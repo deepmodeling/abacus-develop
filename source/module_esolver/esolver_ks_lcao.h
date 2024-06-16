@@ -75,8 +75,6 @@ namespace ModuleESolver
         // we will get rid of this class soon, don't use it, mohan 2024-03-28
         Local_Orbital_Charge LOC;
 
-        LCAO_gen_fixedH gen_h; // mohan add 2024-04-02
-
         // used for k-dependent grid integration.
         Gint_k GK;
 
@@ -88,7 +86,15 @@ namespace ModuleESolver
 
         Grid_Technique GridT;
 
-        std::unique_ptr<TwoCenterBundle> two_center_bundle;
+        // The following variable is introduced in the stage-1 of LCAO
+        // refactoring. It is supposed to replace the previous GlobalC::UOT.
+        //
+        // This is the only place supposed to have the ownership; all other
+        // places should be considered as "borrowing" the object. Unfortunately,
+        // imposing shared_ptr/weak_ptr is only possible once GlobalC::UOT is
+        // completely removed from the code; we have to rely on raw pointers
+        // during the transition period.
+        ORB_gen_tables* uot_;
 
         // Temporarily store the stress to unify the interface with PW,
         // because it's hard to seperate force and stress calculation in LCAO.

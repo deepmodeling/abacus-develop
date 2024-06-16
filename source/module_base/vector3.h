@@ -33,8 +33,10 @@ template <class T> class Vector3
      * @param z1
      */
     Vector3(const T &x1 = 0, const T &y1 = 0, const T &z1 = 0) : x(x1), y(y1), z(z1){};
-    Vector3(const Vector3<T> &v) : x(v.x), y(v.y), z(v.z){}; // Peize Lin add 2018-07-16
-	explicit Vector3(const std::array<T,3> &v) :x(v[0]), y(v[1]), z(v[2]){}
+    Vector3(const Vector3<T> &v) : x(v.x), y(v.y), z(v.z){}; // Peize Lin add 2018-07-16   
+    explicit Vector3(const std::array<T,3> &v) :x(v[0]), y(v[1]), z(v[2]){}
+
+    Vector3(Vector3<T> &&v) noexcept : x(v.x), y(v.y), z(v.z) {}
 
     /**
      * @brief set a 3d vector

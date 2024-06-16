@@ -13,8 +13,7 @@ void test_deepks::preparation()
 	this->set_orbs(ucell.lat0);
 	this->prep_neighbour();
 
-    this->ParaO.set_global2local(GlobalV::NLOCAL, GlobalV::NLOCAL,
-        false, GlobalV::ofs_running);
+    this->ParaO.set_serial(GlobalV::NLOCAL, GlobalV::NLOCAL);
 }
 
 void test_deepks::set_parameters()

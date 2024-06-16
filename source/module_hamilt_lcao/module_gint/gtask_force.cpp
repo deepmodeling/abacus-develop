@@ -1,78 +1,35 @@
 #include <omp.h>
 
-#include "gint_force.h"
+#include "gint_force_gpu.h"
 #include "module_base/ylm.h"
 #include "module_hamilt_lcao/module_gint/gint_tools.h"
 namespace GintKernel
 {
 
-/**
- * @brief Description of the function.
- *
- * Detailed description of the function.
- *
- * @param gridt The Grid_Technique object.
- * @param i The integer parameter i.
- * @param j The integer parameter j.
- * @param psiSizeMax The maximum size of psi.
- * @param max_size The maximum size.
- * @param nczp The nczp parameter.
- * @param vfactor The vfactor parameter.
- * @param vlocal_global_value The array of vlocal_global_value.
- * @param iat_per_nbz The array of iat_per_nbz.
- * @param input_dou The double array of psi_input.
- * @param psiInputInt The integer array of psi_input.
- * @param num_psir The array of num_psir.
- * @param lgd The lgd parameter.
- * @param psir_ylm_g The double array of psir_ylm_g.
- * @param psir_zeros_g The double array of psir_zeros_g.
- * @param dm_matrix_g The double array of dm_matrix_g.
- * @param mat_m The array of mat_m.
- * @param mat_n The array of mat_n.
- * @param mat_k The array of mat_k.
- * @param mat_lda The array of mat_lda.
- * @param mat_ldb The array of mat_ldb.
- * @param mat_ldc The array of mat_ldc.
- * @param mat_A The pointer to mat_A.
- * @param mat_B The pointer to mat_B.
- * @param mat_C The pointer to mat_C.
- * @param max_m The reference to max_m.
- * @param max_n The reference to max_n.
- * @param atom_pair_num The reference to atom_pair_num.
- */
 void gpu_task_generator_force(const Grid_Technique& gridt,
                               const UnitCell& ucell,
-                              const int i,
-                              const int j,
-                              const int psiSizeMax,
-                              const int max_size,
+                              const int grid_index_ij,
+                              const int max_atom_per_bcell,
+                              const int max_atom,
                               const int nczp,
                               const double vfactor,
-                              double* rcut,
+                              const double* rcut,
                               const double* vlocal_global_value,
-                              int* iat_per_nbz,
-                              const int lgd,
-                              double* dm_matrix_g,
-                              int& max_m,
-                              int& max_n,
+                              double* psi_input_double,
+                              int* psi_input_int,
+                              int* atom_num_per_bcell,
+                              int* iat_per_z,
                               int& atom_pair_num,
-                              grid_para& para)
+                              std::vector<bool>& gpu_mat_cal_flag)
 {
-    const int grid_index_ij = i * gridt.nby * gridt.nbzp + j * gridt.nbzp;
     const int nwmax = ucell.nwmax;
-    bool* gpu_mat_cal_flag = new bool[max_size * gridt.nbzp];
-
-    for (int i = 0; i < max_size * gridt.nbzp; i++)
-    {
-        gpu_mat_cal_flag[i] = false;
-    }
     // psir generate
     for (int z_index = 0; z_index < gridt.nbzp; z_index++)
     {
         int num_get_psi = 0;
         int grid_index = grid_index_ij + z_index;
-        int num_psi_pos = psiSizeMax * z_index;
-        int calc_flag_index = max_size * z_index;
+        int num_psi_pos = max_atom_per_bcell * z_index;
+        int calc_flag_index = max_atom * z_index;
         int bcell_start_index = gridt.bcell_start[grid_index];
         int na_grid = gridt.how_many_atoms[grid_index];
 
@@ -116,22 +73,22 @@ void gpu_task_generator_force(const Grid_Technique& gridt,
                             {
                                 distance += 1.0E-9;
                             }
-                            para.input_dou[pos_temp_double] = dr_temp[0];
-                            para.input_dou[pos_temp_double + 1] = dr_temp[1];
-                            para.input_dou[pos_temp_double + 2] = dr_temp[2];
-                            para.input_dou[pos_temp_double + 3] = distance;
+                            psi_input_double[pos_temp_double] = dr_temp[0];
+                            psi_input_double[pos_temp_double + 1] = dr_temp[1];
+                            psi_input_double[pos_temp_double + 2] = dr_temp[2];
+                            psi_input_double[pos_temp_double + 3] = distance;
                             int vindex_global = bx_index * gridt.ncy * nczp
                                                 + by_index * nczp + bz_index
                                                 + start_ind_grid;
-                            para.input_dou[pos_temp_double + 4]
+                            psi_input_double[pos_temp_double + 4]
                                 = vlocal_global_value[vindex_global] * vfactor;
 
-                            para.input_int[pos_temp_int] = it_temp;
-                            para.input_int[pos_temp_int + 1]
-                                = (z_index * gridt.bxyz + ib) * max_size * nwmax
+                            psi_input_int[pos_temp_int] = it_temp;
+                            psi_input_int[pos_temp_int + 1]
+                                = (z_index * gridt.bxyz + ib) * max_atom * nwmax
                                   + id * nwmax;
-                            iat_per_nbz[z_index * gridt.bxyz * max_size
-                                        + ib * max_size + id]
+                            iat_per_z[z_index * gridt.bxyz * max_atom
+                                        + ib * max_atom + id]
                                 = iat;
                             num_get_psi++;
                         }
@@ -140,20 +97,43 @@ void gpu_task_generator_force(const Grid_Technique& gridt,
                 }
             }
         }
-        para.num_psir[z_index] = num_get_psi;
+        atom_num_per_bcell[z_index] = num_get_psi;
     }
+}
 
-    /* allocate the Multiplication of multinomial matrices */
+/* allocate the Multiplication of multinomial matrices */
+void alloc_mult_force(const Grid_Technique& gridt,
+                      const UnitCell& ucell,
+                      const int grid_index_ij,
+                      const int max_atom,
+                      double* const psi_g,
+                      double* const psi_dm_g,
+                      double* const dm_matrix_g,
+                      int& max_m,
+                      int& max_n,
+                      int& atom_pair_num,
+                      int* mat_m,
+                      int* mat_n,
+                      int* mat_k,
+                      int* mat_lda,
+                      int* mat_ldb,
+                      int* mat_ldc,
+                      double** mat_A,
+                      double** mat_B,
+                      double** mat_C,
+                      std::vector<bool>& gpu_mat_cal_flag)
+{
     int tid = 0;
     max_m = 0;
     max_n = 0;
-
+    const int nwmax=ucell.nwmax;
+    const int lgd = gridt.lgd;
     for (int z_index = 0; z_index < gridt.nbzp; z_index++)
     {
         int grid_index = grid_index_ij + z_index;
-        int calc_flag_index = max_size * z_index;
+        int calc_flag_index = max_atom * z_index;
         int bcell_start_index = gridt.bcell_start[grid_index];
-        int bcell_start_psir = z_index * gridt.bxyz * max_size * nwmax;
+        int bcell_start_psir = z_index * gridt.bxyz * max_atom * nwmax;
 
         for (int atom1 = 0; atom1 < gridt.how_many_atoms[grid_index]; atom1++)
         {
@@ -168,8 +148,7 @@ void gpu_task_generator_force(const Grid_Technique& gridt,
                 = gridt.trace_lo[ucell.itiaiw2iwt(it1, ucell.iat2ia[iat1], 0)];
             int nw1 = ucell.atoms[it1].nw;
 
-            for (int atom2 = 0; atom2 < gridt.how_many_atoms[grid_index];
-                 atom2++)
+            for (int atom2 = 0; atom2 < gridt.how_many_atoms[grid_index];atom2++)
             {
                 if (!gpu_mat_cal_flag[calc_flag_index + atom2])
                 {
@@ -179,31 +158,31 @@ void gpu_task_generator_force(const Grid_Technique& gridt,
                 int iat2 = gridt.which_atom[mcell_index2];
                 int it2 = ucell.iat2it[iat2];
                 int lo2 = gridt.trace_lo[ucell.itiaiw2iwt(it2,
-                                                          ucell.iat2ia[iat2],
-                                                          0)];
+                                                            ucell.iat2ia[iat2],
+                                                            0)];
                 int nw2 = ucell.atoms[it2].nw;
 
                 int mat_A_idx = bcell_start_psir + atom2 * nwmax;
                 int mat_B_idx = lgd * lo1 + lo2;
                 int mat_C_idx = bcell_start_psir + atom1 * nwmax;
-                para.atom_pair_A_m[tid] = gridt.bxyz;
-                para.atom_pair_B_n[tid] = nw1;
-                para.atom_pair_K[tid] = nw2;
-                para.atom_pair_lda[tid] = nwmax * max_size;
-                para.atom_pair_ldb[tid] = lgd;
-                para.atom_pair_ldc[tid] = nwmax * max_size;
-                para.matrix_A[tid] = para.psir_r_device + mat_A_idx;
-                para.matrix_B[tid] = dm_matrix_g + mat_B_idx;
-                para.matrix_C[tid] = para.psir_dm_device + mat_C_idx;
+                mat_m[tid] = gridt.bxyz;
+                mat_n[tid] = nw1;
+                mat_k[tid] = nw2;
+                mat_lda[tid] = nwmax * max_atom;
+                mat_ldb[tid] = lgd;
+                mat_ldc[tid] = nwmax * max_atom;
+                mat_A[tid] = psi_g + mat_A_idx;
+                mat_B[tid] = dm_matrix_g + mat_B_idx;
+                mat_C[tid] = psi_dm_g + mat_C_idx;
 
-                if (para.atom_pair_A_m[tid] > max_m)
+                if (mat_m[tid] > max_m)
                 {
-                    max_m = para.atom_pair_A_m[tid];
+                    max_m = mat_m[tid];
                 }
 
-                if (para.atom_pair_B_n[tid] > max_n)
+                if (mat_n[tid] > max_n)
                 {
-                    max_n = para.atom_pair_B_n[tid];
+                    max_n = mat_n[tid];
                 }
 
                 tid++;
@@ -211,53 +190,5 @@ void gpu_task_generator_force(const Grid_Technique& gridt,
         }
     }
     atom_pair_num = tid;
-
-    delete[] gpu_mat_cal_flag;
 }
-
-void allocateDm(double* matrixHost,
-                hamilt::HContainer<double>* dm,
-                const Grid_Technique& gridt,
-                const UnitCell& ucell)
-{
-    ModuleBase::GlobalFunc::ZEROS(matrixHost, gridt.lgd * gridt.lgd);
-    for (int iatRow = 0; iatRow < ucell.nat; iatRow++)
-    {
-        for (int iatColumn = 0; iatColumn < ucell.nat; iatColumn++)
-        {
-            int indexTypeRow = ucell.iat2it[iatRow];
-            int indexTypeColumn = ucell.iat2it[iatColumn];
-            int localOrbitRow
-                = gridt.trace_lo[ucell.itiaiw2iwt(indexTypeRow,
-                                                  ucell.iat2ia[iatRow],
-                                                  0)];
-            int localOrbitColumn
-                = gridt.trace_lo[ucell.itiaiw2iwt(indexTypeColumn,
-                                                  ucell.iat2ia[iatColumn],
-                                                  0)];
-            hamilt::AtomPair<double>* tmpAtomPair
-                = dm->find_pair(iatRow, iatColumn);
-            int orbitIndex = 0;
-            if (tmpAtomPair == NULL)
-            {
-                continue;
-            }
-            for (int orbitRow = 0; orbitRow < tmpAtomPair->get_row_size();
-                 orbitRow++)
-            {
-                for (int orbitColumn = 0;
-                     orbitColumn < tmpAtomPair->get_col_size();
-                     orbitColumn++)
-                {
-                    matrixHost[(localOrbitRow + orbitRow) * gridt.lgd
-                               + (localOrbitColumn + orbitColumn)]
-                        = tmpAtomPair->get_pointer(0)[orbitIndex];
-                    orbitIndex++;
-                }
-            }
-        }
-    }
-    return;
-}
-
 } // namespace GintKernel

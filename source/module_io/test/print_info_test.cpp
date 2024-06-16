@@ -72,7 +72,7 @@ TEST_F(PrintInfoTest, SetupParameters)
 	std::string k_file = "./support/KPT";
 	kv->nspin = 1;
 	kv->read_kpoints(k_file);
-	EXPECT_EQ(kv->nkstot,512);
+	EXPECT_EQ(kv->get_nkstot(),512);
 	std::vector<std::string> cal_type = {"scf","relax","cell-relax","md"};
 	std::vector<std::string> md_types = {"fire","nve","nvt","npt","langevin","msst"};
 	GlobalV::MY_RANK = 0;

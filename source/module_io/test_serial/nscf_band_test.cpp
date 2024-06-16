@@ -6,16 +6,10 @@
 
 Parallel_Kpoints::Parallel_Kpoints()
 {
-    nks_pool = nullptr;
-    startk_pool = nullptr;
-    whichpool = nullptr;
 }
 
 Parallel_Kpoints::~Parallel_Kpoints()
 {
-    delete[] nks_pool;
-    delete[] startk_pool;
-    delete[] whichpool;
 }
 
 K_Vectors::K_Vectors()
@@ -25,6 +19,7 @@ K_Vectors::K_Vectors()
 K_Vectors::~K_Vectors()
 {
 }
+
 
 /************************************************
  *  unit test of nscf_band
@@ -87,7 +82,7 @@ protected:
 
 TEST_F(BandTest, nscf_band)
 {
-    Pkpoints->nks_pool = new int[1];
+    Pkpoints->nks_pool.resize(1);
     Pkpoints->nks_pool[0] = nks;
     Pkpoints->nkstot_np = nks;
     Pkpoints->nks_np = nks;

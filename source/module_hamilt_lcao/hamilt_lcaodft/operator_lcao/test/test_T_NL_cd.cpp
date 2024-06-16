@@ -108,18 +108,12 @@ class TNLTest : public ::testing::Test
 #ifdef __MPI
     void init_parav()
     {
+        int nb = 20;
         int global_row = test_size * test_nw * 2;
         int global_col = test_size * test_nw * 2;
         std::ofstream ofs_running;
         paraV = new Parallel_Orbitals();
-        paraV->set_block_size(20/* nb_2d set to be 2*/);
-        paraV->set_proc_dim(dsize, 0);
-        paraV->mpi_create_cart(MPI_COMM_WORLD);
-        paraV->set_local2global(global_row, global_col, ofs_running, ofs_running);
-        int lr = paraV->get_row_size();
-        int lc = paraV->get_col_size();
-        paraV->set_desc(global_row, global_col, lr);
-        paraV->set_global2local(global_row, global_col, true, ofs_running);
+        paraV->init(global_row, global_col, nb, MPI_COMM_WORLD);
         paraV->set_atomic_trace(ucell.get_iat2iwt(), test_size, global_row);
     }
 #else
@@ -130,6 +124,7 @@ class TNLTest : public ::testing::Test
     UnitCell ucell;
     hamilt::HContainer<std::complex<double>>* HR;
     Parallel_Orbitals *paraV;
+    ORB_gen_tables uot_;
 
     int dsize;
     int my_rank = 0;
@@ -150,6 +145,7 @@ TEST_F(TNLTest, testTVNLcd2cd)
         &hk, 
         &ucell, 
         &gd,
+        &uot_,
         paraV
     );
     hamilt::Operator<std::complex<double>> *op1 = new hamilt::NonlocalNew<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>(
@@ -159,6 +155,7 @@ TEST_F(TNLTest, testTVNLcd2cd)
         &hk, 
         &ucell, 
         &gd,
+        &uot_,
         paraV
     );
     // merge two Operators to a chain

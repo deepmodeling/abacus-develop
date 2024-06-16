@@ -21,8 +21,9 @@ DeePKS<OperatorLCAO<TK, TR>>::DeePKS(Local_Orbital_Charge* loc_in,
     std::vector<TK>* hK_in,
     const UnitCell* ucell_in,
     Grid_Driver* GridD_in,
+    const ORB_gen_tables* uot,
     const int& nks_in,
-    elecstate::DensityMatrix<TK,double>* DM_in) : loc(loc_in), nks(nks_in), ucell(ucell_in), OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in), DM(DM_in)
+    elecstate::DensityMatrix<TK,double>* DM_in) : loc(loc_in), nks(nks_in), ucell(ucell_in), OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in), DM(DM_in), uot_(uot)
 {
     this->cal_type = lcao_deepks;
 #ifdef __DEEPKS
@@ -266,7 +267,6 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::pre_calculate_nlm(const int i
         const ModuleBase::Vector3<double>& tau1 = adjs.adjacent_tau[ad];
         const Atom* atom1 = &ucell->atoms[T1];
 
-        const ORB_gen_tables& uot = ORB_gen_tables::get_const_instance();
         auto all_indexes = paraV->get_indexes_row(iat1);
         auto col_indexes = paraV->get_indexes_col(iat1);
         // insert col_indexes into all_indexes to get universal set with no repeat elements
@@ -293,10 +293,10 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::pre_calculate_nlm(const int i
             int M1 = (m1 % 2 == 0) ? -m1/2 : (m1+1)/2;
 
             ModuleBase::Vector3<double> dtau = tau0 - tau1;
-            uot.two_center_bundle->overlap_orb_alpha->snap(
+            uot_->two_center_bundle->overlap_orb_alpha->snap(
                     T1, L1, N1, M1, 0, dtau * ucell->lat0, 0 /*calc_deri*/, nlm);
 #else
-            uot.snap_psialpha_half(
+            uot_->snap_psialpha_half(
                     orb,
                     nlm, 0, tau1, T1,
                     atom1->iw2l[ iw1 ], // L1

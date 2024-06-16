@@ -1,7 +1,6 @@
 #include "module_base/kernels/math_op.h"
 
 #include "module_base/module_device/memory_op.h"
-// #include "module_psi/kernels/memory_op.h"
 
 #include <complex>
 #include <gtest/gtest.h>

@@ -4,6 +4,7 @@
 #include "module_base/tool_title.h"
 #include "module_base/memory.h"
 #include "module_base/timer.h"
+#include "module_cell/klist.h"
 
 namespace elecstate
 {
@@ -38,7 +39,7 @@ DensityMatrix<TK, TR>::DensityMatrix(const K_Vectors* kv_in, const Parallel_Orbi
     {
         this->_nspin = 2;
 #ifdef __DEBUG
-        assert(kv_in->nks % 2 == 0);
+        assert(kv_in->get_nks() % 2 == 0);
 #endif
     }
     else
@@ -46,10 +47,10 @@ DensityMatrix<TK, TR>::DensityMatrix(const K_Vectors* kv_in, const Parallel_Orbi
         throw std::string("nspin must be 1, 2 or 4");
     }
     // set this->_nks, which is real number of k-points
-    this->_nks = kv_in->nks / this->_nspin;
+    this->_nks = kv_in->get_nks() / this->_nspin;
     // allocate memory for _DMK
-    this->_DMK.resize(this->_kv->nks);
-    for (int ik = 0; ik < this->_kv->nks; ik++)
+    this->_DMK.resize(this->_kv->get_nks());
+    for (int ik = 0; ik < this->_kv->get_nks(); ik++)
     {
         this->_DMK[ik].resize(this->_paraV->get_row_size() * this->_paraV->get_col_size());
     }
@@ -120,7 +121,7 @@ void DensityMatrix<TK, TR>::init_DMR(Grid_Driver* GridD_in, const UnitCell* ucel
             }
             ModuleBase::Vector3<int>& R_index = adjs.box[ad];
             // std::cout << "R_index: " << R_index.x << " " << R_index.y << " " << R_index.z << std::endl;
-            hamilt::AtomPair<TR> tmp_ap(iat1, iat2, R_index.x, R_index.y, R_index.z, this->_paraV);
+            hamilt::AtomPair<TR> tmp_ap(iat1, iat2, R_index, this->_paraV);
             tmp_DMR->insert_pair(tmp_ap);
         }
     }
@@ -236,8 +237,8 @@ void DensityMatrix<TK, TR>::init_DMR(const hamilt::HContainer<TRShift>& DMR_in)
             const int iat2 = DMR_in.get_atom_pair(iap).get_atom_j();
             for(int ir = 0;ir<DMR_in.get_atom_pair(iap).get_R_size();ir++)
             {
-                const int* R_index = DMR_in.get_atom_pair(iap).get_R_index(ir);
-                hamilt::AtomPair<TR> tmp_ap(iat1, iat2, R_index[0], R_index[1], R_index[2], paraV_);
+                const ModuleBase::Vector3<int> R_index = DMR_in.get_atom_pair(iap).get_R_index(ir);
+                hamilt::AtomPair<TR> tmp_ap(iat1, iat2, R_index, paraV_);
                 tmp_DMR->insert_pair(tmp_ap);
             }
         }
@@ -323,7 +324,7 @@ int DensityMatrix<TK, TR>::get_DMK_nks() const
     assert(this->_DMK.size() != 0);
     assert(this->_kv != nullptr);
 #endif
-    return this->_kv->nks;
+    return this->_kv->get_nks();
 }
 
 template <typename TK, typename TR>
@@ -416,8 +417,8 @@ void DensityMatrix<TK,TR>::cal_DMR_test()
             }
             for (int ir = 0; ir < tmp_ap.get_R_size(); ++ir)
             {
-                const int* r_index = tmp_ap.get_R_index(ir);
-                hamilt::BaseMatrix<TR>* tmp_matrix = tmp_ap.find_matrix(r_index[0], r_index[1], r_index[2]);
+                const ModuleBase::Vector3<int> r_index = tmp_ap.get_R_index(ir);
+                hamilt::BaseMatrix<TR>* tmp_matrix = tmp_ap.find_matrix(r_index);
 #ifdef __DEBUG
 				if (tmp_matrix == nullptr)
 				{
@@ -457,6 +458,12 @@ template <>
 void DensityMatrix<std::complex<double>, double>::cal_DMR()
 {
     ModuleBase::TITLE("DensityMatrix", "cal_DMR");
+
+    // To check whether DMR has been initialized
+#ifdef __DEBUG
+    assert(!this->_DMR.empty() && "DMR has not been initialized!");
+#endif
+    
     ModuleBase::timer::tick("DensityMatrix", "cal_DMR");
     int ld_hk = this->_paraV->nrow;
     int ld_hk2 = 2 * ld_hk;
@@ -483,8 +490,8 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR()
             }
             for (int ir = 0; ir < tmp_ap.get_R_size(); ++ir)
             {
-                const int* r_index = tmp_ap.get_R_index(ir);
-                hamilt::BaseMatrix<double>* tmp_matrix = tmp_ap.find_matrix(r_index[0], r_index[1], r_index[2]);
+                const ModuleBase::Vector3<int> r_index = tmp_ap.get_R_index(ir);
+                hamilt::BaseMatrix<double>* tmp_matrix = tmp_ap.find_matrix(r_index);
 #ifdef __DEBUG
                 if (tmp_matrix == nullptr)
                 {
@@ -614,6 +621,12 @@ template <>
 void DensityMatrix<double, double>::cal_DMR()
 {
     ModuleBase::TITLE("DensityMatrix", "cal_DMR");
+
+    // To check whether DMR has been initialized
+#ifdef __DEBUG
+    assert(!this->_DMR.empty() && "DMR has not been initialized!");
+#endif
+
     ModuleBase::timer::tick("DensityMatrix", "cal_DMR");
     int ld_hk = this->_paraV->nrow;
     for (int is = 1; is <= this->_nspin; ++is)
@@ -643,12 +656,12 @@ void DensityMatrix<double, double>::cal_DMR()
                 throw std::string("Atom-pair not belong this process");
             }
             // R index
-            const int* r_index = tmp_ap.get_R_index(0);
+            const ModuleBase::Vector3<int> r_index = tmp_ap.get_R_index(0);
 #ifdef __DEBUG
             assert(tmp_ap.get_R_size() == 1);
-            assert(r_index[0] == 0 && r_index[1] == 0 && r_index[2] == 0);
+            assert(r_index.x == 0 && r_index.y == 0 && r_index.z == 0);
 #endif
-            hamilt::BaseMatrix<double>* tmp_matrix = tmp_ap.find_matrix(r_index[0], r_index[1], r_index[2]);
+            hamilt::BaseMatrix<double>* tmp_matrix = tmp_ap.find_matrix(r_index);
 #ifdef __DEBUG
             if (tmp_matrix == nullptr)
             {
@@ -694,9 +707,9 @@ void DensityMatrix<TK, TR>::sum_DMR_spin()
             hamilt::AtomPair<TR>& tmp_ap_down = tmp_DMR_down->get_atom_pair(i);
             for (int ir = 0; ir < tmp_ap_up.get_R_size(); ++ir)
             {
-                const int* r_index = tmp_ap_up.get_R_index(ir);
-                hamilt::BaseMatrix<double>* tmp_matrix_up = tmp_ap_up.find_matrix(r_index[0], r_index[1], r_index[2]);
-                hamilt::BaseMatrix<double>* tmp_matrix_down = tmp_ap_down.find_matrix(r_index[0], r_index[1], r_index[2]);
+                const ModuleBase::Vector3<int> r_index = tmp_ap_up.get_R_index(ir);
+                hamilt::BaseMatrix<double>* tmp_matrix_up = tmp_ap_up.find_matrix(r_index);
+                hamilt::BaseMatrix<double>* tmp_matrix_down = tmp_ap_down.find_matrix(r_index);
                 TR* ptr_up = tmp_matrix_up->get_pointer();
                 TR* ptr_down = tmp_matrix_down->get_pointer();
                 for (int i = 0; i < tmp_ap_up.get_size(); ++i)

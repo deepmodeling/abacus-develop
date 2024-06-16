@@ -1,9 +1,9 @@
 #include "gint.h"
 
 #if ((defined __CUDA))
-#include "gint_force.h"
-#include "gint_rho.h"
-#include "gint_vl.h"
+#include "gint_force_gpu.h"
+#include "gint_rho_gpu.h"
+#include "gint_vl_gpu.h"
 #endif
 
 #include "module_base/memory.h"
@@ -87,7 +87,7 @@ void Gint::cal_gint(Gint_inout* inout)
             }
 
             const int ntype = orb.get_ntype();
-            double* rcut = new double[ntype];
+            std::vector<double> rcut(ntype);
             for (int it = 0; it < ntype; it++)
             {
                 rcut[it] = orb.Phi[it].getRcut();
@@ -98,16 +98,10 @@ void Gint::cal_gint(Gint_inout* inout)
             if (inout->job == Gint_Tools::job_type::vlocal)
             {
                 GintKernel::gint_gamma_vl_gpu(this->hRGint,
-                                              lgd,
-                                              max_size,
-                                              ucell.omega
-                                                  / this->ncxyz,
                                               inout->vl,
                                               ylmcoef,
-                                              this->nplane,
-                                              this->nbxx,
                                               dr,
-                                              rcut,
+                                              rcut.data(),
                                               *this->gridt,
                                               ucell);
             }
@@ -118,10 +112,9 @@ void Gint::cal_gint(Gint_inout* inout)
                 {
                     ModuleBase::GlobalFunc::ZEROS(inout->rho[is], nrxx);
                     GintKernel::gint_gamma_rho_gpu(this->DMRGint[is],
-                                                   this->nplane,
                                                    ylmcoef,
                                                    dr,
-                                                   rcut,
+                                                   rcut.data(),
                                                    *this->gridt,
                                                    ucell,
                                                    inout->rho[is]);
@@ -133,20 +126,15 @@ void Gint::cal_gint(Gint_inout* inout)
                 int nat = ucell.nat;
                 const int isforce = inout->isforce;
                 const int isstress =inout->isstress;
-                ModuleBase::TITLE("Gint_interface","cal_force_gpu");
-                ModuleBase::timer::tick("Gint_interface","cal_force_gpu");
                 if (isforce || isstress){
                     std::vector<double> force(nat * 3, 0.0);
                     std::vector<double> stress(6, 0.0);
                     GintKernel::gint_fvl_gamma_gpu(this->DMRGint[inout->ispin],
-                                                    ucell.omega
-                                                        / this->ncxyz,
                                                     inout->vl,
-                                                    force,
-                                                    stress,
-                                                    this->nplane,
+                                                    force.data(),
+                                                    stress.data(),
                                                     dr,
-                                                    rcut,
+                                                    rcut.data(),
                                                     isforce,
                                                     isstress,
                                                     *this->gridt,
@@ -168,10 +156,7 @@ void Gint::cal_gint(Gint_inout* inout)
                     inout->svl_dphi[0](1, 2) += stress[4];
                     inout->svl_dphi[0](2, 2) += stress[5];
                 }
-                force.clear();
-                stress.clear();
                 }
-                ModuleBase::timer::tick("Gint_interface","cal_force_gpu");   
             }
         }
         else
@@ -310,23 +295,13 @@ void Gint::cal_gint(Gint_inout* inout)
                     double* vldr3 = Gint_Tools::get_vldr3(inout->vl, this->bxyz, this->bx, this->by, this->bz,
                         this->nplane, this->gridt->start_ind[grid_index], ncyz, dv);
 
-                    double** DM_in;
-					if(GlobalV::GAMMA_ONLY_LOCAL)
-					{
-						DM_in = inout->DM[GlobalV::CURRENT_SPIN];
-					}
-					else if(!GlobalV::GAMMA_ONLY_LOCAL)
-					{
-						DM_in = inout->DM_R;
-					}
-
 #ifdef _OPENMP
-						this->gint_kernel_force(na_grid, grid_index, delta_r, vldr3, LD_pool,
-							DM_in, inout->ispin, inout->isforce, inout->isstress,
-							&fvl_dphi_thread, &svl_dphi_thread,ucell);
+                    this->gint_kernel_force(na_grid, grid_index, delta_r, vldr3, LD_pool,
+                        inout->ispin, inout->isforce, inout->isstress,
+                        &fvl_dphi_thread, &svl_dphi_thread, ucell);
 #else
-						this->gint_kernel_force(na_grid, grid_index, delta_r, vldr3, LD_pool,
-							DM_in, inout->ispin, inout->isforce, inout->isstress,
+                    this->gint_kernel_force(na_grid, grid_index, delta_r, vldr3, LD_pool,
+                        inout->ispin, inout->isforce, inout->isstress,
 							inout->fvl_dphi, inout->svl_dphi,ucell);
 #endif
 					delete[] vldr3;
@@ -404,24 +379,14 @@ void Gint::cal_gint(Gint_inout* inout)
                     double* vkdr3 = Gint_Tools::get_vldr3(inout->vofk, this->bxyz, this->bx, this->by, this->bz,
                         this->nplane, this->gridt->start_ind[grid_index], ncyz, dv);
 
-					double** DM_in;
-
-					if(GlobalV::GAMMA_ONLY_LOCAL)
-					{
-						DM_in = inout->DM[GlobalV::CURRENT_SPIN];
-					}
-					else if(!GlobalV::GAMMA_ONLY_LOCAL)
-					{
-						DM_in = inout->DM_R;
-					}
 #ifdef _OPENMP
-					this->gint_kernel_force_meta(na_grid, grid_index, delta_r, vldr3, vkdr3, LD_pool,
-							DM_in, inout->ispin, inout->isforce, inout->isstress,
-							&fvl_dphi_thread, &svl_dphi_thread,ucell);
+                    this->gint_kernel_force_meta(na_grid, grid_index, delta_r, vldr3, vkdr3, LD_pool,
+                        inout->ispin, inout->isforce, inout->isstress,
+                        &fvl_dphi_thread, &svl_dphi_thread, ucell);
 #else
-					this->gint_kernel_force_meta(na_grid, grid_index, delta_r, vldr3, vkdr3, LD_pool,
-							DM_in, inout->ispin, inout->isforce, inout->isstress,
-							inout->fvl_dphi, inout->svl_dphi,ucell);
+                    this->gint_kernel_force_meta(na_grid, grid_index, delta_r, vldr3, vkdr3, LD_pool,
+                        inout->ispin, inout->isforce, inout->isstress,
+                        inout->fvl_dphi, inout->svl_dphi, ucell);
 #endif
 					delete[] vldr3;
 					delete[] vkdr3;
@@ -722,6 +687,12 @@ void Gint::initialize_pvpR(const UnitCell& ucell_in, Grid_Driver* gd)
 void Gint::transfer_DM2DtoGrid(std::vector<hamilt::HContainer<double>*> DM2D)
 {
     ModuleBase::TITLE("Gint", "transfer_DMR");
+
+    // To check whether input parameter DM2D has been initialized
+#ifdef __DEBUG
+    assert(!DM2D.empty() && "Input parameter DM2D has not been initialized while calling function transfer_DM2DtoGrid!");
+#endif
+
     ModuleBase::timer::tick("Gint", "transfer_DMR");
     if (GlobalV::NSPIN != 4)
     {
@@ -750,10 +721,10 @@ void Gint::transfer_DM2DtoGrid(std::vector<hamilt::HContainer<double>*> DM2D)
 			int iat2 = ap.get_atom_j();
 			for(int ir = 0;ir<ap.get_R_size();++ir)
 			{
-				int* r_index = ap.get_R_index(ir);
+				const ModuleBase::Vector3<int> r_index = ap.get_R_index(ir);
 				for (int is = 0; is < 4; is++)
 				{
-					tmp_pointer[is] = this->DMRGint[is]->find_matrix(iat1, iat2, r_index[0], r_index[1], r_index[2])->get_pointer();
+					tmp_pointer[is] = this->DMRGint[is]->find_matrix(iat1, iat2, r_index)->get_pointer();
 				}
 				double* data_full = ap.get_pointer(ir);
 				for(int irow=0;irow<ap.get_row_size();irow += 2)

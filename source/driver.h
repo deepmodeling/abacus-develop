@@ -19,12 +19,12 @@ class Driver
      * This function read the parameter in "INPUT", "STRU" etc,
      * and split the MPI world into different groups.
      */
-    void reading();
+    static void reading();
 
     /**
      * @brief An interface function.
      * This function calls "this->driver_run()" to do calculation,
-	 * and log the time and  memory consumed during calculation.
+     * and log the time and  memory consumed during calculation.
      */
     void atomic_world();
 

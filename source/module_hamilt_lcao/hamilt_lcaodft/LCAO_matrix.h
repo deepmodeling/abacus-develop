@@ -213,23 +213,6 @@ private:
 			const char &dtype, 
 			const int spin = 0);
 
-	void set_force (
-			const int& iw1_all, 
-			const int& iw2_all, 
-			const double& vx, 
-			const double& vy, 
-			const double& vz, 
-			const char &dtype);
-
-	void set_stress (
-			const int& iw1_all, 
-			const int& iw2_all, 
-			const double& vx, 
-			const double& vy,
-			const double& vz, 
-			const char &dtype, 
-			const ModuleBase::Vector3<double> &dtau);
-
 	void set_HR_tr(
 			const int &Rx, 
 			const int &Ry, 
@@ -251,14 +234,6 @@ private:
     void zeros_HSk(const char &mtype);
 
     void zeros_HSR(const char &mtype);
-
-    void print_HSgamma(const char &mtype, std::ostream &os=std::cout);
-
-	void print_HSk(
-			const char &mtype, 
-			const char &vtype = 'C', 
-			const double &accuracy = 1.0e-5, 
-			std::ostream &os=std::cout);
 
     void update_Hloc(void);
 

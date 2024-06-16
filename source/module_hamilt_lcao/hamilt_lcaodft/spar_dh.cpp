@@ -1,9 +1,10 @@
 #include "spar_dh.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
 
 void sparse_format::cal_dH(
 		LCAO_Matrix &lm,
 		Grid_Driver &grid,
-		LCAO_gen_fixedH &gen_h, 
+        const ORB_gen_tables* uot,
 		const int &current_spin, 
 		const double &sparse_thr,
 		Gint_k &gint_k)
@@ -26,15 +27,41 @@ void sparse_format::cal_dH(
 	{
         GlobalV::CAL_STRESS = false;
 
-        gen_h.build_ST_new('T', true, GlobalC::ucell, GlobalC::ORB, GlobalC::UOT, &(GlobalC::GridD), lm.Hloc_fixedR.data());
+		LCAO_domain::build_ST_new(
+                lm,
+				'T', 
+				true, 
+				GlobalC::ucell, 
+				GlobalC::ORB, 
+                *lm.ParaV,
+				*uot, 
+				&GlobalC::GridD, 
+				lm.Hloc_fixedR.data());
 
         GlobalV::CAL_STRESS = true;
     }
     else
     {
-        gen_h.build_ST_new('T', true, GlobalC::ucell, GlobalC::ORB, GlobalC::UOT, &(GlobalC::GridD), lm.Hloc_fixedR.data());
+		LCAO_domain::build_ST_new(
+				lm,
+				'T', 
+				true, 
+				GlobalC::ucell, 
+				GlobalC::ORB, 
+				*lm.ParaV,
+				*uot, 
+				&GlobalC::GridD, 
+				lm.Hloc_fixedR.data());
     }
-    gen_h.build_Nonlocal_mu_new (lm.Hloc_fixed.data(), true, GlobalC::ucell, GlobalC::ORB, GlobalC::UOT, &(GlobalC::GridD));
+
+	LCAO_domain::build_Nonlocal_mu_new(
+            lm,
+			lm.Hloc_fixed.data(), 
+			true, 
+			GlobalC::ucell, 
+			GlobalC::ORB, 
+			*uot, 
+			&GlobalC::GridD);
     
     sparse_format::cal_dSTN_R(lm, grid, current_spin, sparse_thr);
 
@@ -42,7 +69,14 @@ void sparse_format::cal_dH(
     delete[] lm.DHloc_fixedR_y;
     delete[] lm.DHloc_fixedR_z;
 
-    gint_k.cal_dvlocal_R_sparseMatrix(current_spin, sparse_thr, &lm, lm.ParaV,GlobalC::ORB,GlobalC::ucell,GlobalC::GridD);
+	gint_k.cal_dvlocal_R_sparseMatrix(
+			current_spin, 
+			sparse_thr, 
+			&lm, 
+			lm.ParaV,
+			GlobalC::ORB,
+			GlobalC::ucell,
+			GlobalC::GridD);
 
     return;
 }

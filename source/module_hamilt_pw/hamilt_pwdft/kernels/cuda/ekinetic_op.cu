@@ -21,7 +21,7 @@ __global__ void ekinetic_pw(
   const int block_idx = blockIdx.x;
   const int thread_idx = threadIdx.x;
   for (int ii = thread_idx; ii < npw; ii+= blockDim.x) {
-    hpsi[block_idx * max_npw + ii] 
+    hpsi[block_idx * max_npw + ii]
       += gk2[ii] * tpiba2 * psi[block_idx * max_npw + ii];
   }
 }
@@ -43,9 +43,8 @@ void hamilt::ekinetic_pw_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const b
     gk2_ik, // array of data
     reinterpret_cast<thrust::complex<FPTYPE>*>(tmhpsi), // array of data
     reinterpret_cast<const thrust::complex<FPTYPE>*>(tmpsi_in)); // array of data
-  
-  cudaErrcheck(cudaGetLastError());
-  cudaErrcheck(cudaDeviceSynchronize());
+
+  cudaCheckOnDebug();
 }
 
 template struct ekinetic_pw_op<float, base_device::DEVICE_GPU>;

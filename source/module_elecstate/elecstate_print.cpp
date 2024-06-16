@@ -48,17 +48,17 @@ namespace elecstate
 		std::vector<std::string> th_fmt = {" %-" + std::to_string(witer) + "s"}; 		 // table header: th: ITER
 		std::vector<std::string> td_fmt = {" " + iter_header_dict[ks_solver] + "%-" + std::to_string(witer - 2) + ".0f"}; // table data: td: GE10086
 		// magnetization column, might be non-exist, but size of mag can only be 0, 2 or 4
-		for(int i = 0; i < mag.size(); i++) {th_fmt.emplace_back("%" + std::to_string(wmag) + "s");}
-		for(int i = 0; i < mag.size(); i++) {td_fmt.emplace_back("%" + std::to_string(wmag) + ".4e");} // hard-code precision here
+		for(int i = 0; i < mag.size(); i++) {th_fmt.emplace_back(" %" + std::to_string(wmag) + "s");}
+		for(int i = 0; i < mag.size(); i++) {td_fmt.emplace_back(" %" + std::to_string(wmag) + ".4e");} // hard-code precision here
 		// energies
-		for(int i = 0; i < 2; i++) {th_fmt.emplace_back("%" + std::to_string(wener) + "s");}
-		for(int i = 0; i < 2; i++) {td_fmt.emplace_back("%" + std::to_string(wener) + ".8e");}
+		for(int i = 0; i < 2; i++) {th_fmt.emplace_back(" %" + std::to_string(wener) + "s");}
+		for(int i = 0; i < 2; i++) {td_fmt.emplace_back(" %" + std::to_string(wener) + ".8e");}
 		// densities column, size can be 1 or 2, DRHO or DRHO, DKIN
-		for(int i = 0; i < drho.size(); i++) {th_fmt.emplace_back("%" + std::to_string(wrho) + "s");}
-		for(int i = 0; i < drho.size(); i++) {td_fmt.emplace_back("%" + std::to_string(wrho) + ".8e");}
+		for(int i = 0; i < drho.size(); i++) {th_fmt.emplace_back(" %" + std::to_string(wrho) + "s");}
+		for(int i = 0; i < drho.size(); i++) {td_fmt.emplace_back(" %" + std::to_string(wrho) + ".8e");}
 		// time column, trivial
-		th_fmt.emplace_back("%" + std::to_string(wtime) + "s\n");
-		td_fmt.emplace_back("%" + std::to_string(wtime) + ".2f\n");
+		th_fmt.emplace_back(" %" + std::to_string(wtime) + "s\n");
+		td_fmt.emplace_back(" %" + std::to_string(wtime) + ".2f\n");
 		// contents
 		std::vector<std::string> titles; std::vector<double> values;
 		switch (mag.size())
@@ -87,7 +87,7 @@ namespace elecstate
 void ElecState::print_eigenvalue(std::ofstream& ofs)
 {
     bool wrong = false;
-    for (int ik = 0; ik < this->klist->nks; ++ik)
+    for (int ik = 0; ik < this->klist->get_nks(); ++ik)
     {
         for (int ib = 0; ib < this->ekb.nc; ++ib)
         {
@@ -112,7 +112,7 @@ void ElecState::print_eigenvalue(std::ofstream& ofs)
     ModuleBase::TITLE("ESolver_KS_PW", "print_eigenvalue");
 
     ofs << "\n STATE ENERGY(eV) AND OCCUPATIONS ";
-    for (int ik = 0; ik < this->klist->nks; ik++)
+    for (int ik = 0; ik < this->klist->get_nks(); ik++)
     {
         ofs << std::setprecision(5);
         ofs << std::setiosflags(std::ios::showpoint);
@@ -124,7 +124,7 @@ void ElecState::print_eigenvalue(std::ofstream& ofs)
                 ofs << "SPIN UP : " << std::endl;
             }
         }
-        else if (ik == this->klist->nks / 2)
+        else if (ik == this->klist->get_nks() / 2)
         {
             if (GlobalV::NSPIN == 2)
             {
@@ -136,14 +136,14 @@ void ElecState::print_eigenvalue(std::ofstream& ofs)
         {
             if (this->klist->isk[ik] == 0)
             {
-                ofs << " " << ik + 1 << "/" << this->klist->nks / 2 
+                ofs << " " << ik + 1 << "/" << this->klist->get_nks() / 2 
                 << " kpoint (Cartesian) = " << this->klist->kvec_c[ik].x << " " << this->klist->kvec_c[ik].y << " " << this->klist->kvec_c[ik].z << " (" << this->klist->ngk[ik] << " pws)" << std::endl;
 
                 ofs << std::setprecision(6);
             }
             if (this->klist->isk[ik] == 1)
             {
-                ofs << " " << ik + 1 - this->klist->nks / 2 << "/" << this->klist->nks / 2
+                ofs << " " << ik + 1 - this->klist->get_nks() / 2 << "/" << this->klist->get_nks() / 2
                     << " kpoint (Cartesian) = " << this->klist->kvec_c[ik].x << " " << this->klist->kvec_c[ik].y << " "
                     << this->klist->kvec_c[ik].z << " (" << this->klist->ngk[ik] << " pws)" << std::endl;
 
@@ -152,7 +152,7 @@ void ElecState::print_eigenvalue(std::ofstream& ofs)
         } // Pengfei Li  added  14-9-9
         else
         {
-            ofs << " " << ik + 1 << "/" << this->klist->nks << " kpoint (Cartesian) = " << this->klist->kvec_c[ik].x
+            ofs << " " << ik + 1 << "/" << this->klist->get_nks() << " kpoint (Cartesian) = " << this->klist->kvec_c[ik].x
                 << " " << this->klist->kvec_c[ik].y << " " << this->klist->kvec_c[ik].z << " (" << this->klist->ngk[ik]
                 << " pws)" << std::endl;
 
@@ -198,7 +198,7 @@ void ElecState::print_band(const int& ik, const int& printe, const int& iter)
         if (printe > 0 && ((iter + 1) % printe == 0))
         {
             GlobalV::ofs_running << std::setprecision(6);
-            GlobalV::ofs_running << " Energy (eV) & Occupations  for spin=" << GlobalV::CURRENT_SPIN + 1
+            GlobalV::ofs_running << " Energy (eV) & Occupations  for spin=" << this->klist->isk[ik]+1
                                  << " K-point=" << ik + 1 << std::endl;
             GlobalV::ofs_running << std::setiosflags(std::ios::showpoint);
             for (int ib = 0; ib < GlobalV::NBANDS; ib++)

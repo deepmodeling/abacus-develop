@@ -1,4 +1,4 @@
-#include "FORCE_k.h"
+#include "FORCE.h"
 
 #include <map>
 #include <unordered_map>
@@ -26,19 +26,21 @@
 typedef std::tuple<int, int, int, int> key_tuple;
 
 // must consider three-center H matrix.
-void Force_LCAO_k::cal_fvnl_dbeta_k(const elecstate::DensityMatrix<std::complex<double>, double>* DM,
-                                    const bool isforce,
-									const bool isstress,
-									const Parallel_Orbitals &pv,
-                                    const UnitCell &ucell,
-                                    const LCAO_Orbitals& orb,
-                                    const ORB_gen_tables& uot,
-                                    Grid_Driver* GridD,
-									ModuleBase::matrix& fvnl_dbeta,
-                                    ModuleBase::matrix& svnl_dbeta)
+template<>
+void Force_LCAO<std::complex<double>>::cal_fvnl_dbeta(
+    const elecstate::DensityMatrix<std::complex<double>, double>* dm,
+    const Parallel_Orbitals& pv,
+    const UnitCell& ucell,
+    const LCAO_Orbitals& orb,
+    const ORB_gen_tables& uot,
+    Grid_Driver& gd,
+    const bool isforce,
+    const bool isstress,
+    ModuleBase::matrix& fvnl_dbeta,
+    ModuleBase::matrix& svnl_dbeta)
 {
-    ModuleBase::TITLE("Force_LCAO_k", "cal_fvnl_dbeta_k_new");
-    ModuleBase::timer::tick("Force_LCAO_k", "cal_fvnl_dbeta_k_new");
+    ModuleBase::TITLE("Force_LCAO","cal_fvnl_dbeta");
+    ModuleBase::timer::tick("Force_LCAO","cal_fvnl_dbeta");
 
     const int nspin = GlobalV::NSPIN;
     const int nspin_DMR = (nspin == 2) ? 2 : 1;
@@ -66,7 +68,7 @@ void Force_LCAO_k::cal_fvnl_dbeta_k(const elecstate::DensityMatrix<std::complex<
         const double Rcut_Beta = ucell.infoNL.Beta[it].get_rcut_max();
         const ModuleBase::Vector3<double> tau = ucell.atoms[it].tau[ia];
         AdjacentAtomInfo adjs;
-        GridD->Find_atom(ucell, tau, it, ia, &adjs);
+        gd.Find_atom(ucell, tau, it, ia, &adjs);
 
         nlm_tot[iat].clear();
 
@@ -183,7 +185,7 @@ void Force_LCAO_k::cal_fvnl_dbeta_k(const elecstate::DensityMatrix<std::complex<
                 const int I1 = ucell.iat2ia[iat1];
                 tau1 = atom1->tau[I1];
                 AdjacentAtomInfo adjs;
-                GridD->Find_atom(ucell, tau1, T1, I1, &adjs);
+                gd.Find_atom(ucell, tau1, T1, I1, &adjs);
                 const int start1 = ucell.itiaiw2iwt(T1, I1, 0);
                 int nnr = pv.nlocstart[iat1];
 
@@ -226,8 +228,10 @@ void Force_LCAO_k::cal_fvnl_dbeta_k(const elecstate::DensityMatrix<std::complex<
 
                     // check if this a adjacent atoms.
                     bool is_adj = false;
-                    if (distance < rcut)
-                        is_adj = true;
+					if (distance < rcut)
+					{
+						is_adj = true;
+					}
                     else if (distance >= rcut)
                     {
                         for (int ad0 = 0; ad0 < adjs.adj_num + 1; ++ad0)
@@ -268,24 +272,27 @@ void Force_LCAO_k::cal_fvnl_dbeta_k(const elecstate::DensityMatrix<std::complex<
                         std::vector<double*> tmp_matrix_ptr;
                         for (int is = 0; is < nspin_DMR; ++is)
                         {
-                            auto* tmp_base_matrix = DM->get_DMR_pointer(is+1)->find_matrix(iat1, iat2, rx2, ry2, rz2);
+                            auto* tmp_base_matrix = dm->get_DMR_pointer(is+1)->find_matrix(iat1, iat2, rx2, ry2, rz2);
                             tmp_matrix_ptr.push_back(tmp_base_matrix->get_pointer());
                         }
-                        //hamilt::BaseMatrix<double>* tmp_matrix = DM->get_DMR_pointer(1)->find_matrix(iat1, iat2, rx2, ry2, rz2);
-                        //double* tmp_matrix_ptr = tmp_matrix->get_pointer();
+
                         for (int ad0 = 0; ad0 < adjs.adj_num + 1; ++ad0)
                         {
                             const int T0 = adjs.ntype[ad0];
                             const int I0 = adjs.natom[ad0];
                             const int iat = ucell.itia2iat(T0, I0);
-                            if (!iat_recorded && isforce)
-                                adj_iat[ad0] = iat;
+							if (!iat_recorded && isforce)
+							{
+								adj_iat[ad0] = iat;
+							}
 
                             // mohan add 2010-12-19
-                            if (ucell.infoNL.nproj[T0] == 0)
-                                continue;
+							if (ucell.infoNL.nproj[T0] == 0)
+							{
+								continue;
+							}
 
-                            // const int I0 = GridD->getNatom(ad0);
+                            // const int I0 = gd.getNatom(ad0);
                             // const int start0 = ucell.itiaiw2iwt(T0, I0, 0);
                             tau0 = adjs.adjacent_tau[ad0];
 
@@ -644,7 +651,7 @@ void Force_LCAO_k::cal_fvnl_dbeta_k(const elecstate::DensityMatrix<std::complex<
         StressTools::stress_fill(ucell.lat0, ucell.omega, svnl_dbeta);
     }
 
-    ModuleBase::timer::tick("Force_LCAO_k", "cal_fvnl_dbeta_k_new");
+    ModuleBase::timer::tick("Force_LCAO","cal_fvnl_dbeta");
     return;
 }
 

@@ -63,7 +63,7 @@ namespace ModuleESolver
     void ESolver_KS_LCAO<complex<double>, double>::dpks_cal_e_delta_band(
         const vector<vector<complex<double>>>& dm)const
     {
-        GlobalC::ld.cal_e_delta_band_k(dm, this->kv.nks);
+        GlobalC::ld.cal_e_delta_band_k(dm, this->kv.get_nks());
     }
 
 
@@ -71,7 +71,7 @@ namespace ModuleESolver
     void ESolver_KS_LCAO<complex<double>, complex<double>>::dpks_cal_e_delta_band(
         const vector<vector<complex<double>>>& dm)const
     {
-        GlobalC::ld.cal_e_delta_band_k(dm, this->kv.nks);
+        GlobalC::ld.cal_e_delta_band_k(dm, this->kv.get_nks());
     }
 
 

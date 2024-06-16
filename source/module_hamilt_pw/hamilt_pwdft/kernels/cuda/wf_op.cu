@@ -113,9 +113,8 @@ void cal_sk_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::D
          reinterpret_cast<thrust::complex<FPTYPE>*>(eigts2),
          reinterpret_cast<thrust::complex<FPTYPE>*>(eigts3),
          reinterpret_cast<thrust::complex<FPTYPE>*>(sk));
-    
-    cudaErrcheck(cudaGetLastError());
-    cudaErrcheck(cudaDeviceSynchronize());
+
+    cudaCheckOnDebug();
 }
 
 template struct cal_sk_op<float, base_device::DEVICE_GPU>;

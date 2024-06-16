@@ -93,9 +93,10 @@ void ESolver_KS<T, Device>::before_all_runners(Input& inp, UnitCell& ucell)
 {
 	ModuleBase::TITLE("ESolver_KS", "before_all_runners");
 
+    //! 1) initialize "before_all_runniers" in ESolver_FP
 	ESolver_FP::before_all_runners(inp,ucell);
 
-	//------------------Charge Mixing------------------
+    //! 2) setup the charge mixing parameters
 	p_chgmix->set_mixing(GlobalV::MIXING_MODE,
 			GlobalV::MIXING_BETA,
 			GlobalV::MIXING_NDIM,
@@ -108,7 +109,6 @@ void ESolver_KS<T, Device>::before_all_runners(Input& inp, UnitCell& ucell)
 			GlobalV::MIXING_DMR);
 
 	/// PAW Section
-
 #ifdef USE_PAW
 	if(GlobalV::use_paw)
 	{
@@ -180,11 +180,12 @@ void ESolver_KS<T, Device>::before_all_runners(Input& inp, UnitCell& ucell)
 #endif
 	/// End PAW
 
+    //! 3) calculate the electron number
 	ucell.cal_nelec(GlobalV::nelec);
 
-	/* it has been established that 
-	   xc_func is same for all elements, therefore
-	   only the first one if used*/
+	//! 4) it has been established that 
+    // xc_func is same for all elements, therefore
+    // only the first one if used
 	if(GlobalV::use_paw)
 	{
 		XC_Functional::set_xc_type(GlobalV::DFT_FUNCTIONAL);
@@ -195,7 +196,7 @@ void ESolver_KS<T, Device>::before_all_runners(Input& inp, UnitCell& ucell)
 	}
 	ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");
 
-    // ESolver depends on the Symmetry module
+    //! 5) ESolver depends on the Symmetry module
 	// symmetry analysis should be performed every time the cell is changed
 	if (ModuleSymmetry::Symmetry::symm_flag == 1)
 	{
@@ -203,15 +204,15 @@ void ESolver_KS<T, Device>::before_all_runners(Input& inp, UnitCell& ucell)
 		ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
 	}
 
-	// Setup the k points according to symmetry.
-	this->kv.set(ucell.symm, GlobalV::global_kpoint_card, GlobalV::NSPIN, ucell.G, ucell.latvec);
+	//! 6) Setup the k points according to symmetry.
+	this->kv.set(ucell.symm, GlobalV::global_kpoint_card, GlobalV::NSPIN, ucell.G, ucell.latvec,GlobalV::ofs_running);
+
 	ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
 
-	// print information
-	// mohan add 2021-01-30
+	//! 7) print information
 	Print_Info::setup_parameters(ucell, this->kv);
 
-	//new plane wave basis
+	//! 8) new plane wave basis, fft grids, etc.
 #ifdef __MPI
 	this->pw_wfc->initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, POOL_WORLD);
 #endif
@@ -221,7 +222,8 @@ void ESolver_KS<T, Device>::before_all_runners(Input& inp, UnitCell& ucell)
 			this->pw_rho->nx,
 			this->pw_rho->ny,
 			this->pw_rho->nz);
-	this->pw_wfc->initparameters(false, inp.ecutwfc, this->kv.nks, this->kv.kvec_d.data());
+
+	this->pw_wfc->initparameters(false, inp.ecutwfc, this->kv.get_nks(), this->kv.kvec_d.data());
 
     // the MPI allreduce should not be here, mohan 2024-05-12
 #ifdef __MPI
@@ -236,7 +238,8 @@ void ESolver_KS<T, Device>::before_all_runners(Input& inp, UnitCell& ucell)
 
 	this->pw_wfc->setuptransform();
 
-	for (int ik = 0; ik < this->kv.nks; ++ik)
+    //! 9) initialize the number of plane waves for each k point
+	for (int ik = 0; ik < this->kv.get_nks(); ++ik)
 	{
 		this->kv.ngk[ik] = this->pw_wfc->npwk[ik];
 	}
@@ -245,7 +248,7 @@ void ESolver_KS<T, Device>::before_all_runners(Input& inp, UnitCell& ucell)
 
 	this->print_wfcfft(inp, GlobalV::ofs_running);
 
-	//! initialize the real-space uniform grid for FFT and parallel
+	//! 10) initialize the real-space uniform grid for FFT and parallel
 	//! distribution of plane waves
 	GlobalC::Pgrid.init(this->pw_rhod->nx,
 			this->pw_rhod->ny,
@@ -253,12 +256,12 @@ void ESolver_KS<T, Device>::before_all_runners(Input& inp, UnitCell& ucell)
 			this->pw_rhod->nplane,
 			this->pw_rhod->nrxx,
 			pw_big->nbz,
-			pw_big->bz); // mohan add 2010-07-22, update 2011-05-04
+			pw_big->bz);
 
-	// Calculate Structure factor
+	//! 11) calculate the structure factor
 	this->sf.setup_structure_factor(&ucell, this->pw_rhod);
 
-	// Initialize charge extrapolation
+	//! 12) initialize the charge extrapolation method if necessary
 	CE.Init_CE(ucell.nat);
 
 #ifdef USE_PAW
@@ -410,9 +413,8 @@ void ESolver_KS<T, Device>::print_wfcfft(Input& inp, std::ofstream &ofs)
 //------------------------------------------------------------------------------
 //! the 7th function of ESolver_KS: run
 //! mohan add 2024-05-11
-//! 1) run others except scf, md, relax, cell-relax
 //! 2) before_scf (electronic iteration loops)
-//! 3) print head
+//! 3) run charge density
 //! 4) SCF iterations
 //! 5) write head
 //! 6) initialization of SCF iterations
@@ -431,221 +433,206 @@ template<typename T, typename Device>
 void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
 {
 	ModuleBase::TITLE("ESolver_KS", "runner");
-    
-    // 1) run others except scf, md, relax, cell-relax
-	if (!(GlobalV::CALCULATION == "scf" 
-       || GlobalV::CALCULATION == "md"
-       || GlobalV::CALCULATION == "relax" 
-       || GlobalV::CALCULATION == "cell-relax"))
+
+	ModuleBase::timer::tick(this->classname, "runner");
+
+	// 2) before_scf (electronic iteration loops)
+	this->before_scf(istep); 
+
+    // 3) write charge density
+	if(GlobalV::dm_to_rho) 
 	{
-		this->others(istep);
+	    ModuleBase::timer::tick(this->classname, "runner");
+		return; //nothing further is needed
 	}
-	else
+
+	ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT SCF");
+
+	bool firstscf = true;
+	this->conv_elec = false;
+	this->niter = this->maxniter;
+
+	// 4) SCF iterations
+	std::cout << " * * * * * *\n << Start SCF iteration." << std::endl;
+	for (int iter = 1; iter <= this->maxniter; ++iter)
 	{
-		ModuleBase::timer::tick(this->classname, "runner");
-
-        // 2) before_scf (electronic iteration loops)
-		this->before_scf(istep); 
-
-		if(GlobalV::dm_to_rho) 
-		{
-			return; //nothing further is needed
-		}
-
-		ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT SCF");
-
-        // 3) print head
-		// if(this->maxniter > 0)  
-		// {
-		// 	this->print_head(); //print the headline on the screen.
-		// }
-
-		bool firstscf = true;
-		this->conv_elec = false;
-		this->niter = this->maxniter;
-
-        // 4) SCF iterations
-		std::cout << " * * * * * *\n << Start SCF iteration." << std::endl;
-		for (int iter = 1; iter <= this->maxniter; ++iter)
-		{
-            // 5) write head
-			this->write_head(GlobalV::ofs_running, istep, iter);
+		// 5) write head
+		this->write_head(GlobalV::ofs_running, istep, iter);
 
 #ifdef __MPI
-			auto iterstart = MPI_Wtime();
+		auto iterstart = MPI_Wtime();
 #else
-			auto iterstart = std::chrono::system_clock::now();
+		auto iterstart = std::chrono::system_clock::now();
 #endif
-			double diag_ethr = this->phsol->set_diagethr(istep, iter, drho);
+		double diag_ethr = this->phsol->set_diagethr(istep, iter, drho);
 
-            // 6) initialization of SCF iterations
-			this->iter_init(istep, iter);
+		// 6) initialization of SCF iterations
+		this->iter_init(istep, iter);
 
-            // 7) use Hamiltonian to obtain charge density
-			this->hamilt2density(istep, iter, diag_ethr);
+		// 7) use Hamiltonian to obtain charge density
+		this->hamilt2density(istep, iter, diag_ethr);
 
-            // 8) for MPI: STOGROUP? need to rewrite
-			//<Temporary> It may be changed when more clever parallel algorithm is put forward.
-			//When parallel algorithm for bands are adopted. Density will only be treated in the first group.
-			//(Different ranks should have abtained the same, but small differences always exist in practice.)
-			//Maybe in the future, density and wavefunctions should use different parallel algorithms, in which 
-			//they do not occupy all processors, for example wavefunctions uses 20 processors while density uses 10.
-			if(GlobalV::MY_STOGROUP == 0)
+		// 8) for MPI: STOGROUP? need to rewrite
+		//<Temporary> It may be changed when more clever parallel algorithm is put forward.
+		//When parallel algorithm for bands are adopted. Density will only be treated in the first group.
+		//(Different ranks should have abtained the same, but small differences always exist in practice.)
+		//Maybe in the future, density and wavefunctions should use different parallel algorithms, in which 
+		//they do not occupy all processors, for example wavefunctions uses 20 processors while density uses 10.
+		if(GlobalV::MY_STOGROUP == 0)
+		{
+			// double drho = this->estate.caldr2(); 
+			// EState should be used after it is constructed.
+
+			drho = p_chgmix->get_drho(pelec->charge, GlobalV::nelec);
+			double hsolver_error = 0.0;
+			if (firstscf)
 			{
-				// double drho = this->estate.caldr2(); 
-				// EState should be used after it is constructed.
-
-				drho = p_chgmix->get_drho(pelec->charge, GlobalV::nelec);
-				double hsolver_error = 0.0;
-				if (firstscf)
+				firstscf = false;
+				hsolver_error = this->phsol->cal_hsolerror();
+				// The error of HSolver is larger than drho, 
+				// so a more precise HSolver should be excuconv_elected.
+				if (hsolver_error > drho)
 				{
-					firstscf = false;
+					diag_ethr = this->phsol->reset_diagethr(GlobalV::ofs_running, hsolver_error, drho);
+					this->hamilt2density(istep, iter, diag_ethr);
+					drho = p_chgmix->get_drho(pelec->charge, GlobalV::nelec);
 					hsolver_error = this->phsol->cal_hsolerror();
-					// The error of HSolver is larger than drho, 
-                    // so a more precise HSolver should be excuconv_elected.
-					if (hsolver_error > drho)
-					{
-						diag_ethr = this->phsol->reset_diagethr(GlobalV::ofs_running, hsolver_error, drho);
-						this->hamilt2density(istep, iter, diag_ethr);
-						drho = p_chgmix->get_drho(pelec->charge, GlobalV::nelec);
-						hsolver_error = this->phsol->cal_hsolerror();
-					}
 				}
-				// mixing will restart at this->p_chgmix->mixing_restart steps
-				if (drho <= GlobalV::MIXING_RESTART 
-                    && GlobalV::MIXING_RESTART > 0.0 
-                    && this->p_chgmix->mixing_restart_step > iter)
-				{
-					this->p_chgmix->mixing_restart_step = iter + 1;
-				}
+			}
+			// mixing will restart at this->p_chgmix->mixing_restart steps
+			if (drho <= GlobalV::MIXING_RESTART 
+					&& GlobalV::MIXING_RESTART > 0.0 
+					&& this->p_chgmix->mixing_restart_step > iter)
+			{
+				this->p_chgmix->mixing_restart_step = iter + 1;
+			}
 
-				// drho will be 0 at this->p_chgmix->mixing_restart step, which is not ground state
-				bool not_restart_step = !(iter==this->p_chgmix->mixing_restart_step && GlobalV::MIXING_RESTART > 0.0);
-				// SCF will continue if U is not converged for uramping calculation
-				bool is_U_converged = true;
-				// to avoid unnecessary dependence on dft+u, refactor is needed
+			// drho will be 0 at this->p_chgmix->mixing_restart step, which is not ground state
+			bool not_restart_step = !(iter==this->p_chgmix->mixing_restart_step && GlobalV::MIXING_RESTART > 0.0);
+			// SCF will continue if U is not converged for uramping calculation
+			bool is_U_converged = true;
+			// to avoid unnecessary dependence on dft+u, refactor is needed
 #ifdef __LCAO
-				if (GlobalV::dft_plus_u) 
-				{
-					is_U_converged = GlobalC::dftu.u_converged();
-				}
+			if (GlobalV::dft_plus_u) 
+			{
+				is_U_converged = GlobalC::dftu.u_converged();
+			}
 #endif
-				
-				this->conv_elec = (drho < this->scf_thr 
-                    && not_restart_step
+
+			this->conv_elec = (drho < this->scf_thr 
+					&& not_restart_step
 					&& is_U_converged);
 
-				// If drho < hsolver_error in the first iter or drho < scf_thr, we do not change rho.
-				if (drho < hsolver_error || this->conv_elec)
+			// If drho < hsolver_error in the first iter or drho < scf_thr, we do not change rho.
+			if (drho < hsolver_error || this->conv_elec)
+			{
+				if (drho < hsolver_error)   
 				{
-					if (drho < hsolver_error)   
-					{
-						GlobalV::ofs_warning << " drho < hsolver_error, keep charge density unchanged." << std::endl;
-					}
+					GlobalV::ofs_warning << " drho < hsolver_error, keep charge density unchanged." << std::endl;
+				}
+			}
+			else
+			{
+				//----------charge mixing---------------
+				// mixing will restart after this->p_chgmix->mixing_restart steps
+				if (GlobalV::MIXING_RESTART > 0 
+						&& iter == this->p_chgmix->mixing_restart_step - 1)
+				{
+					// do not mix charge density
 				}
 				else
 				{
-					//----------charge mixing---------------
-					// mixing will restart after this->p_chgmix->mixing_restart steps
-					if (GlobalV::MIXING_RESTART > 0 
-                        && iter == this->p_chgmix->mixing_restart_step - 1)
-					{
-						// do not mix charge density
-					}
-					else
-					{
-						p_chgmix->mix_rho(pelec->charge); // update chr->rho by mixing
-					}
-					if (GlobalV::SCF_THR_TYPE == 2) 
-					{
-						pelec->charge->renormalize_rho(); // renormalize rho in R-space would induce a error in K-space
-					}
-					//----------charge mixing done-----------  
+					p_chgmix->mix_rho(pelec->charge); // update chr->rho by mixing
 				}
-			}
-#ifdef __MPI
-			MPI_Bcast(&drho, 1, MPI_DOUBLE , 0, PARAPW_WORLD);
-			MPI_Bcast(&this->conv_elec, 1, MPI_DOUBLE , 0, PARAPW_WORLD);
-			MPI_Bcast(pelec->charge->rho[0], this->pw_rhod->nrxx, MPI_DOUBLE, 0, PARAPW_WORLD);
-#endif
-
-            // 9) update potential
-			// Hamilt should be used after it is constructed.
-			// this->phamilt->update(conv_elec);
-			this->update_pot(istep, iter);
-
-            // 10) finish scf iterations
-			this->iter_finish(iter);
-#ifdef __MPI
-			double duration = (double)(MPI_Wtime() - iterstart);
-#else
-			double duration = 
-               (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() 
-                - iterstart)).count() / static_cast<double>(1e6);
-#endif
-
-            // 11) get mtaGGA related parameters
-			double dkin = 0.0; // for meta-GGA
-			if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
-			{
-				dkin = p_chgmix->get_dkin(pelec->charge, GlobalV::nelec);
-			}
-			this->print_iter(iter, drho, dkin, duration, diag_ethr);
-
-            // 12) Json, need to be moved to somewhere else
-#ifdef __RAPIDJSON
-			//add Json of scf mag
-			Json::add_output_scf_mag(
-					GlobalC::ucell.magnet.tot_magnetization, GlobalC::ucell.magnet.abs_magnetization,
-					this->pelec->f_en.etot * ModuleBase::Ry_to_eV,
-					this->pelec->f_en.etot_delta * ModuleBase::Ry_to_eV,
-					drho,
-					duration
-					);
-#endif //__RAPIDJSON 
-
-            // 13) check convergence
-			if (this->conv_elec)
-			{
-				this->niter = iter;
-				bool stop = this->do_after_converge(iter);
-				if(stop) 
+				if (GlobalV::SCF_THR_TYPE == 2) 
 				{
-					break;
+					pelec->charge->renormalize_rho(); // renormalize rho in R-space would induce a error in K-space
 				}
+				//----------charge mixing done-----------  
 			}
+		}
+#ifdef __MPI
+		MPI_Bcast(&drho, 1, MPI_DOUBLE , 0, PARAPW_WORLD);
+		MPI_Bcast(&this->conv_elec, 1, MPI_DOUBLE , 0, PARAPW_WORLD);
+		MPI_Bcast(pelec->charge->rho[0], this->pw_rhod->nrxx, MPI_DOUBLE, 0, PARAPW_WORLD);
+#endif
 
-			// notice for restart
-			if (GlobalV::MIXING_RESTART > 0 
-             && iter == this->p_chgmix->mixing_restart_step - 1 
-             && iter != GlobalV::SCF_NMAX)
-			{
-				std::cout<<" SCF restart after this step!"<<std::endl;
-			}
-		}// end scf iterations
-		std::cout << " >> Leave SCF iteration.\n * * * * * *" << std::endl;
+		// 9) update potential
+		// Hamilt should be used after it is constructed.
+		// this->phamilt->update(conv_elec);
+		this->update_pot(istep, iter);
 
+		// 10) finish scf iterations
+		this->iter_finish(iter);
+#ifdef __MPI
+		double duration = (double)(MPI_Wtime() - iterstart);
+#else
+		double duration = 
+			(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() 
+																   - iterstart)).count() / static_cast<double>(1e6);
+#endif
+
+		// 11) get mtaGGA related parameters
+		double dkin = 0.0; // for meta-GGA
+		if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+		{
+			dkin = p_chgmix->get_dkin(pelec->charge, GlobalV::nelec);
+		}
+		this->print_iter(iter, drho, dkin, duration, diag_ethr);
+
+		// 12) Json, need to be moved to somewhere else
 #ifdef __RAPIDJSON
-		// 14) add Json of efermi energy converge
-		Json::add_output_efermi_energy_converge(
-				this->pelec->eferm.ef * ModuleBase::Ry_to_eV,
+		//add Json of scf mag
+		Json::add_output_scf_mag(
+				GlobalC::ucell.magnet.tot_magnetization, GlobalC::ucell.magnet.abs_magnetization,
 				this->pelec->f_en.etot * ModuleBase::Ry_to_eV,
-				this->conv_elec
+				this->pelec->f_en.etot_delta * ModuleBase::Ry_to_eV,
+				drho,
+				duration
 				);
 #endif //__RAPIDJSON 
 
-        // 15) after scf
-		this->after_scf(istep);
+		// 13) check convergence
+		if (this->conv_elec)
+		{
+			this->niter = iter;
+			bool stop = this->do_after_converge(iter);
+			if(stop) 
+			{
+				break;
+			}
+		}
 
-		ModuleBase::timer::tick(this->classname, "runner");
-	}// end scf, md, relax, cell-relax
+		// notice for restart
+		if (GlobalV::MIXING_RESTART > 0 
+				&& iter == this->p_chgmix->mixing_restart_step - 1 
+				&& iter != GlobalV::SCF_NMAX)
+		{
+			std::cout<<" SCF restart after this step!"<<std::endl;
+		}
+	}// end scf iterations
+	std::cout << " >> Leave SCF iteration.\n * * * * * *" << std::endl;
+
+#ifdef __RAPIDJSON
+	// 14) add Json of efermi energy converge
+	Json::add_output_efermi_energy_converge(
+			this->pelec->eferm.ef * ModuleBase::Ry_to_eV,
+			this->pelec->f_en.etot * ModuleBase::Ry_to_eV,
+			this->conv_elec
+			);
+#endif //__RAPIDJSON 
+
+	// 15) after scf
+	this->after_scf(istep);
+
+	ModuleBase::timer::tick(this->classname, "runner");
 
 
     // 16) Json again
 #ifdef __RAPIDJSON
 	// add nkstot,nkstot_ibz to output json
-	int Jnkstot = this->pelec->klist->nkstot;
-	int Jnkstot_ibz = this->pelec->klist->nkstot_ibz;
+	int Jnkstot = this->pelec->klist->get_nkstot();
+	int Jnkstot_ibz = this->pelec->klist->get_nkstot_ibz();
 	Json::add_nkstot(Jnkstot,Jnkstot_ibz);
 #endif //__RAPIDJSON          
 	return;

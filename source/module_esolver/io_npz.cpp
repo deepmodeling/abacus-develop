@@ -33,7 +33,7 @@ void ESolver_KS_LCAO<TK, TR>::read_mat_npz(std::string& zipname, hamilt::HContai
 {
     ModuleBase::TITLE("LCAO_Hamilt","read_mat_npz");
 
-    const Parallel_Orbitals* paraV = this->LOWF.ParaV;
+    const Parallel_Orbitals* paraV = &(this->orb_con.ParaV);
 
 #ifdef __USECNPY
 
@@ -45,15 +45,6 @@ void ESolver_KS_LCAO<TK, TR>::read_mat_npz(std::string& zipname, hamilt::HContai
         return;
     }
 
-/*
-    hamilt::HContainer<double>* HR_serial;
-    Parallel_Orbitals serialV;
-    serialV.set_proc_dim(1,0);
-    serialV.mpi_create_cart(MPI_COMM_WORLD);
-    serialV.set_local2global(GlobalV::NLOCAL, GlobalV::NLOCAL, GlobalV::ofs_running, GlobalV::ofs_warning);
-    serialV.set_global2local(GlobalV::NLOCAL, GlobalV::NLOCAL, false, GlobalV::ofs_running);
-    serialV.set_atomic_trace(GlobalC::ucell.get_iat2iwt(), GlobalC::ucell.nat, GlobalV::NLOCAL);
-*/
     if(GlobalV::MY_RANK == 0)
     {
         //HR_serial = new hamilt::HContainer<double>(&serialV);
@@ -126,7 +117,7 @@ void ESolver_KS_LCAO<TK, TR>::read_mat_npz(std::string& zipname, hamilt::HContai
                 assert(orbital_info[iw*3] == GlobalC::ucell.atoms[it].iw2n[iw]);
                 assert(orbital_info[iw*3+1] == GlobalC::ucell.atoms[it].iw2l[iw]);
                 const int im = GlobalC::ucell.atoms[it].iw2m[iw];
-                const int m = (im % 2 == 0) ? -im/2 : (im+1)/2; // copied from LCAO_gen_fixedH.cpp
+                const int m = (im % 2 == 0) ? -im/2 : (im+1)/2; 
                 assert(orbital_info[iw*3+2] == m);
             }
         }
@@ -422,7 +413,7 @@ void ESolver_KS_LCAO<TK, TR>::output_mat_npz(std::string& zipname, const hamilt:
                 orbital_info[iw*3] = GlobalC::ucell.atoms[it].iw2n[iw];
                 orbital_info[iw*3+1] = GlobalC::ucell.atoms[it].iw2l[iw];
                 const int im = GlobalC::ucell.atoms[it].iw2m[iw];
-                const int m = (im % 2 == 0) ? -im/2 : (im+1)/2; // copied from LCAO_gen_fixedH.cpp
+                const int m = (im % 2 == 0) ? -im/2 : (im+1)/2; 
                 orbital_info[iw*3+2] = m;
             }
             shape={(size_t)GlobalC::ucell.atoms[it].nw,3};
@@ -435,7 +426,7 @@ void ESolver_KS_LCAO<TK, TR>::output_mat_npz(std::string& zipname, const hamilt:
 #ifdef __MPI
     hamilt::HContainer<double>* HR_serial;
     Parallel_Orbitals serialV;
-    serialV.set_global2local(GlobalV::NLOCAL, GlobalV::NLOCAL, false, GlobalV::ofs_running);
+    serialV.set_serial(GlobalV::NLOCAL, GlobalV::NLOCAL);
     serialV.set_atomic_trace(GlobalC::ucell.get_iat2iwt(), GlobalC::ucell.nat, GlobalV::NLOCAL);
     if(GlobalV::MY_RANK == 0)
     {
@@ -457,9 +448,9 @@ void ESolver_KS_LCAO<TK, TR>::output_mat_npz(std::string& zipname, const hamilt:
             for(int iR=0;iR<HR_serial[0].get_atom_pair(iap).get_R_size();++iR)
             {
                 auto& matrix = HR_serial[0].get_atom_pair(iap).get_HR_values(iR);
-                int* r_index = HR_serial[0].get_atom_pair(iap).get_R_index(iR);
+                const ModuleBase::Vector3<int> r_index = HR_serial[0].get_atom_pair(iap).get_R_index(iR);
                 filename = "mat_"+std::to_string(atom_i)+"_"+std::to_string(atom_j)+"_"
-                    +std::to_string(r_index[0])+"_"+std::to_string(r_index[1])+"_"+std::to_string(r_index[2]);
+                    +std::to_string(r_index.x)+"_"+std::to_string(r_index.y)+"_"+std::to_string(r_index.z);
                 std::vector<size_t> shape = {(size_t)row_size,(size_t)col_size};
                 cnpy::npz_save(zipname,filename,matrix.get_pointer(),shape,"a");
             }
@@ -481,10 +472,10 @@ void ESolver_KS_LCAO<TK, TR>::output_mat_npz(std::string& zipname, const hamilt:
         for(int iR=0;iR<hR.get_atom_pair(iap).get_R_size();++iR)
         {
             auto& matrix = hR.get_atom_pair(iap).get_HR_values(iR);
-            int* r_index = hR.get_atom_pair(iap).get_R_index(iR);
+            const ModuleBase::Vector3<int> r_index = hR.get_atom_pair(iap).get_R_index(iR);
 
             filename = "mat_"+std::to_string(atom_i)+"_"+std::to_string(atom_j)+"_"
-                +std::to_string(r_index[0])+"_"+std::to_string(r_index[1])+"_"+std::to_string(r_index[2]);
+                +std::to_string(r_index.x)+"_"+std::to_string(r_index.y)+"_"+std::to_string(r_index.z);
             std::vector<size_t> shape = {(size_t)row_size,(size_t)col_size};
             cnpy::npz_save(zipname,filename,matrix.get_pointer(),shape,"a");
         }

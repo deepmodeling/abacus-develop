@@ -10,6 +10,7 @@
 #include "module_elecstate/module_dm/density_matrix.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "dftu.hpp"
+#include "module_basis/module_ao/ORB_gen_tables.h"
 
 namespace hamilt
 {
@@ -31,6 +32,7 @@ class DFTU<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                                       std::vector<TK>* hK_in,
                                       const UnitCell& ucell_in,
                                       Grid_Driver* gridD_in,
+                                      const ORB_gen_tables* uot,
                                       ModuleDFTU::DFTU* dftu_in,
                                       const Parallel_Orbitals& paraV);
     ~DFTU<OperatorLCAO<TK, TR>>();
@@ -56,6 +58,8 @@ class DFTU<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     hamilt::HContainer<TR>* HR = nullptr;
 
     TK* HK_pointer = nullptr;
+
+    const ORB_gen_tables* uot_ = nullptr;
 
     /// @brief the number of spin components, 1 for no-spin, 2 for collinear spin case and 4 for non-collinear spin case
     int nspin = 0;

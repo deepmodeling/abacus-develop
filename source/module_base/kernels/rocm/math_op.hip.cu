@@ -136,7 +136,7 @@ void cal_ylm_real_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_dev
                                                                   FPTYPE* ylm)
 {
     int block = (ng + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(cal_ylm_real<FPTYPE>), dim3(block), dim3(THREADS_PER_BLOCK), 0, 0, 
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(cal_ylm_real<FPTYPE>), dim3(block), dim3(THREADS_PER_BLOCK), 0, 0,
         ng,
         lmax,
         SQRT2,
@@ -148,12 +148,10 @@ void cal_ylm_real_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_dev
         p,
         ylm);
 
-    hipErrcheck(hipGetLastError());
-    hipErrcheck(hipDeviceSynchronize());
+    hipCheckOnDebug();
 }
 
 template struct cal_ylm_real_op<float, base_device::DEVICE_GPU>;
 template struct cal_ylm_real_op<double, base_device::DEVICE_GPU>;
 
 }  // namespace ModuleBase
-
