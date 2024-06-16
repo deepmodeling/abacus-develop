@@ -237,44 +237,56 @@ void DFTU::force_stress(const elecstate::ElecState* pelec,
     return;
 }
 
-void DFTU::cal_force_k(const int ik, 
-                    const std::complex<double>* rho_VU, 
-                    ModuleBase::matrix& force_dftu,
-                    const std::vector<ModuleBase::Vector3<double>>& kvec_d)
+void DFTU::cal_force_k(
+        ForceStressArrays &fsr,
+        const Parallel_Orbitals &pv,
+		const int ik, 
+		const std::complex<double>* rho_VU, 
+		ModuleBase::matrix& force_dftu,
+		const std::vector<ModuleBase::Vector3<double>>& kvec_d)
 {
     ModuleBase::TITLE("DFTU", "cal_force_k");
     ModuleBase::timer::tick("DFTU", "cal_force_k");
 
-    const char transN = 'N', transC = 'C';
+    const char transN = 'N';
+    const char transC = 'C';
     const int one_int = 1;
-    const std::complex<double> zero(0.0,0.0), one(1.0,0.0);
+    const std::complex<double> zero(0.0,0.0);
+    const std::complex<double> one(1.0,0.0);
 
-    std::vector<std::complex<double>> dm_VU_dSm(this->LM->ParaV->nloc);
-    std::vector<std::complex<double>> dSm_k(this->LM->ParaV->nloc);
+    std::vector<std::complex<double>> dm_VU_dSm(pv.nloc);
+    std::vector<std::complex<double>> dSm_k(pv.nloc);
 
     for (int dim = 0; dim < 3; dim++)
     {
-        this->folding_matrix_k(ik, dim + 1, 0, &dSm_k[0], kvec_d);
+        this->folding_matrix_k(
+				fsr, 
+				pv, 
+				ik, 
+				dim + 1, 
+				0, 
+				&dSm_k[0], 
+				kvec_d);
 
 #ifdef __MPI
         pzgemm_(&transN, &transC,
                 &GlobalV::NLOCAL, &GlobalV::NLOCAL, &GlobalV::NLOCAL,
                 &one, 
-                &dSm_k[0], &one_int, &one_int, this->LM->ParaV->desc, 
-                rho_VU, &one_int, &one_int, this->LM->ParaV->desc,
+                &dSm_k[0], &one_int, &one_int, pv.desc, 
+                rho_VU, &one_int, &one_int, pv.desc,
                 &zero,
-                &dm_VU_dSm[0], &one_int, &one_int, this->LM->ParaV->desc);
+                &dm_VU_dSm[0], &one_int, &one_int, pv.desc);
 #endif
 
-        for (int ir = 0; ir < this->LM->ParaV->nrow; ir++)
+        for (int ir = 0; ir < pv.nrow; ir++)
         {
-            const int iwt1 = this->LM->ParaV->local2global_row(ir);
+            const int iwt1 = pv.local2global_row(ir);
             const int iat1 = GlobalC::ucell.iwt2iat[iwt1];
 
-            for (int ic = 0; ic < this->LM->ParaV->ncol; ic++)
+            for (int ic = 0; ic < pv.ncol; ic++)
             {
-                const int iwt2 = this->LM->ParaV->local2global_col(ic);
-                const int irc = ic * this->LM->ParaV->nrow + ir;
+                const int iwt2 = pv.local2global_col(ic);
+                const int irc = ic * pv.nrow + ir;
 
                 if (iwt1 == iwt2) force_dftu(iat1, dim) += dm_VU_dSm[irc].real();
 
@@ -285,10 +297,10 @@ void DFTU::cal_force_k(const int ik,
         pzgemm_(&transN, &transN,
                 &GlobalV::NLOCAL, &GlobalV::NLOCAL, &GlobalV::NLOCAL,
                 &one, 
-                &dSm_k[0], &one_int, &one_int, this->LM->ParaV->desc, 
-                rho_VU, &one_int, &one_int, this->LM->ParaV->desc,
+                &dSm_k[0], &one_int, &one_int, pv.desc, 
+                rho_VU, &one_int, &one_int, pv.desc,
                 &zero,
-                &dm_VU_dSm[0], &one_int, &one_int, this->LM->ParaV->desc);
+                &dm_VU_dSm[0], &one_int, &one_int, pv.desc);
 #endif
 
         for (int it = 0; it < GlobalC::ucell.ntype; it++)
@@ -315,11 +327,11 @@ void DFTU::cal_force_k(const int ik,
                             for (int ipol = 0; ipol < GlobalV::NPOL; ipol++)
                             {
                                 const int iwt = this->iatlnmipol2iwt[iat][l][n][m][ipol];
-                                const int mu = this->LM->ParaV->global2local_row(iwt);
-                                const int nu = this->LM->ParaV->global2local_col(iwt);
+                                const int mu = pv.global2local_row(iwt);
+                                const int nu = pv.global2local_col(iwt);
                                 if (mu < 0 || nu < 0) continue;
 
-                                force_dftu(iat, dim) += dm_VU_dSm[nu * this->LM->ParaV->nrow + mu].real();
+                                force_dftu(iat, dim) += dm_VU_dSm[nu * pv.nrow + mu].real();
                             }
                         } //
                     } // n

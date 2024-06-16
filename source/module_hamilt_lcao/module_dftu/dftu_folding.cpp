@@ -124,16 +124,23 @@ void DFTU::fold_dSR_gamma(
     return;
 }
 
-void DFTU::folding_matrix_k(const int ik, const int dim1, const int dim2, std::complex<double>* mat_k, std::vector<ModuleBase::Vector3<double>> kvec_d)
+void DFTU::folding_matrix_k(
+        ForceStressArrays &fsr,
+        const Parallel_Orbitals &pv,
+		const int ik, 
+		const int dim1, 
+		const int dim2, 
+		std::complex<double>* mat_k, 
+		const std::vector<ModuleBase::Vector3<double>> &kvec_d)
 {
     ModuleBase::TITLE("DFTU", "folding_matrix_k");
     ModuleBase::timer::tick("DFTU", "folding_matrix_k");
-    ModuleBase::GlobalFunc::ZEROS(mat_k, this->LM->ParaV->nloc);
+    ModuleBase::GlobalFunc::ZEROS(mat_k, pv.nloc);
 
     double* mat_ptr;
-    if      (dim1 == 1 || dim1 == 4) mat_ptr = this->LM->DSloc_Rx;
-    else if (dim1 == 2 || dim1 == 5) mat_ptr = this->LM->DSloc_Ry;
-    else if (dim1 == 3 || dim1 == 6) mat_ptr = this->LM->DSloc_Rz;
+    if      (dim1 == 1 || dim1 == 4) mat_ptr = fsr.DSloc_Rx;
+    else if (dim1 == 2 || dim1 == 5) mat_ptr = fsr.DSloc_Ry;
+    else if (dim1 == 3 || dim1 == 6) mat_ptr = fsr.DSloc_Rz;
 
     int nnr = 0;
     ModuleBase::Vector3<double> dtau;
@@ -219,23 +226,23 @@ void DFTU::folding_matrix_k(const int ik, const int dim1, const int dim2, std::c
                     {
                         // the index of orbitals in this processor
                         const int iw1_all = start1 + ii;
-                        const int mu = this->LM->ParaV->global2local_row(iw1_all);
+                        const int mu = pv.global2local_row(iw1_all);
                         if (mu < 0) continue;
 
                         for (int jj = 0; jj < atom2->nw * GlobalV::NPOL; jj++)
                         {
                             int iw2_all = start2 + jj;
-                            const int nu = this->LM->ParaV->global2local_col(iw2_all);
+                            const int nu = pv.global2local_col(iw2_all);
                             if (nu < 0) continue;
 
                             int iic;
                             if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
                             {
-                                iic = mu + nu * this->LM->ParaV->nrow;
+                                iic = mu + nu * pv.nrow;
                             }
                             else
                             {
-                                iic = mu * this->LM->ParaV->ncol + nu;
+                                iic = mu * pv.ncol + nu;
                             }
 
                             if (dim1 <= 3)
@@ -244,7 +251,7 @@ void DFTU::folding_matrix_k(const int ik, const int dim1, const int dim2, std::c
                             }
                             else
                             {
-                                mat_k[iic] += mat_ptr[nnr] * this->LM->DH_r[nnr * 3 + dim2] * kphase;
+                                mat_k[iic] += mat_ptr[nnr] * fsr.DH_r[nnr * 3 + dim2] * kphase;
                             }
 
                             ++nnr;

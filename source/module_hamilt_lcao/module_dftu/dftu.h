@@ -137,11 +137,17 @@ private:
     // dim = 0 : S, for Hamiltonian
     // dim = 1-3 : dS, for force
     // dim = 4-6 : dS * dR, for stress
-    void folding_matrix_k(const int ik, 
-                        const int dim1, 
-                        const int dim2, 
-                        std::complex<double>* mat_k, 
-                        std::vector<ModuleBase::Vector3<double>> kvec_d);
+
+    void folding_matrix_k(
+        ForceStressArrays &fsr,
+        const Parallel_Orbitals &pv,
+		const int ik, 
+		const int dim1, 
+		const int dim2, 
+		std::complex<double>* mat_k, 
+		const std::vector<ModuleBase::Vector3<double>> &kvec_d);
+
+
     /**
      * @brief new function of folding_S_matrix
      * only for Hamiltonian now, for force and stress will be developed later
@@ -165,10 +171,13 @@ private:
 
   private:
 
-    void cal_force_k(const int ik,
-                    const std::complex<double>* rho_VU,
-                    ModuleBase::matrix& force_dftu,
-                    const std::vector<ModuleBase::Vector3<double>>& kvec_d);
+   void cal_force_k(
+		   ForceStressArrays &fsr,
+		   const Parallel_Orbitals &pv,
+		   const int ik,
+		   const std::complex<double>* rho_VU,
+		   ModuleBase::matrix& force_dftu,
+		   const std::vector<ModuleBase::Vector3<double>>& kvec_d);
 
     void cal_stress_k(const int ik,
                       const std::complex<double>* rho_VU,
