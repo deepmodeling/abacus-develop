@@ -259,14 +259,15 @@ void force_virial(ModuleESolver::ESolver* p_esolver,
     virial *= 0.5;
 
 int size = 1;
+int rank = 0;
 #ifdef __MPI
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 #endif
     int each_ucell_nat = unit_in.nat / size;
     int last_ucell = unit_in.nat - each_ucell_nat * size;
-    int ucell_nat_begin = (each_ucell_nat) * mdp.my_rank + last_ucell;
+    int ucell_nat_begin = (each_ucell_nat) * rank + last_ucell;
     int ucell_nat_end = ucell_nat_begin + each_ucell_nat;
-    if(mdp.my_rank == 0)
+    if(rank == 0)
     {
         ucell_nat_begin = 0;
         ucell_nat_end += last_ucell;
@@ -283,7 +284,7 @@ int size = 1;
     MPI_Bcast(force, (each_ucell_nat + last_ucell) * 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     for(int i = 1; i < size; i++)
     {   
-        ucell_nat_begin = (each_ucell_nat) * mdp.my_rank + last_ucell;
+        ucell_nat_begin = (each_ucell_nat) * rank + last_ucell;
         MPI_Bcast(force + ucell_nat_begin, each_ucell_nat * 3, MPI_DOUBLE, i, MPI_COMM_WORLD);
     }
 
