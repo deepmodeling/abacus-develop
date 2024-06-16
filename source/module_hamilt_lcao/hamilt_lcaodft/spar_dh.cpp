@@ -21,9 +21,9 @@ void sparse_format::cal_dH(
     fsr_dh.DHloc_fixedR_y = new double[nnr];
     fsr_dh.DHloc_fixedR_z = new double[nnr];
 
-    ModuleBase::GlobalFunc::ZEROS(lm.DHloc_fixedR_x, lm.ParaV->nloc);
-    ModuleBase::GlobalFunc::ZEROS(lm.DHloc_fixedR_y, lm.ParaV->nloc);
-    ModuleBase::GlobalFunc::ZEROS(lm.DHloc_fixedR_z, lm.ParaV->nloc);
+    ModuleBase::GlobalFunc::ZEROS(fsr_dh.DHloc_fixedR_x, lm.ParaV->nloc);
+    ModuleBase::GlobalFunc::ZEROS(fsr_dh.DHloc_fixedR_y, lm.ParaV->nloc);
+    ModuleBase::GlobalFunc::ZEROS(fsr_dh.DHloc_fixedR_z, lm.ParaV->nloc);
     // cal dT=<phi|kin|dphi> in LCAO
     // cal T + VNL(P1) in LCAO basis
     if(GlobalV::CAL_STRESS)
@@ -68,7 +68,12 @@ void sparse_format::cal_dH(
 			*uot, 
 			&GlobalC::GridD);
     
-    sparse_format::cal_dSTN_R(lm, grid, current_spin, sparse_thr);
+	sparse_format::cal_dSTN_R(
+			lm, 
+			fsr_dh, 
+			grid, 
+			current_spin, 
+			sparse_thr);
 
     delete[] fsr_dh.DHloc_fixedR_x;
     delete[] fsr_dh.DHloc_fixedR_y;
@@ -117,6 +122,7 @@ void sparse_format::set_R_range(
 
 void sparse_format::cal_dSTN_R(
 		LCAO_Matrix &lm,
+        ForceStressArrays &fsr,
 		Grid_Driver &grid,
 		const int &current_spin, 
 		const double &sparse_thr)
@@ -212,17 +218,17 @@ void sparse_format::cal_dSTN_R(
 
                             if(GlobalV::NSPIN!=4)
                             {
-                                temp_value_double = lm.DHloc_fixedR_x[index];
+                                temp_value_double = fsr.DHloc_fixedR_x[index];
                                 if (std::abs(temp_value_double) > sparse_thr)
                                 {
                                     lm.dHRx_sparse[current_spin][dR][iw1_all][iw2_all] = temp_value_double;
                                 }
-                                temp_value_double = lm.DHloc_fixedR_y[index];
+                                temp_value_double = fsr.DHloc_fixedR_y[index];
                                 if (std::abs(temp_value_double) > sparse_thr)
                                 {
                                     lm.dHRy_sparse[current_spin][dR][iw1_all][iw2_all] = temp_value_double;
                                 }
-                                temp_value_double = lm.DHloc_fixedR_z[index];
+                                temp_value_double = fsr.DHloc_fixedR_z[index];
                                 if (std::abs(temp_value_double) > sparse_thr)
                                 {
                                     lm.dHRz_sparse[current_spin][dR][iw1_all][iw2_all] = temp_value_double;

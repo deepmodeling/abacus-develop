@@ -194,27 +194,23 @@ void DFTU::force_stress(const elecstate::ElecState* pelec,
 
 			if (GlobalV::CAL_FORCE)  
 			{
-				cal_force_k (ik, &rho_VU[0], force_dftu, kv.kvec_d);
+				cal_force_k (fsr, pv, ik, &rho_VU[0], force_dftu, kv.kvec_d);
 			}
 			if (GlobalV::CAL_STRESS) 
 			{
-				cal_stress_k(ik, &rho_VU[0], stress_dftu, kv.kvec_d);
+				cal_stress_k(fsr, pv, ik, &rho_VU[0], stress_dftu, kv.kvec_d);
 			}
         } // ik
     }
 
-#ifdef __MPI
     if (GlobalV::CAL_FORCE)
     {
         Parallel_Reduce::reduce_pool(force_dftu.c, force_dftu.nr * force_dftu.nc);
     }
-#endif
 
     if (GlobalV::CAL_STRESS)
     {
-#ifdef __MPI
         Parallel_Reduce::reduce_pool(stress_dftu.c, stress_dftu.nr * stress_dftu.nc);
-#endif
 
         for (int i = 0; i < 3; i++)
         {
@@ -344,43 +340,70 @@ void DFTU::cal_force_k(
     return;
 }
 
-void DFTU::cal_stress_k(const int ik,
-                        const std::complex<double>* rho_VU,
-                        ModuleBase::matrix& stress_dftu,
-                        const std::vector<ModuleBase::Vector3<double>>& kvec_d)
+void DFTU::cal_stress_k(
+		ForceStressArrays &fsr,
+		const Parallel_Orbitals &pv,
+		const int ik,
+		const std::complex<double>* rho_VU,
+		ModuleBase::matrix& stress_dftu,
+		const std::vector<ModuleBase::Vector3<double>>& kvec_d)
 {
     ModuleBase::TITLE("DFTU", "cal_stress_k");
     ModuleBase::timer::tick("DFTU", "cal_stress_k");
+  
+    const int nlocal = GlobalV::NLOCAL;
+
     const char transN = 'N';
     const int one_int = 1;
-    const std::complex<double> minus_half(-0.5,0.0), zero(0.0,0.0), one(1.0,0.0);
+    const std::complex<double> minus_half(-0.5,0.0);
+    const std::complex<double> zero(0.0,0.0);
+    const std::complex<double> one(1.0,0.0);
 
-    std::vector<std::complex<double>> dm_VU_sover(this->LM->ParaV->nloc);
-    std::vector<std::complex<double>> dSR_k(this->LM->ParaV->nloc);
+    std::vector<std::complex<double>> dm_VU_sover(pv.nloc);
+    std::vector<std::complex<double>> dSR_k(pv.nloc);
 
     for (int dim1 = 0; dim1 < 3; dim1++)
     {
         for (int dim2 = dim1; dim2 < 3; dim2++)
         {
-            this->folding_matrix_k(ik, dim1 + 4, dim2, &dSR_k[0], kvec_d);
+			this->folding_matrix_k(
+					fsr, // mohan add 2024-06-16 
+					pv, 
+					ik, 
+					dim1 + 4, 
+					dim2, 
+					&dSR_k[0], 
+					kvec_d);
 
 #ifdef __MPI
-            pzgemm_(&transN, &transN,
-					&GlobalV::NLOCAL, &GlobalV::NLOCAL, &GlobalV::NLOCAL,
+			pzgemm_(&transN, 
+					&transN,
+					&nlocal, 
+					&nlocal, 
+					&nlocal,
 					&minus_half, 
-					rho_VU, &one_int, &one_int, this->LM->ParaV->desc, 
-					&dSR_k[0], &one_int, &one_int, this->LM->ParaV->desc,
+					rho_VU, 
+					&one_int, 
+					&one_int, 
+					pv.desc, 
+					&dSR_k[0], 
+					&one_int, 
+					&one_int, 
+					pv.desc,
 					&zero,
-					&dm_VU_sover[0], &one_int, &one_int, this->LM->ParaV->desc);
+					&dm_VU_sover[0], 
+					&one_int, 
+					&one_int, 
+					pv.desc);
 #endif
 
-            for (int ir = 0; ir < this->LM->ParaV->nrow; ir++)
+            for (int ir = 0; ir < pv.nrow; ir++)
             {
-                const int iwt1 = this->LM->ParaV->local2global_row(ir);
-                for (int ic = 0; ic < this->LM->ParaV->ncol; ic++)
+                const int iwt1 = pv.local2global_row(ir);
+                for (int ic = 0; ic < pv.ncol; ic++)
                 {
-                    const int iwt2 = this->LM->ParaV->local2global_col(ic);
-                    const int irc = ic * this->LM->ParaV->nrow + ir;
+                    const int iwt2 = pv.local2global_col(ic);
+                    const int irc = ic * pv.nrow + ir;
 
                     if (iwt1 == iwt2) stress_dftu(dim1, dim2) += 2.0 * dm_VU_sover[irc].real();
                 } // end ic

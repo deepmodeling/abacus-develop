@@ -94,6 +94,7 @@ private:
     void cal_fedm(
         const bool isforce,
         const bool isstress,
+        ForceStressArrays &fsr,
         const UnitCell& ucell,
         const elecstate::DensityMatrix<T, double>* dm,
         const psi::Psi<T>* psi,
@@ -108,10 +109,11 @@ private:
     //-------------------------------------------------------------
     // forces related to kinetic and non-local pseudopotentials
     //--------------------------------------------------------------
-    void cal_ftvnl_dphi(const elecstate::DensityMatrix<T, double>* dm,
+    void cal_ftvnl_dphi(
+        const elecstate::DensityMatrix<T, double>* dm,
         const Parallel_Orbitals& pv,
         const UnitCell& ucell,
-        LCAO_Matrix& lm,
+        ForceStressArrays &fsr,
         const bool isforce,
         const bool isstress,
         ModuleBase::matrix& ftvnl_dphi,

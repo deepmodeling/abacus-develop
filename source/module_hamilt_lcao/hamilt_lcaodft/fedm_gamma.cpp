@@ -13,6 +13,7 @@ template<>
 void Force_LCAO<double>::cal_fedm(
 	const bool isforce, 
     const bool isstress,
+    ForceStressArrays &fsr, // mohan add 2024-06-16
     const UnitCell& ucell,
     const elecstate::DensityMatrix<double, double>* dm,
     const psi::Psi<double>* psi,
@@ -83,19 +84,19 @@ void Force_LCAO<double>::cal_fedm(
 
                 if(isforce)
                 {
-                    foverlap(iat,0) += sum * lm.DSloc_x[index];
-                    foverlap(iat,1) += sum * lm.DSloc_y[index];
-                    foverlap(iat,2) += sum * lm.DSloc_z[index];
+                    foverlap(iat,0) += sum * fsr.DSloc_x[index];
+                    foverlap(iat,1) += sum * fsr.DSloc_y[index];
+                    foverlap(iat,2) += sum * fsr.DSloc_z[index];
                 }
 
                 if(isstress)
                 {
-                    soverlap(0,0) += sum/2.0 * lm.DSloc_11[index];
-                    soverlap(0,1) += sum/2.0 * lm.DSloc_12[index];
-                    soverlap(0,2) += sum/2.0 * lm.DSloc_13[index];
-                    soverlap(1,1) += sum/2.0 * lm.DSloc_22[index];
-                    soverlap(1,2) += sum/2.0 * lm.DSloc_23[index];
-                    soverlap(2,2) += sum/2.0 * lm.DSloc_33[index];
+                    soverlap(0,0) += sum/2.0 * fsr.DSloc_11[index];
+                    soverlap(0,1) += sum/2.0 * fsr.DSloc_12[index];
+                    soverlap(0,2) += sum/2.0 * fsr.DSloc_13[index];
+                    soverlap(1,1) += sum/2.0 * fsr.DSloc_22[index];
+                    soverlap(1,2) += sum/2.0 * fsr.DSloc_23[index];
+                    soverlap(2,2) += sum/2.0 * fsr.DSloc_33[index];
                 }
             }
 

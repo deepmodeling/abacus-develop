@@ -267,6 +267,7 @@ void Force_LCAO<double>::ftable(
 	this->cal_fedm(
 			isforce, 
 			isstress, 
+            fsr,
             ucell,
             dm,
 			psi, 
@@ -280,7 +281,7 @@ void Force_LCAO<double>::ftable(
 			dm, 
 			pv, 
 			ucell, 
-			lm, 
+			fsr, 
 			isforce, 
 			isstress, 
 			ftvnl_dphi, 

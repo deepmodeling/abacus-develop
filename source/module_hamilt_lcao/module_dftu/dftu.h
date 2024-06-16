@@ -179,10 +179,13 @@ private:
 		   ModuleBase::matrix& force_dftu,
 		   const std::vector<ModuleBase::Vector3<double>>& kvec_d);
 
-    void cal_stress_k(const int ik,
-                      const std::complex<double>* rho_VU,
-                      ModuleBase::matrix& stress_dftu,
-                      const std::vector<ModuleBase::Vector3<double>>& kvec_d);
+    void cal_stress_k(
+			ForceStressArrays &fsr,
+			const Parallel_Orbitals &pv,
+			const int ik,
+			const std::complex<double>* rho_VU,
+			ModuleBase::matrix& stress_dftu,
+			const std::vector<ModuleBase::Vector3<double>>& kvec_d);
 
 	void cal_force_gamma(
 			const double* rho_VU, 

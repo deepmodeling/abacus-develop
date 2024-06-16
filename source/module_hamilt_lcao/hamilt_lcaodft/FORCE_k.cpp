@@ -336,6 +336,7 @@ void Force_LCAO<std::complex<double>>::ftable(
 	this->allocate(
 			pv,
 			lm,
+            fsr, // mohan add 2024-06-16
 			uot,
 			kv->get_nks(),
 			kv->kvec_d);
@@ -345,6 +346,7 @@ void Force_LCAO<std::complex<double>>::ftable(
 	this->cal_fedm(
 			isforce,
 			isstress,
+            fsr,
 			ucell,
 			dm,
 			psi,
@@ -360,7 +362,7 @@ void Force_LCAO<std::complex<double>>::ftable(
 			dm,
 			pv,
 			ucell,
-			lm,
+			fsr,
 			isforce,
 			isstress,
 			ftvnl_dphi,
