@@ -6,6 +6,7 @@
 #include <cassert>
 #include <fstream>
 #include <regex>
+#include <type_traits>
 
 #ifdef __MPI
 #include "module_base/parallel_common.h"
@@ -210,6 +211,10 @@ void ModuleIO::restart_from_file(const std::string& out_dir, // hard-code the fi
     occ.clear();
     kvec_c.clear();
     wk.clear();
+    const bool gamma_only = std::is_same<T, double>::value || std::is_same<T, float>::value;
+    const bool multi_k = std::is_same<T, std::complex<double>>::value || std::is_same<T, std::complex<float>>::value;
+    assert(gamma_only || multi_k);
+    const std::string flowf_prefix = gamma_only ? "WFC_GAMMA" : "WFC_NAO_K";
     // MPI-related variables init
     int iproc;
     MPI_Comm_rank(p2d.comm_2D, &iproc);
@@ -218,7 +223,7 @@ void ModuleIO::restart_from_file(const std::string& out_dir, // hard-code the fi
     for (int ik = 0; ik < nks; ik++)
     {
         // check existence of file
-        const std::string flowf = out_dir + "/WFC_NAO_K" + std::to_string(ik + 1) + ".txt";
+        const std::string flowf = out_dir + "/" + flowf_prefix + std::to_string(ik + 1) + ".txt";
         std::ifstream ifs(flowf);
         if (!ifs)
             ModuleBase::WARNING_QUIT("restart_from_file", "open file failed: " + flowf);
@@ -306,11 +311,15 @@ void ModuleIO::restart_from_file(const std::string& out_dir, // hard-code the fi
     occ.clear();
     kvec_c.clear();
     wk.clear();
+    const bool gamma_only = std::is_same<T, double>::value || std::is_same<T, float>::value;
+    const bool multi_k = std::is_same<T, std::complex<double>>::value || std::is_same<T, std::complex<float>>::value;
+    assert(gamma_only || multi_k);
+    const std::string flowf_prefix = gamma_only ? "WFC_GAMMA" : "WFC_NAO_K";
     int nbands_ = -1, nbasis_ = -1;
     for (int ik = 0; ik < nks; ik++)
     {
         // check existence of file
-        const std::string flowf = out_dir + "/WFC_NAO_K" + std::to_string(ik + 1) + ".txt";
+        const std::string flowf = out_dir + "/" + flowf_prefix + std::to_string(ik + 1) + ".txt";
         const std::ifstream ifs(flowf);
         if (!ifs)
             ModuleBase::WARNING_QUIT("restart_from_file", "open file failed: " + flowf);

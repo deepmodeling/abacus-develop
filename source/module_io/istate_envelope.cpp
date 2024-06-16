@@ -17,7 +17,7 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
                             const ModulePW::PW_Basis* rhopw,
                             const ModulePW::PW_Basis_K* wfcpw,
                             const ModulePW::PW_Basis_Big* bigpw,
-                            Local_Orbital_wfc& lowf,
+                            const Parallel_Orbitals& pv,
                             Gint_Gamma& gg,
                             int& out_wfc_pw,
                             int& out_wfc_r,
@@ -94,7 +94,7 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
     {
         if (bands_picked[ib])
         {
-            for (int is = 0; is < nspin; ++is)
+            for (int is = 0; is < nspin; ++is) // loop over spin
             {
                 std::cout << " Perform envelope function for band " << ib + 1 << std::endl;
                 ModuleBase::GlobalFunc::ZEROS(pes->charge->rho[is], wfcpw->nrxx);
@@ -103,13 +103,15 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
 #ifdef __MPI
                 lowf.wfc_2d_to_grid(psid->get_pointer(), wfc_gamma_grid[is], is, this->pes->ekb, this->pes->wg);
 #else
-                for (int i = 0;i < nbands;++i)
+// if not MPI enabled, it is the case psid holds a global matrix. use fix_k to switch between different spin channels
+// (actually kpoints, because now the same kpoint in different spin channels are treated as distinct kpoints)
+                for (int i = 0; i < nbands; ++i)
                 {
-                    for (int j = 0;j < nlocal;++j)
+                    for (int j = 0; j < nlocal; ++j)
                         wfc_gamma_grid[is][i][j] = psid[0](i, j);
                 }
 #endif
-                gg.cal_env(wfc_gamma_grid[is][ib], pes->charge->rho[is],GlobalC::ORB,GlobalC::ucell);
+                gg.cal_env(wfc_gamma_grid[is][ib], pes->charge->rho[is], GlobalC::ORB, GlobalC::ucell);
 
 
                 pes->charge->save_rho_before_sum_band(); //xiaohui add 2014-12-09
@@ -251,9 +253,9 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
                                     this->pes->wg,
                                     kv.kvec_c);
 #else
-                for (int i = 0;i < nbands;++i)
+                for (int i = 0; i < nbands; ++i)
                 {
-                    for (int j = 0;j < nlocal;++j)
+                    for (int j = 0; j < nlocal; ++j)
                         lowf.wfc_k_grid[ik][i][j] = psi[0](i, j);
                 }
 #endif

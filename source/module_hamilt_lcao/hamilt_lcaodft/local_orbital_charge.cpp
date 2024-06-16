@@ -3,7 +3,7 @@
 #include "module_base/blas_connector.h"
 #include "module_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-
+#include "module_io/read_wfc_lcao.h"
 // Shen Yu add 2019/5/9
 extern "C"
 {
@@ -68,6 +68,11 @@ void Local_Orbital_Charge::allocate_dm_wfc(const Grid_Technique& gt,
     this->LOWF = &lowf;
     this->LOWF->gridt = &gt;
     // here we reset the density matrix dimension.
+    // it is weird the psi_gamma is allocated inside the function allocate_gamma
+    // but psi_k is allocated outside the function allocate_DM_k
+    // and why the allocation of psi and DM are done together???
+    // lowf.gamma_file(psi, pelec);
+    // will be replaced by
     this->allocate_gamma(gt.lgd, psi, pelec, kv.get_nks(), istep);
     return;
 }
@@ -84,6 +89,7 @@ void Local_Orbital_Charge::allocate_dm_wfc(const Grid_Technique &gt,
     this->LOWF = &lowf;
     this->LOWF->gridt = &gt;
     // here we reset the density matrix dimension.
+    // lgd will be the dimension of global matrix and nbasis of psi to be of the local one
     lowf.allocate_k(gt.lgd, psi, pelec, kv.get_nks(), kv.get_nkstot(), kv.kvec_c, istep);
     this->allocate_DM_k(kv.get_nks(), gt.nnrg);
     return;
