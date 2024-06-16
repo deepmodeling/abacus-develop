@@ -136,6 +136,7 @@ void Force_LCAO<std::complex<double>>::allocate(
     // calculate dVnl=<phi|dVnl|dphi> in LCAO
 	LCAO_domain::build_Nonlocal_mu_new(
 			lm,
+            fsr,
 			lm.Hloc_fixed.data(), 
 			cal_deri, 
 			GlobalC::ucell, 

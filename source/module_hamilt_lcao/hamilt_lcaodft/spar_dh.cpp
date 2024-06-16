@@ -61,6 +61,7 @@ void sparse_format::cal_dH(
 
 	LCAO_domain::build_Nonlocal_mu_new(
             lm,
+            fsr_dh,
 			lm.Hloc_fixed.data(), 
 			true, 
 			GlobalC::ucell, 

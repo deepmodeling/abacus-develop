@@ -29,6 +29,7 @@ namespace LCAO_domain
 
     void build_Nonlocal_mu_new(
 			LCAO_Matrix &lm,
+            ForceStressArrays &fsr, // mohan 2024-06-16 
 			double* HlocR,
 			const bool& calc_deri,
 			const UnitCell& ucell,

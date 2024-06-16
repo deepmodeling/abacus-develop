@@ -108,6 +108,7 @@ void Force_LCAO<double>::allocate(
 
     LCAO_domain::build_Nonlocal_mu_new(
 			lm, 
+            fsr,
 			lm.Hloc_fixed.data(), 
 			cal_deri, 
 			GlobalC::ucell, 
