@@ -111,8 +111,8 @@ public :
   private:
     bool gamma_only = false;
     bool mpifft = false; // if use mpi fft, only used when define __FFTW3_MPI
-
-    fftw_plan planzfor  = NULL;
+//add by A.s 202406 considering that no all people are familiar with fftw3,some comments should be added.
+    fftw_plan planzfor  = NULL;//create a special pointer pointing to the fftw_plan class as a plan for performing FFT
     fftw_plan planzbac  = NULL;
 	fftw_plan planxfor1 = NULL;
 	fftw_plan planxbac1 = NULL;
