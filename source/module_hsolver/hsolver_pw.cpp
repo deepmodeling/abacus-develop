@@ -84,33 +84,33 @@ void HSolverPW<T, Device>::initDiagh(const psi::Psi<T, Device>& psi)
     }
     else if (this->method == "dav")
     {
-#ifdef __MPI
-        const diag_comm_info comm_info = {POOL_WORLD, GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL};
-#else
-        const diag_comm_info comm_info = {GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL};
-#endif
+// #ifdef __MPI
+//         const diag_comm_info comm_info = {POOL_WORLD, GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL};
+// #else
+//         const diag_comm_info comm_info = {GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL};
+// #endif
 
-        if (this->pdiagh != nullptr)
-        {
-            if (this->pdiagh->method != this->method)
-            {
-                delete (DiagoDavid<T, Device>*)this->pdiagh;
+//         if (this->pdiagh != nullptr)
+//         {
+//             if (this->pdiagh->method != this->method)
+//             {
+//                 delete (DiagoDavid<T, Device>*)this->pdiagh;
 
-                this->pdiagh = new DiagoDavid<T, Device>(precondition.data(),
-                                                         GlobalV::PW_DIAG_NDIM,
-                                                         GlobalV::use_paw,
-                                                         comm_info);
+//                 this->pdiagh = new DiagoDavid<T, Device>(precondition.data(),
+//                                                          GlobalV::PW_DIAG_NDIM,
+//                                                          GlobalV::use_paw,
+//                                                          comm_info);
 
-                this->pdiagh->method = this->method;
-            }
-        }
-        else
-        {
-            this->pdiagh
-                = new DiagoDavid<T, Device>(precondition.data(), GlobalV::PW_DIAG_NDIM, GlobalV::use_paw, comm_info);
+//                 this->pdiagh->method = this->method;
+//             }
+//         }
+//         else
+//         {
+//             this->pdiagh
+//                 = new DiagoDavid<T, Device>(precondition.data(), GlobalV::PW_DIAG_NDIM, GlobalV::use_paw, comm_info);
 
-            this->pdiagh->method = this->method;
-        }
+//             this->pdiagh->method = this->method;
+//         }
     }
     else if (this->method == "dav_subspace")
     {
@@ -302,6 +302,8 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
         }
         /// calculate the contribution of Psi for charge density rho
     }
+    // END Loop over k points
+
     castmem_2d_2h_op()(cpu_ctx, cpu_ctx, pes->ekb.c, eigenvalues.data(), pes->ekb.nr * pes->ekb.nc);
 
     this->is_first_scf = false;
@@ -658,11 +660,11 @@ void HSolverPW<T, Device>::endDiagh()
         delete reinterpret_cast<DiagoCG<T, Device>*>(this->pdiagh);
         this->pdiagh = nullptr;
     }
-    if (this->method == "dav")
-    {
-        delete reinterpret_cast<DiagoDavid<T, Device>*>(this->pdiagh);
-        this->pdiagh = nullptr;
-    }
+    // if (this->method == "dav")
+    // {
+    //     delete reinterpret_cast<DiagoDavid<T, Device>*>(this->pdiagh);
+    //     this->pdiagh = nullptr;
+    // }
     // if (this->method == "dav_subspace")
     // {
     //     delete reinterpret_cast<Diago_DavSubspace<T, Device>*>(this->pdiagh);
@@ -770,6 +772,11 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::P
         }
         else // method == "dav"
         {
+#ifdef __MPI
+            const diag_comm_info comm_info = {POOL_WORLD, GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL};
+#else
+            const diag_comm_info comm_info = {GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL};
+#endif
             // Allow 5 tries at most. If ntry > ntry_max = 5, exit diag loop.
             const int ntry_max = 5;
             // In non-self consistent calculation, do until totally converged. Else allow 5 eigenvecs to be NOT
@@ -778,9 +785,13 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::P
             // do diag and add davidson iteration counts up to avg_iter
             const Real david_diag_thr = DiagoIterAssist<T, Device>::PW_DIAG_THR;
             const int david_maxiter = DiagoIterAssist<T, Device>::PW_DIAG_NMAX;
-            auto david = (reinterpret_cast<DiagoDavid<T, Device>*>(this->pdiagh));
+            // auto david = (reinterpret_cast<DiagoDavid<T, Device>*>(this->pdiagh));
+            DiagoDavid<T, Device> david(precondition.data(),
+                                        GlobalV::PW_DIAG_NDIM,
+                                        GlobalV::use_paw,
+                                        comm_info);
             DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(
-                david->diag(hm, psi, eigenvalue, david_diag_thr, david_maxiter, ntry_max, notconv_max));
+                david.diag(hm, psi, eigenvalue, david_diag_thr, david_maxiter, ntry_max, notconv_max));
         }
         return;
     }
