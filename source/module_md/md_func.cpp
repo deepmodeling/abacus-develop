@@ -289,7 +289,7 @@ int rank = 0;
     }
 
     ModuleBase::timer::tick("MD_func", "force_virial");
-
+#endif
     return;
 }
 
