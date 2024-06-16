@@ -2,7 +2,6 @@
 #define TD_CURRENT_H
 
 #include "module_elecstate/module_dm/density_matrix.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_gen_fixedH.h"
 #include "module_elecstate/elecstate_lcao.h"
 #include "module_psi/psi.h"
 
@@ -17,8 +16,7 @@ void write_current(const int istep,
                     const ORB_gen_tables* uot,
                     const Parallel_Orbitals* pv,
 					Record_adj& ra,
-					LCAO_Matrix &lm, // mohan add 2024-04-02
-					LCAO_gen_fixedH &gen_h); // mohan add 2024-04-02
+					LCAO_Matrix &lm); // mohan add 2024-04-02
 
 /// @brief calculate sum_n[𝜌_(𝑛𝑘,𝜇𝜈)] for current calculation
 void cal_tmp_DM(elecstate::DensityMatrix<std::complex<double>, double>& DM, const int ik, const int nspin);
@@ -27,7 +25,6 @@ void cal_tmp_DM(elecstate::DensityMatrix<std::complex<double>, double>& DM, cons
 void Init_DS_tmp(
 		const Parallel_Orbitals& pv,
 		LCAO_Matrix &lm,
-		LCAO_gen_fixedH &gen_h,
         const ORB_gen_tables* uot);
 
 /// @brief DS_locR will be initialized again in force calculation, so it must be destoryed here.

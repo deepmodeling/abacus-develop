@@ -6,7 +6,7 @@
 
 template<>
 void Force_LCAO<double>::cal_fvnl_dbeta(
-    const elecstate::DensityMatrix<double, double>* DM,
+    const elecstate::DensityMatrix<double, double>* dm,
     const Parallel_Orbitals& pv,
     const UnitCell& ucell,
     const LCAO_Orbitals& orb,
@@ -17,8 +17,8 @@ void Force_LCAO<double>::cal_fvnl_dbeta(
 	ModuleBase::matrix& fvnl_dbeta, 
 	ModuleBase::matrix& svnl_dbeta)
 {
-    ModuleBase::TITLE("Force_LCAO_gamma","cal_fvnl_dbeta_new");
-    ModuleBase::timer::tick("Force_LCAO_gamma","cal_fvnl_dbeta_new");
+    ModuleBase::TITLE("Force_LCAO","cal_fvnl_dbeta");
+    ModuleBase::timer::tick("Force_LCAO","cal_fvnl_dbeta");
 
     double r0[3];
 	double r1[3];
@@ -39,7 +39,7 @@ void Force_LCAO<double>::cal_fvnl_dbeta(
         std::vector<std::unordered_map<int,std::vector<std::vector<double>>>> nlm_tot;
         nlm_tot.resize(gd.getAdjacentNum() + 1); //this saves <psi_i|beta> and <psi_i|\nabla|beta>
 
-//Step 1 : Calculate and save <psi_i|beta> and <psi_i|\nabla|beta>
+        //Step 1 : Calculate and save <psi_i|beta> and <psi_i|\nabla|beta>
         for (int ad1 = 0; ad1 < gd.getAdjacentNum() + 1; ad1++)
         {
             const int T1 = gd.getType(ad1);
@@ -62,7 +62,11 @@ void Force_LCAO<double>::cal_fvnl_dbeta(
 				const int iw1_all = start1 + iw1;
                 const int iw1_local = pv.global2local_row(iw1_all);
                 const int iw2_local = pv.global2local_col(iw1_all);
-				if(iw1_local < 0 && iw2_local < 0) continue;
+
+				if(iw1_local < 0 && iw2_local < 0) 
+				{
+					continue;
+				}
                 
                 std::vector<std::vector<double>> nlm;
 
@@ -97,7 +101,7 @@ void Force_LCAO<double>::cal_fvnl_dbeta(
             }
         }//ad
 
-//Step 2 : sum to get beta<psi_i|beta><beta|\nabla|psi_j>
+        //Step 2 : sum to get beta<psi_i|beta><beta|\nabla|psi_j>
         for (int ad1 = 0; ad1 < gd.getAdjacentNum() + 1; ++ad1)
         {
             const int T1 = gd.getType(ad1);
@@ -138,12 +142,20 @@ void Force_LCAO<double>::cal_fvnl_dbeta(
                 {
                     const int iw1_all = start1 + iw1;
                     const int iw1_local = pv.global2local_row(iw1_all);
-                    if(iw1_local < 0)continue;
+					if(iw1_local < 0)
+					{
+						continue;
+					}
                     for (int iw2 = 0; iw2 < ucell.atoms[T2].nw; ++iw2)
+
                     {
                         const int iw2_all = start2 + iw2;
                         const int iw2_local = pv.global2local_col(iw2_all);
-                        if(iw2_local < 0)continue;
+
+						if(iw2_local < 0)
+						{
+							continue;
+						}
 
                         double nlm[3] = {0,0,0};
                         double nlm_t[3] = {0,0,0}; //transpose
@@ -206,9 +218,8 @@ void Force_LCAO<double>::cal_fvnl_dbeta(
                         double sum = 0.0;
                         for(int is=0; is<GlobalV::NSPIN; ++is)
                         {
-                            //sum += dm2d[is][index];
                             //sum += dm2d[is](iw2_local, iw1_local);
-                            sum += DM->get_DMK(is+1, 0, iw2_local, iw1_local);
+                            sum += dm->get_DMK(is+1, 0, iw2_local, iw1_local);
                         }
                         sum *= 2.0;
 
@@ -234,71 +245,12 @@ void Force_LCAO<double>::cal_fvnl_dbeta(
             }//ad2
         }//ad1
     }//iat
+
     if(isstress)
     {
         StressTools::stress_fill(ucell.lat0, ucell.omega, svnl_dbeta);
     }
-    ModuleBase::timer::tick("Force_LCAO_gamma","cal_fvnl_dbeta_new");
+
+    ModuleBase::timer::tick("Force_LCAO","cal_fvnl_dbeta");
 }
 
-template<>
-void Force_LCAO<double>::cal_ftvnl_dphi(
-    const elecstate::DensityMatrix<double, double>* DM,
-    const Parallel_Orbitals& pv,
-    const UnitCell& ucell,
-    LCAO_Matrix& lm,
-    const bool isforce, 
-	const bool isstress, 
-	ModuleBase::matrix& ftvnl_dphi, 
-    ModuleBase::matrix& stvnl_dphi,
-    Record_adj* ra)
-{
-    ModuleBase::TITLE("Force_LCAO_gamma","cal_ftvnl_dphi");
-    ModuleBase::timer::tick("Force_LCAO_gamma","cal_ftvnl_dphi");
-
-    for(int i=0; i<GlobalV::NLOCAL; i++)
-    {
-        const int iat = ucell.iwt2iat[i];
-        for(int j=0; j<GlobalV::NLOCAL; j++)
-        {
-            const int mu = pv.global2local_row(j);
-            const int nu = pv.global2local_col(i);
-
-            if (mu >= 0 && nu >= 0 )
-            {
-                const int index = mu * pv.ncol + nu;
-                //contribution from deriv of AO's in T+VNL term
-
-                double sum = 0.0;
-                for(int is=0; is<GlobalV::NSPIN; ++is)
-                {
-                    //sum += dm2d[is](nu, mu);
-                    sum += DM->get_DMK(is+1, 0, nu, mu);
-                }
-                sum *= 2.0;
-
-                if(isforce)
-				{
-					ftvnl_dphi(iat,0) += sum * lm.DHloc_fixed_x[index];
-					ftvnl_dphi(iat,1) += sum * lm.DHloc_fixed_y[index];
-					ftvnl_dphi(iat,2) += sum * lm.DHloc_fixed_z[index];
-				}
-                if(isstress)
-                {
-                    stvnl_dphi(0,0) += sum/2.0 * lm.DHloc_fixed_11[index];
-                    stvnl_dphi(0,1) += sum/2.0 * lm.DHloc_fixed_12[index];
-                    stvnl_dphi(0,2) += sum/2.0 * lm.DHloc_fixed_13[index];
-                    stvnl_dphi(1,1) += sum/2.0 * lm.DHloc_fixed_22[index];
-                    stvnl_dphi(1,2) += sum/2.0 * lm.DHloc_fixed_23[index];
-                    stvnl_dphi(2,2) += sum/2.0 * lm.DHloc_fixed_33[index];   
-                }
-            }
-        }
-    }
-	if(isstress)
-	{
-        StressTools::stress_fill(ucell.lat0, ucell.omega, stvnl_dphi);
-	}
-    ModuleBase::timer::tick("Force_LCAO_gamma","cal_ftvnl_dphi");
-    return;
-}
