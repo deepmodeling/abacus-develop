@@ -9,12 +9,12 @@
 #endif
 #include "module_io/write_HS.h"
 #include "module_elecstate/elecstate_lcao.h"
-#include "module_cell/module_neighbor/sltk_grid_driver.h"   //GridD
+#include "module_cell/module_neighbor/sltk_grid_driver.h"  //GridD
+#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h" 
 
 template<>
 void Force_LCAO<double>::allocate(const Parallel_Orbitals& pv,
     LCAO_Matrix& lm,
-    LCAO_gen_fixedH& gen_h,
     const ORB_gen_tables* uot,
     const int& nks,
     const std::vector<ModuleBase::Vector3<double>>& kvec_d)
@@ -67,7 +67,8 @@ void Force_LCAO<double>::allocate(const Parallel_Orbitals& pv,
         ModuleBase::Memory::record("Stress::dSH_GO", sizeof(double) * pv.nloc * 12);
     }
     // calculate dS in LCAO basis
-	gen_h.build_ST_new(
+	LCAO_domain::build_ST_new(
+            lm,
 			'S', 
 			cal_deri, 
 			GlobalC::ucell, 
@@ -90,7 +91,8 @@ void Force_LCAO<double>::allocate(const Parallel_Orbitals& pv,
 
     // calculate dT
     // calculate T + VNL(P1) in LCAO basis
-	gen_h.build_ST_new(
+	LCAO_domain::build_ST_new(
+            lm,
 			'T', 
 			cal_deri, 
 			GlobalC::ucell, 
@@ -100,10 +102,14 @@ void Force_LCAO<double>::allocate(const Parallel_Orbitals& pv,
 			&GlobalC::GridD, 
 			lm.Hloc_fixed.data());
 
-    // ModuleBase::timer::tick("Force_LCAO_gamma","build_Nonlocal_mu");
-    gen_h.build_Nonlocal_mu_new(lm.Hloc_fixed.data(), cal_deri, GlobalC::ucell, GlobalC::ORB, *uot, &(GlobalC::GridD));
-    // ModuleBase::timer::tick("Force_LCAO_gamma","build_Nonlocal_mu");
-    // test_gamma(lm.DHloc_fixed_x, "dHloc_fixed_x Vnl part");
+    LCAO_domain::build_Nonlocal_mu_new(
+			lm, 
+			lm.Hloc_fixed.data(), 
+			cal_deri, 
+			GlobalC::ucell, 
+			GlobalC::ORB, 
+			*uot, 
+			&GlobalC::GridD);
 
     // calculate asynchronous S matrix to output for Hefei-NAMD
     if (INPUT.cal_syns)
@@ -112,7 +118,8 @@ void Force_LCAO<double>::allocate(const Parallel_Orbitals& pv,
 
         lm.zeros_HSgamma('S');
 
-		gen_h.build_ST_new(
+		LCAO_domain::build_ST_new(
+                lm,
 				'S', 
 				cal_deri, 
 				GlobalC::ucell, 
@@ -208,8 +215,10 @@ void Force_LCAO<double>::test(Parallel_Orbitals& pv, double* mm, const std::stri
 
 // be called in force_lo.cpp
 template<>
-void Force_LCAO<double>::ftable(const bool isforce,
+void Force_LCAO<double>::ftable(
+    const bool isforce,
     const bool isstress,
+    const UnitCell& ucell,
     const psi::Psi<double>* psi,
     const elecstate::ElecState* pelec,
     ModuleBase::matrix& foverlap,
@@ -223,7 +232,6 @@ void Force_LCAO<double>::ftable(const bool isforce,
 #ifdef __DEEPKS
     ModuleBase::matrix& svnl_dalpha,
 #endif
-    LCAO_gen_fixedH& gen_h, // mohan add 2024-04-02
     TGint<double>::type& gint,
     const ORB_gen_tables* uot,
     const Parallel_Orbitals& pv,
@@ -235,39 +243,80 @@ void Force_LCAO<double>::ftable(const bool isforce,
     ModuleBase::timer::tick("Force_LCAO", "ftable");
 
     // get DM
-    const elecstate::DensityMatrix<double, double>* DM
+    const elecstate::DensityMatrix<double, double>* dm
         = dynamic_cast<const elecstate::ElecStateLCAO<double>*>(pelec)->get_DM();
 
-    this->ParaV = DM->get_paraV_pointer();
-    //const Parallel_Orbitals* pv = loc.ParaV;
+    this->ParaV = dm->get_paraV_pointer();
 
     // allocate DSloc_x, DSloc_y, DSloc_z
     // allocate DHloc_fixed_x, DHloc_fixed_y, DHloc_fixed_z
-    this->allocate(pv, lm, gen_h, uot);
+	this->allocate(
+			pv, 
+			lm, 
+			uot);
 
-    // calculate the 'energy density matrix' here.
-    this->cal_foverlap(isforce, isstress, psi, pv, pelec, lm, foverlap, soverlap);
+    // calculate the force related to 'energy density matrix'.
+	this->cal_fedm(
+			isforce, 
+			isstress, 
+            ucell,
+            dm,
+			psi, 
+			pv, 
+			pelec, 
+			lm, 
+			foverlap, 
+			soverlap);
 
-    // sum up the density matrix with different spin
-    // DM->sum_DMR_spin();
+	this->cal_ftvnl_dphi(
+			dm, 
+			pv, 
+			ucell, 
+			lm, 
+			isforce, 
+			isstress, 
+			ftvnl_dphi, 
+			stvnl_dphi);
 
-    this->cal_ftvnl_dphi(DM, pv, GlobalC::ucell, lm, isforce, isstress, ftvnl_dphi, stvnl_dphi);
+	this->cal_fvnl_dbeta(
+			dm, 
+			pv, 
+			ucell, 
+			GlobalC::ORB, 
+			*uot, 
+			GlobalC::GridD, 
+			isforce, 
+			isstress, 
+			fvnl_dbeta, 
+			svnl_dbeta);
 
-    this->cal_fvnl_dbeta(DM, pv, GlobalC::ucell, GlobalC::ORB, *uot, GlobalC::GridD, isforce, isstress, fvnl_dbeta, svnl_dbeta);
-
-    this->cal_fvl_dphi(isforce, isstress, pelec->pot, gint, fvl_dphi, svl_dphi);
+	this->cal_fvl_dphi(
+			isforce, 
+			isstress, 
+			pelec->pot, 
+			gint, 
+			fvl_dphi, 
+			svl_dphi);
 
     // caoyu add for DeePKS
 #ifdef __DEEPKS
     if (GlobalV::deepks_scf)
     {
-        const std::vector<std::vector<double>>& dm_gamma = DM->get_DMK_vector();
-        GlobalC::ld.cal_projected_DM(DM, GlobalC::ucell, GlobalC::ORB, GlobalC::GridD);
-        GlobalC::ld.cal_descriptor(GlobalC::ucell.nat);
-        GlobalC::ld.cal_gedm(GlobalC::ucell.nat);
+        const std::vector<std::vector<double>>& dm_gamma = dm->get_DMK_vector();
+
+		GlobalC::ld.cal_projected_DM(
+				dm, 
+				ucell, 
+				GlobalC::ORB, 
+				GlobalC::GridD);
+
+        GlobalC::ld.cal_descriptor(ucell.nat);
+
+        GlobalC::ld.cal_gedm(ucell.nat);
+
         GlobalC::ld.cal_f_delta_gamma(
             dm_gamma,
-            GlobalC::ucell,
+            ucell,
             GlobalC::ORB,
             GlobalC::GridD,
             isstress,
@@ -275,6 +324,7 @@ void Force_LCAO<double>::ftable(const bool isforce,
 
 #ifdef __MPI
         Parallel_Reduce::reduce_all(GlobalC::ld.F_delta.c, GlobalC::ld.F_delta.nr * GlobalC::ld.F_delta.nc);
+
         if (isstress)
         {
             Parallel_Reduce::reduce_pool(svnl_dalpha.c, svnl_dalpha.nr * svnl_dalpha.nc);
@@ -285,7 +335,7 @@ void Force_LCAO<double>::ftable(const bool isforce,
         {
             GlobalC::ld.print_dm(dm_gamma[0]);
             GlobalC::ld.check_projected_dm();
-            GlobalC::ld.check_descriptor(GlobalC::ucell);
+            GlobalC::ld.check_descriptor(ucell);
             GlobalC::ld.check_gedm();
 
             GlobalC::ld.cal_e_delta_band(dm_gamma);
@@ -293,7 +343,7 @@ void Force_LCAO<double>::ftable(const bool isforce,
             ofs << std::setprecision(10) << GlobalC::ld.e_delta_band;
             std::ofstream ofs1("E_delta.dat");
             ofs1 << std::setprecision(10) << GlobalC::ld.E_delta;
-            GlobalC::ld.check_f_delta(GlobalC::ucell.nat, svnl_dalpha);
+            GlobalC::ld.check_f_delta(ucell.nat, svnl_dalpha);
         }
     }
 #endif
@@ -331,8 +381,10 @@ void stress_fill(const double& lat0_, const double& omega_, ModuleBase::matrix& 
     {
         for (int j = 0; j < 3; ++j)
         {
-            if (j > i)
-                stress_matrix(j, i) = stress_matrix(i, j);
+			if (j > i)
+			{
+				stress_matrix(j, i) = stress_matrix(i, j);
+			}
             stress_matrix(i, j) *= weight;
         }
     }

@@ -10,9 +10,11 @@
 // force due to the overlap matrix.
 // need energy density matrix here.
 template<>
-void Force_LCAO<double>::cal_foverlap(
+void Force_LCAO<double>::cal_fedm(
 	const bool isforce, 
     const bool isstress,
+    const UnitCell& ucell,
+    const elecstate::DensityMatrix<double, double>* dm,
     const psi::Psi<double>* psi,
     const Parallel_Orbitals& pv,
     const elecstate::ElecState *pelec,
@@ -20,50 +22,50 @@ void Force_LCAO<double>::cal_foverlap(
     ModuleBase::matrix &foverlap,
     ModuleBase::matrix& soverlap,
     const K_Vectors* kv,
-    Record_adj* ra,
-    const elecstate::DensityMatrix<double, double>* DM)
+    Record_adj* ra)
 {
-    ModuleBase::TITLE("Force_LCAO_gamma","cal_foverlap");
-    ModuleBase::timer::tick("Force_LCAO_gamma","cal_foverlap");
+    ModuleBase::TITLE("Force_LCAO","cal_fedm");
+    ModuleBase::timer::tick("Force_LCAO","cal_fedm");
 
-    ModuleBase::timer::tick("Force_LCAO_gamma","cal_edm_2d");
+    const int nspin = GlobalV::NSPIN;
+    const int nbands = GlobalV::NBANDS;
+    const int nlocal = GlobalV::NLOCAL;
 
-    ModuleBase::matrix wgEkb;
-    wgEkb.create(GlobalV::NSPIN, GlobalV::NBANDS);
+    ModuleBase::matrix wg_ekb;
+    wg_ekb.create(nspin, nbands);
 
-    for(int is=0; is<GlobalV::NSPIN; is++)
+    for(int is=0; is<nspin; is++)
     {
-        for(int ib=0; ib<GlobalV::NBANDS; ib++)
+        for(int ib=0; ib<nbands; ib++)
         {
-            wgEkb(is,ib) = pelec->wg(is,ib) * pelec->ekb(is, ib);
+            wg_ekb(is,ib) = pelec->wg(is,ib) * pelec->ekb(is, ib);
         }
     }
 
     // construct a DensityMatrix for Gamma-Only
-    elecstate::DensityMatrix<double, double> EDM(&pv, GlobalV::NSPIN);
+    elecstate::DensityMatrix<double, double> edm(&pv, nspin);
     
 #ifdef __PEXSI
     if (GlobalV::KS_SOLVER == "pexsi")
     {
         auto pes = dynamic_cast<const elecstate::ElecStateLCAO<double>*>(pelec);
-        for (int ik = 0; ik < GlobalV::NSPIN; ik++)
+        for (int ik = 0; ik < nspin; ik++)
         {
-            EDM.set_DMK_pointer(ik, pes->get_DM()->pexsi_EDM[ik]);
+            edm.set_DMK_pointer(ik, pes->get_DM()->pexsi_edm[ik]);
         }
         
     }
     else
 #endif
     {
-        elecstate::cal_dm_psi(EDM.get_paraV_pointer(), wgEkb, psi[0], EDM);
+        elecstate::cal_dm_psi(edm.get_paraV_pointer(), wg_ekb, psi[0], edm);
     }
 
-    ModuleBase::timer::tick("Force_LCAO_gamma","cal_edm_2d");
 
-    for(int i=0; i<GlobalV::NLOCAL; i++)
+    for(int i=0; i<nlocal; i++)
     {
-        const int iat = GlobalC::ucell.iwt2iat[i];
-        for(int j=0; j<GlobalV::NLOCAL; j++)
+        const int iat = ucell.iwt2iat[i];
+        for(int j=0; j<nlocal; j++)
         {
             const int mu = pv.global2local_row(j);
             const int nu = pv.global2local_col(i);
@@ -72,10 +74,10 @@ void Force_LCAO<double>::cal_foverlap(
             {
                 const int index = mu * pv.ncol + nu;
                 double sum = 0.0;
-                for(int is=0; is<GlobalV::NSPIN; ++is)
+                for(int is=0; is<nspin; ++is)
                 {
                     //sum += edm_gamma[is](nu, mu);
-                    sum += EDM.get_DMK(is+1, 0, nu, mu);
+                    sum += edm.get_DMK(is+1, 0, nu, mu);
                 }
                 sum *= 2.0;
 
@@ -102,8 +104,8 @@ void Force_LCAO<double>::cal_foverlap(
 
     if(isstress)
     {
-		StressTools::stress_fill(GlobalC::ucell.lat0, GlobalC::ucell.omega, soverlap);
+		StressTools::stress_fill(ucell.lat0, ucell.omega, soverlap);
     }
-    ModuleBase::timer::tick("Force_LCAO_gamma","cal_foverlap");
+    ModuleBase::timer::tick("Force_LCAO","cal_fedm");
     return;
 }

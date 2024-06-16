@@ -1,10 +1,10 @@
 #include "spar_dh.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
 
 void sparse_format::cal_dH(
 		LCAO_Matrix &lm,
 		Grid_Driver &grid,
         const ORB_gen_tables* uot,
-		LCAO_gen_fixedH &gen_h, 
 		const int &current_spin, 
 		const double &sparse_thr,
 		Gint_k &gint_k)
@@ -27,7 +27,8 @@ void sparse_format::cal_dH(
 	{
         GlobalV::CAL_STRESS = false;
 
-		gen_h.build_ST_new(
+		LCAO_domain::build_ST_new(
+                lm,
 				'T', 
 				true, 
 				GlobalC::ucell, 
@@ -41,7 +42,8 @@ void sparse_format::cal_dH(
     }
     else
     {
-		gen_h.build_ST_new(
+		LCAO_domain::build_ST_new(
+				lm,
 				'T', 
 				true, 
 				GlobalC::ucell, 
@@ -52,7 +54,8 @@ void sparse_format::cal_dH(
 				lm.Hloc_fixedR.data());
     }
 
-	gen_h.build_Nonlocal_mu_new(
+	LCAO_domain::build_Nonlocal_mu_new(
+            lm,
 			lm.Hloc_fixed.data(), 
 			true, 
 			GlobalC::ucell, 
