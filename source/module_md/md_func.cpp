@@ -258,10 +258,11 @@ void force_virial(ModuleESolver::ESolver* p_esolver,
     force_temp *= 0.5;
     virial *= 0.5;
 
-int size = 1;
-int rank = 0;
+    int size = 1;
+    int rank = 0;
 #ifdef __MPI
     MPI_Comm_size(MPI_COMM_WORLD, &size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 #endif
     int each_ucell_nat = unit_in.nat / size;
     int last_ucell = unit_in.nat - each_ucell_nat * size;
