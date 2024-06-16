@@ -687,6 +687,12 @@ void Gint::initialize_pvpR(const UnitCell& ucell_in, Grid_Driver* gd)
 void Gint::transfer_DM2DtoGrid(std::vector<hamilt::HContainer<double>*> DM2D)
 {
     ModuleBase::TITLE("Gint", "transfer_DMR");
+
+    // To check whether input parameter DM2D has been initialized
+#ifdef __DEBUG
+    assert(!DM2D.empty() && "Input parameter DM2D has not been initialized while calling function transfer_DM2DtoGrid!");
+#endif
+
     ModuleBase::timer::tick("Gint", "transfer_DMR");
     if (GlobalV::NSPIN != 4)
     {
