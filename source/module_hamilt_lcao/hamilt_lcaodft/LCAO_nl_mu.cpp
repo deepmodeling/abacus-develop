@@ -339,19 +339,7 @@ void build_Nonlocal_mu_new(
 								{
 									std::vector<double> nlm_1=(*nlm_cur1_e)[iw1_all];
 									std::vector<double> nlm_2=(*nlm_cur2_e)[iw2_all];
-									if(nspin == 4)
-									{
-										std::complex<double> nlm_tmp = ModuleBase::ZERO;
-										int is0 = (j-j0*npol) + (k-k0*npol)*2;
-										for (int no = 0; no < ucell.atoms[T0].ncpp.non_zero_count_soc[is0]; no++)
-										{
-											const int p1 = ucell.atoms[T0].ncpp.index1_soc[is0][no];
-											const int p2 = ucell.atoms[T0].ncpp.index2_soc[is0][no];
-											nlm_tmp += nlm_1[p1] * nlm_2[p2] * ucell.atoms[T0].ncpp.d_so(is0, p2, p1);
-										}
-										lm.Hloc_fixedR_soc[nnr+nnr_inner] += nlm_tmp;
-									}
-									else if(nspin == 2 || nspin == 1)
+									if(nspin == 2 || nspin == 1)
 									{
 										double nlm_tmp = 0.0;
 										const int nproj = ucell.infoNL.nproj[T0];

@@ -86,9 +86,6 @@ private:
     std::vector<double> SlocR;
     std::vector<double> Hloc_fixedR;
 
-    //with soc, zhengdy-soc
-    std::vector<std::complex<double>> Hloc_fixedR_soc;
-
     //LiuXh add 2019-07-15
     double ****Hloc_fixedR_tr;
     double ****SlocR_tr;

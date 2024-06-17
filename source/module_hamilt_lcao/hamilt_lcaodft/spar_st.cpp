@@ -191,14 +191,6 @@ void sparse_format::cal_STN_R_for_T(
                                     lm.TR_sparse[dR][iw1_all][iw2_all] = tmp;
                                 }
                             }
-                            else if(nspin==4)
-                            {
-                                tmpc = lm.Hloc_fixedR_soc[index];
-                                if(std::abs(tmpc) > sparse_thr)
-                                {
-                                    lm.TR_soc_sparse[dR][iw1_all][iw2_all] = tmpc;
-                                }
-                            }
 
                             ++index;
                         }

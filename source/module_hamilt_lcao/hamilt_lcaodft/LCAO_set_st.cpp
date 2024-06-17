@@ -357,8 +357,6 @@ void single_overlap(
 			}
 			else if (nspin == 4)
 			{//only has diagonal term here.
-				const int is = (jj-jj0*npol) + (kk-kk0*npol)*2;
-				lm.Hloc_fixedR_soc[nnr] = olm1[is];
 			}
 			else
 			{
