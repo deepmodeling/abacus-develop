@@ -343,11 +343,6 @@ void single_overlap(
 			{
 				HSloc[nnr] = olm[0];
 			}
-			else if (nspin == 4)
-			{//only has diagonal term here.
-				const int is = (jj-jj0*npol) + (kk-kk0*npol)*2;
-				lm.SlocR_soc[nnr] = olm1[is];
-			}
 			else
 			{
 				ModuleBase::WARNING_QUIT("LCAO_domain::build_ST_new","nspin must be 1, 2 or 4");

@@ -241,12 +241,7 @@ void LCAO_Matrix::zeros_HSR(const char &mtype)
         }
         else
         {
-            if (mtype=='S')
-            {
-                ModuleBase::BLOCK_TASK_DIST_1D(num_threads, thread_id, (long long)this->SlocR_soc.size(), (long long)256, beg, len);
-                ModuleBase::GlobalFunc::ZEROS(this->SlocR_soc.data() + beg, len);
-            }
-            else if (mtype=='T')
+            if (mtype=='T')
             {
                 ModuleBase::BLOCK_TASK_DIST_1D(num_threads, thread_id, (long long)this->Hloc_fixedR_soc.size(), (long long)256, beg, len);
                 ModuleBase::GlobalFunc::ZEROS(this->Hloc_fixedR_soc.data() + beg, len);
