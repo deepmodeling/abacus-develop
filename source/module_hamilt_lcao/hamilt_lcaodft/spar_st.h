@@ -22,7 +22,7 @@ namespace sparse_format
 			const Parallel_Orbitals &pv,
 			LCAO_Matrix &lm,
 			Grid_Driver &grid,
-			LCAO_gen_fixedH &gen_h,
+            const ORB_gen_tables* uot,
 			const double &sparse_thr);
 
     //! cal_STN_R_for_T is only called by cal_TR

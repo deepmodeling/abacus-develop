@@ -1,7 +1,7 @@
 #include "esolver_of.h"
 
 #include "module_io/output_log.h"
-#include "module_io/potential_io.h"
+#include "module_io/write_pot.h"
 #include "module_io/rho_io.h"
 //-----------temporary-------------------------
 #include "module_base/global_function.h"
@@ -57,9 +57,9 @@ ESolver_OF::~ESolver_OF()
     delete this->opt_cg_mag_;
 }
 
-void ESolver_OF::init(Input& inp, UnitCell& ucell)
+void ESolver_OF::before_all_runners(Input& inp, UnitCell& ucell)
 {
-    ESolver_FP::init(inp, ucell);
+    ESolver_FP::before_all_runners(inp, ucell);
 
     // save necessary parameters
     this->of_kinetic_ = inp.of_kinetic;
@@ -88,7 +88,7 @@ void ESolver_OF::init(Input& inp, UnitCell& ucell)
     }
 
     // Setup the k points according to symmetry.
-    kv.set(ucell.symm, GlobalV::global_kpoint_card, GlobalV::NSPIN, ucell.G, ucell.latvec);
+    kv.set(ucell.symm, GlobalV::global_kpoint_card, GlobalV::NSPIN, ucell.G, ucell.latvec, GlobalV::ofs_running);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"INIT K-POINTS");
 
     // print information
@@ -217,9 +217,9 @@ void ESolver_OF::init_after_vc(Input& inp, UnitCell& ucell)
     }
 }
 
-void ESolver_OF::run(int istep, UnitCell& ucell)
+void ESolver_OF::runner(int istep, UnitCell& ucell)
 {
-    ModuleBase::timer::tick("ESolver_OF", "run");
+    ModuleBase::timer::tick("ESolver_OF", "runner");
     // get Ewald energy, initial rho and phi if necessary
     this->before_opt(istep, ucell);
     this->iter_ = 0;
@@ -251,7 +251,7 @@ void ESolver_OF::run(int istep, UnitCell& ucell)
 
     this->after_opt(istep, ucell);
 
-    ModuleBase::timer::tick("ESolver_OF", "run");
+    ModuleBase::timer::tick("ESolver_OF", "runner");
 }
 
 /**
@@ -544,12 +544,13 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell)
                 3);
         }
 
-        if (GlobalV::out_pot == 1) // output the effective potential, sunliang 2023-03-16
+        if (GlobalV::out_pot == 1 || GlobalV::out_pot == 3) // output the effective potential, sunliang 2023-03-16
         {
             int precision = 3; // be consistent with esolver_ks_lcao.cpp
             std::stringstream ssp;
             ssp << GlobalV::global_out_dir << "SPIN" << is + 1 << "_POT.cube";
-            ModuleIO::write_potential(
+            ModuleIO::write_pot_spin(
+                GlobalV::out_pot,
 #ifdef __MPI
                 this->pw_big->bz,
                 this->pw_big->nbz,
@@ -587,7 +588,7 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell)
 /**
  * @brief Output the FINAL_ETOT
  */
-void ESolver_OF::post_process()
+void ESolver_OF::after_all_runners()
 {
 
     GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;

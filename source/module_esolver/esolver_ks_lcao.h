@@ -29,7 +29,7 @@ namespace ModuleESolver
         ESolver_KS_LCAO();
         ~ESolver_KS_LCAO();
 
-        void init(Input& inp, UnitCell& cell) override;
+        void before_all_runners(Input& inp, UnitCell& cell) override;
 
         void init_after_vc(Input& inp, UnitCell& cell) override;
 
@@ -39,7 +39,7 @@ namespace ModuleESolver
 
         void cal_stress(ModuleBase::matrix &stress) override;
 
-        void post_process() override;
+        void after_all_runners() override;
 
         void nscf() override;
 
@@ -75,8 +75,6 @@ namespace ModuleESolver
         // we will get rid of this class soon, don't use it, mohan 2024-03-28
         Local_Orbital_Charge LOC;
 
-        LCAO_gen_fixedH gen_h; // mohan add 2024-04-02
-
         // used for k-dependent grid integration.
         Gint_k GK;
 
@@ -88,7 +86,15 @@ namespace ModuleESolver
 
         Grid_Technique GridT;
 
-        std::unique_ptr<TwoCenterBundle> two_center_bundle;
+        // The following variable is introduced in the stage-1 of LCAO
+        // refactoring. It is supposed to replace the previous GlobalC::UOT.
+        //
+        // This is the only place supposed to have the ownership; all other
+        // places should be considered as "borrowing" the object. Unfortunately,
+        // imposing shared_ptr/weak_ptr is only possible once GlobalC::UOT is
+        // completely removed from the code; we have to rely on raw pointers
+        // during the transition period.
+        ORB_gen_tables* uot_;
 
         // Temporarily store the stress to unify the interface with PW,
         // because it's hard to seperate force and stress calculation in LCAO.
@@ -114,6 +120,9 @@ namespace ModuleESolver
 
         /// @brief create ModuleIO::Output_Mat_Sparse object to output sparse density matrix of H, S, T, r
         ModuleIO::Output_Mat_Sparse<TK> create_Output_Mat_Sparse(int istep);
+
+        void read_mat_npz(std::string& zipname, hamilt::HContainer<double>& hR);
+        void output_mat_npz(std::string& zipname, const hamilt::HContainer<double>& hR);
 
         /// @brief check if skip the corresponding output in md calculation
         bool md_skip_out(std::string calculation, int istep, int interval);

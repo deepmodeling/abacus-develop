@@ -15,7 +15,7 @@
  *    but they are not used in the code.
  *    So, we just test if they can be called without error.
  */
-
+#include "module_cell/klist.h"
 K_Vectors::K_Vectors()
 {
 }
@@ -26,7 +26,8 @@ K_Vectors::~K_Vectors()
 class SpinConstrainTest : public testing::Test
 {
   protected:
-    SpinConstrain<double, psi::DEVICE_CPU>& sc = SpinConstrain<double, psi::DEVICE_CPU>::getScInstance();
+    SpinConstrain<double, base_device::DEVICE_CPU>& sc
+        = SpinConstrain<double, base_device::DEVICE_CPU>::getScInstance();
 };
 
 TEST_F(SpinConstrainTest, TemplatHelpers)

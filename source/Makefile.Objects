@@ -23,6 +23,7 @@ VPATH=./src_global:\
 ./module_base/module_container/ATen/core:\
 ./module_base/module_container/ATen/kernels:\
 ./module_base/module_container/ATen/ops:\
+./module_base/module_device:\
 ./module_base/module_mixing:\
 ./module_md:\
 ./module_basis/module_pw:\
@@ -30,6 +31,7 @@ VPATH=./src_global:\
 ./module_hsolver:\
 ./module_hsolver/kernels:\
 ./module_hsolver/genelpa:\
+./module_hsolver/module_pexsi:\
 ./module_elecstate:\
 ./module_elecstate/kernels:\
 ./module_elecstate/potentials:\
@@ -102,6 +104,7 @@ ${OBJS_VDW}\
 ${OBJS_DFTU}\
 ${OBJS_DELTASPIN}\
 ${OBJS_TENSOR}\
+${OBJS_HSOLVER_PEXSI}\
 
 OBJS_MAIN=main.o\
     driver.o\
@@ -144,10 +147,6 @@ OBJS_BASE=abfs-vector3_order.o\
     ylm.o\
     opt_CG.o\
     opt_DCsrch.o\
-    formatter_fmt.o\
-    formatter_physfmt.o\
-    formatter_table.o\
-    formatter_contextfmt.o\
 	cubic_spline.o\
 	spherical_bessel_transformer.o\
     mixing_data.o\
@@ -155,6 +154,8 @@ OBJS_BASE=abfs-vector3_order.o\
     plain_mixing.o\
     pulay_mixing.o\
     broyden_mixing.o\
+    memory_op.o\
+    device.o\
 
 
 OBJS_CELL=atom_pseudo.o\
@@ -209,9 +210,7 @@ OBJS_ESOLVER=esolver.o\
     esolver_ks.o\
     esolver_fp.o\
     esolver_ks_pw.o\
-    esolver_ks_pw_tool.o\
     esolver_sdft_pw.o\
-    esolver_sdft_pw_tool.o\
     esolver_lj.o\
     esolver_dp.o\
     esolver_of.o\
@@ -222,9 +221,9 @@ OBJS_ESOLVER_LCAO=esolver_ks_lcao.o\
       esolver_ks_lcao_elec.o\
       esolver_ks_lcao_tddft.o\
       esolver_ks_lcao_tmpfunc.o\
+      io_npz.o\
 
 OBJS_GINT=gint.o\
-      gint_gamma.o\
       gint_gamma_env.o\
       gint_gamma_vl.o\
       gint_fvl.o\
@@ -294,15 +293,22 @@ OBJS_HSOLVER=diago_cg.o\
     diago_iter_assist.o\
     math_kernel_op.o\
     dngvd_op.o\
-
+    
 OBJS_HSOLVER_LCAO=hsolver_lcao.o\
-      diago_blas.o\
+      diago_scalapack.o\
       diago_elpa.o\
       elpa_new.o\
       elpa_new_real.o\
       elpa_new_complex.o\
       utils.o\
 
+OBJS_HSOLVER_PEXSI=diago_pexsi.o\
+      pexsi_solver.o\
+      simple_pexsi.o\
+      dist_bcd_matrix.o\
+      dist_ccs_matrix.o\
+      dist_matrix_transformer.o\
+      
 OBJS_MD=fire.o\
     langevin.o\
     md_base.o\
@@ -347,8 +353,6 @@ OBJS_ORBITAL=ORB_atomic.o\
       projgen.o\
 
 OBJS_PSI=psi.o\
-    psi_memory_op.o\
-    device.o\
 
 OBJS_PSI_INITIALIZER=psi_initializer.o\
                      psi_initializer_random.o\
@@ -422,6 +426,7 @@ OBJS_IO=input.o\
     dos_nao.o\
     numerical_descriptor.o\
     numerical_basis.o\
+    numerical_basis_jyjy.o\
     output.o\
     print_info.o\
     read_cube.o\
@@ -444,7 +449,7 @@ OBJS_IO=input.o\
     write_input.o\
     write_cube.o\
     write_rho.o\
-    write_potential.o\
+    write_pot.o\
     write_dipole.o\
     td_current_io.o\
     write_wfc_r.o\
@@ -471,6 +476,7 @@ OBJS_IO_LCAO=cal_r_overlap_R.o\
       read_dm.o\
       unk_overlap_lcao.o\
       read_wfc_nao.o\
+      read_wfc_lcao.o\
       write_wfc_nao.o\
       write_HS_sparse.o\
       single_R_io.o\
@@ -490,25 +496,30 @@ OBJS_LCAO=DM_gamma.o\
       middle_hamilt.o\
       norm_psi.o\
       propagator.o\
+      td_velocity.o\
       upsi.o\
       FORCE_STRESS.o\
-      FORCE_gamma.o\
-      FORCE_gamma_edm.o\
-      FORCE_gamma_tvnl.o\
-      FORCE_gamma_vl.o\
-      FORCE_k.o\
-      foverlap_k.o\
-      ftvnl_dphi_k.o\
-      fvl_dphi_k.o\
-      fvnl_dbeta_k.o\
-      LCAO_gen_fixedH.o\
-      grid_init.o\
+	  FORCE_gamma.o\
+	  FORCE_k.o\
+	  fvl_dphi_gamma.o\
+	  fvl_dphi_k.o\
+	  fedm_gamma.o\
+	  fedm_k.o\
+	  ftvnl_dphi_gamma.o\
+	  ftvnl_dphi_k.o\
+	  fvnl_dbeta_gamma.o\
+	  fvnl_dbeta_k.o\
+	  grid_init.o\
       spar_dh.o\
       spar_exx.o\
       spar_hsr.o\
       spar_st.o\
       spar_u.o\
       LCAO_matrix.o\
+      LCAO_set_fs.o\
+      LCAO_set_st.o\
+      LCAO_nl_mu.o\
+      LCAO_nl_beta.o\
       LCAO_nnr.o\
       center2_orb-orb11.o\
       center2_orb-orb21.o\
@@ -586,6 +597,10 @@ OBJS_SRCPW=H_Ewald_pw.o\
     symmetry_rhog.o\
     wavefunc.o\
     wf_atomic.o\
+    elecond.o\
+    sto_tool.o\
+    sto_elecond.o\
+    sto_dos.o
 
 OBJS_VDW=vdw.o\
     vdwd2_parameters.o\

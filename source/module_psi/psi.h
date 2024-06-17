@@ -1,8 +1,8 @@
 #ifndef PSI_H
 #define PSI_H
 
-#include "module_psi/kernels/memory_op.h"
-#include "module_psi/kernels/types.h"
+#include "module_base/module_device/memory_op.h"
+#include "module_base/module_device/types.h"
 
 #include <tuple>
 
@@ -31,7 +31,8 @@ struct Range
 
 // there is the structure of electric wavefunction coefficient
 // the basic operations defined in the Operator Class
-template <typename T, typename Device = DEVICE_CPU> class Psi
+template <typename T, typename Device = base_device::DEVICE_CPU>
+class Psi
 {
   public:
     // Constructor 1: basic
@@ -119,7 +120,7 @@ template <typename T, typename Device = DEVICE_CPU> class Psi
   private:
     T* psi = nullptr; // avoid using C++ STL
 
-    AbacusDevice_t device = {}; // track the device type (CPU, GPU and SYCL are supported currented)
+    base_device::AbacusDevice_t device = {}; // track the device type (CPU, GPU and SYCL are supported currented)
     Device* ctx = {}; // an context identifier for obtaining the device variable
 
     // dimensions
@@ -142,10 +143,10 @@ template <typename T, typename Device = DEVICE_CPU> class Psi
 
     bool allocate_inside = true;  ///<whether allocate psi inside Psi class
 
-    using set_memory_op = psi::memory::set_memory_op<T, Device>;
-    using delete_memory_op = psi::memory::delete_memory_op<T, Device>;
-    using resize_memory_op = psi::memory::resize_memory_op<T, Device>;
-    using synchronize_memory_op = psi::memory::synchronize_memory_op<T, Device, Device>;
+    using set_memory_op = base_device::memory::set_memory_op<T, Device>;
+    using delete_memory_op = base_device::memory::delete_memory_op<T, Device>;
+    using resize_memory_op = base_device::memory::resize_memory_op<T, Device>;
+    using synchronize_memory_op = base_device::memory::synchronize_memory_op<T, Device, Device>;
 };
 
 } // end of namespace psi

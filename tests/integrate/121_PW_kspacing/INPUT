@@ -7,9 +7,13 @@ ecutwfc                 20
 scf_thr                 1e-07
 scf_nmax                100
 basis_type              pw
+latname                 bco
+
+mixing_type     broyden
+mixing_beta     0.4
 
 smearing_method         gaussian
 smearing_sigma          0.020000
 
-kspacing                1.0
+kspacing                0.6
 pseudo_dir	../../PP_ORB

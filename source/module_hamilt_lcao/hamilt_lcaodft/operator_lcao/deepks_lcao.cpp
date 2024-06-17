@@ -21,8 +21,9 @@ DeePKS<OperatorLCAO<TK, TR>>::DeePKS(Local_Orbital_Charge* loc_in,
     std::vector<TK>* hK_in,
     const UnitCell* ucell_in,
     Grid_Driver* GridD_in,
+    const ORB_gen_tables* uot,
     const int& nks_in,
-    elecstate::DensityMatrix<TK,double>* DM_in) : loc(loc_in), nks(nks_in), ucell(ucell_in), OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in), DM(DM_in)
+    elecstate::DensityMatrix<TK,double>* DM_in) : loc(loc_in), nks(nks_in), ucell(ucell_in), OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in), DM(DM_in), uot_(uot)
 {
     this->cal_type = lcao_deepks;
 #ifdef __DEEPKS
@@ -156,11 +157,8 @@ void DeePKS<OperatorLCAO<double, double>>::contributeHR()
             *this->ucell,
             GlobalC::ORB,
             GlobalC::GridD);
-        GlobalC::ld.cal_descriptor();        
+        GlobalC::ld.cal_descriptor(this->ucell->nat);        
         GlobalC::ld.cal_gedm(this->ucell->nat);
-        //GlobalC::ld.add_v_delta(*this->ucell,
-        //    GlobalC::ORB,
-        //    GlobalC::GridD);
         // recalculate the H_V_delta
         this->H_V_delta->set_zero();
         this->calculate_HR();
@@ -189,15 +187,10 @@ void DeePKS<OperatorLCAO<std::complex<double>, double>>::contributeHR()
         GlobalC::ld.cal_projected_DM_k(this->DM,
             *this->ucell,
             GlobalC::ORB,
-            GlobalC::GridD,
-            this->nks,
-            this->kvec_d);
-        GlobalC::ld.cal_descriptor();
+            GlobalC::GridD);
+        GlobalC::ld.cal_descriptor(this->ucell->nat);
         // calculate dE/dD
         GlobalC::ld.cal_gedm(this->ucell->nat);
-
-        // calculate H_V_deltaR from saved <alpha(0)|psi(R)>
-        //GlobalC::ld.add_v_delta_k(*this->ucell, GlobalC::ORB, GlobalC::GridD, this->LM->ParaV->nnr);
         
         // recalculate the H_V_delta
         if(this->H_V_delta == nullptr)
@@ -230,17 +223,11 @@ void DeePKS<OperatorLCAO<std::complex<double>, std::complex<double>>>::contribut
         GlobalC::ld.cal_projected_DM_k(this->DM,
             *this->ucell,
             GlobalC::ORB,
-            GlobalC::GridD,
-            this->nks,
-            this->kvec_d);
-        GlobalC::ld.cal_descriptor();
+            GlobalC::GridD);
+        GlobalC::ld.cal_descriptor(this->ucell->nat);
         // calculate dE/dD
         GlobalC::ld.cal_gedm(this->ucell->nat);
 
-        // calculate H_V_deltaR from saved <alpha(0)|psi(R)>
-        //GlobalC::ld
-        //    .add_v_delta_k(*this->ucell, GlobalC::ORB, GlobalC::GridD, this->LM->ParaV->nnr);
-        
         // recalculate the H_V_delta
         if(this->H_V_delta == nullptr)
         {
@@ -280,7 +267,6 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::pre_calculate_nlm(const int i
         const ModuleBase::Vector3<double>& tau1 = adjs.adjacent_tau[ad];
         const Atom* atom1 = &ucell->atoms[T1];
 
-        const ORB_gen_tables& uot = ORB_gen_tables::get_const_instance();
         auto all_indexes = paraV->get_indexes_row(iat1);
         auto col_indexes = paraV->get_indexes_col(iat1);
         // insert col_indexes into all_indexes to get universal set with no repeat elements
@@ -307,10 +293,10 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::pre_calculate_nlm(const int i
             int M1 = (m1 % 2 == 0) ? -m1/2 : (m1+1)/2;
 
             ModuleBase::Vector3<double> dtau = tau0 - tau1;
-            uot.two_center_bundle->overlap_orb_alpha->snap(
+            uot_->two_center_bundle->overlap_orb_alpha->snap(
                     T1, L1, N1, M1, 0, dtau * ucell->lat0, 0 /*calc_deri*/, nlm);
 #else
-            uot.snap_psialpha_half(
+            uot_->snap_psialpha_half(
                     orb,
                     nlm, 0, tau1, T1,
                     atom1->iw2l[ iw1 ], // L1
@@ -351,25 +337,46 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
         std::vector<int> trace_alpha_row;
         std::vector<int> trace_alpha_col;
         std::vector<double> gedms;
-        int ib=0;
-        for (int L0 = 0; L0 <= orb.Alpha[0].getLmax();++L0)
+        if(!GlobalV::deepks_equiv)
         {
-            for (int N0 = 0;N0 < orb.Alpha[0].getNchi(L0);++N0)
+            int ib=0;
+            for (int L0 = 0; L0 <= orb.Alpha[0].getLmax();++L0)
             {
-                const int inl = GlobalC::ld.get_inl(T0, I0, L0, N0);
-                const double* pgedm = GlobalC::ld.get_gedms(inl);
-                const int nm = 2*L0+1;
-        
-                for (int m1=0; m1<nm; ++m1) // m1 = 1 for s, 3 for p, 5 for d
+                for (int N0 = 0;N0 < orb.Alpha[0].getNchi(L0);++N0)
                 {
-                    for (int m2=0; m2<nm; ++m2) // m1 = 1 for s, 3 for p, 5 for d
+                    const int inl = GlobalC::ld.get_inl(T0, I0, L0, N0);
+                    const double* pgedm = GlobalC::ld.get_gedms(inl);
+                    const int nm = 2*L0+1;
+            
+                    for (int m1=0; m1<nm; ++m1) // m1 = 1 for s, 3 for p, 5 for d
                     {
-                        trace_alpha_row.push_back(ib+m1);
-                        trace_alpha_col.push_back(ib+m2);
-                        gedms.push_back(pgedm[m1*nm+m2]);
+                        for (int m2=0; m2<nm; ++m2) // m1 = 1 for s, 3 for p, 5 for d
+                        {
+                            trace_alpha_row.push_back(ib+m1);
+                            trace_alpha_col.push_back(ib+m2);
+                            gedms.push_back(pgedm[m1*nm+m2]);
+                        }
                     }
+                    ib+=nm;
                 }
-                ib+=nm;
+            }
+        }
+        else
+        {
+            const double * pgedm = GlobalC::ld.get_gedms(iat0);
+            int nproj = 0;
+            for(int il = 0; il < GlobalC::ld.get_lmaxd() + 1; il++)
+            {
+                nproj += (2 * il + 1) * orb.Alpha[0].getNchi(il);
+            }
+            for(int iproj = 0; iproj < nproj; iproj ++)
+            {
+                for(int jproj = 0; jproj < nproj; jproj ++)
+                {
+                    trace_alpha_row.push_back(iproj);
+                    trace_alpha_col.push_back(jproj);
+                    gedms.push_back(pgedm[iproj*nproj+jproj]);
+                }
             }
         }
         const int trace_alpha_size = trace_alpha_row.size();

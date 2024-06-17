@@ -718,6 +718,10 @@ void input_parameters_set(std::map<std::string, InputParameter> input_parameters
     {
         INPUT.pw_diag_ndim = *static_cast<int*>(input_parameters["pw_diag_ndim"].get());
     }
+    else if (input_parameters.count("diago_full_acc") != 0)
+    {
+        INPUT.diago_full_acc = *static_cast<int*>(input_parameters["diago_full_acc"].get());
+    }
     else if (input_parameters.count("pw_diag_thr") != 0)
     {
         INPUT.pw_diag_thr = *static_cast<double*>(input_parameters["pw_diag_thr"].get());
@@ -884,7 +888,7 @@ void input_parameters_set(std::map<std::string, InputParameter> input_parameters
     }
     else if (input_parameters.count("out_chg") != 0)
     {
-        INPUT.out_chg = *static_cast<bool*>(input_parameters["out_chg"].get());
+        INPUT.out_chg = *static_cast<int*>(input_parameters["out_chg"].get());
     }
     else if (input_parameters.count("out_dm") != 0)
     {
@@ -925,6 +929,18 @@ void input_parameters_set(std::map<std::string, InputParameter> input_parameters
     else if (input_parameters.count("out_mat_xc") != 0)
     {
         INPUT.out_mat_xc = *static_cast<bool*>(input_parameters["out_mat_xc"].get());
+    }
+    else if (input_parameters.count("out_hr_npz") != 0)
+    {
+        INPUT.out_hr_npz = *static_cast<bool*>(input_parameters["out_hr_npz"].get());
+    }
+    else if (input_parameters.count("out_dm_npz") != 0)
+    {
+        INPUT.out_dm_npz = *static_cast<bool*>(input_parameters["out_dm_npz"].get());
+    }
+    else if (input_parameters.count("dm_to_rho") != 0)
+    {
+        INPUT.dm_to_rho = *static_cast<bool*>(input_parameters["dm_to_rho"].get());
     }
     else if (input_parameters.count("cal_syns") != 0)
     {
@@ -1271,6 +1287,10 @@ void input_parameters_set(std::map<std::string, InputParameter> input_parameters
     {
         INPUT.exx_opt_orb_tolerence = *static_cast<double*>(input_parameters["exx_opt_orb_tolerence"].get());
     }
+    else if (input_parameters.count("rpa_ccp_rmesh_times") != 0)
+    {
+        INPUT.rpa_ccp_rmesh_times = *static_cast<double*>(input_parameters["rpa_ccp_rmesh_times"].get());
+    }
     else if (input_parameters.count("td_force_dt") != 0)
     {
         INPUT.td_force_dt = *static_cast<double*>(input_parameters["td_force_dt"].get());
@@ -1508,6 +1528,10 @@ void input_parameters_set(std::map<std::string, InputParameter> input_parameters
     else if (input_parameters.count("deepks_scf") != 0)
     {
         INPUT.deepks_scf = *static_cast<bool*>(input_parameters["deepks_scf"].get());
+    }
+    else if (input_parameters.count("deepks_equiv") != 0)
+    {
+        INPUT.deepks_equiv = *static_cast<bool*>(input_parameters["deepks_equiv"].get());
     }
     else if (input_parameters.count("deepks_bandgap") != 0)
     {

@@ -15,6 +15,8 @@ if [[ ! -f scf.output ]] ||
    [[ ! -f get_wf.output ]] || 
    [[ ! -f OUT.ABACUS/running_scf.log ]] ||
    [[ ! -f OUT.ABACUS/running_get_wf.log ]] ||
+   [[ ! -f OUT.ABACUS/WFC_NAO_K1.txt ]] ||
+   [[ ! -f OUT.ABACUS/WFC_NAO_K36.txt ]] ||
    [[ ! ( "$(tail -1 OUT.ABACUS/running_scf.log)" == " Total  Time  :"* ) ]] ||
    [[ ! ( "$(tail -1 OUT.ABACUS/running_get_wf.log)" == " Total  Time  :"* ) ]] 
 then

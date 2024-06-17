@@ -118,10 +118,10 @@ TEST_F(TimerTest, PrintAll)
 	EXPECT_THAT(output,testing::HasSubstr("TIME STATISTICS"));
 	EXPECT_THAT(output,testing::HasSubstr("CLASS_NAME"));
 	EXPECT_THAT(output,testing::HasSubstr("NAME"));
-	EXPECT_THAT(output,testing::HasSubstr("TIME(Sec)"));
+	EXPECT_THAT(output,testing::HasSubstr("TIME/s"));
 	EXPECT_THAT(output,testing::HasSubstr("CALLS"));
-	EXPECT_THAT(output,testing::HasSubstr("AVG(Sec)"));
-	EXPECT_THAT(output,testing::HasSubstr("PER(%)"));
+	EXPECT_THAT(output,testing::HasSubstr("AVG/s"));
+	EXPECT_THAT(output,testing::HasSubstr("PER/%"));
 	// check output in file
 	ifs.open("tmp");
 	std::cout << "Capture contents line by line from output file: \n" << std::endl;
@@ -131,10 +131,10 @@ TEST_F(TimerTest, PrintAll)
 	getline(ifs,output);
 	EXPECT_THAT(output,testing::HasSubstr("CLASS_NAME"));
 	EXPECT_THAT(output,testing::HasSubstr("NAME"));
-	EXPECT_THAT(output,testing::HasSubstr("TIME(Sec)"));
+	EXPECT_THAT(output,testing::HasSubstr("TIME/s"));
 	EXPECT_THAT(output,testing::HasSubstr("CALLS"));
-	EXPECT_THAT(output,testing::HasSubstr("AVG(Sec)"));
-	EXPECT_THAT(output,testing::HasSubstr("PER(%)"));
+	EXPECT_THAT(output,testing::HasSubstr("AVG/s"));
+	EXPECT_THAT(output,testing::HasSubstr("PER/%"));
 	ifs.close();
 	remove("time.json");
 }
@@ -162,10 +162,10 @@ TEST_F(TimerTest, Finish)
 	EXPECT_THAT(output,testing::HasSubstr("TIME STATISTICS"));
 	EXPECT_THAT(output,testing::HasSubstr("CLASS_NAME"));
 	EXPECT_THAT(output,testing::HasSubstr("NAME"));
-	EXPECT_THAT(output,testing::HasSubstr("TIME(Sec)"));
+	EXPECT_THAT(output,testing::HasSubstr("TIME/s"));
 	EXPECT_THAT(output,testing::HasSubstr("CALLS"));
-	EXPECT_THAT(output,testing::HasSubstr("AVG(Sec)"));
-	EXPECT_THAT(output,testing::HasSubstr("PER(%)"));
+	EXPECT_THAT(output,testing::HasSubstr("AVG/s"));
+	EXPECT_THAT(output,testing::HasSubstr("PER/%"));
 	// check output in file
 	ifs.open("tmp");
 	std::cout << "Capture contents line by line from output file: \n" << std::endl;
@@ -175,10 +175,10 @@ TEST_F(TimerTest, Finish)
 	getline(ifs,output);
 	EXPECT_THAT(output,testing::HasSubstr("CLASS_NAME"));
 	EXPECT_THAT(output,testing::HasSubstr("NAME"));
-	EXPECT_THAT(output,testing::HasSubstr("TIME(Sec)"));
+	EXPECT_THAT(output,testing::HasSubstr("TIME/s"));
 	EXPECT_THAT(output,testing::HasSubstr("CALLS"));
-	EXPECT_THAT(output,testing::HasSubstr("AVG(Sec)"));
-	EXPECT_THAT(output,testing::HasSubstr("PER(%)"));
+	EXPECT_THAT(output,testing::HasSubstr("AVG/s"));
+	EXPECT_THAT(output,testing::HasSubstr("PER/%"));
 	ifs.close();
 }
 

@@ -27,8 +27,8 @@ void Output_DM1::write(void)
     }
 
     // get DMK from DM
-    loc.dm_k.resize(_kv.nks);
-    for (int ik = 0; ik < _kv.nks; ++ik)
+    loc.dm_k.resize(_kv.get_nks());
+    for (int ik = 0; ik < _kv.get_nks(); ++ik)
     {
         loc.set_dm_k(ik,_DM->get_DMK_pointer(ik));
     }

@@ -63,13 +63,18 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>
     const K_Vectors& kv)
 {
 	Mix_DMk_2D mix_DMk_2D;
-	mix_DMk_2D.set_nks(kv.nks, GlobalV::GAMMA_ONLY_LOCAL);
+	mix_DMk_2D.set_nks(kv.get_nks(), GlobalV::GAMMA_ONLY_LOCAL);
 	mix_DMk_2D.set_mixing(nullptr);
 	mix_DMk_2D.mix(dm.get_DMK_vector(), true);
 	const std::vector<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>>
 		Ds = GlobalV::GAMMA_ONLY_LOCAL
 			? RI_2D_Comm::split_m2D_ktoR<Tdata>(kv, mix_DMk_2D.get_DMk_gamma_out(), *dm.get_paraV_pointer())
 			: RI_2D_Comm::split_m2D_ktoR<Tdata>(kv, mix_DMk_2D.get_DMk_k_out(), *dm.get_paraV_pointer());
+
+    // set parameters for bare Coulomb potential
+    GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hf;
+    GlobalC::exx_info.info_global.hybrid_alpha = 1;
+    GlobalC::exx_info.info_ri.ccp_rmesh_times = INPUT.rpa_ccp_rmesh_times;
 
     exx_lri_rpa.init(mpi_comm_in, kv);
     exx_lri_rpa.cal_exx_ions();
@@ -108,7 +113,7 @@ void RPA_LRI<T, Tdata>::out_eigen_vector(const Parallel_Orbitals& parav, const p
 
     ModuleBase::TITLE("DFT_RPA_interface", "out_eigen_vector");
 
-    const int nks_tot = GlobalV::NSPIN == 2 ? p_kv->nks / 2 : p_kv->nks;
+    const int nks_tot = GlobalV::NSPIN == 2 ? p_kv->get_nks() / 2 : p_kv->get_nks();
     const int npsin_tmp = GlobalV::NSPIN == 2 ? 2 : 1;
     const std::complex<double> zero(0.0, 0.0);
 
@@ -164,7 +169,7 @@ template <typename T, typename Tdata> void RPA_LRI<T, Tdata>::out_struc()
         return;
     ModuleBase::TITLE("DFT_RPA_interface", "out_struc");
     double TWOPI_Bohr2A = ModuleBase::TWO_PI * ModuleBase::BOHR_TO_A;
-    const int nks_tot = GlobalV::NSPIN == 2 ? (int)p_kv->nks / 2 : p_kv->nks;
+    const int nks_tot = GlobalV::NSPIN == 2 ? (int)p_kv->get_nks() / 2 : p_kv->get_nks();
     ModuleBase::Matrix3 lat = GlobalC::ucell.latvec / ModuleBase::BOHR_TO_A;
     ModuleBase::Matrix3 G = GlobalC::ucell.G * TWOPI_Bohr2A;
     std::stringstream ss;
@@ -196,7 +201,7 @@ template <typename T, typename Tdata> void RPA_LRI<T, Tdata>::out_bands(const el
     ModuleBase::TITLE("DFT_RPA_interface", "out_bands");
     if (GlobalV::MY_RANK != 0)
         return;
-    const int nks_tot = GlobalV::NSPIN == 2 ? (int)p_kv->nks / 2 : p_kv->nks;
+    const int nks_tot = GlobalV::NSPIN == 2 ? (int)p_kv->get_nks() / 2 : p_kv->get_nks();
     const int nspin_tmp = GlobalV::NSPIN == 2 ? 2 : 1;
     std::stringstream ss;
     ss << "band_out";
@@ -264,7 +269,7 @@ template <typename T, typename Tdata> void RPA_LRI<T, Tdata>::out_coulomb_k()
         mu_shift[I] = all_mu;
         all_mu += exx_lri_rpa.cv.get_index_abfs_size(GlobalC::ucell.iat2it[I]);
     }
-    const int nks_tot = GlobalV::NSPIN == 2 ? (int)p_kv->nks / 2 : p_kv->nks;
+    const int nks_tot = GlobalV::NSPIN == 2 ? (int)p_kv->get_nks() / 2 : p_kv->get_nks();
     std::stringstream ss;
     ss << "coulomb_mat_" << GlobalV::MY_RANK << ".txt";
 

@@ -276,6 +276,7 @@ void Input::Default(void)
     pw_diag_nmax = 50;
     diago_cg_prec = 1; // mohan add 2012-03-31
     pw_diag_ndim = 4;
+    diago_full_acc = false;
     pw_diag_thr = 1.0e-2;
     nb2d = 0;
     nurse = 0;
@@ -337,6 +338,7 @@ void Input::Default(void)
     deepks_scf = 0;
     deepks_bandgap = 0;
     deepks_out_unittest = 0;
+    deepks_equiv = 0;
 
     out_pot = 0;
     out_wfc_pw = 0;
@@ -346,6 +348,9 @@ void Input::Default(void)
     out_proj_band = 0;
     out_mat_hs = {0, 8};
     out_mat_xc = 0;
+    out_hr_npz = 0;
+    out_dm_npz = 0;
+    dm_to_rho = 0;
     cal_syns = 0;
     dmax = 0.01;
     out_mat_hs2 = 0; // LiuXh add 2019-07-15
@@ -371,6 +376,7 @@ void Input::Default(void)
     lcao_dr = 0.01;
     lcao_rmax = 30; // (a.u.)
     onsite_radius = 0; // (a.u.)
+    nstream=4;
     //----------------------------------------------------------
     // efield and dipole correction     Yu Liu add 2022-05-18
     //----------------------------------------------------------
@@ -436,6 +442,7 @@ void Input::Default(void)
     exx_cauchy_stress_threshold = 1E-7;
     exx_ccp_threshold = 1E-8;
     exx_ccp_rmesh_times = "default";
+    rpa_ccp_rmesh_times = 10.0;
 
     exx_distribute_type = "htime";
 
@@ -463,6 +470,8 @@ void Input::Default(void)
     out_dipole = false;
     out_efield = false;
     out_current = false;
+    out_vecpot = false;
+    init_vecpot_file = false;
 
     td_print_eij = -1.0;
     td_edm = 0;
@@ -644,6 +653,34 @@ void Input::Default(void)
     qo_thr = 1e-6;
     qo_screening_coeff = {};
 
+    //==========================================================
+    // variables for PEXSI
+    //==========================================================
+    pexsi_npole = 40;
+    pexsi_inertia = true;
+    pexsi_nmax = 80;
+    // pexsi_symbolic = 1;
+    pexsi_comm = true;
+    pexsi_storage = true;
+    pexsi_ordering = 0;
+    pexsi_row_ordering = 1;
+    pexsi_nproc = 1;
+    pexsi_symm = true;
+    pexsi_trans = false;
+    pexsi_method = 1;
+    pexsi_nproc_pole = 1;
+    // pexsi_spin = 2;
+    pexsi_temp = 0.015;
+    pexsi_gap = 0;
+    pexsi_delta_e = 20.0;
+    pexsi_mu_lower = -10;
+    pexsi_mu_upper = 10;
+    pexsi_mu = 0.0;
+    pexsi_mu_thr = 0.05;
+    pexsi_mu_expand = 0.3;
+    pexsi_mu_guard = 0.2;
+    pexsi_elec_thr = 0.001;
+    pexsi_zero_thr = 1e-10;
     return;
 }
 
@@ -1168,6 +1205,10 @@ bool Input::Read(const std::string& fn)
         {
             read_value(ifs, pw_diag_ndim);
         }
+        else if (strcmp("diago_full_acc", word) == 0)
+        {
+            read_value(ifs, diago_full_acc);
+        }
         else if (strcmp("pw_diag_thr", word) == 0)
         {
             read_value(ifs, pw_diag_thr);
@@ -1352,7 +1393,7 @@ bool Input::Read(const std::string& fn)
         }
         else if (strcmp("out_chg", word) == 0)
         {
-            read_bool(ifs, out_chg);
+            read_value(ifs, out_chg);
         }
         else if (strcmp("out_dm", word) == 0)
         {
@@ -1373,6 +1414,10 @@ bool Input::Read(const std::string& fn)
         else if (strcmp("deepks_scf", word) == 0) // caoyu added 2020-11-24, mohan modified 2021-01-03
         {
             read_bool(ifs, deepks_scf);
+        }
+        else if (strcmp("deepks_equiv", word) == 0)
+        {
+            read_bool(ifs, deepks_equiv);
         }
         else if (strcmp("deepks_bandgap", word) == 0) // caoyu added 2020-11-24, mohan modified 2021-01-03
         {
@@ -1433,6 +1478,18 @@ bool Input::Read(const std::string& fn)
         else if (strcmp("out_mat_xc", word) == 0)
         {
             read_bool(ifs, out_mat_xc);
+        }
+        else if (strcmp("out_hr_npz", word) == 0)
+        {
+            read_bool(ifs, out_hr_npz);
+        }
+        else if (strcmp("out_dm_npz", word) == 0)
+        {
+            read_bool(ifs, out_dm_npz);
+        }
+        else if (strcmp("dm_to_rho", word) == 0)
+        {
+            read_bool(ifs, dm_to_rho);
         }
         else if (strcmp("out_interval", word) == 0)
         {
@@ -1513,6 +1570,10 @@ bool Input::Read(const std::string& fn)
         {
             read_value(ifs, onsite_radius);
         }
+	    else if (strcmp("num_stream",word)==0)
+		{
+	    	read_value(ifs,nstream);
+		}
         //----------------------------------------------------------
         // Molecule Dynamics
         // Yu Liu add 2021-07-30
@@ -1753,6 +1814,14 @@ bool Input::Read(const std::string& fn)
         else if (strcmp("out_efield", word) == 0)
         {
             read_value(ifs, out_efield);
+        }
+        else if (strcmp("out_vecpot", word) == 0)
+        {
+            read_value(ifs, out_vecpot);
+        }
+        else if (strcmp("init_vecpot_file", word) == 0)
+        {
+            read_value(ifs, init_vecpot_file);
         }
         else if (strcmp("td_print_eij", word) == 0)
         {
@@ -2332,6 +2401,9 @@ bool Input::Read(const std::string& fn)
         {
             read_value(ifs, sc_file);
         }
+        //----------------------------------------------------------------------------------
+        //    Quasiatomic orbital
+        //----------------------------------------------------------------------------------
         else if (strcmp("qo_switch", word) == 0){
             read_bool(ifs, qo_switch);
         }
@@ -2346,6 +2418,106 @@ bool Input::Read(const std::string& fn)
         }
         else if (strcmp("qo_screening_coeff", word) == 0){
             read_value2stdvector(ifs, qo_screening_coeff);
+        }
+        //----------------------------------------------------------------------------------
+        //    PEXSI
+        //----------------------------------------------------------------------------------
+        else if (strcmp("pexsi_npole", word) == 0){
+            read_value(ifs, pexsi_npole);
+        }
+        else if (strcmp("pexsi_inertia", word) == 0){
+            read_value(ifs, pexsi_inertia);
+        }
+        else if (strcmp("pexsi_nmax", word) == 0) {
+            read_value(ifs, pexsi_nmax);
+        }
+        // else if (strcmp("pexsi_symbolic", word) == 0)
+        // {
+        //     read_value(ifs, pexsi_symbolic);
+        // }
+        else if (strcmp("pexsi_comm", word) == 0)
+        {
+            read_value(ifs, pexsi_comm);
+        }
+        else if (strcmp("pexsi_storage", word) == 0)
+        {
+            read_value(ifs, pexsi_storage);
+        }
+        else if (strcmp("pexsi_ordering", word) == 0)
+        {
+            read_value(ifs, pexsi_ordering);
+        }
+        else if (strcmp("pexsi_row_ordering", word) == 0)
+        {
+            read_value(ifs, pexsi_row_ordering);
+        }
+        else if (strcmp("pexsi_nproc", word) == 0)
+        {
+            read_value(ifs, pexsi_nproc);
+        }
+        else if (strcmp("pexsi_symm", word) == 0)
+        {
+            read_value(ifs, pexsi_symm);
+        }
+        else if (strcmp("pexsi_trans", word) == 0)
+        {
+            read_value(ifs, pexsi_trans);
+        }
+        else if (strcmp("pexsi_method", word) == 0)
+        {
+            read_value(ifs, pexsi_method);
+        }
+        else if (strcmp("pexsi_nproc_pole", word) == 0)
+        {
+            read_value(ifs, pexsi_nproc_pole);
+        }
+        // else if (strcmp("pexsi_spin", word) == 0)
+        // {
+        //     read_value(ifs, pexsi_spin);
+        // }
+        else if (strcmp("pexsi_temp", word) == 0)
+        {
+            read_value(ifs, pexsi_temp);
+        }
+        else if (strcmp("pexsi_gap", word) == 0)
+        {
+            read_value(ifs, pexsi_gap);
+        }
+        else if (strcmp("pexsi_delta_e", word) == 0)
+        {
+            read_value(ifs, pexsi_delta_e);
+        }
+        else if (strcmp("pexsi_mu_lower", word) == 0)
+        {
+            read_value(ifs, pexsi_mu_lower);
+        }
+        else if (strcmp("pexsi_mu_upper", word) == 0)
+        {
+            read_value(ifs, pexsi_mu_upper);
+        }
+        else if (strcmp("pexsi_mu", word) == 0)
+        {
+            read_value(ifs, pexsi_mu);
+        }
+        else if (strcmp("pexsi_mu_thr", word) == 0)
+        {
+            read_value(ifs, pexsi_mu_thr);
+        }
+        else if (strcmp("pexsi_mu_expand", word) == 0)
+        {
+            read_value(ifs, pexsi_mu_expand);
+        }
+        else if (strcmp("pexsi_mu_guard", word) == 0)
+        {
+            read_value(ifs, pexsi_mu_guard);
+        }
+        else if (strcmp("pexsi_elec_thr", word) == 0)
+        {
+            read_value(ifs, pexsi_elec_thr);
+        }
+        else if (strcmp("pexsi_zero_thr", word) == 0)
+        {
+            read_value(ifs, pexsi_zero_thr);
         }
         else
         {
@@ -2636,10 +2808,20 @@ bool Input::Read(const std::string& fn)
             gamma_only_local = 0;
         }
     }
-    if ((out_mat_r || out_mat_hs2 || out_mat_t || out_mat_dh) && gamma_only_local)
+    if ((out_mat_r || out_mat_hs2 || out_mat_t || out_mat_dh || out_hr_npz || out_dm_npz || dm_to_rho) && gamma_only_local)
     {
         ModuleBase::WARNING_QUIT("Input",
-                                 "printing of H(R)/S(R)/dH(R)/T(R) is not available for gamma only calculations");
+                                 "printing of H(R)/S(R)/dH(R)/T(R)/DM(R) is not available for gamma only calculations");
+    }
+    if(dm_to_rho && GlobalV::NPROC > 1)
+    {
+        ModuleBase::WARNING_QUIT("Input", "dm_to_rho is not available for parallel calculations");
+    }
+    if(out_hr_npz || out_dm_npz || dm_to_rho)
+    {
+#ifndef __USECNPY
+        ModuleBase::WARNING_QUIT("Input", "to write in npz format, please recompile with -DENABLE_CNPY=1");
+#endif
     }
     if (out_mat_dh && nspin == 4)
     {
@@ -2778,10 +2960,12 @@ void Input::Default_2(void) // jiyy add 2019-08-04
     {
         std::string dft_functional_lower = dft_functional;
         std::transform(dft_functional.begin(), dft_functional.end(), dft_functional_lower.begin(), tolower);
-        if (dft_functional_lower == "hf" || rpa)
+        if (dft_functional_lower == "hf")
             exx_hybrid_alpha = "1";
         else if (dft_functional_lower == "pbe0" || dft_functional_lower == "hse" || dft_functional_lower == "scan0")
             exx_hybrid_alpha = "0.25";
+        else    // no exx in scf, but will change to non-zero in postprocess like rpa
+            exx_hybrid_alpha = "0";
     }
     if (exx_real_number == "default")
     {
@@ -2798,6 +2982,8 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             exx_ccp_rmesh_times = "5";
         else if (dft_functional_lower == "hse")
             exx_ccp_rmesh_times = "1.5";
+        else    // no exx in scf
+            exx_ccp_rmesh_times = "1";
     }
     if (symmetry == "default")
     { // deal with no-forced default value
@@ -3022,6 +3208,13 @@ void Input::Default_2(void) // jiyy add 2019-08-04
     {
         if (ks_solver == "default")
         {
+            if(device == "gpu")
+            {
+                ks_solver = "cusolver";
+                ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "cusolver");
+            }
+            else
+            {
 #ifdef __ELPA
             ks_solver = "genelpa";
             ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "genelpa");
@@ -3029,6 +3222,7 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             ks_solver = "scalapack_gvx";
             ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "scalapack_gvx");
 #endif
+            }
         }
         if (lcao_ecut == 0)
         {
@@ -3202,6 +3396,11 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             }
         }
     }
+
+    if (efield_flag)
+    {
+        symmetry = "0";
+    }
 }
 #ifdef __MPI
 void Input::Bcast()
@@ -3276,6 +3475,7 @@ void Input::Bcast()
 
     Parallel_Common::bcast_string(basis_type); // xiaohui add 2013-09-01
     Parallel_Common::bcast_string(ks_solver);  // xiaohui add 2013-09-01
+    Parallel_Common::bcast_int(nstream);
     Parallel_Common::bcast_double(search_radius);
     Parallel_Common::bcast_bool(search_pbc);
     Parallel_Common::bcast_double(search_radius);
@@ -3335,6 +3535,7 @@ void Input::Bcast()
     Parallel_Common::bcast_int(pw_diag_nmax);
     Parallel_Common::bcast_int(diago_cg_prec);
     Parallel_Common::bcast_int(pw_diag_ndim);
+    Parallel_Common::bcast_bool(diago_full_acc);
     Parallel_Common::bcast_double(pw_diag_thr);
     Parallel_Common::bcast_int(nb2d);
     Parallel_Common::bcast_int(nurse);
@@ -3382,7 +3583,7 @@ void Input::Bcast()
     Parallel_Common::bcast_string(chg_extrap); // xiaohui modify 2015-02-01
     Parallel_Common::bcast_int(out_freq_elec);
     Parallel_Common::bcast_int(out_freq_ion);
-    Parallel_Common::bcast_bool(out_chg);
+    Parallel_Common::bcast_int(out_chg);
     Parallel_Common::bcast_bool(out_dm);
     Parallel_Common::bcast_bool(out_dm1);
     Parallel_Common::bcast_bool(out_bandgap); // for bandgap printing
@@ -3392,6 +3593,7 @@ void Input::Bcast()
     Parallel_Common::bcast_bool(deepks_bandgap);
     Parallel_Common::bcast_bool(deepks_out_unittest);
     Parallel_Common::bcast_string(deepks_model);
+    Parallel_Common::bcast_bool(deepks_equiv);
 
     Parallel_Common::bcast_int(out_pot);
     Parallel_Common::bcast_int(out_wfc_pw);
@@ -3406,6 +3608,9 @@ void Input::Bcast()
     Parallel_Common::bcast_bool(out_mat_t);
     Parallel_Common::bcast_bool(out_mat_dh);
     Parallel_Common::bcast_bool(out_mat_xc);
+    Parallel_Common::bcast_bool(out_hr_npz);
+    Parallel_Common::bcast_bool(out_dm_npz);
+    Parallel_Common::bcast_bool(dm_to_rho);
     Parallel_Common::bcast_bool(out_mat_r); // jingan add 2019-8-14
     Parallel_Common::bcast_int(out_wfc_lcao);
     Parallel_Common::bcast_bool(out_alllog);
@@ -3557,6 +3762,8 @@ void Input::Bcast()
     Parallel_Common::bcast_bool(out_dipole);
     Parallel_Common::bcast_bool(out_efield);
     Parallel_Common::bcast_bool(out_current);
+    Parallel_Common::bcast_bool(out_vecpot);
+    Parallel_Common::bcast_bool(init_vecpot_file);
     Parallel_Common::bcast_double(td_print_eij);
     Parallel_Common::bcast_int(td_edm);
     Parallel_Common::bcast_bool(test_skip_ewald);
@@ -3701,6 +3908,34 @@ void Input::Bcast()
     Parallel_Common::bcast_bool(qo_switch);
     Parallel_Common::bcast_string(qo_basis);
     Parallel_Common::bcast_double(qo_thr);
+    //==========================================================
+    // PEXSI
+    //==========================================================
+    Parallel_Common::bcast_int(pexsi_npole);
+    Parallel_Common::bcast_bool(pexsi_inertia);
+    Parallel_Common::bcast_int(pexsi_nmax);
+    // Parallel_Common::bcast_int(pexsi_symbolic);
+    Parallel_Common::bcast_bool(pexsi_comm);
+    Parallel_Common::bcast_bool(pexsi_storage);
+    Parallel_Common::bcast_int(pexsi_ordering);
+    Parallel_Common::bcast_int(pexsi_row_ordering);
+    Parallel_Common::bcast_int(pexsi_nproc);
+    Parallel_Common::bcast_bool(pexsi_symm);
+    Parallel_Common::bcast_bool(pexsi_trans);
+    Parallel_Common::bcast_int(pexsi_method);
+    Parallel_Common::bcast_int(pexsi_nproc_pole);
+    // Parallel_Common::bcast_double(pexsi_spin);
+    Parallel_Common::bcast_double(pexsi_temp);
+    Parallel_Common::bcast_double(pexsi_gap);
+    Parallel_Common::bcast_double(pexsi_delta_e);
+    Parallel_Common::bcast_double(pexsi_mu_lower);
+    Parallel_Common::bcast_double(pexsi_mu_upper);
+    Parallel_Common::bcast_double(pexsi_mu);
+    Parallel_Common::bcast_double(pexsi_mu_thr);
+    Parallel_Common::bcast_double(pexsi_mu_expand);
+    Parallel_Common::bcast_double(pexsi_mu_guard);
+    Parallel_Common::bcast_double(pexsi_elec_thr);
+    Parallel_Common::bcast_double(pexsi_zero_thr);
     /* broadcasting std::vector is sometime a annorying task... */
     if (ntype != 0) /* ntype has been broadcasted before */
     {
@@ -3873,13 +4108,6 @@ void Input::Check(void)
         }
     }
 
-    if (chg_extrap == "dm" && basis_type == "pw") // xiaohui add 2013-09-01, xiaohui modify 2015-02-01
-    {
-        ModuleBase::WARNING_QUIT(
-            "Input",
-            "wrong 'chg_extrap=dm' is only available for local orbitals."); // xiaohui modify 2015-02-01
-    }
-
     if ((init_wfc != "atomic") && (init_wfc != "random") && (init_wfc != "atomic+random") && (init_wfc != "nao")
         && (init_wfc != "nao+random") && (init_wfc != "file"))
     {
@@ -3920,6 +4148,10 @@ void Input::Check(void)
         else if (ks_solver == "lapack")
         {
             ModuleBase::WARNING_QUIT("Input", "lapack can not be used with plane wave basis.");
+        }
+        else if (ks_solver == "pexsi")
+        {
+            ModuleBase::WARNING_QUIT("Input", "pexsi can not be used with plane wave basis.");
         }
         else if (ks_solver != "default" && 
                  ks_solver != "cg" && 
@@ -3993,6 +4225,17 @@ void Input::Check(void)
 #ifndef __MPI
             ModuleBase::WARNING_QUIT("Input", "Cusolver can not be used for series version.");
 #endif
+        }
+        else if (ks_solver == "pexsi")
+        {
+#ifdef __PEXSI
+            GlobalV::ofs_warning << " It's ok to use pexsi." << std::endl;
+#else
+            ModuleBase::WARNING_QUIT("Input",
+                "Can not use PEXSI if abacus is not compiled with PEXSI. Please change ks_solver to scalapack_gvx.");
+#endif
+
+
         }
         else if (ks_solver != "default")
         {
@@ -4123,6 +4366,13 @@ void Input::Check(void)
             ModuleBase::WARNING_QUIT("INPUT", "exx_opt_orb_tolerence must >=0");
         }
     }
+    if (rpa)
+    {
+        if (rpa_ccp_rmesh_times < 1)
+        {
+            ModuleBase::WARNING_QUIT("INPUT", "must rpa_ccp_rmesh_times >= 1");
+        }
+    }
 
     if (berry_phase)
     {
@@ -4215,6 +4465,13 @@ void Input::Check(void)
         }
     }
 
+    if (sc_mag_switch)
+    {
+        std::stringstream ss;
+        ss << "This feature is not stable yet and might lead to erroneous results.\n"
+           << " Please wait for the official release version.";
+        ModuleBase::WARNING_QUIT("Input", ss.str());
+    }
     // Deltaspin variables checking
     if (sc_mag_switch)
     {

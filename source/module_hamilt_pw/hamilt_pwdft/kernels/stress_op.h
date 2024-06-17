@@ -116,29 +116,30 @@ struct cal_stress_mgga_op {
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 template <typename FPTYPE>
-struct cal_dbecp_noevc_nl_op<FPTYPE, psi::DEVICE_GPU> {
-    void operator() (
-        const psi::DEVICE_GPU *ctx,
-        const int &ipol,
-        const int &jpol,
-        const int &nkb,
-        const int &npw,
-        const int &npwx,
-        const int &ik,
-        const FPTYPE &tpiba,
-        const FPTYPE *gcar,
-        const FPTYPE *kvec_c,
-        std::complex<FPTYPE> *vkbi,
-        std::complex<FPTYPE> *vkbj,
-        std::complex<FPTYPE> *vkb,
-        std::complex<FPTYPE> *vkb1,
-        std::complex<FPTYPE> *vkb2,
-        std::complex<FPTYPE> *dbecp_noevc);
+struct cal_dbecp_noevc_nl_op<FPTYPE, base_device::DEVICE_GPU>
+{
+    void operator()(const base_device::DEVICE_GPU* ctx,
+                    const int& ipol,
+                    const int& jpol,
+                    const int& nkb,
+                    const int& npw,
+                    const int& npwx,
+                    const int& ik,
+                    const FPTYPE& tpiba,
+                    const FPTYPE* gcar,
+                    const FPTYPE* kvec_c,
+                    std::complex<FPTYPE>* vkbi,
+                    std::complex<FPTYPE>* vkbj,
+                    std::complex<FPTYPE>* vkb,
+                    std::complex<FPTYPE>* vkb1,
+                    std::complex<FPTYPE>* vkb2,
+                    std::complex<FPTYPE>* dbecp_noevc);
 };
 
 template <typename FPTYPE>
-struct cal_stress_nl_op<FPTYPE, psi::DEVICE_GPU> {
-    void operator()(const psi::DEVICE_GPU* ctx,
+struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_GPU>
+{
+    void operator()(const base_device::DEVICE_GPU* ctx,
                     const bool& nondiagonal,
                     const int& ipol,
                     const int& jpol,

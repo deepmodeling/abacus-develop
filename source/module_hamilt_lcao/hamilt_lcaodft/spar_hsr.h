@@ -31,6 +31,14 @@ namespace sparse_format
 			std::map<Abfs::Vector3_Order<int>, 
 			std::map<size_t, std::map<size_t, std::complex<double>>>>& target);
 
+	void cal_HContainer_td(
+            const Parallel_Orbitals &pv,
+			const int &current_spin, 
+			const double &sparse_threshold, 
+			const hamilt::HContainer<double>& hR, 
+			std::map<Abfs::Vector3_Order<int>, 
+			std::map<size_t, std::map<size_t, std::complex<double>>>>& target);
+
 	void clear_zero_elements(
 			LCAO_Matrix &lm,
 			const int &current_spin, 

@@ -1,6 +1,7 @@
 #ifndef ELECSTATELCAO_H
 #define ELECSTATELCAO_H
 
+#include <vector>
 #include "elecstate.h"
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
@@ -15,13 +16,23 @@ class ElecStateLCAO : public ElecState
 {
   public:
     ElecStateLCAO(){} // will be called by ElecStateLCAO_TDDFT
+    /*
+    Note: on the removal of LOWF
+    The entire instance of Local_Orbital_wfc is not really necessary, because
+    this class only need it to do 2dbcd wavefunction gathering. Therefore, 
+    what is critical is the 2dbcd handle which stores information about the
+    wavefunction, and another free function to do the 2dbcd gathering.
+
+    A future work would be replace the Local_Orbital_wfc with a 2dbcd handle.
+    A free gathering function will also be needed.
+    */
     ElecStateLCAO(Charge* chg_in ,
                   const K_Vectors* klist_in ,
                   int nks_in,
                   Local_Orbital_Charge* loc_in ,
                   Gint_Gamma* gint_gamma_in,  //mohan add 2024-04-01
                   Gint_k* gint_k_in, //mohan add 2024-04-01
-                  Local_Orbital_wfc* lowf_in ,
+                  Local_Orbital_wfc* lowf_in,
                   ModulePW::PW_Basis* rhopw_in ,
                   ModulePW::PW_Basis_Big* bigpw_in )
     {
@@ -52,9 +63,6 @@ class ElecStateLCAO : public ElecState
     // update charge density for next scf step
     // void getNewRho() override;
 
-    virtual void print_psi(const psi::Psi<TK>& psi_in, const int istep = -1) override;
-    //virtual void print_psi(const psi::Psi<std::complex<double>>& psi_in, const int istep = -1) override;
-
     // initial density matrix
     void init_DM(const K_Vectors* kv, const Parallel_Orbitals* paraV, const int nspin);
     DensityMatrix<TK,double>* get_DM() const { return const_cast<DensityMatrix<TK,double>*>(this->DM); } 
@@ -63,6 +71,17 @@ class ElecStateLCAO : public ElecState
     static bool need_psi_grid;
 
     double get_spin_constrain_energy() override;
+
+#ifdef __PEXSI
+    // use for pexsi
+
+    /** 
+     * @brief calculate electronic charge density from pointers of density matrix calculated by pexsi
+     * @param pexsi_DM: pointers of density matrix (DMK) calculated by pexsi
+     * @param pexsi_EDM: pointers of energy-weighed density matrix (EDMK) calculated by pexsi, needed by MD, will be stored in DensityMatrix::pexsi_EDM
+     */
+    void dmToRho(std::vector<TK*> pexsi_DM, std::vector<TK*> pexsi_EDM);
+#endif
 
   protected:
     // calculate electronic charge density on grid points or density matrix in real space

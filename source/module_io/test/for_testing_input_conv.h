@@ -9,12 +9,14 @@
 #include "module_elecstate/module_charge/charge_mixing.h"
 #include "module_elecstate/occupy.h"
 #include "module_elecstate/potentials/H_TDDFT_pw.h"
+#include "module_hamilt_lcao/module_tddft/td_velocity.h"
 #include "module_elecstate/potentials/efield.h"
 #include "module_elecstate/potentials/gatefield.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/FORCE_STRESS.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_lcao/module_tddft/evolve_elec.h"
+#include "module_hamilt_lcao/module_tddft/td_velocity.h"
 #include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 #include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
@@ -26,6 +28,9 @@
 #include "module_relax/relax_old/ions_move_basic.h"
 #include "module_relax/relax_old/ions_move_cg.h"
 #include "module_relax/relax_old/lattice_change_basic.h"
+#ifdef __PEXSI
+#include "module_hsolver/module_pexsi/pexsi_solver.h"
+#endif
 
 bool berryphase::berry_phase_flag = false;
 
@@ -37,6 +42,8 @@ std::vector<int> module_tddft::Evolve_elec::td_vext_dire_case;
 bool module_tddft::Evolve_elec::out_dipole;
 bool module_tddft::Evolve_elec::out_efield;
 bool module_tddft::Evolve_elec::out_current;
+bool TD_Velocity::out_vecpot;
+bool TD_Velocity::init_vecpot_file;
 double module_tddft::Evolve_elec::td_print_eij;
 int module_tddft::Evolve_elec::td_edm;
 double elecstate::Gatefield::zgate = 0.5;
@@ -73,6 +80,9 @@ double elecstate::H_TDDFT_pw::lcut1;
 double elecstate::H_TDDFT_pw::lcut2;
 
 // time domain parameters
+
+bool TD_Velocity::tddft_velocity;
+bool TD_Velocity::out_mat_R;
 
 // Gauss
 int elecstate::H_TDDFT_pw::gauss_count;
@@ -354,6 +364,37 @@ Restart restart;
 pseudopot_cell_vnl ppcell;
 Charge_Mixing CHR_MIX;
 } // namespace GlobalC
+
+#ifdef  __PEXSI
+namespace pexsi
+{
+int PEXSI_Solver::pexsi_npole = 0;
+bool PEXSI_Solver::pexsi_inertia = 0;
+int PEXSI_Solver::pexsi_nmax = 0;
+// int PEXSI_Solver::pexsi_symbolic = 0;
+bool PEXSI_Solver::pexsi_comm = 0;
+bool PEXSI_Solver::pexsi_storage = 0;
+int PEXSI_Solver::pexsi_ordering = 0;
+int PEXSI_Solver::pexsi_row_ordering = 0;
+int PEXSI_Solver::pexsi_nproc = 0;
+bool PEXSI_Solver::pexsi_symm = 0;
+bool PEXSI_Solver::pexsi_trans = 0;
+int PEXSI_Solver::pexsi_method = 0;
+int PEXSI_Solver::pexsi_nproc_pole = 0;
+// double PEXSI_Solver::pexsi_spin = 2;
+double PEXSI_Solver::pexsi_temp = 0.0;
+double PEXSI_Solver::pexsi_gap = 0.0;
+double PEXSI_Solver::pexsi_delta_e = 0.0;
+double PEXSI_Solver::pexsi_mu_lower = 0.0;
+double PEXSI_Solver::pexsi_mu_upper = 0.0;
+double PEXSI_Solver::pexsi_mu = 0.0;
+double PEXSI_Solver::pexsi_mu_thr = 0.0;
+double PEXSI_Solver::pexsi_mu_expand = 0.0;
+double PEXSI_Solver::pexsi_mu_guard = 0.0;
+double PEXSI_Solver::pexsi_elec_thr = 0.0;
+double PEXSI_Solver::pexsi_zero_thr = 0.0;
+} // namespace pexsi
+#endif
 
 #undef private
 

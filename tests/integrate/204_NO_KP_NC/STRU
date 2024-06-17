@@ -1,22 +1,22 @@
 ATOMIC_SPECIES
-Si 14 Si.pz-vbc.UPF
-
-LATTICE_CONSTANT
-10.2  // add lattice constant
+Fe 1.000 Fe_ONCV_PBE-1.0.upf
 
 NUMERICAL_ORBITAL
-Si_lda_8.0au_50Ry_2s2p1d
+Fe_gga_9au_100Ry_4s2p2d1f.orb
+
+LATTICE_CONSTANT
+7
 
 LATTICE_VECTORS
-0.5 0.5 0.0
-0.5 0.0 0.5
-0.0 0.5 0.5
+1.00 0.00 0.00
+0.00 1.00 0.00
+0.00 0.00 1.00
 
 ATOMIC_POSITIONS
-Direct 
+Direct
 
-Si	// Element type	
-0.0	// magnetism
-2	
+Fe
+0.0
+2
 0.00 0.00 0.00 1 1 1 mag 1.0 angle1 90 angle2 0
-0.25 0.25 0.25 1 1 1 mag 1.0 angle1 90 angle2 180
+0.50 0.50 0.50 1 1 1 mag 1.0 angle1 90 angle2 180

@@ -28,11 +28,11 @@ void ModuleIO::write_proj_band_lcao(
     int nks = 0;
     if (nspin0 == 1)
     {
-        nks = kv.nkstot;
+        nks = kv.get_nkstot();
     }
     else if (nspin0 == 2)
     {
-        nks = kv.nkstot / 2;
+        nks = kv.get_nkstot() / 2;
     }
 
     ModuleBase::ComplexMatrix weightk;
@@ -183,18 +183,18 @@ void ModuleIO::write_proj_band_lcao(
     int nks = 0;
     if (nspin0 == 1)
     {
-        nks = kv.nkstot;
+        nks = kv.get_nkstot();
     }
     else if (nspin0 == 2)
     {
-        nks = kv.nkstot / 2;
+        nks = kv.get_nkstot() / 2;
     }
 
     ModuleBase::ComplexMatrix weightk;
     ModuleBase::matrix weight;
-    int NUM = GlobalV::NLOCAL * GlobalV::NBANDS * kv.nks;
-    weightk.create(kv.nks, GlobalV::NBANDS * GlobalV::NLOCAL, true);
-    weight.create(kv.nks, GlobalV::NBANDS * GlobalV::NLOCAL, true);
+    int NUM = GlobalV::NLOCAL * GlobalV::NBANDS * kv.get_nks();
+    weightk.create(kv.get_nks(), GlobalV::NBANDS * GlobalV::NLOCAL, true);
+    weight.create(kv.get_nks(), GlobalV::NBANDS * GlobalV::NLOCAL, true);
 
     for (int is = 0; is < nspin0; is++)
     {
@@ -202,7 +202,7 @@ void ModuleIO::write_proj_band_lcao(
             Mulk.resize(1);
             Mulk[0].create(pv->ncol, pv->nrow);
 
-            for (int ik = 0; ik < kv.nks; ik++)
+            for (int ik = 0; ik < kv.get_nks(); ik++)
             {
                 if (is == kv.isk[ik])
                 {

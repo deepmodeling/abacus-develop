@@ -362,17 +362,17 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
         delmem_complex_op()(this->ctx, ps);
         delmem_complex_op()(this->ctx, becp);
     }
-
-    ModuleBase::TITLE("HamiltPW", "sPsi");
 }
 
-template class HamiltPW<std::complex<float>, psi::DEVICE_CPU>;
-template class HamiltPW<std::complex<double>, psi::DEVICE_CPU>;
-// template HamiltPW<std::complex<double>, psi::DEVICE_CPU>::HamiltPW(const HamiltPW<std::complex<double>, psi::DEVICE_CPU> *hamilt);
+template class HamiltPW<std::complex<float>, base_device::DEVICE_CPU>;
+template class HamiltPW<std::complex<double>, base_device::DEVICE_CPU>;
+// template HamiltPW<std::complex<double>, base_device::DEVICE_CPU>::HamiltPW(const HamiltPW<std::complex<double>,
+// base_device::DEVICE_CPU> *hamilt);
 #if ((defined __CUDA) || (defined __ROCM))
-template class HamiltPW<std::complex<float>, psi::DEVICE_GPU>;
-template class HamiltPW<std::complex<double>, psi::DEVICE_GPU>;
-// template HamiltPW<std::complex<double>, psi::DEVICE_GPU>::HamiltPW(const HamiltPW<std::complex<double>, psi::DEVICE_GPU> *hamilt);
+template class HamiltPW<std::complex<float>, base_device::DEVICE_GPU>;
+template class HamiltPW<std::complex<double>, base_device::DEVICE_GPU>;
+// template HamiltPW<std::complex<double>, base_device::DEVICE_GPU>::HamiltPW(const HamiltPW<std::complex<double>,
+// base_device::DEVICE_GPU> *hamilt);
 #endif
 
 } // namespace hamilt

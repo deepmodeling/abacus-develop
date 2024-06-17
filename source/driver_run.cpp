@@ -29,43 +29,57 @@ void Driver::driver_run(void)
     ModuleESolver::init_esolver(p_esolver);
 
     //! 2: setup cell and atom information
+
+    // this warning should not be here, mohan 2024-05-22
 #ifndef __LCAO
     if(GlobalV::BASIS_TYPE == "lcao_in_pw" || GlobalV::BASIS_TYPE == "lcao")
     {
         ModuleBase::WARNING_QUIT("driver","to use LCAO basis, compile with __LCAO");
     }
 #endif
+
+    // the life of ucell should begin here, mohan 2024-05-12
+    // delete ucell as a GlobalC in near future
     GlobalC::ucell.setup_cell(GlobalV::stru_file, GlobalV::ofs_running);
 
     //! 3: initialize Esolver and fill json-structure 
-    p_esolver->init(INPUT, GlobalC::ucell);
+    p_esolver->before_all_runners(INPUT, GlobalC::ucell);
 
-
+    // this Json part should be moved to before_all_runners, mohan 2024-05-12
 #ifdef __RAPIDJSON
     Json::gen_stru_wrapper(&GlobalC::ucell);
 #endif
 
-    //! 4: md or relax calculations 
-    if(GlobalV::CALCULATION == "md")
+    const std::string cal_type = GlobalV::CALCULATION;
+
+    //! 4: different types of calculations 
+    if(cal_type == "md")
     {
         Run_MD::md_line(GlobalC::ucell, p_esolver, INPUT.mdp);
     }
-    else //! scf; cell relaxation; nscf; etc
+    else if(cal_type == "scf" 
+         || cal_type == "relax" 
+         || cal_type == "cell-relax")
     {
-        if (GlobalV::precision_flag == "single")
-        {
-            Relax_Driver<float, psi::DEVICE_CPU> rl_driver;
-            rl_driver.relax_driver(p_esolver);
-        }
-        else
-        {
-            Relax_Driver<double, psi::DEVICE_CPU> rl_driver;
-            rl_driver.relax_driver(p_esolver);
-        }
+        Relax_Driver rl_driver;
+        rl_driver.relax_driver(p_esolver);
+    }
+    else
+    {
+        //! supported "other" functions:
+        //! nscf(PW,LCAO), 
+        //! get_pchg(LCAO), 
+        //! test_memory(PW,LCAO), 
+        //! test_neighbour(LCAO),
+        //! get_S(LCAO), 
+        //! gen_bessel(PW), et al.
+        const int istep = 0;
+        p_esolver->others(istep);
     }
 
+
     //! 5: clean up esolver
-    p_esolver->post_process();
+    p_esolver->after_all_runners();
     ModuleESolver::clean_esolver(p_esolver);
 
     ModuleBase::timer::tick("Driver", "driver_line");

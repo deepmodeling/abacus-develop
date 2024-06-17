@@ -2,7 +2,7 @@
 #include "module_base/timer.h"
 #include "module_base/tool_title.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
-
+#include "module_cell/unitcell.h"
 namespace hamilt
 {
 
@@ -15,6 +15,8 @@ void Veff<OperatorLCAO<TK, TR>>::initialize_HR(const UnitCell* ucell_in,
 {
     ModuleBase::TITLE("Veff", "initialize_HR");
     ModuleBase::timer::tick("Veff", "initialize_HR");
+
+    this->nspin = GlobalV::NSPIN;
 
     for (int iat1 = 0; iat1 < ucell_in->nat; iat1++)
     {
@@ -42,7 +44,7 @@ void Veff<OperatorLCAO<TK, TR>>::initialize_HR(const UnitCell* ucell_in,
             if (ucell_in->cal_dtau(iat1, iat2, R_index2).norm() * ucell_in->lat0
                 < orb.Phi[T1].getRcut() + orb.Phi[T2].getRcut())
             {
-                hamilt::AtomPair<TR> tmp(iat1, iat2, R_index2.x, R_index2.y, R_index2.z, paraV);
+                hamilt::AtomPair<TR> tmp(iat1, iat2, R_index2, paraV);
                 this->hR->insert_pair(tmp);
             }
         }
@@ -64,15 +66,15 @@ void Veff<OperatorLCAO<TK, TR>>::contributeHR()
     //(1) prepare data for this k point.
     // copy the local potential from array.
     //-----------------------------------------
-    double* vr_eff1 = this->pot->get_effective_v(GlobalV::CURRENT_SPIN);
-    double* vofk_eff1 = this->pot->get_effective_vofk(GlobalV::CURRENT_SPIN);
+    double* vr_eff1 = this->pot->get_effective_v(this->current_spin);
+    double* vofk_eff1 = this->pot->get_effective_vofk(this->current_spin);
 
     //--------------------------------------------
     //(2) check if we need to calculate
     // pvpR = < phi0 | v(spin) | phiR> for a new spin.
     //--------------------------------------------
     // GlobalV::ofs_running << " (spin change)" << std::endl;
-    this->GK->reset_spin(GlobalV::CURRENT_SPIN);
+    this->GK->reset_spin(this->current_spin);
 
     // if you change the place of the following code,
     // rememeber to delete the #include
@@ -90,7 +92,7 @@ void Veff<OperatorLCAO<TK, TR>>::contributeHR()
 
     // added by zhengdy-soc, for non-collinear case
     // integral 4 times, is there any method to simplify?
-    if (GlobalV::NSPIN == 4)
+    if (this->nspin == 4)
     {
         for (int is = 1; is < 4; is++)
         {
@@ -112,8 +114,9 @@ void Veff<OperatorLCAO<TK, TR>>::contributeHR()
             }
         }
     }
+    this->GK->transfer_pvpR(this->hR,this->ucell,GlobalC::ORB,this->gd);
 
-    this->GK->transfer_pvpR(this->hR);
+    if(this->nspin == 2) this->current_spin = 1 - this->current_spin;
 
     ModuleBase::timer::tick("Veff", "contributeHR");
     return;
@@ -130,8 +133,8 @@ void Veff<OperatorLCAO<double, double>>::contributeHR(void)
     //(1) prepare data for this k point.
     // copy the local potential from array.
     //-----------------------------------------
-    const double* vr_eff1 = this->pot->get_effective_v(GlobalV::CURRENT_SPIN);
-    const double* vofk_eff1 = this->pot->get_effective_vofk(GlobalV::CURRENT_SPIN);
+    const double* vr_eff1 = this->pot->get_effective_v(this->current_spin);
+    const double* vofk_eff1 = this->pot->get_effective_vofk(this->current_spin);
 
     //--------------------------------------------
     // (3) folding matrix,
@@ -141,16 +144,19 @@ void Veff<OperatorLCAO<double, double>>::contributeHR(void)
     if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
     {
         Gint_inout inout(vr_eff1, vofk_eff1, Gint_Tools::job_type::vlocal_meta);
-        this->GG->cal_vlocal(&inout, this->LM, this->new_e_iteration);
+        this->GG->cal_vlocal(&inout,  this->new_e_iteration);
     }
     else
     {
         Gint_inout inout(vr_eff1, Gint_Tools::job_type::vlocal);
-        this->GG->cal_vlocal(&inout, this->LM, this->new_e_iteration);
+        this->GG->cal_vlocal(&inout,  this->new_e_iteration);
     }
-    this->GG->transfer_pvpR(this->hR);
+    this->GG->transfer_pvpR(this->hR,this->ucell,GlobalC::ORB);
 
     this->new_e_iteration = false;
+
+    if(this->nspin == 2) this->current_spin = 1 - this->current_spin;
+
     ModuleBase::timer::tick("Veff", "contributeHR");
 }
 

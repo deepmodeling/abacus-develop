@@ -24,6 +24,7 @@ void Gint::gint_kernel_vlocal(
 	double* vldr3,
 	const int LD_pool,
 	double* pvpR_in,
+	const UnitCell& ucell,
 	hamilt::HContainer<double>* hR)
 {
 	//prepare block information
@@ -56,7 +57,7 @@ void Gint::gint_kernel_vlocal(
     {
         this->cal_meshball_vlocal_k(
             na_grid, LD_pool, grid_index, block_size, block_index, block_iw, cal_flag,
-            psir_ylm.ptr_2D, psir_vlbr3.ptr_2D, pvpR_in);
+            psir_ylm.ptr_2D, psir_vlbr3.ptr_2D, pvpR_in,ucell);
     }
 
     //release memories
@@ -80,7 +81,8 @@ void Gint::gint_kernel_dvlocal(
 	const int LD_pool,
 	double* pvdpRx,
 	double* pvdpRy,
-	double* pvdpRz)
+	double* pvdpRz,
+	const UnitCell& ucell)
 {
 	//prepare block information
 	int * block_iw, * block_index, * block_size;
@@ -104,13 +106,13 @@ void Gint::gint_kernel_dvlocal(
 	//and accumulates to the corresponding element in Hamiltonian
 	this->cal_meshball_vlocal_k(
 		na_grid, LD_pool, grid_index, block_size, block_index, block_iw, cal_flag,
-		psir_vlbr3.ptr_2D, dpsir_ylm_x.ptr_2D, pvdpRx);
+		psir_vlbr3.ptr_2D, dpsir_ylm_x.ptr_2D, pvdpRx,ucell);
 	this->cal_meshball_vlocal_k(
 		na_grid, LD_pool, grid_index, block_size, block_index, block_iw, cal_flag,
-		psir_vlbr3.ptr_2D, dpsir_ylm_y.ptr_2D, pvdpRy);
+		psir_vlbr3.ptr_2D, dpsir_ylm_y.ptr_2D, pvdpRy,ucell);
 	this->cal_meshball_vlocal_k(
 		na_grid, LD_pool, grid_index, block_size, block_index, block_iw, cal_flag,
-		psir_vlbr3.ptr_2D, dpsir_ylm_z.ptr_2D, pvdpRz);
+		psir_vlbr3.ptr_2D, dpsir_ylm_z.ptr_2D, pvdpRz,ucell);
 
     //release memories
 	delete[] block_iw;
@@ -133,6 +135,7 @@ void Gint::gint_kernel_vlocal_meta(
 	double* vkdr3,
 	const int LD_pool,
 	double* pvpR_in,
+	const UnitCell& ucell,
 	hamilt::HContainer<double>* hR)
 {
 	//prepare block information
@@ -192,16 +195,16 @@ void Gint::gint_kernel_vlocal_meta(
     {
         this->cal_meshball_vlocal_k(
             na_grid, LD_pool, grid_index, block_size, block_index, block_iw, cal_flag,
-            psir_ylm.ptr_2D, psir_vlbr3.ptr_2D, pvpR_in);
+            psir_ylm.ptr_2D, psir_vlbr3.ptr_2D, pvpR_in,ucell);
 		this->cal_meshball_vlocal_k(
             na_grid, LD_pool, grid_index, block_size, block_index, block_iw, cal_flag,
-			dpsir_ylm_x.ptr_2D, dpsix_vlbr3.ptr_2D, pvpR_in);
+			dpsir_ylm_x.ptr_2D, dpsix_vlbr3.ptr_2D, pvpR_in,ucell);
 		this->cal_meshball_vlocal_k(
             na_grid, LD_pool, grid_index, block_size, block_index, block_iw, cal_flag,
-			dpsir_ylm_y.ptr_2D, dpsiy_vlbr3.ptr_2D, pvpR_in);
+			dpsir_ylm_y.ptr_2D, dpsiy_vlbr3.ptr_2D, pvpR_in,ucell);
 		this->cal_meshball_vlocal_k(
             na_grid, LD_pool, grid_index, block_size, block_index, block_iw, cal_flag,
-			dpsir_ylm_z.ptr_2D, dpsiz_vlbr3.ptr_2D, pvpR_in);
+			dpsir_ylm_z.ptr_2D, dpsiz_vlbr3.ptr_2D, pvpR_in,ucell);
     }
 
     //release memories
@@ -317,7 +320,8 @@ void Gint::cal_meshball_vlocal_k(
 	bool** cal_flag,  
 	double** psir_ylm,
 	double** psir_vlbr3,
-	double* pvpR)
+	double* pvpR,
+	const UnitCell& ucell)
 {
     auto find_offset = [&](const int id1, const int id2, const int iat1, const int iat2)->int
     {
@@ -352,14 +356,14 @@ void Gint::cal_meshball_vlocal_k(
 		int m=block_size[ia1];
 		const int mcell_index1 = this->gridt->bcell_start[grid_index] + ia1;
 		const int iat1= this->gridt->which_atom[mcell_index1];
-		const int T1 = GlobalC::ucell.iat2it[iat1];
+		const int T1 = ucell.iat2it[iat1];
 		const int id1 = this->gridt->which_unitcell[mcell_index1];
 		const int DM_start = this->gridt->nlocstartg[iat1];
 		for(int ia2=0; ia2<na_grid; ++ia2)
 		{
 			const int mcell_index2 = this->gridt->bcell_start[grid_index] + ia2;
 			const int iat2 = this->gridt->which_atom[mcell_index2];
-			const int T2 = GlobalC::ucell.iat2it[iat2];
+			const int T2 = ucell.iat2it[iat2];
 			if (iat1 <= iat2)
 			{
     			int cal_num=0;
@@ -373,7 +377,7 @@ void Gint::cal_meshball_vlocal_k(
     			
                 const int idx2=block_index[ia2];
         		int n=block_size[ia2];
-				//const int I2 = GlobalC::ucell.iat2ia[iat2];
+				//const int I2 = ucell.iat2ia[iat2];
 				const int mcell_index2 = this->gridt->bcell_start[grid_index] + ia2;
 				const int id2 = this->gridt->which_unitcell[mcell_index2];
 				int offset;
