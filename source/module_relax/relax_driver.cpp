@@ -132,6 +132,11 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver *p_esolver)
                     GlobalV::ofs_running << "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
                 }
             }
+
+#ifdef __RAPIDJSON
+            // add the energy to outout
+            Json::add_output_energy(p_esolver->cal_energy() * ModuleBase::Ry_to_eV);    
+#endif                     
         }
 #ifdef __RAPIDJSON
         //add Json of cell coo stress force

@@ -131,15 +131,14 @@ namespace Json
 
     }
 
-    void add_output_efermi_energy_converge(double efermi, double energy ,bool scf_converge ){
+    void add_output_efermi_converge(double efermi, bool scf_converge ){
         Json::AbacusJson::add_json({"output",-1,"e_fermi"}, efermi,false);
-        Json::AbacusJson::add_json({"output",-1,"energy"}, energy,false);
         Json::AbacusJson::add_json({"output",-1,"scf_converge"}, scf_converge,false);
-    
-        // Json::AbacusJson::add_Json(efermi,false,"output",-1,"e_fermi");
-        // Json::AbacusJson::add_Json(energy,false,"output",-1,"energy");
-        // Json::AbacusJson::add_Json(scf_converge,false,"output",-1,"scf_converge");
-    
+    }
+
+    void add_output_energy(double energy)
+    {
+        Json::AbacusJson::add_json({"output",-1,"energy"}, energy,false);
     }
 
     void add_output_scf_mag(

@@ -23,7 +23,8 @@ namespace Json
         ModuleBase::matrix stress, double unit_transform
     );
 
-    void add_output_efermi_energy_converge(double efermi, double energy ,bool scf_converge );
+    void add_output_efermi_converge(double efermi, bool scf_converge );
+    void add_output_energy(double energy );
 
     void add_output_scf_mag(
         double total_mag, double absolute_mag,
