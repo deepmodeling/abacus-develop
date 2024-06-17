@@ -228,11 +228,6 @@ void LCAO_Matrix::zeros_HSR(const char &mtype)
         long long beg, len;
         if(GlobalV::NSPIN!=4)
         {
-            if (mtype=='T')
-            {
-                ModuleBase::BLOCK_TASK_DIST_1D(num_threads, thread_id, (long long)this->Hloc_fixedR.size(), (long long)512, beg, len);
-                ModuleBase::GlobalFunc::ZEROS(this->Hloc_fixedR.data() + beg, len);
-            }
         }
     };
     ModuleBase::OMP_PARALLEL(zeros_HSR_ker);
