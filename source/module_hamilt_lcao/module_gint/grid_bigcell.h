@@ -33,11 +33,7 @@ class Grid_BigCell: public Grid_MeshCell
 		int nye;
 		int nze;
 		int nxyze;
-
-		//this flag will be false at first and turned to true 
-		//after memory of tau_in_meshcell has been allocated.  
-		bool flag_tib;
-
+		
 		std::vector<int> index_atom;
 
 		// save the position of base vector of bigcell.

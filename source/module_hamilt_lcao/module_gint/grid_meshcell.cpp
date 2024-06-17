@@ -1,20 +1,14 @@
 #include "grid_meshcell.h"
+
+#include "module_base/memory.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 Grid_MeshCell::Grid_MeshCell()
 {
-	allocate_pos = false;
-	bx = by = bz = bxyz = 1;
 }
 
 Grid_MeshCell::~Grid_MeshCell()
 {
-    if (allocate_pos)
-    {
-        meshcell_pos.clear();
-        meshcell_pos.shrink_to_fit();
-        allocate_pos = false;
-    }
 }
 
 void Grid_MeshCell::set_grid_dim(
@@ -80,20 +74,20 @@ void Grid_MeshCell::init_latvec(const UnitCell &ucell)
 	assert(ncz>0);
 
 	//size of each room (same shape with unitcell)
-	this->meshcell_vec1.resize(3);
-	this->meshcell_vec1[0]= ucell.a1.x / (double)ncx * ucell.lat0;
-	this->meshcell_vec1[1]= ucell.a1.y / (double)ncx * ucell.lat0;
-	this->meshcell_vec1[2]= ucell.a1.z / (double)ncx * ucell.lat0;
+	this->meshcell_vec1=std::vector<double>(3,0.0);
+	this->meshcell_vec1[0]=ucell.a1.x / (double)ncx * ucell.lat0;
+	this->meshcell_vec1[1]=ucell.a1.y / (double)ncx * ucell.lat0;
+	this->meshcell_vec1[2]=ucell.a1.z / (double)ncx * ucell.lat0;
 
-	this->meshcell_vec2.resize(3);
-	this->meshcell_vec2[0]= ucell.a2.x / (double)ncy * ucell.lat0;
-	this->meshcell_vec2[1]= ucell.a2.y / (double)ncy * ucell.lat0;
-	this->meshcell_vec2[2]= ucell.a2.z / (double)ncy * ucell.lat0;
+	this->meshcell_vec2=std::vector<double>(3,0.0);
+	this->meshcell_vec2[0]=ucell.a2.x / (double)ncy * ucell.lat0;
+	this->meshcell_vec2[1]=ucell.a2.y / (double)ncy * ucell.lat0;
+	this->meshcell_vec2[2]=ucell.a2.z / (double)ncy * ucell.lat0;
 
-	this->meshcell_vec3.resize(3);
-	this->meshcell_vec3[0]= ucell.a3.x / (double)ncz * ucell.lat0;
-	this->meshcell_vec3[1]= ucell.a3.y / (double)ncz * ucell.lat0;
-	this->meshcell_vec3[2]= ucell.a3.z / (double)ncz * ucell.lat0;
+	this->meshcell_vec3=std::vector<double>(3,0.0);
+	this->meshcell_vec3[0]=ucell.a3.x / (double)ncz * ucell.lat0;
+	this->meshcell_vec3[1]=ucell.a3.y / (double)ncz * ucell.lat0;
+	this->meshcell_vec3[2]=ucell.a3.z / (double)ncz * ucell.lat0;
 
 	this->meshcell_latvec0.e11 = this->meshcell_vec1[0];
 	this->meshcell_latvec0.e12 = this->meshcell_vec1[1];
@@ -149,10 +143,8 @@ void Grid_MeshCell::init_meshcell_pos(void)
 	assert(bz>0);
 	assert(bxyz>0);
 
-	if(!allocate_pos)
-	{
-		meshcell_pos = std::vector<std::vector<double>>(bxyz,std::vector<double>(3,0.0));
-	}
+	meshcell_pos = std::vector<std::vector<double>>(bxyz,std::vector<double>(3,0.0));
+	ModuleBase::Memory::record("meshcell_pos", sizeof(double) * bxyz*3);
 
 	int index=0;
 	for(int i=0; i<bx; i++)
@@ -169,8 +161,6 @@ void Grid_MeshCell::init_meshcell_pos(void)
 			}
 		}
 	}
-	allocate_pos = true;
-
 	return;
 }
 

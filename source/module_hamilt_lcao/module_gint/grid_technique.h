@@ -31,7 +31,6 @@ class Grid_Technique : public Grid_MeshBall
     int max_atom;
     // sum of how_many_atoms
     int total_atoms_on_grid;
-
     std::vector<int> start_ind;
 
     //------------------------------------
@@ -54,10 +53,10 @@ class Grid_Technique : public Grid_MeshBall
     //------------------------------------
     // 3: which atom on local grid.
     //------------------------------------
+    int lnat;      // local nat.  
+    int lgd;       // local grid dimension.  lgd * lgd symmetry matrix.
     std::vector<bool> in_this_processor;
     std::vector<int> trace_iat;
-    int lnat;      // local nat.
-    int lgd;       // local grid dimension.  lgd * lgd symmetry matrix.
     std::vector<int> trace_lo; // trace local orbital.
 
     //---------------------------------------
@@ -66,13 +65,14 @@ class Grid_Technique : public Grid_MeshBall
     // use: GridT.in_this_processor
     //---------------------------------------
     int nnrg;
+    bool allocate_find_R2;
     std::vector<int> nlocdimg;
     std::vector<int> nlocstartg;
     std::vector<int> nad; // number of adjacent atoms for each atom.
     std::vector<std::vector<int>> find_R2;
     std::vector<std::vector<int>> find_R2_sorted_index;
     std::vector<std::vector<int>> find_R2st;
-    bool allocate_find_R2;
+
     int binary_search_find_R2_offset(int val, int iat) const;
 
     //UnitCell and LCAO_Obrbitals
@@ -136,7 +136,7 @@ class Grid_Technique : public Grid_MeshBall
                             const UnitCell& ucell);
     void cal_grid_integration_index(void);
     void cal_trace_lo(const UnitCell& ucell);
-    void check_bigcell(int*& ind_bigcell, bool*& bigcell_on_processor);
+    void check_bigcell(int* ind_bigcell, char* bigcell_on_processor);
     void get_startind(const int& ny,
                       const int& nplane,
                       const int& startz_current);

@@ -13,17 +13,15 @@ class Grid_MeshBall : public Grid_BigCell
 	
 	protected:
 		// number of meshcells in meshball.
-		int meshball_ncells;
+		int meshball_ncells=0;
 		// used in index2normal
 		std::vector<int> index_ball;
 		// search each meshcell of this meshball.
 		void init_meshball(void);
 
-		private:
-		//flag_mp determines whether meshball_positions is configured.
-		bool flag_mp;
+	private:
 		// init the meshball radius.
-		double meshball_radius;
+		double meshball_radius=0.0;
 		// Handle as a truncation function.
 		double deal_with_atom_spillage(const double* pos);
 	

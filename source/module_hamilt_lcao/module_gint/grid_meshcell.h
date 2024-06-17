@@ -12,7 +12,7 @@ class Grid_MeshCell: public Grid_MeshK
 	~Grid_MeshCell();
 	
 	int ncx,ncy,ncz,ncxyz;
-	int bx,by,bz,bxyz;
+	int bx=1,by=1,bz=1,bxyz=1;
 	int nbx,nby,nbz,nbxyz;
 	int nbxx;
 	int nbzp_start,nbzp;
@@ -23,7 +23,6 @@ class Grid_MeshCell: public Grid_MeshK
 	
 	protected:
 
-	bool allocate_pos;
 	std::vector<double> meshcell_vec1;
 	std::vector<double> meshcell_vec2;
 	std::vector<double> meshcell_vec3;

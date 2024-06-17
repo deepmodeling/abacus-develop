@@ -3,17 +3,10 @@
 
 Grid_MeshK::Grid_MeshK()
 {
-	ucell_index2x = std::vector<int>();
-	ucell_index2y = std::vector<int>();
-	ucell_index2z = std::vector<int>();
-	max_ucell_para = std::vector<int>();
-	min_ucell_para = std::vector<int>();
-	num_ucell_para = std::vector<int>();
 }
 
 Grid_MeshK::~Grid_MeshK()
 {
-
 }
 
 int Grid_MeshK::cal_Rindex(const int &u1, const int &u2, const int &u3)const
@@ -39,16 +32,21 @@ int Grid_MeshK::cal_Rindex(const int &u1, const int &u2, const int &u3)const
 
 void Grid_MeshK::init_ucell_para(void)
 {
-    this->max_ucell_para.push_back(this->maxu1);
-    this->max_ucell_para.push_back(this->maxu2);
-    this->max_ucell_para.push_back(this->maxu3);
-    this->min_ucell_para.push_back(this->minu1);
-    this->min_ucell_para.push_back(this->minu2);
-    this->min_ucell_para.push_back(this->minu3);
-    this->num_ucell_para.push_back(this->nu1);
-    this->num_ucell_para.push_back(this->nu2);
-    this->num_ucell_para.push_back(this->nu3);
-    this->num_ucell_para.push_back(this->nutot);
+	this->max_ucell_para=std::vector<int>(3,0);
+    this->max_ucell_para[0]=this->maxu1;
+    this->max_ucell_para[1]=this->maxu2;
+    this->max_ucell_para[2]=this->maxu3;
+	
+	this->min_ucell_para=std::vector<int>(3,0);
+    this->min_ucell_para[0]=this->minu1;
+    this->min_ucell_para[1]=this->minu2;
+    this->min_ucell_para[2]=this->minu3;
+    
+	this->num_ucell_para=std::vector<int>(4,0);
+	this->num_ucell_para[0]=this->nu1;
+    this->num_ucell_para[1]=this->nu2;
+    this->num_ucell_para[2]=this->nu3;
+    this->num_ucell_para[3]=this->nutot;
 }
 
 

@@ -1,4 +1,5 @@
 #include "gint_tools.h"
+#include "module_base/memory.h"
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_cell/unitcell.h"
 namespace Gint_Tools{
@@ -15,17 +16,19 @@ void init_orb(double& dr_uniform,
     const int nwmax=ucell.nwmax;
     const int ntype=ucell.ntype;
     
-    rcuts.resize(ntype);
+    rcuts=std::vector<double>(ntype);
+    ModuleBase::Memory::record("rcuts", sizeof(double)*ntype*3);
     for(int T=0; T<ntype; T++)
 	{
 		rcuts[T]=GlobalC::ORB.Phi[T].getRcut();
 	}
-
-    double max_cut = *std::max_element(rcuts.begin(), rcuts.end());
-    int nr_max = static_cast<int>(1/dr_uniform * max_cut) + 10;
-    psi_u.resize(ntype * nwmax);
-    dpsi_u.resize(ntype * nwmax);
-    d2psi_u.resize(ntype * nwmax);
+    
+    const double max_cut = *std::max_element(rcuts.begin(), rcuts.end());
+    const int nr_max = static_cast<int>(1/dr_uniform * max_cut) + 10;
+    psi_u=std::vector<std::vector<double>>(ntype * nwmax);
+    dpsi_u=std::vector<std::vector<double>>(ntype * nwmax);
+    d2psi_u=std::vector<std::vector<double>>(ntype * nwmax);
+    ModuleBase::Memory::record("psi_u", sizeof(double)*nwmax*ntype*3);
     
     Atom* atomx;
     const Numerical_Orbital_Lm* pointer;

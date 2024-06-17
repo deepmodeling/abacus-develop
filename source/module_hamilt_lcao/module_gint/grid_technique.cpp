@@ -106,20 +106,11 @@ void Grid_Technique::get_startind(const int& ny,
     ModuleBase::TITLE("Grid_Technique", "get_startind");
 
     assert(nbxx >= 0);
+
     // calculates start_ind, which stores the
     // starting index of each bigcell
-
-    if (nbxx > 0)
-    {
-        this->start_ind = std::vector<int>(nbxx, 0);
-        ModuleBase::Memory::record("GT::start_ind", sizeof(int) * nbxx);
-    }
-    else
-    {
-        this->start_ind.clear();
-        this->start_ind.shrink_to_fit();
-        return;
-    }
+    this->start_ind = std::vector<int>(nbxx, 0);
+    ModuleBase::Memory::record("GT::start_ind", sizeof(int) * nbxx);
 
 	for(int i=0;i<nbxx;i++)
 	{
@@ -163,34 +154,27 @@ void Grid_Technique::init_atoms_on_grid(const int& ny,
     // (1) prepare data.
     // counting the number of atoms whose orbitals have
     // values on the bigcell.
-    if (nbxx > 0)
-    {
-        this->how_many_atoms = std::vector<int>(nbxx,0);
-        ModuleBase::Memory::record("GT::how_many_atoms", sizeof(int) * nbxx);
-    }
-    else
-    {
-        this->how_many_atoms.clear();
-        this->how_many_atoms.shrink_to_fit();
-    }
-
+    this->how_many_atoms = std::vector<int>(nbxx,0);
+    ModuleBase::Memory::record("GT::how_many_atoms", sizeof(int) * nbxx);
+    
     // (2) information about gloabl grid
     // and local grid.
     // mohan add 2010-07-02
-    int* ind_bigcell;
-    bool* bigcell_on_processor; // normal local form.
-    this->check_bigcell(ind_bigcell, bigcell_on_processor);
+    std::vector<int> ind_bigcell = std::vector<int>(nbxyz,0);
+    ModuleBase::Memory::record("GT::ind_bigcell", sizeof(int) * this->nxyze);
+    std::vector<char> bigcell_on_processor=std::vector<char>(nbxyz,0); 
+    ModuleBase::Memory::record("GT::bigcell_on_processor", sizeof(char) * this->nxyze);
+    this->check_bigcell(ind_bigcell.data(), bigcell_on_processor.data());
 
     // (3) Find the atoms using
     // when doing grid integration.
     this->in_this_processor = std::vector<bool>(ucell.nat, false);
+    ModuleBase::Memory::record("GT::in_this_processor", sizeof(int) * this->nxyze);
 
-    // init atoms on grid
-    assert(this->nxyze > 0);
-    int* index2normal = new int[this->nxyze];
-    assert(index2normal != NULL);
+    // (4) init atoms on grid
+    std::vector<int> index2normal = std::vector<int>(this->nxyze, 0);
     ModuleBase::Memory::record("GT::index2normal", sizeof(int) * this->nxyze);
-    this->grid_expansion_index(1, index2normal);
+    this->grid_expansion_index(1, index2normal.data());
 
 	// (5) record how many atoms on
 	// each local grid point (ix,iy,iz)
@@ -236,9 +220,6 @@ void Grid_Technique::init_atoms_on_grid(const int& ny,
         }
     }
 
-    delete[] ind_bigcell;
-    delete[] bigcell_on_processor;
-
     if (GlobalV::test_gridt)
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,
                                     "Total_atoms_on_grid",
@@ -273,13 +254,12 @@ void Grid_Technique::init_atoms_on_grid(const int& ny,
     // need how_many_atoms first.
     this->cal_grid_integration_index();
     // bcell_start is needed.
-    this->init_atoms_on_grid2(index2normal,ucell);
-    delete[] index2normal;
+    this->init_atoms_on_grid2(index2normal.data(),ucell);
     return;
 }
 
-void Grid_Technique::check_bigcell(int*& ind_bigcell,
-                                   bool*& bigcell_on_processor)
+void Grid_Technique::check_bigcell(int* ind_bigcell,
+                                   char* bigcell_on_processor)
 {
     // check if a given bigcell is treated on this processor
     const int zstart = nbzp_start;
@@ -294,8 +274,6 @@ void Grid_Technique::check_bigcell(int*& ind_bigcell,
     int ind=0;
 	bool flag=false;
 
-    ind_bigcell = new int[nbxyz];
-    bigcell_on_processor = new bool[nbxyz];
     for (int i = 0; i < nbxyz; i++)
     {
         int iz_now = i % nbz;
@@ -331,37 +309,35 @@ void Grid_Technique::init_atoms_on_grid2(const int* index2normal,const UnitCell&
         return;
     }
 
-	int* index2ucell = new int[this->nxyze];
-	assert( index2ucell != NULL );
+	std::vector<int> index2ucell = std::vector<int>(this->nxyze,0);
 	ModuleBase::Memory::record("GT::index2ucell", sizeof(int) * this->nxyze);	
-	this->grid_expansion_index(0,index2ucell);
+	this->grid_expansion_index(0,index2ucell.data());
 	
-	int *ind_bigcell=nullptr;
-	bool *bigcell_on_processor; // normal local form.
-	this->check_bigcell(ind_bigcell, bigcell_on_processor);
+	std::vector<int> ind_bigcell = std::vector<int>(nbxyz,0);
+    ModuleBase::Memory::record("GT::ind_bigcell", sizeof(int) * nbxyz);	
+	std::vector<char> bigcell_on_processor = std::vector<char>(nbxyz, 0); 
+	this->check_bigcell(ind_bigcell.data(), bigcell_on_processor.data());
 
     //--------------------------------------
-    // save which atom is in the bigcell.
+    // save which atom is in the bigcell,unitcell
     //--------------------------------------
+    assert(total_atoms_on_grid != 0);
     this->which_atom = std::vector<int>(total_atoms_on_grid, 0);
-    assert(which_atom.size() != 0);
-    ModuleBase::Memory::record("GT::which_atom",
-                               sizeof(int) * total_atoms_on_grid);
+    ModuleBase::Memory::record("GT::which_atom", sizeof(int) * total_atoms_on_grid);
 
     this->which_bigcell = std::vector<int>(total_atoms_on_grid, 0);
-    assert(which_bigcell.size() != 0);
-    ModuleBase::Memory::record("GT::which_bigcell",
-                               sizeof(int) * total_atoms_on_grid);
+    ModuleBase::Memory::record("GT::which_bigcell", sizeof(int) * total_atoms_on_grid);
 
     this->which_unitcell = std::vector<int>(total_atoms_on_grid, 0);
-    assert(which_unitcell.size() != 0);
     ModuleBase::Memory::record("GT::which_unitcell", sizeof(int) * total_atoms_on_grid);
+
     // for each atom, first we need to locate which cell
     // the atom is in, then we search meshball aroung this
     // grid, and record each grid's atom position.
     int count = 0;
     int iat = 0;
     this->how_many_atoms = std::vector<int>(nbxx, 0);
+    ModuleBase::Memory::record("GT::how many atoms", sizeof(int) * nbxx);
 	for(int it=0; it<ucell.ntype; it++)
 	{
 		for(int ia=0; ia<ucell.atoms[it].na; ia++)
@@ -404,31 +380,20 @@ void Grid_Technique::init_atoms_on_grid2(const int* index2normal,const UnitCell&
 		}
 	}
 	assert( count == total_atoms_on_grid );
-	delete[] index2ucell;
-	delete[] ind_bigcell;
-	delete[] bigcell_on_processor;
 	return;
 }
 
 void Grid_Technique::cal_grid_integration_index(void)
 {
     // save the start
-    if (nbxx > 0)
+    this->bcell_start = std::vector<int>(nbxx, 0);
+    ModuleBase::Memory::record("GT::bcell_start", sizeof(int) * nbxx);
+    for (int i = 1; i < nbxx; i++)
     {
-        this->bcell_start = std::vector<int>(nbxx, 0);
-        ModuleBase::Memory::record("GT::bcell_start", sizeof(int) * nbxx);
-        this->bcell_start[0] = 0;
-        for (int i = 1; i < nbxx; i++)
-        {
-            this->bcell_start[i]
-                = this->bcell_start[i - 1] + this->how_many_atoms[i - 1];
-        }
+        this->bcell_start[i]
+            = this->bcell_start[i - 1] + this->how_many_atoms[i - 1];
     }
-    else
-    {
-        this->bcell_start.clear();
-        this->bcell_start.shrink_to_fit();
-    }
+    
     // calculate which grid has the largest number of atoms,
     // and how many atoms.
     this->max_atom = 0;
