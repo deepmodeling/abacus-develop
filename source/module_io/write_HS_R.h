@@ -5,8 +5,8 @@
 #include "module_cell/klist.h"
 #include "module_hamilt_general/hamilt.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_gen_fixedH.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 namespace ModuleIO
 {
@@ -27,7 +27,6 @@ namespace ModuleIO
         void output_dHR(
             const int &istep,
 			const ModuleBase::matrix& v_eff,
-			LCAO_gen_fixedH& gen_h, // mohan add 2024-04-02
 			Gint_k& gint_k,  // mohan add 2024-04-01
 			LCAO_Matrix &lm,  // mohan add 2024-04-01
             Grid_Driver &grid, // mohan add 2024-04-06
@@ -43,7 +42,6 @@ namespace ModuleIO
 			LCAO_Matrix &lm,
             Grid_Driver &grid,
             const ORB_gen_tables* uot,
-            LCAO_gen_fixedH &gen_h, // mohan add 2024-04-02
             const std::string& TR_filename = "data-TR-sparse_SPIN0.csr",
             const bool& binary = false,
             const double& sparse_threshold = 1e-10);

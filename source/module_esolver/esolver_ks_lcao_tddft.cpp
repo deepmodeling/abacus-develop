@@ -91,7 +91,6 @@ void ESolver_KS_LCAO_TDDFT::before_all_runners(Input& inp, UnitCell& ucell)
 
     // this part will be updated soon 
     // pass Hamilt-pointer to Operator
-    this->gen_h.LM = &this->LM;
     this->LOC.ParaV = this->LM.ParaV;;
     this->LOWF.ParaV = this->LM.ParaV;
 
@@ -435,8 +434,7 @@ void ESolver_KS_LCAO_TDDFT::after_scf(const int istep)
                                 uot_,
                                 tmp_DM->get_paraV_pointer(),
                                 this->RA,
-                                this->LM,     // mohan add 2024-04-02
-                                this->gen_h); // mohan add 2024-02
+                                this->LM);     // mohan add 2024-04-02
     }
     ESolver_KS_LCAO<std::complex<double>, double>::after_scf(istep);
 }
