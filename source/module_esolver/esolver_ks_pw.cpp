@@ -1254,12 +1254,7 @@ void ESolver_KS_PW<T, Device>::nscf(void)
         if (ModuleSymmetry::Symmetry::symm_flag == -1)
         {
             berryphase bp;
-            bp.Macroscopic_polarization(
-                    this->pw_wfc->npwk_max, 
-                    this->psi, 
-                    this->pw_rho, 
-                    this->pw_wfc, 
-                    this->kv);
+            bp.Macroscopic_polarization(this->pw_wfc->npwk_max, this->psi, this->pw_rho, this->pw_wfc, this->kv);
         }
         else
         {
