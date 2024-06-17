@@ -1522,7 +1522,7 @@ void pseudopot_cell_vnl::newq(const ModuleBase::matrix& veff, const ModulePW::PW
     ModuleBase::ComplexMatrix vaux(GlobalV::NSPIN, npw);
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
-        rho_basis->real2recip(&veff(is, 0), &vaux(is, 0));
+        rho_basis->real2recip(&veff.c[is * veff.nc], &vaux(is, 0));
     }
 
     for (int it = 0; it < cell.ntype; it++)

@@ -128,69 +128,6 @@ private:
     std::set<Abfs::Vector3_Order<int>> output_R_coor;
 
 
-    //========================================
-    // FORCE
-    //========================================
-
-    //-----------------------------------------
-    // force in LCAO
-    // used in gamma only algorithm.
-    //-----------------------------------------
-    double* DSloc_x;
-    double* DSloc_y;
-    double* DSloc_z;
-
-    //-----------------------------------------
-    // force in LCAO
-    // used in k-points algorithm.
-    //-----------------------------------------
-    double* DSloc_Rx;
-    double* DSloc_Ry;
-    double* DSloc_Rz;
-
-    //-----------------------------------------
-    // dT + part of dVNL
-    // used in gamma only algorithm.
-    //-----------------------------------------
-    double* DHloc_fixed_x;
-    double* DHloc_fixed_y;
-    double* DHloc_fixed_z;
-
-    //-----------------------------------------
-    // dT + part of dVNL
-    // used in kpoint algorithm.
-    //-----------------------------------------
-    double* DHloc_fixedR_x;
-    double* DHloc_fixedR_y;
-    double* DHloc_fixedR_z;
-
-    //----------------------------------------
-    // r_mu - r_nu
-    //----------------------------------------
-
-    double* DH_r;//zhengdy added 2017-07
-
-
-    double* stvnl11;
-    double* stvnl12;
-    double* stvnl13;
-    double* stvnl22;
-    double* stvnl23;
-    double* stvnl33;
-
-    double* DSloc_11;
-    double* DSloc_12;
-    double* DSloc_13;
-    double* DSloc_22;
-    double* DSloc_23;
-    double* DSloc_33;
-
-    double* DHloc_fixed_11;
-    double* DHloc_fixed_12;
-    double* DHloc_fixed_13;
-    double* DHloc_fixed_22;
-    double* DHloc_fixed_23;
-    double* DHloc_fixed_33;
 
 	template <typename T>
 		static void set_mat2d(
@@ -213,43 +150,6 @@ private:
 			const char &dtype, 
 			const int spin = 0);
 
-	void set_force (
-            const Parallel_Orbitals &pv,
-			const int& iw1_all, 
-			const int& iw2_all, 
-			const double& vx, 
-			const double& vy, 
-			const double& vz, 
-			const char &dtype,
-			double* dsloc_x,
-			double* dsloc_y,
-			double* dsloc_z,
-			double* dhloc_fixed_x,
-			double* dhloc_fixed_y,
-			double* dhloc_fixed_z);
-
-	void set_stress (
-            const Parallel_Orbitals &pv,
-			const int& iw1_all, 
-			const int& iw2_all, 
-			const double& vx, 
-			const double& vy,
-			const double& vz, 
-			const char &dtype, 
-			const ModuleBase::Vector3<double> &dtau,
-			double* dsloc_11,
-			double* dsloc_12,
-			double* dsloc_13,
-			double* dsloc_22,
-			double* dsloc_23,
-			double* dsloc_33,
-			double* dhloc_fixed_11,
-			double* dhloc_fixed_12,
-			double* dhloc_fixed_13,
-			double* dhloc_fixed_22,
-			double* dhloc_fixed_23,
-			double* dhloc_fixed_33);
-
 	void set_HR_tr(
 			const int &Rx, 
 			const int &Ry, 
@@ -271,14 +171,6 @@ private:
     void zeros_HSk(const char &mtype);
 
     void zeros_HSR(const char &mtype);
-
-    void print_HSgamma(const char &mtype, std::ostream &os=std::cout);
-
-	void print_HSk(
-			const char &mtype, 
-			const char &vtype = 'C', 
-			const double &accuracy = 1.0e-5, 
-			std::ostream &os=std::cout);
 
     void update_Hloc(void);
 

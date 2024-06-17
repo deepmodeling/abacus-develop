@@ -70,17 +70,18 @@ class Cuda_Mem_Wrapper
     Cuda_Mem_Wrapper& operator=(Cuda_Mem_Wrapper&& other) noexcept;
     
     ~Cuda_Mem_Wrapper();
-    void copy_host_to_device_sync(int stream_id = 0);
-    void copy_host_to_device_async(cudaStream_t stream, int stream_id);
-    void copy_device_to_host_sync(int stream_id = 0);
-    void copy_device_to_host_async(cudaStream_t stream, int stream_id);
-    void memset_device_sync(int stream_id = 0, int value = 0);
-    void memset_device_async(cudaStream_t stream,
-                             int stream_id = 0,
-                             int value = 0);
-    void memset_host(int stream_id = 0, int value = 0);
-    T* get_device_pointer(int stream_id = 0);
-    T* get_host_pointer(int stream_id = 0);
+    void copy_host_to_device_sync(const int stream_id = 0);
+    void copy_host_to_device_async(const cudaStream_t stream, const int stream_id);
+    void copy_host_to_device_async(const cudaStream_t stream, const int stream_id, const int size);
+    void copy_device_to_host_sync(const int stream_id = 0);
+    void copy_device_to_host_async(const cudaStream_t stream, const int stream_id);
+    void memset_device_sync(const int stream_id = 0, const int value = 0);
+    void memset_device_async(const cudaStream_t stream, 
+                             const int stream_id = 0,
+                             const int value = 0);
+    void memset_host(const int stream_id = 0, const int value = 0);
+    T* get_device_pointer(const int stream_id = 0);
+    T* get_host_pointer(const int stream_id = 0);
     void free_all();
 
   private:

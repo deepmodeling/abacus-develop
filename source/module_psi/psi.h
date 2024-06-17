@@ -3,7 +3,6 @@
 
 #include "module_base/module_device/memory_op.h"
 #include "module_base/module_device/types.h"
-// #include "module_psi/kernels/memory_op.h"
 
 #include <tuple>
 

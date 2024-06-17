@@ -63,8 +63,16 @@ void Local_Orbital_wfc::gamma_file(psi::Psi<double>* psid, elecstate::ElecState*
 
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
-        this->error = ModuleIO::read_wfc_nao(ctot, is, GlobalV::GAMMA_ONLY_LOCAL, GlobalV::NB2D, GlobalV::NBANDS,
-                                             GlobalV::NLOCAL, GlobalV::global_readin_dir, this->ParaV, psid, pelec);
+        this->error = ModuleIO::read_wfc_nao(ctot,
+                                             is,
+                                             GlobalV::GAMMA_ONLY_LOCAL,
+                                             GlobalV::NB2D,
+                                             GlobalV::NBANDS,
+                                             GlobalV::NLOCAL,
+                                             GlobalV::global_readin_dir,
+                                             this->ParaV,
+                                             psid,
+                                             pelec);
 #ifdef __MPI
         Parallel_Common::bcast_int(this->error);
 #endif
@@ -87,15 +95,18 @@ void Local_Orbital_wfc::gamma_file(psi::Psi<double>* psid, elecstate::ElecState*
         }
         if (this->error)
         {
-            std::cout << "WARNING: Failed to read in wavefunction, use default initialization instead." << std::endl;
-            break;
+            ModuleBase::WARNING_QUIT("Local_Orbital_wfc::gamma_file", "Failed to read in wavefunction.");
         }
     } // loop ispin
 }
 
-void Local_Orbital_wfc::allocate_k(const int& lgd, psi::Psi<std::complex<double>>* psi, elecstate::ElecState* pelec,
-                                   const int& nks, const int& nkstot,
-                                   const std::vector<ModuleBase::Vector3<double>>& kvec_c, const int& istep)
+void Local_Orbital_wfc::allocate_k(const int& lgd,
+                                   psi::Psi<std::complex<double>>* psi,
+                                   elecstate::ElecState* pelec,
+                                   const int& nks,
+                                   const int& nkstot,
+                                   const std::vector<ModuleBase::Vector3<double>>& kvec_c,
+                                   const int& istep)
 {
     this->nks = nks;
 
@@ -169,9 +180,16 @@ void Local_Orbital_wfc::allocate_k(const int& lgd, psi::Psi<std::complex<double>
         for (int ik = 0; ik < nkstot; ++ik)
         {
             std::complex<double>** ctot;
-            this->error
-                = ModuleIO::read_wfc_nao_complex(ctot, ik, GlobalV::NB2D, GlobalV::NBANDS, GlobalV::NLOCAL,
-                                                 GlobalV::global_readin_dir, kvec_c[ik], this->ParaV, psi, pelec);
+            this->error = ModuleIO::read_wfc_nao_complex(ctot,
+                                                         ik,
+                                                         GlobalV::NB2D,
+                                                         GlobalV::NBANDS,
+                                                         GlobalV::NLOCAL,
+                                                         GlobalV::global_readin_dir,
+                                                         kvec_c[ik],
+                                                         this->ParaV,
+                                                         psi,
+                                                         pelec);
 #ifdef __MPI
             Parallel_Common::bcast_int(this->error);
 #endif
@@ -194,9 +212,7 @@ void Local_Orbital_wfc::allocate_k(const int& lgd, psi::Psi<std::complex<double>
             }
             if (this->error)
             {
-                std::cout << "WARNING: Failed to read in wavefunction, use default initialization instead."
-                          << std::endl;
-                break;
+                ModuleBase::WARNING_QUIT("Local_Orbital_wfc::allocate_k", "Failed to read in wavefunction.");
             }
         }
     }
@@ -219,8 +235,11 @@ int Local_Orbital_wfc::localIndex(int globalindex, int nblk, int nprocs, int& my
 }
 
 #ifdef __MPI
-void Local_Orbital_wfc::wfc_2d_to_grid(const double* wfc_2d, double** wfc_grid, const int ik,
-                                       const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg)
+void Local_Orbital_wfc::wfc_2d_to_grid(const double* wfc_2d,
+                                       double** wfc_grid,
+                                       const int ik,
+                                       const ModuleBase::matrix& ekb,
+                                       const ModuleBase::matrix& wg)
 {
     ModuleBase::TITLE(" Local_Orbital_wfc", "wfc_2d_to_grid");
     ModuleBase::timer::tick("Local_Orbital_wfc", "wfc_2d_to_grid");
@@ -261,8 +280,11 @@ void Local_Orbital_wfc::wfc_2d_to_grid(const double* wfc_2d, double** wfc_grid, 
     ModuleBase::timer::tick("Local_Orbital_wfc", "wfc_2d_to_grid");
 }
 
-void Local_Orbital_wfc::wfc_2d_to_grid(const std::complex<double>* wfc_2d, std::complex<double>** wfc_grid, int ik,
-                                       const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg,
+void Local_Orbital_wfc::wfc_2d_to_grid(const std::complex<double>* wfc_2d,
+                                       std::complex<double>** wfc_grid,
+                                       int ik,
+                                       const ModuleBase::matrix& ekb,
+                                       const ModuleBase::matrix& wg,
                                        const std::vector<ModuleBase::Vector3<double>>& kvec_c)
 {
     ModuleBase::TITLE("Local_Orbital_wfc", "wfc_2d_to_grid");
