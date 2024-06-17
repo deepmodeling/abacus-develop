@@ -129,7 +129,6 @@ namespace LCAO_domain
      * @brief set each element of T matrices 
     */
 	void single_derivative(
-            LCAO_Matrix& lm,
             ForceStressArrays& fsr,
 			const LCAO_Orbitals& orb,
 			const ORB_gen_tables& uot,
