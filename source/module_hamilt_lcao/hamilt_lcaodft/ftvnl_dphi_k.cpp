@@ -28,7 +28,7 @@ void Force_LCAO<std::complex<double>>::cal_ftvnl_dphi(
     const elecstate::DensityMatrix<std::complex<double>, double>* dm,
     const Parallel_Orbitals& pv,
     const UnitCell& ucell,
-    LCAO_Matrix& lm,
+    ForceStressArrays& fsr,
     const bool isforce,
     const bool isstress,
     ModuleBase::matrix& ftvnl_dphi,
@@ -113,18 +113,18 @@ void Force_LCAO<std::complex<double>>::cal_ftvnl_dphi(
                         //
                         if (isforce)
                         {
-                            ftvnl_dphi_iat[0] += dm2d2 * lm.DHloc_fixedR_x[irr];
-                            ftvnl_dphi_iat[1] += dm2d2 * lm.DHloc_fixedR_y[irr];
-                            ftvnl_dphi_iat[2] += dm2d2 * lm.DHloc_fixedR_z[irr];
+                            ftvnl_dphi_iat[0] += dm2d2 * fsr.DHloc_fixedR_x[irr];
+                            ftvnl_dphi_iat[1] += dm2d2 * fsr.DHloc_fixedR_y[irr];
+                            ftvnl_dphi_iat[2] += dm2d2 * fsr.DHloc_fixedR_z[irr];
                         }
                         if (isstress)
                         {
-                            local_stvnl_dphi(0, 0) -= dm2d1 * lm.stvnl11[irr];
-                            local_stvnl_dphi(0, 1) -= dm2d1 * lm.stvnl12[irr];
-                            local_stvnl_dphi(0, 2) -= dm2d1 * lm.stvnl13[irr];
-                            local_stvnl_dphi(1, 1) -= dm2d1 * lm.stvnl22[irr];
-                            local_stvnl_dphi(1, 2) -= dm2d1 * lm.stvnl23[irr];
-                            local_stvnl_dphi(2, 2) -= dm2d1 * lm.stvnl33[irr];
+                            local_stvnl_dphi(0, 0) -= dm2d1 * fsr.stvnl11[irr];
+                            local_stvnl_dphi(0, 1) -= dm2d1 * fsr.stvnl12[irr];
+                            local_stvnl_dphi(0, 2) -= dm2d1 * fsr.stvnl13[irr];
+                            local_stvnl_dphi(1, 1) -= dm2d1 * fsr.stvnl22[irr];
+                            local_stvnl_dphi(1, 2) -= dm2d1 * fsr.stvnl23[irr];
+                            local_stvnl_dphi(2, 2) -= dm2d1 * fsr.stvnl33[irr];
                         }
                         //}
                         ++local_total_irr;

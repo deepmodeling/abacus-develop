@@ -1,7 +1,3 @@
-//==========================================================
-// Author:Xin Qu
-// DATE : 2019-12-10
-//==========================================================
 #include "dftu.h"
 
 #include "module_base/constants.h"
@@ -27,7 +23,7 @@
 
 namespace GlobalC
 {
-ModuleDFTU::DFTU dftu;
+	ModuleDFTU::DFTU dftu;
 }
 
 namespace ModuleDFTU
@@ -58,17 +54,6 @@ void DFTU::init(UnitCell& cell, // unitcell class
     const int npol = GlobalV::NPOL; // number of polarization directions
     const int nlocal = GlobalV::NLOCAL; // number of total local orbitals
     const int nspin = GlobalV::NSPIN; // number of spins
-
-    /*
-    not implemented yet, no need to check for now
-    if(dftu_type==1 && double_counting==1) cal_type = 1;
-    else if(dftu_type==1 && double_counting==2) cal_type = 2;
-    else if(dftu_type==2 && double_counting==1) cal_type = 3;
-    else if(dftu_type==2 && double_counting==2) cal_type = 4;
-    else ModuleBase::WARNING_QUIT("DFT+U", "Wrong parameter");
-
-    if(cal_type!=3)  ModuleBase::WARNING_QUIT("DFT+U", "Not available yet!");
-    */
 
     this->EU = 0.0;
 
@@ -237,16 +222,20 @@ void DFTU::cal_energy_correction(const int istep)
         const int LC = orbital_corr[T];
         for (int I = 0; I < GlobalC::ucell.atoms[T].na; I++)
         {
-            if (LC == -1)
-                continue;
+			if (LC == -1)
+			{
+				continue;
+			}
 
             const int iat = GlobalC::ucell.itia2iat(T, I);
             const int L = orbital_corr[T];
 
             for (int l = 0; l < NL; l++)
             {
-                if (l != orbital_corr[T])
-                    continue;
+				if (l != orbital_corr[T])
+				{
+					continue;
+				}
 
                 const int N = GlobalC::ucell.atoms[T].l_nchi[l];
 
@@ -255,8 +244,10 @@ void DFTU::cal_energy_correction(const int istep)
                 // part 1: calculate the DFT+U energy correction
                 for (int n = 0; n < N; n++)
                 {
-                    if (n != 0)
-                        continue;
+					if (n != 0)
+					{
+						continue;
+					}
 
                     if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 2)
                     {
@@ -274,11 +265,15 @@ void DFTU::cal_energy_correction(const int istep)
                                                  * this->locale[iat][l][n][spin](m1, m0);
                                 }
                             }
-                            if (Yukawa)
-                                this->EU += 0.5 * (this->U_Yukawa[T][l][n] - this->J_Yukawa[T][l][n])
-                                            * (nm_trace - nm2_trace);
-                            else
-                                this->EU += 0.5 * this->U[T] * (nm_trace - nm2_trace);
+							if (Yukawa)
+							{
+								this->EU += 0.5 * (this->U_Yukawa[T][l][n] - this->J_Yukawa[T][l][n])
+									* (nm_trace - nm2_trace);
+							}
+							else
+							{
+								this->EU += 0.5 * this->U[T] * (nm_trace - nm2_trace);
+							}
                         }
                     }
                     else if (GlobalV::NSPIN == 4) // SOC
@@ -305,11 +300,15 @@ void DFTU::cal_energy_correction(const int istep)
                                 }
                             }
                         }
-                        if (Yukawa)
-                            this->EU
-                                += 0.5 * (this->U_Yukawa[T][l][n] - this->J_Yukawa[T][l][n]) * (nm_trace - nm2_trace);
-                        else
-                            this->EU += 0.5 * this->U[T] * (nm_trace - nm2_trace);
+						if (Yukawa)
+						{
+							this->EU
+								+= 0.5 * (this->U_Yukawa[T][l][n] - this->J_Yukawa[T][l][n]) * (nm_trace - nm2_trace);
+						}
+						else
+						{
+							this->EU += 0.5 * this->U[T] * (nm_trace - nm2_trace);
+						}
                     }
 
                     // calculate the double counting term included in eband

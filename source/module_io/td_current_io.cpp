@@ -17,27 +17,29 @@
 void ModuleIO::Init_DS_tmp(
 		const Parallel_Orbitals& pv,
 		LCAO_Matrix &lm,
+        ForceStressArrays &fsr,
         const ORB_gen_tables* uot)
 {    
     ModuleBase::TITLE("ModuleIO", "Init_DS_tmp");
     ModuleBase::timer::tick("ModuleIO", "Init_DS_tmp");
     const int nnr = pv.nnr;
-    lm.DSloc_Rx = new double[nnr];
-    lm.DSloc_Ry = new double[nnr];
-    lm.DSloc_Rz = new double[nnr];
+    fsr.DSloc_Rx = new double[nnr];
+    fsr.DSloc_Ry = new double[nnr];
+    fsr.DSloc_Rz = new double[nnr];
 
-    const auto init_DSloc_Rxyz = [&lm, nnr](int num_threads, int thread_id) {
+    const auto init_DSloc_Rxyz = [&fsr, nnr](int num_threads, int thread_id) {
         int beg, len;
         ModuleBase::BLOCK_TASK_DIST_1D(num_threads, thread_id, nnr, 1024, beg, len);
-        ModuleBase::GlobalFunc::ZEROS(lm.DSloc_Rx + beg, len);
-        ModuleBase::GlobalFunc::ZEROS(lm.DSloc_Ry + beg, len);
-        ModuleBase::GlobalFunc::ZEROS(lm.DSloc_Rz + beg, len);
+        ModuleBase::GlobalFunc::ZEROS(fsr.DSloc_Rx + beg, len);
+        ModuleBase::GlobalFunc::ZEROS(fsr.DSloc_Ry + beg, len);
+        ModuleBase::GlobalFunc::ZEROS(fsr.DSloc_Rz + beg, len);
     };
 
     ModuleBase::OMP_PARALLEL(init_DSloc_Rxyz);
     bool cal_deri = true;
 	LCAO_domain::build_ST_new(
             lm,
+            fsr,
 			'S', 
 			cal_deri, 
 			GlobalC::ucell, 
@@ -53,13 +55,13 @@ void ModuleIO::Init_DS_tmp(
 
 
 //destory DSloc_R so it can be used normally in the following force calculation
-void ModuleIO::destory_DS_tmp(LCAO_Matrix &lm)
+void ModuleIO::destory_DS_tmp(ForceStressArrays &fsr)
 {
     ModuleBase::TITLE("ModuleIO", "destory_DS_tmp");
     ModuleBase::timer::tick("ModuleIO", "destory_DS_tmp");
-    delete[] lm.DSloc_Rx;
-    delete[] lm.DSloc_Ry;
-    delete[] lm.DSloc_Rz;
+    delete[] fsr.DSloc_Rx;
+    delete[] fsr.DSloc_Ry;
+    delete[] fsr.DSloc_Rz;
     ModuleBase::timer::tick("ModuleIO", "destory_DS_tmp");
     return;
 }
@@ -160,8 +162,13 @@ void ModuleIO::write_current(const int istep,
 
     ModuleBase::TITLE("ModuleIO", "write_current");
     ModuleBase::timer::tick("ModuleIO", "write_current");
+
+    // mohan add 2024-06-16
+    ForceStressArrays fsr_c;
+
     //Init_DS_tmp
-    Init_DS_tmp(*pv, lm, uot);
+    Init_DS_tmp(*pv, lm, fsr_c, uot);
+
     // construct a DensityMatrix object
     elecstate::DensityMatrix<std::complex<double>, double> DM(&kv,pv,GlobalV::NSPIN);
     
@@ -230,9 +237,9 @@ void ModuleIO::write_current(const int istep,
                             // here do not sum over spin due to EDM.sum_DMR_spin();
                             double edm2d1 = tmp_matrix->get_value(mu,nu);
                             double edm2d2 = 2.0 * edm2d1;
-                            current_ik[0] -= edm2d2 * lm.DSloc_Rx[irr];
-                            current_ik[1] -= edm2d2 * lm.DSloc_Ry[irr];
-                            current_ik[2] -= edm2d2 * lm.DSloc_Rz[irr];
+                            current_ik[0] -= edm2d2 * fsr_c.DSloc_Rx[irr];
+                            current_ik[1] -= edm2d2 * fsr_c.DSloc_Ry[irr];
+                            current_ik[2] -= edm2d2 * fsr_c.DSloc_Rz[irr];
                             ++local_total_irr;
                             ++irr;
                         } // end kk
@@ -262,7 +269,7 @@ void ModuleIO::write_current(const int istep,
         //write end
         ModuleBase::timer::tick("ModuleIO", "write_current");
     }//end nks
-    destory_DS_tmp(lm);
+    destory_DS_tmp(fsr_c);
     return;
 }
 #endif //__LCAO
