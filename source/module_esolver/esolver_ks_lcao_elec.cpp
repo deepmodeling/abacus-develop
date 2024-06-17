@@ -684,10 +684,17 @@ void ESolver_KS_LCAO<TK, TR>::nscf(void)
     }
 
     // add by jingan
-    if (berryphase::berry_phase_flag && ModuleSymmetry::Symmetry::symm_flag != 1)
+    if (berryphase::berry_phase_flag)
     {
-        berryphase bp(this->LOWF);
-        bp.Macroscopic_polarization(this->pw_wfc->npwk_max, this->psi, this->pw_rho, this->pw_wfc, this->kv);
+        if (ModuleSymmetry::Symmetry::symm_flag == -1)
+        {
+            berryphase bp(this->LOWF);
+            bp.Macroscopic_polarization(this->pw_wfc->npwk_max, this->psi, this->pw_rho, this->pw_wfc, this->kv);
+        }
+        else
+        {
+            ModuleBase::WARNING_QUIT("ESolver_KS_LCAO<TK, TR>::nscf"," Please set symmetry to -1 when performing berry phase calculation! ");
+        }
     }
 
     // below is for DeePKS NSCF calculation
