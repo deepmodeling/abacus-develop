@@ -79,16 +79,11 @@ public:
     // because sub-function `write_wfc_nao_complex`contains GlobalC declared in `global.h`
     // which will cause lots of "not defined" if included in a header file.
     void wfc_2d_to_grid(const double* wfc_2d,
-                        double** wfc_grid,
-                        const int ik,
-                        const ModuleBase::matrix& ekb,
-                        const ModuleBase::matrix& wg);
+                        const Parallel_Orbitals& pv,
+                        double** wfc_grid);
     void wfc_2d_to_grid(const std::complex<double>* wfc_2d,
-                        std::complex<double>** wfc_grid,
-                        int ik,
-                        const ModuleBase::matrix& ekb,
-                        const ModuleBase::matrix& wg,
-                        const std::vector<ModuleBase::Vector3<double>>& kvec_c);
+                        const Parallel_Orbitals& pv,
+                        std::complex<double>** wfc_grid);
 #endif
 
     int error = 0;
@@ -103,9 +98,7 @@ public:
                      int iprow,
                      int ipcol,
                      T* work,
-                     T** wfc,
-                     int myid = -1,
-                     T** ctot = nullptr);
+                     T** wfc);
 
     bool wfck_flag;
     bool complex_flag;
@@ -123,16 +116,11 @@ int Local_Orbital_wfc::set_wfc_grid(int naroc[2],
                                     int iprow,
                                     int ipcol,
                                     T* work,
-                                    T** wfc,
-                                    int myid,
-                                    T** ctot)
+                                    T** wfc)
 {
 #ifdef __MPI
     ModuleBase::TITLE(" Local_Orbital_wfc", "set_wfc_grid");
-    if (!wfc && !ctot)
-    {
-        return 0;
-    }
+    if (!wfc) { return 0; }
     for (int j = 0; j < naroc[1]; ++j)
     {
         int igcol = globalIndex(j, nb, dim1, ipcol);
@@ -144,14 +132,7 @@ int Local_Orbital_wfc::set_wfc_grid(int naroc[2],
 		{
 			int igrow = globalIndex(i, nb, dim0, iprow);
 			int mu_local = this->gridt->trace_lo[igrow];
-			if (wfc && mu_local >= 0)
-			{
-				wfc[igcol][mu_local] = work[j * naroc[0] + i];
-			}
-			if (ctot && myid == 0)
-			{
-				ctot[igcol][igrow] = work[j * naroc[0] + i];
-			}
+			wfc[igcol][mu_local] = work[j * naroc[0] + i];
         }
     }
 #endif

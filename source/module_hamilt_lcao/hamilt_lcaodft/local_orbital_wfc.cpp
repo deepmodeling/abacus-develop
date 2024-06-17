@@ -236,90 +236,91 @@ int Local_Orbital_wfc::localIndex(int globalindex, int nblk, int nprocs, int& my
 
 #ifdef __MPI
 void Local_Orbital_wfc::wfc_2d_to_grid(const double* wfc_2d,
-                                       double** wfc_grid,
-                                       const int ik,
-                                       const ModuleBase::matrix& ekb,
-                                       const ModuleBase::matrix& wg)
+                                       const Parallel_Orbitals& pv,
+                                       double** wfc_grid)
 {
     ModuleBase::TITLE(" Local_Orbital_wfc", "wfc_2d_to_grid");
     ModuleBase::timer::tick("Local_Orbital_wfc", "wfc_2d_to_grid");
 
-    const Parallel_Orbitals* pv = this->ParaV;
     const int inc = 1;
     int myid = 0;
-    MPI_Comm_rank(pv->comm_2D, &myid);
+    MPI_Comm_rank(pv.comm_2D, &myid);
     int info = 0;
 
     // calculate maxnloc for bcasting 2d-wfc
     long maxnloc; // maximum number of elements in local matrix
-    info = MPI_Reduce(&pv->nloc_wfc, &maxnloc, 1, MPI_LONG, MPI_MAX, 0, pv->comm_2D);
-    info = MPI_Bcast(&maxnloc, 1, MPI_LONG, 0, pv->comm_2D);
+    // calculate the maximum number of nlocal over all processes in pv.comm_2D range
+    info = MPI_Reduce(&pv.nloc_wfc, &maxnloc, 1, MPI_LONG, MPI_MAX, 0, pv.comm_2D);
+    // get and then broadcast
+    info = MPI_Bcast(&maxnloc, 1, MPI_LONG, 0, pv.comm_2D);
     std::vector<double> work(maxnloc); // work/buffer matrix
 
     int naroc[2]; // maximum number of row or column
-    for (int iprow = 0; iprow < pv->dim0; ++iprow)
+    // loop over all processors
+    for (int iprow = 0; iprow < pv.dim0; ++iprow)
     {
-        for (int ipcol = 0; ipcol < pv->dim1; ++ipcol)
+        for (int ipcol = 0; ipcol < pv.dim1; ++ipcol)
         {
             const int coord[2] = {iprow, ipcol};
             int src_rank;
-            info = MPI_Cart_rank(pv->comm_2D, coord, &src_rank);
-            if (myid == src_rank)
+            info = MPI_Cart_rank(pv.comm_2D, coord, &src_rank); // get the MPI rank
+            if (myid == src_rank) // make sure the rank is called in the right order
             {
-                BlasConnector::copy(pv->nloc_wfc, wfc_2d, inc, work.data(), inc);
-                naroc[0] = pv->nrow;
-                naroc[1] = pv->ncol_bands;
+                // copy a number of data from wfc_2d to work. The length to copy is
+                // pv.nloc_wfc, the stride is inc.
+                BlasConnector::copy(pv.nloc_wfc, wfc_2d, inc, work.data(), inc);
+                naroc[0] = pv.nrow;
+                naroc[1] = pv.ncol_bands; // what is the meaning of ncol_bands and nloc_wfc???
             }
-            info = MPI_Bcast(naroc, 2, MPI_INT, src_rank, pv->comm_2D);
-            info = MPI_Bcast(work.data(), maxnloc, MPI_DOUBLE, src_rank, pv->comm_2D);
-
-            info = this->set_wfc_grid(naroc, pv->nb, pv->dim0, pv->dim1, iprow, ipcol, work.data(), wfc_grid);
-
+            // broadcast the number of row and column
+            info = MPI_Bcast(naroc, 2, MPI_INT, src_rank, pv.comm_2D);
+            // broadcast the data, this means the data owned by one processor is broadcast
+            // to all other processors in the communicator.
+            info = MPI_Bcast(work.data(), maxnloc, MPI_DOUBLE, src_rank, pv.comm_2D);
+            // then use it to set the wfc_grid
+            info = this->set_wfc_grid(naroc, pv.nb, pv.dim0, pv.dim1, iprow, ipcol, work.data(), wfc_grid);
+            // this operation will let all processors have the same wfc_grid
         } // loop ipcol
     }     // loop iprow
     ModuleBase::timer::tick("Local_Orbital_wfc", "wfc_2d_to_grid");
 }
 
 void Local_Orbital_wfc::wfc_2d_to_grid(const std::complex<double>* wfc_2d,
-                                       std::complex<double>** wfc_grid,
-                                       int ik,
-                                       const ModuleBase::matrix& ekb,
-                                       const ModuleBase::matrix& wg,
-                                       const std::vector<ModuleBase::Vector3<double>>& kvec_c)
+                                       const Parallel_Orbitals& pv,
+                                       std::complex<double>** wfc_grid)
 {
     ModuleBase::TITLE("Local_Orbital_wfc", "wfc_2d_to_grid");
     ModuleBase::timer::tick("Local_Orbital_wfc", "wfc_2d_to_grid");
 
-    const Parallel_Orbitals* pv = this->ParaV;
     const int inc = 1;
     int myid = 0;
-    MPI_Comm_rank(pv->comm_2D, &myid);
+    MPI_Comm_rank(pv.comm_2D, &myid);
     int info = 0;
 
     // calculate maxnloc for bcasting 2d-wfc
     long maxnloc = 0; // maximum number of elements in local matrix
-    info = MPI_Reduce(&pv->nloc_wfc, &maxnloc, 1, MPI_LONG, MPI_MAX, 0, pv->comm_2D);
-    info = MPI_Bcast(&maxnloc, 1, MPI_LONG, 0, pv->comm_2D);
+    info = MPI_Reduce(&pv.nloc_wfc, &maxnloc, 1, MPI_LONG, MPI_MAX, 0, pv.comm_2D);
+    info = MPI_Bcast(&maxnloc, 1, MPI_LONG, 0, pv.comm_2D);
     std::vector<std::complex<double>> work(maxnloc); // work/buffer matrix
 
     int naroc[2] = {0}; // maximum number of row or column
-    for (int iprow = 0; iprow < pv->dim0; ++iprow)
+    for (int iprow = 0; iprow < pv.dim0; ++iprow)
     {
-        for (int ipcol = 0; ipcol < pv->dim1; ++ipcol)
+        for (int ipcol = 0; ipcol < pv.dim1; ++ipcol)
         {
             const int coord[2] = {iprow, ipcol};
             int src_rank;
-            info = MPI_Cart_rank(pv->comm_2D, coord, &src_rank);
+            info = MPI_Cart_rank(pv.comm_2D, coord, &src_rank);
             if (myid == src_rank)
             {
-                BlasConnector::copy(pv->nloc_wfc, wfc_2d, inc, work.data(), inc);
-                naroc[0] = pv->nrow;
-                naroc[1] = pv->ncol_bands;
+                BlasConnector::copy(pv.nloc_wfc, wfc_2d, inc, work.data(), inc);
+                naroc[0] = pv.nrow;
+                naroc[1] = pv.ncol_bands;
             }
-            info = MPI_Bcast(naroc, 2, MPI_INT, src_rank, pv->comm_2D);
-            info = MPI_Bcast(work.data(), maxnloc, MPI_DOUBLE_COMPLEX, src_rank, pv->comm_2D);
+            info = MPI_Bcast(naroc, 2, MPI_INT, src_rank, pv.comm_2D);
+            info = MPI_Bcast(work.data(), maxnloc, MPI_DOUBLE_COMPLEX, src_rank, pv.comm_2D);
             // mohan update 2021-02-12, delte BFIELD option
-            info = this->set_wfc_grid(naroc, pv->nb, pv->dim0, pv->dim1, iprow, ipcol, work.data(), wfc_grid);
+            info = this->set_wfc_grid(naroc, pv.nb, pv.dim0, pv.dim1, iprow, ipcol, work.data(), wfc_grid);
         } // loop ipcol
     }     // loop iprow
 
