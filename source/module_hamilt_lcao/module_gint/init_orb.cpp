@@ -3,11 +3,11 @@
 #include "module_cell/unitcell.h"
 namespace Gint_Tools{
 void init_orb(double& dr_uniform, 
-                                        std::vector<double>& rcuts,
-                                        UnitCell& ucell,
-                                        std::vector<std::vector<double>>& psi_u,
-                                        std::vector<std::vector<double>>& dpsi_u,
-                                        std::vector<std::vector<double>>& d2psi_u)
+                std::vector<double>& rcuts,
+                UnitCell& ucell,
+                std::vector<std::vector<double>>& psi_u,
+                std::vector<std::vector<double>>& dpsi_u,
+                std::vector<std::vector<double>>& d2psi_u)
 {
     // set the grid parameters
     dr_uniform=GlobalC::ORB.dr_uniform;

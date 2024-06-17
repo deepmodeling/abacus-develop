@@ -60,7 +60,7 @@ void ESolver_KS_LCAO<TK, TR>::set_matrix_grid(Record_adj& ra)
 
     Gint_Tools::init_orb(dr_uniform, rcuts, GlobalC::ucell, 
                             psi_u, dpsi_u, d2psi_u);
-    printf("the dr_uniform is %f\n", dr_uniform);
+
     this->GridT.set_pbc_grid(this->pw_rho->nx,
                              this->pw_rho->ny,
                              this->pw_rho->nz,
