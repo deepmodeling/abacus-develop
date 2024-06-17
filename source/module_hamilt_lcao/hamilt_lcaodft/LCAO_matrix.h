@@ -81,9 +81,7 @@ private:
     // these matrixed are used
     // for 'folding_matrix' in lcao_nnr,
     // HlocR -> Hloc2,
-    // SlocR -> Sloc2,
     //------------------------------
-    std::vector<double> SlocR;
     std::vector<double> Hloc_fixedR;
 
     //LiuXh add 2019-07-15

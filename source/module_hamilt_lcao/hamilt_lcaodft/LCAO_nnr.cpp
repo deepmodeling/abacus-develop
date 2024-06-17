@@ -479,7 +479,6 @@ void LCAO_Matrix::folding_fixedH(
 					if(GlobalV::NSPIN!=4)
 					{
 						auto compute_kernel = [&](int iic, int index) {
-							this->Sloc2[iic] += this->SlocR[index] * kphase;
 							this->Hloc_fixed2[iic] += this->Hloc_fixedR[index] * kphase;
 #ifdef __DEEPKS
 							if(GlobalV::deepks_scf)
