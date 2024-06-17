@@ -52,7 +52,7 @@ void ESolver_KS_LCAO<TK, TR>::set_matrix_grid(Record_adj& ra)
     // ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"SEARCH ADJACENT ATOMS");
 
     // (3) Periodic condition search for each grid.
-    double dr_uniform;
+    double dr_uniform=0.001;
 	std::vector<double> rcuts;
     std::vector<std::vector<double>> psi_u;
     std::vector<std::vector<double>> dpsi_u;
