@@ -15,7 +15,6 @@ namespace ModuleIO
         int istep,
         const ModuleBase::matrix &v_eff,
         const Parallel_Orbitals &pv,
-        LCAO_gen_fixedH &gen_h, // mohan add 2024-04-02
         Gint_k &gint_k, // mohan add 2024-04-01
         const ORB_gen_tables* uot,
         LCAO_Matrix &lm,
@@ -29,7 +28,6 @@ namespace ModuleIO
       _istep(istep),
       _v_eff(v_eff),
       _pv(pv),
-      _gen_h(gen_h), // mohan add 2024-04-02
       _gint_k(gint_k), // mohan add 2024-04-01
       uot_(uot),
       _lm(lm),
@@ -70,8 +68,7 @@ void Output_Mat_Sparse<std::complex<double>>::write(void)
                 this->_pv, 
 				this->_lm, 
 				this->_grid,
-                uot_,
-				this->_gen_h); // LiuXh add 2019-07-15
+                uot_); // LiuXh add 2019-07-15
     }
 
     //! generate a file containing the derivatives of the Hamiltonian matrix (in Ry/Bohr)
@@ -80,7 +77,6 @@ void Output_Mat_Sparse<std::complex<double>>::write(void)
 		output_dHR(
 				_istep, 
 				this->_v_eff, 
-                this->_gen_h,
 				this->_gint_k, // mohan add 2024-04-01
 				this->_lm,
                 this->_grid, // mohan add 2024-04-06
