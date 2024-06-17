@@ -12,8 +12,8 @@ void init_orb(double& dr_uniform,
     // set the grid parameters
     dr_uniform=GlobalC::ORB.dr_uniform;
     
-    int nwmax=ucell.nwmax;
-    int ntype=ucell.ntype;
+    const int nwmax=ucell.nwmax;
+    const int ntype=ucell.ntype;
     
     rcuts.resize(ntype);
     for(int T=0; T<ntype; T++)
