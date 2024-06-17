@@ -1,6 +1,6 @@
 #include "td_nonlocal_lcao.h"
 
-#include "module_basis/module_ao/ORB_gen_tables.h"
+#include "module_hamilt_lcao/module_tddft/snap_psibeta_half_tddft.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
@@ -184,42 +184,21 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                 // If we are calculating force, we need also to store the gradient
                 // and size of outer vector is then 4
                 // inner loop : all projectors (L0,M0)
-#ifdef USE_NEW_TWO_CENTER
-                // snap_psibeta_half_tddft() are used to calculate <psi|exp(iAr)|beta> no matter whether to use new two-center or not for now.
-                int L1 = atom1->iw2l[ iw1 ];
-                int N1 = atom1->iw2n[ iw1 ];
-                int m1 = atom1->iw2m[ iw1 ];
 
-                // convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
-                int M1 = (m1 % 2 == 0) ? -m1/2 : (m1+1)/2;
-
-                ModuleBase::Vector3<double> dtau = tau0 - tau1;
-                uot_->snap_psibeta_half_tddft(orb,
-                                            this->ucell->infoNL,
-                                            nlm,
-                                            tau1 * this->ucell->lat0,
-                                            T1,
-                                            atom1->iw2l[iw1],
-                                            atom1->iw2m[iw1],
-                                            atom1->iw2n[iw1],
-                                            tau0 * this->ucell->lat0,
-                                            T0,
-                                            -cart_At/2.0,
-                                            0);
-#else
-                uot_->snap_psibeta_half_tddft(orb,
-                                            this->ucell->infoNL,
-                                            nlm,
-                                            tau1 * this->ucell->lat0,
-                                            T1,
-                                            atom1->iw2l[iw1],
-                                            atom1->iw2m[iw1],
-                                            atom1->iw2n[iw1],
-                                            tau0 * this->ucell->lat0,
-                                            T0,
-                                            -cart_At/2.0,
-                                            0);
-#endif
+                // snap_psibeta_half_tddft() are used to calculate <psi|exp(iAr)|beta>
+                module_tddft::snap_psibeta_half_tddft(
+                    orb,
+                    this->ucell->infoNL,
+                    nlm,
+                    tau1 * this->ucell->lat0,
+                    T1,
+                    atom1->iw2l[iw1],
+                    atom1->iw2m[iw1],
+                    atom1->iw2n[iw1],
+                    tau0 * this->ucell->lat0,
+                    T0,
+                    -cart_At/2.0,
+                    0);
                 nlm_tot[ad].insert({all_indexes[iw1l], nlm[0]});
             }
         }
