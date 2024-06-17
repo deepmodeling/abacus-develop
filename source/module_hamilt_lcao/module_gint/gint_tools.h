@@ -159,7 +159,7 @@ namespace Gint_Tools
 	void get_block_info(const Grid_Technique& gt, const int bxyz, const int na_grid, const int grid_index,
 		int * &block_iw, int * &block_index, int * &block_size, bool** &cal_flag);		
 
-    void orb_paramter_init(double& dr_uniform, 
+    void init_orb(double& dr_uniform, 
                         std::vector<double>& rcuts,
                         UnitCell& ucell,
                         std::vector<std::vector<double>>& psi_u,

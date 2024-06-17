@@ -109,7 +109,7 @@ namespace ModuleESolver
         // set matrix and grid integral
         void set_matrix_grid(Record_adj& ra);
 
-        void orb_paramter_init(double& dr_uniform, 
+        void init_orb(double& dr_uniform, 
                                 std::vector<double>& rcuts,
                                 UnitCell& ucell,
                                 std::vector<std::vector<double>>& psi_u,

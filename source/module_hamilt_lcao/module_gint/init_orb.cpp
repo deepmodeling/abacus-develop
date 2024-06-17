@@ -2,7 +2,7 @@
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_cell/unitcell.h"
 namespace Gint_Tools{
-void orb_paramter_init(double& dr_uniform, 
+void init_orb(double& dr_uniform, 
                                         std::vector<double>& rcuts,
                                         UnitCell& ucell,
                                         std::vector<std::vector<double>>& psi_u,
