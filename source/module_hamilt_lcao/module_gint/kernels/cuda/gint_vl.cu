@@ -12,7 +12,7 @@ __global__ void get_psi_and_vldr3(double* ylmcoef,
                                   double* psi_input_double,
                                   int* psi_input_int,
                                   int* atom_num_per_bcell,
-                                  int max_atom_per_bcell,
+                                  const int* const start_idx_per_bcell,
                                   int* ucell_atom_nwl,
                                   bool* atom_iw2_new,
                                   int* atom_iw2_ylm,
@@ -23,7 +23,7 @@ __global__ void get_psi_and_vldr3(double* ylmcoef,
                                   double* psi_vldr3)
 {
     const int size = atom_num_per_bcell[blockIdx.x];
-    const int bcell_start = max_atom_per_bcell * blockIdx.x;
+    const int bcell_start = start_idx_per_bcell[blockIdx.x];
     const int end_index = bcell_start + size;
     const int start_index = bcell_start + threadIdx.x + blockDim.x * blockIdx.y;
     for (int index = start_index; index < end_index;

@@ -6,23 +6,25 @@
 namespace GintKernel
 {
 
-void gpu_task_generator_force(const Grid_Technique& gridt,
-                              const UnitCell& ucell,
-                              const int grid_index_ij,
-                              const int max_atom_per_bcell,
-                              const int max_atom,
-                              const int nczp,
-                              const double vfactor,
-                              const double* rcut,
-                              const double* vlocal_global_value,
-                              double* psi_input_double,
-                              int* psi_input_int,
-                              int* atom_num_per_bcell,
-                              int* iat_per_z,
-                              int& atom_pair_num,
-                              std::vector<bool>& gpu_mat_cal_flag)
+void gtask_force(const Grid_Technique& gridt,
+                 const UnitCell& ucell,
+                 const int grid_index_ij,
+                 const int max_atom_per_bcell,
+                 const int max_atom,
+                 const int nczp,
+                 const double vfactor,
+                 const double* rcut,
+                 const double* vlocal_global_value,
+                 double* psi_input_double,
+                 int* psi_input_int,
+                 int* atom_num_per_bcell,
+                 int* start_idx_per_bcell,
+                 int* iat_per_z,
+                 int& atom_per_z,
+                 std::vector<bool>& gpu_mat_cal_flag)
 {
     const int nwmax = ucell.nwmax;
+    atom_per_z = 0;
     // psir generate
     for (int z_index = 0; z_index < gridt.nbzp; z_index++)
     {
@@ -66,9 +68,8 @@ void gpu_task_generator_force(const Grid_Technique& gridt,
                         if (distance <= rcut[it_temp])
                         {
                             gpu_mat_cal_flag[calc_flag_index + id] = true;
-                            int pos_temp_double = num_psi_pos + num_get_psi;
-                            int pos_temp_int = pos_temp_double * 2;
-                            pos_temp_double *= 5;
+                            const int pos_temp_double = (atom_per_z + num_get_psi) * 5;
+                            const int pos_temp_int = (atom_per_z + num_get_psi) * 2;
                             if (distance < 1.0E-9)
                             {
                                 distance += 1.0E-9;
@@ -98,6 +99,8 @@ void gpu_task_generator_force(const Grid_Technique& gridt,
             }
         }
         atom_num_per_bcell[z_index] = num_get_psi;
+        start_idx_per_bcell[z_index] = atom_per_z;
+        atom_per_z += num_get_psi;
     }
 }
 
@@ -121,7 +124,7 @@ void alloc_mult_force(const Grid_Technique& gridt,
                       double** mat_A,
                       double** mat_B,
                       double** mat_C,
-                      std::vector<bool>& gpu_mat_cal_flag)
+                      const std::vector<bool>& gpu_mat_cal_flag)
 {
     int tid = 0;
     max_m = 0;

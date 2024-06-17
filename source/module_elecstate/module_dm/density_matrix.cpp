@@ -458,6 +458,12 @@ template <>
 void DensityMatrix<std::complex<double>, double>::cal_DMR()
 {
     ModuleBase::TITLE("DensityMatrix", "cal_DMR");
+
+    // To check whether DMR has been initialized
+#ifdef __DEBUG
+    assert(!this->_DMR.empty() && "DMR has not been initialized!");
+#endif
+    
     ModuleBase::timer::tick("DensityMatrix", "cal_DMR");
     int ld_hk = this->_paraV->nrow;
     int ld_hk2 = 2 * ld_hk;
@@ -615,6 +621,12 @@ template <>
 void DensityMatrix<double, double>::cal_DMR()
 {
     ModuleBase::TITLE("DensityMatrix", "cal_DMR");
+
+    // To check whether DMR has been initialized
+#ifdef __DEBUG
+    assert(!this->_DMR.empty() && "DMR has not been initialized!");
+#endif
+
     ModuleBase::timer::tick("DensityMatrix", "cal_DMR");
     int ld_hk = this->_paraV->nrow;
     for (int is = 1; is <= this->_nspin; ++is)

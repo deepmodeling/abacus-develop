@@ -641,6 +641,26 @@ void axpy_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const ba
     hipblasErrcheck(hipblasZaxpy(cublas_handle, N, (hipblasDoubleComplex*)alpha, (hipblasDoubleComplex*)X, incX, (hipblasDoubleComplex*)Y, incY));
 }
 
+hipblasOperation_t judge_trans_op(bool is_complex, const char& trans, const char* name)
+{
+    if (trans == 'N')
+    {
+        return HIPBLAS_OP_N;
+    }
+    else if(trans == 'T')
+    {
+        return HIPBLAS_OP_T;
+    }
+    else if(is_complex && trans == 'C')
+    {
+        return HIPBLAS_OP_C;
+    }
+    else 
+    {
+        ModuleBase::WARNING_QUIT(name, std::string("Unknown trans type ") + trans + std::string(" !"));
+    }
+}
+
 template <>
 void gemv_op<double, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* d,
                                                           const char& trans,
@@ -655,19 +675,7 @@ void gemv_op<double, base_device::DEVICE_GPU>::operator()(const base_device::DEV
                                                           double* Y,
                                                           const int& incy)
 {
-    hipblasOperation_t cutrans = {};
-    if (trans == 'N') {
-        cutrans = HIPBLAS_OP_N;
-    }
-    else if (trans == 'T') {
-        cutrans = HIPBLAS_OP_T;
-    }
-    else if (trans == 'C') {
-        cutrans = HIPBLAS_OP_C;
-    }
-    else {
-        ModuleBase::WARNING_QUIT("gemv_op", std::string("Unknown trans type ") + trans + std::string(" !"));
-    }
+    hipblasOperation_t cutrans = judge_trans_op(false, trans, "gemv_op");
     hipblasErrcheck(hipblasDgemv(cublas_handle, cutrans, m, n, alpha, A, lda, X, incx, beta, Y, incx));
 }
 
@@ -685,19 +693,7 @@ void gemv_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const bas
                                                                        std::complex<float>* Y,
                                                                        const int& incy)
 {
-    hipblasOperation_t cutrans = {};
-    if (trans == 'N') {
-        cutrans = HIPBLAS_OP_N;
-    }
-    else if (trans == 'T') {
-        cutrans = HIPBLAS_OP_T;
-    }
-    else if (trans == 'C') {
-        cutrans = HIPBLAS_OP_C;
-    }
-    else {
-        ModuleBase::WARNING_QUIT("gemv_op", std::string("Unknown trans type ") + trans + std::string(" !"));
-    }
+    hipblasOperation_t cutrans = judge_trans_op(true, trans, "gemv_op");
     hipblasErrcheck(hipblasCgemv(cublas_handle, cutrans, m, n, (hipblasComplex*)alpha, (hipblasComplex*)A, lda, (hipblasComplex*)X, incx, (hipblasComplex*)beta, (hipblasComplex*)Y, incx));
 }
 
@@ -715,19 +711,7 @@ void gemv_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const ba
                                                                         std::complex<double>* Y,
                                                                         const int& incy)
 {
-    hipblasOperation_t cutrans = {};
-    if (trans == 'N'){
-        cutrans = HIPBLAS_OP_N;
-    }
-    else if (trans == 'T'){
-        cutrans = HIPBLAS_OP_T;
-    }
-    else if (trans == 'C'){
-        cutrans = HIPBLAS_OP_C;
-    }
-    else {
-        ModuleBase::WARNING_QUIT("gemv_op", std::string("Unknown trans type ") + trans + std::string(" !"));
-    }
+    hipblasOperation_t cutrans = judge_trans_op(true, trans, "gemv_op");
     hipblasErrcheck(hipblasZgemv(cublas_handle, cutrans, m, n, (hipblasDoubleComplex*)alpha, (hipblasDoubleComplex*)A, lda, (hipblasDoubleComplex*)X, incx, (hipblasDoubleComplex*)beta, (hipblasDoubleComplex*)Y, incx));
 }
 
@@ -767,28 +751,8 @@ void gemm_op<double, base_device::DEVICE_GPU>::operator()(const base_device::DEV
                                                           double* c,
                                                           const int& ldc)
 {
-    hipblasOperation_t cutransA;
-    hipblasOperation_t cutransB;
-    // cutransA
-    if (transa == 'N') {
-        cutransA = HIPBLAS_OP_N;
-    }
-    else if (transa == 'T') {
-        cutransA = HIPBLAS_OP_T;
-    }
-    else {
-        ModuleBase::WARNING_QUIT("gemm_op", std::string("Unknown transa type ") + transa + std::string(" !"));
-    }
-    // cutransB
-    if (transb == 'N') {
-        cutransB = HIPBLAS_OP_N;
-    }
-    else if (transb == 'T') {
-        cutransB = HIPBLAS_OP_T;
-    }
-    else {
-        ModuleBase::WARNING_QUIT("gemm_op", std::string("Unknown transb type ") + transb + std::string(" !"));
-    }
+    hipblasOperation_t cutransA = judge_trans_op(false, transa, "gemm_op");
+    hipblasOperation_t cutransB = judge_trans_op(false, transb, "gemm_op");
     hipblasErrcheck(hipblasDgemm(cublas_handle, cutransA, cutransB, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc));
 }
 
@@ -808,34 +772,8 @@ void gemm_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const bas
                                                                        std::complex<float>* c,
                                                                        const int& ldc)
 {
-    hipblasOperation_t cutransA = {};
-    hipblasOperation_t cutransB = {};
-    // cutransA
-    if (transa == 'N'){
-        cutransA = HIPBLAS_OP_N;
-    }
-    else if (transa == 'T'){
-        cutransA = HIPBLAS_OP_T;
-    }
-    else if (transa == 'C'){
-        cutransA = HIPBLAS_OP_C;
-    }
-    else {
-        ModuleBase::WARNING_QUIT("gemm_op", std::string("Unknown transa type ") + transa + std::string(" !"));
-    }
-    // cutransB
-    if (transb == 'N'){
-        cutransB = HIPBLAS_OP_N;
-    }
-    else if (transb == 'T'){
-        cutransB = HIPBLAS_OP_T;
-    }
-    else if (transb == 'C'){
-        cutransB = HIPBLAS_OP_C;
-    }
-    else {
-        ModuleBase::WARNING_QUIT("gemm_op", std::string("Unknown transb type ") + transb + std::string(" !"));
-    }
+    hipblasOperation_t cutransA = judge_trans_op(true, transa, "gemm_op");
+    hipblasOperation_t cutransB = judge_trans_op(true, transb, "gemm_op");
     hipblasErrcheck(hipblasCgemm(cublas_handle, cutransA, cutransB, m, n ,k, (hipblasComplex*)alpha, (hipblasComplex*)a , lda, (hipblasComplex*)b, ldb, (hipblasComplex*)beta, (hipblasComplex*)c, ldc));
 }
 
@@ -855,34 +793,8 @@ void gemm_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const ba
                                                                         std::complex<double>* c,
                                                                         const int& ldc)
 {
-    hipblasOperation_t cutransA;
-    hipblasOperation_t cutransB;
-    // cutransA
-    if (transa == 'N'){
-        cutransA = HIPBLAS_OP_N;
-    }
-    else if (transa == 'T'){
-        cutransA = HIPBLAS_OP_T;
-    }
-    else if (transa == 'C'){
-        cutransA = HIPBLAS_OP_C;
-    }
-    else {
-        ModuleBase::WARNING_QUIT("gemm_op", std::string("Unknown transa type ") + transa + std::string(" !"));
-    }
-    // cutransB
-    if (transb == 'N'){
-        cutransB = HIPBLAS_OP_N;
-    }
-    else if (transb == 'T'){
-        cutransB = HIPBLAS_OP_T;
-    }
-    else if (transb == 'C'){
-        cutransB = HIPBLAS_OP_C;
-    }
-    else {
-        ModuleBase::WARNING_QUIT("gemm_op", std::string("Unknown transb type ") + transb + std::string(" !"));
-    }
+    hipblasOperation_t cutransA = judge_trans_op(true, transa, "gemm_op");
+    hipblasOperation_t cutransB = judge_trans_op(true, transb, "gemm_op");
     hipblasErrcheck(hipblasZgemm(cublas_handle, cutransA, cutransB, m, n ,k, (hipblasDoubleComplex*)alpha, (hipblasDoubleComplex*)a , lda, (hipblasDoubleComplex*)b, ldb, (hipblasDoubleComplex*)beta, (hipblasDoubleComplex*)c, ldc));
 }
 

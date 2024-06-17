@@ -64,7 +64,6 @@ template<typename TK, typename TR>
 HamiltLCAO<TK, TR>::HamiltLCAO(
     Gint_Gamma* GG_in,
     Gint_k* GK_in,
-    LCAO_gen_fixedH* genH_in,
     LCAO_Matrix* LM_in,
     Local_Orbital_Charge* loc_in,
     elecstate::Potential* pot_in,
