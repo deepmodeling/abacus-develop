@@ -502,7 +502,6 @@ void LCAO_Matrix::folding_fixedH(
 					else
 					{
 						auto compute_kernel = [&](int iic, int index, int iw1_all, int iw2_all) {
-							this->Sloc2[iic] += this->SlocR_soc[index] * kphase;
 							this->Hloc_fixed2[iic] += this->Hloc_fixedR_soc[index] * kphase;
 #ifdef __DEEPKS
 							if(GlobalV::deepks_scf)

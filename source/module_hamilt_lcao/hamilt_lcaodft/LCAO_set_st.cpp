@@ -525,7 +525,6 @@ void build_ST_new(
 						else // condition 6, calculate the derivative
 						{
 							single_derivative(
-									lm,
 									fsr,
 									orb,
 									uot,
