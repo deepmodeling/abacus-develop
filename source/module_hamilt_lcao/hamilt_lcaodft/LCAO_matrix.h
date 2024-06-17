@@ -176,8 +176,6 @@ private:
 
     void update_Hloc2(const int &ik);
 
-    void allocate_HS_R(const int &nnr);
-
     void output_HSk(const char &mtype, std::string &fn);
 
     //LiuXh add 2019-07-15
