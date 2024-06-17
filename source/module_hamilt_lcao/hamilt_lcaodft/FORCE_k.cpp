@@ -89,17 +89,6 @@ void Force_LCAO<std::complex<double>>::allocate(
     // calculate dS = <phi | dphi>
     //-----------------------------
     bool cal_deri = true;
-    LCAO_domain::build_ST_new(
-          lm,
-          fsr,
-         'S', 
-          cal_deri, 
-          GlobalC::ucell, 
-          GlobalC::ORB, 
-          pv,
-          *uot, 
-          &GlobalC::GridD, 
-          lm.SlocR.data());
 
     //-----------------------------------------
     // (2) allocate for <phi | T + Vnl | dphi>
@@ -148,20 +137,6 @@ void Force_LCAO<std::complex<double>>::allocate(
 	if (INPUT.cal_syns)
 	{
 		cal_deri = false;
-
-		LCAO_domain::build_ST_new(
-				lm,
-                fsr,
-				'S', 
-				cal_deri, 
-				GlobalC::ucell,
-				GlobalC::ORB,
-				pv,
-				*uot,
-                &(GlobalC::GridD),
-				lm.SlocR.data(), 
-				INPUT.cal_syns, 
-				INPUT.dmax);
 
         for (int ik = 0; ik < nks; ik++)
         {
