@@ -98,8 +98,9 @@ class Grid_Technique : public Grid_MeshBall
                       const int& bz_in, const int& nbx_in, const int& nby_in, const int& nbz_in, const int& nbxx_in,
                       const int& nbzp_start_in, const int& nbzp_in, const int& ny, const int& nplane,
                       const int& startz_current, const UnitCell& ucell, const double& dr_uniform, 
-                      std::vector<double>& rcuts,std::vector<std::vector<double>>& psi_u,std::vector<std::vector<double>>& dpsi_u,
-                      std::vector<std::vector<double>>& d2psi_u,const int& num_stream);
+                      const std::vector<double>& rcuts,const std::vector<std::vector<double>>& psi_u,
+                      const std::vector<std::vector<double>>& dpsi_u,const std::vector<std::vector<double>>& d2psi_u,
+                      const int& num_stream);
 
     /// number of elements(basis-pairs) in this processon
     /// on all adjacent atoms-pairs(Grid division)
