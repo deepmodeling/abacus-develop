@@ -28,6 +28,7 @@ template<>
 void Force_LCAO<std::complex<double>>::cal_fedm(
     const bool isforce,
     const bool isstress,
+    ForceStressArrays &fsr,
     const UnitCell& ucell,
     const elecstate::DensityMatrix<std::complex<double>, double>* dm,
     const psi::Psi<std::complex<double>>* psi,
@@ -168,28 +169,28 @@ void Force_LCAO<std::complex<double>>::cal_fedm(
 
                         if (isforce)
                         {
-                            foverlap_iat[0] -= edm2d2 * lm.DSloc_Rx[irr];
-                            foverlap_iat[1] -= edm2d2 * lm.DSloc_Ry[irr];
-                            foverlap_iat[2] -= edm2d2 * lm.DSloc_Rz[irr];
+                            foverlap_iat[0] -= edm2d2 * fsr.DSloc_Rx[irr];
+                            foverlap_iat[1] -= edm2d2 * fsr.DSloc_Ry[irr];
+                            foverlap_iat[2] -= edm2d2 * fsr.DSloc_Rz[irr];
                         }
                         if (isstress)
                         {
                             for (int ipol = 0; ipol < 3; ipol++)
                             {
-                                local_soverlap(0, ipol) += edm2d1 * lm.DSloc_Rx[irr]
-                                                            * lm.DH_r[irr * 3 + ipol];
+                                local_soverlap(0, ipol) += edm2d1 * fsr.DSloc_Rx[irr]
+                                                            * fsr.DH_r[irr * 3 + ipol];
                                 if (ipol < 1)
 								{
 									continue;
 								}
-                                local_soverlap(1, ipol) += edm2d1 * lm.DSloc_Ry[irr]
-                                                            * lm.DH_r[irr * 3 + ipol];
+                                local_soverlap(1, ipol) += edm2d1 * fsr.DSloc_Ry[irr]
+                                                            * fsr.DH_r[irr * 3 + ipol];
 								if (ipol < 2)
 								{
 									continue;
 								}
-                                local_soverlap(2, ipol) += edm2d1 * lm.DSloc_Rz[irr]
-                                                            * lm.DH_r[irr * 3 + ipol];
+                                local_soverlap(2, ipol) += edm2d1 * fsr.DSloc_Rz[irr]
+                                                            * fsr.DH_r[irr * 3 + ipol];
                             }
                         }
                         //}

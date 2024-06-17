@@ -24,14 +24,16 @@
 #endif
 
 template<>
-void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
+void Force_LCAO<std::complex<double>>::allocate(
+    const Parallel_Orbitals& pv,
     LCAO_Matrix& lm,
+    ForceStressArrays& fsr, // mohan add 2024-06-15
     const ORB_gen_tables* uot,
     const int& nks,
     const std::vector<ModuleBase::Vector3<double>>& kvec_d)
 {
-    ModuleBase::TITLE("Force_LCAO_k", "allocate_k");
-    ModuleBase::timer::tick("Force_LCAO_k", "allocate_k");
+    ModuleBase::TITLE("Force_LCAO", "allocate");
+    ModuleBase::timer::tick("Force_LCAO", "allocate");
 
     const int nnr = pv.nnr;
 
@@ -40,19 +42,18 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
     //--------------------------------
     // (1) allocate for dSx dSy & dSz
     //--------------------------------
-    lm.DSloc_Rx = new double[nnr];
-    lm.DSloc_Ry = new double[nnr];
-    lm.DSloc_Rz = new double[nnr];
+    fsr.DSloc_Rx = new double[nnr];
+    fsr.DSloc_Ry = new double[nnr];
+    fsr.DSloc_Rz = new double[nnr];
 
-    // mohan add lm on 2024-03-31
-	const auto init_DSloc_Rxyz = [this, nnr, &lm](int num_threads, int thread_id) 
+	const auto init_DSloc_Rxyz = [this, nnr, &fsr](int num_threads, int thread_id) 
 	{
 		int beg=0;
 		int len=0;
 		ModuleBase::BLOCK_TASK_DIST_1D(num_threads, thread_id, nnr, 1024, beg, len);
-		ModuleBase::GlobalFunc::ZEROS(lm.DSloc_Rx + beg, len);
-		ModuleBase::GlobalFunc::ZEROS(lm.DSloc_Ry + beg, len);
-		ModuleBase::GlobalFunc::ZEROS(lm.DSloc_Rz + beg, len);
+		ModuleBase::GlobalFunc::ZEROS(fsr.DSloc_Rx + beg, len);
+		ModuleBase::GlobalFunc::ZEROS(fsr.DSloc_Ry + beg, len);
+		ModuleBase::GlobalFunc::ZEROS(fsr.DSloc_Rz + beg, len);
 	};
 
     ModuleBase::OMP_PARALLEL(init_DSloc_Rxyz);
@@ -60,24 +61,23 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
 
     if (GlobalV::CAL_STRESS)
     {
-        lm.DH_r = new double[3 * nnr];
-        lm.stvnl11 = new double[nnr];
-        lm.stvnl12 = new double[nnr];
-        lm.stvnl13 = new double[nnr];
-        lm.stvnl22 = new double[nnr];
-        lm.stvnl23 = new double[nnr];
-        lm.stvnl33 = new double[nnr];
-        // mohan add lm on 2024-03-31
-        const auto init_DH_r_stvnl = [this, nnr, &lm](int num_threads, int thread_id) {
+        fsr.DH_r = new double[3 * nnr];
+        fsr.stvnl11 = new double[nnr];
+        fsr.stvnl12 = new double[nnr];
+        fsr.stvnl13 = new double[nnr];
+        fsr.stvnl22 = new double[nnr];
+        fsr.stvnl23 = new double[nnr];
+        fsr.stvnl33 = new double[nnr];
+        const auto init_DH_r_stvnl = [this, nnr, &fsr](int num_threads, int thread_id) {
             int beg, len;
             ModuleBase::BLOCK_TASK_DIST_1D(num_threads, thread_id, nnr, 1024, beg, len);
-            ModuleBase::GlobalFunc::ZEROS(lm.DH_r + 3 * beg, 3 * len);
-            ModuleBase::GlobalFunc::ZEROS(lm.stvnl11 + beg, len);
-            ModuleBase::GlobalFunc::ZEROS(lm.stvnl12 + beg, len);
-            ModuleBase::GlobalFunc::ZEROS(lm.stvnl13 + beg, len);
-            ModuleBase::GlobalFunc::ZEROS(lm.stvnl22 + beg, len);
-            ModuleBase::GlobalFunc::ZEROS(lm.stvnl23 + beg, len);
-            ModuleBase::GlobalFunc::ZEROS(lm.stvnl33 + beg, len);
+            ModuleBase::GlobalFunc::ZEROS(fsr.DH_r + 3 * beg, 3 * len);
+            ModuleBase::GlobalFunc::ZEROS(fsr.stvnl11 + beg, len);
+            ModuleBase::GlobalFunc::ZEROS(fsr.stvnl12 + beg, len);
+            ModuleBase::GlobalFunc::ZEROS(fsr.stvnl13 + beg, len);
+            ModuleBase::GlobalFunc::ZEROS(fsr.stvnl22 + beg, len);
+            ModuleBase::GlobalFunc::ZEROS(fsr.stvnl23 + beg, len);
+            ModuleBase::GlobalFunc::ZEROS(fsr.stvnl33 + beg, len);
         };
         ModuleBase::OMP_PARALLEL(init_DH_r_stvnl);
 
@@ -91,6 +91,7 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
     bool cal_deri = true;
     LCAO_domain::build_ST_new(
           lm,
+          fsr,
          'S', 
           cal_deri, 
           GlobalC::ucell, 
@@ -103,18 +104,17 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
     //-----------------------------------------
     // (2) allocate for <phi | T + Vnl | dphi>
     //-----------------------------------------
-    lm.DHloc_fixedR_x = new double[nnr];
-    lm.DHloc_fixedR_y = new double[nnr];
-    lm.DHloc_fixedR_z = new double[nnr];
+    fsr.DHloc_fixedR_x = new double[nnr];
+    fsr.DHloc_fixedR_y = new double[nnr];
+    fsr.DHloc_fixedR_z = new double[nnr];
 
-    // mohan add lm on 2024-03-31
-    const auto init_DHloc_fixedR_xyz = [this, nnr, &lm](int num_threads, int thread_id) {
+    const auto init_DHloc_fixedR_xyz = [this, nnr, &fsr](int num_threads, int thread_id) {
         int beg=0;
         int len=0;
         ModuleBase::BLOCK_TASK_DIST_1D(num_threads, thread_id, nnr, 1024, beg, len);
-        ModuleBase::GlobalFunc::ZEROS(lm.DHloc_fixedR_x + beg, len);
-        ModuleBase::GlobalFunc::ZEROS(lm.DHloc_fixedR_y + beg, len);
-        ModuleBase::GlobalFunc::ZEROS(lm.DHloc_fixedR_z + beg, len);
+        ModuleBase::GlobalFunc::ZEROS(fsr.DHloc_fixedR_x + beg, len);
+        ModuleBase::GlobalFunc::ZEROS(fsr.DHloc_fixedR_y + beg, len);
+        ModuleBase::GlobalFunc::ZEROS(fsr.DHloc_fixedR_z + beg, len);
     };
     ModuleBase::OMP_PARALLEL(init_DHloc_fixedR_xyz);
     ModuleBase::Memory::record("Force::dTVNL", sizeof(double) * nnr * 3);
@@ -123,6 +123,7 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
     // calculate T + VNL(P1) in LCAO basis
 	LCAO_domain::build_ST_new(
             lm,
+            fsr,
 			'T', 
 			cal_deri, 
 			GlobalC::ucell, 
@@ -135,6 +136,7 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
     // calculate dVnl=<phi|dVnl|dphi> in LCAO
 	LCAO_domain::build_Nonlocal_mu_new(
 			lm,
+            fsr,
 			lm.Hloc_fixed.data(), 
 			cal_deri, 
 			GlobalC::ucell, 
@@ -149,6 +151,7 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
 
 		LCAO_domain::build_ST_new(
 				lm,
+                fsr,
 				'S', 
 				cal_deri, 
 				GlobalC::ucell,
@@ -196,24 +199,24 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
 }
 
 template<>
-void Force_LCAO<std::complex<double>>::finish_ftable(LCAO_Matrix& lm)
+void Force_LCAO<std::complex<double>>::finish_ftable(ForceStressArrays &fsr)
 {
-    delete[] lm.DSloc_Rx;
-    delete[] lm.DSloc_Ry;
-    delete[] lm.DSloc_Rz;
-    delete[] lm.DHloc_fixedR_x;
-    delete[] lm.DHloc_fixedR_y;
-    delete[] lm.DHloc_fixedR_z;
+    delete[] fsr.DSloc_Rx;
+    delete[] fsr.DSloc_Ry;
+    delete[] fsr.DSloc_Rz;
+    delete[] fsr.DHloc_fixedR_x;
+    delete[] fsr.DHloc_fixedR_y;
+    delete[] fsr.DHloc_fixedR_z;
 
     if (GlobalV::CAL_STRESS)
     {
-        delete[] lm.DH_r;
-        delete[] lm.stvnl11;
-        delete[] lm.stvnl12;
-        delete[] lm.stvnl13;
-        delete[] lm.stvnl22;
-        delete[] lm.stvnl23;
-        delete[] lm.stvnl33;
+        delete[] fsr.DH_r;
+        delete[] fsr.stvnl11;
+        delete[] fsr.stvnl12;
+        delete[] fsr.stvnl13;
+        delete[] fsr.stvnl22;
+        delete[] fsr.stvnl23;
+        delete[] fsr.stvnl33;
     }
     return;
 }
@@ -299,118 +302,122 @@ void Force_LCAO<std::complex<double>>::test(
 }
 
     // be called in Force_LCAO::start_force_calculation
-    template<>
-    void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
-        const bool isstress,
-        const UnitCell& ucell,
-        const psi::Psi<std::complex<double>>* psi,
-        const elecstate::ElecState* pelec,
-        ModuleBase::matrix& foverlap,
-        ModuleBase::matrix& ftvnl_dphi,
-        ModuleBase::matrix& fvnl_dbeta,
-        ModuleBase::matrix& fvl_dphi,
-        ModuleBase::matrix& soverlap,
-        ModuleBase::matrix& stvnl_dphi,
-        ModuleBase::matrix& svnl_dbeta,
-        ModuleBase::matrix& svl_dphi,
+template<>
+void Force_LCAO<std::complex<double>>::ftable(
+	const bool isforce,
+	const bool isstress,
+	ForceStressArrays &fsr, // mohan add 2024-06-15
+	const UnitCell& ucell,
+	const psi::Psi<std::complex<double>>* psi,
+	const elecstate::ElecState* pelec,
+	ModuleBase::matrix& foverlap,
+	ModuleBase::matrix& ftvnl_dphi,
+	ModuleBase::matrix& fvnl_dbeta,
+	ModuleBase::matrix& fvl_dphi,
+	ModuleBase::matrix& soverlap,
+	ModuleBase::matrix& stvnl_dphi,
+	ModuleBase::matrix& svnl_dbeta,
+	ModuleBase::matrix& svl_dphi,
 #ifdef __DEEPKS
-        ModuleBase::matrix& svnl_dalpha,
+	ModuleBase::matrix& svnl_dalpha,
 #endif
-        TGint<std::complex<double>>::type& gint,
-        const ORB_gen_tables* uot,
-        const Parallel_Orbitals& pv,
-        LCAO_Matrix& lm,
-        const K_Vectors* kv,
-        Record_adj* ra)
-    {
-        ModuleBase::TITLE("Force_LCAO_k", "ftable_k");
-        ModuleBase::timer::tick("Force_LCAO_k", "ftable_k");
+	TGint<std::complex<double>>::type& gint,
+	const ORB_gen_tables* uot,
+	const Parallel_Orbitals& pv,
+	LCAO_Matrix& lm,
+	const K_Vectors* kv,
+	Record_adj* ra)
+{
+	ModuleBase::TITLE("Force_LCAO", "ftable");
+	ModuleBase::timer::tick("Force_LCAO", "ftable");
 
-        elecstate::DensityMatrix<complex<double>, double>* dm
-            = dynamic_cast<const elecstate::ElecStateLCAO<std::complex<double>>*>(pelec)->get_DM();
+	elecstate::DensityMatrix<complex<double>, double>* dm
+		= dynamic_cast<const elecstate::ElecStateLCAO<std::complex<double>>*>(pelec)->get_DM();
 
-        this->allocate(
-            pv,
-            lm,
-            uot,
-            kv->get_nks(),
-            kv->kvec_d);
+	this->allocate(
+			pv,
+			lm,
+            fsr, // mohan add 2024-06-16
+			uot,
+			kv->get_nks(),
+			kv->kvec_d);
 
-        // calculate the energy density matrix
-        // and the force related to overlap matrix and energy density matrix.
-        this->cal_fedm(
-            isforce,
-            isstress,
-            ucell,
-            dm,
-            psi,
-            pv,
-            pelec,
-            lm,
-            foverlap,
-            soverlap,
-            kv,
-            ra);
+	// calculate the energy density matrix
+	// and the force related to overlap matrix and energy density matrix.
+	this->cal_fedm(
+			isforce,
+			isstress,
+            fsr,
+			ucell,
+			dm,
+			psi,
+			pv,
+			pelec,
+			lm,
+			foverlap,
+			soverlap,
+			kv,
+			ra);
 
-        this->cal_ftvnl_dphi(
-            dm,
-            pv,
-            ucell,
-            lm,
-            isforce,
-            isstress,
-            ftvnl_dphi,
-            stvnl_dphi,
-            ra);
+	this->cal_ftvnl_dphi(
+			dm,
+			pv,
+			ucell,
+			fsr,
+			isforce,
+			isstress,
+			ftvnl_dphi,
+			stvnl_dphi,
+			ra);
 
-        // doing on the real space grid.
-        this->cal_fvl_dphi(
-            isforce,
-            isstress,
-            pelec->pot,
-            gint,
-            fvl_dphi,
-            svl_dphi);
+	// doing on the real space grid.
+	this->cal_fvl_dphi(
+			isforce,
+			isstress,
+			pelec->pot,
+			gint,
+			fvl_dphi,
+			svl_dphi);
 
-        this->cal_fvnl_dbeta(
-            dm,
-            pv,
-            ucell,
-            GlobalC::ORB,
-            *uot,
-            GlobalC::GridD,
-            isforce,
-            isstress,
-            fvnl_dbeta,
-            svnl_dbeta);
+	this->cal_fvnl_dbeta(
+			dm,
+			pv,
+			ucell,
+			GlobalC::ORB,
+			*uot,
+			GlobalC::GridD,
+			isforce,
+			isstress,
+			fvnl_dbeta,
+			svnl_dbeta);
 
 #ifdef __DEEPKS
-        if (GlobalV::deepks_scf)
-        {
-            const std::vector<std::vector<std::complex<double>>>& dm_k = dm->get_DMK_vector();
+	if (GlobalV::deepks_scf)
+	{
+		const std::vector<std::vector<std::complex<double>>>& dm_k = dm->get_DMK_vector();
 
-            GlobalC::ld.cal_projected_DM_k(dm, ucell, GlobalC::ORB, GlobalC::GridD);
+		GlobalC::ld.cal_projected_DM_k(dm, ucell, GlobalC::ORB, GlobalC::GridD);
 
-            GlobalC::ld.cal_descriptor(ucell.nat);
+		GlobalC::ld.cal_descriptor(ucell.nat);
 
-            GlobalC::ld.cal_gedm(ucell.nat);
+		GlobalC::ld.cal_gedm(ucell.nat);
 
-            GlobalC::ld.cal_f_delta_k(dm_k,
-                ucell,
-                GlobalC::ORB,
-                GlobalC::GridD,
-                kv->get_nks(),
-                kv->kvec_d,
-                isstress,
-                svnl_dalpha);
+		GlobalC::ld.cal_f_delta_k(dm_k,
+				ucell,
+				GlobalC::ORB,
+				GlobalC::GridD,
+				kv->get_nks(),
+				kv->kvec_d,
+				isstress,
+				svnl_dalpha);
 #ifdef __MPI
-            Parallel_Reduce::reduce_all(GlobalC::ld.F_delta.c, GlobalC::ld.F_delta.nr * GlobalC::ld.F_delta.nc);
-            if (isstress)
-            {
-                Parallel_Reduce::reduce_pool(svnl_dalpha.c, svnl_dalpha.nr * svnl_dalpha.nc);
-            }
+		Parallel_Reduce::reduce_all(GlobalC::ld.F_delta.c, GlobalC::ld.F_delta.nr * GlobalC::ld.F_delta.nc);
+		if (isstress)
+		{
+			Parallel_Reduce::reduce_pool(svnl_dalpha.c, svnl_dalpha.nr * svnl_dalpha.nc);
+		}
 #endif
-        }
+	}
 #endif
 
     //----------------------------------------------------------------
@@ -431,6 +438,6 @@ void Force_LCAO<std::complex<double>>::test(
         Parallel_Reduce::reduce_pool(svl_dphi.c, svl_dphi.nr * svl_dphi.nc);
     }
 
-    ModuleBase::timer::tick("Force_LCAO_k", "ftable_k");
+    ModuleBase::timer::tick("Force_LCAO", "ftable");
     return;
 }

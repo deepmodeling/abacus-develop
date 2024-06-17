@@ -9,7 +9,7 @@ void Force_LCAO<double>::cal_ftvnl_dphi(
     const elecstate::DensityMatrix<double, double>* dm,
     const Parallel_Orbitals& pv,
     const UnitCell& ucell,
-    LCAO_Matrix& lm,
+    ForceStressArrays& fsr,
     const bool isforce, 
 	const bool isstress, 
 	ModuleBase::matrix& ftvnl_dphi, 
@@ -45,18 +45,18 @@ void Force_LCAO<double>::cal_ftvnl_dphi(
 
                 if(isforce)
 				{
-					ftvnl_dphi(iat,0) += sum * lm.DHloc_fixed_x[index];
-					ftvnl_dphi(iat,1) += sum * lm.DHloc_fixed_y[index];
-					ftvnl_dphi(iat,2) += sum * lm.DHloc_fixed_z[index];
+					ftvnl_dphi(iat,0) += sum * fsr.DHloc_fixed_x[index];
+					ftvnl_dphi(iat,1) += sum * fsr.DHloc_fixed_y[index];
+					ftvnl_dphi(iat,2) += sum * fsr.DHloc_fixed_z[index];
 				}
                 if(isstress)
                 {
-                    stvnl_dphi(0,0) += sum/2.0 * lm.DHloc_fixed_11[index];
-                    stvnl_dphi(0,1) += sum/2.0 * lm.DHloc_fixed_12[index];
-                    stvnl_dphi(0,2) += sum/2.0 * lm.DHloc_fixed_13[index];
-                    stvnl_dphi(1,1) += sum/2.0 * lm.DHloc_fixed_22[index];
-                    stvnl_dphi(1,2) += sum/2.0 * lm.DHloc_fixed_23[index];
-                    stvnl_dphi(2,2) += sum/2.0 * lm.DHloc_fixed_33[index];   
+                    stvnl_dphi(0,0) += sum/2.0 * fsr.DHloc_fixed_11[index];
+                    stvnl_dphi(0,1) += sum/2.0 * fsr.DHloc_fixed_12[index];
+                    stvnl_dphi(0,2) += sum/2.0 * fsr.DHloc_fixed_13[index];
+                    stvnl_dphi(1,1) += sum/2.0 * fsr.DHloc_fixed_22[index];
+                    stvnl_dphi(1,2) += sum/2.0 * fsr.DHloc_fixed_23[index];
+                    stvnl_dphi(2,2) += sum/2.0 * fsr.DHloc_fixed_33[index];   
                 }
             }
         }

@@ -15,7 +15,7 @@ __global__ void get_psi_force(double* ylmcoef,
                               double* __restrict__ psi_input_double,
                               int* __restrict__ psi_input_int,
                               int* __restrict__ atom_num_per_bcell,
-                              int max_atom_per_bcell,
+                              int* __restrict__ start_idx_per_bcell,
                               const int* __restrict__ ucell_atom_nwl,
                               const bool* __restrict__ atom_iw2_new,
                               const int* __restrict__ atom_iw2_ylm,
@@ -35,7 +35,7 @@ __global__ void get_psi_force(double* ylmcoef,
                               double* d2psi_dzz)
 {
     const int size = atom_num_per_bcell[blockIdx.x];
-    const int bcell_start = max_atom_per_bcell * blockIdx.x;
+    const int bcell_start = start_idx_per_bcell[blockIdx.x];
     const int end_index = bcell_start + size;
     const int start_index = bcell_start + threadIdx.x + blockDim.x * blockIdx.y;
     for (int index = start_index; index < end_index;

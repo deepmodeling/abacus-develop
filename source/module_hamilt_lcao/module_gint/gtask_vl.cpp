@@ -17,10 +17,14 @@ void gtask_vlocal(const Grid_Technique& gridt,
                   const double* vlocal_global_value,
                   double* psi_input_double,
                   int* psi_input_int,
-                  int* atom_num_per_bcell)
+                  int* atom_num_per_bcell,
+                  int* start_idx_per_bcell,
+                  int& atom_per_z)
 {
     const int nwmax = ucell.nwmax;
     const int max_atom_per_bcell = max_atom * gridt.bxyz;
+    atom_per_z = 0;
+
     for (int z_index = 0; z_index < gridt.nbzp; z_index++)
     {
         int num_get_psi = 0;
@@ -28,6 +32,7 @@ void gtask_vlocal(const Grid_Technique& gridt,
         int num_psi_pos = max_atom_per_bcell * z_index;
         int calc_flag_index = max_atom * z_index;
         int bcell_start_index = gridt.bcell_start[grid_index];
+        start_idx_per_bcell[z_index] = 0;
 
         for (int id = 0; id < gridt.how_many_atoms[grid_index]; id++)
         {
@@ -60,9 +65,8 @@ void gtask_vlocal(const Grid_Technique& gridt,
                         if (distance <= rcut[it_temp])
                         {
                             gpu_matrix_calc_flag[calc_flag_index + id] = true;
-                            int pos_temp_double = num_psi_pos + num_get_psi;
-                            int pos_temp_int = pos_temp_double * 2;
-                            pos_temp_double *= 5;
+                            int pos_temp_double = (atom_per_z + num_get_psi) * 5;
+                            int pos_temp_int = (atom_per_z + num_get_psi) * 2;
                             if (distance < 1.0E-9)
                             {
                                 distance += 1.0E-9;
@@ -94,11 +98,14 @@ void gtask_vlocal(const Grid_Technique& gridt,
             }
         }
         atom_num_per_bcell[z_index] = num_get_psi;
+        start_idx_per_bcell[z_index] = atom_per_z;
+        atom_per_z += num_get_psi;
     }
 }
+
 void alloc_mult_vlocal(const Grid_Technique& gridt,
                         const UnitCell& ucell,
-                        std::vector<bool>& gpu_matrix_calc_flag,
+                        const std::vector<bool>& gpu_matrix_calc_flag,
                         const int grid_index_ij,
                         const int max_atom,
                         double* psi,

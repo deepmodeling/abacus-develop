@@ -3,6 +3,8 @@
 
 #include "diagh.h"
 
+#include <functional>
+
 namespace hsolver
 {
 
@@ -27,8 +29,14 @@ class Diago_DavSubspace : public DiagH<T, Device>
 
     virtual ~Diago_DavSubspace() override;
 
-    int diag(hamilt::Hamilt<T, Device>* phm_in,
+    using Func = std::function<void(T*, T*, const int, const int, const int, const int)>;
+
+    int diag(const Func& hpsi_func,
+             T* psi_in,
+
+             hamilt::Hamilt<T, Device>* phm_in,
              psi::Psi<T, Device>& phi,
+
              Real* eigenvalue_in,
              const std::vector<bool>& is_occupied,
              const bool& scf_type);
@@ -62,6 +70,8 @@ class Diago_DavSubspace : public DiagH<T, Device>
     /// record for how many bands not have convergence eigenvalues
     int notconv = 0;
 
+    T* psi_in_iter = nullptr;
+
     /// the product of H and psi in the reduced basis set
     T* hphi = nullptr;
 
@@ -79,30 +89,24 @@ class Diago_DavSubspace : public DiagH<T, Device>
     base_device::DEVICE_CPU* cpu_ctx = {};
     base_device::AbacusDevice_t device = {};
 
-    void cal_grad(hamilt::Hamilt<T, Device>* phm_in,
+    void cal_grad(const Func& hpsi_func,
                   const int& dim,
                   const int& nbase,
                   const int& notconv,
-                  psi::Psi<T, Device>& basis,
+                  T* psi_iter,
                   T* hphi,
                   T* vcc,
                   const int* unconv,
                   std::vector<Real>* eigenvalue_iter);
 
-    void cal_elem(const int& dim,
-                  int& nbase,
-                  const int& notconv,
-                  const psi::Psi<T, Device>& basis,
-                  const T* hphi,
-                  T* hcc,
-                  T* scc);
+    void cal_elem(const int& dim, int& nbase, const int& notconv, const T* psi_iter, const T* hphi, T* hcc, T* scc);
 
     void refresh(const int& dim,
                  const int& nband,
                  int& nbase,
                  const Real* eigenvalue,
                  const psi::Psi<T, Device>& psi,
-                 psi::Psi<T, Device>& basis,
+                 T* psi_iter,
                  T* hphi,
                  T* hcc,
                  T* scc,
@@ -118,7 +122,8 @@ class Diago_DavSubspace : public DiagH<T, Device>
                      bool init,
                      bool is_subspace);
 
-    int diag_once(hamilt::Hamilt<T, Device>* phm_in,
+    int diag_once(const Func& hpsi_func,
+                  T* psi_in,
                   psi::Psi<T, Device>& psi,
                   Real* eigenvalue_in,
                   const std::vector<bool>& is_occupied);

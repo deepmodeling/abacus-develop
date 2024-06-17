@@ -12,7 +12,7 @@ __global__ void get_psi(const double* const ylmcoef,
                         const double* const psi_input_double,
                         const int* const psi_input_int,
                         const int* const atom_num_per_bcell,
-                        int max_atom_per_bcell,
+                        const int* const start_idx_per_bcell,
                         const int* const ucell_atom_nwl,
                         const bool* const atom_iw2_new,
                         const int* const atom_iw2_ylm,
@@ -22,7 +22,7 @@ __global__ void get_psi(const double* const ylmcoef,
                         double* psi)
 {
     const int size = atom_num_per_bcell[blockIdx.x];
-    const int bcell_start = max_atom_per_bcell * blockIdx.x;
+    const int bcell_start = start_idx_per_bcell[blockIdx.x];
     const int end_index = bcell_start + size;
     const int start_index = bcell_start + threadIdx.x + blockDim.x * blockIdx.y;
     for (int index = start_index; index < end_index;
