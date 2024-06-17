@@ -17,15 +17,15 @@ if(ENABLE_LCAO)
         operator_lcao/dftu_lcao.cpp
         FORCE_STRESS.cpp
         FORCE_gamma.cpp
-        FORCE_gamma_edm.cpp
-        FORCE_gamma_tvnl.cpp
-        FORCE_gamma_vl.cpp
         FORCE_k.cpp
-        foverlap_k.cpp
-        ftvnl_dphi_k.cpp
+        fvl_dphi_gamma.cpp
         fvl_dphi_k.cpp
+        fedm_gamma.cpp
+        fedm_k.cpp
+        ftvnl_dphi_gamma.cpp
+        ftvnl_dphi_k.cpp
+        fvnl_dbeta_gamma.cpp
         fvnl_dbeta_k.cpp
-        LCAO_gen_fixedH.cpp
         grid_init.cpp
         spar_dh.cpp
         spar_exx.cpp
@@ -34,7 +34,11 @@ if(ENABLE_LCAO)
         spar_u.cpp
         LCAO_matrix.cpp
         LCAO_nnr.cpp
-        record_adj.cpp
+		LCAO_set_fs.cpp
+		LCAO_set_st.cpp
+		LCAO_nl_mu.cpp
+		LCAO_nl_beta.cpp
+		record_adj.cpp
         center2_orb-orb11.cpp
         center2_orb-orb21.cpp
         center2_orb-orb22.cpp

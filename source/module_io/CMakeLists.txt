@@ -22,7 +22,7 @@ list(APPEND objects
     write_input.cpp
     write_cube.cpp
     write_rho.cpp
-    write_potential.cpp
+    write_pot.cpp
     write_dipole.cpp
     td_current_io.cpp
     write_wfc_r.cpp
@@ -54,6 +54,7 @@ if(ENABLE_LCAO)
       istate_envelope.cpp
       read_dm.cpp
       read_wfc_nao.cpp
+      read_wfc_lcao.cpp
       write_wfc_nao.cpp
       write_dm.cpp
       dos_nao.cpp
@@ -65,10 +66,12 @@ if(ENABLE_LCAO)
       to_qo_kernel.cpp
       to_qo_mpi.cpp
       to_qo_structures.cpp
+      output_sk.cpp
+      output_dmk.cpp
+      output_mulliken.cpp
   )
   list(APPEND objects_advanced
       unk_overlap_lcao.cpp
-      mulliken_charge.cpp
       write_HS_R.cpp
       write_HS_sparse.cpp
       single_R_io.cpp

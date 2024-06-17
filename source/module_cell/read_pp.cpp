@@ -143,23 +143,31 @@ std::string Pseudopot_upf::trimend(std::string &in_str)
 
 int Pseudopot_upf::average_p(const double& lambda)
 {
-	int error = 0;
-	double lambda_ = lambda;
-	if(!GlobalV::LSPINORB) lambda_ = 0.0;
-	if(!this->has_so && GlobalV::LSPINORB) 
-	{
-		error++; 
-		std::cout<<"warning_quit! no soc upf used for lspinorb calculation, error!"<<std::endl; 
-		return error;
-	}
-	//ModuleBase::WARNING_QUIT("average_p", "no soc upf used for lspinorb calculation, error!");
+    int error = 0;
+    double lambda_ = lambda;
+    if(!GlobalV::LSPINORB) { lambda_ = 0.0; }
+    if (this->has_so && this->tvanp)
+    {
+        error++;
+        std::cout << "------------------------------------------------------" << std::endl;
+        std::cout << " FR-USPP please use lspinorb=.true." << std::endl;
+        std::cout << "------------------------------------------------------" << std::endl;
+        return error;
+    }
+    if (!this->has_so && GlobalV::LSPINORB)
+    {
+        error++;
+        std::cout << "warning_quit! no soc upf used for lspinorb calculation, error!" << std::endl;
+        return error;
+    }
+    // ModuleBase::WARNING_QUIT("average_p", "no soc upf used for lspinorb calculation, error!");
 
-	if(!this->has_so || (GlobalV::LSPINORB && std::abs(lambda_ - 1.0) < 1.0e-8) )
-	{
-		return error; 
-	}
+    if (!this->has_so || (GlobalV::LSPINORB && std::abs(lambda_ - 1.0) < 1.0e-8))
+    {
+        return error;
+    }
 
-	//if(std::abs(lambda_)<1.0e-8)
+    //if(std::abs(lambda_)<1.0e-8)
 	if(!GlobalV::LSPINORB)
 	{
 		int new_nbeta = 0; //calculate the new nbeta

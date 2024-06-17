@@ -30,10 +30,10 @@ __global__ void veff_pw(
 {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if(idx >= size) {return;}
-    thrust::complex<FPTYPE> sup = 
+    thrust::complex<FPTYPE> sup =
         out[idx] * (in[0 * size + idx] + in[3 * size + idx])
             + out1[idx] * (in[1 * size + idx] - thrust::complex<FPTYPE>(0.0, 1.0) * in[2 * size + idx]);
-    thrust::complex<FPTYPE> sdown = 
+    thrust::complex<FPTYPE> sdown =
         out1[idx] * (in[0 * size + idx] - in[3 * size + idx])
             + out[idx] * (in[1 * size + idx] + thrust::complex<FPTYPE>(0.0, 1.0) * in[2 * size + idx]);
     out[idx] = sup;
@@ -47,13 +47,12 @@ void veff_pw_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::
                                                              const FPTYPE* in)
 {
     const int block = (size + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(veff_pw<FPTYPE>), dim3(block), dim3(THREADS_PER_BLOCK), 0, 0, 
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(veff_pw<FPTYPE>), dim3(block), dim3(THREADS_PER_BLOCK), 0, 0,
         size, // control params
         reinterpret_cast<thrust::complex<FPTYPE>*>(out), // array of data
         in); // array of data
 
-    hipErrcheck(hipGetLastError());
-    hipErrcheck(hipDeviceSynchronize());
+    hipCheckOnDebug();
 }
 
 template <typename FPTYPE>
@@ -64,14 +63,13 @@ void veff_pw_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::
                                                              const FPTYPE** in)
 {
     const int block = (size + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(veff_pw<FPTYPE>), dim3(block), dim3(THREADS_PER_BLOCK), 0, 0, 
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(veff_pw<FPTYPE>), dim3(block), dim3(THREADS_PER_BLOCK), 0, 0,
         size, // control params
         reinterpret_cast<thrust::complex<FPTYPE>*>(out), // array of data
         reinterpret_cast<thrust::complex<FPTYPE>*>(out1), // array of data
         in[0]); // array of data
-    
-    hipErrcheck(hipGetLastError());
-    hipErrcheck(hipDeviceSynchronize());
+
+    hipCheckOnDebug();
 }
 
 template struct veff_pw_op<float, base_device::DEVICE_GPU>;

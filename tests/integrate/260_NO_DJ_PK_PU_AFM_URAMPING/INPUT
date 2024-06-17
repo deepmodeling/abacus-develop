@@ -3,7 +3,7 @@ suffix    autotest
 nbands    40
 
 calculation    scf
-ecutwfc    20
+ecutwfc    10
 scf_thr    1.0e-4
 scf_nmax    500
 out_chg    0
@@ -15,7 +15,7 @@ cal_force     1
 cal_stress    1
 
 mixing_type    broyden
-mixing_beta    0.4
+mixing_beta    0.2
 mixing_restart 5e-3
 mixing_dmr     1
 mixing_ndim    15

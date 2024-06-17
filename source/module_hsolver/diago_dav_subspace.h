@@ -3,6 +3,8 @@
 
 #include "diagh.h"
 
+#include <functional>
+
 namespace hsolver
 {
 
@@ -16,77 +18,95 @@ class Diago_DavSubspace : public DiagH<T, Device>
     using Real = typename GetTypeReal<T>::type;
 
   public:
-    Diago_DavSubspace(const Real* precondition_in);
-    ~Diago_DavSubspace();
+    Diago_DavSubspace(const std::vector<Real>& precondition_in,
+                      const int& nband_in,
+                      const int& nbasis_in,
+                      const int& david_ndim_in,
+                      const double& diag_thr_in,
+                      const int& diag_nmax_in,
+                      const bool& need_subspace_in,
+                      const diag_comm_info& diag_comm_in);
 
-    // this is the override function diag() for CG method
-    void diag(hamilt::Hamilt<T, Device>* phm_in,
-              psi::Psi<T, Device>& phi,
-              Real* eigenvalue_in,
-              std::vector<bool>& is_occupied);
+    virtual ~Diago_DavSubspace() override;
 
-    static int PW_DIAG_NDIM;
+    using Func = std::function<void(T*, T*, const int, const int, const int, const int)>;
 
-    static double dav_large_thr;
+    int diag(const Func& hpsi_func,
+             T* psi_in,
+
+             hamilt::Hamilt<T, Device>* phm_in,
+             psi::Psi<T, Device>& phi,
+
+             Real* eigenvalue_in,
+             const std::vector<bool>& is_occupied,
+             const bool& scf_type);
 
   private:
-    bool is_subspace = false;
+    /// for MPI communication
+    const diag_comm_info diag_comm;
 
-    int test_david = 0;
+    /// the threshold for this electronic iteration
+    const double diag_thr;
+
+    /// maximal iteration number
+    const int iter_nmax;
+
+    /// is diagH_subspace needed?
+    const bool is_subspace;
+
+    /// the first dimension of the matrix to be diagonalized
+    const int n_band = 0;
+
+    /// the second dimension of the matrix to be diagonalized
+    const int dim = 0;
+
+    /// the maximum dimension of the reduced basis set
+    const int nbase_x = 0;
+
+    /// precondition for diag
+    const std::vector<Real>& precondition;
+    Real* d_precondition = nullptr;
 
     /// record for how many bands not have convergence eigenvalues
     int notconv = 0;
 
-    /// row size for input psi matrix
-    int n_band = 0;
-    /// non-zero col size for inputted psi matrix
-    int dim = 0;
-    // maximum dimension of the reduced basis set
-    int nbase_x = 0;
-    /// precondition for cg diag
-    const Real* precondition = nullptr;
-    Real* d_precondition = nullptr;
+    T* psi_in_iter = nullptr;
 
-    /// eigenvalue results
-    Real* eigenvalue_in_dav = nullptr;
+    /// the product of H and psi in the reduced basis set
+    T* hphi = nullptr;
 
-    T* hphi = nullptr; // the product of H and psi in the reduced basis set
+    /// Hamiltonian on the reduced basis
+    T* hcc = nullptr;
 
-    T* hcc = nullptr; // Hamiltonian on the reduced basis
+    /// Overlap on the reduced basis
+    T* scc = nullptr;
 
-    T* scc = nullptr; // Overlap on the reduced basis
-
-    T* vcc = nullptr; // Eigenvectors on the reduced basis
+    /// Eigenvectors on the reduced basis
+    T* vcc = nullptr;
 
     /// device type of psi
     Device* ctx = {};
     base_device::DEVICE_CPU* cpu_ctx = {};
     base_device::AbacusDevice_t device = {};
 
-    void cal_grad(hamilt::Hamilt<T, Device>* phm_in,
+    void cal_grad(const Func& hpsi_func,
                   const int& dim,
                   const int& nbase,
                   const int& notconv,
-                  psi::Psi<T, Device>& basis,
+                  T* psi_iter,
                   T* hphi,
                   T* vcc,
                   const int* unconv,
-                  Real* eigenvalue);
+                  std::vector<Real>* eigenvalue_iter);
 
-    void cal_elem(const int& dim,
-                  int& nbase,
-                  const int& notconv,
-                  const psi::Psi<T, Device>& basis,
-                  const T* hphi,
-                  T* hcc,
-                  T* scc);
+    void cal_elem(const int& dim, int& nbase, const int& notconv, const T* psi_iter, const T* hphi, T* hcc, T* scc);
 
     void refresh(const int& dim,
                  const int& nband,
                  int& nbase,
                  const Real* eigenvalue,
                  const psi::Psi<T, Device>& psi,
-                 psi::Psi<T, Device>& basis,
+                 T* psi_iter,
                  T* hphi,
                  T* hcc,
                  T* scc,
@@ -97,15 +117,18 @@ class Diago_DavSubspace : public DiagH<T, Device>
                      T* hcc,
                      T* scc,
                      const int& nbase_x,
-                     Real* eigenvalue,
+                     std::vector<Real>* eigenvalue_iter,
                      T* vcc,
                      bool init,
                      bool is_subspace);
 
-    void diag_once(hamilt::Hamilt<T, Device>* phm_in,
-                   psi::Psi<T, Device>& psi,
-                   Real* eigenvalue_in,
-                   std::vector<bool>& is_occupied);
+    int diag_once(const Func& hpsi_func,
+                  T* psi_in,
+                  psi::Psi<T, Device>& psi,
+                  Real* eigenvalue_in,
+                  const std::vector<bool>& is_occupied);
+
+    bool test_exit_cond(const int& ntry, const int& notconv, const bool& scf);
 
     using resmem_complex_op = base_device::memory::resize_memory_op<T, Device>;
     using delmem_complex_op = base_device::memory::delete_memory_op<T, Device>;
@@ -131,12 +154,6 @@ class Diago_DavSubspace : public DiagH<T, Device>
     consts<T> cs;
     const T *one = nullptr, *zero = nullptr, *neg_one = nullptr;
 };
-
-template <typename Real, typename Device>
-int Diago_DavSubspace<Real, Device>::PW_DIAG_NDIM = 4;
-
-template <typename Real, typename Device>
-double Diago_DavSubspace<Real, Device>::dav_large_thr = 1e-5;
 
 } // namespace hsolver
 

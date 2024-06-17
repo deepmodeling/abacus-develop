@@ -17,6 +17,7 @@
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #endif
 #include "module_elecstate/elecstate_lcao.h"
+#include "module_elecstate/module_dm/cal_dm_psi.h"
 #include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
 #include "module_hamilt_general/module_vdw/vdw.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
@@ -24,6 +25,8 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 #include "module_io/dm_io.h"
+#include "module_io/rho_io.h"
+#include "module_io/write_pot.h"
 
 namespace ModuleESolver
 {
@@ -144,11 +147,11 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
         this->p_hamilt = new hamilt::HamiltLCAO<TK, TR>(
             GlobalV::GAMMA_ONLY_LOCAL ? &(this->GG) : nullptr,
             GlobalV::GAMMA_ONLY_LOCAL ? nullptr : &(this->GK),
-            &(this->gen_h),
             &(this->LM),
             &(this->LOC),
             this->pelec->pot,
             this->kv,
+            uot_,
 #ifdef __EXX
             DM,
             GlobalC::exx_info.info_ri.real_number ? &this->exd->two_level_step : &this->exc->two_level_step);
@@ -166,11 +169,11 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
     {
         const Parallel_Orbitals* pv = this->LM.ParaV;
         // build and save <psi(0)|alpha(R)> at beginning
-        GlobalC::ld.build_psialpha(GlobalV::CAL_FORCE, GlobalC::ucell, GlobalC::ORB, GlobalC::GridD, GlobalC::UOT);
+        GlobalC::ld.build_psialpha(GlobalV::CAL_FORCE, GlobalC::ucell, GlobalC::ORB, GlobalC::GridD, *uot_);
 
         if (GlobalV::deepks_out_unittest)
         {
-            GlobalC::ld.check_psialpha(GlobalV::CAL_FORCE, GlobalC::ucell, GlobalC::ORB, GlobalC::GridD, GlobalC::UOT);
+            GlobalC::ld.check_psialpha(GlobalV::CAL_FORCE, GlobalC::ucell, GlobalC::ORB, GlobalC::GridD, *uot_);
         }
     }
 #endif
@@ -208,7 +211,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
 }
 
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::before_scf(int istep)
+void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "before_scf");
     ModuleBase::timer::tick("ESolver_KS_LCAO", "before_scf");
@@ -239,6 +242,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(int istep)
     }
 
     this->beforesolver(istep);
+
     // Peize Lin add 2016-12-03
 #ifdef __EXX // set xc type before the first cal of xc in pelec->init_scf
     if (GlobalC::exx_info.info_ri.real_number)
@@ -252,6 +256,47 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(int istep)
 #endif // __EXX
 
     this->pelec->init_scf(istep, this->sf.strucFac);
+    if (GlobalV::out_chg == 2)
+    {
+        for (int is = 0; is < GlobalV::NSPIN; is++)
+        {
+            std::stringstream ss;
+            ss << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG_INI.cube";
+            ModuleIO::write_rho(
+#ifdef __MPI
+                this->pw_big->bz, // bz first, then nbz
+                this->pw_big->nbz,
+                this->pw_rho->nplane,
+                this->pw_rho->startz_current,
+#endif
+                this->pelec->charge->rho[is],
+                is,
+                GlobalV::NSPIN,
+                0,
+                ss.str(),
+                this->pw_rho->nx,
+                this->pw_rho->ny,
+                this->pw_rho->nz,
+                this->pelec->eferm.ef,
+                &(GlobalC::ucell),
+                11);
+        }
+    }
+
+    ModuleIO::write_pot(GlobalV::out_pot,
+                        GlobalV::NSPIN,
+                        GlobalV::global_out_dir,
+#ifdef __MPI
+                        this->pw_big->bz,
+                        this->pw_big->nbz,
+                        this->pw_rho->nplane,
+                        this->pw_rho->startz_current,
+#endif
+                        this->pw_rho->nx,
+                        this->pw_rho->ny,
+                        this->pw_rho->nz,
+                        this->pelec->pot->get_effective_v());
+
     // initalize DMR
     // DMR should be same size with Hamiltonian(R)
     dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)
@@ -308,12 +353,21 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
     ModuleBase::TITLE("ESolver_KS_LCAO", "others");
     ModuleBase::timer::tick("ESolver_KS_LCAO", "others");
 
-    if (GlobalV::CALCULATION == "get_S")
+    const std::string cal_type = GlobalV::CALCULATION;
+
+    if (cal_type == "get_S")
     {
+        std::cout << "\n * * * * * *" << std::endl;
+        std::cout << " << Start writing the overlap matrix." << std::endl;
         this->get_S();
+        std::cout << " >> Finish writing the overlap matrix." << std::endl;
+        std::cout << " * * * * * *\n" << std::endl;
+
         ModuleBase::QUIT();
+
+        // return; // use 'return' will cause segmentation fault. by mohan 2024-06-09
     }
-    else if (GlobalV::CALCULATION == "test_memory")
+    else if (cal_type == "test_memory")
     {
         Cal_Test::test_memory(this->pw_rho,
                               this->pw_wfc,
@@ -321,7 +375,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                               this->p_chgmix->get_mixing_ndim());
         return;
     }
-    else if (GlobalV::CALCULATION == "test_neighbour")
+    else if (cal_type == "test_neighbour")
     {
         // test_search_neighbor();
         if (GlobalV::SEARCH_RADIUS < 0)
@@ -348,7 +402,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
     {
         this->nscf();
     }
-    else if (GlobalV::CALCULATION == "get_pchg")
+    else if (cal_type == "get_pchg")
     {
         IState_Charge ISC(this->psi, this->LOC);
         ISC.begin(this->GG,
@@ -372,12 +426,15 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                   GlobalV::NLOCAL,
                   GlobalV::global_out_dir,
                   GlobalV::MY_RANK,
-                  GlobalV::ofs_warning);
+                  GlobalV::ofs_warning,
+                  &GlobalC::ucell,
+                  &GlobalC::GridD);
     }
-    else if (GlobalV::CALCULATION == "get_wf")
+    else if (cal_type == "get_wf")
     {
         IState_Envelope IEP(this->pelec);
         if (GlobalV::GAMMA_ONLY_LOCAL)
+        {
             IEP.begin(this->psi,
                       this->pw_rho,
                       this->pw_wfc,
@@ -393,7 +450,9 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                       GlobalV::NSPIN,
                       GlobalV::NLOCAL,
                       GlobalV::global_out_dir);
+        }
         else
+        {
             IEP.begin(this->psi,
                       this->pw_rho,
                       this->pw_wfc,
@@ -409,6 +468,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                       GlobalV::NSPIN,
                       GlobalV::NLOCAL,
                       GlobalV::global_out_dir);
+        }
     }
     else
     {
@@ -450,11 +510,16 @@ void ESolver_KS_LCAO<std::complex<double>, double>::get_S(void)
 
     if (this->p_hamilt == nullptr)
     {
-        this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, double>(&this->LM, this->kv);
+        this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, double>(&this->LM, this->kv, uot_);
         dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, double>*>(this->p_hamilt->ops)->contributeHR();
     }
 
-    ModuleIO::output_SR(orb_con.ParaV, this->LM, GlobalC::GridD, this->p_hamilt, "SR.csr");
+    // mohan add 2024-06-09
+    const std::string fn = GlobalV::global_out_dir + "SR.csr";
+
+    std::cout << " The file is saved in " << fn << std::endl;
+
+    ModuleIO::output_SR(orb_con.ParaV, this->LM, GlobalC::GridD, this->p_hamilt, fn);
 
     return;
 }
@@ -481,12 +546,17 @@ void ESolver_KS_LCAO<std::complex<double>, std::complex<double>>::get_S(void)
     this->LM.ParaV = &this->orb_con.ParaV;
     if (this->p_hamilt == nullptr)
     {
-        this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>(&this->LM, this->kv);
+        this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>(&this->LM, this->kv, uot_);
         dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>*>(this->p_hamilt->ops)
             ->contributeHR();
     }
 
-    ModuleIO::output_SR(orb_con.ParaV, this->LM, GlobalC::GridD, this->p_hamilt, "SR.csr");
+    // mohan add 2024-06-09
+    const std::string fn = GlobalV::global_out_dir + "SR.csr";
+
+    std::cout << " The file is saved in " << fn << std::endl;
+
+    ModuleIO::output_SR(orb_con.ParaV, this->LM, GlobalC::GridD, this->p_hamilt, fn);
 
     return;
 }
@@ -538,9 +608,12 @@ void ESolver_KS_LCAO<TK, TR>::nscf(void)
     GlobalV::ofs_running << " end of band structure calculation " << std::endl;
     GlobalV::ofs_running << " band eigenvalue in this processor (eV) :" << std::endl;
 
-    for (int ik = 0; ik < this->kv.get_nks(); ik++)
+    const int nspin = GlobalV::NSPIN;
+    const int nbands = GlobalV::NBANDS;
+
+    for (int ik = 0; ik < this->kv.get_nks(); ++ik)
     {
-        if (GlobalV::NSPIN == 2)
+        if (nspin == 2)
         {
             if (ik == 0)
             {
@@ -552,10 +625,10 @@ void ESolver_KS_LCAO<TK, TR>::nscf(void)
             }
         }
 
-        GlobalV::ofs_running << " k-points" << ik + 1 << "(" << this->kv.get_nkstot() << "): " << this->kv.kvec_c[ik].x << " "
-                             << this->kv.kvec_c[ik].y << " " << this->kv.kvec_c[ik].z << std::endl;
+        GlobalV::ofs_running << " k-points" << ik + 1 << "(" << this->kv.get_nkstot() << "): " << this->kv.kvec_c[ik].x
+                             << " " << this->kv.kvec_c[ik].y << " " << this->kv.kvec_c[ik].z << std::endl;
 
-        for (int ib = 0; ib < GlobalV::NBANDS; ib++)
+        for (int ib = 0; ib < nbands; ++ib)
         {
             GlobalV::ofs_running << " spin" << this->kv.isk[ik] + 1 << "final_state " << ib + 1 << " "
                                  << this->pelec->ekb(ik, ib) * ModuleBase::Ry_to_eV << " "
@@ -637,6 +710,16 @@ void ESolver_KS_LCAO<TK, TR>::nscf(void)
 #endif
 
     this->create_Output_Mat_Sparse(0).write();
+
+    // mulliken charge analysis
+    if (GlobalV::out_mul)
+    {
+        elecstate::ElecStateLCAO<TK>* pelec_lcao = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec);
+        this->pelec->calculate_weights();
+        this->pelec->calEBand();
+        elecstate::cal_dm_psi(&(this->orb_con.ParaV), pelec_lcao->wg, *(this->psi), *(pelec_lcao->get_DM()));
+        this->cal_mag(istep, true);
+    }
 
     return;
 }

@@ -117,7 +117,7 @@ void ESolver_KS_LCAO<TK, TR>::read_mat_npz(std::string& zipname, hamilt::HContai
                 assert(orbital_info[iw*3] == GlobalC::ucell.atoms[it].iw2n[iw]);
                 assert(orbital_info[iw*3+1] == GlobalC::ucell.atoms[it].iw2l[iw]);
                 const int im = GlobalC::ucell.atoms[it].iw2m[iw];
-                const int m = (im % 2 == 0) ? -im/2 : (im+1)/2; // copied from LCAO_gen_fixedH.cpp
+                const int m = (im % 2 == 0) ? -im/2 : (im+1)/2; 
                 assert(orbital_info[iw*3+2] == m);
             }
         }
@@ -413,7 +413,7 @@ void ESolver_KS_LCAO<TK, TR>::output_mat_npz(std::string& zipname, const hamilt:
                 orbital_info[iw*3] = GlobalC::ucell.atoms[it].iw2n[iw];
                 orbital_info[iw*3+1] = GlobalC::ucell.atoms[it].iw2l[iw];
                 const int im = GlobalC::ucell.atoms[it].iw2m[iw];
-                const int m = (im % 2 == 0) ? -im/2 : (im+1)/2; // copied from LCAO_gen_fixedH.cpp
+                const int m = (im % 2 == 0) ? -im/2 : (im+1)/2; 
                 orbital_info[iw*3+2] = m;
             }
             shape={(size_t)GlobalC::ucell.atoms[it].nw,3};
@@ -448,9 +448,9 @@ void ESolver_KS_LCAO<TK, TR>::output_mat_npz(std::string& zipname, const hamilt:
             for(int iR=0;iR<HR_serial[0].get_atom_pair(iap).get_R_size();++iR)
             {
                 auto& matrix = HR_serial[0].get_atom_pair(iap).get_HR_values(iR);
-                int* r_index = HR_serial[0].get_atom_pair(iap).get_R_index(iR);
+                const ModuleBase::Vector3<int> r_index = HR_serial[0].get_atom_pair(iap).get_R_index(iR);
                 filename = "mat_"+std::to_string(atom_i)+"_"+std::to_string(atom_j)+"_"
-                    +std::to_string(r_index[0])+"_"+std::to_string(r_index[1])+"_"+std::to_string(r_index[2]);
+                    +std::to_string(r_index.x)+"_"+std::to_string(r_index.y)+"_"+std::to_string(r_index.z);
                 std::vector<size_t> shape = {(size_t)row_size,(size_t)col_size};
                 cnpy::npz_save(zipname,filename,matrix.get_pointer(),shape,"a");
             }
@@ -472,10 +472,10 @@ void ESolver_KS_LCAO<TK, TR>::output_mat_npz(std::string& zipname, const hamilt:
         for(int iR=0;iR<hR.get_atom_pair(iap).get_R_size();++iR)
         {
             auto& matrix = hR.get_atom_pair(iap).get_HR_values(iR);
-            int* r_index = hR.get_atom_pair(iap).get_R_index(iR);
+            const ModuleBase::Vector3<int> r_index = hR.get_atom_pair(iap).get_R_index(iR);
 
             filename = "mat_"+std::to_string(atom_i)+"_"+std::to_string(atom_j)+"_"
-                +std::to_string(r_index[0])+"_"+std::to_string(r_index[1])+"_"+std::to_string(r_index[2]);
+                +std::to_string(r_index.x)+"_"+std::to_string(r_index.y)+"_"+std::to_string(r_index.z);
             std::vector<size_t> shape = {(size_t)row_size,(size_t)col_size};
             cnpy::npz_save(zipname,filename,matrix.get_pointer(),shape,"a");
         }

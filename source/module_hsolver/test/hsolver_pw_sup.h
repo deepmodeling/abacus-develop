@@ -179,9 +179,13 @@ DiagoDavid<T, Device>::~DiagoDavid()
 }
 
 template <typename T, typename Device>
-void DiagoDavid<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in,
+int DiagoDavid<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in,
                                       psi::Psi<T, Device>& psi,
-                                      Real* eigenvalue_in)
+                                      Real* eigenvalue_in,
+                                      const Real david_diag_thr,
+                                      const int david_maxiter,
+                                      const int ntry_max,
+                                      const int notconv_max)
 {
     //do something
     for(int ib = 0;ib<psi.get_nbands();ib++)
@@ -195,7 +199,7 @@ void DiagoDavid<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in,
         eigenvalue_in[ib] /= psi.get_nbasis();
     }
     DiagoIterAssist<T, Device>::avg_iter += 1.0;
-    return;
+    return 1;
 }
 template class DiagoDavid<std::complex<float>, base_device::DEVICE_CPU>;
 template class DiagoDavid<std::complex<double>, base_device::DEVICE_CPU>;

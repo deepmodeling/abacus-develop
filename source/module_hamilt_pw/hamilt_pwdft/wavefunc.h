@@ -34,7 +34,10 @@ class wavefunc : public WF_atomic
 	// wanf2: save given localized orbitals. 
 	// mohan_to_qianrui: move the LCAO_in_pw_k and LCAO_in_pw_k_q to wavefunc_in_pw.h 
 	void LCAO_in_pw_k(const int &ik, ModuleBase::ComplexMatrix &wvf);
-	void LCAO_in_pw_k_q(const int &ik, ModuleBase::ComplexMatrix &wvf, ModuleBase::Vector3<double> q);   // pengfei 2016-11-23
+
+	void LCAO_in_pw_k_q(const int &ik, 
+        ModuleBase::ComplexMatrix &wvf, 
+        ModuleBase::Vector3<double> q);   // pengfei 2016-11-23
 
 	// used if k dependent staff is ready.
 	void prepare_k(void);
@@ -50,6 +53,7 @@ class wavefunc : public WF_atomic
     ModuleBase::Vector3<int> ***R;
     int **Rmax;
 };
+
 
 namespace hamilt
 {

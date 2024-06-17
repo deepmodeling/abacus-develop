@@ -109,8 +109,7 @@ struct cast_memory_op<FPTYPE_out, FPTYPE_in, base_device::DEVICE_GPU, base_devic
         const int block = (size + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
         cast_memory<<<block, THREADS_PER_BLOCK>>>(arr_out, arr_in, size);
 
-        cudaErrcheck(cudaGetLastError());
-        cudaErrcheck(cudaDeviceSynchronize());
+        cudaCheckOnDebug();
     }
 };
 
@@ -121,10 +120,10 @@ struct cast_memory_op<FPTYPE_out, FPTYPE_in, base_device::DEVICE_GPU, base_devic
                     FPTYPE_out* arr_out,
                     const FPTYPE_in* arr_in,
                     const size_t size) {
-        
+
         if (size == 0) {return;}
         // No need to cast the memory if the data types are the same.
-        if (std::is_same<FPTYPE_out, FPTYPE_in>::value) 
+        if (std::is_same<FPTYPE_out, FPTYPE_in>::value)
         {
             synchronize_memory_op<FPTYPE_out, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(dev_out,
                                                                                                   dev_in,
@@ -138,8 +137,7 @@ struct cast_memory_op<FPTYPE_out, FPTYPE_in, base_device::DEVICE_GPU, base_devic
         cudaErrcheck(cudaMemcpy(arr, arr_in, sizeof(FPTYPE_in) * size, cudaMemcpyHostToDevice));
         const int block = (size + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
         cast_memory<<<block, THREADS_PER_BLOCK>>>(arr_out, arr, size);
-        cudaErrcheck(cudaGetLastError());
-        cudaErrcheck(cudaDeviceSynchronize());
+        cudaCheckOnDebug();
         cudaErrcheck(cudaFree(arr));
     }
 };
@@ -153,7 +151,7 @@ struct cast_memory_op<FPTYPE_out, FPTYPE_in, base_device::DEVICE_CPU, base_devic
                     const size_t size) {
         if (size == 0) {return;}
         // No need to cast the memory if the data types are the same.
-        if (std::is_same<FPTYPE_out, FPTYPE_in>::value) 
+        if (std::is_same<FPTYPE_out, FPTYPE_in>::value)
         {
             synchronize_memory_op<FPTYPE_out, base_device::DEVICE_CPU, base_device::DEVICE_GPU>()(dev_out,
                                                                                                   dev_in,

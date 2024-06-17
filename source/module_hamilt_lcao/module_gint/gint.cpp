@@ -1,9 +1,9 @@
 #include "gint.h"
 
 #if ((defined __CUDA))
-#include "gint_force.h"
-#include "gint_rho.h"
-#include "gint_vl.h"
+#include "gint_force_gpu.h"
+#include "gint_rho_gpu.h"
+#include "gint_vl_gpu.h"
 #endif
 
 #include "module_base/memory.h"
@@ -87,7 +87,7 @@ void Gint::cal_gint(Gint_inout* inout)
             }
 
             const int ntype = orb.get_ntype();
-            double* rcut = new double[ntype];
+            std::vector<double> rcut(ntype);
             for (int it = 0; it < ntype; it++)
             {
                 rcut[it] = orb.Phi[it].getRcut();
@@ -98,16 +98,10 @@ void Gint::cal_gint(Gint_inout* inout)
             if (inout->job == Gint_Tools::job_type::vlocal)
             {
                 GintKernel::gint_gamma_vl_gpu(this->hRGint,
-                                              lgd,
-                                              max_size,
-                                              ucell.omega
-                                                  / this->ncxyz,
                                               inout->vl,
                                               ylmcoef,
-                                              this->nplane,
-                                              this->nbxx,
                                               dr,
-                                              rcut,
+                                              rcut.data(),
                                               *this->gridt,
                                               ucell);
             }
@@ -118,10 +112,9 @@ void Gint::cal_gint(Gint_inout* inout)
                 {
                     ModuleBase::GlobalFunc::ZEROS(inout->rho[is], nrxx);
                     GintKernel::gint_gamma_rho_gpu(this->DMRGint[is],
-                                                   this->nplane,
                                                    ylmcoef,
                                                    dr,
-                                                   rcut,
+                                                   rcut.data(),
                                                    *this->gridt,
                                                    ucell,
                                                    inout->rho[is]);
@@ -137,14 +130,11 @@ void Gint::cal_gint(Gint_inout* inout)
                     std::vector<double> force(nat * 3, 0.0);
                     std::vector<double> stress(6, 0.0);
                     GintKernel::gint_fvl_gamma_gpu(this->DMRGint[inout->ispin],
-                                                    ucell.omega
-                                                        / this->ncxyz,
                                                     inout->vl,
-                                                    force,
-                                                    stress,
-                                                    this->nplane,
+                                                    force.data(),
+                                                    stress.data(),
                                                     dr,
-                                                    rcut,
+                                                    rcut.data(),
                                                     isforce,
                                                     isstress,
                                                     *this->gridt,
@@ -697,6 +687,12 @@ void Gint::initialize_pvpR(const UnitCell& ucell_in, Grid_Driver* gd)
 void Gint::transfer_DM2DtoGrid(std::vector<hamilt::HContainer<double>*> DM2D)
 {
     ModuleBase::TITLE("Gint", "transfer_DMR");
+
+    // To check whether input parameter DM2D has been initialized
+#ifdef __DEBUG
+    assert(!DM2D.empty() && "Input parameter DM2D has not been initialized while calling function transfer_DM2DtoGrid!");
+#endif
+
     ModuleBase::timer::tick("Gint", "transfer_DMR");
     if (GlobalV::NSPIN != 4)
     {
@@ -725,10 +721,10 @@ void Gint::transfer_DM2DtoGrid(std::vector<hamilt::HContainer<double>*> DM2D)
 			int iat2 = ap.get_atom_j();
 			for(int ir = 0;ir<ap.get_R_size();++ir)
 			{
-				int* r_index = ap.get_R_index(ir);
+				const ModuleBase::Vector3<int> r_index = ap.get_R_index(ir);
 				for (int is = 0; is < 4; is++)
 				{
-					tmp_pointer[is] = this->DMRGint[is]->find_matrix(iat1, iat2, r_index[0], r_index[1], r_index[2])->get_pointer();
+					tmp_pointer[is] = this->DMRGint[is]->find_matrix(iat1, iat2, r_index)->get_pointer();
 				}
 				double* data_full = ap.get_pointer(ir);
 				for(int irow=0;irow<ap.get_row_size();irow += 2)

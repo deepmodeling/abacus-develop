@@ -6,11 +6,11 @@
 #include "module_base/matrix.h"
 #include "module_elecstate/module_dm/density_matrix.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_gen_fixedH.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #include "module_psi/psi.h"
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/force_stress_arrays.h"
 
 
 #ifndef TGINT_H
@@ -44,8 +44,11 @@ private:
     elecstate::Potential* pot;
 
     // orthonormal force + contribution from T and VNL
-    void ftable(const bool isforce,
+    void ftable(
+        const bool isforce,
         const bool isstress,
+        ForceStressArrays &fsr, // mohan add 2024-06-16
+        const UnitCell& ucell,
         const psi::Psi<T>* psi,
         const elecstate::ElecState* pelec,
         ModuleBase::matrix& foverlap,
@@ -59,8 +62,8 @@ private:
 #ifdef __DEEPKS
         ModuleBase::matrix& svnl_dalpha,
 #endif
-        LCAO_gen_fixedH& gen_h, // mohan add 2024-04-02
         typename TGint<T>::type& gint,
+        const ORB_gen_tables* uot,
         const Parallel_Orbitals& pv,
         LCAO_Matrix& lm,
         const K_Vectors* kv = nullptr,
@@ -68,14 +71,16 @@ private:
 
 
     // get the ds, dt, dvnl.
-    void allocate(const Parallel_Orbitals& pv,
+    void allocate(
+        const Parallel_Orbitals& pv,
         LCAO_Matrix& lm,
-        LCAO_gen_fixedH& gen_h,
+        ForceStressArrays& fsr, // mohan add 2024-06-15
+        const ORB_gen_tables* uot,
         const int& nks = 0,
         const std::vector<ModuleBase::Vector3<double>>& kvec_d = {});
 
 
-    void finish_ftable(LCAO_Matrix& lm);
+    void finish_ftable(ForceStressArrays &fsr);
 
     void average_force(double* fm);
 
@@ -86,8 +91,12 @@ private:
     // forces related to energy density matrix
     //-------------------------------------------------------------
 
-    void cal_foverlap(const bool isforce,
+    void cal_fedm(
+        const bool isforce,
         const bool isstress,
+        ForceStressArrays &fsr,
+        const UnitCell& ucell,
+        const elecstate::DensityMatrix<T, double>* dm,
         const psi::Psi<T>* psi,
         const Parallel_Orbitals& pv,
         const elecstate::ElecState* pelec,
@@ -95,23 +104,23 @@ private:
         ModuleBase::matrix& foverlap,
         ModuleBase::matrix& soverlap,
         const K_Vectors* kv = nullptr,
-        Record_adj* ra = nullptr,
-        const elecstate::DensityMatrix<T, double>* DM = nullptr);
+        Record_adj* ra = nullptr);
 
     //-------------------------------------------------------------
     // forces related to kinetic and non-local pseudopotentials
     //--------------------------------------------------------------
-    void cal_ftvnl_dphi(const elecstate::DensityMatrix<T, double>* DM,
+    void cal_ftvnl_dphi(
+        const elecstate::DensityMatrix<T, double>* dm,
         const Parallel_Orbitals& pv,
         const UnitCell& ucell,
-        LCAO_Matrix& lm,
+        ForceStressArrays &fsr,
         const bool isforce,
         const bool isstress,
         ModuleBase::matrix& ftvnl_dphi,
         ModuleBase::matrix& stvnl_dphi,
         Record_adj* ra = nullptr);
 
-    void cal_fvnl_dbeta(const elecstate::DensityMatrix<T, double>* DM,
+    void cal_fvnl_dbeta(const elecstate::DensityMatrix<T, double>* dm,
         const Parallel_Orbitals& pv,
         const UnitCell& ucell,
         const LCAO_Orbitals& orb,

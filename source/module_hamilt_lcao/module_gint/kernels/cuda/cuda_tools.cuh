@@ -8,13 +8,22 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
-cudaError_t checkCuda(cudaError_t result);
-cudaError_t checkCudaLastError();
+
+#define checkCuda(val) check(val, #val, __FILE__, __LINE__)
+#define checkCudaLastError() __checkCudaLastError(__FILE__, __LINE__)
+
+cudaError_t check(cudaError_t result, const char *const func, const char *const file, const int line);
+cudaError_t __checkCudaLastError(const char *file, const int line);
 
 void dump_cuda_array_to_file(double* cuda_array,
                              int width,
                              int hight,
                              const std::string& filename);
+
+static inline int ceil_div(int a, int b)
+{
+    return (a + b - 1) / b;
+}
 
 /*
  * @brief: A simple wrapper for cudaMalloc and cudaFree, sync and async CUDA
@@ -45,6 +54,8 @@ template <typename T>
 class Cuda_Mem_Wrapper
 {
   public:
+
+    Cuda_Mem_Wrapper();
     Cuda_Mem_Wrapper(int one_stream_size,
                      int one_stream_size_aligned,
                      int stream_number = 1,
@@ -52,18 +63,25 @@ class Cuda_Mem_Wrapper
     Cuda_Mem_Wrapper(int one_stream_size,
                      int stream_number = 1,
                      bool malloc_host = true);
+
+    Cuda_Mem_Wrapper(const Cuda_Mem_Wrapper& other) = delete;
+    Cuda_Mem_Wrapper& operator=(const Cuda_Mem_Wrapper& other) = delete;
+    Cuda_Mem_Wrapper(Cuda_Mem_Wrapper&& other) noexcept;
+    Cuda_Mem_Wrapper& operator=(Cuda_Mem_Wrapper&& other) noexcept;
+    
     ~Cuda_Mem_Wrapper();
-    void copy_host_to_device_sync(int stream_id = 0);
-    void copy_host_to_device_async(cudaStream_t stream, int stream_id);
-    void copy_device_to_host_sync(int stream_id = 0);
-    void copy_device_to_host_async(cudaStream_t stream, int stream_id);
-    void memset_device_sync(int stream_id = 0, int value = 0);
-    void memset_device_async(cudaStream_t stream,
-                             int stream_id = 0,
-                             int value = 0);
-    void memset_host(int stream_id = 0, int value = 0);
-    T* get_device_pointer(int stream_id = 0);
-    T* get_host_pointer(int stream_id = 0);
+    void copy_host_to_device_sync(const int stream_id = 0);
+    void copy_host_to_device_async(const cudaStream_t stream, const int stream_id);
+    void copy_host_to_device_async(const cudaStream_t stream, const int stream_id, const int size);
+    void copy_device_to_host_sync(const int stream_id = 0);
+    void copy_device_to_host_async(const cudaStream_t stream, const int stream_id);
+    void memset_device_sync(const int stream_id = 0, const int value = 0);
+    void memset_device_async(const cudaStream_t stream, 
+                             const int stream_id = 0,
+                             const int value = 0);
+    void memset_host(const int stream_id = 0, const int value = 0);
+    T* get_device_pointer(const int stream_id = 0);
+    T* get_host_pointer(const int stream_id = 0);
     void free_all();
 
   private:
@@ -75,4 +93,4 @@ class Cuda_Mem_Wrapper
     int total_size_aligned;
 };
 
-#endif // CUDA_TOOLS_CUH#ifndef CUDA_TOOLS_CUH
+#endif // CUDA_TOOLS_CUH

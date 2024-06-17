@@ -24,10 +24,13 @@ void ModuleIO::write_cube(
 {
 	ModuleBase::TITLE("ModuleIO","write_cube");
 
-	time_t start, end;
+    const int my_rank = GlobalV::MY_RANK;
+
+	time_t start;
+    time_t end;
 	std::ofstream ofs_cube;
   
-	if(GlobalV::MY_RANK==0)
+	if(my_rank==0)
 	{
 		start = time(NULL);
 
@@ -39,8 +42,7 @@ void ModuleIO::write_cube(
 		}	
 
 		/// output header for cube file
-		ofs_cube << "Cubefile created from ABACUS SCF calculation. The inner loop is z index, followed by y index, x index in turn." << std::endl;
-		// ofs_cube << "Contains the selected quantity on a FFT grid" << std::endl;
+		ofs_cube << "Cubefile created from ABACUS. Inner loop is z, followed by y and x" << std::endl;
 		ofs_cube << nspin << " (nspin) ";
 		
 		ofs_cube << std::fixed;
@@ -49,8 +51,14 @@ void ModuleIO::write_cube(
 		{
 			if (GlobalV::TWO_EFERMI)
 			{
-				if(is==0)	ofs_cube << ef << " (fermi energy for spin=1, in Ry)" << std::endl;
-				else if(is==1)	ofs_cube << ef << " (fermi energy for spin=2, in Ry)" << std::endl;
+				if(is==0)	
+				{
+					ofs_cube << ef << " (fermi energy for spin=1, in Ry)" << std::endl;
+				}
+				else if(is==1)	
+				{
+					ofs_cube << ef << " (fermi energy for spin=2, in Ry)" << std::endl;
+				}
 			}
 			else
 			{
@@ -119,46 +127,44 @@ void ModuleIO::write_cube(
 	}
 
 #ifdef __MPI
-//	for(int ir=0; ir<rhopw->nrxx; ir++) chr.rho[0][ir]=1; // for testing
-//	GlobalV::ofs_running << "\n GlobalV::RANK_IN_POOL = " << GlobalV::RANK_IN_POOL;
-	
+
+    const int my_pool = GlobalV::MY_POOL;
+    const int rank_in_pool = GlobalV::RANK_IN_POOL;
+    const int nproc_in_pool = GlobalV::NPROC_IN_POOL;
+
 	// only do in the first pool.
-	if(GlobalV::MY_POOL==0)
+	if(my_pool==0)
 	{
 		/// for cube file
-		int nxyz = nx * ny * nz;
-		std::vector<double> data_cube(nxyz);
-		ModuleBase::GlobalFunc::ZEROS(data_cube.data(), nxyz);
-		/// for cube file
-	
+		const int nxyz = nx * ny * nz;
+		std::vector<double> data_cube(nxyz,0.0);
+
 		// num_z: how many planes on processor 'ip'
-    		int *num_z = new int[GlobalV::NPROC_IN_POOL];
-    		ModuleBase::GlobalFunc::ZEROS(num_z, GlobalV::NPROC_IN_POOL);
-    		for (int iz=0;iz<nbz;iz++)
-    		{
-        		int ip = iz % GlobalV::NPROC_IN_POOL;
-        		num_z[ip] += bz;
-    		}
+        std::vector<int> num_z(nproc_in_pool, 0);
+
+		for (int iz=0;iz<nbz;iz++)
+		{
+			const int ip = iz % nproc_in_pool;
+			num_z[ip] += bz;
+		}
 
 		// start_z: start position of z in 
 		// processor ip.
-    		int *start_z = new int[GlobalV::NPROC_IN_POOL];
-    		ModuleBase::GlobalFunc::ZEROS(start_z, GlobalV::NPROC_IN_POOL);
-    		for (int ip=1;ip<GlobalV::NPROC_IN_POOL;ip++)
-    		{
-        		start_z[ip] = start_z[ip-1]+num_z[ip-1];
-    		}
+        std::vector<int> start_z(nproc_in_pool, 0);
+		for (int ip=1;ip<nproc_in_pool;ip++)
+		{
+			start_z[ip] = start_z[ip-1]+num_z[ip-1];
+		}
 
 		// which_ip: found iz belongs to which ip.
-		std::vector<int> which_ip(nz);
-		ModuleBase::GlobalFunc::ZEROS(which_ip.data(), nz);
+		std::vector<int> which_ip(nz, 0);
 		for(int iz=0; iz<nz; iz++)
 		{
-			for(int ip=0; ip<GlobalV::NPROC_IN_POOL; ip++)
+			for(int ip=0; ip<nproc_in_pool; ip++)
 			{
-				if(iz>=start_z[GlobalV::NPROC_IN_POOL-1]) 
+				if(iz>=start_z[nproc_in_pool-1]) 
 				{
-					which_ip[iz] = GlobalV::NPROC_IN_POOL-1;
+					which_ip[iz] = nproc_in_pool-1;
 					break;
 				}
 				else if(iz>=start_z[ip] && iz<start_z[ip+1])
@@ -167,25 +173,24 @@ void ModuleIO::write_cube(
 					break;
 				}
 			}
-			// GlobalV::ofs_running << "\n iz=" << iz << " ip=" << which_ip[iz];
 		}
 
 		
 		int count=0;
-		int nxy = nx * ny;
-		std::vector<double> zpiece(nxy);
+		const int nxy = nx * ny;
+		std::vector<double> zpiece(nxy, 0.0);
 
 		// save the rho one z by one z.
 		for(int iz=0; iz<nz; iz++)
 		{
-			// std::cout << "\n iz=" << iz << std::endl;
+            zpiece.assign(nxy, 0.0);
+
 			// tag must be different for different iz.
-			ModuleBase::GlobalFunc::ZEROS(zpiece.data(), nxy);
-			int tag = iz;
+			const int tag = iz;
 			MPI_Status ierror;
 
 			// case 1: the first part of rho in processor 0.
-			if(which_ip[iz] == 0 && GlobalV::RANK_IN_POOL ==0)
+			if(which_ip[iz] == 0 && rank_in_pool ==0)
 			{
 				for(int ir=0; ir<nxy; ir++)
 				{
@@ -193,31 +198,27 @@ void ModuleIO::write_cube(
 					// because this can make our next restart calculation lead
 					// to the same scf_thr as the one saved.
 					zpiece[ir] = data[ir*nplane+iz-startz_current];
-					// GlobalV::ofs_running << "\n get zpiece[" << ir << "]=" << zpiece[ir] << " ir*rhopw->nplane+iz=" << ir*rhopw->nplane+iz;
 				}
 			}
 			// case 2: > first part rho: send the rho to 
 			// processor 0.
-			else if(which_ip[iz] == GlobalV::RANK_IN_POOL )
+			else if(which_ip[iz] == rank_in_pool )
 			{
 				for(int ir=0; ir<nxy; ir++)
 				{
-					// zpiece[ir] = rho[is][ir*num_z[GlobalV::RANK_IN_POOL]+iz];
 					zpiece[ir] = data[ir*nplane+iz-startz_current];
-					// GlobalV::ofs_running << "\n get zpiece[" << ir << "]=" << zpiece[ir] << " ir*rhopw->nplane+iz=" << ir*rhopw->nplane+iz;
 				}
 				MPI_Send(zpiece.data(), nxy, MPI_DOUBLE, 0, tag, POOL_WORLD);
 			}
 
 			// case 2: > first part rho: processor 0 receive the rho
 			// from other processors
-			else if(GlobalV::RANK_IN_POOL==0)
+			else if(rank_in_pool==0)
 			{
 				MPI_Recv(zpiece.data(), nxy, MPI_DOUBLE, which_ip[iz], tag, POOL_WORLD, &ierror);
-				// GlobalV::ofs_running << "\n Receieve First number = " << zpiece[0];
 			}
 
-			if(GlobalV::MY_RANK==0)
+			if(my_rank==0)
 			{
 				/// for cube file
 				for(int ir=0; ir<nxy; ir++)
@@ -227,10 +228,9 @@ void ModuleIO::write_cube(
 				/// for cube file
 			}
 		}// end iz
-		delete[] num_z;
-		delete[] start_z;
+
 		// for cube file
-		if(GlobalV::MY_RANK==0)
+		if(my_rank==0)
 		{
 			for(int ix=0; ix<nx; ix++)
 			{
@@ -239,7 +239,10 @@ void ModuleIO::write_cube(
 					for (int iz=0; iz<nz; iz++)
 					{
 						ofs_cube << " " << data_cube[iz*nx*ny+ix*ny+iy];
-						if(iz%6==5 && iz!=nz-1) ofs_cube << "\n";
+						if(iz%6==5 && iz!=nz-1) 
+						{
+							ofs_cube << "\n";
+						}
 					}
 					ofs_cube << "\n";
 				}
@@ -257,18 +260,21 @@ void ModuleIO::write_cube(
 			{
 				ofs_cube << " " << data[k*nx*ny+i*ny+j];
 				// ++count_cube;
-				if(k%6==5 && k!=nz-1) ofs_cube << "\n";
+				if(k%6==5 && k!=nz-1) 
+				{
+					ofs_cube << "\n";
+				}
 			}
 			ofs_cube << "\n";
 		}
 	}
 #endif
 
-	if(GlobalV::MY_RANK==0) 
+	if(my_rank==0) 
 	{
 		end = time(NULL);
 		ModuleBase::GlobalFunc::OUT_TIME("write_cube",start,end);
-		// ofs.close();
+
 		/// for cube file
 		ofs_cube.close();
 	}
