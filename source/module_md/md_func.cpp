@@ -288,9 +288,9 @@ void force_virial(ModuleESolver::ESolver* p_esolver,
         ucell_nat_begin = (each_ucell_nat) * rank + last_ucell;
         MPI_Bcast(force + ucell_nat_begin, each_ucell_nat * 3, MPI_DOUBLE, i, MPI_COMM_WORLD);
     }
-
-    ModuleBase::timer::tick("MD_func", "force_virial");
 #endif
+    
+    ModuleBase::timer::tick("MD_func", "force_virial");
     return;
 }
 
