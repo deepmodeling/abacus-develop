@@ -239,8 +239,6 @@ void unkOverlap_lcao::init(const Grid_Technique& gt, std::complex<double>*** wfc
 	return;
 }
 
-//REMARK: the code next seemed to duplicate with those in 
-//module_hamilt_pw/hamilt/pwdft/wavefunc.cpp.
 int unkOverlap_lcao::iw2it(int iw)
 {
     int ic, type;
