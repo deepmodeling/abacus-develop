@@ -53,7 +53,9 @@ void sparse_format::cal_TR(
     
     //need to rebuild T(R)
     lm.Hloc_fixedR.resize(lm.ParaV->nnr);
-    lm.zeros_HSR('T');
+
+    LCAO_HS_Arrays HS_arrays;
+    LCAO_domain::zeros_HSR('T', HS_arrays);
 
     // tmp array, will be deleted later,
     // mohan 2024-06-15

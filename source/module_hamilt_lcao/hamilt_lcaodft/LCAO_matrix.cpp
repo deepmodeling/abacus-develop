@@ -221,19 +221,6 @@ void LCAO_Matrix::zeros_HSk(const char &mtype)
     return;
 }
 
-void LCAO_Matrix::zeros_HSR(const char &mtype)
-{
-    auto zeros_HSR_ker = [&](int num_threads, int thread_id)
-    {
-        long long beg, len;
-        if(GlobalV::NSPIN!=4)
-        {
-        }
-    };
-    ModuleBase::OMP_PARALLEL(zeros_HSR_ker);
-    return;
-}
-
 // becareful! Update Hloc, we add new members to it.
 void LCAO_Matrix::update_Hloc(void)
 {

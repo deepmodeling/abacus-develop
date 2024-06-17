@@ -164,8 +164,6 @@ private:
 
     void zeros_HSk(const char &mtype);
 
-    void zeros_HSR(const char &mtype);
-
     void update_Hloc(void);
 
     void update_Hloc2(const int &ik);

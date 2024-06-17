@@ -13,6 +13,7 @@
 #include "module_basis/module_ao/ORB_gen_tables.h"
 #include "module_base/vector3.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/force_stress_arrays.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_HS_arrays.hpp"
 
 namespace LCAO_domain
 {
@@ -175,6 +176,11 @@ namespace LCAO_domain
 			double* SHlocR,
 			bool cal_syns = false,
 			double dmax = 0.0);
+
+	/**
+	 * @brief set zeros for HSR matrices 
+	*/
+	void zeros_HSR(const char &mtype, LCAO_HS_Arrays& HS_arrays);
 }
 
 #endif
