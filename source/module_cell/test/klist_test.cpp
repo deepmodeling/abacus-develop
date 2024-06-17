@@ -503,7 +503,7 @@ TEST_F(KlistTest, ReadKpointsWarning6)
 	GlobalV::ofs_warning.close();
 	ifs.open("klist_tmp_warning_6");
 	std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
-    EXPECT_THAT(str, testing::HasSubstr("Line mode of k-points is open, pautomatically set symmetry to 0 to continue ..."));
+    EXPECT_THAT(str, testing::HasSubstr("Line mode of k-points is open, automatically set symmetry to 0 to continue ..."));
 	ifs.close();
 	remove("klist_tmp_warning_6");
 	remove("arbitrary_6");
@@ -525,7 +525,7 @@ TEST_F(KlistTest, ReadKpointsWarning7)
 	GlobalV::ofs_warning.close();
 	ifs.open("klist_tmp_warning_7");
 	std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
-    EXPECT_THAT(str, testing::HasSubstr("Line mode of k-points is open, pautomatically set symmetry to 0 to continue ..."));
+    EXPECT_THAT(str, testing::HasSubstr("Line mode of k-points is open, automatically set symmetry to 0 to continue ..."));
 	ifs.close();
 	remove("klist_tmp_warning_7");
 	remove("arbitrary_7");
