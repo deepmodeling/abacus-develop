@@ -110,17 +110,6 @@ void Force_LCAO<std::complex<double>>::allocate(
 
     // calculate dT=<phi|kin|dphi> in LCAO
     // calculate T + VNL(P1) in LCAO basis
-	LCAO_domain::build_ST_new(
-            lm,
-            fsr,
-			'T', 
-			cal_deri, 
-			GlobalC::ucell, 
-			GlobalC::ORB, 
-			pv,
-			*uot, 
-			&GlobalC::GridD, 
-			lm.Hloc_fixedR.data());
 
     // calculate dVnl=<phi|dVnl|dphi> in LCAO
 	LCAO_domain::build_Nonlocal_mu_new(
