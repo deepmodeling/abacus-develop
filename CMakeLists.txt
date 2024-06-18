@@ -635,7 +635,7 @@ if(BUILD_TESTING)
 
   # Set bash -e to stop on error
   find_program(BASH bash)
-  set(BASH "${BASH} -e")
+  set(BASH ${BASH} -e)
   add_subdirectory(tests) # Contains integration tests
 
   function(AddTest) # function for UT
