@@ -17,6 +17,7 @@
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #endif
 #include "module_elecstate/elecstate_lcao.h"
+#include "module_elecstate/module_dm/cal_dm_psi.h"
 #include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
 #include "module_hamilt_general/module_vdw/vdw.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
@@ -254,41 +255,46 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
 #endif // __EXX
 
     this->pelec->init_scf(istep, this->sf.strucFac);
-    if(GlobalV::out_chg == 2)
+    if (GlobalV::out_chg == 2)
     {
-        for(int is = 0; is < GlobalV::NSPIN; is++)
+        for (int is = 0; is < GlobalV::NSPIN; is++)
         {
             std::stringstream ss;
-            ss << GlobalV::global_out_dir << "SPIN" << is+1 << "_CHG_INI.cube";
+            ss << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG_INI.cube";
             ModuleIO::write_rho(
 #ifdef __MPI
                 this->pw_big->bz, // bz first, then nbz
                 this->pw_big->nbz,
-                this->pw_rho->nplane, this->pw_rho->startz_current,
+                this->pw_rho->nplane,
+                this->pw_rho->startz_current,
 #endif
-                this->pelec->charge->rho[is], is,
-                GlobalV::NSPIN, 0,
+                this->pelec->charge->rho[is],
+                is,
+                GlobalV::NSPIN,
+                0,
                 ss.str(),
-                this->pw_rho->nx, this->pw_rho->ny, this->pw_rho->nz,
-                this->pelec->eferm.ef, &(GlobalC::ucell) , 11);
+                this->pw_rho->nx,
+                this->pw_rho->ny,
+                this->pw_rho->nz,
+                this->pelec->eferm.ef,
+                &(GlobalC::ucell),
+                11);
         }
     }
 
-
-	ModuleIO::write_pot(
-			GlobalV::out_pot, 
-			GlobalV::NSPIN, 
-			GlobalV::global_out_dir,
+    ModuleIO::write_pot(GlobalV::out_pot,
+                        GlobalV::NSPIN,
+                        GlobalV::global_out_dir,
 #ifdef __MPI
-			this->pw_big->bz,
-			this->pw_big->nbz, 
-			this->pw_rho->nplane, 
-			this->pw_rho->startz_current,
+                        this->pw_big->bz,
+                        this->pw_big->nbz,
+                        this->pw_rho->nplane,
+                        this->pw_rho->startz_current,
 #endif
-            this->pw_rho->nx,
-            this->pw_rho->ny,
-            this->pw_rho->nz,
-            this->pelec->pot->get_effective_v());
+                        this->pw_rho->nx,
+                        this->pw_rho->ny,
+                        this->pw_rho->nz,
+                        this->pelec->pot->get_effective_v());
 
     // initalize DMR
     // DMR should be same size with Hamiltonian(R)
@@ -618,8 +624,8 @@ void ESolver_KS_LCAO<TK, TR>::nscf(void)
             }
         }
 
-        GlobalV::ofs_running << " k-points" << ik + 1 << "(" << this->kv.get_nkstot() << "): " << this->kv.kvec_c[ik].x << " "
-                             << this->kv.kvec_c[ik].y << " " << this->kv.kvec_c[ik].z << std::endl;
+        GlobalV::ofs_running << " k-points" << ik + 1 << "(" << this->kv.get_nkstot() << "): " << this->kv.kvec_c[ik].x
+                             << " " << this->kv.kvec_c[ik].y << " " << this->kv.kvec_c[ik].z << std::endl;
 
         for (int ib = 0; ib < nbands; ++ib)
         {
@@ -703,6 +709,16 @@ void ESolver_KS_LCAO<TK, TR>::nscf(void)
 #endif
 
     this->create_Output_Mat_Sparse(0).write();
+
+    // mulliken charge analysis
+    if (GlobalV::out_mul)
+    {
+        elecstate::ElecStateLCAO<TK>* pelec_lcao = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec);
+        this->pelec->calculate_weights();
+        this->pelec->calEBand();
+        elecstate::cal_dm_psi(&(this->orb_con.ParaV), pelec_lcao->wg, *(this->psi), *(pelec_lcao->get_DM()));
+        this->cal_mag(istep, true);
+    }
 
     return;
 }

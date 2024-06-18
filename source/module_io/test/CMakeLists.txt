@@ -187,6 +187,16 @@ AddTest(
   SOURCES numerical_basis_test.cpp ../numerical_basis_jyjy.cpp
 )
 
+
+AddTest(
+  TARGET io_mulliken_test
+  LIBS base ${math_libs} device
+  SOURCES output_mulliken_test.cpp output_mulliken_mock.cpp ../output_mulliken.cpp
+  ../../module_cell/cell_index.cpp
+  ../../module_basis/module_ao/parallel_2d.cpp
+  ../../module_basis/module_ao/parallel_orbitals.cpp
+)
+
 if(ENABLE_LCAO)
 AddTest(
   TARGET read_wfc_lcao_test
