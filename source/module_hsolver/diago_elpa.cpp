@@ -18,13 +18,17 @@ template <>
 MPI_Comm DiagoElpa<double>::setmpicomm()
 {
     if (this->elpa_num_thread == -1)
+    {
         return MPI_COMM_WORLD;
+    }
     else
     {
-        int _num;
+        int _num=0;
         MPI_Comm_size(MPI_COMM_WORLD, &_num);
         if (elpa_num_thread > _num || elpa_num_thread <= 0)
+        {
             return MPI_COMM_WORLD;
+        }
         else
         {
             lastmpinum++;
@@ -47,13 +51,17 @@ template <>
 MPI_Comm DiagoElpa<std::complex<double>>::setmpicomm()
 {
     if (this->elpa_num_thread == -1)
+    {
         return MPI_COMM_WORLD;
+    }
     else
     {
-        int _num;
+        int _num=0;
         MPI_Comm_size(MPI_COMM_WORLD, &_num);
         if (elpa_num_thread > _num || elpa_num_thread <= 0)
+        {
             return MPI_COMM_WORLD;
+        }
         else
         {
             lastmpinum++;
@@ -136,9 +144,13 @@ bool DiagoElpa<T>::ifElpaHandle(const bool& newIteration, const bool& ifNSCF)
 {
     int doHandle = false;
     if (newIteration)
+    {
         doHandle = true;
+    }
     if (ifNSCF)
+    {
         doHandle = true;
+    }
     return doHandle;
 }
 #endif
