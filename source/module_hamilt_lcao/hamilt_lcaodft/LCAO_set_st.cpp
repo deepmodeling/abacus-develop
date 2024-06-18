@@ -7,6 +7,7 @@ namespace LCAO_domain
 
 void single_derivative(
     LCAO_Matrix& lm,
+    ForceStressArrays& fsr,
     const LCAO_Orbitals& orb,
 	const ORB_gen_tables& uot,
     const Parallel_Orbitals& pv,
@@ -102,12 +103,12 @@ void single_derivative(
 				olm[1],
 				olm[2],
 				dtype,
-				lm.DSloc_x,
-				lm.DSloc_y,
-				lm.DSloc_z,
-				lm.DHloc_fixed_x,
-				lm.DHloc_fixed_y,
-				lm.DHloc_fixed_z);
+				fsr.DSloc_x,
+				fsr.DSloc_y,
+				fsr.DSloc_z,
+				fsr.DHloc_fixed_x,
+				fsr.DHloc_fixed_y,
+				fsr.DHloc_fixed_z);
 
 		if(cal_stress)
 		{
@@ -120,18 +121,18 @@ void single_derivative(
 					olm[2],
 					dtype,
 					dtau,
-					lm.DSloc_11,
-					lm.DSloc_12,
-					lm.DSloc_13,
-					lm.DSloc_22,
-					lm.DSloc_23,
-					lm.DSloc_33,
-					lm.DHloc_fixed_11,
-					lm.DHloc_fixed_12,
-					lm.DHloc_fixed_13,
-					lm.DHloc_fixed_22,
-					lm.DHloc_fixed_23,
-					lm.DHloc_fixed_33);
+					fsr.DSloc_11,
+					fsr.DSloc_12,
+					fsr.DSloc_13,
+					fsr.DSloc_22,
+					fsr.DSloc_23,
+					fsr.DSloc_33,
+					fsr.DHloc_fixed_11,
+					fsr.DHloc_fixed_12,
+					fsr.DHloc_fixed_13,
+					fsr.DHloc_fixed_22,
+					fsr.DHloc_fixed_23,
+					fsr.DHloc_fixed_33);
 		}// end stress
 	}// end gamma_only
 	else // condition 7, multiple k-points algorithm
@@ -142,24 +143,24 @@ void single_derivative(
 			// condition 9, nspin
 			if (nspin == 1 || nspin ==2)
 			{
-				lm.DSloc_Rx[nnr] = olm[0];
-				lm.DSloc_Ry[nnr] = olm[1];
-				lm.DSloc_Rz[nnr] = olm[2];
+				fsr.DSloc_Rx[nnr] = olm[0];
+				fsr.DSloc_Ry[nnr] = olm[1];
+				fsr.DSloc_Rz[nnr] = olm[2];
 			}
 			else if (nspin == 4)
 			{
 				int is = (jj-jj0*npol) + (kk-kk0*npol)*2;
 				if (is == 0) // is==3 is not needed in force calculation
 				{
-					lm.DSloc_Rx[nnr] = olm[0];
-					lm.DSloc_Ry[nnr] = olm[1];
-					lm.DSloc_Rz[nnr] = olm[2];
+					fsr.DSloc_Rx[nnr] = olm[0];
+					fsr.DSloc_Ry[nnr] = olm[1];
+					fsr.DSloc_Rz[nnr] = olm[2];
 				}
 				else
 				{
-					lm.DSloc_Rx[nnr] = 0.0;
-					lm.DSloc_Ry[nnr] = 0.0;
-					lm.DSloc_Rz[nnr] = 0.0;
+					fsr.DSloc_Rx[nnr] = 0.0;
+					fsr.DSloc_Ry[nnr] = 0.0;
+					fsr.DSloc_Rz[nnr] = 0.0;
 				}
 			}
 			else
@@ -169,9 +170,9 @@ void single_derivative(
 
 			if(cal_stress)
 			{
-				lm.DH_r[nnr*3] = dtau.x;
-				lm.DH_r[nnr*3 + 1] = dtau.y;
-				lm.DH_r[nnr*3 + 2] = dtau.z;
+				fsr.DH_r[nnr*3] = dtau.x;
+				fsr.DH_r[nnr*3 + 1] = dtau.y;
+				fsr.DH_r[nnr*3 + 2] = dtau.z;
 			}
 		}
 		else if(dtype=='T') // condition 8, S or T
@@ -179,17 +180,17 @@ void single_derivative(
 			// condtion 9, nspin
 			if (nspin == 1 || nspin ==2)
 			{
-				lm.DHloc_fixedR_x[nnr] = olm[0];
-				lm.DHloc_fixedR_y[nnr] = olm[1];
-				lm.DHloc_fixedR_z[nnr] = olm[2];
+				fsr.DHloc_fixedR_x[nnr] = olm[0];
+				fsr.DHloc_fixedR_y[nnr] = olm[1];
+				fsr.DHloc_fixedR_z[nnr] = olm[2];
 				if(cal_stress)
 				{
-					lm.stvnl11[nnr] = olm[0] * dtau.x;
-					lm.stvnl12[nnr] = olm[0] * dtau.y;
-					lm.stvnl13[nnr] = olm[0] * dtau.z;
-					lm.stvnl22[nnr] = olm[1] * dtau.y;
-					lm.stvnl23[nnr] = olm[1] * dtau.z;
-					lm.stvnl33[nnr] = olm[2] * dtau.z;
+					fsr.stvnl11[nnr] = olm[0] * dtau.x;
+					fsr.stvnl12[nnr] = olm[0] * dtau.y;
+					fsr.stvnl13[nnr] = olm[0] * dtau.z;
+					fsr.stvnl22[nnr] = olm[1] * dtau.y;
+					fsr.stvnl23[nnr] = olm[1] * dtau.z;
+					fsr.stvnl33[nnr] = olm[2] * dtau.z;
 				}
 			}
 			else if (nspin == 4)// condition 9
@@ -198,32 +199,32 @@ void single_derivative(
 				// condition 10, details of nspin 4
 				if (is == 0) // is==3 is not needed in force calculation
 				{
-					lm.DHloc_fixedR_x[nnr] = olm[0];
-					lm.DHloc_fixedR_y[nnr] = olm[1];
-					lm.DHloc_fixedR_z[nnr] = olm[2];
+					fsr.DHloc_fixedR_x[nnr] = olm[0];
+					fsr.DHloc_fixedR_y[nnr] = olm[1];
+					fsr.DHloc_fixedR_z[nnr] = olm[2];
 					if(cal_stress)
 					{
-						lm.stvnl11[nnr] = olm[0] * dtau.x;
-						lm.stvnl12[nnr] = olm[0] * dtau.y;
-						lm.stvnl13[nnr] = olm[0] * dtau.z;
-						lm.stvnl22[nnr] = olm[1] * dtau.y;
-						lm.stvnl23[nnr] = olm[1] * dtau.z;
-						lm.stvnl33[nnr] = olm[2] * dtau.z;
+						fsr.stvnl11[nnr] = olm[0] * dtau.x;
+						fsr.stvnl12[nnr] = olm[0] * dtau.y;
+						fsr.stvnl13[nnr] = olm[0] * dtau.z;
+						fsr.stvnl22[nnr] = olm[1] * dtau.y;
+						fsr.stvnl23[nnr] = olm[1] * dtau.z;
+						fsr.stvnl33[nnr] = olm[2] * dtau.z;
 					}
 				}
 				else if (is == 1 || is == 2 || is == 3)
 				{
-					lm.DHloc_fixedR_x[nnr] = 0.0;
-					lm.DHloc_fixedR_y[nnr] = 0.0;
-					lm.DHloc_fixedR_z[nnr] = 0.0;
+					fsr.DHloc_fixedR_x[nnr] = 0.0;
+					fsr.DHloc_fixedR_y[nnr] = 0.0;
+					fsr.DHloc_fixedR_z[nnr] = 0.0;
 					if(cal_stress)
 					{
-						lm.stvnl11[nnr] = 0.0;
-						lm.stvnl12[nnr] = 0.0;
-						lm.stvnl13[nnr] = 0.0;
-						lm.stvnl22[nnr] = 0.0;
-						lm.stvnl23[nnr] = 0.0;
-						lm.stvnl33[nnr] = 0.0;
+						fsr.stvnl11[nnr] = 0.0;
+						fsr.stvnl12[nnr] = 0.0;
+						fsr.stvnl13[nnr] = 0.0;
+						fsr.stvnl22[nnr] = 0.0;
+						fsr.stvnl23[nnr] = 0.0;
+						fsr.stvnl33[nnr] = 0.0;
 					}
 				}
 				else
@@ -378,6 +379,7 @@ void single_overlap(
 
 void build_ST_new(
     LCAO_Matrix& lm,
+    ForceStressArrays& fsr,
     const char& dtype,
 	const bool& calc_deri,
 	const UnitCell &ucell,
@@ -525,6 +527,7 @@ void build_ST_new(
 						{
 							single_derivative(
 									lm,
+									fsr,
 									orb,
 									uot,
 									pv,

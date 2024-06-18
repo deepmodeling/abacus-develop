@@ -14,13 +14,16 @@ void sparse_format::cal_dH(
     sparse_format::set_R_range(lm.all_R_coor, grid);
 
     const int nnr = lm.ParaV->nnr;
-    lm.DHloc_fixedR_x = new double[nnr];
-    lm.DHloc_fixedR_y = new double[nnr];
-    lm.DHloc_fixedR_z = new double[nnr];
 
-    ModuleBase::GlobalFunc::ZEROS(lm.DHloc_fixedR_x, lm.ParaV->nloc);
-    ModuleBase::GlobalFunc::ZEROS(lm.DHloc_fixedR_y, lm.ParaV->nloc);
-    ModuleBase::GlobalFunc::ZEROS(lm.DHloc_fixedR_z, lm.ParaV->nloc);
+    ForceStressArrays fsr_dh;
+
+    fsr_dh.DHloc_fixedR_x = new double[nnr];
+    fsr_dh.DHloc_fixedR_y = new double[nnr];
+    fsr_dh.DHloc_fixedR_z = new double[nnr];
+
+    ModuleBase::GlobalFunc::ZEROS(fsr_dh.DHloc_fixedR_x, lm.ParaV->nloc);
+    ModuleBase::GlobalFunc::ZEROS(fsr_dh.DHloc_fixedR_y, lm.ParaV->nloc);
+    ModuleBase::GlobalFunc::ZEROS(fsr_dh.DHloc_fixedR_z, lm.ParaV->nloc);
     // cal dT=<phi|kin|dphi> in LCAO
     // cal T + VNL(P1) in LCAO basis
     if(GlobalV::CAL_STRESS)
@@ -29,6 +32,7 @@ void sparse_format::cal_dH(
 
 		LCAO_domain::build_ST_new(
                 lm,
+                fsr_dh,
 				'T', 
 				true, 
 				GlobalC::ucell, 
@@ -44,6 +48,7 @@ void sparse_format::cal_dH(
     {
 		LCAO_domain::build_ST_new(
 				lm,
+                fsr_dh,
 				'T', 
 				true, 
 				GlobalC::ucell, 
@@ -56,6 +61,7 @@ void sparse_format::cal_dH(
 
 	LCAO_domain::build_Nonlocal_mu_new(
             lm,
+            fsr_dh,
 			lm.Hloc_fixed.data(), 
 			true, 
 			GlobalC::ucell, 
@@ -63,11 +69,16 @@ void sparse_format::cal_dH(
 			*uot, 
 			&GlobalC::GridD);
     
-    sparse_format::cal_dSTN_R(lm, grid, current_spin, sparse_thr);
+	sparse_format::cal_dSTN_R(
+			lm, 
+			fsr_dh, 
+			grid, 
+			current_spin, 
+			sparse_thr);
 
-    delete[] lm.DHloc_fixedR_x;
-    delete[] lm.DHloc_fixedR_y;
-    delete[] lm.DHloc_fixedR_z;
+    delete[] fsr_dh.DHloc_fixedR_x;
+    delete[] fsr_dh.DHloc_fixedR_y;
+    delete[] fsr_dh.DHloc_fixedR_z;
 
 	gint_k.cal_dvlocal_R_sparseMatrix(
 			current_spin, 
@@ -112,6 +123,7 @@ void sparse_format::set_R_range(
 
 void sparse_format::cal_dSTN_R(
 		LCAO_Matrix &lm,
+        ForceStressArrays &fsr,
 		Grid_Driver &grid,
 		const int &current_spin, 
 		const double &sparse_thr)
@@ -207,17 +219,17 @@ void sparse_format::cal_dSTN_R(
 
                             if(GlobalV::NSPIN!=4)
                             {
-                                temp_value_double = lm.DHloc_fixedR_x[index];
+                                temp_value_double = fsr.DHloc_fixedR_x[index];
                                 if (std::abs(temp_value_double) > sparse_thr)
                                 {
                                     lm.dHRx_sparse[current_spin][dR][iw1_all][iw2_all] = temp_value_double;
                                 }
-                                temp_value_double = lm.DHloc_fixedR_y[index];
+                                temp_value_double = fsr.DHloc_fixedR_y[index];
                                 if (std::abs(temp_value_double) > sparse_thr)
                                 {
                                     lm.dHRy_sparse[current_spin][dR][iw1_all][iw2_all] = temp_value_double;
                                 }
-                                temp_value_double = lm.DHloc_fixedR_z[index];
+                                temp_value_double = fsr.DHloc_fixedR_z[index];
                                 if (std::abs(temp_value_double) > sparse_thr)
                                 {
                                     lm.dHRz_sparse[current_spin][dR][iw1_all][iw2_all] = temp_value_double;

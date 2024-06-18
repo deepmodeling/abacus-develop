@@ -720,189 +720,214 @@ void HSolverPW<T, Device>::updatePsiK(hamilt::Hamilt<T, Device>* pHamilt, psi::P
 template <typename T, typename Device>
 void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::Psi<T, Device>& psi, Real* eigenvalue)
 {
-    if (this->method != "cg")
+    if (this->method == "cg")
     {
-        if (this->method == "dav_subspace")
-        {
-#ifdef __MPI
-            const diag_comm_info comm_info = {POOL_WORLD, GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL};
-#else
-            const diag_comm_info comm_info = {GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL};
-#endif
+        // warp the subspace_func into a lambda function
+        auto ngk_pointer = psi.get_ngk_pointer();
+        auto subspace_func = [this, ngk_pointer](const ct::Tensor& psi_in, ct::Tensor& psi_out) {
+            // psi_in should be a 2D tensor:
+            // psi_in.shape() = [nbands, nbasis]
+            const auto ndim = psi_in.shape().ndim();
+            REQUIRES_OK(ndim == 2, "dims of psi_in should be less than or equal to 2");
+            // Convert a Tensor object to a psi::Psi object
+            auto psi_in_wrapper = psi::Psi<T, Device>(psi_in.data<T>(),
+                                                        1,
+                                                        psi_in.shape().dim_size(0),
+                                                        psi_in.shape().dim_size(1),
+                                                        ngk_pointer);
+            auto psi_out_wrapper = psi::Psi<T, Device>(psi_out.data<T>(),
+                                                        1,
+                                                        psi_out.shape().dim_size(0),
+                                                        psi_out.shape().dim_size(1),
+                                                        ngk_pointer);
+            auto eigen = ct::Tensor(ct::DataTypeToEnum<Real>::value,
+                                    ct::DeviceType::CpuDevice,
+                                    ct::TensorShape({psi_in.shape().dim_size(0)}));
 
-            // this->pdiagh = new Diago_DavSubspace<T, Device>(this->precondition,
+            DiagoIterAssist<T, Device>::diagH_subspace(hamilt_, psi_in_wrapper, psi_out_wrapper, eigen.data<Real>());
+        };
+        DiagoCG<T, Device> cg(GlobalV::BASIS_TYPE,
+                                                GlobalV::CALCULATION,
+                                                DiagoIterAssist<T, Device>::need_subspace,
+                                                subspace_func,
+                                                DiagoIterAssist<T, Device>::PW_DIAG_THR,
+                                                DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
+                                                GlobalV::NPROC_IN_POOL);
 
-            //                         psi.get_nbands(),
-            //                         psi.get_k_first() ? psi.get_current_nbas() : psi.get_nk() * psi.get_nbasis(),
+        // warp the hpsi_func and spsi_func into a lambda function
+        using ct_Device = typename ct::PsiToContainer<Device>::type;
 
-            //                                                 GlobalV::PW_DIAG_NDIM,
-            //                                                 DiagoIterAssist<T, Device>::PW_DIAG_THR,
-            //                                                 DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
-            //                                                 DiagoIterAssist<T, Device>::need_subspace,
-            //                                                 comm_info);
-            Diago_DavSubspace<T, Device> dav_subspace(this->precondition,
-                                                      psi.get_nbands(),
-                                                      psi.get_k_first() ? psi.get_current_nbas()
-                                                                        : psi.get_nk() * psi.get_nbasis(),
-                                                      GlobalV::PW_DIAG_NDIM,
-                                                      DiagoIterAssist<T, Device>::PW_DIAG_THR,
-                                                      DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
-                                                      DiagoIterAssist<T, Device>::need_subspace,
-                                                      comm_info);
+        // warp the hpsi_func and spsi_func into a lambda function
+        auto hpsi_func = [hm, ngk_pointer](const ct::Tensor& psi_in, ct::Tensor& hpsi_out) {
+            ModuleBase::timer::tick("DiagoCG_New", "hpsi_func");
+            // psi_in should be a 2D tensor:
+            // psi_in.shape() = [nbands, nbasis]
+            const auto ndim = psi_in.shape().ndim();
+            REQUIRES_OK(ndim <= 2, "dims of psi_in should be less than or equal to 2");
+            // Convert a Tensor object to a psi::Psi object
+            auto psi_wrapper = psi::Psi<T, Device>(psi_in.data<T>(),
+                                                   1,
+                                                   ndim == 1 ? 1 : psi_in.shape().dim_size(0),
+                                                   ndim == 1 ? psi_in.NumElements() : psi_in.shape().dim_size(1),
+                                                   ngk_pointer);
+            psi::Range all_bands_range(true, psi_wrapper.get_current_k(), 0, psi_wrapper.get_nbands() - 1);
+            using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
+            hpsi_info info(&psi_wrapper, all_bands_range, hpsi_out.data<T>());
+            hm->ops->hPsi(info);
+            ModuleBase::timer::tick("DiagoCG_New", "hpsi_func");
+        };
+        auto spsi_func = [this, hm](const ct::Tensor& psi_in, ct::Tensor& spsi_out) {
+            ModuleBase::timer::tick("DiagoCG_New", "spsi_func");
+            // psi_in should be a 2D tensor:
+            // psi_in.shape() = [nbands, nbasis]
+            const auto ndim = psi_in.shape().ndim();
+            REQUIRES_OK(ndim <= 2, "dims of psi_in should be less than or equal to 2");
 
-            // this->pdiagh->method = this->method;
-
-            bool scf;
-            if (GlobalV::CALCULATION == "nscf")
+            if (GlobalV::use_uspp)
             {
-                scf = false;
+                // Convert a Tensor object to a psi::Psi object
+                hm->sPsi(psi_in.data<T>(),
+                         spsi_out.data<T>(),
+                         ndim == 1 ? psi_in.NumElements() : psi_in.shape().dim_size(1),
+                         ndim == 1 ? psi_in.NumElements() : psi_in.shape().dim_size(1),
+                         ndim == 1 ? 1 : psi_in.shape().dim_size(0));
             }
             else
             {
-                scf = true;
+                base_device::memory::synchronize_memory_op<T, Device, Device>()(
+                    this->ctx,
+                    this->ctx,
+                    spsi_out.data<T>(),
+                    psi_in.data<T>(),
+                    static_cast<size_t>((ndim == 1 ? 1 : psi_in.shape().dim_size(0))
+                                        * (ndim == 1 ? psi_in.NumElements() : psi_in.shape().dim_size(1))));
             }
-            DiagoIterAssist<T, Device>::avg_iter
-                // += static_cast<double>((reinterpret_cast<Diago_DavSubspace<T, Device>*>(this->pdiagh))->diag(
-                += static_cast<double>(dav_subspace.diag(hm, psi, eigenvalue, is_occupied, scf));
 
-            // delete reinterpret_cast<Diago_DavSubspace<T, Device>*>(this->pdiagh);
-            this->pdiagh = nullptr;
-        }
-        else if (this->method == "bpcg")
-        {
-            // this->pdiagh->diag(hm, psi, eigenvalue);
-            DiagoBPCG<T, Device> bpcg(precondition.data());
-            bpcg.init_iter(psi);
-            bpcg.diag(hm, psi, eigenvalue);
-        }
-        else // method == "dav"
-        {
-#ifdef __MPI
-            const diag_comm_info comm_info = {POOL_WORLD, GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL};
-#else
-            const diag_comm_info comm_info = {GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL};
-#endif
-            // Allow 5 tries at most. If ntry > ntry_max = 5, exit diag loop.
-            const int ntry_max = 5;
-            // In non-self consistent calculation, do until totally converged. Else allow 5 eigenvecs to be NOT
-            // converged.
-            const int notconv_max = ("nscf" == GlobalV::CALCULATION) ? 0 : 5;
-            // do diag and add davidson iteration counts up to avg_iter
-            const Real david_diag_thr = DiagoIterAssist<T, Device>::PW_DIAG_THR;
-            const int david_maxiter = DiagoIterAssist<T, Device>::PW_DIAG_NMAX;
-            // auto david = (reinterpret_cast<DiagoDavid<T, Device>*>(this->pdiagh));
-            DiagoDavid<T, Device> david(precondition.data(),
-                                        GlobalV::PW_DIAG_NDIM,
-                                        GlobalV::use_paw,
-                                        comm_info);
-            DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(
-                david.diag(hm, psi, eigenvalue, david_diag_thr, david_maxiter, ntry_max, notconv_max));
-        }
-        return;
+            ModuleBase::timer::tick("DiagoCG_New", "spsi_func");
+        };
+        auto psi_tensor = ct::TensorMap(psi.get_pointer(),
+                                        ct::DataTypeToEnum<T>::value,
+                                        ct::DeviceTypeToEnum<ct_Device>::value,
+                                        ct::TensorShape({psi.get_nbands(), psi.get_nbasis()}))
+                              .slice({0, 0}, {psi.get_nbands(), psi.get_current_nbas()});
+        auto eigen_tensor = ct::TensorMap(eigenvalue,
+                                          ct::DataTypeToEnum<Real>::value,
+                                          ct::DeviceTypeToEnum<ct::DEVICE_CPU>::value,
+                                          ct::TensorShape({psi.get_nbands()}));
+        auto prec_tensor = ct::TensorMap(precondition.data(),
+                                         ct::DataTypeToEnum<Real>::value,
+                                         ct::DeviceTypeToEnum<ct::DEVICE_CPU>::value,
+                                         ct::TensorShape({static_cast<int>(precondition.size())}))
+                               .to_device<ct_Device>()
+                               .slice({0}, {psi.get_current_nbas()});
+
+        cg.diag(hpsi_func, spsi_func, psi_tensor, eigen_tensor, prec_tensor);
+        // TODO: Double check tensormap's potential problem
+        ct::TensorMap(psi.get_pointer(), psi_tensor, {psi.get_nbands(), psi.get_nbasis()}).sync(psi_tensor);
     }
-    // cg below
-    // warp the subspace_func into a lambda function
-    auto ngk_pointer = psi.get_ngk_pointer();
-    auto subspace_func = [this, ngk_pointer](const ct::Tensor& psi_in, ct::Tensor& psi_out) {
-        // psi_in should be a 2D tensor:
-        // psi_in.shape() = [nbands, nbasis]
-        const auto ndim = psi_in.shape().ndim();
-        REQUIRES_OK(ndim == 2, "dims of psi_in should be less than or equal to 2");
-        // Convert a Tensor object to a psi::Psi object
-        auto psi_in_wrapper = psi::Psi<T, Device>(psi_in.data<T>(),
-                                                    1,
-                                                    psi_in.shape().dim_size(0),
-                                                    psi_in.shape().dim_size(1),
-                                                    ngk_pointer);
-        auto psi_out_wrapper = psi::Psi<T, Device>(psi_out.data<T>(),
-                                                    1,
-                                                    psi_out.shape().dim_size(0),
-                                                    psi_out.shape().dim_size(1),
-                                                    ngk_pointer);
-        auto eigen = ct::Tensor(ct::DataTypeToEnum<Real>::value,
-                                ct::DeviceType::CpuDevice,
-                                ct::TensorShape({psi_in.shape().dim_size(0)}));
+    else if (this->method == "dav_subspace")
+    {
+#ifdef __MPI
+        const diag_comm_info comm_info = {POOL_WORLD, GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL};
+#else
+        const diag_comm_info comm_info = {GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL};
+#endif
+        Diago_DavSubspace<T, Device> dav_subspace(this->precondition,
 
-        DiagoIterAssist<T, Device>::diagH_subspace(hamilt_, psi_in_wrapper, psi_out_wrapper, eigen.data<Real>());
-    };
-    DiagoCG<T, Device> cg(GlobalV::BASIS_TYPE,
-                                            GlobalV::CALCULATION,
-                                            DiagoIterAssist<T, Device>::need_subspace,
-                                            subspace_func,
-                                            DiagoIterAssist<T, Device>::PW_DIAG_THR,
-                                            DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
-                                            GlobalV::NPROC_IN_POOL);
+                                                        psi.get_nbands(),
+                                                        psi.get_k_first() ? psi.get_current_nbas()
+                                                                          : psi.get_nk() * psi.get_nbasis(),
 
-    // warp the hpsi_func and spsi_func into a lambda function
-    using ct_Device = typename ct::PsiToContainer<Device>::type;
+                                                        GlobalV::PW_DIAG_NDIM,
+                                                        DiagoIterAssist<T, Device>::PW_DIAG_THR,
+                                                        DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
+                                                        DiagoIterAssist<T, Device>::need_subspace,
+                                                        comm_info);
 
-    // warp the hpsi_func and spsi_func into a lambda function
-    auto hpsi_func = [hm, ngk_pointer](const ct::Tensor& psi_in, ct::Tensor& hpsi_out) {
-        ModuleBase::timer::tick("DiagoCG_New", "hpsi_func");
-        // psi_in should be a 2D tensor:
-        // psi_in.shape() = [nbands, nbasis]
-        const auto ndim = psi_in.shape().ndim();
-        REQUIRES_OK(ndim <= 2, "dims of psi_in should be less than or equal to 2");
-        // Convert a Tensor object to a psi::Psi object
-        auto psi_wrapper = psi::Psi<T, Device>(psi_in.data<T>(),
-                                               1,
-                                               ndim == 1 ? 1 : psi_in.shape().dim_size(0),
-                                               ndim == 1 ? psi_in.NumElements() : psi_in.shape().dim_size(1),
-                                               ngk_pointer);
-        psi::Range all_bands_range(true, psi_wrapper.get_current_k(), 0, psi_wrapper.get_nbands() - 1);
-        using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
-        hpsi_info info(&psi_wrapper, all_bands_range, hpsi_out.data<T>());
-        hm->ops->hPsi(info);
-        ModuleBase::timer::tick("DiagoCG_New", "hpsi_func");
-    };
-    auto spsi_func = [this, hm](const ct::Tensor& psi_in, ct::Tensor& spsi_out) {
-        ModuleBase::timer::tick("DiagoCG_New", "spsi_func");
-        // psi_in should be a 2D tensor:
-        // psi_in.shape() = [nbands, nbasis]
-        const auto ndim = psi_in.shape().ndim();
-        REQUIRES_OK(ndim <= 2, "dims of psi_in should be less than or equal to 2");
+        // this->pdiagh->method = this->method;
 
-        if (GlobalV::use_uspp)
+        bool scf;
+        if (GlobalV::CALCULATION == "nscf")
         {
-            // Convert a Tensor object to a psi::Psi object
-            hm->sPsi(psi_in.data<T>(),
-                     spsi_out.data<T>(),
-                     ndim == 1 ? psi_in.NumElements() : psi_in.shape().dim_size(1),
-                     ndim == 1 ? psi_in.NumElements() : psi_in.shape().dim_size(1),
-                     ndim == 1 ? 1 : psi_in.shape().dim_size(0));
+            scf = false;
         }
         else
         {
-            base_device::memory::synchronize_memory_op<T, Device, Device>()(
-                this->ctx,
-                this->ctx,
-                spsi_out.data<T>(),
-                psi_in.data<T>(),
-                static_cast<size_t>((ndim == 1 ? 1 : psi_in.shape().dim_size(0))
-                                    * (ndim == 1 ? psi_in.NumElements() : psi_in.shape().dim_size(1))));
+            scf = true;
         }
 
-        ModuleBase::timer::tick("DiagoCG_New", "spsi_func");
-    };
-    auto psi_tensor = ct::TensorMap(psi.get_pointer(),
-                                    ct::DataTypeToEnum<T>::value,
-                                    ct::DeviceTypeToEnum<ct_Device>::value,
-                                    ct::TensorShape({psi.get_nbands(), psi.get_nbasis()}))
-                          .slice({0, 0}, {psi.get_nbands(), psi.get_current_nbas()});
-    auto eigen_tensor = ct::TensorMap(eigenvalue,
-                                      ct::DataTypeToEnum<Real>::value,
-                                      ct::DeviceTypeToEnum<ct::DEVICE_CPU>::value,
-                                      ct::TensorShape({psi.get_nbands()}));
-    auto prec_tensor = ct::TensorMap(precondition.data(),
-                                     ct::DataTypeToEnum<Real>::value,
-                                     ct::DeviceTypeToEnum<ct::DEVICE_CPU>::value,
-                                     ct::TensorShape({static_cast<int>(precondition.size())}))
-                           .to_device<ct_Device>()
-                           .slice({0}, {psi.get_current_nbas()});
+        auto ngk_pointer = psi.get_ngk_pointer();
 
-    cg.diag(hpsi_func, spsi_func, psi_tensor, eigen_tensor, prec_tensor);
-    // TODO: Double check tensormap's potential problem
-    ct::TensorMap(psi.get_pointer(), psi_tensor, {psi.get_nbands(), psi.get_nbasis()}).sync(psi_tensor);
+        std::function<void(T*, T*, const int, const int, const int, const int)> hpsi_func = [hm, ngk_pointer](
+                    T* hpsi_out, 
+                    T* psi_in, 
+                    const int nband_in, 
+                    const int nbasis_in,
+                    const int band_index1,
+                    const int band_index2)
+        {
+            ModuleBase::timer::tick("DavSubspace", "hpsi_func");
+
+            // Convert "pointer data stucture" to a psi::Psi object
+            auto psi_iter_wrapper = psi::Psi<T, Device>(psi_in, 1, nband_in, nbasis_in, ngk_pointer);
+
+            psi::Range bands_range(1, 0, band_index1, band_index2);
+
+            using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
+            hpsi_info info(&psi_iter_wrapper, bands_range, hpsi_out);
+            hm->ops->hPsi(info);
+
+            ModuleBase::timer::tick("DavSubspace", "hpsi_func");
+        };
+
+
+        DiagoIterAssist<T, Device>::avg_iter
+            += static_cast<double>(dav_subspace.diag(
+
+                                        hpsi_func,
+                                        psi.get_pointer(),
+                                        
+                                        hm, 
+                                        psi, 
+                                        eigenvalue, 
+                                        is_occupied, 
+                                        scf));
+
+        // delete reinterpret_cast<Diago_DavSubspace<T, Device>*>(this->pdiagh);
+        this->pdiagh = nullptr;
+    }
+    else if (this->method == "bpcg")
+    {
+        // this->pdiagh->diag(hm, psi, eigenvalue);
+        DiagoBPCG<T, Device> bpcg(precondition.data());
+        bpcg.init_iter(psi);
+        bpcg.diag(hm, psi, eigenvalue);
+    }
+    else if (this->method == "dav")
+    {
+#ifdef __MPI
+        const diag_comm_info comm_info = {POOL_WORLD, GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL};
+#else
+        const diag_comm_info comm_info = {GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL};
+#endif
+        // Allow 5 tries at most. If ntry > ntry_max = 5, exit diag loop.
+        const int ntry_max = 5;
+        // In non-self consistent calculation, do until totally converged. Else allow 5 eigenvecs to be NOT
+        // converged.
+        const int notconv_max = ("nscf" == GlobalV::CALCULATION) ? 0 : 5;
+        // do diag and add davidson iteration counts up to avg_iter
+        const Real david_diag_thr = DiagoIterAssist<T, Device>::PW_DIAG_THR;
+        const int david_maxiter = DiagoIterAssist<T, Device>::PW_DIAG_NMAX;
+      
+        DiagoDavid<T, Device> david(precondition.data(),
+                                    GlobalV::PW_DIAG_NDIM,
+                                    GlobalV::use_paw,
+                                    comm_info);
+        DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(
+            david.diag(hm, psi, eigenvalue, david_diag_thr, david_maxiter, ntry_max, notconv_max)
+        );
+    }
+    return;
 }
 
 template <typename T, typename Device>
