@@ -89,6 +89,17 @@ void Force_LCAO<std::complex<double>>::allocate(
     // calculate dS = <phi | dphi>
     //-----------------------------
     bool cal_deri = true;
+    LCAO_domain::build_ST_new(
+        lm,
+        fsr,
+        'S', 
+        cal_deri, 
+        GlobalC::ucell, 
+        GlobalC::ORB, 
+        pv,
+        *uot, 
+        &GlobalC::GridD, 
+        nullptr); // delete lm.SlocR
 
     //-----------------------------------------
     // (2) allocate for <phi | T + Vnl | dphi>
@@ -110,6 +121,17 @@ void Force_LCAO<std::complex<double>>::allocate(
 
     // calculate dT=<phi|kin|dphi> in LCAO
     // calculate T + VNL(P1) in LCAO basis
+    LCAO_domain::build_ST_new(
+            lm,
+            fsr,
+			'T', 
+			cal_deri, 
+			GlobalC::ucell, 
+			GlobalC::ORB, 
+			pv,
+			*uot, 
+			&GlobalC::GridD, 
+			lm.Hloc_fixedR.data());
 
     // calculate dVnl=<phi|dVnl|dphi> in LCAO
 	LCAO_domain::build_Nonlocal_mu_new(
@@ -126,7 +148,21 @@ void Force_LCAO<std::complex<double>>::allocate(
 	if (INPUT.cal_syns)
 	{
 		cal_deri = false;
-
+        
+		LCAO_domain::build_ST_new(
+				lm,
+                fsr,
+				'S', 
+				cal_deri, 
+				GlobalC::ucell,
+				GlobalC::ORB,
+				pv,
+				*uot,
+                &(GlobalC::GridD),
+				nullptr, // delete lm.SlocR
+				INPUT.cal_syns, 
+				INPUT.dmax);
+        
         for (int ik = 0; ik < nks; ik++)
         {
             lm.zeros_HSk('S');
