@@ -31,6 +31,7 @@ list(APPEND objects
     output_potential.cpp
     #parameter_pool.cpp
     para_json.cpp
+    parse_args.cpp
 )
 
 list(APPEND objects_advanced

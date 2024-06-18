@@ -642,6 +642,8 @@ class Input
     double pexsi_mu_guard = 0.2;
     double pexsi_elec_thr = 0.001;
     double pexsi_zero_thr = 1e-10;
+
+    bool check_input = false;
     
     std::time_t get_start_time(void) const
     {

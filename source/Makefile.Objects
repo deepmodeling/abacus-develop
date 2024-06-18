@@ -464,6 +464,7 @@ OBJS_IO=input.o\
     init_info.o\
     readin_info.o\
     output_info.o\
+    parse_args.o\
 
 OBJS_IO_LCAO=cal_r_overlap_R.o\
       write_orb_info.o\
