@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set +e
 # ABACUS executable path
 abacus=/root/abacus-develop/build/abacus
 # number of mpi processes

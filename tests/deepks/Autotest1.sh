@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set +e
 # deepks_test executable path
 deepks_test=test_deepks
 # regex for test cases
