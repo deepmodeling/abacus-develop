@@ -28,7 +28,7 @@ std::string dmr_gen_fname(const int out_type, const int ispin, const bool append
  * @param dm_serial A pointer to the Hamiltonian container.
  * @param istep The current step number.
  */
-void write_dmr_csr(std::string& fname, hamilt::HContainer<double>* dm_serial, const int istep);
+void write_dmr_csr(std::string& fname, hamilt::HContainer<double>* dm_serial, const int nbasis, const int istep);
 
 /**
  * Writes DMR to a file.
@@ -42,7 +42,7 @@ void write_dmr_csr(std::string& fname, hamilt::HContainer<double>* dm_serial, co
  * @param istep The ION step, starting from 0.
  * @param pv The Parallel_Orbitals object.
  */
-void write_dmr(const std::vector<hamilt::HContainer<double>*> dmr, const bool out_csr, const bool out_npz,
+void write_dmr(const std::vector<hamilt::HContainer<double>*> dmr, const int nbasis, const bool out_csr, const bool out_npz,
                const bool append,
                const int istep);
 } // namespace ModuleIO

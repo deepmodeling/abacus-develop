@@ -1090,7 +1090,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
 
     // 2) write density matrix for sparse matrix
     ModuleIO::write_dmr(dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->get_DMR_vector(),
-                        INPUT.out_dm1, false, GlobalV::out_app_flag, istep);
+                        GlobalV::NLOCAL, INPUT.out_dm1, false, GlobalV::out_app_flag, istep);
 
     // 3) write charge density
     if (GlobalV::out_chg)
