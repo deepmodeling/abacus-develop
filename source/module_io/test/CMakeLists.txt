@@ -20,7 +20,7 @@ AddTest(
 )
 
 install(FILES input_test_para.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-find_program(BASH bash)
+
 add_test(NAME io_input_test_para4
       COMMAND ${BASH} input_test_para.sh
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
@@ -96,7 +96,7 @@ AddTest(
 )
 
 install(FILES write_wfc_nao_para.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-find_program(BASH bash)
+
 add_test(NAME io_write_wfc_nao_para
       COMMAND ${BASH} write_wfc_nao_para.sh
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
@@ -159,7 +159,7 @@ if(ENABLE_LCAO)
 AddTest(
   TARGET to_qo_test
   LIBS base ${math_libs} device numerical_atomic_orbitals container orb
-  SOURCES 
+  SOURCES
   to_qo_test.cpp
   ../to_qo_kernel.cpp
   ../to_qo_mpi.cpp

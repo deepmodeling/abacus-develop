@@ -43,7 +43,7 @@ list(APPEND depend_files
   )
 AddTest(
   TARGET orbital_equal_test
-  LIBS ${math_libs} device numerical_atomic_orbitals container 
+  LIBS ${math_libs} device numerical_atomic_orbitals container
   SOURCES 1_snap_equal_test.cpp ORB_unittest.cpp
   ../../../module_base/parallel_reduce.cpp ../../../module_base/parallel_global.cpp ../../../module_base/parallel_common.cpp
   ../../../module_base/assoc_laguerre.cpp
@@ -118,7 +118,7 @@ AddTest(
 )
 
 install(FILES parallel_2d_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-find_program(BASH bash)
+
 add_test(NAME parallel_2d_test_para
       COMMAND ${BASH} parallel_2d_test.sh
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
@@ -131,7 +131,7 @@ AddTest(
 )
 
 install(FILES parallel_orbitals_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-find_program(BASH bash)
+
 add_test(NAME parallel_orbitals_test_para
       COMMAND ${BASH} parallel_orbitals_test.sh
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
@@ -139,4 +139,3 @@ add_test(NAME parallel_orbitals_test_para
 
 install(DIRECTORY lcao_H2O DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(DIRECTORY lcao_H2O DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../../../tests)
-

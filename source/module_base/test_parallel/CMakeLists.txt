@@ -1,12 +1,12 @@
 AddTest(
   TARGET base_ParaCommon
-  LIBS MPI::MPI_CXX 
+  LIBS MPI::MPI_CXX
   SOURCES parallel_common_test.cpp ../global_variable.cpp ../parallel_common.cpp
 )
 
 AddTest(
   TARGET base_ParaGlobal
-  LIBS MPI::MPI_CXX 
+  LIBS MPI::MPI_CXX
   SOURCES parallel_global_test.cpp ../global_variable.cpp ../parallel_global.cpp
 )
 
@@ -20,7 +20,7 @@ install(FILES parallel_common_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES parallel_global_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES parallel_reduce_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
-find_program(BASH bash)
+
 add_test(NAME base_parallel_common_test
       COMMAND ${BASH} parallel_common_test.sh
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
@@ -53,4 +53,3 @@ if(ENABLE_LCAO)
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   )
 endif()
-

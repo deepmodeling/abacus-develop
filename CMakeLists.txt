@@ -212,7 +212,7 @@ if(ENABLE_LCAO)
   if(ENABLE_FFT_TWO_CENTER)
     add_compile_definitions(USE_NEW_TWO_CENTER)
   endif()
-  
+
   if(ENABLE_PEXSI)
     find_package(PEXSI REQUIRED)
     target_link_libraries(${ABACUS_BIN_NAME} ${PEXSI_LIBRARY} ${SuperLU_DIST_LIBRARY} ${ParMETIS_LIBRARY} ${METIS_LIBRARY} pexsi)
@@ -632,6 +632,10 @@ if(BUILD_TESTING)
   endif()
   # TODO: Try the GoogleTest module.
   # https://cmake.org/cmake/help/latest/module/GoogleTest.html
+
+  # Set bash -e to stop on error
+  find_program(BASH bash)
+  set(BASH "${BASH} -e")
   add_subdirectory(tests) # Contains integration tests
 
   function(AddTest) # function for UT

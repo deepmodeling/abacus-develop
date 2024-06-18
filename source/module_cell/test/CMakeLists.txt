@@ -4,7 +4,7 @@ remove_definitions(-D__ROCM)
 remove_definitions(-D__EXX)
 remove_definitions(-DUSE_PAW)
 
-find_program(BASH bash)
+
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES bcast_atom_pseudo_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES bcast_atom_spec_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
@@ -31,28 +31,28 @@ add_library(cell_info OBJECT ${cell_simple_srcs})
 AddTest(
   TARGET cell_read_pp
   LIBS ${math_libs} base device
-  SOURCES read_pp_test.cpp ../read_pp.cpp ../read_pp_upf201.cpp ../read_pp_upf100.cpp ../read_pp_vwr.cpp ../read_pp_blps.cpp 
+  SOURCES read_pp_test.cpp ../read_pp.cpp ../read_pp_upf201.cpp ../read_pp_upf100.cpp ../read_pp_vwr.cpp ../read_pp_blps.cpp
   ../../module_io/output.cpp
 )
 
 AddTest(
   TARGET cell_pseudo_nc
   LIBS ${math_libs} base device
-  SOURCES pseudo_nc_test.cpp ../pseudo.cpp ../read_pp.cpp ../read_pp_upf201.cpp ../read_pp_upf100.cpp ../read_pp_vwr.cpp 
+  SOURCES pseudo_nc_test.cpp ../pseudo.cpp ../read_pp.cpp ../read_pp_upf201.cpp ../read_pp_upf100.cpp ../read_pp_vwr.cpp
   	../read_pp_blps.cpp ../../module_io/output.cpp
 )
 
 AddTest(
   TARGET cell_atom_pseudo
   LIBS ${math_libs} base device
-  SOURCES atom_pseudo_test.cpp ../atom_pseudo.cpp ../pseudo.cpp ../read_pp.cpp ../read_pp_upf201.cpp ../read_pp_upf100.cpp 
+  SOURCES atom_pseudo_test.cpp ../atom_pseudo.cpp ../pseudo.cpp ../read_pp.cpp ../read_pp_upf201.cpp ../read_pp_upf100.cpp
   	../read_pp_vwr.cpp ../read_pp_blps.cpp ../../module_io/output.cpp
 )
 
 AddTest(
   TARGET cell_atom_spec
   LIBS ${math_libs} base device
-  SOURCES atom_spec_test.cpp ../atom_spec.cpp ../atom_pseudo.cpp ../pseudo.cpp ../read_pp.cpp ../read_pp_upf201.cpp 
+  SOURCES atom_spec_test.cpp ../atom_spec.cpp ../atom_pseudo.cpp ../pseudo.cpp ../read_pp.cpp ../read_pp_upf201.cpp
   	../read_pp_upf100.cpp ../read_pp_vwr.cpp ../read_pp_blps.cpp ../../module_io/output.cpp
 )
 
@@ -76,11 +76,11 @@ add_test(NAME cell_klist_test_para4
 AddTest(
   TARGET cell_ParaKpoints
   LIBS MPI::MPI_CXX
-  SOURCES parallel_kpoints_test.cpp ../../module_base/global_variable.cpp ../../module_base/parallel_global.cpp 
+  SOURCES parallel_kpoints_test.cpp ../../module_base/global_variable.cpp ../../module_base/parallel_global.cpp
   	../../module_base/parallel_common.cpp ../parallel_kpoints.cpp
 )
 
-find_program(BASH bash)
+
 
 add_test(NAME cell_bcast_atom_pseudo_test
       COMMAND ${BASH} bcast_atom_pseudo_test.sh
