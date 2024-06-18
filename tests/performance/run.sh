@@ -50,20 +50,20 @@ check_out() {
 
         if [ ! -n "$deviation" ]; then
             echo "    Error: Fatal Error! $key cal=$cal ref=$ref"
-            let failed++
+            let ++failed
             currentfolder=$(pwd | awk -F '/' '{print $NF}')
             failedfile="${failedfile}${currentfolder}\n"
             break
         else
             if [ $(echo "$deviation1 < 1" | bc) = 0 ]; then
                 echo "    Error: FAILED! $key cal=$cal ref=$ref deviation=$deviation"
-                let failed++
+                let ++failed
                 currentfolder=$(pwd | awk -F '/' '{print $NF}')
                 failedfile="${failedfile}${currentfolder}\n"
                 break
             fi
         fi
-        let ok++
+        let ++ok
     done
 }
 ##############################
@@ -84,7 +84,7 @@ run_abacus() {
         lastword=$(tail -1 result.log | awk '{print $1}')
     fi
     if [[ $lastword != "SEE" ]]; then
-        OMP_NUM_THREADS=$2 /usr/bin/time -v mpirun -n $1 $abacus 1>result.log 2>time.log 
+        OMP_NUM_THREADS=$2 /usr/bin/time -v mpirun -n $1 $abacus 1>result.log 2>time.log
     else
         printf "**result.log is normal end, skip this job** "
     fi

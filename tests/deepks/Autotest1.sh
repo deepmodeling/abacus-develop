@@ -30,7 +30,7 @@ do
 	$deepks_test
 	state=`echo $?`
 	if [ $state != "0" ]; then
-		let failed++
+		let ++failed
 		running_path=`echo "./running.log"`
                 cat $running_path
 	fi
@@ -44,5 +44,3 @@ then
 else
 	exit 1
 fi
-
-

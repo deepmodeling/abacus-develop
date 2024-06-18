@@ -78,7 +78,7 @@ check_out(){
     # check every 'key' word
     #------------------------------------------------------
     for key in $properties; do
-    
+
         if [ $key == "totaltimeref" ]; then
             # echo "time=$cal ref=$ref"
             break
@@ -109,7 +109,7 @@ check_out(){
         #--------------------------------------------------
         if [ ! -n "$deviation" ]; then
             echo -e "\e[0;31m[ERROR     ] Fatal Error: key $key not found in output.\e[0m"
-            let fatal++
+            let ++fatal
             fatal_case_list+=$dir'\n'
             break
         else
@@ -118,7 +118,7 @@ check_out(){
                     if [ $(echo "sqrt($deviation*$deviation) < $force_threshold"|bc) = 0 ]; then
                         echo -e "[WARNING   ] "\
                             "$key cal=$cal ref=$ref deviation=$deviation"
-                        let failed++
+                        let ++failed
                         failed_case_list+=$dir'\n'
                     else
                         #echo "$key cal=$cal ref=$ref deviation=$deviation"
@@ -130,7 +130,7 @@ check_out(){
                     if [ $(echo "sqrt($deviation*$deviation) < $stress_threshold"|bc) = 0 ]; then
                         echo -e "[WARNING   ] "\
                             "$key cal=$cal ref=$ref deviation=$deviation"
-                        let failed++
+                        let ++failed
                         failed_case_list+=$dir'\n'
                     else
                         #echo "$key cal=$cal ref=$ref deviation=$deviation"
@@ -141,11 +141,11 @@ check_out(){
                 else
                     echo -e "[WARNING   ] "\
                         "$key cal=$cal ref=$ref deviation=$deviation"
-                    let failed++
+                    let ++failed
                     failed_case_list+=$dir'\n'
                 fi
                 if [ $(echo "sqrt($deviation*$deviation) < $fatal_threshold"|bc) = 0 ]; then
-                    let fatal++
+                    let ++fatal
                     fatal_case_list+=$dir
                     echo -e "\e[0;31m[ERROR      ] \e[0m"\
                         "An unacceptable deviation occurs."
@@ -160,7 +160,7 @@ check_out(){
                 echo -e "\e[0;32m[      OK  ] \e[0m $key"
             fi
         fi
-        let ok++
+        let ++ok
     done
 }
 
@@ -192,7 +192,7 @@ fi
 for dir in $testdir; do
     if [ ! -d $dir ];then
         echo -e "\e[0;31m[ERROR     ]\e[0m $dir is not a directory.\n"
-        let fatal++
+        let ++fatal
         fatal_case_list+=$dir'\n'
         continue
     fi
@@ -223,7 +223,7 @@ for dir in $testdir; do
             ../tools/catch_properties.sh result.out
             if [ $? == 1 ]; then
                 echo -e "\e[0;31m [ERROR     ]  Fatal Error in catch_properties.sh \e[0m"
-                let fatal++
+                let ++fatal
                 fatal_case_list+=$dir'\n'
                 break
             else
