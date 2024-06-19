@@ -8,21 +8,17 @@
 #include "module_base/macros.h"
 namespace hsolver
 {
-// DiagoCusolver class, derived from DiagH, for diagonalization using CUSOLVER
+// DiagoCusolverMP class, derived from DiagH, for diagonalization using CUSOLVERMP
 template <typename T>
 class DiagoCusolverMP : public DiagH<T>
 {
   private:
     using Real = typename GetTypeReal<T>::type;
   public:
-    DiagoCusolverMP()
-    {
-
-    }
-    // Override the diag function for CUSOLVER diagonalization
+    DiagoCusolverMP() { }
+    // Override the diag function for CUSOLVERMP diagonalization
     void diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* eigenvalue_in) override;
 };
-
 } // namespace hsolver
 #endif // __CUSOLVERMP
 #endif // DIAGO_CUSOLVERMPH
