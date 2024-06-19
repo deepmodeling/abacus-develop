@@ -16,9 +16,9 @@ hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::OverlapNew(LCAO_Matrix* LM_in,
                                                              std::vector<TK>* SK_pointer_in,
                                                              const UnitCell* ucell_in,
                                                              Grid_Driver* GridD_in,
-                                                             const ORB_gen_tables* uot,
+                                                             const TwoCenterIntegrator* intor,
                                                              const Parallel_Orbitals* paraV)
-    : hamilt::OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in), uot_(uot)
+    : hamilt::OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in), intor_(intor)
 {
     this->cal_type = calculation_type::lcao_overlap;
     this->ucell = ucell_in;
@@ -163,7 +163,7 @@ void hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::cal_SR_IJR(const int& iat
 
             // convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
             int M2 = (m2 % 2 == 0) ? -m2/2 : (m2+1)/2;
-            uot_->two_center_bundle->overlap_orb->calculate(T1, L1, N1, M1,
+            intor_->calculate(T1, L1, N1, M1,
                     T2, L2, N2, M2, dtau * this->ucell->lat0, olm);
             for (int ipol = 0; ipol < npol; ipol++)
             {

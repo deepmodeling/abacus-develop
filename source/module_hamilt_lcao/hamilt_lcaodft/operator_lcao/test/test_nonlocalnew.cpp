@@ -122,7 +122,7 @@ class NonlocalNewTest : public ::testing::Test
     UnitCell ucell;
     hamilt::HContainer<double>* HR;
     Parallel_Orbitals *paraV;
-    ORB_gen_tables uot_;
+    TwoCenterIntegrator intor_;
 
     int dsize;
     int my_rank = 0;
@@ -145,7 +145,7 @@ TEST_F(NonlocalNewTest, constructHRd2d)
         &hk, 
         &ucell, 
         &gd,
-        &uot_,
+        &intor_,
         paraV
     );
     std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
@@ -214,7 +214,7 @@ TEST_F(NonlocalNewTest, constructHRd2cd)
         &hk, 
         &ucell, 
         &gd,
-        &uot_,
+        &intor_,
         paraV
     );
     op.contributeHR();

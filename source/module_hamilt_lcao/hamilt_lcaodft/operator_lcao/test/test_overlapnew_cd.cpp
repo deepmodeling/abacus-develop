@@ -92,7 +92,7 @@ class OverlapNewTest : public ::testing::Test
     UnitCell ucell;
     hamilt::HContainer<std::complex<double>>* SR;
     Parallel_Orbitals *paraV;
-    ORB_gen_tables uot_;
+    TwoCenterIntegrator intor_;
 
     int dsize;
     int my_rank = 0;
@@ -114,7 +114,7 @@ TEST_F(OverlapNewTest, constructHRcd2cd)
         &hk, 
         &ucell, 
         &gd,
-        &uot_,
+        &intor_,
         paraV
     );
     op.contributeHR();

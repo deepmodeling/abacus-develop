@@ -16,9 +16,9 @@ hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::EkineticNew(
     std::vector<TK>* hK_in,
     const UnitCell* ucell_in,
     Grid_Driver* GridD_in,
-    const ORB_gen_tables* uot,
+    const TwoCenterIntegrator* intor,
     const Parallel_Orbitals* paraV)
-    : hamilt::OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in), uot_(uot)
+    : hamilt::OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in), intor_(intor)
 {
     this->cal_type = calculation_type::lcao_fixed;
     this->ucell = ucell_in;
@@ -194,8 +194,7 @@ void hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& ia
             // convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
             int M2 = (m2 % 2 == 0) ? -m2/2 : (m2+1)/2;
 
-            uot_->two_center_bundle->kinetic_orb->calculate(T1, L1, N1, M1,
-                    T2, L2, N2, M2, dtau * this->ucell->lat0, olm);
+            intor_->calculate(T1, L1, N1, M1, T2, L2, N2, M2, dtau * this->ucell->lat0, olm);
             for (int ipol = 0; ipol < npol; ipol++)
             {
                 data_pointer[ipol * step_trace] += olm[0];

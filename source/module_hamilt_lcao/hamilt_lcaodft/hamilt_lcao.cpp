@@ -55,7 +55,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(LCAO_Matrix* LM_in, const K_Vectors& kv_in, const
         &(this->getSk(LM_in)),
         &GlobalC::ucell,
         &GlobalC::GridD,
-        uot,
+        uot->two_center_bundle->overlap_orb.get(),
         LM_in->ParaV
     );
 }
@@ -133,7 +133,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
             &(this->getSk(LM_in)),
             &GlobalC::ucell,
             &GlobalC::GridD,
-            uot,
+            uot->two_center_bundle->overlap_orb.get(),
             LM_in->ParaV
         );
 
@@ -149,7 +149,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
                 &(this->getHk(LM_in)),
                 &GlobalC::ucell, 
                 &GlobalC::GridD,
-                uot,
+                uot->two_center_bundle->kinetic_orb.get(),
                 LM_in->ParaV
             );
             this->getOperator()->add(ekinetic);
@@ -166,7 +166,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
                 &(this->getHk(LM_in)),
                 &GlobalC::ucell, 
                 &GlobalC::GridD,
-                uot,
+                uot->two_center_bundle->overlap_orb_beta.get(),
                 LM_in->ParaV
             );
             this->getOperator()->add(nonlocal);
@@ -291,7 +291,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
             &(this->getSk(LM_in)),
             &GlobalC::ucell,
             &GlobalC::GridD,
-            uot,
+            uot->two_center_bundle->overlap_orb.get(),
             LM_in->ParaV
         );
         if(this->getOperator() == nullptr)
@@ -314,7 +314,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
                 &(this->getHk(LM_in)),
                 &GlobalC::ucell,
                 &GlobalC::GridD,
-                uot,
+                uot->two_center_bundle->kinetic_orb.get(),
                 LM_in->ParaV
             );
             this->getOperator()->add(ekinetic);
@@ -331,7 +331,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
                 &(this->getHk(LM_in)),
                 &GlobalC::ucell,
                 &GlobalC::GridD,
-                uot,
+                uot->two_center_bundle->overlap_orb_beta.get(),
                 LM_in->ParaV
             );
             //TDDFT velocity gague will calculate full non-local potential including the original one and the correction on its own.

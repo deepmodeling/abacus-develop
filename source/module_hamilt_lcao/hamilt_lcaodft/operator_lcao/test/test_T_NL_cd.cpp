@@ -124,7 +124,7 @@ class TNLTest : public ::testing::Test
     UnitCell ucell;
     hamilt::HContainer<std::complex<double>>* HR;
     Parallel_Orbitals *paraV;
-    ORB_gen_tables uot_;
+    TwoCenterIntegrator intor_;
 
     int dsize;
     int my_rank = 0;
@@ -145,7 +145,7 @@ TEST_F(TNLTest, testTVNLcd2cd)
         &hk, 
         &ucell, 
         &gd,
-        &uot_,
+        &intor_,
         paraV
     );
     hamilt::Operator<std::complex<double>> *op1 = new hamilt::NonlocalNew<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>(
@@ -155,7 +155,7 @@ TEST_F(TNLTest, testTVNLcd2cd)
         &hk, 
         &ucell, 
         &gd,
-        &uot_,
+        &intor_,
         paraV
     );
     // merge two Operators to a chain

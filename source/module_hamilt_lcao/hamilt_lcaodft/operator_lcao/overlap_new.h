@@ -44,7 +44,7 @@ class OverlapNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                                      std::vector<TK>* SK_pointer_in,
                                      const UnitCell* ucell_in,
                                      Grid_Driver* GridD_in,
-                                     const ORB_gen_tables* uot,
+                                     const TwoCenterIntegrator* intor,
                                      const Parallel_Orbitals* paraV);
 
     virtual void contributeHR() override;
@@ -60,8 +60,7 @@ class OverlapNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 
     std::vector<TK>* SK_pointer = nullptr;
 
-    // the following variable is introduced temporarily during LCAO refactoring
-    const ORB_gen_tables* uot_ = nullptr;
+    const TwoCenterIntegrator* intor_ = nullptr;
 
     bool SR_fixed_done = false;
 
