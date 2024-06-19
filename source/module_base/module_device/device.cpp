@@ -124,6 +124,39 @@ int get_node_rank()
     free(host_names);
     return looprank;
 }
+
+int get_node_rank_with_mpi_shared(const MPI_Comm mpi_comm)
+{
+    // 20240530 zhanghaochong
+    // The main difference between this function and the above is that it does not use hostname, 
+    // but uses MPI's built-in function to achieve similar functions.
+    MPI_Comm localComm;
+    int localMpiRank;
+    MPI_Comm_split_type(mpi_comm, MPI_COMM_TYPE_SHARED, 0, MPI_INFO_NULL, &localComm);
+    MPI_Comm_rank(localComm, &localMpiRank);
+    MPI_Comm_free(&localComm);
+    return localMpiRank;
+}
+int set_device_by_rank(const MPI_Comm mpi_comm)
+{
+    int localMpiRank = get_node_rank_with_mpi_shared(mpi_comm);
+    int device_num = -1;
+    
+    cudaGetDeviceCount(&device_num);
+    if (device_num <= 0)
+    {
+        ModuleBase::WARNING_QUIT("device","can not find gpu device!");
+    }
+    // warning: this is not a good way to assign devices, user should assign One process per GPU
+    int local_device_id = localMpiRank % device_num;
+    int ret = cudaSetDevice(local_device_id);
+    if (ret != cudaSuccess)
+    {
+        ModuleBase::WARNING_QUIT("device","cudaSetDevice failed!");
+    }
+    return local_device_id;
+}
+
 #endif
 
 std::string get_device_flag(const std::string& device,

@@ -9,7 +9,9 @@
 #include "module_io/write_HS.h"
 #include "module_hsolver/diago_iter_assist.h"
 #include "module_hsolver/kernels/math_kernel_op.h"
-
+#ifdef __CUSOLVERMP
+#include "diago_cusolvermp.h"
+#endif // __CUSOLVERMP
 #ifdef __ELPA
 #include "diago_elpa.h"
 #endif
@@ -87,6 +89,26 @@ void HSolverLCAO<T, Device>::solveTemplate(hamilt::Hamilt<T>* pHamilt,
             this->pdiagh = new DiagoCusolver<T>(this->ParaV);
             this->pdiagh->method = this->method;
         }
+    }
+    else if (this->method == "cusolvermp")
+    {
+        #ifdef __CUSOLVERMP
+        if (this->pdiagh != nullptr)
+        {
+            if (this->pdiagh->method != this->method)
+            {
+                delete[] this->pdiagh;
+                this->pdiagh = nullptr;
+            }
+        }
+        if (this->pdiagh == nullptr)
+        {
+            this->pdiagh = new DiagoCusolverMP<T>();
+            this->pdiagh->method = this->method;
+        }
+        #else
+        ModuleBase::WARNING_QUIT("HSolverLCAO", "CUSOLVERMP did not compiled!");
+        #endif
     }
 #endif
     else if (this->method == "lapack")
@@ -203,7 +225,7 @@ void HSolverLCAO<T, Device>::solveTemplate(hamilt::Hamilt<T>* pHamilt,
 
 
     if (this->method != "genelpa" && this->method != "scalapack_gvx" && this->method != "lapack"
-                        && this->method != "cusolver" && this->method != "cg_in_lcao" && this->method != "pexsi")
+                        && this->method != "cusolver" && this->method != "cusolvermp" && this->method != "cg_in_lcao" && this->method != "pexsi")
     {
         delete this->pdiagh;
         this->pdiagh = nullptr;

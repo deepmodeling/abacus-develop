@@ -5,6 +5,9 @@
 
 #include <complex>
 #include <iostream>
+#ifdef __MPI
+#include "mpi.h"
+#endif
 
 namespace base_device
 {
@@ -48,7 +51,9 @@ std::string get_device_flag(const std::string& device, const std::string& ks_sol
 
 #if __MPI
 int get_node_rank();
+int get_node_rank_with_mpi_shared(const MPI_Comm mpi_comm = MPI_COMM_WORLD);
 int stringCmp(const void* a, const void* b);
+int set_device_by_rank(const MPI_Comm mpi_comm = MPI_COMM_WORLD);
 #endif
 
 template <typename Device>

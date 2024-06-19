@@ -220,7 +220,7 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
 
     ofs << "\n#Parameters (5.LCAO)" << std::endl;
     ModuleBase::GlobalFunc::OUTP(ofs, "basis_type", basis_type, "PW; LCAO in pw; LCAO");
-    if (ks_solver == "HPSEPS" || ks_solver == "genelpa" || ks_solver == "scalapack_gvx" || ks_solver == "cusolver" || ks_solver == "pexsi")
+    if (ks_solver == "HPSEPS" || ks_solver == "genelpa" || ks_solver == "scalapack_gvx" || ks_solver == "cusolver"  || ks_solver == "cusolvermp" || ks_solver == "pexsi")
     {
         ModuleBase::GlobalFunc::OUTP(ofs, "nb2d", nb2d, "2d distribution of atoms");
     }
