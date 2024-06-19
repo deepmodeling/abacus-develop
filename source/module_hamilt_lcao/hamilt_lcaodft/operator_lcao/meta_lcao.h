@@ -33,7 +33,7 @@ class Meta<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
           loc(loc_in),
           OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in)
     {
-        this->cal_type = lcao_gint;
+        this->cal_type = calculation_type::lcao_gint;
     }
     Meta<OperatorLCAO<TK, TR>>(Gint_Gamma* GG_in,
                           Local_Orbital_Charge* loc_in,
@@ -45,7 +45,7 @@ class Meta<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
           loc(loc_in),
           OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in)
     {
-        this->cal_type = lcao_gint;
+        this->cal_type = calculation_type::lcao_gint;
     }
 
     ~Meta<OperatorLCAO<TK, TR>>();

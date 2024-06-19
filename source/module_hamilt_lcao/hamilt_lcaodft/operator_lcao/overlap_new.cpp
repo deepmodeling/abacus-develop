@@ -20,7 +20,7 @@ hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::OverlapNew(LCAO_Matrix* LM_in,
                                                              const Parallel_Orbitals* paraV)
     : hamilt::OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in), uot_(uot)
 {
-    this->cal_type = lcao_overlap;
+    this->cal_type = calculation_type::lcao_overlap;
     this->ucell = ucell_in;
     this->SR = SR_in;
     this->SK_pointer = SK_pointer_in;

@@ -25,7 +25,7 @@ TDEkinetic<OperatorLCAO<TK, TR>>::TDEkinetic(LCAO_Matrix* LM_in,
     {
         this->LM = LM_in;
         this->ucell = ucell_in;
-        this->cal_type = lcao_tddft_velocity;
+        this->cal_type = calculation_type::lcao_tddft_velocity;
         this->Grid = GridD_in;
         this->init_td();
         // initialize HR to get adjs info.

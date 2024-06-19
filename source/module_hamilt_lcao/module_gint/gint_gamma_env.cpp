@@ -5,12 +5,12 @@
 #include "module_base/ylm.h"
 #include "module_base/timer.h"
 
-void Gint_Gamma::cal_env(const double* wfc, double* rho,LCAO_Orbitals &orb,UnitCell &ucell)
+void Gint_Gamma::cal_env(const double* wfc, double* rho,UnitCell &ucell)
 {
     ModuleBase::TITLE("Grid_Integral","cal_env");
 
     // it's a uniform grid to save orbital values, so the delta_r is a constant.
-    const double delta_r = orb.dr_uniform;
+    const double delta_r = this->dr_uniform;
 	const int max_size = this->gridt->max_atom;
 	const int LD_pool = max_size*ucell.nwmax;
 

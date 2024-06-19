@@ -29,7 +29,6 @@ mixing_gg0    1.1
 ks_solver    scalapack_gvx
 basis_type    lcao
 gamma_only    0
-symmetry    0
 noncolin    1
 lspinorb    1
 

@@ -10,7 +10,7 @@
 namespace hamilt
 {
 
-enum calculation_type
+enum class calculation_type
 {
     no,
     pw_ekinetic, 

@@ -36,7 +36,7 @@ class Diago_DavSubspace : public DiagH<T, Device>
 
              hamilt::Hamilt<T, Device>* phm_in,
              psi::Psi<T, Device>& phi,
-
+             
              Real* eigenvalue_in,
              const std::vector<bool>& is_occupied,
              const bool& scf_type);
@@ -105,7 +105,6 @@ class Diago_DavSubspace : public DiagH<T, Device>
                  const int& nband,
                  int& nbase,
                  const Real* eigenvalue,
-                 const psi::Psi<T, Device>& psi,
                  T* psi_iter,
                  T* hphi,
                  T* hcc,
@@ -124,7 +123,7 @@ class Diago_DavSubspace : public DiagH<T, Device>
 
     int diag_once(const Func& hpsi_func,
                   T* psi_in,
-                  psi::Psi<T, Device>& psi,
+                  const int psi_in_dmax,
                   Real* eigenvalue_in,
                   const std::vector<bool>& is_occupied);
 

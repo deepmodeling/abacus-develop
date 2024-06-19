@@ -6,7 +6,6 @@ namespace LCAO_domain
 {
 
 void single_derivative(
-    LCAO_Matrix& lm,
     ForceStressArrays& fsr,
     const LCAO_Orbitals& orb,
 	const ORB_gen_tables& uot,
@@ -344,11 +343,6 @@ void single_overlap(
 			{
 				HSloc[nnr] = olm[0];
 			}
-			else if (nspin == 4)
-			{//only has diagonal term here.
-				const int is = (jj-jj0*npol) + (kk-kk0*npol)*2;
-				lm.SlocR_soc[nnr] = olm1[is];
-			}
 			else
 			{
 				ModuleBase::WARNING_QUIT("LCAO_domain::build_ST_new","nspin must be 1, 2 or 4");
@@ -363,8 +357,6 @@ void single_overlap(
 			}
 			else if (nspin == 4)
 			{//only has diagonal term here.
-				const int is = (jj-jj0*npol) + (kk-kk0*npol)*2;
-				lm.Hloc_fixedR_soc[nnr] = olm1[is];
 			}
 			else
 			{
@@ -526,7 +518,6 @@ void build_ST_new(
 						else // condition 6, calculate the derivative
 						{
 							single_derivative(
-									lm,
 									fsr,
 									orb,
 									uot,

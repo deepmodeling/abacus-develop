@@ -91,7 +91,7 @@ void OperatorLCAO<TK, TR>::init(const int ik_in)
     }
     switch(this->cal_type)
     {
-        case lcao_overlap:
+        case calculation_type::lcao_overlap:
         {
             //cal_type=lcao_overlap refer to overlap matrix operators, which are only rely on stucture, and not changed during SCF
 
@@ -113,7 +113,7 @@ void OperatorLCAO<TK, TR>::init(const int ik_in)
 
             break;
         }
-        case lcao_fixed:
+        case calculation_type::lcao_fixed:
         {
             //cal_type=lcao_fixed refer to fixed matrix operators, which are only rely on stucture, and not changed during SCF
 
@@ -134,7 +134,7 @@ void OperatorLCAO<TK, TR>::init(const int ik_in)
 
             break;
         }
-        case lcao_gint:
+        case calculation_type::lcao_gint:
         {
             //cal_type=lcao_gint refer to grid integral operators, which are relied on stucture and potential based on real space grids
             //and should be updated each SCF steps
@@ -157,7 +157,7 @@ void OperatorLCAO<TK, TR>::init(const int ik_in)
             break;
         }
 #ifdef __DEEPKS
-        case lcao_deepks:
+        case calculation_type::lcao_deepks:
         {
             //update HR first
             if(!this->hr_done)
@@ -173,7 +173,7 @@ void OperatorLCAO<TK, TR>::init(const int ik_in)
 
         }
 #endif
-        case lcao_dftu:
+        case calculation_type::lcao_dftu:
         {
             //only HK should be updated when cal_type=lcao_dftu
             //in cal_type=lcao_dftu, HK only need to update from one node
@@ -184,14 +184,14 @@ void OperatorLCAO<TK, TR>::init(const int ik_in)
             }
             break;
         }
-        case lcao_sc_lambda:
+        case calculation_type::lcao_sc_lambda:
         {
             //update HK only
             //in cal_type=lcao_sc_mag, HK only need to be updated
             this->contributeHk(ik_in);
             break;
         }
-        case lcao_exx:
+        case calculation_type::lcao_exx:
         {
             //update HR first
             //in cal_type=lcao_exx, HR should be updated by most priority sub-chain nodes
@@ -203,7 +203,7 @@ void OperatorLCAO<TK, TR>::init(const int ik_in)
 
             break;
         }
-        case lcao_tddft_velocity:
+        case calculation_type::lcao_tddft_velocity:
         {
             if(!this->hr_done)
             {

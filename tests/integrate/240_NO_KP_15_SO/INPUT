@@ -9,7 +9,6 @@ gamma_only          0
 
 
 calculation         scf
-symmetry             1
 
 smearing_method            gaussian
 smearing_sigma             0.001

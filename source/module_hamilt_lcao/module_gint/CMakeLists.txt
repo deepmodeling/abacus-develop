@@ -19,6 +19,14 @@ list(APPEND objects
     grid_meshcell.cpp
     grid_meshk.cpp
     grid_technique.cpp
+    cal_psir_ylm.cpp
+    cal_dpsir_ylm.cpp
+    cal_ddpsir_ylm.cpp
+    mult_psi_dm.cpp
+    mult_psi_dm_new.cpp
+    mult_psi_dmr.cpp
+    init_orb.cpp
+
 )
 
 if(USE_CUDA)

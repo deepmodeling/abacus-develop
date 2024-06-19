@@ -24,7 +24,7 @@ hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::DFTU(
     const Parallel_Orbitals& paraV)
     : hamilt::OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in), uot_(uot)
 {
-    this->cal_type = lcao_dftu;
+    this->cal_type = calculation_type::lcao_dftu;
     this->ucell = &ucell_in;
     this->dftu = dftu_in;
 #ifdef __DEBUG

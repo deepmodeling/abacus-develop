@@ -1,7 +1,5 @@
 #include "module_io/input_conv.h"
 
-#include <algorithm>
-
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_cell/module_symmetry/symmetry.h"
@@ -13,6 +11,8 @@
 #include "module_io/input.h"
 #include "module_relax/relax_old/ions_move_basic.h"
 #include "module_relax/relax_old/lattice_change_basic.h"
+
+#include <algorithm>
 
 #ifdef __EXX
 #include "module_ri/exx_abfs-jle.h"
@@ -31,6 +31,7 @@
 #include "module_hsolver/module_pexsi/pexsi_solver.h"
 #endif
 
+#include "module_base/module_device/device.h"
 #include "module_base/timer.h"
 #include "module_elecstate/elecstate_lcao.h"
 #include "module_elecstate/potentials/efield.h"
@@ -38,10 +39,9 @@
 #include "module_hsolver/hsolver_lcao.h"
 #include "module_hsolver/hsolver_pw.h"
 #include "module_md/md_func.h"
-#include "module_base/module_device/device.h"
 
 template <typename T>
-void Input_Conv::parse_expression(const std::string &fn, std::vector<T> &vec)
+void Input_Conv::parse_expression(const std::string& fn, std::vector<T>& vec)
 {
     ModuleBase::TITLE("Input_Conv", "parse_expression");
     int count = 0;
@@ -49,10 +49,13 @@ void Input_Conv::parse_expression(const std::string &fn, std::vector<T> &vec)
     std::vector<std::string> str;
     std::stringstream ss(fn);
     std::string section;
-    while (ss >> section) {
+    while (ss >> section)
+    {
         int index = 0;
-        if (str.empty()) {
-            while (index < section.size() && std::isspace(section[index])) {
+        if (str.empty())
+        {
+            while (index < section.size() && std::isspace(section[index]))
+            {
                 index++;
             }
         }
@@ -136,7 +139,7 @@ std::vector<double> Input_Conv::convert_units(std::string params, double c)
 void Input_Conv::read_td_efield()
 {
     elecstate::H_TDDFT_pw::stype = INPUT.td_stype;
-    if(INPUT.esolver_type == "tddft" && elecstate::H_TDDFT_pw::stype == 1)
+    if (INPUT.esolver_type == "tddft" && elecstate::H_TDDFT_pw::stype == 1)
     {
         TD_Velocity::tddft_velocity = true;
     }
@@ -144,7 +147,7 @@ void Input_Conv::read_td_efield()
     {
         TD_Velocity::tddft_velocity = false;
     }
-    if(INPUT.out_mat_hs2==1)
+    if (INPUT.out_mat_hs2 == 1)
     {
         TD_Velocity::out_mat_R = true;
     }
@@ -176,11 +179,11 @@ void Input_Conv::read_td_efield()
     elecstate::H_TDDFT_pw::gauss_t0 = convert_units(INPUT.td_gauss_t0, 1.0);
     elecstate::H_TDDFT_pw::gauss_amp
         = convert_units(INPUT.td_gauss_amp, ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV); // Ry/bohr
-    //init ncut for velocity gauge integral
-    for(auto omega: elecstate::H_TDDFT_pw::gauss_omega)
+    // init ncut for velocity gauge integral
+    for (auto omega: elecstate::H_TDDFT_pw::gauss_omega)
     {
         int ncut = int(100.0 * omega * elecstate::H_TDDFT_pw::dt / ModuleBase::PI);
-        if(ncut%2 == 0)
+        if (ncut % 2 == 0)
         {
             ncut += 2;
         }
@@ -188,7 +191,8 @@ void Input_Conv::read_td_efield()
         {
             ncut += 1;
         }
-        if(elecstate::H_TDDFT_pw::stype == 0)ncut=1;
+        if (elecstate::H_TDDFT_pw::stype == 0)
+            ncut = 1;
         elecstate::H_TDDFT_pw::gauss_ncut.push_back(ncut);
     }
     // trapezoid
@@ -200,11 +204,11 @@ void Input_Conv::read_td_efield()
     elecstate::H_TDDFT_pw::trape_t3 = convert_units(INPUT.td_trape_t3, 1.0);
     elecstate::H_TDDFT_pw::trape_amp
         = convert_units(INPUT.td_trape_amp, ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV); // Ry/bohr
-    //init ncut for velocity gauge integral
-    for(auto omega: elecstate::H_TDDFT_pw::trape_omega)
+    // init ncut for velocity gauge integral
+    for (auto omega: elecstate::H_TDDFT_pw::trape_omega)
     {
         int ncut = int(100.0 * omega * elecstate::H_TDDFT_pw::dt / ModuleBase::PI);
-        if(ncut%2 == 0)
+        if (ncut % 2 == 0)
         {
             ncut += 2;
         }
@@ -212,7 +216,8 @@ void Input_Conv::read_td_efield()
         {
             ncut += 1;
         }
-        if(elecstate::H_TDDFT_pw::stype == 0)ncut=1;
+        if (elecstate::H_TDDFT_pw::stype == 0)
+            ncut = 1;
         elecstate::H_TDDFT_pw::trape_ncut.push_back(ncut);
     }
     // Trigonometric
@@ -224,11 +229,11 @@ void Input_Conv::read_td_efield()
     elecstate::H_TDDFT_pw::trigo_phase2 = convert_units(INPUT.td_trigo_phase2, 1.0);
     elecstate::H_TDDFT_pw::trigo_amp
         = convert_units(INPUT.td_trigo_amp, ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV); // Ry/bohr
-    //init ncut for velocity gauge integral
-    for(auto omega: elecstate::H_TDDFT_pw::trigo_omega1)
+    // init ncut for velocity gauge integral
+    for (auto omega: elecstate::H_TDDFT_pw::trigo_omega1)
     {
         int ncut = int(100.0 * omega * elecstate::H_TDDFT_pw::dt / ModuleBase::PI);
-        if(ncut%2 == 0)
+        if (ncut % 2 == 0)
         {
             ncut += 2;
         }
@@ -236,7 +241,8 @@ void Input_Conv::read_td_efield()
         {
             ncut += 1;
         }
-        if(elecstate::H_TDDFT_pw::stype == 0)ncut=1;
+        if (elecstate::H_TDDFT_pw::stype == 0)
+            ncut = 1;
         elecstate::H_TDDFT_pw::trigo_ncut.push_back(ncut);
     }
     // Heaviside
@@ -320,15 +326,16 @@ void Input_Conv::Convert(void)
         GlobalV::fixed_atoms = INPUT.fixed_atoms;
     }
 
-    for(int i=0;i<3;i++)
+    for (int i = 0; i < 3; i++)
     {
         GlobalV::KSPACING[i] = INPUT.kspacing[i];
     }
     GlobalV::MIN_DIST_COEF = INPUT.min_dist_coef;
     GlobalV::NBANDS = INPUT.nbands;
     GlobalV::NBANDS_ISTATE = INPUT.nbands_istate;
-    
-    GlobalV::device_flag = base_device::information::get_device_flag(INPUT.device, INPUT.ks_solver, INPUT.basis_type, INPUT.gamma_only_local);
+
+    GlobalV::device_flag = base_device::information::get_device_flag(INPUT.device, INPUT.ks_solver, INPUT.basis_type,
+                                                                     INPUT.gamma_only_local);
 
     if (GlobalV::device_flag == "gpu" && INPUT.basis_type == "pw")
     {
@@ -340,12 +347,14 @@ void Input_Conv::Convert(void)
         GlobalV::NSTOGROUP = INPUT.bndpar;
     }
     GlobalV::precision_flag = INPUT.precision;
-    if (GlobalV::device_flag == "cpu" and GlobalV::precision_flag == "single") {
-        // cpu single precision is not supported while float_fftw lib is not available
-        #ifndef __ENABLE_FLOAT_FFTW
-            ModuleBase::WARNING_QUIT("Input_Conv", "Single precision with cpu is not supported while float_fftw lib is not available; \
+    if (GlobalV::device_flag == "cpu" and GlobalV::precision_flag == "single")
+    {
+// cpu single precision is not supported while float_fftw lib is not available
+#ifndef __ENABLE_FLOAT_FFTW
+        ModuleBase::WARNING_QUIT("Input_Conv",
+                                 "Single precision with cpu is not supported while float_fftw lib is not available; \
             \n Please recompile with cmake flag \"-DENABLE_FLOAT_FFTW=ON\".\n");
-        #endif // __ENABLE_FLOAT_FFTW
+#endif // __ENABLE_FLOAT_FFTW
     }
     GlobalV::CALCULATION = INPUT.calculation;
     GlobalV::ESOLVER_TYPE = INPUT.esolver_type;
@@ -457,7 +466,7 @@ void Input_Conv::Convert(void)
         }
         GlobalC::dftu.U = INPUT.hubbard_u;
         GlobalC::dftu.U0 = std::vector<double>(INPUT.hubbard_u, INPUT.hubbard_u + GlobalC::ucell.ntype);
-        if (INPUT.uramping > 0.01) 
+        if (INPUT.uramping > 0.01)
         {
             ModuleBase::GlobalFunc::ZEROS(GlobalC::dftu.U, GlobalC::ucell.ntype);
         }
@@ -482,9 +491,10 @@ void Input_Conv::Convert(void)
         GlobalV::DOMAG_Z = true;
         GlobalV::LSPINORB = INPUT.lspinorb;
         GlobalV::soc_lambda = INPUT.soc_lambda;
-        if(INPUT.gamma_only_local)
+        if (INPUT.gamma_only_local)
         {
-            ModuleBase::WARNING_QUIT("input_conv", "nspin=4(soc or noncollinear-spin) does not support gamma only calculation");
+            ModuleBase::WARNING_QUIT("input_conv",
+                                     "nspin=4(soc or noncollinear-spin) does not support gamma only calculation");
         }
     }
     else
@@ -505,10 +515,6 @@ void Input_Conv::Convert(void)
     elecstate::Efield::efield_pos_max = INPUT.efield_pos_max;
     elecstate::Efield::efield_pos_dec = INPUT.efield_pos_dec;
     elecstate::Efield::efield_amp = INPUT.efield_amp;
-
-    // efield does not support symmetry=1
-    if (INPUT.efield_flag && INPUT.symmetry == "1")
-        ModuleSymmetry::Symmetry::symm_flag = 0;
 
     //----------------------------------------------------------
     // Yu Liu add 2022-09-13
@@ -670,9 +676,25 @@ void Input_Conv::Convert(void)
         if (INPUT.calculation != "nscf" && INPUT.symmetry == "1")
             ModuleSymmetry::Symmetry::symm_flag = 0;
     }
-#endif // __LCAO
-#endif // __EXX
+#endif                                               // __LCAO
+#endif                                               // __EXX
     GlobalC::ppcell.cell_factor = INPUT.cell_factor; // LiuXh add 20180619
+
+    //----------------------------------------------------------
+    // reset symmetry flag to avoid error
+    //----------------------------------------------------------
+    // In these case, symmetry should be reset to 0
+    // efield does not support symmetry=1
+    if (INPUT.efield_flag && ModuleSymmetry::Symmetry::symm_flag == 1)
+    {
+        ModuleSymmetry::Symmetry::symm_flag = 0;
+    }
+    // In these case, inversion symmetry is also not allowed, symmetry should be reset to -1
+    if (GlobalV::LSPINORB)
+    {
+        ModuleSymmetry::Symmetry::symm_flag = -1;
+    }
+    // end of symmetry reset
 
     //----------------------------------------------------------
     // main parameters / electrons / spin ( 2/16 )
@@ -707,7 +729,7 @@ void Input_Conv::Convert(void)
     GlobalV::out_pot = INPUT.out_pot;
     GlobalV::out_app_flag = INPUT.out_app_flag;
     GlobalV::out_ndigits = INPUT.out_ndigits;
-    
+
     GlobalV::out_bandgap = INPUT.out_bandgap; // QO added for bandgap printing
     GlobalV::out_interval = INPUT.out_interval;
 #ifdef __LCAO
@@ -772,7 +794,7 @@ void Input_Conv::Convert(void)
     GlobalV::deepks_out_labels = INPUT.deepks_out_labels;
     GlobalV::deepks_equiv = INPUT.deepks_equiv;
 
-    if(GlobalV::deepks_equiv && GlobalV::deepks_bandgap)
+    if (GlobalV::deepks_equiv && GlobalV::deepks_bandgap)
     {
         ModuleBase::WARNING_QUIT("Input_conv", "deepks_equiv and deepks_bandgap cannot be used together");
     }
@@ -849,7 +871,7 @@ void Input_Conv::Convert(void)
     GlobalV::MIXING_ANGLE = INPUT.mixing_angle;
     GlobalV::MIXING_TAU = INPUT.mixing_tau;
     GlobalV::MIXING_DMR = INPUT.mixing_dmr;
-    
+
     //-----------------------------------------------
     // Quasiatomic Orbital analysis
     //-----------------------------------------------

@@ -110,7 +110,7 @@ AddTest(
 
 AddTest(
   TARGET io_parse_args
-  SOURCES parse_args_test.cpp
+  SOURCES parse_args_test.cpp ../parse_args.cpp
 )
 
 AddTest(
