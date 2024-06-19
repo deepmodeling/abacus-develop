@@ -75,10 +75,6 @@ void DFTU<OperatorLCAO<TK, TR>>::cal_force_stress(
                 // If we are calculating force, we need also to store the gradient
                 // and size of outer vector is then 4
                 // inner loop : all projectors (L0,M0)
-#ifdef USE_NEW_TWO_CENTER
-                //=================================================================
-                //          new two-center integral (temporary)
-                //=================================================================
                 int L1 = atom1->iw2l[ iw1 ];
                 int N1 = atom1->iw2n[ iw1 ];
                 int m1 = atom1->iw2m[ iw1 ];
@@ -87,11 +83,7 @@ void DFTU<OperatorLCAO<TK, TR>>::cal_force_stress(
                 int M1 = (m1 % 2 == 0) ? -m1/2 : (m1+1)/2;
 
                 ModuleBase::Vector3<double> dtau = tau0 - tau1;
-                uot_->two_center_bundle->overlap_orb_onsite->snap(
-                        T1, L1, N1, M1, T0, dtau * this->ucell->lat0, 1 /*cal_deri*/, nlm);
-#else
-                ModuleBase::WARNING_QUIT("DFTU", "old two center integral method not implemented");
-#endif
+                intor_->snap(T1, L1, N1, M1, T0, dtau * this->ucell->lat0, 1 /*cal_deri*/, nlm);
                 // select the elements of nlm with target_L
                 std::vector<double> nlm_target(tlp1 * 4);
                 for(int iw =0;iw < this->ucell->atoms[T0].nw; iw++)
