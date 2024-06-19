@@ -286,7 +286,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::pre_calculate_nlm(
 
             ModuleBase::Vector3<double> dtau = tau0 - tau1;
             uot_->two_center_bundle->overlap_orb_alpha
-                ->snap(T1, L1, N1, M1, 0, dtau * ucell->lat0, 0 /*calc_deri*/, nlm);
+                ->snap(T1, L1, N1, M1, 0, dtau * ucell->lat0, false /*calc_deri*/, nlm);
             nlm_in[ad].insert({all_indexes[iw1l], nlm[0]});
             if (npol == 2)
                 nlm_in[ad].insert({all_indexes[iw1l + 1], nlm[0]});
