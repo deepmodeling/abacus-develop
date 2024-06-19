@@ -5,20 +5,17 @@
 #include "module_base/ylm.h"
 #include "module_base/timer.h"
 
-void Gint_k::cal_env_k(int ik, 
-                       const std::complex<double>* psi_k, 
-                       double* rho, 
-                       const std::vector<ModuleBase::Vector3<double>>& kvec_c, 
-                       const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-                       LCAO_Orbitals &orb,UnitCell &ucell)
+void Gint_k::cal_env_k(int ik, const std::complex<double>* psi_k, double* rho,
+                       const std::vector<ModuleBase::Vector3<double>>& kvec_c,
+                       const std::vector<ModuleBase::Vector3<double>>& kvec_d, UnitCell& ucell)
 {
     ModuleBase::TITLE("Gint_k", "cal_env_k");
     ModuleBase::timer::tick("Gint_k", "cal_env_k");
 
     // it's a uniform grid to save orbital values, so the delta_r is a constant.
-    const double delta_r = orb.dr_uniform;
-	const int max_size = this->gridt->max_atom;
-	const int LD_pool = max_size*ucell.nwmax;
+    const double delta_r = this->dr_uniform;
+    const int max_size = this->gridt->max_atom;
+    const int LD_pool = max_size * ucell.nwmax;
 
     if (max_size != 0)
     {
@@ -65,9 +62,9 @@ void Gint_k::cal_env_k(int ik,
 
                 //find R by which_unitcell and cal kphase
                 const int id_ucell = this->gridt->which_unitcell[mcell_index1];
-                const int Rx = this->gridt->ucell_index2x[id_ucell] + this->gridt->minu1;
-                const int Ry = this->gridt->ucell_index2y[id_ucell] + this->gridt->minu2;
-                const int Rz = this->gridt->ucell_index2z[id_ucell] + this->gridt->minu3;
+                const int Rx = this->gridt->ucell_index2x[id_ucell] + this->gridt->min_ucell_para[0];
+                const int Ry = this->gridt->ucell_index2y[id_ucell] + this->gridt->min_ucell_para[1];
+                const int Rz = this->gridt->ucell_index2z[id_ucell] + this->gridt->min_ucell_para[2];
                 ModuleBase::Vector3<double> R((double)Rx, (double)Ry, (double)Rz);
                 //std::cout << "kvec_d: " << kvec_d[ik].x << " " << kvec_d[ik].y << " " << kvec_d[ik].z << std::endl;
                 //std::cout << "kvec_c: " << kvec_c[ik].x << " " << kvec_c[ik].y << " " << kvec_c[ik].z << std::endl;

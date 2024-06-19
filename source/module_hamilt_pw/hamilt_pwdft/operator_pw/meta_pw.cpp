@@ -16,7 +16,7 @@ Meta<OperatorPW<T, Device>>::Meta(Real tpiba_in,
                                        const ModulePW::PW_Basis_K* wfcpw_in)
 {
     this->classname = "Meta";
-    this->cal_type = pw_meta;
+    this->cal_type = calculation_type::pw_meta;
     this->isk = isk_in;
     this->tpiba = tpiba_in;
     this->vk = vk_in;
@@ -81,7 +81,7 @@ template<typename T, typename Device>
 template<typename T_in, typename Device_in>
 Meta<OperatorPW<T, Device>>::Meta(const Meta<OperatorPW<T_in, Device_in>> *meta) {
     this->classname = "Meta";
-    this->cal_type = pw_meta;
+    this->cal_type = calculation_type::pw_meta;
     this->ik = meta->get_ik();
     this->isk = meta->get_isk();
     this->tpiba = meta->get_tpiba();

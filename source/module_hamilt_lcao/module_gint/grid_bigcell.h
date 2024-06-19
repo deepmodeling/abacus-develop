@@ -9,67 +9,48 @@
 class Grid_BigCell: public Grid_MeshCell
 {
 	public:
-
-	Grid_BigCell();
-	~Grid_BigCell();
-
-	// save the relative cartesian position
-	// to bigcell of each atom.
-	double** tau_in_bigcell;
-	int nat;
+		Grid_BigCell();
+		~Grid_BigCell();
+		// number atoms and type.
+		int nat;
+		// save the relative cartesian position
+		// to bigcell of each atom.
+		std::vector<std::vector<double>> tau_in_bigcell;
+	
 	protected:
+		// get the max radius of all orbitals
+		// which will use to generate grid expansion,
+		// and the meshball.
+		double orbital_rmax;
+		
+		// the added number of bigcelli each direction.
+		int dxe;
+		int dye;
+		int dze;
 
-	//---------------------------------
-	void init_big_latvec(const UnitCell &ucell);
+		// expansion grid dimension.
+		int nxe;
+		int nye;
+		int nze;
+		int nxyze;
+		
+		std::vector<int> index_atom;
 
-	double bigcell_vec1[3];
-	double bigcell_vec2[3];
-	double bigcell_vec3[3];
+		// save the position of base vector of bigcell.
+		std::vector<double> bigcell_vec1;
+		std::vector<double> bigcell_vec2;
+		std::vector<double> bigcell_vec3;
 
-	ModuleBase::Matrix3 bigcell_latvec0;
-	ModuleBase::Matrix3 bigcell_GT;
-	//---------------------------------
-
-
-	//---------------------------------
-	void init_grid_expansion(const UnitCell& ucell,double* rcut);
-
-	// get the max radius of all orbitals.
-	// which will use to generate grid expansion,
-	// and  the meshball.
-	double orbital_rmax;
-	
-	// Measure the distance between two bigcell
-	// in each direction.
-	double bigcell_dx;
-	double bigcell_dy;
-	double bigcell_dz;
-	
-	// the added number of bigcelli each direction.
-	int dxe;
-	int dye;
-	int dze;
-
-	// expansion grid dimension.
-	int nxe;
-	int nye;
-	int nze;
-	int nxyze;
-	//---------------------------------
-
-
-	//---------------------------------
-	void init_tau_in_bigcell(const UnitCell& ucell);
-
-	//this flag will be false at first and turned to true after memory of tau_in_meshcell has been allocated.  
-	bool flag_tib;
-
-	int* index_atom;
-	//---------------------------------
-
-
-	//---------------------------------
-	void grid_expansion_index(bool f2normal, int *target)const;
-	//---------------------------------
+		ModuleBase::Matrix3 bigcell_latvec0;
+		ModuleBase::Matrix3 bigcell_GT;
+		
+		//---------------------------------
+		void grid_expansion_index(bool f2normal, int *target)const;
+		//---------------------------------
+		void init_big_latvec(const UnitCell &ucell);
+		//---------------------------------
+		void init_tau_in_bigcell(const UnitCell& ucell);
+		//---------------------------------
+		void init_grid_expansion(const UnitCell& ucell,double* rcut);
 };
 #endif

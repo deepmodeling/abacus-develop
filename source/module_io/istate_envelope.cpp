@@ -109,7 +109,7 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
                         wfc_gamma_grid[is][i][j] = psid[0](i, j);
                 }
 #endif
-                gg.cal_env(wfc_gamma_grid[is][ib], pes->charge->rho[is],GlobalC::ORB,GlobalC::ucell);
+                gg.cal_env(wfc_gamma_grid[is][ib], pes->charge->rho[is],GlobalC::ucell);
 
 
                 pes->charge->save_rho_before_sum_band(); //xiaohui add 2014-12-09
@@ -258,7 +258,7 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
                 }
 #endif
                 //deal with NSPIN=4
-                gk.cal_env_k(ik, lowf.wfc_k_grid[ik][ib], pes->charge->rho[ispin], kv.kvec_c, kv.kvec_d,GlobalC::ORB,GlobalC::ucell);
+                gk.cal_env_k(ik, lowf.wfc_k_grid[ik][ib], pes->charge->rho[ispin], kv.kvec_c, kv.kvec_d,GlobalC::ucell);
 
                 std::stringstream ss;
                 ss << global_out_dir << "BAND" << ib + 1 << "_k_" << ik / nspin0 + 1 << "_s_" << ispin + 1 << "_ENV.cube";

@@ -646,7 +646,7 @@ void unkOverlap_lcao::get_lcao_wfc_global_ik(const Grid_Technique& gt, std::comp
 			{
 				// send trace_lo
 				tag = GlobalV::DRANK * 3 + 1;
-				MPI_Send(gt.trace_lo, GlobalV::NLOCAL, MPI_INT, 0, tag, DIAG_WORLD);
+				MPI_Send(gt.trace_lo.data(), GlobalV::NLOCAL, MPI_INT, 0, tag, DIAG_WORLD);
 
 				// send cc
 				std::complex<double>* csend = new std::complex<double>[GlobalV::NBANDS*gt.lgd];

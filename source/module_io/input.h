@@ -646,6 +646,8 @@ class Input
     // variables for elpa
     //==========================================================
     int elpa_num_thread=-1;
+
+    bool check_input = false;
     
     std::time_t get_start_time(void) const
     {

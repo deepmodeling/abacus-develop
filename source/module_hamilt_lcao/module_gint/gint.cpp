@@ -67,7 +67,6 @@ void Gint::cal_gint(Gint_inout* inout)
         ModuleBase::timer::tick("Gint_interface","cal_gint_force_meta");
 	}
     const UnitCell& ucell = *this->ucell;
-    const LCAO_Orbitals& orb = *this->orb;
     const int max_size = this->gridt->max_atom;
     const int LD_pool = max_size * ucell.nwmax;
     const int lgd = this->gridt->lgd;
@@ -86,14 +85,7 @@ void Gint::cal_gint(Gint_inout* inout)
                 ylmcoef[i] = ModuleBase::Ylm::ylmcoef[i];
             }
 
-            const int ntype = orb.get_ntype();
-            std::vector<double> rcut(ntype);
-            for (int it = 0; it < ntype; it++)
-            {
-                rcut[it] = orb.Phi[it].getRcut();
-            }
-
-            const double dr = orb.dr_uniform;
+            const double dr = this->dr_uniform;
 
             if (inout->job == Gint_Tools::job_type::vlocal)
             {
@@ -101,7 +93,7 @@ void Gint::cal_gint(Gint_inout* inout)
                                               inout->vl,
                                               ylmcoef,
                                               dr,
-                                              rcut.data(),
+                                              this->rcuts.data(),
                                               *this->gridt,
                                               ucell);
             }
@@ -114,7 +106,7 @@ void Gint::cal_gint(Gint_inout* inout)
                     GintKernel::gint_gamma_rho_gpu(this->DMRGint[is],
                                                    ylmcoef,
                                                    dr,
-                                                   rcut.data(),
+                                                   this->rcuts.data(),
                                                    *this->gridt,
                                                    ucell,
                                                    inout->rho[is]);
@@ -134,7 +126,7 @@ void Gint::cal_gint(Gint_inout* inout)
                                                     force.data(),
                                                     stress.data(),
                                                     dr,
-                                                    rcut.data(),
+                                                    this->rcuts.data(),
                                                     isforce,
                                                     isstress,
                                                     *this->gridt,
@@ -178,7 +170,7 @@ void Gint::cal_gint(Gint_inout* inout)
 
                 // it's a uniform grid to save orbital values, so the delta_r is
                 // a constant.
-                const double delta_r = orb.dr_uniform;
+                const double delta_r = this->dr_uniform;
 
             if((inout->job==Gint_Tools::job_type::vlocal
                 || inout->job==Gint_Tools::job_type::vlocal_meta)
@@ -492,8 +484,8 @@ void Gint::prep_grid(const Grid_Technique& gt,
     this->nplane = nplane_in;
     this->startz_current = startz_current_in;
     this->ucell= ucell_in;
-    this->orb = orb_in;
-
+    this->dr_uniform=gt.dr_uniform;
+    this->rcuts=gt.rcuts;
     assert(nbx > 0);
     assert(nby > 0);
     assert(nbz >= 0);
@@ -611,15 +603,15 @@ void Gint::initialize_pvpR(const UnitCell& ucell_in, Grid_Driver* gd)
 					{
 						ModuleBase::Vector3<double> dtau = gd->getAdjacentTau(ad) - tau1;
 						double distance = dtau.norm() * ucell_in.lat0;
-						double rcut = this->orb->Phi[T1].getRcut() + this->orb->Phi[T2].getRcut();
+						double rcut = this->rcuts[T1] + this->rcuts[T2];
 
 						//if(distance < rcut)
 						// mohan reset this 2013-07-02 in Princeton
-						// we should make absolutely sure that the distance is smaller than orb.Phi[it].getRcut
+						// we should make absolutely sure that the distance is smaller than rcuts[it]
 						// this should be consistant with LCAO_nnr::cal_nnrg function
 						// typical example : 7 Bohr cutoff Si orbital in 14 Bohr length of cell.
 						// distance = 7.0000000000000000
-						// orb.Phi[it].getRcut = 7.0000000000000008
+						// rcuts[it] = 7.0000000000000008
 						if(distance < rcut - 1.0e-15)
 						{
 							// calculate R index

@@ -1,11 +1,11 @@
-#include <fstream>
-
 #include "../hcontainer.h"
 #include "../output_hcontainer.h"
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "module_io/csr_reader.h"
 #include "prepare_unitcell.h"
+
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
+#include <fstream>
 
 // mock functions
 #ifdef __LCAO
@@ -124,7 +124,7 @@ TEST_F(ReadHContainerTest, ReadAndOutputHContainer)
     // output SR
     std::ofstream ofs_out("SR.out");
     double sparse_threshold = 1e-10;
-    hamilt::Output_HContainer<double> output_SR(&SR, &paraV, *ucell, ofs_out, sparse_threshold, 8);
+    hamilt::Output_HContainer<double> output_SR(&SR, paraV.nrow, paraV.ncol, ofs_out, sparse_threshold, 8);
     // std::cout << SR.size_R_loop() << std::endl;
     // output_SR.write(-2, -1, 0);
     ofs_out << "STEP: " << 0 << std::endl;

@@ -21,6 +21,7 @@
 #include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
 #include "module_hamilt_general/module_vdw/vdw.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 #include "module_io/dm_io.h"
@@ -53,6 +54,15 @@ void ESolver_KS_LCAO<TK, TR>::set_matrix_grid(Record_adj& ra)
     // ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"SEARCH ADJACENT ATOMS");
 
     // (3) Periodic condition search for each grid.
+    double dr_uniform=0.001;
+	std::vector<double> rcuts;
+    std::vector<std::vector<double>> psi_u;
+    std::vector<std::vector<double>> dpsi_u;
+    std::vector<std::vector<double>> d2psi_u;
+
+    Gint_Tools::init_orb(dr_uniform, rcuts, GlobalC::ucell, 
+                            psi_u, dpsi_u, d2psi_u);
+
     this->GridT.set_pbc_grid(this->pw_rho->nx,
                              this->pw_rho->ny,
                              this->pw_rho->nz,
@@ -69,9 +79,18 @@ void ESolver_KS_LCAO<TK, TR>::set_matrix_grid(Record_adj& ra)
                              this->pw_rho->nplane,
                              this->pw_rho->startz_current,
                              GlobalC::ucell,
-                             GlobalC::ORB,
+                             dr_uniform,
+                             rcuts,
+                             psi_u,
+                             dpsi_u,
+                             d2psi_u,
                              GlobalV::NUM_STREAM);
-
+    psi_u.clear();
+    psi_u.shrink_to_fit();
+    dpsi_u.clear();
+    dpsi_u.shrink_to_fit();
+    d2psi_u.clear();
+    d2psi_u.shrink_to_fit();
     // (2)For each atom, calculate the adjacent atoms in different cells
     // and allocate the space for H(R) and S(R).
     // If k point is used here, allocate HlocR after atom_arrange.

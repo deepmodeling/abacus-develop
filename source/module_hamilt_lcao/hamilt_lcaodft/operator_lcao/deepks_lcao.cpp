@@ -25,7 +25,7 @@ DeePKS<OperatorLCAO<TK, TR>>::DeePKS(Local_Orbital_Charge* loc_in,
     const int& nks_in,
     elecstate::DensityMatrix<TK,double>* DM_in) : loc(loc_in), nks(nks_in), ucell(ucell_in), OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in), DM(DM_in), uot_(uot)
 {
-    this->cal_type = lcao_deepks;
+    this->cal_type = calculation_type::lcao_deepks;
 #ifdef __DEEPKS
     this->initialize_HR(GridD_in, LM_in->ParaV);
 #endif

@@ -16,7 +16,7 @@ Ekinetic<OperatorPW<T, Device>>::Ekinetic(
     const int gk2_col)
 {
   this->classname = "Ekinetic";
-  this->cal_type = pw_ekinetic;
+  this->cal_type = calculation_type::pw_ekinetic;
   this->tpiba2 = tpiba2_in;
   this->gk2 = gk2_in;
   this->gk2_row = gk2_row;
@@ -62,7 +62,7 @@ template<typename T, typename Device>
 template<typename T_in, typename Device_in>
 hamilt::Ekinetic<OperatorPW<T, Device>>::Ekinetic(const Ekinetic<OperatorPW<T_in, Device_in>> *ekinetic) {
     this->classname = "Ekinetic";
-    this->cal_type = pw_ekinetic;
+    this->cal_type = calculation_type::pw_ekinetic;
     this->ik = ekinetic->get_ik();
     this->tpiba2 = ekinetic->get_tpiba2();
     this->gk2 = ekinetic->get_gk2();

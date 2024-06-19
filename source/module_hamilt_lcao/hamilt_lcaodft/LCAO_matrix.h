@@ -81,14 +81,8 @@ private:
     // these matrixed are used
     // for 'folding_matrix' in lcao_nnr,
     // HlocR -> Hloc2,
-    // SlocR -> Sloc2,
     //------------------------------
-    std::vector<double> SlocR;
     std::vector<double> Hloc_fixedR;
-
-    //with soc, zhengdy-soc
-    std::vector<std::complex<double>> SlocR_soc;
-    std::vector<std::complex<double>> Hloc_fixedR_soc;
 
     //LiuXh add 2019-07-15
     double ****Hloc_fixedR_tr;
@@ -170,13 +164,9 @@ private:
 
     void zeros_HSk(const char &mtype);
 
-    void zeros_HSR(const char &mtype);
-
     void update_Hloc(void);
 
     void update_Hloc2(const int &ik);
-
-    void allocate_HS_R(const int &nnr);
 
     void output_HSk(const char &mtype, std::string &fn);
 

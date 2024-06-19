@@ -34,7 +34,6 @@ class Gint_inout
         double** rho;
         ModuleBase::matrix* fvl_dphi;
         ModuleBase::matrix* svl_dphi;
-
         Gint_Tools::job_type job;
 
 	// electron density and kin_r, multi-k
@@ -160,6 +159,13 @@ namespace Gint_Tools
 	void get_block_info(const Grid_Technique& gt, const int bxyz, const int na_grid, const int grid_index,
 		int * &block_iw, int * &block_index, int * &block_size, bool** &cal_flag);		
 
+    void init_orb(double& dr_uniform, 
+                    std::vector<double>& rcuts,
+                    UnitCell& ucell,
+                    std::vector<std::vector<double>>& psi_u,
+                    std::vector<std::vector<double>>& dpsi_u,
+                    std::vector<std::vector<double>>& d2psi_u);
+                        
 	// psir_ylm[pw.bxyz][LD_pool]
     void cal_psir_ylm(
         const Grid_Technique& gt, 
