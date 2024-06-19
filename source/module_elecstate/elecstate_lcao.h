@@ -67,7 +67,6 @@ class ElecStateLCAO : public ElecState
     void init_DM(const K_Vectors* kv, const Parallel_Orbitals* paraV, const int nspin);
     DensityMatrix<TK,double>* get_DM() const { return const_cast<DensityMatrix<TK,double>*>(this->DM); } 
     static int out_wfc_lcao;
-    static int out_wfc_flag;
     static bool need_psi_grid;
 
     double get_spin_constrain_energy() override;
@@ -102,9 +101,6 @@ class ElecStateLCAO : public ElecState
 
 template <typename TK>
 int ElecStateLCAO<TK>::out_wfc_lcao = 0;
-
-template <typename TK>
-int ElecStateLCAO<TK>::out_wfc_flag = 0;
 
 template <typename TK>
 bool ElecStateLCAO<TK>::need_psi_grid = 1;
