@@ -18,10 +18,10 @@ hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::DFTU(LCAO_Matrix* LM_in,
                                                  std::vector<TK>* hK_in,
                                                  const UnitCell& ucell_in,
                                                  Grid_Driver* GridD_in,
-                                                 const ORB_gen_tables* uot,
+                                                 const TwoCenterIntegrator* intor,
                                                  ModuleDFTU::DFTU* dftu_in,
                                                  const Parallel_Orbitals& paraV)
-    : hamilt::OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in), uot_(uot)
+    : hamilt::OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in), intor_(intor)
 {
     this->cal_type = calculation_type::lcao_dftu;
     this->ucell = &ucell_in;
@@ -144,8 +144,7 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::cal_nlm_all(const Parallel_Orbi
                 const int M1 = (m1 % 2 == 0) ? -m1 / 2 : (m1 + 1) / 2;
 
                 ModuleBase::Vector3<double> dtau = tau0 - tau1;
-                uot_->two_center_bundle->overlap_orb_onsite
-                    ->snap(T1, L1, N1, M1, T0, dtau * this->ucell->lat0, 0 /*cal_deri*/, nlm);
+                intor_->snap(T1, L1, N1, M1, T0, dtau * this->ucell->lat0, 0 /*cal_deri*/, nlm);
                 // select the elements of nlm with target_L
                 for (int iw = 0; iw < this->ucell->atoms[T0].nw; iw++)
                 {

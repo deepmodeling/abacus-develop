@@ -140,69 +140,115 @@ template class hamilt::OperatorLCAO<std::complex<double>, double>;
 template class hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>;
 
 // mock of ORB_gen_tables and LCAO_Orbitals
-#include "module_basis/module_ao/ORB_gen_tables.h"
-ORB_gen_tables::ORB_gen_tables() : two_center_bundle(new TwoCenterBundle) {}
-ORB_gen_tables::~ORB_gen_tables() {}
-ORB_gaunt_table::ORB_gaunt_table() {}
-ORB_gaunt_table::~ORB_gaunt_table() {}
-ORB_table_phi::ORB_table_phi() {}
-ORB_table_phi::~ORB_table_phi() {}
-ORB_table_alpha::ORB_table_alpha() {}
-ORB_table_alpha::~ORB_table_alpha() {}
-ORB_table_beta::ORB_table_beta() {}
-ORB_table_beta::~ORB_table_beta() {}
-// mock of snap_psipsi
-void ORB_gen_tables::snap_psipsi(
-    const LCAO_Orbitals &orb,
-    double olm[],
-    const int &job, ///<[in]0 for matrix element of either S or T, 1 for its derivatives
-    const char &dtype, ///<[in] derivative type, 'S' for overlap, 'T' for kinetic energy, 'D' for descriptor in deepks
-    const ModuleBase::Vector3<double> &R1,
-    const int &I1,
-    const int &l1,
-    const int &m1,
-    const int &n1,
-    const ModuleBase::Vector3<double> &R2,
-    const int &I2,
-    const int &l2,
-    const int &m2,
-    const int &n2,
-    bool cal_syns,
-    double dmax)const
+//#include "module_basis/module_ao/ORB_gen_tables.h"
+#include "module_basis/module_nao/two_center_integrator.h"
+TwoCenterIntegrator::TwoCenterIntegrator() {}
+
+void TwoCenterIntegrator::tabulate(
+    const RadialCollection& bra,
+    const RadialCollection& ket,
+    const char op,
+    const int nr,
+    const double cutoff
+) {}
+
+void TwoCenterIntegrator::calculate(
+    const int itype1, 
+    const int l1, 
+    const int izeta1, 
+    const int m1, 
+    const int itype2,
+    const int l2,
+    const int izeta2,
+    const int m2,
+    const ModuleBase::Vector3<double>& vR, // vR = R2 - R1
+    double* out,
+    double* grad_out
+) const
 {
-    if(dtype == 'S')
+    out[0] = 1.0;
+}
+
+void TwoCenterIntegrator::snap(
+    const int itype1, 
+    const int l1, 
+    const int izeta1, 
+    const int m1, 
+    const int itype2,
+    const ModuleBase::Vector3<double>& vR, // vR = R2 - R1
+    const bool deriv,
+    std::vector<std::vector<double>>& out
+) const
+{
+    out.resize(1);
+    for(int i = 0; i < out.size(); ++i)
     {
-        olm[0] = 1.0;
-    }
-    else if(dtype == 'T')
-    {
-        olm[0] = 2.0;
-    }
-    else if(dtype == 'D')
-    {
-        olm[0] = 3.0;
+        out[i].resize(5, 1.0);
     }
 }
 
-void ORB_gen_tables::snap_psibeta_half(
-	const LCAO_Orbitals &orb,
-	const InfoNonlocal &infoNL_,
-	std::vector<std::vector<double>> &nlm,
-	const ModuleBase::Vector3<double> &R1,
-	const int &T1,
-	const int &L1,
-	const int &m1,
-	const int &N1,
-	const ModuleBase::Vector3<double> &R0, // The projector.
-	const int &T0,
-	const bool &calc_deri)const // mohan add 2021-04-25)
-{
-    nlm.resize(1);
-    for(int i = 0; i < nlm.size(); ++i)
-    {
-        nlm[i].resize(5, 1.0);
-    }
-}
+//ORB_gen_tables::ORB_gen_tables() : two_center_bundle(new TwoCenterBundle) {}
+//ORB_gen_tables::~ORB_gen_tables() {}
+//ORB_gaunt_table::ORB_gaunt_table() {}
+//ORB_gaunt_table::~ORB_gaunt_table() {}
+//ORB_table_phi::ORB_table_phi() {}
+//ORB_table_phi::~ORB_table_phi() {}
+//ORB_table_alpha::ORB_table_alpha() {}
+//ORB_table_alpha::~ORB_table_alpha() {}
+//ORB_table_beta::ORB_table_beta() {}
+//ORB_table_beta::~ORB_table_beta() {}
+// mock of snap_psipsi
+//void ORB_gen_tables::snap_psipsi(
+//    const LCAO_Orbitals &orb,
+//    double olm[],
+//    const int &job, ///<[in]0 for matrix element of either S or T, 1 for its derivatives
+//    const char &dtype, ///<[in] derivative type, 'S' for overlap, 'T' for kinetic energy, 'D' for descriptor in deepks
+//    const ModuleBase::Vector3<double> &R1,
+//    const int &I1,
+//    const int &l1,
+//    const int &m1,
+//    const int &n1,
+//    const ModuleBase::Vector3<double> &R2,
+//    const int &I2,
+//    const int &l2,
+//    const int &m2,
+//    const int &n2,
+//    bool cal_syns,
+//    double dmax)const
+//{
+//    if(dtype == 'S')
+//    {
+//        olm[0] = 1.0;
+//    }
+//    else if(dtype == 'T')
+//    {
+//        olm[0] = 2.0;
+//    }
+//    else if(dtype == 'D')
+//    {
+//        olm[0] = 3.0;
+//    }
+//}
+
+//void ORB_gen_tables::snap_psibeta_half(
+//	const LCAO_Orbitals &orb,
+//	const InfoNonlocal &infoNL_,
+//	std::vector<std::vector<double>> &nlm,
+//	const ModuleBase::Vector3<double> &R1,
+//	const int &T1,
+//	const int &L1,
+//	const int &m1,
+//	const int &N1,
+//	const ModuleBase::Vector3<double> &R0, // The projector.
+//	const int &T0,
+//	const bool &calc_deri)const // mohan add 2021-04-25)
+//{
+//    nlm.resize(1);
+//    for(int i = 0; i < nlm.size(); ++i)
+//    {
+//        nlm[i].resize(5, 1.0);
+//    }
+//}
 
 #include "module_basis/module_ao/ORB_read.h"
 const LCAO_Orbitals& LCAO_Orbitals::get_const_instance()

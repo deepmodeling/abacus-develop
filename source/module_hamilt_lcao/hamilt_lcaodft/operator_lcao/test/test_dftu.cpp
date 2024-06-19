@@ -134,7 +134,7 @@ class DFTUTest : public ::testing::Test
     hamilt::HContainer<double>* HR;
     hamilt::HContainer<double>* DMR;
     Parallel_Orbitals *paraV;
-    ORB_gen_tables uot_;
+    TwoCenterIntegrator intor_;
 
     int dsize;
     int my_rank = 0;
@@ -167,7 +167,7 @@ TEST_F(DFTUTest, constructHRd2d)
         &hk, 
         ucell, 
         &gd,
-        &uot_,
+        &intor_,
         &GlobalC::dftu,
         *paraV
     );
@@ -235,7 +235,7 @@ TEST_F(DFTUTest, constructHRd2cd)
         &hk, 
         ucell, 
         &gd,
-        &uot_,
+        &intor_,
         &GlobalC::dftu,
         *paraV
     );

@@ -127,7 +127,7 @@ TEST_F(EkineticNewTest, constructHRd2d)
         int nwt = indexes1.size() * indexes2.size();
         for (int i = 0; i < nwt; ++i)
         {
-            EXPECT_EQ(tmp.get_pointer(0)[i], 2.0);
+            EXPECT_EQ(tmp.get_pointer(0)[i], 1.0);
         }
     }
     // calculate SK
@@ -135,7 +135,7 @@ TEST_F(EkineticNewTest, constructHRd2d)
     // check the value of SK
     for (int i = 0; i < paraV->get_row_size() * paraV->get_col_size(); ++i)
     {
-        EXPECT_EQ(hk[i], 2.0);
+        EXPECT_EQ(hk[i], 1.0);
     }
     // calculate HR again
     op.contributeHR();
@@ -150,7 +150,7 @@ TEST_F(EkineticNewTest, constructHRd2d)
         int nwt = indexes1.size() * indexes2.size();
         for (int i = 0; i < nwt; ++i)
         {
-            EXPECT_EQ(tmp.get_pointer(0)[i], 4.0);
+            EXPECT_EQ(tmp.get_pointer(0)[i], 2.0);
         }
     }
 }
@@ -183,7 +183,7 @@ TEST_F(EkineticNewTest, constructHRd2cd)
         int nwt = indexes1.size() * indexes2.size();
         for (int i = 0; i < nwt; ++i)
         {
-            EXPECT_EQ(tmp.get_pointer(0)[i], 2.0);
+            EXPECT_EQ(tmp.get_pointer(0)[i], 1.0);
         }
     }
     // calculate SK for gamma point
@@ -191,7 +191,7 @@ TEST_F(EkineticNewTest, constructHRd2cd)
     // check the value of SK of gamma point
     for (int i = 0; i < paraV->get_row_size() * paraV->get_col_size(); ++i)
     {
-        EXPECT_EQ(hk[i].real(), 2.0);
+        EXPECT_EQ(hk[i].real(), 1.0);
         EXPECT_EQ(hk[i].imag(), 0.0);
     }
     // calculate HK for k point
@@ -200,8 +200,8 @@ TEST_F(EkineticNewTest, constructHRd2cd)
     // check the value of HK
     for (int i = 0; i < paraV->get_row_size() * paraV->get_col_size(); ++i)
     {
-        EXPECT_NEAR(hk[i].real(), -1.6180339887498945, 1e-10);
-        EXPECT_NEAR(hk[i].imag(), -1.1755705045849467, 1e-10);
+        EXPECT_NEAR(hk[i].real(), -1.6180339887498945/2, 1e-10);
+        EXPECT_NEAR(hk[i].imag(), -1.1755705045849467/2, 1e-10);
     }
 }
 

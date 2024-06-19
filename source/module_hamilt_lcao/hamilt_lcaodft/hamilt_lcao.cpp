@@ -238,7 +238,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
                     &(this->getHk(LM_in)),
                     GlobalC::ucell,
                     &GlobalC::GridD,
-                    uot,
+                    uot->two_center_bundle->overlap_orb_onsite.get(),
                     &GlobalC::dftu,
                     *(LM_in->ParaV)
                 );
@@ -415,7 +415,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
                     &(this->getHk(LM_in)),
                     GlobalC::ucell,
                     &GlobalC::GridD,
-                    uot,
+                    uot->two_center_bundle->overlap_orb_onsite.get(),
                     &GlobalC::dftu,
                     *(LM_in->ParaV)
                 );

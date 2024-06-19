@@ -184,7 +184,7 @@ TEST_F(TNLTest, testTVNLcd2cd)
             {
                 if(mu % npol == nu % npol)
                 {
-                    EXPECT_EQ(tmp.get_pointer(0)[i].real(), 2.0);
+                    EXPECT_EQ(tmp.get_pointer(0)[i].real(), 1.0);
                     EXPECT_EQ(tmp.get_pointer(0)[i].imag(), 0.0);
                     EXPECT_EQ(tmp.get_pointer(1)[i].real(), result_ref);
                     EXPECT_EQ(tmp.get_pointer(1)[i].imag(), 0.0);
@@ -201,7 +201,7 @@ TEST_F(TNLTest, testTVNLcd2cd)
         }
     }
     // check the value of HK of gamma point
-    result_ref += 2.0;
+    result_ref += 1.0;
     int i = 0;
     for ( int irow = 0; irow < paraV->get_row_size(); ++irow)
     {
@@ -229,8 +229,8 @@ TEST_F(TNLTest, testTVNLcd2cd)
     std::cout << "Test terms:   " <<std::setw(15)<< "constructor" <<std::setw(15)<< "init(HR+HK)" <<std::setw(15)<< "2nd-init(HK)" << std::endl;
     std::cout << "Elapsed time: " <<std::setw(15)<< elapsed_time0.count()<<std::setw(15)<<elapsed_time1.count()<<std::setw(15)<<elapsed_time2.count() << " seconds." << std::endl;
     // check the value of HK
-    double result_ref1 = -1.6180339887498931 + test_size * 10;
-    double result_ref2 = -1.1755705045849467;
+    double result_ref1 = -1.6180339887498931/2 + test_size * 10;
+    double result_ref2 = -1.1755705045849467/2;
     i = 0;
     for ( int irow = 0; irow < paraV->get_row_size(); ++irow)
     {

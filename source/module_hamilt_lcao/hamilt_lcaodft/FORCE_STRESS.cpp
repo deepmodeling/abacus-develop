@@ -258,7 +258,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
 					nullptr,
 					GlobalC::ucell,
 					&GlobalC::GridD,
-                    uot,
+                    uot->two_center_bundle->overlap_orb_onsite.get(),
 					&GlobalC::dftu,
 					*(lm.ParaV));
 
