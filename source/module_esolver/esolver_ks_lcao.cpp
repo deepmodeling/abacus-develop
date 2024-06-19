@@ -84,12 +84,6 @@ ESolver_KS_LCAO<TK, TR>::ESolver_KS_LCAO()
 template <typename TK, typename TR>
 ESolver_KS_LCAO<TK, TR>::~ESolver_KS_LCAO()
 {
-<<<<<<< Updated upstream
-#ifndef USE_NEW_TWO_CENTER
-    this->orb_con.clear_after_ions(*uot_, GlobalC::ORB, GlobalV::deepks_setorb, GlobalC::ucell.infoNL.nproj);
-#endif
-=======
->>>>>>> Stashed changes
     delete uot_;
 }
 
