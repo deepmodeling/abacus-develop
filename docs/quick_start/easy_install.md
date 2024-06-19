@@ -253,3 +253,31 @@ And, follow the instructions in [Build and Install](#build-and-install) part abo
 See [the advanced installation guide](../advanced/install.md) for more features.
 Make sure the environment variables are set before running `cmake`.
 Possible command: `cmake -B build -DENABLE_DEEPKS=ON -DENABLE_LIBXC=ON -DENABLE_LIBRI=ON`.
+
+## Command line options
+
+Users can check the version of ABACUS by running the command `abacus --version`, the result will be like:
+```
+ABACUS version v3.6.5
+```
+
+Users may check the correctness of the setting of parameters in the `INPUT` file by running the command `abacus --check-input`, the result will be like:
+```
+                              ABACUS v3.6.5
+
+               Atomic-orbital Based Ab-initio Computation at UStc
+
+                     Website: http://abacus.ustc.edu.cn/
+               Documentation: https://abacus.deepmodeling.com/
+                  Repository: https://github.com/abacusmodeling/abacus-develop
+                              https://github.com/deepmodeling/abacus-develop
+                      Commit: unknown
+
+ Tue Jun 18 14:20:31 2024
+ MAKE THE DIR         : OUT.ABACUS/
+----------------------------------------------------------
+  INPUT parameters have been successfully checked!
+----------------------------------------------------------
+```
+
+Warnings will be given if there are any errors in the `INPUT` file.

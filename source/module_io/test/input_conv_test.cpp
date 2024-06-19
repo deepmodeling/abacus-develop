@@ -309,6 +309,7 @@ TEST_F(InputConvTest, nupdown)
 	std::string input_file = "./support/INPUT";
 	INPUT.Read(input_file);
 	INPUT.nupdown=0.1;
+	INPUT.two_fermi=true;
 	Input_Conv::Convert();
 	EXPECT_EQ(GlobalV::TWO_EFERMI,true);
 	EXPECT_EQ(GlobalV::nupdown,0.1);

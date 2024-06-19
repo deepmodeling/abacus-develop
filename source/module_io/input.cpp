@@ -981,6 +981,7 @@ bool Input::Read(const std::string& fn)
         }
         else if (strcmp("nupdown", word) == 0)
         {
+            two_fermi = true;
             read_value(ifs, nupdown);
         }
         else if (strcmp("lmaxmax", word) == 0)
@@ -3478,6 +3479,7 @@ void Input::Bcast()
     Parallel_Common::bcast_int(nspin);
     Parallel_Common::bcast_double(nelec);
     Parallel_Common::bcast_double(nelec_delta);
+    Parallel_Common::bcast_bool(two_fermi);
     Parallel_Common::bcast_double(nupdown);
     Parallel_Common::bcast_int(lmaxmax);
 
