@@ -158,21 +158,15 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& iat1,
         const int L1 = iw2l1[iw1];
         const int N1 = iw2n1[iw1];
         const int m1 = iw2m1[iw1];
-#ifdef USE_NEW_TWO_CENTER
-        int M1 = (m1 % 2 == 0) ? -m1/2 : (m1+1)/2;
-#endif
+
         for (int iw2l = 0; iw2l < col_indexes.size(); iw2l += npol)
         {
             const int iw2 = col_indexes[iw2l] / npol;
             const int L2 = iw2l2[iw2];
             const int N2 = iw2n2[iw2];
             const int m2 = iw2m2[iw2];
-#ifdef USE_NEW_TWO_CENTER
             // center2_orb11_s are used to calculate <psi|∇|psi> no matter whether to use new two-center or not for now.
             ModuleBase::Vector3<double> grad_overlap = center2_orb11_s.at(T1).at(T2).at(L1).at(N1).at(L2).at(N2).cal_grad_overlap(tau1 * ucell->lat0, tau2 * ucell->lat0, m1, m2);
-#else
-            ModuleBase::Vector3<double> grad_overlap = center2_orb11_s.at(T1).at(T2).at(L1).at(N1).at(L2).at(N2).cal_grad_overlap(tau1 * ucell->lat0, tau2 * ucell->lat0, m1, m2);
-#endif
             for (int ipol = 0; ipol < npol; ipol++)
             {
                 //key change

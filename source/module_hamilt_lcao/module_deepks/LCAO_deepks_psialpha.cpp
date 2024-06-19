@@ -91,10 +91,6 @@ void LCAO_Deepks::build_psialpha(const bool& calc_deri,
 					//2D, dim 0 contains the overlap <psi|alpha>
                     //dim 1-3 contains the gradient of overlap
 
-#ifdef USE_NEW_TWO_CENTER
-                    //=================================================================
-                    //          new two-center integral (temporary)
-                    //=================================================================
                     int L1 = atom1->iw2l[ iw1 ];
                     int N1 = atom1->iw2n[ iw1 ];
                     int m1 = atom1->iw2m[ iw1 ];
@@ -105,19 +101,6 @@ void LCAO_Deepks::build_psialpha(const bool& calc_deri,
                     ModuleBase::Vector3<double> dtau = ucell.atoms[T0].tau[I0] - tau1;
                     UOT.two_center_bundle->overlap_orb_alpha->snap(
                             T1, L1, N1, M1, 0, dtau * ucell.lat0, calc_deri, nlm);
-#else
-					//inner loop : all projectors (N,L,M)
-					UOT.snap_psialpha_half(
-                        orb,
-						nlm, job, tau1, T1,
-						atom1->iw2l[ iw1 ], // L1
-						atom1->iw2m[ iw1 ], // m1
-						atom1->iw2n[ iw1 ], // N1
-						ucell.atoms[T0].tau[I0], T0, I0); //R0,T0
-#endif
-                    //=================================================================
-                    //          end of new two-center integral (temporary)
-                    //=================================================================
 
                     if(GlobalV::GAMMA_ONLY_LOCAL)
                     {

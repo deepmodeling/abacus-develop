@@ -281,10 +281,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::pre_calculate_nlm(const int i
             // If we are calculating force, we need also to store the gradient
             // and size of outer vector is then 4
             // inner loop : all projectors (L0,M0)
-#ifdef USE_NEW_TWO_CENTER
-            //=================================================================
-            //          new two-center integral (temporary)
-            //=================================================================
+
             int L1 = atom1->iw2l[ iw1 ];
             int N1 = atom1->iw2n[ iw1 ];
             int m1 = atom1->iw2m[ iw1 ];
@@ -295,15 +292,6 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::pre_calculate_nlm(const int i
             ModuleBase::Vector3<double> dtau = tau0 - tau1;
             uot_->two_center_bundle->overlap_orb_alpha->snap(
                     T1, L1, N1, M1, 0, dtau * ucell->lat0, 0 /*calc_deri*/, nlm);
-#else
-            uot_->snap_psialpha_half(
-                    orb,
-                    nlm, 0, tau1, T1,
-                    atom1->iw2l[ iw1 ], // L1
-                    atom1->iw2m[ iw1 ], // m1
-                    atom1->iw2n[ iw1 ], // N1
-                    tau0, T0, I0);
-#endif
             nlm_in[ad].insert({all_indexes[iw1l], nlm[0]});
             if(npol == 2) nlm_in[ad].insert({all_indexes[iw1l+1], nlm[0]});
         }

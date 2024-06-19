@@ -148,7 +148,6 @@ void hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
             const ModuleBase::Vector3<double>& tau1 = adjs.adjacent_tau[ad];
             const Atom* atom1 = &ucell->atoms[T1];
 
-            const LCAO_Orbitals& orb = LCAO_Orbitals::get_const_instance();
             auto all_indexes = paraV->get_indexes_row(iat1);
 #ifdef _OPENMP
             if(atom_row_list.find(iat1) == atom_row_list.end())
@@ -169,10 +168,7 @@ void hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                 // If we are calculating force, we need also to store the gradient
                 // and size of outer vector is then 4
                 // inner loop : all projectors (L0,M0)
-#ifdef USE_NEW_TWO_CENTER
-                //=================================================================
-                //          new two-center integral (temporary)
-                //=================================================================
+
                 int L1 = atom1->iw2l[ iw1 ];
                 int N1 = atom1->iw2n[ iw1 ];
                 int m1 = atom1->iw2m[ iw1 ];
@@ -182,20 +178,7 @@ void hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
 
                 ModuleBase::Vector3<double> dtau = tau0 - tau1;
                 uot_->two_center_bundle->overlap_orb_beta->snap(
-                        T1, L1, N1, M1, T0, dtau * this->ucell->lat0, 0 /*cal_deri*/, nlm);
-#else
-                uot_->snap_psibeta_half(orb,
-                                      this->ucell->infoNL,
-                                      nlm,
-                                      tau1,
-                                      T1,
-                                      atom1->iw2l[iw1], // L1
-                                      atom1->iw2m[iw1], // m1
-                                      atom1->iw2n[iw1], // N1
-                                      tau0,
-                                      T0,
-                                      0 /*cal_deri*/); // R0,T0
-#endif
+                        T1, L1, N1, M1, T0, dtau * ucell->lat0, 0 /*cal_deri*/, nlm);
                 nlm_tot[ad].insert({all_indexes[iw1l], nlm[0]});
             }
         }

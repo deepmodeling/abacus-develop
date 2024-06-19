@@ -40,10 +40,6 @@ void single_derivative(
 
     const bool gamma_only_local = GlobalV::GAMMA_ONLY_LOCAL;
 
-#ifdef USE_NEW_TWO_CENTER
-	//=================================================================
-	//          new two-center integral (temporary)
-	//=================================================================
 	// convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
 	const int M1 = (m1 % 2 == 0) ? -m1/2 : (m1+1)/2;
 	const int M2 = (m2 % 2 == 0) ? -m2/2 : (m2+1)/2;
@@ -80,16 +76,6 @@ void single_derivative(
 		default:  // not supposed to happen
 			ModuleBase::WARNING_QUIT("LCAO_domain::build_ST_new","dtype must be S or T");
 	}
-#else
-	uot.snap_psipsi( orb, olm, 1, dtype,
-			tau1, T1, L1, m1, N1,
-			tau2, T2, L2, m2, N2
-			);
-#endif
-
-	//=================================================================
-	//          end of new two-center integral (temporary)
-	//=================================================================
 
 	// condition 7: gamma only or multiple k
 	if(gamma_only_local)
@@ -277,10 +263,6 @@ void single_overlap(
 {
     const bool gamma_only_local = GlobalV::GAMMA_ONLY_LOCAL;
 
-#ifdef USE_NEW_TWO_CENTER
-	//=================================================================
-	//          new two-center integral (temporary)
-	//=================================================================
 	// convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
 	const int M1 = (m1 % 2 == 0) ? -m1/2 : (m1+1)/2;
 	const int M2 = (m2 % 2 == 0) ? -m2/2 : (m2+1)/2;
@@ -298,17 +280,6 @@ void single_overlap(
 		default:  // not supposed to happen
 			ModuleBase::WARNING_QUIT("LCAO_domain::build_ST_new","dtype must be S or T");
 	}
-#else
-	uot.snap_psipsi( orb, olm, 0, dtype,
-			tau1, T1, L1, m1, N1,                  // info of atom1
-			adjs.adjacent_tau[ad], T2, L2, m2, N2, // info of atom2
-			cal_syns,
-			dmax);
-#endif
-
-	//=================================================================
-	//          end of new two-center integral (temporary)
-	//=================================================================
 
 	// When NSPIN == 4 , only diagonal term is calculated for T or S Operators
 	// use olm1 to store the diagonal term with complex data type.

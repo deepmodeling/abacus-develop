@@ -145,7 +145,6 @@ void hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& ia
                                                                    const ModuleBase::Vector3<double>& dtau,
                                                                    TR* data_pointer)
 {
-    const LCAO_Orbitals& orb = LCAO_Orbitals::get_const_instance();
     // ---------------------------------------------
     // get info of orbitals of atom1 and atom2 from ucell
     // ---------------------------------------------
@@ -167,15 +166,7 @@ void hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& ia
     const int* iw2l2 = atom2.iw2l;
     const int* iw2n2 = atom2.iw2n;
     const int* iw2m2 = atom2.iw2m;
-#ifndef USE_NEW_TWO_CENTER
-    // ---------------------------------------------
-    // get tau1 (in cell <0,0,0>) and tau2 (in cell R)
-    // in principle, only dtau is needed in this function
-    // snap_psipsi should be refactored to use dtau directly
-    // ---------------------------------------------
-    const ModuleBase::Vector3<double>& tau1 = this->ucell->get_tau(iat1);
-    const ModuleBase::Vector3<double> tau2 = tau1 + dtau;
-#endif
+
     // ---------------------------------------------
     // calculate the Ekinetic matrix for each pair of orbitals
     // ---------------------------------------------
@@ -189,40 +180,22 @@ void hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& ia
         const int L1 = iw2l1[iw1];
         const int N1 = iw2n1[iw1];
         const int m1 = iw2m1[iw1];
-#ifdef USE_NEW_TWO_CENTER
+
+        // convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
         int M1 = (m1 % 2 == 0) ? -m1/2 : (m1+1)/2;
-#endif
+
         for (int iw2l = 0; iw2l < col_indexes.size(); iw2l += npol)
         {
             const int iw2 = col_indexes[iw2l] / npol;
             const int L2 = iw2l2[iw2];
             const int N2 = iw2n2[iw2];
             const int m2 = iw2m2[iw2];
-#ifdef USE_NEW_TWO_CENTER
-            //=================================================================
-            //          new two-center integral (temporary)
-            //=================================================================
+
             // convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
             int M2 = (m2 % 2 == 0) ? -m2/2 : (m2+1)/2;
+
             uot_->two_center_bundle->kinetic_orb->calculate(T1, L1, N1, M1,
                     T2, L2, N2, M2, dtau * this->ucell->lat0, olm);
-#else
-            uot_->snap_psipsi(orb, // orbitals
-                            olm,
-                            0,
-                            'T', // olm, job of derivation, dtype of Operator
-                            tau1,
-                            T1,
-                            L1,
-                            m1,
-                            N1, // info of atom1
-                            tau2,
-                            T2,
-                            L2,
-                            m2,
-                            N2 // info of atom2
-            );
-#endif
             for (int ipol = 0; ipol < npol; ipol++)
             {
                 data_pointer[ipol * step_trace] += olm[0];

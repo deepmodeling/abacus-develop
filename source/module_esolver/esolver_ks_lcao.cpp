@@ -84,9 +84,12 @@ ESolver_KS_LCAO<TK, TR>::ESolver_KS_LCAO()
 template <typename TK, typename TR>
 ESolver_KS_LCAO<TK, TR>::~ESolver_KS_LCAO()
 {
+<<<<<<< Updated upstream
 #ifndef USE_NEW_TWO_CENTER
     this->orb_con.clear_after_ions(*uot_, GlobalC::ORB, GlobalV::deepks_setorb, GlobalC::ucell.infoNL.nproj);
 #endif
+=======
+>>>>>>> Stashed changes
     delete uot_;
 }
 
@@ -556,11 +559,10 @@ void ESolver_KS_LCAO<TK, TR>::init_basis_lcao(ORB_control& orb_con, Input& inp, 
     Lmax = GlobalC::exx_info.info_ri.abfs_Lmax;
 #endif
 
-#ifndef USE_NEW_TWO_CENTER
-    this->orb_con.set_orb_tables(GlobalV::ofs_running, *uot_, GlobalC::ORB, ucell.lat0, GlobalV::deepks_setorb, Lmax,
-                                 ucell.infoNL.nprojmax, ucell.infoNL.nproj, ucell.infoNL.Beta);
-#else
+#ifdef USE_NEW_TWO_CENTER
     two_center_bundle->tabulate();
+#else
+    two_center_bundle->tabulate(inp.lcao_ecut, inp.lcao_dk, inp.lcao_dr, inp.lcao_rmax);
 #endif
 
     if (this->orb_con.setup_2d)

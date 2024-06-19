@@ -99,11 +99,6 @@ void build_Nonlocal_beta_new(
                     //and the first dimension is then 3
                     //inner loop : all projectors (L0,M0)
 
-
-#ifdef USE_NEW_TWO_CENTER
-                    //=================================================================
-                    //          new two-center integral (temporary)
-                    //=================================================================
                     int L1 = atom1->iw2l[ iw1_0 ];
                     int N1 = atom1->iw2n[ iw1_0 ];
                     int m1 = atom1->iw2m[ iw1_0 ];
@@ -114,19 +109,6 @@ void build_Nonlocal_beta_new(
                     ModuleBase::Vector3<double> dtau = ucell.atoms[T0].tau[I0] - tau1;
                     uot.two_center_bundle->overlap_orb_beta->snap(
                             T1, L1, N1, M1, T0, dtau * ucell.lat0, false, nlm);
-#else
-                    uot.snap_psibeta_half(
-                        orb,
-                        ucell.infoNL,
-                        nlm, tau1, T1,
-                        atom1->iw2l[ iw1_0 ], // L1
-                        atom1->iw2m[ iw1_0 ], // m1
-                        atom1->iw2n[ iw1_0 ], // N1
-                        ucell.atoms[T0].tau[I0], T0, 0); //R0,T0
-#endif
-                    //=================================================================
-                    //          end of new two-center integral (temporary)
-                    //=================================================================
 
                     #ifdef _OPENMP
                         nlm_tot_thread[ad_count].insert({iw1_all,nlm[0]});

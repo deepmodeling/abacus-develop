@@ -100,7 +100,9 @@ int& TwoCenterTable::table_index(const NumericalRadial* it1, const NumericalRadi
 void TwoCenterTable::cleanup()
 {
     op_ = '\0';
+    ntab_ = 0;
     nr_ = 0;
+    rmax_ = 0.0;
     delete[] rgrid_;
     rgrid_ = nullptr;
 

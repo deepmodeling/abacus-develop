@@ -119,10 +119,6 @@ void build_Nonlocal_mu_new(
 				//and size of outer vector is then 4
 				//inner loop : all projectors (L0,M0)
 
-#ifdef USE_NEW_TWO_CENTER
-                //=================================================================
-                //          new two-center integral (temporary)
-                //=================================================================
                 int L1 = atom1->iw2l[ iw1_0 ];
                 int N1 = atom1->iw2n[ iw1_0 ];
                 int m1 = atom1->iw2m[ iw1_0 ];
@@ -133,19 +129,6 @@ void build_Nonlocal_mu_new(
                 ModuleBase::Vector3<double> dtau = tau - tau1;
                 uot.two_center_bundle->overlap_orb_beta->snap(
                         T1, L1, N1, M1, it, dtau * ucell.lat0, calc_deri, nlm);
-#else
-				uot.snap_psibeta_half(
-					orb,
-					ucell.infoNL,
-					nlm, tau1, T1,
-					atom1->iw2l[ iw1_0 ], // L1
-					atom1->iw2m[ iw1_0 ], // m1
-					atom1->iw2n[ iw1_0 ], // N1
-					tau, it, calc_deri); //R0,T0
-#endif
-                //=================================================================
-                //          end of new two-center integral (temporary)
-                //=================================================================
 
 				if(!calc_deri)
 				{

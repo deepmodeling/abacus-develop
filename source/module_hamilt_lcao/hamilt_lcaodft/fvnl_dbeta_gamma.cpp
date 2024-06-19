@@ -70,10 +70,6 @@ void Force_LCAO<double>::cal_fvnl_dbeta(
                 
                 std::vector<std::vector<double>> nlm;
 
-#ifdef USE_NEW_TWO_CENTER
-                //=================================================================
-                //          new two-center integral (temporary)
-                //=================================================================
                 int L1 = atom1->iw2l[ iw1 ];
                 int N1 = atom1->iw2n[ iw1 ];
                 int m1 = atom1->iw2m[ iw1 ];
@@ -85,16 +81,6 @@ void Force_LCAO<double>::cal_fvnl_dbeta(
 
                 uot.two_center_bundle->overlap_orb_beta->snap(
                     T1, L1, N1, M1, T0, dtau * ucell.lat0, true, nlm);
-#else
-                uot.snap_psibeta_half(
-                    orb,
-                    ucell.infoNL,
-                    nlm, tau1, T1,
-                    atom1->iw2l[ iw1 ], // L1
-                    atom1->iw2m[ iw1 ], // m1
-                    atom1->iw2n[ iw1 ], // N1
-                    ucell.atoms[T0].tau[I0], T0, 1); //R0,T0
-#endif
 
                 assert(nlm.size()==4);
                 nlm_tot[ad1].insert({iw1,nlm});

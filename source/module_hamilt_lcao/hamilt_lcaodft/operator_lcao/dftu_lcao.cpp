@@ -133,15 +133,11 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::cal_nlm_all(const Parallel_Orbi
                 const int L1 = atom1->iw2l[ iw1 ];
                 const int N1 = atom1->iw2n[ iw1 ];
                 const int m1 = atom1->iw2m[ iw1 ];
-#ifdef USE_NEW_TWO_CENTER
                 std::vector<std::vector<double>> nlm;
                 // nlm is a vector of vectors, but size of outer vector is only 1 here
                 // If we are calculating force, we need also to store the gradient
                 // and size of outer vector is then 4
                 // inner loop : all projectors (L0,M0)
-                //=================================================================
-                //          new two-center integral (temporary)
-                //=================================================================
 
                 // convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
                 const int M1 = (m1 % 2 == 0) ? -m1/2 : (m1+1)/2;
@@ -162,37 +158,6 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::cal_nlm_all(const Parallel_Orbi
                         break;
                     }
                 }
-#else
-                ModuleBase::WARNING("DFTU", "autoset onsite_radius to rcut for old two-center integral");
-                double olm[3] = {0, 0, 0};
-                for(int iw =0;iw < this->ucell->atoms[T0].nw; iw++)
-                {
-                    const int L0 = this->ucell->atoms[T0].iw2l[iw];
-                    if(L0 == target_L)
-                    {
-                        for(int m = 0; m < tlp1; m++)
-                        {
-                            uot_->snap_psipsi(orb, // orbitals
-                                olm,
-                                0,
-                                'S', // olm, job of derivation, dtype of Operator
-                                tau1,
-                                T1,
-                                L1,
-                                m1,
-                                N1, // all zeta of atom1
-                                tau0,
-                                T0,
-                                L0,
-                                m,
-                                0 // choose only the first zeta
-                            );
-                            nlm_target[m] = olm[0];
-                        }
-                        break;
-                    }
-                }
-#endif
                 nlm_tot[iat0][ad].insert({all_indexes[iw1l], nlm_target});
             }
         }

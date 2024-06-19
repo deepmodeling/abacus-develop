@@ -21,6 +21,16 @@ class TwoCenterBundle
 
     void tabulate();
 
+    // Unlike the tabulate() above, this overload function computes
+    // two-center integration table by direct integration with Simpson's
+    // rule, which was the algorithm used prior to v3.3.4.
+    void tabulate(
+        const double lcao_ecut,
+        const double lcao_dk,
+        const double lcao_dr,
+        const double lcao_rmax
+    );
+
     /**
      * @brief Overwrites the content of a LCAO_Orbitals object (e.g. GlobalC::ORB)
      * with the current object.
