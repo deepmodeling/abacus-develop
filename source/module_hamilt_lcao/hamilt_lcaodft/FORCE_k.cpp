@@ -131,7 +131,7 @@ void Force_LCAO<std::complex<double>>::allocate(
 			pv,
 			*uot, 
 			&GlobalC::GridD, 
-			lm.Hloc_fixedR.data());
+			nullptr); // delete lm.Hloc_fixedR
 
     // calculate dVnl=<phi|dVnl|dphi> in LCAO
 	LCAO_domain::build_Nonlocal_mu_new(
