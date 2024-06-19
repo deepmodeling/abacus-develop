@@ -1,11 +1,11 @@
 #ifndef OVERLAPNEW_H
 #define OVERLAPNEW_H
+#include "module_basis/module_ao/ORB_gen_tables.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_cell/unitcell.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
-#include "module_basis/module_ao/ORB_gen_tables.h"
 
 namespace hamilt
 {
@@ -89,7 +89,7 @@ class OverlapNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 
     // if k vector is not changed, then do nothing and return
     // default of kvec_d_old is (-10,-10,-10), which is not a valid k vector
-    ModuleBase::Vector3<double> kvec_d_old = ModuleBase::Vector3<double>(-10,-10,-10);
+    ModuleBase::Vector3<double> kvec_d_old = ModuleBase::Vector3<double>(-10, -10, -10);
 };
 
 } // namespace hamilt

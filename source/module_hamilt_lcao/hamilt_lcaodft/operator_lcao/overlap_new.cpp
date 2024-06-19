@@ -162,9 +162,8 @@ void hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::cal_SR_IJR(const int& iat
             const int m2 = iw2m2[iw2];
 
             // convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
-            int M2 = (m2 % 2 == 0) ? -m2/2 : (m2+1)/2;
-            intor_->calculate(T1, L1, N1, M1,
-                    T2, L2, N2, M2, dtau * this->ucell->lat0, olm);
+            int M2 = (m2 % 2 == 0) ? -m2 / 2 : (m2 + 1) / 2;
+            intor_->calculate(T1, L1, N1, M1, T2, L2, N2, M2, dtau * this->ucell->lat0, olm);
             for (int ipol = 0; ipol < npol; ipol++)
             {
                 data_pointer[ipol * step_trace] += olm[0];
