@@ -22,6 +22,12 @@ public:
     /// number of local columns
     int get_col_size() const { return ncol; };
 
+    /// number of global rows
+    int get_global_row_size();
+
+    /// number of global columns
+    int get_global_col_size();
+
     /// number of local matrix elements
     int64_t get_local_size() const { return nloc; };
 

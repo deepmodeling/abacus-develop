@@ -106,6 +106,9 @@ TEST_F(test_para2d, Divide2D)
                 for (int i = 0;i < lr;++i)
                     for (int j = 0;j < lc;++j)
                         EXPECT_TRUE(p2d.in_this_processor(p2d.local2global_row(i), p2d.local2global_col(j)));
+
+                EXPECT_EQ(p2d.get_global_row_size(), gr);
+                EXPECT_EQ(p2d.get_global_col_size(), gc);
             }
         }
     }
@@ -157,6 +160,10 @@ TEST_F(test_para2d, Serial)
             EXPECT_EQ(p2d.global2local_row(i), i);
         for (int i = 0;i < gc;++i)
             EXPECT_EQ(p2d.global2local_col(i), i);
+
+        //4. get_global_row_size, get_global_col_size
+        EXPECT_EQ(p2d.get_global_row_size(), gr);
+        EXPECT_EQ(p2d.get_global_col_size(), gc);    
     }
 }
 #endif
