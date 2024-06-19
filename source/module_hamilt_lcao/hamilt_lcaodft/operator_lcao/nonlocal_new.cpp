@@ -168,7 +168,6 @@ void hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                 // If we are calculating force, we need also to store the gradient
                 // and size of outer vector is then 4
                 // inner loop : all projectors (L0,M0)
-
                 int L1 = atom1->iw2l[ iw1 ];
                 int N1 = atom1->iw2n[ iw1 ];
                 int m1 = atom1->iw2m[ iw1 ];
@@ -177,8 +176,7 @@ void hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                 int M1 = (m1 % 2 == 0) ? -m1/2 : (m1+1)/2;
 
                 ModuleBase::Vector3<double> dtau = tau0 - tau1;
-                intor_->snap(
-                        T1, L1, N1, M1, T0, dtau * ucell->lat0, 0 /*cal_deri*/, nlm);
+                intor_->snap(T1, L1, N1, M1, T0, dtau * this->ucell->lat0, 0 /*cal_deri*/, nlm);
                 nlm_tot[ad].insert({all_indexes[iw1l], nlm[0]});
             }
         }
