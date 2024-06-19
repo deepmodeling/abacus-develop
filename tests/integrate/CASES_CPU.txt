@@ -163,6 +163,7 @@
 211_NO_elec_add
 211_NO_elec_minus
 211_NO_S2_elec_add
+211_NO_S2_nupdown0
 211_NO_S2_elec_minus
 212_NO_wfc_ienvelope
 212_NO_wfc_out
