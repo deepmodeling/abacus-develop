@@ -102,8 +102,6 @@ void ModuleIO::output_dHR(const int &istep,
     ModuleBase::TITLE("ModuleIO","output_dHR"); 
     ModuleBase::timer::tick("ModuleIO","output_dHR"); 
 
-    lm.Hloc_fixedR.resize(lm.ParaV->nnr);
-
     gint_k.allocate_pvdpR();
 
     const int nspin = GlobalV::NSPIN;

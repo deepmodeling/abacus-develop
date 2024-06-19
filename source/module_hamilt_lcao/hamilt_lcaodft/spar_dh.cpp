@@ -40,7 +40,7 @@ void sparse_format::cal_dH(
                 *lm.ParaV,
 				*uot, 
 				&GlobalC::GridD, 
-				lm.Hloc_fixedR.data());
+				nullptr); // delete unused parameter lm.Hloc_fixedR
 
         GlobalV::CAL_STRESS = true;
     }
@@ -56,7 +56,7 @@ void sparse_format::cal_dH(
 				*lm.ParaV,
 				*uot, 
 				&GlobalC::GridD, 
-				lm.Hloc_fixedR.data());
+				nullptr); // delete unused parameter lm.Hloc_fixedR
     }
 
 	LCAO_domain::build_Nonlocal_mu_new(
