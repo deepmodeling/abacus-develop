@@ -137,6 +137,8 @@ int get_node_rank_with_mpi_shared(const MPI_Comm mpi_comm)
     MPI_Comm_free(&localComm);
     return localMpiRank;
 }
+#if defined(__CUDA)
+
 int set_device_by_rank(const MPI_Comm mpi_comm)
 {
     int localMpiRank = get_node_rank_with_mpi_shared(mpi_comm);
@@ -156,6 +158,7 @@ int set_device_by_rank(const MPI_Comm mpi_comm)
     }
     return local_device_id;
 }
+#endif
 
 #endif
 
