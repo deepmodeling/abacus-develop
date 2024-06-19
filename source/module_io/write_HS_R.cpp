@@ -4,6 +4,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/spar_hsr.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/spar_dh.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/spar_st.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_HS_arrays.hpp"
 
 
 // if 'binary=true', output binary file.
@@ -221,10 +222,14 @@ void ModuleIO::output_TR(
         sst << GlobalV::global_out_dir << TR_filename;
     }
 
+    // need Hloc_fixedR
+    LCAO_HS_Arrays HS_arrays;
+
 	sparse_format::cal_TR(
 			ucell,
 			pv,
 			lm,
+            HS_arrays,
 			grid,
             uot,
 			sparse_thr);

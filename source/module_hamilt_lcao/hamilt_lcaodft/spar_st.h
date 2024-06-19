@@ -3,6 +3,7 @@
 
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_HS_arrays.hpp"
 
 namespace sparse_format
 {
@@ -21,6 +22,7 @@ namespace sparse_format
 			const UnitCell &ucell,
 			const Parallel_Orbitals &pv,
 			LCAO_Matrix &lm,
+			LCAO_HS_Arrays &HS_arrays,
 			Grid_Driver &grid,
             const ORB_gen_tables* uot,
 			const double &sparse_thr);
@@ -30,6 +32,7 @@ namespace sparse_format
 			const UnitCell &ucell,
 			const Parallel_Orbitals &pv,
 			LCAO_Matrix &lm,
+			LCAO_HS_Arrays &HS_arrays,
 			Grid_Driver &grid,
 			const double &sparse_thr);
 }

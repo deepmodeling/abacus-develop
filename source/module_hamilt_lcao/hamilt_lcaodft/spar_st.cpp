@@ -45,6 +45,7 @@ void sparse_format::cal_TR(
         const UnitCell &ucell,
         const Parallel_Orbitals &pv,
         LCAO_Matrix &lm,
+        LCAO_HS_Arrays &HS_arrays,
 	    Grid_Driver &grid,
         const ORB_gen_tables* uot,
 		const double &sparse_thr)
@@ -52,9 +53,8 @@ void sparse_format::cal_TR(
     ModuleBase::TITLE("sparse_format","cal_TR");
     
     //need to rebuild T(R)
-    lm.Hloc_fixedR.resize(lm.ParaV->nnr);
+    HS_arrays.Hloc_fixedR.resize(lm.ParaV->nnr);
 
-    LCAO_HS_Arrays HS_arrays;
     LCAO_domain::zeros_HSR('T', HS_arrays);
 
     // tmp array, will be deleted later,
@@ -71,14 +71,15 @@ void sparse_format::cal_TR(
 			pv, 
 			*uot, 
 			&(GlobalC::GridD), 
-			lm.Hloc_fixedR.data());
+			HS_arrays.Hloc_fixedR.data());
 
     sparse_format::set_R_range(lm.all_R_coor, grid);
 
 	sparse_format::cal_STN_R_for_T(
 			ucell, 
 			pv, 
-			lm, 
+			lm,
+            HS_arrays,
 			grid, 
 			sparse_thr);
 
@@ -90,6 +91,7 @@ void sparse_format::cal_STN_R_for_T(
         const UnitCell &ucell,
         const Parallel_Orbitals &pv,
         LCAO_Matrix &lm,
+        LCAO_HS_Arrays &HS_arrays,
 		Grid_Driver &grid,
 		const double &sparse_thr)
 {
@@ -187,7 +189,7 @@ void sparse_format::cal_STN_R_for_T(
 
                             if(nspin==1 || nspin==2)
                             {
-                                tmp = lm.Hloc_fixedR[index];
+                                tmp = HS_arrays.Hloc_fixedR[index];
                                 if (std::abs(tmp) > sparse_thr)
                                 {
                                     lm.TR_sparse[dR][iw1_all][iw2_all] = tmp;
