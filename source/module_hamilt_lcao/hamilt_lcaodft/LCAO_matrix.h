@@ -81,14 +81,8 @@ private:
     // these matrixed are used
     // for 'folding_matrix' in lcao_nnr,
     // HlocR -> Hloc2,
-    // SlocR -> Sloc2,
     //------------------------------
-    std::vector<double> SlocR;
     std::vector<double> Hloc_fixedR;
-
-    //with soc, zhengdy-soc
-    std::vector<std::complex<double>> SlocR_soc;
-    std::vector<std::complex<double>> Hloc_fixedR_soc;
 
     //LiuXh add 2019-07-15
     double ****Hloc_fixedR_tr;
@@ -128,69 +122,6 @@ private:
     std::set<Abfs::Vector3_Order<int>> output_R_coor;
 
 
-    //========================================
-    // FORCE
-    //========================================
-
-    //-----------------------------------------
-    // force in LCAO
-    // used in gamma only algorithm.
-    //-----------------------------------------
-    double* DSloc_x;
-    double* DSloc_y;
-    double* DSloc_z;
-
-    //-----------------------------------------
-    // force in LCAO
-    // used in k-points algorithm.
-    //-----------------------------------------
-    double* DSloc_Rx;
-    double* DSloc_Ry;
-    double* DSloc_Rz;
-
-    //-----------------------------------------
-    // dT + part of dVNL
-    // used in gamma only algorithm.
-    //-----------------------------------------
-    double* DHloc_fixed_x;
-    double* DHloc_fixed_y;
-    double* DHloc_fixed_z;
-
-    //-----------------------------------------
-    // dT + part of dVNL
-    // used in kpoint algorithm.
-    //-----------------------------------------
-    double* DHloc_fixedR_x;
-    double* DHloc_fixedR_y;
-    double* DHloc_fixedR_z;
-
-    //----------------------------------------
-    // r_mu - r_nu
-    //----------------------------------------
-
-    double* DH_r;//zhengdy added 2017-07
-
-
-    double* stvnl11;
-    double* stvnl12;
-    double* stvnl13;
-    double* stvnl22;
-    double* stvnl23;
-    double* stvnl33;
-
-    double* DSloc_11;
-    double* DSloc_12;
-    double* DSloc_13;
-    double* DSloc_22;
-    double* DSloc_23;
-    double* DSloc_33;
-
-    double* DHloc_fixed_11;
-    double* DHloc_fixed_12;
-    double* DHloc_fixed_13;
-    double* DHloc_fixed_22;
-    double* DHloc_fixed_23;
-    double* DHloc_fixed_33;
 
 	template <typename T>
 		static void set_mat2d(
@@ -233,13 +164,9 @@ private:
 
     void zeros_HSk(const char &mtype);
 
-    void zeros_HSR(const char &mtype);
-
     void update_Hloc(void);
 
     void update_Hloc2(const int &ik);
-
-    void allocate_HS_R(const int &nnr);
 
     void output_HSk(const char &mtype, std::string &fn);
 

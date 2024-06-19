@@ -11,6 +11,7 @@ typedef std::tuple<int,int,int,int> key_tuple;
 
 void build_Nonlocal_mu_new(
     LCAO_Matrix &lm,
+    ForceStressArrays &fsr,
     double* NLloc,
 	const bool &calc_deri,
 	const UnitCell &ucell,
@@ -338,19 +339,7 @@ void build_Nonlocal_mu_new(
 								{
 									std::vector<double> nlm_1=(*nlm_cur1_e)[iw1_all];
 									std::vector<double> nlm_2=(*nlm_cur2_e)[iw2_all];
-									if(nspin == 4)
-									{
-										std::complex<double> nlm_tmp = ModuleBase::ZERO;
-										int is0 = (j-j0*npol) + (k-k0*npol)*2;
-										for (int no = 0; no < ucell.atoms[T0].ncpp.non_zero_count_soc[is0]; no++)
-										{
-											const int p1 = ucell.atoms[T0].ncpp.index1_soc[is0][no];
-											const int p2 = ucell.atoms[T0].ncpp.index2_soc[is0][no];
-											nlm_tmp += nlm_1[p1] * nlm_2[p2] * ucell.atoms[T0].ncpp.d_so(is0, p2, p1);
-										}
-										lm.Hloc_fixedR_soc[nnr+nnr_inner] += nlm_tmp;
-									}
-									else if(nspin == 2 || nspin == 1)
+									if(nspin == 2 || nspin == 1)
 									{
 										double nlm_tmp = 0.0;
 										const int nproj = ucell.infoNL.nproj[T0];
@@ -405,49 +394,49 @@ void build_Nonlocal_mu_new(
 											const int p2 = ucell.atoms[T0].ncpp.index2_soc[is0][no];
 											if (is0 == 0)
 											{
-												lm.DHloc_fixedR_x[nnr+nnr_inner] += nlm_2[0][p1]*nlm_1[p2]*
+												fsr.DHloc_fixedR_x[nnr+nnr_inner] += nlm_2[0][p1]*nlm_1[p2]*
 														(ucell.atoms[T0].ncpp.d_so(0, p2, p1).real()
 														+ ucell.atoms[T0].ncpp.d_so(3, p2, p1).real())*0.5;
-												lm.DHloc_fixedR_y[nnr+nnr_inner] += nlm_2[1][p1]*nlm_1[p2]*
+												fsr.DHloc_fixedR_y[nnr+nnr_inner] += nlm_2[1][p1]*nlm_1[p2]*
 														(ucell.atoms[T0].ncpp.d_so(0, p2, p1).real()
 														+ ucell.atoms[T0].ncpp.d_so(3, p2, p1).real())*0.5;
-												lm.DHloc_fixedR_z[nnr+nnr_inner] += nlm_2[2][p1]*nlm_1[p2]*
+												fsr.DHloc_fixedR_z[nnr+nnr_inner] += nlm_2[2][p1]*nlm_1[p2]*
 														(ucell.atoms[T0].ncpp.d_so(0, p2, p1).real()
 														+ ucell.atoms[T0].ncpp.d_so(3, p2, p1).real())*0.5;
 											}
 											else if (is0 == 1)
 											{
-												lm.DHloc_fixedR_x[nnr+nnr_inner] += nlm_2[0][p1]*nlm_1[p2]*
+												fsr.DHloc_fixedR_x[nnr+nnr_inner] += nlm_2[0][p1]*nlm_1[p2]*
 														(ucell.atoms[T0].ncpp.d_so(1, p2, p1).real()
 														+ ucell.atoms[T0].ncpp.d_so(2, p2, p1).real())*0.5;
-												lm.DHloc_fixedR_y[nnr+nnr_inner] += nlm_2[1][p1]*nlm_1[p2]*
+												fsr.DHloc_fixedR_y[nnr+nnr_inner] += nlm_2[1][p1]*nlm_1[p2]*
 														(ucell.atoms[T0].ncpp.d_so(1, p2, p1).real()
 														+ ucell.atoms[T0].ncpp.d_so(2, p2, p1).real())*0.5;
-												lm.DHloc_fixedR_z[nnr+nnr_inner] += nlm_2[2][p1]*nlm_1[p2]*
+												fsr.DHloc_fixedR_z[nnr+nnr_inner] += nlm_2[2][p1]*nlm_1[p2]*
 														(ucell.atoms[T0].ncpp.d_so(1, p2, p1).real()
 														+ ucell.atoms[T0].ncpp.d_so(2, p2, p1).real())*0.5;
 											}
 											else if (is0 == 2)
 											{
-												lm.DHloc_fixedR_x[nnr+nnr_inner] += nlm_2[0][p1]*nlm_1[p2]*
+												fsr.DHloc_fixedR_x[nnr+nnr_inner] += nlm_2[0][p1]*nlm_1[p2]*
 														(-ucell.atoms[T0].ncpp.d_so(1, p2, p1).imag()
 														+ ucell.atoms[T0].ncpp.d_so(2, p2, p1).imag())*0.5;
-												lm.DHloc_fixedR_y[nnr+nnr_inner] += nlm_2[1][p1]*nlm_1[p2]*
+												fsr.DHloc_fixedR_y[nnr+nnr_inner] += nlm_2[1][p1]*nlm_1[p2]*
 														(-ucell.atoms[T0].ncpp.d_so(1, p2, p1).imag()
 														+ ucell.atoms[T0].ncpp.d_so(2, p2, p1).imag())*0.5;
-												lm.DHloc_fixedR_z[nnr+nnr_inner] += nlm_2[2][p1]*nlm_1[p2]*
+												fsr.DHloc_fixedR_z[nnr+nnr_inner] += nlm_2[2][p1]*nlm_1[p2]*
 														(-ucell.atoms[T0].ncpp.d_so(1, p2, p1).imag()
 														+ ucell.atoms[T0].ncpp.d_so(2, p2, p1).imag())*0.5;
 											}
 											else if (is0 == 3)
 											{
-												lm.DHloc_fixedR_x[nnr+nnr_inner] += nlm_2[0][p1]*nlm_1[p2]*
+												fsr.DHloc_fixedR_x[nnr+nnr_inner] += nlm_2[0][p1]*nlm_1[p2]*
 														(ucell.atoms[T0].ncpp.d_so(0, p2, p1).real()
 														- ucell.atoms[T0].ncpp.d_so(3, p2, p1).real())*0.5;
-												lm.DHloc_fixedR_y[nnr+nnr_inner] += nlm_2[1][p1]*nlm_1[p2]*
+												fsr.DHloc_fixedR_y[nnr+nnr_inner] += nlm_2[1][p1]*nlm_1[p2]*
 														(ucell.atoms[T0].ncpp.d_so(0, p2, p1).real()
 														- ucell.atoms[T0].ncpp.d_so(3, p2, p1).real())*0.5;
-												lm.DHloc_fixedR_z[nnr+nnr_inner] += nlm_2[2][p1]*nlm_1[p2]*
+												fsr.DHloc_fixedR_z[nnr+nnr_inner] += nlm_2[2][p1]*nlm_1[p2]*
 														(ucell.atoms[T0].ncpp.d_so(0, p2, p1).real()
 														- ucell.atoms[T0].ncpp.d_so(3, p2, p1).real())*0.5;
 											}
@@ -494,12 +483,12 @@ void build_Nonlocal_mu_new(
 													nlm[1],
 													nlm[2],
 													'N',
-													lm.DSloc_x,
-													lm.DSloc_y,
-													lm.DSloc_z,
-													lm.DHloc_fixed_x,
-													lm.DHloc_fixed_y,
-													lm.DHloc_fixed_z);
+													fsr.DSloc_x,
+													fsr.DSloc_y,
+													fsr.DSloc_z,
+													fsr.DHloc_fixed_x,
+													fsr.DHloc_fixed_y,
+													fsr.DHloc_fixed_z);
 
 										}
 										else
@@ -536,9 +525,9 @@ void build_Nonlocal_mu_new(
 											}
 											assert(ib==nlm_1.size());
 
-											lm.DHloc_fixedR_x[nnr+nnr_inner] += nlm[0];
-											lm.DHloc_fixedR_y[nnr+nnr_inner] += nlm[1];
-											lm.DHloc_fixedR_z[nnr+nnr_inner] += nlm[2];
+											fsr.DHloc_fixedR_x[nnr+nnr_inner] += nlm[0];
+											fsr.DHloc_fixedR_y[nnr+nnr_inner] += nlm[1];
+											fsr.DHloc_fixedR_z[nnr+nnr_inner] += nlm[2];
 										}
 									}
 									else

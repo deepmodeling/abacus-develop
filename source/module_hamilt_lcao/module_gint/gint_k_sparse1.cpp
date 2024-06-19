@@ -326,7 +326,7 @@ void Gint_k::distribute_pvdpR_soc_sparseMatrix(
 }
 
 void Gint_k::cal_dvlocal_R_sparseMatrix(const int &current_spin, const double &sparse_threshold, 
-            LCAO_Matrix *LM,Parallel_Orbitals *pv,LCAO_Orbitals &orb,UnitCell &ucell,Grid_Driver &gdriver)
+            LCAO_Matrix *LM,Parallel_Orbitals *pv,UnitCell &ucell,Grid_Driver &gdriver)
 {
     ModuleBase::TITLE("Gint_k","cal_vlocal_R_sparseMatrix");
 
@@ -368,7 +368,7 @@ void Gint_k::cal_dvlocal_R_sparseMatrix(const int &current_spin, const double &s
                         Atom* atom2 = &ucell.atoms[T2];
                         dtau = gdriver.getAdjacentTau(ad) - tau1;
                         double distance = dtau.norm() * ucell.lat0;
-                        double rcut = orb.Phi[T1].getRcut() + orb.Phi[T2].getRcut();
+                        double rcut = this->rcuts[T1] + this->rcuts[T2];
 
                         if(distance < rcut)
                         {

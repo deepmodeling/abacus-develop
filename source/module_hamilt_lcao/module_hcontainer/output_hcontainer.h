@@ -1,7 +1,6 @@
 #ifndef OUTPUT_HCONTAINER_H
 #define OUTPUT_HCONTAINER_H
 
-#include "module_cell/unitcell.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 
 namespace hamilt
@@ -14,12 +13,8 @@ template <typename T>
 class Output_HContainer
 {
   public:
-    Output_HContainer(hamilt::HContainer<T>* hcontainer,
-                      const Parallel_Orbitals* ParaV,
-                      const UnitCell& ucell,
-                      std::ostream& ofs,
-                      double sparse_threshold,
-                      int precision);
+    Output_HContainer(hamilt::HContainer<T>* hcontainer, const int nrow, const int ncol, std::ostream& ofs,
+                      double sparse_threshold, int precision);
     // write the matrices of all R vectors to the output stream
     void write();
 
@@ -37,13 +32,13 @@ class Output_HContainer
 
   private:
     hamilt::HContainer<T>* _hcontainer;
-    const UnitCell& _ucell;
-    const Parallel_Orbitals* _ParaV;
+    int _nrow=0; 
+    int _ncol=0;
     std::ostream& _ofs;
     double _sparse_threshold;
     int _precision;
 };
 
-} // namespace ModuleIO
+} // namespace hamilt
 
 #endif // OUTPUT_HCONTAINER_H

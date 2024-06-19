@@ -13,7 +13,6 @@
 
 wavefunc::wavefunc()
 {
-	out_wfc_pw = 0;
 }
 
 wavefunc::~wavefunc()
@@ -739,128 +738,6 @@ void diago_PAO_in_pw_k2(const base_device::DEVICE_GPU* ctx,
 
 }//namespace hamilt
 
-//--------------------------------------------
-// get the nearest unitcell positions
-// that exist overlaps between two orbitals
-// iw1 and iw2
-//--------------------------------------------
-int wavefunc::get_R(int ix, int iy, int iz)   // pengfei 2016-11-23
-{
-	int count;
-	ModuleBase::Vector3<double> r,r1,r2;
-
-	for(int iw1=0; iw1<GlobalV::NLOCAL; iw1++)
-	{
-		for(int iw2=0; iw2<GlobalV::NLOCAL; iw2++)
-		{
-			int it1 = iw2it(iw1); int ia1 = iw2ia(iw1);
-			int it2 = iw2it(iw2); int ia2 = iw2ia(iw2);
-			//std::cout <<"iw1= "<<iw1<<" iw2= "<<iw2<<" it1= "<<it1<<" ia1= "<<ia1<<" it2= "<<it2<<" ia2= "<<ia2<<std::endl;
-			count = 0;
-
-			for(int nx=-int(ix/2);nx<=int(ix/2);nx++)
-			{
-				for(int ny=-int(iy/2);ny<=int(iy/2);ny++)
-				{
-					for(int nz=-int(iz/2);nz<=int(iz/2);nz++)
-					{
-						//std::cout <<"count = "<<count<<std::endl;
-						//std::cout<<"nx= "<<nx<<" ny= "<<ny<<" nz= "<<nz<<std::endl;
-						r1.x = GlobalC::ucell.atoms[it1].tau[ia1].x * GlobalC::ucell.lat0;
-						r1.y = GlobalC::ucell.atoms[it1].tau[ia1].y * GlobalC::ucell.lat0;
-						r1.z = GlobalC::ucell.atoms[it1].tau[ia1].z * GlobalC::ucell.lat0;
-						r2.x = (GlobalC::ucell.atoms[it2].tau[ia2].x
-						+ GlobalC::ucell.latvec.e11 * nx + GlobalC::ucell.latvec.e21 * ny + GlobalC::ucell.latvec.e31 * nz) * GlobalC::ucell.lat0;
-						r2.y = (GlobalC::ucell.atoms[it2].tau[ia2].y
-						+ GlobalC::ucell.latvec.e12 * nx + GlobalC::ucell.latvec.e22 * ny + GlobalC::ucell.latvec.e32 * nz) * GlobalC::ucell.lat0;
-						r2.z = (GlobalC::ucell.atoms[it2].tau[ia2].z
-						+ GlobalC::ucell.latvec.e13 * nx + GlobalC::ucell.latvec.e23 * ny + GlobalC::ucell.latvec.e33 * nz) * GlobalC::ucell.lat0;
-						r = r2 - r1;
-						double distance = sqrt(r*r);
-
-						if(distance < (GlobalC::ucell.atoms[it1].Rcut + GlobalC::ucell.atoms[it2].Rcut))
-						{
-							R[iw1][iw2][count].x = nx;
-							R[iw1][iw2][count].y = ny;
-							R[iw1][iw2][count].z = nz;
-							count++;
-						}
-					}
-				}
-			}
-			Rmax[iw1][iw2] = count;
-		}
-	}
-
-	int NR = 0;
-	for(int iw1=0;iw1<GlobalV::NLOCAL;iw1++)
-	{
-		for(int iw2=0;iw2<GlobalV::NLOCAL;iw2++)
-		{
-			if(Rmax[iw1][iw2] > NR)
-			{
-				NR = Rmax[iw1][iw2];
-			}
-		}
-	}
-
-	return NR;
-}
-
-
-int wavefunc::iw2it(int iw)    // pengfei 2016-11-23
-{
-    int ic, type;
-    ic = 0;
-    type = 0;
-    for(int it = 0; it<GlobalC::ucell.ntype; it++)
-	{
-        for(int ia = 0; ia<GlobalC::ucell.atoms[it].na; ia++)
-        {
-            for(int L = 0; L<GlobalC::ucell.atoms[it].nwl+1; L++)
-			{
-                for(int N = 0; N<GlobalC::ucell.atoms[it].l_nchi[L]; N++)
-                {
-                    for(int i=0; i<(2*L+1); i++)
-                    {
-                        if(ic == iw)
-                        {
-                            type = it;
-                        }
-                        ic++;
-					}
-                }
-			}
-        }
-	}
-    return type;
-}
-
-int wavefunc::iw2ia(int iw)    // pengfei 2016-11-23
-{
-	int ic, na;
-	ic = 0;
-    na = 0;
-	for(int it =0; it<GlobalC::ucell.ntype; it++)
-	{
-		for(int ia = 0; ia<GlobalC::ucell.atoms[it].na; ia++)
-		{
-			for(int L=0; L<GlobalC::ucell.atoms[it].nwl+1; L++)
-				for(int N=0; N<GlobalC::ucell.atoms[it].l_nchi[L]; N++)
-				{
-					for(int i=0; i<(2*L+1); i++)
-					{
-						if(ic == iw)
-						{
-							na = ia;
-						}
-						ic++;
-					}
-				}
-		}
-	}
-	return na;
-}
 
 //LiuXh add a new function here,
 //20180515

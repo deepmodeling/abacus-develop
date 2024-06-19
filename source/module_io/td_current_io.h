@@ -4,6 +4,7 @@
 #include "module_elecstate/module_dm/density_matrix.h"
 #include "module_elecstate/elecstate_lcao.h"
 #include "module_psi/psi.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/force_stress_arrays.h"
 
 namespace ModuleIO
 {
@@ -25,10 +26,11 @@ void cal_tmp_DM(elecstate::DensityMatrix<std::complex<double>, double>& DM, cons
 void Init_DS_tmp(
 		const Parallel_Orbitals& pv,
 		LCAO_Matrix &lm,
+        ForceStressArrays &fsr,
         const ORB_gen_tables* uot);
 
 /// @brief DS_locR will be initialized again in force calculation, so it must be destoryed here.
-void destory_DS_tmp(LCAO_Matrix &lm);
+void destory_DS_tmp(ForceStressArrays &fsr);
 
 #endif // __LCAO
 }

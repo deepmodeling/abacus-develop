@@ -20,7 +20,7 @@ hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::EkineticNew(
     const Parallel_Orbitals* paraV)
     : hamilt::OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in), uot_(uot)
 {
-    this->cal_type = lcao_fixed;
+    this->cal_type = calculation_type::lcao_fixed;
     this->ucell = ucell_in;
 #ifdef __DEBUG
     assert(this->ucell != nullptr);

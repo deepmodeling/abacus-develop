@@ -4,6 +4,7 @@
 #include "spar_hsr.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h" // only for INPUT
+#include "force_stress_arrays.h"
 
 void sparse_format::cal_SR(
         const Parallel_Orbitals &pv,
@@ -52,10 +53,17 @@ void sparse_format::cal_TR(
     
     //need to rebuild T(R)
     lm.Hloc_fixedR.resize(lm.ParaV->nnr);
-    lm.zeros_HSR('T');
+
+    LCAO_HS_Arrays HS_arrays;
+    LCAO_domain::zeros_HSR('T', HS_arrays);
+
+    // tmp array, will be deleted later,
+    // mohan 2024-06-15
+    ForceStressArrays fsr_tmp;
 
 	LCAO_domain::build_ST_new(
 			lm, 
+            fsr_tmp,
 			'T', 
 			0, 
 			ucell, 
@@ -183,14 +191,6 @@ void sparse_format::cal_STN_R_for_T(
                                 if (std::abs(tmp) > sparse_thr)
                                 {
                                     lm.TR_sparse[dR][iw1_all][iw2_all] = tmp;
-                                }
-                            }
-                            else if(nspin==4)
-                            {
-                                tmpc = lm.Hloc_fixedR_soc[index];
-                                if(std::abs(tmpc) > sparse_thr)
-                                {
-                                    lm.TR_soc_sparse[dR][iw1_all][iw2_all] = tmpc;
                                 }
                             }
 

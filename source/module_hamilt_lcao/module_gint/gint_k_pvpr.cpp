@@ -63,7 +63,6 @@ void Gint_k::folding_vl_k(const int &ik,
                         Parallel_Orbitals *pv,
                         const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                         const UnitCell& ucell,
-                        const LCAO_Orbitals& orb,
                         Grid_Driver& gd
                         )
 {
@@ -171,7 +170,7 @@ void Gint_k::folding_vl_k(const int &ik,
                         Atom* atom2 = &ucell.atoms[T2];
                         dtau = adjs.adjacent_tau[ad] - tau1;
                         double distance = dtau.norm() * ucell.lat0;
-                        double rcut = orb.Phi[T1].getRcut() + orb.Phi[T2].getRcut();
+                        double rcut = this->rcuts[T1] + this->rcuts[T2];
 
                         // for the local part, only need to calculate <phi_i | phi_j> within range
                         // mohan note 2012-07-06
@@ -426,7 +425,7 @@ void Gint_k::folding_vl_k(const int &ik,
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
 
 //transfer_pvpR, NSPIN = 1 or 2
-void Gint_k::transfer_pvpR(hamilt::HContainer<double> *hR,const UnitCell* ucell_in,const LCAO_Orbitals& orb,Grid_Driver* gd)
+void Gint_k::transfer_pvpR(hamilt::HContainer<double> *hR,const UnitCell* ucell_in,Grid_Driver* gd)
 {
     ModuleBase::TITLE("Gint_k","transfer_pvpR");
     ModuleBase::timer::tick("Gint_k","transfer_pvpR");
@@ -474,7 +473,7 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<double> *hR,const UnitCell* ucell_
                         Atom* atom2 = &ucell.atoms[T2];
                         auto dtau = adjs.adjacent_tau[ad] - tau1;
                         double distance = dtau.norm() * ucell.lat0;
-                        double rcut = orb.Phi[T1].getRcut() + orb.Phi[T2].getRcut();
+                        double rcut = this->rcuts[T1] + this->rcuts[T2];
 
                         if(distance < rcut)
                         {
@@ -552,7 +551,7 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<double> *hR,const UnitCell* ucell_
 }
 
 //transfer_pvpR, NSPIN = 4
-void Gint_k::transfer_pvpR(hamilt::HContainer<std::complex<double>> *hR,const UnitCell* ucell_in,const LCAO_Orbitals& orb,Grid_Driver* gd)
+void Gint_k::transfer_pvpR(hamilt::HContainer<std::complex<double>> *hR,const UnitCell* ucell_in,Grid_Driver* gd)
 {
     ModuleBase::TITLE("Gint_k","transfer_pvpR");
     ModuleBase::timer::tick("Gint_k","transfer_pvpR");
@@ -599,7 +598,7 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<std::complex<double>> *hR,const Un
                         Atom* atom2 = &ucell.atoms[T2];
                         auto dtau = adjs.adjacent_tau[ad] - tau1;
                         double distance = dtau.norm() * ucell.lat0;
-                        double rcut = orb.Phi[T1].getRcut() + orb.Phi[T2].getRcut();
+                        double rcut = this->rcuts[T1] + this->rcuts[T2];
 
                         if(distance < rcut)
                         {

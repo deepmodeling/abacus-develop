@@ -171,6 +171,7 @@ OBJS_CELL=atom_pseudo.o\
     read_cell_pseudopots.o\
     setup_nonlocal.o\
     klist.o\
+    cell_index.o\
 
 OBJS_DEEPKS=LCAO_deepks.o\
         LCAO_deepks_fdelta.o\
@@ -241,6 +242,13 @@ OBJS_GINT=gint.o\
       grid_meshcell.o\
       grid_meshk.o\
       grid_technique.o\
+      cal_psir_ylm.o\
+      cal_dpsir_ylm.o\
+      cal_ddpsir_ylm.o\
+      mult_psi_dm.o\
+      mult_psi_dm_new.o\
+      mult_psi_dmr.o\
+      init_orb.o\
 
 OBJS_HAMILT=hamilt_pw.o\
     operator.o\
@@ -463,6 +471,7 @@ OBJS_IO=input.o\
     init_info.o\
     readin_info.o\
     output_info.o\
+    parse_args.o\
 
 OBJS_IO_LCAO=cal_r_overlap_R.o\
       write_orb_info.o\
@@ -472,7 +481,6 @@ OBJS_IO_LCAO=cal_r_overlap_R.o\
       nscf_fermi_surf.o\
       istate_charge.o\
       istate_envelope.o\
-      mulliken_charge.o\
       read_dm.o\
       unk_overlap_lcao.o\
       read_wfc_nao.o\
@@ -483,9 +491,11 @@ OBJS_IO_LCAO=cal_r_overlap_R.o\
       write_HS_R.o\
       write_dm.o\
       output_dm.o\
-      output_dm1.o\
-      write_dm_sparse.o\
+      write_dmr.o\
       sparse_matrix.o\
+      output_mulliken.o\
+      output_sk.o\
+      output_dmk.o\
 
 OBJS_LCAO=DM_gamma.o\
       DM_gamma_2d_to_grid.o\
@@ -497,6 +507,7 @@ OBJS_LCAO=DM_gamma.o\
       norm_psi.o\
       propagator.o\
       td_velocity.o\
+      snap_psibeta_half_tddft.o\
       upsi.o\
       FORCE_STRESS.o\
 	  FORCE_gamma.o\
@@ -521,6 +532,7 @@ OBJS_LCAO=DM_gamma.o\
       LCAO_nl_mu.o\
       LCAO_nl_beta.o\
       LCAO_nnr.o\
+      LCAO_set_zero.o\
       center2_orb-orb11.o\
       center2_orb-orb21.o\
       center2_orb-orb22.o\

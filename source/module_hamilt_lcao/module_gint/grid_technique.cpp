@@ -8,18 +8,6 @@
 
 Grid_Technique::Grid_Technique()
 {
-    this->nlocdimg = nullptr;
-    this->nlocstartg = nullptr;
-    this->nad = nullptr;
-    this->how_many_atoms = nullptr;
-    this->start_ind = nullptr;
-    this->which_atom = nullptr;
-    this->which_bigcell = nullptr;
-    this->which_unitcell = nullptr;
-    this->bcell_start = nullptr;
-    this->in_this_processor = nullptr;
-    this->trace_lo = nullptr;
-    this->total_atoms_on_grid = 0;
     allocate_find_R2 = false;
 #if ((defined __CUDA) /* || (defined __ROCM) */)
     if(GlobalV::device_flag == "gpu")
@@ -31,73 +19,6 @@ Grid_Technique::Grid_Technique()
 
 Grid_Technique::~Grid_Technique()
 {
-    if(nlocdimg!=nullptr)
-	{
-		delete[] nlocdimg;
-	}
-
-	if(nlocstartg!=nullptr)
-	{
-		delete[] nlocstartg;
-	}
-
-	if(nad!=nullptr)
-	{
-		delete[] nad;
-	}
-
-	if(how_many_atoms!=nullptr)
-	{
-		delete[] how_many_atoms;
-	}
-
-    if(start_ind!=nullptr)
-	{
-		delete[] start_ind;
-	}
-  
-    if(which_atom!=nullptr)
-	{
-		delete[] which_atom;
-	}
-
-    if(which_bigcell!=nullptr)
-	{
-		delete[] which_bigcell;
-	}
-
-    if(which_unitcell!=nullptr)
-	{
-		delete[] which_unitcell;
-	}
-
-	if(bcell_start!=nullptr)
-	{
-		delete[] bcell_start;
-	}
-
-    if(in_this_processor!=nullptr)
-	{
-		delete[] in_this_processor;
-	}
-
-    if(trace_lo!=nullptr)
-	{
-		delete[] trace_lo;
-	}
-    
-    if (allocate_find_R2)
-    {
-        for (int iat = 0; iat < this->nat; iat++)
-        {
-            delete[] find_R2[iat];
-            delete[] find_R2st[iat];
-            delete[] find_R2_sorted_index[iat];
-        }
-        delete[] find_R2;
-        delete[] find_R2st;
-        delete[] find_R2_sorted_index;
-    }
 
 #if ((defined __CUDA) /* || (defined __ROCM) */)
     if(GlobalV::device_flag == "gpu")
@@ -111,24 +32,13 @@ Grid_Technique::~Grid_Technique()
 // after the orbital information has been read,
 // this function control the routinue to generate
 // grid technique parameters.
-void Grid_Technique::set_pbc_grid(const int& ncx_in,
-                                  const int& ncy_in,
-                                  const int& ncz_in,
-                                  const int& bx_in,
-                                  const int& by_in,
-                                  const int& bz_in,
-                                  const int& nbx_in,
-                                  const int& nby_in,
-                                  const int& nbz_in,
-                                  const int& nbxx_in,
-                                  const int& nbzp_start_in,
-                                  const int& nbzp_in,
-                                  const int& ny,
-                                  const int& nplane,
-                                  const int& startz_current,
-                                  const UnitCell& ucell,
-                                  const LCAO_Orbitals& orb,
-                                  const int num_stream)
+void Grid_Technique::set_pbc_grid(const int& ncx_in, const int& ncy_in, const int& ncz_in, const int& bx_in, const int& by_in,
+                      const int& bz_in, const int& nbx_in, const int& nby_in, const int& nbz_in, const int& nbxx_in,
+                      const int& nbzp_start_in, const int& nbzp_in, const int& ny, const int& nplane,
+                      const int& startz_current, const UnitCell& ucell, const double& dr_uniform, 
+                      const std::vector<double>& rcuts,const std::vector<std::vector<double>>& psi_u,
+                      const std::vector<std::vector<double>>& dpsi_u,const std::vector<std::vector<double>>& d2psi_u,
+                      const int& num_stream)
 {
     ModuleBase::TITLE("Grid_Technique", "init");
     ModuleBase::timer::tick("Grid_Technique", "init");
@@ -140,21 +50,24 @@ void Grid_Technique::set_pbc_grid(const int& ncx_in,
             << std::endl;
     }
 
+    
+    // copy ucell and orb parameters
+    this->ucell = &ucell;
+    this->dr_uniform=dr_uniform;
+    
+    this->nwmax=ucell.nwmax;
+    this->ntype=ucell.ntype;
+    
+    this->rcuts=rcuts;
+    double max_cut = *std::max_element(this->rcuts.begin(), this->rcuts.end());
+    this->nr_max = static_cast<int>(1/this->dr_uniform * max_cut) + 10;
+    this->psi_u=psi_u;
+    this->dpsi_u=dpsi_u;
+    this->d2psi_u=d2psi_u;
+
     // (1) init_meshcell cell and big cell.
-    this->set_grid_dim(ncx_in,
-                       ncy_in,
-                       ncz_in,
-                       bx_in,
-                       by_in,
-                       bz_in,
-                       nbx_in,
-                       nby_in,
-                       nbz_in,
-                       nbxx_in,
-                       nbzp_start_in,
-                       nbzp_in);
-    this->ucell=&ucell;
-    this->orb=&orb;
+    this->set_grid_dim(ncx_in, ncy_in, ncz_in, bx_in, by_in, bz_in, nbx_in, nby_in, nbz_in, nbxx_in, nbzp_start_in,
+                    nbzp_in);
     this->init_latvec(ucell);
 
     this->init_big_latvec(ucell);
@@ -162,20 +75,13 @@ void Grid_Technique::set_pbc_grid(const int& ncx_in,
     this->init_meshcell_pos();
 
     // (2) expand the grid
-    double* rcut=new double[ucell.ntype];
-    for(int T=0; T<ucell.ntype; T++)
-	{
-		rcut[T]=orb.Phi[T].getRcut();
-	}
-    this->init_grid_expansion(ucell,rcut);
+
+    this->init_grid_expansion(ucell, this->rcuts.data());
 
     // (3) calculate the extended grid.
-    this->cal_extended_cell(this->dxe, this->dye, this->dze);
+    this->cal_extended_cell(this->dxe, this->dye, this->dze,this->nbx, this->nby, this->nbz);
 
     this->init_tau_in_bigcell(ucell);
-
-    // init meshball
-    this->delete_meshball_positions(); // LiuXh add 2018-12-14
 
     this->init_meshball();
 
@@ -185,7 +91,7 @@ void Grid_Technique::set_pbc_grid(const int& ncx_in,
 #if ((defined __CUDA) /* || (defined __ROCM) */)
     if(GlobalV::device_flag == "gpu")
     {
-        this->init_gpu_gint_variables(ucell, orb, num_stream);
+        this->init_gpu_gint_variables(ucell, num_stream);
     }
 #endif
 
@@ -200,21 +106,11 @@ void Grid_Technique::get_startind(const int& ny,
     ModuleBase::TITLE("Grid_Technique", "get_startind");
 
     assert(nbxx >= 0);
+
     // calculates start_ind, which stores the
     // starting index of each bigcell
-
-    delete[] this->start_ind;
-    if (nbxx > 0)
-    {
-        this->start_ind = new int[nbxx];
-        ModuleBase::Memory::record("GT::start_ind", sizeof(int) * nbxx);
-        ModuleBase::GlobalFunc::ZEROS(start_ind, nbxx);
-    }
-    else
-    {
-        this->start_ind = nullptr;
-        return;
-    }
+    this->start_ind = std::vector<int>(nbxx, 0);
+    ModuleBase::Memory::record("GT::start_ind", sizeof(int) * nbxx);
 
 	for(int i=0;i<nbxx;i++)
 	{
@@ -258,40 +154,27 @@ void Grid_Technique::init_atoms_on_grid(const int& ny,
     // (1) prepare data.
     // counting the number of atoms whose orbitals have
     // values on the bigcell.
-    delete[] this->how_many_atoms;
-    if (nbxx > 0)
-    {
-        this->how_many_atoms = new int[nbxx];
-        ModuleBase::Memory::record("GT::how_many_atoms", sizeof(int) * nbxx);
-        ModuleBase::GlobalFunc::ZEROS(how_many_atoms, nbxx);
-    }
-    else
-    {
-        this->how_many_atoms = nullptr;
-    }
-
+    this->how_many_atoms = std::vector<int>(nbxx,0);
+    ModuleBase::Memory::record("GT::how_many_atoms", sizeof(int) * nbxx);
+    
     // (2) information about gloabl grid
     // and local grid.
     // mohan add 2010-07-02
-    int* ind_bigcell;
-    bool* bigcell_on_processor; // normal local form.
-    this->check_bigcell(ind_bigcell, bigcell_on_processor);
+    std::vector<int> ind_bigcell = std::vector<int>(nbxyz,0);
+    ModuleBase::Memory::record("GT::ind_bigcell", sizeof(int) * this->nxyze);
+    std::vector<char> bigcell_on_processor=std::vector<char>(nbxyz,0); 
+    ModuleBase::Memory::record("GT::bigcell_on_processor", sizeof(char) * this->nxyze);
+    this->check_bigcell(ind_bigcell.data(), bigcell_on_processor.data());
 
     // (3) Find the atoms using
     // when doing grid integration.
-    delete[] in_this_processor;
-    this->in_this_processor = new bool[ucell.nat];
-    for (int i = 0; i < ucell.nat; i++)
-    {
-        in_this_processor[i] = false;
-    }
+    this->in_this_processor = std::vector<bool>(ucell.nat, false);
+    ModuleBase::Memory::record("GT::in_this_processor", sizeof(int) * this->nxyze);
 
-    // init atoms on grid
-    assert(this->nxyze > 0);
-    int* index2normal = new int[this->nxyze];
-    assert(index2normal != NULL);
+    // (4) init atoms on grid
+    std::vector<int> index2normal = std::vector<int>(this->nxyze, 0);
     ModuleBase::Memory::record("GT::index2normal", sizeof(int) * this->nxyze);
-    this->grid_expansion_index(1, index2normal);
+    this->grid_expansion_index(1, index2normal.data());
 
 	// (5) record how many atoms on
 	// each local grid point (ix,iy,iz)
@@ -337,9 +220,6 @@ void Grid_Technique::init_atoms_on_grid(const int& ny,
         }
     }
 
-    delete[] ind_bigcell;
-    delete[] bigcell_on_processor;
-
     if (GlobalV::test_gridt)
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,
                                     "Total_atoms_on_grid",
@@ -374,13 +254,12 @@ void Grid_Technique::init_atoms_on_grid(const int& ny,
     // need how_many_atoms first.
     this->cal_grid_integration_index();
     // bcell_start is needed.
-    this->init_atoms_on_grid2(index2normal,ucell);
-    delete[] index2normal;
+    this->init_atoms_on_grid2(index2normal.data(),ucell);
     return;
 }
 
-void Grid_Technique::check_bigcell(int*& ind_bigcell,
-                                   bool*& bigcell_on_processor)
+void Grid_Technique::check_bigcell(int* ind_bigcell,
+                                   char* bigcell_on_processor)
 {
     // check if a given bigcell is treated on this processor
     const int zstart = nbzp_start;
@@ -395,8 +274,6 @@ void Grid_Technique::check_bigcell(int*& ind_bigcell,
     int ind=0;
 	bool flag=false;
 
-    ind_bigcell = new int[nbxyz];
-    bigcell_on_processor = new bool[nbxyz];
     for (int i = 0; i < nbxyz; i++)
     {
         int iz_now = i % nbz;
@@ -432,40 +309,35 @@ void Grid_Technique::init_atoms_on_grid2(const int* index2normal,const UnitCell&
         return;
     }
 
-	int* index2ucell = new int[this->nxyze];
-	assert( index2ucell != NULL );
+	std::vector<int> index2ucell = std::vector<int>(this->nxyze,0);
 	ModuleBase::Memory::record("GT::index2ucell", sizeof(int) * this->nxyze);	
-	this->grid_expansion_index(0,index2ucell);
+	this->grid_expansion_index(0,index2ucell.data());
 	
-	int *ind_bigcell=nullptr;
-	bool *bigcell_on_processor; // normal local form.
-	this->check_bigcell(ind_bigcell, bigcell_on_processor);
+	std::vector<int> ind_bigcell = std::vector<int>(nbxyz,0);
+    ModuleBase::Memory::record("GT::ind_bigcell", sizeof(int) * nbxyz);	
+	std::vector<char> bigcell_on_processor = std::vector<char>(nbxyz, 0); 
+	this->check_bigcell(ind_bigcell.data(), bigcell_on_processor.data());
 
     //--------------------------------------
-    // save which atom is in the bigcell.
+    // save which atom is in the bigcell,unitcell
     //--------------------------------------
-    delete[] which_atom;
-    this->which_atom = new int[total_atoms_on_grid];
-    assert(which_atom != 0);
-    ModuleBase::Memory::record("GT::which_atom",
-                               sizeof(int) * total_atoms_on_grid);
+    assert(total_atoms_on_grid != 0);
+    this->which_atom = std::vector<int>(total_atoms_on_grid, 0);
+    ModuleBase::Memory::record("GT::which_atom", sizeof(int) * total_atoms_on_grid);
 
-    delete[] which_bigcell;
-    this->which_bigcell = new int[total_atoms_on_grid];
-    assert(which_bigcell != 0);
-    ModuleBase::Memory::record("GT::which_bigcell",
-                               sizeof(int) * total_atoms_on_grid);
+    this->which_bigcell = std::vector<int>(total_atoms_on_grid, 0);
+    ModuleBase::Memory::record("GT::which_bigcell", sizeof(int) * total_atoms_on_grid);
 
-	delete[] which_unitcell;
-	this->which_unitcell = new int[total_atoms_on_grid];
-	assert( which_unitcell != 0);
-	ModuleBase::Memory::record("GT::which_unitcell", sizeof(int) * total_atoms_on_grid);
-	// for each atom, first we need to locate which cell
-	// the atom is in, then we search meshball aroung this
-	// grid, and record each grid's atom position.
-	int count = 0;
-	int iat = 0;
-	ModuleBase::GlobalFunc::ZEROS(this->how_many_atoms, nbxx);
+    this->which_unitcell = std::vector<int>(total_atoms_on_grid, 0);
+    ModuleBase::Memory::record("GT::which_unitcell", sizeof(int) * total_atoms_on_grid);
+
+    // for each atom, first we need to locate which cell
+    // the atom is in, then we search meshball aroung this
+    // grid, and record each grid's atom position.
+    int count = 0;
+    int iat = 0;
+    this->how_many_atoms = std::vector<int>(nbxx, 0);
+    ModuleBase::Memory::record("GT::how many atoms", sizeof(int) * nbxx);
 	for(int it=0; it<ucell.ntype; it++)
 	{
 		for(int ia=0; ia<ucell.atoms[it].na; ia++)
@@ -508,31 +380,20 @@ void Grid_Technique::init_atoms_on_grid2(const int* index2normal,const UnitCell&
 		}
 	}
 	assert( count == total_atoms_on_grid );
-	delete[] index2ucell;
-	delete[] ind_bigcell;
-	delete[] bigcell_on_processor;
 	return;
 }
 
 void Grid_Technique::cal_grid_integration_index(void)
 {
     // save the start
-    delete[] this->bcell_start;
-    if (nbxx > 0)
+    this->bcell_start = std::vector<int>(nbxx, 0);
+    ModuleBase::Memory::record("GT::bcell_start", sizeof(int) * nbxx);
+    for (int i = 1; i < nbxx; i++)
     {
-        this->bcell_start = new int[nbxx];
-        ModuleBase::Memory::record("GT::bcell_start", sizeof(int) * nbxx);
-        this->bcell_start[0] = 0;
-        for (int i = 1; i < nbxx; i++)
-        {
-            this->bcell_start[i]
-                = this->bcell_start[i - 1] + this->how_many_atoms[i - 1];
-        }
+        this->bcell_start[i]
+            = this->bcell_start[i - 1] + this->how_many_atoms[i - 1];
     }
-    else
-    {
-        this->bcell_start = nullptr;
-    }
+    
     // calculate which grid has the largest number of atoms,
     // and how many atoms.
     this->max_atom = 0;
@@ -572,12 +433,7 @@ void Grid_Technique::cal_trace_lo(const UnitCell& ucell)
     // save the atom information in trace_lo,
     // in fact the trace_lo dimension can be reduced
     // to ucell.nat, but I think this is another way.
-    delete[] trace_lo;
-    this->trace_lo = new int[GlobalV::NLOCAL];
-    for (int i = 0; i < GlobalV::NLOCAL; i++)
-    {
-        this->trace_lo[i] = -1;
-    }
+    this->trace_lo = std::vector<int>(GlobalV::NLOCAL, -1);
     ModuleBase::Memory::record("GT::trace_lo", sizeof(int) * GlobalV::NLOCAL);
 
     this->lnat = 0;
@@ -639,7 +495,7 @@ void Grid_Technique::cal_trace_lo(const UnitCell& ucell)
 
 #if ((defined __CUDA) /* || (defined __ROCM) */)
 
-void Grid_Technique::init_gpu_gint_variables(const UnitCell& ucell,const LCAO_Orbitals &orb,const int num_stream)
+void Grid_Technique::init_gpu_gint_variables(const UnitCell& ucell,const int num_stream)
 {
     if (is_malloced)
     {
@@ -658,15 +514,7 @@ void Grid_Technique::init_gpu_gint_variables(const UnitCell& ucell,const LCAO_Or
                                100 * sizeof(double),
                                cudaMemcpyHostToDevice));
 
-    const Numerical_Orbital_Lm* pointer;
-    double max_cut = 0;
-    for (int i = 0; i < ucell.ntype; i++)
-    {
-        if (orb.Phi[i].getRcut() > max_cut)
-        {
-            max_cut = orb.Phi[i].getRcut();
-        }
-    }
+    double max_cut = *std::max_element(this->rcuts.begin(), this->rcuts.end());
 
     int atom_nw_now[ucell.ntype];
     int ucell_atom_nwl_now[ucell.ntype];
@@ -715,17 +563,13 @@ void Grid_Technique::init_gpu_gint_variables(const UnitCell& ucell,const LCAO_Or
                 atom_iw2_ylm_now[i * ucell.nwmax + j]
                     = atomx->iw2_ylm[j];
                 atom_iw2_l_now[i * ucell.nwmax + j] = atomx->iw2l[j];
-                pointer = &orb.Phi[i].PhiLN(atomx->iw2l[j],
-                                                     atomx->iw2n[j]);
-                for (int k = 0; k < nr_max; k++)
+                for (int k = 0; k < this->nr_max; k++)
                 {
-                    int index_temp
-                        = (i * ucell.nwmax * nr_max + j * nr_max + k)
-                          * 2;
-                    if (k < pointer->nr_uniform)
+                    int index_temp = (i * ucell.nwmax * this->nr_max + j * this->nr_max + k) * 2;
+                    if (k < this->psi_u[i * this->nwmax + j].size())
                     {
-                        psi_u_now[index_temp] = pointer->psi_uniform[k];
-                        psi_u_now[index_temp + 1] = pointer->dpsi_uniform[k];
+                        psi_u_now[index_temp] = this->psi_u[i*this->nwmax + j].data()[k];
+                        psi_u_now[index_temp + 1] = this->dpsi_u[i*this->nwmax + j].data()[k];
                     }
                 }
             }
