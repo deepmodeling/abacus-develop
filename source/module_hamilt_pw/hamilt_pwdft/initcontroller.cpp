@@ -37,7 +37,7 @@ void InitController<T, Device>::prepare_init(Structure_Factor* p_sf, //< structu
                                              Parallel_Kpoints* p_parak,    //< parallel kpoints
                                              const int& rank)              //< rank
 #else
-                                             pseudopot_cell_vnl* = nullptr) //< nonlocal pseudopotential
+                                             pseudopot_cell_vnl* p_ppcell) //< nonlocal pseudopotential
 #endif
 {
     if (!this->use_psiinitializer)
