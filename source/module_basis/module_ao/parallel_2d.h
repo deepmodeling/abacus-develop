@@ -23,10 +23,10 @@ public:
     int get_col_size() const { return ncol; };
 
     /// number of global rows
-    int get_global_row_size();
+    int get_global_row_size() const;
 
     /// number of global columns
-    int get_global_col_size();
+    int get_global_col_size() const;
 
     /// number of local matrix elements
     int64_t get_local_size() const { return nloc; };

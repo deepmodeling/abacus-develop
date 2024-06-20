@@ -11,7 +11,7 @@ bool Parallel_2D::in_this_processor(const int iw1_all, const int iw2_all) const
     return global2local_row(iw1_all) != -1 && global2local_col(iw2_all) != -1;
 }
 
-int Parallel_2D::get_global_row_size()
+int Parallel_2D::get_global_row_size() const
 {
 #ifdef __MPI
     return desc[2];
@@ -20,7 +20,7 @@ int Parallel_2D::get_global_row_size()
 #endif 
 }
 
-int Parallel_2D::get_global_col_size()
+int Parallel_2D::get_global_col_size() const
 {
 #ifdef __MPI
     return desc[3];
