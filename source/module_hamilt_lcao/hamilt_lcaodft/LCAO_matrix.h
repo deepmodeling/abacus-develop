@@ -1,10 +1,10 @@
 #ifndef LCAO_MATRIX_H
 #define LCAO_MATRIX_H
 
+#include "module_base/complexmatrix.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_base/vector3.h"
-#include "module_base/complexmatrix.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
 
 // add by jingan for map<> in 2021-12-2, will be deleted in the future
@@ -15,38 +15,33 @@
 
 class LCAO_Matrix
 {
-    public:
-
+  public:
     LCAO_Matrix();
     ~LCAO_Matrix();
 
     void divide_HS_in_frag(const bool isGamma, Parallel_Orbitals& pv, const int& nks);
-    
-    // folding the fixed Hamiltonian (T+Vnl) if
-	// k-point algorithm is used.
-	void folding_fixedH(const int &ik, 
-                        const std::vector<ModuleBase::Vector3<double>>& kvec_d, 
-                        bool cal_syns = false);
 
-    Parallel_Orbitals *ParaV;
-    
+    // folding the fixed Hamiltonian (T+Vnl) if
+    // k-point algorithm is used.
+    void folding_fixedH(const int& ik, const std::vector<ModuleBase::Vector3<double>>& kvec_d, bool cal_syns = false);
+
+    Parallel_Orbitals* ParaV;
+
 #ifdef __EXX
     using TAC = std::pair<int, std::array<int, 3>>;
-    std::vector< std::map<int, std::map<TAC, RI::Tensor<double>>>> *Hexxd;
-    std::vector< std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc;
+    std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd;
+    std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc;
     /// @brief Hexxk for all k-points, only for the 1st scf loop ofrestart load
     std::vector<std::vector<double>> Hexxd_k_load;
     std::vector<std::vector<std::complex<double>>> Hexxc_k_load;
 #endif
 
-    void allocate_HS_k(const long &nloc);
+    void allocate_HS_k(const long& nloc);
 
-private:
+  private:
+    void allocate_HS_gamma(const long& nloc);
 
-    void allocate_HS_gamma(const long &nloc);
-
-
-    public:
+  public:
     //------------------------------
     // H, S, Hfixed
     // used in gamma only algorithm.
@@ -68,35 +63,19 @@ private:
     std::vector<std::complex<double>> Hloc2;
     std::vector<std::complex<double>> Sloc2;
     std::vector<std::complex<double>> Hloc_fixed2;
-    //with soc, zhengdy-soc
-/*	ModuleBase::ComplexMatrix Hloc2_soc;
-    ModuleBase::ComplexMatrix Sloc2_soc;
-    ModuleBase::ComplexMatrix Hloc_fixed2_soc;*/
 
+    // LiuXh add 2019-07-15
+    double**** Hloc_fixedR_tr;
+    double**** SlocR_tr;
+    double**** HR_tr;
 
-    //------------------------------
-    // Store H(mu,nu')
-    // nu' : nu in near unitcell R.
-    // used in kpoint algorithm.
-    // these matrixed are used
-    // for 'folding_matrix' in lcao_nnr,
-    // HlocR -> Hloc2,
-    //------------------------------
-    std::vector<double> Hloc_fixedR;
-
-    //LiuXh add 2019-07-15
-    double ****Hloc_fixedR_tr;
-    double ****SlocR_tr;
-    double ****HR_tr;
-
-
-    std::complex<double> ****Hloc_fixedR_tr_soc;
-    std::complex<double> ****SlocR_tr_soc;
-    std::complex<double> ****HR_tr_soc;
+    std::complex<double>**** Hloc_fixedR_tr_soc;
+    std::complex<double>**** SlocR_tr_soc;
+    std::complex<double>**** HR_tr_soc;
 
     // jingan add 2021-6-4, modify 2021-12-2
     // Sparse form of HR and SR, the format is [R_direct_coor][orbit_row][orbit_col]
-    
+
     // For HR_sparse[2], when nspin=1, only 0 is valid, when nspin=2, 0 means spin up, 1 means spin down
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> HR_sparse[2];
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> SR_sparse;
@@ -118,59 +97,46 @@ private:
     // Record all R direct coordinate information, even if HR or SR is a zero matrix
     std::set<Abfs::Vector3_Order<int>> all_R_coor;
 
-    // Records the R direct coordinates of HR and SR output, This variable will be filled with data when HR and SR files are output.
+    // Records the R direct coordinates of HR and SR output, This variable will be filled with data when HR and SR files
+    // are output.
     std::set<Abfs::Vector3_Order<int>> output_R_coor;
 
+    template <typename T>
+    static void set_mat2d(const int& global_ir, const int& global_ic, const T& v, const Parallel_Orbitals& pv, T* mat);
 
+    void set_HSgamma(const int& iw1_all, const int& iw2_all, const double& v, double* HSloc);
 
-	template <typename T>
-		static void set_mat2d(
-				const int& global_ir, 
-				const int& global_ic, 
-				const T& v, 
-				const Parallel_Orbitals& pv, 
-				T* mat);
+    void set_HSk(const int& iw1_all,
+                 const int& iw2_all,
+                 const std::complex<double>& v,
+                 const char& dtype,
+                 const int spin = 0);
 
-	void set_HSgamma(
-			const int& iw1_all, 
-			const int& iw2_all, 
-			const double& v, 
-			double* HSloc);
+    void set_HR_tr(const int& Rx,
+                   const int& Ry,
+                   const int& Rz,
+                   const int& iw1_all,
+                   const int& iw2_all,
+                   const double& v);
 
-	void set_HSk(
-			const int &iw1_all, 
-			const int &iw2_all, 
-			const std::complex<double> &v, 
-			const char &dtype, 
-			const int spin = 0);
+    void set_HR_tr_soc(const int& Rx,
+                       const int& Ry,
+                       const int& Rz,
+                       const int& iw1_all,
+                       const int& iw2_all,
+                       const std::complex<double>& v); // LiuXh add 2019-07-16
 
-	void set_HR_tr(
-			const int &Rx, 
-			const int &Ry, 
-			const int &Rz, 
-			const int &iw1_all, 
-			const int &iw2_all, 
-			const double &v);
+    void zeros_HSgamma(const char& mtype);
 
-	void set_HR_tr_soc(
-			const int &Rx, 
-			const int &Ry, 
-			const int &Rz, 
-			const int &iw1_all, 
-			const int &iw2_all, 
-			const std::complex<double> &v); //LiuXh add 2019-07-16
-
-    void zeros_HSgamma(const char &mtype);
-
-    void zeros_HSk(const char &mtype);
+    void zeros_HSk(const char& mtype);
 
     void update_Hloc(void);
 
-    void update_Hloc2(const int &ik);
+    void update_Hloc2(const int& ik);
 
-    void output_HSk(const char &mtype, std::string &fn);
+    void output_HSk(const char& mtype, std::string& fn);
 
-    //LiuXh add 2019-07-15
+    // LiuXh add 2019-07-15
     void allocate_Hloc_fixedR_tr(void);
 
     void allocate_HR_tr(void);
@@ -185,7 +151,6 @@ private:
     void destroy_T_R_sparse(void);
 
     void destroy_dH_R_sparse(void);
-
 };
 
 #include "LCAO_matrix.hpp"
