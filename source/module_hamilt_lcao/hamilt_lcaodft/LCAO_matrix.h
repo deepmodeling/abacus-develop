@@ -138,8 +138,6 @@ class LCAO_Matrix
 
     // LiuXh add 2019-07-15
 
-    void allocate_SlocR_tr(void);
-
     void destroy_Hloc_fixedR_tr(void);
 
     // jingan add 2021-6-4, modify 2021-12-2
