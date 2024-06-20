@@ -410,6 +410,8 @@ class HContainer
         return sparse_ap_index;
     }
 
+    const Parallel_Orbitals* get_paraV() const {return paraV;}
+
   private:
     // i-j atom pairs, sorted by matrix of (atom_i, atom_j)
     std::vector<AtomPair<T>> atom_pairs;
