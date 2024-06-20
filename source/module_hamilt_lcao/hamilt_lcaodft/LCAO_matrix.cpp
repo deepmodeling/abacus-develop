@@ -277,52 +277,6 @@ void LCAO_Matrix::output_HSk(const char &mtype, std::string &fn)
     return;
 }
 
-void LCAO_Matrix::allocate_Hloc_fixedR_tr(void)
-{
-    ModuleBase::TITLE("LCAO_Matrix","allocate_Hloc_fixedR_tr");
-
-    int R_x = GlobalC::GridD.getCellX();
-    int R_y = GlobalC::GridD.getCellY();
-    int R_z = GlobalC::GridD.getCellZ();
-
-    if(GlobalV::NSPIN!=4)
-    {
-        Hloc_fixedR_tr = new double***[R_x];
-        for(int ix=0; ix<R_x; ix++)
-        {
-            Hloc_fixedR_tr[ix] = new double**[R_y];
-            for(int iy=0; iy<R_y; iy++)
-            {
-                Hloc_fixedR_tr[ix][iy] = new double*[R_z];
-                for(int iz=0; iz<R_z; iz++)
-                {
-                    Hloc_fixedR_tr[ix][iy][iz] = new double[this->ParaV->nloc];
-                    ModuleBase::GlobalFunc::ZEROS(Hloc_fixedR_tr[ix][iy][iz], this->ParaV->nloc);
-                }
-            }
-        }
-    }
-    else
-    {
-        Hloc_fixedR_tr_soc = new std::complex<double>***[R_x];
-        for(int ix=0; ix<R_x; ix++)
-        {
-            Hloc_fixedR_tr_soc[ix] = new std::complex<double>**[R_y];
-            for(int iy=0; iy<R_y; iy++)
-            {
-                Hloc_fixedR_tr_soc[ix][iy] = new std::complex<double>*[R_z];
-                for(int iz=0; iz<R_z; iz++)
-                {
-                    Hloc_fixedR_tr_soc[ix][iy][iz] = new std::complex<double>[this->ParaV->nloc];
-                    ModuleBase::GlobalFunc::ZEROS(Hloc_fixedR_tr_soc[ix][iy][iz], this->ParaV->nloc);
-                }
-            }
-        }
-    }
-
-    return;
-}
-
 void LCAO_Matrix::allocate_HR_tr(void)
 {
     ModuleBase::TITLE("LCAO_Matrix","allocate_HR_tr");
