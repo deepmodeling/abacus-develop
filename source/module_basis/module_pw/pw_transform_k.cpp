@@ -10,10 +10,14 @@ namespace ModulePW
 
 /**
  * @brief transform real space to reciprocal space
- * @details c(g)=\int dr*f(r)*exp(-ig*r)
- *          c(k,g)=c(g)*exp(ik*r)
- *          c(k,g)=\int dr*f(r)*exp(-i(g+k)*r)
- *          Here we calculate c(k,g)
+ * @details real wave function f(k,r):
+ *          f(k,r)=1/V*\sum_{g} c(k,g)*exp(i(g+k)*r) 
+ *          c(k,g)=\int dr*f(k,r)*exp(-i(g+k)*r)
+ *          However, we use f'(k,r)!!! :
+ *          f'(k,r)=1/V*\sum_{g} c(k,g)*exp(ig*r) 
+ *          c(k,g)=\int dr*f'(k,r)*exp(-ig*r)
+ * 
+ *          This function tranform f'(r) to c(k,g). 
  * @param in: (nplane,ny,nx), complex<double> data
  * @param out: (nz, ns),  complex<double> data
  */
@@ -69,10 +73,14 @@ void PW_Basis_K::real2recip(const std::complex<FPTYPE>* in,
 
 /**
  * @brief transform real space to reciprocal space
- * @details c(g)=\int dr*f(r)*exp(-ig*r)
- *          c(k,g)=c(g)*exp(ik*r)
- *          c(k,g)=\int dr*f(r)*exp(-i(g+k)*r)
- *          Here we calculate c(k,g)
+ * @details real wave function f(k,r):
+ *          f(k,r)=1/V*\sum_{g} c(k,g)*exp(i(g+k)*r) 
+ *          c(k,g)=\int dr*f(k,r)*exp(-i(g+k)*r)
+ *          However, we use f'(k,r)!!! :
+ *          f'(k,r)=1/V*\sum_{g} c(k,g)*exp(ig*r) 
+ *          c(k,g)=\int dr*f'(k,r)*exp(-ig*r)
+ * 
+ *          This function tranform f'(r) to c(k,g). 
  * @param in: (nplane,ny,nx), double data
  * @param out: (nz, ns),  complex<double> data
  */
@@ -139,10 +147,14 @@ void PW_Basis_K::real2recip(const FPTYPE* in,
 
 /**
  * @brief transform reciprocal space to real space
- * @details f(r)=1/V * \sum_{g} c(k,g)*exp(ig*r)
- *          c(k,g)=c(g)*exp(ik*r)
- *          f(r)=1/V * \sum_{g} c(g)*exp(i(g+k)*r)
- *          Here we calculate f(r)
+ * @details real wave function f(k,r):
+ *          f(k,r)=1/V*\sum_{g} c(k,g)*exp(i(g+k)*r) 
+ *          c(k,g)=\int dr*f(k,r)*exp(-i(g+k)*r)
+ *          However, we use f'(k,r)!!! :
+ *          f'(k,r)=1/V*\sum_{g} c(k,g)*exp(ig*r) 
+ *          c(k,g)=\int dr*f'(k,r)*exp(-ig*r)
+ * 
+ *          This function tranform c(k,g) to f'(r).
  * @param in: (nz,ns), complex<double>
  * @param out: (nplane, ny, nx), complex<double>
  */
@@ -197,10 +209,14 @@ void PW_Basis_K::recip2real(const std::complex<FPTYPE>* in,
 
 /**
  * @brief transform reciprocal space to real space
- * @details f(r)=1/V * \sum_{g} c(k,g)*exp(ig*r)
- *          c(k,g)=c(g)*exp(ik*r)
- *          f(r)=1/V * \sum_{g} c(g)*exp(i(g+k)*r)
- *          Here we calculate f(r)
+ * @details real wave function f(k,r):
+ *          f(k,r)=1/V*\sum_{g} c(k,g)*exp(i(g+k)*r) 
+ *          c(k,g)=\int dr*f(k,r)*exp(-i(g+k)*r)
+ *          However, we use f'(k,r)!!! :
+ *          f'(k,r)=1/V*\sum_{g} c(k,g)*exp(ig*r) 
+ *          c(k,g)=\int dr*f'(k,r)*exp(-ig*r)
+ * 
+ *          This function tranform c(k,g) to f'(r).
  * @param in: (nz,ns), complex<double>
  * @param out: (nplane, ny, nx), double
  */

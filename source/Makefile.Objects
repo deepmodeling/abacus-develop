@@ -597,6 +597,7 @@ OBJS_SRCPW=H_Ewald_pw.o\
     symmetry_rhog.o\
     wavefunc.o\
     wf_atomic.o\
+    initcontroller.o\
     elecond.o\
     sto_tool.o\
     sto_elecond.o\
