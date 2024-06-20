@@ -7,34 +7,19 @@
 #include "module_cell/unitcell.h"
 Grid_BigCell::Grid_BigCell()
 {
-	this->flag_tib = false;
-	this->index_atom = nullptr;
-	this->orbital_rmax = 0.0;
-	this->nxe = this->nye = this->nze = 0;	
-	this->bigcell_dx = 0.0;
-	this->bigcell_dy = 0.0;
-	this->bigcell_dz = 0.0;
-	this->dxe = 0;
-	this->dye = 0;
-	this->dze = 0;
-	this->nxe = 0;
-	this->nye = 0;
-	this->nze = 0;
-	this->nxyze = 0;
+    this->orbital_rmax = 0.0;
+    this->nxe = this->nye = this->nze = 0;
+    this->dxe = 0;
+    this->dye = 0;
+    this->dze = 0;
+    this->nxe = 0;
+    this->nye = 0;
+    this->nze = 0;
+    this->nxyze = 0;
 }
 
 Grid_BigCell::~Grid_BigCell()
 {
-	// delete tau positions.
-	if(this->flag_tib)
-	{
-		for(int i=0; i<this->nat; i++)
-		{
-			delete[] tau_in_bigcell[i];
-		}
-		delete[] tau_in_bigcell;
-	}
-	delete[] index_atom;
 }
 
 void Grid_BigCell::init_big_latvec(const UnitCell& ucell)
@@ -47,17 +32,20 @@ void Grid_BigCell::init_big_latvec(const UnitCell& ucell)
 
 	this->nat=ucell.nat;
 	//size of each big room (same shape with unitcell)
-	this->bigcell_vec1[0]= ucell.a1.x / (double)nbx * ucell.lat0;
-	this->bigcell_vec1[1]= ucell.a1.y / (double)nbx * ucell.lat0;
-	this->bigcell_vec1[2]= ucell.a1.z / (double)nbx * ucell.lat0;
+	this->bigcell_vec1=std::vector<double>(3,0.0);
+	this->bigcell_vec1[0]=ucell.a1.x / (double)nbx * ucell.lat0;
+	this->bigcell_vec1[1]=ucell.a1.y / (double)nbx * ucell.lat0;
+	this->bigcell_vec1[2]=ucell.a1.z / (double)nbx * ucell.lat0;
 
-	this->bigcell_vec2[0]= ucell.a2.x / (double)nby * ucell.lat0;
-	this->bigcell_vec2[1]= ucell.a2.y / (double)nby * ucell.lat0;
-	this->bigcell_vec2[2]= ucell.a2.z / (double)nby * ucell.lat0;
+	this->bigcell_vec2=std::vector<double>(3,0.0);
+	this->bigcell_vec2[0]=ucell.a2.x / (double)nby * ucell.lat0;
+	this->bigcell_vec2[1]=ucell.a2.y / (double)nby * ucell.lat0;
+	this->bigcell_vec2[2]=ucell.a2.z / (double)nby * ucell.lat0;
 
-	this->bigcell_vec3[0]= ucell.a3.x / (double)nbz * ucell.lat0;
-	this->bigcell_vec3[1]= ucell.a3.y / (double)nbz * ucell.lat0;
-	this->bigcell_vec3[2]= ucell.a3.z / (double)nbz * ucell.lat0;
+	this->bigcell_vec3=std::vector<double>(3,0.0);
+	this->bigcell_vec3[0]=ucell.a3.x / (double)nbz * ucell.lat0;
+	this->bigcell_vec3[1]=ucell.a3.y / (double)nbz * ucell.lat0;
+	this->bigcell_vec3[2]=ucell.a3.z / (double)nbz * ucell.lat0;
 
 	this->bigcell_latvec0.e11 = this->bigcell_vec1[0];
 	this->bigcell_latvec0.e12 = this->bigcell_vec1[1];
@@ -168,23 +156,12 @@ void Grid_BigCell::init_tau_in_bigcell(const UnitCell& ucell)
 	
 	// allcoate space for atom positions relative
 	// to meshcell.
-
-	if(!flag_tib)
-	{
-		this->tau_in_bigcell = new double* [ucell.nat];
-		for(int i=0; i<ucell.nat; i++)
-		{
-			this->tau_in_bigcell[i] = new double[3];
-		}
-		this->flag_tib = true;
-
-		// allocate space, these arrays record which meshcell
-		// the atom is in.
-		delete[] index_atom;
-		this->index_atom = new int[ucell.nat];
-
-		ModuleBase::Memory::record("tau_in_bigcell", sizeof(double) * ucell.nat*3);
-	}
+	this->tau_in_bigcell = std::vector<std::vector<double>>(ucell.nat,std::vector<double>(3,0.0));
+	ModuleBase::Memory::record("tau_in_bigcell", sizeof(double) * ucell.nat*3);
+	// allocate space, these arrays record which meshcell
+	// the atom is in.
+	this->index_atom = std::vector<int>(ucell.nat, 0);
+	ModuleBase::Memory::record("index_atom", sizeof(double) * ucell.nat);
 	
 	// get the fraction number of (i,j,k)
 	ModuleBase::Vector3<double> fraction;

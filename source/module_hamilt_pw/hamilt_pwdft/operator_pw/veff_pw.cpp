@@ -13,7 +13,7 @@ Veff<OperatorPW<T, Device>>::Veff(const int* isk_in,
                                        const ModulePW::PW_Basis_K* wfcpw_in)
 {
     this->classname = "Veff";
-    this->cal_type = pw_veff;
+    this->cal_type = calculation_type::pw_veff;
     this->isk = isk_in;
     this->veff = veff_in;
     //note: "veff = nullptr" means that this core does not treat potential but still treats wf. 
@@ -112,7 +112,7 @@ template<typename T, typename Device>
 template<typename T_in, typename Device_in>
 hamilt::Veff<OperatorPW<T, Device>>::Veff(const Veff<OperatorPW<T_in, Device_in>> *veff) {
     this->classname = "Veff";
-    this->cal_type = pw_veff;
+    this->cal_type = calculation_type::pw_veff;
     this->ik = veff->get_ik();
     this->isk = veff->get_isk();
     this->veff_col = veff->get_veff_col();

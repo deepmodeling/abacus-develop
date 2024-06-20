@@ -12,6 +12,8 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_basis/module_ao/ORB_gen_tables.h"
 #include "module_base/vector3.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/force_stress_arrays.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_HS_arrays.hpp"
 
 namespace LCAO_domain
 {
@@ -28,6 +30,7 @@ namespace LCAO_domain
 
     void build_Nonlocal_mu_new(
 			LCAO_Matrix &lm,
+            ForceStressArrays &fsr, // mohan 2024-06-16 
 			double* HlocR,
 			const bool& calc_deri,
 			const UnitCell& ucell,
@@ -127,7 +130,7 @@ namespace LCAO_domain
      * @brief set each element of T matrices 
     */
 	void single_derivative(
-            LCAO_Matrix& lm,
+            ForceStressArrays& fsr,
 			const LCAO_Orbitals& orb,
 			const ORB_gen_tables& uot,
 			const Parallel_Orbitals& pv,
@@ -162,6 +165,7 @@ namespace LCAO_domain
     */
     void build_ST_new(
 			LCAO_Matrix& lm,
+			ForceStressArrays& fsr,
 			const char& dtype,
 			const bool& cal_deri,
 			const UnitCell& ucell,
@@ -172,6 +176,11 @@ namespace LCAO_domain
 			double* SHlocR,
 			bool cal_syns = false,
 			double dmax = 0.0);
+
+	/**
+	 * @brief set zeros for HSR matrices 
+	*/
+	void zeros_HSR(const char &mtype, LCAO_HS_Arrays& HS_arrays);
 }
 
 #endif

@@ -8,7 +8,6 @@ gamma_only          0
 
 
 calculation         scf
-symmetry            1
 
 #test_force         1
 relax_nmax               1
@@ -23,7 +22,7 @@ smearing_method            gaussian
 smearing_sigma               0.001
 
 ecutwfc             20
-scf_thr                 1e-9
+scf_thr                 1e-6
 scf_nmax               100
 
 #cal_stress             1
@@ -31,7 +30,7 @@ scf_nmax               100
 lspinorb            1
 
 basis_type          pw
-ks_solver           cg
+ks_solver           dav
 chg_extrap       second-order
 out_dm              0
 pw_diag_thr                0.00001

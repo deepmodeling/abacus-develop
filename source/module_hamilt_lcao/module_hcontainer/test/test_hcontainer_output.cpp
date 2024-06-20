@@ -1,9 +1,9 @@
-#include "../output_hcontainer.h"
-
 #include "../hcontainer.h"
+#include "../output_hcontainer.h"
+#include "module_cell/unitcell.h"
+
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "module_cell/unitcell.h"
 
 /************************************************
  *  unit test of output_hcontainer.cpp
@@ -131,7 +131,7 @@ TEST_F(OutputHContainerTest, Write)
         HR.unfix_R();
     }
     double sparse_threshold = 0.1;
-    hamilt::Output_HContainer<double> output_HR(&HR, &ParaV, ucell, std::cout, sparse_threshold, 2);
+    hamilt::Output_HContainer<double> output_HR(&HR, ParaV.nrow, ParaV.ncol, std::cout, sparse_threshold, 2);
     // the first R
     testing::internal::CaptureStdout();
     output_HR.write(0, 1, 1);

@@ -86,8 +86,10 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "soc_lambda", soc_lambda, "The fraction of averaged SOC pseudopotential is given by (1-soc_lambda)");
     ModuleBase::GlobalFunc::OUTP(ofs, "cal_force", cal_force, "if calculate the force at the end of the electronic iteration");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_freq_ion", out_freq_ion, "the frequency ( >= 0 ) of ionic step to output charge density and wavefunction. 0: output only when ion steps are finished");
+    ModuleBase::GlobalFunc::OUTP(ofs,"elpa_num_thread",elpa_num_thread,"Number of threads need to use in elpa");
     ModuleBase::GlobalFunc::OUTP(ofs, "device", device, "the computing device for ABACUS");
     ModuleBase::GlobalFunc::OUTP(ofs, "precision", precision, "the computing precision for ABACUS");
+    
 
     ofs << "\n#Parameters (2.PW)" << std::endl;
     ModuleBase::GlobalFunc::OUTP(ofs, "ecutwfc", ecutwfc, "#energy cutoff for wave functions");
@@ -537,7 +539,7 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     ModuleBase::GlobalFunc::OUTP(ofs, "pexsi_mu_guard", pexsi_mu_guard, "Safe guard criterion in terms of the chemical potential to reinvoke the inertia counting procedure");
     ModuleBase::GlobalFunc::OUTP(ofs, "pexsi_elec_thr", pexsi_elec_thr, "Stopping criterion of the PEXSI iteration in terms of the number of electrons compared to numElectronExact");
     ModuleBase::GlobalFunc::OUTP(ofs, "pexsi_zero_thr", pexsi_zero_thr, "if the absolute value of matrix element is less than ZERO_Limit, it will be considered as 0");
-
+    
     ofs.close();
     return;
 }

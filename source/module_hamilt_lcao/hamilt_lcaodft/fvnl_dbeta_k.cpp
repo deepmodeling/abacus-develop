@@ -1,18 +1,17 @@
 #include "FORCE.h"
-
-#include <map>
-#include <unordered_map>
-
 #include "module_base/memory.h"
 #include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
 #include "module_base/tool_threading.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_elecstate/cal_dm.h"
-#include "module_elecstate/module_dm/cal_dm_psi.h"
 #include "module_elecstate/elecstate_lcao.h"
+#include "module_elecstate/module_dm/cal_dm_psi.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/write_HS.h"
+
+#include <map>
+#include <unordered_map>
 
 #ifdef __DEEPKS
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
@@ -22,25 +21,23 @@
 #include <omp.h>
 #endif
 
-
 typedef std::tuple<int, int, int, int> key_tuple;
 
 // must consider three-center H matrix.
-template<>
-void Force_LCAO<std::complex<double>>::cal_fvnl_dbeta(
-    const elecstate::DensityMatrix<std::complex<double>, double>* dm,
-    const Parallel_Orbitals& pv,
-    const UnitCell& ucell,
-    const LCAO_Orbitals& orb,
-    const ORB_gen_tables& uot,
-    Grid_Driver& gd,
-    const bool isforce,
-    const bool isstress,
-    ModuleBase::matrix& fvnl_dbeta,
-    ModuleBase::matrix& svnl_dbeta)
+template <>
+void Force_LCAO<std::complex<double>>::cal_fvnl_dbeta(const elecstate::DensityMatrix<std::complex<double>, double>* dm,
+                                                      const Parallel_Orbitals& pv,
+                                                      const UnitCell& ucell,
+                                                      const LCAO_Orbitals& orb,
+                                                      const ORB_gen_tables& uot,
+                                                      Grid_Driver& gd,
+                                                      const bool isforce,
+                                                      const bool isstress,
+                                                      ModuleBase::matrix& fvnl_dbeta,
+                                                      ModuleBase::matrix& svnl_dbeta)
 {
-    ModuleBase::TITLE("Force_LCAO","cal_fvnl_dbeta");
-    ModuleBase::timer::tick("Force_LCAO","cal_fvnl_dbeta");
+    ModuleBase::TITLE("Force_LCAO", "cal_fvnl_dbeta");
+    ModuleBase::timer::tick("Force_LCAO", "cal_fvnl_dbeta");
 
     const int nspin = GlobalV::NSPIN;
     const int nspin_DMR = (nspin == 2) ? 2 : 1;
@@ -98,39 +95,22 @@ void Force_LCAO<std::complex<double>>::cal_fvnl_dbeta(
                 const int iw1_all = start1 + iw1;
                 const int iw1_local = pv.global2local_row(iw1_all);
                 const int iw2_local = pv.global2local_col(iw1_all);
-				if (iw1_local < 0 && iw2_local < 0)
-				{
-					continue;
-				}
+                if (iw1_local < 0 && iw2_local < 0)
+                {
+                    continue;
+                }
                 const int iw1_0 = iw1 / npol;
                 std::vector<std::vector<double>> nlm;
-#ifdef USE_NEW_TWO_CENTER
-                //=================================================================
-                //          new two-center integral (temporary)
-                //=================================================================
-                int L1 = atom1->iw2l[ iw1_0 ];
-                int N1 = atom1->iw2n[ iw1_0 ];
-                int m1 = atom1->iw2m[ iw1_0 ];
+                int L1 = atom1->iw2l[iw1_0];
+                int N1 = atom1->iw2n[iw1_0];
+                int m1 = atom1->iw2m[iw1_0];
 
                 // convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
-                int M1 = (m1 % 2 == 0) ? -m1/2 : (m1+1)/2;
+                int M1 = (m1 % 2 == 0) ? -m1 / 2 : (m1 + 1) / 2;
 
                 ModuleBase::Vector3<double> dtau = tau - tau1;
-                uot.two_center_bundle->overlap_orb_beta->snap(
-                        T1, L1, N1, M1, it, dtau * ucell.lat0, true, nlm);
-#else
-                uot.snap_psibeta_half(orb,
-                                    ucell.infoNL,
-                                    nlm,
-                                    tau1,
-                                    T1,
-                                    atom1->iw2l[iw1_0], // L1
-                                    atom1->iw2m[iw1_0], // m1
-                                    atom1->iw2n[iw1_0], // N1
-                                    tau,
-                                    it,
-                                    1); // R0,T0
-#endif
+                uot.two_center_bundle->overlap_orb_beta->snap(T1, L1, N1, M1, it, dtau * ucell.lat0, true, nlm);
+
                 nlm_cur.insert({iw1_all, nlm});
             } // end iw
             const int iat1 = ucell.itia2iat(T1, I1);
@@ -151,10 +131,10 @@ void Force_LCAO<std::complex<double>>::cal_fvnl_dbeta(
 #ifdef _OPENMP
 #pragma omp parallel reduction(+ : total_nnr)
     {
-		ModuleBase::matrix local_svnl_dbeta(3, 3);
-		const int num_threads = omp_get_num_threads();
+        ModuleBase::matrix local_svnl_dbeta(3, 3);
+        const int num_threads = omp_get_num_threads();
 #else
-		ModuleBase::matrix& local_svnl_dbeta = svnl_dbeta;
+    ModuleBase::matrix& local_svnl_dbeta = svnl_dbeta;
 #endif
 
         ModuleBase::Vector3<double> tau1;
@@ -228,19 +208,19 @@ void Force_LCAO<std::complex<double>>::cal_fvnl_dbeta(
 
                     // check if this a adjacent atoms.
                     bool is_adj = false;
-					if (distance < rcut)
-					{
-						is_adj = true;
-					}
+                    if (distance < rcut)
+                    {
+                        is_adj = true;
+                    }
                     else if (distance >= rcut)
                     {
                         for (int ad0 = 0; ad0 < adjs.adj_num + 1; ++ad0)
                         {
                             const int T0 = adjs.ntype[ad0];
-							if (ucell.infoNL.nproj[T0] == 0)
-							{
-								continue;
-							}
+                            if (ucell.infoNL.nproj[T0] == 0)
+                            {
+                                continue;
+                            }
                             const int I0 = adjs.natom[ad0];
                             // const int iat0 = ucell.itia2iat(T0, I0);
                             // const int start0 = ucell.itiaiw2iwt(T0, I0, 0);
@@ -272,7 +252,7 @@ void Force_LCAO<std::complex<double>>::cal_fvnl_dbeta(
                         std::vector<double*> tmp_matrix_ptr;
                         for (int is = 0; is < nspin_DMR; ++is)
                         {
-                            auto* tmp_base_matrix = dm->get_DMR_pointer(is+1)->find_matrix(iat1, iat2, rx2, ry2, rz2);
+                            auto* tmp_base_matrix = dm->get_DMR_pointer(is + 1)->find_matrix(iat1, iat2, rx2, ry2, rz2);
                             tmp_matrix_ptr.push_back(tmp_base_matrix->get_pointer());
                         }
 
@@ -281,16 +261,16 @@ void Force_LCAO<std::complex<double>>::cal_fvnl_dbeta(
                             const int T0 = adjs.ntype[ad0];
                             const int I0 = adjs.natom[ad0];
                             const int iat = ucell.itia2iat(T0, I0);
-							if (!iat_recorded && isforce)
-							{
-								adj_iat[ad0] = iat;
-							}
+                            if (!iat_recorded && isforce)
+                            {
+                                adj_iat[ad0] = iat;
+                            }
 
                             // mohan add 2010-12-19
-							if (ucell.infoNL.nproj[T0] == 0)
-							{
-								continue;
-							}
+                            if (ucell.infoNL.nproj[T0] == 0)
+                            {
+                                continue;
+                            }
 
                             // const int I0 = gd.getNatom(ad0);
                             // const int start0 = ucell.itiaiw2iwt(T0, I0, 0);
@@ -302,10 +282,8 @@ void Force_LCAO<std::complex<double>>::cal_fvnl_dbeta(
                             const double distance2 = dtau2.norm2() * pow(ucell.lat0, 2);
 
                             // seems a bug here!! mohan 2011-06-17
-                            rcut1 = pow(orb.Phi[T1].getRcut() + ucell.infoNL.Beta[T0].get_rcut_max(),
-                                        2);
-                            rcut2 = pow(orb.Phi[T2].getRcut() + ucell.infoNL.Beta[T0].get_rcut_max(),
-                                        2);
+                            rcut1 = pow(orb.Phi[T1].getRcut() + ucell.infoNL.Beta[T0].get_rcut_max(), 2);
+                            rcut2 = pow(orb.Phi[T2].getRcut() + ucell.infoNL.Beta[T0].get_rcut_max(), 2);
 
                             double r0[3];
                             double r1[3];
@@ -328,7 +306,7 @@ void Force_LCAO<std::complex<double>>::cal_fvnl_dbeta(
                             key_tuple key2(iat2, rx2 - rx0, ry2 - ry0, rz2 - rz0);
 
                             int nnr_inner = 0;
-                            int dhsize = pv.get_row_size(iat1)*pv.get_col_size(iat2);
+                            int dhsize = pv.get_row_size(iat1) * pv.get_col_size(iat2);
                             std::vector<std::vector<double>> dhvnl(3, std::vector<double>(dhsize, 0.0));
                             std::vector<std::vector<double>> dhvnl1(3, std::vector<double>(dhsize, 0.0));
                             for (int j = 0; j < atom1->nw * npol; j++)
@@ -336,22 +314,22 @@ void Force_LCAO<std::complex<double>>::cal_fvnl_dbeta(
                                 const int j0 = j / npol; // added by zhengdy-soc
                                 const int iw1_all = start1 + j;
                                 const int mu = pv.global2local_row(iw1_all);
-								if (mu < 0)
-								{
-									continue;
-								}
+                                if (mu < 0)
+                                {
+                                    continue;
+                                }
 
                                 for (int k = 0; k < atom2->nw * npol; k++)
                                 {
                                     const int k0 = k / npol;
                                     const int iw2_all = start2 + k;
                                     const int nu = pv.global2local_col(iw2_all);
-									if (nu < 0)
-									{
-										continue;
-									}
+                                    if (nu < 0)
+                                    {
+                                        continue;
+                                    }
 
-                                    if (nspin==4)
+                                    if (nspin == 4)
                                     {
                                         std::vector<double> nlm_1 = nlm_tot[iat][key2][iw2_all][0];
                                         std::vector<std::vector<double>> nlm_2;
@@ -360,7 +338,7 @@ void Force_LCAO<std::complex<double>>::cal_fvnl_dbeta(
                                         {
                                             nlm_2[i] = nlm_tot[iat][key1][iw1_all][i + 1];
                                         }
-                                        int is0 = (j-j0*npol) + (k-k0*npol) * 2;
+                                        int is0 = (j - j0 * npol) + (k - k0 * npol) * 2;
                                         for (int no = 0; no < ucell.atoms[T0].ncpp.non_zero_count_soc[is0]; no++)
                                         {
                                             const int p1 = ucell.atoms[T0].ncpp.index1_soc[is0][no];
@@ -369,27 +347,35 @@ void Force_LCAO<std::complex<double>>::cal_fvnl_dbeta(
                                             {
                                                 if (is0 == 0)
                                                 {
-                                                    dhvnl[ir][nnr_inner] += nlm_2[ir][p1]*nlm_1[p2]*
-                                                            (ucell.atoms[T0].ncpp.d_so(0, p2, p1).real()
-                                                            + ucell.atoms[T0].ncpp.d_so(3, p2, p1).real())*0.5;
+                                                    dhvnl[ir][nnr_inner]
+                                                        += nlm_2[ir][p1] * nlm_1[p2]
+                                                           * (ucell.atoms[T0].ncpp.d_so(0, p2, p1).real()
+                                                              + ucell.atoms[T0].ncpp.d_so(3, p2, p1).real())
+                                                           * 0.5;
                                                 }
                                                 else if (is0 == 1)
                                                 {
-                                                    dhvnl[ir][nnr_inner] += nlm_2[ir][p1]*nlm_1[p2]*
-                                                            (ucell.atoms[T0].ncpp.d_so(1, p2, p1).real()
-                                                            + ucell.atoms[T0].ncpp.d_so(2, p2, p1).real())*0.5;
+                                                    dhvnl[ir][nnr_inner]
+                                                        += nlm_2[ir][p1] * nlm_1[p2]
+                                                           * (ucell.atoms[T0].ncpp.d_so(1, p2, p1).real()
+                                                              + ucell.atoms[T0].ncpp.d_so(2, p2, p1).real())
+                                                           * 0.5;
                                                 }
                                                 else if (is0 == 2)
                                                 {
-                                                    dhvnl[ir][nnr_inner] += nlm_2[ir][p1]*nlm_1[p2]*
-                                                            (-ucell.atoms[T0].ncpp.d_so(1, p2, p1).imag()
-                                                            +ucell.atoms[T0].ncpp.d_so(2, p2, p1).imag())*0.5;
+                                                    dhvnl[ir][nnr_inner]
+                                                        += nlm_2[ir][p1] * nlm_1[p2]
+                                                           * (-ucell.atoms[T0].ncpp.d_so(1, p2, p1).imag()
+                                                              + ucell.atoms[T0].ncpp.d_so(2, p2, p1).imag())
+                                                           * 0.5;
                                                 }
                                                 else if (is0 == 3)
                                                 {
-                                                    dhvnl[ir][nnr_inner] += nlm_2[ir][p1]*nlm_1[p2]*
-                                                            (ucell.atoms[T0].ncpp.d_so(0, p2, p1).real()
-                                                            - ucell.atoms[T0].ncpp.d_so(3, p2, p1).real())*0.5;
+                                                    dhvnl[ir][nnr_inner]
+                                                        += nlm_2[ir][p1] * nlm_1[p2]
+                                                           * (ucell.atoms[T0].ncpp.d_so(0, p2, p1).real()
+                                                              - ucell.atoms[T0].ncpp.d_so(3, p2, p1).real())
+                                                           * 0.5;
                                                 }
                                             }
                                         }
@@ -402,7 +388,7 @@ void Force_LCAO<std::complex<double>>::cal_fvnl_dbeta(
                                             {
                                                 nlm_2[i] = nlm_tot[iat][key2][iw2_all][i + 1];
                                             }
-                                            int is0 = (j-j0*npol) + (k-k0*npol) * 2;
+                                            int is0 = (j - j0 * npol) + (k - k0 * npol) * 2;
                                             for (int no = 0; no < ucell.atoms[T0].ncpp.non_zero_count_soc[is0]; no++)
                                             {
                                                 const int p1 = ucell.atoms[T0].ncpp.index1_soc[is0][no];
@@ -411,27 +397,35 @@ void Force_LCAO<std::complex<double>>::cal_fvnl_dbeta(
                                                 {
                                                     if (is0 == 0)
                                                     {
-                                                        dhvnl1[ir][nnr_inner] += nlm_2[ir][p1]*nlm_1[p2]*
-                                                                (ucell.atoms[T0].ncpp.d_so(0, p2, p1).real()
-                                                                + ucell.atoms[T0].ncpp.d_so(3, p2, p1).real())*0.5;
+                                                        dhvnl1[ir][nnr_inner]
+                                                            += nlm_2[ir][p1] * nlm_1[p2]
+                                                               * (ucell.atoms[T0].ncpp.d_so(0, p2, p1).real()
+                                                                  + ucell.atoms[T0].ncpp.d_so(3, p2, p1).real())
+                                                               * 0.5;
                                                     }
                                                     else if (is0 == 1)
                                                     {
-                                                        dhvnl1[ir][nnr_inner] += nlm_2[ir][p1]*nlm_1[p2]*
-                                                                (ucell.atoms[T0].ncpp.d_so(1, p2, p1).real()
-                                                                + ucell.atoms[T0].ncpp.d_so(2, p2, p1).real())*0.5;
+                                                        dhvnl1[ir][nnr_inner]
+                                                            += nlm_2[ir][p1] * nlm_1[p2]
+                                                               * (ucell.atoms[T0].ncpp.d_so(1, p2, p1).real()
+                                                                  + ucell.atoms[T0].ncpp.d_so(2, p2, p1).real())
+                                                               * 0.5;
                                                     }
                                                     else if (is0 == 2)
                                                     {
-                                                        dhvnl1[ir][nnr_inner] += nlm_2[ir][p1]*nlm_1[p2]*
-                                                                (-ucell.atoms[T0].ncpp.d_so(1, p2, p1).imag()
-                                                                +ucell.atoms[T0].ncpp.d_so(2, p2, p1).imag())*0.5;
+                                                        dhvnl1[ir][nnr_inner]
+                                                            += nlm_2[ir][p1] * nlm_1[p2]
+                                                               * (-ucell.atoms[T0].ncpp.d_so(1, p2, p1).imag()
+                                                                  + ucell.atoms[T0].ncpp.d_so(2, p2, p1).imag())
+                                                               * 0.5;
                                                     }
                                                     else if (is0 == 3)
                                                     {
-                                                        dhvnl1[ir][nnr_inner] += nlm_2[ir][p1]*nlm_1[p2]*
-                                                                (ucell.atoms[T0].ncpp.d_so(0, p2, p1).real()
-                                                                - ucell.atoms[T0].ncpp.d_so(3, p2, p1).real())*0.5;
+                                                        dhvnl1[ir][nnr_inner]
+                                                            += nlm_2[ir][p1] * nlm_1[p2]
+                                                               * (ucell.atoms[T0].ncpp.d_so(0, p2, p1).real()
+                                                                  - ucell.atoms[T0].ncpp.d_so(3, p2, p1).real())
+                                                               * 0.5;
                                                     }
                                                 }
                                             }
@@ -520,15 +514,15 @@ void Force_LCAO<std::complex<double>>::cal_fvnl_dbeta(
                                                 for (int ipol = jpol; ipol < 3; ipol++)
                                                 {
                                                     local_svnl_dbeta(jpol, ipol)
-                                                        += dm2d1
-                                                            * (nlm[jpol] * r1[ipol] + nlm1[jpol] * r0[ipol]);
+                                                        += dm2d1 * (nlm[jpol] * r1[ipol] + nlm1[jpol] * r0[ipol]);
                                                 }
                                             }
                                         }
                                     }
                                     else
                                     {
-                                        ModuleBase::WARNING_QUIT("Force_LCAO_k::cal_fvnl_dbeta_k", "nspin must be 1, 2 or 4");
+                                        ModuleBase::WARNING_QUIT("Force_LCAO_k::cal_fvnl_dbeta_k",
+                                                                 "nspin must be 1, 2 or 4");
                                     }
                                     //}
                                     nnr_inner++;
@@ -558,14 +552,14 @@ void Force_LCAO<std::complex<double>>::cal_fvnl_dbeta(
                                                 {
                                                     local_svnl_dbeta(jpol, ipol)
                                                         += tmp_matrix_ptr[0][ir]
-                                                            * (dhvnl[jpol][ir] * r1[ipol] + dhvnl1[jpol][ir] * r0[ipol]);
+                                                           * (dhvnl[jpol][ir] * r1[ipol] + dhvnl1[jpol][ir] * r0[ipol]);
                                                 }
                                             }
                                         }
                                     }
                                 }
                             }
-                        }         // ad0
+                        } // ad0
 
                         // outer circle : accumulate nnr
                         for (int j = 0; j < atom1->nw * npol; j++)
@@ -573,10 +567,10 @@ void Force_LCAO<std::complex<double>>::cal_fvnl_dbeta(
                             const int j0 = j / npol; // added by zhengdy-soc
                             const int iw1_all = start1 + j;
                             const int mu = pv.global2local_row(iw1_all);
-							if (mu < 0)
-							{
-								continue;
-							}
+                            if (mu < 0)
+                            {
+                                continue;
+                            }
 
                             // fix a serious bug: atom2[T2] -> atom2
                             // mohan 2010-12-20
@@ -585,11 +579,11 @@ void Force_LCAO<std::complex<double>>::cal_fvnl_dbeta(
                                 const int k0 = k / npol;
                                 const int iw2_all = start2 + k;
                                 const int nu = pv.global2local_col(iw2_all);
-								if (nu < 0)
-								{
-									continue;
-								}
-								total_nnr++;
+                                if (nu < 0)
+                                {
+                                    continue;
+                                }
+                                total_nnr++;
                                 nnr++;
                             }
                         }
@@ -626,7 +620,7 @@ void Force_LCAO<std::complex<double>>::cal_fvnl_dbeta(
                 }
             } // I1
         }     // T1
-     
+
 #ifdef _OPENMP
         if (isstress)
         {
@@ -651,7 +645,6 @@ void Force_LCAO<std::complex<double>>::cal_fvnl_dbeta(
         StressTools::stress_fill(ucell.lat0, ucell.omega, svnl_dbeta);
     }
 
-    ModuleBase::timer::tick("Force_LCAO","cal_fvnl_dbeta");
+    ModuleBase::timer::tick("Force_LCAO", "cal_fvnl_dbeta");
     return;
 }
-

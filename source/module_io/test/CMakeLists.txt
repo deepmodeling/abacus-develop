@@ -110,7 +110,7 @@ AddTest(
 
 AddTest(
   TARGET io_parse_args
-  SOURCES parse_args_test.cpp
+  SOURCES parse_args_test.cpp ../parse_args.cpp
 )
 
 AddTest(
@@ -185,6 +185,16 @@ AddTest(
   TARGET numerical_basis_test
   LIBS base ${math_libs} device numerical_atomic_orbitals container orb
   SOURCES numerical_basis_test.cpp ../numerical_basis_jyjy.cpp
+)
+
+
+AddTest(
+  TARGET io_mulliken_test
+  LIBS base ${math_libs} device
+  SOURCES output_mulliken_test.cpp output_mulliken_mock.cpp ../output_mulliken.cpp
+  ../../module_cell/cell_index.cpp
+  ../../module_basis/module_ao/parallel_2d.cpp
+  ../../module_basis/module_ao/parallel_orbitals.cpp
 )
 
 if(ENABLE_LCAO)

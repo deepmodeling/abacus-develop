@@ -29,7 +29,7 @@ class OperatorScLambda<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                                     const std::vector<int>& isk_in)
         : isk(isk_in), OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in)
     {
-        this->cal_type = lcao_sc_lambda;
+        this->cal_type = calculation_type::lcao_sc_lambda;
     }
 
     virtual void contributeHR() override;

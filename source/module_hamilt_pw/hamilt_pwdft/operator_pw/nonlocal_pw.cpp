@@ -17,7 +17,7 @@ Nonlocal<OperatorPW<T, Device>>::Nonlocal(const int* isk_in,
                                                const ModulePW::PW_Basis_K* wfc_basis)
 {
     this->classname = "Nonlocal";
-    this->cal_type = pw_nonlocal;
+    this->cal_type = calculation_type::pw_nonlocal;
     this->wfcpw = wfc_basis;
     this->isk = isk_in;
     this->ppcell = ppcell_in;
@@ -307,7 +307,7 @@ template<typename T_in, typename Device_in>
 hamilt::Nonlocal<OperatorPW<T, Device>>::Nonlocal(const Nonlocal<OperatorPW<T_in, Device_in>> *nonlocal)
 {
     this->classname = "Nonlocal";
-    this->cal_type = pw_nonlocal;
+    this->cal_type = calculation_type::pw_nonlocal;
     this->ik = nonlocal->get_ik();
     this->isk = nonlocal->get_isk();
     this->ppcell = nonlocal->get_ppcell();

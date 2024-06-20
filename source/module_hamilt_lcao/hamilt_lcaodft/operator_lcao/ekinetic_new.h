@@ -1,11 +1,11 @@
 #ifndef EKINETICNEW_H
 #define EKINETICNEW_H
 #include "module_basis/module_ao/parallel_orbitals.h"
+#include "module_basis/module_nao/two_center_integrator.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_cell/unitcell.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
-#include "module_basis/module_ao/ORB_gen_tables.h"
 
 namespace hamilt
 {
@@ -45,7 +45,7 @@ class EkineticNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                                       std::vector<TK>* hK_in,
                                       const UnitCell* ucell_in,
                                       Grid_Driver* GridD_in,
-                                      const ORB_gen_tables* uot,
+                                      const TwoCenterIntegrator* intor,
                                       const Parallel_Orbitals* paraV);
 
     /**
@@ -66,8 +66,7 @@ class EkineticNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 
     hamilt::HContainer<TR>* HR_fixed = nullptr;
 
-    // the following variable is introduced temporarily during LCAO refactoring
-    const ORB_gen_tables* uot_ = nullptr;
+    const TwoCenterIntegrator* intor_ = nullptr;
 
     bool allocated = false;
 

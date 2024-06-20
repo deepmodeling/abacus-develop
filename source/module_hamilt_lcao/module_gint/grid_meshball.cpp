@@ -3,38 +3,21 @@
 
 Grid_MeshBall::Grid_MeshBall()
 {
-	this->meshball_radius = 0.0;
-	this->meshball_ncells = 0;
-
-	this->flag_mp = false;
-
-	this->index_ball = nullptr;
 }
 
 Grid_MeshBall::~Grid_MeshBall()
 {
-	// delete meshball positions.
-	if(flag_mp)
-	{
-		for(int i=0; i<meshball_ncells; i++)
-		{
-			delete[] meshball_positions[i];
-		}
-		delete[] meshball_positions;
-	}
-	delete[] index_ball;
 }
 
 void Grid_MeshBall::init_meshball(void)
 {	
 	ModuleBase::TITLE("Grid_MeshBall","init_meshball");
 
-	// init meshball_radius, generally the value
-	// is same as orbital_rmax, of course you can
-	// incrase meshball_radius, but there will be
-	// no atoms in the added bigcells.
-	// (in case subcell are too many).
-
+    // init meshball_radius, generally the value
+    // is same as orbital_rmax, of course you can
+    // incrase meshball_radius, but there will be
+    // no atoms in the added bigcells.
+    // (in case subcell are too many).
 	this->meshball_radius = this->orbital_rmax;
 
 	// select a ball in a cubic.
@@ -84,21 +67,10 @@ void Grid_MeshBall::init_meshball(void)
 	if(GlobalV::test_gridt)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "how many cells in meshball",this->meshball_ncells);
 
 	// prepare for the second calculation.
-	if(!flag_mp)
-	{
-		this->meshball_positions = new double*[meshball_ncells];
-		for(int i=0; i<meshball_ncells; i++)
-		{
-			this->meshball_positions[i] = new double[3];
-		}
-		this->flag_mp = true;
-
-		ModuleBase::Memory::record("meshball_pos", sizeof(double) * meshball_ncells*3);
-	}
-
-	delete[] index_ball;
-	this->index_ball = new int[meshball_ncells];
-	ModuleBase::GlobalFunc::ZEROS(index_ball, meshball_ncells);
+	this->meshball_positions = std::vector<std::vector<double>>(meshball_ncells, std::vector<double>(3, 0.0));
+	ModuleBase::Memory::record("meshball_pos", sizeof(double) * meshball_ncells*3);
+    this->index_ball = std::vector<int>(meshball_ncells);
+	ModuleBase::Memory::record("index_ball", sizeof(int) * meshball_ncells);
 
 	// second time.
 	int count = 0;
@@ -138,10 +110,10 @@ void Grid_MeshBall::init_meshball(void)
 
 double Grid_MeshBall::deal_with_atom_spillage(const double *pos)
 {
-	double r2 = 100000;
-	double cell[3];
 	double dx;
-
+	double r2 = 100000;
+	double *cell=new double[3];
+	
 	for(int i=-1; i<=1; i++)
 	{
 		for(int j=-1; j<=1; j++)
@@ -161,22 +133,8 @@ double Grid_MeshBall::deal_with_atom_spillage(const double *pos)
 			}
 		}
 	}
-
+	delete[] cell;
 	return r2;
 }
 
-//LiuXh add 2018-12-14
-void Grid_MeshBall::delete_meshball_positions(void)
-{	
-	ModuleBase::TITLE("Grid_MeshBall","delete_meshball_positions");
-	if(flag_mp)
-	{
-		for(int i=0; i<meshball_ncells; i++)
-		{
-			delete[] meshball_positions[i];
-		}
-		delete[] meshball_positions;
-		flag_mp = false;
-	}
-	return;
-}
+
