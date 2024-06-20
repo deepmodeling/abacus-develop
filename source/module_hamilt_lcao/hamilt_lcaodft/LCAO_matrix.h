@@ -136,10 +136,6 @@ class LCAO_Matrix
 
     void output_HSk(const char& mtype, std::string& fn);
 
-    // LiuXh add 2019-07-15
-
-    void destroy_Hloc_fixedR_tr(void);
-
     // jingan add 2021-6-4, modify 2021-12-2
     void destroy_HS_R_sparse(void);
 
