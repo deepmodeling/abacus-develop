@@ -497,6 +497,8 @@ void Grid_Technique::cal_trace_lo(const UnitCell& ucell)
 
 void Grid_Technique::init_gpu_gint_variables(const UnitCell& ucell,const int num_stream)
 {
+    
+    int dev_id = base_device::information::set_device_by_rank();
     if (is_malloced)
     {
         free_gpu_gint_variables(this->nat);

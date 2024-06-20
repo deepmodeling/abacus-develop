@@ -17,6 +17,9 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double>* dm,
                         const UnitCell& ucell,
                         double* rho)
 {
+    int dev_id = base_device::information::set_device_by_rank();
+    checkCuda(cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync));
+
     const int nbzp = gridt.nbzp;
     const int nczp =nbzp * gridt.bz;
     const int num_mcell_on_proc = nczp * gridt.ncx * gridt.ncy;
@@ -92,6 +95,10 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double>* dm,
     {
         for (int j = 0; j < gridt.nby; j++)
         {
+            // 20240620 Note that it must be set again here because 
+            // cuda's device is not safe in a multi-threaded environment.
+
+            checkCuda(cudaSetDevice(dev_id));
             // get stream id
             const int sid = omp_get_thread_num();
             checkCuda(cudaStreamSynchronize(streams[sid]));
