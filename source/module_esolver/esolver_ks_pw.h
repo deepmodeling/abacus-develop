@@ -1,8 +1,8 @@
 #ifndef ESOLVER_KS_PW_H
 #define ESOLVER_KS_PW_H
 #include "./esolver_ks.h"
-#include "module_hamilt_pw/hamilt_pwdft/operator_pw/velocity_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/initcontroller.h"
+#include "module_hamilt_pw/hamilt_pwdft/operator_pw/velocity_pw.h"
 
 #include <memory>
 #include <module_base/macros.h>
@@ -61,8 +61,7 @@ class ESolver_KS_PW : public ESolver_KS<T, Device>
     psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi = nullptr;
 
   private:
-    
-    //psi_initializer controller
+    // psi_initializer controller
     psi::InitController<T, Device>* p_initcontroller = nullptr;
 
     Device* ctx = {};
