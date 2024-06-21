@@ -21,7 +21,6 @@ class Gint_inout
 {
     public:
     //input
-        double** DM_R;
         double*** DM;
         const double* vl;
 		const double* vofk;
@@ -37,9 +36,8 @@ class Gint_inout
         Gint_Tools::job_type job;
 
 	// electron density and kin_r, multi-k
-        Gint_inout(double** DM_R_in, double** rho_in, Gint_Tools::job_type job_in, bool if_symm_in = true)
+        Gint_inout(double** rho_in, Gint_Tools::job_type job_in, bool if_symm_in = true)
         {
-            DM_R = DM_R_in;
             rho = rho_in;
             job = job_in;
             if_symm = if_symm_in;

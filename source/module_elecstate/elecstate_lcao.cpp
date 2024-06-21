@@ -68,7 +68,7 @@ if(!GlobalV::dm_to_rho)
 
     ModuleBase::GlobalFunc::NOTE("Calculate the charge on real space grid!");
     this->gint_k->transfer_DM2DtoGrid(this->DM->get_DMR_vector()); // transfer DM2D to DM_grid in gint
-    Gint_inout inout(this->loc->DM_R, this->charge->rho, Gint_Tools::job_type::rho);
+    Gint_inout inout(this->charge->rho, Gint_Tools::job_type::rho);
     this->gint_k->cal_gint(&inout);
 
     if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
@@ -77,7 +77,7 @@ if(!GlobalV::dm_to_rho)
         {
             ModuleBase::GlobalFunc::ZEROS(this->charge->kin_r[is], this->charge->nrxx);
         }
-        Gint_inout inout1(this->loc->DM_R, this->charge->kin_r, Gint_Tools::job_type::tau);
+        Gint_inout inout1(this->charge->kin_r, Gint_Tools::job_type::tau);
         this->gint_k->cal_gint(&inout1);
     }
 
@@ -138,7 +138,7 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
 
     this->gint_gamma->transfer_DM2DtoGrid(this->DM->get_DMR_vector()); // transfer DM2D to DM_grid in gint
 
-    Gint_inout inout(this->loc->DM, this->charge->rho, Gint_Tools::job_type::rho);
+    Gint_inout inout(this->charge->rho, Gint_Tools::job_type::rho);
 
     this->gint_gamma->cal_gint(&inout);
 
@@ -148,7 +148,7 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
         {
             ModuleBase::GlobalFunc::ZEROS(this->charge->kin_r[is], this->charge->nrxx);
         }
-        Gint_inout inout1(this->loc->DM, this->charge->kin_r, Gint_Tools::job_type::tau);
+        Gint_inout inout1(this->charge->kin_r, Gint_Tools::job_type::tau);
         this->gint_gamma->cal_gint(&inout1);
     }
 
@@ -216,7 +216,7 @@ void ElecStateLCAO<double>::dmToRho(std::vector<double*> pexsi_DM, std::vector<d
 
     ModuleBase::GlobalFunc::NOTE("Calculate the charge on real space grid!");
     this->gint_gamma->transfer_DM2DtoGrid(this->DM->get_DMR_vector()); // transfer DM2D to DM_grid in gint
-    Gint_inout inout(this->loc->DM, this->charge->rho, Gint_Tools::job_type::rho);
+    Gint_inout inout(this->charge->rho, Gint_Tools::job_type::rho);
     this->gint_gamma->cal_gint(&inout);
     if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
     {
@@ -224,7 +224,7 @@ void ElecStateLCAO<double>::dmToRho(std::vector<double*> pexsi_DM, std::vector<d
         {
             ModuleBase::GlobalFunc::ZEROS(this->charge->kin_r[0], this->charge->nrxx);
         }
-        Gint_inout inout1(this->loc->DM, this->charge->kin_r, Gint_Tools::job_type::tau);
+        Gint_inout inout1(this->charge->kin_r, Gint_Tools::job_type::tau);
         this->gint_gamma->cal_gint(&inout1);
     }
 
