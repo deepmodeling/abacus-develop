@@ -8,7 +8,7 @@ namespace psi
 {
 
 // This class is used to initialize the wavefunction
-template <typename T, typename Device>
+template <typename T, typename Device = base_device::DEVICE_CPU>
 class InitController
 {
   public:

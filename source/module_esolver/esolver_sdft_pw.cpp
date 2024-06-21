@@ -63,16 +63,23 @@ void ESolver_SDFT_PW::before_all_runners(Input& inp, UnitCell& ucell)
         GlobalTemp::veff = &(this->pelec->pot->get_effective_v());
     }
 
-    // 6) set occupatio, redundant?
+    // 6) prepare some parameters for electronic wave functions initilization
+    this->p_initcontroller = new psi::InitController<std::complex<double>>(GlobalV::init_wfc,
+                                                                           GlobalV::KS_SOLVER,
+                                                                           GlobalV::BASIS_TYPE,
+                                                                           GlobalV::psi_initializer,
+                                                                           &this->wf,
+                                                                           this->pw_wfc);
+    // 7) set occupatio, redundant?
     if (GlobalV::ocp)
     {
         this->pelec->fixed_weights(GlobalV::ocp_kb, GlobalV::NBANDS, GlobalV::nelec);
     }
 
-    // 7) initialize the global classes
+    // 8) initialize the global classes
     this->Init_GlobalC(inp, ucell, GlobalC::ppcell); // temporary
 
-    // 8) initialize the stochastic wave functions
+    // 9) initialize the stochastic wave functions
     stowf.init(&kv, pw_wfc->npwk_max);
 
     if (inp.nbands_sto != 0)

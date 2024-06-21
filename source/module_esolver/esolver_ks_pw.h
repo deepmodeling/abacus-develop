@@ -60,11 +60,10 @@ class ESolver_KS_PW : public ESolver_KS<T, Device>
     //! hide the psi in ESolver_KS for tmp use
     psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi = nullptr;
 
-  private:
-    
     //psi_initializer controller
     psi::InitController<T, Device>* p_initcontroller = nullptr;
 
+  private:
     Device* ctx = {};
 
     base_device::AbacusDevice_t device = {};

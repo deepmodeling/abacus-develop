@@ -11,7 +11,7 @@ namespace ModulePW
 /**
  * @brief transform real space to reciprocal space
  * @details real wave function f(k,r):
- *          f(k,r)=1/V*\sum_{g} c(k,g)*exp(i(g+k)*r) 
+ *          f(k,r)=1/V*\sum_{g} c(k,g)*exp(i(g+k)*r) \equiv exp(ikr)f'(k.r)
  *          c(k,g)=\int dr*f(k,r)*exp(-i(g+k)*r)
  *          However, we use f'(k,r)!!! :
  *          f'(k,r)=1/V*\sum_{g} c(k,g)*exp(ig*r) 
@@ -74,7 +74,7 @@ void PW_Basis_K::real2recip(const std::complex<FPTYPE>* in,
 /**
  * @brief transform real space to reciprocal space
  * @details real wave function f(k,r):
- *          f(k,r)=1/V*\sum_{g} c(k,g)*exp(i(g+k)*r) 
+ *          f(k,r)=1/V*\sum_{g} c(k,g)*exp(i(g+k)*r) \equiv exp(ikr)f'(k.r)
  *          c(k,g)=\int dr*f(k,r)*exp(-i(g+k)*r)
  *          However, we use f'(k,r)!!! :
  *          f'(k,r)=1/V*\sum_{g} c(k,g)*exp(ig*r) 
@@ -148,7 +148,7 @@ void PW_Basis_K::real2recip(const FPTYPE* in,
 /**
  * @brief transform reciprocal space to real space
  * @details real wave function f(k,r):
- *          f(k,r)=1/V*\sum_{g} c(k,g)*exp(i(g+k)*r) 
+ *          f(k,r)=1/V*\sum_{g} c(k,g)*exp(i(g+k)*r) \equiv exp(ikr)f'(k.r)
  *          c(k,g)=\int dr*f(k,r)*exp(-i(g+k)*r)
  *          However, we use f'(k,r)!!! :
  *          f'(k,r)=1/V*\sum_{g} c(k,g)*exp(ig*r) 
@@ -210,7 +210,7 @@ void PW_Basis_K::recip2real(const std::complex<FPTYPE>* in,
 /**
  * @brief transform reciprocal space to real space
  * @details real wave function f(k,r):
- *          f(k,r)=1/V*\sum_{g} c(k,g)*exp(i(g+k)*r) 
+ *          f(k,r)=1/V*\sum_{g} c(k,g)*exp(i(g+k)*r) \equiv exp(ikr)f'(k.r)
  *          c(k,g)=\int dr*f(k,r)*exp(-i(g+k)*r)
  *          However, we use f'(k,r)!!! :
  *          f'(k,r)=1/V*\sum_{g} c(k,g)*exp(ig*r) 
