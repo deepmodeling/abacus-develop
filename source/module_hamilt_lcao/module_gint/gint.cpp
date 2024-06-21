@@ -85,7 +85,7 @@ void Gint::cal_gint(Gint_inout* inout)
                 ylmcoef[i] = ModuleBase::Ylm::ylmcoef[i];
             }
 
-            const double dr = this->dr_uniform;
+            const double dr = this->gridt->dr_uniform;
 
             if (inout->job == Gint_Tools::job_type::vlocal)
             {
@@ -93,7 +93,7 @@ void Gint::cal_gint(Gint_inout* inout)
                                               inout->vl,
                                               ylmcoef,
                                               dr,
-                                              this->rcuts.data(),
+                    this->gridt->rcuts.data(),
                                               *this->gridt,
                                               ucell);
             }
@@ -106,7 +106,7 @@ void Gint::cal_gint(Gint_inout* inout)
                     GintKernel::gint_gamma_rho_gpu(this->DMRGint[is],
                                                    ylmcoef,
                                                    dr,
-                                                   this->rcuts.data(),
+                        this->gridt->rcuts.data(),
                                                    *this->gridt,
                                                    ucell,
                                                    inout->rho[is]);
@@ -122,15 +122,15 @@ void Gint::cal_gint(Gint_inout* inout)
                     std::vector<double> force(nat * 3, 0.0);
                     std::vector<double> stress(6, 0.0);
                     GintKernel::gint_fvl_gamma_gpu(this->DMRGint[inout->ispin],
-                                                    inout->vl,
-                                                    force.data(),
-                                                    stress.data(),
-                                                    dr,
-                                                    this->rcuts.data(),
-                                                    isforce,
-                                                    isstress,
-                                                    *this->gridt,
-                                                    ucell);
+                        inout->vl,
+                        force.data(),
+                        stress.data(),
+                        dr,
+                        this->gridt->rcuts.data(),
+                        isforce,
+                        isstress,
+                        *this->gridt,
+                        ucell);
                 if (inout->isforce)
                 {
                     for (int iat = 0; iat < nat; iat++)
