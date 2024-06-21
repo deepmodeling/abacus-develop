@@ -45,14 +45,9 @@ void Numerical_Orbital::set_orbital_info
 	}
 
 	// we need this to generate numerical_orbital_lm.
-	if (total_nchi_in < 0) 
+	if (total_nchi_in < 0 || total_nchi_in > 500) 
 	{
-		ModuleBase::WARNING_QUIT("Numerical_Orbital::init", "total_nchi < 0");
-	}
-	else if (total_nchi_in > 50)
-	{
-		// this is a warning, not a quit.
-		ModuleBase::WARNING("Numerical_Orbital::init", "total_nchi > 50");
+		ModuleBase::WARNING_QUIT("Numerical_Orbital::init", "total_nchi < 0 or > 500");
 	}
 	else 
 	{
