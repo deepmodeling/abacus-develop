@@ -348,7 +348,7 @@ std::vector<std::string> UnitCell::get_atomLabels() const
     std::vector<std::string> atomLabels(this->ntype);
     for (int it = 0; it < this->ntype; it++)
     {
-        atomLabels[it] = this->atom_label[it];
+        atomLabels[it] = this->atoms[it].label;
     }
     return atomLabels;
 }
