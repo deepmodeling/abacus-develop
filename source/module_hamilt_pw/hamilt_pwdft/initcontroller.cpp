@@ -226,10 +226,7 @@ void InitController<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
         {
             if (this->ks_solver == "cg")
             {
-                hsolver::DiagoIterAssist<T, Device>::diagH_subspace(p_hamilt,
-                                                                    *(psig_),
-                                                                    *(kspw_psi),
-                                                                    etatom.data());
+                hsolver::DiagoIterAssist<T, Device>::diagH_subspace(p_hamilt, *(psig_), *(kspw_psi), etatom.data());
                 continue;
             }
             // else the case is davidson

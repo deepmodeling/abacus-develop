@@ -1,8 +1,8 @@
 #ifndef ESOLVER_KS_PW_H
 #define ESOLVER_KS_PW_H
 #include "./esolver_ks.h"
-#include "module_hamilt_pw/hamilt_pwdft/operator_pw/velocity_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/initcontroller.h"
+#include "module_hamilt_pw/hamilt_pwdft/operator_pw/velocity_pw.h"
 
 #include <memory>
 #include <module_base/macros.h>
