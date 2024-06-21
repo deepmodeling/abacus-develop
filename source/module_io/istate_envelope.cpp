@@ -362,7 +362,6 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
         ModuleBase::WARNING_QUIT("IState_Envelope::begin", "Invalid mode! Please check the code.");
     }
 
-
     // (2) cicle:
 
     // (2.1) calculate the selected density matrix
@@ -372,7 +371,6 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
     // get the charge density.
 
     // (2.3) output the charge density in .cub format.
-
 
     // for pw-wfc in G space
     psi::Psi<std::complex<double>> pw_wfc_g(kv.ngk.data());
