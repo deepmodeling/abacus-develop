@@ -3,6 +3,7 @@
 #include "module_io/input_conv.h"
 #include "module_base/global_variable.h"
 #include "module_hsolver/hsolver_pw.h"
+#include "module_hsolver/diago_elpa.h"
 #include "for_testing_input_conv.h"
 
 /************************************************
@@ -155,6 +156,8 @@ TEST_F(InputConvTest, Conv)
     EXPECT_EQ(hsolver::HSolverLCAO<std::complex<double>>::out_mat_t, false);
     EXPECT_EQ(hsolver::HSolverLCAO<double>::out_mat_dh, INPUT.out_mat_dh);
     EXPECT_EQ(hsolver::HSolverLCAO<std::complex<double>>::out_mat_dh, INPUT.out_mat_dh);
+	EXPECT_EQ(hsolver::DiagoElpa<double>::elpa_num_thread,-1);
+	EXPECT_EQ(hsolver::DiagoElpa<std::complex<double>>::elpa_num_thread,-1);
     EXPECT_EQ(GlobalV::out_mat_xc, false);
 	EXPECT_EQ(GlobalV::out_hr_npz, false);
 	EXPECT_EQ(GlobalV::out_dm_npz, false);
@@ -309,6 +312,7 @@ TEST_F(InputConvTest, nupdown)
 	std::string input_file = "./support/INPUT";
 	INPUT.Read(input_file);
 	INPUT.nupdown=0.1;
+	INPUT.two_fermi=true;
 	Input_Conv::Convert();
 	EXPECT_EQ(GlobalV::TWO_EFERMI,true);
 	EXPECT_EQ(GlobalV::nupdown,0.1);

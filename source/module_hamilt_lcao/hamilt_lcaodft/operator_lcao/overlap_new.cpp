@@ -1,11 +1,11 @@
 #include "overlap_new.h"
 
+#include "module_base/timer.h"
+#include "module_base/tool_title.h"
 #include "module_basis/module_ao/ORB_gen_tables.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
-#include "module_base/timer.h"
-#include "module_base/tool_title.h"
 
 template <typename TK, typename TR>
 hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::OverlapNew(LCAO_Matrix* LM_in,
@@ -16,9 +16,9 @@ hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::OverlapNew(LCAO_Matrix* LM_in,
                                                              std::vector<TK>* SK_pointer_in,
                                                              const UnitCell* ucell_in,
                                                              Grid_Driver* GridD_in,
-                                                             const ORB_gen_tables* uot,
+                                                             const TwoCenterIntegrator* intor,
                                                              const Parallel_Orbitals* paraV)
-    : hamilt::OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in), uot_(uot)
+    : hamilt::OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in), intor_(intor)
 {
     this->cal_type = calculation_type::lcao_overlap;
     this->ucell = ucell_in;
@@ -58,8 +58,8 @@ void hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::initialize_SR(Grid_Driver
             const ModuleBase::Vector3<int>& R_index = adjs.box[ad];
             // choose the real adjacent atoms
             const LCAO_Orbitals& orb = LCAO_Orbitals::get_const_instance();
-            // Note: the distance of atoms should less than the cutoff radius, 
-            // When equal, the theoretical value of matrix element is zero, 
+            // Note: the distance of atoms should less than the cutoff radius,
+            // When equal, the theoretical value of matrix element is zero,
             // but the calculated value is not zero due to the numerical error, which would lead to result changes.
             if (this->ucell->cal_dtau(iat1, iat2, R_index).norm() * this->ucell->lat0
                 >= orb.Phi[T1].getRcut() + orb.Phi[T2].getRcut())
@@ -115,7 +115,6 @@ void hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::cal_SR_IJR(const int& iat
                                                                   const ModuleBase::Vector3<double>& dtau,
                                                                   TR* data_pointer)
 {
-    const LCAO_Orbitals& orb = LCAO_Orbitals::get_const_instance();
     // ---------------------------------------------
     // get info of orbitals of atom1 and atom2 from ucell
     // ---------------------------------------------
@@ -137,15 +136,7 @@ void hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::cal_SR_IJR(const int& iat
     const int* iw2l2 = atom2.iw2l;
     const int* iw2n2 = atom2.iw2n;
     const int* iw2m2 = atom2.iw2m;
-#ifndef USE_NEW_TWO_CENTER
-    // ---------------------------------------------
-    // get tau1 (in cell <0,0,0>) and tau2 (in cell R)
-    // in principle, only dtau is needed in this function
-    // snap_psipsi should be refactored to use dtau directly
-    // ---------------------------------------------
-    const ModuleBase::Vector3<double>& tau1 = this->ucell->get_tau(iat1);
-    const ModuleBase::Vector3<double> tau2 = tau1 + dtau;
-#endif
+
     // ---------------------------------------------
     // calculate the overlap matrix for each pair of orbitals
     // ---------------------------------------------
@@ -159,40 +150,20 @@ void hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::cal_SR_IJR(const int& iat
         const int L1 = iw2l1[iw1];
         const int N1 = iw2n1[iw1];
         const int m1 = iw2m1[iw1];
-#ifdef USE_NEW_TWO_CENTER
-        int M1 = (m1 % 2 == 0) ? -m1/2 : (m1+1)/2;
-#endif
+
+        // convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
+        int M1 = (m1 % 2 == 0) ? -m1 / 2 : (m1 + 1) / 2;
+
         for (int iw2l = 0; iw2l < col_indexes.size(); iw2l += npol)
         {
             const int iw2 = col_indexes[iw2l] / npol;
             const int L2 = iw2l2[iw2];
             const int N2 = iw2n2[iw2];
             const int m2 = iw2m2[iw2];
-#ifdef USE_NEW_TWO_CENTER
-            //=================================================================
-            //          new two-center integral (temporary)
-            //=================================================================
+
             // convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
-            int M2 = (m2 % 2 == 0) ? -m2/2 : (m2+1)/2;
-            uot_->two_center_bundle->overlap_orb->calculate(T1, L1, N1, M1,
-                    T2, L2, N2, M2, dtau * this->ucell->lat0, olm);
-#else
-            uot_->snap_psipsi(orb, // orbitals
-                            olm,
-                            0,
-                            'S', // olm, job of derivation, dtype of Operator
-                            tau1,
-                            T1,
-                            L1,
-                            m1,
-                            N1, // info of atom1
-                            tau2,
-                            T2,
-                            L2,
-                            m2,
-                            N2 // info of atom2
-            );
-#endif
+            int M2 = (m2 % 2 == 0) ? -m2 / 2 : (m2 + 1) / 2;
+            intor_->calculate(T1, L1, N1, M1, T2, L2, N2, M2, dtau * this->ucell->lat0, olm);
             for (int ipol = 0; ipol < npol; ipol++)
             {
                 data_pointer[ipol * step_trace] += olm[0];
@@ -228,7 +199,7 @@ void hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::contributeHk(int ik)
     ModuleBase::timer::tick("OverlapNew", "contributeHk");
     // set SK to zero and then calculate SK for each k vector
     ModuleBase::GlobalFunc::ZEROS(this->SK_pointer->data(), this->SK_pointer->size());
-    if(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
+    if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
     {
         const int nrow = this->SR->get_atom_pair(0).get_paraV()->get_row_size();
         hamilt::folding_HR(*this->SR, this->SK_pointer->data(), this->kvec_d[ik], nrow, 1);
@@ -244,10 +215,10 @@ void hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::contributeHk(int ik)
     ModuleBase::timer::tick("OverlapNew", "contributeHk");
 }
 
-template<typename TK, typename TR>
+template <typename TK, typename TR>
 TK* hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::getSk()
 {
-    if(this->SK_pointer != nullptr)
+    if (this->SK_pointer != nullptr)
     {
         return this->SK_pointer->data();
     }

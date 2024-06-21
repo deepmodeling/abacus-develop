@@ -1,11 +1,11 @@
 #include "nonlocal_new.h"
 
+#include "module_base/timer.h"
+#include "module_base/tool_title.h"
 #include "module_basis/module_ao/ORB_gen_tables.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
-#include "module_base/timer.h"
-#include "module_base/tool_title.h"
 #ifdef _OPENMP
 #include <unordered_set>
 #endif
@@ -18,9 +18,9 @@ hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>::NonlocalNew(
     std::vector<TK>* hK_in,
     const UnitCell* ucell_in,
     Grid_Driver* GridD_in,
-    const ORB_gen_tables* uot,
+    const TwoCenterIntegrator* intor,
     const Parallel_Orbitals* paraV)
-    : hamilt::OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in), uot_(uot)
+    : hamilt::OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in), intor_(intor)
 {
     this->cal_type = calculation_type::lcao_fixed;
     this->ucell = ucell_in;
@@ -68,8 +68,8 @@ void hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(Grid_Drive
             const ModuleBase::Vector3<int>& R_index1 = adjs.box[ad1];
             // choose the real adjacent atoms
             const LCAO_Orbitals& orb = LCAO_Orbitals::get_const_instance();
-            // Note: the distance of atoms should less than the cutoff radius, 
-            // When equal, the theoretical value of matrix element is zero, 
+            // Note: the distance of atoms should less than the cutoff radius,
+            // When equal, the theoretical value of matrix element is zero,
             // but the calculated value is not zero due to the numerical error, which would lead to result changes.
             if (this->ucell->cal_dtau(iat0, iat1, R_index1).norm() * this->ucell->lat0
                 < orb.Phi[T1].getRcut() + this->ucell->infoNL.Beta[T0].get_rcut_max())
@@ -122,116 +122,98 @@ void hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
     // 1. calculate <psi|beta> for each pair of atoms
 #ifdef _OPENMP
 #pragma omp parallel
-{
-    std::unordered_set<int> atom_row_list;
-    #pragma omp for
-    for (int iat0 = 0; iat0 < this->ucell->nat; iat0++)
     {
-        atom_row_list.insert(iat0);
-    }
-#endif
-    for (int iat0 = 0; iat0 < this->ucell->nat; iat0++)
-    {
-        auto tau0 = ucell->get_tau(iat0);
-        int T0, I0;
-        ucell->iat2iait(iat0, &I0, &T0);
-        AdjacentAtomInfo& adjs = this->adjs_all[iat0];
-
-        std::vector<std::unordered_map<int, std::vector<double>>> nlm_tot;
-        nlm_tot.resize(adjs.adj_num + 1);
-
-        for (int ad = 0; ad < adjs.adj_num + 1; ++ad)
+        std::unordered_set<int> atom_row_list;
+#pragma omp for
+        for (int iat0 = 0; iat0 < this->ucell->nat; iat0++)
         {
-            const int T1 = adjs.ntype[ad];
-            const int I1 = adjs.natom[ad];
-            const int iat1 = ucell->itia2iat(T1, I1);
-            const ModuleBase::Vector3<double>& tau1 = adjs.adjacent_tau[ad];
-            const Atom* atom1 = &ucell->atoms[T1];
-
-            const LCAO_Orbitals& orb = LCAO_Orbitals::get_const_instance();
-            auto all_indexes = paraV->get_indexes_row(iat1);
-#ifdef _OPENMP
-            if(atom_row_list.find(iat1) == atom_row_list.end())
-            {
-                all_indexes.clear();
-            }
-#endif
-            auto col_indexes = paraV->get_indexes_col(iat1);
-            // insert col_indexes into all_indexes to get universal set with no repeat elements
-            all_indexes.insert(all_indexes.end(), col_indexes.begin(), col_indexes.end());
-            std::sort(all_indexes.begin(), all_indexes.end());
-            all_indexes.erase(std::unique(all_indexes.begin(), all_indexes.end()), all_indexes.end());
-            for (int iw1l = 0; iw1l < all_indexes.size(); iw1l += npol)
-            {
-                const int iw1 = all_indexes[iw1l] / npol;
-                std::vector<std::vector<double>> nlm;
-                // nlm is a vector of vectors, but size of outer vector is only 1 here
-                // If we are calculating force, we need also to store the gradient
-                // and size of outer vector is then 4
-                // inner loop : all projectors (L0,M0)
-#ifdef USE_NEW_TWO_CENTER
-                //=================================================================
-                //          new two-center integral (temporary)
-                //=================================================================
-                int L1 = atom1->iw2l[ iw1 ];
-                int N1 = atom1->iw2n[ iw1 ];
-                int m1 = atom1->iw2m[ iw1 ];
-
-                // convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
-                int M1 = (m1 % 2 == 0) ? -m1/2 : (m1+1)/2;
-
-                ModuleBase::Vector3<double> dtau = tau0 - tau1;
-                uot_->two_center_bundle->overlap_orb_beta->snap(
-                        T1, L1, N1, M1, T0, dtau * this->ucell->lat0, 0 /*cal_deri*/, nlm);
-#else
-                uot_->snap_psibeta_half(orb,
-                                      this->ucell->infoNL,
-                                      nlm,
-                                      tau1,
-                                      T1,
-                                      atom1->iw2l[iw1], // L1
-                                      atom1->iw2m[iw1], // m1
-                                      atom1->iw2n[iw1], // N1
-                                      tau0,
-                                      T0,
-                                      0 /*cal_deri*/); // R0,T0
-#endif
-                nlm_tot[ad].insert({all_indexes[iw1l], nlm[0]});
-            }
+            atom_row_list.insert(iat0);
         }
-// 2. calculate <psi_I|beta>D<beta|psi_{J,R}> for each pair of <IJR> atoms
-        for (int ad1 = 0; ad1 < adjs.adj_num + 1; ++ad1)
-        {
-            const int T1 = adjs.ntype[ad1];
-            const int I1 = adjs.natom[ad1];
-            const int iat1 = ucell->itia2iat(T1, I1);
-#ifdef _OPENMP
-            if(atom_row_list.find(iat1) == atom_row_list.end())
-            {
-                continue;
-            }
 #endif
-            ModuleBase::Vector3<int>& R_index1 = adjs.box[ad1];
-            for (int ad2 = 0; ad2 < adjs.adj_num + 1; ++ad2)
+        for (int iat0 = 0; iat0 < this->ucell->nat; iat0++)
+        {
+            auto tau0 = ucell->get_tau(iat0);
+            int T0, I0;
+            ucell->iat2iait(iat0, &I0, &T0);
+            AdjacentAtomInfo& adjs = this->adjs_all[iat0];
+
+            std::vector<std::unordered_map<int, std::vector<double>>> nlm_tot;
+            nlm_tot.resize(adjs.adj_num + 1);
+
+            for (int ad = 0; ad < adjs.adj_num + 1; ++ad)
             {
-                const int T2 = adjs.ntype[ad2];
-                const int I2 = adjs.natom[ad2];
-                const int iat2 = ucell->itia2iat(T2, I2);
-                ModuleBase::Vector3<int>& R_index2 = adjs.box[ad2];
-                ModuleBase::Vector3<int> R_vector(R_index2[0] - R_index1[0],
-                                                  R_index2[1] - R_index1[1],
-                                                  R_index2[2] - R_index1[2]);
-                hamilt::BaseMatrix<TR>* tmp = this->HR_fixed->find_matrix(iat1, iat2, R_vector[0], R_vector[1], R_vector[2]);
-                // if not found , skip this pair of atoms
-                if (tmp != nullptr)
+                const int T1 = adjs.ntype[ad];
+                const int I1 = adjs.natom[ad];
+                const int iat1 = ucell->itia2iat(T1, I1);
+                const ModuleBase::Vector3<double>& tau1 = adjs.adjacent_tau[ad];
+                const Atom* atom1 = &ucell->atoms[T1];
+
+                auto all_indexes = paraV->get_indexes_row(iat1);
+#ifdef _OPENMP
+                if (atom_row_list.find(iat1) == atom_row_list.end())
                 {
-                    this->cal_HR_IJR(iat1, iat2, T0, paraV, nlm_tot[ad1], nlm_tot[ad2], tmp->get_pointer());
+                    all_indexes.clear();
+                }
+#endif
+                auto col_indexes = paraV->get_indexes_col(iat1);
+                // insert col_indexes into all_indexes to get universal set with no repeat elements
+                all_indexes.insert(all_indexes.end(), col_indexes.begin(), col_indexes.end());
+                std::sort(all_indexes.begin(), all_indexes.end());
+                all_indexes.erase(std::unique(all_indexes.begin(), all_indexes.end()), all_indexes.end());
+                for (int iw1l = 0; iw1l < all_indexes.size(); iw1l += npol)
+                {
+                    const int iw1 = all_indexes[iw1l] / npol;
+                    std::vector<std::vector<double>> nlm;
+                    // nlm is a vector of vectors, but size of outer vector is only 1 here
+                    // If we are calculating force, we need also to store the gradient
+                    // and size of outer vector is then 4
+                    // inner loop : all projectors (L0,M0)
+                    int L1 = atom1->iw2l[iw1];
+                    int N1 = atom1->iw2n[iw1];
+                    int m1 = atom1->iw2m[iw1];
+
+                    // convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
+                    int M1 = (m1 % 2 == 0) ? -m1 / 2 : (m1 + 1) / 2;
+
+                    ModuleBase::Vector3<double> dtau = tau0 - tau1;
+                    intor_->snap(T1, L1, N1, M1, T0, dtau * this->ucell->lat0, 0 /*cal_deri*/, nlm);
+                    nlm_tot[ad].insert({all_indexes[iw1l], nlm[0]});
+                }
+            }
+            // 2. calculate <psi_I|beta>D<beta|psi_{J,R}> for each pair of <IJR> atoms
+            for (int ad1 = 0; ad1 < adjs.adj_num + 1; ++ad1)
+            {
+                const int T1 = adjs.ntype[ad1];
+                const int I1 = adjs.natom[ad1];
+                const int iat1 = ucell->itia2iat(T1, I1);
+#ifdef _OPENMP
+                if (atom_row_list.find(iat1) == atom_row_list.end())
+                {
+                    continue;
+                }
+#endif
+                ModuleBase::Vector3<int>& R_index1 = adjs.box[ad1];
+                for (int ad2 = 0; ad2 < adjs.adj_num + 1; ++ad2)
+                {
+                    const int T2 = adjs.ntype[ad2];
+                    const int I2 = adjs.natom[ad2];
+                    const int iat2 = ucell->itia2iat(T2, I2);
+                    ModuleBase::Vector3<int>& R_index2 = adjs.box[ad2];
+                    ModuleBase::Vector3<int> R_vector(R_index2[0] - R_index1[0],
+                                                      R_index2[1] - R_index1[1],
+                                                      R_index2[2] - R_index1[2]);
+                    hamilt::BaseMatrix<TR>* tmp
+                        = this->HR_fixed->find_matrix(iat1, iat2, R_vector[0], R_vector[1], R_vector[2]);
+                    // if not found , skip this pair of atoms
+                    if (tmp != nullptr)
+                    {
+                        this->cal_HR_IJR(iat1, iat2, T0, paraV, nlm_tot[ad1], nlm_tot[ad2], tmp->get_pointer());
+                    }
                 }
             }
         }
-    }
 #ifdef _OPENMP
-}
+    }
 #endif
 
     ModuleBase::timer::tick("NonlocalNew", "calculate_HR");
@@ -320,7 +302,7 @@ void hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
             this->HR_fixed->set_zero();
             this->allocated = true;
         }
-        if(this->next_sub_op != nullptr)
+        if (this->next_sub_op != nullptr)
         {
             // pass pointer of HR_fixed to the next node
             static_cast<OperatorLCAO<TK, TR>*>(this->next_sub_op)->set_HR_fixed(this->HR_fixed);
@@ -330,7 +312,7 @@ void hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
         this->HR_fixed_done = true;
     }
     // last node of sub-chain, add HR_fixed into HR
-    if(this->next_sub_op == nullptr)
+    if (this->next_sub_op == nullptr)
     {
         this->hR->add(*(this->HR_fixed));
     }

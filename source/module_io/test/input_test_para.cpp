@@ -422,6 +422,7 @@ TEST_F(InputParaTest, Bcast)
     EXPECT_DOUBLE_EQ(INPUT.pexsi_mu_guard, 0.2);
     EXPECT_DOUBLE_EQ(INPUT.pexsi_elec_thr, 0.001);
     EXPECT_DOUBLE_EQ(INPUT.pexsi_zero_thr, 1e-10);
+    EXPECT_EQ(INPUT.elpa_num_thread,-1);
 }
 
 TEST_F(InputParaTest, Init)

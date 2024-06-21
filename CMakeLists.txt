@@ -26,7 +26,7 @@ option(ENABLE_LIBCOMM "Enable communicate with LibComm." OFF)
 option(ENABLE_PAW "Enable PAW calculation" OFF)
 option(ENABLE_MPI "Enable compilation with or without MPI." ON)
 option(USE_ELPA "Enable ELPA" ON)
-option(USE_ABACUS_LIBM "Build libmath from source to speed up." ON)
+option(USE_ABACUS_LIBM "Build libmath from source to speed up." OFF)
 option(GIT_SUBMODULE "Check submodules during build" ON)
 option(DEBUG_INFO "Print message for developers to debug." OFF)
 # Do not enable it if generated code will run on different CPUs

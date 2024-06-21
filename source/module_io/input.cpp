@@ -689,6 +689,10 @@ void Input::Default(void)
     pexsi_mu_guard = 0.2;
     pexsi_elec_thr = 0.001;
     pexsi_zero_thr = 1e-10;
+    //==========================================================
+    // variables for elpa
+    //==========================================================
+    elpa_num_thread=-1;
     return;
 }
 
@@ -981,6 +985,7 @@ bool Input::Read(const std::string& fn)
         }
         else if (strcmp("nupdown", word) == 0)
         {
+            two_fermi = true;
             read_value(ifs, nupdown);
         }
         else if (strcmp("lmaxmax", word) == 0)
@@ -2527,6 +2532,12 @@ bool Input::Read(const std::string& fn)
         {
             read_value(ifs, pexsi_zero_thr);
         }
+        //==========================================================
+        // variables for elpa
+        //==========================================================
+        else if(strcmp("elpa_num_thread",word) == 0){
+            read_value(ifs,elpa_num_thread);
+        }
         else
         {
             // xiaohui add 2015-09-15
@@ -3478,6 +3489,7 @@ void Input::Bcast()
     Parallel_Common::bcast_int(nspin);
     Parallel_Common::bcast_double(nelec);
     Parallel_Common::bcast_double(nelec_delta);
+    Parallel_Common::bcast_bool(two_fermi);
     Parallel_Common::bcast_double(nupdown);
     Parallel_Common::bcast_int(lmaxmax);
 
@@ -3945,6 +3957,10 @@ void Input::Bcast()
     Parallel_Common::bcast_double(pexsi_elec_thr);
     Parallel_Common::bcast_double(pexsi_zero_thr);
     /* broadcasting std::vector is sometime a annorying task... */
+    //==========================================================
+    // variables for elpa
+    //==========================================================
+    Parallel_Common::bcast_int(elpa_num_thread);
     if (ntype != 0) /* ntype has been broadcasted before */
     {
         qo_strategy.resize(ntype); 
