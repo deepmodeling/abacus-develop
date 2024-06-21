@@ -228,7 +228,7 @@ void IState_Charge::begin(Gint_Gamma& gg,
             gg.transfer_DM2DtoGrid(DM.get_DMR_vector());
 
             // keep interface for old Output_DM until new one is ready
-            Gint_inout inout(rho, Gint_Tools::job_type::rho);
+            Gint_inout inout(this->loc->DM, rho, Gint_Tools::job_type::rho);
             gg.cal_gint(&inout);
 
             // A solution to replace the original implementation of the following code:
