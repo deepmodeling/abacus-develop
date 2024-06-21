@@ -49,13 +49,13 @@ namespace elecstate
 		std::vector<std::string> td_fmt = {" " + iter_header_dict[ks_solver] + "%-" + std::to_string(witer - 2) + ".0f"}; // table data: td: GE10086
 		// magnetization column, might be non-exist, but size of mag can only be 0, 2 or 4
 		for(int i = 0; i < mag.size(); i++) {th_fmt.emplace_back(" %" + std::to_string(wmag) + "s");}
-		for(int i = 0; i < mag.size(); i++) {td_fmt.emplace_back(" %" + std::to_string(wmag) + ".4e");} // hard-code precision here
+		for(int i = 0; i < mag.size(); i++) {td_fmt.emplace_back(" %" + std::to_string(wmag) + ".2e");} // hard-code precision here
 		// energies
 		for(int i = 0; i < 2; i++) {th_fmt.emplace_back(" %" + std::to_string(wener) + "s");}
 		for(int i = 0; i < 2; i++) {td_fmt.emplace_back(" %" + std::to_string(wener) + ".8e");}
 		// densities column, size can be 1 or 2, DRHO or DRHO, DKIN
 		for(int i = 0; i < drho.size(); i++) {th_fmt.emplace_back(" %" + std::to_string(wrho) + "s");}
-		for(int i = 0; i < drho.size(); i++) {td_fmt.emplace_back(" %" + std::to_string(wrho) + ".8e");}
+		for(int i = 0; i < drho.size(); i++) {td_fmt.emplace_back(" %" + std::to_string(wrho) + ".4e");}
 		// time column, trivial
 		th_fmt.emplace_back(" %" + std::to_string(wtime) + "s\n");
 		td_fmt.emplace_back(" %" + std::to_string(wtime) + ".2f\n");
@@ -343,8 +343,8 @@ void ElecState::print_etot(const bool converged,
         }
         std::vector<double> drho = {scf_thr};
         if(elecstate::get_xc_func_type() == 3 || elecstate::get_xc_func_type() == 5) {drho.push_back(scf_thr_kin);}
-        elecstate::print_scf_iterinfo(get_ks_solver_type(), iter, 6, mag, 12, this->f_en.etot * ModuleBase::Ry_to_eV,
-        this->f_en.etot_delta * ModuleBase::Ry_to_eV, 16, drho, 16, duration, 6);
+        elecstate::print_scf_iterinfo(get_ks_solver_type(), iter, 6, mag, 10, this->f_en.etot * ModuleBase::Ry_to_eV,
+        this->f_en.etot_delta * ModuleBase::Ry_to_eV, 16, drho, 12, duration, 6);
     }
     this->f_en.etot_old = this->f_en.etot;
     return;
