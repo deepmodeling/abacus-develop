@@ -170,7 +170,7 @@ void Gint_k::folding_vl_k(const int &ik,
                         Atom* atom2 = &ucell.atoms[T2];
                         dtau = adjs.adjacent_tau[ad] - tau1;
                         double distance = dtau.norm() * ucell.lat0;
-                        double rcut = this->rcuts[T1] + this->rcuts[T2];
+                        double rcut = this->gridt->rcuts[T1] + this->gridt->rcuts[T2];
 
                         // for the local part, only need to calculate <phi_i | phi_j> within range
                         // mohan note 2012-07-06
@@ -473,7 +473,7 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<double> *hR,const UnitCell* ucell_
                         Atom* atom2 = &ucell.atoms[T2];
                         auto dtau = adjs.adjacent_tau[ad] - tau1;
                         double distance = dtau.norm() * ucell.lat0;
-                        double rcut = this->rcuts[T1] + this->rcuts[T2];
+                        double rcut = this->gridt->rcuts[T1] + this->gridt->rcuts[T2];
 
                         if(distance < rcut)
                         {
@@ -598,7 +598,7 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<std::complex<double>> *hR,const Un
                         Atom* atom2 = &ucell.atoms[T2];
                         auto dtau = adjs.adjacent_tau[ad] - tau1;
                         double distance = dtau.norm() * ucell.lat0;
-                        double rcut = this->rcuts[T1] + this->rcuts[T2];
+                        double rcut = this->gridt->rcuts[T1] + this->gridt->rcuts[T2];
 
                         if(distance < rcut)
                         {

@@ -368,7 +368,7 @@ void Gint_k::cal_dvlocal_R_sparseMatrix(const int &current_spin, const double &s
                         Atom* atom2 = &ucell.atoms[T2];
                         dtau = gdriver.getAdjacentTau(ad) - tau1;
                         double distance = dtau.norm() * ucell.lat0;
-                        double rcut = this->rcuts[T1] + this->rcuts[T2];
+                        double rcut = this->gridt->rcuts[T1] + this->gridt->rcuts[T2];
 
                         if(distance < rcut)
                         {

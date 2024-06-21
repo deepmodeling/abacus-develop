@@ -13,7 +13,7 @@
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_lcao/module_gint/grid_technique.h"
-class Gint :public Grid_Technique
+class Gint
 {
     public:
 

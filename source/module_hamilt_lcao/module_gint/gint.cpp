@@ -170,7 +170,7 @@ void Gint::cal_gint(Gint_inout* inout)
 
                 // it's a uniform grid to save orbital values, so the delta_r is
                 // a constant.
-                const double delta_r = this->dr_uniform;
+                const double delta_r = this->gridt->dr_uniform;
 
             if((inout->job==Gint_Tools::job_type::vlocal
                 || inout->job==Gint_Tools::job_type::vlocal_meta)
@@ -483,9 +483,7 @@ void Gint::prep_grid(const Grid_Technique& gt,
     this->ny = ny_in;
     this->nplane = nplane_in;
     this->startz_current = startz_current_in;
-    this->ucell= ucell_in;
-    this->dr_uniform=gt.dr_uniform;
-    this->rcuts=gt.rcuts;
+    this->ucell = ucell_in;
     assert(nbx > 0);
     assert(nby > 0);
     assert(nbz >= 0);
@@ -603,7 +601,7 @@ void Gint::initialize_pvpR(const UnitCell& ucell_in, Grid_Driver* gd)
 					{
 						ModuleBase::Vector3<double> dtau = gd->getAdjacentTau(ad) - tau1;
 						double distance = dtau.norm() * ucell_in.lat0;
-						double rcut = this->rcuts[T1] + this->rcuts[T2];
+                        double rcut = this->gridt->rcuts[T1] + this->gridt->rcuts[T2];
 
 						//if(distance < rcut)
 						// mohan reset this 2013-07-02 in Princeton

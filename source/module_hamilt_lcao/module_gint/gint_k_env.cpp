@@ -13,7 +13,7 @@ void Gint_k::cal_env_k(int ik, const std::complex<double>* psi_k, double* rho,
     ModuleBase::timer::tick("Gint_k", "cal_env_k");
 
     // it's a uniform grid to save orbital values, so the delta_r is a constant.
-    const double delta_r = this->dr_uniform;
+    const double delta_r = this->gridt->dr_uniform;
     const int max_size = this->gridt->max_atom;
     const int LD_pool = max_size * ucell.nwmax;
 
