@@ -29,9 +29,10 @@ list(APPEND objects
     output_log.cpp
     output_rho.cpp
     output_potential.cpp
-    #parameter_pool.cpp
     para_json.cpp
     parse_args.cpp
+    read_input.cpp
+    read_input_item_general.cpp
 )
 
 list(APPEND objects_advanced

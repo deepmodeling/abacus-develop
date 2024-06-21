@@ -9,7 +9,6 @@
 #include "esolver_dp.h"
 #include "esolver_lj.h"
 #include "esolver_of.h"
-#include "module_md/md_para.h"
 
 namespace ModuleESolver
 {

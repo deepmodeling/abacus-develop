@@ -1,34 +1,20 @@
-#ifndef INPUT_H
-#define INPUT_H
-
-#include <fstream>
-#include <sstream>
+#ifndef PARAMETER_H
+#define PARAMETER_H
 #include <string>
 #include <vector>
-#include <type_traits>
-
+#include "md_parameter.h"
 #include "module_base/vector3.h"
-#include "module_parameter/md_parameter.h"
-#include "input_conv.h"
-
-class Input
+namespace ModuleIO
 {
-  public:
-    ~Input()
-    {
-        delete[] hubbard_u;
-        delete[] orbital_corr;
-    }
-    void Init(const std::string &fn);
-
-    void Print(const std::string &fn) const;
-
-    void close_log(void) const;
-
+    class ReadInput;
+}
+class Parameter
+{
     //==========================================================
     // directories of files
     //==========================================================
-
+  private:
+    friend class ModuleIO::ReadInput;
     std::string suffix; // suffix of out put dir
     std::string stru_file; // file contains atomic positions -- xiaohui modify 2015-02-01
     std::string pseudo_dir; // directory of pseudopotential
@@ -649,113 +635,6 @@ class Input
     int elpa_num_thread=-1;
 
     bool check_input = false;
-    
-    std::time_t get_start_time(void) const
-    {
-        return start_time;
-    }
-
-  private:
-    //==========================================================
-    // MEMBER FUNCTIONS :
-    // NAME : Read()
-    // NAME : Default(set the default value for variables)
-    // NAME : Check(check the values)
-    // NAME : Bcast(only used in paralle case,only read in data
-    //        from first cpu, and distribute the data to the
-    //        other processors)
-    //==========================================================
-
-    // start time
-    std::time_t start_time;
-    bool Read(const std::string &fn);
-
-    void Default(void);
-
-    void Default_2(void); // jiyy add 2019-08-04
-
-    void Check(void);
-
-#ifdef __MPI
-    void Bcast(void);
-#endif
-
-    int count_ntype(const std::string &fn); // sunliang add 2022-12-06
-
-    std::string bands_to_print_; // specify the bands to be calculated in the get_pchg calculation, formalism similar to ocp_set.
-
-  public:
-    template <class T> static void read_value(std::ifstream &ifs, T &var)
-    {
-        ifs >> var;
-        std::string line;
-        getline(ifs, line); // read the rest of the line, directly discard it.
-        return;
-    }
-    void read_kspacing(std::ifstream &ifs)
-    {
-        std::string s;
-        std::getline(ifs, s);
-        std::stringstream ss(s);
-        // read 3 values
-        int count = 0;
-        while ((ss >> kspacing[count]) && count < 3)
-        {
-            count++;
-        }
-        // if not read even one value, or read two values, the input is invalid.
-        if (count == 0 || count == 2)
-        {
-            std::cout << "kspacing can only accept one or three double values." << std::endl;
-            ifs.setstate(std::ios::failbit);
-        }
-        // if only read one value, set all to kspacing[0]
-        if (count == 1)
-        {
-            kspacing[1] = kspacing[0];
-            kspacing[2] = kspacing[0];
-        }
-        // std::cout << "count: " << count << " kspacing: " << kspacing[0] << " " << kspacing[1] << " " << kspacing[2]
-        // << std::endl;
-    };
-
-    /* I hope this function would be more and more useful if want to support
-    vector/list of input */
-    template <typename T>
-    void read_value2stdvector(std::ifstream& ifs, std::vector<T>& var);
-    template <typename T>
-    typename std::enable_if<std::is_same<T, double>::value, T>::type cast_string(const std::string& str) { return std::stod(str); }
-    template <typename T>
-    typename std::enable_if<std::is_same<T, int>::value, T>::type cast_string(const std::string& str)
-    {
-        if (str == "true" || str == "1")
-            return 1;
-        else if (str == "false" || str == "0")
-            return 0;
-        else
-            return std::stoi(str);
-    }
-    template <typename T>
-    typename std::enable_if<std::is_same<T, bool>::value, T>::type cast_string(const std::string& str) { return (str == "true" || str == "1"); }
-    template <typename T>
-    typename std::enable_if<std::is_same<T, std::string>::value, T>::type cast_string(const std::string& str) { return str; }
-    void strtolower(char *sa, char *sb);
-    void read_bool(std::ifstream &ifs, bool &var);
-
-    // Return the const string pointer of private member bands_to_print_
-    // Not recommended to use this function directly, use get_out_band_kb() instead
-    const std::string* get_bands_to_print() const
-    {
-        return &bands_to_print_;
-    }
-    // Return parsed bands_to_print_ as a vector of integers
-    std::vector<int> get_out_band_kb() const
-    {
-        std::vector<int> out_band_kb;
-        Input_Conv::parse_expression(bands_to_print_, out_band_kb);
-        return out_band_kb;
-    }
 };
 
-extern Input INPUT;
-#endif // INPUT
+#endif
