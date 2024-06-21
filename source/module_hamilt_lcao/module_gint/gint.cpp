@@ -90,12 +90,12 @@ void Gint::cal_gint(Gint_inout* inout)
             if (inout->job == Gint_Tools::job_type::vlocal)
             {
                 GintKernel::gint_gamma_vl_gpu(this->hRGint,
-                                              inout->vl,
-                                              ylmcoef,
-                                              dr,
+                    inout->vl,
+                    ylmcoef,
+                    dr,
                     this->gridt->rcuts.data(),
-                                              *this->gridt,
-                                              ucell);
+                    *this->gridt,
+                    ucell);
             }
             else if (inout->job == Gint_Tools::job_type::rho)
             {
@@ -104,12 +104,12 @@ void Gint::cal_gint(Gint_inout* inout)
                 {
                     ModuleBase::GlobalFunc::ZEROS(inout->rho[is], nrxx);
                     GintKernel::gint_gamma_rho_gpu(this->DMRGint[is],
-                                                   ylmcoef,
-                                                   dr,
+                        ylmcoef,
+                        dr,
                         this->gridt->rcuts.data(),
-                                                   *this->gridt,
-                                                   ucell,
-                                                   inout->rho[is]);
+                        *this->gridt,
+                        ucell,
+                        inout->rho[is]);
                 }
             }
             else if (inout->job == Gint_Tools::job_type::force)
