@@ -477,7 +477,6 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
         }
     }
 
-    delete[] bands_picked;
     for (int is = 0; is < nspin; ++is)
     {
         for (int ib = 0; ib < nbands; ++ib)
