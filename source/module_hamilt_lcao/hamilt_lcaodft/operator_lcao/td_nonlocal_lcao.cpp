@@ -1,27 +1,25 @@
 #include "td_nonlocal_lcao.h"
 
-#include "module_hamilt_lcao/module_tddft/snap_psibeta_half_tddft.h"
+#include "module_base/timer.h"
+#include "module_base/tool_title.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
-#include "module_base/timer.h"
-#include "module_base/tool_title.h"
+#include "module_hamilt_lcao/module_tddft/snap_psibeta_half_tddft.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #ifdef _OPENMP
 #include <unordered_set>
 #endif
 
 template <typename TK, typename TR>
-hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::TDNonlocal(
-    LCAO_Matrix* LM_in,
-    const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
-    hamilt::HContainer<TR>* hR_in,
-    std::vector<TK>* hK_in,
-    const UnitCell* ucell_in,
-    Grid_Driver* GridD_in,
-    const ORB_gen_tables* uot,
-    const Parallel_Orbitals* paraV)
-    : hamilt::OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in), uot_(uot)
+hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::TDNonlocal(LCAO_Matrix* LM_in,
+                                                             const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
+                                                             hamilt::HContainer<TR>* hR_in,
+                                                             std::vector<TK>* hK_in,
+                                                             const UnitCell* ucell_in,
+                                                             Grid_Driver* GridD_in,
+                                                             const Parallel_Orbitals* paraV)
+    : hamilt::OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in)
 {
     this->cal_type = calculation_type::lcao_tddft_velocity;
     this->ucell = ucell_in;
@@ -32,7 +30,7 @@ hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::TDNonlocal(
 #endif
     // initialize HR to get adjs info.
     this->init_td();
-    this->initialize_HR(Grid,this->LM->ParaV);
+    this->initialize_HR(Grid, this->LM->ParaV);
 }
 
 // destructor
@@ -45,15 +43,14 @@ hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::~TDNonlocal()
     }
 }
 template <typename TK, typename TR>
-void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::init_td(void)
+void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::init_td()
 {
-    //calculate At in cartesian coorinates.
-	this->cart_At=TD_Velocity::td_vel_op->cart_At;
+    // calculate At in cartesian coorinates.
+    this->cart_At = TD_Velocity::td_vel_op->cart_At;
 }
 // initialize_HR()
 template <typename TK, typename TR>
-void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(Grid_Driver* GridD,
-                                                                      const Parallel_Orbitals* paraV)
+void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(Grid_Driver* GridD, const Parallel_Orbitals* paraV)
 {
     if (elecstate::H_TDDFT_pw::stype != 1)
     {
@@ -81,8 +78,8 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(Grid_Driver
             const ModuleBase::Vector3<int>& R_index1 = adjs.box[ad1];
             // choose the real adjacent atoms
             const LCAO_Orbitals& orb = LCAO_Orbitals::get_const_instance();
-            // Note: the distance of atoms should less than the cutoff radius, 
-            // When equal, the theoretical value of matrix element is zero, 
+            // Note: the distance of atoms should less than the cutoff radius,
+            // When equal, the theoretical value of matrix element is zero,
             // but the calculated value is not zero due to the numerical error, which would lead to result changes.
             if (this->ucell->cal_dtau(iat0, iat1, R_index1).norm() * this->ucell->lat0
                 < orb.Phi[T1].getRcut() + this->ucell->infoNL.Beta[T0].get_rcut_max())
@@ -107,21 +104,21 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::initialize_HR_tmp(const P
     }
     ModuleBase::TITLE("TDNonlocal", "initialize_HR_tmp");
     ModuleBase::timer::tick("TDNonlocal", "initialize_HR_tmp");
-    
+
     for (int i = 0; i < this->hR->size_atom_pairs(); ++i)
     {
         hamilt::AtomPair<TR>& tmp = this->hR->get_atom_pair(i);
-        for(int ir = 0;ir < tmp.get_R_size(); ++ir )
+        for (int ir = 0; ir < tmp.get_R_size(); ++ir)
         {
             const ModuleBase::Vector3<int> R_index = tmp.get_R_index(ir);
             const int iat1 = tmp.get_atom_i();
-            const int iat2 = tmp.get_atom_j(); 
+            const int iat2 = tmp.get_atom_j();
 
             hamilt::AtomPair<std::complex<double>> tmp1(iat1, iat2, R_index, paraV);
             this->hR_tmp->insert_pair(tmp1);
         }
     }
-    this->hR_tmp->allocate(nullptr,true);
+    this->hR_tmp->allocate(nullptr, true);
 
     ModuleBase::timer::tick("TDNonlocal", "initialize_HR_tmp");
 }
@@ -137,104 +134,104 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
     // 1. calculate <psi|beta> for each pair of atoms
 #ifdef _OPENMP
 #pragma omp parallel
-{
-    std::unordered_set<int> atom_row_list;
-    #pragma omp for
-    for (int iat0 = 0; iat0 < this->ucell->nat; iat0++)
     {
-        atom_row_list.insert(iat0);
-    }
-#endif
-    for (int iat0 = 0; iat0 < this->ucell->nat; iat0++)
-    {
-        auto tau0 = ucell->get_tau(iat0);
-        int T0, I0;
-        ucell->iat2iait(iat0, &I0, &T0);
-        AdjacentAtomInfo& adjs = this->adjs_all[iat0];
-
-        std::vector<std::unordered_map<int, std::vector<std::complex<double>>>> nlm_tot;
-        nlm_tot.resize(adjs.adj_num + 1);
-
-        for (int ad = 0; ad < adjs.adj_num + 1; ++ad)
+        std::unordered_set<int> atom_row_list;
+#pragma omp for
+        for (int iat0 = 0; iat0 < this->ucell->nat; iat0++)
         {
-            const int T1 = adjs.ntype[ad];
-            const int I1 = adjs.natom[ad];
-            const int iat1 = ucell->itia2iat(T1, I1);
-            const ModuleBase::Vector3<double>& tau1 = adjs.adjacent_tau[ad];
-            const Atom* atom1 = &ucell->atoms[T1];
-
-            const LCAO_Orbitals& orb = LCAO_Orbitals::get_const_instance();
-            auto all_indexes = paraV->get_indexes_row(iat1);
-#ifdef _OPENMP
-            if(atom_row_list.find(iat1) == atom_row_list.end())
-            {
-                all_indexes.clear();
-            }
-#endif
-            auto col_indexes = paraV->get_indexes_col(iat1);
-            // insert col_indexes into all_indexes to get universal set with no repeat elements
-            all_indexes.insert(all_indexes.end(), col_indexes.begin(), col_indexes.end());
-            std::sort(all_indexes.begin(), all_indexes.end());
-            all_indexes.erase(std::unique(all_indexes.begin(), all_indexes.end()), all_indexes.end());
-            for (int iw1l = 0; iw1l < all_indexes.size(); iw1l += npol)
-            {
-                const int iw1 = all_indexes[iw1l] / npol;
-                std::vector<std::vector<std::complex<double>>> nlm;
-                // nlm is a vector of vectors, but size of outer vector is only 1 here
-                // If we are calculating force, we need also to store the gradient
-                // and size of outer vector is then 4
-                // inner loop : all projectors (L0,M0)
-
-                // snap_psibeta_half_tddft() are used to calculate <psi|exp(iAr)|beta>
-                module_tddft::snap_psibeta_half_tddft(
-                    orb,
-                    this->ucell->infoNL,
-                    nlm,
-                    tau1 * this->ucell->lat0,
-                    T1,
-                    atom1->iw2l[iw1],
-                    atom1->iw2m[iw1],
-                    atom1->iw2n[iw1],
-                    tau0 * this->ucell->lat0,
-                    T0,
-                    -cart_At/2.0,
-                    0);
-                nlm_tot[ad].insert({all_indexes[iw1l], nlm[0]});
-            }
+            atom_row_list.insert(iat0);
         }
-// 2. calculate <psi_I|beta>D<beta|psi_{J,R}> for each pair of <IJR> atoms
-        for (int ad1 = 0; ad1 < adjs.adj_num + 1; ++ad1)
-        {
-            const int T1 = adjs.ntype[ad1];
-            const int I1 = adjs.natom[ad1];
-            const int iat1 = ucell->itia2iat(T1, I1);
-#ifdef _OPENMP
-            if(atom_row_list.find(iat1) == atom_row_list.end())
-            {
-                continue;
-            }
 #endif
-            ModuleBase::Vector3<int>& R_index1 = adjs.box[ad1];
-            for (int ad2 = 0; ad2 < adjs.adj_num + 1; ++ad2)
+        for (int iat0 = 0; iat0 < this->ucell->nat; iat0++)
+        {
+            auto tau0 = ucell->get_tau(iat0);
+            int T0, I0;
+            ucell->iat2iait(iat0, &I0, &T0);
+            AdjacentAtomInfo& adjs = this->adjs_all[iat0];
+
+            std::vector<std::unordered_map<int, std::vector<std::complex<double>>>> nlm_tot;
+            nlm_tot.resize(adjs.adj_num + 1);
+
+            for (int ad = 0; ad < adjs.adj_num + 1; ++ad)
             {
-                const int T2 = adjs.ntype[ad2];
-                const int I2 = adjs.natom[ad2];
-                const int iat2 = ucell->itia2iat(T2, I2);
-                ModuleBase::Vector3<int>& R_index2 = adjs.box[ad2];
-                ModuleBase::Vector3<int> R_vector(R_index2[0] - R_index1[0],
-                                                  R_index2[1] - R_index1[1],
-                                                  R_index2[2] - R_index1[2]);
-                hamilt::BaseMatrix<std::complex<double>>* tmp = this->hR_tmp->find_matrix(iat1, iat2, R_vector[0], R_vector[1], R_vector[2]);
-                // if not found , skip this pair of atoms
-                if (tmp != nullptr)
+                const int T1 = adjs.ntype[ad];
+                const int I1 = adjs.natom[ad];
+                const int iat1 = ucell->itia2iat(T1, I1);
+                const ModuleBase::Vector3<double>& tau1 = adjs.adjacent_tau[ad];
+                const Atom* atom1 = &ucell->atoms[T1];
+
+                const LCAO_Orbitals& orb = LCAO_Orbitals::get_const_instance();
+                auto all_indexes = paraV->get_indexes_row(iat1);
+#ifdef _OPENMP
+                if (atom_row_list.find(iat1) == atom_row_list.end())
                 {
-                    this->cal_HR_IJR(iat1, iat2, T0, paraV, nlm_tot[ad1], nlm_tot[ad2], tmp->get_pointer());
+                    all_indexes.clear();
+                }
+#endif
+                auto col_indexes = paraV->get_indexes_col(iat1);
+                // insert col_indexes into all_indexes to get universal set with no repeat elements
+                all_indexes.insert(all_indexes.end(), col_indexes.begin(), col_indexes.end());
+                std::sort(all_indexes.begin(), all_indexes.end());
+                all_indexes.erase(std::unique(all_indexes.begin(), all_indexes.end()), all_indexes.end());
+                for (int iw1l = 0; iw1l < all_indexes.size(); iw1l += npol)
+                {
+                    const int iw1 = all_indexes[iw1l] / npol;
+                    std::vector<std::vector<std::complex<double>>> nlm;
+                    // nlm is a vector of vectors, but size of outer vector is only 1 here
+                    // If we are calculating force, we need also to store the gradient
+                    // and size of outer vector is then 4
+                    // inner loop : all projectors (L0,M0)
+
+                    // snap_psibeta_half_tddft() are used to calculate <psi|exp(iAr)|beta>
+                    module_tddft::snap_psibeta_half_tddft(orb,
+                                                          this->ucell->infoNL,
+                                                          nlm,
+                                                          tau1 * this->ucell->lat0,
+                                                          T1,
+                                                          atom1->iw2l[iw1],
+                                                          atom1->iw2m[iw1],
+                                                          atom1->iw2n[iw1],
+                                                          tau0 * this->ucell->lat0,
+                                                          T0,
+                                                          -cart_At / 2.0,
+                                                          0);
+                    nlm_tot[ad].insert({all_indexes[iw1l], nlm[0]});
+                }
+            }
+            // 2. calculate <psi_I|beta>D<beta|psi_{J,R}> for each pair of <IJR> atoms
+            for (int ad1 = 0; ad1 < adjs.adj_num + 1; ++ad1)
+            {
+                const int T1 = adjs.ntype[ad1];
+                const int I1 = adjs.natom[ad1];
+                const int iat1 = ucell->itia2iat(T1, I1);
+#ifdef _OPENMP
+                if (atom_row_list.find(iat1) == atom_row_list.end())
+                {
+                    continue;
+                }
+#endif
+                ModuleBase::Vector3<int>& R_index1 = adjs.box[ad1];
+                for (int ad2 = 0; ad2 < adjs.adj_num + 1; ++ad2)
+                {
+                    const int T2 = adjs.ntype[ad2];
+                    const int I2 = adjs.natom[ad2];
+                    const int iat2 = ucell->itia2iat(T2, I2);
+                    ModuleBase::Vector3<int>& R_index2 = adjs.box[ad2];
+                    ModuleBase::Vector3<int> R_vector(R_index2[0] - R_index1[0],
+                                                      R_index2[1] - R_index1[1],
+                                                      R_index2[2] - R_index1[2]);
+                    hamilt::BaseMatrix<std::complex<double>>* tmp
+                        = this->hR_tmp->find_matrix(iat1, iat2, R_vector[0], R_vector[1], R_vector[2]);
+                    // if not found , skip this pair of atoms
+                    if (tmp != nullptr)
+                    {
+                        this->cal_HR_IJR(iat1, iat2, T0, paraV, nlm_tot[ad1], nlm_tot[ad2], tmp->get_pointer());
+                    }
                 }
             }
         }
-    }
 #ifdef _OPENMP
-}
+    }
 #endif
 
     ModuleBase::timer::tick("TDNonlocal", "calculate_HR");
@@ -284,12 +281,12 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(
 #endif
             for (int is = 0; is < npol * npol; ++is)
             {
-                std::complex<double> nlm_tmp = std::complex<double>{0,0};
+                std::complex<double> nlm_tmp = std::complex<double>{0, 0};
                 for (int no = 0; no < this->ucell->atoms[T0].ncpp.non_zero_count_soc[is]; no++)
                 {
                     const int p1 = this->ucell->atoms[T0].ncpp.index1_soc[is][no];
                     const int p2 = this->ucell->atoms[T0].ncpp.index2_soc[is][no];
-                    //this->ucell->atoms[T0].ncpp.get_d(is, p1, p2, tmp_d);
+                    // this->ucell->atoms[T0].ncpp.get_d(is, p1, p2, tmp_d);
                     this->ucell->atoms[T0].ncpp.get_d(is, p2, p1, tmp_d);
                     nlm_tmp += nlm1[p1] * std::conj(nlm2[p2]) * (*tmp_d);
                 }
@@ -320,7 +317,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
         return;
     }
     if (!this->hR_tmp_done)
-    {   
+    {
         if (this->hR_tmp == nullptr)
         {
             this->hR_tmp = new hamilt::HContainer<std::complex<double>>(this->LM->ParaV);
@@ -328,7 +325,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
             this->initialize_HR_tmp(this->LM->ParaV);
             this->allocated = true;
         }
-        if(this->next_sub_op != nullptr)
+        if (this->next_sub_op != nullptr)
         {
             // pass pointer of hR_tmp to the next node
             static_cast<OperatorLCAO<TK, TR>*>(this->next_sub_op)->set_HR_fixed(this->hR_tmp);
@@ -340,23 +337,24 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
     ModuleBase::timer::tick("TDNonlocal", "contributeHR");
     return;
 }
-template<typename TK, typename TR>
+template <typename TK, typename TR>
 void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::contributeHk(int ik)
 {
     return;
 }
-template<>
+template <>
 void hamilt::TDNonlocal<hamilt::OperatorLCAO<std::complex<double>, double>>::contributeHk(int ik)
 {
     if (TD_Velocity::tddft_velocity == false)
     {
         return;
     }
-    else{        
+    else
+    {
         ModuleBase::TITLE("TDNonlocal", "contributeHk");
         ModuleBase::timer::tick("TDNonlocal", "contributeHk");
-        //folding inside HR to HK
-        if(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
+        // folding inside HR to HK
+        if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
         {
             const int nrow = this->LM->ParaV->get_row_size();
             folding_HR(*this->hR_tmp, this->hK->data(), this->kvec_d[ik], nrow, 1);
@@ -366,7 +364,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<std::complex<double>, double>>::con
             const int ncol = this->LM->ParaV->get_col_size();
             folding_HR(*this->hR_tmp, this->hK->data(), this->kvec_d[ik], ncol, 0);
         }
-        
+
         ModuleBase::timer::tick("TDNonlocal", "contributeHk");
     }
 }

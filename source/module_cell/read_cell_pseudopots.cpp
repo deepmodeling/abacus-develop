@@ -1,41 +1,41 @@
-#include <cstring> // Peize Lin fix bug about strcmp 2016-08-02
-
 #include "module_base/parallel_common.h"
 #include "module_io/input.h"
 #include "unitcell.h"
 
+#include <cstring> // Peize Lin fix bug about strcmp 2016-08-02
+
 //==========================================================
 // Read pseudopotential according to the dir
 //==========================================================
-void UnitCell::read_cell_pseudopots(const std::string &pp_dir, std::ofstream &log)
+void UnitCell::read_cell_pseudopots(const std::string& pp_dir, std::ofstream& log)
 {
-	ModuleBase::TITLE("UnitCell","read_cell_pseudopots");
-	// setup reading log for pseudopot_upf
-	std::stringstream ss;
-	ss << GlobalV::global_out_dir << "atom_pseudo.log";
-	
-	// Read in the atomic pseudo potentials
-	std::string pp_address;
-	for (int i = 0;i < ntype;i++)
-	{
-		Pseudopot_upf upf;
-        upf.coulomb_potential=this->atoms[i].coulomb_potential;
-	
-		// mohan update 2010-09-12	
-		int error = 0;
-		int error_ap = 0;
-		
-		if(GlobalV::MY_RANK==0)
-		{
-			pp_address = pp_dir + this->pseudo_fn[i];
-			error = upf.init_pseudo_reader( pp_address, this->pseudo_type[i] ); //xiaohui add 2013-06-23
+    ModuleBase::TITLE("UnitCell", "read_cell_pseudopots");
+    // setup reading log for pseudopot_upf
+    std::stringstream ss;
+    ss << GlobalV::global_out_dir << "atom_pseudo.log";
 
-			if(error==0) // mohan add 2021-04-16
-			{
-				if(this->atoms[i].flag_empty_element)	// Peize Lin add for bsse 2021.04.07
-				{
-					upf.set_empty_element();			
-				}
+    // Read in the atomic pseudo potentials
+    std::string pp_address;
+    for (int i = 0; i < ntype; i++)
+    {
+        Pseudopot_upf upf;
+        upf.coulomb_potential = this->atoms[i].coulomb_potential;
+
+        // mohan update 2010-09-12
+        int error = 0;
+        int error_ap = 0;
+
+        if (GlobalV::MY_RANK == 0)
+        {
+            pp_address = pp_dir + this->pseudo_fn[i];
+            error = upf.init_pseudo_reader(pp_address, this->pseudo_type[i]); // xiaohui add 2013-06-23
+
+            if (error == 0) // mohan add 2021-04-16
+            {
+                if (this->atoms[i].flag_empty_element) // Peize Lin add for bsse 2021.04.07
+                {
+                    upf.set_empty_element();
+                }
                 upf.set_upf_q(); // liuyu add 2023-09-21
                 // average pseudopotential if needed
                 error_ap = upf.average_p(GlobalV::soc_lambda); // added by zhengdy 2020-10-20
@@ -44,13 +44,13 @@ void UnitCell::read_cell_pseudopots(const std::string &pp_dir, std::ofstream &lo
         }
 
 #ifdef __MPI
-		Parallel_Common::bcast_int(error);
-		Parallel_Common::bcast_int(error_ap);
+        Parallel_Common::bcast_int(error);
+        Parallel_Common::bcast_int(error_ap);
         Parallel_Common::bcast_bool(atoms[i].coulomb_potential);
 #endif
 
-		if(error_ap) 
-		{
+        if (error_ap)
+        {
             ModuleBase::WARNING_QUIT("UnitCell::read_cell_pseudopots", "error when average the pseudopotential.");
         }
 
@@ -120,18 +120,18 @@ void UnitCell::read_cell_pseudopots(const std::string &pp_dir, std::ofstream &lo
     return;
 }
 
-
-void UnitCell::print_unitcell_pseudo(const std::string &fn)
+void UnitCell::print_unitcell_pseudo(const std::string& fn)
 {
-	if(GlobalV::test_pseudo_cell) ModuleBase::TITLE("UnitCell","print_unitcell_pseudo");
-	std::ofstream ofs( fn.c_str() );
+    if (GlobalV::test_pseudo_cell)
+        ModuleBase::TITLE("UnitCell", "print_unitcell_pseudo");
+    std::ofstream ofs(fn.c_str());
 
-	this->print_cell(ofs);
-	for (int i = 0;i < ntype;i++)
-	{
-		atoms[i].print_Atom(ofs);
-	}
+    this->print_cell(ofs);
+    for (int i = 0; i < ntype; i++)
+    {
+        atoms[i].print_Atom(ofs);
+    }
 
-	ofs.close();
-	return;
+    ofs.close();
+    return;
 }

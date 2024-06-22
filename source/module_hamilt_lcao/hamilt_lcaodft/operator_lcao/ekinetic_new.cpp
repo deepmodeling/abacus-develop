@@ -2,7 +2,6 @@
 
 #include "module_base/timer.h"
 #include "module_base/tool_title.h"
-#include "module_basis/module_ao/ORB_gen_tables.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"

@@ -1,15 +1,14 @@
 #ifndef TDNONLOCAL_H
 #define TDNONLOCAL_H
-#include <unordered_map>
-
 #include "module_basis/module_ao/parallel_orbitals.h"
-#include "module_basis/module_ao/ORB_gen_tables.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_cell/unitcell.h"
+#include "module_elecstate/potentials/H_TDDFT_pw.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
-#include "module_elecstate/potentials/H_TDDFT_pw.h"
 #include "module_hamilt_lcao/module_tddft/td_velocity.h"
+
+#include <unordered_map>
 
 namespace hamilt
 {
@@ -36,13 +35,12 @@ class TDNonlocal<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 {
   public:
     TDNonlocal<OperatorLCAO<TK, TR>>(LCAO_Matrix* LM_in,
-                                      const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
-                                      hamilt::HContainer<TR>* hR_in,
-                                      std::vector<TK>* hK_in,
-                                      const UnitCell* ucell_in,
-                                      Grid_Driver* GridD_in,
-                                      const ORB_gen_tables* uot,
-                                      const Parallel_Orbitals* paraV);
+                                     const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
+                                     hamilt::HContainer<TR>* hR_in,
+                                     std::vector<TK>* hK_in,
+                                     const UnitCell* ucell_in,
+                                     Grid_Driver* GridD_in,
+                                     const Parallel_Orbitals* paraV);
     ~TDNonlocal<OperatorLCAO<TK, TR>>();
 
     /**
@@ -58,12 +56,10 @@ class TDNonlocal<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     const UnitCell* ucell = nullptr;
 
     HContainer<TR>* HR = nullptr;
-    /// @brief Store real space hamiltonian. TD term should include imaginary part, thus it has to be complex type. Only shared between TD operators.
+    /// @brief Store real space hamiltonian. TD term should include imaginary part, thus it has to be complex type. Only
+    /// shared between TD operators.
     HContainer<std::complex<double>>* hR_tmp = nullptr;
     Grid_Driver* Grid = nullptr;
-
-    // this variable is introduced temporarily during LCAO refactoring
-    const ORB_gen_tables* uot_;
 
     bool allocated = false;
 
@@ -81,7 +77,7 @@ class TDNonlocal<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     /**
      * @brief initialize HR_tmp
      * Allocate the memory for HR_tmp with the same size as HR
-    */
+     */
     void initialize_HR_tmp(const Parallel_Orbitals* paraV);
     /// @brief init vector potential for td_nonlocal term
     void init_td(void);
