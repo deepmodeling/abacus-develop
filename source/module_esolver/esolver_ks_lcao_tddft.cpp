@@ -91,9 +91,9 @@ void ESolver_KS_LCAO_TDDFT::before_all_runners(Input& inp, UnitCell& ucell)
 
     // this part will be updated soon
     // pass Hamilt-pointer to Operator
-    this->LOC.ParaV = this->LM.ParaV;
-    ;
-    this->LOWF.ParaV = this->LM.ParaV;
+
+    this->LOC.ParaV = &(this->orb_con.ParaV);
+    this->LOWF.ParaV = &(this->orb_con.ParaV);
 
     // 6) initialize Density Matrix
     dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)
@@ -311,7 +311,7 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
         this->pelec->cal_converged();
     }
 
-    const int nloc = this->LOC.ParaV->nloc;
+    const int nloc = this->orb_con.ParaV.nloc;
     const int ncol_nbands = this->LM.ParaV->ncol_bands;
     const int nrow = this->LM.ParaV->nrow;
     const int nbands = GlobalV::NBANDS;
@@ -433,7 +433,7 @@ void ESolver_KS_LCAO_TDDFT::after_scf(const int istep)
 }
 
 // use the original formula (Hamiltonian matrix) to calculate energy density matrix
-void ESolver_KS_LCAO_TDDFT::cal_edm_tddft(void)
+void ESolver_KS_LCAO_TDDFT::cal_edm_tddft()
 {
     // mohan add 2024-03-27
     const int nlocal = GlobalV::NLOCAL;
@@ -457,11 +457,10 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft(void)
         // mohan add 2024-03-27
         //! be careful, the type of nloc is 'long'
         //! whether the long type is safe, needs more discussion
-        const long nloc = this->LOC.ParaV->nloc;
-        const int ncol = this->LOC.ParaV->ncol;
-        const int nrow = this->LOC.ParaV->nrow;
+        const long nloc = this->orb_con.ParaV.nloc;
+        const int ncol = this->orb_con.ParaV.ncol;
+        const int nrow = this->orb_con.ParaV.nrow;
 
-        // this->LOC.edm_k_tddft[ik].create(this->LOC.ParaV->ncol, this->LOC.ParaV->nrow);
         tmp_edmk.create(ncol, nrow);
         complex<double>* Htmp = new complex<double>[nloc];
         complex<double>* Sinv = new complex<double>[nloc];
@@ -490,7 +489,7 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft(void)
         int info = 0;
         const int one_int = 1;
 
-        pzgetrf_(&nlocal, &nlocal, Sinv, &one_int, &one_int, this->LOC.ParaV->desc, ipiv.data(), &info);
+        pzgetrf_(&nlocal, &nlocal, Sinv, &one_int, &one_int, this->orb_con.ParaV.desc, ipiv.data(), &info);
 
         int lwork = -1;
         int liwork = -1;
@@ -505,7 +504,7 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft(void)
                  Sinv,
                  &one_int,
                  &one_int,
-                 this->LOC.ParaV->desc,
+                 this->orb_con.ParaV.desc,
                  ipiv.data(),
                  work.data(),
                  &lwork,
@@ -522,7 +521,7 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft(void)
                  Sinv,
                  &one_int,
                  &one_int,
-                 this->LOC.ParaV->desc,
+                 this->orb_con.ParaV.desc,
                  ipiv.data(),
                  work.data(),
                  &lwork,
@@ -545,16 +544,16 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft(void)
                 tmp_dmk,
                 &one_int,
                 &one_int,
-                this->LOC.ParaV->desc,
+                this->orb_con.ParaV.desc,
                 Htmp,
                 &one_int,
                 &one_int,
-                this->LOC.ParaV->desc,
+                this->orb_con.ParaV.desc,
                 &zero_float,
                 tmp1,
                 &one_int,
                 &one_int,
-                this->LOC.ParaV->desc);
+                this->orb_con.ParaV.desc);
 
         pzgemm_(&N_char,
                 &N_char,
@@ -565,16 +564,16 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft(void)
                 tmp1,
                 &one_int,
                 &one_int,
-                this->LOC.ParaV->desc,
+                this->orb_con.ParaV.desc,
                 Sinv,
                 &one_int,
                 &one_int,
-                this->LOC.ParaV->desc,
+                this->orb_con.ParaV.desc,
                 &zero_float,
                 tmp2,
                 &one_int,
                 &one_int,
-                this->LOC.ParaV->desc);
+                this->orb_con.ParaV.desc);
 
         pzgemm_(&N_char,
                 &N_char,
@@ -585,16 +584,16 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft(void)
                 Sinv,
                 &one_int,
                 &one_int,
-                this->LOC.ParaV->desc,
+                this->orb_con.ParaV.desc,
                 Htmp,
                 &one_int,
                 &one_int,
-                this->LOC.ParaV->desc,
+                this->orb_con.ParaV.desc,
                 &zero_float,
                 tmp3,
                 &one_int,
                 &one_int,
-                this->LOC.ParaV->desc);
+                this->orb_con.ParaV.desc);
 
         pzgemm_(&N_char,
                 &N_char,
@@ -605,16 +604,16 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft(void)
                 tmp3,
                 &one_int,
                 &one_int,
-                this->LOC.ParaV->desc,
+                this->orb_con.ParaV.desc,
                 tmp_dmk,
                 &one_int,
                 &one_int,
-                this->LOC.ParaV->desc,
+                this->orb_con.ParaV.desc,
                 &zero_float,
                 tmp4,
                 &one_int,
                 &one_int,
-                this->LOC.ParaV->desc);
+                this->orb_con.ParaV.desc);
 
         pzgeadd_(&N_char,
                  &nlocal,
@@ -623,12 +622,12 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft(void)
                  tmp2,
                  &one_int,
                  &one_int,
-                 this->LOC.ParaV->desc,
+                 this->orb_con.ParaV.desc,
                  &half_float,
                  tmp4,
                  &one_int,
                  &one_int,
-                 this->LOC.ParaV->desc);
+                 this->orb_con.ParaV.desc);
 
         zcopy_(&nloc, tmp4, &inc, tmp_edmk.c, &inc);
 
@@ -640,8 +639,7 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft(void)
         delete[] tmp4;
 #else
         // for serial version
-        // this->LOC.edm_k_tddft[ik].create(this->LOC.ParaV->ncol, this->LOC.ParaV->nrow);
-        tmp_edmk.create(this->LOC.ParaV->ncol, this->LOC.ParaV->nrow);
+        tmp_edmk.create(this->orb_con.ParaV.ncol, this->orb_con.ParaV.nrow);
         ModuleBase::ComplexMatrix Sinv(nlocal, nlocal);
         ModuleBase::ComplexMatrix Htmp(nlocal, nlocal);
 

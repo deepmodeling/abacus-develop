@@ -13,7 +13,7 @@
 class IState_Envelope
 {
   public:
-    IState_Envelope(const elecstate::ElecState* pes_in);
+    IState_Envelope(const elecstate::ElecState* pes);
     ~IState_Envelope();
 
     /// for gamma_only
@@ -28,6 +28,7 @@ class IState_Envelope
                const K_Vectors& kv,
                const double nelec,
                const int nbands_istate,
+               const std::vector<int>& out_band_kb,
                const int nbands,
                const int nspin,
                const int nlocal,
@@ -45,6 +46,7 @@ class IState_Envelope
                const K_Vectors& kv,
                const double nelec,
                const int nbands_istate,
+               const std::vector<int>& out_band_kb,
                const int nbands,
                const int nspin,
                const int nlocal,
@@ -64,6 +66,7 @@ class IState_Envelope
                const K_Vectors& kv,
                const double nelec,
                const int nbands_istate,
+               const std::vector<int>& out_band_kb,
                const int nbands,
                const int nspin,
                const int nlocal,
@@ -81,6 +84,7 @@ class IState_Envelope
                const K_Vectors& kv,
                const double nelec,
                const int nbands_istate,
+               const std::vector<int>& out_band_kb,
                const int nbands,
                const int nspin,
                const int nlocal,
@@ -90,8 +94,8 @@ class IState_Envelope
     };
 
   private:
-    bool* bands_picked = nullptr;
-    const elecstate::ElecState* pes = nullptr;
+    std::vector<int> bands_picked_;
+    const elecstate::ElecState* pes_ = nullptr;
 
     void set_pw_wfc(const ModulePW::PW_Basis_K* wfcpw,
                     const int& ik,
