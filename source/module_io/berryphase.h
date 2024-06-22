@@ -36,9 +36,9 @@ public:
     int GDIR;
 
 	void get_occupation_bands();
-
+#ifdef __LCAO
 	void lcao_init(const K_Vectors& kv, const Grid_Technique& grid_tech);
-
+#endif
 	void set_kpoints(const K_Vectors& kv, const int direction);
 
     double stringPhase(int index_str,
