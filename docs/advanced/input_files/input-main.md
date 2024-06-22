@@ -30,6 +30,7 @@
     - [min\_dist\_coef](#min_dist_coef)
     - [device](#device)
     - [precision](#precision)
+    - [elpa\_num\_thread](#elpa_num_thread)
   - [Variables related to input files](#variables-related-to-input-files)
     - [stru\_file](#stru_file)
     - [kpoint\_file](#kpoint_file)
@@ -690,6 +691,14 @@ If only one value is set (such as `kspacing 0.5`), then kspacing values of a/b/c
   - pw basis: required by the `single` precision options
   - cg/bpcg/dav ks_solver: required by the `single` precision options
 - **Default**: double
+
+### elpa_num_thread
+
+- **Type**: int
+- **Description**: Number of threads used in one elpa calculation. 
+
+  If the number is below 0 or 0 or beyond the max number of threads, all elpa calculation will be using all mpi threads
+- **Default**: -1
 
 [back to top](#full-list-of-input-keywords)
 
@@ -1473,13 +1482,13 @@ These variables are used to control the output of properties.
 - **Type**: Integer
 - **Description**: 
   - 1. Output the charge density (in Bohr^-3) on real space grids into the density files in the folder `OUT.${suffix}`. The files are named as:
-    - npsin = 1: SPIN1_CHG.cube;
-    - npsin = 2: SPIN1_CHG.cube, and SPIN2_CHG.cube;
-    - npsin = 4: SPIN1_CHG.cube, SPIN2_CHG.cube, SPIN3_CHG.cube, and SPIN4_CHG.cube.
+    - nspin = 1: SPIN1_CHG.cube;
+    - nspin = 2: SPIN1_CHG.cube, and SPIN2_CHG.cube;
+    - nspin = 4: SPIN1_CHG.cube, SPIN2_CHG.cube, SPIN3_CHG.cube, and SPIN4_CHG.cube.
   - 2. On top of 1, also output the initial charge density. The files are named as:
     - nspin = 1: SPIN1_CHG_INI.cube
-    - npsin = 2: SPIN1_CHG_INI.cube, and SPIN2_CHG_INI.cube;
-    - npsin = 4: SPIN1_CHG_INI.cube, SPIN2_CHG_INI.cube, SPIN3_CHG_INI.cube, and SPIN4_CHG_INI.cube.
+    - nspin = 2: SPIN1_CHG_INI.cube, and SPIN2_CHG_INI.cube;
+    - nspin = 4: SPIN1_CHG_INI.cube, SPIN2_CHG_INI.cube, SPIN3_CHG_INI.cube, and SPIN4_CHG_INI.cube.
 
   The circle order of the charge density on real space grids is: x is the outer loop, then y and finally z (z is moving fastest).
 
@@ -1491,16 +1500,16 @@ These variables are used to control the output of properties.
 - **Type**: Integer
 - **Description**:
   - 1: Output the **total local potential** (i.e., local pseudopotential + Hartree potential + XC potential + external electric field (if exists) + dipole correction potential (if exists) + ...) on real space grids (in Ry) into files in the folder `OUT.${suffix}`. The files are named as:
-    - npsin = 1: SPIN1_POT.cube;
-    - npsin = 2: SPIN1_POT.cube, and SPIN2_POT.cube;
-    - npsin = 4: SPIN1_POT.cube, SPIN2_POT.cube, SPIN3_POT.cube, and SPIN4_POT.cube.
+    - nspin = 1: SPIN1_POT.cube;
+    - nspin = 2: SPIN1_POT.cube, and SPIN2_POT.cube;
+    - nspin = 4: SPIN1_POT.cube, SPIN2_POT.cube, SPIN3_POT.cube, and SPIN4_POT.cube.
   - 2: Output the **electrostatic potential** on real space grids into `OUT.${suffix}/ElecStaticPot.cube`. The Python script named `tools/average_pot/aveElecStatPot.py` can be used to calculate the average electrostatic potential along the z-axis and outputs it into ElecStaticPot_AVE.
 
     Please note that the total local potential refers to the local component of the self-consistent potential, excluding the non-local pseudopotential. The distinction between the local potential and the electrostatic potential is as follows: local potential = electrostatic potential + XC potential.
   - 3: Apart from 1, also output the **total local potential** of the initial charge density. The files are named as:
-    - npsin = 1: SPIN1_POT_INI.cube;
-    - npsin = 2: SPIN1_POT_INI.cube, and SPIN2_POT_INI.cube;
-    - npsin = 4: SPIN1_POT_INI.cube, SPIN2_POT_INI.cube, SPIN3_POT_INI.cube, and SPIN4_POT_INI.cube.
+    - nspin = 1: SPIN1_POT_INI.cube;
+    - nspin = 2: SPIN1_POT_INI.cube, and SPIN2_POT_INI.cube;
+    - nspin = 4: SPIN1_POT_INI.cube, SPIN2_POT_INI.cube, SPIN3_POT_INI.cube, and SPIN4_POT_INI.cube.
 - **Default**: 0
 
 ### out_dm
@@ -1508,8 +1517,8 @@ These variables are used to control the output of properties.
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital basis (gamma-only algorithm)
 - **Description**: Whether to output the density matrix of localized orbitals into files in the folder `OUT.${suffix}`. The files are named as:
-  - npsin = 1: SPIN1_DM;
-  - npsin = 2: SPIN1_DM, and SPIN2_DM.
+  - nspin = 1: SPIN1_DM;
+  - nspin = 2: SPIN1_DM, and SPIN2_DM.
 - **Default**: False
 
 ### out_dm1
@@ -1517,8 +1526,8 @@ These variables are used to control the output of properties.
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital basis (multi-k points)
 - **Description**: Whether to output the density matrix of localized orbitals into files in the folder `OUT.${suffix}`. The density matrices are written in the format of sparse matrices, as mentioned in [out_mat_hs2](#out_mat_hs2). The files are named as:
-  - npsin = 1: data-DMR-sparse_SPIN0.csr;
-  - npsin = 2: data-DMR-sparse_SPIN0.csr, and data-DMR-sparse_SPIN1.csr.
+  - nspin = 1: data-DMR-sparse_SPIN0.csr;
+  - nspin = 2: data-DMR-sparse_SPIN0.csr, and data-DMR-sparse_SPIN1.csr.
 - **Default**: False
 
 ### out_wfc_pw

@@ -1,14 +1,14 @@
 #include "module_basis/module_nao/two_center_table.h"
 
+#include "module_base/constants.h"
+#include "module_base/cubic_spline.h"
+#include "module_base/math_integral.h"
+
 #include <algorithm>
 #include <cstring>
 #include <iostream>
 #include <limits>
 #include <numeric>
-
-#include "module_base/constants.h"
-#include "module_base/math_integral.h"
-#include "module_base/cubic_spline.h"
 
 void TwoCenterTable::build(const RadialCollection& bra,
                            const RadialCollection& ket,
@@ -37,8 +37,13 @@ void TwoCenterTable::build(const RadialCollection& bra,
     std::for_each(rgrid_, rgrid_ + nr_, [this, dr](double& r) { r = (&r - rgrid_) * dr; });
 
     // index the table by generating a map from (itype1, l1, izeta1, itype2, l2, izeta2, l) to a row index
-    index_map_.resize({bra.ntype(), bra.lmax() + 1, bra.nzeta_max(),
-                       ket.ntype(), ket.lmax() + 1, ket.nzeta_max(), bra.lmax() + ket.lmax() + 1});
+    index_map_.resize({bra.ntype(),
+                       bra.lmax() + 1,
+                       bra.nzeta_max(),
+                       ket.ntype(),
+                       ket.lmax() + 1,
+                       ket.nzeta_max(),
+                       bra.lmax() + ket.lmax() + 1});
     std::fill(index_map_.data<int>(), index_map_.data<int>() + index_map_.NumElements(), -1);
 
     ntab_ = 0;
@@ -61,8 +66,8 @@ const double* TwoCenterTable::table(const int itype1,
 #ifdef __DEBUG
     assert(is_present(itype1, l1, izeta1, itype2, l2, izeta2, l));
 #endif
-    return deriv ? dtable_.inner_most_ptr<double>(index_map_.get_value<int>(itype1, l1, izeta1, itype2, l2, izeta2, l)):
-                    table_.inner_most_ptr<double>(index_map_.get_value<int>(itype1, l1, izeta1, itype2, l2, izeta2, l));
+    return deriv ? dtable_.inner_most_ptr<double>(index_map_.get_value<int>(itype1, l1, izeta1, itype2, l2, izeta2, l))
+                 : table_.inner_most_ptr<double>(index_map_.get_value<int>(itype1, l1, izeta1, itype2, l2, izeta2, l));
 }
 
 void TwoCenterTable::lookup(const int itype1,
@@ -82,12 +87,14 @@ void TwoCenterTable::lookup(const int itype1,
 
     if (R > rmax())
     {
-        if (val) *val = 0.0;
-        if (dval) *dval = 0.0;
+        if (val)
+            *val = 0.0;
+        if (dval)
+            *dval = 0.0;
         return;
     }
 
-    const double*  tab = table(itype1, l1, izeta1, itype2, l2, izeta2, l, false);
+    const double* tab = table(itype1, l1, izeta1, itype2, l2, izeta2, l, false);
     const double* dtab = table(itype1, l1, izeta1, itype2, l2, izeta2, l, true);
     ModuleBase::CubicSpline::eval(nr_, rgrid_, tab, dtab, 1, &R, val, dval);
 }
@@ -100,7 +107,9 @@ int& TwoCenterTable::table_index(const NumericalRadial* it1, const NumericalRadi
 void TwoCenterTable::cleanup()
 {
     op_ = '\0';
+    ntab_ = 0;
     nr_ = 0;
+    rmax_ = 0.0;
     delete[] rgrid_;
     rgrid_ = nullptr;
 
@@ -137,9 +146,7 @@ double TwoCenterTable::dfact(int l) const
     return result;
 }
 
-void TwoCenterTable::two_center_loop(const RadialCollection& bra, 
-                                     const RadialCollection& ket, 
-                                     looped_func f)
+void TwoCenterTable::two_center_loop(const RadialCollection& bra, const RadialCollection& ket, looped_func f)
 {
     for (int l = 0; l <= bra.lmax() + ket.lmax(); ++l)
         for (int l1 = 0; l1 <= bra.lmax(); ++l1)
@@ -179,7 +186,7 @@ void TwoCenterTable::_tabulate(const NumericalRadial* it1, const NumericalRadial
     //
     // See the developer's document for more details.
     double dr = rmax_ / (nr_ - 1);
-    if ( l > 0 )
+    if (l > 0)
     {
         // divide S(R) by R^l (except the R=0 point)
         std::for_each(&tab[1], tab + nr_, [&](double& val) { val /= std::pow(dr * (&val - tab), l); });
@@ -195,37 +202,37 @@ void TwoCenterTable::_tabulate(const NumericalRadial* it1, const NumericalRadial
         int op_exp = l;
         switch (op_)
         {
-        case 'S': op_exp += 2;
-                  break;
-        case 'T': op_exp += 4;
-                  break;
-        default: ; // currently not supposed to happen
+        case 'S':
+            op_exp += 2;
+            break;
+        case 'T':
+            op_exp += 4;
+            break;
+        default:; // currently not supposed to happen
         }
 
         for (int ik = 0; ik != nk; ++ik)
         {
-            fk[ik] = it1->kvalue(ik) * it2->kvalue(ik) 
-                    * std::pow(kgrid[ik], op_exp);
+            fk[ik] = it1->kvalue(ik) * it2->kvalue(ik) * std::pow(kgrid[ik], op_exp);
         }
 
-        tab[0] = ModuleBase::Integral::simpson(nk, fk, &h[1]) 
-                * ModuleBase::FOUR_PI / dfact(2 * l + 1);
+        tab[0] = ModuleBase::Integral::simpson(nk, fk, &h[1]) * ModuleBase::FOUR_PI / dfact(2 * l + 1);
 
         delete[] fk;
         delete[] h;
     }
 
-    // The derivative table stores the derivative of S(R)/R^l or T(R)/R^l 
+    // The derivative table stores the derivative of S(R)/R^l or T(R)/R^l
     // instead of bare dS(R)/dR or dT(R)/dR, which simplifies further calculation.
     //
     // The derivatives are computed from a cubic spline interpolation rather
     // than two spherical Bessel transforms. By doing so, we achieve a good
     // consistency between the table and its derivative during interpolation.
     using ModuleBase::CubicSpline;
-    CubicSpline::build(
-            nr_, rgrid_, table_.inner_most_ptr<double>(itab),
-            {CubicSpline::BoundaryType::first_deriv, 0.0},
-            {CubicSpline::BoundaryType::first_deriv, 0.0},
-            dtable_.inner_most_ptr<double>(itab));
+    CubicSpline::build(nr_,
+                       rgrid_,
+                       table_.inner_most_ptr<double>(itab),
+                       {CubicSpline::BoundaryType::first_deriv, 0.0},
+                       {CubicSpline::BoundaryType::first_deriv, 0.0},
+                       dtable_.inner_most_ptr<double>(itab));
 }
-

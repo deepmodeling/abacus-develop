@@ -158,7 +158,7 @@ Cuda_Mem_Wrapper<T>::~Cuda_Mem_Wrapper()
 }
 
 template <typename T>
-inline void Cuda_Mem_Wrapper<T>::copy_host_to_device_sync(int stream_id)
+inline void Cuda_Mem_Wrapper<T>::copy_host_to_device_sync(const int stream_id)
 {
     if (this->host_pointer == nullptr || this->device_pointer == nullptr)
     {
@@ -174,8 +174,8 @@ inline void Cuda_Mem_Wrapper<T>::copy_host_to_device_sync(int stream_id)
 }
 
 template <typename T>
-inline void Cuda_Mem_Wrapper<T>::copy_host_to_device_async(cudaStream_t stream,
-                                                    int stream_id)
+inline void Cuda_Mem_Wrapper<T>::copy_host_to_device_async(const cudaStream_t stream,
+                                                    const int stream_id)
 {
     if (this->host_pointer == nullptr || this->device_pointer == nullptr)
     {
@@ -192,7 +192,26 @@ inline void Cuda_Mem_Wrapper<T>::copy_host_to_device_async(cudaStream_t stream,
 }
 
 template <typename T>
-inline void Cuda_Mem_Wrapper<T>::copy_device_to_host_sync(int stream_id)
+inline void Cuda_Mem_Wrapper<T>::copy_host_to_device_async(const cudaStream_t stream,
+                                                    const int stream_id,
+                                                    const int size)
+{
+    if (this->host_pointer == nullptr || this->device_pointer == nullptr)
+    {
+        std::cerr << "host_pointer is nullptr, can not copy host to device"
+                  << std::endl;
+        exit(1);
+    }
+    checkCuda(cudaMemcpyAsync(
+        this->device_pointer + stream_id * this->one_stream_size_aligned,
+        this->host_pointer + stream_id * this->one_stream_size_aligned,
+        size * sizeof(T),
+        cudaMemcpyHostToDevice,
+        stream));
+}
+
+template <typename T>
+inline void Cuda_Mem_Wrapper<T>::copy_device_to_host_sync(const int stream_id)
 {
     if (this->host_pointer == nullptr || this->device_pointer == nullptr)
     {
@@ -208,8 +227,8 @@ inline void Cuda_Mem_Wrapper<T>::copy_device_to_host_sync(int stream_id)
 }
 
 template <typename T>
-inline void Cuda_Mem_Wrapper<T>::copy_device_to_host_async(cudaStream_t stream,
-                                                    int stream_id)
+inline void Cuda_Mem_Wrapper<T>::copy_device_to_host_async(const cudaStream_t stream,
+                                                    const int stream_id)
 {
     if (this->host_pointer == nullptr || this->device_pointer == nullptr)
     {
@@ -226,7 +245,7 @@ inline void Cuda_Mem_Wrapper<T>::copy_device_to_host_async(cudaStream_t stream,
 }
 
 template <typename T>
-inline void Cuda_Mem_Wrapper<T>::memset_device_sync(int stream_id, int value)
+inline void Cuda_Mem_Wrapper<T>::memset_device_sync(const int stream_id, const int value)
 {
     checkCuda(cudaMemset(this->device_pointer
                              + stream_id * this->one_stream_size_aligned,
@@ -235,9 +254,9 @@ inline void Cuda_Mem_Wrapper<T>::memset_device_sync(int stream_id, int value)
 }
 
 template <typename T>
-inline void Cuda_Mem_Wrapper<T>::memset_device_async(cudaStream_t stream,
-                                              int stream_id,
-                                              int value)
+inline void Cuda_Mem_Wrapper<T>::memset_device_async(const cudaStream_t stream,
+                                              const int stream_id,
+                                              const int value)
 {
     checkCuda(cudaMemsetAsync(this->device_pointer
                                   + stream_id * this->one_stream_size_aligned,
@@ -247,7 +266,7 @@ inline void Cuda_Mem_Wrapper<T>::memset_device_async(cudaStream_t stream,
 }
 
 template <typename T>
-inline void Cuda_Mem_Wrapper<T>::memset_host(int stream_id, int value)
+inline void Cuda_Mem_Wrapper<T>::memset_host(const int stream_id, const int value)
 {
     memset(this->host_pointer + stream_id * this->one_stream_size_aligned,
            value,
@@ -255,13 +274,13 @@ inline void Cuda_Mem_Wrapper<T>::memset_host(int stream_id, int value)
 }
 
 template <typename T>
-inline T* Cuda_Mem_Wrapper<T>::get_device_pointer(int stream_id)
+inline T* Cuda_Mem_Wrapper<T>::get_device_pointer(const int stream_id)
 {
     return this->device_pointer + stream_id * this->one_stream_size_aligned;
 }
 
 template <typename T>
-inline T* Cuda_Mem_Wrapper<T>::get_host_pointer(int stream_id)
+inline T* Cuda_Mem_Wrapper<T>::get_host_pointer(const int stream_id)
 {
     return this->host_pointer + stream_id * this->one_stream_size_aligned;
 }

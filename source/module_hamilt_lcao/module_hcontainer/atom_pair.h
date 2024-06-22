@@ -9,6 +9,7 @@
 #include <vector>
 #include <complex>
 #include <tuple>
+#include <cassert>
 
 namespace hamilt
 {

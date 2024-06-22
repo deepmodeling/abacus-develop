@@ -2,31 +2,35 @@ STEP: 0
 CALCULATE THE MULLIkEN ANALYSIS FOR EACH ATOM
  Total charge:	2
 Decomposed Mulliken populations
-0                 Zeta of H                        Spin 1
-s                        0                           0.998
-  sum over m                                         0.998
-s                        1                       -0.005133
-  sum over m                                     -0.005133
-  sum over m+zeta                                   0.9929
-pz                        0                        0.007143
-px                        0                               0
-py                        0                               0
-  sum over m                                      0.007143
-  sum over m+zeta                                 0.007143
-Total Charge on atom:  H                   1
+0                              Zeta of H              Spin 1
+s                                      0              0.9980
+s                                      1             -0.0051
+SUM OVER M+Zeta                                       0.9929
+
+pz                                     0              0.0071
+px                                     0              0.0000
+py                                     0              0.0000
+SUM OVER M                                            0.0071
+SUM OVER M+Zeta                                       0.0071
+
+SUM OVER M+Zeta+L                                     1.0000
+
+Total Charge on atom:                  H              1.0000
 
 
-1                 Zeta of H                        Spin 1
-s                        0                           0.998
-  sum over m                                         0.998
-s                        1                       -0.005133
-  sum over m                                     -0.005133
-  sum over m+zeta                                   0.9929
-pz                        0                        0.007143
-px                        0                               0
-py                        0                               0
-  sum over m                                      0.007143
-  sum over m+zeta                                 0.007143
-Total Charge on atom:  H                   1
+1                              Zeta of H              Spin 1
+s                                      0              0.9980
+s                                      1             -0.0051
+SUM OVER M+Zeta                                       0.9929
+
+pz                                     0              0.0071
+px                                     0              0.0000
+py                                     0              0.0000
+SUM OVER M                                            0.0071
+SUM OVER M+Zeta                                       0.0071
+
+SUM OVER M+Zeta+L                                     1.0000
+
+Total Charge on atom:                  H              1.0000
 
 

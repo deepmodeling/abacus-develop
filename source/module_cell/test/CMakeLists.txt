@@ -125,3 +125,9 @@ add_test(NAME cell_unitcell_test_parallel
       COMMAND ${BASH} unitcell_test_parallel.sh
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
+
+AddTest(
+  TARGET cell_index_test
+  LIBS ${math_libs} base device
+  SOURCES cell_index_test.cpp ../cell_index.cpp
+)

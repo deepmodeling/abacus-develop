@@ -17,9 +17,11 @@
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #endif
 #include "module_elecstate/elecstate_lcao.h"
+#include "module_elecstate/module_dm/cal_dm_psi.h"
 #include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
 #include "module_hamilt_general/module_vdw/vdw.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 #include "module_io/dm_io.h"
@@ -52,6 +54,15 @@ void ESolver_KS_LCAO<TK, TR>::set_matrix_grid(Record_adj& ra)
     // ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"SEARCH ADJACENT ATOMS");
 
     // (3) Periodic condition search for each grid.
+    double dr_uniform=0.001;
+	std::vector<double> rcuts;
+    std::vector<std::vector<double>> psi_u;
+    std::vector<std::vector<double>> dpsi_u;
+    std::vector<std::vector<double>> d2psi_u;
+
+    Gint_Tools::init_orb(dr_uniform, rcuts, GlobalC::ucell, 
+                            psi_u, dpsi_u, d2psi_u);
+
     this->GridT.set_pbc_grid(this->pw_rho->nx,
                              this->pw_rho->ny,
                              this->pw_rho->nz,
@@ -68,9 +79,18 @@ void ESolver_KS_LCAO<TK, TR>::set_matrix_grid(Record_adj& ra)
                              this->pw_rho->nplane,
                              this->pw_rho->startz_current,
                              GlobalC::ucell,
-                             GlobalC::ORB,
+                             dr_uniform,
+                             rcuts,
+                             psi_u,
+                             dpsi_u,
+                             d2psi_u,
                              GlobalV::NUM_STREAM);
-
+    psi_u.clear();
+    psi_u.shrink_to_fit();
+    dpsi_u.clear();
+    dpsi_u.shrink_to_fit();
+    d2psi_u.clear();
+    d2psi_u.shrink_to_fit();
     // (2)For each atom, calculate the adjacent atoms in different cells
     // and allocate the space for H(R) and S(R).
     // If k point is used here, allocate HlocR after atom_arrange.
@@ -145,7 +165,6 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
         this->p_hamilt = new hamilt::HamiltLCAO<TK, TR>(
             GlobalV::GAMMA_ONLY_LOCAL ? &(this->GG) : nullptr,
             GlobalV::GAMMA_ONLY_LOCAL ? nullptr : &(this->GK),
-            &(this->gen_h),
             &(this->LM),
             &(this->LOC),
             this->pelec->pot,
@@ -255,41 +274,46 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
 #endif // __EXX
 
     this->pelec->init_scf(istep, this->sf.strucFac);
-    if(GlobalV::out_chg == 2)
+    if (GlobalV::out_chg == 2)
     {
-        for(int is = 0; is < GlobalV::NSPIN; is++)
+        for (int is = 0; is < GlobalV::NSPIN; is++)
         {
             std::stringstream ss;
-            ss << GlobalV::global_out_dir << "SPIN" << is+1 << "_CHG_INI.cube";
+            ss << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG_INI.cube";
             ModuleIO::write_rho(
 #ifdef __MPI
                 this->pw_big->bz, // bz first, then nbz
                 this->pw_big->nbz,
-                this->pw_rho->nplane, this->pw_rho->startz_current,
+                this->pw_rho->nplane,
+                this->pw_rho->startz_current,
 #endif
-                this->pelec->charge->rho[is], is,
-                GlobalV::NSPIN, 0,
+                this->pelec->charge->rho[is],
+                is,
+                GlobalV::NSPIN,
+                0,
                 ss.str(),
-                this->pw_rho->nx, this->pw_rho->ny, this->pw_rho->nz,
-                this->pelec->eferm.ef, &(GlobalC::ucell) , 11);
+                this->pw_rho->nx,
+                this->pw_rho->ny,
+                this->pw_rho->nz,
+                this->pelec->eferm.ef,
+                &(GlobalC::ucell),
+                11);
         }
     }
 
-
-	ModuleIO::write_pot(
-			GlobalV::out_pot, 
-			GlobalV::NSPIN, 
-			GlobalV::global_out_dir,
+    ModuleIO::write_pot(GlobalV::out_pot,
+                        GlobalV::NSPIN,
+                        GlobalV::global_out_dir,
 #ifdef __MPI
-			this->pw_big->bz,
-			this->pw_big->nbz, 
-			this->pw_rho->nplane, 
-			this->pw_rho->startz_current,
+                        this->pw_big->bz,
+                        this->pw_big->nbz,
+                        this->pw_rho->nplane,
+                        this->pw_rho->startz_current,
 #endif
-            this->pw_rho->nx,
-            this->pw_rho->ny,
-            this->pw_rho->nz,
-            this->pelec->pot->get_effective_v());
+                        this->pw_rho->nx,
+                        this->pw_rho->ny,
+                        this->pw_rho->nz,
+                        this->pelec->pot->get_effective_v());
 
     // initalize DMR
     // DMR should be same size with Hamiltonian(R)
@@ -622,8 +646,8 @@ void ESolver_KS_LCAO<TK, TR>::nscf(void)
             }
         }
 
-        GlobalV::ofs_running << " k-points" << ik + 1 << "(" << this->kv.get_nkstot() << "): " << this->kv.kvec_c[ik].x << " "
-                             << this->kv.kvec_c[ik].y << " " << this->kv.kvec_c[ik].z << std::endl;
+        GlobalV::ofs_running << " k-points" << ik + 1 << "(" << this->kv.get_nkstot() << "): " << this->kv.kvec_c[ik].x
+                             << " " << this->kv.kvec_c[ik].y << " " << this->kv.kvec_c[ik].z << std::endl;
 
         for (int ib = 0; ib < nbands; ++ib)
         {
@@ -707,6 +731,16 @@ void ESolver_KS_LCAO<TK, TR>::nscf(void)
 #endif
 
     this->create_Output_Mat_Sparse(0).write();
+
+    // mulliken charge analysis
+    if (GlobalV::out_mul)
+    {
+        elecstate::ElecStateLCAO<TK>* pelec_lcao = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec);
+        this->pelec->calculate_weights();
+        this->pelec->calEBand();
+        elecstate::cal_dm_psi(&(this->orb_con.ParaV), pelec_lcao->wg, *(this->psi), *(pelec_lcao->get_DM()));
+        this->cal_mag(istep, true);
+    }
 
     return;
 }

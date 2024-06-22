@@ -66,7 +66,7 @@ void ModuleIO::read_abacus_lowf(const std::string& flowf, int& ik, ModuleBase::V
         {
             std::vector<std::string> result = FmtCore::split(line);
 #ifdef __DEBUG
-            assert(ilocal == 0) || (ilocal == nlocal);
+            assert((ilocal == 0) || (ilocal == nbasis));
 #endif
             iband = std::stoi(result[0]) - 1;
             ilocal = 0; // reset ilocal
@@ -96,9 +96,9 @@ void ModuleIO::read_abacus_lowf(const std::string& flowf, int& ik, ModuleBase::V
         }
     }
 #ifdef __DEBUG
-    assert(lowf.size() == nbands * nlocal);
-    assert(iband == nbands);
-    assert(ilocal == nlocal);
+    assert(lowf.size() == nbands * nbasis);
+    assert(iband == nbands - 1);
+    assert(ilocal == nbasis);
 #endif
 }
 // instantiate the template function
@@ -156,7 +156,7 @@ void ModuleIO::read_abacus_lowf(const std::string& flowf, int& ik, ModuleBase::V
         {
             std::vector<std::string> result = FmtCore::split(line);
 #ifdef __DEBUG
-            assert(ilocal == 0) || (ilocal == nlocal);
+            assert((ilocal == 0) || (ilocal == nbasis));
 #endif
             iband = std::stoi(result[0]) - 1;
             ilocal = 0; // reset ilocal
@@ -185,9 +185,9 @@ void ModuleIO::read_abacus_lowf(const std::string& flowf, int& ik, ModuleBase::V
         }
     }
 #ifdef __DEBUG
-    assert(lowf.size() == nbands * nlocal);
-    assert(iband == nbands);
-    assert(ilocal == nlocal);
+    assert(lowf.size() == nbands * nbasis);
+    assert(iband == nbands - 1);
+    assert(ilocal == nbasis);
 #endif
 }
 // instantiate the template function

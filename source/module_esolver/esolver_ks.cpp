@@ -615,9 +615,8 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
 
 #ifdef __RAPIDJSON
 	// 14) add Json of efermi energy converge
-	Json::add_output_efermi_energy_converge(
+	Json::add_output_efermi_converge(
 			this->pelec->eferm.ef * ModuleBase::Ry_to_eV,
-			this->pelec->f_en.etot * ModuleBase::Ry_to_eV,
 			this->conv_elec
 			);
 #endif //__RAPIDJSON 

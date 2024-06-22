@@ -8,6 +8,7 @@
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #endif
 #include "module_base/libm/libm.h"
+#include <algorithm>
 
 // This is for cell R dependent part. 
 void Grid_Technique::cal_nnrg(Parallel_Orbitals* pv)
@@ -18,19 +19,14 @@ void Grid_Technique::cal_nnrg(Parallel_Orbitals* pv)
 
 	this->nnrg = 0;
 
-	delete[] nlocdimg;
-	delete[] nlocstartg;
-	delete[] nad;
+	nlocdimg.clear();
+	nlocstartg.clear();
+	nad.clear();
 	this->nnrg_index.resize(0);
 	
-	this->nad = new int[GlobalC::ucell.nat];
-	this->nlocdimg = new int[GlobalC::ucell.nat];	
-	this->nlocstartg = new int[GlobalC::ucell.nat];
-	
-	ModuleBase::GlobalFunc::ZEROS(nad, GlobalC::ucell.nat);
-	ModuleBase::GlobalFunc::ZEROS(nlocdimg, GlobalC::ucell.nat);
-	ModuleBase::GlobalFunc::ZEROS(nlocstartg, GlobalC::ucell.nat);
-
+	this->nad = std::vector<int>(GlobalC::ucell.nat, 0);
+	this->nlocdimg = std::vector<int>(GlobalC::ucell.nat, 0);
+	this->nlocstartg =std::vector<int>(GlobalC::ucell.nat, 0);
 
 	ModuleBase::Vector3<double> tau1, tau2, dtau;
 	ModuleBase::Vector3<double> dtau1, dtau2, tau0;
@@ -115,48 +111,24 @@ void Grid_Technique::cal_nnrg(Parallel_Orbitals* pv)
 	//--------------------------------------------------
 	if(allocate_find_R2)
 	{
-		for(int iat=0; iat<GlobalC::ucell.nat; iat++)
-		{
-			delete[] find_R2_sorted_index[iat];
-		}
-		delete[] find_R2_sorted_index;
-
-		for(int iat=0; iat<GlobalC::ucell.nat; iat++)
-		{
-			delete[] find_R2[iat];
-		}
-		delete[] find_R2;
-
-		for(int iat=0; iat<GlobalC::ucell.nat; iat++)
-		{
-			delete[] find_R2st[iat];
-		}
-		delete[] find_R2st;
+		find_R2.clear();
+		find_R2st.clear();
+		find_R2_sorted_index.clear();
 		allocate_find_R2 = false;
 	}
-
-	this->find_R2_sorted_index = new int*[GlobalC::ucell.nat];
-	for(int iat=0; iat<GlobalC::ucell.nat; iat++)
+	this->find_R2.resize(GlobalC::ucell.nat);
+	this->find_R2st.resize(GlobalC::ucell.nat);
+	this->find_R2_sorted_index.resize(GlobalC::ucell.nat);
+	for (int iat = 0; iat < GlobalC::ucell.nat; iat++)
 	{
-		// at least nad contains itself, so nad[iat] can not be 0.
-		this->find_R2_sorted_index[iat] = new int[nad[iat]];
-		ModuleBase::GlobalFunc::ZEROS(find_R2_sorted_index[iat], nad[iat]);
+		this->find_R2_sorted_index[iat].resize(nad[iat]);
+		std::fill(this->find_R2_sorted_index[iat].begin(), this->find_R2_sorted_index[iat].end(), 0);
+		this->find_R2st[iat].resize(nad[iat]);
+		std::fill(this->find_R2st[iat].begin(), this->find_R2st[iat].end(), 0);
+		this->find_R2[iat].resize(nad[iat]);
+		std::fill(this->find_R2[iat].begin(), this->find_R2[iat].end(), 0);
 	}
 
-	this->find_R2 = new int*[GlobalC::ucell.nat];
-	for(int iat=0; iat<GlobalC::ucell.nat; iat++)
-	{
-		// at least nad contains itself, so nad[iat] can not be 0.
-		this->find_R2[iat] = new int[nad[iat]];
-		ModuleBase::GlobalFunc::ZEROS(find_R2[iat], nad[iat]);
-	}
-
-	this->find_R2st = new int*[GlobalC::ucell.nat];
-	for(int iat=0; iat<GlobalC::ucell.nat; iat++)
-	{
-		this->find_R2st[iat] = new int[nad[iat]];
-		ModuleBase::GlobalFunc::ZEROS(find_R2st[iat], nad[iat]);
-	}
 	allocate_find_R2 = true;
 
 	for (int T1 = 0; T1 < GlobalC::ucell.ntype; T1++)
@@ -224,7 +196,9 @@ void Grid_Technique::cal_nnrg(Parallel_Orbitals* pv)
 					}
 				}
 			}
-			std::stable_sort(find_R2_sorted_index[iat], find_R2_sorted_index[iat] + nad[iat],
+ // Include the necessary header file
+
+			std::stable_sort(find_R2_sorted_index[iat].begin(), find_R2_sorted_index[iat].begin() + nad[iat],
 				[&](int pos1, int pos2){ return find_R2[iat][pos1] < find_R2[iat][pos2]; });
 		}
 	}
@@ -479,8 +453,6 @@ void LCAO_Matrix::folding_fixedH(
 					if(GlobalV::NSPIN!=4)
 					{
 						auto compute_kernel = [&](int iic, int index) {
-							this->Sloc2[iic] += this->SlocR[index] * kphase;
-							this->Hloc_fixed2[iic] += this->Hloc_fixedR[index] * kphase;
 #ifdef __DEEPKS
 							if(GlobalV::deepks_scf)
 							{
@@ -502,8 +474,6 @@ void LCAO_Matrix::folding_fixedH(
 					else
 					{
 						auto compute_kernel = [&](int iic, int index, int iw1_all, int iw2_all) {
-							this->Sloc2[iic] += this->SlocR_soc[index] * kphase;
-							this->Hloc_fixed2[iic] += this->Hloc_fixedR_soc[index] * kphase;
 #ifdef __DEEPKS
 							if(GlobalV::deepks_scf)
 							{

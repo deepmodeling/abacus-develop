@@ -73,7 +73,7 @@ void Local_Orbital_Charge::allocate_gamma(
     }
     
 #ifdef __MPI
-    this->dm2g.setAlltoallvParameter(this->ParaV->comm_2D, GlobalV::NLOCAL, this->ParaV->blacs_ctxt, this->ParaV->nb, this->lgd_now, this->LOWF->gridt->trace_lo);
+    this->dm2g.setAlltoallvParameter(this->ParaV->comm_2D, GlobalV::NLOCAL, this->ParaV->blacs_ctxt, this->ParaV->nb, this->lgd_now, this->LOWF->gridt->trace_lo.data());
 #endif
 
 	// Peize Lin test 2019-01-16

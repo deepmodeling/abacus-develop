@@ -163,10 +163,12 @@
 211_NO_elec_add
 211_NO_elec_minus
 211_NO_S2_elec_add
+211_NO_S2_nupdown0
 211_NO_S2_elec_minus
 212_NO_wfc_ienvelope
 212_NO_wfc_out
 213_NO_mulliken
+214_NO_mulliken_nscf
 215_NO_sol_H2
 216_NO_scan_Si2
 217_NO_out_pot

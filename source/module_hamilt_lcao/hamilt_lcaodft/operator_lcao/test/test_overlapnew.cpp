@@ -1,6 +1,6 @@
-#include "gtest/gtest.h"
 #include "../overlap_new.h"
 
+#include "gtest/gtest.h"
 
 //---------------------------------------
 // Unit test of OverlapNew class
@@ -87,13 +87,14 @@ class OverlapNewTest : public ::testing::Test
     }
 #else
     void init_parav()
-    {}
+    {
+    }
 #endif
 
     UnitCell ucell;
     hamilt::HContainer<double>* SR;
-    Parallel_Orbitals *paraV;
-    ORB_gen_tables uot_;
+    Parallel_Orbitals* paraV;
+    TwoCenterIntegrator intor_;
 
     int dsize;
     int my_rank = 0;
@@ -104,19 +105,9 @@ TEST_F(OverlapNewTest, constructHRd2d)
 {
     std::vector<ModuleBase::Vector3<double>> kvec_d_in(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     std::vector<double> hk(paraV->get_row_size() * paraV->get_col_size(), 0.0);
-    Grid_Driver gd(0,0,0);
-    hamilt::OverlapNew<hamilt::OperatorLCAO<double, double>> op(
-        nullptr, 
-        kvec_d_in, 
-        nullptr,
-        nullptr,
-        SR, 
-        &hk, 
-        &ucell, 
-        &gd,
-        &uot_,
-        paraV
-    );
+    Grid_Driver gd(0, 0, 0);
+    hamilt::OverlapNew<hamilt::OperatorLCAO<double, double>>
+        op(nullptr, kvec_d_in, nullptr, nullptr, SR, &hk, &ucell, &gd, &intor_, paraV);
     op.contributeHR();
     // check the value of SR
     for (int iap = 0; iap < SR->size_atom_pairs(); ++iap)
@@ -146,19 +137,9 @@ TEST_F(OverlapNewTest, constructHRd2cd)
     std::vector<ModuleBase::Vector3<double>> kvec_d_in(2, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     kvec_d_in[1] = ModuleBase::Vector3<double>(0.1, 0.2, 0.3);
     std::vector<std::complex<double>> hk(paraV->get_row_size() * paraV->get_col_size(), std::complex<double>(0.0, 0.0));
-    Grid_Driver gd(0,0,0);
-    hamilt::OverlapNew<hamilt::OperatorLCAO<std::complex<double>, double>> op(
-        nullptr, 
-        kvec_d_in, 
-        nullptr,
-        nullptr,
-        SR, 
-        &hk, 
-        &ucell, 
-        &gd,
-        &uot_,
-        paraV
-    );
+    Grid_Driver gd(0, 0, 0);
+    hamilt::OverlapNew<hamilt::OperatorLCAO<std::complex<double>, double>>
+        op(nullptr, kvec_d_in, nullptr, nullptr, SR, &hk, &ucell, &gd, &intor_, paraV);
     op.contributeHR();
     // check the value of SR
     for (int iap = 0; iap < SR->size_atom_pairs(); ++iap)
@@ -183,7 +164,7 @@ TEST_F(OverlapNewTest, constructHRd2cd)
         EXPECT_EQ(hk[i].imag(), 0.0);
     }
     // calculate SK for k point
-    hk.assign(paraV->get_row_size() * paraV->get_col_size(), std::complex<double>(0.0, 0.0) );
+    hk.assign(paraV->get_row_size() * paraV->get_col_size(), std::complex<double>(0.0, 0.0));
     op.contributeHk(1);
     // check the value of SK
     for (int i = 0; i < paraV->get_row_size() * paraV->get_col_size(); ++i)

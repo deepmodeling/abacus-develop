@@ -111,6 +111,7 @@ class Input
     std::string dft_functional; // input DFT functional.
     double xc_temperature; // only relevant if finite temperature functional is used
     int nspin; // LDA ; LSDA ; non-linear spin
+    bool two_fermi = false;
     double nupdown = 0.0;
     double nelec; // total number of electrons
     double nelec_delta; // change in the number of total electrons
@@ -642,6 +643,12 @@ class Input
     double pexsi_mu_guard = 0.2;
     double pexsi_elec_thr = 0.001;
     double pexsi_zero_thr = 1e-10;
+    //==========================================================
+    // variables for elpa
+    //==========================================================
+    int elpa_num_thread=-1;
+
+    bool check_input = false;
     
     std::time_t get_start_time(void) const
     {
