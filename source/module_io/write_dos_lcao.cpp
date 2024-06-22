@@ -3,9 +3,6 @@
 #ifdef __MPI
 #include <mpi.h>
 #endif
-#include <sys/time.h>
-#include <vector>
-
 #include "cal_dos.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
@@ -13,12 +10,15 @@
 #include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
 #include "write_orb_info.h"
 
+#include <sys/time.h>
+#include <vector>
+
 #ifdef __LCAO
 #include "module_cell/module_neighbor/sltk_atom_arrange.h" //qifeng-2019-01-21
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #endif
 
 #include "module_base/blas_connector.h"
@@ -28,25 +28,24 @@
 #include "module_base/scalapack_connector.h"
 
 template <>
-void ModuleIO::write_dos_lcao(
-    const psi::Psi<double>* psi,
-    LCAO_Matrix &lm,
-    const Parallel_Orbitals &pv, 
-    const ModuleBase::matrix& ekb,
-    const ModuleBase::matrix& wg,
-    const double& dos_edelta_ev,
-    const double& dos_scale,
-    const double& bcoeff,
-    const K_Vectors& kv,
-    hamilt::Hamilt<double>* p_ham)
+void ModuleIO::write_dos_lcao(const psi::Psi<double>* psi,
+                              LCAO_Matrix& lm,
+                              const Parallel_Orbitals& pv,
+                              const ModuleBase::matrix& ekb,
+                              const ModuleBase::matrix& wg,
+                              const double& dos_edelta_ev,
+                              const double& dos_scale,
+                              const double& bcoeff,
+                              const K_Vectors& kv,
+                              hamilt::Hamilt<double>* p_ham)
 {
     ModuleBase::TITLE("ModuleIO", "write_dos_lcao");
 
     int nspin0 = 1;
-	if (GlobalV::NSPIN == 2)
-	{
-		nspin0 = 2;
-	}
+    if (GlobalV::NSPIN == 2)
+    {
+        nspin0 = 2;
+    }
 
     // find the maximal and minimal band energy.
     double emax = ekb(0, 0);
@@ -61,21 +60,21 @@ void ModuleIO::write_dos_lcao(
     }
 
 #ifdef __MPI
-    Parallel_Reduce::gather_max_double_all(emax);
-    Parallel_Reduce::gather_min_double_all(emin);
+    Parallel_Reduce::gather_max_double_all(GlobalV::NPROC, emax);
+    Parallel_Reduce::gather_min_double_all(GlobalV::NPROC, emin);
 #endif
 
     emax *= ModuleBase::Ry_to_eV;
     emin *= ModuleBase::Ry_to_eV;
-	if (INPUT.dos_setemax)
-	{
-		emax = INPUT.dos_emax_ev;
-	}
+    if (INPUT.dos_setemax)
+    {
+        emax = INPUT.dos_emax_ev;
+    }
 
-	if (INPUT.dos_setemin)
-	{
-		emin = INPUT.dos_emin_ev;
-	}
+    if (INPUT.dos_setemin)
+    {
+        emin = INPUT.dos_emin_ev;
+    }
 
     if (!INPUT.dos_setemax && !INPUT.dos_setemin)
     {
@@ -149,24 +148,24 @@ void ModuleIO::write_dos_lcao(
 #ifdef __MPI
             const char T_char = 'T';
             pdgemv_(&T_char,
-                &GlobalV::NLOCAL,
-                &GlobalV::NLOCAL,
-                &one_float,
-                lm.Sloc.data(),
-                &one_int,
-                &one_int,
-                pv.desc,
-                ppsi,
-                &one_int,
-                &NB,
-                pv.desc,
-                &one_int,
-                &zero_float,
-                Mulk[0].c,
-                &one_int,
-                &NB,
-                pv.desc,
-                &one_int);
+                    &GlobalV::NLOCAL,
+                    &GlobalV::NLOCAL,
+                    &one_float,
+                    lm.Sloc.data(),
+                    &one_int,
+                    &one_int,
+                    pv.desc,
+                    ppsi,
+                    &one_int,
+                    &NB,
+                    pv.desc,
+                    &one_int,
+                    &zero_float,
+                    Mulk[0].c,
+                    &one_int,
+                    &NB,
+                    pv.desc,
+                    &one_int);
 #endif
 
             for (int j = 0; j < GlobalV::NLOCAL; ++j)
@@ -296,15 +295,14 @@ void ModuleIO::write_dos_lcao(
                         int w0 = w - s0;
                         for (int n = 0; n < npoints; ++n)
                         {
-                            out << std::setw(20) << pdos[0](s0 + 2 * w0, n) + pdos[0](s0 + 2 * w0 + 1, n)
-                                << std::endl;
+                            out << std::setw(20) << pdos[0](s0 + 2 * w0, n) + pdos[0](s0 + 2 * w0 + 1, n) << std::endl;
                         } // n
                     }
 
                     out << "</data>" << std::endl;
                     out << "</orbital>" << std::endl;
                 } // j
-            } // i
+            }     // i
 
             out << "</pdos>" << std::endl;
             out.close();
@@ -322,45 +320,43 @@ void ModuleIO::write_dos_lcao(
         ss1 << GlobalV::global_out_dir << "DOS" << is + 1 << "_smearing.dat";
 
         ModuleIO::calculate_dos(is,
-            ss.str(),
-            ss1.str(),
-            dos_edelta_ev,
-            emax,
-            emin,
-            bcoeff,
-            kv.get_nks(),
-            kv.get_nkstot(),
-            kv.wk,
-            kv.isk,
-            GlobalV::NBANDS,
-            ekb,
-            wg);
+                                ss.str(),
+                                ss1.str(),
+                                dos_edelta_ev,
+                                emax,
+                                emin,
+                                bcoeff,
+                                kv.get_nks(),
+                                kv.get_nkstot(),
+                                kv.wk,
+                                kv.isk,
+                                GlobalV::NBANDS,
+                                ekb,
+                                wg);
     }
 
     return;
 }
 
-
-template<>
-void ModuleIO::write_dos_lcao(
-    const psi::Psi<std::complex<double>>* psi,
-    LCAO_Matrix &lm,
-    const Parallel_Orbitals &pv,
-    const ModuleBase::matrix& ekb,
-    const ModuleBase::matrix& wg,
-    const double& dos_edelta_ev,
-    const double& dos_scale,
-    const double& bcoeff,
-    const K_Vectors& kv,
-    hamilt::Hamilt<std::complex<double>>* p_ham)
+template <>
+void ModuleIO::write_dos_lcao(const psi::Psi<std::complex<double>>* psi,
+                              LCAO_Matrix& lm,
+                              const Parallel_Orbitals& pv,
+                              const ModuleBase::matrix& ekb,
+                              const ModuleBase::matrix& wg,
+                              const double& dos_edelta_ev,
+                              const double& dos_scale,
+                              const double& bcoeff,
+                              const K_Vectors& kv,
+                              hamilt::Hamilt<std::complex<double>>* p_ham)
 {
     ModuleBase::TITLE("ModuleIO", "write_dos_lcao");
 
     int nspin0 = 1;
-	if (GlobalV::NSPIN == 2)
-	{
-		nspin0 = 2;
-	}
+    if (GlobalV::NSPIN == 2)
+    {
+        nspin0 = 2;
+    }
 
     // find the maximal and minimal band energy.
     double emax = ekb(0, 0);
@@ -375,21 +371,21 @@ void ModuleIO::write_dos_lcao(
     }
 
 #ifdef __MPI
-    Parallel_Reduce::gather_max_double_all(emax);
-    Parallel_Reduce::gather_min_double_all(emin);
+    Parallel_Reduce::gather_max_double_all(GlobalV::NPROC, emax);
+    Parallel_Reduce::gather_min_double_all(GlobalV::NPROC, emin);
 #endif
 
     emax *= ModuleBase::Ry_to_eV;
     emin *= ModuleBase::Ry_to_eV;
-	if (INPUT.dos_setemax)
-	{
-		emax = INPUT.dos_emax_ev;
-	}
+    if (INPUT.dos_setemax)
+    {
+        emax = INPUT.dos_emax_ev;
+    }
 
-	if (INPUT.dos_setemin)
-	{
-		emin = INPUT.dos_emin_ev;
-	}
+    if (INPUT.dos_setemin)
+    {
+        emin = INPUT.dos_emin_ev;
+    }
 
     if (!INPUT.dos_setemax && !INPUT.dos_setemin)
     {
@@ -436,60 +432,60 @@ void ModuleIO::write_dos_lcao(
 
     for (int is = 0; is < nspin0; ++is)
     {
-            std::vector<ModuleBase::ComplexMatrix> Mulk;
-            Mulk.resize(1);
-            Mulk[0].create(pv.ncol, pv.nrow);
+        std::vector<ModuleBase::ComplexMatrix> Mulk;
+        Mulk.resize(1);
+        Mulk[0].create(pv.ncol, pv.nrow);
 
-            for (int ik = 0; ik < kv.get_nks(); ik++)
+        for (int ik = 0; ik < kv.get_nks(); ik++)
+        {
+
+            if (is == kv.isk[ik])
             {
-
-                if (is == kv.isk[ik])
+                // calculate SK for current k point
+                // the target matrix is LM->Sloc2 with collumn-major
+                if (GlobalV::NSPIN == 4)
                 {
-                    // calculate SK for current k point
-                    // the target matrix is LM->Sloc2 with collumn-major
-                    if (GlobalV::NSPIN == 4)
+                    dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(p_ham)->updateSk(ik,
+                                                                                                                   &lm,
+                                                                                                                   1);
+                }
+                else
+                {
+                    dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham)->updateSk(ik, &lm, 1);
+                }
+
+                psi->fix_k(ik);
+                psi::Psi<std::complex<double>> Dwfc(psi[0], 1);
+                std::complex<double>* p_dwfc = Dwfc.get_pointer();
+                for (int index = 0; index < Dwfc.size(); ++index)
+                {
+                    p_dwfc[index] = conj(p_dwfc[index]);
+                }
+
+                for (int i = 0; i < GlobalV::NBANDS; ++i)
+                {
+
+                    ModuleBase::GlobalFunc::ZEROS(waveg, GlobalV::NLOCAL);
+
+                    ModuleBase::GlobalFunc::ZEROS(Gauss, np);
+                    for (int n = 0; n < npoints; ++n)
                     {
-                        dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(p_ham)->updateSk(
-                         ik, &lm, 1);
+                        double en = emin + n * de_ev;
+                        double en0 = ekb(ik, i) * ModuleBase::Ry_to_eV;
+                        double de = en - en0;
+                        double de2 = 0.5 * de * de;
+                        Gauss[n] = kv.wk[ik] * exp(-de2 / a / a) / b;
                     }
-                    else
-                    {
-                        dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham)->updateSk(
-                         ik, &lm, 1);
-                    }
 
-                    psi->fix_k(ik);
-                    psi::Psi<std::complex<double>> Dwfc(psi[0], 1);
-                    std::complex<double>* p_dwfc = Dwfc.get_pointer();
-                    for (int index = 0; index < Dwfc.size(); ++index)
-                    {
-                        p_dwfc[index] = conj(p_dwfc[index]);
-                    }
+                    const int NB = i + 1;
 
-                    for (int i = 0; i < GlobalV::NBANDS; ++i)
-                    {
-
-                        ModuleBase::GlobalFunc::ZEROS(waveg, GlobalV::NLOCAL);
-
-                        ModuleBase::GlobalFunc::ZEROS(Gauss, np);
-                        for (int n = 0; n < npoints; ++n)
-                        {
-                            double en = emin + n * de_ev;
-                            double en0 = ekb(ik, i) * ModuleBase::Ry_to_eV;
-                            double de = en - en0;
-                            double de2 = 0.5 * de * de;
-                            Gauss[n] = kv.wk[ik] * exp(-de2 / a / a) / b;
-                        }
-
-                        const int NB = i + 1;
-
-                        const double one_float[2] = { 1.0, 0.0 }, zero_float[2] = { 0.0, 0.0 };
-                        const int one_int = 1;
-                        //   const int two_int=2;
-                        const char T_char = 'T'; // N_char='N',U_char='U'
+                    const double one_float[2] = {1.0, 0.0}, zero_float[2] = {0.0, 0.0};
+                    const int one_int = 1;
+                    //   const int two_int=2;
+                    const char T_char = 'T'; // N_char='N',U_char='U'
 
 #ifdef __MPI
-                        pzgemv_(&T_char,
+                    pzgemv_(&T_char,
                             &GlobalV::NLOCAL,
                             &GlobalV::NLOCAL,
                             &one_float[0],
@@ -510,25 +506,25 @@ void ModuleIO::write_dos_lcao(
                             &one_int);
 #endif
 
-                        for (int j = 0; j < GlobalV::NLOCAL; ++j)
+                    for (int j = 0; j < GlobalV::NLOCAL; ++j)
+                    {
+
+                        if (pv.in_this_processor(j, i))
                         {
 
-                            if (pv.in_this_processor(j, i))
-                            {
+                            const int ir = pv.global2local_row(j);
+                            const int ic = pv.global2local_col(i);
 
-                                const int ir = pv.global2local_row(j);
-                                const int ic = pv.global2local_col(i);
-
-                                waveg[j] = Mulk[0](ic, ir) * psi[0](ic, ir);
-                                const double x = waveg[j].real();
-                                BlasConnector::axpy(np, x, Gauss, 1, pdosk[is].c + j * pdosk[is].nc, 1);
-                            }
+                            waveg[j] = Mulk[0](ic, ir) * psi[0](ic, ir);
+                            const double x = waveg[j].real();
+                            BlasConnector::axpy(np, x, Gauss, 1, pdosk[is].c + j * pdosk[is].nc, 1);
                         }
+                    }
 
-                    } // ib
+                } // ib
 
-                } // if
-            } // ik
+            } // if
+        }     // ik
 
 #ifdef __MPI
         MPI_Reduce(pdosk[is].c, pdos[is].c, NUM, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
@@ -587,14 +583,14 @@ void ModuleIO::write_dos_lcao(
 
             out << "<pdos>" << std::endl;
             out << "<nspin>" << GlobalV::NSPIN << "</nspin>" << std::endl;
-			if (GlobalV::NSPIN == 4)
-			{
-				out << "<norbitals>" << std::setw(2) << GlobalV::NLOCAL / 2 << "</norbitals>" << std::endl;
-			}
-			else
-			{
-				out << "<norbitals>" << std::setw(2) << GlobalV::NLOCAL << "</norbitals>" << std::endl;
-			}
+            if (GlobalV::NSPIN == 4)
+            {
+                out << "<norbitals>" << std::setw(2) << GlobalV::NLOCAL / 2 << "</norbitals>" << std::endl;
+            }
+            else
+            {
+                out << "<norbitals>" << std::setw(2) << GlobalV::NLOCAL << "</norbitals>" << std::endl;
+            }
             out << "<energy_values units=\"eV\">" << std::endl;
 
             for (int n = 0; n < npoints; ++n)
@@ -646,15 +642,14 @@ void ModuleIO::write_dos_lcao(
                         int w0 = w - s0;
                         for (int n = 0; n < npoints; ++n)
                         {
-                            out << std::setw(20) << pdos[0](s0 + 2 * w0, n) + pdos[0](s0 + 2 * w0 + 1, n)
-                                << std::endl;
+                            out << std::setw(20) << pdos[0](s0 + 2 * w0, n) + pdos[0](s0 + 2 * w0 + 1, n) << std::endl;
                         } // n
                     }
 
                     out << "</data>" << std::endl;
                     out << "</orbital>" << std::endl;
                 } // j
-            } // i
+            }     // i
 
             out << "</pdos>" << std::endl;
             out.close();
@@ -672,19 +667,19 @@ void ModuleIO::write_dos_lcao(
         ss1 << GlobalV::global_out_dir << "DOS" << is + 1 << "_smearing.dat";
 
         ModuleIO::calculate_dos(is,
-            ss.str(),
-            ss1.str(),
-            dos_edelta_ev,
-            emax,
-            emin,
-            bcoeff,
-            kv.get_nks(),
-            kv.get_nkstot(),
-            kv.wk,
-            kv.isk,
-            GlobalV::NBANDS,
-            ekb,
-            wg);
+                                ss.str(),
+                                ss1.str(),
+                                dos_edelta_ev,
+                                emax,
+                                emin,
+                                bcoeff,
+                                kv.get_nks(),
+                                kv.get_nkstot(),
+                                kv.wk,
+                                kv.isk,
+                                GlobalV::NBANDS,
+                                ekb,
+                                wg);
     }
 
     return;

@@ -91,6 +91,7 @@ void ESolver_KS_LCAO_TDDFT::before_all_runners(Input& inp, UnitCell& ucell)
 
     // this part will be updated soon
     // pass Hamilt-pointer to Operator
+
     this->LOC.ParaV = &(this->orb_con.ParaV);
     this->LOWF.ParaV = &(this->orb_con.ParaV);
 
@@ -423,7 +424,7 @@ void ESolver_KS_LCAO_TDDFT::after_scf(const int istep)
                                 this->psi,
                                 pelec,
                                 kv,
-                                uot_,
+                                two_center_bundle_,
                                 tmp_DM->get_paraV_pointer(),
                                 this->RA,
                                 this->LM); // mohan add 2024-04-02

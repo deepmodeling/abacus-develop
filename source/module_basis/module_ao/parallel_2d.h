@@ -1,8 +1,8 @@
 #ifndef _PARALLEL_2D_H_
 #define _PARALLEL_2D_H_
 
-#include <vector>
 #include <cstdint>
+#include <vector>
 
 #ifdef __MPI
 #include <mpi.h>
@@ -12,36 +12,66 @@
 /// 2D-block-cyclic parallel distribution of an arbitrary matrix.
 class Parallel_2D
 {
-public:
+  public:
     Parallel_2D() = default;
     ~Parallel_2D() = default;
 
     /// number of local rows
-    int get_row_size() const { return nrow; };
+    int get_row_size() const
+    {
+        return nrow;
+    };
 
     /// number of local columns
-    int get_col_size() const { return ncol; };
+    int get_col_size() const
+    {
+        return ncol;
+    };
+
+    /// number of global rows
+    int get_global_row_size() const;
+
+    /// number of global columns
+    int get_global_col_size() const;
 
     /// number of local matrix elements
-    int64_t get_local_size() const { return nloc; };
+    int64_t get_local_size() const
+    {
+        return nloc;
+    };
 
     /// get the local index of a global index (row)
-    int global2local_row(const int igr) const { return global2local_row_[igr]; }
+    int global2local_row(const int igr) const
+    {
+        return global2local_row_[igr];
+    }
 
     /// get the local index of a global index (col)
-    int global2local_col(const int igc) const { return global2local_col_[igc]; }
+    int global2local_col(const int igc) const
+    {
+        return global2local_col_[igc];
+    }
 
     /// get the global index of a local index (row)
-    int local2global_row(const int ilr) const { return local2global_row_[ilr]; }
+    int local2global_row(const int ilr) const
+    {
+        return local2global_row_[ilr];
+    }
 
     /// get the global index of a local index (col)
-    int local2global_col(const int ilc) const { return local2global_col_[ilc]; }
+    int local2global_col(const int ilc) const
+    {
+        return local2global_col_[ilc];
+    }
 
     /// check whether a global index is in this process
     bool in_this_processor(const int iw1_all, const int iw2_all) const;
 
     /// side length of 2d square block
-    int get_block_size() const { return nb; };
+    int get_block_size() const
+    {
+        return nb;
+    };
 
 #ifdef __MPI
     /**
@@ -49,26 +79,22 @@ public:
      * and set up the info of a block-cyclic distribution.
      *
      */
-    int init(
-        const int mg,
-        const int ng,
-        const int nb, // square block is assumed
-        const MPI_Comm comm,
-        bool mode = 0
-    );
+    int init(const int mg,
+             const int ng,
+             const int nb, // square block is assumed
+             const MPI_Comm comm,
+             bool mode = 0);
 
     /**
      * @brief Set up the info of a block-cyclic distribution using given
      * MPI communicator and BLACS context.
      *
      */
-    int set(
-        const int mg,
-        const int ng,
-        const int nb, // square block is assumed
-        const MPI_Comm comm_2D,
-        const int blacs_ctxt
-    );
+    int set(const int mg,
+            const int ng,
+            const int nb, // square block is assumed
+            const MPI_Comm comm_2D,
+            const int blacs_ctxt);
 
     /// BLACS context
     int blacs_ctxt = -1;
@@ -104,9 +130,7 @@ public:
     /// test parameter
     int testpb = 0;
 
-
-protected:
-
+  protected:
     /// map from global index to local index
     std::vector<int> global2local_row_;
     std::vector<int> global2local_col_;

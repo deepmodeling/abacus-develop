@@ -10,7 +10,7 @@ void Force_LCAO<double>::cal_fvnl_dbeta(const elecstate::DensityMatrix<double, d
                                         const Parallel_Orbitals& pv,
                                         const UnitCell& ucell,
                                         const LCAO_Orbitals& orb,
-                                        const ORB_gen_tables& uot,
+                                        const TwoCenterIntegrator& intor_orb_beta,
                                         Grid_Driver& gd,
                                         const bool isforce,
                                         const bool isstress,
@@ -79,7 +79,7 @@ void Force_LCAO<double>::cal_fvnl_dbeta(const elecstate::DensityMatrix<double, d
 
                 ModuleBase::Vector3<double> dtau = ucell.atoms[T0].tau[I0] - tau1;
 
-                uot.two_center_bundle->overlap_orb_beta->snap(T1, L1, N1, M1, T0, dtau * ucell.lat0, true, nlm);
+                intor_orb_beta.snap(T1, L1, N1, M1, T0, dtau * ucell.lat0, true, nlm);
 
                 assert(nlm.size() == 4);
                 nlm_tot[ad1].insert({iw1, nlm});

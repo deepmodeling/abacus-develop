@@ -66,7 +66,7 @@ void ModuleIO::output_dHR(const int& istep,
                           Gint_k& gint_k,    // mohan add 2024-04-01
                           LCAO_Matrix& lm,   // mohan add 2024-04-01
                           Grid_Driver& grid, // mohan add 2024-04-06
-                          const ORB_gen_tables* uot,
+                          const TwoCenterBundle& two_center_bundle,
                           const K_Vectors& kv,
                           const bool& binary,
                           const double& sparse_thr)
@@ -83,7 +83,7 @@ void ModuleIO::output_dHR(const int& istep,
         // mohan add 2024-04-01
         const int cspin = 0;
 
-        sparse_format::cal_dH(lm, grid, uot, cspin, sparse_thr, gint_k);
+        sparse_format::cal_dH(lm, grid, two_center_bundle, cspin, sparse_thr, gint_k);
     }
     else if (nspin == 2)
     {
@@ -102,7 +102,7 @@ void ModuleIO::output_dHR(const int& istep,
                 }
             }
 
-            sparse_format::cal_dH(lm, grid, uot, cspin, sparse_thr, gint_k);
+            sparse_format::cal_dH(lm, grid, two_center_bundle, cspin, sparse_thr, gint_k);
         }
     }
     // mohan update 2024-04-01
@@ -144,7 +144,7 @@ void ModuleIO::output_TR(const int istep,
                          const Parallel_Orbitals& pv,
                          LCAO_Matrix& lm,
                          Grid_Driver& grid,
-                         const ORB_gen_tables* uot,
+                         const TwoCenterBundle& two_center_bundle,
                          const std::string& TR_filename,
                          const bool& binary,
                          const double& sparse_thr)
@@ -165,7 +165,7 @@ void ModuleIO::output_TR(const int istep,
     // need Hloc_fixedR
     LCAO_HS_Arrays HS_arrays;
 
-    sparse_format::cal_TR(ucell, pv, lm, HS_arrays, grid, uot, sparse_thr);
+    sparse_format::cal_TR(ucell, pv, lm, HS_arrays, grid, two_center_bundle, sparse_thr);
 
     ModuleIO::save_sparse(lm.TR_sparse, lm.all_R_coor, sparse_thr, binary, sst.str().c_str(), *(lm.ParaV), "T", istep);
 
