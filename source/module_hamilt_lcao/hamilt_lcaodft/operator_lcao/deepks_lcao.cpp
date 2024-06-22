@@ -22,11 +22,11 @@ DeePKS<OperatorLCAO<TK, TR>>::DeePKS(Local_Orbital_Charge* loc_in,
                                      std::vector<TK>* hK_in,
                                      const UnitCell* ucell_in,
                                      Grid_Driver* GridD_in,
-                                     const ORB_gen_tables* uot,
+                                     const TwoCenterIntegrator* intor_orb_alpha,
                                      const int& nks_in,
                                      elecstate::DensityMatrix<TK, double>* DM_in)
     : loc(loc_in), nks(nks_in), ucell(ucell_in), OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in), DM(DM_in),
-      uot_(uot)
+      intor_orb_alpha_(intor_orb_alpha)
 {
     this->cal_type = calculation_type::lcao_deepks;
 #ifdef __DEEPKS
@@ -285,8 +285,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::pre_calculate_nlm(
             int M1 = (m1 % 2 == 0) ? -m1 / 2 : (m1 + 1) / 2;
 
             ModuleBase::Vector3<double> dtau = tau0 - tau1;
-            uot_->two_center_bundle->overlap_orb_alpha
-                ->snap(T1, L1, N1, M1, 0, dtau * ucell->lat0, false /*calc_deri*/, nlm);
+            intor_orb_alpha_->snap(T1, L1, N1, M1, 0, dtau * ucell->lat0, false /*calc_deri*/, nlm);
             nlm_in[ad].insert({all_indexes[iw1l], nlm[0]});
             if (npol == 2)
                 nlm_in[ad].insert({all_indexes[iw1l + 1], nlm[0]});

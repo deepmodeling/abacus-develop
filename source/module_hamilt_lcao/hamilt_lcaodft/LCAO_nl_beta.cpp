@@ -12,7 +12,7 @@ void build_Nonlocal_beta_new(LCAO_Matrix& lm,
                              double* HSloc,
                              const UnitCell& ucell,
                              const LCAO_Orbitals& orb,
-                             const ORB_gen_tables& uot,
+                             const TwoCenterIntegrator& intor_orb_beta,
                              Grid_Driver* GridD) // update by liuyu 2021-04-07
 {
     ModuleBase::TITLE("LCAO_domain", "b_NL_beta_new");
@@ -106,7 +106,7 @@ void build_Nonlocal_beta_new(LCAO_Matrix& lm,
                     int M1 = (m1 % 2 == 0) ? -m1 / 2 : (m1 + 1) / 2;
 
                     ModuleBase::Vector3<double> dtau = ucell.atoms[T0].tau[I0] - tau1;
-                    uot.two_center_bundle->overlap_orb_beta->snap(T1, L1, N1, M1, T0, dtau * ucell.lat0, false, nlm);
+                    intor_orb_beta.snap(T1, L1, N1, M1, T0, dtau * ucell.lat0, false, nlm);
 
 #ifdef _OPENMP
                     nlm_tot_thread[ad_count].insert({iw1_all, nlm[0]});
