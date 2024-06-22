@@ -11,15 +11,13 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 void Gint_k::distribute_pvpR_sparseMatrix(
-    const int current_spin, 
-    const double &sparse_threshold, 
-    const std::map<Abfs::Vector3_Order<int>,
-    std::map<size_t, std::map<size_t, double>>> &pvpR_sparseMatrix,
-    LCAO_Matrix *LM,
-    Parallel_Orbitals *pv
-)
+    const int current_spin,
+    const double& sparse_threshold,
+    const std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>>& pvpR_sparseMatrix,
+    LCAO_Matrix* LM,
+    Parallel_Orbitals* pv)
 {
-    ModuleBase::TITLE("Gint_k","distribute_pvpR_sparseMatrix");
+    ModuleBase::TITLE("Gint_k", "distribute_pvpR_sparseMatrix");
 
     int total_R_num = LM->all_R_coor.size();
     int* nonzero_num = new int[total_R_num];
@@ -70,7 +68,7 @@ void Gint_k::distribute_pvpR_sparseMatrix(
             for (int row = 0; row < GlobalV::NLOCAL; ++row)
             {
                 ModuleBase::GlobalFunc::ZEROS(tmp, GlobalV::NLOCAL);
-                
+
                 auto iter = pvpR_sparseMatrix.find(R_coor);
                 if (iter != pvpR_sparseMatrix.end())
                 {
@@ -118,7 +116,7 @@ void Gint_k::distribute_pvpR_sparseMatrix(
                         {
                             if (std::abs(tmp[col]) > sparse_threshold)
                             {
-                                double &value = LM->HR_sparse[current_spin][R_coor][row][col];
+                                double& value = LM->HR_sparse[current_spin][R_coor][row][col];
                                 value += tmp[col];
                                 if (std::abs(value) <= sparse_threshold)
                                 {
@@ -145,14 +143,13 @@ void Gint_k::distribute_pvpR_sparseMatrix(
 }
 
 void Gint_k::distribute_pvpR_soc_sparseMatrix(
-    const double &sparse_threshold, 
-    const std::map<Abfs::Vector3_Order<int>,
-    std::map<size_t, std::map<size_t, std::complex<double>>>> &pvpR_soc_sparseMatrix,
-    LCAO_Matrix *LM,
-    Parallel_Orbitals *pv
-)
+    const double& sparse_threshold,
+    const std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>&
+        pvpR_soc_sparseMatrix,
+    LCAO_Matrix* LM,
+    Parallel_Orbitals* pv)
 {
-    ModuleBase::TITLE("Gint_k","distribute_pvpR_soc_sparseMatrix");
+    ModuleBase::TITLE("Gint_k", "distribute_pvpR_soc_sparseMatrix");
 
     int total_R_num = LM->all_R_coor.size();
     int* nonzero_num = new int[total_R_num];
@@ -203,7 +200,7 @@ void Gint_k::distribute_pvpR_soc_sparseMatrix(
             for (int row = 0; row < GlobalV::NLOCAL; ++row)
             {
                 ModuleBase::GlobalFunc::ZEROS(tmp_soc, GlobalV::NLOCAL);
-                
+
                 auto iter = pvpR_soc_sparseMatrix.find(R_coor);
                 if (iter != pvpR_soc_sparseMatrix.end())
                 {
@@ -250,7 +247,7 @@ void Gint_k::distribute_pvpR_soc_sparseMatrix(
                         {
                             if (std::abs(tmp_soc[col]) > sparse_threshold)
                             {
-                                std::complex<double> &value = LM->HR_soc_sparse[R_coor][row][col];
+                                std::complex<double>& value = LM->HR_soc_sparse[R_coor][row][col];
                                 value += tmp_soc[col];
                                 if (std::abs(value) <= sparse_threshold)
                                 {
@@ -276,8 +273,12 @@ void Gint_k::distribute_pvpR_soc_sparseMatrix(
     return;
 }
 
-void Gint_k::cal_vlocal_R_sparseMatrix(const int &current_spin, const double &sparse_threshold, 
-                LCAO_Matrix *LM,Parallel_Orbitals *pv,UnitCell &ucell,Grid_Driver &gdriver)
+void Gint_k::cal_vlocal_R_sparseMatrix(const int& current_spin,
+                                       const double& sparse_threshold,
+                                       LCAO_Matrix* LM,
+                                       Parallel_Orbitals* pv,
+                                       UnitCell& ucell,
+                                       Grid_Driver& gdriver)
 {
     ModuleBase::TITLE("Gint_k", "cal_vlocal_R_sparseMatrix");
 
@@ -315,14 +316,16 @@ void Gint_k::cal_vlocal_R_sparseMatrix(const int &current_spin, const double &sp
                         Atom* atom2 = &ucell.atoms[T2];
                         dtau = gdriver.getAdjacentTau(ad) - tau1;
                         double distance = dtau.norm() * ucell.lat0;
-                        double rcut = this->rcuts[T1]+this->rcuts[T2];
+                        double rcut = this->gridt->rcuts[T1] + this->gridt->rcuts[T2];
 
                         if (distance < rcut)
                         {
                             const int start2 = ucell.itiaiw2iwt(T2, I2, 0);
-                            Abfs::Vector3_Order<int> dR(gdriver.getBox(ad).x, gdriver.getBox(ad).y, gdriver.getBox(ad).z);
+                            Abfs::Vector3_Order<int> dR(gdriver.getBox(ad).x,
+                                                        gdriver.getBox(ad).y,
+                                                        gdriver.getBox(ad).z);
                             int ixxx = DM_start + this->gridt->find_R2st[iat][nad2];
-                            for(int iw=0; iw<atom1->nw * GlobalV::NPOL; iw++)
+                            for (int iw = 0; iw < atom1->nw * GlobalV::NPOL; iw++)
                             {
                                 for (int iw2 = 0; iw2 < atom2->nw * GlobalV::NPOL; iw2++)
                                 {
@@ -337,20 +340,26 @@ void Gint_k::cal_vlocal_R_sparseMatrix(const int &current_spin, const double &sp
 
                                         if (iw % 2 == 0 && iw2 % 2 == 0)
                                         {
-                                            //spin = 0;
-                                            temp_value_complex = std::complex<double>(1.0,0.0) * pvpR_reduced[0][iw_nowg] + std::complex<double>(1.0,0.0) * pvpR_reduced[3][iw_nowg];
-                                            if(std::abs(temp_value_complex) > sparse_threshold)
+                                            // spin = 0;
+                                            temp_value_complex
+                                                = std::complex<double>(1.0, 0.0) * pvpR_reduced[0][iw_nowg]
+                                                  + std::complex<double>(1.0, 0.0) * pvpR_reduced[3][iw_nowg];
+                                            if (std::abs(temp_value_complex) > sparse_threshold)
                                             {
-                                                pvpR_soc_sparseMatrix[dR][start1 + iw][start2 + iw2] = temp_value_complex;
+                                                pvpR_soc_sparseMatrix[dR][start1 + iw][start2 + iw2]
+                                                    = temp_value_complex;
                                             }
-                                        }	
-                                        else if(iw%2==1&&iw2%2==1)
+                                        }
+                                        else if (iw % 2 == 1 && iw2 % 2 == 1)
                                         {
-                                            //spin = 3;
-                                            temp_value_complex = std::complex<double>(1.0,0.0) * pvpR_reduced[0][iw_nowg] - std::complex<double>(1.0,0.0) * pvpR_reduced[3][iw_nowg];
-                                            if(std::abs(temp_value_complex) > sparse_threshold)
+                                            // spin = 3;
+                                            temp_value_complex
+                                                = std::complex<double>(1.0, 0.0) * pvpR_reduced[0][iw_nowg]
+                                                  - std::complex<double>(1.0, 0.0) * pvpR_reduced[3][iw_nowg];
+                                            if (std::abs(temp_value_complex) > sparse_threshold)
                                             {
-                                                pvpR_soc_sparseMatrix[dR][start1 + iw][start2 + iw2] = temp_value_complex;
+                                                pvpR_soc_sparseMatrix[dR][start1 + iw][start2 + iw2]
+                                                    = temp_value_complex;
                                             }
                                         }
                                         else if (iw % 2 == 0 && iw2 % 2 == 1)
@@ -362,10 +371,13 @@ void Gint_k::cal_vlocal_R_sparseMatrix(const int &current_spin, const double &sp
                                             }
                                             else
                                             {
-                                                temp_value_complex = pvpR_reduced[1][iw_nowg] - std::complex<double>(0.0,1.0) * pvpR_reduced[2][iw_nowg];
-                                                if(std::abs(temp_value_complex) > sparse_threshold)
+                                                temp_value_complex
+                                                    = pvpR_reduced[1][iw_nowg]
+                                                      - std::complex<double>(0.0, 1.0) * pvpR_reduced[2][iw_nowg];
+                                                if (std::abs(temp_value_complex) > sparse_threshold)
                                                 {
-                                                    pvpR_soc_sparseMatrix[dR][start1 + iw][start2 + iw2] = temp_value_complex;
+                                                    pvpR_soc_sparseMatrix[dR][start1 + iw][start2 + iw2]
+                                                        = temp_value_complex;
                                                 }
                                             }
                                         }
@@ -378,10 +390,13 @@ void Gint_k::cal_vlocal_R_sparseMatrix(const int &current_spin, const double &sp
                                             }
                                             else
                                             {
-                                                temp_value_complex = pvpR_reduced[1][iw_nowg] + std::complex<double>(0.0,1.0) * pvpR_reduced[2][iw_nowg];
-                                                if(std::abs(temp_value_complex) > sparse_threshold)
+                                                temp_value_complex
+                                                    = pvpR_reduced[1][iw_nowg]
+                                                      + std::complex<double>(0.0, 1.0) * pvpR_reduced[2][iw_nowg];
+                                                if (std::abs(temp_value_complex) > sparse_threshold)
                                                 {
-                                                    pvpR_soc_sparseMatrix[dR][start1 + iw][start2 + iw2] = temp_value_complex;
+                                                    pvpR_soc_sparseMatrix[dR][start1 + iw][start2 + iw2]
+                                                        = temp_value_complex;
                                                 }
                                             }
                                         }
@@ -398,8 +413,7 @@ void Gint_k::cal_vlocal_R_sparseMatrix(const int &current_spin, const double &sp
                                             pvpR_sparseMatrix[dR][start1 + iw][start2 + iw2] = temp_value_double;
                                         }
 
-                                    } //endif normal
-
+                                    } // endif normal
                                 }
 
                                 ++lgd;
@@ -414,11 +428,11 @@ void Gint_k::cal_vlocal_R_sparseMatrix(const int &current_spin, const double &sp
 
     if (GlobalV::NSPIN != 4)
     {
-        distribute_pvpR_sparseMatrix(current_spin, sparse_threshold, pvpR_sparseMatrix, LM,pv);
+        distribute_pvpR_sparseMatrix(current_spin, sparse_threshold, pvpR_sparseMatrix, LM, pv);
     }
     else
     {
-        distribute_pvpR_soc_sparseMatrix(sparse_threshold, pvpR_soc_sparseMatrix, LM,pv);
+        distribute_pvpR_soc_sparseMatrix(sparse_threshold, pvpR_soc_sparseMatrix, LM, pv);
     }
 
     return;
