@@ -6,6 +6,7 @@ namespace ModuleIO
 {
 void ReadInput::item_general()
 {
+    // #Parameters (1.General)
     // suffix                         autotest #the name of main output directory
     // latname                        none #the name of lattice name
     // stru_file                      STRU #the filename of file containing atom positions
@@ -453,6 +454,7 @@ void ReadInput::item_general()
         item.readvalue = [](const Input_Item& item, Parameter& para) { para.pseudo_rcut = doublevalue; };
         this->add_item(item);
     }
+    
 }
 
 } // namespace ModuleIO
