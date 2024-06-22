@@ -75,12 +75,12 @@ void ESolver_SDFT_PW::before_all_runners(Input& inp, UnitCell& ucell)
     }
 
     // 6) prepare some parameters for electronic wave functions initilization
-    this->p_initcontroller = new psi::InitController<std::complex<double>>(GlobalV::init_wfc,
-                                                                           GlobalV::KS_SOLVER,
-                                                                           GlobalV::BASIS_TYPE,
-                                                                           GlobalV::psi_initializer,
-                                                                           &this->wf,
-                                                                           this->pw_wfc);
+    this->p_wf_init = new psi::WFInit<std::complex<double>>(GlobalV::init_wfc,
+                                                            GlobalV::KS_SOLVER,
+                                                            GlobalV::BASIS_TYPE,
+                                                            GlobalV::psi_initializer,
+                                                            &this->wf,
+                                                            this->pw_wfc);
     // 7) set occupatio, redundant?
     if (GlobalV::ocp)
     {

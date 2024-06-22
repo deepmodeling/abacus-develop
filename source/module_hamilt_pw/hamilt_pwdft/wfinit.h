@@ -13,11 +13,11 @@ class WFInit
 {
   public:
     WFInit(const std::string& init_wfc_in,
-                   const std::string& ks_solver_in,
-                   const std::string& basis_type_in,
-                   const bool& use_psiinitializer_in,
-                   wavefunc* p_wf_in,
-                   ModulePW::PW_Basis_K* pw_wfc_in);
+           const std::string& ks_solver_in,
+           const std::string& basis_type_in,
+           const bool& use_psiinitializer_in,
+           wavefunc* p_wf_in,
+           ModulePW::PW_Basis_K* pw_wfc_in);
     ~WFInit(){};
 
     // prepare the wavefunction initialization

@@ -99,7 +99,7 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
         delete reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->__kspw_psi);
     }
     delete this->psi;
-    delete this->p_initcontroller;
+    delete this->p_wf_init;
 }
 
 template <typename T, typename Device>
@@ -137,12 +137,12 @@ void ESolver_KS_PW<T, Device>::Init_GlobalC(Input& inp, UnitCell& ucell, pseudop
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "NON-LOCAL POTENTIAL");
 
     //! Allocate psi
-    this->p_initcontroller->allocate_psi(this->psi,
-                                         this->kv.get_nkstot(),
-                                         this->kv.get_nks(),
-                                         this->kv.ngk.data(),
-                                         this->pw_wfc->npwk_max,
-                                         &(this->sf));
+    this->p_wf_init->allocate_psi(this->psi,
+                                  this->kv.get_nkstot(),
+                                  this->kv.get_nks(),
+                                  this->kv.ngk.data(),
+                                  this->pw_wfc->npwk_max,
+                                  &(this->sf));
 
     this->kspw_psi = GlobalV::device_flag == "gpu" || GlobalV::precision_flag == "single"
                          ? new psi::Psi<T, Device>(this->psi[0])
@@ -200,22 +200,20 @@ void ESolver_KS_PW<T, Device>::before_all_runners(Input& inp, UnitCell& ucell)
     }
 
     //! 7) prepare some parameters for electronic wave functions initilization
-    this->p_initcontroller = new psi::InitController<T, Device>(GlobalV::init_wfc,
-                                                                GlobalV::KS_SOLVER,
-                                                                GlobalV::BASIS_TYPE,
-                                                                GlobalV::psi_initializer,
-                                                                &this->wf,
-                                                                this->pw_wfc);
-    this->p_initcontroller->prepare_init(&(this->sf),
+    this->p_wf_init = new psi::WFInit<T, Device>(GlobalV::init_wfc,
+                                                 GlobalV::KS_SOLVER,
+                                                 GlobalV::BASIS_TYPE,
+                                                 GlobalV::psi_initializer,
+                                                 &this->wf,
+                                                 this->pw_wfc);
+    this->p_wf_init->prepare_init(&(this->sf),
                                          &ucell,
                                          1,
 #ifdef __MPI
-                                         &GlobalC::ppcell,
                                          &GlobalC::Pkpoints,
-                                         GlobalV::MY_RANK);
-#else
-                                         &GlobalC::ppcell);
+                                         GlobalV::MY_RANK,
 #endif
+                                         &GlobalC::ppcell);
 
     //! 8) setup global classes
     this->Init_GlobalC(inp, ucell, GlobalC::ppcell);
@@ -300,7 +298,7 @@ void ESolver_KS_PW<T, Device>::init_after_vc(Input& inp, UnitCell& ucell)
 
         this->pw_wfc->collect_local_pw(inp.erf_ecut, inp.erf_height, inp.erf_sigma);
 
-        this->p_initcontroller->make_table(this->kv.get_nks(), &this->sf);
+        this->p_wf_init->make_table(this->kv.get_nks(), &this->sf);
     }
 
 #ifdef USE_PAW
@@ -488,7 +486,7 @@ void ESolver_KS_PW<T, Device>::before_scf(const int istep)
     // What the old strategy does is only to initialize for once...
     if (((GlobalV::init_wfc == "random") && (istep == 0)) || (GlobalV::init_wfc != "random"))
     {
-        this->p_initcontroller->initialize_psi(this->psi, this->kspw_psi, this->p_hamilt, GlobalV::ofs_running);
+        this->p_wf_init->initialize_psi(this->psi, this->kspw_psi, this->p_hamilt, GlobalV::ofs_running);
     }
 }
 
@@ -585,7 +583,7 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, c
             // It is not a good choice to overload another solve function here, this will spoil the concept of
             // multiple inheritance and polymorphism. But for now, we just do it in this way.
             // In the future, there will be a series of class ESolver_KS_LCAO_PW, HSolver_LCAO_PW and so on.
-            std::weak_ptr<psi::Psi<T, Device>> psig = this->p_initcontroller->get_psig();
+            std::weak_ptr<psi::Psi<T, Device>> psig = this->p_wf_init->get_psig();
 
             if (psig.expired())
             {

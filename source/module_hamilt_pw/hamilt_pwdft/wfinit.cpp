@@ -14,11 +14,11 @@ namespace psi
 
 template <typename T, typename Device>
 WFInit<T, Device>::WFInit(const std::string& init_wfc_in,
-                                          const std::string& ks_solver_in,
-                                          const std::string& basis_type_in,
-                                          const bool& use_psiinitializer_in,
-                                          wavefunc* p_wf_in,
-                                          ModulePW::PW_Basis_K* pw_wfc_in)
+                          const std::string& ks_solver_in,
+                          const std::string& basis_type_in,
+                          const bool& use_psiinitializer_in,
+                          wavefunc* p_wf_in,
+                          ModulePW::PW_Basis_K* pw_wfc_in)
 {
     this->init_wfc = init_wfc_in;
     this->ks_solver = ks_solver_in;
@@ -29,14 +29,14 @@ WFInit<T, Device>::WFInit(const std::string& init_wfc_in,
 }
 
 template <typename T, typename Device>
-void WFInit<T, Device>::prepare_init(Structure_Factor* p_sf, //< structure factor
-                                             UnitCell* p_ucell,      //< unit cell
-                                             const int& random_seed, //< random seed
+void WFInit<T, Device>::prepare_init(Structure_Factor* p_sf,
+                                     UnitCell* p_ucell,
+                                     const int& random_seed,
 #ifdef __MPI
-                                             Parallel_Kpoints* = nullptr, //< parallel kpoints
-                                             const int& rank = 0,         //< rank
+                                     Parallel_Kpoints* p_parak,
+                                     const int& rank,
 #endif
-                                             pseudopot_cell_vnl* = nullptr); //< nonlocal pseudopotential
+                                     pseudopot_cell_vnl* p_ppcell)
 {
     if (!this->use_psiinitializer)
         return;
@@ -69,8 +69,7 @@ void WFInit<T, Device>::prepare_init(Structure_Factor* p_sf, //< structure facto
     }
     else
     {
-        ModuleBase::WARNING_QUIT("WFInit::prepare_init",
-                                 "for new psi initializer, init_wfc type not supported");
+        ModuleBase::WARNING_QUIT("WFInit::prepare_init", "for new psi initializer, init_wfc type not supported");
     }
 
     //! function polymorphism is moved from constructor to function initialize.
@@ -88,11 +87,11 @@ void WFInit<T, Device>::prepare_init(Structure_Factor* p_sf, //< structure facto
 
 template <typename T, typename Device>
 void WFInit<T, Device>::allocate_psi(Psi<std::complex<double>>*& psi,
-                                             const int nkstot,
-                                             const int nks,
-                                             const int* ngk,
-                                             const int npwx,
-                                             Structure_Factor* p_sf)
+                                     const int nkstot,
+                                     const int nks,
+                                     const int* ngk,
+                                     const int npwx,
+                                     Structure_Factor* p_sf)
 {
     // allocate memory for std::complex<double> datatype psi
     // New psi initializer in ABACUS, Developer's note:
@@ -157,9 +156,9 @@ void WFInit<T, Device>::make_table(const int nks, Structure_Factor* p_sf)
 
 template <typename T, typename Device>
 void WFInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
-                                               psi::Psi<T, Device>* kspw_psi,
-                                               hamilt::Hamilt<T, Device>* p_hamilt,
-                                               std::ofstream& ofs_running)
+                                       psi::Psi<T, Device>* kspw_psi,
+                                       hamilt::Hamilt<T, Device>* p_hamilt,
+                                       std::ofstream& ofs_running)
 {
     if (!this->use_psiinitializer)
         return;
