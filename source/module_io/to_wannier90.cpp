@@ -1,25 +1,22 @@
 #include "to_wannier90.h"
 
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/math_integral.h"
 #include "module_base/math_polyint.h"
 #include "module_base/math_sphbes.h"
 #include "module_base/math_ylmreal.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 toWannier90::toWannier90()
 {
-    
 }
 
-toWannier90::toWannier90(
-    const bool &out_wannier_mmn, 
-    const bool &out_wannier_amn, 
-    const bool &out_wannier_unk, 
-    const bool &out_wannier_eig,
-    const bool &out_wannier_wvfn_formatted, 
-    const std::string &nnkpfile,
-    const std::string &wannier_spin
-)
+toWannier90::toWannier90(const bool& out_wannier_mmn,
+                         const bool& out_wannier_amn,
+                         const bool& out_wannier_unk,
+                         const bool& out_wannier_eig,
+                         const bool& out_wannier_wvfn_formatted,
+                         const std::string& nnkpfile,
+                         const std::string& wannier_spin)
 {
     this->out_wannier_mmn = out_wannier_mmn;
     this->out_wannier_amn = out_wannier_amn;
@@ -70,7 +67,6 @@ toWannier90::~toWannier90()
 
 void toWannier90::calculate()
 {
-
 }
 
 void toWannier90::read_nnkp(const K_Vectors& kv)
@@ -79,7 +75,7 @@ void toWannier90::read_nnkp(const K_Vectors& kv)
     GlobalV::ofs_running << "reading the " << wannier_file_name << ".nnkp file." << std::endl;
 
     bool read_success = false;
-    if(GlobalV::MY_RANK == 0)
+    if (GlobalV::MY_RANK == 0)
     {
         read_success = try_read_nnkp(kv);
     }
@@ -88,7 +84,7 @@ void toWannier90::read_nnkp(const K_Vectors& kv)
     Parallel_Common::bcast_bool(read_success);
 #endif
 
-    if(GlobalV::MY_RANK != 0 && read_success)
+    if (GlobalV::MY_RANK != 0 && read_success)
     {
         read_success = try_read_nnkp(kv);
     }
@@ -118,22 +114,18 @@ void toWannier90::out_eig(const ModuleBase::matrix& ekb)
 
         eig_file.close();
     }
-
 }
 
 void toWannier90::out_unk()
 {
-
 }
 
 void toWannier90::cal_Amn()
 {
-
 }
 
 void toWannier90::cal_Mmn()
 {
-
 }
 
 bool toWannier90::try_read_nnkp(const K_Vectors& kv)
@@ -148,21 +140,20 @@ bool toWannier90::try_read_nnkp(const K_Vectors& kv)
     if (ModuleBase::GlobalFunc::SCAN_BEGIN(nnkp_read, "real_lattice"))
     {
         ModuleBase::Matrix3 real_lattice_nnkp;
-        nnkp_read >> real_lattice_nnkp.e11 >> real_lattice_nnkp.e12 >> real_lattice_nnkp.e13 
-                  >> real_lattice_nnkp.e21 >> real_lattice_nnkp.e22 >> real_lattice_nnkp.e23 
-                  >> real_lattice_nnkp.e31 >> real_lattice_nnkp.e32 >> real_lattice_nnkp.e33;
+        nnkp_read >> real_lattice_nnkp.e11 >> real_lattice_nnkp.e12 >> real_lattice_nnkp.e13 >> real_lattice_nnkp.e21
+            >> real_lattice_nnkp.e22 >> real_lattice_nnkp.e23 >> real_lattice_nnkp.e31 >> real_lattice_nnkp.e32
+            >> real_lattice_nnkp.e33;
         real_lattice_nnkp = real_lattice_nnkp / GlobalC::ucell.lat0_angstrom;
 
-        if (std::abs(real_lattice_nnkp.e11 - GlobalC::ucell.latvec.e11) > 1.0e-4 ||
-            std::abs(real_lattice_nnkp.e12 - GlobalC::ucell.latvec.e12) > 1.0e-4 ||
-            std::abs(real_lattice_nnkp.e13 - GlobalC::ucell.latvec.e13) > 1.0e-4 ||
-            std::abs(real_lattice_nnkp.e21 - GlobalC::ucell.latvec.e21) > 1.0e-4 ||
-            std::abs(real_lattice_nnkp.e22 - GlobalC::ucell.latvec.e22) > 1.0e-4 ||
-            std::abs(real_lattice_nnkp.e23 - GlobalC::ucell.latvec.e23) > 1.0e-4 ||
-            std::abs(real_lattice_nnkp.e31 - GlobalC::ucell.latvec.e31) > 1.0e-4 ||
-            std::abs(real_lattice_nnkp.e32 - GlobalC::ucell.latvec.e32) > 1.0e-4 ||
-            std::abs(real_lattice_nnkp.e33 - GlobalC::ucell.latvec.e33) > 1.0e-4
-        )
+        if (std::abs(real_lattice_nnkp.e11 - GlobalC::ucell.latvec.e11) > 1.0e-4
+            || std::abs(real_lattice_nnkp.e12 - GlobalC::ucell.latvec.e12) > 1.0e-4
+            || std::abs(real_lattice_nnkp.e13 - GlobalC::ucell.latvec.e13) > 1.0e-4
+            || std::abs(real_lattice_nnkp.e21 - GlobalC::ucell.latvec.e21) > 1.0e-4
+            || std::abs(real_lattice_nnkp.e22 - GlobalC::ucell.latvec.e22) > 1.0e-4
+            || std::abs(real_lattice_nnkp.e23 - GlobalC::ucell.latvec.e23) > 1.0e-4
+            || std::abs(real_lattice_nnkp.e31 - GlobalC::ucell.latvec.e31) > 1.0e-4
+            || std::abs(real_lattice_nnkp.e32 - GlobalC::ucell.latvec.e32) > 1.0e-4
+            || std::abs(real_lattice_nnkp.e33 - GlobalC::ucell.latvec.e33) > 1.0e-4)
         {
             ModuleBase::WARNING_QUIT("toWannier90::read_nnkp", "Error real_lattice in *.nnkp file");
         }
@@ -176,21 +167,20 @@ bool toWannier90::try_read_nnkp(const K_Vectors& kv)
     {
         ModuleBase::Matrix3 recip_lattice_nnkp;
         nnkp_read >> recip_lattice_nnkp.e11 >> recip_lattice_nnkp.e12 >> recip_lattice_nnkp.e13
-                  >> recip_lattice_nnkp.e21 >> recip_lattice_nnkp.e22 >> recip_lattice_nnkp.e23 
-                  >> recip_lattice_nnkp.e31 >> recip_lattice_nnkp.e32 >> recip_lattice_nnkp.e33;
+            >> recip_lattice_nnkp.e21 >> recip_lattice_nnkp.e22 >> recip_lattice_nnkp.e23 >> recip_lattice_nnkp.e31
+            >> recip_lattice_nnkp.e32 >> recip_lattice_nnkp.e33;
         const double tpiba_angstrom = ModuleBase::TWO_PI / GlobalC::ucell.lat0_angstrom;
         recip_lattice_nnkp = recip_lattice_nnkp / tpiba_angstrom;
 
-        if (std::abs(recip_lattice_nnkp.e11 - GlobalC::ucell.G.e11) > 1.0e-4 ||
-            std::abs(recip_lattice_nnkp.e12 - GlobalC::ucell.G.e12) > 1.0e-4 ||
-            std::abs(recip_lattice_nnkp.e13 - GlobalC::ucell.G.e13) > 1.0e-4 ||
-            std::abs(recip_lattice_nnkp.e21 - GlobalC::ucell.G.e21) > 1.0e-4 ||
-            std::abs(recip_lattice_nnkp.e22 - GlobalC::ucell.G.e22) > 1.0e-4 ||
-            std::abs(recip_lattice_nnkp.e23 - GlobalC::ucell.G.e23) > 1.0e-4 ||
-            std::abs(recip_lattice_nnkp.e31 - GlobalC::ucell.G.e31) > 1.0e-4 ||
-            std::abs(recip_lattice_nnkp.e32 - GlobalC::ucell.G.e32) > 1.0e-4 ||
-            std::abs(recip_lattice_nnkp.e33 - GlobalC::ucell.G.e33) > 1.0e-4
-        )
+        if (std::abs(recip_lattice_nnkp.e11 - GlobalC::ucell.G.e11) > 1.0e-4
+            || std::abs(recip_lattice_nnkp.e12 - GlobalC::ucell.G.e12) > 1.0e-4
+            || std::abs(recip_lattice_nnkp.e13 - GlobalC::ucell.G.e13) > 1.0e-4
+            || std::abs(recip_lattice_nnkp.e21 - GlobalC::ucell.G.e21) > 1.0e-4
+            || std::abs(recip_lattice_nnkp.e22 - GlobalC::ucell.G.e22) > 1.0e-4
+            || std::abs(recip_lattice_nnkp.e23 - GlobalC::ucell.G.e23) > 1.0e-4
+            || std::abs(recip_lattice_nnkp.e31 - GlobalC::ucell.G.e31) > 1.0e-4
+            || std::abs(recip_lattice_nnkp.e32 - GlobalC::ucell.G.e32) > 1.0e-4
+            || std::abs(recip_lattice_nnkp.e33 - GlobalC::ucell.G.e33) > 1.0e-4)
         {
             ModuleBase::WARNING_QUIT("toWannier90::read_nnkp", "Error recip_lattice in *.nnkp file");
         }
@@ -223,14 +213,13 @@ bool toWannier90::try_read_nnkp(const K_Vectors& kv)
             ModuleBase::WARNING_QUIT("toWannier90::read_nnkp", "Error kpoints in *.nnkp file");
         }
 
-        ModuleBase::Vector3<double> *kpoints_direct_nnkp = new ModuleBase::Vector3<double>[numkpt_nnkp];
+        ModuleBase::Vector3<double>* kpoints_direct_nnkp = new ModuleBase::Vector3<double>[numkpt_nnkp];
         for (int ik = 0; ik < numkpt_nnkp; ik++)
         {
             nnkp_read >> kpoints_direct_nnkp[ik].x >> kpoints_direct_nnkp[ik].y >> kpoints_direct_nnkp[ik].z;
-            if (std::abs(kpoints_direct_nnkp[ik].x - kv.kvec_d[ik].x) > 1.0e-4 ||
-                std::abs(kpoints_direct_nnkp[ik].y - kv.kvec_d[ik].y) > 1.0e-4 ||
-                std::abs(kpoints_direct_nnkp[ik].z - kv.kvec_d[ik].z) > 1.0e-4
-            )
+            if (std::abs(kpoints_direct_nnkp[ik].x - kv.kvec_d[ik].x) > 1.0e-4
+                || std::abs(kpoints_direct_nnkp[ik].y - kv.kvec_d[ik].y) > 1.0e-4
+                || std::abs(kpoints_direct_nnkp[ik].z - kv.kvec_d[ik].z) > 1.0e-4)
             {
                 ModuleBase::WARNING_QUIT("toWannier90::read_nnkp", "Error kpoints in *.nnkp file");
             }
@@ -244,7 +233,7 @@ bool toWannier90::try_read_nnkp(const K_Vectors& kv)
     {
         ModuleBase::WARNING_QUIT("toWannier90::read_nnkp", "Cannot find kpoints in *.nnkp file");
     }
-    
+
     // read projections
     if (out_wannier_amn)
     {
@@ -328,26 +317,26 @@ bool toWannier90::try_read_nnkp(const K_Vectors& kv)
         }
 
         // Check whether the parameters of the trial orbitals are correct
-        for(int i = 0; i < num_wannier; i++)
+        for (int i = 0; i < num_wannier; i++)
         {
-            if(L[i] < -5 || L[i] > 3) 
+            if (L[i] < -5 || L[i] > 3)
             {
                 ModuleBase::WARNING_QUIT("toWannier90::read_nnkp", "L angular momentum is wrong, please check !!!");
             }
 
-            if(L[i] >= 0) 
+            if (L[i] >= 0)
             {
-                if(m[i] < 0 || m[i] > 2*L[i])
+                if (m[i] < 0 || m[i] > 2 * L[i])
                 {
                     ModuleBase::WARNING_QUIT("toWannier90::read_nnkp", "m momentum is wrong, please check !!!");
                 }
             }
             else
             {
-                if(m[i] < 0 || m[i] > -L[i]) 
+                if (m[i] < 0 || m[i] > -L[i])
                 {
                     ModuleBase::WARNING_QUIT("toWannier90::read_nnkp", "m momentum is wrong, please check !!!");
-                }        
+                }
             }
         }
 
@@ -361,11 +350,8 @@ bool toWannier90::try_read_nnkp(const K_Vectors& kv)
             bool spin_z_neg = false;
             for (int i = 0; i < num_wannier; i++)
             {
-                if (
-                    std::abs(spin_qaxis[i].x) < 1e-6 && 
-                    std::abs(spin_qaxis[i].y) < 1e-6 &&
-                    std::abs(spin_qaxis[i].z - 1.0) < 1e-6
-                )
+                if (std::abs(spin_qaxis[i].x) < 1e-6 && std::abs(spin_qaxis[i].y) < 1e-6
+                    && std::abs(spin_qaxis[i].z - 1.0) < 1e-6)
                 {
                     spin_z_pos = true;
                     if (spin_eig[i] == 1)
@@ -380,11 +366,8 @@ bool toWannier90::try_read_nnkp(const K_Vectors& kv)
                     }
                 }
 
-                if (
-                    std::abs(spin_qaxis[i].x) < 1e-6 && 
-                    std::abs(spin_qaxis[i].y) < 1e-6 &&
-                    std::abs(spin_qaxis[i].z + 1.0) < 1e-6
-                )
+                if (std::abs(spin_qaxis[i].x) < 1e-6 && std::abs(spin_qaxis[i].y) < 1e-6
+                    && std::abs(spin_qaxis[i].z + 1.0) < 1e-6)
                 {
                     spin_z_neg = true;
                     if (spin_eig[i] == 1)
@@ -404,18 +387,18 @@ bool toWannier90::try_read_nnkp(const K_Vectors& kv)
                     if (spin_eig[i] == 1)
                     {
                         up_con[i] = (1.0 / std::sqrt(1.0 + spin_qaxis[i].z)) * (spin_qaxis[i].z + 1.0);
-                        dn_con[i] = (1.0 / std::sqrt(1.0 + spin_qaxis[i].z)) * (spin_qaxis[i].x + ModuleBase::IMAG_UNIT * spin_qaxis[i].y);
+                        dn_con[i] = (1.0 / std::sqrt(1.0 + spin_qaxis[i].z))
+                                    * (spin_qaxis[i].x + ModuleBase::IMAG_UNIT * spin_qaxis[i].y);
                     }
                     else
                     {
                         up_con[i] = (1.0 / std::sqrt(1.0 - spin_qaxis[i].z)) * (spin_qaxis[i].z - 1.0);
-                        dn_con[i] = (1.0 / std::sqrt(1.0 - spin_qaxis[i].z)) * (spin_qaxis[i].x + ModuleBase::IMAG_UNIT * spin_qaxis[i].y);
+                        dn_con[i] = (1.0 / std::sqrt(1.0 - spin_qaxis[i].z))
+                                    * (spin_qaxis[i].x + ModuleBase::IMAG_UNIT * spin_qaxis[i].y);
                     }
                 }
-
             }
         }
-
     }
 
     if (out_wannier_mmn)
@@ -443,7 +426,7 @@ bool toWannier90::try_read_nnkp(const K_Vectors& kv)
             else
             {
                 throw std::runtime_error("numkpt_nnkp uninitialized in " + ModuleBase::GlobalFunc::TO_STRING(__FILE__)
-                                        + " line " + ModuleBase::GlobalFunc::TO_STRING(__LINE__));
+                                         + " line " + ModuleBase::GlobalFunc::TO_STRING(__LINE__));
             }
 
             for (int ik = 0; ik < numkpt_nnkp; ik++)
@@ -497,7 +480,8 @@ bool toWannier90::try_read_nnkp(const K_Vectors& kv)
 
     if (GlobalV::NBANDS <= num_exclude_bands)
     {
-        ModuleBase::WARNING_QUIT("toWannier90::read_nnkp", "you set the band numer is not enough, please add bands number.");
+        ModuleBase::WARNING_QUIT("toWannier90::read_nnkp",
+                                 "you set the band numer is not enough, please add bands number.");
     }
 
     // tag_cal_band = new bool[GlobalV::NBANDS];

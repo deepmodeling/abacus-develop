@@ -29,7 +29,7 @@ void Force_LCAO<std::complex<double>>::cal_fvnl_dbeta(const elecstate::DensityMa
                                                       const Parallel_Orbitals& pv,
                                                       const UnitCell& ucell,
                                                       const LCAO_Orbitals& orb,
-                                                      const ORB_gen_tables& uot,
+                                                      const TwoCenterIntegrator& intor_orb_beta,
                                                       Grid_Driver& gd,
                                                       const bool isforce,
                                                       const bool isstress,
@@ -109,7 +109,7 @@ void Force_LCAO<std::complex<double>>::cal_fvnl_dbeta(const elecstate::DensityMa
                 int M1 = (m1 % 2 == 0) ? -m1 / 2 : (m1 + 1) / 2;
 
                 ModuleBase::Vector3<double> dtau = tau - tau1;
-                uot.two_center_bundle->overlap_orb_beta->snap(T1, L1, N1, M1, it, dtau * ucell.lat0, true, nlm);
+                intor_orb_beta.snap(T1, L1, N1, M1, it, dtau * ucell.lat0, true, nlm);
 
                 nlm_cur.insert({iw1_all, nlm});
             } // end iw
