@@ -1,5 +1,5 @@
-#ifndef BERRYPHASE_H
-#define BERRYPHASE_H
+#ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_IO_BERRYPHASE_H
+#define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_IO_BERRYPHASE_H
 #include "unk_overlap_pw.h"
 #ifdef __LCAO
 #include "unk_overlap_lcao.h"
