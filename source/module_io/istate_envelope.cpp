@@ -160,9 +160,9 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
             wfc_gamma_grid[is][ib] = new double[gg.gridt->lgd];
     }
 
-    const size_t mem_size = sizeof(double) * gg.gridt->lgd * nbands * nspin / 1024 / 1024;
+    const double mem_size = sizeof(double) * double(gg.gridt->lgd) * double(nbands) * double(nspin) / 1024.0 / 1024.0;
     ModuleBase::Memory::record("IState_Envelope::begin::wfc_gamma_grid", mem_size);
-    printf("Estimated on-the-fly memory consuming by IState_Envelope::begin::wfc_gamma_grid: %ld MB\n", mem_size);
+    printf(" Estimated on-the-fly memory consuming by IState_Envelope::begin::wfc_gamma_grid: %f MB\n", mem_size);
 
     // for pw-wfc in G space
     psi::Psi<std::complex<double>> pw_wfc_g;
@@ -392,7 +392,7 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
             wfc_k_grid[ik][ib] = new std::complex<double>[gk.gridt->lgd];
     }
     const double mem_size
-        = sizeof(std::complex<double>) * double(gk.gridt->lgd) * double(nbands) * double(nspin) / 1024.0 / 1024.0;
+        = sizeof(std::complex<double>) * double(gk.gridt->lgd) * double(nbands) * double(nspin) * double(kv.get_nks()) / 1024.0 / 1024.0;
     ModuleBase::Memory::record("IState_Envelope::begin::wfc_k_grid", mem_size);
     printf(" Estimated on-the-fly memory consuming by IState_Envelope::begin::wfc_k_grid: %f MB\n", mem_size);
 
