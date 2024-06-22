@@ -83,7 +83,7 @@ Diago_DavSubspace<T, Device>::~Diago_DavSubspace()
 }
 
 template <typename T, typename Device>
-int Diago_DavSubspace<T, Device>::diag_once(const Func& hpsi_func,
+int Diago_DavSubspace<T, Device>::diag_once(const HPsiFunc& hpsi_func,
                                             T* psi_in,
                                             const int psi_in_dmax,
                                             Real* eigenvalue_in_hsolver,
@@ -254,7 +254,7 @@ int Diago_DavSubspace<T, Device>::diag_once(const Func& hpsi_func,
             }
         }
 
-    } while (1);
+    } while (true);
 
     ModuleBase::timer::tick("Diago_DavSubspace", "diag_once");
 
@@ -262,7 +262,7 @@ int Diago_DavSubspace<T, Device>::diag_once(const Func& hpsi_func,
 }
 
 template <typename T, typename Device>
-void Diago_DavSubspace<T, Device>::cal_grad(const Func& hpsi_func,
+void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
                                             const int& dim,
                                             const int& nbase,
                                             const int& notconv,
@@ -728,12 +728,10 @@ void Diago_DavSubspace<T, Device>::refresh(const int& dim,
 }
 
 template <typename T, typename Device>
-int Diago_DavSubspace<T, Device>::diag(const Func& hpsi_func,
+int Diago_DavSubspace<T, Device>::diag(const HPsiFunc& hpsi_func,
+                                       const SubspaceFunc& subspace_func,
                                        T* psi_in,
-
-                                       hamilt::Hamilt<T, Device>* phm_in,
-                                       psi::Psi<T, Device>& psi,
-
+                                       const int psi_in_dmax,
                                        Real* eigenvalue_in_hsolver,
                                        const std::vector<bool>& is_occupied,
                                        const bool& scf_type)
@@ -790,10 +788,10 @@ int Diago_DavSubspace<T, Device>::diag(const Func& hpsi_func,
     {
         if (this->is_subspace || ntry > 0)
         {
-            DiagoIterAssist<T, Device>::diagH_subspace(phm_in, psi, psi, eigenvalue_in_hsolver, psi.get_nbands());
+            subspace_func(psi_in, psi_in, eigenvalue_in_hsolver, this->n_band, psi_in_dmax);
         }
 
-        sum_iter += this->diag_once(hpsi_func, psi_in, psi.get_nbasis(), eigenvalue_in_hsolver, is_occupied);
+        sum_iter += this->diag_once(hpsi_func, psi_in, psi_in_dmax, eigenvalue_in_hsolver, is_occupied);
 
         ++ntry;
 

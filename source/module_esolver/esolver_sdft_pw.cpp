@@ -48,8 +48,14 @@ void ESolver_SDFT_PW::before_all_runners(Input& inp, UnitCell& ucell)
     ESolver_KS::before_all_runners(inp, ucell);
 
     // 3) initialize the pointer for electronic states of SDFT
-    this->pelec = new elecstate::ElecStatePW_SDFT(pw_wfc, &(chr), (K_Vectors*)(&(kv)), &ucell, &(GlobalC::ppcell),
-                                                  this->pw_rhod, this->pw_rho, pw_big);
+    this->pelec = new elecstate::ElecStatePW_SDFT(pw_wfc,
+                                                  &(chr),
+                                                  (K_Vectors*)(&(kv)),
+                                                  &ucell,
+                                                  &(GlobalC::ppcell),
+                                                  this->pw_rhod,
+                                                  this->pw_rho,
+                                                  pw_big);
 
     // 4) inititlize the charge density.
     this->pelec->charge->allocate(GlobalV::NSPIN);
@@ -58,21 +64,33 @@ void ESolver_SDFT_PW::before_all_runners(Input& inp, UnitCell& ucell)
     // 5) initialize the potential.
     if (this->pelec->pot == nullptr)
     {
-        this->pelec->pot = new elecstate::Potential(pw_rhod, pw_rho, &ucell, &(GlobalC::ppcell.vloc), &(sf),
-                                                    &(this->pelec->f_en.etxc), &(this->pelec->f_en.vtxc));
+        this->pelec->pot = new elecstate::Potential(pw_rhod,
+                                                    pw_rho,
+                                                    &ucell,
+                                                    &(GlobalC::ppcell.vloc),
+                                                    &(sf),
+                                                    &(this->pelec->f_en.etxc),
+                                                    &(this->pelec->f_en.vtxc));
         GlobalTemp::veff = &(this->pelec->pot->get_effective_v());
     }
 
-    // 6) set occupatio, redundant?
+    // 6) prepare some parameters for electronic wave functions initilization
+    this->p_wf_init = new psi::WFInit<std::complex<double>>(GlobalV::init_wfc,
+                                                            GlobalV::KS_SOLVER,
+                                                            GlobalV::BASIS_TYPE,
+                                                            GlobalV::psi_initializer,
+                                                            &this->wf,
+                                                            this->pw_wfc);
+    // 7) set occupatio, redundant?
     if (GlobalV::ocp)
     {
         this->pelec->fixed_weights(GlobalV::ocp_kb, GlobalV::NBANDS, GlobalV::nelec);
     }
 
-    // 7) initialize the global classes
+    // 8) initialize the global classes
     this->Init_GlobalC(inp, ucell, GlobalC::ppcell); // temporary
 
-    // 8) initialize the stochastic wave functions
+    // 9) initialize the stochastic wave functions
     stowf.init(&kv, pw_wfc->npwk_max);
 
     if (inp.nbands_sto != 0)
@@ -130,11 +148,13 @@ void ESolver_SDFT_PW::after_scf(const int istep)
     // save charge difference into files for charge extrapolation
     if (GlobalV::CALCULATION != "scf")
     {
-        this->CE.save_files(istep, GlobalC::ucell,
+        this->CE.save_files(istep,
+                            GlobalC::ucell,
 #ifdef __MPI
                             this->pw_big,
 #endif
-                            this->pelec->charge, &this->sf);
+                            this->pelec->charge,
+                            &this->sf);
     }
 
     if (GlobalV::out_chg > 0)
@@ -146,10 +166,21 @@ void ESolver_SDFT_PW::after_scf(const int istep)
             const double ef_tmp = this->pelec->eferm.get_efval(is);
             ModuleIO::write_rho(
 #ifdef __MPI
-                pw_big->bz, pw_big->nbz, pw_rho->nplane, pw_rho->startz_current,
+                pw_big->bz,
+                pw_big->nbz,
+                pw_rho->nplane,
+                pw_rho->startz_current,
 #endif
-                pelec->charge->rho_save[is], is, GlobalV::NSPIN, 0, ssc.str(), pw_rho->nx, pw_rho->ny, pw_rho->nz,
-                ef_tmp, &(GlobalC::ucell));
+                pelec->charge->rho_save[is],
+                is,
+                GlobalV::NSPIN,
+                0,
+                ssc.str(),
+                pw_rho->nx,
+                pw_rho->ny,
+                pw_rho->nz,
+                ef_tmp,
+                &(GlobalC::ucell));
         }
     }
 
@@ -213,11 +244,19 @@ void ESolver_SDFT_PW::cal_force(ModuleBase::matrix& force)
 void ESolver_SDFT_PW::cal_stress(ModuleBase::matrix& stress)
 {
     Sto_Stress_PW ss;
-    ss.cal_stress(stress, *this->pelec, pw_rho, &GlobalC::ucell.symm, &sf, &kv, pw_wfc, this->psi, this->stowf,
+    ss.cal_stress(stress,
+                  *this->pelec,
+                  pw_rho,
+                  &GlobalC::ucell.symm,
+                  &sf,
+                  &kv,
+                  pw_wfc,
+                  this->psi,
+                  this->stowf,
                   pelec->charge);
 }
 
-void ESolver_SDFT_PW::after_all_runners(void)
+void ESolver_SDFT_PW::after_all_runners()
 {
 
     GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;
@@ -230,22 +269,46 @@ void ESolver_SDFT_PW::after_all_runners(void)
 
     if (INPUT.out_dos)
     {
-        Sto_DOS sto_dos(this->pw_wfc, &this->kv, this->pelec, this->psi, this->p_hamilt,
-                        (hsolver::HSolverPW_SDFT*)phsol, &stowf);
-        sto_dos.decide_param(INPUT.dos_nche, INPUT.emin_sto, INPUT.emax_sto, INPUT.dos_setemin, INPUT.dos_setemax,
-                             INPUT.dos_emin_ev, INPUT.dos_emax_ev, INPUT.dos_scale);
+        Sto_DOS sto_dos(this->pw_wfc,
+                        &this->kv,
+                        this->pelec,
+                        this->psi,
+                        this->p_hamilt,
+                        (hsolver::HSolverPW_SDFT*)phsol,
+                        &stowf);
+        sto_dos.decide_param(INPUT.dos_nche,
+                             INPUT.emin_sto,
+                             INPUT.emax_sto,
+                             INPUT.dos_setemin,
+                             INPUT.dos_setemax,
+                             INPUT.dos_emin_ev,
+                             INPUT.dos_emax_ev,
+                             INPUT.dos_scale);
         sto_dos.caldos(INPUT.dos_sigma, INPUT.dos_edelta_ev, INPUT.npart_sto);
     }
 
     // sKG cost memory, and it should be placed at the end of the program
     if (INPUT.cal_cond)
     {
-        Sto_EleCond sto_elecond(&GlobalC::ucell, &this->kv, this->pelec, this->pw_wfc, this->psi, &GlobalC::ppcell,
-                                this->p_hamilt, (hsolver::HSolverPW_SDFT*)phsol, &stowf);
-        sto_elecond.decide_nche(INPUT.cond_dt, INPUT.cond_dtbatch, 1e-8, this->nche_sto, INPUT.emin_sto,
-                                INPUT.emax_sto);
-        sto_elecond.sKG(INPUT.cond_smear, INPUT.cond_fwhm, INPUT.cond_wcut, INPUT.cond_dw, INPUT.cond_dt,
-                        INPUT.cond_nonlocal, INPUT.cond_dtbatch, INPUT.npart_sto);
+        Sto_EleCond sto_elecond(&GlobalC::ucell,
+                                &this->kv,
+                                this->pelec,
+                                this->pw_wfc,
+                                this->psi,
+                                &GlobalC::ppcell,
+                                this->p_hamilt,
+                                (hsolver::HSolverPW_SDFT*)phsol,
+                                &stowf);
+        sto_elecond
+            .decide_nche(INPUT.cond_dt, INPUT.cond_dtbatch, 1e-8, this->nche_sto, INPUT.emin_sto, INPUT.emax_sto);
+        sto_elecond.sKG(INPUT.cond_smear,
+                        INPUT.cond_fwhm,
+                        INPUT.cond_wcut,
+                        INPUT.cond_dw,
+                        INPUT.cond_dt,
+                        INPUT.cond_nonlocal,
+                        INPUT.cond_dtbatch,
+                        INPUT.npart_sto);
     }
 }
 
@@ -265,7 +328,7 @@ void ESolver_SDFT_PW::others(const int istep)
     return;
 }
 
-void ESolver_SDFT_PW::nscf(void)
+void ESolver_SDFT_PW::nscf()
 {
     ModuleBase::TITLE("ESolver_SDFT_PW", "nscf");
     ModuleBase::timer::tick("ESolver_SDFT_PW", "nscf");

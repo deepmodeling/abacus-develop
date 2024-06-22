@@ -2,7 +2,7 @@
 #define ESOLVER_KS_PW_H
 #include "./esolver_ks.h"
 #include "module_hamilt_pw/hamilt_pwdft/operator_pw/velocity_pw.h"
-#include "module_psi/psi_initializer.h"
+#include "module_hamilt_pw/hamilt_pwdft/wfinit.h"
 
 #include <memory>
 #include <module_base/macros.h>
@@ -56,23 +56,14 @@ class ESolver_KS_PW : public ESolver_KS<T, Device>
     // Init Global class
     void Init_GlobalC(Input& inp, UnitCell& ucell, pseudopot_cell_vnl& ppcell);
 
-    /// @brief allocate psi_init the new psi_initializer
-    void allocate_psi_init();
-
-    /// @brief initialize psi
-    void initialize_psi();
-
   protected:
     //! hide the psi in ESolver_KS for tmp use
     psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi = nullptr;
 
-  private:
-    // psi_initializer<T, Device>* psi_init = nullptr;
-    // change to use smart pointer to manage the memory, and avoid memory leak
-    // while the std::make_unique() is not supported till C++14,
-    // so use the new and std::unique_ptr to manage the memory, but this makes new-delete not symmetric
-    std::unique_ptr<psi_initializer<T, Device>> psi_init;
+    // psi_initializer controller
+    psi::WFInit<T, Device>* p_wf_init = nullptr;
 
+  private:
     Device* ctx = {};
 
     base_device::AbacusDevice_t device = {};
