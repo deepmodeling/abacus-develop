@@ -254,7 +254,7 @@ int Diago_DavSubspace<T, Device>::diag_once(const HPsiFunc& hpsi_func,
             }
         }
 
-    } while (1);
+    } while (true);
 
     ModuleBase::timer::tick("Diago_DavSubspace", "diag_once");
 
