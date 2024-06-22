@@ -26,25 +26,24 @@ class Local_Orbital_Charge
 
 	// mohan added 2021-02-08
     void allocate_dm_wfc(const Grid_Technique& gt,
-        elecstate::ElecState* pelec,
-        Local_Orbital_wfc &lowf,
-        psi::Psi<double>* psi,
-        const K_Vectors& kv,
-        const int& istep);
+                         elecstate::ElecState* pelec,
+                         psi::Psi<double>* psi,
+                         const K_Vectors& kv,
+                         const int& istep);
 
     void allocate_dm_wfc(const Grid_Technique& gt,
-        elecstate::ElecState* pelec,
-        Local_Orbital_wfc& lowf,
-        psi::Psi<std::complex<double>>* psi,
-        const K_Vectors& kv,
-        const int& istep);
+                         elecstate::ElecState* pelec,
+                         psi::Psi<std::complex<double>>* psi,
+                         const K_Vectors& kv,
+                         const int& istep);
 
 	// in DM_gamma.cpp
 	void allocate_gamma(const int& lgd, 
-			psi::Psi<double>* psid, 
-			elecstate::ElecState* pelec, 
-			const int& nks, 
-			const int& istep);
+                        const std::vector<int>& trace_lo,
+                        psi::Psi<double>* psid, 
+                        elecstate::ElecState* pelec, 
+                        const int& nks, 
+                        const int& istep);
 
     void cal_dk_gamma_from_2D_pub(void);
 
@@ -71,20 +70,13 @@ class Local_Orbital_Charge
     void init_dm_2d(const int& nks);
     
     // dm(R) = wfc.T * wg * wfc.conj()*kphase, only used in multi-k 
-    void cal_dm_R(
-        std::vector<ModuleBase::ComplexMatrix>& dm_k,
-        Record_adj& ra,
-        double** dm2d,
-        const K_Vectors& kv);     //output, dm2d[NSPIN][LNNR]
-
-	// wavefunctions' pointer
-    Local_Orbital_wfc* LOWF;
+    void cal_dm_R(std::vector<ModuleBase::ComplexMatrix>& dm_k,
+                  Record_adj& ra,
+                  double** dm2d,
+                  const K_Vectors& kv);     //output, dm2d[NSPIN][LNNR]
 
 	// Parallel Variables' pointer
     const Parallel_Orbitals* ParaV;
-
-    //temporary set it to public for ElecStateLCAO class, would be refactor later
-    void cal_dk_k(const Grid_Technique &gt, const ModuleBase::matrix& wg_in, const K_Vectors& kv);
 
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> DMR_sparse;
 
@@ -114,6 +106,24 @@ private:
 
     DMgamma_2dtoGrid dm2g;
 
+public:
+    std::complex<double>*** wfc_k_grid; // [NK, GlobalV::NBANDS, GlobalV::NLOCAL]
+    std::complex<double>* wfc_k_grid2;  // [NK*GlobalV::NBANDS*GlobalV::NLOCAL]
+    
+private:
+    bool wfck_flag;
+    bool complex_flag;
+    bool allocate_flag;
+    int nks;
+
+    void gamma_file(psi::Psi<double>* psid, elecstate::ElecState* pelec);
+    void allocate_k(const int& lgd,
+        psi::Psi<std::complex<double>>* psi,
+        elecstate::ElecState* pelec,
+        const int& nks,
+        const int& nkstot,
+        const std::vector<ModuleBase::Vector3<double>>& kvec_c,
+        const int& istep);
 };
 
 #endif

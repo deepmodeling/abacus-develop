@@ -11,8 +11,8 @@ berryphase::berryphase()
 }
 
 #ifdef __LCAO
-berryphase::berryphase(Local_Orbital_wfc &lowf_in) :
-    lowf(&lowf_in)
+berryphase::berryphase(Local_Orbital_Charge &loc_in) :
+    loc(&loc_in)
 {
 	GDIR = INPUT.gdir;
 }
@@ -40,10 +40,10 @@ void berryphase::get_occupation_bands()
 }
 
 #ifdef __LCAO
-void berryphase::lcao_init(const K_Vectors& kv)
+void berryphase::lcao_init(const K_Vectors& kv, const Grid_Technique& grid_tech)
 {
 	ModuleBase::TITLE("berryphase","lcao_init");
-	lcao_method.init(*this->lowf->gridt, this->lowf->wfc_k_grid, kv.get_nkstot());
+	lcao_method.init(grid_tech, this->loc->wfc_k_grid, kv.get_nkstot());
 	lcao_method.cal_R_number();
 	lcao_method.cal_orb_overlap();
 	return;
@@ -336,7 +336,7 @@ double berryphase::stringPhase(int index_str,
 			if(GlobalV::NSPIN!=4)
 			{
 				//std::complex<double> my_det = lcao_method.det_berryphase(ik_1,ik_2,dk,nbands);
-				zeta = zeta * lcao_method.det_berryphase(ik_1,ik_2,dk,nbands, *this->lowf, psi_in, kv);
+				zeta = zeta * lcao_method.det_berryphase(ik_1,ik_2,dk,nbands, *this->loc->ParaV, psi_in, kv);
 				// test by jingan
 				//GlobalV::ofs_running << "methon 1: det = " << my_det << std::endl;
 				// test by jingan
@@ -466,9 +466,6 @@ void berryphase::Macroscopic_polarization(const int npwx,
                                           const K_Vectors& kv)
 {	
 	get_occupation_bands();
-#ifdef __LCAO	
-	if( GlobalV::BASIS_TYPE == "lcao" ) this->lcao_init(kv);
-#endif
 	
 	GlobalV::ofs_running << "\n\n\n\n";
 	GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;

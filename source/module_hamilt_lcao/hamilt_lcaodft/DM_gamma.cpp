@@ -9,12 +9,12 @@
 
 // allocate density kernel may change once the ion
 // positions change
-void Local_Orbital_Charge::allocate_gamma(
-    const int& lgd,
-    psi::Psi<double>* psid,
-    elecstate::ElecState* pelec,
-    const int& nks,
-    const int& istep)
+void Local_Orbital_Charge::allocate_gamma(const int& lgd,
+                                          const std::vector<int>& trace_lo,
+                                          psi::Psi<double>* psid,
+                                          elecstate::ElecState* pelec,
+                                          const int& nks,
+                                          const int& istep)
 {
      ModuleBase::TITLE("Local_Orbital_Charge","allocate_gamma");
 
@@ -73,7 +73,7 @@ void Local_Orbital_Charge::allocate_gamma(
     }
     
 #ifdef __MPI
-    this->dm2g.setAlltoallvParameter(this->ParaV->comm_2D, GlobalV::NLOCAL, this->ParaV->blacs_ctxt, this->ParaV->nb, this->lgd_now, this->LOWF->gridt->trace_lo.data());
+    this->dm2g.setAlltoallvParameter(this->ParaV->comm_2D, GlobalV::NLOCAL, this->ParaV->blacs_ctxt, this->ParaV->nb, this->lgd_now, trace_lo.data());
 #endif
 
 	// Peize Lin test 2019-01-16
@@ -81,7 +81,7 @@ void Local_Orbital_Charge::allocate_gamma(
 
     if (istep == 0 && INPUT.init_wfc == "file")
     {
-        this->LOWF->gamma_file(psid, pelec);
+        this->gamma_file(psid, pelec);
     }
     return;
 }

@@ -16,7 +16,7 @@ public:
 
     berryphase();   //for pw-line
 #ifdef __LCAO
-    berryphase(Local_Orbital_wfc &lowf_in);   //for lcao-line
+    berryphase(Local_Orbital_Charge& loc_in);   //for lcao-line
 #endif
     ~berryphase();
 
@@ -25,7 +25,7 @@ public:
 	unkOverlap_pw pw_method;
 #ifdef __LCAO
 	unkOverlap_lcao lcao_method;
-	Local_Orbital_wfc* lowf;
+	Local_Orbital_Charge* loc;
 #endif
 
 	int total_string;
@@ -37,7 +37,7 @@ public:
 
 	void get_occupation_bands();
 
-	void lcao_init(const K_Vectors& kv);
+	void lcao_init(const K_Vectors& kv, const Grid_Technique& grid_tech);
 
 	void set_kpoints(const K_Vectors& kv, const int direction);
 
@@ -66,10 +66,12 @@ public:
         throw std::logic_error("berry phase supports only multi-k");
     };
     void Macroscopic_polarization(const int npwx,
-        const psi::Psi<std::complex<double>>* psi_in,
-        const ModulePW::PW_Basis* rhopw,
-        const ModulePW::PW_Basis_K* wfcpw,
-        const K_Vectors& kv);
+                                  const psi::Psi<std::complex<double>>* psi_in,
+                                  const ModulePW::PW_Basis* rhopw,
+                                  const ModulePW::PW_Basis_K* wfcpw,
+                                  const K_Vectors& kv);
+
+
 
     std::string outFormat(const double polarization, const double modulus, const ModuleBase::Vector3<double> project);
 	

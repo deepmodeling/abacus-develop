@@ -16,7 +16,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/center2_orb-orb11.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/center2_orb-orb21.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/center2_orb.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_wfc.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #include "module_hamilt_lcao/module_gint/grid_technique.h"
 
 class unkOverlap_lcao
@@ -73,7 +73,7 @@ class unkOverlap_lcao
                                         const int ik_R,
                                         const ModuleBase::Vector3<double> dk,
                                         const int occ_bands,
-                                        Local_Orbital_wfc& lowf,
+                                        const Parallel_Orbitals& para_orb,
                                         const psi::Psi<std::complex<double>>* psi_in,
                                         const K_Vectors& kv);
 

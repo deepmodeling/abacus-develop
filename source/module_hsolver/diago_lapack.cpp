@@ -55,19 +55,6 @@ void DiagoLapack::diag(hamilt::Hamilt<std::complex<double>> *phm_in, psi::Psi<st
             }
         }
     }
-    /*
-    else
-    {
-        for (int ib = 0; ib < GlobalV::NBANDS; ib++)
-        {
-            for (int iw = 0; iw < GlobalV::NLOCAL / GlobalV::NPOL; iw++)
-            {
-                wfc_k_grid[ib][iw] = hvec(iw * GlobalV::NPOL, ib);
-                wfc_k_grid[ib][iw + GlobalV::NLOCAL / GlobalV::NPOL] = hvec(iw * GlobalV::NPOL + 1, ib);
-            }
-        }
-    }
-    */
 
     // energy for k-point ik
     for (int ib = 0; ib < GlobalV::NBANDS; ib++)

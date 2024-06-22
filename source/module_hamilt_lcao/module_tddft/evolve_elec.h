@@ -44,7 +44,7 @@ class Evolve_elec
                           const int nband,
                           const int nlocal,
                           hamilt::Hamilt<std::complex<double>>* phm,
-                          Local_Orbital_wfc& lowf,
+                          Parallel_Orbitals& para_orb,
                           psi::Psi<std::complex<double>>* psi,
                           psi::Psi<std::complex<double>>* psi_laststep,
                           std::complex<double>** Hk_laststep,
