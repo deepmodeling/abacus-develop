@@ -31,7 +31,7 @@ Local_Orbital_Charge::Local_Orbital_Charge()
     // band_local = nullptr;
     // Z_wg = nullptr;
     // Z_LOC = nullptr;
-    
+
     // move from Local_Orbital_Wfc
     allocate_flag = false;
     wfck_flag = false;
