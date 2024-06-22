@@ -7,6 +7,8 @@
 #include "module_io/rho_io.h"
 #include "module_io/write_wfc_pw.h"
 #include "module_io/write_wfc_r.h"
+
+#include "module_base/memory.h"
 IState_Envelope::IState_Envelope(const elecstate::ElecState* pes_in)
 {
     pes = pes_in;
@@ -83,7 +85,9 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
         for (int ib = 0; ib < nbands; ++ib)
             wfc_gamma_grid[is][ib] = new double[gg.gridt->lgd];
     }
-
+    const size_t mem_size = sizeof(double) * gg.gridt->lgd * nbands * nspin / 1024 / 1024;
+    ModuleBase::Memory::record("IState_Envelope::begin::wfc_gamma_grid", mem_size);
+    printf("Estimated on-the-fly memory consuming by IState_Envelope::begin::wfc_gamma_grid: %ld MB\n", mem_size);
     // for pw-wfc in G space
     psi::Psi<std::complex<double>> pw_wfc_g;
 
@@ -227,13 +231,16 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
 
     // allocate grid wavefunction for gamma_only
     std::vector<std::complex<double>**> wfc_k_grid(nspin);
-    for (int is = 0; is < nspin; ++is)
+    for (int ik = 0; ik < kv.get_nks(); ++ik)
     {
-        wfc_k_grid[is] = new std::complex<double>*[nbands];
+        wfc_k_grid[ik] = new std::complex<double>*[nbands];
         for (int ib = 0; ib < nbands; ++ib)
-            wfc_k_grid[is][ib] = new std::complex<double>[gk.gridt->lgd];
+            wfc_k_grid[ik][ib] = new std::complex<double>[gk.gridt->lgd];
     }
-
+    const double mem_size = sizeof(std::complex<double>) * double(gk.gridt->lgd) * double(nbands) * double(nspin) / 1024.0 / 1024.0;
+    ModuleBase::Memory::record("IState_Envelope::begin::wfc_k_grid", mem_size);
+    printf(" Estimated on-the-fly memory consuming by IState_Envelope::begin::wfc_k_grid: %f MB\n", mem_size);
+    assert(mem_size > 0);
     // for pw-wfc in G space
     psi::Psi<std::complex<double>> pw_wfc_g(kv.ngk.data());
 
@@ -250,7 +257,7 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
             for (int ik = 0; ik < kv.get_nks(); ++ik) // the loop of nspin0 is included
             {
                 const int ispin = kv.isk[ik];
-                ModuleBase::GlobalFunc::ZEROS(pes->charge->rho[ispin], wfcpw->nrxx);
+                ModuleBase::GlobalFunc::ZEROS(pes->charge->rho[ispin], wfcpw->nrxx); // terrible, you make changes on another instance's data???
                 std::cout << " Perform envelope function for kpoint " << ik << ",  band" << ib + 1 << std::endl;
                 //  2d-to-grid conversion is unified into `wfc_2d_to_grid`.
                 psi->fix_k(ik);
