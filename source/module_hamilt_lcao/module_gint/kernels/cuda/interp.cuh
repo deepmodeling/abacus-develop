@@ -86,7 +86,7 @@ static __device__ void interpolate_f(const double distance,
     int iw_nr = (it_nw * nr_max + ip) * 2;
     int it_nw_iw = it_nw;
     double dpsir[150][4]={0.0};
-
+    int dist_tmp_clac=dist_tmp;
     for (int iw = 0; iw < atom_nw[it]; ++iw)
     {
         if (atom_iw2_new[it_nw_iw])
@@ -105,8 +105,8 @@ static __device__ void interpolate_f(const double distance,
         const double rl = pow(distance, ll);
         const double rl_r = 1.0 / rl;
         const double dist_r = 1 / distance;
-        const int dist_tmp_force = dist_tmp * 3;
-        const int dist_tmp_stress = dist_tmp * 6;
+        const int dist_tmp_force = dist_tmp_clac * 3;
+        const int dist_tmp_stress = dist_tmp_clac * 6;
         // Compute right-hand side of the equation
         dpsir[iw][3] = tmp * ylma[idx_lm] * rl_r * vlbr3_value;
         // Compute derivatives with respect to spatial
@@ -122,7 +122,7 @@ static __device__ void interpolate_f(const double distance,
         dpsir[iw][2] = dpsirz;
 
         // Update loop counters and indices
-        dist_tmp += 1;
+        dist_tmp_clac += 1;
         iw_nr += nr_max;
         iw_nr += nr_max;
         it_nw_iw++;
