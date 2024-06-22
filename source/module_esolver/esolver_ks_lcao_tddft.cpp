@@ -90,7 +90,8 @@ void ESolver_KS_LCAO_TDDFT::before_all_runners(Input& inp, UnitCell& ucell)
 
     // this part will be updated soon
     // pass Hamilt-pointer to Operator
-    this->LOC.ParaV = this->LM.ParaV;;
+    this->LOC.ParaV = this->LM.ParaV;
+    ;
 
     // 6) initialize Density Matrix
     dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)

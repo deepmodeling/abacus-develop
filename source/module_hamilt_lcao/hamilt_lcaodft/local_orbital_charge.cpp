@@ -1,17 +1,16 @@
 #include "local_orbital_charge.h"
 
 #include "module_base/blas_connector.h"
+#include "module_base/memory.h"
 #include "module_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-
 #include "module_io/read_wfc_nao.h"
-#include "module_base/memory.h"
 // Shen Yu add 2019/5/9
 extern "C"
 {
-    void Cblacs_gridinfo(int icontxt, int *nprow, int *npcol, int *myprow, int *mypcol);
-    void Cblacs_pinfo(int *myid, int *nprocs);
-    void Cblacs_pcoord(int icontxt, int pnum, int *prow, int *pcol);
+    void Cblacs_gridinfo(int icontxt, int* nprow, int* npcol, int* myprow, int* mypcol);
+    void Cblacs_pinfo(int* myid, int* nprocs);
+    void Cblacs_pcoord(int icontxt, int pnum, int* prow, int* pcol);
     int Cblacs_pnum(int icontxt, int prow, int pcol);
 }
 
@@ -72,7 +71,7 @@ void Local_Orbital_Charge::allocate_dm_wfc(const Grid_Technique& gt,
     return;
 }
 
-void Local_Orbital_Charge::allocate_dm_wfc(const Grid_Technique &gt,
+void Local_Orbital_Charge::allocate_dm_wfc(const Grid_Technique& gt,
                                            elecstate::ElecState* pelec,
                                            psi::Psi<std::complex<double>>* psi,
                                            const K_Vectors& kv,
@@ -231,7 +230,8 @@ void Local_Orbital_Charge::allocate_k(const int& lgd,
             {
                 this->wfc_k_grid[ik][ib] = &wfc_k_grid2[ik * page + ib * lgd + 0];
             }
-            ModuleBase::Memory::record("LOC::wfc_k_grid", sizeof(std::complex<double>) * GlobalV::NBANDS * GlobalV::NLOCAL);
+            ModuleBase::Memory::record("LOC::wfc_k_grid",
+                                       sizeof(std::complex<double>) * GlobalV::NBANDS * GlobalV::NLOCAL);
             this->complex_flag = true;
         }
     }
@@ -258,15 +258,15 @@ void Local_Orbital_Charge::allocate_k(const int& lgd,
         {
             std::complex<double>** ctot;
             error = ModuleIO::read_wfc_nao_complex(ctot,
-                                                         ik,
-                                                         GlobalV::NB2D,
-                                                         GlobalV::NBANDS,
-                                                         GlobalV::NLOCAL,
-                                                         GlobalV::global_readin_dir,
-                                                         kvec_c[ik],
-                                                         this->ParaV,
-                                                         psi,
-                                                         pelec);
+                                                   ik,
+                                                   GlobalV::NB2D,
+                                                   GlobalV::NBANDS,
+                                                   GlobalV::NLOCAL,
+                                                   GlobalV::global_readin_dir,
+                                                   kvec_c[ik],
+                                                   this->ParaV,
+                                                   psi,
+                                                   pelec);
 #ifdef __MPI
             Parallel_Common::bcast_int(error);
 #endif

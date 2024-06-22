@@ -720,7 +720,9 @@ void ESolver_KS_LCAO<TK, TR>::nscf(void)
     if (berryphase::berry_phase_flag && ModuleSymmetry::Symmetry::symm_flag != 1)
     {
         berryphase bp(this->LOC);
-        bp.lcao_init(this->kv, this->GridT); // additional step before calling macroscopic_polarization (why capitalize the function name?)
+        bp.lcao_init(
+            this->kv,
+            this->GridT); // additional step before calling macroscopic_polarization (why capitalize the function name?)
         bp.Macroscopic_polarization(this->pw_wfc->npwk_max, this->psi, this->pw_rho, this->pw_wfc, this->kv);
     }
 

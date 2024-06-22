@@ -1,10 +1,10 @@
-#include "module_base/blas_connector.h"
-#include "module_base/memory.h"
-#include "module_base/timer.h"
-#include "module_base/parallel_common.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "local_orbital_charge.h"
+#include "module_base/blas_connector.h"
 #include "module_base/libm/libm.h"
+#include "module_base/memory.h"
+#include "module_base/parallel_common.h"
+#include "module_base/timer.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 #ifdef __MKL
 #include <mkl_service.h>
@@ -34,7 +34,7 @@ void Local_Orbital_Charge::allocate_DM_k(const int& nks, const int& nnrg)
 
     if (nnrg_now > 0)
     {
-        this->DM_R = new double *[GlobalV::NSPIN];
+        this->DM_R = new double*[GlobalV::NSPIN];
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
             this->DM_R[is] = new double[nnrg_now];
@@ -60,17 +60,17 @@ void Local_Orbital_Charge::allocate_DM_k(const int& nks, const int& nnrg)
 }
 
 #include "module_hamilt_lcao/hamilt_lcaodft/record_adj.h"
-inline void cal_DM_ATOM(const Grid_Technique &gt,
+inline void cal_DM_ATOM(const Grid_Technique& gt,
                         const std::complex<double> fac,
-                        const Record_adj &RA,
+                        const Record_adj& RA,
                         const int ia1,
                         const int iw1_lo,
                         const int nw1,
                         const int gstart,
-                        std::complex<double> ***wfc_k_grid,
-                        std::complex<double> *WFC_PHASE,
-                        std::complex<double> **DM_ATOM,
-                        const ModuleBase::matrix &wg_in,
+                        std::complex<double>*** wfc_k_grid,
+                        std::complex<double>* WFC_PHASE,
+                        std::complex<double>** DM_ATOM,
+                        const ModuleBase::matrix& wg_in,
                         const K_Vectors& kv)
 {
 
@@ -81,23 +81,23 @@ inline void cal_DM_ATOM(const Grid_Technique &gt,
 
     for (int ik = 0; ik < kv.get_nks(); ik++)
     {
-        std::complex<double> **wfc = wfc_k_grid[ik];
+        std::complex<double>** wfc = wfc_k_grid[ik];
         const int ispin = kv.isk[ik];
         int atom2start = 0;
 
         for (int ia2 = 0; ia2 < RA.na_each[ia1]; ++ia2)
         {
-            std::complex<double> *DM = &DM_ATOM[ispin][atom2start];
+            std::complex<double>* DM = &DM_ATOM[ispin][atom2start];
             const int T2 = RA.info[ia1][ia2][3];
             const int I2 = RA.info[ia1][ia2][4];
-            Atom *atom2 = &GlobalC::ucell.atoms[T2];
+            Atom* atom2 = &GlobalC::ucell.atoms[T2];
             const int start2 = GlobalC::ucell.itiaiw2iwt(T2, I2, 0);
             const int iw2_lo = gt.trace_lo[start2];
             const int nw2 = atom2->nw;
             std::complex<double> exp_R = ModuleBase::libm::exp(fac
-                                             * (kv.kvec_d[ik].x * RA.info[ia1][ia2][0]
-                                                + kv.kvec_d[ik].y * RA.info[ia1][ia2][1]
-                                                + kv.kvec_d[ik].z * RA.info[ia1][ia2][2]));
+                                                               * (kv.kvec_d[ik].x * RA.info[ia1][ia2][0]
+                                                                  + kv.kvec_d[ik].y * RA.info[ia1][ia2][1]
+                                                                  + kv.kvec_d[ik].z * RA.info[ia1][ia2][2]));
 
             // ModuleBase::GlobalFunc::ZEROS(WFC_PHASE, GlobalV::NBANDS*nw1);
             int ibStart = 0;
@@ -138,22 +138,22 @@ inline void cal_DM_ATOM(const Grid_Technique &gt,
 
             atom2start += nw1 * nw2;
         } // ia2
-    } // ik
+    }     // ik
     return;
 }
 
 // added by zhengdy-soc, for non-collinear case
-inline void cal_DM_ATOM_nc(const Grid_Technique &gt,
+inline void cal_DM_ATOM_nc(const Grid_Technique& gt,
                            const std::complex<double> fac,
-                           const Record_adj &RA,
+                           const Record_adj& RA,
                            const int ia1,
                            const int iw1_lo,
                            const int nw1,
                            const int gstart,
-                           std::complex<double> ***wfc_k_grid,
-                           std::complex<double> *WFC_PHASE,
-                           std::complex<double> **DM_ATOM,
-                           const ModuleBase::matrix &wg_in,
+                           std::complex<double>*** wfc_k_grid,
+                           std::complex<double>* WFC_PHASE,
+                           std::complex<double>** DM_ATOM,
+                           const ModuleBase::matrix& wg_in,
                            const K_Vectors& kv)
 {
 
@@ -174,22 +174,22 @@ inline void cal_DM_ATOM_nc(const Grid_Technique &gt,
         {
             for (int ik = 0; ik < kv.get_nks(); ik++)
             {
-                std::complex<double> **wfc = wfc_k_grid[ik];
+                std::complex<double>** wfc = wfc_k_grid[ik];
                 int atom2start = 0;
 
                 for (int ia2 = 0; ia2 < RA.na_each[ia1]; ++ia2)
                 {
-                    std::complex<double> *DM = &DM_ATOM[ispin][atom2start];
+                    std::complex<double>* DM = &DM_ATOM[ispin][atom2start];
                     const int T2 = RA.info[ia1][ia2][3];
                     const int I2 = RA.info[ia1][ia2][4];
-                    Atom *atom2 = &GlobalC::ucell.atoms[T2];
+                    Atom* atom2 = &GlobalC::ucell.atoms[T2];
                     const int start2 = GlobalC::ucell.itiaiw2iwt(T2, I2, 0);
                     const int iw2_lo = gt.trace_lo[start2] / GlobalV::NPOL + gt.lgd / GlobalV::NPOL * is2;
                     const int nw2 = atom2->nw;
                     std::complex<double> exp_R = ModuleBase::libm::exp(fac
-                                                     * (kv.kvec_d[ik].x * RA.info[ia1][ia2][0]
-                                                        + kv.kvec_d[ik].y * RA.info[ia1][ia2][1]
-                                                        + kv.kvec_d[ik].z * RA.info[ia1][ia2][2]));
+                                                                       * (kv.kvec_d[ik].x * RA.info[ia1][ia2][0]
+                                                                          + kv.kvec_d[ik].y * RA.info[ia1][ia2][1]
+                                                                          + kv.kvec_d[ik].z * RA.info[ia1][ia2][2]));
 
                     // ModuleBase::GlobalFunc::ZEROS(WFC_PHASE, GlobalV::NBANDS*nw1);
                     int ibStart = 0;
@@ -231,9 +231,9 @@ inline void cal_DM_ATOM_nc(const Grid_Technique &gt,
 
                     atom2start += nw1 * nw2;
                 } // ia2
-            } // ik
+            }     // ik
             ispin++;
         } // is2
-    } // is1
+    }     // is1
     return;
 }

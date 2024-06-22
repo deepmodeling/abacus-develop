@@ -16,7 +16,9 @@ template <typename TK>
 class ElecStateLCAO : public ElecState
 {
   public:
-    ElecStateLCAO() {} // will be called by ElecStateLCAO_TDDFT
+    ElecStateLCAO()
+    {
+    } // will be called by ElecStateLCAO_TDDFT
     ElecStateLCAO(Charge* chg_in,
                   const K_Vectors* klist_in,
                   int nks_in,

@@ -144,9 +144,9 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(Input& inp, UnitCell& ucell)
         this->pelec = new elecstate::ElecStateLCAO<TK>(&(this->chr), // use which parameter?
                                                        &(this->kv),
                                                        this->kv.get_nks(),
-                                                       &(this->LOC),  // use which parameter?
-                                                       &(this->GG),   // mohan add 2024-04-01
-                                                       &(this->GK),   // mohan add 2024-04-01
+                                                       &(this->LOC), // use which parameter?
+                                                       &(this->GG),  // mohan add 2024-04-01
+                                                       &(this->GK),  // mohan add 2024-04-01
                                                        this->pw_rho,
                                                        this->pw_big);
     }
@@ -277,15 +277,14 @@ void ESolver_KS_LCAO<TK, TR>::init_after_vc(Input& inp, UnitCell& ucell)
     if (GlobalV::md_prec_level == 2)
     {
         delete this->pelec;
-        this->pelec = new elecstate::ElecStateLCAO<TK>(
-            &(this->chr),
-            &(this->kv),
-            this->kv.get_nks(),
-            &(this->LOC),
-            &(this->GG),   // mohan add 2024-04-01
-            &(this->GK),   // mohan add 2024-04-01
-            this->pw_rho,
-            this->pw_big);
+        this->pelec = new elecstate::ElecStateLCAO<TK>(&(this->chr),
+                                                       &(this->kv),
+                                                       this->kv.get_nks(),
+                                                       &(this->LOC),
+                                                       &(this->GG), // mohan add 2024-04-01
+                                                       &(this->GK), // mohan add 2024-04-01
+                                                       this->pw_rho,
+                                                       this->pw_big);
 
         dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->init_DM(&this->kv, this->LM.ParaV, GlobalV::NSPIN);
 
@@ -606,7 +605,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
     // first need to calculate the weight according to
     // electrons number.
     if (istep == 0 && this->wf.init_wfc == "file")
-    { 
+    {
         if (iter == 1)
         {
             std::cout << " WAVEFUN -> CHARGE " << std::endl;

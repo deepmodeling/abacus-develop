@@ -12,34 +12,33 @@
 class berryphase
 {
 
-public:
-
-    berryphase();   //for pw-line
+  public:
+    berryphase(); // for pw-line
 #ifdef __LCAO
-    berryphase(Local_Orbital_Charge& loc_in);   //for lcao-line
+    berryphase(Local_Orbital_Charge& loc_in); // for lcao-line
 #endif
     ~berryphase();
 
-	// mohan add 2021-02-16
-	static bool berry_phase_flag;
-	unkOverlap_pw pw_method;
+    // mohan add 2021-02-16
+    static bool berry_phase_flag;
+    unkOverlap_pw pw_method;
 #ifdef __LCAO
-	unkOverlap_lcao lcao_method;
-	Local_Orbital_Charge* loc;
+    unkOverlap_lcao lcao_method;
+    Local_Orbital_Charge* loc;
 #endif
 
-	int total_string;
-	std::vector<std::vector<int>> k_index;
-	int nppstr;
-	int direction;
-	int occ_nbands;
+    int total_string;
+    std::vector<std::vector<int>> k_index;
+    int nppstr;
+    int direction;
+    int occ_nbands;
     int GDIR;
 
-	void get_occupation_bands();
+    void get_occupation_bands();
 #ifdef __LCAO
-	void lcao_init(const K_Vectors& kv, const Grid_Technique& grid_tech);
+    void lcao_init(const K_Vectors& kv, const Grid_Technique& grid_tech);
 #endif
-	void set_kpoints(const K_Vectors& kv, const int direction);
+    void set_kpoints(const K_Vectors& kv, const int direction);
 
     double stringPhase(int index_str,
                        int nbands,
@@ -59,10 +58,11 @@ public:
                      const K_Vectors& kv);
 
     void Macroscopic_polarization(const int npwx,
-        const psi::Psi<double>* psi_in,
-        const ModulePW::PW_Basis* rhopw,
-        const ModulePW::PW_Basis_K* wfcpw,
-        const K_Vectors& kv) {
+                                  const psi::Psi<double>* psi_in,
+                                  const ModulePW::PW_Basis* rhopw,
+                                  const ModulePW::PW_Basis_K* wfcpw,
+                                  const K_Vectors& kv)
+    {
         throw std::logic_error("berry phase supports only multi-k");
     };
     void Macroscopic_polarization(const int npwx,
@@ -71,10 +71,7 @@ public:
                                   const ModulePW::PW_Basis_K* wfcpw,
                                   const K_Vectors& kv);
 
-
-
     std::string outFormat(const double polarization, const double modulus, const ModuleBase::Vector3<double> project);
-	
 };
 
 #endif
