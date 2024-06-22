@@ -47,7 +47,7 @@ void sparse_format::cal_TR(const UnitCell& ucell,
                            LCAO_Matrix& lm,
                            LCAO_HS_Arrays& HS_arrays,
                            Grid_Driver& grid,
-                           const ORB_gen_tables* uot,
+                           const TwoCenterBundle& two_center_bundle,
                            const double& sparse_thr)
 {
     ModuleBase::TITLE("sparse_format", "cal_TR");
@@ -68,7 +68,7 @@ void sparse_format::cal_TR(const UnitCell& ucell,
                               ucell,
                               GlobalC::ORB,
                               pv,
-                              *uot,
+                              two_center_bundle,
                               &(GlobalC::GridD),
                               HS_arrays.Hloc_fixedR.data());
 

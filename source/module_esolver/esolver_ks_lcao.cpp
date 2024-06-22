@@ -84,7 +84,6 @@ ESolver_KS_LCAO<TK, TR>::ESolver_KS_LCAO()
 template <typename TK, typename TR>
 ESolver_KS_LCAO<TK, TR>::~ESolver_KS_LCAO()
 {
-    delete uot_;
 }
 
 //------------------------------------------------------------------------------
@@ -370,7 +369,7 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(ModuleBase::matrix& force)
                        this->LM,
                        this->GG, // mohan add 2024-04-01
                        this->GK, // mohan add 2024-04-01
-                       uot_,
+                       two_center_bundle_,
                        force,
                        this->scs,
                        this->sf,
@@ -534,26 +533,18 @@ void ESolver_KS_LCAO<TK, TR>::init_basis_lcao(ORB_control& orb_con, Input& inp, 
     // * reading the localized orbitals/projectors
     // * construct the interpolation tables.
 
-    // NOTE: This following raw pointer serves as a temporary step in
-    // LCAO refactoring. Eventually, it will be replaced by a shared_ptr,
-    // which is the only owner of the ORB_gen_tables object. All other
-    // usages will take a weak_ptr.
-    uot_ = new ORB_gen_tables;
-    auto& two_center_bundle = uot_->two_center_bundle;
-
-    two_center_bundle.reset(new TwoCenterBundle);
-    two_center_bundle->build_orb(ucell.ntype, ucell.orbital_fn);
-    two_center_bundle->build_alpha(GlobalV::deepks_setorb, &ucell.descriptor_file);
-    two_center_bundle->build_orb_onsite(ucell.ntype, GlobalV::onsite_radius);
+    two_center_bundle_.build_orb(ucell.ntype, ucell.orbital_fn);
+    two_center_bundle_.build_alpha(GlobalV::deepks_setorb, &ucell.descriptor_file);
+    two_center_bundle_.build_orb_onsite(ucell.ntype, GlobalV::onsite_radius);
     // currently deepks only use one descriptor file, so cast bool to int is fine
 
     // TODO Due to the omnipresence of GlobalC::ORB, we still have to rely
     // on the old interface for now.
-    two_center_bundle->to_LCAO_Orbitals(GlobalC::ORB, inp.lcao_ecut, inp.lcao_dk, inp.lcao_dr, inp.lcao_rmax);
+    two_center_bundle_.to_LCAO_Orbitals(GlobalC::ORB, inp.lcao_ecut, inp.lcao_dk, inp.lcao_dr, inp.lcao_rmax);
 
     ucell.infoNL.setupNonlocal(ucell.ntype, ucell.atoms, GlobalV::ofs_running, GlobalC::ORB);
 
-    two_center_bundle->build_beta(ucell.ntype, ucell.infoNL.Beta);
+    two_center_bundle_.build_beta(ucell.ntype, ucell.infoNL.Beta);
 
     int Lmax = 0;
 #ifdef __EXX
@@ -561,9 +552,9 @@ void ESolver_KS_LCAO<TK, TR>::init_basis_lcao(ORB_control& orb_con, Input& inp, 
 #endif
 
 #ifdef USE_NEW_TWO_CENTER
-    two_center_bundle->tabulate();
+    two_center_bundle_.tabulate();
 #else
-    two_center_bundle->tabulate(inp.lcao_ecut, inp.lcao_dk, inp.lcao_dr, inp.lcao_rmax);
+    two_center_bundle_.tabulate(inp.lcao_ecut, inp.lcao_dk, inp.lcao_dr, inp.lcao_rmax);
 #endif
 
     if (this->orb_con.setup_2d)
@@ -1369,7 +1360,7 @@ ModuleIO::Output_Mat_Sparse<TK> ESolver_KS_LCAO<TK, TR>::create_Output_Mat_Spars
                                            this->pelec->pot->get_effective_v(),
                                            this->orb_con.ParaV,
                                            this->GK, // mohan add 2024-04-01
-                                           uot_,
+                                           two_center_bundle_,
                                            this->LM,
                                            GlobalC::GridD, // mohan add 2024-04-06
                                            this->kv,

@@ -1,87 +1,150 @@
 #include "elecstate.h"
-#include "occupy.h"
 #include "elecstate_getters.h"
+#include "module_base/formatter.h"
 #include "module_base/global_variable.h"
 #include "module_elecstate/potentials/H_Hartree_pw.h"
 #include "module_elecstate/potentials/efield.h"
 #include "module_elecstate/potentials/gatefield.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
-#include "module_base/formatter.h"
+#include "occupy.h"
 namespace elecstate
 {
-	/**
-	 * Notes on refactor of ESolver's functions
-	 * 
-	 * the print of SCF iteration on-the-fly information.
-	 * 1. Previously it is expected for nspin 1, 2, and 4, also with xc_type 3/5 or not, the information will organized in different ways.
-	 * This brings inconsistencies between patterns of print and make it hard to vectorize information.
-	 * 2. the function print_etot actually do two kinds of things, 1) print information into running_*.log, 2) print information onto 
-	 * screen. These two tasks are, in no way should be placed/implemented in one function directly
-	 * 3. there are information redundance: the istep of SCF can provide information determing whether print out the SCF iteration info.
-	 * table header or not, rather than dividing into two functions and hard code the format.
-	 * 
-	 * For nspin 1, print: ITER, ETOT, EDIFF, DRHO, TIME
-	 * 	   nspin 2, print: ITER, TMAG, AMAG, ETOT, EDIFF, DRHO, TIME
-	 * 	   nspin 4 with nlcc, print: ITER, TMAGX, TMAGY, TMAGZ, AMAG, ETOT, EDIFF, DRHO, TIME
-	 * xc type_id 3/5: DKIN 
-	 * 
-	 * Based on summary above, there are several groups of info:
-	 * 1. counting: ITER
-	 * 2. (optional) magnetization: TMAG or TMAGX-TMAGY-TMAGZ, AMAG
-	 * 3. energies: ETOT, EDIFF
-	 * 4. densities: DRHO, DKIN(optional)
-	 * 5. time: TIME
-	 */
-	void print_scf_iterinfo(const std::string& ks_solver, const int& istep, const int& witer,
-							const std::vector<double>& mag, const int& wmag,
-							const double& etot, const double& ediff, const int& wener,
-							const std::vector<double>& drho, const int& wrho,
-							const double& time, const int& wtime)
-	{
-		std::map<std::string, std::string> iter_header_dict = {
-			{"cg", "CG"}, {"cg_in_lcao", "CG"}, {"lapack", "LA"}, {"genelpa", "GE"},
-			{"dav", "DA"}, {"dav_subspace", "DS"}, {"scalapack_gvx", "GV"}, {"cusolver", "CU"},
-			{"bpcg", "BP"}, {"pexsi", "PE"}
-		}; // I change the key of "cg_in_lcao" to "CG" because all the other are only two letters
-		// ITER column
-		std::vector<std::string> th_fmt = {" %-" + std::to_string(witer) + "s"}; 		 // table header: th: ITER
-		std::vector<std::string> td_fmt = {" " + iter_header_dict[ks_solver] + "%-" + std::to_string(witer - 2) + ".0f"}; // table data: td: GE10086
-		// magnetization column, might be non-exist, but size of mag can only be 0, 2 or 4
-		for(int i = 0; i < mag.size(); i++) {th_fmt.emplace_back(" %" + std::to_string(wmag) + "s");}
-		for(int i = 0; i < mag.size(); i++) {td_fmt.emplace_back(" %" + std::to_string(wmag) + ".4e");} // hard-code precision here
-		// energies
-		for(int i = 0; i < 2; i++) {th_fmt.emplace_back(" %" + std::to_string(wener) + "s");}
-		for(int i = 0; i < 2; i++) {td_fmt.emplace_back(" %" + std::to_string(wener) + ".8e");}
-		// densities column, size can be 1 or 2, DRHO or DRHO, DKIN
-		for(int i = 0; i < drho.size(); i++) {th_fmt.emplace_back(" %" + std::to_string(wrho) + "s");}
-		for(int i = 0; i < drho.size(); i++) {td_fmt.emplace_back(" %" + std::to_string(wrho) + ".8e");}
-		// time column, trivial
-		th_fmt.emplace_back(" %" + std::to_string(wtime) + "s\n");
-		td_fmt.emplace_back(" %" + std::to_string(wtime) + ".2f\n");
-		// contents
-		std::vector<std::string> titles; std::vector<double> values;
-		switch (mag.size())
-		{
-			case 2: 
-			titles = {"ITER", FmtCore::center("TMAG", wmag), FmtCore::center("AMAG", wmag), 
-                      FmtCore::center("ETOT/eV", wener), FmtCore::center("EDIFF/eV", wener), FmtCore::center("DRHO", wrho)}; 
-			values = {double(istep), mag[0], mag[1], etot, ediff, drho[0]}; break;
-			case 4:
-			titles = {"ITER", FmtCore::center("TMAGX", wmag), FmtCore::center("TMAGY", wmag), FmtCore::center("TMAGZ", wmag), 
-                      FmtCore::center("AMAG", wmag), FmtCore::center("ETOT/eV", wener), FmtCore::center("EDIFF/eV", wener), FmtCore::center("DRHO", wrho)}; 
-			values = {double(istep), mag[0], mag[1], mag[2], mag[3], etot, ediff, drho[0]}; break;
-			default:
-			titles = {"ITER", FmtCore::center("ETOT/eV", wener), FmtCore::center("EDIFF/eV", wener), FmtCore::center("DRHO", wrho)};
-			values = {double(istep), etot, ediff, drho[0]}; break;
-		}
-		if(drho.size() > 1) {titles.push_back(FmtCore::center("DKIN", wrho)); values.push_back(drho[1]);}
-		titles.push_back(FmtCore::center("TIME/s", wtime)); values.push_back(time);
-		std::string buf;
-		if(istep == 1) { for(int i = 0; i < titles.size(); i++) {buf += FmtCore::format(th_fmt[i].c_str(), titles[i]);} }
-		for(int i = 0; i < values.size(); i++) {buf += FmtCore::format(td_fmt[i].c_str(), values[i]);}
-		std::cout << buf;
-	}
+/**
+ * Notes on refactor of ESolver's functions
+ *
+ * the print of SCF iteration on-the-fly information.
+ * 1. Previously it is expected for nspin 1, 2, and 4, also with xc_type 3/5 or not, the information will organized in
+ * different ways. This brings inconsistencies between patterns of print and make it hard to vectorize information.
+ * 2. the function print_etot actually do two kinds of things, 1) print information into running_*.log, 2) print
+ * information onto screen. These two tasks are, in no way should be placed/implemented in one function directly
+ * 3. there are information redundance: the istep of SCF can provide information determing whether print out the SCF
+ * iteration info. table header or not, rather than dividing into two functions and hard code the format.
+ *
+ * For nspin 1, print: ITER, ETOT, EDIFF, DRHO, TIME
+ * 	   nspin 2, print: ITER, TMAG, AMAG, ETOT, EDIFF, DRHO, TIME
+ * 	   nspin 4 with nlcc, print: ITER, TMAGX, TMAGY, TMAGZ, AMAG, ETOT, EDIFF, DRHO, TIME
+ * xc type_id 3/5: DKIN
+ *
+ * Based on summary above, there are several groups of info:
+ * 1. counting: ITER
+ * 2. (optional) magnetization: TMAG or TMAGX-TMAGY-TMAGZ, AMAG
+ * 3. energies: ETOT, EDIFF
+ * 4. densities: DRHO, DKIN(optional)
+ * 5. time: TIME
+ */
+void print_scf_iterinfo(const std::string& ks_solver,
+                        const int& istep,
+                        const int& witer,
+                        const std::vector<double>& mag,
+                        const int& wmag,
+                        const double& etot,
+                        const double& ediff,
+                        const int& wener,
+                        const std::vector<double>& drho,
+                        const int& wrho,
+                        const double& time,
+                        const int& wtime)
+{
+    std::map<std::string, std::string> iter_header_dict
+        = {{"cg", "CG"},
+           {"cg_in_lcao", "CG"},
+           {"lapack", "LA"},
+           {"genelpa", "GE"},
+           {"dav", "DA"},
+           {"dav_subspace", "DS"},
+           {"scalapack_gvx", "GV"},
+           {"cusolver", "CU"},
+           {"bpcg", "BP"},
+           {"pexsi", "PE"}}; // I change the key of "cg_in_lcao" to "CG" because all the other are only two letters
+    // ITER column
+    std::vector<std::string> th_fmt = {" %-" + std::to_string(witer) + "s"}; // table header: th: ITER
+    std::vector<std::string> td_fmt
+        = {" " + iter_header_dict[ks_solver] + "%-" + std::to_string(witer - 2) + ".0f"}; // table data: td: GE10086
+    // magnetization column, might be non-exist, but size of mag can only be 0, 2 or 4
+    for (int i = 0; i < mag.size(); i++)
+    {
+        th_fmt.emplace_back(" %" + std::to_string(wmag) + "s");
+    }
+    for (int i = 0; i < mag.size(); i++)
+    {
+        td_fmt.emplace_back(" %" + std::to_string(wmag) + ".2e");
+    } // hard-code precision here
+    // energies
+    for (int i = 0; i < 2; i++)
+    {
+        th_fmt.emplace_back(" %" + std::to_string(wener) + "s");
+    }
+    for (int i = 0; i < 2; i++)
+    {
+        td_fmt.emplace_back(" %" + std::to_string(wener) + ".8e");
+    }
+    // densities column, size can be 1 or 2, DRHO or DRHO, DKIN
+    for (int i = 0; i < drho.size(); i++)
+    {
+        th_fmt.emplace_back(" %" + std::to_string(wrho) + "s");
+    }
+    for (int i = 0; i < drho.size(); i++)
+    {
+        td_fmt.emplace_back(" %" + std::to_string(wrho) + ".4e");
+    }
+    // time column, trivial
+    th_fmt.emplace_back(" %" + std::to_string(wtime) + "s\n");
+    td_fmt.emplace_back(" %" + std::to_string(wtime) + ".2f\n");
+    // contents
+    std::vector<std::string> titles;
+    std::vector<double> values;
+    switch (mag.size())
+    {
+    case 2:
+        titles = {"ITER",
+                  FmtCore::center("TMAG", wmag),
+                  FmtCore::center("AMAG", wmag),
+                  FmtCore::center("ETOT/eV", wener),
+                  FmtCore::center("EDIFF/eV", wener),
+                  FmtCore::center("DRHO", wrho)};
+        values = {double(istep), mag[0], mag[1], etot, ediff, drho[0]};
+        break;
+    case 4:
+        titles = {"ITER",
+                  FmtCore::center("TMAGX", wmag),
+                  FmtCore::center("TMAGY", wmag),
+                  FmtCore::center("TMAGZ", wmag),
+                  FmtCore::center("AMAG", wmag),
+                  FmtCore::center("ETOT/eV", wener),
+                  FmtCore::center("EDIFF/eV", wener),
+                  FmtCore::center("DRHO", wrho)};
+        values = {double(istep), mag[0], mag[1], mag[2], mag[3], etot, ediff, drho[0]};
+        break;
+    default:
+        titles = {"ITER",
+                  FmtCore::center("ETOT/eV", wener),
+                  FmtCore::center("EDIFF/eV", wener),
+                  FmtCore::center("DRHO", wrho)};
+        values = {double(istep), etot, ediff, drho[0]};
+        break;
+    }
+    if (drho.size() > 1)
+    {
+        titles.push_back(FmtCore::center("DKIN", wrho));
+        values.push_back(drho[1]);
+    }
+    titles.push_back(FmtCore::center("TIME/s", wtime));
+    values.push_back(time);
+    std::string buf;
+    if (istep == 1)
+    {
+        for (int i = 0; i < titles.size(); i++)
+        {
+            buf += FmtCore::format(th_fmt[i].c_str(), titles[i]);
+        }
+    }
+    for (int i = 0; i < values.size(); i++)
+    {
+        buf += FmtCore::format(td_fmt[i].c_str(), values[i]);
+    }
+    std::cout << buf;
+}
 /// @brief print and check for band energy and occupations
 /// @param ofs
 void ElecState::print_eigenvalue(std::ofstream& ofs)
@@ -136,8 +199,9 @@ void ElecState::print_eigenvalue(std::ofstream& ofs)
         {
             if (this->klist->isk[ik] == 0)
             {
-                ofs << " " << ik + 1 << "/" << this->klist->get_nks() / 2 
-                << " kpoint (Cartesian) = " << this->klist->kvec_c[ik].x << " " << this->klist->kvec_c[ik].y << " " << this->klist->kvec_c[ik].z << " (" << this->klist->ngk[ik] << " pws)" << std::endl;
+                ofs << " " << ik + 1 << "/" << this->klist->get_nks() / 2
+                    << " kpoint (Cartesian) = " << this->klist->kvec_c[ik].x << " " << this->klist->kvec_c[ik].y << " "
+                    << this->klist->kvec_c[ik].z << " (" << this->klist->ngk[ik] << " pws)" << std::endl;
 
                 ofs << std::setprecision(6);
             }
@@ -152,9 +216,9 @@ void ElecState::print_eigenvalue(std::ofstream& ofs)
         } // Pengfei Li  added  14-9-9
         else
         {
-            ofs << " " << ik + 1 << "/" << this->klist->get_nks() << " kpoint (Cartesian) = " << this->klist->kvec_c[ik].x
-                << " " << this->klist->kvec_c[ik].y << " " << this->klist->kvec_c[ik].z << " (" << this->klist->ngk[ik]
-                << " pws)" << std::endl;
+            ofs << " " << ik + 1 << "/" << this->klist->get_nks()
+                << " kpoint (Cartesian) = " << this->klist->kvec_c[ik].x << " " << this->klist->kvec_c[ik].y << " "
+                << this->klist->kvec_c[ik].z << " (" << this->klist->ngk[ik] << " pws)" << std::endl;
 
             ofs << std::setprecision(6);
         }
@@ -198,7 +262,7 @@ void ElecState::print_band(const int& ik, const int& printe, const int& iter)
         if (printe > 0 && ((iter + 1) % printe == 0))
         {
             GlobalV::ofs_running << std::setprecision(6);
-            GlobalV::ofs_running << " Energy (eV) & Occupations  for spin=" << this->klist->isk[ik]+1
+            GlobalV::ofs_running << " Energy (eV) & Occupations  for spin=" << this->klist->isk[ik] + 1
                                  << " K-point=" << ik + 1 << std::endl;
             GlobalV::ofs_running << std::setiosflags(std::ios::showpoint);
             for (int ib = 0; ib < GlobalV::NBANDS; ib++)
@@ -252,78 +316,108 @@ void ElecState::print_etot(const bool converged,
     if (printe > 0 && ((iter + 1) % printe == 0 || converged || iter == GlobalV::SCF_NMAX))
     {
         int n_order = std::max(0, Occupy::gaussian_type);
-        titles.push_back("E_KohnSham");     energies_Ry.push_back(this->f_en.etot);
-        titles.push_back("E_KS(sigma->0)"); energies_Ry.push_back(this->f_en.etot - this->f_en.demet/(2+n_order));
-        titles.push_back("E_Harris");       energies_Ry.push_back(this->f_en.etot_harris);
-        titles.push_back("E_band");         energies_Ry.push_back(this->f_en.eband);
-        titles.push_back("E_one_elec");     energies_Ry.push_back(this->f_en.eband + this->f_en.deband);
-        titles.push_back("E_Hartree");      energies_Ry.push_back(this->f_en.hartree_energy);
-        titles.push_back("E_xc");           energies_Ry.push_back(this->f_en.etxc - this->f_en.etxcc);
-        titles.push_back("E_Ewald");        energies_Ry.push_back(this->f_en.ewald_energy);
-        titles.push_back("E_entropy(-TS)"); energies_Ry.push_back(this->f_en.demet);
-        titles.push_back("E_descf");        energies_Ry.push_back(this->f_en.descf);
+        titles.push_back("E_KohnSham");
+        energies_Ry.push_back(this->f_en.etot);
+        titles.push_back("E_KS(sigma->0)");
+        energies_Ry.push_back(this->f_en.etot - this->f_en.demet / (2 + n_order));
+        titles.push_back("E_Harris");
+        energies_Ry.push_back(this->f_en.etot_harris);
+        titles.push_back("E_band");
+        energies_Ry.push_back(this->f_en.eband);
+        titles.push_back("E_one_elec");
+        energies_Ry.push_back(this->f_en.eband + this->f_en.deband);
+        titles.push_back("E_Hartree");
+        energies_Ry.push_back(this->f_en.hartree_energy);
+        titles.push_back("E_xc");
+        energies_Ry.push_back(this->f_en.etxc - this->f_en.etxcc);
+        titles.push_back("E_Ewald");
+        energies_Ry.push_back(this->f_en.ewald_energy);
+        titles.push_back("E_entropy(-TS)");
+        energies_Ry.push_back(this->f_en.demet);
+        titles.push_back("E_descf");
+        energies_Ry.push_back(this->f_en.descf);
         std::string vdw_method = get_input_vdw_method();
         if (vdw_method == "d2") // Peize Lin add 2014-04, update 2021-03-09
         {
-            titles.push_back("E_vdwD2"); energies_Ry.push_back(this->f_en.evdw);
+            titles.push_back("E_vdwD2");
+            energies_Ry.push_back(this->f_en.evdw);
         }
         else if (vdw_method == "d3_0" || vdw_method == "d3_bj") // jiyy add 2019-05, update 2021-05-02
         {
-            titles.push_back("E_vdwD3"); energies_Ry.push_back(this->f_en.evdw);
+            titles.push_back("E_vdwD3");
+            energies_Ry.push_back(this->f_en.evdw);
         }
-        titles.push_back("E_exx"); energies_Ry.push_back(this->f_en.exx);
+        titles.push_back("E_exx");
+        energies_Ry.push_back(this->f_en.exx);
         if (GlobalV::imp_sol)
         {
-            titles.push_back("E_sol_el"); energies_Ry.push_back(this->f_en.esol_el);
-            titles.push_back("E_sol_cav"); energies_Ry.push_back(this->f_en.esol_cav);
+            titles.push_back("E_sol_el");
+            energies_Ry.push_back(this->f_en.esol_el);
+            titles.push_back("E_sol_cav");
+            energies_Ry.push_back(this->f_en.esol_cav);
         }
         if (GlobalV::EFIELD_FLAG)
         {
-            titles.push_back("E_efield"); energies_Ry.push_back(elecstate::Efield::etotefield);
+            titles.push_back("E_efield");
+            energies_Ry.push_back(elecstate::Efield::etotefield);
         }
         if (GlobalV::GATE_FLAG)
         {
-            titles.push_back("E_gatefield"); energies_Ry.push_back(elecstate::Gatefield::etotgatefield);
+            titles.push_back("E_gatefield");
+            energies_Ry.push_back(elecstate::Gatefield::etotgatefield);
         }
 
 #ifdef __DEEPKS
         if (GlobalV::deepks_scf) // caoyu add 2021-08-10
         {
-            titles.push_back("E_DeePKS"); energies_Ry.push_back(GlobalC::ld.E_delta);
+            titles.push_back("E_DeePKS");
+            energies_Ry.push_back(GlobalC::ld.E_delta);
         }
 #endif
     }
     else
     {
-        titles.push_back("E_KohnSham"); energies_Ry.push_back(this->f_en.etot);
-        titles.push_back("E_Harris");   energies_Ry.push_back(this->f_en.etot_harris);
+        titles.push_back("E_KohnSham");
+        energies_Ry.push_back(this->f_en.etot);
+        titles.push_back("E_Harris");
+        energies_Ry.push_back(this->f_en.etot_harris);
     }
 
     if (GlobalV::TWO_EFERMI)
     {
-        titles.push_back("E_Fermi_up"); energies_Ry.push_back(this->eferm.ef_up);
-        titles.push_back("E_Fermi_dw"); energies_Ry.push_back(this->eferm.ef_dw);
+        titles.push_back("E_Fermi_up");
+        energies_Ry.push_back(this->eferm.ef_up);
+        titles.push_back("E_Fermi_dw");
+        energies_Ry.push_back(this->eferm.ef_dw);
     }
     else
     {
-        titles.push_back("E_Fermi"); energies_Ry.push_back(this->eferm.ef);
+        titles.push_back("E_Fermi");
+        energies_Ry.push_back(this->eferm.ef);
     }
     if (GlobalV::out_bandgap)
     {
         if (!GlobalV::TWO_EFERMI)
         {
-            titles.push_back("E_bandgap"); energies_Ry.push_back(this->bandgap);
+            titles.push_back("E_bandgap");
+            energies_Ry.push_back(this->bandgap);
         }
         else
         {
-            titles.push_back("E_bandgap_up"); energies_Ry.push_back(this->bandgap_up);
-            titles.push_back("E_bandgap_dw"); energies_Ry.push_back(this->bandgap_dw);
+            titles.push_back("E_bandgap_up");
+            energies_Ry.push_back(this->bandgap_up);
+            titles.push_back("E_bandgap_dw");
+            energies_Ry.push_back(this->bandgap_dw);
         }
     }
     energies_eV.resize(energies_Ry.size());
-    std::transform(energies_Ry.begin(), energies_Ry.end(), energies_eV.begin(), [](double ener) { return ener * ModuleBase::Ry_to_eV; });
-    FmtTable table({"Energy", "Rydberg", "eV"}, 
-    titles.size(), {"%-14s",   "%20.10f", "%20.10f"}, {FmtTable::Align::LEFT, FmtTable::Align::CENTER});
+    std::transform(energies_Ry.begin(), energies_Ry.end(), energies_eV.begin(), [](double ener) {
+        return ener * ModuleBase::Ry_to_eV;
+    });
+    FmtTable table({"Energy", "Rydberg", "eV"},
+                   titles.size(),
+                   {"%-14s", "%20.10f", "%20.10f"},
+                   {FmtTable::Align::LEFT, FmtTable::Align::CENTER});
     table << titles << energies_Ry << energies_eV;
     GlobalV::ofs_running << table.str() << std::endl;
     if (iter_in == 1) // pengfei Li added 2015-1-31
@@ -333,18 +427,39 @@ void ElecState::print_etot(const bool converged,
     this->f_en.etot_delta = this->f_en.etot - this->f_en.etot_old;
     if (GlobalV::OUT_LEVEL == "ie" || GlobalV::OUT_LEVEL == "m") // xiaohui add 'm' option, 2015-09-16
     {
-        std::vector<double> mag; 
+        std::vector<double> mag;
         switch (GlobalV::NSPIN)
         {
-        case 2: mag = {get_ucell_tot_magnetization(), get_ucell_abs_magnetization()}; break;
-        case 4: mag = {get_ucell_tot_magnetization_nc_x(), get_ucell_tot_magnetization_nc_y(),
-        get_ucell_tot_magnetization_nc_z(), get_ucell_abs_magnetization()}; break;
-        default: mag = {}; break;
+        case 2:
+            mag = {get_ucell_tot_magnetization(), get_ucell_abs_magnetization()};
+            break;
+        case 4:
+            mag = {get_ucell_tot_magnetization_nc_x(),
+                   get_ucell_tot_magnetization_nc_y(),
+                   get_ucell_tot_magnetization_nc_z(),
+                   get_ucell_abs_magnetization()};
+            break;
+        default:
+            mag = {};
+            break;
         }
         std::vector<double> drho = {scf_thr};
-        if(elecstate::get_xc_func_type() == 3 || elecstate::get_xc_func_type() == 5) {drho.push_back(scf_thr_kin);}
-        elecstate::print_scf_iterinfo(get_ks_solver_type(), iter, 6, mag, 12, this->f_en.etot * ModuleBase::Ry_to_eV,
-        this->f_en.etot_delta * ModuleBase::Ry_to_eV, 16, drho, 16, duration, 6);
+        if (elecstate::get_xc_func_type() == 3 || elecstate::get_xc_func_type() == 5)
+        {
+            drho.push_back(scf_thr_kin);
+        }
+        elecstate::print_scf_iterinfo(get_ks_solver_type(),
+                                      iter,
+                                      6,
+                                      mag,
+                                      10,
+                                      this->f_en.etot * ModuleBase::Ry_to_eV,
+                                      this->f_en.etot_delta * ModuleBase::Ry_to_eV,
+                                      16,
+                                      drho,
+                                      12,
+                                      duration,
+                                      6);
     }
     this->f_en.etot_old = this->f_en.etot;
     return;

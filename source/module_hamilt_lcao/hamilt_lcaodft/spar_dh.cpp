@@ -4,7 +4,7 @@
 
 void sparse_format::cal_dH(LCAO_Matrix& lm,
                            Grid_Driver& grid,
-                           const ORB_gen_tables* uot,
+                           const TwoCenterBundle& two_center_bundle,
                            const int& current_spin,
                            const double& sparse_thr,
                            Gint_k& gint_k)
@@ -37,7 +37,7 @@ void sparse_format::cal_dH(LCAO_Matrix& lm,
                                   GlobalC::ucell,
                                   GlobalC::ORB,
                                   *lm.ParaV,
-                                  *uot,
+                                  two_center_bundle,
                                   &GlobalC::GridD,
                                   nullptr); // delete unused parameter lm.Hloc_fixedR
 
@@ -52,7 +52,7 @@ void sparse_format::cal_dH(LCAO_Matrix& lm,
                                   GlobalC::ucell,
                                   GlobalC::ORB,
                                   *lm.ParaV,
-                                  *uot,
+                                  two_center_bundle,
                                   &GlobalC::GridD,
                                   nullptr); // delete unused parameter lm.Hloc_fixedR
     }
@@ -63,7 +63,7 @@ void sparse_format::cal_dH(LCAO_Matrix& lm,
                                        true,
                                        GlobalC::ucell,
                                        GlobalC::ORB,
-                                       *uot,
+                                       *(two_center_bundle.overlap_orb_beta),
                                        &GlobalC::GridD);
 
     sparse_format::cal_dSTN_R(lm, fsr_dh, grid, current_spin, sparse_thr);

@@ -2,9 +2,9 @@
 
 #include "module_base/global_variable.h"
 #include "module_base/memory.h"
+#include "module_base/parallel_reduce.h"
 #include "module_base/tool_title.h"
 #include "occupy.h"
-#include "module_base/parallel_reduce.h"
 
 namespace elecstate
 {
@@ -16,14 +16,11 @@ const double* ElecState::getRho(int spin) const
     return &(this->charge->rho[spin][0]);
 }
 
-void ElecState::fixed_weights(
-   const std::vector<double>& ocp_kb,
-   const int &nbands,
-   const double &nelec)
+void ElecState::fixed_weights(const std::vector<double>& ocp_kb, const int& nbands, const double& nelec)
 {
 
-    assert(nbands>0);
-    assert(nelec>0.0);
+    assert(nbands > 0);
+    assert(nelec > 0.0);
 
     const double ne_thr = 1.0e-5;
 
@@ -57,7 +54,6 @@ void ElecState::fixed_weights(
 
     return;
 }
-
 
 void ElecState::init_nelec_spin()
 {
@@ -169,7 +165,7 @@ void ElecState::calculate_weights()
         }
 #ifdef __MPI
         // qianrui fix a bug on 2021-7-21
-        Parallel_Reduce::reduce_double_allpool(this->f_en.demet);
+        Parallel_Reduce::reduce_double_allpool(GlobalV::KPAR, GlobalV::NPROC_IN_POOL, this->f_en.demet);
 #endif
     }
     else if (Occupy::fixed_occupations)
@@ -186,7 +182,7 @@ void ElecState::calEBand()
     // calculate ebands using wg and ekb
     double eband = 0.0;
 #ifdef _OPENMP
-#pragma omp parallel for collapse(2) reduction(+:eband)
+#pragma omp parallel for collapse(2) reduction(+ : eband)
 #endif
     for (int ik = 0; ik < this->ekb.nr; ++ik)
     {
@@ -213,7 +209,7 @@ void ElecState::init_scf(const int istep, const ModuleBase::ComplexMatrix& struc
 {
     //---------Charge part-----------------
     // core correction potential.
-    if(!GlobalV::use_paw)
+    if (!GlobalV::use_paw)
     {
         this->charge->set_rho_core(strucfac);
     }
