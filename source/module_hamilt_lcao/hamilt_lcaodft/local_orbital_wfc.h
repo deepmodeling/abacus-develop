@@ -10,10 +10,9 @@
 
 class Local_Orbital_wfc
 {
-public:
-
-	Local_Orbital_wfc();    
-	~Local_Orbital_wfc();
+  public:
+    Local_Orbital_wfc();
+    ~Local_Orbital_wfc();
     ///=========================================
     /// grid wfc
     /// used to generate density matrix: LOC.DM_R,
@@ -33,12 +32,12 @@ public:
     /// read wavefunction coefficients: WFC_NAO_K/GAMMA*.txt
     void gamma_file(psi::Psi<double>* psid, elecstate::ElecState* pelec);
     void allocate_k(const int& lgd,
-        psi::Psi<std::complex<double>>* psi,
-        elecstate::ElecState* pelec,
-        const int& nks,
-        const int& nkstot,
-        const std::vector<ModuleBase::Vector3<double>>& kvec_c,
-        const int& istep);
+                    psi::Psi<std::complex<double>>* psi,
+                    elecstate::ElecState* pelec,
+                    const int& nks,
+                    const int& nkstot,
+                    const std::vector<ModuleBase::Vector3<double>>& kvec_c,
+                    const int& istep);
 
     //=========================================
     // Init Cij, make it satisfy 2 conditions:

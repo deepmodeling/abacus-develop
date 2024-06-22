@@ -7,9 +7,9 @@
 // Shen Yu add 2019/5/9
 extern "C"
 {
-    void Cblacs_gridinfo(int icontxt, int *nprow, int *npcol, int *myprow, int *mypcol);
-    void Cblacs_pinfo(int *myid, int *nprocs);
-    void Cblacs_pcoord(int icontxt, int pnum, int *prow, int *pcol);
+    void Cblacs_gridinfo(int icontxt, int* nprow, int* npcol, int* myprow, int* mypcol);
+    void Cblacs_pinfo(int* myid, int* nprocs);
+    void Cblacs_pcoord(int icontxt, int pnum, int* prow, int* pcol);
     int Cblacs_pnum(int icontxt, int prow, int pcol);
 }
 
@@ -58,11 +58,11 @@ Local_Orbital_Charge::~Local_Orbital_Charge()
 }
 
 void Local_Orbital_Charge::allocate_dm_wfc(const Grid_Technique& gt,
-    elecstate::ElecState* pelec,
-    Local_Orbital_wfc& lowf,
-    psi::Psi<double>* psi,
-    const K_Vectors& kv,
-    const int& istep)
+                                           elecstate::ElecState* pelec,
+                                           Local_Orbital_wfc& lowf,
+                                           psi::Psi<double>* psi,
+                                           const K_Vectors& kv,
+                                           const int& istep)
 {
     ModuleBase::TITLE("Local_Orbital_Charge", "allocate_dm_wfc");
     this->LOWF = &lowf;
@@ -77,7 +77,7 @@ void Local_Orbital_Charge::allocate_dm_wfc(const Grid_Technique& gt,
     return;
 }
 
-void Local_Orbital_Charge::allocate_dm_wfc(const Grid_Technique &gt,
+void Local_Orbital_Charge::allocate_dm_wfc(const Grid_Technique& gt,
                                            elecstate::ElecState* pelec,
                                            Local_Orbital_wfc& lowf,
                                            psi::Psi<std::complex<double>>* psi,
