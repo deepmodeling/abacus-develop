@@ -207,13 +207,13 @@ void ESolver_KS_PW<T, Device>::before_all_runners(Input& inp, UnitCell& ucell)
                                                  &this->wf,
                                                  this->pw_wfc);
     this->p_wf_init->prepare_init(&(this->sf),
-                                         &ucell,
-                                         1,
+                                  &ucell,
+                                  1,
 #ifdef __MPI
-                                         &GlobalC::Pkpoints,
-                                         GlobalV::MY_RANK,
+                                  &GlobalC::Pkpoints,
+                                  GlobalV::MY_RANK,
 #endif
-                                         &GlobalC::ppcell);
+                                  &GlobalC::ppcell);
 
     //! 8) setup global classes
     this->Init_GlobalC(inp, ucell, GlobalC::ppcell);
