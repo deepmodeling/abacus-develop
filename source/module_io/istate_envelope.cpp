@@ -140,7 +140,6 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
         ModuleBase::WARNING_QUIT("IState_Envelope::begin", "Invalid mode! Please check the code.");
     }
 
-
     // (2) cicle:
 
     // (2.1) calculate the selected density matrix
@@ -391,8 +390,8 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
         for (int ib = 0; ib < nbands; ++ib)
             wfc_k_grid[ik][ib] = new std::complex<double>[gk.gridt->lgd];
     }
-    const double mem_size
-        = sizeof(std::complex<double>) * double(gk.gridt->lgd) * double(nbands) * double(nspin) * double(kv.get_nks()) / 1024.0 / 1024.0;
+    const double mem_size = sizeof(std::complex<double>) * double(gk.gridt->lgd) * double(nbands) * double(nspin)
+                            * double(kv.get_nks()) / 1024.0 / 1024.0;
     ModuleBase::Memory::record("IState_Envelope::begin::wfc_k_grid", mem_size);
     printf(" Estimated on-the-fly memory consuming by IState_Envelope::begin::wfc_k_grid: %f MB\n", mem_size);
 
@@ -412,7 +411,8 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
             for (int ik = 0; ik < kv.get_nks(); ++ik) // the loop of nspin0 is included
             {
                 const int ispin = kv.isk[ik];
-                ModuleBase::GlobalFunc::ZEROS(pes_->charge->rho[ispin], wfcpw->nrxx); // terrible, you make changes on another instance's data???
+                ModuleBase::GlobalFunc::ZEROS(pes_->charge->rho[ispin],
+                                              wfcpw->nrxx); // terrible, you make changes on another instance's data???
                 std::cout << " Perform envelope function for kpoint " << ik << ",  band" << ib + 1 << std::endl;
                 //  2d-to-grid conversion is unified into `wfc_2d_to_grid`.
                 psi->fix_k(ik);
