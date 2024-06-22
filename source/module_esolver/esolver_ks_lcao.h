@@ -85,15 +85,7 @@ class ESolver_KS_LCAO : public ESolver_KS<TK>
 
     Grid_Technique GridT;
 
-    // The following variable is introduced in the stage-1 of LCAO
-    // refactoring. It is supposed to replace the previous GlobalC::UOT.
-    //
-    // This is the only place supposed to have the ownership; all other
-    // places should be considered as "borrowing" the object. Unfortunately,
-    // imposing shared_ptr/weak_ptr is only possible once GlobalC::UOT is
-    // completely removed from the code; we have to rely on raw pointers
-    // during the transition period.
-    ORB_gen_tables* uot_;
+    TwoCenterBundle two_center_bundle_;
 
     // Temporarily store the stress to unify the interface with PW,
     // because it's hard to seperate force and stress calculation in LCAO.
@@ -110,7 +102,6 @@ class ESolver_KS_LCAO : public ESolver_KS<TK>
 
     void beforesolver(const int istep);
     //----------------------------------------------------------------------
-
 
     /// @brief create ModuleIO::Output_DM object to output density matrix
     ModuleIO::Output_DM create_Output_DM(int is, int iter);

@@ -1,6 +1,7 @@
 #ifndef HAMILTLCAO_H
 #define HAMILTLCAO_H
 
+#include "module_elecstate/module_dm/density_matrix.h"
 #include "module_elecstate/potentials/potential_new.h"
 #include "module_hamilt_general/hamilt.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
@@ -9,7 +10,6 @@
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
-#include "module_elecstate/module_dm/density_matrix.h"
 
 namespace hamilt
 {
@@ -23,20 +23,20 @@ class HamiltLCAO : public Hamilt<TK>
     /**
      * @brief Constructor of Hamiltonian for LCAO base
      * HR and SR will be allocated with Operators
-    */
+     */
     HamiltLCAO(Gint_Gamma* GG_in,
-        Gint_k* GK_in,
-        LCAO_Matrix* LM_in,
-        Local_Orbital_Charge* loc_in,
-        elecstate::Potential* pot_in,
-        const K_Vectors& kv_in,
-        const ORB_gen_tables* uot,
-        elecstate::DensityMatrix<TK, double>* DM_in,
-        int* exx_two_level_step = nullptr);
+               Gint_k* GK_in,
+               LCAO_Matrix* LM_in,
+               Local_Orbital_Charge* loc_in,
+               elecstate::Potential* pot_in,
+               const K_Vectors& kv_in,
+               const TwoCenterBundle& two_center_bundle,
+               elecstate::DensityMatrix<TK, double>* DM_in,
+               int* exx_two_level_step = nullptr);
     /**
      * @brief Constructor of vacuum Operators, only HR and SR will be initialed as empty HContainer
-    */
-    HamiltLCAO(LCAO_Matrix* LM_in, const K_Vectors& kv_in, const ORB_gen_tables* uot);
+     */
+    HamiltLCAO(LCAO_Matrix* LM_in, const K_Vectors& kv_in, const TwoCenterIntegrator& intor_overlap_orb);
 
     ~HamiltLCAO()
     {
@@ -66,12 +66,12 @@ class HamiltLCAO : public Hamilt<TK>
 
     /**
      * @brief special for LCAO, update SK only
-     * 
+     *
      * @param ik target K point
      * @param hk_type 0: SK is row-major, 1: SK is collumn-major
      * @return void
-    */
-    void updateSk(const int ik, LCAO_Matrix* LM_in, const int hk_type=0);
+     */
+    void updateSk(const int ik, LCAO_Matrix* LM_in, const int hk_type = 0);
 
     // core function: return H(k) and S(k) matrixs for direct solving eigenvalues.
     // not used in PW base
@@ -79,7 +79,7 @@ class HamiltLCAO : public Hamilt<TK>
     void matrix(MatrixBlock<TK>& hk_in, MatrixBlock<TK>& sk_in) override;
 
   private:
-    const K_Vectors *kv = nullptr;
+    const K_Vectors* kv = nullptr;
 
     // Real space Hamiltonian
     HContainer<TR>* hR = nullptr;
@@ -94,8 +94,8 @@ class HamiltLCAO : public Hamilt<TK>
     int current_spin = 0;
 
     // sk and hk will be refactored to HamiltLCAO later
-    //std::vector<TK> sk;
-    //std::vector<TK> hk;
+    // std::vector<TK> sk;
+    // std::vector<TK> hk;
 };
 
 } // namespace hamilt

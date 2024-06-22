@@ -1,20 +1,20 @@
-#ifndef GINT_FORCE_GPU_H
-#define GINT_FORCE_GPU_H
+#ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_LCAO_MODULE_GINT_GINT_FORCE_GPU_H
+#define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_LCAO_MODULE_GINT_GINT_FORCE_GPU_H
 
 #include "module_hamilt_lcao/module_gint/gint.h"
 #include "module_hamilt_lcao/module_gint/grid_technique.h"
 namespace GintKernel
 {
 void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
-                          const double* vlocal,
-                          double* force_in,
-                          double* stress_in,
-                          double dr,
-                          double* rcut,
-                          const int isforce,
-                          const int isstress,
-                          const Grid_Technique& gridt,
-                          const UnitCell& ucell);
+                        const double* vlocal,
+                        double* force_in,
+                        double* stress_in,
+                        double dr,
+                        const double* rcut,
+                        const int isforce,
+                        const int isstress,
+                        const Grid_Technique& gridt,
+                        const UnitCell& ucell);
 
 /**
  * @brief GPU task generator for forces.

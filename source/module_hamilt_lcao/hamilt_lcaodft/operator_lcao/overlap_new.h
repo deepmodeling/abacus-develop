@@ -1,7 +1,7 @@
-#ifndef OVERLAPNEW_H
-#define OVERLAPNEW_H
-#include "module_basis/module_ao/ORB_gen_tables.h"
+#ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_LCAO_HAMILT_LCAODFT_OPERATOR_LCAO_OVERLAP_NEW_H
+#define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_LCAO_HAMILT_LCAODFT_OPERATOR_LCAO_OVERLAP_NEW_H
 #include "module_basis/module_ao/parallel_orbitals.h"
+#include "module_basis/module_nao/two_center_integrator.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_cell/unitcell.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"

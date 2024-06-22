@@ -35,7 +35,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
                                           LCAO_Matrix& lm,
                                           Gint_Gamma& gint_gamma, // mohan add 2024-04-01
                                           Gint_k& gint_k,         // mohan add 2024-04-01
-                                          const ORB_gen_tables* uot,
+                                          const TwoCenterBundle& two_center_bundle,
                                           ModuleBase::matrix& fcs,
                                           ModuleBase::matrix& scs,
                                           const Structure_Factor& sf,
@@ -161,7 +161,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
 #endif
                         gint_gamma,
                         gint_k,
-                        uot,
+                        two_center_bundle,
                         pv,
                         lm,
                         kv);
@@ -255,7 +255,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
                                                                    nullptr,
                                                                    GlobalC::ucell,
                                                                    &GlobalC::GridD,
-                                                                   uot->two_center_bundle->overlap_orb_onsite.get(),
+                                                                   two_center_bundle.overlap_orb_onsite.get(),
                                                                    &GlobalC::dftu,
                                                                    *(lm.ParaV));
 
@@ -768,7 +768,7 @@ void Force_Stress_LCAO<double>::integral_part(const bool isGammaOnly,
 #endif
                                               Gint_Gamma& gint_gamma, // mohan add 2024-04-01
                                               Gint_k& gint_k,         // mohan add 2024-04-01
-                                              const ORB_gen_tables* uot,
+                                              const TwoCenterBundle& two_center_bundle,
                                               const Parallel_Orbitals& pv,
                                               LCAO_Matrix& lm,
                                               const K_Vectors& kv)
@@ -792,7 +792,7 @@ void Force_Stress_LCAO<double>::integral_part(const bool isGammaOnly,
                svnl_dalpha,
 #endif
                gint_gamma,
-               uot,
+               two_center_bundle,
                pv,
                lm);
     return;
@@ -818,7 +818,7 @@ void Force_Stress_LCAO<std::complex<double>>::integral_part(const bool isGammaOn
 #endif
                                                             Gint_Gamma& gint_gamma,
                                                             Gint_k& gint_k,
-                                                            const ORB_gen_tables* uot,
+                                                            const TwoCenterBundle& two_center_bundle,
                                                             const Parallel_Orbitals& pv,
                                                             LCAO_Matrix& lm,
                                                             const K_Vectors& kv)
@@ -841,7 +841,7 @@ void Force_Stress_LCAO<std::complex<double>>::integral_part(const bool isGammaOn
                svnl_dalpha,
 #endif
                gint_k,
-               uot,
+               two_center_bundle,
                pv,
                lm,
                &kv,

@@ -5,17 +5,6 @@
 // #include "global.h"
 #include "module_io/input.h"
 
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-
-#include <algorithm>
-#include <fstream>
-#include <iomanip>
-#include <iostream>
-#include <sstream>
-#include <vector>
-
 #include "module_base/constants.h"
 #include "module_base/global_file.h"
 #include "module_base/global_function.h"
@@ -23,6 +12,16 @@
 #include "module_base/parallel_common.h"
 #include "module_base/timer.h"
 #include "version.h"
+
+#include <algorithm>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <sstream>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <vector>
 Input INPUT;
 
 void Input::Init(const std::string& fn)
@@ -324,7 +323,7 @@ void Input::Default(void)
     mixing_angle = -10.0;    // defaultly close for npsin = 4
     mixing_tau = false;
     mixing_dftu = false;
-    mixing_dmr = false;      // whether to mixing real space density matrix
+    mixing_dmr = false; // whether to mixing real space density matrix
     //----------------------------------------------------------
     // potential / charge / wavefunction / energy
     //----------------------------------------------------------
@@ -382,9 +381,9 @@ void Input::Default(void)
     lcao_ecut = 0; // (Ry)
     lcao_dk = 0.01;
     lcao_dr = 0.01;
-    lcao_rmax = 30; // (a.u.)
+    lcao_rmax = 30;    // (a.u.)
     onsite_radius = 0; // (a.u.)
-    nstream=4;
+    nstream = 4;
     //----------------------------------------------------------
     // efield and dipole correction     Yu Liu add 2022-05-18
     //----------------------------------------------------------
@@ -569,7 +568,8 @@ void Input::Default(void)
     //==========================================================
     //    DFT+U     Xin Qu added on 2020-10-29
     //==========================================================
-    dft_plus_u = 0; // 2:DFT+U correction with dual occupations 1:DFT+U correction with full occupations; 0: standard DFT calcullation
+    dft_plus_u = 0; // 2:DFT+U correction with dual occupations 1:DFT+U correction with full occupations; 0: standard
+                    // DFT calcullation
     yukawa_potential = false;
     yukawa_lambda = -1.0;
     omc = 0;
@@ -692,7 +692,7 @@ void Input::Default(void)
     //==========================================================
     // variables for elpa
     //==========================================================
-    elpa_num_thread=-1;
+    elpa_num_thread = -1;
     return;
 }
 
@@ -1464,7 +1464,8 @@ bool Input::Read(const std::string& fn)
         else if (strcmp("out_band", word) == 0)
         {
             read_value2stdvector(ifs, out_band);
-            if(out_band.size() == 1) out_band.push_back(8);
+            if (out_band.size() == 1)
+                out_band.push_back(8);
         }
         else if (strcmp("out_proj_band", word) == 0)
         {
@@ -1473,7 +1474,8 @@ bool Input::Read(const std::string& fn)
         else if (strcmp("out_mat_hs", word) == 0)
         {
             read_value2stdvector(ifs, out_mat_hs);
-            if(out_mat_hs.size() == 1) out_mat_hs.push_back(8);
+            if (out_mat_hs.size() == 1)
+                out_mat_hs.push_back(8);
         }
         // LiuXh add 2019-07-15
         else if (strcmp("out_mat_hs2", word) == 0)
@@ -1583,10 +1585,10 @@ bool Input::Read(const std::string& fn)
         {
             read_value(ifs, onsite_radius);
         }
-	    else if (strcmp("num_stream",word)==0)
-		{
-	    	read_value(ifs,nstream);
-		}
+        else if (strcmp("num_stream", word) == 0)
+        {
+            read_value(ifs, nstream);
+        }
         //----------------------------------------------------------
         // Molecule Dynamics
         // Yu Liu add 2021-07-30
@@ -2329,7 +2331,7 @@ bool Input::Read(const std::string& fn)
         }
         else if (strcmp("bessel_nao_rcut", word) == 0)
         {
-            //read_value(ifs, bessel_nao_rcut);
+            // read_value(ifs, bessel_nao_rcut);
             read_value2stdvector(ifs, bessel_nao_rcuts);
             bessel_nao_rcut = bessel_nao_rcuts[0]; // also compatible with old input file
         }
@@ -2417,31 +2419,39 @@ bool Input::Read(const std::string& fn)
         //----------------------------------------------------------------------------------
         //    Quasiatomic orbital
         //----------------------------------------------------------------------------------
-        else if (strcmp("qo_switch", word) == 0){
+        else if (strcmp("qo_switch", word) == 0)
+        {
             read_bool(ifs, qo_switch);
         }
-        else if (strcmp("qo_basis", word) == 0){
+        else if (strcmp("qo_basis", word) == 0)
+        {
             read_value(ifs, qo_basis);
         }
-        else if (strcmp("qo_thr", word) == 0){
+        else if (strcmp("qo_thr", word) == 0)
+        {
             read_value(ifs, qo_thr);
         }
-        else if (strcmp("qo_strategy", word) == 0){
+        else if (strcmp("qo_strategy", word) == 0)
+        {
             read_value2stdvector(ifs, qo_strategy);
         }
-        else if (strcmp("qo_screening_coeff", word) == 0){
+        else if (strcmp("qo_screening_coeff", word) == 0)
+        {
             read_value2stdvector(ifs, qo_screening_coeff);
         }
         //----------------------------------------------------------------------------------
         //    PEXSI
         //----------------------------------------------------------------------------------
-        else if (strcmp("pexsi_npole", word) == 0){
+        else if (strcmp("pexsi_npole", word) == 0)
+        {
             read_value(ifs, pexsi_npole);
         }
-        else if (strcmp("pexsi_inertia", word) == 0){
+        else if (strcmp("pexsi_inertia", word) == 0)
+        {
             read_value(ifs, pexsi_inertia);
         }
-        else if (strcmp("pexsi_nmax", word) == 0) {
+        else if (strcmp("pexsi_nmax", word) == 0)
+        {
             read_value(ifs, pexsi_nmax);
         }
         // else if (strcmp("pexsi_symbolic", word) == 0)
@@ -2535,8 +2545,9 @@ bool Input::Read(const std::string& fn)
         //==========================================================
         // variables for elpa
         //==========================================================
-        else if(strcmp("elpa_num_thread",word) == 0){
-            read_value(ifs,elpa_num_thread);
+        else if (strcmp("elpa_num_thread", word) == 0)
+        {
+            read_value(ifs, elpa_num_thread);
         }
         else
         {
@@ -2695,7 +2706,7 @@ bool Input::Read(const std::string& fn)
             if (orbital_corr[i] != -1)
                 close_plus_u = 0;
         }
-        if(close_plus_u)
+        if (close_plus_u)
         {
             dft_plus_u = 0;
             GlobalV::ofs_running << "No atoms are correlated, DFT+U is closed!!!" << std::endl;
@@ -2827,16 +2838,17 @@ bool Input::Read(const std::string& fn)
             gamma_only_local = 0;
         }
     }
-    if ((out_mat_r || out_mat_hs2 || out_mat_t || out_mat_dh || out_hr_npz || out_dm_npz || dm_to_rho) && gamma_only_local)
+    if ((out_mat_r || out_mat_hs2 || out_mat_t || out_mat_dh || out_hr_npz || out_dm_npz || dm_to_rho)
+        && gamma_only_local)
     {
         ModuleBase::WARNING_QUIT("Input",
                                  "printing of H(R)/S(R)/dH(R)/T(R)/DM(R) is not available for gamma only calculations");
     }
-    if(dm_to_rho && GlobalV::NPROC > 1)
+    if (dm_to_rho && GlobalV::NPROC > 1)
     {
         ModuleBase::WARNING_QUIT("Input", "dm_to_rho is not available for parallel calculations");
     }
-    if(out_hr_npz || out_dm_npz || dm_to_rho)
+    if (out_hr_npz || out_dm_npz || dm_to_rho)
     {
 #ifndef __USECNPY
         ModuleBase::WARNING_QUIT("Input", "to write in npz format, please recompile with -DENABLE_CNPY=1");
@@ -2983,7 +2995,7 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             exx_hybrid_alpha = "1";
         else if (dft_functional_lower == "pbe0" || dft_functional_lower == "hse" || dft_functional_lower == "scan0")
             exx_hybrid_alpha = "0.25";
-        else    // no exx in scf, but will change to non-zero in postprocess like rpa
+        else // no exx in scf, but will change to non-zero in postprocess like rpa
             exx_hybrid_alpha = "0";
     }
     if (exx_real_number == "default")
@@ -3001,7 +3013,7 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             exx_ccp_rmesh_times = "5";
         else if (dft_functional_lower == "hse")
             exx_ccp_rmesh_times = "1.5";
-        else    // no exx in scf
+        else // no exx in scf
             exx_ccp_rmesh_times = "1";
     }
     if (symmetry == "default")
@@ -3227,7 +3239,7 @@ void Input::Default_2(void) // jiyy add 2019-08-04
     {
         if (ks_solver == "default")
         {
-            if(device == "gpu")
+            if (device == "gpu")
             {
                 ks_solver = "cusolver";
                 ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "cusolver");
@@ -3235,11 +3247,11 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             else
             {
 #ifdef __ELPA
-            ks_solver = "genelpa";
-            ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "genelpa");
+                ks_solver = "genelpa";
+                ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "genelpa");
 #else
-            ks_solver = "scalapack_gvx";
-            ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "scalapack_gvx");
+                ks_solver = "scalapack_gvx";
+                ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "scalapack_gvx");
 #endif
             }
         }
@@ -3260,9 +3272,9 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             if (!bz)
                 bz = 1;
         }
-        if(dft_plus_u == 1 && onsite_radius == 0.0)
+        if (dft_plus_u == 1 && onsite_radius == 0.0)
         {
-            //autoset onsite_radius to 5.0 as default
+            // autoset onsite_radius to 5.0 as default
             onsite_radius = 5.0;
         }
     }
@@ -3336,18 +3348,18 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         }
     }
 
-    if(qo_switch)
+    if (qo_switch)
     {
         /* parameter logic of QO */
         out_mat_hs[0] = 1; // print H(k) and S(k)
-        out_wfc_lcao = 1; // print wave function in lcao basis in kspace
-        symmetry = "-1"; // disable kpoint reduce
+        out_wfc_lcao = 1;  // print wave function in lcao basis in kspace
+        symmetry = "-1";   // disable kpoint reduce
     }
-    if(qo_screening_coeff.size() != ntype)
+    if (qo_screening_coeff.size() != ntype)
     {
-        if(qo_basis == "pswfc")
+        if (qo_basis == "pswfc")
         {
-            double default_screening_coeff = (qo_screening_coeff.size() == 1)? qo_screening_coeff[0]: 0.1;
+            double default_screening_coeff = (qo_screening_coeff.size() == 1) ? qo_screening_coeff[0] : 0.1;
             qo_screening_coeff.resize(ntype, default_screening_coeff);
         }
         else
@@ -3355,26 +3367,29 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             // if length of qo_screening_coeff is not 0, turn on Slater screening
         }
     }
-    if(qo_strategy.size() != ntype)
+    if (qo_strategy.size() != ntype)
     {
-        if(qo_strategy.size() == 1)
+        if (qo_strategy.size() == 1)
         {
             qo_strategy.resize(ntype, qo_strategy[0]);
         }
         else
         {
             std::string default_strategy;
-            if(qo_basis == "hydrogen") default_strategy = "energy-valence";
-            else if((qo_basis == "pswfc")||(qo_basis == "szv")) default_strategy = "all";
+            if (qo_basis == "hydrogen")
+                default_strategy = "energy-valence";
+            else if ((qo_basis == "pswfc") || (qo_basis == "szv"))
+                default_strategy = "all";
             else
             {
-                ModuleBase::WARNING_QUIT("Input", "When setting default values for qo_strategy, unexpected/unknown qo_basis is found. Please check it.");
+                ModuleBase::WARNING_QUIT("Input",
+                                         "When setting default values for qo_strategy, unexpected/unknown qo_basis is "
+                                         "found. Please check it.");
             }
             qo_strategy.resize(ntype, default_strategy);
         }
     }
 
-  
     // set nspin with noncolin
     if (noncolin || lspinorb)
     {
@@ -3619,10 +3634,12 @@ void Input::Bcast()
     Parallel_Common::bcast_int(out_wfc_pw);
     Parallel_Common::bcast_bool(out_wfc_r);
     Parallel_Common::bcast_int(out_dos);
-    if(GlobalV::MY_RANK != 0) out_band.resize(2); /* If this line is absent, will cause segmentation fault in io_input_test_para */
+    if (GlobalV::MY_RANK != 0)
+        out_band.resize(2); /* If this line is absent, will cause segmentation fault in io_input_test_para */
     Parallel_Common::bcast_int(out_band.data(), 2);
     Parallel_Common::bcast_bool(out_proj_band);
-    if(GlobalV::MY_RANK != 0) out_mat_hs.resize(2); /* If this line is absent, will cause segmentation fault in io_input_test_para */
+    if (GlobalV::MY_RANK != 0)
+        out_mat_hs.resize(2); /* If this line is absent, will cause segmentation fault in io_input_test_para */
     Parallel_Common::bcast_int(out_mat_hs.data(), 2);
     Parallel_Common::bcast_bool(out_mat_hs2); // LiuXh add 2019-07-15
     Parallel_Common::bcast_bool(out_mat_t);
@@ -3963,7 +3980,7 @@ void Input::Bcast()
     Parallel_Common::bcast_int(elpa_num_thread);
     if (ntype != 0) /* ntype has been broadcasted before */
     {
-        qo_strategy.resize(ntype); 
+        qo_strategy.resize(ntype);
         Parallel_Common::bcast_string(qo_strategy.data(), ntype);
         qo_screening_coeff.resize(ntype);
         Parallel_Common::bcast_double(qo_screening_coeff.data(), ntype);
@@ -4177,11 +4194,8 @@ void Input::Check(void)
         {
             ModuleBase::WARNING_QUIT("Input", "pexsi can not be used with plane wave basis.");
         }
-        else if (ks_solver != "default" && 
-                 ks_solver != "cg" && 
-                 ks_solver != "dav" && 
-                 ks_solver != "dav_subspace" && 
-                 ks_solver != "bpcg")
+        else if (ks_solver != "default" && ks_solver != "cg" && ks_solver != "dav" && ks_solver != "dav_subspace"
+                 && ks_solver != "bpcg")
         {
             ModuleBase::WARNING_QUIT("Input", "please check the ks_solver parameter!");
         }
@@ -4255,11 +4269,10 @@ void Input::Check(void)
 #ifdef __PEXSI
             GlobalV::ofs_warning << " It's ok to use pexsi." << std::endl;
 #else
-            ModuleBase::WARNING_QUIT("Input",
+            ModuleBase::WARNING_QUIT(
+                "Input",
                 "Can not use PEXSI if abacus is not compiled with PEXSI. Please change ks_solver to scalapack_gvx.");
 #endif
-
-
         }
         else if (ks_solver != "default")
         {
@@ -4548,33 +4561,36 @@ void Input::Check(void)
             ModuleBase::WARNING_QUIT("INPUT", "nupdown should not be set when sc_mag_switch > 0");
         }
     }
-    if(qo_switch)
+    if (qo_switch)
     {
         /* first about rationality of parameters */
-        if(qo_basis == "pswfc")
+        if (qo_basis == "pswfc")
         {
-            for(auto screen_coeff: qo_screening_coeff)
+            for (auto screen_coeff: qo_screening_coeff)
             {
-                if(screen_coeff < 0)
+                if (screen_coeff < 0)
                 {
                     ModuleBase::WARNING_QUIT("INPUT", "screening coefficient must >= 0 to tune the pswfc decay");
                 }
-                if(std::fabs(screen_coeff) < 1e-6)
+                if (std::fabs(screen_coeff) < 1e-6)
                 {
-                    ModuleBase::WARNING("INPUT", "every low screening coefficient might yield very high computational cost");
+                    ModuleBase::WARNING("INPUT",
+                                        "every low screening coefficient might yield very high computational cost");
                 }
             }
         }
-        else if(qo_basis == "hydrogen")
+        else if (qo_basis == "hydrogen")
         {
-            if(qo_thr > 1e-6)
+            if (qo_thr > 1e-6)
             {
                 ModuleBase::WARNING("INPUT", "too high the convergence threshold might yield unacceptable result");
             }
         }
         /* then size of std::vector<> parameters */
-        if(qo_screening_coeff.size() != ntype) ModuleBase::WARNING_QUIT("INPUT", "qo_screening_coeff.size() != ntype");
-        if(qo_strategy.size() != ntype) ModuleBase::WARNING_QUIT("INPUT", "qo_strategy.size() != ntype");
+        if (qo_screening_coeff.size() != ntype)
+            ModuleBase::WARNING_QUIT("INPUT", "qo_screening_coeff.size() != ntype");
+        if (qo_strategy.size() != ntype)
+            ModuleBase::WARNING_QUIT("INPUT", "qo_strategy.size() != ntype");
     }
 
     return;
@@ -4645,15 +4661,17 @@ template <typename T>
 void Input::read_value2stdvector(std::ifstream& ifs, std::vector<T>& var)
 {
     // reset var
-    var.clear(); var.shrink_to_fit();
+    var.clear();
+    var.shrink_to_fit();
     std::string line;
-    std::getline(ifs, line); // read the whole rest of line
+    std::getline(ifs, line);                                                              // read the whole rest of line
     line = (line.find('#') == std::string::npos) ? line : line.substr(0, line.find('#')); // remove comments
     std::vector<std::string> tmp;
     std::string::size_type start = 0, end = 0;
-    while ((start = line.find_first_not_of(" \t\n", end)) != std::string::npos) // find the first not of delimiters but not reaches the end
+    while ((start = line.find_first_not_of(" \t\n", end))
+           != std::string::npos) // find the first not of delimiters but not reaches the end
     {
-        end = line.find_first_of(" \t\n", start); // find the first of delimiters starting from start pos
+        end = line.find_first_of(" \t\n", start);       // find the first of delimiters starting from start pos
         tmp.push_back(line.substr(start, end - start)); // push back the substring
     }
     var.resize(tmp.size());
