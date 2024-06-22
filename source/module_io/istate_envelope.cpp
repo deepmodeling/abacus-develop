@@ -7,6 +7,7 @@
 #include "module_io/write_wfc_pw.h"
 #include "module_io/write_wfc_r.h"
 
+#include "module_base/timer.h"
 IState_Envelope::IState_Envelope(const elecstate::ElecState* pes_in)
 {pes = pes_in;}
 
@@ -17,7 +18,7 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
                             const ModulePW::PW_Basis* rhopw,
                             const ModulePW::PW_Basis_K* wfcpw,
                             const ModulePW::PW_Basis_Big* bigpw,
-                            Local_Orbital_wfc& lowf,
+                            const Parallel_Orbitals& para_orb,
                             Gint_Gamma& gg,
                             int& out_wfc_pw,
                             int& out_wfc_r,
@@ -101,7 +102,7 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
 
                 psid->fix_k(is);
 #ifdef __MPI
-                lowf.wfc_2d_to_grid(psid->get_pointer(), wfc_gamma_grid[is], is, this->pes->ekb, this->pes->wg);
+                wfc_2d_to_grid(psid->get_pointer(), para_orb, wfc_gamma_grid[is], gg.gridt->trace_lo);
 #else
 // if not MPI enabled, it is the case psid holds a global matrix. use fix_k to switch between different spin channels
 // (actually kpoints, because now the same kpoint in different spin channels are treated as distinct kpoints)
@@ -171,7 +172,7 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
                             const ModulePW::PW_Basis* rhopw,
                             const ModulePW::PW_Basis_K* wfcpw,
                             const ModulePW::PW_Basis_Big* bigpw,
-                            Local_Orbital_wfc& lowf,
+                            const Parallel_Orbitals& para_orb,
                             Gint_k& gk,
                             int& out_wf,
                             int& out_wf_r,
@@ -224,6 +225,15 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
         }
     }
 
+    //allocate grid wavefunction for gamma_only
+    std::vector<std::complex<double>**> wfc_k_grid(nspin);
+    for (int is = 0; is < nspin; ++is)
+    {
+        wfc_k_grid[is] = new std::complex<double>* [nbands];
+        for (int ib = 0;ib < nbands; ++ib)
+            wfc_k_grid[is][ib] = new std::complex<double>[gk.gridt->lgd];
+    }
+
     //for pw-wfc in G space
     psi::Psi<std::complex<double>> pw_wfc_g(kv.ngk.data());
 
@@ -244,23 +254,17 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
                 std::cout << " Perform envelope function for kpoint " << ik << ",  band" << ib + 1 << std::endl;
                 //  2d-to-grid conversion is unified into `wfc_2d_to_grid`.
                 psi->fix_k(ik);
-#ifdef __MPI
-                // need to deal with NSPIN=4 !!!!
-                lowf.wfc_2d_to_grid(psi->get_pointer(),
-                                    lowf.wfc_k_grid[ik],
-                                    ik,
-                                    this->pes->ekb,
-                                    this->pes->wg,
-                                    kv.kvec_c);
+#ifdef __MPI    // need to deal with NSPIN=4 !!!!
+                wfc_2d_to_grid(psi->get_pointer(), para_orb, wfc_k_grid[ik], gk.gridt->trace_lo);
 #else
                 for (int i = 0; i < nbands; ++i)
                 {
                     for (int j = 0; j < nlocal; ++j)
-                        lowf.wfc_k_grid[ik][i][j] = psi[0](i, j);
+                        wfc_k_grid[ik][i][j] = psi[0](i, j);
                 }
 #endif
                 //deal with NSPIN=4
-                gk.cal_env_k(ik, lowf.wfc_k_grid[ik][ib], pes->charge->rho[ispin], kv.kvec_c, kv.kvec_d,GlobalC::ucell);
+                gk.cal_env_k(ik, wfc_k_grid[ik][ib], pes->charge->rho[ispin], kv.kvec_c, kv.kvec_d,GlobalC::ucell);
 
                 std::stringstream ss;
                 ss << global_out_dir << "BAND" << ib + 1 << "_k_" << ik / nspin0 + 1 << "_s_" << ispin + 1 << "_ENV.cube";
@@ -311,6 +315,12 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
     }
 
     delete[] bands_picked;
+    for (int is = 0; is < nspin; ++is)
+    {
+        for (int ib = 0;ib < nbands; ++ib)
+            delete[] wfc_k_grid[is][ib];
+        delete[] wfc_k_grid[is];
+    }
     return;
 }
 
@@ -335,3 +345,122 @@ void IState_Envelope::set_pw_wfc(const ModulePW::PW_Basis_K* wfcpw,
     //call FFT
     wfcpw->real2recip(Porter.data(), &wfc_g(ib, 0), ik);
 }
+
+#ifdef __MPI
+template<typename T>
+int IState_Envelope::set_wfc_grid(const Parallel_2D& p2d,
+                                  const int nbands,
+                                  const std::vector<int>& trace_lo,
+                                  const T* in,
+                                  T** out)
+{
+    ModuleBase::TITLE(" Local_Orbital_wfc", "set_wfc_grid");
+    if (!out) { return 0; }
+    const int naroc[2] = {p2d.nrow, p2d.ncol};
+    for (int j = 0; j < naroc[1]; ++j)
+    {
+        const int igcol = p2d.local2global_col(j);
+		if (igcol >= nbands)
+		{
+			continue;
+		}
+		for (int i = 0; i < naroc[0]; ++i)
+		{
+			const int igrow = p2d.local2global_row(i);
+			const int mu_local = trace_lo[igrow];
+			out[igcol][mu_local] = in[j * naroc[0] + i];
+        }
+    }
+    return 0;
+}
+
+template int IState_Envelope::set_wfc_grid(const Parallel_2D& p2d,
+                                           const int nbands,
+                                           const std::vector<int>& trace_lo,
+                                           const double* in,
+                                           double** out);
+template int IState_Envelope::set_wfc_grid(const Parallel_2D& p2d,
+                                           const int nbands,
+                                           const std::vector<int>& trace_lo,
+                                           const std::complex<double>* in,
+                                           std::complex<double>** out);
+
+template<typename T>
+void IState_Envelope::wfc_2d_to_grid(const T* lowf_2d,
+                                     const Parallel_Orbitals& pv,
+                                     T** lowf_grid,
+                                     const std::vector<int>& trace_lo)
+{
+    ModuleBase::TITLE(" Local_Orbital_wfc", "wfc_2d_to_grid");
+    ModuleBase::timer::tick("Local_Orbital_wfc", "wfc_2d_to_grid");
+
+    // dimension related
+    const int nlocal = pv.desc_wfc[2];
+    const int nbands = pv.desc_wfc[3];
+
+    // MPI and memory related
+    const int mem_stride = 1;
+    int mpi_info = 0;
+    auto mpi_dtype = std::is_same<T, double>::value ? MPI_DOUBLE : MPI_DOUBLE_COMPLEX;
+
+    // get the rank of the current process
+    int rank = 0;
+    MPI_Comm_rank(pv.comm_2D, &rank);
+
+    // calculate the maximum number of nlocal over all processes in pv.comm_2D range
+    long buf_size;
+    mpi_info = MPI_Reduce(&pv.nloc_wfc, &buf_size, 1, MPI_LONG, MPI_MAX, 0, pv.comm_2D);
+    mpi_info = MPI_Bcast(&buf_size, 1, MPI_LONG, 0, pv.comm_2D); // get and then broadcast
+    std::vector<T> lowf_block(buf_size);
+
+    // this quantity seems to have the value returned by function numroc_ in ScaLAPACK?
+    int naroc[2];
+
+    // loop over all processors
+    for (int iprow = 0; iprow < pv.dim0; ++iprow)
+    {
+        for (int ipcol = 0; ipcol < pv.dim1; ++ipcol)
+        {
+            // get the rank of the processor at the given coordinate
+            int rank_at_coord;
+            const int mpi_cart_coord[2] = {iprow, ipcol};
+            mpi_info = MPI_Cart_rank(pv.comm_2D, mpi_cart_coord, &rank_at_coord); // get the MPI rank
+
+            // keep in mind present function is concurrently called by all processors, thus
+            // the following code block will only be executed once for each processor, which means
+            // for each processor, get its MPI rank and MPI coord, then assign the naroc[0] and naroc[1]
+            // with the value which should have been calculated automatically by ScaLAPACK function
+            // numroc_.
+            if (rank == rank_at_coord)
+            {
+                BlasConnector::copy(pv.nloc_wfc, lowf_2d, mem_stride, lowf_block.data(), mem_stride);
+                naroc[0] = pv.nrow;
+                naroc[1] = pv.ncol_bands;
+            }
+
+            // broadcast the number of row and column
+            mpi_info = MPI_Bcast(naroc, 2, MPI_INT, rank_at_coord, pv.comm_2D);
+
+            // broadcast the data, this means the data owned by one processor is broadcast
+            // to all other processors in the communicator.
+            mpi_info = MPI_Bcast(lowf_block.data(), buf_size, mpi_dtype, rank_at_coord, pv.comm_2D);
+
+            // then use it to set the wfc_grid.
+            Parallel_2D p2d;
+            p2d.init(nlocal, nbands, pv.nb, pv.comm_2D);
+            mpi_info = this->set_wfc_grid(p2d, nbands, trace_lo, lowf_block.data(), lowf_grid);
+            // this operation will let all processors have the same wfc_grid
+        }
+    }
+    ModuleBase::timer::tick("Local_Orbital_wfc", "wfc_2d_to_grid");
+}
+
+template void IState_Envelope::wfc_2d_to_grid(const double* lowf_2d,
+                                              const Parallel_Orbitals& pv,
+                                              double** lowf_grid,
+                                              const std::vector<int>& trace_lo);
+template void IState_Envelope::wfc_2d_to_grid(const std::complex<double>* lowf_2d,
+                                              const Parallel_Orbitals& pv,
+                                              std::complex<double>** lowf_grid,
+                                              const std::vector<int>& trace_lo);
+#endif

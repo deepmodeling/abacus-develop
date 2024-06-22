@@ -61,10 +61,8 @@ void Local_Orbital_Charge::allocate_dm_wfc(const Grid_Technique& gt,
     elecstate::ElecState* pelec,
     Local_Orbital_wfc& lowf,
     psi::Psi<double>* psi,
-    const Parallel_Orbitals& ParaV,
     const K_Vectors& kv,
-    const int& istep,
-    const std::string& readin_dir)
+    const int& istep)
 {
     ModuleBase::TITLE("Local_Orbital_Charge", "allocate_dm_wfc");
     this->LOWF = &lowf;
@@ -83,10 +81,8 @@ void Local_Orbital_Charge::allocate_dm_wfc(const Grid_Technique &gt,
                                            elecstate::ElecState* pelec,
                                            Local_Orbital_wfc& lowf,
                                            psi::Psi<std::complex<double>>* psi,
-                                           const Parallel_Orbitals& ParaV,
                                            const K_Vectors& kv,
-                                           const int& istep,
-                                           const std::string& readin_dir)
+                                           const int& istep)
 {
     ModuleBase::TITLE("Local_Orbital_Charge", "allocate_dm_wfc");
 
@@ -94,23 +90,7 @@ void Local_Orbital_Charge::allocate_dm_wfc(const Grid_Technique &gt,
     this->LOWF->gridt = &gt;
     // here we reset the density matrix dimension.
     // lgd will be the dimension of global matrix and nbasis of psi to be of the local one
-    //lowf.allocate_k(gt.lgd, psi, pelec, kv.get_nks(), kv.get_nkstot(), kv.kvec_c, istep);
-    if(INPUT.init_wfc == "file" && istep == 0)
-    {
-        if(psi != nullptr)
-        {
-            const int nkstot = kv.get_nkstot();
-            std::vector<std::complex<double>> lowf_loc;
-            std::vector<double> ekb;
-            std::vector<double> occ;
-            int nbands;
-            int nbasis;
-            double wk;
-            
-            psi->resize(nkstot, ParaV.ncol_bands, ParaV.nrow);
-            
-        }
-    }
+    lowf.allocate_k(gt.lgd, psi, pelec, kv.get_nks(), kv.get_nkstot(), kv.kvec_c, istep);
     this->allocate_DM_k(kv.get_nks(), gt.nnrg);
     return;
 }
