@@ -91,66 +91,59 @@ class Gint_k : public Gint
                    UnitCell& ucell);
 
     //------------------------------------------------------
-    // in gint_k_sparse.cpp 
-    //------------------------------------------------------    
+    // in gint_k_sparse.cpp
+    //------------------------------------------------------
     // related to sparse matrix
     // jingan add 2021-6-4, modify 2021-12-2
     void distribute_pvpR_sparseMatrix(
-        const int current_spin, 
-        const double &sparse_threshold, 
-        const std::map<Abfs::Vector3_Order<int>,
-        std::map<size_t, std::map<size_t, double>>> &pvpR_sparseMatrix,
-        LCAO_Matrix *LM,
-        Parallel_Orbitals *pv);
+        const int current_spin,
+        const double& sparse_threshold,
+        const std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>>& pvpR_sparseMatrix,
+        LCAO_Matrix* LM,
+        Parallel_Orbitals* pv);
 
     void distribute_pvpR_soc_sparseMatrix(
-        const double &sparse_threshold, 
-        const std::map<Abfs::Vector3_Order<int>,
-        std::map<size_t,
-        std::map<size_t, std::complex<double>>>> &pvpR_soc_sparseMatrix,
-        LCAO_Matrix *LM,
-        Parallel_Orbitals *pv
-        );
+        const double& sparse_threshold,
+        const std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>&
+            pvpR_soc_sparseMatrix,
+        LCAO_Matrix* LM,
+        Parallel_Orbitals* pv);
 
-    void cal_vlocal_R_sparseMatrix(
-        const int &current_spin,
-        const double &sparse_threshold,
-        LCAO_Matrix *LM,
-        Parallel_Orbitals *pv,
-        UnitCell &ucell,
-        Grid_Driver &gdriver);
+    void cal_vlocal_R_sparseMatrix(const int& current_spin,
+                                   const double& sparse_threshold,
+                                   LCAO_Matrix* LM,
+                                   Parallel_Orbitals* pv,
+                                   UnitCell& ucell,
+                                   Grid_Driver& gdriver);
 
     //------------------------------------------------------
-    // in gint_k_sparse1.cpp 
-    //------------------------------------------------------  
+    // in gint_k_sparse1.cpp
+    //------------------------------------------------------
     // similar to the above 3, just for the derivative
     void distribute_pvdpR_sparseMatrix(
-        const int current_spin, 
+        const int current_spin,
         const int dim,
-        const double &sparse_threshold, 
-        const std::map<Abfs::Vector3_Order<int>,
-        std::map<size_t, std::map<size_t, double>>> &pvdpR_sparseMatrix,
-        LCAO_Matrix *LM,
-        Parallel_Orbitals *pv);
+        const double& sparse_threshold,
+        const std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>>& pvdpR_sparseMatrix,
+        LCAO_Matrix* LM,
+        Parallel_Orbitals* pv);
 
     void distribute_pvdpR_soc_sparseMatrix(
         const int dim,
-        const double &sparse_threshold, 
-        const std::map<Abfs::Vector3_Order<int>,
-        std::map<size_t, std::map<size_t, std::complex<double>>>> &pvdpR_soc_sparseMatrix,
-        LCAO_Matrix *LM,
-        Parallel_Orbitals *pv);
+        const double& sparse_threshold,
+        const std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>&
+            pvdpR_soc_sparseMatrix,
+        LCAO_Matrix* LM,
+        Parallel_Orbitals* pv);
 
-    void cal_dvlocal_R_sparseMatrix(
-        const int &current_spin,
-        const double &sparse_threshold,
-        LCAO_Matrix *LM,
-        Parallel_Orbitals *pv,
-        UnitCell &ucell,
-        Grid_Driver &gdriver);
+    void cal_dvlocal_R_sparseMatrix(const int& current_spin,
+                                    const double& sparse_threshold,
+                                    LCAO_Matrix* LM,
+                                    Parallel_Orbitals* pv,
+                                    UnitCell& ucell,
+                                    Grid_Driver& gdriver);
 
-    private:
-
+  private:
     //----------------------------
     // key variable
     //----------------------------
