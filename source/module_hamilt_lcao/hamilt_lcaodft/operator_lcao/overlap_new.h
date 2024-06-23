@@ -1,11 +1,11 @@
-#ifndef OVERLAPNEW_H
-#define OVERLAPNEW_H
+#ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_LCAO_HAMILT_LCAODFT_OPERATOR_LCAO_OVERLAP_NEW_H
+#define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_LCAO_HAMILT_LCAODFT_OPERATOR_LCAO_OVERLAP_NEW_H
 #include "module_basis/module_ao/parallel_orbitals.h"
+#include "module_basis/module_nao/two_center_integrator.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_cell/unitcell.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
-#include "module_basis/module_ao/ORB_gen_tables.h"
 
 namespace hamilt
 {
@@ -44,7 +44,7 @@ class OverlapNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                                      std::vector<TK>* SK_pointer_in,
                                      const UnitCell* ucell_in,
                                      Grid_Driver* GridD_in,
-                                     const ORB_gen_tables* uot,
+                                     const TwoCenterIntegrator* intor,
                                      const Parallel_Orbitals* paraV);
 
     virtual void contributeHR() override;
@@ -60,8 +60,7 @@ class OverlapNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 
     std::vector<TK>* SK_pointer = nullptr;
 
-    // the following variable is introduced temporarily during LCAO refactoring
-    const ORB_gen_tables* uot_ = nullptr;
+    const TwoCenterIntegrator* intor_ = nullptr;
 
     bool SR_fixed_done = false;
 
@@ -90,7 +89,7 @@ class OverlapNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 
     // if k vector is not changed, then do nothing and return
     // default of kvec_d_old is (-10,-10,-10), which is not a valid k vector
-    ModuleBase::Vector3<double> kvec_d_old = ModuleBase::Vector3<double>(-10,-10,-10);
+    ModuleBase::Vector3<double> kvec_d_old = ModuleBase::Vector3<double>(-10, -10, -10);
 };
 
 } // namespace hamilt

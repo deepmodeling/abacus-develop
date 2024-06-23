@@ -25,7 +25,7 @@ int Occupy::gaussian_type = 0;
 double Occupy::gaussian_parameter = 0.01;
 bool Occupy::fixed_occupations = false;
 
-void Occupy::decision(const std::string &name, const std::string &smearing_method, const double &smearing_sigma)
+void Occupy::decision(const std::string& name, const std::string& smearing_method, const double& smearing_sigma)
 {
     ModuleBase::TITLE("Occupy", "decision");
     use_gaussian_broadening = false;
@@ -83,7 +83,9 @@ void Occupy::decision(const std::string &name, const std::string &smearing_metho
         {
             // acually any order Methfessel-Paxton method can be supported in Occupy::w1gauss()
             // however the parameter is string instead of int
-            ModuleBase::WARNING_QUIT("occupy", "Some refactor of smearing shoule be done before supporting any order of Methfessel-Paxton method!");
+            ModuleBase::WARNING_QUIT(
+                "occupy",
+                "Some refactor of smearing shoule be done before supporting any order of Methfessel-Paxton method!");
         }
 
         else if (smearing_method == "marzari-vanderbilt" || smearing_method == "cold" || smearing_method == "mv")
@@ -126,15 +128,16 @@ void Occupy::decision(const std::string &name, const std::string &smearing_metho
  * @param is the spin index now.
  * @param isk distinguish k point belong to which spin.
  */
-void Occupy::iweights(const int nks,
-                      const std::vector<double>& wk,
-                      const int nbands,
-                      const double& nelec,
-                      const ModuleBase::matrix& ekb,
-                      double& ef,
-                      ModuleBase::matrix& wg,
-                      const int& is, //<- is should be -1, 0, or 1. -1 means set all spins, and 0 means spin up, 1 means spin down.
-                      const std::vector<int>& isk)
+void Occupy::iweights(
+    const int nks,
+    const std::vector<double>& wk,
+    const int nbands,
+    const double& nelec,
+    const ModuleBase::matrix& ekb,
+    double& ef,
+    ModuleBase::matrix& wg,
+    const int& is, //<- is should be -1, 0, or 1. -1 means set all spins, and 0 means spin up, 1 means spin down.
+    const std::vector<int>& isk)
 {
     assert(is < 2);
     double degspin = 2.0;
@@ -147,14 +150,16 @@ void Occupy::iweights(const int nks,
     int ib_min = std::ceil(ib_mind);
     if (ib_min != int(ib_mind))
     {
-        ModuleBase::WARNING_QUIT("iweights", "It is not a semiconductor or insulator. Please do not set 'smearing_method=fixed', and try other options.");
+        ModuleBase::WARNING_QUIT("iweights",
+                                 "It is not a semiconductor or insulator. Please do not set 'smearing_method=fixed', "
+                                 "and try other options.");
     }
     ef = -1e+10;
 
     for (int ik = 0; ik < nks; ++ik)
     {
         // when NSPIN=2, only calculate spin up or spin down with TWO_FERMI mode(nupdown != 0)
-        if (GlobalV::NSPIN == 2 && isk[ik] != is && is!=-1)
+        if (GlobalV::NSPIN == 2 && isk[ik] != is && is != -1)
         {
             continue;
         }
@@ -173,7 +178,7 @@ void Occupy::iweights(const int nks,
         }
     }
 #ifdef __MPI
-    Parallel_Reduce::gather_max_double_all(ef);
+    Parallel_Reduce::gather_max_double_all(GlobalV::NPROC, ef);
 #endif
 
     return;
@@ -301,8 +306,8 @@ void Occupy::efermig(const ModuleBase::matrix& ekb,
 
 #ifdef __MPI
     // find min and max across pools
-    Parallel_Reduce::gather_max_double_all(eup);
-    Parallel_Reduce::gather_min_double_all(elw);
+    Parallel_Reduce::gather_max_double_all(GlobalV::NPROC, eup);
+    Parallel_Reduce::gather_min_double_all(GlobalV::NPROC, elw);
 
 #endif
     //=================
@@ -411,7 +416,7 @@ double Occupy::sumkg(const ModuleBase::matrix& ekb,
     // GlobalV::ofs_running << "\n sum2 before reduce = " << sum2 << std::endl;
 
 #ifdef __MPI
-    Parallel_Reduce::reduce_double_allpool(sum2);
+    Parallel_Reduce::reduce_double_allpool(GlobalV::KPAR, GlobalV::NPROC_IN_POOL, sum2);
 #endif
 
     // GlobalV::ofs_running << "\n sum2 after reduce = " << sum2 << std::endl;
@@ -419,7 +424,7 @@ double Occupy::sumkg(const ModuleBase::matrix& ekb,
     return sum2;
 }
 
-double Occupy::wgauss(const double &x, const int n)
+double Occupy::wgauss(const double& x, const int n)
 {
     // ModuleBase::TITLE("Occupy","wgauss");
     //=====================================================================
@@ -501,7 +506,7 @@ double Occupy::wgauss(const double &x, const int n)
     return wga;
 } // end function wgauss
 
-double Occupy::w1gauss(const double &x, const int n)
+double Occupy::w1gauss(const double& x, const int n)
 {
     //========================================================================
     //    w1gauss(x,n) = \int_{-\infty}^x   y delta(y) dy

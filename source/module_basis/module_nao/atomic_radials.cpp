@@ -1,13 +1,13 @@
 #include "module_basis/module_nao/atomic_radials.h"
 
-#include <fstream>
-#include <iostream>
-#include <string>
-
+#include "module_base/math_integral.h"
 #include "module_base/parallel_common.h"
 #include "module_base/tool_quit.h"
 #include "projgen.h"
-#include "module_base/math_integral.h"
+
+#include <fstream>
+#include <iostream>
+#include <string>
 
 AtomicRadials& AtomicRadials::operator=(const AtomicRadials& rhs)
 {
@@ -78,7 +78,7 @@ void AtomicRadials::build(RadialSet* const other, const int itype, const double 
     }
     this->indexing();
     this->chi_ = new NumericalRadial[nchi_];
-    for(int ichi = 0;ichi<this->nchi_;ichi++)
+    for (int ichi = 0; ichi < this->nchi_; ichi++)
     {
         const int l = other->cbegin()[ichi].l();
         int ngrid = other->cbegin()[ichi].nr();
@@ -86,7 +86,7 @@ void AtomicRadials::build(RadialSet* const other, const int itype, const double 
         const double* rvalue = other->cbegin()[ichi].rvalue();
         const int izeta = other->cbegin()[ichi].izeta();
         // if the cutoff radius is larger than the original one, just copy the orbitals
-        if(rcut >= other->cbegin()[ichi].rcut())
+        if (rcut >= other->cbegin()[ichi].rcut())
         {
             this->chi_[ichi].build(l, true, ngrid, rgrid, rvalue, 0, izeta, symbol_, itype, false);
         }
@@ -96,8 +96,8 @@ void AtomicRadials::build(RadialSet* const other, const int itype, const double 
             std::vector<double> rvalue_new;
             smoothgen(ngrid, rgrid, rvalue, rcut, rvalue_new);
             ngrid = rvalue_new.size();
-            //projgen(l, ngrid, rgrid, rvalue, rcut, 20, rvalue_new);
-            //build the new on-site orbitals
+            // projgen(l, ngrid, rgrid, rvalue, rcut, 20, rvalue_new);
+            // build the new on-site orbitals
             this->chi_[ichi].build(l, true, ngrid, rgrid, rvalue_new.data(), 0, izeta, symbol_, itype, false);
         }
     }

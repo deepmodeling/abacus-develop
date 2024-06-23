@@ -1,6 +1,7 @@
-#include "gtest/gtest.h"
 #include "../dftu_lcao.h"
-#include <chrono> 
+
+#include "gtest/gtest.h"
+#include <chrono>
 
 // mock of DFTU
 #include "module_hamilt_lcao/module_dftu/dftu.h"
@@ -8,15 +9,13 @@ ModuleDFTU::DFTU::DFTU(){};
 ModuleDFTU::DFTU::~DFTU(){};
 namespace GlobalC
 {
-    ModuleDFTU::DFTU dftu;
+ModuleDFTU::DFTU dftu;
 }
 const hamilt::HContainer<double>* tmp_DMR;
 const hamilt::HContainer<double>* ModuleDFTU::DFTU::get_dmr(int ispin) const
 {
     return tmp_DMR;
 }
-
-
 
 //---------------------------------------
 // Unit test of DFTU class
@@ -32,8 +31,8 @@ const hamilt::HContainer<double>* ModuleDFTU::DFTU::get_dmr(int ispin) const
 
 // test_size is the number of atoms in the unitcell
 // modify test_size to test different size of unitcell
-int test_size = 10; 
-int test_nw = 10;   // please larger than 5
+int test_size = 10;
+int test_nw = 10; // please larger than 5
 class DFTUTest : public ::testing::Test
 {
   protected:
@@ -80,24 +79,23 @@ class DFTUTest : public ::testing::Test
         DMR = new hamilt::HContainer<double>(*HR);
         tmp_DMR = DMR;
 
-        //setting of DFTU
+        // setting of DFTU
         GlobalC::dftu.locale.resize(test_size);
-        for(int iat=0;iat<test_size;iat++)
+        for (int iat = 0; iat < test_size; iat++)
         {
             GlobalC::dftu.locale[iat].resize(3);
-            for(int l=0;l<3;l++)
+            for (int l = 0; l < 3; l++)
             {
                 GlobalC::dftu.locale[iat][l].resize(1);
                 GlobalC::dftu.locale[iat][l][0].resize(2);
-                GlobalC::dftu.locale[iat][l][0][0].create(2*l+1, 2*l+1);
-                GlobalC::dftu.locale[iat][l][0][1].create(2*l+1, 2*l+1);
+                GlobalC::dftu.locale[iat][l][0][0].create(2 * l + 1, 2 * l + 1);
+                GlobalC::dftu.locale[iat][l][0][1].create(2 * l + 1, 2 * l + 1);
             }
         }
         GlobalC::dftu.U = &U_test;
         GlobalC::dftu.orbital_corr = &orbital_c_test;
 
         GlobalV::onsite_radius = 1.0;
-
     }
 
     void TearDown() override
@@ -127,14 +125,15 @@ class DFTUTest : public ::testing::Test
     }
 #else
     void init_parav()
-    {}
+    {
+    }
 #endif
 
     UnitCell ucell;
     hamilt::HContainer<double>* HR;
     hamilt::HContainer<double>* DMR;
-    Parallel_Orbitals *paraV;
-    ORB_gen_tables uot_;
+    Parallel_Orbitals* paraV;
+    TwoCenterIntegrator intor_;
 
     int dsize;
     int my_rank = 0;
@@ -145,42 +144,35 @@ class DFTUTest : public ::testing::Test
 // using TEST_F to test DFTU
 TEST_F(DFTUTest, constructHRd2d)
 {
-    //test for nspin=1
+    // test for nspin=1
     GlobalV::NSPIN = 1;
     std::vector<ModuleBase::Vector3<double>> kvec_d_in(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     std::vector<double> hk(paraV->get_row_size() * paraV->get_col_size(), 0.0);
-    Grid_Driver gd(0,0,0);
+    Grid_Driver gd(0, 0, 0);
     // check some input values
     EXPECT_EQ(LCAO_Orbitals::get_const_instance().Phi[0].getRcut(), 1.0);
     // reset HR and DMR
     const double factor = 1.0 / test_nw / test_nw / test_size / test_size;
-    for(int i=0;i<DMR->get_nnr();i++)
+    for (int i = 0; i < DMR->get_nnr(); i++)
     {
         DMR->get_wrapper()[i] = factor;
         HR->get_wrapper()[i] = 0.0;
     }
     std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
-    hamilt::DFTU<hamilt::OperatorLCAO<double, double>> op(
-        nullptr, 
-        kvec_d_in, 
-        HR, 
-        &hk, 
-        ucell, 
-        &gd,
-        &uot_,
-        &GlobalC::dftu,
-        *paraV
-    );
+    hamilt::DFTU<hamilt::OperatorLCAO<double, double>>
+        op(nullptr, kvec_d_in, HR, &hk, ucell, &gd, &intor_, &GlobalC::dftu, *paraV);
     std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed_time = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
+    std::chrono::duration<double> elapsed_time
+        = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
     start_time = std::chrono::high_resolution_clock::now();
     op.contributeHR();
     end_time = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed_time1 = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
+    std::chrono::duration<double> elapsed_time1
+        = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
     // check the occupations of dftu
-    for(int iat=0;iat<test_size;iat++)
+    for (int iat = 0; iat < test_size; iat++)
     {
-        for(int icc=0;icc<25;icc++)
+        for (int icc = 0; icc < 25; icc++)
         {
             EXPECT_NEAR(GlobalC::dftu.locale[iat][2][0][0].c[icc], 0.5, 1e-10);
         }
@@ -196,21 +188,24 @@ TEST_F(DFTUTest, constructHRd2d)
         int nwt = indexes1.size() * indexes2.size();
         for (int i = 0; i < nwt; ++i)
         {
-            EXPECT_NEAR(tmp.get_pointer(0)[i], -10.0*test_size, 1e-10);
+            EXPECT_NEAR(tmp.get_pointer(0)[i], -10.0 * test_size, 1e-10);
         }
     }
     // calculate SK
     start_time = std::chrono::high_resolution_clock::now();
     op.contributeHk(0);
     end_time = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed_time2 = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
+    std::chrono::duration<double> elapsed_time2
+        = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
     // check the value of SK
     for (int i = 0; i < paraV->get_row_size() * paraV->get_col_size(); ++i)
     {
-        EXPECT_NEAR(hk[i], -10.0*test_size, 1e-10);
+        EXPECT_NEAR(hk[i], -10.0 * test_size, 1e-10);
     }
-    std::cout << "Test terms:   " <<std::setw(15)<< "initialize_HR" <<std::setw(15)<< "contributeHR" <<std::setw(15)<< "contributeHk" << std::endl;
-    std::cout << "Elapsed time: " <<std::setw(15)<< elapsed_time.count()<<std::setw(15)<<elapsed_time1.count()<<std::setw(15)<<elapsed_time2.count() << " seconds." << std::endl;
+    std::cout << "Test terms:   " << std::setw(15) << "initialize_HR" << std::setw(15) << "contributeHR"
+              << std::setw(15) << "contributeHk" << std::endl;
+    std::cout << "Elapsed time: " << std::setw(15) << elapsed_time.count() << std::setw(15) << elapsed_time1.count()
+              << std::setw(15) << elapsed_time2.count() << " seconds." << std::endl;
 }
 
 TEST_F(DFTUTest, constructHRd2cd)
@@ -219,31 +214,22 @@ TEST_F(DFTUTest, constructHRd2cd)
     GlobalV::NSPIN = 2;
     std::vector<ModuleBase::Vector3<double>> kvec_d_in(2, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     std::vector<std::complex<double>> hk(paraV->get_row_size() * paraV->get_col_size(), std::complex<double>(0.0, 0.0));
-    Grid_Driver gd(0,0,0);
+    Grid_Driver gd(0, 0, 0);
     EXPECT_EQ(LCAO_Orbitals::get_const_instance().Phi[0].getRcut(), 1.0);
     // reset HR and DMR
     const double factor = 0.5 / test_nw / test_nw / test_size / test_size;
-    for(int i=0;i<DMR->get_nnr();i++)
+    for (int i = 0; i < DMR->get_nnr(); i++)
     {
         DMR->get_wrapper()[i] = factor;
         HR->get_wrapper()[i] = 0.0;
     }
-    hamilt::DFTU<hamilt::OperatorLCAO<std::complex<double>, double>> op(
-        nullptr, 
-        kvec_d_in, 
-        HR, 
-        &hk, 
-        ucell, 
-        &gd,
-        &uot_,
-        &GlobalC::dftu,
-        *paraV
-    );
+    hamilt::DFTU<hamilt::OperatorLCAO<std::complex<double>, double>>
+        op(nullptr, kvec_d_in, HR, &hk, ucell, &gd, &intor_, &GlobalC::dftu, *paraV);
     op.contributeHR();
     // check the occupations of dftu for spin-up
-    for(int iat=0;iat<test_size;iat++)
+    for (int iat = 0; iat < test_size; iat++)
     {
-        for(int icc=0;icc<25;icc++)
+        for (int icc = 0; icc < 25; icc++)
         {
             EXPECT_NEAR(GlobalC::dftu.locale[iat][2][0][0].c[icc], 0.5, 1e-10);
         }
@@ -259,7 +245,7 @@ TEST_F(DFTUTest, constructHRd2cd)
         int nwt = indexes1.size() * indexes2.size();
         for (int i = 0; i < nwt; ++i)
         {
-            EXPECT_NEAR(tmp.get_pointer(0)[i], -10.0*test_size, 1e-10);
+            EXPECT_NEAR(tmp.get_pointer(0)[i], -10.0 * test_size, 1e-10);
         }
     }
     // calculate HK for gamma point
@@ -267,15 +253,15 @@ TEST_F(DFTUTest, constructHRd2cd)
     // check the value of HK of gamma point
     for (int i = 0; i < paraV->get_row_size() * paraV->get_col_size(); ++i)
     {
-        EXPECT_NEAR(hk[i].real(), -10.0*test_size, 1e-10);
+        EXPECT_NEAR(hk[i].real(), -10.0 * test_size, 1e-10);
         EXPECT_NEAR(hk[i].imag(), 0.0, 1e-10);
     }
     // calculate spin-down hamiltonian
     op.contributeHR();
     // check the occupations of dftu for spin-down
-    for(int iat=0;iat<test_size;iat++)
+    for (int iat = 0; iat < test_size; iat++)
     {
-        for(int icc=0;icc<25;icc++)
+        for (int icc = 0; icc < 25; icc++)
         {
             EXPECT_NEAR(GlobalC::dftu.locale[iat][2][0][1].c[icc], 0.5, 1e-10);
         }
