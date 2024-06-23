@@ -47,7 +47,10 @@ int get_device_kpar(const int& kpar);
  * @brief Get the device flag object
  * for module_io GlobalV::device_flag
  */
-std::string get_device_flag(const std::string& device, const std::string& ks_solver, const std::string& basis_type, const bool& gamma_only);
+std::string get_device_flag(const std::string& device,
+                            const std::string& ks_solver,
+                            const std::string& basis_type,
+                            const bool& gamma_only);
 
 #if __MPI
 int get_node_rank();
@@ -62,10 +65,16 @@ int set_device_by_rank(const MPI_Comm mpi_comm = MPI_COMM_WORLD);
 #endif
 
 template <typename Device>
-void print_device_info(const Device* dev, std::ofstream& ofs_device) {return;}
+void print_device_info(const Device* dev, std::ofstream& ofs_device)
+{
+    return;
+}
 
 template <typename Device>
-void record_device_memory(const Device* dev, std::ofstream& ofs_device, std::string str, size_t size) {return;}
+void record_device_memory(const Device* dev, std::ofstream& ofs_device, std::string str, size_t size)
+{
+    return;
+}
 
 } // end of namespace information
 } // end of namespace base_device

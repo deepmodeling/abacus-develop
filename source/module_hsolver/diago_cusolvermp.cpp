@@ -1,6 +1,7 @@
 #ifdef __CUSOLVERMP
 
 #include "diago_cusolvermp.h"
+
 #include "module_base/timer.h"
 
 using complex = std::complex<double>;
@@ -16,7 +17,7 @@ void DiagoCusolverMP<T>::diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real*
 
     std::vector<Real> eigen(GlobalV::NLOCAL, 0.0);
 
-    MPI_Comm COMM_DIAG=MPI_COMM_WORLD; // use all processes
+    MPI_Comm COMM_DIAG = MPI_COMM_WORLD; // use all processes
     {
         Diag_CusolverMP_gvd<T> es(COMM_DIAG, (const int)h_mat.row, (const int)h_mat.col, (const int*)h_mat.desc);
 
@@ -26,10 +27,9 @@ void DiagoCusolverMP<T>::diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real*
     }
     const int inc = 1;
     BlasConnector::copy(GlobalV::NBANDS, eigen.data(), inc, eigenvalue_in, inc);
-
 }
-    template class DiagoCusolverMP<double>;
-    template class DiagoCusolverMP<complex>;
+template class DiagoCusolverMP<double>;
+template class DiagoCusolverMP<complex>;
 
 } // namespace hsolver
 
