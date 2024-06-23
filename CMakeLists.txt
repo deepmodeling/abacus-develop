@@ -689,6 +689,7 @@ target_link_libraries(
   psi_initializer
   esolver
   vdw
+  parameter
   device
   container)
 

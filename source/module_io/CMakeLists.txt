@@ -33,6 +33,13 @@ list(APPEND objects
     parse_args.cpp
     read_input.cpp
     read_input_item_general.cpp
+    read_input_item_pw.cpp
+    read_input_item_sdft.cpp
+    read_input_item_relax.cpp
+    read_input_item_lcao.cpp
+    read_input_item_postprocess.cpp
+    read_input_item_md.cpp
+    read_input_item_other.cpp
 )
 
 list(APPEND objects_advanced

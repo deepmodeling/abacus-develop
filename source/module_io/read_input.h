@@ -11,41 +11,45 @@
 
 namespace ModuleIO
 {
-
 class ReadInput
 {
   public:
-    ReadInput();
+    ReadInput(const int& rank);
     ~ReadInput(){};
+    void readin_parameters(Parameter& param, const std::string& filename, const bool& test_mode = false);
+  private:
     /**
      * @brief read INPUT file of txt format
      *
      * @param param parameters of ABACUS
      * @param filename INPUT file name
      */
-    void ReadTxtInput(Parameter& param, const std::string& filename);
-#ifdef __MPI
+    void read_txt_input(Parameter& param, const std::string& filename);
     /**
-     * @brief initialize MPI
-     * @param rank_in rank
-     * @param comm_world_in MPI communicator
-     *
+     * @brief add item to input list
+     * 
+     * @param item input_item
      */
-    void InitMPI(const int rank_in, MPI_Comm comm_world_in)
-    {
-        rank = rank_in;
-        comm_world = comm_world_in;
-    }
-#endif
-  private:
     void add_item(const Input_Item& item);
+    // general items
     void item_general();
+    // items for pw
+    void item_pw();
+    // items for sdft
+    void item_sdft();
+    // items for relax
+    void item_relax();
+    // items for lcao
+    void item_lcao();
+    // items for postprocess
+    void item_postprocess();
+    // items for md
     void item_md();
+    // items for others
+    void item_others();
+
 
   private:
-#ifdef __MPI
-    MPI_Comm comm_world;
-#endif
     int rank = 0;
     // All input items
     std::map<std::string, Input_Item> input_lists;
@@ -56,21 +60,11 @@ class ReadInput
     std::vector<Input_Item*> checkvalue_items;
     // reset value items for readin parameters
     std::vector<Input_Item*> resetvalue_items;
+#ifdef __MPI
+    /// bcast value function
+    std::vector<std::function<void(Parameter&)>> bcastfuncs;
+#endif
 };
-
-template <class T>
-T convertstr(const std::string& in)
-{
-  T out;
-  std::stringstream ss;
-  ss << in;
-  ss >> out;
-  return out;
-}
-#define strvalue item.str_values[0]
-#define intvalue convertstr<int>(item.str_values[0])
-#define doublevalue convertstr<double>(item.str_values[0])
-#define boolvalue convertstr<bool>(item.str_values[0])
 
 } // namespace ModuleIO
 

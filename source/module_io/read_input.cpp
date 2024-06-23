@@ -4,6 +4,7 @@
 #include "module_base/tool_title.h"
 
 #include <fstream>
+#include <iostream>
 #include <string.h>
 namespace ModuleIO
 {
@@ -39,17 +40,46 @@ void read_information(std::ifstream& ifs, std::vector<std::string>& output, cons
     }
 }
 
-ReadInput::ReadInput()
+ReadInput::ReadInput(const int& rank)
 {
+    this->rank = rank;
     this->item_general();
+    this->item_pw();
+    this->item_sdft();
+    this->item_relax();
+    this->item_lcao();
+    this->item_postprocess();
+    this->item_md();
+    this->item_others();
 }
 
-void ReadInput::ReadTxtInput(Parameter& param, const std::string& filename)
+void ReadInput::readin_parameters(Parameter& param, const std::string& filename, const bool& test_mode)
+{
+    // 1. only rank 0 read the input file
+    if (this->rank == 0)
+    {
+        this->read_txt_input(param, filename);
+    }
+    if(test_mode)
+    {
+        std::cout << "----------------------------------------------------------" << std::endl;
+        std::cout << "  INPUT parameters have been successfully checked!" << std::endl;
+        std::cout << "----------------------------------------------------------" << std::endl;
+        exit(0);
+        return;
+    }
+#ifdef __MPI
+    // 2. broadcast the parameters
+    for (auto& bcastfunc: this->bcastfuncs)
+    {
+        bcastfunc(param);
+    }
+#endif
+}
+
+void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
 {
     ModuleBase::TITLE("Input", "Read");
-
-    if (this->rank != 0)
-        return ;
 
     std::ifstream ifs(filename.c_str(), std::ios::in);
 
@@ -123,23 +153,30 @@ void ReadInput::ReadTxtInput(Parameter& param, const std::string& filename)
         readvalue_item->readvalue(*readvalue_item, param);
     }
 
-    // 2) check the value of the parameters
+    // 2) reset the value of some parameters based on readin values
+    //    e.g. if (calulation_type == "nscf") then set "init_chg" to "file".
+    for (auto& resetvalue_item: this->resetvalue_items)
+    {
+        resetvalue_item->resetvalue(*resetvalue_item, param);
+    }
+
+    // 3) check the value of the parameters
     for (auto& checkvalue_item: this->checkvalue_items)
     {
         checkvalue_item->checkvalue(*checkvalue_item, param);
     }
 
-    // 3) reset the value of some parameters based on readin values
-    //    e.g. if (calulation_type == "nscf") then set "init_chg" to file.
-    for (auto& resetvalue_item: this->resetvalue_items)
-    {
-        resetvalue_item->resetvalue(*resetvalue_item, param);
-    }
+    
 }
 
 void ReadInput::add_item(const Input_Item& item)
 {
-    this->input_lists.insert(make_pair(item.label, item));
+    // only rank 0 read the input file
+    // So only rank 0 add the item to the input list
+    if (this->rank == 0)
+    {
+        this->input_lists.insert(make_pair(item.label, item));
+    }
 }
 
 } // namespace ModuleIO
