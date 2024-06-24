@@ -64,6 +64,29 @@ class Gint
     int nbxx;
     int ny, nplane, startz_current; // from rhopw
 
+    // in cal_gint_gpu.cpp
+    void gamma_gpu_vlocal_interface(Gint_inout* inout);
+    
+    void gamma_gpu_rho_interface(Gint_inout* inout);
+
+    void gamma_gpu_force_interface(Gint_inout* inout);
+
+    // in cal_gint_cpu.cpp
+    void cal_gint_cpu(Gint_inout* inout);
+
+    void cpu_vlocal_interface(Gint_inout* inout);
+
+    void cpu_dvlocal_interface(Gint_inout* inout);
+
+    void cpu_vlocal_meta_interface(Gint_inout* inout);
+
+    void cpu_rho_interface(Gint_inout* inout);
+
+    void cpu_tau_interface(Gint_inout* inout);
+
+    void cpu_force_interface(Gint_inout* inout);
+
+    void cpu_force_meta_interface(Gint_inout* inout);
     //------------------------------------------------------
     // in gint_vl.cpp
     //------------------------------------------------------

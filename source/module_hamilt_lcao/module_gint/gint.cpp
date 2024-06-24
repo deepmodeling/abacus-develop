@@ -36,540 +36,66 @@ Gint::~Gint()
 void Gint::cal_gint(Gint_inout* inout)
 {
     ModuleBase::timer::tick("Gint_interface", "cal_gint");
-    if (inout->job == Gint_Tools::job_type::vlocal)
-    {
-        ModuleBase::TITLE("Gint_interface", "cal_gint_vlocal");
-        ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal");
-    }
-    else if (inout->job == Gint_Tools::job_type::vlocal_meta)
-    {
-        ModuleBase::TITLE("Gint_interface", "cal_gint_vlocal_meta");
-        ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal_meta");
-    }
-    else if (inout->job == Gint_Tools::job_type::rho)
-    {
-        ModuleBase::TITLE("Gint_interface", "cal_gint_rho");
-        ModuleBase::timer::tick("Gint_interface", "cal_gint_rho");
-    }
-    else if (inout->job == Gint_Tools::job_type::tau)
-    {
-        ModuleBase::TITLE("Gint_interface", "cal_gint_tau");
-        ModuleBase::timer::tick("Gint_interface", "cal_gint_tau");
-    }
-    else if (inout->job == Gint_Tools::job_type::force)
-    {
-        ModuleBase::TITLE("Gint_interface", "cal_gint_force");
-        ModuleBase::timer::tick("Gint_interface", "cal_gint_force");
-    }
-    if (inout->job == Gint_Tools::job_type::force_meta)
-    {
-        ModuleBase::TITLE("Gint_interface", "cal_gint_force_meta");
-        ModuleBase::timer::tick("Gint_interface", "cal_gint_force_meta");
-    }
     const UnitCell& ucell = *this->ucell;
     const int max_size = this->gridt->max_atom;
     const int LD_pool = max_size * ucell.nwmax;
     const int lgd = this->gridt->lgd;
-    const int nnrg = this->gridt->nnrg;
-
-    if (max_size != 0)
+    if (max_size == 0)
+    {
+        ModuleBase::WARNING_QUIT("Gint_interface::cal_gint", "max_size equal to 0!");
+    }
+    if (lgd == 0)
+    {
+        ModuleBase::WARNING_QUIT("Gint_interface::cal_gint", "lgd equal to 0!");
+    }
+    if (GlobalV::device_flag == "gpu" && GlobalV::GAMMA_ONLY_LOCAL)
     {
 #ifdef __CUDA
-        if (GlobalV::device_flag == "gpu" && GlobalV::GAMMA_ONLY_LOCAL && lgd > 0)
+        if (inout->job == Gint_Tools::job_type::vlocal)
         {
-            double ylmcoef[100];
-            ModuleBase::GlobalFunc::ZEROS(ylmcoef, 100);
-            for (int i = 0; i < 100; i++)
-            {
-                ylmcoef[i] = ModuleBase::Ylm::ylmcoef[i];
-            }
-
-            const double dr = this->gridt->dr_uniform;
-
-            if (inout->job == Gint_Tools::job_type::vlocal)
-            {
-                GintKernel::gint_gamma_vl_gpu(this->hRGint,
-                                              inout->vl,
-                                              ylmcoef,
-                                              dr,
-                                              this->gridt->rcuts.data(),
-                                              *this->gridt,
-                                              ucell);
-            }
-            else if (inout->job == Gint_Tools::job_type::rho)
-            {
-                int nrxx = this->gridt->ncx * this->gridt->ncy * this->nplane;
-                for (int is = 0; is < GlobalV::NSPIN; ++is)
-                {
-                    ModuleBase::GlobalFunc::ZEROS(inout->rho[is], nrxx);
-                    GintKernel::gint_gamma_rho_gpu(this->DMRGint[is],
-                                                   ylmcoef,
-                                                   dr,
-                                                   this->gridt->rcuts.data(),
-                                                   *this->gridt,
-                                                   ucell,
-                                                   inout->rho[is]);
-                }
-            }
-            else if (inout->job == Gint_Tools::job_type::force)
-            {
-                const int ncyz = this->ny * this->nplane;
-                int nat = ucell.nat;
-                const int isforce = inout->isforce;
-                const int isstress = inout->isstress;
-                if (isforce || isstress)
-                {
-                    std::vector<double> force(nat * 3, 0.0);
-                    std::vector<double> stress(6, 0.0);
-                    GintKernel::gint_fvl_gamma_gpu(this->DMRGint[inout->ispin],
-                                                   inout->vl,
-                                                   force.data(),
-                                                   stress.data(),
-                                                   dr,
-                                                   this->gridt->rcuts.data(),
-                                                   isforce,
-                                                   isstress,
-                                                   *this->gridt,
-                                                   ucell);
-                    if (inout->isforce)
-                    {
-                        for (int iat = 0; iat < nat; iat++)
-                        {
-                            inout->fvl_dphi[0](iat, 0) += force[iat * 3];
-                            inout->fvl_dphi[0](iat, 1) += force[iat * 3 + 1];
-                            inout->fvl_dphi[0](iat, 2) += force[iat * 3 + 2];
-                        }
-                    }
-                    if (inout->isstress)
-                    {
-                        inout->svl_dphi[0](0, 0) += stress[0];
-                        inout->svl_dphi[0](0, 1) += stress[1];
-                        inout->svl_dphi[0](0, 2) += stress[2];
-                        inout->svl_dphi[0](1, 1) += stress[3];
-                        inout->svl_dphi[0](1, 2) += stress[4];
-                        inout->svl_dphi[0](2, 2) += stress[5];
-                    }
-                }
-            }
+            gamma_gpu_vlocal_interface(inout);
         }
-        else
-#endif
+        else if (inout->job == Gint_Tools::job_type::rho)
         {
-#ifdef __MKL
-            const int mkl_threads = mkl_get_max_threads();
-            mkl_set_num_threads(1);
-#endif
-
-#ifdef _OPENMP
-#pragma omp parallel
-#endif
-            {
-                // prepare some constants
-                const int ncyz = this->ny * this->nplane; // mohan add 2012-03-25
-                const double dv = ucell.omega / this->ncxyz;
-
-                // it's a uniform grid to save orbital values, so the delta_r is
-                // a constant.
-                const double delta_r = this->gridt->dr_uniform;
-
-                if ((inout->job == Gint_Tools::job_type::vlocal || inout->job == Gint_Tools::job_type::vlocal_meta)
-                    && !GlobalV::GAMMA_ONLY_LOCAL)
-                {
-                    if (!pvpR_alloc_flag)
-                    {
-                        ModuleBase::WARNING_QUIT("Gint_interface::cal_gint", "pvpR has not been allocated yet!");
-                    }
-                    else
-                    {
-                        ModuleBase::GlobalFunc::ZEROS(this->pvpR_reduced[inout->ispin], nnrg);
-                    }
-                }
-
-                if (inout->job == Gint_Tools::job_type::dvlocal)
-                {
-                    if (GlobalV::GAMMA_ONLY_LOCAL)
-                    {
-                        ModuleBase::WARNING_QUIT("Gint_interface::cal_gint", "dvlocal only for k point!");
-                    }
-                    ModuleBase::GlobalFunc::ZEROS(this->pvdpRx_reduced[inout->ispin], nnrg);
-                    ModuleBase::GlobalFunc::ZEROS(this->pvdpRy_reduced[inout->ispin], nnrg);
-                    ModuleBase::GlobalFunc::ZEROS(this->pvdpRz_reduced[inout->ispin], nnrg);
-                }
-
-                // perpare auxiliary arrays to store thread-specific values
-#ifdef _OPENMP
-                double* pvpR_thread = nullptr;
-                hamilt::HContainer<double>* hRGint_thread = nullptr; // auxiliary pointer for multi-threading
-
-                if (inout->job == Gint_Tools::job_type::vlocal || inout->job == Gint_Tools::job_type::vlocal_meta)
-                {
-                    if (!GlobalV::GAMMA_ONLY_LOCAL)
-                    {
-                        pvpR_thread = new double[nnrg]();
-                        ModuleBase::GlobalFunc::ZEROS(pvpR_thread, nnrg);
-                    }
-                    if (GlobalV::GAMMA_ONLY_LOCAL && lgd > 0)
-                    {
-                        hRGint_thread = new hamilt::HContainer<double>(*this->hRGint);
-                    }
-                }
-
-                double* pvdpRx_thread = nullptr;
-                double* pvdpRy_thread = nullptr;
-                double* pvdpRz_thread = nullptr;
-                if (inout->job == Gint_Tools::job_type::dvlocal)
-                {
-                    pvdpRx_thread = new double[nnrg];
-                    ModuleBase::GlobalFunc::ZEROS(pvdpRx_thread, nnrg);
-                    pvdpRy_thread = new double[nnrg];
-                    ModuleBase::GlobalFunc::ZEROS(pvdpRy_thread, nnrg);
-                    pvdpRz_thread = new double[nnrg];
-                    ModuleBase::GlobalFunc::ZEROS(pvdpRz_thread, nnrg);
-                }
-
-                ModuleBase::matrix fvl_dphi_thread;
-                ModuleBase::matrix svl_dphi_thread;
-                if (inout->job == Gint_Tools::job_type::force || inout->job == Gint_Tools::job_type::force_meta)
-                {
-                    if (inout->isforce)
-                    {
-                        fvl_dphi_thread.create(inout->fvl_dphi->nr, inout->fvl_dphi->nc);
-                        fvl_dphi_thread.zero_out();
-                    }
-                    if (inout->isstress)
-                    {
-                        svl_dphi_thread.create(inout->svl_dphi->nr, inout->svl_dphi->nc);
-                        svl_dphi_thread.zero_out();
-                    }
-                }
-
-#pragma omp for
-#endif
-                // entering the main loop of grid points
-                for (int grid_index = 0; grid_index < this->nbxx; grid_index++)
-                {
-                    // get the value: how many atoms has orbital value on this
-                    // grid.
-                    const int na_grid = this->gridt->how_many_atoms[grid_index];
-
-                    if (na_grid == 0)
-                    {
-                        continue;
-                    }
-
-                    if (inout->job == Gint_Tools::job_type::rho)
-                    {
-                        // int* vindex = Gint_Tools::get_vindex(ncyz, ibx, jby, kbz);
-                        int* vindex = Gint_Tools::get_vindex(this->bxyz,
-                                                             this->bx,
-                                                             this->by,
-                                                             this->bz,
-                                                             this->nplane,
-                                                             this->gridt->start_ind[grid_index],
-                                                             ncyz);
-                        this->gint_kernel_rho(na_grid, grid_index, delta_r, vindex, LD_pool, ucell, inout);
-                        delete[] vindex;
-                    }
-                    else if (inout->job == Gint_Tools::job_type::tau)
-                    {
-                        int* vindex = Gint_Tools::get_vindex(this->bxyz,
-                                                             this->bx,
-                                                             this->by,
-                                                             this->bz,
-                                                             this->nplane,
-                                                             this->gridt->start_ind[grid_index],
-                                                             ncyz);
-                        this->gint_kernel_tau(na_grid, grid_index, delta_r, vindex, LD_pool, inout, ucell);
-                        delete[] vindex;
-                    }
-                    else if (inout->job == Gint_Tools::job_type::force)
-                    {
-                        double* vldr3 = Gint_Tools::get_vldr3(inout->vl,
-                                                              this->bxyz,
-                                                              this->bx,
-                                                              this->by,
-                                                              this->bz,
-                                                              this->nplane,
-                                                              this->gridt->start_ind[grid_index],
-                                                              ncyz,
-                                                              dv);
-
-#ifdef _OPENMP
-                        this->gint_kernel_force(na_grid,
-                                                grid_index,
-                                                delta_r,
-                                                vldr3,
-                                                LD_pool,
-                                                inout->ispin,
-                                                inout->isforce,
-                                                inout->isstress,
-                                                &fvl_dphi_thread,
-                                                &svl_dphi_thread,
-                                                ucell);
-#else
-                        this->gint_kernel_force(na_grid,
-                                                grid_index,
-                                                delta_r,
-                                                vldr3,
-                                                LD_pool,
-                                                inout->ispin,
-                                                inout->isforce,
-                                                inout->isstress,
-                                                inout->fvl_dphi,
-                                                inout->svl_dphi,
-                                                ucell);
-#endif
-                        delete[] vldr3;
-                    }
-                    else if (inout->job == Gint_Tools::job_type::vlocal)
-                    {
-                        double* vldr3 = Gint_Tools::get_vldr3(inout->vl,
-                                                              this->bxyz,
-                                                              this->bx,
-                                                              this->by,
-                                                              this->bz,
-                                                              this->nplane,
-                                                              this->gridt->start_ind[grid_index],
-                                                              ncyz,
-                                                              dv);
-#ifdef _OPENMP
-                        if ((GlobalV::GAMMA_ONLY_LOCAL && lgd > 0) || !GlobalV::GAMMA_ONLY_LOCAL)
-                        {
-                            this->gint_kernel_vlocal(na_grid,
-                                                     grid_index,
-                                                     delta_r,
-                                                     vldr3,
-                                                     LD_pool,
-                                                     pvpR_thread,
-                                                     ucell,
-                                                     hRGint_thread);
-                        }
-#else
-                        if (GlobalV::GAMMA_ONLY_LOCAL && lgd > 0)
-                        {
-                            this->gint_kernel_vlocal(na_grid, grid_index, delta_r, vldr3, LD_pool, ucell, nullptr);
-                        }
-                        if (!GlobalV::GAMMA_ONLY_LOCAL)
-                        {
-                            this->gint_kernel_vlocal(na_grid,
-                                                     grid_index,
-                                                     delta_r,
-                                                     vldr3,
-                                                     LD_pool,
-                                                     ucell,
-                                                     this->pvpR_reduced[inout->ispin]);
-                        }
-#endif
-                        delete[] vldr3;
-                    }
-                    else if (inout->job == Gint_Tools::job_type::dvlocal)
-                    {
-                        double* vldr3 = Gint_Tools::get_vldr3(inout->vl,
-                                                              this->bxyz,
-                                                              this->bx,
-                                                              this->by,
-                                                              this->bz,
-                                                              this->nplane,
-                                                              this->gridt->start_ind[grid_index],
-                                                              ncyz,
-                                                              dv);
-#ifdef _OPENMP
-                        this->gint_kernel_dvlocal(na_grid,
-                                                  grid_index,
-                                                  delta_r,
-                                                  vldr3,
-                                                  LD_pool,
-                                                  pvdpRx_thread,
-                                                  pvdpRy_thread,
-                                                  pvdpRz_thread,
-                                                  ucell);
-#else
-                        this->gint_kernel_dvlocal(na_grid,
-                                                  grid_index,
-                                                  delta_r,
-                                                  vldr3,
-                                                  LD_pool,
-                                                  this->pvdpRx_reduced[inout->ispin],
-                                                  this->pvdpRy_reduced[inout->ispin],
-                                                  this->pvdpRz_reduced[inout->ispin],
-                                                  ucell);
-#endif
-                        delete[] vldr3;
-                    }
-                    else if (inout->job == Gint_Tools::job_type::vlocal_meta)
-                    {
-                        double* vldr3 = Gint_Tools::get_vldr3(inout->vl,
-                                                              this->bxyz,
-                                                              this->bx,
-                                                              this->by,
-                                                              this->bz,
-                                                              this->nplane,
-                                                              this->gridt->start_ind[grid_index],
-                                                              ncyz,
-                                                              dv);
-                        double* vkdr3 = Gint_Tools::get_vldr3(inout->vofk,
-                                                              this->bxyz,
-                                                              this->bx,
-                                                              this->by,
-                                                              this->bz,
-                                                              this->nplane,
-                                                              this->gridt->start_ind[grid_index],
-                                                              ncyz,
-                                                              dv);
-#ifdef _OPENMP
-                        if ((GlobalV::GAMMA_ONLY_LOCAL && lgd > 0) || !GlobalV::GAMMA_ONLY_LOCAL)
-                        {
-                            this->gint_kernel_vlocal_meta(na_grid,
-                                                          grid_index,
-                                                          delta_r,
-                                                          vldr3,
-                                                          vkdr3,
-                                                          LD_pool,
-                                                          pvpR_thread,
-                                                          ucell,
-                                                          hRGint_thread);
-                        }
-#else
-                        if (GlobalV::GAMMA_ONLY_LOCAL && lgd > 0)
-                        {
-                            this->gint_kernel_vlocal_meta(na_grid,
-                                                          grid_index,
-                                                          delta_r,
-                                                          vldr3,
-                                                          vkdr3,
-                                                          LD_pool,
-                                                          ucell,
-                                                          nullptr);
-                        }
-                        if (!GlobalV::GAMMA_ONLY_LOCAL)
-                        {
-                            this->gint_kernel_vlocal_meta(na_grid,
-                                                          grid_index,
-                                                          delta_r,
-                                                          vldr3,
-                                                          vkdr3,
-                                                          LD_pool,
-                                                          ucell,
-                                                          this->pvpR_reduced[inout->ispin]);
-                        }
-#endif
-                        delete[] vldr3;
-                        delete[] vkdr3;
-                    }
-                    else if (inout->job == Gint_Tools::job_type::force_meta)
-                    {
-                        double* vldr3 = Gint_Tools::get_vldr3(inout->vl,
-                                                              this->bxyz,
-                                                              this->bx,
-                                                              this->by,
-                                                              this->bz,
-                                                              this->nplane,
-                                                              this->gridt->start_ind[grid_index],
-                                                              ncyz,
-                                                              dv);
-
-                        double* vkdr3 = Gint_Tools::get_vldr3(inout->vofk,
-                                                              this->bxyz,
-                                                              this->bx,
-                                                              this->by,
-                                                              this->bz,
-                                                              this->nplane,
-                                                              this->gridt->start_ind[grid_index],
-                                                              ncyz,
-                                                              dv);
-
-#ifdef _OPENMP
-                        this->gint_kernel_force_meta(na_grid,
-                                                     grid_index,
-                                                     delta_r,
-                                                     vldr3,
-                                                     vkdr3,
-                                                     LD_pool,
-                                                     inout->ispin,
-                                                     inout->isforce,
-                                                     inout->isstress,
-                                                     &fvl_dphi_thread,
-                                                     &svl_dphi_thread,
-                                                     ucell);
-#else
-                        this->gint_kernel_force_meta(na_grid,
-                                                     grid_index,
-                                                     delta_r,
-                                                     vldr3,
-                                                     vkdr3,
-                                                     LD_pool,
-                                                     inout->ispin,
-                                                     inout->isforce,
-                                                     inout->isstress,
-                                                     inout->fvl_dphi,
-                                                     inout->svl_dphi,
-                                                     ucell);
-#endif
-                        delete[] vldr3;
-                        delete[] vkdr3;
-                    }
-                } // int grid_index
-
-#ifdef _OPENMP
-                if (inout->job == Gint_Tools::job_type::vlocal || inout->job == Gint_Tools::job_type::vlocal_meta)
-                {
-                    if (GlobalV::GAMMA_ONLY_LOCAL && lgd > 0)
-                    {
-#pragma omp critical(gint_gamma)
-                        {
-                            BlasConnector::axpy(this->hRGint->get_nnr(),
-                                                1.0,
-                                                hRGint_thread->get_wrapper(),
-                                                1,
-                                                this->hRGint->get_wrapper(),
-                                                1);
-                        }
-                        delete hRGint_thread;
-                    }
-                    if (!GlobalV::GAMMA_ONLY_LOCAL)
-                    {
-#pragma omp critical(gint_k)
-                        {
-                            BlasConnector::axpy(nnrg, 1.0, pvpR_thread, 1, pvpR_reduced[inout->ispin], 1);
-                        }
-                        delete[] pvpR_thread;
-                    }
-                }
-
-#pragma omp critical(gint)
-                if (inout->job == Gint_Tools::job_type::force || inout->job == Gint_Tools::job_type::force_meta)
-                {
-                    if (inout->isforce)
-                    {
-                        inout->fvl_dphi[0] += fvl_dphi_thread;
-                    }
-                    if (inout->isstress)
-                    {
-                        inout->svl_dphi[0] += svl_dphi_thread;
-                    }
-                }
-#endif
-            } // end of #pragma omp parallel
-#ifdef __MKL
-            mkl_set_num_threads(mkl_threads);
-#endif
+            gamma_gpu_rho_interface(inout);
         }
-
-    } // end of if (max_size)
+        else if (inout->job == Gint_Tools::job_type::force)
+        {
+            gamma_gpu_force_interface(inout);
+        }
+#endif
+    }
+    else{
+#ifdef __MKL
+        const int mkl_threads = mkl_get_max_threads();
+        mkl_set_num_threads(1);
+#endif
+        if (inout->job == Gint_Tools::job_type::vlocal)
+        {
+            cpu_vlocal_interface(inout);
+        }
+        else if (inout->job == Gint_Tools::job_type::dvlocal)
+        {
+            cpu_dvlocal_interface(inout);
+        }
+        else if (inout->job == Gint_Tools::job_type::vlocal_meta)
+        {
+            cpu_vlocal_meta_interface(inout);
+        }
+        else if (inout->job == Gint_Tools::job_type::rho)
+        {
+            cpu_rho_interface(inout);
+        }
+        else if (inout->job == Gint_Tools::job_type::force)
+        {
+            cpu_force_interface(inout);
+        }
+        else if (inout->job == Gint_Tools::job_type::force_meta)
+        {
+            cpu_force_meta_interface(inout);
+        }
+    }
     ModuleBase::timer::tick("Gint_interface", "cal_gint");
-
-    if (inout->job == Gint_Tools::job_type::vlocal)
-        ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal");
-    if (inout->job == Gint_Tools::job_type::vlocal_meta)
-        ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal_meta");
-    if (inout->job == Gint_Tools::job_type::rho)
-        ModuleBase::timer::tick("Gint_interface", "cal_gint_rho");
-    if (inout->job == Gint_Tools::job_type::tau)
-        ModuleBase::timer::tick("Gint_interface", "cal_gint_tau");
-    if (inout->job == Gint_Tools::job_type::force)
-        ModuleBase::timer::tick("Gint_interface", "cal_gint_force");
-    if (inout->job == Gint_Tools::job_type::force_meta)
-        ModuleBase::timer::tick("Gint_interface", "cal_gint_force_meta");
 
     return;
 }
