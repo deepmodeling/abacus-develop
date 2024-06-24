@@ -1,66 +1,56 @@
 #include "ORB_control.h"
+
 #include "ORB_gen_tables.h"
-#include "module_base/timer.h"
-#include "module_base/parallel_common.h"
-#include "module_base/lapack_connector.h"
 #include "module_base/blacs_connector.h"
+#include "module_base/lapack_connector.h"
 #include "module_base/memory.h"
+#include "module_base/parallel_common.h"
 #include "module_base/parallel_global.h"
+#include "module_base/timer.h"
 
 //#include "build_st_pw.h"
 
-ORB_control::ORB_control(
-    const bool& gamma_only_in,
-    const int& nlocal_in,
-    const int& nbands_in,
-    const int& nspin_in,
-    const int& dsize_in,
-    const int& nb2d_in,
-    const int& dcolor_in,
-    const int& drank_in,
-    const int& myrank_in,
-    const std::string& calculation_in,
-    const std::string& ks_solver_in) :
-    gamma_only(gamma_only_in),
-    nlocal(nlocal_in),
-    nbands(nbands_in),
-    nspin(nspin_in),
-    dsize(dsize_in),
-    nb2d(nb2d_in),
-    dcolor(dcolor_in),
-    drank(drank_in),
-    myrank(myrank_in),
-    calculation(calculation_in),
-    ks_solver(ks_solver_in),
-    setup_2d(true)
+ORB_control::ORB_control(const bool& gamma_only_in,
+                         const int& nlocal_in,
+                         const int& nbands_in,
+                         const int& nspin_in,
+                         const int& dsize_in,
+                         const int& nb2d_in,
+                         const int& dcolor_in,
+                         const int& drank_in,
+                         const int& myrank_in,
+                         const std::string& calculation_in,
+                         const std::string& ks_solver_in)
+    : gamma_only(gamma_only_in), nlocal(nlocal_in), nbands(nbands_in), nspin(nspin_in), dsize(dsize_in), nb2d(nb2d_in),
+      dcolor(dcolor_in), drank(drank_in), myrank(myrank_in), calculation(calculation_in), ks_solver(ks_solver_in),
+      setup_2d(true)
 {
     this->ParaV.nspin = nspin_in;
 }
 
-ORB_control::ORB_control() :
-    setup_2d(false)
-{}
+ORB_control::ORB_control() : setup_2d(false)
+{
+}
 ORB_control::~ORB_control()
 {
-    Cblacs_exit(1); //delete global variables in cblacs but do not close MPI
+    Cblacs_exit(1); // delete global variables in cblacs but do not close MPI
 }
 
-void ORB_control::read_orb_first(
-    std::ofstream& ofs_in,
-    LCAO_Orbitals& orb,
-    const int& ntype, // mohan add 2021-04-26
-    const std::string& orbital_dir,  // liuyu add 2023-04-06
-    const std::string *orbital_file,  // liuyu add 2023-04-06
-    const std::string& descriptor_file,  // liuyu add 2023-04-06
-    const int& lmax, // mohan add 2021-04-26 
-    const double& lcao_ecut_in, // mohan add 2021-04-16
-    const double& lcao_dk_in, // mohan add 2021-04-16
-    const double& lcao_dr_in, // mohan add 2021-04-16
-    const double& lcao_rmax_in, // mohan add 2021-04-16
-    const bool& deepks_setorb,
-    const int& out_mat_r,
-    const bool& force_flag, // mohan add 2021-05-07
-    const int& my_rank // mohan add 2021-04-26
+void ORB_control::read_orb_first(std::ofstream& ofs_in,
+                                 LCAO_Orbitals& orb,
+                                 const int& ntype,                   // mohan add 2021-04-26
+                                 const std::string& orbital_dir,     // liuyu add 2023-04-06
+                                 const std::string* orbital_file,    // liuyu add 2023-04-06
+                                 const std::string& descriptor_file, // liuyu add 2023-04-06
+                                 const int& lmax,                    // mohan add 2021-04-26
+                                 const double& lcao_ecut_in,         // mohan add 2021-04-16
+                                 const double& lcao_dk_in,           // mohan add 2021-04-16
+                                 const double& lcao_dr_in,           // mohan add 2021-04-16
+                                 const double& lcao_rmax_in,         // mohan add 2021-04-16
+                                 const bool& deepks_setorb,
+                                 const int& out_mat_r,
+                                 const bool& force_flag, // mohan add 2021-05-07
+                                 const int& my_rank      // mohan add 2021-04-26
 )
 {
     ModuleBase::TITLE("ORB_control", "read_orb_first");
@@ -91,7 +81,7 @@ void ORB_control::read_orb_first(
     {
         orb.read_in_flag = true;
         orb.descriptor_file = descriptor_file;
-        for(int it = 0; it < ntype; ++it)
+        for (int it = 0; it < ntype; ++it)
         {
             std::string ofile = orbital_dir + orbital_file[it];
             orb.orbital_file.push_back(ofile);
@@ -101,33 +91,24 @@ void ORB_control::read_orb_first(
     orb.bcast_files(ntype, my_rank);
 #endif
 
-    orb.Read_Orbitals(
-        ofs_in,
-        ntype,
-        lmax,
-        deepks_setorb,
-        out_mat_r,
-        force_flag,
-        my_rank);
+    orb.Read_Orbitals(ofs_in, ntype, lmax, deepks_setorb, out_mat_r, force_flag, my_rank);
 
     ModuleBase::timer::tick("ORB_control", "read_orb_first");
     return;
 }
 
-void ORB_control::set_orb_tables(
-    std::ofstream& ofs_in,
-    ORB_gen_tables& OGT,
-    LCAO_Orbitals& orb,
-    const double& lat0,
-    const bool& deepks_setorb,
-    const int& Lmax_exx,
-    const int& nprojmax,
-    const int* nproj,
-    const Numerical_Nonlocal* beta_)
+void ORB_control::set_orb_tables(std::ofstream& ofs_in,
+                                 ORB_gen_tables& OGT,
+                                 LCAO_Orbitals& orb,
+                                 const double& lat0,
+                                 const bool& deepks_setorb,
+                                 const int& Lmax_exx,
+                                 const int& nprojmax,
+                                 const int* nproj,
+                                 const Numerical_Nonlocal* beta_)
 {
     ModuleBase::TITLE("ORB_control", "set_orb_tables");
     ModuleBase::timer::tick("ORB_control", "set_orb_tables");
-
 
 #ifdef __NORMAL
 
@@ -139,14 +120,13 @@ void ORB_control::set_orb_tables(
     }
 #endif
 
-
     ///////////////////////////////////////////////////////////////////
     /// (2) FUNCTION : Generate Gaunt_Coefficients and S-table using OGT.init
     /// 	   Must have 'Numerical Orbital' infomation
     ///
     /// (2) RESULT : we have tabulated S table for use.
     ///////////////////////////////////////////////////////////////////
-    
+
     /// generate overlap & kinetic table
     OGT.gen_tables(ofs_in, orb, Lmax_exx, deepks_setorb, nprojmax, nproj, beta_);
     // init lat0, in order to interpolated value from this table.
@@ -158,17 +138,16 @@ void ORB_control::set_orb_tables(
     return;
 }
 
-void ORB_control::clear_after_ions(
-    ORB_gen_tables& OGT,
-    LCAO_Orbitals& orb,
-    const bool& deepks_setorb,
-    const int* nproj_)
+void ORB_control::clear_after_ions(ORB_gen_tables& OGT,
+                                   LCAO_Orbitals& orb,
+                                   const bool& deepks_setorb,
+                                   const int* nproj_)
 {
     ModuleBase::TITLE("ORB_control", "clear_after_ions");
     OGT.MOT.Destroy_Table(orb);
     OGT.tbeta.Destroy_Table_Beta(orb.get_ntype(), orb.Phi, nproj_);
 
-    //caoyu add 2021-03-18
+    // caoyu add 2021-03-18
     if (deepks_setorb)
     {
         OGT.talpha.Destroy_Table_Alpha(orb);
@@ -176,15 +155,14 @@ void ORB_control::clear_after_ions(
     return;
 }
 
-
-void ORB_control::setup_2d_division(std::ofstream& ofs_running,
-    std::ofstream& ofs_warning)
+void ORB_control::setup_2d_division(std::ofstream& ofs_running, std::ofstream& ofs_warning)
 {
     ModuleBase::TITLE("ORB_control", "setup_2d_division");
     ofs_running << "\n SETUP THE DIVISION OF H/S MATRIX" << std::endl;
 
     // (1) calculate nrow, ncol, nloc.
-    if (ks_solver == "genelpa" || ks_solver == "scalapack_gvx" || ks_solver == "cusolver" || ks_solver == "cg_in_lcao" || ks_solver == "pexsi")
+    if (ks_solver == "genelpa" || ks_solver == "scalapack_gvx" || ks_solver == "cusolver" || ks_solver == "cusolvermp"
+        || ks_solver == "cg_in_lcao" || ks_solver == "pexsi")
     {
         ofs_running << " divide the H&S matrix using 2D block algorithms." << std::endl;
 #ifdef __MPI
@@ -203,9 +181,12 @@ void ORB_control::setup_2d_division(std::ofstream& ofs_running,
 
     // determine whether 2d-division or not according to ks_solver
     bool div_2d;
-    if (ks_solver == "lapack" || ks_solver == "cg" || ks_solver == "dav" || ks_solver == "dav_subspace") div_2d = false;
+    if (ks_solver == "lapack" || ks_solver == "cg" || ks_solver == "dav" || ks_solver == "dav_subspace")
+        div_2d = false;
 #ifdef __MPI
-    else if (ks_solver == "genelpa" || ks_solver == "scalapack_gvx" || ks_solver == "cusolver" || ks_solver == "cg_in_lcao" || ks_solver == "pexsi") div_2d = true;
+    else if (ks_solver == "genelpa" || ks_solver == "scalapack_gvx" || ks_solver == "cusolver"
+             || ks_solver == "cusolvermp" || ks_solver == "cg_in_lcao" || ks_solver == "pexsi")
+        div_2d = true;
 #endif
     else
     {
@@ -214,27 +195,28 @@ void ORB_control::setup_2d_division(std::ofstream& ofs_running,
     }
 }
 
-
-void ORB_control::set_parameters(std::ofstream& ofs_running,
-    std::ofstream& ofs_warning)
+void ORB_control::set_parameters(std::ofstream& ofs_running, std::ofstream& ofs_warning)
 {
     ModuleBase::TITLE("ORB_control", "set_parameters");
 
     Parallel_Orbitals* pv = &this->ParaV;
     // set loc_size
-    if (gamma_only)//xiaohui add 2014-12-21
+    if (gamma_only) // xiaohui add 2014-12-21
     {
         pv->loc_size = nbands / dsize;
 
         // mohan add 2012-03-29
         if (pv->loc_size == 0)
         {
-            ofs_warning << " loc_size=0" << " in proc " << myrank + 1 << std::endl;
+            ofs_warning << " loc_size=0"
+                        << " in proc " << myrank + 1 << std::endl;
             ModuleBase::WARNING_QUIT("ORB_control::set_parameters", "nbands < ncpus");
         }
 
-        if (drank < nbands % dsize) pv->loc_size += 1;
-        if (pv->testpb)ModuleBase::GlobalFunc::OUT(ofs_running, "local size", pv->loc_size);
+        if (drank < nbands % dsize)
+            pv->loc_size += 1;
+        if (pv->testpb)
+            ModuleBase::GlobalFunc::OUT(ofs_running, "local size", pv->loc_size);
 
         // set loc_sizes
         delete[] pv->loc_sizes;
@@ -271,7 +253,8 @@ void ORB_control::set_parameters(std::ofstream& ofs_running,
         // mohan add 2012-03-29
         if (pv->loc_size == 0)
         {
-            ofs_warning << " loc_size=0" << " in proc " << myrank + 1 << std::endl;
+            ofs_warning << " loc_size=0"
+                        << " in proc " << myrank + 1 << std::endl;
             ModuleBase::WARNING_QUIT("ORB_control::set_parameters", "nbands < ncpus");
         }
 
@@ -279,7 +262,8 @@ void ORB_control::set_parameters(std::ofstream& ofs_running,
         {
             pv->loc_size += 1;
         }
-        if (pv->testpb) ModuleBase::GlobalFunc::OUT(ofs_running, "local size", pv->loc_size);
+        if (pv->testpb)
+            ModuleBase::GlobalFunc::OUT(ofs_running, "local size", pv->loc_size);
 
         // set loc_sizes
         delete[] pv->loc_sizes;
@@ -308,10 +292,12 @@ void ORB_control::set_parameters(std::ofstream& ofs_running,
                 break;
             }
         }
-    }//xiaohui add 2014-12-21
+    } // xiaohui add 2014-12-21
 
-    if (pv->testpb)ModuleBase::GlobalFunc::OUT(ofs_running, "lastband_in_proc", pv->lastband_in_proc);
-    if (pv->testpb)ModuleBase::GlobalFunc::OUT(ofs_running, "lastband_number", pv->lastband_number);
+    if (pv->testpb)
+        ModuleBase::GlobalFunc::OUT(ofs_running, "lastband_in_proc", pv->lastband_in_proc);
+    if (pv->testpb)
+        ModuleBase::GlobalFunc::OUT(ofs_running, "lastband_number", pv->lastband_number);
 
     return;
 }
@@ -338,9 +324,9 @@ void ORB_control::divide_HS_2d(
         ModuleBase::GlobalFunc::OUT(ofs_running, "dim1", pv->dim1);
 
 #ifdef __MPI
-    // mohan add 2011-04-16
+        // mohan add 2011-04-16
 #ifdef __DEBUG
-assert(nb2d > 0);
+    assert(nb2d > 0);
 #endif
 
     ModuleBase::GlobalFunc::OUT(ofs_running, "nb2d", pv->get_block_size());
@@ -361,7 +347,8 @@ assert(nb2d > 0);
     }
 
     // init blacs context for genelpa
-    if (ks_solver == "genelpa" || ks_solver == "scalapack_gvx" || ks_solver == "cusolver" || ks_solver == "cg_in_lcao" || ks_solver == "pexsi")
+    if (ks_solver == "genelpa" || ks_solver == "scalapack_gvx" || ks_solver == "cusolver" || ks_solver == "cusolvermp"
+        || ks_solver == "cg_in_lcao" || ks_solver == "pexsi")
     {
         pv->set_desc_wfc_Eij(nlocal, nbands, pv->nrow);
     }

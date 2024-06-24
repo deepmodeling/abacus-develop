@@ -17,6 +17,15 @@ case='^[^#].*_.*$'
 # enable AddressSanitizer
 sanitize=false
 
+threshold_file="threshold"   
+# can specify the threshold for each test case
+# threshold file example:
+# threshold 0.0000001
+# force_threshold 0.0001
+# stress_threshold 0.001
+# fatal_threshold 1
+
+
 while getopts a:n:t:c:s:r:f:g flag
 do
     case "${flag}" in
@@ -52,6 +61,16 @@ echo "Generate reference: $g"
 echo "--------------------------------"
 echo ""
 
+
+#----------------------------------------------------------
+# check_deviation()
+#----------------------------------------------------------
+check_deviation_pass(){
+    deviation=$1
+    thr=$2
+    echo $(awk -v deviation="$deviation" -v thr="$thr" 'BEGIN{ if (sqrt(deviation*deviation) < thr) print 1; else print 0}')
+}
+
 #----------------------------------------------------------
 # define a function named 'check_out'
 #----------------------------------------------------------
@@ -60,6 +79,10 @@ check_out(){
     # input file $1 is 'result.out' in each test directory
     #------------------------------------------------------
     outfile=$1
+    thr=$2
+    force_thr=$3
+    stress_thr=$4
+    fatal_thr=$5
 
     #------------------------------------------------------
     # outfile = result.out
@@ -102,7 +125,7 @@ check_out(){
 
 
         #--------------------------------------------------
-        # If deviation < threshold, then the test passes,
+        # If deviation < thr, then the test passes,
         # otherwise, the test prints out warning
         # Daye Zheng found bug on 2021-06-20,
         # deviation should be positively defined
@@ -113,28 +136,24 @@ check_out(){
             fatal_case_list+=$dir'\n'
             break
         else
-            if [ $(echo "sqrt($deviation*$deviation) < $threshold"|bc) = 0 ]; then
+            if [ $(check_deviation_pass $deviation $thr) = 0 ]; then
                 if [ $key == "totalforceref" ]; then
-                    if [ $(echo "sqrt($deviation*$deviation) < $force_threshold"|bc) = 0 ]; then
+                    if [ $(check_deviation_pass $deviation $force_thr) = 0 ]; then
                         echo -e "[WARNING   ] "\
                             "$key cal=$cal ref=$ref deviation=$deviation"
                         let failed++
                         failed_case_list+=$dir'\n'
                     else
-                        #echo "$key cal=$cal ref=$ref deviation=$deviation"
-                        #echo "[ PASS ] $key"
                         echo -e "\e[0;32m[      OK  ] \e[0m $key"
                     fi
 
                 elif [ $key == "totalstressref" ]; then
-                    if [ $(echo "sqrt($deviation*$deviation) < $stress_threshold"|bc) = 0 ]; then
+                    if [ $(check_deviation_pass $deviation $stress_thr) = 0 ]; then
                         echo -e "[WARNING   ] "\
                             "$key cal=$cal ref=$ref deviation=$deviation"
                         let failed++
                         failed_case_list+=$dir'\n'
                     else
-                        #echo "$key cal=$cal ref=$ref deviation=$deviation"
-                        #echo "[ PASS ] $key"
                         echo -e "\e[0;32m[      OK  ] \e[0m $key"
                     fi
 
@@ -144,7 +163,7 @@ check_out(){
                     let failed++
                     failed_case_list+=$dir'\n'
                 fi
-                if [ $(echo "sqrt($deviation*$deviation) < $fatal_threshold"|bc) = 0 ]; then
+                if [ $(check_deviation_pass $deviation $fatal_thr) = 0 ]; then
                     let fatal++
                     fatal_case_list+=$dir
                     echo -e "\e[0;31m[ERROR      ] \e[0m"\
@@ -155,13 +174,31 @@ check_out(){
                 fi
                 break
             else
-                #echo "$key cal=$cal ref=$ref deviation=$deviation"
-                #echo "[ PASS ] $key"
                 echo -e "\e[0;32m[      OK  ] \e[0m $key"
             fi
         fi
         let ok++
     done
+}
+
+#---------------------------------------------
+# function to read the threshold from the file
+#---------------------------------------------
+get_threshold()
+{
+    threshold_f=$1
+    threshold_name=$2
+    default_value=$3
+    if [ -e $threshold_f ]; then 
+        threshold_value=$(awk -v tn="$threshold_name" '$1==tn {print $2}' "$threshold_f")
+         if [ -n "$threshold_value" ]; then
+            echo $threshold_value
+        else
+            echo $default_value
+        fi
+    else
+        echo $default_value
+    fi
 }
 
 #---------------------------------------------
@@ -227,7 +264,11 @@ for dir in $testdir; do
                 fatal_case_list+=$dir'\n'
                 break
             else
-                check_out result.out
+                my_threshold=$(get_threshold $threshold_file "threshold" $threshold)
+                my_force_threshold=$(get_threshold $threshold_file "force_threshold" $force_threshold)
+                my_stress_threshold=$(get_threshold $threshold_file "stress_threshold" $stress_threshold)
+                my_fatal_threshold=$(get_threshold $threshold_file "fatal_threshold" $fatal_threshold)
+                check_out result.out $my_threshold $my_force_threshold $my_stress_threshold $my_fatal_threshold
             fi
         else
             ../tools/catch_properties.sh result.ref
