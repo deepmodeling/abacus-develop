@@ -14,8 +14,17 @@ class Parameter
   public:
     Parameter();
     ~Parameter();
+    // ---------------------------------------------------------------
+    // --------------          Getters                ----------------
+    // ---------------------------------------------------------------
+  public:
+    // We can only read the value of Parameter, but cannot modify it.
+    const Parameter& get() const;
+    // We can only read the value of mdp, but cannot modify it.
+    const MD_para& get_mdp() const;
 
   private:
+    // Only ReadInput can modify the value of Parameter.
     friend class ModuleIO::ReadInput;
     // ---------------------------------------------------------------
     // --------------       INPUT  Parameters         ----------------
@@ -276,7 +285,7 @@ class Parameter
     double block_height = 0.1; ///< height of the block
 
     // ==============   #Parameters (12.Test) ====================
-    请为下面的变量写一行getter，用小写，保留下划线： bool out_alllog = false; ///< output all logs.
+    bool out_alllog = false; ///< output all logs.
     int nurse = 0;                                                            ///< used for debug.
     bool colour = false;                                                      ///< used for fun.
     bool t_in_h = true;                                                       ///< calculate the T or not.
@@ -543,241 +552,11 @@ class Parameter
     // ---------------------------------------------------------------
     // --------------       Other  Parameters         ----------------
     // ---------------------------------------------------------------
-
-    // ---------------------------------------------------------------
-    // --------------          Getters                ----------------
-    // ---------------------------------------------------------------
-  public:
-    // ==============   #Getters (1.General)  =====================
-    std::string get_suffix() const;
-    std::string get_latname() const;
-    std::string get_stru_file() const;
-    std::string get_kpoint_file() const;
-    std::string get_pseudo_dir() const;
-    std::string get_orbital_dir() const;
-    double get_pseudo_rcut() const;
-    bool get_pseudo_mesh() const;
-    int get_lmaxmax() const;
-    std::string get_dft_functional() const;
-    double get_xc_temperature() const;
-    std::string get_calculation() const;
-    std::string get_esolver_type() const;
-    int get_ntype() const;
-    int get_nspin() const;
-    double get_kspacing(int i) const;
-    double get_min_dist_coef() const;
-    int get_nbands() const;
-    int get_nbands_istate() const;
-    std::string get_bands_to_print() const;
-    std::string get_symmetry() const;
-    bool get_init_vel() const;
-    double get_symmetry_prec() const;
-    bool get_symmetry_autoclose() const;
-    double get_nelec() const;
-    double get_nelec_delta() const;
-    double get_nupdown() const;
-    bool get_two_fermi() const;
-    bool get_out_mul() const;
-    bool get_noncolin() const;
-    bool get_lspinorb() const;
-    int get_kpar() const;
-    int get_bndpar() const;
-    int get_out_freq_elec() const;
-    bool get_dft_plus_dmft() const;
-    bool get_rpa() const;
-    int get_printe() const;
-    int get_mem_saver() const;
-    int get_diago_proc() const;
-    int get_nbspline() const;
-    std::string get_wannier_card() const;
-    double get_soc_lambda() const;
-    bool get_cal_force() const;
-    int get_out_freq_ion() const;
-    int get_elpa_num_thread() const;
-    std::string get_device() const;
-    std::string get_precision() const;
-
-    // ==============   #Parameters (2.PW) ===========================
-    double get_ecutwfc() const;
-    double get_ecutrho() const;
-    double get_erf_ecut() const;
-    double get_erf_height() const;
-    double get_erf_sigma() const;
-    int get_fft_mode() const;
-    int get_pw_diag_nmax() const;
-    int get_diago_cg_prec() const;
-    int get_pw_diag_ndim() const;
-    bool get_diago_full_acc() const;
-    double get_pw_diag_thr() const;
-    int get_nb2d() const;
-    double get_scf_thr() const;
-    int get_scf_thr_type() const;
-    std::string get_init_wfc() const;
-    bool get_psi_initializer() const;
-    std::string get_init_chg() const;
-    std::string get_chg_extrap() const;
-    int get_out_chg() const;
-    int get_out_pot() const;
-    int get_out_wfc_pw() const;
-    bool get_out_wfc_r() const;
-    int get_out_dos() const;
-    std::vector<int> get_out_band() const;
-    bool get_out_proj_band() const;
-    bool get_restart_save() const;
-    bool get_restart_load() const;
-    std::string get_read_file_dir() const;
-    int get_nx() const;
-    int get_ny() const;
-    int get_nz() const;
-    int get_ncx() const;
-    int get_ncy() const;
-    int get_ncz() const;
-    int get_ndx() const;
-    int get_ndy() const;
-    int get_ndz() const;
-    double get_cell_factor() const;
-    int get_pw_seed() const;
-
-    // ==============   #Parameters (3.Stochasti DFT) ===========================
-    int get_method_sto() const;
-    int get_npart_sto() const;
-    int get_nbands_sto() const;
-    std::string get_nbndsto_str() const;
-    int get_nche_sto() const;
-    double get_emin_sto() const;
-    double get_emax_sto() const;
-    int get_seed_sto() const;
-    double get_initsto_ecut() const;
-    int get_initsto_freq() const;
-    bool get_cal_cond() const;
-    double get_cond_che_thr() const;
-    double get_cond_dw() const;
-    double get_cond_wcut() const;
-    double get_cond_dt() const;
-    int get_cond_dtbatch() const;
-    int get_cond_smear() const;
-    double get_cond_fwhm() const;
-    bool get_cond_nonlocal() const;
-
-    // ==============   #Parameters (4.Relaxation) ===========================
-    std::string get_ks_solver() const;
-    int get_scf_nmax() const;
-    int get_relax_nmax() const;
-    bool get_out_stru() const;
-    double get_force_thr() const;
-    double get_force_thr_ev() const;
-    double get_force_thr_ev2() const;
-    double get_relax_cg_thr() const;
-    double get_stress_thr() const;
-    double get_press1() const;
-    double get_press2() const;
-    double get_press3() const;
-    double get_relax_bfgs_w1() const;
-    double get_relax_bfgs_w2() const;
-    double get_relax_bfgs_rmax() const;
-    double get_relax_bfgs_rmin() const;
-    double get_relax_bfgs_init() const;
-    bool get_cal_stress() const;
-    std::string get_fixed_axes() const;
-    bool get_fixed_ibrav() const;
-    bool get_fixed_atoms() const;
-    std::string get_relax_method() const;
-    bool get_relax_new() const;
-    double get_relax_scale_force() const;
-    std::string get_out_level() const;
-    bool get_out_md_control() const;
-    bool get_out_dm() const;
-    bool get_out_dm1() const;
-    bool get_out_bandgap() const;
-    bool get_use_paw() const;
-
-    bool get_deepks_out_labels() const;
-    bool get_deepks_scf() const;
-    bool get_deepks_bandgap() const;
-    bool get_deepks_equiv() const;
-    bool get_deepks_out_unittest() const;
-    std::string get_deepks_model() const;
-
-    // ==============   #Parameters (5.LCAO) ===========================
-    std::string get_basis_type() const;
-    bool get_gamma_only() const;
-    bool get_gamma_only_local() const;
-
-    double get_search_radius() const;
-    bool get_search_pbc() const;
-    double get_lcao_ecut() const;
-    double get_lcao_dk() const;
-    double get_lcao_dr() const;
-    double get_lcao_rmax() const;
-
-    std::vector<int> get_out_mat_hs() const;
-    bool get_out_mat_hs2() const;
-    bool get_out_mat_dh() const;
-    bool get_out_mat_xc() const;
-    bool get_out_hr_npz() const;
-    bool get_out_dm_npz() const;
-    bool get_dm_to_rho() const;
-    int get_out_interval() const;
-    bool get_out_app_flag() const;
-    int get_out_ndigits() const;
-    bool get_out_mat_t() const;
-    bool get_out_element_info() const;
-    bool get_out_mat_r() const;
-    int get_out_wfc_lcao() const;
-    int get_bx() const;
-    int get_by() const;
-    int get_bz() const;
-    int get_nstream() const;
-
-    // ==============   #Parameters (6.Smearing) ===========================
-
-    std::string get_smearing_method() const;
-    double get_smearing_sigma() const;
-    // ==============   #Parameters (7.Charge Mixing) ======================
-    std::string get_mixing_mode() const;
-    double get_mixing_beta() const;
-    int get_mixing_ndim() const;
-    double get_mixing_restart() const;
-    double get_mixing_gg0() const;
-    double get_mixing_beta_mag() const;
-    double get_mixing_gg0_mag() const;
-    double get_mixing_gg0_min() const;
-    double get_mixing_angle() const;
-    bool is_mixing_tau() const;
-    bool is_mixing_dftu() const;
-    bool is_mixing_dmr() const;
-    // ==============   #Parameters (8.DOS) ===============================
-    double get_dos_emin_ev() const;
-    double get_dos_emax_ev() const;
-    bool get_dos_setemin() const;
-    bool get_dos_setemax() const;
-    double get_dos_edelta_ev() const;
-    double get_dos_scale() const;
-    double get_dos_sigma() const;
-    int get_dos_nche() const;
-
-    // ==============   #Parameters (9.Molecular dynamics) ================
-    MD_para get_mdp() const;
-    double get_ref_cell_factor() const;
-    bool get_cal_syns() const;
-    double get_dmax() const;
-
-    // =======   #Parameters (10.Electric field and dipole correction) ====
-    bool get_efield_flag() const;
-    bool get_dip_cor_flag() const;
-    int get_efield_dir() const;
-    double get_efield_pos_max() const;
-    double get_efield_pos_dec() const;
-    double get_efield_amp() const;
-
-    bool get_gate_flag() const;
-    double get_zgate() const;
-    bool get_relax() const;
-    bool get_block() const;
-    double get_block_down() const;
-    double get_block_up() const;
-    double get_block_height() const;
-    // ==============   #Parameters (11.Gate field) ================
+    int myrank = 0;
+    int nproc = 1;
+    int mypool = 0;
+    int npool = 1;
+    int nproc_in_pool = 1;
 };
 
 extern Parameter PARAM;
