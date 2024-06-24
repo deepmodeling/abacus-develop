@@ -1,5 +1,6 @@
 #include "read_input.h"
 
+#include "module_base/global_function.h"
 #include "module_base/tool_quit.h"
 #include "module_base/tool_title.h"
 
@@ -40,6 +41,8 @@ void read_information(std::ifstream& ifs, std::vector<std::string>& output, cons
     }
 }
 
+bool ReadInput::check_mode = false;
+
 ReadInput::ReadInput(const int& rank)
 {
     this->rank = rank;
@@ -53,14 +56,14 @@ ReadInput::ReadInput(const int& rank)
     this->item_others();
 }
 
-void ReadInput::readin_parameters(Parameter& param, const std::string& filename, const bool& test_mode)
+void ReadInput::readin_parameters(Parameter& param, const std::string& filename)
 {
     // 1. only rank 0 read the input file
     if (this->rank == 0)
     {
         this->read_txt_input(param, filename);
     }
-    if(test_mode)
+    if (this->check_mode)
     {
         std::cout << "----------------------------------------------------------" << std::endl;
         std::cout << "  INPUT parameters have been successfully checked!" << std::endl;
@@ -79,7 +82,7 @@ void ReadInput::readin_parameters(Parameter& param, const std::string& filename,
 
 void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
 {
-    ModuleBase::TITLE("Input", "Read");
+    ModuleBase::TITLE("ReadInput", "read_txt_input");
 
     std::ifstream ifs(filename.c_str(), std::ios::in);
 
@@ -165,8 +168,113 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
     {
         checkvalue_item->checkvalue(*checkvalue_item, param);
     }
+}
 
-    
+void ReadInput::write_txt_input(const Parameter& param, const std::string& filename)
+{
+    ModuleBase::TITLE("ReadInput", "write_txt_input");
+    for (auto& item: this->input_lists)
+    {
+        item.second.getfinalvalue(item.second, param);
+    }
+    std::ofstream ofs(filename.c_str(), std::ios::out);
+    ofs << "INPUT_PARAMETERS" << std::endl;
+    ofs << std::setiosflags(std::ios::left);
+
+    ofs << "#Parameters (1.General)" << std::endl;
+    for (auto& item: this->input_lists)
+    {
+        const Input_Item* p_item = &(item.second);
+        if(p_item->label == "ecutwfc")
+        {
+            ofs << "\n#Parameters (2.PW)" << std::endl;
+        }
+        else if(p_item->label == "method_sto")
+        {
+            ofs << "\n#Parameters (3.Stochastic DFT)" << std::endl;
+        }
+        else if(p_item->label == "ks_solver")
+        {
+            ofs << "\n#Parameters (4.Relaxation)" << std::endl;
+        }
+        else if(p_item->label == "basis_type")
+        {
+            ofs << "\n#Parameters (5.LCAO)" << std::endl;
+        }
+        else if(p_item->label == "smearing_method")
+        {
+            ofs << "\n#Parameters (6.Smearing)" << std::endl;
+        }
+        else if(p_item->label == "mixing_type")
+        {
+            ofs << "\n#Parameters (7.Charge Mixing)" << std::endl;
+        }
+        else if(p_item->label == "dos_emin_ev")
+        {
+            ofs << "\n#Parameters (8.DOS)" << std::endl;
+        }
+        else if(p_item->label == "md_type")
+        {
+            ofs << "\n#Parameters (9.Molecular dynamics)" << std::endl;
+        }
+        else if(p_item->label == "efield_flag")
+        {
+            ofs << "\n#Parameters (10.Electric field and dipole correction)" << std::endl;
+        }
+        else if(p_item->label == "gate_flag")
+        {
+            ofs << "\n#Parameters (11.Gate field)" << std::endl;
+        }
+        else if(p_item->label == "out_alllog")
+        {
+            ofs << "\n#Parameters (12.Test)" << std::endl;
+        }
+        else if(p_item->label == "vdw_method")
+        {
+            ofs << "\n#Parameters (13.vdW Correction)" << std::endl;
+        }
+        else if(p_item->label == "exx_hybrid_alpha")
+        {
+            ofs << "\n#Parameters (14.exx)" << std::endl;
+        }
+        else if(p_item->label == "td_force_dt")
+        {
+            ofs << "\n#Parameters (16.tddft)" << std::endl;
+        }
+        else if(p_item->label == "berry_phase")
+        {
+            ofs << "\n#Parameters (17.berry_wannier)" << std::endl;
+        }
+        else if(p_item->label == "imp_sol")
+        {
+            ofs << "\n#Parameters (18.implicit_solvation)" << std::endl;
+        }
+        else if(p_item->label == "of_kinetic")
+        {
+            ofs << "\n#Parameters (19.orbital free density functional theory)" << std::endl;
+        }
+        else if(p_item->label == "dft_plus_u")
+        {
+            ofs << "\n#Parameters (20.dft+u)" << std::endl;
+        }
+        else if(p_item->label == "bessel_nao_ecut")
+        {
+            ofs << "\n#Parameters (21.spherical bessel)" << std::endl;
+        }
+        else if(p_item->label == "sc_mag_switch")
+        {
+            ofs << "\n#Parameters (22.non-collinear spin-constrained DFT)" << std::endl;
+        }
+        else if(p_item->label == "qo_switch")
+        {
+            ofs << "\n#Parameters (23.Quasiatomic Orbital analysis)" << std::endl;
+        }
+        else if(p_item->label == "pexsi_npole")
+        {
+            ofs << "\n#Parameters (24.PEXSI)" << std::endl;
+        }
+        ModuleBase::GlobalFunc::OUTP(ofs, p_item->label, p_item->final_value.str(), p_item->annotation);
+    }
 }
 
 void ReadInput::add_item(const Input_Item& item)
@@ -178,5 +286,6 @@ void ReadInput::add_item(const Input_Item& item)
         this->input_lists.insert(make_pair(item.label, item));
     }
 }
+
 
 } // namespace ModuleIO

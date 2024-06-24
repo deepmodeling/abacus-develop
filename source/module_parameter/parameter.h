@@ -21,29 +21,29 @@ class Parameter
     // --------------       INPUT  Parameters         ----------------
     // ---------------------------------------------------------------
     // ==============   #Parameters (1.General)  =====================
-    std::string suffix = "ABACUS"; ///< suffix of out put dir
-    std::string latname = "none";  ///< lattice name
-    std::string stru_file = "";    ///< file contains atomic positions -- xiaohui modify 2015-02-01
-    std::string kpoint_file = "";  ///< file contains k-points -- xiaohui modify 2015-02-01
-    std::string pseudo_dir = "";   ///< directory of pseudopotential
-    std::string orbital_dir = "";  ///< directory of orbital file
-    double pseudo_rcut = 15.0;     ///< cut-off radius for calculating msh
+    std::string suffix = "ABACUS";   ///< suffix of out put dir
+    std::string latname = "none";    ///< lattice name
+    std::string stru_file = "STRU";  ///< file contains atomic positions -- xiaohui modify 2015-02-01
+    std::string kpoint_file = "KPT"; ///< file contains k-points -- xiaohui modify 2015-02-01
+    std::string pseudo_dir = "";     ///< directory of pseudopotential
+    std::string orbital_dir = "";    ///< directory of orbital file
+    double pseudo_rcut = 15.0;       ///< cut-off radius for calculating msh
     bool pseudo_mesh = 0; ///< 0: use msh to normalize radial wave functions;  1: use mesh, which is used in QE.
     int lmaxmax = 2;      ///< maximum of l channels used
-    std::string dft_functional = "";    ///< input DFT functional.
-    double xc_temperature = 0.0;        ///< only relevant if finite temperature functional is used
-    std::string calculation = "scf";    ///< "scf" : self consistent calculation.
-                                        ///< "nscf" : non-self consistent calculation.
-                                        ///< "relax" : cell relaxations
-    std::string esolver_type = "ksdft"; ///< the energy solver: ksdft, sdft, ofdft, tddft, lj, dp
-    int ntype = 0;                      ///< number of atom types
-    int nspin = 0;                      ///< LDA ; LSDA ; non-linear spin
-    double kspacing[3]{0.0, 0.0, 0.0};  ///< kspacing for k-point generation
-    double min_dist_coef = 0.2;         ///< allowed minimum distance between two atoms
-    int nbands = 0;                     ///< number of bands
-    int nbands_istate = 5;              ///< number of bands around fermi level for get_pchg calculation.
-    std::string bands_to_print = "";    ///< specify the bands to be calculated in the get_pchg calculation, formalism
-                                        ///< similar to ocp_set.
+    std::string dft_functional = "default";         ///< input DFT functional.
+    double xc_temperature = 0.0;                    ///< only relevant if finite temperature functional is used
+    std::string calculation = "scf";                ///< "scf" : self consistent calculation.
+                                                    ///< "nscf" : non-self consistent calculation.
+                                                    ///< "relax" : cell relaxations
+    std::string esolver_type = "ksdft";             ///< the energy solver: ksdft, sdft, ofdft, tddft, lj, dp
+    int ntype = 1;                                  ///< number of atom types
+    int nspin = 1;                                  ///< LDA ; LSDA ; non-linear spin
+    std::vector<double> kspacing = {0.0, 0.0, 0.0}; ///< kspacing for k-point generation
+    double min_dist_coef = 0.2;                     ///< allowed minimum distance between two atoms
+    int nbands = 0;                                 ///< number of bands
+    int nbands_istate = 5;                          ///< number of bands around fermi level for get_pchg calculation.
+    std::string bands_to_print = ""; ///< specify the bands to be calculated in the get_pchg calculation, formalism
+                                     ///< similar to ocp_set.
     /* symmetry level:
       -1, no symmetry at all;
       0, only basic time reversal would be considered;
@@ -75,215 +75,217 @@ class Parameter
     int out_freq_ion = 0; ///< the frequency ( >= 0 ) of ionic step to output charge density and wavefunction. 0: output
                           ///< only when ion steps are finished
     int elpa_num_thread = -1; ///< Number of threads need to use in elpa
-    std::string device = "device";
+    std::string device = "cpu";
     std::string precision = "double";
 
     // ==============   #Parameters (2.PW) ===========================
 
-    double ecutwfc;    ///< energy cutoff for wavefunctions
-    double ecutrho;    ///< energy cutoff for charge/potential
-    double erf_ecut;   ///< the value of the constant energy cutoff
-    double erf_height; ///< the height of the energy step for reciprocal vectors
-    double erf_sigma;  ///< the width of the energy step for reciprocal vectors
-    int fft_mode = 0;  ///< fftw mode 0: estimate, 1: measure, 2: patient, 3: exhaustive
-    int pw_diag_nmax;
-    int diago_cg_prec;         ///< mohan add 2012-03-31
-    int pw_diag_ndim;          ///< dimension of workspace for Davidson diagonalization
-    bool diago_full_acc;       ///< all the empty states are diagonalized
-    double pw_diag_thr;        ///< used in cg method
-    int nb2d;                  ///< matrix 2d division.
-    double scf_thr;            ///< \sum |rhog_out - rhog_in |^2
-    int scf_thr_type;          ///< type of the criterion of scf_thr, 1: reci drho, 2: real drho
-    std::string init_wfc;      ///< "file","atomic","random"
-    bool psi_initializer;      ///< whether use psi_initializer to initialize wavefunctions
-    std::string init_chg;      ///< "file","atomic"
-    std::string chg_extrap;    ///< xiaohui modify 2015-02-01
-    int out_chg;               ///< output charge density. 0: no; 1: yes
-    int out_pot;               ///< yes or no
-    int out_wfc_pw;            ///< 0: no; 1: txt; 2: dat
-    bool out_wfc_r;            ///< 0: no; 1: yes
-    int out_dos;               ///< dos calculation. mohan add 20090909
-    std::vector<int> out_band; ///< band calculation pengfei 2014-10-13
-    bool out_proj_band;        ///< projected band structure calculation jiyy add 2022-05-11
-    bool restart_save;         ///< restart //Peize Lin add 2020-04-04
-    bool restart_load;
-    std::string read_file_dir; ///< directory of files for reading
-    int nx, ny, nz;            ///< three dimension of FFT wavefunc
-    int ncx, ncy, ncz;         ///< three dimension of FFT charge/grid
-    int ndx, ndy, ndz;         ///< three dimension of FFT smooth charge density
-    double cell_factor;        ///< LiuXh add 20180619
-    int pw_seed;               ///< random seed for initializing wave functions qianrui 2021-8-12
+    double ecutwfc = 50;    ///< energy cutoff for wavefunctions
+    double ecutrho = 200;   ///< energy cutoff for charge/potential
+    double erf_ecut = 0;    ///< the value of the constant energy cutoff
+    double erf_height = 0;  ///< the height of the energy step for reciprocal vectors
+    double erf_sigma = 0.1; ///< the width of the energy step for reciprocal vectors
+    int fft_mode = 0;       ///< fftw mode 0: estimate, 1: measure, 2: patient, 3: exhaustive
+    int pw_diag_nmax = 50;
+    int diago_cg_prec = 1;             ///< mohan add 2012-03-31
+    int pw_diag_ndim = 4;              ///< dimension of workspace for Davidson diagonalization
+    bool diago_full_acc = false;       ///< all the empty states are diagonalized
+    double pw_diag_thr = 0.01;         ///< used in cg method
+    int nb2d = 0;                      ///< matrix 2d division.
+    double scf_thr = 1e-9;             ///< \sum |rhog_out - rhog_in |^2
+    int scf_thr_type = 1;              ///< type of the criterion of scf_thr, 1: reci drho, 2: real drho
+    std::string init_wfc = "atomic";   ///< "file","atomic","random"
+    bool psi_initializer = false;      ///< whether use psi_initializer to initialize wavefunctions
+    std::string init_chg = "atomic";   ///< "file","atomic"
+    std::string chg_extrap = "atomic"; ///< xiaohui modify 2015-02-01
+    int out_chg = 0;                   ///< output charge density. 0: no; 1: yes
+    int out_pot = 0;                   ///< yes or no
+    int out_wfc_pw = 0;                ///< 0: no; 1: txt; 2: dat
+    bool out_wfc_r = false;            ///< 0: no; 1: yes
+    int out_dos = 0;                   ///< dos calculation. mohan add 20090909
+    std::vector<int> out_band;         ///< band calculation pengfei 2014-10-13
+    bool out_proj_band = false;        ///< projected band structure calculation jiyy add 2022-05-11
+    bool restart_save = false;         ///< restart //Peize Lin add 2020-04-04
+    bool restart_load = false;
+    std::string read_file_dir = "auto"; ///< directory of files for reading
+    int nx = 0, ny = 0, nz = 0;         ///< three dimension of FFT wavefunc
+    int ncx = 0, ncy = 0, ncz = 0;      ///< three dimension of FFT charge/grid
+    int ndx = 0, ndy = 0, ndz = 0;      ///< three dimension of FFT smooth charge density
+    double cell_factor = 1.2;           ///< LiuXh add 20180619
+    int pw_seed = 1;                    ///< random seed for initializing wave functions qianrui 2021-8-12
 
     // ==============   #Parameters (3.Stochasti DFT) ===========================
-    int method_sto;            ///< different methods for sdft, 1: slow, less memory  2: fast, more memory
-    int npart_sto;             ///< for method_sto = 2, reduce memory
-    int nbands_sto = 256;      ///< number of stochastic bands //qianrui 2021-2-5
-    std::string nbndsto_str;   ///< string parameter for stochastic bands
-    int nche_sto;              ///< number of orders for Chebyshev expansion in stochastic DFT ///<qinarui 2021-2-5
-    double emin_sto;           ///< Emin to normalize H
-    double emax_sto;           ///< Emax to normalize H
-    int seed_sto;              ///< random seed for sDFT
-    double initsto_ecut = 0.0; ///< maximum ecut to init stochastic bands
-    int initsto_freq;          ///< frequency to init stochastic orbitals when running md
-    bool cal_cond;             ///< calculate electronic conductivities
-    double cond_che_thr;       ///< control the error of Chebyshev expansions for conductivities
-    double cond_dw;            ///< d\omega for conductivities
-    double cond_wcut;          ///< cutoff \omega for conductivities
-    double cond_dt;            ///< dt to integrate conductivities
-    int cond_dtbatch;          ///< exp(iH*dt*cond_dtbatch) is expanded with Chebyshev expansion.
-    int cond_smear;            ///< smearing method for conductivities 1: Gaussian 2: Lorentzian
-    double cond_fwhm;          ///< FWHM for conductivities
-    bool cond_nonlocal;        ///< if calculate nonlocal effects
+    int method_sto = 2;              ///< different methods for sdft, 1: slow, less memory  2: fast, more memory
+    int npart_sto = 1;               ///< for method_sto = 2, reduce memory
+    int nbands_sto = 256;            ///< number of stochastic bands //qianrui 2021-2-5
+    std::string nbndsto_str = "256"; ///< string parameter for stochastic bands
+    int nche_sto = 100;         ///< number of orders for Chebyshev expansion in stochastic DFT ///<qinarui 2021-2-5
+    double emin_sto = 0;        ///< Emin to normalize H
+    double emax_sto = 0;        ///< Emax to normalize H
+    int seed_sto = 0;           ///< random seed for sDFT
+    double initsto_ecut = 0.0;  ///< maximum ecut to init stochastic bands
+    int initsto_freq = 0;       ///< frequency to init stochastic orbitals when running md
+    bool cal_cond = false;      ///< calculate electronic conductivities
+    double cond_che_thr = 1e-8; ///< control the error of Chebyshev expansions for conductivities
+    double cond_dw = 0.1;       ///< d\omega for conductivities
+    double cond_wcut = 10;      ///< cutoff \omega for conductivities
+    double cond_dt = 0.02;      ///< dt to integrate conductivities
+    int cond_dtbatch = 0;       ///< exp(iH*dt*cond_dtbatch) is expanded with Chebyshev expansion.
+    int cond_smear = 1;         ///< smearing method for conductivities 1: Gaussian 2: Lorentzian
+    double cond_fwhm = 0.4;     ///< FWHM for conductivities
+    bool cond_nonlocal = 1;     ///< if calculate nonlocal effects
 
     // ==============   #Parameters (4.Relaxation) ===========================
-    std::string ks_solver;     ///< xiaohui add 2013-09-01
-    int scf_nmax;              ///< number of max elec iter
-    int relax_nmax;            ///< number of max ionic iter
-    bool out_stru;             ///< outut stru file each ion step
-    double force_thr = 1.0e-3; ///< threshold of force in unit (Ry/Bohr)
-    double force_thr_ev;       ///< threshold of force in unit (eV/Angstrom)
-    double force_thr_ev2;      ///< invalid force threshold, mohan add 2011-04-17
-    double relax_cg_thr;       ///< threshold when cg to bfgs, pengfei add 2011-08-15
-    double stress_thr;         ///< Pengfei Li 2017-11-01 ///<LiuXh update 20180515
-    double press1;
-    double press2;
-    double press3;
-    double relax_bfgs_w1;     ///< wolfe condition 1
-    double relax_bfgs_w2;     ///< wolfe condition 2
-    double relax_bfgs_rmax;   ///< trust radius max
-    double relax_bfgs_rmin;   ///< trust radius min
-    double relax_bfgs_init;   ///< initial move
-    bool cal_stress;          ///< calculate the stress
-    std::string fixed_axes;   ///< which axes are fixed
-    bool fixed_ibrav;         ///< whether to keep type of lattice; must be used along with latname
-    bool fixed_atoms;         ///< whether to fix atoms during vc-relax
-    std::string relax_method; ///< methods to move_ion: sd, bfgs, cg...
-    bool relax_new;
-    double relax_scale_force;
-    std::string out_level = "m"; ///< control the output information.
-    bool out_md_control;         ///< internal parameter , added by zhengdy 2019-04-07
-    bool out_dm;                 ///< output density matrix. (gamma point)
-    bool out_dm1;                ///< output density matrix. (multi-k points)
-    bool out_bandgap;            ///< QO added for bandgap printing
-    bool use_paw = false;
+    std::string ks_solver = "cg";    ///< xiaohui add 2013-09-01
+    int scf_nmax = 100;              ///< number of max elec iter
+    int relax_nmax = 1;              ///< number of max ionic iter
+    bool out_stru = false;           ///< outut stru file each ion step
+    double force_thr = 1.0e-3;       ///< threshold of force in unit (Ry/Bohr)
+    double force_thr_ev = 0.0257112; ///< threshold of force in unit (eV/Angstrom)
+    double force_thr_ev2 = 0;        ///< invalid force threshold, mohan add 2011-04-17
+    double relax_cg_thr = 0.5;       ///< threshold when cg to bfgs, pengfei add 2011-08-15
+    double stress_thr = 0.5;         ///< Pengfei Li 2017-11-01 ///<LiuXh update 20180515
+    double press1 = 0;
+    double press2 = 0;
+    double press3 = 0;
+    double relax_bfgs_w1 = 0.01;     ///< wolfe condition 1
+    double relax_bfgs_w2 = 0.5;      ///< wolfe condition 2
+    double relax_bfgs_rmax = 0.8;    ///< trust radius max
+    double relax_bfgs_rmin = 1e-05;  ///< trust radius min
+    double relax_bfgs_init = 0.5;    ///< initial move
+    bool cal_stress = false;         ///< calculate the stress
+    std::string fixed_axes = "None"; ///< which axes are fixed
+    bool fixed_ibrav = false;        ///< whether to keep type of lattice; must be used along with latname
+    bool fixed_atoms = false;        ///< whether to fix atoms during vc-relax
+    std::string relax_method = "cg"; ///< methods to move_ion: sd, bfgs, cg...
+    bool relax_new = true;
+    double relax_scale_force = 0.5;
+    std::string out_level = "ie"; ///< control the output information.
+    bool out_md_control = false;  ///< internal parameter , added by zhengdy 2019-04-07
+    bool out_dm = false;          ///< output density matrix. (gamma point)
+    bool out_dm1 = false;         ///< output density matrix. (multi-k points)
+    bool out_bandgap = false;     ///< QO added for bandgap printing
+    bool use_paw = false;         ///< whether to use PAW in pw calculation
     //==========================================================
     // DeepKS -- added by caoyu and mohan
     //==========================================================
-    bool deepks_out_labels; ///< (need libnpy) prints energy and force labels and descriptors for training, wenfei
-                            ///< 2022-1-12
-    bool deepks_scf; ///<(need libnpy and libtorch) if set 1, a trained model would be needed to cal V_delta and F_delta
-    bool deepks_bandgap; ///< for bandgap label. QO added 2021-12-15
-    bool deepks_equiv;
-    bool deepks_out_unittest; ///< if set 1, prints intermediate quantities that shall be used for making unit test
-    std::string deepks_model; ///< needed when deepks_scf=1
+    bool deepks_out_labels = false; ///< (need libnpy) prints energy and force labels and descriptors for training,
+                                    ///< wenfei 2022-1-12
+    bool deepks_scf = false;        ///< (need libnpy and libtorch) if set to true, a trained model would be needed to
+                                    ///< calculate V_delta and F_delta
+    bool deepks_bandgap = false;    ///< for bandgap label. QO added 2021-12-15
+    bool deepks_equiv = false;      ///< whether to use equivariant version of DeePKS
+    bool deepks_out_unittest
+        = false; ///< if set to true, prints intermediate quantities that shall be used for making unit test
+    std::string deepks_model = ""; ///< needed when deepks_scf=1
 
     // ==============   #Parameters (5.LCAO) ===========================
-    std::string basis_type; ///< xiaohui add 2013-09-01, for structural adjustment
-    bool gamma_only;        ///< for plane wave.
-    bool gamma_only_local;  ///< for local orbitals.
+    std::string basis_type = "pw"; ///< xiaohui add 2013-09-01, for structural adjustment
+    bool gamma_only = false;       ///< for plane wave.
+    bool gamma_only_local = false; ///< for local orbitals.
 
     //==========================================================
     // two center integrals in LCAO
     // mohan add 2009-11-11
     //==========================================================
-    double search_radius; ///< 11.1
-    bool search_pbc;      ///< 11.2
-    double lcao_ecut;     ///< ecut of two center integral
-    double lcao_dk;       ///< delta k used in two center integral
-    double lcao_dr;       ///< dr used in two center integral
-    double lcao_rmax;     ///< rmax(a.u.) to make table.
+    double search_radius = -1.0; ///< 11.1
+    bool search_pbc = true;      ///< 11.2
+    double lcao_ecut = 0.0;      ///< ecut of two center integral
+    double lcao_dk = 0.01;       ///< delta k used in two center integral
+    double lcao_dr = 0.01;       ///< dr used in two center integral
+    double lcao_rmax = 30.0;     ///< rmax(a.u.) to make table.
 
-    std::vector<int> out_mat_hs; ///< output H matrix and S matrix in local basis.
-    bool out_mat_hs2;            ///< LiuXh add 2019-07-16, output H(R) matrix and S(R) matrix in local basis.
-    bool out_mat_dh;
-    bool out_mat_xc; ///< output exchange-correlation matrix in KS-orbital representation.
-    bool out_hr_npz; ///< output exchange-correlation matrix in KS-orbital representation.
-    bool out_dm_npz;
-    bool dm_to_rho;
-    int out_interval;
-    bool out_app_flag; ///< whether output r(R), H(R), S(R), T(R), and dH(R) matrices in an append manner during MD
-                       ///< liuyu 2023-03-20
-    int out_ndigits;
-    bool out_mat_t;
-    bool out_element_info; ///< output infomation of all element
-    bool out_mat_r;        ///< jingan add 2019-8-14, output r(R) matrix.
-    int out_wfc_lcao;      ///< output the wave functions in local basis.
-    int bx, by, bz;        ///< big mesh ball. mohan add 2011-04-21
-    int nstream;
+    std::vector<int> out_mat_hs = {0}; ///< output H matrix and S matrix in local basis.
+    bool out_mat_hs2 = false;          ///< LiuXh add 2019-07-16, output H(R) matrix and S(R) matrix in local basis.
+    bool out_mat_dh = false;
+    bool out_mat_xc = false; ///< output exchange-correlation matrix in KS-orbital representation.
+    bool out_hr_npz = false; ///< output exchange-correlation matrix in KS-orbital representation.
+    bool out_dm_npz = false;
+    bool dm_to_rho = false;
+    int out_interval = 1;
+    bool out_app_flag = true; ///< whether output r(R), H(R), S(R), T(R), and dH(R) matrices in an append manner during
+                              ///< MD liuyu 2023-03-20
+    int out_ndigits = 8;      ///< Assuming 8 digits precision is needed for matrices output
+    bool out_mat_t = false;
+    bool out_element_info = false; ///< output information of all elements
+    bool out_mat_r = false;        ///< jingan add 2019-8-14, output r(R) matrix.
+    int out_wfc_lcao = 0;          ///< output the wave functions in local basis.
+    int bx = 1, by = 1, bz = 1;    ///< big mesh ball. mohan add 2011-04-21
+    int nstream = 4;               ///< Number of streams in CUDA as per input data
 
     // ==============   #Parameters (6.Smearing) ===========================
-    std::string smearing_method; ///< "gaussian",
-                                 ///< "mp","methfessel-paxton"
-                                 ///< "mv","marzari-vanderbilt","cold"
-                                 ///< "fd","fermi-dirac"
-    double smearing_sigma;       ///<
+    std::string smearing_method = "gaussian"; ///< "gaussian",
+                                              ///< "mp","methfessel-paxton"
+                                              ///< "mv","marzari-vanderbilt","cold"
+                                              ///< "fd","fermi-dirac"
+    double smearing_sigma = 0.015;            ///<
 
     // ==============   #Parameters (7.Charge Mixing) ======================
-    std::string mixing_mode; ///< "plain","broyden",...
-    double mixing_beta;      ///< 0 : no_mixing
-    int mixing_ndim;         ///< used in Broyden method
-    double mixing_restart;   ///< mixing will restart once if drho is smaller than mixing_restart
-    double mixing_gg0;       ///< used in kerker method
-    double mixing_beta_mag;
-    double mixing_gg0_mag;
-    double mixing_gg0_min;
-    double mixing_angle;
-    bool mixing_tau;  ///< whether to mix tau in mgga
-    bool mixing_dftu; ///< whether to mix locale in DFT+U
-    bool mixing_dmr;  ///< whether to mix real space density matrix
+    std::string mixing_mode = "broyden"; ///< "plain","broyden",...
+    double mixing_beta = 0.8;            ///< 0 : no_mixing
+    int mixing_ndim = 8;                 ///< used in Broyden method
+    double mixing_restart = 0.0;         ///< mixing will restart once if drho is smaller than mixing_restart
+    double mixing_gg0 = 1.0;             ///< used in kerker method
+    double mixing_beta_mag = -10.0;
+    double mixing_gg0_mag = 0.0;
+    double mixing_gg0_min = 0.1;
+    double mixing_angle = -10.0;
+    bool mixing_tau = false;  ///< whether to mix tau in mgga
+    bool mixing_dftu = false; ///< whether to mix locale in DFT+U
+    bool mixing_dmr = false;  ///< whether to mix real space density matrix
 
     // ==============   #Parameters (8.DOS) ===============================
-    double dos_emin_ev;
-    double dos_emax_ev;
-    bool dos_setemin = false; ///< true: emin is set
-    bool dos_setemax = false; ///< true: emax is set
-    double dos_edelta_ev;
-    double dos_scale;
-    double dos_sigma; ///<  pengfei 2014-10-13
-    int dos_nche;     ///< orders of Chebyshev expansions for dos
+    double dos_emin_ev = -15.0;
+    double dos_emax_ev = 15.0;
+    bool dos_setemin = true; ///< true: emin is set
+    bool dos_setemax = true; ///< true: emax is set
+    double dos_edelta_ev = 0.01;
+    double dos_scale = 0.01;
+    double dos_sigma = 0.07; ///< pengfei 2014-10-13
+    int dos_nche = 100;      ///< orders of Chebyshev expansions for dos
 
     // ==============   #Parameters (9.Molecular dynamics) ================
     MD_para mdp;
-    double ref_cell_factor; ///< construct a reference cell bigger than the initial cell  liuyu 2023-03-21
-    bool cal_syns;          ///< calculate asynchronous S matrix to output
-    double dmax;            ///< maximum displacement of all atoms in one step (bohr)
+    double ref_cell_factor = 1; ///< construct a reference cell bigger than the initial cell liuyu 2023-03-21
+    bool cal_syns = false;      ///< calculate asynchronous S matrix to output
+    double dmax = 0.01;         ///< maximum displacement of all atoms in one step (bohr)
 
     // =======   #Parameters (10.Electric field and dipole correction) ====
     // ==========================================================
     //  efield and dipole correction
     //  Yu Liu add 2022-05-18
     // ==========================================================
-    bool efield_flag;      ///< add electric field
-    bool dip_cor_flag;     ///< dipole correction
-    int efield_dir;        ///< the direction of the electric field or dipole correction
-    double efield_pos_max; ///< position of the maximum of the saw-like potential along crystal axis efield_dir
-    double efield_pos_dec; ///< zone in the unit cell where the saw-like potential decreases
-    double efield_amp;     ///< amplitude of the electric field
+    bool efield_flag = false;   ///< add electric field
+    bool dip_cor_flag = false;  ///< dipole correction
+    int efield_dir = 2;         ///< the direction of the electric field or dipole correction
+    double efield_pos_max = -1; ///< position of the maximum of the saw-like potential along crystal axis efield_dir
+    double efield_pos_dec = -1; ///< zone in the unit cell where the saw-like potential decreases
+    double efield_amp = 0;      ///< amplitude of the electric field
 
     // ==============   #Parameters (11.Gate field) ================
     // ==========================================================
     //  gatefield (compensating charge)
     //  Yu Liu add 2022-09-13
     // ==========================================================
-    bool gate_flag;      ///< compensating charge or not
-    double zgate;        ///< position of charged plate
-    bool relax;          ///< allow relaxation along the specific direction
-    bool block;          ///< add a block potential or not
-    double block_down;   ///< low bound of the block
-    double block_up;     ///< high bound of the block
-    double block_height; ///< height of the block
+    bool gate_flag = false;    ///< compensating charge or not
+    double zgate = 0.5;        ///< position of charged plate
+    bool relax = false;        ///< allow relaxation along the specific direction
+    bool block = false;        ///< add a block potential or not
+    double block_down = 0.45;  ///< low bound of the block
+    double block_up = 0.55;    ///< high bound of the block
+    double block_height = 0.1; ///< height of the block
 
     // ==============   #Parameters (12.Test) ====================
-    bool out_alllog;              ///< output all logs.
-    int nurse;                    ///< used for debug.
-    bool colour;                  ///< used for fun.
-    bool t_in_h;                  ///< calculate the T or not.
-    bool vl_in_h;                 ///< calculate the vloc or not.
-    bool vnl_in_h;                ///< calculate the vnl or not.
-    bool vh_in_h;                 ///< calculate the hartree potential or not
-    bool vion_in_h;               ///< calculate the local ionic potential or not //only relevant when vl_in_h = 1
-    bool test_force;              ///< test the force.
-    bool test_stress;             ///< test the stress.
+    请为下面的变量写一行getter，用小写，保留下划线： bool out_alllog = false; ///< output all logs.
+    int nurse = 0;                                                            ///< used for debug.
+    bool colour = false;                                                      ///< used for fun.
+    bool t_in_h = true;                                                       ///< calculate the T or not.
+    bool vl_in_h = true;                                                      ///< calculate the vloc or not.
+    bool vnl_in_h = false;                                                    ///< calculate the vnl or not.
+    bool vh_in_h = false;         ///< calculate the hartree potential or not
+    bool vion_in_h = false;       ///< calculate the local ionic potential or not //only relevant when vl_in_h = 1
+    bool test_force = false;      ///< test the force.
+    bool test_stress = false;     ///< test the stress.
     bool test_skip_ewald = false; ///< variables for test only
 
     // ==============   #Parameters (13.vdW Correction) ===========
@@ -291,170 +293,179 @@ class Parameter
     //  vdw
     //  Peize Lin add 2014-03-31, jiyy update 2019-08-01
     // ==========================================================
-    std::string vdw_method; ///< the method of vdw calculation
-    std::string vdw_s6;     ///< scale parameter
-    std::string vdw_s8;     ///< scale parameter
-    std::string vdw_a1;     ///< damping function parameter
-    std::string vdw_a2;     ///< damping function parameter
-    double vdw_d;           ///< damping function parameter d
-    bool vdw_abc;           ///< third-order term?
-    std::string vdw_C6_file;
-    std::string vdw_C6_unit; ///<"Bohr" or "Angstrom"
-    std::string vdw_R0_file;
-    std::string vdw_R0_unit;       ///<"Bohr" or "Angstrom"
-    std::string vdw_cutoff_type;   ///<"period" or "radius"
-    std::string vdw_cutoff_radius; ///< cutoff radius for std::pair interactions
-    std::string vdw_radius_unit;   ///<"Bohr" or "Angstrom"
-    double vdw_cn_thr;             ///< cutoff radius for calculating the coordination number
-    std::string vdw_cn_thr_unit;   ///<"Bohr" or "Angstrom"
-    ModuleBase::Vector3<int> vdw_cutoff_period;
+    std::string vdw_method = "none";           ///< the method of calculating vdw (none; d2; d3_0; d3_bj)
+    std::string vdw_s6 = "default";            ///< scale parameter of d2/d3_0/d3_bj
+    std::string vdw_s8 = "default";            ///< scale parameter of d3_0/d3_bj
+    std::string vdw_a1 = "default";            ///< damping parameter of d3_0/d3_bj
+    std::string vdw_a2 = "default";            ///< damping parameter of d3_bj
+    double vdw_d = 20.0;                       ///< damping parameter of d2
+    bool vdw_abc = false;                      ///< third-order term?
+    std::string vdw_C6_file = "default";       ///< filename of C6
+    std::string vdw_C6_unit = "Jnm6/mol";      ///< unit of C6, Jnm6/mol or eVA6
+    std::string vdw_R0_file = "default";       ///< filename of R0
+    std::string vdw_R0_unit = "A";             ///< unit of R0, A or Bohr
+    std::string vdw_cutoff_type = "radius";    ///< expression model of periodic structure, radius or period
+    std::string vdw_cutoff_radius = "default"; ///< radius cutoff for periodic structure
+    std::string vdw_radius_unit = "Bohr";      ///< unit of radius cutoff for periodic structure
+    double vdw_cn_thr = 40.0;                  ///< radius cutoff for cn
+    std::string vdw_cn_thr_unit = "Bohr";      ///< unit of cn_thr, Bohr or Angstrom
+    ModuleBase::Vector3<int> vdw_cutoff_period = {3, 3, 3}; ///< periods of periodic structure
 
     // ==============   #Parameters (14.exx) ====================
     // ==========================================================
     //  exx
     //  Peize Lin add 2018-06-20
     // ==========================================================
-    std::string exx_hybrid_alpha;
-    double exx_hse_omega;
-    bool exx_separate_loop; ///< 0 or 1
-    int exx_hybrid_step;
-    double exx_mixing_beta; ///< only for exx_separate_loop=1
-    double exx_lambda;
-    std::string exx_real_number;
-    double exx_pca_threshold;
-    double exx_c_threshold;
-    double exx_v_threshold;
-    double exx_dm_threshold;
-    double exx_schwarz_threshold;
-    double exx_cauchy_threshold;
-    double exx_c_grad_threshold;
-    double exx_v_grad_threshold;
-    double exx_cauchy_force_threshold;
-    double exx_cauchy_stress_threshold;
-    std::string exx_ccp_rmesh_times;
-    std::string exx_distribute_type;
-    int exx_opt_orb_lmax;
-    double exx_opt_orb_ecut;
-    double exx_opt_orb_tolerence;
-    double rpa_ccp_rmesh_times;
+    std::string exx_hybrid_alpha = "0"; ///< fraction of Fock exchange in hybrid functionals
+    double exx_hse_omega = 0.11;        ///< range-separation parameter in HSE functional
+    bool exx_separate_loop
+        = true; ///< if 1, a two-step method is employed, else it will start with a GGA-Loop, and then Hybrid-Loop
+    int exx_hybrid_step = 100;    ///< the maximal electronic iteration number in the evaluation of Fock exchange
+    double exx_mixing_beta = 1.0; ///< mixing_beta for outer-loop when exx_separate_loop=1
+    double exx_lambda = 0.3; ///< used to compensate for divergence points at G=0 in the evaluation of Fock exchange
+                             ///< using lcao_in_pw method
+    std::string exx_real_number = "0";          ///< exx calculated in real or complex
+    double exx_pca_threshold = 0.0001;          ///< threshold to screen on-site ABFs in exx
+    double exx_c_threshold = 0.0001;            ///< threshold to screen C matrix in exx
+    double exx_v_threshold = 0.1;               ///< threshold to screen C matrix in exx
+    double exx_dm_threshold = 0.0001;           ///< threshold to screen density matrix in exx
+    double exx_schwarz_threshold = 1e-07;       ///< threshold to screen exx using Cauchy-Schwartz inequality
+    double exx_cauchy_threshold = 1e-07;        ///< threshold to screen exx using Cauchy-Schwartz inequality
+    double exx_c_grad_threshold = 0.0001;       ///< threshold to screen nabla C matrix in exx
+    double exx_v_grad_threshold = 0.1;          ///< threshold to screen nabla V matrix in exx
+    double exx_cauchy_force_threshold = 1e-07;  ///< threshold to screen exx force using Cauchy-Schwartz inequality
+    double exx_cauchy_stress_threshold = 1e-07; ///< threshold to screen exx stress using Cauchy-Schwartz inequality
+    std::string exx_ccp_rmesh_times = "1"; ///< how many times larger the radial mesh required for calculating Columb
+                                           ///< potential is to that of atomic orbitals
+    std::string exx_distribute_type = "default"; ///< distribute type (assuming default as no specific value provided)
+    int exx_opt_orb_lmax = 0;                    ///< the maximum l of the spherical Bessel functions for opt ABFs
+    double exx_opt_orb_ecut = 0.0;               ///< the cut-off of plane wave expansion for opt ABFs
+    double exx_opt_orb_tolerence
+        = 0.0; ///< the threshold when solving for the zeros of spherical Bessel functions for opt ABFs
+    double rpa_ccp_rmesh_times = 10.0; ///< how many times larger the radial mesh required for calculating Columb
+                                       ///< potential is to that of atomic orbitals
 
     // ==============   #Parameters (16.tddft) ======================
-    double td_force_dt;       ///<"fs"
-    bool td_vext;             ///< add extern potential or not
-    std::string td_vext_dire; ///< vext direction
-    bool out_dipole;          ///< output the dipole or not
-    bool out_efield;          ///< output the efield or not
-    bool out_current;         ///< output the current or not
-    bool out_vecpot;          ///< output the vector potential or not
-    bool init_vecpot_file;    ///< initialize the vector potential, though file or integral
-    double td_print_eij;      ///< threshold to output Eij elements
-    int td_edm;               ///< 0: new edm method   1: old edm method
-    int propagator;           ///< method of propagator
-    int td_stype;             ///< type of space domain  0 : length gauge  1: velocity gauge
-    std::string td_ttype;     ///< type of time domain
+    double td_force_dt = 0.02;           ///<"fs"
+    bool td_vext = false;                ///< add extern potential or not
+    std::vector<int> td_vext_dire = {1}; ///< vext direction
+    int td_nvext_dire = 1;               ///< number of vext directions
+    bool out_dipole = false;             ///< output the dipole or not
+    bool out_efield = false;             ///< output the efield or not
+    bool out_current = false;            ///< output the current or not
+    bool out_vecpot;                     ///< output the vector potential or not
+    bool init_vecpot_file;               ///< initialize the vector potential, though file or integral
+    double td_print_eij;                 ///< threshold to output Eij elements
+    int td_edm;                          ///< 0: new edm method   1: old edm method
+    int propagator;                      ///< method of propagator
+    int td_stype;                        ///< type of space domain  0 : length gauge  1: velocity gauge
+    std::string td_ttype;                ///< type of time domain
     ///<  0  Gauss type function.
     ///<  1  trapezoid type function.
     ///<  2  Trigonometric functions, sin^2.
     ///<  3  heaviside function.
     ///<  4  HHG function.
-    int td_tstart;
-    int td_tend;
+    int td_tstart = 1;
+    int td_tend = 1000;
 
     ///< space domain parameters
     ///< length gauge
-    double td_lcut1;
-    double td_lcut2;
+    double td_lcut1 = 0.05;
+    double td_lcut2 = 0.95;
 
     ///< time domain parameters
     ///< Gauss
-    double td_gauss_freq; ///< time(fs)^-1
-    double td_gauss_phase;
-    double td_gauss_sigma; ///< time(fs)
-    double td_gauss_t0;
-    double td_gauss_amp; ///< V/A
+    double td_gauss_freq = 22.13; ///< time(fs)^-1
+    double td_gauss_phase = 0.0;
+    double td_gauss_sigma = 30.0; ///< time(fs)
+    double td_gauss_t0 = 100.0;
+    double td_gauss_amp = 0.25; ///< V/A
 
     ///< trapezoid
-    double td_trape_freq; ///< time(fs)^-1
-    double td_trape_phase;
-    double td_trape_t1;
-    double td_trape_t2;
-    double td_trape_t3;
-    double td_trape_amp; ///< V/A
+    double td_trape_freq = 1.60; ///< time(fs)^-1
+    // Trapezoidal
+    double td_trape_phase = 0.0;
+    double td_trape_t1 = 1875.0;
+    double td_trape_t2 = 5625.0;
+    double td_trape_t3 = 7500.0;
+    double td_trape_amp = 2.74; // V/A
 
-    ///< Trigonometric
-    double td_trigo_freq1; ///< time(fs)^-1
-    double td_trigo_freq2; ///< time(fs)^-1
-    double td_trigo_phase1;
-    double td_trigo_phase2;
-    double td_trigo_amp; ///< V/A
+    // Trigonometric
+    double td_trigo_freq1 = 1.164656; // time(fs)^-1
+    double td_trigo_freq2 = 0.029116; // time(fs)^-1
+    double td_trigo_phase1 = 0.0;
+    double td_trigo_phase2 = 0.0;
+    double td_trigo_amp = 2.74; // V/A
 
-    ///< Heaviside
-    double td_heavi_t0;
-    double td_heavi_amp; ///< V/A
+    // Heaviside
+    double td_heavi_t0 = 100.0;
+    double td_heavi_amp = 1.0; // V/A
 
-    bool ocp;
-    std::string ocp_set;
+    bool ocp = false;
+    std::string ocp_set = "";
 
     // ==============   #Parameters (17.berry_wannier) ================
-    bool berry_phase; ///< berry phase calculation
-    int gdir;         ///< berry phase calculation
+    bool berry_phase = false; ///< berry phase calculation: calculate berry phase or not
+    int gdir = 3; ///< berry phase calculation: calculate the polarization in the direction of the lattice vector
+
     ///<==========================================================
     ///< Wannier functions
     ///<==========================================================
-    bool towannier90;         ///< add by jingan for wannier90
-    std::string nnkpfile;     ///< add by jingan for wannier90
-    std::string wannier_spin; ///< add by jingan for wannier90
-    int wannier_method;       ///< different implementation methods under Lcao basis set
-    bool out_wannier_mmn;     ///< add by renxi for wannier90
-    bool out_wannier_amn;
-    bool out_wannier_unk;
-    bool out_wannier_eig;
-    bool out_wannier_wvfn_formatted;
+    bool towannier90 = false;               ///< add by jingan for wannier90: use wannier90 code interface or not
+    std::string nnkpfile = "seedname.nnkp"; ///< add by jingan for wannier90: the wannier90 code nnkp file name
+    std::string wannier_spin = "up";        ///< add by jingan for wannier90: calculate spin in wannier90 code interface
+    int wannier_method = 1;                 ///< different implementation methods under Lcao basis set
+    bool out_wannier_mmn = true;            ///< add by renxi for wannier90: output .mmn file or not
+    bool out_wannier_amn = true;            ///< output .amn file or not
+    bool out_wannier_unk = false;           ///< output UNK. file or not
+    bool out_wannier_eig = true;            ///< output .eig file or not
+    bool out_wannier_wvfn_formatted = true; ///< output UNK. file in text format or in binary format
 
     // ==============   #Parameters (18.implicit_solvation) ================
     //    implicit solvation model       Menglin Sun added on 2022-04-04
-    bool imp_sol; ///< true:implicit solvation correction; false: vacuum calculation(default)
-    double eb_k;
-    double tau;
-    double sigma_k;
-    double nc_k;
+    bool imp_sol = false;    ///< true: implicit solvation correction; false: vacuum calculation(default)
+    double eb_k = 80;        ///< the relative permittivity of the bulk solvent
+    double tau = 1.0798e-05; ///< the effective surface tension parameter
+    double sigma_k = 0.6;    ///< the width of the diffuse cavity
+    double nc_k = 0.00037;   ///< the cut-off charge density
 
-    // ==============   #Parameters (18.OFDFT) ================
+    // ==============   #Parameters (19.OFDFT) ================
     // OFDFT  sunliang added on 2022-05-05
-    std::string of_kinetic; ///< Kinetic energy functional, such as TF, VW, WT, TF+
-    std::string of_method;  ///< optimization method, include cg1, cg2, tn (default), bfgs
-    std::string of_conv;    ///< select the convergence criterion, potential, energy (default), or both
-    double of_tole;         ///< tolerance of the energy change (in Ry) for determining the convergence, default=2e-6 Ry
-    double of_tolp;         ///< tolerance of potential for determining the convergence, default=1e-5 in a.u.
-    double of_tf_weight;    ///< weight of TF KEDF
-    double of_vw_weight;    ///< weight of vW KEDF
-    double of_wt_alpha;     ///< parameter alpha of WT KEDF
-    double of_wt_beta;      ///< parameter beta of WT KEDF
-    double of_wt_rho0;      ///< set the average density of system, in Bohr^-3
-    bool of_hold_rho0; ///< If set to 1, the rho0 will be fixed even if the volume of system has changed, it will be set
-                       ///< to 1 automaticly if of_wt_rho0 is not zero.
-    double of_lkt_a;   ///< parameter a of LKT KEDF
-    bool of_full_pw; ///< If set to 1, ecut will be ignored while collecting planewaves, so that all planewaves will be
-                     ///< used.
-    int of_full_pw_dim;  ///< If of_full_pw = 1, the dimention of FFT will be testricted to be (0) either odd or even;
-                         ///< (1) odd only; (2) even only.
-    bool of_read_kernel; ///< If set to 1, the kernel of WT KEDF will be filled from file of_kernel_file, not from
-                         ///< formula. Only usable for WT KEDF.
-    std::string of_kernel_file; ///< The name of WT kernel file.
+    std::string of_kinetic = "wt";  ///< Kinetic energy functional, such as TF, VW, WT, TF+
+    std::string of_method = "tn";   ///< optimization method, include cg1, cg2, tn (default), bfgs
+    std::string of_conv = "energy"; ///< select the convergence criterion, potential, energy (default), or both
+    double of_tole = 1e-06; ///< tolerance of the energy change (in Ry) for determining the convergence, default=2e-6 Ry
+    double of_tolp = 1e-05; ///< tolerance of potential for determining the convergence, default=1e-5 in a.u.
+    double of_tf_weight = 1.0;     ///< weight of TF KEDF
+    double of_vw_weight = 1.0;     ///< weight of vW KEDF
+    double of_wt_alpha = 0.833333; ///< parameter alpha of WT KEDF
+    double of_wt_beta = 0.833333;  ///< parameter beta of WT KEDF
+    double of_wt_rho0 = 0.0;       ///< set the average density of system, in Bohr^-3
+    bool of_hold_rho0 = false;     ///< If set to 1, the rho0 will be fixed even if the volume of system has changed, it
+                                   ///< will be set to 1 automatically if of_wt_rho0 is not zero.
+    double of_lkt_a = 1.3;         ///< parameter a of LKT KEDF
+    bool of_full_pw = true; ///< If set to 1, ecut will be ignored while collecting planewaves, so that all planewaves
+                            ///< will be used.
+    int of_full_pw_dim = 0; ///< If of_full_pw = 1, the dimension of FFT will be restricted to be (0) either odd or
+                            ///< even; (1) odd only; (2) even only.
+    bool of_read_kernel = false; ///< If set to 1, the kernel of WT KEDF will be filled from file of_kernel_file, not
+                                 ///< from formula. Only usable for WT KEDF.
+    std::string of_kernel_file = "WTkernel.txt"; ///< The name of WT kernel file.
 
     ///< std::string pseudo_type; ///< the type of pseudopotential, mohan add 2013-05-20, ABACUS supports
     ///<                          ///< UPF format (default) and vwr format. (xiaohui add 2013-06-23)
 
     // ==============   #Parameters (19.dft+u) ================
     //    DFT+U       Xin Qu added on 2020-10-29
-    int dft_plus_u;                ///< 1:DFT+U correction; 2:old DFT+U method; 0:standard DFT calculation(default)
-    bool yukawa_potential;         ///< default:false
-    double yukawa_lambda;          ///< default:-1.0, which means we calculate lambda
-    double uramping;               ///< default:-1.0, which means we do not use U-Ramping method
-    int omc;                       ///< whether turn on occupation matrix control method or not
-    double onsite_radius;          ///< the radius of on-site orbitals
-    std::vector<double> hubbard_u; ///< Hubbard Coulomb interaction parameter U(ev)
-    std::vector<int> orbital_corr; ///< which correlated orbitals need corrected ; d:2 ,f:3, do not need correction:-1
+    int dft_plus_u = 0;                    ///< 0: standard DFT calculation (default)
+    bool yukawa_potential = false;         ///< default: false
+    double yukawa_lambda = -1.0;           ///< default: -1.0, which means we calculate lambda
+    double uramping = -1.0;                ///< default: -1.0, which means we do not use U-Ramping method
+    int omc = 0;                           ///< the mode of occupation matrix control
+    double onsite_radius = 0.0;            ///< radius of the sphere for onsite projection (Bohr)
+    std::vector<double> hubbard_u = {0.0}; ///< Hubbard Coulomb interaction parameter U(ev)
+    std::vector<int> orbital_corr
+        = {-1}; ///< which correlated orbitals need corrected ; d:2 ,f:3, do not need correction:-1
 
     // ==============   #Parameters (21.spherical bessel) =========
     // ==========================================================
@@ -462,47 +473,47 @@ class Parameter
     // ==========================================================
     //  the following are used when generating orb_matrix.dat
     //  int		bessel_nao_lmax;		///< lmax used in descriptor
-    std::string bessel_nao_ecut; ///< energy cutoff for spherical bessel functions(Ry)
-    double bessel_nao_tolerence; ///< tolerence for spherical bessel root
-                                 ///< the following are used when generating jle.orb
-    double bessel_nao_rcut;      ///< radial cutoff for spherical bessel functions(a.u.)
-    std::vector<double> bessel_nao_rcuts;
-    int nrcut;                          ///< number of bessel_nao_rcuts
-    bool bessel_nao_smooth;             ///< spherical bessel smooth or not
-    double bessel_nao_sigma;            ///< spherical bessel smearing_sigma
-    int bessel_descriptor_lmax;         ///< lmax used in descriptor
-    std::string bessel_descriptor_ecut; ///< energy cutoff for spherical bessel functions(Ry)
-    double bessel_descriptor_tolerence; ///< tolerence for spherical bessel root
-    double bessel_descriptor_rcut;      ///< radial cutoff for spherical bessel functions(a.u.)
-    bool bessel_descriptor_smooth;      ///< spherical bessel smooth or not
-    double bessel_descriptor_sigma;     ///< spherical bessel smearing_sigma
+    std::string bessel_nao_ecut = "50.000000";        ///< energy cutoff for spherical bessel functions(Ry)
+    double bessel_nao_tolerence = 1e-12;              ///< tolerance for spherical bessel root
+    double bessel_nao_rcut = 6.0;                     ///< radial cutoff for spherical bessel functions(a.u.)
+    std::vector<double> bessel_nao_rcuts = {};        ///< No specific values provided for bessel_nao_rcuts
+    int nrcut = 0;                                    ///< number of bessel_nao_rcuts, assuming 0 as no values provided
+    bool bessel_nao_smooth = true;                    ///< spherical bessel smooth or not
+    double bessel_nao_sigma = 0.1;                    ///< spherical bessel smearing_sigma
+    int bessel_descriptor_lmax = 2;                   ///< lmax used in descriptor
+    std::string bessel_descriptor_ecut = "50.000000"; ///< energy cutoff for spherical bessel functions(Ry)
+    double bessel_descriptor_tolerence = 1e-12;       ///< tolerance for spherical bessel root
+    double bessel_descriptor_rcut = 6.0;              ///< radial cutoff for spherical bessel functions(a.u.)
+    bool bessel_descriptor_smooth = true;             ///< spherical bessel smooth or not
+    double bessel_descriptor_sigma = 0.1;             ///< spherical bessel smearing_sigma
 
     // =======   #Parameters (22.non-collinear spin-constrained DFT) =========
     /**
      * 0: none spin-constrained DFT;
      * 1: constrain atomic spin;
      */
-    bool sc_mag_switch; ///< the switch to open the DeltaSpin function, 0: no spin-constrained DFT; 1: constrain atomic
-                        ///< magnetization
-    bool decay_grad_switch; ///< the switch to use the local approximation of gradient decay, 0: no local approximation;
-                            ///< 1: apply the method
-    double sc_thr;          ///< threshold for spin-constrained DFT in uB
-    int nsc;                ///< maximum number of inner lambda loop
-    int nsc_min;            ///< minimum number of inner lambda loop
-    int sc_scf_nmin;        ///< minimum number of outer scf loop before initial lambda loop
-    double alpha_trial;     ///< initial trial step size for lambda in eV/uB^2
-    double sccut;           ///< restriction of step size in eV/uB
-    std::string sc_file;    ///< file name for Deltaspin (json format)
+    bool sc_mag_switch = false; ///< the switch to open the DeltaSpin function, 0: no spin-constrained DFT; 1: constrain
+                                ///< atomic magnetization
+    bool decay_grad_switch = false; ///< the switch to use the local approximation of gradient decay, 0: no local
+                                    ///< approximation; 1: apply the method
+    double sc_thr = 1e-06;          ///< threshold for spin-constrained DFT in uB
+    int nsc = 100;                  ///< maximum number of inner lambda loop
+    int nsc_min = 2;                ///< minimum number of inner lambda loop
+    int sc_scf_nmin = 2;            ///< minimum number of outer scf loop before initial lambda loop
+    double alpha_trial = 0.01;      ///< initial trial step size for lambda in eV/uB^2
+    double sccut = 3.0;             ///< restriction of step size in eV/uB
+    std::string sc_file = "none";   ///< file name for Deltaspin (json format)
 
     // ==============   #Parameters (23.Quasiatomic Orbital analysis) =========
     ///<==========================================================
     ///< variables for Quasiatomic Orbital analysis
     ///<==========================================================
-    bool qo_switch = false;
-    std::string qo_basis = "hydrogen";
-    double qo_thr = 1e-6;
-    std::vector<std::string> qo_strategy = {};
-    std::vector<double> qo_screening_coeff = {};
+    bool qo_switch = false; ///< 0: no QO analysis; 1: QO analysis
+    std::string qo_basis
+        = "szv"; ///< type of QO basis function: hydrogen: hydrogen-like basis, pswfc: read basis from pseudopotential
+    double qo_thr = 1e-06;
+    std::vector<std::string> qo_strategy = {};   ///< No specific values provided for qo_strategy
+    std::vector<double> qo_screening_coeff = {}; ///< No specific values provided for qo_screening_coeff
 
     // ==============   #Parameters (24.PEXSI) =====================
     int pexsi_npole = 40;
@@ -586,9 +597,187 @@ class Parameter
     std::string get_device() const;
     std::string get_precision() const;
 
-  public:
-    // Only test the format of INPUT, do not run ABAUCS
-    bool check_input = false;
+    // ==============   #Parameters (2.PW) ===========================
+    double get_ecutwfc() const;
+    double get_ecutrho() const;
+    double get_erf_ecut() const;
+    double get_erf_height() const;
+    double get_erf_sigma() const;
+    int get_fft_mode() const;
+    int get_pw_diag_nmax() const;
+    int get_diago_cg_prec() const;
+    int get_pw_diag_ndim() const;
+    bool get_diago_full_acc() const;
+    double get_pw_diag_thr() const;
+    int get_nb2d() const;
+    double get_scf_thr() const;
+    int get_scf_thr_type() const;
+    std::string get_init_wfc() const;
+    bool get_psi_initializer() const;
+    std::string get_init_chg() const;
+    std::string get_chg_extrap() const;
+    int get_out_chg() const;
+    int get_out_pot() const;
+    int get_out_wfc_pw() const;
+    bool get_out_wfc_r() const;
+    int get_out_dos() const;
+    std::vector<int> get_out_band() const;
+    bool get_out_proj_band() const;
+    bool get_restart_save() const;
+    bool get_restart_load() const;
+    std::string get_read_file_dir() const;
+    int get_nx() const;
+    int get_ny() const;
+    int get_nz() const;
+    int get_ncx() const;
+    int get_ncy() const;
+    int get_ncz() const;
+    int get_ndx() const;
+    int get_ndy() const;
+    int get_ndz() const;
+    double get_cell_factor() const;
+    int get_pw_seed() const;
+
+    // ==============   #Parameters (3.Stochasti DFT) ===========================
+    int get_method_sto() const;
+    int get_npart_sto() const;
+    int get_nbands_sto() const;
+    std::string get_nbndsto_str() const;
+    int get_nche_sto() const;
+    double get_emin_sto() const;
+    double get_emax_sto() const;
+    int get_seed_sto() const;
+    double get_initsto_ecut() const;
+    int get_initsto_freq() const;
+    bool get_cal_cond() const;
+    double get_cond_che_thr() const;
+    double get_cond_dw() const;
+    double get_cond_wcut() const;
+    double get_cond_dt() const;
+    int get_cond_dtbatch() const;
+    int get_cond_smear() const;
+    double get_cond_fwhm() const;
+    bool get_cond_nonlocal() const;
+
+    // ==============   #Parameters (4.Relaxation) ===========================
+    std::string get_ks_solver() const;
+    int get_scf_nmax() const;
+    int get_relax_nmax() const;
+    bool get_out_stru() const;
+    double get_force_thr() const;
+    double get_force_thr_ev() const;
+    double get_force_thr_ev2() const;
+    double get_relax_cg_thr() const;
+    double get_stress_thr() const;
+    double get_press1() const;
+    double get_press2() const;
+    double get_press3() const;
+    double get_relax_bfgs_w1() const;
+    double get_relax_bfgs_w2() const;
+    double get_relax_bfgs_rmax() const;
+    double get_relax_bfgs_rmin() const;
+    double get_relax_bfgs_init() const;
+    bool get_cal_stress() const;
+    std::string get_fixed_axes() const;
+    bool get_fixed_ibrav() const;
+    bool get_fixed_atoms() const;
+    std::string get_relax_method() const;
+    bool get_relax_new() const;
+    double get_relax_scale_force() const;
+    std::string get_out_level() const;
+    bool get_out_md_control() const;
+    bool get_out_dm() const;
+    bool get_out_dm1() const;
+    bool get_out_bandgap() const;
+    bool get_use_paw() const;
+
+    bool get_deepks_out_labels() const;
+    bool get_deepks_scf() const;
+    bool get_deepks_bandgap() const;
+    bool get_deepks_equiv() const;
+    bool get_deepks_out_unittest() const;
+    std::string get_deepks_model() const;
+
+    // ==============   #Parameters (5.LCAO) ===========================
+    std::string get_basis_type() const;
+    bool get_gamma_only() const;
+    bool get_gamma_only_local() const;
+
+    double get_search_radius() const;
+    bool get_search_pbc() const;
+    double get_lcao_ecut() const;
+    double get_lcao_dk() const;
+    double get_lcao_dr() const;
+    double get_lcao_rmax() const;
+
+    std::vector<int> get_out_mat_hs() const;
+    bool get_out_mat_hs2() const;
+    bool get_out_mat_dh() const;
+    bool get_out_mat_xc() const;
+    bool get_out_hr_npz() const;
+    bool get_out_dm_npz() const;
+    bool get_dm_to_rho() const;
+    int get_out_interval() const;
+    bool get_out_app_flag() const;
+    int get_out_ndigits() const;
+    bool get_out_mat_t() const;
+    bool get_out_element_info() const;
+    bool get_out_mat_r() const;
+    int get_out_wfc_lcao() const;
+    int get_bx() const;
+    int get_by() const;
+    int get_bz() const;
+    int get_nstream() const;
+
+    // ==============   #Parameters (6.Smearing) ===========================
+
+    std::string get_smearing_method() const;
+    double get_smearing_sigma() const;
+    // ==============   #Parameters (7.Charge Mixing) ======================
+    std::string get_mixing_mode() const;
+    double get_mixing_beta() const;
+    int get_mixing_ndim() const;
+    double get_mixing_restart() const;
+    double get_mixing_gg0() const;
+    double get_mixing_beta_mag() const;
+    double get_mixing_gg0_mag() const;
+    double get_mixing_gg0_min() const;
+    double get_mixing_angle() const;
+    bool is_mixing_tau() const;
+    bool is_mixing_dftu() const;
+    bool is_mixing_dmr() const;
+    // ==============   #Parameters (8.DOS) ===============================
+    double get_dos_emin_ev() const;
+    double get_dos_emax_ev() const;
+    bool get_dos_setemin() const;
+    bool get_dos_setemax() const;
+    double get_dos_edelta_ev() const;
+    double get_dos_scale() const;
+    double get_dos_sigma() const;
+    int get_dos_nche() const;
+
+    // ==============   #Parameters (9.Molecular dynamics) ================
+    MD_para get_mdp() const;
+    double get_ref_cell_factor() const;
+    bool get_cal_syns() const;
+    double get_dmax() const;
+
+    // =======   #Parameters (10.Electric field and dipole correction) ====
+    bool get_efield_flag() const;
+    bool get_dip_cor_flag() const;
+    int get_efield_dir() const;
+    double get_efield_pos_max() const;
+    double get_efield_pos_dec() const;
+    double get_efield_amp() const;
+
+    bool get_gate_flag() const;
+    double get_zgate() const;
+    bool get_relax() const;
+    bool get_block() const;
+    double get_block_down() const;
+    double get_block_up() const;
+    double get_block_height() const;
+    // ==============   #Parameters (11.Gate field) ================
 };
 
 extern Parameter PARAM;

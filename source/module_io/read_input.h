@@ -3,11 +3,8 @@
 #include "input_item.h"
 #include "module_parameter/parameter.h"
 
-#include <string>
 #include <sstream>
-#ifdef __MPI
-#include "mpi.h"
-#endif
+#include <string>
 
 namespace ModuleIO
 {
@@ -16,18 +13,34 @@ class ReadInput
   public:
     ReadInput(const int& rank);
     ~ReadInput(){};
-    void readin_parameters(Parameter& param, const std::string& filename, const bool& test_mode = false);
+    /**
+     * @brief read in parameters from input file
+     *
+     * @param param parameters of ABACUS
+     * @param filename input file name
+     */
+    void readin_parameters(Parameter& param, const std::string& filename);
+
+    static bool check_mode;
+
   private:
     /**
      * @brief read INPUT file of txt format
      *
      * @param param parameters of ABACUS
-     * @param filename INPUT file name
+     * @param filename INPUT
      */
     void read_txt_input(Parameter& param, const std::string& filename);
     /**
+     * @brief write INPUT file of txt format
+     *
+     * @param param parameters of ABACUS
+     * @param filename output file name
+     */
+    void write_txt_input(const Parameter& param, const std::string& filename);
+    /**
      * @brief add item to input list
-     * 
+     *
      * @param item input_item
      */
     void add_item(const Input_Item& item);
@@ -47,7 +60,6 @@ class ReadInput
     void item_md();
     // items for others
     void item_others();
-
 
   private:
     int rank = 0;

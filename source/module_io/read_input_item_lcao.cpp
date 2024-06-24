@@ -9,49 +9,49 @@ void ReadInput::item_lcao()
     {
         Input_Item item("basis_type");
         item.annotation = "PW; LCAO in pw; LCAO";
-        read_bcast_string(basis_type);
+        read_sync_string(basis_type);
         this->add_item(item);
     }
     {
         Input_Item item("gamma_only");
         item.annotation = "Only for localized orbitals set and gamma point. If set to 1, a fast algorithm is used";
-        read_bcast_bool(gamma_only);
+        read_sync_bool(gamma_only);
         this->add_item(item);
     }
     {
         Input_Item item("search_radius");
         item.annotation = "input search radius (Bohr)";
-        read_bcast_double(search_radius);
+        read_sync_double(search_radius);
         this->add_item(item);
     }
     {
         Input_Item item("search_pbc");
         item.annotation = "input periodic boundary condition";
-        read_bcast_bool(search_pbc);
+        read_sync_bool(search_pbc);
         this->add_item(item);
     }
     {
         Input_Item item("lcao_ecut");
         item.annotation = "energy cutoff for LCAO";
-        read_bcast_double(lcao_ecut);
+        read_sync_double(lcao_ecut);
         this->add_item(item);
     }
     {
         Input_Item item("lcao_dk");
         item.annotation = "delta k for 1D integration in LCAO";
-        read_bcast_double(lcao_dk);
+        read_sync_double(lcao_dk);
         this->add_item(item);
     }
     {
         Input_Item item("lcao_dr");
         item.annotation = "delta r for 1D integration in LCAO";
-        read_bcast_double(lcao_dr);
+        read_sync_double(lcao_dr);
         this->add_item(item);
     }
     {
         Input_Item item("lcao_rmax");
         item.annotation = "max R for 1D two-center integration table";
-        read_bcast_double(lcao_rmax);
+        read_sync_double(lcao_rmax);
         this->add_item(item);
     }
     {
@@ -74,109 +74,109 @@ void ReadInput::item_lcao()
                 throw std::runtime_error("out_mat_hs should have 1 or 2 values");
             }
         };
-        bcast_intvec_param(out_mat_hs.data(), 2);
+        sync_intvec(out_mat_hs, 2);
         this->add_item(item);
     }
     {
         Input_Item item("out_mat_hs2");
         item.annotation = "output H(R) and S(R) matrix";
-        read_bcast_bool(out_mat_hs2);
+        read_sync_bool(out_mat_hs2);
         this->add_item(item);
     }
     {
         Input_Item item("out_mat_dh");
         item.annotation = "output of derivative of H(R) matrix";
-        read_bcast_bool(out_mat_dh);
+        read_sync_bool(out_mat_dh);
         this->add_item(item);
     }
     {
         Input_Item item("out_mat_xc");
         item.annotation = "output exchange-correlation matrix in KS-orbital representation";
-        read_bcast_bool(out_mat_xc);
+        read_sync_bool(out_mat_xc);
         this->add_item(item);
     }
     {
         Input_Item item("out_hr_npz");
         item.annotation = "output hr(I0,JR) submatrices in npz format";
-        read_bcast_bool(out_hr_npz);
+        read_sync_bool(out_hr_npz);
         this->add_item(item);
     }
     {
         Input_Item item("out_dm_npz");
         item.annotation = "output dmr(I0,JR) submatrices in npz format";
-        read_bcast_bool(out_dm_npz);
+        read_sync_bool(out_dm_npz);
         this->add_item(item);
     }
     {
         Input_Item item("dm_to_rho");
         item.annotation = "reads dmr in npz format and calculates electron density";
-        read_bcast_bool(dm_to_rho);
+        read_sync_bool(dm_to_rho);
         this->add_item(item);
     }
     {
         Input_Item item("out_interval");
         item.annotation = "interval for printing H(R) and S(R) matrix during MD";
-        read_bcast_int(out_interval);
+        read_sync_int(out_interval);
         this->add_item(item);
     }
     {
         Input_Item item("out_app_flag");
         item.annotation = "whether output r(R), H(R), S(R), T(R), and dH(R) matrices in an append manner during MD";
-        read_bcast_bool(out_app_flag);
+        read_sync_bool(out_app_flag);
         this->add_item(item);
     }
     {
         Input_Item item("out_ndigits");
         item.annotation = "the length of decimal part of output data";
-        read_bcast_int(out_ndigits);
+        read_sync_int(out_ndigits);
         this->add_item(item);
     }
     {
         Input_Item item("out_mat_t");
         item.annotation = "output T(R) matrix";
-        read_bcast_bool(out_mat_t);
+        read_sync_bool(out_mat_t);
         this->add_item(item);
     }
     {
         Input_Item item("out_element_info");
         item.annotation = "output (projected) wavefunction of each element";
-        read_bcast_bool(out_element_info);
+        read_sync_bool(out_element_info);
         this->add_item(item);
     }
     {
         Input_Item item("out_mat_r");
         item.annotation = "output r(R) matrix";
-        read_bcast_bool(out_mat_r);
+        read_sync_bool(out_mat_r);
         this->add_item(item);
     }
     {
         Input_Item item("out_wfc_lcao");
         item.annotation = "ouput LCAO wave functions, 0, no output 1: text, 2: binary";
-        read_bcast_int(out_wfc_lcao);
+        read_sync_int(out_wfc_lcao);
         this->add_item(item);
     }
     {
         Input_Item item("bx");
         item.annotation = "division of an element grid in FFT grid along x";
-        read_bcast_int(bx);
+        read_sync_int(bx);
         this->add_item(item);
     }
     {
         Input_Item item("by");
         item.annotation = "division of an element grid in FFT grid along y";
-        read_bcast_int(by);
+        read_sync_int(by);
         this->add_item(item);
     }
     {
         Input_Item item("bz");
         item.annotation = "division of an element grid in FFT grid along z";
-        read_bcast_int(bz);
+        read_sync_int(bz);
         this->add_item(item);
     }
     {
         Input_Item item("num_stream");
         item.annotation = "the nstream in compute the LCAO with CUDA";
-        read_bcast_int(nstream);
+        read_sync_int(nstream);
         this->add_item(item);
     }
 }

@@ -3,7 +3,7 @@
 #include <cstdlib>
 #include "version.h"
 #include "module_io/input.h"
-#include "module_parameter/parameter.h"
+#include "module_io/read_input.h"
 
 namespace ModuleIO
 {
@@ -26,7 +26,7 @@ void parse_args(int argc, char** argv)
         else if (arg == "--check-input")
         {
             INPUT.check_input = true;
-            PARAM.check_input = true;
+            ModuleIO::ReadInput::check_mode = true;
         }
         else
         {
