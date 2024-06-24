@@ -22,13 +22,13 @@ list(APPEND objects
     gint_force_cpu_interface.cpp
     gint_rho_cpu_interface.cpp
     gint_vl_cpu_interface.cpp
-    gint_tools/cal_psir_ylm.cpp
-    gint_tools/cal_dpsir_ylm.cpp
-    gint_tools/cal_ddpsir_ylm.cpp
-    gint_tools/mult_psi_dm.cpp
-    gint_tools/mult_psi_dm_new.cpp
-    gint_tools/mult_psi_dmr.cpp
-    gint_tools/init_orb.cpp
+    cal_psir_ylm.cpp
+    cal_dpsir_ylm.cpp
+    cal_ddpsir_ylm.cpp
+    mult_psi_dm.cpp
+    mult_psi_dm_new.cpp
+    mult_psi_dmr.cpp
+    init_orb.cpp
 )
 
 if(USE_CUDA)

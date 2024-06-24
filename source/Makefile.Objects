@@ -93,7 +93,6 @@ ${OBJS_DEEPKS}\
 ${OBJS_ELECSTAT_LCAO}\
 ${OBJS_ESOLVER_LCAO}\
 ${OBJS_GINT}\
-${OBJS_GINT_TOOLS}
 ${OBJS_HAMILT_LCAO}\
 ${OBJS_HSOLVER_LCAO}\
 ${OBJS_HCONTAINER}\
@@ -246,8 +245,7 @@ OBJS_GINT=gint.o\
       gint_force_cpu_interface.o\
       gint_rho_cpu_interface.o\
       gint_vl_cpu_interface.o\
-      
-OBJS_GINT_TOOLS=cal_psir_ylm.o\
+      cal_psir_ylm.o\
       cal_dpsir_ylm.o\
       cal_ddpsir_ylm.o\
       mult_psi_dm.o\
