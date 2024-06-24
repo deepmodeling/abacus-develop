@@ -13,6 +13,7 @@
 #include "module_base/blas_connector.h"
 #include "module_base/global_function.h"
 #include "module_base/scalapack_connector.h"
+#include "module_base/lapack_connector.h"
 #include "module_elecstate/module_charge/symmetry_rho.h"
 #include "module_elecstate/occupy.h"
 #include "module_hamilt_lcao/module_tddft/evolve_elec.h"
@@ -126,7 +127,6 @@ void ESolver_KS_LCAO_TDDFT::before_all_runners(Input& inp, UnitCell& ucell)
 void ESolver_KS_LCAO_TDDFT::hamilt2density(const int istep, const int iter, const double ethr)
 {
     pelec->charge->save_rho_before_sum_band();
-
     if (wf.init_wfc == "file")
     {
         if (istep >= 1)
@@ -145,6 +145,7 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(const int istep, const int iter, cons
                                                  INPUT.propagator,
                                                  kv.get_nks());
             this->pelec_td->psiToRho_td(this->psi[0]);
+
         }
         this->pelec_td->psiToRho_td(this->psi[0]);
     }

@@ -139,7 +139,7 @@ void cal_dm_psi(const Parallel_Orbitals* ParaV,
     return;
 }
 
-// #ifdef __MPI
+#ifdef __MPI
 void psiMulPsiMpi(const psi::Psi<double>& psi1,
                          const psi::Psi<double>& psi2,
                          double* dm_out,
@@ -172,6 +172,7 @@ void psiMulPsiMpi(const psi::Psi<double>& psi1,
             &one_int,
             &one_int,
             desc_dm);
+
     ModuleBase::timer::tick("psiMulPsiMpi", "pdgemm");
 }
 
@@ -187,6 +188,7 @@ void psiMulPsiMpi(const psi::Psi<std::complex<double>>& psi1,
     const char N_char = 'N', T_char = 'T';
     const int nlocal = desc_dm[2];
     const int nbands = desc_psi[3];
+
     pzgemm_(&N_char,
             &T_char,
             &nlocal,
@@ -206,10 +208,12 @@ void psiMulPsiMpi(const psi::Psi<std::complex<double>>& psi1,
             &one_int,
             &one_int,
             desc_dm);
+
+    
     ModuleBase::timer::tick("psiMulPsiMpi", "pdgemm");
 }
-
-// #else
+#endif
+//#else
 void psiMulPsi(const psi::Psi<double>& psi1, const psi::Psi<double>& psi2, double* dm_out)
 {
     const double one_float = 1.0, zero_float = 0.0;
@@ -256,6 +260,6 @@ void psiMulPsi(const psi::Psi<std::complex<double>>& psi1,
            dm_out,
            &nlocal);
 }
-// #endif
+//#endif
 
 } // namespace elecstate

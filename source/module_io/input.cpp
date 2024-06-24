@@ -3250,8 +3250,13 @@ void Input::Default_2(void) // jiyy add 2019-08-04
                 ks_solver = "genelpa";
                 ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "genelpa");
 #else
+#ifdef __MPI
                 ks_solver = "scalapack_gvx";
                 ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "scalapack_gvx");
+#else
+                ks_solver = "lapack";
+                ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "lapack");
+#endif
 #endif
             }
         }

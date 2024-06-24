@@ -496,6 +496,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
         //(Different ranks should have abtained the same, but small differences always exist in practice.)
         // Maybe in the future, density and wavefunctions should use different parallel algorithms, in which
         // they do not occupy all processors, for example wavefunctions uses 20 processors while density uses 10.
+        
         if (GlobalV::MY_STOGROUP == 0)
         {
             // double drho = this->estate.caldr2();
@@ -523,7 +524,6 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
             {
                 this->p_chgmix->mixing_restart_step = iter + 1;
             }
-
             // drho will be 0 at this->p_chgmix->mixing_restart step, which is not ground state
             bool not_restart_step = !(iter == this->p_chgmix->mixing_restart_step && GlobalV::MIXING_RESTART > 0.0);
             // SCF will continue if U is not converged for uramping calculation
@@ -575,7 +575,6 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
         // Hamilt should be used after it is constructed.
         // this->phamilt->update(conv_elec);
         this->update_pot(istep, iter);
-
         // 10) finish scf iterations
         this->iter_finish(iter);
 #ifdef __MPI
@@ -594,7 +593,6 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
             dkin = p_chgmix->get_dkin(pelec->charge, GlobalV::nelec);
         }
         this->print_iter(iter, drho, dkin, duration, diag_ethr);
-
         // 12) Json, need to be moved to somewhere else
 #ifdef __RAPIDJSON
         // add Json of scf mag

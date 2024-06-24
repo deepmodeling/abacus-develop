@@ -753,21 +753,21 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2density(int istep, int iter, double ethr)
 
     // 1) save input rho
     this->pelec->charge->save_rho_before_sum_band();
-
     // 2) save density matrix DMR for mixing
     if (GlobalV::MIXING_RESTART > 0 && GlobalV::MIXING_DMR && this->p_chgmix->mixing_restart_count > 0)
     {
         elecstate::DensityMatrix<TK, double>* dm = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
         dm->save_DMR();
     }
-
     // 3) solve the Hamiltonian and output band gap
     if (this->phsol != nullptr)
     {
         // reset energy
         this->pelec->f_en.eband = 0.0;
         this->pelec->f_en.demet = 0.0;
-
+        printf(GlobalV::KS_SOLVER.c_str());
+        printf(this->phsol->method.c_str());
+        printf(this->phsol->classname.c_str());
         this->phsol->solve(this->p_hamilt, this->psi[0], this->pelec, GlobalV::KS_SOLVER);
 
         if (GlobalV::out_bandgap)
@@ -804,7 +804,6 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2density(int istep, int iter, double ethr)
         this->exc->exx_hamilt2density(*this->pelec, this->orb_con.ParaV, iter);
     }
 #endif
-
     // 6) calculate the local occupation number matrix and energy correction in DFT+U
     if (GlobalV::dft_plus_u)
     {
@@ -822,7 +821,6 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2density(int istep, int iter, double ethr)
         }
         GlobalC::dftu.output();
     }
-
     // (7) for deepks, calculate delta_e
 #ifdef __DEEPKS
     if (GlobalV::deepks_scf)
@@ -840,17 +838,14 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2density(int istep, int iter, double ethr)
         SpinConstrain<TK, base_device::DEVICE_CPU>& sc = SpinConstrain<TK, base_device::DEVICE_CPU>::getScInstance();
         sc.cal_MW(iter, &(this->LM));
     }
-
     // 9) use new charge density to calculate energy
     this->pelec->cal_energies(1);
-
     // 10) symmetrize the charge density
     Symmetry_rho srho;
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
         srho.begin(is, *(this->pelec->charge), this->pw_rho, GlobalC::Pgrid, GlobalC::ucell.symm);
     }
-
     // 11) compute magnetization, only for spin==2
     GlobalC::ucell.magnet.compute_magnetization(this->pelec->charge->nrxx,
                                                 this->pelec->charge->nxyz,

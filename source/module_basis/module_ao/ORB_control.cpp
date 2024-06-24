@@ -42,7 +42,9 @@ ORB_control::ORB_control() :
 {}
 ORB_control::~ORB_control()
 {
+#ifdef __MPI
     Cblacs_exit(1); //delete global variables in cblacs but do not close MPI
+#endif
 }
 
 void ORB_control::read_orb_first(
@@ -184,7 +186,7 @@ void ORB_control::setup_2d_division(std::ofstream& ofs_running,
     ofs_running << "\n SETUP THE DIVISION OF H/S MATRIX" << std::endl;
 
     // (1) calculate nrow, ncol, nloc.
-    if (ks_solver == "genelpa" || ks_solver == "scalapack_gvx" || ks_solver == "cusolver" || ks_solver == "cg_in_lcao" || ks_solver == "pexsi")
+    if (ks_solver == "genelpa" || ks_solver == "scalapack_gvx" || ks_solver == "lapack" || ks_solver == "cusolver" || ks_solver == "cg_in_lcao" || ks_solver == "pexsi")
     {
         ofs_running << " divide the H&S matrix using 2D block algorithms." << std::endl;
 #ifdef __MPI
@@ -192,7 +194,8 @@ void ORB_control::setup_2d_division(std::ofstream& ofs_running,
         // is determined in 'divide_HS_2d' subroutine
         this->divide_HS_2d(DIAG_WORLD, ofs_running, ofs_warning);
 #else
-        ModuleBase::WARNING_QUIT("LCAO_Matrix::init", "diago method is not ready.");
+        //ModuleBase::WARNING_QUIT("LCAO_Matrix::init", "diago method is not ready.");
+        this->divide_HS_2d(ofs_running, ofs_warning);
 #endif
     }
     else
@@ -205,7 +208,7 @@ void ORB_control::setup_2d_division(std::ofstream& ofs_running,
     bool div_2d;
     if (ks_solver == "lapack" || ks_solver == "cg" || ks_solver == "dav" || ks_solver == "dav_subspace") div_2d = false;
 #ifdef __MPI
-    else if (ks_solver == "genelpa" || ks_solver == "scalapack_gvx" || ks_solver == "cusolver" || ks_solver == "cg_in_lcao" || ks_solver == "pexsi") div_2d = true;
+    else if (ks_solver == "genelpa" || ks_solver == "scalapack_gvx" || ks_solver == "lapack" || ks_solver == "cusolver" || ks_solver == "cg_in_lcao" || ks_solver == "pexsi") div_2d = true;
 #endif
     else
     {
@@ -361,7 +364,7 @@ assert(nb2d > 0);
     }
 
     // init blacs context for genelpa
-    if (ks_solver == "genelpa" || ks_solver == "scalapack_gvx" || ks_solver == "cusolver" || ks_solver == "cg_in_lcao" || ks_solver == "pexsi")
+    if (ks_solver == "genelpa" || ks_solver == "scalapack_gvx" || ks_solver == "lapack" || ks_solver == "cusolver" || ks_solver == "cg_in_lcao" || ks_solver == "pexsi")
     {
         pv->set_desc_wfc_Eij(nlocal, nbands, pv->nrow);
     }

@@ -1,6 +1,10 @@
 #include "hsolver_lcao.h"
 
+#ifdef __MPI
 #include "diago_scalapack.h"
+#endif
+
+#include "diago_lapack.h"
 #include "diago_cg.h"
 #include <ATen/core/tensor.h>
 #include <ATen/core/tensor_types.h>
@@ -35,10 +39,12 @@ void HSolverLCAO<T, Device>::solveTemplate(hamilt::Hamilt<T>* pHamilt,
     ModuleBase::timer::tick("HSolverLCAO", "solve");
     // select the method of diagonalization
     this->method = method_in;
+    printf(method_in.c_str());
 
     // init
     if (this->method == "scalapack_gvx")
     {
+#ifdef __MPI
         if (this->pdiagh != nullptr)
         {
             if (this->pdiagh->method != this->method)
@@ -52,6 +58,9 @@ void HSolverLCAO<T, Device>::solveTemplate(hamilt::Hamilt<T>* pHamilt,
             this->pdiagh = new DiagoScalapack<T>();
             this->pdiagh->method = this->method;
         }
+#else
+        ModuleBase::WARNING_QUIT("hsolver_lcao", "Scalapack solver is not supported! Please use -DENABLE_MPI=ON");
+#endif
     }
 #ifdef __ELPA
     else if (this->method == "genelpa")
@@ -91,11 +100,7 @@ void HSolverLCAO<T, Device>::solveTemplate(hamilt::Hamilt<T>* pHamilt,
 #endif
     else if (this->method == "lapack")
     {
-        ModuleBase::WARNING_QUIT("hsolver_lcao", "please fix lapack solver!!!");
-        // We are not supporting diagonalization with lapack
-        // until the obsolete globalc::hm is removed from
-        // diago_lapack.cpp
-        /*
+        //ModuleBase::WARNING_QUIT("hsolver_lcao", "please fix lapack solver!!!");
         if (this->pdiagh != nullptr)
         {
             if (this->pdiagh->method != this->method)
@@ -106,11 +111,10 @@ void HSolverLCAO<T, Device>::solveTemplate(hamilt::Hamilt<T>* pHamilt,
         }
         if (this->pdiagh == nullptr)
         {
-            this->pdiagh = new DiagoLapack();
+            this->pdiagh = new DiagoLapack<T>();
             this->pdiagh->method = this->method;
         }
-        */
-        ModuleBase::WARNING_QUIT("HSolverLCAO::solve", "This method of DiagH is not supported!");
+        //ModuleBase::WARNING_QUIT("HSolverLCAO::solve", "This method of DiagH is not supported!");
     }
     else if (this->method == "cg_in_lcao")
     {

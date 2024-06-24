@@ -1,4 +1,5 @@
 #include "module_hsolver/diago_scalapack.h"
+#include "module_hsolver/diago_lapack.h"
 #include "module_hsolver/test/diago_elpa_utils.h"
 #include "mpi.h"
 #include "string.h"
@@ -64,24 +65,31 @@ class DiagoPrepare
         : nlocal(nlocal), nbands(nbands), nb2d(nb2d), sparsity(sparsity), ks_solver(ks_solver), hfname(hfname),
           sfname(sfname)
     {
-        MPI_Comm_size(MPI_COMM_WORLD, &dsize);
-        MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+        this->disable_mpi = (ks_solver == "lapack");
+
+        if (!this->disable_mpi){
+            MPI_Comm_size(MPI_COMM_WORLD, &dsize);
+            MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+        }
 
         if (ks_solver == "scalapack_gvx")
             dh = new hsolver::DiagoScalapack<T>;
+        else if (ks_solver == "lapack")
+            dh = new hsolver::DiagoLapack<T>;
 #ifdef __ELPA
         else if (ks_solver == "genelpa")
             dh = new hsolver::DiagoElpa<T>;
 #endif
         else
         {
-            if (myrank == 0)
+            if (this->disable_mpi || myrank == 0)
                 std::cout << "ERROR: undefined ks_solver: " << ks_solver << std::endl;
             exit(1);
         }
     }
 
-    int dsize, myrank;
+    int dsize, myrank = 0;
+    bool disable_mpi = false;
     int nlocal, nbands, nb2d, sparsity;
     double hsolver_time = 0.0, lapack_time = 0.0;
     std::string ks_solver, sfname, hfname;
@@ -101,7 +109,7 @@ class DiagoPrepare
     {
         bool readhfile = false;
         bool readsfile = false;
-        if (this->myrank == 0)
+        if (this->disable_mpi || this->myrank == 0)
         {
             int hdim, sdim;
             readhfile = LCAO_DIAGO_TEST::read_hs<std::vector<T>>(hfname, this->h);
@@ -115,9 +123,11 @@ class DiagoPrepare
             }
             nlocal = hdim;
         }
-        MPI_Bcast(&nlocal, 1, MPI_INT, 0, MPI_COMM_WORLD);
-        MPI_Bcast(&readhfile, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
-        MPI_Bcast(&readsfile, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
+        if (!this->disable_mpi){
+            MPI_Bcast(&nlocal, 1, MPI_INT, 0, MPI_COMM_WORLD);
+            MPI_Bcast(&readhfile, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
+            MPI_Bcast(&readsfile, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
+        }
         nbands = nlocal / 2;
         if (readhfile && readsfile)
             return true;
@@ -138,7 +148,7 @@ class DiagoPrepare
     {
         if (!PRINT_HS)
             return;
-        if (myrank == 0)
+        if (this->disable_mpi || this->myrank == 0)
         {
             std::ofstream fp("hmatrix.dat");
             LCAO_DIAGO_TEST::print_matrix(fp, this->h.data(), nlocal, nlocal, true);
@@ -210,27 +220,40 @@ class DiagoPrepare
         this->set_env();
 
         double starttime = 0.0, endtime = 0.0;
-        MPI_Barrier(MPI_COMM_WORLD);
-        starttime = MPI_Wtime();
+
+        if (!this->disable_mpi){
+            MPI_Barrier(MPI_COMM_WORLD);
+            starttime = MPI_Wtime();
+        }
+
         for (int i = 0; i < REPEATRUN; i++)
         {
             hmtest.h_local = this->h_local;
             hmtest.s_local = this->s_local;
             dh->diag(&hmtest, psi, e_solver.data());
         }
-        endtime = MPI_Wtime();
-        hsolver_time = (endtime - starttime) / REPEATRUN;
+
+        if (!this->disable_mpi){
+            endtime = MPI_Wtime();
+            hsolver_time = (endtime - starttime) / REPEATRUN;
+        }
         delete dh;
     }
 
     void diago_lapack()
     {
         double starttime = 0.0, endtime = 0.0;
-        starttime = MPI_Wtime();
+
+        if (!this->disable_mpi){
+            starttime = MPI_Wtime();
+        }
         for (int i = 0; i < REPEATRUN; i++)
             LCAO_DIAGO_TEST::lapack_diago(this->h.data(), this->s.data(), this->e_lapack.data(), nlocal);
-        endtime = MPI_Wtime();
-        lapack_time = (endtime - starttime) / REPEATRUN;
+        
+        if (!this->disable_mpi){
+            endtime = MPI_Wtime();
+            lapack_time = (endtime - starttime) / REPEATRUN;
+        }
     }
 
     bool compare_eigen(std::stringstream& out_info)
@@ -252,7 +275,7 @@ class DiagoPrepare
         }
 
         std::cout << "H/S matrix are read from " << hfname << ", " << sfname << std::endl;
-        std::cout << "solver=" << ks_solver << ", NLOCAL=" << nlocal << ", nbands=" << nbands << ", nb2d=" << nb2d;
+        std::cout << "solver=" << ks_solver << ", NLOCAL=" << nlocal << ", nbands=" << nbands << ", nb2d=" << nb2d << ", disable_mpi=" << this->disable_mpi;
         std::cout << std::endl;
         out_info << "solver time: " << hsolver_time << "s, LAPACK time(1 core):" << lapack_time << "s" << std::endl;
         out_info << "Maximum difference between ks_hsolver and LAPACK is " << maxerror << " (" << iindex
@@ -277,7 +300,8 @@ TEST_P(DiagoGammaOnlyTest, LCAO)
     std::stringstream out_info;
     DiagoPrepare<double> dp = GetParam();
     ASSERT_TRUE(dp.produce_HS());
-    dp.diago();
+    if (!dp.disable_mpi || dp.myrank == 0)
+        dp.diago();
 
     if (dp.myrank == 0)
     {
@@ -286,7 +310,8 @@ TEST_P(DiagoGammaOnlyTest, LCAO)
         EXPECT_TRUE(pass) << out_info.str();
     }
 
-    MPI_Barrier(MPI_COMM_WORLD);
+    if (!dp.disable_mpi)
+        MPI_Barrier(MPI_COMM_WORLD);
 }
 
 INSTANTIATE_TEST_SUITE_P(
@@ -309,7 +334,9 @@ TEST_P(DiagoKPointsTest, LCAO)
     std::stringstream out_info;
     DiagoPrepare<std::complex<double>> dp = GetParam();
     ASSERT_TRUE(dp.produce_HS());
-    dp.diago();
+
+    if (!dp.disable_mpi || dp.myrank == 0)
+        dp.diago();
 
     if (dp.myrank == 0)
     {
@@ -317,7 +344,9 @@ TEST_P(DiagoKPointsTest, LCAO)
         bool pass = dp.compare_eigen(out_info);
         EXPECT_TRUE(pass) << out_info.str();
     }
-    MPI_Barrier(MPI_COMM_WORLD);
+    
+    if (!dp.disable_mpi)
+        MPI_Barrier(MPI_COMM_WORLD);
 }
 INSTANTIATE_TEST_SUITE_P(
     DiagoTest,

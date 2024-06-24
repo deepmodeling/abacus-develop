@@ -54,6 +54,7 @@ void print_scf_iterinfo(const std::string& ks_solver,
            {"dav", "DA"},
            {"dav_subspace", "DS"},
            {"scalapack_gvx", "GV"},
+           {"lapack","LP"},
            {"cusolver", "CU"},
            {"bpcg", "BP"},
            {"pexsi", "PE"}}; // I change the key of "cg_in_lcao" to "CG" because all the other are only two letters
