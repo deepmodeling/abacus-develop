@@ -33,7 +33,11 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
                           const int isstress,
                           const Grid_Technique& gridt,
                           const UnitCell& ucell)
-{   
+{ 
+    int dev_id = base_device::information::set_device_by_rank();
+
+    checkCuda(cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync));
+
     const int nbzp = gridt.nbzp;
     const int lgd = gridt.lgd;
     const int max_atom = gridt.max_atom;
@@ -119,6 +123,9 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
     {
         for (int j = 0; j < gridt.nby; j++)
         {
+            // 20240620 Note that it must be set again here because 
+            // cuda's device is not safe in a multi-threaded environment.
+            checkCuda(cudaSetDevice(dev_id));
             const int sid = omp_get_thread_num();
             checkCuda(cudaStreamSynchronize(streams[sid]));
 
