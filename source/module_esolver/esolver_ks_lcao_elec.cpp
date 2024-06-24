@@ -425,7 +425,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
     }
     else if (cal_type == "get_pchg")
     {
-        IState_Charge ISC(this->psi, this->LOC);
+        IState_Charge ISC(this->psi, &(this->orb_con.ParaV));
         ISC.begin(this->GG,
                   this->pelec->charge->rho,
                   this->pelec->wg,
