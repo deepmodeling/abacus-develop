@@ -103,9 +103,20 @@ class IState_Envelope
                     const int& nspin,
                     const double* const* const rho,
                     psi::Psi<std::complex<double>>& wfc_g);
+    static int globalIndex(int localindex, int nblk, int nprocs, int myproc);
+    static int localIndex(int globalindex, int nblk, int nprocs, int& myproc);
+
 #ifdef __MPI
     template <typename T>
-    int set_wfc_grid(const Parallel_2D& p2d, const int nbands, const std::vector<int>& trace_lo, const T* in, T** out);
+    int set_wfc_grid(const int naroc[2],
+                     const int nb,
+                     const int dim0,
+                     const int dim1,
+                     const int iprow,
+                     const int ipcol,
+                     const T* in,
+                     T** out,
+                     const std::vector<int>& trace_lo);
     template <typename T>
     void wfc_2d_to_grid(const T* wfc_2d, const Parallel_Orbitals& pv, T** wfc_grid, const std::vector<int>& trace_lo);
 #endif
