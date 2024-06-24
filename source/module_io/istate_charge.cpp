@@ -319,8 +319,7 @@ void IState_Charge::idmatrix(const int& ib,
                                 *(this->psi_gamma),
                                 DM.get_DMK_pointer(ik),
                                 this->ParaV->desc_wfc,
-                                this->ParaV->desc);    
+                                this->ParaV->desc);
     }
 }
-#endif  
-
+#endif

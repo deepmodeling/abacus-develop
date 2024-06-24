@@ -83,6 +83,5 @@ class IState_Charge
 #endif
     psi::Psi<double>* psi_gamma;
     const Parallel_Orbitals* ParaV;
-
 };
 #endif
