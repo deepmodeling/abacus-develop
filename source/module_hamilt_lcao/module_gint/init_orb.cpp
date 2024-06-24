@@ -1,4 +1,4 @@
-#include "../gint_tools.h"
+#include "gint_tools.h"
 #include "module_base/memory.h"
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_cell/unitcell.h"
