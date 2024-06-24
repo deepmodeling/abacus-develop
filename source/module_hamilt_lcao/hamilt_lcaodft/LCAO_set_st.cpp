@@ -7,7 +7,7 @@ namespace LCAO_domain
 
 void single_derivative(ForceStressArrays& fsr,
                        const LCAO_Orbitals& orb,
-                       const ORB_gen_tables& uot,
+                       const TwoCenterBundle& two_center_bundle,
                        const Parallel_Orbitals& pv,
                        const UnitCell& ucell,
                        const int nspin,
@@ -45,10 +45,10 @@ void single_derivative(ForceStressArrays& fsr,
     switch (dtype)
     {
     case 'S':
-        uot.two_center_bundle->overlap_orb->calculate(T1, L1, N1, M1, T2, L2, N2, M2, dtau * ucell.lat0, nullptr, olm);
+        two_center_bundle.overlap_orb->calculate(T1, L1, N1, M1, T2, L2, N2, M2, dtau * ucell.lat0, nullptr, olm);
         break;
     case 'T':
-        uot.two_center_bundle->kinetic_orb->calculate(T1, L1, N1, M1, T2, L2, N2, M2, dtau * ucell.lat0, nullptr, olm);
+        two_center_bundle.kinetic_orb->calculate(T1, L1, N1, M1, T2, L2, N2, M2, dtau * ucell.lat0, nullptr, olm);
         break;
     default: // not supposed to happen
         ModuleBase::WARNING_QUIT("LCAO_domain::build_ST_new", "dtype must be S or T");
@@ -204,7 +204,7 @@ void single_derivative(ForceStressArrays& fsr,
 
 void single_overlap(LCAO_Matrix& lm,
                     const LCAO_Orbitals& orb,
-                    const ORB_gen_tables& uot,
+                    const TwoCenterBundle& two_center_bundle,
                     const Parallel_Orbitals& pv,
                     const UnitCell& ucell,
                     const int nspin,
@@ -243,10 +243,10 @@ void single_overlap(LCAO_Matrix& lm,
     switch (dtype)
     {
     case 'S':
-        uot.two_center_bundle->overlap_orb->calculate(T1, L1, N1, M1, T2, L2, N2, M2, dtau * ucell.lat0, olm);
+        two_center_bundle.overlap_orb->calculate(T1, L1, N1, M1, T2, L2, N2, M2, dtau * ucell.lat0, olm);
         break;
     case 'T':
-        uot.two_center_bundle->kinetic_orb->calculate(T1, L1, N1, M1, T2, L2, N2, M2, dtau * ucell.lat0, olm);
+        two_center_bundle.kinetic_orb->calculate(T1, L1, N1, M1, T2, L2, N2, M2, dtau * ucell.lat0, olm);
         break;
     default: // not supposed to happen
         ModuleBase::WARNING_QUIT("LCAO_domain::build_ST_new", "dtype must be S or T");
@@ -316,7 +316,7 @@ void build_ST_new(LCAO_Matrix& lm,
                   const UnitCell& ucell,
                   const LCAO_Orbitals& orb,
                   const Parallel_Orbitals& pv,
-                  const ORB_gen_tables& uot,
+                  const TwoCenterBundle& two_center_bundle,
                   Grid_Driver* GridD,
                   double* HSloc,
                   bool cal_syns,
@@ -424,7 +424,7 @@ void build_ST_new(LCAO_Matrix& lm,
                             {
                                 single_overlap(lm,
                                                orb,
-                                               uot,
+                                               two_center_bundle,
                                                pv,
                                                ucell,
                                                nspin,
@@ -457,7 +457,7 @@ void build_ST_new(LCAO_Matrix& lm,
                             {
                                 single_derivative(fsr,
                                                   orb,
-                                                  uot,
+                                                  two_center_bundle,
                                                   pv,
                                                   ucell,
                                                   nspin,

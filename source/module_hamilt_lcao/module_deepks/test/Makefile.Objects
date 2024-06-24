@@ -68,8 +68,7 @@ ORB_nonlocal_lm.o\
 ORB_gaunt_table.o\
 ORB_table_beta.o\
 ORB_table_phi.o\
-ORB_table_alpha.o\
-ORB_gen_tables.o\
+ORB_table_alpha.o
 
 OBJS_NEIGHBOR=sltk_adjacent_set.o\
 sltk_atom_arrange.o\

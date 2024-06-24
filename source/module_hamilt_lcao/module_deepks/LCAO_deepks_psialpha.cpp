@@ -16,7 +16,7 @@ void LCAO_Deepks::build_psialpha(const bool& calc_deri,
                                  const UnitCell& ucell,
                                  const LCAO_Orbitals& orb,
                                  Grid_Driver& GridD,
-                                 const ORB_gen_tables& UOT)
+                                 const TwoCenterIntegrator& overlap_orb_alpha)
 {
     ModuleBase::TITLE("LCAO_Deepks", "build_psialpha");
     ModuleBase::timer::tick("LCAO_Deepks", "build_psialpha");
@@ -99,8 +99,7 @@ void LCAO_Deepks::build_psialpha(const bool& calc_deri,
                     int M1 = (m1 % 2 == 0) ? -m1 / 2 : (m1 + 1) / 2;
 
                     ModuleBase::Vector3<double> dtau = ucell.atoms[T0].tau[I0] - tau1;
-                    UOT.two_center_bundle->overlap_orb_alpha
-                        ->snap(T1, L1, N1, M1, 0, dtau * ucell.lat0, calc_deri, nlm);
+                    overlap_orb_alpha.snap(T1, L1, N1, M1, 0, dtau * ucell.lat0, calc_deri, nlm);
 
                     if (GlobalV::GAMMA_ONLY_LOCAL)
                     {
@@ -133,8 +132,7 @@ void LCAO_Deepks::build_psialpha(const bool& calc_deri,
 void LCAO_Deepks::check_psialpha(const bool& calc_deri,
                                  const UnitCell& ucell,
                                  const LCAO_Orbitals& orb,
-                                 Grid_Driver& GridD,
-                                 const ORB_gen_tables& UOT)
+                                 Grid_Driver& GridD)
 {
     ModuleBase::TITLE("LCAO_Deepks", "check_psialpha");
     ModuleBase::timer::tick("LCAO_Deepks", "check_psialpha");

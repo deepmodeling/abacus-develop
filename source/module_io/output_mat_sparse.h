@@ -2,6 +2,7 @@
 #define OUTPUT_MAT_SPARSE_H
 
 #include "module_basis/module_ao/parallel_orbitals.h"
+#include "module_basis/module_nao/two_center_bundle.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
 #include "module_hsolver/hsolver_lcao.h"
@@ -20,8 +21,8 @@ class Output_Mat_Sparse
                       int istep,
                       const ModuleBase::matrix& v_eff,
                       const Parallel_Orbitals& pv,
-                      Gint_k& gint_k,         // mohan add 2024-04-01
-                      const ORB_gen_tables* uot,
+                      Gint_k& gint_k, // mohan add 2024-04-01
+                      const TwoCenterBundle& two_center_bundle,
                       LCAO_Matrix& lm,
                       Grid_Driver& grid, // mohan add 2024-04-06
                       const K_Vectors& kv,
@@ -51,7 +52,7 @@ class Output_Mat_Sparse
     Gint_k& _gint_k; // mohan add 2024-04-01
 
     // introduced temporarily for LCAO refactoring
-    const ORB_gen_tables* uot_;
+    const TwoCenterBundle& two_center_bundle_;
 
     LCAO_Matrix& _lm;
 

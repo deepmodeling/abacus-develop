@@ -46,6 +46,9 @@ void Local_Orbital_wfc::gamma_file(psi::Psi<double>* psid, elecstate::ElecState*
 #ifdef __CUDA
         || GlobalV::KS_SOLVER == "cusolver"
 #endif
+#ifdef __CUSOLVERMP
+        || GlobalV::KS_SOLVER == "cusolvermp"
+#endif
     )
     {
         ncol = this->ParaV->ncol;

@@ -14,7 +14,7 @@ void build_Nonlocal_mu_new(LCAO_Matrix& lm,
                            const bool& calc_deri,
                            const UnitCell& ucell,
                            const LCAO_Orbitals& orb,
-                           const ORB_gen_tables& uot,
+                           const TwoCenterIntegrator& intor_orb_beta,
                            Grid_Driver* GridD)
 {
     ModuleBase::TITLE("LCAO_domain", "vnl_mu_new");
@@ -125,7 +125,7 @@ void build_Nonlocal_mu_new(LCAO_Matrix& lm,
                 int M1 = (m1 % 2 == 0) ? -m1 / 2 : (m1 + 1) / 2;
 
                 ModuleBase::Vector3<double> dtau = tau - tau1;
-                uot.two_center_bundle->overlap_orb_beta->snap(T1, L1, N1, M1, it, dtau * ucell.lat0, calc_deri, nlm);
+                intor_orb_beta.snap(T1, L1, N1, M1, it, dtau * ucell.lat0, calc_deri, nlm);
 
                 if (!calc_deri)
                 {

@@ -1,9 +1,7 @@
-#include "gint_force.cuh"
-#include "interp.cuh"
-#include "module_hamilt_lcao/module_gint/gint_force_gpu.h"
-#include "cuda_tools.cuh"
-#include "gint_force.cuh"
 #include "sph.cuh"
+#include "interp.cuh"
+#include "gint_force.cuh"
+#include "cuda_tools.cuh"
 #include "cuda_runtime.h"
 // CUDA kernel to calculate psi and force
 namespace GintKernel
@@ -11,7 +9,7 @@ namespace GintKernel
 __global__ void get_psi_force(double* ylmcoef,
                               double delta_r_g,
                               int bxyz_g,
-                              double nwmax_g,
+                              const int nwmax_g,
                               double* __restrict__ psi_input_double,
                               int* __restrict__ psi_input_int,
                               int* __restrict__ atom_num_per_bcell,
@@ -24,15 +22,8 @@ __global__ void get_psi_force(double* ylmcoef,
                               int nr_max,
                               const double* __restrict__ psi_u,
                               double* psi,
-                              double* dpsi_dx,
-                              double* dpsi_dy,
-                              double* dpsi_dz,
-                              double* d2psi_dxx,
-                              double* d2psi_dxy,
-                              double* d2psi_dxz,
-                              double* d2psi_dyy,
-                              double* d2psi_dyz,
-                              double* d2psi_dzz)
+                              double* dpsi,
+                              double* d2psi)
 {
     const int size = atom_num_per_bcell[blockIdx.x];
     const int bcell_start = start_idx_per_bcell[blockIdx.x];
@@ -57,7 +48,6 @@ __global__ void get_psi_force(double* ylmcoef,
 
         const int nwl = ucell_atom_nwl[it];
         spherical_harmonics_d(dr, distance*distance, grly, nwl, ylma, ylmcoef);
-
         interpolate_f(distance,
                       delta_r_g,
                       it,
@@ -72,26 +62,14 @@ __global__ void get_psi_force(double* ylmcoef,
                       dist_tmp,
                       ylma,
                       vlbr3_value,
-                      dpsi_dx,
+                      dpsi,
                       dr,
                       grly,
-                      dpsi_dy,
-                      dpsi_dz,
-                      d2psi_dxx,
-                      d2psi_dxy,
-                      d2psi_dxz,
-                      d2psi_dyy,
-                      d2psi_dyz,
-                      d2psi_dzz);
+                      d2psi);
     }
 }
 
-__global__ void dot_product_stress(double* d2psi_dxx,
-                                   double* d2psi_dxy,
-                                   double* d2psi_dxz,
-                                   double* d2psi_dyy,
-                                   double* d2psi_dyz,
-                                   double* d2psi_dzz,
+__global__ void dot_product_stress(double* d2psi,
                                    double* psir_ylm_dm,
                                    double* stress_dot,
                                    int elements_num)
@@ -103,12 +81,13 @@ __global__ void dot_product_stress(double* d2psi_dxx,
     while (tid < elements_num)
     {   
         double psi_dm_2 = psir_ylm_dm[tid] * 2;
-        tmp[0] += d2psi_dxx[tid] * psi_dm_2;
-        tmp[1] += d2psi_dxy[tid] * psi_dm_2;
-        tmp[2] += d2psi_dxz[tid] * psi_dm_2;
-        tmp[3] += d2psi_dyy[tid] * psi_dm_2;
-        tmp[4] += d2psi_dyz[tid] * psi_dm_2;
-        tmp[5] += d2psi_dzz[tid] * psi_dm_2;
+        const int tid_stress = tid * 6;
+        tmp[0] += d2psi[tid_stress] * psi_dm_2;
+        tmp[1] += d2psi[tid_stress + 1] * psi_dm_2;
+        tmp[2] += d2psi[tid_stress + 2] * psi_dm_2;
+        tmp[3] += d2psi[tid_stress + 3] * psi_dm_2;
+        tmp[4] += d2psi[tid_stress + 4] * psi_dm_2;
+        tmp[5] += d2psi[tid_stress + 5] * psi_dm_2;
         tid += blockDim.x * gridDim.x;
     }
 
@@ -141,9 +120,7 @@ __global__ void dot_product_stress(double* d2psi_dxx,
     }
 }
 
-__global__ void dot_product_force(double* __restrict__ dpsi_dx,
-                                  double* __restrict__ dpsi_dy,
-                                  double* __restrict__ dpsi_dz,
+__global__ void dot_product_force(double* __restrict__ dpsi,
                                   double* __restrict__ psir_ylm_dm,
                                   double* force_dot,
                                   int* iat,
@@ -167,10 +144,11 @@ __global__ void dot_product_force(double* __restrict__ dpsi_dx,
     {
         int ls_offset = tid * 3;
         int psi_offset = offset + i;
+        int psi_offset_force = psi_offset * 3;
         double psi_dm_2 = psir_ylm_dm[psi_offset] * 2;
-        localsum[ls_offset] += dpsi_dx[psi_offset] * psi_dm_2;
-        localsum[ls_offset + 1] += dpsi_dy[psi_offset] * psi_dm_2;
-        localsum[ls_offset + 2] += dpsi_dz[psi_offset] * psi_dm_2;
+        localsum[ls_offset] += dpsi[psi_offset_force] * psi_dm_2;
+        localsum[ls_offset + 1] += dpsi[psi_offset_force + 1] * psi_dm_2;
+        localsum[ls_offset + 2] += dpsi[psi_offset_force + 2] * psi_dm_2;
     }
     __syncthreads();
     
