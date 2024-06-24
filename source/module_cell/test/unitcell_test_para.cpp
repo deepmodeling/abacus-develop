@@ -107,6 +107,12 @@ TEST_F(UcellTest,BcastUnitcell)
 		EXPECT_DOUBLE_EQ(ucell->a1.x,10.0);
 		EXPECT_EQ(ucell->atoms[0].na,1);
 		EXPECT_EQ(ucell->atoms[1].na,2);
+		/// this is to ensure all processes have the atom label info
+		auto atom_labels = ucell->get_atomLabels();
+		std::string atom_type1_expected = "C";
+		std::string atom_type2_expected = "H";
+		EXPECT_EQ(atom_labels[0], atom_type1_expected);
+		EXPECT_EQ(atom_labels[1], atom_type2_expected);
 	}
 }
 
