@@ -40,10 +40,10 @@ void ReadInput::item_relax()
         Input_Item item("force_thr_ev");
         item.annotation = "force threshold, unit: eV/Angstrom";
         item.readvalue = [](const Input_Item& item, Parameter& para) {
-            para.force_thr_ev = doublevalue ;
+            para.input.force_thr_ev = doublevalue ;
         };
         item.resetvalue = [](const Input_Item& item, Parameter& para) {
-            para.force_thr = para.force_thr_ev / 13.6058 * 0.529177;
+            para.input.force_thr = para.input.force_thr_ev / 13.6058 * 0.529177;
         };
         sync_double(force_thr_ev);
         this->add_item(item);
@@ -160,8 +160,8 @@ void ReadInput::item_relax()
         Input_Item item("out_level");
         item.annotation = "ie(for electrons); i(for ions);";
         item.readvalue = [](const Input_Item& item, Parameter& para) {
-            para.out_level = strvalue;
-            para.out_md_control = true;
+            para.input.out_level = strvalue;
+            para.input.out_md_control = true;
         };
         sync_string(out_level);
         add_bool_bcast(out_md_control); //Since "out_md_control" has been assigned a value, it needs to be broadcasted

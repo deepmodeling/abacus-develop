@@ -151,13 +151,13 @@ void ReadInput::item_pw()
             int count = item.str_values.size();
             if (count == 1)
             {
-                para.out_band[0] = convertstr<int>(item.str_values[0]);
-                para.out_band[1] = 8;
+                para.input.out_band[0] = convertstr<int>(item.str_values[0]);
+                para.input.out_band[1] = 8;
             }
             else if (count == 2)
             {
-                para.out_band[0] = convertstr<int>(item.str_values[0]);
-                para.out_band[1] = convertstr<int>(item.str_values[1]);
+                para.input.out_band[0] = convertstr<int>(item.str_values[0]);
+                para.input.out_band[1] = convertstr<int>(item.str_values[1]);
             }
             else
             {
@@ -195,8 +195,8 @@ void ReadInput::item_pw()
         Input_Item item("nx");
         item.annotation = "number of points along x axis for FFT grid";
         item.readvalue = [](const Input_Item& item, Parameter& para) {
-            para.nx = intvalue;
-            para.ncx = intvalue;
+            para.input.nx = intvalue;
+            para.input.ncx = intvalue;
         };
         sync_int(nx);
         add_int_bcast(ncx); //Since "ncx" has been assigned a value, it needs to be broadcasted
@@ -206,8 +206,8 @@ void ReadInput::item_pw()
         Input_Item item("ny");
         item.annotation = "number of points along y axis for FFT grid";
         item.readvalue = [](const Input_Item& item, Parameter& para) {
-            para.ny = intvalue;
-            para.ncy = intvalue;
+            para.input.ny = intvalue;
+            para.input.ncy = intvalue;
         };
         sync_int(ny);
         add_int_bcast(ncy); //Since "ncy" has been assigned a value, it needs to be broadcasted
@@ -217,8 +217,8 @@ void ReadInput::item_pw()
         Input_Item item("nz");
         item.annotation = "number of points along z axis for FFT grid";
         item.readvalue = [](const Input_Item& item, Parameter& para) {
-            para.nz = intvalue;
-            para.ncz = intvalue;
+            para.input.nz = intvalue;
+            para.input.ncz = intvalue;
         };
         sync_int(nz);
         add_int_bcast(ncz); //Since "ncz" has been assigned a value, it needs to be broadcasted

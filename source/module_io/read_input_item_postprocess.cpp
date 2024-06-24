@@ -99,8 +99,8 @@ void ReadInput::item_postprocess()
         Input_Item item("dos_emin_ev");
         item.annotation = "minimal range for dos";
         item.readvalue = [](const Input_Item& item, Parameter& para) {
-            para.dos_emin_ev = doublevalue;
-            para.dos_setemin = true;
+            para.input.dos_emin_ev = doublevalue;
+            para.input.dos_setemin = true;
         };
         sync_double(dos_emin_ev);
         add_bool_bcast(dos_setemin); //Since "dos_setemin" has been assigned a value, it needs to be broadcasted
@@ -110,8 +110,8 @@ void ReadInput::item_postprocess()
         Input_Item item("dos_emax_ev");
         item.annotation = "maximal range for dos";
         item.readvalue = [](const Input_Item& item, Parameter& para) {
-            para.dos_emax_ev = doublevalue;
-            para.dos_setemax = true;
+            para.input.dos_emax_ev = doublevalue;
+            para.input.dos_setemax = true;
         };
         sync_double(dos_emax_ev);
         add_bool_bcast(dos_setemax); //Since "dos_setemax" has been assigned a value, it needs to be broadcasted

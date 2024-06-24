@@ -20,19 +20,20 @@ namespace ModuleIO
 //      item.annotation = "unit in 1/bohr, should be > 0, default is 0 which means read KPT file";
 //
 //      item.readvalue = [](const Input_Item& item, Parameter& para) {
-//          para.kspacing[0] = convertstr<double>(item.str_values[0]);
-//          para.kspacing[1] = convertstr<double>(item.str_values[1]);
-//          para.kspacing[2] = convertstr<double>(item.str_values[2]);
+//          para.input.kspacing[0] = convertstr<double>(item.str_values[0]);
+//          para.input.kspacing[1] = convertstr<double>(item.str_values[1]);
+//          para.input.kspacing[2] = convertstr<double>(item.str_values[2]);
 //      };
 //
-//      item.resetvalue = [](const Input_Item& item, Parameter& para) { 
-//          if(para.kspacing[0] <= 0) para.kspacing[0] = 1;
+//      item.resetvalue = [](const Input_Item& item, Parameter& para) {
+//          if(para.input.kspacing[0] <= 0) para.input.kspacing[0] = 1;
 //      };
 //
-//      item.checkvalue = [](const Input_Item& item, const Parameter& para) {assert(para.kspacing[0]>0);};
+//      item.checkvalue = [](const Input_Item& item, const Parameter& para) {assert(para.input.kspacing[0]>0);};
 //
 //      item.getfinalvalue = [](Input_Item& item, const Parameter& para) {
-//          item.final_value << para.kspacing[0] << " " << para.kspacing[1] << " " << para.kspacing[2];
+//          item.final_value << para.input.kspacing[0] << " " << para.input.kspacing[1] << " " <<
+//          para.input.kspacing[2];
 //      };
 //
 //      add_doublevec_bcast(&Parameter::PARAMETER, N);
@@ -137,13 +138,13 @@ void ReadInput::item_general()
             int count = item.str_values.size();
             if (count == 1)
             {
-                para.kspacing[0] = para.kspacing[1] = para.kspacing[2] = convertstr<double>(item.str_values[0]);
+                para.input.kspacing[0] = para.input.kspacing[1] = para.input.kspacing[2] = doublevalue;
             }
             else if (count == 3)
             {
-                para.kspacing[0] = convertstr<double>(item.str_values[0]);
-                para.kspacing[1] = convertstr<double>(item.str_values[1]);
-                para.kspacing[2] = convertstr<double>(item.str_values[2]);
+                para.input.kspacing[0] = convertstr<double>(item.str_values[0]);
+                para.input.kspacing[1] = convertstr<double>(item.str_values[1]);
+                para.input.kspacing[2] = convertstr<double>(item.str_values[2]);
             }
             else
             {
@@ -217,8 +218,8 @@ void ReadInput::item_general()
         Input_Item item("nupdown");
         item.annotation = "the difference number of electrons between spin-up and spin-down";
         item.readvalue = [](const Input_Item& item, Parameter& para) {
-            para.nupdown = doublevalue;
-            para.two_fermi = true;
+            para.input.nupdown = doublevalue;
+            para.input.two_fermi = true;
         };
 
         sync_double(nupdown);

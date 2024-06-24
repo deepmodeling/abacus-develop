@@ -56,12 +56,12 @@ ReadInput::ReadInput(const int& rank)
     this->item_others();
 }
 
-void ReadInput::readin_parameters(Parameter& param, const std::string& filename)
+void ReadInput::readin_parameters(Parameter& param, const std::string& filename_in, const std::string& filename_out)
 {
     // 1. only rank 0 read the input file
     if (this->rank == 0)
     {
-        this->read_txt_input(param, filename);
+        this->read_txt_input(param, filename_in);
     }
     if (this->check_mode)
     {
@@ -70,6 +70,10 @@ void ReadInput::readin_parameters(Parameter& param, const std::string& filename)
         std::cout << "----------------------------------------------------------" << std::endl;
         exit(0);
         return;
+    }
+    if (filename_out != "")
+    {
+        this->write_txt_input(param, filename_out);
     }
 #ifdef __MPI
     // 2. broadcast the parameters

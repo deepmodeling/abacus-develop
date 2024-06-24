@@ -2,17 +2,15 @@
 
 Parameter PARAM;
 
-Parameter::Parameter()
+const Input_para& Parameter::get() const
 {
-}
-Parameter::~Parameter()
-{
-}
-const Parameter& Parameter::get() const
-{
-    return *this;
+    return this->input;
 }
 const MD_para& Parameter::get_mdp() const
 {
-    return this->mdp;
+    return this->input.mdp;
+}
+const Other_para& Parameter::globalV() const
+{
+    return this->gv;
 }

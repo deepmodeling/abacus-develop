@@ -253,9 +253,9 @@ void ReadInput::item_others()
             int count = item.str_values.size();
             if (count == 3)
             {
-                para.vdw_cutoff_period[0] = convertstr<int>(item.str_values[0]);
-                para.vdw_cutoff_period[1] = convertstr<int>(item.str_values[1]);
-                para.vdw_cutoff_period[2] = convertstr<int>(item.str_values[2]);
+                para.input.vdw_cutoff_period[0] = convertstr<int>(item.str_values[0]);
+                para.input.vdw_cutoff_period[1] = convertstr<int>(item.str_values[1]);
+                para.input.vdw_cutoff_period[2] = convertstr<int>(item.str_values[2]);
             }
             else
             {
@@ -263,11 +263,12 @@ void ReadInput::item_others()
             }
         };
         item.getfinalvalue = [](Input_Item& item, const Parameter& para) {
-            item.final_value << para.vdw_cutoff_period[0] << " " << para.vdw_cutoff_period[1] << " "
-                             << para.vdw_cutoff_period[2];
+            item.final_value << para.input.vdw_cutoff_period[0] << " " << para.input.vdw_cutoff_period[1] << " "
+                             << para.input.vdw_cutoff_period[2];
         };
 #ifdef __MPI
-        bcastfuncs.push_back([](Parameter& para) { Parallel_Common::bcast_int((int*)&para.vdw_cutoff_period, 3); });
+        bcastfuncs.push_back(
+            [](Parameter& para) { Parallel_Common::bcast_int((int*)&para.input.vdw_cutoff_period, 3); });
 #endif
         this->add_item(item);
     }
@@ -428,14 +429,15 @@ void ReadInput::item_others()
         item.annotation = "extern potential direction";
         item.readvalue = [](const Input_Item& item, Parameter& para) {
             int count = item.str_values.size();
-            para.td_nvext_dire = count;
+            para.input.td_nvext_dire = count;
             for (auto& str: item.str_values)
             {
-                para.td_vext_dire.push_back(convertstr<int>(str));
+                para.input.td_vext_dire.push_back(convertstr<int>(str));
             }
         };
-        sync_intvec(td_vext_dire, para.td_nvext_dire);
         add_int_bcast(td_nvext_dire); // Since "td_nvext_dire" has been assigned a value, it needs to be broadcasted
+        // We must firt bcast td_nvext_direr, then bcast td_vext_dire
+        sync_intvec(td_vext_dire, para.input.td_nvext_dire);
         this->add_item(item);
     }
     {
@@ -889,16 +891,17 @@ void ReadInput::item_others()
             int count = item.str_values.size();
             for (int i = 0; i < count; i++)
             {
-                para.hubbard_u.push_back(convertstr<double>(item.str_values[i]));
+                para.input.hubbard_u.push_back(convertstr<double>(item.str_values[i]));
             }
         };
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
-            if (para.hubbard_u.size() != para.ntype)
+            if (para.input.hubbard_u.size() != para.input.ntype)
             {
                 throw std::runtime_error("hubbard_u should have the same number of elements as ntype");
             }
         };
-        sync_doublevec(hubbard_u, para.ntype);
+        // We must firt bcast ntype (in item_general), then bcast hubbard_u
+        sync_doublevec(hubbard_u, para.input.ntype);
         this->add_item(item);
     }
     {
@@ -908,16 +911,17 @@ void ReadInput::item_others()
             int count = item.str_values.size();
             for (int i = 0; i < count; i++)
             {
-                para.orbital_corr.push_back(convertstr<int>(item.str_values[i]));
+                para.input.orbital_corr.push_back(convertstr<int>(item.str_values[i]));
             }
         };
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
-            if (para.orbital_corr.size() != para.ntype)
+            if (para.input.orbital_corr.size() != para.input.ntype)
             {
                 throw std::runtime_error("orbital_corr should have the same number of elements as ntype");
             }
         };
-        sync_intvec(orbital_corr, para.ntype);
+        // We must firt bcast ntype (in item_general), then bcast orbital_corr
+        sync_intvec(orbital_corr, para.input.ntype);
         this->add_item(item);
     }
 
@@ -941,15 +945,16 @@ void ReadInput::item_others()
             int count = item.str_values.size();
             for (int i = 0; i < count; i++)
             {
-                para.bessel_nao_rcuts.push_back(convertstr<double>(item.str_values[i]));
+                para.input.bessel_nao_rcuts.push_back(convertstr<double>(item.str_values[i]));
             }
-            para.bessel_nao_rcut = para.bessel_nao_rcuts[0]; // also compatible with old input file
-            para.nrcut = count;
+            para.input.bessel_nao_rcut = para.input.bessel_nao_rcuts[0]; // also compatible with old input file
+            para.input.nrcut = count;
         };
-        sync_doublevec(bessel_nao_rcuts, para.nrcut);
         // Since nrcut and bessel_nao_rcut are also valued, we need to broadcast them
-        add_double_bcast(bessel_nao_rcut);
         add_int_bcast(nrcut);
+        add_double_bcast(bessel_nao_rcut);
+        // We must firt bcast nrcut, then bcast bessel_nao_rcut
+        sync_doublevec(bessel_nao_rcuts, para.input.nrcut);
         this->add_item(item);
     }
     {
@@ -1084,33 +1089,34 @@ void ReadInput::item_others()
             int count = item.str_values.size();
             for (int i = 0; i < count; i++)
             {
-                para.qo_strategy.push_back(item.str_values[i]);
+                para.input.qo_strategy.push_back(item.str_values[i]);
             }
         };
         item.resetvalue = [](const Input_Item& item, Parameter& para) {
-            if (para.qo_strategy.size() != para.ntype)
+            if (para.input.qo_strategy.size() != para.input.ntype)
             {
-                if (para.qo_strategy.size() == 1)
+                if (para.input.qo_strategy.size() == 1)
                 {
-                    para.qo_strategy.resize(para.ntype, para.qo_strategy[0]);
+                    para.input.qo_strategy.resize(para.input.ntype, para.input.qo_strategy[0]);
                 }
                 else
                 {
                     std::string default_strategy;
-                    if (para.qo_basis == "hydrogen")
+                    if (para.input.qo_basis == "hydrogen")
                         default_strategy = "energy-valence";
-                    else if ((para.qo_basis == "pswfc") || (para.qo_basis == "szv"))
+                    else if ((para.input.qo_basis == "pswfc") || (para.input.qo_basis == "szv"))
                         default_strategy = "all";
                     else
                     {
                         throw std::runtime_error("When setting default values for qo_strategy, unexpected/unknown "
                                                  "qo_basis is found. Please check it.");
                     }
-                    para.qo_strategy.resize(para.ntype, default_strategy);
+                    para.input.qo_strategy.resize(para.input.ntype, default_strategy);
                 }
             }
         };
-        sync_stringvec(qo_strategy, para.ntype);
+        // We must firt bcast ntype (in item_general), then bcast qo_strategy
+        sync_stringvec(qo_strategy, para.input.ntype);
         this->add_item(item);
     };
 
@@ -1121,17 +1127,17 @@ void ReadInput::item_others()
             int count = item.str_values.size();
             for (int i = 0; i < count; i++)
             {
-                para.qo_screening_coeff.push_back(convertstr<double>(item.str_values[i]));
+                para.input.qo_screening_coeff.push_back(convertstr<double>(item.str_values[i]));
             }
         };
         item.resetvalue = [](const Input_Item& item, Parameter& para) {
-            if (para.qo_screening_coeff.size() != para.ntype)
+            if (para.input.qo_screening_coeff.size() != para.input.ntype)
             {
-                if (para.qo_basis == "pswfc")
+                if (para.input.qo_basis == "pswfc")
                 {
                     double default_screening_coeff
-                        = (para.qo_screening_coeff.size() == 1) ? para.qo_screening_coeff[0] : 0.1;
-                    para.qo_screening_coeff.resize(para.ntype, default_screening_coeff);
+                        = (para.input.qo_screening_coeff.size() == 1) ? para.input.qo_screening_coeff[0] : 0.1;
+                    para.input.qo_screening_coeff.resize(para.input.ntype, default_screening_coeff);
                 }
                 else
                 {
@@ -1140,7 +1146,7 @@ void ReadInput::item_others()
             }
         };
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
-            for (auto screen_coeff: para.qo_screening_coeff)
+            for (auto screen_coeff: para.input.qo_screening_coeff)
             {
                 if (screen_coeff < 0)
                 {
@@ -1153,8 +1159,8 @@ void ReadInput::item_others()
                 }
             }
         };
-
-        sync_doublevec(qo_screening_coeff, para.ntype);
+        // We must firt bcast ntype (in item_general), then bcast qo_screening_coeff
+        sync_doublevec(qo_screening_coeff, para.input.ntype);
         this->add_item(item);
     }
 

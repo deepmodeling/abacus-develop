@@ -22,16 +22,16 @@ void ReadInput::item_sdft()
         Input_Item item("nbands_sto");
         item.annotation = "number of stochstic orbitals";
         item.readvalue = [](const Input_Item& item, Parameter& para) {
-            para.nbndsto_str = strvalue;
-            if(para.nbndsto_str != "all")
+            para.input.nbndsto_str = strvalue;
+            if(para.input.nbndsto_str != "all")
             {
-                para.nbands_sto = std::stoi(para.nbndsto_str);
+                para.input.nbands_sto = std::stoi(para.input.nbndsto_str);
             }
         };
         item.resetvalue = [](const Input_Item& item, Parameter& para) {
-            if(para.nbndsto_str == "all")
+            if(para.input.nbndsto_str == "all")
             {
-                para.nbands_sto = 0;
+                para.input.nbands_sto = 0;
             }
         };
         sync_string(nbndsto_str);

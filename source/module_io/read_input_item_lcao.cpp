@@ -61,13 +61,13 @@ void ReadInput::item_lcao()
             int count = item.str_values.size();
             if (count == 1)
             {
-                para.out_mat_hs[0] = convertstr<int>(item.str_values[0]);
-                para.out_mat_hs[1] = 8;
+                para.input.out_mat_hs[0] = convertstr<int>(item.str_values[0]);
+                para.input.out_mat_hs[1] = 8;
             }
             else if (count == 2)
             {
-                para.out_mat_hs[0] = convertstr<int>(item.str_values[0]);
-                para.out_mat_hs[1] = convertstr<int>(item.str_values[1]);
+                para.input.out_mat_hs[0] = convertstr<int>(item.str_values[0]);
+                para.input.out_mat_hs[1] = convertstr<int>(item.str_values[1]);
             }
             else
             {

@@ -17,9 +17,10 @@ class ReadInput
      * @brief read in parameters from input file
      *
      * @param param parameters of ABACUS
-     * @param filename input file name
+     * @param filename_in read INPUT file name
+     * @param filename_out write output INPUT file name
      */
-    void readin_parameters(Parameter& param, const std::string& filename);
+    void readin_parameters(Parameter& param, const std::string& filename_in, const std::string& filename_out = "");
 
     static bool check_mode;
 
