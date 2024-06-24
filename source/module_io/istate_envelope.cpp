@@ -522,29 +522,48 @@ int IState_Envelope::set_wfc_grid(const int naroc[2],
                                   const std::vector<int>& trace_lo)
 {
     ModuleBase::TITLE(" Local_Orbital_wfc", "set_wfc_grid");
-    if (!out) { return 0; }
+    if (!out)
+    {
+        return 0;
+    }
     for (int j = 0; j < naroc[1]; ++j)
     {
         int igcol = globalIndex(j, nb, dim1, ipcol);
-		if (igcol >= GlobalV::NBANDS)
-		{
-			continue;
-		}
-		for (int i = 0; i < naroc[0]; ++i)
-		{
-			int igrow = globalIndex(i, nb, dim0, iprow);
-			int mu_local = trace_lo[igrow];
-			if (out && mu_local >= 0)
-			{
-				out[igcol][mu_local] = in[j * naroc[0] + i];
-			}
+        if (igcol >= GlobalV::NBANDS)
+        {
+            continue;
+        }
+        for (int i = 0; i < naroc[0]; ++i)
+        {
+            int igrow = globalIndex(i, nb, dim0, iprow);
+            int mu_local = trace_lo[igrow];
+            if (out && mu_local >= 0)
+            {
+                out[igcol][mu_local] = in[j * naroc[0] + i];
+            }
         }
     }
     return 0;
 }
 
-template int IState_Envelope::set_wfc_grid(const int naroc[2], const int nb, const int dim0, const int dim1, const int iprow, const int ipcol, const double* in, double** out, const std::vector<int>& trace_lo);
-template int IState_Envelope::set_wfc_grid(const int naroc[2], const int nb, const int dim0, const int dim1, const int iprow, const int ipcol, const std::complex<double>* in, std::complex<double>** out, const std::vector<int>& trace_lo);
+template int IState_Envelope::set_wfc_grid(const int naroc[2],
+                                           const int nb,
+                                           const int dim0,
+                                           const int dim1,
+                                           const int iprow,
+                                           const int ipcol,
+                                           const double* in,
+                                           double** out,
+                                           const std::vector<int>& trace_lo);
+template int IState_Envelope::set_wfc_grid(const int naroc[2],
+                                           const int nb,
+                                           const int dim0,
+                                           const int dim1,
+                                           const int iprow,
+                                           const int ipcol,
+                                           const std::complex<double>* in,
+                                           std::complex<double>** out,
+                                           const std::vector<int>& trace_lo);
 
 template <typename T>
 void IState_Envelope::wfc_2d_to_grid(const T* lowf_2d,
@@ -607,7 +626,15 @@ void IState_Envelope::wfc_2d_to_grid(const T* lowf_2d,
             mpi_info = MPI_Bcast(lowf_block.data(), buf_size, mpi_dtype, rank_at_coord, pv.comm_2D);
 
             // then use it to set the wfc_grid.
-            mpi_info = this->set_wfc_grid(naroc, pv.nb, pv.dim0, pv.dim1, iprow, ipcol, lowf_block.data(), lowf_grid, trace_lo);
+            mpi_info = this->set_wfc_grid(naroc,
+                                          pv.nb,
+                                          pv.dim0,
+                                          pv.dim1,
+                                          iprow,
+                                          ipcol,
+                                          lowf_block.data(),
+                                          lowf_grid,
+                                          trace_lo);
             // this operation will let all processors have the same wfc_grid
         }
     }
