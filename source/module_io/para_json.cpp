@@ -31,7 +31,7 @@ void json_output()
 #ifdef __MPI
     if (GlobalV::MY_RANK == 0)
         AbacusJson::write_to_json("abacus.json");
-#elif
+#else
     AbacusJson::write_to_json("abacus.json");
 #endif
 #endif // __RAPIDJSON
@@ -51,7 +51,7 @@ void gen_stru_wrapper(UnitCell *ucell){
 #ifdef __MPI
     if (GlobalV::MY_RANK == 0)
         gen_stru(ucell);
-#elif
+#else
     gen_stru(ucell);
 #endif
 #endif

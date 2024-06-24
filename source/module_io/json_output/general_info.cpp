@@ -39,7 +39,7 @@ void gen_general_info(Input *input)
 #ifdef __MPI
     int mpi_num = Parallel_Global::mpi_number;
     int omp_num = Parallel_Global::omp_number;
-#elif
+#else
     int mpi_num = 1;
     int omp_num = 1;
 #endif
