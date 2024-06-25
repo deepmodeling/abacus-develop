@@ -106,12 +106,6 @@ class LCAO_Matrix
 
     void set_HSgamma(const int& iw1_all, const int& iw2_all, const double& v, double* HSloc);
 
-    void set_HSk(const int& iw1_all,
-                 const int& iw2_all,
-                 const std::complex<double>& v,
-                 const char& dtype,
-                 const int spin = 0);
-
     void set_HR_tr(const int& Rx,
                    const int& Ry,
                    const int& Rz,

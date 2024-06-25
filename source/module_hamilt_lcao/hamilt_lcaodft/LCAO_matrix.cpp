@@ -120,31 +120,6 @@ void LCAO_Matrix::set_HSgamma(const int& iw1_all, const int& iw2_all, const doub
     return;
 }
 
-void LCAO_Matrix::set_HSk(const int& iw1_all,
-                          const int& iw2_all,
-                          const std::complex<double>& v,
-                          const char& dtype,
-                          const int spin)
-{
-    if (dtype == 'S') // overlap Hamiltonian.
-    {
-        LCAO_Matrix::set_mat2d<std::complex<double>>(iw1_all, iw2_all, v, *this->ParaV, this->Sloc2.data());
-    }
-    else if (dtype == 'T' || dtype == 'N') // kinetic and nonlocal Hamiltonian.
-    {
-        LCAO_Matrix::set_mat2d<std::complex<double>>(iw1_all, iw2_all, v, *this->ParaV, this->Hloc_fixed2.data());
-    }
-    else if (dtype == 'L') // Local potential Hamiltonian.
-    {
-        LCAO_Matrix::set_mat2d<std::complex<double>>(iw1_all, iw2_all, v, *this->ParaV, this->Hloc2.data());
-    }
-    else
-    {
-        ModuleBase::WARNING_QUIT("LCAO_Matrix", "set_HSk");
-    }
-    return;
-}
-
 void LCAO_Matrix::zeros_HSgamma(const char& mtype)
 {
     auto zeros_HSgamma_ker = [&](int num_threads, int thread_id) {
