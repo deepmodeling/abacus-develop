@@ -4,7 +4,6 @@
 #include "elecstate.h"
 #include "elecstate_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_wfc.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
 
 namespace elecstate

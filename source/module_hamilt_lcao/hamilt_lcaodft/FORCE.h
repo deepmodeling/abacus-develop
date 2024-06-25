@@ -11,6 +11,7 @@
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
 #include "module_psi/psi.h"
+#include "module_basis/module_nao/two_center_bundle.h"
 
 #ifndef TGINT_H
 #define TGINT_H

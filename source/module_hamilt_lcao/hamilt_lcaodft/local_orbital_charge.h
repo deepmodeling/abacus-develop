@@ -9,7 +9,6 @@
 #include "module_base/parallel_common.h"
 #include "module_elecstate/elecstate.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/DM_gamma_2d_to_grid.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_wfc.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/record_adj.h"
 #include "module_hamilt_lcao/module_gint/grid_technique.h"
 #include "module_psi/psi.h"

@@ -41,7 +41,6 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 #ifdef __LCAO
-#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_wfc.h"
 #include "module_hamilt_lcao/module_gint/grid_technique.h"
 
 

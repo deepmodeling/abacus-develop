@@ -63,6 +63,19 @@ Local_Orbital_Charge::~Local_Orbital_Charge()
         }
         delete[] DM_R;
     }
+    // used for k-points.
+    if (this->complex_flag)
+    {
+        delete[] this->wfc_k_grid2;
+    }
+    if (this->wfck_flag)
+    {
+        for (int i = 0; i < nks; i++)
+        {
+            delete[] this->wfc_k_grid[i];
+        }
+        delete[] this->wfc_k_grid;
+    }
 }
 
 void Local_Orbital_Charge::allocate_dm_wfc(const Grid_Technique& gt,

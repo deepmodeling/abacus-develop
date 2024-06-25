@@ -35,7 +35,6 @@
 
 #ifdef __LCAO
 #include "module_basis/module_ao/parallel_orbitals.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_wfc.h"
 #include "module_hamilt_lcao/module_gint/grid_technique.h"
 
 #include "module_psi/psi_initializer.h"

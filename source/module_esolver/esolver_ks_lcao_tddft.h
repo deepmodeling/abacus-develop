@@ -5,7 +5,6 @@
 #include "module_basis/module_ao/ORB_control.h"
 #include "module_psi/psi.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_wfc.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/record_adj.h"
 #include "module_elecstate/elecstate_lcao_tddft.h"
 

@@ -25,14 +25,14 @@ inline int CTOT2q(const int myid, const int naroc[2], const int nb, const int di
 {
     for (int j = 0; j < naroc[1]; ++j)
     {
-        int igcol = Local_Orbital_wfc::globalIndex(j, nb, dim1, ipcol);
+        int igcol = ModuleIO::globalIndex(j, nb, dim1, ipcol);
         if (igcol >= nbands)
         {
             continue;
         }
         for (int i = 0; i < naroc[0]; ++i)
         {
-            int igrow = Local_Orbital_wfc::globalIndex(i, nb, dim0, iprow);
+            int igrow = ModuleIO::globalIndex(i, nb, dim0, iprow);
             // GlobalV::ofs_running << "i,j,igcol,igrow" << i << " " << j << " " << igcol << " " << igrow << std::endl;
             if (myid == 0)
             {
@@ -64,14 +64,14 @@ inline int CTOT2q_c(const int myid, const int naroc[2], const int nb, const int 
 {
     for (int j = 0; j < naroc[1]; ++j)
     {
-        int igcol = Local_Orbital_wfc::globalIndex(j, nb, dim1, ipcol);
+        int igcol = ModuleIO::globalIndex(j, nb, dim1, ipcol);
         if (igcol >= nbands)
         {
             continue;
         }
         for (int i = 0; i < naroc[0]; ++i)
         {
-            int igrow = Local_Orbital_wfc::globalIndex(i, nb, dim0, iprow);
+            int igrow = ModuleIO::globalIndex(i, nb, dim0, iprow);
             // ofs_running << "i,j,igcol,igrow" << i << " " << j << " " << igcol << " " << igrow << std::endl;
             if (myid == 0)
             {
@@ -279,7 +279,6 @@ int ModuleIO::read_wfc_nao(double** ctot, const int& is, const bool& gamma_only_
         {
             GlobalV::ofs_warning << " read in nbands=" << nbands;
             GlobalV::ofs_warning << " NBANDS=" << nbands_g << std::endl;
-            error = 2;
             ModuleBase::WARNING_QUIT("ModuleIO::read_wfc_nao",
                                      "The nbands read in from file do not match the global parameter NBANDS!");
         }
@@ -287,7 +286,6 @@ int ModuleIO::read_wfc_nao(double** ctot, const int& is, const bool& gamma_only_
         {
             GlobalV::ofs_warning << " read in nlocal=" << nlocal;
             GlobalV::ofs_warning << " NLOCAL=" << nlocal_g << std::endl;
-            error = 3;
             ModuleBase::WARNING_QUIT("ModuleIO::read_wfc_nao",
                                      "The nlocal read in from file do not match the global parameter NLOCAL!");
         }
@@ -486,4 +484,18 @@ void ModuleIO::distri_wfc_nao_complex(std::complex<double>** ctot, const int& ik
     ModuleBase::WARNING_QUIT("ModuleIO::distri_wfc_nao", "check the code without MPI.");
 #endif
     return;
+}
+
+int ModuleIO::globalIndex(int localindex, int nblk, int nprocs, int myproc)
+{
+    int iblock, gIndex;
+    iblock = localindex / nblk;
+    gIndex = (iblock * nprocs + myproc) * nblk + localindex % nblk;
+    return gIndex;
+}
+
+int ModuleIO::localIndex(int globalindex, int nblk, int nprocs, int& myproc)
+{
+    myproc = int((globalindex % (nblk * nprocs)) / nblk);
+    return int(globalindex / (nblk * nprocs)) * nblk + globalindex % nblk;
 }

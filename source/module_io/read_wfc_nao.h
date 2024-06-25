@@ -39,6 +39,10 @@ namespace ModuleIO
         const Parallel_Orbitals* ParaV, 
         psi::Psi<std::complex<double>>* psi,
         elecstate::ElecState* pelec);
+
+    int globalIndex(int localindex, int nblk, int nprocs, int myproc);
+    int localIndex(int globalindex, int nblk, int nprocs, int& myproc);
+
 }
 
 #endif

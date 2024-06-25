@@ -159,7 +159,6 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(Input& inp, UnitCell& ucell)
 
     //! pass basis-pointer to EState and Psi
     this->LOC.ParaV = &(this->orb_con.ParaV);
-    this->LOWF.ParaV = &(this->orb_con.ParaV);
     this->LM.ParaV = &(this->orb_con.ParaV);
 
     // 5) initialize density matrix
