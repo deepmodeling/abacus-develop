@@ -6,6 +6,7 @@
 #include "module_basis/module_ao/ORB_atomic_lm.h"
 #include "module_elecstate/module_charge/charge.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_HS_arrays.hpp"
 
 // add by jingan for map<> in 2021-12-2, will be deleted in the future
 #include "module_base/abfs-vector3_order.h"
@@ -123,11 +124,13 @@ class Gint_k : public Gint
         const std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>&
             pvdpR_soc_sparseMatrix,
         LCAO_Matrix* LM,
+        LCAO_HS_Arrays& HS_Arrays,
         Parallel_Orbitals* pv);
 
     void cal_dvlocal_R_sparseMatrix(const int& current_spin,
                                     const double& sparse_threshold,
                                     LCAO_Matrix* LM,
+                                    LCAO_HS_Arrays& HS_Arrays,
                                     Parallel_Orbitals* pv,
                                     UnitCell& ucell,
                                     Grid_Driver& gdriver);
