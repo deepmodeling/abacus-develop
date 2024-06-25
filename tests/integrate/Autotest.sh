@@ -297,9 +297,9 @@ else
     if [ $fatal -gt 0 ]
     then
         echo -e "\e[0;31m[ERROR     ]\e[0m $fatal test cases out of $[ $failed + $ok ] produced fatal error."
-        echo -e $fatal_case_list
-        exit 1
+        echo -e $fatal_case_list  
     fi
+    exit 1
 fi
 else
 echo "Generate test cases complete."
