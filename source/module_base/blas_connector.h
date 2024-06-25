@@ -263,6 +263,46 @@ public:
 	}
 };
 
+/// The unified interface for the BLAS routine sgemm, dgemm, cgemm, zgemm. 
+/// This is the col-major version, consistent with the fortran proto.
+/// The one in BlasConnector is row-major.
+static inline
+void gemm(const char transa, const char transb, const int m, const int n, const int k,
+    const float alpha, const float* a, const int lda, const float* b, const int ldb,
+    const float beta, float* c, const int ldc)
+{
+    sgemm_(&transa, &transb, &m, &n, &k,
+        &alpha, a, &lda, b, &ldb,
+        &beta, c, &ldc);
+}
+static inline
+void gemm(const char transa, const char transb, const int m, const int n, const int k,
+    const double alpha, const double* a, const int lda, const double* b, const int ldb,
+    const double beta, double* c, const int ldc)
+{
+    dgemm_(&transa, &transb, &m, &n, &k,
+        &alpha, a, &lda, b, &ldb,
+        &beta, c, &ldc);
+}
+static inline
+void gemm(const char transa, const char transb, const int m, const int n, const int k,
+    const std::complex<float> alpha, const std::complex<float>* a, const int lda, const std::complex<float>* b, const int ldb,
+    const std::complex<float> beta, std::complex<float>* c, const int ldc)
+{
+    cgemm_(&transa, &transb, &m, &n, &k,
+        &alpha, a, &lda, b, &ldb,
+        &beta, c, &ldc);
+}
+static inline
+void gemm(const char transa, const char transb, const int m, const int n, const int k,
+    const std::complex<double> alpha, const std::complex<double>* a, const int lda, const std::complex<double>* b, const int ldb,
+    const std::complex<double> beta, std::complex<double>* c, const int ldc)
+{
+    zgemm_(&transa, &transb, &m, &n, &k,
+        &alpha, a, &lda, b, &ldb,
+        &beta, c, &ldc);
+}
+
 // If GATHER_INFO is defined, the original function is replaced with a "i" suffix,
 // preventing changes on the original code.
 // The real function call is at gather_math_lib_info.cpp
