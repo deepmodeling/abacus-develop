@@ -4,6 +4,7 @@
 #include "module_base/tool_quit.h"
 #include "module_base/tool_title.h"
 
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <string.h>
@@ -71,12 +72,15 @@ void ReadInput::readin_parameters(Parameter& param, const std::string& filename_
         exit(0);
         return;
     }
+
+    // 2. write the input file
     if (filename_out != "")
     {
         this->write_txt_input(param, filename_out);
     }
+
 #ifdef __MPI
-    // 2. broadcast the parameters
+    // 3. broadcast the parameters
     for (auto& bcastfunc: this->bcastfuncs)
     {
         bcastfunc(param);
@@ -152,6 +156,24 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
             }
             ifs.ignore(150, '\n');
         }
+
+        ifs.rdstate();
+        if (ifs.eof())
+        {
+            break;
+        }
+        else if (ifs.bad())
+        {
+            std::cout << " Bad input parameters. " << std::endl;
+            exit(1);
+        }
+        else if (ifs.fail())
+        {
+            std::cout << " word = " << word << std::endl;
+            std::cout << " Fail to read parameters. " << std::endl;
+            ifs.clear();
+            exit(1);
+        }
     }
 
     // 1) read the value of the parameters
@@ -160,14 +182,23 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
         readvalue_item->readvalue(*readvalue_item, param);
     }
 
-    // 2) reset the value of some parameters based on readin values
+    // 2) count the number of atom types from STRU file
+    check_ntype(param.input.stru_file, param.input.ntype);
+
+    // 3) reset the value of some parameters based on readin values
     //    e.g. if (calulation_type == "nscf") then set "init_chg" to "file".
     for (auto& resetvalue_item: this->resetvalue_items)
     {
         resetvalue_item->resetvalue(*resetvalue_item, param);
     }
 
-    // 3) check the value of the parameters
+    // 4) auto set some parameters
+    for (auto& autoset: this->autosetfuncs)
+    {
+        autoset(param);
+    }
+
+    // 4) check the value of the parameters
     for (auto& checkvalue_item: this->checkvalue_items)
     {
         checkvalue_item->checkvalue(*checkvalue_item, param);
@@ -179,7 +210,8 @@ void ReadInput::write_txt_input(const Parameter& param, const std::string& filen
     ModuleBase::TITLE("ReadInput", "write_txt_input");
     for (auto& item: this->input_lists)
     {
-        item.second.getfinalvalue(item.second, param);
+        if (item.second.getfinalvalue != nullptr)
+            item.second.getfinalvalue(item.second, param);
     }
     std::ofstream ofs(filename.c_str(), std::ios::out);
     ofs << "INPUT_PARAMETERS" << std::endl;
@@ -189,95 +221,138 @@ void ReadInput::write_txt_input(const Parameter& param, const std::string& filen
     for (auto& item: this->input_lists)
     {
         const Input_Item* p_item = &(item.second);
-        if(p_item->label == "ecutwfc")
+        if (p_item->getfinalvalue == nullptr)
+            continue;
+        if (p_item->label == "ecutwfc")
         {
             ofs << "\n#Parameters (2.PW)" << std::endl;
         }
-        else if(p_item->label == "method_sto")
+        else if (p_item->label == "method_sto")
         {
             ofs << "\n#Parameters (3.Stochastic DFT)" << std::endl;
         }
-        else if(p_item->label == "ks_solver")
+        else if (p_item->label == "ks_solver")
         {
             ofs << "\n#Parameters (4.Relaxation)" << std::endl;
         }
-        else if(p_item->label == "basis_type")
+        else if (p_item->label == "basis_type")
         {
             ofs << "\n#Parameters (5.LCAO)" << std::endl;
         }
-        else if(p_item->label == "smearing_method")
+        else if (p_item->label == "smearing_method")
         {
             ofs << "\n#Parameters (6.Smearing)" << std::endl;
         }
-        else if(p_item->label == "mixing_type")
+        else if (p_item->label == "mixing_type")
         {
             ofs << "\n#Parameters (7.Charge Mixing)" << std::endl;
         }
-        else if(p_item->label == "dos_emin_ev")
+        else if (p_item->label == "dos_emin_ev")
         {
             ofs << "\n#Parameters (8.DOS)" << std::endl;
         }
-        else if(p_item->label == "md_type")
+        else if (p_item->label == "md_type")
         {
             ofs << "\n#Parameters (9.Molecular dynamics)" << std::endl;
         }
-        else if(p_item->label == "efield_flag")
+        else if (p_item->label == "efield_flag")
         {
             ofs << "\n#Parameters (10.Electric field and dipole correction)" << std::endl;
         }
-        else if(p_item->label == "gate_flag")
+        else if (p_item->label == "gate_flag")
         {
             ofs << "\n#Parameters (11.Gate field)" << std::endl;
         }
-        else if(p_item->label == "out_alllog")
+        else if (p_item->label == "out_alllog")
         {
             ofs << "\n#Parameters (12.Test)" << std::endl;
         }
-        else if(p_item->label == "vdw_method")
+        else if (p_item->label == "vdw_method")
         {
             ofs << "\n#Parameters (13.vdW Correction)" << std::endl;
         }
-        else if(p_item->label == "exx_hybrid_alpha")
+        else if (p_item->label == "exx_hybrid_alpha")
         {
             ofs << "\n#Parameters (14.exx)" << std::endl;
         }
-        else if(p_item->label == "td_force_dt")
+        else if (p_item->label == "td_force_dt")
         {
             ofs << "\n#Parameters (16.tddft)" << std::endl;
         }
-        else if(p_item->label == "berry_phase")
+        else if (p_item->label == "berry_phase")
         {
             ofs << "\n#Parameters (17.berry_wannier)" << std::endl;
         }
-        else if(p_item->label == "imp_sol")
+        else if (p_item->label == "imp_sol")
         {
             ofs << "\n#Parameters (18.implicit_solvation)" << std::endl;
         }
-        else if(p_item->label == "of_kinetic")
+        else if (p_item->label == "of_kinetic")
         {
             ofs << "\n#Parameters (19.orbital free density functional theory)" << std::endl;
         }
-        else if(p_item->label == "dft_plus_u")
+        else if (p_item->label == "dft_plus_u")
         {
             ofs << "\n#Parameters (20.dft+u)" << std::endl;
         }
-        else if(p_item->label == "bessel_nao_ecut")
+        else if (p_item->label == "bessel_nao_ecut")
         {
             ofs << "\n#Parameters (21.spherical bessel)" << std::endl;
         }
-        else if(p_item->label == "sc_mag_switch")
+        else if (p_item->label == "sc_mag_switch")
         {
             ofs << "\n#Parameters (22.non-collinear spin-constrained DFT)" << std::endl;
         }
-        else if(p_item->label == "qo_switch")
+        else if (p_item->label == "qo_switch")
         {
             ofs << "\n#Parameters (23.Quasiatomic Orbital analysis)" << std::endl;
         }
-        else if(p_item->label == "pexsi_npole")
+        else if (p_item->label == "pexsi_npole")
         {
             ofs << "\n#Parameters (24.PEXSI)" << std::endl;
         }
         ModuleBase::GlobalFunc::OUTP(ofs, p_item->label, p_item->final_value.str(), p_item->annotation);
+    }
+}
+
+void ReadInput::check_ntype(const std::string& fn, int& param_ntype)
+{
+    std::ifstream ifa(fn.c_str(), std::ios::in);
+    if (!ifa)
+    {
+        GlobalV::ofs_warning << fn;
+        ModuleBase::WARNING_QUIT("Input::count_ntype", "Can not find the file containing atom positions.!");
+    }
+
+    int ntype_stru = 0;
+    std::string temp;
+    if (ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "ATOMIC_SPECIES"))
+    {
+        while (true)
+        {
+            ModuleBase::GlobalFunc::READ_VALUE(ifa, temp);
+            if (temp == "LATTICE_CONSTANT" || temp == "NUMERICAL_ORBITAL" || temp == "NUMERICAL_DESCRIPTOR"
+                || temp == "PAW_FILES" || ifa.eof())
+            {
+                break;
+            }
+            else if (isalpha(temp[0]))
+            {
+                ntype_stru += 1;
+            }
+        }
+    }
+
+    if (param_ntype == 0)
+    {
+        param_ntype = ntype_stru;
+        GlobalV::ofs_running << "ntype in INPUT is 0, and it is automatically set to " << param_ntype
+                             << " according to STRU" << std::endl;
+    }
+    else if (param_ntype != ntype_stru)
+    {
+        ModuleBase::WARNING_QUIT("ReadInput",
+                                 "The ntype in INPUT is not equal to the ntype counted in STRU, check it.");
     }
 }
 
@@ -290,6 +365,9 @@ void ReadInput::add_item(const Input_Item& item)
         this->input_lists.insert(make_pair(item.label, item));
     }
 }
-
-
+bool find_str(const std::vector<std::string>& strings, const std::string& strToFind)
+{
+    auto it = std::find(strings.begin(), strings.end(), strToFind);
+    return it != strings.end();
+};
 } // namespace ModuleIO

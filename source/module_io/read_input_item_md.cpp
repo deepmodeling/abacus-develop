@@ -1,3 +1,4 @@
+#include "module_base/tool_quit.h"
 #include "read_input.h"
 #include "read_input_tool.h"
 
@@ -195,13 +196,19 @@ void ReadInput::item_md()
     {
         Input_Item item("md_pfirst");
         item.annotation = "initial target pressure";
-        read_sync_double(mdp.md_pfirst);
+        item.readvalue = [](const Input_Item& item, Parameter& para) {
+            para.input.mdp.md_pfirst = doublevalue;
+            para.input.mdp.md_plast = para.input.mdp.md_pfirst;
+        };
         this->add_item(item);
     }
     {
         Input_Item item("md_plast");
         item.annotation = "final target pressure";
-        read_sync_double(mdp.md_plast);
+        item.readvalue = [](const Input_Item& item, Parameter& para) { para.input.mdp.md_plast = doublevalue; };
+        // No matter md_pfirst or md_plast is read first, both of them will be set to the right value
+        item.resetvalue = [](const Input_Item& item, Parameter& para) { para.input.mdp.md_plast = doublevalue; };
+        sync_double(mdp.md_plast);
         this->add_item(item);
     }
     {

@@ -32,4 +32,13 @@ class Parameter
 };
 
 extern Parameter PARAM;
+
+//temperarily put here
+namespace GlobalV
+{
+  extern int NPROC;
+  extern int MY_RANK;
+  extern std::ofstream ofs_running;
+  extern std::ofstream ofs_warning;
+}
 #endif

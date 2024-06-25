@@ -1,6 +1,6 @@
 #include "read_input.h"
 #include "read_input_tool.h"
-
+#include "module_base/tool_quit.h"
 
 namespace ModuleIO
 {
@@ -10,6 +10,12 @@ void ReadInput::item_sdft()
         Input_Item item("method_sto");
         item.annotation = "1: slow and save memory, 2: fast and waste memory";
         read_sync_int(method_sto);
+        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.method_sto != 1 && para.input.method_sto != 2)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "method_sto should be 1 or 2");
+            }
+        };
         this->add_item(item);
     }
     {
@@ -22,20 +28,30 @@ void ReadInput::item_sdft()
         Input_Item item("nbands_sto");
         item.annotation = "number of stochstic orbitals";
         item.readvalue = [](const Input_Item& item, Parameter& para) {
-            para.input.nbndsto_str = strvalue;
-            if(para.input.nbndsto_str != "all")
+            std::string nbandsto_str = strvalue;
+            if (nbandsto_str != "all")
             {
-                para.input.nbands_sto = std::stoi(para.input.nbndsto_str);
+                para.input.nbands_sto = std::stoi(nbandsto_str);
             }
-        };
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
-            if(para.input.nbndsto_str == "all")
+            else
             {
                 para.input.nbands_sto = 0;
             }
         };
-        sync_string(nbndsto_str);
-        add_int_bcast(nbands_sto); // Since "nbands_sto" has been assigned a value, it needs to be broadcasted
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+            if(strvalue == "0" && para.input.esolver_type == "sdft")
+            {
+                para.input.esolver_type = "ksdft";
+            }
+        };
+        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.nbands_sto < 0 || para.input.nbands_sto > 100000)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "nbands_sto should be in the range of 0 to 100000");
+            }
+        };
+        item.getfinalvalue = [](Input_Item& item, const Parameter& para) { item.final_value << strvalue; };
+        add_int_bcast(nbands_sto);
         this->add_item(item);
     }
     {

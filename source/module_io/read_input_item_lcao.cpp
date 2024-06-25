@@ -1,7 +1,10 @@
+
+#include "module_base/global_function.h"
+#include "module_base/tool_quit.h"
 #include "read_input.h"
 #include "read_input_tool.h"
 
-
+#include <fstream>
 namespace ModuleIO
 {
 void ReadInput::item_lcao()
@@ -10,12 +13,89 @@ void ReadInput::item_lcao()
         Input_Item item("basis_type");
         item.annotation = "PW; LCAO in pw; LCAO";
         read_sync_string(basis_type);
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+            Input_para& input = para.input;
+            if (para.input.basis_type == "lcao_in_pw")
+            {
+                if (para.input.ks_solver != "lapack")
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput", "ks_solver must be lapack when basis_type is lcao_in_pw");
+                }
+                else
+                {
+                    para.input.psi_initializer = true;
+                    if (para.input.init_wfc != "nao")
+                    {
+                        para.input.init_wfc = "nao";
+                        GlobalV::ofs_warning << "init_wfc is set to nao when basis_type is lcao_in_pw" << std::endl;
+                    }
+                }
+                para.input.bx = 1;
+                para.input.by = 1;
+                para.input.bz = 1;
+            }
+            else if (para.input.basis_type == "lcao")
+            {
+                if (para.input.lcao_ecut == 0)
+                {
+                    para.input.lcao_ecut = para.input.ecutwfc;
+                    ModuleBase::GlobalFunc::AUTO_SET("lcao_ecut", para.input.ecutwfc);
+                }
+            }
+        };
+        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+            const std::vector<std::string> basis_types = {"pw", "lcao_in_pw", "lcao"};
+            if (find_str(basis_types, para.input.basis_type) == -1)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "basis_type should be pw, lcao_in_pw, or lcao");
+            }
+        };
         this->add_item(item);
     }
     {
         Input_Item item("gamma_only");
         item.annotation = "Only for localized orbitals set and gamma point. If set to 1, a fast algorithm is used";
         read_sync_bool(gamma_only);
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+            Input_para& input = para.input;
+            std::string& basis_type = input.basis_type;
+            bool& gamma_only = input.gamma_only;
+            if (basis_type == "pw" && gamma_only) // pengfei Li add 2015-1-31
+            {
+                gamma_only = 0;
+                GlobalV::ofs_warning << " WARNING : gamma_only has not been implemented for pw yet" << std::endl;
+                GlobalV::ofs_warning << " the INPUT parameter gamma_only has been reset to 0" << std::endl;
+                GlobalV::ofs_warning << " and a new KPT is generated with gamma point as the only k point" << std::endl;
+
+                GlobalV::ofs_warning << " Auto generating k-points file: " << input.kpoint_file << std::endl;
+                std::ofstream ofs(input.kpoint_file.c_str());
+                ofs << "K_POINTS" << std::endl;
+                ofs << "0" << std::endl;
+                ofs << "Gamma" << std::endl;
+                ofs << "1 1 1 0 0 0" << std::endl;
+                ofs.close();
+            }
+            else if (basis_type == "lcao" && gamma_only == 1)
+            {
+                input.sup.gamma_only_local = true;
+                // std::cout << "gamma_only_local =" << gamma_only_local << std::endl;
+                if (input.esolver_type == "tddft")
+                {
+                    GlobalV::ofs_running << " WARNING : gamma_only is not applicable for tddft" << std::endl;
+                    input.sup.gamma_only_local = 0;
+                }
+            }
+
+            if ((input.out_mat_r || input.out_mat_hs2 || input.out_mat_t || input.out_mat_dh || input.out_hr_npz
+                 || input.out_dm_npz || input.dm_to_rho)
+                && input.sup.gamma_only_local)
+            {
+                ModuleBase::WARNING_QUIT(
+                    "ReadInput",
+                    "output of r(R)/H(R)/S(R)/T(R)/dH(R)/DM(R) is not available for gamma only calculations");
+            }
+        };
+        add_bool_bcast(sup.gamma_only_local);
         this->add_item(item);
     }
     {
@@ -61,17 +141,17 @@ void ReadInput::item_lcao()
             int count = item.str_values.size();
             if (count == 1)
             {
-                para.input.out_mat_hs[0] = convertstr<int>(item.str_values[0]);
+                para.input.out_mat_hs[0] = std::stoi(item.str_values[0]);
                 para.input.out_mat_hs[1] = 8;
             }
             else if (count == 2)
             {
-                para.input.out_mat_hs[0] = convertstr<int>(item.str_values[0]);
-                para.input.out_mat_hs[1] = convertstr<int>(item.str_values[1]);
+                para.input.out_mat_hs[0] = std::stoi(item.str_values[0]);
+                para.input.out_mat_hs[1] = std::stoi(item.str_values[1]);
             }
             else
             {
-                throw std::runtime_error("out_mat_hs should have 1 or 2 values");
+                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_hs should have 1 or 2 values");
             }
         };
         sync_intvec(out_mat_hs, 2);
@@ -87,6 +167,12 @@ void ReadInput::item_lcao()
         Input_Item item("out_mat_dh");
         item.annotation = "output of derivative of H(R) matrix";
         read_sync_bool(out_mat_dh);
+        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_mat_dh && para.input.nspin == 4)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_dh is not available for nspin = 4");
+            }
+        };
         this->add_item(item);
     }
     {
@@ -99,18 +185,46 @@ void ReadInput::item_lcao()
         Input_Item item("out_hr_npz");
         item.annotation = "output hr(I0,JR) submatrices in npz format";
         read_sync_bool(out_hr_npz);
+        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_hr_npz)
+            {
+#ifndef __USECNPY
+                ModuleBase::WARNING_QUIT("ReadInput", "to write in npz format, please recompile with -DENABLE_CNPY=1");
+#endif
+            }
+        };
         this->add_item(item);
     }
     {
         Input_Item item("out_dm_npz");
         item.annotation = "output dmr(I0,JR) submatrices in npz format";
         read_sync_bool(out_dm_npz);
+        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_dm_npz)
+            {
+#ifndef __USECNPY
+                ModuleBase::WARNING_QUIT("ReadInput", "to write in npz format, please recompile with -DENABLE_CNPY=1");
+#endif
+            }
+        };
         this->add_item(item);
     }
     {
         Input_Item item("dm_to_rho");
         item.annotation = "reads dmr in npz format and calculates electron density";
         read_sync_bool(dm_to_rho);
+        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.dm_to_rho && GlobalV::NPROC > 1)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "dm_to_rho is not available for parallel calculations");
+            }
+            if (para.input.dm_to_rho)
+            {
+#ifndef __USECNPY
+                ModuleBase::WARNING_QUIT("ReadInput", "to write in npz format, please recompile with -DENABLE_CNPY=1");
+#endif
+            }
+        };
         this->add_item(item);
     }
     {
@@ -153,24 +267,52 @@ void ReadInput::item_lcao()
         Input_Item item("out_wfc_lcao");
         item.annotation = "ouput LCAO wave functions, 0, no output 1: text, 2: binary";
         read_sync_int(out_wfc_lcao);
+        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_wfc_lcao < 0 || para.input.out_wfc_lcao > 2)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_wfc_lcao should be 0, 1, or 2");
+            }
+            if (para.input.basis_type != "lcao")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_wfc_lcao is only available for basis_type = lcao");
+            }
+        };
         this->add_item(item);
     }
     {
         Input_Item item("bx");
         item.annotation = "division of an element grid in FFT grid along x";
         read_sync_int(bx);
+        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.bx > 10)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "bx should be no more than 10");
+            }
+        };
         this->add_item(item);
     }
     {
         Input_Item item("by");
         item.annotation = "division of an element grid in FFT grid along y";
         read_sync_int(by);
+        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.by > 10)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "by should be no more than 10");
+            }
+        };
         this->add_item(item);
     }
     {
         Input_Item item("bz");
         item.annotation = "division of an element grid in FFT grid along z";
         read_sync_int(bz);
+        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.bz > 10)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "bz should be no more than 10");
+            }
+        };
         this->add_item(item);
     }
     {

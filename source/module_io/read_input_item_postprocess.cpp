@@ -1,7 +1,6 @@
+#include "module_base/tool_quit.h"
 #include "read_input.h"
 #include "read_input_tool.h"
-
-
 namespace ModuleIO
 {
 void ReadInput::item_postprocess()
@@ -19,6 +18,15 @@ void ReadInput::item_postprocess()
         read_sync_double(smearing_sigma);
         this->add_item(item);
     }
+    {
+        // Energy range for smearing,
+        //`smearing_sigma` = 1/2 *kB* `smearing_sigma_temp`.
+        Input_Item tmp_item("smearing_sigma_temp");
+        tmp_item.readvalue
+            = [](const Input_Item& item, Parameter& para) { para.input.smearing_sigma = 3.166815e-6 * doublevalue; };
+        // only to set smearing_sigma, so no need to write to output INPUT file or bcast.
+        this->add_item(tmp_item);
+    }
 
     // 7. Charge Mixing
     {
@@ -31,6 +39,27 @@ void ReadInput::item_postprocess()
         Input_Item item("mixing_beta");
         item.annotation = "mixing parameter: 0 means no new charge";
         read_sync_double(mixing_beta);
+        autosetfuncs.push_back([](Parameter& para) {
+            if (para.input.mixing_beta < 0.0)
+            {
+                if (para.input.nspin == 1)
+                {
+                    para.input.mixing_beta = 0.8;
+                }
+                else if (para.input.nspin == 2)
+                {
+                    para.input.mixing_beta = 0.4;
+                    para.input.mixing_beta_mag = 1.6;
+                    para.input.mixing_gg0_mag = 0.0;
+                }
+                else if (para.input.nspin == 4) // I will add this
+                {
+                    para.input.mixing_beta = 0.4;
+                    para.input.mixing_beta_mag = 1.6;
+                    para.input.mixing_gg0_mag = 0.0;
+                }
+            }
+        });
         this->add_item(item);
     }
     {
@@ -55,6 +84,22 @@ void ReadInput::item_postprocess()
         Input_Item item("mixing_beta_mag");
         item.annotation = "mixing parameter for magnetic density";
         read_sync_double(mixing_beta_mag);
+        autosetfuncs.push_back([](Parameter& para) {
+            if (para.input.mixing_beta_mag < 0.0)
+            {
+                if (para.input.nspin == 2 || para.input.nspin == 4)
+                {
+                    if (para.input.mixing_beta <= 0.4)
+                    {
+                        para.input.mixing_beta_mag = 4 * para.input.mixing_beta;
+                    }
+                    else
+                    {
+                        para.input.mixing_beta_mag = 1.6; // 1.6 can be discussed
+                    }
+                }
+            }
+        });
         this->add_item(item);
     }
     {
@@ -100,10 +145,10 @@ void ReadInput::item_postprocess()
         item.annotation = "minimal range for dos";
         item.readvalue = [](const Input_Item& item, Parameter& para) {
             para.input.dos_emin_ev = doublevalue;
-            para.input.dos_setemin = true;
+            para.input.sup.dos_setemin = true;
         };
         sync_double(dos_emin_ev);
-        add_bool_bcast(dos_setemin); //Since "dos_setemin" has been assigned a value, it needs to be broadcasted
+        add_bool_bcast(sup.dos_setemin);
         this->add_item(item);
     }
     {
@@ -111,10 +156,10 @@ void ReadInput::item_postprocess()
         item.annotation = "maximal range for dos";
         item.readvalue = [](const Input_Item& item, Parameter& para) {
             para.input.dos_emax_ev = doublevalue;
-            para.input.dos_setemax = true;
+            para.input.sup.dos_setemax = true;
         };
         sync_double(dos_emax_ev);
-        add_bool_bcast(dos_setemax); //Since "dos_setemax" has been assigned a value, it needs to be broadcasted
+        add_bool_bcast(sup.dos_setemax);
         this->add_item(item);
     }
     {

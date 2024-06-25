@@ -674,6 +674,7 @@ target_link_libraries(
   planewave
   surchem
   neighbor
+  io_input
   io_basic
   io_advanced
   relax

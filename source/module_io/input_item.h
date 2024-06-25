@@ -35,14 +35,18 @@ class Input_Item
 
     std::string annotation; ///< annotation of the input item
 
-    /// read value function from input file
+    
+    // ====== !!! These functions are complete.        ======
+    // ====== !!! Do not add any more functions here.  ======
+    /// read value if INPUT file has this item
     std::function<void(const Input_Item&, Parameter&)> readvalue = [](const Input_Item& item, Parameter& param) {};
-    /// check the value read from input file
+    /// check value if INPUT file has this item
     std::function<void(const Input_Item&, const Parameter&)> checkvalue = nullptr;
-    /// reset other values if this value is read in and set.
+    /// reset some values if INPUT file has this item
     std::function<void(const Input_Item&, Parameter&)> resetvalue = nullptr;
-    /// get final_value function
+    /// get final_value function for output INPUT file
     std::function<void(Input_Item&, const Parameter&)> getfinalvalue = nullptr;
+    // ====== !!! Do not add any more functions here.  ======
 };
 
 } // namespace ModuleIO

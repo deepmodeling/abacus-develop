@@ -1,6 +1,7 @@
+#include "module_base/global_function.h"
+#include "module_base/tool_quit.h"
 #include "read_input.h"
 #include "read_input_tool.h"
-
 
 namespace ModuleIO
 {
@@ -10,6 +11,99 @@ void ReadInput::item_relax()
         Input_Item item("ks_solver");
         item.annotation = "cg; dav; lapack; genelpa; scalapack_gvx; cusolver";
         read_sync_string(ks_solver);
+        autosetfuncs.push_back([this](Parameter& para) {
+            if (para.input.ks_solver == "default")
+            {
+                if (para.input.device == "gpu")
+                {
+                    para.input.ks_solver = "cusolver";
+                    ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "cusolver");
+                }
+                else
+                {
+#ifdef __ELPA
+                    para.input.ks_solver = "genelpa";
+                    ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "genelpa");
+#else
+                    para.input.ks_solver = "scalapack_gvx";
+                    ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "scalapack_gvx");
+#endif
+                }
+            }
+        });
+        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+            const std::string& ks_solver = para.input.ks_solver;
+            const std::vector<std::string> pw_solvers = {"cg", "dav", "bpcg"};
+            const std::vector<std::string> lcao_solvers = {
+                "genelpa",
+                "lapack",
+                "scalapack_gvx",
+                "cusolver",
+                "pexsi",
+                "cg_in_lcao",
+            };
+
+            if (para.input.basis_type == "pw")
+            {
+                if (find_str(pw_solvers, ks_solver) == false)
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput", "ks_solver must be cg, dav or bpcg for pw basis.");
+                }
+            }
+            else if (para.input.basis_type == "lcao")
+            {
+                if (find_str(lcao_solvers, ks_solver) == false)
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput", "ks_solver must be genelpa, lapack, scalapack_gvx, cusolver, pexsi or "
+                                             "cg_in_lcao for lcao basis.");
+                }
+                if (ks_solver == "cg_in_lcao")
+                {
+                    GlobalV::ofs_warning << "cg_in_lcao is under testing" << std::endl;
+                }
+                else if (ks_solver == "genelpa")
+                {
+#ifndef __MPI
+                    ModuleBase::WARNING_QUIT("ReadInput", "genelpa can not be used for series version.");
+#endif
+#ifndef __ELPA
+                    ModuleBase::WARNING_QUIT("Input",
+                                             "Can not use genelpa if abacus is not compiled with ELPA. Please change "
+                                             "ks_solver to scalapack_gvx.");
+#endif
+                }
+                else if (ks_solver == "scalapack_gvx")
+                {
+#ifdef __MPI
+                    GlobalV::ofs_warning << "scalapack_gvx is under testing" << std::endl;
+#else
+                    ModuleBase::WARNING_QUIT("ReadInput", "scalapack_gvx can not be used for series version.");
+#endif
+                }
+                else if (ks_solver == "cusolver")
+                {
+#ifndef __MPI
+                    ModuleBase::WARNING_QUIT("ReadInput", "Cusolver can not be used for series version.");
+#endif
+                }
+                else if (ks_solver == "pexsi")
+                {
+#ifdef __PEXSI
+                    GlobalV::ofs_warning << " It's ok to use pexsi." << std::endl;
+#else
+                    ModuleBase::WARNING_QUIT("ReadInput", "Can not use PEXSI if abacus is not compiled with PEXSI. Please change "
+                                             "ks_solver to scalapack_gvx.");
+#endif
+                }
+            }
+            else if (para.input.basis_type == "lcao_in_pw")
+            {
+                if (ks_solver != "lapack")
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput", "LCAO in plane wave can only done with lapack.");
+                }
+            }
+        };
         this->add_item(item);
     }
     {
@@ -22,6 +116,13 @@ void ReadInput::item_relax()
         Input_Item item("relax_nmax");
         item.annotation = "number of ion iteration steps";
         read_sync_int(relax_nmax);
+        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+            const std::vector<std::string> relax_methods = {"cg", "bfgs", "sd", "cg_bfgs"};
+            if (find_str(relax_methods, para.input.relax_method) == false)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "relax_method must be cg, bfgs, sd or cg_bfgs.");
+            }
+        };
         this->add_item(item);
     }
     {
@@ -39,9 +140,7 @@ void ReadInput::item_relax()
     {
         Input_Item item("force_thr_ev");
         item.annotation = "force threshold, unit: eV/Angstrom";
-        item.readvalue = [](const Input_Item& item, Parameter& para) {
-            para.input.force_thr_ev = doublevalue ;
-        };
+        item.readvalue = [](const Input_Item& item, Parameter& para) { para.input.force_thr_ev = doublevalue; };
         item.resetvalue = [](const Input_Item& item, Parameter& para) {
             para.input.force_thr = para.input.force_thr_ev / 13.6058 * 0.529177;
         };
@@ -161,22 +260,34 @@ void ReadInput::item_relax()
         item.annotation = "ie(for electrons); i(for ions);";
         item.readvalue = [](const Input_Item& item, Parameter& para) {
             para.input.out_level = strvalue;
-            para.input.out_md_control = true;
+            para.input.sup.out_md_control = true;
         };
         sync_string(out_level);
-        add_bool_bcast(out_md_control); //Since "out_md_control" has been assigned a value, it needs to be broadcasted
+        add_bool_bcast(sup.out_md_control);
         this->add_item(item);
     }
     {
         Input_Item item("out_dm");
         item.annotation = ">0 output density matrix";
         read_sync_bool(out_dm);
+        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.sup.gamma_only_local == false)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_dm with k-point algorithm is not implemented yet.");
+            }
+        };
         this->add_item(item);
     }
     {
         Input_Item item("out_dm1");
         item.annotation = ">0 output density matrix (multi-k points)";
         read_sync_bool(out_dm1);
+        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.sup.gamma_only_local == true)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_dm1 is only for multi-k");
+            }
+        };
         this->add_item(item);
     }
     {

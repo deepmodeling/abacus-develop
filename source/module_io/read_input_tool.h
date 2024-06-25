@@ -16,8 +16,8 @@ T convertstr(const std::string& in)
     return out;
 }
 #define strvalue item.str_values[0]
-#define intvalue convertstr<int>(item.str_values[0])
-#define doublevalue convertstr<double>(item.str_values[0])
+#define intvalue std::stoi(item.str_values[0])
+#define doublevalue std::stod(item.str_values[0])
 #define boolvalue convertstr<bool>(item.str_values[0])
 
 #ifdef __MPI
