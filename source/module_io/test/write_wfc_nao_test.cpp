@@ -1,8 +1,8 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include "../write_wfc_nao.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_wfc.h"
 #include "module_base/scalapack_connector.h"
+#include "module_base/global_variable.h"
 #include "../binstream.h"
 
 #ifdef __MPI
