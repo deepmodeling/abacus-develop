@@ -1,14 +1,14 @@
 #ifndef LCAO_HS_ARRAYS_H
 #define LCAO_HS_ARRAYS_H
 
-#include <vector>
-#include <complex>
 #include "module_base/abfs-vector3_order.h"
+
+#include <complex>
+#include <vector>
 
 class LCAO_HS_Arrays
 {
-    public:
-
+  public:
     LCAO_HS_Arrays(){};
     ~LCAO_HS_Arrays(){};
 

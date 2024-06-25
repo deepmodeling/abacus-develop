@@ -6,7 +6,6 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/spar_hsr.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/spar_st.h"
 #include "write_HS_sparse.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_HS_arrays.hpp"
 
 // if 'binary=true', output binary file.
 // The 'sparse_thr' is the accuracy of the sparse matrix.
