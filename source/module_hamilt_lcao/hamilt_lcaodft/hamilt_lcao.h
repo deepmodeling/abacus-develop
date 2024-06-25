@@ -1,6 +1,7 @@
 #ifndef HAMILTLCAO_H
 #define HAMILTLCAO_H
 
+#include "module_basis/module_nao/two_center_bundle.h"
 #include "module_elecstate/module_dm/density_matrix.h"
 #include "module_elecstate/potentials/potential_new.h"
 #include "module_hamilt_general/hamilt.h"
@@ -9,7 +10,6 @@
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
-#include "module_basis/module_nao/two_center_bundle.h"
 
 namespace hamilt
 {
