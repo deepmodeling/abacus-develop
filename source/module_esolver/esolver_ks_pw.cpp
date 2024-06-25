@@ -1158,10 +1158,11 @@ void ESolver_KS_PW<T, Device>::nscf()
         }
         else
         {
-            ModuleBase::WARNING_QUIT("ESolver_KS_PW<T, Device>::nscf"," Please set symmetry to -1 when performing berry phase calculation! ");
+            ModuleBase::WARNING_QUIT("ESolver_KS_PW<T, Device>::nscf",
+                                     " Please set symmetry to -1 when performing berry phase calculation! ");
         }
     }
-    
+
     ModuleBase::timer::tick("ESolver_KS_PW", "nscf");
     return;
 }
