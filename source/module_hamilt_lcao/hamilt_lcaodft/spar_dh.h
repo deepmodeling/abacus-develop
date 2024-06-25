@@ -6,10 +6,12 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/force_stress_arrays.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_HS_arrays.hpp"
 
 namespace sparse_format
 {
 void cal_dH(LCAO_Matrix& lm,
+            LCAO_HS_Arrays& HS_Arrays,
             Grid_Driver& grid,
             const TwoCenterBundle& two_center_bundle,
             const int& current_spin,
