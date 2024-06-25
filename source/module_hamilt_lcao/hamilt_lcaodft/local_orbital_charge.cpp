@@ -87,7 +87,6 @@ void Local_Orbital_Charge::allocate_dm_wfc(const Grid_Technique& gt,
     ModuleBase::TITLE("Local_Orbital_Charge", "allocate_dm_wfc");
     // here we reset the density matrix dimension.
     this->allocate_gamma(gt.lgd, gt.trace_lo, psi, pelec, kv.get_nks(), istep);
-    this->gamma_file(psi, pelec);
     return;
 }
 
