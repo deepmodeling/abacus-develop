@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <complex>
+#include "module_base/abfs-vector3_order.h"
 
 class LCAO_HS_Arrays
 {
@@ -21,6 +22,10 @@ class LCAO_HS_Arrays
     // SlocR -> Sloc2,
     //------------------------------
     std::vector<double> Hloc_fixedR;
+
+    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>> dHRx_soc_sparse;
+    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>> dHRy_soc_sparse;
+    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>> dHRz_soc_sparse;
 };
 
 #endif
