@@ -6,14 +6,20 @@
 #include <cassert>
 #include <fstream>
 #include <regex>
+#include <type_traits>
 
 #ifdef __MPI
 #include "module_base/parallel_common.h"
 #endif
 
 template <typename T>
-void ModuleIO::read_abacus_lowf(const std::string& flowf, int& ik, ModuleBase::Vector3<double>& kvec_c, int& nbands,
-                                int& nbasis, std::vector<std::complex<T>>& lowf, std::vector<double>& ekb,
+void ModuleIO::read_abacus_lowf(const std::string& flowf,
+                                int& ik,
+                                ModuleBase::Vector3<double>& kvec_c,
+                                int& nbands,
+                                int& nbasis,
+                                std::vector<std::complex<T>>& lowf,
+                                std::vector<double>& ekb,
                                 std::vector<double>& occ,
                                 double& wk) //<[out] wavefunction coefficients
 {
@@ -101,16 +107,34 @@ void ModuleIO::read_abacus_lowf(const std::string& flowf, int& ik, ModuleBase::V
 #endif
 }
 // instantiate the template function
-template void ModuleIO::read_abacus_lowf(const std::string& flowf, int& ik, ModuleBase::Vector3<double>& kvec_c,
-                                         int& nbands, int& nbasis, std::vector<std::complex<double>>& lowf,
-                                         std::vector<double>& ekb, std::vector<double>& occ, double& wk);
-template void ModuleIO::read_abacus_lowf(const std::string& flowf, int& ik, ModuleBase::Vector3<double>& kvec_c,
-                                         int& nbands, int& nbasis, std::vector<std::complex<float>>& lowf,
-                                         std::vector<double>& ekb, std::vector<double>& occ, double& wk);
+template void ModuleIO::read_abacus_lowf(const std::string& flowf,
+                                         int& ik,
+                                         ModuleBase::Vector3<double>& kvec_c,
+                                         int& nbands,
+                                         int& nbasis,
+                                         std::vector<std::complex<double>>& lowf,
+                                         std::vector<double>& ekb,
+                                         std::vector<double>& occ,
+                                         double& wk);
+template void ModuleIO::read_abacus_lowf(const std::string& flowf,
+                                         int& ik,
+                                         ModuleBase::Vector3<double>& kvec_c,
+                                         int& nbands,
+                                         int& nbasis,
+                                         std::vector<std::complex<float>>& lowf,
+                                         std::vector<double>& ekb,
+                                         std::vector<double>& occ,
+                                         double& wk);
 
 template <typename T>
-void ModuleIO::read_abacus_lowf(const std::string& flowf, int& ik, ModuleBase::Vector3<double>& kvec_c, int& nbands,
-                                int& nbasis, std::vector<T>& lowf, std::vector<double>& ekb, std::vector<double>& occ,
+void ModuleIO::read_abacus_lowf(const std::string& flowf,
+                                int& ik,
+                                ModuleBase::Vector3<double>& kvec_c,
+                                int& nbands,
+                                int& nbasis,
+                                std::vector<T>& lowf,
+                                std::vector<double>& ekb,
+                                std::vector<double>& occ,
                                 double& wk)
 {
     std::ifstream ifs(flowf.c_str());
@@ -190,19 +214,37 @@ void ModuleIO::read_abacus_lowf(const std::string& flowf, int& ik, ModuleBase::V
 #endif
 }
 // instantiate the template function
-template void ModuleIO::read_abacus_lowf(const std::string& flowf, int& ik, ModuleBase::Vector3<double>& kvec_c,
-                                         int& nbands, int& nbasis, std::vector<double>& lowf, std::vector<double>& ekb,
-                                         std::vector<double>& occ, double& wk);
-template void ModuleIO::read_abacus_lowf(const std::string& flowf, int& ik, ModuleBase::Vector3<double>& kvec_c,
-                                         int& nbands, int& nbasis, std::vector<float>& lowf, std::vector<double>& ekb,
-                                         std::vector<double>& occ, double& wk);
+template void ModuleIO::read_abacus_lowf(const std::string& flowf,
+                                         int& ik,
+                                         ModuleBase::Vector3<double>& kvec_c,
+                                         int& nbands,
+                                         int& nbasis,
+                                         std::vector<double>& lowf,
+                                         std::vector<double>& ekb,
+                                         std::vector<double>& occ,
+                                         double& wk);
+template void ModuleIO::read_abacus_lowf(const std::string& flowf,
+                                         int& ik,
+                                         ModuleBase::Vector3<double>& kvec_c,
+                                         int& nbands,
+                                         int& nbasis,
+                                         std::vector<float>& lowf,
+                                         std::vector<double>& ekb,
+                                         std::vector<double>& occ,
+                                         double& wk);
 
 #ifdef __MPI
 template <typename T>
 void ModuleIO::restart_from_file(const std::string& out_dir, // hard-code the file name to be WFC_NAO_K*.txt?
-                                 const Parallel_2D& p2d, const int& nks, int& nbands, int& nbasis,
-                                 std::vector<T>& lowf_loc, std::vector<double>& ekb, std::vector<double>& occ,
-                                 std::vector<ModuleBase::Vector3<double>>& kvec_c, std::vector<double>& wk)
+                                 const Parallel_2D& p2d,
+                                 const int& nks,
+                                 int& nbands,
+                                 int& nbasis,
+                                 std::vector<T>& lowf_loc,
+                                 std::vector<double>& ekb,
+                                 std::vector<double>& occ,
+                                 std::vector<ModuleBase::Vector3<double>>& kvec_c,
+                                 std::vector<double>& wk)
 {
     // reset vectors
     lowf_loc.clear();
@@ -210,6 +252,10 @@ void ModuleIO::restart_from_file(const std::string& out_dir, // hard-code the fi
     occ.clear();
     kvec_c.clear();
     wk.clear();
+    const bool gamma_only = std::is_same<T, double>::value || std::is_same<T, float>::value;
+    const bool multi_k = std::is_same<T, std::complex<double>>::value || std::is_same<T, std::complex<float>>::value;
+    assert(gamma_only || multi_k);
+    const std::string flowf_prefix = gamma_only ? "WFC_GAMMA" : "WFC_NAO_K";
     // MPI-related variables init
     int iproc;
     MPI_Comm_rank(p2d.comm_2D, &iproc);
@@ -218,7 +264,7 @@ void ModuleIO::restart_from_file(const std::string& out_dir, // hard-code the fi
     for (int ik = 0; ik < nks; ik++)
     {
         // check existence of file
-        const std::string flowf = out_dir + "/WFC_NAO_K" + std::to_string(ik + 1) + ".txt";
+        const std::string flowf = out_dir + "/" + flowf_prefix + std::to_string(ik + 1) + ".txt";
         std::ifstream ifs(flowf);
         if (!ifs)
             ModuleBase::WARNING_QUIT("restart_from_file", "open file failed: " + flowf);
@@ -250,8 +296,17 @@ void ModuleIO::restart_from_file(const std::string& out_dir, // hard-code the fi
         Parallel_Common::bcast_int(nbasis);
         p2d_glb.init(nbasis, nbands, std::max(nbasis, nbands), p2d.comm_2D); // in the same comm world
         lowf_loc_k.resize(p2d.nrow * p2d.ncol);
-        Cpxgemr2d(nbasis, nbands, lowf_glb.data(), 1, 1, const_cast<int*>(p2d_glb.desc), lowf_loc_k.data(), 1, 1,
-                  const_cast<int*>(p2d.desc), p2d_glb.blacs_ctxt);
+        Cpxgemr2d(nbasis,
+                  nbands,
+                  lowf_glb.data(),
+                  1,
+                  1,
+                  const_cast<int*>(p2d_glb.desc),
+                  lowf_loc_k.data(),
+                  1,
+                  1,
+                  const_cast<int*>(p2d.desc),
+                  p2d_glb.blacs_ctxt);
         // append to the global lowf_loc
         lowf_loc.insert(lowf_loc.end(), lowf_loc_k.begin(), lowf_loc_k.end());
     }
@@ -276,29 +331,58 @@ void ModuleIO::restart_from_file(const std::string& out_dir, // hard-code the fi
     }
 }
 // instantiate the template function
-template void ModuleIO::restart_from_file(const std::string& out_dir, const Parallel_2D& p2d, const int& nks,
-                                          int& nbands, int& nbasis, std::vector<double>& lowf_loc,
-                                          std::vector<double>& ekb, std::vector<double>& occ,
-                                          std::vector<ModuleBase::Vector3<double>>& kvec_c, std::vector<double>& wk);
-template void ModuleIO::restart_from_file(const std::string& out_dir, const Parallel_2D& p2d, const int& nks,
-                                          int& nbands, int& nbasis, std::vector<float>& lowf_loc,
-                                          std::vector<double>& ekb, std::vector<double>& occ,
-                                          std::vector<ModuleBase::Vector3<double>>& kvec_c, std::vector<double>& wk);
-template void ModuleIO::restart_from_file(const std::string& out_dir, const Parallel_2D& p2d, const int& nks,
-                                          int& nbands, int& nbasis, std::vector<std::complex<double>>& lowf_loc,
-                                          std::vector<double>& ekb, std::vector<double>& occ,
-                                          std::vector<ModuleBase::Vector3<double>>& kvec_c, std::vector<double>& wk);
-template void ModuleIO::restart_from_file(const std::string& out_dir, const Parallel_2D& p2d, const int& nks,
-                                          int& nbands, int& nbasis, std::vector<std::complex<float>>& lowf_loc,
-                                          std::vector<double>& ekb, std::vector<double>& occ,
-                                          std::vector<ModuleBase::Vector3<double>>& kvec_c, std::vector<double>& wk);
+template void ModuleIO::restart_from_file(const std::string& out_dir,
+                                          const Parallel_2D& p2d,
+                                          const int& nks,
+                                          int& nbands,
+                                          int& nbasis,
+                                          std::vector<double>& lowf_loc,
+                                          std::vector<double>& ekb,
+                                          std::vector<double>& occ,
+                                          std::vector<ModuleBase::Vector3<double>>& kvec_c,
+                                          std::vector<double>& wk);
+template void ModuleIO::restart_from_file(const std::string& out_dir,
+                                          const Parallel_2D& p2d,
+                                          const int& nks,
+                                          int& nbands,
+                                          int& nbasis,
+                                          std::vector<float>& lowf_loc,
+                                          std::vector<double>& ekb,
+                                          std::vector<double>& occ,
+                                          std::vector<ModuleBase::Vector3<double>>& kvec_c,
+                                          std::vector<double>& wk);
+template void ModuleIO::restart_from_file(const std::string& out_dir,
+                                          const Parallel_2D& p2d,
+                                          const int& nks,
+                                          int& nbands,
+                                          int& nbasis,
+                                          std::vector<std::complex<double>>& lowf_loc,
+                                          std::vector<double>& ekb,
+                                          std::vector<double>& occ,
+                                          std::vector<ModuleBase::Vector3<double>>& kvec_c,
+                                          std::vector<double>& wk);
+template void ModuleIO::restart_from_file(const std::string& out_dir,
+                                          const Parallel_2D& p2d,
+                                          const int& nks,
+                                          int& nbands,
+                                          int& nbasis,
+                                          std::vector<std::complex<float>>& lowf_loc,
+                                          std::vector<double>& ekb,
+                                          std::vector<double>& occ,
+                                          std::vector<ModuleBase::Vector3<double>>& kvec_c,
+                                          std::vector<double>& wk);
 #endif
 
 template <typename T>
 void ModuleIO::restart_from_file(const std::string& out_dir, // hard-code the file name to be WFC_NAO_K*.txt?
-                                 const int& nks, int& nbands, int& nbasis, std::vector<T>& lowf,
-                                 std::vector<double>& ekb, std::vector<double>& occ,
-                                 std::vector<ModuleBase::Vector3<double>>& kvec_c, std::vector<double>& wk)
+                                 const int& nks,
+                                 int& nbands,
+                                 int& nbasis,
+                                 std::vector<T>& lowf,
+                                 std::vector<double>& ekb,
+                                 std::vector<double>& occ,
+                                 std::vector<ModuleBase::Vector3<double>>& kvec_c,
+                                 std::vector<double>& wk)
 {
     // reset vectors
     lowf.clear();
@@ -306,11 +390,15 @@ void ModuleIO::restart_from_file(const std::string& out_dir, // hard-code the fi
     occ.clear();
     kvec_c.clear();
     wk.clear();
+    const bool gamma_only = std::is_same<T, double>::value || std::is_same<T, float>::value;
+    const bool multi_k = std::is_same<T, std::complex<double>>::value || std::is_same<T, std::complex<float>>::value;
+    assert(gamma_only || multi_k);
+    const std::string flowf_prefix = gamma_only ? "WFC_GAMMA" : "WFC_NAO_K";
     int nbands_ = -1, nbasis_ = -1;
     for (int ik = 0; ik < nks; ik++)
     {
         // check existence of file
-        const std::string flowf = out_dir + "/WFC_NAO_K" + std::to_string(ik + 1) + ".txt";
+        const std::string flowf = out_dir + "/" + flowf_prefix + std::to_string(ik + 1) + ".txt";
         const std::ifstream ifs(flowf);
         if (!ifs)
             ModuleBase::WARNING_QUIT("restart_from_file", "open file failed: " + flowf);
@@ -339,17 +427,39 @@ void ModuleIO::restart_from_file(const std::string& out_dir, // hard-code the fi
     assert(lowf.size() == nks * nbands * nbasis);
 }
 // instantiate the template function
-template void ModuleIO::restart_from_file(const std::string& out_dir, const int& nks, int& nbands, int& nbasis,
-                                          std::vector<double>& lowf, std::vector<double>& ekb, std::vector<double>& occ,
-                                          std::vector<ModuleBase::Vector3<double>>& kvec_c, std::vector<double>& wk);
-template void ModuleIO::restart_from_file(const std::string& out_dir, const int& nks, int& nbands, int& nbasis,
-                                          std::vector<float>& lowf, std::vector<double>& ekb, std::vector<double>& occ,
-                                          std::vector<ModuleBase::Vector3<double>>& kvec_c, std::vector<double>& wk);
-template void ModuleIO::restart_from_file(const std::string& out_dir, const int& nks, int& nbands, int& nbasis,
-                                          std::vector<std::complex<double>>& lowf, std::vector<double>& ekb,
-                                          std::vector<double>& occ, std::vector<ModuleBase::Vector3<double>>& kvec_c,
+template void ModuleIO::restart_from_file(const std::string& out_dir,
+                                          const int& nks,
+                                          int& nbands,
+                                          int& nbasis,
+                                          std::vector<double>& lowf,
+                                          std::vector<double>& ekb,
+                                          std::vector<double>& occ,
+                                          std::vector<ModuleBase::Vector3<double>>& kvec_c,
                                           std::vector<double>& wk);
-template void ModuleIO::restart_from_file(const std::string& out_dir, const int& nks, int& nbands, int& nbasis,
-                                          std::vector<std::complex<float>>& lowf, std::vector<double>& ekb,
-                                          std::vector<double>& occ, std::vector<ModuleBase::Vector3<double>>& kvec_c,
+template void ModuleIO::restart_from_file(const std::string& out_dir,
+                                          const int& nks,
+                                          int& nbands,
+                                          int& nbasis,
+                                          std::vector<float>& lowf,
+                                          std::vector<double>& ekb,
+                                          std::vector<double>& occ,
+                                          std::vector<ModuleBase::Vector3<double>>& kvec_c,
+                                          std::vector<double>& wk);
+template void ModuleIO::restart_from_file(const std::string& out_dir,
+                                          const int& nks,
+                                          int& nbands,
+                                          int& nbasis,
+                                          std::vector<std::complex<double>>& lowf,
+                                          std::vector<double>& ekb,
+                                          std::vector<double>& occ,
+                                          std::vector<ModuleBase::Vector3<double>>& kvec_c,
+                                          std::vector<double>& wk);
+template void ModuleIO::restart_from_file(const std::string& out_dir,
+                                          const int& nks,
+                                          int& nbands,
+                                          int& nbasis,
+                                          std::vector<std::complex<float>>& lowf,
+                                          std::vector<double>& ekb,
+                                          std::vector<double>& occ,
+                                          std::vector<ModuleBase::Vector3<double>>& kvec_c,
                                           std::vector<double>& wk);
