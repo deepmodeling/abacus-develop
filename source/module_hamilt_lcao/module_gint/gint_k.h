@@ -61,17 +61,6 @@ class Gint_k : public Gint
     // destroy the temporary <phi_0 | V | dphi_R> matrix element.
     void destroy_pvdpR();
 
-    // folding the < phi_0 | V | phi_R> matrix to
-    // <phi_0i | V | phi_0j>
-    // V is (Vl + Vh + Vxc) if no Vna is used,
-    // and is (Vna + delta_Vh + Vxc) if Vna is used.
-    void folding_vl_k(const int& ik,
-                      LCAO_Matrix* LM,
-                      Parallel_Orbitals* pv,
-                      const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-                      const UnitCell& ucell,
-                      Grid_Driver& gd);
-
     /**
      * @brief transfer pvpR to this->hRGint
      * then pass this->hRGint to Veff<OperatorLCAO>::hR
