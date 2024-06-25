@@ -373,7 +373,7 @@ void LCAO_Matrix::destroy_T_R_sparse()
     return;
 }
 
-void LCAO_Matrix::destroy_dH_R_sparse()
+void LCAO_Matrix::destroy_dH_R_sparse(LCAO_HS_Arrays& HS_Arrays)
 {
     ModuleBase::TITLE("LCAO_Matrix", "destroy_dH_R_sparse");
 
@@ -402,9 +402,9 @@ void LCAO_Matrix::destroy_dH_R_sparse()
         std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>
             empty_dHRz_soc_sparse;
 
-        dHRx_soc_sparse.swap(empty_dHRx_soc_sparse);
-        dHRy_soc_sparse.swap(empty_dHRy_soc_sparse);
-        dHRz_soc_sparse.swap(empty_dHRz_soc_sparse);
+        HS_Arrays.dHRx_soc_sparse.swap(empty_dHRx_soc_sparse);
+        HS_Arrays.dHRy_soc_sparse.swap(empty_dHRy_soc_sparse);
+        HS_Arrays.dHRz_soc_sparse.swap(empty_dHRz_soc_sparse);
     }
 
     return;
