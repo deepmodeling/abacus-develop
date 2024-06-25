@@ -11,11 +11,11 @@ AddTest(
   SOURCES rho_io_test.cpp ../read_cube.cpp ../write_cube.cpp ../read_rho.cpp ../write_rho.cpp ../output.cpp
 )
 
-AddTest(
-  TARGET io_dm_io
-  LIBS ${math_libs} base device cell_info
-  SOURCES dm_io_test.cpp ../read_dm.cpp ../write_dm.cpp ../output.cpp
-)
+#AddTest(
+#  TARGET io_dm_io
+#  LIBS ${math_libs} base device cell_info
+#  SOURCES dm_io_test.cpp ../read_dm.cpp ../write_dm.cpp ../output.cpp
+#)
 
 AddTest(
   TARGET io_nscf_band

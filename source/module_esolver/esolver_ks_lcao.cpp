@@ -1027,7 +1027,6 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int iter)
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
             this->create_Output_Rho(is, iter, "tmp_").write();
-            this->create_Output_DM(is, iter).write();
             if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
             {
                 this->create_Output_Kin(is, iter, "tmp_").write();
@@ -1108,12 +1107,9 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
     }
 
     // 4) write density matrix
-    if (this->LOC.out_dm)
+    if (INPUT.out_dm)
     {
-        for (int is = 0; is < GlobalV::NSPIN; is++)
-        {
-            this->create_Output_DM(is, istep).write();
-        }
+        ModuleBase::WARNING_QUIT("ESolver_KS_LCAO", "output of the Gamma DM is not supported now! If you want to output the sparse DMR (DM in real space), please set out_dm1 = 1 in the input file.");
     }
 
     // 5) write Vxc
@@ -1323,22 +1319,6 @@ bool ESolver_KS_LCAO<TK, TR>::do_after_converge(int& iter)
 //! the 16th function of ESolver_KS_LCAO: create_Output_DM
 //! mohan add 2024-05-11
 //------------------------------------------------------------------------------
-template <typename TK, typename TR>
-ModuleIO::Output_DM ESolver_KS_LCAO<TK, TR>::create_Output_DM(int is, int iter)
-{
-    const int precision = 3;
-
-    return ModuleIO::Output_DM(this->GridT,
-                               is,
-                               iter,
-                               precision,
-                               this->LOC.out_dm,
-                               this->LOC.DM,
-                               this->pelec->eferm.get_efval(is),
-                               &(GlobalC::ucell),
-                               GlobalV::global_out_dir,
-                               GlobalV::GAMMA_ONLY_LOCAL);
-}
 
 //------------------------------------------------------------------------------
 //! the 17th function of ESolver_KS_LCAO: create_Output_DM1
