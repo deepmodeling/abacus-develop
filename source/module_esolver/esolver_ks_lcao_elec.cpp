@@ -453,6 +453,9 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
     }
     else if (cal_type == "get_wf")
     {
+        // Note: on the removal of LOWF
+        // here the LOWF is involved by gathering the wave functions from 2D BCD
+        // to serial. Parameter list of begin() should be updated.
         IState_Envelope IEP(this->pelec);
         if (GlobalV::GAMMA_ONLY_LOCAL)
         {
@@ -460,7 +463,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                       this->pw_rho,
                       this->pw_wfc,
                       this->pw_big,
-                      this->LOWF,
+                      this->orb_con.ParaV,
                       this->GG,
                       INPUT.out_wfc_pw,
                       this->wf.out_wfc_r,
@@ -479,7 +482,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                       this->pw_rho,
                       this->pw_wfc,
                       this->pw_big,
-                      this->LOWF,
+                      this->orb_con.ParaV,
                       this->GK,
                       INPUT.out_wfc_pw,
                       this->wf.out_wfc_r,
