@@ -3,9 +3,7 @@
 
 #include <memory>
 #include "ORB_gaunt_table.h"
-#include "ORB_table_beta.h"
 #include "ORB_table_phi.h"
-#include "ORB_table_alpha.h"		//caoyu add 2020-3-18
 #include "ORB_read.h"
 #include "module_base/vector3.h"
 #include "module_base/matrix.h"
