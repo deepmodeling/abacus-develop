@@ -1,5 +1,5 @@
-#ifndef TD_CURRENT_H
-#define TD_CURRENT_H
+#ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_IO_TD_CURRENT_IO_H
+#define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_IO_TD_CURRENT_IO_H
 
 #include "module_basis/module_nao/two_center_bundle.h"
 #include "module_elecstate/elecstate_lcao.h"
@@ -34,4 +34,4 @@ void destory_DS_tmp(ForceStressArrays& fsr);
 
 #endif // __LCAO
 } // namespace ModuleIO
-#endif // TD_CURRENT_H
+#endif // W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_IO_TD_CURRENT_IO_H

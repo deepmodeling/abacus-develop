@@ -1,5 +1,5 @@
-#ifndef HAMILTLCAO_H
-#define HAMILTLCAO_H
+#ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_LCAO_HAMILT_LCAODFT_HAMILT_LCAO_H
+#define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_LCAO_HAMILT_LCAODFT_HAMILT_LCAO_H
 
 #include "module_basis/module_nao/two_center_bundle.h"
 #include "module_elecstate/module_dm/density_matrix.h"

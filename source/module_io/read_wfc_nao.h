@@ -1,5 +1,5 @@
-#ifndef READ_WFC_NAO_H
-#define READ_WFC_NAO_H
+#ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_IO_READ_WFC_NAO_H
+#define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_IO_READ_WFC_NAO_H
 
 #include "../module_base/global_function.h"
 #include "../module_base/global_variable.h"
