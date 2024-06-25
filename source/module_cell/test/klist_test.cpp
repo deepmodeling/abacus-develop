@@ -492,8 +492,10 @@ TEST_F(KlistTest, ReadKpointsWarning6)
 	std::string k_file = "arbitrary_6";
 	ofs.open(k_file.c_str());
 	ofs<<"KPOINTS"<<std::endl;
-	ofs<<"100000"<<std::endl;
+	ofs<<"2"<<std::endl;
 	ofs<<"Line_Cartesian"<<std::endl;
+	ofs<<"0.0 0.0 0.0 20"<<std::endl;
+	ofs<<"0.5 0.5 0.5 1"<<std::endl;
 	ofs.close();
         //Cartesian: non-spin case nspin=1
 	kv->nspin = 1;
@@ -515,8 +517,10 @@ TEST_F(KlistTest, ReadKpointsWarning7)
 	std::string k_file = "arbitrary_7";
 	ofs.open(k_file.c_str());
 	ofs<<"KPOINTS"<<std::endl;
-	ofs<<"100000"<<std::endl;
+	ofs<<"2"<<std::endl;
 	ofs<<"Line_Direct"<<std::endl;
+	ofs<<"0.0 0.0 0.0 20"<<std::endl;
+	ofs<<"0.5 0.5 0.5 1"<<std::endl;
 	ofs.close();
 	kv->nspin = 1;
 	ModuleSymmetry::Symmetry::symm_flag = 1;
