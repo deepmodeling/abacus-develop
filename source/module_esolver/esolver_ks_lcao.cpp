@@ -156,7 +156,6 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(Input& inp, UnitCell& ucell)
     // reading the localized orbitals/projectors
     // construct the interpolation tables.
     this->init_basis_lcao(this->orb_con, inp, ucell);
-    std::cout << "init_basis_lcao done" << std::endl;
     //------------------init Basis_lcao----------------------
 
     //! pass basis-pointer to EState and Psi
@@ -194,7 +193,6 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(Input& inp, UnitCell& ucell)
     // * set the 'trace' between local H/S and global H/S
     this->LM.divide_HS_in_frag(GlobalV::GAMMA_ONLY_LOCAL, orb_con.ParaV, this->kv.get_nks());
 
-    std::cout << "ready __EXX:" << std::endl;
 #ifdef __EXX
     // 7) initialize exx
     // PLEASE simplify the Exx_Global interface
@@ -215,20 +213,16 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(Input& inp, UnitCell& ucell)
             {
                 XC_Functional::set_xc_type("scan");
             }
-            std::cout << "ready to init exx..." << std::endl;
 
             // GlobalC::exx_lcao.init();
             if (GlobalC::exx_info.info_ri.real_number)
             {
-                std::cout << "exx double" << std::endl;
                 this->exx_lri_double->init(MPI_COMM_WORLD, this->kv);
             }
             else
             {
-                std::cout << "exx complex" << std::endl;
                 this->exx_lri_complex->init(MPI_COMM_WORLD, this->kv);
             }
-            std::cout << "exx init done" << std::endl;
         }
     }
 #endif
@@ -281,7 +275,6 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(Input& inp, UnitCell& ucell)
     }
 
     ModuleBase::timer::tick("ESolver_KS_LCAO", "before_all_runners");
-    std::cout << "before_all_runners done" << std::endl;
     return;
 }
 

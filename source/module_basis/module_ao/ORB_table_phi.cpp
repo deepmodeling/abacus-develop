@@ -859,7 +859,8 @@ void ORB_table_phi::init_Table_Spherical_Bessel (
 
     const double dr = orb.get_dR();
     const double dk = orb.get_dk();
-    const int kmesh = orb.get_kmesh();
+    const int kmesh = orb.get_kmesh() * 4 + 1;
+    // multiplied by kmesh_times (default to 4 in module_ri) and add 1 to make it odd
 
 	int Rmesh = static_cast<int>( orb.get_Rmax()/dr ) + 4;
     Rmesh += 1 - Rmesh % 2;
