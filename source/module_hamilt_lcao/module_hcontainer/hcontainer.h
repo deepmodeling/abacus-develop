@@ -410,7 +410,14 @@ class HContainer
         return sparse_ap_index;
     }
 
-    const Parallel_Orbitals* get_paraV() const {return paraV;}
+    /**
+     * @brief get number of basis in each H matrix
+     * @return int
+    */
+    const int get_nbasis() const
+    {
+        return paraV->get_row_size();
+    }
 
   private:
     // i-j atom pairs, sorted by matrix of (atom_i, atom_j)
