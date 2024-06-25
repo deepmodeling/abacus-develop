@@ -39,7 +39,7 @@ class ORB_gen_tables
                      double olm[],
                      const int& job,    ///<[in]0 for matrix element of either S or T, 1 for its derivatives
                      const char& dtype, ///<[in] derivative type, 'S' for overlap, 'T' for kinetic energy, 'D' for
-                                        ///<descriptor in deepks
+                                        ///< descriptor in deepks
                      const ModuleBase::Vector3<double>& R1,
                      const int& I1,
                      const int& l1,
