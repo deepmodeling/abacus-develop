@@ -93,7 +93,7 @@ struct Input_para
     // ==============   #Parameters (2.PW) ===========================
 
     double ecutwfc = 50;    ///< energy cutoff for wavefunctions
-    double ecutrho = -1;   ///< energy cutoff for charge/potential
+    double ecutrho = 0;    ///< energy cutoff for charge/potential
     double erf_ecut = 0;    ///< the value of the constant energy cutoff
     double erf_height = 0;  ///< the height of the energy step for reciprocal vectors
     double erf_sigma = 0.1; ///< the width of the energy step for reciprocal vectors
@@ -146,15 +146,15 @@ struct Input_para
     bool cond_nonlocal = 1;     ///< if calculate nonlocal effects
 
     // ==============   #Parameters (4.Relaxation) ===========================
-    std::string ks_solver = "default";    ///< xiaohui add 2013-09-01
-    int scf_nmax = 100;              ///< number of max elec iter
-    int relax_nmax = 1;              ///< number of max ionic iter
-    bool out_stru = false;           ///< outut stru file each ion step
-    double force_thr = 1.0e-3;       ///< threshold of force in unit (Ry/Bohr)
-    double force_thr_ev = 0.0257112; ///< threshold of force in unit (eV/Angstrom)
-    double force_thr_ev2 = 0;        ///< invalid force threshold, mohan add 2011-04-17
-    double relax_cg_thr = 0.5;       ///< threshold when cg to bfgs, pengfei add 2011-08-15
-    double stress_thr = 0.5;         ///< Pengfei Li 2017-11-01 ///<LiuXh update 20180515
+    std::string ks_solver = "default"; ///< xiaohui add 2013-09-01
+    int scf_nmax = 100;                ///< number of max elec iter
+    int relax_nmax = 1;                ///< number of max ionic iter
+    bool out_stru = false;             ///< outut stru file each ion step
+    double force_thr = 1.0e-3;         ///< threshold of force in unit (Ry/Bohr)
+    double force_thr_ev = 0.0257112;   ///< threshold of force in unit (eV/Angstrom)
+    double force_thr_ev2 = 0;          ///< invalid force threshold, mohan add 2011-04-17
+    double relax_cg_thr = 0.5;         ///< threshold when cg to bfgs, pengfei add 2011-08-15
+    double stress_thr = 0.5;           ///< Pengfei Li 2017-11-01 ///<LiuXh update 20180515
     double press1 = 0;
     double press2 = 0;
     double press3 = 0;
@@ -230,7 +230,7 @@ struct Input_para
 
     // ==============   #Parameters (7.Charge Mixing) ======================
     std::string mixing_mode = "broyden"; ///< "plain","broyden",...
-    double mixing_beta = -1.0;            ///< 0 : no_mixing
+    double mixing_beta = -1.0;           ///< 0 : no_mixing
     int mixing_ndim = 8;                 ///< used in Broyden method
     double mixing_restart = 0.0;         ///< mixing will restart once if drho is smaller than mixing_restart
     double mixing_gg0 = 1.0;             ///< used in kerker method
@@ -335,7 +335,7 @@ struct Input_para
     double exx_c_threshold = 0.0001;            ///< threshold to screen C matrix in exx
     double exx_v_threshold = 0.1;               ///< threshold to screen C matrix in exx
     double exx_dm_threshold = 0.0001;           ///< threshold to screen density matrix in exx
-    double exx_schwarz_threshold = 1e-07;       ///< threshold to screen exx using Cauchy-Schwartz inequality
+    double exx_schwarz_threshold = 0;           ///< threshold to screen exx using Cauchy-Schwartz inequality
     double exx_cauchy_threshold = 1e-07;        ///< threshold to screen exx using Cauchy-Schwartz inequality
     double exx_c_grad_threshold = 0.0001;       ///< threshold to screen nabla C matrix in exx
     double exx_v_grad_threshold = 0.1;          ///< threshold to screen nabla V matrix in exx
@@ -343,9 +343,9 @@ struct Input_para
     double exx_cauchy_stress_threshold = 1e-07; ///< threshold to screen exx stress using Cauchy-Schwartz inequality
     std::string exx_ccp_rmesh_times = "1"; ///< how many times larger the radial mesh required for calculating Columb
                                            ///< potential is to that of atomic orbitals
-    std::string exx_distribute_type = "default"; ///< distribute type (assuming default as no specific value provided)
-    int exx_opt_orb_lmax = 0;                    ///< the maximum l of the spherical Bessel functions for opt ABFs
-    double exx_opt_orb_ecut = 0.0;               ///< the cut-off of plane wave expansion for opt ABFs
+    std::string exx_distribute_type = "htime"; ///< distribute type (assuming default as no specific value provided)
+    int exx_opt_orb_lmax = 0;                  ///< the maximum l of the spherical Bessel functions for opt ABFs
+    double exx_opt_orb_ecut = 0.0;             ///< the cut-off of plane wave expansion for opt ABFs
     double exx_opt_orb_tolerence
         = 0.0; ///< the threshold when solving for the zeros of spherical Bessel functions for opt ABFs
     double rpa_ccp_rmesh_times = 10.0; ///< how many times larger the radial mesh required for calculating Columb
@@ -358,13 +358,13 @@ struct Input_para
     bool out_dipole = false;             ///< output the dipole or not
     bool out_efield = false;             ///< output the efield or not
     bool out_current = false;            ///< output the current or not
-    bool out_vecpot;                     ///< output the vector potential or not
-    bool init_vecpot_file;               ///< initialize the vector potential, though file or integral
-    double td_print_eij;                 ///< threshold to output Eij elements
-    int td_edm;                          ///< 0: new edm method   1: old edm method
-    int propagator;                      ///< method of propagator
-    int td_stype;                        ///< type of space domain  0 : length gauge  1: velocity gauge
-    std::string td_ttype;                ///< type of time domain
+    bool out_vecpot = false;             ///< output the vector potential or not
+    bool init_vecpot_file = false;       ///< initialize the vector potential, though file or integral
+    double td_print_eij = -1.0;          ///< threshold to output Eij elements
+    int td_edm = 0;                      ///< 0: new edm method   1: old edm method
+    int propagator = 0;                  ///< method of propagator
+    int td_stype = 0;                    ///< type of space domain  0 : length gauge  1: velocity gauge
+    std::string td_ttype = "0";          ///< type of time domain
     ///<  0  Gauss type function.
     ///<  1  trapezoid type function.
     ///<  2  Trigonometric functions, sin^2.
@@ -441,14 +441,14 @@ struct Input_para
     std::string of_conv = "energy"; ///< select the convergence criterion, potential, energy (default), or both
     double of_tole = 1e-06; ///< tolerance of the energy change (in Ry) for determining the convergence, default=2e-6 Ry
     double of_tolp = 1e-05; ///< tolerance of potential for determining the convergence, default=1e-5 in a.u.
-    double of_tf_weight = 1.0;     ///< weight of TF KEDF
-    double of_vw_weight = 1.0;     ///< weight of vW KEDF
-    double of_wt_alpha = 0.833333; ///< parameter alpha of WT KEDF
-    double of_wt_beta = 0.833333;  ///< parameter beta of WT KEDF
-    double of_wt_rho0 = 0.0;       ///< set the average density of system, in Bohr^-3
-    bool of_hold_rho0 = false;     ///< If set to 1, the rho0 will be fixed even if the volume of system has changed, it
-                                   ///< will be set to 1 automatically if of_wt_rho0 is not zero.
-    double of_lkt_a = 1.3;         ///< parameter a of LKT KEDF
+    double of_tf_weight = 1.0;    ///< weight of TF KEDF
+    double of_vw_weight = 1.0;    ///< weight of vW KEDF
+    double of_wt_alpha = 5. / 6.; ///< parameter alpha of WT KEDF
+    double of_wt_beta = 5. / 6.;  ///< parameter beta of WT KEDF
+    double of_wt_rho0 = 0.0;      ///< set the average density of system, in Bohr^-3
+    bool of_hold_rho0 = false;    ///< If set to 1, the rho0 will be fixed even if the volume of system has changed, it
+                                  ///< will be set to 1 automatically if of_wt_rho0 is not zero.
+    double of_lkt_a = 1.3;        ///< parameter a of LKT KEDF
     bool of_full_pw = true; ///< If set to 1, ecut will be ignored while collecting planewaves, so that all planewaves
                             ///< will be used.
     int of_full_pw_dim = 0; ///< If of_full_pw = 1, the dimension of FFT will be restricted to be (0) either odd or

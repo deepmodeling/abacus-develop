@@ -14,20 +14,31 @@ void ReadInput::item_relax()
         autosetfuncs.push_back([this](Parameter& para) {
             if (para.input.ks_solver == "default")
             {
-                if (para.input.device == "gpu")
+                if (para.input.basis_type == "pw")
                 {
-                    para.input.ks_solver = "cusolver";
-                    ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "cusolver");
+                    if (para.input.ks_solver == "default")
+                    {
+                        para.input.ks_solver = "cg";
+                        ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "cg");
+                    }
                 }
-                else
+                else if (para.input.basis_type == "lcao")
                 {
+                    if (para.input.device == "gpu")
+                    {
+                        para.input.ks_solver = "cusolver";
+                        ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "cusolver");
+                    }
+                    else
+                    {
 #ifdef __ELPA
-                    para.input.ks_solver = "genelpa";
-                    ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "genelpa");
+                        para.input.ks_solver = "genelpa";
+                        ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "genelpa");
 #else
-                    para.input.ks_solver = "scalapack_gvx";
-                    ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "scalapack_gvx");
+                        para.input.ks_solver = "scalapack_gvx";
+                        ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "scalapack_gvx");
 #endif
+                    }
                 }
             }
         });
@@ -54,7 +65,8 @@ void ReadInput::item_relax()
             {
                 if (find_str(lcao_solvers, ks_solver) == false)
                 {
-                    ModuleBase::WARNING_QUIT("ReadInput", "ks_solver must be genelpa, lapack, scalapack_gvx, cusolver, pexsi or "
+                    ModuleBase::WARNING_QUIT("ReadInput",
+                                             "ks_solver must be genelpa, lapack, scalapack_gvx, cusolver, pexsi or "
                                              "cg_in_lcao for lcao basis.");
                 }
                 if (ks_solver == "cg_in_lcao")
@@ -91,7 +103,8 @@ void ReadInput::item_relax()
 #ifdef __PEXSI
                     GlobalV::ofs_warning << " It's ok to use pexsi." << std::endl;
 #else
-                    ModuleBase::WARNING_QUIT("ReadInput", "Can not use PEXSI if abacus is not compiled with PEXSI. Please change "
+                    ModuleBase::WARNING_QUIT("ReadInput",
+                                             "Can not use PEXSI if abacus is not compiled with PEXSI. Please change "
                                              "ks_solver to scalapack_gvx.");
 #endif
                 }

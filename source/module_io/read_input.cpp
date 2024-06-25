@@ -183,7 +183,8 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
     }
 
     // 2) count the number of atom types from STRU file
-    check_ntype(param.input.stru_file, param.input.ntype);
+    if (this->check_ntype_flag)
+        check_ntype(param.input.stru_file, param.input.ntype);
 
     // 3) reset the value of some parameters based on readin values
     //    e.g. if (calulation_type == "nscf") then set "init_chg" to "file".

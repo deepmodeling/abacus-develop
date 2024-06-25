@@ -17,18 +17,11 @@ void ReadInput::item_lcao()
             Input_para& input = para.input;
             if (para.input.basis_type == "lcao_in_pw")
             {
-                if (para.input.ks_solver != "lapack")
+                para.input.psi_initializer = true;
+                if (para.input.init_wfc != "nao")
                 {
-                    ModuleBase::WARNING_QUIT("ReadInput", "ks_solver must be lapack when basis_type is lcao_in_pw");
-                }
-                else
-                {
-                    para.input.psi_initializer = true;
-                    if (para.input.init_wfc != "nao")
-                    {
-                        para.input.init_wfc = "nao";
-                        GlobalV::ofs_warning << "init_wfc is set to nao when basis_type is lcao_in_pw" << std::endl;
-                    }
+                    para.input.init_wfc = "nao";
+                    GlobalV::ofs_warning << "init_wfc is set to nao when basis_type is lcao_in_pw" << std::endl;
                 }
                 para.input.bx = 1;
                 para.input.by = 1;

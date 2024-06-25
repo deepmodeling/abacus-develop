@@ -326,6 +326,13 @@ void ReadInput::item_general()
         Input_Item item("esolver_type");
         item.annotation = "the energy solver: ksdft, sdft, ofdft, tddft, lj, dp";
         read_sync_string(esolver_type);
+        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+            const std::vector<std::string> esolver_types = {"ksdft", "sdft", "ofdft", "tddft", "lj", "dp"};
+            if (find_str(esolver_types, para.input.esolver_type) == false)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "esolver_type should be ksdft, sdft, ofdft, tddft, lj or dp.");
+            }
+        };
         this->add_item(item);
     }
     {

@@ -23,6 +23,7 @@ class ReadInput
     void readin_parameters(Parameter& param, const std::string& filename_in, const std::string& filename_out = "");
 
     static bool check_mode;
+    bool check_ntype_flag = true; ///< check ntype from STRU file
 
   private:
     /**
