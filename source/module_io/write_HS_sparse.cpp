@@ -367,6 +367,7 @@ void ModuleIO::save_HSR_sparse(
 void ModuleIO::save_dH_sparse(
     const int &istep,
     LCAO_Matrix &lm,
+    LCAO_HS_Arrays& HS_Arrays,
     const double& sparse_thr,
     const bool &binary
 )
@@ -377,11 +378,11 @@ void ModuleIO::save_dH_sparse(
     auto &all_R_coor_ptr = lm.all_R_coor;
     auto &output_R_coor_ptr = lm.output_R_coor;
     auto &dHRx_sparse_ptr = lm.dHRx_sparse;
-    auto &dHRx_soc_sparse_ptr = lm.dHRx_soc_sparse;
+    auto &dHRx_soc_sparse_ptr = HS_Arrays.dHRx_soc_sparse;
     auto &dHRy_sparse_ptr = lm.dHRy_sparse;
-    auto &dHRy_soc_sparse_ptr = lm.dHRy_soc_sparse;
+    auto &dHRy_soc_sparse_ptr = HS_Arrays.dHRy_soc_sparse;
     auto &dHRz_sparse_ptr = lm.dHRz_sparse;
-    auto &dHRz_soc_sparse_ptr = lm.dHRz_soc_sparse;
+    auto &dHRz_soc_sparse_ptr = HS_Arrays.dHRz_soc_sparse;
 
     int total_R_num = all_R_coor_ptr.size();
     int output_R_number = 0;
