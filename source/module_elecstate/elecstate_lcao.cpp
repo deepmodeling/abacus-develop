@@ -56,8 +56,7 @@ void ElecStateLCAO<std::complex<double>>::psiToRho(const psi::Psi<std::complex<d
 #endif
         }
     }
-    // old 2D-to-Grid conversion has been replaced by new Gint Refactor 2023/09/25
-    // this->loc->cal_dk_k(*this->lowf->gridt, this->wg, (*this->klist));
+
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
         ModuleBase::GlobalFunc::ZEROS(this->charge->rho[is], this->charge->nrxx); // mohan 2009-11-10

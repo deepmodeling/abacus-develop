@@ -11,8 +11,8 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/rho_io.h"
 
-IState_Charge::IState_Charge(psi::Psi<double>* psi_gamma_in, Local_Orbital_Charge& loc_in)
-    : psi_gamma(psi_gamma_in), loc(&loc_in)
+IState_Charge::IState_Charge(psi::Psi<double>* psi_gamma_in, const Parallel_Orbitals* ParaV_in)
+    : psi_gamma(psi_gamma_in), ParaV(ParaV_in)
 {
 }
 
@@ -203,7 +203,7 @@ void IState_Charge::begin(Gint_Gamma& gg,
             // (1) calculate the density matrix for a partuclar band, whenever it is occupied or not.
 
             // Using new density matrix inplementation
-            elecstate::DensityMatrix<double, double> DM(this->loc->ParaV, nspin);
+            elecstate::DensityMatrix<double, double> DM(this->ParaV, nspin);
 
 #ifdef __MPI
             this->idmatrix(ib, nspin, nelec, nlocal, wg, DM);
@@ -227,8 +227,7 @@ void IState_Charge::begin(Gint_Gamma& gg,
 
             gg.transfer_DM2DtoGrid(DM.get_DMR_vector());
 
-            // keep interface for old Output_DM until new one is ready
-            Gint_inout inout(this->loc->DM, rho, Gint_Tools::job_type::rho);
+            Gint_inout inout((double***)nullptr, rho, Gint_Tools::job_type::rho);
             gg.cal_gint(&inout);
 
             // A solution to replace the original implementation of the following code:
@@ -297,8 +296,8 @@ void IState_Charge::idmatrix(const int& ib,
 
     for (int is = 0; is < nspin; ++is)
     {
-        std::vector<double> wg_local(this->loc->ParaV->ncol, 0.0);
-        const int ib_local = this->loc->ParaV->global2local_col(ib);
+        std::vector<double> wg_local(this->ParaV->ncol, 0.0);
+        const int ib_local = this->ParaV->global2local_col(ib);
 
         if (ib_local >= 0)
         {
@@ -314,105 +313,13 @@ void IState_Charge::idmatrix(const int& ib,
         {
             BlasConnector::scal(wg_wfc.get_nbasis(), wg_local[ir], wg_wfc.get_pointer() + ir * wg_wfc.get_nbasis(), 1);
         }
-
-        // dm(iw1,iw2) = wfc(ib,iw1).T * wg_wfc(ib,iw2)
-        const double one_float = 1.0, zero_float = 0.0;
-        const int one_int = 1;
-        const char N_char = 'N', T_char = 'T';
-
-        this->loc->dm_gamma.at(is).create(wg_wfc.get_nbands(), wg_wfc.get_nbasis());
-
-        // Print dm_gamma
-        // std::cout << "Before: " << std::endl;
-        // for (size_t i = 0; i < this->loc->dm_gamma.size(); ++i)
-        // {
-        //     std::cout << "dm_gamma[" << i << "]:" << std::endl;
-        //     const auto& matrix = this->loc->dm_gamma[i];
-        //     for (size_t row = 0; row < matrix.nr; ++row)
-        //     {
-        //         for (size_t col = 0; col < matrix.nc; ++col)
-        //         {
-        //             std::cout << matrix(row, col) << " ";
-        //         }
-        //         std::cout << std::endl;
-        //     }
-        //     std::cout << std::endl;
-        // }
-
         const int ik = 0; // Gamma point only
+
         elecstate::psiMulPsiMpi(wg_wfc,
-                                wg_wfc,
+                                *(this->psi_gamma),
                                 DM.get_DMK_pointer(ik),
-                                this->loc->ParaV->desc_wfc,
-                                this->loc->ParaV->desc);
-
-        // C++: dm(iw1,iw2) = wfc(ib,iw1).T * wg_wfc(ib,iw2)
-        // elecstate::psiMulPsiMpi(wg, wg_wfc, &DM, this->loc->ParaV->desc_wfc, this->loc->ParaV->desc);
-
-        // std::cout << "New DM implementation: " << std::endl;
-        // // Print DM
-        // std::cout << "DensityMatrix values for spin " << is << ":" << std::endl;
-        // for (int i = 0; i < DM.get_DMK_nrow(); ++i)
-        // {
-        //     for (int j = 0; j < DM.get_DMK_ncol(); ++j)
-        //     {
-        //         std::cout << DM.get_DMK(1, 0, i, j) << " ";
-        //     }
-        //     std::cout << std::endl;
-        // }
-
-        pdgemm_(&N_char,
-                &T_char,
-                &nlocal,
-                &nlocal,
-                &wg.nc,
-                &one_float,
-                wg_wfc.get_pointer(),
-                &one_int,
-                &one_int,
-                this->loc->ParaV->desc,
-                this->psi_gamma->get_pointer(),
-                &one_int,
-                &one_int,
-                this->loc->ParaV->desc,
-                &zero_float,
-                this->loc->dm_gamma.at(is).c,
-                &one_int,
-                &one_int,
-                this->loc->ParaV->desc);
-
-        // std::cout << "Old loc->dm implementation: " << std::endl;
-        // for (size_t i = 0; i < this->loc->dm_gamma.size(); ++i)
-        // {
-        //     std::cout << "dm_gamma[" << i << "]:" << std::endl;
-        //     const auto& matrix = this->loc->dm_gamma[i];
-        //     for (size_t row = 0; row < matrix.nr; ++row)
-        //     {
-        //         for (size_t col = 0; col < matrix.nc; ++col)
-        //         {
-        //             std::cout << matrix(row, col) << " ";
-        //         }
-        //         std::cout << std::endl;
-        //     }
-        //     std::cout << std::endl;
-        // }
-
-        // std::cout << "Ratio new_DM/old_dm_gamma for spin " << is << ":" << std::endl;
-        // for (int i = 0; i < DM.get_DMK_nrow(); ++i)
-        // {
-        //     const auto& matrix = this->loc->dm_gamma[0];
-        //     for (int j = 0; j < DM.get_DMK_ncol(); ++j)
-        //     {
-        //         double ratio = static_cast<double>(DM.get_DMK(1, 0, i, j)) / static_cast<double>(matrix(i, j));
-        //         std::cout << ratio << " ";
-        //     }
-        //     std::cout << std::endl;
-        // }
+                                this->ParaV->desc_wfc,
+                                this->ParaV->desc);
     }
-
-    std::cout << " Finished calculating dm_2d." << std::endl;
-
-    this->loc->cal_dk_gamma_from_2D_pub();
-    std::cout << " Finished converting dm_2d to dk_gamma." << std::endl;
 }
 #endif
