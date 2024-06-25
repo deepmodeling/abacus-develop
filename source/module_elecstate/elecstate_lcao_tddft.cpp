@@ -1,8 +1,8 @@
 #include "elecstate_lcao_tddft.h"
 
 #include "cal_dm.h"
-#include "module_elecstate/module_dm/cal_dm_psi.h"
 #include "module_base/timer.h"
+#include "module_elecstate/module_dm/cal_dm_psi.h"
 #include "module_hamilt_lcao/module_gint/grid_technique.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 namespace elecstate
@@ -28,7 +28,7 @@ void ElecStateLCAO_TDDFT::psiToRho_td(const psi::Psi<std::complex<double>>& psi)
         elecstate::cal_dm_psi(this->DM->get_paraV_pointer(), this->wg, psi, *(this->DM));
         this->DM->cal_DMR();
 
-// interface for RI-related calculation, which needs loc.dm_k 
+// interface for RI-related calculation, which needs loc.dm_k
 #ifdef __EXX
         if (GlobalC::exx_info.info_global.cal_exx)
         {
@@ -36,12 +36,11 @@ void ElecStateLCAO_TDDFT::psiToRho_td(const psi::Psi<std::complex<double>>& psi)
             this->loc->dm_k.resize(kv->get_nks());
             for (int ik = 0; ik < kv->get_nks(); ++ik)
             {
-                this->loc->set_dm_k(ik, this->DM->get_DMK_pointer(ik));         
+                this->loc->set_dm_k(ik, this->DM->get_DMK_pointer(ik));
             }
         }
 #endif
     }
-
 
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
@@ -53,8 +52,8 @@ void ElecStateLCAO_TDDFT::psiToRho_td(const psi::Psi<std::complex<double>>& psi)
     //------------------------------------------------------------
 
     ModuleBase::GlobalFunc::NOTE("Calculate the charge on real space grid!");
-    this->gint_k->transfer_DM2DtoGrid(this->DM->get_DMR_vector()); // transfer DM2D to DM_grid in gint
-    Gint_inout inout(this->loc->DM_R, this->charge->rho, Gint_Tools::job_type::rho); // rho calculation
+    this->gint_k->transfer_DM2DtoGrid(this->DM->get_DMR_vector());  // transfer DM2D to DM_grid in gint
+    Gint_inout inout(this->charge->rho, Gint_Tools::job_type::rho); // rho calculation
     this->gint_k->cal_gint(&inout);
 
     this->charge->renormalize_rho();
@@ -98,6 +97,5 @@ void ElecStateLCAO_TDDFT::calculate_weights_td()
     }
     return;
 }
-
 
 } // namespace elecstate

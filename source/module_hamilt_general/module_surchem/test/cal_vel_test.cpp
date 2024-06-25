@@ -1,14 +1,15 @@
 #ifdef __MPI
-#include "mpi.h"
 #include "../../../module_base/parallel_global.h"
+#include "mpi.h"
 #endif
-#include "gtest/gtest.h"
-#include "gmock/gmock.h"
-#include <iostream>
-#include <fstream>
-#include "../surchem.h"
 #include "../../module_xc/xc_functional.h"
+#include "../surchem.h"
 #include "setcell.h"
+
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
+#include <fstream>
+#include <iostream>
 /************************************************
  *  unit test of functions in cal_vel.cpp
  ***********************************************/
@@ -25,30 +26,31 @@
 
 class cal_vel_test : public testing::Test
 {
-protected:
-    
+  protected:
     surchem solvent_model;
 };
 
 TEST_F(cal_vel_test, shape_gradn)
-{  
+{
     int nrxx = 27000;
     double TWO_PI = 6.283;
     double sigma_k = 0.6;
     double nc_k = 3.7e-04;
-    double *PS_TOTN_real = new double[nrxx];
-    ModuleBase::GlobalFunc::ZEROS(PS_TOTN_real,nrxx);
+    double* PS_TOTN_real = new double[nrxx];
+    ModuleBase::GlobalFunc::ZEROS(PS_TOTN_real, nrxx);
 
-    PS_TOTN_real[0]=2.081e-03; PS_TOTN_real[1]=1.818e-03;PS_TOTN_real[2]=1.193e-03;
+    PS_TOTN_real[0] = 2.081e-03;
+    PS_TOTN_real[1] = 1.818e-03;
+    PS_TOTN_real[2] = 1.193e-03;
     for (int i = 3; i < nrxx; i++)
     {
-        PS_TOTN_real[i] = 0.1; 
+        PS_TOTN_real[i] = 0.1;
     }
 
     double epr_c = 1.0 / sqrt(TWO_PI) / sigma_k;
     double epr_z = 0;
     double min = 1e-10;
-    double *eprime = new double[nrxx];
+    double* eprime = new double[nrxx];
 
     for (int ir = 0; ir < nrxx; ir++)
     {
@@ -56,14 +58,14 @@ TEST_F(cal_vel_test, shape_gradn)
         eprime[ir] = epr_c * exp(-pow(epr_z, 2)) / std::max(PS_TOTN_real[ir], min);
     }
 
-    EXPECT_NEAR(eprime[0],5.0729550913,1e-10);
-    EXPECT_NEAR(eprime[1],10.8252209597,1e-10);
+    EXPECT_NEAR(eprime[0], 5.0729550913, 1e-10);
+    EXPECT_NEAR(eprime[1], 10.8252209597, 1e-10);
 
     delete[] PS_TOTN_real;
 }
 
 TEST_F(cal_vel_test, eps_pot)
-{   
+{
     Setcell::setupcell(GlobalC::ucell);
 
     std::string precision_flag, device_flag;
@@ -73,7 +75,7 @@ TEST_F(cal_vel_test, eps_pot)
     ModulePW::PW_Basis pwtest(device_flag, precision_flag);
     GlobalC::rhopw = &pwtest;
     ModuleBase::Matrix3 latvec;
-    int nx,ny,nz;  //f*G
+    int nx, ny, nz; // f*G
     double wfcecut;
     bool gamma_only;
 
@@ -82,47 +84,51 @@ TEST_F(cal_vel_test, eps_pot)
     int distribution_type = 1;
     bool xprime = false;
 
-    //init
+    // init
 #ifdef __MPI
-    MPI_Comm_size(MPI_COMM_WORLD,&GlobalV::NPROC);
-	MPI_Comm_rank(MPI_COMM_WORLD,&GlobalV::MY_RANK); 
-    Parallel_Global::split_diag_world(GlobalV::NPROC);
-    Parallel_Global::split_grid_world(GlobalV::NPROC);
-    MPI_Comm_split(MPI_COMM_WORLD,0,1,&POOL_WORLD); //in LCAO kpar=1
+    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
+    MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
+    MPI_Comm_split(MPI_COMM_WORLD, 0, 1, &POOL_WORLD); // in LCAO kpar=1
 #endif
 
 #ifdef __MPI
-    GlobalC::rhopw ->initmpi(1, 0, POOL_WORLD);
+    GlobalC::rhopw->initmpi(1, 0, POOL_WORLD);
 #endif
-    GlobalC::rhopw ->initgrids(GlobalC::ucell.lat0,GlobalC::ucell.latvec,wfcecut);
+    GlobalC::rhopw->initgrids(GlobalC::ucell.lat0, GlobalC::ucell.latvec, wfcecut);
 
-    GlobalC::rhopw ->initparameters(gamma_only,wfcecut,distribution_type, xprime);
-    GlobalC::rhopw ->setuptransform();
-    GlobalC::rhopw ->collect_local_pw();
-    GlobalC::rhopw ->collect_uniqgg();
+    GlobalC::rhopw->initparameters(gamma_only, wfcecut, distribution_type, xprime);
+    GlobalC::rhopw->setuptransform();
+    GlobalC::rhopw->collect_local_pw();
+    GlobalC::rhopw->collect_uniqgg();
 
-    const int npw = GlobalC::rhopw ->npw;
-    const int nrxx = GlobalC::rhopw ->nrxx;
-    double *vwork = new double[nrxx];
-    double *eprime = new double[nrxx];
-    double *PS_TOTN_real = new double[nrxx];
+    const int npw = GlobalC::rhopw->npw;
+    const int nrxx = GlobalC::rhopw->nrxx;
+    double* vwork = new double[nrxx];
+    double* eprime = new double[nrxx];
+    double* PS_TOTN_real = new double[nrxx];
     ModuleBase::GlobalFunc::ZEROS(vwork, nrxx);
     ModuleBase::GlobalFunc::ZEROS(eprime, nrxx);
-    ModuleBase::GlobalFunc::ZEROS(PS_TOTN_real,nrxx);
-    
-    PS_TOTN_real[0] = 2.081e-03; PS_TOTN_real[1] = 1.818e-03; PS_TOTN_real[2] = 1.193e-03;
-    eprime[0] = 5.07288; eprime[1] = 10.8251; eprime[2] = 83.0605;
+    ModuleBase::GlobalFunc::ZEROS(PS_TOTN_real, nrxx);
+
+    PS_TOTN_real[0] = 2.081e-03;
+    PS_TOTN_real[1] = 1.818e-03;
+    PS_TOTN_real[2] = 1.193e-03;
+    eprime[0] = 5.07288;
+    eprime[1] = 10.8251;
+    eprime[2] = 83.0605;
     for (int i = 3; i < nrxx; i++)
     {
-        PS_TOTN_real[i] = 0.1; 
+        PS_TOTN_real[i] = 0.1;
         eprime[i] = 1;
     }
 
-    complex<double> *phi = new complex<double>[npw];
-    phi[0] = {2.116e-05,-9.528e-05}; phi[1] = {1.608e-04,-1.958e-06}; phi[2] = {1.500e-05,7.303e-05};
-    for(int i = 3; i < npw; i++)
+    complex<double>* phi = new complex<double>[npw];
+    phi[0] = {2.116e-05, -9.528e-05};
+    phi[1] = {1.608e-04, -1.958e-06};
+    phi[2] = {1.500e-05, 7.303e-05};
+    for (int i = 3; i < npw; i++)
     {
-        phi[i]=1e-7;
+        phi[i] = 1e-7;
     }
 
     for (int ir = 0; ir < nrxx; ir++)
@@ -130,8 +136,8 @@ TEST_F(cal_vel_test, eps_pot)
         eprime[ir] = eprime[ir] * (GlobalV::eb_k - 1);
     }
 
-    ModuleBase::Vector3<double> *nabla_phi = new ModuleBase::Vector3<double>[nrxx];
-    double *phisq = new double[nrxx];
+    ModuleBase::Vector3<double>* nabla_phi = new ModuleBase::Vector3<double>[nrxx];
+    double* phisq = new double[nrxx];
 
     XC_Functional::grad_rho(phi, nabla_phi, GlobalC::rhopw, GlobalC::ucell.tpiba);
 
@@ -157,7 +163,7 @@ TEST_F(cal_vel_test, eps_pot)
 }
 
 TEST_F(cal_vel_test, cal_vel)
-{   
+{
     Setcell::setupcell(GlobalC::ucell);
 
     std::string precision_flag, device_flag;
@@ -167,7 +173,7 @@ TEST_F(cal_vel_test, cal_vel)
     ModulePW::PW_Basis pwtest(device_flag, precision_flag);
     GlobalC::rhopw = &pwtest;
     ModuleBase::Matrix3 latvec;
-    int nx,ny,nz;  //f*G
+    int nx, ny, nz; // f*G
     double wfcecut;
     bool gamma_only;
 
@@ -176,32 +182,30 @@ TEST_F(cal_vel_test, cal_vel)
     int distribution_type = 1;
     bool xprime = false;
 
-    //init
+    // init
 #ifdef __MPI
-    MPI_Comm_size(MPI_COMM_WORLD,&GlobalV::NPROC);
-	MPI_Comm_rank(MPI_COMM_WORLD,&GlobalV::MY_RANK); 
-    Parallel_Global::split_diag_world(GlobalV::NPROC);
-    Parallel_Global::split_grid_world(GlobalV::NPROC);
-    MPI_Comm_split(MPI_COMM_WORLD,0,1,&POOL_WORLD); //in LCAO kpar=1
+    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
+    MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
+    MPI_Comm_split(MPI_COMM_WORLD, 0, 1, &POOL_WORLD); // in LCAO kpar=1
 #endif
 
 #ifdef __MPI
-    GlobalC::rhopw ->initmpi(1, 0, POOL_WORLD);
+    GlobalC::rhopw->initmpi(1, 0, POOL_WORLD);
 #endif
-    GlobalC::rhopw ->initgrids(GlobalC::ucell.lat0,GlobalC::ucell.latvec,wfcecut);
+    GlobalC::rhopw->initgrids(GlobalC::ucell.lat0, GlobalC::ucell.latvec, wfcecut);
 
-    GlobalC::rhopw ->initparameters(gamma_only,wfcecut,distribution_type, xprime);
-    GlobalC::rhopw ->setuptransform();
-    GlobalC::rhopw ->collect_local_pw();
-    GlobalC::rhopw ->collect_uniqgg();
+    GlobalC::rhopw->initparameters(gamma_only, wfcecut, distribution_type, xprime);
+    GlobalC::rhopw->setuptransform();
+    GlobalC::rhopw->collect_local_pw();
+    GlobalC::rhopw->collect_uniqgg();
 
-    const int npw = GlobalC::rhopw ->npw;
-    const int nrxx = GlobalC::rhopw ->nrxx;
+    const int npw = GlobalC::rhopw->npw;
+    const int nrxx = GlobalC::rhopw->nrxx;
 
-    complex<double> *TOTN = new complex<double>[npw];
-    complex<double> *PS_TOTN = new complex<double>[npw];
-    
-    for(int i=0;i<npw;i++)
+    complex<double>* TOTN = new complex<double>[npw];
+    complex<double>* PS_TOTN = new complex<double>[npw];
+
+    for (int i = 0; i < npw; i++)
     {
         TOTN[i] = 1e-5;
         PS_TOTN[i] = 1e-7;
@@ -210,24 +214,24 @@ TEST_F(cal_vel_test, cal_vel)
     int nspin = 1;
     solvent_model.Vel.create(nspin, nrxx);
     solvent_model.epspot = new double[nrxx];
-    solvent_model.TOTN_real =  new double[nrxx];
-    solvent_model.delta_phi =  new double[nrxx];
+    solvent_model.TOTN_real = new double[nrxx];
+    solvent_model.delta_phi = new double[nrxx];
 
     solvent_model.cal_vel(GlobalC::ucell, GlobalC::rhopw, TOTN, PS_TOTN, nspin);
 
-    EXPECT_NEAR(solvent_model.Vel(0,0), 0.0532168705, 1e-10);
-    EXPECT_NEAR(solvent_model.Vel(0,1), 0.0447818244, 1e-10);
+    EXPECT_NEAR(solvent_model.Vel(0, 0), 0.0532168705, 1e-10);
+    EXPECT_NEAR(solvent_model.Vel(0, 1), 0.0447818244, 1e-10);
 
     delete[] PS_TOTN;
     delete[] TOTN;
 }
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
 #ifdef __MPI
     MPI_Init(&argc, &argv);
-    MPI_Comm_size(MPI_COMM_WORLD,&GlobalV::NPROC);
-    MPI_Comm_rank(MPI_COMM_WORLD,&GlobalV::MY_RANK);
+    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
+    MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
 #endif
 
     testing::InitGoogleTest(&argc, argv);

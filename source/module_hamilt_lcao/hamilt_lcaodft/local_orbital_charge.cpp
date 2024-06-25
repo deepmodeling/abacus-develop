@@ -3,13 +3,13 @@
 #include "module_base/blas_connector.h"
 #include "module_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-
+#include "module_io/read_wfc_lcao.h"
 // Shen Yu add 2019/5/9
 extern "C"
 {
-    void Cblacs_gridinfo(int icontxt, int *nprow, int *npcol, int *myprow, int *mypcol);
-    void Cblacs_pinfo(int *myid, int *nprocs);
-    void Cblacs_pcoord(int icontxt, int pnum, int *prow, int *pcol);
+    void Cblacs_gridinfo(int icontxt, int* nprow, int* npcol, int* myprow, int* mypcol);
+    void Cblacs_pinfo(int* myid, int* nprocs);
+    void Cblacs_pcoord(int icontxt, int pnum, int* prow, int* pcol);
     int Cblacs_pnum(int icontxt, int prow, int pcol);
 }
 
@@ -58,32 +58,38 @@ Local_Orbital_Charge::~Local_Orbital_Charge()
 }
 
 void Local_Orbital_Charge::allocate_dm_wfc(const Grid_Technique& gt,
-    elecstate::ElecState* pelec,
-    Local_Orbital_wfc& lowf,
-    psi::Psi<double>* psi,
-    const K_Vectors& kv,
-    const int& istep)
+                                           elecstate::ElecState* pelec,
+                                           Local_Orbital_wfc& lowf,
+                                           psi::Psi<double>* psi,
+                                           const K_Vectors& kv,
+                                           const int& istep)
 {
     ModuleBase::TITLE("Local_Orbital_Charge", "allocate_dm_wfc");
     this->LOWF = &lowf;
     this->LOWF->gridt = &gt;
     // here we reset the density matrix dimension.
+    // it is weird the psi_gamma is allocated inside the function allocate_gamma
+    // but psi_k is allocated outside the function allocate_DM_k
+    // and why the allocation of psi and DM are done together???
+    // lowf.gamma_file(psi, pelec);
+    // will be replaced by
     this->allocate_gamma(gt.lgd, psi, pelec, kv.get_nks(), istep);
     return;
 }
 
-void Local_Orbital_Charge::allocate_dm_wfc(const Grid_Technique &gt,
-    elecstate::ElecState* pelec,
-    Local_Orbital_wfc& lowf,
-    psi::Psi<std::complex<double>>* psi,
-    const K_Vectors& kv,
-    const int& istep)
+void Local_Orbital_Charge::allocate_dm_wfc(const Grid_Technique& gt,
+                                           elecstate::ElecState* pelec,
+                                           Local_Orbital_wfc& lowf,
+                                           psi::Psi<std::complex<double>>* psi,
+                                           const K_Vectors& kv,
+                                           const int& istep)
 {
     ModuleBase::TITLE("Local_Orbital_Charge", "allocate_dm_wfc");
 
     this->LOWF = &lowf;
     this->LOWF->gridt = &gt;
     // here we reset the density matrix dimension.
+    // lgd will be the dimension of global matrix and nbasis of psi to be of the local one
     lowf.allocate_k(gt.lgd, psi, pelec, kv.get_nks(), kv.get_nkstot(), kv.kvec_c, istep);
     this->allocate_DM_k(kv.get_nks(), gt.nnrg);
     return;

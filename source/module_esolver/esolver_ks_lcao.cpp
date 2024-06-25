@@ -84,10 +84,6 @@ ESolver_KS_LCAO<TK, TR>::ESolver_KS_LCAO()
 template <typename TK, typename TR>
 ESolver_KS_LCAO<TK, TR>::~ESolver_KS_LCAO()
 {
-#ifndef USE_NEW_TWO_CENTER
-    this->orb_con.clear_after_ions(*uot_, GlobalC::ORB, GlobalV::deepks_setorb, GlobalC::ucell.infoNL.nproj);
-#endif
-    delete uot_;
 }
 
 //------------------------------------------------------------------------------
@@ -254,9 +250,13 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(Input& inp, UnitCell& ucell)
     // 12) initialize the potential
     if (this->pelec->pot == nullptr)
     {
-        this->pelec->pot
-            = new elecstate::Potential(this->pw_rhod, this->pw_rho, &GlobalC::ucell, &(GlobalC::ppcell.vloc),
-                                       &(this->sf), &(this->pelec->f_en.etxc), &(this->pelec->f_en.vtxc));
+        this->pelec->pot = new elecstate::Potential(this->pw_rhod,
+                                                    this->pw_rho,
+                                                    &GlobalC::ucell,
+                                                    &(GlobalC::ppcell.vloc),
+                                                    &(this->sf),
+                                                    &(this->pelec->f_en.etxc),
+                                                    &(this->pelec->f_en.vtxc));
     }
 
 #ifdef __DEEPKS
@@ -321,9 +321,13 @@ void ESolver_KS_LCAO<TK, TR>::init_after_vc(Input& inp, UnitCell& ucell)
         // Initialize the potential.
         if (this->pelec->pot == nullptr)
         {
-            this->pelec->pot
-                = new elecstate::Potential(this->pw_rhod, this->pw_rho, &GlobalC::ucell, &(GlobalC::ppcell.vloc),
-                                           &(this->sf), &(this->pelec->f_en.etxc), &(this->pelec->f_en.vtxc));
+            this->pelec->pot = new elecstate::Potential(this->pw_rhod,
+                                                        this->pw_rho,
+                                                        &GlobalC::ucell,
+                                                        &(GlobalC::ppcell.vloc),
+                                                        &(this->sf),
+                                                        &(this->pelec->f_en.etxc),
+                                                        &(this->pelec->f_en.vtxc));
         }
     }
 
@@ -353,25 +357,24 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(ModuleBase::matrix& force)
     ModuleBase::TITLE("ESolver_KS_LCAO", "cal_force");
     ModuleBase::timer::tick("ESolver_KS_LCAO", "cal_force");
 
-	Force_Stress_LCAO<TK> fsl(this->RA, GlobalC::ucell.nat);
+    Force_Stress_LCAO<TK> fsl(this->RA, GlobalC::ucell.nat);
 
-	fsl.getForceStress(
-            GlobalV::CAL_FORCE,
-			GlobalV::CAL_STRESS,
-			GlobalV::TEST_FORCE,
-			GlobalV::TEST_STRESS,
-            this->orb_con.ParaV, 
-			this->pelec,
-			this->psi,
-            this->LM,
-            this->GG, // mohan add 2024-04-01
-            this->GK, // mohan add 2024-04-01
-            uot_,
-			force,
-			this->scs,
-			this->sf,
-			this->kv,
-			this->pw_rho,
+    fsl.getForceStress(GlobalV::CAL_FORCE,
+                       GlobalV::CAL_STRESS,
+                       GlobalV::TEST_FORCE,
+                       GlobalV::TEST_STRESS,
+                       this->orb_con.ParaV,
+                       this->pelec,
+                       this->psi,
+                       this->LM,
+                       this->GG, // mohan add 2024-04-01
+                       this->GK, // mohan add 2024-04-01
+                       two_center_bundle_,
+                       force,
+                       this->scs,
+                       this->sf,
+                       this->kv,
+                       this->pw_rho,
 #ifdef __EXX
                        *this->exx_lri_double,
                        *this->exx_lri_complex,
@@ -530,37 +533,28 @@ void ESolver_KS_LCAO<TK, TR>::init_basis_lcao(ORB_control& orb_con, Input& inp, 
     // * reading the localized orbitals/projectors
     // * construct the interpolation tables.
 
-    // NOTE: This following raw pointer serves as a temporary step in
-    // LCAO refactoring. Eventually, it will be replaced by a shared_ptr,
-    // which is the only owner of the ORB_gen_tables object. All other
-    // usages will take a weak_ptr.
-    uot_ = new ORB_gen_tables;
-    auto& two_center_bundle = uot_->two_center_bundle;
-
-    two_center_bundle.reset(new TwoCenterBundle);
-    two_center_bundle->build_orb(ucell.ntype, ucell.orbital_fn);
-    two_center_bundle->build_alpha(GlobalV::deepks_setorb, &ucell.descriptor_file);
-    two_center_bundle->build_orb_onsite(ucell.ntype, GlobalV::onsite_radius);
+    two_center_bundle_.build_orb(ucell.ntype, ucell.orbital_fn);
+    two_center_bundle_.build_alpha(GlobalV::deepks_setorb, &ucell.descriptor_file);
+    two_center_bundle_.build_orb_onsite(ucell.ntype, GlobalV::onsite_radius);
     // currently deepks only use one descriptor file, so cast bool to int is fine
 
     // TODO Due to the omnipresence of GlobalC::ORB, we still have to rely
     // on the old interface for now.
-    two_center_bundle->to_LCAO_Orbitals(GlobalC::ORB, inp.lcao_ecut, inp.lcao_dk, inp.lcao_dr, inp.lcao_rmax);
+    two_center_bundle_.to_LCAO_Orbitals(GlobalC::ORB, inp.lcao_ecut, inp.lcao_dk, inp.lcao_dr, inp.lcao_rmax);
 
     ucell.infoNL.setupNonlocal(ucell.ntype, ucell.atoms, GlobalV::ofs_running, GlobalC::ORB);
 
-    two_center_bundle->build_beta(ucell.ntype, ucell.infoNL.Beta);
+    two_center_bundle_.build_beta(ucell.ntype, ucell.infoNL.Beta);
 
     int Lmax = 0;
 #ifdef __EXX
     Lmax = GlobalC::exx_info.info_ri.abfs_Lmax;
 #endif
 
-#ifndef USE_NEW_TWO_CENTER
-    this->orb_con.set_orb_tables(GlobalV::ofs_running, *uot_, GlobalC::ORB, ucell.lat0, GlobalV::deepks_setorb, Lmax,
-                                 ucell.infoNL.nprojmax, ucell.infoNL.nproj, ucell.infoNL.Beta);
+#ifdef USE_NEW_TWO_CENTER
+    two_center_bundle_.tabulate();
 #else
-    two_center_bundle->tabulate();
+    two_center_bundle_.tabulate(inp.lcao_ecut, inp.lcao_dk, inp.lcao_dr, inp.lcao_rmax);
 #endif
 
     if (this->orb_con.setup_2d)
@@ -858,8 +852,10 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2density(int istep, int iter, double ethr)
     }
 
     // 11) compute magnetization, only for spin==2
-    GlobalC::ucell.magnet.compute_magnetization(this->pelec->charge->nrxx, this->pelec->charge->nxyz,
-                                                this->pelec->charge->rho, this->pelec->nelec_spin.data());
+    GlobalC::ucell.magnet.compute_magnetization(this->pelec->charge->nrxx,
+                                                this->pelec->charge->nxyz,
+                                                this->pelec->charge->rho,
+                                                this->pelec->nelec_spin.data());
 
     // 12) calculate delta energy
     this->pelec->f_en.deband = this->pelec->cal_delta_eband();
@@ -1081,16 +1077,22 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
     // 1) write charge difference into files for charge extrapolation
     if (GlobalV::CALCULATION != "scf")
     {
-        this->CE.save_files(istep, GlobalC::ucell,
+        this->CE.save_files(istep,
+                            GlobalC::ucell,
 #ifdef __MPI
                             this->pw_big,
 #endif
-                            this->pelec->charge, &this->sf);
+                            this->pelec->charge,
+                            &this->sf);
     }
 
     // 2) write density matrix for sparse matrix
     ModuleIO::write_dmr(dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->get_DMR_vector(),
-                        GlobalV::NLOCAL, INPUT.out_dm1, false, GlobalV::out_app_flag, istep);
+                        GlobalV::NLOCAL,
+                        INPUT.out_dm1,
+                        false,
+                        GlobalV::out_app_flag,
+                        istep);
 
     // 3) write charge density
     if (GlobalV::out_chg)
@@ -1350,20 +1352,19 @@ ModuleIO::Output_DM ESolver_KS_LCAO<TK, TR>::create_Output_DM(int is, int iter)
 template <typename TK, typename TR>
 ModuleIO::Output_Mat_Sparse<TK> ESolver_KS_LCAO<TK, TR>::create_Output_Mat_Sparse(int istep)
 {
-	return ModuleIO::Output_Mat_Sparse<TK>(
-            hsolver::HSolverLCAO<TK>::out_mat_hsR,
-			hsolver::HSolverLCAO<TK>::out_mat_dh,
-			hsolver::HSolverLCAO<TK>::out_mat_t,
-			INPUT.out_mat_r,
-			istep,
-			this->pelec->pot->get_effective_v(),
-			this->orb_con.ParaV,
-            this->GK, // mohan add 2024-04-01
-            uot_,
-			this->LM,
-            GlobalC::GridD, // mohan add 2024-04-06
-			this->kv,
-			this->p_hamilt);
+    return ModuleIO::Output_Mat_Sparse<TK>(hsolver::HSolverLCAO<TK>::out_mat_hsR,
+                                           hsolver::HSolverLCAO<TK>::out_mat_dh,
+                                           hsolver::HSolverLCAO<TK>::out_mat_t,
+                                           INPUT.out_mat_r,
+                                           istep,
+                                           this->pelec->pot->get_effective_v(),
+                                           this->orb_con.ParaV,
+                                           this->GK, // mohan add 2024-04-01
+                                           two_center_bundle_,
+                                           this->LM,
+                                           GlobalC::GridD, // mohan add 2024-04-06
+                                           this->kv,
+                                           this->p_hamilt);
 }
 
 //------------------------------------------------------------------------------

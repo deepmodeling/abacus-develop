@@ -113,6 +113,8 @@ TEST_F(write_input, General1)
     EXPECT_THAT(output,
                 testing::HasSubstr("out_freq_ion                   0 #the frequency ( >= 0 ) of ionic step to output "
                                    "charge density and wavefunction. 0: output only when ion steps are finished"));
+    EXPECT_THAT(output,
+                testing::HasSubstr("elpa_num_thread                -1 #Number of threads need to use in elpa"));
     EXPECT_THAT(output, testing::HasSubstr("evice                         cpu #the computing device for ABACUS"));
     EXPECT_THAT(output, testing::HasSubstr(""));
     ifs.close();

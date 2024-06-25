@@ -1,25 +1,24 @@
 #include "td_current_io.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
 
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
-#include "module_base/vector3.h"
-#include "module_base/timer.h"
 #include "module_base/libm/libm.h"
-#include "module_base/tool_threading.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_elecstate/module_dm/cal_dm_psi.h"
 #include "module_base/parallel_reduce.h"
+#include "module_base/timer.h"
+#include "module_base/tool_threading.h"
+#include "module_base/vector3.h"
+#include "module_elecstate/module_dm/cal_dm_psi.h"
 #include "module_elecstate/potentials/H_TDDFT_pw.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 #ifdef __LCAO
-//init DSloc_R for current calculation
-void ModuleIO::Init_DS_tmp(
-		const Parallel_Orbitals& pv,
-		LCAO_Matrix &lm,
-        ForceStressArrays &fsr,
-        const ORB_gen_tables* uot)
-{    
+// init DSloc_R for current calculation
+void ModuleIO::Init_DS_tmp(const Parallel_Orbitals& pv,
+                           LCAO_Matrix& lm,
+                           ForceStressArrays& fsr,
+                           const TwoCenterBundle& two_center_bundle)
+{
     ModuleBase::TITLE("ModuleIO", "Init_DS_tmp");
     ModuleBase::timer::tick("ModuleIO", "Init_DS_tmp");
     const int nnr = pv.nnr;
@@ -37,25 +36,23 @@ void ModuleIO::Init_DS_tmp(
 
     ModuleBase::OMP_PARALLEL(init_DSloc_Rxyz);
     bool cal_deri = true;
-    LCAO_domain::build_ST_new(
-        lm,
-        fsr,
-        'S', 
-        cal_deri, 
-        GlobalC::ucell, 
-        GlobalC::ORB, 
-        pv,
-        *uot, 
-        &GlobalC::GridD, 
-        nullptr); // delete lm.SlocR
+    LCAO_domain::build_ST_new(lm,
+                              fsr,
+                              'S',
+                              cal_deri,
+                              GlobalC::ucell,
+                              GlobalC::ORB,
+                              pv,
+                              two_center_bundle,
+                              &GlobalC::GridD,
+                              nullptr); // delete lm.SlocR
 
     ModuleBase::timer::tick("ModuleIO", "Init_DS_tmp");
     return;
 }
 
-
-//destory DSloc_R so it can be used normally in the following force calculation
-void ModuleIO::destory_DS_tmp(ForceStressArrays &fsr)
+// destory DSloc_R so it can be used normally in the following force calculation
+void ModuleIO::destory_DS_tmp(ForceStressArrays& fsr)
 {
     ModuleBase::TITLE("ModuleIO", "destory_DS_tmp");
     ModuleBase::timer::tick("ModuleIO", "destory_DS_tmp");
@@ -65,7 +62,6 @@ void ModuleIO::destory_DS_tmp(ForceStressArrays &fsr)
     ModuleBase::timer::tick("ModuleIO", "destory_DS_tmp");
     return;
 }
-
 
 void ModuleIO::cal_tmp_DM(elecstate::DensityMatrix<std::complex<double>, double>& DM, const int ik, const int nspin)
 {
@@ -80,7 +76,7 @@ void ModuleIO::cal_tmp_DM(elecstate::DensityMatrix<std::complex<double>, double>
         // set zero since this function is called in every scf step
         tmp_DMR->set_zero();
 #ifdef _OPENMP
-        #pragma omp parallel for
+#pragma omp parallel for
 #endif
         for (int i = 0; i < tmp_DMR->size_atom_pairs(); ++i)
         {
@@ -106,43 +102,43 @@ void ModuleIO::cal_tmp_DM(elecstate::DensityMatrix<std::complex<double>, double>
                 }
 #endif
                 // only ik
-                if(GlobalV::NSPIN !=4 )
+                if (GlobalV::NSPIN != 4)
                 {
-                // cal k_phase
-                // if TK==std::complex<double>, kphase is e^{ikR}
-                const ModuleBase::Vector3<double> dR(r_index.x, r_index.y, r_index.z);
-                const double arg = (DM.get_kv_pointer()->kvec_d[ik] * dR) * ModuleBase::TWO_PI;
-                double sinp, cosp;
-                ModuleBase::libm::sincos(arg, &sinp, &cosp);
-                std::complex<double> kphase = std::complex<double>(cosp, sinp);
-                // set DMR element
-                double* tmp_DMR_pointer = tmp_matrix->get_pointer();
-                std::complex<double>* tmp_DMK_pointer = DM.get_DMK_pointer(ik + ik_begin);
-                double* DMK_real_pointer = nullptr;
-                double* DMK_imag_pointer = nullptr;
-                // jump DMK to fill DMR
-                // DMR is row-major, DMK is column-major
-                tmp_DMK_pointer += col_ap * DM.get_paraV_pointer()->nrow + row_ap;
-                for (int mu = 0; mu < DM.get_paraV_pointer()->get_row_size(iat1); ++mu)
-                {
-                    DMK_real_pointer = (double*)tmp_DMK_pointer;
-                    DMK_imag_pointer = DMK_real_pointer + 1;
-                    BlasConnector::axpy(DM.get_paraV_pointer()->get_col_size(iat2),
-                                        kphase.imag(),
-                                        DMK_real_pointer,
-                                        ld_hk2,
-                                        tmp_DMR_pointer,
-                                        1);
-                    // "-" since i^2 = -1
-                    BlasConnector::axpy(DM.get_paraV_pointer()->get_col_size(iat2),
-                                        kphase.real(),
-                                        DMK_imag_pointer,
-                                        ld_hk2,
-                                        tmp_DMR_pointer,
-                                        1);
-                    tmp_DMK_pointer += 1;
-                    tmp_DMR_pointer += DM.get_paraV_pointer()->get_col_size(iat2);
-                }
+                    // cal k_phase
+                    // if TK==std::complex<double>, kphase is e^{ikR}
+                    const ModuleBase::Vector3<double> dR(r_index.x, r_index.y, r_index.z);
+                    const double arg = (DM.get_kv_pointer()->kvec_d[ik] * dR) * ModuleBase::TWO_PI;
+                    double sinp, cosp;
+                    ModuleBase::libm::sincos(arg, &sinp, &cosp);
+                    std::complex<double> kphase = std::complex<double>(cosp, sinp);
+                    // set DMR element
+                    double* tmp_DMR_pointer = tmp_matrix->get_pointer();
+                    std::complex<double>* tmp_DMK_pointer = DM.get_DMK_pointer(ik + ik_begin);
+                    double* DMK_real_pointer = nullptr;
+                    double* DMK_imag_pointer = nullptr;
+                    // jump DMK to fill DMR
+                    // DMR is row-major, DMK is column-major
+                    tmp_DMK_pointer += col_ap * DM.get_paraV_pointer()->nrow + row_ap;
+                    for (int mu = 0; mu < DM.get_paraV_pointer()->get_row_size(iat1); ++mu)
+                    {
+                        DMK_real_pointer = (double*)tmp_DMK_pointer;
+                        DMK_imag_pointer = DMK_real_pointer + 1;
+                        BlasConnector::axpy(DM.get_paraV_pointer()->get_col_size(iat2),
+                                            kphase.imag(),
+                                            DMK_real_pointer,
+                                            ld_hk2,
+                                            tmp_DMR_pointer,
+                                            1);
+                        // "-" since i^2 = -1
+                        BlasConnector::axpy(DM.get_paraV_pointer()->get_col_size(iat2),
+                                            kphase.real(),
+                                            DMK_imag_pointer,
+                                            ld_hk2,
+                                            tmp_DMR_pointer,
+                                            1);
+                        tmp_DMK_pointer += 1;
+                        tmp_DMR_pointer += DM.get_paraV_pointer()->get_col_size(iat2);
+                    }
                 }
             }
         }
@@ -151,13 +147,13 @@ void ModuleIO::cal_tmp_DM(elecstate::DensityMatrix<std::complex<double>, double>
 }
 
 void ModuleIO::write_current(const int istep,
-                                const psi::Psi<std::complex<double>>* psi,
-                                const elecstate::ElecState* pelec,
-                                const K_Vectors& kv,
-                                const ORB_gen_tables* uot,
-                                const Parallel_Orbitals* pv,
-								Record_adj& ra,
-								LCAO_Matrix &lm) // mohan add 2024-04-02
+                             const psi::Psi<std::complex<double>>* psi,
+                             const elecstate::ElecState* pelec,
+                             const K_Vectors& kv,
+                             const TwoCenterBundle& two_center_bundle,
+                             const Parallel_Orbitals* pv,
+                             Record_adj& ra,
+                             LCAO_Matrix& lm) // mohan add 2024-04-02
 {
 
     ModuleBase::TITLE("ModuleIO", "write_current");
@@ -166,32 +162,32 @@ void ModuleIO::write_current(const int istep,
     // mohan add 2024-06-16
     ForceStressArrays fsr_c;
 
-    //Init_DS_tmp
-    Init_DS_tmp(*pv, lm, fsr_c, uot);
+    // Init_DS_tmp
+    Init_DS_tmp(*pv, lm, fsr_c, two_center_bundle);
 
     // construct a DensityMatrix object
-    elecstate::DensityMatrix<std::complex<double>, double> DM(&kv,pv,GlobalV::NSPIN);
-    
+    elecstate::DensityMatrix<std::complex<double>, double> DM(&kv, pv, GlobalV::NSPIN);
+
     elecstate::cal_dm_psi(DM.get_paraV_pointer(), pelec->wg, psi[0], DM);
-    
-    //loc.cal_dm_R(edm_k, ra, edm2d, kv);
+
+    // loc.cal_dm_R(edm_k, ra, edm2d, kv);
 
     // cal_dm_2d
-    DM.init_DMR(ra,&GlobalC::ucell);
+    DM.init_DMR(ra, &GlobalC::ucell);
     for (int ik = 0; ik < DM.get_DMK_nks(); ++ik)
     {
         cal_tmp_DM(DM, ik, pv->nspin);
-        //check later
+        // check later
         double current_ik[3] = {0.0, 0.0, 0.0};
         int total_irr = 0;
 #ifdef _OPENMP
 #pragma omp parallel
         {
             int num_threads = omp_get_num_threads();
-            //ModuleBase::matrix local_soverlap(3, 3);
+            // ModuleBase::matrix local_soverlap(3, 3);
             int local_total_irr = 0;
 #else
-        //ModuleBase::matrix& local_soverlap = soverlap;
+        // ModuleBase::matrix& local_soverlap = soverlap;
         int& local_total_irr = total_irr;
 #endif
 
@@ -226,7 +222,8 @@ void ModuleIO::write_current(const int istep,
                     double Rz = ra.info[iat][cb][2];
                     // get BaseMatrix
                     hamilt::BaseMatrix<double>* tmp_matrix = DM.get_DMR_pointer(1)->find_matrix(iat1, iat2, Rx, Ry, Rz);
-                    if(tmp_matrix == nullptr) continue;
+                    if (tmp_matrix == nullptr)
+                        continue;
                     int row_ap = pv->atom_begin_row[iat1];
                     int col_ap = pv->atom_begin_col[iat2];
                     // get DMR
@@ -235,7 +232,7 @@ void ModuleIO::write_current(const int istep,
                         for (int nu = 0; nu < pv->get_col_size(iat2); ++nu)
                         {
                             // here do not sum over spin due to EDM.sum_DMR_spin();
-                            double edm2d1 = tmp_matrix->get_value(mu,nu);
+                            double edm2d1 = tmp_matrix->get_value(mu, nu);
                             double edm2d2 = 2.0 * edm2d1;
                             current_ik[0] -= edm2d2 * fsr_c.DSloc_Rx[irr];
                             current_ik[1] -= edm2d2 * fsr_c.DSloc_Ry[irr];
@@ -245,7 +242,7 @@ void ModuleIO::write_current(const int istep,
                         } // end kk
                     }     // end jj
                 }         // end cb
-            } // end iat
+            }             // end iat
 #ifdef _OPENMP
 #pragma omp critical(cal_foverlap_k_reduce)
             {
@@ -254,21 +251,21 @@ void ModuleIO::write_current(const int istep,
         }
 #endif
         Parallel_Reduce::reduce_all(current_ik, 3);
-        //MPI_Reduce(local_current_ik, current_ik, 3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-        if(GlobalV::MY_RANK==0)
+        // MPI_Reduce(local_current_ik, current_ik, 3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+        if (GlobalV::MY_RANK == 0)
         {
-            std::string filename = GlobalV::global_out_dir + "current_" + std::to_string(ik)+".dat";
+            std::string filename = GlobalV::global_out_dir + "current_" + std::to_string(ik) + ".dat";
             std::ofstream fout;
             fout.open(filename, std::ios::app);
             fout << std::setprecision(16);
             fout << std::scientific;
-            //fout << "# current_x current_y current_z" << std::endl;
+            // fout << "# current_x current_y current_z" << std::endl;
             fout << current_ik[0] << " " << current_ik[1] << " " << current_ik[2] << std::endl;
             fout.close();
         }
-        //write end
+        // write end
         ModuleBase::timer::tick("ModuleIO", "write_current");
-    }//end nks
+    } // end nks
     destory_DS_tmp(fsr_c);
     return;
 }

@@ -43,6 +43,10 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
                        const Grid_Technique& gridt,
                        const UnitCell& ucell)
 {
+
+
+    int dev_id = base_device::information::set_device_by_rank();
+    checkCuda(cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync));
     const int nbzp = gridt.nbzp;
     const int num_streams = gridt.nstreams;
     const int lgd = gridt.lgd;
@@ -110,12 +114,16 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
     Cuda_Mem_Wrapper<double*> gemm_A(max_atompair_per_z, num_streams, true);
     Cuda_Mem_Wrapper<double*> gemm_B(max_atompair_per_z, num_streams, true);
     Cuda_Mem_Wrapper<double*> gemm_C(max_atompair_per_z, num_streams, true);
-    
+
 #pragma omp parallel for num_threads(num_streams) collapse(2)
     for (int i = 0; i < gridt.nbx; i++)
     {
         for (int j = 0; j < gridt.nby; j++)
         {
+            // 20240620 Note that it must be set again here because 
+            // cuda's device is not safe in a multi-threaded environment.
+
+            checkCuda(cudaSetDevice(dev_id));
             const int sid = omp_get_thread_num();
             checkCuda(cudaStreamSynchronize(streams[sid]));
 

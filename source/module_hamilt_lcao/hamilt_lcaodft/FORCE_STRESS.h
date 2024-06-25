@@ -13,11 +13,11 @@
 #ifdef __EXX
 #include "module_ri/Exx_LRI.h"
 #endif
+#include "force_stress_arrays.h"
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
-#include "force_stress_arrays.h"
 
-template<typename T>
+template <typename T>
 class Force_Stress_LCAO
 {
     // mohan add 2021-02-09
@@ -30,26 +30,26 @@ class Force_Stress_LCAO
     ~Force_Stress_LCAO();
 
     void getForceStress(const bool isforce,
-        const bool isstress,
-        const bool istestf,
-        const bool istests,
-		Parallel_Orbitals &pv,
-		const elecstate::ElecState* pelec,
-        const psi::Psi<T>* psi,
-		LCAO_Matrix &lm,
-		Gint_Gamma &gint_gamma, // mohan add 2024-04-01
-		Gint_k &gint_k, // mohan add 2024-04-01
-        const ORB_gen_tables* uot,
-        ModuleBase::matrix& fcs,
-        ModuleBase::matrix& scs,
-        const Structure_Factor& sf,
-        const K_Vectors& kv,
-        ModulePW::PW_Basis* rhopw,
+                        const bool isstress,
+                        const bool istestf,
+                        const bool istests,
+                        Parallel_Orbitals& pv,
+                        const elecstate::ElecState* pelec,
+                        const psi::Psi<T>* psi,
+                        LCAO_Matrix& lm,
+                        Gint_Gamma& gint_gamma, // mohan add 2024-04-01
+                        Gint_k& gint_k,         // mohan add 2024-04-01
+                        const TwoCenterBundle& two_center_bundle,
+                        ModuleBase::matrix& fcs,
+                        ModuleBase::matrix& scs,
+                        const Structure_Factor& sf,
+                        const K_Vectors& kv,
+                        ModulePW::PW_Basis* rhopw,
 #ifdef __EXX
-        Exx_LRI<double>& exx_lri_double,
-        Exx_LRI<std::complex<double>>& exx_lri_complex,
-#endif  
-        ModuleSymmetry::Symmetry* symm);
+                        Exx_LRI<double>& exx_lri_double,
+                        Exx_LRI<std::complex<double>>& exx_lri_complex,
+#endif
+                        ModuleSymmetry::Symmetry* symm);
 
   private:
     int nat;
@@ -71,30 +71,29 @@ class Force_Stress_LCAO
                         ModulePW::PW_Basis* rhopw,
                         const Structure_Factor& sf);
 
-    void integral_part(
-        const bool isGammaOnly,
-        const bool isforce,
-        const bool isstress,
-        ForceStressArrays &fsr, // mohan add 2024-06-15
-        const elecstate::ElecState* pelec,
-        const psi::Psi<T>* psi,
-        ModuleBase::matrix& foverlap,
-        ModuleBase::matrix& ftvnl_dphi,
-        ModuleBase::matrix& fvnl_dbeta,
-        ModuleBase::matrix& fvl_dphi,
-        ModuleBase::matrix& soverlap,
-        ModuleBase::matrix& stvnl_dphi,
-        ModuleBase::matrix& svnl_dbeta,
-        ModuleBase::matrix& svl_dphi,
+    void integral_part(const bool isGammaOnly,
+                       const bool isforce,
+                       const bool isstress,
+                       ForceStressArrays& fsr, // mohan add 2024-06-15
+                       const elecstate::ElecState* pelec,
+                       const psi::Psi<T>* psi,
+                       ModuleBase::matrix& foverlap,
+                       ModuleBase::matrix& ftvnl_dphi,
+                       ModuleBase::matrix& fvnl_dbeta,
+                       ModuleBase::matrix& fvl_dphi,
+                       ModuleBase::matrix& soverlap,
+                       ModuleBase::matrix& stvnl_dphi,
+                       ModuleBase::matrix& svnl_dbeta,
+                       ModuleBase::matrix& svl_dphi,
 #if __DEEPKS
-        ModuleBase::matrix& svnl_dalpha,
+                       ModuleBase::matrix& svnl_dalpha,
 #endif
-		Gint_Gamma &gint_gamma,
-		Gint_k &gint_k,
-        const ORB_gen_tables* uot,
-	    const Parallel_Orbitals &pv,
-		LCAO_Matrix &lm,
-		const K_Vectors& kv);
+                       Gint_Gamma& gint_gamma,
+                       Gint_k& gint_k,
+                       const TwoCenterBundle& two_center_bundle,
+                       const Parallel_Orbitals& pv,
+                       LCAO_Matrix& lm,
+                       const K_Vectors& kv);
 
     void calStressPwPart(ModuleBase::matrix& sigmadvl,
                          ModuleBase::matrix& sigmahar,
@@ -109,7 +108,7 @@ class Force_Stress_LCAO
     static double force_invalid_threshold_ev;
 };
 
-template<typename T>
+template <typename T>
 double Force_Stress_LCAO<T>::force_invalid_threshold_ev = 0.00;
 
 #endif

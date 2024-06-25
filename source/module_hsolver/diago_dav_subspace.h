@@ -29,14 +29,13 @@ class Diago_DavSubspace : public DiagH<T, Device>
 
     virtual ~Diago_DavSubspace() override;
 
-    using Func = std::function<void(T*, T*, const int, const int, const int, const int)>;
+    using HPsiFunc = std::function<void(T*, T*, const int, const int, const int, const int)>;
+    using SubspaceFunc = std::function<void(T*, T*, Real*, const int, const int)>;
 
-    int diag(const Func& hpsi_func,
+    int diag(const HPsiFunc& hpsi_func,
+             const SubspaceFunc& subspace_func,
              T* psi_in,
-
-             hamilt::Hamilt<T, Device>* phm_in,
-             psi::Psi<T, Device>& phi,
-             
+             const int psi_in_dmax,
              Real* eigenvalue_in,
              const std::vector<bool>& is_occupied,
              const bool& scf_type);
@@ -89,7 +88,7 @@ class Diago_DavSubspace : public DiagH<T, Device>
     base_device::DEVICE_CPU* cpu_ctx = {};
     base_device::AbacusDevice_t device = {};
 
-    void cal_grad(const Func& hpsi_func,
+    void cal_grad(const HPsiFunc& hpsi_func,
                   const int& dim,
                   const int& nbase,
                   const int& notconv,
@@ -121,7 +120,7 @@ class Diago_DavSubspace : public DiagH<T, Device>
                      bool init,
                      bool is_subspace);
 
-    int diag_once(const Func& hpsi_func,
+    int diag_once(const HPsiFunc& hpsi_func,
                   T* psi_in,
                   const int psi_in_dmax,
                   Real* eigenvalue_in,

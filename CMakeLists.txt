@@ -38,6 +38,7 @@ option(ENABLE_GOOGLEBENCH "Enable GOOGLE-benchmark usage." OFF)
 option(ENABLE_RAPIDJSON "Enable rapid-json usage." OFF)
 option(ENABLE_CNPY "Enable cnpy usage." OFF)
 option(ENABLE_PEXSI "Enable support for PEXSI." OFF)
+option(ENABLE_CUSOLVERMP "Enable cusolvermp." OFF)
 
 # enable json support
 if(ENABLE_RAPIDJSON)
@@ -316,6 +317,13 @@ if(USE_CUDA)
     endif()
     if (USE_OPENMP AND OpenMP_CXX_FOUND)
       set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler=${OpenMP_CXX_FLAGS}" CACHE STRING "CUDA flags" FORCE)
+    endif()
+    if (ENABLE_CUSOLVERMP)
+      add_compile_definitions(__CUSOLVERMP)
+      target_link_libraries(${ABACUS_BIN_NAME}
+          -lcal
+          -lcusolverMp
+      )
     endif()
   endif()
 endif()

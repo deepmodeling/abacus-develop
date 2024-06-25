@@ -30,6 +30,9 @@
 #ifdef __PEXSI
 #include "module_hsolver/module_pexsi/pexsi_solver.h"
 #endif
+#ifdef __MPI
+#include "module_hsolver/diago_elpa.h"
+#endif
 
 #include "module_base/module_device/device.h"
 #include "module_base/timer.h"
@@ -910,6 +913,12 @@ void Input_Conv::Convert(void)
     pexsi::PEXSI_Solver::pexsi_mu_guard = INPUT.pexsi_mu_guard;
     pexsi::PEXSI_Solver::pexsi_elec_thr = INPUT.pexsi_elec_thr;
     pexsi::PEXSI_Solver::pexsi_zero_thr = INPUT.pexsi_zero_thr;
+#endif
+
+    //elpa related
+#ifdef __MPI
+    hsolver::DiagoElpa<std::complex<double>>::elpa_num_thread = INPUT.elpa_num_thread;
+    hsolver::DiagoElpa<double>::elpa_num_thread = INPUT.elpa_num_thread;
 #endif
     ModuleBase::timer::tick("Input_Conv", "Convert");
     return;
