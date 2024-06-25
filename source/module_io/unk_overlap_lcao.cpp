@@ -72,7 +72,7 @@ void unkOverlap_lcao::init(const Grid_Technique& gt, std::complex<double>*** wfc
 #ifdef __EXX
     exx_lmax = GlobalC::exx_info.info_ri.abfs_Lmax;
 #endif
-    MOT.init_Table_Spherical_Bessel(2, 3, Lmax_used, Lmax, exx_lmax, GlobalC::ORB, GlobalC::ucell.infoNL.Beta);
+    ORB_table_phi::init_Table_Spherical_Bessel(2, 3, Lmax_used, Lmax, exx_lmax, GlobalC::ORB, GlobalC::ucell.infoNL.Beta, MOT.pSB);
 
     ModuleBase::Ylm::set_coefficients();
 
@@ -186,7 +186,7 @@ void unkOverlap_lcao::init(const Grid_Technique& gt, std::complex<double>*** wfc
 								std::make_pair(NB, Center2_Orb::Orb11(
 									GlobalC::ORB.Phi[TA].PhiLN(LA,NA),								
 									GlobalC::ORB.Phi[TB].PhiLN(LB,NB),
-									MOT, MGT)));
+									MOT.pSB, MGT)));
 						}
 					}
 				}
@@ -211,7 +211,7 @@ void unkOverlap_lcao::init(const Grid_Technique& gt, std::complex<double>*** wfc
 									GlobalC::ORB.Phi[TA].PhiLN(LA,NA),	
 									orb_r,									
 									GlobalC::ORB.Phi[TB].PhiLN(LB,NB),
-									MOT, MGT)));
+									MOT.pSB, MGT)));
 						}
 					}
 				}

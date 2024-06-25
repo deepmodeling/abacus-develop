@@ -52,16 +52,7 @@ class ORB_table_phi
 	 * L should be 2*Lmax, which is max L of all type
 	 */
 	// Peize Lin update 2016-01-26
-	void init_Lmax(
-		const int orb_num, 
-		const int mode, 
-		int &Lmax_used, 
-		int &Lmax,
-		const int &Lmax_exx,
-		const LCAO_Orbitals &orb,
-		const Numerical_Nonlocal* beta_) const;
-
-	void init_Table_Spherical_Bessel(
+	static void init_Lmax(
 		const int orb_num, 
 		const int mode, 
 		int &Lmax_used, 
@@ -69,6 +60,16 @@ class ORB_table_phi
 		const int &Lmax_exx,
 		const LCAO_Orbitals &orb,
 		const Numerical_Nonlocal* beta_);
+
+	static void init_Table_Spherical_Bessel(
+		const int orb_num, 
+		const int mode, 
+		int &Lmax_used, 
+		int &Lmax,
+		const int &Lmax_exx,
+		const LCAO_Orbitals &orb,
+		const Numerical_Nonlocal* beta_,
+        ModuleBase::Sph_Bessel_Recursive::D2*& psb);
 
 	//Wenfei 2021-8-26, plot table elements against R
 	void plot_table(
@@ -99,30 +100,32 @@ class ORB_table_phi
     ModuleBase::IntArray OV_Opair;
     ModuleBase::IntArray OV_L2plus1;
 
-	int get_rmesh( const double &R1, const double &R2) const;
+	static int get_rmesh( const double &R1, const double &R2, const double dr);
 
 	double dr;
 	int Rmesh;
 
 
-	void cal_ST_Phi12_R(
+	static void cal_ST_Phi12_R(
 		const int &job,
 		const int &l,
 		const Numerical_Orbital_Lm &n1,
 		const Numerical_Orbital_Lm &n2,
 		const int &rmesh,
 		double *rs,
-		double *drs) const;
+		double *drs,
+        const ModuleBase::Sph_Bessel_Recursive::D2* psb);
 
 	// Peize Lin add 2017-10-13
-	void cal_ST_Phi12_R(
+	static void cal_ST_Phi12_R(
 		const int &job,
 		const int &l,
 		const Numerical_Orbital_Lm &n1,
 		const Numerical_Orbital_Lm &n2,
 		const std::set<size_t> &radials,				// only calculate ir in radials
 		double *rs,
-		double *drs) const;
+		double *drs,
+        const ModuleBase::Sph_Bessel_Recursive::D2* psb);
 
 	private:
 

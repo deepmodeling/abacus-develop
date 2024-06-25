@@ -27,7 +27,7 @@ void cal_r_overlap_R::initialize_orb_table()
     exx_lmax = GlobalC::exx_info.info_ri.abfs_Lmax;
 #endif
 
-    MOT.init_Table_Spherical_Bessel(2, 3, Lmax_used, Lmax, exx_lmax, GlobalC::ORB, GlobalC::ucell.infoNL.Beta);
+    ORB_table_phi::init_Table_Spherical_Bessel(2, 3, Lmax_used, Lmax, exx_lmax, GlobalC::ORB, GlobalC::ucell.infoNL.Beta, MOT.pSB);
     ModuleBase::Ylm::set_coefficients();
     MGT.init_Gaunt_CH(Lmax);
     MGT.init_Gaunt(Lmax);
@@ -108,7 +108,7 @@ void cal_r_overlap_R::construct_orbs_and_orb_r()
                                 std::make_pair(NB, Center2_Orb::Orb11(
                                     orbs[TA][LA][NA],
                                     orbs[TB][LB][NB],
-                                    MOT, MGT))
+                                    MOT.pSB, MGT))
                                 );
                         }
                     }
@@ -134,7 +134,7 @@ void cal_r_overlap_R::construct_orbs_and_orb_r()
                                     orbs[TA][LA][NA],	
                                     orb_r,									
                                     orbs[TB][LB][NB],
-                                    MOT, MGT)));
+                                    MOT.pSB, MGT)));
                         }
                     }
                 }

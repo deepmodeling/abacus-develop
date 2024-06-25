@@ -6,6 +6,7 @@
 #include "center2_orb-orb11.h"
 
 #include "module_base/constants.h"
+#include "module_base/sph_bessel_recursive.h"
 #include "module_base/ylm.h"
 #include "module_base/math_polyint.h"
 
@@ -14,12 +15,12 @@
 Center2_Orb::Orb11::Orb11(
 	const Numerical_Orbital_Lm &nA_in,
 	const Numerical_Orbital_Lm &nB_in,
-	const ORB_table_phi &MOT_in,
+    const ModuleBase::Sph_Bessel_Recursive::D2* psb,
 	const ORB_gaunt_table &MGT_in
 )
 	:nA(nA_in),
 	 nB(nB_in),
-	 MOT(MOT_in),
+     psb_(psb),
 	 MGT(MGT_in)
 {}
 
@@ -34,19 +35,20 @@ void Center2_Orb::Orb11::init_radial_table(void)
 			continue;
 		}
 
-		const int rmesh = this->MOT.get_rmesh(this->nA.getRcut(),this->nB.getRcut()) ;
+		const int rmesh = ORB_table_phi::get_rmesh(this->nA.getRcut(),this->nB.getRcut(), dr_) ;
 
 		this->Table_r[LAB].resize(rmesh,0);
 		this->Table_dr[LAB].resize(rmesh,0);
 
-		this->MOT.cal_ST_Phi12_R(
+        ORB_table_phi::cal_ST_Phi12_R(
 			1,
 			LAB,
 			this->nA,
 			this->nB,
 			rmesh,
 			this->Table_r[LAB].data(),
-			this->Table_dr[LAB].data());
+			this->Table_dr[LAB].data(),
+            psb_);
 	}
 	return;
 }
@@ -56,7 +58,7 @@ void Center2_Orb::Orb11::init_radial_table( const std::set<size_t> &radials )
 	const int LA = this->nA.getL();
 	const int LB = this->nB.getL();
 
-	const size_t rmesh = this->MOT.get_rmesh(this->nA.getRcut(),this->nB.getRcut());
+	const size_t rmesh = ORB_table_phi::get_rmesh(this->nA.getRcut(),this->nB.getRcut(), dr_);
 
 	std::set<size_t> radials_used;
 	for( const size_t &ir : radials )
@@ -71,14 +73,15 @@ void Center2_Orb::Orb11::init_radial_table( const std::set<size_t> &radials )
 		this->Table_r[LAB].resize(rmesh,0);
 		this->Table_dr[LAB].resize(rmesh,0);
 
-		this->MOT.cal_ST_Phi12_R(
+        ORB_table_phi::cal_ST_Phi12_R(
 			1,
 			LAB,
 			this->nA,
 			this->nB,
 			radials_used,
 			this->Table_r[LAB].data(),
-			this->Table_dr[LAB].data());
+			this->Table_dr[LAB].data(),
+            psb_);
 	}
 }
 
@@ -134,8 +137,8 @@ double Center2_Orb::Orb11::cal_overlap(
 				(distance > tiny2)
 				? ModuleBase::PolyInt::Polynomial_Interpolation(
 					tb_r.second.data(),
-					this->MOT.get_rmesh(RcutA, RcutB),
-					this->MOT.dr,
+					ORB_table_phi::get_rmesh(RcutA, RcutB, dr_),
+					dr_,
 					distance )
 				: tb_r.second.at(0);
 
@@ -216,8 +219,8 @@ ModuleBase::Vector3<double> Center2_Orb::Orb11::cal_grad_overlap(    //caoyu add
 				(distance > tiny2)
 				? ModuleBase::PolyInt::Polynomial_Interpolation(
 					tb_r.second.data(),
-					this->MOT.get_rmesh(RcutA, RcutB),
-					this->MOT.dr,
+					ORB_table_phi::get_rmesh(RcutA, RcutB, dr_),
+					dr_,
 					distance )
                 : tb_r.second.at(0);
 
@@ -225,8 +228,8 @@ ModuleBase::Vector3<double> Center2_Orb::Orb11::cal_grad_overlap(    //caoyu add
                 (distance > tiny2)
                 ? ModuleBase::PolyInt::Polynomial_Interpolation(
                     this->Table_dr.at(LAB).data(),
-                    this->MOT.get_rmesh(RcutA, RcutB),
-                    this->MOT.dr,
+                    ORB_table_phi::get_rmesh(RcutA, RcutB, dr_),
+                    dr_,
                     distance)   //Interp(Table_dr)
                   - Interp_Tlm * LAB / distance
 				: 0.0;

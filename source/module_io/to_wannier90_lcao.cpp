@@ -274,7 +274,7 @@ void toWannier90_LCAO::initialize_orb_table()
 #endif
 
 #ifdef __LCAO
-    MOT.init_Table_Spherical_Bessel(2, 3, Lmax_used, Lmax, exx_lmax, GlobalC::ORB, GlobalC::ucell.infoNL.Beta);
+    ORB_table_phi::init_Table_Spherical_Bessel(2, 3, Lmax_used, Lmax, exx_lmax, GlobalC::ORB, GlobalC::ucell.infoNL.Beta, MOT.pSB);
     ModuleBase::Ylm::set_coefficients();
     MGT.init_Gaunt_CH(Lmax);
     MGT.init_Gaunt(Lmax);
@@ -658,7 +658,7 @@ void toWannier90_LCAO::construct_overlap_table_project()
                     std::make_pair(0, Center2_Orb::Orb11(
                         orbs[iw2it[orb_index_row]][iw2iL[orb_index_row]][iw2iN[orb_index_row]], 
                         A_orbs[wannier_index][0], 
-                        MOT, MGT)
+                        MOT.pSB, MGT)
                     )
                 );
             }
@@ -676,7 +676,7 @@ void toWannier90_LCAO::construct_overlap_table_project()
                         std::make_pair(tmp_L, Center2_Orb::Orb11(
                             orbs[iw2it[orb_index_row]][iw2iL[orb_index_row]][iw2iN[orb_index_row]], 
                             A_orbs[wannier_index][tmp_L], 
-                            MOT, MGT)
+                            MOT.pSB, MGT)
                         )
                     );
                 }

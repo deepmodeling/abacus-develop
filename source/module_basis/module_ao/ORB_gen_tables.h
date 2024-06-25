@@ -54,46 +54,10 @@ class ORB_gen_tables
 		bool cal_syns = false,
 		double dmax = 0.0)const;
 
-	void snap_psibeta_half(
-		const LCAO_Orbitals &orb,
-		const InfoNonlocal &infoNL_,
-		std::vector<std::vector<double>> &nlm,
-		const ModuleBase::Vector3<double> &R1,
-		const int &T1,
-		const int &L1,
-		const int &m1,
-		const int &N1,
-		const ModuleBase::Vector3<double> &R0, // The projector.
-		const int &T0,
-		const bool &calc_deri)const; // mohan add 2021-04-25);
-	/// set as public because in hamilt_linear,
-#ifdef __DEEPKS
-    void snap_psialpha_half(
-			const LCAO_Orbitals& orb,
-			std::vector<std::vector<double>> &nlm,
-			const int& job,
-			const ModuleBase::Vector3<double>& R1,
-			const int& T1,
-			const int& L1,
-			const int& m1,
-			const int& N1,
-			const ModuleBase::Vector3<double>& R0, // The projector.
-			const int& T0,
-			const int& I0
-        ) const;
-#endif
-    /// set as public because in hamilt_linear,
 	/// we need to destroy the tables: SR,TR,NR
 	/// after ionic optimization is done.
 	ORB_table_phi MOT;
-	ORB_table_beta tbeta;
 
-	/// if we want to add table for descriptors,
-	/// we should consider here -- mohan 2021-02-09
-	ORB_table_alpha talpha;		//caoyu add 2021-03-17
-
-    /// a temporary solution in refactoring
-    std::unique_ptr<TwoCenterBundle> two_center_bundle;
 
 	private:
 

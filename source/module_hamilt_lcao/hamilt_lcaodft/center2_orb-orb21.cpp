@@ -14,13 +14,13 @@ Center2_Orb::Orb21::Orb21(
 	const Numerical_Orbital_Lm &nA1_in,
 	const Numerical_Orbital_Lm &nA2_in,
 	const Numerical_Orbital_Lm &nB_in,
-	const ORB_table_phi &MOT_in,
+    const ModuleBase::Sph_Bessel_Recursive::D2* psb,
 	const ORB_gaunt_table &MGT_in
 )
 	:nA1(nA1_in),
 	 nA2(nA2_in),
 	 nB(nB_in),
-	 MOT(MOT_in),
+     psb_(psb),
 	 MGT(MGT_in)
 {}
 
@@ -58,7 +58,7 @@ void Center2_Orb::Orb21::init_radial_table()
 			true,
 			GlobalV::CAL_FORCE); // mohan add 2021-05-07
 
-		this->orb11s.insert( std::make_pair( LA, Center2_Orb::Orb11(this->nA[LA], nB, this->MOT, this->MGT) ) );
+		this->orb11s.insert( std::make_pair( LA, Center2_Orb::Orb11(this->nA[LA], nB, psb_, this->MGT) ) );
 
 		this->orb11s.at(LA).init_radial_table();
 
@@ -99,7 +99,7 @@ void Center2_Orb::Orb21::init_radial_table( const std::set<size_t> &radials )
 			true,
 			GlobalV::CAL_FORCE); // mohan add 2021-05-07
 
-		this->orb11s.insert( std::make_pair( LA, Center2_Orb::Orb11(this->nA[LA], nB, this->MOT, this->MGT) ) );
+		this->orb11s.insert( std::make_pair( LA, Center2_Orb::Orb11(this->nA[LA], nB, psb_, this->MGT) ) );
 
 		this->orb11s.at(LA).init_radial_table(radials);
 

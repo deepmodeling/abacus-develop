@@ -145,13 +145,7 @@ void ORB_control::clear_after_ions(ORB_gen_tables& OGT,
 {
     ModuleBase::TITLE("ORB_control", "clear_after_ions");
     OGT.MOT.Destroy_Table(orb);
-    OGT.tbeta.Destroy_Table_Beta(orb.get_ntype(), orb.Phi, nproj_);
 
-    // caoyu add 2021-03-18
-    if (deepks_setorb)
-    {
-        OGT.talpha.Destroy_Table_Alpha(orb);
-    }
     return;
 }
 

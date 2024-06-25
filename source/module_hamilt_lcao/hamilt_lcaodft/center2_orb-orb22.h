@@ -27,7 +27,7 @@ public:
 		const Numerical_Orbital_Lm &nA2_in,
 		const Numerical_Orbital_Lm &nB1_in,
 		const Numerical_Orbital_Lm &nB2_in,		
-		const ORB_table_phi &MOT_in,
+        const ModuleBase::Sph_Bessel_Recursive::D2* psb,
 		const ORB_gaunt_table &MGT_in);
 		
 	void init_radial_table();
@@ -47,7 +47,7 @@ protected:								// Peize Lin test 2016-10-07
 	const Numerical_Orbital_Lm &nB1;
 	const Numerical_Orbital_Lm &nB2;
 	
-	const ORB_table_phi &MOT;
+    const ModuleBase::Sph_Bessel_Recursive::D2* psb_;
 	const ORB_gaunt_table &MGT;	
 
 	std::map<int,Numerical_Orbital_Lm> nB;

@@ -29,7 +29,7 @@ void Matrix_Orbs11::init(
 //		GlobalC::ORB.get_dk() / kmesh_times);				// delta k, for integration in k space
 		GlobalC::ORB.get_dk());											// Peize Lin change 2017-04-16
 	int Lmax_used, Lmax;
-	this->MOT.init_Table_Spherical_Bessel (2, mode, Lmax_used, Lmax, GlobalC::exx_info.info_ri.abfs_Lmax, GlobalC::ORB, GlobalC::ucell.infoNL.Beta);
+    ORB_table_phi::init_Table_Spherical_Bessel (2, mode, Lmax_used, Lmax, GlobalC::exx_info.info_ri.abfs_Lmax, GlobalC::ORB, GlobalC::ucell.infoNL.Beta, MOT.pSB);
 //	this->MOT.init_OV_Tpair();							// for this->MOT.OV_L2plus1
 //	this->MOT.Destroy_Table_Spherical_Bessel (Lmax_used);				// why?
 
@@ -64,7 +64,7 @@ void Matrix_Orbs11::init_radial(
 								std::make_pair(NB, Center2_Orb::Orb11(
 									orb_A[TA][LA][NA],
 									orb_B[TB][LB][NB],
-									this->MOT, this->MGT)));
+									MOT.pSB, this->MGT)));
 	ModuleBase::timer::tick("Matrix_Orbs11", "init_radial");
 }
 
@@ -84,7 +84,7 @@ void Matrix_Orbs11::init_radial(
 								std::make_pair(NB, Center2_Orb::Orb11(
 									orb_A.Phi[TA].PhiLN(LA,NA),
 									orb_B.Phi[TB].PhiLN(LB,NB),
-									this->MOT, this->MGT)));
+									MOT.pSB, this->MGT)));
 	ModuleBase::timer::tick("Matrix_Orbs11", "init_radial");
 }
 

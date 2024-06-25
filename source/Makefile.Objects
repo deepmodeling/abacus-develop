@@ -341,8 +341,6 @@ OBJS_ORBITAL=ORB_atomic.o\
       ORB_nonlocal.o\
       ORB_nonlocal_lm.o\
       ORB_read.o\
-      ORB_table_alpha.o\
-      ORB_table_beta.o\
       ORB_table_phi.o\
       parallel_2d.o\
       parallel_orbitals.o\

@@ -210,7 +210,7 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::init_td(void)
                        orb.get_dR(),                          // delta R, for making radial table
                        orb.get_dk());                         // Peize Lin change 2017-04-16
     int Lmax_used, Lmax;
-    this->MOT.init_Table_Spherical_Bessel(2, 1, Lmax_used, Lmax, 1, orb, this->ucell->infoNL.Beta);
+    ORB_table_phi::init_Table_Spherical_Bessel(2, 1, Lmax_used, Lmax, 1, orb, this->ucell->infoNL.Beta, MOT.pSB);
 
     //=========================================
     // (2) init Ylm Coef
@@ -234,7 +234,7 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::init_td(void)
                                 std::make_pair(NB,
                                                Center2_Orb::Orb11(orb.Phi[TA].PhiLN(LA, NA),
                                                                   orb.Phi[TB].PhiLN(LB, NB),
-                                                                  this->MOT,
+                                                                  this->MOT.pSB,
                                                                   this->MGT)));
     for (auto& coA: center2_orb11_s)
         for (auto& coB: coA.second)

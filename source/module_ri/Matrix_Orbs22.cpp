@@ -28,7 +28,7 @@ void Matrix_Orbs22::init(
 //		GlobalC::ORB.get_dk() / kmesh_times);				// delta k, for integration in k space
 		GlobalC::ORB.get_dk());											// Peize Lin change 2017-04-16
 	int Lmax_used, Lmax;
-	this->MOT.init_Table_Spherical_Bessel (4, mode, Lmax_used, Lmax, GlobalC::exx_info.info_ri.abfs_Lmax, GlobalC::ORB, GlobalC::ucell.infoNL.Beta);
+    ORB_table_phi::init_Table_Spherical_Bessel (4, mode, Lmax_used, Lmax, GlobalC::exx_info.info_ri.abfs_Lmax, GlobalC::ORB, GlobalC::ucell.infoNL.Beta, MOT.pSB);
 //	this->MOT.init_OV_Tpair();							// for this->MOT.OV_L2plus1
 //	this->MOT.Destroy_Table_Spherical_Bessel (Lmax_used);				// why?
 
@@ -44,6 +44,7 @@ void Matrix_Orbs22::init(
 	this->MGT.init_Gaunt( 2*Lmax+1 );
 
 	ModuleBase::timer::tick("Matrix_Orbs22", "init");
+    std::cout << "Matrix_Orbs22::init()::done" << std::endl;
 }
 
 
@@ -74,7 +75,7 @@ void Matrix_Orbs22::init_radial(
 													orb_A2[TA][LA2][NA2],
 													orb_B1[TB][LB1][NB1],
 													orb_B2[TB][LB2][NB2],
-													this->MOT, this->MGT)));
+													MOT.pSB, this->MGT)));
 	ModuleBase::timer::tick("Matrix_Orbs22", "init_radial");
 }
 
@@ -105,7 +106,7 @@ void Matrix_Orbs22::init_radial(
 													orb_A2.Phi[TA].PhiLN(LA2,NA2),
 													orb_B1.Phi[TB].PhiLN(LB1,NB1),
 													orb_B2.Phi[TB].PhiLN(LB2,NB2),
-													this->MOT, this->MGT)));
+													MOT.pSB, this->MGT)));
 	ModuleBase::timer::tick("Matrix_Orbs22", "init_radial");
 }
 

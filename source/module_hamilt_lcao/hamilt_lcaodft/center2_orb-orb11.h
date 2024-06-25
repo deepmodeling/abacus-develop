@@ -12,6 +12,7 @@
 
 #include "center2_orb.h"
 
+#include "module_base/sph_bessel_recursive.h"
 #include "module_basis/module_ao/ORB_table_phi.h"
 #include "module_basis/module_ao/ORB_gaunt_table.h"
 #include "module_basis/module_ao/ORB_atomic_lm.h"
@@ -24,7 +25,7 @@ public:
 	Orb11(
 		const Numerical_Orbital_Lm &nA_in,
 		const Numerical_Orbital_Lm &nB_in,
-		const ORB_table_phi &MOT_in,
+        const ModuleBase::Sph_Bessel_Recursive::D2* psb,
 		const ORB_gaunt_table &MGT_in);
 
 	void init_radial_table(void);
@@ -43,11 +44,19 @@ private:
 	const Numerical_Orbital_Lm &nA;
 	const Numerical_Orbital_Lm &nB;
 	
-	const ORB_table_phi &MOT;
+    const ModuleBase::Sph_Bessel_Recursive::D2* psb_;
 	const ORB_gaunt_table &MGT;	
 
 	std::map<int,std::vector<double>> Table_r;									// unit: Bohr/MOT.dr
 	std::map<int,std::vector<double>> Table_dr;
+
+    // NOTE: the following variable is introduced during refactoring in order
+    // to decouple this class with ORB_table_phi. Before, MOT.dr is widely
+    // used by this class. MOT.dr, however, is in fact ORB.dR, which is in
+    // turn lcao_dr, one of the four parameters that define the two-center
+    // integration grid. This parameter is usually not set and defaults to
+    // 0.01.
+    const double dr_ = 0.01;
 };
 
 // this->Table_r[LAB][ir]

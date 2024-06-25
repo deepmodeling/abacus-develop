@@ -190,7 +190,7 @@ TEST_F(OrbTablePhiTest, TwoCenterIntegral) {
 	otp.allocate(ntype_, lmax_, lcao_.get_kmesh(), Rmax_, dR_, dk_);
 	init_sph_bessel();
 
-	int rmesh = otp.get_rmesh(lcao_.Phi[0].getRcut(), lcao_.Phi[1].getRcut());
+	int rmesh = otp.get_rmesh(lcao_.Phi[0].getRcut(), lcao_.Phi[1].getRcut(), otp.dr);
 
 	double* rs1 = new double[rmesh];
 	double* rs2 = new double[rmesh];
@@ -205,8 +205,8 @@ TEST_F(OrbTablePhiTest, TwoCenterIntegral) {
 		rs1[ir] = rs2[ir] = drs1[ir] = drs2[ir] = 0.0;
 	}
 
-	otp.cal_ST_Phi12_R(1, 0, lcao_.Phi[0].PhiLN(1,0), lcao_.Phi[1].PhiLN(2,1), rmesh, rs1, drs1);
-	otp.cal_ST_Phi12_R(1, 0, lcao_.Phi[0].PhiLN(1,0), lcao_.Phi[1].PhiLN(2,1), idx_r, rs2, drs2);
+	otp.cal_ST_Phi12_R(1, 0, lcao_.Phi[0].PhiLN(1,0), lcao_.Phi[1].PhiLN(2,1), rmesh, rs1, drs1, otp.pSB);
+	otp.cal_ST_Phi12_R(1, 0, lcao_.Phi[0].PhiLN(1,0), lcao_.Phi[1].PhiLN(2,1), idx_r, rs2, drs2, otp.pSB);
 
 	for (int ir = 0; ir != rmesh; ++ir) {
 		// 1. check the two overloaded versions agree with each other
@@ -236,8 +236,8 @@ TEST_F(OrbTablePhiTest, TwoCenterIntegral) {
 		rs1[ir] = rs2[ir] = drs1[ir] = drs2[ir] = 0.0;
 	}
 
-	otp.cal_ST_Phi12_R(1, 0, lcao_.Phi[0].PhiLN(1,0), lcao_.Phi[1].PhiLN(2,1), rmesh, rs1, drs1);
-	otp.cal_ST_Phi12_R(1, 0, lcao_.Phi[0].PhiLN(1,0), lcao_.Phi[1].PhiLN(2,1), idx_r, rs2, drs2);
+	otp.cal_ST_Phi12_R(1, 0, lcao_.Phi[0].PhiLN(1,0), lcao_.Phi[1].PhiLN(2,1), rmesh, rs1, drs1, otp.pSB);
+	otp.cal_ST_Phi12_R(1, 0, lcao_.Phi[0].PhiLN(1,0), lcao_.Phi[1].PhiLN(2,1), idx_r, rs2, drs2, otp.pSB);
 
 	for (int ir = 0; ir != rmesh; ++ir) {
 		if (idx_r.find(ir) != idx_r.end()) {
@@ -298,7 +298,7 @@ TEST_F(OrbTablePhiTest, GetRmesh) {
     // check whether rmesh is an odd number
     for (size_t i = 0; i != 8; ++i) {
         R2 = 0.11*i;
-        rmesh = otp.get_rmesh(R1, R2);
+        rmesh = otp.get_rmesh(R1, R2, otp.dr);
         EXPECT_TRUE( (rmesh % 2 == 1) && (rmesh > 0) );
     }
 
@@ -311,7 +311,7 @@ TEST_F(OrbTablePhiTest, GetRmeshAbnormal) {
 
 	testing::internal::CaptureStdout();
 
-    EXPECT_EXIT(otp.get_rmesh(0.5, -1.0), testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(otp.get_rmesh(0.5, -1.0, otp.dr), testing::ExitedWithCode(0), "");
 
 	std::string output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output, testing::HasSubstr("rmesh <= 0"));
@@ -324,11 +324,11 @@ TEST_F(OrbTablePhiTest, PlotTable) {
 	init_sph_bessel();
 
 	std::string fname = "ORB_table_phi_test.txt";
-	int rmesh = otp.get_rmesh(lcao_.Phi[0].getRcut(), lcao_.Phi[1].getRcut());
+	int rmesh = otp.get_rmesh(lcao_.Phi[0].getRcut(), lcao_.Phi[1].getRcut(), otp.dr);
 
 	double* rs = new double[rmesh];
 	double* drs = new double[rmesh];
-	otp.cal_ST_Phi12_R(1, 0, lcao_.Phi[0].PhiLN(1,0), lcao_.Phi[1].PhiLN(2,1), rmesh, rs, drs);
+	otp.cal_ST_Phi12_R(1, 0, lcao_.Phi[0].PhiLN(1,0), lcao_.Phi[1].PhiLN(2,1), rmesh, rs, drs, otp.pSB);
 
 	otp.plot_table(fname, rmesh, rs);
 

@@ -104,9 +104,9 @@ void ORB_table_phi::allocate
 	return;
 }
 
-int ORB_table_phi::get_rmesh(const double &R1, const double &R2) const
+int ORB_table_phi::get_rmesh(const double &R1, const double &R2, const double dr)
 {
-	int rmesh = static_cast<int>((R1+R2)/ this->dr) + 5;
+	int rmesh = static_cast<int>((R1+R2)/ dr) + 5;
 	//mohan update 2009-09-08 +1 ==> +5
 	//considering interpolation or so on...
 	if (rmesh % 2 == 0) rmesh ++;
@@ -132,10 +132,15 @@ void ORB_table_phi::cal_ST_Phi12_R
     const Numerical_Orbital_Lm &n2,
     const int &rmesh,
     double* rs,
-	double* drs
-) const
+	double* drs,
+    const ModuleBase::Sph_Bessel_Recursive::D2* psb
+) 
 {
 	ModuleBase::timer::tick("ORB_table_phi", "cal_ST_Phi12_R");
+
+    const int kmesh = n1.getNk();
+    const double* kpoint = n1.getKpoint();
+    const double dk = n1.getDk();
 
 	std::vector<double> k1_dot_k2(kmesh);
 	// Peize Lin change 2017-12-12
@@ -176,7 +181,7 @@ void ORB_table_phi::cal_ST_Phi12_R
 	std::vector<double> k1_dot_k2_dot_kpoint(kmesh);
 	for (int ik = 0; ik < kmesh; ik++)
 	{
-		k1_dot_k2_dot_kpoint[ik] = k1_dot_k2[ik] * this->kpoint[ik];
+		k1_dot_k2_dot_kpoint[ik] = k1_dot_k2[ik] * kpoint[ik];
 	}
 
 	//Drs
@@ -192,9 +197,9 @@ void ORB_table_phi::cal_ST_Phi12_R
         ll = l - 1;
     }
 
-	const std::vector<std::vector<double>> &jlm1 = pSB->get_jlx()[ll];
-	const std::vector<std::vector<double>> &jl = pSB->get_jlx()[l];
-	const std::vector<std::vector<double>> &jlp1 = pSB->get_jlx()[l+1];
+	const std::vector<std::vector<double>> &jlm1 = psb->get_jlx()[ll];
+	const std::vector<std::vector<double>> &jl = psb->get_jlx()[l];
+	const std::vector<std::vector<double>> &jlp1 = psb->get_jlx()[l+1];
 
 #ifdef _OPENMP
 	#pragma omp parallel for schedule(static)
@@ -250,7 +255,7 @@ void ORB_table_phi::cal_ST_Phi12_R
 			integrated_func[ik] = k1_dot_k2[ik] * std::pow (kpoint[ik], l);
 		}
 
-		ModuleBase::Integral::Simpson_Integral(kmesh, integrated_func.data(), kab, temp);
+		ModuleBase::Integral::Simpson_Integral(kmesh, integrated_func.data(), dk, temp);
 		rs[0] = ModuleBase::FOUR_PI / ModuleBase::Mathzone_Add1::dualfac (2*l+1) * temp;
 	}
 
@@ -268,11 +273,16 @@ void ORB_table_phi::cal_ST_Phi12_R
     const Numerical_Orbital_Lm &n2,
 	const std::set<size_t> &radials,
     double* rs,
-	double* drs
-) const
+	double* drs,
+    const ModuleBase::Sph_Bessel_Recursive::D2* psb
+)
 {
 //	ModuleBase::TITLE("ORB_table_phi","cal_ST_Phi12_R");
 	ModuleBase::timer::tick("ORB_table_phi", "cal_ST_Phi12_R");
+
+    const int kmesh = n1.getNk();
+    const double* kpoint = n1.getKpoint();
+    const double dk = n1.getDk();
 
 	std::vector<double> k1_dot_k2(kmesh);
 	switch(job)
@@ -312,14 +322,14 @@ void ORB_table_phi::cal_ST_Phi12_R
 	std::vector<double> k1_dot_k2_dot_kpoint(kmesh);
 	for (int ik = 0; ik < kmesh; ik++)
 	{
-		k1_dot_k2_dot_kpoint[ik] = k1_dot_k2[ik] * this->kpoint[ik];
+		k1_dot_k2_dot_kpoint[ik] = k1_dot_k2[ik] * kpoint[ik];
 	}
 
 	std::vector<double> integrated_func(kmesh);
 
-	const std::vector<std::vector<double>> &jlm1 = pSB->get_jlx()[l-1];
-	const std::vector<std::vector<double>> &jl = pSB->get_jlx()[l];
-	const std::vector<std::vector<double>> &jlp1 = pSB->get_jlx()[l+1];
+	const std::vector<std::vector<double>> &jlm1 = psb->get_jlx()[l-1];
+	const std::vector<std::vector<double>> &jl = psb->get_jlx()[l];
+	const std::vector<std::vector<double>> &jlp1 = psb->get_jlx()[l+1];
 
 	for( const size_t &ir : radials )
 	{
@@ -455,7 +465,7 @@ void ORB_table_phi::init_Table(LCAO_Orbitals &orb)
 			assert(Rcut1>0.0 && Rcut1<100);
 			assert(Rcut2>0.0 && Rcut2<100);
 
-			const int rmesh = this->get_rmesh( Rcut1, Rcut2);
+			const int rmesh = this->get_rmesh( Rcut1, Rcut2, dr);
 			assert( rmesh < this->Rmesh );
 #ifdef __ORBITAL
 			ModuleBase::GlobalFunc::MAKE_DIR("Table_SR0");
@@ -505,19 +515,21 @@ void ORB_table_phi::init_Table(LCAO_Orbitals &orb)
 									continue;
 								}
 
-								this->cal_ST_Phi12_R(1,L,
+								cal_ST_Phi12_R(1,L,
 										orb.Phi[T1].PhiLN(L1,N1),
 										orb.Phi[T2].PhiLN(L2,N2),
 										rmesh,
 										Table_SR[0][Tpair][Opair][L],
-										Table_SR[1][Tpair][Opair][L]);
+										Table_SR[1][Tpair][Opair][L],
+                                        pSB);
 
-								this->cal_ST_Phi12_R(2,L,
+								cal_ST_Phi12_R(2,L,
 										orb.Phi[T1].PhiLN(L1,N1),
 										orb.Phi[T2].PhiLN(L2,N2),
 										rmesh,
 										Table_TR[0][Tpair][Opair][L],
-										Table_TR[1][Tpair][Opair][L]);
+										Table_TR[1][Tpair][Opair][L],
+                                        pSB);
 
 #ifdef __ORBITAL
 								int plot_length = 20;
@@ -740,7 +752,7 @@ void ORB_table_phi::init_Lmax (
 	int &Lmax,
 	const int &Lmax_exx,
 	const LCAO_Orbitals &orb,
-	const Numerical_Nonlocal* beta_) const
+	const Numerical_Nonlocal* beta_)
 {
 
 	auto cal_Lmax_Phi = [](int &Lmax,const LCAO_Orbitals &orb)
@@ -840,31 +852,39 @@ void ORB_table_phi::init_Table_Spherical_Bessel (
 	int &Lmax,
 	const int &Lmax_exx,
 	const LCAO_Orbitals &orb,
-	const Numerical_Nonlocal* beta_)
+	const Numerical_Nonlocal* beta_,
+    ModuleBase::Sph_Bessel_Recursive::D2*& psb)
 {
 	ModuleBase::TITLE("ORB_table_phi", "init_Table_Spherical_Bessel");
 
-	this->init_Lmax (orb_num,mode,Lmax_used,Lmax,Lmax_exx,orb, beta_);		// Peize Lin add 2016-01-26
+    const double dr = orb.get_dR();
+    const double dk = orb.get_dk();
+    const int kmesh = orb.get_kmesh();
+
+	int Rmesh = static_cast<int>( orb.get_Rmax()/dr ) + 4;
+    Rmesh += 1 - Rmesh % 2;
+
+	init_Lmax (orb_num,mode,Lmax_used,Lmax,Lmax_exx,orb, beta_);		// Peize Lin add 2016-01-26
 
 	for( auto & sb : ModuleBase::Sph_Bessel_Recursive_Pool::D2::sb_pool )
 	{
-		if( this->dr * this->dk == sb.get_dx() )
+		if( dr * dk == sb.get_dx() )
 		{
-			pSB = &sb;
+			psb = &sb;
 			break;
 		}
 	}
 
-	if(!pSB)
+	if(!psb)
 	{
 		ModuleBase::Sph_Bessel_Recursive_Pool::D2::sb_pool.push_back({});
-		pSB = &ModuleBase::Sph_Bessel_Recursive_Pool::D2::sb_pool.back();
+		psb = &ModuleBase::Sph_Bessel_Recursive_Pool::D2::sb_pool.back();
 	}
 
-	pSB->set_dx( this->dr * this->dk );
-	pSB->cal_jlx( Lmax_used, this->Rmesh, this->kmesh );
+	psb->set_dx( dr * dk );
+	psb->cal_jlx( Lmax_used, Rmesh, kmesh );
 
-	ModuleBase::Memory::record ("ORB::Jl(x)", sizeof(double) * (Lmax_used+1) * this->kmesh * this->Rmesh);
+	ModuleBase::Memory::record ("ORB::Jl(x)", sizeof(double) * (Lmax_used+1) * kmesh * Rmesh);
 }
 
 void ORB_table_phi::plot_table(
