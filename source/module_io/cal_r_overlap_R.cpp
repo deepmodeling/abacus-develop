@@ -106,8 +106,7 @@ void cal_r_overlap_R::construct_orbs_and_orb_r()
                         for (int NB = 0; NB < GlobalC::ORB.Phi[TB].getNchi(LB); ++NB)
                         {
                             center2_orb11[TA][TB][LA][NA][LB].insert(
-                                std::make_pair(NB,
-                                               Center2_Orb::Orb11(orbs[TA][LA][NA], orbs[TB][LB][NB], psb_, MGT)));
+                                std::make_pair(NB, Center2_Orb::Orb11(orbs[TA][LA][NA], orbs[TB][LB][NB], psb_, MGT)));
                         }
                     }
                 }
