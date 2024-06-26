@@ -48,9 +48,13 @@ void Gint::cal_gint(Gint_inout* inout)
     {
         ModuleBase::WARNING_QUIT("Gint_interface::cal_gint", "lgd less than 0!");
     }
-    if (GlobalV::device_flag == "gpu" && GlobalV::GAMMA_ONLY_LOCAL)
-    {
+
 #ifdef __CUDA
+    if (GlobalV::device_flag == "gpu" && GlobalV::GAMMA_ONLY_LOCAL
+        && (inout->job == Gint_Tools::job_type::vlocal || 
+            inout->job == Gint_Tools::job_type::rho    ||
+            inout->job == Gint_Tools::job_type::force))
+    {
         if (inout->job == Gint_Tools::job_type::vlocal)
         {
             gamma_gpu_vlocal_interface(inout);
@@ -63,9 +67,9 @@ void Gint::cal_gint(Gint_inout* inout)
         {
             gamma_gpu_force_interface(inout);
         }
-#endif
     }
     else
+#endif
     {
 #ifdef __MKL
         const int mkl_threads = mkl_get_max_threads();
