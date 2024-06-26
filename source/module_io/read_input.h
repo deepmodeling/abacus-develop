@@ -71,7 +71,9 @@ class ReadInput
   private:
     int rank = 0;
     // All input items
-    std::map<std::string, Input_Item> input_lists;
+    // std::map<std::string, Input_Item> input_lists;
+    // use vector instead of map to keep the order of input items
+    std::vector<std::pair<std::string, Input_Item>> input_lists;
     //----These functions are done only when INPUT file has them.------
     // read value if INPUT file has this item
     std::vector<Input_Item*> readvalue_items;

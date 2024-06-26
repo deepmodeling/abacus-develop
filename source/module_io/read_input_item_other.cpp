@@ -256,7 +256,7 @@ void ReadInput::item_others()
                 {
                     ModuleBase::WARNING_QUIT("ReadInput", "vdw_cutoff_period <= 0 is not allowd");
                 }
-                if (std::stod(para.input.vdw_cutoff_radius) <= 0)
+                if (convertstr<double>(para.input.vdw_cutoff_radius) <= 0)
                 {
                     ModuleBase::WARNING_QUIT("ReadInput", "vdw_cutoff_radius <= 0 is not allowd");
                 }
@@ -313,25 +313,25 @@ void ReadInput::item_others()
         this->add_item(item);
     }
     {
-        Input_Item item("vdw_C6_file");
+        Input_Item item("vdw_c6_file");
         item.annotation = "filename of C6";
         read_sync_string(vdw_C6_file);
         this->add_item(item);
     }
     {
-        Input_Item item("vdw_C6_unit");
+        Input_Item item("vdw_c6_unit");
         item.annotation = "unit of C6, Jnm6/mol or eVA6";
         read_sync_string(vdw_C6_unit);
         this->add_item(item);
     }
     {
-        Input_Item item("vdw_R0_file");
+        Input_Item item("vdw_r0_file");
         item.annotation = "filename of R0";
         read_sync_string(vdw_R0_file);
         this->add_item(item);
     }
     {
-        Input_Item item("vdw_R0_unit");
+        Input_Item item("vdw_r0_unit");
         item.annotation = "unit of R0, A or Bohr";
         read_sync_string(vdw_R0_unit);
         this->add_item(item);
@@ -370,12 +370,12 @@ void ReadInput::item_others()
         Input_Item item("vdw_cutoff_period");
         item.annotation = "periods of periodic structure";
         item.readvalue = [](const Input_Item& item, Parameter& para) {
-            int count = item.str_values.size();
+            size_t count = item.get_size();
             if (count == 3)
             {
-                para.input.vdw_cutoff_period[0] = std::stoi(item.str_values[0]);
-                para.input.vdw_cutoff_period[1] = std::stoi(item.str_values[1]);
-                para.input.vdw_cutoff_period[2] = std::stoi(item.str_values[2]);
+                para.input.vdw_cutoff_period[0] = convertstr<int>(item.str_values[0]);
+                para.input.vdw_cutoff_period[1] = convertstr<int>(item.str_values[1]);
+                para.input.vdw_cutoff_period[2] = convertstr<int>(item.str_values[2]);
             }
             else
             {
@@ -414,7 +414,7 @@ void ReadInput::item_others()
             }
         };
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
-            const double exx_hybrid_alpha_value = std::stod(para.input.exx_hybrid_alpha);
+            const double exx_hybrid_alpha_value = convertstr<double>(para.input.exx_hybrid_alpha);
             if (exx_hybrid_alpha_value < 0 || exx_hybrid_alpha_value > 1)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "must 0 <= exx_hybrid_alpha <= 1");
@@ -549,7 +549,7 @@ void ReadInput::item_others()
             }
         };
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
-            if (std::stod(para.input.exx_ccp_rmesh_times) < 1)
+            if (convertstr<double>(para.input.exx_ccp_rmesh_times) < 1)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "exx_ccp_rmesh_times must >= 1");
             }
@@ -637,11 +637,11 @@ void ReadInput::item_others()
         Input_Item item("td_vext_dire");
         item.annotation = "extern potential direction";
         item.readvalue = [](const Input_Item& item, Parameter& para) {
-            int count = item.str_values.size();
+            size_t count = item.get_size();
             para.input.sup.td_nvext_dire = count;
             for (auto& str: item.str_values)
             {
-                para.input.td_vext_dire.push_back(std::stoi(str));
+                para.input.td_vext_dire.push_back(convertstr<int>(str));
             }
         };
         add_int_bcast(sup.td_nvext_dire);
@@ -1137,20 +1137,23 @@ void ReadInput::item_others()
     // 20. dft+u
     {
         Input_Item item("dft_plus_u");
-        item.annotation = "new/old DFT+U correction method; 0: standard DFT calcullation(default)";
+        item.annotation = "DFT+U correction method";
         read_sync_int(dft_plus_u);
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
             const Input_para& input = para.input;
-            if (input.basis_type != "lcao")
+            if (input.dft_plus_u != 0)
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "WRONG ARGUMENTS OF basis_type, only lcao is support");
-            }
-            if (input.ks_solver != "genelpa" && input.ks_solver != "scalapack_gvx" && input.ks_solver != "default")
-            {
-                std::cout << " You'are using " << input.ks_solver << std::endl;
-                ModuleBase::WARNING_QUIT(
-                    "ReadInput",
-                    "WRONG ARGUMENTS OF ks_solver in DFT+U routine, only genelpa and scalapack_gvx are supported ");
+                if (input.basis_type != "lcao")
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput", "WRONG ARGUMENTS OF basis_type, only lcao is support");
+                }
+                if (input.ks_solver != "genelpa" && input.ks_solver != "scalapack_gvx" && input.ks_solver != "default")
+                {
+                    std::cout << " You'are using " << input.ks_solver << std::endl;
+                    ModuleBase::WARNING_QUIT(
+                        "ReadInput",
+                        "WRONG ARGUMENTS OF ks_solver in DFT+U routine, only genelpa and scalapack_gvx are supported ");
+                }
             }
         };
         item.resetvalue = [](const Input_Item& item, Parameter& para) {
@@ -1177,9 +1180,12 @@ void ReadInput::item_others()
     {
         Input_Item item("uramping");
         item.annotation = "increasing U values during SCF";
-        item.readvalue
-            = [](const Input_Item& item, Parameter& para) { para.input.uramping = doublevalue / ModuleBase::Ry_to_eV; };
-        sync_double(uramping);
+        item.readvalue = [](const Input_Item& item, Parameter& para) {
+            para.input.uramping_eV = doublevalue;
+            para.input.sup.uramping = para.input.uramping_eV / ModuleBase::Ry_to_eV;
+        };
+        sync_double(uramping_eV);
+        add_double_bcast(sup.uramping);
         this->add_item(item);
     }
     {
@@ -1198,18 +1204,19 @@ void ReadInput::item_others()
         Input_Item item("hubbard_u");
         item.annotation = "Hubbard Coulomb interaction parameter U(ev)";
         item.readvalue = [](const Input_Item& item, Parameter& para) {
-            int count = item.str_values.size();
+            size_t count = item.get_size();
             for (int i = 0; i < count; i++)
             {
-                para.input.hubbard_u.push_back(std::stod(item.str_values[i]) / ModuleBase::Ry_to_eV);
+                para.input.hubbard_u_eV.push_back(convertstr<double>(item.str_values[i]));
+                para.input.sup.hubbard_u.push_back(para.input.hubbard_u_eV[i] / ModuleBase::Ry_to_eV);
             }
         };
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.hubbard_u.size() != para.input.ntype)
+            if (para.input.sup.hubbard_u.size() != para.input.ntype)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "hubbard_u should have the same number of elements as ntype");
             }
-            for (auto& value: para.input.hubbard_u)
+            for (auto& value: para.input.sup.hubbard_u)
             {
                 if (value < -1.0e-3)
                 {
@@ -1218,17 +1225,18 @@ void ReadInput::item_others()
             }
         };
         // We must firt bcast ntype (in item_general), then bcast hubbard_u
-        sync_doublevec(hubbard_u, para.input.ntype);
+        sync_doublevec(hubbard_u_eV, para.input.ntype);
+        add_doublevec_bcast(sup.hubbard_u, para.input.ntype);
         this->add_item(item);
     }
     {
         Input_Item item("orbital_corr");
         item.annotation = "which correlated orbitals need corrected ; d:2 ,f:3, do not need correction:-1";
         item.readvalue = [](const Input_Item& item, Parameter& para) {
-            int count = item.str_values.size();
+            size_t count = item.get_size();
             for (int i = 0; i < count; i++)
             {
-                para.input.orbital_corr.push_back(std::stoi(item.str_values[i]));
+                para.input.orbital_corr.push_back(convertstr<int>(item.str_values[i]));
             }
         };
         item.resetvalue = [](const Input_Item& item, Parameter& para) {
@@ -1249,9 +1257,9 @@ void ReadInput::item_others()
                     para.input.dft_plus_u = 0;
                     std::cout << "No atoms are correlated, DFT+U is closed!!!" << std::endl;
                 }
-                if (input.uramping != 0.0)
+                if (input.sup.uramping != 0.0)
                 {
-                    para.input.uramping = 0.0;
+                    para.input.sup.uramping = 0.0;
                     std::cout << "No atoms are correlated, DFT+DMFT is closed!!!" << std::endl;
                 }
             }
@@ -1286,7 +1294,7 @@ void ReadInput::item_others()
             }
         });
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
-            if (std::stod(para.input.bessel_nao_ecut) < 0)
+            if (convertstr<double>(para.input.bessel_nao_ecut) < 0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "bessel_nao_ecut must >= 0");
             }
@@ -1303,12 +1311,13 @@ void ReadInput::item_others()
         Input_Item item("bessel_nao_rcut");
         item.annotation = "radial cutoff for spherical bessel functions(a.u.)";
         item.readvalue = [](const Input_Item& item, Parameter& para) {
-            int count = item.str_values.size();
+            size_t count = item.get_size();
             for (int i = 0; i < count; i++)
             {
-                para.input.bessel_nao_rcuts.push_back(std::stod(item.str_values[i]));
+                para.input.bessel_nao_rcuts.push_back(convertstr<double>(item.str_values[i]));
             }
-            para.input.sup.bessel_nao_rcut = para.input.bessel_nao_rcuts[0]; // also compatible with old input file
+            if (count > 0)
+                para.input.sup.bessel_nao_rcut = para.input.bessel_nao_rcuts[0]; // also compatible with old input file
             para.input.sup.nrcut = count;
         };
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
@@ -1352,7 +1361,7 @@ void ReadInput::item_others()
             }
         });
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
-            if (std::stod(para.input.bessel_descriptor_ecut) < 0)
+            if (convertstr<double>(para.input.bessel_descriptor_ecut) < 0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "bessel_descriptor_ecut must >= 0");
             }
@@ -1550,7 +1559,7 @@ void ReadInput::item_others()
         Input_Item item("qo_strategy");
         item.annotation = "strategy to generate generate radial orbitals";
         item.readvalue = [](const Input_Item& item, Parameter& para) {
-            int count = item.str_values.size();
+            size_t count = item.get_size();
             for (int i = 0; i < count; i++)
             {
                 para.input.qo_strategy.push_back(item.str_values[i]);
@@ -1583,16 +1592,15 @@ void ReadInput::item_others()
         // We must firt bcast ntype (in item_general), then bcast qo_strategy
         sync_stringvec(qo_strategy, para.input.ntype);
         this->add_item(item);
-    };
-
+    }
     {
         Input_Item item("qo_screening_coeff");
         item.annotation = "rescale the shape of radial orbitals";
         item.readvalue = [](const Input_Item& item, Parameter& para) {
-            int count = item.str_values.size();
+            size_t count = item.get_size();
             for (int i = 0; i < count; i++)
             {
-                para.input.qo_screening_coeff.push_back(std::stod(item.str_values[i]));
+                para.input.qo_screening_coeff.push_back(convertstr<double>(item.str_values[i]));
             }
         };
         item.resetvalue = [](const Input_Item& item, Parameter& para) {

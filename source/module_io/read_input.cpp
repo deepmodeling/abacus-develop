@@ -25,10 +25,6 @@ void strtolower(char* sa, char* sb)
 
 void read_information(std::ifstream& ifs, std::vector<std::string>& output, const std::string& delimiters)
 {
-    std::string value1;
-    ifs >> value1;
-    output.push_back(value1);
-
     std::string line;
     getline(ifs, line);
 
@@ -39,6 +35,10 @@ void read_information(std::ifstream& ifs, std::vector<std::string>& output, cons
         if (delimiters.find(word[0]) != std::string::npos)
             break;
         output.push_back(word);
+    }
+    if (output.size() == 0)
+    {
+        output.push_back("");
     }
 }
 
@@ -135,8 +135,9 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
         if (ifs.eof())
             break;
         strtolower(word1, word);
-
-        auto it = this->input_lists.find(word);
+        auto it = std::find_if(input_lists.begin(),
+                               input_lists.end(),
+                               [&word](const std::pair<std::string, Input_Item>& item) { return item.first == word; });
         if (it != this->input_lists.end())
         {
             Input_Item* p_item = &(it->second);
@@ -355,6 +356,10 @@ void ReadInput::check_ntype(const std::string& fn, int& param_ntype)
         ModuleBase::WARNING_QUIT("ReadInput",
                                  "The ntype in INPUT is not equal to the ntype counted in STRU, check it.");
     }
+    if (param_ntype <= 0)
+    {
+        ModuleBase::WARNING_QUIT("ReadInput", "ntype should be greater than 0.");
+    }
 }
 
 void ReadInput::add_item(const Input_Item& item)
@@ -363,7 +368,7 @@ void ReadInput::add_item(const Input_Item& item)
     // So only rank 0 add the item to the input list
     if (this->rank == 0)
     {
-        this->input_lists.insert(make_pair(item.label, item));
+        this->input_lists.push_back(make_pair(item.label, item));
     }
 }
 bool find_str(const std::vector<std::string>& strings, const std::string& strToFind)

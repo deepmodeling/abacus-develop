@@ -23,9 +23,9 @@ namespace ModuleIO
 //      item.annotation = "unit in 1/bohr, should be > 0, default is 0 which means read KPT file";
 //
 //      item.readvalue = [](const Input_Item& item, Parameter& para) {
-//          para.input.kspacing[0] = std::stod(item.str_values[0]);
-//          para.input.kspacing[1] = std::stod(item.str_values[1]);
-//          para.input.kspacing[2] = std::stod(item.str_values[2]);
+//          para.input.kspacing[0] = convertstr<double>(item.str_values[0]);
+//          para.input.kspacing[1] = convertstr<double>(item.str_values[1]);
+//          para.input.kspacing[2] = convertstr<double>(item.str_values[2]);
 //      };
 //
 //      item.resetvalue = [](const Input_Item& item, Parameter& para) {
@@ -338,12 +338,7 @@ void ReadInput::item_general()
     {
         Input_Item item("ntype");
         item.annotation = "atom species number";
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.ntype <= 0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "ntype should be greater than 0.");
-            }
-        };
+        //check of ntype is done in check_ntype
         read_sync_int(ntype);
         this->add_item(item);
     }
@@ -363,16 +358,16 @@ void ReadInput::item_general()
         Input_Item item("kspacing");
         item.annotation = "unit in 1/bohr, should be > 0, default is 0 which means read KPT file";
         item.readvalue = [](const Input_Item& item, Parameter& para) {
-            int count = item.str_values.size();
+            size_t count = item.get_size();
             if (count == 1)
             {
                 para.input.kspacing[0] = para.input.kspacing[1] = para.input.kspacing[2] = doublevalue;
             }
             else if (count == 3)
             {
-                para.input.kspacing[0] = std::stod(item.str_values[0]);
-                para.input.kspacing[1] = std::stod(item.str_values[1]);
-                para.input.kspacing[2] = std::stod(item.str_values[2]);
+                para.input.kspacing[0] = convertstr<double>(item.str_values[0]);
+                para.input.kspacing[1] = convertstr<double>(item.str_values[1]);
+                para.input.kspacing[2] = convertstr<double>(item.str_values[2]);
             }
             else
             {
@@ -535,7 +530,7 @@ void ReadInput::item_general()
         item.annotation = "devide all processors into kpar groups and k points will be distributed among";
         read_sync_int(kpar);
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.basis_type == "lcao")
+            if (para.input.basis_type == "lcao" && para.input.kpar > 1)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "kpar > 1 has not been supported for lcao calculation.");
             }
@@ -566,9 +561,9 @@ void ReadInput::item_general()
         item.annotation = "true:DFT+DMFT; false: standard DFT calcullation(default)";
         read_sync_bool(dft_plus_dmft);
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.basis_type != "lcao")
+            if (para.input.basis_type != "lcao" && para.input.dft_plus_dmft)
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "WRONG ARGUMENTS OF basis_type, only lcao is support");
+                ModuleBase::WARNING_QUIT("ReadInput", "DFT+DMFT is only supported for lcao calculation.");
             }
         };
         this->add_item(item);

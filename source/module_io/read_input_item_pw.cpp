@@ -22,7 +22,7 @@ void ReadInput::item_pw()
         Input_Item item("ecutrho");
         item.annotation = "energy cutoff for charge density and potential";
         read_sync_double(ecutrho);
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        autosetfuncs.push_back([](Parameter& para) {
             Input_para& input = para.input;
             if (input.ecutrho <= 0.0)
             {
@@ -32,9 +32,9 @@ void ReadInput::item_pw()
             {
                 input.sup.double_grid = true;
             }
-        };
+        });
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.ecutwfc / para.input.ecutwfc < 4 - 1e-8)
+            if (para.input.ecutrho / para.input.ecutwfc < 4 - 1e-8)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "ecutrho/ecutwfc must >= 4");
             }
@@ -239,16 +239,16 @@ void ReadInput::item_pw()
         Input_Item item("out_band");
         item.annotation = "output energy and band structure (with precision 8)";
         item.readvalue = [](const Input_Item& item, Parameter& para) {
-            int count = item.str_values.size();
+            size_t count = item.get_size();
             if (count == 1)
             {
-                para.input.out_band[0] = std::stoi(item.str_values[0]);
+                para.input.out_band[0] = convertstr<int>(item.str_values[0]);
                 para.input.out_band[1] = 8;
             }
             else if (count == 2)
             {
-                para.input.out_band[0] = std::stoi(item.str_values[0]);
-                para.input.out_band[1] = std::stoi(item.str_values[1]);
+                para.input.out_band[0] = convertstr<int>(item.str_values[0]);
+                para.input.out_band[1] = convertstr<int>(item.str_values[1]);
             }
             else
             {
@@ -263,7 +263,7 @@ void ReadInput::item_pw()
         item.annotation = "output projected band structure";
         read_sync_bool(out_proj_band);
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.basis_type == "pw")
+            if (para.input.basis_type == "pw" && para.input.out_proj_band)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "out_proj_band is only for lcao");
             }
@@ -306,7 +306,7 @@ void ReadInput::item_pw()
             para.input.sup.ncx = intvalue;
         };
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.nx * para.input.ny * para.input.nz == 0)
+            if (para.input.nx * para.input.ny * para.input.nz == 0 && para.input.nx != 0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "nx, ny, nz should be all set to non-zero");
             }
@@ -323,7 +323,7 @@ void ReadInput::item_pw()
             para.input.sup.ncy = intvalue;
         };
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.nx * para.input.ny * para.input.nz == 0)
+            if (para.input.nx * para.input.ny * para.input.nz == 0 && para.input.ny != 0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "nx, ny, nz should be all set to non-zero");
             }
@@ -340,7 +340,7 @@ void ReadInput::item_pw()
             para.input.sup.ncz = intvalue;
         };
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.nx * para.input.ny * para.input.nz == 0)
+            if (para.input.nx * para.input.ny * para.input.nz == 0 && para.input.nz != 0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "nx, ny, nz should be all set to non-zero");
             }
@@ -360,7 +360,7 @@ void ReadInput::item_pw()
             }
         };
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.ndx * para.input.ndy * para.input.ndz == 0)
+            if (para.input.ndx * para.input.ndy * para.input.ndz == 0 && para.input.ndx != 0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "ndx, ndy, ndz should be all set to non-zero");
             }
@@ -383,7 +383,7 @@ void ReadInput::item_pw()
             }
         };
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.ndx * para.input.ndy * para.input.ndz == 0)
+            if (para.input.ndx * para.input.ndy * para.input.ndz == 0 && para.input.ndy != 0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "ndx, ndy, ndz should be all set to non-zero");
             }
@@ -405,7 +405,7 @@ void ReadInput::item_pw()
             }
         };
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.ndx * para.input.ndy * para.input.ndz == 0)
+            if (para.input.ndx * para.input.ndy * para.input.ndz == 0 && para.input.ndz != 0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "ndx, ndy, ndz should be all set to non-zero");
             }

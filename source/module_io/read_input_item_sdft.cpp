@@ -1,6 +1,6 @@
+#include "module_base/tool_quit.h"
 #include "read_input.h"
 #include "read_input_tool.h"
-#include "module_base/tool_quit.h"
 
 namespace ModuleIO
 {
@@ -31,7 +31,7 @@ void ReadInput::item_sdft()
             std::string nbandsto_str = strvalue;
             if (nbandsto_str != "all")
             {
-                para.input.nbands_sto = std::stoi(nbandsto_str);
+                para.input.nbands_sto = convertstr<int>(nbandsto_str);
             }
             else
             {
@@ -39,7 +39,7 @@ void ReadInput::item_sdft()
             }
         };
         item.resetvalue = [](const Input_Item& item, Parameter& para) {
-            if(strvalue == "0" && para.input.esolver_type == "sdft")
+            if (strvalue == "0" && para.input.esolver_type == "sdft")
             {
                 para.input.esolver_type = "ksdft";
             }
@@ -50,7 +50,16 @@ void ReadInput::item_sdft()
                 ModuleBase::WARNING_QUIT("ReadInput", "nbands_sto should be in the range of 0 to 100000");
             }
         };
-        item.getfinalvalue = [](Input_Item& item, const Parameter& para) { item.final_value << strvalue; };
+        item.getfinalvalue = [](Input_Item& item, const Parameter& para) {
+            if (item.str_values.size() == 0)
+            {
+                item.final_value << para.input.nbands_sto;
+            }
+            else
+            {
+                item.final_value << item.str_values[0];
+            }
+        };
         add_int_bcast(nbands_sto);
         this->add_item(item);
     }

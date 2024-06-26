@@ -147,16 +147,34 @@ void ReadInput::item_relax()
     {
         Input_Item item("force_thr");
         item.annotation = "force threshold, unit: Ry/Bohr";
-        read_sync_double(force_thr);
+        // read_sync_double(force_thr);
+        item.readvalue = [](const Input_Item& item, Parameter& para) {
+            para.input.force_thr = doublevalue;
+        };
+        autosetfuncs.push_back([](Parameter& para) {
+            if (para.input.force_thr == -1 && para.input.force_thr_ev == -1)
+            {
+                para.input.force_thr = 1.0e-3; // default value
+                para.input.force_thr_ev = para.input.force_thr * 13.6058 / 0.529177;
+            }
+            else if (para.input.force_thr == -1 && para.input.force_thr_ev != -1)
+            {
+                para.input.force_thr = para.input.force_thr_ev / 13.6058 * 0.529177;
+            }
+            else
+            {
+                // if both force_thr and force_thr_ev are set, use force_thr
+                std::cout<<"both force_thr and force_thr_ev are set, use force_thr"<<std::endl;
+                para.input.force_thr_ev = para.input.force_thr * 13.6058 / 0.529177;
+            }
+        });
+        sync_double(force_thr);
         this->add_item(item);
     }
     {
         Input_Item item("force_thr_ev");
         item.annotation = "force threshold, unit: eV/Angstrom";
         item.readvalue = [](const Input_Item& item, Parameter& para) { para.input.force_thr_ev = doublevalue; };
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
-            para.input.force_thr = para.input.force_thr_ev / 13.6058 * 0.529177;
-        };
         sync_double(force_thr_ev);
         this->add_item(item);
     }
@@ -284,7 +302,7 @@ void ReadInput::item_relax()
         item.annotation = ">0 output density matrix";
         read_sync_bool(out_dm);
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.sup.gamma_only_local == false)
+            if (para.input.sup.gamma_only_local == false && para.input.out_dm)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "out_dm with k-point algorithm is not implemented yet.");
             }
@@ -296,7 +314,7 @@ void ReadInput::item_relax()
         item.annotation = ">0 output density matrix (multi-k points)";
         read_sync_bool(out_dm1);
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.sup.gamma_only_local == true)
+            if (para.input.sup.gamma_only_local == true && para.input.out_dm1)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "out_dm1 is only for multi-k");
             }

@@ -16,14 +16,15 @@ struct Input_supplement
     int nrcut = 0;                ///< number of bessel_nao_rcuts, assuming 0 as no values provided
     double bessel_nao_rcut = 6.0; ///< radial cutoff for spherical bessel functions(a.u.)
 
-    bool dos_setemin = true;       ///< true: "dos_emin_ev" is set
-    bool dos_setemax = true;       ///< true: "dos_emax_ev" is set
-    int ncx = 0, ncy = 0, ncz = 0; ///< three dimension of FFT charge/grid, same as "nx,ny,nz"
-    bool out_md_control = false;   ///< true if "out_level" is set
-    bool rpa_setorb = false;       ///< true if "rpa" is set
-    bool gamma_only_local = false; ///< true if "gamma_only" is true and "lcao" is true; for local orbitals.
-    bool double_grid
-        = false; ///< true if "ndx" is larger than "nx" or "ndy" is larger than "ny" or "ndz" is larger than "nz"
+    bool dos_setemin = true;            ///< true: "dos_emin_ev" is set
+    bool dos_setemax = true;            ///< true: "dos_emax_ev" is set
+    int ncx = 0, ncy = 0, ncz = 0;      ///< three dimension of FFT charge/grid, same as "nx,ny,nz"
+    bool out_md_control = false;        ///< true if "out_level" is set
+    bool rpa_setorb = false;            ///< true if "rpa" is set
+    bool gamma_only_local = false;      ///< true if "gamma_only" is true and "lcao" is true; for local orbitals.
+    bool double_grid = false;           ///< true if "ndx,ndy,ndz" is larger than "nx,ny,nz"
+    double uramping = -10.0 / 13.6;     /// U-Ramping method (Ry)
+    std::vector<double> hubbard_u = {}; ///< Hubbard Coulomb interaction parameter U (Ry)
 };
 
 // It stores all input parameters both defined in INPUT file and not defined in INPUT file
@@ -93,7 +94,7 @@ struct Input_para
     // ==============   #Parameters (2.PW) ===========================
 
     double ecutwfc = 50;    ///< energy cutoff for wavefunctions
-    double ecutrho = 0;    ///< energy cutoff for charge/potential
+    double ecutrho = 0;     ///< energy cutoff for charge/potential
     double erf_ecut = 0;    ///< the value of the constant energy cutoff
     double erf_height = 0;  ///< the height of the energy step for reciprocal vectors
     double erf_sigma = 0.1; ///< the width of the energy step for reciprocal vectors
@@ -150,8 +151,8 @@ struct Input_para
     int scf_nmax = 100;                ///< number of max elec iter
     int relax_nmax = 1;                ///< number of max ionic iter
     bool out_stru = false;             ///< outut stru file each ion step
-    double force_thr = 1.0e-3;         ///< threshold of force in unit (Ry/Bohr)
-    double force_thr_ev = 0.0257112;   ///< threshold of force in unit (eV/Angstrom)
+    double force_thr = -1;             ///< threshold of force in unit (Ry/Bohr)
+    double force_thr_ev = -1;          ///< threshold of force in unit (eV/Angstrom)
     double force_thr_ev2 = 0;          ///< invalid force threshold, mohan add 2011-04-17
     double relax_cg_thr = 0.5;         ///< threshold when cg to bfgs, pengfei add 2011-08-15
     double stress_thr = 0.5;           ///< Pengfei Li 2017-11-01 ///<LiuXh update 20180515
@@ -465,12 +466,12 @@ struct Input_para
     int dft_plus_u = 0;                    ///< 0: standard DFT calculation (default)
     bool yukawa_potential = false;         ///< default: false
     double yukawa_lambda = -1.0;           ///< default: -1.0, which means we calculate lambda
-    double uramping = -1.0;                ///< default: -1.0, which means we do not use U-Ramping method
+    double uramping_eV = -1.0;             ///< U-Ramping method (eV)
     int omc = 0;                           ///< the mode of occupation matrix control
     double onsite_radius = 0.0;            ///< radius of the sphere for onsite projection (Bohr)
-    std::vector<double> hubbard_u = {0.0}; ///< Hubbard Coulomb interaction parameter U(ev)
+    std::vector<double> hubbard_u_eV = {}; ///< Hubbard Coulomb interaction parameter U(ev)
     std::vector<int> orbital_corr
-        = {-1}; ///< which correlated orbitals need corrected ; d:2 ,f:3, do not need correction:-1
+        = {}; ///< which correlated orbitals need corrected ; d:2 ,f:3, do not need correction:-1
 
     // ==============   #Parameters (21.spherical bessel) =========
     // ==========================================================

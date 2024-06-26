@@ -1,3 +1,5 @@
+#ifndef INPUT_ITEM_H
+#define INPUT_ITEM_H
 #include "module_parameter/parameter.h"
 
 #include <functional>
@@ -33,6 +35,17 @@ class Input_Item
     std::vector<std::string> str_values; ///< string values of the input item
     std::stringstream final_value;       ///< final value for writing to output INPUT file
 
+    size_t get_size() const ///< get size of the input item
+    {
+        if(str_values.empty())
+            return 0;
+        else if(str_values.size() == 1 && str_values[0].empty())
+            return 0;
+        else
+            return str_values.size();
+        return str_values.size();
+    }
+
     std::string annotation; ///< annotation of the input item
 
     
@@ -50,3 +63,4 @@ class Input_Item
 };
 
 } // namespace ModuleIO
+#endif // INPUT_ITEM_H

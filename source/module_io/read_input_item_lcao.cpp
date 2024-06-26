@@ -131,16 +131,16 @@ void ReadInput::item_lcao()
         Input_Item item("out_mat_hs");
         item.annotation = "output H and S matrix (with precision 8)";
         item.readvalue = [](const Input_Item& item, Parameter& para) {
-            int count = item.str_values.size();
+            size_t count = item.get_size();
             if (count == 1)
             {
-                para.input.out_mat_hs[0] = std::stoi(item.str_values[0]);
+                para.input.out_mat_hs[0] = convertstr<int>(item.str_values[0]);
                 para.input.out_mat_hs[1] = 8;
             }
             else if (count == 2)
             {
-                para.input.out_mat_hs[0] = std::stoi(item.str_values[0]);
-                para.input.out_mat_hs[1] = std::stoi(item.str_values[1]);
+                para.input.out_mat_hs[0] = convertstr<int>(item.str_values[0]);
+                para.input.out_mat_hs[1] = convertstr<int>(item.str_values[1]);
             }
             else
             {
@@ -265,7 +265,7 @@ void ReadInput::item_lcao()
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "out_wfc_lcao should be 0, 1, or 2");
             }
-            if (para.input.basis_type != "lcao")
+            if (para.input.basis_type != "lcao" && para.input.out_wfc_lcao != 0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "out_wfc_lcao is only available for basis_type = lcao");
             }
