@@ -36,7 +36,6 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout)
 
 #ifdef _OPENMP
 #pragma omp for
-#endif
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++)
     {
         const int na_grid = this->gridt->how_many_atoms[grid_index];
@@ -53,17 +52,53 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout)
                                               this->gridt->start_ind[grid_index],
                                               ncyz,
                                               dv);
-#ifdef _OPENMP
-        if ((GlobalV::GAMMA_ONLY_LOCAL && lgd > 0) || !GlobalV::GAMMA_ONLY_LOCAL)
-        {
-            this->gint_kernel_vlocal(na_grid, grid_index, delta_r, vldr3, LD_pool, pvpR_thread, ucell, hRGint_thread);
-        }
+
+        this->gint_kernel_vlocal(na_grid, grid_index, delta_r, vldr3, LD_pool, pvpR_thread, ucell, hRGint_thread);
+        
+        delete[] vldr3;
+    }
+#pragma omp critical(gint_gamma)
+    if (GlobalV::GAMMA_ONLY_LOCAL)
+    {
+        BlasConnector::axpy(this->hRGint->get_nnr(),
+                    1.0,
+                    hRGint_thread->get_wrapper(),
+                    1,
+                    this->hRGint->get_wrapper(),
+                    1);
+        delete hRGint_thread;
+    }
+    else
+    {
+#pragma omp critical(gint_k)
+    {
+        BlasConnector::axpy(nnrg, 1.0, pvpR_thread, 1, pvpR_reduced[inout->ispin], 1);
+    }
+    delete[] pvpR_thread;
+    }
 #else
-        if (GlobalV::GAMMA_ONLY_LOCAL && lgd > 0)
+ for (int grid_index = 0; grid_index < this->nbxx; grid_index++)
+    {
+        const int na_grid = this->gridt->how_many_atoms[grid_index];
+        if (na_grid == 0)
+        {
+            continue;
+        }
+        double* vldr3 = Gint_Tools::get_vldr3(inout->vl,
+                                              this->bxyz,
+                                              this->bx,
+                                              this->by,
+                                              this->bz,
+                                              this->nplane,
+                                              this->gridt->start_ind[grid_index],
+                                              ncyz,
+                                              dv);
+
+        if (GlobalV::GAMMA_ONLY_LOCAL)
         {
             this->gint_kernel_vlocal(na_grid, grid_index, delta_r, vldr3, LD_pool, ucell, nullptr);
         }
-        if (!GlobalV::GAMMA_ONLY_LOCAL)
+        else
         {
             this->gint_kernel_vlocal(na_grid,
                                      grid_index,
@@ -73,34 +108,17 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout)
                                      ucell,
                                      this->pvpR_reduced[inout->ispin]);
         }
-#endif
         delete[] vldr3;
     }
-    if (GlobalV::GAMMA_ONLY_LOCAL && lgd > 0)
+    if (GlobalV::GAMMA_ONLY_LOCAL)
     {
-#ifdef _OPENMP
-#pragma omp critical(gint_gamma)
-#endif
-        {
-            BlasConnector::axpy(this->hRGint->get_nnr(),
-                                1.0,
-                                hRGint_thread->get_wrapper(),
-                                1,
-                                this->hRGint->get_wrapper(),
-                                1);
-        }
         delete hRGint_thread;
     }
-    if (!GlobalV::GAMMA_ONLY_LOCAL)
+    else
     {
-#ifdef _OPENMP
-#pragma omp critical(gint_k)
-#endif
-        {
-            BlasConnector::axpy(nnrg, 1.0, pvpR_thread, 1, pvpR_reduced[inout->ispin], 1);
-        }
         delete[] pvpR_thread;
     }
+#endif
     ModuleBase::TITLE("Gint_interface", "cal_gint_vlocal");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal");
 }
@@ -121,7 +139,7 @@ void Gint::cpu_dvlocal_interface(Gint_inout* inout)
     const int ncyz = this->ny * this->nplane;
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
-
+#ifdef _OPENMP
     double* pvdpRx_thread = nullptr;
     double* pvdpRy_thread = nullptr;
     double* pvdpRz_thread = nullptr;
@@ -138,9 +156,7 @@ void Gint::cpu_dvlocal_interface(Gint_inout* inout)
     ModuleBase::GlobalFunc::ZEROS(this->pvdpRx_reduced[inout->ispin], nnrg);
     ModuleBase::GlobalFunc::ZEROS(this->pvdpRy_reduced[inout->ispin], nnrg);
     ModuleBase::GlobalFunc::ZEROS(this->pvdpRz_reduced[inout->ispin], nnrg);
-#ifdef _OPENMP
 #pragma omp for
-#endif
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++)
     {
         const int na_grid = this->gridt->how_many_atoms[grid_index];
@@ -157,7 +173,6 @@ void Gint::cpu_dvlocal_interface(Gint_inout* inout)
                                               this->gridt->start_ind[grid_index],
                                               ncyz,
                                               dv);
-#ifdef _OPENMP
         this->gint_kernel_dvlocal(na_grid,
                                   grid_index,
                                   delta_r,
@@ -167,7 +182,28 @@ void Gint::cpu_dvlocal_interface(Gint_inout* inout)
                                   pvdpRy_thread,
                                   pvdpRz_thread,
                                   ucell);
+        delete[] vldr3;
+    }
+    delete[] pvdpRx_thread;
+    delete[] pvdpRy_thread;
+    delete[] pvdpRz_thread;
 #else
+    for (int grid_index = 0; grid_index < this->nbxx; grid_index++)
+    {
+        const int na_grid = this->gridt->how_many_atoms[grid_index];
+        if (na_grid == 0)
+        {
+            continue;
+        }
+        double* vldr3 = Gint_Tools::get_vldr3(inout->vl,
+                                        this->bxyz,
+                                        this->bx,
+                                        this->by,
+                                        this->bz,
+                                        this->nplane,
+                                        this->gridt->start_ind[grid_index],
+                                        ncyz,
+                                        dv);
         this->gint_kernel_dvlocal(na_grid,
                                   grid_index,
                                   delta_r,
@@ -177,13 +213,9 @@ void Gint::cpu_dvlocal_interface(Gint_inout* inout)
                                   this->pvdpRy_reduced[inout->ispin],
                                   this->pvdpRz_reduced[inout->ispin],
                                   ucell);
-#endif
-        delete[] vldr3;
     }
-    delete[] pvdpRx_thread;
-    delete[] pvdpRy_thread;
-    delete[] pvdpRz_thread;
     delete hRGint_thread;
+#endif
     ModuleBase::TITLE("Gint_interface", "cal_gint_dvlocal");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_dvlocal");
 }
@@ -219,7 +251,8 @@ void Gint::cpu_vlocal_meta_interface(Gint_inout* inout)
     {
         hRGint_thread = new hamilt::HContainer<double>(*this->hRGint);
     }
-
+#ifdef _OPENMP
+#pragma omp for
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++)
     {
         const int na_grid = this->gridt->how_many_atoms[grid_index];
@@ -245,7 +278,7 @@ void Gint::cpu_vlocal_meta_interface(Gint_inout* inout)
                                               this->gridt->start_ind[grid_index],
                                               ncyz,
                                               dv);
-#ifdef _OPENMP
+
         if ((GlobalV::GAMMA_ONLY_LOCAL && lgd > 0) || !GlobalV::GAMMA_ONLY_LOCAL)
         {
             this->gint_kernel_vlocal_meta(na_grid,
@@ -258,7 +291,56 @@ void Gint::cpu_vlocal_meta_interface(Gint_inout* inout)
                                           ucell,
                                           hRGint_thread);
         }
+        delete[] vldr3;
+        delete[] vkdr3;
+    }
+    if (GlobalV::GAMMA_ONLY_LOCAL)
+    {
+#pragma omp critical(gint_gamma)
+        {
+            BlasConnector::axpy(this->hRGint->get_nnr(),
+                                1.0,
+                                hRGint_thread->get_wrapper(),
+                                1,
+                                this->hRGint->get_wrapper(),
+                                1);
+        }
+        delete hRGint_thread;
+    }
+    if (!GlobalV::GAMMA_ONLY_LOCAL)
+    {
+#pragma omp critical(gint_k)
+        {
+            BlasConnector::axpy(nnrg, 1.0, pvpR_thread, 1, pvpR_reduced[inout->ispin], 1);
+        }
+        delete[] pvpR_thread;
+    }
 #else
+    for (int grid_index = 0; grid_index < this->nbxx; grid_index++)
+    {
+        const int na_grid = this->gridt->how_many_atoms[grid_index];
+        if (na_grid == 0)
+        {
+            continue;
+        }
+        double* vldr3 = Gint_Tools::get_vldr3(inout->vl,
+                                              this->bxyz,
+                                              this->bx,
+                                              this->by,
+                                              this->bz,
+                                              this->nplane,
+                                              this->gridt->start_ind[grid_index],
+                                              ncyz,
+                                              dv);
+        double* vkdr3 = Gint_Tools::get_vldr3(inout->vofk,
+                                              this->bxyz,
+                                              this->bx,
+                                              this->by,
+                                              this->bz,
+                                              this->nplane,
+                                              this->gridt->start_ind[grid_index],
+                                              ncyz,
+                                              dv);
         if (GlobalV::GAMMA_ONLY_LOCAL && lgd > 0)
         {
             this->gint_kernel_vlocal_meta(na_grid, grid_index, delta_r, vldr3, vkdr3, LD_pool, ucell, nullptr);
@@ -274,33 +356,12 @@ void Gint::cpu_vlocal_meta_interface(Gint_inout* inout)
                                           ucell,
                                           this->pvpR_reduced[inout->ispin]);
         }
-#endif
+
         delete[] vldr3;
         delete[] vkdr3;
     }
-    if (GlobalV::GAMMA_ONLY_LOCAL)
-    {
-#ifdef _OPENMP
-#pragma omp critical(gint_gamma)
+    delete hRGint_thread;
+    delete[] pvpR_thread;
 #endif
-        {
-            BlasConnector::axpy(this->hRGint->get_nnr(),
-                                1.0,
-                                hRGint_thread->get_wrapper(),
-                                1,
-                                this->hRGint->get_wrapper(),
-                                1);
-        }
-        delete hRGint_thread;
-    }
-    if (!GlobalV::GAMMA_ONLY_LOCAL)
-    {
-#ifdef _OPENMP
-#pragma omp critical(gint_k)
-#endif
-        {
-            BlasConnector::axpy(nnrg, 1.0, pvpR_thread, 1, pvpR_reduced[inout->ispin], 1);
-        }
-        delete[] pvpR_thread;
-    }
+
 }

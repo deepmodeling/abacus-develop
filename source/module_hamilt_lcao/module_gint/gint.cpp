@@ -44,9 +44,9 @@ void Gint::cal_gint(Gint_inout* inout)
     {
         ModuleBase::WARNING_QUIT("Gint_interface::cal_gint", "max_size equal to 0!");
     }
-    if (lgd == 0)
+    if (lgd <= 0)
     {
-        ModuleBase::WARNING_QUIT("Gint_interface::cal_gint", "lgd equal to 0!");
+        ModuleBase::WARNING_QUIT("Gint_interface::cal_gint", "lgd less than 0!");
     }
     if (GlobalV::device_flag == "gpu" && GlobalV::GAMMA_ONLY_LOCAL)
     {
@@ -96,6 +96,9 @@ void Gint::cal_gint(Gint_inout* inout)
             cpu_force_meta_interface(inout);
         }
     }
+#ifdef __MKL
+        mkl_set_num_threads(mkl_threads);
+#endif
     ModuleBase::timer::tick("Gint_interface", "cal_gint");
 
     return;

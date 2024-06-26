@@ -105,8 +105,6 @@ static __device__ void interpolate_f(const double distance,
         const double rl = pow(distance, ll);
         const double rl_r = 1.0 / rl;
         const double dist_r = 1 / distance;
-        const int dist_tmp_force = dist_tmp_clac * 3;
-        const int dist_tmp_stress = dist_tmp_clac * 6;
         // Compute right-hand side of the equation
         dpsir[iw][3] = tmp * ylma[idx_lm] * rl_r * vlbr3_value;
         // Compute derivatives with respect to spatial

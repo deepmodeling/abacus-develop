@@ -14,7 +14,7 @@ void Gint::cpu_force_interface(Gint_inout* inout)
     const int ncyz = this->ny * this->nplane;
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
-
+#ifdef _OPENMP
     ModuleBase::matrix fvl_dphi_thread;
     ModuleBase::matrix svl_dphi_thread;
     if (inout->isforce)
@@ -27,9 +27,7 @@ void Gint::cpu_force_interface(Gint_inout* inout)
         svl_dphi_thread.create(inout->svl_dphi->nr, inout->svl_dphi->nc);
         svl_dphi_thread.zero_out();
     }
-
-#ifdef _OPENMP
-#pragma omp parallel
+#pragma omp for
 #endif
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++)
     {
@@ -74,6 +72,9 @@ void Gint::cpu_force_interface(Gint_inout* inout)
 #endif
         delete[] vldr3;
     }
+#ifdef _OPENMP
+#pragma omp critical(gint)
+{
     if (inout->isforce)
     {
         inout->fvl_dphi[0] += fvl_dphi_thread;
@@ -82,6 +83,8 @@ void Gint::cpu_force_interface(Gint_inout* inout)
     {
         inout->svl_dphi[0] += svl_dphi_thread;
     }
+}
+#endif
     ModuleBase::TITLE("Gint_interface", "cal_gint_force");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_force");
 }
@@ -98,7 +101,7 @@ void Gint::cpu_force_meta_interface(Gint_inout* inout)
     const int ncyz = this->ny * this->nplane;
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
-
+#ifdef _OPENMP
     ModuleBase::matrix fvl_dphi_thread;
     ModuleBase::matrix svl_dphi_thread;
     if (inout->isforce)
@@ -111,6 +114,7 @@ void Gint::cpu_force_meta_interface(Gint_inout* inout)
         svl_dphi_thread.create(inout->svl_dphi->nr, inout->svl_dphi->nc);
         svl_dphi_thread.zero_out();
     }
+#endif
 #ifdef _OPENMP
 #pragma omp parallel
 #endif
@@ -171,6 +175,9 @@ void Gint::cpu_force_meta_interface(Gint_inout* inout)
         delete[] vldr3;
         delete[] vkdr3;
     }
+#ifdef _OPENMP
+#pragma omp critical(gint)
+{
     if (inout->isforce)
     {
         inout->fvl_dphi[0] += fvl_dphi_thread;
@@ -179,6 +186,8 @@ void Gint::cpu_force_meta_interface(Gint_inout* inout)
     {
         inout->svl_dphi[0] += svl_dphi_thread;
     }
+}
+#endif
     ModuleBase::TITLE("Gint_interface", "cal_gint_force_meta");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_force_meta");
 }
