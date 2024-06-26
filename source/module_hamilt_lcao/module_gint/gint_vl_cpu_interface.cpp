@@ -54,30 +54,30 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout)
                                               dv);
 
         this->gint_kernel_vlocal(na_grid, grid_index, delta_r, vldr3, LD_pool, pvpR_thread, ucell, hRGint_thread);
-        
+
         delete[] vldr3;
     }
 #pragma omp critical(gint_gamma)
     if (GlobalV::GAMMA_ONLY_LOCAL)
     {
         BlasConnector::axpy(this->hRGint->get_nnr(),
-                    1.0,
-                    hRGint_thread->get_wrapper(),
-                    1,
-                    this->hRGint->get_wrapper(),
-                    1);
+                            1.0,
+                            hRGint_thread->get_wrapper(),
+                            1,
+                            this->hRGint->get_wrapper(),
+                            1);
         delete hRGint_thread;
     }
     else
     {
 #pragma omp critical(gint_k)
-    {
-        BlasConnector::axpy(nnrg, 1.0, pvpR_thread, 1, pvpR_reduced[inout->ispin], 1);
-    }
-    delete[] pvpR_thread;
+        {
+            BlasConnector::axpy(nnrg, 1.0, pvpR_thread, 1, pvpR_reduced[inout->ispin], 1);
+        }
+        delete[] pvpR_thread;
     }
 #else
- for (int grid_index = 0; grid_index < this->nbxx; grid_index++)
+    for (int grid_index = 0; grid_index < this->nbxx; grid_index++)
     {
         const int na_grid = this->gridt->how_many_atoms[grid_index];
         if (na_grid == 0)
@@ -196,14 +196,14 @@ void Gint::cpu_dvlocal_interface(Gint_inout* inout)
             continue;
         }
         double* vldr3 = Gint_Tools::get_vldr3(inout->vl,
-                                        this->bxyz,
-                                        this->bx,
-                                        this->by,
-                                        this->bz,
-                                        this->nplane,
-                                        this->gridt->start_ind[grid_index],
-                                        ncyz,
-                                        dv);
+                                              this->bxyz,
+                                              this->bx,
+                                              this->by,
+                                              this->bz,
+                                              this->nplane,
+                                              this->gridt->start_ind[grid_index],
+                                              ncyz,
+                                              dv);
         this->gint_kernel_dvlocal(na_grid,
                                   grid_index,
                                   delta_r,
@@ -363,5 +363,4 @@ void Gint::cpu_vlocal_meta_interface(Gint_inout* inout)
     delete hRGint_thread;
     delete[] pvpR_thread;
 #endif
-
 }

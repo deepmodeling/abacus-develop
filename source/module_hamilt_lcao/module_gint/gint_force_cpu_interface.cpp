@@ -69,7 +69,7 @@ void Gint::cpu_force_interface(Gint_inout* inout)
         }
     }
 #else
-for (int grid_index = 0; grid_index < this->nbxx; grid_index++)
+    for (int grid_index = 0; grid_index < this->nbxx; grid_index++)
     {
         const int na_grid = this->gridt->how_many_atoms[grid_index];
         if (na_grid == 0)
@@ -169,22 +169,22 @@ void Gint::cpu_force_meta_interface(Gint_inout* inout)
                                      &fvl_dphi_thread,
                                      &svl_dphi_thread,
                                      ucell);
-    delete[] vldr3;
-    delete[] vkdr3;
+        delete[] vldr3;
+        delete[] vkdr3;
     }
 #pragma omp critical(gint)
-{
-    if (inout->isforce)
     {
-        inout->fvl_dphi[0] += fvl_dphi_thread;
+        if (inout->isforce)
+        {
+            inout->fvl_dphi[0] += fvl_dphi_thread;
+        }
+        if (inout->isstress)
+        {
+            inout->svl_dphi[0] += svl_dphi_thread;
+        }
     }
-    if (inout->isstress)
-    {
-        inout->svl_dphi[0] += svl_dphi_thread;
-    }
-}
 #else
-  for (int grid_index = 0; grid_index < this->nbxx; grid_index++)
+    for (int grid_index = 0; grid_index < this->nbxx; grid_index++)
     {
         const int na_grid = this->gridt->how_many_atoms[grid_index];
         if (na_grid == 0)
