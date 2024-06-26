@@ -479,11 +479,11 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
         }
     }
 
-    for (int is = 0; is < nspin; ++is)
+    for (int ik = 0; ik < nks; ++ik)
     {
         for (int ib = 0; ib < nbands; ++ib)
-            delete[] wfc_k_grid[is][ib];
-        delete[] wfc_k_grid[is];
+            delete[] wfc_k_grid[ik][ib];
+        delete[] wfc_k_grid[ik];
     }
 
     return;
