@@ -416,7 +416,7 @@ void ESolver_KS_LCAO<TK, TR>::cal_stress(ModuleBase::matrix& stress)
 //! mohan add 2024-05-11
 //------------------------------------------------------------------------------
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::after_all_runners(void)
+void ESolver_KS_LCAO<TK, TR>::after_all_runners()
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "after_all_runners");
     ModuleBase::timer::tick("ESolver_KS_LCAO", "after_all_runners");
@@ -1109,7 +1109,9 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
     // 4) write density matrix
     if (INPUT.out_dm)
     {
-        ModuleBase::WARNING_QUIT("ESolver_KS_LCAO", "output of the Gamma DM is not supported now! If you want to output the sparse DMR (DM in real space), please set out_dm1 = 1 in the input file.");
+        ModuleBase::WARNING_QUIT("ESolver_KS_LCAO",
+                                 "output of the Gamma DM is not supported now! If you want to output the sparse DMR "
+                                 "(DM in real space), please set out_dm1 = 1 in the input file.");
     }
 
     // 5) write Vxc
