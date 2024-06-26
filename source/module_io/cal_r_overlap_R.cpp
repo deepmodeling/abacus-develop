@@ -15,14 +15,6 @@ cal_r_overlap_R::~cal_r_overlap_R()
 
 void cal_r_overlap_R::initialize_orb_table()
 {
-    MOT.allocate(GlobalC::ORB.get_ntype(),                                     // number of atom types
-                 GlobalC::ORB.get_lmax(),                                      // max L used to calculate overlap
-                 static_cast<int>(GlobalC::ORB.get_kmesh() * kmesh_times) | 1, // kpoints, for integration in k space
-                 GlobalC::ORB.get_Rmax(),                                      // max value of radial table
-                 GlobalC::ORB.get_dR(),                                        // delta R, for making radial table
-                 GlobalC::ORB.get_dk()                                         // delta k, for integration in k space
-    );
-
     int Lmax_used = 0;
     int Lmax = 0;
     int exx_lmax = 0;
@@ -37,7 +29,7 @@ void cal_r_overlap_R::initialize_orb_table()
                                                exx_lmax,
                                                GlobalC::ORB,
                                                GlobalC::ucell.infoNL.Beta,
-                                               MOT.pSB);
+                                               psb_);
     ModuleBase::Ylm::set_coefficients();
     MGT.init_Gaunt_CH(Lmax);
     MGT.init_Gaunt(Lmax);
@@ -115,7 +107,7 @@ void cal_r_overlap_R::construct_orbs_and_orb_r()
                         {
                             center2_orb11[TA][TB][LA][NA][LB].insert(
                                 std::make_pair(NB,
-                                               Center2_Orb::Orb11(orbs[TA][LA][NA], orbs[TB][LB][NB], MOT.pSB, MGT)));
+                                               Center2_Orb::Orb11(orbs[TA][LA][NA], orbs[TB][LB][NB], psb_, MGT)));
                         }
                     }
                 }
@@ -137,7 +129,7 @@ void cal_r_overlap_R::construct_orbs_and_orb_r()
                         {
                             center2_orb21_r[TA][TB][LA][NA][LB].insert(std::make_pair(
                                 NB,
-                                Center2_Orb::Orb21(orbs[TA][LA][NA], orb_r, orbs[TB][LB][NB], MOT.pSB, MGT)));
+                                Center2_Orb::Orb21(orbs[TA][LA][NA], orb_r, orbs[TB][LB][NB], psb_, MGT)));
                         }
                     }
                 }

@@ -5,11 +5,11 @@
 #include <map>
 #include <set>
 
+#include "module_base/sph_bessel_recursive.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/center2_orb.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/center2_orb-orb11.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/center2_orb-orb21.h"
 
-#include "module_basis/module_ao/ORB_table_phi.h"
 #include "module_basis/module_ao/ORB_gaunt_table.h"
 #include "module_basis/module_ao/ORB_atomic_lm.h"
 #include "module_basis/module_ao/ORB_read.h"
@@ -47,7 +47,7 @@ private:
     std::vector<int> iw2iN;
     std::vector<int> iw2it;
 
-    ORB_table_phi MOT;
+    ModuleBase::Sph_Bessel_Recursive::D2* psb_ = nullptr;
     ORB_gaunt_table MGT;
 
     Numerical_Orbital_Lm orb_r;

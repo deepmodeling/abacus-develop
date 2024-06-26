@@ -258,14 +258,6 @@ void toWannier90_LCAO::out_unk(const psi::Psi<std::complex<double>>& psi)
 
 void toWannier90_LCAO::initialize_orb_table()
 {
-    MOT.allocate(GlobalC::ORB.get_ntype(),                                     // number of atom types
-                 GlobalC::ORB.get_lmax(),                                      // max L used to calculate overlap
-                 static_cast<int>(GlobalC::ORB.get_kmesh() * kmesh_times) | 1, // kpoints, for integration in k space
-                 GlobalC::ORB.get_Rmax(),                                      // max value of radial table
-                 GlobalC::ORB.get_dR(),                                        // delta R, for making radial table
-                 GlobalC::ORB.get_dk()                                         // delta k, for integration in k space
-    );
-
     int Lmax_used = 0;
     int Lmax = 0;
     int exx_lmax = 0;
@@ -281,7 +273,7 @@ void toWannier90_LCAO::initialize_orb_table()
                                                exx_lmax,
                                                GlobalC::ORB,
                                                GlobalC::ucell.infoNL.Beta,
-                                               MOT.pSB);
+                                               psb_);
     ModuleBase::Ylm::set_coefficients();
     MGT.init_Gaunt_CH(Lmax);
     MGT.init_Gaunt(Lmax);
@@ -683,7 +675,7 @@ void toWannier90_LCAO::construct_overlap_table_project()
                     0,
                     Center2_Orb::Orb11(orbs[iw2it[orb_index_row]][iw2iL[orb_index_row]][iw2iN[orb_index_row]],
                                        A_orbs[wannier_index][0],
-                                       MOT.pSB,
+                                       psb_,
                                        MGT)));
             }
             else
@@ -702,7 +694,7 @@ void toWannier90_LCAO::construct_overlap_table_project()
                         tmp_L,
                         Center2_Orb::Orb11(orbs[iw2it[orb_index_row]][iw2iL[orb_index_row]][iw2iN[orb_index_row]],
                                            A_orbs[wannier_index][tmp_L],
-                                           MOT.pSB,
+                                           psb_,
                                            MGT)));
                 }
             }
