@@ -172,6 +172,12 @@ void ReadInput::item_others()
         read_sync_bool(test_stress);
         this->add_item(item);
     }
+    {
+        Input_Item item("test_skip_ewald");
+        item.annotation = "whether to skip ewald";
+        read_sync_bool(test_skip_ewald);
+        this->add_item(item);
+    }
 
     // 13. vdW Correction
     {
@@ -256,7 +262,7 @@ void ReadInput::item_others()
                 {
                     ModuleBase::WARNING_QUIT("ReadInput", "vdw_cutoff_period <= 0 is not allowd");
                 }
-                if (convertstr<double>(para.input.vdw_cutoff_radius) <= 0)
+                if (std::stod(para.input.vdw_cutoff_radius) <= 0)
                 {
                     ModuleBase::WARNING_QUIT("ReadInput", "vdw_cutoff_radius <= 0 is not allowd");
                 }
@@ -373,9 +379,9 @@ void ReadInput::item_others()
             size_t count = item.get_size();
             if (count == 3)
             {
-                para.input.vdw_cutoff_period[0] = convertstr<int>(item.str_values[0]);
-                para.input.vdw_cutoff_period[1] = convertstr<int>(item.str_values[1]);
-                para.input.vdw_cutoff_period[2] = convertstr<int>(item.str_values[2]);
+                para.input.vdw_cutoff_period[0] = std::stoi(item.str_values[0]);
+                para.input.vdw_cutoff_period[1] = std::stoi(item.str_values[1]);
+                para.input.vdw_cutoff_period[2] = std::stoi(item.str_values[2]);
             }
             else
             {
@@ -414,7 +420,7 @@ void ReadInput::item_others()
             }
         };
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
-            const double exx_hybrid_alpha_value = convertstr<double>(para.input.exx_hybrid_alpha);
+            const double exx_hybrid_alpha_value = std::stod(para.input.exx_hybrid_alpha);
             if (exx_hybrid_alpha_value < 0 || exx_hybrid_alpha_value > 1)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "must 0 <= exx_hybrid_alpha <= 1");
@@ -500,6 +506,12 @@ void ReadInput::item_others()
         this->add_item(item);
     }
     {
+        Input_Item item("exx_schwarz_threshold");
+        item.annotation = "threshold to screen exx using Cauchy-Schwartz inequality";
+        read_sync_double(exx_schwarz_threshold);
+        this->add_item(item);
+    }
+    {
         Input_Item item("exx_cauchy_threshold");
         item.annotation = "threshold to screen exx using Cauchy-Schwartz inequality";
         read_sync_double(exx_cauchy_threshold);
@@ -549,7 +561,7 @@ void ReadInput::item_others()
             }
         };
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
-            if (convertstr<double>(para.input.exx_ccp_rmesh_times) < 1)
+            if (std::stod(para.input.exx_ccp_rmesh_times) < 1)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "exx_ccp_rmesh_times must >= 1");
             }
@@ -641,12 +653,12 @@ void ReadInput::item_others()
             para.input.sup.td_nvext_dire = count;
             for (auto& str: item.str_values)
             {
-                para.input.td_vext_dire.push_back(convertstr<int>(str));
+                para.input.td_vext_dire.push_back(std::stoi(str));
             }
         };
         add_int_bcast(sup.td_nvext_dire);
         // We must firt bcast td_nvext_direr, then bcast td_vext_dire
-        sync_intvec(td_vext_dire, para.input.sup.td_nvext_dire);
+        sync_intvec(td_vext_dire, para.input.sup.td_nvext_dire, 1);
         this->add_item(item);
     }
     {
@@ -1207,7 +1219,7 @@ void ReadInput::item_others()
             size_t count = item.get_size();
             for (int i = 0; i < count; i++)
             {
-                para.input.hubbard_u_eV.push_back(convertstr<double>(item.str_values[i]));
+                para.input.hubbard_u_eV.push_back(std::stod(item.str_values[i]));
                 para.input.sup.hubbard_u.push_back(para.input.hubbard_u_eV[i] / ModuleBase::Ry_to_eV);
             }
         };
@@ -1225,8 +1237,8 @@ void ReadInput::item_others()
             }
         };
         // We must firt bcast ntype (in item_general), then bcast hubbard_u
-        sync_doublevec(hubbard_u_eV, para.input.ntype);
-        add_doublevec_bcast(sup.hubbard_u, para.input.ntype);
+        sync_doublevec(hubbard_u_eV, para.input.ntype, 0.0);
+        add_doublevec_bcast(sup.hubbard_u, para.input.ntype, 0.0);
         this->add_item(item);
     }
     {
@@ -1236,7 +1248,7 @@ void ReadInput::item_others()
             size_t count = item.get_size();
             for (int i = 0; i < count; i++)
             {
-                para.input.orbital_corr.push_back(convertstr<int>(item.str_values[i]));
+                para.input.orbital_corr.push_back(std::stoi(item.str_values[i]));
             }
         };
         item.resetvalue = [](const Input_Item& item, Parameter& para) {
@@ -1278,7 +1290,7 @@ void ReadInput::item_others()
             }
         };
         // We must firt bcast ntype (in item_general), then bcast orbital_corr
-        sync_intvec(orbital_corr, para.input.ntype);
+        sync_intvec(orbital_corr, para.input.ntype, -1);
         this->add_item(item);
     }
 
@@ -1294,7 +1306,7 @@ void ReadInput::item_others()
             }
         });
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
-            if (convertstr<double>(para.input.bessel_nao_ecut) < 0)
+            if (std::stod(para.input.bessel_nao_ecut) < 0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "bessel_nao_ecut must >= 0");
             }
@@ -1314,7 +1326,7 @@ void ReadInput::item_others()
             size_t count = item.get_size();
             for (int i = 0; i < count; i++)
             {
-                para.input.bessel_nao_rcuts.push_back(convertstr<double>(item.str_values[i]));
+                para.input.bessel_nao_rcuts.push_back(std::stod(item.str_values[i]));
             }
             if (count > 0)
                 para.input.sup.bessel_nao_rcut = para.input.bessel_nao_rcuts[0]; // also compatible with old input file
@@ -1329,7 +1341,7 @@ void ReadInput::item_others()
         add_int_bcast(sup.nrcut);
         add_double_bcast(sup.bessel_nao_rcut);
         // We must firt bcast nrcut, then bcast bessel_nao_rcut
-        sync_doublevec(bessel_nao_rcuts, para.input.sup.nrcut);
+        sync_doublevec(bessel_nao_rcuts, para.input.sup.nrcut, 0.0);
         this->add_item(item);
     }
     {
@@ -1361,7 +1373,7 @@ void ReadInput::item_others()
             }
         });
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
-            if (convertstr<double>(para.input.bessel_descriptor_ecut) < 0)
+            if (std::stod(para.input.bessel_descriptor_ecut) < 0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "bessel_descriptor_ecut must >= 0");
             }
@@ -1565,7 +1577,7 @@ void ReadInput::item_others()
                 para.input.qo_strategy.push_back(item.str_values[i]);
             }
         };
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        autosetfuncs.push_back([](Parameter& para) {
             if (para.input.qo_strategy.size() != para.input.ntype)
             {
                 if (para.input.qo_strategy.size() == 1)
@@ -1588,9 +1600,9 @@ void ReadInput::item_others()
                     para.input.qo_strategy.resize(para.input.ntype, default_strategy);
                 }
             }
-        };
+        });
         // We must firt bcast ntype (in item_general), then bcast qo_strategy
-        sync_stringvec(qo_strategy, para.input.ntype);
+        sync_stringvec(qo_strategy, para.input.ntype, "all");
         this->add_item(item);
     }
     {
@@ -1600,7 +1612,7 @@ void ReadInput::item_others()
             size_t count = item.get_size();
             for (int i = 0; i < count; i++)
             {
-                para.input.qo_screening_coeff.push_back(convertstr<double>(item.str_values[i]));
+                para.input.qo_screening_coeff.push_back(std::stod(item.str_values[i]));
             }
         };
         item.resetvalue = [](const Input_Item& item, Parameter& para) {
@@ -1635,7 +1647,7 @@ void ReadInput::item_others()
             }
         };
         // We must firt bcast ntype (in item_general), then bcast qo_screening_coeff
-        sync_doublevec(qo_screening_coeff, para.input.ntype);
+        sync_doublevec(qo_screening_coeff, para.input.ntype, 0.1);
         this->add_item(item);
     }
 

@@ -23,6 +23,45 @@ void strtolower(char* sa, char* sb)
     sb[len] = '\0';
 }
 
+bool convert_bool(std::string str)
+{
+    for (auto& i: str)
+    {
+        i = tolower(i);
+    }
+    if (str == "true")
+    {
+        return true;
+    }
+    else if (str == "false")
+    {
+        return false;
+    }
+    else if (str == "1")
+    {
+        return true;
+    }
+    else if (str == "0")
+    {
+        return false;
+    }
+    else if (str == "t")
+    {
+        return true;
+    }
+    else if (str == "f")
+    {
+        return false;
+    }
+    else
+    {
+        std::string warningstr = "Bad boolean parameter ";
+        warningstr.append(str);
+        warningstr.append(", please check the input parameters in file INPUT");
+        ModuleBase::WARNING_QUIT("Input", warningstr);
+    }
+}
+
 void read_information(std::ifstream& ifs, std::vector<std::string>& output, const std::string& delimiters)
 {
     std::string line;
@@ -79,13 +118,11 @@ void ReadInput::readin_parameters(Parameter& param, const std::string& filename_
         this->write_txt_input(param, filename_out);
     }
 
-#ifdef __MPI
     // 3. broadcast the parameters
     for (auto& bcastfunc: this->bcastfuncs)
     {
         bcastfunc(param);
     }
-#endif
 }
 
 void ReadInput::read_txt_input(Parameter& param, const std::string& filename)

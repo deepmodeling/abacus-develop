@@ -131,20 +131,20 @@ void ReadInput::item_lcao()
             size_t count = item.get_size();
             if (count == 1)
             {
-                para.input.out_mat_hs[0] = convertstr<int>(item.str_values[0]);
+                para.input.out_mat_hs[0] = std::stoi(item.str_values[0]);
                 para.input.out_mat_hs[1] = 8;
             }
             else if (count == 2)
             {
-                para.input.out_mat_hs[0] = convertstr<int>(item.str_values[0]);
-                para.input.out_mat_hs[1] = convertstr<int>(item.str_values[1]);
+                para.input.out_mat_hs[0] = std::stoi(item.str_values[0]);
+                para.input.out_mat_hs[1] = std::stoi(item.str_values[1]);
             }
             else
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "out_mat_hs should have 1 or 2 values");
             }
         };
-        sync_intvec(out_mat_hs, 2);
+        sync_intvec(out_mat_hs, 2, 0);
         this->add_item(item);
     }
     {

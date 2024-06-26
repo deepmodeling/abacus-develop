@@ -6,19 +6,10 @@
 #include "module_base/parallel_common.h"
 #endif
 
-template <class T>
-T convertstr(const std::string& in)
-{
-    T out;
-    std::stringstream ss;
-    ss << in;
-    ss >> out;
-    return out;
-}
 #define strvalue item.str_values[0]
-#define intvalue convertstr<int>(item.str_values[0])
-#define doublevalue convertstr<double>(item.str_values[0])
-#define boolvalue convertstr<bool>(item.str_values[0])
+#define intvalue std::stoi(item.str_values[0])
+#define doublevalue std::stod(item.str_values[0])
+#define boolvalue convert_bool(item.str_values[0])
 
 #ifdef __MPI
 #define add_double_bcast(PARAMETER)                                                                                    \
@@ -37,17 +28,29 @@ T convertstr(const std::string& in)
     {                                                                                                                  \
         bcastfuncs.push_back([](Parameter& para) { Parallel_Common::bcast_string(para.input.PARAMETER); });            \
     }
-#define add_doublevec_bcast(PARAMETER, N)                                                                              \
+#define add_doublevec_bcast(PARAMETER, N, FILL)                                                                        \
     {                                                                                                                  \
-        bcastfuncs.push_back([](Parameter& para) { Parallel_Common::bcast_double(para.input.PARAMETER.data(), N); });  \
+        bcastfuncs.push_back([](Parameter& para) {                                                                     \
+            if (para.input.PARAMETER.size() != N)                                                                      \
+                para.input.PARAMETER.resize(N, FILL);                                                                  \
+            Parallel_Common::bcast_double(para.input.PARAMETER.data(), N);                                             \
+        });                                                                                                            \
     }
-#define add_intvec_bcast(PARAMETER, N)                                                                                 \
+#define add_intvec_bcast(PARAMETER, N, FILL)                                                                           \
     {                                                                                                                  \
-        bcastfuncs.push_back([](Parameter& para) { Parallel_Common::bcast_int(para.input.PARAMETER.data(), N); });     \
+        bcastfuncs.push_back([](Parameter& para) {                                                                     \
+            if (para.input.PARAMETER.size() != N)                                                                      \
+                para.input.PARAMETER.resize(N, FILL);                                                                  \
+            Parallel_Common::bcast_int(para.input.PARAMETER.data(), N);                                                \
+        });                                                                                                            \
     }
-#define add_stringvec_bcast(PARAMETER, N)                                                                              \
+#define add_stringvec_bcast(PARAMETER, N, FILL)                                                                        \
     {                                                                                                                  \
-        bcastfuncs.push_back([](Parameter& para) { Parallel_Common::bcast_string(para.input.PARAMETER.data(), N); });  \
+        bcastfuncs.push_back([](Parameter& para) {                                                                     \
+            if (para.input.PARAMETER.size() != N)                                                                      \
+                para.input.PARAMETER.resize(N, FILL);                                                                  \
+            Parallel_Common::bcast_string(para.input.PARAMETER.data(), N);                                             \
+        });                                                                                                            \
     }
 
 #else
@@ -55,9 +58,16 @@ T convertstr(const std::string& in)
 #define add_int_bcast(PARAMETER)
 #define add_bool_bcast(PARAMETER)
 #define add_string_bcast(PARAMETER)
-#define add_doublevec_bcast(PARAMETER, N)
-#define add_intvec_bcast(PARAMETER, N)
-#define add_stringvec_bcast(PARAMETER, N)
+#define add_doublevec_bcast(PARAMETER, N, FILL)                                                                        \
+    {                                                                                                                  \
+        bcastfuncs.push_back([](Parameter& para) {                                                                     \
+            if (para.input.PARAMETER.size() != N)                                                                      \
+                para.input.PARAMETER.resize(N, FILL);                                                                  \
+        });                                                                                                            \
+    }
+
+#define add_intvec_bcast(PARAMETER, N, FILL) add_doublevec_bcast(PARAMETER, N, FILL)
+#define add_stringvec_bcast(PARAMETER, N, FILL) add_doublevec_bcast(PARAMETER, N, FILL)
 
 #endif
 
@@ -85,7 +95,7 @@ T convertstr(const std::string& in)
             = [](Input_Item& item, const Parameter& para) { item.final_value << para.input.PARAMETER; };               \
         add_bool_bcast(PARAMETER);                                                                                     \
     }
-#define sync_doublevec(PARAMETER, N)                                                                                   \
+#define sync_doublevec(PARAMETER, N, FILL)                                                                             \
     {                                                                                                                  \
         item.getfinalvalue = [](Input_Item& item, const Parameter& para) {                                             \
             for (int i = 0; i < N; i++)                                                                                \
@@ -93,9 +103,9 @@ T convertstr(const std::string& in)
                 item.final_value << para.input.PARAMETER[i] << " ";                                                    \
             }                                                                                                          \
         };                                                                                                             \
-        add_doublevec_bcast(PARAMETER, N);                                                                             \
+        add_doublevec_bcast(PARAMETER, N, FILL);                                                                       \
     }
-#define sync_intvec(PARAMETER, N)                                                                                      \
+#define sync_intvec(PARAMETER, N, FILL)                                                                                \
     {                                                                                                                  \
         item.getfinalvalue = [](Input_Item& item, const Parameter& para) {                                             \
             for (int i = 0; i < N; i++)                                                                                \
@@ -103,9 +113,9 @@ T convertstr(const std::string& in)
                 item.final_value << para.input.PARAMETER[i] << " ";                                                    \
             }                                                                                                          \
         };                                                                                                             \
-        add_intvec_bcast(PARAMETER, N);                                                                                \
+        add_intvec_bcast(PARAMETER, N, FILL);                                                                          \
     }
-#define sync_stringvec(PARAMETER, N)                                                                                   \
+#define sync_stringvec(PARAMETER, N, FILL)                                                                             \
     {                                                                                                                  \
         item.getfinalvalue = [](Input_Item& item, const Parameter& para) {                                             \
             for (int i = 0; i < N; i++)                                                                                \
@@ -113,7 +123,7 @@ T convertstr(const std::string& in)
                 item.final_value << para.input.PARAMETER[i] << " ";                                                    \
             }                                                                                                          \
         };                                                                                                             \
-        add_stringvec_bcast(PARAMETER, N);                                                                             \
+        add_stringvec_bcast(PARAMETER, N, FILL);                                                                       \
     }
 
 #define read_sync_string(PARAMETER)                                                                                    \

@@ -31,7 +31,7 @@ void ReadInput::item_sdft()
             std::string nbandsto_str = strvalue;
             if (nbandsto_str != "all")
             {
-                para.input.nbands_sto = convertstr<int>(nbandsto_str);
+                para.input.nbands_sto = std::stoi(nbandsto_str);
             }
             else
             {

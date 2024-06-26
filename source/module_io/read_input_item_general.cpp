@@ -23,9 +23,9 @@ namespace ModuleIO
 //      item.annotation = "unit in 1/bohr, should be > 0, default is 0 which means read KPT file";
 //
 //      item.readvalue = [](const Input_Item& item, Parameter& para) {
-//          para.input.kspacing[0] = convertstr<double>(item.str_values[0]);
-//          para.input.kspacing[1] = convertstr<double>(item.str_values[1]);
-//          para.input.kspacing[2] = convertstr<double>(item.str_values[2]);
+//          para.input.kspacing[0] = std::stod(item.str_values[0]);
+//          para.input.kspacing[1] = std::stod(item.str_values[1]);
+//          para.input.kspacing[2] = std::stod(item.str_values[2]);
 //      };
 //
 //      item.resetvalue = [](const Input_Item& item, Parameter& para) {
@@ -349,16 +349,16 @@ void ReadInput::item_general()
             }
             else if (count == 3)
             {
-                para.input.kspacing[0] = convertstr<double>(item.str_values[0]);
-                para.input.kspacing[1] = convertstr<double>(item.str_values[1]);
-                para.input.kspacing[2] = convertstr<double>(item.str_values[2]);
+                para.input.kspacing[0] = std::stod(item.str_values[0]);
+                para.input.kspacing[1] = std::stod(item.str_values[1]);
+                para.input.kspacing[2] = std::stod(item.str_values[2]);
             }
             else
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "kspacing can only accept one or three values.");
             }
         };
-        sync_doublevec(kspacing, 3);
+        sync_doublevec(kspacing, 3, 0.0);
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
             int kspacing_zero_num = 0;
             const std::vector<double>& kspacing = para.input.kspacing;

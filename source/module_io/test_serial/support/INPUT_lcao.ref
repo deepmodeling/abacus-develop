@@ -262,6 +262,7 @@ vh_in_h                        1 #calculate the hartree potential or not
 vion_in_h                      1 #calculate the local ionic potential or not
 test_force                     0 #test the force
 test_stress                    0 #test the stress
+test_skip_ewald                0 #whether to skip ewald
 
 #Parameters (13.vdW Correction)
 vdw_method                     none #the method of calculating vdw (none ; d2 ; d3_0 ; d3_bj
@@ -294,6 +295,7 @@ exx_pca_threshold              0.0001 #threshold to screen on-site ABFs in exx
 exx_c_threshold                0.0001 #threshold to screen C matrix in exx
 exx_v_threshold                0.1 #threshold to screen C matrix in exx
 exx_dm_threshold               0.0001 #threshold to screen density matrix in exx
+exx_schwarz_threshold          0 #threshold to screen exx using Cauchy-Schwartz inequality
 exx_cauchy_threshold           1e-07 #threshold to screen exx using Cauchy-Schwartz inequality
 exx_c_grad_threshold           0.0001 #threshold to screen nabla C matrix in exx
 exx_v_grad_threshold           0.1 #threshold to screen nabla V matrix in exx
@@ -384,7 +386,7 @@ of_read_kernel                 0 #If set to 1, the kernel of WT KEDF will be fil
 of_kernel_file                 WTkernel.txt #The name of WT kernel file.
 
 #Parameters (20.dft+u)
-dft_plus_u                     0 #new/old DFT+U correction method; 0: standard DFT calcullation(default)
+dft_plus_u                     0 #DFT+U correction method
 yukawa_lambda                  -1 #default:0.0
 yukawa_potential               0 #default: false
 uramping                       -1 #increasing U values during SCF

@@ -242,20 +242,20 @@ void ReadInput::item_pw()
             size_t count = item.get_size();
             if (count == 1)
             {
-                para.input.out_band[0] = convertstr<int>(item.str_values[0]);
+                para.input.out_band[0] = std::stoi(item.str_values[0]);
                 para.input.out_band[1] = 8;
             }
             else if (count == 2)
             {
-                para.input.out_band[0] = convertstr<int>(item.str_values[0]);
-                para.input.out_band[1] = convertstr<int>(item.str_values[1]);
+                para.input.out_band[0] = std::stoi(item.str_values[0]);
+                para.input.out_band[1] = std::stoi(item.str_values[1]);
             }
             else
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "out_band should have 1 or 2 values");
             }
         };
-        sync_intvec(out_band, 2);
+        sync_intvec(out_band, 2, 0);
         this->add_item(item);
     }
     {

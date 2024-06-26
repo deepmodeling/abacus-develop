@@ -18,7 +18,7 @@ class ReadInput
      */
     void clear()
     {
-        for(auto& item : input_lists)
+        for (auto& item: input_lists)
         {
             item.second.final_value.str("");
             item.second.str_values.clear();
@@ -100,19 +100,20 @@ class ReadInput
     //----These functions must be done----------------------
     /**
      * @brief autoset some values
-     *        For "default" inputs
+     *        For "default" inputs, e.g. ks_esolver = "default", force_thr = -1, etc.
      * @note "autosetfuncs" can also serve as a fallback function for "resetvalue_items" or "checkvalue_items" because
      * it will definitely execute, but it is recommended to use "autosetfuncs" as much as possible. This will help
      * you understand the relationships between input parameters.
      */
     std::vector<std::function<void(Parameter&)>> autosetfuncs;
-#ifdef __MPI
     /// bcast all values function
+    /// if no MPI, this function will resize the vector
     std::vector<std::function<void(Parameter&)>> bcastfuncs;
-#endif
     //------------------------------------------------------
 };
 
+void strtolower(char* sa, char* sb);
+bool convert_bool(std::string str);
 bool find_str(const std::vector<std::string>& strings, const std::string& strToFind);
 
 } // namespace ModuleIO
