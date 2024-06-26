@@ -266,6 +266,9 @@ public:
 /// The unified interface for the BLAS routine sgemm, dgemm, cgemm, zgemm. 
 /// This is the col-major version, consistent with the fortran proto.
 /// The one in BlasConnector is row-major.
+/// The usage of col-major interface (and the defination of row/col major) can be referred to the [blas documentation](https://www.intel.com/content/www/us/en/docs/onemkl/developer-reference-c/2023-0/cblas-gemm-001.html).
+/// If one find that both A and B are row-major stored accordng tho the defination, 
+/// One can use the row-major interface `BlasConnector::gemm` without changing any parameters.
 static inline
 void gemm(const char transa, const char transb, const int m, const int n, const int k,
     const float alpha, const float* a, const int lda, const float* b, const int ldb,
