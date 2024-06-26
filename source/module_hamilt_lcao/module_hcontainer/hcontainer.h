@@ -416,7 +416,7 @@ class HContainer
      */
     int get_nbasis() const
     {
-        return paraV->get_row_size();
+        return paraV->get_global_row_size();
     }
 
   private:
