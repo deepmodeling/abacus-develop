@@ -1,11 +1,12 @@
 #include "td_velocity.h"
 
-#include "module_base/timer.h"
 #include "module_elecstate/potentials/H_TDDFT_pw.h"
 
 bool TD_Velocity::tddft_velocity = false;
 bool TD_Velocity::out_mat_R = false;
 bool TD_Velocity::out_vecpot = false;
+bool TD_Velocity::out_current = false;
+bool TD_Velocity::out_current_k = false;
 bool TD_Velocity::init_vecpot_file = false;
 
 TD_Velocity* TD_Velocity::td_vel_op = nullptr;

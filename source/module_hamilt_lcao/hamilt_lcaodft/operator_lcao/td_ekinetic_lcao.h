@@ -4,7 +4,7 @@
 #include "operator_lcao.h"
 #include "module_cell/klist.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/center2_orb-orb11.h"
+#include "module_basis/module_nao/two_center_integrator.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "module_basis/module_ao/ORB_table_phi.h"
 #include "module_basis/module_ao/ORB_gaunt_table.h"
@@ -42,7 +42,8 @@ class TDEkinetic<OperatorLCAO<TK,TR>> : public OperatorLCAO<TK, TR>
                                  hamilt::HContainer<TR>* SR_in,
                                  const K_Vectors* kv_in,
                                  const UnitCell* ucell_in,
-                                 Grid_Driver* GridD_in);
+                                 Grid_Driver* GridD_in,
+                                 const TwoCenterIntegrator* intor);
     ~TDEkinetic();
 
     virtual void contributeHR() override;
@@ -92,17 +93,7 @@ class TDEkinetic<OperatorLCAO<TK,TR>> : public OperatorLCAO<TK, TR>
     /// @brief correction term A^2*S
     void td_ekinetic_grad(std::complex<double>* Hloc, int nnr, ModuleBase::Vector3<double> grad_overlap);
 
-    ORB_table_phi MOT;
-	  ORB_gaunt_table MGT;
-    
-    /// @brief Store the two center integrals outcome <𝝓_𝝁𝟎 |𝛁| 𝝓_𝝂𝑹> for td_ekinetic term
-    std::map<size_t,                                // TA
-      std::map<size_t,                            // TB
-        std::map<int,                           // LA
-          std::map<size_t,                    // NA
-            std::map<int,                   // LB
-              std::map<size_t,            // NB
-                Center2_Orb::Orb11>>>>>> center2_orb11_s;
+    const TwoCenterIntegrator* intor_ = nullptr;
 
     /// @brief Store the vector potential for td_ekinetic term
     ModuleBase::Vector3<double> cart_At;
@@ -113,7 +104,6 @@ class TDEkinetic<OperatorLCAO<TK,TR>> : public OperatorLCAO<TK, TR>
     bool hR_tmp_done = false;
     bool allocated = false;
     bool output_hR_done = false;
-    bool out_mat_R = false;
 };
 
 } // namespace hamilt

@@ -23,7 +23,7 @@ namespace module_tddft
 		const ModuleBase::Vector3<double> &R0, // The projector.
 		const int &T0,
 		const ModuleBase::Vector3<double> &A,
-		const bool &calc_deri
+		const bool &calc_r
     );
 
 } // namespace module_tddft

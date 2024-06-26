@@ -2,6 +2,7 @@
 #define TD_VELOCITY_H
 #include "module_base/abfs-vector3_order.h"
 #include "module_base/timer.h"
+#include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 
 #include <map>
 // Class to store TDDFT velocity gague infos.
@@ -24,6 +25,12 @@ class TD_Velocity
 
     /// @brief switch to control the output of At
     static bool out_vecpot;
+
+    /// @brief switch to control the output of current
+    static bool out_current;
+
+    /// @brief switch to control the format of the output current, in total or in each k-point
+    static bool out_current_k;
 
     /// @brief switch to control the source of At
     static bool init_vecpot_file;

@@ -351,7 +351,8 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
                                                                              this->sR,
                                                                              kv,
                                                                              &GlobalC::ucell,
-                                                                             &GlobalC::GridD);
+                                                                             &GlobalC::GridD,
+                                                                             two_center_bundle.overlap_orb.get());
             this->getOperator()->add(td_ekinetic);
 
             Operator<TK>* td_nonlocal = new TDNonlocal<OperatorLCAO<TK, TR>>(LM_in,
