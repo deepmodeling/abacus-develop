@@ -55,7 +55,7 @@ void Gint::cpu_force_interface(Gint_inout* inout)
                                 &fvl_dphi_thread,
                                 &svl_dphi_thread,
                                 ucell);
-        delete[] vldr3
+        delete[] vldr3;
     }
 #pragma omp critical(gint)
     {
