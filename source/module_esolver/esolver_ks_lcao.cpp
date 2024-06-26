@@ -390,7 +390,7 @@ void ESolver_KS_LCAO<TK, TR>::cal_stress(ModuleBase::matrix& stress)
 //! mohan add 2024-05-11
 //------------------------------------------------------------------------------
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::after_all_runners(void)
+void ESolver_KS_LCAO<TK, TR>::after_all_runners()
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "after_all_runners");
     ModuleBase::timer::tick("ESolver_KS_LCAO", "after_all_runners");
@@ -466,22 +466,22 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(void)
     if (INPUT.out_mat_xc)
     {
         ModuleIO::write_Vxc<TK, TR>(GlobalV::NSPIN,
-            GlobalV::NLOCAL,
-            GlobalV::DRANK,
-            *this->psi,
-            GlobalC::ucell,
-            this->sf,
-            *this->pw_rho,
-            *this->pw_rhod,
-            GlobalC::ppcell.vloc,
-            *this->pelec->charge,
-            this->GG,
-            this->GK,
-            this->LM,
-            this->LOC,
-            this->kv,
-            this->pelec->wg,
-            GlobalC::GridD);
+                                    GlobalV::NLOCAL,
+                                    GlobalV::DRANK,
+                                    *this->psi,
+                                    GlobalC::ucell,
+                                    this->sf,
+                                    *this->pw_rho,
+                                    *this->pw_rhod,
+                                    GlobalC::ppcell.vloc,
+                                    *this->pelec->charge,
+                                    this->GG,
+                                    this->GK,
+                                    this->LM,
+                                    this->LOC,
+                                    this->kv,
+                                    this->pelec->wg,
+                                    GlobalC::GridD);
     }
 
     ModuleBase::timer::tick("ESolver_KS_LCAO", "after_all_runners");
