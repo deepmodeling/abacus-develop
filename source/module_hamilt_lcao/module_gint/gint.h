@@ -66,7 +66,7 @@ class Gint
 
     // in cal_gint_gpu.cpp
     void gamma_gpu_vlocal_interface(Gint_inout* inout);
-    
+
     void gamma_gpu_rho_interface(Gint_inout* inout);
 
     void gamma_gpu_force_interface(Gint_inout* inout);

@@ -65,7 +65,8 @@ void Gint::cal_gint(Gint_inout* inout)
         }
 #endif
     }
-    else{
+    else
+    {
 #ifdef __MKL
         const int mkl_threads = mkl_get_max_threads();
         mkl_set_num_threads(1);

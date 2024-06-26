@@ -11,10 +11,10 @@ void Gint::cpu_force_interface(Gint_inout* inout)
     const int LD_pool = max_size * ucell.nwmax;
     const int lgd = this->gridt->lgd;
     const int nnrg = this->gridt->nnrg;
-    const int ncyz = this->ny * this->nplane; 
+    const int ncyz = this->ny * this->nplane;
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
-   
+
     ModuleBase::matrix fvl_dphi_thread;
     ModuleBase::matrix svl_dphi_thread;
     if (inout->isforce)
@@ -39,14 +39,14 @@ void Gint::cpu_force_interface(Gint_inout* inout)
             continue;
         }
         double* vldr3 = Gint_Tools::get_vldr3(inout->vl,
-                                                this->bxyz,
-                                                this->bx,
-                                                this->by,
-                                                this->bz,
-                                                this->nplane,
-                                                this->gridt->start_ind[grid_index],
-                                                ncyz,
-                                                dv);
+                                              this->bxyz,
+                                              this->bx,
+                                              this->by,
+                                              this->bz,
+                                              this->nplane,
+                                              this->gridt->start_ind[grid_index],
+                                              ncyz,
+                                              dv);
 #ifdef _OPENMP
         this->gint_kernel_force(na_grid,
                                 grid_index,
@@ -72,7 +72,7 @@ void Gint::cpu_force_interface(Gint_inout* inout)
                                 inout->svl_dphi,
                                 ucell);
 #endif
-        delete[] vldr3; 
+        delete[] vldr3;
     }
     if (inout->isforce)
     {
@@ -95,7 +95,7 @@ void Gint::cpu_force_meta_interface(Gint_inout* inout)
     const int LD_pool = max_size * ucell.nwmax;
     const int lgd = this->gridt->lgd;
     const int nnrg = this->gridt->nnrg;
-    const int ncyz = this->ny * this->nplane; 
+    const int ncyz = this->ny * this->nplane;
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
 
@@ -122,51 +122,51 @@ void Gint::cpu_force_meta_interface(Gint_inout* inout)
             continue;
         }
         double* vldr3 = Gint_Tools::get_vldr3(inout->vl,
-                                                this->bxyz,
-                                                this->bx,
-                                                this->by,
-                                                this->bz,
-                                                this->nplane,
-                                                this->gridt->start_ind[grid_index],
-                                                ncyz,
-                                                dv);
+                                              this->bxyz,
+                                              this->bx,
+                                              this->by,
+                                              this->bz,
+                                              this->nplane,
+                                              this->gridt->start_ind[grid_index],
+                                              ncyz,
+                                              dv);
 
         double* vkdr3 = Gint_Tools::get_vldr3(inout->vofk,
-                                                this->bxyz,
-                                                this->bx,
-                                                this->by,
-                                                this->bz,
-                                                this->nplane,
-                                                this->gridt->start_ind[grid_index],
-                                                ncyz,
-                                                dv);
+                                              this->bxyz,
+                                              this->bx,
+                                              this->by,
+                                              this->bz,
+                                              this->nplane,
+                                              this->gridt->start_ind[grid_index],
+                                              ncyz,
+                                              dv);
 
 #ifdef _OPENMP
         this->gint_kernel_force_meta(na_grid,
-                                        grid_index,
-                                        delta_r,
-                                        vldr3,
-                                        vkdr3,
-                                        LD_pool,
-                                        inout->ispin,
-                                        inout->isforce,
-                                        inout->isstress,
-                                        &fvl_dphi_thread,
-                                        &svl_dphi_thread,
-                                        ucell);
+                                     grid_index,
+                                     delta_r,
+                                     vldr3,
+                                     vkdr3,
+                                     LD_pool,
+                                     inout->ispin,
+                                     inout->isforce,
+                                     inout->isstress,
+                                     &fvl_dphi_thread,
+                                     &svl_dphi_thread,
+                                     ucell);
 #else
         this->gint_kernel_force_meta(na_grid,
-                                        grid_index,
-                                        delta_r,
-                                        vldr3,
-                                        vkdr3,
-                                        LD_pool,
-                                        inout->ispin,
-                                        inout->isforce,
-                                        inout->isstress,
-                                        inout->fvl_dphi,
-                                        inout->svl_dphi,
-                                        ucell);
+                                     grid_index,
+                                     delta_r,
+                                     vldr3,
+                                     vkdr3,
+                                     LD_pool,
+                                     inout->ispin,
+                                     inout->isforce,
+                                     inout->isstress,
+                                     inout->fvl_dphi,
+                                     inout->svl_dphi,
+                                     ucell);
 #endif
         delete[] vldr3;
         delete[] vkdr3;
@@ -182,4 +182,3 @@ void Gint::cpu_force_meta_interface(Gint_inout* inout)
     ModuleBase::TITLE("Gint_interface", "cal_gint_force_meta");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_force_meta");
 }
-

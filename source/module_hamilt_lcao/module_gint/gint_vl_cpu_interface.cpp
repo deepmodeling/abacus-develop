@@ -11,11 +11,11 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout)
     const int LD_pool = max_size * ucell.nwmax;
     const int lgd = this->gridt->lgd;
     const int nnrg = this->gridt->nnrg;
-    const int ncyz = this->ny * this->nplane; 
+    const int ncyz = this->ny * this->nplane;
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
     double* pvpR_thread = nullptr;
-    hamilt::HContainer<double>* hRGint_thread = nullptr; 
+    hamilt::HContainer<double>* hRGint_thread = nullptr;
     if (!GlobalV::GAMMA_ONLY_LOCAL)
     {
         if (!pvpR_alloc_flag)
@@ -45,25 +45,18 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout)
             continue;
         }
         double* vldr3 = Gint_Tools::get_vldr3(inout->vl,
-                                                this->bxyz,
-                                                this->bx,
-                                                this->by,
-                                                this->bz,
-                                                this->nplane,
-                                                this->gridt->start_ind[grid_index],
-                                                ncyz,
-                                                dv);
+                                              this->bxyz,
+                                              this->bx,
+                                              this->by,
+                                              this->bz,
+                                              this->nplane,
+                                              this->gridt->start_ind[grid_index],
+                                              ncyz,
+                                              dv);
 #ifdef _OPENMP
         if ((GlobalV::GAMMA_ONLY_LOCAL && lgd > 0) || !GlobalV::GAMMA_ONLY_LOCAL)
         {
-            this->gint_kernel_vlocal(na_grid,
-                                        grid_index,
-                                        delta_r,
-                                        vldr3,
-                                        LD_pool,
-                                        pvpR_thread,
-                                        ucell,
-                                        hRGint_thread);
+            this->gint_kernel_vlocal(na_grid, grid_index, delta_r, vldr3, LD_pool, pvpR_thread, ucell, hRGint_thread);
         }
 #else
         if (GlobalV::GAMMA_ONLY_LOCAL && lgd > 0)
@@ -73,15 +66,15 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout)
         if (!GlobalV::GAMMA_ONLY_LOCAL)
         {
             this->gint_kernel_vlocal(na_grid,
-                                        grid_index,
-                                        delta_r,
-                                        vldr3,
-                                        LD_pool,
-                                        ucell,
-                                        this->pvpR_reduced[inout->ispin]);
+                                     grid_index,
+                                     delta_r,
+                                     vldr3,
+                                     LD_pool,
+                                     ucell,
+                                     this->pvpR_reduced[inout->ispin]);
         }
 #endif
-    delete[] vldr3;
+        delete[] vldr3;
     }
     if (GlobalV::GAMMA_ONLY_LOCAL && lgd > 0)
     {
@@ -106,7 +99,7 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout)
         {
             BlasConnector::axpy(nnrg, 1.0, pvpR_thread, 1, pvpR_reduced[inout->ispin], 1);
         }
-        delete[] pvpR_thread;   
+        delete[] pvpR_thread;
     }
     ModuleBase::TITLE("Gint_interface", "cal_gint_vlocal");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal");
@@ -125,17 +118,16 @@ void Gint::cpu_dvlocal_interface(Gint_inout* inout)
     const int LD_pool = max_size * ucell.nwmax;
     const int lgd = this->gridt->lgd;
     const int nnrg = this->gridt->nnrg;
-    const int ncyz = this->ny * this->nplane; 
+    const int ncyz = this->ny * this->nplane;
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
-    
 
     double* pvdpRx_thread = nullptr;
     double* pvdpRy_thread = nullptr;
     double* pvdpRz_thread = nullptr;
-    hamilt::HContainer<double>* hRGint_thread = nullptr; 
+    hamilt::HContainer<double>* hRGint_thread = nullptr;
 
-    pvdpRx_thread = new double[nnrg];   
+    pvdpRx_thread = new double[nnrg];
     ModuleBase::GlobalFunc::ZEROS(pvdpRx_thread, nnrg);
     pvdpRy_thread = new double[nnrg];
     ModuleBase::GlobalFunc::ZEROS(pvdpRy_thread, nnrg);
@@ -157,34 +149,34 @@ void Gint::cpu_dvlocal_interface(Gint_inout* inout)
             continue;
         }
         double* vldr3 = Gint_Tools::get_vldr3(inout->vl,
-                                                this->bxyz,
-                                                this->bx,
-                                                this->by,
-                                                this->bz,
-                                                this->nplane,
-                                                this->gridt->start_ind[grid_index],
-                                                ncyz,
-                                                dv);
+                                              this->bxyz,
+                                              this->bx,
+                                              this->by,
+                                              this->bz,
+                                              this->nplane,
+                                              this->gridt->start_ind[grid_index],
+                                              ncyz,
+                                              dv);
 #ifdef _OPENMP
         this->gint_kernel_dvlocal(na_grid,
-                                    grid_index,
-                                    delta_r,
-                                    vldr3,
-                                    LD_pool,
-                                    pvdpRx_thread,
-                                    pvdpRy_thread,
-                                    pvdpRz_thread,
-                                    ucell);
+                                  grid_index,
+                                  delta_r,
+                                  vldr3,
+                                  LD_pool,
+                                  pvdpRx_thread,
+                                  pvdpRy_thread,
+                                  pvdpRz_thread,
+                                  ucell);
 #else
         this->gint_kernel_dvlocal(na_grid,
-                                    grid_index,
-                                    delta_r,
-                                    vldr3,
-                                    LD_pool,
-                                    this->pvdpRx_reduced[inout->ispin],
-                                    this->pvdpRy_reduced[inout->ispin],
-                                    this->pvdpRz_reduced[inout->ispin],
-                                    ucell);
+                                  grid_index,
+                                  delta_r,
+                                  vldr3,
+                                  LD_pool,
+                                  this->pvdpRx_reduced[inout->ispin],
+                                  this->pvdpRy_reduced[inout->ispin],
+                                  this->pvdpRz_reduced[inout->ispin],
+                                  ucell);
 #endif
         delete[] vldr3;
     }
@@ -205,11 +197,11 @@ void Gint::cpu_vlocal_meta_interface(Gint_inout* inout)
     const int LD_pool = max_size * ucell.nwmax;
     const int lgd = this->gridt->lgd;
     const int nnrg = this->gridt->nnrg;
-    const int ncyz = this->ny * this->nplane; 
+    const int ncyz = this->ny * this->nplane;
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
     double* pvpR_thread = nullptr;
-    hamilt::HContainer<double>* hRGint_thread = nullptr; 
+    hamilt::HContainer<double>* hRGint_thread = nullptr;
     if (!GlobalV::GAMMA_ONLY_LOCAL)
     {
         if (!pvpR_alloc_flag)
@@ -236,64 +228,57 @@ void Gint::cpu_vlocal_meta_interface(Gint_inout* inout)
             continue;
         }
         double* vldr3 = Gint_Tools::get_vldr3(inout->vl,
-                                                this->bxyz,
-                                                this->bx,
-                                                this->by,
-                                                this->bz,
-                                                this->nplane,
-                                                this->gridt->start_ind[grid_index],
-                                                ncyz,
-                                                dv);
+                                              this->bxyz,
+                                              this->bx,
+                                              this->by,
+                                              this->bz,
+                                              this->nplane,
+                                              this->gridt->start_ind[grid_index],
+                                              ncyz,
+                                              dv);
         double* vkdr3 = Gint_Tools::get_vldr3(inout->vofk,
-                                                this->bxyz,
-                                                this->bx,
-                                                this->by,
-                                                this->bz,
-                                                this->nplane,
-                                                this->gridt->start_ind[grid_index],
-                                                ncyz,
-                                                dv);
+                                              this->bxyz,
+                                              this->bx,
+                                              this->by,
+                                              this->bz,
+                                              this->nplane,
+                                              this->gridt->start_ind[grid_index],
+                                              ncyz,
+                                              dv);
 #ifdef _OPENMP
         if ((GlobalV::GAMMA_ONLY_LOCAL && lgd > 0) || !GlobalV::GAMMA_ONLY_LOCAL)
         {
             this->gint_kernel_vlocal_meta(na_grid,
-                                            grid_index,
-                                            delta_r,
-                                            vldr3,
-                                            vkdr3,
-                                            LD_pool,
-                                            pvpR_thread,
-                                            ucell,
-                                            hRGint_thread);
+                                          grid_index,
+                                          delta_r,
+                                          vldr3,
+                                          vkdr3,
+                                          LD_pool,
+                                          pvpR_thread,
+                                          ucell,
+                                          hRGint_thread);
         }
 #else
         if (GlobalV::GAMMA_ONLY_LOCAL && lgd > 0)
         {
-            this->gint_kernel_vlocal_meta(na_grid,
-                                            grid_index,
-                                            delta_r,
-                                            vldr3,
-                                            vkdr3,
-                                            LD_pool,
-                                            ucell,
-                                            nullptr);
+            this->gint_kernel_vlocal_meta(na_grid, grid_index, delta_r, vldr3, vkdr3, LD_pool, ucell, nullptr);
         }
         if (!GlobalV::GAMMA_ONLY_LOCAL)
         {
             this->gint_kernel_vlocal_meta(na_grid,
-                                            grid_index,
-                                            delta_r,
-                                            vldr3,
-                                            vkdr3,
-                                            LD_pool,
-                                            ucell,
-                                            this->pvpR_reduced[inout->ispin]);
+                                          grid_index,
+                                          delta_r,
+                                          vldr3,
+                                          vkdr3,
+                                          LD_pool,
+                                          ucell,
+                                          this->pvpR_reduced[inout->ispin]);
         }
 #endif
         delete[] vldr3;
-        delete[] vkdr3;                                     
+        delete[] vkdr3;
     }
-if (GlobalV::GAMMA_ONLY_LOCAL)
+    if (GlobalV::GAMMA_ONLY_LOCAL)
     {
 #ifdef _OPENMP
 #pragma omp critical(gint_gamma)
@@ -316,6 +301,6 @@ if (GlobalV::GAMMA_ONLY_LOCAL)
         {
             BlasConnector::axpy(nnrg, 1.0, pvpR_thread, 1, pvpR_reduced[inout->ispin], 1);
         }
-        delete[] pvpR_thread;   
+        delete[] pvpR_thread;
     }
 }

@@ -2,7 +2,6 @@
 #include "gint_force_gpu.h"
 #include "gint_rho_gpu.h"
 #include "gint_vl_gpu.h"
-
 #include "module_base/memory.h"
 #include "module_base/timer.h"
 
@@ -20,13 +19,7 @@ void Gint::gamma_gpu_vlocal_interface(Gint_inout* inout)
         ylmcoef[i] = ModuleBase::Ylm::ylmcoef[i];
     }
 
-    GintKernel::gint_gamma_vl_gpu(this->hRGint,
-                                  inout->vl,
-                                  ylmcoef,
-                                  dr,
-                                  this->gridt->rcuts.data(),
-                                  *this->gridt,
-                                  ucell);
+    GintKernel::gint_gamma_vl_gpu(this->hRGint, inout->vl, ylmcoef, dr, this->gridt->rcuts.data(), *this->gridt, ucell);
 
     ModuleBase::TITLE("Gint_interface", "cal_gint_vlocal");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal");
@@ -50,12 +43,12 @@ void Gint::gamma_gpu_rho_interface(Gint_inout* inout)
     {
         ModuleBase::GlobalFunc::ZEROS(inout->rho[is], nrxx);
         GintKernel::gint_gamma_rho_gpu(this->DMRGint[is],
-                                        ylmcoef,
-                                        dr,
-                                        this->gridt->rcuts.data(),
-                                        *this->gridt,
-                                        ucell,
-                                        inout->rho[is]);
+                                       ylmcoef,
+                                       dr,
+                                       this->gridt->rcuts.data(),
+                                       *this->gridt,
+                                       ucell,
+                                       inout->rho[is]);
     }
     ModuleBase::TITLE("Gint_interface", "cal_gint_rho");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_rho");
@@ -75,7 +68,7 @@ void Gint::gamma_gpu_force_interface(Gint_inout* inout)
         ylmcoef[i] = ModuleBase::Ylm::ylmcoef[i];
     }
 
-     const int ncyz = this->ny * this->nplane;
+    const int ncyz = this->ny * this->nplane;
     int nat = ucell.nat;
     const int isforce = inout->isforce;
     const int isstress = inout->isstress;
@@ -84,15 +77,15 @@ void Gint::gamma_gpu_force_interface(Gint_inout* inout)
         std::vector<double> force(nat * 3, 0.0);
         std::vector<double> stress(6, 0.0);
         GintKernel::gint_fvl_gamma_gpu(this->DMRGint[inout->ispin],
-                                        inout->vl,
-                                        force.data(),
-                                        stress.data(),
-                                        dr,
-                                        this->gridt->rcuts.data(),
-                                        isforce,
-                                        isstress,
-                                        *this->gridt,
-                                        ucell);
+                                       inout->vl,
+                                       force.data(),
+                                       stress.data(),
+                                       dr,
+                                       this->gridt->rcuts.data(),
+                                       isforce,
+                                       isstress,
+                                       *this->gridt,
+                                       ucell);
         if (inout->isforce)
         {
             for (int iat = 0; iat < nat; iat++)
@@ -112,7 +105,7 @@ void Gint::gamma_gpu_force_interface(Gint_inout* inout)
             inout->svl_dphi[0](2, 2) += stress[5];
         }
     }
-    
+
     ModuleBase::TITLE("Gint_interface", "cal_gint_force");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_force");
 }
