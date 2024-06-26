@@ -1,12 +1,13 @@
 ---
 Checks: '
-    llvm-header-guard,
     modernize-deprecated-headers,
     modernize-redundant-void-arg,
     modernize-use-bool-literals,
     modernize-use-nullptr,
-    readability-avoid-return-with-void-value
+    readability-avoid-return-with-void-value,
     readability-braces-around-statements
+
+    # llvm-header-guard,
     
     # bugprone-*,
     # clang-analyzer-*,
