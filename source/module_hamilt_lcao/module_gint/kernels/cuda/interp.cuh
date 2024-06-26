@@ -126,8 +126,8 @@ static __device__ void interpolate_f(const double distance,
         it_nw_iw++;
     }
 
-    #pragma unroll
     int dist_tmp_trans = dist_tmp;
+    #pragma unroll
     for (int iw=0;iw<atom_nw[it];++iw)
     {
         const int dist_tmp_force = dist_tmp_trans * 3;

@@ -73,7 +73,7 @@ void Gint::cal_gint(Gint_inout* inout)
     {
 #ifdef __MKL
         const int mkl_threads = mkl_get_max_threads();
-        mkl_set_num_threads(1);
+        mkl_set_num_threads(mkl_threads);
 #endif
         if (inout->job == Gint_Tools::job_type::vlocal)
         {
@@ -100,9 +100,6 @@ void Gint::cal_gint(Gint_inout* inout)
             cpu_force_meta_interface(inout);
         }
     }
-#ifdef __MKL
-        mkl_set_num_threads(mkl_threads);
-#endif
     ModuleBase::timer::tick("Gint_interface", "cal_gint");
 
     return;
