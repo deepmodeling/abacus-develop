@@ -1,7 +1,7 @@
 #include "unitcell.h"
 
-class  Check_Structure
+class Check_Structure
 {
-public:
-    static void check_structure(UnitCell &ucell, double &factor);
+  public:
+    static void check_structure(UnitCell& ucell, double& factor);
 };

@@ -1,7 +1,8 @@
 #include "check_structure.h"
+
 #include "module_base/element_covalent_radius.h"
 
-void Check_Structure::check_structure(UnitCell &ucell, double &factor)
+void Check_Structure::check_structure(UnitCell& ucell, double& factor)
 {
     // First we calculate all bond length in the structure,
     // and compare with the covalent_bond_length,
