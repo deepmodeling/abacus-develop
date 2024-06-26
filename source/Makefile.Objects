@@ -537,7 +537,6 @@ OBJS_LCAO=DM_gamma.o\
       center2_orb-orb21.o\
       center2_orb-orb22.o\
       local_orbital_charge.o\
-      local_orbital_wfc.o\
       record_adj.o\
       dm_2d.o\
       wavefunc_in_pw.o\

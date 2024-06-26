@@ -103,8 +103,8 @@ class IState_Envelope
                     const int& nspin,
                     const double* const* const rho,
                     psi::Psi<std::complex<double>>& wfc_g);
-    static int globalIndex(int localindex, int nblk, int nprocs, int myproc);
-    static int localIndex(int globalindex, int nblk, int nprocs, int& myproc);
+    int globalIndex(int localindex, int nblk, int nprocs, int myproc);
+    int localIndex(int globalindex, int nblk, int nprocs, int& myproc);
 
 #ifdef __MPI
     template <typename T>

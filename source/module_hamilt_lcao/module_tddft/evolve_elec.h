@@ -1,5 +1,5 @@
-#ifndef EVOLVE_ELEC_H
-#define EVOLVE_ELEC_H
+#ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_LCAO_MODULE_TDDFT_EVOLVE_ELEC_H
+#define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_LCAO_MODULE_TDDFT_EVOLVE_ELEC_H
 
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
@@ -31,7 +31,7 @@ class Evolve_elec
     static double td_force_dt;
     static bool td_vext;
     static std::vector<int> td_vext_dire_case;
-    //Output dipole, efield, current or not
+    // Output dipole, efield, current or not
     static bool out_dipole;
     static bool out_efield;
     static bool out_current;
@@ -44,7 +44,7 @@ class Evolve_elec
                           const int nband,
                           const int nlocal,
                           hamilt::Hamilt<std::complex<double>>* phm,
-                          Local_Orbital_wfc& lowf,
+                          Parallel_Orbitals& para_orb,
                           psi::Psi<std::complex<double>>* psi,
                           psi::Psi<std::complex<double>>* psi_laststep,
                           std::complex<double>** Hk_laststep,

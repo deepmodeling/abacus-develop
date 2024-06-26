@@ -1,14 +1,12 @@
-#ifndef ESOLVER_KS_LCAO_TDDFT_H
-#define ESOLVER_KS_LCAO_TDDFT_H
+#ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_ESOLVER_ESOLVER_KS_LCAO_TDDFT_H
+#define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_ESOLVER_ESOLVER_KS_LCAO_TDDFT_H
 #include "esolver_ks.h"
 #include "esolver_ks_lcao.h"
 #include "module_basis/module_ao/ORB_control.h"
-#include "module_psi/psi.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_wfc.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/record_adj.h"
 #include "module_elecstate/elecstate_lcao_tddft.h"
-
+#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/record_adj.h"
+#include "module_psi/psi.h"
 
 namespace ModuleESolver
 {
@@ -16,7 +14,6 @@ namespace ModuleESolver
 class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO<std::complex<double>, double>
 {
   public:
-
     ESolver_KS_LCAO_TDDFT();
 
     ~ESolver_KS_LCAO_TDDFT();
@@ -29,13 +26,12 @@ class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO<std::complex<double>, doubl
 
     std::complex<double>** Sk_laststep = nullptr;
 
-    //same as pelec
+    // same as pelec
     elecstate::ElecStateLCAO_TDDFT* pelec_td = nullptr;
 
     int td_htype = 1;
 
   protected:
-
     virtual void hamilt2density(const int istep, const int iter, const double ethr) override;
 
     virtual void update_pot(const int istep, const int iter) override;

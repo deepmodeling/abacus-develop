@@ -23,8 +23,8 @@
 class IState_Charge
 {
   public:
-    IState_Charge(psi::Psi<double>* psi_gamma_in, Local_Orbital_Charge& loc_in);
-    IState_Charge(psi::Psi<std::complex<double>>* psi_k_in, Local_Orbital_Charge& loc_in)
+    IState_Charge(psi::Psi<double>* psi_gamma_in, const Parallel_Orbitals* ParaV_in);
+    IState_Charge(psi::Psi<std::complex<double>>* psi_k_in, const Parallel_Orbitals* ParaV_in)
     {
         throw std::logic_error("IState_Charge for multi-k is not implemented.");
     };
@@ -82,6 +82,6 @@ class IState_Charge
                   elecstate::DensityMatrix<double, double>& DM);
 #endif
     psi::Psi<double>* psi_gamma;
-    Local_Orbital_Charge* loc;
+    const Parallel_Orbitals* ParaV;
 };
 #endif
