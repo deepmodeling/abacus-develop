@@ -25,6 +25,12 @@ AddTest(
 )
 
 AddTest(
+  TARGET io_read_item_serial
+  LIBS ${math_libs} base device io_input_serial parameter
+  SOURCES read_input_item_test.cpp
+)
+
+AddTest(
   TARGET io_rho_io
   LIBS ${math_libs} base device cell_info
   SOURCES rho_io_test.cpp ../read_cube.cpp ../write_cube.cpp ../read_rho.cpp ../write_rho.cpp ../output.cpp

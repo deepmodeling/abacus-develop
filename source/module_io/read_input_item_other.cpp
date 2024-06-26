@@ -1255,12 +1255,12 @@ void ReadInput::item_others()
                 if (input.dft_plus_u != 0)
                 {
                     para.input.dft_plus_u = 0;
-                    std::cout << "No atoms are correlated, DFT+U is closed!!!" << std::endl;
+                    ModuleBase::WARNING("ReadInput", "No atoms are correlated, DFT+U is closed!!!");
                 }
                 if (input.sup.uramping != 0.0)
                 {
                     para.input.sup.uramping = 0.0;
-                    std::cout << "No atoms are correlated, DFT+DMFT is closed!!!" << std::endl;
+                    ModuleBase::WARNING("ReadInput", "No atoms are correlated, U-ramping is closed!!!");
                 }
             }
         };

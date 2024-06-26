@@ -14,6 +14,20 @@ class ReadInput
     ReadInput(const int& rank);
     ~ReadInput(){};
     /**
+     * @brief clear all input items
+     */
+    void clear()
+    {
+        for(auto& item : input_lists)
+        {
+            item.second.final_value.str("");
+            item.second.str_values.clear();
+        }
+        readvalue_items.clear();
+        checkvalue_items.clear();
+        resetvalue_items.clear();
+    }
+    /**
      * @brief read in parameters from input file
      *
      * @param param parameters of ABACUS

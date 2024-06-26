@@ -102,22 +102,6 @@ void ReadInput::item_general()
         Input_Item item("dft_functional");
         item.annotation = "exchange correlation functional";
         read_sync_string(dft_functional);
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
-#ifndef USE_PAW
-            if (para.input.use_paw)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "to use PAW, compile with USE_PAW");
-                if (para.input.basis_type != "pw")
-                {
-                    ModuleBase::WARNING_QUIT("ReadInput", "PAW is for pw basis only");
-                }
-            }
-#endif
-            if (para.input.dft_functional == "default" && para.input.use_paw)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "dft_functional must be set when use_paw is true");
-            }
-        };
         this->add_item(item);
     }
     {
@@ -371,7 +355,7 @@ void ReadInput::item_general()
             }
             else
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "kspacing can only accept one or three double values.");
+                ModuleBase::WARNING_QUIT("ReadInput", "kspacing can only accept one or three values.");
             }
         };
         sync_doublevec(kspacing, 3);

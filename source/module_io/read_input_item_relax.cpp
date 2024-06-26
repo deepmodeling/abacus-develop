@@ -31,12 +31,17 @@ void ReadInput::item_relax()
                     }
                     else
                     {
+#ifdef __MPI
 #ifdef __ELPA
                         para.input.ks_solver = "genelpa";
                         ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "genelpa");
 #else
                         para.input.ks_solver = "scalapack_gvx";
                         ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "scalapack_gvx");
+#endif
+#else
+                        para.input.ks_solver = "lapack";
+                        ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "lapack");
 #endif
                     }
                 }
@@ -148,9 +153,7 @@ void ReadInput::item_relax()
         Input_Item item("force_thr");
         item.annotation = "force threshold, unit: Ry/Bohr";
         // read_sync_double(force_thr);
-        item.readvalue = [](const Input_Item& item, Parameter& para) {
-            para.input.force_thr = doublevalue;
-        };
+        item.readvalue = [](const Input_Item& item, Parameter& para) { para.input.force_thr = doublevalue; };
         autosetfuncs.push_back([](Parameter& para) {
             if (para.input.force_thr == -1 && para.input.force_thr_ev == -1)
             {
@@ -164,7 +167,7 @@ void ReadInput::item_relax()
             else
             {
                 // if both force_thr and force_thr_ev are set, use force_thr
-                std::cout<<"both force_thr and force_thr_ev are set, use force_thr"<<std::endl;
+                ModuleBase::WARNING("ReadInput", "both force_thr and force_thr_ev are set, use force_thr");
                 para.input.force_thr_ev = para.input.force_thr * 13.6058 / 0.529177;
             }
         });
@@ -331,6 +334,22 @@ void ReadInput::item_relax()
         Input_Item item("use_paw");
         item.annotation = "whether to use PAW in pw calculation";
         read_sync_bool(use_paw);
+        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.use_paw)
+            {
+#ifndef USE_PAW
+                ModuleBase::WARNING_QUIT("ReadInput", "to use PAW, compile with USE_PAW");
+#endif
+                if (para.input.basis_type != "pw")
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput", "PAW is for pw basis only");
+                }
+                if (para.input.dft_functional == "default")
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput", "dft_functional must be set when use_paw is true");
+                }
+            }
+        };
         this->add_item(item);
     }
     {

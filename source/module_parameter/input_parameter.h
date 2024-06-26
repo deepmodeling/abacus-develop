@@ -219,7 +219,7 @@ struct Input_para
     bool out_element_info = false; ///< output information of all elements
     bool out_mat_r = false;        ///< jingan add 2019-8-14, output r(R) matrix.
     int out_wfc_lcao = 0;          ///< output the wave functions in local basis.
-    int bx = 1, by = 1, bz = 1;    ///< big mesh ball. mohan add 2011-04-21
+    int bx = 0, by = 0, bz = 0;    ///< big mesh ball. 0: auto set bx/by/bz
     int nstream = 4;               ///< Number of streams in CUDA as per input data
 
     // ==============   #Parameters (6.Smearing) ===========================

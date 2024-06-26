@@ -23,9 +23,6 @@ void ReadInput::item_lcao()
                     para.input.init_wfc = "nao";
                     GlobalV::ofs_warning << "init_wfc is set to nao when basis_type is lcao_in_pw" << std::endl;
                 }
-                para.input.bx = 1;
-                para.input.by = 1;
-                para.input.bz = 1;
             }
             else if (para.input.basis_type == "lcao")
             {
@@ -282,6 +279,15 @@ void ReadInput::item_lcao()
                 ModuleBase::WARNING_QUIT("ReadInput", "bx should be no more than 10");
             }
         };
+        autosetfuncs.push_back([](Parameter& para) {
+            if (para.input.basis_type == "pw" || para.input.basis_type == "lcao_in_pw"
+                || para.input.calculation == "get_wf")
+            {
+                para.input.bx = 1;
+                para.input.by = 1;
+                para.input.bz = 1;
+            }
+        });
         this->add_item(item);
     }
     {
