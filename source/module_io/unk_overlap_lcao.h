@@ -1,10 +1,6 @@
 #ifndef UNKOVERLAP_LCAO
 #define UNKOVERLAP_LCAO
 
-#include <map>
-#include <set>
-#include <vector>
-
 #include "module_base/vector3.h"
 #include "module_base/ylm.h"
 #include "module_basis/module_ao/ORB_atomic_lm.h"
@@ -16,8 +12,12 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/center2_orb-orb11.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/center2_orb-orb21.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/center2_orb.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_wfc.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #include "module_hamilt_lcao/module_gint/grid_technique.h"
+
+#include <map>
+#include <set>
+#include <vector>
 
 class unkOverlap_lcao
 {
@@ -73,16 +73,11 @@ class unkOverlap_lcao
                                         const int ik_R,
                                         const ModuleBase::Vector3<double> dk,
                                         const int occ_bands,
-                                        Local_Orbital_wfc& lowf,
+                                        const Parallel_Orbitals& para_orb,
                                         const psi::Psi<std::complex<double>>* psi_in,
                                         const K_Vectors& kv);
 
     void test(const Grid_Technique& gt, std::complex<double>*** wfc_k_grid, const K_Vectors& kv);
 };
-
-
-
-
-
 
 #endif

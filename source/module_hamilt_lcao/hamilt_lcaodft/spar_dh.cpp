@@ -3,6 +3,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
 
 void sparse_format::cal_dH(LCAO_Matrix& lm,
+                           LCAO_HS_Arrays& HS_Arrays,
                            Grid_Driver& grid,
                            const TwoCenterBundle& two_center_bundle,
                            const int& current_spin,
@@ -72,7 +73,8 @@ void sparse_format::cal_dH(LCAO_Matrix& lm,
     delete[] fsr_dh.DHloc_fixedR_y;
     delete[] fsr_dh.DHloc_fixedR_z;
 
-    gint_k.cal_dvlocal_R_sparseMatrix(current_spin, sparse_thr, &lm, lm.ParaV, GlobalC::ucell, GlobalC::GridD);
+    gint_k
+        .cal_dvlocal_R_sparseMatrix(current_spin, sparse_thr, &lm, HS_Arrays, lm.ParaV, GlobalC::ucell, GlobalC::GridD);
 
     return;
 }

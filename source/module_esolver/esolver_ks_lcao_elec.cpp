@@ -177,7 +177,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
 #endif
     }
     // init density kernel and wave functions.
-    this->LOC.allocate_dm_wfc(this->GridT, this->pelec, this->LOWF, this->psi, this->kv, istep);
+    this->LOC.allocate_dm_wfc(this->GridT, this->pelec, this->psi, this->kv, istep);
 
 #ifdef __DEEPKS
     // for each ionic step, the overlap <psi|alpha> must be rebuilt
@@ -425,7 +425,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
     }
     else if (cal_type == "get_pchg")
     {
-        IState_Charge ISC(this->psi, this->LOC);
+        IState_Charge ISC(this->psi, &(this->orb_con.ParaV));
         ISC.begin(this->GG,
                   this->pelec->charge->rho,
                   this->pelec->wg,
@@ -460,7 +460,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                       this->pw_rho,
                       this->pw_wfc,
                       this->pw_big,
-                      this->LOWF,
+                      this->orb_con.ParaV,
                       this->GG,
                       INPUT.out_wfc_pw,
                       this->wf.out_wfc_r,
@@ -479,7 +479,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                       this->pw_rho,
                       this->pw_wfc,
                       this->pw_big,
-                      this->LOWF,
+                      this->orb_con.ParaV,
                       this->GK,
                       INPUT.out_wfc_pw,
                       this->wf.out_wfc_r,
@@ -721,7 +721,10 @@ void ESolver_KS_LCAO<TK, TR>::nscf(void)
     // add by jingan
     if (berryphase::berry_phase_flag && ModuleSymmetry::Symmetry::symm_flag != 1)
     {
-        berryphase bp(this->LOWF);
+        berryphase bp(this->LOC);
+        bp.lcao_init(
+            this->kv,
+            this->GridT); // additional step before calling macroscopic_polarization (why capitalize the function name?)
         bp.Macroscopic_polarization(this->pw_wfc->npwk_max, this->psi, this->pw_rho, this->pw_wfc, this->kv);
     }
 
