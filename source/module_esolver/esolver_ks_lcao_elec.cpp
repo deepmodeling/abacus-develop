@@ -730,7 +730,8 @@ void ESolver_KS_LCAO<TK, TR>::nscf(void)
         }
         else
         {
-            ModuleBase::WARNING_QUIT("ESolver_KS_LCAO<TK, TR>::nscf"," Please set symmetry to -1 when performing berry phase calculation! ");
+            ModuleBase::WARNING_QUIT("ESolver_KS_LCAO<TK, TR>::nscf",
+                                     " Please set symmetry to -1 when performing berry phase calculation! ");
         }
     }
 
