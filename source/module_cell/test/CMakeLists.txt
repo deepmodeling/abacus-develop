@@ -24,6 +24,7 @@ list(APPEND cell_simple_srcs
     ../read_pp_upf100.cpp
     ../read_pp_vwr.cpp
     ../read_pp_blps.cpp
+    ../check_structure.cpp
 )
 
 add_library(cell_info OBJECT ${cell_simple_srcs})

@@ -109,6 +109,5 @@ bool UnitCell::check_tau(void)const {return true;}
 bool UnitCell::if_atoms_can_move()const {return true;}
 bool UnitCell::if_cell_can_change()const {return true;}
 void UnitCell::setup(const std::string &latname_in, const int &ntype_in, const int &lmaxmax_in, const bool &init_vel_in, const std::string &fixed_axes_in) {}
-void UnitCell::check_structure(double factor) {}
 void UnitCell::cal_nelec(double& nelec) {}
 void UnitCell::compare_atom_labels(std::string label1, std::string label2) {}

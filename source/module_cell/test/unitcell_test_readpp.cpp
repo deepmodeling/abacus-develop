@@ -4,6 +4,7 @@
 #include "module_base/mathzone.h"
 #include "module_base/global_variable.h"
 #include "module_cell/unitcell.h"
+#include "module_cell/check_structure.h"
 #include <vector>
 #include <valarray>
 #ifdef __MPI
@@ -328,18 +329,21 @@ TEST_F(UcellDeathTest,CheckStructure)
 	EXPECT_FALSE(ucell->atoms[1].ncpp.has_so);
 	//trial 1
 	testing::internal::CaptureStdout();
-	EXPECT_NO_THROW(ucell->check_structure(0.2));
+	double factor = 0.2;
+	EXPECT_NO_THROW(Check_Structure::check_structure(*ucell, factor));
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("WARNING: Some atoms are too close!!!"));
 	//trial 2
 	testing::internal::CaptureStdout();
-	EXPECT_EXIT(ucell->check_structure(0.4),::testing::ExitedWithCode(0),"");
+	factor = 0.4;
+	EXPECT_EXIT(Check_Structure::check_structure(*ucell, factor),::testing::ExitedWithCode(0),"");
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("The structure is unreasonable!"));
 	//trial 3
-	ucell->atoms[0].ncpp.psd = "arbitrary";
+	ucell->atoms[0].label = "arbitrary";
 	testing::internal::CaptureStdout();
-	EXPECT_NO_THROW(ucell->check_structure(0.2));
+	factor = 0.2;
+	EXPECT_NO_THROW(Check_Structure::check_structure(*ucell, factor));
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("Notice: symbol 'arbitrary' is not an element symbol!!!! set the covalent radius to be 0."));
 }
