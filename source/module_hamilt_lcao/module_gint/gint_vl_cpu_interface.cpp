@@ -16,23 +16,20 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout)
     const double delta_r = this->gridt->dr_uniform;
     double* pvpR_thread = nullptr;
     hamilt::HContainer<double>* hRGint_thread = nullptr; 
-
-    if (!pvpR_alloc_flag)
-    {
-        ModuleBase::WARNING_QUIT("Gint_interface::cal_gint", "pvpR has not been allocated yet!");
-    }
-    else
-    {
-        ModuleBase::GlobalFunc::ZEROS(this->pvpR_reduced[inout->ispin], nnrg);
-    }
-
     if (!GlobalV::GAMMA_ONLY_LOCAL)
     {
+        if (!pvpR_alloc_flag)
+        {
+            ModuleBase::WARNING_QUIT("Gint_interface::cal_gint", "pvpR has not been allocated yet!");
+        }
+        else
+        {
+            ModuleBase::GlobalFunc::ZEROS(this->pvpR_reduced[inout->ispin], nnrg);
+        }
         pvpR_thread = new double[nnrg]();
         ModuleBase::GlobalFunc::ZEROS(pvpR_thread, nnrg);
     }
-
-    if (GlobalV::GAMMA_ONLY_LOCAL)
+    else
     {
         hRGint_thread = new hamilt::HContainer<double>(*this->hRGint);
     }
@@ -213,22 +210,20 @@ void Gint::cpu_vlocal_meta_interface(Gint_inout* inout)
     const double delta_r = this->gridt->dr_uniform;
     double* pvpR_thread = nullptr;
     hamilt::HContainer<double>* hRGint_thread = nullptr; 
-    if (!pvpR_alloc_flag)
-    {
-        ModuleBase::WARNING_QUIT("Gint_interface::cal_gint", "pvpR has not been allocated yet!");
-    }
-    else
-    {
-        ModuleBase::GlobalFunc::ZEROS(this->pvpR_reduced[inout->ispin], nnrg);
-    }
-
     if (!GlobalV::GAMMA_ONLY_LOCAL)
     {
+        if (!pvpR_alloc_flag)
+        {
+            ModuleBase::WARNING_QUIT("Gint_interface::cal_gint", "pvpR has not been allocated yet!");
+        }
+        else
+        {
+            ModuleBase::GlobalFunc::ZEROS(this->pvpR_reduced[inout->ispin], nnrg);
+        }
         pvpR_thread = new double[nnrg]();
         ModuleBase::GlobalFunc::ZEROS(pvpR_thread, nnrg);
     }
-
-    if (GlobalV::GAMMA_ONLY_LOCAL)
+    else
     {
         hRGint_thread = new hamilt::HContainer<double>(*this->hRGint);
     }

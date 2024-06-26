@@ -35,8 +35,7 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
                           const UnitCell& ucell)
 { 
     int dev_id = base_device::information::set_device_by_rank();
-
-    checkCuda(cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync));
+    // checkCuda(cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync));
 
     const int nbzp = gridt.nbzp;
     const int lgd = gridt.lgd;

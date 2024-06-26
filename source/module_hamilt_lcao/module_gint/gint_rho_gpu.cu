@@ -18,7 +18,7 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double>* dm,
                         double* rho)
 {
     int dev_id = base_device::information::set_device_by_rank();
-    checkCuda(cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync));
+    // checkCuda(cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync));
 
     const int nbzp = gridt.nbzp;
     const int nczp =nbzp * gridt.bz;
