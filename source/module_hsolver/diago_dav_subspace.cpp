@@ -134,9 +134,7 @@ int Diago_DavSubspace<T, Device>::diag_once(const HPsiFunc& hpsi_func,
                       this->is_subspace);
 
     for (size_t m = 0; m < this->n_band; m++)
-    {
         eigenvalue_in_hsolver[m] = eigenvalue_iter[m];
-    }
 
     ModuleBase::timer::tick("Diago_DavSubspace", "first");
 
