@@ -100,8 +100,8 @@ check_out(){
     #------------------------------------------------------
     # check every 'key' word
     #------------------------------------------------------
-    ifail=0
-    ifatal=0
+    ifail=0  # if all properties have no warning. 0: no warning, 1: warning
+    ifatal=0 # if all properties have no fatal error. 0: no fatal error, 1: fatal error
     for key in $properties; do
     
         if [ $key == "totaltimeref" ]; then
