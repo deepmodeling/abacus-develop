@@ -17,8 +17,8 @@
 template <typename FPTYPE, typename Device = base_device::DEVICE_CPU>
 class Forces
 {
-public:
-    template<typename T>
+  public:
+    template <typename T>
     friend class Force_Stress_LCAO;
     /* This routine is a driver routine which compute the forces
      * acting on the atoms, the complete forces in plane waves
@@ -30,7 +30,7 @@ public:
      * (5) cal_force_us: contribution due to US pseudopotential.
      * (6) cal_scc: contributino due to incomplete SCF calculation.
      */
-    Forces(const int nat_in):nat(nat_in){};
+    Forces(const int nat_in) : nat(nat_in){};
     ~Forces(){};
 
     void cal_force(ModuleBase::matrix& force,
@@ -49,11 +49,25 @@ public:
     void cal_force_loc(ModuleBase::matrix& forcelc, ModulePW::PW_Basis* rho_basis, const Charge* const chr);
     void cal_force_ew(ModuleBase::matrix& forceion, ModulePW::PW_Basis* rho_basis, const Structure_Factor* p_sf);
     void cal_force_cc(ModuleBase::matrix& forcecc, ModulePW::PW_Basis* rho_basis, const Charge* const chr);
+
+    /**
+     * @brief This routine computes the atomic force of non-local pseudopotential
+     *    F^{NL}_i = \sum_{n,k}f_{nk}\sum_I \sum_{lm,l'm'}D_{l,l'}^{I} [
+     *               \sum_G \langle c_{nk}(\mathbf{G+K})|\beta_{lm}^I(\mathbf{G+K})\rangle *
+     *               \sum_{G'}\langle \beta_{lm}^I(\mathbf{G+K})*(-j)^l(\mathbf{G+K})_i |c_{nk}(\mathbf{G+K})\rangle ]
+     *    there would be three parts in the above equation:
+     *    (1) sum over becp and dbecp with D_{l,l'}^{I} ----- first line in the above equation
+     *    (2) calculate becp = <psi | beta> ----- second line in the above equation
+     *    (3) calculate dbecp = <psi | \nabla beta> ----- third line in the above equation
+     */
     void cal_force_nl(ModuleBase::matrix& forcenl,
                       const ModuleBase::matrix& wg,
                       const ModuleBase::matrix& ekb,
-                      K_Vectors* p_kv,
-                      ModulePW::PW_Basis_K* psi_basis,
+                      const K_Vectors* p_kv,
+                      const ModulePW::PW_Basis_K* psi_basis,
+                      const Structure_Factor* p_sf,
+                      pseudopot_cell_vnl* nlpp_in,
+                      const UnitCell& ucell_in,
                       const psi::Psi<std::complex<FPTYPE>, Device>* psi_in = nullptr);
     void cal_force_scc(ModuleBase::matrix& forcescc,
                        ModulePW::PW_Basis* rho_basis,
@@ -64,14 +78,13 @@ public:
                       pseudopot_cell_vnl* ppcell_in,
                       const elecstate::ElecState& elec,
                       const UnitCell& ucell);
+    void cal_ylm(int lmax, int npw, const FPTYPE* gk_in, FPTYPE* ylm);
 
   private:
     Device* ctx = {};
     base_device::DEVICE_CPU* cpu_ctx = {};
     base_device::AbacusDevice_t device = {};
     using gemm_op = hsolver::gemm_op<std::complex<FPTYPE>, Device>;
-    using cal_vkb1_nl_op = hamilt::cal_vkb1_nl_op<FPTYPE, Device>;
-    using cal_force_nl_op = hamilt::cal_force_nl_op<FPTYPE, Device>;
 
     using resmem_complex_op = base_device::memory::resize_memory_op<std::complex<FPTYPE>, Device>;
     using resmem_complex_h_op = base_device::memory::resize_memory_op<std::complex<FPTYPE>, base_device::DEVICE_CPU>;
