@@ -25,7 +25,6 @@ void parse_args(int argc, char** argv)
         }
         else if (arg == "--check-input")
         {
-            INPUT.check_input = true;
             ModuleIO::ReadInput::check_mode = true;
         }
         else

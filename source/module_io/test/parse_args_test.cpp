@@ -1,9 +1,9 @@
 #include "gtest/gtest.h"
 #include "module_io/parse_args.h"
 #include "version.h"
-#include "module_io/input.h"
+#include "module_io/read_input.h"
 
-Input INPUT;
+bool ModuleIO::ReadInput::check_mode = false;
 
 TEST(ParseArgsTest, OutVersionTest)
 {
@@ -58,5 +58,5 @@ TEST(ParseArgsTest, CheckInput)
     char* argv[] = {arg0, arg1};
     int argc = 2;
     ModuleIO::parse_args(argc, argv);
-    EXPECT_TRUE(INPUT.check_input);
+    EXPECT_TRUE(ModuleIO::ReadInput::check_mode);
 }
