@@ -40,15 +40,10 @@ void Gint::cal_gint(Gint_inout* inout)
     const int max_size = this->gridt->max_atom;
     const int LD_pool = max_size * ucell.nwmax;
     const int lgd = this->gridt->lgd;
-    if (max_size == 0)
+    // In multi-process environments, 
+    // some processes may not be allocated any data.
+    if (max_size > 0)
     {
-        ModuleBase::WARNING_QUIT("Gint_interface::cal_gint", "max_size equal to 0!");
-    }
-    if (lgd <= 0)
-    {
-        ModuleBase::WARNING_QUIT("Gint_interface::cal_gint", "lgd less than 0!");
-    }
-
 #ifdef __CUDA
     if (GlobalV::device_flag == "gpu" && GlobalV::GAMMA_ONLY_LOCAL
         && (inout->job == Gint_Tools::job_type::vlocal || 
@@ -75,36 +70,41 @@ void Gint::cal_gint(Gint_inout* inout)
         const int mkl_threads = mkl_get_max_threads();
         mkl_set_num_threads(mkl_threads);
 #endif
-        if (inout->job == Gint_Tools::job_type::vlocal)
+#ifdef _OPENMP
+#pragma omp parallel
+#endif
         {
-            cpu_vlocal_interface(inout);
-        }
-        else if (inout->job == Gint_Tools::job_type::dvlocal)
-        {
-            cpu_dvlocal_interface(inout);
-        }
-        else if (inout->job == Gint_Tools::job_type::vlocal_meta)
-        {
-            cpu_vlocal_meta_interface(inout);
-        }
-        else if (inout->job == Gint_Tools::job_type::rho)
-        {
-            cpu_rho_interface(inout);
-        }
-        else if (inout->job == Gint_Tools::job_type::force)
-        {
-            cpu_force_interface(inout);
-        }
-        else if (inout->job == Gint_Tools::job_type::force_meta)
-        {
-            cpu_force_meta_interface(inout);
+            if (inout->job == Gint_Tools::job_type::vlocal)
+            {
+                cpu_vlocal_interface(inout);
+            }
+            else if (inout->job == Gint_Tools::job_type::dvlocal)
+            {
+                cpu_dvlocal_interface(inout);
+            }
+            else if (inout->job == Gint_Tools::job_type::vlocal_meta)
+            {
+                cpu_vlocal_meta_interface(inout);
+            }
+            else if (inout->job == Gint_Tools::job_type::rho)
+            {
+                cpu_rho_interface(inout);
+            }
+            else if (inout->job == Gint_Tools::job_type::force)
+            {
+                cpu_force_interface(inout);
+            }
+            else if (inout->job == Gint_Tools::job_type::force_meta)
+            {
+                cpu_force_meta_interface(inout);
+            }
         }
     }
     ModuleBase::timer::tick("Gint_interface", "cal_gint");
 
     return;
+    }
 }
-
 void Gint::prep_grid(const Grid_Technique& gt,
                      const int& nbx_in,
                      const int& nby_in,

@@ -173,16 +173,16 @@ void Gint::cpu_force_meta_interface(Gint_inout* inout)
     delete[] vkdr3;
     }
 #pragma omp critical(gint)
-{
-    if (inout->isforce)
     {
-        inout->fvl_dphi[0] += fvl_dphi_thread;
+        if (inout->isforce)
+        {
+            inout->fvl_dphi[0] += fvl_dphi_thread;
+        }
+        if (inout->isstress)
+        {
+            inout->svl_dphi[0] += svl_dphi_thread;
+        }
     }
-    if (inout->isstress)
-    {
-        inout->svl_dphi[0] += svl_dphi_thread;
-    }
-}
 #else
   for (int grid_index = 0; grid_index < this->nbxx; grid_index++)
     {
