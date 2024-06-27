@@ -49,8 +49,11 @@ void write_dmr_csr(std::string& fname, hamilt::HContainer<double>* dm_serial, co
     ofs.close();
 }
 
-void write_dmr(const std::vector<hamilt::HContainer<double>*> dmr, const bool out_csr, const bool out_npz,
-               const bool append, const int istep)
+void write_dmr(const std::vector<hamilt::HContainer<double>*> dmr,
+               const bool out_csr,
+               const bool out_npz,
+               const bool append,
+               const int istep)
 {
     if (!out_csr && !out_npz)
     {
@@ -60,7 +63,7 @@ void write_dmr(const std::vector<hamilt::HContainer<double>*> dmr, const bool ou
 
     for (int ispin = 0; ispin < dmr.size(); ispin++)
     {
-        if(out_csr)
+        if (out_csr)
         {
             int nbasis = dmr[ispin]->get_nbasis();
             // gather the parallel matrix to serial matrix
@@ -80,9 +83,8 @@ void write_dmr(const std::vector<hamilt::HContainer<double>*> dmr, const bool ou
             }
         }
 
-        if(out_npz)
+        if (out_npz)
         {
-            
         }
     }
 }
