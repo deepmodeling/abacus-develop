@@ -414,9 +414,9 @@ class HContainer
      * @brief get number of basis in each H matrix
      * @return int
      */
-    const int get_nbasis() const
+    int get_nbasis() const
     {
-        return paraV->get_row_size();
+        return paraV->get_global_row_size();
     }
 
   private:
