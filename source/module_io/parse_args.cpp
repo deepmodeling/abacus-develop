@@ -1,9 +1,11 @@
 #include "parse_args.h"
-#include <iostream>
-#include <cstdlib>
-#include "version.h"
+
 #include "module_io/input.h"
 #include "module_io/read_input.h"
+#include "version.h"
+
+#include <cstdlib>
+#include <iostream>
 
 namespace ModuleIO
 {
@@ -35,4 +37,4 @@ void parse_args(int argc, char** argv)
     }
 }
 
-}
+} // namespace ModuleIO

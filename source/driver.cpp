@@ -66,7 +66,7 @@ void Driver::print_start_info()
 #else
     const char* commit = "unknown";
 #endif
-    time_t time_now = time(NULL);
+    time_t time_now = time(nullptr);
 
     INPUT.start_time = time_now;
     PARAM.set_start_time(time_now);

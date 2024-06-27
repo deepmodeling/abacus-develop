@@ -56,13 +56,13 @@ TEST_F(InputTest, Item_test)
         EXPECT_TRUE(std::remove("testINPUT") == 0);
         readinput.clear();
     }
-    { //kspacing
+    { // kspacing
         Parameter param;
         std::string word = "kspacing";
-        auto it
-            = std::find_if(readinput.input_lists.begin(),
-                           readinput.input_lists.end(),
-                           [&word](const std::pair<std::string, ModuleIO::Input_Item>& item) { return item.first == word; });
+        auto it = std::find_if(
+            readinput.input_lists.begin(),
+            readinput.input_lists.end(),
+            [&word](const std::pair<std::string, ModuleIO::Input_Item>& item) { return item.first == word; });
         if (it != readinput.input_lists.end())
         {
             param.input.kspacing = {-0.1, 0.1, 0.1};

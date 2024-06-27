@@ -22,11 +22,10 @@ class Parameter
     // We can only read the value of other parameters, but cannot modify it.
     const System_para& globalV() const;
 
-    // Set the rank & nproc 
+    // Set the rank & nproc
     void set_rank_nproc(const int& myrank, const int& nproc);
     // Set the start time
     void set_start_time(const std::time_t& start_time);
-
 
   private:
     // Only ReadInput can modify the value of Parameter.
@@ -39,12 +38,12 @@ class Parameter
 
 extern Parameter PARAM;
 
-//temperarily put here
+// temperarily put here
 namespace GlobalV
 {
-  extern int NPROC;
-  extern int MY_RANK;
-  extern std::ofstream ofs_running;
-  extern std::ofstream ofs_warning;
-}
+extern int NPROC;
+extern int MY_RANK;
+extern std::ofstream ofs_running;
+extern std::ofstream ofs_warning;
+} // namespace GlobalV
 #endif

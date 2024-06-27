@@ -16,7 +16,7 @@ class Driver
   private:
     /**
      * @brief Print the start information.
-     * 
+     *
      */
     void print_start_info();
     /**

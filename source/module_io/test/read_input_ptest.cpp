@@ -141,7 +141,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.get().ndx, 0);
     EXPECT_EQ(param.get().ndy, 0);
     EXPECT_EQ(param.get().ndz, 0);
-    EXPECT_EQ(param.get().diago_proc, std::min(GlobalV::NPROC,4));
+    EXPECT_EQ(param.get().diago_proc, std::min(GlobalV::NPROC, 4));
     EXPECT_EQ(param.get().pw_diag_nmax, 50);
     EXPECT_EQ(param.get().diago_cg_prec, 1);
     EXPECT_EQ(param.get().pw_diag_ndim, 4);
