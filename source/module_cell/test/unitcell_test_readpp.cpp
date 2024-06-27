@@ -324,35 +324,37 @@ TEST_F(UcellTest, CalNwfc2)
 
 TEST_F(UcellDeathTest, CheckStructure)
 {
-	ucell->read_cell_pseudopots(pp_dir,ofs);
-	EXPECT_FALSE(ucell->atoms[0].ncpp.has_so);
-	EXPECT_FALSE(ucell->atoms[1].ncpp.has_so);
-	//trial 1
-	testing::internal::CaptureStdout();
-	double factor = 0.2;
-	EXPECT_NO_THROW(Check_Atomic_Stru::check_atomic_stru(*ucell, factor));
-	output = testing::internal::GetCapturedStdout();
-	EXPECT_THAT(output,testing::HasSubstr("WARNING: Some atoms are too close!!!"));
-	//trial 2
-	testing::internal::CaptureStdout();
-	factor = 0.4;
-	EXPECT_EXIT(Check_Atomic_Stru::check_atomic_stru(*ucell, factor),::testing::ExitedWithCode(0),"");
-	output = testing::internal::GetCapturedStdout();
-	EXPECT_THAT(output,testing::HasSubstr("The structure is unreasonable!"));
-	//trial 3
-	ucell->atoms[0].label = "arbitrary";
-	testing::internal::CaptureStdout();
-	factor = 0.2;
-	EXPECT_NO_THROW(Check_Atomic_Stru::check_atomic_stru(*ucell, factor));
-	output = testing::internal::GetCapturedStdout();
-	EXPECT_THAT(output,testing::HasSubstr("Notice: symbol 'arbitrary' is not an element symbol!!!! set the covalent radius to be 0."));
-	//trial 4
-	ucell->atoms[0].label = "Fe1";
-	testing::internal::CaptureStdout();
-	factor = 0.2;
-	EXPECT_NO_THROW(Check_Atomic_Stru::check_atomic_stru(*ucell, factor));
-	output = testing::internal::GetCapturedStdout();
-	EXPECT_THAT(output,testing::HasSubstr("WARNING: Some atoms are too close!!!"));
+    ucell->read_cell_pseudopots(pp_dir, ofs);
+    EXPECT_FALSE(ucell->atoms[0].ncpp.has_so);
+    EXPECT_FALSE(ucell->atoms[1].ncpp.has_so);
+    // trial 1
+    testing::internal::CaptureStdout();
+    double factor = 0.2;
+    EXPECT_NO_THROW(Check_Atomic_Stru::check_atomic_stru(*ucell, factor));
+    output = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output, testing::HasSubstr("WARNING: Some atoms are too close!!!"));
+    // trial 2
+    testing::internal::CaptureStdout();
+    factor = 0.4;
+    EXPECT_EXIT(Check_Atomic_Stru::check_atomic_stru(*ucell, factor), ::testing::ExitedWithCode(0), "");
+    output = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output, testing::HasSubstr("The structure is unreasonable!"));
+    // trial 3
+    ucell->atoms[0].label = "arbitrary";
+    testing::internal::CaptureStdout();
+    factor = 0.2;
+    EXPECT_NO_THROW(Check_Atomic_Stru::check_atomic_stru(*ucell, factor));
+    output = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(
+        output,
+        testing::HasSubstr("Notice: symbol 'arbitrary' is not an element symbol!!!! set the covalent radius to be 0."));
+    // trial 4
+    ucell->atoms[0].label = "Fe1";
+    testing::internal::CaptureStdout();
+    factor = 0.2;
+    EXPECT_NO_THROW(Check_Atomic_Stru::check_atomic_stru(*ucell, factor));
+    output = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output, testing::HasSubstr("WARNING: Some atoms are too close!!!"));
 }
 
 TEST_F(UcellDeathTest, ReadPseudoWarning1)

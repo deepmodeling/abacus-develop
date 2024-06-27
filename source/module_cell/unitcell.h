@@ -218,7 +218,7 @@ class UnitCell
     void update_vel(const ModuleBase::Vector3<double>* vel_in);
     void periodic_boundary_adjustment();
     void bcast_atoms_tau();
-    bool judge_big_cell(void) const;
+    bool judge_big_cell() const;
 
     void update_stress(ModuleBase::matrix& scs); // updates stress
     void update_force(ModuleBase::matrix& fcs);  // updates force in Atom
@@ -231,11 +231,11 @@ class UnitCell
     std::string descriptor_file; // filenames of descriptor_file, liuyu add 2023-04-06
 
 #ifdef __MPI
-    void bcast_unitcell(void);
-    void bcast_unitcell2(void);
+    void bcast_unitcell();
+    void bcast_unitcell2();
 #endif
 
-    void set_iat2itia(void);
+    void set_iat2itia();
 
     void setup_cell(const std::string& fn, std::ofstream& log);
 
@@ -257,7 +257,7 @@ class UnitCell
 
     void read_pseudo(std::ofstream& ofs);
     int find_type(const std::string& label);
-    void print_tau(void) const;
+    void print_tau() const;
     /**
      * @brief UnitCell class is too heavy, this function would be moved elsewhere. Print STRU file respect to given
      * setting
@@ -279,7 +279,7 @@ class UnitCell
                          const bool& orb = false,
                          const bool& dpks_desc = false,
                          const int& iproc = 0) const;
-    void check_dtau(void);
+    void check_dtau();
     void setup_cell_after_vc(std::ofstream& log); // LiuXh add 20180515
 
     // for constrained vc-relaxation where type of lattice
@@ -298,7 +298,7 @@ class UnitCell
     void cal_meshx();
     void cal_natomwfc(std::ofstream& log);
     void print_unitcell_pseudo(const std::string& fn);
-    bool check_tau(void) const; // mohan add 2011-03-03
+    bool check_tau() const; // mohan add 2011-03-03
     bool if_atoms_can_move() const;
     bool if_cell_can_change() const;
     void setup(const std::string& latname_in,
