@@ -89,6 +89,10 @@ void Gint::cal_gint(Gint_inout* inout)
                 {
                     cpu_rho_interface(inout);
                 }
+                else if (inout->job == Gint_Tools::job_type::tau)
+                {
+                    cpu_tau_interface(inout);
+                }
                 else if (inout->job == Gint_Tools::job_type::force)
                 {
                     cpu_force_interface(inout);
