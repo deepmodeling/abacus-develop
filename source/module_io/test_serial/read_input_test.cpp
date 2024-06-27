@@ -77,7 +77,8 @@ TEST_F(InputTest, Default)
         emptyfile << "INPUT_PARAMETERS";
         emptyfile.close();
         Parameter param;
-        readinput.readin_parameters(param, "./empty_INPUT", "./my_INPUT1");
+        readinput.read_parameters(param, "./empty_INPUT");
+        readinput.write_parameters(param, "./my_INPUT1");
         EXPECT_TRUE(compare_two_files("./my_INPUT1", "./support/INPUT_pw.ref"));
         EXPECT_TRUE(std::remove("./empty_INPUT") == 0);
         EXPECT_TRUE(std::remove("./my_INPUT1") == 0);
@@ -89,7 +90,8 @@ TEST_F(InputTest, Default)
         emptyfile << "basis_type           lcao";
         emptyfile.close();
         Parameter param;
-        readinput.readin_parameters(param, "./empty_INPUT", "./my_INPUT2");
+        readinput.read_parameters(param, "./empty_INPUT");
+        readinput.write_parameters(param, "./my_INPUT2");
         EXPECT_TRUE(compare_two_files("./my_INPUT2", "./support/INPUT_lcao.ref"));
         EXPECT_TRUE(std::remove("./empty_INPUT") == 0);
         EXPECT_TRUE(std::remove("./my_INPUT2") == 0);
@@ -103,14 +105,16 @@ TEST_F(InputTest, Read)
     readinput.check_ntype_flag = false;
     { // PW
         Parameter param;
-        readinput.readin_parameters(param, "./support/INPUT_pw.ref", "./my_INPUT3");
+        readinput.read_parameters(param, "./support/INPUT_pw.ref");
+        readinput.write_parameters(param, "./my_INPUT3");
         EXPECT_TRUE(compare_two_files("./my_INPUT3", "./support/INPUT_pw.ref"));
         EXPECT_TRUE(std::remove("./my_INPUT3") == 0);
         readinput.clear();
     }
     { // LCAO
         Parameter param;
-        readinput.readin_parameters(param, "./support/INPUT_lcao.ref", "./my_INPUT4");
+        readinput.read_parameters(param, "./support/INPUT_lcao.ref");
+        readinput.write_parameters(param, "./my_INPUT4");
         EXPECT_TRUE(compare_two_files("./my_INPUT4", "./support/INPUT_lcao.ref"));
         EXPECT_TRUE(std::remove("./my_INPUT4") == 0);
         readinput.clear();
@@ -124,7 +128,7 @@ TEST_F(InputTest, Check)
     readinput.check_ntype_flag = false;
     Parameter param;
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(readinput.readin_parameters(param, "./support/INPUT_pw.ref"), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(readinput.read_parameters(param, "./support/INPUT_pw.ref"), ::testing::ExitedWithCode(0), "");
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("INPUT parameters have been successfully checked!"));
 }

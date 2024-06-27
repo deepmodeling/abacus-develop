@@ -1,5 +1,6 @@
 list(APPEND objects
     input.cpp
+    input_conv_tmp.cpp
     input_conv.cpp
     bessel_basis.cpp
     cal_test.cpp
@@ -19,7 +20,6 @@ list(APPEND objects
     restart.cpp
     binstream.cpp
     write_wfc_pw.cpp
-    write_input.cpp
     write_cube.cpp
     write_rho.cpp
     write_pot.cpp

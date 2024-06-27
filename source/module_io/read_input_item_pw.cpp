@@ -286,16 +286,16 @@ void ReadInput::item_pw()
         Input_Item item("read_file_dir");
         item.annotation = "directory of files for reading";
         read_sync_string(read_file_dir);
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.read_file_dir != "auto")
+        autosetfuncs.push_back([](Parameter& para) {
+            if (para.input.read_file_dir == "auto")
             {
-                const std::string ss = "test -d " + para.input.read_file_dir;
-                if (system(ss.c_str()))
-                {
-                    ModuleBase::WARNING_QUIT("ReadInput", "please set right files directory for reading in.");
-                }
+                para.input.sup.readin_dir = "OUT." + para.input.suffix + "/";
             }
-        };
+            else
+            {
+                para.input.sup.readin_dir = para.input.read_file_dir + '/';
+            }
+        });
         this->add_item(item);
     }
     {

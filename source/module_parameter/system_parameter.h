@@ -1,8 +1,9 @@
-#ifndef OTHER_PARAMETER_H
-#define OTHER_PARAMETER_H
+#ifndef SYSTEM_PARAMETER_H
+#define SYSTEM_PARAMETER_H
 #include <string>
+#include <ctime>
 
-struct Other_para
+struct System_para
 {
     // ---------------------------------------------------------------
     // --------------       Other  Parameters         ----------------
@@ -12,5 +13,6 @@ struct Other_para
     int mypool = 0;
     int npool = 1;
     int nproc_in_pool = 1;
+    std::time_t start_time = 0;
 };
 #endif

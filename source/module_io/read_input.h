@@ -32,10 +32,23 @@ class ReadInput
      *
      * @param param parameters of ABACUS
      * @param filename_in read INPUT file name
-     * @param filename_out write output INPUT file name
      */
-    void readin_parameters(Parameter& param, const std::string& filename_in, const std::string& filename_out = "");
+    void read_parameters(Parameter& param, const std::string& filename_in);
 
+    /**
+     * @brief Create a directory for output files
+     * 
+     * @param param parameters of ABACUS
+     */
+    void create_directory(const Parameter& param);
+
+    /**
+     * @brief write out parameters to output file
+     *
+     * @param param parameters of ABACUS
+     * @param filename_out write output file name
+     */
+    void write_parameters(const Parameter& param, const std::string& filename_out);
     static bool check_mode;
     bool check_ntype_flag = true; ///< check ntype from STRU file
 

@@ -19,11 +19,6 @@ class Input
         delete[] hubbard_u;
         delete[] orbital_corr;
     }
-    void Init(const std::string &fn);
-
-    void Print(const std::string &fn) const;
-
-    void close_log(void) const;
 
     //==========================================================
     // directories of files
@@ -223,7 +218,6 @@ class Input
     //==========================================================
     // occupation
     //==========================================================
-    std::string occupations; // "fixed","smearing","tetrahedra","from_input"
 
     std::string smearing_method; // "gaussian",
                                  // "mp","methfessel-paxton"
@@ -650,6 +644,7 @@ class Input
 
     bool check_input = false;
     
+    std::time_t start_time;
     std::time_t get_start_time(void) const
     {
         return start_time;
@@ -667,7 +662,7 @@ class Input
     //==========================================================
 
     // start time
-    std::time_t start_time;
+    
     bool Read(const std::string &fn);
 
     void Default(void);

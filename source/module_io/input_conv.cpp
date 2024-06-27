@@ -708,7 +708,8 @@ void Input_Conv::Convert(void)
     //----------------------------------------------------------
     // occupation (3/3)
     //----------------------------------------------------------
-    Occupy::decision(INPUT.occupations, INPUT.smearing_method, INPUT.smearing_sigma);
+    std::string occupations = "smearing";
+    Occupy::decision(occupations, INPUT.smearing_method, INPUT.smearing_sigma);
 
     //----------------------------------------------------------
     // iteration

@@ -1,7 +1,7 @@
 #ifndef PARAMETER_H
 #define PARAMETER_H
 #include "input_parameter.h"
-#include "other_parameter.h"
+#include "system_parameter.h"
 namespace ModuleIO
 {
 class ReadInput;
@@ -20,15 +20,21 @@ class Parameter
     // We can only read the value of mdp, but cannot modify it.
     const MD_para& get_mdp() const;
     // We can only read the value of other parameters, but cannot modify it.
-    const Other_para& globalV() const;
+    const System_para& globalV() const;
+
+    // Set the rank & nproc 
+    void set_rank_nproc(const int& myrank, const int& nproc);
+    // Set the start time
+    void set_start_time(const std::time_t& start_time);
+
 
   private:
     // Only ReadInput can modify the value of Parameter.
     friend class ModuleIO::ReadInput;
     // INPUT parameters
     Input_para input;
-    // Other parameters
-    Other_para gv;
+    // System parameters
+    System_para gv;
 };
 
 extern Parameter PARAM;

@@ -36,7 +36,7 @@ TEST_F(InputTest, Item_test)
         Parameter param;
 
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(readinput.readin_parameters(param, "testINPUT"), ::testing::ExitedWithCode(0), "");
+        EXPECT_EXIT(readinput.read_parameters(param, "testINPUT"), ::testing::ExitedWithCode(0), "");
         std::string output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("esolver_type should be ksdft, sdft, ofdft, tddft, lj or dp."));
         EXPECT_TRUE(std::remove("testINPUT") == 0);
@@ -50,7 +50,7 @@ TEST_F(InputTest, Item_test)
         Parameter param;
 
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(readinput.readin_parameters(param, "testINPUT"), ::testing::ExitedWithCode(0), "");
+        EXPECT_EXIT(readinput.read_parameters(param, "testINPUT"), ::testing::ExitedWithCode(0), "");
         std::string output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("nspin should be 1, 2 or 4."));
         EXPECT_TRUE(std::remove("testINPUT") == 0);

@@ -1,5 +1,6 @@
 #include "read_input.h"
 
+#include "module_base/global_file.h"
 #include "module_base/global_function.h"
 #include "module_base/tool_quit.h"
 #include "module_base/tool_title.h"
@@ -96,7 +97,7 @@ ReadInput::ReadInput(const int& rank)
     this->item_others();
 }
 
-void ReadInput::readin_parameters(Parameter& param, const std::string& filename_in, const std::string& filename_out)
+void ReadInput::read_parameters(Parameter& param, const std::string& filename_in)
 {
     // 1. only rank 0 read the input file
     if (this->rank == 0)
@@ -112,16 +113,61 @@ void ReadInput::readin_parameters(Parameter& param, const std::string& filename_
         return;
     }
 
-    // 2. write the input file
-    if (filename_out != "")
-    {
-        this->write_txt_input(param, filename_out);
-    }
-
-    // 3. broadcast the parameters
+    // 2. broadcast the parameters
     for (auto& bcastfunc: this->bcastfuncs)
     {
         bcastfunc(param);
+    }
+}
+
+void ReadInput::create_directory(const Parameter& param)
+{
+    ModuleBase::TITLE("ReadInput", "create_directory");
+    if(this->rank != 0)
+    {
+        return;
+    }
+    // mohan move forward 2011-02-26
+    //----------------------------------------------------------
+    // OTHRE CLASS MEMBER FUNCTION :
+    // NAME : Run::make_dir( dir name : OUT.suffix)
+    //----------------------------------------------------------
+    bool out_dir = false;
+    if (!param.input.out_app_flag
+        && (param.input.out_mat_hs2 || param.input.out_mat_r || param.input.out_mat_t || param.input.out_mat_dh))
+    {
+        out_dir = true;
+    }
+    ModuleBase::Global_File::make_dir_out(param.input.suffix,
+                                          param.input.calculation,
+                                          out_dir,
+                                          this->rank,
+                                          param.input.mdp.md_restart,
+                                          param.input.out_alllog); // xiaohui add 2013-09-01
+
+    GlobalV::ofs_running << std::setiosflags(std::ios::left);
+    std::cout << std::setiosflags(std::ios::left);
+
+    GlobalV::ofs_running << "\n READING GENERAL INFORMATION" << std::endl;
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "global_out_dir", GlobalV::global_out_dir);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "global_in_card", GlobalV::global_in_card);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "pseudo_dir", GlobalV::global_pseudo_dir);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "orbital_dir", GlobalV::global_orbital_dir);
+
+    const std::string ss = "test -d " + param.get().read_file_dir;
+    if (system(ss.c_str()))
+    {
+        ModuleBase::WARNING_QUIT("ReadInput", "please set right files directory for reading in.");
+    }
+
+    return;
+}
+
+void ReadInput::write_parameters(const Parameter& param, const std::string& filename_out)
+{
+    if (this->rank == 0)
+    {
+        this->write_txt_input(param, filename_out);
     }
 }
 
@@ -243,6 +289,8 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
         checkvalue_item->checkvalue(*checkvalue_item, param);
     }
 }
+
+
 
 void ReadInput::write_txt_input(const Parameter& param, const std::string& filename)
 {

@@ -7,18 +7,6 @@ remove_definitions(-DUSE_PAW)
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES INPUTs DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
-AddTest(
-  TARGET io_input_test
-  LIBS ${math_libs} base device
-  SOURCES input_test.cpp ../input.cpp
-)
-
-AddTest(
-  TARGET io_input_test_para
-  LIBS ${math_libs} base device
-  SOURCES input_test_para.cpp ../input.cpp
-)
-
 add_test(NAME io_input_test_para_4
       COMMAND mpirun -np 4 ./io_input_test_para
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
@@ -82,12 +70,6 @@ AddTest(
   TARGET io_print_info
   LIBS ${math_libs} base device symmetry cell_info
   SOURCES print_info_test.cpp ../print_info.cpp ../input.cpp ../output.cpp ../../module_cell/klist.cpp ../../module_cell/parallel_kpoints.cpp
-)
-
-AddTest(
-  TARGET io_write_input_test
-  LIBS ${math_libs} base device
-  SOURCES write_input_test.cpp ../write_input.cpp ../input.cpp
 )
 
 AddTest(
