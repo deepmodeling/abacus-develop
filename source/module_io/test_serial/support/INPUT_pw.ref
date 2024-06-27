@@ -75,7 +75,7 @@ out_band                       0 8  #output energy and band structure (with prec
 out_proj_band                  0 #output projected band structure
 restart_save                   0 #print to disk every step for restart
 restart_load                   0 #restart from disk
-read_file_dir                  auto #directory of files for reading
+read_file_dir                  OUT.ABACUS/ #directory of files for reading
 nx                             0 #number of points along x axis for FFT grid
 ny                             0 #number of points along y axis for FFT grid
 nz                             0 #number of points along z axis for FFT grid

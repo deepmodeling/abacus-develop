@@ -39,7 +39,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.get().kpoint_file, "KPT");
     EXPECT_EQ(param.get().pseudo_dir, "../../PP_ORB/");
     EXPECT_EQ(param.get().orbital_dir, "../../PP_ORB/");
-    EXPECT_EQ(param.get().read_file_dir, "auto");
+    EXPECT_EQ(param.get().read_file_dir, "OUT.autotest/");
     EXPECT_EQ(param.get().wannier_card, "none");
     EXPECT_EQ(param.get().latname, "none");
     EXPECT_EQ(param.get().calculation, "scf");

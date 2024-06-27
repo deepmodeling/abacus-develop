@@ -25,7 +25,6 @@ struct Input_supplement
     bool double_grid = false;           ///< true if "ndx,ndy,ndz" is larger than "nx,ny,nz"
     double uramping = -10.0 / 13.6;     /// U-Ramping method (Ry)
     std::vector<double> hubbard_u = {}; ///< Hubbard Coulomb interaction parameter U (Ry)
-    std::string readin_dir = "auto";     ///< directory of files for reading, decided by "read_file_dir:
 };
 
 // It stores all input parameters both defined in INPUT file and not defined in INPUT file

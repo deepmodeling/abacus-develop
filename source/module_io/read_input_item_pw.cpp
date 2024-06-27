@@ -289,11 +289,15 @@ void ReadInput::item_pw()
         autosetfuncs.push_back([](Parameter& para) {
             if (para.input.read_file_dir == "auto")
             {
-                para.input.sup.readin_dir = "OUT." + para.input.suffix + "/";
+                para.input.read_file_dir = "OUT." + para.input.suffix;
             }
             else
             {
-                para.input.sup.readin_dir = para.input.read_file_dir + '/';
+                para.input.read_file_dir = para.input.read_file_dir;
+            }
+            if (para.input.read_file_dir.back() != '/')
+            {
+                para.input.read_file_dir += '/';
             }
         });
         this->add_item(item);

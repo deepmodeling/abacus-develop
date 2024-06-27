@@ -123,10 +123,7 @@ void ReadInput::read_parameters(Parameter& param, const std::string& filename_in
 void ReadInput::create_directory(const Parameter& param)
 {
     ModuleBase::TITLE("ReadInput", "create_directory");
-    if(this->rank != 0)
-    {
-        return;
-    }
+
     // mohan move forward 2011-02-26
     //----------------------------------------------------------
     // OTHRE CLASS MEMBER FUNCTION :
@@ -138,6 +135,8 @@ void ReadInput::create_directory(const Parameter& param)
     {
         out_dir = true;
     }
+    // NOTE: "make_dir_out" must be called by all processes!!!
+    //       Maybe it is not good, because only rank 0 can create the directory.
     ModuleBase::Global_File::make_dir_out(param.input.suffix,
                                           param.input.calculation,
                                           out_dir,
@@ -289,8 +288,6 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
         checkvalue_item->checkvalue(*checkvalue_item, param);
     }
 }
-
-
 
 void ReadInput::write_txt_input(const Parameter& param, const std::string& filename)
 {
