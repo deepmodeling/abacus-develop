@@ -26,25 +26,22 @@ std::string dmr_gen_fname(const int out_type, const int ispin, const bool append
  *
  * @param fname The name of the file to write the CSR representation to.
  * @param dm_serial A pointer to the Hamiltonian container.
- * @param nbasis The number of basis functions.
  * @param istep The current step number.
  */
-void write_dmr_csr(std::string& fname, hamilt::HContainer<double>* dm_serial, const int nbasis, const int istep);
+void write_dmr_csr(std::string& fname, hamilt::HContainer<double>* dm_serial, const int istep);
 
 /**
  * Writes DMR to a file.
  *
  * @param dm The 2D block parallel matrix representing the density matrix.
- * @param nbasis The number of basis functions.
  * @param out_type The output file type. 1: csr, 2: npz.
  * @param sparse Whether output the sparse DM.
  * @param ispin The spin index, starting from 0.
  * @param append Whether to append the data to an existing file or create a new file. The file name is related to this
  * flag.
  * @param istep The ION step, starting from 0.
- * @param pv The Parallel_Orbitals object.
  */
-void write_dmr(const std::vector<hamilt::HContainer<double>*> dmr, const int nbasis, const bool out_csr, const bool out_npz,
+void write_dmr(const std::vector<hamilt::HContainer<double>*> dmr, const bool out_csr, const bool out_npz,
                const bool append,
                const int istep);
 } // namespace ModuleIO
