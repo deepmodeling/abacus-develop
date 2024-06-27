@@ -66,9 +66,14 @@ void Gint::cpu_tau_interface(Gint_inout* inout)
             continue;
         }
         // int* vindex = Gint_Tools::get_vindex(ncyz, ibx, jby, kbz);
-        int* vindex = Gint_Tools::get_vindex(this->bxyz, this->bx, this->by, this->bz,
-                            this->nplane, this->gridt->start_ind[grid_index], ncyz);
-        this->gint_kernel_tau(na_grid, grid_index, delta_r, vindex, LD_pool, inout,ucell);
+        int* vindex = Gint_Tools::get_vindex(this->bxyz,
+                                             this->bx,
+                                             this->by,
+                                             this->bz,
+                                             this->nplane,
+                                             this->gridt->start_ind[grid_index],
+                                             ncyz);
+        this->gint_kernel_tau(na_grid, grid_index, delta_r, vindex, LD_pool, inout, ucell);
         delete[] vindex;
     }
     ModuleBase::TITLE("Gint_interface", "cal_gint_tau");
