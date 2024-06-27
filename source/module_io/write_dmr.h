@@ -33,7 +33,7 @@ void write_dmr_csr(std::string& fname, hamilt::HContainer<double>* dm_serial, co
 /**
  * Writes DMR to a file.
  *
- * @param dm The 2D block parallel matrix representing the density matrix.
+ * @param dmr The 2D block parallel matrix representing the density matrix. The first dimension is the spin index.
  * @param out_type The output file type. 1: csr, 2: npz.
  * @param sparse Whether output the sparse DM.
  * @param ispin The spin index, starting from 0.
