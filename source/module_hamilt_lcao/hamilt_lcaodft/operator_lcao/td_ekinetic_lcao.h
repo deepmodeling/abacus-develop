@@ -43,6 +43,7 @@ class TDEkinetic<OperatorLCAO<TK,TR>> : public OperatorLCAO<TK, TR>
                                  const K_Vectors* kv_in,
                                  const UnitCell* ucell_in,
                                  Grid_Driver* GridD_in,
+                                 const Parallel_Orbitals* paraV,
                                  const TwoCenterIntegrator* intor);
     ~TDEkinetic();
 
@@ -67,7 +68,7 @@ class TDEkinetic<OperatorLCAO<TK,TR>> : public OperatorLCAO<TK, TR>
     /**
      * @brief calculate the HR local matrix of <I,J,R> atom pair
      */
-    void cal_HR_IJR(const int& iat1,const int& iat2,const Parallel_Orbitals* paraV,const ModuleBase::Vector3<double>& dtau,std::complex<double>* data_pointer,TR* s_pointer);
+    void cal_HR_IJR(const int& iat1,const int& iat2,const Parallel_Orbitals* paraV,const ModuleBase::Vector3<double>& dtau,std::complex<double>* data_pointer,std::complex<double>** data_pointer_c,TR* s_pointer);
 
     /**
      * @brief calculate the ekinetic matrix correction term in tddft with specific <I,J,R> atom-pairs

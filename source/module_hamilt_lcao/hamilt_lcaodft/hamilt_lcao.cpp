@@ -352,6 +352,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
                                                                              kv,
                                                                              &GlobalC::ucell,
                                                                              &GlobalC::GridD,
+                                                                             LM_in->ParaV,
                                                                              two_center_bundle.overlap_orb.get());
             this->getOperator()->add(td_ekinetic);
 

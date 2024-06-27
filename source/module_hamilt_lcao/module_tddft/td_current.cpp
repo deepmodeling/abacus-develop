@@ -14,6 +14,9 @@
 
 #ifdef __LCAO
 
+bool TD_current::cal_grad = false;
+bool TD_current::cal_vcomm_r = false;
+
 TD_current::TD_current(const UnitCell* ucell_in,
                        Grid_Driver* GridD_in,
                        const Parallel_Orbitals* paraV,
@@ -21,8 +24,14 @@ TD_current::TD_current(const UnitCell* ucell_in,
                        const TwoCenterIntegrator* intor)
     : ucell(ucell_in), Grid(GridD_in), paraV(paraV), cart_At(cart_At), intor_(intor)
 {   
-    this->initialize_vcomm_r(GridD_in, paraV);
-    this->initialize_grad_term(GridD_in, paraV);
+    if(cal_vcomm_r)
+    {
+        this->initialize_vcomm_r(GridD_in, paraV);
+    }
+    if(cal_grad)
+    {
+        this->initialize_grad_term(GridD_in, paraV);
+    }
 }
 TD_current::~TD_current()
 {
@@ -31,7 +40,6 @@ TD_current::~TD_current()
         delete this->current_term[dir];
     }
 }
-//allocate space for current_term
 void TD_current::initialize_vcomm_r(Grid_Driver* GridD, const Parallel_Orbitals* paraV)
 {
     ModuleBase::TITLE("TD_current", "initialize_vcomm_r");
@@ -112,12 +120,14 @@ void TD_current::initialize_grad_term(Grid_Driver* GridD, const Parallel_Orbital
 {
     ModuleBase::TITLE("TD_current", "initialize_grad_term");
     ModuleBase::timer::tick("TD_current", "initialize_grad_term");
-
     for (int dir=0;dir<3;dir++)
     {
         if (this->current_term[dir] == nullptr)
         this->current_term[dir] = new hamilt::HContainer<std::complex<double>>(paraV);
     }
+
+    this->adjs_grad.clear();
+    this->adjs_grad.reserve(this->ucell->nat);
     for (int iat1 = 0; iat1 < ucell->nat; iat1++)
     {
         auto tau1 = ucell->get_tau(iat1);
@@ -170,9 +180,46 @@ void TD_current::initialize_grad_term(Grid_Driver* GridD, const Parallel_Orbital
 
     ModuleBase::timer::tick("EkineticNew", "initialize_HR");
 }
+void TD_current::initialize_current_term(const hamilt::HContainer<std::complex<double>>* HR, const Parallel_Orbitals* paraV)
+{
+    ModuleBase::TITLE("TD_current", "initialize_current_term");
+    ModuleBase::timer::tick("TD_current", "initialize_current_term");
+
+    for (int dir=0;dir<3;dir++)
+    {
+        if (this->current_term[dir] == nullptr)
+        this->current_term[dir] = new hamilt::HContainer<std::complex<double>>(paraV);
+    }
+
+    for (int i = 0; i < HR->size_atom_pairs(); ++i)
+    {
+        hamilt::AtomPair<std::complex<double>>& tmp = HR->get_atom_pair(i);
+        for (int ir = 0; ir < tmp.get_R_size(); ++ir)
+        {
+            const ModuleBase::Vector3<int> R_index = tmp.get_R_index(ir);
+            const int iat1 = tmp.get_atom_i();
+            const int iat2 = tmp.get_atom_j();
+
+            hamilt::AtomPair<std::complex<double>> tmp1(iat1, iat2, R_index, paraV);
+            for (int dir=0;dir<3;dir++)
+            {
+                this->current_term[dir]->insert_pair(tmp1);
+            }
+        }
+    }
+    for (int dir=0;dir<3;dir++)
+    {
+        this->current_term[dir]->allocate(nullptr, true);
+    }
+    ModuleBase::timer::tick("TDEkinetic", "initialize_HR_tmp");
+}
 
 void TD_current::calculate_vcomm_r()
 {
+    if(cal_vcomm_r == false)
+    {
+        return;
+    }
     ModuleBase::TITLE("TDNonlocal", "calculate_HR");
     ModuleBase::timer::tick("TDNonlocal", "calculate_HR");
 
@@ -391,6 +438,10 @@ void TD_current::cal_vcomm_r_IJR(
 }
 void TD_current::calculate_grad_term()
 {
+    if(cal_grad == false)
+    {
+        return;
+    }
     ModuleBase::TITLE("TDEkinetic", "calculate_HR");
     if(this->current_term[0]==nullptr || this->current_term[0]->size_atom_pairs()<=0)
     {

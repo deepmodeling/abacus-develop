@@ -132,10 +132,19 @@ void ModuleIO::write_current(const int istep,
 
     ModuleBase::TITLE("ModuleIO", "write_current");
     ModuleBase::timer::tick("ModuleIO", "write_current");
-
-    TD_current* current_term = new TD_current(&GlobalC::ucell, &GlobalC::GridD, pv, TD_Velocity::td_vel_op->cart_At, intor);
-    current_term->calculate_grad_term();
-    current_term->calculate_vcomm_r();
+    TD_current* current_term =nullptr;
+    ModuleBase::Vector3<double> cart_At(0,0,0);
+    if (TD_Velocity::td_vel_op!=nullptr)
+    {
+        current_term = TD_Velocity::td_vel_op->get_current_pointer();
+        cart_At=TD_Velocity::td_vel_op->cart_At;
+    }
+    else
+    {
+        current_term = new TD_current(&GlobalC::ucell, &GlobalC::GridD, pv, cart_At, intor);
+        current_term->calculate_grad_term();
+        current_term->calculate_vcomm_r();
+    }
     // construct a DensityMatrix object
     elecstate::DensityMatrix<std::complex<double>, double> DM_real(&kv, pv, GlobalV::NSPIN);
     elecstate::DensityMatrix<std::complex<double>, double> DM_imag(&kv, pv, GlobalV::NSPIN);
@@ -239,9 +248,9 @@ void ModuleIO::write_current(const int istep,
                                     s_tmp = tmp_s->get_value(mu,nu);
                                 }
 
-                                local_current_ik[0] -= dm2d1_real * rvx.real() - dm2d1_imag * rvx.imag() + dm2d1_real*TD_Velocity::td_vel_op->cart_At[0]*s_tmp/2.0;
-                                local_current_ik[1] -= dm2d1_real * rvy.real() - dm2d1_imag * rvy.imag() + dm2d1_real*TD_Velocity::td_vel_op->cart_At[1]*s_tmp/2.0;
-                                local_current_ik[2] -= dm2d1_real * rvz.real() - dm2d1_imag * rvz.imag() + dm2d1_real*TD_Velocity::td_vel_op->cart_At[2]*s_tmp/2.0;
+                                local_current_ik[0] -= dm2d1_real * rvx.real() - dm2d1_imag * rvx.imag() + dm2d1_real*cart_At[0]*s_tmp/2.0;
+                                local_current_ik[1] -= dm2d1_real * rvy.real() - dm2d1_imag * rvy.imag() + dm2d1_real*cart_At[1]*s_tmp/2.0;
+                                local_current_ik[2] -= dm2d1_real * rvz.real() - dm2d1_imag * rvz.imag() + dm2d1_real*cart_At[2]*s_tmp/2.0;
                                 ++local_total_irr;
                                 ++irr;
                             } // end kk

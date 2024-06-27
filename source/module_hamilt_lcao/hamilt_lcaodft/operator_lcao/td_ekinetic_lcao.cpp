@@ -21,6 +21,7 @@ TDEkinetic<OperatorLCAO<TK, TR>>::TDEkinetic(LCAO_Matrix* LM_in,
                                              const K_Vectors* kv_in,
                                              const UnitCell* ucell_in,
                                              Grid_Driver* GridD_in,
+                                             const Parallel_Orbitals* paraV,
                                              const TwoCenterIntegrator* intor)
     : SR(SR_in), kv(kv_in), OperatorLCAO<TK, TR>(LM_in, kv_in->kvec_d, hR_in, hK_in),intor_(intor)
 {
@@ -53,6 +54,7 @@ void TDEkinetic<OperatorLCAO<std::complex<double>, double>>::td_ekinetic_scalar(
                                                                                 double* Sloc,
                                                                                 int nnr)
 {
+    //the correction term A^2/2 , 4.0 due to the unit transformation
     std::complex<double> tmp = {cart_At.norm2() * Sloc[nnr] / 4.0, 0};
     Hloc[nnr] += tmp;
     return;
@@ -103,7 +105,19 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::calculate_HR()
             hamilt::BaseMatrix<TR>* tmps = this->SR->find_matrix(iat1, iat2, R_index2);
             if (tmp != nullptr)
             {
-                this->cal_HR_IJR(iat1, iat2, paraV, dtau, tmp->get_pointer(), tmps->get_pointer());
+                if(TD_Velocity::out_current)
+                {
+                    std::complex<double>* tmp_c[3] = {nullptr, nullptr, nullptr};
+                    for(int i = 0; i < 3; i++)
+                    {
+                        tmp_c[i] = td_velocity.get_current_pointer()->get_current_term_pointer(i)->find_matrix(iat1, iat2, R_index2)->get_pointer();
+                    }
+                    this->cal_HR_IJR(iat1, iat2, paraV, dtau, tmp->get_pointer(), tmp_c, tmps->get_pointer());
+                }
+                else
+                {
+                    this->cal_HR_IJR(iat1, iat2, paraV, dtau, tmp->get_pointer(), nullptr, tmps->get_pointer());
+                }
             }
             else
             {
@@ -120,6 +134,7 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& iat1,
                                                   const Parallel_Orbitals* paraV,
                                                   const ModuleBase::Vector3<double>& dtau,
                                                   std::complex<double>* data_pointer,
+                                                  std::complex<double>** data_pointer_c,
                                                   TR* s_pointer)
 {
     const LCAO_Orbitals& orb = LCAO_Orbitals::get_const_instance();
@@ -191,9 +206,26 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& iat1,
             }
             data_pointer += npol;
             s_pointer += npol;
+            //current grad part
+            if(data_pointer_c!=nullptr)
+            {
+                for(int dir = 0; dir < 3; dir++)
+                {
+                    for (int ipol = 0; ipol < npol; ipol++)
+                    {
+                        data_pointer_c[dir][ipol * step_trace] += std::complex<double>(0,grad_overlap[dir]);
+                    }
+                    data_pointer_c[dir] += npol;
+                }
+
+            }
         }
         data_pointer += (npol - 1) * col_indexes.size();
         s_pointer += (npol - 1) * col_indexes.size();
+        if(data_pointer_c!=nullptr)
+        {
+            for(int dir = 0; dir < 3; dir++) data_pointer_c[dir] += (npol - 1) * col_indexes.size();
+        }
     }
 }
 // init two center integrals and vector potential for td_ekintic term
@@ -298,21 +330,27 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::contributeHR()
     {
         return;
     }
-
     if (!this->hR_tmp_done)
     {
+        const Parallel_Orbitals* paraV = this->hR->get_atom_pair(0).get_paraV();
         // if this Operator is the first node of the sub_chain, then hR_tmp is nullptr
         if (this->hR_tmp == nullptr)
         {
-            this->hR_tmp = new hamilt::HContainer<std::complex<double>>(this->LM->ParaV);
+            this->hR_tmp = new hamilt::HContainer<std::complex<double>>(paraV);
             // allocate memory for hR_tmp use the same memory as hR
-            this->initialize_HR_tmp(this->LM->ParaV);
+            this->initialize_HR_tmp(paraV);
             this->allocated = true;
         }
         if (this->next_sub_op != nullptr)
         {
             // pass pointer of hR_tmp to the next node
             static_cast<OperatorLCAO<TK, TR>*>(this->next_sub_op)->set_HR_fixed(this->hR_tmp);
+        }
+        //initialize current term if needed
+        if (TD_Velocity::out_current)
+        {
+            td_velocity.setup_current(this->ucell, this->Grid, paraV, this->intor_);
+            td_velocity.get_current_pointer()->initialize_current_term(this->hR_tmp, paraV);
         }
         // calculate the values in hR_tmp
         this->calculate_HR();

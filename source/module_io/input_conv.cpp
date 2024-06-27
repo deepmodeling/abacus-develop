@@ -26,6 +26,7 @@
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_lcao/module_tddft/evolve_elec.h"
 #include "module_hamilt_lcao/module_tddft/td_velocity.h"
+#include "module_hamilt_lcao/module_tddft/td_current.h"
 #endif
 #ifdef __PEXSI
 #include "module_hsolver/module_pexsi/pexsi_solver.h"
@@ -145,10 +146,17 @@ void Input_Conv::read_td_efield()
     if (INPUT.esolver_type == "tddft" && elecstate::H_TDDFT_pw::stype == 1)
     {
         TD_Velocity::tddft_velocity = true;
+        //For velocity gauge, current term would be calculated together with correction term
+        TD_current::cal_grad = false;
+        TD_current::cal_vcomm_r = false;
     }
     else
     {
         TD_Velocity::tddft_velocity = false;
+        //if T are not count in, term [r,T]=0, so grad term is not needed
+        TD_current::cal_grad = INPUT.t_in_h;
+        //if Vnl are not count in, term [r,Vnl]=0, so Vcomm term is not needed
+        TD_current::cal_vcomm_r = INPUT.vnl_in_h;
     }
     if (INPUT.out_mat_hs2 == 1)
     {

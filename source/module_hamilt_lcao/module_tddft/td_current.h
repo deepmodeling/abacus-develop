@@ -27,8 +27,13 @@ class TD_current
         return this->current_term[i];
     }
 
+    void initialize_current_term(const hamilt::HContainer<std::complex<double>>* HR, const Parallel_Orbitals* paraV);
     void calculate_vcomm_r();
     void calculate_grad_term();
+
+    /// @brief calculate specific current term or not
+    static bool cal_grad;
+    static bool cal_vcomm_r;
 
   private:
     const UnitCell* ucell = nullptr;
@@ -47,9 +52,8 @@ class TD_current
     void initialize_vcomm_r(Grid_Driver* GridD_in, const Parallel_Orbitals* paraV);
     void initialize_grad_term(Grid_Driver* GridD_in, const Parallel_Orbitals* paraV);
 
-    /**
-     * @brief calculate the HR local matrix of <I,J,R> atom pair
-     */
+
+    //calculate term [r,Vnl]
     void cal_vcomm_r_IJR(const int& iat1,
                     const int& iat2,
                     const int& T0,
@@ -65,6 +69,7 @@ class TD_current
                     std::complex<double>* data_pointerx,
                     std::complex<double>* data_pointery,
                     std::complex<double>* data_pointerz);
+    //calculate term -i⋅∇
     void cal_grad_IJR(const int& iat1,
                       const int& iat2,
                       const Parallel_Orbitals* paraV,

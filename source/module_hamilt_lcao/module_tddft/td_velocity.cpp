@@ -26,6 +26,7 @@ TD_Velocity::TD_Velocity()
 TD_Velocity::~TD_Velocity()
 {
     this->destroy_HS_R_td_sparse();
+    delete td_vel_op;
 }
 
 void TD_Velocity::output_cart_At(const std::string& out_dir)
@@ -133,6 +134,14 @@ void TD_Velocity::read_cart_At(void)
     max_istep = At_from_file.size() - 1;
     ifs.close();
 
+    return;
+}
+void TD_Velocity::setup_current(const UnitCell* ucell_in,
+                                Grid_Driver* GridD_in,
+                                const Parallel_Orbitals* paraV,
+                                const TwoCenterIntegrator* intor)
+{
+    current_p = new TD_current(ucell_in, GridD_in, paraV, cart_At, intor);
     return;
 }
 void TD_Velocity::destroy_HS_R_td_sparse(void)

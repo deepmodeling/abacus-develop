@@ -3,6 +3,7 @@
 #include "module_base/abfs-vector3_order.h"
 #include "module_base/timer.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
+#include "td_current.h"
 
 #include <map>
 // Class to store TDDFT velocity gague infos.
@@ -44,6 +45,17 @@ class TD_Velocity
                      const ModuleBase::Vector3<double>& a2,
                      const ModuleBase::Vector3<double>& At);
 
+    /// @brief setup TD_current object
+    void setup_current(const UnitCell* ucell_in,
+                       Grid_Driver* GridD_in,
+                       const Parallel_Orbitals* paraV,
+                       const TwoCenterIntegrator* intor);
+    
+    TD_current* get_current_pointer() const
+    {
+        return current_p;
+    }
+
     // For TDDFT velocity gague, to fix the output of HR
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>> HR_sparse_td_vel[2];
 
@@ -65,6 +77,8 @@ class TD_Velocity
 
     /// @brief destory HSR data stored
     void destroy_HS_R_td_sparse(void);
+
+    TD_current* current_p = nullptr;
 };
 
 #endif
