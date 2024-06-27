@@ -4,7 +4,7 @@
 #include "module_base/mathzone.h"
 #include "module_base/global_variable.h"
 #include "module_cell/unitcell.h"
-#include "module_cell/check_structure.h"
+#include "module_cell/check_atomic_stru.h"
 #include <vector>
 #include <valarray>
 #ifdef __MPI
@@ -72,7 +72,7 @@ Magnetism::~Magnetism()
  *   - CalNwfc2
  *     - cal_nwfc(): calcuate the total number of local basis: NSPIN == 4
  *   - CheckStructure
- *     - check_structure(): check if too atoms are two close
+ *     - check_atomic_stru(): check if too atoms are two close
  *   - ReadPseudoWarning1
  *     - read_pseudo(): All DFT functional must consistent.
  *   - ReadPseudoWarning2
@@ -330,22 +330,29 @@ TEST_F(UcellDeathTest,CheckStructure)
 	//trial 1
 	testing::internal::CaptureStdout();
 	double factor = 0.2;
-	EXPECT_NO_THROW(Check_Structure::check_structure(*ucell, factor));
+	EXPECT_NO_THROW(Check_Atomic_Stru::check_atomic_stru(*ucell, factor));
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("WARNING: Some atoms are too close!!!"));
 	//trial 2
 	testing::internal::CaptureStdout();
 	factor = 0.4;
-	EXPECT_EXIT(Check_Structure::check_structure(*ucell, factor),::testing::ExitedWithCode(0),"");
+	EXPECT_EXIT(Check_Atomic_Stru::check_atomic_stru(*ucell, factor),::testing::ExitedWithCode(0),"");
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("The structure is unreasonable!"));
 	//trial 3
 	ucell->atoms[0].label = "arbitrary";
 	testing::internal::CaptureStdout();
 	factor = 0.2;
-	EXPECT_NO_THROW(Check_Structure::check_structure(*ucell, factor));
+	EXPECT_NO_THROW(Check_Atomic_Stru::check_atomic_stru(*ucell, factor));
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("Notice: symbol 'arbitrary' is not an element symbol!!!! set the covalent radius to be 0."));
+	//trial 4
+	ucell->atoms[0].label = "Fe1";
+	testing::internal::CaptureStdout();
+	factor = 0.2;
+	EXPECT_NO_THROW(Check_Atomic_Stru::check_atomic_stru(*ucell, factor));
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("WARNING: Some atoms are too close!!!"));
 }
 
 TEST_F(UcellDeathTest,ReadPseudoWarning1)

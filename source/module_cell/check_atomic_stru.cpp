@@ -1,7 +1,7 @@
-#include "check_structure.h"
+#include "check_atomic_stru.h"
 #include "module_base/element_covalent_radius.h"
 
-void Check_Structure::check_structure(UnitCell &ucell, double &factor)
+void Check_Atomic_Stru::check_atomic_stru(UnitCell &ucell, double &factor)
 {
     // First we calculate all bond length in the structure,
     // and compare with the covalent_bond_length,
@@ -14,7 +14,13 @@ void Check_Structure::check_structure(UnitCell &ucell, double &factor)
     bool no_warning = true;
     for (int it1 = 0; it1 < ucell.ntype; it1++)
     {
-        std::string symbol1 = ucell.atoms[it1].label;
+        std::string symbol1 = "";
+        for (char ch : ucell.atoms[it1].label) {
+            if (std::isalpha(ch)) {
+                symbol1.push_back(ch);
+            }
+        }
+        // std::string symbol1 = ucell.atoms[it1].label;
         double symbol1_covalent_radius;
         if (ModuleBase::CovalentRadius.find(symbol1) != ModuleBase::CovalentRadius.end())
         {

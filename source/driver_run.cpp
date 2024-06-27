@@ -6,7 +6,7 @@
 #include "module_io/winput.h"
 #include "module_md/run_md.h"
 #include "module_io/para_json.h"
-#include "module_cell/check_structure.h"
+#include "module_cell/check_atomic_stru.h"
 
 /**
  * @brief This is the driver function which defines the workflow of ABACUS calculations.
@@ -42,7 +42,7 @@ void Driver::driver_run(void)
     // the life of ucell should begin here, mohan 2024-05-12
     // delete ucell as a GlobalC in near future
     GlobalC::ucell.setup_cell(GlobalV::stru_file, GlobalV::ofs_running);
-    Check_Structure::check_structure(GlobalC::ucell, GlobalV::MIN_DIST_COEF);
+    Check_Atomic_Stru::check_atomic_stru(GlobalC::ucell, GlobalV::MIN_DIST_COEF);
 
     //! 3: initialize Esolver and fill json-structure 
     p_esolver->before_all_runners(INPUT, GlobalC::ucell);
