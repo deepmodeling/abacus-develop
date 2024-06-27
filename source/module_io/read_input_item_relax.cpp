@@ -97,7 +97,7 @@ void ReadInput::item_relax()
                     ModuleBase::WARNING_QUIT("ReadInput", "scalapack_gvx can not be used for series version.");
 #endif
                 }
-                else if (ks_solver == "cusolver")
+                else if (ks_solver == "cusolver" || ks_solver == "cusolvermp")
                 {
 #ifndef __MPI
                     ModuleBase::WARNING_QUIT("ReadInput", "Cusolver can not be used for series version.");

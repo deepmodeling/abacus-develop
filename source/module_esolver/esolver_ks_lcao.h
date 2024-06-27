@@ -2,7 +2,6 @@
 #define ESOLVER_KS_LCAO_H
 #include "esolver_ks.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_wfc.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/record_adj.h"
 // for grid integration
 #include "module_basis/module_ao/ORB_control.h"
@@ -67,9 +66,6 @@ class ESolver_KS_LCAO : public ESolver_KS<TK>
 
     // we will get rid of this class soon, don't use it, mohan 2024-03-28
     Record_adj RA;
-
-    // we will get rid of this class soon, don't use it, mohan 2024-03-28
-    Local_Orbital_wfc LOWF;
 
     // we will get rid of this class soon, don't use it, mohan 2024-03-28
     Local_Orbital_Charge LOC;

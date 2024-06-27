@@ -169,6 +169,7 @@ bx                             0 #division of an element grid in FFT grid along 
 by                             0 #division of an element grid in FFT grid along y
 bz                             0 #division of an element grid in FFT grid along z
 num_stream                     4 #the nstream in compute the LCAO with CUDA
+elpa_num_threads               -1 #Number of threads need to use in elpa
 
 #Parameters (6.Smearing)
 smearing_method                gauss #type of smearing_method: gauss; fd; fixed; mp; mp2; mv

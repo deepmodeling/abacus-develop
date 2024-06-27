@@ -76,6 +76,8 @@ void ModuleIO::output_dHR(const int& istep,
 
     gint_k.allocate_pvdpR();
 
+    LCAO_HS_Arrays HS_Arrays;
+
     const int nspin = GlobalV::NSPIN;
 
     if (nspin == 1 || nspin == 4)
@@ -83,7 +85,7 @@ void ModuleIO::output_dHR(const int& istep,
         // mohan add 2024-04-01
         const int cspin = 0;
 
-        sparse_format::cal_dH(lm, grid, two_center_bundle, cspin, sparse_thr, gint_k);
+        sparse_format::cal_dH(lm, HS_Arrays, grid, two_center_bundle, cspin, sparse_thr, gint_k);
     }
     else if (nspin == 2)
     {
@@ -102,13 +104,13 @@ void ModuleIO::output_dHR(const int& istep,
                 }
             }
 
-            sparse_format::cal_dH(lm, grid, two_center_bundle, cspin, sparse_thr, gint_k);
+            sparse_format::cal_dH(lm, HS_Arrays, grid, two_center_bundle, cspin, sparse_thr, gint_k);
         }
     }
     // mohan update 2024-04-01
-    ModuleIO::save_dH_sparse(istep, lm, sparse_thr, binary);
+    ModuleIO::save_dH_sparse(istep, lm, HS_Arrays, sparse_thr, binary);
 
-    lm.destroy_dH_R_sparse();
+    lm.destroy_dH_R_sparse(HS_Arrays);
 
     gint_k.destroy_pvdpR();
 

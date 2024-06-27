@@ -221,6 +221,7 @@ struct Input_para
     int out_wfc_lcao = 0;          ///< output the wave functions in local basis.
     int bx = 0, by = 0, bz = 0;    ///< big mesh ball. 0: auto set bx/by/bz
     int nstream = 4;               ///< Number of streams in CUDA as per input data
+    int elpa_num_threads = -1;     ///< Number of threads need to use in elpa
 
     // ==============   #Parameters (6.Smearing) ===========================
     std::string smearing_method = "gauss"; ///< "gauss",

@@ -809,8 +809,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::P
         auto psi_tensor = ct::TensorMap(psi.get_pointer(),
                                         ct::DataTypeToEnum<T>::value,
                                         ct::DeviceTypeToEnum<ct_Device>::value,
-                                        ct::TensorShape({psi.get_nbands(), psi.get_nbasis()}))
-                              .slice({0, 0}, {psi.get_nbands(), psi.get_current_nbas()});
+                                        ct::TensorShape({psi.get_nbands(), psi.get_nbasis()}));
         auto eigen_tensor = ct::TensorMap(eigenvalue,
                                           ct::DataTypeToEnum<Real>::value,
                                           ct::DeviceTypeToEnum<ct::DEVICE_CPU>::value,
@@ -866,7 +865,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::P
             // Convert "pointer data stucture" to a psi::Psi object
             auto psi_iter_wrapper = psi::Psi<T, Device>(psi_in, 1, nband_in, nbasis_in, ngk_pointer);
 
-            psi::Range bands_range(1, 0, band_index1, band_index2);
+            psi::Range bands_range(true, 0, band_index1, band_index2);
 
             using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
             hpsi_info info(&psi_iter_wrapper, bands_range, hpsi_out);

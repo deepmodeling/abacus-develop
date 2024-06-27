@@ -320,5 +320,11 @@ void ReadInput::item_lcao()
         read_sync_int(nstream);
         this->add_item(item);
     }
+    {
+        Input_Item item("elpa_num_thread");
+        item.annotation = "Number of threads need to use in elpa";
+        read_sync_int(elpa_num_thread);
+        this->add_item(item);
+    }
 }
 } // namespace ModuleIO

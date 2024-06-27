@@ -1,9 +1,9 @@
 #ifndef ISTATE_ENVELOPE_H
 #define ISTATE_ENVELOPE_H
+#include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_basis/module_pw/pw_basis_k.h"
 #include "module_cell/klist.h"
 #include "module_elecstate/elecstate.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_wfc.h"
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
@@ -13,7 +13,7 @@
 class IState_Envelope
 {
   public:
-    IState_Envelope(const elecstate::ElecState* pes_in);
+    IState_Envelope(const elecstate::ElecState* pes);
     ~IState_Envelope();
 
     /// for gamma_only
@@ -21,7 +21,7 @@ class IState_Envelope
                const ModulePW::PW_Basis* rhopw,
                const ModulePW::PW_Basis_K* wfcpw,
                const ModulePW::PW_Basis_Big* bigpw,
-               Local_Orbital_wfc& lowf,
+               const Parallel_Orbitals& para_orb,
                Gint_Gamma& gg,
                int& out_wfc_pw,
                int& out_wfc_r,
@@ -39,7 +39,7 @@ class IState_Envelope
                const ModulePW::PW_Basis* rhopw,
                const ModulePW::PW_Basis_K* wfcpw,
                const ModulePW::PW_Basis_Big* bigpw,
-               Local_Orbital_wfc& lowf,
+               const Parallel_Orbitals& para_orb,
                Gint_k& gg,
                int& out_wfc_pw,
                int& out_wfc_r,
@@ -59,7 +59,7 @@ class IState_Envelope
                const ModulePW::PW_Basis* rhopw,
                const ModulePW::PW_Basis_K* wfcpw,
                const ModulePW::PW_Basis_Big* bigpw,
-               Local_Orbital_wfc& lowf,
+               const Parallel_Orbitals& para_orb,
                Gint_k& gk,
                int& out_wfc_pw,
                int& out_wfc_r,
@@ -77,7 +77,7 @@ class IState_Envelope
                const ModulePW::PW_Basis* rhopw,
                const ModulePW::PW_Basis_K* wfcpw,
                const ModulePW::PW_Basis_Big* bigpw,
-               Local_Orbital_wfc& lowf,
+               const Parallel_Orbitals& para_orb,
                Gint_Gamma& gk,
                int& out_wfc_pw,
                int& out_wfc_r,
@@ -103,5 +103,22 @@ class IState_Envelope
                     const int& nspin,
                     const double* const* const rho,
                     psi::Psi<std::complex<double>>& wfc_g);
+    int globalIndex(int localindex, int nblk, int nprocs, int myproc);
+    int localIndex(int globalindex, int nblk, int nprocs, int& myproc);
+
+#ifdef __MPI
+    template <typename T>
+    int set_wfc_grid(const int naroc[2],
+                     const int nb,
+                     const int dim0,
+                     const int dim1,
+                     const int iprow,
+                     const int ipcol,
+                     const T* in,
+                     T** out,
+                     const std::vector<int>& trace_lo);
+    template <typename T>
+    void wfc_2d_to_grid(const T* wfc_2d, const Parallel_Orbitals& pv, T** wfc_grid, const std::vector<int>& trace_lo);
+#endif
 };
 #endif

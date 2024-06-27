@@ -89,7 +89,7 @@ UnitCell::~UnitCell()
 
 #include "module_base/parallel_common.h"
 #ifdef __MPI
-void UnitCell::bcast_unitcell(void)
+void UnitCell::bcast_unitcell()
 {
     if (GlobalV::test_unitcell)
         ModuleBase::TITLE("UnitCell", "bcast_unitcell");
@@ -162,7 +162,7 @@ void UnitCell::bcast_unitcell(void)
     return;
 }
 
-void UnitCell::bcast_unitcell2(void)
+void UnitCell::bcast_unitcell2()
 {
     for (int i = 0; i < ntype; i++)
     {
@@ -282,7 +282,7 @@ void UnitCell::print_cell_xyz(const std::string& fn) const
 }
 */
 
-void UnitCell::set_iat2itia(void)
+void UnitCell::set_iat2itia()
 {
     assert(nat > 0);
     delete[] iat2it;
@@ -348,7 +348,7 @@ std::vector<std::string> UnitCell::get_atomLabels() const
     std::vector<std::string> atomLabels(this->ntype);
     for (int it = 0; it < this->ntype; it++)
     {
-        atomLabels[it] = this->atom_label[it];
+        atomLabels[it] = this->atoms[it].label;
     }
     return atomLabels;
 }
@@ -1287,10 +1287,10 @@ bool UnitCell::if_atoms_can_move() const
         for (int ia = 0; ia < atom->na; ia++)
         {
             if (atom->mbl[ia].x || atom->mbl[ia].y || atom->mbl[ia].z)
-                return 1;
+                return true;
         }
     }
-    return 0;
+    return false;
 }
 
 // check if lattice vector can be changed
@@ -1299,9 +1299,9 @@ bool UnitCell::if_cell_can_change() const
     // need to be fixed next
     if (this->lc[0] || this->lc[1] || this->lc[2])
     {
-        return 1;
+        return true;
     }
-    return 0;
+    return false;
 }
 
 void UnitCell::setup(const std::string& latname_in,

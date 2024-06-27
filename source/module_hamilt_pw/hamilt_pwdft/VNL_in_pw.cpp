@@ -495,7 +495,6 @@ void pseudopot_cell_vnl::getvnl(Device* ctx, const int& ik, std::complex<FPTYPE>
                  npw,
                  this->wfcpw->npwk_max,
                  this->nhm,
-                 GlobalV::NQX,
                  this->tab.getBound2(),
                  this->tab.getBound3(),
                  atom_na,

@@ -170,6 +170,7 @@ void Gint_k::distribute_pvdpR_soc_sparseMatrix(
     const std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>&
         pvdpR_soc_sparseMatrix,
     LCAO_Matrix* LM,
+    LCAO_HS_Arrays& HS_Arrays,
     Parallel_Orbitals* pv)
 {
     ModuleBase::TITLE("Gint_k", "distribute_pvdpR_soc_sparseMatrix");
@@ -272,29 +273,29 @@ void Gint_k::distribute_pvdpR_soc_sparseMatrix(
                             {
                                 if (dim == 0)
                                 {
-                                    std::complex<double>& value = LM->dHRx_soc_sparse[R_coor][row][col];
+                                    std::complex<double>& value = HS_Arrays.dHRx_soc_sparse[R_coor][row][col];
                                     value += tmp_soc[col];
                                     if (std::abs(value) <= sparse_threshold)
                                     {
-                                        LM->dHRx_soc_sparse[R_coor][row].erase(col);
+                                        HS_Arrays.dHRx_soc_sparse[R_coor][row].erase(col);
                                     }
                                 }
                                 if (dim == 1)
                                 {
-                                    std::complex<double>& value = LM->dHRy_soc_sparse[R_coor][row][col];
+                                    std::complex<double>& value = HS_Arrays.dHRy_soc_sparse[R_coor][row][col];
                                     value += tmp_soc[col];
                                     if (std::abs(value) <= sparse_threshold)
                                     {
-                                        LM->dHRy_soc_sparse[R_coor][row].erase(col);
+                                        HS_Arrays.dHRy_soc_sparse[R_coor][row].erase(col);
                                     }
                                 }
                                 if (dim == 2)
                                 {
-                                    std::complex<double>& value = LM->dHRz_soc_sparse[R_coor][row][col];
+                                    std::complex<double>& value = HS_Arrays.dHRz_soc_sparse[R_coor][row][col];
                                     value += tmp_soc[col];
                                     if (std::abs(value) <= sparse_threshold)
                                     {
-                                        LM->dHRz_soc_sparse[R_coor][row].erase(col);
+                                        HS_Arrays.dHRz_soc_sparse[R_coor][row].erase(col);
                                     }
                                 }
                             }
@@ -320,6 +321,7 @@ void Gint_k::distribute_pvdpR_soc_sparseMatrix(
 void Gint_k::cal_dvlocal_R_sparseMatrix(const int& current_spin,
                                         const double& sparse_threshold,
                                         LCAO_Matrix* LM,
+                                        LCAO_HS_Arrays& HS_Arrays,
                                         Parallel_Orbitals* pv,
                                         UnitCell& ucell,
                                         Grid_Driver& gdriver)
@@ -564,9 +566,9 @@ void Gint_k::cal_dvlocal_R_sparseMatrix(const int& current_spin,
     }
     else
     {
-        distribute_pvdpR_soc_sparseMatrix(0, sparse_threshold, pvdpRx_soc_sparseMatrix, LM, pv);
-        distribute_pvdpR_soc_sparseMatrix(1, sparse_threshold, pvdpRy_soc_sparseMatrix, LM, pv);
-        distribute_pvdpR_soc_sparseMatrix(2, sparse_threshold, pvdpRz_soc_sparseMatrix, LM, pv);
+        distribute_pvdpR_soc_sparseMatrix(0, sparse_threshold, pvdpRx_soc_sparseMatrix, LM, HS_Arrays, pv);
+        distribute_pvdpR_soc_sparseMatrix(1, sparse_threshold, pvdpRy_soc_sparseMatrix, LM, HS_Arrays, pv);
+        distribute_pvdpR_soc_sparseMatrix(2, sparse_threshold, pvdpRz_soc_sparseMatrix, LM, HS_Arrays, pv);
     }
 
     return;
