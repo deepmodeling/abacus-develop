@@ -265,6 +265,10 @@ template struct delete_memory_op<float, base_device::DEVICE_GPU>;
 template struct delete_memory_op<double, base_device::DEVICE_GPU>;
 template struct delete_memory_op<std::complex<float>, base_device::DEVICE_GPU>;
 template struct delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>;
+template struct delete_memory_op<float*, base_device::DEVICE_GPU>;
+template struct delete_memory_op<double*, base_device::DEVICE_GPU>;
+template struct delete_memory_op<std::complex<float>*, base_device::DEVICE_GPU>;
+template struct delete_memory_op<std::complex<double>*, base_device::DEVICE_GPU>;
 
 } // namespace memory
 } // end of namespace base_device

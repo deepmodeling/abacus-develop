@@ -342,8 +342,6 @@ OBJS_ORBITAL=ORB_atomic.o\
       ORB_nonlocal.o\
       ORB_nonlocal_lm.o\
       ORB_read.o\
-      ORB_table_alpha.o\
-      ORB_table_beta.o\
       ORB_table_phi.o\
       parallel_2d.o\
       parallel_orbitals.o\
@@ -577,6 +575,8 @@ OBJS_SRCPW=H_Ewald_pw.o\
     fp_energy.o\
     forces.o\
     forces_us.o\
+    forces_nl.o\
+    fs_nonlocal_tools.o\
     force_op.o\
     stress_op.o\
     wf_op.o\

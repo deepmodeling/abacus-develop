@@ -33,9 +33,7 @@ list(APPEND depend_files
   ../ORB_nonlocal.cpp
   ../ORB_nonlocal_lm.cpp
   ../ORB_gaunt_table.cpp
-  ../ORB_table_beta.cpp
   ../ORB_table_phi.cpp
-  ../ORB_table_alpha.cpp
   ../ORB_gen_tables.cpp
   ../parallel_2d.cpp
   ../parallel_orbitals.cpp
@@ -90,16 +88,6 @@ AddTest(
 #        ../ORB_gaunt_table.cpp
 #    LIBS ${math_libs} device base
 #)
-
-AddTest(
-    TARGET ORB_table_alpha_test
-    SOURCES ORB_table_alpha_test.cpp
-        ../ORB_table_alpha.cpp
-        ../ORB_read.cpp
-        ../ORB_atomic.cpp
-        ../ORB_atomic_lm.cpp
-    LIBS ${math_libs} device base
-)
 
 AddTest(
     TARGET ORB_table_phi_test

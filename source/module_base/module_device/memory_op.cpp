@@ -141,9 +141,12 @@ template struct delete_memory_op<float, base_device::DEVICE_CPU>;
 template struct delete_memory_op<double, base_device::DEVICE_CPU>;
 template struct delete_memory_op<std::complex<float>, base_device::DEVICE_CPU>;
 template struct delete_memory_op<std::complex<double>, base_device::DEVICE_CPU>;
+template struct delete_memory_op<float*, base_device::DEVICE_CPU>;
+template struct delete_memory_op<double*, base_device::DEVICE_CPU>;
+template struct delete_memory_op<std::complex<float>*, base_device::DEVICE_CPU>;
+template struct delete_memory_op<std::complex<double>*, base_device::DEVICE_CPU>;
 
 #if !(defined(__CUDA) || defined(__ROCM))
-
 
 template <typename FPTYPE>
 struct resize_memory_op<FPTYPE, base_device::DEVICE_GPU>

@@ -1,6 +1,7 @@
 #ifndef UNKOVERLAP_LCAO
 #define UNKOVERLAP_LCAO
 
+#include "module_base/sph_bessel_recursive.h"
 #include "module_base/vector3.h"
 #include "module_base/ylm.h"
 #include "module_basis/module_ao/ORB_atomic_lm.h"
@@ -22,7 +23,7 @@
 class unkOverlap_lcao
 {
   public:
-    ORB_table_phi MOT;
+    ModuleBase::Sph_Bessel_Recursive::D2* psb_ = nullptr;
     ORB_gaunt_table MGT;
     Numerical_Orbital_Lm orb_r; // New r vector, exists in atomic orbital form, expanded in solid spherical function
 

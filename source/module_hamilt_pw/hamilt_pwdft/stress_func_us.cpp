@@ -3,6 +3,7 @@
 #include "module_base/math_ylmreal.h"
 #include "module_base/timer.h"
 #include "module_elecstate/elecstate_pw.h"
+#include "module_hamilt_pw/hamilt_pwdft/nonlocal_maths.hpp"
 #include "stress_pw.h"
 
 // computes the part of the crystal stress which is due
@@ -35,7 +36,7 @@ void Stress_PW<FPTYPE, Device>::stress_us(ModuleBase::matrix& sigma,
     ModuleBase::matrix ylmk0(ppcell_in->lmaxq * ppcell_in->lmaxq, npw);
     ModuleBase::YlmReal::Ylm_Real(ppcell_in->lmaxq * ppcell_in->lmaxq, npw, rho_basis->gcar, ylmk0);
 
-    //double* qnorm = new double[npw];
+    // double* qnorm = new double[npw];
     std::vector<double> qnorm_vec(npw);
     double* qnorm = qnorm_vec.data();
     for (int ig = 0; ig < npw; ig++)
@@ -49,7 +50,12 @@ void Stress_PW<FPTYPE, Device>::stress_us(ModuleBase::matrix& sigma,
     ModuleBase::matrix dylmk0(ppcell_in->lmaxq * ppcell_in->lmaxq, npw);
     for (int ipol = 0; ipol < 3; ipol++)
     {
-        this->dylmr2(ppcell_in->lmaxq * ppcell_in->lmaxq, npw, rho_basis->gcar, dylmk0, ipol);
+        double* gcar_ptr = reinterpret_cast<double*>(rho_basis->gcar);
+        hamilt::Nonlocal_maths<FPTYPE, Device>::dylmr2(ppcell_in->lmaxq * ppcell_in->lmaxq,
+                                                       npw,
+                                                       gcar_ptr,
+                                                       dylmk0.c,
+                                                       ipol);
         for (int it = 0; it < ucell.ntype; it++)
         {
             Atom* atom = &ucell.atoms[it];
