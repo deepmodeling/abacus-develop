@@ -309,7 +309,7 @@ void Input_Conv::tmp_convert()
     INPUT.td_trigo_amp = PARAM.get().td_trigo_amp;
     INPUT.td_heavi_t0 = PARAM.get().td_heavi_t0;
     INPUT.td_heavi_amp = PARAM.get().td_heavi_amp;
-    
+
     INPUT.restart_save = PARAM.get().restart_save;
     INPUT.restart_load = PARAM.get().restart_load;
     INPUT.cell_factor = PARAM.get().cell_factor;
