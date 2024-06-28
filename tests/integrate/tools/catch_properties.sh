@@ -354,7 +354,7 @@ if ! test -z "$out_dm"  && [ $out_dm == 1 ]; then
               echo "Can't find DM files"
               exit 1
       else
-			python3 ../tools/CompareFile.py $dmref $dm 5
+			python3 ../tools/CompareFile.py $dmref $dmfile 5
             echo "DM_different $?" >>$1
       fi
 fi
