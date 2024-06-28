@@ -10,6 +10,7 @@ namespace sparse_format
 	void cal_HSR(
             const Parallel_Orbitals &pv,
 			LCAO_Matrix &lm,
+			LCAO_HS_Arrays& HS_Arrays,
 			Grid_Driver &grid,
 			const int &current_spin, 
 			const double &sparse_thr, 

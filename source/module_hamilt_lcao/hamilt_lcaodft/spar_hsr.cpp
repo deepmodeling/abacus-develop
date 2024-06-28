@@ -8,6 +8,7 @@
 void sparse_format::cal_HSR(
         const Parallel_Orbitals &pv,
 		LCAO_Matrix &lm,
+        LCAO_HS_Arrays& HS_Arrays,
 		Grid_Driver &grid,
 		const int &current_spin, 
 		const double &sparse_thr, 
@@ -62,7 +63,7 @@ void sparse_format::cal_HSR(
 				current_spin, 
 				sparse_thr, 
 				*(p_ham_lcao->getHR()), 
-				lm.HR_soc_sparse);
+				HS_Arrays.HR_soc_sparse);
 
 		sparse_format::cal_HContainer_cd(
 				pv,
@@ -95,7 +96,7 @@ void sparse_format::cal_HSR(
 					pv,
 					lm.all_R_coor,
 					lm.SR_soc_sparse,
-					lm.HR_soc_sparse,
+					HS_Arrays.HR_soc_sparse,
 					current_spin, 
 					sparse_thr);
         }

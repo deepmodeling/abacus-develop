@@ -28,18 +28,20 @@ void ModuleIO::output_HSR(const int& istep,
 
     const int nspin = GlobalV::NSPIN;
 
+    LCAO_HS_Arrays HS_Arrays;
+
     if (nspin == 1 || nspin == 4)
     {
         const int spin_now = 0;
         // jingan add 2021-6-4, modify 2021-12-2
-        sparse_format::cal_HSR(pv, lm, grid, spin_now, sparse_thr, kv.nmp, p_ham);
+        sparse_format::cal_HSR(pv, lm, HS_Arrays, grid, spin_now, sparse_thr, kv.nmp, p_ham);
     }
     else if (nspin == 2)
     {
         int spin_now = 1;
 
         // save HR of spin down first (the current spin always be down)
-        sparse_format::cal_HSR(pv, lm, grid, spin_now, sparse_thr, kv.nmp, p_ham);
+        sparse_format::cal_HSR(pv, lm, HS_Arrays, grid, spin_now, sparse_thr, kv.nmp, p_ham);
 
         // cal HR of the spin up
         if (GlobalV::VL_IN_H)
@@ -50,7 +52,7 @@ void ModuleIO::output_HSR(const int& istep,
             spin_now = 0;
         }
 
-        sparse_format::cal_HSR(pv, lm, grid, spin_now, sparse_thr, kv.nmp, p_ham);
+        sparse_format::cal_HSR(pv, lm, HS_Arrays, grid, spin_now, sparse_thr, kv.nmp, p_ham);
     }
 
     ModuleIO::save_HSR_sparse(istep, lm, sparse_thr, binary, SR_filename, HR_filename_up, HR_filename_down);
