@@ -750,6 +750,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
                                                        nband_in);
         };
 
+<<<<<<< HEAD
         DiagoIterAssist<T, Device>::avg_iter
             += static_cast<double>(dav_subspace.diag(hpsi_func,
                                                      subspace_func,
@@ -759,6 +760,14 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
                                                      is_occupied,
                                                      scf));
     } else if (this->method == "bpcg") {
+=======
+        DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(
+            dav_subspace
+                .diag(hpsi_func, subspace_func, psi.get_pointer(), psi.get_nbasis(), eigenvalue, is_occupied, scf));
+    }
+    else if (this->method == "bpcg")
+    {
+>>>>>>> 3a4158887 ([pre-commit.ci lite] apply automatic fixes)
         DiagoBPCG<T, Device> bpcg(precondition.data());
         bpcg.init_iter(psi);
         bpcg.diag(hm, psi, eigenvalue);
