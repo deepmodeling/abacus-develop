@@ -47,7 +47,6 @@ if(ENABLE_LCAO)
         DM_gamma_2d_to_grid.cpp
         DM_k.cpp
         local_orbital_charge.cpp
-        local_orbital_wfc.cpp
         dm_2d.cpp
         wavefunc_in_pw.cpp
     )

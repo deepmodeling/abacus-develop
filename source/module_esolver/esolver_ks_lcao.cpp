@@ -144,10 +144,9 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(Input& inp, UnitCell& ucell)
         this->pelec = new elecstate::ElecStateLCAO<TK>(&(this->chr), // use which parameter?
                                                        &(this->kv),
                                                        this->kv.get_nks(),
-                                                       &(this->LOC),  // use which parameter?
-                                                       &(this->GG),   // mohan add 2024-04-01
-                                                       &(this->GK),   // mohan add 2024-04-01
-                                                       &(this->LOWF), // use which parameter?
+                                                       &(this->LOC), // use which parameter?
+                                                       &(this->GG),  // mohan add 2024-04-01
+                                                       &(this->GK),  // mohan add 2024-04-01
                                                        this->pw_rho,
                                                        this->pw_big);
     }
@@ -159,22 +158,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(Input& inp, UnitCell& ucell)
     //------------------init Basis_lcao----------------------
 
     //! pass basis-pointer to EState and Psi
-    /*
-    Inform: on getting rid of ORB_control and Parallel_Orbitals
-
-    Have to say it is all the stories start, the ORB_control instance pass its Parallel_Orbitals instance to
-    Local_Orbital_Charge, Local_Orbital_Wfc and LCAO_Matrix, which is actually for getting information
-    of 2D block-cyclic distribution.
-
-    To remove LOC, LOWF and LM use in functions, one must make sure there is no more information imported
-    to those classes. Then places where to get information from them can be substituted to orb_con
-
-    Plan:
-    1. Specifically for paraV, the thing to do first is to replace the use of ParaV to the oen of ORB_control.
-    Then remove ORB_control and place paraV somewhere.
-    */
     this->LOC.ParaV = &(this->orb_con.ParaV);
-    this->LOWF.ParaV = &(this->orb_con.ParaV);
     this->LM.ParaV = &(this->orb_con.ParaV);
 
     // 5) initialize density matrix
@@ -289,27 +273,17 @@ void ESolver_KS_LCAO<TK, TR>::init_after_vc(Input& inp, UnitCell& ucell)
     ModuleBase::timer::tick("ESolver_KS_LCAO", "init_after_vc");
 
     ESolver_KS<TK>::init_after_vc(inp, ucell);
-    /*
-    Notes: on the removal of LOWF
-    Following constructor of ElecStateLCAO requires LOWF. However, ElecState only need
-    LOWF to do wavefunction 2dbcd (2D BlockCyclicDistribution) gathering. So, a free
-    function is needed to replace the use of LOWF. The function indeed needs the information
-    about 2dbcd, therefore another instance storing the information is needed instead.
-    Then that instance will be the input of "the free function to gather".
-    */
     if (GlobalV::md_prec_level == 2)
     {
         delete this->pelec;
-        this->pelec = new elecstate::ElecStateLCAO<TK>(
-            &(this->chr),
-            &(this->kv),
-            this->kv.get_nks(),
-            &(this->LOC),
-            &(this->GG),   // mohan add 2024-04-01
-            &(this->GK),   // mohan add 2024-04-01
-            &(this->LOWF), // should be replaced by a 2dbcd handle, if insist the "print_psi" must be in ElecState class
-            this->pw_rho,
-            this->pw_big);
+        this->pelec = new elecstate::ElecStateLCAO<TK>(&(this->chr),
+                                                       &(this->kv),
+                                                       this->kv.get_nks(),
+                                                       &(this->LOC),
+                                                       &(this->GG), // mohan add 2024-04-01
+                                                       &(this->GK), // mohan add 2024-04-01
+                                                       this->pw_rho,
+                                                       this->pw_big);
 
         dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->init_DM(&this->kv, this->LM.ParaV, GlobalV::NSPIN);
 
@@ -629,10 +603,9 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
     // mohan move it outside 2011-01-13
     // first need to calculate the weight according to
     // electrons number.
-    if (istep == 0 && this->wf.init_wfc == "file" // Note: on the removal of LOWF
-        && this->LOWF.error == 0)                 // this means the wavefunction is read without any error.
-    {                  // However the I/O of wavefunction are nonsence to be implmented in different places.
-        if (iter == 1) // once the reading of wavefunction has any error, should exit immediately.
+    if (istep == 0 && this->wf.init_wfc == "file")
+    {
+        if (iter == 1)
         {
             std::cout << " WAVEFUN -> CHARGE " << std::endl;
 
@@ -1196,7 +1169,6 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
     {
         // ModuleRPA::DFT_RPA_interface rpa_interface(GlobalC::exx_info.info_global);
         // rpa_interface.rpa_exx_lcao().info.files_abfs = GlobalV::rpa_orbitals;
-        // rpa_interface.out_for_RPA(*(this->LOWF.ParaV), *(this->psi), this->LOC, this->pelec);
         RPA_LRI<TK, double> rpa_lri_double(GlobalC::exx_info.info_ri);
         rpa_lri_double.cal_postSCF_exx(*dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(),
                                        MPI_COMM_WORLD,

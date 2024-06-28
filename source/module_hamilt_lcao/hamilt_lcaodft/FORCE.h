@@ -1,9 +1,10 @@
-#ifndef FORCE_LCAO_GAMMA_H
-#define FORCE_LCAO_GAMMA_H
+#ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_LCAO_HAMILT_LCAODFT_FORCE_H
+#define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_LCAO_HAMILT_LCAODFT_FORCE_H
 
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_base/matrix.h"
+#include "module_basis/module_nao/two_center_bundle.h"
 #include "module_elecstate/module_dm/density_matrix.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/force_stress_arrays.h"

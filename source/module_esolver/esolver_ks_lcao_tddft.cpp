@@ -78,7 +78,6 @@ void ESolver_KS_LCAO_TDDFT::before_all_runners(Input& inp, UnitCell& ucell)
                                                          kv.get_nks(),
                                                          &this->LOC,
                                                          &this->GK, // mohan add 2024-04-01
-                                                         &this->LOWF,
                                                          this->pw_rho,
                                                          pw_big);
     }
@@ -91,9 +90,7 @@ void ESolver_KS_LCAO_TDDFT::before_all_runners(Input& inp, UnitCell& ucell)
 
     // this part will be updated soon
     // pass Hamilt-pointer to Operator
-
-    this->LOC.ParaV = &(this->orb_con.ParaV);
-    this->LOWF.ParaV = &(this->orb_con.ParaV);
+    this->LOC.ParaV = this->LM.ParaV;
 
     // 6) initialize Density Matrix
     dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)
@@ -135,7 +132,7 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(const int istep, const int iter, cons
                                                  GlobalV::NBANDS,
                                                  GlobalV::NLOCAL,
                                                  this->p_hamilt,
-                                                 this->LOWF,
+                                                 this->orb_con.ParaV,
                                                  this->psi,
                                                  this->psi_laststep,
                                                  this->Hk_laststep,
@@ -154,7 +151,7 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(const int istep, const int iter, cons
                                              GlobalV::NBANDS,
                                              GlobalV::NLOCAL,
                                              this->p_hamilt,
-                                             this->LOWF,
+                                             this->orb_con.ParaV,
                                              this->psi,
                                              this->psi_laststep,
                                              this->Hk_laststep,

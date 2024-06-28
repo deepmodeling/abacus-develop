@@ -20,19 +20,27 @@
  * @param CTOT Global matrix from which the submatrix is extracted.
  * @return int Always returns 0 as a success indicator.
  */
-inline int CTOT2q(const int myid, const int naroc[2], const int nb, const int dim0, const int dim1, const int iprow,
-                  const int ipcol, const int nbands, double* work, double** const CTOT)
+inline int CTOT2q(const int myid,
+                  const int naroc[2],
+                  const int nb,
+                  const int dim0,
+                  const int dim1,
+                  const int iprow,
+                  const int ipcol,
+                  const int nbands,
+                  double* work,
+                  double** const CTOT)
 {
     for (int j = 0; j < naroc[1]; ++j)
     {
-        int igcol = Local_Orbital_wfc::globalIndex(j, nb, dim1, ipcol);
+        int igcol = ModuleIO::globalIndex(j, nb, dim1, ipcol);
         if (igcol >= nbands)
         {
             continue;
         }
         for (int i = 0; i < naroc[0]; ++i)
         {
-            int igrow = Local_Orbital_wfc::globalIndex(i, nb, dim0, iprow);
+            int igrow = ModuleIO::globalIndex(i, nb, dim0, iprow);
             // GlobalV::ofs_running << "i,j,igcol,igrow" << i << " " << j << " " << igcol << " " << igrow << std::endl;
             if (myid == 0)
             {
@@ -59,19 +67,27 @@ inline int CTOT2q(const int myid, const int naroc[2], const int nb, const int di
  * @param CTOT Global matrix from which the submatrix is extracted.
  * @return int Always returns 0 as a success indicator.
  */
-inline int CTOT2q_c(const int myid, const int naroc[2], const int nb, const int dim0, const int dim1, const int iprow,
-                    const int ipcol, const int nbands, std::complex<double>* work, std::complex<double>** const CTOT)
+inline int CTOT2q_c(const int myid,
+                    const int naroc[2],
+                    const int nb,
+                    const int dim0,
+                    const int dim1,
+                    const int iprow,
+                    const int ipcol,
+                    const int nbands,
+                    std::complex<double>* work,
+                    std::complex<double>** const CTOT)
 {
     for (int j = 0; j < naroc[1]; ++j)
     {
-        int igcol = Local_Orbital_wfc::globalIndex(j, nb, dim1, ipcol);
+        int igcol = ModuleIO::globalIndex(j, nb, dim1, ipcol);
         if (igcol >= nbands)
         {
             continue;
         }
         for (int i = 0; i < naroc[0]; ++i)
         {
-            int igrow = Local_Orbital_wfc::globalIndex(i, nb, dim0, iprow);
+            int igrow = ModuleIO::globalIndex(i, nb, dim0, iprow);
             // ofs_running << "i,j,igcol,igrow" << i << " " << j << " " << igcol << " " << igrow << std::endl;
             if (myid == 0)
             {
@@ -83,10 +99,16 @@ inline int CTOT2q_c(const int myid, const int naroc[2], const int nb, const int 
 }
 
 // be called in local_orbital_wfc::allocate_k
-int ModuleIO::read_wfc_nao_complex(std::complex<double>** ctot, const int& ik, const int& nb2d, const int& nbands_g,
-                                   const int& nlocal_g, const std::string& global_readin_dir,
-                                   const ModuleBase::Vector3<double> kvec_c, const Parallel_Orbitals* ParaV,
-                                   psi::Psi<std::complex<double>>* psi, elecstate::ElecState* pelec)
+int ModuleIO::read_wfc_nao_complex(std::complex<double>** ctot,
+                                   const int& ik,
+                                   const int& nb2d,
+                                   const int& nbands_g,
+                                   const int& nlocal_g,
+                                   const std::string& global_readin_dir,
+                                   const ModuleBase::Vector3<double> kvec_c,
+                                   const Parallel_Orbitals* ParaV,
+                                   psi::Psi<std::complex<double>>* psi,
+                                   elecstate::ElecState* pelec)
 {
     ModuleBase::TITLE("ModuleIO", "read_wfc_nao_complex");
     ModuleBase::timer::tick("ModuleIO", "read_wfc_nao_complex");
@@ -236,9 +258,16 @@ int ModuleIO::read_wfc_nao_complex(std::complex<double>** ctot, const int& ik, c
     return 0;
 }
 
-int ModuleIO::read_wfc_nao(double** ctot, const int& is, const bool& gamma_only_local, const int& nb2d,
-                           const int& nbands_g, const int& nlocal_g, const std::string& global_readin_dir,
-                           const Parallel_Orbitals* ParaV, psi::Psi<double>* psid, elecstate::ElecState* pelec)
+int ModuleIO::read_wfc_nao(double** ctot,
+                           const int& is,
+                           const bool& gamma_only_local,
+                           const int& nb2d,
+                           const int& nbands_g,
+                           const int& nlocal_g,
+                           const std::string& global_readin_dir,
+                           const Parallel_Orbitals* ParaV,
+                           psi::Psi<double>* psid,
+                           elecstate::ElecState* pelec)
 {
     ModuleBase::TITLE("ModuleIO", "read_wfc_nao");
     ModuleBase::timer::tick("ModuleIO", "read_wfc_nao");
@@ -279,7 +308,6 @@ int ModuleIO::read_wfc_nao(double** ctot, const int& is, const bool& gamma_only_
         {
             GlobalV::ofs_warning << " read in nbands=" << nbands;
             GlobalV::ofs_warning << " NBANDS=" << nbands_g << std::endl;
-            error = 2;
             ModuleBase::WARNING_QUIT("ModuleIO::read_wfc_nao",
                                      "The nbands read in from file do not match the global parameter NBANDS!");
         }
@@ -287,7 +315,6 @@ int ModuleIO::read_wfc_nao(double** ctot, const int& is, const bool& gamma_only_
         {
             GlobalV::ofs_warning << " read in nlocal=" << nlocal;
             GlobalV::ofs_warning << " NLOCAL=" << nlocal_g << std::endl;
-            error = 3;
             ModuleBase::WARNING_QUIT("ModuleIO::read_wfc_nao",
                                      "The nlocal read in from file do not match the global parameter NLOCAL!");
         }
@@ -350,8 +377,13 @@ int ModuleIO::read_wfc_nao(double** ctot, const int& is, const bool& gamma_only_
     return 0;
 }
 
-void ModuleIO::distri_wfc_nao(double** ctot, const int& is, const int& nb2d, const int& nbands_g, const int& nlocal_g,
-                              const Parallel_Orbitals* ParaV, psi::Psi<double>* psid)
+void ModuleIO::distri_wfc_nao(double** ctot,
+                              const int& is,
+                              const int& nb2d,
+                              const int& nbands_g,
+                              const int& nlocal_g,
+                              const Parallel_Orbitals* ParaV,
+                              psi::Psi<double>* psid)
 {
     ModuleBase::TITLE("ModuleIO", "distri_wfc_nao");
 #ifdef __MPI
@@ -422,8 +454,12 @@ void ModuleIO::distri_wfc_nao(double** ctot, const int& is, const int& nb2d, con
     return;
 }
 
-void ModuleIO::distri_wfc_nao_complex(std::complex<double>** ctot, const int& ik, const int& nb2d, const int& nbands_g,
-                                      const Parallel_Orbitals* ParaV, psi::Psi<std::complex<double>>* psi)
+void ModuleIO::distri_wfc_nao_complex(std::complex<double>** ctot,
+                                      const int& ik,
+                                      const int& nb2d,
+                                      const int& nbands_g,
+                                      const Parallel_Orbitals* ParaV,
+                                      psi::Psi<std::complex<double>>* psi)
 {
     ModuleBase::TITLE("ModuleIO", "distri_wfc_nao_complex");
 #ifdef __MPI
@@ -486,4 +522,18 @@ void ModuleIO::distri_wfc_nao_complex(std::complex<double>** ctot, const int& ik
     ModuleBase::WARNING_QUIT("ModuleIO::distri_wfc_nao", "check the code without MPI.");
 #endif
     return;
+}
+
+int ModuleIO::globalIndex(int localindex, int nblk, int nprocs, int myproc)
+{
+    int iblock, gIndex;
+    iblock = localindex / nblk;
+    gIndex = (iblock * nprocs + myproc) * nblk + localindex % nblk;
+    return gIndex;
+}
+
+int ModuleIO::localIndex(int globalindex, int nblk, int nprocs, int& myproc)
+{
+    myproc = int((globalindex % (nblk * nprocs)) / nblk);
+    return int(globalindex / (nblk * nprocs)) * nblk + globalindex % nblk;
 }
