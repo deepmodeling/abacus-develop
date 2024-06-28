@@ -49,9 +49,8 @@ void gen_init(UnitCell *ucell){
 }
 
 
-void add_nkstot(int nkstot,int nkstot_ibz){
-    Json::AbacusJson::add_json({"init", "nkstot"}, nkstot,false);
-    Json::AbacusJson::add_json({"init", "nkstot_ibz"}, nkstot_ibz,false);
+void add_nkstot(int nkstot) {
+    Json::AbacusJson::add_json({ "init", "nkstot" }, nkstot, false);
 
     // Json::AbacusJson::add_Json(nkstot,false,"init", "nkstot");
     // Json::AbacusJson::add_Json(nkstot_ibz,false,"init", "nkstot_ibz");

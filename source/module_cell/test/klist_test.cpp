@@ -196,8 +196,7 @@ protected:
 TEST_F(KlistTest, Construct)
 {
 	EXPECT_EQ(kv->get_nks(),0);
-	EXPECT_EQ(kv->get_nkstot(),0);
-	EXPECT_EQ(kv->get_nkstot_ibz(),0);
+    EXPECT_EQ(kv->get_nkstot(), 0);
 	EXPECT_EQ(kv->nspin,0);
 	EXPECT_EQ(kv->k_nkstot,0);
 	EXPECT_FALSE(kv->kc_done);
@@ -680,11 +679,8 @@ TEST_F(KlistTest, UpdateUseIBZ)
 	kv->nspin = 1;
 	kv->set_nkstot(3);
 	kv->set_nks(3);
-	kv->renew(kv->get_nkstot());
-	kv->set_nkstot_ibz(2);
-	kv->kvec_d_ibz.resize(kv->get_nkstot_ibz());
-	kv->wk_ibz.resize(kv->get_nkstot_ibz());
-	kv->update_use_ibz();
+    kv->renew(kv->get_nkstot());
+    kv->update_use_ibz(kv->get_nkstot(), std::vector<ModuleBase::Vector3<double>>(2, { 0,0,0 }));
 	EXPECT_EQ(kv->get_nkstot(),2);
 	EXPECT_EQ(kv->kvec_d.size(),2);
 	EXPECT_TRUE(kv->kd_done);
@@ -708,7 +704,7 @@ TEST_F(KlistTest, IbzKpoint)
     ModuleSymmetry::Symmetry::symm_flag = 1;
     bool match = true;
     kv->ibz_kpoint(symm, ModuleSymmetry::Symmetry::symm_flag, skpt, ucell, match);
-	EXPECT_EQ(kv->get_nkstot_ibz(),35);
+    EXPECT_EQ(kv->get_nkstot(), 35);
 	GlobalV::ofs_running<<skpt<<std::endl;
 	GlobalV::ofs_running.close();
 	ClearUcell();
@@ -733,7 +729,7 @@ TEST_F(KlistTest, IbzKpointIsMP)
     ModuleSymmetry::Symmetry::symm_flag = 0;
     bool match = true;
     kv->ibz_kpoint(symm, ModuleSymmetry::Symmetry::symm_flag, skpt, ucell, match);
-	EXPECT_EQ(kv->get_nkstot_ibz(),260);
+    EXPECT_EQ(kv->get_nks(), 260);
 	GlobalV::ofs_running<<skpt<<std::endl;
 	GlobalV::ofs_running.close();
 	ClearUcell();

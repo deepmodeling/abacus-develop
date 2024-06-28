@@ -21,7 +21,7 @@ void gen_init(UnitCell *ucell);
 /**
 * @param nkstot,nkstot_ibz: two param in json tree
 */
-void add_nkstot(int nkstot,int nkstot_ibz);
+void add_nkstot(int nkstot);
 
 /**
 * @param ucell: ucell for reading structure init in abacus.

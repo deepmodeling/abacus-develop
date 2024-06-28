@@ -639,8 +639,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
 #ifdef __RAPIDJSON
     // add nkstot,nkstot_ibz to output json
     int Jnkstot = this->pelec->klist->get_nkstot();
-    int Jnkstot_ibz = this->pelec->klist->get_nkstot_ibz();
-    Json::add_nkstot(Jnkstot, Jnkstot_ibz);
+    Json::add_nkstot(Jnkstot);
 #endif //__RAPIDJSON
     return;
 };

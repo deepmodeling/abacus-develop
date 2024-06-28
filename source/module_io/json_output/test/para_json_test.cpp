@@ -309,15 +309,14 @@ TEST(AbacusJsonTest, InitInfo)
     }
     // init the doc allocator
     Json::AbacusJson::doc.Parse("{}");
-    int Jnkstot=1,Jnkstot_ibz = 2;
+    int Jnkstot = 1;
 
-    Json::add_nkstot(Jnkstot,Jnkstot_ibz);
+    Json::add_nkstot(Jnkstot);
     Json::gen_init(&ucell);
 
 
     ASSERT_TRUE(Json::AbacusJson::doc.HasMember("init"));
     ASSERT_EQ(Json::AbacusJson::doc["init"]["nkstot"].GetInt(), 1);
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["nkstot_ibz"].GetInt(), 2);
 
     ASSERT_EQ(Json::AbacusJson::doc["init"]["natom"].GetInt(), 6);
     ASSERT_EQ(Json::AbacusJson::doc["init"]["nband"].GetInt(), 10);
