@@ -8,6 +8,7 @@
 
 void ModuleIO::save_HSR_sparse(const int& istep,
                                LCAO_Matrix& lm,
+                               LCAO_HS_Arrays& HS_Arrays,
                                const double& sparse_thr,
                                const bool& binary,
                                const std::string& SR_filename,
@@ -21,7 +22,7 @@ void ModuleIO::save_HSR_sparse(const int& istep,
     auto& output_R_coor_ptr = lm.output_R_coor;
     auto& HR_sparse_ptr = lm.HR_sparse;
     auto& SR_sparse_ptr = lm.SR_sparse;
-    auto& HR_soc_sparse_ptr = lm.HR_soc_sparse;
+    auto& HR_soc_sparse_ptr = HS_Arrays.HR_soc_sparse;
     auto& SR_soc_sparse_ptr = lm.SR_soc_sparse;
 
     int total_R_num = all_R_coor_ptr.size();

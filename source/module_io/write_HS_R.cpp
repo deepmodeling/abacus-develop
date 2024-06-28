@@ -55,7 +55,7 @@ void ModuleIO::output_HSR(const int& istep,
         sparse_format::cal_HSR(pv, lm, HS_Arrays, grid, spin_now, sparse_thr, kv.nmp, p_ham);
     }
 
-    ModuleIO::save_HSR_sparse(istep, lm, sparse_thr, binary, SR_filename, HR_filename_up, HR_filename_down);
+    ModuleIO::save_HSR_sparse(istep, lm, HS_Arrays, sparse_thr, binary, SR_filename, HR_filename_up, HR_filename_down);
 
     lm.destroy_HS_R_sparse();
 
