@@ -50,6 +50,7 @@ void write_dmr_csr(std::string& fname, hamilt::HContainer<double>* dm_serial, co
 }
 
 void write_dmr(const std::vector<hamilt::HContainer<double>*> dmr,
+               const Parallel_2D& paraV,
                const bool out_csr,
                const bool out_npz,
                const bool append,
@@ -68,9 +69,8 @@ void write_dmr(const std::vector<hamilt::HContainer<double>*> dmr,
             int nbasis = dmr[ispin]->get_nbasis();
             // gather the parallel matrix to serial matrix
 #ifdef __MPI
-            // This is not safe, because we do not know the comm_2D of dmr. Need refactor the gather function.
             Parallel_Orbitals serialV;
-            serialV.init(nbasis, nbasis, nbasis, MPI_COMM_WORLD);
+            serialV.init(nbasis, nbasis, nbasis, paraV.comm_2D);
             serialV.set_serial(nbasis, nbasis);
             serialV.set_atomic_trace(GlobalC::ucell.get_iat2iwt(), GlobalC::ucell.nat, nbasis);
             hamilt::HContainer<double> dm_serial(&serialV);
