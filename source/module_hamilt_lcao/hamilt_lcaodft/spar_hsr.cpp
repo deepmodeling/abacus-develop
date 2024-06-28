@@ -70,7 +70,7 @@ void sparse_format::cal_HSR(
 				current_spin, 
 				sparse_thr, 
 				*(p_ham_lcao->getSR()), 
-				lm.SR_soc_sparse);
+				HS_Arrays.SR_soc_sparse);
 	}
 	else
 	{
@@ -95,7 +95,7 @@ void sparse_format::cal_HSR(
 			cal_HR_dftu_soc(
 					pv,
 					lm.all_R_coor,
-					lm.SR_soc_sparse,
+					HS_Arrays.SR_soc_sparse,
 					HS_Arrays.HR_soc_sparse,
 					current_spin, 
 					sparse_thr);
@@ -113,17 +113,17 @@ void sparse_format::cal_HSR(
     {
 		if(GlobalC::exx_info.info_ri.real_number)
 		{
-			sparse_format::cal_HR_exx(lm, current_spin, sparse_thr, nmp, *lm.Hexxd);
+			sparse_format::cal_HR_exx(lm, HS_Arrays, current_spin, sparse_thr, nmp, *lm.Hexxd);
 		}
 		else
 		{
-			sparse_format::cal_HR_exx(lm, current_spin, sparse_thr, nmp, *lm.Hexxc);
+			sparse_format::cal_HR_exx(lm, HS_Arrays, current_spin, sparse_thr, nmp, *lm.Hexxc);
 		}
 	}
 #endif // __MPI
 #endif // __EXX
 
-    sparse_format::clear_zero_elements(lm, current_spin, sparse_thr);
+    sparse_format::clear_zero_elements(lm, HS_Arrays, current_spin, sparse_thr);
 
     return;
 }
@@ -263,6 +263,7 @@ void sparse_format::cal_HContainer_td(
 // in case there are elements smaller than the threshold
 void sparse_format::clear_zero_elements(
         LCAO_Matrix &lm,
+        LCAO_HS_Arrays& HS_Arrays,
 		const int &current_spin, 
 		const double &sparse_thr)
 {
@@ -335,7 +336,7 @@ void sparse_format::clear_zero_elements(
     }
     else
     {
-        for (auto &R_loop : lm.HR_soc_sparse)
+        for (auto &R_loop : HS_Arrays.HR_soc_sparse)
         {
             for (auto &row_loop : R_loop.second)
             {

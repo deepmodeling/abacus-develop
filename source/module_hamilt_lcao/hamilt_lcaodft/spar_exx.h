@@ -12,12 +12,15 @@
 
 // use LCAO_Matrix
 #include "module_hamilt_lcao/hamilt_lcaodft/spar_exx.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_HS_arrays.hpp"
+
 
 namespace sparse_format
 {
 
     template<typename Tdata> void cal_HR_exx(
             LCAO_Matrix &lm,
+            LCAO_HS_Arrays& HS_Arrays,
             const int &current_spin,
             const double &sparse_thr,
             const int (&nmp)[3],

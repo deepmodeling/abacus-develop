@@ -28,6 +28,7 @@
 template<typename Tdata>
 void sparse_format::cal_HR_exx(
             LCAO_Matrix &lm, // mohan add 2024-04-06
+			LCAO_HS_Arrays& HS_Arrays,
 			const int &current_spin, 
 			const double &sparse_threshold,
 			const int (&nmp)[3],
@@ -115,7 +116,7 @@ void sparse_format::cal_HR_exx(
 							}
 							else if(GlobalV::NSPIN==4)
 							{
-								auto &HR_sparse_ptr = lm.HR_soc_sparse[R][iwt0];
+								auto &HR_sparse_ptr = HS_Arrays.HR_soc_sparse[R][iwt0];
 								std::complex<double> &HR_sparse = HR_sparse_ptr[iwt1];
 								HR_sparse += RI::Global_Func::convert<std::complex<double>>(frac * Hexx(iw0,iw1));
 								if(std::abs(HR_sparse) <= sparse_threshold)
