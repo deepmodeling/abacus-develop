@@ -122,8 +122,6 @@ class LCAO_Matrix
     void destroy_HS_R_sparse(LCAO_HS_Arrays& HS_Arrays);
 
     void destroy_T_R_sparse(void);
-
-    void destroy_dH_R_sparse(LCAO_HS_Arrays& HS_Arrays);
 };
 
 #include "LCAO_matrix.hpp"

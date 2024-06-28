@@ -112,7 +112,7 @@ void ModuleIO::output_dHR(const int& istep,
     // mohan update 2024-04-01
     ModuleIO::save_dH_sparse(istep, lm, HS_Arrays, sparse_thr, binary);
 
-    lm.destroy_dH_R_sparse(HS_Arrays);
+    sparse_format::destroy_dH_R_sparse(HS_Arrays);
 
     gint_k.destroy_pvdpR();
 

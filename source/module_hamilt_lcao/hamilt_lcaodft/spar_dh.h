@@ -28,6 +28,9 @@ void cal_dSTN_R(LCAO_Matrix& lm,
                 Grid_Driver& grid,
                 const int& current_spin,
                 const double& sparse_thr);
+
+void destroy_dH_R_sparse(LCAO_HS_Arrays& HS_Arrays);
+
 } // namespace sparse_format
 
 #endif
