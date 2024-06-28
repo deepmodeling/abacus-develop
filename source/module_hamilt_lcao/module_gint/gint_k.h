@@ -99,13 +99,6 @@ class Gint_k : public Gint
         LCAO_Matrix* LM,
         Parallel_Orbitals* pv);
 
-    void cal_vlocal_R_sparseMatrix(const int& current_spin,
-                                   const double& sparse_threshold,
-                                   LCAO_Matrix* LM,
-                                   Parallel_Orbitals* pv,
-                                   UnitCell& ucell,
-                                   Grid_Driver& gdriver);
-
     //------------------------------------------------------
     // in gint_k_sparse1.cpp
     //------------------------------------------------------

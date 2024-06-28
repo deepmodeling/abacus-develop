@@ -326,7 +326,7 @@ void Gint_k::cal_dvlocal_R_sparseMatrix(const int& current_spin,
                                         UnitCell& ucell,
                                         Grid_Driver& gdriver)
 {
-    ModuleBase::TITLE("Gint_k", "cal_vlocal_R_sparseMatrix");
+    ModuleBase::TITLE("Gint_k", "cal_dvlocal_R_sparseMatrix");
 
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> pvdpRx_sparseMatrix;
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> pvdpRy_sparseMatrix;
