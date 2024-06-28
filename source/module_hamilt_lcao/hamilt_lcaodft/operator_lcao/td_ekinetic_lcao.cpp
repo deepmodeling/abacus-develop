@@ -23,7 +23,7 @@ TDEkinetic<OperatorLCAO<TK, TR>>::TDEkinetic(LCAO_Matrix* LM_in,
                                              Grid_Driver* GridD_in,
                                              const Parallel_Orbitals* paraV,
                                              const TwoCenterIntegrator* intor)
-    : SR(SR_in), kv(kv_in), OperatorLCAO<TK, TR>(LM_in, kv_in->kvec_d, hR_in, hK_in),intor_(intor)
+    : SR(SR_in), kv(kv_in), OperatorLCAO<TK, TR>(LM_in, kv_in->kvec_d, hR_in, hK_in), intor_(intor)
 {
     this->LM = LM_in;
     this->ucell = ucell_in;
@@ -54,7 +54,7 @@ void TDEkinetic<OperatorLCAO<std::complex<double>, double>>::td_ekinetic_scalar(
                                                                                 double* Sloc,
                                                                                 int nnr)
 {
-    //the correction term A^2/2 , 4.0 due to the unit transformation
+    // the correction term A^2/2 , 4.0 due to the unit transformation
     std::complex<double> tmp = {cart_At.norm2() * Sloc[nnr] / 4.0, 0};
     Hloc[nnr] += tmp;
     return;
@@ -65,9 +65,9 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::td_ekinetic_grad(std::complex<double>* Hl
                                                         int nnr,
                                                         ModuleBase::Vector3<double> grad_overlap)
 {
-    //the correction term -iA dot ∇r
-    //∇ refer to the integral ∫𝜙(𝑟)𝜕/𝜕𝑟𝜙(𝑟−𝑅)𝑑𝑟,but abacus only provide the integral of ∫𝜙(𝑟)𝜕/𝜕R𝜙(𝑟−𝑅)𝑑𝑟. An extra minus must be counted in.
-    //The final term is iA dot ∇R
+    // the correction term -iA dot ∇r
+    //∇ refer to the integral ∫𝜙(𝑟)𝜕/𝜕𝑟𝜙(𝑟−𝑅)𝑑𝑟,but abacus only provide the integral of ∫𝜙(𝑟)𝜕/𝜕R𝜙(𝑟−𝑅)𝑑𝑟. An extra
+    //minus must be counted in. The final term is iA dot ∇R
     std::complex<double> tmp = {0, grad_overlap * cart_At};
     Hloc[nnr] += tmp;
     return;
@@ -105,12 +105,13 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::calculate_HR()
             hamilt::BaseMatrix<TR>* tmps = this->SR->find_matrix(iat1, iat2, R_index2);
             if (tmp != nullptr)
             {
-                if(TD_Velocity::out_current)
+                if (TD_Velocity::out_current)
                 {
                     std::complex<double>* tmp_c[3] = {nullptr, nullptr, nullptr};
-                    for(int i = 0; i < 3; i++)
+                    for (int i = 0; i < 3; i++)
                     {
-                        tmp_c[i] = td_velocity.get_current_term_pointer(i)->find_matrix(iat1, iat2, R_index2)->get_pointer();
+                        tmp_c[i]
+                            = td_velocity.get_current_term_pointer(i)->find_matrix(iat1, iat2, R_index2)->get_pointer();
                     }
                     this->cal_HR_IJR(iat1, iat2, paraV, dtau, tmp->get_pointer(), tmp_c, tmps->get_pointer());
                 }
@@ -181,7 +182,7 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& iat1,
         const int m1 = iw2m1[iw1];
 
         // convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
-        int M1 = (m1 % 2 == 0) ? -m1/2 : (m1+1)/2;
+        int M1 = (m1 % 2 == 0) ? -m1 / 2 : (m1 + 1) / 2;
 
         for (int iw2l = 0; iw2l < col_indexes.size(); iw2l += npol)
         {
@@ -191,11 +192,10 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& iat1,
             const int m2 = iw2m2[iw2];
 
             // convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
-            int M2 = (m2 % 2 == 0) ? -m2/2 : (m2+1)/2;
+            int M2 = (m2 % 2 == 0) ? -m2 / 2 : (m2 + 1) / 2;
 
-            //calculate <psi|∇R|psi>, which equals to -<psi|∇r|psi>.
-            intor_->calculate(T1, L1, N1, M1,
-                    T2, L2, N2, M2, dtau * this->ucell->lat0, nullptr, grad);
+            // calculate <psi|∇R|psi>, which equals to -<psi|∇r|psi>.
+            intor_->calculate(T1, L1, N1, M1, T2, L2, N2, M2, dtau * this->ucell->lat0, nullptr, grad);
             ModuleBase::Vector3<double> grad_overlap(grad[0], grad[1], grad[2]);
 
             for (int ipol = 0; ipol < npol; ipol++)
@@ -206,25 +206,27 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& iat1,
             }
             data_pointer += npol;
             s_pointer += npol;
-            //current grad part
-            if(data_pointer_c!=nullptr)
+            // current grad part
+            if (data_pointer_c != nullptr)
             {
-                for(int dir = 0; dir < 3; dir++)
+                for (int dir = 0; dir < 3; dir++)
                 {
                     for (int ipol = 0; ipol < npol; ipol++)
                     {
-                        data_pointer_c[dir][ipol * step_trace] += std::complex<double>(0,grad_overlap[dir]);
+                        // part of Momentum operator, -i∇r,used to calculate the current
+                        // here is actually i∇R
+                        data_pointer_c[dir][ipol * step_trace] += std::complex<double>(0, grad_overlap[dir]);
                     }
                     data_pointer_c[dir] += npol;
                 }
-
             }
         }
         data_pointer += (npol - 1) * col_indexes.size();
         s_pointer += (npol - 1) * col_indexes.size();
-        if(data_pointer_c!=nullptr)
+        if (data_pointer_c != nullptr)
         {
-            for(int dir = 0; dir < 3; dir++) data_pointer_c[dir] += (npol - 1) * col_indexes.size();
+            for (int dir = 0; dir < 3; dir++)
+                data_pointer_c[dir] += (npol - 1) * col_indexes.size();
         }
     }
 }
@@ -346,7 +348,7 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::contributeHR()
             // pass pointer of hR_tmp to the next node
             static_cast<OperatorLCAO<TK, TR>*>(this->next_sub_op)->set_HR_fixed(this->hR_tmp);
         }
-        //initialize current term if needed
+        // initialize current term if needed
         if (TD_Velocity::out_current)
         {
             td_velocity.initialize_current_term(this->hR_tmp, paraV);

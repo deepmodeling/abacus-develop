@@ -29,7 +29,7 @@ TD_Velocity::~TD_Velocity()
     delete td_vel_op;
     for (int dir = 0; dir < 3; dir++)
     {
-        if(this->current_term[dir] != nullptr)
+        if (this->current_term[dir] != nullptr)
         {
             delete this->current_term[dir];
         }
@@ -143,15 +143,16 @@ void TD_Velocity::read_cart_At(void)
 
     return;
 }
-void TD_Velocity::initialize_current_term(const hamilt::HContainer<std::complex<double>>* HR, const Parallel_Orbitals* paraV)
+void TD_Velocity::initialize_current_term(const hamilt::HContainer<std::complex<double>>* HR,
+                                          const Parallel_Orbitals* paraV)
 {
     ModuleBase::TITLE("TD_Velocity", "initialize_current_term");
     ModuleBase::timer::tick("TD_Velocity", "initialize_current_term");
 
-    for (int dir=0;dir<3;dir++)
+    for (int dir = 0; dir < 3; dir++)
     {
         if (this->current_term[dir] == nullptr)
-        this->current_term[dir] = new hamilt::HContainer<std::complex<double>>(paraV);
+            this->current_term[dir] = new hamilt::HContainer<std::complex<double>>(paraV);
     }
 
     for (int i = 0; i < HR->size_atom_pairs(); ++i)
@@ -164,13 +165,13 @@ void TD_Velocity::initialize_current_term(const hamilt::HContainer<std::complex<
             const int iat2 = tmp.get_atom_j();
 
             hamilt::AtomPair<std::complex<double>> tmp1(iat1, iat2, R_index, paraV);
-            for (int dir=0;dir<3;dir++)
+            for (int dir = 0; dir < 3; dir++)
             {
                 this->current_term[dir]->insert_pair(tmp1);
             }
         }
     }
-    for (int dir=0;dir<3;dir++)
+    for (int dir = 0; dir < 3; dir++)
     {
         this->current_term[dir]->allocate(nullptr, true);
     }

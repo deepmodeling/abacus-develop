@@ -18,7 +18,7 @@ void write_current(const int istep,
                    const TwoCenterIntegrator* intor,
                    const Parallel_Orbitals* pv,
                    Record_adj& ra,
-                   hamilt::HContainer<double>* sR); 
+                   hamilt::HContainer<double>* sR);
 
 /// @brief calculate sum_n[𝜌_(𝑛𝑘,𝜇𝜈)] for current calculation
 void cal_tmp_DM(elecstate::DensityMatrix<std::complex<double>, double>& DM_real,
@@ -26,7 +26,6 @@ void cal_tmp_DM(elecstate::DensityMatrix<std::complex<double>, double>& DM_real,
                 const int ik,
                 const int nspin,
                 const int is);
-
 
 #endif // __LCAO
 } // namespace ModuleIO

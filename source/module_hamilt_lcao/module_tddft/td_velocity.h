@@ -44,10 +44,10 @@ class TD_Velocity
                      const ModuleBase::Vector3<double>& a2,
                      const ModuleBase::Vector3<double>& At);
 
-    //allocate memory for current term
+    // allocate memory for current term.
     void initialize_current_term(const hamilt::HContainer<std::complex<double>>* HR, const Parallel_Orbitals* paraV);
 
-    hamilt::HContainer<std::complex<double>>* get_current_term_pointer(const int& i)const 
+    hamilt::HContainer<std::complex<double>>* get_current_term_pointer(const int& i) const
     {
         return this->current_term[i];
     }
@@ -74,6 +74,7 @@ class TD_Velocity
     /// @brief destory HSR data stored
     void destroy_HS_R_td_sparse(void);
 
+    /// @brief part of Momentum operator, -i∇ - i[r,Vnl]. Used to calculate current.
     std::vector<hamilt::HContainer<std::complex<double>>*> current_term = {nullptr, nullptr, nullptr};
 };
 
