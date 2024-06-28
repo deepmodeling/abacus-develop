@@ -6,6 +6,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/input.h"
 #include "module_io/input_conv.h"
+#include "module_hamilt_lcao/module_tddft/td_velocity.h"
 
 namespace elecstate
 {
@@ -238,6 +239,7 @@ void H_TDDFT_pw::update_At(void)
     std::cout << "calculate electric potential" << std::endl;
     // time evolve
     H_TDDFT_pw::istep++;
+    
     // judgement to skip vext
     if (!module_tddft::Evolve_elec::td_vext || istep > tend || istep < tstart)
     {

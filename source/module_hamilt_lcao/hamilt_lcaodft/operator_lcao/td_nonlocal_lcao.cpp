@@ -150,14 +150,12 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
             ucell->iat2iait(iat0, &I0, &T0);
             AdjacentAtomInfo& adjs = this->adjs_all[iat0];
             
-            //test
             std::vector<std::vector<std::unordered_map<int, std::vector<std::complex<double>>>>> nlm_tot;
             nlm_tot.resize(adjs.adj_num + 1);
             for(int i=0;i < adjs.adj_num + 1;i++)
             {
                 nlm_tot[i].resize(nlm_dim);
             }
-            //test
 
             for (int ad = 0; ad < adjs.adj_num + 1; ++ad)
             {
@@ -240,7 +238,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                             std::complex<double>* tmp_c[3] = {nullptr, nullptr, nullptr};
                             for(int i = 0; i < 3; i++)
                             {
-                                tmp_c[i] = TD_Velocity::td_vel_op->get_current_pointer()->get_current_term_pointer(i)->find_matrix(iat1, iat2, R_index2)->get_pointer();
+                                tmp_c[i] = TD_Velocity::td_vel_op->get_current_term_pointer(i)->find_matrix(iat1, iat2, R_index2)->get_pointer();
                             }
                             this->cal_HR_IJR(iat1, iat2, T0, paraV, nlm_tot[ad1], nlm_tot[ad2], tmp->get_pointer(), tmp_c);
                         }

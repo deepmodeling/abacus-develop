@@ -8,7 +8,6 @@ if(ENABLE_LCAO)
         propagator.cpp
         upsi.cpp
         td_velocity.cpp
-        td_current.cpp
         snap_psibeta_half_tddft.cpp
     )
 

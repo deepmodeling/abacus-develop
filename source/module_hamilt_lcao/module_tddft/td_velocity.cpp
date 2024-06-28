@@ -27,6 +27,13 @@ TD_Velocity::~TD_Velocity()
 {
     this->destroy_HS_R_td_sparse();
     delete td_vel_op;
+    for (int dir = 0; dir < 3; dir++)
+    {
+        if(this->current_term[dir] != nullptr)
+        {
+            delete this->current_term[dir];
+        }
+    }
 }
 
 void TD_Velocity::output_cart_At(const std::string& out_dir)
@@ -136,14 +143,40 @@ void TD_Velocity::read_cart_At(void)
 
     return;
 }
-void TD_Velocity::setup_current(const UnitCell* ucell_in,
-                                Grid_Driver* GridD_in,
-                                const Parallel_Orbitals* paraV,
-                                const TwoCenterIntegrator* intor)
+void TD_Velocity::initialize_current_term(const hamilt::HContainer<std::complex<double>>* HR, const Parallel_Orbitals* paraV)
 {
-    current_p = new TD_current(ucell_in, GridD_in, paraV, cart_At, intor);
-    return;
+    ModuleBase::TITLE("TD_Velocity", "initialize_current_term");
+    ModuleBase::timer::tick("TD_Velocity", "initialize_current_term");
+
+    for (int dir=0;dir<3;dir++)
+    {
+        if (this->current_term[dir] == nullptr)
+        this->current_term[dir] = new hamilt::HContainer<std::complex<double>>(paraV);
+    }
+
+    for (int i = 0; i < HR->size_atom_pairs(); ++i)
+    {
+        hamilt::AtomPair<std::complex<double>>& tmp = HR->get_atom_pair(i);
+        for (int ir = 0; ir < tmp.get_R_size(); ++ir)
+        {
+            const ModuleBase::Vector3<int> R_index = tmp.get_R_index(ir);
+            const int iat1 = tmp.get_atom_i();
+            const int iat2 = tmp.get_atom_j();
+
+            hamilt::AtomPair<std::complex<double>> tmp1(iat1, iat2, R_index, paraV);
+            for (int dir=0;dir<3;dir++)
+            {
+                this->current_term[dir]->insert_pair(tmp1);
+            }
+        }
+    }
+    for (int dir=0;dir<3;dir++)
+    {
+        this->current_term[dir]->allocate(nullptr, true);
+    }
+    ModuleBase::timer::tick("TDEkinetic", "initialize_HR_tmp");
 }
+
 void TD_Velocity::destroy_HS_R_td_sparse(void)
 {
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>
