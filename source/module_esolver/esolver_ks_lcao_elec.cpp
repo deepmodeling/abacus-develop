@@ -752,7 +752,7 @@ void ESolver_KS_LCAO<TK, TR>::nscf(void)
         this->cal_mag(istep, true);
     }
 
-    ///write potential
+    /// write potential
     this->create_Output_Potential(0).write();
 
     return;
