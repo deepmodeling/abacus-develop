@@ -42,7 +42,7 @@ has_lowf=`grep out_wfc_lcao INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 out_app_flag=`grep out_app_flag INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 has_wfc_r=`grep out_wfc_r INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 has_wfc_pw=`grep out_wfc_pw INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
-out_dm=`grep "out_dm " INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
+out_dm=`grep "out_dm" INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 out_mul=`grep out_mul INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 gamma_only=`grep gamma_only INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 imp_sol=`grep imp_sol INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
@@ -341,29 +341,14 @@ if ! test -z "$has_lowf"  && [ $has_lowf == 1 ]; then
 fi
 
 if ! test -z "$out_dm"  && [ $out_dm == 1 ]; then
-      dmfile=`ls OUT.autotest/ | grep "^SPIN1_DM"`
+      dmfile=OUT.autotest/SPIN1_DM
+	  dmref=SPIN1_DM.ref
       if test -z "$dmfile"; then
               echo "Can't find DM files"
               exit 1
       else
-              for dm in $dmfile;
-              do
-                      if ! test -f OUT.autotest/$dm; then
-                              echo "Irregular DM file found"
-                              exit 1
-                      else
-                            total_dm=$(awk 'BEGIN {sum=0.0;startline=999}
-							{
-								if(NR==7){startline=$1+14;}
-								else if(NR>=startline) 
-								{
-									for(i=1;i<=NF;i++){sum+=sqrt($i*$i)}
-								}
-							}
-							END {printf"%.6f",sum}' OUT.autotest/$dm)
-                            echo "$dm $total_dm" >>$1
-                      fi
-              done
+			python3 ../tools/CompareFile.py $dmref $dm 5
+            echo "DM_different $?" >>$1
       fi
 fi
 

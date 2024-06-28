@@ -53,14 +53,12 @@ if(ENABLE_LCAO)
       nscf_fermi_surf.cpp
       istate_charge.cpp
       istate_envelope.cpp
-      read_dm.cpp
       read_wfc_nao.cpp
       read_wfc_lcao.cpp
       write_wfc_nao.cpp
-      write_dm.cpp
+      io_dmk.cpp
       write_dmr.cpp
       dos_nao.cpp
-      output_dm.cpp
       sparse_matrix.cpp
       file_reader.cpp
       csr_reader.cpp

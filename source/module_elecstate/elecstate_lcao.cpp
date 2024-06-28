@@ -106,24 +106,6 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
         // cal_dm(this->loc->ParaV, this->wg, psi, this->loc->dm_gamma);
         elecstate::cal_dm_psi(this->DM->get_paraV_pointer(), this->wg, psi, *(this->DM));
         this->DM->cal_DMR();
-        if (this->loc->out_dm) // keep interface for old Output_DM until new one is ready
-        {
-            this->loc->dm_gamma.resize(GlobalV::NSPIN);
-            for (int is = 0; is < GlobalV::NSPIN; ++is)
-            {
-                this->loc->set_dm_gamma(is, this->DM->get_DMK_pointer(is));
-            }
-        }
-        ModuleBase::timer::tick("ElecStateLCAO", "cal_dm_2d");
-        for (int ik = 0; ik < psi.get_nk(); ++ik)
-        {
-            // for gamma_only case, no convertion occured, just for print.
-            // old 2D-to-Grid conversion has been replaced by new Gint Refactor 2023/09/25
-            if (this->loc->out_dm) // keep interface for old Output_DM until new one is ready
-            {
-                this->loc->cal_dk_gamma_from_2D_pub();
-            }
-        }
     }
 
     for (int is = 0; is < GlobalV::NSPIN; is++)
@@ -189,16 +171,6 @@ void ElecStateLCAO<double>::dmToRho(std::vector<double*> pexsi_DM, std::vector<d
     if (GlobalV::NSPIN == 4)
     {
         nspin = 1;
-    }
-
-    // old 2D-to-Grid conversion has been replaced by new Gint Refactor 2023/09/25
-    if (this->loc->out_dm) // keep interface for old Output_DM until new one is ready
-    {
-        for (int is = 0; is < nspin; ++is)
-        {
-            this->loc->set_dm_gamma(is, pexsi_DM[is]);
-        }
-        this->loc->cal_dk_gamma_from_2D_pub();
     }
 
     this->get_DM()->pexsi_EDM = pexsi_EDM;

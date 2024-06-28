@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
-#include "module_io/dm_io.h"
+#include "module_io/io_dmk.h"
 #include "module_base/global_variable.h"
 #include "prepare_unitcell.h"
 
@@ -22,16 +22,16 @@ Magnetism::~Magnetism()
 }
 
 /************************************************
- *  unit test of read_dm and write_dm
+ *  unit test of read_dmk and write_dmk
  ***********************************************/
 
 /**
  * - Tested Functions:
- *   - read_dm()
- *     - the function to read density matrix from file
+ *   - read_dmk()
+ *     - the function to read density matrix K from file
  *     - the serial version without MPI
- *   - write_dm()
- *     - the function to write density matrix to file
+ *   - write_dmk()
+ *     - the function to write density matrix K to file
  *     - the serial version without MPI
  */
 
@@ -86,7 +86,7 @@ TEST_F(DMIOTest,Read)
 	double ef;
 	UcellTestPrepare utp = UcellTestLib["Si"];
 	ucell = utp.SetUcellInfo();
-	ModuleIO::read_dm(GlobalV::GAMMA_ONLY_LOCAL, GlobalV::NLOCAL,
+	ModuleIO::read_dmk(GlobalV::GAMMA_ONLY_LOCAL, GlobalV::NLOCAL,
 					  GlobalV::NSPIN,is,fn,DM,DM_R,ef,ucell);
 	EXPECT_DOUBLE_EQ(ef,0.570336288802337);
 	EXPECT_NEAR(DM[0][0][0],3.904e-01,1e-6);
@@ -104,16 +104,28 @@ TEST_F(DMIOTest,Write)
 	double ef;
 	UcellTestPrepare utp = UcellTestLib["Si"];
 	ucell = utp.SetUcellInfo();
-	ModuleIO::read_dm(GlobalV::GAMMA_ONLY_LOCAL, GlobalV::NLOCAL,
+	ModuleIO::read_dmk(GlobalV::GAMMA_ONLY_LOCAL, GlobalV::NLOCAL,
 					  GlobalV::NSPIN,is,fn,DM,DM_R,ef,ucell);
 	EXPECT_DOUBLE_EQ(ef,0.570336288802337);
 	EXPECT_NEAR(DM[0][0][0],3.904e-01,1e-6);
 	EXPECT_NEAR(DM[0][25][25],3.445e-02,1e-6);
 	//then write
-	std::string ssd = "SPIN1_DM";
 	int precision = 3;
-	int out_dm = 1;
-	ModuleIO::write_dm(is,0,ssd,precision,out_dm,DM,ef,ucell,GlobalV::MY_RANK,GlobalV::NSPIN,GlobalV::NLOCAL);
+	std::vector<std::vector<double>> dmk(nspin,std::vector<double>(lgd*lgd,0.0));
+	for(int is=0; is<nspin; ++is)
+	{
+		for(int ig=0; ig<lgd; ++ig)
+		{
+			for(int jg=0; jg<lgd; ++jg)
+			{
+				dmk[is][ig*lgd+jg] = DM[is][ig][jg];
+			}
+		}
+	}
+	Parallel_2D pv;
+	pv.nrow = lgd; 
+	pv.ncol = lgd;
+	ModuleIO::write_dmk(dmk,precision, std::vector<double>(nspin,ef),ucell,pv);
 	std::ifstream ifs;
 	ifs.open("SPIN1_DM");
 	std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
