@@ -133,7 +133,7 @@ void ModuleIO::output_SR(Parallel_Orbitals& pv,
 
     LCAO_HS_Arrays HS_Arrays;
 
-    sparse_format::cal_SR(pv, lm.all_R_coor, lm.SR_sparse, lm.SR_soc_sparse, grid, sparse_thr, p_ham);
+    sparse_format::cal_SR(pv, lm.all_R_coor, lm.SR_sparse, HS_Arrays.SR_soc_sparse, grid, sparse_thr, p_ham);
 
     const int istep = 0;
 

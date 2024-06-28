@@ -345,7 +345,7 @@ void LCAO_Matrix::destroy_HS_R_sparse(LCAO_HS_Arrays& HS_Arrays)
         std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>
             empty_SR_soc_sparse;
         HS_Arrays.HR_soc_sparse.swap(empty_HR_soc_sparse);
-        SR_soc_sparse.swap(empty_SR_soc_sparse);
+        HS_Arrays.SR_soc_sparse.swap(empty_SR_soc_sparse);
     }
 
     // 'all_R_coor' has a small memory requirement and does not need to be deleted.

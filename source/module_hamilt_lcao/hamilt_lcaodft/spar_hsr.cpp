@@ -356,7 +356,7 @@ void sparse_format::clear_zero_elements(
             }// end row loop
         }// end R loop
 
-        for (auto &R_loop : lm.SR_soc_sparse)
+        for (auto &R_loop : HS_Arrays.SR_soc_sparse)
         {
             for (auto &row_loop : R_loop.second)
             {

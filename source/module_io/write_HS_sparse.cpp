@@ -23,7 +23,7 @@ void ModuleIO::save_HSR_sparse(const int& istep,
     auto& HR_sparse_ptr = lm.HR_sparse;
     auto& SR_sparse_ptr = lm.SR_sparse;
     auto& HR_soc_sparse_ptr = HS_Arrays.HR_soc_sparse;
-    auto& SR_soc_sparse_ptr = lm.SR_soc_sparse;
+    auto& SR_soc_sparse_ptr = HS_Arrays.SR_soc_sparse;
 
     int total_R_num = all_R_coor_ptr.size();
     int output_R_number = 0;
