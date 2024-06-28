@@ -1,7 +1,7 @@
 #ifndef SYSTEM_PARAMETER_H
 #define SYSTEM_PARAMETER_H
-#include <string>
 #include <ctime>
+#include <string>
 
 struct System_para
 {

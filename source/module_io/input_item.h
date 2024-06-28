@@ -4,8 +4,8 @@
 
 #include <functional>
 #include <map>
-#include <string>
 #include <sstream>
+#include <string>
 #include <vector>
 namespace ModuleIO
 {
@@ -37,9 +37,9 @@ class Input_Item
 
     size_t get_size() const ///< get size of the input item
     {
-        if(str_values.empty())
+        if (str_values.empty())
             return 0;
-        else if(str_values.size() == 1 && str_values[0].empty())
+        else if (str_values.size() == 1 && str_values[0].empty())
             return 0;
         else
             return str_values.size();
@@ -48,7 +48,6 @@ class Input_Item
 
     std::string annotation; ///< annotation of the input item
 
-    
     // ====== !!! These functions are complete.        ======
     // ====== !!! Do not add any more functions here.  ======
     /// read value if INPUT file has this item

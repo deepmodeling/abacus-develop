@@ -5,13 +5,12 @@
 #ifndef INPUT_CONVERT_H
 #define INPUT_CONVERT_H
 
-#include <regex.h>
-#include <stdio.h>
-#include <string.h>
-
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <regex.h>
+#include <stdio.h>
+#include <string.h>
 #include <string>
 #include <vector>
 
@@ -20,7 +19,7 @@ namespace Input_Conv
 
 /**
  * @brief template bridge codes for converting string to other types
- * 
+ *
  */
 void tmp_convert();
 

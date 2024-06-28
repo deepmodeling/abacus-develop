@@ -322,7 +322,7 @@ void ReadInput::item_general()
     {
         Input_Item item("ntype");
         item.annotation = "atom species number";
-        //check of ntype is done in check_ntype
+        // check of ntype is done in check_ntype
         read_sync_int(ntype);
         this->add_item(item);
     }

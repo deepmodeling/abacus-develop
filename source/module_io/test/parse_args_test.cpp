@@ -1,7 +1,9 @@
-#include "gtest/gtest.h"
 #include "module_io/parse_args.h"
-#include "version.h"
+
 #include "module_io/read_input.h"
+#include "version.h"
+
+#include "gtest/gtest.h"
 
 bool ModuleIO::ReadInput::check_mode = false;
 
@@ -18,9 +20,9 @@ TEST(ParseArgsTest, OutVersionTest)
     // No output expected
 
 #ifdef VERSION
-std::string output_ref = "ABACUS version " + std::string(VERSION) + "\n";
+    std::string output_ref = "ABACUS version " + std::string(VERSION) + "\n";
 #else
-std::string output_ref = "ABACUS version unknown\n";
+    std::string output_ref = "ABACUS version unknown\n";
 #endif
 
     // Test case 2: --version argument
@@ -28,7 +30,7 @@ std::string output_ref = "ABACUS version unknown\n";
     char* argv1[] = {arg0, arg1};
     argc = 2;
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(ModuleIO::parse_args(argc, argv1),::testing::ExitedWithCode(0),"");
+    EXPECT_EXIT(ModuleIO::parse_args(argc, argv1), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_EQ(output_ref, output);
 
@@ -37,7 +39,7 @@ std::string output_ref = "ABACUS version unknown\n";
     char* argv2[] = {arg0, arg2};
     argc = 2;
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(ModuleIO::parse_args(argc, argv2),::testing::ExitedWithCode(0),"");
+    EXPECT_EXIT(ModuleIO::parse_args(argc, argv2), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_EQ(output_ref, output);
 
@@ -46,7 +48,7 @@ std::string output_ref = "ABACUS version unknown\n";
     char* argv3[] = {arg0, arg3};
     argc = 2;
     testing::internal::CaptureStdout();
-        EXPECT_EXIT(ModuleIO::parse_args(argc, argv3),::testing::ExitedWithCode(0),"");
+    EXPECT_EXIT(ModuleIO::parse_args(argc, argv3), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_EQ(output_ref, output);
 }

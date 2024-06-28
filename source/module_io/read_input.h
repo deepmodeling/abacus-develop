@@ -37,7 +37,7 @@ class ReadInput
 
     /**
      * @brief Create a directory for output files
-     * 
+     *
      * @param param parameters of ABACUS
      */
     void create_directory(const Parameter& param);

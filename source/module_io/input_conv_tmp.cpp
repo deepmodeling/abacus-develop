@@ -5,7 +5,7 @@
 #include <sstream>
 #include <string>
 
-void Input_Conv:: tmp_convert()
+void Input_Conv::tmp_convert()
 {
     INPUT.suffix = PARAM.get().suffix;
     INPUT.stru_file = PARAM.get().stru_file;
