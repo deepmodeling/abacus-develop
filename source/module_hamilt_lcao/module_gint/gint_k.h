@@ -92,13 +92,6 @@ class Gint_k : public Gint
         LCAO_Matrix* LM,
         Parallel_Orbitals* pv);
 
-    void distribute_pvpR_soc_sparseMatrix(
-        const double& sparse_threshold,
-        const std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>&
-            pvpR_soc_sparseMatrix,
-        LCAO_Matrix* LM,
-        Parallel_Orbitals* pv);
-
     //------------------------------------------------------
     // in gint_k_sparse1.cpp
     //------------------------------------------------------
