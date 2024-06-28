@@ -734,11 +734,9 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::P
             dav_subspace
                 .diag(hpsi_func, subspace_func, psi.get_pointer(), psi.get_nbasis(), eigenvalue, is_occupied, scf));
 
-        this->pdiagh = nullptr;
     }
     else if (this->method == "bpcg")
     {
-        // this->pdiagh->diag(hm, psi, eigenvalue);
         DiagoBPCG<T, Device> bpcg(precondition.data());
         bpcg.init_iter(psi);
         bpcg.diag(hm, psi, eigenvalue);
