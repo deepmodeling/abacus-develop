@@ -2,6 +2,7 @@
 #define TD_VELOCITY_H
 #include "module_base/abfs-vector3_order.h"
 #include "module_base/timer.h"
+#include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 
 #include <map>
 // Class to store TDDFT velocity gague infos.
@@ -25,6 +26,12 @@ class TD_Velocity
     /// @brief switch to control the output of At
     static bool out_vecpot;
 
+    /// @brief switch to control the output of current
+    static bool out_current;
+
+    /// @brief switch to control the format of the output current, in total or in each k-point
+    static bool out_current_k;
+
     /// @brief switch to control the source of At
     static bool init_vecpot_file;
 
@@ -36,6 +43,14 @@ class TD_Velocity
                      const ModuleBase::Vector3<double>& a1,
                      const ModuleBase::Vector3<double>& a2,
                      const ModuleBase::Vector3<double>& At);
+
+    //allocate memory for current term
+    void initialize_current_term(const hamilt::HContainer<std::complex<double>>* HR, const Parallel_Orbitals* paraV);
+
+    hamilt::HContainer<std::complex<double>>* get_current_term_pointer(const int& i)const 
+    {
+        return this->current_term[i];
+    }
 
     // For TDDFT velocity gague, to fix the output of HR
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>> HR_sparse_td_vel[2];
@@ -58,6 +73,8 @@ class TD_Velocity
 
     /// @brief destory HSR data stored
     void destroy_HS_R_td_sparse(void);
+
+    std::vector<hamilt::HContainer<std::complex<double>>*> current_term = {nullptr, nullptr, nullptr};
 };
 
 #endif
