@@ -325,7 +325,7 @@ void LCAO_Matrix::set_HR_tr_soc(const int& Rx,
     return;
 }
 
-void LCAO_Matrix::destroy_HS_R_sparse()
+void LCAO_Matrix::destroy_HS_R_sparse(LCAO_HS_Arrays& HS_Arrays)
 {
     ModuleBase::TITLE("LCAO_Matrix", "destroy_HS_R_sparse");
 
@@ -344,7 +344,7 @@ void LCAO_Matrix::destroy_HS_R_sparse()
             empty_HR_soc_sparse;
         std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>
             empty_SR_soc_sparse;
-        HR_soc_sparse.swap(empty_HR_soc_sparse);
+        HS_Arrays.HR_soc_sparse.swap(empty_HR_soc_sparse);
         SR_soc_sparse.swap(empty_SR_soc_sparse);
     }
 

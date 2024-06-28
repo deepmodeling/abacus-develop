@@ -87,7 +87,6 @@ class LCAO_Matrix
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> dHRz_sparse[2];
 
     // For nspin = 4
-    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>> HR_soc_sparse;
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>> SR_soc_sparse;
 
     // Record all R direct coordinate information, even if HR or SR is a zero matrix
@@ -127,7 +126,7 @@ class LCAO_Matrix
     void output_HSk(const char& mtype, std::string& fn);
 
     // jingan add 2021-6-4, modify 2021-12-2
-    void destroy_HS_R_sparse(void);
+    void destroy_HS_R_sparse(LCAO_HS_Arrays& HS_Arrays);
 
     void destroy_T_R_sparse(void);
 

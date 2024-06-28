@@ -57,7 +57,7 @@ void ModuleIO::output_HSR(const int& istep,
 
     ModuleIO::save_HSR_sparse(istep, lm, HS_Arrays, sparse_thr, binary, SR_filename, HR_filename_up, HR_filename_down);
 
-    lm.destroy_HS_R_sparse();
+    lm.destroy_HS_R_sparse(HS_Arrays);
 
     ModuleBase::timer::tick("ModuleIO", "output_HSR");
     return;
@@ -131,13 +131,15 @@ void ModuleIO::output_SR(Parallel_Orbitals& pv,
     ModuleBase::TITLE("ModuleIO", "output_SR");
     ModuleBase::timer::tick("ModuleIO", "output_SR");
 
+    LCAO_HS_Arrays HS_Arrays;
+
     sparse_format::cal_SR(pv, lm.all_R_coor, lm.SR_sparse, lm.SR_soc_sparse, grid, sparse_thr, p_ham);
 
     const int istep = 0;
 
     ModuleIO::save_sparse(lm.SR_sparse, lm.all_R_coor, sparse_thr, binary, SR_filename, *lm.ParaV, "S", istep);
 
-    lm.destroy_HS_R_sparse();
+    lm.destroy_HS_R_sparse(HS_Arrays);
 
     ModuleBase::timer::tick("ModuleIO", "output_SR");
     return;
