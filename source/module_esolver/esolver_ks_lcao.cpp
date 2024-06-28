@@ -44,10 +44,9 @@
 //---------------------------------------------------
 
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
+#include "module_io/io_dmk.h"
 #include "module_io/write_dmr.h"
 #include "module_io/write_wfc_nao.h"
-#include "module_io/io_dmk.h"
-
 
 namespace ModuleESolver
 {

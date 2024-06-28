@@ -1,8 +1,8 @@
-#include "module_base/parallel_common.h"
-#include "module_base/timer.h"
 #include "module_io/io_dmk.h"
-#include "module_base/scalapack_connector.h"
 
+#include "module_base/parallel_common.h"
+#include "module_base/scalapack_connector.h"
+#include "module_base/timer.h"
 
 void ModuleIO::read_dmk(
 #ifdef __MPI
@@ -176,28 +176,26 @@ void ModuleIO::read_dmk(
 
 std::string ModuleIO::dmk_gen_fname(const bool gamma_only, const int ispin, const int ik)
 {
-    if(gamma_only)
+    if (gamma_only)
     {
         return "SPIN" + std::to_string(ispin + 1) + "_DM";
     }
     else
     {
         // this case is not implemented now.
-        ModuleBase::WARNING_QUIT("dmk_gen_fname","Not implemented for non-gamma_only case.");
+        ModuleBase::WARNING_QUIT("dmk_gen_fname", "Not implemented for non-gamma_only case.");
     }
 }
 
 template <typename T>
-void ModuleIO::write_dmk(
-    const std::vector<std::vector<T>> dmk, 	
-	const int precision,
-	const std::vector<double> efs,
-	const UnitCell* ucell,
-    const Parallel_2D& pv
-    )
+void ModuleIO::write_dmk(const std::vector<std::vector<T>> dmk,
+                         const int precision,
+                         const std::vector<double> efs,
+                         const UnitCell* ucell,
+                         const Parallel_2D& pv)
 {
-    ModuleBase::TITLE("ModuleIO","write_dmk");
-	ModuleBase::timer::tick("ModuleIO","write_dmk");
+    ModuleBase::TITLE("ModuleIO", "write_dmk");
+    ModuleBase::timer::tick("ModuleIO", "write_dmk");
 
     int my_rank = 0;
 #ifdef __MPI
@@ -210,10 +208,10 @@ void ModuleIO::write_dmk(
     int nk = dmk.size() / nspin;
     if (nk * nspin != dmk.size())
     {
-        ModuleBase::WARNING_QUIT("write_dmk","The size of dmk is not consistent with nspin and nk.");
+        ModuleBase::WARNING_QUIT("write_dmk", "The size of dmk is not consistent with nspin and nk.");
     }
     Parallel_2D pv_glb;
-	
+
     // when nspin == 2, assume the order of K in dmk is K1_up, K2_up, ..., K1_down, K2_down, ...
     for (int ispin = 0; ispin < nspin; ispin++)
     {
@@ -250,32 +248,31 @@ void ModuleIO::write_dmk(
 
                 // write the UnitCell information
                 ofs << ucell->latName << std::endl;
-	            ofs << " " << ucell->lat0 * ModuleBase::BOHR_TO_A << std::endl;
-	            ofs << " " << ucell->latvec.e11 << " " << ucell->latvec.e12 << " " << ucell->latvec.e13 << std::endl;
-	            ofs << " " << ucell->latvec.e21 << " " << ucell->latvec.e22 << " " << ucell->latvec.e23 << std::endl;
-	            ofs << " " << ucell->latvec.e31 << " " << ucell->latvec.e32 << " " << ucell->latvec.e33 << std::endl;
-	            for(int it=0; it<ucell->ntype; it++)
-	            {
-	            	ofs << " " << ucell->atoms[it].label;
-	            }
-	            ofs << std::endl;
-	            for(int it=0; it<ucell->ntype; it++)
-	            {
-	            	ofs << " " << ucell->atoms[it].na;
-	            }
-	            ofs << std::endl;
-	            ofs << "Direct" << std::endl;
-	            for(int it=0; it<ucell->ntype; it++)
-	            {
-	            	Atom* atom = &ucell->atoms[it];
-	            	ofs << std::setprecision(15);
-	            	for(int ia=0; ia<ucell->atoms[it].na; ia++)
-	            	{
-	            		ofs << " " << atom->taud[ia].x
-	            			<< " " << atom->taud[ia].y
-	            			<< " " << atom->taud[ia].z << std::endl;
-	            	}
-	            }
+                ofs << " " << ucell->lat0 * ModuleBase::BOHR_TO_A << std::endl;
+                ofs << " " << ucell->latvec.e11 << " " << ucell->latvec.e12 << " " << ucell->latvec.e13 << std::endl;
+                ofs << " " << ucell->latvec.e21 << " " << ucell->latvec.e22 << " " << ucell->latvec.e23 << std::endl;
+                ofs << " " << ucell->latvec.e31 << " " << ucell->latvec.e32 << " " << ucell->latvec.e33 << std::endl;
+                for (int it = 0; it < ucell->ntype; it++)
+                {
+                    ofs << " " << ucell->atoms[it].label;
+                }
+                ofs << std::endl;
+                for (int it = 0; it < ucell->ntype; it++)
+                {
+                    ofs << " " << ucell->atoms[it].na;
+                }
+                ofs << std::endl;
+                ofs << "Direct" << std::endl;
+                for (int it = 0; it < ucell->ntype; it++)
+                {
+                    Atom* atom = &ucell->atoms[it];
+                    ofs << std::setprecision(15);
+                    for (int ia = 0; ia < ucell->atoms[it].na; ia++)
+                    {
+                        ofs << " " << atom->taud[ia].x << " " << atom->taud[ia].y << " " << atom->taud[ia].z
+                            << std::endl;
+                    }
+                }
                 ofs << "\n " << dmk.size(); // nspin
                 ofs << "\n " << efs[ispin] << " (fermi energy)";
                 ofs << "\n  " << nlocal << " " << nlocal << std::endl;
@@ -296,28 +293,27 @@ void ModuleIO::write_dmk(
                         }
                         else if (std::is_same<std::complex<double>, T>::value)
                         {
-                            ofs << " (" << std::real(dmk_global[i * nlocal + j]) << "," << std::imag(dmk_global[i * nlocal + j]) << ")";
+                            ofs << " (" << std::real(dmk_global[i * nlocal + j]) << ","
+                                << std::imag(dmk_global[i * nlocal + j]) << ")";
                         }
                     }
                 }
                 ofs.close();
             } // rank0
-        } // ik
-    } // ispin
+        }     // ik
+    }         // ispin
 
-	ModuleBase::timer::tick("ModuleIO","write_dmk");
+    ModuleBase::timer::tick("ModuleIO", "write_dmk");
 }
 
-template void ModuleIO::write_dmk<double>(
-    const std::vector<std::vector<double>> dmk,
-    const int precision,
-    const std::vector<double> efs,
-    const UnitCell* ucell,
-    const Parallel_2D& pv);
+template void ModuleIO::write_dmk<double>(const std::vector<std::vector<double>> dmk,
+                                          const int precision,
+                                          const std::vector<double> efs,
+                                          const UnitCell* ucell,
+                                          const Parallel_2D& pv);
 
-template void ModuleIO::write_dmk<std::complex<double>>(
-    const std::vector<std::vector<std::complex<double>>> dmk,
-    const int precision,
-    const std::vector<double> efs,
-    const UnitCell* ucell,
-    const Parallel_2D& pv);
+template void ModuleIO::write_dmk<std::complex<double>>(const std::vector<std::vector<std::complex<double>>> dmk,
+                                                        const int precision,
+                                                        const std::vector<double> efs,
+                                                        const UnitCell* ucell,
+                                                        const Parallel_2D& pv);
