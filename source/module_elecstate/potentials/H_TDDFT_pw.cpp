@@ -1,6 +1,7 @@
 #include "H_TDDFT_pw.h"
-#include "module_base/math_integral.h"
+
 #include "module_base/constants.h"
+#include "module_base/math_integral.h"
 #include "module_base/timer.h"
 #include "module_hamilt_lcao/module_tddft/evolve_elec.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
@@ -28,7 +29,7 @@ std::vector<int> H_TDDFT_pw::ttype;
 int H_TDDFT_pw::tstart;
 int H_TDDFT_pw::tend;
 double H_TDDFT_pw::dt;
-//cut dt for integral
+// cut dt for integral
 double H_TDDFT_pw::dt_int;
 int H_TDDFT_pw::istep_int;
 // space domain parameters
@@ -37,7 +38,7 @@ int H_TDDFT_pw::istep_int;
 double H_TDDFT_pw::lcut1;
 double H_TDDFT_pw::lcut2;
 
-//velocity gauge
+// velocity gauge
 ModuleBase::Vector3<double> H_TDDFT_pw::At;
 
 // time domain parameters
@@ -49,7 +50,7 @@ std::vector<double> H_TDDFT_pw::gauss_phase;
 std::vector<double> H_TDDFT_pw::gauss_sigma; // time(a.u.)
 std::vector<double> H_TDDFT_pw::gauss_t0;
 std::vector<double> H_TDDFT_pw::gauss_amp; // Ry/bohr
-std::vector<int> H_TDDFT_pw::gauss_ncut; //cut for integral
+std::vector<int> H_TDDFT_pw::gauss_ncut;   // cut for integral
 
 // trapezoid
 int H_TDDFT_pw::trape_count;
@@ -59,7 +60,7 @@ std::vector<double> H_TDDFT_pw::trape_t1;
 std::vector<double> H_TDDFT_pw::trape_t2;
 std::vector<double> H_TDDFT_pw::trape_t3;
 std::vector<double> H_TDDFT_pw::trape_amp; // Ry/bohr
-std::vector<int> H_TDDFT_pw::trape_ncut; //cut for integral
+std::vector<int> H_TDDFT_pw::trape_ncut;   // cut for integral
 
 // Trigonometric
 int H_TDDFT_pw::trigo_count;
@@ -68,19 +69,20 @@ std::vector<double> H_TDDFT_pw::trigo_omega2; // time(a.u.)^-1
 std::vector<double> H_TDDFT_pw::trigo_phase1;
 std::vector<double> H_TDDFT_pw::trigo_phase2;
 std::vector<double> H_TDDFT_pw::trigo_amp; // Ry/bohr
-std::vector<int> H_TDDFT_pw::trigo_ncut; //cut for integral
+std::vector<int> H_TDDFT_pw::trigo_ncut;   // cut for integral
 
 // Heaviside
 int H_TDDFT_pw::heavi_count;
 std::vector<double> H_TDDFT_pw::heavi_t0;
 std::vector<double> H_TDDFT_pw::heavi_amp; // Ry/bohr
 
-void H_TDDFT_pw::cal_fixed_v(double *vl_pseudo)
+void H_TDDFT_pw::cal_fixed_v(double* vl_pseudo)
 {
     ModuleBase::TITLE("H_TDDFT_pw", "cal_fixed_v");
 
-    //skip if velocity_gague
-    if(stype==1)return;
+    // skip if velocity_gague
+    if (stype == 1)
+        return;
 
     // time evolve
     H_TDDFT_pw::istep++;
@@ -104,7 +106,7 @@ void H_TDDFT_pw::cal_fixed_v(double *vl_pseudo)
     for (auto direc: module_tddft::Evolve_elec::td_vext_dire_case)
     {
         std::vector<double> vext_space(this->rho_basis_->nrxx, 0.0);
-        double vext_time = cal_v_time(ttype[count],true);
+        double vext_time = cal_v_time(ttype[count], true);
 
         if (module_tddft::Evolve_elec::out_efield && GlobalV::MY_RANK == 0)
         {
@@ -126,7 +128,7 @@ void H_TDDFT_pw::cal_fixed_v(double *vl_pseudo)
     return;
 }
 
-void H_TDDFT_pw::cal_v_space(std::vector<double> &vext_space, int direc)
+void H_TDDFT_pw::cal_v_space(std::vector<double>& vext_space, int direc)
 {
     ModuleBase::TITLE("H_TDDFT_pw", "cal_v_space");
     ModuleBase::timer::tick("H_TDDFT_pw", "cal_v_space");
@@ -145,7 +147,7 @@ void H_TDDFT_pw::cal_v_space(std::vector<double> &vext_space, int direc)
     return;
 }
 
-void H_TDDFT_pw::cal_v_space_length(std::vector<double> &vext_space, int direc)
+void H_TDDFT_pw::cal_v_space_length(std::vector<double>& vext_space, int direc)
 {
     ModuleBase::TITLE("H_TDDFT_pw", "cal_v_space_length");
     ModuleBase::timer::tick("H_TDDFT_pw", "cal_v_space_length");
@@ -204,7 +206,7 @@ double H_TDDFT_pw::cal_v_space_length_potential(double i)
 }
 int H_TDDFT_pw::check_ncut(int t_type)
 {
-    int ncut=0;
+    int ncut = 0;
     switch (t_type)
     {
     case 0:
@@ -238,7 +240,7 @@ void H_TDDFT_pw::update_At(void)
     std::cout << "calculate electric potential" << std::endl;
     // time evolve
     H_TDDFT_pw::istep++;
-    
+
     // judgement to skip vext
     if (!module_tddft::Evolve_elec::td_vext || istep > tend || istep < tstart)
     {
@@ -249,7 +251,7 @@ void H_TDDFT_pw::update_At(void)
     trape_count = 0;
     trigo_count = 0;
     heavi_count = 0;
-    //parameters for integral
+    // parameters for integral
     int ncut = 1;
     bool last = false;
     double out = 0.0;
@@ -257,33 +259,34 @@ void H_TDDFT_pw::update_At(void)
     for (auto direc: module_tddft::Evolve_elec::td_vext_dire_case)
     {
         last = false;
-        //cut the integral space and initial relvant parameters
+        // cut the integral space and initial relvant parameters
         ncut = check_ncut(ttype[count]);
-        istep_int = istep*ncut;
-        dt_int = dt/double(ncut);
+        istep_int = istep * ncut;
+        dt_int = dt / double(ncut);
 
-        //store vext_time for each time point, include the first and last point
-        double* vext_time = new double[ncut+1]();
-        for(int i=0; i<=ncut; i++)
+        // store vext_time for each time point, include the first and last point
+        double* vext_time = new double[ncut + 1]();
+        for (int i = 0; i <= ncut; i++)
         {
-            //if this is the last point, type_count++
-            if(i==ncut)last=true;
-            vext_time[i] = cal_v_time(ttype[count],last);
+            // if this is the last point, type_count++
+            if (i == ncut)
+                last = true;
+            vext_time[i] = cal_v_time(ttype[count], last);
             istep_int++;
         }
-        ModuleBase::Integral::Simpson_Integral(ncut+1, vext_time, dt_int, out);
-        //update At value for its direction
+        ModuleBase::Integral::Simpson_Integral(ncut + 1, vext_time, dt_int, out);
+        // update At value for its direction
         switch (stype)
         {
         case 1:
-            At[direc-1] -= out;
+            At[direc - 1] -= out;
             break;
         default:
             std::cout << "space_domain_type of electric field is wrong" << std::endl;
             break;
         }
 
-        //output Efield
+        // output Efield
         if (module_tddft::Evolve_elec::out_efield && GlobalV::MY_RANK == 0)
         {
             std::stringstream as;
@@ -293,7 +296,7 @@ void H_TDDFT_pw::update_At(void)
                 << vext_time[0] * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A << std::endl;
             ofs.close();
         }
-        //total count++
+        // total count++
         delete[] vext_time;
         count++;
     }
@@ -345,7 +348,8 @@ double H_TDDFT_pw::cal_v_time_Gauss(const bool last)
 
     double gauss_t = (istep_int - t0 * ncut) * dt_int;
     vext_time = cos(omega * gauss_t + phase) * exp(-gauss_t * gauss_t * 0.5 / (sigma * sigma)) * amp;
-    if(last)gauss_count++;
+    if (last)
+        gauss_count++;
 
     return vext_time;
 }
@@ -375,7 +379,8 @@ double H_TDDFT_pw::cal_v_time_trapezoid(const bool last)
     }
 
     vext_time = vext_time * amp * cos(omega * istep_int * dt_int + phase);
-    if(last)trape_count++;
+    if (last)
+        trape_count++;
 
     return vext_time;
 }
@@ -392,7 +397,8 @@ double H_TDDFT_pw::cal_v_time_trigonometric(const bool last)
     const double timenow = istep_int * dt_int;
 
     vext_time = amp * cos(omega1 * timenow + phase1) * sin(omega2 * timenow + phase2) * sin(omega2 * timenow + phase2);
-    if(last)trigo_count++;
+    if (last)
+        trigo_count++;
 
     return vext_time;
 }

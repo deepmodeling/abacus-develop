@@ -337,7 +337,9 @@ void Input_Conv::Convert(void)
     GlobalV::NBANDS = INPUT.nbands;
     GlobalV::NBANDS_ISTATE = INPUT.nbands_istate;
 
-    GlobalV::device_flag = base_device::information::get_device_flag(INPUT.device, INPUT.ks_solver, INPUT.basis_type,
+    GlobalV::device_flag = base_device::information::get_device_flag(INPUT.device,
+                                                                     INPUT.ks_solver,
+                                                                     INPUT.basis_type,
                                                                      INPUT.gamma_only_local);
 
     if (GlobalV::device_flag == "gpu" && INPUT.basis_type == "pw")
@@ -916,7 +918,7 @@ void Input_Conv::Convert(void)
     pexsi::PEXSI_Solver::pexsi_zero_thr = INPUT.pexsi_zero_thr;
 #endif
 
-    //elpa related
+    // elpa related
 #ifdef __MPI
     hsolver::DiagoElpa<std::complex<double>>::elpa_num_thread = INPUT.elpa_num_thread;
     hsolver::DiagoElpa<double>::elpa_num_thread = INPUT.elpa_num_thread;

@@ -9,7 +9,6 @@
 #include "module_elecstate/module_charge/charge_mixing.h"
 #include "module_elecstate/occupy.h"
 #include "module_elecstate/potentials/H_TDDFT_pw.h"
-#include "module_hamilt_lcao/module_tddft/td_velocity.h"
 #include "module_elecstate/potentials/efield.h"
 #include "module_elecstate/potentials/gatefield.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/FORCE_STRESS.h"
@@ -41,8 +40,8 @@ bool module_tddft::Evolve_elec::td_vext;
 std::vector<int> module_tddft::Evolve_elec::td_vext_dire_case;
 bool module_tddft::Evolve_elec::out_dipole;
 bool module_tddft::Evolve_elec::out_efield;
-bool TD_Velocity::::out_current;
-bool TD_Velocity::::out_current_k;
+bool TD_Velocity:: ::out_current;
+bool TD_Velocity:: ::out_current_k;
 bool TD_Velocity::out_vecpot;
 bool TD_Velocity::init_vecpot_file;
 double module_tddft::Evolve_elec::td_print_eij;
@@ -366,7 +365,7 @@ pseudopot_cell_vnl ppcell;
 Charge_Mixing CHR_MIX;
 } // namespace GlobalC
 
-#ifdef  __PEXSI
+#ifdef __PEXSI
 namespace pexsi
 {
 int PEXSI_Solver::pexsi_npole = 0;

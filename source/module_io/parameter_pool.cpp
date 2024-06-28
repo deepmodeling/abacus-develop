@@ -1,11 +1,5 @@
 #include "module_io/parameter_pool.h"
 
-#include <fstream>
-#include <iomanip>
-#include <iostream>
-#include <sstream>
-#include <vector>
-
 #include "module_base/constants.h"
 #include "module_base/global_file.h"
 #include "module_base/global_function.h"
@@ -14,6 +8,12 @@
 #include "module_base/vector3.h"
 #include "module_io/input.h"
 #include "module_md/md_para.h"
+
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <sstream>
+#include <vector>
 
 /**
  * @param input_parameters Save all input parameters
@@ -46,8 +46,8 @@ int count_ntype(const std::string& fn)
         while (true)
         {
             ModuleBase::GlobalFunc::READ_VALUE(ifa, temp);
-            if (temp == "LATTICE_CONSTANT" || temp == "NUMERICAL_ORBITAL" || temp == "NUMERICAL_DESCRIPTOR" || temp == "PAW_FILES"
-                || ifa.eof())
+            if (temp == "LATTICE_CONSTANT" || temp == "NUMERICAL_ORBITAL" || temp == "NUMERICAL_DESCRIPTOR"
+                || temp == "PAW_FILES" || ifa.eof())
             {
                 break;
             }
@@ -1467,7 +1467,7 @@ void input_parameters_set(std::map<std::string, InputParameter> input_parameters
                 close_plus_u = false;
             }
         }
-        if(close_plus_u)
+        if (close_plus_u)
         {
             std::cout << "No atoms are correlated!!!" << std::endl;
             INPUT.dft_plus_u = 0;
