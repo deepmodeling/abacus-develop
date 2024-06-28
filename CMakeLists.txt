@@ -26,7 +26,7 @@ option(ENABLE_LIBCOMM "Enable communicate with LibComm." OFF)
 option(ENABLE_PAW "Enable PAW calculation" OFF)
 option(ENABLE_MPI "Enable compilation with or without MPI." ON)
 option(USE_ELPA "Enable ELPA" ON)
-option(USE_ABACUS_LIBM "Build libmath from source to speed up." ON)
+option(USE_ABACUS_LIBM "Build libmath from source to speed up." OFF)
 option(GIT_SUBMODULE "Check submodules during build" ON)
 option(DEBUG_INFO "Print message for developers to debug." OFF)
 # Do not enable it if generated code will run on different CPUs
@@ -38,6 +38,7 @@ option(ENABLE_GOOGLEBENCH "Enable GOOGLE-benchmark usage." OFF)
 option(ENABLE_RAPIDJSON "Enable rapid-json usage." OFF)
 option(ENABLE_CNPY "Enable cnpy usage." OFF)
 option(ENABLE_PEXSI "Enable support for PEXSI." OFF)
+option(ENABLE_CUSOLVERMP "Enable cusolvermp." OFF)
 
 # enable json support
 if(ENABLE_RAPIDJSON)
@@ -316,6 +317,13 @@ if(USE_CUDA)
     endif()
     if (USE_OPENMP AND OpenMP_CXX_FOUND)
       set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler=${OpenMP_CXX_FLAGS}" CACHE STRING "CUDA flags" FORCE)
+    endif()
+    if (ENABLE_CUSOLVERMP)
+      add_compile_definitions(__CUSOLVERMP)
+      target_link_libraries(${ABACUS_BIN_NAME}
+          -lcal
+          -lcusolverMp
+      )
     endif()
   endif()
 endif()

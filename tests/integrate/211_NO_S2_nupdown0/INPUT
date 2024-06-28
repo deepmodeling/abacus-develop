@@ -1,0 +1,31 @@
+INPUT_PARAMETERS
+#Parameters (1.General)
+suffix			autotest
+calculation     scf
+
+nbands			8
+symmetry		1
+pseudo_dir	../../PP_ORB
+orbital_dir	../../PP_ORB
+nspin           2
+nelec           9
+
+#Parameters (2.Iteration)
+ecutwfc			10
+scf_thr				1e-7
+scf_nmax			100
+
+
+#Parameters (3.Basis)
+basis_type		lcao
+
+#Parameters (4.Smearing)
+smearing_method		gauss
+smearing_sigma			0.002
+
+#Parameters (5.Mixing)
+mixing_type		pulay
+mixing_beta		0.7
+
+nupdown         0.0
+out_mul		1

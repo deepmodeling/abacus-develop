@@ -7,7 +7,7 @@
 
 
 find_library(tensorflow_cc
-    NAMES tensorflow_cc
+    NAMES tensorflow_cc libtensorflow_cc.so.2
     HINTS ${TensorFlow_DIR}
     PATH_SUFFIXES "lib"
     )

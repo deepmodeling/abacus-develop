@@ -1,14 +1,32 @@
 #include "parallel_2d.h"
 
-#include <numeric>
-#include <cassert>
-
 #include "module_base/blacs_connector.h"
 #include "module_base/scalapack_connector.h"
+
+#include <cassert>
+#include <numeric>
 
 bool Parallel_2D::in_this_processor(const int iw1_all, const int iw2_all) const
 {
     return global2local_row(iw1_all) != -1 && global2local_col(iw2_all) != -1;
+}
+
+int Parallel_2D::get_global_row_size() const
+{
+#ifdef __MPI
+    return desc[2];
+#else
+    return nrow;
+#endif
+}
+
+int Parallel_2D::get_global_col_size() const
+{
+#ifdef __MPI
+    return desc[3];
+#else
+    return ncol;
+#endif
 }
 
 #ifdef __MPI
@@ -19,9 +37,15 @@ void Parallel_2D::_init_proc_grid(const MPI_Comm comm, const bool mode)
     int num_proc = 0;
     MPI_Comm_size(comm, &num_proc);
     dim0 = static_cast<int>(std::sqrt(num_proc + 0.5));
-    while (dim1 = num_proc / dim0, dim0 * dim1 != num_proc) { --dim0; }
+    while (dim1 = num_proc / dim0, dim0 * dim1 != num_proc)
+    {
+        --dim0;
+    }
 
-    if (mode) { std::swap(dim0, dim1); }
+    if (mode)
+    {
+        std::swap(dim0, dim1);
+    }
 
     // create a 2D Cartesian MPI communicator (row-major by default)
     int period[2] = {1, 1};
@@ -41,7 +65,6 @@ void Parallel_2D::_init_proc_grid(const MPI_Comm comm, const bool mode)
     // might be unnecessary to create an MPI communicator with Cartesian topology.
     // ***This needs to be verified***
 }
-
 
 void Parallel_2D::_set_dist_info(const int mg, const int ng, const int nb)
 {
@@ -75,28 +98,14 @@ void Parallel_2D::_set_dist_info(const int mg, const int ng, const int nb)
     }
 }
 
-
-int Parallel_2D::init(
-    const int mg,
-    const int ng,
-    const int nb,
-    const MPI_Comm comm,
-    const bool mode
-)
+int Parallel_2D::init(const int mg, const int ng, const int nb, const MPI_Comm comm, const bool mode)
 {
     _init_proc_grid(comm, mode);
     _set_dist_info(mg, ng, nb);
     return nrow == 0 || ncol == 0;
 }
 
-
-int Parallel_2D::set(
-    const int mg,
-    const int ng,
-    const int nb,
-    const MPI_Comm comm_2D,
-    const int blacs_ctxt
-)
+int Parallel_2D::set(const int mg, const int ng, const int nb, const MPI_Comm comm_2D, const int blacs_ctxt)
 {
     this->comm_2D = comm_2D;
     this->blacs_ctxt = blacs_ctxt;
@@ -127,4 +136,3 @@ void Parallel_2D::set_serial(const int mg, const int ng)
     blacs_ctxt = -1;
 #endif
 }
-

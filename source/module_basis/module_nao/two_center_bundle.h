@@ -1,8 +1,8 @@
-#ifndef TWO_CENTER_BUNDLE_H
-#define TWO_CENTER_BUNDLE_H
+#ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_BASIS_MODULE_NAO_TWO_CENTER_BUNDLE_H
+#define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_BASIS_MODULE_NAO_TWO_CENTER_BUNDLE_H
 
-#include "module_basis/module_nao/two_center_integrator.h"
 #include "module_basis/module_ao/ORB_read.h"
+#include "module_basis/module_nao/two_center_integrator.h"
 
 #include <memory>
 #include <string>
@@ -21,6 +21,11 @@ class TwoCenterBundle
 
     void tabulate();
 
+    // Unlike the tabulate() above, this overload function computes
+    // two-center integration table by direct integration with Simpson's
+    // rule, which was the algorithm used prior to v3.3.4.
+    void tabulate(const double lcao_ecut, const double lcao_dk, const double lcao_dr, const double lcao_rmax);
+
     /**
      * @brief Overwrites the content of a LCAO_Orbitals object (e.g. GlobalC::ORB)
      * with the current object.
@@ -31,8 +36,7 @@ class TwoCenterBundle
                           const double lcao_ecut,
                           const double lcao_dk,
                           const double lcao_dr,
-                          const double lcao_rmax
-                          ) const;
+                          const double lcao_rmax) const;
 
     std::unique_ptr<TwoCenterIntegrator> kinetic_orb;
     std::unique_ptr<TwoCenterIntegrator> overlap_orb;

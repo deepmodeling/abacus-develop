@@ -29,6 +29,13 @@ if(ENABLE_LCAO)
           diago_cusolver.cpp
           diago_cusolver.h
       )
+      if(ENABLE_CUSOLVERMP)
+        list(APPEND objects
+            ./kernels/cuda/diag_cusolvermp.cu
+            diago_cusolvermp.cpp
+            diago_cusolvermp.h
+        )
+      endif()
     add_library(
         diag_cusolver
         OBJECT

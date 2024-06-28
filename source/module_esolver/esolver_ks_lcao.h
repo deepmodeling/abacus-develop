@@ -2,7 +2,6 @@
 #define ESOLVER_KS_LCAO_H
 #include "esolver_ks.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_wfc.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/record_adj.h"
 // for grid integration
 #include "module_basis/module_ao/ORB_control.h"
@@ -69,9 +68,6 @@ class ESolver_KS_LCAO : public ESolver_KS<TK>
     Record_adj RA;
 
     // we will get rid of this class soon, don't use it, mohan 2024-03-28
-    Local_Orbital_wfc LOWF;
-
-    // we will get rid of this class soon, don't use it, mohan 2024-03-28
     Local_Orbital_Charge LOC;
 
     // used for k-dependent grid integration.
@@ -85,15 +81,7 @@ class ESolver_KS_LCAO : public ESolver_KS<TK>
 
     Grid_Technique GridT;
 
-    // The following variable is introduced in the stage-1 of LCAO
-    // refactoring. It is supposed to replace the previous GlobalC::UOT.
-    //
-    // This is the only place supposed to have the ownership; all other
-    // places should be considered as "borrowing" the object. Unfortunately,
-    // imposing shared_ptr/weak_ptr is only possible once GlobalC::UOT is
-    // completely removed from the code; we have to rely on raw pointers
-    // during the transition period.
-    ORB_gen_tables* uot_;
+    TwoCenterBundle two_center_bundle_;
 
     // Temporarily store the stress to unify the interface with PW,
     // because it's hard to seperate force and stress calculation in LCAO.
@@ -110,7 +98,6 @@ class ESolver_KS_LCAO : public ESolver_KS<TK>
 
     void beforesolver(const int istep);
     //----------------------------------------------------------------------
-
 
     /// @brief create ModuleIO::Output_DM object to output density matrix
     ModuleIO::Output_DM create_Output_DM(int is, int iter);

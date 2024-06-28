@@ -30,6 +30,7 @@
     - [min\_dist\_coef](#min_dist_coef)
     - [device](#device)
     - [precision](#precision)
+    - [elpa\_num\_thread](#elpa_num_thread)
   - [Variables related to input files](#variables-related-to-input-files)
     - [stru\_file](#stru_file)
     - [kpoint\_file](#kpoint_file)
@@ -690,6 +691,14 @@ If only one value is set (such as `kspacing 0.5`), then kspacing values of a/b/c
   - pw basis: required by the `single` precision options
   - cg/bpcg/dav ks_solver: required by the `single` precision options
 - **Default**: double
+
+### elpa_num_thread
+
+- **Type**: int
+- **Description**: Number of threads used in one elpa calculation. 
+
+  If the number is below 0 or 0 or beyond the max number of threads, all elpa calculation will be using all mpi threads
+- **Default**: -1
 
 [back to top](#full-list-of-input-keywords)
 

@@ -52,28 +52,21 @@ static __device__ void interpolate(const double dist,
 static __device__ void interpolate_f(const double distance,
                                      const double delta_r_g,
                                      const int it,
-                                     const double nwmax_g,
+                                     const int nwmax_g,
                                      const int nr_max,
                                      const int* __restrict__ atom_nw,
                                      const bool* __restrict__ atom_iw2_new,
                                      const double* __restrict__ psi_u,
                                      const int* __restrict__ atom_iw2_l,
                                      const int* __restrict__ atom_iw2_ylm,
-                                     double* psir_r,
+                                     double* psi,
                                      int dist_tmp,
                                      const double ylma[49],
                                      const double vlbr3_value,
-                                     double* psir_lx,
+                                     double* dpsi,
                                      const double * __restrict__ dr,
                                      const double grly[49][3],
-                                     double* psir_ly,
-                                     double* psir_lz,
-                                     double* psir_lxx,
-                                     double* psir_lxy,
-                                     double* psir_lxz,
-                                     double* psir_lyy,
-                                     double* psir_lyz,
-                                     double* psir_lzz)
+                                     double* d2psi)
 {
     // Calculate normalized position for interpolation
     const double postion = distance / delta_r_g;
@@ -92,6 +85,8 @@ static __device__ void interpolate_f(const double distance,
     const int it_nw = it * nwmax_g;
     int iw_nr = (it_nw * nr_max + ip) * 2;
     int it_nw_iw = it_nw;
+    double dpsir[150][4]={0.0};
+    int dist_tmp_clac=dist_tmp;
     for (int iw = 0; iw < atom_nw[it]; ++iw)
     {
         if (atom_iw2_new[it_nw_iw])
@@ -110,34 +105,47 @@ static __device__ void interpolate_f(const double distance,
         const double rl = pow(distance, ll);
         const double rl_r = 1.0 / rl;
         const double dist_r = 1 / distance;
-
+        const int dist_tmp_force = dist_tmp_clac * 3;
+        const int dist_tmp_stress = dist_tmp_clac * 6;
         // Compute right-hand side of the equation
-        psir_r[dist_tmp] = tmp * ylma[idx_lm] * rl_r * vlbr3_value;
+        dpsir[iw][3] = tmp * ylma[idx_lm] * rl_r * vlbr3_value;
         // Compute derivatives with respect to spatial
         // coordinates
         const double tmpdphi_rly
             = (dtmp - tmp * ll * dist_r) * rl_r * ylma[idx_lm] * dist_r;
         const double tmprl = tmp * rl_r;
-        psir_lx[dist_tmp]
-            = tmpdphi_rly * dr[0] + tmprl * grly[idx_lm][0];
-
-        psir_ly[dist_tmp]
-            = tmpdphi_rly * dr[1] + tmprl * grly[idx_lm][1];
-        psir_lz[dist_tmp]
-            = tmpdphi_rly * dr[2] + tmprl * grly[idx_lm][2];
-
-        psir_lxx[dist_tmp] = psir_lx[dist_tmp] * dr[0];
-        psir_lxy[dist_tmp] = psir_lx[dist_tmp] * dr[1];
-        psir_lxz[dist_tmp] = psir_lx[dist_tmp] * dr[2];
-        psir_lyy[dist_tmp] = psir_ly[dist_tmp] * dr[1];
-        psir_lyz[dist_tmp] = psir_ly[dist_tmp] * dr[2];
-        psir_lzz[dist_tmp] = psir_lz[dist_tmp] * dr[2];
+        const double dpsirx = tmpdphi_rly * dr[0] + tmprl * grly[idx_lm][0];
+        const double dpsiry = tmpdphi_rly * dr[1] + tmprl * grly[idx_lm][1];
+        const double dpsirz = tmpdphi_rly * dr[2] + tmprl * grly[idx_lm][2];
+        dpsir[iw][0] = dpsirx;
+        dpsir[iw][1] = dpsiry;
+        dpsir[iw][2] = dpsirz;
 
         // Update loop counters and indices
-        dist_tmp += 1;
+        dist_tmp_clac += 1;
         iw_nr += nr_max;
         iw_nr += nr_max;
         it_nw_iw++;
+    }
+
+    #pragma unroll
+    int dist_tmp_trans = dist_tmp;
+    for (int iw=0;iw<atom_nw[it];++iw)
+    {
+        const int dist_tmp_force = dist_tmp_trans * 3;
+        const int dist_tmp_stress = dist_tmp_trans * 6;
+        psi[dist_tmp_trans] = dpsir[iw][3];
+        dpsi[dist_tmp_force] = dpsir[iw][0];
+        dpsi[dist_tmp_force + 1] = dpsir[iw][1];
+        dpsi[dist_tmp_force + 2] = dpsir[iw][2];
+
+        d2psi[dist_tmp_stress] = dpsir[iw][0] * dr[0];
+        d2psi[dist_tmp_stress + 1] = dpsir[iw][0] * dr[1];
+        d2psi[dist_tmp_stress + 2] = dpsir[iw][0] * dr[2];
+        d2psi[dist_tmp_stress + 3] = dpsir[iw][1] * dr[1];
+        d2psi[dist_tmp_stress + 4] = dpsir[iw][1] * dr[2];
+        d2psi[dist_tmp_stress + 5] = dpsir[iw][2] * dr[2];
+        dist_tmp_trans += 1;
     }
 }
 } // namespace GintKernel

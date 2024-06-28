@@ -21,8 +21,8 @@
 #include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
 #include "module_hamilt_general/module_vdw/vdw.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 #include "module_io/dm_io.h"
 #include "module_io/rho_io.h"
@@ -54,14 +54,13 @@ void ESolver_KS_LCAO<TK, TR>::set_matrix_grid(Record_adj& ra)
     // ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"SEARCH ADJACENT ATOMS");
 
     // (3) Periodic condition search for each grid.
-    double dr_uniform=0.001;
-	std::vector<double> rcuts;
+    double dr_uniform = 0.001;
+    std::vector<double> rcuts;
     std::vector<std::vector<double>> psi_u;
     std::vector<std::vector<double>> dpsi_u;
     std::vector<std::vector<double>> d2psi_u;
 
-    Gint_Tools::init_orb(dr_uniform, rcuts, GlobalC::ucell, 
-                            psi_u, dpsi_u, d2psi_u);
+    Gint_Tools::init_orb(dr_uniform, rcuts, GlobalC::ucell, psi_u, dpsi_u, d2psi_u);
 
     this->GridT.set_pbc_grid(this->pw_rho->nx,
                              this->pw_rho->ny,
@@ -133,7 +132,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
             nsk = GlobalV::NSPIN;
             ncol = this->orb_con.ParaV.ncol_bands;
             if (GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "lapack_gvx" || GlobalV::KS_SOLVER == "pexsi"
-                || GlobalV::KS_SOLVER == "cusolver")
+                || GlobalV::KS_SOLVER == "cusolver" || GlobalV::KS_SOLVER == "cusolvermp")
             {
                 ncol = this->orb_con.ParaV.ncol;
             }
@@ -169,7 +168,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
             &(this->LOC),
             this->pelec->pot,
             this->kv,
-            uot_,
+            two_center_bundle_,
 #ifdef __EXX
             DM,
             GlobalC::exx_info.info_ri.real_number ? &this->exd->two_level_step : &this->exc->two_level_step);
@@ -178,7 +177,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
 #endif
     }
     // init density kernel and wave functions.
-    this->LOC.allocate_dm_wfc(this->GridT, this->pelec, this->LOWF, this->psi, this->kv, istep);
+    this->LOC.allocate_dm_wfc(this->GridT, this->pelec, this->psi, this->kv, istep);
 
 #ifdef __DEEPKS
     // for each ionic step, the overlap <psi|alpha> must be rebuilt
@@ -187,11 +186,15 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
     {
         const Parallel_Orbitals* pv = this->LM.ParaV;
         // build and save <psi(0)|alpha(R)> at beginning
-        GlobalC::ld.build_psialpha(GlobalV::CAL_FORCE, GlobalC::ucell, GlobalC::ORB, GlobalC::GridD, *uot_);
+        GlobalC::ld.build_psialpha(GlobalV::CAL_FORCE,
+                                   GlobalC::ucell,
+                                   GlobalC::ORB,
+                                   GlobalC::GridD,
+                                   *(two_center_bundle_.overlap_orb_alpha));
 
         if (GlobalV::deepks_out_unittest)
         {
-            GlobalC::ld.check_psialpha(GlobalV::CAL_FORCE, GlobalC::ucell, GlobalC::ORB, GlobalC::GridD, *uot_);
+            GlobalC::ld.check_psialpha(GlobalV::CAL_FORCE, GlobalC::ucell, GlobalC::ORB, GlobalC::GridD);
         }
     }
 #endif
@@ -408,7 +411,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                              GlobalC::ucell,
                              GlobalV::SEARCH_RADIUS,
                              GlobalV::test_atom_input,
-                             1);
+                             true);
         return;
     }
 
@@ -422,7 +425,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
     }
     else if (cal_type == "get_pchg")
     {
-        IState_Charge ISC(this->psi, this->LOC);
+        IState_Charge ISC(this->psi, &(this->orb_con.ParaV));
         ISC.begin(this->GG,
                   this->pelec->charge->rho,
                   this->pelec->wg,
@@ -457,13 +460,14 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                       this->pw_rho,
                       this->pw_wfc,
                       this->pw_big,
-                      this->LOWF,
+                      this->orb_con.ParaV,
                       this->GG,
                       INPUT.out_wfc_pw,
                       this->wf.out_wfc_r,
                       this->kv,
                       GlobalV::nelec,
                       GlobalV::NBANDS_ISTATE,
+                      INPUT.get_out_band_kb(),
                       GlobalV::NBANDS,
                       GlobalV::NSPIN,
                       GlobalV::NLOCAL,
@@ -475,13 +479,14 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                       this->pw_rho,
                       this->pw_wfc,
                       this->pw_big,
-                      this->LOWF,
+                      this->orb_con.ParaV,
                       this->GK,
                       INPUT.out_wfc_pw,
                       this->wf.out_wfc_r,
                       this->kv,
                       GlobalV::nelec,
                       GlobalV::NBANDS_ISTATE,
+                      INPUT.get_out_band_kb(),
                       GlobalV::NBANDS,
                       GlobalV::NSPIN,
                       GlobalV::NLOCAL,
@@ -528,7 +533,9 @@ void ESolver_KS_LCAO<std::complex<double>, double>::get_S(void)
 
     if (this->p_hamilt == nullptr)
     {
-        this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, double>(&this->LM, this->kv, uot_);
+        this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, double>(&this->LM,
+                                                                              this->kv,
+                                                                              *(two_center_bundle_.overlap_orb));
         dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, double>*>(this->p_hamilt->ops)->contributeHR();
     }
 
@@ -564,7 +571,10 @@ void ESolver_KS_LCAO<std::complex<double>, std::complex<double>>::get_S(void)
     this->LM.ParaV = &this->orb_con.ParaV;
     if (this->p_hamilt == nullptr)
     {
-        this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>(&this->LM, this->kv, uot_);
+        this->p_hamilt
+            = new hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>(&this->LM,
+                                                                                 this->kv,
+                                                                                 *(two_center_bundle_.overlap_orb));
         dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>*>(this->p_hamilt->ops)
             ->contributeHR();
     }
@@ -711,7 +721,10 @@ void ESolver_KS_LCAO<TK, TR>::nscf(void)
     // add by jingan
     if (berryphase::berry_phase_flag && ModuleSymmetry::Symmetry::symm_flag != 1)
     {
-        berryphase bp(this->LOWF);
+        berryphase bp(this->LOC);
+        bp.lcao_init(
+            this->kv,
+            this->GridT); // additional step before calling macroscopic_polarization (why capitalize the function name?)
         bp.Macroscopic_polarization(this->pw_wfc->npwk_max, this->psi, this->pw_rho, this->pw_wfc, this->kv);
     }
 
