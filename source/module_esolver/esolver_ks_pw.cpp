@@ -1152,6 +1152,9 @@ void ESolver_KS_PW<T, Device>::nscf()
         bp.Macroscopic_polarization(this->pw_wfc->npwk_max, this->psi, this->pw_rho, this->pw_wfc, this->kv);
     }
 
+    ///write potential
+    this->create_Output_Potential(0).write();
+
     ModuleBase::timer::tick("ESolver_KS_PW", "nscf");
     return;
 }
