@@ -736,7 +736,6 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::P
         DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(
             dav_subspace
                 .diag(hpsi_func, subspace_func, psi.get_pointer(), psi.get_nbasis(), eigenvalue, is_occupied, scf));
-
     }
     else if (this->method == "bpcg")
     {
