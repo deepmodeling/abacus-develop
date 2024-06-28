@@ -11,6 +11,8 @@ The following CI actions are triggered on pull request (PR) creation or update (
 - [Rerender the docs site](https://readthedocs.org/projects/abacus-rtd/builds/): This action rerenders the documentation site on Read the Docs. It is automatically triggered when the documentation is updated.
 - Testing GPU features (`cuda.yml`): This action builds ABACUS with GPU support and runs several tests on the GPU.
 
+> Some tests are executed on self-hosted runners, which are maintained by the deepmodeling community. To save resources, the actions triggered by new commits may cancel the previous actions in the same PR.
+
 ## On PR Merge
 
 After the PR merges into the main branch, the following actions are triggered:
