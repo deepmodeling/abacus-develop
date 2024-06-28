@@ -35,8 +35,8 @@ void Matrix_Orbs21::init(const int mode, const double kmesh_times, const double 
     }
     const double dr = GlobalC::ORB.get_dR();
     const double dk = GlobalC::ORB.get_dk();
-    const int kmesh = GlobalC::ORB.get_kmesh() * 4 + 1;
-    int Rmesh = static_cast<int>(GlobalC::ORB.get_Rmax() / dr) + 4;
+    const int kmesh = GlobalC::ORB.get_kmesh() * kmesh_times + 1;
+    int Rmesh = static_cast<int>(GlobalC::ORB.get_Rmax() * rmesh_times / dr) + 4;
     Rmesh += 1 - Rmesh % 2;
 
     ORB_table_phi::init_Table_Spherical_Bessel(3,
