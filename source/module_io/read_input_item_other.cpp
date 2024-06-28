@@ -748,109 +748,109 @@ void ReadInput::item_others()
     {
         Input_Item item("td_gauss_freq");
         item.annotation = "frequency (freq) of Gauss type electric field";
-        read_sync_double(td_gauss_freq);
+        read_sync_string(td_gauss_freq);
         this->add_item(item);
     }
     {
         Input_Item item("td_gauss_phase");
         item.annotation = "phase of Gauss type electric field";
-        read_sync_double(td_gauss_phase);
+        read_sync_string(td_gauss_phase);
         this->add_item(item);
     }
     {
         Input_Item item("td_gauss_sigma");
         item.annotation = "sigma of Gauss type electric field";
-        read_sync_double(td_gauss_sigma);
+        read_sync_string(td_gauss_sigma);
         this->add_item(item);
     }
     {
         Input_Item item("td_gauss_t0");
         item.annotation = "step number of time center (t0) of Gauss type electric field";
-        read_sync_double(td_gauss_t0);
+        read_sync_string(td_gauss_t0);
         this->add_item(item);
     }
     {
         Input_Item item("td_gauss_amp");
         item.annotation = "amplitude of Gauss type electric field";
-        read_sync_double(td_gauss_amp);
+        read_sync_string(td_gauss_amp);
         this->add_item(item);
     }
     {
         Input_Item item("td_trape_freq");
         item.annotation = "frequency of Trapezoid type electric field";
-        read_sync_double(td_trape_freq);
+        read_sync_string(td_trape_freq);
         this->add_item(item);
     }
     {
         Input_Item item("td_trape_phase");
         item.annotation = "phase of Trapezoid type electric field";
-        read_sync_double(td_trape_phase);
+        read_sync_string(td_trape_phase);
         this->add_item(item);
     }
     {
         Input_Item item("td_trape_t1");
         item.annotation = "t1 of Trapezoid type electric field";
-        read_sync_double(td_trape_t1);
+        read_sync_string(td_trape_t1);
         this->add_item(item);
     }
     {
         Input_Item item("td_trape_t2");
         item.annotation = "t2 of Trapezoid type electric field";
-        read_sync_double(td_trape_t2);
+        read_sync_string(td_trape_t2);
         this->add_item(item);
     }
     {
         Input_Item item("td_trape_t3");
         item.annotation = "t3 of Trapezoid type electric field";
-        read_sync_double(td_trape_t3);
+        read_sync_string(td_trape_t3);
         this->add_item(item);
     }
     {
         Input_Item item("td_trape_amp");
         item.annotation = "amplitude of Trapezoid type electric field";
-        read_sync_double(td_trape_amp);
+        read_sync_string(td_trape_amp);
         this->add_item(item);
     }
     {
         Input_Item item("td_trigo_freq1");
         item.annotation = "frequency 1 of Trigonometric type electric field";
-        read_sync_double(td_trigo_freq1);
+        read_sync_string(td_trigo_freq1);
         this->add_item(item);
     }
     {
         Input_Item item("td_trigo_freq2");
         item.annotation = "frequency 2 of Trigonometric type electric field";
-        read_sync_double(td_trigo_freq2);
+        read_sync_string(td_trigo_freq2);
         this->add_item(item);
     }
     {
         Input_Item item("td_trigo_phase1");
         item.annotation = "phase 1 of Trigonometric type electric field";
-        read_sync_double(td_trigo_phase1);
+        read_sync_string(td_trigo_phase1);
         this->add_item(item);
     }
     {
         Input_Item item("td_trigo_phase2");
         item.annotation = "phase 2 of Trigonometric type electric field";
-        read_sync_double(td_trigo_phase2);
+        read_sync_string(td_trigo_phase2);
         this->add_item(item);
     }
     {
         Input_Item item("td_trigo_amp");
         item.annotation = "amplitude of Trigonometric type electric field";
-        read_sync_double(td_trigo_amp);
+        read_sync_string(td_trigo_amp);
         this->add_item(item);
     }
     {
         Input_Item item("td_heavi_t0");
         item.annotation = "t0 of Heaviside type electric field";
-        read_sync_double(td_heavi_t0);
+        read_sync_string(td_heavi_t0);
         this->add_item(item);
     }
     {
         Input_Item item("td_heavi_amp");
         item.annotation = "amplitude of Heaviside type electric field";
-        read_sync_double(td_heavi_amp);
+        read_sync_string(td_heavi_amp);
         this->add_item(item);
     }
     {

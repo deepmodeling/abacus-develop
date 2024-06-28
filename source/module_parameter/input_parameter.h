@@ -382,31 +382,31 @@ struct Input_para
 
     ///< time domain parameters
     ///< Gauss
-    double td_gauss_freq = 22.13; ///< time(fs)^-1
-    double td_gauss_phase = 0.0;
-    double td_gauss_sigma = 30.0; ///< time(fs)
-    double td_gauss_t0 = 100.0;
-    double td_gauss_amp = 0.25; ///< V/A
+    std::string td_gauss_freq = "22.13"; ///< time(fs)^-1
+    std::string td_gauss_phase = "0.0";
+    std::string td_gauss_sigma = "30.0"; ///< time(fs)
+    std::string td_gauss_t0 = "100.0";
+    std::string td_gauss_amp = "0.25"; ///< V/A
 
     ///< trapezoid
-    double td_trape_freq = 1.60; ///< time(fs)^-1
+    std::string td_trape_freq = "1.60"; ///< time(fs)^-1
     // Trapezoidal
-    double td_trape_phase = 0.0;
-    double td_trape_t1 = 1875.0;
-    double td_trape_t2 = 5625.0;
-    double td_trape_t3 = 7500.0;
-    double td_trape_amp = 2.74; // V/A
+    std::string td_trape_phase = "0.0";
+    std::string td_trape_t1 = "1875.0";
+    std::string td_trape_t2 = "5625.0";
+    std::string td_trape_t3 = "7500.0";
+    std::string td_trape_amp = "2.74"; // V/A
 
     // Trigonometric
-    double td_trigo_freq1 = 1.164656; // time(fs)^-1
-    double td_trigo_freq2 = 0.029116; // time(fs)^-1
-    double td_trigo_phase1 = 0.0;
-    double td_trigo_phase2 = 0.0;
-    double td_trigo_amp = 2.74; // V/A
+    std::string td_trigo_freq1 = "1.164656"; // time(fs)^-1
+    std::string td_trigo_freq2 = "0.029116"; // time(fs)^-1
+    std::string td_trigo_phase1 = "0.0";
+    std::string td_trigo_phase2 = "0.0";
+    std::string td_trigo_amp = "2.74"; // V/A
 
     // Heaviside
-    double td_heavi_t0 = 100.0;
-    double td_heavi_amp = 1.0; // V/A
+    std::string td_heavi_t0 = "100.0";
+    std::string td_heavi_amp = "1.0"; // V/A
 
     bool ocp = false;
     std::string ocp_set = "";

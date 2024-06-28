@@ -290,6 +290,7 @@ void Input_Conv:: tmp_convert()
     INPUT.td_tend = PARAM.get().td_tend;
     INPUT.td_lcut1 = PARAM.get().td_lcut1;
     INPUT.td_lcut2 = PARAM.get().td_lcut2;
+
     INPUT.td_gauss_freq = PARAM.get().td_gauss_freq;
     INPUT.td_gauss_phase = PARAM.get().td_gauss_phase;
     INPUT.td_gauss_sigma = PARAM.get().td_gauss_sigma;
@@ -308,6 +309,7 @@ void Input_Conv:: tmp_convert()
     INPUT.td_trigo_amp = PARAM.get().td_trigo_amp;
     INPUT.td_heavi_t0 = PARAM.get().td_heavi_t0;
     INPUT.td_heavi_amp = PARAM.get().td_heavi_amp;
+    
     INPUT.restart_save = PARAM.get().restart_save;
     INPUT.restart_load = PARAM.get().restart_load;
     INPUT.cell_factor = PARAM.get().cell_factor;
