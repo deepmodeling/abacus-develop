@@ -32,7 +32,6 @@ HSolverPW<T, Device>::HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in, wavefunc* pw
     /*this->init(pbas_in);*/
 }
 
-
 template <typename T, typename Device>
 void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
                                  psi::Psi<T, Device>& psi,
@@ -733,7 +732,6 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::P
         DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(
             dav_subspace
                 .diag(hpsi_func, subspace_func, psi.get_pointer(), psi.get_nbasis(), eigenvalue, is_occupied, scf));
-
     }
     else if (this->method == "bpcg")
     {
