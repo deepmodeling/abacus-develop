@@ -82,10 +82,6 @@ class LCAO_Matrix
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> SR_sparse;
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> TR_sparse;
 
-    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> dHRx_sparse[2];
-    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> dHRy_sparse[2];
-    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> dHRz_sparse[2];
-
     // Record all R direct coordinate information, even if HR or SR is a zero matrix
     std::set<Abfs::Vector3_Order<int>> all_R_coor;
 
