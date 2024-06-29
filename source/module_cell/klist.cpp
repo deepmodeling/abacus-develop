@@ -198,7 +198,7 @@ bool K_Vectors::read_kpoints(const std::string& fn)
     ModuleBase::TITLE("K_Vectors", "read_kpoints");
     if (GlobalV::MY_RANK != 0)
     {
-        return 1;
+        return true;
     }
 
     // 1. Overwrite the KPT file and default K-point information if needed
@@ -246,7 +246,7 @@ bool K_Vectors::read_kpoints(const std::string& fn)
     if (!ifk)
     {
         GlobalV::ofs_warning << " Can't find File name : " << fn << std::endl;
-        return 0;
+        return false;
     }
 
     ifk >> std::setiosflags(std::ios::uppercase);
@@ -277,7 +277,7 @@ bool K_Vectors::read_kpoints(const std::string& fn)
     if (ierr == 0)
     {
         GlobalV::ofs_warning << " symbol K_POINTS not found." << std::endl;
-        return 0;
+        return false;
     }
 
     // input k-points are in 2pi/a units
@@ -295,7 +295,7 @@ bool K_Vectors::read_kpoints(const std::string& fn)
     if (nkstot > max_kpoints)
     {
         GlobalV::ofs_warning << " nkstot > MAX_KPOINTS" << std::endl;
-        return 0;
+        return false;
     }
 
     // 2.2 Select different methods and generate K-point grid
@@ -317,7 +317,7 @@ bool K_Vectors::read_kpoints(const std::string& fn)
         else
         {
             GlobalV::ofs_warning << " Error: neither Gamma nor Monkhorst-Pack." << std::endl;
-            return 0;
+            return false;
         }
 
         ifk >> nmp[0] >> nmp[1] >> nmp[2];
@@ -361,7 +361,7 @@ bool K_Vectors::read_kpoints(const std::string& fn)
             {
                 ModuleBase::WARNING("K_Vectors::read_kpoints",
                                     "Line mode of k-points is open, please set symmetry to 0 or -1.");
-                return 0;
+                return false;
             }
 
             interpolate_k_between(ifk, kvec_c);
@@ -377,7 +377,7 @@ bool K_Vectors::read_kpoints(const std::string& fn)
             {
                 ModuleBase::WARNING("K_Vectors::read_kpoints",
                                     "Line mode of k-points is open, please set symmetry to 0 or -1.");
-                return 0;
+                return false;
             }
 
             interpolate_k_between(ifk, kvec_d);
@@ -390,14 +390,14 @@ bool K_Vectors::read_kpoints(const std::string& fn)
         else
         {
             GlobalV::ofs_warning << " Error : neither Cartesian nor Direct kpoint." << std::endl;
-            return 0;
+            return false;
         }
     }
 
     this->nkstot_full = this->nks = this->nkstot;
 
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "nkstot", nkstot);
-    return 1;
+    return true;
 } // END SUBROUTINE
 
 void K_Vectors::interpolate_k_between(std::ifstream& ifk, std::vector<ModuleBase::Vector3<double>>& kvec)
@@ -524,8 +524,8 @@ void K_Vectors::Monkhorst_Pack(const int* nmp_in, const double* koffset_in, cons
 }
 
 void K_Vectors::update_use_ibz(const int& nkstot_ibz,
-    const std::vector<ModuleBase::Vector3<double>>& kvec_d_ibz,
-    const std::vector<double>& wk_ibz)
+                               const std::vector<ModuleBase::Vector3<double>>& kvec_d_ibz,
+                               const std::vector<double>& wk_ibz)
 {
     if (GlobalV::MY_RANK != 0)
         return;
@@ -930,9 +930,9 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry& symm,
                                  this->kvec_d[i].y,
                                  this->kvec_d[i].z,
                                  ibz_index[i] + 1,
-            kvec_d_ibz[ibz_index[i]].x,
-            kvec_d_ibz[ibz_index[i]].y,
-            kvec_d_ibz[ibz_index[i]].z);
+                                 kvec_d_ibz[ibz_index[i]].x,
+                                 kvec_d_ibz[ibz_index[i]].y,
+                                 kvec_d_ibz[ibz_index[i]].z);
     }
     ss << table << std::endl;
     skpt = ss.str();
@@ -944,17 +944,20 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry& symm,
     for (int ik = 0; ik < nkstot_ibz; ik++)
     {
         table += FmtCore::format("%8d%12.8f%12.8f%12.8f%8.4f%8d\n",
-            ik + 1,
-            kvec_d_ibz[ik].x,
-            kvec_d_ibz[ik].y,
-            kvec_d_ibz[ik].z,
-            wk_ibz[ik],
-            ibz2bz[ik]);
+                                 ik + 1,
+                                 kvec_d_ibz[ik].x,
+                                 kvec_d_ibz[ik].y,
+                                 kvec_d_ibz[ik].z,
+                                 wk_ibz[ik],
+                                 ibz2bz[ik]);
     }
     GlobalV::ofs_running << table << std::endl;
 
     // resize the kpoint container according to nkstot_ibz
-    if (use_symm || is_mp) { this->update_use_ibz(nkstot_ibz, kvec_d_ibz, wk_ibz); }
+    if (use_symm || is_mp)
+    {
+        this->update_use_ibz(nkstot_ibz, kvec_d_ibz, wk_ibz);
+    }
 
     return;
 }
@@ -1084,7 +1087,7 @@ void K_Vectors::normalize_wk(const int& degspin)
 }
 
 #ifdef __MPI
-void K_Vectors::mpi_k(void)
+void K_Vectors::mpi_k()
 {
     ModuleBase::TITLE("K_Vectors", "mpi_k");
 
@@ -1176,7 +1179,7 @@ void K_Vectors::mpi_k(void)
 // This routine sets the k vectors for the up and down spin
 //----------------------------------------------------------
 // from set_kup_and_kdw.f90
-void K_Vectors::set_kup_and_kdw(void)
+void K_Vectors::set_kup_and_kdw()
 {
     ModuleBase::TITLE("K_Vectors", "setup_kup_and_kdw");
 
