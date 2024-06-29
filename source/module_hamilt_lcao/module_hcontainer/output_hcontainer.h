@@ -13,8 +13,7 @@ template <typename T>
 class Output_HContainer
 {
   public:
-    Output_HContainer(hamilt::HContainer<T>* hcontainer, const int nrow, const int ncol, std::ostream& ofs,
-                      double sparse_threshold, int precision);
+    Output_HContainer(hamilt::HContainer<T>* hcontainer, std::ostream& ofs, double sparse_threshold, int precision);
     // write the matrices of all R vectors to the output stream
     void write();
 
@@ -32,8 +31,6 @@ class Output_HContainer
 
   private:
     hamilt::HContainer<T>* _hcontainer;
-    int _nrow=0; 
-    int _ncol=0;
     std::ostream& _ofs;
     double _sparse_threshold;
     int _precision;
