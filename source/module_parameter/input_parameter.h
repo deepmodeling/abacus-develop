@@ -324,7 +324,7 @@ struct Input_para
     //  Peize Lin add 2018-06-20
     // ==========================================================
     std::string exx_hybrid_alpha = "default"; ///< fraction of Fock exchange in hybrid functionals
-    double exx_hse_omega = 0.11;        ///< range-separation parameter in HSE functional
+    double exx_hse_omega = 0.11;              ///< range-separation parameter in HSE functional
     bool exx_separate_loop
         = true; ///< if 1, a two-step method is employed, else it will start with a GGA-Loop, and then Hybrid-Loop
     int exx_hybrid_step = 100;    ///< the maximal electronic iteration number in the evaluation of Fock exchange
