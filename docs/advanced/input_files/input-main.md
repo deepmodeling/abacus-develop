@@ -3280,7 +3280,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 ### out_current
 
 - **Type**: Boolean
-- **Description**:output current in tddft velocity gague calculation
+- **Description**:output current in real time TDDFT simulations with the velocity gauge
   - True: output current.
   - False: do not output current.
 - **Default**: False
@@ -3288,8 +3288,8 @@ These variables are used to control berry phase and wannier90 interface paramete
 ### out_current_k
 
 - **Type**: Boolean
-- **Description**:output tddft current for each k points.
-  - True: output tddft current for each k points.
+- **Description**:output tddft current for all k points.
+  - True: output tddft current for all k points.
   - False: output current in total.
 - **Default**: False
 
