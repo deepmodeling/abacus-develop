@@ -278,7 +278,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_DOUBLE_EQ(param.get().soc_lambda, 1.0);
     EXPECT_DOUBLE_EQ(param.get().td_force_dt, 0.02);
     EXPECT_EQ(param.get().td_vext, 0);
-    EXPECT_EQ(param.get().td_vext_dire[0], 1);
+    EXPECT_EQ(param.get().td_vext_dire, "1");
     EXPECT_EQ(param.get().propagator, 0);
     EXPECT_EQ(param.get().td_stype, 0);
     EXPECT_EQ(param.get().td_ttype, "0");

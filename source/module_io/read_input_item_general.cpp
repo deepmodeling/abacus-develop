@@ -408,7 +408,10 @@ void ReadInput::item_general()
     {
         Input_Item item("bands_to_print");
         item.annotation = "specify the bands to be calculated in the get_pchg calculation";
-        read_sync_string(bands_to_print);
+        item.readvalue = [](const Input_Item& item, Parameter& para) {
+            para.input.bands_to_print = longstring(item.str_values, item.get_size());
+        };
+        sync_string(bands_to_print);
         this->add_item(item);
     }
     {

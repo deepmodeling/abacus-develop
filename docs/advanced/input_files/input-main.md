@@ -954,6 +954,7 @@ calculations.
   - **cg**: cg method.
   - **bpcg**: bpcg method, which is a block-parallel Conjugate Gradient (CG) method, typically exhibits higher acceleration in a GPU environment.
   - **dav**: the Davidson algorithm.
+  - **dav_subspace**: subspace Davidson algorithm
 
   For atomic orbitals basis,
 

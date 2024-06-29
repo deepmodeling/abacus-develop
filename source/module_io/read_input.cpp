@@ -24,6 +24,21 @@ void strtolower(char* sa, char* sb)
     sb[len] = '\0';
 }
 
+std::string longstring(const std::vector<std::string>& str_values, const int length)
+{
+    std::string output;
+    output = "";
+    for (int i = 0; i < length; ++i)
+    {
+        output += str_values[i];
+        if (i != length - 1)
+        {
+            output += " ";
+        }
+    }
+    return output;
+}
+
 bool convert_bool(std::string str)
 {
     for (auto& i: str)
@@ -292,11 +307,6 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
 void ReadInput::write_txt_input(const Parameter& param, const std::string& filename)
 {
     ModuleBase::TITLE("ReadInput", "write_txt_input");
-    for (auto& item: this->input_lists)
-    {
-        if (item.second.getfinalvalue != nullptr)
-            item.second.getfinalvalue(item.second, param);
-    }
     std::ofstream ofs(filename.c_str(), std::ios::out);
     ofs << "INPUT_PARAMETERS" << std::endl;
     ofs << std::setiosflags(std::ios::left);
@@ -304,9 +314,10 @@ void ReadInput::write_txt_input(const Parameter& param, const std::string& filen
     ofs << "#Parameters (1.General)" << std::endl;
     for (auto& item: this->input_lists)
     {
-        const Input_Item* p_item = &(item.second);
+        Input_Item* p_item = &(item.second);
         if (p_item->getfinalvalue == nullptr)
             continue;
+        p_item->getfinalvalue(*p_item, param);
         if (p_item->label == "ecutwfc")
         {
             ofs << "\n#Parameters (2.PW)" << std::endl;

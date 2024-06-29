@@ -272,10 +272,7 @@ void Input_Conv::tmp_convert()
     INPUT.exx_opt_orb_tolerence = PARAM.get().exx_opt_orb_tolerence;
     INPUT.td_force_dt = PARAM.get().td_force_dt;
     INPUT.td_vext = PARAM.get().td_vext;
-    std::stringstream ss;
-    for (int i = 0; i < PARAM.get().sup.td_nvext_dire; ++i)
-        ss << PARAM.get().td_vext_dire[i] << " ";
-    INPUT.td_vext_dire = ss.str();
+    INPUT.td_vext_dire = PARAM.get().td_vext_dire;
     INPUT.out_dipole = PARAM.get().out_dipole;
     INPUT.out_efield = PARAM.get().out_efield;
     INPUT.out_current = PARAM.get().out_current;

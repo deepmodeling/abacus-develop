@@ -404,7 +404,7 @@ void ReadInput::item_others()
         Input_Item item("exx_hybrid_alpha");
         item.annotation = "fraction of Fock exchange in hybrid functionals";
         read_sync_string(exx_hybrid_alpha);
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        autosetfuncs.push_back([](Parameter& para) {
             if (para.input.exx_hybrid_alpha == "default")
             {
                 std::string& dft_functional = para.input.dft_functional;
@@ -418,7 +418,7 @@ void ReadInput::item_others()
                 else // no exx in scf, but will change to non-zero in postprocess like rpa
                     para.input.exx_hybrid_alpha = "0";
             }
-        };
+        });
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
             const double exx_hybrid_alpha_value = std::stod(para.input.exx_hybrid_alpha);
             if (exx_hybrid_alpha_value < 0 || exx_hybrid_alpha_value > 1)
@@ -649,16 +649,9 @@ void ReadInput::item_others()
         Input_Item item("td_vext_dire");
         item.annotation = "extern potential direction";
         item.readvalue = [](const Input_Item& item, Parameter& para) {
-            size_t count = item.get_size();
-            para.input.sup.td_nvext_dire = count;
-            for (auto& str: item.str_values)
-            {
-                para.input.td_vext_dire.push_back(std::stoi(str));
-            }
+            para.input.td_vext_dire = longstring(item.str_values, item.get_size());
         };
-        add_int_bcast(sup.td_nvext_dire);
-        // We must firt bcast td_nvext_direr, then bcast td_vext_dire
-        sync_intvec(td_vext_dire, para.input.sup.td_nvext_dire, 1);
+        sync_string(td_vext_dire);
         this->add_item(item);
     }
     {
@@ -718,7 +711,10 @@ void ReadInput::item_others()
     {
         Input_Item item("td_ttype");
         item.annotation = "type of electric field in time domain";
-        read_sync_string(td_ttype);
+        item.readvalue = [](const Input_Item& item, Parameter& para) {
+            para.input.td_ttype = longstring(item.str_values, item.get_size());
+        };
+        sync_string(td_ttype);
         this->add_item(item);
     }
     {
@@ -748,109 +744,163 @@ void ReadInput::item_others()
     {
         Input_Item item("td_gauss_freq");
         item.annotation = "frequency (freq) of Gauss type electric field";
-        read_sync_string(td_gauss_freq);
+        item.readvalue = [](const Input_Item& item, Parameter& para) {
+            para.input.td_gauss_freq = longstring(item.str_values, item.get_size());
+        };
+        sync_string(td_gauss_freq);
         this->add_item(item);
     }
     {
         Input_Item item("td_gauss_phase");
         item.annotation = "phase of Gauss type electric field";
-        read_sync_string(td_gauss_phase);
+        item.readvalue = [](const Input_Item& item, Parameter& para) {
+            para.input.td_gauss_phase = longstring(item.str_values, item.get_size());
+        };
+        sync_string(td_gauss_phase);
         this->add_item(item);
     }
     {
         Input_Item item("td_gauss_sigma");
         item.annotation = "sigma of Gauss type electric field";
-        read_sync_string(td_gauss_sigma);
+        item.readvalue = [](const Input_Item& item, Parameter& para) {
+            para.input.td_gauss_sigma = longstring(item.str_values, item.get_size());
+        };
+        sync_string(td_gauss_sigma);
         this->add_item(item);
     }
     {
         Input_Item item("td_gauss_t0");
         item.annotation = "step number of time center (t0) of Gauss type electric field";
-        read_sync_string(td_gauss_t0);
+        item.readvalue = [](const Input_Item& item, Parameter& para) {
+            para.input.td_gauss_t0 = longstring(item.str_values, item.get_size());
+        };
+        sync_string(td_gauss_t0);
         this->add_item(item);
     }
     {
         Input_Item item("td_gauss_amp");
         item.annotation = "amplitude of Gauss type electric field";
-        read_sync_string(td_gauss_amp);
+        item.readvalue = [](const Input_Item& item, Parameter& para) {
+            para.input.td_gauss_amp = longstring(item.str_values, item.get_size());
+        };
+        sync_string(td_gauss_amp);
         this->add_item(item);
     }
     {
         Input_Item item("td_trape_freq");
         item.annotation = "frequency of Trapezoid type electric field";
-        read_sync_string(td_trape_freq);
+        item.readvalue = [](const Input_Item& item, Parameter& para) {
+            para.input.td_trape_freq = longstring(item.str_values, item.get_size());
+        };
+        sync_string(td_trape_freq);
         this->add_item(item);
     }
     {
         Input_Item item("td_trape_phase");
         item.annotation = "phase of Trapezoid type electric field";
-        read_sync_string(td_trape_phase);
+        item.readvalue = [](const Input_Item& item, Parameter& para) {
+            para.input.td_trape_phase = longstring(item.str_values, item.get_size());
+        };
+        sync_string(td_trape_phase);
         this->add_item(item);
     }
     {
         Input_Item item("td_trape_t1");
         item.annotation = "t1 of Trapezoid type electric field";
-        read_sync_string(td_trape_t1);
+        item.readvalue = [](const Input_Item& item, Parameter& para) {
+            para.input.td_trape_t1 = longstring(item.str_values, item.get_size());
+        };
+        sync_string(td_trape_t1);
         this->add_item(item);
     }
     {
         Input_Item item("td_trape_t2");
         item.annotation = "t2 of Trapezoid type electric field";
-        read_sync_string(td_trape_t2);
+        item.readvalue = [](const Input_Item& item, Parameter& para) {
+            para.input.td_trape_t2 = longstring(item.str_values, item.get_size());
+        };
+        sync_string(td_trape_t2);
         this->add_item(item);
     }
     {
         Input_Item item("td_trape_t3");
         item.annotation = "t3 of Trapezoid type electric field";
-        read_sync_string(td_trape_t3);
+        item.readvalue = [](const Input_Item& item, Parameter& para) {
+            para.input.td_trape_t3 = longstring(item.str_values, item.get_size());
+        };
+        sync_string(td_trape_t3);
         this->add_item(item);
     }
     {
         Input_Item item("td_trape_amp");
         item.annotation = "amplitude of Trapezoid type electric field";
-        read_sync_string(td_trape_amp);
+        item.readvalue = [](const Input_Item& item, Parameter& para) {
+            para.input.td_trape_amp = longstring(item.str_values, item.get_size());
+        };
+        sync_string(td_trape_amp);
         this->add_item(item);
     }
     {
         Input_Item item("td_trigo_freq1");
         item.annotation = "frequency 1 of Trigonometric type electric field";
-        read_sync_string(td_trigo_freq1);
+        item.readvalue = [](const Input_Item& item, Parameter& para) {
+            para.input.td_trigo_freq1 = longstring(item.str_values, item.get_size());
+        };
+        sync_string(td_trigo_freq1);
         this->add_item(item);
     }
     {
         Input_Item item("td_trigo_freq2");
         item.annotation = "frequency 2 of Trigonometric type electric field";
-        read_sync_string(td_trigo_freq2);
+        item.readvalue = [](const Input_Item& item, Parameter& para) {
+            para.input.td_trigo_freq2 = longstring(item.str_values, item.get_size());
+        };
+        sync_string(td_trigo_freq2);
         this->add_item(item);
     }
     {
         Input_Item item("td_trigo_phase1");
         item.annotation = "phase 1 of Trigonometric type electric field";
-        read_sync_string(td_trigo_phase1);
+        item.readvalue = [](const Input_Item& item, Parameter& para) {
+            para.input.td_trigo_phase1 = longstring(item.str_values, item.get_size());
+        };
+        sync_string(td_trigo_phase1);
         this->add_item(item);
     }
     {
         Input_Item item("td_trigo_phase2");
         item.annotation = "phase 2 of Trigonometric type electric field";
-        read_sync_string(td_trigo_phase2);
+        item.readvalue = [](const Input_Item& item, Parameter& para) {
+            para.input.td_trigo_phase2 = longstring(item.str_values, item.get_size());
+        };
+        sync_string(td_trigo_phase2);
         this->add_item(item);
     }
     {
         Input_Item item("td_trigo_amp");
         item.annotation = "amplitude of Trigonometric type electric field";
-        read_sync_string(td_trigo_amp);
+        item.readvalue = [](const Input_Item& item, Parameter& para) {
+            para.input.td_trigo_amp = longstring(item.str_values, item.get_size());
+        };
+        sync_string(td_trigo_amp);
         this->add_item(item);
     }
     {
         Input_Item item("td_heavi_t0");
         item.annotation = "t0 of Heaviside type electric field";
-        read_sync_string(td_heavi_t0);
+        item.readvalue = [](const Input_Item& item, Parameter& para) {
+            para.input.td_heavi_t0 = longstring(item.str_values, item.get_size());
+        };
+        sync_string(td_heavi_t0);
         this->add_item(item);
     }
     {
         Input_Item item("td_heavi_amp");
         item.annotation = "amplitude of Heaviside type electric field";
-        read_sync_string(td_heavi_amp);
+        item.readvalue = [](const Input_Item& item, Parameter& para) {
+            para.input.td_heavi_amp = longstring(item.str_values, item.get_size());
+        };
+        sync_string(td_heavi_amp);
         this->add_item(item);
     }
     {
@@ -862,7 +912,10 @@ void ReadInput::item_others()
     {
         Input_Item item("ocp_set");
         item.annotation = "set occupation";
-        read_sync_string(ocp_set);
+        item.readvalue = [](const Input_Item& item, Parameter& para) {
+            para.input.ocp_set = longstring(item.str_values, item.get_size());
+        };
+        sync_string(ocp_set);
         this->add_item(item);
     }
 

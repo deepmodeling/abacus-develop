@@ -126,6 +126,7 @@ class ReadInput
 };
 
 void strtolower(char* sa, char* sb);
+std::string longstring(const std::vector<std::string>& str_values, const int length);
 bool convert_bool(std::string str);
 bool find_str(const std::vector<std::string>& strings, const std::string& strToFind);
 

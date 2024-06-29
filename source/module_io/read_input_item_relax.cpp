@@ -49,7 +49,7 @@ void ReadInput::item_relax()
         });
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
             const std::string& ks_solver = para.input.ks_solver;
-            const std::vector<std::string> pw_solvers = {"cg", "dav", "bpcg"};
+            const std::vector<std::string> pw_solvers = {"cg", "dav", "bpcg", "dav_subspace"};
             const std::vector<std::string> lcao_solvers = {
                 "genelpa",
                 "lapack",
@@ -63,7 +63,7 @@ void ReadInput::item_relax()
             {
                 if (find_str(pw_solvers, ks_solver) == false)
                 {
-                    ModuleBase::WARNING_QUIT("ReadInput", "ks_solver must be cg, dav or bpcg for pw basis.");
+                    ModuleBase::WARNING_QUIT("ReadInput", "ks_solver must be cg, dav, bpcg or dav_subspace for pw basis.");
                 }
             }
             else if (para.input.basis_type == "lcao")

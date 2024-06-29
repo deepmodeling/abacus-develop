@@ -10,14 +10,13 @@
 struct Input_supplement
 {
     bool two_fermi = false; ///< true if "nupdown" is set
-    int td_nvext_dire = 1;  ///< number of vext directions (for "td_vext_dire")
 
     // For parameter "bessel_nao_rcuts"
     int nrcut = 0;                ///< number of bessel_nao_rcuts, assuming 0 as no values provided
     double bessel_nao_rcut = 6.0; ///< radial cutoff for spherical bessel functions(a.u.)
 
-    bool dos_setemin = true;            ///< true: "dos_emin_ev" is set
-    bool dos_setemax = true;            ///< true: "dos_emax_ev" is set
+    bool dos_setemin = false;           ///< true: "dos_emin_ev" is set
+    bool dos_setemax = false;           ///< true: "dos_emax_ev" is set
     int ncx = 0, ncy = 0, ncz = 0;      ///< three dimension of FFT charge/grid, same as "nx,ny,nz"
     bool out_md_control = false;        ///< true if "out_level" is set
     bool rpa_setorb = false;            ///< true if "rpa" is set
@@ -324,7 +323,7 @@ struct Input_para
     //  exx
     //  Peize Lin add 2018-06-20
     // ==========================================================
-    std::string exx_hybrid_alpha = "0"; ///< fraction of Fock exchange in hybrid functionals
+    std::string exx_hybrid_alpha = "default"; ///< fraction of Fock exchange in hybrid functionals
     double exx_hse_omega = 0.11;        ///< range-separation parameter in HSE functional
     bool exx_separate_loop
         = true; ///< if 1, a two-step method is employed, else it will start with a GGA-Loop, and then Hybrid-Loop
@@ -354,19 +353,19 @@ struct Input_para
                                        ///< potential is to that of atomic orbitals
 
     // ==============   #Parameters (16.tddft) ======================
-    double td_force_dt = 0.02;           ///<"fs"
-    bool td_vext = false;                ///< add extern potential or not
-    std::vector<int> td_vext_dire = {1}; ///< vext direction
-    bool out_dipole = false;             ///< output the dipole or not
-    bool out_efield = false;             ///< output the efield or not
-    bool out_current = false;            ///< output the current or not
-    bool out_vecpot = false;             ///< output the vector potential or not
-    bool init_vecpot_file = false;       ///< initialize the vector potential, though file or integral
-    double td_print_eij = -1.0;          ///< threshold to output Eij elements
-    int td_edm = 0;                      ///< 0: new edm method   1: old edm method
-    int propagator = 0;                  ///< method of propagator
-    int td_stype = 0;                    ///< type of space domain  0 : length gauge  1: velocity gauge
-    std::string td_ttype = "0";          ///< type of time domain
+    double td_force_dt = 0.02;      ///<"fs"
+    bool td_vext = false;           ///< add extern potential or not
+    std::string td_vext_dire = "1"; ///< vext direction
+    bool out_dipole = false;        ///< output the dipole or not
+    bool out_efield = false;        ///< output the efield or not
+    bool out_current = false;       ///< output the current or not
+    bool out_vecpot = false;        ///< output the vector potential or not
+    bool init_vecpot_file = false;  ///< initialize the vector potential, though file or integral
+    double td_print_eij = -1.0;     ///< threshold to output Eij elements
+    int td_edm = 0;                 ///< 0: new edm method   1: old edm method
+    int propagator = 0;             ///< method of propagator
+    int td_stype = 0;               ///< type of space domain  0 : length gauge  1: velocity gauge
+    std::string td_ttype = "0";     ///< type of time domain
     ///<  0  Gauss type function.
     ///<  1  trapezoid type function.
     ///<  2  Trigonometric functions, sin^2.
