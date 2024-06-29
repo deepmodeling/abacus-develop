@@ -31,7 +31,11 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
 
     // select the method of diagonalization
     this->method = method_in;
-    this->initDiagh(psi);
+    // report if the specified diagonalization method is not supported
+    if (this->method != "cg" && this->method != "dav" && this->method != "dav_subspace" && this->method != "bpcg")
+    {
+        ModuleBase::WARNING_QUIT("HSolverPW::solve", "This method of DiagH is not supported!");
+    }
 
     // part of KSDFT to get KS orbitals
     for (int ik = 0; ik < nks; ++ik)

@@ -64,7 +64,7 @@ class HSolverPW : public HSolver<T, Device>
     virtual Real set_diagethr(const int istep, const int iter, const Real drho) override;
     virtual Real reset_diagethr(std::ofstream& ofs_running, const Real hsover_error, const Real drho) override;
   protected:
-    void initDiagh(const psi::Psi<T, Device>& psi_in);
+    // void initDiagh(const psi::Psi<T, Device>& psi_in);
     void endDiagh();
     void hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::Psi<T, Device>& psi, Real* eigenvalue);
 

@@ -33,15 +33,6 @@ HSolverPW<T, Device>::HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in, wavefunc* pw
 }
 
 template <typename T, typename Device>
-void HSolverPW<T, Device>::initDiagh(const psi::Psi<T, Device>& psi)
-{
-    if (this->method != "cg" && this->method != "dav" && this->method != "dav_subspace" && this->method != "bpcg")
-    {
-        ModuleBase::WARNING_QUIT("HSolverPW::solve", "This method of DiagH is not supported!");
-    }
-}
-
-template <typename T, typename Device>
 void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
                                  psi::Psi<T, Device>& psi,
                                  elecstate::ElecState* pes,
@@ -55,7 +46,11 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
     this->hamilt_ = pHamilt;
     // select the method of diagonalization
     this->method = method_in;
-    this->initDiagh(psi);
+    // report if the specified diagonalization method is not supported
+    if (this->method != "cg" && this->method != "dav" && this->method != "dav_subspace" && this->method != "bpcg")
+    {
+        ModuleBase::WARNING_QUIT("HSolverPW::solve", "This method of DiagH is not supported!");
+    }
 
     std::vector<Real> eigenvalues(pes->ekb.nr * pes->ekb.nc, 0);
 
