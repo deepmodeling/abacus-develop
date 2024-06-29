@@ -680,7 +680,7 @@ TEST_F(KlistTest, UpdateUseIBZ)
 	kv->set_nkstot(3);
 	kv->set_nks(3);
     kv->renew(kv->get_nkstot());
-    kv->update_use_ibz(kv->get_nkstot(), std::vector<ModuleBase::Vector3<double>>(2, { 0,0,0 }));
+    kv->update_use_ibz(2, std::vector<ModuleBase::Vector3<double>>(2, { 0,0,0 }), std::vector<double>(2, 0.0));
 	EXPECT_EQ(kv->get_nkstot(),2);
 	EXPECT_EQ(kv->kvec_d.size(),2);
 	EXPECT_TRUE(kv->kd_done);

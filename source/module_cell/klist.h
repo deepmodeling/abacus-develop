@@ -15,7 +15,6 @@ class K_Vectors
     std::vector<ModuleBase::Vector3<double>> kvec_d;     /// Direct coordinates of k points
 
     std::vector<double> wk;     /// wk, weight of k points
-    std::vector<double> wk_ibz; /// ibz kpoint wk ,weight of k points
 
     std::vector<int> ngk; /// ngk, number of plane waves for each k point
     std::vector<int> isk; /// distinguish spin up and down k points
@@ -154,8 +153,6 @@ private:
     int k_nkstot;        // LiuXh add 20180619
     bool is_mp = false;  // Monkhorst-Pack
 
-    std::vector<int> ibz2bz; // mohan added 2009-05-18
-
     /**
      * @brief Resize the k-point related vectors according to the new k-point number.
      *
@@ -271,7 +268,9 @@ private:
      * updated, and the flag kc_done is set to false to indicate that the Cartesian coordinates of the k-points need to
      * be recalculated.
      */
-    void update_use_ibz(const int& nkstot_ibz, const std::vector<ModuleBase::Vector3<double>>& kvec_d_ibz);
+    void update_use_ibz(const int& nkstot_ibz,
+        const std::vector<ModuleBase::Vector3<double>>& kvec_d_ibz,
+        const std::vector<double>& wk_ibz);
 
     /**
      * @brief Sets both the direct and Cartesian k-vectors.
