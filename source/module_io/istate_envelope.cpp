@@ -383,15 +383,18 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
     // (2.3) output the charge density in .cub format.
 
     // allocate grid wavefunction for gamma_only
-    std::vector<std::complex<double>**> wfc_k_grid(nspin);
-    for (int ik = 0; ik < kv.get_nks(); ++ik)
+    const int nks = kv.get_nks();
+    std::vector<std::complex<double>**> wfc_k_grid(nks);
+    for (int ik = 0; ik < nks; ++ik)
     {
         wfc_k_grid[ik] = new std::complex<double>*[nbands];
         for (int ib = 0; ib < nbands; ++ib)
+        {
             wfc_k_grid[ik][ib] = new std::complex<double>[gk.gridt->lgd];
+        }
     }
-    const double mem_size = sizeof(std::complex<double>) * double(gk.gridt->lgd) * double(nbands) * double(nspin)
-                            * double(kv.get_nks()) / 1024.0 / 1024.0;
+    const double mem_size
+        = sizeof(std::complex<double>) * double(gk.gridt->lgd) * double(nbands) * double(nks) / 1024.0 / 1024.0;
     ModuleBase::Memory::record("IState_Envelope::begin::wfc_k_grid", mem_size);
     printf(" Estimated on-the-fly memory consuming by IState_Envelope::begin::wfc_k_grid: %f MB\n", mem_size);
 
@@ -400,7 +403,7 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
 
     if (out_wf || out_wf_r)
     {
-        pw_wfc_g.resize(kv.get_nks(), nbands, wfcpw->npwk_max);
+        pw_wfc_g.resize(nks, nbands, wfcpw->npwk_max);
     }
 
     for (int ib = 0; ib < nbands; ib++)
@@ -408,7 +411,7 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
         if (bands_picked_[ib])
         {
             const int nspin0 = (nspin == 2) ? 2 : 1;
-            for (int ik = 0; ik < kv.get_nks(); ++ik) // the loop of nspin0 is included
+            for (int ik = 0; ik < nks; ++ik) // the loop of nspin0 is included
             {
                 const int ispin = kv.isk[ik];
                 ModuleBase::GlobalFunc::ZEROS(pes_->charge->rho[ispin],
@@ -477,11 +480,11 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
         }
     }
 
-    for (int is = 0; is < nspin; ++is)
+    for (int ik = 0; ik < nks; ++ik)
     {
         for (int ib = 0; ib < nbands; ++ib)
-            delete[] wfc_k_grid[is][ib];
-        delete[] wfc_k_grid[is];
+            delete[] wfc_k_grid[ik][ib];
+        delete[] wfc_k_grid[ik];
     }
 
     return;
