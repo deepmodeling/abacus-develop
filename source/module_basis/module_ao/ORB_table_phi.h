@@ -66,7 +66,9 @@ class ORB_table_phi
                                             const int& Lmax_exx,
                                             const LCAO_Orbitals& orb,
                                             const Numerical_Nonlocal* beta_,
-                                            ModuleBase::Sph_Bessel_Recursive::D2*& psb);
+                                            ModuleBase::Sph_Bessel_Recursive::D2*& psbi,
+                                            const int kmesh_times = 4,
+                                            const int rmesh_times = 1);
 
     // Wenfei 2021-8-26, plot table elements against R
     void plot_table(const std::string filename, const int rmesh, double* column);
