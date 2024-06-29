@@ -10,6 +10,7 @@
 #include "module_io/input.h"
 #include "module_io/json_output/init_info.h"
 #include "module_io/print_info.h"
+#include "module_parameter/parameter.h"
 
 #include <iostream>
 //--------------Temporary----------------
@@ -458,7 +459,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
     this->before_scf(istep);
 
     // 3) write charge density
-    if (GlobalV::dm_to_rho)
+    if (PARAM.get().dm_to_rho)
     {
         ModuleBase::timer::tick(this->classname, "runner");
         return; // nothing further is needed
@@ -736,7 +737,7 @@ ModuleIO::Output_Rho ESolver_KS<T, Device>::create_Output_Rho(int is, int iter, 
 {
     const int precision = 3;
     std::string tag = "CHG";
-    if (GlobalV::dm_to_rho)
+    if (PARAM.get().dm_to_rho)
     {
         return ModuleIO::Output_Rho(this->pw_big,
                                     this->pw_rhod,

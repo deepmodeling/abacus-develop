@@ -13,6 +13,7 @@
 #include "module_io/write_Vxc.hpp"
 #include "module_io/write_istate_info.h"
 #include "module_io/write_proj_band_lcao.h"
+#include "module_parameter/parameter.h"
 
 //--------------temporary----------------------------
 #include "module_base/global_function.h"
@@ -463,7 +464,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners()
                               this->p_hamilt);
     }
 
-    if (INPUT.out_mat_xc)
+    if (PARAM.get().out_mat_xc)
     {
         ModuleIO::write_Vxc<TK, TR>(GlobalV::NSPIN,
                                     GlobalV::NLOCAL,
@@ -1084,7 +1085,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
     // 2) write density matrix for sparse matrix
     ModuleIO::write_dmr(dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->get_DMR_vector(),
                         this->orb_con.ParaV,
-                        INPUT.out_dm1,
+                        PARAM.get().out_dm1,
                         false,
                         GlobalV::out_app_flag,
                         istep);
@@ -1178,7 +1179,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
 #endif
 
     // 12) write HR in npz format
-    if (GlobalV::out_hr_npz)
+    if (PARAM.get().out_hr_npz)
     {
         this->p_hamilt->updateHk(0); // first k point, up spin
         hamilt::HamiltLCAO<std::complex<double>, double>* p_ham_lcao
@@ -1197,7 +1198,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
     }
 
     // 13) write dm in npz format
-    if (GlobalV::out_dm_npz)
+    if (PARAM.get().out_dm_npz)
     {
         const elecstate::DensityMatrix<TK, double>* dm
             = dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();

@@ -13,6 +13,7 @@
 #include "module_io/to_wannier90_lcao.h"
 #include "module_io/to_wannier90_lcao_in_pw.h"
 #include "module_io/write_HS_R.h"
+#include "module_parameter/parameter.h"
 #ifdef __DEEPKS
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #endif
@@ -324,7 +325,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
         ->get_DM()
         ->init_DMR(*(dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt)->getHR()));
 
-    if (GlobalV::dm_to_rho)
+    if (PARAM.get().dm_to_rho)
     {
         std::string zipname = "output_DM0.npz";
         elecstate::DensityMatrix<TK, double>* dm

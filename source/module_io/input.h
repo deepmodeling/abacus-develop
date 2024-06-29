@@ -24,7 +24,6 @@ class Input
     // directories of files
     //==========================================================
 
-    std::string suffix;        // suffix of out put dir
     std::string stru_file;     // file contains atomic positions -- xiaohui modify 2015-02-01
     std::string pseudo_dir;    // directory of pseudopotential
     std::string orbital_dir;   // directory of orbital file
@@ -50,13 +49,6 @@ class Input
     bool init_vel;          // read velocity from STRU or not  liuyu 2021-07-14
     double ref_cell_factor; // construct a reference cell bigger than the initial cell  liuyu 2023-03-21
 
-    /* symmetry level:
-      -1, no symmetry at all;
-      0, only basic time reversal would be considered;
-      1, point group symmetry would be considered*/
-    std::string symmetry;
-    double symmetry_prec;    // LiuXh add 2021-08-12, accuracy for symmetry
-    bool symmetry_autoclose; // whether to close symmetry automatically when error occurs in symmetry analysis
     int kpar;                // ecch pool is for one k point
 
     bool berry_phase; // berry phase calculation
@@ -106,10 +98,6 @@ class Input
     std::string dft_functional; // input DFT functional.
     double xc_temperature;      // only relevant if finite temperature functional is used
     int nspin;                  // LDA ; LSDA ; non-linear spin
-    bool two_fermi = false;
-    double nupdown = 0.0;
-    double nelec;       // total number of electrons
-    double nelec_delta; // change in the number of total electrons
     int lmaxmax;
 
     //==========================================================
@@ -123,7 +111,6 @@ class Input
     //==========================================================
     bool cal_force;
     double force_thr;     // threshold of force in unit (Ry/Bohr)
-    double force_thr_ev2; // invalid force threshold, mohan add 2011-04-17
 
     //==========================================================
     // Stress
@@ -147,13 +134,6 @@ class Input
     bool relax_new;
 
     double relax_cg_thr; // threshold when cg to bfgs, pengfei add 2011-08-15
-
-    double relax_bfgs_w1; // wolfe condition 1
-    double relax_bfgs_w2; // wolfe condition 2
-
-    double relax_bfgs_rmax; // trust radius max
-    double relax_bfgs_rmin; // trust radius min
-    double relax_bfgs_init; // initial move
 
     double relax_scale_force;
 
@@ -183,7 +163,6 @@ class Input
     int pw_diag_nmax;
     int diago_cg_prec; // mohan add 2012-03-31
     int pw_diag_ndim;
-    bool diago_full_acc;
     double pw_diag_thr; // used in cg method
 
     int nb2d; // matrix 2d division.
@@ -211,7 +190,6 @@ class Input
     int scf_thr_type;      // type of the criterion of scf_thr, 1: reci drho, 2: real drho
     int scf_nmax;          // number of max elec iter
     int relax_nmax;        // number of max ionic iter
-    bool out_stru;         // outut stru file each ion step
     std::string out_level; // control the output information.
     bool out_md_control;   // internal parameter , added by zhengdy 2019-04-07
 
@@ -224,23 +202,6 @@ class Input
                                  // "mv","marzari-vanderbilt","cold"
                                  // "fd","fermi-dirac"
     double smearing_sigma;       //
-
-    //==========================================================
-    // charge mixing
-    //==========================================================
-    std::string mixing_mode; // "plain","broyden",...
-    double mixing_beta;      // 0 : no_mixing
-    int mixing_ndim;         // used in Broyden method
-    double mixing_restart;   // mixing will restart once if drho is smaller than mixing_restart
-    double mixing_gg0;       // used in kerker method
-    double mixing_beta_mag;
-    double mixing_gg0_mag;
-    double mixing_gg0_min;
-    double mixing_angle;
-
-    bool mixing_tau;  // whether to mix tau in mgga
-    bool mixing_dftu; // whether to mix locale in DFT+U
-    bool mixing_dmr;  // whether to mix real space density matrix
 
     //==========================================================
     // potential / charge / wavefunction / energy
@@ -260,30 +221,19 @@ class Input
     int out_freq_ion;  // the frequency ( >= 0 ) of ionic step to output charge density and wavefunction. 0: output only
                        // when ion steps are finished
     int out_chg;       // output charge density. 0: no; 1: yes
-    bool out_dm;       // output density matrix.
-    bool out_dm1;
     int out_pot;                 // yes or no
     int out_wfc_pw;              // 0: no; 1: txt; 2: dat
     bool out_wfc_r;              // 0: no; 1: yes
     int out_dos;                 // dos calculation. mohan add 20090909
     std::vector<int> out_band;   // band calculation pengfei 2014-10-13
     bool out_proj_band;          // projected band structure calculation jiyy add 2022-05-11
-    std::vector<int> out_mat_hs; // output H matrix and S matrix in local basis.
-    bool out_mat_xc;             // output exchange-correlation matrix in KS-orbital representation.
-    bool out_hr_npz;             // output exchange-correlation matrix in KS-orbital representation.
-    bool out_dm_npz;
-    bool dm_to_rho;
     bool cal_syns;    // calculate asynchronous S matrix to output
     double dmax;      // maximum displacement of all atoms in one step (bohr)
-    bool out_mat_hs2; // LiuXh add 2019-07-16, output H(R) matrix and S(R) matrix in local basis.
-    bool out_mat_dh;
     int out_interval;
     bool out_app_flag; // whether output r(R), H(R), S(R), T(R), and dH(R) matrices in an append manner during MD  liuyu
                        // 2023-03-20
     int out_ndigits;
-    bool out_mat_t;
     bool out_mat_r;        // jingan add 2019-8-14, output r(R) matrix.
-    int out_wfc_lcao;      // output the wave functions in local basis.
     bool out_alllog;       // output all logs.
     bool out_element_info; // output infomation of all element
 
@@ -318,29 +268,6 @@ class Input
     MD_para mdp;
 
     //==========================================================
-    // efield and dipole correction
-    // Yu Liu add 2022-05-18
-    //==========================================================
-    bool efield_flag;      // add electric field
-    bool dip_cor_flag;     // dipole correction
-    int efield_dir;        // the direction of the electric field or dipole correction
-    double efield_pos_max; // position of the maximum of the saw-like potential along crystal axis efield_dir
-    double efield_pos_dec; // zone in the unit cell where the saw-like potential decreases
-    double efield_amp;     // amplitude of the electric field
-
-    //==========================================================
-    // gatefield (compensating charge)
-    // Yu Liu add 2022-09-13
-    //==========================================================
-    bool gate_flag;      // compensating charge or not
-    double zgate;        // position of charged plate
-    bool relax;          // allow relaxation along the specific direction
-    bool block;          // add a block potential or not
-    double block_down;   // low bound of the block
-    double block_up;     // high bound of the block
-    double block_height; // height of the block
-
-    //==========================================================
     // vdw
     // Peize Lin add 2014-03-31, jiyy update 2019-08-01
     //==========================================================
@@ -369,114 +296,12 @@ class Input
     bool noncolin;
     bool lspinorb;
     double soc_lambda;
-
-    //==========================================================
-    // exx
-    // Peize Lin add 2018-06-20
-    //==========================================================
-    std::string exx_hybrid_alpha;
-    double exx_hse_omega;
-
-    bool exx_separate_loop; // 0 or 1
-    int exx_hybrid_step;
-    double exx_mixing_beta; // only for exx_separate_loop=1
-
-    double exx_lambda;
-
-    std::string exx_real_number;
-    double exx_pca_threshold;
-    double exx_c_threshold;
-    double exx_v_threshold;
-    double exx_dm_threshold;
-    double exx_schwarz_threshold;
-    double exx_cauchy_threshold;
-    double exx_c_grad_threshold;
-    double exx_v_grad_threshold;
-    double exx_cauchy_force_threshold;
-    double exx_cauchy_stress_threshold;
-    double exx_ccp_threshold;
-    std::string exx_ccp_rmesh_times;
-    double rpa_ccp_rmesh_times;
-
-    std::string exx_distribute_type;
-
-    int exx_opt_orb_lmax;
-    double exx_opt_orb_ecut;
-    double exx_opt_orb_tolerence;
-
     //==========================================================
     // tddft
     // Fuxiang He add 2016-10-26
     //==========================================================
-    double td_force_dt;       //"fs"
-    bool td_vext;             // add extern potential or not
-    std::string td_vext_dire; // vext direction
-    bool out_dipole;          // output the dipole or not
-    bool out_efield;          // output the efield or not
-    bool out_current;         // output the current or not
-    bool out_vecpot;          // output the vector potential or not
-    bool init_vecpot_file;    // initialize the vector potential, though file or integral
 
-    double td_print_eij; // threshold to output Eij elements
-    int td_edm;          // 0: new edm method   1: old edm method
 
-    int propagator; // method of propagator
-
-    int td_stype; // type of space domain  0 : length gauge  1: velocity gauge
-
-    std::string td_ttype; // type of time domain
-    //  0  Gauss type function.
-    //  1  trapezoid type function.
-    //  2  Trigonometric functions, sin^2.
-    //  3  heaviside function.
-    //  4  HHG function.
-
-    int td_tstart;
-    int td_tend;
-
-    // space domain parameters
-
-    // length gauge
-    double td_lcut1;
-    double td_lcut2;
-
-    // time domain parameters
-
-    // Gauss
-    std::string td_gauss_freq; // time(fs)^-1
-    std::string td_gauss_phase;
-    std::string td_gauss_sigma; // time(fs)
-    std::string td_gauss_t0;
-    std::string td_gauss_amp; // V/A
-
-    // trapezoid
-    std::string td_trape_freq; // time(fs)^-1
-    std::string td_trape_phase;
-    std::string td_trape_t1;
-    std::string td_trape_t2;
-    std::string td_trape_t3;
-    std::string td_trape_amp; // V/A
-
-    // Trigonometric
-    std::string td_trigo_freq1; // time(fs)^-1
-    std::string td_trigo_freq2; // time(fs)^-1
-    std::string td_trigo_phase1;
-    std::string td_trigo_phase2;
-    std::string td_trigo_amp; // V/A
-
-    // Heaviside
-    std::string td_heavi_t0;
-    std::string td_heavi_amp; // V/A
-
-    // HHG
-    // std::string td_hhg_amp1; // V/A
-    // std::string td_hhg_amp2; // V/A
-    // std::string td_hhg_freq1; // time(fs)^-1
-    // std::string td_hhg_freq2; // time(fs)^-1
-    // std::string td_hhg_phase1;
-    // std::string td_hhg_phase2;
-    // std::string td_hhg_t0;
-    // std::string td_hhg_sigma; // time(fs)
 
     //==========================================================
     // restart
@@ -509,29 +334,7 @@ class Input
     //==========================================================
     bool rpa;
     std::string coulomb_type;
-
-    //==========================================================
-    // DeepKS -- added by caoyu and mohan
-    //==========================================================
-    bool deepks_out_labels; // (need libnpy) prints energy and force labels and descriptors for training, wenfei
-                            // 2022-1-12
-    bool deepks_scf; //(need libnpy and libtorch) if set 1, a trained model would be needed to cal V_delta and F_delta
-    bool deepks_bandgap; // for bandgap label. QO added 2021-12-15
-    bool deepks_equiv;
-    bool deepks_out_unittest; // if set 1, prints intermediate quantities that shall be used for making unit test
-
-    std::string deepks_model; // needed when deepks_scf=1
-
-    //==========================================================
-    //    implicit solvation model       Menglin Sun added on 2022-04-04
-    //==========================================================
-    bool imp_sol; // true:implicit solvation correction; false: vacuum calculation(default)
-    double eb_k;
-    double tau;
-    double sigma_k;
-    double nc_k;
-
-    //==========================================================
+//==========================================================
     // OFDFT  sunliang added on 2022-05-05
     //==========================================================
     std::string of_kinetic; // Kinetic energy functional, such as TF, VW, WT, TF+
@@ -589,67 +392,13 @@ class Input
     bool test_skip_ewald = false;
 
     //==========================================================
-    // variables for non-collinear spin-constrained DFT (deltaspin)
-    //==========================================================
-    /**
-     * 0: none spin-constrained DFT;
-     * 1: constrain atomic spin;
-     */
-    bool sc_mag_switch; // the switch to open the DeltaSpin function, 0: no spin-constrained DFT; 1: constrain atomic
-                        // magnetization
-    bool decay_grad_switch; // the switch to use the local approximation of gradient decay, 0: no local approximation;
-                            // 1: apply the method
-    double sc_thr;          // threshold for spin-constrained DFT in uB
-    int nsc;                // maximum number of inner lambda loop
-    int nsc_min;            // minimum number of inner lambda loop
-    int sc_scf_nmin;        // minimum number of outer scf loop before initial lambda loop
-    double alpha_trial;     // initial trial step size for lambda in eV/uB^2
-    double sccut;           // restriction of step size in eV/uB
-    std::string sc_file;    // file name for Deltaspin (json format)
-    //==========================================================
     // variables for PAW
     //==========================================================
     bool use_paw = false;
-    //==========================================================
-    // variables for Quasiatomic Orbital analysis
-    //==========================================================
-    bool qo_switch = false;
-    std::string qo_basis = "hydrogen";
-    double qo_thr = 1e-6;
-    std::vector<std::string> qo_strategy = {};
-    std::vector<double> qo_screening_coeff = {};
-    //==========================================================
-    // variables for PEXSI
-    //==========================================================
-    int pexsi_npole = 40;
-    bool pexsi_inertia = true;
-    int pexsi_nmax = 80;
-    // int pexsi_symbolic = 1;
-    bool pexsi_comm = true;
-    bool pexsi_storage = true;
-    int pexsi_ordering = 0;
-    int pexsi_row_ordering = 1;
-    int pexsi_nproc = 1;
-    bool pexsi_symm = true;
-    bool pexsi_trans = false;
-    int pexsi_method = 1;
-    int pexsi_nproc_pole = 1;
-    // double pexsi_spin = 2;
-    double pexsi_temp = 0.015;
-    double pexsi_gap = 0;
-    double pexsi_delta_e = 20.0;
-    double pexsi_mu_lower = -10;
-    double pexsi_mu_upper = 10;
-    double pexsi_mu = 0.0;
-    double pexsi_mu_thr = 0.05;
-    double pexsi_mu_expand = 0.3;
-    double pexsi_mu_guard = 0.2;
-    double pexsi_elec_thr = 0.001;
-    double pexsi_zero_thr = 1e-10;
+
     //==========================================================
     // variables for elpa
     //==========================================================
-    int elpa_num_thread = -1;
 
     bool check_input = false;
 

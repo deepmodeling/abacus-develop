@@ -26,6 +26,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "module_hsolver/hsolver_lcao.h"
 #include "module_psi/psi.h"
+#include "module_parameter/parameter.h"
 
 //-----force& stress-------------------
 #include "module_hamilt_lcao/hamilt_lcaodft/FORCE_STRESS.h"
@@ -139,7 +140,7 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(const int istep, const int iter, cons
                                                  this->Sk_laststep,
                                                  this->pelec_td->ekb,
                                                  td_htype,
-                                                 INPUT.propagator,
+                                                 PARAM.get().propagator,
                                                  kv.get_nks());
             this->pelec_td->psiToRho_td(this->psi[0]);
         }
@@ -158,7 +159,7 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(const int istep, const int iter, cons
                                              this->Sk_laststep,
                                              this->pelec_td->ekb,
                                              td_htype,
-                                             INPUT.propagator,
+                                             PARAM.get().propagator,
                                              kv.get_nks());
         this->pelec_td->psiToRho_td(this->psi[0]);
     }

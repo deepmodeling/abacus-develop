@@ -259,24 +259,6 @@ extern int dft_plus_u;
 extern bool rpa_setorb;
 extern std::vector<std::string> rpa_orbitals;
 
-// ofdft sunliang add on 2022-05-11
-extern std::string of_kinetic; // Kinetic energy functional, such as TF, VW, WT
-extern std::string of_method;  // optimization method, include cg1, cg2, tn (default), bfgs
-extern std::string of_conv;    // select the convergence criterion, potential, energy (default), or both
-extern double of_tole;    // tolerance of the energy change (in Ry) for determining the convergence, default=2e-6 Ry
-extern double of_tolp;    // tolerance of potential for determining the convergence, default=1e-5 in a.u.
-extern double of_tf_weight;  // weight of TF KEDF
-extern double of_vw_weight;  // weight of vW KEDF
-extern double of_wt_alpha;   // parameter alpha of WT KEDF
-extern double of_wt_beta;    // parameter beta of WT KEDF
-extern double of_wt_rho0;    // set the average density of system, in Bohr^-3
-extern bool of_hold_rho0;   // If set to 1, the rho0 will be fixed even if the volume of system has changed, it will be set to 1 automaticly if of_wt_rho0 is not zero.
-extern double of_lkt_a;    // parameter a of LKT KEDF
-extern bool of_full_pw;     // If set to 1, ecut will be ignored while collecting planewaves, so that all planewaves will be used.
-extern int of_full_pw_dim;  // If of_full_pw = 1, the dimention of FFT will be testricted to be (0) either odd or even; (1) odd only; (2) even only.
-extern bool of_read_kernel; // If set to 1, the kernel of WT KEDF will be filled from file of_kernel_file, not from formula. Only usable for WT KEDF.
-extern std::string of_kernel_file; // The name of WT kernel file.
-
 // mixing parameters
 extern std::string MIXING_MODE;
 extern double MIXING_BETA;
@@ -315,11 +297,6 @@ extern double nelec;
 extern double nelec_delta;
 extern bool out_bandgap;
 extern int out_interval;
-
-extern bool out_mat_xc; // output Vxc in KS-wfc representation for GW calculation
-extern bool out_hr_npz; //writes h(r) in npz format
-extern bool out_dm_npz; //writes dm(r) in npz format
-extern bool dm_to_rho; //reads in dm(r) and creates density
 
 // Deltaspin related
 extern bool sc_mag_switch; // 0: no deltaspin; 1: constrain atomic magnetic moments;

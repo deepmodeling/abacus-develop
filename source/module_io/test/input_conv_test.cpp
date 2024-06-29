@@ -158,10 +158,6 @@ TEST_F(InputConvTest, Conv)
     EXPECT_EQ(hsolver::HSolverLCAO<std::complex<double>>::out_mat_dh, INPUT.out_mat_dh);
 	EXPECT_EQ(hsolver::DiagoElpa<double>::elpa_num_thread,-1);
 	EXPECT_EQ(hsolver::DiagoElpa<std::complex<double>>::elpa_num_thread,-1);
-    EXPECT_EQ(GlobalV::out_mat_xc, false);
-	EXPECT_EQ(GlobalV::out_hr_npz, false);
-	EXPECT_EQ(GlobalV::out_dm_npz, false);
-	EXPECT_EQ(GlobalV::dm_to_rho, false);
     EXPECT_EQ(GlobalV::out_interval, 1);
     EXPECT_EQ(elecstate::ElecStateLCAO<double>::out_wfc_lcao, false);
     EXPECT_EQ(berryphase::berry_phase_flag, false);
@@ -171,22 +167,6 @@ TEST_F(InputConvTest, Conv)
 	EXPECT_EQ(GlobalV::sigma_k,0.6);
 	EXPECT_EQ(GlobalV::sigma_k,0.6);
 	EXPECT_EQ( GlobalV::nc_k,0.00037);
-	EXPECT_EQ( GlobalV::of_kinetic,"vw");
-	EXPECT_EQ(GlobalV::of_method,"tn");
-	EXPECT_EQ(GlobalV::of_conv,"energy");
-	EXPECT_EQ(GlobalV::of_tole,0.000001);
-	EXPECT_EQ(GlobalV::of_tolp,0.00001);
-	EXPECT_EQ(GlobalV::of_tf_weight,1.0);
-	EXPECT_EQ(GlobalV::of_vw_weight,1.0);
-	EXPECT_EQ(GlobalV::of_wt_alpha,0.833333);
-	EXPECT_EQ(GlobalV::of_wt_beta,0.833333);
-	EXPECT_EQ(GlobalV::of_wt_rho0,1.0);
-	EXPECT_EQ(GlobalV::of_hold_rho0,false);
-	EXPECT_EQ(GlobalV::of_lkt_a,1.3);
-    EXPECT_EQ(GlobalV::of_full_pw,false);
-	EXPECT_EQ(GlobalV::of_full_pw_dim,0);
-	EXPECT_EQ(GlobalV::of_read_kernel,false);
-	EXPECT_EQ(GlobalV::of_kernel_file,"WTkernel.txt");
 	EXPECT_EQ(GlobalV::global_readin_dir,GlobalV::global_out_dir);
 	EXPECT_EQ(GlobalV::sc_mag_switch,0);
 	
@@ -311,11 +291,7 @@ TEST_F(InputConvTest, nupdown)
 	INPUT.Default();
 	std::string input_file = "./support/INPUT";
 	INPUT.Read(input_file);
-	INPUT.nupdown=0.1;
-	INPUT.two_fermi=true;
 	Input_Conv::Convert();
-	EXPECT_EQ(GlobalV::TWO_EFERMI,true);
-	EXPECT_EQ(GlobalV::nupdown,0.1);
 }
 
 TEST_F(InputConvTest,restart_save )

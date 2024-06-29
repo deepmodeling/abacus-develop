@@ -7,6 +7,7 @@
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 #include "module_hamilt_lcao/module_gint/grid_technique.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_parameter/parameter.h"
 
 #include <vector>
 
@@ -25,7 +26,7 @@ void ElecStateLCAO<std::complex<double>>::psiToRho(const psi::Psi<std::complex<d
     // the calculations of dm, and dm -> rho are, technically, two separate functionalities, as we cannot
     // rule out the possibility that we may have a dm from other sources, such as read from file.
     // However, since we are not separating them now, I opt to add a flag to control how dm is obtained as of now
-    if (!GlobalV::dm_to_rho)
+    if (!PARAM.get().dm_to_rho)
     {
         this->calEBand();
 
