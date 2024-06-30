@@ -292,7 +292,7 @@ void ESolver_OF::adjust_direction()
  */
 void ESolver_OF::check_direction(double* dEdtheta, double** ptemp_phi, UnitCell& ucell)
 {
-    assert(GlobalV::NSPIN>0);
+    assert(GlobalV::NSPIN > 0);
     double* temp_theta = new double[GlobalV::NSPIN];
     ModuleBase::GlobalFunc::ZEROS(temp_theta, GlobalV::NSPIN);
 
@@ -401,10 +401,10 @@ void ESolver_OF::print_info()
     //     if (this->pdEdphi_[0][i] < minPot) minPot = this->pdEdphi_[0][i];
     //     if (this->pdEdphi_[0][i] > maxPot) maxPot = this->pdEdphi_[0][i];
     // }
-    std::cout << std::setw(6) << this->iter_ << std::setw(22) << std::scientific
-              << std::setprecision(12) << this->energy_current_ / 2. << std::setw(12) << std::setprecision(3)
-              << this->mu_[0] / 2. << std::setw(12) << this->theta_[0] << std::setw(12) << this->normdLdphi_
-              << std::setw(12) << (this->energy_current_ - this->energy_last_) / 2. << std::endl;
+    std::cout << std::setw(6) << this->iter_ << std::setw(22) << std::scientific << std::setprecision(12)
+              << this->energy_current_ / 2. << std::setw(12) << std::setprecision(3) << this->mu_[0] / 2.
+              << std::setw(12) << this->theta_[0] << std::setw(12) << this->normdLdphi_ << std::setw(12)
+              << (this->energy_current_ - this->energy_last_) / 2. << std::endl;
     // ============ used to compare with PROFESS3.0 ================
     // << setw(10) << minDen << "/ " << setw(12) << maxDen
     // << setw(10) << minPot << "/ " << setw(10) << maxPot << endl;
@@ -501,9 +501,10 @@ void ESolver_OF::print_info()
         energies_Ry.push_back(this->mu_[0]);
     }
     energies_eV.resize(energies_Ry.size());
-    std::transform(energies_Ry.begin(), energies_Ry.end(), energies_eV.begin(), [](double energy) { return energy * ModuleBase::Ry_to_eV; });
-    FmtTable table({"Energy", "Rydberg", "eV"},
-    titles.size(), {"%20s",   "%20.12f", "%20.12f"});
+    std::transform(energies_Ry.begin(), energies_Ry.end(), energies_eV.begin(), [](double energy) {
+        return energy * ModuleBase::Ry_to_eV;
+    });
+    FmtTable table({"Energy", "Rydberg", "eV"}, titles.size(), {"%20s", "%20.12f", "%20.12f"});
     table << titles << energies_Ry << energies_eV;
     GlobalV::ofs_running << table.str() << std::endl;
 }

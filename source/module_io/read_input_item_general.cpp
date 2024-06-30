@@ -136,7 +136,7 @@ void ReadInput::item_general()
                     para.input.mem_saver = 0;
                     ModuleBase::GlobalFunc::AUTO_SET("mem_saver", "0");
                 }
-                para.input.cal_force = 1;
+                para.input.cal_force = true;
                 if (!para.input.relax_nmax)
                     para.input.relax_nmax = 50;
             }
@@ -144,7 +144,7 @@ void ReadInput::item_general()
             {
                 GlobalV::CALCULATION = "nscf";
                 para.input.relax_nmax = 1;
-                para.input.out_stru = 0;
+                para.input.out_stru = false;
 
                 if (para.input.basis_type == "pw" && calculation == "get_S")
                 {
@@ -168,41 +168,41 @@ void ReadInput::item_general()
             {
                 GlobalV::CALCULATION = "get_pchg";
                 para.input.relax_nmax = 1;
-                para.input.out_stru = 0;
+                para.input.out_stru = false;
                 para.input.out_dos = 0;
                 para.input.out_band[0] = 0;
-                para.input.out_proj_band = 0;
-                para.input.cal_force = 0;
+                para.input.out_proj_band = false;
+                para.input.cal_force = false;
                 para.input.init_wfc = "file";
                 para.input.init_chg = "atomic";   // useless,
                 para.input.chg_extrap = "atomic"; // xiaohui modify 2015-02-01
                 para.input.out_chg = 1;           // this leads to the calculation of state charge.
-                para.input.out_dm = 0;
-                para.input.out_dm1 = 0;
+                para.input.out_dm = false;
+                para.input.out_dm1 = false;
                 para.input.out_pot = 0;
             }
             else if (calculation == "get_wf")
             {
                 GlobalV::CALCULATION = "get_wf"; // mohan fix 2011-11-04
                 para.input.relax_nmax = 1;
-                para.input.out_stru = 0;
+                para.input.out_stru = false;
                 para.input.out_dos = 0;
                 para.input.out_band[0] = 0;
-                para.input.out_proj_band = 0;
-                para.input.cal_force = 0;
+                para.input.out_proj_band = false;
+                para.input.cal_force = false;
                 para.input.init_wfc = "file";
                 para.input.init_chg = "atomic";
                 para.input.chg_extrap = "atomic"; // xiaohui modify 2015-02-01
                 para.input.out_chg = 1;
-                para.input.out_dm = 0;
-                para.input.out_dm1 = 0;
+                para.input.out_dm = false;
+                para.input.out_dm1 = false;
                 para.input.out_pot = 0;
             }
             else if (calculation == "md") // mohan add 2011-11-04
             {
                 GlobalV::CALCULATION = "md";
                 para.input.symmetry = "0";
-                para.input.cal_force = 1;
+                para.input.cal_force = true;
                 if (para.input.mdp.md_nstep == 0)
                 {
                     GlobalV::ofs_running << "md_nstep should be set. Autoset md_nstep to 50!" << std::endl;
@@ -221,12 +221,12 @@ void ReadInput::item_general()
                 }
                 if (para.input.mdp.md_tfirst < 0 || para.input.mdp.md_restart)
                 {
-                    para.input.init_vel = 1;
+                    para.input.init_vel = true;
                 }
                 if (para.input.esolver_type == "lj" || para.input.esolver_type == "dp"
                     || para.input.mdp.md_type == "msst" || para.input.mdp.md_type == "npt")
                 {
-                    para.input.cal_stress = 1;
+                    para.input.cal_stress = true;
                 }
 
                 // md_prec_level only used in vc-md  liuyu 2023-03-27
@@ -237,8 +237,8 @@ void ReadInput::item_general()
             }
             else if (calculation == "cell-relax") // mohan add 2011-11-04
             {
-                para.input.cal_force = 1;
-                para.input.cal_stress = 1;
+                para.input.cal_force = true;
+                para.input.cal_stress = true;
                 if (!para.input.relax_nmax)
                     para.input.relax_nmax = 50;
             }

@@ -52,7 +52,7 @@ void ReadInput::item_lcao()
             bool& gamma_only = input.gamma_only;
             if (basis_type == "pw" && gamma_only) // pengfei Li add 2015-1-31
             {
-                gamma_only = 0;
+                gamma_only = false;
                 GlobalV::ofs_warning << " WARNING : gamma_only has not been implemented for pw yet" << std::endl;
                 GlobalV::ofs_warning << " the INPUT parameter gamma_only has been reset to 0" << std::endl;
                 GlobalV::ofs_warning << " and a new KPT is generated with gamma point as the only k point" << std::endl;
@@ -72,7 +72,7 @@ void ReadInput::item_lcao()
                 if (input.esolver_type == "tddft")
                 {
                     GlobalV::ofs_running << " WARNING : gamma_only is not applicable for tddft" << std::endl;
-                    input.sup.gamma_only_local = 0;
+                    input.sup.gamma_only_local = false;
                 }
             }
 
