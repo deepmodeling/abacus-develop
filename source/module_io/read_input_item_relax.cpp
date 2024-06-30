@@ -63,7 +63,8 @@ void ReadInput::item_relax()
             {
                 if (find_str(pw_solvers, ks_solver) == false)
                 {
-                    ModuleBase::WARNING_QUIT("ReadInput", "ks_solver must be cg, dav, bpcg or dav_subspace for pw basis.");
+                    ModuleBase::WARNING_QUIT("ReadInput",
+                                             "ks_solver must be cg, dav, bpcg or dav_subspace for pw basis.");
                 }
             }
             else if (para.input.basis_type == "lcao")
