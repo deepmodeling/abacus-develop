@@ -4,6 +4,7 @@
 #include "module_elecstate/potentials/efield.h"
 #include "module_elecstate/potentials/gatefield.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_parameter/parameter.h"
 
 namespace ModuleESolver
 {
@@ -211,7 +212,7 @@ double ESolver_OF::cal_mu(double* pphi, double* pdEdphi, double nelec)
 void ESolver_OF::adjust_direction()
 {
     // filter the high frequency term in direction if of_full_pw = false
-    if (!GlobalV::of_full_pw)
+    if (!PARAM.get().of_full_pw)
     {
         for (int is = 0; is < GlobalV::NSPIN; ++is)
         {

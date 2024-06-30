@@ -6,7 +6,7 @@
 #ifndef RPA_LRI_HPP
 #define RPA_LRI_HPP
 #include "RPA_LRI.h"
-
+#include "module_parameter/parameter.h"
 #include <cstring>
 #include <fstream>
 #include <iostream>
@@ -74,7 +74,7 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>
     // set parameters for bare Coulomb potential
     GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hf;
     GlobalC::exx_info.info_global.hybrid_alpha = 1;
-    GlobalC::exx_info.info_ri.ccp_rmesh_times = INPUT.rpa_ccp_rmesh_times;
+    GlobalC::exx_info.info_ri.ccp_rmesh_times = PARAM.get().rpa_ccp_rmesh_times;
 
     exx_lri_rpa.init(mpi_comm_in, kv);
     exx_lri_rpa.cal_exx_ions();

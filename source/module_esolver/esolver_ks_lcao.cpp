@@ -249,7 +249,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(Input& inp, UnitCell& ucell)
     if (GlobalV::deepks_scf)
     {
         // load the DeePKS model from deep neural network
-        GlobalC::ld.load_model(INPUT.deepks_model);
+        GlobalC::ld.load_model(PARAM.get().deepks_model);
     }
 #endif
 

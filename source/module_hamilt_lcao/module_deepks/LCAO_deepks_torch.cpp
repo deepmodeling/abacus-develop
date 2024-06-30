@@ -29,7 +29,7 @@
 #include "module_hamilt_lcao/module_hcontainer/atom_pair.h"
 #include "module_base/libm/libm.h"
 #include "module_base/blas_connector.h"
-#include "module_io/input.h"
+#include "module_parameter/parameter.h"
 
 void LCAO_Deepks::cal_descriptor_equiv(const int nat)
 {
@@ -457,7 +457,7 @@ void LCAO_Deepks::cal_gedm_equiv(const int nat)
     generate_py_files(this->lmaxd, this->nmaxd);
     if(GlobalV::MY_RANK==0)
     {
-        std::string cmd = "python cal_gedm.py " + INPUT.deepks_model;
+        std::string cmd = "python cal_gedm.py " + PARAM.get().deepks_model;
         int stat = std::system(cmd.c_str());
         assert(stat == 0);
     }

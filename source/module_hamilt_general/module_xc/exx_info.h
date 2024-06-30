@@ -53,7 +53,6 @@ struct Exx_Info
 		double V_grad_threshold  = 0;
 		double cauchy_force_threshold = 0;
 		double cauchy_stress_threshold = 0;
-		double ccp_threshold = 0;
 		double ccp_rmesh_times = 10;
 		double kmesh_times = 4;
 

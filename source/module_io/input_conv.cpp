@@ -671,7 +671,6 @@ void Input_Conv::Convert(void)
         GlobalC::exx_info.info_ri.V_grad_threshold = PARAM.get().exx_v_grad_threshold;
         GlobalC::exx_info.info_ri.cauchy_force_threshold = PARAM.get().exx_cauchy_force_threshold;
         GlobalC::exx_info.info_ri.cauchy_stress_threshold = PARAM.get().exx_cauchy_stress_threshold;
-        GlobalC::exx_info.info_ri.ccp_threshold = PARAM.get().exx_ccp_threshold;
         GlobalC::exx_info.info_ri.ccp_rmesh_times = std::stod(PARAM.get().exx_ccp_rmesh_times);
 
         Exx_Abfs::Jle::Lmax = PARAM.get().exx_opt_orb_lmax;
