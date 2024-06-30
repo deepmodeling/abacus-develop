@@ -7,22 +7,15 @@ remove_definitions(-DUSE_PAW)
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES INPUTs DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
+AddTest(
+  TARGET io_input_test_para
+  LIBS ${math_libs} base device io_input parameter
+  SOURCES read_input_ptest.cpp
+)
+
 add_test(NAME io_input_test_para_4
       COMMAND mpirun -np 4 ./io_input_test_para
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-)
-
-install(FILES input_test_para.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-find_program(BASH bash)
-add_test(NAME io_input_test_para4
-      COMMAND ${BASH} input_test_para.sh
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-)
-
-AddTest(
-  TARGET io_read_input_test_para
-  LIBS ${math_libs} base device io_input parameter
-  SOURCES read_input_ptest.cpp
 )
 
 AddTest(
