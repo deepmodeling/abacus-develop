@@ -243,5 +243,5 @@ void diago_PAO_in_pw_k2(const base_device::DEVICE_CPU* ctx,
 
 }//namespace hsolver
 
-template class hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_CPU>;
-template class hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU>;
+// template class hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_CPU>;
+// template class hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU>;
