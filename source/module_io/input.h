@@ -49,7 +49,7 @@ class Input
     bool init_vel;          // read velocity from STRU or not  liuyu 2021-07-14
     double ref_cell_factor; // construct a reference cell bigger than the initial cell  liuyu 2023-03-21
 
-    int kpar;                // ecch pool is for one k point
+    int kpar; // ecch pool is for one k point
 
     bool berry_phase; // berry phase calculation
     int gdir;         // berry phase calculation
@@ -110,7 +110,7 @@ class Input
     // Forces
     //==========================================================
     bool cal_force;
-    double force_thr;     // threshold of force in unit (Ry/Bohr)
+    double force_thr; // threshold of force in unit (Ry/Bohr)
 
     //==========================================================
     // Stress
@@ -221,14 +221,14 @@ class Input
     int out_freq_ion;  // the frequency ( >= 0 ) of ionic step to output charge density and wavefunction. 0: output only
                        // when ion steps are finished
     int out_chg;       // output charge density. 0: no; 1: yes
-    int out_pot;                 // yes or no
-    int out_wfc_pw;              // 0: no; 1: txt; 2: dat
-    bool out_wfc_r;              // 0: no; 1: yes
-    int out_dos;                 // dos calculation. mohan add 20090909
-    std::vector<int> out_band;   // band calculation pengfei 2014-10-13
-    bool out_proj_band;          // projected band structure calculation jiyy add 2022-05-11
-    bool cal_syns;    // calculate asynchronous S matrix to output
-    double dmax;      // maximum displacement of all atoms in one step (bohr)
+    int out_pot;       // yes or no
+    int out_wfc_pw;    // 0: no; 1: txt; 2: dat
+    bool out_wfc_r;    // 0: no; 1: yes
+    int out_dos;       // dos calculation. mohan add 20090909
+    std::vector<int> out_band; // band calculation pengfei 2014-10-13
+    bool out_proj_band;        // projected band structure calculation jiyy add 2022-05-11
+    bool cal_syns;             // calculate asynchronous S matrix to output
+    double dmax;               // maximum displacement of all atoms in one step (bohr)
     int out_interval;
     bool out_app_flag; // whether output r(R), H(R), S(R), T(R), and dH(R) matrices in an append manner during MD  liuyu
                        // 2023-03-20
@@ -301,8 +301,6 @@ class Input
     // Fuxiang He add 2016-10-26
     //==========================================================
 
-
-
     //==========================================================
     // restart
     // Peize Lin add 2020-04-04
@@ -334,7 +332,7 @@ class Input
     //==========================================================
     bool rpa;
     std::string coulomb_type;
-//==========================================================
+    //==========================================================
     // OFDFT  sunliang added on 2022-05-05
     //==========================================================
     std::string of_kinetic; // Kinetic energy functional, such as TF, VW, WT, TF+

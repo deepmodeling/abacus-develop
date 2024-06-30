@@ -9,9 +9,9 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/berryphase.h"
 #include "module_io/input.h"
+#include "module_parameter/parameter.h"
 #include "module_relax/relax_old/ions_move_basic.h"
 #include "module_relax/relax_old/lattice_change_basic.h"
-#include "module_parameter/parameter.h"
 
 #include <algorithm>
 
@@ -828,7 +828,6 @@ void Input_Conv::Convert(void)
     GlobalV::sigma_k = PARAM.get().sigma_k;
     GlobalV::nc_k = PARAM.get().nc_k;
 
-
     //-----------------------------------------------
     // Deltaspin related parameters
     //-----------------------------------------------
@@ -897,8 +896,10 @@ void Input_Conv::Convert(void)
 
     // elpa related
 #ifdef __MPI
-    hsolver::DiagoElpa<std::complex<double>>::elpa_num_thread = PARAM.get().elpa_num_thread;;
-    hsolver::DiagoElpa<double>::elpa_num_thread = PARAM.get().elpa_num_thread;;
+    hsolver::DiagoElpa<std::complex<double>>::elpa_num_thread = PARAM.get().elpa_num_thread;
+    ;
+    hsolver::DiagoElpa<double>::elpa_num_thread = PARAM.get().elpa_num_thread;
+    ;
 #endif
     ModuleBase::timer::tick("Input_Conv", "Convert");
     return;

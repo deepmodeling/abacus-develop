@@ -25,8 +25,8 @@
 #include "module_elecstate/elecstate_lcao_tddft.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "module_hsolver/hsolver_lcao.h"
-#include "module_psi/psi.h"
 #include "module_parameter/parameter.h"
+#include "module_psi/psi.h"
 
 //-----force& stress-------------------
 #include "module_hamilt_lcao/hamilt_lcaodft/FORCE_STRESS.h"
