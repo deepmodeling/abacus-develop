@@ -4,10 +4,15 @@ on:
   workflow_dispatch:
   pull_request:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     name: Test on CUDA Build
     runs-on: nvidia
+    if: github.repository_owner == 'deepmodeling'
     container:
       image: ghcr.io/deepmodeling/abacus-cuda
       options: --gpus all
