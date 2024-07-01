@@ -103,7 +103,6 @@ AddTest(
     ../two_center_bundle.cpp
     ../two_center_integrator.cpp
     ../real_gaunt_table.cpp
-    ../../../module_hamilt_lcao/hamilt_lcaodft/center2_orb.cpp
   LIBS ${math_libs} device base container orb
 )
 
@@ -133,7 +132,6 @@ AddTest(
     ../radial_set.cpp
     ../numerical_radial.cpp
     ../two_center_bundle.cpp
-    ../../../module_hamilt_lcao/hamilt_lcaodft/center2_orb.cpp
   LIBS ${math_libs} device base container orb
 )
 
@@ -154,7 +152,6 @@ AddTest(
     ../radial_set.cpp
     ../projgen.cpp
     ../numerical_radial.cpp
-    ../../../module_hamilt_lcao/hamilt_lcaodft/center2_orb.cpp
   LIBS ${math_libs} device base container orb
 )
 
@@ -175,7 +172,6 @@ AddTest(
     ../radial_set.cpp
     ../projgen.cpp
     ../numerical_radial.cpp
-    ../../../module_hamilt_lcao/hamilt_lcaodft/center2_orb.cpp
   LIBS ${math_libs} device base container orb
 )
 

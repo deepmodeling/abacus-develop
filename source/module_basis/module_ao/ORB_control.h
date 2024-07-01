@@ -4,7 +4,6 @@
 #include "module_io/input.h"
 #include "module_cell/unitcell.h"
 #include "parallel_orbitals.h"
-#include "ORB_gen_tables.h"
 #include "ORB_read.h"
 
 class ORB_control
@@ -53,22 +52,6 @@ public:
         const int& my_rank // mohan add 2021-04-26
     );
     /// Generate the S(overlap),T,NL matrix.
-    void set_orb_tables(
-        std::ofstream& ofs_in,
-        ORB_gen_tables& OGT,
-        LCAO_Orbitals& orb,
-        const double& lat0,
-        const bool& deepks_setorb,
-        const int& Lmax_exx,
-        const int& nprojmax,
-        const int* nproj,
-        const Numerical_Nonlocal* beta_);
-
-    void clear_after_ions(
-        ORB_gen_tables& OGT,
-        LCAO_Orbitals& orb,
-        const bool& deepks_setorb,
-        const int* nproj_);
 
     ///set 2D-block-cyclic division according to the basis
     void setup_2d_division(std::ofstream& ofs_running,

@@ -33,7 +33,6 @@ list(APPEND depend_files
   ../ORB_nonlocal.cpp
   ../ORB_nonlocal_lm.cpp
   ../ORB_gaunt_table.cpp
-  ../ORB_gen_tables.cpp
   ../parallel_2d.cpp
   ../parallel_orbitals.cpp
   ../../../module_hamilt_lcao/hamilt_lcaodft/center2_orb-orb11.cpp

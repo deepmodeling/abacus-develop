@@ -22,7 +22,6 @@ protected:
 public:
 
 	LCAO_Orbitals ORB;
-	ORB_gen_tables OGT;
 	ORB_gaunt_table Center2_MGT;	//gaunt table used in center2orb
 	ORB_control ooo;
 	std::ofstream ofs_running;
