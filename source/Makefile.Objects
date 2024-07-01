@@ -337,7 +337,6 @@ OBJS_ORBITAL=ORB_atomic.o\
       ORB_atomic_lm.o\
       ORB_control.o\
       ORB_gaunt_table.o\
-      ORB_gen_tables.o\
       ORB_nonlocal.o\
       ORB_nonlocal_lm.o\
       ORB_read.o\
