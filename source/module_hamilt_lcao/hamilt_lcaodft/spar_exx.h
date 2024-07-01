@@ -11,7 +11,7 @@
 #include <RI/ri/Cell_Nearest.h>
 
 // use LCAO_Matrix
-#include "module_hamilt_lcao/hamilt_lcaodft/spar_exx.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_HS_arrays.hpp"
 
 
