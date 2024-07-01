@@ -217,18 +217,7 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::init_td(void)
     int Rmesh = static_cast<int>(orb.get_Rmax() / dr) + 4;
     Rmesh += 1 - Rmesh % 2;
 
-    Center2_Orb::init_Table_Spherical_Bessel(2,
-                                             1,
-                                             Lmax_used,
-                                             Lmax,
-                                             1,
-                                             lmax_orb,
-                                             lmax_beta,
-                                             dr,
-                                             dk,
-                                             kmesh,
-                                             Rmesh,
-                                             psb_);
+    Center2_Orb::init_Table_Spherical_Bessel(2, 1, Lmax_used, Lmax, 1, lmax_orb, lmax_beta, dr, dk, kmesh, Rmesh, psb_);
 
     //=========================================
     // (2) init Ylm Coef

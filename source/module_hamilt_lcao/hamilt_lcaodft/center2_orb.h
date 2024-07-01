@@ -6,10 +6,10 @@
 #ifndef CENTER2_ORB_H
 #define CENTER2_ORB_H
 
-#include <set>
-
 #include "module_base/sph_bessel_recursive.h"
 #include "module_basis/module_ao/ORB_atomic_lm.h"
+
+#include <set>
 
 class Center2_Orb
 {
@@ -46,7 +46,6 @@ class Center2_Orb
                                             const int Rmesh,
                                             ModuleBase::Sph_Bessel_Recursive::D2*& psb);
 
-
     static void cal_ST_Phi12_R(const int& job,
                                const int& l,
                                const Numerical_Orbital_Lm& n1,
@@ -65,7 +64,6 @@ class Center2_Orb
                                double* rs,
                                double* drs,
                                const ModuleBase::Sph_Bessel_Recursive::D2* psb);
-
 };
 
 #endif // CENTER2_ORB_H

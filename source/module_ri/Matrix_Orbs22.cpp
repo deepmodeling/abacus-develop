@@ -41,7 +41,6 @@ void Matrix_Orbs22::init(const int mode, const double kmesh_times, const double 
                                              Rmesh,
                                              psb_);
 
-
     //=========================================
     // (3) make Gaunt coefficients table
     //=========================================
