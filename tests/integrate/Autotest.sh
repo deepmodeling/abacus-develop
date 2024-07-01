@@ -100,6 +100,8 @@ check_out(){
     #------------------------------------------------------
     # check every 'key' word
     #------------------------------------------------------
+    ifail=0  # if all properties have no warning. 0: no warning, 1: warning
+    ifatal=0 # if all properties have no fatal error. 0: no fatal error, 1: fatal error
     for key in $properties; do
     
         if [ $key == "totaltimeref" ]; then
@@ -141,8 +143,7 @@ check_out(){
                     if [ $(check_deviation_pass $deviation $force_thr) = 0 ]; then
                         echo -e "[WARNING   ] "\
                             "$key cal=$cal ref=$ref deviation=$deviation"
-                        let failed++
-                        failed_case_list+=$dir'\n'
+                        ifail=1
                     else
                         echo -e "\e[0;32m[      OK  ] \e[0m $key"
                     fi
@@ -151,8 +152,7 @@ check_out(){
                     if [ $(check_deviation_pass $deviation $stress_thr) = 0 ]; then
                         echo -e "[WARNING   ] "\
                             "$key cal=$cal ref=$ref deviation=$deviation"
-                        let failed++
-                        failed_case_list+=$dir'\n'
+                        ifail=1
                     else
                         echo -e "\e[0;32m[      OK  ] \e[0m $key"
                     fi
@@ -160,25 +160,31 @@ check_out(){
                 else
                     echo -e "[WARNING   ] "\
                         "$key cal=$cal ref=$ref deviation=$deviation"
-                    let failed++
-                    failed_case_list+=$dir'\n'
+                    ifail=1
                 fi
+
                 if [ $(check_deviation_pass $deviation $fatal_thr) = 0 ]; then
-                    let fatal++
-                    fatal_case_list+=$dir
+                    ifatal=1
                     echo -e "\e[0;31m[ERROR      ] \e[0m"\
                         "An unacceptable deviation occurs."
                     calculation=`grep calculation INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
                     running_path=`echo "OUT.autotest/running_$calculation"".log"`
                     cat $running_path
                 fi
-                break
             else
                 echo -e "\e[0;32m[      OK  ] \e[0m $key"
             fi
         fi
         let ok++
     done
+    if [ $ifail -eq 1 ]; then
+        let failed++
+        failed_case_list+=$dir'\n'
+    fi
+    if [ $ifatal -eq 1 ]; then
+        let fatal++
+        fatal_case_list+=$dir'\n'
+    fi
 }
 
 #---------------------------------------------
