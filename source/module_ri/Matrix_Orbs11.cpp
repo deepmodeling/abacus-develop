@@ -33,7 +33,9 @@ void Matrix_Orbs11::init(const int mode, const double kmesh_times, const double 
                                                GlobalC::exx_info.info_ri.abfs_Lmax,
                                                GlobalC::ORB,
                                                GlobalC::ucell.infoNL.Beta,
-                                               MOT.pSB);
+                                               MOT.pSB,
+                                               kmesh_times,
+                                               rmesh_times);
     //	this->MOT.init_OV_Tpair();							// for this->MOT.OV_L2plus1
     //	this->MOT.Destroy_Table_Spherical_Bessel (Lmax_used);				// why?
 
