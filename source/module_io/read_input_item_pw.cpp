@@ -10,12 +10,6 @@ void ReadInput::item_pw()
         Input_Item item("ecutwfc");
         item.annotation = "energy cutoff for wave functions";
         read_sync_double(ecutwfc);
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
-            if (para.input.ecutrho <= 0.0)
-            {
-                para.input.ecutrho = 4.0 * para.input.ecutwfc;
-            }
-        };
         this->add_item(item);
     }
     {

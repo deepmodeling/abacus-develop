@@ -28,6 +28,10 @@ void ReadInput::item_md()
     {
         Input_Item item("md_dt");
         item.annotation = "time step";
+        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.mdp.md_dt < 0)
+                ModuleBase::WARNING_QUIT("ReadInput", "time interval of MD calculation should be positive");
+        };
         read_sync_double(mdp.md_dt);
         this->add_item(item);
     }
@@ -136,6 +140,12 @@ void ReadInput::item_md()
     {
         Input_Item item("msst_qmass");
         item.annotation = "mass of thermostat";
+        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.mdp.msst_qmass <= 0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "msst_qmass must be greater than 0!");
+            }
+        };
         read_sync_double(mdp.msst_qmass);
         this->add_item(item);
     }

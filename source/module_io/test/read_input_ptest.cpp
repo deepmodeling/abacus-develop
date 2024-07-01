@@ -378,7 +378,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_DOUBLE_EQ(param.get().mdp.md_tolerance, 100);
     EXPECT_EQ(param.get().mdp.md_type, "nvt");
     EXPECT_EQ(param.get().mdp.msst_direction, 2);
-    EXPECT_DOUBLE_EQ(param.get().mdp.msst_qmass, -1);
+    EXPECT_DOUBLE_EQ(param.get().mdp.msst_qmass, 1);
     EXPECT_DOUBLE_EQ(param.get().mdp.msst_tscale, 0.01);
     EXPECT_DOUBLE_EQ(param.get().mdp.msst_vel, 0);
     EXPECT_DOUBLE_EQ(param.get().mdp.msst_vis, 0);

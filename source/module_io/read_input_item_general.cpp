@@ -116,33 +116,24 @@ void ReadInput::item_general()
         read_sync_string(calculation);
         item.resetvalue = [](const Input_Item& item, Parameter& para) {
             std::string& calculation = para.input.calculation;
+            para.input.sup.global_calculation = calculation;
+            if (calculation == "nscf" || calculation == "get_S")
+            {
+                // Maybe it should be modified.
+                para.input.sup.global_calculation = "nscf";
+            }
             if (calculation != "md")
             {
                 para.input.mdp.md_prec_level = 0;
             }
-            if (calculation == "scf")
+            if (calculation == "relax") // pengfei 2014-10-13
             {
-                if (para.input.mem_saver == 1)
-                {
-                    para.input.mem_saver = 0;
-                    ModuleBase::GlobalFunc::AUTO_SET("mem_saver", "0");
-                }
-                para.input.relax_nmax = 1;
-            }
-            else if (calculation == "relax") // pengfei 2014-10-13
-            {
-                if (para.input.mem_saver == 1)
-                {
-                    para.input.mem_saver = 0;
-                    ModuleBase::GlobalFunc::AUTO_SET("mem_saver", "0");
-                }
                 para.input.cal_force = 1;
                 if (!para.input.relax_nmax)
                     para.input.relax_nmax = 50;
             }
             else if (calculation == "nscf" || calculation == "get_S")
             {
-                GlobalV::CALCULATION = "nscf";
                 para.input.relax_nmax = 1;
                 para.input.out_stru = 0;
 
@@ -166,7 +157,6 @@ void ReadInput::item_general()
             }
             else if (calculation == "get_pchg")
             {
-                GlobalV::CALCULATION = "get_pchg";
                 para.input.relax_nmax = 1;
                 para.input.out_stru = 0;
                 para.input.out_dos = 0;
@@ -183,7 +173,6 @@ void ReadInput::item_general()
             }
             else if (calculation == "get_wf")
             {
-                GlobalV::CALCULATION = "get_wf"; // mohan fix 2011-11-04
                 para.input.relax_nmax = 1;
                 para.input.out_stru = 0;
                 para.input.out_dos = 0;
@@ -200,7 +189,6 @@ void ReadInput::item_general()
             }
             else if (calculation == "md") // mohan add 2011-11-04
             {
-                GlobalV::CALCULATION = "md";
                 para.input.symmetry = "0";
                 para.input.cal_force = 1;
                 if (para.input.mdp.md_nstep == 0)
@@ -257,38 +245,11 @@ void ReadInput::item_general()
                                              "symmetry can't be used for out_dos==3(Fermi Surface Plotting) by now.");
                 }
             }
-            else if (calculation == "get_pchg")
+            else if (calculation == "get_pchg" || calculation == "get_wf")
             {
                 if (para.input.basis_type == "pw") // xiaohui add 2013-09-01
                 {
-                    ModuleBase::WARNING_QUIT("ReadInput", "calculate = get_pchg is only availble for LCAO.");
-                }
-            }
-            else if (calculation == "get_wf")
-            {
-                if (para.input.basis_type == "pw") // xiaohui add 2013-09-01
-                {
-                    ModuleBase::WARNING_QUIT("ReadInput", "calculate = get_wf is only availble for LCAO.");
-                }
-            }
-            else if (calculation == "md") // mohan add 2011-11-04
-            {
-                // deal with input parameters , 2019-04-30
-                if (para.input.mdp.md_dt < 0)
-                    ModuleBase::WARNING_QUIT("ReadInput", "time interval of MD calculation should be set!");
-                if (para.input.mdp.md_type == "msst")
-                {
-                    if (para.input.mdp.msst_qmass <= 0)
-                    {
-                        ModuleBase::WARNING_QUIT("ReadInput", "msst_qmass must be greater than 0!");
-                    }
-                }
-                if (para.input.esolver_type == "dp")
-                {
-                    if (access(para.input.mdp.pot_file.c_str(), 0) == -1)
-                    {
-                        ModuleBase::WARNING_QUIT("ReadInput", "Can not find DP model !");
-                    }
+                    ModuleBase::WARNING_QUIT("ReadInput", "calculate = get_pchg or get_wf is only availble for LCAO.");
                 }
             }
             else if (calculation == "gen_bessel")
@@ -304,6 +265,7 @@ void ReadInput::item_general()
                 ModuleBase::WARNING_QUIT("ReadInput", "check 'calculation' !");
             }
         };
+        add_string_bcast(sup.global_calculation);
         this->add_item(item);
     }
     {
@@ -312,9 +274,16 @@ void ReadInput::item_general()
         read_sync_string(esolver_type);
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
             const std::vector<std::string> esolver_types = {"ksdft", "sdft", "ofdft", "tddft", "lj", "dp"};
-            if (find_str(esolver_types, para.input.esolver_type) == false)
+            if (!find_str(esolver_types, para.input.esolver_type))
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "esolver_type should be ksdft, sdft, ofdft, tddft, lj or dp.");
+            }
+            if (para.input.esolver_type == "dp")
+            {
+                if (access(para.input.mdp.pot_file.c_str(), 0) == -1)
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput", "Can not find DP model !");
+                }
             }
         };
         this->add_item(item);
@@ -572,6 +541,16 @@ void ReadInput::item_general()
         item.annotation = "Only for nscf calculations. if set to 1, then a memory saving technique will be used for "
                           "many k point calculations.";
         read_sync_int(mem_saver);
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+            if (para.input.mem_saver == 1)
+            {
+                if (para.input.calculation == "scf" || para.input.calculation == "relax")
+                {
+                    para.input.mem_saver = 0;
+                    ModuleBase::GlobalFunc::AUTO_SET("mem_saver", "0");
+                }
+            }
+        };
         this->add_item(item);
     }
     {

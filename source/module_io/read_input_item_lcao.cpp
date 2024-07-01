@@ -35,7 +35,7 @@ void ReadInput::item_lcao()
         };
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
             const std::vector<std::string> basis_types = {"pw", "lcao_in_pw", "lcao"};
-            if (find_str(basis_types, para.input.basis_type) == -1)
+            if (!find_str(basis_types, para.input.basis_type))
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "basis_type should be pw, lcao_in_pw, or lcao");
             }

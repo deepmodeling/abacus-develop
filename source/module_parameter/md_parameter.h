@@ -28,7 +28,7 @@ struct MD_para
 
     int msst_direction = 2;    ///< shock direction: 0, 1, 2
     double msst_vel = 0.0;     ///< shock msst_vel (\AA/fs)
-    double msst_qmass = -1.0;  ///< cell mass-like parameter (mass^2/length^4)
+    double msst_qmass = 1.0;   ///< cell mass-like parameter (mass^2/length^4)
     double msst_vis = 0.0;     ///< artificial msst_vis (mass/length/time)
     double msst_tscale = 0.01; ///< reduction in initial temperature (0~1)
 

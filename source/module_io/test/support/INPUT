@@ -196,7 +196,7 @@ msst_direction                 2 #the direction of shock wave
 msst_vel                       0 #the velocity of shock wave
 msst_vis                       0 #artificial viscosity
 msst_tscale                    0.01 #reduction in initial temperature
-msst_qmass                     -1 #mass of thermostat
+msst_qmass                     1 #mass of thermostat
 md_tfreq                       0 #oscillation frequency, used to determine qmass of NHC
 md_damp                        1 #damping parameter (time units) used to add force in Langevin method
 md_nraise                      1 #parameters used when md_type=nvt

@@ -16,11 +16,8 @@ void ReadInput::item_relax()
             {
                 if (para.input.basis_type == "pw")
                 {
-                    if (para.input.ks_solver == "default")
-                    {
-                        para.input.ks_solver = "cg";
-                        ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "cg");
-                    }
+                    para.input.ks_solver = "cg";
+                    ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "cg");
                 }
                 else if (para.input.basis_type == "lcao")
                 {
@@ -61,7 +58,7 @@ void ReadInput::item_relax()
 
             if (para.input.basis_type == "pw")
             {
-                if (find_str(pw_solvers, ks_solver) == false)
+                if (!find_str(pw_solvers, ks_solver))
                 {
                     ModuleBase::WARNING_QUIT("ReadInput",
                                              "ks_solver must be cg, dav, bpcg or dav_subspace for pw basis.");
@@ -69,7 +66,7 @@ void ReadInput::item_relax()
             }
             else if (para.input.basis_type == "lcao")
             {
-                if (find_str(lcao_solvers, ks_solver) == false)
+                if (!find_str(lcao_solvers, ks_solver))
                 {
                     ModuleBase::WARNING_QUIT("ReadInput",
                                              "ks_solver must be genelpa, lapack, scalapack_gvx, cusolver, pexsi or "
@@ -135,13 +132,6 @@ void ReadInput::item_relax()
         Input_Item item("relax_nmax");
         item.annotation = "number of ion iteration steps";
         read_sync_int(relax_nmax);
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
-            const std::vector<std::string> relax_methods = {"cg", "bfgs", "sd", "cg_bfgs"};
-            if (find_str(relax_methods, para.input.relax_method) == false)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "relax_method must be cg, bfgs, sd or cg_bfgs.");
-            }
-        };
         this->add_item(item);
     }
     {
@@ -276,6 +266,13 @@ void ReadInput::item_relax()
         Input_Item item("relax_method");
         item.annotation = "cg; bfgs; sd; cg; cg_bfgs;";
         read_sync_string(relax_method);
+        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+            const std::vector<std::string> relax_methods = {"cg", "bfgs", "sd", "cg_bfgs"};
+            if (!find_str(relax_methods, para.input.relax_method))
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "relax_method must be cg, bfgs, sd or cg_bfgs.");
+            }
+        };
         this->add_item(item);
     }
     {

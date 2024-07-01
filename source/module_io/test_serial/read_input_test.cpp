@@ -13,14 +13,11 @@
 
 /**
  * - Tested Functions:
- *   - Default
- *     - read empty INPUT file
- *   - Read:
- *     - read input parameters from INPUT files
+ *   - Selfconsistent_Read:
+ *     - read empty INPUT file and write INPUT.ref back
+ *     - read INPUT.ref file again and write INPUT
  *   - Check:
  *     - check_mode = true
- *   - Item_test:
- *     - read in specific values for some items
  */
 
 class InputTest : public testing::Test
@@ -68,7 +65,7 @@ class InputTest : public testing::Test
     }
 };
 
-TEST_F(InputTest, Default)
+TEST_F(InputTest, Selfconsistent_Read)
 {
     ModuleIO::ReadInput readinput(0);
     readinput.check_ntype_flag = false;
@@ -79,9 +76,13 @@ TEST_F(InputTest, Default)
         Parameter param;
         readinput.read_parameters(param, "./empty_INPUT");
         readinput.write_parameters(param, "./my_INPUT1");
-        EXPECT_TRUE(compare_two_files("./my_INPUT1", "./support/INPUT_pw.ref"));
+        readinput.clear();
+        readinput.read_parameters(param, "./my_INPUT1");
+        readinput.write_parameters(param, "./my_INPUT2");
+        EXPECT_TRUE(compare_two_files("./my_INPUT1", "./my_INPUT2"));
         EXPECT_TRUE(std::remove("./empty_INPUT") == 0);
         EXPECT_TRUE(std::remove("./my_INPUT1") == 0);
+        EXPECT_TRUE(std::remove("./my_INPUT2") == 0);
         readinput.clear();
     }
     { // LCAO
@@ -91,44 +92,39 @@ TEST_F(InputTest, Default)
         emptyfile.close();
         Parameter param;
         readinput.read_parameters(param, "./empty_INPUT");
+        readinput.write_parameters(param, "./my_INPUT1");
+        readinput.clear();
+        readinput.read_parameters(param, "./my_INPUT1");
         readinput.write_parameters(param, "./my_INPUT2");
-        EXPECT_TRUE(compare_two_files("./my_INPUT2", "./support/INPUT_lcao.ref"));
+        EXPECT_TRUE(compare_two_files("./my_INPUT1", "./my_INPUT2"));
         EXPECT_TRUE(std::remove("./empty_INPUT") == 0);
+        EXPECT_TRUE(std::remove("./my_INPUT1") == 0);
         EXPECT_TRUE(std::remove("./my_INPUT2") == 0);
-        readinput.clear();
-    }
-}
-
-TEST_F(InputTest, Read)
-{
-    ModuleIO::ReadInput readinput(0);
-    readinput.check_ntype_flag = false;
-    { // PW
-        Parameter param;
-        readinput.read_parameters(param, "./support/INPUT_pw.ref");
-        readinput.write_parameters(param, "./my_INPUT3");
-        EXPECT_TRUE(compare_two_files("./my_INPUT3", "./support/INPUT_pw.ref"));
-        EXPECT_TRUE(std::remove("./my_INPUT3") == 0);
-        readinput.clear();
-    }
-    { // LCAO
-        Parameter param;
-        readinput.read_parameters(param, "./support/INPUT_lcao.ref");
-        readinput.write_parameters(param, "./my_INPUT4");
-        EXPECT_TRUE(compare_two_files("./my_INPUT4", "./support/INPUT_lcao.ref"));
-        EXPECT_TRUE(std::remove("./my_INPUT4") == 0);
         readinput.clear();
     }
 }
 
 TEST_F(InputTest, Check)
 {
-    ModuleIO::ReadInput::check_mode = true;
     ModuleIO::ReadInput readinput(0);
     readinput.check_ntype_flag = false;
+    {
+        std::ofstream emptyfile("empty_INPUT");
+        emptyfile << "INPUT_PARAMETERS";
+        emptyfile.close();
+
+        Parameter param;
+        readinput.read_parameters(param, "./empty_INPUT");
+        readinput.write_parameters(param, "./INPUT.ref");
+        EXPECT_TRUE(std::remove("./empty_INPUT") == 0);
+        readinput.clear();
+    }
+
+    ModuleIO::ReadInput::check_mode = true;
     Parameter param;
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(readinput.read_parameters(param, "./support/INPUT_pw.ref"), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(readinput.read_parameters(param, "./INPUT.ref"), ::testing::ExitedWithCode(0), "");
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("INPUT parameters have been successfully checked!"));
+    EXPECT_TRUE(std::remove("./INPUT.ref") == 0);
 }

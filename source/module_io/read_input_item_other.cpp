@@ -1475,18 +1475,18 @@ void ReadInput::item_others()
                 ModuleBase::WARNING_QUIT("ReadInput",
                                          "This feature is not stable yet and might lead to erroneous results.\n"
                                          " Please wait for the official release version.");
-                if (para.input.nspin != 4 && para.input.nspin != 2)
-                {
-                    ModuleBase::WARNING_QUIT("ReadInput", "nspin must be 2 or 4 when sc_mag_switch > 0");
-                }
-                if (para.input.calculation != "scf")
-                {
-                    ModuleBase::WARNING_QUIT("ReadInput", "calculation must be scf when sc_mag_switch > 0");
-                }
-                if (para.input.nupdown > 0.0)
-                {
-                    ModuleBase::WARNING_QUIT("ReadInput", "nupdown should not be set when sc_mag_switch > 0");
-                }
+                // if (para.input.nspin != 4 && para.input.nspin != 2)
+                // {
+                //     ModuleBase::WARNING_QUIT("ReadInput", "nspin must be 2 or 4 when sc_mag_switch > 0");
+                // }
+                // if (para.input.calculation != "scf")
+                // {
+                //     ModuleBase::WARNING_QUIT("ReadInput", "calculation must be scf when sc_mag_switch > 0");
+                // }
+                // if (para.input.nupdown > 0.0)
+                // {
+                //     ModuleBase::WARNING_QUIT("ReadInput", "nupdown should not be set when sc_mag_switch > 0");
+                // }
             }
         };
         this->add_item(item);
@@ -1579,7 +1579,7 @@ void ReadInput::item_others()
                 const std::string ss = "test -f " + para.input.sc_file;
                 if (system(ss.c_str()))
                 {
-                    ModuleBase::WARNING("ReadInput", "sc_file does not exist");
+                    ModuleBase::WARNING_QUIT("ReadInput", "sc_file does not exist");
                 }
             }
         };

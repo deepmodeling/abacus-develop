@@ -51,7 +51,7 @@ void ReadInput::item_sdft()
             }
         };
         item.getfinalvalue = [](Input_Item& item, const Parameter& para) {
-            if (item.str_values.size() == 0)
+            if (item.str_values.size() == 0) // no nbands_sto in INPUT
             {
                 item.final_value << para.input.nbands_sto;
             }
