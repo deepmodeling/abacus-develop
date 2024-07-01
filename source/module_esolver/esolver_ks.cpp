@@ -1,6 +1,6 @@
 #include "esolver_ks.h"
 
-#include <time.h>
+#include <ctime>
 #ifdef __MPI
 #include <mpi.h>
 #else
@@ -550,7 +550,8 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
             {
                 //----------charge mixing---------------
                 // mixing will restart after this->p_chgmix->mixing_restart steps
-                if (GlobalV::MIXING_RESTART > 0 && iter == this->p_chgmix->mixing_restart_step - 1 && drho <= GlobalV::MIXING_RESTART)
+                if (GlobalV::MIXING_RESTART > 0 && iter == this->p_chgmix->mixing_restart_step - 1
+                    && drho <= GlobalV::MIXING_RESTART)
                 {
                     // do not mix charge density
                 }
@@ -650,7 +651,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
 //! mohan add 2024-05-12
 //------------------------------------------------------------------------------
 template <typename T, typename Device>
-void ESolver_KS<T, Device>::print_head(void)
+void ESolver_KS<T, Device>::print_head()
 {
     std::cout << " " << std::setw(7) << "ITER";
 
