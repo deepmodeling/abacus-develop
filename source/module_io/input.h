@@ -253,7 +253,7 @@ class Input
     //==========================================================
 
     std::string init_wfc; // "file","atomic","random"
-    std::string init_chg; // "file","atomic"
+    std::string init_chg; // "file","atomic", "auto"
     bool psi_initializer; // whether use psi_initializer to initialize wavefunctions
     
     std::string chg_extrap; // xiaohui modify 2015-02-01

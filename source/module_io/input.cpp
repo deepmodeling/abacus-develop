@@ -4130,9 +4130,9 @@ void Input::Check(void)
     {
         ModuleBase::WARNING_QUIT("Input", "check 'calculation' !");
     }
-    if (init_chg != "atomic" && init_chg != "file")
+    if (init_chg != "atomic" && init_chg != "file" && init_chg != "auto")
     {
-        ModuleBase::WARNING_QUIT("Input", "wrong 'init_chg',not 'atomic', 'file',please check");
+        ModuleBase::WARNING_QUIT("Input", "wrong 'init_chg', not 'atomic', 'file', 'auto', please check");
     }
     if (gamma_only_local == 0)
     {
