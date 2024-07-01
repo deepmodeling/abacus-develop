@@ -10,8 +10,8 @@
 #include <vector>
 
 // use LCAO_Matrix
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_HS_arrays.hpp"
+#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 
 namespace sparse_format
 {
