@@ -6,6 +6,7 @@
 #ifndef MATRIX_ORB11_H
 #define MATRIX_ORB11_H
 
+#include "module_base/sph_bessel_recursive.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/center2_orb-orb11.h"
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_basis/module_ao/ORB_table_phi.h"
@@ -67,8 +68,9 @@ public:
         const ModuleBase::Element_Basis_Index::IndexLNM& index_c) const;
     
 private:
-	ORB_table_phi MOT;
+    ModuleBase::Sph_Bessel_Recursive::D2* psb_ = nullptr;
 	ORB_gaunt_table MGT;
+    const double lcao_dr_ = 0.01;
 
 	std::map<size_t,                                // TA
 		std::map<size_t,                            // TB

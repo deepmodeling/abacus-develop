@@ -6,9 +6,9 @@
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/center2_orb-orb11.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
-#include "module_basis/module_ao/ORB_table_phi.h"
 #include "module_basis/module_ao/ORB_gaunt_table.h"
 #include "module_hamilt_lcao/module_tddft/td_velocity.h"
+#include "module_base/sph_bessel_recursive.h"
 
 
 namespace hamilt
@@ -92,8 +92,8 @@ class TDEkinetic<OperatorLCAO<TK,TR>> : public OperatorLCAO<TK, TR>
     /// @brief correction term A^2*S
     void td_ekinetic_grad(std::complex<double>* Hloc, int nnr, ModuleBase::Vector3<double> grad_overlap);
 
-    ORB_table_phi MOT;
-	  ORB_gaunt_table MGT;
+    ModuleBase::Sph_Bessel_Recursive::D2* psb_ = nullptr;
+	ORB_gaunt_table MGT;
     
     /// @brief Store the two center integrals outcome <𝝓_𝝁𝟎 |𝛁| 𝝓_𝝂𝑹> for td_ekinetic term
     std::map<size_t,                                // TA

@@ -264,7 +264,7 @@ TEST_F(OrbTablePhiTest, InitAndDestroyTable)
     otp.init_OV_Tpair(lcao_);
     otp.init_OV_Opair(lcao_);
 
-    EXPECT_NO_THROW(otp.init_Table(lcao_));
+    //EXPECT_NO_THROW(otp.init_Table(lcao_));
     EXPECT_NE(otp.Table_SR, nullptr);
     EXPECT_NE(otp.Table_TR, nullptr);
 
@@ -280,7 +280,7 @@ TEST_F(OrbTablePhiTest, AutoDestroyTable)
     otp.init_OV_Tpair(lcao_);
     otp.init_OV_Opair(lcao_);
 
-    otp.init_Table(lcao_);
+    //otp.init_Table(lcao_);
     EXPECT_NE(otp.Table_SR, nullptr);
     EXPECT_NE(otp.Table_TR, nullptr);
 

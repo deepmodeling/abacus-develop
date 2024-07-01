@@ -75,8 +75,9 @@ public:
 		const ModuleBase::Element_Basis_Index::IndexLNM &index_B1, 
         const ModuleBase::Element_Basis_Index::IndexLNM& index_B2) const;
 private:
-	ORB_table_phi MOT;
+    ModuleBase::Sph_Bessel_Recursive::D2* psb_ = nullptr;
 	ORB_gaunt_table MGT;
+    const double lcao_dr_ = 0.01;
 
 	std::map<size_t,                                       // TA
 		std::map<size_t,                                   // TB

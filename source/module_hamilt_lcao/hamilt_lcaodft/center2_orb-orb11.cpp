@@ -37,14 +37,14 @@ void Center2_Orb::Orb11::init_radial_table()
         this->Table_r[LAB].resize(rmesh, 0);
         this->Table_dr[LAB].resize(rmesh, 0);
 
-        ORB_table_phi::cal_ST_Phi12_R(1,
-                                      LAB,
-                                      this->nA,
-                                      this->nB,
-                                      rmesh,
-                                      this->Table_r[LAB].data(),
-                                      this->Table_dr[LAB].data(),
-                                      psb_);
+        Center2_Orb::cal_ST_Phi12_R(1,
+                                    LAB,
+                                    this->nA,
+                                    this->nB,
+                                    rmesh,
+                                    this->Table_r[LAB].data(),
+                                    this->Table_dr[LAB].data(),
+                                    psb_);
     }
     return;
 }
@@ -69,14 +69,14 @@ void Center2_Orb::Orb11::init_radial_table(const std::set<size_t>& radials)
         this->Table_r[LAB].resize(rmesh, 0);
         this->Table_dr[LAB].resize(rmesh, 0);
 
-        ORB_table_phi::cal_ST_Phi12_R(1,
-                                      LAB,
-                                      this->nA,
-                                      this->nB,
-                                      radials_used,
-                                      this->Table_r[LAB].data(),
-                                      this->Table_dr[LAB].data(),
-                                      psb_);
+        Center2_Orb::cal_ST_Phi12_R(1,
+                                    LAB,
+                                    this->nA,
+                                    this->nB,
+                                    radials_used,
+                                    this->Table_r[LAB].data(),
+                                    this->Table_dr[LAB].data(),
+                                    psb_);
     }
 }
 

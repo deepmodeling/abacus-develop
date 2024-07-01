@@ -144,8 +144,6 @@ void ORB_control::clear_after_ions(ORB_gen_tables& OGT,
                                    const int* nproj_)
 {
     ModuleBase::TITLE("ORB_control", "clear_after_ions");
-    OGT.MOT.Destroy_Table(orb);
-
     return;
 }
 

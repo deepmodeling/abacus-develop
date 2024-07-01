@@ -35,18 +35,18 @@ void cal_r_overlap_R::initialize_orb_table()
     int Rmesh = static_cast<int>(GlobalC::ORB.get_Rmax() / dr) + 4;
     Rmesh += 1 - Rmesh % 2;
 
-    ORB_table_phi::init_Table_Spherical_Bessel(2,
-                                               3,
-                                               Lmax_used,
-                                               Lmax,
-                                               exx_lmax,
-                                               lmax_orb,
-                                               lmax_beta,
-                                               dr,
-                                               dk,
-                                               kmesh,
-                                               Rmesh,
-                                               psb_);
+    Center2_Orb::init_Table_Spherical_Bessel(2,
+                                             3,
+                                             Lmax_used,
+                                             Lmax,
+                                             exx_lmax,
+                                             lmax_orb,
+                                             lmax_beta,
+                                             dr,
+                                             dk,
+                                             kmesh,
+                                             Rmesh,
+                                             psb_);
     ModuleBase::Ylm::set_coefficients();
     MGT.init_Gaunt_CH(Lmax);
     MGT.init_Gaunt(Lmax);

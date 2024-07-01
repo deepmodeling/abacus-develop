@@ -201,14 +201,7 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::init_td(void)
     this->cart_At = td_velocity.cart_At;
     std::cout << "cart_At: " << cart_At[0] << " " << cart_At[1] << " " << cart_At[2] << std::endl;
 
-    // init MOT,MGT
     const LCAO_Orbitals& orb = LCAO_Orbitals::get_const_instance();
-    this->MOT.allocate(orb.get_ntype(),                       // number of atom types
-                       orb.get_lmax(),                        // max L used to calculate overlap
-                       static_cast<int>(orb.get_kmesh()) | 1, // kpoints, for integration in k space
-                       orb.get_Rmax(),                        // max value of radial table
-                       orb.get_dR(),                          // delta R, for making radial table
-                       orb.get_dk());                         // Peize Lin change 2017-04-16
     int Lmax_used, Lmax;
 
     const int ntype = orb.get_ntype();
@@ -224,18 +217,18 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::init_td(void)
     int Rmesh = static_cast<int>(orb.get_Rmax() / dr) + 4;
     Rmesh += 1 - Rmesh % 2;
 
-    ORB_table_phi::init_Table_Spherical_Bessel(2,
-                                               1,
-                                               Lmax_used,
-                                               Lmax,
-                                               1,
-                                               lmax_orb,
-                                               lmax_beta,
-                                               dr,
-                                               dk,
-                                               kmesh,
-                                               Rmesh,
-                                               MOT.pSB);
+    Center2_Orb::init_Table_Spherical_Bessel(2,
+                                             1,
+                                             Lmax_used,
+                                             Lmax,
+                                             1,
+                                             lmax_orb,
+                                             lmax_beta,
+                                             dr,
+                                             dk,
+                                             kmesh,
+                                             Rmesh,
+                                             psb_);
 
     //=========================================
     // (2) init Ylm Coef
@@ -259,7 +252,7 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::init_td(void)
                                 std::make_pair(NB,
                                                Center2_Orb::Orb11(orb.Phi[TA].PhiLN(LA, NA),
                                                                   orb.Phi[TB].PhiLN(LB, NB),
-                                                                  this->MOT.pSB,
+                                                                  psb_,
                                                                   this->MGT)));
     for (auto& coA: center2_orb11_s)
         for (auto& coB: coA.second)

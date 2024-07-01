@@ -7,6 +7,7 @@
 #include "module_base/complexarray.h"
 #include "module_base/intarray.h"
 #include "module_base/matrix.h"
+#include "module_base/sph_bessel_recursive.h"
 #include "module_base/vector3.h"
 #include "module_basis/module_nao/two_center_bundle.h"
 #include "module_cell/setup_nonlocal.h"
@@ -35,29 +36,8 @@ class ORB_gen_tables
         lat0 = v;
     }
 
-    void snap_psipsi(const LCAO_Orbitals& orb,
-                     double olm[],
-                     const int& job,    ///<[in]0 for matrix element of either S or T, 1 for its derivatives
-                     const char& dtype, ///<[in] derivative type, 'S' for overlap, 'T' for kinetic energy, 'D' for
-                                        ///< descriptor in deepks
-                     const ModuleBase::Vector3<double>& R1,
-                     const int& I1,
-                     const int& l1,
-                     const int& m1,
-                     const int& n1,
-                     const ModuleBase::Vector3<double>& R2,
-                     const int& I2,
-                     const int& l2,
-                     const int& m2,
-                     const int& n2,
-                     bool cal_syns = false,
-                     double dmax = 0.0) const;
-
-    /// we need to destroy the tables: SR,TR,NR
-    /// after ionic optimization is done.
-    ORB_table_phi MOT;
-
   private:
+    ModuleBase::Sph_Bessel_Recursive::D2* psb_ = nullptr;
     ORB_gaunt_table MGT;
 
     double get_distance(const ModuleBase::Vector3<double>& R1, const ModuleBase::Vector3<double>& R2) const;
