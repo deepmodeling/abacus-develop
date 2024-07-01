@@ -2,7 +2,6 @@
 #define VEFFLCAO_H
 #include "module_base/timer.h"
 #include "module_elecstate/potentials/potential_new.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
 #include "operator_lcao.h"
@@ -36,7 +35,6 @@ class Veff<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      * @param GK_in: the pointer of Gint_k object, used for grid integration
     */
     Veff<OperatorLCAO<TK, TR>>(Gint_k* GK_in,
-                          Local_Orbital_Charge* loc_in,
                           LCAO_Matrix* LM_in,
                           const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
                           elecstate::Potential* pot_in,
@@ -46,7 +44,6 @@ class Veff<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                           Grid_Driver* GridD_in,
                           const Parallel_Orbitals* paraV)
         : GK(GK_in),
-          loc(loc_in),
           pot(pot_in),
           ucell(ucell_in),
           gd(GridD_in),
@@ -62,7 +59,6 @@ class Veff<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      * @param GG_in: the pointer of Gint_Gamma object, used for grid integration
     */
     Veff<OperatorLCAO<TK, TR>>(Gint_Gamma* GG_in,
-                          Local_Orbital_Charge* loc_in,
                           LCAO_Matrix* LM_in,
                           const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
                           elecstate::Potential* pot_in,
@@ -72,7 +68,7 @@ class Veff<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                           Grid_Driver* GridD_in,
                           const Parallel_Orbitals* paraV
                           )
-        : GG(GG_in), loc(loc_in), pot(pot_in),
+        : GG(GG_in), pot(pot_in),
         OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in)
     {
         this->cal_type = calculation_type::lcao_gint;
@@ -101,7 +97,6 @@ class Veff<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     Gint_Gamma* GG = nullptr;
 
     // Charge calculating method in LCAO base and contained grid base calculation: DM_R, DM, pvpR_reduced
-    Local_Orbital_Charge* loc = nullptr;
 
     elecstate::Potential* pot = nullptr;
 

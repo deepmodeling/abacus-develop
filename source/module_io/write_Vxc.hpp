@@ -209,7 +209,6 @@ namespace ModuleIO
             Gint_Gamma &gint_gamma, // mohan add 2024-04-01
             Gint_k &gint_k, // mohan add 2024-04-01
 			LCAO_Matrix& lm, 
-			Local_Orbital_Charge& loc,
 			const K_Vectors& kv, 
 			const ModuleBase::matrix& wg, 
 			Grid_Driver& gd)
@@ -247,7 +246,6 @@ namespace ModuleIO
         {
             vxcs_op_ao[is] = new hamilt::Veff<hamilt::OperatorLCAO<TK, TR>>(
 					gint, 
-					&loc, 
 					&lm, 
 					kv.kvec_d, 
 					potxc, 
