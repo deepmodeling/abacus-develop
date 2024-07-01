@@ -307,8 +307,6 @@ class UnitCell
                const bool& init_vel_in,
                const std::string& fixed_axes_in);
 
-    void check_atomic_stru(double factor);
-
     /// @brief calculate the total number of electrons in system (GlobalV::nelec)
     void cal_nelec(double& nelec);
 
