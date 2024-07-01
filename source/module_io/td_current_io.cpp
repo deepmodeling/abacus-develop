@@ -231,8 +231,8 @@ void ModuleIO::write_current(const int istep,
                         {
                             for (int nu = 0; nu < pv->get_col_size(iat2); ++nu)
                             {
-                                double dm2d1_real = tmp_matrix_real->get_value(mu, nu);
-                                double dm2d1_imag = tmp_matrix_imag->get_value(mu, nu);
+                                double dm2d1_real = 2.0 * tmp_matrix_real->get_value(mu, nu);
+                                double dm2d1_imag = 2.0 * tmp_matrix_imag->get_value(mu, nu);
 
                                 double s_tmp = 0.0;
                                 std::complex<double> rvx = {0, 0};
