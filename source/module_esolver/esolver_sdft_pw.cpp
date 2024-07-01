@@ -253,7 +253,9 @@ void ESolver_SDFT_PW::cal_stress(ModuleBase::matrix& stress)
                   pw_wfc,
                   this->psi,
                   this->stowf,
-                  pelec->charge);
+                  pelec->charge,
+                  &GlobalC::ppcell,
+                  GlobalC::ucell);
 }
 
 void ESolver_SDFT_PW::after_all_runners()

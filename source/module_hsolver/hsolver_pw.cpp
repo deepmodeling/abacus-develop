@@ -35,140 +35,7 @@ HSolverPW<T, Device>::HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in, wavefunc* pw
 template <typename T, typename Device>
 void HSolverPW<T, Device>::initDiagh(const psi::Psi<T, Device>& psi)
 {
-    if (this->method == "cg")
-    {
-        // if (this->pdiagh != nullptr)
-        // {
-        //     if (this->pdiagh->method != this->method)
-        //     {
-        //         delete reinterpret_cast<DiagoCG<T, Device>*>(this->pdiagh);
-        //     }
-        //     else
-        //     {
-        //         return;
-        //     }
-        // }
-
-        // this->pdiagh = new DiagoCG<T, Device>(precondition.data());
-
-        // // warp the subspace_func into a lambda function
-        // auto ngk_pointer = psi.get_ngk_pointer();
-        // auto subspace_func = [this, ngk_pointer](const ct::Tensor& psi_in, ct::Tensor& psi_out) {
-        //     // psi_in should be a 2D tensor:
-        //     // psi_in.shape() = [nbands, nbasis]
-        //     const auto ndim = psi_in.shape().ndim();
-        //     REQUIRES_OK(ndim == 2, "dims of psi_in should be less than or equal to 2");
-        //     // Convert a Tensor object to a psi::Psi object
-        //     auto psi_in_wrapper = psi::Psi<T, Device>(psi_in.data<T>(),
-        //                                               1,
-        //                                               psi_in.shape().dim_size(0),
-        //                                               psi_in.shape().dim_size(1),
-        //                                               ngk_pointer);
-        //     auto psi_out_wrapper = psi::Psi<T, Device>(psi_out.data<T>(),
-        //                                                1,
-        //                                                psi_out.shape().dim_size(0),
-        //                                                psi_out.shape().dim_size(1),
-        //                                                ngk_pointer);
-        //     auto eigen = ct::Tensor(ct::DataTypeToEnum<Real>::value,
-        //                             ct::DeviceType::CpuDevice,
-        //                             ct::TensorShape({psi_in.shape().dim_size(0)}));
-
-        //     DiagoIterAssist<T, Device>::diagH_subspace(hamilt_, psi_in_wrapper, psi_out_wrapper, eigen.data<Real>());
-        // };
-        // this->pdiagh = new DiagoCG<T, Device>(GlobalV::BASIS_TYPE,
-        //                                       GlobalV::CALCULATION,
-        //                                       DiagoIterAssist<T, Device>::need_subspace,
-        //                                       subspace_func,
-        //                                       DiagoIterAssist<T, Device>::PW_DIAG_THR,
-        //                                       DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
-        //                                       GlobalV::NPROC_IN_POOL);
-        // this->pdiagh->method = this->method;
-    }
-    else if (this->method == "dav")
-    {
-        // #ifdef __MPI
-        //         const diag_comm_info comm_info = {POOL_WORLD, GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL};
-        // #else
-        //         const diag_comm_info comm_info = {GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL};
-        // #endif
-
-        //         if (this->pdiagh != nullptr)
-        //         {
-        //             if (this->pdiagh->method != this->method)
-        //             {
-        //                 delete (DiagoDavid<T, Device>*)this->pdiagh;
-
-        //                 this->pdiagh = new DiagoDavid<T, Device>(precondition.data(),
-        //                                                          GlobalV::PW_DIAG_NDIM,
-        //                                                          GlobalV::use_paw,
-        //                                                          comm_info);
-
-        //                 this->pdiagh->method = this->method;
-        //             }
-        //         }
-        //         else
-        //         {
-        //             this->pdiagh
-        //                 = new DiagoDavid<T, Device>(precondition.data(), GlobalV::PW_DIAG_NDIM, GlobalV::use_paw,
-        //                 comm_info);
-
-        //             this->pdiagh->method = this->method;
-        //         }
-    }
-    else if (this->method == "dav_subspace")
-    {
-        // #ifdef __MPI
-        //         const diag_comm_info comm_info = {POOL_WORLD, GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL};
-        // #else
-        //         const diag_comm_info comm_info = {GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL};
-        // #endif
-        //         if (this->pdiagh != nullptr)
-        //         {
-        //             if (this->pdiagh->method != this->method)
-        //             {
-        //                 delete (Diago_DavSubspace<T, Device>*)this->pdiagh;
-
-        //                 this->pdiagh = new Diago_DavSubspace<T, Device>(precondition.data(),
-        //                                                                 GlobalV::PW_DIAG_NDIM,
-        //                                                                 DiagoIterAssist<T, Device>::PW_DIAG_THR,
-        //                                                                 DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
-        //                                                                 DiagoIterAssist<T, Device>::need_subspace,
-        //                                                                 comm_info);
-
-        //                 this->pdiagh->method = this->method;
-        //             }
-        //         }
-        //         else
-        //         {
-        //             this->pdiagh = new Diago_DavSubspace<T, Device>(precondition.data(),
-        //                                                             GlobalV::PW_DIAG_NDIM,
-        //                                                             DiagoIterAssist<T, Device>::PW_DIAG_THR,
-        //                                                             DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
-        //                                                             DiagoIterAssist<T, Device>::need_subspace,
-        //                                                             comm_info);
-        //             this->pdiagh->method = this->method;
-        //         }
-    }
-    else if (this->method == "bpcg")
-    {
-        // if (this->pdiagh != nullptr)
-        // {
-        //     if (this->pdiagh->method != this->method)
-        //     {
-        //         delete (DiagoBPCG<T, Device>*)this->pdiagh;
-        //         this->pdiagh = new DiagoBPCG<T, Device>(precondition.data());
-        //         this->pdiagh->method = this->method;
-        //         reinterpret_cast<DiagoBPCG<T, Device>*>(this->pdiagh)->init_iter(psi);
-        //     }
-        // }
-        // else
-        // {
-        //     this->pdiagh = new DiagoBPCG<T, Device>(precondition.data());
-        //     this->pdiagh->method = this->method;
-        //     reinterpret_cast<DiagoBPCG<T, Device>*>(this->pdiagh)->init_iter(psi);
-        // }
-    }
-    else
+    if (this->method != "cg" && this->method != "dav" && this->method != "dav_subspace" && this->method != "bpcg")
     {
         ModuleBase::WARNING_QUIT("HSolverPW::solve", "This method of DiagH is not supported!");
     }
@@ -656,29 +523,6 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt, // ESolver_
 template <typename T, typename Device>
 void HSolverPW<T, Device>::endDiagh()
 {
-    // DiagoCG would keep 9*nbasis memory in cache during loop-k
-    // it should be deleted before calculating charge
-    // if (this->method == "cg")
-    // {
-    //     delete reinterpret_cast<DiagoCG<T, Device>*>(this->pdiagh);
-    //     this->pdiagh = nullptr;
-    // }
-    // if (this->method == "dav")
-    // {
-    //     delete reinterpret_cast<DiagoDavid<T, Device>*>(this->pdiagh);
-    //     this->pdiagh = nullptr;
-    // }
-    // if (this->method == "dav_subspace")
-    // {
-    //     delete reinterpret_cast<Diago_DavSubspace<T, Device>*>(this->pdiagh);
-    //     this->pdiagh = nullptr;
-    // }
-    // if (this->method == "bpcg")
-    // {
-    //     delete reinterpret_cast<DiagoBPCG<T, Device>*>(this->pdiagh);
-    //     this->pdiagh = nullptr;
-    // }
-
     // in PW base, average iteration steps for each band and k-point should be printing
     if (DiagoIterAssist<T, Device>::avg_iter > 0.0)
     {
@@ -809,8 +653,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::P
         auto psi_tensor = ct::TensorMap(psi.get_pointer(),
                                         ct::DataTypeToEnum<T>::value,
                                         ct::DeviceTypeToEnum<ct_Device>::value,
-                                        ct::TensorShape({psi.get_nbands(), psi.get_nbasis()}))
-                              .slice({0, 0}, {psi.get_nbands(), psi.get_current_nbas()});
+                                        ct::TensorShape({psi.get_nbands(), psi.get_nbasis()}));
         auto eigen_tensor = ct::TensorMap(eigenvalue,
                                           ct::DataTypeToEnum<Real>::value,
                                           ct::DeviceTypeToEnum<ct::DEVICE_CPU>::value,
@@ -842,7 +685,6 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::P
                                                   DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
                                                   DiagoIterAssist<T, Device>::need_subspace,
                                                   comm_info);
-
         bool scf;
         if (GlobalV::CALCULATION == "nscf")
         {
@@ -866,7 +708,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::P
             // Convert "pointer data stucture" to a psi::Psi object
             auto psi_iter_wrapper = psi::Psi<T, Device>(psi_in, 1, nband_in, nbasis_in, ngk_pointer);
 
-            psi::Range bands_range(1, 0, band_index1, band_index2);
+            psi::Range bands_range(true, 0, band_index1, band_index2);
 
             using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
             hpsi_info info(&psi_iter_wrapper, bands_range, hpsi_out);
@@ -894,12 +736,9 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::P
         DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(
             dav_subspace
                 .diag(hpsi_func, subspace_func, psi.get_pointer(), psi.get_nbasis(), eigenvalue, is_occupied, scf));
-
-        this->pdiagh = nullptr;
     }
     else if (this->method == "bpcg")
     {
-        // this->pdiagh->diag(hm, psi, eigenvalue);
         DiagoBPCG<T, Device> bpcg(precondition.data());
         bpcg.init_iter(psi);
         bpcg.diag(hm, psi, eigenvalue);

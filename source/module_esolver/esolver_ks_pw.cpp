@@ -874,19 +874,17 @@ template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::cal_force(ModuleBase::matrix& force)
 {
     Forces<double, Device> ff(GlobalC::ucell.nat);
-    if (this->__kspw_psi != nullptr)
+    if (this->__kspw_psi != nullptr && GlobalV::precision_flag == "single")
     {
-        this->__kspw_psi = nullptr;
+        delete reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->__kspw_psi);
     }
 
-    if (this->__kspw_psi == nullptr)
-    {
-        this->__kspw_psi = GlobalV::precision_flag == "single"
-                               ? new psi::Psi<std::complex<double>, Device>(this->kspw_psi[0])
-                               : reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->kspw_psi);
-    }
+    // Refresh __kspw_psi
+    this->__kspw_psi = GlobalV::precision_flag == "single"
+                           ? new psi::Psi<std::complex<double>, Device>(this->kspw_psi[0])
+                           : reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->kspw_psi);
 
-    //! Calculate forces
+    // Calculate forces
     ff.cal_force(force,
                  *this->pelec,
                  this->pw_rhod,
@@ -901,19 +899,18 @@ template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::cal_stress(ModuleBase::matrix& stress)
 {
     Stress_PW<double, Device> ss(this->pelec);
-    if (this->__kspw_psi != nullptr)
+    if (this->__kspw_psi != nullptr && GlobalV::precision_flag == "single")
     {
-        this->__kspw_psi = nullptr;
+        delete reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->__kspw_psi);
     }
 
-    if (this->__kspw_psi == nullptr)
-    {
-        this->__kspw_psi = GlobalV::precision_flag == "single"
-                               ? new psi::Psi<std::complex<double>, Device>(this->kspw_psi[0])
-                               : reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->kspw_psi);
-    }
+    // Refresh __kspw_psi
+    this->__kspw_psi = GlobalV::precision_flag == "single"
+                           ? new psi::Psi<std::complex<double>, Device>(this->kspw_psi[0])
+                           : reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->kspw_psi);
     ss.cal_stress(stress,
                   GlobalC::ucell,
+                  &GlobalC::ppcell,
                   this->pw_rhod,
                   &GlobalC::ucell.symm,
                   &this->sf,
