@@ -550,7 +550,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
             {
                 //----------charge mixing---------------
                 // mixing will restart after this->p_chgmix->mixing_restart steps
-                if (GlobalV::MIXING_RESTART > 0 && iter == this->p_chgmix->mixing_restart_step - 1)
+                if (GlobalV::MIXING_RESTART > 0 && iter == this->p_chgmix->mixing_restart_step - 1 && drho <= GlobalV::MIXING_RESTART)
                 {
                     // do not mix charge density
                 }
