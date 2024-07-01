@@ -134,7 +134,7 @@ void ModuleIO::read_dmk(
         for (int i = 0; i < nlocal; ++i)
         {
             // GlobalV::ofs_running << " i=" << i << std::endl;
-            ModuleBase::GlobalFunc::ZEROS(tmp, nlocal);
+            ModuleBase::GlobalFunc::ZEROS(tmp.data(), nlocal);
             if (GlobalV::MY_RANK == 0)
             {
                 for (int j = 0; j < nlocal; ++j)
