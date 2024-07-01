@@ -130,8 +130,7 @@ void ModuleIO::read_dmk(
 
     if (gamma_only_local)
     {
-
-        double* tmp = new double[nlocal];
+        std::vector<double> tmp(nlocal);
         for (int i = 0; i < nlocal; ++i)
         {
             // GlobalV::ofs_running << " i=" << i << std::endl;
@@ -143,7 +142,7 @@ void ModuleIO::read_dmk(
                     ifs >> tmp[j];
                 }
             }
-            Parallel_Common::bcast_double(tmp, nlocal);
+            Parallel_Common::bcast_double(tmp.data(), nlocal);
 
             const int mu = trace_lo[i];
             if (mu >= 0)
@@ -158,7 +157,6 @@ void ModuleIO::read_dmk(
                 }
             }
         } // i
-        delete[] tmp;
     }
     else
     {
