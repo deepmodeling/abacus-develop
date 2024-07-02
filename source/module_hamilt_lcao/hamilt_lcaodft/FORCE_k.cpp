@@ -356,7 +356,7 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
         const std::vector<std::vector<std::complex<double>>>& dm_k = dm->get_DMK_vector();
 
         // when deepks_scf is on, the init pdm should be same as the out pdm, so we should not recalculate the pdm
-        //GlobalC::ld.cal_projected_DM_k(dm, ucell, GlobalC::ORB, GlobalC::GridD);
+        // GlobalC::ld.cal_projected_DM_k(dm, ucell, GlobalC::ORB, GlobalC::GridD);
 
         GlobalC::ld.cal_descriptor(ucell.nat);
 

@@ -74,8 +74,8 @@ void LCAO_Deepks_Interface::out_deepks_labels(double etot,
                 ld->save_npy_orbital_precalc(nat, nks);
                 ld->cal_o_delta(dm_bandgap_gamma);
                 ld->save_npy_o(deepks_bands - ld->o_delta, "o_base.npy", nks);
-            }     // end deepks_scf == 1
-            else  // deepks_scf == 0
+            }    // end deepks_scf == 1
+            else // deepks_scf == 0
             {
                 ld->save_npy_o(deepks_bands, "o_base.npy", nks); // no scf, o_tot=o_base
             }                                                    // end deepks_scf == 0
@@ -87,9 +87,10 @@ void LCAO_Deepks_Interface::out_deepks_labels(double etot,
     {
         // this part is for integrated test of deepks
         // when deepks_scf is on, the init pdm should be same as the out pdm, so we should not recalculate the pdm
-        if(!GlobalV::deepks_scf) ld->cal_projected_DM(dm, ucell, orb, GridD);
+        if (!GlobalV::deepks_scf)
+            ld->cal_projected_DM(dm, ucell, orb, GridD);
         ld->check_projected_dm(); // print out the projected dm for NSCF calculaiton
-        ld->cal_descriptor(nat);     // final descriptor
+        ld->cal_descriptor(nat);  // final descriptor
         ld->check_descriptor(ucell);
 
         if (GlobalV::deepks_out_labels)
@@ -101,8 +102,7 @@ void LCAO_Deepks_Interface::out_deepks_labels(double etot,
 
         ld->cal_e_delta_band(dm->get_DMK_vector());
         std::cout << "E_delta_band = " << std::setprecision(8) << ld->e_delta_band << " Ry"
-                  << " = " << std::setprecision(8) << ld->e_delta_band * ModuleBase::Ry_to_eV << " eV"
-                  << std::endl;
+                  << " = " << std::setprecision(8) << ld->e_delta_band * ModuleBase::Ry_to_eV << " eV" << std::endl;
         std::cout << "E_delta_NN= " << std::setprecision(8) << ld->E_delta << " Ry"
                   << " = " << std::setprecision(8) << ld->E_delta * ModuleBase::Ry_to_eV << " eV" << std::endl;
     }
@@ -176,8 +176,8 @@ void LCAO_Deepks_Interface::out_deepks_labels(double etot,
                 ld->save_npy_orbital_precalc(nat, nks);
                 ld->cal_o_delta_k(dm_bandgap_k, nks);
                 ld->save_npy_o(deepks_bands - ld->o_delta, "o_base.npy", nks);
-            }     // end deepks_scf == 1
-            else  // deepks_scf == 0
+            }    // end deepks_scf == 1
+            else // deepks_scf == 0
             {
                 ld->save_npy_o(deepks_bands, "o_base.npy", nks); // no scf, o_tot=o_base
             }                                                    // end deepks_scf == 0
@@ -190,9 +190,10 @@ void LCAO_Deepks_Interface::out_deepks_labels(double etot,
         // this part is for integrated test of deepks
         // so it is printed no matter even if deepks_out_labels is not used
         // when deepks_scf is on, the init pdm should be same as the out pdm, so we should not recalculate the pdm
-        if(!GlobalV::deepks_scf) ld->cal_projected_DM_k(dm, ucell, orb, GridD);
+        if (!GlobalV::deepks_scf)
+            ld->cal_projected_DM_k(dm, ucell, orb, GridD);
         ld->check_projected_dm(); // print out the projected dm for NSCF calculaiton
-        ld->cal_descriptor(nat);     // final descriptor
+        ld->cal_descriptor(nat);  // final descriptor
         ld->check_descriptor(ucell);
 
         if (GlobalV::deepks_out_labels)
@@ -203,8 +204,7 @@ void LCAO_Deepks_Interface::out_deepks_labels(double etot,
     {
         ld->cal_e_delta_band_k(dm->get_DMK_vector(), nks);
         std::cout << "E_delta_band = " << std::setprecision(8) << ld->e_delta_band << " Ry"
-                  << " = " << std::setprecision(8) << ld->e_delta_band * ModuleBase::Ry_to_eV << " eV"
-                  << std::endl;
+                  << " = " << std::setprecision(8) << ld->e_delta_band * ModuleBase::Ry_to_eV << " eV" << std::endl;
         std::cout << "E_delta_NN= " << std::setprecision(8) << ld->E_delta << " Ry"
                   << " = " << std::setprecision(8) << ld->E_delta * ModuleBase::Ry_to_eV << " eV" << std::endl;
     }
