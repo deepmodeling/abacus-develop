@@ -8,8 +8,7 @@
 #include "module_io/input.h"
 #include "module_io/input_conv.h"
 
-namespace elecstate
-{
+namespace elecstate {
 
 int H_TDDFT_pw::istep = -1;
 
@@ -76,8 +75,7 @@ int H_TDDFT_pw::heavi_count;
 std::vector<double> H_TDDFT_pw::heavi_t0;
 std::vector<double> H_TDDFT_pw::heavi_amp; // Ry/bohr
 
-void H_TDDFT_pw::cal_fixed_v(double* vl_pseudo)
-{
+void H_TDDFT_pw::cal_fixed_v(double* vl_pseudo) {
     ModuleBase::TITLE("H_TDDFT_pw", "cal_fixed_v");
 
     // skip if velocity_gague
@@ -89,8 +87,7 @@ void H_TDDFT_pw::cal_fixed_v(double* vl_pseudo)
     H_TDDFT_pw::istep_int = istep;
 
     // judgement to skip vext
-    if (!module_tddft::Evolve_elec::td_vext || istep > tend || istep < tstart)
-    {
+    if (!module_tddft::Evolve_elec::td_vext || istep > tend || istep < tstart) {
         return;
     }
     std::cout << "calculate electric potential" << std::endl;
@@ -103,18 +100,17 @@ void H_TDDFT_pw::cal_fixed_v(double* vl_pseudo)
     trigo_count = 0;
     heavi_count = 0;
 
-    for (auto direc: module_tddft::Evolve_elec::td_vext_dire_case)
-    {
+    for (auto direc: module_tddft::Evolve_elec::td_vext_dire_case) {
         std::vector<double> vext_space(this->rho_basis_->nrxx, 0.0);
         double vext_time = cal_v_time(ttype[count], true);
 
-        if (module_tddft::Evolve_elec::out_efield && GlobalV::MY_RANK == 0)
-        {
+        if (module_tddft::Evolve_elec::out_efield && GlobalV::MY_RANK == 0) {
             std::stringstream as;
             as << GlobalV::global_out_dir << "efield_" << count << ".dat";
             std::ofstream ofs(as.str().c_str(), std::ofstream::app);
             ofs << H_TDDFT_pw::istep * dt * ModuleBase::AU_to_FS << "\t"
-                << vext_time * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A << std::endl;
+                << vext_time * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A
+                << std::endl;
             ofs.close();
         }
 
@@ -128,18 +124,17 @@ void H_TDDFT_pw::cal_fixed_v(double* vl_pseudo)
     return;
 }
 
-void H_TDDFT_pw::cal_v_space(std::vector<double>& vext_space, int direc)
-{
+void H_TDDFT_pw::cal_v_space(std::vector<double>& vext_space, int direc) {
     ModuleBase::TITLE("H_TDDFT_pw", "cal_v_space");
     ModuleBase::timer::tick("H_TDDFT_pw", "cal_v_space");
 
-    switch (stype)
-    {
+    switch (stype) {
     case 0:
         cal_v_space_length(vext_space, direc);
         break;
     default:
-        std::cout << "space_domain_type of electric field is wrong" << std::endl;
+        std::cout << "space_domain_type of electric field is wrong"
+                  << std::endl;
         break;
     }
 
@@ -147,24 +142,23 @@ void H_TDDFT_pw::cal_v_space(std::vector<double>& vext_space, int direc)
     return;
 }
 
-void H_TDDFT_pw::cal_v_space_length(std::vector<double>& vext_space, int direc)
-{
+void H_TDDFT_pw::cal_v_space_length(std::vector<double>& vext_space,
+                                    int direc) {
     ModuleBase::TITLE("H_TDDFT_pw", "cal_v_space_length");
     ModuleBase::timer::tick("H_TDDFT_pw", "cal_v_space_length");
 
     prepare(GlobalC::ucell, direc);
 
-    for (int ir = 0; ir < this->rho_basis_->nrxx; ++ir)
-    {
+    for (int ir = 0; ir < this->rho_basis_->nrxx; ++ir) {
         int i = ir / (this->rho_basis_->ny * this->rho_basis_->nplane);
         int j = ir / this->rho_basis_->nplane - i * this->rho_basis_->ny;
-        int k = ir % this->rho_basis_->nplane + this->rho_basis_->startz_current;
+        int k
+            = ir % this->rho_basis_->nplane + this->rho_basis_->startz_current;
         double x = (double)i / this->rho_basis_->nx;
         double y = (double)j / this->rho_basis_->ny;
         double z = (double)k / this->rho_basis_->nz;
 
-        switch (direc)
-        {
+        switch (direc) {
         case 1:
             vext_space[ir] = cal_v_space_length_potential(x) / bmod;
             break;
@@ -187,28 +181,24 @@ void H_TDDFT_pw::cal_v_space_length(std::vector<double>& vext_space, int direc)
     return;
 }
 
-double H_TDDFT_pw::cal_v_space_length_potential(double i)
-{
+double H_TDDFT_pw::cal_v_space_length_potential(double i) {
     double vext_space = 0.0;
-    if (i < lcut1)
-    {
-        vext_space = ((i - lcut1) * (lcut2 - lcut1) / (lcut1 + 1.0 - lcut2) - lcut1) * this->ucell_->lat0;
-    }
-    else if (i >= lcut1 && i < lcut2)
-    {
+    if (i < lcut1) {
+        vext_space
+            = ((i - lcut1) * (lcut2 - lcut1) / (lcut1 + 1.0 - lcut2) - lcut1)
+              * this->ucell_->lat0;
+    } else if (i >= lcut1 && i < lcut2) {
         vext_space = -i * this->ucell_->lat0;
-    }
-    else if (i >= lcut2)
-    {
-        vext_space = ((i - lcut2) * (lcut2 - lcut1) / (lcut1 + 1.0 - lcut2) - lcut2) * this->ucell_->lat0;
+    } else if (i >= lcut2) {
+        vext_space
+            = ((i - lcut2) * (lcut2 - lcut1) / (lcut1 + 1.0 - lcut2) - lcut2)
+              * this->ucell_->lat0;
     }
     return vext_space;
 }
-int H_TDDFT_pw::check_ncut(int t_type)
-{
+int H_TDDFT_pw::check_ncut(int t_type) {
     int ncut = 0;
-    switch (t_type)
-    {
+    switch (t_type) {
     case 0:
         ncut = *(gauss_ncut.begin() + gauss_count);
         break;
@@ -235,15 +225,13 @@ int H_TDDFT_pw::check_ncut(int t_type)
     }
     return ncut;
 }
-void H_TDDFT_pw::update_At(void)
-{
+void H_TDDFT_pw::update_At(void) {
     std::cout << "calculate electric potential" << std::endl;
     // time evolve
     H_TDDFT_pw::istep++;
 
     // judgement to skip vext
-    if (!module_tddft::Evolve_elec::td_vext || istep > tend || istep < tstart)
-    {
+    if (!module_tddft::Evolve_elec::td_vext || istep > tend || istep < tstart) {
         return;
     }
     int count = 0;
@@ -256,8 +244,7 @@ void H_TDDFT_pw::update_At(void)
     bool last = false;
     double out = 0.0;
 
-    for (auto direc: module_tddft::Evolve_elec::td_vext_dire_case)
-    {
+    for (auto direc: module_tddft::Evolve_elec::td_vext_dire_case) {
         last = false;
         // cut the integral space and initial relvant parameters
         ncut = check_ncut(ttype[count]);
@@ -266,34 +253,36 @@ void H_TDDFT_pw::update_At(void)
 
         // store vext_time for each time point, include the first and last point
         double* vext_time = new double[ncut + 1]();
-        for (int i = 0; i <= ncut; i++)
-        {
+        for (int i = 0; i <= ncut; i++) {
             // if this is the last point, type_count++
             if (i == ncut)
                 last = true;
             vext_time[i] = cal_v_time(ttype[count], last);
             istep_int++;
         }
-        ModuleBase::Integral::Simpson_Integral(ncut + 1, vext_time, dt_int, out);
+        ModuleBase::Integral::Simpson_Integral(ncut + 1,
+                                               vext_time,
+                                               dt_int,
+                                               out);
         // update At value for its direction
-        switch (stype)
-        {
+        switch (stype) {
         case 1:
             At[direc - 1] -= out;
             break;
         default:
-            std::cout << "space_domain_type of electric field is wrong" << std::endl;
+            std::cout << "space_domain_type of electric field is wrong"
+                      << std::endl;
             break;
         }
 
         // output Efield
-        if (module_tddft::Evolve_elec::out_efield && GlobalV::MY_RANK == 0)
-        {
+        if (module_tddft::Evolve_elec::out_efield && GlobalV::MY_RANK == 0) {
             std::stringstream as;
             as << GlobalV::global_out_dir << "efield_" << count << ".dat";
             std::ofstream ofs(as.str().c_str(), std::ofstream::app);
             ofs << H_TDDFT_pw::istep * dt * ModuleBase::AU_to_FS << "\t"
-                << vext_time[0] * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A << std::endl;
+                << vext_time[0] * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A
+                << std::endl;
             ofs.close();
         }
         // total count++
@@ -303,12 +292,10 @@ void H_TDDFT_pw::update_At(void)
     return;
 }
 
-double H_TDDFT_pw::cal_v_time(int t_type, const bool last)
-{
+double H_TDDFT_pw::cal_v_time(int t_type, const bool last) {
     double vext_time = 0.0;
 
-    switch (t_type)
-    {
+    switch (t_type) {
     case 0:
         vext_time = cal_v_time_Gauss(last);
         break;
@@ -336,8 +323,7 @@ double H_TDDFT_pw::cal_v_time(int t_type, const bool last)
     return vext_time;
 }
 
-double H_TDDFT_pw::cal_v_time_Gauss(const bool last)
-{
+double H_TDDFT_pw::cal_v_time_Gauss(const bool last) {
     double vext_time = 0.0;
     double t0 = *(gauss_t0.begin() + gauss_count);
     double omega = *(gauss_omega.begin() + gauss_count);
@@ -347,15 +333,15 @@ double H_TDDFT_pw::cal_v_time_Gauss(const bool last)
     double ncut = *(gauss_ncut.begin() + gauss_count);
 
     double gauss_t = (istep_int - t0 * ncut) * dt_int;
-    vext_time = cos(omega * gauss_t + phase) * exp(-gauss_t * gauss_t * 0.5 / (sigma * sigma)) * amp;
+    vext_time = cos(omega * gauss_t + phase)
+                * exp(-gauss_t * gauss_t * 0.5 / (sigma * sigma)) * amp;
     if (last)
         gauss_count++;
 
     return vext_time;
 }
 
-double H_TDDFT_pw::cal_v_time_trapezoid(const bool last)
-{
+double H_TDDFT_pw::cal_v_time_trapezoid(const bool last) {
     double vext_time = 0.0;
     double t1 = *(trape_t1.begin() + trape_count);
     double t2 = *(trape_t2.begin() + trape_count);
@@ -365,16 +351,11 @@ double H_TDDFT_pw::cal_v_time_trapezoid(const bool last)
     double amp = *(trape_amp.begin() + trape_count);
     double ncut = *(trape_ncut.begin() + trape_count);
 
-    if (istep < t1)
-    {
+    if (istep < t1) {
         vext_time = istep_int / ncut / t1;
-    }
-    else if (istep < t2)
-    {
+    } else if (istep < t2) {
         vext_time = 1.0;
-    }
-    else if (istep < t3)
-    {
+    } else if (istep < t3) {
         vext_time = (t3 - istep_int / ncut) / (t3 - t2);
     }
 
@@ -385,8 +366,7 @@ double H_TDDFT_pw::cal_v_time_trapezoid(const bool last)
     return vext_time;
 }
 
-double H_TDDFT_pw::cal_v_time_trigonometric(const bool last)
-{
+double H_TDDFT_pw::cal_v_time_trigonometric(const bool last) {
     double vext_time = 0.0;
     double omega1 = *(trigo_omega1.begin() + trigo_count);
     double phase1 = *(trigo_phase1.begin() + trigo_count);
@@ -396,15 +376,16 @@ double H_TDDFT_pw::cal_v_time_trigonometric(const bool last)
 
     const double timenow = istep_int * dt_int;
 
-    vext_time = amp * cos(omega1 * timenow + phase1) * sin(omega2 * timenow + phase2) * sin(omega2 * timenow + phase2);
+    vext_time = amp * cos(omega1 * timenow + phase1)
+                * sin(omega2 * timenow + phase2)
+                * sin(omega2 * timenow + phase2);
     if (last)
         trigo_count++;
 
     return vext_time;
 }
 
-double H_TDDFT_pw::cal_v_time_heaviside()
-{
+double H_TDDFT_pw::cal_v_time_heaviside() {
     double t0 = *(heavi_t0.begin() + heavi_count);
     double amp = *(heavi_amp.begin() + heavi_count);
     double vext_time = 0.0;
@@ -417,43 +398,32 @@ double H_TDDFT_pw::cal_v_time_heaviside()
     return vext_time;
 }
 
-void H_TDDFT_pw::prepare(const UnitCell& cell, int& dir)
-{
-    if (dir == 1)
-    {
+void H_TDDFT_pw::prepare(const UnitCell& cell, int& dir) {
+    if (dir == 1) {
         bvec[0] = cell.G.e11;
         bvec[1] = cell.G.e12;
         bvec[2] = cell.G.e13;
-    }
-    else if (dir == 2)
-    {
+    } else if (dir == 2) {
         bvec[0] = cell.G.e21;
         bvec[1] = cell.G.e22;
         bvec[2] = cell.G.e23;
-    }
-    else if (dir == 3)
-    {
+    } else if (dir == 3) {
         bvec[0] = cell.G.e31;
         bvec[1] = cell.G.e32;
         bvec[2] = cell.G.e33;
-    }
-    else
-    {
+    } else {
         ModuleBase::WARNING_QUIT("H_TDDFT_pw::prepare", "direction is wrong!");
     }
     bmod = sqrt(pow(bvec[0], 2) + pow(bvec[1], 2) + pow(bvec[2], 2));
 }
 
-void H_TDDFT_pw ::compute_force(const UnitCell& cell, ModuleBase::matrix& fe)
-{
+void H_TDDFT_pw ::compute_force(const UnitCell& cell, ModuleBase::matrix& fe) {
     int iat = 0;
-    for (int it = 0; it < cell.ntype; ++it)
-    {
-        for (int ia = 0; ia < cell.atoms[it].na; ++ia)
-        {
-            for (int jj = 0; jj < 3; ++jj)
-            {
-                fe(iat, jj) = ModuleBase::e2 * amp * cell.atoms[it].ncpp.zv * bvec[jj] / bmod;
+    for (int it = 0; it < cell.ntype; ++it) {
+        for (int ia = 0; ia < cell.atoms[it].na; ++ia) {
+            for (int jj = 0; jj < 3; ++jj) {
+                fe(iat, jj) = ModuleBase::e2 * amp * cell.atoms[it].ncpp.zv
+                              * bvec[jj] / bmod;
             }
             ++iat;
         }

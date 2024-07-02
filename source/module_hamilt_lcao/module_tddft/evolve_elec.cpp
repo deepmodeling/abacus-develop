@@ -8,8 +8,7 @@
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
-namespace module_tddft
-{
+namespace module_tddft {
 Evolve_elec::Evolve_elec(){};
 Evolve_elec::~Evolve_elec(){};
 
@@ -34,20 +33,17 @@ void Evolve_elec::solve_psi(const int& istep,
                             ModuleBase::matrix& ekb,
                             int htype,
                             int propagator,
-                            const int& nks)
-{
+                            const int& nks) {
     ModuleBase::TITLE("Evolve_elec", "eveolve_psi");
     ModuleBase::timer::tick("Evolve_elec", "evolve_psi");
 
-    for (int ik = 0; ik < nks; ik++)
-    {
+    for (int ik = 0; ik < nks; ik++) {
         phm->updateHk(ik);
 
         ModuleBase::timer::tick("Efficience", "evolve_k");
         psi->fix_k(ik);
         psi_laststep->fix_k(ik);
-        if (htype == 0)
-        {
+        if (htype == 0) {
             evolve_psi(nband,
                        nlocal,
                        &(para_orb),
@@ -59,9 +55,7 @@ void Evolve_elec::solve_psi(const int& istep,
                        &(ekb(ik, 0)),
                        htype,
                        propagator);
-        }
-        else if (htype == 1)
-        {
+        } else if (htype == 1) {
             evolve_psi(nband,
                        nlocal,
                        &(para_orb),
@@ -73,9 +67,7 @@ void Evolve_elec::solve_psi(const int& istep,
                        &(ekb(ik, 0)),
                        htype,
                        propagator);
-        }
-        else
-        {
+        } else {
             std::cout << "method of htype is wrong" << std::endl;
         }
 

@@ -8,21 +8,21 @@
 #include <complex>
 #include <vector>
 
-namespace module_tddft
-{
+namespace module_tddft {
 // calculate the tddft nonlocal potential term
-void snap_psibeta_half_tddft(const LCAO_Orbitals& orb,
-                             const InfoNonlocal& infoNL_,
-                             std::vector<std::vector<std::complex<double>>>& nlm,
-                             const ModuleBase::Vector3<double>& R1,
-                             const int& T1,
-                             const int& L1,
-                             const int& m1,
-                             const int& N1,
-                             const ModuleBase::Vector3<double>& R0, // The projector.
-                             const int& T0,
-                             const ModuleBase::Vector3<double>& A,
-                             const bool& calc_r);
+void snap_psibeta_half_tddft(
+    const LCAO_Orbitals& orb,
+    const InfoNonlocal& infoNL_,
+    std::vector<std::vector<std::complex<double>>>& nlm,
+    const ModuleBase::Vector3<double>& R1,
+    const int& T1,
+    const int& L1,
+    const int& m1,
+    const int& N1,
+    const ModuleBase::Vector3<double>& R0, // The projector.
+    const int& T0,
+    const ModuleBase::Vector3<double>& A,
+    const bool& calc_r);
 
 } // namespace module_tddft
 

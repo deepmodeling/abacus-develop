@@ -10,37 +10,35 @@
 
 #include <unordered_map>
 
-namespace hamilt
-{
+namespace hamilt {
 
 #ifndef __TD_NONLOCALTEMPLATE
 #define __TD_NONLOCALTEMPLATE
 
 /// The TDNonlocal class template inherits from class T
-/// It is used to calculate correction term of non-local pseudopotential in time-dependent DFT
+/// It is used to calculate correction term of non-local pseudopotential in
+/// time-dependent DFT
 template <class T>
-class TDNonlocal : public T
-{
-};
+class TDNonlocal : public T {};
 
 #endif
 
 /// TDNonlocal class template specialization for OperatorLCAO<TK> base class
-/// It is used to calculate correction term of non-local pseudopotential in time-dependent DFT
-/// Template parameters:
+/// It is used to calculate correction term of non-local pseudopotential in
+/// time-dependent DFT Template parameters:
 /// - TK: data type of k-space Hamiltonian
 /// - TR: data type of real space Hamiltonian
 template <typename TK, typename TR>
-class TDNonlocal<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
-{
+class TDNonlocal<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR> {
   public:
-    TDNonlocal<OperatorLCAO<TK, TR>>(LCAO_Matrix* LM_in,
-                                     const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
-                                     hamilt::HContainer<TR>* hR_in,
-                                     std::vector<TK>* hK_in,
-                                     const UnitCell* ucell_in,
-                                     Grid_Driver* GridD_in,
-                                     const Parallel_Orbitals* paraV);
+    TDNonlocal<OperatorLCAO<TK, TR>>(
+        LCAO_Matrix* LM_in,
+        const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
+        hamilt::HContainer<TR>* hR_in,
+        std::vector<TK>* hK_in,
+        const UnitCell* ucell_in,
+        Grid_Driver* GridD_in,
+        const Parallel_Orbitals* paraV);
     ~TDNonlocal<OperatorLCAO<TK, TR>>();
 
     /**
@@ -56,8 +54,8 @@ class TDNonlocal<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     const UnitCell* ucell = nullptr;
 
     HContainer<TR>* HR = nullptr;
-    /// @brief Store real space hamiltonian. TD term should include imaginary part, thus it has to be complex type. Only
-    /// shared between TD operators.
+    /// @brief Store real space hamiltonian. TD term should include imaginary
+    /// part, thus it has to be complex type. Only shared between TD operators.
     HContainer<std::complex<double>>* hR_tmp = nullptr;
     Grid_Driver* Grid = nullptr;
 
@@ -69,8 +67,9 @@ class TDNonlocal<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 
     /**
      * @brief initialize HR, search the nearest neighbor atoms
-     * HContainer is used to store the non-local pseudopotential matrix with specific <I,J,R> atom-pairs
-     * the size of HR will be fixed after initialization
+     * HContainer is used to store the non-local pseudopotential matrix with
+     * specific <I,J,R> atom-pairs the size of HR will be fixed after
+     * initialization
      */
     void initialize_HR(Grid_Driver* GridD_in, const Parallel_Orbitals* paraV);
 
@@ -82,23 +81,29 @@ class TDNonlocal<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     /// @brief init vector potential for td_nonlocal term
     void init_td(void);
     /**
-     * @brief calculate the non-local pseudopotential matrix with specific <I,J,R> atom-pairs
-     * nearest neighbor atoms don't need to be calculated again
-     * loop the atom-pairs in HR and calculate the non-local pseudopotential matrix
+     * @brief calculate the non-local pseudopotential matrix with specific
+     * <I,J,R> atom-pairs nearest neighbor atoms don't need to be calculated
+     * again loop the atom-pairs in HR and calculate the non-local
+     * pseudopotential matrix
      */
     void calculate_HR();
 
     /**
      * @brief calculate the HR local matrix of <I,J,R> atom pair
      */
-    void cal_HR_IJR(const int& iat1,
-                    const int& iat2,
-                    const int& T0,
-                    const Parallel_Orbitals* paraV,
-                    const std::vector<std::unordered_map<int, std::vector<std::complex<double>>>>& nlm1_all,
-                    const std::vector<std::unordered_map<int, std::vector<std::complex<double>>>>& nlm2_all,
-                    std::complex<double>* data_pointer,
-                    std::complex<double>** data_pointer_c);
+    void cal_HR_IJR(
+        const int& iat1,
+        const int& iat2,
+        const int& T0,
+        const Parallel_Orbitals* paraV,
+        const std::vector<
+            std::unordered_map<int, std::vector<std::complex<double>>>>&
+            nlm1_all,
+        const std::vector<
+            std::unordered_map<int, std::vector<std::complex<double>>>>&
+            nlm2_all,
+        std::complex<double>* data_pointer,
+        std::complex<double>** data_pointer_c);
 
     /// @brief exact the nearest neighbor atoms from all adjacent atoms
     std::vector<AdjacentAtomInfo> adjs_all;

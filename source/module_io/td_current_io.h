@@ -6,8 +6,7 @@
 #include "module_elecstate/module_dm/density_matrix.h"
 #include "module_psi/psi.h"
 
-namespace ModuleIO
-{
+namespace ModuleIO {
 #ifdef __LCAO
 /// @brief func to output current, only used in tddft
 void write_current(const int istep,

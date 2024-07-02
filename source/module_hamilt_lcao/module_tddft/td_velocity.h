@@ -6,8 +6,7 @@
 
 #include <map>
 // Class to store TDDFT velocity gague infos.
-class TD_Velocity
-{
+class TD_Velocity {
   public:
     TD_Velocity();
     ~TD_Velocity();
@@ -29,7 +28,8 @@ class TD_Velocity
     /// @brief switch to control the output of current
     static bool out_current;
 
-    /// @brief switch to control the format of the output current, in total or in each k-point
+    /// @brief switch to control the format of the output current, in total or
+    /// in each k-point
     static bool out_current_k;
 
     /// @brief switch to control the source of At
@@ -45,15 +45,19 @@ class TD_Velocity
                      const ModuleBase::Vector3<double>& At);
 
     // allocate memory for current term.
-    void initialize_current_term(const hamilt::HContainer<std::complex<double>>* HR, const Parallel_Orbitals* paraV);
+    void initialize_current_term(
+        const hamilt::HContainer<std::complex<double>>* HR,
+        const Parallel_Orbitals* paraV);
 
-    hamilt::HContainer<std::complex<double>>* get_current_term_pointer(const int& i) const
-    {
+    hamilt::HContainer<std::complex<double>>*
+        get_current_term_pointer(const int& i) const {
         return this->current_term[i];
     }
 
     // For TDDFT velocity gague, to fix the output of HR
-    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>> HR_sparse_td_vel[2];
+    std::map<Abfs::Vector3_Order<int>,
+             std::map<size_t, std::map<size_t, std::complex<double>>>>
+        HR_sparse_td_vel[2];
 
   private:
     /// @brief read At from output file
@@ -74,8 +78,10 @@ class TD_Velocity
     /// @brief destory HSR data stored
     void destroy_HS_R_td_sparse();
 
-    /// @brief part of Momentum operator, -i∇ - i[r,Vnl]. Used to calculate current.
-    std::vector<hamilt::HContainer<std::complex<double>>*> current_term = {nullptr, nullptr, nullptr};
+    /// @brief part of Momentum operator, -i∇ - i[r,Vnl]. Used to calculate
+    /// current.
+    std::vector<hamilt::HContainer<std::complex<double>>*> current_term
+        = {nullptr, nullptr, nullptr};
 };
 
 #endif

@@ -15,10 +15,8 @@
 // k is the index for the points in the first Brillouin zone
 //-----------------------------------------------------------
 
-namespace module_tddft
-{
-class Evolve_elec
-{
+namespace module_tddft {
+class Evolve_elec {
 
     friend class ELEC_scf;
     friend class ModuleESolver::ESolver_KS_LCAO<std::complex<double>, double>;
