@@ -14,23 +14,15 @@
 #include "prepare_unitcell.h"
 
 #ifdef __LCAO
-InfoNonlocal::InfoNonlocal()
-{
-}
-InfoNonlocal::~InfoNonlocal()
-{
-}
+InfoNonlocal::InfoNonlocal() {}
+InfoNonlocal::~InfoNonlocal() {}
 #endif
-Magnetism::Magnetism()
-{
+Magnetism::Magnetism() {
     this->tot_magnetization = 0.0;
     this->abs_magnetization = 0.0;
     this->start_magnetization = nullptr;
 }
-Magnetism::~Magnetism()
-{
-    delete[] this->start_magnetization;
-}
+Magnetism::~Magnetism() { delete[] this->start_magnetization; }
 
 /************************************************
  *  unit test of class UnitCell
@@ -39,14 +31,16 @@ Magnetism::~Magnetism()
 /**
  * - Tested Functions:
  *   - ReadCellPPWarning1
- *     - read_cell_pseudopots(): error when average the pseudopotential: error_ap
+ *     - read_cell_pseudopots(): error when average the pseudopotential:
+ * error_ap
  *   - ReadCellPPWarning2
  *     - read_cell_pseudopots(): Couldn't find pseudopotential file:: error == 1
  *   - ReadCellPPWarning3
  *     - read_cell_pseudopots(): Pseudopotential data do not match: error ==2
  *     - error==3 is currently difficult to reach in read_pseudo_vwr
  *   - ReadCellPPWarning4
- *     - read_cell_pseudopots(): dft_functional from INPUT does not match that in pseudopot file
+ *     - read_cell_pseudopots(): dft_functional from INPUT does not match that
+ * in pseudopot file
  *   - ReadCellPPWarning5
  *     - read_cell_pseudopots(): Unknown pseudopotential type
  *   - ReadCellPP
@@ -54,19 +48,24 @@ Magnetism::~Magnetism()
  *   - CalMeshx
  *     - cal_meshx(): calculate max mesh info from atomic pseudo potential file
  *   - CalNatomwfc1
- *     - cal_natomwfc(): calculate total number of atomic orbitals in pseudo potential file
+ *     - cal_natomwfc(): calculate total number of atomic orbitals in pseudo
+ * potential file
  *     - NSPIN != 4
- *     - this corresponds to number_of_wfc, PP_CHI in pp file, and atoms[it].ncpp.lchi[ncpp.nchi]
+ *     - this corresponds to number_of_wfc, PP_CHI in pp file, and
+ * atoms[it].ncpp.lchi[ncpp.nchi]
  *     - setup the total number of PAOs: pseudopotential atomic orbitals
  *   - CalNatomwfc2
- *     - cal_natomwfc(): calculate total number of atomic orbitals in pseudo potential file
+ *     - cal_natomwfc(): calculate total number of atomic orbitals in pseudo
+ * potential file
  *     - NSPIN ==4, has_so = false
  *   - CalNatomwfc3
- *     - cal_natomwfc(): calculate total number of atomic orbitals in pseudo potential file
+ *     - cal_natomwfc(): calculate total number of atomic orbitals in pseudo
+ * potential file
  *     - NSPIN ==4, has_so = true
  *   - CalNwfc1
  *     - cal_nwfc(): calcuate the total number of local basis: NSPIN != 4
- *     - this corresponds to number_of_proj, PP_BETA in pp file, and atoms[it].l_nchi[nw], nw from orb file
+ *     - this corresponds to number_of_proj, PP_BETA in pp file, and
+ * atoms[it].l_nchi[nw], nw from orb file
  *     - setup GlobalV::NLOCAL
  *     - interfaces initialed in this function:
  *       - itia2iat
@@ -81,29 +80,27 @@ Magnetism::~Magnetism()
  *   - ReadPseudoWarning1
  *     - read_pseudo(): All DFT functional must consistent.
  *   - ReadPseudoWarning2
- *     - read_pseudo(): number valence electrons > corresponding minimum possible of an element
+ *     - read_pseudo(): number valence electrons > corresponding minimum
+ * possible of an element
  *   - CalNelec: UnitCell::cal_nelec
  *     - calculate the total number of valence electrons from psp files
  */
 
 // mock function
 #ifdef __LCAO
-void LCAO_Orbitals::bcast_files(const int& ntype_in, const int& my_rank)
-{
+void LCAO_Orbitals::bcast_files(const int& ntype_in, const int& my_rank) {
     return;
 }
 #endif
 
-class UcellTest : public ::testing::Test
-{
+class UcellTest : public ::testing::Test {
   protected:
     UcellTestPrepare utp = UcellTestLib["C1H2-Read"];
     std::unique_ptr<UnitCell> ucell;
     std::ofstream ofs;
     std::string pp_dir;
     std::string output;
-    void SetUp()
-    {
+    void SetUp() {
         ofs.open("running.log");
         GlobalV::relax_new = utp.relax_new;
         GlobalV::global_out_dir = "./";
@@ -117,64 +114,68 @@ class UcellTest : public ::testing::Test
         GlobalV::NSPIN = 1;
         GlobalV::BASIS_TYPE = "pw";
     }
-    void TearDown()
-    {
-        ofs.close();
-    }
+    void TearDown() { ofs.close(); }
 };
 
 using UcellDeathTest = UcellTest;
 
-TEST_F(UcellDeathTest, ReadCellPPWarning1)
-{
+TEST_F(UcellDeathTest, ReadCellPPWarning1) {
     GlobalV::LSPINORB = true;
     ucell->pseudo_fn[1] = "H_sr.upf";
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(ucell->read_cell_pseudopots(pp_dir, ofs), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(ucell->read_cell_pseudopots(pp_dir, ofs),
+                ::testing::ExitedWithCode(0),
+                "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("error when average the pseudopotential."));
+    EXPECT_THAT(output,
+                testing::HasSubstr("error when average the pseudopotential."));
 }
 
-TEST_F(UcellDeathTest, ReadCellPPWarning2)
-{
+TEST_F(UcellDeathTest, ReadCellPPWarning2) {
     pp_dir = "./arbitrary/";
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(ucell->read_cell_pseudopots(pp_dir, ofs), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(ucell->read_cell_pseudopots(pp_dir, ofs),
+                ::testing::ExitedWithCode(0),
+                "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("Couldn't find pseudopotential file"));
+    EXPECT_THAT(output,
+                testing::HasSubstr("Couldn't find pseudopotential file"));
 }
 
-TEST_F(UcellDeathTest, ReadCellPPWarning3)
-{
+TEST_F(UcellDeathTest, ReadCellPPWarning3) {
     ucell->pseudo_type[0] = "upf";
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(ucell->read_cell_pseudopots(pp_dir, ofs), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(ucell->read_cell_pseudopots(pp_dir, ofs),
+                ::testing::ExitedWithCode(0),
+                "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("Pseudopotential data do not match."));
+    EXPECT_THAT(output,
+                testing::HasSubstr("Pseudopotential data do not match."));
 }
 
-TEST_F(UcellDeathTest, ReadCellPPWarning4)
-{
+TEST_F(UcellDeathTest, ReadCellPPWarning4) {
     GlobalV::DFT_FUNCTIONAL = "LDA";
     testing::internal::CaptureStdout();
     EXPECT_NO_THROW(ucell->read_cell_pseudopots(pp_dir, ofs));
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("dft_functional readin is: LDA"));
-    EXPECT_THAT(output, testing::HasSubstr("dft_functional in pseudopot file is: PBE"));
-    EXPECT_THAT(output, testing::HasSubstr("Please make sure this is what you need"));
+    EXPECT_THAT(output,
+                testing::HasSubstr("dft_functional in pseudopot file is: PBE"));
+    EXPECT_THAT(output,
+                testing::HasSubstr("Please make sure this is what you need"));
 }
 
-TEST_F(UcellDeathTest, ReadCellPPWarning5)
-{
+TEST_F(UcellDeathTest, ReadCellPPWarning5) {
     ucell->pseudo_type[0] = "upf0000";
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(ucell->read_cell_pseudopots(pp_dir, ofs), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(ucell->read_cell_pseudopots(pp_dir, ofs),
+                ::testing::ExitedWithCode(0),
+                "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("Unknown pseudopotential type."));
 }
 
-TEST_F(UcellTest, ReadCellPP)
-{
+TEST_F(UcellTest, ReadCellPP) {
     ucell->atoms[1].flag_empty_element = true;
     ucell->read_cell_pseudopots(pp_dir, ofs);
     EXPECT_EQ(ucell->atoms[0].ncpp.pp_type, "NC");
@@ -185,17 +186,20 @@ TEST_F(UcellTest, ReadCellPP)
     ofs.close();
     std::ifstream ifs;
     ifs.open("running.log");
-    std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-    EXPECT_THAT(str, testing::HasSubstr("Read in pseudopotential file is C.upf"));
+    std::string str((std::istreambuf_iterator<char>(ifs)),
+                    std::istreambuf_iterator<char>());
+    EXPECT_THAT(str,
+                testing::HasSubstr("Read in pseudopotential file is C.upf"));
     EXPECT_THAT(str, testing::HasSubstr("pseudopotential type = NC"));
-    EXPECT_THAT(str, testing::HasSubstr("exchange-correlation functional = PBE"));
+    EXPECT_THAT(str,
+                testing::HasSubstr("exchange-correlation functional = PBE"));
     EXPECT_THAT(str, testing::HasSubstr("valence electrons = 4"));
-    EXPECT_THAT(str, testing::HasSubstr("Read in pseudopotential file is H.upf"));
+    EXPECT_THAT(str,
+                testing::HasSubstr("Read in pseudopotential file is H.upf"));
     EXPECT_THAT(str, testing::HasSubstr("valence electrons = 0"));
 }
 
-TEST_F(UcellTest, CalMeshx)
-{
+TEST_F(UcellTest, CalMeshx) {
     ucell->read_cell_pseudopots(pp_dir, ofs);
     ucell->cal_meshx();
     EXPECT_EQ(ucell->atoms[0].ncpp.msh, 1247);
@@ -203,8 +207,7 @@ TEST_F(UcellTest, CalMeshx)
     EXPECT_EQ(ucell->meshx, 1247);
 }
 
-TEST_F(UcellTest, CalNatomwfc1)
-{
+TEST_F(UcellTest, CalNatomwfc1) {
     ucell->read_cell_pseudopots(pp_dir, ofs);
     EXPECT_FALSE(ucell->atoms[0].ncpp.has_so);
     EXPECT_FALSE(ucell->atoms[1].ncpp.has_so);
@@ -216,8 +219,7 @@ TEST_F(UcellTest, CalNatomwfc1)
     EXPECT_EQ(ucell->natomwfc, (1 + 3) * 1 + 1 * 2);
 }
 
-TEST_F(UcellTest, CalNatomwfc2)
-{
+TEST_F(UcellTest, CalNatomwfc2) {
     GlobalV::LSPINORB = false;
     GlobalV::NSPIN = 4;
     ucell->read_cell_pseudopots(pp_dir, ofs);
@@ -231,8 +233,7 @@ TEST_F(UcellTest, CalNatomwfc2)
     EXPECT_EQ(ucell->natomwfc, ((1 + 3) * 1 + 1 * 2) * 2);
 }
 
-TEST_F(UcellTest, CalNatomwfc3)
-{
+TEST_F(UcellTest, CalNatomwfc3) {
     GlobalV::LSPINORB = true;
     GlobalV::NSPIN = 4;
     ucell->read_cell_pseudopots(pp_dir, ofs);
@@ -243,11 +244,11 @@ TEST_F(UcellTest, CalNatomwfc3)
     EXPECT_EQ(ucell->atoms[1].ncpp.nchi, 1);
     EXPECT_EQ(ucell->atoms[0].na, 1);
     EXPECT_EQ(ucell->atoms[1].na, 2);
-    EXPECT_EQ(ucell->natomwfc, ((2 * 0 + 2) + (2 * 1 + 2) + (2 * 1)) * 1 + (2 * 0 + 2) * 2);
+    EXPECT_EQ(ucell->natomwfc,
+              ((2 * 0 + 2) + (2 * 1 + 2) + (2 * 1)) * 1 + (2 * 0 + 2) * 2);
 }
 
-TEST_F(UcellTest, CalNwfc1)
-{
+TEST_F(UcellTest, CalNwfc1) {
     ucell->read_cell_pseudopots(pp_dir, ofs);
     EXPECT_FALSE(ucell->atoms[0].ncpp.has_so);
     EXPECT_FALSE(ucell->atoms[1].ncpp.has_so);
@@ -311,8 +312,7 @@ TEST_F(UcellTest, CalNwfc1)
     EXPECT_EQ(ucell->iwt2iw[20], 2);
 }
 
-TEST_F(UcellTest, CalNwfc2)
-{
+TEST_F(UcellTest, CalNwfc2) {
     GlobalV::NSPIN = 4;
     GlobalV::BASIS_TYPE = "lcao";
     ucell->read_cell_pseudopots(pp_dir, ofs);
@@ -322,8 +322,7 @@ TEST_F(UcellTest, CalNwfc2)
     EXPECT_EQ(GlobalV::NLOCAL, 3 * 9 * 2);
 }
 
-TEST_F(UcellDeathTest, CheckStructure)
-{
+TEST_F(UcellDeathTest, CheckStructure) {
     ucell->read_cell_pseudopots(pp_dir, ofs);
     EXPECT_FALSE(ucell->atoms[0].ncpp.has_so);
     EXPECT_FALSE(ucell->atoms[1].ncpp.has_so);
@@ -332,11 +331,14 @@ TEST_F(UcellDeathTest, CheckStructure)
     double factor = 0.2;
     EXPECT_NO_THROW(Check_Atomic_Stru::check_atomic_stru(*ucell, factor));
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("WARNING: Some atoms are too close!!!"));
+    EXPECT_THAT(output,
+                testing::HasSubstr("WARNING: Some atoms are too close!!!"));
     // trial 2
     testing::internal::CaptureStdout();
     factor = 0.4;
-    EXPECT_EXIT(Check_Atomic_Stru::check_atomic_stru(*ucell, factor), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(Check_Atomic_Stru::check_atomic_stru(*ucell, factor),
+                ::testing::ExitedWithCode(0),
+                "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("The structure is unreasonable!"));
     // trial 3
@@ -347,18 +349,19 @@ TEST_F(UcellDeathTest, CheckStructure)
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(
         output,
-        testing::HasSubstr("Notice: symbol 'arbitrary' is not an element symbol!!!! set the covalent radius to be 0."));
+        testing::HasSubstr("Notice: symbol 'arbitrary' is not an element "
+                           "symbol!!!! set the covalent radius to be 0."));
     // trial 4
     ucell->atoms[0].label = "Fe1";
     testing::internal::CaptureStdout();
     factor = 0.2;
     EXPECT_NO_THROW(Check_Atomic_Stru::check_atomic_stru(*ucell, factor));
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("WARNING: Some atoms are too close!!!"));
+    EXPECT_THAT(output,
+                testing::HasSubstr("WARNING: Some atoms are too close!!!"));
 }
 
-TEST_F(UcellDeathTest, ReadPseudoWarning1)
-{
+TEST_F(UcellDeathTest, ReadPseudoWarning1) {
     GlobalV::global_pseudo_dir = pp_dir;
     GlobalV::out_element_info = 1;
     GlobalV::MIN_DIST_COEF = 0.2;
@@ -366,11 +369,11 @@ TEST_F(UcellDeathTest, ReadPseudoWarning1)
     testing::internal::CaptureStdout();
     EXPECT_EXIT(ucell->read_pseudo(ofs), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("All DFT functional must consistent."));
+    EXPECT_THAT(output,
+                testing::HasSubstr("All DFT functional must consistent."));
 }
 
-TEST_F(UcellDeathTest, ReadPseudoWarning2)
-{
+TEST_F(UcellDeathTest, ReadPseudoWarning2) {
     GlobalV::global_pseudo_dir = pp_dir;
     GlobalV::out_element_info = 1;
     GlobalV::MIN_DIST_COEF = 0.2;
@@ -380,11 +383,11 @@ TEST_F(UcellDeathTest, ReadPseudoWarning2)
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(
         output,
-        testing::HasSubstr("Warning: the number of valence electrons in pseudopotential > 3 for Al: [Ne] 3s2 3p1"));
+        testing::HasSubstr("Warning: the number of valence electrons in "
+                           "pseudopotential > 3 for Al: [Ne] 3s2 3p1"));
 }
 
-TEST_F(UcellTest, CalNelec)
-{
+TEST_F(UcellTest, CalNelec) {
     ucell->read_cell_pseudopots(pp_dir, ofs);
     EXPECT_EQ(4, ucell->atoms[0].ncpp.zv);
     EXPECT_EQ(1, ucell->atoms[1].ncpp.zv);
@@ -397,8 +400,7 @@ TEST_F(UcellTest, CalNelec)
 
 #ifdef __MPI
 #include "mpi.h"
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
     MPI_Init(&argc, &argv);
     testing::InitGoogleTest(&argc, argv);
 
