@@ -2,8 +2,7 @@
 #include "module_base/memory.h"
 #include "module_base/timer.h"
 
-void Gint::cpu_rho_interface(Gint_inout* inout)
-{
+void Gint::cpu_rho_interface(Gint_inout* inout) {
     ModuleBase::TITLE("Gint_interface", "cal_gint_rho");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_rho");
     const UnitCell& ucell = *this->ucell;
@@ -19,11 +18,9 @@ void Gint::cpu_rho_interface(Gint_inout* inout)
 #ifdef _OPENMP
 #pragma omp for
 #endif
-    for (int grid_index = 0; grid_index < this->nbxx; grid_index++)
-    {
+    for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
         const int na_grid = this->gridt->how_many_atoms[grid_index];
-        if (na_grid == 0)
-        {
+        if (na_grid == 0) {
             continue;
         }
         // int* vindex = Gint_Tools::get_vindex(ncyz, ibx, jby, kbz);
@@ -34,7 +31,13 @@ void Gint::cpu_rho_interface(Gint_inout* inout)
                                              this->nplane,
                                              this->gridt->start_ind[grid_index],
                                              ncyz);
-        this->gint_kernel_rho(na_grid, grid_index, delta_r, vindex, LD_pool, ucell, inout);
+        this->gint_kernel_rho(na_grid,
+                              grid_index,
+                              delta_r,
+                              vindex,
+                              LD_pool,
+                              ucell,
+                              inout);
         delete[] vindex;
     }
 
@@ -42,8 +45,7 @@ void Gint::cpu_rho_interface(Gint_inout* inout)
     ModuleBase::timer::tick("Gint_interface", "cal_gint_rho");
 }
 
-void Gint::cpu_tau_interface(Gint_inout* inout)
-{
+void Gint::cpu_tau_interface(Gint_inout* inout) {
     ModuleBase::TITLE("Gint_interface", "cal_gint_tau");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_tau");
     const UnitCell& ucell = *this->ucell;
@@ -58,11 +60,9 @@ void Gint::cpu_tau_interface(Gint_inout* inout)
 #ifdef _OPENMP
 #pragma omp for
 #endif
-    for (int grid_index = 0; grid_index < this->nbxx; grid_index++)
-    {
+    for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
         const int na_grid = this->gridt->how_many_atoms[grid_index];
-        if (na_grid == 0)
-        {
+        if (na_grid == 0) {
             continue;
         }
         // int* vindex = Gint_Tools::get_vindex(ncyz, ibx, jby, kbz);
@@ -73,7 +73,13 @@ void Gint::cpu_tau_interface(Gint_inout* inout)
                                              this->nplane,
                                              this->gridt->start_ind[grid_index],
                                              ncyz);
-        this->gint_kernel_tau(na_grid, grid_index, delta_r, vindex, LD_pool, inout, ucell);
+        this->gint_kernel_tau(na_grid,
+                              grid_index,
+                              delta_r,
+                              vindex,
+                              LD_pool,
+                              inout,
+                              ucell);
         delete[] vindex;
     }
     ModuleBase::TITLE("Gint_interface", "cal_gint_tau");

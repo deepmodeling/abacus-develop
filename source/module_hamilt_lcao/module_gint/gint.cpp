@@ -19,13 +19,11 @@
 #include <mkl_service.h>
 #endif
 
-Gint::~Gint()
-{
+Gint::~Gint() {
 
     delete this->hRGint;
     delete this->hRGintCd;
-    for (int is = 0; is < this->DMRGint.size(); is++)
-    {
+    for (int is = 0; is < this->DMRGint.size(); is++) {
         delete this->DMRGint[is];
     }
 #ifdef __MPI
@@ -33,8 +31,7 @@ Gint::~Gint()
 #endif
 }
 
-void Gint::cal_gint(Gint_inout* inout)
-{
+void Gint::cal_gint(Gint_inout* inout) {
     ModuleBase::timer::tick("Gint_interface", "cal_gint");
     const UnitCell& ucell = *this->ucell;
     const int max_size = this->gridt->max_atom;
@@ -42,67 +39,47 @@ void Gint::cal_gint(Gint_inout* inout)
     const int lgd = this->gridt->lgd;
     // In multi-process environments,
     // some processes may not be allocated any data.
-    if(this->gridt->get_init_malloced() == false)
-    {
-        ModuleBase::WARNING_QUIT("Gint_interface::cal_gint","gridt has not been allocated yet!");
+    if (this->gridt->get_init_malloced() == false) {
+        ModuleBase::WARNING_QUIT("Gint_interface::cal_gint",
+                                 "gridt has not been allocated yet!");
     }
-    if (max_size > 0)
-    {
+    if (max_size > 0) {
 #ifdef __CUDA
         if (GlobalV::device_flag == "gpu" && GlobalV::GAMMA_ONLY_LOCAL
-            && (inout->job == Gint_Tools::job_type::vlocal || inout->job == Gint_Tools::job_type::rho
-                || inout->job == Gint_Tools::job_type::force))
-        {
-            if (inout->job == Gint_Tools::job_type::vlocal)
-            {
+            && (inout->job == Gint_Tools::job_type::vlocal
+                || inout->job == Gint_Tools::job_type::rho
+                || inout->job == Gint_Tools::job_type::force)) {
+            if (inout->job == Gint_Tools::job_type::vlocal) {
                 gamma_gpu_vlocal_interface(inout);
-            }
-            else if (inout->job == Gint_Tools::job_type::rho)
-            {
+            } else if (inout->job == Gint_Tools::job_type::rho) {
                 gamma_gpu_rho_interface(inout);
-            }
-            else if (inout->job == Gint_Tools::job_type::force)
-            {
+            } else if (inout->job == Gint_Tools::job_type::force) {
                 gamma_gpu_force_interface(inout);
             }
-        }
-        else
+        } else
 #endif
         {
 #ifdef __MKL
             const int mkl_threads = mkl_get_max_threads();
             mkl_set_num_threads(mkl_threads);
 #endif
-        {
-            if (inout->job == Gint_Tools::job_type::vlocal)
             {
-                cpu_vlocal_interface(inout);
+                if (inout->job == Gint_Tools::job_type::vlocal) {
+                    cpu_vlocal_interface(inout);
+                } else if (inout->job == Gint_Tools::job_type::dvlocal) {
+                    cpu_dvlocal_interface(inout);
+                } else if (inout->job == Gint_Tools::job_type::vlocal_meta) {
+                    cpu_vlocal_meta_interface(inout);
+                } else if (inout->job == Gint_Tools::job_type::rho) {
+                    cpu_rho_interface(inout);
+                } else if (inout->job == Gint_Tools::job_type::tau) {
+                    cpu_tau_interface(inout);
+                } else if (inout->job == Gint_Tools::job_type::force) {
+                    cpu_force_interface(inout);
+                } else if (inout->job == Gint_Tools::job_type::force_meta) {
+                    cpu_force_meta_interface(inout);
+                }
             }
-            else if (inout->job == Gint_Tools::job_type::dvlocal)
-            {
-                cpu_dvlocal_interface(inout);
-            }
-            else if (inout->job == Gint_Tools::job_type::vlocal_meta)
-            {
-                cpu_vlocal_meta_interface(inout);
-            }
-            else if (inout->job == Gint_Tools::job_type::rho)
-            {
-                cpu_rho_interface(inout);
-            }
-            else if (inout->job == Gint_Tools::job_type::tau)
-            {
-                cpu_tau_interface(inout);
-            }
-            else if (inout->job == Gint_Tools::job_type::force)
-            {
-                cpu_force_interface(inout);
-            }
-            else if (inout->job == Gint_Tools::job_type::force_meta)
-            {
-                cpu_force_meta_interface(inout);
-            }
-        }
         }
         ModuleBase::timer::tick("Gint_interface", "cal_gint");
 
@@ -124,8 +101,7 @@ void Gint::prep_grid(const Grid_Technique& gt,
                      const int& nplane_in,
                      const int& startz_current_in,
                      const UnitCell* ucell_in,
-                     const LCAO_Orbitals* orb_in)
-{
+                     const LCAO_Orbitals* orb_in) {
     ModuleBase::TITLE(GlobalV::ofs_running, "Gint_k", "prep_grid");
 
     this->gridt = &gt;
@@ -160,43 +136,34 @@ void Gint::prep_grid(const Grid_Technique& gt,
     return;
 }
 
-void Gint::initialize_pvpR(const UnitCell& ucell_in, Grid_Driver* gd)
-{
+void Gint::initialize_pvpR(const UnitCell& ucell_in, Grid_Driver* gd) {
     ModuleBase::TITLE("Gint", "initialize_pvpR");
 
     int npol = 1;
     // there is the only resize code of DMRGint
-    if (this->DMRGint.size() == 0)
-    {
+    if (this->DMRGint.size() == 0) {
         this->DMRGint.resize(GlobalV::NSPIN);
     }
-    if (GlobalV::NSPIN != 4)
-    {
-        if (this->hRGint != nullptr)
-        {
+    if (GlobalV::NSPIN != 4) {
+        if (this->hRGint != nullptr) {
             delete this->hRGint;
         }
         this->hRGint = new hamilt::HContainer<double>(ucell_in.nat);
-    }
-    else
-    {
+    } else {
         npol = 2;
-        if (this->hRGintCd != nullptr)
-        {
+        if (this->hRGintCd != nullptr) {
             delete this->hRGintCd;
         }
-        this->hRGintCd = new hamilt::HContainer<std::complex<double>>(ucell_in.nat);
-        for (int is = 0; is < GlobalV::NSPIN; is++)
-        {
-            if (this->DMRGint[is] != nullptr)
-            {
+        this->hRGintCd
+            = new hamilt::HContainer<std::complex<double>>(ucell_in.nat);
+        for (int is = 0; is < GlobalV::NSPIN; is++) {
+            if (this->DMRGint[is] != nullptr) {
                 delete this->DMRGint[is];
             }
             this->DMRGint[is] = new hamilt::HContainer<double>(ucell_in.nat);
         }
 #ifdef __MPI
-        if (this->DMRGint_full != nullptr)
-        {
+        if (this->DMRGint_full != nullptr) {
             delete this->DMRGint_full;
         }
         this->DMRGint_full = new hamilt::HContainer<double>(ucell_in.nat);
@@ -207,32 +174,27 @@ void Gint::initialize_pvpR(const UnitCell& ucell_in, Grid_Driver* gd)
     // same, name as orb_index
     std::vector<int> orb_index(ucell_in.nat + 1);
     orb_index[0] = 0;
-    for (int i = 1; i < orb_index.size(); i++)
-    {
+    for (int i = 1; i < orb_index.size(); i++) {
         int type = ucell_in.iat2it[i - 1];
         orb_index[i] = orb_index[i - 1] + ucell_in.atoms[type].nw;
     }
     std::vector<int> orb_index_npol;
-    if (npol == 2)
-    {
+    if (npol == 2) {
         orb_index_npol.resize(ucell_in.nat + 1);
         orb_index_npol[0] = 0;
-        for (int i = 1; i < orb_index_npol.size(); i++)
-        {
+        for (int i = 1; i < orb_index_npol.size(); i++) {
             int type = ucell_in.iat2it[i - 1];
-            orb_index_npol[i] = orb_index_npol[i - 1] + ucell_in.atoms[type].nw * npol;
+            orb_index_npol[i]
+                = orb_index_npol[i - 1] + ucell_in.atoms[type].nw * npol;
         }
     }
 
-    if (GlobalV::GAMMA_ONLY_LOCAL && GlobalV::NSPIN != 4)
-    {
+    if (GlobalV::GAMMA_ONLY_LOCAL && GlobalV::NSPIN != 4) {
         this->hRGint->fix_gamma();
     }
-    for (int T1 = 0; T1 < ucell_in.ntype; ++T1)
-    {
+    for (int T1 = 0; T1 < ucell_in.ntype; ++T1) {
         const Atom* atom1 = &(ucell_in.atoms[T1]);
-        for (int I1 = 0; I1 < atom1->na; ++I1)
-        {
+        for (int I1 = 0; I1 < atom1->na; ++I1) {
             auto& tau1 = atom1->tau[I1];
 
             gd->Find_atom(ucell_in, tau1, T1, I1);
@@ -243,82 +205,83 @@ void Gint::initialize_pvpR(const UnitCell& ucell_in, Grid_Driver* gd)
             // we only need to consider <phi_i | phi_j>,
 
             // whether this atom is in this processor.
-            if (this->gridt->in_this_processor[iat1])
-            {
-                for (int ad = 0; ad < gd->getAdjacentNum() + 1; ++ad)
-                {
+            if (this->gridt->in_this_processor[iat1]) {
+                for (int ad = 0; ad < gd->getAdjacentNum() + 1; ++ad) {
                     const int T2 = gd->getType(ad);
                     const int I2 = gd->getNatom(ad);
                     const int iat2 = ucell_in.itia2iat(T2, I2);
                     const Atom* atom2 = &(ucell_in.atoms[T2]);
 
                     // NOTE: hRGint wil save total number of atom pairs,
-                    // if only upper triangle is saved, the lower triangle will be lost in 2D-block parallelization.
-                    // if the adjacent atom is in this processor.
-                    if (this->gridt->in_this_processor[iat2])
-                    {
-                        ModuleBase::Vector3<double> dtau = gd->getAdjacentTau(ad) - tau1;
+                    // if only upper triangle is saved, the lower triangle will
+                    // be lost in 2D-block parallelization. if the adjacent atom
+                    // is in this processor.
+                    if (this->gridt->in_this_processor[iat2]) {
+                        ModuleBase::Vector3<double> dtau
+                            = gd->getAdjacentTau(ad) - tau1;
                         double distance = dtau.norm() * ucell_in.lat0;
-                        double rcut = this->gridt->rcuts[T1] + this->gridt->rcuts[T2];
+                        double rcut
+                            = this->gridt->rcuts[T1] + this->gridt->rcuts[T2];
 
                         // if(distance < rcut)
                         //  mohan reset this 2013-07-02 in Princeton
-                        //  we should make absolutely sure that the distance is smaller than rcuts[it]
-                        //  this should be consistant with LCAO_nnr::cal_nnrg function
-                        //  typical example : 7 Bohr cutoff Si orbital in 14 Bohr length of cell.
+                        //  we should make absolutely sure that the distance is
+                        //  smaller than rcuts[it] this should be consistant
+                        //  with LCAO_nnr::cal_nnrg function typical example : 7
+                        //  Bohr cutoff Si orbital in 14 Bohr length of cell.
                         //  distance = 7.0000000000000000
                         //  rcuts[it] = 7.0000000000000008
-                        if (distance < rcut - 1.0e-15)
-                        {
+                        if (distance < rcut - 1.0e-15) {
                             // calculate R index
                             auto& R_index = gd->getBox(ad);
                             // insert this atom-pair into this->hRGint
-                            if (npol == 1)
-                            {
-                                hamilt::AtomPair<double> tmp_atom_pair(iat1,
-                                                                       iat2,
-                                                                       R_index.x,
-                                                                       R_index.y,
-                                                                       R_index.z,
-                                                                       orb_index.data(),
-                                                                       orb_index.data(),
-                                                                       ucell_in.nat);
+                            if (npol == 1) {
+                                hamilt::AtomPair<double> tmp_atom_pair(
+                                    iat1,
+                                    iat2,
+                                    R_index.x,
+                                    R_index.y,
+                                    R_index.z,
+                                    orb_index.data(),
+                                    orb_index.data(),
+                                    ucell_in.nat);
                                 this->hRGint->insert_pair(tmp_atom_pair);
-                            }
-                            else
-                            {
+                            } else {
                                 // HR is complex and size is nw * npol
-                                hamilt::AtomPair<std::complex<double>> tmp_atom_pair(iat1,
-                                                                                     iat2,
-                                                                                     R_index.x,
-                                                                                     R_index.y,
-                                                                                     R_index.z,
-                                                                                     orb_index_npol.data(),
-                                                                                     orb_index_npol.data(),
-                                                                                     ucell_in.nat);
+                                hamilt::AtomPair<std::complex<double>>
+                                    tmp_atom_pair(iat1,
+                                                  iat2,
+                                                  R_index.x,
+                                                  R_index.y,
+                                                  R_index.z,
+                                                  orb_index_npol.data(),
+                                                  orb_index_npol.data(),
+                                                  ucell_in.nat);
                                 this->hRGintCd->insert_pair(tmp_atom_pair);
                                 // DMR is double now and size is nw
-                                hamilt::AtomPair<double> tmp_dmR(iat1,
-                                                                 iat2,
-                                                                 R_index.x,
-                                                                 R_index.y,
-                                                                 R_index.z,
-                                                                 orb_index.data(),
-                                                                 orb_index.data(),
-                                                                 ucell_in.nat);
-                                for (int is = 0; is < this->DMRGint.size(); is++)
-                                {
+                                hamilt::AtomPair<double> tmp_dmR(
+                                    iat1,
+                                    iat2,
+                                    R_index.x,
+                                    R_index.y,
+                                    R_index.z,
+                                    orb_index.data(),
+                                    orb_index.data(),
+                                    ucell_in.nat);
+                                for (int is = 0; is < this->DMRGint.size();
+                                     is++) {
                                     this->DMRGint[is]->insert_pair(tmp_dmR);
                                 }
 #ifdef __MPI
-                                hamilt::AtomPair<double> tmp_dmR_full(iat1,
-                                                                      iat2,
-                                                                      R_index.x,
-                                                                      R_index.y,
-                                                                      R_index.z,
-                                                                      orb_index_npol.data(),
-                                                                      orb_index_npol.data(),
-                                                                      ucell_in.nat);
+                                hamilt::AtomPair<double> tmp_dmR_full(
+                                    iat1,
+                                    iat2,
+                                    R_index.x,
+                                    R_index.y,
+                                    R_index.z,
+                                    orb_index_npol.data(),
+                                    orb_index_npol.data(),
+                                    ucell_in.nat);
                                 // tmp DMR for transfer
                                 this->DMRGint_full->insert_pair(tmp_dmR_full);
 #endif
@@ -329,52 +292,51 @@ void Gint::initialize_pvpR(const UnitCell& ucell_in, Grid_Driver* gd)
             }         // end iat
         }             // end I1
     }                 // end T1
-    if (npol == 1)
-    {
+    if (npol == 1) {
         this->hRGint->allocate(nullptr, false);
-        ModuleBase::Memory::record("Gint::hRGint", this->hRGint->get_memory_size());
+        ModuleBase::Memory::record("Gint::hRGint",
+                                   this->hRGint->get_memory_size());
         // initialize DMRGint with hRGint when NSPIN != 4
-        for (int is = 0; is < this->DMRGint.size(); is++)
-        {
-            if (this->DMRGint[is] != nullptr)
-            {
+        for (int is = 0; is < this->DMRGint.size(); is++) {
+            if (this->DMRGint[is] != nullptr) {
                 delete this->DMRGint[is];
             }
             this->DMRGint[is] = new hamilt::HContainer<double>(*this->hRGint);
         }
-        ModuleBase::Memory::record("Gint::DMRGint", this->DMRGint[0]->get_memory_size() * this->DMRGint.size());
-    }
-    else
-    {
+        ModuleBase::Memory::record("Gint::DMRGint",
+                                   this->DMRGint[0]->get_memory_size()
+                                       * this->DMRGint.size());
+    } else {
         this->hRGintCd->allocate(nullptr, 0);
-        ModuleBase::Memory::record("Gint::hRGintCd", this->hRGintCd->get_memory_size());
-        for (int is = 0; is < this->DMRGint.size(); is++)
-        {
+        ModuleBase::Memory::record("Gint::hRGintCd",
+                                   this->hRGintCd->get_memory_size());
+        for (int is = 0; is < this->DMRGint.size(); is++) {
             this->DMRGint[is]->allocate(nullptr, false);
         }
-        ModuleBase::Memory::record("Gint::DMRGint", this->DMRGint[0]->get_memory_size() * this->DMRGint.size());
+        ModuleBase::Memory::record("Gint::DMRGint",
+                                   this->DMRGint[0]->get_memory_size()
+                                       * this->DMRGint.size());
 #ifdef __MPI
         this->DMRGint_full->allocate(nullptr, false);
-        ModuleBase::Memory::record("Gint::DMRGint_full", this->DMRGint_full->get_memory_size());
+        ModuleBase::Memory::record("Gint::DMRGint_full",
+                                   this->DMRGint_full->get_memory_size());
 #endif
     }
 }
 
-void Gint::transfer_DM2DtoGrid(std::vector<hamilt::HContainer<double>*> DM2D)
-{
+void Gint::transfer_DM2DtoGrid(std::vector<hamilt::HContainer<double>*> DM2D) {
     ModuleBase::TITLE("Gint", "transfer_DMR");
 
     // To check whether input parameter DM2D has been initialized
 #ifdef __DEBUG
     assert(!DM2D.empty()
-           && "Input parameter DM2D has not been initialized while calling function transfer_DM2DtoGrid!");
+           && "Input parameter DM2D has not been initialized while calling "
+              "function transfer_DM2DtoGrid!");
 #endif
 
     ModuleBase::timer::tick("Gint", "transfer_DMR");
-    if (GlobalV::NSPIN != 4)
-    {
-        for (int is = 0; is < this->DMRGint.size(); is++)
-        {
+    if (GlobalV::NSPIN != 4) {
+        for (int is = 0; is < this->DMRGint.size(); is++) {
 #ifdef __MPI
             hamilt::transferParallels2Serials(*DM2D[is], DMRGint[is]);
 #else
@@ -382,8 +344,7 @@ void Gint::transfer_DM2DtoGrid(std::vector<hamilt::HContainer<double>*> DM2D)
             this->DMRGint[is]->add(*DM2D[is]);
 #endif
         }
-    }
-    else // NSPIN=4 case
+    } else // NSPIN=4 case
     {
 #ifdef __MPI
         hamilt::transferParallels2Serials(*DM2D[0], this->DMRGint_full);
@@ -391,29 +352,25 @@ void Gint::transfer_DM2DtoGrid(std::vector<hamilt::HContainer<double>*> DM2D)
         this->DMRGint_full = DM2D[0];
 #endif
         std::vector<double*> tmp_pointer(4, nullptr);
-        for (int iap = 0; iap < this->DMRGint_full->size_atom_pairs(); ++iap)
-        {
+        for (int iap = 0; iap < this->DMRGint_full->size_atom_pairs(); ++iap) {
             auto& ap = this->DMRGint_full->get_atom_pair(iap);
             int iat1 = ap.get_atom_i();
             int iat2 = ap.get_atom_j();
-            for (int ir = 0; ir < ap.get_R_size(); ++ir)
-            {
+            for (int ir = 0; ir < ap.get_R_size(); ++ir) {
                 const ModuleBase::Vector3<int> r_index = ap.get_R_index(ir);
-                for (int is = 0; is < 4; is++)
-                {
-                    tmp_pointer[is] = this->DMRGint[is]->find_matrix(iat1, iat2, r_index)->get_pointer();
+                for (int is = 0; is < 4; is++) {
+                    tmp_pointer[is] = this->DMRGint[is]
+                                          ->find_matrix(iat1, iat2, r_index)
+                                          ->get_pointer();
                 }
                 double* data_full = ap.get_pointer(ir);
-                for (int irow = 0; irow < ap.get_row_size(); irow += 2)
-                {
-                    for (int icol = 0; icol < ap.get_col_size(); icol += 2)
-                    {
+                for (int irow = 0; irow < ap.get_row_size(); irow += 2) {
+                    for (int icol = 0; icol < ap.get_col_size(); icol += 2) {
                         *(tmp_pointer[0])++ = data_full[icol];
                         *(tmp_pointer[1])++ = data_full[icol + 1];
                     }
                     data_full += ap.get_col_size();
-                    for (int icol = 0; icol < ap.get_col_size(); icol += 2)
-                    {
+                    for (int icol = 0; icol < ap.get_col_size(); icol += 2) {
                         *(tmp_pointer[2])++ = data_full[icol];
                         *(tmp_pointer[3])++ = data_full[icol + 1];
                     }
