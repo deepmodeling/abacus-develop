@@ -1,8 +1,7 @@
 #ifndef TDEKINETIC_H
 #define TDEKINETIC_H
+#include "module_base/sph_bessel_recursive.h"
 #include "module_base/timer.h"
-#include "module_basis/module_ao/ORB_gaunt_table.h"
-#include "module_basis/module_ao/ORB_table_phi.h"
 #include "module_basis/module_nao/two_center_integrator.h"
 #include "module_cell/klist.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
@@ -80,7 +79,7 @@ class TDEkinetic<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      * nearest neighbor atoms don't need to be calculated again
      * loop the atom-pairs in HR and calculate the ekinetic matrix
      */
-    void calculate_HR();
+    void calculate_HR(void);
     virtual void set_HR_fixed(void*) override;
 
     TD_Velocity td_velocity;
@@ -101,6 +100,7 @@ class TDEkinetic<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     void td_ekinetic_grad(std::complex<double>* Hloc, int nnr, ModuleBase::Vector3<double> grad_overlap);
 
     const TwoCenterIntegrator* intor_ = nullptr;
+
 
     /// @brief Store the vector potential for td_ekinetic term
     ModuleBase::Vector3<double> cart_At;

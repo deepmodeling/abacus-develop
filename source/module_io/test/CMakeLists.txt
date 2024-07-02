@@ -167,6 +167,7 @@ AddTest(
   ../../module_cell/atom_spec.cpp
   ../../module_cell/parallel_kpoints.cpp
   ../../module_cell/test/support/mock_unitcell.cpp
+  ../../module_hamilt_lcao/hamilt_lcaodft/center2_orb.cpp
 )
 endif()
 
@@ -184,7 +185,7 @@ add_test(NAME read_wfc_pw_test_parallel
 AddTest(
   TARGET numerical_basis_test
   LIBS base ${math_libs} device numerical_atomic_orbitals container orb
-  SOURCES numerical_basis_test.cpp ../numerical_basis_jyjy.cpp
+  SOURCES numerical_basis_test.cpp ../numerical_basis_jyjy.cpp ../../module_hamilt_lcao/hamilt_lcaodft/center2_orb.cpp
 )
 
 

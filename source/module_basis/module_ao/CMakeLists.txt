@@ -6,11 +6,9 @@ if(ENABLE_LCAO)
       ORB_atomic_lm.cpp
       ORB_control.cpp
       ORB_gaunt_table.cpp
-      ORB_gen_tables.cpp
       ORB_nonlocal.cpp
       ORB_nonlocal_lm.cpp
       ORB_read.cpp
-      ORB_table_phi.cpp
       parallel_2d.cpp
       parallel_orbitals.cpp
   )

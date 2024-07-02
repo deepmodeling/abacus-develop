@@ -13,35 +13,33 @@ void Matrix_Orbs22::init(const int mode, const double kmesh_times, const double 
 {
     ModuleBase::TITLE("Matrix_Orbs22", "init");
     ModuleBase::timer::tick("Matrix_Orbs22", "init");
-    //=========================================
-    // (1) MOT: make overlap table.
-    //=========================================
-    this->MOT.allocate(
-        GlobalC::ORB.get_ntype(),                                               // number of atom types
-        std::max(GlobalC::ORB.get_lmax(), GlobalC::exx_info.info_ri.abfs_Lmax), // max L used to calculate overlap
-        static_cast<int>(GlobalC::ORB.get_kmesh() * kmesh_times) | 1,           // kpoints, for integration in k space
-        GlobalC::ORB.get_Rmax() * rmesh_times,                                  // max value of radial table
-        GlobalC::ORB.get_dR(),                                                  // delta R, for making radial table
-        //		GlobalC::ORB.get_dk() / kmesh_times);				// delta k, for integration in k space
-        GlobalC::ORB.get_dk()); // Peize Lin change 2017-04-16
     int Lmax_used, Lmax;
-    ORB_table_phi::init_Table_Spherical_Bessel(4,
-                                               mode,
-                                               Lmax_used,
-                                               Lmax,
-                                               GlobalC::exx_info.info_ri.abfs_Lmax,
-                                               GlobalC::ORB,
-                                               GlobalC::ucell.infoNL.Beta,
-                                               MOT.pSB,
-                                               kmesh_times,
-                                               rmesh_times);
-    //	this->MOT.init_OV_Tpair();							// for this->MOT.OV_L2plus1
-    //	this->MOT.Destroy_Table_Spherical_Bessel (Lmax_used);				// why?
 
-    //=========================================
-    // (2) init Ylm Coef
-    //=========================================
-    ModuleBase::Ylm::set_coefficients();
+    const int ntype = GlobalC::ORB.get_ntype();
+    int lmax_orb = -1, lmax_beta = -1;
+    for (int it = 0; it < ntype; it++)
+    {
+        lmax_orb = std::max(lmax_orb, GlobalC::ORB.Phi[it].getLmax());
+        lmax_beta = std::max(lmax_beta, GlobalC::ucell.infoNL.Beta[it].getLmax());
+    }
+    const double dr = GlobalC::ORB.get_dR();
+    const double dk = GlobalC::ORB.get_dk();
+    const int kmesh = GlobalC::ORB.get_kmesh() * kmesh_times + 1;
+    int Rmesh = static_cast<int>(GlobalC::ORB.get_Rmax() * rmesh_times / dr) + 4;
+    Rmesh += 1 - Rmesh % 2;
+
+    Center2_Orb::init_Table_Spherical_Bessel(4,
+                                             mode,
+                                             Lmax_used,
+                                             Lmax,
+                                             GlobalC::exx_info.info_ri.abfs_Lmax,
+                                             lmax_orb,
+                                             lmax_beta,
+                                             dr,
+                                             dk,
+                                             kmesh,
+                                             Rmesh,
+                                             psb_);
 
     //=========================================
     // (3) make Gaunt coefficients table
@@ -78,7 +76,7 @@ void Matrix_Orbs22::init_radial(const std::vector<std::vector<std::vector<Numeri
                                                                                   orb_A2[TA][LA2][NA2],
                                                                                   orb_B1[TB][LB1][NB1],
                                                                                   orb_B2[TB][LB2][NB2],
-                                                                                  MOT.pSB,
+                                                                                  psb_,
                                                                                   this->MGT)));
     ModuleBase::timer::tick("Matrix_Orbs22", "init_radial");
 }
@@ -108,7 +106,7 @@ void Matrix_Orbs22::init_radial(const LCAO_Orbitals& orb_A1,
                                                                                   orb_A2.Phi[TA].PhiLN(LA2, NA2),
                                                                                   orb_B1.Phi[TB].PhiLN(LB1, NB1),
                                                                                   orb_B2.Phi[TB].PhiLN(LB2, NB2),
-                                                                                  MOT.pSB,
+                                                                                  psb_,
                                                                                   this->MGT)));
     ModuleBase::timer::tick("Matrix_Orbs22", "init_radial");
 }
@@ -154,7 +152,7 @@ void Matrix_Orbs22::init_radial_table(const std::map<size_t, std::map<size_t, st
                 std::set<size_t> radials;
                 for (const double& R: RsB.second)
                 {
-                    const double position = R * GlobalC::ucell.lat0 / this->MOT.dr;
+                    const double position = R * GlobalC::ucell.lat0 / lcao_dr_;
                     const size_t iq = static_cast<size_t>(position);
                     for (size_t i = 0; i != 4; ++i)
                         radials.insert(iq + i);

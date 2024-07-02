@@ -22,14 +22,31 @@ void cal_r_overlap_R::initialize_orb_table()
     exx_lmax = GlobalC::exx_info.info_ri.abfs_Lmax;
 #endif
 
-    ORB_table_phi::init_Table_Spherical_Bessel(2,
-                                               3,
-                                               Lmax_used,
-                                               Lmax,
-                                               exx_lmax,
-                                               GlobalC::ORB,
-                                               GlobalC::ucell.infoNL.Beta,
-                                               psb_);
+    const int ntype = GlobalC::ORB.get_ntype();
+    int lmax_orb = -1, lmax_beta = -1;
+    for (int it = 0; it < ntype; it++)
+    {
+        lmax_orb = std::max(lmax_orb, GlobalC::ORB.Phi[it].getLmax());
+        lmax_beta = std::max(lmax_beta, GlobalC::ucell.infoNL.Beta[it].getLmax());
+    }
+    const double dr = GlobalC::ORB.get_dR();
+    const double dk = GlobalC::ORB.get_dk();
+    const int kmesh = GlobalC::ORB.get_kmesh() * 4 + 1;
+    int Rmesh = static_cast<int>(GlobalC::ORB.get_Rmax() / dr) + 4;
+    Rmesh += 1 - Rmesh % 2;
+
+    Center2_Orb::init_Table_Spherical_Bessel(2,
+                                             3,
+                                             Lmax_used,
+                                             Lmax,
+                                             exx_lmax,
+                                             lmax_orb,
+                                             lmax_beta,
+                                             dr,
+                                             dk,
+                                             kmesh,
+                                             Rmesh,
+                                             psb_);
     ModuleBase::Ylm::set_coefficients();
     MGT.init_Gaunt_CH(Lmax);
     MGT.init_Gaunt(Lmax);
