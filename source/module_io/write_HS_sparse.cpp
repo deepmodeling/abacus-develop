@@ -20,8 +20,8 @@ void ModuleIO::save_HSR_sparse(const int& istep,
 
     auto& all_R_coor_ptr = lm.all_R_coor;
     auto& output_R_coor_ptr = lm.output_R_coor;
-    auto& HR_sparse_ptr = lm.HR_sparse;
-    auto& SR_sparse_ptr = lm.SR_sparse;
+    auto& HR_sparse_ptr = HS_Arrays.HR_sparse;
+    auto& SR_sparse_ptr = HS_Arrays.SR_sparse;
     auto& HR_soc_sparse_ptr = HS_Arrays.HR_soc_sparse;
     auto& SR_soc_sparse_ptr = HS_Arrays.SR_soc_sparse;
 

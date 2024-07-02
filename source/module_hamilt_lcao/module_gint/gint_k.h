@@ -81,18 +81,6 @@ class Gint_k : public Gint
                    UnitCell& ucell);
 
     //------------------------------------------------------
-    // in gint_k_sparse.cpp
-    //------------------------------------------------------
-    // related to sparse matrix
-    // jingan add 2021-6-4, modify 2021-12-2
-    void distribute_pvpR_sparseMatrix(
-        const int current_spin,
-        const double& sparse_threshold,
-        const std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>>& pvpR_sparseMatrix,
-        LCAO_Matrix* LM,
-        Parallel_Orbitals* pv);
-
-    //------------------------------------------------------
     // in gint_k_sparse1.cpp
     //------------------------------------------------------
     // similar to the above 3, just for the derivative

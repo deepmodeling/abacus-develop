@@ -77,9 +77,6 @@ class LCAO_Matrix
     // jingan add 2021-6-4, modify 2021-12-2
     // Sparse form of HR and SR, the format is [R_direct_coor][orbit_row][orbit_col]
 
-    // For HR_sparse[2], when nspin=1, only 0 is valid, when nspin=2, 0 means spin up, 1 means spin down
-    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> HR_sparse[2];
-    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> SR_sparse;
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> TR_sparse;
 
     // Record all R direct coordinate information, even if HR or SR is a zero matrix

@@ -105,7 +105,7 @@ void sparse_format::cal_HR_exx(
                         {
                             if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 2)
                             {
-                                auto& HR_sparse_ptr = lm.HR_sparse[current_spin][R][iwt0];
+                                auto& HR_sparse_ptr = HS_Arrays.HR_sparse[current_spin][R][iwt0];
                                 double& HR_sparse = HR_sparse_ptr[iwt1];
                                 HR_sparse += RI::Global_Func::convert<double>(frac * Hexx(iw0, iw1));
                                 if (std::abs(HR_sparse) <= sparse_threshold)

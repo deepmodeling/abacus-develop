@@ -334,9 +334,9 @@ void LCAO_Matrix::destroy_HS_R_sparse(LCAO_HS_Arrays& HS_Arrays)
         std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> empty_HR_sparse_up;
         std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> empty_HR_sparse_down;
         std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> empty_SR_sparse;
-        HR_sparse[0].swap(empty_HR_sparse_up);
-        HR_sparse[1].swap(empty_HR_sparse_down);
-        SR_sparse.swap(empty_SR_sparse);
+        HS_Arrays.HR_sparse[0].swap(empty_HR_sparse_up);
+        HS_Arrays.HR_sparse[1].swap(empty_HR_sparse_down);
+        HS_Arrays.SR_sparse.swap(empty_SR_sparse);
     }
     else
     {

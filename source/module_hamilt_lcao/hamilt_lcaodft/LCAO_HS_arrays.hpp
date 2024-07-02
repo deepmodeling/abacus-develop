@@ -23,6 +23,10 @@ class LCAO_HS_Arrays
     //------------------------------
     std::vector<double> Hloc_fixedR;
 
+    // For HR_sparse[2], when nspin=1, only 0 is valid, when nspin=2, 0 means spin up, 1 means spin down
+    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> HR_sparse[2];
+    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> SR_sparse;
+
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> dHRx_sparse[2];
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> dHRy_sparse[2];
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> dHRz_sparse[2];

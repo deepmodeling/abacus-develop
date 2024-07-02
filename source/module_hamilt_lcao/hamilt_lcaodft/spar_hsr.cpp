@@ -41,10 +41,10 @@ void sparse_format::cal_HSR(const Parallel_Orbitals& pv,
                                             current_spin,
                                             sparse_thr,
                                             *(p_ham_lcao->getHR()),
-                                            lm.HR_sparse[current_spin]);
+                                            HS_Arrays.HR_sparse[current_spin]);
         }
 
-        sparse_format::cal_HContainer_d(pv, current_spin, sparse_thr, *(p_ham_lcao->getSR()), lm.SR_sparse);
+        sparse_format::cal_HContainer_d(pv, current_spin, sparse_thr, *(p_ham_lcao->getSR()), HS_Arrays.SR_sparse);
     }
     else if (nspin == 4)
     {
@@ -65,7 +65,7 @@ void sparse_format::cal_HSR(const Parallel_Orbitals& pv,
     {
         if (nspin == 1 || nspin == 2)
         {
-            cal_HR_dftu(pv, lm.all_R_coor, lm.SR_sparse, lm.HR_sparse, current_spin, sparse_thr);
+            cal_HR_dftu(pv, lm.all_R_coor, HS_Arrays.SR_sparse, HS_Arrays.HR_sparse, current_spin, sparse_thr);
         }
         else if (nspin == 4)
         {
@@ -243,7 +243,7 @@ void sparse_format::clear_zero_elements(LCAO_Matrix& lm,
 
     if (GlobalV::NSPIN != 4)
     {
-        for (auto& R_loop: lm.HR_sparse[current_spin])
+        for (auto& R_loop: HS_Arrays.HR_sparse[current_spin])
         {
             for (auto& row_loop: R_loop.second)
             {
@@ -285,7 +285,7 @@ void sparse_format::clear_zero_elements(LCAO_Matrix& lm,
             }
         }
 
-        for (auto& R_loop: lm.SR_sparse)
+        for (auto& R_loop: HS_Arrays.SR_sparse)
         {
             for (auto& row_loop: R_loop.second)
             {
