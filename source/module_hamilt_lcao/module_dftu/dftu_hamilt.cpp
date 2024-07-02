@@ -3,18 +3,15 @@
 #include "module_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
-namespace ModuleDFTU
-{
+namespace ModuleDFTU {
 
 void DFTU::cal_eff_pot_mat_complex(const int ik,
                                    std::complex<double>* eff_pot,
                                    const std::vector<int>& isk,
-                                   const std::complex<double>* sk)
-{
+                                   const std::complex<double>* sk) {
     ModuleBase::TITLE("DFTU", "cal_eff_pot_mat");
     ModuleBase::timer::tick("DFTU", "cal_eff_pot_mat");
-    if (!this->initialed_locale)
-    {
+    if (!this->initialed_locale) {
         ModuleBase::timer::tick("DFTU", "cal_eff_pot_mat");
         return;
     }
@@ -79,12 +76,13 @@ void DFTU::cal_eff_pot_mat_complex(const int ik,
     return;
 }
 
-void DFTU::cal_eff_pot_mat_real(const int ik, double* eff_pot, const std::vector<int>& isk, const double* sk)
-{
+void DFTU::cal_eff_pot_mat_real(const int ik,
+                                double* eff_pot,
+                                const std::vector<int>& isk,
+                                const double* sk) {
     ModuleBase::TITLE("DFTU", "cal_eff_pot_mat");
     ModuleBase::timer::tick("DFTU", "cal_eff_pot_mat");
-    if (!this->initialed_locale)
-    {
+    if (!this->initialed_locale) {
         ModuleBase::timer::tick("DFTU", "cal_eff_pot_mat");
         return;
     }
@@ -147,8 +145,7 @@ void DFTU::cal_eff_pot_mat_real(const int ik, double* eff_pot, const std::vector
     return;
 }
 
-void DFTU::cal_eff_pot_mat_R_double(const int ispin, double* SR, double* HR)
-{
+void DFTU::cal_eff_pot_mat_R_double(const int ispin, double* SR, double* HR) {
     const char transN = 'N', transT = 'T';
     const int one_int = 1;
     const double alpha = 1.0, beta = 0.0, one = 1.0, half = 0.5;
@@ -201,8 +198,9 @@ void DFTU::cal_eff_pot_mat_R_double(const int ispin, double* SR, double* HR)
     return;
 }
 
-void DFTU::cal_eff_pot_mat_R_complex_double(const int ispin, std::complex<double>* SR, std::complex<double>* HR)
-{
+void DFTU::cal_eff_pot_mat_R_complex_double(const int ispin,
+                                            std::complex<double>* SR,
+                                            std::complex<double>* HR) {
     const char transN = 'N', transT = 'T';
     const int one_int = 1;
     const std::complex<double> zero = 0.0, one = 1.0, half = 0.5;

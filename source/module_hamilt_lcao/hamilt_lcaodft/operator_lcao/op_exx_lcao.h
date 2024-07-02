@@ -9,22 +9,18 @@
 
 #include <RI/global/Tensor.h>
 
-namespace hamilt
-{
+namespace hamilt {
 
 #ifndef __OPEXXTEMPLATE
 #define __OPEXXTEMPLATE
 
 template <class T>
-class OperatorEXX : public T
-{
-};
+class OperatorEXX : public T {};
 
 #endif
 
 template <typename TK, typename TR>
-class OperatorEXX<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
-{
+class OperatorEXX<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR> {
     using TAC = std::pair<int, std::array<int, 3>>;
 
   public:
@@ -33,8 +29,12 @@ class OperatorEXX<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
         LCAO_Matrix* LM_in,
         hamilt::HContainer<TR>* hR_in,
         const K_Vectors& kv_in,
-        std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd_in = nullptr,
-        std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc_in = nullptr,
+        std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd_in
+        = nullptr,
+        std::vector<
+            std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>*
+            Hexxc_in
+        = nullptr,
         int* two_level_step_in = nullptr,
         const bool restart_in = false);
 
@@ -43,15 +43,20 @@ class OperatorEXX<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
   private:
     bool HR_fixed_done = false;
 
-    std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd = nullptr;
-    std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc = nullptr;
+    std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd
+        = nullptr;
+    std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>*
+        Hexxc
+        = nullptr;
 
     /// @brief  the step of the outer loop.
-    /// nullptr: no dependence on the number of two_level_step, contributeHk will do enerything normally.
-    /// 0: the first outer loop. If restart, contributeHk will directly add Hexx to Hloc. else, do nothing.
-    /// >0: not the first outer loop. contributeHk will do enerything normally.
+    /// nullptr: no dependence on the number of two_level_step, contributeHk
+    /// will do enerything normally. 0: the first outer loop. If restart,
+    /// contributeHk will directly add Hexx to Hloc. else, do nothing. >0: not
+    /// the first outer loop. contributeHk will do enerything normally.
     int* two_level_step = nullptr;
-    /// @brief if restart, read and save Hexx, and directly use it during the first outer loop.
+    /// @brief if restart, read and save Hexx, and directly use it during the
+    /// first outer loop.
     bool restart = false;
 
     void add_loaded_Hexx(const int ik);

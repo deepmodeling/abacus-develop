@@ -7,8 +7,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 
-namespace hamilt
-{
+namespace hamilt {
 
 #ifndef __EKINETICNEWTEMPLATE
 #define __EKINETICNEWTEMPLATE
@@ -17,34 +16,32 @@ namespace hamilt
 /// it is used to calculate the electronic kinetic
 /// Template parameters:
 /// - T: base class, it would be OperatorLCAO<TK> or OperatorPW<TK>
-/// - TR: data type of real space Hamiltonian, it would be double or std::complex<double>
+/// - TR: data type of real space Hamiltonian, it would be double or
+/// std::complex<double>
 template <class T>
-class EkineticNew : public T
-{
-};
+class EkineticNew : public T {};
 
 #endif
 
 /// EkineticNew class template specialization for OperatorLCAO<TK> base class
-/// It is used to calculate the electronic kinetic matrix in real space and fold it to k-space
-/// HR = <psi_{mu, 0}|-\Nabla^2|psi_{nu, R}>
-/// HK = <psi_{mu, k}|-\Nabla^2|psi_{nu, k}> = \sum_{R} e^{ikR} HR
-/// Template parameters:
+/// It is used to calculate the electronic kinetic matrix in real space and fold
+/// it to k-space HR = <psi_{mu, 0}|-\Nabla^2|psi_{nu, R}> HK = <psi_{mu,
+/// k}|-\Nabla^2|psi_{nu, k}> = \sum_{R} e^{ikR} HR Template parameters:
 /// - TK: data type of k-space Hamiltonian
 /// - TR: data type of real space Hamiltonian
 template <typename TK, typename TR>
-class EkineticNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
-{
+class EkineticNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR> {
   public:
     /**
      * @brief Construct a new EkineticNew object
      */
-    EkineticNew<OperatorLCAO<TK, TR>>(HS_Matrix_K<TK>* hsk_in,
-                                      const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
-                                      HContainer<TR>* hR_in,
-                                      const UnitCell* ucell_in,
-                                      Grid_Driver* GridD_in,
-                                      const TwoCenterIntegrator* intor);
+    EkineticNew<OperatorLCAO<TK, TR>>(
+        HS_Matrix_K<TK>* hsk_in,
+        const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
+        HContainer<TR>* hR_in,
+        const UnitCell* ucell_in,
+        Grid_Driver* GridD_in,
+        const TwoCenterIntegrator* intor);
 
     /**
      * @brief Destroy the EkineticNew object
@@ -72,14 +69,14 @@ class EkineticNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 
     /**
      * @brief initialize HR, search the nearest neighbor atoms
-     * HContainer is used to store the electronic kinetic matrix with specific <I,J,R> atom-pairs
-     * the size of HR will be fixed after initialization
+     * HContainer is used to store the electronic kinetic matrix with specific
+     * <I,J,R> atom-pairs the size of HR will be fixed after initialization
      */
     void initialize_HR(Grid_Driver* GridD_in);
 
     /**
-     * @brief calculate the electronic kinetic matrix with specific <I,J,R> atom-pairs
-     * use the adjs_all to calculate the HR matrix
+     * @brief calculate the electronic kinetic matrix with specific <I,J,R>
+     * atom-pairs use the adjs_all to calculate the HR matrix
      */
     void calculate_HR();
 

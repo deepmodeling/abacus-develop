@@ -4,35 +4,33 @@
 #include "module_base/tool_title.h"
 #include "module_cell/unitcell.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
-namespace hamilt
-{
+namespace hamilt {
 
 // initialize_HR()
 template <typename TK, typename TR>
-void Veff<OperatorLCAO<TK, TR>>::initialize_HR(const UnitCell* ucell_in, Grid_Driver* GridD)
-{
+void Veff<OperatorLCAO<TK, TR>>::initialize_HR(const UnitCell* ucell_in,
+                                               Grid_Driver* GridD) {
     ModuleBase::TITLE("Veff", "initialize_HR");
     ModuleBase::timer::tick("Veff", "initialize_HR");
 
     this->nspin = GlobalV::NSPIN;
     auto* paraV = this->hR->get_paraV(); // get parallel orbitals from HR
-    // TODO: if paraV is nullptr, AtomPair can not use paraV for constructor, I will repair it in the future.
+    // TODO: if paraV is nullptr, AtomPair can not use paraV for constructor, I
+    // will repair it in the future.
 
-    for (int iat1 = 0; iat1 < ucell_in->nat; iat1++)
-    {
+    for (int iat1 = 0; iat1 < ucell_in->nat; iat1++) {
         auto tau1 = ucell_in->get_tau(iat1);
         int T1, I1;
         ucell_in->iat2iait(iat1, &I1, &T1);
         AdjacentAtomInfo adjs;
         GridD->Find_atom(*ucell_in, tau1, T1, I1, &adjs);
         std::vector<bool> is_adj(adjs.adj_num + 1, false);
-        for (int ad1 = 0; ad1 < adjs.adj_num + 1; ++ad1)
-        {
+        for (int ad1 = 0; ad1 < adjs.adj_num + 1; ++ad1) {
             const int T2 = adjs.ntype[ad1];
             const int I2 = adjs.natom[ad1];
             const int iat2 = ucell_in->itia2iat(T2, I2);
-            if (paraV->get_row_size(iat1) <= 0 || paraV->get_col_size(iat2) <= 0)
-            {
+            if (paraV->get_row_size(iat1) <= 0
+                || paraV->get_col_size(iat2) <= 0) {
                 continue;
             }
             const ModuleBase::Vector3<int>& R_index2 = adjs.box[ad1];
@@ -40,10 +38,10 @@ void Veff<OperatorLCAO<TK, TR>>::initialize_HR(const UnitCell* ucell_in, Grid_Dr
             const LCAO_Orbitals& orb = LCAO_Orbitals::get_const_instance();
             // Note: the distance of atoms should less than the cutoff radius,
             // When equal, the theoretical value of matrix element is zero,
-            // but the calculated value is not zero due to the numerical error, which would lead to result changes.
+            // but the calculated value is not zero due to the numerical error,
+            // which would lead to result changes.
             if (ucell_in->cal_dtau(iat1, iat2, R_index2).norm() * ucell_in->lat0
-                < orb.Phi[T1].getRcut() + orb.Phi[T2].getRcut())
-            {
+                < orb.Phi[T1].getRcut() + orb.Phi[T2].getRcut()) {
                 hamilt::AtomPair<TR> tmp(iat1, iat2, R_index2, paraV);
                 this->hR->insert_pair(tmp);
             }
@@ -56,8 +54,7 @@ void Veff<OperatorLCAO<TK, TR>>::initialize_HR(const UnitCell* ucell_in, Grid_Dr
 }
 
 template <typename TK, typename TR>
-void Veff<OperatorLCAO<TK, TR>>::contributeHR()
-{
+void Veff<OperatorLCAO<TK, TR>>::contributeHR() {
     ModuleBase::TITLE("Veff", "contributeHR");
     ModuleBase::timer::tick("Veff", "contributeHR");
     //-----------------------------------------
@@ -76,13 +73,14 @@ void Veff<OperatorLCAO<TK, TR>>::contributeHR()
 
     // if you change the place of the following code,
     // rememeber to delete the #include
-    if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
-    {
-        Gint_inout inout(vr_eff1, vofk_eff1, 0, Gint_Tools::job_type::vlocal_meta);
+    if (XC_Functional::get_func_type() == 3
+        || XC_Functional::get_func_type() == 5) {
+        Gint_inout inout(vr_eff1,
+                         vofk_eff1,
+                         0,
+                         Gint_Tools::job_type::vlocal_meta);
         this->GK->cal_gint(&inout);
-    }
-    else
-    {
+    } else {
         // vlocal = Vh[rho] + Vxc[rho] + Vl(pseudo)
         Gint_inout inout(vr_eff1, 0, Gint_Tools::job_type::vlocal);
         this->GK->cal_gint(&inout);
@@ -90,23 +88,22 @@ void Veff<OperatorLCAO<TK, TR>>::contributeHR()
 
     // added by zhengdy-soc, for non-collinear case
     // integral 4 times, is there any method to simplify?
-    if (this->nspin == 4)
-    {
-        for (int is = 1; is < 4; is++)
-        {
+    if (this->nspin == 4) {
+        for (int is = 1; is < 4; is++) {
             vr_eff1 = this->pot->get_effective_v(is);
-            if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
-            {
+            if (XC_Functional::get_func_type() == 3
+                || XC_Functional::get_func_type() == 5) {
                 vofk_eff1 = this->pot->get_effective_vofk(is);
             }
 
-            if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
-            {
-                Gint_inout inout(vr_eff1, vofk_eff1, is, Gint_Tools::job_type::vlocal_meta);
+            if (XC_Functional::get_func_type() == 3
+                || XC_Functional::get_func_type() == 5) {
+                Gint_inout inout(vr_eff1,
+                                 vofk_eff1,
+                                 is,
+                                 Gint_Tools::job_type::vlocal_meta);
                 this->GK->cal_gint(&inout);
-            }
-            else
-            {
+            } else {
                 Gint_inout inout(vr_eff1, is, Gint_Tools::job_type::vlocal);
                 this->GK->cal_gint(&inout);
             }
@@ -123,8 +120,7 @@ void Veff<OperatorLCAO<TK, TR>>::contributeHR()
 
 // special case of gamma-only
 template <>
-void Veff<OperatorLCAO<double, double>>::contributeHR(void)
-{
+void Veff<OperatorLCAO<double, double>>::contributeHR(void) {
     ModuleBase::TITLE("Veff", "contributeHR");
     ModuleBase::timer::tick("Veff", "contributeHR");
 
@@ -140,13 +136,11 @@ void Veff<OperatorLCAO<double, double>>::contributeHR(void)
     // and diagonalize the H matrix (T+Vl+Vnl).
     //--------------------------------------------
 
-    if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
-    {
+    if (XC_Functional::get_func_type() == 3
+        || XC_Functional::get_func_type() == 5) {
         Gint_inout inout(vr_eff1, vofk_eff1, Gint_Tools::job_type::vlocal_meta);
         this->GG->cal_vlocal(&inout, this->new_e_iteration);
-    }
-    else
-    {
+    } else {
         Gint_inout inout(vr_eff1, Gint_Tools::job_type::vlocal);
         this->GG->cal_vlocal(&inout, this->new_e_iteration);
     }
@@ -160,7 +154,8 @@ void Veff<OperatorLCAO<double, double>>::contributeHR(void)
     ModuleBase::timer::tick("Veff", "contributeHR");
 }
 
-// definition of class template should in the end of file to avoid compiling warning
+// definition of class template should in the end of file to avoid compiling
+// warning
 template class Veff<OperatorLCAO<double, double>>;
 
 template class Veff<OperatorLCAO<std::complex<double>, double>>;

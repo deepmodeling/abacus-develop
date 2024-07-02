@@ -9,34 +9,44 @@
 #include <iostream>
 
 template <>
-ModuleBase::matrix SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>::cal_MW_k(
-    LCAO_Matrix* LM,
-    const std::vector<std::vector<std::complex<double>>>& dm)
-{
+ModuleBase::matrix
+    SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>::cal_MW_k(
+        LCAO_Matrix* LM,
+        const std::vector<std::vector<std::complex<double>>>& dm) {
     ModuleBase::TITLE("module_deltaspin", "cal_MW_k");
     int nw = this->get_nw();
     const int nlocal = (this->nspin_ == 4) ? nw / 2 : nw;
-    ModuleBase::matrix MecMulP(this->nspin_, nlocal, true), orbMulP(this->nspin_, nlocal, true);
-    for (size_t ik = 0; ik != this->kv_.get_nks(); ++ik)
-    {
+    ModuleBase::matrix MecMulP(this->nspin_, nlocal, true),
+        orbMulP(this->nspin_, nlocal, true);
+    for (size_t ik = 0; ik != this->kv_.get_nks(); ++ik) {
         std::complex<double>* sk = nullptr;
-        if (this->nspin_ == 4)
-        {
-            dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(this->p_hamilt)
+        if (this->nspin_ == 4) {
+            dynamic_cast<hamilt::HamiltLCAO<std::complex<double>,
+                                            std::complex<double>>*>(
+                this->p_hamilt)
                 ->updateSk(ik, 1);
-            sk = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(this->p_hamilt)->getSk();
+            sk = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>,
+                                                 std::complex<double>>*>(
+                     this->p_hamilt)
+                     ->getSk();
+        } else {
+            dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(
+                this->p_hamilt)
+                ->updateSk(ik, 1);
+            sk = dynamic_cast<
+                     hamilt::HamiltLCAO<std::complex<double>, double>*>(
+                     this->p_hamilt)
+                     ->getSk();
         }
-        else
-        {
-            dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(this->p_hamilt)->updateSk(ik, 1);
-            sk = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(this->p_hamilt)->getSk();
-        }
-        ModuleBase::ComplexMatrix mud(this->ParaV->ncol, this->ParaV->nrow, true);
+        ModuleBase::ComplexMatrix mud(this->ParaV->ncol,
+                                      this->ParaV->nrow,
+                                      true);
 #ifdef __MPI
         const char T_char = 'T';
         const char N_char = 'N';
         const int one_int = 1;
-        const std::complex<double> one_float = {1.0, 0.0}, zero_float = {0.0, 0.0};
+        const std::complex<double> one_float = {1.0, 0.0},
+                                   zero_float = {0.0, 0.0};
         pzgemm_(&N_char,
                 &T_char,
                 &nw,
@@ -60,18 +70,28 @@ ModuleBase::matrix SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>:
 #endif
     }
 #ifdef __MPI
-    MPI_Allreduce(MecMulP.c, orbMulP.c, this->nspin_ * nlocal, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(MecMulP.c,
+                  orbMulP.c,
+                  this->nspin_ * nlocal,
+                  MPI_DOUBLE,
+                  MPI_SUM,
+                  MPI_COMM_WORLD);
 #endif
 
     return orbMulP;
 }
 
 template <>
-void SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>::cal_MW(const int& step, LCAO_Matrix* LM, bool print)
-{
+void SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>::cal_MW(
+    const int& step,
+    LCAO_Matrix* LM,
+    bool print) {
     ModuleBase::TITLE("module_deltaspin", "cal_MW");
     const std::vector<std::vector<std::complex<double>>>& dm
-        = dynamic_cast<const elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)->get_DM()->get_DMK_vector();
+        = dynamic_cast<const elecstate::ElecStateLCAO<std::complex<double>>*>(
+              this->pelec)
+              ->get_DM()
+              ->get_DMK_vector();
     this->calculate_MW(this->convert(this->cal_MW_k(LM, dm)));
     this->print_Mi(print);
 }

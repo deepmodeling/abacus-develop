@@ -17,8 +17,7 @@
 struct ScAtomData;
 
 template <typename FPTYPE, typename Device = base_device::DEVICE_CPU>
-class SpinConstrain
-{
+class SpinConstrain {
   public:
     /**
      * pubic interface for spin-constrained DFT
@@ -44,11 +43,16 @@ class SpinConstrain
                  elecstate::ElecState* pelec_in);
 
     /// calculate h_lambda operator for spin-constrained DFT
-    void cal_h_lambda(std::complex<double>* h_lambda, const std::complex<double>* Sloc2, bool column_major, int isk);
+    void cal_h_lambda(std::complex<double>* h_lambda,
+                      const std::complex<double>* Sloc2,
+                      bool column_major,
+                      int isk);
 
     void cal_MW(const int& step, LCAO_Matrix* LM, bool print = false);
 
-    ModuleBase::matrix cal_MW_k(LCAO_Matrix* LM, const std::vector<std::vector<std::complex<double>>>& dm);
+    ModuleBase::matrix
+        cal_MW_k(LCAO_Matrix* LM,
+                 const std::vector<std::vector<std::complex<double>>>& dm);
 
     void cal_mw_from_lambda(int i_step);
 
@@ -56,22 +60,30 @@ class SpinConstrain
 
     double get_escon();
 
-    std::vector<std::vector<std::vector<double>>> convert(const ModuleBase::matrix& orbMulP);
+    std::vector<std::vector<std::vector<double>>>
+        convert(const ModuleBase::matrix& orbMulP);
 
     void run_lambda_loop(int outer_step);
 
     /// lambda loop helper functions
-    bool check_rms_stop(int outer_step, int i_step, double rms_error, double duration, double total_duration);
+    bool check_rms_stop(int outer_step,
+                        int i_step,
+                        double rms_error,
+                        double duration,
+                        double total_duration);
 
     /// apply restriction
-    void check_restriction(const std::vector<ModuleBase::Vector3<double>>& search, double& alpha_trial);
+    void check_restriction(
+        const std::vector<ModuleBase::Vector3<double>>& search,
+        double& alpha_trial);
 
     /// check gradient decay
-    bool check_gradient_decay(std::vector<ModuleBase::Vector3<double>> new_spin,
-                              std::vector<ModuleBase::Vector3<double>> old_spin,
-                              std::vector<ModuleBase::Vector3<double>> new_delta_lambda,
-                              std::vector<ModuleBase::Vector3<double>> old_delta_lambda,
-                              bool print = false);
+    bool check_gradient_decay(
+        std::vector<ModuleBase::Vector3<double>> new_spin,
+        std::vector<ModuleBase::Vector3<double>> old_spin,
+        std::vector<ModuleBase::Vector3<double>> new_delta_lambda,
+        std::vector<ModuleBase::Vector3<double>> old_delta_lambda,
+        bool print = false);
     /// @brief  calculate alpha_opt
     double cal_alpha_opt(std::vector<ModuleBase::Vector3<double>> spin,
                          std::vector<ModuleBase::Vector3<double>> spin_plus,
@@ -82,16 +94,21 @@ class SpinConstrain
     void print_termination();
 
     /// calculate mw from AorbMulP matrix
-    void calculate_MW(const std::vector<std::vector<std::vector<double>>>& AorbMulP);
+    void calculate_MW(
+        const std::vector<std::vector<std::vector<double>>>& AorbMulP);
 
     /// print mi
     void print_Mi(bool print = false);
 
-    /// print magnetic force, defined as \frac{\delta{L}}/{\delta{Mi}} = -lambda[iat])
+    /// print magnetic force, defined as \frac{\delta{L}}/{\delta{Mi}} =
+    /// -lambda[iat])
     void print_Mag_Force();
 
     /// collect_mw from matrix multiplication result
-    void collect_MW(ModuleBase::matrix& MecMulP, const ModuleBase::ComplexMatrix& mud, int nw, int isk);
+    void collect_MW(ModuleBase::matrix& MecMulP,
+                    const ModuleBase::ComplexMatrix& mud,
+                    int nw,
+                    int isk);
 
   public:
     /**
@@ -129,21 +146,25 @@ class SpinConstrain
     /// get element index to orbital index map
     const std::map<int, int>& get_orbitalCounts() const;
     /// set lnchiCounts
-    void set_lnchiCounts(const std::map<int, std::map<int, int>>& lnchiCounts_in);
+    void set_lnchiCounts(
+        const std::map<int, std::map<int, int>>& lnchiCounts_in);
     /// get lnchiCounts
     const std::map<int, std::map<int, int>>& get_lnchiCounts() const;
     /// set sc_lambda
     void set_sc_lambda();
     /// set sc_lambda from variable
-    void set_sc_lambda(const ModuleBase::Vector3<double>* lambda_in, int nat_in);
+    void set_sc_lambda(const ModuleBase::Vector3<double>* lambda_in,
+                       int nat_in);
     /// set target_mag
     void set_target_mag();
     /// set target_mag from variable
-    void set_target_mag(const ModuleBase::Vector3<double>* target_mag_in, int nat_in);
+    void set_target_mag(const ModuleBase::Vector3<double>* target_mag_in,
+                        int nat_in);
     /// set constrain
     void set_constrain();
     /// set constrain from variable
-    void set_constrain(const ModuleBase::Vector3<int>* constrain_in, int nat_in);
+    void set_constrain(const ModuleBase::Vector3<int>* constrain_in,
+                       int nat_in);
     /// get sc_lambda
     const std::vector<ModuleBase::Vector3<double>>& get_sc_lambda() const;
     /// get target_mag
@@ -215,8 +236,8 @@ class SpinConstrain
     void bcast_ScData(std::string sc_file, int nat, int ntype);
 
   private:
-    SpinConstrain(){};                                       // Private constructor
-    ~SpinConstrain(){};                                      // Destructor
+    SpinConstrain(){};  // Private constructor
+    ~SpinConstrain(){}; // Destructor
     SpinConstrain& operator=(SpinConstrain const&) = delete; // Copy assign
     SpinConstrain& operator=(SpinConstrain&&) = delete;      // Move assign
     std::map<int, std::vector<ScAtomData>> ScData;
@@ -225,7 +246,9 @@ class SpinConstrain
     std::map<int, int> atomCounts;
     std::map<int, int> orbitalCounts;
     std::map<int, std::map<int, int>> lnchiCounts;
-    std::vector<ModuleBase::Vector3<double>> lambda_; // in unit of Ry/uB in code, but in unit of meV/uB in input file
+    std::vector<ModuleBase::Vector3<double>>
+        lambda_; // in unit of Ry/uB in code, but in unit of meV/uB in input
+                 // file
     std::vector<ModuleBase::Vector3<double>> target_mag_; // in unit of uB
     std::vector<ModuleBase::Vector3<double>> Mi_;         // in unit of uB
     double escon_ = 0.0;
@@ -247,8 +270,7 @@ class SpinConstrain
 /**
  * @brief struct for storing parameters of non-collinear spin-constrained DFT
  */
-struct ScAtomData
-{
+struct ScAtomData {
     int index;
     std::vector<double> lambda;
     std::vector<double> target_mag;

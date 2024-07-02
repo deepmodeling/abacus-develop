@@ -6,8 +6,7 @@
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
-namespace ModuleDFTU
-{
+namespace ModuleDFTU {
 
 void DFTU::fold_dSR_gamma(const UnitCell& ucell,
                           const Parallel_Orbitals& pv,
@@ -18,23 +17,17 @@ void DFTU::fold_dSR_gamma(const UnitCell& ucell,
                           double* dh_r,
                           const int dim1,
                           const int dim2,
-                          double* dSR_gamma)
-{
+                          double* dSR_gamma) {
     ModuleBase::TITLE("DFTU", "fold_dSR_gamma");
 
     ModuleBase::GlobalFunc::ZEROS(dSR_gamma, pv.nloc);
 
     double* dS_ptr = nullptr;
-    if (dim1 == 0)
-    {
+    if (dim1 == 0) {
         dS_ptr = dsloc_x;
-    }
-    else if (dim1 == 1)
-    {
+    } else if (dim1 == 1) {
         dS_ptr = dsloc_y;
-    }
-    else if (dim1 == 2)
-    {
+    } else if (dim1 == 2) {
         dS_ptr = dsloc_z;
     }
 
@@ -42,16 +35,13 @@ void DFTU::fold_dSR_gamma(const UnitCell& ucell,
     ModuleBase::Vector3<double> tau1, tau2, dtau;
     ModuleBase::Vector3<double> dtau1, dtau2, tau0;
 
-    for (int T1 = 0; T1 < ucell.ntype; ++T1)
-    {
+    for (int T1 = 0; T1 < ucell.ntype; ++T1) {
         Atom* atom1 = &ucell.atoms[T1];
-        for (int I1 = 0; I1 < atom1->na; ++I1)
-        {
+        for (int I1 = 0; I1 < atom1->na; ++I1) {
             tau1 = atom1->tau[I1];
             const int start1 = ucell.itiaiw2iwt(T1, I1, 0);
             gd->Find_atom(ucell, tau1, T1, I1);
-            for (int ad = 0; ad < gd->getAdjacentNum() + 1; ++ad)
-            {
+            for (int ad = 0; ad < gd->getAdjacentNum() + 1; ++ad) {
                 const int T2 = gd->getType(ad);
                 const int I2 = gd->getNatom(ad);
                 const int start2 = ucell.itiaiw2iwt(T2, I2, 0);
@@ -59,16 +49,13 @@ void DFTU::fold_dSR_gamma(const UnitCell& ucell,
                 tau2 = gd->getAdjacentTau(ad);
                 dtau = tau2 - tau1;
                 double distance = dtau.norm() * ucell.lat0;
-                double rcut = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ORB.Phi[T2].getRcut();
+                double rcut = GlobalC::ORB.Phi[T1].getRcut()
+                              + GlobalC::ORB.Phi[T2].getRcut();
                 bool adj = false;
-                if (distance < rcut)
-                {
+                if (distance < rcut) {
                     adj = true;
-                }
-                else if (distance >= rcut)
-                {
-                    for (int ad0 = 0; ad0 < gd->getAdjacentNum() + 1; ++ad0)
-                    {
+                } else if (distance >= rcut) {
+                    for (int ad0 = 0; ad0 < gd->getAdjacentNum() + 1; ++ad0) {
                         const int T0 = gd->getType(ad0);
                         const int I0 = gd->getNatom(ad0);
                         const int iat0 = ucell.itia2iat(T0, I0);
@@ -78,39 +65,36 @@ void DFTU::fold_dSR_gamma(const UnitCell& ucell,
                         dtau2 = tau0 - tau2;
                         double distance1 = dtau1.norm() * ucell.lat0;
                         double distance2 = dtau2.norm() * ucell.lat0;
-                        double rcut1 = GlobalC::ORB.Phi[T1].getRcut() + ucell.infoNL.Beta[T0].get_rcut_max();
-                        double rcut2 = GlobalC::ORB.Phi[T2].getRcut() + ucell.infoNL.Beta[T0].get_rcut_max();
-                        if (distance1 < rcut1 && distance2 < rcut2)
-                        {
+                        double rcut1 = GlobalC::ORB.Phi[T1].getRcut()
+                                       + ucell.infoNL.Beta[T0].get_rcut_max();
+                        double rcut2 = GlobalC::ORB.Phi[T2].getRcut()
+                                       + ucell.infoNL.Beta[T0].get_rcut_max();
+                        if (distance1 < rcut1 && distance2 < rcut2) {
                             adj = true;
                             break;
                         }
                     }
                 }
 
-                if (adj)
-                {
-                    for (int jj = 0; jj < atom1->nw * GlobalV::NPOL; ++jj)
-                    {
+                if (adj) {
+                    for (int jj = 0; jj < atom1->nw * GlobalV::NPOL; ++jj) {
                         const int jj0 = jj / GlobalV::NPOL;
                         const int iw1_all = start1 + jj0;
                         const int mu = pv.global2local_row(iw1_all);
-                        if (mu < 0)
-                        {
+                        if (mu < 0) {
                             continue;
                         }
 
-                        for (int kk = 0; kk < atom2->nw * GlobalV::NPOL; ++kk)
-                        {
+                        for (int kk = 0; kk < atom2->nw * GlobalV::NPOL; ++kk) {
                             const int kk0 = kk / GlobalV::NPOL;
                             const int iw2_all = start2 + kk0;
                             const int nu = pv.global2local_col(iw2_all);
-                            if (nu < 0)
-                            {
+                            if (nu < 0) {
                                 continue;
                             }
 
-                            dSR_gamma[nu * pv.nrow + mu] += dS_ptr[nnr] * dh_r[nnr * 3 + dim2];
+                            dSR_gamma[nu * pv.nrow + mu]
+                                += dS_ptr[nnr] * dh_r[nnr * 3 + dim2];
 
                             ++nnr;
                         } // kk
@@ -123,14 +107,14 @@ void DFTU::fold_dSR_gamma(const UnitCell& ucell,
     return;
 }
 
-void DFTU::folding_matrix_k(ForceStressArrays& fsr,
-                            const Parallel_Orbitals& pv,
-                            const int ik,
-                            const int dim1,
-                            const int dim2,
-                            std::complex<double>* mat_k,
-                            const std::vector<ModuleBase::Vector3<double>>& kvec_d)
-{
+void DFTU::folding_matrix_k(
+    ForceStressArrays& fsr,
+    const Parallel_Orbitals& pv,
+    const int ik,
+    const int dim1,
+    const int dim2,
+    std::complex<double>* mat_k,
+    const std::vector<ModuleBase::Vector3<double>>& kvec_d) {
     ModuleBase::TITLE("DFTU", "folding_matrix_k");
     ModuleBase::timer::tick("DFTU", "folding_matrix_k");
     ModuleBase::GlobalFunc::ZEROS(mat_k, pv.nloc);
@@ -152,19 +136,16 @@ void DFTU::folding_matrix_k(ForceStressArrays& fsr,
     ModuleBase::Vector3<double> dtau2;
     ModuleBase::Vector3<double> tau0;
 
-    for (int T1 = 0; T1 < GlobalC::ucell.ntype; ++T1)
-    {
+    for (int T1 = 0; T1 < GlobalC::ucell.ntype; ++T1) {
         Atom* atom1 = &GlobalC::ucell.atoms[T1];
-        for (int I1 = 0; I1 < atom1->na; ++I1)
-        {
+        for (int I1 = 0; I1 < atom1->na; ++I1) {
             tau1 = atom1->tau[I1];
             GlobalC::GridD.Find_atom(GlobalC::ucell, tau1, T1, I1);
             Atom* atom1 = &GlobalC::ucell.atoms[T1];
             const int start1 = GlobalC::ucell.itiaiw2iwt(T1, I1, 0);
 
             // (2) search among all adjacent atoms.
-            for (int ad = 0; ad < GlobalC::GridD.getAdjacentNum() + 1; ++ad)
-            {
+            for (int ad = 0; ad < GlobalC::GridD.getAdjacentNum() + 1; ++ad) {
                 const int T2 = GlobalC::GridD.getType(ad);
                 const int I2 = GlobalC::GridD.getNatom(ad);
                 Atom* atom2 = &GlobalC::ucell.atoms[T2];
@@ -172,18 +153,16 @@ void DFTU::folding_matrix_k(ForceStressArrays& fsr,
                 tau2 = GlobalC::GridD.getAdjacentTau(ad);
                 dtau = tau2 - tau1;
                 double distance = dtau.norm() * GlobalC::ucell.lat0;
-                double rcut = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ORB.Phi[T2].getRcut();
+                double rcut = GlobalC::ORB.Phi[T1].getRcut()
+                              + GlobalC::ORB.Phi[T2].getRcut();
 
                 bool adj = false;
 
-                if (distance < rcut)
-                {
+                if (distance < rcut) {
                     adj = true;
-                }
-                else if (distance >= rcut)
-                {
-                    for (int ad0 = 0; ad0 < GlobalC::GridD.getAdjacentNum() + 1; ++ad0)
-                    {
+                } else if (distance >= rcut) {
+                    for (int ad0 = 0; ad0 < GlobalC::GridD.getAdjacentNum() + 1;
+                         ++ad0) {
                         const int T0 = GlobalC::GridD.getType(ad0);
                         const int I0 = GlobalC::GridD.getNatom(ad0);
 
@@ -194,19 +173,21 @@ void DFTU::folding_matrix_k(ForceStressArrays& fsr,
                         double distance1 = dtau1.norm() * GlobalC::ucell.lat0;
                         double distance2 = dtau2.norm() * GlobalC::ucell.lat0;
 
-                        double rcut1 = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
-                        double rcut2 = GlobalC::ORB.Phi[T2].getRcut() + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
+                        double rcut1
+                            = GlobalC::ORB.Phi[T1].getRcut()
+                              + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
+                        double rcut2
+                            = GlobalC::ORB.Phi[T2].getRcut()
+                              + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
 
-                        if (distance1 < rcut1 && distance2 < rcut2)
-                        {
+                        if (distance1 < rcut1 && distance2 < rcut2) {
                             adj = true;
                             break;
                         }
                     }
                 }
 
-                if (adj)
-                {
+                if (adj) {
                     // (3) calculate the nu of atom (T2, I2)
                     const int start2 = GlobalC::ucell.itiaiw2iwt(T2, I2, 0);
                     //------------------------------------------------
@@ -217,44 +198,40 @@ void DFTU::folding_matrix_k(ForceStressArrays& fsr,
                                                    GlobalC::GridD.getBox(ad).y,
                                                    GlobalC::GridD.getBox(ad).z);
                     const double arg = (kvec_d[ik] * dR) * ModuleBase::TWO_PI;
-                    const std::complex<double> kphase = std::complex<double>(cos(arg), sin(arg));
+                    const std::complex<double> kphase
+                        = std::complex<double>(cos(arg), sin(arg));
 
                     //--------------------------------------------------
                     // calculate how many matrix elements are in
                     // this processor.
                     //--------------------------------------------------
-                    for (int ii = 0; ii < atom1->nw * GlobalV::NPOL; ii++)
-                    {
+                    for (int ii = 0; ii < atom1->nw * GlobalV::NPOL; ii++) {
                         // the index of orbitals in this processor
                         const int iw1_all = start1 + ii;
                         const int mu = pv.global2local_row(iw1_all);
                         if (mu < 0)
                             continue;
 
-                        for (int jj = 0; jj < atom2->nw * GlobalV::NPOL; jj++)
-                        {
+                        for (int jj = 0; jj < atom2->nw * GlobalV::NPOL; jj++) {
                             int iw2_all = start2 + jj;
                             const int nu = pv.global2local_col(iw2_all);
                             if (nu < 0)
                                 continue;
 
                             int iic;
-                            if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
-                            {
+                            if (ModuleBase::GlobalFunc::
+                                    IS_COLUMN_MAJOR_KS_SOLVER()) {
                                 iic = mu + nu * pv.nrow;
-                            }
-                            else
-                            {
+                            } else {
                                 iic = mu * pv.ncol + nu;
                             }
 
-                            if (dim1 <= 3)
-                            {
+                            if (dim1 <= 3) {
                                 mat_k[iic] += mat_ptr[nnr] * kphase;
-                            }
-                            else
-                            {
-                                mat_k[iic] += mat_ptr[nnr] * fsr.DH_r[nnr * 3 + dim2] * kphase;
+                            } else {
+                                mat_k[iic] += mat_ptr[nnr]
+                                              * fsr.DH_r[nnr * 3 + dim2]
+                                              * kphase;
                             }
 
                             ++nnr;
@@ -270,31 +247,30 @@ void DFTU::folding_matrix_k(ForceStressArrays& fsr,
     return;
 }
 
-void DFTU::folding_matrix_k_new(const int ik, hamilt::Hamilt<std::complex<double>>* p_ham)
-{
+void DFTU::folding_matrix_k_new(const int ik,
+                                hamilt::Hamilt<std::complex<double>>* p_ham) {
     ModuleBase::TITLE("DFTU", "folding_matrix_k_new");
     ModuleBase::timer::tick("DFTU", "folding_matrix_k_new");
 
     int hk_type = 0;
-    if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
-    {
+    if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER()) {
         hk_type = 1;
     }
 
     // get SR and fold to mat_k
-    if (GlobalV::GAMMA_ONLY_LOCAL)
-    {
-        dynamic_cast<hamilt::HamiltLCAO<double, double>*>(p_ham)->updateSk(ik, hk_type);
-    }
-    else
-    {
-        if (GlobalV::NSPIN != 4)
-        {
-            dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham)->updateSk(ik, hk_type);
-        }
-        else
-        {
-            dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(p_ham)->updateSk(ik, hk_type);
+    if (GlobalV::GAMMA_ONLY_LOCAL) {
+        dynamic_cast<hamilt::HamiltLCAO<double, double>*>(p_ham)->updateSk(
+            ik,
+            hk_type);
+    } else {
+        if (GlobalV::NSPIN != 4) {
+            dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(
+                p_ham)
+                ->updateSk(ik, hk_type);
+        } else {
+            dynamic_cast<hamilt::HamiltLCAO<std::complex<double>,
+                                            std::complex<double>>*>(p_ham)
+                ->updateSk(ik, hk_type);
         }
     }
 }

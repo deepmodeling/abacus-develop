@@ -2,12 +2,10 @@
 #define MATRIXBLOCK_H
 
 #include <cstddef>
-namespace hamilt
-{
+namespace hamilt {
 
 template <typename T>
-struct MatrixBlock
-{
+struct MatrixBlock {
     /* this is a simple template block of a matrix
        would change to Eigen in the future */
     T* p;

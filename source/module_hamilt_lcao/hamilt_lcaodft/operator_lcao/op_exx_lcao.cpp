@@ -3,12 +3,10 @@
 
 #include "module_base/blacs_connector.h"
 
-namespace hamilt
-{
+namespace hamilt {
 
 template <>
-void OperatorEXX<OperatorLCAO<double, double>>::add_loaded_Hexx(const int ik)
-{
+void OperatorEXX<OperatorLCAO<double, double>>::add_loaded_Hexx(const int ik) {
     BlasConnector::axpy(this->LM->ParaV->get_local_size(),
                         1.0,
                         this->LM->Hexxd_k_load[ik].data(),
@@ -17,8 +15,8 @@ void OperatorEXX<OperatorLCAO<double, double>>::add_loaded_Hexx(const int ik)
                         1);
 }
 template <>
-void OperatorEXX<OperatorLCAO<std::complex<double>, double>>::add_loaded_Hexx(const int ik)
-{
+void OperatorEXX<OperatorLCAO<std::complex<double>, double>>::add_loaded_Hexx(
+    const int ik) {
 
     BlasConnector::axpy(this->LM->ParaV->get_local_size(),
                         1.0,
@@ -28,8 +26,8 @@ void OperatorEXX<OperatorLCAO<std::complex<double>, double>>::add_loaded_Hexx(co
                         1);
 }
 template <>
-void OperatorEXX<OperatorLCAO<std::complex<double>, std::complex<double>>>::add_loaded_Hexx(const int ik)
-{
+void OperatorEXX<OperatorLCAO<std::complex<double>, std::complex<double>>>::
+    add_loaded_Hexx(const int ik) {
     BlasConnector::axpy(this->LM->ParaV->get_local_size(),
                         1.0,
                         this->LM->Hexxc_k_load[ik].data(),

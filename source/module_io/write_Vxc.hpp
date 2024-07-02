@@ -11,33 +11,32 @@ template <typename T>
 struct TGint;
 
 template <>
-struct TGint<double>
-{
+struct TGint<double> {
     using type = Gint_Gamma;
 };
 
 template <>
-struct TGint<std::complex<double>>
-{
+struct TGint<std::complex<double>> {
     using type = Gint_k;
 };
 #endif
 
-namespace ModuleIO
-{
+namespace ModuleIO {
 
-inline void gint_vl(Gint_Gamma& gg, Gint_inout& io, LCAO_Matrix& lm)
-{
+inline void gint_vl(Gint_Gamma& gg, Gint_inout& io, LCAO_Matrix& lm) {
     gg.cal_vlocal(&io, false);
 };
 
-inline void gint_vl(Gint_k& gk, Gint_inout& io, LCAO_Matrix& lm, ModuleBase::matrix& wg)
-{
+inline void gint_vl(Gint_k& gk,
+                    Gint_inout& io,
+                    LCAO_Matrix& lm,
+                    ModuleBase::matrix& wg) {
     gk.cal_gint(&io);
 };
 
-void set_para2d_MO(const Parallel_Orbitals& pv, const int nbands, Parallel_2D& p2d)
-{
+void set_para2d_MO(const Parallel_Orbitals& pv,
+                   const int nbands,
+                   Parallel_2D& p2d) {
     std::ofstream ofs;
 #ifdef __MPI
     p2d.set(nbands, nbands, pv.nb, pv.comm_2D, pv.blacs_ctxt);
@@ -51,8 +50,7 @@ std::vector<std::complex<double>> cVc(std::complex<double>* V,
                                       int nbasis,
                                       int nbands,
                                       const Parallel_Orbitals& pv,
-                                      const Parallel_2D& p2d)
-{
+                                      const Parallel_2D& p2d) {
     std::vector<std::complex<double>> Vc(pv.nloc_wfc, 0.0);
     char transa = 'N';
     char transb = 'N';
@@ -80,7 +78,19 @@ std::vector<std::complex<double>> cVc(std::complex<double>* V,
             &i1,
             pv.desc_wfc);
 #else
-    zgemm_(&transa, &transb, &nbasis, &nbands, &nbasis, &alpha, V, &nbasis, c, &nbasis, &beta, Vc.data(), &nbasis);
+    zgemm_(&transa,
+           &transb,
+           &nbasis,
+           &nbands,
+           &nbasis,
+           &alpha,
+           V,
+           &nbasis,
+           c,
+           &nbasis,
+           &beta,
+           Vc.data(),
+           &nbasis);
 #endif
     std::vector<std::complex<double>> cVc(p2d.nloc, 0.0);
     transa = 'C';
@@ -127,8 +137,7 @@ std::vector<double> cVc(double* V,
                         int nbasis,
                         int nbands,
                         const Parallel_Orbitals& pv,
-                        const Parallel_2D& p2d)
-{
+                        const Parallel_2D& p2d) {
     std::vector<double> Vc(pv.nloc_wfc, 0.0);
     char transa = 'N';
     char transb = 'N';
@@ -156,7 +165,19 @@ std::vector<double> cVc(double* V,
             &i1,
             pv.desc_wfc);
 #else
-    dgemm_(&transa, &transb, &nbasis, &nbands, &nbasis, &alpha, V, &nbasis, c, &nbasis, &beta, Vc.data(), &nbasis);
+    dgemm_(&transa,
+           &transb,
+           &nbasis,
+           &nbands,
+           &nbasis,
+           &alpha,
+           V,
+           &nbasis,
+           c,
+           &nbasis,
+           &beta,
+           Vc.data(),
+           &nbasis);
 #endif
     std::vector<double> cVc(p2d.nloc, 0.0);
     transa = 'T';
@@ -198,27 +219,21 @@ std::vector<double> cVc(double* V,
     return cVc;
 }
 
-inline double get_real(const std::complex<double>& c)
-{
-    return c.real();
-}
+inline double get_real(const std::complex<double>& c) { return c.real(); }
 
-inline double get_real(const double& d)
-{
-    return d;
-}
+inline double get_real(const double& d) { return d; }
 
 template <typename T>
-double all_band_energy(const int ik, const std::vector<T>& mat_mo, const Parallel_2D& p2d, const ModuleBase::matrix& wg)
-{
+double all_band_energy(const int ik,
+                       const std::vector<T>& mat_mo,
+                       const Parallel_2D& p2d,
+                       const ModuleBase::matrix& wg) {
     double e = 0.0;
-    for (int i = 0; i < p2d.get_row_size(); ++i)
-    {
-        for (int j = 0; j < p2d.get_col_size(); ++j)
-        {
-            if (p2d.local2global_row(i) == p2d.local2global_col(j))
-            {
-                e += get_real(mat_mo[j * p2d.get_row_size() + i]) * wg(ik, p2d.local2global_row(i));
+    for (int i = 0; i < p2d.get_row_size(); ++i) {
+        for (int j = 0; j < p2d.get_col_size(); ++j) {
+            if (p2d.local2global_row(i) == p2d.local2global_col(j)) {
+                e += get_real(mat_mo[j * p2d.get_row_size() + i])
+                     * wg(ik, p2d.local2global_row(i));
             }
         }
     }
@@ -227,17 +242,18 @@ double all_band_energy(const int ik, const std::vector<T>& mat_mo, const Paralle
 }
 
 template <typename T>
-std::vector<double> orbital_energy(const int ik, const int nbands, const std::vector<T>& mat_mo, const Parallel_2D& p2d)
-{
+std::vector<double> orbital_energy(const int ik,
+                                   const int nbands,
+                                   const std::vector<T>& mat_mo,
+                                   const Parallel_2D& p2d) {
 #ifdef __DEBUG
     assert(nbands >= 0);
 #endif
     std::vector<double> e(nbands, 0.0);
-    for (int i = 0; i < nbands; ++i)
-    {
-        if (p2d.in_this_processor(i, i))
-        {
-            const int index = p2d.global2local_col(i) * p2d.get_row_size() + p2d.global2local_row(i);
+    for (int i = 0; i < nbands; ++i) {
+        if (p2d.in_this_processor(i, i)) {
+            const int index = p2d.global2local_col(i) * p2d.get_row_size()
+                              + p2d.global2local_row(i);
             e[i] = get_real(mat_mo[index]);
         }
     }
@@ -247,26 +263,29 @@ std::vector<double> orbital_energy(const int ik, const int nbands, const std::ve
 
 // mohan update 2024-04-01
 template <typename T>
-void set_gint_pointer(Gint_Gamma& gint_gamma, Gint_k& gint_k, typename TGint<T>::type*& gint);
+void set_gint_pointer(Gint_Gamma& gint_gamma,
+                      Gint_k& gint_k,
+                      typename TGint<T>::type*& gint);
 
 // mohan update 2024-04-01
 template <>
-void set_gint_pointer<double>(Gint_Gamma& gint_gamma, Gint_k& gint_k, typename TGint<double>::type*& gint)
-{
+void set_gint_pointer<double>(Gint_Gamma& gint_gamma,
+                              Gint_k& gint_k,
+                              typename TGint<double>::type*& gint) {
     gint = &gint_gamma;
 }
 
 // mohan update 2024-04-01
 template <>
-void set_gint_pointer<std::complex<double>>(Gint_Gamma& gint_gamma,
-                                            Gint_k& gint_k,
-                                            typename TGint<std::complex<double>>::type*& gint)
-{
+void set_gint_pointer<std::complex<double>>(
+    Gint_Gamma& gint_gamma,
+    Gint_k& gint_k,
+    typename TGint<std::complex<double>>::type*& gint) {
     gint = &gint_k;
 }
 
-/// @brief  write the Vxc matrix in KS orbital representation, usefull for GW calculation
-/// including terms: local/semi-local XC, EXX, DFTU
+/// @brief  write the Vxc matrix in KS orbital representation, usefull for GW
+/// calculation including terms: local/semi-local XC, EXX, DFTU
 template <typename TK, typename TR>
 void write_Vxc(int nspin,
                int nbasis,
@@ -283,8 +302,7 @@ void write_Vxc(int nspin,
                LCAO_Matrix& lm,
                const K_Vectors& kv,
                const ModuleBase::matrix& wg,
-               Grid_Driver& gd)
-{
+               Grid_Driver& gd) {
     ModuleBase::TITLE("ModuleIO", "write_Vxc");
     const Parallel_Orbitals* pv = lm.ParaV;
     int nbands = wg.nc;
@@ -294,7 +312,13 @@ void write_Vxc(int nspin,
     double vtxc = 0.0;
     // elecstate::PotXC* potxc(&rho_basis, &etxc, vtxc, nullptr);
     // potxc.cal_v_eff(&chg, &ucell, vr_xc);
-    elecstate::Potential* potxc = new elecstate::Potential(&rhod_basis, &rho_basis, &ucell, &vloc, &sf, &etxc, &vtxc);
+    elecstate::Potential* potxc = new elecstate::Potential(&rhod_basis,
+                                                           &rho_basis,
+                                                           &ucell,
+                                                           &vloc,
+                                                           &sf,
+                                                           &etxc,
+                                                           &vtxc);
     std::vector<std::string> compnents_list = {"xc"};
     potxc->pot_register(compnents_list);
     potxc->update_from_charge(&chg, &ucell);
@@ -302,7 +326,8 @@ void write_Vxc(int nspin,
     // 2. allocate AO-matrix
     // R (the number of hR: 1 for nspin=1, 4; 2 for nspin=2)
     int nspin0 = (nspin == 2) ? 2 : 1;
-    std::vector<hamilt::HContainer<TR>> vxcs_R_ao(nspin0, hamilt::HContainer<TR>(pv));
+    std::vector<hamilt::HContainer<TR>> vxcs_R_ao(nspin0,
+                                                  hamilt::HContainer<TR>(pv));
     for (int is = 0; is < nspin0; ++is)
         vxcs_R_ao[is].set_zero();
     // k (size for each k-point)
@@ -315,27 +340,39 @@ void write_Vxc(int nspin,
     set_gint_pointer<TK>(gint_gamma, gint_k, gint);
 
     std::vector<hamilt::Veff<hamilt::OperatorLCAO<TK, TR>>*> vxcs_op_ao(nspin0);
-    for (int is = 0; is < nspin0; ++is)
-    {
-        vxcs_op_ao[is] = new hamilt::Veff<hamilt::OperatorLCAO<TK, TR>>(gint,
-                                                                        &vxc_k_ao,
-                                                                        kv.kvec_d,
-                                                                        potxc,
-                                                                        &vxcs_R_ao[is],
-                                                                        &ucell,
-                                                                        &gd);
+    for (int is = 0; is < nspin0; ++is) {
+        vxcs_op_ao[is]
+            = new hamilt::Veff<hamilt::OperatorLCAO<TK, TR>>(gint,
+                                                             &vxc_k_ao,
+                                                             kv.kvec_d,
+                                                             potxc,
+                                                             &vxcs_R_ao[is],
+                                                             &ucell,
+                                                             &gd);
 
         vxcs_op_ao[is]->contributeHR();
     }
     std::vector<std::vector<double>> e_orb_locxc; // orbital energy (local XC)
     std::vector<std::vector<double>> e_orb_tot;   // orbital energy (total)
 #ifdef __EXX
-    hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>> vexx_op_ao(&vxc_k_ao, &lm, nullptr, kv);
-    hamilt::HS_Matrix_K<TK> vexxonly_k_ao(pv, 1); // only hk is needed, sk is skipped
-    hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>> vexxonly_op_ao(&vexxonly_k_ao, &lm, nullptr, kv);
+    hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>> vexx_op_ao(&vxc_k_ao,
+                                                                 &lm,
+                                                                 nullptr,
+                                                                 kv);
+    hamilt::HS_Matrix_K<TK> vexxonly_k_ao(
+        pv,
+        1); // only hk is needed, sk is skipped
+    hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>> vexxonly_op_ao(
+        &vexxonly_k_ao,
+        &lm,
+        nullptr,
+        kv);
     std::vector<std::vector<double>> e_orb_exx; // orbital energy (EXX)
 #endif
-    hamilt::OperatorDFTU<hamilt::OperatorLCAO<TK, TR>> vdftu_op_ao(&vxc_k_ao, kv.kvec_d, nullptr, kv.isk);
+    hamilt::OperatorDFTU<hamilt::OperatorLCAO<TK, TR>> vdftu_op_ao(&vxc_k_ao,
+                                                                   kv.kvec_d,
+                                                                   nullptr,
+                                                                   kv.isk);
 
     // 4. calculate and write the MO-matrix Exc
     Parallel_2D p2d;
@@ -345,32 +382,38 @@ void write_Vxc(int nspin,
     // double total_energy = 0.0;
     // double exx_energy = 0.0;
     // ======test=======
-    for (int ik = 0; ik < kv.get_nks(); ++ik)
-    {
+    for (int ik = 0; ik < kv.get_nks(); ++ik) {
         vxc_k_ao.set_zero_hk();
         int is = kv.isk[ik];
-        dynamic_cast<hamilt::OperatorLCAO<TK, TR>*>(vxcs_op_ao[is])->contributeHk(ik);
-        const std::vector<TK>& vlocxc_k_mo = cVc(vxc_k_ao.get_hk(), &psi(ik, 0, 0), nbasis, nbands, *pv, p2d);
+        dynamic_cast<hamilt::OperatorLCAO<TK, TR>*>(vxcs_op_ao[is])
+            ->contributeHk(ik);
+        const std::vector<TK>& vlocxc_k_mo
+            = cVc(vxc_k_ao.get_hk(), &psi(ik, 0, 0), nbasis, nbands, *pv, p2d);
 
 #ifdef __EXX
-        if (GlobalC::exx_info.info_global.cal_exx)
-        {
-            e_orb_locxc.emplace_back(orbital_energy(ik, nbands, vlocxc_k_mo, p2d));
+        if (GlobalC::exx_info.info_global.cal_exx) {
+            e_orb_locxc.emplace_back(
+                orbital_energy(ik, nbands, vlocxc_k_mo, p2d));
             ModuleBase::GlobalFunc::ZEROS(vexxonly_k_ao.get_hk(), pv->nloc);
             vexx_op_ao.contributeHk(ik);
             vexxonly_op_ao.contributeHk(ik);
-            std::vector<TK> vexx_k_mo = cVc(vexxonly_k_ao.get_hk(), &psi(ik, 0, 0), nbasis, nbands, *pv, p2d);
+            std::vector<TK> vexx_k_mo = cVc(vexxonly_k_ao.get_hk(),
+                                            &psi(ik, 0, 0),
+                                            nbasis,
+                                            nbands,
+                                            *pv,
+                                            p2d);
             e_orb_exx.emplace_back(orbital_energy(ik, nbands, vexx_k_mo, p2d));
         }
         // ======test=======
         // exx_energy += all_band_energy(ik, vexx_k_mo, p2d, wg);
         // ======test=======
 #endif
-        if (GlobalV::dft_plus_u)
-        {
+        if (GlobalV::dft_plus_u) {
             vdftu_op_ao.contributeHk(ik);
         }
-        const std::vector<TK>& vxc_tot_k_mo = cVc(vxc_k_ao.get_hk(), &psi(ik, 0, 0), nbasis, nbands, *pv, p2d);
+        const std::vector<TK>& vxc_tot_k_mo
+            = cVc(vxc_k_ao.get_hk(), &psi(ik, 0, 0), nbasis, nbands, *pv, p2d);
         e_orb_tot.emplace_back(orbital_energy(ik, nbands, vxc_tot_k_mo, p2d));
         // write
         ModuleIO::save_mat(-1,
@@ -392,43 +435,40 @@ void write_Vxc(int nspin,
     // total_energy -= 0.5 * exx_energy;
     // std::cout << "total energy: " << total_energy << std::endl;
     // std::cout << "etxc: " << etxc << std::endl;
-    // std::cout << "vtxc_cal: " << total_energy - 0.5 * exx_energy << std::endl;
-    // std::cout << "vtxc_ref: " << vtxc << std::endl;
-    // std::cout << "exx_energy: " << 0.5 * exx_energy << std::endl;
+    // std::cout << "vtxc_cal: " << total_energy - 0.5 * exx_energy <<
+    // std::endl; std::cout << "vtxc_ref: " << vtxc << std::endl; std::cout <<
+    // "exx_energy: " << 0.5 * exx_energy << std::endl;
     // ======test=======
     delete potxc;
-    for (int is = 0; is < nspin0; ++is)
-    {
+    for (int is = 0; is < nspin0; ++is) {
         delete vxcs_op_ao[is];
     }
     // write the orbital energy for xc and exx in LibRPA format
-    auto write_orb_energy = [&kv, &nspin0, &nbands](const std::vector<std::vector<double>>& e_orb,
-                                                    const std::string& label,
-                                                    const bool app = false) {
-        assert(e_orb.size() == kv.get_nks());
-        const int nk = kv.get_nks() / nspin0;
-        std::ofstream ofs;
-        ofs.open(GlobalV::global_out_dir + "vxc_" + (label == "" ? "out" : label + "_out"),
-                 app ? std::ios::app : std::ios::out);
-        ofs << nk << "\n" << nspin0 << "\n" << nbands << "\n";
-        ofs << std::scientific << std::setprecision(16);
-        for (int ik = 0; ik < nk; ++ik)
-        {
-            for (int is = 0; is < nspin0; ++is)
-            {
-                for (auto e: e_orb[is * nk + ik])
-                { // Hartree and eV
-                    ofs << e / 2. << "\t" << e * ModuleBase::Ry_to_eV << "\n";
-                }
-            }
-        }
-    };
-    if (GlobalV::MY_RANK == 0)
-    {
+    auto write_orb_energy
+        = [&kv, &nspin0, &nbands](const std::vector<std::vector<double>>& e_orb,
+                                  const std::string& label,
+                                  const bool app = false) {
+              assert(e_orb.size() == kv.get_nks());
+              const int nk = kv.get_nks() / nspin0;
+              std::ofstream ofs;
+              ofs.open(GlobalV::global_out_dir + "vxc_"
+                           + (label == "" ? "out" : label + "_out"),
+                       app ? std::ios::app : std::ios::out);
+              ofs << nk << "\n" << nspin0 << "\n" << nbands << "\n";
+              ofs << std::scientific << std::setprecision(16);
+              for (int ik = 0; ik < nk; ++ik) {
+                  for (int is = 0; is < nspin0; ++is) {
+                      for (auto e: e_orb[is * nk + ik]) { // Hartree and eV
+                          ofs << e / 2. << "\t" << e * ModuleBase::Ry_to_eV
+                              << "\n";
+                      }
+                  }
+              }
+          };
+    if (GlobalV::MY_RANK == 0) {
         write_orb_energy(e_orb_tot, "");
 #ifdef __EXX
-        if (GlobalC::exx_info.info_global.cal_exx)
-        {
+        if (GlobalC::exx_info.info_global.cal_exx) {
             write_orb_energy(e_orb_locxc, "local");
             write_orb_energy(e_orb_exx, "exx");
         }

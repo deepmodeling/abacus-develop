@@ -13,8 +13,7 @@
 #include "module_hamilt_lcao/module_gint/gint_k.h"
 #include "module_hamilt_lcao/module_gint/grid_technique.h"
 
-namespace LCAO_domain
-{
+namespace LCAO_domain {
 
 void build_Nonlocal_mu_new(LCAO_Matrix& lm,
                            ForceStressArrays& fsr, // mohan 2024-06-16

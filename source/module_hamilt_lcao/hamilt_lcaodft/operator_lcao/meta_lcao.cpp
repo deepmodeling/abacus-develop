@@ -4,8 +4,7 @@
 #include "module_base/tool_title.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
-namespace hamilt
-{
+namespace hamilt {
 
 template class Meta<OperatorLCAO<double, double>>;
 

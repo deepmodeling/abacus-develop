@@ -3,12 +3,8 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-K_Vectors::K_Vectors()
-{
-}
-K_Vectors::~K_Vectors()
-{
-}
+K_Vectors::K_Vectors() {}
+K_Vectors::~K_Vectors() {}
 
 /************************************************
  *  unit test of the function of cal_h_lambda
@@ -20,15 +16,14 @@ K_Vectors::~K_Vectors()
  *    - this function calculates the h_lambda operator
  */
 
-class SpinConstrainTest : public testing::Test
-{
+class SpinConstrainTest : public testing::Test {
   protected:
     SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>& sc
-        = SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>::getScInstance();
+        = SpinConstrain<std::complex<double>,
+                        base_device::DEVICE_CPU>::getScInstance();
 };
 
-TEST_F(SpinConstrainTest, CalHLambda)
-{
+TEST_F(SpinConstrainTest, CalHLambda) {
     Parallel_Orbitals paraV;
     std::ofstream ofs("test.log");
     int nrow = 2;
@@ -55,11 +50,13 @@ TEST_F(SpinConstrainTest, CalHLambda)
     sc.set_sc_lambda(sc_lambda, 1);
     // column_major = true
     sc.cal_h_lambda(&h_lambda[0], Sloc2.data(), true, 0);
-    // h_lambda = - [lambda_x * sigma_x + lambda_y * sigma_y + lambda_z * sigma_z] * Sloc2
-    std::vector<std::complex<double>> columnMajor_h_lambda = {std::complex<double>{-1.0, 0.0},
-                                                              std::complex<double>{-1.0, 1.0},
-                                                              std::complex<double>{-1.0, -1.0},
-                                                              std::complex<double>{1.0, 0.0}};
+    // h_lambda = - [lambda_x * sigma_x + lambda_y * sigma_y + lambda_z *
+    // sigma_z] * Sloc2
+    std::vector<std::complex<double>> columnMajor_h_lambda
+        = {std::complex<double>{-1.0, 0.0},
+           std::complex<double>{-1.0, 1.0},
+           std::complex<double>{-1.0, -1.0},
+           std::complex<double>{1.0, 0.0}};
     EXPECT_DOUBLE_EQ(h_lambda[0].real(), columnMajor_h_lambda[0].real());
     EXPECT_DOUBLE_EQ(h_lambda[0].imag(), columnMajor_h_lambda[0].imag());
     EXPECT_DOUBLE_EQ(h_lambda[1].real(), columnMajor_h_lambda[1].real());
@@ -71,10 +68,11 @@ TEST_F(SpinConstrainTest, CalHLambda)
     // column_major = false
     delete[] sc_lambda;
     sc.cal_h_lambda(&h_lambda[0], Sloc2.data(), false, 0);
-    std::vector<std::complex<double>> rowMajor_h_lambda = {std::complex<double>{-1.0, 0.0},
-                                                           std::complex<double>{-1.0, -1.0},
-                                                           std::complex<double>{-1.0, 1.0},
-                                                           std::complex<double>{1.0, 0.0}};
+    std::vector<std::complex<double>> rowMajor_h_lambda
+        = {std::complex<double>{-1.0, 0.0},
+           std::complex<double>{-1.0, -1.0},
+           std::complex<double>{-1.0, 1.0},
+           std::complex<double>{1.0, 0.0}};
     EXPECT_DOUBLE_EQ(h_lambda[0].real(), rowMajor_h_lambda[0].real());
     EXPECT_DOUBLE_EQ(h_lambda[0].imag(), rowMajor_h_lambda[0].imag());
     EXPECT_DOUBLE_EQ(h_lambda[1].real(), rowMajor_h_lambda[1].real());
@@ -86,8 +84,7 @@ TEST_F(SpinConstrainTest, CalHLambda)
     remove("test.log");
 }
 
-TEST_F(SpinConstrainTest, CalHLambdaS2)
-{
+TEST_F(SpinConstrainTest, CalHLambdaS2) {
     Parallel_Orbitals paraV;
     std::ofstream ofs("test.log");
     int nrow = 1;

@@ -10,30 +10,27 @@
 #include "module_hamilt_lcao/module_tddft/td_velocity.h"
 #include "operator_lcao.h"
 
-namespace hamilt
-{
+namespace hamilt {
 
 #ifndef __TDEKINETICTEMPLATE
 #define __TDEKINETICTEMPLATE
 
 /// The TDEkinetic class template inherits from class T
-/// It is used to calculate correction term of kinetic energy in time-dependent DFT
+/// It is used to calculate correction term of kinetic energy in time-dependent
+/// DFT
 template <class T>
-class TDEkinetic : public T
-{
-};
+class TDEkinetic : public T {};
 
 #endif
 
 /// TDEkinetic class template specialization for OperatorLCAO<TK> base class
-/// It is used to calculate correction term of kinetic energy in time-dependent DFT
-/// Template parameters:
+/// It is used to calculate correction term of kinetic energy in time-dependent
+/// DFT Template parameters:
 /// - TK: data type of k-space Hamiltonian
 /// - TR: data type of real space Hamiltonian
 
 template <typename TK, typename TR>
-class TDEkinetic<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
-{
+class TDEkinetic<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR> {
   public:
     TDEkinetic<OperatorLCAO<TK, TR>>(HS_Matrix_K<TK>* hsk_in,
                                      hamilt::HContainer<TR>* hR_in,
@@ -45,13 +42,15 @@ class TDEkinetic<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 
     virtual void contributeHR() override;
     virtual void contributeHk(int ik) override;
-    /// @brief init two center integrals and vector potential for td_ekintic term
+    /// @brief init two center integrals and vector potential for td_ekintic
+    /// term
     void init_td(void);
 
     /**
      * @brief initialize HR, search the nearest neighbor atoms
-     * HContainer is used to store the non-local pseudopotential matrix with specific <I,J,R> atom-pairs
-     * the size of HR will be fixed after initialization
+     * HContainer is used to store the non-local pseudopotential matrix with
+     * specific <I,J,R> atom-pairs the size of HR will be fixed after
+     * initialization
      */
     void initialize_HR(Grid_Driver* GridD);
 
@@ -72,9 +71,10 @@ class TDEkinetic<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                     TR* s_pointer);
 
     /**
-     * @brief calculate the ekinetic matrix correction term in tddft with specific <I,J,R> atom-pairs
-     * nearest neighbor atoms don't need to be calculated again
-     * loop the atom-pairs in HR and calculate the ekinetic matrix
+     * @brief calculate the ekinetic matrix correction term in tddft with
+     * specific <I,J,R> atom-pairs nearest neighbor atoms don't need to be
+     * calculated again loop the atom-pairs in HR and calculate the ekinetic
+     * matrix
      */
     void calculate_HR(void);
     virtual void set_HR_fixed(void*) override;
@@ -85,8 +85,8 @@ class TDEkinetic<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     const UnitCell* ucell = nullptr;
 
     HContainer<TR>* SR = nullptr;
-    /// @brief Store real space hamiltonian. TD term should include imaginary part, thus it has to be complex type. Only
-    /// shared between TD operators.
+    /// @brief Store real space hamiltonian. TD term should include imaginary
+    /// part, thus it has to be complex type. Only shared between TD operators.
     HContainer<std::complex<double>>* hR_tmp = nullptr;
     Grid_Driver* Grid = nullptr;
 
@@ -94,19 +94,23 @@ class TDEkinetic<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     /// @brief correction term iA⋅∇
     void td_ekinetic_scalar(std::complex<double>* Hloc, TR* Sloc, int nnr);
     /// @brief correction term A^2*S
-    void td_ekinetic_grad(std::complex<double>* Hloc, int nnr, ModuleBase::Vector3<double> grad_overlap);
+    void td_ekinetic_grad(std::complex<double>* Hloc,
+                          int nnr,
+                          ModuleBase::Vector3<double> grad_overlap);
 
     ModuleBase::Sph_Bessel_Recursive::D2* psb_ = nullptr;
     ORB_gaunt_table MGT;
 
-    /// @brief Store the two center integrals outcome <𝝓_𝝁𝟎 |𝛁| 𝝓_𝝂𝑹> for td_ekinetic term
-    std::map<size_t,                                              // TA
-             std::map<size_t,                                     // TB
-                      std::map<int,                               // LA
-                               std::map<size_t,                   // NA
-                                        std::map<int,             // LB
-                                                 std::map<size_t, // NB
-                                                          Center2_Orb::Orb11>>>>>>
+    /// @brief Store the two center integrals outcome <𝝓_𝝁𝟎 |𝛁| 𝝓_𝝂𝑹> for
+    /// td_ekinetic term
+    std::map<
+        size_t,                                              // TA
+        std::map<size_t,                                     // TB
+                 std::map<int,                               // LA
+                          std::map<size_t,                   // NA
+                                   std::map<int,             // LB
+                                            std::map<size_t, // NB
+                                                     Center2_Orb::Orb11>>>>>>
         center2_orb11_s;
 
     /// @brief Store the vector potential for td_ekinetic term
