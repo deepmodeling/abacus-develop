@@ -16,7 +16,6 @@
 #include "module_basis/module_ao/ORB_atomic_lm.h"
 #include "module_basis/module_ao/ORB_gaunt_table.h"
 #include "module_basis/module_ao/ORB_read.h"
-#include "module_basis/module_ao/ORB_table_phi.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_cell/klist.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
