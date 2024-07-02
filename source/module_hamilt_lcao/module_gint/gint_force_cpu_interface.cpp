@@ -28,6 +28,7 @@ void Gint::cpu_force_interface(Gint_inout* inout)
         svl_dphi_thread.zero_out();
     }
 #pragma omp for
+#endif
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++)
     {
         const int na_grid = this->gridt->how_many_atoms[grid_index];
@@ -44,6 +45,7 @@ void Gint::cpu_force_interface(Gint_inout* inout)
                                               this->gridt->start_ind[grid_index],
                                               ncyz,
                                               dv);
+#ifdef _OPENMP
         this->gint_kernel_force(na_grid,
                                 grid_index,
                                 delta_r,
@@ -55,8 +57,22 @@ void Gint::cpu_force_interface(Gint_inout* inout)
                                 &fvl_dphi_thread,
                                 &svl_dphi_thread,
                                 ucell);
+#else
+        this->gint_kernel_force(na_grid,
+                        grid_index,
+                        delta_r,
+                        vldr3,
+                        LD_pool,
+                        inout->ispin,
+                        inout->isforce,
+                        inout->isstress,
+                        inout->fvl_dphi,
+                        inout->svl_dphi,
+                        ucell);
+#endif
         delete[] vldr3;
     }
+#ifdef _OPENMP
 #pragma omp critical(gint)
     {
         if (inout->isforce)
@@ -67,37 +83,6 @@ void Gint::cpu_force_interface(Gint_inout* inout)
         {
             inout->svl_dphi[0] += svl_dphi_thread;
         }
-    }
-#else
-    for (int grid_index = 0; grid_index < this->nbxx; grid_index++)
-    {
-        const int na_grid = this->gridt->how_many_atoms[grid_index];
-        if (na_grid == 0)
-        {
-            continue;
-        }
-        double* vldr3 = Gint_Tools::get_vldr3(inout->vl,
-                                              this->bxyz,
-                                              this->bx,
-                                              this->by,
-                                              this->bz,
-                                              this->nplane,
-                                              this->gridt->start_ind[grid_index],
-                                              ncyz,
-                                              dv);
-        this->gint_kernel_force(na_grid,
-                                grid_index,
-                                delta_r,
-                                vldr3,
-                                LD_pool,
-                                inout->ispin,
-                                inout->isforce,
-                                inout->isstress,
-                                inout->fvl_dphi,
-                                inout->svl_dphi,
-                                ucell);
-
-        delete[] vldr3;
     }
 #endif
     ModuleBase::TITLE("Gint_interface", "cal_gint_force");
@@ -130,6 +115,7 @@ void Gint::cpu_force_meta_interface(Gint_inout* inout)
         svl_dphi_thread.zero_out();
     }
 #pragma omp for
+#endif
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++)
     {
         const int na_grid = this->gridt->how_many_atoms[grid_index];
@@ -156,7 +142,7 @@ void Gint::cpu_force_meta_interface(Gint_inout* inout)
                                               this->gridt->start_ind[grid_index],
                                               ncyz,
                                               dv);
-
+#ifdef _OPENMP
         this->gint_kernel_force_meta(na_grid,
                                      grid_index,
                                      delta_r,
@@ -169,9 +155,24 @@ void Gint::cpu_force_meta_interface(Gint_inout* inout)
                                      &fvl_dphi_thread,
                                      &svl_dphi_thread,
                                      ucell);
+#else
+        this->gint_kernel_force_meta(na_grid,
+                                grid_index,
+                                delta_r,
+                                vldr3,
+                                vkdr3,
+                                LD_pool,
+                                inout->ispin,
+                                inout->isforce,
+                                inout->isstress,
+                                inout->fvl_dphi,
+                                inout->svl_dphi,
+                                ucell);
+#endif
         delete[] vldr3;
         delete[] vkdr3;
     }
+#ifdef _OPENMP
 #pragma omp critical(gint)
     {
         if (inout->isforce)
@@ -182,49 +183,6 @@ void Gint::cpu_force_meta_interface(Gint_inout* inout)
         {
             inout->svl_dphi[0] += svl_dphi_thread;
         }
-    }
-#else
-    for (int grid_index = 0; grid_index < this->nbxx; grid_index++)
-    {
-        const int na_grid = this->gridt->how_many_atoms[grid_index];
-        if (na_grid == 0)
-        {
-            continue;
-        }
-        double* vldr3 = Gint_Tools::get_vldr3(inout->vl,
-                                              this->bxyz,
-                                              this->bx,
-                                              this->by,
-                                              this->bz,
-                                              this->nplane,
-                                              this->gridt->start_ind[grid_index],
-                                              ncyz,
-                                              dv);
-
-        double* vkdr3 = Gint_Tools::get_vldr3(inout->vofk,
-                                              this->bxyz,
-                                              this->bx,
-                                              this->by,
-                                              this->bz,
-                                              this->nplane,
-                                              this->gridt->start_ind[grid_index],
-                                              ncyz,
-                                              dv);
-
-        this->gint_kernel_force_meta(na_grid,
-                                     grid_index,
-                                     delta_r,
-                                     vldr3,
-                                     vkdr3,
-                                     LD_pool,
-                                     inout->ispin,
-                                     inout->isforce,
-                                     inout->isstress,
-                                     inout->fvl_dphi,
-                                     inout->svl_dphi,
-                                     ucell);
-        delete[] vldr3;
-        delete[] vkdr3;
     }
 #endif
     ModuleBase::TITLE("Gint_interface", "cal_gint_force_meta");
