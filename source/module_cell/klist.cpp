@@ -33,8 +33,6 @@ K_Vectors::K_Vectors()
 
     nks = 0;
     nkstot = 0;
-    nkstot_ibz = 0;
-
     k_nkstot = 0; // LiuXh add 20180619
 }
 
@@ -124,12 +122,6 @@ void K_Vectors::set(const ModuleSymmetry::Symmetry& symm,
 3. Close symemtry: set `symmetry` to 0 in INPUT. \n \
 4. Set `symmetry_autoclose` to 1 in INPUT to automatically close symmetry when this error occurs.");
         }
-        if (ModuleSymmetry::Symmetry::symm_flag || is_mp)
-        {
-            // resize the kpoint container according to nkstot_ibz
-            this->update_use_ibz();
-            this->nks = this->nkstot = this->nkstot_ibz;
-        }
     }
 
     // (3)
@@ -206,7 +198,7 @@ bool K_Vectors::read_kpoints(const std::string& fn)
     ModuleBase::TITLE("K_Vectors", "read_kpoints");
     if (GlobalV::MY_RANK != 0)
     {
-        return 1;
+        return true;
     }
 
     // 1. Overwrite the KPT file and default K-point information if needed
@@ -254,7 +246,7 @@ bool K_Vectors::read_kpoints(const std::string& fn)
     if (!ifk)
     {
         GlobalV::ofs_warning << " Can't find File name : " << fn << std::endl;
-        return 0;
+        return false;
     }
 
     ifk >> std::setiosflags(std::ios::uppercase);
@@ -285,7 +277,7 @@ bool K_Vectors::read_kpoints(const std::string& fn)
     if (ierr == 0)
     {
         GlobalV::ofs_warning << " symbol K_POINTS not found." << std::endl;
-        return 0;
+        return false;
     }
 
     // input k-points are in 2pi/a units
@@ -303,7 +295,7 @@ bool K_Vectors::read_kpoints(const std::string& fn)
     if (nkstot > max_kpoints)
     {
         GlobalV::ofs_warning << " nkstot > MAX_KPOINTS" << std::endl;
-        return 0;
+        return false;
     }
 
     // 2.2 Select different methods and generate K-point grid
@@ -325,7 +317,7 @@ bool K_Vectors::read_kpoints(const std::string& fn)
         else
         {
             GlobalV::ofs_warning << " Error: neither Gamma nor Monkhorst-Pack." << std::endl;
-            return 0;
+            return false;
         }
 
         ifk >> nmp[0] >> nmp[1] >> nmp[2];
@@ -369,7 +361,7 @@ bool K_Vectors::read_kpoints(const std::string& fn)
             {
                 ModuleBase::WARNING("K_Vectors::read_kpoints",
                                     "Line mode of k-points is open, please set symmetry to 0 or -1.");
-                return 0;
+                return false;
             }
 
             interpolate_k_between(ifk, kvec_c);
@@ -385,7 +377,7 @@ bool K_Vectors::read_kpoints(const std::string& fn)
             {
                 ModuleBase::WARNING("K_Vectors::read_kpoints",
                                     "Line mode of k-points is open, please set symmetry to 0 or -1.");
-                return 0;
+                return false;
             }
 
             interpolate_k_between(ifk, kvec_d);
@@ -398,14 +390,14 @@ bool K_Vectors::read_kpoints(const std::string& fn)
         else
         {
             GlobalV::ofs_warning << " Error : neither Cartesian nor Direct kpoint." << std::endl;
-            return 0;
+            return false;
         }
     }
 
     this->nkstot_full = this->nks = this->nkstot;
 
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "nkstot", nkstot);
-    return 1;
+    return true;
 } // END SUBROUTINE
 
 void K_Vectors::interpolate_k_between(std::ifstream& ifk, std::vector<ModuleBase::Vector3<double>>& kvec)
@@ -531,15 +523,17 @@ void K_Vectors::Monkhorst_Pack(const int* nmp_in, const double* koffset_in, cons
     return;
 }
 
-void K_Vectors::update_use_ibz(void)
+void K_Vectors::update_use_ibz(const int& nkstot_ibz,
+                               const std::vector<ModuleBase::Vector3<double>>& kvec_d_ibz,
+                               const std::vector<double>& wk_ibz)
 {
     if (GlobalV::MY_RANK != 0)
         return;
     ModuleBase::TITLE("K_Vectors", "update_use_ibz");
     assert(nkstot_ibz > 0);
-
+    assert(nkstot_ibz <= kvec_d_ibz.size());
     // update nkstot
-    this->nkstot = this->nkstot_ibz;
+    this->nks = this->nkstot = nkstot_ibz;
 
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "nkstot now", nkstot);
 
@@ -547,10 +541,10 @@ void K_Vectors::update_use_ibz(void)
 
     for (int i = 0; i < this->nkstot; ++i)
     {
-        this->kvec_d[i] = this->kvec_d_ibz[i];
+        this->kvec_d[i] = kvec_d_ibz[i];
 
         // update weight.
-        this->wk[i] = this->wk_ibz[i];
+        this->wk[i] = wk_ibz[i];
     }
 
     this->kd_done = true;
@@ -774,12 +768,12 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry& symm,
 
     // use operation : kgmatrix to find
     // the new set kvec_d : ir_kpt
-    this->nkstot_ibz = 0;
+    int nkstot_ibz = 0;
 
     assert(nkstot > 0);
-    kvec_d_ibz.resize(this->nkstot);
-    wk_ibz.resize(this->nkstot);
-    ibz2bz.resize(this->nkstot);
+    std::vector<ModuleBase::Vector3<double>> kvec_d_ibz(this->nkstot);
+    std::vector<double> wk_ibz(this->nkstot); // ibz kpoint wk ,weight of k points
+    std::vector<double> ibz2bz(this->nkstot);
 
     // nkstot is the total input k-points number.
     const double weight = 1.0 / static_cast<double>(nkstot);
@@ -848,16 +842,16 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry& symm,
                     // kvec_rot_k.z;
                     kvec_rot_k = kvec_rot_k * ucell.G * k_vec.Inverse(); // convert back to k-latice
                 }
-                for (int k = 0; k < this->nkstot_ibz; ++k)
+                for (int k = 0; k < nkstot_ibz; ++k)
                 {
-                    if (symm.equal(kvec_rot.x, this->kvec_d_ibz[k].x) && symm.equal(kvec_rot.y, this->kvec_d_ibz[k].y)
-                        && symm.equal(kvec_rot.z, this->kvec_d_ibz[k].z))
+                    if (symm.equal(kvec_rot.x, kvec_d_ibz[k].x) && symm.equal(kvec_rot.y, kvec_d_ibz[k].y)
+                        && symm.equal(kvec_rot.z, kvec_d_ibz[k].z))
                     {
                         already_exist = true;
                         // find another ibz k point,
                         // but is already in the ibz_kpoint list.
                         // so the weight need to +1;
-                        this->wk_ibz[k] += weight;
+                        wk_ibz[k] += weight;
                         exist_number = k;
                         break;
                     }
@@ -869,15 +863,15 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry& symm,
         {
             // if it's a new ibz kpoint.
             // nkstot_ibz indicate the index of ibz kpoint.
-            this->kvec_d_ibz[nkstot_ibz] = kvec_rot;
+            kvec_d_ibz[nkstot_ibz] = kvec_rot;
             // output in kpoints file
             ibz_index[i] = nkstot_ibz;
 
             // the weight should be averged k-point weight.
-            this->wk_ibz[nkstot_ibz] = weight;
+            wk_ibz[nkstot_ibz] = weight;
 
             // ibz2bz records the index of origin k points.
-            this->ibz2bz[nkstot_ibz] = i;
+            ibz2bz[nkstot_ibz] = i;
             ++nkstot_ibz;
         }
         else // mohan fix bug 2010-1-30
@@ -936,9 +930,9 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry& symm,
                                  this->kvec_d[i].y,
                                  this->kvec_d[i].z,
                                  ibz_index[i] + 1,
-                                 this->kvec_d_ibz[ibz_index[i]].x,
-                                 this->kvec_d_ibz[ibz_index[i]].y,
-                                 this->kvec_d_ibz[ibz_index[i]].z);
+                                 kvec_d_ibz[ibz_index[i]].x,
+                                 kvec_d_ibz[ibz_index[i]].y,
+                                 kvec_d_ibz[ibz_index[i]].z);
     }
     ss << table << std::endl;
     skpt = ss.str();
@@ -951,13 +945,20 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry& symm,
     {
         table += FmtCore::format("%8d%12.8f%12.8f%12.8f%8.4f%8d\n",
                                  ik + 1,
-                                 this->kvec_d_ibz[ik].x,
-                                 this->kvec_d_ibz[ik].y,
-                                 this->kvec_d_ibz[ik].z,
-                                 this->wk_ibz[ik],
-                                 this->ibz2bz[ik]);
+                                 kvec_d_ibz[ik].x,
+                                 kvec_d_ibz[ik].y,
+                                 kvec_d_ibz[ik].z,
+                                 wk_ibz[ik],
+                                 ibz2bz[ik]);
     }
     GlobalV::ofs_running << table << std::endl;
+
+    // resize the kpoint container according to nkstot_ibz
+    if (use_symm || is_mp)
+    {
+        this->update_use_ibz(nkstot_ibz, kvec_d_ibz, wk_ibz);
+    }
+
     return;
 }
 
@@ -1086,7 +1087,7 @@ void K_Vectors::normalize_wk(const int& degspin)
 }
 
 #ifdef __MPI
-void K_Vectors::mpi_k(void)
+void K_Vectors::mpi_k()
 {
     ModuleBase::TITLE("K_Vectors", "mpi_k");
 
@@ -1178,7 +1179,7 @@ void K_Vectors::mpi_k(void)
 // This routine sets the k vectors for the up and down spin
 //----------------------------------------------------------
 // from set_kup_and_kdw.f90
-void K_Vectors::set_kup_and_kdw(void)
+void K_Vectors::set_kup_and_kdw()
 {
     ModuleBase::TITLE("K_Vectors", "setup_kup_and_kdw");
 

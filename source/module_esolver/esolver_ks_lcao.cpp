@@ -479,7 +479,6 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners()
                                     this->GG,
                                     this->GK,
                                     this->LM,
-                                    this->LOC,
                                     this->kv,
                                     this->pelec->wg,
                                     GlobalC::GridD);
