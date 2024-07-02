@@ -67,7 +67,7 @@ void sparse_format::cal_dH(LCAO_Matrix& lm,
                                        *(two_center_bundle.overlap_orb_beta),
                                        &GlobalC::GridD);
 
-    sparse_format::cal_dSTN_R(lm, fsr_dh, grid, current_spin, sparse_thr);
+    sparse_format::cal_dSTN_R(lm, HS_Arrays, fsr_dh, grid, current_spin, sparse_thr);
 
     delete[] fsr_dh.DHloc_fixedR_x;
     delete[] fsr_dh.DHloc_fixedR_y;
@@ -105,6 +105,7 @@ void sparse_format::set_R_range(std::set<Abfs::Vector3_Order<int>>& all_R_coor, 
 }
 
 void sparse_format::cal_dSTN_R(LCAO_Matrix& lm,
+                               LCAO_HS_Arrays& HS_Arrays,
                                ForceStressArrays& fsr,
                                Grid_Driver& grid,
                                const int& current_spin,
@@ -201,17 +202,17 @@ void sparse_format::cal_dSTN_R(LCAO_Matrix& lm,
                                 temp_value_double = fsr.DHloc_fixedR_x[index];
                                 if (std::abs(temp_value_double) > sparse_thr)
                                 {
-                                    lm.dHRx_sparse[current_spin][dR][iw1_all][iw2_all] = temp_value_double;
+                                    HS_Arrays.dHRx_sparse[current_spin][dR][iw1_all][iw2_all] = temp_value_double;
                                 }
                                 temp_value_double = fsr.DHloc_fixedR_y[index];
                                 if (std::abs(temp_value_double) > sparse_thr)
                                 {
-                                    lm.dHRy_sparse[current_spin][dR][iw1_all][iw2_all] = temp_value_double;
+                                    HS_Arrays.dHRy_sparse[current_spin][dR][iw1_all][iw2_all] = temp_value_double;
                                 }
                                 temp_value_double = fsr.DHloc_fixedR_z[index];
                                 if (std::abs(temp_value_double) > sparse_thr)
                                 {
-                                    lm.dHRz_sparse[current_spin][dR][iw1_all][iw2_all] = temp_value_double;
+                                    HS_Arrays.dHRz_sparse[current_spin][dR][iw1_all][iw2_all] = temp_value_double;
                                 }
                             }
                             else
@@ -224,6 +225,43 @@ void sparse_format::cal_dSTN_R(LCAO_Matrix& lm,
                 }
             }
         }
+    }
+
+    return;
+}
+
+void sparse_format::destroy_dH_R_sparse(LCAO_HS_Arrays& HS_Arrays)
+{
+    ModuleBase::TITLE("LCAO_Matrix", "destroy_dH_R_sparse");
+
+    if (GlobalV::NSPIN != 4)
+    {
+        std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> empty_dHRx_sparse_up;
+        std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> empty_dHRx_sparse_down;
+        std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> empty_dHRy_sparse_up;
+        std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> empty_dHRy_sparse_down;
+        std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> empty_dHRz_sparse_up;
+        std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> empty_dHRz_sparse_down;
+
+        HS_Arrays.dHRx_sparse[0].swap(empty_dHRx_sparse_up);
+        HS_Arrays.dHRx_sparse[1].swap(empty_dHRx_sparse_down);
+        HS_Arrays.dHRy_sparse[0].swap(empty_dHRy_sparse_up);
+        HS_Arrays.dHRy_sparse[1].swap(empty_dHRy_sparse_down);
+        HS_Arrays.dHRz_sparse[0].swap(empty_dHRz_sparse_up);
+        HS_Arrays.dHRz_sparse[1].swap(empty_dHRz_sparse_down);
+    }
+    else
+    {
+        std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>
+            empty_dHRx_soc_sparse;
+        std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>
+            empty_dHRy_soc_sparse;
+        std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>
+            empty_dHRz_soc_sparse;
+
+        HS_Arrays.dHRx_soc_sparse.swap(empty_dHRx_soc_sparse);
+        HS_Arrays.dHRy_soc_sparse.swap(empty_dHRy_soc_sparse);
+        HS_Arrays.dHRz_soc_sparse.swap(empty_dHRz_soc_sparse);
     }
 
     return;
