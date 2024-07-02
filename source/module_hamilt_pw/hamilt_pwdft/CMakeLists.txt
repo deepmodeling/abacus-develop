@@ -8,6 +8,7 @@ list(APPEND objects
     operator_pw/meta_pw.cpp
     operator_pw/velocity_pw.cpp
     operator_pw/operator_pw.cpp
+    forces_nl.cpp
     forces.cpp
     forces_us.cpp
     stress_func_cc.cpp
@@ -32,6 +33,7 @@ list(APPEND objects
     global.cpp
     parallel_grid.cpp
     elecond.cpp
+    fs_nonlocal_tools.cpp
 )
 
 add_library(

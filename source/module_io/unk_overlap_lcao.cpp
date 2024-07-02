@@ -60,19 +60,18 @@ void unkOverlap_lcao::init(const Grid_Technique& gt, std::complex<double>*** wfc
     // std::cout << "unkOverlap_lcao::init start" << std::endl;
 
     int Lmax_used, Lmax;
-
-    MOT.allocate(GlobalC::ORB.get_ntype(), // number of atom types
-                 GlobalC::ORB.get_lmax(),  // max L used to calculate overlap
-                 GlobalC::ORB.get_kmesh(), // kpoints, for integration in k space
-                 GlobalC::ORB.get_Rmax(),  // max value of radial table
-                 GlobalC::ORB.get_dR(),    // delta R, for making radial table
-                 GlobalC::ORB.get_dk());   // delta k, for integration in k space
-
     int exx_lmax = 0;
 #ifdef __EXX
     exx_lmax = GlobalC::exx_info.info_ri.abfs_Lmax;
 #endif
-    MOT.init_Table_Spherical_Bessel(2, 3, Lmax_used, Lmax, exx_lmax, GlobalC::ORB, GlobalC::ucell.infoNL.Beta);
+    ORB_table_phi::init_Table_Spherical_Bessel(2,
+                                               3,
+                                               Lmax_used,
+                                               Lmax,
+                                               exx_lmax,
+                                               GlobalC::ORB,
+                                               GlobalC::ucell.infoNL.Beta,
+                                               psb_);
 
     ModuleBase::Ylm::set_coefficients();
 
@@ -186,7 +185,7 @@ void unkOverlap_lcao::init(const Grid_Technique& gt, std::complex<double>*** wfc
                                 std::make_pair(NB,
                                                Center2_Orb::Orb11(GlobalC::ORB.Phi[TA].PhiLN(LA, NA),
                                                                   GlobalC::ORB.Phi[TB].PhiLN(LB, NB),
-                                                                  MOT,
+                                                                  psb_,
                                                                   MGT)));
                         }
                     }
@@ -212,7 +211,7 @@ void unkOverlap_lcao::init(const Grid_Technique& gt, std::complex<double>*** wfc
                                                Center2_Orb::Orb21(GlobalC::ORB.Phi[TA].PhiLN(LA, NA),
                                                                   orb_r,
                                                                   GlobalC::ORB.Phi[TB].PhiLN(LB, NB),
-                                                                  MOT,
+                                                                  psb_,
                                                                   MGT)));
                         }
                     }

@@ -9,6 +9,7 @@
 #include "module_base/matrix.h"
 #include "module_base/matrix3.h"
 #include "module_base/parallel_reduce.h"
+#include "module_base/sph_bessel_recursive.h"
 #include "module_base/timer.h"
 #include "module_base/vector3.h"
 #include "module_base/ylm.h"
@@ -103,7 +104,7 @@ class toWannier90_LCAO : public toWannier90
     // Use default element orbital information
     int orb_r_ntype = 0;
 
-    ORB_table_phi MOT;
+    ModuleBase::Sph_Bessel_Recursive::D2* psb_ = nullptr;
     ORB_gaunt_table MGT;
     double kmesh_times = 1;
 
