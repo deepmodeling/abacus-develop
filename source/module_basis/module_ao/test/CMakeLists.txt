@@ -33,20 +33,12 @@ list(APPEND depend_files
   ../ORB_nonlocal.cpp
   ../ORB_nonlocal_lm.cpp
   ../ORB_gaunt_table.cpp
-  ../ORB_table_phi.cpp
-  ../ORB_gen_tables.cpp
   ../parallel_2d.cpp
   ../parallel_orbitals.cpp
   ../../../module_hamilt_lcao/hamilt_lcaodft/center2_orb-orb11.cpp
+  ../../../module_hamilt_lcao/hamilt_lcaodft/center2_orb.cpp
   )
-AddTest(
-  TARGET orbital_equal_test
-  LIBS ${math_libs} device numerical_atomic_orbitals container 
-  SOURCES 1_snap_equal_test.cpp ORB_unittest.cpp
-  ../../../module_base/parallel_reduce.cpp ../../../module_base/parallel_global.cpp ../../../module_base/parallel_common.cpp
-  ../../../module_base/assoc_laguerre.cpp
-  ${depend_files}
-)
+
 install(DIRECTORY GaAs DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../../../tests)
 install(DIRECTORY GaAs DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
@@ -89,15 +81,6 @@ AddTest(
 #    LIBS ${math_libs} device base
 #)
 
-AddTest(
-    TARGET ORB_table_phi_test
-    SOURCES ORB_table_phi_test.cpp
-        ../ORB_table_phi.cpp
-        ../ORB_read.cpp
-        ../ORB_atomic.cpp
-        ../ORB_atomic_lm.cpp
-    LIBS ${math_libs} device base
-)
 
 AddTest(
     TARGET parallel_2d_test
