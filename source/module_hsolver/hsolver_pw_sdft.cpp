@@ -7,8 +7,7 @@
 
 #include <algorithm>
 
-namespace hsolver
-{
+namespace hsolver {
 void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
                            psi::Psi<std::complex<double>>& psi,
                            elecstate::ElecState* pes,
@@ -17,8 +16,7 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
                            const int istep,
                            const int iter,
                            const std::string method_in,
-                           const bool skip_charge)
-{
+                           const bool skip_charge) {
     ModuleBase::TITLE(this->classname, "solve");
     ModuleBase::timer::tick(this->classname, "solve");
     const int npwx = psi.get_nbasis();
@@ -32,17 +30,16 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
     // select the method of diagonalization
     this->method = method_in;
     // report if the specified diagonalization method is not supported
-    if (this->method != "cg" && this->method != "dav" && this->method != "dav_subspace" && this->method != "bpcg")
-    {
-        ModuleBase::WARNING_QUIT("HSolverPW::solve", "This method of DiagH is not supported!");
+    if (this->method != "cg" && this->method != "dav"
+        && this->method != "dav_subspace" && this->method != "bpcg") {
+        ModuleBase::WARNING_QUIT("HSolverPW::solve",
+                                 "This method of DiagH is not supported!");
     }
 
     // part of KSDFT to get KS orbitals
-    for (int ik = 0; ik < nks; ++ik)
-    {
+    for (int ik = 0; ik < nks; ++ik) {
         pHamilt->updateHk(ik);
-        if (nbands > 0 && GlobalV::MY_STOGROUP == 0)
-        {
+        if (nbands > 0 && GlobalV::MY_STOGROUP == 0) {
             this->updatePsiK(pHamilt, psi, ik);
             // template add precondition calculating here
             update_precondition(precondition, ik, this->wfc_basis->npwk[ik]);
@@ -54,9 +51,12 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
         stoiter.stohchi.current_ik = ik;
 
 #ifdef __MPI
-        if (nbands > 0)
-        {
-            MPI_Bcast(&psi(ik, 0, 0), npwx * nbands, MPI_DOUBLE_COMPLEX, 0, PARAPW_WORLD);
+        if (nbands > 0) {
+            MPI_Bcast(&psi(ik, 0, 0),
+                      npwx * nbands,
+                      MPI_DOUBLE_COMPLEX,
+                      0,
+                      PARAPW_WORLD);
             MPI_Bcast(&(pes->ekb(ik, 0)), nbands, MPI_DOUBLE, 0, PARAPW_WORLD);
         }
 #endif
@@ -66,8 +66,7 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
 
     this->endDiagh();
 
-    for (int ik = 0; ik < nks; ik++)
-    {
+    for (int ik = 0; ik < nks; ik++) {
         // init k
         if (nks > 1)
             pHamilt->updateHk(ik);
@@ -77,25 +76,21 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
 
     stoiter.itermu(iter, pes);
     stoiter.calHsqrtchi(stowf);
-    if (skip_charge)
-    {
+    if (skip_charge) {
         ModuleBase::timer::tick(this->classname, "solve");
         return;
     }
     //(5) calculate new charge density
     // calculate KS rho.
-    if (nbands > 0)
-    {
+    if (nbands > 0) {
         pes->psiToRho(psi);
 #ifdef __MPI
         MPI_Bcast(&pes->f_en.eband, 1, MPI_DOUBLE, 0, PARAPW_WORLD);
 #endif
-    }
-    else
-    {
-        for (int is = 0; is < GlobalV::NSPIN; is++)
-        {
-            ModuleBase::GlobalFunc::ZEROS(pes->charge->rho[is], pes->charge->nrxx);
+    } else {
+        for (int is = 0; is < GlobalV::NSPIN; is++) {
+            ModuleBase::GlobalFunc::ZEROS(pes->charge->rho[is],
+                                          pes->charge->nrxx);
         }
     }
     // calculate stochastic rho
@@ -106,25 +101,22 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
     return;
 }
 
-double HSolverPW_SDFT::set_diagethr(const int istep, const int iter, const double drho)
-{
-    if (iter == 1)
-    {
-        if (istep == 0)
-        {
-            if (GlobalV::init_chg == "file")
-            {
+double HSolverPW_SDFT::set_diagethr(const int istep,
+                                    const int iter,
+                                    const double drho) {
+    if (iter == 1) {
+        if (istep == 0) {
+            if (GlobalV::init_chg == "file") {
                 this->diag_ethr = 1.0e-5;
             }
             this->diag_ethr = std::max(this->diag_ethr, GlobalV::PW_DIAG_THR);
-        }
-        else
+        } else
             this->diag_ethr = std::max(this->diag_ethr, 1.0e-5);
-    }
-    else
-    {
+    } else {
         if (GlobalV::NBANDS > 0 && this->stoiter.KS_ne > 1e-6)
-            this->diag_ethr = std::min(this->diag_ethr, 0.1 * drho / std::max(1.0, this->stoiter.KS_ne));
+            this->diag_ethr
+                = std::min(this->diag_ethr,
+                           0.1 * drho / std::max(1.0, this->stoiter.KS_ne));
         else
             this->diag_ethr = 0.0;
     }
