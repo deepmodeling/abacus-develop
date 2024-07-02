@@ -93,6 +93,8 @@ class Grid_Technique : public Grid_MeshBall
 
     // indexes for nnrg -> orbital index + R index
     std::vector<gridIntegral::gridIndex> nnrg_index;
+    
+    bool get_init_malloced() const { return init_malloced; }
 
     void set_pbc_grid(const int& ncx_in, const int& ncy_in, const int& ncz_in, const int& bx_in, const int& by_in,
                       const int& bz_in, const int& nbx_in, const int& nby_in, const int& nbz_in, const int& nbxx_in,
@@ -111,7 +113,10 @@ class Grid_Technique : public Grid_MeshBall
                        const int& iat2) const;
 
   private:
-    void cal_max_box_index(void);
+
+    // init_malloced as whether the class 
+    // is initialized or not
+    bool init_malloced=true;
 
     int maxB1;
     int maxB2;
@@ -127,6 +132,7 @@ class Grid_Technique : public Grid_MeshBall
 
     int nbox;
 
+    void cal_max_box_index(void);
     // atoms on meshball
     void init_atoms_on_grid(const int& ny,
                             const int& nplane,

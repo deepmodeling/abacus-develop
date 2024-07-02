@@ -62,6 +62,7 @@ void Grid_Technique::set_pbc_grid(const int& ncx_in,
     {
         GlobalV::ofs_running << "\n SETUP EXTENDED REAL SPACE GRID FOR GRID INTEGRATION" << std::endl;
     }
+    this->init_malloced = true;
 
     // copy ucell and orb parameters
     this->ucell = &ucell;
@@ -76,7 +77,7 @@ void Grid_Technique::set_pbc_grid(const int& ncx_in,
     this->psi_u = psi_u;
     this->dpsi_u = dpsi_u;
     this->d2psi_u = d2psi_u;
-
+   
     // (1) init_meshcell cell and big cell.
     this->set_grid_dim(ncx_in,
                        ncy_in,
