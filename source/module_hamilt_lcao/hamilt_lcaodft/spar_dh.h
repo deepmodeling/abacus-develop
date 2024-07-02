@@ -23,10 +23,14 @@ void set_R_range(std::set<Abfs::Vector3_Order<int>>& all_R_coor, Grid_Driver& gr
 
 // be called by 'cal_dH_sparse'
 void cal_dSTN_R(LCAO_Matrix& lm,
+                LCAO_HS_Arrays& HS_Arrays,
                 ForceStressArrays& fsr, // mohan add 2024-06-16
                 Grid_Driver& grid,
                 const int& current_spin,
                 const double& sparse_thr);
+
+void destroy_dH_R_sparse(LCAO_HS_Arrays& HS_Arrays);
+
 } // namespace sparse_format
 
 #endif
