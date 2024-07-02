@@ -14,8 +14,7 @@
 #include <string>
 #include <vector>
 
-namespace Input_Conv
-{
+namespace Input_Conv {
 
 /**
  * @brief template bridge codes for converting string to other types
@@ -24,8 +23,8 @@ namespace Input_Conv
 void tmp_convert();
 
 /**
- * @brief Pass the data members from the INPUT instance(defined in module_io/input.cpp)
- *        to GlobalV and GlobalC.
+ * @brief Pass the data members from the INPUT instance(defined in
+ * module_io/input.cpp) to GlobalV and GlobalC.
  */
 void Convert(void);
 

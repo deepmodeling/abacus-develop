@@ -2,12 +2,10 @@
 #define PARAMETER_H
 #include "input_parameter.h"
 #include "system_parameter.h"
-namespace ModuleIO
-{
+namespace ModuleIO {
 class ReadInput;
 }
-class Parameter
-{
+class Parameter {
   public:
     Parameter(){};
     ~Parameter(){};
@@ -39,8 +37,7 @@ class Parameter
 extern Parameter PARAM;
 
 // temperarily put here
-namespace GlobalV
-{
+namespace GlobalV {
 extern int NPROC;
 extern int MY_RANK;
 extern std::ofstream ofs_running;

@@ -8,24 +8,27 @@
  * @brief base class of md
  *
  * This class implements the velocity-Verlet method.
- * The system is assumed to be isolated in the sense that it cannot exchange energy or particles with its environment,
- * so that the energy of the system does not change with time.
+ * The system is assumed to be isolated in the sense that it cannot exchange
+ * energy or particles with its environment, so that the energy of the system
+ * does not change with time.
  */
-class MD_base
-{
+class MD_base {
   public:
     MD_base(MD_para& MD_para_in, UnitCell& unit_in);
     virtual ~MD_base();
 
     /**
-     * @brief init before running md, calculate energy, force, and stress of the initial configuration.
+     * @brief init before running md, calculate energy, force, and stress of the
+     * initial configuration.
      * @param p_esolver the energy solver used in md
      * @param global_readin_dir directory of files for reading
      */
-    virtual void setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir);
+    virtual void setup(ModuleESolver::ESolver* p_esolver,
+                       const std::string& global_readin_dir);
 
     /**
-     * @brief the first half of equation of motion, update velocities and positions
+     * @brief the first half of equation of motion, update velocities and
+     * positions
      * @param ofs determine the output files
      */
     virtual void first_half(std::ofstream& ofs);
@@ -67,13 +70,14 @@ class MD_base
     virtual void update_vel(const ModuleBase::Vector3<double>* force);
 
   public:
-    bool stop;                          ///< MD stop or not
-    double t_current;                   ///< current temperature
-    int step_;                          ///< the MD step finished in current calculation
-    int step_rst_;                      ///< the MD step finished in previous calculations
-    int frozen_freedom_;                ///< the fixed freedom of the system
-    double* allmass;                    ///< atom mass
-    ModuleBase::Vector3<double>* pos;   ///< atom displacements  liuyu modify 2023-03-22
+    bool stop;           ///< MD stop or not
+    double t_current;    ///< current temperature
+    int step_;           ///< the MD step finished in current calculation
+    int step_rst_;       ///< the MD step finished in previous calculations
+    int frozen_freedom_; ///< the fixed freedom of the system
+    double* allmass;     ///< atom mass
+    ModuleBase::Vector3<double>*
+        pos; ///< atom displacements  liuyu modify 2023-03-22
     ModuleBase::Vector3<double>* vel;   ///< atom velocity
     ModuleBase::Vector3<int>* ionmbl;   ///< atom is frozen or not
     ModuleBase::Vector3<double>* force; ///< force of each atom

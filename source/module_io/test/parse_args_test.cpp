@@ -7,8 +7,7 @@
 
 bool ModuleIO::ReadInput::check_mode = false;
 
-TEST(ParseArgsTest, OutVersionTest)
-{
+TEST(ParseArgsTest, OutVersionTest) {
     // Test case 1: no arguments
     char arg0[] = "test";
     char* argv[] = {arg0};
@@ -30,7 +29,9 @@ TEST(ParseArgsTest, OutVersionTest)
     char* argv1[] = {arg0, arg1};
     argc = 2;
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(ModuleIO::parse_args(argc, argv1), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(ModuleIO::parse_args(argc, argv1),
+                ::testing::ExitedWithCode(0),
+                "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_EQ(output_ref, output);
 
@@ -39,7 +40,9 @@ TEST(ParseArgsTest, OutVersionTest)
     char* argv2[] = {arg0, arg2};
     argc = 2;
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(ModuleIO::parse_args(argc, argv2), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(ModuleIO::parse_args(argc, argv2),
+                ::testing::ExitedWithCode(0),
+                "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_EQ(output_ref, output);
 
@@ -48,13 +51,14 @@ TEST(ParseArgsTest, OutVersionTest)
     char* argv3[] = {arg0, arg3};
     argc = 2;
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(ModuleIO::parse_args(argc, argv3), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(ModuleIO::parse_args(argc, argv3),
+                ::testing::ExitedWithCode(0),
+                "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_EQ(output_ref, output);
 }
 
-TEST(ParseArgsTest, CheckInput)
-{
+TEST(ParseArgsTest, CheckInput) {
     char arg0[] = "test";
     char arg1[] = "--check-input";
     char* argv[] = {arg0, arg1};

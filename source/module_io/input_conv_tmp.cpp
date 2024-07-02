@@ -5,8 +5,7 @@
 #include <sstream>
 #include <string>
 
-void Input_Conv::tmp_convert()
-{
+void Input_Conv::tmp_convert() {
     INPUT.stru_file = PARAM.get().stru_file;
     INPUT.pseudo_dir = PARAM.get().pseudo_dir;
     INPUT.orbital_dir = PARAM.get().orbital_dir;

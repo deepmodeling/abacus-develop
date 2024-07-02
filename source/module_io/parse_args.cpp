@@ -7,16 +7,13 @@
 #include <cstdlib>
 #include <iostream>
 
-namespace ModuleIO
-{
+namespace ModuleIO {
 
-void parse_args(int argc, char** argv)
-{
+void parse_args(int argc, char** argv) {
     for (int i = 1; i < argc; ++i) // Start from 1 to skip the program name
     {
         std::string arg = argv[i];
-        if (arg == "--version" || arg == "-v" || arg == "-V")
-        {
+        if (arg == "--version" || arg == "-v" || arg == "-V") {
 #ifdef VERSION
             const char* version = VERSION;
 #else
@@ -24,13 +21,9 @@ void parse_args(int argc, char** argv)
 #endif
             std::cout << "ABACUS version " << version << std::endl;
             std::exit(0);
-        }
-        else if (arg == "--check-input")
-        {
+        } else if (arg == "--check-input") {
             ModuleIO::ReadInput::check_mode = true;
-        }
-        else
-        {
+        } else {
             std::cerr << "Unknown argument: " << arg << std::endl;
             std::exit(1);
         }

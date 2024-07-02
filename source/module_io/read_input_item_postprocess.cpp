@@ -1,14 +1,13 @@
 #include "module_base/tool_quit.h"
 #include "read_input.h"
 #include "read_input_tool.h"
-namespace ModuleIO
-{
-void ReadInput::item_postprocess()
-{
+namespace ModuleIO {
+void ReadInput::item_postprocess() {
     // 6. Smearing
     {
         Input_Item item("smearing_method");
-        item.annotation = "type of smearing_method: gauss; fd; fixed; mp; mp2; mv";
+        item.annotation
+            = "type of smearing_method: gauss; fd; fixed; mp; mp2; mv";
         read_sync_string(smearing_method);
         this->add_item(item);
     }
@@ -22,9 +21,11 @@ void ReadInput::item_postprocess()
         // Energy range for smearing,
         //`smearing_sigma` = 1/2 *kB* `smearing_sigma_temp`.
         Input_Item tmp_item("smearing_sigma_temp");
-        tmp_item.readvalue
-            = [](const Input_Item& item, Parameter& para) { para.input.smearing_sigma = 3.166815e-6 * doublevalue; };
-        // only to set smearing_sigma, so no need to write to output INPUT file or bcast.
+        tmp_item.readvalue = [](const Input_Item& item, Parameter& para) {
+            para.input.smearing_sigma = 3.166815e-6 * doublevalue;
+        };
+        // only to set smearing_sigma, so no need to write to output INPUT file
+        // or bcast.
         this->add_item(tmp_item);
     }
 
@@ -40,19 +41,14 @@ void ReadInput::item_postprocess()
         item.annotation = "mixing parameter: 0 means no new charge";
         read_sync_double(mixing_beta);
         autosetfuncs.push_back([](Parameter& para) {
-            if (para.input.mixing_beta < 0.0)
-            {
-                if (para.input.nspin == 1)
-                {
+            if (para.input.mixing_beta < 0.0) {
+                if (para.input.nspin == 1) {
                     para.input.mixing_beta = 0.8;
-                }
-                else if (para.input.nspin == 2)
-                {
+                } else if (para.input.nspin == 2) {
                     para.input.mixing_beta = 0.4;
                     para.input.mixing_beta_mag = 1.6;
                     para.input.mixing_gg0_mag = 0.0;
-                }
-                else if (para.input.nspin == 4) // I will add this
+                } else if (para.input.nspin == 4) // I will add this
                 {
                     para.input.mixing_beta = 0.4;
                     para.input.mixing_beta_mag = 1.6;
@@ -85,17 +81,13 @@ void ReadInput::item_postprocess()
         item.annotation = "mixing parameter for magnetic density";
         read_sync_double(mixing_beta_mag);
         autosetfuncs.push_back([](Parameter& para) {
-            if (para.input.mixing_beta_mag < 0.0)
-            {
-                if (para.input.nspin == 2 || para.input.nspin == 4)
-                {
-                    if (para.input.mixing_beta <= 0.4)
-                    {
+            if (para.input.mixing_beta_mag < 0.0) {
+                if (para.input.nspin == 2 || para.input.nspin == 4) {
+                    if (para.input.mixing_beta <= 0.4) {
                         para.input.mixing_beta_mag = 4 * para.input.mixing_beta;
-                    }
-                    else
-                    {
-                        para.input.mixing_beta_mag = 1.6; // 1.6 can be discussed
+                    } else {
+                        para.input.mixing_beta_mag
+                            = 1.6; // 1.6 can be discussed
                     }
                 }
             }
@@ -116,7 +108,8 @@ void ReadInput::item_postprocess()
     }
     {
         Input_Item item("mixing_angle");
-        item.annotation = "angle mixing parameter for non-colinear calculations";
+        item.annotation
+            = "angle mixing parameter for non-colinear calculations";
         read_sync_double(mixing_angle);
         this->add_item(item);
     }

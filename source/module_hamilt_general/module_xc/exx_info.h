@@ -4,10 +4,8 @@
 #include "module_ri/conv_coulomb_pot_k.h"
 #include "xc_functional.h"
 
-struct Exx_Info
-{
-    struct Exx_Info_Global
-    {
+struct Exx_Info {
+    struct Exx_Info_Global {
         bool cal_exx = false;
 
         Conv_Coulomb_Pot_K::Ccp_Type ccp_type;
@@ -20,21 +18,18 @@ struct Exx_Info
     };
     Exx_Info_Global info_global;
 
-    struct Exx_Info_Lip
-    {
+    struct Exx_Info_Lip {
         const Conv_Coulomb_Pot_K::Ccp_Type& ccp_type;
         const double& hse_omega;
         double lambda;
 
         Exx_Info_Lip(const Exx_Info::Exx_Info_Global& info_global)
-            : ccp_type(info_global.ccp_type), hse_omega(info_global.hse_omega)
-        {
+            : ccp_type(info_global.ccp_type), hse_omega(info_global.hse_omega) {
         }
     };
     Exx_Info_Lip info_lip;
 
-    struct Exx_Info_RI
-    {
+    struct Exx_Info_RI {
         const Conv_Coulomb_Pot_K::Ccp_Type& ccp_type;
         const double& hse_omega;
 
@@ -56,15 +51,12 @@ struct Exx_Info
         int abfs_Lmax = 0; // tmp
 
         Exx_Info_RI(const Exx_Info::Exx_Info_Global& info_global)
-            : ccp_type(info_global.ccp_type), hse_omega(info_global.hse_omega)
-        {
+            : ccp_type(info_global.ccp_type), hse_omega(info_global.hse_omega) {
         }
     };
     Exx_Info_RI info_ri;
 
-    Exx_Info() : info_lip(this->info_global), info_ri(this->info_global)
-    {
-    }
+    Exx_Info() : info_lip(this->info_global), info_ri(this->info_global) {}
 };
 
 #endif

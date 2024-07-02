@@ -2,18 +2,16 @@
 #include "read_input.h"
 #include "read_input_tool.h"
 
-namespace ModuleIO
-{
-void ReadInput::item_sdft()
-{
+namespace ModuleIO {
+void ReadInput::item_sdft() {
     {
         Input_Item item("method_sto");
         item.annotation = "1: slow and save memory, 2: fast and waste memory";
         read_sync_int(method_sto);
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.method_sto != 1 && para.input.method_sto != 2)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "method_sto should be 1 or 2");
+            if (para.input.method_sto != 1 && para.input.method_sto != 2) {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                                         "method_sto should be 1 or 2");
             }
         };
         this->add_item(item);
@@ -29,34 +27,29 @@ void ReadInput::item_sdft()
         item.annotation = "number of stochstic orbitals";
         item.readvalue = [](const Input_Item& item, Parameter& para) {
             std::string nbandsto_str = strvalue;
-            if (nbandsto_str != "all")
-            {
+            if (nbandsto_str != "all") {
                 para.input.nbands_sto = std::stoi(nbandsto_str);
-            }
-            else
-            {
+            } else {
                 para.input.nbands_sto = 0;
             }
         };
         item.resetvalue = [](const Input_Item& item, Parameter& para) {
-            if (strvalue == "0" && para.input.esolver_type == "sdft")
-            {
+            if (strvalue == "0" && para.input.esolver_type == "sdft") {
                 para.input.esolver_type = "ksdft";
             }
         };
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.nbands_sto < 0 || para.input.nbands_sto > 100000)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "nbands_sto should be in the range of 0 to 100000");
+            if (para.input.nbands_sto < 0 || para.input.nbands_sto > 100000) {
+                ModuleBase::WARNING_QUIT(
+                    "ReadInput",
+                    "nbands_sto should be in the range of 0 to 100000");
             }
         };
         item.getfinalvalue = [](Input_Item& item, const Parameter& para) {
             if (item.str_values.size() == 0) // no nbands_sto in INPUT
             {
                 item.final_value << para.input.nbands_sto;
-            }
-            else
-            {
+            } else {
                 item.final_value << item.str_values[0];
             }
         };
@@ -71,13 +64,15 @@ void ReadInput::item_sdft()
     }
     {
         Input_Item item("emin_sto");
-        item.annotation = "trial energy to guess the lower bound of eigen energies of the Hamitonian operator";
+        item.annotation = "trial energy to guess the lower bound of eigen "
+                          "energies of the Hamitonian operator";
         read_sync_double(emin_sto);
         this->add_item(item);
     }
     {
         Input_Item item("emax_sto");
-        item.annotation = "trial energy to guess the upper bound of eigen energies of the Hamitonian operator";
+        item.annotation = "trial energy to guess the upper bound of eigen "
+                          "energies of the Hamitonian operator";
         read_sync_double(emax_sto);
         this->add_item(item);
     }
@@ -95,7 +90,8 @@ void ReadInput::item_sdft()
     }
     {
         Input_Item item("initsto_freq");
-        item.annotation = "frequency to generate new stochastic orbitals when running md";
+        item.annotation
+            = "frequency to generate new stochastic orbitals when running md";
         read_sync_int(initsto_freq);
         this->add_item(item);
     }
@@ -107,7 +103,8 @@ void ReadInput::item_sdft()
     }
     {
         Input_Item item("cond_che_thr");
-        item.annotation = "control the error of Chebyshev expansions for conductivities";
+        item.annotation
+            = "control the error of Chebyshev expansions for conductivities";
         read_sync_double(cond_che_thr);
         this->add_item(item);
     }
@@ -131,7 +128,8 @@ void ReadInput::item_sdft()
     }
     {
         Input_Item item("cond_dtbatch");
-        item.annotation = "exp(iH*dt*cond_dtbatch) is expanded with Chebyshev expansion";
+        item.annotation
+            = "exp(iH*dt*cond_dtbatch) is expanded with Chebyshev expansion";
         read_sync_int(cond_dtbatch);
         this->add_item(item);
     }

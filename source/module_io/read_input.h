@@ -6,20 +6,16 @@
 #include <sstream>
 #include <string>
 
-namespace ModuleIO
-{
-class ReadInput
-{
+namespace ModuleIO {
+class ReadInput {
   public:
     ReadInput(const int& rank);
     ~ReadInput(){};
     /**
      * @brief clear all input items
      */
-    void clear()
-    {
-        for (auto& item: input_lists)
-        {
+    void clear() {
+        for (auto& item: input_lists) {
             item.second.final_value.str("");
             item.second.str_values.clear();
         }
@@ -48,7 +44,8 @@ class ReadInput
      * @param param parameters of ABACUS
      * @param filename_out write output file name
      */
-    void write_parameters(const Parameter& param, const std::string& filename_out);
+    void write_parameters(const Parameter& param,
+                          const std::string& filename_out);
     static bool check_mode;
     bool check_ntype_flag = true; ///< check ntype from STRU file
 
@@ -113,10 +110,12 @@ class ReadInput
     //----These functions must be done----------------------
     /**
      * @brief autoset some values
-     *        For "default" inputs, e.g. ks_esolver = "default", force_thr = -1, etc.
-     * @note "autosetfuncs" can also serve as a fallback function for "resetvalue_items" or "checkvalue_items" because
-     * it will definitely execute, but it is recommended to use "autosetfuncs" as much as possible. This will help
-     * you understand the relationships between input parameters.
+     *        For "default" inputs, e.g. ks_esolver = "default", force_thr = -1,
+     * etc.
+     * @note "autosetfuncs" can also serve as a fallback function for
+     * "resetvalue_items" or "checkvalue_items" because it will definitely
+     * execute, but it is recommended to use "autosetfuncs" as much as possible.
+     * This will help you understand the relationships between input parameters.
      */
     std::vector<std::function<void(Parameter&)>> autosetfuncs;
     /// bcast all values function
@@ -126,9 +125,11 @@ class ReadInput
 };
 
 void strtolower(char* sa, char* sb);
-std::string longstring(const std::vector<std::string>& str_values, const int length);
+std::string longstring(const std::vector<std::string>& str_values,
+                       const int length);
 bool convert_bool(std::string str);
-bool find_str(const std::vector<std::string>& strings, const std::string& strToFind);
+bool find_str(const std::vector<std::string>& strings,
+              const std::string& strToFind);
 
 } // namespace ModuleIO
 

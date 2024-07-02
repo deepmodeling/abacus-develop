@@ -13,19 +13,15 @@
 #include "module_io/read_input.h"
 #include "module_io/winput.h"
 #include "module_parameter/parameter.h"
-Driver::Driver()
-{
-}
+Driver::Driver() {}
 
-Driver::~Driver()
-{
+Driver::~Driver() {
     // Release the device memory within singleton object GlobalC::ppcell
     // before the main function exits.
     GlobalC::ppcell.release_memory();
 }
 
-void Driver::init()
-{
+void Driver::init() {
     ModuleBase::TITLE("Driver", "init");
 
     time_t time_start = std::time(nullptr);
@@ -34,8 +30,8 @@ void Driver::init()
     this->print_start_info();
 
     // (1) read the input parameters.
-    // INPUT should be initalized here and then pass to atomic world, mohan 2024-05-12
-    // INPUT should not be GlobalC, mohan 2024-05-12
+    // INPUT should be initalized here and then pass to atomic world, mohan
+    // 2024-05-12 INPUT should not be GlobalC, mohan 2024-05-12
     Driver::reading();
 
     // (2) welcome to the atomic world!
@@ -46,15 +42,15 @@ void Driver::init()
     Print_Info::print_time(time_start, time_finish);
 
     // (4) close all of the running logs
-    ModuleBase::Global_File::close_all_log(GlobalV::MY_RANK, PARAM.get().out_alllog);
+    ModuleBase::Global_File::close_all_log(GlobalV::MY_RANK,
+                                           PARAM.get().out_alllog);
 
     // (5) output the json file
     // Json::create_Json(&GlobalC::ucell.symm,GlobalC::ucell.atoms,&INPUT);
     Json::create_Json(&GlobalC::ucell, &INPUT);
 }
 
-void Driver::print_start_info()
-{
+void Driver::print_start_info() {
 #ifdef VERSION
     const char* version = VERSION;
 #else
@@ -70,27 +66,42 @@ void Driver::print_start_info()
 
     INPUT.start_time = time_now;
     PARAM.set_start_time(time_now);
-    GlobalV::ofs_running << "                                                                                     "
+    GlobalV::ofs_running << "                                                  "
+                            "                                   "
                          << std::endl;
-    GlobalV::ofs_running << "                              ABACUS " << version << std::endl << std::endl;
-    GlobalV::ofs_running << "               Atomic-orbital Based Ab-initio Computation at UStc                    "
+    GlobalV::ofs_running << "                              ABACUS " << version
                          << std::endl
                          << std::endl;
-    GlobalV::ofs_running << "                     Website: http://abacus.ustc.edu.cn/                             "
+    GlobalV::ofs_running << "               Atomic-orbital Based Ab-initio "
+                            "Computation at UStc                    "
+                         << std::endl
                          << std::endl;
-    GlobalV::ofs_running << "               Documentation: https://abacus.deepmodeling.com/                       "
+    GlobalV::ofs_running
+        << "                     Website: http://abacus.ustc.edu.cn/           "
+           "                  "
+        << std::endl;
+    GlobalV::ofs_running
+        << "               Documentation: https://abacus.deepmodeling.com/     "
+           "                  "
+        << std::endl;
+    GlobalV::ofs_running
+        << "                  Repository: "
+           "https://github.com/abacusmodeling/abacus-develop       "
+        << std::endl;
+    GlobalV::ofs_running
+        << "                              "
+           "https://github.com/deepmodeling/abacus-develop         "
+        << std::endl;
+    GlobalV::ofs_running << "                      Commit: " << commit
+                         << std::endl
                          << std::endl;
-    GlobalV::ofs_running << "                  Repository: https://github.com/abacusmodeling/abacus-develop       "
-                         << std::endl;
-    GlobalV::ofs_running << "                              https://github.com/deepmodeling/abacus-develop         "
-                         << std::endl;
-    GlobalV::ofs_running << "                      Commit: " << commit << std::endl << std::endl;
     GlobalV::ofs_running << std::setiosflags(std::ios::right);
 
 #ifdef __MPI
-    // GlobalV::ofs_running << "    Version: Parallel, under ALPHA test" << std::endl;
-    // GlobalV::ofs_running << "    Version: Parallel, in development" << std::endl;
-    // GlobalV::ofs_running << "    Processor Number is " << GlobalV::NPROC << std::endl;
+    // GlobalV::ofs_running << "    Version: Parallel, under ALPHA test" <<
+    // std::endl; GlobalV::ofs_running << "    Version: Parallel, in
+    // development" << std::endl; GlobalV::ofs_running << "    Processor Number
+    // is " << GlobalV::NPROC << std::endl;
     ModuleBase::TITLE("Input", "init");
     ModuleBase::TITLE("Input", "Bcast");
 #else
@@ -98,14 +109,15 @@ void Driver::print_start_info()
     ModuleBase::TITLE("Input", "init");
 #endif
     GlobalV::ofs_running << "    Start Time is " << ctime(&time_now);
-    GlobalV::ofs_running << "                                                                                     "
+    GlobalV::ofs_running << "                                                  "
+                            "                                   "
                          << std::endl;
-    GlobalV::ofs_running << " ------------------------------------------------------------------------------------"
+    GlobalV::ofs_running << " -------------------------------------------------"
+                            "-----------------------------------"
                          << std::endl;
 }
 
-void Driver::reading()
-{
+void Driver::reading() {
     ModuleBase::timer::tick("Driver", "reading");
     // temperarily
     GlobalV::MY_RANK = PARAM.globalV().myrank;
@@ -139,14 +151,21 @@ void Driver::reading()
                                       GlobalV::MY_RANK,
                                       GlobalV::GRANK,
                                       GlobalV::GSIZE);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "DRANK", GlobalV::DRANK + 1);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,
+                                "DRANK",
+                                GlobalV::DRANK + 1);
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "DSIZE", GlobalV::DSIZE);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "DCOLOR", GlobalV::DCOLOR + 1);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "GRANK", GlobalV::GRANK + 1);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,
+                                "DCOLOR",
+                                GlobalV::DCOLOR + 1);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,
+                                "GRANK",
+                                GlobalV::GRANK + 1);
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "GSIZE", GlobalV::GSIZE);
 
 #ifdef __MPI
-    // (5)  divide the GlobalV::NPROC processors into GlobalV::KPAR for k-points parallelization.
+    // (5)  divide the GlobalV::NPROC processors into GlobalV::KPAR for k-points
+    // parallelization.
     Parallel_Global::init_pools(GlobalV::NPROC,
                                 GlobalV::MY_RANK,
                                 GlobalV::NSTOGROUP,
@@ -165,8 +184,7 @@ void Driver::reading()
     ModuleBase::timer::tick("Driver", "reading");
 }
 
-void Driver::atomic_world()
-{
+void Driver::atomic_world() {
     ModuleBase::TITLE("Driver", "atomic_world");
     //--------------------------------------------------
     // choose basis sets:
