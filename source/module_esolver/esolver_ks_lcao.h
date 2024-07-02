@@ -16,11 +16,9 @@
 
 #include <memory>
 
-namespace ModuleESolver
-{
+namespace ModuleESolver {
 template <typename TK, typename TR>
-class ESolver_KS_LCAO : public ESolver_KS<TK>
-{
+class ESolver_KS_LCAO : public ESolver_KS<TK> {
   public:
     ESolver_KS_LCAO();
     ~ESolver_KS_LCAO();
@@ -48,7 +46,9 @@ class ESolver_KS_LCAO : public ESolver_KS<TK>
 
     virtual void iter_init(const int istep, const int iter) override;
 
-    virtual void hamilt2density(const int istep, const int iter, const double ethr) override;
+    virtual void hamilt2density(const int istep,
+                                const int iter,
+                                const double ethr) override;
 
     virtual void update_pot(const int istep, const int iter) override;
 
@@ -98,11 +98,13 @@ class ESolver_KS_LCAO : public ESolver_KS<TK>
     void beforesolver(const int istep);
     //----------------------------------------------------------------------
 
-    /// @brief create ModuleIO::Output_Mat_Sparse object to output sparse density matrix of H, S, T, r
+    /// @brief create ModuleIO::Output_Mat_Sparse object to output sparse
+    /// density matrix of H, S, T, r
     ModuleIO::Output_Mat_Sparse<TK> create_Output_Mat_Sparse(int istep);
 
     void read_mat_npz(std::string& zipname, hamilt::HContainer<double>& hR);
-    void output_mat_npz(std::string& zipname, const hamilt::HContainer<double>& hR);
+    void output_mat_npz(std::string& zipname,
+                        const hamilt::HContainer<double>& hR);
 
     /// @brief check if skip the corresponding output in md calculation
     bool md_skip_out(std::string calculation, int istep, int interval);
@@ -116,12 +118,14 @@ class ESolver_KS_LCAO : public ESolver_KS<TK>
 
   private:
     // tmp interfaces  before sub-modules are refactored
-    void dftu_cal_occup_m(const int& iter, const std::vector<std::vector<TK>>& dm) const;
+    void dftu_cal_occup_m(const int& iter,
+                          const std::vector<std::vector<TK>>& dm) const;
 
 #ifdef __DEEPKS
     void dpks_cal_e_delta_band(const std::vector<std::vector<TK>>& dm) const;
 
-    void dpks_cal_projected_DM(const elecstate::DensityMatrix<TK, double>* dm) const;
+    void dpks_cal_projected_DM(
+        const elecstate::DensityMatrix<TK, double>* dm) const;
 #endif
 };
 } // namespace ModuleESolver

@@ -7,8 +7,7 @@
 #include <string>
 #include <vector>
 
-namespace ModuleIO
-{
+namespace ModuleIO {
 
 /**
  * @brief Generates the filename for the DMK file based on the given parameters.
@@ -51,9 +50,11 @@ void dmk_readData(std::ifstream& ifs, std::complex<double>& data);
  * @tparam T The type of the DMK data.
  * @param nspin The number of spin components.
  * @param nk The number of k-points.
- * @param pv The Parallel_2D object. Will get the global size and local size from it, and seperate the data into different processors accordingly.
+ * @param pv The Parallel_2D object. Will get the global size and local size
+ * from it, and seperate the data into different processors accordingly.
  * @param dmk_dir The directory path of the DMK file.
- * @param dmk A vector to store the DMK data. If use MPI parallel, the data will be seperated into different processors based on the Parallel_2D object.
+ * @param dmk A vector to store the DMK data. If use MPI parallel, the data will
+ * be seperated into different processors based on the Parallel_2D object.
  * @return True if the DMK data is successfully read, false otherwise.
  */
 template <typename T>
@@ -67,10 +68,12 @@ bool read_dmk(const int nspin,
  * @brief Writes the DMK data to a file.
  *
  * @tparam T The type of the DMK data.
- * @param dmk A vector containing the DMK data. The first dimension is nspin*nk, and the second dimension is
- * nlocal*nlocal. DMK is parallel in 2d-block type if using MPI.
+ * @param dmk A vector containing the DMK data. The first dimension is nspin*nk,
+ * and the second dimension is nlocal*nlocal. DMK is parallel in 2d-block type
+ * if using MPI.
  * @param precision The precision of the output of DMK.
- * @param efs A vector containing the Fermi energies, and should have the same size as the number of SPIN.
+ * @param efs A vector containing the Fermi energies, and should have the same
+ * size as the number of SPIN.
  * @param ucell A pointer to the UnitCell object.
  * @param pv The Parallel_2D object. The 2d-block parallel information of DMK.
  */
