@@ -1,5 +1,3 @@
-#include <vector>
-
 #include "charge.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
@@ -15,11 +13,16 @@
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 #include "module_io/rho_io.h"
 #include "module_io/rhog_io.h"
+
+#include <vector>
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
 #endif
 
-void Charge::init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMatrix& strucFac, const int& nbz, const int& bz)
+void Charge::init_rho(elecstate::efermi& eferm_iout,
+                      const ModuleBase::ComplexMatrix& strucFac,
+                      const int& nbz,
+                      const int& bz)
 {
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "init_chg", GlobalV::init_chg);
 
@@ -152,7 +155,8 @@ void Charge::init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMa
     {
         std::cout << " WARNING: Failed to read charge density from file. Possible reasons: " << std::endl;
         std::cout << " - not found: The default directory of SPIN1_CHG.cube is OUT.suffix, \n"
-            "or you must set read_file_dir to a specific directory. " << std::endl;
+                     "or you must set read_file_dir to a specific directory. "
+                  << std::endl;
         std::cout << " - parameter mismatch: check the previous warning." << std::endl;
         if (GlobalV::init_chg == "auto")
         {
@@ -164,8 +168,7 @@ void Charge::init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMa
         }
     }
 
-    if (GlobalV::init_chg == "atomic" || 
-        (GlobalV::init_chg == "auto" && read_error)) // mohan add 2007-10-17
+    if (GlobalV::init_chg == "atomic" || (GlobalV::init_chg == "auto" && read_error)) // mohan add 2007-10-17
     {
         this->atomic_rho(GlobalV::NSPIN, GlobalC::ucell.omega, rho, strucFac, GlobalC::ucell);
 
@@ -202,12 +205,10 @@ void Charge::init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMa
 //==========================================================
 // computes the core charge on the real space 3D mesh.
 //==========================================================
-void Charge::set_rho_core(
-    const ModuleBase::ComplexMatrix &structure_factor
-)
+void Charge::set_rho_core(const ModuleBase::ComplexMatrix& structure_factor)
 {
-    ModuleBase::TITLE("Charge","set_rho_core");
-    ModuleBase::timer::tick("Charge","set_rho_core");
+    ModuleBase::TITLE("Charge", "set_rho_core");
+    ModuleBase::timer::tick("Charge", "set_rho_core");
 
     // double eps = 1.e-10;
     //----------------------------------------------------------
@@ -221,7 +222,7 @@ void Charge::set_rho_core(
     // int ig = 0;
 
     bool bl = false;
-    for (int it = 0; it<GlobalC::ucell.ntype; it++)
+    for (int it = 0; it < GlobalC::ucell.ntype; it++)
     {
         if (GlobalC::ucell.atoms[it].ncpp.nlcc)
         {
@@ -232,47 +233,46 @@ void Charge::set_rho_core(
 
     if (!bl)
     {
-        ModuleBase::GlobalFunc::ZEROS( this->rho_core, this->rhopw->nrxx);
-    	ModuleBase::timer::tick("Charge","set_rho_core");
+        ModuleBase::GlobalFunc::ZEROS(this->rho_core, this->rhopw->nrxx);
+        ModuleBase::timer::tick("Charge", "set_rho_core");
         return;
     }
 
-    double *rhocg = new double[this->rhopw->ngg];
-    ModuleBase::GlobalFunc::ZEROS(rhocg, this->rhopw->ngg );
+    double* rhocg = new double[this->rhopw->ngg];
+    ModuleBase::GlobalFunc::ZEROS(rhocg, this->rhopw->ngg);
 
-	// three dimension.
-    std::complex<double> *vg = new std::complex<double>[this->rhopw->npw];	
+    // three dimension.
+    std::complex<double>* vg = new std::complex<double>[this->rhopw->npw];
 
-    for (int it = 0; it < GlobalC::ucell.ntype;it++)
+    for (int it = 0; it < GlobalC::ucell.ntype; it++)
     {
         if (GlobalC::ucell.atoms[it].ncpp.nlcc)
         {
-//----------------------------------------------------------
-// EXPLAIN : drhoc compute the radial fourier transform for
-// each shell of g vec
-//----------------------------------------------------------
-            this->non_linear_core_correction(
-                GlobalC::ppcell.numeric,
-                GlobalC::ucell.atoms[it].ncpp.msh,
-                GlobalC::ucell.atoms[it].ncpp.r,
-                GlobalC::ucell.atoms[it].ncpp.rab,
-                GlobalC::ucell.atoms[it].ncpp.rho_atc,
-                rhocg);
-//----------------------------------------------------------
-// EXPLAIN : multiply by the structure factor and sum
-//----------------------------------------------------------
-            for (int ig = 0; ig < this->rhopw->npw ; ig++)
+            //----------------------------------------------------------
+            // EXPLAIN : drhoc compute the radial fourier transform for
+            // each shell of g vec
+            //----------------------------------------------------------
+            this->non_linear_core_correction(GlobalC::ppcell.numeric,
+                                             GlobalC::ucell.atoms[it].ncpp.msh,
+                                             GlobalC::ucell.atoms[it].ncpp.r,
+                                             GlobalC::ucell.atoms[it].ncpp.rab,
+                                             GlobalC::ucell.atoms[it].ncpp.rho_atc,
+                                             rhocg);
+            //----------------------------------------------------------
+            // EXPLAIN : multiply by the structure factor and sum
+            //----------------------------------------------------------
+            for (int ig = 0; ig < this->rhopw->npw; ig++)
             {
                 vg[ig] += structure_factor(it, ig) * rhocg[this->rhopw->ig2igg[ig]];
             }
         }
     }
 
-	// for tmp use.
-	for(int ig=0; ig< this->rhopw->npw; ig++)
-	{
-		this->rhog_core[ig] = vg[ig];
-	}
+    // for tmp use.
+    for (int ig = 0; ig < this->rhopw->npw; ig++)
+    {
+        this->rhog_core[ig] = vg[ig];
+    }
 
     this->rhopw->recip2real(vg, this->rho_core);
 
@@ -295,110 +295,105 @@ void Charge::set_rho_core(
         // mentioned above) uncomment the following lines.  SdG, Oct 15 1999
     }
 
-	// mohan fix bug 2011-04-03
+    // mohan fix bug 2011-04-03
     Parallel_Reduce::reduce_pool(rhoneg);
     Parallel_Reduce::reduce_pool(rhoima);
 
-	// mohan changed 2010-2-2, make this same as in atomic_rho.
-	// still lack something......
+    // mohan changed 2010-2-2, make this same as in atomic_rho.
+    // still lack something......
     rhoneg /= this->rhopw->nxyz * GlobalC::ucell.omega;
     rhoima /= this->rhopw->nxyz * GlobalC::ucell.omega;
 
     // calculate core_only exch-corr energy etxcc=E_xc[rho_core] if required
     // The term was present in previous versions of the code but it shouldn't
-    delete [] rhocg;
-    delete [] vg;
-    ModuleBase::timer::tick("Charge","set_rho_core");
+    delete[] rhocg;
+    delete[] vg;
+    ModuleBase::timer::tick("Charge", "set_rho_core");
     return;
 } // end subroutine set_rhoc
 
 void Charge::set_rho_core_paw()
 {
-    ModuleBase::TITLE("Charge","set_rho_core_paw");
+    ModuleBase::TITLE("Charge", "set_rho_core_paw");
 #ifdef USE_PAW
     double* tmp = new double[nrxx];
-    GlobalC::paw_cell.get_vloc_ncoret(tmp,this->rho_core);
+    GlobalC::paw_cell.get_vloc_ncoret(tmp, this->rho_core);
     delete[] tmp;
 
-    this->rhopw->real2recip(this->rho_core,this->rhog_core);
+    this->rhopw->real2recip(this->rho_core, this->rhog_core);
 #endif
 }
 
-void Charge::non_linear_core_correction
-(
-    const bool &numeric,
-    const int mesh,
-    const double *r,
-    const double *rab,
-    const double *rhoc,
-    double *rhocg) const
+void Charge::non_linear_core_correction(const bool& numeric,
+                                        const int mesh,
+                                        const double* r,
+                                        const double* rab,
+                                        const double* rhoc,
+                                        double* rhocg) const
 {
-    ModuleBase::TITLE("charge","drhoc");
+    ModuleBase::TITLE("charge", "drhoc");
 
-	// use labmda instead of repeating codes
-	const auto kernel = [&](int num_threads, int thread_id)
-	{
+    // use labmda instead of repeating codes
+    const auto kernel = [&](int num_threads, int thread_id) {
+        double gx = 0.0;
+        double rhocg1 = 0.0;
+        double* aux;
 
-	double gx = 0.0;
-    double rhocg1 = 0.0;
-    double *aux;
-
-    // here we compute the fourier transform is the charge in numeric form
-    if (numeric)
-    {
-        aux = new double [mesh];
-        // G=0 term
-
-        int igl0 = 0;
-        if (this->rhopw->gg_uniq [0] < 1.0e-8)
+        // here we compute the fourier transform is the charge in numeric form
+        if (numeric)
         {
-			// single thread term
-			if (thread_id == 0)
-			{
-				for (int ir = 0;ir < mesh; ir++)
-				{
-					aux [ir] = r [ir] * r [ir] * rhoc [ir];
-				}
-				ModuleBase::Integral::Simpson_Integral(mesh, aux, rab, rhocg1);
-				//rhocg [1] = fpi * rhocg1 / omega;
-				rhocg [0] = ModuleBase::FOUR_PI * rhocg1 / GlobalC::ucell.omega;//mohan modify 2008-01-19
-			}
-            igl0 = 1;
-        }
+            aux = new double[mesh];
+            // G=0 term
 
-		int igl_beg, igl_end;
-		// exclude igl0
-		ModuleBase::TASK_DIST_1D(num_threads, thread_id, this->rhopw->ngg - igl0, igl_beg, igl_end);
-		igl_beg += igl0;
-		igl_end += igl_beg;
-
-        // G <> 0 term
-        for (int igl = igl_beg; igl < igl_end;igl++) 
-        {
-            gx = sqrt(this->rhopw->gg_uniq[igl] * GlobalC::ucell.tpiba2);
-            ModuleBase::Sphbes::Spherical_Bessel(mesh, r, gx, 0, aux);
-            for (int ir = 0;ir < mesh; ir++) 
+            int igl0 = 0;
+            if (this->rhopw->gg_uniq[0] < 1.0e-8)
             {
-                aux [ir] = r[ir] * r[ir] * rhoc [ir] * aux [ir];
+                // single thread term
+                if (thread_id == 0)
+                {
+                    for (int ir = 0; ir < mesh; ir++)
+                    {
+                        aux[ir] = r[ir] * r[ir] * rhoc[ir];
+                    }
+                    ModuleBase::Integral::Simpson_Integral(mesh, aux, rab, rhocg1);
+                    // rhocg [1] = fpi * rhocg1 / omega;
+                    rhocg[0] = ModuleBase::FOUR_PI * rhocg1 / GlobalC::ucell.omega; // mohan modify 2008-01-19
+                }
+                igl0 = 1;
+            }
+
+            int igl_beg, igl_end;
+            // exclude igl0
+            ModuleBase::TASK_DIST_1D(num_threads, thread_id, this->rhopw->ngg - igl0, igl_beg, igl_end);
+            igl_beg += igl0;
+            igl_end += igl_beg;
+
+            // G <> 0 term
+            for (int igl = igl_beg; igl < igl_end; igl++)
+            {
+                gx = sqrt(this->rhopw->gg_uniq[igl] * GlobalC::ucell.tpiba2);
+                ModuleBase::Sphbes::Spherical_Bessel(mesh, r, gx, 0, aux);
+                for (int ir = 0; ir < mesh; ir++)
+                {
+                    aux[ir] = r[ir] * r[ir] * rhoc[ir] * aux[ir];
+                } //  enddo
+                ModuleBase::Integral::Simpson_Integral(mesh, aux, rab, rhocg1);
+                rhocg[igl] = ModuleBase::FOUR_PI * rhocg1 / GlobalC::ucell.omega;
             } //  enddo
-            ModuleBase::Integral::Simpson_Integral(mesh, aux, rab, rhocg1);
-            rhocg [igl] = ModuleBase::FOUR_PI * rhocg1 / GlobalC::ucell.omega;
-        } //  enddo
-        delete [] aux;
-    }
-    else
-    {
-        // here the case where the charge is in analytic form,
-        // check old version before 2008-12-9
-    }
+            delete[] aux;
+        }
+        else
+        {
+            // here the case where the charge is in analytic form,
+            // check old version before 2008-12-9
+        }
+    }; // end kernel
 
-	}; // end kernel
-
-	// do not use omp parallel when this function is already in parallel block
-	// 
-	// it is called in parallel block in Forces::cal_force_cc,
-	// but not in other funtcion such as Stress_Func::stress_cc.
-	ModuleBase::TRY_OMP_PARALLEL(kernel);
+    // do not use omp parallel when this function is already in parallel block
+    //
+    // it is called in parallel block in Forces::cal_force_cc,
+    // but not in other funtcion such as Stress_Func::stress_cc.
+    ModuleBase::TRY_OMP_PARALLEL(kernel);
 
     return;
 }
