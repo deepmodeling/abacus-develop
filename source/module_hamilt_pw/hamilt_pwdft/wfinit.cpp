@@ -163,6 +163,7 @@ void WFInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
     if (!this->use_psiinitializer)
         return;
     ModuleBase::timer::tick("WFInit", "initialize_psi");
+    if (!this->psi_init->psig_use_count()) { this->psi_init->allocate(/*psig_only=*/true); }
     for (int ik = 0; ik < this->pw_wfc->nks; ik++)
     {
         //! Fix the wavefunction to initialize at given kpoint
@@ -239,7 +240,7 @@ void WFInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
         }
     } // end k-point loop
 
-    this->psi_init->set_initialized(true);
+    if (this->basis_type != "lcao_in_pw") { this->psi_init->deallocate_psig(); }
 
     ModuleBase::timer::tick("WFInit", "initialize_psi");
 }
