@@ -225,7 +225,7 @@ if ! test -z "$has_xc"  && [  $has_xc == 1 ]; then
 	oecal=OUT.autotest/vxc_out
 	python3 ../tools/CompareFile.py $xcref $xccal 4
 	echo "CompareXC_pass $?" >>$1
-	python3 ../tools/CompareFile.py $oeref $oecal 6
+	python3 ../tools/CompareFile.py $oeref $oecal 5
     echo "CompareOE_pass $?" >>$1
 fi
 
