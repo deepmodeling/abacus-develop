@@ -128,7 +128,7 @@ void ReadInput::item_general()
             }
             if (calculation == "relax") // pengfei 2014-10-13
             {
-                para.input.cal_force = 1;
+                para.input.cal_force = true;
                 if (!para.input.relax_nmax)
                     para.input.relax_nmax = 50;
             }
