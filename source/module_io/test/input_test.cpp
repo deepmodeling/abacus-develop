@@ -18,14 +18,12 @@
 #define private public
 #include "module_io/input.h"
 
-class InputTest : public testing::Test
-{
+class InputTest : public testing::Test {
   protected:
     std::string output;
 };
 
-TEST_F(InputTest, Default)
-{
+TEST_F(InputTest, Default) {
     INPUT.Default();
     EXPECT_EQ(INPUT.suffix, "ABACUS");
     EXPECT_EQ(INPUT.stru_file, "");
@@ -390,8 +388,7 @@ TEST_F(InputTest, Default)
     EXPECT_EQ(INPUT.sc_file, "none");
 }
 
-TEST_F(InputTest, Read)
-{
+TEST_F(InputTest, Read) {
     std::string input_file = "./support/INPUT";
     INPUT.Read(input_file);
     EXPECT_EQ(INPUT.suffix, "autotest");
@@ -760,8 +757,7 @@ TEST_F(InputTest, Read)
     EXPECT_EQ(INPUT.sc_file, "sc.json");
 }
 
-TEST_F(InputTest, Default_2)
-{
+TEST_F(InputTest, Default_2) {
     //==================================================
     // prepare default parameters for the 1st calling
     EXPECT_EQ(INPUT.vdw_method, "d2");
@@ -1037,8 +1033,7 @@ TEST_F(InputTest, Default_2)
     remove("STRU");
 }
 
-TEST_F(InputTest, Check)
-{
+TEST_F(InputTest, Check) {
     INPUT.ecutwfc = 20.0;
     INPUT.ecutrho = 10;
     testing::internal::CaptureStdout();
@@ -1051,7 +1046,8 @@ TEST_F(InputTest, Check)
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("smooth grids is denser than dense grids"));
+    EXPECT_THAT(output,
+                testing::HasSubstr("smooth grids is denser than dense grids"));
     INPUT.ndx = INPUT.ndy = INPUT.ndz = 11;
     //
     INPUT.nbands = -1;
@@ -1080,7 +1076,9 @@ TEST_F(InputTest, Check)
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("please don't set diago_proc with lcao base"));
+    EXPECT_THAT(
+        output,
+        testing::HasSubstr("please don't set diago_proc with lcao base"));
     INPUT.diago_proc = 1;
     //
     INPUT.kspacing[0] = -1;
@@ -1102,7 +1100,9 @@ TEST_F(InputTest, Check)
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("dipole correction is not active if efield_flag=false !"));
+    EXPECT_THAT(output,
+                testing::HasSubstr(
+                    "dipole correction is not active if efield_flag=false !"));
     INPUT.dip_cor_flag = false;
     //
     INPUT.efield_flag = true;
@@ -1111,7 +1111,10 @@ TEST_F(InputTest, Check)
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("gate field cannot be used with efield if dip_cor_flag=false !"));
+    EXPECT_THAT(
+        output,
+        testing::HasSubstr(
+            "gate field cannot be used with efield if dip_cor_flag=false !"));
     INPUT.gate_flag = false;
     //
     INPUT.calculation = "nscf";
@@ -1120,7 +1123,10 @@ TEST_F(InputTest, Check)
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("symmetry can't be used for out_dos==3(Fermi Surface Plotting) by now."));
+    EXPECT_THAT(
+        output,
+        testing::HasSubstr("symmetry can't be used for out_dos==3(Fermi "
+                           "Surface Plotting) by now."));
     INPUT.symmetry = "0";
     INPUT.out_dos = 0;
     //
@@ -1129,7 +1135,9 @@ TEST_F(InputTest, Check)
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("calculate = get_pchg is only availble for LCAO"));
+    EXPECT_THAT(
+        output,
+        testing::HasSubstr("calculate = get_pchg is only availble for LCAO"));
     INPUT.basis_type = "lcao";
     //
     INPUT.calculation = "get_wf";
@@ -1137,7 +1145,9 @@ TEST_F(InputTest, Check)
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("calculate = get_wf is only availble for LCAO"));
+    EXPECT_THAT(
+        output,
+        testing::HasSubstr("calculate = get_wf is only availble for LCAO"));
     INPUT.basis_type = "lcao";
     //
     INPUT.calculation = "md";
@@ -1145,7 +1155,9 @@ TEST_F(InputTest, Check)
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("time interval of MD calculation should be set!"));
+    EXPECT_THAT(
+        output,
+        testing::HasSubstr("time interval of MD calculation should be set!"));
     INPUT.mdp.md_dt = 1.0;
     //
     INPUT.mdp.md_type = "msst";
@@ -1153,7 +1165,8 @@ TEST_F(InputTest, Check)
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("msst_qmass must be greater than 0!"));
+    EXPECT_THAT(output,
+                testing::HasSubstr("msst_qmass must be greater than 0!"));
     INPUT.mdp.msst_qmass = 1.0;
     //
     INPUT.esolver_type = "dp";
@@ -1169,7 +1182,9 @@ TEST_F(InputTest, Check)
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("to generate descriptors, please use pw basis"));
+    EXPECT_THAT(
+        output,
+        testing::HasSubstr("to generate descriptors, please use pw basis"));
     INPUT.basis_type = "pw";
     //
     INPUT.calculation = "arbitrary";
@@ -1183,7 +1198,10 @@ TEST_F(InputTest, Check)
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("wrong 'init_chg', not 'atomic', 'file', 'auto', please check"));
+    EXPECT_THAT(
+        output,
+        testing::HasSubstr(
+            "wrong 'init_chg', not 'atomic', 'file', 'auto', please check"));
     INPUT.init_chg = "atomic";
     //
     INPUT.gamma_only_local = false;
@@ -1191,7 +1209,9 @@ TEST_F(InputTest, Check)
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("out_dm with k-point algorithm is not implemented yet."));
+    EXPECT_THAT(output,
+                testing::HasSubstr(
+                    "out_dm with k-point algorithm is not implemented yet."));
     INPUT.out_dm = false;
     //
     INPUT.gamma_only_local = true;
@@ -1214,14 +1234,16 @@ TEST_F(InputTest, Check)
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("nelec > 2*nbnd , bands not enough!"));
+    EXPECT_THAT(output,
+                testing::HasSubstr("nelec > 2*nbnd , bands not enough!"));
     INPUT.nelec = INPUT.nbands;
     //
     INPUT.nspin = 3;
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("nspin does not equal to 1, 2, or 4!"));
+    EXPECT_THAT(output,
+                testing::HasSubstr("nspin does not equal to 1, 2, or 4!"));
     INPUT.nspin = 1;
     //
     INPUT.basis_type = "pw";
@@ -1229,28 +1251,35 @@ TEST_F(InputTest, Check)
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("genelpa can not be used with plane wave basis."));
+    EXPECT_THAT(
+        output,
+        testing::HasSubstr("genelpa can not be used with plane wave basis."));
     //
     INPUT.basis_type = "pw";
     INPUT.ks_solver = "scalapack_gvx";
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("scalapack_gvx can not be used with plane wave basis."));
+    EXPECT_THAT(output,
+                testing::HasSubstr(
+                    "scalapack_gvx can not be used with plane wave basis."));
     //
     INPUT.basis_type = "pw";
     INPUT.ks_solver = "lapack";
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("lapack can not be used with plane wave basis."));
+    EXPECT_THAT(
+        output,
+        testing::HasSubstr("lapack can not be used with plane wave basis."));
     //
     INPUT.basis_type = "pw";
     INPUT.ks_solver = "arbitrary";
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("please check the ks_solver parameter!"));
+    EXPECT_THAT(output,
+                testing::HasSubstr("please check the ks_solver parameter!"));
     INPUT.ks_solver = "cg";
     //
     INPUT.basis_type = "pw";
@@ -1258,7 +1287,9 @@ TEST_F(InputTest, Check)
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("gamma_only not implemented for plane wave now."));
+    EXPECT_THAT(
+        output,
+        testing::HasSubstr("gamma_only not implemented for plane wave now."));
     INPUT.gamma_only = false;
     //
     INPUT.basis_type = "pw";
@@ -1266,7 +1297,9 @@ TEST_F(InputTest, Check)
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("out_proj_band not implemented for plane wave now."));
+    EXPECT_THAT(output,
+                testing::HasSubstr(
+                    "out_proj_band not implemented for plane wave now."));
     INPUT.out_proj_band = false;
     //
     INPUT.basis_type = "pw";
@@ -1274,7 +1307,10 @@ TEST_F(InputTest, Check)
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("Fermi Surface Plotting not implemented for plane wave now."));
+    EXPECT_THAT(
+        output,
+        testing::HasSubstr(
+            "Fermi Surface Plotting not implemented for plane wave now."));
     INPUT.out_dos = 0;
     //
     INPUT.basis_type = "pw";
@@ -1282,7 +1318,9 @@ TEST_F(InputTest, Check)
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("Non-colliner Spin-constrained DFT not implemented for plane wave now."));
+    EXPECT_THAT(output,
+                testing::HasSubstr("Non-colliner Spin-constrained DFT not "
+                                   "implemented for plane wave now."));
     INPUT.sc_mag_switch = false;
     //
     INPUT.basis_type = "lcao";
@@ -1290,7 +1328,8 @@ TEST_F(InputTest, Check)
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("not ready for cg method in lcao ."));
+    EXPECT_THAT(output,
+                testing::HasSubstr("not ready for cg method in lcao ."));
     //
     INPUT.basis_type = "lcao";
     INPUT.ks_solver = "genelpa";
@@ -1298,7 +1337,9 @@ TEST_F(InputTest, Check)
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("genelpa can not be used for series version."));
+    EXPECT_THAT(
+        output,
+        testing::HasSubstr("genelpa can not be used for series version."));
 #endif
 #ifndef __ELPA
     testing::internal::CaptureStdout();
@@ -1306,8 +1347,8 @@ TEST_F(InputTest, Check)
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(
         output,
-        testing::HasSubstr(
-            "Can not use genelpa if abacus is not compiled with ELPA. Please change ks_solver to scalapack_gvx."));
+        testing::HasSubstr("Can not use genelpa if abacus is not compiled with "
+                           "ELPA. Please change ks_solver to scalapack_gvx."));
 #endif
     //
     INPUT.basis_type = "lcao";
@@ -1316,7 +1357,9 @@ TEST_F(InputTest, Check)
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("scalapack_gvx can not be used for series version."));
+    EXPECT_THAT(output,
+                testing::HasSubstr(
+                    "scalapack_gvx can not be used for series version."));
 #endif
     //
     INPUT.basis_type = "lcao";
@@ -1326,7 +1369,8 @@ TEST_F(InputTest, Check)
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output,
-                testing::HasSubstr("ks_solver=lapack is not an option for parallel version of ABACUS (try genelpa)"));
+                testing::HasSubstr("ks_solver=lapack is not an option for "
+                                   "parallel version of ABACUS (try genelpa)"));
 #endif
     //
     INPUT.basis_type = "lcao";
@@ -1335,7 +1379,9 @@ TEST_F(InputTest, Check)
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("Cusolver can not be used for series version."));
+    EXPECT_THAT(
+        output,
+        testing::HasSubstr("Cusolver can not be used for series version."));
 #endif
     //
     INPUT.basis_type = "lcao";
@@ -1343,7 +1389,8 @@ TEST_F(InputTest, Check)
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("please check the ks_solver parameter!"));
+    EXPECT_THAT(output,
+                testing::HasSubstr("please check the ks_solver parameter!"));
     INPUT.ks_solver = "genelpa";
     //
     INPUT.basis_type = "lcao";
@@ -1351,7 +1398,9 @@ TEST_F(InputTest, Check)
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("kpar > 1 has not been supported for lcao calculation."));
+    EXPECT_THAT(output,
+                testing::HasSubstr(
+                    "kpar > 1 has not been supported for lcao calculation."));
     INPUT.kpar = 1;
     //
     INPUT.basis_type = "lcao";
@@ -1367,21 +1416,26 @@ TEST_F(InputTest, Check)
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("LCAO in plane wave can only done with lapack."));
+    EXPECT_THAT(
+        output,
+        testing::HasSubstr("LCAO in plane wave can only done with lapack."));
     INPUT.ks_solver = "default";
     //
     INPUT.basis_type = "arbitrary";
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("please check the basis_type parameter!"));
+    EXPECT_THAT(output,
+                testing::HasSubstr("please check the basis_type parameter!"));
     INPUT.basis_type = "pw";
     //
     INPUT.relax_method = "arbitrary";
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("relax_method can only be sd, cg, bfgs or cg_bfgs."));
+    EXPECT_THAT(output,
+                testing::HasSubstr(
+                    "relax_method can only be sd, cg, bfgs or cg_bfgs."));
     INPUT.relax_method = "cg";
     //
     INPUT.bx = 11;
@@ -1390,7 +1444,8 @@ TEST_F(InputTest, Check)
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("bx, or by, or bz is larger than 10!"));
+    EXPECT_THAT(output,
+                testing::HasSubstr("bx, or by, or bz is larger than 10!"));
     INPUT.bx = 1;
     //
     INPUT.vdw_method = "d2";
@@ -1398,7 +1453,8 @@ TEST_F(InputTest, Check)
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("vdw_C6_unit must be Jnm6/mol or eVA6"));
+    EXPECT_THAT(output,
+                testing::HasSubstr("vdw_C6_unit must be Jnm6/mol or eVA6"));
     INPUT.vdw_C6_unit = "eVA6";
     //
     INPUT.vdw_R0_unit = "arbitrary";
@@ -1412,28 +1468,32 @@ TEST_F(InputTest, Check)
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("vdw_cutoff_type must be radius or period"));
+    EXPECT_THAT(output,
+                testing::HasSubstr("vdw_cutoff_type must be radius or period"));
     INPUT.vdw_cutoff_type = "radius";
     //
     INPUT.vdw_cutoff_period.x = 0;
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("vdw_cutoff_period <= 0 is not allowd"));
+    EXPECT_THAT(output,
+                testing::HasSubstr("vdw_cutoff_period <= 0 is not allowd"));
     INPUT.vdw_cutoff_period.x = 3;
     //
     INPUT.vdw_cutoff_radius = "0";
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("vdw_cutoff_radius <= 0 is not allowd"));
+    EXPECT_THAT(output,
+                testing::HasSubstr("vdw_cutoff_radius <= 0 is not allowd"));
     INPUT.vdw_cutoff_radius = "1.0";
     //
     INPUT.vdw_radius_unit = "arbitrary";
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("vdw_radius_unit must be A or Bohr"));
+    EXPECT_THAT(output,
+                testing::HasSubstr("vdw_radius_unit must be A or Bohr"));
     INPUT.vdw_radius_unit = "A";
     //
     INPUT.vdw_cn_thr = 0;
@@ -1447,7 +1507,8 @@ TEST_F(InputTest, Check)
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("vdw_cn_thr_unit must be A or Bohr"));
+    EXPECT_THAT(output,
+                testing::HasSubstr("vdw_cn_thr_unit must be A or Bohr"));
     INPUT.vdw_cn_thr_unit = "A";
     //
     INPUT.dft_functional = "scan0";
@@ -1484,7 +1545,9 @@ TEST_F(InputTest, Check)
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("exx_distribute_type must be htime or kmeans2 or kmeans1"));
+    EXPECT_THAT(output,
+                testing::HasSubstr(
+                    "exx_distribute_type must be htime or kmeans2 or kmeans1"));
     INPUT.exx_distribute_type = "htime";
     //
     INPUT.dft_functional = "opt_orb";
@@ -1515,7 +1578,10 @@ TEST_F(InputTest, Check)
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("calculate berry phase, please set basis_type = pw or lcao"));
+    EXPECT_THAT(
+        output,
+        testing::HasSubstr(
+            "calculate berry phase, please set basis_type = pw or lcao"));
     INPUT.basis_type = "pw";
     INPUT.ks_solver = "cg";
     //
@@ -1523,25 +1589,29 @@ TEST_F(InputTest, Check)
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("calculate berry phase, please set calculation = nscf"));
+    EXPECT_THAT(output,
+                testing::HasSubstr(
+                    "calculate berry phase, please set calculation = nscf"));
     INPUT.calculation = "nscf";
     //
     INPUT.gdir = 4;
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("calculate berry phase, please set gdir = 1 or 2 or 3"));
+    EXPECT_THAT(output,
+                testing::HasSubstr(
+                    "calculate berry phase, please set gdir = 1 or 2 or 3"));
     INPUT.gdir = 3;
     INPUT.berry_phase = false;
     //
     INPUT.towannier90 = true;
-    // due to the repair of lcao_in_pw, original warning has been deprecated, 2023/12/23, ykhuang
-    // INPUT.basis_type = "lcao_in_pw";
-    // INPUT.ks_solver = "lapack";
-    // testing::internal::CaptureStdout();
+    // due to the repair of lcao_in_pw, original warning has been deprecated,
+    // 2023/12/23, ykhuang INPUT.basis_type = "lcao_in_pw"; INPUT.ks_solver =
+    // "lapack"; testing::internal::CaptureStdout();
     // EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
     // output = testing::internal::GetCapturedStdout();
-    // EXPECT_THAT(output,testing::HasSubstr("to use towannier90, please set basis_type = pw or lcao"));
+    // EXPECT_THAT(output,testing::HasSubstr("to use towannier90, please set
+    // basis_type = pw or lcao"));
     INPUT.basis_type = "pw";
     INPUT.ks_solver = "cg";
     //
@@ -1549,7 +1619,9 @@ TEST_F(InputTest, Check)
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("to use towannier90, please set calculation = nscf"));
+    EXPECT_THAT(output,
+                testing::HasSubstr(
+                    "to use towannier90, please set calculation = nscf"));
     INPUT.calculation = "nscf";
     //
     INPUT.nspin = 2;
@@ -1557,7 +1629,10 @@ TEST_F(InputTest, Check)
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("to use towannier90, please set wannier_spin = up or down"));
+    EXPECT_THAT(
+        output,
+        testing::HasSubstr(
+            "to use towannier90, please set wannier_spin = up or down"));
     INPUT.wannier_spin = "up";
     INPUT.towannier90 = false;
     //
@@ -1565,7 +1640,9 @@ TEST_F(InputTest, Check)
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("please set right files directory for reading in."));
+    EXPECT_THAT(
+        output,
+        testing::HasSubstr("please set right files directory for reading in."));
     INPUT.read_file_dir = "auto";
     /*
     // Start to check deltaspin parameters
@@ -1577,7 +1654,8 @@ TEST_F(InputTest, Check)
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output,testing::HasSubstr("sc_file (json format) must be set when sc_mag_switch > 0"));
+    EXPECT_THAT(output,testing::HasSubstr("sc_file (json format) must be set
+    when sc_mag_switch > 0"));
     // warning 2 of Deltaspin
     INPUT.sc_file = "sc.json";
     testing::internal::CaptureStdout();
@@ -1590,15 +1668,15 @@ TEST_F(InputTest, Check)
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output,testing::HasSubstr("nspin must be 2 or 4 when sc_mag_switch > 0"));
-    INPUT.nspin = 4;
+    EXPECT_THAT(output,testing::HasSubstr("nspin must be 2 or 4 when
+    sc_mag_switch > 0")); INPUT.nspin = 4;
     // warning 4 of Deltaspin
     INPUT.calculation = "nscf";
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output,testing::HasSubstr("calculation must be scf when sc_mag_switch > 0"));
-    INPUT.calculation = "scf";
+    EXPECT_THAT(output,testing::HasSubstr("calculation must be scf when
+    sc_mag_switch > 0")); INPUT.calculation = "scf";
     // warning 5 of Deltaspin
     INPUT.sc_thr = -1;
         testing::internal::CaptureStdout();
@@ -1646,8 +1724,8 @@ TEST_F(InputTest, Check)
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output,testing::HasSubstr("nupdown should not be set when sc_mag_switch > 0"));
-    INPUT.nupdown = 0;
+    EXPECT_THAT(output,testing::HasSubstr("nupdown should not be set when
+    sc_mag_switch > 0")); INPUT.nupdown = 0;
     // restore to default values
     INPUT.nspin = 1;
     INPUT.sc_file = "none";
@@ -1665,69 +1743,59 @@ TEST_F(InputTest, Check)
     */
 }
 
-bool strcmp_inbuilt(const std::string& str1, const std::string& str2)
-{
+bool strcmp_inbuilt(const std::string& str1, const std::string& str2) {
     if (str1.size() != str2.size())
         return false;
-    for (int i = 0; i < str1.size(); i++)
-    {
+    for (int i = 0; i < str1.size(); i++) {
         if (str1[i] != str2[i])
             return false;
     }
     return true;
 }
 
-TEST_F(InputTest, ReadValue2stdvector)
-{
+TEST_F(InputTest, ReadValue2stdvector) {
     std::string input_file = "./support/INPUT_list";
     std::ifstream ifs(input_file);
     std::string word;
     std::vector<int> value;
-    while (!ifs.eof())
-    {
+    while (!ifs.eof()) {
         ifs >> word;
-        if (strcmp_inbuilt(word, "bessel_nao_rcut_case0"))
-        {
+        if (strcmp_inbuilt(word, "bessel_nao_rcut_case0")) {
             value.clear();
             value.shrink_to_fit();
             INPUT.read_value2stdvector(ifs, value);
             EXPECT_EQ(value.size(), 1);
             EXPECT_EQ(value[0], 7);
         }
-        if (strcmp_inbuilt(word, "bessel_nao_rcut_case1"))
-        {
+        if (strcmp_inbuilt(word, "bessel_nao_rcut_case1")) {
             value.clear();
             value.shrink_to_fit();
             INPUT.read_value2stdvector(ifs, value);
             EXPECT_EQ(value.size(), 1);
             EXPECT_EQ(value[0], 7);
         }
-        if (strcmp_inbuilt(word, "bessel_nao_rcut_case2"))
-        {
+        if (strcmp_inbuilt(word, "bessel_nao_rcut_case2")) {
             value.clear();
             value.shrink_to_fit();
             INPUT.read_value2stdvector(ifs, value);
             EXPECT_EQ(value.size(), 1);
             EXPECT_EQ(value[0], 7);
         }
-        if (strcmp_inbuilt(word, "bessel_nao_rcut_case3"))
-        {
+        if (strcmp_inbuilt(word, "bessel_nao_rcut_case3")) {
             value.clear();
             value.shrink_to_fit();
             INPUT.read_value2stdvector(ifs, value);
             EXPECT_EQ(value.size(), 1);
             EXPECT_EQ(value[0], 7);
         }
-        if (strcmp_inbuilt(word, "bessel_nao_rcut_case4"))
-        {
+        if (strcmp_inbuilt(word, "bessel_nao_rcut_case4")) {
             value.clear();
             value.shrink_to_fit();
             INPUT.read_value2stdvector(ifs, value);
             EXPECT_EQ(value.size(), 1);
             EXPECT_EQ(value[0], 7);
         }
-        if (strcmp_inbuilt(word, "bessel_nao_rcut_case5"))
-        {
+        if (strcmp_inbuilt(word, "bessel_nao_rcut_case5")) {
             value.clear();
             value.shrink_to_fit();
             INPUT.read_value2stdvector(ifs, value);
@@ -1737,8 +1805,7 @@ TEST_F(InputTest, ReadValue2stdvector)
             EXPECT_EQ(value[2], 9);
             EXPECT_EQ(value[3], 10);
         }
-        if (strcmp_inbuilt(word, "bessel_nao_rcut_case6"))
-        {
+        if (strcmp_inbuilt(word, "bessel_nao_rcut_case6")) {
             value.clear();
             value.shrink_to_fit();
             INPUT.read_value2stdvector(ifs, value);
@@ -1748,8 +1815,7 @@ TEST_F(InputTest, ReadValue2stdvector)
             EXPECT_EQ(value[2], 9);
             EXPECT_EQ(value[3], 10);
         }
-        if (strcmp_inbuilt(word, "bessel_nao_rcut_case7"))
-        {
+        if (strcmp_inbuilt(word, "bessel_nao_rcut_case7")) {
             value.clear();
             value.shrink_to_fit();
             INPUT.read_value2stdvector(ifs, value);
@@ -1759,8 +1825,7 @@ TEST_F(InputTest, ReadValue2stdvector)
             EXPECT_EQ(value[2], 9);
             EXPECT_EQ(value[3], 10);
         }
-        if (strcmp_inbuilt(word, "bessel_nao_rcut_case8"))
-        {
+        if (strcmp_inbuilt(word, "bessel_nao_rcut_case8")) {
             value.clear();
             value.shrink_to_fit();
             INPUT.read_value2stdvector(ifs, value);
@@ -1771,16 +1836,14 @@ TEST_F(InputTest, ReadValue2stdvector)
             EXPECT_EQ(value[3], 10);
         }
         std::vector<std::string> str_value;
-        if (strcmp_inbuilt(word, "bessel_nao_rcut_case9"))
-        {
+        if (strcmp_inbuilt(word, "bessel_nao_rcut_case9")) {
             str_value.clear();
             str_value.shrink_to_fit();
             INPUT.read_value2stdvector(ifs, str_value);
             EXPECT_EQ(str_value.size(), 1);
             EXPECT_EQ(str_value[0], "string1");
         }
-        if (strcmp_inbuilt(word, "bessel_nao_rcut_case10"))
-        {
+        if (strcmp_inbuilt(word, "bessel_nao_rcut_case10")) {
             str_value.clear();
             str_value.shrink_to_fit();
             INPUT.read_value2stdvector(ifs, str_value);
@@ -1791,16 +1854,14 @@ TEST_F(InputTest, ReadValue2stdvector)
             EXPECT_EQ(str_value[3], "string4");
         }
         std::vector<double> double_value;
-        if (strcmp_inbuilt(word, "bessel_nao_rcut_case11"))
-        {
+        if (strcmp_inbuilt(word, "bessel_nao_rcut_case11")) {
             double_value.clear();
             double_value.shrink_to_fit();
             INPUT.read_value2stdvector(ifs, double_value);
             EXPECT_EQ(double_value.size(), 1);
             EXPECT_EQ(double_value[0], 1.23456789);
         }
-        if (strcmp_inbuilt(word, "bessel_nao_rcut_case12"))
-        {
+        if (strcmp_inbuilt(word, "bessel_nao_rcut_case12")) {
             double_value.clear();
             double_value.shrink_to_fit();
             INPUT.read_value2stdvector(ifs, double_value);
@@ -1814,11 +1875,9 @@ TEST_F(InputTest, ReadValue2stdvector)
 }
 #undef private
 
-class ReadKSpacingTest : public ::testing::Test
-{
+class ReadKSpacingTest : public ::testing::Test {
   protected:
-    void SetUp() override
-    {
+    void SetUp() override {
         // create a temporary file for testing
         char tmpname[] = "tmpfile.tmp";
         int fd = mkstemp(tmpname);
@@ -1828,8 +1887,7 @@ class ReadKSpacingTest : public ::testing::Test
         ofs.close();
     }
 
-    void TearDown() override
-    {
+    void TearDown() override {
         close(fd);
         unlink(tmpfile.c_str());
     }
@@ -1838,8 +1896,7 @@ class ReadKSpacingTest : public ::testing::Test
     int fd;
 };
 
-TEST_F(ReadKSpacingTest, ValidInputOneValue)
-{
+TEST_F(ReadKSpacingTest, ValidInputOneValue) {
     std::ifstream ifs(tmpfile);
     EXPECT_NO_THROW(INPUT.read_kspacing(ifs));
     EXPECT_EQ(INPUT.kspacing[0], 1.0);
@@ -1847,8 +1904,7 @@ TEST_F(ReadKSpacingTest, ValidInputOneValue)
     EXPECT_EQ(INPUT.kspacing[2], 1.0);
 }
 
-TEST_F(ReadKSpacingTest, ValidInputThreeValue)
-{
+TEST_F(ReadKSpacingTest, ValidInputThreeValue) {
     std::ofstream ofs(tmpfile);
     ofs << "1.0 2.0 3.0"; // invalid input
     ofs.close();
@@ -1860,8 +1916,7 @@ TEST_F(ReadKSpacingTest, ValidInputThreeValue)
     EXPECT_EQ(INPUT.kspacing[2], 3.0);
 }
 
-TEST_F(ReadKSpacingTest, InvalidInput)
-{
+TEST_F(ReadKSpacingTest, InvalidInput) {
     std::ofstream ofs(tmpfile);
     ofs << "1.0 2.0"; // invalid input
     ofs.close();
