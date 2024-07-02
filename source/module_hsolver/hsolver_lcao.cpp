@@ -129,6 +129,7 @@ void HSolverLCAO<T, Device>::solveTemplate(hamilt::Hamilt<T>* pHamilt,
     else if (this->method == "lapack")
     {
         //ModuleBase::WARNING_QUIT("hsolver_lcao", "please fix lapack solver!!!");
+#ifndef __MPI
         if (this->pdiagh != nullptr)
         {
             if (this->pdiagh->method != this->method)
@@ -142,7 +143,9 @@ void HSolverLCAO<T, Device>::solveTemplate(hamilt::Hamilt<T>* pHamilt,
             this->pdiagh = new DiagoLapack<T>();
             this->pdiagh->method = this->method;
         }
-        //ModuleBase::WARNING_QUIT("HSolverLCAO::solve", "This method of DiagH is not supported!");
+#else
+        ModuleBase::WARNING_QUIT("HSolverLCAO::solve", "This method of DiagH is not supported!");
+#endif
     }
     else if (this->method == "cg_in_lcao")
     {
