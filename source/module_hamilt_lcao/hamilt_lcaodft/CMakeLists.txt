@@ -40,6 +40,7 @@ if(ENABLE_LCAO)
 		LCAO_nl_beta.cpp
         LCAO_set_zero.cpp
 		record_adj.cpp
+        center2_orb.cpp
         center2_orb-orb11.cpp
         center2_orb-orb21.cpp
         center2_orb-orb22.cpp
