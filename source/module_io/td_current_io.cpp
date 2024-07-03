@@ -44,10 +44,6 @@ void ModuleIO::cal_tmp_DM(elecstate::DensityMatrix<std::complex<double>, double>
         // get global indexes of whole matrix for each atom in this process
         int row_ap = DM_real.get_paraV_pointer()->atom_begin_row[iat1];
         int col_ap = DM_real.get_paraV_pointer()->atom_begin_col[iat2];
-        if (row_ap == -1 || col_ap == -1)
-        {
-            throw std::string("Atom-pair not belong this process");
-        }
         for (int ir = 0; ir < tmp_ap_real.get_R_size(); ++ir)
         {
             const ModuleBase::Vector3<int> r_index = tmp_ap_real.get_R_index(ir);
