@@ -32,6 +32,8 @@ void cal_STN_R_for_T(const UnitCell& ucell,
                      LCAO_HS_Arrays& HS_arrays,
                      Grid_Driver& grid,
                      const double& sparse_thr);
+
+void destroy_T_R_sparse(LCAO_HS_Arrays& HS_Arrays);
 } // namespace sparse_format
 
 #endif

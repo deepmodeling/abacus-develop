@@ -354,15 +354,3 @@ void LCAO_Matrix::destroy_HS_R_sparse(LCAO_HS_Arrays& HS_Arrays)
 
     return;
 }
-
-void LCAO_Matrix::destroy_T_R_sparse(LCAO_HS_Arrays& HS_Arrays)
-{
-    ModuleBase::TITLE("LCAO_Matrix", "destroy_T_R_sparse");
-
-    if (GlobalV::NSPIN != 4)
-    {
-        std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> empty_TR_sparse;
-        HS_Arrays.TR_sparse.swap(empty_TR_sparse);
-    }
-    return;
-}

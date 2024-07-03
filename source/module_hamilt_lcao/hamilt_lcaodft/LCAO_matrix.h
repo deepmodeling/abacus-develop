@@ -112,8 +112,6 @@ class LCAO_Matrix
 
     // jingan add 2021-6-4, modify 2021-12-2
     void destroy_HS_R_sparse(LCAO_HS_Arrays& HS_Arrays);
-
-    void destroy_T_R_sparse(LCAO_HS_Arrays& HS_Arrays);
 };
 
 #include "LCAO_matrix.hpp"

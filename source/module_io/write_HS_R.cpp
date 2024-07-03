@@ -175,7 +175,7 @@ void ModuleIO::output_TR(const int istep,
 
     ModuleIO::save_sparse(HS_arrays.TR_sparse, lm.all_R_coor, sparse_thr, binary, sst.str().c_str(), *(lm.ParaV), "T", istep);
 
-    lm.destroy_T_R_sparse(HS_arrays);
+    sparse_format::destroy_T_R_sparse(HS_arrays);
 
     ModuleBase::timer::tick("ModuleIO", "output_TR");
     return;

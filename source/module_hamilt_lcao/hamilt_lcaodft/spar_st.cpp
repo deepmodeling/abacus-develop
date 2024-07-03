@@ -194,3 +194,15 @@ void sparse_format::cal_STN_R_for_T(const UnitCell& ucell,
 
     return;
 }
+
+void sparse_format::destroy_T_R_sparse(LCAO_HS_Arrays& HS_Arrays)
+{
+    ModuleBase::TITLE("sparse_format", "destroy_T_R_sparse");
+
+    if (GlobalV::NSPIN != 4)
+    {
+        std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> empty_TR_sparse;
+        HS_Arrays.TR_sparse.swap(empty_TR_sparse);
+    }
+    return;
+}
