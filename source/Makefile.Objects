@@ -477,7 +477,7 @@ OBJS_IO_LCAO=cal_r_overlap_R.o\
       nscf_fermi_surf.o\
       istate_charge.o\
       istate_envelope.o\
-      read_dm.o\
+      io_dmk.o\
       unk_overlap_lcao.o\
       read_wfc_nao.o\
       read_wfc_lcao.o\
@@ -485,8 +485,6 @@ OBJS_IO_LCAO=cal_r_overlap_R.o\
       write_HS_sparse.o\
       single_R_io.o\
       write_HS_R.o\
-      write_dm.o\
-      output_dm.o\
       write_dmr.o\
       sparse_matrix.o\
       output_mulliken.o\

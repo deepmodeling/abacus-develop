@@ -21,46 +21,53 @@ sum_file(){
 #echo $answer
 #exit 0
 
+get_input_key_value(){
+	key=$1
+	inputf=$2
+	value=$(awk -v key=$key '{if($1==key) a=$2} END {print a}' $inputf)
+	echo $value
+}
+
 file=$1
 #echo $1
 calculation=`grep calculation INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 running_path=`echo "OUT.autotest/running_$calculation"".log"`
 natom=`grep -En '(^|[[:space:]])TOTAL ATOM NUMBER($|[[:space:]])' $running_path | tail -1 | awk '{print $6}'`
-has_force=`grep -En '(^|[[:space:]])cal_force($|[[:space:]])' INPUT | awk '{print $2}'`
-has_stress=`grep -En '(^|[[:space:]])cal_stress($|[[:space:]])' INPUT | awk '{print $2}'`
-has_dftu=`grep -En '(^|[[:space:]])dft_plus_u($|[[:space:]])' INPUT | awk '{print $2}'`
-has_band=`grep -En '(^|[[:space:]])out_band($|[[:space:]])' INPUT | awk '{print $2}'`
-has_dos=`grep -En '(^|[[:space:]])out_dos($|[[:space:]])' INPUT | awk '{print $2}'`
-has_cond=`grep -En '(^|[[:space:]])cal_cond($|[[:space:]])' INPUT | awk '{print $2}'`
-has_hs=`grep -En '(^|[[:space:]])out_mat_hs($|[[:space:]])' INPUT | awk '{print $2}'`
-has_hs2=`grep -En '(^|[[:space:]])out_mat_hs2($|[[:space:]])' INPUT | awk '{print $2}'`
-has_xc=`grep -En '(^|[[:space:]])out_mat_xc($|[[:space:]])' INPUT | awk '{print $2}'`
-has_r=`grep -En '(^|[[:space:]])out_mat_r($|[[:space:]])' INPUT | awk '{print $2}'`
-deepks_out_labels=`grep deepks_out_labels INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
-deepks_bandgap=`grep deepks_bandgap INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
-has_lowf=`grep out_wfc_lcao INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
-out_app_flag=`grep out_app_flag INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
-has_wfc_r=`grep out_wfc_r INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
-has_wfc_pw=`grep out_wfc_pw INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
-out_dm=`grep "out_dm " INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
-out_mul=`grep out_mul INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
-gamma_only=`grep gamma_only INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
-imp_sol=`grep imp_sol INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
-run_rpa=`grep rpa INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
-out_pot=`grep out_pot INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
-out_dm1=`grep out_dm1 INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
-get_s=`grep calculation INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
-out_pband=`grep out_proj_band INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
-toW90=`grep towannier90 INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
-has_mat_r=`grep out_mat_r INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
-has_mat_t=`grep out_mat_t INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
-has_mat_dh=`grep out_mat_dh INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
-has_scan=`grep dft_functional INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
-out_chg=`grep out_chg INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
+has_force=$(get_input_key_value "cal_force" "INPUT")
+has_stress=$(get_input_key_value "cal_stress" "INPUT")
+has_dftu=$(get_input_key_value "dft_plus_u" "INPUT")
+has_band=$(get_input_key_value "out_band" "INPUT")
+has_dos=$(get_input_key_value "out_dos" "INPUT")
+has_cond=$(get_input_key_value "cal_cond" "INPUT")
+has_hs=$(get_input_key_value "out_mat_hs" "INPUT")
+has_hs2=$(get_input_key_value "out_mat_hs2" "INPUT")
+has_xc=$(get_input_key_value "out_mat_xc" "INPUT")
+has_r=$(get_input_key_value "out_mat_r" "INPUT")
+deepks_out_labels=$(get_input_key_value "deepks_out_labels" "INPUT")
+deepks_bandgap=$(get_input_key_value "deepks_bandgap" "INPUT")
+has_lowf=$(get_input_key_value "out_wfc_lcao" "INPUT")
+out_app_flag=$(get_input_key_value "out_app_flag" "INPUT")
+has_wfc_r=$(get_input_key_value "out_wfc_r" "INPUT")
+has_wfc_pw=$(get_input_key_value "out_wfc_pw" "INPUT")
+out_dm=$(get_input_key_value "out_dm" "INPUT")
+out_mul=$(get_input_key_value "out_mul" "INPUT")
+gamma_only=$(get_input_key_value "gamma_only" "INPUT")
+imp_sol=$(get_input_key_value "imp_sol" "INPUT")
+run_rpa=$(get_input_key_value "rpa" "INPUT")
+out_pot=$(get_input_key_value "out_pot" "INPUT")
+out_dm1=$(get_input_key_value "out_dm1" "INPUT")
+get_s=$(get_input_key_value "calculation" "INPUT")
+out_pband=$(get_input_key_value "out_proj_band" "INPUT")
+toW90=$(get_input_key_value "towannier90" "INPUT")
+has_mat_r=$(get_input_key_value "out_mat_r" "INPUT")
+has_mat_t=$(get_input_key_value "out_mat_t" "INPUT") 
+has_mat_dh=$(get_input_key_value "out_mat_dh" "INPUT")
+has_scan=$(get_input_key_value "dft_functional" "INPUT")
+out_chg=$(get_input_key_value "out_chg" "INPUT") 
 #echo $running_path
-base=`grep -En '(^|[[:space:]])basis_type($|[[:space:]])' INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
+base=$(get_input_key_value "basis_type" "INPUT")
 word="driver_line"
-symmetry=`grep -w "symmetry" INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
+symmetry=$(get_input_key_value "symmetry" "INPUT")
 test -e $1 && rm $1
 #--------------------------------------------
 # if NOT non-self-consistent calculations
@@ -224,8 +231,9 @@ if ! test -z "$has_xc"  && [  $has_xc == 1 ]; then
 	oeref=vxc_out.ref
 	oecal=OUT.autotest/vxc_out
 	python3 ../tools/CompareFile.py $xcref $xccal 4
-	python3 ../tools/CompareFile.py $oeref $oecal 6
-    echo "CompareXC_pass $?" >>$1
+	echo "CompareXC_pass $?" >>$1
+	python3 ../tools/CompareFile.py $oeref $oecal 5
+    echo "CompareOE_pass $?" >>$1
 fi
 
 #echo $has_hs2
@@ -341,29 +349,14 @@ if ! test -z "$has_lowf"  && [ $has_lowf == 1 ]; then
 fi
 
 if ! test -z "$out_dm"  && [ $out_dm == 1 ]; then
-      dmfile=`ls OUT.autotest/ | grep "^SPIN1_DM"`
+      dmfile=OUT.autotest/SPIN1_DM
+	  dmref=SPIN1_DM.ref
       if test -z "$dmfile"; then
               echo "Can't find DM files"
               exit 1
       else
-              for dm in $dmfile;
-              do
-                      if ! test -f OUT.autotest/$dm; then
-                              echo "Irregular DM file found"
-                              exit 1
-                      else
-                            total_dm=$(awk 'BEGIN {sum=0.0;startline=999}
-							{
-								if(NR==7){startline=$1+14;}
-								else if(NR>=startline) 
-								{
-									for(i=1;i<=NF;i++){sum+=sqrt($i*$i)}
-								}
-							}
-							END {printf"%.6f",sum}' OUT.autotest/$dm)
-                            echo "$dm $total_dm" >>$1
-                      fi
-              done
+			python3 ../tools/CompareFile.py $dmref $dmfile 5
+            echo "DM_different $?" >>$1
       fi
 fi
 
