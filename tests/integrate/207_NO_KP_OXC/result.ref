@@ -1,4 +1,5 @@
 etotref -212.6300856413655
 etotperatomref -106.3150428207
-CompareXC_pass 1
+CompareXC_pass 0
+CompareOE_pass 0
 totaltimeref 22.06
