@@ -651,6 +651,13 @@ TEST_F(InputTest, Item_test) {
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
+    { // relax_nmax
+        auto it = find_lable("relax_nmax", readinput.input_lists);
+        param.input.calculation = "scf";
+        param.input.relax_nmax = 5;
+        it->second.resetvalue(it->second, param);
+        EXPECT_EQ(param.input.relax_nmax, 1);
+    }
     { // relax_method
         auto it = find_lable("relax_method", readinput.input_lists);
         param.input.relax_method = "none";

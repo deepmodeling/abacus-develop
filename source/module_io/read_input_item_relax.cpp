@@ -129,6 +129,11 @@ void ReadInput::item_relax() {
         Input_Item item("relax_nmax");
         item.annotation = "number of ion iteration steps";
         read_sync_int(relax_nmax);
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+            if (para.input.calculation == "scf") {
+                para.input.relax_nmax = 1;
+            }
+        };
         this->add_item(item);
     }
     {

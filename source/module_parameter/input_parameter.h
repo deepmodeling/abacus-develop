@@ -139,7 +139,7 @@ struct Input_para {
     bool psi_initializer
         = false; ///< whether use psi_initializer to initialize wavefunctions
     std::string init_chg = "atomic";   ///< "file","atomic"
-    std::string chg_extrap = "atomic"; ///< xiaohui modify 2015-02-01
+    std::string chg_extrap = "default"; ///< xiaohui modify 2015-02-01
     int out_chg = 0;                   ///< output charge density. 0: no; 1: yes
     int out_pot = 0;                   ///< yes or no
     int out_wfc_pw = 0;                ///< 0: no; 1: txt; 2: dat
