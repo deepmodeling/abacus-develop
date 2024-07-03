@@ -38,6 +38,8 @@ void cal_HContainer_td(
 
 void clear_zero_elements(LCAO_Matrix& lm, LCAO_HS_Arrays& HS_Arrays, const int& current_spin, const double& sparse_thr);
 
+void destroy_HS_R_sparse(LCAO_HS_Arrays& HS_Arrays);
+
 } // namespace sparse_format
 
 #endif

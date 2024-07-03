@@ -350,3 +350,33 @@ void sparse_format::clear_zero_elements(LCAO_Matrix& lm,
 
     return;
 }
+
+void sparse_format::destroy_HS_R_sparse(LCAO_HS_Arrays& HS_Arrays)
+{
+    ModuleBase::TITLE("sparse_format", "destroy_HS_R_sparse");
+
+    if (GlobalV::NSPIN != 4)
+    {
+        std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> empty_HR_sparse_up;
+        std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> empty_HR_sparse_down;
+        std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> empty_SR_sparse;
+        HS_Arrays.HR_sparse[0].swap(empty_HR_sparse_up);
+        HS_Arrays.HR_sparse[1].swap(empty_HR_sparse_down);
+        HS_Arrays.SR_sparse.swap(empty_SR_sparse);
+    }
+    else
+    {
+        std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>
+            empty_HR_soc_sparse;
+        std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>
+            empty_SR_soc_sparse;
+        HS_Arrays.HR_soc_sparse.swap(empty_HR_soc_sparse);
+        HS_Arrays.SR_soc_sparse.swap(empty_SR_soc_sparse);
+    }
+
+    // 'all_R_coor' has a small memory requirement and does not need to be deleted.
+    // std::set<Abfs::Vector3_Order<int>> empty_all_R_coor;
+    // all_R_coor.swap(empty_all_R_coor);
+
+    return;
+}

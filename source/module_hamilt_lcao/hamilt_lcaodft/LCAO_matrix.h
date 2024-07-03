@@ -109,9 +109,6 @@ class LCAO_Matrix
     void update_Hloc2(const int& ik);
 
     void output_HSk(const char& mtype, std::string& fn);
-
-    // jingan add 2021-6-4, modify 2021-12-2
-    void destroy_HS_R_sparse(LCAO_HS_Arrays& HS_Arrays);
 };
 
 #include "LCAO_matrix.hpp"
