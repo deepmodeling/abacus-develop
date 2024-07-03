@@ -1,5 +1,6 @@
 // Refactored according to diago_scalapack
-// This code will be futher refactored to remove the dependency of psi and hamilt
+// This code will be futher refactored to remove the dependency of psi and
+// hamilt
 
 #include "diago_lapack.h"
 
@@ -12,45 +13,55 @@
 typedef hamilt::MatrixBlock<double> matd;
 typedef hamilt::MatrixBlock<std::complex<double>> matcd;
 
-namespace hsolver
-{
+namespace hsolver {
 template <>
-void DiagoLapack<double>::diag(hamilt::Hamilt<double>* phm_in, psi::Psi<double>& psi, Real* eigenvalue_in)
-{
+void DiagoLapack<double>::diag(hamilt::Hamilt<double>* phm_in,
+                               psi::Psi<double>& psi,
+                               Real* eigenvalue_in) {
     ModuleBase::TITLE("DiagoLapack", "diag");
 
     // Prepare H and S matrix
     matd h_mat, s_mat;
     phm_in->matrix(h_mat, s_mat);
 
-    assert(h_mat.col == s_mat.col && h_mat.row == s_mat.row && h_mat.desc == s_mat.desc);
+    assert(h_mat.col == s_mat.col && h_mat.row == s_mat.row
+           && h_mat.desc == s_mat.desc);
 
     std::vector<double> eigen(GlobalV::NLOCAL, 0.0);
 
     // Diag
-    this->dsygvx_diag(h_mat.col, h_mat.row, h_mat.p, s_mat.p, eigen.data(), psi);
+    this->dsygvx_diag(h_mat.col,
+                      h_mat.row,
+                      h_mat.p,
+                      s_mat.p,
+                      eigen.data(),
+                      psi);
     // Copy result
     int size = eigen.size();
-    for (int i = 0; i < size; i++)
-    {
+    for (int i = 0; i < size; i++) {
         eigenvalue_in[i] = eigen[i];
     }
 }
 template <>
-void DiagoLapack<std::complex<double>>::diag(hamilt::Hamilt<std::complex<double>>* phm_in,
-                                             psi::Psi<std::complex<double>>& psi,
-                                             Real* eigenvalue_in)
-{
+void DiagoLapack<std::complex<double>>::diag(
+    hamilt::Hamilt<std::complex<double>>* phm_in,
+    psi::Psi<std::complex<double>>& psi,
+    Real* eigenvalue_in) {
     ModuleBase::TITLE("DiagoLapack", "diag");
     matcd h_mat, s_mat;
     phm_in->matrix(h_mat, s_mat);
-    assert(h_mat.col == s_mat.col && h_mat.row == s_mat.row && h_mat.desc == s_mat.desc);
+    assert(h_mat.col == s_mat.col && h_mat.row == s_mat.row
+           && h_mat.desc == s_mat.desc);
 
     std::vector<double> eigen(GlobalV::NLOCAL, 0.0);
-    this->zhegvx_diag(h_mat.col, h_mat.row, h_mat.p, s_mat.p, eigen.data(), psi);
+    this->zhegvx_diag(h_mat.col,
+                      h_mat.row,
+                      h_mat.p,
+                      s_mat.p,
+                      eigen.data(),
+                      psi);
     int size = eigen.size();
-    for (int i = 0; i < size; i++)
-    {
+    for (int i = 0; i < size; i++) {
         eigenvalue_in[i] = eigen[i];
     }
 }
@@ -61,8 +72,7 @@ int DiagoLapack<T>::dsygvx_once(const int ncol,
                                 const double* const h_mat,
                                 const double* const s_mat,
                                 double* const ekb,
-                                psi::Psi<double>& wfc_2d) const
-{
+                                psi::Psi<double>& wfc_2d) const {
     // Copy matrix to temp variables
     ModuleBase::matrix h_tmp(ncol, nrow, false);
     memcpy(h_tmp.c, h_mat, sizeof(double) * ncol * nrow);
@@ -107,9 +117,10 @@ int DiagoLapack<T>::dsygvx_once(const int ncol,
 
     // Throw error if it returns info
     if (info)
-        throw std::runtime_error("info = " + ModuleBase::GlobalFunc::TO_STRING(info) + ".\n"
-                                 + ModuleBase::GlobalFunc::TO_STRING(__FILE__) + " line "
-                                 + ModuleBase::GlobalFunc::TO_STRING(__LINE__));
+        throw std::runtime_error(
+            "info = " + ModuleBase::GlobalFunc::TO_STRING(info) + ".\n"
+            + ModuleBase::GlobalFunc::TO_STRING(__FILE__) + " line "
+            + ModuleBase::GlobalFunc::TO_STRING(__LINE__));
 
     lwork = work[0];
     work.resize(std::max(lwork, 3), 0);
@@ -148,8 +159,7 @@ int DiagoLapack<T>::zhegvx_once(const int ncol,
                                 const std::complex<double>* const h_mat,
                                 const std::complex<double>* const s_mat,
                                 double* const ekb,
-                                psi::Psi<std::complex<double>>& wfc_2d) const
-{
+                                psi::Psi<std::complex<double>>& wfc_2d) const {
     ModuleBase::ComplexMatrix h_tmp(ncol, nrow, false);
     memcpy(h_tmp.c, h_mat, sizeof(std::complex<double>) * ncol * nrow);
     ModuleBase::ComplexMatrix s_tmp(ncol, nrow, false);
@@ -191,9 +201,10 @@ int DiagoLapack<T>::zhegvx_once(const int ncol,
             ifail.data(),
             &info);
     if (info)
-        throw std::runtime_error("info=" + ModuleBase::GlobalFunc::TO_STRING(info) + ". "
-                                 + ModuleBase::GlobalFunc::TO_STRING(__FILE__) + " line "
-                                 + ModuleBase::GlobalFunc::TO_STRING(__LINE__));
+        throw std::runtime_error(
+            "info=" + ModuleBase::GlobalFunc::TO_STRING(info) + ". "
+            + ModuleBase::GlobalFunc::TO_STRING(__FILE__) + " line "
+            + ModuleBase::GlobalFunc::TO_STRING(__LINE__));
 
     //	GlobalV::ofs_running<<"lwork="<<work[0]<<"\t"<<"lrwork="<<rwork[0]<<"\t"<<"liwork="<<iwork[0]<<std::endl;
     lwork = work[0].real();
@@ -236,10 +247,8 @@ void DiagoLapack<T>::dsygvx_diag(const int ncol,
                                  const double* const h_mat,
                                  const double* const s_mat,
                                  double* const ekb,
-                                 psi::Psi<double>& wfc_2d)
-{
-    while (true)
-    {
+                                 psi::Psi<double>& wfc_2d) {
+    while (true) {
 
         int info_result = dsygvx_once(ncol, nrow, h_mat, s_mat, ekb, wfc_2d);
         if (info_result == 0)
@@ -253,10 +262,8 @@ void DiagoLapack<T>::zhegvx_diag(const int ncol,
                                  const std::complex<double>* const h_mat,
                                  const std::complex<double>* const s_mat,
                                  double* const ekb,
-                                 psi::Psi<std::complex<double>>& wfc_2d)
-{
-    while (true)
-    {
+                                 psi::Psi<std::complex<double>>& wfc_2d) {
+    while (true) {
         int info_result = zhegvx_once(ncol, nrow, h_mat, s_mat, ekb, wfc_2d);
         if (info_result == 0)
             break;
@@ -264,15 +271,16 @@ void DiagoLapack<T>::zhegvx_diag(const int ncol,
 }
 
 template <typename T>
-void DiagoLapack<T>::post_processing(const int info, const std::vector<int>& vec)
-{
-    const std::string str_info = "info = " + ModuleBase::GlobalFunc::TO_STRING(info) + ".\n";
+void DiagoLapack<T>::post_processing(const int info,
+                                     const std::vector<int>& vec) {
+    const std::string str_info
+        = "info = " + ModuleBase::GlobalFunc::TO_STRING(info) + ".\n";
     const std::string str_FILE
-        = ModuleBase::GlobalFunc::TO_STRING(__FILE__) + " line " + ModuleBase::GlobalFunc::TO_STRING(__LINE__) + ".\n";
+        = ModuleBase::GlobalFunc::TO_STRING(__FILE__) + " line "
+          + ModuleBase::GlobalFunc::TO_STRING(__LINE__) + ".\n";
     const std::string str_info_FILE = str_info + str_FILE;
 
-    if (info == 0)
-    {
+    if (info == 0) {
         return;
     }
 }

@@ -20,47 +20,45 @@ ORB_control::ORB_control(const bool& gamma_only_in,
                          const int& myrank_in,
                          const std::string& calculation_in,
                          const std::string& ks_solver_in)
-    : gamma_only(gamma_only_in), nlocal(nlocal_in), nbands(nbands_in), nspin(nspin_in), dsize(dsize_in), nb2d(nb2d_in),
-      dcolor(dcolor_in), drank(drank_in), myrank(myrank_in), calculation(calculation_in), ks_solver(ks_solver_in),
-      setup_2d(true)
-{
+    : gamma_only(gamma_only_in), nlocal(nlocal_in), nbands(nbands_in),
+      nspin(nspin_in), dsize(dsize_in), nb2d(nb2d_in), dcolor(dcolor_in),
+      drank(drank_in), myrank(myrank_in), calculation(calculation_in),
+      ks_solver(ks_solver_in), setup_2d(true) {
     this->ParaV.nspin = nspin_in;
 }
 
-ORB_control::ORB_control() : setup_2d(false)
-{
-}
-ORB_control::~ORB_control()
-{
+ORB_control::ORB_control() : setup_2d(false) {}
+ORB_control::~ORB_control() {
 #ifdef __MPI
     Cblacs_exit(1); // delete global variables in cblacs but do not close MPI
 #endif
 }
 
-void ORB_control::read_orb_first(std::ofstream& ofs_in,
-                                 LCAO_Orbitals& orb,
-                                 const int& ntype,                   // mohan add 2021-04-26
-                                 const std::string& orbital_dir,     // liuyu add 2023-04-06
-                                 const std::string* orbital_file,    // liuyu add 2023-04-06
-                                 const std::string& descriptor_file, // liuyu add 2023-04-06
-                                 const int& lmax,                    // mohan add 2021-04-26
-                                 const double& lcao_ecut_in,         // mohan add 2021-04-16
-                                 const double& lcao_dk_in,           // mohan add 2021-04-16
-                                 const double& lcao_dr_in,           // mohan add 2021-04-16
-                                 const double& lcao_rmax_in,         // mohan add 2021-04-16
-                                 const bool& deepks_setorb,
-                                 const int& out_mat_r,
-                                 const bool& force_flag, // mohan add 2021-05-07
-                                 const int& my_rank      // mohan add 2021-04-26
-)
-{
+void ORB_control::read_orb_first(
+    std::ofstream& ofs_in,
+    LCAO_Orbitals& orb,
+    const int& ntype,                   // mohan add 2021-04-26
+    const std::string& orbital_dir,     // liuyu add 2023-04-06
+    const std::string* orbital_file,    // liuyu add 2023-04-06
+    const std::string& descriptor_file, // liuyu add 2023-04-06
+    const int& lmax,                    // mohan add 2021-04-26
+    const double& lcao_ecut_in,         // mohan add 2021-04-16
+    const double& lcao_dk_in,           // mohan add 2021-04-16
+    const double& lcao_dr_in,           // mohan add 2021-04-16
+    const double& lcao_rmax_in,         // mohan add 2021-04-16
+    const bool& deepks_setorb,
+    const int& out_mat_r,
+    const bool& force_flag, // mohan add 2021-05-07
+    const int& my_rank      // mohan add 2021-04-26
+) {
     ModuleBase::TITLE("ORB_control", "read_orb_first");
     ModuleBase::timer::tick("ORB_control", "read_orb_first");
 
     /////////////////////////////////////////////////////////////////
     /// (1) FUNCTION : use 'info' to generate 'Numerical Orbital'
     ///
-    /// (1) RESULT : We have 'Numerical Orbital' for calculate S-table and T-table.
+    /// (1) RESULT : We have 'Numerical Orbital' for calculate S-table and
+    /// T-table.
     /////////////////////////////////////////////////////////////////
 
     // mohan add 2021-04-16
@@ -78,12 +76,10 @@ void ORB_control::read_orb_first(std::ofstream& ofs_in,
     orb.Rmax = lcao_rmax_in;
 
     // liuyu add 2023-04-06
-    if (my_rank == 0 && !orb.read_in_flag)
-    {
+    if (my_rank == 0 && !orb.read_in_flag) {
         orb.read_in_flag = true;
         orb.descriptor_file = descriptor_file;
-        for (int it = 0; it < ntype; ++it)
-        {
+        for (int it = 0; it < ntype; ++it) {
             std::string ofile = orbital_dir + orbital_file[it];
             orb.orbital_file.push_back(ofile);
         }
@@ -92,22 +88,30 @@ void ORB_control::read_orb_first(std::ofstream& ofs_in,
     orb.bcast_files(ntype, my_rank);
 #endif
 
-    orb.Read_Orbitals(ofs_in, ntype, lmax, deepks_setorb, out_mat_r, force_flag, my_rank);
+    orb.Read_Orbitals(ofs_in,
+                      ntype,
+                      lmax,
+                      deepks_setorb,
+                      out_mat_r,
+                      force_flag,
+                      my_rank);
 
     ModuleBase::timer::tick("ORB_control", "read_orb_first");
     return;
 }
 
-void ORB_control::setup_2d_division(std::ofstream& ofs_running, std::ofstream& ofs_warning)
-{
+void ORB_control::setup_2d_division(std::ofstream& ofs_running,
+                                    std::ofstream& ofs_warning) {
     ModuleBase::TITLE("ORB_control", "setup_2d_division");
     ofs_running << "\n SETUP THE DIVISION OF H/S MATRIX" << std::endl;
 
     // (1) calculate nrow, ncol, nloc.
-    if (ks_solver == "genelpa" || ks_solver == "lapack" || ks_solver == "scalapack_gvx" || ks_solver == "cusolver"
-        || ks_solver == "cusolvermp" || ks_solver == "cg_in_lcao" || ks_solver == "pexsi")
-    {
-        ofs_running << " divide the H&S matrix using 2D block algorithms." << std::endl;
+    if (ks_solver == "genelpa" || ks_solver == "lapack"
+        || ks_solver == "scalapack_gvx" || ks_solver == "cusolver"
+        || ks_solver == "cusolvermp" || ks_solver == "cg_in_lcao"
+        || ks_solver == "pexsi") {
+        ofs_running << " divide the H&S matrix using 2D block algorithms."
+                    << std::endl;
 #ifdef __MPI
         // storage form of H and S matrices on each processor
         // is determined in 'divide_HS_2d' subroutine
@@ -115,31 +119,32 @@ void ORB_control::setup_2d_division(std::ofstream& ofs_running, std::ofstream& o
 #else
         this->divide_HS_2d(ofs_running, ofs_warning);
 #endif
-    }
-    else
-    {
+    } else {
         // the full matrix
         this->ParaV.nloc = nlocal * nlocal;
     }
 
     // determine whether 2d-division or not according to ks_solver
     bool div_2d;
-    if (ks_solver == "lapack" || ks_solver == "cg" || ks_solver == "dav" || ks_solver == "dav_subspace")
+    if (ks_solver == "lapack" || ks_solver == "cg" || ks_solver == "dav"
+        || ks_solver == "dav_subspace")
         div_2d = false;
 #ifdef __MPI
-    else if (ks_solver == "genelpa" || ks_solver == "scalapack_gvx" || ks_solver == "cusolver"
-             || ks_solver == "cusolvermp" || ks_solver == "cg_in_lcao" || ks_solver == "pexsi")
+    else if (ks_solver == "genelpa" || ks_solver == "scalapack_gvx"
+             || ks_solver == "cusolver" || ks_solver == "cusolvermp"
+             || ks_solver == "cg_in_lcao" || ks_solver == "pexsi")
         div_2d = true;
 #endif
-    else
-    {
-        std::cout << " Parallel Orbial, DIAGO_TYPE = " << ks_solver << std::endl;
-        ModuleBase::WARNING_QUIT("Parallel_Orbitals::setup_2d_division", "Check ks_solver.");
+    else {
+        std::cout << " Parallel Orbial, DIAGO_TYPE = " << ks_solver
+                  << std::endl;
+        ModuleBase::WARNING_QUIT("Parallel_Orbitals::setup_2d_division",
+                                 "Check ks_solver.");
     }
 }
 
-void ORB_control::set_parameters(std::ofstream& ofs_running, std::ofstream& ofs_warning)
-{
+void ORB_control::set_parameters(std::ofstream& ofs_running,
+                                 std::ofstream& ofs_warning) {
     ModuleBase::TITLE("ORB_control", "set_parameters");
 
     Parallel_Orbitals* pv = &this->ParaV;
@@ -149,17 +154,19 @@ void ORB_control::set_parameters(std::ofstream& ofs_running, std::ofstream& ofs_
         pv->loc_size = nbands / dsize;
 
         // mohan add 2012-03-29
-        if (pv->loc_size == 0)
-        {
+        if (pv->loc_size == 0) {
             ofs_warning << " loc_size=0"
                         << " in proc " << myrank + 1 << std::endl;
-            ModuleBase::WARNING_QUIT("ORB_control::set_parameters", "nbands < ncpus");
+            ModuleBase::WARNING_QUIT("ORB_control::set_parameters",
+                                     "nbands < ncpus");
         }
 
         if (drank < nbands % dsize)
             pv->loc_size += 1;
         if (pv->testpb)
-            ModuleBase::GlobalFunc::OUT(ofs_running, "local size", pv->loc_size);
+            ModuleBase::GlobalFunc::OUT(ofs_running,
+                                        "local size",
+                                        pv->loc_size);
 
         // set loc_sizes
         delete[] pv->loc_sizes;
@@ -169,44 +176,38 @@ void ORB_control::set_parameters(std::ofstream& ofs_running, std::ofstream& ofs_
         pv->lastband_in_proc = 0;
         pv->lastband_number = 0;
         int count_bands = 0;
-        for (int i = 0; i < dsize; i++)
-        {
-            if (i < nbands % dsize)
-            {
+        for (int i = 0; i < dsize; i++) {
+            if (i < nbands % dsize) {
                 // mohan modify 2010-07-05
                 pv->loc_sizes[i] = nbands / dsize + 1;
-            }
-            else
-            {
+            } else {
                 pv->loc_sizes[i] = nbands / dsize;
             }
             count_bands += pv->loc_sizes[i];
-            if (count_bands >= nbands)
-            {
+            if (count_bands >= nbands) {
                 pv->lastband_in_proc = i;
                 pv->lastband_number = nbands - (count_bands - pv->loc_sizes[i]);
                 break;
             }
         }
-    }
-    else
-    {
+    } else {
         pv->loc_size = nlocal / dsize;
 
         // mohan add 2012-03-29
-        if (pv->loc_size == 0)
-        {
+        if (pv->loc_size == 0) {
             ofs_warning << " loc_size=0"
                         << " in proc " << myrank + 1 << std::endl;
-            ModuleBase::WARNING_QUIT("ORB_control::set_parameters", "nbands < ncpus");
+            ModuleBase::WARNING_QUIT("ORB_control::set_parameters",
+                                     "nbands < ncpus");
         }
 
-        if (drank < nlocal % dsize)
-        {
+        if (drank < nlocal % dsize) {
             pv->loc_size += 1;
         }
         if (pv->testpb)
-            ModuleBase::GlobalFunc::OUT(ofs_running, "local size", pv->loc_size);
+            ModuleBase::GlobalFunc::OUT(ofs_running,
+                                        "local size",
+                                        pv->loc_size);
 
         // set loc_sizes
         delete[] pv->loc_sizes;
@@ -216,20 +217,15 @@ void ORB_control::set_parameters(std::ofstream& ofs_running, std::ofstream& ofs_
         pv->lastband_in_proc = 0;
         pv->lastband_number = 0;
         int count_bands = 0;
-        for (int i = 0; i < dsize; i++)
-        {
-            if (i < nlocal % dsize)
-            {
+        for (int i = 0; i < dsize; i++) {
+            if (i < nlocal % dsize) {
                 // mohan modify 2010-07-05
                 pv->loc_sizes[i] = nlocal / dsize + 1;
-            }
-            else
-            {
+            } else {
                 pv->loc_sizes[i] = nlocal / dsize;
             }
             count_bands += pv->loc_sizes[i];
-            if (count_bands >= nbands)
-            {
+            if (count_bands >= nbands) {
                 pv->lastband_in_proc = i;
                 pv->lastband_number = nbands - (count_bands - pv->loc_sizes[i]);
                 break;
@@ -238,9 +234,13 @@ void ORB_control::set_parameters(std::ofstream& ofs_running, std::ofstream& ofs_
     } // xiaohui add 2014-12-21
 
     if (pv->testpb)
-        ModuleBase::GlobalFunc::OUT(ofs_running, "lastband_in_proc", pv->lastband_in_proc);
+        ModuleBase::GlobalFunc::OUT(ofs_running,
+                                    "lastband_in_proc",
+                                    pv->lastband_in_proc);
     if (pv->testpb)
-        ModuleBase::GlobalFunc::OUT(ofs_running, "lastband_number", pv->lastband_number);
+        ModuleBase::GlobalFunc::OUT(ofs_running,
+                                    "lastband_number",
+                                    pv->lastband_number);
 
     return;
 }
@@ -251,8 +251,7 @@ void ORB_control::divide_HS_2d(
     MPI_Comm DIAG_WORLD,
 #endif
     std::ofstream& ofs_running,
-    std::ofstream& ofs_warning)
-{
+    std::ofstream& ofs_warning) {
     ModuleBase::TITLE("ORB_control", "divide_HS_2d");
     assert(nlocal > 0);
     assert(dsize > 0);
@@ -278,10 +277,11 @@ void ORB_control::divide_HS_2d(
 
     int try_nb = pv->init(nlocal, nlocal, nb2d, DIAG_WORLD);
     try_nb += pv->set_nloc_wfc_Eij(nbands, ofs_running, ofs_warning);
-    if (try_nb != 0)
-    {
-        ofs_running << " parameter nb2d is too large: nb2d = " << pv->get_block_size() << std::endl;
-        ofs_running << " reset nb2d to value 1, this set would make the program keep working but maybe get slower "
+    if (try_nb != 0) {
+        ofs_running << " parameter nb2d is too large: nb2d = "
+                    << pv->get_block_size() << std::endl;
+        ofs_running << " reset nb2d to value 1, this set would make the "
+                       "program keep working but maybe get slower "
                        "during diagonalization."
                     << std::endl;
 
@@ -290,9 +290,9 @@ void ORB_control::divide_HS_2d(
     }
 
     // init blacs context for genelpa
-    if (ks_solver == "genelpa" || ks_solver == "scalapack_gvx" || ks_solver == "cusolver" || ks_solver == "cusolvermp"
-        || ks_solver == "cg_in_lcao" || ks_solver == "pexsi")
-    {
+    if (ks_solver == "genelpa" || ks_solver == "scalapack_gvx"
+        || ks_solver == "cusolver" || ks_solver == "cusolvermp"
+        || ks_solver == "cg_in_lcao" || ks_solver == "pexsi") {
         pv->set_desc_wfc_Eij(nlocal, nbands, pv->nrow);
     }
 #else // single processor used.
