@@ -871,13 +871,13 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
     // 1) print Hamiltonian and Overlap matrix
     if (this->conv_elec || iter == GlobalV::SCF_NMAX)
     {
-        if (!GlobalV::GAMMA_ONLY_LOCAL && hsolver::HSolverLCAO<TK>::out_mat_hs[0])
+        if (!GlobalV::GAMMA_ONLY_LOCAL && (hsolver::HSolverLCAO<TK>::out_mat_hs[0] || GlobalV::deepks_v_delta))
         {
             this->GK.renew(true);
         }
         for (int ik = 0; ik < this->kv.get_nks(); ++ik)
         {
-            if (hsolver::HSolverLCAO<TK>::out_mat_hs[0])
+            if (hsolver::HSolverLCAO<TK>::out_mat_hs[0] || GlobalV::deepks_v_delta)
             {
                 this->p_hamilt->updateHk(ik);
             }
@@ -912,6 +912,12 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
                                        this->orb_con.ParaV,
                                        GlobalV::DRANK);
                 }
+#ifdef __DEEPKS
+                if(GlobalV::deepks_v_delta)
+                {
+                    GlobalC::ld.save_h_mat(h_mat.p,this->orb_con.ParaV.nloc);
+                }
+#endif
             }
         }
     }

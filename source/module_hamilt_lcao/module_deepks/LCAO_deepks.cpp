@@ -36,6 +36,7 @@ LCAO_Deepks::LCAO_Deepks()
     inl_l = nullptr;
     H_V_deltaR = nullptr;
     gedm = nullptr;
+    h_mat = nullptr;
 }
 
 //Desctructor of the class
@@ -66,6 +67,11 @@ LCAO_Deepks::~LCAO_Deepks()
     }
 
     del_gdmx();
+
+    if (h_mat)
+    {
+        delete[] h_mat;
+    }
 }
 
 void LCAO_Deepks::init(
@@ -139,6 +145,21 @@ void LCAO_Deepks::init(
     this->allocate_nlm(nat);
 
     this->pv = &pv_in;
+
+    if(GlobalV::deepks_v_delta)
+    {
+        //allocate and init h_mat
+        if(GlobalV::GAMMA_ONLY_LOCAL)
+        {
+            int nloc=this->pv->nloc;
+            if(this->h_mat)
+            {
+                delete[] this->h_mat;
+            }
+            this->h_mat = new double[nloc];
+            ModuleBase::GlobalFunc::ZEROS(this->h_mat, nloc);
+        }
+    }
 
     return;
 }
@@ -413,6 +434,58 @@ void LCAO_Deepks::del_orbital_pdm_shell(const int nks)
         delete[] this->orbital_pdm_shell[iks];
     }
      delete[] this->orbital_pdm_shell;    
+
+    return;
+}
+
+void LCAO_Deepks::init_v_delta_pdm_shell(const int nks,const int nlocal)
+{
+    
+    this->v_delta_pdm_shell = new double**** [nks];
+
+    for (int iks=0; iks<nks; iks++)
+    {
+        this->v_delta_pdm_shell[iks] = new double*** [nlocal];
+
+        for (int mu=0; mu<nlocal; mu++)
+        {
+            this->v_delta_pdm_shell[iks][mu] = new double** [nlocal];
+
+            for (int nu=0; nu<nlocal; nu++)
+            {
+                this->v_delta_pdm_shell[iks][mu][nu] = new double* [this->inlmax];
+
+                for(int inl = 0; inl < this->inlmax; inl++)
+                {
+                    this->v_delta_pdm_shell[iks][mu][nu][inl] = new double [(2 * this->lmaxd + 1) * (2 * this->lmaxd + 1)];
+                    ModuleBase::GlobalFunc::ZEROS(v_delta_pdm_shell[iks][mu][nu][inl], (2 * this->lmaxd + 1) * (2 * this->lmaxd + 1));
+                }                
+            }
+        }
+    }
+
+    return;
+}
+
+void LCAO_Deepks::del_v_delta_pdm_shell(const int nks,const int nlocal)
+{
+    for (int iks=0; iks<nks; iks++)
+    {
+        for (int mu=0; mu<nlocal; mu++)
+        {
+            for (int nu=0; nu<nlocal; nu++)
+            {
+                for (int inl = 0;inl < this->inlmax; inl++)
+                {
+                    delete[] this->v_delta_pdm_shell[iks][mu][nu][inl];
+                }
+                delete[] this->v_delta_pdm_shell[iks][mu][nu];                
+            }
+            delete[] this->v_delta_pdm_shell[iks][mu]; 
+        }
+        delete[] this->v_delta_pdm_shell[iks]; 
+    }
+    delete[] this->v_delta_pdm_shell;    
 
     return;
 }
