@@ -45,6 +45,7 @@
 //---------------------------------------------------
 
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
+#include "module_io/io_dmk.h"
 #include "module_io/write_dmr.h"
 #include "module_io/write_wfc_nao.h"
 
@@ -1041,7 +1042,6 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int iter) {
     if (print) {
         for (int is = 0; is < GlobalV::NSPIN; is++) {
             this->create_Output_Rho(is, iter, "tmp_").write();
-            this->create_Output_DM(is, iter).write();
             if (XC_Functional::get_func_type() == 3
                 || XC_Functional::get_func_type() == 5) {
                 this->create_Output_Kin(is, iter, "tmp_").write();
@@ -1122,10 +1122,20 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep) {
     }
 
     // 4) write density matrix
-    if (this->LOC.out_dm) {
-        for (int is = 0; is < GlobalV::NSPIN; is++) {
-            this->create_Output_DM(is, istep).write();
+    if (PARAM.get().out_dm) {
+        std::vector<double> efermis(GlobalV::NSPIN == 2 ? 2 : 1);
+        for (int ispin = 0; ispin < efermis.size(); ispin++) {
+            efermis[ispin] = this->pelec->eferm.get_efval(ispin);
         }
+        const int precision = 3;
+        ModuleIO::write_dmk(
+            dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)
+                ->get_DM()
+                ->get_DMK_vector(),
+            precision,
+            efermis,
+            &(GlobalC::ucell),
+            this->orb_con.ParaV);
     }
 
 #ifdef __EXX
@@ -1316,22 +1326,6 @@ bool ESolver_KS_LCAO<TK, TR>::do_after_converge(int& iter) {
 //! the 16th function of ESolver_KS_LCAO: create_Output_DM
 //! mohan add 2024-05-11
 //------------------------------------------------------------------------------
-template <typename TK, typename TR>
-ModuleIO::Output_DM ESolver_KS_LCAO<TK, TR>::create_Output_DM(int is,
-                                                              int iter) {
-    const int precision = 3;
-
-    return ModuleIO::Output_DM(this->GridT,
-                               is,
-                               iter,
-                               precision,
-                               this->LOC.out_dm,
-                               this->LOC.DM,
-                               this->pelec->eferm.get_efval(is),
-                               &(GlobalC::ucell),
-                               GlobalV::global_out_dir,
-                               GlobalV::GAMMA_ONLY_LOCAL);
-}
 
 //------------------------------------------------------------------------------
 //! the 17th function of ESolver_KS_LCAO: create_Output_DM1

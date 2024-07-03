@@ -174,6 +174,7 @@ OBJS_CELL=atom_pseudo.o\
     setup_nonlocal.o\
     klist.o\
     cell_index.o\
+    check_atomic_stru.o\
 
 OBJS_DEEPKS=LCAO_deepks.o\
         LCAO_deepks_fdelta.o\
@@ -234,7 +235,6 @@ OBJS_GINT=gint.o\
       gint_tau.o\
       gint_vl.o\
       gint_k_env.o\
-      gint_k_sparse.o\
       gint_k_sparse1.o\
       gint_k_pvpr.o\
       gint_k_pvdpr.o\
@@ -488,7 +488,7 @@ OBJS_IO_LCAO=cal_r_overlap_R.o\
       nscf_fermi_surf.o\
       istate_charge.o\
       istate_envelope.o\
-      read_dm.o\
+      io_dmk.o\
       unk_overlap_lcao.o\
       read_wfc_nao.o\
       read_wfc_lcao.o\
@@ -496,8 +496,6 @@ OBJS_IO_LCAO=cal_r_overlap_R.o\
       write_HS_sparse.o\
       single_R_io.o\
       write_HS_R.o\
-      write_dm.o\
-      output_dm.o\
       write_dmr.o\
       sparse_matrix.o\
       output_mulliken.o\

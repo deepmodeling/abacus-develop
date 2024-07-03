@@ -9,7 +9,6 @@ list(APPEND objects
     gint_tau.cpp
     gint_vl.cpp
     gint_k_env.cpp
-    gint_k_sparse.cpp
     gint_k_sparse1.cpp
     gint_k_pvpr.cpp
     gint_k_pvdpr.cpp
