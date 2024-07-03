@@ -5,13 +5,15 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 
-namespace sparse_format
-{
+namespace sparse_format {
 //! calculate overlap matrix with lattice vector R
 void cal_SR(const Parallel_Orbitals& pv,
             std::set<Abfs::Vector3_Order<int>>& all_R_coor,
-            std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>>& SR_sparse,
-            std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>& SR_soc_sparse,
+            std::map<Abfs::Vector3_Order<int>,
+                     std::map<size_t, std::map<size_t, double>>>& SR_sparse,
+            std::map<Abfs::Vector3_Order<int>,
+                     std::map<size_t, std::map<size_t, std::complex<double>>>>&
+                SR_soc_sparse,
             Grid_Driver& grid,
             const double& sparse_thr,
             hamilt::Hamilt<std::complex<double>>* p_ham);
