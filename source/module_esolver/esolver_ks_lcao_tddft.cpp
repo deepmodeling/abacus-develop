@@ -398,19 +398,19 @@ void ESolver_KS_LCAO_TDDFT::after_scf(const int istep) {
                                    ss_dipole.str());
         }
     }
-    if (module_tddft::Evolve_elec::out_current == 1) {
+    if (TD_Velocity::out_current == true)
+    {
         elecstate::DensityMatrix<std::complex<double>, double>* tmp_DM
-            = dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(
-                  this->pelec)
-                  ->get_DM();
+            = dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)->get_DM();
+        hamilt::HamiltLCAO<std::complex<double>, double>* p_ham_lcao = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(this->p_hamilt);
         ModuleIO::write_current(istep,
                                 this->psi,
                                 pelec,
                                 kv,
-                                two_center_bundle_,
+                                two_center_bundle_.overlap_orb.get(),
                                 tmp_DM->get_paraV_pointer(),
                                 this->RA,
-                                this->LM); // mohan add 2024-04-02
+                                p_ham_lcao->getSR()); // mohan add 2024-04-02
     }
     ESolver_KS_LCAO<std::complex<double>, double>::after_scf(istep);
 }

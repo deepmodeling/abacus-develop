@@ -417,6 +417,7 @@ class Input
     bool out_dipole; // output the dipole or not
     bool out_efield; // output the efield or not
     bool out_current; //output the current or not
+    bool out_current_k; //output the current for each k-point
     bool out_vecpot; // output the vector potential or not
     bool init_vecpot_file; // initialize the vector potential, though file or integral
 
