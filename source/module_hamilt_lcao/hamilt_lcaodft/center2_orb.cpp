@@ -316,8 +316,8 @@ void Center2_Orb::cal_ST_Phi12_R(
 
     std::vector<double> integrated_func(kmesh);
 
-    const std::vector<std::vector<double>>& jlm1
-        = l > 0 ? psb->get_jlx()[l - 1] : std::vector<std::vector<double>>{};
+    int lm1 = (l != 0 ? l - 1 : 0);
+    const std::vector<std::vector<double>>& jlm1 = psb->get_jlx()[lm1];
     const std::vector<std::vector<double>>& jl = psb->get_jlx()[l];
     const std::vector<std::vector<double>>& jlp1 = psb->get_jlx()[l + 1];
 
@@ -342,6 +342,7 @@ void Center2_Orb::cal_ST_Phi12_R(
             temp);
         rs[ir] = temp * ModuleBase::FOUR_PI;
 
+        const std::vector<double>& jlm1_r = jlm1[ir];
         const std::vector<double>& jlp1_r = jlp1[ir];
         const double fac = l / (l + 1.0);
         if (l == 0) {
@@ -349,7 +350,6 @@ void Center2_Orb::cal_ST_Phi12_R(
                 integrated_func[ik] = jlp1_r[ik] * k1_dot_k2_dot_kpoint[ik];
             }
         } else {
-            const std::vector<double>& jlm1_r = jlm1[ir];
             for (int ik = 0; ik < kmesh; ++ik) {
                 integrated_func[ik] = (jlp1_r[ik] - fac * jlm1_r[ik])
                                       * k1_dot_k2_dot_kpoint[ik];
