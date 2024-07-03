@@ -222,8 +222,9 @@ void ModuleIO::write_current(const int istep,
                         // get SR info
                         // SR are used to calculate the final part of momentum operator, eA.
                         hamilt::BaseMatrix<double>* tmp_s = sR->find_matrix(iat1, iat2, Rx, Ry, Rz);
-                        if (tmp_matrix_real == nullptr)
+                        if (tmp_matrix_real == nullptr) {
                             continue;
+                        }
                         int row_ap = pv->atom_begin_row[iat1];
                         int col_ap = pv->atom_begin_col[iat2];
                         // get DMR

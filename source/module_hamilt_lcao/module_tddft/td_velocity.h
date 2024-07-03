@@ -57,7 +57,7 @@ class TD_Velocity
 
   private:
     /// @brief read At from output file
-    void read_cart_At(void);
+    void read_cart_At();
 
     /// @brief output cart_At to output file
     void output_cart_At(const std::string& out_dir);
@@ -72,7 +72,7 @@ class TD_Velocity
     static std::vector<ModuleBase::Vector3<double>> At_from_file;
 
     /// @brief destory HSR data stored
-    void destroy_HS_R_td_sparse(void);
+    void destroy_HS_R_td_sparse();
 
     /// @brief part of Momentum operator, -i∇ - i[r,Vnl]. Used to calculate current.
     std::vector<hamilt::HContainer<std::complex<double>>*> current_term = {nullptr, nullptr, nullptr};

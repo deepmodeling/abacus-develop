@@ -128,8 +128,9 @@ void snap_psibeta_half_tddft(const LCAO_Orbitals& orb,
         }
 
         double y = 0.0;
-        if (right > mesh_r - 4)
+        if (right > mesh_r - 4) {
             return y;
+        }
 
         double x0 = r_radial[right];
         double x1 = r_radial[right + 1];
@@ -212,8 +213,9 @@ void snap_psibeta_half_tddft(const LCAO_Orbitals& orb,
                     tmp_r_unit = tmp_r_coor / tmp_r_coor_norm;
                 }
 
-                if (tmp_r_coor_norm > Rcut1)
+                if (tmp_r_coor_norm > Rcut1) {
                     continue;
+                }
 
                 std::vector<double> rly0;
                 ModuleBase::Ylm::rl_sph_harm(L0, x, y, z, rly0);

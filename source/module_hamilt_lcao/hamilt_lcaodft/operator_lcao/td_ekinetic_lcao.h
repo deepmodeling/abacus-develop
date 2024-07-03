@@ -50,7 +50,7 @@ class TDEkinetic<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     virtual void contributeHR() override;
     virtual void contributeHk(int ik) override;
     /// @brief init two center integrals and vector potential for td_ekintic term
-    void init_td(void);
+    void init_td();
 
     /**
      * @brief initialize HR, search the nearest neighbor atoms
@@ -81,7 +81,7 @@ class TDEkinetic<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      * nearest neighbor atoms don't need to be calculated again
      * loop the atom-pairs in HR and calculate the ekinetic matrix
      */
-    void calculate_HR(void);
+    void calculate_HR();
     virtual void set_HR_fixed(void*) override;
 
     TD_Velocity td_velocity;
