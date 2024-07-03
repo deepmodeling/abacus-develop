@@ -180,7 +180,7 @@ void sparse_format::cal_STN_R_for_T(const UnitCell& ucell,
                                 tmp = HS_arrays.Hloc_fixedR[index];
                                 if (std::abs(tmp) > sparse_thr)
                                 {
-                                    lm.TR_sparse[dR][iw1_all][iw2_all] = tmp;
+                                    HS_arrays.TR_sparse[dR][iw1_all][iw2_all] = tmp;
                                 }
                             }
 

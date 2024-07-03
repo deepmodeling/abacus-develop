@@ -74,11 +74,6 @@ class LCAO_Matrix
     std::complex<double>**** SlocR_tr_soc;
     std::complex<double>**** HR_tr_soc;
 
-    // jingan add 2021-6-4, modify 2021-12-2
-    // Sparse form of HR and SR, the format is [R_direct_coor][orbit_row][orbit_col]
-
-    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> TR_sparse;
-
     // Record all R direct coordinate information, even if HR or SR is a zero matrix
     std::set<Abfs::Vector3_Order<int>> all_R_coor;
 
@@ -118,7 +113,7 @@ class LCAO_Matrix
     // jingan add 2021-6-4, modify 2021-12-2
     void destroy_HS_R_sparse(LCAO_HS_Arrays& HS_Arrays);
 
-    void destroy_T_R_sparse(void);
+    void destroy_T_R_sparse(LCAO_HS_Arrays& HS_Arrays);
 };
 
 #include "LCAO_matrix.hpp"
