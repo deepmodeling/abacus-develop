@@ -34,8 +34,6 @@ ORB_nonlocal_lm.cpp: store each non-local projector
 ORB_nonlocal_lm.h
 ORB_read.cpp: read-in basis sets/non-local projectors/descriptors
 ORB_read.h
-ORB_table_phi.cpp: generate Tables for basis sets
-ORB_table_phi.h
 --------------------------------------------------------------------
 
 There are some other files in the 'OBJS_BASE' group (mainly math functions), 
