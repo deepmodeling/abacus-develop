@@ -45,8 +45,10 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
     // select the method of diagonalization
     this->method = method_in;
     // report if the specified diagonalization method is not supported
-    const std::initializer_list<std::string> _methods = {"cg", "dav", "dav_subspace", "bpcg"};
-    if (std::find(std::begin(_methods), std::end(_methods), this->method) == std::end(_methods)){
+    const std::initializer_list<std::string> _methods
+        = {"cg", "dav", "dav_subspace", "bpcg"};
+    if (std::find(std::begin(_methods), std::end(_methods), this->method)
+        == std::end(_methods)) {
         ModuleBase::WARNING_QUIT("HSolverPW::solve",
                                  "This method of DiagH is not supported!");
     }
@@ -498,15 +500,15 @@ void HSolverPW<T, Device>::solve(
 }
 
 template <typename T, typename Device>
-void HSolverPW<T, Device>::endDiagh()
-{
-    // in PW base, average iteration steps for each band and k-point should be printing
-    if (DiagoIterAssist<T, Device>::avg_iter > 0.0)
-    {
-        GlobalV::ofs_running << "Average iterative diagonalization steps: "
-                             << DiagoIterAssist<T, Device>::avg_iter / this->wfc_basis->nks
-                             << " ; where current threshold is: " << DiagoIterAssist<T, Device>::PW_DIAG_THR << " . "
-                             << std::endl;
+void HSolverPW<T, Device>::endDiagh() {
+    // in PW base, average iteration steps for each band and k-point should be
+    // printing
+    if (DiagoIterAssist<T, Device>::avg_iter > 0.0) {
+        GlobalV::ofs_running
+            << "Average iterative diagonalization steps: "
+            << DiagoIterAssist<T, Device>::avg_iter / this->wfc_basis->nks
+            << " ; where current threshold is: "
+            << DiagoIterAssist<T, Device>::PW_DIAG_THR << " . " << std::endl;
 
         // std::cout << "avg_iter == " << DiagoIterAssist<T, Device>::avg_iter
         // << std::endl;
@@ -761,12 +763,15 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
                                                      scf));
     } else if (this->method == "bpcg") {
 =======
-        DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(
-            dav_subspace
-                .diag(hpsi_func, subspace_func, psi.get_pointer(), psi.get_nbasis(), eigenvalue, is_occupied, scf));
-    }
-    else if (this->method == "bpcg")
-    {
+        DiagoIterAssist<T, Device>::avg_iter
+            += static_cast<double>(dav_subspace.diag(hpsi_func,
+                                                     subspace_func,
+                                                     psi.get_pointer(),
+                                                     psi.get_nbasis(),
+                                                     eigenvalue,
+                                                     is_occupied,
+                                                     scf));
+    } else if (this->method == "bpcg") {
 >>>>>>> 3a4158887 ([pre-commit.ci lite] apply automatic fixes)
         DiagoBPCG<T, Device> bpcg(precondition.data());
         bpcg.init_iter(psi);
