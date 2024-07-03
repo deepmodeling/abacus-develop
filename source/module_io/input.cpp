@@ -2602,16 +2602,15 @@ bool Input::Read(const std::string& fn)
         this->stru_file = "STRU";
     }
     double ntype_stru = this->count_ntype(this->stru_file);
-    if (this->ntype == 0)
+    if (this->ntype != 0)
     {
-        this->ntype = ntype_stru;
-        GlobalV::ofs_running << "ntype in INPUT is 0, and it is automatically set to " << this->ntype
+        std::string ntype_doc = " 'ntype' is no longer required in INPUT, and it will be ignored.";
+        GlobalV::ofs_running << ntype_doc << std::endl;
+        std::cout << ntype_doc << std::endl;
+    }
+    GlobalV::ofs_running << "ntype is automatically set to " << this->ntype
                              << " according to STRU" << std::endl;
-    }
-    else if (this->ntype != ntype_stru)
-    {
-        ModuleBase::WARNING_QUIT("Input", "The ntype in INPUT is not equal to the ntype counted in STRU, check it.");
-    }
+    this->ntype = ntype_stru;
 
     //----------------------------------------------------------
     //       DFT+U    Xin Qu  added on 2020-10-29
