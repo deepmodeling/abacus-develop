@@ -35,24 +35,25 @@ class DiagoDavid : public DiagH<T, Device>
                       const int notconv_max = 0);
 
   private:
-    int david_ndim = 4;
     bool use_paw = false;
     int test_david = 0;
 
     diag_comm_info diag_comm;
 
-    /// row size for input psi matrix
+    /// number of searched eigenpairs
     int n_band = 0;
-    /// non-zero col size for inputted psi matrix
+    /// dimension of the input matrix psi to be diagonalized
     int dim = 0;
+    /// leading dimension of the matrix data
     int dmx = 0;
-    // maximum dimension of the reduced basis set
+    /// dimension of the subspace allowed in Davidson
+    int david_ndim = 4;
+    /// maximum dimension of the reduced basis set
     int nbase_x = 0;
-
-    /// record for how many bands not have convergence eigenvalues
+    /// number of unconverged eigenvalues
     int notconv = 0;
 
-    /// precondition for cg diag
+    /// precondition for diag, diagonal array approx
     const Real* precondition = nullptr;
     Real* d_precondition = nullptr;
 
