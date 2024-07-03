@@ -172,6 +172,7 @@ OBJS_CELL=atom_pseudo.o\
     setup_nonlocal.o\
     klist.o\
     cell_index.o\
+    check_atomic_stru.o\
 
 OBJS_DEEPKS=LCAO_deepks.o\
         LCAO_deepks_fdelta.o\
@@ -232,7 +233,6 @@ OBJS_GINT=gint.o\
       gint_tau.o\
       gint_vl.o\
       gint_k_env.o\
-      gint_k_sparse.o\
       gint_k_sparse1.o\
       gint_k_pvpr.o\
       gint_k_pvdpr.o\
