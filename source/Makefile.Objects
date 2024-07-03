@@ -337,11 +337,9 @@ OBJS_ORBITAL=ORB_atomic.o\
       ORB_atomic_lm.o\
       ORB_control.o\
       ORB_gaunt_table.o\
-      ORB_gen_tables.o\
       ORB_nonlocal.o\
       ORB_nonlocal_lm.o\
       ORB_read.o\
-      ORB_table_phi.o\
       parallel_2d.o\
       parallel_orbitals.o\
 	  atomic_radials.o\
@@ -531,6 +529,7 @@ OBJS_LCAO=DM_gamma.o\
       LCAO_nl_beta.o\
       LCAO_nnr.o\
       LCAO_set_zero.o\
+      center2_orb.o\
       center2_orb-orb11.o\
       center2_orb-orb21.o\
       center2_orb-orb22.o\

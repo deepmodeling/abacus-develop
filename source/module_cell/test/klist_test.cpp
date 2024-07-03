@@ -20,7 +20,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 #include "module_io/berryphase.h"
 
-bool berryphase::berry_phase_flag = false;
+bool berryphase::berry_phase_flag = 0;
 
 pseudo::pseudo()
 {
@@ -241,7 +241,6 @@ TEST_F(KlistTest, Construct)
 {
     EXPECT_EQ(kv->get_nks(), 0);
     EXPECT_EQ(kv->get_nkstot(), 0);
-    EXPECT_EQ(kv->get_nkstot_ibz(), 0);
     EXPECT_EQ(kv->nspin, 0);
     EXPECT_EQ(kv->k_nkstot, 0);
     EXPECT_FALSE(kv->kc_done);
@@ -301,7 +300,7 @@ TEST_F(KlistTest, MP)
 
 TEST_F(KlistTest, ReadKpointsGammaOnlyLocal)
 {
-    GlobalV::GAMMA_ONLY_LOCAL = true;
+    GlobalV::GAMMA_ONLY_LOCAL = 1;
     std::string kfile = "KPT_GO";
     kv->nspin = 1;
     kv->read_kpoints(kfile);
@@ -310,7 +309,7 @@ TEST_F(KlistTest, ReadKpointsGammaOnlyLocal)
     EXPECT_THAT(str, testing::HasSubstr("Gamma"));
     EXPECT_THAT(str, testing::HasSubstr("1 1 1 0 0 0"));
     ifs.close();
-    GlobalV::GAMMA_ONLY_LOCAL = false; // this is important for the following tests because it is global
+    GlobalV::GAMMA_ONLY_LOCAL = 0; // this is important for the following tests because it is global
 }
 
 TEST_F(KlistTest, ReadKpointsKspacing)
@@ -682,9 +681,9 @@ TEST_F(KlistTest, SetBothKvecFinalSCF)
     kv->kvec_c[0].y = 0.0;
     kv->kvec_c[0].z = 0.0;
     std::string skpt;
-    GlobalV::FINAL_SCF = true;
-    kv->kd_done = false;
-    kv->kc_done = false;
+    GlobalV::FINAL_SCF = 1;
+    kv->kd_done = 0;
+    kv->kc_done = 0;
     // case 1
     kv->k_nkstot = 0;
     kv->set_both_kvec(GlobalC::ucell.G, GlobalC::ucell.latvec, skpt);
@@ -722,14 +721,14 @@ TEST_F(KlistTest, SetBothKvec)
     kv->kvec_d[0].x = 0.0;
     kv->kvec_d[0].y = 0.0;
     kv->kvec_d[0].z = 0.0;
-    kv->kc_done = false;
-    kv->kd_done = true;
+    kv->kc_done = 0;
+    kv->kd_done = 1;
     std::string skpt;
-    GlobalV::FINAL_SCF = false;
+    GlobalV::FINAL_SCF = 0;
     kv->set_both_kvec(GlobalC::ucell.G, GlobalC::ucell.latvec, skpt);
     EXPECT_TRUE(kv->kc_done);
-    kv->kc_done = true;
-    kv->kd_done = false;
+    kv->kc_done = 1;
+    kv->kd_done = 0;
     kv->set_both_kvec(GlobalC::ucell.G, GlobalC::ucell.latvec, skpt);
     EXPECT_TRUE(kv->kd_done);
 }
@@ -754,10 +753,7 @@ TEST_F(KlistTest, UpdateUseIBZ)
     kv->set_nkstot(3);
     kv->set_nks(3);
     kv->renew(kv->get_nkstot());
-    kv->set_nkstot_ibz(2);
-    kv->kvec_d_ibz.resize(kv->get_nkstot_ibz());
-    kv->wk_ibz.resize(kv->get_nkstot_ibz());
-    kv->update_use_ibz();
+    kv->update_use_ibz(2, std::vector<ModuleBase::Vector3<double>>(2, {0, 0, 0}), std::vector<double>(2, 0.0));
     EXPECT_EQ(kv->get_nkstot(), 2);
     EXPECT_EQ(kv->kvec_d.size(), 2);
     EXPECT_TRUE(kv->kd_done);
@@ -781,7 +777,7 @@ TEST_F(KlistTest, IbzKpoint)
     ModuleSymmetry::Symmetry::symm_flag = 1;
     bool match = true;
     kv->ibz_kpoint(symm, ModuleSymmetry::Symmetry::symm_flag, skpt, ucell, match);
-    EXPECT_EQ(kv->get_nkstot_ibz(), 35);
+    EXPECT_EQ(kv->get_nkstot(), 35);
     GlobalV::ofs_running << skpt << std::endl;
     GlobalV::ofs_running.close();
     ClearUcell();
@@ -806,7 +802,7 @@ TEST_F(KlistTest, IbzKpointIsMP)
     ModuleSymmetry::Symmetry::symm_flag = 0;
     bool match = true;
     kv->ibz_kpoint(symm, ModuleSymmetry::Symmetry::symm_flag, skpt, ucell, match);
-    EXPECT_EQ(kv->get_nkstot_ibz(), 260);
+    EXPECT_EQ(kv->get_nks(), 260);
     GlobalV::ofs_running << skpt << std::endl;
     GlobalV::ofs_running.close();
     ClearUcell();
