@@ -1108,8 +1108,8 @@ void LCAO_Deepks::cal_v_delta_precalc(const int nlocal,
 							if(iw2_local < 0)continue;
 							const int iw2_0 = iw2/GlobalV::NPOL;
 
-                            std::vector<double> nlm1 = this->nlm_save[iat][ad1][iw1_all][0];
-                            std::vector<double> nlm2 = this->nlm_save[iat][ad2][iw2_all][0];
+                            std::vector<double> nlm1 = this->nlm_save[iat][ad1][iw1][0];
+                            std::vector<double> nlm2 = this->nlm_save[iat][ad2][iw2][0];
 
                             assert(nlm1.size()==nlm2.size());
                             int ib=0;
@@ -1267,7 +1267,7 @@ void LCAO_Deepks::prepare_psialpha(const int nlocal,
 					const int iw2_local = pv->global2local_col(iw1_all);
 					if(iw1_local < 0 || iw2_local < 0)continue;
 					const int iw1_0 = iw1/GlobalV::NPOL;
-					std::vector<double> nlm = this->nlm_save[iat][ad][iw1_all][0];
+					std::vector<double> nlm = this->nlm_save[iat][ad][iw1][0];
                     
                     int ib=0;
                     int nl=0;
