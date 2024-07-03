@@ -1,5 +1,6 @@
 #ifndef TDEKINETIC_H
 #define TDEKINETIC_H
+#include "module_base/sph_bessel_recursive.h"
 #include "module_base/timer.h"
 #include "module_basis/module_ao/ORB_gaunt_table.h"
 #include "module_basis/module_ao/ORB_table_phi.h"

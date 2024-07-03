@@ -3,8 +3,8 @@ repos:
   - repo: https://github.com/pocc/pre-commit-hooks
     rev: v1.3.5
     hooks:
-      - id: clang-format
-        args: [-i]
+      # - id: clang-format
+      #   args: [-i]
       - id: clang-tidy
         args: [-p=build, --fix-errors]
       # - id: oclint
