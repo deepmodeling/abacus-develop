@@ -172,6 +172,7 @@ OBJS_CELL=atom_pseudo.o\
     setup_nonlocal.o\
     klist.o\
     cell_index.o\
+    check_atomic_stru.o\
 
 OBJS_DEEPKS=LCAO_deepks.o\
         LCAO_deepks_fdelta.o\

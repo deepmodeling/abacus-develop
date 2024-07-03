@@ -55,6 +55,7 @@ read_pp_upf201.o\
 read_pp_vwr.o\
 read_pp_blps.o\
 unitcell.o\
+check_atomic_stru.o\
 read_atoms.o\
 read_cell_pseudopots.o\
 setup_nonlocal.o
