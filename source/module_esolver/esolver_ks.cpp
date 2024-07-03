@@ -514,11 +514,11 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell) {
 
         // 8) for MPI: STOGROUP? need to rewrite
         //<Temporary> It may be changed when more clever parallel algorithm is
-        //put forward.
+        // put forward.
         // When parallel algorithm for bands are adopted. Density will only be
         // treated in the first group.
         //(Different ranks should have abtained the same, but small differences
-        //always exist in practice.)
+        // always exist in practice.)
         // Maybe in the future, density and wavefunctions should use different
         // parallel algorithms, in which they do not occupy all processors, for
         // example wavefunctions uses 20 processors while density uses 10.

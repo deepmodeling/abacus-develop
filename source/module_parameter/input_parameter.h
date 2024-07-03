@@ -52,7 +52,7 @@ struct Input_para {
     double pseudo_rcut = 15.0;    ///< cut-off radius for calculating msh
     bool pseudo_mesh = 0; ///< 0: use msh to normalize radial wave functions; 1:
                           ///< use mesh, which is used in QE.
-    int lmaxmax = 2;                        ///< maximum of l channels used
+    int lmaxmax = 2;      ///< maximum of l channels used
     std::string dft_functional = "default"; ///< input DFT functional.
     double xc_temperature
         = 0.0; ///< only relevant if finite temperature functional is used
@@ -138,13 +138,13 @@ struct Input_para {
     std::string init_wfc = "atomic"; ///< "file","atomic","random"
     bool psi_initializer
         = false; ///< whether use psi_initializer to initialize wavefunctions
-    std::string init_chg = "atomic";   ///< "file","atomic"
+    std::string init_chg = "atomic";    ///< "file","atomic"
     std::string chg_extrap = "default"; ///< xiaohui modify 2015-02-01
-    int out_chg = 0;                   ///< output charge density. 0: no; 1: yes
-    int out_pot = 0;                   ///< yes or no
-    int out_wfc_pw = 0;                ///< 0: no; 1: txt; 2: dat
-    bool out_wfc_r = false;            ///< 0: no; 1: yes
-    int out_dos = 0;                   ///< dos calculation. mohan add 20090909
+    int out_chg = 0;        ///< output charge density. 0: no; 1: yes
+    int out_pot = 0;        ///< yes or no
+    int out_wfc_pw = 0;     ///< 0: no; 1: txt; 2: dat
+    bool out_wfc_r = false; ///< 0: no; 1: yes
+    int out_dos = 0;        ///< dos calculation. mohan add 20090909
     std::vector<int> out_band = {0, 8}; ///< band calculation pengfei 2014-10-13
     bool out_proj_band
         = false; ///< projected band structure calculation jiyy add 2022-05-11
@@ -162,7 +162,7 @@ struct Input_para {
     // ===========================
     int method_sto = 2; ///< different methods for sdft, 1: slow, less memory 2:
                         ///< fast, more memory
-    int npart_sto = 1;    ///< for method_sto = 2, reduce memory
+    int npart_sto = 1;  ///< for method_sto = 2, reduce memory
     int nbands_sto = 256; ///< number of stochastic bands //qianrui 2021-2-5
     int nche_sto = 100;   ///< number of orders for Chebyshev expansion in
                           ///< stochastic DFT ///<qinarui 2021-2-5

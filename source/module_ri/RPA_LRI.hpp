@@ -410,11 +410,11 @@ void RPA_LRI<T, Tdata>::out_coulomb_k() {
 // 		exx_lri_rpa.cv.Vws = std::move(this->exx.cv.Vws);
 
 // 	const std::array<Tcell,Ndim> period_Vs =
-// LRI_CV_Tools::cal_latvec_range<Tcell>(1+this->info.ccp_rmesh_times); 	const
+// LRI_CV_Tools::cal_latvec_range<Tcell>(1+this->info.ccp_rmesh_times); const
 // std::pair<std::vector<TA>,
-// std::vector<std::vector<std::pair<TA,std::array<Tcell,Ndim>>>>> 		list_As_Vs =
-// RI::Distribute_Equally::distribute_atoms(this->mpi_comm, atoms, period_Vs, 2,
-// false);
+// std::vector<std::vector<std::pair<TA,std::array<Tcell,Ndim>>>>> 		list_As_Vs
+// = RI::Distribute_Equally::distribute_atoms(this->mpi_comm, atoms, period_Vs,
+// 2, false);
 
 // 	std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>
 // 		Vs = exx_lri_rpa.cv.cal_Vs(
@@ -430,17 +430,18 @@ void RPA_LRI<T, Tdata>::out_coulomb_k() {
 
 // 	const std::array<Tcell,Ndim> period_Cs =
 // LRI_CV_Tools::cal_latvec_range<Tcell>(2); 	const std::pair<std::vector<TA>,
-// std::vector<std::vector<std::pair<TA,std::array<Tcell,Ndim>>>>> 		list_As_Cs =
-// RI::Distribute_Equally::distribute_atoms_periods(this->mpi_comm, atoms,
+// std::vector<std::vector<std::pair<TA,std::array<Tcell,Ndim>>>>> 		list_As_Cs
+// = RI::Distribute_Equally::distribute_atoms_periods(this->mpi_comm, atoms,
 // period_Cs, 2, false);
 
 // 	std::pair<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,
 // std::array<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,3>> 		Cs_dCs =
 // exx_lri_rpa.cv.cal_Cs_dCs( 			list_As_Cs.first, list_As_Cs.second[0],
 // 			{{"cal_dC",false},
-// 			 {"writable_Cws",true}, {"writable_dCws",true}, {"writable_Vws",false},
-// {"writable_dVws",false}}); 	std::map<TA,std::map<TAC,RI::Tensor<Tdata>>> &Cs =
-// std::get<0>(Cs_dCs);
+// 			 {"writable_Cws",true}, {"writable_dCws",true},
+// {"writable_Vws",false},
+// {"writable_dVws",false}}); 	std::map<TA,std::map<TAC,RI::Tensor<Tdata>>> &Cs
+// = std::get<0>(Cs_dCs);
 
 // 	out_Cs(Cs);
 

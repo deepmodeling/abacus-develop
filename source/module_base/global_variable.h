@@ -233,7 +233,7 @@ extern bool FINAL_SCF; // LiuXh add 20180619
 extern bool deepks_out_labels; // (need libnpy) prints energy and force labels
                                // and descriptors for training, wenfei 2022-1-12
 extern bool deepks_scf; //(need libnpy and libtorch) if set 1, a trained model
-                        //would be needed to cal V_delta and F_delta
+                        // would be needed to cal V_delta and F_delta
 extern bool deepks_bandgap; // for bandgap label. QO added 2021-12-15
 
 extern bool deepks_equiv; // whether to use equviariant version of DeePKS

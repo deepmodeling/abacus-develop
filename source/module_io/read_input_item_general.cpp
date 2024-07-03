@@ -246,8 +246,8 @@ void ReadInput::item_general() {
                         "ReadInput",
                         "to generate descriptors, please use pw basis");
                 }
-            } else if (calculation != "scf" && calculation != "relax" && calculation != "md"
-                       && calculation != "cell-relax"
+            } else if (calculation != "scf" && calculation != "relax"
+                       && calculation != "md" && calculation != "cell-relax"
                        && calculation != "test_memory"
                        && calculation != "test_neighbour") {
                 ModuleBase::WARNING_QUIT("ReadInput", "check 'calculation' !");
