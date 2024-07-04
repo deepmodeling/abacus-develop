@@ -22,6 +22,7 @@ add_library(
     klist.cpp
     parallel_kpoints.cpp
     cell_index.cpp
+    check_atomic_stru.cpp
 )
 
 if(ENABLE_COVERAGE)

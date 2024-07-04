@@ -85,6 +85,7 @@
 116_PW_scan_Si2
 116_PW_scan_Si2_nspin2
 117_PW_out_pot
+117_PW_out_pot_nscf
 118_PW_CHG_BINARY
 118_PW_WFC_BINARY
 120_PW_KP_MD_MSST
@@ -172,6 +173,7 @@
 215_NO_sol_H2
 216_NO_scan_Si2
 217_NO_out_pot
+217_NO_out_pot_nscf
 220_NO_KP_MD_MSST
 220_NO_KP_MD_MSST_level2
 220_NO_KP_MD_NVT
