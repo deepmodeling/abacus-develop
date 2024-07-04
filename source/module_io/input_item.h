@@ -45,13 +45,13 @@ class Input_Item {
 
     // ====== !!! These functions are complete.        ======
     // ====== !!! Do not add any more functions here.  ======
-    /// read value if INPUT file has this item
+    /// read value function
     std::function<void(const Input_Item&, Parameter&)> readvalue
         = [](const Input_Item& item, Parameter& param) {};
-    /// check value if INPUT file has this item
+    /// check value function
     std::function<void(const Input_Item&, const Parameter&)> checkvalue
         = nullptr;
-    /// reset some values if INPUT file has this item
+    /// reset this value when some conditions are met
     std::function<void(const Input_Item&, Parameter&)> resetvalue = nullptr;
     /// get final_value function for output INPUT file
     std::function<void(Input_Item&, const Parameter&)> getfinalvalue = nullptr;

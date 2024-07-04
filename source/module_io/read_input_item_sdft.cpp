@@ -1,6 +1,7 @@
 #include "module_base/tool_quit.h"
 #include "read_input.h"
 #include "read_input_tool.h"
+#include "module_base/global_function.h"
 
 namespace ModuleIO {
 void ReadInput::item_sdft() {
@@ -34,8 +35,13 @@ void ReadInput::item_sdft() {
             }
         };
         item.resetvalue = [](const Input_Item& item, Parameter& para) {
-            if (strvalue == "0" && para.input.esolver_type == "sdft") {
-                para.input.esolver_type = "ksdft";
+            // only do it when nbands_sto is set in INPUT
+            if (item.get_size() == 1)
+            {
+                if (strvalue == "0" && para.input.esolver_type == "sdft") {
+                    para.input.esolver_type = "ksdft";
+                    ModuleBase::GlobalFunc::AUTO_SET("esolver_type", para.input.esolver_type);
+                }
             }
         };
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {

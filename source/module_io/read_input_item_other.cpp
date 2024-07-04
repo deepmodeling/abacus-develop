@@ -14,11 +14,6 @@ void ReadInput::item_others() {
         Input_Item item("efield_flag");
         item.annotation = "add electric field";
         read_sync_bool(efield_flag);
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
-            if (para.input.efield_flag) {
-                para.input.symmetry = "0";
-            }
-        };
         this->add_item(item);
     }
     {
@@ -189,119 +184,66 @@ void ReadInput::item_others() {
         item.annotation
             = "the method of calculating vdw (none ; d2 ; d3_0 ; d3_bj";
         read_sync_string(vdw_method);
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
-            Input_para& input = para.input;
-            if (input.vdw_s6 == "default") {
-                if (input.vdw_method == "d2") {
-                    input.vdw_s6 = "0.75";
-                } else if (input.vdw_method == "d3_0"
-                           || input.vdw_method == "d3_bj") {
-                    input.vdw_s6 = "1.0";
-                }
-            }
-            if (input.vdw_s8 == "default") {
-                if (input.vdw_method == "d3_0") {
-                    input.vdw_s8 = "0.722";
-                } else if (input.vdw_method == "d3_bj") {
-                    input.vdw_s8 = "0.7875";
-                }
-            }
-            if (input.vdw_a1 == "default") {
-                if (input.vdw_method == "d3_0") {
-                    input.vdw_a1 = "1.217";
-                } else if (input.vdw_method == "d3_bj") {
-                    input.vdw_a1 = "0.4289";
-                }
-            }
-            if (input.vdw_a2 == "default") {
-                if (input.vdw_method == "d3_0") {
-                    input.vdw_a2 = "1.0";
-                } else if (input.vdw_method == "d3_bj") {
-                    input.vdw_a2 = "4.4407";
-                }
-            }
-            if (input.vdw_cutoff_radius == "default") {
-                if (input.vdw_method == "d2") {
-                    input.vdw_cutoff_radius = "56.6918";
-                } else if (input.vdw_method == "d3_0"
-                           || input.vdw_method == "d3_bj") {
-                    input.vdw_cutoff_radius = "95";
-                }
-            }
-        };
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.vdw_method == "d2" || para.input.vdw_method == "d3_0"
-                || para.input.vdw_method == "d3_bj") {
-                if ((para.input.vdw_C6_unit != "Jnm6/mol")
-                    && (para.input.vdw_C6_unit != "eVA6")) {
-                    ModuleBase::WARNING_QUIT(
-                        "ReadInput",
-                        "vdw_C6_unit must be Jnm6/mol or eVA6");
-                }
-                if ((para.input.vdw_R0_unit != "A")
-                    && (para.input.vdw_R0_unit != "Bohr")) {
-                    ModuleBase::WARNING_QUIT("ReadInput",
-                                             "vdw_R0_unit must be A or Bohr");
-                }
-                if ((para.input.vdw_cutoff_type != "radius")
-                    && (para.input.vdw_cutoff_type != "period")) {
-                    ModuleBase::WARNING_QUIT(
-                        "ReadInput",
-                        "vdw_cutoff_type must be radius or period");
-                }
-                if ((para.input.vdw_cutoff_period.x <= 0)
-                    || (para.input.vdw_cutoff_period.y <= 0)
-                    || (para.input.vdw_cutoff_period.z <= 0)) {
-                    ModuleBase::WARNING_QUIT(
-                        "ReadInput",
-                        "vdw_cutoff_period <= 0 is not allowd");
-                }
-                if (std::stod(para.input.vdw_cutoff_radius) <= 0) {
-                    ModuleBase::WARNING_QUIT(
-                        "ReadInput",
-                        "vdw_cutoff_radius <= 0 is not allowd");
-                }
-                if ((para.input.vdw_radius_unit != "A")
-                    && (para.input.vdw_radius_unit != "Bohr")) {
-                    ModuleBase::WARNING_QUIT(
-                        "ReadInput",
-                        "vdw_radius_unit must be A or Bohr");
-                }
-                if (para.input.vdw_cn_thr <= 0) {
-                    ModuleBase::WARNING_QUIT("ReadInput",
-                                             "vdw_cn_thr <= 0 is not allowd");
-                }
-                if ((para.input.vdw_cn_thr_unit != "A")
-                    && (para.input.vdw_cn_thr_unit != "Bohr")) {
-                    ModuleBase::WARNING_QUIT(
-                        "ReadInput",
-                        "vdw_cn_thr_unit must be A or Bohr");
-                }
-            }
-        };
         this->add_item(item);
     }
     {
         Input_Item item("vdw_s6");
         item.annotation = "scale parameter of d2/d3_0/d3_bj";
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+            if (para.input.vdw_s6 == "default") {
+                if (para.input.vdw_method == "d2") {
+                    para.input.vdw_s6 = "0.75";
+                } else if (para.input.vdw_method == "d3_0"
+                           || para.input.vdw_method == "d3_bj") {
+                    para.input.vdw_s6 = "1.0";
+                }
+            }
+        };
         read_sync_string(vdw_s6);
         this->add_item(item);
     }
     {
         Input_Item item("vdw_s8");
         item.annotation = "scale parameter of d3_0/d3_bj";
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+            if (para.input.vdw_s8 == "default") {
+                if (para.input.vdw_method == "d3_0") {
+                    para.input.vdw_s8 = "0.722";
+                } else if (para.input.vdw_method == "d3_bj") {
+                    para.input.vdw_s8 = "0.7875";
+                }
+            }
+        };
         read_sync_string(vdw_s8);
         this->add_item(item);
     }
     {
         Input_Item item("vdw_a1");
         item.annotation = "damping parameter of d3_0/d3_bj";
+        item.resetvalue = [] (const Input_Item& item, Parameter& para) {
+            if (para.input.vdw_a1 == "default") {
+                if (para.input.vdw_method == "d3_0") {
+                    para.input.vdw_a1 = "1.217";
+                } else if (para.input.vdw_method == "d3_bj") {
+                    para.input.vdw_a1 = "0.4289";
+                }
+            }
+        };
         read_sync_string(vdw_a1);
         this->add_item(item);
     }
     {
         Input_Item item("vdw_a2");
         item.annotation = "damping parameter of d3_bj";
+        item.resetvalue = [] (const Input_Item& item, Parameter& para) {
+            if (para.input.vdw_a2 == "default") {
+                if (para.input.vdw_method == "d3_0") {
+                    para.input.vdw_a2 = "1.0";
+                } else if (para.input.vdw_method == "d3_bj") {
+                    para.input.vdw_a2 = "4.4407";
+                }
+            }
+        };
         read_sync_string(vdw_a2);
         this->add_item(item);
     }
@@ -327,6 +269,13 @@ void ReadInput::item_others() {
         Input_Item item("vdw_c6_unit");
         item.annotation = "unit of C6, Jnm6/mol or eVA6";
         read_sync_string(vdw_C6_unit);
+        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+            if ((para.input.vdw_C6_unit != "Jnm6/mol") && (para.input.vdw_C6_unit != "eVA6")) {
+                ModuleBase::WARNING_QUIT(
+                    "ReadInput",
+                    "vdw_C6_unit must be Jnm6/mol or eVA6");
+            }
+        };
         this->add_item(item);
     }
     {
@@ -339,18 +288,53 @@ void ReadInput::item_others() {
         Input_Item item("vdw_r0_unit");
         item.annotation = "unit of R0, A or Bohr";
         read_sync_string(vdw_R0_unit);
+        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+            if ((para.input.vdw_R0_unit != "A") && (para.input.vdw_R0_unit != "Bohr")) {
+                ModuleBase::WARNING_QUIT(
+                    "ReadInput",
+                    "vdw_R0_unit must be A or Bohr");
+            }
+        };
         this->add_item(item);
     }
     {
         Input_Item item("vdw_cutoff_type");
         item.annotation
             = "expression model of periodic structure, radius or period";
+        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.vdw_cutoff_type != "radius"
+                && para.input.vdw_cutoff_type != "period") {
+                ModuleBase::WARNING_QUIT(
+                    "ReadInput",
+                    "vdw_cutoff_type must be radius or period");
+            }
+        };
         read_sync_string(vdw_cutoff_type);
         this->add_item(item);
     }
     {
         Input_Item item("vdw_cutoff_radius");
         item.annotation = "radius cutoff for periodic structure";
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+            if (para.input.vdw_cutoff_radius == "default") {
+                if (para.input.vdw_method == "d2") {
+                    para.input.vdw_cutoff_radius = "56.6918";
+                } else if (para.input.vdw_method == "d3_0"
+                           || para.input.vdw_method == "d3_bj") {
+                    para.input.vdw_cutoff_radius = "95";
+                }
+                else {
+                    para.input.vdw_cutoff_radius = "0";
+                }
+            }
+        };
+        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+            if (std::stod(para.input.vdw_cutoff_radius) <= 0 && para.input.vdw_method != "none") {
+                    ModuleBase::WARNING_QUIT(
+                        "ReadInput",
+                        "vdw_cutoff_radius <= 0 is not allowd");
+            }
+        };
         read_sync_string(vdw_cutoff_radius);
         this->add_item(item);
     }
@@ -358,18 +342,39 @@ void ReadInput::item_others() {
         Input_Item item("vdw_radius_unit");
         item.annotation = "unit of radius cutoff for periodic structure";
         read_sync_string(vdw_radius_unit);
+        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+            if ((para.input.vdw_radius_unit != "A") && (para.input.vdw_radius_unit != "Bohr")) {
+                ModuleBase::WARNING_QUIT(
+                    "ReadInput",
+                    "vdw_radius_unit must be A or Bohr");
+            }
+        };
         this->add_item(item);
     }
     {
         Input_Item item("vdw_cn_thr");
         item.annotation = "radius cutoff for cn";
         read_sync_double(vdw_cn_thr);
+        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.vdw_cn_thr <= 0) {
+                ModuleBase::WARNING_QUIT(
+                    "ReadInput",
+                    "vdw_cn_thr <= 0 is not allowd");
+            }
+        };
         this->add_item(item);
     }
     {
         Input_Item item("vdw_cn_thr_unit");
         item.annotation = "unit of cn_thr, Bohr or Angstrom";
         read_sync_string(vdw_cn_thr_unit);
+        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+            if ((para.input.vdw_cn_thr_unit != "A") && (para.input.vdw_cn_thr_unit != "Bohr")) {
+                ModuleBase::WARNING_QUIT(
+                    "ReadInput",
+                    "vdw_cn_thr_unit must be A or Bohr");
+            }
+        };
         this->add_item(item);
     }
     {
@@ -385,6 +390,15 @@ void ReadInput::item_others() {
                 ModuleBase::WARNING_QUIT(
                     "ReadInput",
                     "vdw_cutoff_period should have 3 values");
+            }
+        };
+        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.vdw_cutoff_period[0] <= 0
+                || para.input.vdw_cutoff_period[1] <= 0
+                || para.input.vdw_cutoff_period[2] <= 0) {
+                ModuleBase::WARNING_QUIT(
+                    "ReadInput",
+                    "vdw_cutoff_period should be positive");
             }
         };
         item.getfinalvalue = [](Input_Item& item, const Parameter& para) {
@@ -405,7 +419,7 @@ void ReadInput::item_others() {
         Input_Item item("exx_hybrid_alpha");
         item.annotation = "fraction of Fock exchange in hybrid functionals";
         read_sync_string(exx_hybrid_alpha);
-        autosetfuncs.push_back([](Parameter& para) {
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
             if (para.input.exx_hybrid_alpha == "default") {
                 std::string& dft_functional = para.input.dft_functional;
                 std::string dft_functional_lower = dft_functional;
@@ -423,7 +437,7 @@ void ReadInput::item_others() {
                      // postprocess like rpa
                     para.input.exx_hybrid_alpha = "0";
             }
-        });
+        };
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
             const double exx_hybrid_alpha_value
                 = std::stod(para.input.exx_hybrid_alpha);
@@ -999,34 +1013,6 @@ void ReadInput::item_others() {
         Input_Item item("towannier90");
         item.annotation = "use wannier90 code interface or not";
         read_sync_bool(towannier90);
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
-            if (para.input.towannier90) {
-                if (para.input.basis_type == "lcao_in_pw") {
-                    /*
-                        Developer's notes: on the repair of lcao_in_pw
-
-                        lcao_in_pw is a special basis_type, for scf calculation,
-                       it follows workflow of pw, but for nscf the toWannier90
-                       calculation, the interface is in ESolver_KS_LCAO_elec,
-                        therefore lcao_in_pw for towannier90 calculation follows
-                       lcao.
-
-                        In the future lcao_in_pw will have its own ESolver.
-
-                        2023/12/22 use new psi_initializer to expand numerical
-                       atomic orbitals, ykhuang
-                    */
-                    para.input.basis_type = "lcao";
-                    para.input.wannier_method
-                        = 1; // it is the way to call toWannier90_lcao_in_pw
-#ifdef __ELPA
-                    para.input.ks_solver = "genelpa";
-#else
-                    para.input.ks_solver = "scalapack_gvx";
-#endif
-                }
-            };
-        };
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
             if (para.input.towannier90) {
                 if (para.input.calculation != "nscf") {
@@ -1063,6 +1049,25 @@ void ReadInput::item_others() {
         Input_Item item("wannier_method");
         item.annotation
             = "different implementation methods under Lcao basis set";
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+             /*
+                        Developer's notes: on the repair of lcao_in_pw
+
+                        lcao_in_pw is a special basis_type, for scf calculation,
+                       it follows workflow of pw, but for nscf the toWannier90
+                       calculation, the interface is in ESolver_KS_LCAO_elec,
+                        therefore lcao_in_pw for towannier90 calculation follows
+                       lcao.
+
+                        In the future lcao_in_pw will have its own ESolver.
+
+                        2023/12/22 use new psi_initializer to expand numerical
+                       atomic orbitals, ykhuang
+                    */
+            if (para.input.towannier90 && para.input.basis_type == "lcao_in_pw") {
+                para.input.wannier_method = 1;
+            }
+        };
         read_sync_int(wannier_method);
         this->add_item(item);
     }
@@ -1134,11 +1139,6 @@ void ReadInput::item_others() {
         Input_Item item("of_kinetic");
         item.annotation = "kinetic energy functional, such as tf, vw, wt";
         read_sync_string(of_kinetic);
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
-            if (para.input.of_kinetic != "wt") {
-                para.input.of_read_kernel = false; // sunliang add 2022-09-12
-            }
-        };
         this->add_item(item);
     }
     {
@@ -1198,11 +1198,6 @@ void ReadInput::item_others() {
         item.annotation
             = "the average density of system, used in WT KEDF, in Bohr^-3";
         read_sync_double(of_wt_rho0);
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
-            if (para.input.of_wt_rho0 != 0) {
-                para.input.of_hold_rho0 = true; // sunliang add 2022-06-17
-            }
-        };
         this->add_item(item);
     }
     {
@@ -1211,6 +1206,11 @@ void ReadInput::item_others() {
                           "volume of system has changed, it will be "
                           "set to 1 automaticly if of_wt_rho0 is not zero";
         read_sync_bool(of_hold_rho0);
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+            if (para.input.of_wt_rho0 != 0) {
+                para.input.of_hold_rho0 = true; // sunliang add 2022-06-17
+            }
+        };
         this->add_item(item);
     }
     {
@@ -1224,11 +1224,6 @@ void ReadInput::item_others() {
         item.annotation = "If set to 1, ecut will be ignored when collect "
                           "planewaves, so that all planewaves will be used";
         read_sync_bool(of_full_pw);
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
-            if (!para.input.of_full_pw) {
-                para.input.of_full_pw_dim = 0; // sunliang add 2022-08-31
-            }
-        };
         this->add_item(item);
     }
     {
@@ -1237,6 +1232,11 @@ void ReadInput::item_others() {
                           "testricted to be (0) either odd or even; (1) odd "
                           "only; (2) even only";
         read_sync_int(of_full_pw_dim);
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+            if (!para.input.of_full_pw) {
+                para.input.of_full_pw_dim = 0; // sunliang add 2022-08-31
+            }
+        };
         this->add_item(item);
     }
     {
@@ -1245,6 +1245,11 @@ void ReadInput::item_others() {
                           "from file of_kernel_file, not from "
                           "formula. Only usable for WT KEDF";
         read_sync_bool(of_read_kernel);
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+            if (para.input.of_kinetic != "wt") {
+                para.input.of_read_kernel = false; // sunliang add 2022-09-12
+            }
+        };
         this->add_item(item);
     }
     {
@@ -1259,6 +1264,23 @@ void ReadInput::item_others() {
         Input_Item item("dft_plus_u");
         item.annotation = "DFT+U correction method";
         read_sync_int(dft_plus_u);
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+            bool all_minus1 = true;
+            for (auto& val: para.input.orbital_corr) {
+                if (val != -1) {
+                    all_minus1 = false;
+                    break;
+                }
+            }
+            if (all_minus1) {
+                if (para.input.dft_plus_u != 0) {
+                    para.input.dft_plus_u = 0;
+                    ModuleBase::WARNING(
+                        "ReadInput",
+                        "No atoms are correlated, DFT+U is closed!!!");
+                }
+            }
+        };
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
             const Input_para& input = para.input;
             if (input.dft_plus_u != 0) {
@@ -1277,12 +1299,6 @@ void ReadInput::item_others() {
                         "WRONG ARGUMENTS OF ks_solver in DFT+U routine, only "
                         "genelpa and scalapack_gvx are supported ");
                 }
-            }
-        };
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
-            if (para.input.dft_plus_u == 1 && para.input.onsite_radius == 0.0) {
-                // autoset onsite_radius to 5.0 as default
-                para.input.onsite_radius = 5.0;
             }
         };
         this->add_item(item);
@@ -1307,6 +1323,23 @@ void ReadInput::item_others() {
             para.input.sup.uramping
                 = para.input.uramping_eV / ModuleBase::Ry_to_eV;
         };
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+            bool all_minus1 = true;
+            for (auto& val: para.input.orbital_corr) {
+                if (val != -1) {
+                    all_minus1 = false;
+                    break;
+                }
+            }
+            if (all_minus1) {
+                if (para.input.sup.uramping != 0.0) {
+                    para.input.sup.uramping = 0.0;
+                    ModuleBase::WARNING(
+                        "ReadInput",
+                        "No atoms are correlated, U-ramping is closed!!!");
+                }
+            }
+        };
         sync_double(uramping_eV);
         add_double_bcast(sup.uramping);
         this->add_item(item);
@@ -1321,6 +1354,12 @@ void ReadInput::item_others() {
         Input_Item item("onsite_radius");
         item.annotation = "radius of the sphere for onsite projection (Bohr)";
         read_sync_double(onsite_radius);
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+            if (para.input.dft_plus_u == 1 && para.input.onsite_radius == 0.0) {
+                // autoset onsite_radius to 5.0 as default
+                para.input.onsite_radius = 5.0;
+            }
+        };
         this->add_item(item);
     }
     {
@@ -1336,6 +1375,7 @@ void ReadInput::item_others() {
             }
         };
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+            if (item.get_size() == 0) return;
             if (para.input.sup.hubbard_u.size() != para.input.ntype) {
                 ModuleBase::WARNING_QUIT("ReadInput",
                                          "hubbard_u should have the same "
@@ -1364,31 +1404,9 @@ void ReadInput::item_others() {
                     std::stoi(item.str_values[i]));
             }
         };
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
-            bool all_minus1 = true;
-            for (auto& val: para.input.orbital_corr) {
-                if (val != -1) {
-                    all_minus1 = false;
-                    break;
-                }
-            }
-            if (all_minus1) {
-                const Input_para& input = para.input;
-                if (input.dft_plus_u != 0) {
-                    para.input.dft_plus_u = 0;
-                    ModuleBase::WARNING(
-                        "ReadInput",
-                        "No atoms are correlated, DFT+U is closed!!!");
-                }
-                if (input.sup.uramping != 0.0) {
-                    para.input.sup.uramping = 0.0;
-                    ModuleBase::WARNING(
-                        "ReadInput",
-                        "No atoms are correlated, U-ramping is closed!!!");
-                }
-            }
-        };
+        
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+            if (item.get_size() == 0) return;
             if (para.input.orbital_corr.size() != para.input.ntype) {
                 ModuleBase::WARNING_QUIT("ReadInput",
                                          "orbital_corr should have the same "
@@ -1411,11 +1429,11 @@ void ReadInput::item_others() {
         Input_Item item("bessel_nao_ecut");
         item.annotation = "energy cutoff for spherical bessel functions(Ry)";
         read_sync_string(bessel_nao_ecut);
-        autosetfuncs.push_back([](Parameter& para) {
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
             if (para.input.bessel_nao_ecut == "default") {
                 para.input.bessel_nao_ecut = std::to_string(para.input.ecutwfc);
             }
-        });
+        };
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
             if (std::stod(para.input.bessel_nao_ecut) < 0) {
                 ModuleBase::WARNING_QUIT("ReadInput",
@@ -1479,12 +1497,12 @@ void ReadInput::item_others() {
         Input_Item item("bessel_descriptor_ecut");
         item.annotation = "energy cutoff for spherical bessel functions(Ry)";
         read_sync_string(bessel_descriptor_ecut);
-        autosetfuncs.push_back([](Parameter& para) {
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
             if (para.input.bessel_descriptor_ecut == "default") {
                 para.input.bessel_descriptor_ecut
                     = std::to_string(para.input.ecutwfc);
             }
-        });
+        };
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
             if (std::stod(para.input.bessel_descriptor_ecut) < 0) {
                 ModuleBase::WARNING_QUIT("ReadInput",
@@ -1650,14 +1668,6 @@ void ReadInput::item_others() {
     {
         Input_Item item("qo_switch");
         item.annotation = "switch to control quasiatomic orbital analysis";
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
-            if (para.input.qo_switch) {
-                para.input.out_mat_hs[0] = 1; // print H(k) and S(k)
-                para.input.out_wfc_lcao
-                    = 1; // print wave function in lcao basis in kspace
-                para.input.symmetry = "-1"; // disable kpoint reduce
-            }
-        };
         read_sync_bool(qo_switch);
         this->add_item(item);
     }
@@ -1691,7 +1701,7 @@ void ReadInput::item_others() {
                 para.input.qo_strategy.push_back(item.str_values[i]);
             }
         };
-        autosetfuncs.push_back([](Parameter& para) {
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
             if (para.input.qo_strategy.size() != para.input.ntype) {
                 if (para.input.qo_strategy.size() == 1) {
                     para.input.qo_strategy.resize(para.input.ntype,
@@ -1714,7 +1724,7 @@ void ReadInput::item_others() {
                                                   default_strategy);
                 }
             }
-        });
+        };
         // We must firt bcast ntype (in item_general), then bcast qo_strategy
         sync_stringvec(qo_strategy, para.input.ntype, "all");
         this->add_item(item);
@@ -1730,6 +1740,8 @@ void ReadInput::item_others() {
             }
         };
         item.resetvalue = [](const Input_Item& item, Parameter& para) {
+            if (item.get_size() == 0)
+                return;
             if (para.input.qo_screening_coeff.size() != para.input.ntype) {
                 if (para.input.qo_basis == "pswfc") {
                     double default_screening_coeff

@@ -114,129 +114,18 @@ void ReadInput::item_general() {
     {
         Input_Item item("calculation");
         item.annotation = "test; scf; relax; nscf; get_wf; get_pchg";
-        read_sync_string(calculation);
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.readvalue = [](const Input_Item& item, Parameter& para) {
+            para.input.calculation = strvalue;
             std::string& calculation = para.input.calculation;
             para.input.sup.global_calculation = calculation;
             if (calculation == "nscf" || calculation == "get_S") {
                 // Maybe it should be modified.
                 para.input.sup.global_calculation = "nscf";
             }
-            if (calculation != "md") {
-                para.input.mdp.md_prec_level = 0;
-            }
-            if (calculation == "relax") // pengfei 2014-10-13
-            {
-                para.input.cal_force = true;
-                if (!para.input.relax_nmax) {
-                    para.input.relax_nmax = 50;
-                }
-            } else if (calculation == "nscf" || calculation == "get_S") {
-                para.input.relax_nmax = 1;
-                para.input.out_stru = false;
-
-                if (para.input.basis_type == "pw" && calculation == "get_S") {
-                    if (para.input.pw_diag_thr > 1.0e-3) {
-                        para.input.pw_diag_thr = 1.0e-5;
-                    }
-                }
-                if (para.input.cal_force) // mohan add 2010-09-07
-                {
-                    para.input.cal_force = false;
-                    ModuleBase::GlobalFunc::AUTO_SET("cal_force", "false");
-                }
-                if (para.input.init_chg != "file") {
-                    para.input.init_chg = "file";
-                    ModuleBase::GlobalFunc::AUTO_SET("init_chg",
-                                                     para.input.init_chg);
-                }
-            } else if (calculation == "get_pchg") {
-                para.input.relax_nmax = 1;
-                para.input.out_stru = false;
-                para.input.out_dos = 0;
-                para.input.out_band[0] = 0;
-                para.input.out_proj_band = false;
-                para.input.cal_force = false;
-                para.input.init_wfc = "file";
-                para.input.init_chg = "atomic";   // useless,
-                para.input.chg_extrap = "atomic"; // xiaohui modify 2015-02-01
-                para.input.out_chg
-                    = 1; // this leads to the calculation of state charge.
-                para.input.out_dm = false;
-                para.input.out_dm1 = false;
-                para.input.out_pot = 0;
-            } else if (calculation == "get_wf") {
-                para.input.relax_nmax = 1;
-                para.input.out_stru = false;
-                para.input.out_dos = 0;
-                para.input.out_band[0] = 0;
-                para.input.out_proj_band = false;
-                para.input.cal_force = false;
-                para.input.init_wfc = "file";
-                para.input.init_chg = "atomic";
-                para.input.chg_extrap = "atomic"; // xiaohui modify 2015-02-01
-                para.input.out_chg = 1;
-                para.input.out_dm = false;
-                para.input.out_dm1 = false;
-                para.input.out_pot = 0;
-            } else if (calculation == "md") // mohan add 2011-11-04
-            {
-                para.input.symmetry = "0";
-                para.input.cal_force = true;
-                if (para.input.mdp.md_nstep == 0) {
-                    GlobalV::ofs_running
-                        << "md_nstep should be set. Autoset md_nstep to 50!"
-                        << std::endl;
-                    para.input.mdp.md_nstep = 50;
-                }
-                if (!para.input.sup.out_md_control) {
-                    para.input.out_level = "m"; // zhengdy add 2019-04-07
-                }
-
-                if (para.input.mdp.md_tfreq == 0) {
-                    para.input.mdp.md_tfreq = 1.0 / 40 / para.input.mdp.md_dt;
-                }
-                if (para.input.mdp.md_pfreq == 0) {
-                    para.input.mdp.md_pfreq = 1.0 / 400 / para.input.mdp.md_dt;
-                }
-                if (para.input.mdp.md_tfirst < 0 || para.input.mdp.md_restart) {
-                    para.input.init_vel = true;
-                }
-                if (para.input.esolver_type == "lj"
-                    || para.input.esolver_type == "dp"
-                    || para.input.mdp.md_type == "msst"
-                    || para.input.mdp.md_type == "npt") {
-                    para.input.cal_stress = true;
-                }
-
-                // md_prec_level only used in vc-md  liuyu 2023-03-27
-                if (para.input.mdp.md_type != "msst"
-                    && para.input.mdp.md_type != "npt") {
-                    para.input.mdp.md_prec_level = 0;
-                }
-            } else if (calculation == "cell-relax") // mohan add 2011-11-04
-            {
-                para.input.cal_force = true;
-                para.input.cal_stress = true;
-                if (!para.input.relax_nmax) {
-                    para.input.relax_nmax = 50;
-                }
-            } else if (calculation == "test_memory"
-                       || calculation == "test_neighbour"
-                       || calculation == "gen_bessel") {
-                para.input.relax_nmax = 1;
-            }
         };
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
             const std::string& calculation = para.input.calculation;
-            if (calculation == "nscf" || calculation == "get_S") {
-                if (para.input.out_dos == 3 && para.input.symmetry == "1") {
-                    ModuleBase::WARNING_QUIT(
-                        "ReadInput",
-                        "symmetry can't be used for out_dos==3(Fermi Surface "
-                        "Plotting) by now.");
-                }
-            } else if (calculation == "get_pchg" || calculation == "get_wf") {
+            if (calculation == "get_pchg" || calculation == "get_wf") {
                 if (para.input.basis_type == "pw") // xiaohui add 2013-09-01
                 {
                     ModuleBase::WARNING_QUIT("ReadInput",
@@ -256,6 +145,7 @@ void ReadInput::item_general() {
                 ModuleBase::WARNING_QUIT("ReadInput", "check 'calculation' !");
             }
         };
+        sync_string(calculation);
         add_string_bcast(sup.global_calculation);
         this->add_item(item);
     }
@@ -293,6 +183,11 @@ void ReadInput::item_general() {
         item.annotation
             = "1: single spin; 2: up and down spin; 4: noncollinear spin";
         read_sync_int(nspin);
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+            if (para.input.noncolin || para.input.lspinorb) {
+                para.input.nspin = 4;
+            }
+        };
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
             if (para.input.nspin != 1 && para.input.nspin != 2
                 && para.input.nspin != 4) {
@@ -381,7 +276,7 @@ void ReadInput::item_general() {
         Input_Item item("symmetry");
         item.annotation = "the control of symmetry";
         read_sync_string(symmetry);
-        autosetfuncs.push_back([](Parameter& para) {
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
             if (para.input.symmetry == "default") {
                 if (para.input.gamma_only || para.input.calculation == "nscf"
                     || para.input.calculation == "get_S"
@@ -393,12 +288,31 @@ void ReadInput::item_general() {
                     para.input.symmetry = "1";
                 }
             }
-        });
+            if (para.input.calculation == "md")
+            {
+                para.input.symmetry = "0";
+            }
+            if (para.input.efield_flag) {
+                para.input.symmetry = "0";
+            }
+            if (para.input.qo_switch) {
+                para.input.symmetry = "-1"; // disable kpoint reduce
+            }
+        };
         this->add_item(item);
     }
     {
         Input_Item item("init_vel");
         item.annotation = "read velocity from STRU or not";
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+            if (para.input.calculation == "md")
+            {            
+                if (para.input.mdp.md_tfirst < 0 || para.input.mdp.md_restart) {
+                    para.input.init_vel = true;
+                }
+            }
+                
+        };
         read_sync_bool(init_vel);
         this->add_item(item);
     }
@@ -461,22 +375,12 @@ void ReadInput::item_general() {
         Input_Item item("noncolin");
         item.annotation = "using non-collinear-spin";
         read_sync_bool(noncolin);
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
-            if (para.input.noncolin) {
-                para.input.nspin = 4;
-            }
-        };
         this->add_item(item);
     }
     {
         Input_Item item("lspinorb");
         item.annotation = "consider the spin-orbit interaction";
         read_sync_bool(lspinorb);
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
-            if (para.input.lspinorb) {
-                para.input.nspin = 4;
-            }
-        };
         this->add_item(item);
     }
     {
@@ -565,13 +469,11 @@ void ReadInput::item_general() {
         Input_Item item("diago_proc");
         item.annotation = "the number of procs used to do diagonalization";
         read_sync_int(diago_proc);
-        autosetfuncs.push_back([](Parameter& para) {
-            if (para.input.diago_proc > GlobalV::NPROC
-                || para.input.diago_proc <= 0) {
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+            if (para.input.diago_proc > GlobalV::NPROC || para.input.diago_proc <= 0) {
                 para.input.diago_proc = GlobalV::NPROC;
             }
-        });
-
+        };
         this->add_item(item);
     }
     {
@@ -597,6 +499,26 @@ void ReadInput::item_general() {
         Input_Item item("cal_force");
         item.annotation
             = "if calculate the force at the end of the electronic iteration";
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+            std::vector<std::string> use_force = {"cell-relax", "relax", "md"};
+            std::vector<std::string> not_use_force = {"get_wf", "get_pchg", "nscf", "get_S"};
+            if (find_str(use_force, para.input.calculation))
+            {
+                if(!para.input.cal_force)
+                {
+                    ModuleBase::GlobalFunc::AUTO_SET("cal_force", "true");
+                }
+                para.input.cal_force = true;
+            }
+            else if (find_str(not_use_force, para.input.calculation))
+            {
+                if(para.input.cal_force)
+                {
+                    ModuleBase::GlobalFunc::AUTO_SET("cal_force", "false");
+                }
+                para.input.cal_force = false;
+            }
+        };
         read_sync_bool(cal_force);
         this->add_item(item);
     }

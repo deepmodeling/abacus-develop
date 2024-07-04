@@ -20,8 +20,6 @@ class ReadInput {
             item.second.str_values.clear();
         }
         readvalue_items.clear();
-        checkvalue_items.clear();
-        resetvalue_items.clear();
     }
     /**
      * @brief read in parameters from input file
@@ -98,30 +96,16 @@ class ReadInput {
     // std::map<std::string, Input_Item> input_lists;
     // use vector instead of map to keep the order of input items
     std::vector<std::pair<std::string, Input_Item>> input_lists;
-    //----These functions are done only when INPUT file has them.------
+
     // read value if INPUT file has this item
+    // This function will be done only when INPUT file has them.
     std::vector<Input_Item*> readvalue_items;
-    // check value if INPUT file has this item
-    std::vector<Input_Item*> checkvalue_items;
-    // reset some values if INPUT file has this item
-    std::vector<Input_Item*> resetvalue_items;
     //-----------------------------------------------------------------
 
-    //----These functions must be done----------------------
-    /**
-     * @brief autoset some values
-     *        For "default" inputs, e.g. ks_esolver = "default", force_thr = -1,
-     * etc.
-     * @note "autosetfuncs" can also serve as a fallback function for
-     * "resetvalue_items" or "checkvalue_items" because it will definitely
-     * execute, but it is recommended to use "autosetfuncs" as much as possible.
-     * This will help you understand the relationships between input parameters.
-     */
-    std::vector<std::function<void(Parameter&)>> autosetfuncs;
-    /// bcast all values function
-    /// if no MPI, this function will resize the vector
+    // bcast all values function
+    // if no MPI, this function will resize the vector
+    // This function must be done, no matter INPUT file has them or not.
     std::vector<std::function<void(Parameter&)>> bcastfuncs;
-    //------------------------------------------------------
 };
 
 void strtolower(char* sa, char* sb);

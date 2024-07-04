@@ -20,6 +20,14 @@ void ReadInput::item_md() {
     {
         Input_Item item("md_nstep");
         item.annotation = "md steps";
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+            if (para.input.mdp.md_nstep == 0) {
+                    GlobalV::ofs_running
+                        << "md_nstep should be set. Autoset md_nstep to 50!"
+                        << std::endl;
+                    para.input.mdp.md_nstep = 50;
+                }
+        };
         read_sync_int(mdp.md_nstep);
         this->add_item(item);
     }
@@ -74,6 +82,16 @@ void ReadInput::item_md() {
     {
         Input_Item item("md_prec_level");
         item.annotation = "precision level for vc-md";
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+            if (para.input.calculation != "md") {
+                para.input.mdp.md_prec_level = 0;
+            }
+            // md_prec_level only used in vc-md  liuyu 2023-03-27
+            else if (para.input.mdp.md_type != "msst"
+                    && para.input.mdp.md_type != "npt") {
+                    para.input.mdp.md_prec_level = 0;
+                }
+        };
         read_sync_int(mdp.md_prec_level);
         this->add_item(item);
     }
@@ -154,6 +172,11 @@ void ReadInput::item_md() {
         Input_Item item("md_tfreq");
         item.annotation
             = "oscillation frequency, used to determine qmass of NHC";
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+            if (para.input.mdp.md_tfreq == 0 && para.input.calculation == "md") {
+                    para.input.mdp.md_tfreq = 1.0 / 40 / para.input.mdp.md_dt;
+                }
+        };
         read_sync_double(mdp.md_tfreq);
         this->add_item(item);
     }
@@ -212,30 +235,28 @@ void ReadInput::item_md() {
     {
         Input_Item item("md_pfirst");
         item.annotation = "initial target pressure";
-        item.readvalue = [](const Input_Item& item, Parameter& para) {
-            para.input.mdp.md_pfirst = doublevalue;
-            para.input.mdp.md_plast = para.input.mdp.md_pfirst;
-        };
+        read_sync_double(mdp.md_pfirst);
         this->add_item(item);
     }
     {
         Input_Item item("md_plast");
         item.annotation = "final target pressure";
-        item.readvalue = [](const Input_Item& item, Parameter& para) {
-            para.input.mdp.md_plast = doublevalue;
-        };
-        // No matter md_pfirst or md_plast is read first, both of them will be
-        // set to the right value
         item.resetvalue = [](const Input_Item& item, Parameter& para) {
-            para.input.mdp.md_plast = doublevalue;
+            if(item.get_size() == 0) // no md_plast in INPUT
+                para.input.mdp.md_plast = para.input.mdp.md_pfirst;
         };
-        sync_double(mdp.md_plast);
+        read_sync_double(mdp.md_plast);
         this->add_item(item);
     }
     {
         Input_Item item("md_pfreq");
         item.annotation = "oscillation frequency, used to determine qmass of "
                           "thermostats coupled with barostat";
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+            if (para.input.mdp.md_pfreq == 0 && para.input.calculation == "md") {
+                    para.input.mdp.md_pfreq = 1.0 / 400 / para.input.mdp.md_dt;
+                }
+        };
         read_sync_double(mdp.md_pfreq);
         this->add_item(item);
     }

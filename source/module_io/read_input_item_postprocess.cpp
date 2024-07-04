@@ -40,7 +40,7 @@ void ReadInput::item_postprocess() {
         Input_Item item("mixing_beta");
         item.annotation = "mixing parameter: 0 means no new charge";
         read_sync_double(mixing_beta);
-        autosetfuncs.push_back([](Parameter& para) {
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
             if (para.input.mixing_beta < 0.0) {
                 if (para.input.nspin == 1) {
                     para.input.mixing_beta = 0.8;
@@ -55,7 +55,7 @@ void ReadInput::item_postprocess() {
                     para.input.mixing_gg0_mag = 0.0;
                 }
             }
-        });
+        };
         this->add_item(item);
     }
     {
@@ -80,7 +80,7 @@ void ReadInput::item_postprocess() {
         Input_Item item("mixing_beta_mag");
         item.annotation = "mixing parameter for magnetic density";
         read_sync_double(mixing_beta_mag);
-        autosetfuncs.push_back([](Parameter& para) {
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
             if (para.input.mixing_beta_mag < 0.0) {
                 if (para.input.nspin == 2 || para.input.nspin == 4) {
                     if (para.input.mixing_beta <= 0.4) {
@@ -91,7 +91,7 @@ void ReadInput::item_postprocess() {
                     }
                 }
             }
-        });
+        };
         this->add_item(item);
     }
     {

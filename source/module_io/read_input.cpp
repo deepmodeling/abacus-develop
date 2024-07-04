@@ -230,10 +230,6 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename) {
         if (it != this->input_lists.end()) {
             Input_Item* p_item = &(it->second);
             this->readvalue_items.push_back(p_item);
-            if (it->second.checkvalue)
-                this->checkvalue_items.push_back(p_item);
-            if (it->second.resetvalue)
-                this->resetvalue_items.push_back(p_item);
             read_information(ifs, it->second.str_values, "#/!");
         } else {
             if (word[0] != '#' && word[0] != '/' && word[0] != '!') {
@@ -270,20 +266,19 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename) {
     if (this->check_ntype_flag)
         check_ntype(param.input.stru_file, param.input.ntype);
 
-    // 3) reset the value of some parameters based on readin values
+    // 3) reset this value when some conditions are met
     //    e.g. if (calulation_type == "nscf") then set "init_chg" to "file".
-    for (auto& resetvalue_item: this->resetvalue_items) {
-        resetvalue_item->resetvalue(*resetvalue_item, param);
-    }
-
-    // 4) auto set some parameters
-    for (auto& autoset: this->autosetfuncs) {
-        autoset(param);
+    for (auto& input_item: this->input_lists) {
+        Input_Item* resetvalue_item = &(input_item.second);
+        if (resetvalue_item->resetvalue != nullptr)
+            resetvalue_item->resetvalue(*resetvalue_item, param);
     }
 
     // 4) check the value of the parameters
-    for (auto& checkvalue_item: this->checkvalue_items) {
-        checkvalue_item->checkvalue(*checkvalue_item, param);
+    for (auto& input_item: this->input_lists) {
+        Input_Item* checkvalue_item = &(input_item.second);
+        if(checkvalue_item->checkvalue != nullptr)
+            checkvalue_item->checkvalue(*checkvalue_item, param);
     }
 }
 
@@ -394,6 +389,10 @@ void ReadInput::check_ntype(const std::string& fn, int& param_ntype) {
         ModuleBase::WARNING_QUIT("ReadInput",
                                  "ntype should be greater than 0.");
     }
+    else
+        GlobalV::ofs_running << " 'ntype' is automatically set to " 
+                             << param_ntype
+                             << std::endl;
 }
 
 void ReadInput::add_item(const Input_Item& item) {

@@ -12,20 +12,9 @@ void ReadInput::item_lcao() {
         item.annotation = "PW; LCAO in pw; LCAO";
         read_sync_string(basis_type);
         item.resetvalue = [](const Input_Item& item, Parameter& para) {
-            Input_para& input = para.input;
-            if (para.input.basis_type == "lcao_in_pw") {
-                para.input.psi_initializer = true;
-                if (para.input.init_wfc != "nao") {
-                    para.input.init_wfc = "nao";
-                    GlobalV::ofs_warning << "init_wfc is set to nao when "
-                                            "basis_type is lcao_in_pw"
-                                         << std::endl;
-                }
-            } else if (para.input.basis_type == "lcao") {
-                if (para.input.lcao_ecut == 0) {
-                    para.input.lcao_ecut = para.input.ecutwfc;
-                    ModuleBase::GlobalFunc::AUTO_SET("lcao_ecut",
-                                                     para.input.ecutwfc);
+            if (para.input.towannier90) {
+                if (para.input.basis_type == "lcao_in_pw") {
+                    para.input.basis_type = "lcao";
                 }
             }
         };
@@ -111,6 +100,12 @@ void ReadInput::item_lcao() {
     {
         Input_Item item("lcao_ecut");
         item.annotation = "energy cutoff for LCAO";
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+            if (para.input.lcao_ecut == 0 && para.input.basis_type == "lcao") {
+                para.input.lcao_ecut = para.input.ecutwfc;
+                ModuleBase::GlobalFunc::AUTO_SET("lcao_ecut", para.input.ecutwfc);
+            }
+        };
         read_sync_double(lcao_ecut);
         this->add_item(item);
     }
@@ -148,6 +143,11 @@ void ReadInput::item_lcao() {
                     "ReadInput",
                     "out_mat_hs should have 1 or 2 values");
             }
+        };
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+             if (para.input.qo_switch) {
+                para.input.out_mat_hs[0] = 1; // print H(k) and S(k)
+             }
         };
         sync_intvec(out_mat_hs, 2, 0);
         this->add_item(item);
@@ -272,6 +272,11 @@ void ReadInput::item_lcao() {
         item.annotation
             = "ouput LCAO wave functions, 0, no output 1: text, 2: binary";
         read_sync_int(out_wfc_lcao);
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+            if (para.input.qo_switch) {
+                para.input.out_wfc_lcao = 1;
+            }
+        };
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
             if (para.input.out_wfc_lcao < 0 || para.input.out_wfc_lcao > 2) {
                 ModuleBase::WARNING_QUIT("ReadInput",
@@ -296,7 +301,7 @@ void ReadInput::item_lcao() {
                                          "bx should be no more than 10");
             }
         };
-        autosetfuncs.push_back([](Parameter& para) {
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
             if (para.input.basis_type == "pw"
                 || para.input.basis_type == "lcao_in_pw"
                 || para.input.calculation == "get_wf") {
@@ -304,7 +309,7 @@ void ReadInput::item_lcao() {
                 para.input.by = 1;
                 para.input.bz = 1;
             }
-        });
+        };
         this->add_item(item);
     }
     {

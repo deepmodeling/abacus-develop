@@ -9,7 +9,7 @@ void ReadInput::item_relax() {
         Input_Item item("ks_solver");
         item.annotation = "cg; dav; lapack; genelpa; scalapack_gvx; cusolver";
         read_sync_string(ks_solver);
-        autosetfuncs.push_back([this](Parameter& para) {
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
             if (para.input.ks_solver == "default") {
                 if (para.input.basis_type == "pw") {
                     para.input.ks_solver = "cg";
@@ -37,7 +37,16 @@ void ReadInput::item_relax() {
                     }
                 }
             }
-        });
+            if (para.input.towannier90) {
+                if (para.input.basis_type == "lcao_in_pw") {
+#ifdef __ELPA
+                    para.input.ks_solver = "genelpa";
+#else
+                    para.input.ks_solver = "scalapack_gvx";
+#endif
+                }
+            };
+        };
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
             const std::string& ks_solver = para.input.ks_solver;
             const std::vector<std::string> pw_solvers
@@ -128,17 +137,33 @@ void ReadInput::item_relax() {
     {
         Input_Item item("relax_nmax");
         item.annotation = "number of ion iteration steps";
-        read_sync_int(relax_nmax);
         item.resetvalue = [](const Input_Item& item, Parameter& para) {
-            if (para.input.calculation == "scf") {
+            const std::string& calculation = para.input.calculation;
+            const std::vector<std::string> singlelist = {
+                "scf", "nscf", "get_S", "get_pchg", "get_wf", "test_memory",
+                "test_neighbour", "gen_bessel"};
+            if (find_str(singlelist, calculation)) {
                 para.input.relax_nmax = 1;
             }
+            else if (calculation == "relax" || calculation == "cell-relax") {
+                if (!para.input.relax_nmax) {
+                    para.input.relax_nmax = 50;
+                }
+            }
         };
+        read_sync_int(relax_nmax);
         this->add_item(item);
     }
     {
         Input_Item item("out_stru");
         item.annotation = "output the structure files after each ion step";
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+            const std::vector<std::string> offlist = {"nscf", "get_S", "get_pchg", "get_wf"};
+            if (find_str(offlist, para.input.calculation))
+            {
+                para.input.out_stru = false;
+            }
+        };
         read_sync_bool(out_stru);
         this->add_item(item);
     }
@@ -149,7 +174,7 @@ void ReadInput::item_relax() {
         item.readvalue = [](const Input_Item& item, Parameter& para) {
             para.input.force_thr = doublevalue;
         };
-        autosetfuncs.push_back([](Parameter& para) {
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
             if (para.input.force_thr == -1 && para.input.force_thr_ev == -1) {
                 para.input.force_thr = 1.0e-3; // default value
                 para.input.force_thr_ev
@@ -166,7 +191,7 @@ void ReadInput::item_relax() {
                 para.input.force_thr_ev
                     = para.input.force_thr * 13.6058 / 0.529177;
             }
-        });
+        };
         sync_double(force_thr);
         this->add_item(item);
     }
@@ -249,6 +274,16 @@ void ReadInput::item_relax() {
     {
         Input_Item item("cal_stress");
         item.annotation = "calculate the stress or not";
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+            if(para.input.calculation == "md")
+            if (para.input.esolver_type == "lj"
+                    || para.input.esolver_type == "dp"
+                    || para.input.mdp.md_type == "msst"
+                    || para.input.mdp.md_type == "npt"
+                    || para.input.calculation == "cell-relax") {
+                    para.input.cal_stress = true;
+                }
+        };
         read_sync_bool(cal_stress);
         this->add_item(item);
     }
@@ -306,6 +341,11 @@ void ReadInput::item_relax() {
             para.input.out_level = strvalue;
             para.input.sup.out_md_control = true;
         };
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+            if (!para.input.sup.out_md_control && para.input.calculation == "md") {
+                    para.input.out_level = "m"; // zhengdy add 2019-04-07
+                }
+        };
         sync_string(out_level);
         add_bool_bcast(sup.out_md_control);
         this->add_item(item);
@@ -313,7 +353,11 @@ void ReadInput::item_relax() {
     {
         Input_Item item("out_dm");
         item.annotation = ">0 output density matrix";
-        read_sync_bool(out_dm);
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+            if (para.input.calculation == "get_pchg" || para.input.calculation == "get_wf") {
+                para.input.out_dm = false;
+            }
+        };
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
             if (para.input.sup.gamma_only_local == false && para.input.out_dm) {
                 ModuleBase::WARNING_QUIT(
@@ -321,18 +365,24 @@ void ReadInput::item_relax() {
                     "out_dm with k-point algorithm is not implemented yet.");
             }
         };
+        read_sync_bool(out_dm);
         this->add_item(item);
     }
     {
         Input_Item item("out_dm1");
         item.annotation = ">0 output density matrix (multi-k points)";
-        read_sync_bool(out_dm1);
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+            if (para.input.calculation == "get_pchg" || para.input.calculation == "get_wf") {
+                para.input.out_dm1 = false;
+            }
+        };
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
             if (para.input.sup.gamma_only_local == true && para.input.out_dm1) {
                 ModuleBase::WARNING_QUIT("ReadInput",
                                          "out_dm1 is only for multi-k");
             }
         };
+        read_sync_bool(out_dm1);
         this->add_item(item);
     }
     {

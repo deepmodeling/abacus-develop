@@ -1,4 +1,5 @@
 #include "module_base/tool_quit.h"
+#include "module_base/global_function.h"
 #include "read_input.h"
 #include "read_input_tool.h"
 
@@ -14,7 +15,7 @@ void ReadInput::item_pw() {
         Input_Item item("ecutrho");
         item.annotation = "energy cutoff for charge density and potential";
         read_sync_double(ecutrho);
-        autosetfuncs.push_back([](Parameter& para) {
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
             Input_para& input = para.input;
             if (input.ecutrho <= 0.0) {
                 input.ecutrho = 4.0 * input.ecutwfc;
@@ -23,7 +24,7 @@ void ReadInput::item_pw() {
                 && input.ecutrho / input.ecutwfc > 4 + 1e-8) {
                 input.sup.double_grid = true;
             }
-        });
+        };
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
             if (para.input.ecutrho / para.input.ecutwfc < 4 - 1e-8) {
                 ModuleBase::WARNING_QUIT("ReadInput",
@@ -86,6 +87,15 @@ void ReadInput::item_pw() {
         Input_Item item("pw_diag_thr");
         item.annotation = "threshold for eigenvalues is cg electron iterations";
         read_sync_double(pw_diag_thr);
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+            if (para.input.calculation == "nscf" || para.input.calculation == "get_S") {
+                if (para.input.basis_type == "pw") {
+                    if (para.input.pw_diag_thr > 1.0e-3) {
+                        para.input.pw_diag_thr = 1.0e-5;
+                    }
+                }
+            }
+        };
         this->add_item(item);
     }
     {
@@ -104,7 +114,7 @@ void ReadInput::item_pw() {
         Input_Item item("scf_thr");
         item.annotation = "charge density error";
         read_sync_double(scf_thr);
-        autosetfuncs.push_back([](Parameter& para) {
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
             if (para.input.scf_thr == -1.0) {
                 if (para.input.basis_type == "lcao"
                     || para.input.basis_type == "lcao_in_pw") {
@@ -122,7 +132,7 @@ void ReadInput::item_pw() {
                     // 20230908
                 }
             }
-        });
+        };
         this->add_item(item);
     }
     {
@@ -130,7 +140,7 @@ void ReadInput::item_pw() {
         item.annotation = "type of the criterion of scf_thr, 1: reci drho for "
                           "pw, 2: real drho for lcao";
         read_sync_int(scf_thr_type);
-        autosetfuncs.push_back([](Parameter& para) {
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
             if (para.input.scf_thr_type == -1) {
                 if (para.input.basis_type == "lcao"
                     || para.input.basis_type == "lcao_in_pw") {
@@ -139,19 +149,37 @@ void ReadInput::item_pw() {
                     para.input.scf_thr_type = 1;
                 }
             }
-        });
+        };
         this->add_item(item);
     }
     {
         Input_Item item("init_wfc");
         item.annotation = "start wave functions are from 'atomic', "
                           "'atomic+random', 'random' or";
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+            if (para.input.calculation == "get_pchg" || para.input.calculation == "get_wf") {
+                para.input.init_wfc = "file";
+            }
+            if (para.input.basis_type == "lcao_in_pw") {
+                if (para.input.init_wfc != "nao") {
+                    para.input.init_wfc = "nao";
+                    GlobalV::ofs_warning << "init_wfc is set to nao when "
+                                            "basis_type is lcao_in_pw"
+                                         << std::endl;
+                }
+            }
+        };
         read_sync_string(init_wfc);
         this->add_item(item);
     }
     {
         Input_Item item("psi_initializer");
         item.annotation = "whether to use psi_initializer";
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+            if (para.input.basis_type == "lcao_in_pw") {
+                para.input.psi_initializer = true;
+            }
+        };
         read_sync_bool(psi_initializer);
         this->add_item(item);
     }
@@ -159,6 +187,19 @@ void ReadInput::item_pw() {
         Input_Item item("init_chg");
         item.annotation = "start charge is from 'atomic' or file";
         read_sync_string(init_chg);
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+            if (para.input.calculation == "get_pchg" || para.input.calculation == "get_wf") {
+                para.input.init_chg = "atomic";
+            }
+            if (para.input.calculation == "nscf" || para.input.calculation == "get_S")
+            {
+                if(para.input.init_chg != "file")
+                {
+                    ModuleBase::GlobalFunc::AUTO_SET("init_chg", para.input.init_chg);
+                }
+                para.input.init_chg = "file";
+            } 
+        };
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
             if (para.input.init_chg != "atomic"
                 && para.input.init_chg != "file") {
@@ -174,7 +215,7 @@ void ReadInput::item_pw() {
         item.annotation
             = "atomic; first-order; second-order; dm:coefficients of SIA";
         read_sync_string(chg_extrap);
-        autosetfuncs.push_back([this](Parameter& para) {
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
             if (para.input.chg_extrap == "default"
                 && para.input.calculation == "md") {
                 para.input.chg_extrap = "second-order";
@@ -185,19 +226,30 @@ void ReadInput::item_pw() {
             } else if (para.input.chg_extrap == "default") {
                 para.input.chg_extrap = "atomic";
             }
-        });
+            if (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg") {
+                para.input.chg_extrap = "atomic";
+            }
+        };
         this->add_item(item);
     }
     {
         Input_Item item("out_chg");
         item.annotation
             = ">0 output charge density for selected electron steps";
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+            if (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
+                para.input.out_chg = 1;
+        };
         read_sync_int(out_chg);
         this->add_item(item);
     }
     {
         Input_Item item("out_pot");
         item.annotation = "output realspace potential";
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+            if (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
+                para.input.out_pot = 0;
+        };
         read_sync_int(out_pot);
         this->add_item(item);
     }
@@ -217,7 +269,17 @@ void ReadInput::item_pw() {
         Input_Item item("out_dos");
         item.annotation = "output energy and dos";
         read_sync_int(out_dos);
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+            if (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
+                para.input.out_dos = 0;
+        };
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_dos == 3 && para.input.symmetry == "1") {
+                    ModuleBase::WARNING_QUIT(
+                        "ReadInput",
+                        "symmetry can't be used for out_dos==3(Fermi Surface "
+                        "Plotting) by now.");
+            }
             if (para.input.basis_type == "pw" && para.input.out_dos == 3) {
                 ModuleBase::WARNING_QUIT("ReadInput",
                                          "Fermi Surface Plotting not "
@@ -242,6 +304,10 @@ void ReadInput::item_pw() {
                                          "out_band should have 1 or 2 values");
             }
         };
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+            if (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
+                para.input.out_band[0] = 0;
+        };
         sync_intvec(out_band, 2, 0);
         this->add_item(item);
     }
@@ -249,6 +315,10 @@ void ReadInput::item_pw() {
         Input_Item item("out_proj_band");
         item.annotation = "output projected band structure";
         read_sync_bool(out_proj_band);
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+            if (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
+                para.input.out_proj_band = false;
+        };
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
             if (para.input.basis_type == "pw" && para.input.out_proj_band) {
                 ModuleBase::WARNING_QUIT("ReadInput",
@@ -273,7 +343,7 @@ void ReadInput::item_pw() {
         Input_Item item("read_file_dir");
         item.annotation = "directory of files for reading";
         read_sync_string(read_file_dir);
-        autosetfuncs.push_back([](Parameter& para) {
+        item.resetvalue = [](const Input_Item& item, Parameter& para) {
             if (para.input.read_file_dir == "auto") {
                 para.input.read_file_dir = "OUT." + para.input.suffix;
             } else {
@@ -282,7 +352,7 @@ void ReadInput::item_pw() {
             if (para.input.read_file_dir.back() != '/') {
                 para.input.read_file_dir += '/';
             }
-        });
+        };
         this->add_item(item);
     }
     {
