@@ -12,9 +12,9 @@ AddTest(
 )
 
 AddTest(
-  TARGET io_dm_io
+  TARGET io_dmk_io
   LIBS ${math_libs} base device cell_info
-  SOURCES dm_io_test.cpp ../read_dm.cpp ../write_dm.cpp ../output.cpp
+  SOURCES io_dmk_test.cpp ../io_dmk.cpp ../output.cpp ../../module_basis/module_ao/parallel_2d.cpp
 )
 
 AddTest(
