@@ -201,12 +201,14 @@ void Input_Conv::tmp_convert() {
     INPUT.dft_plus_u = PARAM.get().dft_plus_u;
     delete[] INPUT.orbital_corr;
     INPUT.orbital_corr = new int[INPUT.ntype];
-    for (int i = 0; i < INPUT.ntype; ++i)
+    for (int i = 0; i < INPUT.ntype; ++i) {
         INPUT.orbital_corr[i] = PARAM.get().orbital_corr[i];
+    }
     delete[] INPUT.hubbard_u;
     INPUT.hubbard_u = new double[INPUT.ntype];
-    for (int i = 0; i < INPUT.ntype; ++i)
+    for (int i = 0; i < INPUT.ntype; ++i) {
         INPUT.hubbard_u[i] = PARAM.get().sup.hubbard_u[i];
+    }
     INPUT.omc = PARAM.get().omc;
     INPUT.yukawa_potential = PARAM.get().yukawa_potential;
     INPUT.yukawa_lambda = PARAM.get().yukawa_lambda;

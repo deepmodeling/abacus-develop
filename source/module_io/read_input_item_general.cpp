@@ -128,8 +128,9 @@ void ReadInput::item_general() {
             if (calculation == "relax") // pengfei 2014-10-13
             {
                 para.input.cal_force = true;
-                if (!para.input.relax_nmax)
+                if (!para.input.relax_nmax) {
                     para.input.relax_nmax = 50;
+                }
             } else if (calculation == "nscf" || calculation == "get_S") {
                 para.input.relax_nmax = 1;
                 para.input.out_stru = false;
@@ -188,8 +189,9 @@ void ReadInput::item_general() {
                         << std::endl;
                     para.input.mdp.md_nstep = 50;
                 }
-                if (!para.input.sup.out_md_control)
+                if (!para.input.sup.out_md_control) {
                     para.input.out_level = "m"; // zhengdy add 2019-04-07
+                }
 
                 if (para.input.mdp.md_tfreq == 0) {
                     para.input.mdp.md_tfreq = 1.0 / 40 / para.input.mdp.md_dt;
@@ -216,8 +218,9 @@ void ReadInput::item_general() {
             {
                 para.input.cal_force = true;
                 para.input.cal_stress = true;
-                if (!para.input.relax_nmax)
+                if (!para.input.relax_nmax) {
                     para.input.relax_nmax = 50;
+                }
             } else if (calculation == "test_memory"
                        || calculation == "test_neighbour"
                        || calculation == "gen_bessel") {
@@ -383,11 +386,12 @@ void ReadInput::item_general() {
                 if (para.input.gamma_only || para.input.calculation == "nscf"
                     || para.input.calculation == "get_S"
                     || para.input.calculation == "get_pchg"
-                    || para.input.calculation == "get_wf")
+                    || para.input.calculation == "get_wf") {
                     para.input.symmetry = "0"; // if md or exx, symmetry will be
                                                // force-set to 0 or -1 later
-                else
+                } else {
                     para.input.symmetry = "1";
+                }
             }
         });
         this->add_item(item);
@@ -495,10 +499,12 @@ void ReadInput::item_general() {
                           "will be distributed among each group";
         read_sync_int(bndpar);
         item.resetvalue = [](const Input_Item& item, Parameter& para) {
-            if (para.input.esolver_type != "sdft")
+            if (para.input.esolver_type != "sdft") {
                 para.input.bndpar = 1;
-            if (para.input.bndpar > GlobalV::NPROC)
+            }
+            if (para.input.bndpar > GlobalV::NPROC) {
                 para.input.bndpar = GlobalV::NPROC;
+            }
         };
         this->add_item(item);
     }
@@ -561,8 +567,9 @@ void ReadInput::item_general() {
         read_sync_int(diago_proc);
         autosetfuncs.push_back([](Parameter& para) {
             if (para.input.diago_proc > GlobalV::NPROC
-                || para.input.diago_proc <= 0)
+                || para.input.diago_proc <= 0) {
                 para.input.diago_proc = GlobalV::NPROC;
+            }
         });
 
         this->add_item(item);

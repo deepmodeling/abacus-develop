@@ -30,8 +30,9 @@ void RPA_LRI<T, Tdata>::init(const MPI_Comm& mpi_comm_in,
 template <typename T, typename Tdata>
 void RPA_LRI<T, Tdata>::cal_rpa_cv() {
     std::vector<TA> atoms(GlobalC::ucell.nat);
-    for (int iat = 0; iat < GlobalC::ucell.nat; ++iat)
+    for (int iat = 0; iat < GlobalC::ucell.nat; ++iat) {
         atoms[iat] = iat;
+    }
     const std::array<Tcell, Ndim> period
         = {p_kv->nmp[0], p_kv->nmp[1], p_kv->nmp[2]};
 
@@ -152,8 +153,9 @@ void RPA_LRI<T, Tdata>::out_eigen_vector(const Parallel_Orbitals& parav,
         ss << "KS_eigenvector_" << ik << ".dat";
 
         std::ofstream ofs;
-        if (GlobalV::MY_RANK == 0)
+        if (GlobalV::MY_RANK == 0) {
             ofs.open(ss.str().c_str(), std::ios::out);
+        }
         std::vector<ModuleBase::ComplexMatrix> is_wfc_ib_iw(npsin_tmp);
         for (int is = 0; is < npsin_tmp; is++) {
             is_wfc_ib_iw[is].create(GlobalV::NBANDS, GlobalV::NLOCAL);
@@ -163,10 +165,12 @@ void RPA_LRI<T, Tdata>::out_eigen_vector(const Parallel_Orbitals& parav,
 
                 const int ib_local = parav.global2local_col(ib_global);
 
-                if (ib_local >= 0)
-                    for (int ir = 0; ir < psi.get_nbasis(); ir++)
+                if (ib_local >= 0) {
+                    for (int ir = 0; ir < psi.get_nbasis(); ir++) {
                         wfc_iks[parav.local2global_row(ir)]
                             = psi(ik + nks_tot * is, ib_local, ir);
+                    }
+                }
 
                 std::vector<std::complex<double>> tmp = wfc_iks;
 #ifdef __MPI
@@ -177,18 +181,20 @@ void RPA_LRI<T, Tdata>::out_eigen_vector(const Parallel_Orbitals& parav,
                               MPI_SUM,
                               MPI_COMM_WORLD);
 #endif
-                for (int iw = 0; iw < GlobalV::NLOCAL; iw++)
+                for (int iw = 0; iw < GlobalV::NLOCAL; iw++) {
                     is_wfc_ib_iw[is](ib_global, iw) = wfc_iks[iw];
+                }
             } // ib
         }     // is
         ofs << ik + 1 << std::endl;
         for (int iw = 0; iw < GlobalV::NLOCAL; iw++) {
             for (int ib = 0; ib < GlobalV::NBANDS; ib++) {
-                for (int is = 0; is < npsin_tmp; is++)
+                for (int is = 0; is < npsin_tmp; is++) {
                     ofs << std::setw(21) << std::fixed << std::setprecision(15)
                         << is_wfc_ib_iw[is](ib, iw).real() << std::setw(21)
                         << std::fixed << std::setprecision(15)
                         << is_wfc_ib_iw[is](ib, iw).imag() << std::endl;
+                }
             }
         }
         ofs.close();
@@ -198,8 +204,9 @@ void RPA_LRI<T, Tdata>::out_eigen_vector(const Parallel_Orbitals& parav,
 
 template <typename T, typename Tdata>
 void RPA_LRI<T, Tdata>::out_struc() {
-    if (GlobalV::MY_RANK != 0)
+    if (GlobalV::MY_RANK != 0) {
         return;
+    }
     ModuleBase::TITLE("DFT_RPA_interface", "out_struc");
     double TWOPI_Bohr2A = ModuleBase::TWO_PI * ModuleBase::BOHR_TO_A;
     const int nks_tot
@@ -227,12 +234,13 @@ void RPA_LRI<T, Tdata>::out_struc() {
     ofs << p_kv->nmp[0] << std::setw(6) << p_kv->nmp[1] << std::setw(6)
         << p_kv->nmp[2] << std::setw(6) << std::endl;
 
-    for (int ik = 0; ik != nks_tot; ik++)
+    for (int ik = 0; ik != nks_tot; ik++) {
         ofs << std::setw(15) << std::fixed << std::setprecision(9)
             << p_kv->kvec_c[ik].x * TWOPI_Bohr2A << std::setw(15) << std::fixed
             << std::setprecision(9) << p_kv->kvec_c[ik].y * TWOPI_Bohr2A
             << std::setw(15) << std::fixed << std::setprecision(9)
             << p_kv->kvec_c[ik].z * TWOPI_Bohr2A << std::endl;
+    }
     ofs.close();
     return;
 }
@@ -240,8 +248,9 @@ void RPA_LRI<T, Tdata>::out_struc() {
 template <typename T, typename Tdata>
 void RPA_LRI<T, Tdata>::out_bands(const elecstate::ElecState* pelec) {
     ModuleBase::TITLE("DFT_RPA_interface", "out_bands");
-    if (GlobalV::MY_RANK != 0)
+    if (GlobalV::MY_RANK != 0) {
         return;
+    }
     const int nks_tot
         = GlobalV::NSPIN == 2 ? (int)p_kv->get_nks() / 2 : p_kv->get_nks();
     const int nspin_tmp = GlobalV::NSPIN == 2 ? 2 : 1;
@@ -259,7 +268,7 @@ void RPA_LRI<T, Tdata>::out_bands(const elecstate::ElecState* pelec) {
         for (int is = 0; is != nspin_tmp; is++) {
             ofs << std::setw(6) << ik + 1 << std::setw(6) << is + 1
                 << std::endl;
-            for (int ib = 0; ib != GlobalV::NBANDS; ib++)
+            for (int ib = 0; ib != GlobalV::NBANDS; ib++) {
                 ofs << std::setw(5) << ib + 1 << "   " << std::setw(8)
                     << pelec->wg(ik + is * nks_tot, ib) * nks_tot
                     << std::setw(18) << std::fixed << std::setprecision(8)
@@ -267,6 +276,7 @@ void RPA_LRI<T, Tdata>::out_bands(const elecstate::ElecState* pelec) {
                     << std::fixed << std::setprecision(8)
                     << pelec->ekb(ik + is * nks_tot, ib) * ModuleBase::Ry_to_eV
                     << std::endl;
+            }
         }
     }
     ofs.close();
@@ -292,12 +302,15 @@ void RPA_LRI<T, Tdata>::out_Cs() {
             ofs << I + 1 << "   " << J + 1 << "   " << R[0] << "   " << R[1]
                 << "   " << R[2] << "   " << i_num << std::endl;
             ofs << j_num << "   " << tmp_Cs.shape[0] << std::endl;
-            for (int i = 0; i != i_num; i++)
-                for (int j = 0; j != j_num; j++)
-                    for (int mu = 0; mu != tmp_Cs.shape[0]; mu++)
+            for (int i = 0; i != i_num; i++) {
+                for (int j = 0; j != j_num; j++) {
+                    for (int mu = 0; mu != tmp_Cs.shape[0]; mu++) {
                         ofs << std::setw(15) << std::fixed
                             << std::setprecision(9) << tmp_Cs(mu, i, j)
                             << std::endl;
+                    }
+                }
+            }
         }
     }
     ofs.close();
@@ -332,8 +345,9 @@ void RPA_LRI<T, Tdata>::out_coulomb_k() {
                 auto J = JPp.first.first;
 
                 auto R = JPp.first.second;
-                if (J < I)
+                if (J < I) {
                     continue;
+                }
                 RI::Tensor<std::complex<double>> tmp_VR
                     = RI::Global_Func::convert<std::complex<double>>(
                         JPp.second);
@@ -345,9 +359,10 @@ void RPA_LRI<T, Tdata>::out_coulomb_k() {
                                    * ModuleBase::TWO_PI; // latvec
                 const std::complex<double> kphase
                     = std::complex<double>(cos(arg), sin(arg));
-                if (Vq_k_IJ[J].empty())
+                if (Vq_k_IJ[J].empty()) {
                     Vq_k_IJ[J] = RI::Tensor<std::complex<double>>(
                         {tmp_VR.shape[0], tmp_VR.shape[1]});
+                }
                 Vq_k_IJ[J] = Vq_k_IJ[J] + tmp_VR * kphase;
             }
             for (auto& vq_Jp: Vq_k_IJ) {
