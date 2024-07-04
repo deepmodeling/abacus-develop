@@ -75,7 +75,6 @@ class LCAO_Matrix {
     double**** HR_tr;
 
     std::complex<double>**** Hloc_fixedR_tr_soc;
-    std::complex<double>**** SlocR_tr_soc;
 
     // Record all R direct coordinate information, even if HR or SR is a zero
     // matrix
