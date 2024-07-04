@@ -276,13 +276,18 @@ void ReadInput::item_relax() {
         item.annotation = "calculate the stress or not";
         item.resetvalue = [](const Input_Item& item, Parameter& para) {
             if(para.input.calculation == "md")
-            if (para.input.esolver_type == "lj"
-                    || para.input.esolver_type == "dp"
-                    || para.input.mdp.md_type == "msst"
-                    || para.input.mdp.md_type == "npt"
-                    || para.input.calculation == "cell-relax") {
-                    para.input.cal_stress = true;
-                }
+            {
+                if (para.input.esolver_type == "lj"
+                        || para.input.esolver_type == "dp"
+                        || para.input.mdp.md_type == "msst"
+                        || para.input.mdp.md_type == "npt") {
+                        para.input.cal_stress = true;
+                    }
+            }
+            else if(para.input.calculation == "cell-relax")
+            {
+                para.input.cal_stress = true;
+            }
         };
         read_sync_bool(cal_stress);
         this->add_item(item);

@@ -422,6 +422,8 @@ void ReadInput::item_pw() {
             }
         };
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+            if (item.get_size() == 0) 
+                return;
             if (para.input.ndx * para.input.ndy * para.input.ndz == 0
                 && para.input.ndx != 0) {
                 ModuleBase::WARNING_QUIT(
@@ -447,6 +449,8 @@ void ReadInput::item_pw() {
             }
         };
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+            if (item.get_size() == 0) 
+                return;
             if (para.input.ndx * para.input.ndy * para.input.ndz == 0
                 && para.input.ndy != 0) {
                 ModuleBase::WARNING_QUIT(
@@ -471,6 +475,8 @@ void ReadInput::item_pw() {
             }
         };
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+            if (item.get_size() == 0) 
+                return;
             if (para.input.ndx * para.input.ndy * para.input.ndz == 0
                 && para.input.ndz != 0) {
                 ModuleBase::WARNING_QUIT(

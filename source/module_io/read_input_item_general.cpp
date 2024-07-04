@@ -125,6 +125,11 @@ void ReadInput::item_general() {
         };
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
             const std::string& calculation = para.input.calculation;
+            std::vector<std::string> callist = {"scf", "relax", "md", "cell-relax", "test_memory",
+                                                "test_neighbour", "nscf", "get_S", "get_wf", "get_pchg", "gen_bessel"};
+            if (!find_str(callist, calculation)) {
+                ModuleBase::WARNING_QUIT("ReadInput", "check 'calculation' !");
+            }
             if (calculation == "get_pchg" || calculation == "get_wf") {
                 if (para.input.basis_type == "pw") // xiaohui add 2013-09-01
                 {
@@ -138,11 +143,6 @@ void ReadInput::item_general() {
                         "ReadInput",
                         "to generate descriptors, please use pw basis");
                 }
-            } else if (calculation != "scf" && calculation != "relax"
-                       && calculation != "md" && calculation != "cell-relax"
-                       && calculation != "test_memory"
-                       && calculation != "test_neighbour") {
-                ModuleBase::WARNING_QUIT("ReadInput", "check 'calculation' !");
             }
         };
         sync_string(calculation);
