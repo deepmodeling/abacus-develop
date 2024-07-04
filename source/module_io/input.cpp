@@ -1912,12 +1912,11 @@ bool Input::Read(const std::string& fn) {
     }
     double ntype_stru = this->count_ntype(this->stru_file);
     if (this->ntype != 0) {
-        std::string ntype_doc = " 'ntype' is no longer required in INPUT, and "
-                                "it will be ignored.";
+        std::string ntype_doc = " 'ntype' is no longer required in INPUT, and it will be ignored.";
         GlobalV::ofs_running << ntype_doc << std::endl;
         std::cout << ntype_doc << std::endl;
     }
-    GlobalV::ofs_running << "ntype is automatically set to " << this->ntype
+    GlobalV::ofs_running << "ntype is automatically set to " << ntype_stru
                          << " according to STRU" << std::endl;
     this->ntype = ntype_stru;
 
