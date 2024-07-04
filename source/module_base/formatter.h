@@ -41,9 +41,9 @@ public:
     static inline std::string format(const char* fmt, const Ts&... args)
     {
         const int size = snprintf(nullptr, 0, fmt, FmtCore::filter(args)...) + 1;
-        std::string dst(size, '\0');
-        snprintf(&dst[0], size, fmt, FmtCore::filter(args)...);
-        dst.pop_back();
+        std::string dst(size, ' ');
+        const int size_filled = snprintf(&dst[0], size, fmt, FmtCore::filter(args)...);
+        dst.resize(size_filled);
         return dst;
     }
     /**
