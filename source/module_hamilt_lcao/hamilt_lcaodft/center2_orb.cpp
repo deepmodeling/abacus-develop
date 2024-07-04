@@ -13,8 +13,9 @@ int Center2_Orb::get_rmesh(const double& R1, const double& R2, const double dr)
     int rmesh = static_cast<int>((R1 + R2) / dr) + 5;
     // mohan update 2009-09-08 +1 ==> +5
     // considering interpolation or so on...
-    if (rmesh % 2 == 0)
+    if (rmesh % 2 == 0) {
         rmesh++;
+    }
 
     if (rmesh <= 0)
     {
@@ -344,8 +345,9 @@ void Center2_Orb::cal_ST_Phi12_R(const int& job,
         // if(rs[ir])  => rs[ir]  has been calculated
         // if(drs[ir]) => drs[ir] has been calculated
         // Actually, if(ir[ir]||dr[ir]) is enough. Double insurance for the sake of avoiding numerical errors
-        if (rs[ir] && drs[ir])
+        if (rs[ir] && drs[ir]) {
             continue;
+        }
 
         const std::vector<double>& jl_r = jl[ir];
         for (int ik = 0; ik < kmesh; ++ik)
