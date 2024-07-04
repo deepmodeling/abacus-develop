@@ -105,13 +105,6 @@ class LCAO_Matrix {
                    const int& iw2_all,
                    const double& v);
 
-    void set_HR_tr_soc(const int& Rx,
-                       const int& Ry,
-                       const int& Rz,
-                       const int& iw1_all,
-                       const int& iw2_all,
-                       const std::complex<double>& v); // LiuXh add 2019-07-16
-
     void zeros_HSgamma(const char& mtype);
 
     void zeros_HSk(const char& mtype);

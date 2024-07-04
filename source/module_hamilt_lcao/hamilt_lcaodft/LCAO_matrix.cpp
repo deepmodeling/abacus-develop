@@ -267,26 +267,3 @@ void LCAO_Matrix::set_HR_tr(const int& Rx,
 
     return;
 }
-
-// LiuXh add 2019-07-16
-void LCAO_Matrix::set_HR_tr_soc(const int& Rx,
-                                const int& Ry,
-                                const int& Rz,
-                                const int& iw1_all,
-                                const int& iw2_all,
-                                const std::complex<double>& v) {
-    const int ir = this->ParaV->global2local_row(iw1_all);
-    const int ic = this->ParaV->global2local_col(iw2_all);
-
-    long index = 0;
-    if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER()) {
-        index = ic * this->ParaV->nrow + ir;
-    } else {
-        index = ir * this->ParaV->ncol + ic;
-    }
-
-    assert(index < this->ParaV->nloc);
-    HR_tr_soc[Rx][Ry][Rz][index] = Hloc_fixedR_tr_soc[Rx][Ry][Rz][index] + v;
-
-    return;
-}
