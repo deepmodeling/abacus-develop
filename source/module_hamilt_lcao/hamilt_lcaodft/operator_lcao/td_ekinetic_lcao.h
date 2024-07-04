@@ -36,7 +36,6 @@ class TDEkinetic<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     TDEkinetic<OperatorLCAO<TK, TR>>(LCAO_Matrix* LM_in,
                                      hamilt::HContainer<TR>* hR_in,
                                      std::vector<TK>* hK_in,
-                                     hamilt::HContainer<TR>* SR_in,
                                      const K_Vectors* kv_in,
                                      const UnitCell* ucell_in,
                                      Grid_Driver* GridD_in,
@@ -70,8 +69,7 @@ class TDEkinetic<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                     const Parallel_Orbitals* paraV,
                     const ModuleBase::Vector3<double>& dtau,
                     std::complex<double>* data_pointer,
-                    std::complex<double>** data_pointer_c,
-                    TR* s_pointer);
+                    std::complex<double>** data_pointer_c);
 
     /**
      * @brief calculate the ekinetic matrix correction term in tddft with specific <I,J,R> atom-pairs
@@ -94,7 +92,7 @@ class TDEkinetic<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 
     const K_Vectors* kv;
     /// @brief correction term iA⋅∇
-    void td_ekinetic_scalar(std::complex<double>* Hloc, TR* Sloc, int nnr);
+    void td_ekinetic_scalar(std::complex<double>* Hloc, TR Sloc, int nnr);
     /// @brief correction term A^2*S
     void td_ekinetic_grad(std::complex<double>* Hloc, int nnr, ModuleBase::Vector3<double> grad_overlap);
 
