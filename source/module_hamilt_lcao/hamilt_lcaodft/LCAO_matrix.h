@@ -70,7 +70,6 @@ class LCAO_Matrix {
     std::vector<std::complex<double>> Hloc_fixed2;
 
     // LiuXh add 2019-07-15
-    double**** SlocR_tr;
     double**** HR_tr;
 
     // Record all R direct coordinate information, even if HR or SR is a zero
