@@ -231,39 +231,3 @@ void LCAO_Matrix::output_HSk(const char& mtype, std::string& fn) {
     ofs.close();
     return;
 }
-
-void LCAO_Matrix::set_HR_tr(const int& Rx,
-                            const int& Ry,
-                            const int& Rz,
-                            const int& iw1_all,
-                            const int& iw2_all,
-                            const double& v) {
-    const int ir = this->ParaV->global2local_row(iw1_all);
-    const int ic = this->ParaV->global2local_col(iw2_all);
-
-    // std::cout<<"ir: "<<ir<<std::endl;
-    // std::cout<<"ic: "<<ic<<std::endl;
-    long index;
-    if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER()) {
-        index = ic * this->ParaV->nrow + ir;
-        // std::cout<<"index: "<<index<<std::endl;
-    } else {
-        index = ir * this->ParaV->ncol + ic;
-        // std::cout<<"index: "<<index<<std::endl;
-    }
-
-    // std::cout<<"this->ParaV->nloc: "<<this->ParaV->nloc<<std::endl;
-    assert(index < this->ParaV->nloc);
-    // std::cout<<"Rx: "<<Rx<<std::endl;
-    // std::cout<<"Ry: "<<Ry<<std::endl;
-    // std::cout<<"Rz: "<<Rz<<std::endl;
-    // std::cout<<"Hloc_fixedR_tr:
-    // "<<Hloc_fixedR_tr[Rx][Ry][Rz][index]<<std::endl; std::cout<<"v:
-    // "<<v<<std::endl;
-    HR_tr[Rx][Ry][Rz][index] = Hloc_fixedR_tr[Rx][Ry][Rz][index] + v;
-    // HR_tr[Rx][Ry][Rz][index] = Hloc_fixedR_tr[Rx][Ry][Rz][index];
-    // HR_tr[Rx][Ry][Rz][index] = v;
-    // HR_tr[Rx][Ry][Rz][index] = index;
-
-    return;
-}

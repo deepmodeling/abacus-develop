@@ -94,13 +94,6 @@ class LCAO_Matrix {
                      const double& v,
                      double* HSloc);
 
-    void set_HR_tr(const int& Rx,
-                   const int& Ry,
-                   const int& Rz,
-                   const int& iw1_all,
-                   const int& iw2_all,
-                   const double& v);
-
     void zeros_HSgamma(const char& mtype);
 
     void zeros_HSk(const char& mtype);
