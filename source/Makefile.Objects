@@ -172,6 +172,7 @@ OBJS_CELL=atom_pseudo.o\
     setup_nonlocal.o\
     klist.o\
     cell_index.o\
+    check_atomic_stru.o\
 
 OBJS_DEEPKS=LCAO_deepks.o\
         LCAO_deepks_fdelta.o\
@@ -232,7 +233,6 @@ OBJS_GINT=gint.o\
       gint_tau.o\
       gint_vl.o\
       gint_k_env.o\
-      gint_k_sparse.o\
       gint_k_sparse1.o\
       gint_k_pvpr.o\
       gint_k_pvdpr.o\
@@ -337,11 +337,9 @@ OBJS_ORBITAL=ORB_atomic.o\
       ORB_atomic_lm.o\
       ORB_control.o\
       ORB_gaunt_table.o\
-      ORB_gen_tables.o\
       ORB_nonlocal.o\
       ORB_nonlocal_lm.o\
       ORB_read.o\
-      ORB_table_phi.o\
       parallel_2d.o\
       parallel_orbitals.o\
 	  atomic_radials.o\
@@ -479,7 +477,7 @@ OBJS_IO_LCAO=cal_r_overlap_R.o\
       nscf_fermi_surf.o\
       istate_charge.o\
       istate_envelope.o\
-      read_dm.o\
+      io_dmk.o\
       unk_overlap_lcao.o\
       read_wfc_nao.o\
       read_wfc_lcao.o\
@@ -487,8 +485,6 @@ OBJS_IO_LCAO=cal_r_overlap_R.o\
       write_HS_sparse.o\
       single_R_io.o\
       write_HS_R.o\
-      write_dm.o\
-      output_dm.o\
       write_dmr.o\
       sparse_matrix.o\
       output_mulliken.o\
@@ -531,6 +527,7 @@ OBJS_LCAO=DM_gamma.o\
       LCAO_nl_beta.o\
       LCAO_nnr.o\
       LCAO_set_zero.o\
+      center2_orb.o\
       center2_orb-orb11.o\
       center2_orb-orb21.o\
       center2_orb-orb22.o\

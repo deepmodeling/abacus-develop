@@ -1,6 +1,5 @@
 ---
 Language: Cpp
-BasedOnStyle: Microsoft
 
 AlwaysBreakTemplateDeclarations: Yes
 
@@ -14,6 +13,20 @@ BreakBeforeTernaryOperators: true
 
 Cpp11BracedListStyle: true
 FixNamespaceComments: true
+
+# About Brace
+InsertBraces: true
+BraceWrapping:
+  AfterClass: true
+  AfterControlStatement: true
+  AfterEnum: true
+  AfterFunction: true
+  AfterNamespace: true
+  AfterStruct: true
+  AfterUnion: true
+  BeforeCatch: true
+  BeforeElse: true
+  IndentBraces: false
 
 # About include
 IncludeBlocks: Regroup
