@@ -179,35 +179,6 @@ void LCAO_Matrix::zeros_HSk(const char& mtype) {
     return;
 }
 
-// becareful! Update Hloc, we add new members to it.
-void LCAO_Matrix::update_Hloc() {
-    ModuleBase::TITLE("LCAO_Matrix", "update_Hloc");
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 1024)
-#endif
-    for (long i = 0; i < this->ParaV->nloc; i++) {
-        Hloc[i] += Hloc_fixed[i];
-    }
-    return;
-}
-
-void LCAO_Matrix::update_Hloc2(const int& ik) {
-    ModuleBase::TITLE("LCAO_Matrix", "update_Hloc2");
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 1024)
-#endif
-    for (long i = 0; i < this->ParaV->nloc; i++) {
-        Hloc2[i] += Hloc_fixed2[i];
-#ifdef __DEEPKS
-        if (GlobalV::deepks_scf) {
-            Hloc2[i] += GlobalC::ld.H_V_delta_k[ik][i];
-        }
-#endif
-    }
-
-    return;
-}
-
 void LCAO_Matrix::output_HSk(const char& mtype, std::string& fn) {
     ModuleBase::TITLE("LCAO_Matrix", "output_HSk");
     std::stringstream ss;

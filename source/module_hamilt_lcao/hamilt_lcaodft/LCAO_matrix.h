@@ -93,10 +93,6 @@ class LCAO_Matrix {
 
     void zeros_HSk(const char& mtype);
 
-    void update_Hloc();
-
-    void update_Hloc2(const int& ik);
-
     void output_HSk(const char& mtype, std::string& fn);
 };
 
