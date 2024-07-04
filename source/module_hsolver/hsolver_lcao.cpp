@@ -135,7 +135,7 @@ void HSolverLCAO<T, Device>::solveTemplate(hamilt::Hamilt<T>* pHamilt,
         }
         if (this->pdiagh == nullptr)
         {
-            this->pdiagh = new DiagoLapack();
+            this->pdiagh = new DiagoLapack<T>();
             this->pdiagh->method = this->method;
         }
 #else
