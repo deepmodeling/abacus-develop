@@ -89,8 +89,10 @@ void berryphase::set_kpoints(const K_Vectors& kv, const int direction)
                 for (int ix = 0; ix < mp_x; ix++)
                 {
                     k_index[string_index][ix] = ix + iy * mp_x + iz * mp_x * mp_y;
-                    if (ix == (mp_x - 1))
-                        k_index[string_index][ix + 1] = k_index[string_index][0];
+                    if (ix == (mp_x - 1)) {
+                        k_index[string_index][ix + 1]
+                            = k_index[string_index][0];
+                    }
                 }
             }
         }
@@ -137,8 +139,10 @@ void berryphase::set_kpoints(const K_Vectors& kv, const int direction)
                 for (int iy = 0; iy < mp_y; iy++)
                 {
                     k_index[string_index][iy] = ix + iy * mp_x + iz * mp_x * mp_y;
-                    if (iy == (mp_y - 1))
-                        k_index[string_index][iy + 1] = k_index[string_index][0];
+                    if (iy == (mp_y - 1)) {
+                        k_index[string_index][iy + 1]
+                            = k_index[string_index][0];
+                    }
                 }
             }
         }
@@ -185,8 +189,10 @@ void berryphase::set_kpoints(const K_Vectors& kv, const int direction)
                 for (int iz = 0; iz < mp_z; iz++)
                 {
                     k_index[string_index][iz] = ix + iy * mp_x + iz * mp_x * mp_y;
-                    if (iz == (mp_z - 1))
-                        k_index[string_index][iz + 1] = k_index[string_index][0];
+                    if (iz == (mp_z - 1)) {
+                        k_index[string_index][iz + 1]
+                            = k_index[string_index][0];
+                    }
                 }
             }
         }
@@ -303,9 +309,15 @@ double berryphase::stringPhase(int index_str,
                             }
 
                             mat(nb, mb) = pw_method.unkdotp_soc_G0(rhopw, wfcpw, ik_1, ik_2, nb, mb, psi_in, G);
+                        } else {
+                            mat(nb, mb) = pw_method.unkdotp_soc_G(wfcpw,
+                                                                  ik_1,
+                                                                  ik_2,
+                                                                  nb,
+                                                                  mb,
+                                                                  npwx,
+                                                                  psi_in);
                         }
-                        else
-                            mat(nb, mb) = pw_method.unkdotp_soc_G(wfcpw, ik_1, ik_2, nb, mb, npwx, psi_in);
                     }
 
                 } // nb
@@ -318,10 +330,11 @@ double berryphase::stringPhase(int index_str,
             LapackConnector::zgetrf(nbands, nbands, mat, nbands, ipiv.data(), &info);
             for (int ib = 0; ib < nbands; ib++)
             {
-                if (ipiv[ib] != (ib + 1))
+                if (ipiv[ib] != (ib + 1)) {
                     det = -det * mat(ib, ib);
-                else
+                } else {
                     det = det * mat(ib, ib);
+                }
             }
 
             zeta = zeta * det;
@@ -401,8 +414,9 @@ void berryphase::Berry_Phase(int nbands,
     for (int istring = 0; istring < total_string; istring++)
     {
         wistring[istring] = 1.0 / total_string;
-        if (GlobalV::NSPIN == 2)
+        if (GlobalV::NSPIN == 2) {
             wistring[istring] = wistring[istring] * 2;
+        }
     }
 
     for (int istring = 0; istring < total_string; istring++)
@@ -561,10 +575,11 @@ void berryphase::Macroscopic_polarization(const int npwx,
 
     // calculate Macroscopic polarization modulus because berry phase
     int modulus = 0;
-    if ((!lodd) && (GlobalV::NSPIN == 1))
+    if ((!lodd) && (GlobalV::NSPIN == 1)) {
         modulus = 2;
-    else
+    } else {
         modulus = 1;
+    }
 
     // test by jingan
     // GlobalV::ofs_running << "ion polarization end" << std::endl;
