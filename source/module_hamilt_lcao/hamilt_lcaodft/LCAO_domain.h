@@ -173,6 +173,10 @@ void zeros_HSR(const char& mtype, LCAO_HS_Arrays& HS_arrays);
 
 void divide_HS_in_frag(LCAO_Matrix& lm, const bool isGamma, Parallel_Orbitals& pv, const int& nks);
 
+void allocate_HS_k(LCAO_Matrix& lm, const long& nloc);
+
+void allocate_HS_gamma(LCAO_Matrix& lm, const long& nloc);
+
 } // namespace LCAO_domain
 
 #endif

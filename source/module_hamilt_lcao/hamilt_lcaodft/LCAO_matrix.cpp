@@ -11,53 +11,6 @@ LCAO_Matrix::LCAO_Matrix() {}
 
 LCAO_Matrix::~LCAO_Matrix() {}
 
-void LCAO_Matrix::allocate_HS_gamma(const long& nloc) {
-    ModuleBase::TITLE("LCAO_Matrix", "allocate_HS_gamma");
-
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "nloc", nloc);
-
-    if (nloc == 0) {
-        return;
-    }
-
-    // because we initilize in the constructor function
-    // with dimension '1', so here we reconstruct these
-    // matrices
-
-    this->Sloc.resize(nloc);
-    this->Hloc_fixed.resize(nloc);
-    this->Hloc.resize(nloc);
-
-    ModuleBase::GlobalFunc::ZEROS(Sloc.data(), nloc);
-    ModuleBase::GlobalFunc::ZEROS(Hloc_fixed.data(), nloc);
-    ModuleBase::GlobalFunc::ZEROS(Hloc.data(), nloc);
-
-    return;
-}
-
-void LCAO_Matrix::allocate_HS_k(const long& nloc) {
-    ModuleBase::TITLE("LCAO_Matrix", "allocate_HS_k");
-
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "nloc", nloc);
-
-    if (nloc == 0) {
-        return; // mohan fix bug 2012-05-25
-    }
-
-    // because we initilize in the constructor function
-    // with dimension '1', so here we reconstruct these
-    // matrices
-    this->Sloc2.resize(nloc);
-    this->Hloc_fixed2.resize(nloc);
-    this->Hloc2.resize(nloc);
-
-    ModuleBase::GlobalFunc::ZEROS(Sloc2.data(), nloc);
-    ModuleBase::GlobalFunc::ZEROS(Hloc_fixed2.data(), nloc);
-    ModuleBase::GlobalFunc::ZEROS(Hloc2.data(), nloc);
-
-    return;
-}
-
 void LCAO_Matrix::set_HSgamma(const int& iw1_all,
                               const int& iw2_all,
                               const double& v,

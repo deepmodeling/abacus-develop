@@ -37,10 +37,6 @@ class LCAO_Matrix {
     std::vector<std::vector<std::complex<double>>> Hexxc_k_load;
 #endif
 
-    void allocate_HS_k(const long& nloc);
-
-    void allocate_HS_gamma(const long& nloc);
-
   public:
     //------------------------------
     // H, S, Hfixed
