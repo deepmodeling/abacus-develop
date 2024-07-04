@@ -42,6 +42,10 @@
 
 #include <sys/time.h>
 #include "module_hamilt_pw/hamilt_pwdft/hamilt_lcaopw.h"
+#include "module_parameter/parameter.h"
+#ifdef __LCAO
+#include "module_io/write_Vxc_lip.hpp"
+#endif
 
 namespace ModuleESolver
 {
@@ -246,6 +250,24 @@ namespace ModuleESolver
     }
 #endif
 
+    template <typename T>
+    void ESolver_KS_LIP<T>::after_all_runners()
+    {
+        ESolver_KS_PW<T>::after_all_runners();
+#ifdef __LCAO
+        if (PARAM.inp.out_mat_xc)
+        {
+            ModuleIO::write_Vxc(GlobalV::NSPIN, GlobalV::NLOCAL,
+                GlobalV::DRANK, *this->kspw_psi, GlobalC::ucell, this->sf,
+                *this->pw_wfc, *this->pw_rho, *this->pw_rhod,
+                GlobalC::ppcell.vloc, *this->pelec->charge, this->kv, this->pelec->wg
+#ifdef __EXX
+                , *this->exx_lip
+#endif
+            );
+        }
+#endif
+    }
     template class ESolver_KS_LIP<std::complex<float>>;
     template class ESolver_KS_LIP<std::complex<double>>;
     // LIP is not supported on GPU yet.

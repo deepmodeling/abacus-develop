@@ -25,6 +25,7 @@ namespace ModuleESolver
 
         void before_all_runners(Input& inp, UnitCell& cell) override;
         void iter_init(const int istep, const int iter) override;
+        void after_all_runners()override;
 
     protected:
 
