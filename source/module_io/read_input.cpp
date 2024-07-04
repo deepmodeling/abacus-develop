@@ -382,9 +382,9 @@ void ReadInput::check_ntype(const std::string& fn, int& param_ntype) {
 
     if (param_ntype == 0) {
         param_ntype = ntype_stru;
-        GlobalV::ofs_running
-            << "ntype in INPUT is 0, and it is automatically set to "
-            << param_ntype << " according to STRU" << std::endl;
+        GlobalV::ofs_running << " 'ntype' is no longer required in INPUT, and "
+                                "it will be ignored. "
+                             << std::endl;
     } else if (param_ntype != ntype_stru) {
         ModuleBase::WARNING_QUIT("ReadInput",
                                  "The ntype in INPUT is not equal to the ntype "
