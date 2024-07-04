@@ -773,7 +773,7 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry& symm,
     assert(nkstot > 0);
     std::vector<ModuleBase::Vector3<double>> kvec_d_ibz(this->nkstot);
     std::vector<double> wk_ibz(this->nkstot); // ibz kpoint wk ,weight of k points
-    std::vector<double> ibz2bz(this->nkstot);
+    std::vector<int> ibz2bz(this->nkstot);
 
     // nkstot is the total input k-points number.
     const double weight = 1.0 / static_cast<double>(nkstot);
