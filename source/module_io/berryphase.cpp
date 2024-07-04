@@ -11,7 +11,7 @@ berryphase::berryphase()
 }
 
 #ifdef __LCAO
-berryphase::berryphase(Local_Orbital_Charge& loc_in) : loc(&loc_in)
+berryphase::berryphase(const Parallel_Orbitals& paraV_in) : paraV(paraV_in)
 {
     GDIR = INPUT.gdir;
 }
@@ -334,7 +334,7 @@ double berryphase::stringPhase(int index_str,
             if (GlobalV::NSPIN != 4)
             {
                 // std::complex<double> my_det = lcao_method.det_berryphase(ik_1,ik_2,dk,nbands);
-                zeta = zeta * lcao_method.det_berryphase(ik_1, ik_2, dk, nbands, *this->loc->ParaV, psi_in, kv);
+                zeta = zeta * lcao_method.det_berryphase(ik_1, ik_2, dk, nbands, this->paraV, psi_in, kv);
                 // test by jingan
                 // GlobalV::ofs_running << "methon 1: det = " << my_det << std::endl;
                 // test by jingan

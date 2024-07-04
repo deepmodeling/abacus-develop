@@ -723,7 +723,7 @@ void ESolver_KS_LCAO<TK, TR>::nscf(void) {
     // add by jingan
     if (berryphase::berry_phase_flag
         && ModuleSymmetry::Symmetry::symm_flag != 1) {
-        berryphase bp(this->LOC);
+        berryphase bp(this->orb_con.ParaV);
         bp.lcao_init(this->kv,
                      this->GridT); // additional step before calling
                                    // macroscopic_polarization (why capitalize
