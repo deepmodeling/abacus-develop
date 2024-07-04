@@ -70,7 +70,6 @@ class LCAO_Matrix {
     std::vector<std::complex<double>> Hloc_fixed2;
 
     // LiuXh add 2019-07-15
-    double**** Hloc_fixedR_tr;
     double**** SlocR_tr;
     double**** HR_tr;
 
