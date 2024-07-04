@@ -188,7 +188,7 @@ void Exx_Lip::init(const ModuleSymmetry::Symmetry& symm,
 		{
 			q_pack = k_pack;
 		}
-		else if(GlobalV::init_chg=="file")
+		else if (GlobalV::init_chg == "file" || GlobalV::init_chg == "auto")
 		{
             read_q_pack(symm, wfc_basis, sf);
         }

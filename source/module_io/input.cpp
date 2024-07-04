@@ -3315,7 +3315,7 @@ void Input::Check() {
              && calculation != "test_neighbour") {
         ModuleBase::WARNING_QUIT("Input", "check 'calculation' !");
     }
-    if (init_chg != "atomic" && init_chg != "file") {
+    if (init_chg != "atomic" && init_chg != "file" && init_chg != "auto") {
         ModuleBase::WARNING_QUIT(
             "Input",
             "wrong 'init_chg',not 'atomic', 'file',please check");
