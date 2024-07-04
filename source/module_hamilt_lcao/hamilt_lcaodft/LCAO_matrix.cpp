@@ -178,27 +178,3 @@ void LCAO_Matrix::zeros_HSk(const char& mtype) {
     ModuleBase::OMP_PARALLEL(zeros_HSk_ker);
     return;
 }
-
-void LCAO_Matrix::output_HSk(const char& mtype, std::string& fn) {
-    ModuleBase::TITLE("LCAO_Matrix", "output_HSk");
-    std::stringstream ss;
-    ss << GlobalV::global_out_dir << fn;
-    std::ofstream ofs(ss.str().c_str());
-    ofs << GlobalV::NLOCAL << std::endl;
-    for (int i = 0; i < GlobalV::NLOCAL; i++) {
-        for (int j = 0; j < GlobalV::NLOCAL; j++) {
-            const int index = i * GlobalV::NLOCAL + j;
-            if (mtype == 'S')
-                ofs << Sloc2[index].real() << " " << Sloc2[index].imag()
-                    << std::endl;
-            else if (mtype == 'T')
-                ofs << Hloc_fixed2[index].real() << " "
-                    << Hloc_fixed2[index].imag() << std::endl;
-            else if (mtype == 'H')
-                ofs << Hloc2[index].real() << " " << Hloc2[index].imag()
-                    << std::endl;
-        }
-    }
-    ofs.close();
-    return;
-}

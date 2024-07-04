@@ -92,8 +92,6 @@ class LCAO_Matrix {
     void zeros_HSgamma(const char& mtype);
 
     void zeros_HSk(const char& mtype);
-
-    void output_HSk(const char& mtype, std::string& fn);
 };
 
 #include "LCAO_matrix.hpp"
