@@ -170,6 +170,9 @@ void build_ST_new(LCAO_Matrix& lm,
  * @brief set zeros for HSR matrices
  */
 void zeros_HSR(const char& mtype, LCAO_HS_Arrays& HS_arrays);
+
+void divide_HS_in_frag(LCAO_Matrix& lm, const bool isGamma, Parallel_Orbitals& pv, const int& nks);
+
 } // namespace LCAO_domain
 
 #endif

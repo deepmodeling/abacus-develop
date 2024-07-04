@@ -11,50 +11,6 @@ LCAO_Matrix::LCAO_Matrix() {}
 
 LCAO_Matrix::~LCAO_Matrix() {}
 
-void LCAO_Matrix::divide_HS_in_frag(const bool isGamma,
-                                    Parallel_Orbitals& pv,
-                                    const int& nks) {
-    ModuleBase::TITLE("LCAO_Matrix", "divide_HS_in_frag");
-
-    //(1), (2): set up matrix division have been moved into ORB_control
-    // just pass `ParaV` as pointer is enough
-    this->ParaV = &pv;
-    // (3) allocate for S, H_fixed, H, and S_diag
-    if (isGamma) {
-        allocate_HS_gamma(this->ParaV->nloc);
-    } else {
-        allocate_HS_k(this->ParaV->nloc);
-    }
-#ifdef __DEEPKS
-    // wenfei 2021-12-19
-    // preparation for DeePKS
-
-    if (GlobalV::deepks_out_labels || GlobalV::deepks_scf) {
-        // allocate relevant data structures for calculating descriptors
-        std::vector<int> na;
-        na.resize(GlobalC::ucell.ntype);
-        for (int it = 0; it < GlobalC::ucell.ntype; it++) {
-            na[it] = GlobalC::ucell.atoms[it].na;
-        }
-
-        GlobalC::ld.init(GlobalC::ORB,
-                         GlobalC::ucell.nat,
-                         GlobalC::ucell.ntype,
-                         pv,
-                         na);
-
-        if (GlobalV::deepks_scf) {
-            if (isGamma) {
-                GlobalC::ld.allocate_V_delta(GlobalC::ucell.nat);
-            } else {
-                GlobalC::ld.allocate_V_delta(GlobalC::ucell.nat, nks);
-            }
-        }
-    }
-#endif
-    return;
-}
-
 void LCAO_Matrix::allocate_HS_gamma(const long& nloc) {
     ModuleBase::TITLE("LCAO_Matrix", "allocate_HS_gamma");
 
