@@ -102,7 +102,7 @@ void ORB_control::setup_2d_division(std::ofstream& ofs_running, std::ofstream& o
     ofs_running << "\n SETUP THE DIVISION OF H/S MATRIX" << std::endl;
 
     // (1) calculate nrow, ncol, nloc.
-    if (ks_solver == "genelpa" || ks_solver == "scalapack_gvx" || ks_solver == "cusolver" || ks_solver == "cusolvermp"
+    if (ks_solver == "genelpa" || ks_solver == "scalapack_gvx" || ks_solver == "lapack" || ks_solver == "cusolver" || ks_solver == "cusolvermp"
         || ks_solver == "cg_in_lcao" || ks_solver == "pexsi")
     {
         ofs_running << " divide the H&S matrix using 2D block algorithms." << std::endl;
@@ -111,7 +111,7 @@ void ORB_control::setup_2d_division(std::ofstream& ofs_running, std::ofstream& o
         // is determined in 'divide_HS_2d' subroutine
         this->divide_HS_2d(DIAG_WORLD, ofs_running, ofs_warning);
 #else
-        ModuleBase::WARNING_QUIT("LCAO_Matrix::init", "diago method is not ready.");
+        this->divide_HS_2d(ofs_running, ofs_warning);
 #endif
     }
     else
