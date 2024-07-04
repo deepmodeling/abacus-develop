@@ -32,7 +32,7 @@ init_vel        1
 
 td_vext 		1
 td_vext_dire 	1
-td_stype		1
+td_stype		0
 td_ttype		0
 td_tstart 		1
 td_tend			2

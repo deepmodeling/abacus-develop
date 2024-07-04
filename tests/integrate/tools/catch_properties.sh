@@ -68,6 +68,7 @@ out_chg=$(get_input_key_value "out_chg" "INPUT")
 base=$(get_input_key_value "basis_type" "INPUT")
 word="driver_line"
 symmetry=$(get_input_key_value "symmetry" "INPUT")
+out_current=$(get_input_key_value "out_current" "INPUT")
 test -e $1 && rm $1
 #--------------------------------------------
 # if NOT non-self-consistent calculations
@@ -455,6 +456,13 @@ if ! test -z "$symmetry" && [ $symmetry == 1 ]; then
 	echo "pointgroupref $pointgroup" >>$1
 	echo "spacegroupref $spacegroup" >>$1
 	echo "nksibzref $nksibz" >>$1
+fi
+
+if ! test -z "$out_current" && [ $out_current ]; then
+	current1ref=refcurrent_total.dat
+	current1cal=OUT.autotest/current_total.dat
+	python3 ../tools/CompareFile.py $current1ref $current1cal 10
+	echo "CompareCurrent_pass $?" >>$1
 fi
 
 #echo $total_band
