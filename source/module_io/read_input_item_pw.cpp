@@ -88,12 +88,9 @@ void ReadInput::item_pw() {
         item.annotation = "threshold for eigenvalues is cg electron iterations";
         read_sync_double(pw_diag_thr);
         item.resetvalue = [](const Input_Item& item, Parameter& para) {
-            if (para.input.calculation == "nscf" || para.input.calculation == "get_S") {
-                if (para.input.basis_type == "pw") {
-                    if (para.input.pw_diag_thr > 1.0e-3) {
+            if (para.input.calculation == "get_S" && para.input.basis_type == "pw") {
+                    if (para.input.pw_diag_thr > 1.0e-3)
                         para.input.pw_diag_thr = 1.0e-5;
-                    }
-                }
             }
         };
         this->add_item(item);

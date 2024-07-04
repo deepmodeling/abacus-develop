@@ -279,7 +279,7 @@ TEST_F(InputTest, Item_test) {
     { // pw_diag_thr
         auto it = find_lable("pw_diag_thr", readinput.input_lists);
         param.input.pw_diag_thr = 1.0e-2;
-        param.input.calculation = "nscf";
+        param.input.calculation = "get_S";
         param.input.basis_type = "pw";
         it->second.resetvalue(it->second, param);
         EXPECT_EQ(param.input.pw_diag_thr, 1.0e-5);
