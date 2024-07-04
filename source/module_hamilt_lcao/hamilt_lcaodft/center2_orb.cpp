@@ -334,7 +334,8 @@ void Center2_Orb::cal_ST_Phi12_R(const int& job,
 
     std::vector<double> integrated_func(kmesh);
 
-    const std::vector<std::vector<double>>& jlm1 = psb->get_jlx()[l - 1];
+    const int lm1 = (l > 0 ? l - 1 : 0);
+    const std::vector<std::vector<double>>& jlm1 = psb->get_jlx()[lm1];
     const std::vector<std::vector<double>>& jl = psb->get_jlx()[l];
     const std::vector<std::vector<double>>& jlp1 = psb->get_jlx()[l + 1];
 
