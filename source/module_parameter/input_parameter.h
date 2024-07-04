@@ -447,6 +447,7 @@ struct Input_para {
     bool out_dipole = false;        ///< output the dipole or not
     bool out_efield = false;        ///< output the efield or not
     bool out_current = false;       ///< output the current or not
+    bool out_current_k = false;     ///< output tddft current for all k points
     bool out_vecpot = false;        ///< output the vector potential or not
     bool init_vecpot_file
         = false; ///< initialize the vector potential, though file or integral

@@ -30,8 +30,7 @@ template <typename TK, typename TR>
 class DeePKS<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 {
   public:
-    DeePKS<OperatorLCAO<TK, TR>>(Local_Orbital_Charge* loc_in,
-                                 LCAO_Matrix* LM_in,
+    DeePKS<OperatorLCAO<TK, TR>>(LCAO_Matrix* LM_in,
                                  const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
                                  HContainer<TR>* hR_in,
                                  std::vector<TK>* hK_in,
@@ -57,8 +56,6 @@ class DeePKS<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 #endif
 
   private:
-    Local_Orbital_Charge* loc;
-
     elecstate::DensityMatrix<TK, double>* DM;
 
     const UnitCell* ucell = nullptr;

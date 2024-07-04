@@ -8,43 +8,12 @@
 unkOverlap_lcao::unkOverlap_lcao()
 {
     allocate_flag = false;
-    /*
-    const int kpoints_number = kv.get_nkstot();
-    lcao_wfc_global = new std::complex<double>**[kpoints_number];
-    for(int ik = 0; ik < kpoints_number; ik++)
-    {
-        lcao_wfc_global[ik] = new std::complex<double>*[GlobalV::NBANDS];
-        for(int ib = 0; ib < GlobalV::NBANDS; ib++)
-        {
-            lcao_wfc_global[ik][ib] = new std::complex<double>[GlobalV::NLOCAL];
-            ModuleBase::GlobalFunc::ZEROS(lcao_wfc_global[ik][ib], GlobalV::NLOCAL);
-        }
-    }
-
-    cal_tag = new int*[GlobalV::NLOCAL];
-    for(int iw = 0; iw < GlobalV::NLOCAL; iw++)
-    {
-        cal_tag[iw] = new int[GlobalV::NLOCAL];
-        ModuleBase::GlobalFunc::ZEROS(cal_tag[iw],GlobalV::NLOCAL);
-    }
-    */
-    // GlobalV::ofs_running << "this is unkOverlap_lcao()" << std::endl;
 }
 
 unkOverlap_lcao::~unkOverlap_lcao()
 {
     if (allocate_flag)
     {
-        for (int ik = 0; ik < this->kpoints_number; ik++)
-        {
-            for (int ib = 0; ib < GlobalV::NBANDS; ib++)
-            {
-                delete lcao_wfc_global[ik][ib];
-            }
-            delete lcao_wfc_global[ik];
-        }
-        delete lcao_wfc_global;
-
         for (int iw = 0; iw < GlobalV::NLOCAL; iw++)
         {
             delete cal_tag[iw];
@@ -55,7 +24,7 @@ unkOverlap_lcao::~unkOverlap_lcao()
     // GlobalV::ofs_running << "this is ~unkOverlap_lcao()" << std::endl;
 }
 
-void unkOverlap_lcao::init(const Grid_Technique& gt, std::complex<double>*** wfc_k_grid, const int nkstot)
+void unkOverlap_lcao::init(const Grid_Technique& gt, const int nkstot)
 {
     // std::cout << "unkOverlap_lcao::init start" << std::endl;
 
@@ -118,29 +87,12 @@ void unkOverlap_lcao::init(const Grid_Technique& gt, std::complex<double>*** wfc
     this->kpoints_number = nkstot;
     if (allocate_flag)
     {
-        lcao_wfc_global = new std::complex<double>**[kpoints_number];
-        for (int ik = 0; ik < kpoints_number; ik++)
-        {
-            lcao_wfc_global[ik] = new std::complex<double>*[GlobalV::NBANDS];
-            for (int ib = 0; ib < GlobalV::NBANDS; ib++)
-            {
-                lcao_wfc_global[ik][ib] = new std::complex<double>[GlobalV::NLOCAL];
-                ModuleBase::GlobalFunc::ZEROS(lcao_wfc_global[ik][ib], GlobalV::NLOCAL);
-            }
-        }
-
         cal_tag = new int*[GlobalV::NLOCAL];
         for (int iw = 0; iw < GlobalV::NLOCAL; iw++)
         {
             cal_tag[iw] = new int[GlobalV::NLOCAL];
             ModuleBase::GlobalFunc::ZEROS(cal_tag[iw], GlobalV::NLOCAL);
         }
-    }
-
-    // translate: get the atomic orbital coefficients of each cpu core
-    for (int ik = 0; ik < kpoints_number; ik++)
-    {
-        get_lcao_wfc_global_ik(gt, lcao_wfc_global[ik], wfc_k_grid[ik]);
     }
 
 #ifdef __MPI
@@ -533,209 +485,6 @@ void unkOverlap_lcao::cal_orb_overlap()
     return;
 }
 
-// dk 's unit is GlobalC::ucell.tpiba
-std::complex<double> unkOverlap_lcao::unkdotp_LCAO(const int ik_L,
-                                                   const int ik_R,
-                                                   const int iband_L,
-                                                   const int iband_R,
-                                                   const ModuleBase::Vector3<double> dk,
-                                                   const K_Vectors& kv)
-{
-    // std::cout << "unkdotp_LCAO start" << std::endl;
-
-    std::complex<double> result(0.0, 0.0);
-
-    for (int iw1 = 0; iw1 < GlobalV::NLOCAL; iw1++)
-    {
-        for (int iw2 = 0; iw2 < GlobalV::NLOCAL; iw2++)
-        {
-            // if ( !pv.in_this_processor(iw1,iw2) ) continue;
-            if (!cal_tag[iw1][iw2])
-            {
-                // GlobalV::ofs_running << "the no calculate iw1 and iw2 is " << iw1 << "," << iw2 << std::endl;
-                continue;
-            }
-
-            // GlobalV::ofs_running << "the calculate iw1 and iw2 is " << iw1 << "," << iw2 << std::endl;
-
-            // iw1 and iw2 never have overlap
-            if (orb1_orb2_R[iw1][iw2].empty())
-                continue;
-
-            // e^i( ik_R*Rn - dk*tau1 )
-            ModuleBase::Vector3<double> tau1 = GlobalC::ucell.atoms[iw2it(iw1)].tau[iw2ia(iw1)];
-            ModuleBase::Vector3<double> tau2 = GlobalC::ucell.atoms[iw2it(iw2)].tau[iw2ia(iw2)];
-            ModuleBase::Vector3<double> dtau = tau2 - tau1;
-            for (int iR = 0; iR < orb1_orb2_R[iw1][iw2].size(); iR++)
-            {
-                //*
-                double kRn = (kv.kvec_c[ik_R] * orb1_orb2_R[iw1][iw2][iR] - dk * tau1) * ModuleBase::TWO_PI;
-                std::complex<double> kRn_phase(cos(kRn), sin(kRn));
-                std::complex<double> orb_overlap(psi_psi[iw1][iw2][iR],
-                                                 (-dk * GlobalC::ucell.tpiba * psi_r_psi[iw1][iw2][iR]));
-                result = result
-                         + conj(lcao_wfc_global[ik_L][iband_L][iw1]) * lcao_wfc_global[ik_R][iband_R][iw2] * kRn_phase
-                               * orb_overlap;
-                //*/
-
-                /*
-                // test by jingan
-                // R_tem is the vector of the center of the orbitals of iw1 and iw2
-                ModuleBase::Vector3<double> R_tem = dtau + orb1_orb2_R[iw1][iw2][iR];
-                double kRn = ( kv.kvec_c[ik_R] * orb1_orb2_R[iw1][iw2][iR] - dk * tau1 - 0.5 * dk * R_tem ) *
-                ModuleBase::TWO_PI; std::complex<double>  kRn_phase(cos(kRn),sin(kRn)); double psi_r_psi_overlap = -dk *
-                GlobalC::ucell.tpiba * psi_r_psi[iw1][iw2][iR] + 0.5 * dk * R_tem * ModuleBase::TWO_PI *
-                psi_psi[iw1][iw2][iR]; std::complex<double> orb_overlap( psi_psi[iw1][iw2][iR], psi_r_psi_overlap );
-                result = result + conj( lcao_wfc_global[ik_L][iband_L][iw1] ) * lcao_wfc_global[ik_R][iband_R][iw2] *
-                kRn_phase * orb_overlap;
-                // test by jingan
-                */
-            }
-        }
-    }
-
-#ifdef __MPI
-    // note: the mpi uses MPI_COMMON_WORLD,so you must make the GlobalV::KPAR = 1.
-    double in_date_real = result.real();
-    double in_date_imag = result.imag();
-    double out_date_real = 0.0;
-    double out_date_imag = 0.0;
-    MPI_Allreduce(&in_date_real, &out_date_real, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-    MPI_Allreduce(&in_date_imag, &out_date_imag, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-    result = std::complex<double>(out_date_real, out_date_imag);
-#endif
-
-    return result;
-}
-
-void unkOverlap_lcao::get_lcao_wfc_global_ik(const Grid_Technique& gt,
-                                             std::complex<double>** ctot,
-                                             std::complex<double>** cc)
-{
-    std::complex<double>* ctot_send = new std::complex<double>[GlobalV::NBANDS * GlobalV::NLOCAL];
-
-#ifdef __MPI
-    MPI_Status status;
-#endif
-
-    for (int i = 0; i < GlobalV::DSIZE; i++)
-    {
-        if (GlobalV::DRANK == 0)
-        {
-            if (i == 0)
-            {
-                // get the wave functions from 'ctot',
-                // save them in the matrix 'c'.
-                for (int iw = 0; iw < GlobalV::NLOCAL; iw++)
-                {
-                    const int mu_local = gt.trace_lo[iw];
-                    if (mu_local >= 0)
-                    {
-                        for (int ib = 0; ib < GlobalV::NBANDS; ib++)
-                        {
-                            // ctot[ib][iw] = cc[ib][mu_local];
-                            ctot_send[ib * GlobalV::NLOCAL + iw] = cc[ib][mu_local];
-                        }
-                    }
-                }
-            }
-            else
-            {
-#ifdef __MPI
-                int tag;
-                // receive lgd2
-                int lgd2 = 0;
-                tag = i * 3;
-                MPI_Recv(&lgd2, 1, MPI_INT, i, tag, DIAG_WORLD, &status);
-                if (lgd2 == 0)
-                {
-                }
-                else
-                {
-                    // receive trace_lo2
-                    tag = i * 3 + 1;
-                    int* trace_lo2 = new int[GlobalV::NLOCAL];
-                    MPI_Recv(trace_lo2, GlobalV::NLOCAL, MPI_INT, i, tag, DIAG_WORLD, &status);
-                    // receive crecv
-                    std::complex<double>* crecv = new std::complex<double>[GlobalV::NBANDS * lgd2];
-                    ModuleBase::GlobalFunc::ZEROS(crecv, GlobalV::NBANDS * lgd2);
-                    tag = i * 3 + 2;
-                    MPI_Recv(crecv, GlobalV::NBANDS * lgd2, MPI_DOUBLE_COMPLEX, i, tag, DIAG_WORLD, &status);
-
-                    for (int ib = 0; ib < GlobalV::NBANDS; ib++)
-                    {
-                        for (int iw = 0; iw < GlobalV::NLOCAL; iw++)
-                        {
-                            const int mu_local = trace_lo2[iw];
-                            if (mu_local >= 0)
-                            {
-                                // ctot[ib][iw] = crecv[mu_local*GlobalV::NBANDS+ib];
-                                ctot_send[ib * GlobalV::NLOCAL + iw] = crecv[mu_local * GlobalV::NBANDS + ib];
-                            }
-                        }
-                    }
-
-                    delete[] crecv;
-                    delete[] trace_lo2;
-                }
-#endif
-            }
-        } // end GlobalV::DRANK=0
-        else if (i == GlobalV::DRANK)
-        {
-#ifdef __MPI
-            int tag;
-
-            // send gt.lgd
-            tag = GlobalV::DRANK * 3;
-            MPI_Send(&gt.lgd, 1, MPI_INT, 0, tag, DIAG_WORLD);
-
-            if (gt.lgd != 0)
-            {
-                // send trace_lo
-                tag = GlobalV::DRANK * 3 + 1;
-                MPI_Send(gt.trace_lo.data(), GlobalV::NLOCAL, MPI_INT, 0, tag, DIAG_WORLD);
-
-                // send cc
-                std::complex<double>* csend = new std::complex<double>[GlobalV::NBANDS * gt.lgd];
-                ModuleBase::GlobalFunc::ZEROS(csend, GlobalV::NBANDS * gt.lgd);
-
-                for (int ib = 0; ib < GlobalV::NBANDS; ib++)
-                {
-                    for (int mu = 0; mu < gt.lgd; mu++)
-                    {
-                        csend[mu * GlobalV::NBANDS + ib] = cc[ib][mu];
-                    }
-                }
-
-                tag = GlobalV::DRANK * 3 + 2;
-                MPI_Send(csend, GlobalV::NBANDS * gt.lgd, MPI_DOUBLE_COMPLEX, 0, tag, DIAG_WORLD);
-
-                delete[] csend;
-            }
-#endif
-        } // end i==GlobalV::DRANK
-#ifdef __MPI
-        MPI_Barrier(DIAG_WORLD);
-#endif
-    }
-
-#ifdef __MPI
-    MPI_Bcast(ctot_send, GlobalV::NBANDS * GlobalV::NLOCAL, MPI_DOUBLE_COMPLEX, 0, DIAG_WORLD);
-#endif
-
-    for (int ib = 0; ib < GlobalV::NBANDS; ib++)
-    {
-        for (int iw = 0; iw < GlobalV::NLOCAL; iw++)
-        {
-            ctot[ib][iw] = ctot_send[ib * GlobalV::NLOCAL + iw];
-        }
-    }
-
-    delete[] ctot_send;
-    return;
-}
-
 void unkOverlap_lcao::prepare_midmatrix_pblas(const int ik_L,
                                               const int ik_R,
                                               const ModuleBase::Vector3<double> dk,
@@ -870,21 +619,4 @@ std::complex<double> unkOverlap_lcao::det_berryphase(const int ik_L,
 #endif
 
     return det;
-}
-
-void unkOverlap_lcao::test(const Grid_Technique& gt, std::complex<double>*** wfc_k_grid, const K_Vectors& kv)
-{
-    this->init(gt, wfc_k_grid, kv.get_nkstot());
-    this->cal_R_number();
-    this->cal_orb_overlap();
-
-    for (int ik = 0; ik < this->kpoints_number; ik++)
-    {
-        for (int ib = 0; ib < GlobalV::NBANDS; ib++)
-            for (int iw = 0; iw < GlobalV::NLOCAL; iw++)
-            {
-                GlobalV::ofs_running << "the global lcao wfc : ik = " << ik << "  ib = " << ib << "  iw = " << iw
-                                     << "  valuse = " << lcao_wfc_global[ik][ib][iw] << std::endl;
-            }
-    }
 }

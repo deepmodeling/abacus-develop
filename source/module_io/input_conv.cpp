@@ -560,9 +560,10 @@ void Input_Conv::Convert() {
     }
     module_tddft::Evolve_elec::out_dipole = PARAM.get().out_dipole;
     module_tddft::Evolve_elec::out_efield = PARAM.get().out_efield;
-    module_tddft::Evolve_elec::out_current = PARAM.get().out_current;
     module_tddft::Evolve_elec::td_print_eij = PARAM.get().td_print_eij;
     module_tddft::Evolve_elec::td_edm = PARAM.get().td_edm;
+    TD_Velocity::out_current = PARAM.get().out_current;
+    TD_Velocity::out_current_k = PARAM.get().out_current_k;
     TD_Velocity::out_vecpot = PARAM.get().out_vecpot;
     TD_Velocity::init_vecpot_file = PARAM.get().init_vecpot_file;
     read_td_efield();

@@ -16,33 +16,24 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
                         const Grid_Technique& gridt,
                         const UnitCell& ucell);
 
-/**
- * @brief GPU task generator for forces.
- *
- * This function generates GPU tasks for force calculations.
- */
-
 void gtask_force(const Grid_Technique& gridt,
                  const UnitCell& ucell,
                  const int grid_index_ij,
-                 const int max_atom_per_bcell,
-                 const int max_atom,
                  const int nczp,
                  const double vfactor,
-                 const double* rcut,
                  const double* vlocal_global_value,
-                 double* psi_input_double,
-                 int* psi_input_int,
-                 int* atom_num_per_bcell,
-                 int* start_idx_per_bcell,
-                 int* iat_per_z,
-                 int& atom_per_z,
-                 std::vector<bool>& gpu_mat_cal_flag);
+                 int& atoms_per_z,
+                 int* atoms_num_info,
+                 int* iat_on_nbz,
+                 uint8_t* atoms_type,
+                 double* dr_part,
+                 double* vldr3);
 
 void alloc_mult_force(const Grid_Technique& gridt,
                       const UnitCell& ucell,
                       const int grid_index_ij,
                       const int max_atom,
+                      const int *atoms_num_info,
                       double* const psi_g,
                       double* const psi_dm_g,
                       double* const dm_matrix_g,
@@ -57,8 +48,7 @@ void alloc_mult_force(const Grid_Technique& gridt,
                       int* mat_ldc,
                       double** mat_A,
                       double** mat_B,
-                      double** mat_C,
-                      const std::vector<bool>& gpu_mat_cal_flag);
+                      double** mat_C);
 
 } // namespace GintKernel
 #endif

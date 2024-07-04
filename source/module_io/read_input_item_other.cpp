@@ -709,6 +709,12 @@ void ReadInput::item_others() {
         this->add_item(item);
     }
     {
+        Input_Item item("out_current_k");
+        item.annotation = "output current for each k";
+        read_sync_bool(out_current_k);
+        this->add_item(item);
+    }
+    {
         Input_Item item("out_vecpot");
         item.annotation = "output TDDFT vector potential or not";
         read_sync_bool(out_vecpot);
