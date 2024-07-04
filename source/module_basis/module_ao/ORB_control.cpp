@@ -1,6 +1,5 @@
 #include "ORB_control.h"
 
-#include "ORB_gen_tables.h"
 #include "module_base/blacs_connector.h"
 #include "module_base/lapack_connector.h"
 #include "module_base/memory.h"
@@ -94,58 +93,6 @@ void ORB_control::read_orb_first(std::ofstream& ofs_in,
     orb.Read_Orbitals(ofs_in, ntype, lmax, deepks_setorb, out_mat_r, force_flag, my_rank);
 
     ModuleBase::timer::tick("ORB_control", "read_orb_first");
-    return;
-}
-
-void ORB_control::set_orb_tables(std::ofstream& ofs_in,
-                                 ORB_gen_tables& OGT,
-                                 LCAO_Orbitals& orb,
-                                 const double& lat0,
-                                 const bool& deepks_setorb,
-                                 const int& Lmax_exx,
-                                 const int& nprojmax,
-                                 const int* nproj,
-                                 const Numerical_Nonlocal* beta_)
-{
-    ModuleBase::TITLE("ORB_control", "set_orb_tables");
-    ModuleBase::timer::tick("ORB_control", "set_orb_tables");
-
-#ifdef __NORMAL
-
-#else
-    if (calculation == "test")
-    {
-        ModuleBase::timer::tick("ORB_control", "set_orb_tables");
-        return;
-    }
-#endif
-
-    ///////////////////////////////////////////////////////////////////
-    /// (2) FUNCTION : Generate Gaunt_Coefficients and S-table using OGT.init
-    /// 	   Must have 'Numerical Orbital' infomation
-    ///
-    /// (2) RESULT : we have tabulated S table for use.
-    ///////////////////////////////////////////////////////////////////
-
-    /// generate overlap & kinetic table
-    OGT.gen_tables(ofs_in, orb, Lmax_exx, deepks_setorb, nprojmax, nproj, beta_);
-    // init lat0, in order to interpolated value from this table.
-
-    assert(lat0 > 0.0);
-    OGT.set_unit(lat0);
-
-    ModuleBase::timer::tick("ORB_control", "set_orb_tables");
-    return;
-}
-
-void ORB_control::clear_after_ions(ORB_gen_tables& OGT,
-                                   LCAO_Orbitals& orb,
-                                   const bool& deepks_setorb,
-                                   const int* nproj_)
-{
-    ModuleBase::TITLE("ORB_control", "clear_after_ions");
-    OGT.MOT.Destroy_Table(orb);
-
     return;
 }
 

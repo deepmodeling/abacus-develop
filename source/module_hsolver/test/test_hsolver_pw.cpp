@@ -5,11 +5,10 @@
 #define private public
 #define protected public
 
-#include "module_hsolver/hsolver_pw.h"
-#include "hsolver_supplementary_mock.h"
 #include "hsolver_pw_sup.h"
-
+#include "hsolver_supplementary_mock.h"
 #include "module_base/global_variable.h"
+#include "module_hsolver/hsolver_pw.h"
 
 /************************************************
  *  unit test of HSolverPW class
@@ -31,14 +30,17 @@
  *  - 8. solve()
  *      - lcao_in_pw specific implementation
  */
-class TestHSolverPW : public ::testing::Test
-{
-	public:
+class TestHSolverPW : public ::testing::Test {
+  public:
     ModulePW::PW_Basis_K pwbk;
     hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_CPU> hs_f
-        = hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_CPU>(&pwbk, nullptr);
+        = hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_CPU>(
+            &pwbk,
+            nullptr);
     hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU> hs_d
-        = hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU>(&pwbk, nullptr);
+        = hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU>(
+            &pwbk,
+            nullptr);
 
     hamilt::Hamilt<std::complex<double>> hamilt_test_d;
     hamilt::Hamilt<std::complex<float>> hamilt_test_f;
@@ -55,8 +57,7 @@ class TestHSolverPW : public ::testing::Test
     std::ofstream temp_ofs;
 };
 
-TEST_F(TestHSolverPW, solve)
-{
+TEST_F(TestHSolverPW, solve) {
     // initial memory and data
     elecstate_test.ekb.create(1, 2);
     this->ekb_f.resize(2);
@@ -71,21 +72,29 @@ TEST_F(TestHSolverPW, solve)
     // check solve()
     EXPECT_EQ(this->hs_f.initialed_psi, false);
     EXPECT_EQ(this->hs_d.initialed_psi, false);
-    this->hs_f.solve(&hamilt_test_f, psi_test_cf, &elecstate_test, method_test, true);
+    this->hs_f.solve(&hamilt_test_f,
+                     psi_test_cf,
+                     &elecstate_test,
+                     method_test,
+                     true);
     EXPECT_EQ(this->hs_f.initialed_psi, true);
-    for (int i = 0; i < psi_test_cf.size(); i++)
-    {
+    for (int i = 0; i < psi_test_cf.size(); i++) {
         EXPECT_DOUBLE_EQ(psi_test_cf.get_pointer()[i].real(), i + 3);
     }
     EXPECT_DOUBLE_EQ(elecstate_test.ekb.c[0], 4.0);
     EXPECT_DOUBLE_EQ(elecstate_test.ekb.c[1], 7.0);
-    EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<float>>::avg_iter, 0.0);
+    EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<float>>::avg_iter,
+                     0.0);
 
-    this->hs_d.solve(&hamilt_test_d, psi_test_cd, &elecstate_test, method_test, true);
+    this->hs_d.solve(&hamilt_test_d,
+                     psi_test_cd,
+                     &elecstate_test,
+                     method_test,
+                     true);
     EXPECT_EQ(this->hs_d.initialed_psi, true);
-    EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<double>>::avg_iter, 0.0);
-    for (int i = 0; i < psi_test_cd.size(); i++)
-    {
+    EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<double>>::avg_iter,
+                     0.0);
+    for (int i = 0; i < psi_test_cd.size(); i++) {
         EXPECT_DOUBLE_EQ(psi_test_cd.get_pointer()[i].real(), i + 3);
     }
     EXPECT_DOUBLE_EQ(elecstate_test.ekb.c[0], 4.0);
@@ -96,21 +105,21 @@ TEST_F(TestHSolverPW, solve)
     this->hs_d.method = "dav";
     this->hs_f.initialed_psi = false;
     this->hs_d.initialed_psi = false;
-    this->hs_f.initDiagh(psi_test_cf);
-    this->hs_d.initDiagh(psi_test_cd);
+    // this->hs_f.initDiagh(psi_test_cf);
+    // this->hs_d.initDiagh(psi_test_cd);
     // will not change state of initialed_psi in initDiagh
     EXPECT_EQ(this->hs_f.initialed_psi, false);
     EXPECT_EQ(this->hs_d.initialed_psi, false);
 
     // check hamiltSolvePsiK()
     this->hs_f.hamiltSolvePsiK(&hamilt_test_f, psi_test_cf, ekb_f.data());
-    this->hs_d.hamiltSolvePsiK(&hamilt_test_d, psi_test_cd, elecstate_test.ekb.c);
-    for (int i = 0; i < psi_test_cf.size(); i++)
-    {
+    this->hs_d.hamiltSolvePsiK(&hamilt_test_d,
+                               psi_test_cd,
+                               elecstate_test.ekb.c);
+    for (int i = 0; i < psi_test_cf.size(); i++) {
         EXPECT_DOUBLE_EQ(psi_test_cf.get_pointer()[i].real(), i + 4);
     }
-    for (int i = 0; i < psi_test_cd.size(); i++)
-    {
+    for (int i = 0; i < psi_test_cd.size(); i++) {
         EXPECT_DOUBLE_EQ(psi_test_cf.get_pointer()[i].real(), i + 4);
     }
     EXPECT_DOUBLE_EQ(ekb_f[0], 5.0);
@@ -131,17 +140,19 @@ TEST_F(TestHSolverPW, solve)
     // skip initializing Psi, Psi will not change
     this->hs_f.updatePsiK(&hamilt_test_f, psi_test_cf, 0);
     this->hs_d.updatePsiK(&hamilt_test_d, psi_test_cd, 0);
-    for (int i = 0; i < psi_test_cf.size(); i++)
-    {
+    for (int i = 0; i < psi_test_cf.size(); i++) {
         EXPECT_DOUBLE_EQ(psi_test_cf.get_pointer()[i].real(), i + 4);
     }
-    for (int i = 0; i < psi_test_cd.size(); i++)
-    {
+    for (int i = 0; i < psi_test_cd.size(); i++) {
         EXPECT_DOUBLE_EQ(psi_test_cd.get_pointer()[i].real(), i + 4);
     }
     // check update_precondition()
-    this->hs_f.update_precondition(this->hs_f.precondition, 0, psi_test_cf.get_nbasis());
-    this->hs_d.update_precondition(this->hs_d.precondition, 0, psi_test_cd.get_nbasis());
+    this->hs_f.update_precondition(this->hs_f.precondition,
+                                   0,
+                                   psi_test_cf.get_nbasis());
+    this->hs_d.update_precondition(this->hs_d.precondition,
+                                   0,
+                                   psi_test_cd.get_nbasis());
     EXPECT_NEAR(this->hs_f.precondition[0], 2.414213657, 1e-8);
     EXPECT_NEAR(this->hs_f.precondition[1], 3.618033886, 1e-8);
     EXPECT_NEAR(this->hs_f.precondition[2], 6.236067772, 1e-8);
@@ -197,21 +208,20 @@ TEST_F(TestHSolverPW, solve)
 #include "module_base/timer.h"
 int main(int argc, char **argv)
 {
-	ModuleBase::timer::disable();
-	MPI_Init(&argc, &argv);
-	testing::InitGoogleTest(&argc, argv);
+    ModuleBase::timer::disable();
+    MPI_Init(&argc, &argv);
+    testing::InitGoogleTest(&argc, argv);
 
-	MPI_Comm_size(MPI_COMM_WORLD,&GlobalV::NPROC);
-	MPI_Comm_rank(MPI_COMM_WORLD,&GlobalV::MY_RANK);
-	int result = RUN_ALL_TESTS();
-	
-	MPI_Finalize();
-	
-	return result;
+    MPI_Comm_size(MPI_COMM_WORLD,&GlobalV::NPROC);
+    MPI_Comm_rank(MPI_COMM_WORLD,&GlobalV::MY_RANK);
+    int result = RUN_ALL_TESTS();
+
+    MPI_Finalize();
+
+    return result;
 }*/
 
-TEST_F(TestHSolverPW, SolveLcaoInPW)
-{
+TEST_F(TestHSolverPW, SolveLcaoInPW) {
     pwbk.nks = 1;
     // initial memory and data
     elecstate_test.ekb.create(1, 2);
@@ -223,18 +233,21 @@ TEST_F(TestHSolverPW, SolveLcaoInPW)
     psi::Psi<std::complex<float>> transform_test_cf;
     // transform psi, the old wanf2, has 2 local basis and 3 pw basis.
     // so in principle the hcc has dimension 3*3 to diagonalize
-    // 2 lowest eigenvalues will be selected and save to psi    
+    // 2 lowest eigenvalues will be selected and save to psi
     transform_test_cd.resize(1, 3, 3);
     transform_test_cf.resize(1, 3, 3);
 
     std::complex<double> psi_value_d = {0.0, 0.0};
     std::complex<float> psi_value_f = {0.0, 0.0};
-    for(int iband = 0; iband < transform_test_cd.get_nbands(); iband++)
-    {
-        for(int ibasis = 0; ibasis < transform_test_cd.get_nbasis(); ibasis++)
-        {
-            transform_test_cd.get_pointer()[iband * transform_test_cd.get_nbasis() + ibasis] = psi_value_d;
-            transform_test_cf.get_pointer()[iband * transform_test_cf.get_nbasis() + ibasis] = psi_value_f;
+    for (int iband = 0; iband < transform_test_cd.get_nbands(); iband++) {
+        for (int ibasis = 0; ibasis < transform_test_cd.get_nbasis();
+             ibasis++) {
+            transform_test_cd
+                .get_pointer()[iband * transform_test_cd.get_nbasis() + ibasis]
+                = psi_value_d;
+            transform_test_cf
+                .get_pointer()[iband * transform_test_cf.get_nbasis() + ibasis]
+                = psi_value_f;
             psi_value_d += std::complex<double>(1.0, 0.0);
             psi_value_f += std::complex<float>(1.0, 0.0);
         }
@@ -244,10 +257,14 @@ TEST_F(TestHSolverPW, SolveLcaoInPW)
     // check solve()
     elecstate_test.ekb.c[0] = 1.0;
     elecstate_test.ekb.c[1] = 2.0;
-    this->hs_f.solve(&hamilt_test_f, psi_test_cf, &elecstate_test, transform_test_cf, true);
-    EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<float>>::avg_iter, 0.0);
-    for (int i = 0; i < psi_test_cf.size(); i++)
-    {
+    this->hs_f.solve(&hamilt_test_f,
+                     psi_test_cf,
+                     &elecstate_test,
+                     transform_test_cf,
+                     true);
+    EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<float>>::avg_iter,
+                     0.0);
+    for (int i = 0; i < psi_test_cf.size(); i++) {
         EXPECT_DOUBLE_EQ(psi_test_cf.get_pointer()[i].real(), i);
     }
     EXPECT_DOUBLE_EQ(elecstate_test.ekb.c[0], 0.0);
@@ -255,10 +272,14 @@ TEST_F(TestHSolverPW, SolveLcaoInPW)
 
     elecstate_test.ekb.c[0] = 1.0;
     elecstate_test.ekb.c[1] = 2.0;
-    this->hs_d.solve(&hamilt_test_d, psi_test_cd, &elecstate_test, transform_test_cd, true);
-    EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<double>>::avg_iter, 0.0);
-    for (int i = 0; i < psi_test_cd.size(); i++)
-    {
+    this->hs_d.solve(&hamilt_test_d,
+                     psi_test_cd,
+                     &elecstate_test,
+                     transform_test_cd,
+                     true);
+    EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<double>>::avg_iter,
+                     0.0);
+    for (int i = 0; i < psi_test_cd.size(); i++) {
         EXPECT_DOUBLE_EQ(psi_test_cd.get_pointer()[i].real(), i);
     }
     EXPECT_DOUBLE_EQ(elecstate_test.ekb.c[0], 0.0);

@@ -11,12 +11,10 @@
 class K_Vectors
 {
   public:
-    std::vector<ModuleBase::Vector3<double>> kvec_c;     /// Cartesian coordinates of k points
-    std::vector<ModuleBase::Vector3<double>> kvec_d;     /// Direct coordinates of k points
-    std::vector<ModuleBase::Vector3<double>> kvec_d_ibz; /// ibz Direct coordinates of k points
+    std::vector<ModuleBase::Vector3<double>> kvec_c; /// Cartesian coordinates of k points
+    std::vector<ModuleBase::Vector3<double>> kvec_d; /// Direct coordinates of k points
 
-    std::vector<double> wk;     /// wk, weight of k points
-    std::vector<double> wk_ibz; /// ibz kpoint wk ,weight of k points
+    std::vector<double> wk; /// wk, weight of k points
 
     std::vector<int> ngk; /// ngk, number of plane waves for each k point
     std::vector<int> isk; /// distinguish spin up and down k points
@@ -114,7 +112,6 @@ class K_Vectors
      */
     inline int getik_global(const int& ik) const;
 
-    
     int get_nks() const
     {
         return this->nks;
@@ -125,38 +122,31 @@ class K_Vectors
         return this->nkstot;
     }
 
-    int get_nkstot_ibz() const
-    {
-        return this->nkstot_ibz;
-    }
-
     int get_nkstot_full() const
     {
         return this->nkstot_full;
     }
 
-    void set_nks(int value) {
+    void set_nks(int value)
+    {
         this->nks = value;
     }
 
-    void set_nkstot(int value) {
+    void set_nkstot(int value)
+    {
         this->nkstot = value;
     }
 
-    void set_nkstot_ibz(int value) {
-        this->nkstot_ibz = value;
-    }
-
-    void set_nkstot_full(int value) {
+    void set_nkstot_full(int value)
+    {
         this->nkstot_full = value;
     }
 
-private:
-    int nks;						// number of k points in this pool(processor, up+dw)
-    int nkstot;						/// total number of k points, equal to nkstot_ibz after reducing k points
-    int nkstot_ibz;             /// number of k points in IBZ
-    int nkstot_full;    /// number of k points in full k mesh
-    
+  private:
+    int nks;         // number of symmetry-reduced k points in this pool(processor, up+dw)
+    int nkstot;      /// number of symmetry-reduced k points in full k mesh
+    int nkstot_full; /// number of k points before symmetry reduction in full k mesh
+
     int nspin;
     bool kc_done;
     bool kd_done;
@@ -164,8 +154,6 @@ private:
     std::string k_kword; // LiuXh add 20180619
     int k_nkstot;        // LiuXh add 20180619
     bool is_mp = false;  // Monkhorst-Pack
-
-    std::vector<int> ibz2bz; // mohan added 2009-05-18
 
     /**
      * @brief Resize the k-point related vectors according to the new k-point number.
@@ -282,7 +270,9 @@ private:
      * updated, and the flag kc_done is set to false to indicate that the Cartesian coordinates of the k-points need to
      * be recalculated.
      */
-    void update_use_ibz(void);
+    void update_use_ibz(const int& nkstot_ibz,
+                        const std::vector<ModuleBase::Vector3<double>>& kvec_d_ibz,
+                        const std::vector<double>& wk_ibz);
 
     /**
      * @brief Sets both the direct and Cartesian k-vectors.
