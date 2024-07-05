@@ -26,7 +26,8 @@ jobs:
       - name: Install CI tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y ccache clang-format clang-tidy ca-certificates python-is-python3 python3-pip
+          sudo apt-get install -y ccache ca-certificates python-is-python3 python3-pip
+          sudo pip install clang-format clang-tidy
 
       - name: Configure
         run: |

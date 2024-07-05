@@ -6,8 +6,7 @@
 #include <complex>
 #include <vector>
 
-class LCAO_HS_Arrays
-{
+class LCAO_HS_Arrays {
   public:
     LCAO_HS_Arrays(){};
     ~LCAO_HS_Arrays(){};
@@ -23,17 +22,45 @@ class LCAO_HS_Arrays
     //------------------------------
     std::vector<double> Hloc_fixedR;
 
-    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> dHRx_sparse[2];
-    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> dHRy_sparse[2];
-    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> dHRz_sparse[2];
+    // For HR_sparse[2], when nspin=1, only 0 is valid, when nspin=2, 0 means
+    // spin up, 1 means spin down
+    std::map<Abfs::Vector3_Order<int>,
+             std::map<size_t, std::map<size_t, double>>>
+        HR_sparse[2];
+    std::map<Abfs::Vector3_Order<int>,
+             std::map<size_t, std::map<size_t, double>>>
+        SR_sparse;
+    std::map<Abfs::Vector3_Order<int>,
+             std::map<size_t, std::map<size_t, double>>>
+        TR_sparse;
+
+    std::map<Abfs::Vector3_Order<int>,
+             std::map<size_t, std::map<size_t, double>>>
+        dHRx_sparse[2];
+    std::map<Abfs::Vector3_Order<int>,
+             std::map<size_t, std::map<size_t, double>>>
+        dHRy_sparse[2];
+    std::map<Abfs::Vector3_Order<int>,
+             std::map<size_t, std::map<size_t, double>>>
+        dHRz_sparse[2];
 
     // For nspin = 4
-    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>> HR_soc_sparse;
-    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>> SR_soc_sparse;
+    std::map<Abfs::Vector3_Order<int>,
+             std::map<size_t, std::map<size_t, std::complex<double>>>>
+        HR_soc_sparse;
+    std::map<Abfs::Vector3_Order<int>,
+             std::map<size_t, std::map<size_t, std::complex<double>>>>
+        SR_soc_sparse;
 
-    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>> dHRx_soc_sparse;
-    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>> dHRy_soc_sparse;
-    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>> dHRz_soc_sparse;
+    std::map<Abfs::Vector3_Order<int>,
+             std::map<size_t, std::map<size_t, std::complex<double>>>>
+        dHRx_soc_sparse;
+    std::map<Abfs::Vector3_Order<int>,
+             std::map<size_t, std::map<size_t, std::complex<double>>>>
+        dHRy_soc_sparse;
+    std::map<Abfs::Vector3_Order<int>,
+             std::map<size_t, std::map<size_t, std::complex<double>>>>
+        dHRz_soc_sparse;
 };
 
 #endif

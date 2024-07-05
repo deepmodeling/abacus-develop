@@ -29,35 +29,13 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double>* dm,
                         const UnitCell& ucell,
                         double* rho);
 
-/**
- * Generate GPU tasks for computing the rho.
- * The computation task can be divided into psir calculation, matrix
- * multiplication, and vector dot product. The matrix multiplication is mat_dm *
- * mat_psir, and the vector dot product is psir * psir_dm. This function will be
- * split into three separate functions: calculating psir, matrix multiplication,
- * and vector dot product.
- *
- * @param gridt Grid_Technique object containing grid information.
- * @param grid_index_ij Combined X and Y indices of the bigcell.
- * @param gpu_matrix_calc_flag Flags indicating which parts of the calculation will use the GPU.
- * @param max_atom Maximum number of atoms in a meshcell.
- * @param ucell UnitCell object containing unit cell information.
- * @param rcut Pointer to the cutoff radius array.
- * @param psi_input_double `double` type data used for calculating psir.
- * @param psi_input_int `int` type data used for calculating psir.
- * @param atom_num_per_bcell Number of atoms in each bigcell.
- */
 void gtask_rho(const Grid_Technique& gridt,
                const int grid_index_ij,
-               std::vector<bool>& gpu_mat_cal_flag,
-               const int max_atom,
                const UnitCell& ucell,
-               const double* rcut,
-               double* psi_input_double,
-               int* psi_input_int,
-               int* atom_num_per_bcell,
-               int* start_idx_per_bcell,
-               int& atom_per_z);
+               double* dr_part,
+               uint8_t* atoms_type,
+               int* atoms_num_info,
+               int& atoms_per_z);
 
 /**
  * Allocate resources and perform matrix multiplication and vector dot products 
@@ -91,11 +69,11 @@ void gtask_rho(const Grid_Technique& gridt,
  */
 void alloc_mult_dot_rho(const Grid_Technique& gridt,
                         const UnitCell& ucell,
-                        const std::vector<bool>& gpu_mat_cal_flag,
                         const int grid_index_ij,
-                        const int max_size,
+                        const int max_atom,
                         const int lgd,
                         const int nczp,
+                        const int* atoms_num_info,
                         double* const psir_ylm_g,
                         double* const psir_dm_g,
                         double* const dm_matrix_g,

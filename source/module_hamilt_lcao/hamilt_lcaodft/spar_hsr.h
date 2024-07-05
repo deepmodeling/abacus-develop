@@ -4,8 +4,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 
-namespace sparse_format
-{
+namespace sparse_format {
 
 void cal_HSR(const Parallel_Orbitals& pv,
              LCAO_Matrix& lm,
@@ -16,27 +15,36 @@ void cal_HSR(const Parallel_Orbitals& pv,
              const int (&nmp)[3],
              hamilt::Hamilt<std::complex<double>>* p_ham);
 
-void cal_HContainer_d(const Parallel_Orbitals& pv,
-                      const int& current_spin,
-                      const double& sparse_threshold,
-                      const hamilt::HContainer<double>& hR,
-                      std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>>& target);
+void cal_HContainer_d(
+    const Parallel_Orbitals& pv,
+    const int& current_spin,
+    const double& sparse_threshold,
+    const hamilt::HContainer<double>& hR,
+    std::map<Abfs::Vector3_Order<int>,
+             std::map<size_t, std::map<size_t, double>>>& target);
 
 void cal_HContainer_cd(
     const Parallel_Orbitals& pv,
     const int& current_spin,
     const double& sparse_threshold,
     const hamilt::HContainer<std::complex<double>>& hR,
-    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>& target);
+    std::map<Abfs::Vector3_Order<int>,
+             std::map<size_t, std::map<size_t, std::complex<double>>>>& target);
 
 void cal_HContainer_td(
     const Parallel_Orbitals& pv,
     const int& current_spin,
     const double& sparse_threshold,
     const hamilt::HContainer<double>& hR,
-    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>& target);
+    std::map<Abfs::Vector3_Order<int>,
+             std::map<size_t, std::map<size_t, std::complex<double>>>>& target);
 
-void clear_zero_elements(LCAO_Matrix& lm, LCAO_HS_Arrays& HS_Arrays, const int& current_spin, const double& sparse_thr);
+void clear_zero_elements(LCAO_Matrix& lm,
+                         LCAO_HS_Arrays& HS_Arrays,
+                         const int& current_spin,
+                         const double& sparse_thr);
+
+void destroy_HS_R_sparse(LCAO_HS_Arrays& HS_Arrays);
 
 } // namespace sparse_format
 
