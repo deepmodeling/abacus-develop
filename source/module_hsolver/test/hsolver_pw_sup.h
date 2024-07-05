@@ -66,9 +66,12 @@ FFT::~FFT()
 #include "module_hsolver/diago_david.h"
 #include "module_hsolver/diago_iter_assist.h"
 
-template<typename T> consts<T>::consts() {}
-template class consts<std::complex<float>>;
-template class consts<std::complex<double>>;
+template <typename T>
+const_nums<T>::const_nums()
+{
+}
+template class const_nums<std::complex<float>>;
+template class const_nums<std::complex<double>>;
 
 namespace hsolver
 {
