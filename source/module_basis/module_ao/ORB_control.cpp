@@ -32,7 +32,9 @@ ORB_control::ORB_control() : setup_2d(false)
 }
 ORB_control::~ORB_control()
 {
+#ifdef __MPI
     Cblacs_exit(1); // delete global variables in cblacs but do not close MPI
+#endif
 }
 
 void ORB_control::read_orb_first(std::ofstream& ofs_in,

@@ -657,17 +657,14 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell) {
         }
     } // end scf iterations
     std::cout << " >> Leave SCF iteration.\n * * * * * *" << std::endl;
-
 #ifdef __RAPIDJSON
     // 14) add Json of efermi energy converge
     Json::add_output_efermi_converge(this->pelec->eferm.ef
                                          * ModuleBase::Ry_to_eV,
                                      this->conv_elec);
 #endif //__RAPIDJSON
-
     // 15) after scf
     this->after_scf(istep);
-
     ModuleBase::timer::tick(this->classname, "runner");
 
     // 16) Json again

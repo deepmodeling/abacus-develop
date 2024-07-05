@@ -179,7 +179,11 @@ void init_esolver(ESolver*& p_esolver)
 
 void clean_esolver(ESolver*& pesolver)
 {
+// No release step for serial version
+// It will be modified later
+#ifdef __MPI
 	delete pesolver;
+#endif
 }
 
 }
