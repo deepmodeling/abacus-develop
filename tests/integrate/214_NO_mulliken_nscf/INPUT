@@ -14,5 +14,6 @@ ecutwfc			25.0              # Rydberg
 basis_type		lcao 	
 scf_thr			1e-10
 
-calculation     	scf
+calculation     	nscf
 out_mul			1
+read_file_dir .
