@@ -131,6 +131,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
 
     const Parallel_Orbitals* paraV = this->hR_tmp->get_atom_pair(0).get_paraV();
     const int npol = this->ucell->get_npol();
+    const int nlm_dim = TD_Velocity::out_current ? 4 : 1;
     // 1. calculate <psi|beta> for each pair of atoms
 #ifdef _OPENMP
 #pragma omp parallel
@@ -149,8 +150,12 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
             ucell->iat2iait(iat0, &I0, &T0);
             AdjacentAtomInfo& adjs = this->adjs_all[iat0];
 
-            std::vector<std::unordered_map<int, std::vector<std::complex<double>>>> nlm_tot;
+            std::vector<std::vector<std::unordered_map<int, std::vector<std::complex<double>>>>> nlm_tot;
             nlm_tot.resize(adjs.adj_num + 1);
+            for (int i = 0; i < adjs.adj_num + 1; i++)
+            {
+                nlm_tot[i].resize(nlm_dim);
+            }
 
             for (int ad = 0; ad < adjs.adj_num + 1; ++ad)
             {
@@ -177,12 +182,12 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                 {
                     const int iw1 = all_indexes[iw1l] / npol;
                     std::vector<std::vector<std::complex<double>>> nlm;
-                    // nlm is a vector of vectors, but size of outer vector is only 1 here
-                    // If we are calculating force, we need also to store the gradient
-                    // and size of outer vector is then 4
-                    // inner loop : all projectors (L0,M0)
+                    // nlm is a vector of vectors, but size of outer vector is only 1 when out_current is false
+                    // and size of outer vector is 4 when out_current is true (3 for <psi|r_i * exp(-iAr)|beta>, 1 for
+                    // <psi|exp(-iAr)|beta>) inner loop : all projectors (L0,M0)
 
-                    // snap_psibeta_half_tddft() are used to calculate <psi|exp(iAr)|beta>
+                    // snap_psibeta_half_tddft() are used to calculate <psi|exp(-iAr)|beta>
+                    // and <psi|rexp(-iAr)|beta> as well if current are needed
                     module_tddft::snap_psibeta_half_tddft(orb,
                                                           this->ucell->infoNL,
                                                           nlm,
@@ -193,9 +198,12 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                                                           atom1->iw2n[iw1],
                                                           tau0 * this->ucell->lat0,
                                                           T0,
-                                                          -cart_At / 2.0,
-                                                          0);
-                    nlm_tot[ad].insert({all_indexes[iw1l], nlm[0]});
+                                                          cart_At / 2.0,
+                                                          TD_Velocity::out_current);
+                    for (int dir = 0; dir < nlm_dim; dir++)
+                    {
+                        nlm_tot[ad][dir].insert({all_indexes[iw1l], nlm[dir]});
+                    }
                 }
             }
             // 2. calculate <psi_I|beta>D<beta|psi_{J,R}> for each pair of <IJR> atoms
@@ -225,7 +233,35 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                     // if not found , skip this pair of atoms
                     if (tmp != nullptr)
                     {
-                        this->cal_HR_IJR(iat1, iat2, T0, paraV, nlm_tot[ad1], nlm_tot[ad2], tmp->get_pointer());
+                        if (TD_Velocity::out_current)
+                        {
+                            std::complex<double>* tmp_c[3] = {nullptr, nullptr, nullptr};
+                            for (int i = 0; i < 3; i++)
+                            {
+                                tmp_c[i] = TD_Velocity::td_vel_op->get_current_term_pointer(i)
+                                               ->find_matrix(iat1, iat2, R_index2)
+                                               ->get_pointer();
+                            }
+                            this->cal_HR_IJR(iat1,
+                                             iat2,
+                                             T0,
+                                             paraV,
+                                             nlm_tot[ad1],
+                                             nlm_tot[ad2],
+                                             tmp->get_pointer(),
+                                             tmp_c);
+                        }
+                        else
+                        {
+                            this->cal_HR_IJR(iat1,
+                                             iat2,
+                                             T0,
+                                             paraV,
+                                             nlm_tot[ad1],
+                                             nlm_tot[ad2],
+                                             tmp->get_pointer(),
+                                             nullptr);
+                        }
                     }
                 }
             }
@@ -244,11 +280,12 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(
     const int& iat2,
     const int& T0,
     const Parallel_Orbitals* paraV,
-    const std::unordered_map<int, std::vector<std::complex<double>>>& nlm1_all,
-    const std::unordered_map<int, std::vector<std::complex<double>>>& nlm2_all,
-    std::complex<double>* data_pointer)
+    const std::vector<std::unordered_map<int, std::vector<std::complex<double>>>>& nlm1_all,
+    const std::vector<std::unordered_map<int, std::vector<std::complex<double>>>>& nlm2_all,
+    std::complex<double>* data_pointer,
+    std::complex<double>** data_pointer_c)
 {
-
+    const int nlm_dim = TD_Velocity::out_current ? 4 : 1;
     // npol is the number of polarizations,
     // 1 for non-magnetic (one Hamiltonian matrix only has spin-up or spin-down),
     // 2 for magnetic (one Hamiltonian matrix has both spin-up and spin-down)
@@ -265,17 +302,27 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(
     {
         for (int is2 = 0; is2 < npol; is2++)
         {
-            step_trace[is + is2 * npol] = col_indexes.size() * is + is2;
+            step_trace[is * npol + is2] = col_indexes.size() * is + is2;
         }
     }
     // calculate the local matrix
     const std::complex<double>* tmp_d = nullptr;
     for (int iw1l = 0; iw1l < row_indexes.size(); iw1l += npol)
     {
-        const std::vector<std::complex<double>>& nlm1 = nlm1_all.find(row_indexes[iw1l])->second;
+        // const std::vector<std::complex<double>>* nlm1 = &(nlm1_all[0].find(row_indexes[iw1l])->second);
+        std::vector<const std::vector<std::complex<double>>*> nlm1;
+        for (int dir = 0; dir < nlm_dim; dir++)
+        {
+            nlm1.push_back(&(nlm1_all[dir].find(row_indexes[iw1l])->second));
+        }
+
         for (int iw2l = 0; iw2l < col_indexes.size(); iw2l += npol)
         {
-            const std::vector<std::complex<double>>& nlm2 = nlm2_all.find(col_indexes[iw2l])->second;
+            std::vector<const std::vector<std::complex<double>>*> nlm2;
+            for (int dir = 0; dir < nlm_dim; dir++)
+            {
+                nlm2.push_back(&(nlm2_all[dir].find(col_indexes[iw2l])->second));
+            }
 #ifdef __DEBUG
             assert(nlm1.size() == nlm2.size());
 #endif
@@ -286,15 +333,49 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(
                 {
                     const int p1 = this->ucell->atoms[T0].ncpp.index1_soc[is][no];
                     const int p2 = this->ucell->atoms[T0].ncpp.index2_soc[is][no];
-                    // this->ucell->atoms[T0].ncpp.get_d(is, p1, p2, tmp_d);
-                    this->ucell->atoms[T0].ncpp.get_d(is, p2, p1, tmp_d);
-                    nlm_tmp += nlm1[p1] * std::conj(nlm2[p2]) * (*tmp_d);
+                    this->ucell->atoms[T0].ncpp.get_d(is, p1, p2, tmp_d);
+                    nlm_tmp += nlm1[0]->at(p1) * std::conj(nlm2[0]->at(p2)) * (*tmp_d);
                 }
                 data_pointer[step_trace[is]] += nlm_tmp;
+                if (data_pointer_c != nullptr)
+                {
+                    for (int dir = 0; dir < 3; dir++)
+                    {
+                        std::complex<double> nlm_r_tmp = std::complex<double>{0, 0};
+                        std::complex<double> imag_unit = std::complex<double>{0, 1};
+                        for (int no = 0; no < this->ucell->atoms[T0].ncpp.non_zero_count_soc[is]; no++)
+                        {
+                            const int p1 = this->ucell->atoms[T0].ncpp.index1_soc[is][no];
+                            const int p2 = this->ucell->atoms[T0].ncpp.index2_soc[is][no];
+                            this->ucell->atoms[T0].ncpp.get_d(is, p1, p2, tmp_d);
+                            //<psi|rexp(-iAr)|beta><beta|exp(iAr)|psi>-<psi|exp(-iAr)|beta><beta|rexp(iAr)|psi>
+                            // multiply d in the end
+                            nlm_r_tmp += (nlm1[dir + 1]->at(p1) * std::conj(nlm2[0]->at(p2))
+                                          - nlm1[0]->at(p1) * std::conj(nlm2[dir + 1]->at(p2)))
+                                         * (*tmp_d);
+                        }
+                        // -i[r,Vnl], 2.0 due to the unit transformation
+                        data_pointer_c[dir][step_trace[is]] -= imag_unit * nlm_r_tmp / 2.0;
+                    }
+                }
             }
             data_pointer += npol;
+            if (data_pointer_c != nullptr)
+            {
+                for (int dir = 0; dir < 3; dir++)
+                {
+                    data_pointer_c[dir] += npol;
+                }
+            }
         }
         data_pointer += (npol - 1) * col_indexes.size();
+        if (data_pointer_c != nullptr)
+        {
+            for (int dir = 0; dir < 3; dir++)
+            {
+                data_pointer_c[dir] += (npol - 1) * col_indexes.size();
+            }
+        }
     }
 }
 

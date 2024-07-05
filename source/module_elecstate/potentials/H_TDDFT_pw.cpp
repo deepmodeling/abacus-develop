@@ -238,6 +238,7 @@ void H_TDDFT_pw::update_At(void)
     std::cout << "calculate electric potential" << std::endl;
     // time evolve
     H_TDDFT_pw::istep++;
+    
     // judgement to skip vext
     if (!module_tddft::Evolve_elec::td_vext || istep > tend || istep < tstart)
     {

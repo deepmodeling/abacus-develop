@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cstring>
+#include <stdint.h>
 
 #include "cuda_tools.cuh"
 
@@ -245,6 +246,25 @@ inline void Cuda_Mem_Wrapper<T>::copy_device_to_host_async(const cudaStream_t st
 }
 
 template <typename T>
+inline void Cuda_Mem_Wrapper<T>::copy_device_to_host_async(const cudaStream_t stream,
+                                                    const int stream_id,
+                                                    const int size)
+{
+    if (this->host_pointer == nullptr || this->device_pointer == nullptr)
+    {
+        std::cerr << "host_pointer is nullptr, can not copy device to host"
+                  << std::endl;
+        exit(1);
+    }
+    checkCuda(cudaMemcpyAsync(
+        this->host_pointer + stream_id * this->one_stream_size_aligned,
+        this->device_pointer + stream_id * this->one_stream_size_aligned,
+        size * sizeof(T),
+        cudaMemcpyDeviceToHost,
+        stream));
+}
+
+template <typename T>
 inline void Cuda_Mem_Wrapper<T>::memset_device_sync(const int stream_id, const int value)
 {
     checkCuda(cudaMemset(this->device_pointer
@@ -287,3 +307,6 @@ inline T* Cuda_Mem_Wrapper<T>::get_host_pointer(const int stream_id)
 template class Cuda_Mem_Wrapper<double>;
 template class Cuda_Mem_Wrapper<double*>;
 template class Cuda_Mem_Wrapper<int>;
+template class Cuda_Mem_Wrapper<bool>;
+template class Cuda_Mem_Wrapper<uint8_t>;
+

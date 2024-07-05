@@ -22,6 +22,7 @@
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/print_info.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h" // need divide_HS_in_frag
 
 #include <memory>
 #ifdef __EXX
@@ -176,7 +177,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(Input& inp, UnitCell& ucell) {
     // 6) initialize Hamilt in LCAO
     // * allocate H and S matrices according to computational resources
     // * set the 'trace' between local H/S and global H/S
-    this->LM.divide_HS_in_frag(GlobalV::GAMMA_ONLY_LOCAL,
+    LCAO_domain::divide_HS_in_frag(this->LM, GlobalV::GAMMA_ONLY_LOCAL,
                                orb_con.ParaV,
                                this->kv.get_nks());
 
