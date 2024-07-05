@@ -13,10 +13,12 @@ class Parameter
     Parameter(){};
     // Destruct the Parameter object
     ~Parameter(){};
+    
+  public:
     // ---------------------------------------------------------------
     // --------------          Getters                ----------------
     // ---------------------------------------------------------------
-  public:
+    
     // We can only read the value of input, but cannot modify it.
     const Input_para& get() const;
     // We can only read the value of mdp, but cannot modify it.
