@@ -168,7 +168,7 @@ void ReadInput::create_directory(const Parameter& param)
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "pseudo_dir", GlobalV::global_pseudo_dir);
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "orbital_dir", GlobalV::global_orbital_dir);
 
-    const std::string ss = "test -d " + param.get().read_file_dir;
+    const std::string ss = "test -d " + PARAM.inp.read_file_dir;
     if (system(ss.c_str()))
     {
         ModuleBase::WARNING_QUIT("ReadInput", "please set right files directory for reading in.");

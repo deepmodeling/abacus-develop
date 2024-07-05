@@ -253,7 +253,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(Input& inp, UnitCell& ucell)
     if (GlobalV::deepks_scf)
     {
         // load the DeePKS model from deep neural network
-        GlobalC::ld.load_model(PARAM.get().deepks_model);
+        GlobalC::ld.load_model(PARAM.inp.deepks_model);
     }
 #endif
 
@@ -486,7 +486,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners()
                               this->p_hamilt);
     }
 
-    if (PARAM.get().out_mat_xc)
+    if (PARAM.inp.out_mat_xc)
     {
         ModuleIO::write_Vxc<TK, TR>(GlobalV::NSPIN,
                                     GlobalV::NLOCAL,
@@ -1111,7 +1111,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
     // 2) write density matrix for sparse matrix
     ModuleIO::write_dmr(dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->get_DMR_vector(),
                         this->orb_con.ParaV,
-                        PARAM.get().out_dm1,
+                        PARAM.inp.out_dm1,
                         false,
                         GlobalV::out_app_flag,
                         istep);
@@ -1130,7 +1130,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
     }
 
     // 4) write density matrix
-    if (PARAM.get().out_dm)
+    if (PARAM.inp.out_dm)
     {
         std::vector<double> efermis(GlobalV::NSPIN == 2 ? 2 : 1);
         for (int ispin = 0; ispin < efermis.size(); ispin++)
@@ -1213,7 +1213,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
 #endif
 
     // 12) write HR in npz format
-    if (PARAM.get().out_hr_npz)
+    if (PARAM.inp.out_hr_npz)
     {
         this->p_hamilt->updateHk(0); // first k point, up spin
         hamilt::HamiltLCAO<std::complex<double>, double>* p_ham_lcao
@@ -1232,7 +1232,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
     }
 
     // 13) write dm in npz format
-    if (PARAM.get().out_dm_npz)
+    if (PARAM.inp.out_dm_npz)
     {
         const elecstate::DensityMatrix<TK, double>* dm
             = dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();

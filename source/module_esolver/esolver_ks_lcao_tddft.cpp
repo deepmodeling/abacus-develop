@@ -140,7 +140,7 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(const int istep, const int iter, cons
                                                  this->Sk_laststep,
                                                  this->pelec_td->ekb,
                                                  td_htype,
-                                                 PARAM.get().propagator,
+                                                 PARAM.inp.propagator,
                                                  kv.get_nks());
             this->pelec_td->psiToRho_td(this->psi[0]);
         }
@@ -159,7 +159,7 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(const int istep, const int iter, cons
                                              this->Sk_laststep,
                                              this->pelec_td->ekb,
                                              td_htype,
-                                             PARAM.get().propagator,
+                                             PARAM.inp.propagator,
                                              kv.get_nks());
         this->pelec_td->psiToRho_td(this->psi[0]);
     }

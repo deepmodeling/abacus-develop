@@ -324,7 +324,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
         ->get_DM()
         ->init_DMR(*(dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt)->getHR()));
 
-    if (PARAM.get().dm_to_rho)
+    if (PARAM.inp.dm_to_rho)
     {
         std::string zipname = "output_DM0.npz";
         elecstate::DensityMatrix<TK, double>* dm

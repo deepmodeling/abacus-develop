@@ -28,7 +28,7 @@ void ElecStateLCAO<std::complex<double>>::psiToRho(const psi::Psi<std::complex<d
     // dm from other sources, such as read from file. However, since we are not
     // separating them now, I opt to add a flag to control how dm is obtained as
     // of now
-    if (!PARAM.get().dm_to_rho)
+    if (!PARAM.inp.dm_to_rho)
     {
         this->calEBand();
 

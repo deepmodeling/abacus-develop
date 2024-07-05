@@ -46,7 +46,7 @@ void Driver::init()
     Print_Info::print_time(time_start, time_finish);
 
     // (4) close all of the running logs
-    ModuleBase::Global_File::close_all_log(GlobalV::MY_RANK, PARAM.get().out_alllog);
+    ModuleBase::Global_File::close_all_log(GlobalV::MY_RANK, PARAM.inp.out_alllog);
 
     // (5) output the json file
     // Json::create_Json(&GlobalC::ucell.symm,GlobalC::ucell.atoms,&INPUT);
@@ -117,11 +117,11 @@ void Driver::reading()
 {
     ModuleBase::timer::tick("Driver", "reading");
     // temperarily
-    GlobalV::MY_RANK = PARAM.globalV().myrank;
-    GlobalV::NPROC = PARAM.globalV().nproc;
+    GlobalV::MY_RANK = PARAM.sys.myrank;
+    GlobalV::NPROC = PARAM.sys.nproc;
 
     // (1) read the input file
-    ModuleIO::ReadInput read_input(PARAM.globalV().myrank);
+    ModuleIO::ReadInput read_input(PARAM.sys.myrank);
     read_input.read_parameters(PARAM, GlobalV::global_in_card);
 
     // (2) create the output directory

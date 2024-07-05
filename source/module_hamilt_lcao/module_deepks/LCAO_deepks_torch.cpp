@@ -457,7 +457,7 @@ void LCAO_Deepks::cal_gedm_equiv(const int nat) {
     this->save_npy_d(nat);
     generate_py_files(this->lmaxd, this->nmaxd);
     if (GlobalV::MY_RANK == 0) {
-        std::string cmd = "python cal_gedm.py " + PARAM.get().deepks_model;
+        std::string cmd = "python cal_gedm.py " + PARAM.inp.deepks_model;
         int stat = std::system(cmd.c_str());
         assert(stat == 0);
     }

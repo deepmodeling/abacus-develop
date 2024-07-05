@@ -483,7 +483,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
     this->before_scf(istep);
 
     // 3) write charge density
-    if (PARAM.get().dm_to_rho)
+    if (PARAM.inp.dm_to_rho)
     {
         ModuleBase::timer::tick(this->classname, "runner");
         return; // nothing further is needed
@@ -771,7 +771,7 @@ ModuleIO::Output_Rho ESolver_KS<T, Device>::create_Output_Rho(int is, int iter, 
 {
     const int precision = 3;
     std::string tag = "CHG";
-    if (PARAM.get().dm_to_rho)
+    if (PARAM.inp.dm_to_rho)
     {
         return ModuleIO::Output_Rho(this->pw_big,
                                     this->pw_rhod,

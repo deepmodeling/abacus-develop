@@ -26,7 +26,7 @@ ESolver_FP::ESolver_FP()
     pw_big->setbxyz(INPUT.bx, INPUT.by, INPUT.bz);
     sf.set(pw_rhod, INPUT.nbspline);
 
-    GlobalC::ucell.symm.epsilon = GlobalC::ucell.symm.epsilon_input = PARAM.get().symmetry_prec;
+    GlobalC::ucell.symm.epsilon = GlobalC::ucell.symm.epsilon_input = PARAM.inp.symmetry_prec;
 }
 
 ESolver_FP::~ESolver_FP()
