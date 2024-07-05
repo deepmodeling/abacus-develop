@@ -1,12 +1,12 @@
 #include "module_io/read_input.h"
 
-#include "module_base/tool_quit.h"
-#include "module_parameter/parameter.h"
+#include <cstdio>
+#include <fstream>
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include <cstdio>
-#include <fstream>
+#include "module_base/tool_quit.h"
+#include "module_parameter/parameter.h"
 /************************************************
  *  unit test of read_input_test.cpp
  ***********************************************/
@@ -20,10 +20,11 @@
  *     - check_mode = true
  */
 
-class InputTest : public testing::Test {
+class InputTest : public testing::Test
+{
   protected:
-    bool compare_two_files(const std::string& filename1,
-                           const std::string& filename2) {
+    bool compare_two_files(const std::string& filename1, const std::string& filename2)
+    {
         std::ifstream file1(filename1.c_str());
         std::ifstream file2(filename2.c_str());
         EXPECT_TRUE(file1.is_open());
@@ -32,7 +33,8 @@ class InputTest : public testing::Test {
         std::string line1, line2;
         int lineNumber = 1;
         bool allpass = true;
-        while (std::getline(file1, line1) && std::getline(file2, line2)) {
+        while (std::getline(file1, line1) && std::getline(file2, line2))
+        {
             std::istringstream iss1(line1);
             std::istringstream iss2(line2);
 
@@ -45,14 +47,12 @@ class InputTest : public testing::Test {
 
             // compare two columns
             // compare two columns
-            if (col1_file1 != col1_file2 || col2_file1 != col2_file2) {
-                std::cout << "Mismatch found at line " << lineNumber
-                          << " in files " << filename1 << " and " << filename2
-                          << std::endl;
-                std::cout << "File1: " << col1_file1 << " " << col2_file1
-                          << std::endl;
-                std::cout << "File2: " << col1_file2 << " " << col2_file2
-                          << std::endl;
+            if (col1_file1 != col1_file2 || col2_file1 != col2_file2)
+            {
+                std::cout << "Mismatch found at line " << lineNumber << " in files " << filename1 << " and "
+                          << filename2 << std::endl;
+                std::cout << "File1: " << col1_file1 << " " << col2_file1 << std::endl;
+                std::cout << "File2: " << col1_file2 << " " << col2_file2 << std::endl;
                 allpass = false;
             }
 
@@ -65,7 +65,8 @@ class InputTest : public testing::Test {
     }
 };
 
-TEST_F(InputTest, Selfconsistent_Read) {
+TEST_F(InputTest, Selfconsistent_Read)
+{
     ModuleIO::ReadInput readinput(0);
     readinput.check_ntype_flag = false;
     { // PW
@@ -103,7 +104,8 @@ TEST_F(InputTest, Selfconsistent_Read) {
     }
 }
 
-TEST_F(InputTest, Check) {
+TEST_F(InputTest, Check)
+{
     ModuleIO::ReadInput readinput(0);
     readinput.check_ntype_flag = false;
     {
@@ -121,12 +123,8 @@ TEST_F(InputTest, Check) {
     ModuleIO::ReadInput::check_mode = true;
     Parameter param;
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(readinput.read_parameters(param, "./INPUT.ref"),
-                ::testing::ExitedWithCode(0),
-                "");
+    EXPECT_EXIT(readinput.read_parameters(param, "./INPUT.ref"), ::testing::ExitedWithCode(0), "");
     std::string output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(
-        output,
-        testing::HasSubstr("INPUT parameters have been successfully checked!"));
+    EXPECT_THAT(output, testing::HasSubstr("INPUT parameters have been successfully checked!"));
     EXPECT_TRUE(std::remove("./INPUT.ref") == 0);
 }

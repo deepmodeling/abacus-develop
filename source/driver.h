@@ -1,7 +1,8 @@
 #ifndef DRIVER_H
 #define DRIVER_H
 
-class Driver {
+class Driver
+{
   public:
     Driver();
     ~Driver();

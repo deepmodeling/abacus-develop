@@ -2,8 +2,10 @@
 #include "read_input.h"
 #include "read_input_tool.h"
 
-namespace ModuleIO {
-void ReadInput::item_md() {
+namespace ModuleIO
+{
+void ReadInput::item_md()
+{
     // 9. Molecular dynamics
     {
         Input_Item item("md_type");
@@ -21,12 +23,11 @@ void ReadInput::item_md() {
         Input_Item item("md_nstep");
         item.annotation = "md steps";
         item.resetvalue = [](const Input_Item& item, Parameter& para) {
-            if (para.input.mdp.md_nstep == 0) {
-                    GlobalV::ofs_running
-                        << "md_nstep should be set. Autoset md_nstep to 50!"
-                        << std::endl;
-                    para.input.mdp.md_nstep = 50;
-                }
+            if (para.input.mdp.md_nstep == 0)
+            {
+                GlobalV::ofs_running << "md_nstep should be set. Autoset md_nstep to 50!" << std::endl;
+                para.input.mdp.md_nstep = 50;
+            }
         };
         read_sync_int(mdp.md_nstep);
         this->add_item(item);
@@ -36,9 +37,7 @@ void ReadInput::item_md() {
         item.annotation = "time step";
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
             if (para.input.mdp.md_dt < 0)
-                ModuleBase::WARNING_QUIT(
-                    "ReadInput",
-                    "time interval of MD calculation should be positive");
+                ModuleBase::WARNING_QUIT("ReadInput", "time interval of MD calculation should be positive");
         };
         read_sync_double(mdp.md_dt);
         this->add_item(item);
@@ -83,22 +82,22 @@ void ReadInput::item_md() {
         Input_Item item("md_prec_level");
         item.annotation = "precision level for vc-md";
         item.resetvalue = [](const Input_Item& item, Parameter& para) {
-            if (para.input.calculation != "md") {
+            if (para.input.calculation != "md")
+            {
                 para.input.mdp.md_prec_level = 0;
             }
             // md_prec_level only used in vc-md  liuyu 2023-03-27
-            else if (para.input.mdp.md_type != "msst"
-                    && para.input.mdp.md_type != "npt") {
-                    para.input.mdp.md_prec_level = 0;
-                }
+            else if (para.input.mdp.md_type != "msst" && para.input.mdp.md_type != "npt")
+            {
+                para.input.mdp.md_prec_level = 0;
+            }
         };
         read_sync_int(mdp.md_prec_level);
         this->add_item(item);
     }
     {
         Input_Item item("ref_cell_factor");
-        item.annotation
-            = "construct a reference cell bigger than the initial cell";
+        item.annotation = "construct a reference cell bigger than the initial cell";
         read_sync_double(ref_cell_factor);
         this->add_item(item);
     }
@@ -160,9 +159,9 @@ void ReadInput::item_md() {
         Input_Item item("msst_qmass");
         item.annotation = "mass of thermostat";
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.mdp.msst_qmass <= 0) {
-                ModuleBase::WARNING_QUIT("ReadInput",
-                                         "msst_qmass must be greater than 0!");
+            if (para.input.mdp.msst_qmass <= 0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "msst_qmass must be greater than 0!");
             }
         };
         read_sync_double(mdp.msst_qmass);
@@ -170,12 +169,12 @@ void ReadInput::item_md() {
     }
     {
         Input_Item item("md_tfreq");
-        item.annotation
-            = "oscillation frequency, used to determine qmass of NHC";
+        item.annotation = "oscillation frequency, used to determine qmass of NHC";
         item.resetvalue = [](const Input_Item& item, Parameter& para) {
-            if (para.input.mdp.md_tfreq == 0 && para.input.calculation == "md") {
-                    para.input.mdp.md_tfreq = 1.0 / 40 / para.input.mdp.md_dt;
-                }
+            if (para.input.mdp.md_tfreq == 0 && para.input.calculation == "md")
+            {
+                para.input.mdp.md_tfreq = 1.0 / 40 / para.input.mdp.md_dt;
+            }
         };
         read_sync_double(mdp.md_tfreq);
         this->add_item(item);
@@ -195,15 +194,13 @@ void ReadInput::item_md() {
     }
     {
         Input_Item item("cal_syns");
-        item.annotation
-            = "calculate asynchronous overlap matrix to output for Hefei-NAMD";
+        item.annotation = "calculate asynchronous overlap matrix to output for Hefei-NAMD";
         read_sync_bool(cal_syns);
         this->add_item(item);
     }
     {
         Input_Item item("dmax");
-        item.annotation
-            = "maximum displacement of all atoms in one step (bohr)";
+        item.annotation = "maximum displacement of all atoms in one step (bohr)";
         read_sync_double(dmax);
         this->add_item(item);
     }
@@ -221,8 +218,7 @@ void ReadInput::item_md() {
     }
     {
         Input_Item item("md_pcouple");
-        item.annotation
-            = "whether couple different components: xyz, xy, yz, xz, none";
+        item.annotation = "whether couple different components: xyz, xy, yz, xz, none";
         read_sync_string(mdp.md_pcouple);
         this->add_item(item);
     }
@@ -242,7 +238,7 @@ void ReadInput::item_md() {
         Input_Item item("md_plast");
         item.annotation = "final target pressure";
         item.resetvalue = [](const Input_Item& item, Parameter& para) {
-            if(!item.is_read()) // no md_plast in INPUT
+            if (!item.is_read()) // no md_plast in INPUT
                 para.input.mdp.md_plast = para.input.mdp.md_pfirst;
         };
         read_sync_double(mdp.md_plast);
@@ -253,9 +249,10 @@ void ReadInput::item_md() {
         item.annotation = "oscillation frequency, used to determine qmass of "
                           "thermostats coupled with barostat";
         item.resetvalue = [](const Input_Item& item, Parameter& para) {
-            if (para.input.mdp.md_pfreq == 0 && para.input.calculation == "md") {
-                    para.input.mdp.md_pfreq = 1.0 / 400 / para.input.mdp.md_dt;
-                }
+            if (para.input.mdp.md_pfreq == 0 && para.input.calculation == "md")
+            {
+                para.input.mdp.md_pfreq = 1.0 / 400 / para.input.mdp.md_dt;
+            }
         };
         read_sync_double(mdp.md_pfreq);
         this->add_item(item);
@@ -268,8 +265,7 @@ void ReadInput::item_md() {
     }
     {
         Input_Item item("dump_vel");
-        item.annotation
-            = "output atomic velocities into the file MD_dump or not";
+        item.annotation = "output atomic velocities into the file MD_dump or not";
         read_sync_bool(mdp.dump_vel);
         this->add_item(item);
     }

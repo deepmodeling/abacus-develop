@@ -1,19 +1,21 @@
 #ifndef INPUT_H
 #define INPUT_H
 
-#include "input_conv.h"
-#include "module_base/vector3.h"
-#include "module_parameter/md_parameter.h"
-
 #include <fstream>
 #include <sstream>
 #include <string>
 #include <type_traits>
 #include <vector>
 
-class Input {
+#include "input_conv.h"
+#include "module_base/vector3.h"
+#include "module_parameter/md_parameter.h"
+
+class Input
+{
   public:
-    ~Input() {
+    ~Input()
+    {
         delete[] hubbard_u;
         delete[] orbital_corr;
     }
@@ -22,32 +24,30 @@ class Input {
     // directories of files
     //==========================================================
 
-    std::string stru_file;   // file contains atomic positions -- xiaohui modify
-                             // 2015-02-01
-    std::string pseudo_dir;  // directory of pseudopotential
-    std::string orbital_dir; // directory of orbital file
+    std::string stru_file;     // file contains atomic positions -- xiaohui modify
+                               // 2015-02-01
+    std::string pseudo_dir;    // directory of pseudopotential
+    std::string orbital_dir;   // directory of orbital file
     std::string read_file_dir; // directory of files for reading
     // std::string pseudo_type; // the type of pseudopotential, mohan add
     // 2013-05-20, ABACUS supports
     //                          // UPF format (default) and vwr format. (xiaohui
     //                          add 2013-06-23)
-    std::string
-        kpoint_file; // file contains k-points -- xiaohui modify 2015-02-01
+    std::string kpoint_file;  // file contains k-points -- xiaohui modify 2015-02-01
     std::string wannier_card; // input card for wannier functions.
     std::string latname;      // lattice name
 
-    std::string calculation; // "scf" : self consistent calculation.
-                             // "nscf" : non-self consistent calculation.
-                             // "relax" : cell relaxations
-    std::string
-        esolver_type;   // the energy solver: ksdft, sdft, ofdft, tddft, lj, dp
-    double pseudo_rcut; // cut-off radius for calculating msh
-    bool pseudo_mesh;  // 0: use msh to normalize radial wave functions;  1: use
-                       // mesh, which is used in QE.
-    int ntype;         // number of atom types
-    int nbands;        // number of bands
-    int nbands_istate; // number of bands around fermi level for get_pchg
-                       // calculation.
+    std::string calculation;  // "scf" : self consistent calculation.
+                              // "nscf" : non-self consistent calculation.
+                              // "relax" : cell relaxations
+    std::string esolver_type; // the energy solver: ksdft, sdft, ofdft, tddft, lj, dp
+    double pseudo_rcut;       // cut-off radius for calculating msh
+    bool pseudo_mesh;         // 0: use msh to normalize radial wave functions;  1: use
+                              // mesh, which is used in QE.
+    int ntype;                // number of atom types
+    int nbands;               // number of bands
+    int nbands_istate;        // number of bands around fermi level for get_pchg
+                              // calculation.
 
     int pw_seed; // random seed for initializing wave functions qianrui
                  // 2021-8-12
@@ -68,8 +68,8 @@ class Input {
     bool towannier90;         // add by jingan for wannier90
     std::string nnkpfile;     // add by jingan for wannier90
     std::string wannier_spin; // add by jingan for wannier90
-    int wannier_method; // different implementation methods under Lcao basis set
-    bool out_wannier_mmn; // add by renxi for wannier90
+    int wannier_method;       // different implementation methods under Lcao basis set
+    bool out_wannier_mmn;     // add by renxi for wannier90
     bool out_wannier_amn;
     bool out_wannier_unk;
     bool out_wannier_eig;
@@ -78,20 +78,20 @@ class Input {
     //==========================================================
     // Stochastic DFT
     //==========================================================
-    int nche_sto; // number of orders for Chebyshev expansion in stochastic DFT
-                  // //qinarui 2021-2-5
+    int nche_sto;              // number of orders for Chebyshev expansion in stochastic DFT
+                               // //qinarui 2021-2-5
     int nbands_sto;            // number of stochastic bands //qianrui 2021-2-5
     std::string nbndsto_str;   // string parameter for stochastic bands
     int seed_sto;              // random seed for sDFT
     double initsto_ecut = 0.0; // maximum ecut to init stochastic bands
     double emax_sto;           // Emax & Emin to normalize H
     double emin_sto;
-    int bndpar;       // parallel for stochastic/deterministic bands
-    int initsto_freq; // frequency to init stochastic orbitals when running md
-    int method_sto;   // different methods for sdft, 1: slow, less memory  2:
-                      // fast, more memory
-    int npart_sto;    // for method_sto = 2, reduce memory
-    bool cal_cond;    // calculate electronic conductivities
+    int bndpar;          // parallel for stochastic/deterministic bands
+    int initsto_freq;    // frequency to init stochastic orbitals when running md
+    int method_sto;      // different methods for sdft, 1: slow, less memory  2:
+                         // fast, more memory
+    int npart_sto;       // for method_sto = 2, reduce memory
+    bool cal_cond;       // calculate electronic conductivities
     double cond_che_thr; // control the error of Chebyshev expansions for
                          // conductivities
     int cond_smear;      // smearing method for conductivities 1: Gaussian 2:
@@ -108,9 +108,9 @@ class Input {
     // electrons / spin
     //==========================================================
     std::string dft_functional; // input DFT functional.
-    double xc_temperature; // only relevant if finite temperature functional is
-                           // used
-    int nspin;             // LDA ; LSDA ; non-linear spin
+    double xc_temperature;      // only relevant if finite temperature functional is
+                                // used
+    int nspin;                  // LDA ; LSDA ; non-linear spin
     int lmaxmax;
 
     //==========================================================
@@ -134,10 +134,10 @@ class Input {
     double press3;
     bool cal_stress; // calculate the stress
     int nstream;
-    std::string fixed_axes; // which axes are fixed
-    bool fixed_ibrav; // whether to keep type of lattice; must be used along
-                      // with latname
-    bool fixed_atoms; // whether to fix atoms during vc-relax
+    std::string fixed_axes;   // which axes are fixed
+    bool fixed_ibrav;         // whether to keep type of lattice; must be used along
+                              // with latname
+    bool fixed_atoms;         // whether to fix atoms during vc-relax
     std::string relax_method; // methods to move_ion: sd, bfgs, cg...
 
     // For now, this is only relevant if we choose to use
@@ -156,8 +156,7 @@ class Input {
     //==========================================================
     bool gamma_only;       // for plane wave.
     bool gamma_only_local; // for local orbitals.
-    int fft_mode
-        = 0; // fftw mode 0: estimate, 1: measure, 2: patient, 3: exhaustive
+    int fft_mode = 0;      // fftw mode 0: estimate, 1: measure, 2: patient, 3: exhaustive
 
     double ecutwfc; // energy cutoff for wavefunctions
     double ecutrho; // energy cutoff for charge/potential
@@ -202,11 +201,11 @@ class Input {
     //==========================================================
     // iteration
     //==========================================================
-    double scf_thr;   // \sum |rhog_out - rhog_in |^2
-    int scf_thr_type; // type of the criterion of scf_thr, 1: reci drho, 2: real
-                      // drho
-    int scf_nmax;     // number of max elec iter
-    int relax_nmax;   // number of max ionic iter
+    double scf_thr;        // \sum |rhog_out - rhog_in |^2
+    int scf_thr_type;      // type of the criterion of scf_thr, 1: reci drho, 2: real
+                           // drho
+    int scf_nmax;          // number of max elec iter
+    int relax_nmax;        // number of max ionic iter
     std::string out_level; // control the output information.
     bool out_md_control;   // internal parameter , added by zhengdy 2019-04-07
 
@@ -233,13 +232,13 @@ class Input {
 
     int mem_saver; // 1: save psi when nscf calculation.
 
-    int printe;        // mohan add 2011-03-16
-    int out_freq_elec; // the frequency ( >= 0) of electronic iter to output
-                       // charge density and wavefunction. 0: output only when
-                       // converged
-    int out_freq_ion;  // the frequency ( >= 0 ) of ionic step to output charge
-                      // density and wavefunction. 0: output only when ion steps
-                      // are finished
+    int printe;                // mohan add 2011-03-16
+    int out_freq_elec;         // the frequency ( >= 0) of electronic iter to output
+                               // charge density and wavefunction. 0: output only when
+                               // converged
+    int out_freq_ion;          // the frequency ( >= 0 ) of ionic step to output charge
+                               // density and wavefunction. 0: output only when ion steps
+                               // are finished
     int out_chg;               // output charge density. 0: no; 1: yes
     int out_pot;               // yes or no
     int out_wfc_pw;            // 0: no; 1: txt; 2: dat
@@ -249,7 +248,7 @@ class Input {
     bool out_proj_band;        // projected band structure calculation jiyy add
                                // 2022-05-11
     bool cal_syns;             // calculate asynchronous S matrix to output
-    double dmax; // maximum displacement of all atoms in one step (bohr)
+    double dmax;               // maximum displacement of all atoms in one step (bohr)
     int out_interval;
     bool out_app_flag; // whether output r(R), H(R), S(R), T(R), and dH(R)
                        // matrices in an append manner during MD  liuyu
@@ -302,8 +301,8 @@ class Input {
     bool vdw_abc;                  // third-order term?
     std::string vdw_cutoff_radius; // cutoff radius for std::pair interactions
     std::string vdw_radius_unit;   //"Bohr" or "Angstrom"
-    double vdw_cn_thr; // cutoff radius for calculating the coordination number
-    std::string vdw_cn_thr_unit; //"Bohr" or "Angstrom"
+    double vdw_cn_thr;             // cutoff radius for calculating the coordination number
+    std::string vdw_cn_thr_unit;   //"Bohr" or "Angstrom"
     std::string vdw_C6_file;
     std::string vdw_C6_unit; //"Bohr" or "Angstrom"
     std::string vdw_R0_file;
@@ -336,17 +335,15 @@ class Input {
     //==========================================================
     //    DFT+U       Xin Qu added on 2020-10-29
     //==========================================================
-    int dft_plus_u; ///< 1:DFT+U correction; 2:old DFT+U method; 0:standard DFT
-                    ///< calculation(default)
+    int dft_plus_u;              ///< 1:DFT+U correction; 2:old DFT+U method; 0:standard DFT
+                                 ///< calculation(default)
     int* orbital_corr = nullptr; ///< which correlated orbitals need corrected ;
                                  ///< d:2 ,f:3, do not need correction:-1
-    double* hubbard_u
-        = nullptr; ///< Hubbard Coulomb interaction parameter U(ev)
-    int omc;       ///< whether turn on occupation matrix control method or not
-    bool yukawa_potential; ///< default:false
-    double yukawa_lambda;  ///< default:-1.0, which means we calculate lambda
-    double
-        uramping; ///< default:-1.0, which means we do not use U-Ramping method
+    double* hubbard_u = nullptr; ///< Hubbard Coulomb interaction parameter U(ev)
+    int omc;                     ///< whether turn on occupation matrix control method or not
+    bool yukawa_potential;       ///< default:false
+    double yukawa_lambda;        ///< default:-1.0, which means we calculate lambda
+    double uramping;             ///< default:-1.0, which means we do not use U-Ramping method
 
     //==========================================================
     //    DFT+DMFT       Xin Qu added on 2021-08
@@ -362,33 +359,31 @@ class Input {
     //==========================================================
     // OFDFT  sunliang added on 2022-05-05
     //==========================================================
-    std::string
-        of_kinetic; // Kinetic energy functional, such as TF, VW, WT, TF+
-    std::string
-        of_method; // optimization method, include cg1, cg2, tn (default), bfgs
-    std::string of_conv; // select the convergence criterion, potential, energy
-                         // (default), or both
-    double of_tole; // tolerance of the energy change (in Ry) for determining
-                    // the convergence, default=2e-6 Ry
-    double of_tolp; // tolerance of potential for determining the convergence,
-                    // default=1e-5 in a.u.
-    double of_tf_weight; // weight of TF KEDF
-    double of_vw_weight; // weight of vW KEDF
-    double of_wt_alpha;  // parameter alpha of WT KEDF
-    double of_wt_beta;   // parameter beta of WT KEDF
-    double of_wt_rho0;   // set the average density of system, in Bohr^-3
-    bool of_hold_rho0; // If set to 1, the rho0 will be fixed even if the volume
-                       // of system has changed, it will be set to 1 automaticly
-                       // if of_wt_rho0 is not zero.
-    double of_lkt_a;   // parameter a of LKT KEDF
-    bool of_full_pw;   // If set to 1, ecut will be ignored while collecting
-                       // planewaves, so that all planewaves will be used.
-    int of_full_pw_dim;  // If of_full_pw = 1, the dimention of FFT will be
-                         // testricted to be (0) either odd or even; (1) odd
-                         // only; (2) even only.
-    bool of_read_kernel; // If set to 1, the kernel of WT KEDF will be filled
-                         // from file of_kernel_file, not from formula. Only
-                         // usable for WT KEDF.
+    std::string of_kinetic;     // Kinetic energy functional, such as TF, VW, WT, TF+
+    std::string of_method;      // optimization method, include cg1, cg2, tn (default), bfgs
+    std::string of_conv;        // select the convergence criterion, potential, energy
+                                // (default), or both
+    double of_tole;             // tolerance of the energy change (in Ry) for determining
+                                // the convergence, default=2e-6 Ry
+    double of_tolp;             // tolerance of potential for determining the convergence,
+                                // default=1e-5 in a.u.
+    double of_tf_weight;        // weight of TF KEDF
+    double of_vw_weight;        // weight of vW KEDF
+    double of_wt_alpha;         // parameter alpha of WT KEDF
+    double of_wt_beta;          // parameter beta of WT KEDF
+    double of_wt_rho0;          // set the average density of system, in Bohr^-3
+    bool of_hold_rho0;          // If set to 1, the rho0 will be fixed even if the volume
+                                // of system has changed, it will be set to 1 automaticly
+                                // if of_wt_rho0 is not zero.
+    double of_lkt_a;            // parameter a of LKT KEDF
+    bool of_full_pw;            // If set to 1, ecut will be ignored while collecting
+                                // planewaves, so that all planewaves will be used.
+    int of_full_pw_dim;         // If of_full_pw = 1, the dimention of FFT will be
+                                // testricted to be (0) either odd or even; (1) odd
+                                // only; (2) even only.
+    bool of_read_kernel;        // If set to 1, the kernel of WT KEDF will be filled
+                                // from file of_kernel_file, not from formula. Only
+                                // usable for WT KEDF.
     std::string of_kernel_file; // The name of WT kernel file.
 
     //==========================================================
@@ -396,16 +391,13 @@ class Input {
     //==========================================================
     // the following are used when generating orb_matrix.dat
     // int		bessel_nao_lmax;		// lmax used in descriptor
-    bool bessel_nao_smooth;  // spherical bessel smooth or not
-    double bessel_nao_sigma; // spherical bessel smearing_sigma
-    std::string
-        bessel_nao_ecut; // energy cutoff for spherical bessel functions(Ry)
-    double
-        bessel_nao_rcut; // radial cutoff for spherical bessel functions(a.u.)
+    bool bessel_nao_smooth;      // spherical bessel smooth or not
+    double bessel_nao_sigma;     // spherical bessel smearing_sigma
+    std::string bessel_nao_ecut; // energy cutoff for spherical bessel functions(Ry)
+    double bessel_nao_rcut;      // radial cutoff for spherical bessel functions(a.u.)
     std::vector<double> bessel_nao_rcuts;
-    double
-        bessel_nao_tolerence; // tolerence for spherical bessel root
-                              // the following are used when generating jle.orb
+    double bessel_nao_tolerence;        // tolerence for spherical bessel root
+                                        // the following are used when generating jle.orb
     int bessel_descriptor_lmax;         // lmax used in descriptor
     bool bessel_descriptor_smooth;      // spherical bessel smooth or not
     double bessel_descriptor_sigma;     // spherical bessel smearing_sigma
@@ -441,7 +433,10 @@ class Input {
     bool check_input = false;
 
     std::time_t start_time;
-    std::time_t get_start_time(void) const { return start_time; }
+    std::time_t get_start_time(void) const
+    {
+        return start_time;
+    }
 
   private:
     //==========================================================
@@ -470,35 +465,38 @@ class Input {
 
     int count_ntype(const std::string& fn); // sunliang add 2022-12-06
 
-    std::string
-        bands_to_print_; // specify the bands to be calculated in the get_pchg
-                         // calculation, formalism similar to ocp_set.
+    std::string bands_to_print_; // specify the bands to be calculated in the get_pchg
+                                 // calculation, formalism similar to ocp_set.
 
   public:
     template <class T>
-    static void read_value(std::ifstream& ifs, T& var) {
+    static void read_value(std::ifstream& ifs, T& var)
+    {
         ifs >> var;
         std::string line;
         getline(ifs, line); // read the rest of the line, directly discard it.
         return;
     }
-    void read_kspacing(std::ifstream& ifs) {
+    void read_kspacing(std::ifstream& ifs)
+    {
         std::string s;
         std::getline(ifs, s);
         std::stringstream ss(s);
         // read 3 values
         int count = 0;
-        while ((ss >> kspacing[count]) && count < 3) {
+        while ((ss >> kspacing[count]) && count < 3)
+        {
             count++;
         }
         // if not read even one value, or read two values, the input is invalid.
-        if (count == 0 || count == 2) {
-            std::cout << "kspacing can only accept one or three double values."
-                      << std::endl;
+        if (count == 0 || count == 2)
+        {
+            std::cout << "kspacing can only accept one or three double values." << std::endl;
             ifs.setstate(std::ios::failbit);
         }
         // if only read one value, set all to kspacing[0]
-        if (count == 1) {
+        if (count == 1)
+        {
             kspacing[1] = kspacing[0];
             kspacing[2] = kspacing[0];
         }
@@ -512,13 +510,13 @@ class Input {
     template <typename T>
     void read_value2stdvector(std::ifstream& ifs, std::vector<T>& var);
     template <typename T>
-    typename std::enable_if<std::is_same<T, double>::value, T>::type
-        cast_string(const std::string& str) {
+    typename std::enable_if<std::is_same<T, double>::value, T>::type cast_string(const std::string& str)
+    {
         return std::stod(str);
     }
     template <typename T>
-    typename std::enable_if<std::is_same<T, int>::value, T>::type
-        cast_string(const std::string& str) {
+    typename std::enable_if<std::is_same<T, int>::value, T>::type cast_string(const std::string& str)
+    {
         if (str == "true" || str == "1")
             return 1;
         else if (str == "false" || str == "0")
@@ -527,13 +525,13 @@ class Input {
             return std::stoi(str);
     }
     template <typename T>
-    typename std::enable_if<std::is_same<T, bool>::value, T>::type
-        cast_string(const std::string& str) {
+    typename std::enable_if<std::is_same<T, bool>::value, T>::type cast_string(const std::string& str)
+    {
         return (str == "true" || str == "1");
     }
     template <typename T>
-    typename std::enable_if<std::is_same<T, std::string>::value, T>::type
-        cast_string(const std::string& str) {
+    typename std::enable_if<std::is_same<T, std::string>::value, T>::type cast_string(const std::string& str)
+    {
         return str;
     }
     void strtolower(char* sa, char* sb);
@@ -542,9 +540,13 @@ class Input {
     // Return the const string pointer of private member bands_to_print_
     // Not recommended to use this function directly, use get_out_band_kb()
     // instead
-    const std::string* get_bands_to_print() const { return &bands_to_print_; }
+    const std::string* get_bands_to_print() const
+    {
+        return &bands_to_print_;
+    }
     // Return parsed bands_to_print_ as a vector of integers
-    std::vector<int> get_out_band_kb() const {
+    std::vector<int> get_out_band_kb() const
+    {
         std::vector<int> out_band_kb;
         Input_Conv::parse_expression(bands_to_print_, out_band_kb);
         return out_band_kb;

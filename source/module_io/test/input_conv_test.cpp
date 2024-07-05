@@ -1,12 +1,11 @@
 #include "module_io/input_conv.h"
 
 #include "for_testing_input_conv.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include "module_base/global_variable.h"
 #include "module_hsolver/diago_elpa.h"
 #include "module_hsolver/hsolver_pw.h"
-
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 
 /************************************************
  *  unit test of input_conv.cpp
@@ -20,12 +19,14 @@
 #define private public
 #include "module_io/input.h"
 
-class InputConvTest : public testing::Test {
+class InputConvTest : public testing::Test
+{
   protected:
     std::string output;
 };
 
-TEST_F(InputConvTest, Conv) {
+TEST_F(InputConvTest, Conv)
+{
     INPUT.Default();
     std::string input_file = "./support/INPUT";
     INPUT.Read(input_file);
@@ -66,9 +67,7 @@ TEST_F(InputConvTest, Conv) {
     EXPECT_EQ(GlobalV::PRESS3, 0);
     EXPECT_EQ(GlobalV::out_element_info, 0);
     EXPECT_EQ(Force_Stress_LCAO<double>::force_invalid_threshold_ev, 0);
-    EXPECT_EQ(
-        Force_Stress_LCAO<std::complex<double>>::force_invalid_threshold_ev,
-        0);
+    EXPECT_EQ(Force_Stress_LCAO<std::complex<double>>::force_invalid_threshold_ev, 0);
     EXPECT_DOUBLE_EQ(BFGS_Basic::relax_bfgs_w1, 0.01);
     EXPECT_DOUBLE_EQ(BFGS_Basic::relax_bfgs_w2, 0.5);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::relax_bfgs_rmax, 0.8);
@@ -157,8 +156,7 @@ TEST_F(InputConvTest, Conv) {
     EXPECT_EQ(hsolver::HSolverLCAO<double>::out_mat_t, false);
     EXPECT_EQ(hsolver::HSolverLCAO<std::complex<double>>::out_mat_t, false);
     EXPECT_EQ(hsolver::HSolverLCAO<double>::out_mat_dh, INPUT.out_mat_dh);
-    EXPECT_EQ(hsolver::HSolverLCAO<std::complex<double>>::out_mat_dh,
-              INPUT.out_mat_dh);
+    EXPECT_EQ(hsolver::HSolverLCAO<std::complex<double>>::out_mat_dh, INPUT.out_mat_dh);
     EXPECT_EQ(hsolver::DiagoElpa<double>::elpa_num_thread, -1);
     EXPECT_EQ(hsolver::DiagoElpa<std::complex<double>>::elpa_num_thread, -1);
     EXPECT_EQ(GlobalV::out_interval, 1);
@@ -181,7 +179,8 @@ TEST_F(InputConvTest, Conv) {
     EXPECT_EQ(GlobalV::NUM_STREAM, 4);
 }
 
-TEST_F(InputConvTest, ConvRelax) {
+TEST_F(InputConvTest, ConvRelax)
+{
     INPUT.Default();
     std::string input_file = "./support/INPUT";
     INPUT.Read(input_file);
@@ -192,17 +191,9 @@ TEST_F(InputConvTest, ConvRelax) {
     testing::internal::CaptureStdout();
     EXPECT_EXIT(Input_Conv::Convert(), ::testing::ExitedWithCode(0), "");
     output2 = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(
-        output2,
-        testing::HasSubstr(
-            "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"));
-    EXPECT_THAT(
-        output2,
-        testing::HasSubstr(
-            "                         NOTICE                          "));
-    EXPECT_THAT(
-        output2,
-        testing::HasSubstr("fixed_ibrav only available for relax_new = 1"));
+    EXPECT_THAT(output2, testing::HasSubstr("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"));
+    EXPECT_THAT(output2, testing::HasSubstr("                         NOTICE                          "));
+    EXPECT_THAT(output2, testing::HasSubstr("fixed_ibrav only available for relax_new = 1"));
     EXPECT_THAT(output2, testing::HasSubstr("CHECK IN FILE : warning.log"));
     EXPECT_THAT(output2, testing::HasSubstr("TIME STATISTICS"));
     INPUT.Read(input_file);
@@ -212,17 +203,9 @@ TEST_F(InputConvTest, ConvRelax) {
     testing::internal::CaptureStdout();
     EXPECT_EXIT(Input_Conv::Convert(), ::testing::ExitedWithCode(0), "");
     output2 = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(
-        output2,
-        testing::HasSubstr(
-            "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"));
-    EXPECT_THAT(
-        output2,
-        testing::HasSubstr(
-            "                         NOTICE                          "));
-    EXPECT_THAT(
-        output2,
-        testing::HasSubstr("to use fixed_ibrav, latname must be provided"));
+    EXPECT_THAT(output2, testing::HasSubstr("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"));
+    EXPECT_THAT(output2, testing::HasSubstr("                         NOTICE                          "));
+    EXPECT_THAT(output2, testing::HasSubstr("to use fixed_ibrav, latname must be provided"));
     EXPECT_THAT(output2, testing::HasSubstr("CHECK IN FILE : warning.log"));
     EXPECT_THAT(output2, testing::HasSubstr("TIME STATISTICS"));
     INPUT.Read(input_file);
@@ -231,18 +214,9 @@ TEST_F(InputConvTest, ConvRelax) {
     testing::internal::CaptureStdout();
     EXPECT_EXIT(Input_Conv::Convert(), ::testing::ExitedWithCode(0), "");
     output2 = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(
-        output2,
-        testing::HasSubstr(
-            "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"));
-    EXPECT_THAT(
-        output2,
-        testing::HasSubstr(
-            "                         NOTICE                          "));
-    EXPECT_THAT(
-        output2,
-        testing::HasSubstr(
-            "fixed_atoms is not meant to be used for calculation = relax"));
+    EXPECT_THAT(output2, testing::HasSubstr("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"));
+    EXPECT_THAT(output2, testing::HasSubstr("                         NOTICE                          "));
+    EXPECT_THAT(output2, testing::HasSubstr("fixed_atoms is not meant to be used for calculation = relax"));
     EXPECT_THAT(output2, testing::HasSubstr("CHECK IN FILE : warning.log"));
     EXPECT_THAT(output2, testing::HasSubstr("TIME STATISTICS"));
     INPUT.Read(input_file);
@@ -252,18 +226,9 @@ TEST_F(InputConvTest, ConvRelax) {
     testing::internal::CaptureStdout();
     EXPECT_EXIT(Input_Conv::Convert(), ::testing::ExitedWithCode(0), "");
     output2 = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(
-        output2,
-        testing::HasSubstr(
-            "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"));
-    EXPECT_THAT(
-        output2,
-        testing::HasSubstr(
-            "                         NOTICE                          "));
-    EXPECT_THAT(
-        output2,
-        testing::HasSubstr(
-            "fixed shape and fixed volume only supported for relax_new = 1"));
+    EXPECT_THAT(output2, testing::HasSubstr("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"));
+    EXPECT_THAT(output2, testing::HasSubstr("                         NOTICE                          "));
+    EXPECT_THAT(output2, testing::HasSubstr("fixed shape and fixed volume only supported for relax_new = 1"));
     EXPECT_THAT(output2, testing::HasSubstr("CHECK IN FILE : warning.log"));
     EXPECT_THAT(output2, testing::HasSubstr("TIME STATISTICS"));
     INPUT.Default();
@@ -275,7 +240,8 @@ TEST_F(InputConvTest, ConvRelax) {
     EXPECT_EQ(INPUT.relax_new, false);
 }
 
-TEST_F(InputConvTest, ConvGpu) {
+TEST_F(InputConvTest, ConvGpu)
+{
     INPUT.Default();
     std::string input_file = "./support/INPUT";
     INPUT.Read(input_file);
@@ -286,11 +252,11 @@ TEST_F(InputConvTest, ConvGpu) {
     testing::internal::CaptureStdout();
     EXPECT_EXIT(Input_Conv::Convert(), ::testing::ExitedWithCode(0), "");
     output2 = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output2,
-                testing::HasSubstr("The GPU is not supported in this build!"));
+    EXPECT_THAT(output2, testing::HasSubstr("The GPU is not supported in this build!"));
 }
 
-TEST_F(InputConvTest, dftplus) {
+TEST_F(InputConvTest, dftplus)
+{
     INPUT.Default();
     std::string input_file = "./support/INPUT";
     INPUT.Read(input_file);
@@ -304,7 +270,8 @@ TEST_F(InputConvTest, dftplus) {
     EXPECT_EQ(GlobalC::dftu.U, INPUT.hubbard_u);
 }
 
-TEST_F(InputConvTest, nspin) {
+TEST_F(InputConvTest, nspin)
+{
     INPUT.Default();
     std::string input_file = "./support/INPUT";
     INPUT.Read(input_file);
@@ -320,14 +287,16 @@ TEST_F(InputConvTest, nspin) {
     EXPECT_EQ(GlobalV::soc_lambda, INPUT.soc_lambda);
 }
 
-TEST_F(InputConvTest, nupdown) {
+TEST_F(InputConvTest, nupdown)
+{
     INPUT.Default();
     std::string input_file = "./support/INPUT";
     INPUT.Read(input_file);
     Input_Conv::Convert();
 }
 
-TEST_F(InputConvTest, restart_save) {
+TEST_F(InputConvTest, restart_save)
+{
     INPUT.Default();
     std::string input_file = "./support/INPUT";
     INPUT.Read(input_file);
@@ -342,7 +311,8 @@ TEST_F(InputConvTest, restart_save) {
     EXPECT_EQ(GlobalC::restart.info_save.save_H, true);
 }
 
-TEST_F(InputConvTest, restart_save2) {
+TEST_F(InputConvTest, restart_save2)
+{
     INPUT.Default();
     std::string input_file = "./support/INPUT";
     INPUT.Read(input_file);
@@ -352,7 +322,8 @@ TEST_F(InputConvTest, restart_save2) {
     EXPECT_EQ(GlobalC::restart.info_save.save_charge, true);
 }
 
-TEST_F(InputConvTest, restart_load) {
+TEST_F(InputConvTest, restart_load)
+{
     INPUT.Default();
     std::string input_file = "./support/INPUT";
     INPUT.Read(input_file);
@@ -364,7 +335,8 @@ TEST_F(InputConvTest, restart_load) {
     EXPECT_EQ(GlobalC::restart.info_load.load_H, true);
 }
 
-TEST_F(InputConvTest, restart_load2) {
+TEST_F(InputConvTest, restart_load2)
+{
     INPUT.Default();
     std::string input_file = "./support/INPUT";
     INPUT.Read(input_file);
@@ -374,7 +346,8 @@ TEST_F(InputConvTest, restart_load2) {
     EXPECT_EQ(GlobalC::restart.info_load.load_charge, true);
 }
 
-TEST_F(InputConvTest, cell_factor) {
+TEST_F(InputConvTest, cell_factor)
+{
     INPUT.Default();
     std::string input_file = "./support/INPUT";
     INPUT.Read(input_file);
@@ -384,7 +357,8 @@ TEST_F(InputConvTest, cell_factor) {
     EXPECT_EQ(INPUT.cell_factor, 2.0);
 }
 
-TEST_F(InputConvTest, neighbour) {
+TEST_F(InputConvTest, neighbour)
+{
     INPUT.Default();
     std::string input_file = "./support/INPUT";
     INPUT.Read(input_file);
@@ -395,7 +369,8 @@ TEST_F(InputConvTest, neighbour) {
     EXPECT_EQ(elecstate::ElecStateLCAO<double>::need_psi_grid, false);
 }
 
-TEST_F(InputConvTest, neighbour2) {
+TEST_F(InputConvTest, neighbour2)
+{
     INPUT.Default();
     std::string input_file = "./support/INPUT";
     INPUT.Read(input_file);
@@ -405,22 +380,15 @@ TEST_F(InputConvTest, neighbour2) {
     testing::internal::CaptureStdout();
     EXPECT_EXIT(Input_Conv::Convert(), ::testing::ExitedWithCode(0), "");
     output2 = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(
-        output2,
-        testing::HasSubstr(
-            "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"));
-    EXPECT_THAT(
-        output2,
-        testing::HasSubstr(
-            "                         NOTICE                          "));
-    EXPECT_THAT(
-        output2,
-        testing::HasSubstr("test_neighbour must be done with 1 processor"));
+    EXPECT_THAT(output2, testing::HasSubstr("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"));
+    EXPECT_THAT(output2, testing::HasSubstr("                         NOTICE                          "));
+    EXPECT_THAT(output2, testing::HasSubstr("test_neighbour must be done with 1 processor"));
     EXPECT_THAT(output2, testing::HasSubstr("CHECK IN FILE : warning.log"));
     EXPECT_THAT(output2, testing::HasSubstr("TIME STATISTICS"));
 }
 
-TEST_F(InputConvTest, compile) {
+TEST_F(InputConvTest, compile)
+{
     INPUT.Default();
     std::string input_file = "./support/INPUT";
     INPUT.Read(input_file);
@@ -429,20 +397,15 @@ TEST_F(InputConvTest, compile) {
     testing::internal::CaptureStdout();
     EXPECT_EXIT(Input_Conv::Convert(), ::testing::ExitedWithCode(0), "");
     output2 = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(
-        output2,
-        testing::HasSubstr(
-            "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"));
-    EXPECT_THAT(
-        output2,
-        testing::HasSubstr(
-            "                         NOTICE                          "));
+    EXPECT_THAT(output2, testing::HasSubstr("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"));
+    EXPECT_THAT(output2, testing::HasSubstr("                         NOTICE                          "));
     EXPECT_THAT(output2, testing::HasSubstr("please compile with DeePKS"));
     EXPECT_THAT(output2, testing::HasSubstr("CHECK IN FILE : warning.log"));
     EXPECT_THAT(output2, testing::HasSubstr("TIME STATISTICS"));
 }
 
-TEST_F(InputConvTest, globalReadinDir) {
+TEST_F(InputConvTest, globalReadinDir)
+{
     INPUT.Default();
     std::string input_file = "./support/INPUT";
     INPUT.Read(input_file);
@@ -451,7 +414,8 @@ TEST_F(InputConvTest, globalReadinDir) {
     EXPECT_EQ(GlobalV::global_readin_dir, "/root/");
 }
 
-TEST_F(InputConvTest, parse) {
+TEST_F(InputConvTest, parse)
+{
     INPUT.Default();
     std::string input_file = "./support/INPUT";
     INPUT.Read(input_file);
@@ -460,7 +424,8 @@ TEST_F(InputConvTest, parse) {
     EXPECT_EQ(module_tddft::Evolve_elec::td_vext_dire_case.size(), 0);
 }
 
-TEST_F(InputConvTest, parse2) {
+TEST_F(InputConvTest, parse2)
+{
     INPUT.Default();
     std::string input_file = "./support/INPUT";
     INPUT.Read(input_file);
@@ -469,7 +434,8 @@ TEST_F(InputConvTest, parse2) {
     EXPECT_EQ(GlobalV::ocp_kb.size(), 0);
 }
 
-TEST_F(InputConvTest, ParseExpressionDouble) {
+TEST_F(InputConvTest, ParseExpressionDouble)
+{
     std::vector<double> vec;
     std::string input = "2*3.5 1.2 0.5";
     Input_Conv::parse_expression(input, vec);
@@ -481,7 +447,8 @@ TEST_F(InputConvTest, ParseExpressionDouble) {
 }
 
 #ifdef __LCAO
-TEST_F(InputConvTest, ConvertUnitsWithEmptyParams) {
+TEST_F(InputConvTest, ConvertUnitsWithEmptyParams)
+{
     std::string params = "";
     double c = 2.0;
     std::vector<double> expected = {};
@@ -489,7 +456,8 @@ TEST_F(InputConvTest, ConvertUnitsWithEmptyParams) {
     EXPECT_EQ(result, expected);
 }
 
-TEST_F(InputConvTest, ConvertUnitsWithSingleParam) {
+TEST_F(InputConvTest, ConvertUnitsWithSingleParam)
+{
     std::string params = "1.23";
     double c = 2.0;
     std::vector<double> expected = {2.46};
@@ -497,7 +465,8 @@ TEST_F(InputConvTest, ConvertUnitsWithSingleParam) {
     EXPECT_EQ(result, expected);
 }
 
-TEST_F(InputConvTest, ConvertUnitsWithMultipleParams) {
+TEST_F(InputConvTest, ConvertUnitsWithMultipleParams)
+{
     std::string params = "1.23 4.56 7.89";
     double c = 0.5;
     std::vector<double> expected = {0.615, 2.28, 3.945};
@@ -505,7 +474,8 @@ TEST_F(InputConvTest, ConvertUnitsWithMultipleParams) {
     EXPECT_EQ(result, expected);
 }
 
-TEST_F(InputConvTest, ReadTdEfieldTest) {
+TEST_F(InputConvTest, ReadTdEfieldTest)
+{
     Input_Conv::read_td_efield();
 
     EXPECT_EQ(elecstate::H_TDDFT_pw::stype, 0);
@@ -514,46 +484,29 @@ TEST_F(InputConvTest, ReadTdEfieldTest) {
     EXPECT_EQ(elecstate::H_TDDFT_pw::tend, 1000);
     EXPECT_EQ(elecstate::H_TDDFT_pw::lcut1, 0.05);
     EXPECT_EQ(elecstate::H_TDDFT_pw::lcut2, 0.95);
-    EXPECT_NEAR(elecstate::H_TDDFT_pw::gauss_omega[0],
-                22.13 * 2 * ModuleBase::PI * ModuleBase::AU_to_FS,
-                1e-8);
+    EXPECT_NEAR(elecstate::H_TDDFT_pw::gauss_omega[0], 22.13 * 2 * ModuleBase::PI * ModuleBase::AU_to_FS, 1e-8);
     EXPECT_EQ(elecstate::H_TDDFT_pw::gauss_phase[0], 0.0);
-    EXPECT_NEAR(elecstate::H_TDDFT_pw::gauss_sigma[0],
-                30.0 / ModuleBase::AU_to_FS,
-                1e-8);
+    EXPECT_NEAR(elecstate::H_TDDFT_pw::gauss_sigma[0], 30.0 / ModuleBase::AU_to_FS, 1e-8);
     EXPECT_EQ(elecstate::H_TDDFT_pw::gauss_t0[0], 100.0);
-    EXPECT_NEAR(elecstate::H_TDDFT_pw::gauss_amp[0],
-                0.25 * ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV,
-                1e-8);
-    EXPECT_NEAR(elecstate::H_TDDFT_pw::trape_omega[0],
-                1.60 * 2 * ModuleBase::PI * ModuleBase::AU_to_FS,
-                1e-8);
+    EXPECT_NEAR(elecstate::H_TDDFT_pw::gauss_amp[0], 0.25 * ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV, 1e-8);
+    EXPECT_NEAR(elecstate::H_TDDFT_pw::trape_omega[0], 1.60 * 2 * ModuleBase::PI * ModuleBase::AU_to_FS, 1e-8);
     EXPECT_EQ(elecstate::H_TDDFT_pw::trape_phase[0], 0.0);
     EXPECT_EQ(elecstate::H_TDDFT_pw::trape_t1[0], 1875);
     EXPECT_EQ(elecstate::H_TDDFT_pw::trape_t2[0], 5625);
     EXPECT_EQ(elecstate::H_TDDFT_pw::trape_t3[0], 7500);
-    EXPECT_NEAR(elecstate::H_TDDFT_pw::trape_amp[0],
-                2.74 * ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV,
-                1e-8);
-    EXPECT_NEAR(elecstate::H_TDDFT_pw::trigo_omega1[0],
-                1.164656 * 2 * ModuleBase::PI * ModuleBase::AU_to_FS,
-                1e-8);
-    EXPECT_NEAR(elecstate::H_TDDFT_pw::trigo_omega2[0],
-                0.029116 * 2 * ModuleBase::PI * ModuleBase::AU_to_FS,
-                1e-8);
+    EXPECT_NEAR(elecstate::H_TDDFT_pw::trape_amp[0], 2.74 * ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV, 1e-8);
+    EXPECT_NEAR(elecstate::H_TDDFT_pw::trigo_omega1[0], 1.164656 * 2 * ModuleBase::PI * ModuleBase::AU_to_FS, 1e-8);
+    EXPECT_NEAR(elecstate::H_TDDFT_pw::trigo_omega2[0], 0.029116 * 2 * ModuleBase::PI * ModuleBase::AU_to_FS, 1e-8);
     EXPECT_EQ(elecstate::H_TDDFT_pw::trigo_phase1[0], 0.0);
     EXPECT_EQ(elecstate::H_TDDFT_pw::trigo_phase2[0], 0.0);
-    EXPECT_NEAR(elecstate::H_TDDFT_pw::trigo_amp[0],
-                2.74 * ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV,
-                1e-8);
+    EXPECT_NEAR(elecstate::H_TDDFT_pw::trigo_amp[0], 2.74 * ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV, 1e-8);
     EXPECT_EQ(elecstate::H_TDDFT_pw::heavi_t0[0], 100);
-    EXPECT_NEAR(elecstate::H_TDDFT_pw::heavi_amp[0],
-                1.00 * ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV,
-                1e-8);
+    EXPECT_NEAR(elecstate::H_TDDFT_pw::heavi_amp[0], 1.00 * ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV, 1e-8);
 }
 
 #ifdef __PEXSI
-TEST_F(InputConvTest, PEXSI) {
+TEST_F(InputConvTest, PEXSI)
+{
     INPUT.Default();
     std::string input_file = "./support/INPUT";
     INPUT.Read(input_file);

@@ -1,11 +1,11 @@
-#include "module_base/tool_quit.h"
-#include "module_io/read_input.h"
-#include "module_parameter/parameter.h"
+#include <cstdio>
+#include <fstream>
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include <cstdio>
-#include <fstream>
+#include "module_base/tool_quit.h"
+#include "module_io/read_input.h"
+#include "module_parameter/parameter.h"
 // #ifdef __MPI
 #include "module_base/parallel_global.h"
 #include "module_basis/module_pw/test/test_tool.h"
@@ -23,12 +23,14 @@
  *    - check_mode = true
  */
 
-class InputParaTest : public testing::Test {
+class InputParaTest : public testing::Test
+{
   protected:
 };
 
 // #ifdef __MPI
-TEST_F(InputParaTest, ParaRead) {
+TEST_F(InputParaTest, ParaRead)
+{
     ModuleIO::ReadInput readinput(GlobalV::MY_RANK);
     Parameter param;
     readinput.read_parameters(param, "./support/INPUT");
@@ -395,8 +397,10 @@ TEST_F(InputParaTest, ParaRead) {
     EXPECT_EQ(param.get().sc_file, "sc.json");
 }
 
-TEST_F(InputParaTest, Check) {
-    if (GlobalV::MY_RANK == 0) {
+TEST_F(InputParaTest, Check)
+{
+    if (GlobalV::MY_RANK == 0)
+    {
         std::ofstream emptyfile("./empty_INPUT");
         emptyfile << "INPUT_PARAMETERS                \n";
         emptyfile << "stru_file    ./support/STRU     \n";
@@ -406,19 +410,17 @@ TEST_F(InputParaTest, Check) {
     ModuleIO::ReadInput readinput(GlobalV::MY_RANK);
     Parameter param;
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(readinput.read_parameters(param, "./empty_INPUT"),
-                ::testing::ExitedWithCode(0),
-                "");
+    EXPECT_EXIT(readinput.read_parameters(param, "./empty_INPUT"), ::testing::ExitedWithCode(0), "");
     std::string output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(
-        output,
-        testing::HasSubstr("INPUT parameters have been successfully checked!"));
-    if (GlobalV::MY_RANK == 0) {
+    EXPECT_THAT(output, testing::HasSubstr("INPUT parameters have been successfully checked!"));
+    if (GlobalV::MY_RANK == 0)
+    {
         EXPECT_TRUE(std::remove("./empty_INPUT") == 0);
     }
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char** argv)
+{
     MPI_Init(&argc, &argv);
     testing::InitGoogleTest(&argc, argv);
 

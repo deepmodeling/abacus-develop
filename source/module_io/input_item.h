@@ -1,20 +1,26 @@
 #ifndef INPUT_ITEM_H
 #define INPUT_ITEM_H
-#include "module_parameter/parameter.h"
-
 #include <functional>
 #include <map>
 #include <sstream>
 #include <string>
 #include <vector>
-namespace ModuleIO {
-class Input_Item {
+
+#include "module_parameter/parameter.h"
+namespace ModuleIO
+{
+class Input_Item
+{
   public:
     Input_Item(){};
 
-    Input_Item(const std::string& label_in) { label = label_in; }
+    Input_Item(const std::string& label_in)
+    {
+        label = label_in;
+    }
 
-    Input_Item(const Input_Item& item) {
+    Input_Item(const Input_Item& item)
+    {
         label = item.label;
         str_values = item.str_values;
         final_value.str(item.final_value.str());
@@ -27,9 +33,8 @@ class Input_Item {
 
     std::string label;                   ///< label of the input item
     std::vector<std::string> str_values; ///< string values of the input item
-    std::stringstream
-        final_value; ///< final value for writing to output INPUT file
-    
+    std::stringstream final_value;       ///< final value for writing to output INPUT file
+
     bool is_read() const ///< check if the input item is read
     {
         return !str_values.empty();
@@ -51,11 +56,9 @@ class Input_Item {
     // ====== !!! These functions are complete.        ======
     // ====== !!! Do not add any more functions here.  ======
     /// read value function
-    std::function<void(const Input_Item&, Parameter&)> readvalue
-        = [](const Input_Item& item, Parameter& param) {};
+    std::function<void(const Input_Item&, Parameter&)> readvalue = [](const Input_Item& item, Parameter& param) {};
     /// check value function
-    std::function<void(const Input_Item&, const Parameter&)> checkvalue
-        = nullptr;
+    std::function<void(const Input_Item&, const Parameter&)> checkvalue = nullptr;
     /// reset this value when some conditions are met
     std::function<void(const Input_Item&, Parameter&)> resetvalue = nullptr;
     /// get final_value function for output INPUT file

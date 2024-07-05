@@ -10,7 +10,8 @@
 #include <sstream>
 #include <string>
 #include <vector>
-namespace GlobalV {
+namespace GlobalV
+{
 
 //----------------------------------------------------------
 // EXPLAIN : Basic Global Variables
@@ -29,12 +30,11 @@ bool PSEUDO_MESH = false;
 
 std::string CALCULATION = "scf";
 std::string ESOLVER_TYPE = "ksdft";
-int EFIELD_FLAG = 0;    // 5: add electric field
-int DIP_COR_FLAG = 0;   // 7: add dipole field
-bool GATE_FLAG = false; // add gate field
-bool out_app_flag
-    = true; // whether output r(R), H(R), S(R), T(R), and dH(R) matrices in an
-            // append manner during MD  liuyu 2023-03-20
+int EFIELD_FLAG = 0;      // 5: add electric field
+int DIP_COR_FLAG = 0;     // 7: add dipole field
+bool GATE_FLAG = false;   // add gate field
+bool out_app_flag = true; // whether output r(R), H(R), S(R), T(R), and dH(R) matrices in an
+                          // append manner during MD  liuyu 2023-03-20
 int out_ndigits = 8;
 std::string DFT_FUNCTIONAL = "default";
 double XC_TEMPERATURE = 0.0;
@@ -42,8 +42,7 @@ int NSPIN = 1;       // LDA
 bool TWO_EFERMI = 0; // two fermi energy, exist only magnetization is fixed.
 double nupdown = 0.0;
 int CURRENT_K = 0;
-int CAL_FORCE
-    = 0; // if cal_force >1, means do the grid integration 'cal_force' times.
+int CAL_FORCE = 0; // if cal_force >1, means do the grid integration 'cal_force' times.
 double FORCE_THR = 1.0e-3;
 bool CAL_STRESS = false;
 int NUM_STREAM = 4;
@@ -117,8 +116,7 @@ int MY_POOL = 0; ///< global index of pool (count in pool)
 int MY_STOGROUP = 0;
 int NPROC_IN_POOL = 1; ///< local number of process in a pool
 int NPROC_IN_STOGROUP = 1;
-int RANK_IN_POOL
-    = 0; ///< global index of pool (count in process), my_rank in each pool
+int RANK_IN_POOL = 0; ///< global index of pool (count in process), my_rank in each pool
 int RANK_IN_STOGROUP = 0;
 int DRANK = -1; ///< mohan add 2012-01-13, must be -1, so we can recognize who
                 ///< didn't in DIAG_WORLD
@@ -203,10 +201,9 @@ double soc_lambda = 1.0;
 
 bool FINAL_SCF = false; // LiuXh add 20180619
 
-bool deepks_out_labels
-    = false;             // caoyu add 2021-10-16 for DeePKS, wenfei 2022-1-16
-bool deepks_scf = false; // caoyu add 2021-10-16 for DeePKS, wenfei 2022-1-16
-bool deepks_bandgap = false; // for bandgap label. QO added 2021-12-15
+bool deepks_out_labels = false; // caoyu add 2021-10-16 for DeePKS, wenfei 2022-1-16
+bool deepks_scf = false;        // caoyu add 2021-10-16 for DeePKS, wenfei 2022-1-16
+bool deepks_bandgap = false;    // for bandgap label. QO added 2021-12-15
 bool deepks_out_unittest = false;
 
 bool deepks_equiv = false;

@@ -1,11 +1,12 @@
+#include <sstream>
+#include <string>
+
 #include "input.h"
 #include "input_conv.h"
 #include "module_parameter/parameter.h"
 
-#include <sstream>
-#include <string>
-
-void Input_Conv::tmp_convert() {
+void Input_Conv::tmp_convert()
+{
     INPUT.stru_file = PARAM.get().stru_file;
     INPUT.pseudo_dir = PARAM.get().pseudo_dir;
     INPUT.orbital_dir = PARAM.get().orbital_dir;
@@ -201,12 +202,14 @@ void Input_Conv::tmp_convert() {
     INPUT.dft_plus_u = PARAM.get().dft_plus_u;
     delete[] INPUT.orbital_corr;
     INPUT.orbital_corr = new int[INPUT.ntype];
-    for (int i = 0; i < INPUT.ntype; ++i) {
+    for (int i = 0; i < INPUT.ntype; ++i)
+    {
         INPUT.orbital_corr[i] = PARAM.get().orbital_corr[i];
     }
     delete[] INPUT.hubbard_u;
     INPUT.hubbard_u = new double[INPUT.ntype];
-    for (int i = 0; i < INPUT.ntype; ++i) {
+    for (int i = 0; i < INPUT.ntype; ++i)
+    {
         INPUT.hubbard_u[i] = PARAM.get().sup.hubbard_u[i];
     }
     INPUT.omc = PARAM.get().omc;

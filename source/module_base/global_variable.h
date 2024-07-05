@@ -12,7 +12,8 @@
 #include <string>
 #include <vector>
 
-namespace GlobalV {
+namespace GlobalV
+{
 //==========================================================
 // EXPLAIN : Basic Global Variables
 //==========================================================
@@ -29,16 +30,14 @@ extern bool PSEUDO_MESH;
 
 extern std::string CALCULATION; // 2 "scf";"nscf" ;"symmetry"
 extern std::string ESOLVER_TYPE;
-extern int EFIELD_FLAG;  // 5 add electric field
-extern int DIP_COR_FLAG; // 7 add dipole correction
-extern bool GATE_FLAG;   // add gate field
-extern bool
-    out_app_flag; // whether output r(R), H(R), S(R), T(R), and dH(R) matrices
-                  // in an append manner during MD liuyu 2023-03-20
+extern int EFIELD_FLAG;   // 5 add electric field
+extern int DIP_COR_FLAG;  // 7 add dipole correction
+extern bool GATE_FLAG;    // add gate field
+extern bool out_app_flag; // whether output r(R), H(R), S(R), T(R), and dH(R) matrices
+                          // in an append manner during MD liuyu 2023-03-20
 extern int out_ndigits;
 
-extern std::string
-    DFT_FUNCTIONAL; // 6.5 change the DFT functional from input file.
+extern std::string DFT_FUNCTIONAL; // 6.5 change the DFT functional from input file.
 extern double XC_TEMPERATURE;
 extern int NSPIN;       // 7
 extern bool TWO_EFERMI; // 7.5 two fermi energy, exist if nupdown isn't zero.
@@ -177,9 +176,8 @@ extern std::string global_out_dir;
 extern std::string global_orbital_dir; // liuyu add 2021-08-14
 extern std::string global_readin_dir;  // zhengdy modified
 extern std::string global_stru_dir;    // liuyu add 2022-05-24 for MD STRU
-extern std::string
-    global_matrix_dir; // liuyu add 2022-09-19 for HS matrix outpu, jiyy
-                       // modified 2023-01-23 for R matrix output
+extern std::string global_matrix_dir;  // liuyu add 2022-09-19 for HS matrix outpu, jiyy
+                                       // modified 2023-01-23 for R matrix output
 
 extern std::ofstream ofs_running;
 extern std::ofstream ofs_warning;
@@ -232,9 +230,9 @@ extern bool FINAL_SCF; // LiuXh add 20180619
 
 extern bool deepks_out_labels; // (need libnpy) prints energy and force labels
                                // and descriptors for training, wenfei 2022-1-12
-extern bool deepks_scf; //(need libnpy and libtorch) if set 1, a trained model
-                        // would be needed to cal V_delta and F_delta
-extern bool deepks_bandgap; // for bandgap label. QO added 2021-12-15
+extern bool deepks_scf;        //(need libnpy and libtorch) if set 1, a trained model
+                               // would be needed to cal V_delta and F_delta
+extern bool deepks_bandgap;    // for bandgap label. QO added 2021-12-15
 
 extern bool deepks_equiv; // whether to use equviariant version of DeePKS
 
@@ -307,8 +305,7 @@ extern bool out_bandgap;
 extern int out_interval;
 
 // Deltaspin related
-extern bool
-    sc_mag_switch; // 0: no deltaspin; 1: constrain atomic magnetic moments;
+extern bool sc_mag_switch;     // 0: no deltaspin; 1: constrain atomic magnetic moments;
 extern bool decay_grad_switch; // 0: decay grad will be set to zero; 1: with
                                // decay grad set for some elements
 extern double sc_thr;
