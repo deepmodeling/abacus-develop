@@ -185,7 +185,7 @@ void OperatorLCAO<TK, TR>::init(const int ik_in)
 
             //update HK next
             //in cal_type=lcao_exx, HK only need to update from one node
-            this->contributeHk(ik_in);
+            // this->contributeHk(ik_in);
 
             break;
         }

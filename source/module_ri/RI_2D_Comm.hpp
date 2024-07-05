@@ -215,4 +215,51 @@ int RI_2D_Comm::get_iwt(const int iat, const int iw_b, const int is_b)
 	return iwt;
 }
 
+template<typename Tdata, typename TR>
+void RI_2D_Comm::add_HexxR(
+    const int current_spin,
+    const double alpha,
+    const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Hs,
+    const Parallel_Orbitals& pv,
+    const int npol,
+    hamilt::HContainer<TR>& hR,
+    const RI::Cell_Nearest<int, int, 3, double, 3>* const cell_nearest)
+{
+    ModuleBase::TITLE("RI_2D_Comm", "add_HexxR");
+    ModuleBase::timer::tick("RI_2D_Comm", "add_HexxR");
+
+    for (const auto& Hs_tmpA : Hs[current_spin])
+    {
+        const TA& iat0 = Hs_tmpA.first;
+        for (const auto& Hs_tmpB : Hs_tmpA.second)
+        {
+            const TA& iat1 = Hs_tmpB.first.first;
+            const Abfs::Vector3_Order<int> R = RI_Util::array3_to_Vector3(
+                (cell_nearest ?
+                    cell_nearest->get_cell_nearest_discrete(iat0, iat1, Hs_tmpB.first.second)
+                    : Hs_tmpB.first.second));
+            hamilt::BaseMatrix<TR>* HlocR = hR.find_matrix(iat0, iat1, R.x, R.y, R.z);
+            if (HlocR == nullptr)
+            { // add R to HContainer
+                hamilt::AtomPair<TR> tmp(iat0, iat1, R.x, R.y, R.z, &pv);
+                hR.insert_pair(tmp);
+                HlocR = hR.find_matrix(iat0, iat1, R.x, R.y, R.z);
+            }
+            auto row_indexes = pv.get_indexes_row(iat0);
+            auto col_indexes = pv.get_indexes_col(iat1);
+            const RI::Tensor<Tdata>& HexxR = (Tdata)alpha * Hs_tmpB.second;
+            // std::cout << "iat0=" << iat0 << ", iat1=" << iat1 << std::endl;
+            for (int lw0 = 0;lw0 < row_indexes.size();lw0 += npol)
+                for (int lw1 = 0;lw1 < col_indexes.size();lw1 += npol)
+                {
+                    const int& gw0 = row_indexes[lw0];
+                    const int& gw1 = col_indexes[lw1];
+                    // std::cout << "gw0=" << gw0 << ", gw1=" << gw1 << ", lw0=" << lw0 << ", lw1=" << lw1 << std::endl;
+                    HlocR->add_element(lw0, lw1, RI::Global_Func::convert<TR>(HexxR(gw0, gw1)));
+                }
+        }
+    }
+    ModuleBase::timer::tick("RI_2D_Comm", "add_HexxR");
+}
+
 #endif

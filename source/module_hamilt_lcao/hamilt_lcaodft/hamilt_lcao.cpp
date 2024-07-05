@@ -361,16 +361,17 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
 #ifdef __EXX
     if (GlobalC::exx_info.info_global.cal_exx)
     {
-        Operator<TK>* exx = new OperatorEXX<OperatorLCAO<TK, TR>>(this->hsk,
-                                                                  LM_in,
-                                                                  this->hR,
-                                                                  *this->kv,
-                                                                  LM_in->Hexxd,
-                                                                  LM_in->Hexxc,
-                                                                  exx_two_level_step,
-                                                                  !GlobalC::restart.info_load.restart_exx
-                                                                      && GlobalC::restart.info_load.load_H);
-        this->getOperator()->add(exx);
+    Operator<TK>*exx = new OperatorEXX<OperatorLCAO<TK, TR>>(this->hsk,
+            LM_in,
+            this->hR,
+            *this->kv,
+            LM_in->Hexxd,
+            LM_in->Hexxc,
+            Add_Hexx_Type::R,
+            exx_two_level_step,
+            !GlobalC::restart.info_load.restart_exx
+            && GlobalC::restart.info_load.load_H);
+            this->getOperator()->add(exx);
     }
 #endif
     // if NSPIN==2, HR should be separated into two parts, save HR into this->hRS2
