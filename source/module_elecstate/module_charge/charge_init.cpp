@@ -160,7 +160,7 @@ void Charge::init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMa
         }
         else if (GlobalV::init_chg == "file")
         {
-            ModuleBase::WARNING_QUIT("Charge::init_rho", "Failed to read in charge density from file. And if you want to use atomic charge initialization, please set init_chg to atomic in INPUT.");
+            ModuleBase::WARNING_QUIT("Charge::init_rho", "Failed to read in charge density from file.\nIf you want to use atomic charge initialization, \nplease set init_chg to atomic in INPUT.");
         }
     }
 
