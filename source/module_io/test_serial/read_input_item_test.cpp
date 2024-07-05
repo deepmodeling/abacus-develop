@@ -519,6 +519,7 @@ TEST_F(InputTest, Item_test) {
 
         param.input.ndx = 1;
         param.input.ndy = 0;
+        it->second.str_values = {"1"};
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.checkvalue(it->second, param),
                     ::testing::ExitedWithCode(0),
@@ -544,6 +545,7 @@ TEST_F(InputTest, Item_test) {
 
         param.input.ndy = 1;
         param.input.ndz = 0;
+        it->second.str_values = {"1"};
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.checkvalue(it->second, param),
                     ::testing::ExitedWithCode(0),
@@ -569,6 +571,7 @@ TEST_F(InputTest, Item_test) {
 
         param.input.ndz = 1;
         param.input.nz = 2;
+        it->second.str_values = {"1"};
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.checkvalue(it->second, param),
                     ::testing::ExitedWithCode(0),
