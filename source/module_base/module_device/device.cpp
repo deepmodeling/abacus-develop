@@ -64,14 +64,14 @@ int stringCmp(const void* a, const void* b)
     char* n = (char*)b;
     int i, sum = 0;
 
-    for (i = 0; i < MPI_MAX_PROCESSOR_NAME; i++)
-        if (m[i] == n[i])
+    for (i = 0; i < MPI_MAX_PROCESSOR_NAME; i++) {
+        if (m[i] == n[i]) {
             continue;
-        else
-        {
+        } else {
             sum = m[i] - n[i];
             break;
         }
+    }
     return sum;
 }
 int get_node_rank()
@@ -96,8 +96,13 @@ int get_node_rank()
 
     strcpy(host_names[rank], host_name);
 
-    for (n = 0; n < nprocs; n++)
-        MPI_Bcast(&(host_names[n]), MPI_MAX_PROCESSOR_NAME, MPI_CHAR, n, MPI_COMM_WORLD);
+    for (n = 0; n < nprocs; n++) {
+        MPI_Bcast(&(host_names[n]),
+                  MPI_MAX_PROCESSOR_NAME,
+                  MPI_CHAR,
+                  n,
+                  MPI_COMM_WORLD);
+    }
     qsort(host_names, nprocs, sizeof(char[MPI_MAX_PROCESSOR_NAME]), stringCmp);
 
     color = 0;
