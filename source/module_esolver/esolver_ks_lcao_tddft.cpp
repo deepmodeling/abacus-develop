@@ -408,7 +408,7 @@ void ESolver_KS_LCAO_TDDFT::after_scf(const int istep) {
                                 kv,
                                 two_center_bundle_.overlap_orb.get(),
                                 tmp_DM->get_paraV_pointer(),
-                                this->RA); // mohan add 2024-04-02
+                                this->RA);
     }
     ESolver_KS_LCAO<std::complex<double>, double>::after_scf(istep);
 }
