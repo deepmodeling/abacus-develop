@@ -53,7 +53,7 @@ void TDEkinetic<OperatorLCAO<std::complex<double>, double>>::td_ekinetic_scalar(
                                                                                 double overlap,
                                                                                 int nnr)
 {
-    // the correction term A^2/2 , 4.0 due to the unit transformation
+    // the correction term A^2/2. From Hatree to Ry, it needs to be multiplied by 2.0
     std::complex<double> tmp = {cart_At.norm2() * overlap, 0};
     Hloc[nnr] += tmp;
     return;
@@ -66,7 +66,7 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::td_ekinetic_grad(std::complex<double>* Hl
 {
     // the correction term -iA dot ∇r
     //∇ refer to the integral ∫𝜙(𝑟)𝜕/𝜕𝑟𝜙(𝑟−𝑅)𝑑𝑟,but abacus only provide the integral of ∫𝜙(𝑟)𝜕/𝜕R𝜙(𝑟−𝑅)𝑑𝑟. An extra
-    //minus must be counted in. The final term is iA dot ∇R
+    //minus must be counted in. The final term is iA dot ∇R. From Hatree to Ry, it needs to be multiplied by 2.0
     std::complex<double> tmp = {0, grad_overlap * cart_At};
     Hloc[nnr] += tmp * 2.0;
     return;
