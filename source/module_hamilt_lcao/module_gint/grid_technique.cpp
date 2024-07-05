@@ -615,24 +615,34 @@ void Grid_Technique::init_gpu_gint_variables(const UnitCell& ucell,
                                ucell.ntype * ucell.nwmax * this->nr_max * sizeof(double) * 2,
                                cudaMemcpyHostToDevice));
 
-    checkCudaErrors(
-        cudaMalloc((void**)&psi_u_g,
-                   ucell.ntype * ucell.nwmax * nr_max * sizeof(double) * 2));
-    checkCudaErrors(
-        cudaMemcpy(psi_u_g,
-                   psi_u_now,
-                   ucell.ntype * ucell.nwmax * nr_max * sizeof(double) * 2,
-                   cudaMemcpyHostToDevice));
+    checkCudaErrors(cudaMalloc((void**)&psi_u_g,
+                                ucell.ntype * ucell.nwmax * nr_max * sizeof(double) * 2));
+    checkCudaErrors(cudaMemcpy(psi_u_g,
+                                psi_u_now,
+                                ucell.ntype * ucell.nwmax * nr_max * sizeof(double) * 2,
+                                cudaMemcpyHostToDevice));
 
     checkCudaErrors(cudaMalloc((void**)&atom_new_g,
                                ucell.ntype * ucell.nwmax * sizeof(bool)));
+    checkCudaErrors(cudaMemcpy(atom_new_g,
+                                 atom_iw2_new_now,
+                                 ucell.ntype * ucell.nwmax * sizeof(bool),
+                                 cudaMemcpyHostToDevice));
+
     checkCudaErrors(cudaMalloc((void**)&atom_ylm_g,
                                ucell.ntype * ucell.nwmax * sizeof(int)));
-    checkCudaErrors(
-    cudaMemcpy(atom_l_g,
-               atom_iw2_l_now,
-               ucell.ntype * ucell.nwmax * sizeof(int),
-               cudaMemcpyHostToDevice));
+
+    checkCudaErrors(cudaMemcpy(atom_ylm_g,
+                                atom_iw2_ylm_now,
+                                ucell.ntype * ucell.nwmax * sizeof(int),
+                                cudaMemcpyHostToDevice));
+
+    checkCudaErrors(cudaMalloc((void**)&atom_l_g,
+                                ucell.ntype * ucell.nwmax * sizeof(int)));
+    checkCudaErrors(cudaMemcpy(atom_l_g,
+                                atom_iw2_l_now,
+                                ucell.ntype * ucell.nwmax * sizeof(int),
+                                cudaMemcpyHostToDevice));
 
     checkCudaErrors(cudaMalloc((void**)&rcut_g, ucell.ntype * sizeof(double)));
     checkCudaErrors(cudaMemcpy(rcut_g,
