@@ -198,7 +198,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                                                           atom1->iw2n[iw1],
                                                           tau0 * this->ucell->lat0,
                                                           T0,
-                                                          cart_At / 2.0,
+                                                          cart_At,
                                                           TD_Velocity::out_current);
                     for (int dir = 0; dir < nlm_dim; dir++)
                     {
@@ -412,7 +412,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
             static_cast<OperatorLCAO<TK, TR>*>(this->next_sub_op)->set_HR_fixed(this->hR_tmp);
         }
         // calculate the values in hR_tmp
-        this->calculate_HR();
+        //this->calculate_HR();
         this->hR_tmp_done = true;
     }
     ModuleBase::timer::tick("TDNonlocal", "contributeHR");
