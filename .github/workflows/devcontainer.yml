@@ -25,7 +25,7 @@ jobs:
         with:
           images: |
             ghcr.io/deepmodeling/abacus-${{ matrix.dockerfile }}
-            registry.dp.tech/deepmodeling/abacus-${{ matrix.dockerfile }}
+            dp-harbor-registry.us-east-1.cr.aliyuncs.com/deepmodeling/abacus-${{ matrix.dockerfile }}
           tags: |
             type=semver,pattern={{version}},enable=${{ github.ref_type == 'tag' }}
             type=raw,value=latest
