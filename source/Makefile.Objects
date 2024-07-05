@@ -242,6 +242,9 @@ OBJS_GINT=gint.o\
       grid_meshcell.o\
       grid_meshk.o\
       grid_technique.o\
+      gint_force_cpu_interface.o\
+      gint_rho_cpu_interface.o\
+      gint_vl_cpu_interface.o\
       cal_psir_ylm.o\
       cal_dpsir_ylm.o\
       cal_ddpsir_ylm.o\
