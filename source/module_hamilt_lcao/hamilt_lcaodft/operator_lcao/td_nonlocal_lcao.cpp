@@ -412,7 +412,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
             static_cast<OperatorLCAO<TK, TR>*>(this->next_sub_op)->set_HR_fixed(this->hR_tmp);
         }
         // calculate the values in hR_tmp
-        //this->calculate_HR();
+        this->calculate_HR();
         this->hR_tmp_done = true;
     }
     ModuleBase::timer::tick("TDNonlocal", "contributeHR");
