@@ -92,6 +92,9 @@ class Grid_Technique : public Grid_MeshBall {
     // indexes for nnrg -> orbital index + R index
     std::vector<gridIntegral::gridIndex> nnrg_index;
 
+    // Determine whether the grid point integration is initialized.
+    bool  init_malloced;
+
     bool get_init_malloced() const { return init_malloced; }
 
     void set_pbc_grid(const int& ncx_in,
@@ -126,7 +129,6 @@ class Grid_Technique : public Grid_MeshBall {
                        const int& iat2) const;
 
   private:
-    void cal_max_box_index();
 
     int maxB1;
     int maxB2;
