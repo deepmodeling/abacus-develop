@@ -8,7 +8,6 @@
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_cell/unitcell.h"
 #if ((defined __CUDA) /* || (defined __ROCM) */)
-#include "kernels/cuda/cuda_tools.cuh"
 #include "kernels/cuda/gemm_selector.cuh"
 
 #include <cuda_runtime.h>
@@ -127,9 +126,7 @@ class Grid_Technique : public Grid_MeshBall {
                        const int& iat2) const;
 
   private:
-    // init_malloced as whether the class
-    // is initialized or not
-    bool init_malloced = true;
+    void cal_max_box_index();
 
     int maxB1;
     int maxB2;
@@ -152,7 +149,7 @@ class Grid_Technique : public Grid_MeshBall {
                             const int& startz_current,
                             const UnitCell& ucell);
     void init_atoms_on_grid2(const int* index2normal, const UnitCell& ucell);
-    void cal_grid_integration_index(void);
+    void cal_grid_integration_index();
     void cal_trace_lo(const UnitCell& ucell);
     void check_bigcell(int* ind_bigcell, char* bigcell_on_processor);
     void get_startind(const int& ny,
@@ -170,6 +167,8 @@ class Grid_Technique : public Grid_MeshBall {
     bool* atom_new_g;
     int* atom_ylm_g;
     int* atom_l_g;
+    double* rcut_g;
+    double*mcell_pos_g;
 
     int nstreams = 4;
     // streams[nstreams]

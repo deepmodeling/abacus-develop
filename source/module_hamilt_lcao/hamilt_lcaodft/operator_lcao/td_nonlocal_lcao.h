@@ -95,9 +95,10 @@ class TDNonlocal<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                     const int& iat2,
                     const int& T0,
                     const Parallel_Orbitals* paraV,
-                    const std::unordered_map<int, std::vector<std::complex<double>>>& nlm1_all,
-                    const std::unordered_map<int, std::vector<std::complex<double>>>& nlm2_all,
-                    std::complex<double>* data_pointer);
+                    const std::vector<std::unordered_map<int, std::vector<std::complex<double>>>>& nlm1_all,
+                    const std::vector<std::unordered_map<int, std::vector<std::complex<double>>>>& nlm2_all,
+                    std::complex<double>* data_pointer,
+                    std::complex<double>** data_pointer_c);
 
     /// @brief exact the nearest neighbor atoms from all adjacent atoms
     std::vector<AdjacentAtomInfo> adjs_all;

@@ -15,8 +15,7 @@ namespace hamilt
 {
 
 template <typename TK, typename TR>
-DeePKS<OperatorLCAO<TK, TR>>::DeePKS(Local_Orbital_Charge* loc_in,
-                                     LCAO_Matrix* LM_in,
+DeePKS<OperatorLCAO<TK, TR>>::DeePKS(LCAO_Matrix* LM_in,
                                      const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
                                      HContainer<TR>* hR_in,
                                      std::vector<TK>* hK_in,
@@ -25,7 +24,7 @@ DeePKS<OperatorLCAO<TK, TR>>::DeePKS(Local_Orbital_Charge* loc_in,
                                      const TwoCenterIntegrator* intor_orb_alpha,
                                      const int& nks_in,
                                      elecstate::DensityMatrix<TK, double>* DM_in)
-    : loc(loc_in), nks(nks_in), ucell(ucell_in), OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in), DM(DM_in),
+    : nks(nks_in), ucell(ucell_in), OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in), DM(DM_in),
       intor_orb_alpha_(intor_orb_alpha)
 {
     this->cal_type = calculation_type::lcao_deepks;

@@ -625,6 +625,7 @@ void Input::Print(const std::string& fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "out_dipole", out_dipole, "output dipole or not");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_efield", out_dipole, "output dipole or not");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_current", out_current, "output current or not");
+    ModuleBase::GlobalFunc::OUTP(ofs, "out_current_k", out_current_k, "output current for each k");
     ModuleBase::GlobalFunc::OUTP(ofs, "ocp", GlobalV::ocp, "change occupation or not");
     ModuleBase::GlobalFunc::OUTP(ofs, "ocp_set", GlobalV::ocp_set, "set occupation");
 

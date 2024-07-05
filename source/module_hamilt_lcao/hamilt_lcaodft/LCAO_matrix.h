@@ -19,10 +19,6 @@ class LCAO_Matrix {
     LCAO_Matrix();
     ~LCAO_Matrix();
 
-    void divide_HS_in_frag(const bool isGamma,
-                           Parallel_Orbitals& pv,
-                           const int& nks);
-
     // folding the fixed Hamiltonian (T+Vnl) if
     // k-point algorithm is used.
     void folding_fixedH(const int& ik,
@@ -40,11 +36,6 @@ class LCAO_Matrix {
     std::vector<std::vector<double>> Hexxd_k_load;
     std::vector<std::vector<std::complex<double>>> Hexxc_k_load;
 #endif
-
-    void allocate_HS_k(const long& nloc);
-
-  private:
-    void allocate_HS_gamma(const long& nloc);
 
   public:
     //------------------------------
@@ -69,15 +60,6 @@ class LCAO_Matrix {
     std::vector<std::complex<double>> Sloc2;
     std::vector<std::complex<double>> Hloc_fixed2;
 
-    // LiuXh add 2019-07-15
-    double**** Hloc_fixedR_tr;
-    double**** SlocR_tr;
-    double**** HR_tr;
-
-    std::complex<double>**** Hloc_fixedR_tr_soc;
-    std::complex<double>**** SlocR_tr_soc;
-    std::complex<double>**** HR_tr_soc;
-
     // Record all R direct coordinate information, even if HR or SR is a zero
     // matrix
     std::set<Abfs::Vector3_Order<int>> all_R_coor;
@@ -98,29 +80,9 @@ class LCAO_Matrix {
                      const double& v,
                      double* HSloc);
 
-    void set_HR_tr(const int& Rx,
-                   const int& Ry,
-                   const int& Rz,
-                   const int& iw1_all,
-                   const int& iw2_all,
-                   const double& v);
-
-    void set_HR_tr_soc(const int& Rx,
-                       const int& Ry,
-                       const int& Rz,
-                       const int& iw1_all,
-                       const int& iw2_all,
-                       const std::complex<double>& v); // LiuXh add 2019-07-16
-
     void zeros_HSgamma(const char& mtype);
 
     void zeros_HSk(const char& mtype);
-
-    void update_Hloc();
-
-    void update_Hloc2(const int& ik);
-
-    void output_HSk(const char& mtype, std::string& fn);
 };
 
 #include "LCAO_matrix.hpp"
