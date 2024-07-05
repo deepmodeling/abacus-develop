@@ -124,15 +124,16 @@ void ORB_control::setup_2d_division(std::ofstream& ofs_running, std::ofstream& o
 
     // determine whether 2d-division or not according to ks_solver
     bool div_2d;
-    if (ks_solver == "lapack" || ks_solver == "cg" || ks_solver == "dav" || ks_solver == "dav_subspace")
+    if (ks_solver == "lapack" || ks_solver == "cg" || ks_solver == "dav"
+        || ks_solver == "dav_subspace") {
         div_2d = false;
 #ifdef __MPI
-    else if (ks_solver == "genelpa" || ks_solver == "scalapack_gvx" || ks_solver == "cusolver"
-             || ks_solver == "cusolvermp" || ks_solver == "cg_in_lcao" || ks_solver == "pexsi")
+    } else if (ks_solver == "genelpa" || ks_solver == "scalapack_gvx"
+               || ks_solver == "cusolver" || ks_solver == "cusolvermp"
+               || ks_solver == "cg_in_lcao" || ks_solver == "pexsi") {
         div_2d = true;
 #endif
-    else
-    {
+    } else {
         std::cout << " Parallel Orbial, DIAGO_TYPE = " << ks_solver << std::endl;
         ModuleBase::WARNING_QUIT("Parallel_Orbitals::setup_2d_division", "Check ks_solver.");
     }
@@ -156,10 +157,14 @@ void ORB_control::set_parameters(std::ofstream& ofs_running, std::ofstream& ofs_
             ModuleBase::WARNING_QUIT("ORB_control::set_parameters", "nbands < ncpus");
         }
 
-        if (drank < nbands % dsize)
+        if (drank < nbands % dsize) {
             pv->loc_size += 1;
-        if (pv->testpb)
-            ModuleBase::GlobalFunc::OUT(ofs_running, "local size", pv->loc_size);
+        }
+        if (pv->testpb) {
+            ModuleBase::GlobalFunc::OUT(ofs_running,
+                                        "local size",
+                                        pv->loc_size);
+        }
 
         // set loc_sizes
         delete[] pv->loc_sizes;
@@ -205,8 +210,11 @@ void ORB_control::set_parameters(std::ofstream& ofs_running, std::ofstream& ofs_
         {
             pv->loc_size += 1;
         }
-        if (pv->testpb)
-            ModuleBase::GlobalFunc::OUT(ofs_running, "local size", pv->loc_size);
+        if (pv->testpb) {
+            ModuleBase::GlobalFunc::OUT(ofs_running,
+                                        "local size",
+                                        pv->loc_size);
+        }
 
         // set loc_sizes
         delete[] pv->loc_sizes;
@@ -237,10 +245,16 @@ void ORB_control::set_parameters(std::ofstream& ofs_running, std::ofstream& ofs_
         }
     } // xiaohui add 2014-12-21
 
-    if (pv->testpb)
-        ModuleBase::GlobalFunc::OUT(ofs_running, "lastband_in_proc", pv->lastband_in_proc);
-    if (pv->testpb)
-        ModuleBase::GlobalFunc::OUT(ofs_running, "lastband_number", pv->lastband_number);
+    if (pv->testpb) {
+        ModuleBase::GlobalFunc::OUT(ofs_running,
+                                    "lastband_in_proc",
+                                    pv->lastband_in_proc);
+    }
+    if (pv->testpb) {
+        ModuleBase::GlobalFunc::OUT(ofs_running,
+                                    "lastband_number",
+                                    pv->lastband_number);
+    }
 
     return;
 }
@@ -258,13 +272,16 @@ void ORB_control::divide_HS_2d(
     assert(dsize > 0);
     Parallel_Orbitals* pv = &this->ParaV;
 
-    if (dcolor != 0)
+    if (dcolor != 0) {
         return; // mohan add 2012-01-13
+    }
 
-    if (pv->testpb)
+    if (pv->testpb) {
         ModuleBase::GlobalFunc::OUT(ofs_running, "dim0", pv->dim0);
-    if (pv->testpb)
+    }
+    if (pv->testpb) {
         ModuleBase::GlobalFunc::OUT(ofs_running, "dim1", pv->dim1);
+    }
 
 #ifdef __MPI
         // mohan add 2011-04-16
@@ -301,11 +318,14 @@ void ORB_control::divide_HS_2d(
 #endif
 
     assert(pv->nloc > 0);
-    if (pv->testpb)
+    if (pv->testpb) {
         ModuleBase::GlobalFunc::OUT(ofs_running, "this->nrow", pv->nrow);
-    if (pv->testpb)
+    }
+    if (pv->testpb) {
         ModuleBase::GlobalFunc::OUT(ofs_running, "this->ncol", pv->ncol);
-    if (pv->testpb)
+    }
+    if (pv->testpb) {
         ModuleBase::GlobalFunc::OUT(ofs_running, "nloc", pv->nloc);
+    }
     return;
 }

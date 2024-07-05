@@ -144,8 +144,9 @@ void ESolver_KS<T, Device>::before_all_runners(Input& inp, UnitCell& ucell) {
             std::string line;
             while (!ifa.eof()) {
                 getline(ifa, line);
-                if (line.find("PAW_FILES") != std::string::npos)
+                if (line.find("PAW_FILES") != std::string::npos) {
                     break;
+                }
             }
 
             for (int it = 0; it < ucell.ntype; it++) {

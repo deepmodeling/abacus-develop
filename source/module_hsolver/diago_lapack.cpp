@@ -266,8 +266,9 @@ void DiagoLapack<T>::dsygvx_diag(const int ncol,
     {
 
         int info_result = dsygvx_once(ncol, nrow, h_mat, s_mat, ekb, wfc_2d);
-        if (info_result == 0)
+        if (info_result == 0) {
             break;
+        }
     }
 }
 
@@ -282,8 +283,9 @@ void DiagoLapack<T>::zhegvx_diag(const int ncol,
     while (true)
     {
         int info_result = zhegvx_once(ncol, nrow, h_mat, s_mat, ekb, wfc_2d);
-        if (info_result == 0)
+        if (info_result == 0) {
             break;
+        }
     }
 }
 
