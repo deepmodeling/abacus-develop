@@ -64,18 +64,16 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
                                      delta_r,
                                      vldr3,
                                      LD_pool,
-                                     pvpR_thread,
-                                     ucell,
-                                     nullptr);
+                                     nullptr,
+                                     ucell);
         } else {
             this->gint_kernel_vlocal(na_grid,
                                      grid_index,
                                      delta_r,
                                      vldr3,
                                      LD_pool,
-                                     pvpR_thread,
-                                     ucell,
-                                     this->pvpR_reduced[inout->ispin]);
+                                     this->pvpR_reduced[inout->ispin],
+                                     ucell);
         }
 #endif
         delete[] vldr3;
@@ -269,9 +267,8 @@ void Gint::cpu_vlocal_meta_interface(Gint_inout* inout) {
                                           vldr3,
                                           vkdr3,
                                           LD_pool,
-                                          pvpR_thread,
-                                          ucell,
-                                          nullptr);
+                                          nullptr,
+                                          ucell);
         } else {
             this->gint_kernel_vlocal_meta(na_grid,
                                           grid_index,
@@ -279,9 +276,8 @@ void Gint::cpu_vlocal_meta_interface(Gint_inout* inout) {
                                           vldr3,
                                           vkdr3,
                                           LD_pool,
-                                          pvpR_thread,
-                                          ucell,
-                                          this->pvpR_reduced[inout->ispin]);
+                                          this->pvpR_reduced[inout->ispin],
+                                          ucell);
         }
 #endif
         delete[] vldr3;
