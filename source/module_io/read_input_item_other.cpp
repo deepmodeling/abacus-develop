@@ -1381,7 +1381,7 @@ void ReadInput::item_others() {
             }
         };
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
-            if (item.get_size() == 0) return;
+            if (!item.is_read()) return;
             if (para.input.sup.hubbard_u.size() != para.input.ntype) {
                 ModuleBase::WARNING_QUIT("ReadInput",
                                          "hubbard_u should have the same "
@@ -1412,7 +1412,7 @@ void ReadInput::item_others() {
         };
         
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
-            if (item.get_size() == 0) return;
+            if (!item.is_read()) return;
             if (para.input.orbital_corr.size() != para.input.ntype) {
                 ModuleBase::WARNING_QUIT("ReadInput",
                                          "orbital_corr should have the same "
@@ -1746,7 +1746,7 @@ void ReadInput::item_others() {
             }
         };
         item.resetvalue = [](const Input_Item& item, Parameter& para) {
-            if (item.get_size() == 0)
+            if (!item.is_read())
                 return;
             if (para.input.qo_screening_coeff.size() != para.input.ntype) {
                 if (para.input.qo_basis == "pswfc") {

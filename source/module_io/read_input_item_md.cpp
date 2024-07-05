@@ -242,7 +242,7 @@ void ReadInput::item_md() {
         Input_Item item("md_plast");
         item.annotation = "final target pressure";
         item.resetvalue = [](const Input_Item& item, Parameter& para) {
-            if(item.get_size() == 0) // no md_plast in INPUT
+            if(!item.is_read()) // no md_plast in INPUT
                 para.input.mdp.md_plast = para.input.mdp.md_pfirst;
         };
         read_sync_double(mdp.md_plast);

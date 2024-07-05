@@ -29,6 +29,11 @@ class Input_Item {
     std::vector<std::string> str_values; ///< string values of the input item
     std::stringstream
         final_value; ///< final value for writing to output INPUT file
+    
+    bool is_read() const ///< check if the input item is read
+    {
+        return !str_values.empty();
+    }
 
     size_t get_size() const ///< get size of the input item
     {

@@ -36,7 +36,7 @@ void ReadInput::item_sdft() {
         };
         item.resetvalue = [](const Input_Item& item, Parameter& para) {
             // only do it when nbands_sto is set in INPUT
-            if (item.get_size() == 1)
+            if (item.is_read())
             {
                 if (strvalue == "0" && para.input.esolver_type == "sdft") {
                     para.input.esolver_type = "ksdft";
