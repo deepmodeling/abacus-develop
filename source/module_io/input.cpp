@@ -62,8 +62,10 @@ void Input::Init(const std::string& fn) {
     // NAME : Run::make_dir( dir name : OUT.suffix)
     //----------------------------------------------------------
     bool out_dir = false;
-    if (!out_app_flag && (out_mat_hs2 || out_mat_r || out_mat_t || out_mat_dh))
+    if (!out_app_flag
+        && (out_mat_hs2 || out_mat_r || out_mat_t || out_mat_dh)) {
         out_dir = true;
+    }
     ModuleBase::Global_File::make_dir_out(
         this->suffix,
         this->calculation,
@@ -742,8 +744,9 @@ void Input::Default() {
 bool Input::Read(const std::string& fn) {
     ModuleBase::TITLE("Input", "Read");
 
-    if (GlobalV::MY_RANK != 0)
+    if (GlobalV::MY_RANK != 0) {
         return false;
+    }
 
     std::ifstream ifs(fn.c_str(), std::ios::in); // "in_datas/input_parameters"
 
@@ -785,8 +788,9 @@ bool Input::Read(const std::string& fn) {
     ifs.rdstate();
     while (ifs.good()) {
         ifs >> word1;
-        if (ifs.eof())
+        if (ifs.eof()) {
             break;
+        }
         strtolower(word1, word);
 
         //----------------------------------------------------------
@@ -1237,14 +1241,16 @@ bool Input::Read(const std::string& fn) {
             read_value(ifs, out_dos);
         } else if (strcmp("out_band", word) == 0) {
             read_value2stdvector(ifs, out_band);
-            if (out_band.size() == 1)
+            if (out_band.size() == 1) {
                 out_band.push_back(8);
+            }
         } else if (strcmp("out_proj_band", word) == 0) {
             read_bool(ifs, out_proj_band);
         } else if (strcmp("out_mat_hs", word) == 0) {
             read_value2stdvector(ifs, out_mat_hs);
-            if (out_mat_hs.size() == 1)
+            if (out_mat_hs.size() == 1) {
                 out_mat_hs.push_back(8);
+            }
         }
         // LiuXh add 2019-07-15
         else if (strcmp("out_mat_hs2", word) == 0) {
@@ -1659,17 +1665,17 @@ bool Input::Read(const std::string& fn) {
             read_value(ifs, dft_plus_u);
         }
         // ignore to avoid error
-        else if (strcmp("yukawa_potential", word) == 0)
+        else if (strcmp("yukawa_potential", word) == 0) {
             ifs.ignore(150, '\n');
-        else if (strcmp("hubbard_u", word) == 0)
+        } else if (strcmp("hubbard_u", word) == 0) {
             ifs.ignore(150, '\n');
-        else if (strcmp("orbital_corr", word) == 0)
+        } else if (strcmp("orbital_corr", word) == 0) {
             ifs.ignore(150, '\n');
-        else if (strcmp("omc", word) == 0)
+        } else if (strcmp("omc", word) == 0) {
             ifs.ignore(150, '\n');
-        else if (strcmp("yukawa_lambda", word) == 0)
+        } else if (strcmp("yukawa_lambda", word) == 0) {
             ifs.ignore(150, '\n');
-        else if (strcmp("uramping", word) == 0) {
+        } else if (strcmp("uramping", word) == 0) {
             ifs.ignore(150, '\n');
         }
         //----------------------------------------------------------------------------------
@@ -1683,8 +1689,9 @@ bool Input::Read(const std::string& fn) {
         //----------------------------------------------------------------------------------
         else if (strcmp("rpa", word) == 0) {
             read_bool(ifs, rpa);
-            if (rpa)
+            if (rpa) {
                 GlobalV::rpa_setorb = true;
+            }
         }
         //----------------------------------------------------------------------------------
         //    implicit solvation model       sunml added on 2022-04-04
@@ -1919,12 +1926,11 @@ bool Input::Read(const std::string& fn) {
     }
     double ntype_stru = this->count_ntype(this->stru_file);
     if (this->ntype != 0) {
-        std::string ntype_doc = " 'ntype' is no longer required in INPUT, and "
-                                "it will be ignored.";
+        std::string ntype_doc = " 'ntype' is no longer required in INPUT, and it will be ignored.";
         GlobalV::ofs_running << ntype_doc << std::endl;
         std::cout << ntype_doc << std::endl;
     }
-    GlobalV::ofs_running << "ntype is automatically set to " << this->ntype
+    GlobalV::ofs_running << "ntype is automatically set to " << ntype_stru
                          << " according to STRU" << std::endl;
     this->ntype = ntype_stru;
 
@@ -1947,8 +1953,9 @@ bool Input::Read(const std::string& fn) {
         ifs.rdstate();
         while (ifs.good()) {
             ifs >> word1;
-            if (ifs.eof() != 0)
+            if (ifs.eof() != 0) {
                 break;
+            }
             strtolower(word1, word); // convert uppercase std::string to lower
                                      // case; word1 --> word
 
@@ -1996,8 +2003,9 @@ bool Input::Read(const std::string& fn) {
 
         bool close_plus_u = true;
         for (int i = 0; i < ntype; i++) {
-            if (orbital_corr[i] != -1)
+            if (orbital_corr[i] != -1) {
                 close_plus_u = false;
+            }
         }
         if (close_plus_u) {
             dft_plus_u = 0;
@@ -2043,11 +2051,13 @@ bool Input::Read(const std::string& fn) {
                 for (int i = 0; i < ntype; i++) {
                     ifs >> orbital_corr[i];
                 }
-            } else
+            } else {
                 ifs.ignore(150, '\n');
+            }
 
-            if (ifs.eof() != 0)
+            if (ifs.eof() != 0) {
                 break;
+            }
         }
 
         for (int i = 0; i < ntype; i++) {
@@ -2157,8 +2167,9 @@ bool Input::Read(const std::string& fn) {
 
 void Input::Default_2() // jiyy add 2019-08-04
 {
-    if (GlobalV::MY_RANK != 0)
+    if (GlobalV::MY_RANK != 0) {
         return;
+    }
     //==========================================================
     // vdw
     // jiyy add 2019-08-04
@@ -2232,19 +2243,24 @@ void Input::Default_2() // jiyy add 2019-08-04
     } else if (nbndsto_str == "0" && esolver_type == "sdft") {
         esolver_type = "ksdft";
     }
-    if (esolver_type != "sdft")
+    if (esolver_type != "sdft") {
         bndpar = 1;
-    if (bndpar > GlobalV::NPROC)
+    }
+    if (bndpar > GlobalV::NPROC) {
         bndpar = GlobalV::NPROC;
+    }
     if (method_sto != 1 && method_sto != 2) {
         method_sto = 2;
     }
-    if (of_wt_rho0 != 0)
+    if (of_wt_rho0 != 0) {
         of_hold_rho0 = true; // sunliang add 2022-06-17
-    if (!of_full_pw)
+    }
+    if (!of_full_pw) {
         of_full_pw_dim = 0; // sunliang add 2022-08-31
-    if (of_kinetic != "wt")
+    }
+    if (of_kinetic != "wt") {
         of_read_kernel = false; // sunliang add 2022-09-12
+    }
 
     if (dft_functional == "default" && use_paw) {
         ModuleBase::WARNING_QUIT(
@@ -2258,20 +2274,24 @@ void Input::Default_2() // jiyy add 2019-08-04
                        dft_functional.end(),
                        dft_functional_lower.begin(),
                        tolower);
-        if (dft_functional_lower == "hf")
+        if (dft_functional_lower == "hf") {
             exx_hybrid_alpha = "1";
-        else if (dft_functional_lower == "pbe0" || dft_functional_lower == "hse"
-                 || dft_functional_lower == "scan0")
+        } else if (dft_functional_lower == "pbe0"
+                   || dft_functional_lower == "hse"
+                   || dft_functional_lower == "scan0") {
             exx_hybrid_alpha = "0.25";
-        else // no exx in scf, but will change to non-zero in postprocess like
-             // rpa
+        } else { // no exx in scf, but will change to non-zero in postprocess
+                 // like
+                 // rpa
             exx_hybrid_alpha = "0";
+        }
     }
     if (exx_real_number == "default") {
-        if (gamma_only)
+        if (gamma_only) {
             exx_real_number = "1";
-        else
+        } else {
             exx_real_number = "0";
+        }
     }
     if (exx_ccp_rmesh_times == "default") {
         std::string dft_functional_lower = dft_functional;
@@ -2280,20 +2300,22 @@ void Input::Default_2() // jiyy add 2019-08-04
                        dft_functional_lower.begin(),
                        tolower);
         if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0"
-            || dft_functional_lower == "scan0")
+            || dft_functional_lower == "scan0") {
             exx_ccp_rmesh_times = "5";
-        else if (dft_functional_lower == "hse")
+        } else if (dft_functional_lower == "hse") {
             exx_ccp_rmesh_times = "1.5";
-        else // no exx in scf
+        } else { // no exx in scf
             exx_ccp_rmesh_times = "1";
+        }
     }
     if (symmetry == "default") { // deal with no-forced default value
         if (gamma_only || calculation == "nscf" || calculation == "get_S"
-            || calculation == "get_pchg" || calculation == "get_wf")
+            || calculation == "get_pchg" || calculation == "get_wf") {
             symmetry = "0"; // if md or exx, symmetry will be force-set to 0 or
                             // -1 later
-        else
+        } else {
             symmetry = "1";
+        }
     }
     if (diago_proc <= 0) {
         diago_proc = GlobalV::NPROC;
@@ -2325,8 +2347,9 @@ void Input::Default_2() // jiyy add 2019-08-04
             ModuleBase::GlobalFunc::AUTO_SET("mem_saver", "0");
         }
         cal_force = true;
-        if (!this->relax_nmax)
+        if (!this->relax_nmax) {
             this->relax_nmax = 50;
+        }
     } else if (calculation == "nscf" || calculation == "get_S") {
         GlobalV::CALCULATION = "nscf";
         this->relax_nmax = 1;
@@ -2390,8 +2413,9 @@ void Input::Default_2() // jiyy add 2019-08-04
                 << std::endl;
             mdp.md_nstep = 50;
         }
-        if (!out_md_control)
+        if (!out_md_control) {
             out_level = "m"; // zhengdy add 2019-04-07
+        }
 
         if (mdp.md_tfreq == 0) {
             mdp.md_tfreq = 1.0 / 40 / mdp.md_dt;
@@ -2415,8 +2439,9 @@ void Input::Default_2() // jiyy add 2019-08-04
     {
         cal_force = true;
         cal_stress = true;
-        if (!this->relax_nmax)
+        if (!this->relax_nmax) {
             this->relax_nmax = 50;
+        }
     } else if (calculation == "test_memory") {
         this->relax_nmax = 1;
     } else if (calculation == "test_neighbour") {
@@ -2499,12 +2524,15 @@ void Input::Default_2() // jiyy add 2019-08-04
         // calculate nbx/nby/nbz by divide nx/ny/nz by bx/by/bz, so bx/by/bz
         // should not be 0
         if (calculation == "get_wf") {
-            if (!bx)
+            if (!bx) {
                 bx = 1;
-            if (!by)
+            }
+            if (!by) {
                 by = 1;
-            if (!bz)
+            }
+            if (!bz) {
                 bz = 1;
+            }
         }
         if (dft_plus_u == 1 && onsite_radius == 0.0) {
             // autoset onsite_radius to 5.0 as default
@@ -2584,11 +2612,11 @@ void Input::Default_2() // jiyy add 2019-08-04
             qo_strategy.resize(ntype, qo_strategy[0]);
         } else {
             std::string default_strategy;
-            if (qo_basis == "hydrogen")
+            if (qo_basis == "hydrogen") {
                 default_strategy = "energy-valence";
-            else if ((qo_basis == "pswfc") || (qo_basis == "szv"))
+            } else if ((qo_basis == "pswfc") || (qo_basis == "szv")) {
                 default_strategy = "all";
-            else {
+            } else {
                 ModuleBase::WARNING_QUIT(
                     "Input",
                     "When setting default values for qo_strategy, "
@@ -2831,14 +2859,16 @@ void Input::Bcast() {
     Parallel_Common::bcast_int(out_wfc_pw);
     Parallel_Common::bcast_bool(out_wfc_r);
     Parallel_Common::bcast_int(out_dos);
-    if (GlobalV::MY_RANK != 0)
-        out_band.resize(2); /* If this line is absent, will cause segmentation
-                               fault in io_input_test_para */
+    if (GlobalV::MY_RANK != 0) {
+        out_band.resize(2);
+    } /* If this line is absent, will cause segmentation
+                                    fault in io_input_test_para */
     Parallel_Common::bcast_int(out_band.data(), 2);
     Parallel_Common::bcast_bool(out_proj_band);
-    if (GlobalV::MY_RANK != 0)
-        out_mat_hs.resize(2); /* If this line is absent, will cause segmentation
-                                 fault in io_input_test_para */
+    if (GlobalV::MY_RANK != 0) {
+        out_mat_hs.resize(2);
+    } /* If this line is absent, will cause segmentation
+                                      fault in io_input_test_para */
     Parallel_Common::bcast_int(out_mat_hs.data(), 2);
     Parallel_Common::bcast_bool(out_mat_hs2); // LiuXh add 2019-07-15
     Parallel_Common::bcast_bool(out_mat_t);
@@ -3200,14 +3230,17 @@ void Input::Check() {
                                  "smooth grids is denser than dense grids");
     }
 
-    if (nbands < 0)
+    if (nbands < 0) {
         ModuleBase::WARNING_QUIT("Input", "NBANDS must >= 0");
+    }
     //	if(nbands_istate < 0) ModuleBase::WARNING_QUIT("Input","NBANDS_ISTATE
     //must > 0");
-    if (nb2d < 0)
+    if (nb2d < 0) {
         ModuleBase::WARNING_QUIT("Input", "nb2d must > 0");
-    if (ntype <= 0)
+    }
+    if (ntype <= 0) {
         ModuleBase::WARNING_QUIT("Input", "ntype must > 0");
+    }
 
         // std::cout << "diago_proc=" << diago_proc << std::endl;
         // std::cout << " NPROC=" << GlobalV::NPROC << std::endl;
@@ -3287,10 +3320,11 @@ void Input::Check() {
     } else if (calculation == "md") // mohan add 2011-11-04
     {
         // deal with input parameters , 2019-04-30
-        if (mdp.md_dt < 0)
+        if (mdp.md_dt < 0) {
             ModuleBase::WARNING_QUIT(
                 "Input::Check",
                 "time interval of MD calculation should be set!");
+        }
         if (mdp.md_type == "msst") {
             if (mdp.msst_qmass <= 0) {
                 ModuleBase::WARNING_QUIT("Input::Check",
@@ -3775,11 +3809,13 @@ void Input::Check() {
             }
         }
         /* then size of std::vector<> parameters */
-        if (qo_screening_coeff.size() != ntype)
+        if (qo_screening_coeff.size() != ntype) {
             ModuleBase::WARNING_QUIT("INPUT",
                                      "qo_screening_coeff.size() != ntype");
-        if (qo_strategy.size() != ntype)
+        }
+        if (qo_strategy.size() != ntype) {
             ModuleBase::WARNING_QUIT("INPUT", "qo_strategy.size() != ntype");
+        }
     }
 
     return;
