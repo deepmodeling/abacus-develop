@@ -20,7 +20,7 @@ void dump_cuda_array_to_file(double* cuda_array,
                              int hight,
                              const std::string& filename);
 
-static inline int ceil_div(int a, int b)
+inline int ceil_div(int a, int b)
 {
     return (a + b - 1) / b;
 }
@@ -75,6 +75,7 @@ class Cuda_Mem_Wrapper
     void copy_host_to_device_async(const cudaStream_t stream, const int stream_id, const int size);
     void copy_device_to_host_sync(const int stream_id = 0);
     void copy_device_to_host_async(const cudaStream_t stream, const int stream_id);
+    void copy_device_to_host_async(const cudaStream_t stream, const int stream_id, const int size);
     void memset_device_sync(const int stream_id = 0, const int value = 0);
     void memset_device_async(const cudaStream_t stream, 
                              const int stream_id = 0,

@@ -8,9 +8,6 @@
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #if ((defined __CUDA) /* || (defined __ROCM) */)
-#include <cuda_runtime.h>
-
-#include "kernels/cuda/cuda_tools.cuh"
 #include "kernels/cuda/gemm_selector.cuh"
 #endif
 
@@ -111,7 +108,7 @@ class Grid_Technique : public Grid_MeshBall
                        const int& iat2) const;
 
   private:
-    void cal_max_box_index(void);
+    void cal_max_box_index();
 
     int maxB1;
     int maxB2;
@@ -132,9 +129,8 @@ class Grid_Technique : public Grid_MeshBall
                             const int& nplane,
                             const int& startz_current,
                             const UnitCell& ucell);
-    void init_atoms_on_grid2(const int* index2normal,
-                            const UnitCell& ucell);
-    void cal_grid_integration_index(void);
+    void init_atoms_on_grid2(const int* index2normal, const UnitCell& ucell);
+    void cal_grid_integration_index();
     void cal_trace_lo(const UnitCell& ucell);
     void check_bigcell(int* ind_bigcell, char* bigcell_on_processor);
     void get_startind(const int& ny,
@@ -152,6 +148,8 @@ class Grid_Technique : public Grid_MeshBall
     bool* atom_new_g;
     int* atom_ylm_g;
     int* atom_l_g;
+    double* rcut_g;
+    double*mcell_pos_g;
 
     int nstreams = 4;
     // streams[nstreams]

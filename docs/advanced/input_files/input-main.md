@@ -343,6 +343,8 @@
     - [td\_heavi\_t0](#td_heavi_t0)
     - [td\_heavi\_amp](#td_heavi_amp)
     - [out\_dipole](#out_dipole)
+    - [out\_current](#out_current)
+    - [out\_current_k](#out_current_k)
     - [out\_efield](#out_efield)
     - [out\_vecpot](#out_vecpot)
     - [init\_vecpot\_file](#init_vecpot_file)
@@ -3273,6 +3275,22 @@ These variables are used to control berry phase and wannier90 interface paramete
 - **Description**:
   - True: output dipole.
   - False: do not output dipole.
+- **Default**: False
+
+### out_current
+
+- **Type**: Boolean
+- **Description**:output current in real time TDDFT simulations with the velocity gauge
+  - True: output current.
+  - False: do not output current.
+- **Default**: False
+
+### out_current_k
+
+- **Type**: Boolean
+- **Description**:output tddft current for all k points.
+  - True: output tddft current for all k points.
+  - False: output current in total.
 - **Default**: False
 
 ### out_efield

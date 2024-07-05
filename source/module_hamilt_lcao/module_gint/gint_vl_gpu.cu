@@ -2,7 +2,6 @@
 
 #include "kernels/cuda/cuda_tools.cuh"
 #include "module_base/ylm.h"
-#include "gint_tools.h"
 #include "gint_vl_gpu.h"
 #include "kernels/cuda/gint_vl.cuh"
 
@@ -14,14 +13,8 @@ namespace GintKernel
  *
  * @param hRGint Pointer to the HContainer<double> object to store the computed
  * integrals.
- * @param lgd Dimension information for the computation results.
- * @param max_atom The maximum number of neighboring atoms for a grid point.
- * @param vfactor Related to volume. The scaling factor for the Vlocal
- * integrals.
  * @param vlocal Pointer to the Vlocal array.
  * @param ylmcoef_now Pointer to the Ylm coefficients array.
- * @param nczp The number of grid layers in the C direction.
- * @param nbxx The total number of grid points.
  * @param dr The grid spacing.
  * @param rcut Pointer to the cutoff radius array.
  * @param gridt The Grid_Technique object containing grid information.
@@ -43,13 +36,10 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
                        const Grid_Technique& gridt,
                        const UnitCell& ucell)
 {
-
-
     int dev_id = base_device::information::set_device_by_rank();
-    checkCuda(cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync));
+    // checkCuda(cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync));
     const int nbzp = gridt.nbzp;
     const int num_streams = gridt.nstreams;
-    const int lgd = gridt.lgd;
     const int max_atom = gridt.max_atom;
     const int max_atom_per_bcell = max_atom * gridt.bxyz;
     const int max_atom_per_z = max_atom_per_bcell * nbzp;
@@ -97,10 +87,12 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
         }
     }
 
-    Cuda_Mem_Wrapper<double> psi_input_double(5 * max_atom_per_z, num_streams, true);
-    Cuda_Mem_Wrapper<int> psi_input_int(2 * max_atom_per_z, num_streams, true);
-    Cuda_Mem_Wrapper<int> atom_num_per_bcell(nbzp, num_streams, true);
-    Cuda_Mem_Wrapper<int> start_idx_per_bcell(nbzp, num_streams, true);
+    Cuda_Mem_Wrapper<double> dr_part(max_atom_per_z * 3, num_streams, true);
+    Cuda_Mem_Wrapper<uint8_t> atoms_type(max_atom_per_z, num_streams, true);
+    // The first number in every group of two represents the number of atoms on that bigcell.
+    // The second number represents the cumulative number of atoms up to that bigcell.
+    Cuda_Mem_Wrapper<int> atoms_num_info(2 * nbzp, num_streams, true);
+    Cuda_Mem_Wrapper<double> vldr3(nbzp * gridt.bxyz, num_streams, true);
 
     Cuda_Mem_Wrapper<double> psi(max_phi_per_z, num_streams, false);
     Cuda_Mem_Wrapper<double> psi_vldr3(max_phi_per_z, num_streams, false);
@@ -122,57 +114,52 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
         {
             // 20240620 Note that it must be set again here because 
             // cuda's device is not safe in a multi-threaded environment.
-
             checkCuda(cudaSetDevice(dev_id));
             const int sid = omp_get_thread_num();
-            checkCuda(cudaStreamSynchronize(streams[sid]));
 
             int max_m = 0;
             int max_n = 0;
             int atom_pair_num = 0;
-            int atom_per_z = 0;
-            const int grid_index_ij = i * gridt.nby * gridt.nbzp + j * gridt.nbzp;
-            std::vector<bool> gpu_matrix_calc_flag(max_atom * nbzp, false);
+            int atoms_per_z = 0;
+            const int grid_index_ij = i * gridt.nby * nbzp + j * nbzp;
+            
             gtask_vlocal(gridt,
-                         rcut,
                          ucell,
-                         gpu_matrix_calc_flag,
                          grid_index_ij,
-                         max_atom,
                          nczp,
                          vfactor,
                          vlocal,
-                         psi_input_double.get_host_pointer(sid),
-                         psi_input_int.get_host_pointer(sid),
-                         atom_num_per_bcell.get_host_pointer(sid),
-                         start_idx_per_bcell.get_host_pointer(sid),
-                         atom_per_z);
+                         atoms_per_z,
+                         atoms_num_info.get_host_pointer(sid),
+                         atoms_type.get_host_pointer(sid),
+                         dr_part.get_host_pointer(sid),
+                         vldr3.get_host_pointer(sid));
         
             alloc_mult_vlocal(gridt,
-                                ucell,
-                                gpu_matrix_calc_flag,
-                                grid_index_ij,
-                                max_atom,
-                                psi.get_device_pointer(sid),
-                                psi_vldr3.get_device_pointer(sid),
-                                grid_vlocal_g,
-                                gemm_m.get_host_pointer(sid),
-                                gemm_n.get_host_pointer(sid),
-                                gemm_k.get_host_pointer(sid),
-                                gemm_lda.get_host_pointer(sid),
-                                gemm_ldb.get_host_pointer(sid),
-                                gemm_ldc.get_host_pointer(sid),
-                                gemm_A.get_host_pointer(sid),
-                                gemm_B.get_host_pointer(sid),
-                                gemm_C.get_host_pointer(sid),
-                                atom_pair_num,
-                                max_m,
-                                max_n);
+                              ucell,
+                              grid_index_ij,
+                              max_atom,
+                              psi.get_device_pointer(sid),
+                              psi_vldr3.get_device_pointer(sid),
+                              grid_vlocal_g,
+                              gemm_m.get_host_pointer(sid),
+                              gemm_n.get_host_pointer(sid),
+                              gemm_k.get_host_pointer(sid),
+                              gemm_lda.get_host_pointer(sid),
+                              gemm_ldb.get_host_pointer(sid),
+                              gemm_ldc.get_host_pointer(sid),
+                              gemm_A.get_host_pointer(sid),
+                              gemm_B.get_host_pointer(sid),
+                              gemm_C.get_host_pointer(sid),
+                              atom_pair_num,
+                              max_m,
+                              max_n);
 
-            psi_input_double.copy_host_to_device_async(streams[sid], sid, 5 * atom_per_z);
-            psi_input_int.copy_host_to_device_async(streams[sid], sid, 2 * atom_per_z);
-            atom_num_per_bcell.copy_host_to_device_async(streams[sid], sid);
-            start_idx_per_bcell.copy_host_to_device_async(streams[sid], sid);
+            dr_part.copy_host_to_device_async(streams[sid], sid, atoms_per_z * 3);
+            atoms_type.copy_host_to_device_async(streams[sid], sid, atoms_per_z);
+            vldr3.copy_host_to_device_async(streams[sid], sid);
+            atoms_num_info.copy_host_to_device_async(streams[sid], sid, 2 * nbzp);
+            
             gemm_m.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
             gemm_n.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
             gemm_k.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
@@ -182,11 +169,11 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
             gemm_A.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
             gemm_B.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
             gemm_C.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
-
+            
             psi.memset_device_async(streams[sid], sid, 0);
             psi_vldr3.memset_device_async(streams[sid], sid, 0);
 
-            dim3 grid_psi(nbzp, 8);
+            dim3 grid_psi(nbzp, gridt.bxyz);
             dim3 block_psi(64);
             get_psi_and_vldr3<<<grid_psi,
                                 block_psi,
@@ -196,16 +183,19 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
                 dr,
                 gridt.bxyz,
                 ucell.nwmax,
-                psi_input_double.get_device_pointer(sid),
-                psi_input_int.get_device_pointer(sid),
-                atom_num_per_bcell.get_device_pointer(sid),
-                start_idx_per_bcell.get_device_pointer(sid),
+                max_atom,
                 gridt.atom_nwl_g,
                 gridt.atom_new_g,
                 gridt.atom_ylm_g,
                 gridt.atom_nw_g,
+                gridt.rcut_g,
                 gridt.nr_max,
                 gridt.psi_u_g,
+                gridt.mcell_pos_g,
+                dr_part.get_device_pointer(sid),
+                vldr3.get_device_pointer(sid),
+                atoms_type.get_device_pointer(sid),
+                atoms_num_info.get_device_pointer(sid),
                 psi.get_device_pointer(sid),
                 psi_vldr3.get_device_pointer(sid));
             checkCudaLastError();
@@ -225,13 +215,10 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
                                      streams[sid],
                                      nullptr);
             checkCudaLastError();
+            checkCuda(cudaStreamSynchronize(streams[sid]));
         }
     }
 
-    for (int i = 0; i < num_streams; i++)
-    {
-        checkCuda(cudaStreamSynchronize(streams[i]));
-    }
     {
         int iter_num = 0;
         for (int iat1 = 0; iat1 < ucell.nat; iat1++)
@@ -268,10 +255,6 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
                 }
             }
         }
-    }
-    for (int i = 0; i < num_streams; i++)
-    {
-        checkCuda(cudaStreamSynchronize(streams[i]));
     }
     for (int i = 0; i < num_streams; i++)
     {

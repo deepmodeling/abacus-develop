@@ -528,6 +528,7 @@ OBJS_LCAO=DM_gamma.o\
       LCAO_nl_beta.o\
       LCAO_nnr.o\
       LCAO_set_zero.o\
+      LCAO_allocate.o\
       center2_orb.o\
       center2_orb-orb11.o\
       center2_orb-orb21.o\
