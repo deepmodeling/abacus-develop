@@ -5,6 +5,7 @@
 void Gint::cpu_vlocal_interface(Gint_inout* inout) {
     ModuleBase::TITLE("Gint_interface", "cal_gint_vlocal");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal");
+    printf("in vlocal\n");
     const UnitCell& ucell = *this->ucell;
     const int max_size = this->gridt->max_atom;
     const int LD_pool = max_size * ucell.nwmax;
@@ -14,20 +15,17 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
 #ifdef _OPENMP
-    double* pvpR_thread = nullptr;
+    std::vector<double> pvpR_thread;
     hamilt::HContainer<double>* hRGint_thread = nullptr;
     if (!GlobalV::GAMMA_ONLY_LOCAL) {
         if (!pvpR_alloc_flag) {
             ModuleBase::WARNING_QUIT("Gint_interface::cal_gint",
                                      "pvpR has not been allocated yet!");
-            pvpR_thread = new double[nnrg]();
-            ModuleBase::GlobalFunc::ZEROS(pvpR_thread, nnrg);
         } else {
             ModuleBase::GlobalFunc::ZEROS(this->pvpR_reduced[inout->ispin],
                                           nnrg);
         }
-        pvpR_thread = new double[nnrg]();
-        ModuleBase::GlobalFunc::ZEROS(pvpR_thread, nnrg);
+        std::vector<double> pvpR_thread = std::vector<double>(nnrg, 0.0);
     } else {
         hRGint_thread = new hamilt::HContainer<double>(*this->hRGint);
     }
@@ -54,7 +52,7 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
                                  delta_r,
                                  vldr3,
                                  LD_pool,
-                                 pvpR_thread,
+                                 pvpR_thread.data(),
                                  ucell,
                                  hRGint_thread);
 #else
@@ -101,9 +99,9 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
                                 pvpR_reduced[inout->ispin],
                                 1);
         }
-
+        pvpR_thread.shrink_to_fit();
     }
-    delete[] pvpR_thread;
+
 #endif
     ModuleBase::TITLE("Gint_interface", "cal_gint_vlocal");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal");
@@ -136,19 +134,10 @@ void Gint::cpu_dvlocal_interface(Gint_inout* inout) {
     }
 
 #ifdef _OPENMP
-    double* pvdpRx_thread = nullptr;
-    double* pvdpRy_thread = nullptr;
-    double* pvdpRz_thread = nullptr;
-    hamilt::HContainer<double>* hRGint_thread = nullptr;
-
-    pvdpRx_thread = new double[nnrg];
-    ModuleBase::GlobalFunc::ZEROS(pvdpRx_thread, nnrg);
-    pvdpRy_thread = new double[nnrg];
-    ModuleBase::GlobalFunc::ZEROS(pvdpRy_thread, nnrg);
-    pvdpRz_thread = new double[nnrg];
-    ModuleBase::GlobalFunc::ZEROS(pvdpRz_thread, nnrg);
-    hRGint_thread = new hamilt::HContainer<double>(*this->hRGint);
-
+    std::vector<double> pvdpRx_thread = std::vector<double>(nnrg, 0.0);
+    std::vector<double> pvdpRy_thread = std::vector<double>(nnrg, 0.0);
+    std::vector<double> pvdpRz_thread = std::vector<double>(nnrg, 0.0);
+    hamilt::HContainer<double>* hRGint_thread = new hamilt::HContainer<double>(*this->hRGint);
 #pragma omp for
 #endif
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
@@ -172,9 +161,9 @@ void Gint::cpu_dvlocal_interface(Gint_inout* inout) {
                                   delta_r,
                                   vldr3,
                                   LD_pool,
-                                  pvdpRx_thread,
-                                  pvdpRy_thread,
-                                  pvdpRz_thread,
+                                  pvdpRx_thread.data(),
+                                  pvdpRy_thread.data(),
+                                  pvdpRz_thread.data(),
                                   ucell);
 #else
         this->gint_kernel_dvlocal(na_grid,
@@ -190,9 +179,9 @@ void Gint::cpu_dvlocal_interface(Gint_inout* inout) {
         delete[] vldr3;
     }
 #ifdef _OPENMP
-    delete[] pvdpRx_thread;
-    delete[] pvdpRy_thread;
-    delete[] pvdpRz_thread;
+    pvdpRx_thread.shrink_to_fit();
+    pvdpRy_thread.shrink_to_fit();
+    pvdpRz_thread.shrink_to_fit();
     delete hRGint_thread;
 #endif
     ModuleBase::TITLE("Gint_interface", "cal_gint_dvlocal");
@@ -221,11 +210,10 @@ void Gint::cpu_vlocal_meta_interface(Gint_inout* inout) {
 
 #ifdef _OPENMP
 
-    double* pvpR_thread = nullptr;
+    std::vector<double> pvpR_thread;
     hamilt::HContainer<double>* hRGint_thread = nullptr;
     if (!GlobalV::GAMMA_ONLY_LOCAL) {
-        pvpR_thread = new double[nnrg]();
-        ModuleBase::GlobalFunc::ZEROS(pvpR_thread, nnrg);
+        pvpR_reduced=std::vector<double>(nnrg, 0.0);
     } else {
         hRGint_thread = new hamilt::HContainer<double>(*this->hRGint);
     }
@@ -316,8 +304,9 @@ void Gint::cpu_vlocal_meta_interface(Gint_inout* inout) {
                                 pvpR_reduced[inout->ispin],
                                 1);
         }
+        pvpR_thread.shrink_to_fit();
     }
-    delete[] pvpR_thread;
+    
 #endif
     ModuleBase::TITLE("Gint_interface", "cal_gint_vlocal_meta");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal_meta");
