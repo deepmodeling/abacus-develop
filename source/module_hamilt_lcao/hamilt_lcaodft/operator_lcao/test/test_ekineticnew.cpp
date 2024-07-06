@@ -104,10 +104,11 @@ class EkineticNewTest : public ::testing::Test
 TEST_F(EkineticNewTest, constructHRd2d)
 {
     std::vector<ModuleBase::Vector3<double>> kvec_d_in(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
-    std::vector<double> hk(paraV->get_row_size() * paraV->get_col_size(), 0.0);
+    hamilt::HS_Matrix_K<double> hsk(paraV, 1);
+    hsk.set_zero_hk();
     Grid_Driver gd(0, 0, 0);
     hamilt::EkineticNew<hamilt::OperatorLCAO<double, double>>
-        op(nullptr, kvec_d_in, HR, &hk, &ucell, &gd, &intor_, paraV);
+        op(&hsk, kvec_d_in, HR, &ucell, &gd, &intor_);
     op.contributeHR();
     // check the value of HR
     for (int iap = 0; iap < HR->size_atom_pairs(); ++iap)
@@ -123,9 +124,10 @@ TEST_F(EkineticNewTest, constructHRd2d)
             EXPECT_EQ(tmp.get_pointer(0)[i], 1.0);
         }
     }
-    // calculate SK
+    // calculate HK
     op.contributeHk(0);
-    // check the value of SK
+    // check the value of HK
+    double* hk = hsk.get_hk();
     for (int i = 0; i < paraV->get_row_size() * paraV->get_col_size(); ++i)
     {
         EXPECT_EQ(hk[i], 1.0);
@@ -152,10 +154,11 @@ TEST_F(EkineticNewTest, constructHRd2cd)
 {
     std::vector<ModuleBase::Vector3<double>> kvec_d_in(2, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     kvec_d_in[1] = ModuleBase::Vector3<double>(0.1, 0.2, 0.3);
-    std::vector<std::complex<double>> hk(paraV->get_row_size() * paraV->get_col_size(), std::complex<double>(0.0, 0.0));
+    hamilt::HS_Matrix_K<std::complex<double>> hsk(paraV, 1);
+    hsk.set_zero_hk();
     Grid_Driver gd(0, 0, 0);
     hamilt::EkineticNew<hamilt::OperatorLCAO<std::complex<double>, double>>
-        op(nullptr, kvec_d_in, HR, &hk, &ucell, &gd, &intor_, paraV);
+        op(&hsk, kvec_d_in, HR, &ucell, &gd, &intor_);
     op.contributeHR();
     // check the value of HR
     for (int iap = 0; iap < HR->size_atom_pairs(); ++iap)
@@ -171,16 +174,17 @@ TEST_F(EkineticNewTest, constructHRd2cd)
             EXPECT_EQ(tmp.get_pointer(0)[i], 1.0);
         }
     }
-    // calculate SK for gamma point
+    // calculate HK for gamma point
     op.contributeHk(0);
-    // check the value of SK of gamma point
+    auto* hk = hsk.get_hk();
+    // check the value of HK of gamma point
     for (int i = 0; i < paraV->get_row_size() * paraV->get_col_size(); ++i)
     {
         EXPECT_EQ(hk[i].real(), 1.0);
         EXPECT_EQ(hk[i].imag(), 0.0);
     }
     // calculate HK for k point
-    hk.assign(paraV->get_row_size() * paraV->get_col_size(), std::complex<double>(0.0, 0.0));
+    hsk.set_zero_hk();
     op.contributeHk(1);
     // check the value of HK
     for (int i = 0; i < paraV->get_row_size() * paraV->get_col_size(); ++i)

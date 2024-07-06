@@ -8,7 +8,6 @@
 #include "module_cell/klist.h"
 #include "module_cell/unitcell.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_elecstate/module_charge/charge_mixing.h"
 #include "module_hamilt_general/hamilt.h"
 #include "module_elecstate/elecstate.h"
@@ -39,7 +38,7 @@ class DFTU
   public:
     // allocate relevant data strcutures
     void init(UnitCell& cell, // unitcell class
-              LCAO_Matrix& lm,
+              const Parallel_Orbitals* pv,
               const int& nks);
 
     // calculate the energy correction
@@ -57,7 +56,7 @@ class DFTU
 
     double EU; //+U energy
   private:
-    LCAO_Matrix* LM;
+    const Parallel_Orbitals* paraV = nullptr;
     int cal_type = 3; // 1:dftu_tpye=1, dc=1; 2:dftu_type=1, dc=2; 3:dftu_tpye=2, dc=1; 4:dftu_tpye=2, dc=2;
     
     // transform between iwt index and it, ia, L, N and m index
@@ -69,8 +68,8 @@ class DFTU
     // For calculating contribution to Hamiltonian matrices
     //=============================================================
   public:
-    void cal_eff_pot_mat_complex(const int ik, std::complex<double>* eff_pot, const std::vector<int>& isk);
-    void cal_eff_pot_mat_real(const int ik, double* eff_pot, const std::vector<int>& isk);
+    void cal_eff_pot_mat_complex(const int ik, std::complex<double>* eff_pot, const std::vector<int>& isk, const std::complex<double>* sk);
+    void cal_eff_pot_mat_real(const int ik, double* eff_pot, const std::vector<int>& isk, const double* sk);
     void cal_eff_pot_mat_R_double(const int ispin, double* SR, double* HR);
     void cal_eff_pot_mat_R_complex_double(const int ispin, std::complex<double>* SR, std::complex<double>* HR);
 
@@ -82,7 +81,7 @@ class DFTU
   public:
     // calculate the local occupation number matrix
     void cal_occup_m_k(const int iter, const std::vector<std::vector<std::complex<double>>>& dm_k, const K_Vectors& kv, const double& mixing_beta, hamilt::Hamilt<std::complex<double>>* p_ham);
-    void cal_occup_m_gamma(const int iter, const std::vector<std::vector<double>>& dm_gamma, const double& mixing_beta);
+    void cal_occup_m_gamma(const int iter, const std::vector<std::vector<double>>& dm_gamma, const double& mixing_beta, hamilt::Hamilt<double>* p_ham);
 
     // dftu can be calculated only after locale has been initialed
     bool initialed_locale = false;
@@ -162,7 +161,6 @@ private:
   public:
 
    void force_stress(const elecstate::ElecState* pelec,
-		   LCAO_Matrix& lm,
 		   const Parallel_Orbitals& pv,
 		   ForceStressArrays& fsr,
 		   ModuleBase::matrix& force_dftu,

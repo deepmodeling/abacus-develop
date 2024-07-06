@@ -8,7 +8,6 @@ Checks: '
     readability-braces-around-statements
 
     # llvm-header-guard,
-    
     # bugprone-*,
     # clang-analyzer-*,
     # clang-diagnostic-*,
@@ -41,5 +40,4 @@ Checks: '
     # -google-build-using-namespace,
     # -bugprone-narrowing-conversions,
 '
-FormatStyle: file
 ...

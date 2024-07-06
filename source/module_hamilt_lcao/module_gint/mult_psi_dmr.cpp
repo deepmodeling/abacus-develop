@@ -10,19 +10,6 @@ void mult_psi_DMR(const Grid_Technique& gt, const int bxyz, const int& grid_inde
     int iwi, iww;
     const UnitCell& ucell = *gt.ucell;
     const int LD_pool = gt.max_atom * ucell.nwmax;
-    bool* all_out_of_range = new bool[na_grid];
-    for (int ia = 0; ia < na_grid; ++ia) // number of atoms
-    {
-        all_out_of_range[ia] = true;
-        for (int ib = 0; ib < gt.bxyz; ++ib) // number of small box in big box
-        {
-            if (cal_flag[ib][ia])
-            {
-                all_out_of_range[ia] = false;
-                // break; //mohan add 2012-07-10
-            }
-        }
-    }
 
     // parameters for lapack subroutiens
     const char trans = 'N';
@@ -33,9 +20,6 @@ void mult_psi_DMR(const Grid_Technique& gt, const int bxyz, const int& grid_inde
 
     for (int ia1 = 0; ia1 < na_grid; ia1++)
     {
-        if (all_out_of_range[ia1])
-            continue;
-
         const int mcell_index1 = gt.bcell_start[grid_index] + ia1;
         const int iat = gt.which_atom[mcell_index1];
         const int T1 = ucell.iat2it[iat];
@@ -123,9 +107,6 @@ void mult_psi_DMR(const Grid_Technique& gt, const int bxyz, const int& grid_inde
 
         for (int ia2 = start; ia2 < na_grid; ia2++)
         {
-            if (all_out_of_range[ia2])
-                continue;
-
             //---------------------------------------------
             // check if we need to calculate the big cell.
             //---------------------------------------------
@@ -234,7 +215,5 @@ void mult_psi_DMR(const Grid_Technique& gt, const int bxyz, const int& grid_inde
             } // cal_num
         }     // ia2
     }         // ia1
-
-    delete[] all_out_of_range;
 }
 }

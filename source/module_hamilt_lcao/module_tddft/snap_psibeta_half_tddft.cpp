@@ -8,6 +8,8 @@
 namespace module_tddft
 {
 
+// nlm[0] : <phi|exp^{-iAr}|beta>
+// nlm[1, 2, 3,] : <phi|r_a * exp^{-iAr}|beta>, which a = x, y, z.
 void snap_psibeta_half_tddft(const LCAO_Orbitals& orb,
                              const InfoNonlocal& infoNL_,
                              std::vector<std::vector<std::complex<double>>>& nlm,
@@ -19,7 +21,7 @@ void snap_psibeta_half_tddft(const LCAO_Orbitals& orb,
                              const ModuleBase::Vector3<double>& R0, // The projector.
                              const int& T0,
                              const ModuleBase::Vector3<double>& A,
-                             const bool& calc_deri) // mohan add 2021-04-25)
+                             const bool& calc_r)
 {
     ModuleBase::timer::tick("module_tddft", "snap_psibeta_half_tddft");
 
@@ -27,7 +29,7 @@ void snap_psibeta_half_tddft(const LCAO_Orbitals& orb,
     const int nproj = infoNL_.nproj[T0];
     if (nproj == 0)
     {
-        if (calc_deri)
+        if (calc_r)
         {
             nlm.resize(4);
         }
@@ -43,7 +45,7 @@ void snap_psibeta_half_tddft(const LCAO_Orbitals& orb,
     std::vector<int> rmesh1;
     rmesh1.resize(nproj);
 
-    if (calc_deri)
+    if (calc_r)
     {
         nlm.resize(4);
     }
@@ -126,8 +128,9 @@ void snap_psibeta_half_tddft(const LCAO_Orbitals& orb,
         }
 
         double y = 0.0;
-        if (right > mesh_r - 4)
+        if (right > mesh_r - 4) {
             return y;
+        }
 
         double x0 = r_radial[right];
         double x1 = r_radial[right + 1];
@@ -177,27 +180,22 @@ void snap_psibeta_half_tddft(const LCAO_Orbitals& orb,
                                                              r_ridial,
                                                              weights_ridial);
 
-        // test by jingan
-        // std::cout << "Rcut = " << Rcut0 << std::endl;
-        // for (int ttt = 0; ttt < mesh_r0; ttt++)
-        // {
-        // 	std::cout << infoNL_.Beta[T0].Proj[nb].getRadial(ttt) << ",  ";
-        // }
-        // std::cout << std::endl;
-        // for (int ttt = 0; ttt < mesh_r0; ttt++)
-        // {
-        // 	std::cout << infoNL_.Beta[T0].Proj[nb].getBeta_r(ttt) << ",  ";
-        // }
-        // std::cout << std::endl;
-        // std::cout << "L0 = " << L0 << std::endl;
-        // test by jingan
-
         double A_phase = A * R0;
         std::complex<double> exp_iAR0 = std::exp(ModuleBase::IMAG_UNIT * A_phase);
 
         for (int ir = 0; ir < ridial_grid_num; ir++)
         {
             std::vector<std::complex<double>> result_angular(2 * L0 + 1, 0.0);
+            std::vector<std::complex<double>> result_angular_r_commu_x;
+            std::vector<std::complex<double>> result_angular_r_commu_y;
+            std::vector<std::complex<double>> result_angular_r_commu_z;
+            if (calc_r)
+            {
+                result_angular_r_commu_x.resize(2 * L0 + 1, 0.0);
+                result_angular_r_commu_y.resize(2 * L0 + 1, 0.0);
+                result_angular_r_commu_z.resize(2 * L0 + 1, 0.0);
+            }
+
             for (int ian = 0; ian < angular_grid_num; ian++)
             {
                 double x = ModuleBase::Integral::Lebedev_Laikov_grid110_x[ian];
@@ -215,8 +213,9 @@ void snap_psibeta_half_tddft(const LCAO_Orbitals& orb,
                     tmp_r_unit = tmp_r_coor / tmp_r_coor_norm;
                 }
 
-                if (tmp_r_coor_norm > Rcut1)
+                if (tmp_r_coor_norm > Rcut1) {
                     continue;
+                }
 
                 std::vector<double> rly0;
                 ModuleBase::Ylm::rl_sph_harm(L0, x, y, z, rly0);
@@ -227,22 +226,51 @@ void snap_psibeta_half_tddft(const LCAO_Orbitals& orb,
                 double phase = A * r_coor;
                 std::complex<double> exp_iAr = std::exp(ModuleBase::IMAG_UNIT * phase);
 
+                ModuleBase::Vector3<double> tmp_r_coor_r_commu = r_coor + R0;
+
                 for (int m0 = 0; m0 < 2 * L0 + 1; m0++)
                 {
+                    double temp_interpolation_value = Polynomial_Interpolation(mesh_r1, psi_1, radial1, tmp_r_coor_norm);
+
                     result_angular[m0] += exp_iAr * rly0[L0 * L0 + m0] * rly1[L1 * L1 + m1]
-                                          * Polynomial_Interpolation(mesh_r1, psi_1, radial1, tmp_r_coor_norm)
+                                          * temp_interpolation_value
                                           * weights_angular;
+
+                    if (calc_r)
+                    {
+                        result_angular_r_commu_x[m0] += exp_iAr * tmp_r_coor_r_commu.x * rly0[L0*L0+m0] * rly1[L1*L1+m1]
+                                                        * temp_interpolation_value
+                                                        * weights_angular;
+                        
+                        result_angular_r_commu_y[m0] += exp_iAr * tmp_r_coor_r_commu.y * rly0[L0*L0+m0] * rly1[L1*L1+m1]
+                                                        * temp_interpolation_value
+                                                        * weights_angular;
+                        
+                        result_angular_r_commu_z[m0] += exp_iAr * tmp_r_coor_r_commu.z * rly0[L0*L0+m0] * rly1[L1*L1+m1]
+                                                        * temp_interpolation_value
+                                                        * weights_angular;
+                    }
                 }
             }
 
             int index_tmp = index;
-            if (!calc_deri)
+            double temp = Polynomial_Interpolation(mesh_r0, beta_r, radial0, r_ridial[ir]) * r_ridial[ir] * weights_ridial[ir];
+            if (!calc_r)
             {
-                double temp = Polynomial_Interpolation(mesh_r0, beta_r, radial0, r_ridial[ir]) * r_ridial[ir]
-                              * weights_ridial[ir];
                 for (int m0 = 0; m0 < 2 * L0 + 1; m0++)
                 {
                     nlm[0][index_tmp] += temp * result_angular[m0] * exp_iAR0;
+                    index_tmp++;
+                }
+            }
+            else
+            {
+                for (int m0 = 0; m0 < 2 * L0 + 1; m0++)
+                {
+                    nlm[0][index_tmp] += temp * result_angular[m0] * exp_iAR0;
+                    nlm[1][index_tmp] += temp * result_angular_r_commu_x[m0] * exp_iAR0;
+                    nlm[2][index_tmp] += temp * result_angular_r_commu_y[m0] * exp_iAR0;
+                    nlm[3][index_tmp] += temp * result_angular_r_commu_z[m0] * exp_iAR0;
                     index_tmp++;
                 }
             }
@@ -251,11 +279,13 @@ void snap_psibeta_half_tddft(const LCAO_Orbitals& orb,
         index += 2 * L0 + 1;
     }
 
-    for (int dim = 0; dim < nlm.size(); dim++)
+    for(int dim = 0; dim < nlm.size(); dim++)
     {
-        for (auto& x: nlm[dim])
+        for (auto &x : nlm[dim])
         {
-            x = std::conj(x); // <phi|exp^{-iAr}|beta>
+            // nlm[0] is <phi|exp^{-iAr}|beta>
+            // nlm[1 or 2 or 3] is <phi|r_a * exp^{-iAr}|beta>, a = x, y, z
+            x = std::conj(x); 
         }
     }
 

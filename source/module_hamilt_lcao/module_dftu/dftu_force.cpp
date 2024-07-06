@@ -72,7 +72,6 @@ namespace ModuleDFTU
 {
 
 void DFTU::force_stress(const elecstate::ElecState* pelec,
-                        LCAO_Matrix& lm,
                         const Parallel_Orbitals& pv,
                         ForceStressArrays& fsr, // mohan add 2024-06-16
                         ModuleBase::matrix& force_dftu,
@@ -83,8 +82,6 @@ void DFTU::force_stress(const elecstate::ElecState* pelec,
     ModuleBase::timer::tick("DFTU", "force_stress");
 
     const int nlocal = GlobalV::NLOCAL;
-
-    this->LM = &lm;
 
     if (GlobalV::CAL_FORCE)
     {
@@ -643,14 +640,14 @@ void DFTU::cal_stress_gamma(const UnitCell& ucell,
                     pv.desc);
 #endif
 
-            for (int ir = 0; ir < this->LM->ParaV->nrow; ir++)
+            for (int ir = 0; ir < this->paraV->nrow; ir++)
             {
-                const int iwt1 = this->LM->ParaV->local2global_row(ir);
+                const int iwt1 = this->paraV->local2global_row(ir);
 
-                for (int ic = 0; ic < this->LM->ParaV->ncol; ic++)
+                for (int ic = 0; ic < this->paraV->ncol; ic++)
                 {
-                    const int iwt2 = this->LM->ParaV->local2global_col(ic);
-                    const int irc = ic * this->LM->ParaV->nrow + ir;
+                    const int iwt2 = this->paraV->local2global_col(ic);
+                    const int irc = ic * this->paraV->nrow + ir;
 
                     if (iwt1 == iwt2)
                         stress_dftu(dim1, dim2) += 2.0 * dm_VU_sover[irc];
