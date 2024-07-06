@@ -4,8 +4,7 @@
 #include "types.h"
 
 #include <complex>
-#include <stddef.h>
-#include <vector>
+#include <cstddef>
 
 namespace base_device
 {

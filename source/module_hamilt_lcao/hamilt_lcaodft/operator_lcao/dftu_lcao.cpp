@@ -11,16 +11,14 @@
 #include "module_base/parallel_reduce.h"
 
 template <typename TK, typename TR>
-hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::DFTU(LCAO_Matrix* LM_in,
+hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::DFTU(HS_Matrix_K<TK>* hsk_in,
                                                  const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
                                                  hamilt::HContainer<TR>* hR_in,
-                                                 std::vector<TK>* hK_in,
                                                  const UnitCell& ucell_in,
                                                  Grid_Driver* GridD_in,
                                                  const TwoCenterIntegrator* intor,
-                                                 ModuleDFTU::DFTU* dftu_in,
-                                                 const Parallel_Orbitals& paraV)
-    : hamilt::OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in), intor_(intor)
+                                                 ModuleDFTU::DFTU* dftu_in)
+    : hamilt::OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in), intor_(intor)
 {
     this->cal_type = calculation_type::lcao_dftu;
     this->ucell = &ucell_in;
@@ -29,7 +27,7 @@ hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::DFTU(LCAO_Matrix* LM_in,
     assert(this->ucell != nullptr);
 #endif
     // initialize HR to allocate sparse Nonlocal matrix memory
-    this->initialize_HR(GridD_in, &paraV);
+    this->initialize_HR(GridD_in);
     // set nspin
     this->nspin = GlobalV::NSPIN;
 }
@@ -42,10 +40,13 @@ hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::~DFTU()
 
 // initialize_HR()
 template <typename TK, typename TR>
-void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(Grid_Driver* GridD, const Parallel_Orbitals* paraV)
+void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(Grid_Driver* GridD)
 {
     ModuleBase::TITLE("DFTU", "initialize_HR");
     ModuleBase::timer::tick("DFTU", "initialize_HR");
+
+    auto* paraV = this->hR->get_paraV();// get parallel orbitals from HR
+    // TODO: if paraV is nullptr, AtomPair can not use paraV for constructor, I will repair it in the future.
 
     this->adjs_all.clear();
     this->adjs_all.reserve(this->ucell->nat);

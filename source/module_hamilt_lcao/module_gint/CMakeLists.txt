@@ -18,6 +18,9 @@ list(APPEND objects
     grid_meshcell.cpp
     grid_meshk.cpp
     grid_technique.cpp
+    gint_force_cpu_interface.cpp
+    gint_rho_cpu_interface.cpp
+    gint_vl_cpu_interface.cpp
     cal_psir_ylm.cpp
     cal_dpsir_ylm.cpp
     cal_ddpsir_ylm.cpp
@@ -25,11 +28,11 @@ list(APPEND objects
     mult_psi_dm_new.cpp
     mult_psi_dmr.cpp
     init_orb.cpp
-
 )
 
 if(USE_CUDA)
   list(APPEND objects
+      gint_gpu_interface.cpp
       kernels/cuda/cuda_tools.cu
       kernels/cuda/gint_vl.cu
       kernels/cuda/gint_rho.cu

@@ -13,8 +13,7 @@
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_lcao/module_gint/grid_technique.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
-class Gint
-{
+class Gint {
   public:
     ~Gint();
 
@@ -64,6 +63,28 @@ class Gint
     int nbxx;
     int ny, nplane, startz_current; // from rhopw
 
+    // in cal_gint_gpu.cpp
+    void gamma_gpu_vlocal_interface(Gint_inout* inout);
+
+    void gamma_gpu_rho_interface(Gint_inout* inout);
+
+    void gamma_gpu_force_interface(Gint_inout* inout);
+
+    // in cal_gint_cpu.cpp
+
+    void cpu_vlocal_interface(Gint_inout* inout);
+
+    void cpu_dvlocal_interface(Gint_inout* inout);
+
+    void cpu_vlocal_meta_interface(Gint_inout* inout);
+
+    void cpu_rho_interface(Gint_inout* inout);
+
+    void cpu_tau_interface(Gint_inout* inout);
+
+    void cpu_force_interface(Gint_inout* inout);
+
+    void cpu_force_meta_interface(Gint_inout* inout);
     //------------------------------------------------------
     // in gint_vl.cpp
     //------------------------------------------------------
@@ -103,15 +124,20 @@ class Gint
     void cal_meshball_vlocal_gamma(
         const int na_grid, // how many atoms on this (i,j,k) grid
         const int LD_pool,
-        const int* const block_iw,    // block_iw[na_grid],	index of wave functions for each block
-        const int* const block_size,  // block_size[na_grid],	number of columns of a band
-        const int* const block_index, // block_index[na_grid+1], count total number of atomis orbitals
+        const int* const block_iw, // block_iw[na_grid],	index of wave
+                                   // functions for each block
+        const int* const
+            block_size, // block_size[na_grid],	number of columns of a band
+        const int* const block_index, // block_index[na_grid+1], count total
+                                      // number of atomis orbitals
         const int grid_index,         // index of grid group, for tracing iat
         const bool* const* const
-            cal_flag, // cal_flag[bxyz][na_grid],	whether the atom-grid distance is larger than cutoff
+            cal_flag, // cal_flag[bxyz][na_grid],	whether the atom-grid
+                      // distance is larger than cutoff
         const double* const* const psir_ylm,   // psir_ylm[bxyz][LD_pool]
         const double* const* const psir_vlbr3, // psir_vlbr3[bxyz][LD_pool]
-        hamilt::HContainer<double>* hR);       // HContainer for storing the <phi_0 | V | phi_R> matrix element.
+        hamilt::HContainer<double>* hR); // HContainer for storing the <phi_0 |
+                                         // V | phi_R> matrix element.
 
     void cal_meshball_vlocal_k(int na_grid,
                                int LD_pool,
@@ -156,9 +182,11 @@ class Gint
 
     void cal_meshball_force(
         const int grid_index,
-        const int na_grid,                         // how many atoms on this (i,j,k) grid
-        const int* const block_size,               // block_size[na_grid],	number of columns of a band
-        const int* const block_index,              // block_index[na_grid+1], count total number of atomis orbitals
+        const int na_grid, // how many atoms on this (i,j,k) grid
+        const int* const
+            block_size, // block_size[na_grid],	number of columns of a band
+        const int* const block_index, // block_index[na_grid+1], count total
+                                      // number of atomis orbitals
         const double* const* const psir_vlbr3_DMR, // psir_vlbr3[bxyz][LD_pool]
         const double* const* const dpsir_x,        // psir_vlbr3[bxyz][LD_pool]
         const double* const* const dpsir_y,        // psir_vlbr3[bxyz][LD_pool]
@@ -167,7 +195,8 @@ class Gint
 
     void cal_meshball_stress(
         const int na_grid,            // how many atoms on this (i,j,k) grid
-        const int* const block_index, // block_index[na_grid+1], count total number of atomis orbitals
+        const int* const block_index, // block_index[na_grid+1], count total
+                                      // number of atomis orbitals
         const double* const* const psir_vlbr3_DMR,
         const double* const* const dpsir_xx,
         const double* const* const dpsir_xy,
@@ -180,7 +209,8 @@ class Gint
     //------------------------------------------------------
     // in gint_k_rho.cpp
     //------------------------------------------------------
-    // calculate the charge density & kinetic energy density (tau) via grid integrals
+    // calculate the charge density & kinetic energy density (tau) via grid
+    // integrals
     void gint_kernel_rho(const int na_grid,
                          const int grid_index,
                          const double delta_r,
@@ -217,11 +247,16 @@ class Gint
 
     // save the < phi_0i | V | phi_Rj > in sparse H matrix.
     bool pvpR_alloc_flag = false;
-    double** pvpR_reduced = nullptr;                              // stores Hamiltonian in reduced format, for multi-l
-    hamilt::HContainer<double>* hRGint = nullptr;                 // stores Hamiltonian in sparse format
-    hamilt::HContainer<std::complex<double>>* hRGintCd = nullptr; // stores Hamiltonian in sparse format
-    std::vector<hamilt::HContainer<double>*> DMRGint;             // stores DMR in sparse format
-    hamilt::HContainer<double>* DMRGint_full = nullptr;           // tmp tools used in transfer_DM2DtoGrid
+    double** pvpR_reduced
+        = nullptr; // stores Hamiltonian in reduced format, for multi-l
+    hamilt::HContainer<double>* hRGint
+        = nullptr; // stores Hamiltonian in sparse format
+    hamilt::HContainer<std::complex<double>>* hRGintCd
+        = nullptr; // stores Hamiltonian in sparse format
+    std::vector<hamilt::HContainer<double>*>
+        DMRGint; // stores DMR in sparse format
+    hamilt::HContainer<double>* DMRGint_full
+        = nullptr; // tmp tools used in transfer_DM2DtoGrid
     double** pvdpRx_reduced = nullptr;
     double** pvdpRy_reduced = nullptr;
     double** pvdpRz_reduced = nullptr;

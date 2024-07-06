@@ -282,17 +282,17 @@ void DFTU::folding_matrix_k_new(const int ik,
     // get SR and fold to mat_k
     if(GlobalV::GAMMA_ONLY_LOCAL)
     {
-        dynamic_cast<hamilt::HamiltLCAO<double, double>*>(p_ham)->updateSk(ik, this->LM, hk_type);
+        dynamic_cast<hamilt::HamiltLCAO<double, double>*>(p_ham)->updateSk(ik, hk_type);
     }
     else
     {
         if(GlobalV::NSPIN != 4)
         {
-            dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham)->updateSk(ik, this->LM, hk_type);
+            dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham)->updateSk(ik, hk_type);
         }
         else
         {
-            dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(p_ham)->updateSk(ik, this->LM, hk_type);
+            dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(p_ham)->updateSk(ik, hk_type);
         }
     }
 }
