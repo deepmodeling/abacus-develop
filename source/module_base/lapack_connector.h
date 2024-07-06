@@ -21,9 +21,57 @@
 
 extern "C"
 {
-    void zhegv_(const int* itype,const char* jobz,const char* uplo,const int* n,
-                std::complex<double>* a,const int* lda,std::complex<double>* b,const int* ldb,
-                double* w,std::complex<double>* work,int* lwork,double* rwork,int* info);
+// solve the generalized eigenproblem Ax=eBx, where A is Hermitian and complex couble
+    // zhegv_ & zhegvd_ returns all eigenvalues while zhegvx_ returns selected ones
+    void dsygvd_(const int* itype, const char* jobz, const char* uplo, const int* n,
+        double* a, const int* lda,
+        const double* b, const int* ldb, double* w,
+        double* work, int* lwork,
+        int* iwork, int* liwork, int* info);
+
+    void chegvd_(const int* itype, const char* jobz, const char* uplo, const int* n,
+             std::complex<float>* a, const int* lda,
+             const std::complex<float>* b, const int* ldb, float* w,
+             std::complex<float>* work, int* lwork, float* rwork, int* lrwork,
+             int* iwork, int* liwork, int* info);
+
+    void zhegvd_(const int* itype, const char* jobz, const char* uplo, const int* n,
+                 std::complex<double>* a, const int* lda, 
+                 const std::complex<double>* b, const int* ldb, double* w,
+                 std::complex<double>* work, int* lwork, double* rwork, int* lrwork,
+                 int* iwork, int* liwork, int* info);
+
+    void dsyevx_(const char* jobz, const char* range, const char* uplo, const int* n,
+        double* a, const int* lda,
+        const double* vl, const double* vu, const int* il, const int* iu, const double* abstol,
+        const int* m, double* w, double* z, const int* ldz,
+        double* work, const int* lwork, double* rwork, int* iwork, int* ifail, int* info);
+
+    void cheevx_(const char* jobz, const char* range, const char* uplo, const int* n,
+             std::complex<float> *a, const int* lda,
+             const float* vl, const float* vu, const int* il, const int* iu, const float* abstol,
+             const int* m, float* w, std::complex<float> *z, const int *ldz,
+             std::complex<float> *work, const int* lwork, float* rwork, int* iwork, int* ifail, int* info);
+
+    void zheevx_(const char* jobz, const char* range, const char* uplo, const int* n, 
+                 std::complex<double> *a, const int* lda,
+                 const double* vl, const double* vu, const int* il, const int* iu, const double* abstol, 
+                 const int* m, double* w, std::complex<double> *z, const int *ldz, 
+                 std::complex<double> *work, const int* lwork, double* rwork, int* iwork, int* ifail, int* info);
+
+
+    void dsygvx_(const int* itype, const char* jobz, const char* range, const char* uplo,
+                const int* n, double* A, const int* lda, double* B, const int* ldb,
+                const double* vl, const double* vu, const int* il, const int* iu,
+                const double* abstol, const int* m, double* w, double* Z, const int* ldz,
+                double* work, int* lwork, int*iwork, int* ifail, int* info);
+
+    void chegvx_(const int* itype,const char* jobz,const char* range,const char* uplo,
+             const int* n,std::complex<float> *a,const int* lda,std::complex<float> *b,
+             const int* ldb,const float* vl,const float* vu,const int* il,
+             const int* iu,const float* abstol,const int* m,float* w,
+             std::complex<float> *z,const int *ldz,std::complex<float> *work,const int* lwork,
+             float* rwork,int* iwork,int* ifail,int* info);
 
     void zhegvx_(const int* itype,const char* jobz,const char* range,const char* uplo,
                  const int* n,std::complex<double> *a,const int* lda,std::complex<double> *b,
@@ -32,11 +80,26 @@ extern "C"
                  std::complex<double> *z,const int *ldz,std::complex<double> *work,const int* lwork,
                  double* rwork,int* iwork,int* ifail,int* info);
 
+    void zhegv_(const int* itype,const char* jobz,const char* uplo,const int* n,
+                std::complex<double>* a,const int* lda,std::complex<double>* b,const int* ldb,
+                double* w,std::complex<double>* work,int* lwork,double* rwork,int* info);
+    void chegv_(const int* itype,const char* jobz,const char* uplo,const int* n,
+                std::complex<float>* a,const int* lda,std::complex<float>* b,const int* ldb,
+                float* w,std::complex<float>* work,int* lwork,float* rwork,int* info);
+	void dsygv_(const int* itype, const char* jobz,const char* uplo, const int* n,
+				double* a,const int* lda,double* b,const int* ldb,
+	 			double* w,double* work,int* lwork,int* info);
+
     // solve the eigenproblem Ax=ex, where A is Hermitian and complex couble
     // zheev_ returns all eigenvalues while zheevx_ returns selected ones
     void zheev_(const char* jobz,const char* uplo,const int* n,std::complex<double> *a,
                 const int* lda,double* w,std::complex<double >* work,const int* lwork,
                 double* rwork,int* info);
+    void cheev_(const char* jobz,const char* uplo,const int* n,std::complex<float> *a,
+                const int* lda,float* w,std::complex<float >* work,const int* lwork,
+                float* rwork,int* info);
+	void dsyev_(const char* jobz,const char* uplo,const int* n,double *a,
+                const int* lda,double* w,double* work,const int* lwork, int* info);
 
     // liuyu add 2023-10-03
     // dgetri and dgetrf computes the inverse of a n*n real matrix
