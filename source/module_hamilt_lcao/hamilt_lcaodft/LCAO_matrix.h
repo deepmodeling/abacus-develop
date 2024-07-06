@@ -19,12 +19,6 @@ class LCAO_Matrix {
     LCAO_Matrix();
     ~LCAO_Matrix();
 
-    // folding the fixed Hamiltonian (T+Vnl) if
-    // k-point algorithm is used.
-    void folding_fixedH(const int& ik,
-                        const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-                        bool cal_syns = false);
-
     Parallel_Orbitals* ParaV;
 
 #ifdef __EXX
@@ -38,27 +32,6 @@ class LCAO_Matrix {
 #endif
 
   public:
-    //------------------------------
-    // H, S, Hfixed
-    // used in gamma only algorithm.
-    // thse matrix are used to
-    // diagonalize.
-    //------------------------------
-    std::vector<double> Hloc;
-    std::vector<double> Sloc;
-    std::vector<double> Hloc_fixed;
-
-    //------------------------------
-    // 1. Hamiltonian(vl),
-    // 2. overlap matrix Sloc2
-    // 3. fixed (vna+T+Vnl) matrix.
-    // used in kpoint algorithm.
-    // these matrix are used to
-    // diagonalize.
-    //------------------------------
-    std::vector<std::complex<double>> Hloc2;
-    std::vector<std::complex<double>> Sloc2;
-    std::vector<std::complex<double>> Hloc_fixed2;
 
     // Record all R direct coordinate information, even if HR or SR is a zero
     // matrix
@@ -79,10 +52,6 @@ class LCAO_Matrix {
                      const int& iw2_all,
                      const double& v,
                      double* HSloc);
-
-    void zeros_HSgamma(const char& mtype);
-
-    void zeros_HSk(const char& mtype);
 };
 
 #include "LCAO_matrix.hpp"

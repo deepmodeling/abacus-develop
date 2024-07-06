@@ -6,6 +6,7 @@
 #include <RI/global/Tensor.h>
 #include "operator_lcao.h"
 #include "module_cell/klist.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 
 namespace hamilt
 {
@@ -25,9 +26,9 @@ class OperatorEXX<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 {
     using TAC = std::pair<int, std::array<int, 3>>;
 public:
-    OperatorEXX<OperatorLCAO<TK, TR>>(LCAO_Matrix* LM_in,
+    OperatorEXX<OperatorLCAO<TK, TR>>(HS_Matrix_K<TK>* hsk_in,
+        LCAO_Matrix* LM_in,
         hamilt::HContainer<TR>* hR_in,
-        std::vector<TK>* hK_in,
         const K_Vectors& kv_in,
         std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd_in = nullptr,
         std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc_in = nullptr,
@@ -53,6 +54,8 @@ public:
 
       void add_loaded_Hexx(const int ik);
       const K_Vectors& kv;
+
+      LCAO_Matrix* LM = nullptr;
 };
 
 } // namespace hamilt

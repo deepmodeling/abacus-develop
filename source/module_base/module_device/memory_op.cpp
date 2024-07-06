@@ -4,8 +4,7 @@
 #include "module_base/tool_threading.h"
 
 #include <complex>
-#include <iostream>
-#include <string.h>
+#include <cstring>
 
 namespace base_device
 {

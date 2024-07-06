@@ -19,7 +19,8 @@ namespace ModuleESolver
 		GlobalC::dftu.cal_occup_m_gamma(
 				iter, 
 				dm, 
-				this->p_chgmix->get_mixing_beta());
+				this->p_chgmix->get_mixing_beta(),
+                this->p_hamilt);
     }
 
     //! dftu occupation matrix for multiple k-points using dm(complex)
