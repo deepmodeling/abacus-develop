@@ -144,7 +144,7 @@ class Grid_Technique : public Grid_MeshBall {
 
     int nbox;
 
-    void cal_max_box_index(void);
+    void cal_max_box_index();
     // atoms on meshball
     void init_atoms_on_grid(const int& ny,
                             const int& nplane,
