@@ -13,15 +13,15 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
     const int ncyz = this->ny * this->nplane;
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
-    double* pvpR_thread = nullptr;
-    pvpR_thread = new double[nnrg]();
-    ModuleBase::GlobalFunc::ZEROS(pvpR_thread, nnrg);
 #ifdef _OPENMP
+    double* pvpR_thread = nullptr;
     hamilt::HContainer<double>* hRGint_thread = nullptr;
     if (!GlobalV::GAMMA_ONLY_LOCAL) {
         if (!pvpR_alloc_flag) {
             ModuleBase::WARNING_QUIT("Gint_interface::cal_gint",
                                      "pvpR has not been allocated yet!");
+            pvpR_thread = new double[nnrg]();
+            ModuleBase::GlobalFunc::ZEROS(pvpR_thread, nnrg);
         } else {
             ModuleBase::GlobalFunc::ZEROS(this->pvpR_reduced[inout->ispin],
                                           nnrg);
@@ -103,8 +103,8 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
         }
 
     }
-#endif
     delete[] pvpR_thread;
+#endif
     ModuleBase::TITLE("Gint_interface", "cal_gint_vlocal");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal");
 }
@@ -112,10 +112,6 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
 void Gint::cpu_dvlocal_interface(Gint_inout* inout) {
     ModuleBase::TITLE("Gint_interface", "cal_gint_dvlocal");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_dvlocal");
-    if (GlobalV::GAMMA_ONLY_LOCAL) {
-        ModuleBase::WARNING_QUIT("Gint_interface::cal_gint",
-                                 "dvlocal only for k point!");
-    }
     const UnitCell& ucell = *this->ucell;
     const int max_size = this->gridt->max_atom;
     const int LD_pool = max_size * ucell.nwmax;
@@ -124,6 +120,21 @@ void Gint::cpu_dvlocal_interface(Gint_inout* inout) {
     const int ncyz = this->ny * this->nplane;
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
+
+    if (GlobalV::GAMMA_ONLY_LOCAL) {
+        ModuleBase::WARNING_QUIT("Gint_interface::cal_gint",
+                                 "dvlocal only for k point!");
+        ModuleBase::GlobalFunc::ZEROS(
+                        this->pvdpRx_reduced[inout->ispin],
+                        nnrg);
+        ModuleBase::GlobalFunc::ZEROS(
+                        this->pvdpRy_reduced[inout->ispin],
+                        nnrg);
+        ModuleBase::GlobalFunc::ZEROS(
+                        this->pvdpRz_reduced[inout->ispin],
+                        nnrg);
+    }
+
 #ifdef _OPENMP
     double* pvdpRx_thread = nullptr;
     double* pvdpRy_thread = nullptr;
@@ -138,9 +149,6 @@ void Gint::cpu_dvlocal_interface(Gint_inout* inout) {
     ModuleBase::GlobalFunc::ZEROS(pvdpRz_thread, nnrg);
     hRGint_thread = new hamilt::HContainer<double>(*this->hRGint);
 
-    ModuleBase::GlobalFunc::ZEROS(this->pvdpRx_reduced[inout->ispin], nnrg);
-    ModuleBase::GlobalFunc::ZEROS(this->pvdpRy_reduced[inout->ispin], nnrg);
-    ModuleBase::GlobalFunc::ZEROS(this->pvdpRz_reduced[inout->ispin], nnrg);
 #pragma omp for
 #endif
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
@@ -202,20 +210,22 @@ void Gint::cpu_vlocal_meta_interface(Gint_inout* inout) {
     const int ncyz = this->ny * this->nplane;
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
-    double* pvpR_thread = nullptr;
-    pvpR_thread = new double[nnrg]();
-    ModuleBase::GlobalFunc::ZEROS(pvpR_thread, nnrg);
+
+    if (!pvpR_alloc_flag) {
+        ModuleBase::WARNING_QUIT("Gint_interface::cal_gint",
+                                    "pvpR has not been allocated yet!");
+    } else {
+        ModuleBase::GlobalFunc::ZEROS(this->pvpR_reduced[inout->ispin],
+                                        nnrg);
+    }
+
 #ifdef _OPENMP
+
+    double* pvpR_thread = nullptr;
     hamilt::HContainer<double>* hRGint_thread = nullptr;
     if (!GlobalV::GAMMA_ONLY_LOCAL) {
-        if (!pvpR_alloc_flag) {
-            ModuleBase::WARNING_QUIT("Gint_interface::cal_gint",
-                                     "pvpR has not been allocated yet!");
-        } else {
-            ModuleBase::GlobalFunc::ZEROS(this->pvpR_reduced[inout->ispin],
-                                          nnrg);
-        }
-
+        pvpR_thread = new double[nnrg]();
+        ModuleBase::GlobalFunc::ZEROS(pvpR_thread, nnrg);
     } else {
         hRGint_thread = new hamilt::HContainer<double>(*this->hRGint);
     }
@@ -307,8 +317,8 @@ void Gint::cpu_vlocal_meta_interface(Gint_inout* inout) {
                                 1);
         }
     }
-#endif
     delete[] pvpR_thread;
+#endif
     ModuleBase::TITLE("Gint_interface", "cal_gint_vlocal_meta");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal_meta");
 }
