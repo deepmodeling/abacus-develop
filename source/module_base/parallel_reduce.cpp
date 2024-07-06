@@ -110,7 +110,8 @@ void Parallel_Reduce::reduce_pool<double>(double* object, const int n)
 // (2) we need to reduce the value from different pool.
 void Parallel_Reduce::reduce_double_allpool(const int& kpar, const int& nproc_in_pool, double& object)
 {
-    if (kpar == 1) {
+    if (kpar == 1) 
+    {
         return;
     }
 #ifdef __MPI
@@ -123,7 +124,8 @@ void Parallel_Reduce::reduce_double_allpool(const int& kpar, const int& nproc_in
 // (2) we need to reduce the value from different pool.
 void Parallel_Reduce::reduce_double_allpool(const int& kpar, const int& nproc_in_pool, double* object, const int n)
 {
-    if (kpar == 1) {
+    if (kpar == 1) 
+    {
         return;
     }
 #ifdef __MPI
@@ -228,7 +230,8 @@ void Parallel_Reduce::gather_max_double_all(const int& nproc, double& v)
 void Parallel_Reduce::gather_max_double_pool(const int& nproc_in_pool, double& v)
 {
 #ifdef __MPI
-    if (nproc_in_pool == 1) {
+    if (nproc_in_pool == 1) 
+    {
         return;
     }
     double* value = new double[nproc_in_pool];
@@ -248,7 +251,8 @@ void Parallel_Reduce::gather_max_double_pool(const int& nproc_in_pool, double& v
 void Parallel_Reduce::gather_min_double_pool(const int& nproc_in_pool, double& v)
 {
 #ifdef __MPI
-    if (nproc_in_pool == 1) {
+    if (nproc_in_pool == 1) 
+    {
         return;
     }
     double* value = new double[nproc_in_pool];
