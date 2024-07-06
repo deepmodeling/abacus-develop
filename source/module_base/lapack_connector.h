@@ -21,6 +21,10 @@
 
 extern "C"
 {
+    void zhegv_(const int* itype,const char* jobz,const char* uplo,const int* n,
+                std::complex<double>* a,const int* lda,std::complex<double>* b,const int* ldb,
+                double* w,std::complex<double>* work,int* lwork,double* rwork,int* info);
+
     void zhegvx_(const int* itype,const char* jobz,const char* range,const char* uplo,
                  const int* n,std::complex<double> *a,const int* lda,std::complex<double> *b,
                  const int* ldb,const double* vl,const double* vu,const int* il,
