@@ -43,14 +43,6 @@ inline double get_conj(const double &x) { return x; }
 
 inline float get_conj(const float &x) { return x; }
 
-inline double get_real(const std::complex<double> &x) { return x.real(); }
-
-inline float get_real(const std::complex<float> &x) { return x.real(); }
-
-inline double get_real(const double &x) { return x; }
-
-inline float get_real(const float &x) { return x; }
-
 template <typename T, typename Device> struct line_minimize_with_block_op {
   /// @brief dot_real_op computes the dot product of the given complex
   /// arrays(treated as float arrays). And there's may have MPI communications
