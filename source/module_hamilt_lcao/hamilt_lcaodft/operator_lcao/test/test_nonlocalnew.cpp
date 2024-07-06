@@ -133,14 +133,15 @@ class NonlocalNewTest : public ::testing::Test
 TEST_F(NonlocalNewTest, constructHRd2d)
 {
     std::vector<ModuleBase::Vector3<double>> kvec_d_in(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
-    std::vector<double> hk(paraV->get_row_size() * paraV->get_col_size(), 0.0);
+    hamilt::HS_Matrix_K<double> hsk(paraV, true);
+    hsk.set_zero_hk();
     Grid_Driver gd(0, 0, 0);
     // check some input values
     EXPECT_EQ(ucell.infoNL.Beta[0].get_rcut_max(), 1.0);
     EXPECT_EQ(LCAO_Orbitals::get_const_instance().Phi[0].getRcut(), 1.0);
     std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
     hamilt::NonlocalNew<hamilt::OperatorLCAO<double, double>>
-        op(nullptr, kvec_d_in, HR, &hk, &ucell, &gd, &intor_, paraV);
+        op(&hsk, kvec_d_in, HR, &ucell, &gd, &intor_);
     std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed_time
         = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
@@ -169,7 +170,8 @@ TEST_F(NonlocalNewTest, constructHRd2d)
     end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed_time2
         = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
-    // check the value of SK
+    // check the value of HK
+    double* hk = hsk.get_hk();
     for (int i = 0; i < paraV->get_row_size() * paraV->get_col_size(); ++i)
     {
         EXPECT_EQ(hk[i], 5.0 * test_size);
@@ -205,10 +207,11 @@ TEST_F(NonlocalNewTest, constructHRd2cd)
 {
     std::vector<ModuleBase::Vector3<double>> kvec_d_in(2, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     kvec_d_in[1] = ModuleBase::Vector3<double>(0.1, 0.2, 0.3);
-    std::vector<std::complex<double>> hk(paraV->get_row_size() * paraV->get_col_size(), std::complex<double>(0.0, 0.0));
+    hamilt::HS_Matrix_K<std::complex<double>> hsk(paraV);
+    hsk.set_zero_hk();
     Grid_Driver gd(0, 0, 0);
     hamilt::NonlocalNew<hamilt::OperatorLCAO<std::complex<double>, double>>
-        op(nullptr, kvec_d_in, HR, &hk, &ucell, &gd, &intor_, paraV);
+        op(&hsk, kvec_d_in, HR, &ucell, &gd, &intor_);
     op.contributeHR();
     // check the value of HR
     for (int iap = 0; iap < HR->size_atom_pairs(); ++iap)
@@ -224,16 +227,17 @@ TEST_F(NonlocalNewTest, constructHRd2cd)
             EXPECT_EQ(tmp.get_pointer(0)[i], 5.0 * test_size);
         }
     }
-    // calculate SK for gamma point
+    // calculate HK for gamma point
     op.contributeHk(0);
-    // check the value of SK of gamma point
+    // check the value of HK of gamma point
+    auto* hk = hsk.get_hk();
     for (int i = 0; i < paraV->get_row_size() * paraV->get_col_size(); ++i)
     {
         EXPECT_EQ(hk[i].real(), 5.0 * test_size);
         EXPECT_EQ(hk[i].imag(), 0.0);
     }
     // calculate HK for k point
-    hk.assign(paraV->get_row_size() * paraV->get_col_size(), std::complex<double>(0.0, 0.0));
+    hsk.set_zero_hk();
     op.contributeHk(1);
     // check the value of HK
     for (int i = 0; i < paraV->get_row_size() * paraV->get_col_size(); ++i)

@@ -104,10 +104,11 @@ TEST_F(OverlapNewTest, constructHRcd2cd)
     int npol = ucell.get_npol();
     std::vector<ModuleBase::Vector3<double>> kvec_d_in(2, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     kvec_d_in[1] = ModuleBase::Vector3<double>(0.1, 0.2, 0.3);
-    std::vector<std::complex<double>> hk(paraV->get_row_size() * paraV->get_col_size(), std::complex<double>(0.0, 0.0));
+    hamilt::HS_Matrix_K<std::complex<double>> hsk(paraV);
+    hsk.set_zero_sk();
     Grid_Driver gd(0, 0, 0);
     hamilt::OverlapNew<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>
-        op(nullptr, kvec_d_in, nullptr, nullptr, SR, &hk, &ucell, &gd, &intor_, paraV);
+        op(&hsk, kvec_d_in, nullptr, SR, &ucell, &gd, &intor_);
     op.contributeHR();
     // check the value of SR
     for (int iap = 0; iap < SR->size_atom_pairs(); ++iap)
@@ -139,6 +140,7 @@ TEST_F(OverlapNewTest, constructHRcd2cd)
     // calculate SK for gamma point
     op.contributeHk(0);
     // check the value of SK of gamma point
+    auto* sk = hsk.get_sk();
     int i = 0;
     for (int irow = 0; irow < paraV->get_row_size(); ++irow)
     {
@@ -146,19 +148,19 @@ TEST_F(OverlapNewTest, constructHRcd2cd)
         {
             if (irow % npol == icol % npol)
             {
-                EXPECT_NEAR(hk[i].real(), 1.0, 1e-10);
-                EXPECT_NEAR(hk[i].imag(), 0.0, 1e-10);
+                EXPECT_NEAR(sk[i].real(), 1.0, 1e-10);
+                EXPECT_NEAR(sk[i].imag(), 0.0, 1e-10);
             }
             else
             {
-                EXPECT_NEAR(hk[i].real(), 0.0, 1e-10);
-                EXPECT_NEAR(hk[i].imag(), 0.0, 1e-10);
+                EXPECT_NEAR(sk[i].real(), 0.0, 1e-10);
+                EXPECT_NEAR(sk[i].imag(), 0.0, 1e-10);
             }
             ++i;
         }
     }
     // calculate SK for k point
-    hk.assign(paraV->get_row_size() * paraV->get_col_size(), std::complex<double>(0.0, 0.0));
+    hsk.set_zero_sk();
     op.contributeHk(1);
     // check the value of SK
     i = 0;
@@ -168,13 +170,13 @@ TEST_F(OverlapNewTest, constructHRcd2cd)
         {
             if (irow % npol == icol % npol)
             {
-                EXPECT_NEAR(hk[i].real(), -0.80901699437494723, 1e-10);
-                EXPECT_NEAR(hk[i].imag(), -0.58778525229247336, 1e-10);
+                EXPECT_NEAR(sk[i].real(), -0.80901699437494723, 1e-10);
+                EXPECT_NEAR(sk[i].imag(), -0.58778525229247336, 1e-10);
             }
             else
             {
-                EXPECT_NEAR(hk[i].real(), 0.0, 1e-10);
-                EXPECT_NEAR(hk[i].imag(), 0.0, 1e-10);
+                EXPECT_NEAR(sk[i].real(), 0.0, 1e-10);
+                EXPECT_NEAR(sk[i].imag(), 0.0, 1e-10);
             }
             ++i;
         }

@@ -212,7 +212,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(Input& inp, UnitCell& ucell) {
 
     // 8) initialize DFT+U
     if (GlobalV::dft_plus_u) {
-        GlobalC::dftu.init(ucell, this->LM, this->kv.get_nks());
+        GlobalC::dftu.init(ucell, this->LM.ParaV, this->kv.get_nks());
     }
 
     // 9) initialize ppcell
@@ -1010,22 +1010,21 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int iter) {
         && (!GlobalC::exx_info.info_global.separate_loop
             || iter == 1)) // to avoid saving the same value repeatedly
     {
-        std::vector<TK> Hexxk_save(this->orb_con.ParaV.get_local_size());
+        hamilt::HS_Matrix_K<TK> Hexxk_save(&this->orb_con.ParaV, 1);
         for (int ik = 0; ik < this->kv.get_nks(); ++ik) {
-            ModuleBase::GlobalFunc::ZEROS(Hexxk_save.data(), Hexxk_save.size());
+            Hexxk_save.set_zero_hk();
 
-            hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>> opexx_save(
-                &this->LM,
-                nullptr,
-                &Hexxk_save,
-                this->kv);
+            hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>> opexx_save(&Hexxk_save, 
+                                                                         &this->LM, 
+                                                                         nullptr, 
+                                                                         this->kv);
 
             opexx_save.contributeHk(ik);
 
             GlobalC::restart.save_disk("Hexx",
                                        ik,
                                        this->orb_con.ParaV.get_local_size(),
-                                       Hexxk_save.data());
+                                       Hexxk_save.get_hk());
         }
         if (GlobalV::MY_RANK == 0) {
             GlobalC::restart.save_disk("Eexx", 0, 1, &this->pelec->f_en.exx);

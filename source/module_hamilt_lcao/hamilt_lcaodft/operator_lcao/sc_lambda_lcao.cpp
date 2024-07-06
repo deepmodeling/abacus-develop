@@ -20,12 +20,13 @@ void OperatorScLambda<OperatorLCAO<std::complex<double>, std::complex<double>>>:
     ModuleBase::timer::tick("OperatorScLambda", "contributeHk");
     SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>& sc
         = SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>::getScInstance();
-    std::vector<std::complex<double>> h_lambda(this->LM->ParaV->nloc);
+    std::vector<std::complex<double>> h_lambda(this->hsk->get_pv()->nloc);
     std::fill(h_lambda.begin(), h_lambda.end(), std::complex<double>(0, 0));
-    sc.cal_h_lambda(&h_lambda[0], this->LM->Sloc2, ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(), this->isk[ik]);
-    for (int irc = 0; irc < this->LM->ParaV->nloc; irc++)
+    sc.cal_h_lambda(&h_lambda[0], this->hsk->get_sk(), ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(), this->isk[ik]);
+    std::complex<double>* hk = this->hsk->get_hk();
+    for (int irc = 0; irc < this->hsk->get_pv()->nloc; irc++)
     {
-        this->LM->Hloc2[irc] += h_lambda[irc];
+        hk[irc] += h_lambda[irc];
     }
     //std::cout << "OperatorScLambda contributeHk" << std::endl;
     ModuleBase::timer::tick("OperatorScLambda", "contributeHk");
@@ -39,12 +40,13 @@ void OperatorScLambda<OperatorLCAO<std::complex<double>, double>>::contributeHk(
     ModuleBase::timer::tick("OperatorScLambda", "contributeHk");
     SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>& sc
         = SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>::getScInstance();
-    std::vector<std::complex<double>> h_lambda(this->LM->ParaV->nloc);
+    std::vector<std::complex<double>> h_lambda(this->hsk->get_pv()->nloc);
     std::fill(h_lambda.begin(), h_lambda.end(), std::complex<double>(0, 0));
-    sc.cal_h_lambda(&h_lambda[0], this->LM->Sloc2, ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(), this->isk[ik]);
-    for (int irc = 0; irc < this->LM->ParaV->nloc; irc++)
+    sc.cal_h_lambda(&h_lambda[0], this->hsk->get_sk(), ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(), this->isk[ik]);
+    std::complex<double>* hk = this->hsk->get_hk();
+    for (int irc = 0; irc < this->hsk->get_pv()->nloc; irc++)
     {
-        this->LM->Hloc2[irc] += h_lambda[irc];
+        hk[irc] += h_lambda[irc];
     }
     //std::cout << "OperatorScLambda contributeHk" << std::endl;
     ModuleBase::timer::tick("OperatorScLambda", "contributeHk");

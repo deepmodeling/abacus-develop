@@ -21,6 +21,8 @@ void ModuleIO::write_proj_band_lcao(
     ModuleBase::timer::tick("ModuleIO", "write_proj_band_lcao");
 
     const Parallel_Orbitals* pv = lm.ParaV;
+    // get the date pointer of SK
+    const double* sk = dynamic_cast<const hamilt::HamiltLCAO<double, double>*>(p_ham)->getSk();
 
     int nspin0 = 1;
     if (GlobalV::NSPIN == 2)
@@ -61,7 +63,7 @@ void ModuleIO::write_proj_band_lcao(
                 &GlobalV::NLOCAL,
                 &GlobalV::NLOCAL,
                 &one_float,
-                lm.Sloc.data(),
+                sk,
                 &one_int,
                 &one_int,
                 pv->desc,
@@ -207,16 +209,16 @@ void ModuleIO::write_proj_band_lcao(
                 if (is == kv.isk[ik])
                 {
                     // calculate SK for current k point
-                    // the target matrix is LM->Sloc2 with collumn-major
+                    const std::complex<double>* sk = nullptr;
                     if (GlobalV::NSPIN == 4)
                     {
-                        dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(p_ham)->updateSk(
-                          ik, &lm, 1);
+                        dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(p_ham)->updateSk(ik, 1);
+                        sk = dynamic_cast<const hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(p_ham)->getSk();
                     }
                     else
                     {
-                        dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham)->updateSk(
-                          ik, &lm, 1);
+                        dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham)->updateSk(ik, 1);
+                        sk = dynamic_cast<const hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham)->getSk();
                     }
 
                     // calculate Mulk
@@ -241,7 +243,7 @@ void ModuleIO::write_proj_band_lcao(
                             &GlobalV::NLOCAL,
                             &GlobalV::NLOCAL,
                             &one_float[0],
-                            lm.Sloc2.data(),
+                            sk,
                             &one_int,
                             &one_int,
                             pv->desc,
