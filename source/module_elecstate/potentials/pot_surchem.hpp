@@ -31,7 +31,7 @@ class PotSurChem : public PotBase
         }
     }
 
-    void cal_v_eff(const Charge* chg, const UnitCell* ucell, ModuleBase::matrix& v_eff) override
+    void cal_v_eff(const Charge*const chg, const UnitCell*const ucell, ModuleBase::matrix& v_eff) override
     {
         if (!this->allocated)
         {

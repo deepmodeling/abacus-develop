@@ -23,7 +23,7 @@ class PotXC : public PotBase
         this->fixed_mode = false;
     }
 
-    void cal_v_eff(const Charge* chg, const UnitCell* ucell, ModuleBase::matrix& v_eff) override;
+    void cal_v_eff(const Charge*const chg, const UnitCell*const ucell, ModuleBase::matrix& v_eff) override;
 
     ModuleBase::matrix* vofk = nullptr;
     double* etxc_ = nullptr;

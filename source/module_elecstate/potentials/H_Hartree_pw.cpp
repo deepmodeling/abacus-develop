@@ -100,7 +100,7 @@ PotHartree::PotHartree(const ModulePW::PW_Basis* rho_basis_in)
     this->fixed_mode = false;
 }
 
-void PotHartree::cal_v_eff(const Charge* chg, const UnitCell* ucell, ModuleBase::matrix& v_eff)
+void PotHartree::cal_v_eff(const Charge*const chg, const UnitCell*const ucell, ModuleBase::matrix& v_eff)
 {
     if(GlobalV::use_paw)
     {
