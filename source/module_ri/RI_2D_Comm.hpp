@@ -227,17 +227,17 @@ void RI_2D_Comm::add_HexxR(
 {
     ModuleBase::TITLE("RI_2D_Comm", "add_HexxR");
     ModuleBase::timer::tick("RI_2D_Comm", "add_HexxR");
-
-    for (const auto& Hs_tmpA : Hs[current_spin])
+    for (const auto& Hs_tmpA : Hs[GlobalV::NSPIN == 2 ? current_spin : 0])
     {
         const TA& iat0 = Hs_tmpA.first;
         for (const auto& Hs_tmpB : Hs_tmpA.second)
         {
             const TA& iat1 = Hs_tmpB.first.first;
+            const TC& cell = Hs_tmpB.first.second;
             const Abfs::Vector3_Order<int> R = RI_Util::array3_to_Vector3(
                 (cell_nearest ?
-                    cell_nearest->get_cell_nearest_discrete(iat0, iat1, Hs_tmpB.first.second)
-                    : Hs_tmpB.first.second));
+                    cell_nearest->get_cell_nearest_discrete(iat0, iat1, cell)
+                    : cell));
             hamilt::BaseMatrix<TR>* HlocR = hR.find_matrix(iat0, iat1, R.x, R.y, R.z);
             if (HlocR == nullptr)
             { // add R to HContainer
@@ -248,14 +248,19 @@ void RI_2D_Comm::add_HexxR(
             auto row_indexes = pv.get_indexes_row(iat0);
             auto col_indexes = pv.get_indexes_col(iat1);
             const RI::Tensor<Tdata>& HexxR = (Tdata)alpha * Hs_tmpB.second;
-            // std::cout << "iat0=" << iat0 << ", iat1=" << iat1 << std::endl;
             for (int lw0 = 0;lw0 < row_indexes.size();lw0 += npol)
                 for (int lw1 = 0;lw1 < col_indexes.size();lw1 += npol)
                 {
-                    const int& gw0 = row_indexes[lw0];
-                    const int& gw1 = col_indexes[lw1];
+                    const int& gw0 = row_indexes[lw0] / npol;
+                    const int& gw1 = col_indexes[lw1] / npol;
                     // std::cout << "gw0=" << gw0 << ", gw1=" << gw1 << ", lw0=" << lw0 << ", lw1=" << lw1 << std::endl;
                     HlocR->add_element(lw0, lw1, RI::Global_Func::convert<TR>(HexxR(gw0, gw1)));
+                    if (npol == 2)
+                    {
+                        HlocR->add_element(lw0, lw1 + 1, RI::Global_Func::convert<TR>(Hs[1].at(iat0).at({ iat1, cell })(gw0, gw1)) * alpha);
+                        HlocR->add_element(lw0 + 1, lw1, RI::Global_Func::convert<TR>(Hs[2].at(iat0).at({ iat1, cell })(gw0, gw1)) * alpha);
+                        HlocR->add_element(lw0 + 1, lw1 + 1, RI::Global_Func::convert<TR>(Hs[3].at(iat0).at({ iat1, cell })(gw0, gw1)) * alpha);
+                    }
                 }
         }
     }
