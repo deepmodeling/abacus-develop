@@ -113,7 +113,7 @@ void ORB_control::setup_2d_division(std::ofstream& ofs_running, std::ofstream& o
         // is determined in 'divide_HS_2d' subroutine
         this->divide_HS_2d(DIAG_WORLD, ofs_running, ofs_warning);
 #else
-        this->divide_HS_2d(ofs_running, ofs_warning);
+        this->divide_HS_2d(ofs_running, ofs_warning); // Zhang Xiaoyang enable the serial version of LCAO and recovered this function usage. 2024-07-06
 #endif
     }
     else
