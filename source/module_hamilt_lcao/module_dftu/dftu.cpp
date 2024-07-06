@@ -36,7 +36,7 @@ DFTU::~DFTU()
 }
 
 void DFTU::init(UnitCell& cell, // unitcell class
-                LCAO_Matrix& lm,
+                const Parallel_Orbitals* pv,
                 const int& nks)
 {
     ModuleBase::TITLE("DFTU", "init");
@@ -46,7 +46,7 @@ void DFTU::init(UnitCell& cell, // unitcell class
     exit(0);
 #endif
 
-    this->LM = &lm;
+    this->paraV = pv;
 
     // needs reconstructions in future
     // global parameters, need to be removed in future

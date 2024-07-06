@@ -166,6 +166,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
             GlobalV::GAMMA_ONLY_LOCAL ? &(this->GG) : nullptr,
             GlobalV::GAMMA_ONLY_LOCAL ? nullptr : &(this->GK),
             &(this->LM),
+            &this->orb_con.ParaV,
             this->pelec->pot,
             this->kv,
             two_center_bundle_,
@@ -530,14 +531,14 @@ void ESolver_KS_LCAO<std::complex<double>, double>::get_S(void)
 
     this->RA.for_2d(this->orb_con.ParaV, GlobalV::GAMMA_ONLY_LOCAL);
 
-    this->LM.ParaV = &this->orb_con.ParaV;
-
-    if (this->p_hamilt == nullptr)
-    {
-        this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, double>(&this->LM,
-                                                                              this->kv,
-                                                                              *(two_center_bundle_.overlap_orb));
-        dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, double>*>(this->p_hamilt->ops)->contributeHR();
+    if (this->p_hamilt == nullptr) {
+        this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, double>(
+            &this->orb_con.ParaV,
+            this->kv,
+            *(two_center_bundle_.overlap_orb));
+        dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, double>*>(
+            this->p_hamilt->ops)
+            ->contributeHR();
     }
 
     // mohan add 2024-06-09
@@ -570,13 +571,15 @@ void ESolver_KS_LCAO<std::complex<double>, std::complex<double>>::get_S(void)
 
     this->RA.for_2d(this->orb_con.ParaV, GlobalV::GAMMA_ONLY_LOCAL);
     this->LM.ParaV = &this->orb_con.ParaV;
-    if (this->p_hamilt == nullptr)
-    {
-        this->p_hamilt
-            = new hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>(&this->LM,
-                                                                                 this->kv,
-                                                                                 *(two_center_bundle_.overlap_orb));
-        dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>*>(this->p_hamilt->ops)
+    if (this->p_hamilt == nullptr) {
+        this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>,
+                                                std::complex<double>>(
+            &this->orb_con.ParaV,
+            this->kv,
+            *(two_center_bundle_.overlap_orb));
+        dynamic_cast<
+            hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>*>(
+            this->p_hamilt->ops)
             ->contributeHR();
     }
 
@@ -591,13 +594,12 @@ void ESolver_KS_LCAO<std::complex<double>, std::complex<double>>::get_S(void)
 }
 
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::nscf(void)
-{
+void ESolver_KS_LCAO<TK, TR>::nscf() {
     ModuleBase::TITLE("ESolver_KS_LCAO", "nscf");
 
     std::cout << " NON-SELF CONSISTENT CALCULATIONS" << std::endl;
 
-    time_t time_start = std::time(NULL);
+    time_t time_start = std::time(nullptr);
 
 #ifdef __EXX
 #ifdef __MPI
@@ -631,7 +633,7 @@ void ESolver_KS_LCAO<TK, TR>::nscf(void)
         ModuleBase::WARNING_QUIT("ESolver_KS_PW", "HSolver has not been initialed!");
     }
 
-    time_t time_finish = std::time(NULL);
+    time_t time_finish = std::time(nullptr);
     ModuleBase::GlobalFunc::OUT_TIME("cal_bands", time_start, time_finish);
 
     GlobalV::ofs_running << " end of band structure calculation " << std::endl;

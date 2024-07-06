@@ -19,13 +19,16 @@ ModuleBase::matrix SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>:
     ModuleBase::matrix MecMulP(this->nspin_, nlocal, true), orbMulP(this->nspin_, nlocal, true);
     for(size_t ik = 0; ik != this->kv_.get_nks(); ++ik)
     {
+        std::complex<double> *sk = nullptr;
         if (this->nspin_ == 4)
         {
-            dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(this->p_hamilt)->updateSk(ik, LM, 1);
+            dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(this->p_hamilt)->updateSk(ik, 1);
+            sk = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(this->p_hamilt)->getSk();
         }
         else
         {
-            dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(this->p_hamilt)->updateSk(ik, LM, 1);
+            dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(this->p_hamilt)->updateSk(ik, 1);
+            sk = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(this->p_hamilt)->getSk();
         }
         ModuleBase::ComplexMatrix mud(this->ParaV->ncol, this->ParaV->nrow, true);
 #ifdef __MPI
@@ -43,7 +46,7 @@ ModuleBase::matrix SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>:
                 &one_int,
                 &one_int,
                 this->ParaV->desc,
-                LM->Sloc2.data(),
+                sk,
                 &one_int,
                 &one_int,
                 this->ParaV->desc,

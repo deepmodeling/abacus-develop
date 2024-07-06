@@ -16,14 +16,6 @@
 namespace LCAO_domain
 {
 
-// can used in gamma algorithm.
-void build_Nonlocal_beta_new(LCAO_Matrix& lm,
-                             double* Hloc,
-                             const UnitCell& ucell,
-                             const LCAO_Orbitals& orb,
-                             const TwoCenterIntegrator& intor_orb_beta,
-                             Grid_Driver* GridD);
-
 void build_Nonlocal_mu_new(LCAO_Matrix& lm,
                            ForceStressArrays& fsr, // mohan 2024-06-16
                            double* HlocR,
@@ -172,10 +164,6 @@ void build_ST_new(LCAO_Matrix& lm,
 void zeros_HSR(const char& mtype, LCAO_HS_Arrays& HS_arrays);
 
 void divide_HS_in_frag(LCAO_Matrix& lm, const bool isGamma, Parallel_Orbitals& pv, const int& nks);
-
-void allocate_HS_k(LCAO_Matrix& lm, const long& nloc);
-
-void allocate_HS_gamma(LCAO_Matrix& lm, const long& nloc);
 
 } // namespace LCAO_domain
 
