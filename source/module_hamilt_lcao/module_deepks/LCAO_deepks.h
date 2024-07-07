@@ -503,8 +503,7 @@ class LCAO_Deepks
         const UnitCell &ucell,
         const LCAO_Orbitals &orb,
         Grid_Driver &GridD);
-    
-    // void check_v_delta_precalc(const int nlocal,const int nat);
+    void check_v_delta_precalc(const int nat, const int nks,const int nlocal);
 
     // prepare psialpha for outputting npy file
     void prepare_psialpha(const int nlocal,
@@ -512,11 +511,13 @@ class LCAO_Deepks
         const UnitCell &ucell,
         const LCAO_Orbitals &orb,
         Grid_Driver &GridD);
+    void check_vdp_psialpha(const int nat, const int nks, const int nlocal);
     
     // prepare gevdm for outputting npy file
     void prepare_gevdm(
         const int nat,
         const LCAO_Orbitals &orb);
+    void check_vdp_gevdm(const int nat);
 
   private:
     const Parallel_Orbitals* pv;
@@ -616,6 +617,7 @@ class LCAO_Deepks
     void save_h_mat(const std::complex<double> *h_mat_in,const int nloc);
     //Collect data in h_in to matrix h_out. Note that left lower trianger in h_out is filled
     void collect_h_mat(const double *h_in,ModuleBase::matrix &h_out,const int nlocal);//just for gamma only
+    void check_h_mat(const ModuleBase::matrix &H,const std::string &h_file,const int nlocal);//just for gamma only
   
 };
 

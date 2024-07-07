@@ -77,5 +77,20 @@ void LCAO_Deepks::collect_h_mat(const double *h_in,ModuleBase::matrix &h_out,con
 #endif
 }
 
+//just for gamma-only now
+void LCAO_Deepks::check_h_mat(const ModuleBase::matrix &H,const std::string &h_file,const int nlocal)
+{
+    std::ofstream ofs(h_file.c_str());
+    ofs << std::setprecision(10);
+    for (int i=0; i<nlocal; i++)
+    {
+        for (int j=0; j<nlocal; j++)
+        {
+            ofs << H(i,j) << " ";
+        }
+        ofs << std::endl;
+    }
+    ofs.close();
+}
 
 #endif

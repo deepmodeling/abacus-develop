@@ -1215,6 +1215,30 @@ void LCAO_Deepks::cal_v_delta_precalc(const int nlocal,
     return;
 }
 
+void LCAO_Deepks::check_v_delta_precalc(const int nat, const int nks,const int nlocal)
+{
+    std::ofstream ofs("v_delta_precalc.dat");
+    ofs << std::setprecision(10);
+    for (int iks = 0; iks < nks; ++iks)
+    {
+        for (int mu = 0; mu < nlocal; ++mu)
+        {
+            for (int nu = 0; nu < nlocal; ++nu)
+            {
+                for (int iat = 0;iat < nat;++iat)
+                {
+                    for(int p=0; p<this->des_per_atom; ++p)
+                    {
+                        ofs<<this->v_delta_precalc_tensor.index({iks, mu, nu, iat, p }).item().toDouble()<<" ";
+                    }
+                }
+                ofs << std::endl;                
+            }
+        }
+    }
+    ofs.close();
+}
+
 // prepare_psialpha and prepare_gevdm for deepks_v_delta = 2
 void LCAO_Deepks::prepare_psialpha(const int nlocal,
     const int nat,
@@ -1308,6 +1332,33 @@ void LCAO_Deepks::prepare_psialpha(const int nlocal,
 #endif  
 }
 
+void LCAO_Deepks::check_vdp_psialpha(const int nat, const int nks, const int nlocal)
+{
+    std::ofstream ofs("vdp_psialpha.dat");
+    ofs << std::setprecision(10);
+    
+    int nlmax = this->inlmax/nat;
+    int mmax = 2*this->lmaxd+1;
+    for(int iat=0; iat< nat ; iat++) 
+    {
+        for(int nl = 0; nl < nlmax; nl++)
+        {
+            for (int iks = 0; iks < nks ; iks++)
+            {
+                for(int mu = 0; mu < nlocal ; mu++)
+                {
+                    for(int m=0; m< mmax; m++)
+                    {
+                        ofs << this->psialpha_tensor.index({ iat,nl, iks, mu, m }).item().toDouble() << " ";
+                    }
+                }                
+            }
+            ofs << std::endl;
+        }
+    }
+    ofs.close();
+}
+
 void LCAO_Deepks::prepare_gevdm(
     const int nat,
     const LCAO_Orbitals &orb)
@@ -1341,6 +1392,33 @@ void LCAO_Deepks::prepare_gevdm(
         }
     }
     assert(nl == nlmax);
+}
+
+void LCAO_Deepks::check_vdp_gevdm(const int nat)
+{
+    std::ofstream ofs("vdp_gevdm.dat");
+    ofs << std::setprecision(10);
+
+    int nlmax = this->inlmax/nat;
+    int mmax = 2*this->lmaxd+1;
+    for(int iat=0; iat< nat ; iat++) 
+    {
+        for(int nl = 0; nl < nlmax; nl++)
+        {
+            for(int v=0; v<mmax; v++)
+            {
+                for(int m=0; m<mmax; m++)
+                {
+                    for(int n=0; n<mmax; n++)
+                    {
+                        ofs << this->gevdm_tensor.index({ iat,nl, v, m, n }).item().toDouble() << " ";
+                    }
+                }
+            }
+            ofs << std::endl;
+        }
+    }
+    ofs.close();
 }
 
 #endif
