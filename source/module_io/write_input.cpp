@@ -420,9 +420,30 @@ void Input::Print(const std::string& fn) const
                                  ref_cell_factor,
                                  "construct a reference cell bigger than the initial cell");
     ModuleBase::GlobalFunc::OUTP(ofs, "md_restart", mdp.md_restart, "whether restart");
+    ModuleBase::GlobalFunc::OUTP(ofs, "lj_rule", mdp.lj_rule, "combination rules used to construct the parameter matrix for LJ potential");
     ModuleBase::GlobalFunc::OUTP(ofs, "lj_rcut", mdp.lj_rcut, "cutoff radius of LJ potential");
-    ModuleBase::GlobalFunc::OUTP(ofs, "lj_epsilon", mdp.lj_epsilon, "the value of epsilon for LJ potential");
-    ModuleBase::GlobalFunc::OUTP(ofs, "lj_sigma", mdp.lj_sigma, "the value of sigma for LJ potential");
+
+    auto vector2string = [](std::vector<double> target) 
+    {
+        std::stringstream ss;
+        for (int i = 0; i < target.size(); i++) 
+        {
+            double t = target[i];
+            if (i < target.size() - 1) 
+            {
+                ss << t << "  ";
+            }
+            else 
+            {
+                ss << t;
+            }
+        }
+        return ss.str();
+    };
+    std::string lj_epsilon = vector2string(mdp.lj_epsilon);
+    std::string lj_sigma = vector2string(mdp.lj_sigma);
+    ModuleBase::GlobalFunc::OUTP(ofs, "lj_epsilon", lj_epsilon, "the value of epsilon for LJ potential");
+    ModuleBase::GlobalFunc::OUTP(ofs, "lj_sigma", lj_sigma, "the value of sigma for LJ potential");
     ModuleBase::GlobalFunc::OUTP(ofs, "pot_file", mdp.pot_file, "the filename of potential files for CMD such as DP");
     ModuleBase::GlobalFunc::OUTP(ofs, "msst_direction", mdp.msst_direction, "the direction of shock wave");
     ModuleBase::GlobalFunc::OUTP(ofs, "msst_vel", mdp.msst_vel, "the velocity of shock wave");

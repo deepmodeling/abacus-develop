@@ -28,18 +28,20 @@ namespace ModuleESolver
 
       private:
 
-        double LJ_energy(const double d);
+        double LJ_energy(const double d, const int i, const int j);
 
-        ModuleBase::Vector3<double> LJ_force(const double d,
-            const ModuleBase::Vector3<double> dr);
+        ModuleBase::Vector3<double> LJ_force(const ModuleBase::Vector3<double> dr, const int i, const int j);
 
         void LJ_virial(const ModuleBase::Vector3<double>& force,
             const ModuleBase::Vector3<double>& dtau);
 
         //--------------temporary----------------------------
+        int lj_rule;
         double lj_rcut;
-        double lj_sigma;
-        double lj_epsilon;
+        ModuleBase::matrix lj_c12;
+        ModuleBase::matrix lj_c6;
+        ModuleBase::matrix en_shift;
+
         double lj_potential;
         ModuleBase::matrix lj_force;
         ModuleBase::matrix lj_virial;

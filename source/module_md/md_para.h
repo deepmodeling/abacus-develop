@@ -2,6 +2,7 @@
 #define MD_PARA_H
 
 #include <string>
+#include <vector>
 
 /**
  * @brief input parameters used in md
@@ -24,9 +25,10 @@ class MD_para
         md_seed = -1;
         md_prec_level = 0;
 
+        lj_rule = 2;
         lj_rcut = 8.5;
-        lj_epsilon = 0.01032;
-        lj_sigma = 3.405;
+        lj_epsilon = {};
+        lj_sigma = {};
         pot_file = "graph.pb";
 
         msst_direction = 2;
@@ -71,10 +73,11 @@ class MD_para
     int md_seed;               ///< random seed for MD
     int md_prec_level;         ///< precision level for vc-md
 
-    double lj_rcut;       ///< cutoff radius of LJ potential (\AA)
-    double lj_epsilon;    ///< the value of epsilon for LJ potential (eV)
-    double lj_sigma;      ///< the value of sigma for LJ potential (\AA)
-    std::string pot_file; ///< the filename of potential files for CMD such as DP
+    int lj_rule;                    ///< combination rules used to construct the parameter matrix for LJ potential 
+    double lj_rcut;                 ///< cutoff radius of LJ potential (\AA)
+    std::vector<double> lj_epsilon; ///< the value of epsilon for LJ potential (eV)
+    std::vector<double> lj_sigma;   ///< the value of sigma for LJ potential (\AA)
+    std::string pot_file;           ///< the filename of potential files for CMD such as DP
 
     int msst_direction; ///< shock direction: 0, 1, 2
     double msst_vel;    ///< shock msst_vel (\AA/fs)

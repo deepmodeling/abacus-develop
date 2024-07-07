@@ -1686,17 +1686,21 @@ bool Input::Read(const std::string& fn)
         {
             read_value(ifs, mdp.md_pfreq);
         }
+        else if (strcmp("lj_rule", word) == 0)
+        {
+            read_value(ifs, mdp.lj_rule);
+        }
         else if (strcmp("lj_rcut", word) == 0)
         {
             read_value(ifs, mdp.lj_rcut);
         }
         else if (strcmp("lj_epsilon", word) == 0)
         {
-            read_value(ifs, mdp.lj_epsilon);
+            read_value2stdvector(ifs, mdp.lj_epsilon);
         }
         else if (strcmp("lj_sigma", word) == 0)
         {
-            read_value(ifs, mdp.lj_sigma);
+            read_value2stdvector(ifs, mdp.lj_sigma);
         }
         else if (strcmp("msst_direction", word) == 0)
         {
@@ -3685,9 +3689,22 @@ void Input::Bcast()
     Parallel_Common::bcast_int(mdp.md_seed);
     Parallel_Common::bcast_int(mdp.md_prec_level);
     Parallel_Common::bcast_bool(mdp.md_restart);
+    Parallel_Common::bcast_int(mdp.lj_rule);
     Parallel_Common::bcast_double(mdp.lj_rcut);
-    Parallel_Common::bcast_double(mdp.lj_epsilon);
-    Parallel_Common::bcast_double(mdp.lj_sigma);
+    int num_lj_epsilon = mdp.lj_epsilon.size();
+    Parallel_Common::bcast_int(num_lj_epsilon);
+    if (num_lj_epsilon != 0)
+    {
+        mdp.lj_epsilon.resize(num_lj_epsilon);
+        Parallel_Common::bcast_double(mdp.lj_epsilon.data(), num_lj_epsilon);
+    }
+    int num_lj_sigma = mdp.lj_sigma.size();
+    Parallel_Common::bcast_int(num_lj_sigma);
+    if (num_lj_sigma != 0)
+    {
+        mdp.lj_sigma.resize(num_lj_sigma);
+        Parallel_Common::bcast_double(mdp.lj_sigma.data(), num_lj_sigma);
+    }
     Parallel_Common::bcast_int(mdp.msst_direction);
     Parallel_Common::bcast_double(mdp.msst_vel);
     Parallel_Common::bcast_double(mdp.msst_vis);
