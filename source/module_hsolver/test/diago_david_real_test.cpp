@@ -102,7 +102,8 @@ public:
         start = clock();
 #endif	
 
-        dav.diag(phm, npw, phi, en, eps, maxiter);
+        const int ldPsi = phi.get_k_first() ? phi.get_nbasis() : phi.get_nk() * phi.get_nbasis();
+        dav.diag(phm, ldPsi, phi, en, eps, maxiter);
 
 #ifdef __MPI		
         end = MPI_Wtime();
