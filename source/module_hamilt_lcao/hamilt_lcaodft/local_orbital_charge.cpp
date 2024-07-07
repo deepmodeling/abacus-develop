@@ -141,7 +141,7 @@ void Local_Orbital_Charge::gamma_file(psi::Psi<double>* psid, elecstate::ElecSta
     // allocate psi
     int ncol = this->ParaV->ncol_bands;
 
-    if (GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "lapack_gvx" || GlobalV::KS_SOLVER == "scalapack_gvx"
+    if (GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "lapack" || GlobalV::KS_SOLVER == "scalapack_gvx"
         || GlobalV::KS_SOLVER == "cg_in_lcao"
 #ifdef __CUDA
         || GlobalV::KS_SOLVER == "cusolver"

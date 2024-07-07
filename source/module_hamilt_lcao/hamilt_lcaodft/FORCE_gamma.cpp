@@ -278,7 +278,8 @@ void Force_LCAO<double>::ftable(const bool isforce,
     {
         const std::vector<std::vector<double>>& dm_gamma = dm->get_DMK_vector();
 
-        GlobalC::ld.cal_projected_DM(dm, ucell, GlobalC::ORB, GlobalC::GridD);
+        // when deepks_scf is on, the init pdm should be same as the out pdm, so we should not recalculate the pdm
+        //GlobalC::ld.cal_projected_DM(dm, ucell, GlobalC::ORB, GlobalC::GridD);
 
         GlobalC::ld.cal_descriptor(ucell.nat);
 

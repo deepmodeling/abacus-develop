@@ -252,7 +252,9 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(Input& inp, UnitCell& ucell)
     if (GlobalV::deepks_scf)
     {
         // load the DeePKS model from deep neural network
-        GlobalC::ld.load_model(PARAM.inp.deepks_model);
+        GlobalC::ld.load_model(INPUT.deepks_model);
+        // read pdm from file for NSCF or SCF-restart, do it only once in whole calculation
+        GlobalC::ld.read_projected_DM((GlobalV::init_chg == "file"), GlobalV::deepks_equiv, *GlobalC::ORB.Alpha);
     }
 #endif
 
@@ -1301,6 +1303,18 @@ bool ESolver_KS_LCAO<TK, TR>::do_after_converge(int& iter)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "do_after_converge");
 
+    if (GlobalV::dft_plus_u)
+    {
+        // use the converged occupation matrix for next MD/Relax SCF calculation
+        GlobalC::dftu.initialed_locale = true;
+    }
+
+#ifdef __DEEPKS
+    if (GlobalV::deepks_scf)
+    {
+        GlobalC::ld.set_init_pdm(true);
+    }
+#endif
 #ifdef __EXX
     if (GlobalC::exx_info.info_ri.real_number)
     {
@@ -1319,12 +1333,6 @@ bool ESolver_KS_LCAO<TK, TR>::do_after_converge(int& iter)
                                              iter);
     }
 #endif // __EXX
-
-    if (GlobalV::dft_plus_u)
-    {
-        // use the converged occupation matrix for next MD/Relax SCF calculation
-        GlobalC::dftu.initialed_locale = true;
-    }
 
     return true;
 }

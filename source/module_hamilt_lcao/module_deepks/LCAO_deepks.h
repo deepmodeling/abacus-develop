@@ -278,8 +278,14 @@ class LCAO_Deepks
     // 6. check_gdmx, which prints gdmx to a series of .dat files
 
   public:
-    /// calculate projected density matrix:
-    /// pdm = sum_i,occ <phi_i|alpha1><alpha2|phi_k>
+    /** 
+     * @brief calculate projected density matrix:
+     * pdm = sum_i,occ <phi_i|alpha1><alpha2|phi_k>
+     * 3 cases to skip calculation of pdm:
+     *    1. NSCF calculation of DeePKS, init_chg = file and pdm has been read
+     *    2. SCF calculation of DeePKS with init_chg = file and pdm has been read for restarting SCF
+     *    3. Relax/Cell-Relax/MD calculation, non-first step will use the convergence pdm from the last step as initial pdm
+     */
     void cal_projected_DM(const elecstate::DensityMatrix<double, double>* dm,
                           const UnitCell& ucell,
                           const LCAO_Orbitals& orb,
@@ -316,6 +322,18 @@ class LCAO_Deepks
         const std::vector<ModuleBase::Vector3<double>>& kvec_d,
         const bool isstress);
     void check_gdmx(const int nat);
+
+    /** 
+     * @brief set init_pdm to skip the calculation of pdm in SCF iteration
+     */
+    void set_init_pdm(bool ipdm)
+    {
+        this->init_pdm = ipdm;
+    }
+    /**
+     * @brief read pdm from file, do it only once in whole calculation
+     */
+    void read_projected_DM(bool read_pdm_file, bool is_equiv, const Numerical_Orbital& alpha);
 
     //-------------------
     // LCAO_deepks_vdelta.cpp
