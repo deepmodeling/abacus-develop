@@ -47,7 +47,7 @@
     - [pw\_diag\_thr](#pw_diag_thr)
     - [pw\_diag\_nmax](#pw_diag_nmax)
     - [pw\_diag\_ndim](#pw_diag_ndim)
-    - [diago_full_acc](#diago_full_acc)
+    - [diago\_full\_acc](#diago_full_acc)
     - [erf\_ecut](#erf_ecut)
     - [fft\_mode](#fft_mode)
     - [erf\_height](#erf_height)
@@ -147,6 +147,8 @@
     - [out\_mat\_t](#out_mat_t)
     - [out\_mat\_dh](#out_mat_dh)
     - [out\_mat\_xc](#out_mat_xc)
+    - [out\_hr\_npz/out\_dm\_npz](#out_hr_npzout_dm_npz)
+    - [dm\_to\_rho](#dm_to_rho)
     - [out\_app\_flag](#out_app_flag)
     - [out\_ndigits](#out_ndigits)
     - [out\_interval](#out_interval)
@@ -172,6 +174,7 @@
   - [DeePKS](#deepks)
     - [deepks\_out\_labels](#deepks_out_labels)
     - [deepks\_scf](#deepks_scf)
+    - [deepks\_equiv](#deepks_equiv)
     - [deepks\_model](#deepks_model)
     - [bessel\_descriptor\_lmax](#bessel_descriptor_lmax)
     - [bessel\_descriptor\_ecut](#bessel_descriptor_ecut)
@@ -180,6 +183,7 @@
     - [bessel\_descriptor\_smooth](#bessel_descriptor_smooth)
     - [bessel\_descriptor\_sigma](#bessel_descriptor_sigma)
     - [deepks\_bandgap](#deepks_bandgap)
+    - [deepks\_v\_delta](#deepks_v_delta)
     - [deepks\_out\_unittest](#deepks_out_unittest)
   - [OFDFT: orbital free density functional theory](#ofdft-orbital-free-density-functional-theory)
     - [of\_kinetic](#of_kinetic)
@@ -1924,6 +1928,14 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Availability**: numerical atomic orbital basis and `deepks_scf` is true
 - **Description**: include bandgap label for DeePKS training
 - **Default**: False
+
+### deepks_v_delta
+
+- **Type**: int
+- **Availability**: numerical atomic orbital basis
+- **Description**: Include V_delta label for DeePKS training. When `deepks_out_labels` is true and `deepks_v_delta` > 0, ABACUS will output h_base.npy, v_delta.npy and h_tot.npy(h_tot=h_base+v_delta). 
+  Meanwhile, when `deepks_v_delta` equals 1, ABACUS will also output v_delta_precalc.npy, which is used to calculate V_delta during DeePKS training. However, when the number of atoms grows, the size of v_delta_precalc.npy will be very large. In this case, it's recommended to set `deepks_v_delta` as 2, and ABACUS will output psialpha.npy and grad_evdm.npy but not v_delta_precalc.npy. These two files are small and can be used to calculate v_delta_precalc in the procedure of training DeePKS.
+- **Default**: 0
 
 ### deepks_out_unittest
 
