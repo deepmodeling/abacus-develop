@@ -109,8 +109,9 @@ void Input_Conv::parse_expression(const std::string& fn, std::vector<T>& vec)
             // const std::vector<double>::iterator dest = vec.begin() + count;
             // copy(ocp_temp.begin(), ocp_temp.end(), dest);
             // count += num;
-            for (size_t k = 0; k != num; k++)
+            for (size_t k = 0; k != num; k++) {
                 vec.emplace_back(occ);
+}
         }
         else
         {
@@ -257,7 +258,7 @@ void Input_Conv::read_td_efield()
 }
 #endif
 
-void Input_Conv::Convert(void)
+void Input_Conv::Convert()
 {
     ModuleBase::TITLE("Input_Conv", "Convert");
     ModuleBase::timer::tick("Input_Conv", "Convert");
@@ -295,12 +296,15 @@ void Input_Conv::Convert(void)
         GlobalV::stru_file = INPUT.stru_file;
     }
     GlobalV::global_wannier_card = INPUT.wannier_card;
-    if (INPUT.kpoint_file != "")
+    if (INPUT.kpoint_file != "") {
         GlobalV::global_kpoint_card = INPUT.kpoint_file;
-    if (INPUT.pseudo_dir != "")
+}
+    if (INPUT.pseudo_dir != "") {
         GlobalV::global_pseudo_dir = INPUT.pseudo_dir + "/";
-    if (INPUT.orbital_dir != "")
+}
+    if (INPUT.orbital_dir != "") {
         GlobalV::global_orbital_dir = INPUT.orbital_dir + "/";
+}
     // GlobalV::global_pseudo_type = INPUT.pseudo_type;
     GlobalC::ucell.setup(INPUT.latname, INPUT.ntype, INPUT.lmaxmax, INPUT.init_vel, INPUT.fixed_axes);
 
@@ -677,8 +681,9 @@ void Input_Conv::Convert(void)
         Exx_Abfs::Jle::tolerence = INPUT.exx_opt_orb_tolerence;
 
         // EXX does not support symmetry=1
-        if (INPUT.calculation != "nscf" && INPUT.symmetry == "1")
+        if (INPUT.calculation != "nscf" && INPUT.symmetry == "1") {
             ModuleSymmetry::Symmetry::symm_flag = 0;
+}
     }
 #endif                                               // __LCAO
 #endif                                               // __EXX
@@ -805,17 +810,21 @@ void Input_Conv::Convert(void)
     }
     if (GlobalV::deepks_out_unittest)
     {
-        GlobalV::deepks_out_labels = 1;
-        GlobalV::deepks_scf = 1;
-        if (GlobalV::NPROC > 1)
+        GlobalV::deepks_out_labels = true;
+        GlobalV::deepks_scf = true;
+        if (GlobalV::NPROC > 1) {
             ModuleBase::WARNING_QUIT("Input_conv", "generate deepks unittest with only 1 processor");
-        if (GlobalV::CAL_FORCE != 1)
+}
+        if (GlobalV::CAL_FORCE != 1) {
             ModuleBase::WARNING_QUIT("Input_conv", "force is required in generating deepks unittest");
-        if (GlobalV::CAL_STRESS != 1)
+}
+        if (GlobalV::CAL_STRESS != 1) {
             ModuleBase::WARNING_QUIT("Input_conv", "stress is required in generating deepks unittest");
+}
     }
-    if (GlobalV::deepks_scf || GlobalV::deepks_out_labels)
-        GlobalV::deepks_setorb = 1;
+    if (GlobalV::deepks_scf || GlobalV::deepks_out_labels) {
+        GlobalV::deepks_setorb = true;
+}
 #else
     if (INPUT.deepks_scf || INPUT.deepks_out_labels || INPUT.deepks_bandgap || INPUT.deepks_v_delta)
     {

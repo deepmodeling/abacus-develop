@@ -104,7 +104,8 @@ void LCAO_Deepks::load_npy_gedm(const int nat)
 void LCAO_Deepks::save_npy_d(const int nat)
 {
     ModuleBase::TITLE("LCAO_Deepks", "save_npy_d");
-    if(GlobalV::MY_RANK!=0) return;
+    if(GlobalV::MY_RANK!=0) { return;
+}
     //save descriptor in .npy format
     if(!GlobalV::deepks_equiv)
     {
@@ -147,7 +148,8 @@ void LCAO_Deepks::save_npy_d(const int nat)
 void LCAO_Deepks::save_npy_gvx(const int nat)
 {
     ModuleBase::TITLE("LCAO_Deepks", "save_npy_gvx");
-    if(GlobalV::MY_RANK!=0) return;
+    if(GlobalV::MY_RANK!=0) { return;
+}
     //save grad_vx.npy (when  force label is in use)
     //unit: /Bohr
     const long unsigned gshape[]
@@ -174,7 +176,8 @@ void LCAO_Deepks::save_npy_gvx(const int nat)
 void LCAO_Deepks::save_npy_gvepsl(const int nat)
 {
     ModuleBase::TITLE("LCAO_Deepks", "save_npy_gvepsl");
-    if(GlobalV::MY_RANK!=0) return;
+    if(GlobalV::MY_RANK!=0) { return;
+}
     //save grad_vepsl.npy (when  stress label is in use)
     //unit: none
     const long unsigned gshape[] = {6UL, static_cast<unsigned long>(nat), static_cast<unsigned long>(this->des_per_atom)};
@@ -199,7 +202,8 @@ void LCAO_Deepks::save_npy_gvepsl(const int nat)
 void LCAO_Deepks::save_npy_e(const double &e, const std::string &e_file)
 {
     ModuleBase::TITLE("LCAO_Deepks", "save_npy_e");
-    if(GlobalV::MY_RANK!=0) return;
+    if(GlobalV::MY_RANK!=0) { return;
+}
     //save e_base
     const long unsigned eshape[] = { 1 };
     vector<double> npy_e;
@@ -212,7 +216,8 @@ void LCAO_Deepks::save_npy_e(const double &e, const std::string &e_file)
 void LCAO_Deepks::save_npy_f(const ModuleBase::matrix &f, const std::string &f_file, const int nat)
 {
     ModuleBase::TITLE("LCAO_Deepks", "save_npy_f");
-    if(GlobalV::MY_RANK!=0) return;
+    if(GlobalV::MY_RANK!=0) { return;
+}
     //save f_base
     //caution: unit: Rydberg/Bohr
     const long unsigned fshape[] = {static_cast<unsigned long>(nat), 3 };
@@ -232,7 +237,8 @@ void LCAO_Deepks::save_npy_f(const ModuleBase::matrix &f, const std::string &f_f
 void LCAO_Deepks::save_npy_s(const ModuleBase::matrix &s, const std::string &s_file, const double omega)
 {
     ModuleBase::TITLE("LCAO_Deepks", "save_npy_s");
-    if(GlobalV::MY_RANK!=0) return;
+    if(GlobalV::MY_RANK!=0) { return;
+}
     //save f_base
     //caution: unit: Rydberg/Bohr
     const long unsigned sshape[] = { 6 };
@@ -252,7 +258,8 @@ void LCAO_Deepks::save_npy_s(const ModuleBase::matrix &s, const std::string &s_f
 void LCAO_Deepks::save_npy_o(const ModuleBase::matrix &bandgap, const std::string &o_file, const int nks)
 {
     ModuleBase::TITLE("LCAO_Deepks", "save_npy_o");
-    if(GlobalV::MY_RANK!=0) return;
+    if(GlobalV::MY_RANK!=0) { return;
+}
     //save o_base
     const long unsigned oshape[] = {static_cast<unsigned long>(nks), 1 };
     vector<double> npy_o;
@@ -271,7 +278,8 @@ void LCAO_Deepks::save_npy_o(const ModuleBase::matrix &bandgap, const std::strin
 void LCAO_Deepks::save_npy_orbital_precalc(const int nat, const int nks)
 {
     ModuleBase::TITLE("LCAO_Deepks", "save_npy_orbital_precalc");
-    if(GlobalV::MY_RANK!=0) return;
+    if(GlobalV::MY_RANK!=0) { return;
+}
     //save orbital_precalc.npy (when bandgap label is in use)
     //unit: a.u.
     const long unsigned gshape[] = {static_cast<unsigned long>(nks),
@@ -320,7 +328,8 @@ void LCAO_Deepks::save_npy_h(const ModuleBase::matrix &H,const std::string &h_fi
 void LCAO_Deepks::save_npy_v_delta_precalc(const int nat, const int nks,const int nlocal)
 {
     ModuleBase::TITLE("LCAO_Deepks", "save_npy_v_delta_precalc");
-    if(GlobalV::MY_RANK!=0) return;
+    if(GlobalV::MY_RANK!=0) { return;
+}
     // timeval t_start;
     // gettimeofday(&t_start,NULL);
     //save v_delta_precalc.npy (when v_delta label is in use)
@@ -357,7 +366,8 @@ void LCAO_Deepks::save_npy_v_delta_precalc(const int nat, const int nks,const in
 void LCAO_Deepks::save_npy_psialpha(const int nat, const int nks,const int nlocal)
 {
     ModuleBase::TITLE("LCAO_Deepks", "save_npy_psialpha");
-    if(GlobalV::MY_RANK!=0) return;
+    if(GlobalV::MY_RANK!=0) { return;
+}
     // timeval t_start;
     // gettimeofday(&t_start,NULL);
     //save psialpha.npy (when v_delta label == 2)
@@ -396,7 +406,8 @@ void LCAO_Deepks::save_npy_psialpha(const int nat, const int nks,const int nloca
 void LCAO_Deepks::save_npy_gevdm(const int nat)
 {
     ModuleBase::TITLE("LCAO_Deepks", "save_npy_gevdm");
-    if(GlobalV::MY_RANK!=0) return;
+    if(GlobalV::MY_RANK!=0) { return;
+}
     // timeval t_start;
     // gettimeofday(&t_start,NULL);
     //save grad_evdm.npy (when v_delta label == 2)
