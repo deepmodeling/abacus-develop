@@ -26,13 +26,15 @@ class DiagoDavid : public DiagH<T, Device>
 
     virtual ~DiagoDavid() override;
 
-    int diag(hamilt::Hamilt<T, Device>* phm_in,
-                      psi::Psi<T, Device>& psi,
-                      Real* eigenvalue_in,
-                      const Real david_diag_thr,
-                      const int david_maxiter,
-                      const int ntry_max = 5,
-                      const int notconv_max = 0);
+    int diag(hamilt::Hamilt<T, Device>* phm_in,   // Pointer to the Hamiltonian object for diagonalization
+                      // const int dim,              // Dimension of the input matrix psi to be diagonalized
+                      const int ldPsi,            // Leading dimension of the psi input
+                      psi::Psi<T, Device>& psi,   // Reference to the wavefunction object for eigenvectors
+                      Real* eigenvalue_in,        // Pointer to store the resulting eigenvalues
+                      const Real david_diag_thr,  // Convergence threshold for the Davidson iteration
+                      const int david_maxiter,    // Maximum allowed iterations for the Davidson method
+                      const int ntry_max = 5,     // Maximum number of diagonalization attempts (default is 5)
+                      const int notconv_max = 0); // Maximum number of allowed non-converged eigenvectors
 
   private:
     bool use_paw = false;
@@ -44,8 +46,8 @@ class DiagoDavid : public DiagH<T, Device>
     int n_band = 0;
     /// dimension of the input matrix psi to be diagonalized
     int dim = 0;
-    /// leading dimension of the matrix data
-    int dmx = 0;
+    // leading dimension of the matrix data
+    // const int dmx = 0;
     /// dimension of the subspace allowed in Davidson
     int david_ndim = 4;
     /// maximum dimension of the reduced basis set
@@ -53,7 +55,8 @@ class DiagoDavid : public DiagH<T, Device>
     /// number of unconverged eigenvalues
     int notconv = 0;
 
-    /// precondition for diag, diagonal array approx
+    /// precondition for diag, diagonal approximation of
+    /// matrix A (i.e. Hamilt)
     const Real* precondition = nullptr;
     Real* d_precondition = nullptr;
 
@@ -129,6 +132,7 @@ class DiagoDavid : public DiagH<T, Device>
                      T* vcc);
 
     int diag_mock(hamilt::Hamilt<T, Device>* phm_in,
+                   const int ldPsi,
                    psi::Psi<T, Device>& psi,
                    Real* eigenvalue_in,
                    const Real david_diag_thr,

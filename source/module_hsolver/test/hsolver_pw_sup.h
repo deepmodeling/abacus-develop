@@ -162,6 +162,7 @@ DiagoDavid<T, Device>::~DiagoDavid() {
 
 template <typename T, typename Device>
 int DiagoDavid<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in,
+                                const int ldPsi,
                                 psi::Psi<T, Device>& psi,
                                 Real* eigenvalue_in,
                                 const Real david_diag_thr,

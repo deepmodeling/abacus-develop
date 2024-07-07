@@ -56,6 +56,8 @@ DiagoDavid<T, Device>::~DiagoDavid()
 
 template <typename T, typename Device>
 int DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
+                                        //    const int dim,
+                                           const int ldPsi,
                                            psi::Psi<T, Device>& psi,
                                            Real* eigenvalue_in,
                                            const Real david_diag_thr,
@@ -85,7 +87,7 @@ int DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
     /// - "basis" : number of occupied ks-orbitals(subscripts i,j) * number of unoccupied ks-orbitals(subscripts a,b), corresponding to "bands" of the ground state
     
     this->dim = psi.get_k_first() ? psi.get_current_nbas() : psi.get_nk() * psi.get_nbasis();
-    this->dmx = psi.get_k_first() ? psi.get_nbasis() : psi.get_nk() * psi.get_nbasis();
+    // this->dmx = psi.get_k_first() ? psi.get_nbasis() : psi.get_nk() * psi.get_nbasis();
     this->n_band = psi.get_nbands();
     this->nbase_x = this->david_ndim * this->n_band; // maximum dimension of the reduced basis set
 
@@ -257,7 +259,7 @@ int DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
             // updata eigenvectors of Hamiltonian
 
             // ModuleBase::GlobalFunc::ZEROS(psi.get_pointer(), n_band * this->dmx);
-            setmem_complex_op()(this->ctx, psi.get_pointer(), 0, n_band * this->dmx);
+            setmem_complex_op()(this->ctx, psi.get_pointer(), 0, n_band * ldPsi);
             //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
             // haozhihan repalce 2022-10-18
             gemm_op<T, Device>()(this->ctx,
@@ -273,7 +275,7 @@ int DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
                                       this->nbase_x,
                                       this->zero,
                                       psi.get_pointer(),   // C dim * n_band
-                                      this->dmx
+                                      ldPsi
             );
 
             if (!this->notconv || (dav_iter == david_maxiter))
@@ -1058,6 +1060,7 @@ void DiagoDavid<T, Device>::planSchmitOrth(const int nband, int* pre_matrix_mm_m
  */
 template <typename T, typename Device>
 int DiagoDavid<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in,
+                                    const int ldPsi,
                                     psi::Psi<T, Device>& psi,
                                     Real* eigenvalue_in,
                                     const Real david_diag_thr,
@@ -1080,7 +1083,7 @@ int DiagoDavid<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in,
     int sum_dav_iter = 0;
     do
     {
-        sum_dav_iter += this->diag_mock(phm_in, psi, eigenvalue_in, david_diag_thr, david_maxiter);
+        sum_dav_iter += this->diag_mock(phm_in, ldPsi, psi, eigenvalue_in, david_diag_thr, david_maxiter);
         ++ntry;
     } while (!check_block_conv(ntry, this->notconv, ntry_max, notconv_max));
 
