@@ -310,9 +310,8 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
         if (TD_Velocity::tddft_velocity)
         {
             if(!TD_Velocity::init_vecpot_file) elecstate::H_TDDFT_pw::update_At();
-            Operator<TK>* td_ekinetic = new TDEkinetic<OperatorLCAO<TK, TR>>(LM_in,
+            Operator<TK>* td_ekinetic = new TDEkinetic<OperatorLCAO<TK, TR>>(this->hsk,
                                                                              this->hR,
-                                                                             &(this->getHk(LM_in)),
                                                                              kv,
                                                                              &GlobalC::ucell,
                                                                              &GlobalC::GridD,
