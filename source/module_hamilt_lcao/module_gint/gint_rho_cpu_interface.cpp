@@ -16,7 +16,7 @@ void Gint::cpu_rho_interface(Gint_inout* inout) {
     double* pvpR_thread = nullptr;
     hamilt::HContainer<double>* hRGint_thread = nullptr;
 #ifdef _OPENMP
-#pragma omp for
+#pragma omp parallel for
 #endif
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
         const int na_grid = this->gridt->how_many_atoms[grid_index];
@@ -58,7 +58,7 @@ void Gint::cpu_tau_interface(Gint_inout* inout) {
     const double delta_r = this->gridt->dr_uniform;
 
 #ifdef _OPENMP
-#pragma omp for
+#pragma omp parallel for
 #endif
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
         const int na_grid = this->gridt->how_many_atoms[grid_index];

@@ -24,7 +24,7 @@ void Gint::cpu_force_interface(Gint_inout* inout) {
         svl_dphi_thread.create(inout->svl_dphi->nr, inout->svl_dphi->nc);
         svl_dphi_thread.zero_out();
     }
-#pragma omp for
+#pragma omp parallel for
 #endif
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
         const int na_grid = this->gridt->how_many_atoms[grid_index];
@@ -105,7 +105,7 @@ void Gint::cpu_force_meta_interface(Gint_inout* inout) {
         svl_dphi_thread.create(inout->svl_dphi->nr, inout->svl_dphi->nc);
         svl_dphi_thread.zero_out();
     }
-#pragma omp for
+#pragma omp parallel for
 #endif
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
         const int na_grid = this->gridt->how_many_atoms[grid_index];

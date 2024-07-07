@@ -28,7 +28,7 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
     } else {
         hRGint_thread = new hamilt::HContainer<double>(*this->hRGint);
     }
-#pragma omp for
+#pragma omp parallel for
 #endif
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
         const int na_grid = this->gridt->how_many_atoms[grid_index];
@@ -137,7 +137,7 @@ void Gint::cpu_dvlocal_interface(Gint_inout* inout) {
     std::vector<double> pvdpRy_thread = std::vector<double>(nnrg, 0.0);
     std::vector<double> pvdpRz_thread = std::vector<double>(nnrg, 0.0);
     hamilt::HContainer<double>* hRGint_thread = new hamilt::HContainer<double>(*this->hRGint);
-#pragma omp for
+#pragma omp parallel for
 #endif
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
         const int na_grid = this->gridt->how_many_atoms[grid_index];
@@ -212,7 +212,7 @@ void Gint::cpu_vlocal_meta_interface(Gint_inout* inout) {
     std::vector<double> pvpR_thread =std::vector<double>(nnrg, 0.0);
     hamilt::HContainer<double>* hRGint_thread =new hamilt::HContainer<double>(*this->hRGint);
     
-#pragma omp for
+#pragma omp parallel for
 #endif
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
         const int na_grid = this->gridt->how_many_atoms[grid_index];
