@@ -26,6 +26,7 @@
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 #include "module_io/rho_io.h"
 #include "module_io/write_pot.h"
+#include "module_io/write_wfc_nao.h"
 
 namespace ModuleESolver {
 
@@ -763,7 +764,17 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
     /// write potential
     this->create_Output_Potential(0).write();
 
-    return;
+    // write wfc
+    if (INPUT.out_wfc_lcao)
+    {
+        ModuleIO::write_wfc_nao(INPUT.out_wfc_lcao,
+                                *this->psi,
+                                this->pelec->ekb,
+                                this->pelec->wg,
+                                this->pelec->klist->kvec_c,
+                                this->orb_con.ParaV,
+                                istep);
+    }
 }
 
 template class ESolver_KS_LCAO<double, double>;
