@@ -272,7 +272,7 @@ void TD_current::calculate_vcomm_r()
                 std::complex<double>* tmp_c[3] = {nullptr, nullptr, nullptr};
                 for (int i = 0; i < 3; i++)
                 {
-                    tmp_c[i] = this->current_term[i]->find_matrix(iat1, iat2, R_index2)->get_pointer();
+                    tmp_c[i] = this->current_term[i]->find_matrix(iat1, iat2, R_vector[0], R_vector[1], R_vector[2])->get_pointer();
                 }
                 // if not found , skip this pair of atoms
                 if (tmp_c[0] != nullptr)
