@@ -5,7 +5,6 @@
 void Gint::cpu_vlocal_interface(Gint_inout* inout) {
     ModuleBase::TITLE("Gint_interface", "cal_gint_vlocal");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal");
-    printf("in vlocal\n");
     const UnitCell& ucell = *this->ucell;
     const int max_size = this->gridt->max_atom;
     const int LD_pool = max_size * ucell.nwmax;
@@ -94,7 +93,7 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
         {
             BlasConnector::axpy(nnrg,
                                 1.0,
-                                pvpR_thread,
+                                pvpR_thread.data(),
                                 1,
                                 pvpR_reduced[inout->ispin],
                                 1);
@@ -210,13 +209,9 @@ void Gint::cpu_vlocal_meta_interface(Gint_inout* inout) {
 
 #ifdef _OPENMP
 
-    std::vector<double> pvpR_thread;
-    hamilt::HContainer<double>* hRGint_thread = nullptr;
-    if (!GlobalV::GAMMA_ONLY_LOCAL) {
-        pvpR_reduced=std::vector<double>(nnrg, 0.0);
-    } else {
-        hRGint_thread = new hamilt::HContainer<double>(*this->hRGint);
-    }
+    std::vector<double> pvpR_thread =std::vector<double>(nnrg, 0.0);
+    hamilt::HContainer<double>* hRGint_thread =new hamilt::HContainer<double>(*this->hRGint);
+    
 #pragma omp for
 #endif
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
@@ -253,7 +248,7 @@ void Gint::cpu_vlocal_meta_interface(Gint_inout* inout) {
                                           vldr3,
                                           vkdr3,
                                           LD_pool,
-                                          pvpR_thread,
+                                          pvpR_thread.data(),
                                           ucell,
                                           hRGint_thread);
         }
@@ -292,20 +287,20 @@ void Gint::cpu_vlocal_meta_interface(Gint_inout* inout) {
                                 this->hRGint->get_wrapper(),
                                 1);
         }
-        delete hRGint_thread;
+        
     }
     if (!GlobalV::GAMMA_ONLY_LOCAL) {
 #pragma omp critical(gint_k)
         {
             BlasConnector::axpy(nnrg,
                                 1.0,
-                                pvpR_thread,
+                                pvpR_thread.data(),
                                 1,
                                 pvpR_reduced[inout->ispin],
                                 1);
         }
-        pvpR_thread.shrink_to_fit();
     }
+    delete hRGint_thread;
     
 #endif
     ModuleBase::TITLE("Gint_interface", "cal_gint_vlocal_meta");
