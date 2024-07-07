@@ -105,7 +105,7 @@ inline void psiMulPsi(const psi::Psi<std::complex<double>>& psi1,
     const char N_char = 'N', T_char = 'T';
     const int nlocal = psi1.get_nbasis();
     const int nbands = psi1.get_nbands();
-    const complex<double> one_complex = {1.0, 0.0}, zero_complex = {0.0, 0.0};
+    const std::complex<double> one_complex = {1.0, 0.0}, zero_complex = {0.0, 0.0};
     zgemm_(&N_char,
            &T_char,
            &nlocal,

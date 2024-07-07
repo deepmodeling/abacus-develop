@@ -1,7 +1,13 @@
 #include "hsolver_lcao.h"
 
 #include "diago_cg.h"
+
+#ifdef __MPI
 #include "diago_scalapack.h"
+#else
+#include "diago_lapack.h"
+#endif
+
 #include "module_base/timer.h"
 #include "module_hsolver/diago_iter_assist.h"
 #include "module_hsolver/kernels/math_kernel_op.h"
@@ -42,6 +48,7 @@ void HSolverLCAO<T, Device>::solveTemplate(hamilt::Hamilt<T>* pHamilt,
     // init
     if (this->method == "scalapack_gvx")
     {
+#ifdef __MPI
         if (this->pdiagh != nullptr)
         {
             if (this->pdiagh->method != this->method)
@@ -55,6 +62,9 @@ void HSolverLCAO<T, Device>::solveTemplate(hamilt::Hamilt<T>* pHamilt,
             this->pdiagh = new DiagoScalapack<T>();
             this->pdiagh->method = this->method;
         }
+#else
+        ModuleBase::WARNING_QUIT("HSolverLCAO", "Scalapack not supported in SERIAL VERSION");
+#endif
     }
 #ifdef __ELPA
     else if (this->method == "genelpa")
@@ -114,11 +124,7 @@ void HSolverLCAO<T, Device>::solveTemplate(hamilt::Hamilt<T>* pHamilt,
 #endif
     else if (this->method == "lapack")
     {
-        ModuleBase::WARNING_QUIT("hsolver_lcao", "please fix lapack solver!!!");
-        // We are not supporting diagonalization with lapack
-        // until the obsolete globalc::hm is removed from
-        // diago_lapack.cpp
-        /*
+#ifndef __MPI
         if (this->pdiagh != nullptr)
         {
             if (this->pdiagh->method != this->method)
@@ -129,11 +135,12 @@ void HSolverLCAO<T, Device>::solveTemplate(hamilt::Hamilt<T>* pHamilt,
         }
         if (this->pdiagh == nullptr)
         {
-            this->pdiagh = new DiagoLapack();
+            this->pdiagh = new DiagoLapack<T>();
             this->pdiagh->method = this->method;
         }
-        */
+#else
         ModuleBase::WARNING_QUIT("HSolverLCAO::solve", "This method of DiagH is not supported!");
+#endif
     }
     else if (this->method == "cg_in_lcao")
     {

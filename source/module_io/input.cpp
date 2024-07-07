@@ -2509,8 +2509,13 @@ void Input::Default_2() // jiyy add 2019-08-04
                 ks_solver = "genelpa";
                 ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "genelpa");
 #else
+#ifdef __MPI
                 ks_solver = "scalapack_gvx";
                 ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "scalapack_gvx");
+#else
+                ks_solver = "lapack";
+                ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "lapack");
+#endif
 #endif
             }
         }
@@ -3680,7 +3685,11 @@ void Input::Check() {
 #ifdef __ELPA
             ks_solver = "genelpa";
 #else
+#ifdef __MPI
             ks_solver = "scalapack_gvx";
+#else
+            ks_solver = "lapack";
+#endif
 #endif
         } else {
             if ((basis_type != "pw") && (basis_type != "lcao")) {

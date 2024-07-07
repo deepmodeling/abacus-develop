@@ -1,6 +1,7 @@
 #include "dftu.h"
 #include "module_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 
 extern "C"
 {
@@ -154,13 +155,21 @@ void DFTU::cal_occup_m_k(const int iter,
     const int one_int = 1;
     const std::complex<double> beta(0.0,0.0), alpha(1.0,0.0);
 
-    std::vector<std::complex<double>> srho(this->LM->ParaV->nloc);
+    std::vector<std::complex<double>> srho(this->paraV->nloc);
 
     for (int ik = 0; ik < kv.get_nks(); ik++)
     {
         // srho(mu,nu) = \sum_{iw} S(mu,iw)*dm_k(iw,nu)
         this->folding_matrix_k_new(ik, p_ham);
-        std::complex<double>* s_k_pointer = this->LM->Sloc2.data();
+        std::complex<double>* s_k_pointer = nullptr;
+        if(GlobalV::NSPIN != 4)
+        {
+            s_k_pointer = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham)->getSk();
+        }
+        else
+        {
+            s_k_pointer = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(p_ham)->getSk();
+        }
 
 #ifdef __MPI
         pzgemm_(&transN,
@@ -172,17 +181,17 @@ void DFTU::cal_occup_m_k(const int iter,
                 s_k_pointer,
                 &one_int,
                 &one_int,
-                this->LM->ParaV->desc,
+                this->paraV->desc,
                 dm_k[ik].data(),
                 //dm_k[ik].c,
                 &one_int,
                 &one_int,
-                this->LM->ParaV->desc,
+                this->paraV->desc,
                 &beta,
                 &srho[0],
                 &one_int,
                 &one_int,
-                this->LM->ParaV->desc);
+                this->paraV->desc);
 #endif
 
         const int spin = kv.isk[ik];
@@ -217,19 +226,19 @@ void DFTU::cal_occup_m_k(const int iter,
                             for (int ipol0 = 0; ipol0 < GlobalV::NPOL; ipol0++)
                             {
                                 const int iwt0 = this->iatlnmipol2iwt[iat][l][n][m0][ipol0];
-                                const int mu = this->LM->ParaV->global2local_row(iwt0);
-                                const int mu_prime = this->LM->ParaV->global2local_col(iwt0);
+                                const int mu = this->paraV->global2local_row(iwt0);
+                                const int mu_prime = this->paraV->global2local_col(iwt0);
 
                                 for (int m1 = 0; m1 < 2 * l + 1; m1++)
                                 {
                                     for (int ipol1 = 0; ipol1 < GlobalV::NPOL; ipol1++)
                                     {
                                         const int iwt1 = this->iatlnmipol2iwt[iat][l][n][m1][ipol1];
-                                        const int nu = this->LM->ParaV->global2local_col(iwt1);
-                                        const int nu_prime = this->LM->ParaV->global2local_row(iwt1);
+                                        const int nu = this->paraV->global2local_col(iwt1);
+                                        const int nu_prime = this->paraV->global2local_row(iwt1);
 
-                                        const int irc = nu * this->LM->ParaV->nrow + mu;
-                                        const int irc_prime = mu_prime * this->LM->ParaV->nrow + nu_prime;
+                                        const int irc = nu * this->paraV->nrow + mu;
+                                        const int irc_prime = mu_prime * this->paraV->nrow + nu_prime;
 
                                         const int m0_all = m0 + ipol0 * (2 * l + 1);
                                         const int m1_all = m1 + ipol1 * (2 * l + 1);
@@ -344,7 +353,7 @@ void DFTU::cal_occup_m_k(const int iter,
     return;
 }
 
-void DFTU::cal_occup_m_gamma(const int iter, const std::vector<std::vector<double>> &dm_gamma, const double& mixing_beta)
+void DFTU::cal_occup_m_gamma(const int iter, const std::vector<std::vector<double>> &dm_gamma, const double& mixing_beta, hamilt::Hamilt<double>* p_ham)
 {
     ModuleBase::TITLE("DFTU", "cal_occup_m_gamma");
     ModuleBase::timer::tick("DFTU", "cal_occup_m_gamma");
@@ -357,11 +366,11 @@ void DFTU::cal_occup_m_gamma(const int iter, const std::vector<std::vector<doubl
     const int one_int = 1;
     const double alpha = 1.0, beta = 0.0;
 
-    std::vector<double> srho(this->LM->ParaV->nloc);
+    std::vector<double> srho(this->paraV->nloc);
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
         // srho(mu,nu) = \sum_{iw} S(mu,iw)*dm_gamma(iw,nu)
-        double* s_gamma_pointer = this->LM->Sloc.data();
+        double* s_gamma_pointer = dynamic_cast<hamilt::HamiltLCAO<double, double>*>(p_ham)->getSk();
 
 #ifdef __MPI
         pdgemm_(&transN,
@@ -373,17 +382,17 @@ void DFTU::cal_occup_m_gamma(const int iter, const std::vector<std::vector<doubl
                 s_gamma_pointer,
                 &one_int,
                 &one_int,
-                this->LM->ParaV->desc,
+                this->paraV->desc,
                 dm_gamma[is].data(),
                 //dm_gamma[is].c,
                 &one_int,
                 &one_int,
-                this->LM->ParaV->desc,
+                this->paraV->desc,
                 &beta,
                 &srho[0],
                 &one_int,
                 &one_int,
-                this->LM->ParaV->desc);
+                this->paraV->desc);
 #endif
 
         for (int it = 0; it < GlobalC::ucell.ntype; it++)
@@ -413,19 +422,19 @@ void DFTU::cal_occup_m_gamma(const int iter, const std::vector<std::vector<doubl
                             for (int ipol0 = 0; ipol0 < GlobalV::NPOL; ipol0++)
                             {
                                 const int iwt0 = this->iatlnmipol2iwt[iat][l][n][m0][ipol0];
-                                const int mu = this->LM->ParaV->global2local_row(iwt0);
-                                const int mu_prime = this->LM->ParaV->global2local_col(iwt0);
+                                const int mu = this->paraV->global2local_row(iwt0);
+                                const int mu_prime = this->paraV->global2local_col(iwt0);
 
                                 for (int m1 = 0; m1 < 2 * l + 1; m1++)
                                 {
                                     for (int ipol1 = 0; ipol1 < GlobalV::NPOL; ipol1++)
                                     {
                                         const int iwt1 = this->iatlnmipol2iwt[iat][l][n][m1][ipol1];
-                                        const int nu = this->LM->ParaV->global2local_col(iwt1);
-                                        const int nu_prime = this->LM->ParaV->global2local_row(iwt1);
+                                        const int nu = this->paraV->global2local_col(iwt1);
+                                        const int nu_prime = this->paraV->global2local_row(iwt1);
 
-                                        const int irc = nu * this->LM->ParaV->nrow + mu;
-                                        const int irc_prime = mu_prime * this->LM->ParaV->nrow + nu_prime;
+                                        const int irc = nu * this->paraV->nrow + mu;
+                                        const int irc_prime = mu_prime * this->paraV->nrow + nu_prime;
 
                                         if ((nu >= 0) && (mu >= 0))
                                         {

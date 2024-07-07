@@ -18,7 +18,7 @@ double* Output_Sk<double>::get_Sk(int ik)
     {
         ModuleBase::WARNING_QUIT("Output_Sk::get_sk", "ik out of range");
     }
-    return this->LM_->Sloc.data();
+    return dynamic_cast<hamilt::HamiltLCAO<double, double>*>(this->p_hamilt_)->getSk();
 }
 
 template <>
@@ -31,13 +31,15 @@ std::complex<double>* Output_Sk<std::complex<double>>::get_Sk(int ik)
     if (this->nspin_ == 4)
     {
         dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(this->p_hamilt_)
-            ->updateSk(ik, this->LM_, 1);
+            ->updateSk(ik, 1);
+        return dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(this->p_hamilt_)->getSk();
     }
     else
     {
-        dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(this->p_hamilt_)->updateSk(ik, this->LM_, 1);
+        dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(this->p_hamilt_)->updateSk(ik, 1);
+        return dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(this->p_hamilt_)->getSk();
     }
-    return this->LM_->Sloc2.data();
+    return nullptr;
 }
 
 template class Output_Sk<double>;

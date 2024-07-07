@@ -12,7 +12,7 @@ template <typename T> struct MatrixBlock
     T* p;
     size_t row;
     size_t col;
-    int* desc;
+    const int* desc;
 };
 
 } // namespace hamilt
