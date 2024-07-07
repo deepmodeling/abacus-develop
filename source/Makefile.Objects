@@ -528,7 +528,6 @@ OBJS_LCAO=DM_gamma.o\
       LCAO_set_fs.o\
       LCAO_set_st.o\
       LCAO_nl_mu.o\
-      LCAO_nl_beta.o\
       LCAO_nnr.o\
       LCAO_set_zero.o\
       LCAO_allocate.o\

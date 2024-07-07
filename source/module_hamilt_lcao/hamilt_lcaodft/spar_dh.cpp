@@ -60,7 +60,7 @@ void sparse_format::cal_dH(LCAO_Matrix& lm,
 
     LCAO_domain::build_Nonlocal_mu_new(lm,
                                        fsr_dh,
-                                       lm.Hloc_fixed.data(),
+                                       nullptr,
                                        true,
                                        GlobalC::ucell,
                                        GlobalC::ORB,

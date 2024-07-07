@@ -15,21 +15,20 @@ namespace hamilt
 {
 
 template <typename TK, typename TR>
-DeePKS<OperatorLCAO<TK, TR>>::DeePKS(LCAO_Matrix* LM_in,
+DeePKS<OperatorLCAO<TK, TR>>::DeePKS(HS_Matrix_K<TK>* hsk_in,
                                      const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
                                      HContainer<TR>* hR_in,
-                                     std::vector<TK>* hK_in,
                                      const UnitCell* ucell_in,
                                      Grid_Driver* GridD_in,
                                      const TwoCenterIntegrator* intor_orb_alpha,
                                      const int& nks_in,
                                      elecstate::DensityMatrix<TK, double>* DM_in)
-    : nks(nks_in), ucell(ucell_in), OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in), DM(DM_in),
+    : nks(nks_in), ucell(ucell_in), OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in), DM(DM_in),
       intor_orb_alpha_(intor_orb_alpha)
 {
     this->cal_type = calculation_type::lcao_deepks;
 #ifdef __DEEPKS
-    this->initialize_HR(GridD_in, LM_in->ParaV);
+    this->initialize_HR(GridD_in);
 #endif
 }
 
@@ -45,10 +44,13 @@ DeePKS<OperatorLCAO<TK, TR>>::~DeePKS()
 #ifdef __DEEPKS
 // initialize_HR()
 template <typename TK, typename TR>
-void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(Grid_Driver* GridD, const Parallel_Orbitals* paraV)
+void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(Grid_Driver* GridD)
 {
     ModuleBase::TITLE("DeePKS", "initialize_HR");
     ModuleBase::timer::tick("DeePKS", "initialize_HR");
+
+    auto* paraV = this->hR->get_paraV();// get parallel orbitals from HR
+    // TODO: if paraV is nullptr, AtomPair can not use paraV for constructor, I will repair it in the future.
 
     // this->H_V_delta = new HContainer<TR>(paraV);
     if (std::is_same<TK, double>::value)
@@ -153,7 +155,7 @@ void DeePKS<OperatorLCAO<double, double>>::contributeHR()
     if (GlobalC::ld.get_hr_cal())
     {
         ModuleBase::timer::tick("DeePKS", "contributeHR");
-        const Parallel_Orbitals* pv = this->LM->ParaV;
+        const Parallel_Orbitals* pv = this->hsk->get_pv();
         GlobalC::ld.cal_projected_DM(this->DM, *this->ucell, GlobalC::ORB, GlobalC::GridD);
         GlobalC::ld.cal_descriptor(this->ucell->nat);
         GlobalC::ld.cal_gedm(this->ucell->nat);
@@ -245,7 +247,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::pre_calculate_nlm(
     const int iat0,
     std::vector<std::unordered_map<int, std::vector<double>>>& nlm_in)
 {
-    const Parallel_Orbitals* paraV = this->LM->ParaV;
+    const Parallel_Orbitals* paraV = this->hR->get_paraV();
     const int npol = this->ucell->get_npol();
     auto tau0 = ucell->get_tau(iat0);
     int T0, I0;
@@ -302,7 +304,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
     }
     ModuleBase::timer::tick("DeePKS", "calculate_HR");
 
-    const Parallel_Orbitals* paraV = this->H_V_delta->get_atom_pair(0).get_paraV();
+    const Parallel_Orbitals* paraV = this->H_V_delta->get_paraV();
     const int npol = this->ucell->get_npol();
 
     const LCAO_Orbitals& orb = LCAO_Orbitals::get_const_instance();
@@ -511,16 +513,16 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHk(int ik)
     TK* h_delta_k = nullptr;
     get_h_delta_k(ik, h_delta_k);
     // set SK to zero and then calculate SK for each k vector
-    ModuleBase::GlobalFunc::ZEROS(h_delta_k, this->hK->size());
+    ModuleBase::GlobalFunc::ZEROS(h_delta_k, this->hsk->get_size());
 
     if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
     {
-        const int nrow = this->LM->ParaV->get_row_size();
+        const int nrow = this->hsk->get_pv()->get_row_size();
         hamilt::folding_HR(*this->H_V_delta, h_delta_k, this->kvec_d[ik], nrow, 1);
     }
     else
     {
-        const int ncol = this->LM->ParaV->get_col_size();
+        const int ncol = this->hsk->get_pv()->get_col_size();
         hamilt::folding_HR(*this->H_V_delta, h_delta_k, this->kvec_d[ik], ncol, 0);
     }
     ModuleBase::timer::tick("DeePKS", "contributeHk");

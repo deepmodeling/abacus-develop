@@ -7,7 +7,7 @@
 template <>
 void SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>::cal_h_lambda(
     std::complex<double>* h_lambda,
-    const std::vector<std::complex<double>>& Sloc2,
+    const std::complex<double>* Sloc2,
     bool column_major,
     int isk)
 {
