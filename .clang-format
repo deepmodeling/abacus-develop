@@ -15,7 +15,7 @@ BreakBeforeTernaryOperators: true
 Cpp11BracedListStyle: true
 FixNamespaceComments: true
 
-InsertBraces: true
+# InsertBraces: true
 
 # About include
 IncludeBlocks: Regroup
