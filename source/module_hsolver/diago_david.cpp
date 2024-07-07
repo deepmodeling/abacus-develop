@@ -134,8 +134,9 @@ int DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
 
     this->notconv = this->n_band; // the number of the unconvergent bands
 
-    for (int m = 0; m < this->n_band; m++)
+    for (int m = 0; m < this->n_band; m++) {
         unconv[m] = m;
+}
 
     ModuleBase::timer::tick("DiagoDavid", "first");
 
@@ -307,7 +308,7 @@ int DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
 
         } // end of if
 
-    } while (1);
+    } while (true);
 
     ModuleBase::timer::tick("DiagoDavid", "diag_mock");
 
@@ -326,10 +327,12 @@ void DiagoDavid<T, Device>::cal_grad(hamilt::Hamilt<T, Device>* phm_in,
                                           const int* unconv,
                                           const Real* eigenvalue)
 {
-    if (test_david == 1)
+    if (test_david == 1) {
         ModuleBase::TITLE("DiagoDavid", "cal_grad");
-    if (notconv == 0)
+}
+    if (notconv == 0) {
         return;
+}
     ModuleBase::timer::tick("DiagoDavid", "cal_grad");
 
     // use template pointer for accelerate
@@ -543,7 +546,7 @@ void DiagoDavid<T, Device>::cal_grad(hamilt::Hamilt<T, Device>* phm_in,
     }
     // calculate H|psi> for not convergence bands
     hpsi_info dav_hpsi_in(&basis,
-                          psi::Range(1, 0, nbase, nbase + notconv - 1),
+                          psi::Range(true, 0, nbase, nbase + notconv - 1),
                           &hphi[nbase * this->dim]); // &hp(nbase, 0)
     phm_in->ops->hPsi(dav_hpsi_in);
 
@@ -564,11 +567,13 @@ void DiagoDavid<T, Device>::cal_elem(const int& dim,
                                           T* hcc,
                                           T* scc)
 {
-    if (test_david == 1)
+    if (test_david == 1) {
         ModuleBase::TITLE("DiagoDavid", "cal_elem");
+}
 
-    if (notconv == 0)
+    if (notconv == 0) {
         return;
+}
     ModuleBase::timer::tick("DiagoDavid", "cal_elem");
 
     gemm_op<T, Device>()(this->ctx,
@@ -719,8 +724,9 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
                                          T* sc,
                                          T* vc)
 {
-    if (test_david == 1)
+    if (test_david == 1) {
         ModuleBase::TITLE("DiagoDavid", "refresh");
+}
     ModuleBase::timer::tick("DiagoDavid", "refresh");
 
     // update hp,sp
@@ -978,8 +984,9 @@ void DiagoDavid<T, Device>::SchmitOrth(const int& dim,
 template <typename T, typename Device>
 void DiagoDavid<T, Device>::planSchmitOrth(const int nband, int* pre_matrix_mm_m, int* pre_matrix_mv_m)
 {
-    if (nband <= 0)
+    if (nband <= 0) {
         return;
+}
     ModuleBase::GlobalFunc::ZEROS(pre_matrix_mm_m, nband);
     ModuleBase::GlobalFunc::ZEROS(pre_matrix_mv_m, nband);
     int last_matrix_size = nband;
@@ -994,10 +1001,11 @@ void DiagoDavid<T, Device>::planSchmitOrth(const int nband, int* pre_matrix_mm_m
         {
             divide_points[0] = index;
             pre_matrix_mm_m[index] = matrix_size;
-            if (res_nband == matrix_size)
+            if (res_nband == matrix_size) {
                 pre_matrix_mv_m[index] = 1;
-            else
+            } else {
                 pre_matrix_mv_m[index] = 2;
+}
             divide_times = 1;
         }
         else
