@@ -297,13 +297,13 @@ OBJS_HCONTAINER=base_matrix.o\
 OBJS_HSOLVER=diago_cg.o\
     diago_david.o\
     diago_dav_subspace.o\
-    diagh_consts.o\
     diago_bpcg.o\
     hsolver_pw.o\
     hsolver_pw_sdft.o\
     diago_iter_assist.o\
     math_kernel_op.o\
     dngvd_op.o\
+    diag_const_nums.o\
     
 OBJS_HSOLVER_LCAO=hsolver_lcao.o\
       diago_scalapack.o\
