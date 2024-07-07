@@ -304,6 +304,7 @@ void Input::Print(const std::string& fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "deepks_scf", deepks_scf, ">0 add V_delta to Hamiltonian");
     ModuleBase::GlobalFunc::OUTP(ofs, "deepks_equiv", deepks_equiv, "whether to use equivariant version of DeePKS");
     ModuleBase::GlobalFunc::OUTP(ofs, "deepks_bandgap", deepks_bandgap, ">0 for bandgap label");
+    ModuleBase::GlobalFunc::OUTP(ofs, "deepks_v_delta", deepks_v_delta, ">0 for v_delta label. when output, 1 for v_delta_precalc, 2 for psialpha and grad_evdm ( can save memory )");
     ModuleBase::GlobalFunc::OUTP(ofs,
                                  "deepks_out_unittest",
                                  deepks_out_unittest,

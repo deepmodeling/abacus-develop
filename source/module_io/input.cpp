@@ -384,6 +384,7 @@ void Input::Default() {
     deepks_out_labels = false; // caoyu added 2020-11-24, mohan added 2021-01-03
     deepks_scf = false;
     deepks_bandgap = false;
+    deepks_v_delta = 0;
     deepks_out_unittest = false;
     deepks_equiv = false;
 
@@ -1222,6 +1223,10 @@ bool Input::Read(const std::string& fn) {
                    == 0) // caoyu added 2020-11-24, mohan modified 2021-01-03
         {
             read_bool(ifs, deepks_bandgap);
+        } else if (strcmp("deepks_v_delta", word)
+                   == 0) // xinyuan added 2023-02-15
+        {
+            read_value(ifs, deepks_v_delta);
         } else if (strcmp("deepks_out_unittest", word)
                    == 0) // mohan added 2021-01-03
         {
@@ -2856,6 +2861,7 @@ void Input::Bcast() {
         deepks_out_labels); // caoyu added 2020-11-24, mohan modified 2021-01-03
     Parallel_Common::bcast_bool(deepks_scf);
     Parallel_Common::bcast_bool(deepks_bandgap);
+    Parallel_Common::bcast_int(deepks_v_delta);
     Parallel_Common::bcast_bool(deepks_out_unittest);
     Parallel_Common::bcast_string(deepks_model);
     Parallel_Common::bcast_bool(deepks_equiv);
