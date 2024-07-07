@@ -2,6 +2,8 @@
 
 #include "parallel_global.h"
 
+#include <vector>
+
 template <>
 void Parallel_Reduce::reduce_all<int>(int& object)
 {
@@ -129,13 +131,12 @@ void Parallel_Reduce::reduce_double_allpool(const int& kpar, const int& nproc_in
         return;
     }
 #ifdef __MPI
-    double* swap = new double[n];
+    std::vector<double> swap(n, 0.0);
     for (int i = 0; i < n; i++)
     {
         swap[i] = object[i] / nproc_in_pool;
     }
-    MPI_Allreduce(swap, object, n, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-    delete[] swap;
+    MPI_Allreduce(swap.data(), object, n, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 #endif
 }
 
@@ -197,8 +198,8 @@ void Parallel_Reduce::gather_int_all(int& v, int* all)
 void Parallel_Reduce::gather_min_int_all(const int& nproc, int& v)
 {
 #ifdef __MPI
-    int* all = new int[nproc];
-    MPI_Allgather(&v, 1, MPI_INT, all, 1, MPI_INT, MPI_COMM_WORLD);
+    std::vector<int> all(nproc, 0);
+    MPI_Allgather(&v, 1, MPI_INT, all.data(), 1, MPI_INT, MPI_COMM_WORLD);
     for (int i = 0; i < nproc; i++)
     {
         if (v > all[i])
@@ -206,16 +207,14 @@ void Parallel_Reduce::gather_min_int_all(const int& nproc, int& v)
             v = all[i];
         }
     }
-    delete[] all;
 #endif
 }
 
 void Parallel_Reduce::gather_max_double_all(const int& nproc, double& v)
 {
 #ifdef __MPI
-    double* value = new double[nproc];
-    Parallel_Reduce::ZEROS(value, nproc);
-    MPI_Allgather(&v, 1, MPI_DOUBLE, value, 1, MPI_DOUBLE, MPI_COMM_WORLD);
+    std::vector<double> value(nproc, 0.0);
+    MPI_Allgather(&v, 1, MPI_DOUBLE, value.data(), 1, MPI_DOUBLE, MPI_COMM_WORLD);
     for (int i = 0; i < nproc; i++)
     {
         if (v < value[i])
@@ -223,7 +222,6 @@ void Parallel_Reduce::gather_max_double_all(const int& nproc, double& v)
             v = value[i];
         }
     }
-    delete[] value;
 #endif
 }
 
@@ -234,9 +232,8 @@ void Parallel_Reduce::gather_max_double_pool(const int& nproc_in_pool, double& v
     {
         return;
     }
-    double* value = new double[nproc_in_pool];
-    Parallel_Reduce::ZEROS(value, nproc_in_pool);
-    MPI_Allgather(&v, 1, MPI_DOUBLE, value, 1, MPI_DOUBLE, POOL_WORLD);
+    std::vector<double> value(nproc_in_pool, 0.0);
+    MPI_Allgather(&v, 1, MPI_DOUBLE, value.data(), 1, MPI_DOUBLE, POOL_WORLD);
     for (int i = 0; i < nproc_in_pool; i++)
     {
         if (v < value[i])
@@ -244,7 +241,6 @@ void Parallel_Reduce::gather_max_double_pool(const int& nproc_in_pool, double& v
             v = value[i];
         }
     }
-    delete[] value;
 #endif
 }
 
@@ -255,9 +251,8 @@ void Parallel_Reduce::gather_min_double_pool(const int& nproc_in_pool, double& v
     {
         return;
     }
-    double* value = new double[nproc_in_pool];
-    Parallel_Reduce::ZEROS(value, nproc_in_pool);
-    MPI_Allgather(&v, 1, MPI_DOUBLE, value, 1, MPI_DOUBLE, POOL_WORLD);
+    std::vector<double> value(nproc_in_pool, 0.0);
+    MPI_Allgather(&v, 1, MPI_DOUBLE, value.data(), 1, MPI_DOUBLE, POOL_WORLD);
     for (int i = 0; i < nproc_in_pool; i++)
     {
         if (v > value[i])
@@ -265,16 +260,14 @@ void Parallel_Reduce::gather_min_double_pool(const int& nproc_in_pool, double& v
             v = value[i];
         }
     }
-    delete[] value;
 #endif
 }
 
 void Parallel_Reduce::gather_min_double_all(const int& nproc, double& v)
 {
 #ifdef __MPI
-    double* value = new double[nproc];
-    Parallel_Reduce::ZEROS(value, nproc);
-    MPI_Allgather(&v, 1, MPI_DOUBLE, value, 1, MPI_DOUBLE, MPI_COMM_WORLD);
+    std::vector<double> value(nproc, 0.0);
+    MPI_Allgather(&v, 1, MPI_DOUBLE, value.data(), 1, MPI_DOUBLE, MPI_COMM_WORLD);
     for (int i = 0; i < nproc; i++)
     {
         if (v > value[i])
@@ -282,6 +275,5 @@ void Parallel_Reduce::gather_min_double_all(const int& nproc, double& v)
             v = value[i];
         }
     }
-    delete[] value;
 #endif
 }
