@@ -252,7 +252,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(Input& inp, UnitCell& ucell)
     if (GlobalV::deepks_scf)
     {
         // load the DeePKS model from deep neural network
-        GlobalC::ld.load_model(INPUT.deepks_model);
+        GlobalC::ld.load_model(PARAM.inp.deepks_model);
         // read pdm from file for NSCF or SCF-restart, do it only once in whole calculation
         GlobalC::ld.read_projected_DM((GlobalV::init_chg == "file"), GlobalV::deepks_equiv, *GlobalC::ORB.Alpha);
     }

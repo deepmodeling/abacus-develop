@@ -28,17 +28,17 @@ void ReadInput::item_relax()
                     }
                     else
                     {
-#ifdef __MPI
 #ifdef __ELPA
                         para.input.ks_solver = "genelpa";
                         ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "genelpa");
 #else
+#ifdef __MPI
                         para.input.ks_solver = "scalapack_gvx";
                         ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "scalapack_gvx");
-#endif
 #else
                         para.input.ks_solver = "lapack";
                         ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "lapack");
+#endif
 #endif
                     }
                 }
@@ -50,7 +50,11 @@ void ReadInput::item_relax()
 #ifdef __ELPA
                     para.input.ks_solver = "genelpa";
 #else
+#ifdef __MPI
                     para.input.ks_solver = "scalapack_gvx";
+#else
+                    para.input.ks_solver = "lapack";
+#endif
 #endif
                 }
             };

@@ -763,9 +763,9 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
     this->create_Output_Potential(0).write();
 
     // write wfc
-    if (INPUT.out_wfc_lcao)
+    if (PARAM.inp.out_wfc_lcao)
     {
-        ModuleIO::write_wfc_nao(INPUT.out_wfc_lcao,
+        ModuleIO::write_wfc_nao(PARAM.inp.out_wfc_lcao,
                                 *this->psi,
                                 this->pelec->ekb,
                                 this->pelec->wg,
