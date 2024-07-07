@@ -21,17 +21,19 @@ namespace ModuleIO
             int nR = csr.getNumberOfR();
             int nbasis = csr.getMatrixDimension();
             // allocate Hexxs[is]
-            for (int iat1 = 0; iat1 < ucell.nat; ++iat1)
-                for (int iat2 = 0;iat2 < ucell.nat;++iat2)
+            for (int iat1 = 0; iat1 < ucell.nat; ++iat1) {
+                for (int iat2 = 0;iat2 < ucell.nat;++iat2) {
                     for (int iR = 0;iR < nR;++iR)
                     {
                         const std::vector<int>& R = csr.getRCoordinate(iR);
                         TC dR({ R[0], R[1], R[2] });
                         Hexxs[is][iat1][{iat2, dR}] = RI::Tensor<Tdata>({ static_cast<size_t>(ucell.atoms[ucell.iat2it[iat1]].nw), static_cast<size_t>(ucell.atoms[ucell.iat2it[iat2]].nw) });
                     }
+}
+}
             // read Hexxs[is]
-            for (int i = 0;i < nbasis;++i)
-                for (int j = 0;j < nbasis;++j)
+            for (int i = 0;i < nbasis;++i) {
+                for (int j = 0;j < nbasis;++j) {
                     for (int iR = 0;iR < nR;++iR)
                     {
                         int iat1 = ucell.iwt2iat[i];
@@ -41,6 +43,8 @@ namespace ModuleIO
                         TC dR({ R[0], R[1], R[2] });
                         Hexxs.at(is).at(iat1).at({ iat2, dR })(ucell.iwt2iw[i], ucell.iwt2iw[j]) = matrix(i, j);
                     }
+}
+}
         }
     }
 
@@ -66,9 +70,11 @@ namespace ModuleIO
                 const TC& R = a2R_data.first.second;
                 auto& matrix = a2R_data.second;
                 Abfs::Vector3_Order<int> dR(R[0], R[1], R[2]);
-                for (int i = 0;i < nw1;++i)
-                    for (int j = 0;j < nw2;++j)
+                for (int i = 0;i < nw1;++i) {
+                    for (int j = 0;j < nw2;++j) {
                         target[dR][start1 + i][start2 + j] = ((std::abs(matrix(i, j)) > sparse_threshold) ? matrix(i, j) : static_cast<Tdata>(0));
+}
+}
             }
         }
         return target;

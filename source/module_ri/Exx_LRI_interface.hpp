@@ -39,8 +39,8 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const K_Vectors& kv, const Charg
 #ifdef __MPI
     if (GlobalC::exx_info.info_global.cal_exx)
     {
-        if (GlobalC::restart.info_load.load_H_finish && !GlobalC::restart.info_load.restart_exx) XC_Functional::set_xc_type(GlobalC::ucell.atoms[0].ncpp.xc_func);
-        else
+        if (GlobalC::restart.info_load.load_H_finish && !GlobalC::restart.info_load.restart_exx) { XC_Functional::set_xc_type(GlobalC::ucell.atoms[0].ncpp.xc_func);
+        } else
         {
             if (GlobalC::ucell.atoms[0].ncpp.xc_func == "HF" || GlobalC::ucell.atoms[0].ncpp.xc_func == "PBE0" || GlobalC::ucell.atoms[0].ncpp.xc_func == "HSE")
             {
@@ -67,10 +67,11 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const K_Vectors& kv, const Charg
 		if(GlobalC::exx_info.info_global.cal_exx)
 		{
 			this->mix_DMk_2D.set_nks(kv.get_nks(), GlobalV::GAMMA_ONLY_LOCAL);
-			if(GlobalC::exx_info.info_global.separate_loop)
+			if(GlobalC::exx_info.info_global.separate_loop) {
                 this->mix_DMk_2D.set_mixing(nullptr);
-			else
+			} else {
 				this->mix_DMk_2D.set_mixing(chgmix.get_mixing());
+}
         }
         // for exx two_level scf
         this->two_level_step = 0;
@@ -106,7 +107,8 @@ void Exx_LRI_Interface<T, Tdata>::exx_hamilt2density(elecstate::ElecState& elec,
         if (GlobalC::restart.info_load.load_H_finish && !GlobalC::restart.info_load.restart_exx
             && this->two_level_step == 0 && iter == 1)
         {
-            if (GlobalV::MY_RANK == 0)GlobalC::restart.load_disk("Eexx", 0, 1, &this->exx_ptr->Eexx);
+            if (GlobalV::MY_RANK == 0) {GlobalC::restart.load_disk("Eexx", 0, 1, &this->exx_ptr->Eexx);
+}
             Parallel_Common::bcast_double(this->exx_ptr->Eexx);
             this->exx_ptr->Eexx /= GlobalC::exx_info.info_global.hybrid_alpha;
         }
@@ -174,7 +176,7 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
             }
 
             std::cout << " Updating EXX " << std::flush;
-            timeval t_start;       gettimeofday(&t_start, NULL);
+            timeval t_start;       gettimeofday(&t_start, nullptr);
 
             const bool flag_restart = (this->two_level_step == 0) ? true : false;
             this->mix_DMk_2D.mix(dm.get_DMK_vector(), flag_restart);
@@ -188,7 +190,7 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
             iter = 0;
             this->two_level_step++;
             
-            timeval t_end;       gettimeofday(&t_end, NULL);
+            timeval t_end;       gettimeofday(&t_end, nullptr);
             std::cout << "and rerun SCF\t"
                 << std::setprecision(3) << std::setiosflags(std::ios::scientific)
                 << (double)(t_end.tv_sec-t_start.tv_sec) + (double)(t_end.tv_usec-t_start.tv_usec)/1000000.0 
