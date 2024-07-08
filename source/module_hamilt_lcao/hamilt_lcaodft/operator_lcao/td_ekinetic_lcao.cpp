@@ -200,7 +200,7 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& iat1,
             }
             hr_mat_p += npol;
             // current grad part
-            if (current_mat_p_c != nullptr)
+            if (current_mat_p != nullptr)
             {
                 for (int dir = 0; dir < 3; dir++)
                 {
