@@ -170,6 +170,68 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
 
     // R-space sum here (only done for the processor that contains G=0)
     ewaldr = 0.0;
+#ifdef __MPI
+    rmax = 4.0 / sqrt(alpha) / cell.lat0;
+    if(GlobalV::test_energy)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"rmax(unit lat0)",rmax);
+
+    int size = 0;
+    int my_rank = 0;
+    MPI_Comm_size(POOL_WORLD, &size);
+    MPI_Comm_rank(POOL_WORLD, &my_rank);
+
+    int ia_start = 0;
+    int ia_step = 0;
+    ia_start = my_rank;
+    ia_step = std::min(cell.nat, size);
+
+    int it1 = 0;
+    int ia1 = 0;
+    int it2 = 0;
+    int ia2 = 0;
+    for(int na1=ia_start; na1<cell.nat; na1+=ia_step)
+    {
+        it1 = cell.iat2it[na1];
+	ia1 = cell.iat2ia[na1];
+	
+	for(int na2=0; na2<cell.nat; na2++)
+	{
+            it2 = cell.iat2it[na2];
+	    ia2 = cell.iat2ia[na2];
+
+	    // calculate tau[na1]-tau[na2]
+	    dtau = cell.atoms[it1].tau[ia1] - cell.atoms[it2].tau[ia2];
+	    // generates nearest-neighbors shells
+	    H_Ewald_pw::rgen(dtau, rmax, irr, cell.latvec, cell.G, r, r2, nrm);
+	    // at-->cell.latvec, bg-->G
+	    // and sum to the real space part
+
+	    if(GlobalV::test_energy>1)
+	    {
+                ModuleBase::GlobalFunc::OUT("dtau.x",dtau.x);
+		ModuleBase::GlobalFunc::OUT("dtau.y",dtau.y);
+		ModuleBase::GlobalFunc::OUT("dtau.z",dtau.z);
+		ModuleBase::GlobalFunc::OUT("nrm",nrm);
+	    }
+	    for(nr=0; nr<nrm; nr++)
+	    {
+                rr = sqrt(r2[nr]) * cell.lat0;
+		if(GlobalV::use_paw)
+		{
+#ifdef USE_PAW
+                    ewaldr = ewaldr + GlobalC::paw_cell.get_val(it1) * GlobalC::paw_cell.get_val(it2) *
+                            erfc(sqrt(alpha) * rr) / rr;
+#endif
+		}
+		else
+		{
+                    ewaldr = ewaldr + cell.atoms[it1].ncpp.zv * cell.atoms[it2].ncpp.zv *
+                            erfc(sqrt(alpha) * rr) / rr;
+		}
+	    }
+	    if (GlobalV::test_energy>1) ModuleBase::GlobalFunc::OUT("ewaldr",ewaldr);
+	}
+    }
+#else
     if (rho_basis->ig_gge0 >= 0)
     {	
         rmax = 4.0 / sqrt(alpha) / cell.lat0;
@@ -222,6 +284,7 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
             } // nt2
         }//nt1
     } // endif
+#endif
 
     ewalds = 0.50 * ModuleBase::e2 * (ewaldg + ewaldr);
 
