@@ -27,7 +27,7 @@ class DiagoDavid : public DiagH<T, Device>
     virtual ~DiagoDavid() override;
 
     int diag(hamilt::Hamilt<T, Device>* phm_in,   // Pointer to the Hamiltonian object for diagonalization
-                      // const int dim,              // Dimension of the input matrix psi to be diagonalized
+                      const int dim,              // Dimension of the input matrix psi to be diagonalized
                       const int ldPsi,            // Leading dimension of the psi input
                       psi::Psi<T, Device>& psi,   // Reference to the wavefunction object for eigenvectors
                       Real* eigenvalue_in,        // Pointer to store the resulting eigenvalues
@@ -45,7 +45,7 @@ class DiagoDavid : public DiagH<T, Device>
     /// number of searched eigenpairs
     int n_band = 0;
     /// dimension of the input matrix psi to be diagonalized
-    int dim = 0;
+    // int dim = 0;
     // leading dimension of the matrix data
     // const int dmx = 0;
     /// dimension of the subspace allowed in Davidson
@@ -132,6 +132,7 @@ class DiagoDavid : public DiagH<T, Device>
                      T* vcc);
 
     int diag_mock(hamilt::Hamilt<T, Device>* phm_in,
+                   const int dim,
                    const int ldPsi,
                    psi::Psi<T, Device>& psi,
                    Real* eigenvalue_in,
