@@ -10,9 +10,3 @@
 LCAO_Matrix::LCAO_Matrix() {}
 
 LCAO_Matrix::~LCAO_Matrix() {}
-
-void LCAO_Matrix::set_HSgamma(const int& iw1_all, const int& iw2_all, const double& v, double* HSloc)
-{
-    LCAO_Matrix::set_mat2d<double>(iw1_all, iw2_all, v, *this->ParaV, HSloc);
-    return;
-}
