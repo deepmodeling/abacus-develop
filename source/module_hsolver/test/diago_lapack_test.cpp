@@ -4,7 +4,7 @@
 // and refactored some function.
 
 #include "gtest/gtest.h"
-#include "string.h"
+#include <cstring>
 #include <vector>
 
 #include "module_hsolver/diago_lapack.h"
@@ -51,8 +51,9 @@ void lapackEigen(int &npw, std::vector<std::complex<double>> &hm, double *e, boo
     char tmp_c1 = 'V', tmp_c2 = 'U';
     zheev_(&tmp_c1, &tmp_c2, &npw, hm.data(), &npw, e, work2, &lwork, rwork, &info);
     end = clock();
-    if (outtime)
+    if (outtime) {
         std::cout << "Lapack Run time: " << (double)(end - start) / CLOCKS_PER_SEC << " S" << std::endl;
+}
     delete[] rwork;
     delete[] work2;
 }
@@ -180,7 +181,7 @@ class DiagoLapackPrepare
     std::vector<T> h;
     std::vector<T> s;
     HamiltTEST<T> hmtest;
-    hsolver::DiagH<T>* dh = 0;
+    hsolver::DiagH<T>* dh = nullptr;
     psi::Psi<T> psi;
     std::vector<double> e_solver;
     std::vector<double> e_lapack;
@@ -203,8 +204,9 @@ class DiagoLapackPrepare
         }
         nlocal = hdim;
         nbands = nlocal / 2;
-        if (readhfile && readsfile)
+        if (readhfile && readsfile) {
             std::cout << "READ FINISH" << std::endl;
+}
             return true;
         return false;
     }
@@ -219,8 +221,9 @@ class DiagoLapackPrepare
 
     void print_hs()
     {
-        if (!PRINT_HS)
+        if (!PRINT_HS) {
             return;
+}
         std::ofstream fp("hmatrix.dat");
         print_matrix(fp, this->h.data(), nlocal, nlocal, true);
         fp.close();
@@ -259,8 +262,9 @@ class DiagoLapackPrepare
 
     void diago_lapack()
     {
-        for (int i = 0; i < REPEATRUN; i++)
+        for (int i = 0; i < REPEATRUN; i++) {
             lapack_diago(this->h.data(), this->s.data(), this->e_lapack.data(), nlocal);
+}
     }
 
     bool compare_eigen(std::stringstream& out_info)
@@ -276,8 +280,9 @@ class DiagoLapackPrepare
                 maxerror = error;
                 iindex = i;
             }
-            if (error > PASSTHRESHOLD)
+            if (error > PASSTHRESHOLD) {
                 pass = false;
+}
         }
 
         std::cout << "H/S matrix are read from " << hfname << ", " << sfname << std::endl;
