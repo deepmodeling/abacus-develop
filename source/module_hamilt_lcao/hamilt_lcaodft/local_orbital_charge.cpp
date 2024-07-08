@@ -131,12 +131,10 @@ void Local_Orbital_Charge::set_dm_gamma(int is, double* dm_gamma_in)
     return;
 }
 
-void Local_Orbital_Charge::gamma_file(psi::Psi<double>* psid, elecstate::ElecState* pelec)
+void Local_Orbital_Charge::gamma_file(psi::Psi<double>*const psid, elecstate::ElecState*const pelec)
 {
     ModuleBase::TITLE("Local_Orbital_Charge", "gamma_file");
     std::cout << " Read in gamma point wave function files " << std::endl;
-
-    double** ctot;
 
     // allocate psi
     int ncol = this->ParaV->ncol_bands;
@@ -161,10 +159,9 @@ void Local_Orbital_Charge::gamma_file(psi::Psi<double>* psid, elecstate::ElecSta
     }
     ModuleBase::GlobalFunc::ZEROS(psid->get_pointer(), psid->size());
 
-    int error;
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
-        error = ModuleIO::read_wfc_nao(ctot,
+        int error = ModuleIO::read_wfc_nao(
                                        is,
                                        GlobalV::GAMMA_ONLY_LOCAL,
                                        GlobalV::NB2D,
@@ -202,8 +199,8 @@ void Local_Orbital_Charge::gamma_file(psi::Psi<double>* psid, elecstate::ElecSta
 }
 
 void Local_Orbital_Charge::allocate_k(const int& lgd,
-                                      psi::Psi<std::complex<double>>* psi,
-                                      elecstate::ElecState* pelec,
+                                      psi::Psi<std::complex<double>>*const psi,
+                                      elecstate::ElecState*const pelec,
                                       const int& nks,
                                       const int& nkstot,
                                       const std::vector<ModuleBase::Vector3<double>>& kvec_c,
@@ -272,11 +269,9 @@ void Local_Orbital_Charge::allocate_k(const int& lgd,
         {
             psi->resize(nkstot, this->ParaV->ncol_bands, this->ParaV->nrow);
         }
-        int error;
         for (int ik = 0; ik < nkstot; ++ik)
         {
-            std::complex<double>** ctot;
-            error = ModuleIO::read_wfc_nao_complex(ctot,
+            int error = ModuleIO::read_wfc_nao_complex(
                                                    ik,
                                                    GlobalV::NB2D,
                                                    GlobalV::NBANDS,

@@ -3,6 +3,7 @@
 #include "esolver_ks_pw.h"
 #include "esolver_sdft_pw.h"
 #ifdef __LCAO
+#include "esolver_ks_lcaopw.h"
 #include "esolver_ks_lcao.h"
 #include "esolver_ks_lcao_tddft.h"
 #endif
@@ -10,16 +11,17 @@
 #include "esolver_lj.h"
 #include "esolver_of.h"
 #include "module_md/md_para.h"
+#include <stdexcept>
 
 namespace ModuleESolver
 {
 
-void ESolver::printname(void)
+void ESolver::printname()
 {
-    std::cout << classname << std::endl;
+	std::cout << classname << std::endl;
 }
 
-std::string determine_type(void)
+std::string determine_type()
 {
 	std::string esolver_type = "none";
 	if (GlobalV::BASIS_TYPE == "pw")
@@ -46,10 +48,10 @@ std::string determine_type(void)
 		}
 		else if(GlobalV::ESOLVER_TYPE == "ksdft")
 		{
-			esolver_type = "ksdft_pw";
+            esolver_type = "ksdft_lip";
 		}
 #else
-		ModuleBase::WARNING_QUIT("ESolver", "LCAO basis type must be compiled with __LCAO");
+		ModuleBase::WARNING_QUIT("ESolver", "Calculation involving numerical orbitals must be compiled with __LCAO");
 #endif
 	}
 	else if (GlobalV::BASIS_TYPE == "lcao")
@@ -64,7 +66,7 @@ std::string determine_type(void)
 			esolver_type = "ksdft_lcao";
 		}
 #else
-		ModuleBase::WARNING_QUIT("ESolver", "LCAO basis type must be compiled with __LCAO");
+		ModuleBase::WARNING_QUIT("ESolver", "Calculation involving numerical orbitals must be compiled with __LCAO");
 #endif
 	}
 
@@ -85,14 +87,14 @@ std::string determine_type(void)
 
 	auto device_info = GlobalV::device_flag;
 
-	for (char &c : device_info) 
+	for (char &c : device_info)
 	{
-		if (std::islower(c)) 
+		if (std::islower(c))
 		{
 			c = std::toupper(c);
 		}
 	}
-	if (GlobalV::MY_RANK == 0) 
+	if (GlobalV::MY_RANK == 0)
 	{
 		std::cout << " RUNNING WITH DEVICE  : " << device_info << " / "
 			<< base_device::information::get_device_info(GlobalV::device_flag) << std::endl;
@@ -106,74 +108,85 @@ std::string determine_type(void)
 
 
 //Some API to operate E_Solver
-void init_esolver(ESolver*& p_esolver)
+ESolver* init_esolver()
 {
 	//determine type of esolver based on INPUT information
-	std::string esolver_type = determine_type();
+	const std::string esolver_type = determine_type();
 
 	//initialize the corresponding Esolver child class
 	if (esolver_type == "ksdft_pw")
 	{
 #if ((defined __CUDA) || (defined __ROCM))
-		if (GlobalV::device_flag == "gpu") 
+		if (GlobalV::device_flag == "gpu")
 		{
-			if (GlobalV::precision_flag == "single") 
+			if (GlobalV::precision_flag == "single")
 			{
-                p_esolver = new ESolver_KS_PW<std::complex<float>, base_device::DEVICE_GPU>();
-            }
-			else 
+				return new ESolver_KS_PW<std::complex<float>, base_device::DEVICE_GPU>();
+			}
+			else
 			{
-                p_esolver = new ESolver_KS_PW<std::complex<double>, base_device::DEVICE_GPU>();
-            }
-			return;
+				return new ESolver_KS_PW<std::complex<double>, base_device::DEVICE_GPU>();
+			}
 		}
 #endif
-		if (GlobalV::precision_flag == "single") 
+		if (GlobalV::precision_flag == "single")
 		{
-            p_esolver = new ESolver_KS_PW<std::complex<float>, base_device::DEVICE_CPU>();
-        }
-        else 
-		{
-            p_esolver = new ESolver_KS_PW<std::complex<double>, base_device::DEVICE_CPU>();
-        }
-    }
-#ifdef __LCAO
-	else if (esolver_type == "ksdft_lcao")
-	{
-		if (GlobalV::GAMMA_ONLY_LOCAL)
-		{
-			p_esolver = new ESolver_KS_LCAO<double, double>();
-		}
-		else if (GlobalV::NSPIN < 4)
-		{
-			p_esolver = new ESolver_KS_LCAO<std::complex<double>, double>();
+			return new ESolver_KS_PW<std::complex<float>, base_device::DEVICE_CPU>();
 		}
 		else
 		{
-			p_esolver = new ESolver_KS_LCAO<std::complex<double>, std::complex<double>>();
+			return new ESolver_KS_PW<std::complex<double>, base_device::DEVICE_CPU>();
+		}
+	}
+#ifdef __LCAO
+    else if (esolver_type == "ksdft_lip")
+    {
+        if (GlobalV::precision_flag == "single")
+        {
+            p_esolver = new ESolver_KS_LIP<std::complex<float>>();
+        }
+        else
+        {
+            p_esolver = new ESolver_KS_LIP<std::complex<double>>();
+        }
+    }
+    else if (esolver_type == "ksdft_lcao")
+	{
+		if (GlobalV::GAMMA_ONLY_LOCAL)
+		{
+			return new ESolver_KS_LCAO<double, double>();
+		}
+		else if (GlobalV::NSPIN < 4)
+		{
+			return new ESolver_KS_LCAO<std::complex<double>, double>();
+		}
+		else
+		{
+			return new ESolver_KS_LCAO<std::complex<double>, std::complex<double>>();
 		}
 	}
 	else if (esolver_type == "ksdft_lcao_tddft")
 	{
-		p_esolver = new ESolver_KS_LCAO_TDDFT();
+		return new ESolver_KS_LCAO_TDDFT();
 	}
 #endif
 	else if (esolver_type == "sdft_pw")
 	{
-		p_esolver = new ESolver_SDFT_PW();
+		return new ESolver_SDFT_PW();
 	}
 	else if(esolver_type == "ofdft")
 	{
-		p_esolver = new ESolver_OF();
+		return new ESolver_OF();
 	}
 	else if (esolver_type == "lj_pot")
 	{
-		p_esolver = new ESolver_LJ();
+		return new ESolver_LJ();
 	}
 	else if (esolver_type == "dp_pot")
 	{
-		p_esolver = new ESolver_DP(INPUT.mdp.pot_file);
+		return new ESolver_DP(INPUT.mdp.pot_file);
 	}
+	throw std::invalid_argument("esolver_type = "+std::string(esolver_type)+". Wrong in "+std::string(__FILE__)+" line "+std::to_string(__LINE__));
 }
 
 

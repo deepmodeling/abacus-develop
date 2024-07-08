@@ -5,6 +5,7 @@ list(APPEND objects
     diago_dav_subspace.cpp
     diago_bpcg.cpp
     hsolver_pw.cpp
+    hsolver_lcaopw.cpp
     hsolver_pw_sdft.cpp
     diago_iter_assist.cpp
     
