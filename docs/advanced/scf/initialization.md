@@ -9,6 +9,7 @@ In LCAO basis, wavefunction can be read to calculate initial charge density. The
 `init_chg` is used for choosing the method of charge density initialization.
  - `atomic` : initial charge density by atomic charge density from pseudopotential file under keyword `PP_RHOATOM` 
  - `file` : initial charge density from files produced by previous calculations with [`out_chg 1`](../elec_properties/charge.md).
+ - `auto`: Abacus first attempts to read the density from a file; if not found, it defaults to using atomic density.
 
 ## Wave function
 `init_wfc` is used for choosing the method of wavefunction coefficient initialization.

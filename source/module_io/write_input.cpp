@@ -187,7 +187,11 @@ void Input::Print(const std::string& fn) const
                                  "init_wfc",
                                  init_wfc,
                                  "start wave functions are from 'atomic', 'atomic+random', 'random' or 'file'");
-    ModuleBase::GlobalFunc::OUTP(ofs, "init_chg", init_chg, "start charge is from 'atomic' or file");
+    ModuleBase::GlobalFunc::OUTP(ofs,
+                                 "init_chg",
+                                 init_chg,
+                                 "start charge is from 'atomic' or file, or auto means fistly read from file and use "
+                                 "atomic charge if file is not found");
     ModuleBase::GlobalFunc::OUTP(ofs,
                                  "chg_extrap",
                                  chg_extrap,
