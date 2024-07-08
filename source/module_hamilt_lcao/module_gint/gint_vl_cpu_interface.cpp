@@ -200,7 +200,7 @@ void Gint::cpu_vlocal_meta_interface(Gint_inout* inout) {
 
 #ifdef _OPENMP
     hamilt::HContainer<double>* hRGint_thread =new hamilt::HContainer<double>(*this->hRGint);
-    std::vector<double> std::vector<double>(nnrg, 0.0);
+    std::vector<double>pvpR_thread = std::vector<double>(nnrg, 0.0);
 #pragma omp for
 #endif
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
