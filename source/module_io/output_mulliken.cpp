@@ -450,18 +450,30 @@ void Output_Mulliken<TK>::print_atom_mag(const std::vector<std::vector<double>>&
     }
     else if (this->nspin_ == 4)
     {
-        const std::vector<std::string> title = {"Total Magnetism (uB)", "", "", ""};
-        const std::vector<std::string> fmts = {"%-26s", "%20.10f", "%20.10f", "%20.10f"};
-        FmtTable table(title, nat, fmts, {FmtTable::Align::RIGHT, FmtTable::Align::LEFT});
+        std::vector<double> magnitude(nat, 0.0);
+        std::vector<double> polar(nat, 0.0);
+        std::vector<double> azimuth(nat, 0.0);
+        const std::vector<std::string> title = {"Total Magnetism (uB)", "x", "y", "z"};
+        const std::vector<std::string> fmts = {"%26s", "%20.10f", "%20.10f", "%20.10f"};
+        FmtTable table(title, nat, fmts, {FmtTable::Align::RIGHT, FmtTable::Align::RIGHT});
         for (int iat = 0; iat < nat; ++iat)
         {
             atom_label.push_back(this->cell_index_->get_atom_label(iat, true));
             mag_x[iat] = atom_chg[iat][1];
             mag_y[iat] = atom_chg[iat][2];
             mag_z[iat] = atom_chg[iat][3];
+            magnitude[iat] = std::sqrt(mag_x[iat] * mag_x[iat] + mag_y[iat] * mag_y[iat] + mag_z[iat] * mag_z[iat]);
+            polar[iat] = std::acos(mag_z[iat] / magnitude[iat]) * 180.0 / ModuleBase::PI;
+            azimuth[iat] = std::atan2(mag_y[iat], mag_x[iat]) * 180.0 / ModuleBase::PI;
         }
         table << atom_label << mag_x << mag_y << mag_z;
         os << table.str() << std::endl;
+        /// output mag in polar coordinates
+        const std::vector<std::string> title_polar = {"Total Magnetism (uB)", "Magnitude (uB)", "Polar (degree)", "Azimuth (degree)"};
+        const std::vector<std::string> fmts_polar = {"%26s", "%20.10f", "%20.10f", "%20.10f"};
+        FmtTable table_polar(title_polar, nat, fmts_polar, {FmtTable::Align::RIGHT, FmtTable::Align::RIGHT});
+        table_polar << atom_label << magnitude << polar << azimuth;
+        os << table_polar.str() << std::endl;
     }
     else if (this->nspin_ == 1)
     {
