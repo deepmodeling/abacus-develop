@@ -64,6 +64,8 @@ void Gint::cal_gint(Gint_inout* inout) {
             mkl_set_num_threads(mkl_threads);
 #endif
             {
+// Here we write omp parallel, each job in this parallel region, uses omp for, 
+// which conforms to the running rules of OpenMP.
 #ifdef _OPENMP
 #pragma omp parallel
 {

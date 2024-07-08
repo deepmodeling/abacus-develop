@@ -2,9 +2,7 @@
 # Find the native MKL headers and libraries.
 #
 #  MKL_INCLUDE_DIRS - where to find mkl.h, etc.
-#  MKL_LIBRARIES    - List of libraries when using mkl.
 #  MKL_FOUND        - True if mkl found.
-#
 
 find_path(MKL_INCLUDE_DIR mkl_service.h HINTS ${MKLROOT}/include)
 
@@ -27,11 +25,6 @@ else()
 endif()
 
 if(IntelMKL_FOUND)
-  if (ENABLE_MPI)
-    set(MKL_LIBRARIES ${MKL_INTEL} ${MKL_INTEL_THREAD} ${MKL_CORE} ${MKL_SCALAPACK} ${MKL_BLACS_INTELMPI})
-  else()
-    set(MKL_LIBRARIES ${MKL_INTEL} ${MKL_INTEL_THREAD} ${MKL_CORE})
-  endif()
   set(MKL_INCLUDE_DIRS ${MKL_INCLUDE_DIR})
 
   if(NOT TARGET IntelMKL::INTEL)

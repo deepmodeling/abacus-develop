@@ -344,9 +344,10 @@ void build_Nonlocal_mu_new(LCAO_Matrix& lm,
                                                 // mohan add 2010-12-20
                                                 if (nlm_tmp != 0.0)
                                                 {
-                                                    lm.set_HSgamma(iw1_all,
+                                                    LCAO_domain::set_mat2d(iw1_all,
                                                                    iw2_all,
                                                                    nlm_tmp,
+                                                                   *lm.ParaV,
                                                                    NLloc); // N stands for nonlocal.
                                                 }
                                             }

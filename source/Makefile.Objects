@@ -505,6 +505,7 @@ OBJS_LCAO=DM_gamma.o\
       norm_psi.o\
       propagator.o\
       td_velocity.o\
+      td_current.o\
       snap_psibeta_half_tddft.o\
       upsi.o\
       FORCE_STRESS.o\
@@ -524,13 +525,13 @@ OBJS_LCAO=DM_gamma.o\
       spar_hsr.o\
       spar_st.o\
       spar_u.o\
-      LCAO_matrix.o\
       LCAO_set_fs.o\
       LCAO_set_st.o\
       LCAO_nl_mu.o\
       LCAO_nnr.o\
       LCAO_set_zero.o\
       LCAO_allocate.o\
+      LCAO_set_mat2d.o\
       center2_orb.o\
       center2_orb-orb11.o\
       center2_orb-orb21.o\

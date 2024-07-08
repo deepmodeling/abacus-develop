@@ -1182,7 +1182,7 @@ TEST_F(InputTest, Check)
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
 	output = testing::internal::GetCapturedStdout();
-	EXPECT_THAT(output,testing::HasSubstr("wrong 'init_chg',not 'atomic', 'file',please check"));
+	EXPECT_THAT(output, testing::HasSubstr("wrong 'init_chg', should be 'atomic', 'file', or 'auto'. Please check it."));
 	INPUT.init_chg = "atomic";
 	//
 	INPUT.gamma_only_local = 0;

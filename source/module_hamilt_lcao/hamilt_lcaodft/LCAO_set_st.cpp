@@ -272,7 +272,7 @@ void single_overlap(LCAO_Matrix& lm,
         // according to global2local_row and global2local_col
         // the last paramete: 1 for Sloc, 2 for Hloc
         // and 3 for Hloc_fixed.
-        lm.set_HSgamma(iw1_all, iw2_all, olm[0], HSloc);
+        LCAO_domain::set_mat2d(iw1_all, iw2_all, olm[0], *lm.ParaV, HSloc);
     }
     else // condition 7, multiple k-points algorithm
     {
