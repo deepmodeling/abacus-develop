@@ -505,6 +505,7 @@ OBJS_LCAO=DM_gamma.o\
       norm_psi.o\
       propagator.o\
       td_velocity.o\
+      td_current.o\
       snap_psibeta_half_tddft.o\
       upsi.o\
       FORCE_STRESS.o\

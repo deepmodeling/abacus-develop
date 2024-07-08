@@ -16,8 +16,7 @@ void write_current(const int istep,
                    const K_Vectors& kv,
                    const TwoCenterIntegrator* intor,
                    const Parallel_Orbitals* pv,
-                   Record_adj& ra,
-                   hamilt::HContainer<double>* sR);
+                   Record_adj& ra);
 
 /// @brief calculate sum_n[𝜌_(𝑛𝑘,𝜇𝜈)] for current calculation
 void cal_tmp_DM(elecstate::DensityMatrix<std::complex<double>, double>& DM_real,
