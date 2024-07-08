@@ -52,7 +52,8 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
     // buffer variable
     // used to optimize alpha
 
-	if(GlobalV::test_energy)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"mxr",mxr);
+	if(GlobalV::test_energy) {ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"mxr",mxr);
+}
     //r  = new ModuleBase::Vector3<double>[mxr];
     //r2 = new double[mxr];
     //int* irr = new int[mxr];
@@ -78,7 +79,8 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
             charge += cell.atoms[it].na * cell.atoms[it].ncpp.zv;//mohan modify 2007-11-7
         }
     }
-    if(GlobalV::test_energy)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"Total ionic charge",charge);
+    if(GlobalV::test_energy) {ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"Total ionic charge",charge);
+}
 
 	// (2) calculate the converged value: alpha
     H_Ewald_pw::alpha = 2.90;
@@ -96,8 +98,10 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
                      erfc(sqrt(cell.tpiba2 * rho_basis->ggecut / 4.0 / alpha));
     }
     while (upperbound > 1.0e-7);
-    if(GlobalV::test_energy)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"alpha",alpha);
-	if(GlobalV::test_energy)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"Upper bound",upperbound);
+    if(GlobalV::test_energy) {ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"alpha",alpha);
+}
+	if(GlobalV::test_energy) {ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"Upper bound",upperbound);
+}
 
     // G-space sum here.
     // Determine if this processor contains G=0 and set the constant term
@@ -126,7 +130,8 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
 
     for (int ig = 0; ig < rho_basis->npw; ig++)
     {
-        if(ig == rho_basis->ig_gge0) continue;
+        if(ig == rho_basis->ig_gge0) { continue;
+}
         std::complex<double> rhon = ModuleBase::ZERO;
         for (int it=0; it<cell.ntype; it++)
         {
@@ -172,7 +177,8 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
     ewaldr = 0.0;
 #ifdef __MPI
     rmax = 4.0 / sqrt(alpha) / cell.lat0;
-    if(GlobalV::test_energy)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"rmax(unit lat0)",rmax);
+    if(GlobalV::test_energy) {ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"rmax(unit lat0)",rmax);
+}
 
     int size = 0;
     int my_rank = 0;
@@ -228,7 +234,8 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
                             erfc(sqrt(alpha) * rr) / rr;
 		}
 	    }
-	    if (GlobalV::test_energy>1) ModuleBase::GlobalFunc::OUT("ewaldr",ewaldr);
+	    if (GlobalV::test_energy>1) { ModuleBase::GlobalFunc::OUT("ewaldr",ewaldr);
+}
 	}
     }
 #else
