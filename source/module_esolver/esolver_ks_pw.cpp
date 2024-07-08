@@ -43,6 +43,7 @@
 #endif
 #include <ATen/kernels/blas.h>
 #include <ATen/kernels/lapack.h>
+#include "module_base/formatter.h"
 
 namespace ModuleESolver {
 
@@ -1121,6 +1122,7 @@ void ESolver_KS_PW<T, Device>::nscf() {
                          << std::endl;
 
     //! 4) print out band energies and weights
+    std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "writing band energies");
     const int nspin = GlobalV::NSPIN;
     const int nbands = GlobalV::NBANDS;
     for (int ik = 0; ik < this->kv.get_nks(); ik++) {
@@ -1146,9 +1148,11 @@ void ESolver_KS_PW<T, Device>::nscf() {
         }
         GlobalV::ofs_running << std::endl;
     }
+    std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "writing band energies");
 
     //! 5) print out band gaps
     if (GlobalV::out_bandgap) {
+        std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "writing band gaps");
         if (!GlobalV::TWO_EFERMI) {
             this->pelec->cal_bandgap();
             GlobalV::ofs_running << " E_bandgap "
@@ -1165,10 +1169,12 @@ void ESolver_KS_PW<T, Device>::nscf() {
                 << this->pelec->bandgap_dw * ModuleBase::Ry_to_eV << " eV"
                 << std::endl;
         }
+        std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "writing band gaps");
     }
 
     //! 6) calculate Wannier functions
     if (INPUT.towannier90) {
+        std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "Wannier functions calculation");
         toWannier90_PW wan(INPUT.out_wannier_mmn,
                            INPUT.out_wannier_amn,
                            INPUT.out_wannier_unk,
@@ -1182,17 +1188,20 @@ void ESolver_KS_PW<T, Device>::nscf() {
                       this->pw_big,
                       this->kv,
                       this->psi);
+        std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "Wannier functions calculation");
     }
 
     //! 7) calculate Berry phase polarization
     if (berryphase::berry_phase_flag
         && ModuleSymmetry::Symmetry::symm_flag != 1) {
+        std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "Berry phase polarization");
         berryphase bp;
         bp.Macroscopic_polarization(this->pw_wfc->npwk_max,
                                     this->psi,
                                     this->pw_rho,
                                     this->pw_wfc,
                                     this->kv);
+        std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "Berry phase polarization");
     }
 
     /// write potential
