@@ -107,7 +107,6 @@ endif()
 if(NOT ENABLE_MPI)
   set(USE_ELPA OFF)
   set(ENABLE_DEEPKS OFF)
-  set(BUILD_TESTING OFF)
 endif()
 
 if(ENABLE_LCAO AND ENABLE_MPI)

@@ -8,6 +8,8 @@ remove_definitions(-D__DEEPKS)
 remove_definitions(-D_OPENMP)
 remove_definitions(-DUSE_PAW)
 
+if (ENABLE_MPI)
+
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 AddTest(
@@ -96,3 +98,5 @@ AddTest(
   SOURCES charge_extra_test.cpp ../module_charge/charge_extra.cpp ../../module_io/read_cube.cpp ../../module_io/write_cube.cpp
   ../../module_io/output.cpp
 )
+
+endif()
