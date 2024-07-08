@@ -16,8 +16,8 @@
 
 class LCAO_Matrix {
   public:
-    LCAO_Matrix();
-    ~LCAO_Matrix();
+    LCAO_Matrix(){};
+    ~LCAO_Matrix(){};
 
     Parallel_Orbitals* ParaV;
 
