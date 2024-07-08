@@ -36,7 +36,7 @@ void LCAO_Deepks::collect_h_mat(const std::vector<double> h_in,ModuleBase::matri
                 ic = pv->global2local_col(j);
                 if (ic>=0)
                 {
-                    int iic;
+                    int iic=0;
                     if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
                     {
                         iic=ir+ic*pv->nrow;

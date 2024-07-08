@@ -17,6 +17,7 @@ class LCAO_Deepks_Interface
     /// @param[in] etot
     /// @param[in] nks
     /// @param[in] nat
+    /// @param[in] nlocal
     /// @param[in] ekb
     /// @param[in] kvec_d
     /// @param[in] ucell
@@ -31,6 +32,7 @@ class LCAO_Deepks_Interface
     void out_deepks_labels(double etot,
                            int nks,
                            int nat,
+                           int nlocal,
                            const ModuleBase::matrix& ekb,
                            const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                            const UnitCell& ucell,
@@ -43,6 +45,7 @@ class LCAO_Deepks_Interface
   void out_deepks_labels(double etot,
                            int nks,
                            int nat,
+                           int nlocal,
                            const ModuleBase::matrix& ekb,
                            const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                            const UnitCell& ucell,

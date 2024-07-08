@@ -1138,13 +1138,14 @@ void LCAO_Deepks::cal_v_delta_precalc(const int nlocal,
         }
     }
 #ifdef __MPI
+    int mn_size=(2 * this->lmaxd + 1) * (2 * this->lmaxd + 1);
     for(int inl = 0; inl < this->inlmax; inl++)
     {
         for(int mu = 0; mu < nlocal ; mu++)
         {
             for(int nu=0; nu< nlocal ; nu++)
             {
-                Parallel_Reduce::reduce_all(this->v_delta_pdm_shell[0][mu][nu][inl],(2 * this->lmaxd + 1) * (2 * this->lmaxd + 1));
+                Parallel_Reduce::reduce_all(this->v_delta_pdm_shell[0][mu][nu][inl],mn_size);
             }
         }
     }

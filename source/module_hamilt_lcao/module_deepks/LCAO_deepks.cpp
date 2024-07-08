@@ -434,6 +434,7 @@ void LCAO_Deepks::init_v_delta_pdm_shell(const int nks,const int nlocal)
     
     this->v_delta_pdm_shell = new double**** [nks];
 
+    int mn_size=(2 * this->lmaxd + 1) * (2 * this->lmaxd + 1);
     for (int iks=0; iks<nks; iks++)
     {
         this->v_delta_pdm_shell[iks] = new double*** [nlocal];
@@ -448,8 +449,8 @@ void LCAO_Deepks::init_v_delta_pdm_shell(const int nks,const int nlocal)
 
                 for(int inl = 0; inl < this->inlmax; inl++)
                 {
-                    this->v_delta_pdm_shell[iks][mu][nu][inl] = new double [(2 * this->lmaxd + 1) * (2 * this->lmaxd + 1)];
-                    ModuleBase::GlobalFunc::ZEROS(v_delta_pdm_shell[iks][mu][nu][inl], (2 * this->lmaxd + 1) * (2 * this->lmaxd + 1));
+                    this->v_delta_pdm_shell[iks][mu][nu][inl] = new double [mn_size];
+                    ModuleBase::GlobalFunc::ZEROS(v_delta_pdm_shell[iks][mu][nu][inl], mn_size);
                 }                
             }
         }

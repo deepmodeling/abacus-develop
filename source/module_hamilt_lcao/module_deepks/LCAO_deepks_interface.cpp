@@ -12,6 +12,7 @@ LCAO_Deepks_Interface::LCAO_Deepks_Interface(std::shared_ptr<LCAO_Deepks> ld_in)
 void LCAO_Deepks_Interface::out_deepks_labels(double etot,
                                               int nks,
                                               int nat,
+                                              int nlocal,
                                               const ModuleBase::matrix& ekb,
                                               const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                                               const UnitCell& ucell,
@@ -83,38 +84,38 @@ void LCAO_Deepks_Interface::out_deepks_labels(double etot,
         if(GlobalV::deepks_v_delta)//gamma only now
         {
             ModuleBase::matrix h_tot;
-            h_tot.create(GlobalV::NLOCAL,GlobalV::NLOCAL);
+            h_tot.create(nlocal,nlocal);
 
-            ld->collect_h_mat(ld->h_mat,h_tot,GlobalV::NLOCAL);
-            ld->save_npy_h(h_tot, "h_tot.npy",GlobalV::NLOCAL);
+            ld->collect_h_mat(ld->h_mat,h_tot,nlocal);
+            ld->save_npy_h(h_tot, "h_tot.npy",nlocal);
 
             if(GlobalV::deepks_scf)
             {
                 ModuleBase::matrix v_delta;
-                v_delta.create(GlobalV::NLOCAL,GlobalV::NLOCAL);
-                ld->collect_h_mat(ld->H_V_delta,v_delta,GlobalV::NLOCAL);
-                ld->save_npy_h(h_tot-v_delta, "h_base.npy",GlobalV::NLOCAL);
-                ld->save_npy_h(v_delta, "v_delta.npy",GlobalV::NLOCAL);
+                v_delta.create(nlocal,nlocal);
+                ld->collect_h_mat(ld->H_V_delta,v_delta,nlocal);
+                ld->save_npy_h(h_tot-v_delta, "h_base.npy",nlocal);
+                ld->save_npy_h(v_delta, "v_delta.npy",nlocal);
 
                 if(GlobalV::deepks_v_delta==1)//v_delta_precalc storage method 1
                 {
-                    ld->cal_v_delta_precalc(GlobalV::NLOCAL,
+                    ld->cal_v_delta_precalc(nlocal,
                             nat,
                             ucell,
                             orb,
                             GridD);
                 
-                    ld->save_npy_v_delta_precalc(nat, 1, GlobalV::NLOCAL);
+                    ld->save_npy_v_delta_precalc(nat, 1, nlocal);
                 }
                 else if(GlobalV::deepks_v_delta==2)//v_delta_precalc storage method 2
                 {
-                    ld->prepare_psialpha(GlobalV::NLOCAL,
+                    ld->prepare_psialpha(nlocal,
                                 nat,
                                 ucell,
                                 orb,
                                 GridD);
                     
-                    ld->save_npy_psialpha(nat, 1, GlobalV::NLOCAL);
+                    ld->save_npy_psialpha(nat, 1, nlocal);
 
                     ld->prepare_gevdm(
                                 nat,
@@ -125,7 +126,7 @@ void LCAO_Deepks_Interface::out_deepks_labels(double etot,
             }
             else //deepks_scf == 0
             {
-                ld->save_npy_h(h_tot, "h_base.npy",GlobalV::NLOCAL);
+                ld->save_npy_h(h_tot, "h_base.npy",nlocal);
             }
         }//end v_delta label
     
@@ -161,6 +162,7 @@ void LCAO_Deepks_Interface::out_deepks_labels(double etot,
 void LCAO_Deepks_Interface::out_deepks_labels(double etot,
                                               int nks,
                                               int nat,
+                                              int nlocal,
                                               const ModuleBase::matrix& ekb,
                                               const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                                               const UnitCell& ucell,
