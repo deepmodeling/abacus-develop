@@ -40,7 +40,7 @@ TDEkinetic<OperatorLCAO<TK, TR>>::~TDEkinetic()
 }
 // term A^2*S
 template <typename TK, typename TR>
-void TDEkinetic<OperatorLCAO<TK, TR>>::td_ekinetic_scalar(std::complex<double>* Hloc, TR overlap, int nnr)
+void TDEkinetic<OperatorLCAO<TK, TR>>::td_ekinetic_scalar(std::complex<double>* Hloc, TR& overlap, int nnr)
 {
     return;
 }
@@ -128,8 +128,8 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& iat1,
                                                   const int& iat2,
                                                   const Parallel_Orbitals* paraV,
                                                   const ModuleBase::Vector3<double>& dtau,
-                                                  std::complex<double>* data_pointer,
-                                                  std::complex<double>** data_pointer_c)
+                                                  std::complex<double>* hr_mat_p,
+                                                  std::complex<double>** current_mat_p)
 {
     const LCAO_Orbitals& orb = LCAO_Orbitals::get_const_instance();
     // ---------------------------------------------
@@ -195,12 +195,12 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& iat1,
             for (int ipol = 0; ipol < npol; ipol++)
             {
                 // key change
-                td_ekinetic_scalar(data_pointer, overlap, ipol * step_trace);
-                td_ekinetic_grad(data_pointer, ipol * step_trace, grad_overlap);
+                td_ekinetic_scalar(hr_mat_p, overlap, ipol * step_trace);
+                td_ekinetic_grad(hr_mat_p, ipol * step_trace, grad_overlap);
             }
-            data_pointer += npol;
+            hr_mat_p += npol;
             // current grad part
-            if (data_pointer_c != nullptr)
+            if (current_mat_p_c != nullptr)
             {
                 for (int dir = 0; dir < 3; dir++)
                 {
@@ -208,19 +208,19 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& iat1,
                     {
                         // part of Momentum operator, -i∇r,used to calculate the current
                         // here is actually i∇R
-                        data_pointer_c[dir][ipol * step_trace] += std::complex<double>(0, grad_overlap[dir]);
+                        current_mat_p[dir][ipol * step_trace] += std::complex<double>(0, grad_overlap[dir]);
                         // part of Momentum operator, eA,used to calculate the current
-                        data_pointer_c[dir][ipol * step_trace] += std::complex<double>(overlap * cart_At[dir], 0);
+                        current_mat_p[dir][ipol * step_trace] += std::complex<double>(overlap * cart_At[dir], 0);
                     }
-                    data_pointer_c[dir] += npol;
+                    current_mat_p[dir] += npol;
                 }
             }
         }
-        data_pointer += (npol - 1) * col_indexes.size();
-        if (data_pointer_c != nullptr)
+        hr_mat_p += (npol - 1) * col_indexes.size();
+        if (current_mat_p != nullptr)
         {
             for (int dir = 0; dir < 3; dir++)
-                data_pointer_c[dir] += (npol - 1) * col_indexes.size();
+                current_mat_p[dir] += (npol - 1) * col_indexes.size();
         }
     }
 }
