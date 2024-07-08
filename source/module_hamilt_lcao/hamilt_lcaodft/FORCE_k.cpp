@@ -131,7 +131,7 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
     // calculate dVnl=<phi|dVnl|dphi> in LCAO
     LCAO_domain::build_Nonlocal_mu_new(lm,
                                        fsr,
-                                       lm.Hloc_fixed.data(),
+                                       nullptr,
                                        cal_deri,
                                        GlobalC::ucell,
                                        GlobalC::ORB,
@@ -142,6 +142,9 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
     if (INPUT.cal_syns)
     {
         cal_deri = false;
+
+        ModuleBase::WARNING_QUIT("cal_syns",
+                                 "This function has been broken and will be fixed later.");
 
         LCAO_domain::build_ST_new(lm,
                                   fsr,
@@ -158,10 +161,9 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
 
         for (int ik = 0; ik < nks; ik++)
         {
-            lm.zeros_HSk('S');
-            lm.folding_fixedH(ik, kvec_d, 1);
+            
             bool bit = false; // LiuXh, 2017-03-21
-            ModuleIO::save_mat(0,
+            /*ModuleIO::save_mat(0,
                                lm.Hloc2.data(),
                                GlobalV::NLOCAL,
                                bit,
@@ -183,7 +185,7 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
                                "S",
                                "data-" + std::to_string(ik),
                                pv,
-                               GlobalV::DRANK);
+                               GlobalV::DRANK);*/
         }
     }
 
@@ -355,7 +357,8 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
     {
         const std::vector<std::vector<std::complex<double>>>& dm_k = dm->get_DMK_vector();
 
-        GlobalC::ld.cal_projected_DM_k(dm, ucell, GlobalC::ORB, GlobalC::GridD);
+        // when deepks_scf is on, the init pdm should be same as the out pdm, so we should not recalculate the pdm
+        //GlobalC::ld.cal_projected_DM_k(dm, ucell, GlobalC::ORB, GlobalC::GridD);
 
         GlobalC::ld.cal_descriptor(ucell.nat);
 

@@ -27,6 +27,7 @@
 #include <memory>
 #ifdef __EXX
 #include "module_ri/RPA_LRI.h"
+#include "module_io/restart_exx_csr.h"
 #endif
 
 #ifdef __DEEPKS
@@ -212,7 +213,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(Input& inp, UnitCell& ucell) {
 
     // 8) initialize DFT+U
     if (GlobalV::dft_plus_u) {
-        GlobalC::dftu.init(ucell, this->LM, this->kv.get_nks());
+        GlobalC::dftu.init(ucell, this->LM.ParaV, this->kv.get_nks());
     }
 
     // 9) initialize ppcell
@@ -244,6 +245,8 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(Input& inp, UnitCell& ucell) {
     if (GlobalV::deepks_scf) {
         // load the DeePKS model from deep neural network
         GlobalC::ld.load_model(INPUT.deepks_model);
+        // read pdm from file for NSCF or SCF-restart, do it only once in whole calculation
+        GlobalC::ld.read_projected_DM((GlobalV::init_chg == "file"), GlobalV::deepks_equiv, *GlobalC::ORB.Alpha);
     }
 #endif
 
@@ -1010,22 +1013,33 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int iter) {
         && (!GlobalC::exx_info.info_global.separate_loop
             || iter == 1)) // to avoid saving the same value repeatedly
     {
-        std::vector<TK> Hexxk_save(this->orb_con.ParaV.get_local_size());
+        ////////// for Add_Hexx_Type::k
+        /*
+        hamilt::HS_Matrix_K<TK> Hexxk_save(&this->orb_con.ParaV, 1);
         for (int ik = 0; ik < this->kv.get_nks(); ++ik) {
-            ModuleBase::GlobalFunc::ZEROS(Hexxk_save.data(), Hexxk_save.size());
+            Hexxk_save.set_zero_hk();
 
-            hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>> opexx_save(
-                &this->LM,
-                nullptr,
-                &Hexxk_save,
-                this->kv);
+            hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>> opexx_save(&Hexxk_save, 
+                                                                         &this->LM, 
+                                                                         nullptr, 
+                                                                         this->kv);
 
             opexx_save.contributeHk(ik);
 
             GlobalC::restart.save_disk("Hexx",
                                        ik,
                                        this->orb_con.ParaV.get_local_size(),
-                                       Hexxk_save.data());
+                                       Hexxk_save.get_hk());
+        }*/
+        ////////// for Add_Hexx_Type:R
+        const std::string& restart_HR_path = GlobalC::restart.folder + "HexxR" + std::to_string(GlobalV::MY_RANK);
+        if (GlobalC::exx_info.info_ri.real_number)
+        {
+            ModuleIO::write_Hexxs_csr(restart_HR_path, GlobalC::ucell, this->exd->get_Hexxs());
+        }
+        else
+        {
+            ModuleIO::write_Hexxs_csr(restart_HR_path, GlobalC::ucell, this->exc->get_Hexxs());
         }
         if (GlobalV::MY_RANK == 0) {
             GlobalC::restart.save_disk("Eexx", 0, 1, &this->pelec->f_en.exx);
@@ -1145,9 +1159,9 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep) {
         const std::string file_name_exx = GlobalV::global_out_dir + "HexxR"
                                           + std::to_string(GlobalV::MY_RANK);
         if (GlobalC::exx_info.info_ri.real_number) {
-            this->exd->write_Hexxs_csr(file_name_exx, GlobalC::ucell);
+            ModuleIO::write_Hexxs_csr(file_name_exx, GlobalC::ucell, this->exd->get_Hexxs());
         } else {
-            this->exc->write_Hexxs_csr(file_name_exx, GlobalC::ucell);
+            ModuleIO::write_Hexxs_csr(file_name_exx, GlobalC::ucell, this->exc->get_Hexxs());
         }
     }
 #endif
@@ -1294,6 +1308,18 @@ template <typename TK, typename TR>
 bool ESolver_KS_LCAO<TK, TR>::do_after_converge(int& iter) {
     ModuleBase::TITLE("ESolver_KS_LCAO", "do_after_converge");
 
+    if (GlobalV::dft_plus_u)
+    {
+        // use the converged occupation matrix for next MD/Relax SCF calculation
+        GlobalC::dftu.initialed_locale = true;
+    }
+
+#ifdef __DEEPKS
+    if (GlobalV::deepks_scf)
+    {
+        GlobalC::ld.set_init_pdm(true);
+    }
+#endif
 #ifdef __EXX
     if (GlobalC::exx_info.info_ri.real_number) {
         return this->exd->exx_after_converge(
@@ -1313,11 +1339,6 @@ bool ESolver_KS_LCAO<TK, TR>::do_after_converge(int& iter) {
             iter);
     }
 #endif // __EXX
-
-    if (GlobalV::dft_plus_u) {
-        // use the converged occupation matrix for next MD/Relax SCF calculation
-        GlobalC::dftu.initialed_locale = true;
-    }
 
     return true;
 }

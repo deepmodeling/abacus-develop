@@ -68,7 +68,7 @@ void Grid_Technique::set_pbc_grid(
     this->ucell = &ucell;
     this->dr_uniform = dr_uniform;
 
-    this->nwmax = 0;
+    this->nwmax = ucell.nwmax;
     this->ntype = ucell.ntype;
 
     this->rcuts = rcuts;
@@ -263,14 +263,14 @@ void Grid_Technique::init_atoms_on_grid(const int& ny,
         if (this->in_this_processor[iat])
         {
             ++nat_local;
-            this->nwmax = std::max(this->nwmax, ucell.atoms[it].nw);
         }
     }
 
-    if (GlobalV::test_gridt)
+    if (GlobalV::test_gridt) {
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,
                                     "Total_atoms_on_grid",
                                     total_atoms_on_grid);
+}
 
     int stop = 0;
     if (total_atoms_on_grid == 0) {
@@ -514,8 +514,9 @@ void Grid_Technique::cal_trace_lo(const UnitCell& ucell) {
             } else {
                 // global index of atomic orbitals
                 iw_all += ucell.atoms[it].nw;
-                if (GlobalV::NSPIN == 4)
+                if (GlobalV::NSPIN == 4) {
                     iw_all += ucell.atoms[it].nw;
+}
             }
             ++iat;
         }

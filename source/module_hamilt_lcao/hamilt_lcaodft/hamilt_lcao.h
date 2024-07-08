@@ -10,7 +10,7 @@
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
-
+#include "module_hamilt_lcao/hamilt_lcaodft/hs_matrix_k.hpp"
 namespace hamilt
 {
 
@@ -27,6 +27,7 @@ class HamiltLCAO : public Hamilt<TK>
     HamiltLCAO(Gint_Gamma* GG_in,
                Gint_k* GK_in,
                LCAO_Matrix* LM_in,
+               const Parallel_Orbitals* paraV,
                elecstate::Potential* pot_in,
                const K_Vectors& kv_in,
                const TwoCenterBundle& two_center_bundle,
@@ -35,7 +36,7 @@ class HamiltLCAO : public Hamilt<TK>
     /**
      * @brief Constructor of vacuum Operators, only HR and SR will be initialed as empty HContainer
      */
-    HamiltLCAO(LCAO_Matrix* LM_in, const K_Vectors& kv_in, const TwoCenterIntegrator& intor_overlap_orb);
+    HamiltLCAO(const Parallel_Orbitals* paraV, const K_Vectors& kv_in, const TwoCenterIntegrator& intor_overlap_orb);
 
     ~HamiltLCAO()
     {
@@ -45,18 +46,20 @@ class HamiltLCAO : public Hamilt<TK>
         }
         delete this->hR;
         delete this->sR;
-    };
+        delete this->hsk;
+    }
 
     /// get pointer of Operator<TK> ops
     Operator<TK>*& getOperator();
-    /// get hk-pointer of std::vector<TK>, the return will be LM->Hloc or LM->Hloc2
-    std::vector<TK>& getHk(LCAO_Matrix* LM);
-    /// get sk-pointer of std::vector<TK>, the return will be this->sk
-    std::vector<TK>& getSk(LCAO_Matrix* LM);
+    /// get hk-pointer
+    TK* getHk() const{return this->hsk->get_hk();}
+    /// get sk-pointer
+    TK* getSk() const{return this->hsk->get_sk();}
+    int get_size_hsk() const{return this->hsk->get_size();}
     /// get HR pointer of *this->hR, which is a HContainer<TR> and contains H(R)
-    HContainer<TR>*& getHR();
+    HContainer<TR>*& getHR(){return this->hR;}
     /// get SR pointer of *this->sR, which is a HContainer<TR> and contains S(R)
-    HContainer<TR>*& getSR();
+    HContainer<TR>*& getSR(){return this->sR;}
     /// refresh the status of HR
     void refresh() override;
 
@@ -70,7 +73,7 @@ class HamiltLCAO : public Hamilt<TK>
      * @param hk_type 0: SK is row-major, 1: SK is collumn-major
      * @return void
      */
-    void updateSk(const int ik, LCAO_Matrix* LM_in, const int hk_type = 0);
+    void updateSk(const int ik, const int hk_type = 0);
 
     // core function: return H(k) and S(k) matrixs for direct solving eigenvalues.
     // not used in PW base
@@ -84,6 +87,7 @@ class HamiltLCAO : public Hamilt<TK>
     HContainer<TR>* hR = nullptr;
     HContainer<TR>* sR = nullptr;
 
+    HS_Matrix_K<TK>* hsk = nullptr;
     // special case for NSPIN=2 , data of HR should be separated into two parts
     // save them in this->hRS2;
     std::vector<TR> hRS2;

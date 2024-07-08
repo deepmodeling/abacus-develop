@@ -179,7 +179,13 @@ void init_esolver(ESolver*& p_esolver)
 
 void clean_esolver(ESolver*& pesolver)
 {
+// Zhang Xiaoyang modified in 2024/7/6:
+// Note: because of the init method of serial lcao hsolver
+// it needs no release step for it, or this [delete] will cause Segmentation Fault
+// Probably it will be modified later.
+#ifdef __MPI
 	delete pesolver;
+#endif
 }
 
 }
