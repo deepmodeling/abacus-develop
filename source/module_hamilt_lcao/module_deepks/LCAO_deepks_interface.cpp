@@ -92,7 +92,7 @@ void LCAO_Deepks_Interface::out_deepks_labels(double etot,
             {
                 ModuleBase::matrix v_delta;
                 v_delta.create(GlobalV::NLOCAL,GlobalV::NLOCAL);
-                ld->collect_h_mat(ld->H_V_delta.data(),v_delta,GlobalV::NLOCAL);
+                ld->collect_h_mat(ld->H_V_delta,v_delta,GlobalV::NLOCAL);
                 ld->save_npy_h(h_tot-v_delta, "h_base.npy",GlobalV::NLOCAL);
                 ld->save_npy_h(v_delta, "v_delta.npy",GlobalV::NLOCAL);
 

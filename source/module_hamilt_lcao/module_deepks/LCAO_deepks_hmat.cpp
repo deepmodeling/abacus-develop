@@ -17,7 +17,7 @@ void LCAO_Deepks::save_h_mat(const std::complex<double> *h_mat_in,const int nloc
 
 }
 
-void LCAO_Deepks::collect_h_mat(const double *h_in,ModuleBase::matrix &h_out,const int nlocal)
+void LCAO_Deepks::collect_h_mat(const std::vector<double> h_in,ModuleBase::matrix &h_out,const int nlocal)
 {
     ModuleBase::TITLE("LCAO_Deepks", "collect_h_tot");
     //construct the total H matrix
@@ -25,8 +25,7 @@ void LCAO_Deepks::collect_h_mat(const double *h_in,ModuleBase::matrix &h_out,con
     int ir,ic;
     for (int i=0; i<nlocal; i++)
     {
-        double* lineH = new double[nlocal-i];
-        ModuleBase::GlobalFunc::ZEROS(lineH, nlocal-i);
+        std::vector<double> lineH(nlocal-i,0.0);
 
         ir = pv->global2local_row(i);
         if (ir>=0)
@@ -56,22 +55,21 @@ void LCAO_Deepks::collect_h_mat(const double *h_in,ModuleBase::matrix &h_out,con
             //do nothing
         }
 
-        Parallel_Reduce::reduce_all(lineH,nlocal-i);
+        Parallel_Reduce::reduce_all(lineH.data(),nlocal-i);
 
         for (int j=i; j<nlocal; j++)
         {
             h_out(i,j)=lineH[j-i];
             h_out(j,i)=lineH[j-i];//H is a symmetric matrix
         }
-        delete[] lineH;
     }
 #else
     for (int i=0; i<nlocal; i++)
     {
         for (int j=i; j<nlocal; j++)
         {
-            h_out(i,j)=lineH[i*nlocal+j];
-            h_out(j,i)=lineH[i*nlocal+j];//H is a symmetric matrix
+            h_out(i,j)=h_in[i*nlocal+j];
+            h_out(j,i)=h_in[i*nlocal+j];//H is a symmetric matrix
         }
     }
 #endif

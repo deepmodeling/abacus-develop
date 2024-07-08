@@ -36,7 +36,6 @@ LCAO_Deepks::LCAO_Deepks()
     inl_l = nullptr;
     H_V_deltaR = nullptr;
     gedm = nullptr;
-    h_mat = nullptr;
 }
 
 //Desctructor of the class
@@ -68,10 +67,6 @@ LCAO_Deepks::~LCAO_Deepks()
 
     del_gdmx();
 
-    if (h_mat)
-    {
-        delete[] h_mat;
-    }
 }
 
 void LCAO_Deepks::init(
@@ -152,12 +147,8 @@ void LCAO_Deepks::init(
         if(GlobalV::GAMMA_ONLY_LOCAL)
         {
             int nloc=this->pv->nloc;
-            if(this->h_mat)
-            {
-                delete[] this->h_mat;
-            }
-            this->h_mat = new double[nloc];
-            ModuleBase::GlobalFunc::ZEROS(this->h_mat, nloc);
+            this->h_mat.resize(nloc);
+            ModuleBase::GlobalFunc::ZEROS(this->h_mat.data(), nloc);
         }
     }
 

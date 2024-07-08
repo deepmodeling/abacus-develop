@@ -53,7 +53,7 @@ class LCAO_Deepks
     ModuleBase::matrix o_delta;
 
     ///(Unit: Ry) Hamiltonian matrix
-    double* h_mat;    
+    std::vector<double> h_mat;    
 
     /// Correction term to the Hamiltonian matrix: \f$\langle\psi|V_\delta|\psi\rangle\f$ (for gamma only)
     std::vector<double> H_V_delta;
@@ -634,7 +634,7 @@ class LCAO_Deepks
     void save_h_mat(const double *h_mat_in,const int nloc);
     void save_h_mat(const std::complex<double> *h_mat_in,const int nloc);
     //Collect data in h_in to matrix h_out. Note that left lower trianger in h_out is filled
-    void collect_h_mat(const double *h_in,ModuleBase::matrix &h_out,const int nlocal);//just for gamma only
+    void collect_h_mat(const std::vector<double> h_in,ModuleBase::matrix &h_out,const int nlocal);//just for gamma only
     void check_h_mat(const ModuleBase::matrix &H,const std::string &h_file,const int nlocal);//just for gamma only
   
 };
