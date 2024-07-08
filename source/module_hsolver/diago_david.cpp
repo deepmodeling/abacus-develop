@@ -149,7 +149,7 @@ int DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
     // plan for SchmitOrth
     std::vector<int> pre_matrix_mm_m(this->n_band, 0);
     std::vector<int> pre_matrix_mv_m(this->n_band, 1);
-    this->planSchmitOrth(this->n_band, pre_matrix_mm_m.data(), pre_matrix_mv_m.data());
+    this->planSchmitOrth(this->n_band, pre_matrix_mm_m, pre_matrix_mv_m);
 
     for (int m = 0; m < this->n_band; m++)
     {
@@ -486,7 +486,7 @@ void DiagoDavid<T, Device>::cal_grad(hamilt::Hamilt<T, Device>* phm_in,
 
     std::vector<int> pre_matrix_mm_m(notconv, 0);
     std::vector<int> pre_matrix_mv_m(notconv, 1);
-    this->planSchmitOrth(notconv, pre_matrix_mm_m.data(), pre_matrix_mv_m.data());
+    this->planSchmitOrth(notconv, pre_matrix_mm_m, pre_matrix_mv_m);
     for (int m = 0; m < notconv; m++)
     {
         if(this->use_paw)
@@ -982,13 +982,13 @@ void DiagoDavid<T, Device>::SchmitOrth(const int& dim,
 }
 
 template <typename T, typename Device>
-void DiagoDavid<T, Device>::planSchmitOrth(const int nband, int* pre_matrix_mm_m, int* pre_matrix_mv_m)
+void DiagoDavid<T, Device>::planSchmitOrth(const int nband, std::vector<int>& pre_matrix_mm_m, std::vector<int>& pre_matrix_mv_m)
 {
     if (nband <= 0) {
         return;
 }
-    ModuleBase::GlobalFunc::ZEROS(pre_matrix_mm_m, nband);
-    ModuleBase::GlobalFunc::ZEROS(pre_matrix_mv_m, nband);
+    ModuleBase::GlobalFunc::ZEROS(pre_matrix_mm_m.data(), nband);
+    ModuleBase::GlobalFunc::ZEROS(pre_matrix_mv_m.data(), nband);
     int last_matrix_size = nband;
     int matrix_size = int(nband / 2);
     int divide_times = 0;

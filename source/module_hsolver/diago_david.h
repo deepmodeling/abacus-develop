@@ -121,7 +121,7 @@ class DiagoDavid : public DiagH<T, Device>
                     const int mm_size,
                     const int mv_size);
 
-    void planSchmitOrth(const int nband, int* pre_matrix_mm_m, int* pre_matrix_mv_m);
+    void planSchmitOrth(const int nband, std::vector<int>& pre_matrix_mm_m, std::vector<int>& pre_matrix_mv_m);
 
     void diag_zhegvx(const int& nbase,
                      const int& nband,
