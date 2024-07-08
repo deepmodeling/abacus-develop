@@ -44,7 +44,7 @@ If the Deep Potential model is employed in Molecule Dynamics calculations, the f
 cmake -B build -DDeePMD_DIR=~/deepmd-kit -DTensorFlow_DIR=~/tensorflow
 ```
 
-> `deepmd_c`/`deepmd_cc` and `tensorflow_cc` libraries would be called according to `DeePMD_DIR` and `TensorFlow_DIR`, which is showed in detail in [this page](https://github.com/deepmodeling/deepmd-kit/blob/master/doc/inference/cxx.md).
+> `deepmd_c`/`deepmd_cc` and `tensorflow_cc` libraries would be called according to `DeePMD_DIR` and `TensorFlow_DIR`, which is showed in detail in [this page](https://github.com/deepmodeling/deepmd-kit/blob/master/doc/inference/cxx.md). If `TensorFlow_DIR` is not defined, it will be the same as `DeePMD_DIR`. Note that `tensorflow_cc` is not required if `deepmd_c` is found.
 
 ## Build with LibRI and LibComm
 
@@ -290,7 +290,7 @@ make DeePMD_DIR=~/deepmd-kit TensorFlow_DIR=~/tensorflow
 
 directly.
 
-> `deepmd_c`/`deepmd_cc` and `tensorflow_cc` libraries would be called according to `DeePMD_DIR` and `TensorFlow_DIR`, which is showed in detail in [this page](https://github.com/deepmodeling/deepmd-kit/blob/master/doc/inference/cxx.md).
+> `deepmd_c`/`deepmd_cc` and `tensorflow_cc` libraries would be called according to `DeePMD_DIR` and `TensorFlow_DIR`, which is showed in detail in [this page](https://github.com/deepmodeling/deepmd-kit/blob/master/doc/inference/cxx.md). If `TensorFlow_DIR` is not defined, it will be the same as `DeePMD_DIR`. Note that `tensorflow_cc` is not required if `deepmd_c` is found.
 
 ### Add LibRI Support
 To use new EXX, you need two libraries: [LibRI](https://github.com/abacusmodeling/LibRI) and [LibComm](https://github.com/abacusmodeling/LibComm) and need to define `LIBRI_DIR` and `LIBCOMM_DIR` in the file `Makefile.vars` or use

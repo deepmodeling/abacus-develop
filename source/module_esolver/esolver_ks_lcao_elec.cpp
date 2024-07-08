@@ -27,6 +27,9 @@
 #include "module_io/rho_io.h"
 #include "module_io/write_pot.h"
 #include "module_io/write_wfc_nao.h"
+#ifdef __EXX
+#include "module_io/restart_exx_csr.h"
+#endif
 
 namespace ModuleESolver {
 
@@ -599,21 +602,6 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
     std::cout << " NON-SELF CONSISTENT CALCULATIONS" << std::endl;
 
     time_t time_start = std::time(nullptr);
-
-#ifdef __EXX
-#ifdef __MPI
-    // Peize Lin add 2018-08-14
-    if (GlobalC::exx_info.info_global.cal_exx) {
-        const std::string file_name_exx = GlobalV::global_out_dir + "HexxR"
-                                          + std::to_string(GlobalV::MY_RANK);
-        if (GlobalC::exx_info.info_ri.real_number) {
-            this->exd->read_Hexxs_csr(file_name_exx, GlobalC::ucell);
-        } else {
-            this->exc->read_Hexxs_csr(file_name_exx, GlobalC::ucell);
-        }
-    }
-#endif // __MPI
-#endif // __EXX
 
     // mohan add 2021-02-09
     // in ions, istep starts from 1,
