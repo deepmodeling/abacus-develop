@@ -302,7 +302,7 @@ void TD_current::cal_vcomm_r_IJR(
     const Parallel_Orbitals* paraV,
     const std::vector<std::unordered_map<int, std::vector<std::complex<double>>>>& nlm1_all,
     const std::vector<std::unordered_map<int, std::vector<std::complex<double>>>>& nlm2_all,
-    std::complex<double>** data_pointer_c)
+    std::complex<double>** current_mat_p)
 {
     // npol is the number of polarizations,
     // 1 for non-magnetic (one Hamiltonian matrix only has spin-up or spin-down),
@@ -361,17 +361,17 @@ void TD_current::cal_vcomm_r_IJR(
                                         * (*tmp_d);
                     }
                     // -i[r,Vnl], 2.0 due to the unit transformation
-                    data_pointer_c[dir][step_trace[is]] -= imag_unit * nlm_r_tmp / 2.0;
+                    current_mat_p[dir][step_trace[is]] -= imag_unit * nlm_r_tmp / 2.0;
                 }
             }
             for (int dir = 0; dir < 3; dir++)
             {
-                data_pointer_c[dir] += npol;
+                current_mat_p[dir] += npol;
             }
         }
         for (int dir = 0; dir < 3; dir++)
         {
-            data_pointer_c[dir] += (npol - 1) * col_indexes.size();
+            current_mat_p[dir] += (npol - 1) * col_indexes.size();
         }
     }
 }
@@ -425,7 +425,7 @@ void TD_current::cal_grad_IJR(const int& iat1,
                               const int& iat2,
                               const Parallel_Orbitals* paraV,
                               const ModuleBase::Vector3<double>& dtau,
-                              std::complex<double>** data_pointer_c)
+                              std::complex<double>** current_mat_p)
 {
     const LCAO_Orbitals& orb = LCAO_Orbitals::get_const_instance();
     // ---------------------------------------------
@@ -491,14 +491,14 @@ void TD_current::cal_grad_IJR(const int& iat1,
                 {
                     // part of Momentum operator, -i∇r,used to calculate the current
                     // here is actually i∇R
-                    data_pointer_c[dir][ipol * step_trace] += std::complex<double>(0, grad_overlap[dir]);
+                    current_mat_p[dir][ipol * step_trace] += std::complex<double>(0, grad_overlap[dir]);
                 }
-                data_pointer_c[dir] += npol;
+                current_mat_p[dir] += npol;
             }
         }
         for (int dir = 0; dir < 3; dir++)
         {
-            data_pointer_c[dir] += (npol - 1) * col_indexes.size();
+            current_mat_p[dir] += (npol - 1) * col_indexes.size();
         }   
     }
 }
