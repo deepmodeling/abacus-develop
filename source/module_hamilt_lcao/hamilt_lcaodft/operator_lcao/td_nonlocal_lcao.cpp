@@ -195,7 +195,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                                                           atom1->iw2n[iw1],
                                                           tau0 * this->ucell->lat0,
                                                           T0,
-                                                          cart_At / 2.0,
+                                                          cart_At,
                                                           TD_Velocity::out_current);
                     for (int dir = 0; dir < nlm_dim; dir++)
                     {
@@ -236,7 +236,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                             for (int i = 0; i < 3; i++)
                             {
                                 tmp_c[i] = TD_Velocity::td_vel_op->get_current_term_pointer(i)
-                                               ->find_matrix(iat1, iat2, R_index2)
+                                               ->find_matrix(iat1, iat2, R_vector[0], R_vector[1], R_vector[2])
                                                ->get_pointer();
                             }
                             this->cal_HR_IJR(iat1,

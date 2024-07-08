@@ -309,10 +309,9 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
         // TDDFT_velocity_gague
         if (TD_Velocity::tddft_velocity)
         {
-            elecstate::H_TDDFT_pw::update_At();
+            if(!TD_Velocity::init_vecpot_file) elecstate::H_TDDFT_pw::update_At();
             Operator<TK>* td_ekinetic = new TDEkinetic<OperatorLCAO<TK, TR>>(this->hsk,
                                                                              this->hR,
-                                                                             this->sR,
                                                                              kv,
                                                                              &GlobalC::ucell,
                                                                              &GlobalC::GridD,

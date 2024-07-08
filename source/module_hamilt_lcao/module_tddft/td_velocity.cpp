@@ -60,7 +60,7 @@ void TD_Velocity::output_cart_At(const std::string& out_dir)
         // divide by 2.0 to get the atomic unit
         for (int i = 0; i < 3; i++)
         {
-            ofs << std::scientific << std::setprecision(4) << std::setw(15) << cart_At[i] / 2.0;
+            ofs << std::scientific << std::setprecision(4) << std::setw(15) << cart_At[i] ;
         }
         ofs << std::endl;
         ofs.close();
@@ -68,10 +68,7 @@ void TD_Velocity::output_cart_At(const std::string& out_dir)
     return;
 }
 
-void TD_Velocity::cal_cart_At(const ModuleBase::Vector3<double>& a0,
-                              const ModuleBase::Vector3<double>& a1,
-                              const ModuleBase::Vector3<double>& a2,
-                              const ModuleBase::Vector3<double>& At)
+void TD_Velocity::cal_cart_At(const ModuleBase::Vector3<double>& At)
 {
     istep++;
     if (init_vecpot_file)
@@ -80,8 +77,8 @@ void TD_Velocity::cal_cart_At(const ModuleBase::Vector3<double>& a0,
     }
     else
     {
-        const double l_norm[3] = {a0.norm(), a1.norm(), a2.norm()};
-        this->cart_At = a0 * At[0] / l_norm[0] + a1 * At[1] / l_norm[1] + a2 * At[2] / l_norm[2];
+        // transfrom into atomic unit
+        this->cart_At = At/2.0;
     }
     // output the vector potential if needed
     if (out_vecpot == true)
@@ -132,8 +129,6 @@ void TD_Velocity::read_cart_At(void)
             }
             At[i] = component;
         }
-        // unit transform ,change unit into Ry/bohr/e*t_a.u.
-        At *= 2.0;
         // add the tmporary vector3 to the vector potential vector
         At_from_file.push_back(At);
     }
