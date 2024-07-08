@@ -16,8 +16,8 @@
 
 class LCAO_Matrix {
   public:
-    LCAO_Matrix();
-    ~LCAO_Matrix();
+   LCAO_Matrix(){};
+  ~LCAO_Matrix(){};
 
     Parallel_Orbitals* ParaV;
 
@@ -40,20 +40,6 @@ class LCAO_Matrix {
     // Records the R direct coordinates of HR and SR output, This variable will
     // be filled with data when HR and SR files are output.
     std::set<Abfs::Vector3_Order<int>> output_R_coor;
-
-    template <typename T>
-    static void set_mat2d(const int& global_ir,
-                          const int& global_ic,
-                          const T& v,
-                          const Parallel_Orbitals& pv,
-                          T* mat);
-
-    void set_HSgamma(const int& iw1_all,
-                     const int& iw2_all,
-                     const double& v,
-                     double* HSloc);
 };
-
-#include "LCAO_matrix.hpp"
 
 #endif
