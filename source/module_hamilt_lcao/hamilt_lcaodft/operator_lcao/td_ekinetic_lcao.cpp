@@ -40,14 +40,14 @@ TDEkinetic<OperatorLCAO<TK, TR>>::~TDEkinetic()
 }
 // term A^2*S
 template <typename TK, typename TR>
-void TDEkinetic<OperatorLCAO<TK, TR>>::td_ekinetic_scalar(std::complex<double>* Hloc, TR& overlap, int nnr)
+void TDEkinetic<OperatorLCAO<TK, TR>>::td_ekinetic_scalar(std::complex<double>* Hloc,const TR& overlap, int nnr)
 {
     return;
 }
 // term A^2*S
 template <>
 void TDEkinetic<OperatorLCAO<std::complex<double>, double>>::td_ekinetic_scalar(std::complex<double>* Hloc,
-                                                                                double overlap,
+                                                                                const double& overlap,
                                                                                 int nnr)
 {
     // the correction term A^2/2. From Hatree to Ry, it needs to be multiplied by 2.0
