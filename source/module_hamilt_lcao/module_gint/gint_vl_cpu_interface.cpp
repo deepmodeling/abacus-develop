@@ -23,8 +23,15 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
                                           nnrg);
         }
     }
+
+    // define HContainer here to reference.
+    hamilt::HContainer<double>* hRGint_thread =nullptr;
+    //Under the condition of gamma_only, hRGint will be instantiated.
+    if (GlobalV::GAMMA_ONLY_LOCAL){
+        hRGint_thread = new hamilt::HContainer<double>(*this->hRGint);
+    }
+    //use vector instead of new-delete to avoid memory leak.
     std::vector<double> pvpR_thread = std::vector<double>(nnrg, 0.0);
-    hamilt::HContainer<double>* hRGint_thread =new hamilt::HContainer<double>(*this->hRGint);
 #pragma omp for
 #endif
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
@@ -199,7 +206,14 @@ void Gint::cpu_vlocal_meta_interface(Gint_inout* inout) {
     }
 
 #ifdef _OPENMP
-    hamilt::HContainer<double>* hRGint_thread =new hamilt::HContainer<double>(*this->hRGint);
+    // define HContainer here to reference.
+    hamilt::HContainer<double>* hRGint_thread = nullptr;
+    //Under the condition of gamma_only, hRGint will be instantiated.
+    if (GlobalV::GAMMA_ONLY_LOCAL)
+    {
+        hRGint_thread =new hamilt::HContainer<double>(*this->hRGint);
+    }
+    //use vector instead of new-delete to avoid memory leak.
     std::vector<double>pvpR_thread = std::vector<double>(nnrg, 0.0);
 #pragma omp for
 #endif
@@ -229,8 +243,6 @@ void Gint::cpu_vlocal_meta_interface(Gint_inout* inout) {
                                     ncyz,
                                     dv);
 #ifdef _OPENMP
-        if ((GlobalV::GAMMA_ONLY_LOCAL && lgd > 0)
-            || !GlobalV::GAMMA_ONLY_LOCAL) {
             this->gint_kernel_vlocal_meta(na_grid,
                                           grid_index,
                                           delta_r,
@@ -240,7 +252,6 @@ void Gint::cpu_vlocal_meta_interface(Gint_inout* inout) {
                                           pvpR_thread.data(),
                                           ucell,
                                           hRGint_thread);
-        }
 #else
         if (GlobalV::GAMMA_ONLY_LOCAL) {
             this->gint_kernel_vlocal_meta(na_grid,
@@ -287,8 +298,8 @@ void Gint::cpu_vlocal_meta_interface(Gint_inout* inout) {
                                 pvpR_reduced[inout->ispin],
                                 1);
         }
+        delete hRGint_thread;
     }
-    delete hRGint_thread;
 #endif
     ModuleBase::TITLE("Gint_interface", "cal_gint_vlocal_meta");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal_meta");
