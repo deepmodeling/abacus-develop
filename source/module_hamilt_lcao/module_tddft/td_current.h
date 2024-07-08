@@ -56,12 +56,12 @@ class TD_current
                          const Parallel_Orbitals* paraV,
                          const std::vector<std::unordered_map<int, std::vector<std::complex<double>>>>& nlm1_all,
                          const std::vector<std::unordered_map<int, std::vector<std::complex<double>>>>& nlm2_all,
-                         std::complex<double>** data_pointer_c);
+                         std::complex<double>** current_mat_p);
     void cal_grad_IJR(const int& iat1,
                       const int& iat2,
                       const Parallel_Orbitals* paraV,
                       const ModuleBase::Vector3<double>& dtau,
-                      std::complex<double>** data_pointer_c);
+                      std::complex<double>** current_mat_p);
 
     /// @brief exact the nearest neighbor atoms from all adjacent atoms
     std::vector<AdjacentAtomInfo> adjs_vcommr;
