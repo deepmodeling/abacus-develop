@@ -2,7 +2,8 @@
 #define DIAGODAVID_H
 
 #include "diagh.h"
-
+#include "module_hsolver/diag_comm_info.h"
+#include "module_hsolver/diag_const_nums.h"
 
 namespace hsolver
 {
@@ -150,7 +151,7 @@ class DiagoDavid : public DiagH<T, Device>
 
     using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
 
-    consts<T> cs;
+    const_nums<T> cs;
     const T* one = nullptr, * zero = nullptr, * neg_one = nullptr;
 };
 } // namespace hsolver
