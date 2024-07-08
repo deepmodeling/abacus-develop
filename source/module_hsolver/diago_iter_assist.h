@@ -28,12 +28,13 @@ class DiagoIterAssist
 
     static int SCF_ITER;
 
-    // for raw pointer structure
-    static void diagH_subspace_new(hamilt::Hamilt<T, Device>* pHamilt,
-                                   const psi::Psi<T, Device>& psi,
-                                   psi::Psi<T, Device>& evc,
-                                   Real* en,
-                                   int n_band = 0);
+    // // for raw pointer structure
+    // static void diagH_subspace_new(const std::function<void(T*, T*, const int, const int, const int, const int)> hpsi_func,
+    //                                T* psi_pointer,
+    //                                Real* en,
+    //                                int n_band,
+    //                                int dmin,
+    //                                int dmax);
 
     // for psi::Psi structure
     static void diagH_subspace(hamilt::Hamilt<T, Device>* pHamilt,
