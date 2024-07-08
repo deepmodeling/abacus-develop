@@ -5,8 +5,9 @@
 
 void Input::Print(const std::string& fn) const
 {
-    if (GlobalV::MY_RANK != 0)
+    if (GlobalV::MY_RANK != 0) {
         return;
+}
 
     ModuleBase::TITLE("Input", "Print");
 
