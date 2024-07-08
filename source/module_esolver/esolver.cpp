@@ -3,7 +3,7 @@
 #include "esolver_ks_pw.h"
 #include "esolver_sdft_pw.h"
 #ifdef __LCAO
-#include "esolver_ks_lip.h"
+#include "esolver_ks_lcaopw.h"
 #include "esolver_ks_lcao.h"
 #include "esolver_ks_lcao_tddft.h"
 #endif
