@@ -14,8 +14,6 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
 #ifdef _OPENMP
-    std::vector<double> pvpR_thread;
-    hamilt::HContainer<double>* hRGint_thread = nullptr;
     if (!GlobalV::GAMMA_ONLY_LOCAL) {
         if (!pvpR_alloc_flag) {
             ModuleBase::WARNING_QUIT("Gint_interface::cal_gint",
@@ -24,10 +22,9 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
             ModuleBase::GlobalFunc::ZEROS(this->pvpR_reduced[inout->ispin],
                                           nnrg);
         }
-        std::vector<double> pvpR_thread = std::vector<double>(nnrg, 0.0);
-    } else {
-        hRGint_thread = new hamilt::HContainer<double>(*this->hRGint);
     }
+    std::vector<double> pvpR_thread = std::vector<double>(nnrg, 0.0);
+    hamilt::HContainer<double>* hRGint_thread =new hamilt::HContainer<double>(*this->hRGint);
 #pragma omp for
 #endif
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
@@ -86,8 +83,6 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
                                 this->hRGint->get_wrapper(),
                                 1);
         }
-
-        delete hRGint_thread;
     } else {
 #pragma omp critical(gint_k)
         {
@@ -99,7 +94,7 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
                                 1);
         }
     }
-
+     delete hRGint_thread;
 #endif
     ModuleBase::TITLE("Gint_interface", "cal_gint_vlocal");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal");
@@ -177,9 +172,6 @@ void Gint::cpu_dvlocal_interface(Gint_inout* inout) {
         delete[] vldr3;
     }
 #ifdef _OPENMP
-    pvdpRx_thread.shrink_to_fit();
-    pvdpRy_thread.shrink_to_fit();
-    pvdpRz_thread.shrink_to_fit();
     delete hRGint_thread;
 #endif
     ModuleBase::TITLE("Gint_interface", "cal_gint_dvlocal");
@@ -207,13 +199,8 @@ void Gint::cpu_vlocal_meta_interface(Gint_inout* inout) {
     }
 
 #ifdef _OPENMP
-    if (GlobalV::GAMMA_ONLY_LOCAL) {
-        hamilt::HContainer<double>* hRGint_thread =new hamilt::HContainer<double>(*this->hRGint);
-    }
-    else{
-        std::vector<double> pvpR_thread =std::vector<double>(nnrg, 0.0);
-    }
-    
+    hamilt::HContainer<double>* hRGint_thread =new hamilt::HContainer<double>(*this->hRGint);
+    std::vector<double> std::vector<double>(nnrg, 0.0);
 #pragma omp for
 #endif
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
@@ -289,7 +276,6 @@ void Gint::cpu_vlocal_meta_interface(Gint_inout* inout) {
                                 this->hRGint->get_wrapper(),
                                 1);
         }
-        delete hRGint_thread;
     }
     else{
 #pragma omp critical(gint_k)
@@ -302,8 +288,7 @@ void Gint::cpu_vlocal_meta_interface(Gint_inout* inout) {
                                 1);
         }
     }
-    
-    
+    delete hRGint_thread;
 #endif
     ModuleBase::TITLE("Gint_interface", "cal_gint_vlocal_meta");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal_meta");
