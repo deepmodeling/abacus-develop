@@ -38,8 +38,9 @@ void WFInit<T, Device>::prepare_init(Structure_Factor* p_sf,
 #endif
                                      pseudopot_cell_vnl* p_ppcell)
 {
-    if (!this->use_psiinitializer)
+    if (!this->use_psiinitializer) {
         return;
+}
     // under restriction of C++11, std::unique_ptr can not be allocate via std::make_unique
     // use new instead, but will cause asymmetric allocation and deallocation, in literal aspect
     ModuleBase::timer::tick("WFInit", "prepare_init");
@@ -160,8 +161,9 @@ void WFInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
                                        hamilt::Hamilt<T, Device>* p_hamilt,
                                        std::ofstream& ofs_running)
 {
-    if (!this->use_psiinitializer)
+    if (!this->use_psiinitializer) {
         return;
+}
     ModuleBase::timer::tick("WFInit", "initialize_psi");
     if (!this->psi_init->psig_use_count()) { this->psi_init->allocate(/*psig_only=*/true); }
     for (int ik = 0; ik < this->pw_wfc->nks; ik++)
