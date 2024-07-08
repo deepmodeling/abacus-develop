@@ -448,7 +448,8 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep) {
                   GlobalV::MY_RANK,
                   GlobalV::ofs_warning,
                   &GlobalC::ucell,
-                  &GlobalC::GridD);
+                  &GlobalC::GridD,
+                  this->kv);
     } else if (cal_type == "get_wf") {
         IState_Envelope IEP(this->pelec);
         if (GlobalV::GAMMA_ONLY_LOCAL) {

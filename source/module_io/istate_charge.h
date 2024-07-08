@@ -5,6 +5,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #include "module_hamilt_lcao/module_gint/gint.h"
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
+#include "module_hamilt_lcao/module_gint/gint_k.h"
 #include "module_psi/psi.h"
 
 #include <module_base/complexmatrix.h>
@@ -24,13 +25,14 @@ class IState_Charge
 {
   public:
     IState_Charge(psi::Psi<double>* psi_gamma_in, const Parallel_Orbitals* ParaV_in);
-    IState_Charge(psi::Psi<std::complex<double>>* psi_k_in, const Parallel_Orbitals* ParaV_in)
-    {
-        throw std::logic_error("IState_Charge for multi-k is not implemented.");
-    };
+    IState_Charge(psi::Psi<std::complex<double>>* psi_k_in, const Parallel_Orbitals* ParaV_in);
+    // {
+    //     throw std::logic_error("IState_Charge for multi-k is not implemented.");
+    // };
 
     ~IState_Charge();
 
+    // for gamma_only
     void begin(Gint_Gamma& gg,
                double** rho,
                const ModuleBase::matrix& wg,
@@ -54,7 +56,35 @@ class IState_Charge
                const int my_rank,
                std::ofstream& ofs_warning,
                const UnitCell* ucell_in,
-               Grid_Driver* GridD_in);
+               Grid_Driver* GridD_in,
+               const K_Vectors& kv);
+
+    // For multi-k
+    void begin(Gint_k& gk,
+               double** rho,
+               const ModuleBase::matrix& wg,
+               const std::vector<double>& ef_all_spin,
+               const int rhopw_nrxx,
+               const int rhopw_nplane,
+               const int rhopw_startz_current,
+               const int rhopw_nx,
+               const int rhopw_ny,
+               const int rhopw_nz,
+               const int bigpw_bz,
+               const int bigpw_nbz,
+               const bool gamma_only_local,
+               const int nbands_istate,
+               const std::vector<int>& out_band_kb,
+               const int nbands,
+               const double nelec,
+               const int nspin,
+               const int nlocal,
+               const std::string& global_out_dir,
+               const int my_rank,
+               std::ofstream& ofs_warning,
+               const UnitCell* ucell_in,
+               Grid_Driver* GridD_in,
+               const K_Vectors& kv);
 
   private:
     std::vector<int> bands_picked_;
@@ -79,9 +109,20 @@ class IState_Charge
                   const double& nelec,
                   const int nlocal,
                   const ModuleBase::matrix& wg,
-                  elecstate::DensityMatrix<double, double>& DM);
+                  elecstate::DensityMatrix<double, double>& DM,
+                  const K_Vectors& kv);
+
+    void idmatrix(const int& ib,
+                  const int nspin,
+                  const double& nelec,
+                  const int nlocal,
+                  const ModuleBase::matrix& wg,
+                  elecstate::DensityMatrix<std::complex<double>, double>& DM,
+                  const K_Vectors& kv);
+
 #endif
     psi::Psi<double>* psi_gamma;
+    psi::Psi<std::complex<double>>* psi_k;
     const Parallel_Orbitals* ParaV;
 };
 #endif
