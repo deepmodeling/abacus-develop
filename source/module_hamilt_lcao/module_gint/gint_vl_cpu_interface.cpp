@@ -98,7 +98,6 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
                                 pvpR_reduced[inout->ispin],
                                 1);
         }
-        pvpR_thread.shrink_to_fit();
     }
 
 #endif
@@ -208,9 +207,12 @@ void Gint::cpu_vlocal_meta_interface(Gint_inout* inout) {
     }
 
 #ifdef _OPENMP
-
-    std::vector<double> pvpR_thread =std::vector<double>(nnrg, 0.0);
-    hamilt::HContainer<double>* hRGint_thread =new hamilt::HContainer<double>(*this->hRGint);
+    if (GlobalV::GAMMA_ONLY_LOCAL) {
+        hamilt::HContainer<double>* hRGint_thread =new hamilt::HContainer<double>(*this->hRGint);
+    }
+    else{
+        std::vector<double> pvpR_thread =std::vector<double>(nnrg, 0.0);
+    }
     
 #pragma omp parallel for
 #endif
@@ -287,9 +289,9 @@ void Gint::cpu_vlocal_meta_interface(Gint_inout* inout) {
                                 this->hRGint->get_wrapper(),
                                 1);
         }
-        
+        delete hRGint_thread;
     }
-    if (!GlobalV::GAMMA_ONLY_LOCAL) {
+    else{
 #pragma omp critical(gint_k)
         {
             BlasConnector::axpy(nnrg,
@@ -300,7 +302,7 @@ void Gint::cpu_vlocal_meta_interface(Gint_inout* inout) {
                                 1);
         }
     }
-    delete hRGint_thread;
+    
     
 #endif
     ModuleBase::TITLE("Gint_interface", "cal_gint_vlocal_meta");

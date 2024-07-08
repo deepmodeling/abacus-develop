@@ -8,8 +8,6 @@ void Gint::cpu_force_interface(Gint_inout* inout) {
     const UnitCell& ucell = *this->ucell;
     const int max_size = this->gridt->max_atom;
     const int LD_pool = max_size * ucell.nwmax;
-    const int lgd = this->gridt->lgd;
-    const int nnrg = this->gridt->nnrg;
     const int ncyz = this->ny * this->nplane;
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
@@ -89,8 +87,6 @@ void Gint::cpu_force_meta_interface(Gint_inout* inout) {
     const UnitCell& ucell = *this->ucell;
     const int max_size = this->gridt->max_atom;
     const int LD_pool = max_size * ucell.nwmax;
-    const int lgd = this->gridt->lgd;
-    const int nnrg = this->gridt->nnrg;
     const int ncyz = this->ny * this->nplane;
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
