@@ -12,8 +12,8 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
-#include "module_hsolver/diagh.h"
 #include "module_hsolver/diag_comm_info.h"
+#include "module_hsolver/diagh.h"
 #include "module_hsolver/diago_iter_assist.h"
 
 #include <algorithm>
