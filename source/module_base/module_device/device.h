@@ -2,9 +2,8 @@
 #define MODULE_DEVICE_H_
 
 #include "types.h"
+#include <fstream>
 
-#include <complex>
-#include <iostream>
 #ifdef __MPI
 #include "mpi.h"
 #endif

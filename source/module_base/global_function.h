@@ -156,8 +156,9 @@ void SCAN_END(std::ifstream& ifs, const std::string& TargetName, const bool ifwa
 template <class T>
 static inline void DCOPY(const T& a, T& b, const int& dim)
 {
-    for (int i = 0; i < dim; ++i)
+    for (int i = 0; i < dim; ++i) {
         b[i] = a[i];
+    }
 }
 
 template <typename T>
@@ -234,8 +235,9 @@ template <typename T_map, typename T_key1>
 inline void* MAP_EXIST(T_map& ms, const T_key1& key1)
 {
     auto ms1 = ms.find(key1);
-    if (ms1 == ms.end())
+    if (ms1 == ms.end()) {
         return nullptr;
+    }
     return static_cast<void*>(&ms1->second);
 }
 
@@ -243,8 +245,9 @@ template <typename T_map, typename T_key1, typename... T_key_tail>
 inline void* MAP_EXIST(T_map& ms, const T_key1& key1, const T_key_tail&... key_tail)
 {
     auto ms1 = ms.find(key1);
-    if (ms1 == ms.end())
+    if (ms1 == ms.end()) {
         return nullptr;
+    }
     return MAP_EXIST(ms1->second, key_tail...);
 }
 
@@ -252,8 +255,9 @@ template <typename T_map, typename T_key1>
 inline const void* MAP_EXIST(const T_map& ms, const T_key1& key1)
 {
     auto ms1 = ms.find(key1);
-    if (ms1 == ms.end())
+    if (ms1 == ms.end()) {
         return nullptr;
+    }
     return static_cast<const void*>(&ms1->second);
 }
 
@@ -261,8 +265,9 @@ template <typename T_map, typename T_key1, typename... T_key_tail>
 inline const void* MAP_EXIST(const T_map& ms, const T_key1& key1, const T_key_tail&... key_tail)
 {
     auto ms1 = ms.find(key1);
-    if (ms1 == ms.end())
+    if (ms1 == ms.end()) {
         return nullptr;
+    }
     return MAP_EXIST(ms1->second, key_tail...);
 }
 
@@ -298,8 +303,9 @@ static inline void DELETE_MUL_PTR(T_element* v)
 template <typename T_element, typename T_N_first, typename... T_N_tail>
 static inline void DELETE_MUL_PTR(T_element* v, const T_N_first N_first, const T_N_tail... N_tail)
 {
-    for (T_N_first i = 0; i < N_first; ++i)
+    for (T_N_first i = 0; i < N_first; ++i) {
         DELETE_MUL_PTR(v[i], N_tail...);
+    }
     delete[] v;
     v = nullptr;
 }
@@ -327,8 +333,9 @@ static inline void FREE_MUL_PTR(T_element* v)
 template <typename T_element, typename T_N_first, typename... T_N_tail>
 static inline void FREE_MUL_PTR(T_element* v, const T_N_first N_first, const T_N_tail... N_tail)
 {
-    for (T_N_first i = 0; i < N_first; ++i)
+    for (T_N_first i = 0; i < N_first; ++i) {
         FREE_MUL_PTR(v[i], N_tail...);
+    }
     free(v);
     v = nullptr;
 }
@@ -344,7 +351,7 @@ T ddot_real(const int& dim, const std::complex<T>* psi_L, const std::complex<T>*
 static inline bool IS_COLUMN_MAJOR_KS_SOLVER()
 {
     return GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "scalapack_gvx" || GlobalV::KS_SOLVER == "cusolver"
-           || GlobalV::KS_SOLVER == "cusolvermp" || GlobalV::KS_SOLVER == "cg_in_lcao" || GlobalV::KS_SOLVER == "pexsi";
+           || GlobalV::KS_SOLVER == "cusolvermp" || GlobalV::KS_SOLVER == "cg_in_lcao" || GlobalV::KS_SOLVER == "pexsi" || GlobalV::KS_SOLVER == "lapack";
 }
 
 } // namespace GlobalFunc

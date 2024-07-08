@@ -323,7 +323,7 @@ The integrate test is a test suite for testing the whole ABACUS package. The exa
          totaltimeref 2.78
         ``` 
     - If you want to test the correctness of some output files, you need to do extra below steps:
-        1. add the corresponding comparison method in `catch_properties.sh`. For example, to verify whether the output of the SPIN1_CHG.cube file is correct, you need to add the following code in `catch_properties.sh`:
+        1. add the corresponding comparison method in `catch_properties.sh`. For example, to verify whether the output of the BANDS_1.dat file is correct, you need to add the following code in `catch_properties.sh`:
             ```bash
             has_band=$(awk '$1=="out_band" {a=$2} END{print a}' INPUT)  # check if the BAND is outputed
             if ! test -z "$has_band"  && [  $has_band == 1 ]; then      # if band is outputed, then check if the band is correct
