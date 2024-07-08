@@ -77,7 +77,7 @@ void Force_LCAO<double>::allocate(const Parallel_Orbitals& pv,
                               pv,
                               two_center_bundle,
                               &GlobalC::GridD,
-                              lm.Sloc.data());
+                              nullptr);
 
     // calculate dT in LCAP
     // allocation dt
@@ -101,11 +101,11 @@ void Force_LCAO<double>::allocate(const Parallel_Orbitals& pv,
                               pv,
                               two_center_bundle,
                               &GlobalC::GridD,
-                              lm.Hloc_fixed.data());
+                              nullptr);
 
     LCAO_domain::build_Nonlocal_mu_new(lm,
                                        fsr,
-                                       lm.Hloc_fixed.data(),
+                                       nullptr,
                                        cal_deri,
                                        GlobalC::ucell,
                                        GlobalC::ORB,
@@ -116,8 +116,9 @@ void Force_LCAO<double>::allocate(const Parallel_Orbitals& pv,
     if (INPUT.cal_syns)
     {
         cal_deri = false;
-
-        lm.zeros_HSgamma('S');
+        ModuleBase::WARNING_QUIT("cal_syns", "this function has been broken and will be fixed later.");
+        /*
+        std::vector<double> Sloc(pv.nloc, 0.0);
 
         LCAO_domain::build_ST_new(lm,
                                   fsr,
@@ -128,7 +129,7 @@ void Force_LCAO<double>::allocate(const Parallel_Orbitals& pv,
                                   pv,
                                   two_center_bundle,
                                   &GlobalC::GridD,
-                                  lm.Sloc.data(),
+                                  Sloc.data(),
                                   INPUT.cal_syns,
                                   INPUT.dmax);
 
@@ -147,7 +148,7 @@ void Force_LCAO<double>::allocate(const Parallel_Orbitals& pv,
                            GlobalV::DRANK);
 
         ModuleIO::save_mat(0,
-                           lm.Sloc.data(),
+                           Sloc.data(),
                            GlobalV::NLOCAL,
                            bit,
                            GlobalV::out_ndigits,
@@ -156,7 +157,7 @@ void Force_LCAO<double>::allocate(const Parallel_Orbitals& pv,
                            "S",
                            "data-" + std::to_string(0),
                            pv,
-                           GlobalV::DRANK);
+                           GlobalV::DRANK);*/
     }
 
     ModuleBase::timer::tick("Force_LCAO", "allocate");
@@ -277,7 +278,8 @@ void Force_LCAO<double>::ftable(const bool isforce,
     {
         const std::vector<std::vector<double>>& dm_gamma = dm->get_DMK_vector();
 
-        GlobalC::ld.cal_projected_DM(dm, ucell, GlobalC::ORB, GlobalC::GridD);
+        // when deepks_scf is on, the init pdm should be same as the out pdm, so we should not recalculate the pdm
+        //GlobalC::ld.cal_projected_DM(dm, ucell, GlobalC::ORB, GlobalC::GridD);
 
         GlobalC::ld.cal_descriptor(ucell.nat);
 

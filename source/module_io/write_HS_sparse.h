@@ -13,6 +13,7 @@ namespace ModuleIO
 // jingan add 2021-6-4, modify 2021-12-2
 void save_HSR_sparse(const int& istep,
                      LCAO_Matrix& lm,
+                     LCAO_HS_Arrays& HS_Arrays,
                      const double& sparse_thr,
                      const bool& binary,
                      const std::string& SR_filename,

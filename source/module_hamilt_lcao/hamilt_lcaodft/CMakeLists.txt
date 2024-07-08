@@ -36,10 +36,11 @@ if(ENABLE_LCAO)
         LCAO_nnr.cpp
 		LCAO_set_fs.cpp
 		LCAO_set_st.cpp
-		LCAO_nl_mu.cpp
-		LCAO_nl_beta.cpp
+		LCAO_nl_mu.cpp	
         LCAO_set_zero.cpp
+        LCAO_allocate.cpp
 		record_adj.cpp
+        center2_orb.cpp
         center2_orb-orb11.cpp
         center2_orb-orb21.cpp
         center2_orb-orb22.cpp

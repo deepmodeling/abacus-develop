@@ -3,11 +3,22 @@
 #ifndef MODULE_HSOLVER_DNGVD_H
 #define MODULE_HSOLVER_DNGVD_H
 
-#include "math_kernel_op.h"
-#include "module_base/lapack_connector.h"
+#include "module_base/macros.h"
+#include "module_base/lapack_wrapper.h"
+#include "module_base/parallel_reduce.h"
+#include "module_base/module_device/types.h"
 
 namespace hsolver
 {
+
+inline double get_real(const std::complex<double> &x) { return x.real(); }
+
+inline float get_real(const std::complex<float> &x) { return x.real(); }
+
+inline double get_real(const double &x) { return x; }
+
+inline float get_real(const float &x) { return x; }
+
 
 template <typename T, typename Device>
 struct dngvd_op

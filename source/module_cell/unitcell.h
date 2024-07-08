@@ -13,8 +13,7 @@
 #endif
 
 // provide the basic information about unitcell.
-class UnitCell
-{
+class UnitCell {
   public:
     Atom* atoms;
 
@@ -58,35 +57,31 @@ class UnitCell
     ModuleSymmetry::Symmetry symm;
 
     // ========================================================
-    // iat2iwt is the atom index iat to the first global index for orbital of this atom
-    // the size of iat2iwt is nat, the value should be sum_{i=0}^{iat-1} atoms[it].nw * npol
-    // where the npol is the number of polarizations, 1 for non-magnetic(NSPIN=1 or 2), 2 for magnetic(only NSPIN=4)
-    // this part only used for Atomic Orbital based calculation
+    // iat2iwt is the atom index iat to the first global index for orbital of
+    // this atom the size of iat2iwt is nat, the value should be
+    // sum_{i=0}^{iat-1} atoms[it].nw * npol where the npol is the number of
+    // polarizations, 1 for non-magnetic(NSPIN=1 or 2), 2 for magnetic(only
+    // NSPIN=4) this part only used for Atomic Orbital based calculation
     // ========================================================
   public:
     // indexing tool for find orbital global index from it,ia,iw
     template <typename Tiait>
-    inline Tiait itiaiw2iwt(const Tiait& it, const Tiait& ia, const Tiait& iw) const
-    {
+    inline Tiait
+        itiaiw2iwt(const Tiait& it, const Tiait& ia, const Tiait& iw) const {
         return Tiait(this->iat2iwt[this->itia2iat(it, ia)] + iw);
     }
     // initialize iat2iwt
     void set_iat2iwt(const int& npol_in);
     // get iat2iwt
-    inline const int* get_iat2iwt() const
-    {
-        return iat2iwt.data();
-    }
+    inline const int* get_iat2iwt() const { return iat2iwt.data(); }
     // get npol
-    inline const int& get_npol() const
-    {
-        return npol;
-    }
+    inline const int& get_npol() const { return npol; }
 
   private:
-    std::vector<int> iat2iwt; // iat ==> iwt, the first global index for orbital of this atom
-    int npol = 1;             // number of spin polarizations, initialized in set_iat2iwt
-                              // ----------------- END of iat2iwt part -----------------
+    std::vector<int>
+        iat2iwt; // iat ==> iwt, the first global index for orbital of this atom
+    int npol = 1; // number of spin polarizations, initialized in set_iat2iwt
+                  // ----------------- END of iat2iwt part -----------------
 
   public:
     //========================================================
@@ -94,10 +89,8 @@ class UnitCell
     // return true if the last out is reset
     //========================================================
     template <typename Tiat, typename Tiait>
-    inline bool iat2iait(const Tiat iat, Tiait* ia, Tiait* it) const
-    {
-        if (iat >= nat)
-        {
+    inline bool iat2iait(const Tiat iat, Tiait* ia, Tiait* it) const {
+        if (iat >= nat) {
             *ia = 0;
             *it = ntype;
             return false;
@@ -108,8 +101,11 @@ class UnitCell
     }
 
     template <typename Tiat, typename Tiait>
-    inline bool ijat2iaitjajt(const Tiat ijat, Tiait* ia, Tiait* it, Tiait* ja, Tiait* jt) const
-    {
+    inline bool ijat2iaitjajt(const Tiat ijat,
+                              Tiait* ia,
+                              Tiait* it,
+                              Tiait* ja,
+                              Tiait* jt) const {
         Tiat iat = ijat / nat;
         Tiat jat = ijat % nat;
         iat2iait(iat, ia, it);
@@ -118,10 +114,8 @@ class UnitCell
     }
 
     template <typename Tiait>
-    inline bool step_it(Tiait* it) const
-    {
-        if (++(*it) >= ntype)
-        {
+    inline bool step_it(Tiait* it) const {
+        if (++(*it) >= ntype) {
             *it = 0;
             return true;
         }
@@ -129,10 +123,8 @@ class UnitCell
     }
 
     template <typename Tiait>
-    inline bool step_ia(const Tiait it, Tiait* ia) const
-    {
-        if (++(*ia) >= atoms[it].na)
-        {
+    inline bool step_ia(const Tiait it, Tiait* ia) const {
+        if (++(*ia) >= atoms[it].na) {
             *ia = 0;
             return true;
         }
@@ -140,37 +132,34 @@ class UnitCell
     }
 
     template <typename Tiait>
-    inline bool step_iait(Tiait* ia, Tiait* it) const
-    {
-        if (step_ia(*it, ia))
-        {
+    inline bool step_iait(Tiait* ia, Tiait* it) const {
+        if (step_ia(*it, ia)) {
             return step_it(it);
         }
         return false;
     }
 
     template <typename Tiait>
-    inline bool step_jajtiait(Tiait* ja, Tiait* jt, Tiait* ia, Tiait* it) const
-    {
-        if (step_iait(ja, jt))
-        {
+    inline bool
+        step_jajtiait(Tiait* ja, Tiait* jt, Tiait* ia, Tiait* it) const {
+        if (step_iait(ja, jt)) {
             return step_iait(ia, it);
         }
         return false;
     }
 
     // get tau for atom iat
-    inline const ModuleBase::Vector3<double>& get_tau(const int& iat) const
-    {
+    inline const ModuleBase::Vector3<double>& get_tau(const int& iat) const {
         return atoms[iat2it[iat]].tau[iat2ia[iat]];
     }
 
     // calculate vector between two atoms with R cell
-    inline const ModuleBase::Vector3<double> cal_dtau(const int& iat1,
-                                                      const int& iat2,
-                                                      const ModuleBase::Vector3<int>& R) const
-    {
-        return get_tau(iat2) + double(R.x) * a1 + double(R.y) * a2 + double(R.z) * a3 - get_tau(iat1);
+    inline const ModuleBase::Vector3<double>
+        cal_dtau(const int& iat1,
+                 const int& iat2,
+                 const ModuleBase::Vector3<int>& R) const {
+        return get_tau(iat2) + double(R.x) * a1 + double(R.y) * a2
+               + double(R.z) * a3 - get_tau(iat1);
     }
 
     // LiuXh add 20180515
@@ -180,8 +169,10 @@ class UnitCell
     ModuleBase::Matrix3 invGGT0;
 
     // I'm doing a bad thing here! Will change later
-    bool ionic_position_updated = false; // whether the ionic position has been updated
-    bool cell_parameter_updated = false; // whether the cell parameters are updated
+    bool ionic_position_updated
+        = false; // whether the ionic position has been updated
+    bool cell_parameter_updated
+        = false; // whether the cell parameters are updated
 
     //============================================================
     // meshx : max number of mesh point in pseudopotential file
@@ -218,7 +209,7 @@ class UnitCell
     void update_vel(const ModuleBase::Vector3<double>* vel_in);
     void periodic_boundary_adjustment();
     void bcast_atoms_tau();
-    bool judge_big_cell(void) const;
+    bool judge_big_cell() const;
 
     void update_stress(ModuleBase::matrix& scs); // updates stress
     void update_force(ModuleBase::matrix& fcs);  // updates force in Atom
@@ -226,21 +217,24 @@ class UnitCell
     double* atom_mass;
     std::string* atom_label;
     std::string* pseudo_fn;
-    std::string* pseudo_type;    // pseudopotential types for each elements, sunliang added 2022-09-15.
-    std::string* orbital_fn;     // filenames of orbitals, liuyu add 2022-10-19
-    std::string descriptor_file; // filenames of descriptor_file, liuyu add 2023-04-06
+    std::string* pseudo_type; // pseudopotential types for each elements,
+                              // sunliang added 2022-09-15.
+    std::string* orbital_fn;  // filenames of orbitals, liuyu add 2022-10-19
+    std::string
+        descriptor_file; // filenames of descriptor_file, liuyu add 2023-04-06
 
 #ifdef __MPI
-    void bcast_unitcell(void);
-    void bcast_unitcell2(void);
+    void bcast_unitcell();
+    void bcast_unitcell2();
 #endif
 
-    void set_iat2itia(void);
+    void set_iat2itia();
 
     void setup_cell(const std::string& fn, std::ofstream& log);
 
 #ifdef __LCAO
-    InfoNonlocal infoNL; // store nonlocal information of lcao, added by zhengdy 2021-09-07
+    InfoNonlocal infoNL; // store nonlocal information of lcao, added by zhengdy
+                         // 2021-09-07
 #endif
 
     /// @brief read number of numerical orbitals for each angular momentum
@@ -248,25 +242,32 @@ class UnitCell
     /// @param orb_file orbital filename
     /// @param ofs_running ofstream
     /// @param atom Atom instance stored in UnitCell
-    void read_orb_file(int it, std::string& orb_file, std::ofstream& ofs_running, Atom* atom);
-    int read_atom_species(std::ifstream& ifa,
-                          std::ofstream& ofs_running); // read in the atom information for each type of atom
-    bool read_atom_positions(std::ifstream& ifpos,
-                             std::ofstream& ofs_running,
-                             std::ofstream& ofs_warning); // read in atomic positions
+    void read_orb_file(int it,
+                       std::string& orb_file,
+                       std::ofstream& ofs_running,
+                       Atom* atom);
+    int read_atom_species(
+        std::ifstream& ifa,
+        std::ofstream&
+            ofs_running); // read in the atom information for each type of atom
+    bool read_atom_positions(
+        std::ifstream& ifpos,
+        std::ofstream& ofs_running,
+        std::ofstream& ofs_warning); // read in atomic positions
 
     void read_pseudo(std::ofstream& ofs);
     int find_type(const std::string& label);
-    void print_tau(void) const;
+    void print_tau() const;
     /**
-     * @brief UnitCell class is too heavy, this function would be moved elsewhere. Print STRU file respect to given
-     * setting
+     * @brief UnitCell class is too heavy, this function would be moved
+     * elsewhere. Print STRU file respect to given setting
      *
      * @param fn STRU file name
      * @param nspin GlobalV::NSPIN feed in
      * @param direct true for direct coords, false for cartesian coords
      * @param vol true for printing velocities
-     * @param magmom true for printing Mulliken population analysis produced magmom
+     * @param magmom true for printing Mulliken population analysis produced
+     * magmom
      * @param orb true for printing NUMERICAL_ORBITAL section
      * @param dpks_desc true for printing NUMERICAL_DESCRIPTOR section
      * @param iproc GlobalV::MY_RANK feed in
@@ -279,7 +280,7 @@ class UnitCell
                          const bool& orb = false,
                          const bool& dpks_desc = false,
                          const int& iproc = 0) const;
-    void check_dtau(void);
+    void check_dtau();
     void setup_cell_after_vc(std::ofstream& log); // LiuXh add 20180515
 
     // for constrained vc-relaxation where type of lattice
@@ -298,7 +299,7 @@ class UnitCell
     void cal_meshx();
     void cal_natomwfc(std::ofstream& log);
     void print_unitcell_pseudo(const std::string& fn);
-    bool check_tau(void) const; // mohan add 2011-03-03
+    bool check_tau() const; // mohan add 2011-03-03
     bool if_atoms_can_move() const;
     bool if_cell_can_change() const;
     void setup(const std::string& latname_in,
@@ -307,26 +308,30 @@ class UnitCell
                const bool& init_vel_in,
                const std::string& fixed_axes_in);
 
-    void check_structure(double factor);
-
-    /// @brief calculate the total number of electrons in system (GlobalV::nelec)
+    /// @brief calculate the total number of electrons in system
+    /// (GlobalV::nelec)
     void cal_nelec(double& nelec);
 
-    /// @brief check consistency between two atom labels from STRU and pseudo or orb file
+    /// @brief check consistency between two atom labels from STRU and pseudo or
+    /// orb file
     void compare_atom_labels(std::string label1, std::string label2);
     /// @brief get atomCounts, which is a map from element type to atom number
     std::map<int, int> get_atom_Counts() const;
-    /// @brief get orbitalCounts, which is a map from element type to orbital number
+    /// @brief get orbitalCounts, which is a map from element type to orbital
+    /// number
     std::map<int, int> get_orbital_Counts() const;
-    /// @brief get lnchiCounts, which is a map from element type to the l:nchi map
+    /// @brief get lnchiCounts, which is a map from element type to the l:nchi
+    /// map
     std::map<int, std::map<int, int>> get_lnchi_Counts() const;
-    /// these are newly added functions, the three above functions are deprecated
-    /// and will be removed in the future
+    /// these are newly added functions, the three above functions are
+    /// deprecated and will be removed in the future
     /// @brief get atom labels
     std::vector<std::string> get_atomLabels() const;
-    /// @brief get atomCounts, which is a vector of element type with atom number
+    /// @brief get atomCounts, which is a vector of element type with atom
+    /// number
     std::vector<int> get_atomCounts() const;
-    /// @brief get lnchiCounts, which is a vector of element type with the l:nchi vector
+    /// @brief get lnchiCounts, which is a vector of element type with the
+    /// l:nchi vector
     std::vector<std::vector<int>> get_lnchiCounts() const;
 };
 

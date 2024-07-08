@@ -15,16 +15,16 @@ template<>
 void OperatorLCAO<double, double>::get_hs_pointers()
 {
     ModuleBase::timer::tick("OperatorLCAO", "get_hs_pointers");
-    this->hmatrix_k = this->LM->Hloc.data();
+    this->hmatrix_k = this->hsk->get_hk();
     if ((this->new_e_iteration && ik == 0) || hsolver::HSolverLCAO<double>::out_mat_hs[0])
     {
         if (this->smatrix_k == nullptr)
         {
-            this->smatrix_k = new double[this->LM->Sloc.size()];
+            this->smatrix_k = new double[this->hsk->get_size()];
             this->allocated_smatrix = true;
         }
         const int inc = 1;
-        BlasConnector::copy(this->LM->Sloc.size(), this->LM->Sloc.data(), inc, this->smatrix_k, inc);
+        BlasConnector::copy(this->hsk->get_size(), this->hsk->get_sk(), inc, this->smatrix_k, inc);
 #ifdef __ELPA
         hsolver::DiagoElpa<double>::DecomposedState = 0;
 #endif
@@ -36,36 +36,22 @@ void OperatorLCAO<double, double>::get_hs_pointers()
 template<>
 void OperatorLCAO<std::complex<double>, double>::get_hs_pointers()
 {
-    this->hmatrix_k = this->LM->Hloc2.data();
-    this->smatrix_k = this->LM->Sloc2.data();
+    this->hmatrix_k = this->hsk->get_hk();
+    this->smatrix_k = this->hsk->get_sk();
 }
 
 template<>
 void OperatorLCAO<std::complex<double>, std::complex<double>>::get_hs_pointers()
 {
-    this->hmatrix_k = this->LM->Hloc2.data();
-    this->smatrix_k = this->LM->Sloc2.data();
+    this->hmatrix_k = this->hsk->get_hk();
+    this->smatrix_k = this->hsk->get_sk();
 }
 
-template<>
-void OperatorLCAO<double, double>::refresh_h()
+template<typename TK, typename TR>
+void OperatorLCAO<TK, TR>::refresh_h()
 {
     // Set the matrix 'H' to zero.
-    this->LM->zeros_HSgamma('H');
-}
-
-template<>
-void OperatorLCAO<std::complex<double>, double>::refresh_h()
-{
-    // Set the matrix 'H' to zero.
-    this->LM->zeros_HSk('H');
-}
-
-template<>
-void OperatorLCAO<std::complex<double>, std::complex<double>>::refresh_h()
-{
-    // Set the matrix 'H' to zero.
-    this->LM->zeros_HSk('H');
+    this->hsk->set_zero_hk();
 }
 
 template<typename TK, typename TR>
@@ -194,12 +180,14 @@ void OperatorLCAO<TK, TR>::init(const int ik_in)
         case calculation_type::lcao_exx:
         {
             //update HR first
-            //in cal_type=lcao_exx, HR should be updated by most priority sub-chain nodes
-            this->contributeHR();
+            if (!this->hr_done)
+            {
+                this->contributeHR();
+            }
 
             //update HK next
             //in cal_type=lcao_exx, HK only need to update from one node
-            this->contributeHk(ik_in);
+            // this->contributeHk(ik_in);
 
             break;
         }
@@ -254,13 +242,13 @@ void OperatorLCAO<TK, TR>::contributeHk(int ik)
     ModuleBase::timer::tick("OperatorLCAO", "contributeHk");
     if(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
     {
-        const int nrow = this->LM->ParaV->get_row_size();
-        hamilt::folding_HR(*this->hR, this->hK->data(), this->kvec_d[ik], nrow, 1);
+        const int nrow = this->hsk->get_pv()->get_row_size();
+        hamilt::folding_HR(*this->hR, this->hsk->get_hk(), this->kvec_d[ik], nrow, 1);
     }
     else
     {
-        const int ncol = this->LM->ParaV->get_col_size();
-        hamilt::folding_HR(*this->hR, this->hK->data(), this->kvec_d[ik], ncol, 0);
+        const int ncol = this->hsk->get_pv()->get_col_size();
+        hamilt::folding_HR(*this->hR, this->hsk->get_hk(), this->kvec_d[ik], ncol, 0);
     }
     ModuleBase::timer::tick("OperatorLCAO", "contributeHk");
 }

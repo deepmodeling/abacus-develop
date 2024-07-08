@@ -7,7 +7,6 @@
 #include "module_basis/module_ao/ORB_atomic_lm.h"
 #include "module_basis/module_ao/ORB_gaunt_table.h"
 #include "module_basis/module_ao/ORB_read.h"
-#include "module_basis/module_ao/ORB_table_phi.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_cell/klist.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/center2_orb-orb11.h"
@@ -31,7 +30,6 @@ class unkOverlap_lcao
     std::vector<std::vector<std::vector<double>>> psi_psi;
     std::vector<std::vector<std::vector<ModuleBase::Vector3<double>>>> psi_r_psi;
     bool allocate_flag;                      // translate: Used to initialize the array
-    std::complex<double>*** lcao_wfc_global; // Global wave function coefficient in LCAO basis
     int** cal_tag;                           // Used for parallel scheme
 
     int kpoints_number;
@@ -49,21 +47,14 @@ class unkOverlap_lcao
     unkOverlap_lcao();
     ~unkOverlap_lcao();
 
-    void init(const Grid_Technique& gt, std::complex<double>*** wfc_k_grid, const int nkstot);
+    void init(const Grid_Technique& gt, const int nkstot);
     int iw2it(int iw);
     int iw2ia(int iw);
     int iw2iL(int iw);
     int iw2iN(int iw);
     int iw2im(int iw);
-    std::complex<double> unkdotp_LCAO(const int ik_L,
-                                      const int ik_R,
-                                      const int iband_L,
-                                      const int iband_R,
-                                      const ModuleBase::Vector3<double> dk,
-                                      const K_Vectors& kv);
     void cal_R_number();
     void cal_orb_overlap();
-    void get_lcao_wfc_global_ik(const Grid_Technique& gt, std::complex<double>** ctot, std::complex<double>** cc);
     void prepare_midmatrix_pblas(const int ik_L,
                                  const int ik_R,
                                  const ModuleBase::Vector3<double> dk,
@@ -77,8 +68,6 @@ class unkOverlap_lcao
                                         const Parallel_Orbitals& para_orb,
                                         const psi::Psi<std::complex<double>>* psi_in,
                                         const K_Vectors& kv);
-
-    void test(const Grid_Technique& gt, std::complex<double>*** wfc_k_grid, const K_Vectors& kv);
 };
 
 #endif

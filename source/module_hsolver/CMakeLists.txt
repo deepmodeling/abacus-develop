@@ -1,5 +1,5 @@
 list(APPEND objects
-    diagh_consts.cpp
+    diag_const_nums.cpp
     diago_cg.cpp
     diago_david.cpp
     diago_dav_subspace.cpp
@@ -11,10 +11,17 @@ list(APPEND objects
 )
 
 if(ENABLE_LCAO)
-  list(APPEND objects
-      hsolver_lcao.cpp
-      diago_scalapack.cpp
-  )
+  if (ENABLE_MPI)
+    list(APPEND objects
+        hsolver_lcao.cpp
+        diago_scalapack.cpp
+    )
+  else ()
+    list(APPEND objects
+        hsolver_lcao.cpp
+        diago_lapack.cpp
+    )
+  endif ()
   if (USE_ELPA)
     list(APPEND objects
         diago_elpa.cpp

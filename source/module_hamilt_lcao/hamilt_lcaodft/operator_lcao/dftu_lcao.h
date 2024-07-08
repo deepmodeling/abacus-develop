@@ -26,15 +26,13 @@ template <typename TK, typename TR>
 class DFTU<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 {
   public:
-    DFTU<OperatorLCAO<TK, TR>>(LCAO_Matrix* lm_in,
+    DFTU<OperatorLCAO<TK, TR>>(HS_Matrix_K<TK>* hsk_in,
                                const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
                                hamilt::HContainer<TR>* hR_in,
-                               std::vector<TK>* hK_in,
                                const UnitCell& ucell_in,
                                Grid_Driver* gridD_in,
                                const TwoCenterIntegrator* intor,
-                               ModuleDFTU::DFTU* dftu_in,
-                               const Parallel_Orbitals& paraV);
+                               ModuleDFTU::DFTU* dftu_in);
     ~DFTU<OperatorLCAO<TK, TR>>();
 
     /**
@@ -56,8 +54,6 @@ class DFTU<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 
     hamilt::HContainer<TR>* HR = nullptr;
 
-    TK* HK_pointer = nullptr;
-
     const TwoCenterIntegrator* intor_ = nullptr;
 
     /// @brief the number of spin components, 1 for no-spin, 2 for collinear spin case and 4 for non-collinear spin case
@@ -70,7 +66,7 @@ class DFTU<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      * the size of HR will not change in DFTU,
      * because I don't want to expand HR larger than Nonlocal operator caused by DFTU
      */
-    void initialize_HR(Grid_Driver* gridD_in, const Parallel_Orbitals* paraV);
+    void initialize_HR(Grid_Driver* gridD_in);
 
     /**
      * @brief calculate the <phi|alpha^I> overlap values and save them in this->nlm_tot

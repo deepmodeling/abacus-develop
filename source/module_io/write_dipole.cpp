@@ -86,9 +86,9 @@ void ModuleIO::write_dipole(const double* rho_save,
         dipole_elec[i] *= GlobalC::ucell.lat0 / bmod[i] * GlobalC::ucell.omega / rhopw->nxyz;
     }
 
-    std::cout << std::setprecision(8) << "dipole_elec_x: " << dipole_elec[0] << std::endl;
-    std::cout << std::setprecision(8) << "dipole_elec_y: " << dipole_elec[1] << std::endl;
-    std::cout << std::setprecision(8) << "dipole_elec_z: " << dipole_elec[2] << std::endl;
+    std::cout << std::setprecision(15) << "dipole_elec_x: " << dipole_elec[0] << std::endl;
+    std::cout << std::setprecision(15) << "dipole_elec_y: " << dipole_elec[1] << std::endl;
+    std::cout << std::setprecision(15) << "dipole_elec_z: " << dipole_elec[2] << std::endl;
 
     ofs << std::setprecision(8) << istep << " " << dipole_elec[0] << " " << dipole_elec[1] << " " << dipole_elec[2]
         << std::endl;
