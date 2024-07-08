@@ -1,5 +1,5 @@
 list(APPEND objects
-    diagh_consts.cpp
+    diag_const_nums.cpp
     diago_cg.cpp
     diago_david.cpp
     diago_dav_subspace.cpp

@@ -124,7 +124,8 @@ void LCAO_Deepks::cal_descriptor(const int nat)
 void LCAO_Deepks::check_descriptor(const UnitCell &ucell)
 {
     ModuleBase::TITLE("LCAO_Deepks", "check_descriptor");
-    if(GlobalV::MY_RANK!=0) return;
+    if(GlobalV::MY_RANK!=0) { return;
+}
     std::ofstream ofs("descriptor.dat");
     ofs<<std::setprecision(10);
     if(!GlobalV::deepks_equiv)
@@ -143,7 +144,8 @@ void LCAO_Deepks::check_descriptor(const UnitCell &ucell)
                     {
                         const int ind=iat*inlmax/ucell.nat+inl;
                         ofs << d_tensor[ind].index({im}).item().toDouble() << " ";
-                        if (id % 8 == 7) ofs << std::endl;
+                        if (id % 8 == 7) { ofs << std::endl;
+}
                         id++;
                     }
                 }   
@@ -160,7 +162,8 @@ void LCAO_Deepks::check_descriptor(const UnitCell &ucell)
             for(int i = 0; i < this->des_per_atom; i ++)
             {
                 ofs << this->pdm[iat][i] << " ";
-                if (i % 8 == 7) ofs << std::endl;
+                if (i % 8 == 7) { ofs << std::endl;
+}
             }
             ofs << std::endl << std::endl;
         }
@@ -202,9 +205,12 @@ void LCAO_Deepks::cal_gvx(const int nat)
                         {
                             for(int m2=0;m2<nm;++m2)
                             {
-                                if(i==0) mmv.push_back(this->gdmx[ibt][inl][m1*nm+m2]);
-                                if(i==1) mmv.push_back(this->gdmy[ibt][inl][m1*nm+m2]);
-                                if(i==2) mmv.push_back(this->gdmz[ibt][inl][m1*nm+m2]);
+                                if(i==0) { mmv.push_back(this->gdmx[ibt][inl][m1*nm+m2]);
+}
+                                if(i==1) { mmv.push_back(this->gdmy[ibt][inl][m1*nm+m2]);
+}
+                                if(i==2) { mmv.push_back(this->gdmz[ibt][inl][m1*nm+m2]);
+}
                             }
                         }//nm^2
                         torch::Tensor mm = torch::tensor(mmv, torch::TensorOptions().dtype(torch::kFloat64) ).reshape({nm, nm});    //nm*nm
@@ -421,7 +427,8 @@ void LCAO_Deepks::load_model(const std::string& deepks_model)
 
 inline void generate_py_files(const int lmaxd, const int nmaxd)
 {
-    if(GlobalV::MY_RANK!=0) return;
+    if(GlobalV::MY_RANK!=0) { return;
+}
     std::ofstream ofs("cal_gedm.py");
     ofs << "import torch" << std::endl;
     ofs << "import numpy as np" << std::endl << std::endl;
@@ -610,7 +617,8 @@ void LCAO_Deepks::cal_orbital_precalc(const std::vector<std::vector<ModuleBase::
 
                 auto row_indexes = pv->get_indexes_row(ibt1);
                 const int row_size = row_indexes.size();
-                if(row_size == 0) continue;
+                if(row_size == 0) { continue;
+}
 
                 std::vector<double> s_1t(trace_alpha_size * row_size);
                 std::vector<double> g_1dmt(trace_alpha_size * row_size, 0.0);
@@ -642,7 +650,8 @@ void LCAO_Deepks::cal_orbital_precalc(const std::vector<std::vector<ModuleBase::
 
                     auto col_indexes = pv->get_indexes_col(ibt2);
                     const int col_size = col_indexes.size();
-                    if(col_size == 0) continue;
+                    if(col_size == 0) { continue;
+}
 
                     std::vector<double> s_2t(trace_alpha_size * col_size);
                     for(int icol=0;icol<col_size;icol++)
@@ -843,10 +852,12 @@ void LCAO_Deepks::cal_orbital_precalc_k(const std::vector<std::vector<ModuleBase
 
                 auto row_indexes = pv->get_indexes_row(ibt1);
                 const int row_size = row_indexes.size();
-                if(row_size == 0) continue;
+                if(row_size == 0) { continue;
+}
 
                 key_tuple key_1(ibt1,dR1.x,dR1.y,dR1.z);
-                if(this->nlm_save_k[iat].find(key_1) == this->nlm_save_k[iat].end()) continue;
+                if(this->nlm_save_k[iat].find(key_1) == this->nlm_save_k[iat].end()) { continue;
+}
                 std::vector<double> s_1t(trace_alpha_size * row_size);
                 std::vector<double> g_1dmt(nks * trace_alpha_size * row_size, 0.0);
                 for(int irow=0;irow<row_size;irow++)
@@ -863,7 +874,8 @@ void LCAO_Deepks::cal_orbital_precalc_k(const std::vector<std::vector<ModuleBase
 					const int T2 = GridD.getType(ad2);
 					const int I2 = GridD.getNatom(ad2);
                     const int ibt2 = ucell.itia2iat(T2,I2);
-                    if(ibt1>ibt2) continue;
+                    if(ibt1>ibt2) { continue;
+}
 					const ModuleBase::Vector3<double> tau2 = GridD.getAdjacentTau(ad2);
 					const Atom* atom2 = &ucell.atoms[T2];
 					const int nw2_tot = atom2->nw*GlobalV::NPOL;
@@ -879,11 +891,13 @@ void LCAO_Deepks::cal_orbital_precalc_k(const std::vector<std::vector<ModuleBase
 
                     auto col_indexes = pv->get_indexes_col(ibt2);
                     const int col_size = col_indexes.size();
-                    if(col_size == 0) continue;
+                    if(col_size == 0) { continue;
+}
 
                     std::vector<double> s_2t(trace_alpha_size * col_size);
                     key_tuple key_2(ibt2,dR2.x,dR2.y,dR2.z);
-                    if(this->nlm_save_k[iat].find(key_2) == this->nlm_save_k[iat].end()) continue;
+                    if(this->nlm_save_k[iat].find(key_2) == this->nlm_save_k[iat].end()) { continue;
+}
                     for(int icol=0;icol<col_size;icol++)
                     {
                         const double* col_ptr = this->nlm_save_k[iat][key_2][col_indexes[icol]][0].data();
@@ -917,7 +931,8 @@ void LCAO_Deepks::cal_orbital_precalc_k(const std::vector<std::vector<ModuleBase
                     //dgemm for s_2t and dm_array to get g_1dmt
                     constexpr char transa='T', transb='N';
                     double gemm_alpha = 1.0, gemm_beta = 1.0;
-                    if(ibt1<ibt2) gemm_alpha = 2.0;
+                    if(ibt1<ibt2) { gemm_alpha = 2.0;
+}
                     dgemm_(
                         &transa, &transb, 
                         &row_size_nks, 
@@ -1099,13 +1114,15 @@ void LCAO_Deepks::cal_v_delta_precalc(const int nlocal,
 					{
 						const int iw1_all = start1 + iw1; // this is \mu
 						const int iw1_local = pv->global2local_row(iw1_all);
-						if(iw1_local < 0)continue;
+						if(iw1_local < 0) {continue;
+}
 						const int iw1_0 = iw1/GlobalV::NPOL;
 						for (int iw2=0; iw2<nw2_tot; ++iw2)
 						{
 							const int iw2_all = start2 + iw2; // this is \nu
 							const int iw2_local = pv->global2local_col(iw2_all);
-							if(iw2_local < 0)continue;
+							if(iw2_local < 0) {continue;
+}
 							const int iw2_0 = iw2/GlobalV::NPOL;
 
                             std::vector<double> nlm1 = this->nlm_save[iat][ad1][iw1][0];
@@ -1290,7 +1307,8 @@ void LCAO_Deepks::prepare_psialpha(const int nlocal,
 					const int iw1_all = start1 + iw1;
 					const int iw1_local = pv->global2local_row(iw1_all);
 					const int iw2_local = pv->global2local_col(iw1_all);
-					if(iw1_local < 0 || iw2_local < 0)continue;
+					if(iw1_local < 0 || iw2_local < 0) {continue;
+}
 					const int iw1_0 = iw1/GlobalV::NPOL;
 					std::vector<double> nlm = this->nlm_save[iat][ad][iw1][0];
                     
@@ -1323,9 +1341,11 @@ void LCAO_Deepks::prepare_psialpha(const int nlocal,
         {
             for(int mu = 0; mu < nlocal ; mu++)
             {
-                for(int m=0;m<mmax;m++) msg[m] = this->psialpha_tensor[iat][nl][0][mu][m].item().toDouble();
+                for(int m=0;m<mmax;m++) { msg[m] = this->psialpha_tensor[iat][nl][0][mu][m].item().toDouble();
+}
                 Parallel_Reduce::reduce_all(msg,mmax);
-                for(int m=0;m<mmax;m++) this->psialpha_tensor[iat][nl][0][mu][m] = msg[m];
+                for(int m=0;m<mmax;m++) { this->psialpha_tensor[iat][nl][0][mu][m] = msg[m];
+}
             }
         }
     }
