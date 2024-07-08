@@ -26,6 +26,7 @@
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 #include "module_io/rho_io.h"
 #include "module_io/write_pot.h"
+#include "module_io/write_wfc_nao.h"
 
 namespace ModuleESolver {
 
@@ -132,7 +133,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep) {
             nsk = GlobalV::NSPIN;
             ncol = this->orb_con.ParaV.ncol_bands;
             if (GlobalV::KS_SOLVER == "genelpa"
-                || GlobalV::KS_SOLVER == "lapack_gvx"
+                || GlobalV::KS_SOLVER == "lapack"
                 || GlobalV::KS_SOLVER == "pexsi"
                 || GlobalV::KS_SOLVER == "cusolver"
                 || GlobalV::KS_SOLVER == "cusolvermp") {
@@ -170,7 +171,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep) {
             GlobalV::GAMMA_ONLY_LOCAL ? &(this->GG) : nullptr,
             GlobalV::GAMMA_ONLY_LOCAL ? nullptr : &(this->GK),
             &(this->LM),
-            &(this->LOC),
+            &this->orb_con.ParaV,
             this->pelec->pot,
             this->kv,
             two_center_bundle_,
@@ -521,11 +522,9 @@ void ESolver_KS_LCAO<std::complex<double>, double>::get_S(void) {
 
     this->RA.for_2d(this->orb_con.ParaV, GlobalV::GAMMA_ONLY_LOCAL);
 
-    this->LM.ParaV = &this->orb_con.ParaV;
-
     if (this->p_hamilt == nullptr) {
         this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, double>(
-            &this->LM,
+            &this->orb_con.ParaV,
             this->kv,
             *(two_center_bundle_.overlap_orb));
         dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, double>*>(
@@ -570,7 +569,7 @@ void ESolver_KS_LCAO<std::complex<double>, std::complex<double>>::get_S(void) {
     if (this->p_hamilt == nullptr) {
         this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>,
                                                 std::complex<double>>(
-            &this->LM,
+            &this->orb_con.ParaV,
             this->kv,
             *(two_center_bundle_.overlap_orb));
         dynamic_cast<
@@ -594,12 +593,12 @@ void ESolver_KS_LCAO<std::complex<double>, std::complex<double>>::get_S(void) {
 }
 
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::nscf(void) {
+void ESolver_KS_LCAO<TK, TR>::nscf() {
     ModuleBase::TITLE("ESolver_KS_LCAO", "nscf");
 
     std::cout << " NON-SELF CONSISTENT CALCULATIONS" << std::endl;
 
-    time_t time_start = std::time(NULL);
+    time_t time_start = std::time(nullptr);
 
 #ifdef __EXX
 #ifdef __MPI
@@ -632,7 +631,7 @@ void ESolver_KS_LCAO<TK, TR>::nscf(void) {
                                  "HSolver has not been initialed!");
     }
 
-    time_t time_finish = std::time(NULL);
+    time_t time_finish = std::time(nullptr);
     ModuleBase::GlobalFunc::OUT_TIME("cal_bands", time_start, time_finish);
 
     GlobalV::ofs_running << " end of band structure calculation " << std::endl;
@@ -723,7 +722,7 @@ void ESolver_KS_LCAO<TK, TR>::nscf(void) {
     // add by jingan
     if (berryphase::berry_phase_flag
         && ModuleSymmetry::Symmetry::symm_flag != 1) {
-        berryphase bp(this->LOC);
+        berryphase bp(this->orb_con.ParaV);
         bp.lcao_init(this->kv,
                      this->GridT); // additional step before calling
                                    // macroscopic_polarization (why capitalize
@@ -765,7 +764,17 @@ void ESolver_KS_LCAO<TK, TR>::nscf(void) {
     /// write potential
     this->create_Output_Potential(0).write();
 
-    return;
+    // write wfc
+    if (INPUT.out_wfc_lcao)
+    {
+        ModuleIO::write_wfc_nao(INPUT.out_wfc_lcao,
+                                *this->psi,
+                                this->pelec->ekb,
+                                this->pelec->wg,
+                                this->pelec->klist->kvec_c,
+                                this->orb_con.ParaV,
+                                istep);
+    }
 }
 
 template class ESolver_KS_LCAO<double, double>;

@@ -8,10 +8,7 @@
 
 namespace GintKernel
 {
-
-// Function to calculate forces using GPU-accelerated gamma point Gint
 /**
- * Function to calculate forces using GPU-accelerated gamma point Gint
  * @brief Calculate forces and stresses
  * @note The grid integration on the GPU is mainly divided into the following
  * steps:
@@ -24,19 +21,18 @@ namespace GintKernel
  * 7. Copy the results back to the host.
  */
 void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
-                          const double* vlocal,
-                          double* force_in,
-                          double* stress_in,
-                          double dr,
-                          const double* rcut,
-                          const int isforce,
-                          const int isstress,
-                          const Grid_Technique& gridt,
-                          const UnitCell& ucell)
+                        const double* vlocal,
+                        double* force_in,
+                        double* stress_in,
+                        double dr,
+                        const double* rcut,
+                        const int isforce,
+                        const int isstress,
+                        const Grid_Technique& gridt,
+                        const UnitCell& ucell)
 { 
     int dev_id = base_device::information::set_device_by_rank();
-
-    checkCuda(cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync));
+    // checkCuda(cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync));
 
     const int nbzp = gridt.nbzp;
     const int lgd = gridt.lgd;
@@ -49,10 +45,7 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
     const int max_atompair_per_z = max_atom * max_atom * nbzp;
     const double vfactor = ucell.omega / gridt.ncxyz;
     const int nczp = nbzp * gridt.bz;
-    const int cuda_threads = 256;
     const int nat=ucell.nat;
-    const int cuda_block
-        = std::min(64, ceil_div(max_phi_per_z, cuda_threads));
 
     const int num_streams = gridt.nstreams;
 
@@ -62,10 +55,13 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
         checkCuda(cudaStreamCreate(&streams[i]));
     }
 
-    Cuda_Mem_Wrapper<double> psi_input_double(5 * max_atom_per_z, num_streams, true);
-    Cuda_Mem_Wrapper<int> psi_input_int(2 * max_atom_per_z, num_streams, true);
-    Cuda_Mem_Wrapper<int> atom_num_per_bcell(nbzp, num_streams, true);
-    Cuda_Mem_Wrapper<int> start_idx_per_bcell(nbzp, num_streams, true);
+    Cuda_Mem_Wrapper<double> dr_part(3 * max_atom_per_z, num_streams, true);
+    Cuda_Mem_Wrapper<uint8_t> atoms_type(max_atom_per_z, num_streams, true);
+    Cuda_Mem_Wrapper<int> iat_on_nbz(max_atom_per_z, num_streams, true);
+    // The first number in every group of two represents the number of atoms on that bigcell.
+    // The second number represents the cumulative number of atoms up to that bigcell.
+    Cuda_Mem_Wrapper<int> atoms_num_info(2 * nbzp, num_streams, true);
+    Cuda_Mem_Wrapper<double> vldr3(nbzp * gridt.bxyz, num_streams, true);
 
     Cuda_Mem_Wrapper<double> psi(max_phi_per_z, num_streams, false);
     Cuda_Mem_Wrapper<double> psi_dm(max_phi_per_z, num_streams, false);
@@ -85,7 +81,6 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
 
     Cuda_Mem_Wrapper<double> force(3 * nat, num_streams, true);
     Cuda_Mem_Wrapper<double> stress(6, num_streams, true);
-    Cuda_Mem_Wrapper<int> iat_per_z(max_atom_per_z, num_streams, true);
 
     Cuda_Mem_Wrapper<double> dm_matrix(lgd * lgd, 1, true);
     for (int iat1 = 0; iat1 < ucell.nat; iat1++)
@@ -127,38 +122,31 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
             // cuda's device is not safe in a multi-threaded environment.
             checkCuda(cudaSetDevice(dev_id));
             const int sid = omp_get_thread_num();
-            checkCuda(cudaStreamSynchronize(streams[sid]));
 
             int max_m = 0;
             int max_n = 0;
             int atom_pair_num = 0;
-            int atom_per_z = 0;
-            const int grid_index_ij = i * gridt.nby * nbzp 
-                                        + j * nbzp;
-
-            std::vector<bool> gpu_mat_cal_flag(max_atom * nbzp, false);
+            int atoms_per_z = 0;
+            const int grid_index_ij = i * gridt.nby * nbzp + j * nbzp;
 
             gtask_force(gridt,
                         ucell,
                         grid_index_ij,
-                        max_atom_per_bcell,
-                        max_atom,
                         nczp,
                         vfactor,
-                        rcut,
                         vlocal,
-                        psi_input_double.get_host_pointer(sid),
-                        psi_input_int.get_host_pointer(sid),
-                        atom_num_per_bcell.get_host_pointer(sid),
-                        start_idx_per_bcell.get_host_pointer(sid),
-                        iat_per_z.get_host_pointer(sid),
-                        atom_per_z,
-                        gpu_mat_cal_flag);
+                        atoms_per_z,
+                        atoms_num_info.get_host_pointer(sid),
+                        iat_on_nbz.get_host_pointer(sid),
+                        atoms_type.get_host_pointer(sid),
+                        dr_part.get_host_pointer(sid),
+                        vldr3.get_host_pointer(sid));
            
             alloc_mult_force(gridt,
                              ucell, 
                              grid_index_ij,
                              max_atom,
+                             atoms_num_info.get_host_pointer(sid),
                              psi.get_device_pointer(sid),
                              psi_dm.get_device_pointer(sid),
                              dm_matrix.get_device_pointer(),
@@ -173,14 +161,14 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
                              gemm_ldc.get_host_pointer(sid),
                              gemm_A.get_host_pointer(sid),
                              gemm_B.get_host_pointer(sid),
-                             gemm_C.get_host_pointer(sid),
-                             gpu_mat_cal_flag);
+                             gemm_C.get_host_pointer(sid));
 
-            psi_input_double.copy_host_to_device_async(streams[sid], sid, 5 * atom_per_z);
-            psi_input_int.copy_host_to_device_async(streams[sid], sid, 2 * atom_per_z);
-            atom_num_per_bcell.copy_host_to_device_async(streams[sid], sid);
-            start_idx_per_bcell.copy_host_to_device_async(streams[sid], sid);
-            iat_per_z.copy_host_to_device_async(streams[sid], sid);
+            dr_part.copy_host_to_device_async(streams[sid], sid, 3 * atoms_per_z);
+            atoms_type.copy_host_to_device_async(streams[sid], sid, atoms_per_z);
+            iat_on_nbz.copy_host_to_device_async(streams[sid], sid, atoms_per_z);
+            vldr3.copy_host_to_device_async(streams[sid], sid);
+            atoms_num_info.copy_host_to_device_async(streams[sid], sid);
+            
             gemm_m.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
             gemm_n.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
             gemm_k.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
@@ -196,7 +184,7 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
             dpsi.memset_device_async(streams[sid], sid, 0);
             d2psi.memset_device_async(streams[sid], sid, 0);
 
-            dim3 grid_psi(nbzp, 32);
+            dim3 grid_psi(nbzp, gridt.bxyz);
             dim3 block_psi(64);
             get_psi_force<<<grid_psi,
                             block_psi,
@@ -206,17 +194,20 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
                 dr,
                 bxyz,
                 nwmax,
-                psi_input_double.get_device_pointer(sid),
-                psi_input_int.get_device_pointer(sid),
-                atom_num_per_bcell.get_device_pointer(sid),
-                start_idx_per_bcell.get_device_pointer(sid),
+                max_atom,
                 gridt.atom_nwl_g,
                 gridt.atom_new_g,
                 gridt.atom_ylm_g,
                 gridt.atom_l_g,
                 gridt.atom_nw_g,
+                gridt.rcut_g,
                 gridt.nr_max,
                 gridt.psi_u_g,
+                gridt.mcell_pos_g,
+                dr_part.get_device_pointer(sid),
+                vldr3.get_device_pointer(sid),
+                atoms_type.get_device_pointer(sid),
+                atoms_num_info.get_device_pointer(sid),
                 psi.get_device_pointer(sid),
                 dpsi.get_device_pointer(sid),
                 d2psi.get_device_pointer(sid));
@@ -236,36 +227,38 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
                                      atom_pair_num,
                                      streams[sid],
                                      nullptr);
-
+   
             if (isforce){
-            const int block_size = std::min(256, ceil_div(nwmax, 32) * 32);
-            dim3 grid_force(max_atom_per_z);
-            dim3 block_force(block_size);
-            dot_product_force<<<grid_force,
-                                block_force,
-                                block_size * 3 * sizeof(double),
-                                streams[sid]>>>(
-                                    dpsi.get_device_pointer(sid),
-                                    psi_dm.get_device_pointer(sid),
-                                    force.get_device_pointer(sid),
-                                    iat_per_z.get_device_pointer(sid),
-                                    nwmax);
-            checkCudaLastError();
+                dim3 grid_force(nbzp);
+                dim3 block_force(64);
+                dot_product_force<<<grid_force,
+                                    block_force,
+                                    32 * 3 * sizeof(double),
+                                    streams[sid]>>>(
+                                        bxyz,
+                                        nwmax,
+                                        atoms_num_info.get_device_pointer(sid),
+                                        iat_on_nbz.get_device_pointer(sid),
+                                        dpsi.get_device_pointer(sid),
+                                        psi_dm.get_device_pointer(sid),
+                                        force.get_device_pointer(sid));
+                checkCudaLastError();
             }
 
             if (isstress){ 
-            dim3 grid_stress(cuda_block);
-            dim3 block_stress(cuda_threads);
-            dot_product_stress<<<grid_stress,
-                                 block_stress,
-                                 0,
-                                 streams[sid]>>>(
-                                d2psi.get_device_pointer(sid),
-                                psi_dm.get_device_pointer(sid),
-                                stress.get_device_pointer(sid),
-                                max_phi_per_z);
-            checkCudaLastError();
+                dim3 grid_stress(nbzp);
+                dim3 block_stress(64);
+                dot_product_stress<<<grid_stress,
+                                        block_stress,
+                                        32 * 6 * sizeof(double),
+                                        streams[sid]>>>(
+                                    d2psi.get_device_pointer(sid),
+                                    psi_dm.get_device_pointer(sid),
+                                    atoms_per_z * nwmax * bxyz,
+                                    stress.get_device_pointer(sid));
+                checkCudaLastError();
             }
+            checkCuda(cudaStreamSynchronize(streams[sid]));
         }
     }
 

@@ -518,6 +518,7 @@ void Input::Default() {
     out_dipole = false;
     out_efield = false;
     out_current = false;
+    out_current_k = false;
     out_vecpot = false;
     init_vecpot_file = false;
 
@@ -1444,7 +1445,13 @@ bool Input::Read(const std::string& fn) {
             read_value(ifs, out_dipole);
         } else if (strcmp("out_current", word) == 0) {
             read_value(ifs, out_current);
-        } else if (strcmp("out_efield", word) == 0) {
+        }
+        else if (strcmp("out_current_k", word) == 0)
+        {
+            read_value(ifs, out_current_k);
+        }
+        else if (strcmp("out_efield", word) == 0)
+        {
             read_value(ifs, out_efield);
         } else if (strcmp("out_vecpot", word) == 0) {
             read_value(ifs, out_vecpot);
@@ -1919,12 +1926,11 @@ bool Input::Read(const std::string& fn) {
     }
     double ntype_stru = this->count_ntype(this->stru_file);
     if (this->ntype != 0) {
-        std::string ntype_doc = " 'ntype' is no longer required in INPUT, and "
-                                "it will be ignored.";
+        std::string ntype_doc = " 'ntype' is no longer required in INPUT, and it will be ignored.";
         GlobalV::ofs_running << ntype_doc << std::endl;
         std::cout << ntype_doc << std::endl;
     }
-    GlobalV::ofs_running << "ntype is automatically set to " << this->ntype
+    GlobalV::ofs_running << "ntype is automatically set to " << ntype_stru
                          << " according to STRU" << std::endl;
     this->ntype = ntype_stru;
 
@@ -2503,8 +2509,13 @@ void Input::Default_2() // jiyy add 2019-08-04
                 ks_solver = "genelpa";
                 ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "genelpa");
 #else
+#ifdef __MPI
                 ks_solver = "scalapack_gvx";
                 ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "scalapack_gvx");
+#else
+                ks_solver = "lapack";
+                ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "lapack");
+#endif
 #endif
             }
         }
@@ -3022,6 +3033,7 @@ void Input::Bcast() {
     Parallel_Common::bcast_bool(out_dipole);
     Parallel_Common::bcast_bool(out_efield);
     Parallel_Common::bcast_bool(out_current);
+    Parallel_Common::bcast_bool(out_current_k);
     Parallel_Common::bcast_bool(out_vecpot);
     Parallel_Common::bcast_bool(init_vecpot_file);
     Parallel_Common::bcast_double(td_print_eij);
@@ -3673,7 +3685,11 @@ void Input::Check() {
 #ifdef __ELPA
             ks_solver = "genelpa";
 #else
+#ifdef __MPI
             ks_solver = "scalapack_gvx";
+#else
+            ks_solver = "lapack";
+#endif
 #endif
         } else {
             if ((basis_type != "pw") && (basis_type != "lcao")) {

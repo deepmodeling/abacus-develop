@@ -47,6 +47,9 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psi,
         nspin0 = 2;
     }
 
+    // get the date pointer of SK
+    const double* sk = dynamic_cast<const hamilt::HamiltLCAO<double, double>*>(p_ham)->getSk();
+
     // find the maximal and minimal band energy.
     double emax = ekb(0, 0);
     double emin = ekb(0, 0);
@@ -151,7 +154,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psi,
                     &GlobalV::NLOCAL,
                     &GlobalV::NLOCAL,
                     &one_float,
-                    lm.Sloc.data(),
+                    sk,
                     &one_int,
                     &one_int,
                     pv.desc,
@@ -442,16 +445,16 @@ void ModuleIO::write_dos_lcao(const psi::Psi<std::complex<double>>* psi,
             if (is == kv.isk[ik])
             {
                 // calculate SK for current k point
-                // the target matrix is LM->Sloc2 with collumn-major
+                const std::complex<double>* sk = nullptr;
                 if (GlobalV::NSPIN == 4)
                 {
-                    dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(p_ham)->updateSk(ik,
-                                                                                                                   &lm,
-                                                                                                                   1);
+                    dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(p_ham)->updateSk(ik, 1);
+                    sk = dynamic_cast<const hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(p_ham)->getSk();
                 }
                 else
                 {
-                    dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham)->updateSk(ik, &lm, 1);
+                    dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham)->updateSk(ik, 1);
+                    sk = dynamic_cast<const hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham)->getSk();
                 }
 
                 psi->fix_k(ik);
@@ -489,7 +492,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<std::complex<double>>* psi,
                             &GlobalV::NLOCAL,
                             &GlobalV::NLOCAL,
                             &one_float[0],
-                            lm.Sloc2.data(),
+                            sk,
                             &one_int,
                             &one_int,
                             pv.desc,

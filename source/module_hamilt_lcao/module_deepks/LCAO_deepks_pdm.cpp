@@ -25,31 +25,24 @@
 #include "module_hamilt_lcao/module_hcontainer/atom_pair.h"
 #include "module_base/libm/libm.h"
 
-//this subroutine performs the calculation of projected density matrices
-//pdm_m,m'=\sum_{mu,nu} rho_{mu,nu} <chi_mu|alpha_m><alpha_m'|chi_nu>
-void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<double, double>* dm, 
-    const UnitCell &ucell,
-    const LCAO_Orbitals &orb,
-    Grid_Driver& GridD)
+void LCAO_Deepks::read_projected_DM(bool read_pdm_file, bool is_equiv, const Numerical_Orbital& alpha)
 {
-    ModuleBase::TITLE("LCAO_Deepks", "cal_projected_DM");
-
-    int pdm_size = 0;
-    if(!GlobalV::deepks_equiv)
+    if (read_pdm_file && !this->init_pdm) //for DeePKS NSCF calculation 
     {
-        pdm_size = (this->lmaxd * 2 + 1) * (this->lmaxd * 2 + 1);
-    }
-    else
-    {
-        int nproj = 0;
-        for(int il = 0; il < this->lmaxd + 1; il++)
+        int pdm_size = 0;
+        if(!is_equiv)
         {
-            nproj += (2 * il + 1) * orb.Alpha[0].getNchi(il);
+            pdm_size = (this->lmaxd * 2 + 1) * (this->lmaxd * 2 + 1);
         }
-        pdm_size = nproj * nproj;
-    }
-    if (GlobalV::init_chg == "file" && !this->init_pdm) //for DeePKS NSCF calculation 
-    {
+        else
+        {
+            int nproj = 0;
+            for(int il = 0; il < this->lmaxd + 1; il++)
+            {
+                nproj += (2 * il + 1) * alpha.getNchi(il);
+            }
+            pdm_size = nproj * nproj;
+        }
         std::ifstream ifs("pdm.dat");
         if (!ifs)
         {
@@ -65,7 +58,37 @@ void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<double, double
             }
         }
         this->init_pdm = true;
+    }
+}
+
+//this subroutine performs the calculation of projected density matrices
+//pdm_m,m'=\sum_{mu,nu} rho_{mu,nu} <chi_mu|alpha_m><alpha_m'|chi_nu>
+void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<double, double>* dm, 
+    const UnitCell &ucell,
+    const LCAO_Orbitals &orb,
+    Grid_Driver& GridD)
+{
+    ModuleBase::TITLE("LCAO_Deepks", "cal_projected_DM");
+
+    // if pdm has been initialized, skip the calculation
+    if(this->init_pdm)
+    {
+        this->init_pdm = false;
         return;
+    }
+    int pdm_size = 0;
+    if(!GlobalV::deepks_equiv)
+    {
+        pdm_size = (this->lmaxd * 2 + 1) * (this->lmaxd * 2 + 1);
+    }
+    else
+    {
+        int nproj = 0;
+        for(int il = 0; il < this->lmaxd + 1; il++)
+        {
+            nproj += (2 * il + 1) * orb.Alpha[0].getNchi(il);
+        }
+        pdm_size = nproj * nproj;
     }
 
     //if(dm.size() == 0 || dm[0].size() == 0)
@@ -289,6 +312,12 @@ void LCAO_Deepks::cal_projected_DM_k(const elecstate::DensityMatrix<std::complex
     const LCAO_Orbitals &orb,
     Grid_Driver& GridD)
 {
+    // if pdm has been initialized, skip the calculation
+    if(this->init_pdm)
+    {
+        this->init_pdm = false;
+        return;
+    }
 
     int pdm_size = 0;
     if(!GlobalV::deepks_equiv)
@@ -303,26 +332,6 @@ void LCAO_Deepks::cal_projected_DM_k(const elecstate::DensityMatrix<std::complex
             nproj += (2 * il + 1) * orb.Alpha[0].getNchi(il);
         }
         pdm_size = nproj * nproj;        
-    }
-
-    if (GlobalV::init_chg == "file" && !this->init_pdm) //for DeePKS NSCF calculation 
-    {
-        std::ifstream ifs("pdm.dat");
-        if (!ifs)
-        {
-            ModuleBase::WARNING_QUIT("LCAO_Deepks::cal_projected_DM_k","Can not find the file pdm.dat . Please do DeePKS SCF calculation first.");
-        }
-        for(int inl=0;inl<this->inlmax;inl++)
-        {
-            for(int ind=0;ind<pdm_size;ind++)
-            {
-                double c;
-			    ifs >> c;
-                pdm[inl][ind] = c;
-            }
-        }
-        this->init_pdm = true;
-        return;
     }
 
     //check for skipping

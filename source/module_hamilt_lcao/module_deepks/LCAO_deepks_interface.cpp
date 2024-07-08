@@ -86,7 +86,8 @@ void LCAO_Deepks_Interface::out_deepks_labels(double etot,
     if (GlobalV::deepks_out_labels || GlobalV::deepks_scf)
     {
         // this part is for integrated test of deepks
-        ld->cal_projected_DM(dm, ucell, orb, GridD);
+        // when deepks_scf is on, the init pdm should be same as the out pdm, so we should not recalculate the pdm
+        if(!GlobalV::deepks_scf) ld->cal_projected_DM(dm, ucell, orb, GridD);
         ld->check_projected_dm(); // print out the projected dm for NSCF calculaiton
         ld->cal_descriptor(nat);     // final descriptor
         ld->check_descriptor(ucell);
@@ -188,7 +189,8 @@ void LCAO_Deepks_Interface::out_deepks_labels(double etot,
     {
         // this part is for integrated test of deepks
         // so it is printed no matter even if deepks_out_labels is not used
-        ld->cal_projected_DM_k(dm, ucell, orb, GridD);
+        // when deepks_scf is on, the init pdm should be same as the out pdm, so we should not recalculate the pdm
+        if(!GlobalV::deepks_scf) ld->cal_projected_DM_k(dm, ucell, orb, GridD);
         ld->check_projected_dm(); // print out the projected dm for NSCF calculaiton
         ld->cal_descriptor(nat);     // final descriptor
         ld->check_descriptor(ucell);
