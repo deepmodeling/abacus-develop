@@ -11,7 +11,7 @@ void ReadInput::item_relax()
         Input_Item item("ks_solver");
         item.annotation = "cg; dav; lapack; genelpa; scalapack_gvx; cusolver";
         read_sync_string(ks_solver);
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.ks_solver == "default")
             {
                 if (para.input.basis_type == "pw")
@@ -59,7 +59,7 @@ void ReadInput::item_relax()
                 }
             };
         };
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             const std::string& ks_solver = para.input.ks_solver;
             const std::vector<std::string> pw_solvers = {"cg", "dav", "bpcg", "dav_subspace"};
             const std::vector<std::string> lcao_solvers = {
@@ -150,7 +150,7 @@ void ReadInput::item_relax()
     {
         Input_Item item("relax_nmax");
         item.annotation = "number of ion iteration steps";
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             const std::string& calculation = para.input.calculation;
             const std::vector<std::string> singlelist
                 = {"scf", "nscf", "get_S", "get_pchg", "get_wf", "test_memory", "test_neighbour", "gen_bessel"};
@@ -172,7 +172,7 @@ void ReadInput::item_relax()
     {
         Input_Item item("out_stru");
         item.annotation = "output the structure files after each ion step";
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             const std::vector<std::string> offlist = {"nscf", "get_S", "get_pchg", "get_wf"};
             if (find_str(offlist, para.input.calculation))
             {
@@ -186,8 +186,8 @@ void ReadInput::item_relax()
         Input_Item item("force_thr");
         item.annotation = "force threshold, unit: Ry/Bohr";
         // read_sync_double(force_thr);
-        item.readvalue = [](const Input_Item& item, Parameter& para) { para.input.force_thr = doublevalue; };
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.read_value = [](const Input_Item& item, Parameter& para) { para.input.force_thr = doublevalue; };
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.force_thr == -1 && para.input.force_thr_ev == -1)
             {
                 para.input.force_thr = 1.0e-3; // default value
@@ -210,7 +210,7 @@ void ReadInput::item_relax()
     {
         Input_Item item("force_thr_ev");
         item.annotation = "force threshold, unit: eV/Angstrom";
-        item.readvalue = [](const Input_Item& item, Parameter& para) { para.input.force_thr_ev = doublevalue; };
+        item.read_value = [](const Input_Item& item, Parameter& para) { para.input.force_thr_ev = doublevalue; };
         sync_double(force_thr_ev);
         this->add_item(item);
     }
@@ -283,7 +283,7 @@ void ReadInput::item_relax()
     {
         Input_Item item("cal_stress");
         item.annotation = "calculate the stress or not";
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.calculation == "md")
             {
                 if (para.input.esolver_type == "lj" || para.input.esolver_type == "dp"
@@ -323,7 +323,7 @@ void ReadInput::item_relax()
         Input_Item item("relax_method");
         item.annotation = "cg; bfgs; sd; cg; cg_bfgs;";
         read_sync_string(relax_method);
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             const std::vector<std::string> relax_methods = {"cg", "bfgs", "sd", "cg_bfgs"};
             if (!find_str(relax_methods, para.input.relax_method))
             {
@@ -347,11 +347,11 @@ void ReadInput::item_relax()
     {
         Input_Item item("out_level");
         item.annotation = "ie(for electrons); i(for ions);";
-        item.readvalue = [](const Input_Item& item, Parameter& para) {
+        item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.out_level = strvalue;
             para.input.sup.out_md_control = true;
         };
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (!para.input.sup.out_md_control && para.input.calculation == "md")
             {
                 para.input.out_level = "m"; // zhengdy add 2019-04-07
@@ -364,13 +364,13 @@ void ReadInput::item_relax()
     {
         Input_Item item("out_dm");
         item.annotation = ">0 output density matrix";
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.calculation == "get_pchg" || para.input.calculation == "get_wf")
             {
                 para.input.out_dm = false;
             }
         };
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.sup.gamma_only_local == false && para.input.out_dm)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "out_dm with k-point algorithm is not implemented yet.");
@@ -382,13 +382,13 @@ void ReadInput::item_relax()
     {
         Input_Item item("out_dm1");
         item.annotation = ">0 output density matrix (multi-k points)";
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.calculation == "get_pchg" || para.input.calculation == "get_wf")
             {
                 para.input.out_dm1 = false;
             }
         };
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.sup.gamma_only_local == true && para.input.out_dm1)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "out_dm1 is only for multi-k");
@@ -407,7 +407,7 @@ void ReadInput::item_relax()
         Input_Item item("use_paw");
         item.annotation = "whether to use PAW in pw calculation";
         read_sync_bool(use_paw);
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.use_paw)
             {
 #ifndef USE_PAW

@@ -17,7 +17,7 @@ void ReadInput::item_pw()
         Input_Item item("ecutrho");
         item.annotation = "energy cutoff for charge density and potential";
         read_sync_double(ecutrho);
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             Input_para& input = para.input;
             if (input.ecutrho <= 0.0)
             {
@@ -28,7 +28,7 @@ void ReadInput::item_pw()
                 input.sup.double_grid = true;
             }
         };
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.ecutrho / para.input.ecutwfc < 4 - 1e-8)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "ecutrho/ecutwfc must >= 4");
@@ -89,7 +89,7 @@ void ReadInput::item_pw()
         Input_Item item("pw_diag_thr");
         item.annotation = "threshold for eigenvalues is cg electron iterations";
         read_sync_double(pw_diag_thr);
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.calculation == "get_S" && para.input.basis_type == "pw")
             {
                 if (para.input.pw_diag_thr > 1.0e-3)
@@ -102,7 +102,7 @@ void ReadInput::item_pw()
         Input_Item item("nb2d");
         item.annotation = "matrix 2d division";
         read_sync_int(nb2d);
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.nb2d < 0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "nb2d should be greater than 0");
@@ -114,7 +114,7 @@ void ReadInput::item_pw()
         Input_Item item("scf_thr");
         item.annotation = "charge density error";
         read_sync_double(scf_thr);
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.scf_thr == -1.0)
             {
                 if (para.input.basis_type == "lcao" || para.input.basis_type == "lcao_in_pw")
@@ -143,7 +143,7 @@ void ReadInput::item_pw()
         item.annotation = "type of the criterion of scf_thr, 1: reci drho for "
                           "pw, 2: real drho for lcao";
         read_sync_int(scf_thr_type);
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.scf_thr_type == -1)
             {
                 if (para.input.basis_type == "lcao" || para.input.basis_type == "lcao_in_pw")
@@ -162,7 +162,7 @@ void ReadInput::item_pw()
         Input_Item item("init_wfc");
         item.annotation = "start wave functions are from 'atomic', "
                           "'atomic+random', 'random' or";
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.calculation == "get_pchg" || para.input.calculation == "get_wf")
             {
                 para.input.init_wfc = "file";
@@ -184,7 +184,7 @@ void ReadInput::item_pw()
     {
         Input_Item item("psi_initializer");
         item.annotation = "whether to use psi_initializer";
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.basis_type == "lcao_in_pw")
             {
                 para.input.psi_initializer = true;
@@ -197,7 +197,7 @@ void ReadInput::item_pw()
         Input_Item item("init_chg");
         item.annotation = "start charge is from 'atomic' or file";
         read_sync_string(init_chg);
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.calculation == "get_pchg" || para.input.calculation == "get_wf")
             {
                 para.input.init_chg = "atomic";
@@ -211,7 +211,7 @@ void ReadInput::item_pw()
                 para.input.init_chg = "file";
             }
         };
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.init_chg != "atomic" && para.input.init_chg != "file" && para.input.init_chg != "auto")
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "init_chg should be 'atomic', 'file' or 'auto'");
@@ -223,7 +223,7 @@ void ReadInput::item_pw()
         Input_Item item("chg_extrap");
         item.annotation = "atomic; first-order; second-order; dm:coefficients of SIA";
         read_sync_string(chg_extrap);
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.chg_extrap == "default" && para.input.calculation == "md")
             {
                 para.input.chg_extrap = "second-order";
@@ -247,7 +247,7 @@ void ReadInput::item_pw()
     {
         Input_Item item("out_chg");
         item.annotation = ">0 output charge density for selected electron steps";
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
                 para.input.out_chg = 1;
         };
@@ -257,7 +257,7 @@ void ReadInput::item_pw()
     {
         Input_Item item("out_pot");
         item.annotation = "output realspace potential";
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
                 para.input.out_pot = 0;
         };
@@ -280,11 +280,11 @@ void ReadInput::item_pw()
         Input_Item item("out_dos");
         item.annotation = "output energy and dos";
         read_sync_int(out_dos);
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
                 para.input.out_dos = 0;
         };
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.out_dos == 3 && para.input.symmetry == "1")
             {
                 ModuleBase::WARNING_QUIT("ReadInput",
@@ -303,7 +303,7 @@ void ReadInput::item_pw()
     {
         Input_Item item("out_band");
         item.annotation = "output energy and band structure (with precision 8)";
-        item.readvalue = [](const Input_Item& item, Parameter& para) {
+        item.read_value = [](const Input_Item& item, Parameter& para) {
             size_t count = item.get_size();
             if (count == 1)
             {
@@ -320,7 +320,7 @@ void ReadInput::item_pw()
                 ModuleBase::WARNING_QUIT("ReadInput", "out_band should have 1 or 2 values");
             }
         };
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
                 para.input.out_band[0] = 0;
         };
@@ -331,11 +331,11 @@ void ReadInput::item_pw()
         Input_Item item("out_proj_band");
         item.annotation = "output projected band structure";
         read_sync_bool(out_proj_band);
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
                 para.input.out_proj_band = false;
         };
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.basis_type == "pw" && para.input.out_proj_band)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "out_proj_band is only for lcao");
@@ -359,7 +359,7 @@ void ReadInput::item_pw()
         Input_Item item("read_file_dir");
         item.annotation = "directory of files for reading";
         read_sync_string(read_file_dir);
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.read_file_dir == "auto")
             {
                 para.input.read_file_dir = "OUT." + para.input.suffix;
@@ -378,11 +378,11 @@ void ReadInput::item_pw()
     {
         Input_Item item("nx");
         item.annotation = "number of points along x axis for FFT grid";
-        item.readvalue = [](const Input_Item& item, Parameter& para) {
+        item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.nx = intvalue;
             para.input.sup.ncx = intvalue;
         };
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.nx * para.input.ny * para.input.nz == 0 && para.input.nx != 0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "nx, ny, nz should be all set to non-zero");
@@ -395,11 +395,11 @@ void ReadInput::item_pw()
     {
         Input_Item item("ny");
         item.annotation = "number of points along y axis for FFT grid";
-        item.readvalue = [](const Input_Item& item, Parameter& para) {
+        item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.ny = intvalue;
             para.input.sup.ncy = intvalue;
         };
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.nx * para.input.ny * para.input.nz == 0 && para.input.ny != 0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "nx, ny, nz should be all set to non-zero");
@@ -412,11 +412,11 @@ void ReadInput::item_pw()
     {
         Input_Item item("nz");
         item.annotation = "number of points along z axis for FFT grid";
-        item.readvalue = [](const Input_Item& item, Parameter& para) {
+        item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.nz = intvalue;
             para.input.sup.ncz = intvalue;
         };
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.nx * para.input.ny * para.input.nz == 0 && para.input.nz != 0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "nx, ny, nz should be all set to non-zero");
@@ -430,13 +430,13 @@ void ReadInput::item_pw()
         Input_Item item("ndx");
         item.annotation = "number of points along x axis for FFT smooth grid";
         read_sync_int(ndx);
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.ndx > para.input.nx)
             {
                 para.input.sup.double_grid = true;
             }
         };
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (!item.is_read())
                 return;
             if (para.input.ndx * para.input.ndy * para.input.ndz == 0 && para.input.ndx != 0)
@@ -455,13 +455,13 @@ void ReadInput::item_pw()
         Input_Item item("ndy");
         item.annotation = "number of points along y axis for FFT smooth grid";
         read_sync_int(ndy);
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.ndy > para.input.ny)
             {
                 para.input.sup.double_grid = true;
             }
         };
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (!item.is_read())
                 return;
             if (para.input.ndx * para.input.ndy * para.input.ndz == 0 && para.input.ndy != 0)
@@ -479,13 +479,13 @@ void ReadInput::item_pw()
         Input_Item item("ndz");
         item.annotation = "number of points along z axis for FFT smooth grid";
         read_sync_int(ndz);
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.ndy > para.input.ny)
             {
                 para.input.sup.double_grid = true;
             }
         };
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (!item.is_read())
                 return;
             if (para.input.ndx * para.input.ndy * para.input.ndz == 0 && para.input.ndz != 0)

@@ -11,7 +11,7 @@ void ReadInput::item_sdft()
         Input_Item item("method_sto");
         item.annotation = "1: slow and save memory, 2: fast and waste memory";
         read_sync_int(method_sto);
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.method_sto != 1 && para.input.method_sto != 2)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "method_sto should be 1 or 2");
@@ -28,7 +28,7 @@ void ReadInput::item_sdft()
     {
         Input_Item item("nbands_sto");
         item.annotation = "number of stochstic orbitals";
-        item.readvalue = [](const Input_Item& item, Parameter& para) {
+        item.read_value = [](const Input_Item& item, Parameter& para) {
             std::string nbandsto_str = strvalue;
             if (nbandsto_str != "all")
             {
@@ -39,7 +39,7 @@ void ReadInput::item_sdft()
                 para.input.nbands_sto = 0;
             }
         };
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             // only do it when nbands_sto is set in INPUT
             if (item.is_read())
             {
@@ -50,13 +50,13 @@ void ReadInput::item_sdft()
                 }
             }
         };
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.nbands_sto < 0 || para.input.nbands_sto > 100000)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "nbands_sto should be in the range of 0 to 100000");
             }
         };
-        item.getfinalvalue = [](Input_Item& item, const Parameter& para) {
+        item.get_final_value = [](Input_Item& item, const Parameter& para) {
             if (item.str_values.size() == 0) // no nbands_sto in INPUT
             {
                 item.final_value << para.input.nbands_sto;

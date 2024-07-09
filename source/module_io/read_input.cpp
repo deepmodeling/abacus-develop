@@ -278,7 +278,7 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
     // 1) read the value of the parameters
     for (auto& readvalue_item: this->readvalue_items)
     {
-        readvalue_item->readvalue(*readvalue_item, param);
+        readvalue_item->read_value(*readvalue_item, param);
     }
 
     // 2) count the number of atom types from STRU file
@@ -290,16 +290,16 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
     for (auto& input_item: this->input_lists)
     {
         Input_Item* resetvalue_item = &(input_item.second);
-        if (resetvalue_item->resetvalue != nullptr)
-            resetvalue_item->resetvalue(*resetvalue_item, param);
+        if (resetvalue_item->reset_value != nullptr)
+            resetvalue_item->reset_value(*resetvalue_item, param);
     }
 
     // 4) check the value of the parameters
     for (auto& input_item: this->input_lists)
     {
         Input_Item* checkvalue_item = &(input_item.second);
-        if (checkvalue_item->checkvalue != nullptr)
-            checkvalue_item->checkvalue(*checkvalue_item, param);
+        if (checkvalue_item->check_value != nullptr)
+            checkvalue_item->check_value(*checkvalue_item, param);
     }
 }
 
@@ -314,9 +314,9 @@ void ReadInput::write_txt_input(const Parameter& param, const std::string& filen
     for (auto& item: this->input_lists)
     {
         Input_Item* p_item = &(item.second);
-        if (p_item->getfinalvalue == nullptr)
+        if (p_item->get_final_value == nullptr)
             continue;
-        p_item->getfinalvalue(*p_item, param);
+        p_item->get_final_value(*p_item, param);
         if (p_item->label == "ecutwfc")
         {
             ofs << "\n#Parameters (2.PW)" << std::endl;

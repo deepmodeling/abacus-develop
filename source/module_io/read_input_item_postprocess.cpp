@@ -22,7 +22,7 @@ void ReadInput::item_postprocess()
         // Energy range for smearing,
         //`smearing_sigma` = 1/2 *kB* `smearing_sigma_temp`.
         Input_Item tmp_item("smearing_sigma_temp");
-        tmp_item.readvalue
+        tmp_item.read_value
             = [](const Input_Item& item, Parameter& para) { para.input.smearing_sigma = 3.166815e-6 * doublevalue; };
         // only to set smearing_sigma, so no need to write to output INPUT file
         // or bcast.
@@ -40,7 +40,7 @@ void ReadInput::item_postprocess()
         Input_Item item("mixing_beta");
         item.annotation = "mixing parameter: 0 means no new charge";
         read_sync_double(mixing_beta);
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.mixing_beta < 0.0)
             {
                 if (para.input.nspin == 1)
@@ -85,7 +85,7 @@ void ReadInput::item_postprocess()
         Input_Item item("mixing_beta_mag");
         item.annotation = "mixing parameter for magnetic density";
         read_sync_double(mixing_beta_mag);
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.mixing_beta_mag < 0.0)
             {
                 if (para.input.nspin == 2 || para.input.nspin == 4)
@@ -144,7 +144,7 @@ void ReadInput::item_postprocess()
     {
         Input_Item item("dos_emin_ev");
         item.annotation = "minimal range for dos";
-        item.readvalue = [](const Input_Item& item, Parameter& para) {
+        item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.dos_emin_ev = doublevalue;
             para.input.sup.dos_setemin = true;
         };
@@ -155,7 +155,7 @@ void ReadInput::item_postprocess()
     {
         Input_Item item("dos_emax_ev");
         item.annotation = "maximal range for dos";
-        item.readvalue = [](const Input_Item& item, Parameter& para) {
+        item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.dos_emax_ev = doublevalue;
             para.input.sup.dos_setemax = true;
         };

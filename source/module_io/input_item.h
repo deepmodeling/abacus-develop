@@ -25,10 +25,10 @@ class Input_Item
         str_values = item.str_values;
         final_value.str(item.final_value.str());
         annotation = item.annotation;
-        readvalue = item.readvalue;
-        checkvalue = item.checkvalue;
-        resetvalue = item.resetvalue;
-        getfinalvalue = item.getfinalvalue;
+        read_value = item.read_value;
+        check_value = item.check_value;
+        reset_value = item.reset_value;
+        get_final_value = item.get_final_value;
     }
 
     std::string label;                   ///< label of the input item
@@ -56,13 +56,14 @@ class Input_Item
     // ====== !!! These functions are complete.        ======
     // ====== !!! Do not add any more functions here.  ======
     /// read value function
-    std::function<void(const Input_Item&, Parameter&)> readvalue = [](const Input_Item& item, Parameter& param) {};
+    std::function<void(const Input_Item&, Parameter&)> read_value = [](const Input_Item& item, Parameter& param) {};
     /// check value function
-    std::function<void(const Input_Item&, const Parameter&)> checkvalue = nullptr;
+    std::function<void(const Input_Item&, const Parameter&)> check_value = nullptr;
     /// reset this value when some conditions are met
-    std::function<void(const Input_Item&, Parameter&)> resetvalue = nullptr;
+    /// e.g. should only reset the value of this item
+    std::function<void(const Input_Item&, Parameter&)> reset_value = nullptr;
     /// get final_value function for output INPUT file
-    std::function<void(Input_Item&, const Parameter&)> getfinalvalue = nullptr;
+    std::function<void(Input_Item&, const Parameter&)> get_final_value = nullptr;
     // ====== !!! Do not add any more functions here.  ======
 };
 

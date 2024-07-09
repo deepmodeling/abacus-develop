@@ -22,7 +22,7 @@ void ReadInput::item_others()
     {
         Input_Item item("dip_cor_flag");
         item.annotation = "dipole correction";
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.dip_cor_flag && !para.input.efield_flag)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "dipole correction is not active if efield_flag=false !");
@@ -34,7 +34,7 @@ void ReadInput::item_others()
     {
         Input_Item item("efield_dir");
         item.annotation = "the direction of the electric field or dipole correction";
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.gate_flag && para.input.efield_flag && !para.input.dip_cor_flag)
             {
                 ModuleBase::WARNING_QUIT("ReadInput",
@@ -187,7 +187,7 @@ void ReadInput::item_others()
     {
         Input_Item item("vdw_s6");
         item.annotation = "scale parameter of d2/d3_0/d3_bj";
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.vdw_s6 == "default")
             {
                 if (para.input.vdw_method == "d2")
@@ -206,7 +206,7 @@ void ReadInput::item_others()
     {
         Input_Item item("vdw_s8");
         item.annotation = "scale parameter of d3_0/d3_bj";
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.vdw_s8 == "default")
             {
                 if (para.input.vdw_method == "d3_0")
@@ -225,7 +225,7 @@ void ReadInput::item_others()
     {
         Input_Item item("vdw_a1");
         item.annotation = "damping parameter of d3_0/d3_bj";
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.vdw_a1 == "default")
             {
                 if (para.input.vdw_method == "d3_0")
@@ -244,7 +244,7 @@ void ReadInput::item_others()
     {
         Input_Item item("vdw_a2");
         item.annotation = "damping parameter of d3_bj";
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.vdw_a2 == "default")
             {
                 if (para.input.vdw_method == "d3_0")
@@ -282,7 +282,7 @@ void ReadInput::item_others()
         Input_Item item("vdw_c6_unit");
         item.annotation = "unit of C6, Jnm6/mol or eVA6";
         read_sync_string(vdw_C6_unit);
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if ((para.input.vdw_C6_unit != "Jnm6/mol") && (para.input.vdw_C6_unit != "eVA6"))
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "vdw_C6_unit must be Jnm6/mol or eVA6");
@@ -300,7 +300,7 @@ void ReadInput::item_others()
         Input_Item item("vdw_r0_unit");
         item.annotation = "unit of R0, A or Bohr";
         read_sync_string(vdw_R0_unit);
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if ((para.input.vdw_R0_unit != "A") && (para.input.vdw_R0_unit != "Bohr"))
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "vdw_R0_unit must be A or Bohr");
@@ -311,7 +311,7 @@ void ReadInput::item_others()
     {
         Input_Item item("vdw_cutoff_type");
         item.annotation = "expression model of periodic structure, radius or period";
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.vdw_cutoff_type != "radius" && para.input.vdw_cutoff_type != "period")
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "vdw_cutoff_type must be radius or period");
@@ -323,7 +323,7 @@ void ReadInput::item_others()
     {
         Input_Item item("vdw_cutoff_radius");
         item.annotation = "radius cutoff for periodic structure";
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.vdw_cutoff_radius == "default")
             {
                 if (para.input.vdw_method == "d2")
@@ -340,7 +340,7 @@ void ReadInput::item_others()
                 }
             }
         };
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (std::stod(para.input.vdw_cutoff_radius) <= 0 && para.input.vdw_method != "none")
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "vdw_cutoff_radius <= 0 is not allowd");
@@ -353,7 +353,7 @@ void ReadInput::item_others()
         Input_Item item("vdw_radius_unit");
         item.annotation = "unit of radius cutoff for periodic structure";
         read_sync_string(vdw_radius_unit);
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if ((para.input.vdw_radius_unit != "A") && (para.input.vdw_radius_unit != "Bohr"))
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "vdw_radius_unit must be A or Bohr");
@@ -365,7 +365,7 @@ void ReadInput::item_others()
         Input_Item item("vdw_cn_thr");
         item.annotation = "radius cutoff for cn";
         read_sync_double(vdw_cn_thr);
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.vdw_cn_thr <= 0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "vdw_cn_thr <= 0 is not allowd");
@@ -377,7 +377,7 @@ void ReadInput::item_others()
         Input_Item item("vdw_cn_thr_unit");
         item.annotation = "unit of cn_thr, Bohr or Angstrom";
         read_sync_string(vdw_cn_thr_unit);
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if ((para.input.vdw_cn_thr_unit != "A") && (para.input.vdw_cn_thr_unit != "Bohr"))
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "vdw_cn_thr_unit must be A or Bohr");
@@ -388,7 +388,7 @@ void ReadInput::item_others()
     {
         Input_Item item("vdw_cutoff_period");
         item.annotation = "periods of periodic structure";
-        item.readvalue = [](const Input_Item& item, Parameter& para) {
+        item.read_value = [](const Input_Item& item, Parameter& para) {
             size_t count = item.get_size();
             if (count == 3)
             {
@@ -401,14 +401,14 @@ void ReadInput::item_others()
                 ModuleBase::WARNING_QUIT("ReadInput", "vdw_cutoff_period should have 3 values");
             }
         };
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.vdw_cutoff_period[0] <= 0 || para.input.vdw_cutoff_period[1] <= 0
                 || para.input.vdw_cutoff_period[2] <= 0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "vdw_cutoff_period should be positive");
             }
         };
-        item.getfinalvalue = [](Input_Item& item, const Parameter& para) {
+        item.get_final_value = [](Input_Item& item, const Parameter& para) {
             item.final_value << para.input.vdw_cutoff_period[0] << " " << para.input.vdw_cutoff_period[1] << " "
                              << para.input.vdw_cutoff_period[2];
         };
@@ -424,7 +424,7 @@ void ReadInput::item_others()
         Input_Item item("exx_hybrid_alpha");
         item.annotation = "fraction of Fock exchange in hybrid functionals";
         read_sync_string(exx_hybrid_alpha);
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.exx_hybrid_alpha == "default")
             {
                 std::string& dft_functional = para.input.dft_functional;
@@ -440,7 +440,7 @@ void ReadInput::item_others()
                     para.input.exx_hybrid_alpha = "0";
             }
         };
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             const double exx_hybrid_alpha_value = std::stod(para.input.exx_hybrid_alpha);
             if (exx_hybrid_alpha_value < 0 || exx_hybrid_alpha_value > 1)
             {
@@ -467,7 +467,7 @@ void ReadInput::item_others()
         item.annotation = "the maximal electronic iteration number in the "
                           "evaluation of Fock exchange";
         read_sync_int(exx_hybrid_step);
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.exx_hybrid_step <= 0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "exx_hybrid_step must > 0");
@@ -493,7 +493,7 @@ void ReadInput::item_others()
         Input_Item item("exx_real_number");
         item.annotation = "exx calculated in real or complex";
         read_sync_string(exx_real_number);
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.exx_real_number == "default")
             {
                 if (para.input.gamma_only)
@@ -570,7 +570,7 @@ void ReadInput::item_others()
                           "calculating Columb potential is to that "
                           "of atomic orbitals";
         read_sync_string(exx_ccp_rmesh_times);
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.exx_ccp_rmesh_times == "default")
             {
                 std::string& dft_functional = para.input.dft_functional;
@@ -584,7 +584,7 @@ void ReadInput::item_others()
                     para.input.exx_ccp_rmesh_times = "1";
             }
         };
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (std::stod(para.input.exx_ccp_rmesh_times) < 1)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "exx_ccp_rmesh_times must >= 1");
@@ -596,7 +596,7 @@ void ReadInput::item_others()
         Input_Item item("exx_distribute_type");
         item.annotation = "exx_distribute_type";
         read_sync_string(exx_distribute_type);
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.exx_distribute_type != "htime" && para.input.exx_distribute_type != "kmeans2"
                 && para.input.exx_distribute_type != "kmeans1" && para.input.exx_distribute_type != "order")
             {
@@ -611,7 +611,7 @@ void ReadInput::item_others()
         Input_Item item("exx_opt_orb_lmax");
         item.annotation = "the maximum l of the spherical Bessel functions for opt ABFs";
         read_sync_int(exx_opt_orb_lmax);
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.exx_opt_orb_lmax < 0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "exx_opt_orb_lmax must >= 0");
@@ -623,7 +623,7 @@ void ReadInput::item_others()
         Input_Item item("exx_opt_orb_ecut");
         item.annotation = "the cut-off of plane wave expansion for opt ABFs";
         read_sync_double(exx_opt_orb_ecut);
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.exx_opt_orb_ecut < 0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "exx_opt_orb_ecut must >= 0");
@@ -636,7 +636,7 @@ void ReadInput::item_others()
         item.annotation = "the threshold when solving for the zeros of "
                           "spherical Bessel functions for opt ABFs";
         read_sync_double(exx_opt_orb_tolerence);
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.exx_opt_orb_tolerence < 0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "exx_opt_orb_tolerence must >= 0");
@@ -650,7 +650,7 @@ void ReadInput::item_others()
                           "calculating Columb potential is to that "
                           "of atomic orbitals";
         read_sync_double(rpa_ccp_rmesh_times);
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.rpa_ccp_rmesh_times < 1)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "rpa_ccp_rmesh_times must >= 1");
@@ -675,7 +675,7 @@ void ReadInput::item_others()
     {
         Input_Item item("td_vext_dire");
         item.annotation = "extern potential direction";
-        item.readvalue = [](const Input_Item& item, Parameter& para) {
+        item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.td_vext_dire = longstring(item.str_values, item.get_size());
         };
         sync_string(td_vext_dire);
@@ -744,7 +744,7 @@ void ReadInput::item_others()
     {
         Input_Item item("td_ttype");
         item.annotation = "type of electric field in time domain";
-        item.readvalue = [](const Input_Item& item, Parameter& para) {
+        item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.td_ttype = longstring(item.str_values, item.get_size());
         };
         sync_string(td_ttype);
@@ -777,7 +777,7 @@ void ReadInput::item_others()
     {
         Input_Item item("td_gauss_freq");
         item.annotation = "frequency (freq) of Gauss type electric field";
-        item.readvalue = [](const Input_Item& item, Parameter& para) {
+        item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.td_gauss_freq = longstring(item.str_values, item.get_size());
         };
         sync_string(td_gauss_freq);
@@ -786,7 +786,7 @@ void ReadInput::item_others()
     {
         Input_Item item("td_gauss_phase");
         item.annotation = "phase of Gauss type electric field";
-        item.readvalue = [](const Input_Item& item, Parameter& para) {
+        item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.td_gauss_phase = longstring(item.str_values, item.get_size());
         };
         sync_string(td_gauss_phase);
@@ -795,7 +795,7 @@ void ReadInput::item_others()
     {
         Input_Item item("td_gauss_sigma");
         item.annotation = "sigma of Gauss type electric field";
-        item.readvalue = [](const Input_Item& item, Parameter& para) {
+        item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.td_gauss_sigma = longstring(item.str_values, item.get_size());
         };
         sync_string(td_gauss_sigma);
@@ -804,7 +804,7 @@ void ReadInput::item_others()
     {
         Input_Item item("td_gauss_t0");
         item.annotation = "step number of time center (t0) of Gauss type electric field";
-        item.readvalue = [](const Input_Item& item, Parameter& para) {
+        item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.td_gauss_t0 = longstring(item.str_values, item.get_size());
         };
         sync_string(td_gauss_t0);
@@ -813,7 +813,7 @@ void ReadInput::item_others()
     {
         Input_Item item("td_gauss_amp");
         item.annotation = "amplitude of Gauss type electric field";
-        item.readvalue = [](const Input_Item& item, Parameter& para) {
+        item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.td_gauss_amp = longstring(item.str_values, item.get_size());
         };
         sync_string(td_gauss_amp);
@@ -822,7 +822,7 @@ void ReadInput::item_others()
     {
         Input_Item item("td_trape_freq");
         item.annotation = "frequency of Trapezoid type electric field";
-        item.readvalue = [](const Input_Item& item, Parameter& para) {
+        item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.td_trape_freq = longstring(item.str_values, item.get_size());
         };
         sync_string(td_trape_freq);
@@ -831,7 +831,7 @@ void ReadInput::item_others()
     {
         Input_Item item("td_trape_phase");
         item.annotation = "phase of Trapezoid type electric field";
-        item.readvalue = [](const Input_Item& item, Parameter& para) {
+        item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.td_trape_phase = longstring(item.str_values, item.get_size());
         };
         sync_string(td_trape_phase);
@@ -840,7 +840,7 @@ void ReadInput::item_others()
     {
         Input_Item item("td_trape_t1");
         item.annotation = "t1 of Trapezoid type electric field";
-        item.readvalue = [](const Input_Item& item, Parameter& para) {
+        item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.td_trape_t1 = longstring(item.str_values, item.get_size());
         };
         sync_string(td_trape_t1);
@@ -849,7 +849,7 @@ void ReadInput::item_others()
     {
         Input_Item item("td_trape_t2");
         item.annotation = "t2 of Trapezoid type electric field";
-        item.readvalue = [](const Input_Item& item, Parameter& para) {
+        item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.td_trape_t2 = longstring(item.str_values, item.get_size());
         };
         sync_string(td_trape_t2);
@@ -858,7 +858,7 @@ void ReadInput::item_others()
     {
         Input_Item item("td_trape_t3");
         item.annotation = "t3 of Trapezoid type electric field";
-        item.readvalue = [](const Input_Item& item, Parameter& para) {
+        item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.td_trape_t3 = longstring(item.str_values, item.get_size());
         };
         sync_string(td_trape_t3);
@@ -867,7 +867,7 @@ void ReadInput::item_others()
     {
         Input_Item item("td_trape_amp");
         item.annotation = "amplitude of Trapezoid type electric field";
-        item.readvalue = [](const Input_Item& item, Parameter& para) {
+        item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.td_trape_amp = longstring(item.str_values, item.get_size());
         };
         sync_string(td_trape_amp);
@@ -876,7 +876,7 @@ void ReadInput::item_others()
     {
         Input_Item item("td_trigo_freq1");
         item.annotation = "frequency 1 of Trigonometric type electric field";
-        item.readvalue = [](const Input_Item& item, Parameter& para) {
+        item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.td_trigo_freq1 = longstring(item.str_values, item.get_size());
         };
         sync_string(td_trigo_freq1);
@@ -885,7 +885,7 @@ void ReadInput::item_others()
     {
         Input_Item item("td_trigo_freq2");
         item.annotation = "frequency 2 of Trigonometric type electric field";
-        item.readvalue = [](const Input_Item& item, Parameter& para) {
+        item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.td_trigo_freq2 = longstring(item.str_values, item.get_size());
         };
         sync_string(td_trigo_freq2);
@@ -894,7 +894,7 @@ void ReadInput::item_others()
     {
         Input_Item item("td_trigo_phase1");
         item.annotation = "phase 1 of Trigonometric type electric field";
-        item.readvalue = [](const Input_Item& item, Parameter& para) {
+        item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.td_trigo_phase1 = longstring(item.str_values, item.get_size());
         };
         sync_string(td_trigo_phase1);
@@ -903,7 +903,7 @@ void ReadInput::item_others()
     {
         Input_Item item("td_trigo_phase2");
         item.annotation = "phase 2 of Trigonometric type electric field";
-        item.readvalue = [](const Input_Item& item, Parameter& para) {
+        item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.td_trigo_phase2 = longstring(item.str_values, item.get_size());
         };
         sync_string(td_trigo_phase2);
@@ -912,7 +912,7 @@ void ReadInput::item_others()
     {
         Input_Item item("td_trigo_amp");
         item.annotation = "amplitude of Trigonometric type electric field";
-        item.readvalue = [](const Input_Item& item, Parameter& para) {
+        item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.td_trigo_amp = longstring(item.str_values, item.get_size());
         };
         sync_string(td_trigo_amp);
@@ -921,7 +921,7 @@ void ReadInput::item_others()
     {
         Input_Item item("td_heavi_t0");
         item.annotation = "t0 of Heaviside type electric field";
-        item.readvalue = [](const Input_Item& item, Parameter& para) {
+        item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.td_heavi_t0 = longstring(item.str_values, item.get_size());
         };
         sync_string(td_heavi_t0);
@@ -930,7 +930,7 @@ void ReadInput::item_others()
     {
         Input_Item item("td_heavi_amp");
         item.annotation = "amplitude of Heaviside type electric field";
-        item.readvalue = [](const Input_Item& item, Parameter& para) {
+        item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.td_heavi_amp = longstring(item.str_values, item.get_size());
         };
         sync_string(td_heavi_amp);
@@ -945,7 +945,7 @@ void ReadInput::item_others()
     {
         Input_Item item("ocp_set");
         item.annotation = "set occupation";
-        item.readvalue = [](const Input_Item& item, Parameter& para) {
+        item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.ocp_set = longstring(item.str_values, item.get_size());
         };
         sync_string(ocp_set);
@@ -957,7 +957,7 @@ void ReadInput::item_others()
         Input_Item item("berry_phase");
         item.annotation = "calculate berry phase or not";
         read_sync_bool(berry_phase);
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.berry_phase)
             {
                 if (para.input.basis_type != "pw" && para.input.basis_type != "lcao")
@@ -989,7 +989,7 @@ void ReadInput::item_others()
         Input_Item item("towannier90");
         item.annotation = "use wannier90 code interface or not";
         read_sync_bool(towannier90);
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.towannier90)
             {
                 if (para.input.calculation != "nscf")
@@ -1024,7 +1024,7 @@ void ReadInput::item_others()
     {
         Input_Item item("wannier_method");
         item.annotation = "different implementation methods under Lcao basis set";
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             /*
                        Developer's notes: on the repair of lcao_in_pw
 
@@ -1180,7 +1180,7 @@ void ReadInput::item_others()
                           "volume of system has changed, it will be "
                           "set to 1 automaticly if of_wt_rho0 is not zero";
         read_sync_bool(of_hold_rho0);
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.of_wt_rho0 != 0)
             {
                 para.input.of_hold_rho0 = true; // sunliang add 2022-06-17
@@ -1207,7 +1207,7 @@ void ReadInput::item_others()
                           "testricted to be (0) either odd or even; (1) odd "
                           "only; (2) even only";
         read_sync_int(of_full_pw_dim);
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (!para.input.of_full_pw)
             {
                 para.input.of_full_pw_dim = 0; // sunliang add 2022-08-31
@@ -1221,7 +1221,7 @@ void ReadInput::item_others()
                           "from file of_kernel_file, not from "
                           "formula. Only usable for WT KEDF";
         read_sync_bool(of_read_kernel);
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.of_kinetic != "wt")
             {
                 para.input.of_read_kernel = false; // sunliang add 2022-09-12
@@ -1241,7 +1241,7 @@ void ReadInput::item_others()
         Input_Item item("dft_plus_u");
         item.annotation = "DFT+U correction method";
         read_sync_int(dft_plus_u);
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             bool all_minus1 = true;
             for (auto& val: para.input.orbital_corr)
             {
@@ -1260,7 +1260,7 @@ void ReadInput::item_others()
                 }
             }
         };
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             const Input_para& input = para.input;
             if (input.dft_plus_u != 0)
             {
@@ -1294,11 +1294,11 @@ void ReadInput::item_others()
     {
         Input_Item item("uramping");
         item.annotation = "increasing U values during SCF";
-        item.readvalue = [](const Input_Item& item, Parameter& para) {
+        item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.uramping_eV = doublevalue;
             para.input.sup.uramping = para.input.uramping_eV / ModuleBase::Ry_to_eV;
         };
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             bool all_minus1 = true;
             for (auto& val: para.input.orbital_corr)
             {
@@ -1331,7 +1331,7 @@ void ReadInput::item_others()
         Input_Item item("onsite_radius");
         item.annotation = "radius of the sphere for onsite projection (Bohr)";
         read_sync_double(onsite_radius);
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.dft_plus_u == 1 && para.input.onsite_radius == 0.0)
             {
                 // autoset onsite_radius to 5.0 as default
@@ -1343,7 +1343,7 @@ void ReadInput::item_others()
     {
         Input_Item item("hubbard_u");
         item.annotation = "Hubbard Coulomb interaction parameter U(ev)";
-        item.readvalue = [](const Input_Item& item, Parameter& para) {
+        item.read_value = [](const Input_Item& item, Parameter& para) {
             size_t count = item.get_size();
             for (int i = 0; i < count; i++)
             {
@@ -1351,7 +1351,7 @@ void ReadInput::item_others()
                 para.input.sup.hubbard_u.push_back(para.input.hubbard_u_eV[i] / ModuleBase::Ry_to_eV);
             }
         };
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (!item.is_read())
                 return;
             if (para.input.sup.hubbard_u.size() != para.input.ntype)
@@ -1377,7 +1377,7 @@ void ReadInput::item_others()
         Input_Item item("orbital_corr");
         item.annotation = "which correlated orbitals need corrected ; d:2 "
                           ",f:3, do not need correction:-1";
-        item.readvalue = [](const Input_Item& item, Parameter& para) {
+        item.read_value = [](const Input_Item& item, Parameter& para) {
             size_t count = item.get_size();
             for (int i = 0; i < count; i++)
             {
@@ -1385,7 +1385,7 @@ void ReadInput::item_others()
             }
         };
 
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (!item.is_read())
                 return;
             if (para.input.orbital_corr.size() != para.input.ntype)
@@ -1412,13 +1412,13 @@ void ReadInput::item_others()
         Input_Item item("bessel_nao_ecut");
         item.annotation = "energy cutoff for spherical bessel functions(Ry)";
         read_sync_string(bessel_nao_ecut);
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.bessel_nao_ecut == "default")
             {
                 para.input.bessel_nao_ecut = std::to_string(para.input.ecutwfc);
             }
         };
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (std::stod(para.input.bessel_nao_ecut) < 0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "bessel_nao_ecut must >= 0");
@@ -1435,7 +1435,7 @@ void ReadInput::item_others()
     {
         Input_Item item("bessel_nao_rcut");
         item.annotation = "radial cutoff for spherical bessel functions(a.u.)";
-        item.readvalue = [](const Input_Item& item, Parameter& para) {
+        item.read_value = [](const Input_Item& item, Parameter& para) {
             size_t count = item.get_size();
             for (int i = 0; i < count; i++)
             {
@@ -1446,7 +1446,7 @@ void ReadInput::item_others()
                                                                                  // old input file
             para.input.sup.nrcut = count;
         };
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.sup.bessel_nao_rcut < 0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "bessel_nao_rcut must >= 0");
@@ -1480,13 +1480,13 @@ void ReadInput::item_others()
         Input_Item item("bessel_descriptor_ecut");
         item.annotation = "energy cutoff for spherical bessel functions(Ry)";
         read_sync_string(bessel_descriptor_ecut);
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.bessel_descriptor_ecut == "default")
             {
                 para.input.bessel_descriptor_ecut = std::to_string(para.input.ecutwfc);
             }
         };
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (std::stod(para.input.bessel_descriptor_ecut) < 0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "bessel_descriptor_ecut must >= 0");
@@ -1504,7 +1504,7 @@ void ReadInput::item_others()
         Input_Item item("bessel_descriptor_rcut");
         item.annotation = "radial cutoff for spherical bessel functions(a.u.)";
         read_sync_double(bessel_descriptor_rcut);
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.bessel_descriptor_rcut < 0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "bessel_descriptor_rcut must >= 0");
@@ -1530,7 +1530,7 @@ void ReadInput::item_others()
         Input_Item item("sc_mag_switch");
         item.annotation = "switch to control spin-constrained DFT";
         read_sync_bool(sc_mag_switch);
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.sc_mag_switch)
             {
                 ModuleBase::WARNING_QUIT("ReadInput",
@@ -1566,7 +1566,7 @@ void ReadInput::item_others()
         Input_Item item("sc_thr");
         item.annotation = "Convergence criterion of spin-constrained iteration (RMS) in uB";
         read_sync_double(sc_thr);
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.sc_thr < 0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "sc_thr must >= 0");
@@ -1578,7 +1578,7 @@ void ReadInput::item_others()
         Input_Item item("nsc");
         item.annotation = "Maximal number of spin-constrained iteration";
         read_sync_int(nsc);
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.nsc <= 0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "nsc must > 0");
@@ -1590,7 +1590,7 @@ void ReadInput::item_others()
         Input_Item item("nsc_min");
         item.annotation = "Minimum number of spin-constrained iteration";
         read_sync_int(nsc_min);
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.nsc_min <= 0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "nsc_min must > 0");
@@ -1603,7 +1603,7 @@ void ReadInput::item_others()
         item.annotation = "Minimum number of outer scf loop before "
                           "initializing lambda loop";
         read_sync_int(sc_scf_nmin);
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.sc_scf_nmin < 2)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "sc_scf_nmin must >= 2");
@@ -1615,7 +1615,7 @@ void ReadInput::item_others()
         Input_Item item("alpha_trial");
         item.annotation = "Initial trial step size for lambda in eV/uB^2";
         read_sync_double(alpha_trial);
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.alpha_trial <= 0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "alpha_trial must > 0");
@@ -1627,7 +1627,7 @@ void ReadInput::item_others()
         Input_Item item("sccut");
         item.annotation = "Maximal step size for lambda in eV/uB";
         read_sync_double(sccut);
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.sccut <= 0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "sccut must > 0");
@@ -1640,7 +1640,7 @@ void ReadInput::item_others()
         item.annotation = "file name for parameters used in non-collinear "
                           "spin-constrained DFT (json format)";
         read_sync_string(sc_file);
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.sc_mag_switch)
             {
                 const std::string ss = "test -f " + para.input.sc_file;
@@ -1671,7 +1671,7 @@ void ReadInput::item_others()
         Input_Item item("qo_thr");
         item.annotation = "accuracy for evaluating cutoff radius of QO basis function";
         read_sync_double(qo_thr);
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.qo_thr > 1e-6)
             {
                 ModuleBase::WARNING("ReadInput",
@@ -1684,14 +1684,14 @@ void ReadInput::item_others()
     {
         Input_Item item("qo_strategy");
         item.annotation = "strategy to generate generate radial orbitals";
-        item.readvalue = [](const Input_Item& item, Parameter& para) {
+        item.read_value = [](const Input_Item& item, Parameter& para) {
             size_t count = item.get_size();
             for (int i = 0; i < count; i++)
             {
                 para.input.qo_strategy.push_back(item.str_values[i]);
             }
         };
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.qo_strategy.size() != para.input.ntype)
             {
                 if (para.input.qo_strategy.size() == 1)
@@ -1723,14 +1723,14 @@ void ReadInput::item_others()
     {
         Input_Item item("qo_screening_coeff");
         item.annotation = "rescale the shape of radial orbitals";
-        item.readvalue = [](const Input_Item& item, Parameter& para) {
+        item.read_value = [](const Input_Item& item, Parameter& para) {
             size_t count = item.get_size();
             for (int i = 0; i < count; i++)
             {
                 para.input.qo_screening_coeff.push_back(std::stod(item.str_values[i]));
             }
         };
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (!item.is_read())
                 return;
             if (para.input.qo_screening_coeff.size() != para.input.ntype)
@@ -1749,7 +1749,7 @@ void ReadInput::item_others()
                 }
             }
         };
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             for (auto screen_coeff: para.input.qo_screening_coeff)
             {
                 if (screen_coeff < 0)

@@ -73,31 +73,31 @@
 
 #define sync_string(PARAMETER)                                                                                         \
     {                                                                                                                  \
-        item.getfinalvalue                                                                                             \
+        item.get_final_value                                                                                             \
             = [](Input_Item& item, const Parameter& para) { item.final_value << para.input.PARAMETER; };               \
         add_string_bcast(PARAMETER);                                                                                   \
     }
 #define sync_int(PARAMETER)                                                                                            \
     {                                                                                                                  \
-        item.getfinalvalue                                                                                             \
+        item.get_final_value                                                                                             \
             = [](Input_Item& item, const Parameter& para) { item.final_value << para.input.PARAMETER; };               \
         add_int_bcast(PARAMETER);                                                                                      \
     }
 #define sync_double(PARAMETER)                                                                                         \
     {                                                                                                                  \
-        item.getfinalvalue                                                                                             \
+        item.get_final_value                                                                                             \
             = [](Input_Item& item, const Parameter& para) { item.final_value << para.input.PARAMETER; };               \
         add_double_bcast(PARAMETER);                                                                                   \
     }
 #define sync_bool(PARAMETER)                                                                                           \
     {                                                                                                                  \
-        item.getfinalvalue                                                                                             \
+        item.get_final_value                                                                                             \
             = [](Input_Item& item, const Parameter& para) { item.final_value << para.input.PARAMETER; };               \
         add_bool_bcast(PARAMETER);                                                                                     \
     }
 #define sync_doublevec(PARAMETER, N, FILL)                                                                             \
     {                                                                                                                  \
-        item.getfinalvalue = [](Input_Item& item, const Parameter& para) {                                             \
+        item.get_final_value = [](Input_Item& item, const Parameter& para) {                                             \
             for (int i = 0; i < N; i++)                                                                                \
             {                                                                                                          \
                 item.final_value << para.input.PARAMETER[i] << " ";                                                    \
@@ -107,7 +107,7 @@
     }
 #define sync_intvec(PARAMETER, N, FILL)                                                                                \
     {                                                                                                                  \
-        item.getfinalvalue = [](Input_Item& item, const Parameter& para) {                                             \
+        item.get_final_value = [](Input_Item& item, const Parameter& para) {                                             \
             for (int i = 0; i < N; i++)                                                                                \
             {                                                                                                          \
                 item.final_value << para.input.PARAMETER[i] << " ";                                                    \
@@ -117,7 +117,7 @@
     }
 #define sync_stringvec(PARAMETER, N, FILL)                                                                             \
     {                                                                                                                  \
-        item.getfinalvalue = [](Input_Item& item, const Parameter& para) {                                             \
+        item.get_final_value = [](Input_Item& item, const Parameter& para) {                                             \
             for (int i = 0; i < N; i++)                                                                                \
             {                                                                                                          \
                 item.final_value << para.input.PARAMETER[i] << " ";                                                    \
@@ -128,21 +128,21 @@
 
 #define read_sync_string(PARAMETER)                                                                                    \
     {                                                                                                                  \
-        item.readvalue = [](const Input_Item& item, Parameter& para) { para.input.PARAMETER = strvalue; };             \
+        item.read_value = [](const Input_Item& item, Parameter& para) { para.input.PARAMETER = strvalue; };             \
         sync_string(PARAMETER);                                                                                        \
     }
 #define read_sync_int(PARAMETER)                                                                                       \
     {                                                                                                                  \
-        item.readvalue = [](const Input_Item& item, Parameter& para) { para.input.PARAMETER = intvalue; };             \
+        item.read_value = [](const Input_Item& item, Parameter& para) { para.input.PARAMETER = intvalue; };             \
         sync_int(PARAMETER);                                                                                           \
     }
 #define read_sync_double(PARAMETER)                                                                                    \
     {                                                                                                                  \
-        item.readvalue = [](const Input_Item& item, Parameter& para) { para.input.PARAMETER = doublevalue; };          \
+        item.read_value = [](const Input_Item& item, Parameter& para) { para.input.PARAMETER = doublevalue; };          \
         sync_double(PARAMETER);                                                                                        \
     }
 #define read_sync_bool(PARAMETER)                                                                                      \
     {                                                                                                                  \
-        item.readvalue = [](const Input_Item& item, Parameter& para) { para.input.PARAMETER = boolvalue; };            \
+        item.read_value = [](const Input_Item& item, Parameter& para) { para.input.PARAMETER = boolvalue; };            \
         sync_bool(PARAMETER);                                                                                          \
     }

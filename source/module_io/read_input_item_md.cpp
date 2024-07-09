@@ -22,7 +22,7 @@ void ReadInput::item_md()
     {
         Input_Item item("md_nstep");
         item.annotation = "md steps";
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.mdp.md_nstep == 0)
             {
                 GlobalV::ofs_running << "md_nstep should be set. Autoset md_nstep to 50!" << std::endl;
@@ -35,7 +35,7 @@ void ReadInput::item_md()
     {
         Input_Item item("md_dt");
         item.annotation = "time step";
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.mdp.md_dt < 0)
                 ModuleBase::WARNING_QUIT("ReadInput", "time interval of MD calculation should be positive");
         };
@@ -81,7 +81,7 @@ void ReadInput::item_md()
     {
         Input_Item item("md_prec_level");
         item.annotation = "precision level for vc-md";
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.calculation != "md")
             {
                 para.input.mdp.md_prec_level = 0;
@@ -158,7 +158,7 @@ void ReadInput::item_md()
     {
         Input_Item item("msst_qmass");
         item.annotation = "mass of thermostat";
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.mdp.msst_qmass <= 0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "msst_qmass must be greater than 0!");
@@ -170,7 +170,7 @@ void ReadInput::item_md()
     {
         Input_Item item("md_tfreq");
         item.annotation = "oscillation frequency, used to determine qmass of NHC";
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.mdp.md_tfreq == 0 && para.input.calculation == "md")
             {
                 para.input.mdp.md_tfreq = 1.0 / 40 / para.input.mdp.md_dt;
@@ -237,7 +237,7 @@ void ReadInput::item_md()
     {
         Input_Item item("md_plast");
         item.annotation = "final target pressure";
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (!item.is_read()) // no md_plast in INPUT
                 para.input.mdp.md_plast = para.input.mdp.md_pfirst;
         };
@@ -248,7 +248,7 @@ void ReadInput::item_md()
         Input_Item item("md_pfreq");
         item.annotation = "oscillation frequency, used to determine qmass of "
                           "thermostats coupled with barostat";
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.mdp.md_pfreq == 0 && para.input.calculation == "md")
             {
                 para.input.mdp.md_pfreq = 1.0 / 400 / para.input.mdp.md_dt;

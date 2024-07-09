@@ -13,7 +13,7 @@ void ReadInput::item_lcao()
         Input_Item item("basis_type");
         item.annotation = "PW; LCAO in pw; LCAO";
         read_sync_string(basis_type);
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.towannier90)
             {
                 if (para.input.basis_type == "lcao_in_pw")
@@ -22,7 +22,7 @@ void ReadInput::item_lcao()
                 }
             }
         };
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             const std::vector<std::string> basis_types = {"pw", "lcao_in_pw", "lcao"};
             if (!find_str(basis_types, para.input.basis_type))
             {
@@ -36,7 +36,7 @@ void ReadInput::item_lcao()
         item.annotation = "Only for localized orbitals set and gamma point. If "
                           "set to 1, a fast algorithm is used";
         read_sync_bool(gamma_only);
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             Input_para& input = para.input;
             std::string& basis_type = input.basis_type;
             bool& gamma_only = input.gamma_only;
@@ -98,7 +98,7 @@ void ReadInput::item_lcao()
     {
         Input_Item item("lcao_ecut");
         item.annotation = "energy cutoff for LCAO";
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.lcao_ecut == 0 && para.input.basis_type == "lcao")
             {
                 para.input.lcao_ecut = para.input.ecutwfc;
@@ -129,7 +129,7 @@ void ReadInput::item_lcao()
     {
         Input_Item item("out_mat_hs");
         item.annotation = "output H and S matrix (with precision 8)";
-        item.readvalue = [](const Input_Item& item, Parameter& para) {
+        item.read_value = [](const Input_Item& item, Parameter& para) {
             size_t count = item.get_size();
             if (count == 1)
             {
@@ -146,7 +146,7 @@ void ReadInput::item_lcao()
                 ModuleBase::WARNING_QUIT("ReadInput", "out_mat_hs should have 1 or 2 values");
             }
         };
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.qo_switch)
             {
                 para.input.out_mat_hs[0] = 1; // print H(k) and S(k)
@@ -165,7 +165,7 @@ void ReadInput::item_lcao()
         Input_Item item("out_mat_dh");
         item.annotation = "output of derivative of H(R) matrix";
         read_sync_bool(out_mat_dh);
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.out_mat_dh && para.input.nspin == 4)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "out_mat_dh is not available for nspin = 4");
@@ -183,7 +183,7 @@ void ReadInput::item_lcao()
         Input_Item item("out_hr_npz");
         item.annotation = "output hr(I0,JR) submatrices in npz format";
         read_sync_bool(out_hr_npz);
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.out_hr_npz)
             {
 #ifndef __USECNPY
@@ -199,7 +199,7 @@ void ReadInput::item_lcao()
         Input_Item item("out_dm_npz");
         item.annotation = "output dmr(I0,JR) submatrices in npz format";
         read_sync_bool(out_dm_npz);
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.out_dm_npz)
             {
 #ifndef __USECNPY
@@ -215,7 +215,7 @@ void ReadInput::item_lcao()
         Input_Item item("dm_to_rho");
         item.annotation = "reads dmr in npz format and calculates electron density";
         read_sync_bool(dm_to_rho);
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.dm_to_rho && GlobalV::NPROC > 1)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "dm_to_rho is not available for parallel calculations");
@@ -272,13 +272,13 @@ void ReadInput::item_lcao()
         Input_Item item("out_wfc_lcao");
         item.annotation = "ouput LCAO wave functions, 0, no output 1: text, 2: binary";
         read_sync_int(out_wfc_lcao);
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.qo_switch)
             {
                 para.input.out_wfc_lcao = 1;
             }
         };
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.out_wfc_lcao < 0 || para.input.out_wfc_lcao > 2)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "out_wfc_lcao should be 0, 1, or 2");
@@ -294,13 +294,13 @@ void ReadInput::item_lcao()
         Input_Item item("bx");
         item.annotation = "division of an element grid in FFT grid along x";
         read_sync_int(bx);
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.bx > 10)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "bx should be no more than 10");
             }
         };
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.basis_type == "pw" || para.input.basis_type == "lcao_in_pw"
                 || para.input.calculation == "get_wf")
             {
@@ -315,7 +315,7 @@ void ReadInput::item_lcao()
         Input_Item item("by");
         item.annotation = "division of an element grid in FFT grid along y";
         read_sync_int(by);
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.by > 10)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "by should be no more than 10");
@@ -327,7 +327,7 @@ void ReadInput::item_lcao()
         Input_Item item("bz");
         item.annotation = "division of an element grid in FFT grid along z";
         read_sync_int(bz);
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.bz > 10)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "bz should be no more than 10");

@@ -24,20 +24,20 @@ namespace ModuleIO
 //      item.annotation = "unit in 1/bohr, should be > 0, default is 0 which
 //      means read KPT file";
 //
-//      item.readvalue = [](const Input_Item& item, Parameter& para) {
+//      item.read_value = [](const Input_Item& item, Parameter& para) {
 //          para.input.kspacing[0] = std::stod(item.str_values[0]);
 //          para.input.kspacing[1] = std::stod(item.str_values[1]);
 //          para.input.kspacing[2] = std::stod(item.str_values[2]);
 //      };
 //
-//      item.resetvalue = [](const Input_Item& item, Parameter& para) {
+//      item.reset_value = [](const Input_Item& item, Parameter& para) {
 //          if(para.input.kspacing[0] <= 0) para.input.kspacing[0] = 1;
 //      };
 //
-//      item.checkvalue = [](const Input_Item& item, const Parameter& para)
+//      item.check_value = [](const Input_Item& item, const Parameter& para)
 //      {assert(para.input.kspacing[0]>0);};
 //
-//      item.getfinalvalue = [](Input_Item& item, const Parameter& para) {
+//      item.get_final_value = [](Input_Item& item, const Parameter& para) {
 //          item.final_value << para.input.kspacing[0] << " " <<
 //          para.input.kspacing[1] << " " << para.input.kspacing[2];
 //      };
@@ -117,7 +117,7 @@ void ReadInput::item_general()
     {
         Input_Item item("calculation");
         item.annotation = "test; scf; relax; nscf; get_wf; get_pchg";
-        item.readvalue = [](const Input_Item& item, Parameter& para) {
+        item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.calculation = strvalue;
             std::string& calculation = para.input.calculation;
             para.input.sup.global_calculation = calculation;
@@ -127,7 +127,7 @@ void ReadInput::item_general()
                 para.input.sup.global_calculation = "nscf";
             }
         };
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             const std::string& calculation = para.input.calculation;
             std::vector<std::string> callist = {"scf",
                                                 "relax",
@@ -169,7 +169,7 @@ void ReadInput::item_general()
         Input_Item item("esolver_type");
         item.annotation = "the energy solver: ksdft, sdft, ofdft, tddft, lj, dp";
         read_sync_string(esolver_type);
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             const std::vector<std::string> esolver_types = {"ksdft", "sdft", "ofdft", "tddft", "lj", "dp"};
             if (!find_str(esolver_types, para.input.esolver_type))
             {
@@ -198,13 +198,13 @@ void ReadInput::item_general()
         Input_Item item("nspin");
         item.annotation = "1: single spin; 2: up and down spin; 4: noncollinear spin";
         read_sync_int(nspin);
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.noncolin || para.input.lspinorb)
             {
                 para.input.nspin = 4;
             }
         };
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.nspin != 1 && para.input.nspin != 2 && para.input.nspin != 4)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "nspin should be 1, 2 or 4.");
@@ -216,7 +216,7 @@ void ReadInput::item_general()
         Input_Item item("kspacing");
         item.annotation = "unit in 1/bohr, should be > 0, default is 0 which "
                           "means read KPT file";
-        item.readvalue = [](const Input_Item& item, Parameter& para) {
+        item.read_value = [](const Input_Item& item, Parameter& para) {
             size_t count = item.get_size();
             if (count == 1)
             {
@@ -234,7 +234,7 @@ void ReadInput::item_general()
             }
         };
         sync_doublevec(kspacing, 3, 0.0);
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             int kspacing_zero_num = 0;
             const std::vector<double>& kspacing = para.input.kspacing;
             for (int i = 0; i < 3; i++)
@@ -267,7 +267,7 @@ void ReadInput::item_general()
         Input_Item item("nbands");
         item.annotation = "number of bands";
         read_sync_int(nbands);
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.nbands < 0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "nbands should be greater than 0.");
@@ -284,7 +284,7 @@ void ReadInput::item_general()
     {
         Input_Item item("bands_to_print");
         item.annotation = "specify the bands to be calculated in the get_pchg calculation";
-        item.readvalue = [](const Input_Item& item, Parameter& para) {
+        item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.bands_to_print = longstring(item.str_values, item.get_size());
         };
         sync_string(bands_to_print);
@@ -294,7 +294,7 @@ void ReadInput::item_general()
         Input_Item item("symmetry");
         item.annotation = "the control of symmetry";
         read_sync_string(symmetry);
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.symmetry == "default")
             {
                 if (para.input.gamma_only || para.input.calculation == "nscf" || para.input.calculation == "get_S"
@@ -326,7 +326,7 @@ void ReadInput::item_general()
     {
         Input_Item item("init_vel");
         item.annotation = "read velocity from STRU or not";
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.calculation == "md")
             {
                 if (para.input.mdp.md_tfirst < 0 || para.input.mdp.md_restart)
@@ -354,7 +354,7 @@ void ReadInput::item_general()
     {
         Input_Item item("nelec");
         item.annotation = "input number of electrons";
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.nelec < 0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "nelec should be greater than 0.");
@@ -377,7 +377,7 @@ void ReadInput::item_general()
         Input_Item item("nupdown");
         item.annotation = "the difference number of electrons between spin-up "
                           "and spin-down";
-        item.readvalue = [](const Input_Item& item, Parameter& para) {
+        item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.nupdown = doublevalue;
             para.input.sup.two_fermi = true;
         };
@@ -409,7 +409,7 @@ void ReadInput::item_general()
         item.annotation = "devide all processors into kpar groups and k points "
                           "will be distributed among";
         read_sync_int(kpar);
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.basis_type == "lcao" && para.input.kpar > 1)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "kpar > 1 has not been supported for lcao calculation.");
@@ -422,7 +422,7 @@ void ReadInput::item_general()
         item.annotation = "devide all processors into bndpar groups and bands "
                           "will be distributed among each group";
         read_sync_int(bndpar);
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.esolver_type != "sdft")
             {
                 para.input.bndpar = 1;
@@ -446,7 +446,7 @@ void ReadInput::item_general()
         Input_Item item("dft_plus_dmft");
         item.annotation = "true:DFT+DMFT; false: standard DFT calcullation(default)";
         read_sync_bool(dft_plus_dmft);
-        item.checkvalue = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.basis_type != "lcao" && para.input.dft_plus_dmft)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "DFT+DMFT is only supported for lcao calculation.");
@@ -473,7 +473,7 @@ void ReadInput::item_general()
                           "memory saving technique will be used for "
                           "many k point calculations.";
         read_sync_int(mem_saver);
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.mem_saver == 1)
             {
                 if (para.input.calculation == "scf" || para.input.calculation == "relax")
@@ -489,7 +489,7 @@ void ReadInput::item_general()
         Input_Item item("diago_proc");
         item.annotation = "the number of procs used to do diagonalization";
         read_sync_int(diago_proc);
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.diago_proc > GlobalV::NPROC || para.input.diago_proc <= 0)
             {
                 para.input.diago_proc = GlobalV::NPROC;
@@ -519,7 +519,7 @@ void ReadInput::item_general()
     {
         Input_Item item("cal_force");
         item.annotation = "if calculate the force at the end of the electronic iteration";
-        item.resetvalue = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             std::vector<std::string> use_force = {"cell-relax", "relax", "md"};
             std::vector<std::string> not_use_force = {"get_wf", "get_pchg", "nscf", "get_S"};
             if (find_str(use_force, para.input.calculation))
