@@ -241,10 +241,11 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psi,
 
             out << "<pdos>" << std::endl;
             out << "<nspin>" << GlobalV::NSPIN << "</nspin>" << std::endl;
-            if (GlobalV::NSPIN == 4)
+            if (GlobalV::NSPIN == 4) {
                 out << "<norbitals>" << std::setw(2) << GlobalV::NLOCAL / 2 << "</norbitals>" << std::endl;
-            else
+            } else {
                 out << "<norbitals>" << std::setw(2) << GlobalV::NLOCAL << "</norbitals>" << std::endl;
+}
             out << "<energy_values units=\"eV\">" << std::endl;
 
             for (int n = 0; n < npoints; ++n)
