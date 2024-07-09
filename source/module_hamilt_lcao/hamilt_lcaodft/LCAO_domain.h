@@ -78,8 +78,7 @@ void set_stress(const Parallel_Orbitals& pv,
 /**
  * @brief set each element without derivatives
  */
-void single_overlap(LCAO_Matrix& lm,
-                    const LCAO_Orbitals& orb,
+void single_overlap(const LCAO_Orbitals& orb,
                     const TwoCenterBundle& two_center_bundle,
                     const Parallel_Orbitals& pv,
                     const UnitCell& ucell,

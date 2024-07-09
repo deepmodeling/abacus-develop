@@ -117,47 +117,6 @@ void Force_LCAO<double>::allocate(const Parallel_Orbitals& pv,
     {
         cal_deri = false;
         ModuleBase::WARNING_QUIT("cal_syns", "this function has been broken and will be fixed later.");
-        /*
-        std::vector<double> Sloc(pv.nloc, 0.0);
-
-        LCAO_domain::build_ST_new(lm,
-                                  fsr,
-                                  'S',
-                                  cal_deri,
-                                  GlobalC::ucell,
-                                  GlobalC::ORB,
-                                  pv,
-                                  two_center_bundle,
-                                  &GlobalC::GridD,
-                                  Sloc.data(),
-                                  INPUT.cal_syns,
-                                  INPUT.dmax);
-
-        bool bit = false; // LiuXh, 2017-03-21
-
-        ModuleIO::save_mat(0,
-                           lm.Hloc.data(),
-                           GlobalV::NLOCAL,
-                           bit,
-                           GlobalV::out_ndigits,
-                           0,
-                           GlobalV::out_app_flag,
-                           "H",
-                           "data-" + std::to_string(0),
-                           pv,
-                           GlobalV::DRANK);
-
-        ModuleIO::save_mat(0,
-                           Sloc.data(),
-                           GlobalV::NLOCAL,
-                           bit,
-                           GlobalV::out_ndigits,
-                           0,
-                           GlobalV::out_app_flag,
-                           "S",
-                           "data-" + std::to_string(0),
-                           pv,
-                           GlobalV::DRANK);*/
     }
 
     ModuleBase::timer::tick("Force_LCAO", "allocate");

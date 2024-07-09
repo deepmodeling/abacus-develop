@@ -202,8 +202,7 @@ void single_derivative(ForceStressArrays& fsr,
     } // end condition 7, gamma or multiple k
 }
 
-void single_overlap(LCAO_Matrix& lm,
-                    const LCAO_Orbitals& orb,
+void single_overlap(const LCAO_Orbitals& orb,
                     const TwoCenterBundle& two_center_bundle,
                     const Parallel_Orbitals& pv,
                     const UnitCell& ucell,
@@ -272,7 +271,7 @@ void single_overlap(LCAO_Matrix& lm,
         // according to global2local_row and global2local_col
         // the last paramete: 1 for Sloc, 2 for Hloc
         // and 3 for Hloc_fixed.
-        LCAO_domain::set_mat2d(iw1_all, iw2_all, olm[0], *lm.ParaV, HSloc);
+        LCAO_domain::set_mat2d(iw1_all, iw2_all, olm[0], pv, HSloc);
     }
     else // condition 7, multiple k-points algorithm
     {
@@ -422,8 +421,7 @@ void build_ST_new(LCAO_Matrix& lm,
                             // condition 6, not calculate the derivative
                             if (!calc_deri)
                             {
-                                single_overlap(lm,
-                                               orb,
+                                single_overlap(orb,
                                                two_center_bundle,
                                                pv,
                                                ucell,
