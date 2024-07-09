@@ -337,7 +337,6 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(ModuleBase::matrix& force) {
                        this->orb_con.ParaV,
                        this->pelec,
                        this->psi,
-                       this->LM,
                        this->GG, // mohan add 2024-04-01
                        this->GK, // mohan add 2024-04-01
                        two_center_bundle_,

@@ -36,7 +36,6 @@ class Force_Stress_LCAO
                         Parallel_Orbitals& pv,
                         const elecstate::ElecState* pelec,
                         const psi::Psi<T>* psi,
-                        LCAO_Matrix& lm,
                         Gint_Gamma& gint_gamma, // mohan add 2024-04-01
                         Gint_k& gint_k,         // mohan add 2024-04-01
                         const TwoCenterBundle& two_center_bundle,
