@@ -27,9 +27,8 @@ void Driver::driver_run() {
     ModuleBase::TITLE("Driver", "driver_line");
     ModuleBase::timer::tick("Driver", "driver_line");
 
-    //! 1: initialize the ESolver
-    ModuleESolver::ESolver* p_esolver = nullptr;
-    ModuleESolver::init_esolver(p_esolver);
+    //! 1: initialize the ESolver 
+    ModuleESolver::ESolver *p_esolver = ModuleESolver::init_esolver();
 
     //! 2: setup cell and atom information
 

@@ -55,14 +55,6 @@ void hamilt::OperatorLCAO<double, double>::contributeHk(const int ik_in)
  *   -
  */
 
-LCAO_Matrix::LCAO_Matrix()
-{
-}
-
-LCAO_Matrix::~LCAO_Matrix()
-{
-}
-
 class ScLambdaLCAOTest : public ::testing::Test
 {
   protected:

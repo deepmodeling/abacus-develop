@@ -32,13 +32,13 @@ if(ENABLE_LCAO)
         spar_hsr.cpp
         spar_st.cpp
         spar_u.cpp
-        LCAO_matrix.cpp
         LCAO_nnr.cpp
 		LCAO_set_fs.cpp
 		LCAO_set_st.cpp
 		LCAO_nl_mu.cpp	
         LCAO_set_zero.cpp
         LCAO_allocate.cpp
+        LCAO_set_mat2d.cpp
 		record_adj.cpp
         center2_orb.cpp
         center2_orb-orb11.cpp

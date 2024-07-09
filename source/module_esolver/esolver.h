@@ -82,9 +82,9 @@ std::string determine_type(void);
  * the corresponding ESolver child class. It supports various ESolver types including ksdft_pw,
  * ksdft_lcao, ksdft_lcao_tddft, sdft_pw, ofdft, lj_pot, and dp_pot.
  *
- * @param [in, out] p_esolver A pointer to an ESolver object that will be initialized.
+ * @return [out] A pointer to an ESolver object that will be initialized.
  */
-void init_esolver(ESolver*& p_esolver);
+ESolver* init_esolver();
 
 void clean_esolver(ESolver*& pesolver);
 

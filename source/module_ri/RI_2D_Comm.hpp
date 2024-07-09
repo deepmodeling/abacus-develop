@@ -11,6 +11,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/tool_title.h"
 #include "module_base/timer.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
 
 #include <RI/global/Global_Func-2.h>
 
@@ -145,7 +146,7 @@ void RI_2D_Comm::add_Hexx(
                         if (pv.global2local_col(iwt1) < 0) {
                             continue;
                         }
-                        LCAO_Matrix::set_mat2d(iwt0, iwt1, RI::Global_Func::convert<TK>(H(iw0_b, iw1_b)) * RI::Global_Func::convert<TK>(frac), pv, hk);
+                        LCAO_domain::set_mat2d(iwt0, iwt1, RI::Global_Func::convert<TK>(H(iw0_b, iw1_b)) * RI::Global_Func::convert<TK>(frac), pv, hk);
 					}
 				}
 			}
