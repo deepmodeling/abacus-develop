@@ -83,7 +83,6 @@ class Gint_k : public Gint {
         const std::map<Abfs::Vector3_Order<int>,
                        std::map<size_t, std::map<size_t, double>>>&
             pvdpR_sparseMatrix,
-        LCAO_Matrix* LM,
         LCAO_HS_Arrays& HS_Arrays,
         Parallel_Orbitals* pv);
 
