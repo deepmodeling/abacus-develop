@@ -444,9 +444,11 @@ void IState_Charge::begin(Gint_k& gk,
     {
         if (bands_picked_[ib])
         {
-            std::cout << " Perform band decomposed charge density for band " << ib + 1 << std::endl;
+            // std::cout << " Perform band decomposed charge density for kpoint " << ik << ",  band" << ib + 1
+            //           << std::endl;
 
-            elecstate::DensityMatrix<std::complex<double>, double> DM(this->ParaV, nspin);
+            // elecstate::DensityMatrix<std::complex<double>, double> DM(this->ParaV, nspin);
+            elecstate::DensityMatrix<std::complex<double>, double> DM(&kv, this->ParaV, nspin);
 
 #ifdef __MPI
             this->idmatrix(ib, nspin, nelec, nlocal, wg, DM, kv);
@@ -523,9 +525,19 @@ void IState_Charge::idmatrix(const int& ib,
                              const K_Vectors& kv)
 {
     ModuleBase::TITLE("IState_Charge", "idmatrix");
-    assert(wg.nr == nspin);
+    // assert(wg.nr == nspin);
+    std::cout << "wg.nr = " << wg.nr << std::endl;
 
     int fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
+
+    for (int ik = 0; ik < kv.get_nks(); ++ik)
+    {
+        std::cout << " Perform band decomposed charge density for kpoint " << ik << ",  band" << ib + 1 << std::endl;
+
+        const int ispin = kv.isk[ik];
+
+        
+    }
 
     for (int is = 0; is < nspin; ++is)
     {
@@ -544,14 +556,16 @@ void IState_Charge::idmatrix(const int& ib,
         {
             BlasConnector::scal(wg_wfc.get_nbasis(), wg_local[ir], wg_wfc.get_pointer() + ir * wg_wfc.get_nbasis(), 1);
         }
-
+        std::cout << "Here is Okay." << std::endl;
         for (int ik = 0; ik < kv.get_nks(); ++ik)
         {
+            std::cout << "Here is Okay." << std::endl;
             elecstate::psiMulPsiMpi(wg_wfc,
                                     *(this->psi_k),
                                     DM.get_DMK_pointer(ik),
                                     this->ParaV->desc_wfc,
                                     this->ParaV->desc);
+            std::cout << "Here is Okay." << std::endl;
         }
     }
 }
@@ -568,6 +582,10 @@ void IState_Charge::idmatrix(const int& ib,
 {
     ModuleBase::TITLE("IState_Charge", "idmatrix");
     assert(wg.nr == nspin);
+
+    std::cout << "wg.nr = " << wg.nr << std::endl;
+    std::cout << "wg.nc = " << wg.nc << std::endl;
+    std::cout << "nspin = " << nspin << std::endl;
 
     int fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
 
@@ -590,11 +608,11 @@ void IState_Charge::idmatrix(const int& ib,
         {
             BlasConnector::scal(wg_wfc.get_nbasis(), wg_local[ir], wg_wfc.get_pointer() + ir * wg_wfc.get_nbasis(), 1);
         }
-        const int ik = 0; // Gamma point only
+        // const int ik = 0; // Gamma point only
 
         elecstate::psiMulPsiMpi(wg_wfc,
                                 *(this->psi_gamma),
-                                DM.get_DMK_pointer(ik),
+                                DM.get_DMK_pointer(is),
                                 this->ParaV->desc_wfc,
                                 this->ParaV->desc);
     }
