@@ -39,10 +39,7 @@ class TD_Velocity
     ModuleBase::Vector3<double> cart_At;
 
     /// @brief calculate the At in cartesian coordinate
-    void cal_cart_At(const ModuleBase::Vector3<double>& a0,
-                     const ModuleBase::Vector3<double>& a1,
-                     const ModuleBase::Vector3<double>& a2,
-                     const ModuleBase::Vector3<double>& At);
+    void cal_cart_At(const ModuleBase::Vector3<double>& At);
 
     // allocate memory for current term.
     void initialize_current_term(const hamilt::HContainer<std::complex<double>>* HR, const Parallel_Orbitals* paraV);

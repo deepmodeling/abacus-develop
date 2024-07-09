@@ -419,6 +419,12 @@ class HContainer
         return paraV->get_global_row_size();
     }
 
+    /**
+     * @brief get parallel orbital pointer to check parallel information
+     * @return const Parallel_Orbitals* , if return is nullptr, it means HContainer is not in parallel mode
+     */
+    const Parallel_Orbitals* get_paraV() const{return paraV;}
+
   private:
     // i-j atom pairs, sorted by matrix of (atom_i, atom_j)
     std::vector<AtomPair<T>> atom_pairs;

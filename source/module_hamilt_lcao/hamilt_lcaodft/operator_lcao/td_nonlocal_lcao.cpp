@@ -12,25 +12,22 @@
 #endif
 
 template <typename TK, typename TR>
-hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::TDNonlocal(LCAO_Matrix* LM_in,
+hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::TDNonlocal(HS_Matrix_K<TK>* hsk_in,
                                                              const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
                                                              hamilt::HContainer<TR>* hR_in,
-                                                             std::vector<TK>* hK_in,
                                                              const UnitCell* ucell_in,
-                                                             Grid_Driver* GridD_in,
-                                                             const Parallel_Orbitals* paraV)
-    : hamilt::OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in)
+                                                             Grid_Driver* GridD_in)
+    : hamilt::OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in)
 {
     this->cal_type = calculation_type::lcao_tddft_velocity;
     this->ucell = ucell_in;
-    this->LM = LM_in;
     this->Grid = GridD_in;
 #ifdef __DEBUG
     assert(this->ucell != nullptr);
 #endif
     // initialize HR to get adjs info.
     this->init_td();
-    this->initialize_HR(Grid, this->LM->ParaV);
+    this->initialize_HR(Grid);
 }
 
 // destructor
@@ -50,7 +47,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::init_td()
 }
 // initialize_HR()
 template <typename TK, typename TR>
-void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(Grid_Driver* GridD, const Parallel_Orbitals* paraV)
+void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(Grid_Driver* GridD)
 {
     if (elecstate::H_TDDFT_pw::stype != 1)
     {
@@ -198,7 +195,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                                                           atom1->iw2n[iw1],
                                                           tau0 * this->ucell->lat0,
                                                           T0,
-                                                          cart_At / 2.0,
+                                                          cart_At,
                                                           TD_Velocity::out_current);
                     for (int dir = 0; dir < nlm_dim; dir++)
                     {
@@ -239,7 +236,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                             for (int i = 0; i < 3; i++)
                             {
                                 tmp_c[i] = TD_Velocity::td_vel_op->get_current_term_pointer(i)
-                                               ->find_matrix(iat1, iat2, R_index2)
+                                               ->find_matrix(iat1, iat2, R_vector[0], R_vector[1], R_vector[2])
                                                ->get_pointer();
                             }
                             this->cal_HR_IJR(iat1,
@@ -401,9 +398,9 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
     {
         if (this->hR_tmp == nullptr)
         {
-            this->hR_tmp = new hamilt::HContainer<std::complex<double>>(this->LM->ParaV);
+            this->hR_tmp = new hamilt::HContainer<std::complex<double>>(this->hsk->get_pv());
             // allocate memory for hR_tmp use the same memory as hR
-            this->initialize_HR_tmp(this->LM->ParaV);
+            this->initialize_HR_tmp(this->hsk->get_pv());
             this->allocated = true;
         }
         if (this->next_sub_op != nullptr)
@@ -437,13 +434,13 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<std::complex<double>, double>>::con
         // folding inside HR to HK
         if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
         {
-            const int nrow = this->LM->ParaV->get_row_size();
-            folding_HR(*this->hR_tmp, this->hK->data(), this->kvec_d[ik], nrow, 1);
+            const int nrow = this->hsk->get_pv()->get_row_size();
+            folding_HR(*this->hR_tmp, this->hsk->get_hk(), this->kvec_d[ik], nrow, 1);
         }
         else
         {
-            const int ncol = this->LM->ParaV->get_col_size();
-            folding_HR(*this->hR_tmp, this->hK->data(), this->kvec_d[ik], ncol, 0);
+            const int ncol = this->hsk->get_pv()->get_col_size();
+            folding_HR(*this->hR_tmp, this->hsk->get_hk(), this->kvec_d[ik], ncol, 0);
         }
 
         ModuleBase::timer::tick("TDNonlocal", "contributeHk");

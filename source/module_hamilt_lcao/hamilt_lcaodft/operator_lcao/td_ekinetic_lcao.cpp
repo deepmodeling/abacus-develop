@@ -14,24 +14,20 @@
 namespace hamilt
 {
 template <typename TK, typename TR>
-TDEkinetic<OperatorLCAO<TK, TR>>::TDEkinetic(LCAO_Matrix* LM_in,
+TDEkinetic<OperatorLCAO<TK, TR>>::TDEkinetic(HS_Matrix_K<TK>* hsk_in,
                                              hamilt::HContainer<TR>* hR_in,
-                                             std::vector<TK>* hK_in,
-                                             hamilt::HContainer<TR>* SR_in,
                                              const K_Vectors* kv_in,
                                              const UnitCell* ucell_in,
                                              Grid_Driver* GridD_in,
-                                             const Parallel_Orbitals* paraV,
                                              const TwoCenterIntegrator* intor)
-    : SR(SR_in), kv(kv_in), OperatorLCAO<TK, TR>(LM_in, kv_in->kvec_d, hR_in, hK_in), intor_(intor)
+    : kv(kv_in), OperatorLCAO<TK, TR>(hsk_in, kv_in->kvec_d, hR_in), intor_(intor)
 {
-    this->LM = LM_in;
     this->ucell = ucell_in;
     this->cal_type = calculation_type::lcao_tddft_velocity;
     this->Grid = GridD_in;
     this->init_td();
     // initialize HR to get adjs info.
-    this->initialize_HR(Grid, this->LM->ParaV);
+    this->initialize_HR(Grid);
 }
 template <typename TK, typename TR>
 TDEkinetic<OperatorLCAO<TK, TR>>::~TDEkinetic()
@@ -44,18 +40,18 @@ TDEkinetic<OperatorLCAO<TK, TR>>::~TDEkinetic()
 }
 // term A^2*S
 template <typename TK, typename TR>
-void TDEkinetic<OperatorLCAO<TK, TR>>::td_ekinetic_scalar(std::complex<double>* Hloc, TR* Sloc, int nnr)
+void TDEkinetic<OperatorLCAO<TK, TR>>::td_ekinetic_scalar(std::complex<double>* Hloc,const TR& overlap, int nnr)
 {
     return;
 }
 // term A^2*S
 template <>
 void TDEkinetic<OperatorLCAO<std::complex<double>, double>>::td_ekinetic_scalar(std::complex<double>* Hloc,
-                                                                                double* Sloc,
+                                                                                const double& overlap,
                                                                                 int nnr)
 {
-    // the correction term A^2/2 , 4.0 due to the unit transformation
-    std::complex<double> tmp = {cart_At.norm2() * Sloc[nnr] / 4.0, 0};
+    // the correction term A^2/2. From Hatree to Ry, it needs to be multiplied by 2.0
+    std::complex<double> tmp = {cart_At.norm2() * overlap, 0};
     Hloc[nnr] += tmp;
     return;
 }
@@ -67,9 +63,9 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::td_ekinetic_grad(std::complex<double>* Hl
 {
     // the correction term -iA dot ∇r
     //∇ refer to the integral ∫𝜙(𝑟)𝜕/𝜕𝑟𝜙(𝑟−𝑅)𝑑𝑟,but abacus only provide the integral of ∫𝜙(𝑟)𝜕/𝜕R𝜙(𝑟−𝑅)𝑑𝑟. An extra
-    //minus must be counted in. The final term is iA dot ∇R
+    //minus must be counted in. The final term is iA dot ∇R. From Hatree to Ry, it needs to be multiplied by 2.0
     std::complex<double> tmp = {0, grad_overlap * cart_At};
-    Hloc[nnr] += tmp;
+    Hloc[nnr] += tmp * 2.0;
     return;
 }
 
@@ -102,7 +98,6 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::calculate_HR()
             ModuleBase::Vector3<double> dtau = this->ucell->cal_dtau(iat1, iat2, R_index2);
 
             hamilt::BaseMatrix<std::complex<double>>* tmp = this->hR_tmp->find_matrix(iat1, iat2, R_index2);
-            hamilt::BaseMatrix<TR>* tmps = this->SR->find_matrix(iat1, iat2, R_index2);
             if (tmp != nullptr)
             {
                 if (TD_Velocity::out_current)
@@ -110,14 +105,13 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::calculate_HR()
                     std::complex<double>* tmp_c[3] = {nullptr, nullptr, nullptr};
                     for (int i = 0; i < 3; i++)
                     {
-                        tmp_c[i]
-                            = td_velocity.get_current_term_pointer(i)->find_matrix(iat1, iat2, R_index2)->get_pointer();
+                        tmp_c[i] = td_velocity.get_current_term_pointer(i)->find_matrix(iat1, iat2, R_index2)->get_pointer();
                     }
-                    this->cal_HR_IJR(iat1, iat2, paraV, dtau, tmp->get_pointer(), tmp_c, tmps->get_pointer());
+                    this->cal_HR_IJR(iat1, iat2, paraV, dtau, tmp->get_pointer(), tmp_c);
                 }
                 else
                 {
-                    this->cal_HR_IJR(iat1, iat2, paraV, dtau, tmp->get_pointer(), nullptr, tmps->get_pointer());
+                    this->cal_HR_IJR(iat1, iat2, paraV, dtau, tmp->get_pointer(), nullptr);
                 }
             }
             else
@@ -134,9 +128,8 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& iat1,
                                                   const int& iat2,
                                                   const Parallel_Orbitals* paraV,
                                                   const ModuleBase::Vector3<double>& dtau,
-                                                  std::complex<double>* data_pointer,
-                                                  std::complex<double>** data_pointer_c,
-                                                  TR* s_pointer)
+                                                  std::complex<double>* hr_mat_p,
+                                                  std::complex<double>** current_mat_p)
 {
     const LCAO_Orbitals& orb = LCAO_Orbitals::get_const_instance();
     // ---------------------------------------------
@@ -171,6 +164,7 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& iat1,
     // calculate the Ekinetic matrix for each pair of orbitals
     // ---------------------------------------------
     double grad[3] = {0, 0, 0};
+    double overlap = 0;
     auto row_indexes = paraV->get_indexes_row(iat1);
     auto col_indexes = paraV->get_indexes_col(iat2);
     const int step_trace = col_indexes.size() + 1;
@@ -195,19 +189,18 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& iat1,
             int M2 = (m2 % 2 == 0) ? -m2 / 2 : (m2 + 1) / 2;
 
             // calculate <psi|∇R|psi>, which equals to -<psi|∇r|psi>.
-            intor_->calculate(T1, L1, N1, M1, T2, L2, N2, M2, dtau * this->ucell->lat0, nullptr, grad);
+            intor_->calculate(T1, L1, N1, M1, T2, L2, N2, M2, dtau * this->ucell->lat0, &overlap, grad);
             ModuleBase::Vector3<double> grad_overlap(grad[0], grad[1], grad[2]);
 
             for (int ipol = 0; ipol < npol; ipol++)
             {
                 // key change
-                td_ekinetic_scalar(data_pointer, s_pointer, ipol * step_trace);
-                td_ekinetic_grad(data_pointer, ipol * step_trace, grad_overlap);
+                td_ekinetic_scalar(hr_mat_p, overlap, ipol * step_trace);
+                td_ekinetic_grad(hr_mat_p, ipol * step_trace, grad_overlap);
             }
-            data_pointer += npol;
-            s_pointer += npol;
+            hr_mat_p += npol;
             // current grad part
-            if (data_pointer_c != nullptr)
+            if (current_mat_p != nullptr)
             {
                 for (int dir = 0; dir < 3; dir++)
                 {
@@ -215,18 +208,19 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& iat1,
                     {
                         // part of Momentum operator, -i∇r,used to calculate the current
                         // here is actually i∇R
-                        data_pointer_c[dir][ipol * step_trace] += std::complex<double>(0, grad_overlap[dir]);
+                        current_mat_p[dir][ipol * step_trace] += std::complex<double>(0, grad_overlap[dir]);
+                        // part of Momentum operator, eA,used to calculate the current
+                        current_mat_p[dir][ipol * step_trace] += std::complex<double>(overlap * cart_At[dir], 0);
                     }
-                    data_pointer_c[dir] += npol;
+                    current_mat_p[dir] += npol;
                 }
             }
         }
-        data_pointer += (npol - 1) * col_indexes.size();
-        s_pointer += (npol - 1) * col_indexes.size();
-        if (data_pointer_c != nullptr)
+        hr_mat_p += (npol - 1) * col_indexes.size();
+        if (current_mat_p != nullptr)
         {
             for (int dir = 0; dir < 3; dir++)
-                data_pointer_c[dir] += (npol - 1) * col_indexes.size();
+                current_mat_p[dir] += (npol - 1) * col_indexes.size();
         }
     }
 }
@@ -236,7 +230,7 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::init_td(void)
 {
     TD_Velocity::td_vel_op = &td_velocity;
     // calculate At in cartesian coorinates.
-    td_velocity.cal_cart_At(this->ucell->a1, this->ucell->a2, this->ucell->a3, elecstate::H_TDDFT_pw::At);
+    td_velocity.cal_cart_At(elecstate::H_TDDFT_pw::At);
     this->cart_At = td_velocity.cart_At;
     std::cout << "cart_At: " << cart_At[0] << " " << cart_At[1] << " " << cart_At[2] << std::endl;
 }
@@ -248,7 +242,7 @@ void hamilt::TDEkinetic<hamilt::OperatorLCAO<TK, TR>>::set_HR_fixed(void* hR_tmp
     this->allocated = false;
 }
 template <typename TK, typename TR>
-void TDEkinetic<OperatorLCAO<TK, TR>>::initialize_HR(Grid_Driver* GridD, const Parallel_Orbitals* paraV)
+void TDEkinetic<OperatorLCAO<TK, TR>>::initialize_HR(Grid_Driver* GridD)
 {
     if (elecstate::H_TDDFT_pw::stype != 1)
     {
@@ -256,6 +250,9 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::initialize_HR(Grid_Driver* GridD, const P
     }
     ModuleBase::TITLE("TDEkinetic", "initialize_HR");
     ModuleBase::timer::tick("TDEkinetic", "initialize_HR");
+
+    auto* paraV = this->hR->get_paraV();// get parallel orbitals from HR
+    // TODO: if paraV is nullptr, AtomPair can not use paraV for constructor, I will repair it in the future.
 
     this->adjs_all.clear();
     this->adjs_all.reserve(this->ucell->nat);
@@ -294,7 +291,7 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::initialize_HR(Grid_Driver* GridD, const P
     ModuleBase::timer::tick("TDEkinetic", "initialize_HR");
 }
 template <typename TK, typename TR>
-void TDEkinetic<OperatorLCAO<TK, TR>>::initialize_HR_tmp(const Parallel_Orbitals* paraV)
+void TDEkinetic<OperatorLCAO<TK, TR>>::initialize_HR_tmp()
 {
     if (elecstate::H_TDDFT_pw::stype != 1)
     {
@@ -303,6 +300,8 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::initialize_HR_tmp(const Parallel_Orbitals
     ModuleBase::TITLE("TDEkinetic", "initialize_HR_tmp");
     ModuleBase::timer::tick("TDEkinetic", "initialize_HR_tmp");
 
+    auto* paraV = this->hR->get_paraV();// get parallel orbitals from HR
+    // TODO: if paraV is nullptr, AtomPair can not use paraV for constructor, I will repair it in the future.
     for (int i = 0; i < this->hR->size_atom_pairs(); ++i)
     {
         hamilt::AtomPair<TR>& tmp = this->hR->get_atom_pair(i);
@@ -338,9 +337,9 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::contributeHR()
         // if this Operator is the first node of the sub_chain, then hR_tmp is nullptr
         if (this->hR_tmp == nullptr)
         {
-            this->hR_tmp = new hamilt::HContainer<std::complex<double>>(paraV);
+            this->hR_tmp = new hamilt::HContainer<std::complex<double>>(this->hR->get_paraV());
             // allocate memory for hR_tmp use the same memory as hR
-            this->initialize_HR_tmp(paraV);
+            this->initialize_HR_tmp();
             this->allocated = true;
         }
         if (this->next_sub_op != nullptr)
@@ -399,12 +398,12 @@ void TDEkinetic<OperatorLCAO<std::complex<double>, double>>::contributeHk(int ik
         if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
         {
             const int nrow = paraV->get_row_size();
-            hamilt::folding_HR(*this->hR_tmp, this->hK->data(), this->kvec_d[ik], nrow, 1);
+            hamilt::folding_HR(*this->hR_tmp, this->hsk->get_hk(), this->kvec_d[ik], nrow, 1);
         }
         else
         {
             const int ncol = paraV->get_col_size();
-            hamilt::folding_HR(*this->hR_tmp, this->hK->data(), this->kvec_d[ik], ncol, 0);
+            hamilt::folding_HR(*this->hR_tmp, this->hsk->get_hk(), this->kvec_d[ik], ncol, 0);
         }
 
         ModuleBase::timer::tick("TDEkinetic", "contributeHk");

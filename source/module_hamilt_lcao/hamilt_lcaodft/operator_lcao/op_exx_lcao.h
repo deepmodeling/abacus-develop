@@ -4,8 +4,10 @@
 #ifdef __EXX
 
 #include <RI/global/Tensor.h>
+#include <RI/ri/Cell_Nearest.h>
 #include "operator_lcao.h"
 #include "module_cell/klist.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 
 namespace hamilt
 {
@@ -19,25 +21,28 @@ class OperatorEXX : public T
 };
 
 #endif
-
+enum Add_Hexx_Type { R, k };
 template <typename TK, typename TR>
 class OperatorEXX<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 {
     using TAC = std::pair<int, std::array<int, 3>>;
 public:
-    OperatorEXX<OperatorLCAO<TK, TR>>(LCAO_Matrix* LM_in,
+    OperatorEXX<OperatorLCAO<TK, TR>>(HS_Matrix_K<TK>* hsk_in,
+        LCAO_Matrix* LM_in,
         hamilt::HContainer<TR>* hR_in,
-        std::vector<TK>* hK_in,
         const K_Vectors& kv_in,
         std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd_in = nullptr,
         std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc_in = nullptr,
+        Add_Hexx_Type add_hexx_type_in = Add_Hexx_Type::R,
         int* two_level_step_in = nullptr,
         const bool restart_in = false);
 
     virtual void contributeHk(int ik) override;
+    virtual void contributeHR() override;
 
   private:
-
+      Add_Hexx_Type add_hexx_type = Add_Hexx_Type::R;
+      int current_spin = 0;
       bool HR_fixed_done = false;
 
       std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd = nullptr;
@@ -52,7 +57,14 @@ public:
       bool restart = false;
 
       void add_loaded_Hexx(const int ik);
+      void add_loaded_HexxR() {};
+      void clear_loaded_HexxR() {};
       const K_Vectors& kv;
+
+      LCAO_Matrix* LM = nullptr;
+      // if k points has no shift, use cell_nearest to reduce the memory cost
+      RI::Cell_Nearest<int, int, 3, double, 3> cell_nearest;
+      bool use_cell_nearest = true;
 };
 
 } // namespace hamilt

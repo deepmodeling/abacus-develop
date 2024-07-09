@@ -38,14 +38,12 @@ template <typename TK, typename TR>
 class NonlocalNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 {
   public:
-    NonlocalNew<OperatorLCAO<TK, TR>>(LCAO_Matrix* LM_in,
+    NonlocalNew<OperatorLCAO<TK, TR>>(HS_Matrix_K<TK>* hsk_in,
                                       const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
                                       hamilt::HContainer<TR>* hR_in,
-                                      std::vector<TK>* hK_in,
                                       const UnitCell* ucell_in,
                                       Grid_Driver* GridD_in,
-                                      const TwoCenterIntegrator* intor,
-                                      const Parallel_Orbitals* paraV);
+                                      const TwoCenterIntegrator* intor);
     ~NonlocalNew<OperatorLCAO<TK, TR>>();
 
     /**
@@ -59,16 +57,12 @@ class NonlocalNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
   private:
     const UnitCell* ucell = nullptr;
 
-    hamilt::HContainer<TR>* HR = nullptr;
-
     hamilt::HContainer<TR>* HR_fixed = nullptr;
 
     // the following variable is introduced temporarily during LCAO refactoring
     const TwoCenterIntegrator* intor_ = nullptr;
 
     bool allocated = false;
-
-    TK* HK_pointer = nullptr;
 
     bool HR_fixed_done = false;
 
@@ -77,7 +71,7 @@ class NonlocalNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      * HContainer is used to store the non-local pseudopotential matrix with specific <I,J,R> atom-pairs
      * the size of HR will be fixed after initialization
      */
-    void initialize_HR(Grid_Driver* GridD_in, const Parallel_Orbitals* paraV);
+    void initialize_HR(Grid_Driver* GridD_in);
 
     /**
      * @brief calculate the non-local pseudopotential matrix with specific <I,J,R> atom-pairs

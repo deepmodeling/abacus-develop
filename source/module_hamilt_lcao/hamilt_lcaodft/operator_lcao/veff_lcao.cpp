@@ -10,13 +10,14 @@ namespace hamilt
 // initialize_HR()
 template <typename TK, typename TR>
 void Veff<OperatorLCAO<TK, TR>>::initialize_HR(const UnitCell* ucell_in,
-                                        Grid_Driver* GridD,
-                                        const Parallel_Orbitals* paraV)
+                                        Grid_Driver* GridD)
 {
     ModuleBase::TITLE("Veff", "initialize_HR");
     ModuleBase::timer::tick("Veff", "initialize_HR");
 
     this->nspin = GlobalV::NSPIN;
+    auto* paraV = this->hR->get_paraV();// get parallel orbitals from HR
+    // TODO: if paraV is nullptr, AtomPair can not use paraV for constructor, I will repair it in the future.
 
     for (int iat1 = 0; iat1 < ucell_in->nat; iat1++)
     {

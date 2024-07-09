@@ -127,6 +127,11 @@ class K_Vectors
         return this->nkstot_full;
     }
 
+    double get_koffset(const int i) const
+    {
+        return this->koffset[i];
+    }
+
     void set_nks(int value)
     {
         this->nks = value;

@@ -14,11 +14,8 @@
 #include <limits>
 #include "module_base/parallel_global.h"
 
-Exx_Lip::Exx_Lip( const Exx_Info::Exx_Info_Lip &info_in )
-	:init_finish(false),
-	 info(info_in),
-	 exx_matrix(NULL),
-	 exx_energy(0){}
+Exx_Lip::Exx_Lip(const Exx_Info::Exx_Info_Lip& info_in)
+    : init_finish(false), info(info_in), exx_matrix(nullptr), exx_energy(0) {}
 
 // void Exx_Lip::cal_exx(const int& nks)
 // {
@@ -188,7 +185,7 @@ void Exx_Lip::init(const ModuleSymmetry::Symmetry& symm,
 		{
 			q_pack = k_pack;
 		}
-		else if(GlobalV::init_chg=="file")
+		else if (GlobalV::init_chg == "file" || GlobalV::init_chg == "auto")
 		{
             read_q_pack(symm, wfc_basis, sf);
         }
@@ -215,8 +212,9 @@ void Exx_Lip::init(const ModuleSymmetry::Symmetry& symm,
 
 		sum1 = new std::complex<double> [GlobalV::NLOCAL*GlobalV::NLOCAL];
 
-		if( Conv_Coulomb_Pot_K::Ccp_Type::Ccp==info.ccp_type || Conv_Coulomb_Pot_K::Ccp_Type::Hf==info.ccp_type )
-			if(gzero_rank_in_pool==GlobalV::RANK_IN_POOL)
+        if (Conv_Coulomb_Pot_K::Ccp_Type::Ccp == info.ccp_type
+            || Conv_Coulomb_Pot_K::Ccp_Type::Hf == info.ccp_type) {
+            if(gzero_rank_in_pool==GlobalV::RANK_IN_POOL)
 			{
 				b0 = new std::complex<double> [GlobalV::NLOCAL];
 				sum3 = new std::complex<double> *[GlobalV::NLOCAL];
@@ -227,16 +225,15 @@ void Exx_Lip::init(const ModuleSymmetry::Symmetry& symm,
 			}
 			else
 			{
-				b0 = NULL;
-				sum3 = NULL;
-			}
-		else
-		{
-			b0 = NULL;
-			sum3 = NULL;
-		}
+                b0 = nullptr;
+                sum3 = nullptr;
+            }
+        } else {
+            b0 = nullptr;
+            sum3 = nullptr;
+        }
 
-		exx_matrix = new std::complex<double> **[k_pack->kv_ptr->get_nks()];
+        exx_matrix = new std::complex<double> **[k_pack->kv_ptr->get_nks()];
 		for( int ik=0; ik<k_pack->kv_ptr->get_nks(); ++ik)
 		{
 			exx_matrix[ik] = new std::complex<double>*[GlobalV::NLOCAL];
@@ -261,75 +258,101 @@ Exx_Lip::~Exx_Lip()
 	{
 		for( int iw=0; iw<GlobalV::NLOCAL; ++iw)
 		{
-			delete[] phi[iw];	phi[iw]=NULL;
-		}
-		delete[] phi;		phi=NULL;
+			delete[] phi[iw];
+            phi[iw] = nullptr;
+        }
+		delete[] phi;
+        phi = nullptr;
 
-		for( int iq=0;iq<q_pack->kv_ptr->get_nks();++iq)
+        for( int iq=0;iq<q_pack->kv_ptr->get_nks();++iq)
 		{
 			for( int ib=0;ib<GlobalV::NBANDS;++ib)
 			{
-				delete[] psi[iq][ib];	psi[iq][ib]=NULL;
-			}
-			delete[] psi[iq];	psi[iq]=NULL;
-		}
-		delete[] psi;		psi=NULL;
+				delete[] psi[iq][ib];
+                psi[iq][ib] = nullptr;
+            }
+			delete[] psi[iq];
+            psi[iq] = nullptr;
+        }
+		delete[] psi;
+        psi = nullptr;
 
-		delete[] recip_qkg2;	recip_qkg2=NULL;
+        delete[] recip_qkg2;
+        recip_qkg2 = nullptr;
 
-		delete[] b;		b=NULL;
+        delete[] b;
+        b = nullptr;
 
-		delete[] sum1;		sum1=NULL;
+        delete[] sum1;
+        sum1 = nullptr;
 
-		if( Conv_Coulomb_Pot_K::Ccp_Type::Ccp==info.ccp_type || Conv_Coulomb_Pot_K::Ccp_Type::Hf==info.ccp_type )
-			if(gzero_rank_in_pool==GlobalV::RANK_IN_POOL)
+        if (Conv_Coulomb_Pot_K::Ccp_Type::Ccp == info.ccp_type
+            || Conv_Coulomb_Pot_K::Ccp_Type::Hf == info.ccp_type) {
+            if(gzero_rank_in_pool==GlobalV::RANK_IN_POOL)
 			{
-				delete[] b0;	b0=NULL;
-				for( int iw_l=0; iw_l<GlobalV::NLOCAL; ++iw_l)
+				delete[] b0;
+                b0 = nullptr;
+                for( int iw_l=0; iw_l<GlobalV::NLOCAL; ++iw_l)
 				{
-					delete[] sum3[iw_l];	sum3[iw_l]=NULL;
-				}
-				delete[] sum3;		sum3=NULL;
-			}
+					delete[] sum3[iw_l];
+                    sum3[iw_l] = nullptr;
+                }
+				delete[] sum3;
+                sum3 = nullptr;
+            }
+        }
 
-		for( int ik=0; ik<k_pack->kv_ptr->get_nks(); ++ik)
+        for( int ik=0; ik<k_pack->kv_ptr->get_nks(); ++ik)
 		{
 			for( int iw_l=0; iw_l<GlobalV::NLOCAL; ++iw_l)
 			{
-				delete[] exx_matrix[ik][iw_l];	exx_matrix[ik][iw_l]=NULL;
-			}
-			delete[] exx_matrix[ik];	exx_matrix[ik]=NULL;
-		}
-		delete[] exx_matrix;	exx_matrix=NULL;
+				delete[] exx_matrix[ik][iw_l];
+                exx_matrix[ik][iw_l] = nullptr;
+            }
+			delete[] exx_matrix[ik];
+            exx_matrix[ik] = nullptr;
+        }
+		delete[] exx_matrix;
+        exx_matrix = nullptr;
 
-		delete[] k_pack->hvec_array;	k_pack->hvec_array=NULL;
-		delete k_pack;
+        delete[] k_pack->hvec_array;
+        k_pack->hvec_array = nullptr;
+        delete k_pack;
 
 		if (GlobalV::init_chg=="atomic")
 		{
-			q_pack = NULL;
-		}
+            q_pack = nullptr;
+        }
 		else if(GlobalV::init_chg=="file")
 		{
-			delete q_pack->kv_ptr;	q_pack->kv_ptr=NULL;
-			delete q_pack->wf_ptr;	q_pack->wf_ptr=NULL;
-			delete[] q_pack->hvec_array;	q_pack->hvec_array=NULL;
-			delete q_pack;	q_pack=NULL;
-		}
+			delete q_pack->kv_ptr;
+            q_pack->kv_ptr = nullptr;
+            delete q_pack->wf_ptr;
+            q_pack->wf_ptr = nullptr;
+            delete[] q_pack->hvec_array;
+            q_pack->hvec_array = nullptr;
+            delete q_pack;
+            q_pack = nullptr;
+        }
 	}
 }
 
 void Exx_Lip::wf_wg_cal()
 {
 	ModuleBase::TITLE("Exx_Lip","wf_wg_cal");
-	if(GlobalV::NSPIN==1)
-		for( int ik=0; ik<k_pack->kv_ptr->get_nks(); ++ik)
-			for( int ib=0; ib<GlobalV::NBANDS; ++ib)
-				k_pack->wf_wg(ik,ib) = k_pack->pelec->wg(ik,ib)/2;
-	else if(GlobalV::NSPIN==2)
-		for( int ik=0; ik<k_pack->kv_ptr->get_nks(); ++ik)
-			for( int ib=0; ib<GlobalV::NBANDS; ++ib)
-				k_pack->wf_wg(ik,ib) = k_pack->pelec->wg(ik,ib);
+    if (GlobalV::NSPIN == 1) {
+        for (int ik = 0; ik < k_pack->kv_ptr->get_nks(); ++ik) {
+            for (int ib = 0; ib < GlobalV::NBANDS; ++ib) {
+                k_pack->wf_wg(ik, ib) = k_pack->pelec->wg(ik, ib) / 2;
+            }
+        }
+    } else if (GlobalV::NSPIN == 2) {
+        for (int ik = 0; ik < k_pack->kv_ptr->get_nks(); ++ik) {
+            for (int ib = 0; ib < GlobalV::NBANDS; ++ib) {
+                k_pack->wf_wg(ik, ib) = k_pack->pelec->wg(ik, ib);
+            }
+        }
+    }
 }
 
 void Exx_Lip::phi_cal(k_package *kq_pack, int ikq)
@@ -442,20 +465,24 @@ void Exx_Lip::qkg2_exp(int ik, int iq)
 		const double qkg2 = ( (q_pack->kv_ptr->kvec_c[iq] - k_pack->kv_ptr->kvec_c[ik] + rho_basis->gcar[ig]) *(ModuleBase::TWO_PI/ucell_ptr->lat0)).norm2();
 		if( Conv_Coulomb_Pot_K::Ccp_Type::Ccp==info.ccp_type || Conv_Coulomb_Pot_K::Ccp_Type::Hf==info.ccp_type )
 		{
-			if( std::abs(qkg2)<1e-10 )
-				recip_qkg2[ig] = 0.0;												// 0 to ignore bb/qkg2 when qkg2==0
-			else
-				recip_qkg2[ig] = 1.0/qkg2;
-			sum2_factor += recip_qkg2[ig] * exp(-info.lambda*qkg2) ;
+            if (std::abs(qkg2) < 1e-10) {
+                recip_qkg2[ig] = 0.0;												// 0 to ignore bb/qkg2 when qkg2==0
+            } else {
+                recip_qkg2[ig] = 1.0 / qkg2;
+            }
+            sum2_factor += recip_qkg2[ig] * exp(-info.lambda*qkg2) ;
 			recip_qkg2[ig] = sqrt(recip_qkg2[ig]);
 		}
 		else if( Conv_Coulomb_Pot_K::Ccp_Type::Hse==info.ccp_type )
 		{
-			if( std::abs(qkg2)<1e-10 )
-				recip_qkg2[ig] = 1.0/(2*info.hse_omega);
-			else
-				recip_qkg2[ig] = sqrt( (1-exp(-qkg2/(4*info.hse_omega*info.hse_omega))) /qkg2);
-		}
+            if (std::abs(qkg2) < 1e-10) {
+                recip_qkg2[ig] = 1.0/(2*info.hse_omega);
+            } else {
+                recip_qkg2[ig] = sqrt(
+                    (1 - exp(-qkg2 / (4 * info.hse_omega * info.hse_omega)))
+                    / qkg2);
+            }
+        }
 	}
 }
 
@@ -492,23 +519,34 @@ void Exx_Lip::b_cal( int ik, int iq, int ib)
 		}
 		std::complex<double> * const b_w = b+iw*rho_basis->npw;
 		rho_basis->real2recip( porter, b_w);
-		if( Conv_Coulomb_Pot_K::Ccp_Type::Ccp==info.ccp_type || Conv_Coulomb_Pot_K::Ccp_Type::Hf==info.ccp_type )
-			if((iq==iq_vecik) && (gzero_rank_in_pool==GlobalV::RANK_IN_POOL))							/// need to check while use k_point parallel
-				b0[iw] = b_w[rho_basis->ig_gge0];
+        if (Conv_Coulomb_Pot_K::Ccp_Type::Ccp == info.ccp_type
+            || Conv_Coulomb_Pot_K::Ccp_Type::Hf == info.ccp_type) {
+            if ((iq == iq_vecik)
+                && (gzero_rank_in_pool
+                    == GlobalV::RANK_IN_POOL)) { /// need to check while use
+                                                 /// k_point parallel
+                b0[iw] = b_w[rho_basis->ig_gge0];
+            }
+        }
 
-		for( size_t ig=0; ig<rho_basis->npw; ++ig)
-			b_w[ig] *= recip_qkg2[ig];
-	}
+        for (size_t ig = 0; ig < rho_basis->npw; ++ig) {
+            b_w[ig] *= recip_qkg2[ig];
+        }
+    }
 	delete [] porter;
 }
 
 
 void  Exx_Lip::sum3_cal(int iq, int ib)
 {
-	if( gzero_rank_in_pool == GlobalV::RANK_IN_POOL )
-		for( int iw_l=0; iw_l<GlobalV::NLOCAL; ++iw_l)
-			for( int iw_r=0; iw_r<GlobalV::NLOCAL; ++iw_r)
-				sum3[iw_l][iw_r] += b0[iw_l] * conj(b0[iw_r]) * q_pack->wf_wg(iq,ib);
+    if (gzero_rank_in_pool == GlobalV::RANK_IN_POOL) {
+        for (int iw_l = 0; iw_l < GlobalV::NLOCAL; ++iw_l) {
+            for (int iw_r = 0; iw_r < GlobalV::NLOCAL; ++iw_r) {
+                sum3[iw_l][iw_r]
+                    += b0[iw_l] * conj(b0[iw_r]) * q_pack->wf_wg(iq, ib);
+            }
+        }
+    }
 }
 
 
@@ -530,25 +568,39 @@ void Exx_Lip::sum_all(int ik)
 {
 	double sum2_factor_g(0.0);
 	#ifdef __MPI
-	if( Conv_Coulomb_Pot_K::Ccp_Type::Ccp==info.ccp_type || Conv_Coulomb_Pot_K::Ccp_Type::Hf==info.ccp_type )
-		MPI_Reduce( &sum2_factor, &sum2_factor_g, 1, MPI_DOUBLE, MPI_SUM, gzero_rank_in_pool, POOL_WORLD);
-	#endif
-	for( size_t iw_l=1; iw_l<GlobalV::NLOCAL; ++iw_l)
-		for( size_t iw_r=0; iw_r<iw_l; ++iw_r)
-			sum1[iw_l*GlobalV::NLOCAL+iw_r] = conj(sum1[iw_r*GlobalV::NLOCAL+iw_l]);		// Peize Lin add conj 2019-04-14
+    if (Conv_Coulomb_Pot_K::Ccp_Type::Ccp == info.ccp_type
+        || Conv_Coulomb_Pot_K::Ccp_Type::Hf == info.ccp_type) {
+        MPI_Reduce(&sum2_factor,
+                   &sum2_factor_g,
+                   1,
+                   MPI_DOUBLE,
+                   MPI_SUM,
+                   gzero_rank_in_pool,
+                   POOL_WORLD);
+    }
+#endif
+    for (size_t iw_l = 1; iw_l < GlobalV::NLOCAL; ++iw_l) {
+        for (size_t iw_r = 0; iw_r < iw_l; ++iw_r) {
+            sum1[iw_l * GlobalV::NLOCAL + iw_r]
+                = conj(sum1[iw_r * GlobalV::NLOCAL
+                            + iw_l]); // Peize Lin add conj 2019-04-14
+        }
+    }
 
-	for( int iw_l=0; iw_l<GlobalV::NLOCAL; ++iw_l)
+    for( int iw_l=0; iw_l<GlobalV::NLOCAL; ++iw_l)
 	{
 		for( int iw_r=0; iw_r<GlobalV::NLOCAL; ++iw_r)
 		{
 			exx_matrix[ik][iw_l][iw_r] = 2.0* (-4*ModuleBase::PI/ucell_ptr->omega *sum1[iw_l*GlobalV::NLOCAL+iw_r]);
-			if( Conv_Coulomb_Pot_K::Ccp_Type::Ccp==info.ccp_type || Conv_Coulomb_Pot_K::Ccp_Type::Hf==info.ccp_type )
-				if(gzero_rank_in_pool==GlobalV::RANK_IN_POOL)
+            if (Conv_Coulomb_Pot_K::Ccp_Type::Ccp == info.ccp_type
+                || Conv_Coulomb_Pot_K::Ccp_Type::Hf == info.ccp_type) {
+                if(gzero_rank_in_pool==GlobalV::RANK_IN_POOL)
 				{
 					exx_matrix[ik][iw_l][iw_r] += 2.0* (4*ModuleBase::PI/ucell_ptr->omega *sum3[iw_l][iw_r] *sum2_factor_g );
 					exx_matrix[ik][iw_l][iw_r] += 2.0* (-1/sqrt(info.lambda*ModuleBase::PI)*(q_pack->kv_ptr->get_nks()/GlobalV::NSPIN) * sum3[iw_l][iw_r]);
-				}
-		}
+                }
+            }
+        }
 	}
 }
 
@@ -628,10 +680,11 @@ void Exx_Lip::exx_energy_cal()
 
 void Exx_Lip::write_q_pack() const
 {
-    if (GlobalV::out_chg==0)
-		return;
+    if (GlobalV::out_chg == 0) {
+        return;
+    }
 
-	if(!GlobalV::RANK_IN_POOL)
+    if(!GlobalV::RANK_IN_POOL)
 	{
 		const std::string exx_q_pack = "exx_q_pack/";
 		int return_value=0;

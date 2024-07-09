@@ -105,7 +105,7 @@ You can install Git first and reinstall abacus.")
 endif()
 
 if(NOT ENABLE_MPI)
-  set(ENABLE_LCAO OFF)
+  set(USE_ELPA OFF)
   set(ENABLE_DEEPKS OFF)
   set(BUILD_TESTING OFF)
 endif()
@@ -116,6 +116,8 @@ elseif(NOT ENABLE_LCAO AND ENABLE_MPI)
   set(ABACUS_BIN_NAME abacus_pw)
 elseif(NOT ENABLE_LCAO AND NOT ENABLE_MPI)
   set(ABACUS_BIN_NAME abacus_pw_serial)
+elseif(ENABLE_LCAO AND NOT ENABLE_MPI)
+  set(ABACUS_BIN_NAME abacus_serial)
 endif()
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
@@ -213,7 +215,7 @@ if(ENABLE_LCAO)
   if(ENABLE_FFT_TWO_CENTER)
     add_compile_definitions(USE_NEW_TWO_CENTER)
   endif()
-  
+
   if(ENABLE_PEXSI)
     find_package(PEXSI REQUIRED)
     target_link_libraries(${ABACUS_BIN_NAME} ${PEXSI_LIBRARY} ${SuperLU_DIST_LIBRARY} ${ParMETIS_LIBRARY} ${METIS_LIBRARY} pexsi)
@@ -395,13 +397,7 @@ if(MKLROOT)
   find_package(IntelMKL REQUIRED)
   add_definitions(-D__MKL)
   include_directories(${MKL_INCLUDE_DIRS} ${MKL_INCLUDE_DIRS}/fftw)
-
-  # Since libtorch will find its own MKL, the fftw part conflicts with the
-  # original one. When enable deepks, mkl will be linked within
-  # ${TORCH_LIBRARIES}.
-  if(NOT ENABLE_DEEPKS)
-    list(APPEND math_libs IntelMKL::MKL)
-  endif()
+  list(APPEND math_libs IntelMKL::MKL)
 
   if(CMAKE_CXX_COMPILER_ID MATCHES Intel)
     list(APPEND math_libs -lifcore)
@@ -586,14 +582,13 @@ if(DEFINED DeePMD_DIR)
     add_compile_definitions(__DPMDC)
   else()
     target_link_libraries(${ABACUS_BIN_NAME} DeePMD::deepmd_cc)
-  endif()
-
-  if(NOT DEFINED TensorFlow_DIR)
-    set(TensorFlow_DIR ${DeePMD_DIR})
-  endif()
-  find_package(TensorFlow REQUIRED)
-  if(TensorFlow_FOUND)
-    target_link_libraries(${ABACUS_BIN_NAME} TensorFlow::tensorflow_cc)
+    if(NOT DEFINED TensorFlow_DIR)
+      set(TensorFlow_DIR ${DeePMD_DIR})
+    endif()
+    find_package(TensorFlow REQUIRED)
+    if(TensorFlow_FOUND)
+      target_link_libraries(${ABACUS_BIN_NAME} TensorFlow::tensorflow_cc)
+    endif()
   endif()
 endif()
 
@@ -682,6 +677,7 @@ target_link_libraries(
   planewave
   surchem
   neighbor
+  io_input
   io_basic
   io_advanced
   relax
@@ -697,6 +693,7 @@ target_link_libraries(
   psi_initializer
   esolver
   vdw
+  parameter
   device
   container)
 

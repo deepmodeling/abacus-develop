@@ -56,14 +56,15 @@ class ESolver_KS_PW : public ESolver_KS<T, Device>
     // Init Global class
     void Init_GlobalC(Input& inp, UnitCell& ucell, pseudopot_cell_vnl& ppcell);
 
-  protected:
+    virtual void allocate_hsolver();
+    virtual void deallocate_hsolver();
+
     //! hide the psi in ESolver_KS for tmp use
     psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi = nullptr;
 
     // psi_initializer controller
     psi::WFInit<T, Device>* p_wf_init = nullptr;
 
-  private:
     Device* ctx = {};
 
     base_device::AbacusDevice_t device = {};

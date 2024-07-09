@@ -47,7 +47,7 @@
     - [pw\_diag\_thr](#pw_diag_thr)
     - [pw\_diag\_nmax](#pw_diag_nmax)
     - [pw\_diag\_ndim](#pw_diag_ndim)
-    - [diago_full_acc](#diago_full_acc)
+    - [diago\_full\_acc](#diago_full_acc)
     - [erf\_ecut](#erf_ecut)
     - [fft\_mode](#fft_mode)
     - [erf\_height](#erf_height)
@@ -147,6 +147,8 @@
     - [out\_mat\_t](#out_mat_t)
     - [out\_mat\_dh](#out_mat_dh)
     - [out\_mat\_xc](#out_mat_xc)
+    - [out\_hr\_npz/out\_dm\_npz](#out_hr_npzout_dm_npz)
+    - [dm\_to\_rho](#dm_to_rho)
     - [out\_app\_flag](#out_app_flag)
     - [out\_ndigits](#out_ndigits)
     - [out\_interval](#out_interval)
@@ -172,6 +174,7 @@
   - [DeePKS](#deepks)
     - [deepks\_out\_labels](#deepks_out_labels)
     - [deepks\_scf](#deepks_scf)
+    - [deepks\_equiv](#deepks_equiv)
     - [deepks\_model](#deepks_model)
     - [bessel\_descriptor\_lmax](#bessel_descriptor_lmax)
     - [bessel\_descriptor\_ecut](#bessel_descriptor_ecut)
@@ -556,6 +559,7 @@ These variables are used to control general system parameters.
 
   - atomic: the density is starting from the summation of the atomic density of single atoms.
   - file: the density will be read in from a binary file `charge-density.dat` first. If it does not exist, the charge density will be read in from cube files. Besides, when you do `nspin=1` calculation, you only need the density file SPIN1_CHG.cube. However, if you do `nspin=2` calculation, you also need the density file SPIN2_CHG.cube. The density file should be output with these names if you set out_chg = 1 in INPUT file.
+  - auto: Abacus first attempts to read the density from a file; if not found, it defaults to using atomic density.
 - **Default**: atomic
 
 ### init_vel
@@ -953,6 +957,7 @@ calculations.
   - **cg**: cg method.
   - **bpcg**: bpcg method, which is a block-parallel Conjugate Gradient (CG) method, typically exhibits higher acceleration in a GPU environment.
   - **dav**: the Davidson algorithm.
+  - **dav_subspace**: subspace Davidson algorithm
 
   For atomic orbitals basis,
 
@@ -1708,7 +1713,7 @@ The band (KS orbital) energy for each (k-point, spin, band) will be printed in t
   - auto: These files are saved in folder `OUT.${suffix}/restart/`;
   - other: These files are saved in folder `${read_file_dir}/restart/`.
 
-  If EXX(exact exchange) is calculated (i.e. *[dft_fuctional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)==True*), the Hexx(k) files for each k-point will also be saved in the above folder, which can be read in EXX calculation with *[restart_load](#restart_load)==True*.
+  If EXX(exact exchange) is calculated (i.e. *[dft_fuctional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)==True*), the Hexx(R) files for each processor will also be saved in the above folder, which can be read in EXX calculation with *[restart_load](#restart_load)==True*.
 - **Default**: False
 
 ### restart_load
@@ -1717,7 +1722,7 @@ The band (KS orbital) energy for each (k-point, spin, band) will be printed in t
 - **Availability**: Numerical atomic orbital basis
 - **Description**: If [restart_save](#restart_save) is set to true and an electronic iteration is finished, calculations can be restarted from the charge density file, which are saved in the former calculation. Please ensure [read_file_dir](#read_file_dir) is correct, and  the charge density file exist.
 
-  If EXX(exact exchange) is calculated (i.e. *[dft_fuctional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)==True*), the Hexx(k) files in the same folder for each k-point will also be read.
+  If EXX(exact exchange) is calculated (i.e. *[dft_fuctional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)==True*), the Hexx(R) files in the same folder for each processor will also be read.
 - **Default**: False
 
 ### rpa
@@ -2663,7 +2668,7 @@ These variables are used to control DFT+U correlated parameters
   - 1: For p-electron orbits, the plus U correction is needed.
   - 2: For d-electron orbits, the plus U correction is needed.
   - 3: For f-electron orbits, the plus U correction is needed.
-- **Default**: None
+- **Default**: -1
 
 ### hubbard_u
 

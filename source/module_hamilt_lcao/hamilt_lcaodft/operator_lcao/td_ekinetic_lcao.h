@@ -8,6 +8,7 @@
 #include "module_hamilt_lcao/module_tddft/td_velocity.h"
 #include "operator_lcao.h"
 
+
 namespace hamilt
 {
 
@@ -30,18 +31,15 @@ class TDEkinetic : public T
 /// - TR: data type of real space Hamiltonian
 
 template <typename TK, typename TR>
-class TDEkinetic<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
+class TDEkinetic<OperatorLCAO<TK,TR>> : public OperatorLCAO<TK, TR>
 {
   public:
-    TDEkinetic<OperatorLCAO<TK, TR>>(LCAO_Matrix* LM_in,
-                                     hamilt::HContainer<TR>* hR_in,
-                                     std::vector<TK>* hK_in,
-                                     hamilt::HContainer<TR>* SR_in,
-                                     const K_Vectors* kv_in,
-                                     const UnitCell* ucell_in,
-                                     Grid_Driver* GridD_in,
-                                     const Parallel_Orbitals* paraV,
-                                     const TwoCenterIntegrator* intor);
+    TDEkinetic<OperatorLCAO<TK, TR>>(HS_Matrix_K<TK>* hsk_in,
+                                 hamilt::HContainer<TR>* hR_in,
+                                 const K_Vectors* kv_in,
+                                 const UnitCell* ucell_in,
+                                 Grid_Driver* GridD_in,
+                                 const TwoCenterIntegrator* intor);
     ~TDEkinetic();
 
     virtual void contributeHR() override;
@@ -54,13 +52,13 @@ class TDEkinetic<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      * HContainer is used to store the non-local pseudopotential matrix with specific <I,J,R> atom-pairs
      * the size of HR will be fixed after initialization
      */
-    void initialize_HR(Grid_Driver* GridD, const Parallel_Orbitals* paraV);
+    void initialize_HR(Grid_Driver* GridD);
 
     /**
      * @brief initialize HR_tmp
      * Allocate the memory for HR_tmp with the same size as HR
-     */
-    void initialize_HR_tmp(const Parallel_Orbitals* paraV);
+    */
+    void initialize_HR_tmp();
 
     /**
      * @brief calculate the HR local matrix of <I,J,R> atom pair
@@ -69,9 +67,8 @@ class TDEkinetic<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                     const int& iat2,
                     const Parallel_Orbitals* paraV,
                     const ModuleBase::Vector3<double>& dtau,
-                    std::complex<double>* data_pointer,
-                    std::complex<double>** data_pointer_c,
-                    TR* s_pointer);
+                    std::complex<double>* hr_mat_p,
+                    std::complex<double>** current_mat_p);
 
     /**
      * @brief calculate the ekinetic matrix correction term in tddft with specific <I,J,R> atom-pairs
@@ -85,16 +82,15 @@ class TDEkinetic<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 
   private:
     const UnitCell* ucell = nullptr;
-
+    
     HContainer<TR>* SR = nullptr;
-    /// @brief Store real space hamiltonian. TD term should include imaginary part, thus it has to be complex type. Only
-    /// shared between TD operators.
+    /// @brief Store real space hamiltonian. TD term should include imaginary part, thus it has to be complex type. Only shared between TD operators.
     HContainer<std::complex<double>>* hR_tmp = nullptr;
     Grid_Driver* Grid = nullptr;
 
     const K_Vectors* kv;
     /// @brief correction term iA⋅∇
-    void td_ekinetic_scalar(std::complex<double>* Hloc, TR* Sloc, int nnr);
+    void td_ekinetic_scalar(std::complex<double>* Hloc, const TR& Sloc, int nnr);
     /// @brief correction term A^2*S
     void td_ekinetic_grad(std::complex<double>* Hloc, int nnr, ModuleBase::Vector3<double> grad_overlap);
 

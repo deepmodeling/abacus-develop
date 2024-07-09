@@ -36,7 +36,9 @@ void DiagoIterAssist<T, Device>::diagH_subspace(hamilt::Hamilt<T, Device>* pHami
     // 2. lcao_in_pw base: nstart >= n_band, psi(NLOCAL * npwx)
     const int nstart = psi.get_nbands();
     if (n_band == 0)
+    {
         n_band = nstart;
+    }
     assert(n_band <= nstart);
 
     T *hcc = nullptr, *scc = nullptr, *vcc = nullptr;
@@ -49,10 +51,6 @@ void DiagoIterAssist<T, Device>::diagH_subspace(hamilt::Hamilt<T, Device>* pHami
 
     const int dmin = psi.get_current_nbas();
     const int dmax = psi.get_nbasis();
-    const int ik = psi.get_current_k();
-
-    // qianrui improve this part 2021-3-14
-    const T* ppsi = psi.get_pointer();
 
     T* temp = nullptr;
     bool in_place = false;
@@ -72,17 +70,43 @@ void DiagoIterAssist<T, Device>::diagH_subspace(hamilt::Hamilt<T, Device>* pHami
 
         T* hphi = temp;
         // do hPsi for all bands
-        psi::Range all_bands_range(1, ik, 0, nstart - 1);
+        psi::Range all_bands_range(1, psi.get_current_k(), 0, nstart - 1);
         hpsi_info hpsi_in(&psi, all_bands_range, hphi);
         pHamilt->ops->hPsi(hpsi_in);
 
-        gemm_op<T, Device>()(ctx, 'C', 'N', nstart, nstart, dmin, &one, ppsi, dmax, hphi, dmax, &zero, hcc, nstart);
+        gemm_op<T, Device>()(ctx,
+                             'C',
+                             'N',
+                             nstart,
+                             nstart,
+                             dmin,
+                             &one,
+                             psi.get_pointer(),
+                             dmax,
+                             hphi,
+                             dmax,
+                             &zero,
+                             hcc,
+                             nstart);
 
         T* sphi = temp;
         // do sPsi for all bands
-        pHamilt->sPsi(ppsi, sphi, dmax, dmin, nstart);
+        pHamilt->sPsi(psi.get_pointer(), sphi, dmax, dmin, nstart);
 
-        gemm_op<T, Device>()(ctx, 'C', 'N', nstart, nstart, dmin, &one, ppsi, dmax, sphi, dmax, &zero, scc, nstart);
+        gemm_op<T, Device>()(ctx,
+                             'C',
+                             'N',
+                             nstart,
+                             nstart,
+                             dmin,
+                             &one,
+                             psi.get_pointer(),
+                             dmax,
+                             sphi,
+                             dmax,
+                             &zero,
+                             scc,
+                             nstart);
     }
 
     if (GlobalV::NPROC_IN_POOL > 1)
@@ -102,7 +126,7 @@ void DiagoIterAssist<T, Device>::diagH_subspace(hamilt::Hamilt<T, Device>* pHami
                              n_band,
                              nstart,
                              &one,
-                             ppsi, // dmin * nstart
+                             psi.get_pointer(), // dmin * nstart
                              dmax,
                              vcc, // nstart * n_band
                              nstart,

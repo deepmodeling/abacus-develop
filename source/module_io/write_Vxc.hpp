@@ -306,7 +306,7 @@ void write_Vxc(int nspin,
     for (int is = 0; is < nspin0; ++is)
         vxcs_R_ao[is].set_zero();
     // k (size for each k-point)
-    std::vector<TK> vxc_k_ao(pv->nloc);
+    hamilt::HS_Matrix_K<TK> vxc_k_ao(pv, 1); // only hk is needed, sk is skipped
 
     // 3. allocate operators and contribute HR
     // op (corresponding to hR)
@@ -318,26 +318,24 @@ void write_Vxc(int nspin,
     for (int is = 0; is < nspin0; ++is)
     {
         vxcs_op_ao[is] = new hamilt::Veff<hamilt::OperatorLCAO<TK, TR>>(gint,
-                                                                        &lm,
+                                                                        &vxc_k_ao,
                                                                         kv.kvec_d,
                                                                         potxc,
                                                                         &vxcs_R_ao[is],
-                                                                        &vxc_k_ao,
                                                                         &ucell,
-                                                                        &gd,
-                                                                        pv);
+                                                                        &gd);
 
         vxcs_op_ao[is]->contributeHR();
     }
     std::vector<std::vector<double>> e_orb_locxc; // orbital energy (local XC)
     std::vector<std::vector<double>> e_orb_tot;   // orbital energy (total)
 #ifdef __EXX
-    hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>> vexx_op_ao(&lm, nullptr, &vxc_k_ao, kv);
-    std::vector<TK> vexxonly_k_ao(pv->nloc);
-    hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>> vexxonly_op_ao(&lm, nullptr, &vexxonly_k_ao, kv);
+    hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>> vexx_op_ao(&vxc_k_ao, &lm, nullptr, kv, lm.Hexxd, lm.Hexxc, hamilt::Add_Hexx_Type::k);
+    hamilt::HS_Matrix_K<TK> vexxonly_k_ao(pv, 1); // only hk is needed, sk is skipped
+    hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>> vexxonly_op_ao(&vexxonly_k_ao, &lm, nullptr, kv, lm.Hexxd, lm.Hexxc, hamilt::Add_Hexx_Type::k);
     std::vector<std::vector<double>> e_orb_exx; // orbital energy (EXX)
 #endif
-    hamilt::OperatorDFTU<hamilt::OperatorLCAO<TK, TR>> vdftu_op_ao(&lm, kv.kvec_d, nullptr, &vxc_k_ao, kv.isk);
+    hamilt::OperatorDFTU<hamilt::OperatorLCAO<TK, TR>> vdftu_op_ao(&vxc_k_ao, kv.kvec_d, nullptr, kv.isk);
 
     // 4. calculate and write the MO-matrix Exc
     Parallel_2D p2d;
@@ -349,19 +347,19 @@ void write_Vxc(int nspin,
     // ======test=======
     for (int ik = 0; ik < kv.get_nks(); ++ik)
     {
-        ModuleBase::GlobalFunc::ZEROS(vxc_k_ao.data(), pv->nloc);
+        vxc_k_ao.set_zero_hk();
         int is = kv.isk[ik];
         dynamic_cast<hamilt::OperatorLCAO<TK, TR>*>(vxcs_op_ao[is])->contributeHk(ik);
-        const std::vector<TK>& vlocxc_k_mo = cVc(vxc_k_ao.data(), &psi(ik, 0, 0), nbasis, nbands, *pv, p2d);
+        const std::vector<TK>& vlocxc_k_mo = cVc(vxc_k_ao.get_hk(), &psi(ik, 0, 0), nbasis, nbands, *pv, p2d);
 
 #ifdef __EXX
         if (GlobalC::exx_info.info_global.cal_exx)
         {
             e_orb_locxc.emplace_back(orbital_energy(ik, nbands, vlocxc_k_mo, p2d));
-            ModuleBase::GlobalFunc::ZEROS(vexxonly_k_ao.data(), pv->nloc);
+            ModuleBase::GlobalFunc::ZEROS(vexxonly_k_ao.get_hk(), pv->nloc);
             vexx_op_ao.contributeHk(ik);
             vexxonly_op_ao.contributeHk(ik);
-            std::vector<TK> vexx_k_mo = cVc(vexxonly_k_ao.data(), &psi(ik, 0, 0), nbasis, nbands, *pv, p2d);
+            std::vector<TK> vexx_k_mo = cVc(vexxonly_k_ao.get_hk(), &psi(ik, 0, 0), nbasis, nbands, *pv, p2d);
             e_orb_exx.emplace_back(orbital_energy(ik, nbands, vexx_k_mo, p2d));
         }
         // ======test=======
@@ -372,7 +370,7 @@ void write_Vxc(int nspin,
         {
             vdftu_op_ao.contributeHk(ik);
         }
-        const std::vector<TK>& vxc_tot_k_mo = cVc(vxc_k_ao.data(), &psi(ik, 0, 0), nbasis, nbands, *pv, p2d);
+        const std::vector<TK>& vxc_tot_k_mo = cVc(vxc_k_ao.get_hk(), &psi(ik, 0, 0), nbasis, nbands, *pv, p2d);
         e_orb_tot.emplace_back(orbital_energy(ik, nbands, vxc_tot_k_mo, p2d));
         // write
         ModuleIO::save_mat(-1,

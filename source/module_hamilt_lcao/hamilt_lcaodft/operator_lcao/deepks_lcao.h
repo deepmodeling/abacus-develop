@@ -30,10 +30,9 @@ template <typename TK, typename TR>
 class DeePKS<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 {
   public:
-    DeePKS<OperatorLCAO<TK, TR>>(LCAO_Matrix* LM_in,
+    DeePKS<OperatorLCAO<TK, TR>>(HS_Matrix_K<TK>* hsk_in,
                                  const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
                                  HContainer<TR>* hR_in,
-                                 std::vector<TK>* hK_in,
                                  const UnitCell* ucell_in,
                                  Grid_Driver* GridD_in,
                                  const TwoCenterIntegrator* intor_orb_alpha,
@@ -72,7 +71,7 @@ class DeePKS<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      * HContainer is used to store the DeePKS real space Hamiltonian correction with specific <I,J,R> atom-pairs
      * the size of HR will be fixed after initialization
      */
-    void initialize_HR(Grid_Driver* GridD, const Parallel_Orbitals* paraV);
+    void initialize_HR(Grid_Driver* GridD);
 
     /**
      * @brief calculate the DeePKS correction matrix with specific <I,J,R> atom-pairs

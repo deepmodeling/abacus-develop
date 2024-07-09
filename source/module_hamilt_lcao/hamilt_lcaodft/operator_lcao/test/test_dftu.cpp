@@ -147,7 +147,8 @@ TEST_F(DFTUTest, constructHRd2d)
     // test for nspin=1
     GlobalV::NSPIN = 1;
     std::vector<ModuleBase::Vector3<double>> kvec_d_in(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
-    std::vector<double> hk(paraV->get_row_size() * paraV->get_col_size(), 0.0);
+    hamilt::HS_Matrix_K<double> hsk(paraV, 1);
+    hsk.set_zero_hk();
     Grid_Driver gd(0, 0, 0);
     // check some input values
     EXPECT_EQ(LCAO_Orbitals::get_const_instance().Phi[0].getRcut(), 1.0);
@@ -160,7 +161,7 @@ TEST_F(DFTUTest, constructHRd2d)
     }
     std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
     hamilt::DFTU<hamilt::OperatorLCAO<double, double>>
-        op(nullptr, kvec_d_in, HR, &hk, ucell, &gd, &intor_, &GlobalC::dftu, *paraV);
+        op(&hsk, kvec_d_in, HR, ucell, &gd, &intor_, &GlobalC::dftu);
     std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed_time
         = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
@@ -197,7 +198,8 @@ TEST_F(DFTUTest, constructHRd2d)
     end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed_time2
         = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
-    // check the value of SK
+    // check the value of HK
+    double* hk = hsk.get_hk();
     for (int i = 0; i < paraV->get_row_size() * paraV->get_col_size(); ++i)
     {
         EXPECT_NEAR(hk[i], -10.0 * test_size, 1e-10);
@@ -213,7 +215,8 @@ TEST_F(DFTUTest, constructHRd2cd)
     // test for nspin=2
     GlobalV::NSPIN = 2;
     std::vector<ModuleBase::Vector3<double>> kvec_d_in(2, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
-    std::vector<std::complex<double>> hk(paraV->get_row_size() * paraV->get_col_size(), std::complex<double>(0.0, 0.0));
+    hamilt::HS_Matrix_K<std::complex<double>> hsk(paraV, 1);
+    hsk.set_zero_hk();
     Grid_Driver gd(0, 0, 0);
     EXPECT_EQ(LCAO_Orbitals::get_const_instance().Phi[0].getRcut(), 1.0);
     // reset HR and DMR
@@ -224,7 +227,7 @@ TEST_F(DFTUTest, constructHRd2cd)
         HR->get_wrapper()[i] = 0.0;
     }
     hamilt::DFTU<hamilt::OperatorLCAO<std::complex<double>, double>>
-        op(nullptr, kvec_d_in, HR, &hk, ucell, &gd, &intor_, &GlobalC::dftu, *paraV);
+        op(&hsk, kvec_d_in, HR, ucell, &gd, &intor_, &GlobalC::dftu);
     op.contributeHR();
     // check the occupations of dftu for spin-up
     for (int iat = 0; iat < test_size; iat++)
@@ -251,6 +254,7 @@ TEST_F(DFTUTest, constructHRd2cd)
     // calculate HK for gamma point
     op.contributeHk(0);
     // check the value of HK of gamma point
+    std::complex<double>* hk = hsk.get_hk();
     for (int i = 0; i < paraV->get_row_size() * paraV->get_col_size(); ++i)
     {
         EXPECT_NEAR(hk[i].real(), -10.0 * test_size, 1e-10);

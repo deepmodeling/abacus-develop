@@ -2,6 +2,8 @@
 #define DIAGO_NEW_DAV_H
 
 #include "diagh.h"
+#include "module_hsolver/diag_comm_info.h"
+#include "module_hsolver/diag_const_nums.h"
 
 #include <functional>
 
@@ -30,10 +32,8 @@ class Diago_DavSubspace : public DiagH<T, Device>
     virtual ~Diago_DavSubspace() override;
 
     using HPsiFunc = std::function<void(T*, T*, const int, const int, const int, const int)>;
-    using SubspaceFunc = std::function<void(T*, T*, Real*, const int, const int)>;
 
     int diag(const HPsiFunc& hpsi_func,
-             const SubspaceFunc& subspace_func,
              T* psi_in,
              const int psi_in_dmax,
              Real* eigenvalue_in,
@@ -110,6 +110,21 @@ class Diago_DavSubspace : public DiagH<T, Device>
                  T* scc,
                  T* vcc);
 
+    void diagH_subspace(T* psi_pointer, // [in] & [out] wavefunction
+                        Real* en,       // [out] eigenvalues
+                        const HPsiFunc hpsi_func,
+                        const int n_band,
+                        const int dmin,
+                        const int dmax);
+
+    // void diagH_LAPACK(const int nstart,
+    //                   const int nbands,
+    //                   const T* hcc,
+    //                   const T* sc,
+    //                   const int ldh, // nstart
+    //                   Real* e,
+    //                   T* vcc);
+
     void diag_zhegvx(const int& nbase,
                      const int& nband,
                      T* hcc,
@@ -147,9 +162,7 @@ class Diago_DavSubspace : public DiagH<T, Device>
     using syncmem_h2d_op = base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>;
     using syncmem_d2h_op = base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>;
 
-    using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
-
-    consts<T> cs;
+    const_nums<T> cs;
     const T *one = nullptr, *zero = nullptr, *neg_one = nullptr;
 };
 
