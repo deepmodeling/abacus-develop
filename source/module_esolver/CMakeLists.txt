@@ -3,6 +3,7 @@ list(APPEND objects
     esolver_ks.cpp
     esolver_fp.cpp
     esolver_ks_pw.cpp
+    esolver_ks_lcaopw.cpp
     esolver_sdft_pw.cpp
     esolver_lj.cpp
     esolver_dp.cpp

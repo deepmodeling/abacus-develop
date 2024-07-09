@@ -62,6 +62,7 @@ if (ENABLE_MPI)
   )
   endif()
 
+
   AddTest(
     TARGET HSolver_base
     LIBS ${math_libs} psi device base
@@ -71,8 +72,9 @@ if (ENABLE_MPI)
   AddTest(
     TARGET HSolver_pw
     LIBS ${math_libs} psi device base container
-    SOURCES test_hsolver_pw.cpp ../hsolver_pw.cpp ../diago_bpcg.cpp ../diago_dav_subspace.cpp ../diag_const_nums.cpp ../diago_iter_assist.cpp
+    SOURCES test_hsolver_pw.cpp ../hsolver_pw.cpp ../hsolver_lcaopw.cpp ../diago_bpcg.cpp ../diago_dav_subspace.cpp ../diag_const_nums.cpp ../diago_iter_assist.cpp
   )
+
 
   AddTest(
     TARGET HSolver_sdft

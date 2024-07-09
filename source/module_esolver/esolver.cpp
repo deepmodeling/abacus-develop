@@ -3,6 +3,7 @@
 #include "esolver_ks_pw.h"
 #include "esolver_sdft_pw.h"
 #ifdef __LCAO
+#include "esolver_ks_lcaopw.h"
 #include "esolver_ks_lcao.h"
 #include "esolver_ks_lcao_tddft.h"
 #endif
@@ -15,12 +16,12 @@
 namespace ModuleESolver
 {
 
-void ESolver::printname(void)
+void ESolver::printname()
 {
 	std::cout << classname << std::endl;
 }
 
-std::string determine_type(void)
+std::string determine_type()
 {
 	std::string esolver_type = "none";
 	if (GlobalV::BASIS_TYPE == "pw")
@@ -47,10 +48,10 @@ std::string determine_type(void)
 		}
 		else if(GlobalV::ESOLVER_TYPE == "ksdft")
 		{
-			esolver_type = "ksdft_pw";
+            esolver_type = "ksdft_lip";
 		}
 #else
-		ModuleBase::WARNING_QUIT("ESolver", "LCAO basis type must be compiled with __LCAO");
+		ModuleBase::WARNING_QUIT("ESolver", "Calculation involving numerical orbitals must be compiled with __LCAO");
 #endif
 	}
 	else if (GlobalV::BASIS_TYPE == "lcao")
@@ -65,7 +66,7 @@ std::string determine_type(void)
 			esolver_type = "ksdft_lcao";
 		}
 #else
-		ModuleBase::WARNING_QUIT("ESolver", "LCAO basis type must be compiled with __LCAO");
+		ModuleBase::WARNING_QUIT("ESolver", "Calculation involving numerical orbitals must be compiled with __LCAO");
 #endif
 	}
 
@@ -138,7 +139,18 @@ ESolver* init_esolver()
 		}
 	}
 #ifdef __LCAO
-	else if (esolver_type == "ksdft_lcao")
+    else if (esolver_type == "ksdft_lip")
+    {
+        if (GlobalV::precision_flag == "single")
+        {
+            p_esolver = new ESolver_KS_LIP<std::complex<float>>();
+        }
+        else
+        {
+            p_esolver = new ESolver_KS_LIP<std::complex<double>>();
+        }
+    }
+    else if (esolver_type == "ksdft_lcao")
 	{
 		if (GlobalV::GAMMA_ONLY_LOCAL)
 		{
