@@ -144,8 +144,7 @@ void single_derivative(ForceStressArrays& fsr,
 /**
  * @brief set the elements of S and T matrices
  */
-void build_ST_new(LCAO_Matrix& lm,
-                  ForceStressArrays& fsr,
+void build_ST_new(ForceStressArrays& fsr,
                   const char& dtype,
                   const bool& cal_deri,
                   const UnitCell& ucell,

@@ -70,8 +70,7 @@ void sparse_format::cal_TR(const UnitCell& ucell,
     // mohan 2024-06-15
     ForceStressArrays fsr_tmp;
 
-    LCAO_domain::build_ST_new(lm,
-                              fsr_tmp,
+    LCAO_domain::build_ST_new(fsr_tmp,
                               'T',
                               false,
                               ucell,

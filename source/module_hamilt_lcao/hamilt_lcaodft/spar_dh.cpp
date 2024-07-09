@@ -31,8 +31,7 @@ void sparse_format::cal_dH(LCAO_Matrix& lm,
     {
         GlobalV::CAL_STRESS = false;
 
-        LCAO_domain::build_ST_new(lm,
-                                  fsr_dh,
+        LCAO_domain::build_ST_new(fsr_dh,
                                   'T',
                                   true,
                                   GlobalC::ucell,
@@ -46,8 +45,7 @@ void sparse_format::cal_dH(LCAO_Matrix& lm,
     }
     else
     {
-        LCAO_domain::build_ST_new(lm,
-                                  fsr_dh,
+        LCAO_domain::build_ST_new(fsr_dh,
                                   'T',
                                   true,
                                   GlobalC::ucell,

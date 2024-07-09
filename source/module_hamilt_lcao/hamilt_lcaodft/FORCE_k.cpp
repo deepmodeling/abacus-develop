@@ -86,8 +86,7 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
     // calculate dS = <phi | dphi>
     //-----------------------------
     bool cal_deri = true;
-    LCAO_domain::build_ST_new(lm,
-                              fsr,
+    LCAO_domain::build_ST_new(fsr,
                               'S',
                               cal_deri,
                               GlobalC::ucell,
@@ -117,8 +116,7 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
 
     // calculate dT=<phi|kin|dphi> in LCAO
     // calculate T + VNL(P1) in LCAO basis
-    LCAO_domain::build_ST_new(lm,
-                              fsr,
+    LCAO_domain::build_ST_new(fsr,
                               'T',
                               cal_deri,
                               GlobalC::ucell,
@@ -146,8 +144,7 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
         ModuleBase::WARNING_QUIT("cal_syns",
                                  "This function has been broken and will be fixed later.");
 
-        LCAO_domain::build_ST_new(lm,
-                                  fsr,
+        LCAO_domain::build_ST_new(fsr,
                                   'S',
                                   cal_deri,
                                   GlobalC::ucell,

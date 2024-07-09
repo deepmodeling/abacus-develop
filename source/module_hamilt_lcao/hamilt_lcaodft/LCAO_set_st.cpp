@@ -308,8 +308,7 @@ void single_overlap(const LCAO_Orbitals& orb,
     } // end condition 7, gamma point or multiple k-points
 }
 
-void build_ST_new(LCAO_Matrix& lm,
-                  ForceStressArrays& fsr,
+void build_ST_new(ForceStressArrays& fsr,
                   const char& dtype,
                   const bool& calc_deri,
                   const UnitCell& ucell,
