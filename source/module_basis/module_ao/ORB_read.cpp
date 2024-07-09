@@ -83,7 +83,9 @@ void LCAO_Orbitals::init(
         }
     }
 
+#ifdef __MPI
     bcast_files(ntype, my_rank);
+#endif
     Read_Orbitals(ofs_in, ntype, lmax, deepks_setorb, out_mat_r, force_flag, my_rank);
     return;
 }
