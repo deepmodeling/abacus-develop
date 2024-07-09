@@ -43,70 +43,34 @@ void ORB_control::setup_2d_division(std::ofstream& ofs_running, std::ofstream& o
     ModuleBase::TITLE("ORB_control", "setup_2d_division");
     ofs_running << "\n SETUP THE DIVISION OF H/S MATRIX" << std::endl;
 
-    // (1) calculate nrow, ncol, nloc.
-    if (ks_solver == "genelpa" || ks_solver == "scalapack_gvx" || ks_solver == "lapack" || ks_solver == "cusolver" || ks_solver == "cusolvermp"
-        || ks_solver == "cg_in_lcao" || ks_solver == "pexsi")
-    {
-        ofs_running << " divide the H&S matrix using 2D block algorithms." << std::endl;
 #ifdef __MPI
-        // storage form of H and S matrices on each processor
-        // is determined in 'divide_HS_2d' subroutine
-        this->divide_HS_2d(DIAG_WORLD, ofs_running, ofs_warning);
-#else
-        this->divide_HS_2d(ofs_running, ofs_warning); // Zhang Xiaoyang enable the serial version of LCAO and recovered this function usage. 2024-07-06
-#endif
-    }
-    else
-    {
-        // the full matrix
-        this->ParaV.nloc = nlocal * nlocal;
-    }
-}
+    // storage form of H and S matrices on each processor
+    // is determined in 'divide_HS_2d' subroutine
 
-
-
-// divide the H&S matrix using 2D block algorithms.
-void ORB_control::divide_HS_2d(
-#ifdef __MPI
-    MPI_Comm DIAG_WORLD,
-#endif
-    std::ofstream& ofs_running,
-    std::ofstream& ofs_warning)
-{
-    ModuleBase::TITLE("ORB_control", "divide_HS_2d");
-    assert(nlocal > 0);
-    assert(dsize > 0);
-    assert(nb2d > 0);
-
-    Parallel_Orbitals* pv = &this->ParaV;
-
-#ifdef __MPI
-
-    ModuleBase::GlobalFunc::OUT(ofs_running, "nb2d", pv->get_block_size());
-
-    int try_nb = pv->init(nlocal, nlocal, nb2d, DIAG_WORLD);
-    try_nb += pv->set_nloc_wfc_Eij(nbands, ofs_running, ofs_warning);
+    ModuleBase::GlobalFunc::OUT(ofs_running, "nb2d", ParaV.get_block_size());
+    int try_nb = ParaV.init(nlocal, nlocal, nb2d, DIAG_WORLD);
+    try_nb += ParaV.set_nloc_wfc_Eij(nbands, ofs_running, ofs_warning);
     if (try_nb != 0)
     {
-        ofs_running << " parameter nb2d is too large: nb2d = " << pv->get_block_size() << std::endl;
+        ofs_running << " parameter nb2d is too large: nb2d = " << ParaV.get_block_size() << std::endl;
         ofs_running << " reset nb2d to value 1, this set would make the program keep working but maybe get slower "
                        "during diagonalization."
                     << std::endl;
 
-        pv->set(nlocal, nlocal, 1, pv->comm_2D, pv->blacs_ctxt);
-        try_nb = pv->set_nloc_wfc_Eij(nbands, ofs_running, ofs_warning);
+        ParaV.set(nlocal, nlocal, 1, ParaV.comm_2D, ParaV.blacs_ctxt);
+        try_nb = ParaV.set_nloc_wfc_Eij(nbands, ofs_running, ofs_warning);
     }
 
     // init blacs context for genelpa
     if (ks_solver == "genelpa" || ks_solver == "scalapack_gvx" || ks_solver == "cusolver" || ks_solver == "cusolvermp"
         || ks_solver == "cg_in_lcao" || ks_solver == "pexsi")
     {
-        pv->set_desc_wfc_Eij(nlocal, nbands, pv->nrow);
+        ParaV.set_desc_wfc_Eij(nlocal, nbands, ParaV.nrow);
     }
-#else // single processor used.
-    pv->set_serial(nlocal, nlocal);
-#endif
 
-    assert(pv->nloc > 0);
-    return;
+#else
+    ParaV->set_serial(nlocal, nlocal);
+    // Zhang Xiaoyang enable the serial version of LCAO and recovered this function usage. 2024-07-06
+#endif
 }
+

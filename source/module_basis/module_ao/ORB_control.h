@@ -60,17 +60,6 @@ class ORB_control
     std::ofstream ofs_running;
     std::ofstream ofs_warning;
 
-  private:
-    void divide_HS_2d(
-#ifdef __MPI
-        MPI_Comm DIAG_WORLD,
-#endif
-        std::ofstream& ofs_running,
-        std::ofstream& ofs_warning);
-
-#ifdef __MPI
-    int mpi_comm_rows, mpi_comm_cols;
-#endif
 
 };
 #endif
