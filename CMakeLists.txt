@@ -396,6 +396,7 @@ endif()
 if(MKLROOT)
   set(MKL_INTERFACE lp64)
   find_package(MKL REQUIRED)
+
   add_definitions(-D__MKL)
   include_directories(${MKL_INCLUDE} ${MKL_INCLUDE}/fftw)
   list(APPEND math_libs MKL::MKL MKL::MKL_SCALAPACK)
@@ -448,7 +449,7 @@ if(ENABLE_DEEPKS)
   endif()
   include_directories(${TORCH_INCLUDE_DIRS})
   target_link_libraries(${ABACUS_BIN_NAME} deepks)
-  list(PREPEND math_libs ${TORCH_LIBRARIES}) # Avoid conflict with MKL FFT
+  list(APPEND math_libs ${TORCH_LIBRARIES})
   add_compile_options(${TORCH_CXX_FLAGS})
 
   find_path(libnpy_SOURCE_DIR npy.hpp HINTS ${libnpy_INCLUDE_DIR})
