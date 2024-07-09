@@ -57,6 +57,7 @@ DiagoDavid<T, Device>::~DiagoDavid()
 template <typename T, typename Device>
 int DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
                                            const int dim,
+                                           const int nband,
                                            const int ldPsi,
                                            psi::Psi<T, Device>& psi,
                                            Real* eigenvalue_in,
@@ -70,7 +71,7 @@ int DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
     ModuleBase::timer::tick("DiagoDavid", "diag_mock");
 
     assert(this->david_ndim > 1);
-    assert(this->david_ndim * psi.get_nbands() < psi.get_current_nbas() * diag_comm.nproc);
+    assert(this->david_ndim * nband < psi.get_current_nbas() * diag_comm.nproc);
 
     // qianrui change it 2021-7-25.
     // In strictly speaking, it shoule be PW_DIAG_NDIM*nband < npw sum of all pools. We roughly estimate it here.
@@ -88,8 +89,8 @@ int DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
     
     // dim = psi.get_k_first() ? psi.get_current_nbas() : psi.get_nk() * psi.get_nbasis();
     // this->dmx = psi.get_k_first() ? psi.get_nbasis() : psi.get_nk() * psi.get_nbasis();
-    this->n_band = psi.get_nbands();
-    this->nbase_x = this->david_ndim * this->n_band; // maximum dimension of the reduced basis set
+    // this->n_band = psi.get_nbands();
+    this->nbase_x = this->david_ndim * nband; // maximum dimension of the reduced basis set
 
     // the lowest N eigenvalues
     base_device::memory::resize_memory_op<Real, base_device::DEVICE_CPU>()(
@@ -126,15 +127,15 @@ int DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     // convflag[m] = true if the m th band is convergent
-    std::vector<bool> convflag(this->n_band, false);
+    std::vector<bool> convflag(nband, false);
     // unconv[m] store the number of the m th unconvergent band
-    std::vector<int> unconv(this->n_band);
+    std::vector<int> unconv(nband);
 
     int nbase = 0; // the dimension of the reduced basis set
 
-    this->notconv = this->n_band; // the number of the unconvergent bands
+    this->notconv = nband; // the number of the unconvergent bands
 
-    for (int m = 0; m < this->n_band; m++) {
+    for (int m = 0; m < nband; m++) {
         unconv[m] = m;
 }
 
@@ -142,16 +143,16 @@ int DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
 
     // orthogonalise the initial trial psi(0~nband-1)
 
-    // ModuleBase::ComplexMatrix lagrange_matrix(this->n_band, this->n_band);
-    resmem_complex_op()(this->ctx, this->lagrange_matrix, this->n_band * this->n_band);
-    setmem_complex_op()(this->ctx, this->lagrange_matrix, 0, this->n_band * this->n_band);
+    // ModuleBase::ComplexMatrix lagrange_matrix(nband, nband);
+    resmem_complex_op()(this->ctx, this->lagrange_matrix, nband * nband);
+    setmem_complex_op()(this->ctx, this->lagrange_matrix, 0, nband * nband);
 
     // plan for SchmitOrth
-    std::vector<int> pre_matrix_mm_m(this->n_band, 0);
-    std::vector<int> pre_matrix_mv_m(this->n_band, 1);
-    this->planSchmitOrth(this->n_band, pre_matrix_mm_m, pre_matrix_mv_m);
+    std::vector<int> pre_matrix_mm_m(nband, 0);
+    std::vector<int> pre_matrix_mv_m(nband, 1);
+    this->planSchmitOrth(nband, pre_matrix_mm_m, pre_matrix_mv_m);
 
-    for (int m = 0; m < this->n_band; m++)
+    for (int m = 0; m < nband; m++)
     {
         if(this->use_paw)
         {
@@ -173,17 +174,17 @@ int DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
         }
     }
     // begin SchmitOrth
-    for (int m = 0; m < this->n_band; m++)
+    for (int m = 0; m < nband; m++)
     {
         // haozhihan replace 2022-10-23
         syncmem_complex_op()(this->ctx, this->ctx, &basis(m, 0), psi.get_k_first() ? &psi(m, 0) : &psi(m, 0, 0), dim);
 
         this->SchmitOrth(dim,
-                         this->n_band,
+                         nband,
                          m,
                          basis,
                          this->sphi,
-                         &this->lagrange_matrix[m * this->n_band],
+                         &this->lagrange_matrix[m * nband],
                          pre_matrix_mm_m[m],
                          pre_matrix_mv_m[m]);
         if(this->use_paw)
@@ -200,14 +201,14 @@ int DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
     }
 
     // end of SchmitOrth and calculate H|psi>
-    hpsi_info dav_hpsi_in(&basis, psi::Range(1, 0, 0, this->n_band - 1), this->hphi);
+    hpsi_info dav_hpsi_in(&basis, psi::Range(1, 0, 0, nband - 1), this->hphi);
     phm_in->ops->hPsi(dav_hpsi_in);
 
     this->cal_elem(dim, nbase, this->notconv, basis, this->hphi, this->sphi, this->hcc, this->scc);
 
-    this->diag_zhegvx(nbase, this->n_band, this->hcc, this->scc, this->nbase_x, this->eigenvalue, this->vcc);
+    this->diag_zhegvx(nbase, nband, this->hcc, this->scc, this->nbase_x, this->eigenvalue, this->vcc);
 
-    for (int m = 0; m < this->n_band; m++)
+    for (int m = 0; m < nband; m++)
     {
         eigenvalue_in[m] = this->eigenvalue[m];
     }
@@ -232,13 +233,13 @@ int DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
 
         this->cal_elem(dim, nbase, this->notconv, basis, this->hphi, this->sphi, this->hcc, this->scc);
 
-        this->diag_zhegvx(nbase, this->n_band, this->hcc, this->scc, this->nbase_x, this->eigenvalue, this->vcc);
+        this->diag_zhegvx(nbase, nband, this->hcc, this->scc, this->nbase_x, this->eigenvalue, this->vcc);
 
         // check convergence and update eigenvalues
         ModuleBase::timer::tick("DiagoDavid", "check_update");
 
         this->notconv = 0;
-        for (int m = 0; m < this->n_band; m++)
+        for (int m = 0; m < nband; m++)
         {
             convflag[m] = (std::abs(this->eigenvalue[m] - eigenvalue_in[m]) < david_diag_thr);
 
@@ -267,7 +268,7 @@ int DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
                                       'N',
                                       'N',
                                       dim,           // m: row of A,C
-                                      this->n_band,        // n: col of B,C
+                                      nband,        // n: col of B,C
                                       nbase,               // k: col of A, row of B
                                       this->one,
                                       basis.get_pointer(), // A dim * nbase
@@ -293,7 +294,7 @@ int DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
                 // estimate of the eigenvectors and set the basis dimension to N;
 
                 this->refresh(dim,
-                              this->n_band,
+                              nband,
                               nbase,
                               eigenvalue_in,
                               psi,
@@ -1056,6 +1057,7 @@ void DiagoDavid<T, Device>::planSchmitOrth(const int nband, std::vector<int>& pr
  * @tparam Device The device type (e.g., base_device::DEVICE_CPU).
  * @param phm_in Pointer to the Hamiltonian matrix object.
  * @param dim Dimension of the input matrix psi to be diagonalized.
+ * @param nband Number of required eigenpairs.
  * @param ldPsi The leading dimension of the psi array, which is the stride 
  *              between the columns in the psi array.
  * @param psi The wavefunction to be diagonalized.
@@ -1072,6 +1074,7 @@ void DiagoDavid<T, Device>::planSchmitOrth(const int nband, std::vector<int>& pr
 template <typename T, typename Device>
 int DiagoDavid<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in,
                                     const int dim,
+                                    const int nband,
                                     const int ldPsi,
                                     psi::Psi<T, Device>& psi,
                                     Real* eigenvalue_in,
@@ -1095,11 +1098,11 @@ int DiagoDavid<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in,
     int sum_dav_iter = 0;
     do
     {
-        sum_dav_iter += this->diag_mock(phm_in, dim, ldPsi, psi, eigenvalue_in, david_diag_thr, david_maxiter);
+        sum_dav_iter += this->diag_mock(phm_in, dim, nband, ldPsi, psi, eigenvalue_in, david_diag_thr, david_maxiter);
         ++ntry;
     } while (!check_block_conv(ntry, this->notconv, ntry_max, notconv_max));
 
-    if (notconv > std::max(5, psi.get_nbands() / 4))
+    if (notconv > std::max(5, nband / 4))
     {
         std::cout << "\n notconv = " << this->notconv;
         std::cout << "\n DiagoDavid::diag', too many bands are not converged! \n";
