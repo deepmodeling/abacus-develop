@@ -159,29 +159,6 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
         {
             
             bool bit = false; // LiuXh, 2017-03-21
-            /*ModuleIO::save_mat(0,
-                               lm.Hloc2.data(),
-                               GlobalV::NLOCAL,
-                               bit,
-                               GlobalV::out_ndigits,
-                               0,
-                               GlobalV::out_app_flag,
-                               "H",
-                               "data-" + std::to_string(ik),
-                               pv,
-                               GlobalV::DRANK);
-
-            ModuleIO::save_mat(0,
-                               lm.Sloc2.data(),
-                               GlobalV::NLOCAL,
-                               bit,
-                               GlobalV::out_ndigits,
-                               0,
-                               GlobalV::out_app_flag,
-                               "S",
-                               "data-" + std::to_string(ik),
-                               pv,
-                               GlobalV::DRANK);*/
         }
     }
 
@@ -311,7 +288,6 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
                                               TGint<std::complex<double>>::type& gint,
                                               const TwoCenterBundle& two_center_bundle,
                                               const Parallel_Orbitals& pv,
-                                              LCAO_Matrix& lm,
                                               const K_Vectors* kv,
                                               Record_adj* ra)
 {
@@ -322,7 +298,6 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
         = dynamic_cast<const elecstate::ElecStateLCAO<std::complex<double>>*>(pelec)->get_DM();
 
     this->allocate(pv,
-                   lm,
                    fsr, // mohan add 2024-06-16
                    two_center_bundle,
                    kv->get_nks(),

@@ -67,7 +67,6 @@ class Force_LCAO
                 typename TGint<T>::type& gint,
                 const TwoCenterBundle& two_center_bundle,
                 const Parallel_Orbitals& pv,
-                LCAO_Matrix& lm,
                 const K_Vectors* kv = nullptr,
                 Record_adj* ra = nullptr);
 

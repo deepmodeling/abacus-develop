@@ -193,7 +193,6 @@ void Force_LCAO<double>::ftable(const bool isforce,
                                 TGint<double>::type& gint,
                                 const TwoCenterBundle& two_center_bundle,
                                 const Parallel_Orbitals& pv,
-                                LCAO_Matrix& lm,
                                 const K_Vectors* kv,
                                 Record_adj* ra)
 {
@@ -208,7 +207,7 @@ void Force_LCAO<double>::ftable(const bool isforce,
 
     // allocate DSloc_x, DSloc_y, DSloc_z
     // allocate DHloc_fixed_x, DHloc_fixed_y, DHloc_fixed_z
-    this->allocate(pv, lm, fsr, two_center_bundle);
+    this->allocate(pv, fsr, two_center_bundle);
 
     // calculate the force related to 'energy density matrix'.
     this->cal_fedm(isforce, isstress, fsr, ucell, dm, psi, pv, pelec, foverlap, soverlap);
