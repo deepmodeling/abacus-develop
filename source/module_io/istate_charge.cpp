@@ -456,59 +456,78 @@ void IState_Charge::begin(Gint_k& gk,
             ModuleBase::WARNING_QUIT("IState_Charge::begin", "The `pchg` calculation is only available for MPI now!");
 #endif
 
-            for (int is = 0; is < nspin; ++is)
+            for (int ik = 0; ik < kv.get_nks() / nspin; ++ik)
             {
-                ModuleBase::GlobalFunc::ZEROS(rho[is], rhopw_nrxx);
-            }
+                const int ispin = kv.isk[ik];
+                std::cout << "ispin = " << ispin << std::endl;
 
-            DM.init_DMR(GridD_in, ucell_in);
-            DM.cal_DMR();
+                for (int is = 0; is < nspin; ++is)
+                {
+                    ModuleBase::GlobalFunc::ZEROS(rho[is], rhopw_nrxx);
+                }
 
-            gk.initialize_pvpR(*ucell_in, GridD_in);
+                std::cout << "Here is Okay." << std::endl;
 
-            gk.transfer_DM2DtoGrid(DM.get_DMR_vector());
+                DM.init_DMR(GridD_in, ucell_in);
 
-            Gint_inout inout((double***)nullptr, rho, Gint_Tools::job_type::rho);
-            gk.cal_gint(&inout);
+                std::cout << "Here is Okay." << std::endl;
 
-            double** rho_save = new double*[nspin];
-            for (int is = 0; is < nspin; is++)
-            {
-                rho_save[is] = new double[rhopw_nrxx];
-                ModuleBase::GlobalFunc::DCOPY(rho[is], rho_save[is], rhopw_nrxx);
-            }
+                DM.cal_DMR(ik);
+                // DM.cal_DMR();
 
-            for (int is = 0; is < nspin; ++is)
-            {
-                // ssc should be inside the inner loop to reset the string stream each time
-                std::stringstream ssc;
-                ssc << global_out_dir << "BAND" << ib + 1 << "_SPIN" << is << "_CHG.cube";
+                std::cout << "Here is Okay." << std::endl;
 
-                double ef_spin = ef_all_spin[is];
-                ModuleIO::write_rho(
+                gk.initialize_pvpR(*ucell_in, GridD_in);
+
+                gk.transfer_DM2DtoGrid(DM.get_DMR_vector());
+
+                Gint_inout inout(rho, Gint_Tools::job_type::rho);
+                gk.cal_gint(&inout);
+
+                double** rho_save = new double*[nspin]; // Initialize an array of pointers
+                for (int is = 0; is < nspin; is++)
+                {
+                    rho_save[is] = new double[rhopw_nrxx]; // Allocate memory for each internal array
+                    ModuleBase::GlobalFunc::DCOPY(rho[is], rho_save[is],
+                                                  rhopw_nrxx); // Copy data after allocation
+                }
+
+                // 0 means definitely output charge density.
+                for (int is = 0; is < nspin; ++is)
+                {
+                    // ssc should be inside the inner loop to reset the string stream each time
+                    std::stringstream ssc;
+                    ssc << global_out_dir << "BAND" << ib + 1 << "_K" << ik + 1 << "_SPIN" << is + 1 << "_CHG.cube";
+
+                    // Use a const vector to store efermi for all spins, replace the original implementation:
+                    // const double ef_tmp = pelec->eferm.get_efval(is);
+                    double ef_spin = ef_all_spin[is];
+                    ModuleIO::write_rho(
 #ifdef __MPI
-                    bigpw_bz,
-                    bigpw_nbz,
-                    rhopw_nplane,
-                    rhopw_startz_current,
+                        bigpw_bz,
+                        bigpw_nbz,
+                        rhopw_nplane,
+                        rhopw_startz_current,
 #endif
-                    rho_save[is],
-                    is,
-                    nspin,
-                    0,
-                    ssc.str(),
-                    rhopw_nx,
-                    rhopw_ny,
-                    rhopw_nz,
-                    ef_spin,
-                    ucell_in);
-            }
+                        rho_save[is],
+                        is,
+                        nspin,
+                        0,
+                        ssc.str(),
+                        rhopw_nx,
+                        rhopw_ny,
+                        rhopw_nz,
+                        ef_spin,
+                        ucell_in);
+                }
 
-            for (int is = 0; is < nspin; is++)
-            {
-                delete[] rho_save[is];
+                // Release memory of rho_save
+                for (int is = 0; is < nspin; is++)
+                {
+                    delete[] rho_save[is]; // Release memory of each internal array
+                }
+                delete[] rho_save; // Release memory of the array of pointers
             }
-            delete[] rho_save;
         }
     }
 
@@ -535,36 +554,30 @@ void IState_Charge::idmatrix(const int& ib,
         std::cout << " Perform band decomposed charge density for kpoint " << ik << ",  band" << ib + 1 << std::endl;
 
         const int ispin = kv.isk[ik];
-    }
 
-    for (int is = 0; is < nspin; ++is)
-    {
+        std::cout << "ispin = " << ispin << std::endl;
+
         std::vector<double> wg_local(this->ParaV->ncol, 0.0);
         const int ib_local = this->ParaV->global2local_col(ib);
 
         if (ib_local >= 0)
         {
-            wg_local[ib_local] = (ib < fermi_band) ? wg(is, ib) : wg(is, fermi_band - 1);
+            wg_local[ib_local] = (ib < fermi_band) ? wg(ik, ib) : wg(ik, fermi_band - 1);
         }
 
-        this->psi_k->fix_k(is);
+        this->psi_k->fix_k(ik);
         psi::Psi<std::complex<double>> wg_wfc(*this->psi_k, 1);
 
         for (int ir = 0; ir < wg_wfc.get_nbands(); ++ir)
         {
             BlasConnector::scal(wg_wfc.get_nbasis(), wg_local[ir], wg_wfc.get_pointer() + ir * wg_wfc.get_nbasis(), 1);
         }
-        std::cout << "Here is Okay." << std::endl;
-        for (int ik = 0; ik < kv.get_nks(); ++ik)
-        {
-            std::cout << "Here is Okay." << std::endl;
-            elecstate::psiMulPsiMpi(wg_wfc,
-                                    *(this->psi_k),
-                                    DM.get_DMK_pointer(ik),
-                                    this->ParaV->desc_wfc,
-                                    this->ParaV->desc);
-            std::cout << "Here is Okay." << std::endl;
-        }
+
+        elecstate::psiMulPsiMpi(wg_wfc,
+                                *(this->psi_k),
+                                DM.get_DMK_pointer(ik),
+                                this->ParaV->desc_wfc,
+                                this->ParaV->desc);
     }
 }
 #endif
