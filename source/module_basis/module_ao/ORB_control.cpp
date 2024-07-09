@@ -9,27 +9,18 @@
 
 //#include "build_st_pw.h"
 
-ORB_control::ORB_control(const bool& gamma_only_in,
-                         const int& nlocal_in,
-                         const int& nbands_in,
-                         const int& nspin_in,
-                         const int& dsize_in,
-                         const int& nb2d_in,
-                         const int& dcolor_in,
-                         const int& drank_in,
-                         const int& myrank_in,
-                         const std::string& calculation_in,
-                         const std::string& ks_solver_in)
-    : gamma_only(gamma_only_in), nlocal(nlocal_in), nbands(nbands_in), nspin(nspin_in), dsize(dsize_in), nb2d(nb2d_in),
-      dcolor(dcolor_in), drank(drank_in), myrank(myrank_in), calculation(calculation_in), ks_solver(ks_solver_in),
-      setup_2d(true)
+ORB_control::ORB_control(
+    const int& nlocal_in,
+    const int& nbands_in,
+    const int& nb2d_in
+): nlocal(nlocal_in), nbands(nbands_in), nb2d(nb2d_in)
 {
-    this->ParaV.nspin = nspin_in;
 }
 
-ORB_control::ORB_control() : setup_2d(false)
+ORB_control::ORB_control()
 {
 }
+
 ORB_control::~ORB_control()
 {
 #ifdef __MPI
@@ -62,11 +53,7 @@ void ORB_control::setup_2d_division(std::ofstream& ofs_running, std::ofstream& o
     }
 
     // init blacs context for genelpa
-    if (ks_solver == "genelpa" || ks_solver == "scalapack_gvx" || ks_solver == "cusolver" || ks_solver == "cusolvermp"
-        || ks_solver == "cg_in_lcao" || ks_solver == "pexsi")
-    {
-        ParaV.set_desc_wfc_Eij(nlocal, nbands, ParaV.nrow);
-    }
+    ParaV.set_desc_wfc_Eij(nlocal, nbands, ParaV.nrow);
 
 #else
     ParaV.set_serial(nlocal, nlocal);

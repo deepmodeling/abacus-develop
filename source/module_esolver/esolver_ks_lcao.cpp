@@ -537,18 +537,9 @@ void ESolver_KS_LCAO<TK, TR>::init_basis_lcao(ORB_control& orb_con, Input& inp, 
         }
     }
     // Set the variables first
-    this->orb_con.gamma_only = GlobalV::GAMMA_ONLY_LOCAL;
     this->orb_con.nlocal = GlobalV::NLOCAL;
     this->orb_con.nbands = GlobalV::NBANDS;
-    this->orb_con.ParaV.nspin = GlobalV::NSPIN;
-    this->orb_con.dsize = GlobalV::DSIZE;
     this->orb_con.nb2d = GlobalV::NB2D;
-    this->orb_con.dcolor = GlobalV::DCOLOR;
-    this->orb_con.drank = GlobalV::DRANK;
-    this->orb_con.myrank = GlobalV::MY_RANK;
-    this->orb_con.calculation = GlobalV::CALCULATION;
-    this->orb_con.ks_solver = GlobalV::KS_SOLVER;
-    this->orb_con.setup_2d = true;
 
     // * reading the localized orbitals/projectors
     // * construct the interpolation tables.
@@ -578,11 +569,8 @@ void ESolver_KS_LCAO<TK, TR>::init_basis_lcao(ORB_control& orb_con, Input& inp, 
     two_center_bundle_.tabulate(inp.lcao_ecut, inp.lcao_dk, inp.lcao_dr, inp.lcao_rmax);
 #endif
 
-    if (this->orb_con.setup_2d)
-    {
-        this->orb_con.setup_2d_division(GlobalV::ofs_running, GlobalV::ofs_warning);
-        this->orb_con.ParaV.set_atomic_trace(GlobalC::ucell.get_iat2iwt(), GlobalC::ucell.nat, GlobalV::NLOCAL);
-    }
+    this->orb_con.setup_2d_division(GlobalV::ofs_running, GlobalV::ofs_warning);
+    this->orb_con.ParaV.set_atomic_trace(GlobalC::ucell.get_iat2iwt(), GlobalC::ucell.nat, GlobalV::NLOCAL);
 
     return;
 }
