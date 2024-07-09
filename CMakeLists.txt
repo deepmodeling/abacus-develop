@@ -309,7 +309,7 @@ if(USE_CUDA)
   # ${ABACUS_BIN_NAME} is added before CUDA is enabled
   set_property(TARGET ${ABACUS_BIN_NAME}
                PROPERTY CUDA_ARCHITECTURES ${CMAKE_CUDA_ARCHITECTURES})
-  target_link_libraries(${ABACUS_BIN_NAME} -lcudart -lnvToolsExt)
+  target_link_libraries(${ABACUS_BIN_NAME} cudart nvToolsExt)
   include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
   if(USE_CUDA)
     add_compile_definitions(__CUDA)
@@ -323,8 +323,8 @@ if(USE_CUDA)
     if (ENABLE_CUSOLVERMP)
       add_compile_definitions(__CUSOLVERMP)
       target_link_libraries(${ABACUS_BIN_NAME}
-          -lcal
-          -lcusolverMp
+          cal
+          cusolverMp
       )
     endif()
   endif()
@@ -400,7 +400,7 @@ if(MKLROOT)
   list(APPEND math_libs IntelMKL::MKL)
 
   if(CMAKE_CXX_COMPILER_ID MATCHES Intel)
-    list(APPEND math_libs -lifcore)
+    list(APPEND math_libs ifcore)
   endif()
 else()
 
@@ -421,11 +421,11 @@ else()
     list(APPEND math_libs FFTW3::FFTW3_FLOAT)
   endif()
   if(CMAKE_CXX_COMPILER_ID MATCHES GNU)
-    list(APPEND math_libs -lgfortran)
+    list(APPEND math_libs gfortran)
   elseif(CMAKE_CXX_COMPILER_ID MATCHES Intel)
-    list(APPEND math_libs -lifcore)
+    list(APPEND math_libs ifcore)
   elseif(CMAKE_CXX_COMPILER_ID MATCHES Clang)
-    list(APPEND math_libs -lgfortran)
+    list(APPEND math_libs gfortran)
   else()
     message(WARNING "Cannot find the correct library for Fortran.")
   endif()
