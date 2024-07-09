@@ -169,7 +169,6 @@ void Gint_k::distribute_pvdpR_soc_sparseMatrix(
     const double& sparse_threshold,
     const std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>&
         pvdpR_soc_sparseMatrix,
-    LCAO_Matrix* LM,
     LCAO_HS_Arrays& HS_Arrays,
     Parallel_Orbitals* pv)
 {
@@ -566,9 +565,9 @@ void Gint_k::cal_dvlocal_R_sparseMatrix(const int& current_spin,
     }
     else
     {
-        distribute_pvdpR_soc_sparseMatrix(0, sparse_threshold, pvdpRx_soc_sparseMatrix, LM, HS_Arrays, pv);
-        distribute_pvdpR_soc_sparseMatrix(1, sparse_threshold, pvdpRy_soc_sparseMatrix, LM, HS_Arrays, pv);
-        distribute_pvdpR_soc_sparseMatrix(2, sparse_threshold, pvdpRz_soc_sparseMatrix, LM, HS_Arrays, pv);
+        distribute_pvdpR_soc_sparseMatrix(0, sparse_threshold, pvdpRx_soc_sparseMatrix, HS_Arrays, pv);
+        distribute_pvdpR_soc_sparseMatrix(1, sparse_threshold, pvdpRy_soc_sparseMatrix, HS_Arrays, pv);
+        distribute_pvdpR_soc_sparseMatrix(2, sparse_threshold, pvdpRz_soc_sparseMatrix, HS_Arrays, pv);
     }
 
     return;
