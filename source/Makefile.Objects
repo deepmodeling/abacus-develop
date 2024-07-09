@@ -65,6 +65,7 @@ VPATH=./src_global:\
 ./module_io/json_output:\
 ./src_ri:\
 ./module_ri:\
+./module_parameter:\
 ./\
 
 OBJS_ABACUS_PW=${OBJS_MAIN}\
@@ -109,6 +110,7 @@ ${OBJS_HSOLVER_PEXSI}\
 OBJS_MAIN=main.o\
     driver.o\
     driver_run.o\
+    parameter.o
 
 OBJS_BASE=abfs-vector3_order.o\
     assoc_laguerre.o\
@@ -426,6 +428,7 @@ OBJS_XC=xc_functional.o\
     xc_funct_hcth.o\
 
 OBJS_IO=input.o\
+    input_conv_tmp.o\
     input_conv.o\
     berryphase.o\
     bessel_basis.o\
@@ -456,7 +459,6 @@ OBJS_IO=input.o\
     unk_overlap_pw.o\
     write_wfc_pw.o\
     winput.o\
-    write_input.o\
     write_cube.o\
     write_rho.o\
     write_pot.o\
@@ -474,6 +476,15 @@ OBJS_IO=input.o\
     readin_info.o\
     output_info.o\
     parse_args.o\
+    read_input.o\
+    read_input_item_general.o\
+    read_input_item_pw.o\
+    read_input_item_sdft.o\
+    read_input_item_relax.o\
+    read_input_item_lcao.o\
+    read_input_item_postprocess.o\
+    read_input_item_md.o\
+    read_input_item_other.o\
 
 OBJS_IO_LCAO=cal_r_overlap_R.o\
       write_orb_info.o\
