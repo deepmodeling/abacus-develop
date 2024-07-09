@@ -993,8 +993,10 @@ void DiagoDavid<T, Device>::planSchmitOrth(const int nband, std::vector<int>& pr
     if (nband <= 0) {
         return;
 }
-    ModuleBase::GlobalFunc::ZEROS(pre_matrix_mm_m.data(), nband);
-    ModuleBase::GlobalFunc::ZEROS(pre_matrix_mv_m.data(), nband);
+    // ModuleBase::GlobalFunc::ZEROS(pre_matrix_mm_m.data(), nband);
+    // ModuleBase::GlobalFunc::ZEROS(pre_matrix_mv_m.data(), nband);
+    std::fill(pre_matrix_mm_m.begin(), pre_matrix_mm_m.end(), 0);
+    std::fill(pre_matrix_mv_m.begin(), pre_matrix_mv_m.end(), 0);
     int last_matrix_size = nband;
     int matrix_size = int(nband / 2);
     int divide_times = 0;
