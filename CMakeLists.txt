@@ -447,8 +447,7 @@ if(ENABLE_DEEPKS)
   endif()
   include_directories(${TORCH_INCLUDE_DIRS})
   target_link_libraries(${ABACUS_BIN_NAME} deepks)
-  list(APPEND math_libs ${TORCH_LIBRARIES})
-
+  list(PREPEND math_libs ${TORCH_LIBRARIES}) # Avoid conflict with MKL FFT
   add_compile_options(${TORCH_CXX_FLAGS})
 
   find_path(libnpy_SOURCE_DIR npy.hpp HINTS ${libnpy_INCLUDE_DIR})
