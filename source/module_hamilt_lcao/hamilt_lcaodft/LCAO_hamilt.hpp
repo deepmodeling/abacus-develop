@@ -78,7 +78,7 @@ void sparse_format::cal_HR_exx(
                                                            iat1,
                                                            HexxB.first.second));
 
-                lm.all_R_coor.insert(R);
+                HS_Arrays.all_R_coor.insert(R);
 
                 const RI::Tensor<Tdata>& Hexx = HexxB.second;
 

@@ -30,12 +30,6 @@ class LCAO_Matrix {
     std::vector<std::vector<double>> Hexxd_k_load;
     std::vector<std::vector<std::complex<double>>> Hexxc_k_load;
 #endif
-
-  public:
-
-    // Record all R direct coordinate information, even if HR or SR is a zero
-    // matrix
-    std::set<Abfs::Vector3_Order<int>> all_R_coor;
 };
 
 #endif

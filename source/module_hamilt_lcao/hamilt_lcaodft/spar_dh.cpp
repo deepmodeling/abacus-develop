@@ -12,7 +12,7 @@ void sparse_format::cal_dH(LCAO_Matrix& lm,
 {
     ModuleBase::TITLE("sparse_format", "cal_dH");
 
-    sparse_format::set_R_range(lm.all_R_coor, grid);
+    sparse_format::set_R_range(HS_Arrays.all_R_coor, grid);
 
     const int nnr = lm.ParaV->nnr;
 

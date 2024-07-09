@@ -21,13 +21,13 @@ void Gint_k::distribute_pvdpR_sparseMatrix(
 {
     ModuleBase::TITLE("Gint_k", "distribute_pvdpR_sparseMatrix");
 
-    int total_R_num = LM->all_R_coor.size();
+    int total_R_num = HS_Arrays.all_R_coor.size();
     int* nonzero_num = new int[total_R_num];
     int* minus_nonzero_num = new int[total_R_num];
     ModuleBase::GlobalFunc::ZEROS(nonzero_num, total_R_num);
     ModuleBase::GlobalFunc::ZEROS(minus_nonzero_num, total_R_num);
     int count = 0;
-    for (auto& R_coor: LM->all_R_coor)
+    for (auto& R_coor: HS_Arrays.all_R_coor)
     {
         auto iter = pvdpR_sparseMatrix.find(R_coor);
         if (iter != pvdpR_sparseMatrix.end())
@@ -61,7 +61,7 @@ void Gint_k::distribute_pvdpR_sparseMatrix(
     tmp = new double[GlobalV::NLOCAL];
 
     count = 0;
-    for (auto& R_coor: LM->all_R_coor)
+    for (auto& R_coor: HS_Arrays.all_R_coor)
     {
         if (nonzero_num[count] != 0 || minus_nonzero_num[count] != 0)
         {
@@ -176,13 +176,13 @@ void Gint_k::distribute_pvdpR_soc_sparseMatrix(
 {
     ModuleBase::TITLE("Gint_k", "distribute_pvdpR_soc_sparseMatrix");
 
-    int total_R_num = LM->all_R_coor.size();
+    int total_R_num = HS_Arrays.all_R_coor.size();
     int* nonzero_num = new int[total_R_num];
     int* minus_nonzero_num = new int[total_R_num];
     ModuleBase::GlobalFunc::ZEROS(nonzero_num, total_R_num);
     ModuleBase::GlobalFunc::ZEROS(minus_nonzero_num, total_R_num);
     int count = 0;
-    for (auto& R_coor: LM->all_R_coor)
+    for (auto& R_coor: HS_Arrays.all_R_coor)
     {
         auto iter = pvdpR_soc_sparseMatrix.find(R_coor);
         if (iter != pvdpR_soc_sparseMatrix.end())
@@ -216,7 +216,7 @@ void Gint_k::distribute_pvdpR_soc_sparseMatrix(
     tmp_soc = new std::complex<double>[GlobalV::NLOCAL];
 
     count = 0;
-    for (auto& R_coor: LM->all_R_coor)
+    for (auto& R_coor: HS_Arrays.all_R_coor)
     {
         if (nonzero_num[count] != 0 || minus_nonzero_num[count] != 0)
         {

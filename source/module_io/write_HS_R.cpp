@@ -163,7 +163,7 @@ void ModuleIO::output_SR(Parallel_Orbitals& pv,
     LCAO_HS_Arrays HS_Arrays;
 
     sparse_format::cal_SR(pv,
-                          lm.all_R_coor,
+                          HS_Arrays.all_R_coor,
                           HS_Arrays.SR_sparse,
                           HS_Arrays.SR_soc_sparse,
                           grid,
@@ -173,7 +173,7 @@ void ModuleIO::output_SR(Parallel_Orbitals& pv,
     const int istep = 0;
 
     ModuleIO::save_sparse(HS_Arrays.SR_sparse,
-                          lm.all_R_coor,
+                          HS_Arrays.all_R_coor,
                           sparse_thr,
                           binary,
                           SR_filename,
@@ -216,7 +216,7 @@ void ModuleIO::output_TR(const int istep,
                           sparse_thr);
 
     ModuleIO::save_sparse(HS_Arrays.TR_sparse,
-                          lm.all_R_coor,
+                          HS_Arrays.all_R_coor,
                           sparse_thr,
                           binary,
                           sst.str().c_str(),
