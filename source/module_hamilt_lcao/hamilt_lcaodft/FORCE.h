@@ -73,7 +73,6 @@ class Force_LCAO
 
     // get the ds, dt, dvnl.
     void allocate(const Parallel_Orbitals& pv,
-                  LCAO_Matrix& lm,
                   ForceStressArrays& fsr, // mohan add 2024-06-15
                   const TwoCenterBundle& two_center_bundle,
                   const int& nks = 0,

@@ -24,7 +24,6 @@
 
 template <>
 void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
-                                                LCAO_Matrix& lm,
                                                 ForceStressArrays& fsr, // mohan add 2024-06-15
                                                 const TwoCenterBundle& two_center_bundle,
                                                 const int& nks,
