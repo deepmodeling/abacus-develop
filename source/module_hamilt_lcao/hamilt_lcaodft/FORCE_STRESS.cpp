@@ -163,7 +163,6 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
                         gint_k,
                         two_center_bundle,
                         pv,
-                        lm,
                         kv);
 
     //! forces and stress from vdw
@@ -767,7 +766,6 @@ void Force_Stress_LCAO<double>::integral_part(const bool isGammaOnly,
                                               Gint_k& gint_k,         // mohan add 2024-04-01
                                               const TwoCenterBundle& two_center_bundle,
                                               const Parallel_Orbitals& pv,
-                                              LCAO_Matrix& lm,
                                               const K_Vectors& kv)
 {
 
@@ -790,8 +788,7 @@ void Force_Stress_LCAO<double>::integral_part(const bool isGammaOnly,
 #endif
                gint_gamma,
                two_center_bundle,
-               pv,
-               lm);
+               pv);
     return;
 }
 
@@ -817,7 +814,6 @@ void Force_Stress_LCAO<std::complex<double>>::integral_part(const bool isGammaOn
                                                             Gint_k& gint_k,
                                                             const TwoCenterBundle& two_center_bundle,
                                                             const Parallel_Orbitals& pv,
-                                                            LCAO_Matrix& lm,
                                                             const K_Vectors& kv)
 {
     flk.ftable(isforce,
@@ -840,7 +836,6 @@ void Force_Stress_LCAO<std::complex<double>>::integral_part(const bool isGammaOn
                gint_k,
                two_center_bundle,
                pv,
-               lm,
                &kv,
                this->RA);
     return;

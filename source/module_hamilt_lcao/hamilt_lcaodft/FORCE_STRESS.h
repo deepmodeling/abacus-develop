@@ -92,7 +92,6 @@ class Force_Stress_LCAO
                        Gint_k& gint_k,
                        const TwoCenterBundle& two_center_bundle,
                        const Parallel_Orbitals& pv,
-                       LCAO_Matrix& lm,
                        const K_Vectors& kv);
 
     void calStressPwPart(ModuleBase::matrix& sigmadvl,
