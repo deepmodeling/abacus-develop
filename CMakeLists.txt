@@ -453,7 +453,6 @@ if(ENABLE_DEEPKS)
   endif()
   include_directories(${TORCH_INCLUDE_DIRS})
   target_link_libraries(${ABACUS_BIN_NAME} ${TORCH_LIBRARIES})
-  list(APPEND math_libs ${TORCH_LIBRARIES})
   add_compile_options(${TORCH_CXX_FLAGS})
   target_link_libraries(${ABACUS_BIN_NAME} deepks)
 
