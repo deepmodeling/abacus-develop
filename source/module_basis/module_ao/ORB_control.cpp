@@ -69,7 +69,7 @@ void ORB_control::setup_2d_division(std::ofstream& ofs_running, std::ofstream& o
     }
 
 #else
-    ParaV->set_serial(nlocal, nlocal);
+    ParaV.set_serial(nlocal, nlocal);
     // Zhang Xiaoyang enable the serial version of LCAO and recovered this function usage. 2024-07-06
 #endif
 }
