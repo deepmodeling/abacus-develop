@@ -71,7 +71,7 @@ cell_factor                    1.2 #used in the construction of the pseudopotent
 pw_seed                        1 #random seed for initializing wave functions
 
 #Parameters (3.Stochastic DFT)
-method_sto                     3 #1: slow and save memory, 2: fast and waste memory
+method_sto                     2 #1: slow and save memory, 2: fast and waste memory
 npart_sto                      1 #Reduce memory when calculating Stochastic DOS
 nbands_sto                     256 #number of stochstic orbitals
 nche_sto                       100 #Chebyshev expansion orders
@@ -196,7 +196,7 @@ msst_direction                 2 #the direction of shock wave
 msst_vel                       0 #the velocity of shock wave
 msst_vis                       0 #artificial viscosity
 msst_tscale                    0.01 #reduction in initial temperature
-msst_qmass                     -1 #mass of thermostat
+msst_qmass                     1 #mass of thermostat
 md_tfreq                       0 #oscillation frequency, used to determine qmass of NHC
 md_damp                        1 #damping parameter (time units) used to add force in Langevin method
 md_nraise                      1 #parameters used when md_type=nvt
@@ -280,7 +280,6 @@ exx_c_grad_threshold           0 #
 exx_v_grad_threshold           0 #
 exx_cauchy_force_threshold     0 #
 exx_cauchy_stress_threshold    0 #
-exx_ccp_threshold              1e-08 #
 exx_ccp_rmesh_times            default #
 exx_distribute_type            htime #htime or kmeans1 or kmeans2
 exx_opt_orb_lmax               0 #
