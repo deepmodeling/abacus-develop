@@ -87,7 +87,7 @@ int DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
     /// - k : k-points, the same meaning as the ground state
     /// - "basis" : number of occupied ks-orbitals(subscripts i,j) * number of unoccupied ks-orbitals(subscripts a,b), corresponding to "bands" of the ground state
     
-    // dim = psi.get_k_first() ? psi.get_current_nbas() : psi.get_nk() * psi.get_nbasis();
+    // this->dim = psi.get_k_first() ? psi.get_current_nbas() : psi.get_nk() * psi.get_nbasis();
     // this->dmx = psi.get_k_first() ? psi.get_nbasis() : psi.get_nk() * psi.get_nbasis();
     // this->n_band = psi.get_nbands();
     this->nbase_x = this->david_ndim * nband; // maximum dimension of the reduced basis set
@@ -166,7 +166,7 @@ int DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
         }
         else
         {
-            phm_in->sPsi(psi.get_k_first() ? &psi(m, 0) : &psi(m, 0, 0),
+            phm_in->sPsi(&psi(m, 0),
                          &this->sphi[m * dim],
                          dim,
                          dim,
@@ -177,7 +177,7 @@ int DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
     for (int m = 0; m < nband; m++)
     {
         // haozhihan replace 2022-10-23
-        syncmem_complex_op()(this->ctx, this->ctx, &basis(m, 0), psi.get_k_first() ? &psi(m, 0) : &psi(m, 0, 0), dim);
+        syncmem_complex_op()(this->ctx, this->ctx, &basis(m, 0), &psi(m, 0), dim);
 
         this->SchmitOrth(dim,
                          nband,
@@ -783,7 +783,7 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
     basis.zero_out();
     for (int m = 0; m < nband; m++)
     {
-        syncmem_complex_op()(this->ctx, this->ctx, &basis(m, 0), psi.get_k_first() ? &psi(m, 0) : &psi(m, 0, 0), dim);
+        syncmem_complex_op()(this->ctx, this->ctx, &basis(m, 0),&psi(m, 0), dim);
         /*for (int ig = 0; ig < npw; ig++)
             basis(m, ig) = psi(m, ig);*/
     }
