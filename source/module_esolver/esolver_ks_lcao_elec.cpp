@@ -136,25 +136,25 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
         if (GlobalV::GAMMA_ONLY_LOCAL)
         {
             nsk = GlobalV::NSPIN;
-            ncol = this->orb_con.ParaV.ncol_bands;
+            ncol = this->ParaV.ncol_bands;
             if (GlobalV::KS_SOLVER == "genelpa"
                 || GlobalV::KS_SOLVER == "lapack"
                 || GlobalV::KS_SOLVER == "pexsi"
                 || GlobalV::KS_SOLVER == "cusolver"
                 || GlobalV::KS_SOLVER == "cusolvermp") {
-                ncol = this->orb_con.ParaV.ncol;
+                ncol = this->ParaV.ncol;
             }
         }
         else
         {
             nsk = this->kv.get_nks();
 #ifdef __MPI
-            ncol = this->orb_con.ParaV.ncol_bands;
+            ncol = this->ParaV.ncol_bands;
 #else
             ncol = GlobalV::NBANDS;
 #endif
         }
-        this->psi = new psi::Psi<TK>(nsk, ncol, this->orb_con.ParaV.nrow, nullptr);
+        this->psi = new psi::Psi<TK>(nsk, ncol, this->ParaV.nrow, nullptr);
     }
 
     // prepare grid in Gint
@@ -173,7 +173,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
             GlobalV::GAMMA_ONLY_LOCAL ? &(this->GG) : nullptr,
             GlobalV::GAMMA_ONLY_LOCAL ? nullptr : &(this->GK),
             &(this->LM),
-            &this->orb_con.ParaV,
+            &this->ParaV,
             this->pelec->pot,
             this->kv,
             two_center_bundle_,
@@ -218,7 +218,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
                    GlobalC::ucell,
                    GlobalV::sc_file,
                    GlobalV::NPOL,
-                   &(this->orb_con.ParaV),
+                   &(this->ParaV),
                    GlobalV::NSPIN,
                    this->kv,
                    GlobalV::KS_SOLVER,
@@ -432,7 +432,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
         this->nscf();
     } else if (cal_type == "get_pchg") {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "getting partial charge");
-        IState_Charge ISC(this->psi, &(this->orb_con.ParaV));
+        IState_Charge ISC(this->psi, &(this->ParaV));
         ISC.begin(this->GG,
                   this->pelec->charge->rho,
                   this->pelec->wg,
@@ -467,7 +467,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                       this->pw_rho,
                       this->pw_wfc,
                       this->pw_big,
-                      this->orb_con.ParaV,
+                      this->ParaV,
                       this->GG,
                       INPUT.out_wfc_pw,
                       this->wf.out_wfc_r,
@@ -486,7 +486,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                       this->pw_rho,
                       this->pw_wfc,
                       this->pw_big,
-                      this->orb_con.ParaV,
+                      this->ParaV,
                       this->GK,
                       INPUT.out_wfc_pw,
                       this->wf.out_wfc_r,
@@ -534,11 +534,11 @@ void ESolver_KS_LCAO<std::complex<double>, double>::get_S(void)
                          GlobalV::SEARCH_RADIUS,
                          GlobalV::test_atom_input);
 
-    this->RA.for_2d(this->orb_con.ParaV, GlobalV::GAMMA_ONLY_LOCAL);
+    this->RA.for_2d(this->ParaV, GlobalV::GAMMA_ONLY_LOCAL);
 
     if (this->p_hamilt == nullptr) {
         this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, double>(
-            &this->orb_con.ParaV,
+            &this->ParaV,
             this->kv,
             *(two_center_bundle_.overlap_orb));
         dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, double>*>(
@@ -551,7 +551,7 @@ void ESolver_KS_LCAO<std::complex<double>, double>::get_S(void)
 
     std::cout << " The file is saved in " << fn << std::endl;
 
-    ModuleIO::output_SR(orb_con.ParaV, this->LM, GlobalC::GridD, this->p_hamilt, fn);
+    ModuleIO::output_SR(ParaV, this->LM, GlobalC::GridD, this->p_hamilt, fn);
 
     return;
 }
@@ -574,12 +574,12 @@ void ESolver_KS_LCAO<std::complex<double>, std::complex<double>>::get_S(void)
                          GlobalV::SEARCH_RADIUS,
                          GlobalV::test_atom_input);
 
-    this->RA.for_2d(this->orb_con.ParaV, GlobalV::GAMMA_ONLY_LOCAL);
-    this->LM.ParaV = &this->orb_con.ParaV;
+    this->RA.for_2d(this->ParaV, GlobalV::GAMMA_ONLY_LOCAL);
+    this->LM.ParaV = &this->ParaV;
     if (this->p_hamilt == nullptr) {
         this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>,
                                                 std::complex<double>>(
-            &this->orb_con.ParaV,
+            &this->ParaV,
             this->kv,
             *(two_center_bundle_.overlap_orb));
         dynamic_cast<
@@ -593,7 +593,7 @@ void ESolver_KS_LCAO<std::complex<double>, std::complex<double>>::get_S(void)
 
     std::cout << " The file is saved in " << fn << std::endl;
 
-    ModuleIO::output_SR(orb_con.ParaV, this->LM, GlobalC::GridD, this->p_hamilt, fn);
+    ModuleIO::output_SR(ParaV, this->LM, GlobalC::GridD, this->p_hamilt, fn);
 
     return;
 }
@@ -691,7 +691,7 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
                                 this->sf,
                                 this->kv,
                                 this->psi,
-                                &(this->orb_con.ParaV));
+                                &(this->ParaV));
         }
         else if (INPUT.wannier_method == 2)
         {
@@ -703,7 +703,7 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
                                        INPUT.nnkpfile,
                                        INPUT.wannier_spin);
 
-            myWannier.calculate(this->pelec->ekb, this->kv, *(this->psi), &(this->orb_con.ParaV));
+            myWannier.calculate(this->pelec->ekb, this->kv, *(this->psi), &(this->ParaV));
         }
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "Wave function to Wannier90");
 #endif
@@ -713,7 +713,7 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
     if (berryphase::berry_phase_flag
         && ModuleSymmetry::Symmetry::symm_flag != 1) {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "Berry phase calculation");
-        berryphase bp(this->orb_con.ParaV);
+        berryphase bp(this->ParaV);
         bp.lcao_init(this->kv,
                      this->GridT); // additional step before calling
                                    // macroscopic_polarization (why capitalize
@@ -748,7 +748,7 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
             = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec);
         this->pelec->calculate_weights();
         this->pelec->calEBand();
-        elecstate::cal_dm_psi(&(this->orb_con.ParaV), pelec_lcao->wg, *(this->psi), *(pelec_lcao->get_DM()));
+        elecstate::cal_dm_psi(&(this->ParaV), pelec_lcao->wg, *(this->psi), *(pelec_lcao->get_DM()));
         this->cal_mag(istep, true);
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "Mulliken charge analysis");
     }
@@ -765,7 +765,7 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
                                 this->pelec->ekb,
                                 this->pelec->wg,
                                 this->pelec->klist->kvec_c,
-                                this->orb_con.ParaV,
+                                this->ParaV,
                                 istep);
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "writing wave function");
     }

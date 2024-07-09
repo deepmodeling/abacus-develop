@@ -61,13 +61,13 @@ class ESolver_KS_LCAO : public ESolver_KS<TK> {
     virtual void others(const int istep) override;
 
     // we will get rid of this class soon, don't use it, mohan 2024-03-28
-    ORB_control orb_con; // Basis_LCAO
-
-    // we will get rid of this class soon, don't use it, mohan 2024-03-28
     Record_adj RA;
 
     // we will get rid of this class soon, don't use it, mohan 2024-03-28
     Local_Orbital_Charge LOC;
+
+    // 2d block-cyclic distribution info
+    Parallel_Orbitals ParaV;
 
     // used for k-dependent grid integration.
     Gint_k GK;
@@ -89,7 +89,7 @@ class ESolver_KS_LCAO : public ESolver_KS<TK> {
     ModuleBase::matrix scs;
     bool have_force = false;
 
-    void init_basis_lcao(ORB_control& orb_con, Input& inp, UnitCell& ucell);
+    void init_basis_lcao(Input& inp, UnitCell& ucell);
 
     //--------------common for all calculation, not only scf-------------
     // set matrix and grid integral
