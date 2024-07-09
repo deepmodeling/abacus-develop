@@ -1,3 +1,4 @@
+#pragma once
 #include "module_elecstate/elecstate.h"
 
 namespace elecstate

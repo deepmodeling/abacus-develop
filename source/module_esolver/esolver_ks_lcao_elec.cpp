@@ -28,6 +28,10 @@
 #include "module_io/rho_io.h"
 #include "module_io/write_pot.h"
 #include "module_io/write_wfc_nao.h"
+#include "module_base/formatter.h"
+#ifdef __EXX
+#include "module_io/restart_exx_csr.h"
+#endif
 
 namespace ModuleESolver
 {
@@ -380,33 +384,31 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
 
     const std::string cal_type = GlobalV::CALCULATION;
 
-    if (cal_type == "get_S")
-    {
-        std::cout << "\n * * * * * *" << std::endl;
-        std::cout << " << Start writing the overlap matrix." << std::endl;
+    if (cal_type == "get_S") {
+        std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "writing the overlap matrix");
         this->get_S();
-        std::cout << " >> Finish writing the overlap matrix." << std::endl;
-        std::cout << " * * * * * *\n" << std::endl;
+        std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "writing the overlap matrix");
 
         ModuleBase::QUIT();
 
         // return; // use 'return' will cause segmentation fault. by mohan
         // 2024-06-09
-    }
-    else if (cal_type == "test_memory")
-    {
+    } else if (cal_type == "test_memory") {
+        std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "testing memory");
         Cal_Test::test_memory(this->pw_rho,
                               this->pw_wfc,
                               this->p_chgmix->get_mixing_mode(),
                               this->p_chgmix->get_mixing_ndim());
+        std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "testing memory");
         return;
     }
     else if (cal_type == "test_neighbour")
     {
         // test_search_neighbor();
-        if (GlobalV::SEARCH_RADIUS < 0)
-        {
-            std::cout << " SEARCH_RADIUS : " << GlobalV::SEARCH_RADIUS << std::endl;
+        std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "testing neighbour");
+        if (GlobalV::SEARCH_RADIUS < 0) {
+            std::cout << " SEARCH_RADIUS : " << GlobalV::SEARCH_RADIUS
+                      << std::endl;
             std::cout << " please make sure search_radius > 0" << std::endl;
         }
 
@@ -417,6 +419,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                              GlobalV::SEARCH_RADIUS,
                              GlobalV::test_atom_input,
                              true);
+        std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "testing neighbour");
         return;
     }
 
@@ -427,9 +430,8 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
     if (GlobalV::CALCULATION == "nscf")
     {
         this->nscf();
-    }
-    else if (cal_type == "get_pchg")
-    {
+    } else if (cal_type == "get_pchg") {
+        std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "getting partial charge");
         IState_Charge ISC(this->psi, &(this->orb_con.ParaV));
         ISC.begin(this->GG,
                   this->pelec->charge->rho,
@@ -455,9 +457,9 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                   GlobalV::ofs_warning,
                   &GlobalC::ucell,
                   &GlobalC::GridD);
-    }
-    else if (cal_type == "get_wf")
-    {
+        std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "getting partial charge");
+    } else if (cal_type == "get_wf") {
+        std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "getting wave function");
         IState_Envelope IEP(this->pelec);
         if (GlobalV::GAMMA_ONLY_LOCAL)
         {
@@ -497,10 +499,10 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                       GlobalV::NLOCAL,
                       GlobalV::global_out_dir);
         }
-    }
-    else
-    {
-        ModuleBase::WARNING_QUIT("ESolver_KS_LCAO<TK, TR>::others", "CALCULATION type not supported");
+        std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "getting wave function");
+    } else {
+        ModuleBase::WARNING_QUIT("ESolver_KS_LCAO<TK, TR>::others",
+                                 "CALCULATION type not supported");
     }
 
     ModuleBase::timer::tick("ESolver_KS_LCAO", "others");
@@ -604,24 +606,6 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
 
     time_t time_start = std::time(nullptr);
 
-#ifdef __EXX
-#ifdef __MPI
-    // Peize Lin add 2018-08-14
-    if (GlobalC::exx_info.info_global.cal_exx)
-    {
-        const std::string file_name_exx = GlobalV::global_out_dir + "HexxR" + std::to_string(GlobalV::MY_RANK);
-        if (GlobalC::exx_info.info_ri.real_number)
-        {
-            this->exd->read_Hexxs_csr(file_name_exx, GlobalC::ucell);
-        }
-        else
-        {
-            this->exc->read_Hexxs_csr(file_name_exx, GlobalC::ucell);
-        }
-    }
-#endif // __MPI
-#endif // __EXX
-
     // mohan add 2021-02-09
     // in ions, istep starts from 1,
     // then when the istep is a variable of scf or nscf,
@@ -670,10 +654,9 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
         }
         GlobalV::ofs_running << std::endl;
     }
-    if (GlobalV::out_bandgap)
-    {
-        if (!GlobalV::TWO_EFERMI)
-        {
+    if (GlobalV::out_bandgap) {
+        std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "band gap calculation");
+        if (!GlobalV::TWO_EFERMI) {
             this->pelec->cal_bandgap();
             GlobalV::ofs_running << " E_bandgap " << this->pelec->bandgap * ModuleBase::Ry_to_eV << " eV" << std::endl;
         }
@@ -685,14 +668,15 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
             GlobalV::ofs_running << " E_bandgap_dw " << this->pelec->bandgap_dw * ModuleBase::Ry_to_eV << " eV"
                                  << std::endl;
         }
+        std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "band gap calculation");
     }
 
     // add by jingan in 2018.11.7
     if (GlobalV::CALCULATION == "nscf" && INPUT.towannier90)
     {
 #ifdef __LCAO
-        if (INPUT.wannier_method == 1)
-        {
+        std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "Wave function to Wannier90");
+        if (INPUT.wannier_method == 1) {
             toWannier90_LCAO_IN_PW myWannier(INPUT.out_wannier_mmn,
                                              INPUT.out_wannier_amn,
                                              INPUT.out_wannier_unk,
@@ -721,42 +705,52 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
 
             myWannier.calculate(this->pelec->ekb, this->kv, *(this->psi), &(this->orb_con.ParaV));
         }
+        std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "Wave function to Wannier90");
 #endif
     }
 
     // add by jingan
-    if (berryphase::berry_phase_flag && ModuleSymmetry::Symmetry::symm_flag != 1)
-    {
+    if (berryphase::berry_phase_flag
+        && ModuleSymmetry::Symmetry::symm_flag != 1) {
+        std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "Berry phase calculation");
         berryphase bp(this->orb_con.ParaV);
         bp.lcao_init(this->kv,
                      this->GridT); // additional step before calling
                                    // macroscopic_polarization (why capitalize
                                    // the function name?)
-        bp.Macroscopic_polarization(this->pw_wfc->npwk_max, this->psi, this->pw_rho, this->pw_wfc, this->kv);
+        bp.Macroscopic_polarization(this->pw_wfc->npwk_max,
+                                    this->psi,
+                                    this->pw_rho,
+                                    this->pw_wfc,
+                                    this->kv);
+        std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "Berry phase calculation");
     }
 
     // below is for DeePKS NSCF calculation
 #ifdef __DEEPKS
-    if (GlobalV::deepks_out_labels || GlobalV::deepks_scf)
-    {
+    if (GlobalV::deepks_out_labels || GlobalV::deepks_scf) {
+        std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "DeepKS output");
         const elecstate::DensityMatrix<TK, double>* dm
             = dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
         this->dpks_cal_projected_DM(dm);
         GlobalC::ld.cal_descriptor(GlobalC::ucell.nat); // final descriptor
         GlobalC::ld.cal_gedm(GlobalC::ucell.nat);
+        std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "DeepKS output");
     }
 #endif
 
     this->create_Output_Mat_Sparse(0).write();
 
     // mulliken charge analysis
-    if (GlobalV::out_mul)
-    {
-        elecstate::ElecStateLCAO<TK>* pelec_lcao = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec);
+    if (GlobalV::out_mul) {
+        std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "Mulliken charge analysis");
+        elecstate::ElecStateLCAO<TK>* pelec_lcao
+            = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec);
         this->pelec->calculate_weights();
         this->pelec->calEBand();
         elecstate::cal_dm_psi(&(this->orb_con.ParaV), pelec_lcao->wg, *(this->psi), *(pelec_lcao->get_DM()));
         this->cal_mag(istep, true);
+        std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "Mulliken charge analysis");
     }
 
     /// write potential
@@ -765,6 +759,7 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
     // write wfc
     if (PARAM.inp.out_wfc_lcao)
     {
+        std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "writing wave function");
         ModuleIO::write_wfc_nao(PARAM.inp.out_wfc_lcao,
                                 *this->psi,
                                 this->pelec->ekb,
@@ -772,6 +767,7 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
                                 this->pelec->klist->kvec_c,
                                 this->orb_con.ParaV,
                                 istep);
+        std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "writing wave function");
     }
 }
 

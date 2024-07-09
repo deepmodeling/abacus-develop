@@ -55,17 +55,6 @@ class WFInit
                         std::ofstream& ofs_running);
 
     /**
-     * @brief get whether psi is initialized
-     *
-     * @return true : psi is initialized
-     * @return false : psi is not initialized
-     */
-    bool initialized() const
-    {
-        return this->psi_init->initialized();
-    }
-
-    /**
      * @brief get the psi_initializer
      *
      * @return psi_initializer<T, Device>*

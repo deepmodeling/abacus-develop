@@ -165,6 +165,13 @@ void zeros_HSR(const char& mtype, LCAO_HS_Arrays& HS_arrays);
 
 void divide_HS_in_frag(LCAO_Matrix& lm, const bool isGamma, Parallel_Orbitals& pv, const int& nks);
 
+template <typename T>
+void set_mat2d(const int& global_ir,
+                const int& global_ic,
+                const T& v,
+                const Parallel_Orbitals& pv,
+                T* mat);
+
 } // namespace LCAO_domain
 
 #endif

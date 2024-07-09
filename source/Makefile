@@ -162,18 +162,18 @@ ifdef DeePMD_DIR
         LIBS += -L${DeeP_LIB_DIR} -ldeepmd_c -Wl,-rpath=${DeeP_LIB_DIR}
     else
         LIBS += -L${DeeP_LIB_DIR} -ldeepmd_cc -Wl,-rpath=${DeeP_LIB_DIR}
-    endif
 
-    #==========================
-    # TensorFlow package
-    #==========================
-    ifndef TensorFlow_DIR
-        TensorFlow_DIR = ${DeePMD_DIR}
+        #==========================
+        # TensorFlow package
+        #==========================
+        ifndef TensorFlow_DIR
+            TensorFlow_DIR = ${DeePMD_DIR}
+        endif
+        TensorFlow_LIB_DIR = ${TensorFlow_DIR}/lib
+        LIBS += -L${TensorFlow_LIB_DIR} -ltensorflow_cc -Wl,-rpath=${TensorFlow_LIB_DIR}
+        TensorFlow_INCLUDE_DIR = ${TensorFlow_DIR}/include
+        INCLUDES += -I${TensorFlow_INCLUDE_DIR}
     endif
-    TensorFlow_LIB_DIR = ${TensorFlow_DIR}/lib
-    LIBS += -L${TensorFlow_LIB_DIR} -ltensorflow_cc -Wl,-rpath=${TensorFlow_LIB_DIR}
-    TensorFlow_INCLUDE_DIR = ${TensorFlow_DIR}/include
-    INCLUDES += -I${TensorFlow_INCLUDE_DIR}
 endif
 
 ifdef PEXSI_DIR

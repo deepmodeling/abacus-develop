@@ -1,10 +1,11 @@
 list(APPEND objects
-    diagh_consts.cpp
+    diag_const_nums.cpp
     diago_cg.cpp
     diago_david.cpp
     diago_dav_subspace.cpp
     diago_bpcg.cpp
     hsolver_pw.cpp
+    hsolver_lcaopw.cpp
     hsolver_pw_sdft.cpp
     diago_iter_assist.cpp
     

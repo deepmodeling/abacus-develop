@@ -24,3 +24,4 @@ smearing_sigma			0.002
 mixing_type		broyden
 mixing_beta		0.7
 
+init_chg auto

@@ -2,6 +2,7 @@
 
 #include "module_base/name_angular.h"
 #include "module_base/tool_quit.h"
+#include <stdexcept>
 
 CellIndex::CellIndex(const std::vector<std::string>& atomLabels_in,
                      const std::vector<int>& atomCounts_in,
@@ -184,6 +185,7 @@ int CellIndex::iw2l(int iat, int iw)
     {
         ModuleBase::WARNING_QUIT("CellIndex::iw2l", "iw out of range [0, nw)");
     }
+    throw std::out_of_range(std::string(__FILE__)+" line "+std::to_string(__LINE__));
 }
 
 int CellIndex::iw2z(int iat, int iw)
@@ -208,6 +210,7 @@ int CellIndex::iw2z(int iat, int iw)
     {
         ModuleBase::WARNING_QUIT("CellIndex::iw2l", "iw out of range [0, nw)");
     }
+    throw std::out_of_range(std::string(__FILE__)+" line "+std::to_string(__LINE__));
 }
 
 int CellIndex::iw2m(int iat, int iw)
@@ -232,6 +235,7 @@ int CellIndex::iw2m(int iat, int iw)
     {
         ModuleBase::WARNING_QUIT("CellIndex::iw2l", "iw out of range [0, nw)");
     }
+    throw std::out_of_range(std::string(__FILE__)+" line "+std::to_string(__LINE__));
 }
 
 bool CellIndex::check_nspin(int nspin)

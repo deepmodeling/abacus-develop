@@ -5,6 +5,9 @@
 #define private public
 #define protected public
 
+#include "module_hsolver/hsolver_pw.h"
+#include "module_hsolver/hsolver_lcaopw.h"
+#include "hsolver_supplementary_mock.h"
 #include "hsolver_pw_sup.h"
 #include "hsolver_supplementary_mock.h"
 #include "module_base/global_variable.h"
@@ -257,14 +260,16 @@ TEST_F(TestHSolverPW, SolveLcaoInPW) {
     // check solve()
     elecstate_test.ekb.c[0] = 1.0;
     elecstate_test.ekb.c[1] = 2.0;
-    this->hs_f.solve(&hamilt_test_f,
-                     psi_test_cf,
-                     &elecstate_test,
-                     transform_test_cf,
-                     true);
-    EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<float>>::avg_iter,
-                     0.0);
-    for (int i = 0; i < psi_test_cf.size(); i++) {
+
+    hsolver::HSolverLIP<std::complex<float>> hs_f_lip
+        = hsolver::HSolverLIP<std::complex<float>>(&pwbk);
+    hsolver::HSolverLIP<std::complex<double>> hs_d_lip
+        = hsolver::HSolverLIP<std::complex<double>>(&pwbk);
+    hs_f_lip.solve(&hamilt_test_f, psi_test_cf, &elecstate_test,
+        transform_test_cf, true);
+    EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<float>>::avg_iter, 0.0);
+    for (int i = 0; i < psi_test_cf.size(); i++)
+    {
         EXPECT_DOUBLE_EQ(psi_test_cf.get_pointer()[i].real(), i);
     }
     EXPECT_DOUBLE_EQ(elecstate_test.ekb.c[0], 0.0);
@@ -272,14 +277,10 @@ TEST_F(TestHSolverPW, SolveLcaoInPW) {
 
     elecstate_test.ekb.c[0] = 1.0;
     elecstate_test.ekb.c[1] = 2.0;
-    this->hs_d.solve(&hamilt_test_d,
-                     psi_test_cd,
-                     &elecstate_test,
-                     transform_test_cd,
-                     true);
-    EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<double>>::avg_iter,
-                     0.0);
-    for (int i = 0; i < psi_test_cd.size(); i++) {
+    hs_d_lip.solve(&hamilt_test_d, psi_test_cd, &elecstate_test, transform_test_cd, true);
+    EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<double>>::avg_iter, 0.0);
+    for (int i = 0; i < psi_test_cd.size(); i++)
+    {
         EXPECT_DOUBLE_EQ(psi_test_cd.get_pointer()[i].real(), i);
     }
     EXPECT_DOUBLE_EQ(elecstate_test.ekb.c[0], 0.0);

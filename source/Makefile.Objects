@@ -214,6 +214,7 @@ OBJS_ESOLVER=esolver.o\
     esolver_ks.o\
     esolver_fp.o\
     esolver_ks_pw.o\
+    esolver_ks_lcaopw.o\
     esolver_sdft_pw.o\
     esolver_lj.o\
     esolver_dp.o\
@@ -299,13 +300,14 @@ OBJS_HCONTAINER=base_matrix.o\
 OBJS_HSOLVER=diago_cg.o\
     diago_david.o\
     diago_dav_subspace.o\
-    diagh_consts.o\
     diago_bpcg.o\
     hsolver_pw.o\
+    hsolver_lcaopw.o\
     hsolver_pw_sdft.o\
     diago_iter_assist.o\
     math_kernel_op.o\
     dngvd_op.o\
+    diag_const_nums.o\
     
 OBJS_HSOLVER_LCAO=hsolver_lcao.o\
       diago_scalapack.o\
@@ -516,6 +518,7 @@ OBJS_LCAO=DM_gamma.o\
       norm_psi.o\
       propagator.o\
       td_velocity.o\
+      td_current.o\
       snap_psibeta_half_tddft.o\
       upsi.o\
       FORCE_STRESS.o\
@@ -535,13 +538,13 @@ OBJS_LCAO=DM_gamma.o\
       spar_hsr.o\
       spar_st.o\
       spar_u.o\
-      LCAO_matrix.o\
       LCAO_set_fs.o\
       LCAO_set_st.o\
       LCAO_nl_mu.o\
       LCAO_nnr.o\
       LCAO_set_zero.o\
       LCAO_allocate.o\
+      LCAO_set_mat2d.o\
       center2_orb.o\
       center2_orb-orb11.o\
       center2_orb-orb21.o\

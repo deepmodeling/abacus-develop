@@ -28,6 +28,7 @@
 #include "module_io/print_info.h"
 #ifdef __EXX
 #include "module_ri/RPA_LRI.h"
+#include "module_io/restart_exx_csr.h"
 #endif
 
 #ifdef __DEEPKS
@@ -1020,6 +1021,8 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int iter)
     if (GlobalC::restart.info_save.save_H && two_level_step > 0
         && (!GlobalC::exx_info.info_global.separate_loop || iter == 1)) // to avoid saving the same value repeatedly
     {
+        ////////// for Add_Hexx_Type::k
+        /*
         hamilt::HS_Matrix_K<TK> Hexxk_save(&this->orb_con.ParaV, 1);
         for (int ik = 0; ik < this->kv.get_nks(); ++ik) {
             Hexxk_save.set_zero_hk();
@@ -1035,6 +1038,16 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int iter)
                                        ik,
                                        this->orb_con.ParaV.get_local_size(),
                                        Hexxk_save.get_hk());
+        }*/
+        ////////// for Add_Hexx_Type:R
+        const std::string& restart_HR_path = GlobalC::restart.folder + "HexxR" + std::to_string(GlobalV::MY_RANK);
+        if (GlobalC::exx_info.info_ri.real_number)
+        {
+            ModuleIO::write_Hexxs_csr(restart_HR_path, GlobalC::ucell, this->exd->get_Hexxs());
+        }
+        else
+        {
+            ModuleIO::write_Hexxs_csr(restart_HR_path, GlobalC::ucell, this->exc->get_Hexxs());
         }
         if (GlobalV::MY_RANK == 0)
         {
@@ -1155,14 +1168,12 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
     // 5) write Exx matrix
     if (GlobalC::exx_info.info_global.cal_exx) // Peize Lin add if 2022.11.14
     {
-        const std::string file_name_exx = GlobalV::global_out_dir + "HexxR" + std::to_string(GlobalV::MY_RANK);
-        if (GlobalC::exx_info.info_ri.real_number)
-        {
-            this->exd->write_Hexxs_csr(file_name_exx, GlobalC::ucell);
-        }
-        else
-        {
-            this->exc->write_Hexxs_csr(file_name_exx, GlobalC::ucell);
+        const std::string file_name_exx = GlobalV::global_out_dir + "HexxR"
+                                          + std::to_string(GlobalV::MY_RANK);
+        if (GlobalC::exx_info.info_ri.real_number) {
+            ModuleIO::write_Hexxs_csr(file_name_exx, GlobalC::ucell, this->exd->get_Hexxs());
+        } else {
+            ModuleIO::write_Hexxs_csr(file_name_exx, GlobalC::ucell, this->exc->get_Hexxs());
         }
     }
 #endif

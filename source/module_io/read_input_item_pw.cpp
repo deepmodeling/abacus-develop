@@ -212,9 +212,9 @@ void ReadInput::item_pw()
             }
         };
         item.checkvalue = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.init_chg != "atomic" && para.input.init_chg != "file")
+            if (para.input.init_chg != "atomic" && para.input.init_chg != "file" && para.input.init_chg != "auto")
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "init_chg should be 'atomic' or 'file'");
+                ModuleBase::WARNING_QUIT("ReadInput", "init_chg should be 'atomic', 'file' or 'auto'");
             }
         };
         this->add_item(item);

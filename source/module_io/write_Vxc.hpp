@@ -330,9 +330,9 @@ void write_Vxc(int nspin,
     std::vector<std::vector<double>> e_orb_locxc; // orbital energy (local XC)
     std::vector<std::vector<double>> e_orb_tot;   // orbital energy (total)
 #ifdef __EXX
-    hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>> vexx_op_ao(&vxc_k_ao, &lm, nullptr, kv);
+    hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>> vexx_op_ao(&vxc_k_ao, &lm, nullptr, kv, lm.Hexxd, lm.Hexxc, hamilt::Add_Hexx_Type::k);
     hamilt::HS_Matrix_K<TK> vexxonly_k_ao(pv, 1); // only hk is needed, sk is skipped
-    hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>> vexxonly_op_ao(&vexxonly_k_ao, &lm, nullptr, kv);
+    hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>> vexxonly_op_ao(&vexxonly_k_ao, &lm, nullptr, kv, lm.Hexxd, lm.Hexxc, hamilt::Add_Hexx_Type::k);
     std::vector<std::vector<double>> e_orb_exx; // orbital energy (EXX)
 #endif
     hamilt::OperatorDFTU<hamilt::OperatorLCAO<TK, TR>> vdftu_op_ao(&vxc_k_ao, kv.kvec_d, nullptr, kv.isk);
