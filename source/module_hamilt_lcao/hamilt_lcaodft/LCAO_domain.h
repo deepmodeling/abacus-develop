@@ -7,7 +7,6 @@
 #include "module_basis/module_nao/two_center_bundle.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_HS_arrays.hpp"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/force_stress_arrays.h"
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
@@ -161,7 +160,7 @@ void build_ST_new(ForceStressArrays& fsr,
  */
 void zeros_HSR(const char& mtype, LCAO_HS_Arrays& HS_arrays);
 
-void divide_HS_in_frag(LCAO_Matrix& lm, const bool isGamma, Parallel_Orbitals& pv, const int& nks);
+void divide_HS_in_frag(const bool isGamma, Parallel_Orbitals& pv, const int& nks);
 
 template <typename T>
 void set_mat2d(const int& global_ir,
