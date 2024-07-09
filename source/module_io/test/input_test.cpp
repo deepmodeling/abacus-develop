@@ -835,7 +835,7 @@ TEST_F(InputTest, Default_2)
 	INPUT.exx_hybrid_alpha = "default";
 	INPUT.dft_functional = "hf";
 	INPUT.exx_real_number = "default";
-	INPUT.gamma_only = 0;
+	INPUT.gamma_only = false;
         INPUT.exx_ccp_rmesh_times = "default";
 	INPUT.diago_proc = 0;
 	INPUT.calculation = "relax";
@@ -843,7 +843,7 @@ TEST_F(InputTest, Default_2)
     INPUT.relax_nmax = 0;
     INPUT.basis_type = "pw";
     INPUT.ks_solver = "default";
-    INPUT.gamma_only_local = 1;
+    INPUT.gamma_only_local = true;
 	INPUT.scf_thr = -1.0;
 	INPUT.scf_thr_type = -1;
     INPUT.nbndsto_str = "0";
@@ -890,7 +890,7 @@ TEST_F(InputTest, Default_2)
     INPUT.chg_extrap = "default";
     INPUT.basis_type = "pw";
     INPUT.pw_diag_thr = 1.0e-2;
-    INPUT.cal_force = 1;
+    INPUT.cal_force = true;
 	INPUT.init_chg = "atomic";
 	INPUT.basis_type = "pw";
 	INPUT.ks_solver = "cg";
@@ -972,12 +972,12 @@ TEST_F(InputTest, Default_2)
 	INPUT.calculation = "md";
     INPUT.chg_extrap = "default";
     INPUT.mdp.md_nstep = 0;
-	INPUT.out_md_control = 0;
+	INPUT.out_md_control = false;
 	INPUT.mdp.md_tlast = -1.0;
 	INPUT.mdp.md_plast = -1.0;
 	INPUT.mdp.md_tfreq = 0;
 	INPUT.mdp.md_pfreq = 0;
-	INPUT.mdp.md_restart = 1;
+	INPUT.mdp.md_restart = true;
 	INPUT.mdp.md_type = "npt";
 	INPUT.mdp.md_pmode = "iso";
 	// the 6th calling
@@ -1098,22 +1098,22 @@ TEST_F(InputTest, Check)
 	EXPECT_THAT(output,testing::HasSubstr("nelec < 0 is not allowed !"));
 	INPUT.nelec = 100;
 	//
-	INPUT.efield_flag = 0;
-	INPUT.dip_cor_flag = 1;
+	INPUT.efield_flag = false;
+	INPUT.dip_cor_flag = true;
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("dipole correction is not active if efield_flag=false !"));
-	INPUT.dip_cor_flag = 0;
+	INPUT.dip_cor_flag = false;
 	//
-	INPUT.efield_flag = 1;
-	INPUT.gate_flag = 1;
-	INPUT.dip_cor_flag = 0;
+	INPUT.efield_flag = true;
+	INPUT.gate_flag = true;
+	INPUT.dip_cor_flag = false;
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("gate field cannot be used with efield if dip_cor_flag=false !"));
-	INPUT.gate_flag = 0;
+	INPUT.gate_flag = false;
 	//
 	INPUT.calculation = "nscf";
 	INPUT.out_dos = 3;
@@ -1184,25 +1184,25 @@ TEST_F(InputTest, Check)
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
 	output = testing::internal::GetCapturedStdout();
-	EXPECT_THAT(output,testing::HasSubstr("wrong 'init_chg',not 'atomic', 'file',please check"));
+	EXPECT_THAT(output, testing::HasSubstr("wrong 'init_chg', should be 'atomic', 'file', or 'auto'. Please check it."));
 	INPUT.init_chg = "atomic";
 	//
-	INPUT.gamma_only_local = 0;
-	INPUT.out_dm = 1;
+	INPUT.gamma_only_local = false;
+	INPUT.out_dm = true;
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("out_dm with k-point algorithm is not implemented yet."));
-	INPUT.out_dm = 0;
+	INPUT.out_dm = false;
 	//
-	INPUT.gamma_only_local = 1;
-	INPUT.out_dm1 = 1;
+	INPUT.gamma_only_local = true;
+	INPUT.out_dm1 = true;
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("out_dm1 is only for multi-k"));
-	INPUT.gamma_only_local = 0;
-	INPUT.out_dm1 = 0;
+	INPUT.gamma_only_local = false;
+	INPUT.out_dm1 = false;
 	//
 	INPUT.nbands = 100001;
 	testing::internal::CaptureStdout();
@@ -1255,20 +1255,20 @@ TEST_F(InputTest, Check)
 	INPUT.ks_solver = "cg";
 	//
 	INPUT.basis_type = "pw";
-	INPUT.gamma_only = 1;
+	INPUT.gamma_only = true;
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("gamma_only not implemented for plane wave now."));
-	INPUT.gamma_only = 0;
+	INPUT.gamma_only = false;
 	//
 	INPUT.basis_type = "pw";
-	INPUT.out_proj_band = 1;
+	INPUT.out_proj_band = true;
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("out_proj_band not implemented for plane wave now."));
-	INPUT.out_proj_band = 0;
+	INPUT.out_proj_band = false;
 	//
 	INPUT.basis_type = "pw";
 	INPUT.out_dos = 3;
@@ -1279,12 +1279,12 @@ TEST_F(InputTest, Check)
 	INPUT.out_dos = 0;
 	//
 	INPUT.basis_type = "pw";
-	INPUT.sc_mag_switch = 3;
+	INPUT.sc_mag_switch = true;
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("Non-colliner Spin-constrained DFT not implemented for plane wave now."));
-	INPUT.sc_mag_switch = 0;
+	INPUT.sc_mag_switch = false;
 	//
 	INPUT.basis_type = "lcao";
 	INPUT.ks_solver = "cg";
@@ -1504,7 +1504,7 @@ TEST_F(InputTest, Check)
 	EXPECT_THAT(output,testing::HasSubstr("exx_opt_orb_tolerence must >=0"));
 	INPUT.exx_opt_orb_tolerence = 0;
 	//
-	INPUT.berry_phase = 1;
+	INPUT.berry_phase = true;
 	INPUT.basis_type = "lcao_in_pw";
 	INPUT.ks_solver = "lapack";
 	testing::internal::CaptureStdout();
@@ -1527,9 +1527,9 @@ TEST_F(InputTest, Check)
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("calculate berry phase, please set gdir = 1 or 2 or 3"));
 	INPUT.gdir = 3;
-	INPUT.berry_phase = 0;
+	INPUT.berry_phase = false;
 	//
-	INPUT.towannier90 = 1;
+	INPUT.towannier90 = true;
 	// due to the repair of lcao_in_pw, original warning has been deprecated, 2023/12/23, ykhuang
 	// INPUT.basis_type = "lcao_in_pw";
 	// INPUT.ks_solver = "lapack";
@@ -1554,7 +1554,7 @@ TEST_F(InputTest, Check)
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("to use towannier90, please set wannier_spin = up or down"));
 	INPUT.wannier_spin = "up";
-	INPUT.towannier90 = 0;
+	INPUT.towannier90 = false;
 	//
 	INPUT.read_file_dir = "arbitrary";
 	testing::internal::CaptureStdout();
@@ -1662,12 +1662,14 @@ TEST_F(InputTest, Check)
 
 bool strcmp_inbuilt(const std::string& str1, const std::string& str2)
 {
-	if(str1.size() != str2.size())
+	if(str1.size() != str2.size()) {
 		return false;
+}
 	for(int i=0; i<str1.size(); i++)
 	{
-		if(str1[i] != str2[i])
+		if(str1[i] != str2[i]) {
 			return false;
+}
 	}
 	return true;
 }
