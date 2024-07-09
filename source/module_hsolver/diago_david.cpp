@@ -90,40 +90,40 @@ int DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
     // this->dim = psi.get_k_first() ? psi.get_current_nbas() : psi.get_nk() * psi.get_nbasis();
     // this->dmx = psi.get_k_first() ? psi.get_nbasis() : psi.get_nk() * psi.get_nbasis();
     // this->n_band = psi.get_nbands();
-    this->nbase_x = this->david_ndim * nband; // maximum dimension of the reduced basis set
+    const int nbase_x = this->david_ndim * nband; // maximum dimension of the reduced basis set
 
     // the lowest N eigenvalues
     base_device::memory::resize_memory_op<Real, base_device::DEVICE_CPU>()(
-                        this->cpu_ctx, this->eigenvalue, this->nbase_x, "DAV::eig");
+                        this->cpu_ctx, this->eigenvalue, nbase_x, "DAV::eig");
     base_device::memory::set_memory_op<Real, base_device::DEVICE_CPU>()(
-                        this->cpu_ctx, this->eigenvalue, 0, this->nbase_x);
+                        this->cpu_ctx, this->eigenvalue, 0, nbase_x);
 
     psi::Psi<T, Device> basis(1,
-                              this->nbase_x,
+                              nbase_x,
                               dim,
                               &(psi.get_ngk(0))); // the reduced basis set
-    ModuleBase::Memory::record("DAV::basis", this->nbase_x * dim * sizeof(T));
+    ModuleBase::Memory::record("DAV::basis", nbase_x * dim * sizeof(T));
 
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     // ModuleBase::ComplexMatrix hp(nbase_x, dim); // the product of H and psi in the reduced basis set
-    resmem_complex_op()(this->ctx, this->hphi, this->nbase_x * dim, "DAV::hphi");
-    setmem_complex_op()(this->ctx, this->hphi, 0, this->nbase_x * dim);
+    resmem_complex_op()(this->ctx, this->hphi, nbase_x * dim, "DAV::hphi");
+    setmem_complex_op()(this->ctx, this->hphi, 0, nbase_x * dim);
 
     // ModuleBase::ComplexMatrix sp(nbase_x, dim); // the Product of S and psi in the reduced basis set
-    resmem_complex_op()(this->ctx, this->sphi, this->nbase_x * dim, "DAV::sphi");
-    setmem_complex_op()(this->ctx, this->sphi, 0, this->nbase_x * dim);
+    resmem_complex_op()(this->ctx, this->sphi, nbase_x * dim, "DAV::sphi");
+    setmem_complex_op()(this->ctx, this->sphi, 0, nbase_x * dim);
 
-    // ModuleBase::ComplexMatrix hc(this->nbase_x, this->nbase_x); // Hamiltonian on the reduced basis
-    resmem_complex_op()(this->ctx, this->hcc, this->nbase_x * this->nbase_x, "DAV::hcc");
-    setmem_complex_op()(this->ctx, this->hcc, 0, this->nbase_x * this->nbase_x);
+    // ModuleBase::ComplexMatrix hc(nbase_x, nbase_x); // Hamiltonian on the reduced basis
+    resmem_complex_op()(this->ctx, this->hcc, nbase_x * nbase_x, "DAV::hcc");
+    setmem_complex_op()(this->ctx, this->hcc, 0, nbase_x * nbase_x);
 
-    // ModuleBase::ComplexMatrix sc(this->nbase_x, this->nbase_x); // Overlap on the reduced basis
-    resmem_complex_op()(this->ctx, this->scc, this->nbase_x * this->nbase_x, "DAV::scc");
-    setmem_complex_op()(this->ctx, this->scc, 0, this->nbase_x * this->nbase_x);
+    // ModuleBase::ComplexMatrix sc(nbase_x, nbase_x); // Overlap on the reduced basis
+    resmem_complex_op()(this->ctx, this->scc, nbase_x * nbase_x, "DAV::scc");
+    setmem_complex_op()(this->ctx, this->scc, 0, nbase_x * nbase_x);
 
-    // ModuleBase::ComplexMatrix vc(this->nbase_x, this->nbase_x); // Eigenvectors of hc
-    resmem_complex_op()(this->ctx, this->vcc, this->nbase_x * this->nbase_x, "DAV::vcc");
-    setmem_complex_op()(this->ctx, this->vcc, 0, this->nbase_x * this->nbase_x);
+    // ModuleBase::ComplexMatrix vc(nbase_x, nbase_x); // Eigenvectors of hc
+    resmem_complex_op()(this->ctx, this->vcc, nbase_x * nbase_x, "DAV::vcc");
+    setmem_complex_op()(this->ctx, this->vcc, 0, nbase_x * nbase_x);
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     // convflag[m] = true if the m th band is convergent
@@ -204,9 +204,9 @@ int DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
     hpsi_info dav_hpsi_in(&basis, psi::Range(1, 0, 0, nband - 1), this->hphi);
     phm_in->ops->hPsi(dav_hpsi_in);
 
-    this->cal_elem(dim, nbase, this->notconv, basis, this->hphi, this->sphi, this->hcc, this->scc);
+    this->cal_elem(dim, nbase, nbase_x, this->notconv, basis, this->hphi, this->sphi, this->hcc, this->scc);
 
-    this->diag_zhegvx(nbase, nband, this->hcc, this->scc, this->nbase_x, this->eigenvalue, this->vcc);
+    this->diag_zhegvx(nbase, nband, this->hcc, this->scc, nbase_x, this->eigenvalue, this->vcc);
 
     for (int m = 0; m < nband; m++)
     {
@@ -223,6 +223,7 @@ int DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
         this->cal_grad(phm_in,
                        dim,
                        nbase,
+                       nbase_x,
                        this->notconv,
                        basis,
                        this->hphi,
@@ -231,9 +232,9 @@ int DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
                        unconv.data(),
                        this->eigenvalue);
 
-        this->cal_elem(dim, nbase, this->notconv, basis, this->hphi, this->sphi, this->hcc, this->scc);
+        this->cal_elem(dim, nbase, nbase_x, this->notconv, basis, this->hphi, this->sphi, this->hcc, this->scc);
 
-        this->diag_zhegvx(nbase, nband, this->hcc, this->scc, this->nbase_x, this->eigenvalue, this->vcc);
+        this->diag_zhegvx(nbase, nband, this->hcc, this->scc, nbase_x, this->eigenvalue, this->vcc);
 
         // check convergence and update eigenvalues
         ModuleBase::timer::tick("DiagoDavid", "check_update");
@@ -253,7 +254,7 @@ int DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
         }
 
         ModuleBase::timer::tick("DiagoDavid", "check_update");
-        if (!this->notconv || (nbase + this->notconv > this->nbase_x)
+        if (!this->notconv || (nbase + this->notconv > nbase_x)
             || (dav_iter == david_maxiter))
         {
             ModuleBase::timer::tick("DiagoDavid", "last");
@@ -274,7 +275,7 @@ int DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
                                       basis.get_pointer(), // A dim * nbase
                                       dim,
                                       this->vcc,           // B nbase * n_band
-                                      this->nbase_x,
+                                      nbase_x,
                                       this->zero,
                                       psi.get_pointer(),   // C dim * n_band
                                       ldPsi
@@ -296,6 +297,7 @@ int DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
                 this->refresh(dim,
                               nband,
                               nbase,
+                              nbase_x,
                               eigenvalue_in,
                               psi,
                               basis,
@@ -320,6 +322,7 @@ template <typename T, typename Device>
 void DiagoDavid<T, Device>::cal_grad(hamilt::Hamilt<T, Device>* phm_in,
                                           const int& dim,
                                           const int& nbase, // current dimension of the reduced basis
+                                          const int nbase_x, // maximum dimension of the reduced basis set
                                           const int& notconv,
                                           psi::Psi<T, Device>& basis,
                                           T* hphi,
@@ -355,7 +358,7 @@ void DiagoDavid<T, Device>::cal_grad(hamilt::Hamilt<T, Device>* phm_in,
     //     for (int i = 0; i < nbase; i++)
     //     {
     //         // vc_ev_vector(m, i) = vc(i, unconv[m]);
-    //         vc_ev_vector[m * nbase + i] = vcc[i * this->nbase_x + unconv[m]];
+    //         vc_ev_vector[m * nbase + i] = vcc[i * nbase_x + unconv[m]];
     //     }
     // }
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -365,7 +368,7 @@ void DiagoDavid<T, Device>::cal_grad(hamilt::Hamilt<T, Device>* phm_in,
         syncmem_complex_op()(this->ctx,
                              this->ctx,
                              vc_ev_vector + m * nbase,
-                             vcc + unconv[m] * this->nbase_x,
+                             vcc + unconv[m] * nbase_x,
                              nbase);
     }
 
@@ -561,6 +564,7 @@ void DiagoDavid<T, Device>::cal_grad(hamilt::Hamilt<T, Device>* phm_in,
 template <typename T, typename Device>
 void DiagoDavid<T, Device>::cal_elem(const int& dim,
                                           int& nbase, // current dimension of the reduced basis
+                                          const int nbase_x, // maximum dimension of the reduced basis set
                                           const int& notconv, // number of newly added basis vectors
                                           const psi::Psi<T, Device>& basis,
                                           const T* hphi,
@@ -590,7 +594,7 @@ void DiagoDavid<T, Device>::cal_elem(const int& dim,
                               dim,
                               this->zero,
                               hcc + nbase,        // notconv * (nbase + notconv)
-                              this->nbase_x);
+                              nbase_x);
 
     gemm_op<T, Device>()(this->ctx,
                               'C',
@@ -605,44 +609,44 @@ void DiagoDavid<T, Device>::cal_elem(const int& dim,
                               dim,
                               this->zero,
                               scc + nbase,        // notconv * (nbase + notconv)
-                              this->nbase_x);
+                              nbase_x);
 
 
 #ifdef __MPI
     if (diag_comm.nproc > 1)
     {
-        matrixTranspose_op<T, Device>()(this->ctx, this->nbase_x, this->nbase_x, hcc, hcc);
-        matrixTranspose_op<T, Device>()(this->ctx, this->nbase_x, this->nbase_x, scc, scc);
+        matrixTranspose_op<T, Device>()(this->ctx, nbase_x, nbase_x, hcc, hcc);
+        matrixTranspose_op<T, Device>()(this->ctx, nbase_x, nbase_x, scc, scc);
 
-        auto* swap = new T[notconv * this->nbase_x];
-        syncmem_complex_op()(this->ctx, this->ctx, swap, hcc + nbase * this->nbase_x, notconv * this->nbase_x);
+        auto* swap = new T[notconv * nbase_x];
+        syncmem_complex_op()(this->ctx, this->ctx, swap, hcc + nbase * nbase_x, notconv * nbase_x);
         if (std::is_same<T, double>::value)
         {
-            Parallel_Reduce::reduce_pool(hcc + nbase * this->nbase_x, notconv * this->nbase_x);
+            Parallel_Reduce::reduce_pool(hcc + nbase * nbase_x, notconv * nbase_x);
         }
         else
         {
             if (base_device::get_current_precision(swap) == "single") {
-                MPI_Reduce(swap, hcc + nbase * this->nbase_x, notconv * this->nbase_x, MPI_COMPLEX, MPI_SUM, 0, diag_comm.comm);
+                MPI_Reduce(swap, hcc + nbase * nbase_x, notconv * nbase_x, MPI_COMPLEX, MPI_SUM, 0, diag_comm.comm);
             }
             else {
-                MPI_Reduce(swap, hcc + nbase * this->nbase_x, notconv * this->nbase_x, MPI_DOUBLE_COMPLEX, MPI_SUM, 0, diag_comm.comm);
+                MPI_Reduce(swap, hcc + nbase * nbase_x, notconv * nbase_x, MPI_DOUBLE_COMPLEX, MPI_SUM, 0, diag_comm.comm);
             }
-            syncmem_complex_op()(this->ctx, this->ctx, swap, scc + nbase * this->nbase_x, notconv * this->nbase_x);
+            syncmem_complex_op()(this->ctx, this->ctx, swap, scc + nbase * nbase_x, notconv * nbase_x);
             if (base_device::get_current_precision(swap) == "single") {
-                MPI_Reduce(swap, scc + nbase * this->nbase_x, notconv * this->nbase_x, MPI_COMPLEX, MPI_SUM, 0, diag_comm.comm);
+                MPI_Reduce(swap, scc + nbase * nbase_x, notconv * nbase_x, MPI_COMPLEX, MPI_SUM, 0, diag_comm.comm);
             }
             else {
-                MPI_Reduce(swap, scc + nbase * this->nbase_x, notconv * this->nbase_x, MPI_DOUBLE_COMPLEX, MPI_SUM, 0, diag_comm.comm);
+                MPI_Reduce(swap, scc + nbase * nbase_x, notconv * nbase_x, MPI_DOUBLE_COMPLEX, MPI_SUM, 0, diag_comm.comm);
             }
         }
         delete[] swap;
 
-        // Parallel_Reduce::reduce_complex_double_pool( hcc + nbase * this->nbase_x, notconv * this->nbase_x );
-        // Parallel_Reduce::reduce_complex_double_pool( scc + nbase * this->nbase_x, notconv * this->nbase_x );
+        // Parallel_Reduce::reduce_complex_double_pool( hcc + nbase * nbase_x, notconv * nbase_x );
+        // Parallel_Reduce::reduce_complex_double_pool( scc + nbase * nbase_x, notconv * nbase_x );
 
-        matrixTranspose_op<T, Device>()(this->ctx, this->nbase_x, this->nbase_x, hcc, hcc);
-        matrixTranspose_op<T, Device>()(this->ctx, this->nbase_x, this->nbase_x, scc, scc);
+        matrixTranspose_op<T, Device>()(this->ctx, nbase_x, nbase_x, hcc, hcc);
+        matrixTranspose_op<T, Device>()(this->ctx, nbase_x, nbase_x, scc, scc);
     }
 #endif
 
@@ -681,18 +685,18 @@ void DiagoDavid<T, Device>::diag_zhegvx(const int& nbase,
         {
 #if defined(__CUDA) || defined(__ROCM)
             Real* eigenvalue_gpu = nullptr;
-            resmem_var_op()(this->ctx, eigenvalue_gpu, this->nbase_x);
-            syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, eigenvalue_gpu, this->eigenvalue, this->nbase_x);
+            resmem_var_op()(this->ctx, eigenvalue_gpu, nbase_x);
+            syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, eigenvalue_gpu, this->eigenvalue, nbase_x);
 
-            dnevx_op<T, Device>()(this->ctx, nbase, this->nbase_x, this->hcc, nband, eigenvalue_gpu, this->vcc);
+            dnevx_op<T, Device>()(this->ctx, nbase, nbase_x, this->hcc, nband, eigenvalue_gpu, this->vcc);
 
-            syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, this->eigenvalue, eigenvalue_gpu, this->nbase_x);
+            syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, this->eigenvalue, eigenvalue_gpu, nbase_x);
             delmem_var_op()(this->ctx, eigenvalue_gpu);
 #endif
         }
         else
         {
-            dnevx_op<T, Device>()(this->ctx, nbase, this->nbase_x, this->hcc, nband, this->eigenvalue, this->vcc);
+            dnevx_op<T, Device>()(this->ctx, nbase, nbase_x, this->hcc, nband, this->eigenvalue, this->vcc);
         }
     }
 
@@ -702,7 +706,7 @@ void DiagoDavid<T, Device>::diag_zhegvx(const int& nbase,
         // vcc: nbase * nband
         for (int i = 0; i < nband; i++)
         {
-            MPI_Bcast(&vcc[i * this->nbase_x], nbase, MPI_DOUBLE_COMPLEX, 0, diag_comm.comm);
+            MPI_Bcast(&vcc[i * nbase_x], nbase, MPI_DOUBLE_COMPLEX, 0, diag_comm.comm);
         }
         MPI_Bcast(this->eigenvalue, nband, MPI_DOUBLE, 0, diag_comm.comm);
     }
@@ -716,6 +720,7 @@ template <typename T, typename Device>
 void DiagoDavid<T, Device>::refresh(const int& dim,
                                          const int& nband,
                                          int& nbase,
+                                         const int nbase_x, // maximum dimension of the reduced basis set
                                          const Real* eigenvalue_in,
                                          const psi::Psi<T, Device>& psi,
                                          psi::Psi<T, Device>& basis,
@@ -744,7 +749,7 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
                               this->hphi,           // A dim * nbase
                               dim,
                               this->vcc,            // B nbase * nband
-                              this->nbase_x,
+                              nbase_x,
                               this->zero,
                               basis.get_pointer(),  // C dim * nband
                               dim
@@ -762,7 +767,7 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
                               this->sphi,               // A dim * nbase
                               dim,
                               this->vcc,                // B nbase * nband
-                              this->nbase_x,
+                              nbase_x,
                               this->zero,
                               &basis(nband, 0),         // C dim * nband
                               dim
@@ -792,10 +797,10 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
     nbase = nband;
 
     // hc.zero_out();
-    setmem_complex_op()(this->ctx, hcc, 0, this->nbase_x * this->nbase_x);
+    setmem_complex_op()(this->ctx, hcc, 0, nbase_x * nbase_x);
 
     // sc.zero_out();
-    setmem_complex_op()(this->ctx, scc, 0, this->nbase_x * this->nbase_x);
+    setmem_complex_op()(this->ctx, scc, 0, nbase_x * nbase_x);
 
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
@@ -807,31 +812,31 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
         T* vcc_cpu = nullptr;
         base_device::memory::resize_memory_op<T, base_device::DEVICE_CPU>()(this->cpu_ctx,
                                                                             hcc_cpu,
-                                                                            this->nbase_x * this->nbase_x,
+                                                                            nbase_x * nbase_x,
                                                                             "DAV::hcc");
         base_device::memory::resize_memory_op<T, base_device::DEVICE_CPU>()(this->cpu_ctx,
                                                                             scc_cpu,
-                                                                            this->nbase_x * this->nbase_x,
+                                                                            nbase_x * nbase_x,
                                                                             "DAV::scc");
         base_device::memory::resize_memory_op<T, base_device::DEVICE_CPU>()(this->cpu_ctx,
                                                                             vcc_cpu,
-                                                                            this->nbase_x * this->nbase_x,
+                                                                            nbase_x * nbase_x,
                                                                             "DAV::vcc");
 
-        syncmem_d2h_op()(this->cpu_ctx, this->ctx, hcc_cpu, hcc, this->nbase_x * this->nbase_x);
-        syncmem_d2h_op()(this->cpu_ctx, this->ctx, scc_cpu, scc, this->nbase_x * this->nbase_x);
-        syncmem_d2h_op()(this->cpu_ctx, this->ctx, vcc_cpu, vcc, this->nbase_x * this->nbase_x);
+        syncmem_d2h_op()(this->cpu_ctx, this->ctx, hcc_cpu, hcc, nbase_x * nbase_x);
+        syncmem_d2h_op()(this->cpu_ctx, this->ctx, scc_cpu, scc, nbase_x * nbase_x);
+        syncmem_d2h_op()(this->cpu_ctx, this->ctx, vcc_cpu, vcc, nbase_x * nbase_x);
 
         for (int i = 0; i < nbase; i++)
         {
-            hcc_cpu[i * this->nbase_x + i] = eigenvalue_in[i];
-            scc_cpu[i * this->nbase_x + i] = this->one[0];
-            vcc_cpu[i * this->nbase_x + i] = this->one[0];
+            hcc_cpu[i * nbase_x + i] = eigenvalue_in[i];
+            scc_cpu[i * nbase_x + i] = this->one[0];
+            vcc_cpu[i * nbase_x + i] = this->one[0];
         }
 
-        syncmem_h2d_op()(this->ctx, this->cpu_ctx, hcc, hcc_cpu, this->nbase_x * this->nbase_x);
-        syncmem_h2d_op()(this->ctx, this->cpu_ctx, scc, scc_cpu, this->nbase_x * this->nbase_x);
-        syncmem_h2d_op()(this->ctx, this->cpu_ctx, vcc, vcc_cpu, this->nbase_x * this->nbase_x);
+        syncmem_h2d_op()(this->ctx, this->cpu_ctx, hcc, hcc_cpu, nbase_x * nbase_x);
+        syncmem_h2d_op()(this->ctx, this->cpu_ctx, scc, scc_cpu, nbase_x * nbase_x);
+        syncmem_h2d_op()(this->ctx, this->cpu_ctx, vcc, vcc_cpu, nbase_x * nbase_x);
 
         base_device::memory::delete_memory_op<T, base_device::DEVICE_CPU>()(this->cpu_ctx, hcc_cpu);
         base_device::memory::delete_memory_op<T, base_device::DEVICE_CPU>()(this->cpu_ctx, scc_cpu);
@@ -842,11 +847,11 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
     {
         for (int i = 0; i < nbase; i++)
         {
-            hcc[i * this->nbase_x + i] = eigenvalue_in[i];
+            hcc[i * nbase_x + i] = eigenvalue_in[i];
             // sc(i, i) = this->one;
-            scc[i * this->nbase_x + i] = this->one[0];
+            scc[i * nbase_x + i] = this->one[0];
             // vc(i, i) = this->one;
-            vcc[i * this->nbase_x + i] = this->one[0];
+            vcc[i * nbase_x + i] = this->one[0];
         }
     }
     ModuleBase::timer::tick("DiagoDavid", "refresh");

@@ -48,7 +48,7 @@ class DiagoDavid : public DiagH<T, Device>
     /// dimension of the subspace allowed in Davidson
     int david_ndim = 4;
     /// maximum dimension of the reduced basis set
-    int nbase_x = 0;
+    // int nbase_x = 0;
     /// number of unconverged eigenvalues
     int notconv = 0;
 
@@ -80,6 +80,7 @@ class DiagoDavid : public DiagH<T, Device>
     void cal_grad(hamilt::Hamilt<T, Device>* phm_in,
                   const int& dim,
                   const int& nbase,
+                  const int nbase_x,
                   const int& notconv,
                   psi::Psi<T, Device>& basis,
                   T* hphi,
@@ -90,6 +91,7 @@ class DiagoDavid : public DiagH<T, Device>
 
     void cal_elem(const int& dim,
                   int& nbase,
+                  const int nbase_x,// maximum dimension of the reduced basis set
                   const int& notconv,
                   const psi::Psi<T, Device>& basis,
                   const T* hphi,
@@ -100,6 +102,7 @@ class DiagoDavid : public DiagH<T, Device>
     void refresh(const int& dim,
                  const int& nband,
                  int& nbase,
+                 const int nbase_x,
                  const Real* eigenvalue,
                  const psi::Psi<T, Device>& psi,
                  psi::Psi<T, Device>& basis,
