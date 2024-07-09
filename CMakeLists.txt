@@ -397,7 +397,7 @@ if(MKLROOT)
   set(MKL_INTERFACE lp64)
   find_package(MKL REQUIRED)
   add_definitions(-D__MKL)
-  include_directories(${MKL_INCLUDE_DIRS} ${MKL_INCLUDE_DIRS}/fftw)
+  include_directories(${MKL_INCLUDE} ${MKL_INCLUDE}/fftw)
   list(APPEND math_libs MKL::MKL MKL::MKL_SCALAPACK)
 
   if(CMAKE_CXX_COMPILER_ID MATCHES Intel)
