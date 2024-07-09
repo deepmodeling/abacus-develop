@@ -687,6 +687,7 @@ target_link_libraries(
   planewave
   surchem
   neighbor
+  io_input
   io_basic
   io_advanced
   relax
@@ -702,6 +703,7 @@ target_link_libraries(
   psi_initializer
   esolver
   vdw
+  parameter
   device
   container)
 if(ENABLE_LCAO)

@@ -62,7 +62,7 @@ class Grid_Technique : public Grid_MeshBall {
     // each processor's real space grid.
     // use: GridT.in_this_processor
     //---------------------------------------
-    int nnrg;
+    int nnrg = 0;
     bool allocate_find_R2;
     std::vector<int> nlocdimg;
     std::vector<int> nlocstartg;
@@ -144,7 +144,7 @@ class Grid_Technique : public Grid_MeshBall {
 
     int nbox;
 
-    void cal_max_box_index(void);
+    void cal_max_box_index();
     // atoms on meshball
     void init_atoms_on_grid(const int& ny,
                             const int& nplane,

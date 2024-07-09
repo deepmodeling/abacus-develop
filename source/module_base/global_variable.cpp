@@ -20,26 +20,25 @@ namespace GlobalV
 //----------------------------------------------------------
 int NBANDS = 0;
 int NBANDS_ISTATE = 0; // default number.
-int NLOCAL = 0; // total number of local basis.
+int NLOCAL = 0;        // total number of local basis.
 
-double  KSPACING[3] = {0.0,0.0,0.0};
+double KSPACING[3] = {0.0, 0.0, 0.0};
 double MIN_DIST_COEF = 0.2;
-
 
 double PSEUDORCUT = 0;
 bool PSEUDO_MESH = false;
 
-
 std::string CALCULATION = "scf";
 std::string ESOLVER_TYPE = "ksdft";
-int EFIELD_FLAG = 0; // 5: add electric field
-int DIP_COR_FLAG = 0; // 7: add dipole field
-bool GATE_FLAG = false;    // add gate field
-bool out_app_flag = true;  // whether output r(R), H(R), S(R), T(R), and dH(R) matrices in an append manner during MD  liuyu 2023-03-20
+int EFIELD_FLAG = 0;      // 5: add electric field
+int DIP_COR_FLAG = 0;     // 7: add dipole field
+bool GATE_FLAG = false;   // add gate field
+bool out_app_flag = true; // whether output r(R), H(R), S(R), T(R), and dH(R) matrices in an
+                          // append manner during MD  liuyu 2023-03-20
 int out_ndigits = 8;
 std::string DFT_FUNCTIONAL = "default";
 double XC_TEMPERATURE = 0.0;
-int NSPIN = 1; // LDA
+int NSPIN = 1;       // LDA
 bool TWO_EFERMI = 0; // two fermi energy, exist only magnetization is fixed.
 double nupdown = 0.0;
 int CURRENT_K = 0;
@@ -67,7 +66,7 @@ bool use_uspp = false;
 bool double_grid = false;
 
 std::string BASIS_TYPE = "pw"; // xiaohui add 2013-09-01
-std::string KS_SOLVER = "cg"; // xiaohui add 2013-09-01
+std::string KS_SOLVER = "cg";  // xiaohui add 2013-09-01
 double SEARCH_RADIUS = -1.0;
 bool SEARCH_PBC = true;
 bool SPARSE_MATRIX = false;
@@ -83,13 +82,13 @@ double SCF_THR = 1.0e-9;
 int SCF_THR_TYPE = 1;
 
 double DQ = 0.010; // space between Q points of the reciprocal radial tab
-int NQX = 10000; // number of points describing reciprocal radial tab
-int NQXQ = 10000; // number of points describing reciprocal radial tab for Q
+int NQX = 10000;   // number of points describing reciprocal radial tab
+int NQXQ = 10000;  // number of points describing reciprocal radial tab for Q
 
 int NURSE = 0; // used for debug.
 bool COLOUR = 0;
 bool GAMMA_ONLY_LOCAL = 0; // mohan add 2010-10-20
-bool GAMMA_ONLY_PW = 0; // mohan add 2012-06-05
+bool GAMMA_ONLY_PW = 0;    // mohan add 2012-06-05
 
 int T_IN_H = 1; // mohan add 2010-11-28
 int VL_IN_H = 1;
@@ -110,7 +109,7 @@ bool out_mul = false; // qifeng add 2019/9/10
 //----------------------------------------------------------
 
 int NPROC = 1; ///< global number of process
-int KPAR = 1; ///< global number of pools
+int KPAR = 1;  ///< global number of pools
 int NSTOGROUP = 1;
 int MY_RANK = 0; ///< global index of process
 int MY_POOL = 0; ///< global index of pool (count in pool)
@@ -119,7 +118,8 @@ int NPROC_IN_POOL = 1; ///< local number of process in a pool
 int NPROC_IN_STOGROUP = 1;
 int RANK_IN_POOL = 0; ///< global index of pool (count in process), my_rank in each pool
 int RANK_IN_STOGROUP = 0;
-int DRANK = -1; ///< mohan add 2012-01-13, must be -1, so we can recognize who didn't in DIAG_WORLD
+int DRANK = -1; ///< mohan add 2012-01-13, must be -1, so we can recognize who
+                ///< didn't in DIAG_WORLD
 int DSIZE = KPAR;
 int DCOLOR = -1;
 int GRANK = MY_RANK;
@@ -145,7 +145,7 @@ std::string global_matrix_dir;
 
 std::ofstream ofs_running;
 std::ofstream ofs_warning;
-std::ofstream ofs_info; // output math lib info
+std::ofstream ofs_info;   // output math lib info
 std::ofstream ofs_device; // output device info
 
 //----------------------------------------------------------
@@ -173,17 +173,17 @@ bool test_skip_ewald = false;
 //----------------------------------------------------------
 int test_atom_arrange = 0;
 int test_atom_input = 0;
-int test_grid = 0; // 4 now
+int test_grid = 0;        // 4 now
 int test_grid_driver = 0; // 4 now
 int test_overlap = 0;
-int TEST_FORCE = 0; // mohan add 2011-03-18
+int TEST_FORCE = 0;  // mohan add 2011-03-18
 int TEST_STRESS = 0; // zhengdy add 2018-05-16
-int test_gridt = 0; // mohan add 2011-03-17
+int test_gridt = 0;  // mohan add 2011-03-17
 //----------------------------------------------------------
 // src_pseudo
 //----------------------------------------------------------
 int test_pseudo_cell = 0; // 2 : output readin data
-int test_pp = 0; // pp: pseudopotential
+int test_pp = 0;          // pp: pseudopotential
 int test_kmesh = 0;
 int test_relax_method = 0;
 //----------------------------------------------------------
@@ -202,8 +202,8 @@ double soc_lambda = 1.0;
 bool FINAL_SCF = false; // LiuXh add 20180619
 
 bool deepks_out_labels = false; // caoyu add 2021-10-16 for DeePKS, wenfei 2022-1-16
-bool deepks_scf = false; // caoyu add 2021-10-16 for DeePKS, wenfei 2022-1-16
-bool deepks_bandgap = false; // for bandgap label. QO added 2021-12-15
+bool deepks_scf = false;        // caoyu add 2021-10-16 for DeePKS, wenfei 2022-1-16
+bool deepks_bandgap = false;    // for bandgap label. QO added 2021-12-15
 bool deepks_out_unittest = false;
 
 bool deepks_equiv = false;
@@ -218,9 +218,9 @@ double tau = 1.0798 * 1e-5;
 double sigma_k = 0.6;
 double nc_k = 0.00037;
 
-int dft_plus_u = 0; //DFTU control
+int dft_plus_u = 0; // DFTU control
 
-//Xinyang Dong added for rpa
+// Xinyang Dong added for rpa
 bool rpa_setorb = false;
 std::vector<std::string> rpa_orbitals;
 
@@ -231,8 +231,8 @@ double of_tole = 2e-6;
 double of_tolp = 1e-5;
 double of_tf_weight = 1.;
 double of_vw_weight = 1.;
-double of_wt_alpha = 5./6.;
-double of_wt_beta = 5./6.;
+double of_wt_alpha = 5. / 6.;
+double of_wt_beta = 5. / 6.;
 double of_wt_rho0 = 0.;
 bool of_hold_rho0 = false;
 double of_lkt_a = 1.3;
@@ -275,12 +275,7 @@ int out_chg = 0;
 double nelec = 0;
 double nelec_delta = 0;
 bool out_bandgap = false; // QO added for bandgap printing
-int out_interval = 1;    // convert from out_hsR_interval liuyu 2023-04-18
-
-bool out_mat_xc = false; // output Vxc in KS-wfc representation for GW calculation
-bool out_hr_npz = false;
-bool out_dm_npz = false;
-bool dm_to_rho = false; // reads dm in npz format, then prints density in cube format
+int out_interval = 1;     // convert from out_hsR_interval liuyu 2023-04-18
 
 //==========================================================
 // Deltaspin related
