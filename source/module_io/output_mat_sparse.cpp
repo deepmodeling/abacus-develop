@@ -63,6 +63,7 @@ void Output_Mat_Sparse<std::complex<double>>::write()
                    this->_v_eff,
                    this->_gint_k, // mohan add 2024-04-01
                    this->_lm,
+                   HS_Arrays,
                    this->_grid, // mohan add 2024-04-06
                    two_center_bundle_,
                    _kv); // LiuXh add 2019-07-15
