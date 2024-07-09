@@ -143,11 +143,11 @@ ESolver* init_esolver()
     {
         if (GlobalV::precision_flag == "single")
         {
-            p_esolver = new ESolver_KS_LIP<std::complex<float>>();
+            return new ESolver_KS_LIP<std::complex<float>>();
         }
         else
         {
-            p_esolver = new ESolver_KS_LIP<std::complex<double>>();
+            return new ESolver_KS_LIP<std::complex<double>>();
         }
     }
     else if (esolver_type == "ksdft_lcao")
