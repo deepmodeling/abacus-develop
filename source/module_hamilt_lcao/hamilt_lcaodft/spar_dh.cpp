@@ -72,7 +72,7 @@ void sparse_format::cal_dH(LCAO_Matrix& lm,
     delete[] fsr_dh.DHloc_fixedR_z;
 
     gint_k
-        .cal_dvlocal_R_sparseMatrix(current_spin, sparse_thr, &lm, HS_Arrays, lm.ParaV, GlobalC::ucell, GlobalC::GridD);
+        .cal_dvlocal_R_sparseMatrix(current_spin, sparse_thr, HS_Arrays, lm.ParaV, GlobalC::ucell, GlobalC::GridD);
 
     return;
 }

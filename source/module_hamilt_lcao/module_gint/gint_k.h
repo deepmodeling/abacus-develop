@@ -98,7 +98,6 @@ class Gint_k : public Gint {
 
     void cal_dvlocal_R_sparseMatrix(const int& current_spin,
                                     const double& sparse_threshold,
-                                    LCAO_Matrix* LM,
                                     LCAO_HS_Arrays& HS_Arrays,
                                     Parallel_Orbitals* pv,
                                     UnitCell& ucell,
