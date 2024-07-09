@@ -1,7 +1,8 @@
 #include "esolver.h"
-#include "module_base/module_device/device.h"
+
 #include "esolver_ks_pw.h"
 #include "esolver_sdft_pw.h"
+#include "module_base/module_device/device.h"
 #ifdef __LCAO
 #include "esolver_ks_lcaopw.h"
 #include "esolver_ks_lcao.h"
@@ -10,7 +11,7 @@
 #include "esolver_dp.h"
 #include "esolver_lj.h"
 #include "esolver_of.h"
-#include "module_md/md_para.h"
+#include "module_parameter/md_parameter.h"
 #include <stdexcept>
 
 namespace ModuleESolver
@@ -23,24 +24,24 @@ void ESolver::printname()
 
 std::string determine_type()
 {
-	std::string esolver_type = "none";
-	if (GlobalV::BASIS_TYPE == "pw")
-	{
-		if(GlobalV::ESOLVER_TYPE == "sdft")
-		{
-			esolver_type = "sdft_pw";
-		}
-		else if(GlobalV::ESOLVER_TYPE == "ofdft")
-		{
-			esolver_type = "ofdft";
-		}
-		else if(GlobalV::ESOLVER_TYPE == "ksdft")
-		{
-			esolver_type = "ksdft_pw";
-		}
-	}
-	else if (GlobalV::BASIS_TYPE == "lcao_in_pw")
-	{
+    std::string esolver_type = "none";
+    if (GlobalV::BASIS_TYPE == "pw")
+    {
+        if (GlobalV::ESOLVER_TYPE == "sdft")
+        {
+            esolver_type = "sdft_pw";
+        }
+        else if (GlobalV::ESOLVER_TYPE == "ofdft")
+        {
+            esolver_type = "ofdft";
+        }
+        else if (GlobalV::ESOLVER_TYPE == "ksdft")
+        {
+            esolver_type = "ksdft_pw";
+        }
+    }
+    else if (GlobalV::BASIS_TYPE == "lcao_in_pw")
+    {
 #ifdef __LCAO
 		if(GlobalV::ESOLVER_TYPE == "sdft")
 		{
@@ -53,39 +54,39 @@ std::string determine_type()
 #else
 		ModuleBase::WARNING_QUIT("ESolver", "Calculation involving numerical orbitals must be compiled with __LCAO");
 #endif
-	}
-	else if (GlobalV::BASIS_TYPE == "lcao")
-	{
+    }
+    else if (GlobalV::BASIS_TYPE == "lcao")
+    {
 #ifdef __LCAO
-		if(GlobalV::ESOLVER_TYPE == "tddft")
-		{
-			esolver_type = "ksdft_lcao_tddft";
-		}
-		else if(GlobalV::ESOLVER_TYPE == "ksdft")
-		{
-			esolver_type = "ksdft_lcao";
-		}
+        if (GlobalV::ESOLVER_TYPE == "tddft")
+        {
+            esolver_type = "ksdft_lcao_tddft";
+        }
+        else if (GlobalV::ESOLVER_TYPE == "ksdft")
+        {
+            esolver_type = "ksdft_lcao";
+        }
 #else
 		ModuleBase::WARNING_QUIT("ESolver", "Calculation involving numerical orbitals must be compiled with __LCAO");
 #endif
-	}
+    }
 
-	if(GlobalV::ESOLVER_TYPE == "lj")
-	{
-		esolver_type = "lj_pot";
-	}
-	else if(GlobalV::ESOLVER_TYPE == "dp")
-	{
-		esolver_type = "dp_pot";
-	}
-	else if(esolver_type == "none")
-	{
-		ModuleBase::WARNING_QUIT("ESolver", "No such esolver_type combined with basis_type");
-	}
+    if (GlobalV::ESOLVER_TYPE == "lj")
+    {
+        esolver_type = "lj_pot";
+    }
+    else if (GlobalV::ESOLVER_TYPE == "dp")
+    {
+        esolver_type = "dp_pot";
+    }
+    else if (esolver_type == "none")
+    {
+        ModuleBase::WARNING_QUIT("ESolver", "No such esolver_type combined with basis_type");
+    }
 
-	GlobalV::ofs_running << " The esolver type has been set to : " << esolver_type << std::endl;
+    GlobalV::ofs_running << " The esolver type has been set to : " << esolver_type << std::endl;
 
-	auto device_info = GlobalV::device_flag;
+    auto device_info = GlobalV::device_flag;
 
 	for (char &c : device_info)
 	{
@@ -100,10 +101,10 @@ std::string determine_type()
 			<< base_device::information::get_device_info(GlobalV::device_flag) << std::endl;
 	}
 
-	GlobalV::ofs_running << "\n RUNNING WITH DEVICE  : " << device_info << " / "
-		<< base_device::information::get_device_info(GlobalV::device_flag) << std::endl;
+    GlobalV::ofs_running << "\n RUNNING WITH DEVICE  : " << device_info << " / "
+                         << base_device::information::get_device_info(GlobalV::device_flag) << std::endl;
 
-	return esolver_type;
+    return esolver_type;
 }
 
 
@@ -113,9 +114,9 @@ ESolver* init_esolver()
 	//determine type of esolver based on INPUT information
 	const std::string esolver_type = determine_type();
 
-	//initialize the corresponding Esolver child class
-	if (esolver_type == "ksdft_pw")
-	{
+    // initialize the corresponding Esolver child class
+    if (esolver_type == "ksdft_pw")
+    {
 #if ((defined __CUDA) || (defined __ROCM))
 		if (GlobalV::device_flag == "gpu")
 		{
@@ -189,7 +190,6 @@ ESolver* init_esolver()
 	throw std::invalid_argument("esolver_type = "+std::string(esolver_type)+". Wrong in "+std::string(__FILE__)+" line "+std::to_string(__LINE__));
 }
 
-
 void clean_esolver(ESolver*& pesolver)
 {
 // Zhang Xiaoyang modified in 2024/7/6:
@@ -201,4 +201,4 @@ void clean_esolver(ESolver*& pesolver)
 #endif
 }
 
-}
+} // namespace ModuleESolver
