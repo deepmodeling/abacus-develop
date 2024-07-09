@@ -16,7 +16,7 @@
 namespace LCAO_domain
 {
 
-void build_Nonlocal_mu_new(LCAO_Matrix& lm,
+void build_Nonlocal_mu_new(const Parallel_Orbitals& pv,
                            ForceStressArrays& fsr, // mohan 2024-06-16
                            double* HlocR,
                            const bool& calc_deri,

@@ -127,7 +127,7 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
                               nullptr); // delete lm.Hloc_fixedR
 
     // calculate dVnl=<phi|dVnl|dphi> in LCAO
-    LCAO_domain::build_Nonlocal_mu_new(lm,
+    LCAO_domain::build_Nonlocal_mu_new(pv,
                                        fsr,
                                        nullptr,
                                        cal_deri,

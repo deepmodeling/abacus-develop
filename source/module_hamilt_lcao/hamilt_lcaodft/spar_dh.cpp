@@ -56,7 +56,7 @@ void sparse_format::cal_dH(LCAO_Matrix& lm,
                                   nullptr); // delete unused parameter lm.Hloc_fixedR
     }
 
-    LCAO_domain::build_Nonlocal_mu_new(lm,
+    LCAO_domain::build_Nonlocal_mu_new(*lm.ParaV,
                                        fsr_dh,
                                        nullptr,
                                        true,

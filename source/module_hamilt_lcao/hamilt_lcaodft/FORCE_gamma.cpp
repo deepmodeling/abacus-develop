@@ -101,7 +101,7 @@ void Force_LCAO<double>::allocate(const Parallel_Orbitals& pv,
                               &GlobalC::GridD,
                               nullptr);
 
-    LCAO_domain::build_Nonlocal_mu_new(lm,
+    LCAO_domain::build_Nonlocal_mu_new(pv,
                                        fsr,
                                        nullptr,
                                        cal_deri,
