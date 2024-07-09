@@ -396,10 +396,14 @@ endif()
 if(MKLROOT)
   set(MKL_INTERFACE lp64)
   find_package(MKL REQUIRED)
-
   add_definitions(-D__MKL)
   include_directories(${MKL_INCLUDE} ${MKL_INCLUDE}/fftw)
-  list(APPEND math_libs MKL::MKL MKL::MKL_SCALAPACK)
+  list(APPEND math_libs MKL::MKL_SCALAPACK)
+  # libtorch_cpu.so will bring its own MKL. To avoid conflict,
+  # MKL will be linked by ${TORCH_LIBRARIES} when deepks is enabled.
+  if(NOT ENABLE_DEEPKS)
+    list(APPEND math_libs MKL::MKL)
+  endif()
 
   if(CMAKE_CXX_COMPILER_ID MATCHES Intel)
     list(APPEND math_libs ifcore)
