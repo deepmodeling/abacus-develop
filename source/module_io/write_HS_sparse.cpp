@@ -331,7 +331,7 @@ void ModuleIO::save_dH_sparse(const int& istep,
     ModuleBase::timer::tick("ModuleIO", "save_dH_sparse");
 
     auto& all_R_coor_ptr = lm.all_R_coor;
-    auto& _ptr = lm.output_R_coor;
+    auto& output_R_coor_ptr = HS_Arrays.output_R_coor;
     auto& dHRx_sparse_ptr = HS_Arrays.dHRx_sparse;
     auto& dHRx_soc_sparse_ptr = HS_Arrays.dHRx_soc_sparse;
     auto& dHRy_sparse_ptr = HS_Arrays.dHRy_sparse;
