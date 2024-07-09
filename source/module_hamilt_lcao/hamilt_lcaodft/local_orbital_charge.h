@@ -112,10 +112,10 @@ class Local_Orbital_Charge
     bool allocate_flag;
     int nks;
 
-    void gamma_file(psi::Psi<double>* psid, elecstate::ElecState* pelec);
+    void gamma_file(psi::Psi<double>*const psid, elecstate::ElecState*const pelec);
     void allocate_k(const int& lgd,
-                    psi::Psi<std::complex<double>>* psi,
-                    elecstate::ElecState* pelec,
+                    psi::Psi<std::complex<double>>*const psi,
+                    elecstate::ElecState*const pelec,
                     const int& nks,
                     const int& nkstot,
                     const std::vector<ModuleBase::Vector3<double>>& kvec_c,

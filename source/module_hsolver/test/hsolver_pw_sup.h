@@ -219,8 +219,4 @@ void diago_PAO_in_pw_k2(
     }
 }
 
-} // namespace hamilt
-
-// template class hsolver::HSolverPW<std::complex<float>,
-// base_device::DEVICE_CPU>; template class
-// hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU>;
+}//namespace hsolver

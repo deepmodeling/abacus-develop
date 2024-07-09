@@ -25,27 +25,25 @@ void distri_wfc_nao_complex(std::complex<double>** ctot,
                             const Parallel_Orbitals* ParaV,
                             psi::Psi<std::complex<double>>* psi);
 
-int read_wfc_nao(double** ctot,
-                 const int& is,
+int read_wfc_nao(const int& is,
                  const bool& gamma_only_local,
                  const int& nb2d,
                  const int& nbands_g,
                  const int& nlocal_g,
                  const std::string& global_readin_dir,
-                 const Parallel_Orbitals* ParaV,
-                 psi::Psi<double>* psid,
-                 elecstate::ElecState* pelec);
+                 const Parallel_Orbitals*const ParaV,
+                 psi::Psi<double>*const psid,
+                 elecstate::ElecState*const pelec);
 
-int read_wfc_nao_complex(std::complex<double>** ctot,
-                         const int& ik,
+int read_wfc_nao_complex(const int& ik,
                          const int& nb2d,
                          const int& nbands_g,
                          const int& nlocal_g,
                          const std::string& global_readin_dir,
                          const ModuleBase::Vector3<double> kvec_c,
-                         const Parallel_Orbitals* ParaV,
-                         psi::Psi<std::complex<double>>* psi,
-                         elecstate::ElecState* pelec);
+                         const Parallel_Orbitals*const ParaV,
+                         psi::Psi<std::complex<double>>*const psi,
+                         elecstate::ElecState*const pelec);
 
 int globalIndex(int localindex, int nblk, int nprocs, int myproc);
 int localIndex(int globalindex, int nblk, int nprocs, int& myproc);
