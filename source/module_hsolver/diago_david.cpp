@@ -71,7 +71,7 @@ int DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
     ModuleBase::timer::tick("DiagoDavid", "diag_mock");
 
     assert(this->david_ndim > 1);
-    assert(this->david_ndim * nband < psi.get_current_nbas() * diag_comm.nproc);
+    assert(this->david_ndim * nband < dim * diag_comm.nproc);
 
     // qianrui change it 2021-7-25.
     // In strictly speaking, it shoule be PW_DIAG_NDIM*nband < npw sum of all pools. We roughly estimate it here.
@@ -157,9 +157,9 @@ int DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
         if(this->use_paw)
         {
 #ifdef USE_PAW
-#ifdef __DEBUG
-            assert(psi.get_k_first());
-#endif 
+// #ifdef __DEBUG
+//             assert(psi.get_k_first());
+// #endif 
             GlobalC::paw_cell.paw_nl_psi(1, reinterpret_cast<const std::complex<double>*> (&psi(m, 0)),
                 reinterpret_cast<std::complex<double>*>(&this->sphi[m * dim]));
 #endif
@@ -1095,8 +1095,8 @@ int DiagoDavid<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in,
 #if defined(__CUDA) || defined(__ROCM)
     if (this->device == base_device::GpuDevice)
     {
-        resmem_var_op()(this->ctx, this->d_precondition, psi.get_nbasis());
-        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, this->d_precondition, this->precondition, psi.get_nbasis());
+        resmem_var_op()(this->ctx, this->d_precondition, ldPsi);
+        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, this->d_precondition, this->precondition, ldPsi);
     }
 #endif
 
