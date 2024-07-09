@@ -36,10 +36,12 @@ void Output_Mat_Sparse<double>::write()
 template <>
 void Output_Mat_Sparse<std::complex<double>>::write()
 {
+    LCAO_HS_Arrays HS_Arrays;
+
     //! generate a file containing the Hamiltonian and S(overlap) matrices
     if (_out_mat_hsR)
     {
-        output_HSR(_istep, this->_v_eff, this->_pv, this->_lm, this->_grid, _kv, _p_ham);
+        output_HSR(_istep, this->_v_eff, this->_pv, this->_lm, HS_Arrays, this->_grid, _kv, _p_ham);
     }
 
     //! generate a file containing the kinetic energy matrix
