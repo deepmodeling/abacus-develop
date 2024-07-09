@@ -246,12 +246,12 @@ void IState_Charge::begin(Gint_Gamma& gg,
                                               rhopw_nrxx); // Copy data after allocation
             }
 
-            std::stringstream ssc;
-            ssc << global_out_dir << "BAND" << ib + 1;
             // 0 means definitely output charge density.
             for (int is = 0; is < nspin; ++is)
             {
-                ssc << "_SPIN" << is << "_CHG.cube";
+                // ssc should be inside the inner loop to reset the string stream each time
+                std::stringstream ssc;
+                ssc << global_out_dir << "BAND" << ib + 1 << "_SPIN" << is << "_CHG.cube";
 
                 // Use a const vector to store efermi for all spins, replace the original implementation:
                 // const double ef_tmp = pelec->eferm.get_efval(is);
@@ -478,11 +478,11 @@ void IState_Charge::begin(Gint_k& gk,
                 ModuleBase::GlobalFunc::DCOPY(rho[is], rho_save[is], rhopw_nrxx);
             }
 
-            std::stringstream ssc;
-            ssc << global_out_dir << "BAND" << ib + 1;
             for (int is = 0; is < nspin; ++is)
             {
-                ssc << "_SPIN" << is << "_CHG.cube";
+                // ssc should be inside the inner loop to reset the string stream each time
+                std::stringstream ssc;
+                ssc << global_out_dir << "BAND" << ib + 1 << "_SPIN" << is << "_CHG.cube";
 
                 double ef_spin = ef_all_spin[is];
                 ModuleIO::write_rho(
@@ -535,8 +535,6 @@ void IState_Charge::idmatrix(const int& ib,
         std::cout << " Perform band decomposed charge density for kpoint " << ik << ",  band" << ib + 1 << std::endl;
 
         const int ispin = kv.isk[ik];
-
-        
     }
 
     for (int is = 0; is < nspin; ++is)
