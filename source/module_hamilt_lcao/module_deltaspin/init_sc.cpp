@@ -15,7 +15,6 @@ void SpinConstrain<FPTYPE, Device>::init_sc(double sc_thr_in,
                                             int nspin_in,
                                             K_Vectors kv_in,
                                             std::string KS_SOLVER_in,
-                                            LCAO_Matrix* LM_in,
                                             hsolver::HSolver<FPTYPE, Device>* phsol_in,
                                             hamilt::Hamilt<FPTYPE, Device>* p_hamilt_in,
                                             psi::Psi<FPTYPE>* psi_in,
@@ -29,7 +28,7 @@ void SpinConstrain<FPTYPE, Device>::init_sc(double sc_thr_in,
     this->bcast_ScData(sc_file, this->get_nat(), this->get_ntype());
     this->set_npol(NPOL);
     this->set_ParaV(ParaV_in);
-    this->set_solver_parameters(kv_in, phsol_in, p_hamilt_in, psi_in, pelec_in, KS_SOLVER_in, LM_in);
+    this->set_solver_parameters(kv_in, phsol_in, p_hamilt_in, psi_in, pelec_in, KS_SOLVER_in);
 }
 
 template class SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>;

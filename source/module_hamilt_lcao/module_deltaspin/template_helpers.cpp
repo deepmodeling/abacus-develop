@@ -15,7 +15,6 @@ void SpinConstrain<double, base_device::DEVICE_CPU>::cal_mw_from_lambda(int i_st
 
 template <>
 ModuleBase::matrix SpinConstrain<double, base_device::DEVICE_CPU>::cal_MW_k(
-    LCAO_Matrix* LM,
     const std::vector<std::vector<std::complex<double>>>& dm)
 {
     ModuleBase::matrix orbMulP;
@@ -23,7 +22,7 @@ ModuleBase::matrix SpinConstrain<double, base_device::DEVICE_CPU>::cal_MW_k(
 }
 
 template <>
-void SpinConstrain<double, base_device::DEVICE_CPU>::cal_MW(const int& step, LCAO_Matrix* LM, bool print)
+void SpinConstrain<double, base_device::DEVICE_CPU>::cal_MW(const int& step, bool print)
 {
 }
 

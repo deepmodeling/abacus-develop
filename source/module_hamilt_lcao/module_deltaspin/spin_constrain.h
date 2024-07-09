@@ -11,7 +11,6 @@
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_cell/klist.h"
 #include "module_cell/unitcell.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_hsolver/hsolver.h"
 
 struct ScAtomData;
@@ -37,7 +36,6 @@ public:
                int nspin_in,
                K_Vectors kv_in,
                std::string KS_SOLVER_in,
-               LCAO_Matrix* LM_in,
                hsolver::HSolver<FPTYPE, Device>* phsol_in,
                hamilt::Hamilt<FPTYPE, Device>* p_hamilt_in,
                psi::Psi<FPTYPE>* psi_in,
@@ -46,9 +44,9 @@ public:
   /// calculate h_lambda operator for spin-constrained DFT
   void cal_h_lambda(std::complex<double>* h_lambda, const std::complex<double>* Sloc2, bool column_major, int isk);
 
-  void cal_MW(const int& step, LCAO_Matrix* LM, bool print = false);
+  void cal_MW(const int& step, bool print = false);
 
-  ModuleBase::matrix cal_MW_k(LCAO_Matrix* LM, const std::vector<std::vector<std::complex<double>>>& dm);
+  ModuleBase::matrix cal_MW_k(const std::vector<std::vector<std::complex<double>>>& dm);
 
   void cal_mw_from_lambda(int i_step);
 
@@ -102,7 +100,6 @@ public:
     hamilt::Hamilt<FPTYPE, Device>* p_hamilt = nullptr;
     psi::Psi<FPTYPE>* psi = nullptr;
     elecstate::ElecState* pelec = nullptr;
-    LCAO_Matrix* LM = nullptr;
     std::string KS_SOLVER;
     const double meV_to_Ry = 7.349864435130999e-05;
     K_Vectors kv_;
@@ -209,8 +206,7 @@ public:
                                hamilt::Hamilt<FPTYPE, Device>* p_hamilt_in,
                                psi::Psi<FPTYPE>* psi_in,
                                elecstate::ElecState* pelec_in,
-                               std::string KS_SOLVER_in,
-                               LCAO_Matrix* LM_in);
+                               std::string KS_SOLVER_in);
     /// bcast sc data read from json file
     void bcast_ScData(std::string sc_file, int nat, int ntype);
 

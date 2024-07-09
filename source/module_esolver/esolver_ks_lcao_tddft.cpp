@@ -79,7 +79,7 @@ void ESolver_KS_LCAO_TDDFT::before_all_runners(Input& inp, UnitCell& ucell) {
     this->init_basis_lcao(this->orb_con, inp, ucell);
 
     // 5) allocate H and S matrices according to computational resources
-    LCAO_domain::divide_HS_in_frag(this->LM, GlobalV::GAMMA_ONLY_LOCAL,
+    LCAO_domain::divide_HS_in_frag(GlobalV::GAMMA_ONLY_LOCAL,
                                orb_con.ParaV,
                                kv.get_nks());
 

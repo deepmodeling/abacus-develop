@@ -178,7 +178,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(Input& inp, UnitCell& ucell) {
     // 6) initialize Hamilt in LCAO
     // * allocate H and S matrices according to computational resources
     // * set the 'trace' between local H/S and global H/S
-    LCAO_domain::divide_HS_in_frag(this->LM, GlobalV::GAMMA_ONLY_LOCAL,
+    LCAO_domain::divide_HS_in_frag(GlobalV::GAMMA_ONLY_LOCAL,
                                orb_con.ParaV,
                                this->kv.get_nks());
 
@@ -1272,7 +1272,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep) {
     if (GlobalV::sc_mag_switch) {
         SpinConstrain<TK, base_device::DEVICE_CPU>& sc
             = SpinConstrain<TK, base_device::DEVICE_CPU>::getScInstance();
-        sc.cal_MW(istep, &(this->LM), true);
+        sc.cal_MW(istep, true);
         sc.print_Mag_Force();
     }
 

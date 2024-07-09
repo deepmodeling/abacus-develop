@@ -33,7 +33,7 @@ void set_force
         std::cout << " ic = " << ic << std::endl;
         std::cout << " index = " << index << std::endl;
         std::cout << " pv.nloc = " << pv.nloc << std::endl;
-        ModuleBase::WARNING_QUIT("LCAO_Matrix","set_force");
+        ModuleBase::WARNING_QUIT("LCAO_domain","set_force");
     }	 
 
     if (dtype == 'S')
@@ -96,7 +96,7 @@ void set_stress
         std::cout << " ic = " << ic << std::endl;
         std::cout << " index = " << index << std::endl;
         std::cout << " pv.nloc = " << pv.nloc << std::endl;
-        ModuleBase::WARNING_QUIT("LCAO_Matrix","set_stress");
+        ModuleBase::WARNING_QUIT("LCAO_domain","set_stress");
     }
 
     if (dtype == 'S')
