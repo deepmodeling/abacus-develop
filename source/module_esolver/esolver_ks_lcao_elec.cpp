@@ -27,6 +27,7 @@
 #include "module_io/rho_io.h"
 #include "module_io/write_pot.h"
 #include "module_io/write_wfc_nao.h"
+#include "module_io/read_wfc_nao.h"
 #include "module_base/formatter.h"
 #ifdef __EXX
 #include "module_io/restart_exx_csr.h"
@@ -155,6 +156,16 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep) {
             = new psi::Psi<TK>(nsk, ncol, this->orb_con.ParaV.nrow, nullptr);
     }
 
+    // init wfc from file
+    if(istep == 0 && INPUT.init_wfc == "file")
+    {
+        if (! ModuleIO::read_wfc_nao(GlobalV::global_readin_dir, this->orb_con.ParaV, *(this->psi), this->pelec))
+        {
+            ModuleBase::WARNING_QUIT("ESolver_KS_LCAO<TK, TR>::beforesolver",
+                                     "read wfc nao failed");
+        }
+    }
+
     // prepare grid in Gint
     LCAO_domain::grid_prepare(this->GridT,
                               this->GG,
@@ -187,12 +198,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep) {
             DM);
 #endif
     }
-    // init density kernel and wave functions.
-    this->LOC.allocate_dm_wfc(this->GridT,
-                              this->pelec,
-                              this->psi,
-                              this->kv,
-                              istep);
+
 
 #ifdef __DEEPKS
     // for each ionic step, the overlap <psi|alpha> must be rebuilt

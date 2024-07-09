@@ -22,7 +22,6 @@
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_elecstate/potentials/H_TDDFT_pw.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/FORCE_STRESS.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_lcao/module_tddft/evolve_elec.h"
 #include "module_hamilt_lcao/module_tddft/td_velocity.h"
@@ -737,8 +736,6 @@ void Input_Conv::Convert(void)
     GlobalV::out_bandgap = INPUT.out_bandgap; // QO added for bandgap printing
     GlobalV::out_interval = INPUT.out_interval;
 #ifdef __LCAO
-    Local_Orbital_Charge::out_dm = INPUT.out_dm;
-    Local_Orbital_Charge::out_dm1 = INPUT.out_dm1;
     hsolver::HSolverLCAO<double>::out_mat_hs = INPUT.out_mat_hs;
     hsolver::HSolverLCAO<double>::out_mat_hsR = INPUT.out_mat_hs2; // LiuXh add 2019-07-16
     hsolver::HSolverLCAO<double>::out_mat_t = INPUT.out_mat_t;

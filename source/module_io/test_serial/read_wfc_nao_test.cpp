@@ -4,9 +4,6 @@
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_io/write_wfc_nao.h"
 
-//write mock function for Parallel_Orbitals
-Parallel_Orbitals::Parallel_Orbitals() {}
-Parallel_Orbitals::~Parallel_Orbitals(){}
 //define a mock derived class of class ElecState
 
 namespace elecstate
@@ -42,77 +39,33 @@ class ReadWfcNaoTest : public ::testing::Test
 protected:
 };
 
-TEST_F(ReadWfcNaoTest,DistriWfcNao)
-{
-      // Arrange
-      int is = 0;
-      int nks = 1;
-      GlobalV::NBANDS = 2;
-      GlobalV::NLOCAL = 3;
-      int nband = GlobalV::NBANDS;
-      int nlocal = GlobalV::NLOCAL;
-      int ngk[1] = {10};
-      double** ctot = new double*[nband];
-      for (int i=0; i<nband; i++)
-      {
-                        ctot[i] = new double[nlocal];
-                        for (int j=0; j<nlocal; j++)
-                        {
-                                          ctot[i][j] = i*nlocal + j;
-                        }
-      }
-      Parallel_Orbitals* ParaV = new Parallel_Orbitals;
-      psi::Psi<double>* psid = new psi::Psi<double>(nks, nband, nlocal, &ngk[0]);
-      // Act
-      ModuleIO::distri_wfc_nao(ctot, is, GlobalV::NB2D, GlobalV::NBANDS, GlobalV::NLOCAL, ParaV, psid);
-      // Assert
-      for (int i=0; i<nband; i++)
-      {
-                        for (int j=0; j<nlocal; j++)
-                        {
-                                          EXPECT_DOUBLE_EQ(ctot[i][j], psid[0](is, i, j));
-                        }
-      }
-      // Clean up
-      for (int i=0; i<nband; i++)
-      {
-                        delete[] ctot[i];
-      }
-      delete[] ctot;
-      delete ParaV;
-      delete psid;
-}
 
 TEST_F(ReadWfcNaoTest,ReadWfcNao)
 {
       //Global variables
-      GlobalV::NBANDS = 3;
-      GlobalV::NLOCAL = 3;
-      GlobalV::GAMMA_ONLY_LOCAL = true;
+      int nbands = 3;
+      int nlocal = 3;
       GlobalV::global_readin_dir = "./support/";
-      GlobalV::DRANK = 0;
-      GlobalV::MY_RANK = 0;
-      // Arrange
-      int is = 0;
       int nks = 1;
-      int nband = GlobalV::NBANDS;
-      int nlocal = GlobalV::NLOCAL;
-      int ngk[1] = {1};
-      Parallel_Orbitals* ParaV = new Parallel_Orbitals;
-      psi::Psi<double>* psid = new psi::Psi<double>(nks, nband, nlocal, &ngk[0]);
-      elecstate::ElecState* pelec = new elecstate::ElecState;
-      //elecstate::ElecState* pelec = new elecstate::MockElecState;
-      pelec->ekb.create(nks,nband);
-      pelec->wg.create(nks,nband);
+
+      Parallel_Orbitals ParaV;
+#ifdef __MPI
+      ParaV.init(nlocal, nlocal, 1);      
+      ParaV.set_desc_wfc_Eij(nlocal, nbands, pv->nrow);
+#else
+      ParaV.set_serial(nlocal, nlocal);
+      ParaV.nrow_bands = nlocal;
+      ParaV.ncol_bands = nbands;  
+#endif 
+
+      psi::Psi<double> psid;
+      elecstate::ElecState pelec;
+      pelec.ekb.create(nks,nbands);
+      pelec.wg.create(nks,nbands);
       // Act
-      ModuleIO::read_wfc_nao(is, GlobalV::GAMMA_ONLY_LOCAL, GlobalV::NB2D, GlobalV::NBANDS,
-                             GlobalV::NLOCAL, GlobalV::global_readin_dir, ParaV, psid, pelec);
+      ModuleIO::read_wfc_nao(GlobalV::global_readin_dir, ParaV, psid, &(pelec));
       // Assert
-      EXPECT_NEAR(pelec->ekb(0,1),0.31482195194888534794941393,1e-5);
-      EXPECT_NEAR(pelec->wg(0,1),0.0,1e-5);
-      EXPECT_NEAR(psid[0](0,1,1),0.59595655928,1e-5);
-      // clean up
-      delete ParaV;
-      delete psid;
-      delete pelec;
+      EXPECT_NEAR(pelec.ekb(0,1),0.31482195194888534794941393,1e-5);
+      EXPECT_NEAR(pelec.wg(0,1),0.0,1e-5);
+      EXPECT_NEAR(psid(0,1,1),0.59595655928,1e-5);
 }

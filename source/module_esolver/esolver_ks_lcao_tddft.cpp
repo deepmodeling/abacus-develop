@@ -69,7 +69,6 @@ void ESolver_KS_LCAO_TDDFT::before_all_runners(Input& inp, UnitCell& ucell) {
             &this->chr,
             &kv,
             kv.get_nks(),
-            &this->LOC,
             &this->GK, // mohan add 2024-04-01
             this->pw_rho,
             pw_big);
@@ -82,10 +81,6 @@ void ESolver_KS_LCAO_TDDFT::before_all_runners(Input& inp, UnitCell& ucell) {
     LCAO_domain::divide_HS_in_frag(this->LM, GlobalV::GAMMA_ONLY_LOCAL,
                                orb_con.ParaV,
                                kv.get_nks());
-
-    // this part will be updated soon
-    // pass Hamilt-pointer to Operator
-    this->LOC.ParaV = this->LM.ParaV;
 
     // 6) initialize Density Matrix
     dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)
@@ -421,7 +416,6 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft() {
     const int nlocal = GlobalV::NLOCAL;
     assert(nlocal >= 0);
 
-    // this->LOC.edm_k_tddft.resize(kv.get_nks());
     dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)
         ->get_DM()
         ->EDMK.resize(kv.get_nks());

@@ -148,7 +148,6 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(Input& inp, UnitCell& ucell) {
             &(this->chr), // use which parameter?
             &(this->kv),
             this->kv.get_nks(),
-            &(this->LOC), // use which parameter?
             &(this->GG),  // mohan add 2024-04-01
             &(this->GK),  // mohan add 2024-04-01
             this->pw_rho,
@@ -162,7 +161,6 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(Input& inp, UnitCell& ucell) {
     //------------------init Basis_lcao----------------------
 
     //! pass basis-pointer to EState and Psi
-    this->LOC.ParaV = &(this->orb_con.ParaV);
     this->LM.ParaV = &(this->orb_con.ParaV);
 
     // 5) initialize density matrix
@@ -277,7 +275,6 @@ void ESolver_KS_LCAO<TK, TR>::init_after_vc(Input& inp, UnitCell& ucell) {
             &(this->chr),
             &(this->kv),
             this->kv.get_nks(),
-            &(this->LOC),
             &(this->GG), // mohan add 2024-04-01
             &(this->GK), // mohan add 2024-04-01
             this->pw_rho,

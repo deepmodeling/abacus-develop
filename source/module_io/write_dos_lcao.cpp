@@ -18,7 +18,6 @@
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #endif
 
 #include "module_base/blas_connector.h"

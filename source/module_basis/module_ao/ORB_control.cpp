@@ -314,6 +314,8 @@ void ORB_control::divide_HS_2d(
     }
 #else // single processor used.
     pv->set_serial(nlocal, nlocal);
+    pv->nrow_bands = nlocal;
+    pv->ncol_bands = nbands;
     this->set_parameters(ofs_running, ofs_warning);
 #endif
 
