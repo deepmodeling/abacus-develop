@@ -103,7 +103,10 @@ public:
 		start = clock();
 #endif	
 
-		dav.diag(phm,phi,en,eps, maxiter);
+		const int dim = phi.get_k_first() ? phi.get_current_nbas() : phi.get_nk() * phi.get_nbasis();
+		const int ldPsi = phi.get_k_first() ? phi.get_nbasis() : phi.get_nk() * phi.get_nbasis();
+		std::cout << "ldPsi = " << ldPsi << std::endl;
+		dav.diag(phm, dim, ldPsi, phi, en, eps, maxiter);
 
 #ifdef __MPI		
 		end = MPI_Wtime();

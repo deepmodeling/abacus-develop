@@ -1,8 +1,11 @@
 #include "parse_args.h"
-#include <iostream>
+
 #include <cstdlib>
-#include "version.h"
+#include <iostream>
+
 #include "module_io/input.h"
+#include "module_io/read_input.h"
+#include "version.h"
 
 namespace ModuleIO
 {
@@ -24,7 +27,7 @@ void parse_args(int argc, char** argv)
         }
         else if (arg == "--check-input")
         {
-            INPUT.check_input = true;
+            ModuleIO::ReadInput::check_mode = true;
         }
         else
         {
@@ -34,4 +37,4 @@ void parse_args(int argc, char** argv)
     }
 }
 
-}
+} // namespace ModuleIO

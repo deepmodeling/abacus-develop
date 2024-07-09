@@ -99,21 +99,20 @@ inline int CTOT2q_c(const int myid,
 }
 
 // be called in local_orbital_wfc::allocate_k
-int ModuleIO::read_wfc_nao_complex(std::complex<double>** ctot,
-                                   const int& ik,
+int ModuleIO::read_wfc_nao_complex(const int& ik,
                                    const int& nb2d,
                                    const int& nbands_g,
                                    const int& nlocal_g,
                                    const std::string& global_readin_dir,
                                    const ModuleBase::Vector3<double> kvec_c,
-                                   const Parallel_Orbitals* ParaV,
-                                   psi::Psi<std::complex<double>>* psi,
-                                   elecstate::ElecState* pelec)
+                                   const Parallel_Orbitals*const ParaV,
+                                   psi::Psi<std::complex<double>>*const psi,
+                                   elecstate::ElecState*const pelec)
 {
     ModuleBase::TITLE("ModuleIO", "read_wfc_nao_complex");
     ModuleBase::timer::tick("ModuleIO", "read_wfc_nao_complex");
 
-    std::string ss = global_readin_dir + ModuleIO::wfc_nao_gen_fname(1, false, true, ik);
+    const std::string ss = global_readin_dir + ModuleIO::wfc_nao_gen_fname(1, false, true, ik);
     std::ifstream ifs;
     int error = 0;
 
@@ -137,6 +136,7 @@ int ModuleIO::read_wfc_nao_complex(std::complex<double>** ctot,
     }
 
     // otherwise, find the file.
+    std::complex<double> **ctot = nullptr;
 
     if (GlobalV::MY_RANK == 0)
     {
@@ -258,21 +258,20 @@ int ModuleIO::read_wfc_nao_complex(std::complex<double>** ctot,
     return 0;
 }
 
-int ModuleIO::read_wfc_nao(double** ctot,
-                           const int& is,
+int ModuleIO::read_wfc_nao(const int& is,
                            const bool& gamma_only_local,
                            const int& nb2d,
                            const int& nbands_g,
                            const int& nlocal_g,
                            const std::string& global_readin_dir,
-                           const Parallel_Orbitals* ParaV,
-                           psi::Psi<double>* psid,
-                           elecstate::ElecState* pelec)
+                           const Parallel_Orbitals*const ParaV,
+                           psi::Psi<double>*const psid,
+                           elecstate::ElecState*const pelec)
 {
     ModuleBase::TITLE("ModuleIO", "read_wfc_nao");
     ModuleBase::timer::tick("ModuleIO", "read_wfc_nao");
 
-    std::string ss = global_readin_dir + ModuleIO::wfc_nao_gen_fname(1, GlobalV::GAMMA_ONLY_LOCAL, false, is);
+    const std::string ss = global_readin_dir + ModuleIO::wfc_nao_gen_fname(1, GlobalV::GAMMA_ONLY_LOCAL, false, is);
     std::ifstream ifs;
 
     int error = 0;
@@ -297,6 +296,7 @@ int ModuleIO::read_wfc_nao(double** ctot,
     }
 
     // otherwise, find the file.
+    double** ctot = nullptr;
 
     if (GlobalV::MY_RANK == 0)
     {

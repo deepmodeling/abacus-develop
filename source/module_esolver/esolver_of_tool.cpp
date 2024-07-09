@@ -4,6 +4,7 @@
 #include "module_elecstate/potentials/efield.h"
 #include "module_elecstate/potentials/gatefield.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_parameter/parameter.h"
 
 namespace ModuleESolver
 {
@@ -103,7 +104,8 @@ void ESolver_OF::allocate_array()
 }
 
 /**
- * @brief Get dL/dphi = dL/drho * drho/dphi = (dE/drho - mu) * 2 * ptemp_phi and store it in rdLdphi
+ * @brief Get dL/dphi = dL/drho * drho/dphi = (dE/drho - mu) * 2 * ptemp_phi and
+ * store it in rdLdphi
  *
  * @param [in] ptemp_phi phi
  * @param [out] rdLdphi dL/dphi
@@ -211,7 +213,7 @@ double ESolver_OF::cal_mu(double* pphi, double* pdEdphi, double nelec)
 void ESolver_OF::adjust_direction()
 {
     // filter the high frequency term in direction if of_full_pw = false
-    if (!GlobalV::of_full_pw)
+    if (!PARAM.inp.of_full_pw)
     {
         for (int is = 0; is < GlobalV::NSPIN; ++is)
         {
@@ -291,7 +293,7 @@ void ESolver_OF::adjust_direction()
  */
 void ESolver_OF::check_direction(double* dEdtheta, double** ptemp_phi, UnitCell& ucell)
 {
-    assert(GlobalV::NSPIN>0);
+    assert(GlobalV::NSPIN > 0);
     double* temp_theta = new double[GlobalV::NSPIN];
     ModuleBase::GlobalFunc::ZEROS(temp_theta, GlobalV::NSPIN);
 
@@ -324,7 +326,8 @@ void ESolver_OF::check_direction(double* dEdtheta, double** ptemp_phi, UnitCell&
             else if (dEdtheta[is] > 0)
             {
                 GlobalV::ofs_warning << "ESolver_OF: WARNING "
-                                     << "when use steepest dencent method, dEdphi > 0, so we might get minimum."
+                                     << "when use steepest dencent method, "
+                                        "dEdphi > 0, so we might get minimum."
                                      << std::endl;
             }
         }
@@ -382,11 +385,16 @@ void ESolver_OF::print_info()
 {
     if (this->iter_ == 0)
     {
-        std::cout << "============================== Running OFDFT ==============================" << std::endl;
-        std::cout << "Iter        Etot(Ha)          Mu(Ha)      Theta      PotNorm     deltaE(Ha)" << std::endl;
-        // cout << "======================================== Running OFDFT ========================================" <<
-        // endl; cout << "Iter        Etot(Ha)          Theta       PotNorm        min/max(den) min/max(dE/dPhi)" <<
-        // endl;
+        std::cout << "============================== Running OFDFT "
+                     "=============================="
+                  << std::endl;
+        std::cout << "Iter        Etot(Ha)          Mu(Ha)      Theta      "
+                     "PotNorm     deltaE(Ha)"
+                  << std::endl;
+        // cout << "======================================== Running OFDFT
+        // ========================================" << endl; cout << "Iter
+        // Etot(Ha)          Theta       PotNorm        min/max(den)
+        // min/max(dE/dPhi)" << endl;
     }
     // ============ used to compare with PROFESS3.0 ================
     // double minDen = pelec->charge->rho[0][0];
@@ -395,15 +403,16 @@ void ESolver_OF::print_info()
     // double maxPot = this->pdEdphi_[0][0];
     // for (int i = 0; i < this->pw_rho->nrxx; ++i)
     // {
-    //     if (pelec->charge->rho[0][i] < minDen) minDen = pelec->charge->rho[0][i];
-    //     if (pelec->charge->rho[0][i] > maxDen) maxDen = pelec->charge->rho[0][i];
-    //     if (this->pdEdphi_[0][i] < minPot) minPot = this->pdEdphi_[0][i];
-    //     if (this->pdEdphi_[0][i] > maxPot) maxPot = this->pdEdphi_[0][i];
+    //     if (pelec->charge->rho[0][i] < minDen) minDen =
+    //     pelec->charge->rho[0][i]; if (pelec->charge->rho[0][i] > maxDen)
+    //     maxDen = pelec->charge->rho[0][i]; if (this->pdEdphi_[0][i] < minPot)
+    //     minPot = this->pdEdphi_[0][i]; if (this->pdEdphi_[0][i] > maxPot)
+    //     maxPot = this->pdEdphi_[0][i];
     // }
-    std::cout << std::setw(6) << this->iter_ << std::setw(22) << std::scientific
-              << std::setprecision(12) << this->energy_current_ / 2. << std::setw(12) << std::setprecision(3)
-              << this->mu_[0] / 2. << std::setw(12) << this->theta_[0] << std::setw(12) << this->normdLdphi_
-              << std::setw(12) << (this->energy_current_ - this->energy_last_) / 2. << std::endl;
+    std::cout << std::setw(6) << this->iter_ << std::setw(22) << std::scientific << std::setprecision(12)
+              << this->energy_current_ / 2. << std::setw(12) << std::setprecision(3) << this->mu_[0] / 2.
+              << std::setw(12) << this->theta_[0] << std::setw(12) << this->normdLdphi_ << std::setw(12)
+              << (this->energy_current_ - this->energy_last_) / 2. << std::endl;
     // ============ used to compare with PROFESS3.0 ================
     // << setw(10) << minDen << "/ " << setw(12) << maxDen
     // << setw(10) << minPot << "/ " << setw(10) << maxPot << endl;
@@ -500,9 +509,10 @@ void ESolver_OF::print_info()
         energies_Ry.push_back(this->mu_[0]);
     }
     energies_eV.resize(energies_Ry.size());
-    std::transform(energies_Ry.begin(), energies_Ry.end(), energies_eV.begin(), [](double energy) { return energy * ModuleBase::Ry_to_eV; });
-    FmtTable table({"Energy", "Rydberg", "eV"},
-    titles.size(), {"%20s",   "%20.12f", "%20.12f"});
+    std::transform(energies_Ry.begin(), energies_Ry.end(), energies_eV.begin(), [](double energy) {
+        return energy * ModuleBase::Ry_to_eV;
+    });
+    FmtTable table({"Energy", "Rydberg", "eV"}, titles.size(), {"%20s", "%20.12f", "%20.12f"});
     table << titles << energies_Ry << energies_eV;
     GlobalV::ofs_running << table.str() << std::endl;
 }

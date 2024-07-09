@@ -52,7 +52,10 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
     // buffer variable
     // used to optimize alpha
 
-	if(GlobalV::test_energy)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"mxr",mxr);
+	if(GlobalV::test_energy) 
+    {
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"mxr",mxr);
+    }
     //r  = new ModuleBase::Vector3<double>[mxr];
     //r2 = new double[mxr];
     //int* irr = new int[mxr];
@@ -78,7 +81,10 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
             charge += cell.atoms[it].na * cell.atoms[it].ncpp.zv;//mohan modify 2007-11-7
         }
     }
-    if(GlobalV::test_energy)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"Total ionic charge",charge);
+    if(GlobalV::test_energy) 
+    {
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"Total ionic charge",charge);
+    }
 
 	// (2) calculate the converged value: alpha
     H_Ewald_pw::alpha = 2.90;
@@ -96,8 +102,11 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
                      erfc(sqrt(cell.tpiba2 * rho_basis->ggecut / 4.0 / alpha));
     }
     while (upperbound > 1.0e-7);
-    if(GlobalV::test_energy)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"alpha",alpha);
-	if(GlobalV::test_energy)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"Upper bound",upperbound);
+    if(GlobalV::test_energy) 
+    {
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"alpha",alpha);
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"Upper bound",upperbound);
+    }
 
     // G-space sum here.
     // Determine if this processor contains G=0 and set the constant term
@@ -126,7 +135,10 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
 
     for (int ig = 0; ig < rho_basis->npw; ig++)
     {
-        if(ig == rho_basis->ig_gge0) continue;
+        if(ig == rho_basis->ig_gge0) 
+        { 
+            continue;
+        }
         std::complex<double> rhon = ModuleBase::ZERO;
         for (int it=0; it<cell.ntype; it++)
         {
@@ -170,10 +182,78 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
 
     // R-space sum here (only done for the processor that contains G=0)
     ewaldr = 0.0;
+#ifdef __MPI
+    rmax = 4.0 / sqrt(alpha) / cell.lat0;
+    if(GlobalV::test_energy) 
+    {
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"rmax(unit lat0)",rmax);
+    }
+
+    int size = 0;
+    int my_rank = 0;
+    MPI_Comm_size(POOL_WORLD, &size);
+    MPI_Comm_rank(POOL_WORLD, &my_rank);
+
+    int ia_start = 0;
+    int ia_step = 0;
+    ia_start = my_rank;
+    ia_step = std::min(cell.nat, size);
+
+    int it1 = 0;
+    int ia1 = 0;
+    int it2 = 0;
+    int ia2 = 0;
+    for(int na1=ia_start; na1<cell.nat; na1+=ia_step)
+    {
+        it1 = cell.iat2it[na1];
+        ia1 = cell.iat2ia[na1];
+	
+        for(int na2=0; na2<cell.nat; na2++)
+        {
+            it2 = cell.iat2it[na2];
+            ia2 = cell.iat2ia[na2];
+
+            // calculate tau[na1]-tau[na2]
+            dtau = cell.atoms[it1].tau[ia1] - cell.atoms[it2].tau[ia2];
+            // generates nearest-neighbors shells
+            H_Ewald_pw::rgen(dtau, rmax, irr, cell.latvec, cell.G, r, r2, nrm);
+            // at-->cell.latvec, bg-->G
+            // and sum to the real space part
+
+            if(GlobalV::test_energy>1)
+            {
+                ModuleBase::GlobalFunc::OUT("dtau.x",dtau.x);
+                ModuleBase::GlobalFunc::OUT("dtau.y",dtau.y);
+                ModuleBase::GlobalFunc::OUT("dtau.z",dtau.z);
+                ModuleBase::GlobalFunc::OUT("nrm",nrm);
+            }
+            for(nr=0; nr<nrm; nr++)
+            {
+                rr = sqrt(r2[nr]) * cell.lat0;
+                if(GlobalV::use_paw)
+                {
+#ifdef USE_PAW
+                    ewaldr = ewaldr + GlobalC::paw_cell.get_val(it1) * GlobalC::paw_cell.get_val(it2) *
+                            erfc(sqrt(alpha) * rr) / rr;
+#endif
+                }
+                else
+                {
+                    ewaldr = ewaldr + cell.atoms[it1].ncpp.zv * cell.atoms[it2].ncpp.zv *
+                            erfc(sqrt(alpha) * rr) / rr;
+                }
+            }
+            if (GlobalV::test_energy>1) 
+            {
+                ModuleBase::GlobalFunc::OUT("ewaldr",ewaldr);
+            }
+        }
+    }
+#else
     if (rho_basis->ig_gge0 >= 0)
     {	
         rmax = 4.0 / sqrt(alpha) / cell.lat0;
-		if(GlobalV::test_energy)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"rmax(unit lat0)",rmax);
+		if(GlobalV::test_energy) ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"rmax(unit lat0)",rmax);
         // with this choice terms up to ZiZj*erfc(4) are counted (erfc(4)=2x10^-8
         int nt1=0;
         int nt2=0;
@@ -222,6 +302,7 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
             } // nt2
         }//nt1
     } // endif
+#endif
 
     ewalds = 0.50 * ModuleBase::e2 * (ewaldg + ewaldr);
 

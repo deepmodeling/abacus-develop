@@ -729,56 +729,12 @@ void Diago_DavSubspace<T, Device>::refresh(const int& dim,
 
 template <typename T, typename Device>
 int Diago_DavSubspace<T, Device>::diag(const HPsiFunc& hpsi_func,
-                                       const SubspaceFunc& subspace_func,
                                        T* psi_in,
                                        const int psi_in_dmax,
                                        Real* eigenvalue_in_hsolver,
                                        const std::vector<bool>& is_occupied,
                                        const bool& scf_type)
 {
-    /**
-    bool outputscc = false;
-    bool outputeigenvalue = false;
-    if (outputscc)
-    {
-        std::cout << "before dav 111" << std::endl;
-        gemm_op<T, Device>()(this->ctx,
-                             'C',
-                             'N',
-                             psi.get_nbands(),
-                             psi.get_nbands(),
-                             psi.get_current_nbas(),
-                             this->one,
-                             &psi(0, 0),
-                             psi.get_current_nbas(),
-                             &psi(0, 0),
-                             psi.get_current_nbas(),
-                             this->zero,
-                             this->scc,
-                             this->nbase_x);
-        // output scc
-        for (size_t i = 0; i < psi.get_nbands(); i++)
-        {
-            for (size_t j = 0; j < psi.get_nbands(); j++)
-            {
-                std::cout << this->scc[i * this->nbase_x + j] << "\t";
-            }
-            std::cout << std::endl;
-        }
-        std::cout << std::endl;
-    }
-    if (outputeigenvalue)
-    {
-        // output: eigenvalue_in_hsolver
-        std::cout << "before dav, output eigenvalue_in_hsolver" << std::endl;
-        for (size_t i = 0; i < psi.get_nbands(); i++)
-        {
-            std::cout << eigenvalue_in_hsolver[i] << "\t";
-        }
-        std::cout << std::endl;
-    }
-    */
-
     /// record the times of trying iterative diagonalization
     this->notconv = 0;
 
@@ -788,7 +744,7 @@ int Diago_DavSubspace<T, Device>::diag(const HPsiFunc& hpsi_func,
     {
         if (this->is_subspace || ntry > 0)
         {
-            subspace_func(psi_in, psi_in, eigenvalue_in_hsolver, this->n_band, psi_in_dmax);
+            this->diagH_subspace(psi_in, eigenvalue_in_hsolver, hpsi_func, this->n_band, this->dim, psi_in_dmax);
         }
 
         sum_iter += this->diag_once(hpsi_func, psi_in, psi_in_dmax, eigenvalue_in_hsolver, is_occupied);
@@ -802,47 +758,6 @@ int Diago_DavSubspace<T, Device>::diag(const HPsiFunc& hpsi_func,
         std::cout << "\n notconv = " << this->notconv;
         std::cout << "\n Diago_DavSubspace::diag', too many bands are not converged! \n";
     }
-
-    /**
-    if (outputeigenvalue)
-    {
-        // output: eigenvalue_in_hsolver
-        std::cout << "after dav, output eigenvalue_in_hsolver" << std::endl;
-        for (size_t i = 0; i < psi.get_nbands(); i++)
-        {
-            std::cout << eigenvalue_in_hsolver[i] << "\t";
-        }
-        std::cout << std::endl;
-    }
-    if (outputscc)
-    {
-        std::cout << "after dav 222 " << std::endl;
-        gemm_op<T, Device>()(this->ctx,
-                             'C',
-                             'N',
-                             psi.get_nbands(),
-                             psi.get_nbands(),
-                             psi.get_current_nbas(),
-                             this->one,
-                             &psi(0, 0),
-                             psi.get_current_nbas(),
-                             &psi(0, 0),
-                             psi.get_current_nbas(),
-                             this->zero,
-                             this->scc,
-                             this->nbase_x);
-        // output scc
-        for (size_t i = 0; i < psi.get_nbands(); i++)
-        {
-            for (size_t j = 0; j < psi.get_nbands(); j++)
-            {
-                std::cout << this->scc[i * this->nbase_x + j] << "\t";
-            }
-            std::cout << std::endl;
-        }
-        std::cout << std::endl;
-    }
-     */
 
     return sum_iter;
 }
@@ -864,6 +779,106 @@ bool Diago_DavSubspace<T, Device>::test_exit_cond(const int& ntry, const int& no
     const bool f3 = ((scf && (notconv > 5)));
 
     return (f1 && (f2 || f3));
+}
+
+template <typename T, typename Device>
+void Diago_DavSubspace<T, Device>::diagH_subspace(T* psi_pointer, // [in] & [out] wavefunction
+                                                  Real* en,       // [out] eigenvalues
+                                                  const HPsiFunc hpsi_func,
+                                                  const int n_band,
+                                                  const int dmin,
+                                                  const int dmax)
+{
+    ModuleBase::TITLE("Diago_DavSubspace", "subspace");
+    ModuleBase::timer::tick("Diago_DavSubspace", "subspace");
+
+    const int nstart = n_band;
+    assert(n_band > 0);
+
+    T* hcc = nullptr;
+    T* scc = nullptr;
+    T* vcc = nullptr;
+    resmem_complex_op()(ctx, hcc, nstart * nstart, "DAV::hcc");
+    resmem_complex_op()(ctx, scc, nstart * nstart, "DAV::scc");
+    resmem_complex_op()(ctx, vcc, nstart * nstart, "DAV::vcc");
+    setmem_complex_op()(ctx, hcc, 0, nstart * nstart);
+    setmem_complex_op()(ctx, scc, 0, nstart * nstart);
+    setmem_complex_op()(ctx, vcc, 0, nstart * nstart);
+
+    T* hphi = nullptr;
+    resmem_complex_op()(ctx, hphi, nstart * dmax, "DAV::hphi");
+    setmem_complex_op()(ctx, hphi, 0, nstart * dmax);
+
+    {
+        // do hPsi for all bands
+        hpsi_func(hphi, psi_pointer, n_band, dmax, 0, nstart - 1);
+
+        gemm_op<T, Device>()(ctx,
+                             'C',
+                             'N',
+                             nstart,
+                             nstart,
+                             dmin,
+                             this->one,
+                             psi_pointer,
+                             dmax,
+                             hphi,
+                             dmax,
+                             this->zero,
+                             hcc,
+                             nstart);
+
+        gemm_op<T, Device>()(ctx,
+                             'C',
+                             'N',
+                             nstart,
+                             nstart,
+                             dmin,
+                             this->one,
+                             psi_pointer,
+                             dmax,
+                             psi_pointer,
+                             dmax,
+                             this->zero,
+                             scc,
+                             nstart);
+    }
+
+    if (GlobalV::NPROC_IN_POOL > 1)
+    {
+        Parallel_Reduce::reduce_pool(hcc, nstart * nstart);
+        Parallel_Reduce::reduce_pool(scc, nstart * nstart);
+    }
+
+    // after generation of H and S matrix, diag them
+    DiagoIterAssist<T, Device>::diagH_LAPACK(nstart, n_band, hcc, scc, nstart, en, vcc);
+
+    { // code block to calculate evc
+        gemm_op<T, Device>()(ctx,
+                             'N',
+                             'N',
+                             dmin,
+                             n_band,
+                             nstart,
+                             this->one,
+                             psi_pointer, // dmin * nstart
+                             dmax,
+                             vcc, // nstart * n_band
+                             nstart,
+                             this->zero,
+                             hphi,
+                             dmin);
+    }
+
+    matrixSetToAnother<T, Device>()(ctx, n_band, hphi, dmin, psi_pointer, dmax);
+
+    delmem_complex_op()(ctx, hphi);
+
+    delmem_complex_op()(ctx, hcc);
+    delmem_complex_op()(ctx, scc);
+    delmem_complex_op()(ctx, vcc);
+
+    ModuleBase::timer::tick("Diago_DavSubspace", "diagH_subspace");
 }
 
 namespace hsolver

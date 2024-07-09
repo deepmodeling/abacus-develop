@@ -65,13 +65,10 @@ ESolver_KS_PW<T, Device>::ESolver_KS_PW() {
 template <typename T, typename Device>
 ESolver_KS_PW<T, Device>::~ESolver_KS_PW() {
     // delete HSolver and ElecState
-    if (this->phsol != nullptr) {
-        delete reinterpret_cast<hsolver::HSolverPW<T, Device>*>(this->phsol);
-        this->phsol = nullptr;
-    }
-    if (this->pelec != nullptr) {
-        delete reinterpret_cast<elecstate::ElecStatePW<T, Device>*>(
-            this->pelec);
+    this->deallocate_hsolver();
+    if (this->pelec != nullptr)
+    {
+        delete reinterpret_cast<elecstate::ElecStatePW<T, Device>*>(this->pelec);
         this->pelec = nullptr;
     }
     // delete Hamilt
@@ -155,9 +152,9 @@ void ESolver_KS_PW<T, Device>::before_all_runners(Input& inp, UnitCell& ucell) {
     ESolver_KS<T, Device>::before_all_runners(inp, ucell);
 
     // 2) initialize HSolver
-    if (this->phsol == nullptr) {
-        this->phsol
-            = new hsolver::HSolverPW<T, Device>(this->pw_wfc, &this->wf);
+    if (this->phsol == nullptr)
+    {
+        this->allocate_hsolver();
     }
 
     // 3) initialize ElecState,
@@ -215,7 +212,17 @@ void ESolver_KS_PW<T, Device>::before_all_runners(Input& inp, UnitCell& ucell) {
                                    GlobalV::nelec);
     }
 }
-
+template <typename T, typename Device>
+void ESolver_KS_PW<T, Device>::allocate_hsolver()
+{
+    this->phsol = new hsolver::HSolverPW<T, Device>(this->pw_wfc, &this->wf);
+}
+template <typename T, typename Device>
+void ESolver_KS_PW<T, Device>::deallocate_hsolver()
+{
+    delete reinterpret_cast<hsolver::HSolverPW<T, Device>*>(this->phsol);
+    this->phsol = nullptr;
+}
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::init_after_vc(Input& inp, UnitCell& ucell) {
     ModuleBase::TITLE("ESolver_KS_PW", "init_after_vc");
@@ -259,8 +266,7 @@ void ESolver_KS_PW<T, Device>::init_after_vc(Input& inp, UnitCell& ucell) {
                                        inp.erf_sigma);
 
         delete this->phsol;
-        this->phsol
-            = new hsolver::HSolverPW<T, Device>(this->pw_wfc, &this->wf);
+        this->allocate_hsolver();
 
         delete this->pelec;
         this->pelec
@@ -576,36 +582,15 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep,
         hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX
             = GlobalV::PW_DIAG_NMAX;
 
-        if (GlobalV::BASIS_TYPE != "lcao_in_pw") {
-            // from HSolverPW
-            this->phsol->solve(
-                this->p_hamilt,      // hamilt::Hamilt<T, Device>* pHamilt,
-                this->kspw_psi[0],   // psi::Psi<T, Device>& psi,
-                this->pelec,         // elecstate::ElecState<T, Device>* pelec,
-                GlobalV::KS_SOLVER); // const std::string method_in,
-        } else {
-            // It is not a good choice to overload another solve function here,
-            // this will spoil the concept of multiple inheritance and
-            // polymorphism. But for now, we just do it in this way. In the
-            // future, there will be a series of class ESolver_KS_LCAO_PW,
-            // HSolver_LCAO_PW and so on.
-            std::weak_ptr<psi::Psi<T, Device>> psig
-                = this->p_wf_init->get_psig();
+        this->phsol->solve(this->p_hamilt,      // hamilt::Hamilt<T, Device>* pHamilt,
+            this->kspw_psi[0],   // psi::Psi<T, Device>& psi,
+            this->pelec,         // elecstate::ElecState<T, Device>* pelec,
+            GlobalV::KS_SOLVER); // const std::string method_in,
 
-            if (psig.expired()) {
-                ModuleBase::WARNING_QUIT("ESolver_KS_PW::hamilt2density",
-                                         "psig lifetime is expired");
-            }
-
-            // from HSolverPW
-            this->phsol->solve(
-                this->p_hamilt,    // hamilt::Hamilt<T, Device>* pHamilt,
-                this->kspw_psi[0], // psi::Psi<T, Device>& psi,
-                this->pelec,       // elecstate::ElecState<T, Device>* pelec,
-                psig.lock().get()[0]); // psi::Psi<T, Device>& transform,
-        }
-        if (GlobalV::out_bandgap) {
-            if (!GlobalV::TWO_EFERMI) {
+        if (GlobalV::out_bandgap)
+        {
+            if (!GlobalV::TWO_EFERMI)
+            {
                 this->pelec->cal_bandgap();
             } else {
                 this->pelec->cal_bandgap_updw();
@@ -615,13 +600,6 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep,
         ModuleBase::WARNING_QUIT("ESolver_KS_PW",
                                  "HSolver has not been initialed!");
     }
-    // add exx
-#ifdef __LCAO
-#ifdef __EXX
-    this->pelec->set_exx(
-        GlobalC::exx_lip.get_exx_energy()); // Peize Lin add 2019-03-09
-#endif
-#endif
 
     // calculate the delta_harris energy
     // according to new charge density.

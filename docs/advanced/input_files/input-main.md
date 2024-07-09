@@ -958,6 +958,7 @@ calculations.
   - **cg**: cg method.
   - **bpcg**: bpcg method, which is a block-parallel Conjugate Gradient (CG) method, typically exhibits higher acceleration in a GPU environment.
   - **dav**: the Davidson algorithm.
+  - **dav_subspace**: subspace Davidson algorithm
 
   For atomic orbitals basis,
 
@@ -2676,7 +2677,7 @@ These variables are used to control DFT+U correlated parameters
   - 1: For p-electron orbits, the plus U correction is needed.
   - 2: For d-electron orbits, the plus U correction is needed.
   - 3: For f-electron orbits, the plus U correction is needed.
-- **Default**: None
+- **Default**: -1
 
 ### hubbard_u
 
