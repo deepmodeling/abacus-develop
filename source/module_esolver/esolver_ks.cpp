@@ -849,6 +849,23 @@ ModuleIO::Output_Potential ESolver_KS<T, Device>::create_Output_Potential(int it
 //! the 16th-20th functions of ESolver_KS
 //! mohan add 2024-05-12
 //------------------------------------------------------------------------------
+template <typename T, typename Device>
+void ESolver_KS<T, Device>::set_xc_first_loop(const UnitCell& ucell)
+{
+    /** In the special "two-level" calculation case,
+    the first scf iteration only calculate the functional without exact
+    exchange. but in "nscf" calculation, there is no need of "two-level"
+    method. */
+    if (ucell.atoms[0].ncpp.xc_func == "HF"
+        || ucell.atoms[0].ncpp.xc_func == "PBE0"
+        || ucell.atoms[0].ncpp.xc_func == "HSE") {
+        XC_Functional::set_xc_type("pbe");
+    }
+    else if (ucell.atoms[0].ncpp.xc_func == "SCAN0") {
+        XC_Functional::set_xc_type("scan");
+    }
+}
+
 //! This is for mixed-precision pw/LCAO basis sets.
 template class ESolver_KS<std::complex<float>, base_device::DEVICE_CPU>;
 template class ESolver_KS<std::complex<double>, base_device::DEVICE_CPU>;
