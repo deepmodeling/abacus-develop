@@ -25,6 +25,23 @@ class LCAO_Orbitals
 	// static function to get global instance
 	static const LCAO_Orbitals& get_const_instance();
 
+    void init(
+        std::ofstream& ofs_in,
+        const int& ntype,
+        const std::string& orbital_dir,
+        const std::string* orbital_file,
+        const std::string& descriptor_file,
+        const int& lmax,
+        const double& lcao_ecut_in,
+        const double& lcao_dk_in,
+        const double& lcao_dr_in,
+        const double& lcao_rmax_in,
+        const bool& deepks_setorb,
+        const int& out_mat_r,
+        const bool& force_flag,
+        const int& my_rank
+    );
+
 	void Read_Orbitals(
 		std::ofstream &ofs_in, // mohan add 2021-05-07
 		const int &ntype_in,

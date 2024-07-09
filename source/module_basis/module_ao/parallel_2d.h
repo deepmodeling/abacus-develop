@@ -127,9 +127,6 @@ class Parallel_2D
     /// process coordinate in the MPI Cartesian grid
     int coord[2] = {-1, -1};
 
-    /// test parameter
-    int testpb = 0;
-
   protected:
     /// map from global index to local index
     std::vector<int> global2local_row_;

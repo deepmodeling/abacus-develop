@@ -146,8 +146,7 @@ void test_deepks::set_orbs(const double& lat0_in)
 {
     for (int it = 0; it < ntype; it++)
     {
-        ooo.read_orb_first(GlobalV::ofs_running,
-                           ORB,
+        ORB.init(GlobalV::ofs_running,
                            ucell.ntype,
                            GlobalV::global_orbital_dir,
                            ucell.orbital_fn,

@@ -29,27 +29,6 @@ class ORB_control
 
     ~ORB_control();
 
-    void Init(Input& inp, UnitCell& ucell);
-
-    // first step: read orbital file
-    void read_orb_first(std::ofstream& ofs_in,
-                        LCAO_Orbitals& orb,
-                        const int& ntype,                   // mohan add 2021-04-26
-                        const std::string& orbital_dir,     // liuyu add 2023-04-06
-                        const std::string* orbital_file,    // liuyu add 2023-04-06
-                        const std::string& descriptor_file, // liuyu add 2023-04-06
-                        const int& lmax,                    // mohan add 2021-04-26
-                        const double& lcao_ecut_in,         // mohan add 2021-04-16
-                        const double& lcao_dk_in,           // mohan add 2021-04-16
-                        const double& lcao_dr_in,           // mohan add 2021-04-16
-                        const double& lcao_rmax_in,         // mohan add 2021-04-16
-                        const bool& deepks_setorb,
-                        const int& out_mat_r,
-                        const bool& force_flag, // mohan add 2021-05-07
-                        const int& my_rank      // mohan add 2021-04-26
-    );
-    /// Generate the S(overlap),T,NL matrix.
-
     /// set 2D-block-cyclic division according to the basis
     void setup_2d_division(std::ofstream& ofs_running, std::ofstream& ofs_warning);
 
@@ -93,6 +72,5 @@ class ORB_control
     int mpi_comm_rows, mpi_comm_cols;
 #endif
 
-    void set_parameters(std::ofstream& ofs_running, std::ofstream& ofs_warning);
 };
 #endif

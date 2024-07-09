@@ -70,8 +70,7 @@ void test_orb::set_ekcut()
 void test_orb::set_orbs()
 {
 
-    ooo.read_orb_first(ofs_running,
-                       ORB,
+    ORB.init(ofs_running,
                        ntype_read,
                        "./",
                        orbital_fn,

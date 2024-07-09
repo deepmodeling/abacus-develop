@@ -28,7 +28,6 @@ class test_deepks
     ~test_deepks();
 
     LCAO_Orbitals ORB;
-    ORB_control ooo;
 
     RadialCollection orb_;
     RadialCollection alpha_;
