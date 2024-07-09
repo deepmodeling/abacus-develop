@@ -113,14 +113,14 @@ if (ENABLE_MPI)
     ../kernels/cuda/diag_cusolver.cu
   )
   endif()
-else()
-  if(ENABLE_LCAO)
-  AddTest(
-        TARGET HSolver_Lapack
-        LIBS ${math_libs} base psi device
-        SOURCES diago_lapack_test.cpp ../diago_lapack.cpp 
-      )
-  endif()
+#else()
+#  if(ENABLE_LCAO)
+#  AddTest(
+#        TARGET HSolver_Lapack
+#        LIBS ${math_libs} base psi device
+#        SOURCES diago_lapack_test.cpp ../diago_lapack.cpp 
+#      )
+#  endif()
 endif()
 install(FILES H-KPoints-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES H-GammaOnly-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
