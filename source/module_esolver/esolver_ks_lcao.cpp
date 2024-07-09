@@ -1323,7 +1323,6 @@ bool ESolver_KS_LCAO<TK, TR>::do_after_converge(int& iter) {
     if (GlobalC::exx_info.info_ri.real_number) {
         return this->exd->exx_after_converge(
             *this->p_hamilt,
-            this->LM,
             *dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)
                  ->get_DM(),
             this->kv,
@@ -1331,7 +1330,6 @@ bool ESolver_KS_LCAO<TK, TR>::do_after_converge(int& iter) {
     } else {
         return this->exc->exx_after_converge(
             *this->p_hamilt,
-            this->LM,
             *dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)
                  ->get_DM(),
             this->kv,

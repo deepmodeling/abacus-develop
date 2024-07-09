@@ -26,12 +26,12 @@ struct TGint<std::complex<double>>
 namespace ModuleIO
 {
 
-inline void gint_vl(Gint_Gamma& gg, Gint_inout& io, LCAO_Matrix& lm)
+inline void gint_vl(Gint_Gamma& gg, Gint_inout& io)
 {
     gg.cal_vlocal(&io, false);
 };
 
-inline void gint_vl(Gint_k& gk, Gint_inout& io, LCAO_Matrix& lm, ModuleBase::matrix& wg)
+inline void gint_vl(Gint_k& gk, Gint_inout& io, ModuleBase::matrix& wg)
 {
     gk.cal_gint(&io);
 };
