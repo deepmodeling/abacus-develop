@@ -81,22 +81,22 @@ class test_deepks
     void set_dm_k_new();
 
     // checking
-    void check_dstable(void);
-    void check_psialpha(void);
+    void check_dstable();
+    void check_psialpha();
 
-    void read_dm(void);
+    void read_dm();
     void read_dm_k(const int nks);
 
-    void check_pdm(void);
-    void check_gdmx(void);
+    void check_pdm();
+    void check_gdmx();
 
-    void check_descriptor(void);
-    void check_gvx(void);
+    void check_descriptor();
+    void check_gvx();
 
-    void check_edelta(void);
+    void check_edelta();
 
-    void check_e_deltabands(void);
-    void check_f_delta(void);
+    void check_e_deltabands();
+    void check_f_delta();
 
     // compares numbers stored in two files
     void compare_with_ref(const std::string f1, const std::string f2);
