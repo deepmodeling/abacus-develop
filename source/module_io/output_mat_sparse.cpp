@@ -36,7 +36,7 @@ void Output_Mat_Sparse<double>::write()
 template <>
 void Output_Mat_Sparse<std::complex<double>>::write()
 {
-    LCAO_HS_Arrays HS_Arrays;
+    LCAO_HS_Arrays HS_Arrays; // store sparse arrays
 
     //! generate a file containing the Hamiltonian and S(overlap) matrices
     if (_out_mat_hsR)
@@ -76,7 +76,7 @@ void Output_Mat_Sparse<std::complex<double>>::write()
         r_matrix.init(this->_pv);
         if (_out_mat_hsR)
         {
-            r_matrix.out_rR_other(_istep, this->_lm.output_R_coor);
+            r_matrix.out_rR_other(_istep, HS_Arrays.output_R_coor);
         }
         else
         {
