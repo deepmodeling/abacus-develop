@@ -83,7 +83,7 @@ class Parallel_2D
              const int ng,
              const int nb, // square block is assumed
              const MPI_Comm comm,
-             bool mode = 0);
+             bool mode = false);
 
     /**
      * @brief Set up the info of a block-cyclic distribution using given

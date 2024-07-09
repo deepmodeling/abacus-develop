@@ -68,20 +68,20 @@ class LCAO_Orbitals
 	void bcast_files(const int &ntype_in, const int &my_rank);
 #endif
 
-	const double& get_ecutwfc(void) const {return ecutwfc;}
-	const int& get_kmesh(void) const{return kmesh;}
-	const double& get_dk(void) const {return dk;}
-	const double& get_dR(void) const {return dR;}
-	const double& get_Rmax(void) const {return Rmax;}
-	const int& get_lmax(void) const {return lmax;}
-	const int& get_lmax_d(void) const { return lmax_d; }		///<lmax of descriptor basis
-	const int& get_nchimax(void) const {return nchimax;}
-	const int& get_nchimax_d(void) const { return nchimax_d; }	///<nchimax of descriptor basis
-	const int& get_ntype(void) const {return ntype;}
-	const double& get_dr_uniform(void) const { return dr_uniform; }
+	const double& get_ecutwfc() const {return ecutwfc;}
+	const int& get_kmesh() const{return kmesh;}
+	const double& get_dk() const {return dk;}
+	const double& get_dR() const {return dR;}
+	const double& get_Rmax() const {return Rmax;}
+	const int& get_lmax() const {return lmax;}
+	const int& get_lmax_d() const { return lmax_d; }		///<lmax of descriptor basis
+	const int& get_nchimax() const {return nchimax;}
+	const int& get_nchimax_d() const { return nchimax_d; }	///<nchimax of descriptor basis
+	const int& get_ntype() const {return ntype;}
+	const double& get_dr_uniform() const { return dr_uniform; }
 
 	//caoyu add 2021-05-24
-	const double& get_rcutmax_Phi(void) const { return rcutmax_Phi; }
+	const double& get_rcutmax_Phi() const { return rcutmax_Phi; }
 
 	/// numerical atomic orbitals
 	Numerical_Orbital* Phi;
