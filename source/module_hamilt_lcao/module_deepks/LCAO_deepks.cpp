@@ -147,8 +147,7 @@ void LCAO_Deepks::init(
         if(GlobalV::GAMMA_ONLY_LOCAL)
         {
             int nloc=this->pv->nloc;
-            this->h_mat.resize(nloc);
-            ModuleBase::GlobalFunc::ZEROS(this->h_mat.data(), nloc);
+            this->h_mat.resize(nloc,0.0);
         }
     }
 
@@ -434,7 +433,7 @@ void LCAO_Deepks::init_v_delta_pdm_shell(const int nks,const int nlocal)
     
     this->v_delta_pdm_shell = new double**** [nks];
 
-    int mn_size=(2 * this->lmaxd + 1) * (2 * this->lmaxd + 1);
+    const int mn_size=(2 * this->lmaxd + 1) * (2 * this->lmaxd + 1);
     for (int iks=0; iks<nks; iks++)
     {
         this->v_delta_pdm_shell[iks] = new double*** [nlocal];

@@ -9,10 +9,10 @@ LCAO_Deepks_Interface::LCAO_Deepks_Interface(std::shared_ptr<LCAO_Deepks> ld_in)
 {
 }
 // gamma-only
-void LCAO_Deepks_Interface::out_deepks_labels(double etot,
-                                              int nks,
-                                              int nat,
-                                              int nlocal,
+void LCAO_Deepks_Interface::out_deepks_labels(const double& etot,
+                                              const int& nks,
+                                              const int& nat,
+                                              const int& nlocal,
                                               const ModuleBase::matrix& ekb,
                                               const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                                               const UnitCell& ucell,
@@ -20,7 +20,8 @@ void LCAO_Deepks_Interface::out_deepks_labels(double etot,
                                               Grid_Driver& GridD,
                                               const Parallel_Orbitals* ParaV,
                                               const psi::Psi<double>& psid,
-                                              const elecstate::DensityMatrix<double, double>* dm)
+                                              const elecstate::DensityMatrix<double, double>* dm,
+                                              const int& deepks_v_delta)
 {
     ModuleBase::TITLE("LCAO_Deepks_Interface", "out_deepks_labels");
     // calculating deepks correction to bandgap
@@ -81,7 +82,7 @@ void LCAO_Deepks_Interface::out_deepks_labels(double etot,
                 ld->save_npy_o(deepks_bands, "o_base.npy", nks); // no scf, o_tot=o_base
             }                                                    // end deepks_scf == 0
         }                                                        // end bandgap label                                                  
-        if(GlobalV::deepks_v_delta)//gamma only now
+        if(deepks_v_delta)//gamma only now
         {
             ModuleBase::matrix h_tot;
             h_tot.create(nlocal,nlocal);
@@ -97,7 +98,7 @@ void LCAO_Deepks_Interface::out_deepks_labels(double etot,
                 ld->save_npy_h(h_tot-v_delta, "h_base.npy",nlocal);
                 ld->save_npy_h(v_delta, "v_delta.npy",nlocal);
 
-                if(GlobalV::deepks_v_delta==1)//v_delta_precalc storage method 1
+                if(deepks_v_delta==1)//v_delta_precalc storage method 1
                 {
                     ld->cal_v_delta_precalc(nlocal,
                             nat,
@@ -107,7 +108,7 @@ void LCAO_Deepks_Interface::out_deepks_labels(double etot,
                 
                     ld->save_npy_v_delta_precalc(nat, 1, nlocal);
                 }
-                else if(GlobalV::deepks_v_delta==2)//v_delta_precalc storage method 2
+                else if(deepks_v_delta==2)//v_delta_precalc storage method 2
                 {
                     ld->prepare_psialpha(nlocal,
                                 nat,
@@ -159,10 +160,10 @@ void LCAO_Deepks_Interface::out_deepks_labels(double etot,
 }
 
 // multi-k
-void LCAO_Deepks_Interface::out_deepks_labels(double etot,
-                                              int nks,
-                                              int nat,
-                                              int nlocal,
+void LCAO_Deepks_Interface::out_deepks_labels(const double& etot,
+                                              const int& nks,
+                                              const int& nat,
+                                              const int& nlocal,
                                               const ModuleBase::matrix& ekb,
                                               const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                                               const UnitCell& ucell,
@@ -170,7 +171,8 @@ void LCAO_Deepks_Interface::out_deepks_labels(double etot,
                                               Grid_Driver& GridD,
                                               const Parallel_Orbitals* ParaV,
                                               const psi::Psi<std::complex<double>>& psi,
-                                              const elecstate::DensityMatrix<std::complex<double>, double>* dm)
+                                              const elecstate::DensityMatrix<std::complex<double>, double>* dm,
+                                              const int& deepks_v_delta)
 {
     ModuleBase::TITLE("LCAO_Deepks_Interface", "out_deepks_labels");
     ModuleBase::timer::tick("LCAO_Deepks_Interface", "out_deepks_labels");
@@ -233,7 +235,7 @@ void LCAO_Deepks_Interface::out_deepks_labels(double etot,
                 ld->save_npy_o(deepks_bands, "o_base.npy", nks); // no scf, o_tot=o_base
             }                                                    // end deepks_scf == 0
         }                                                        // end bandgap label
-        if(GlobalV::deepks_v_delta)
+        if(deepks_v_delta)
         {
             ModuleBase::WARNING_QUIT("ESolver_KS_LCAO", "V_delta label has not been developed for multi-k now!");
         }

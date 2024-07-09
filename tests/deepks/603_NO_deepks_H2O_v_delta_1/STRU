@@ -7,7 +7,7 @@ H_gga_6au_60Ry_2s1p.orb
 O_gga_6au_60Ry_2s2p1d.orb
 
 NUMERICAL_DESCRIPTOR
-jle.orb
+../Model_ProjOrb/2au_20Ry_jle.orb
 
 LATTICE_CONSTANT
 1

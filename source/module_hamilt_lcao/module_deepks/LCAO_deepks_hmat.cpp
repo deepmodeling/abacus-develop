@@ -22,7 +22,7 @@ void LCAO_Deepks::collect_h_mat(const std::vector<double> h_in,ModuleBase::matri
     ModuleBase::TITLE("LCAO_Deepks", "collect_h_tot");
     //construct the total H matrix
 #ifdef __MPI
-    int ir,ic;
+    int ir=0,ic=0;
     for (int i=0; i<nlocal; i++)
     {
         std::vector<double> lineH(nlocal-i,0.0);
@@ -60,7 +60,7 @@ void LCAO_Deepks::collect_h_mat(const std::vector<double> h_in,ModuleBase::matri
         for (int j=i; j<nlocal; j++)
         {
             h_out(i,j)=lineH[j-i];
-            h_out(j,i)=lineH[j-i];//H is a symmetric matrix
+            h_out(j,i)=h_out(i,j);//H is a symmetric matrix
         }
     }
 #else
@@ -69,7 +69,7 @@ void LCAO_Deepks::collect_h_mat(const std::vector<double> h_in,ModuleBase::matri
         for (int j=i; j<nlocal; j++)
         {
             h_out(i,j)=h_in[i*nlocal+j];
-            h_out(j,i)=h_in[i*nlocal+j];//H is a symmetric matrix
+            h_out(j,i)=h_out(i,j);//H is a symmetric matrix
         }
     }
 #endif

@@ -1155,7 +1155,7 @@ void LCAO_Deepks::cal_v_delta_precalc(const int nlocal,
         }
     }
 #ifdef __MPI
-    int mn_size=(2 * this->lmaxd + 1) * (2 * this->lmaxd + 1);
+    const int mn_size=(2 * this->lmaxd + 1) * (2 * this->lmaxd + 1);
     for(int inl = 0; inl < this->inlmax; inl++)
     {
         for(int mu = 0; mu < nlocal ; mu++)

@@ -1206,7 +1206,8 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep) {
         &(this->orb_con.ParaV),
         *(this->psi),
         dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)
-            ->get_DM());
+            ->get_DM(),
+        GlobalV::deepks_v_delta);
 
     ModuleBase::timer::tick("ESolver_KS_LCAO", "out_deepks_labels");
 #endif
