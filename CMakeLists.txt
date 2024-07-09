@@ -523,6 +523,7 @@ if(ENABLE_LIBRI)
   else()
     message(FATAL_ERROR "Must provide LIBRI_DIR for RI related features.")
   endif()
+  target_link_libraries(${ABACUS_BIN_NAME} ri)
   add_compile_definitions(__EXX EXX_DM=3 EXX_H_COMM=2 TEST_EXX_LCAO=0
                           TEST_EXX_RADIAL=1)
 endif()
@@ -550,6 +551,7 @@ if(ENABLE_PAW)
   else()
     message(FATAL_ERROR "Must provide LIBPAW_DIR for PAW related features.")
   endif()
+  target_link_libraries(${ABACUS_BIN_NAME} paw)
   add_compile_definitions(USE_PAW)
 endif()
 
@@ -662,7 +664,6 @@ if(BUILD_TESTING)
       COMMAND ${UT_TARGET}
       WORKING_DIRECTORY $<TARGET_FILE_DIR:${UT_TARGET}>)
   endfunction(AddTest)
-
 endif()
 
 add_subdirectory(source)
@@ -693,11 +694,6 @@ target_link_libraries(
   vdw
   device
   container)
-
-if(ENABLE_PAW)
-  target_link_libraries(${ABACUS_BIN_NAME} paw)
-endif()
-
 if(ENABLE_LCAO)
   target_link_libraries(
     ${ABACUS_BIN_NAME}
@@ -716,9 +712,8 @@ if(ENABLE_LCAO)
     target_link_libraries(diag_cusolver)
   endif()
 endif()
-
-if(ENABLE_LIBRI)
-  target_link_libraries(${ABACUS_BIN_NAME} ri)
+if(ENABLE_RAPIDJSON)
+  target_link_libraries(${ABACUS_BIN_NAME} json_output)
 endif()
 
 install(PROGRAMS ${ABACUS_BIN_PATH}
@@ -728,8 +723,4 @@ install(PROGRAMS ${ABACUS_BIN_PATH}
 
 if(ENABLE_COVERAGE)
   coverage_evaluate()
-endif()
-
-if(ENABLE_RAPIDJSON)
-  target_link_libraries(${ABACUS_BIN_NAME} json_output)
 endif()
