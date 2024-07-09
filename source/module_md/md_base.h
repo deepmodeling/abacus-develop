@@ -1,15 +1,16 @@
 #ifndef MD_BASE_H
 #define MD_BASE_H
 
-#include "md_para.h"
 #include "module_esolver/esolver.h"
+#include "module_parameter/md_parameter.h"
 
 /**
  * @brief base class of md
  *
  * This class implements the velocity-Verlet method.
- * The system is assumed to be isolated in the sense that it cannot exchange energy or particles with its environment,
- * so that the energy of the system does not change with time.
+ * The system is assumed to be isolated in the sense that it cannot exchange
+ * energy or particles with its environment, so that the energy of the system
+ * does not change with time.
  */
 class MD_base
 {
@@ -18,14 +19,16 @@ class MD_base
     virtual ~MD_base();
 
     /**
-     * @brief init before running md, calculate energy, force, and stress of the initial configuration.
+     * @brief init before running md, calculate energy, force, and stress of the
+     * initial configuration.
      * @param p_esolver the energy solver used in md
      * @param global_readin_dir directory of files for reading
      */
     virtual void setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir);
 
     /**
-     * @brief the first half of equation of motion, update velocities and positions
+     * @brief the first half of equation of motion, update velocities and
+     * positions
      * @param ofs determine the output files
      */
     virtual void first_half(std::ofstream& ofs);
