@@ -255,7 +255,7 @@ void Force_LCAO<double>::ftable(const bool isforce,
     this->allocate(pv, lm, fsr, two_center_bundle);
 
     // calculate the force related to 'energy density matrix'.
-    this->cal_fedm(isforce, isstress, fsr, ucell, dm, psi, pv, pelec, lm, foverlap, soverlap);
+    this->cal_fedm(isforce, isstress, fsr, ucell, dm, psi, pv, pelec, foverlap, soverlap);
 
     this->cal_ftvnl_dphi(dm, pv, ucell, fsr, isforce, isstress, ftvnl_dphi, stvnl_dphi);
 

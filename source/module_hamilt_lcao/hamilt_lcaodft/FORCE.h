@@ -98,7 +98,6 @@ class Force_LCAO
                   const psi::Psi<T>* psi,
                   const Parallel_Orbitals& pv,
                   const elecstate::ElecState* pelec,
-                  LCAO_Matrix& lm,
                   ModuleBase::matrix& foverlap,
                   ModuleBase::matrix& soverlap,
                   const K_Vectors* kv = nullptr,
