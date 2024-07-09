@@ -201,7 +201,7 @@ int DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
     }
 
     // end of SchmitOrth and calculate H|psi>
-    hpsi_info dav_hpsi_in(&basis, psi::Range(1, 0, 0, nband - 1), this->hphi);
+    hpsi_info dav_hpsi_in(&basis, psi::Range(true, 0, 0, nband - 1), this->hphi);
     phm_in->ops->hPsi(dav_hpsi_in);
 
     this->cal_elem(dim, nbase, nbase_x, this->notconv, basis, this->hphi, this->sphi, this->hcc, this->scc);
