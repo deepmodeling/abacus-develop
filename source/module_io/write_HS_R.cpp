@@ -192,6 +192,7 @@ void ModuleIO::output_TR(const int istep,
                          const UnitCell& ucell,
                          const Parallel_Orbitals& pv,
                          LCAO_Matrix& lm,
+                         LCAO_HS_Arrays& HS_Arrays,
                          Grid_Driver& grid,
                          const TwoCenterBundle& two_center_bundle,
                          const std::string& TR_filename,
@@ -207,18 +208,15 @@ void ModuleIO::output_TR(const int istep,
         sst << GlobalV::global_out_dir << TR_filename;
     }
 
-    // need Hloc_fixedR
-    LCAO_HS_Arrays HS_arrays;
-
     sparse_format::cal_TR(ucell,
                           pv,
                           lm,
-                          HS_arrays,
+                          HS_Arrays,
                           grid,
                           two_center_bundle,
                           sparse_thr);
 
-    ModuleIO::save_sparse(HS_arrays.TR_sparse,
+    ModuleIO::save_sparse(HS_Arrays.TR_sparse,
                           lm.all_R_coor,
                           sparse_thr,
                           binary,
@@ -227,7 +225,7 @@ void ModuleIO::output_TR(const int istep,
                           "T",
                           istep);
 
-    sparse_format::destroy_T_R_sparse(HS_arrays);
+    sparse_format::destroy_T_R_sparse(HS_Arrays);
 
     ModuleBase::timer::tick("ModuleIO", "output_TR");
     return;

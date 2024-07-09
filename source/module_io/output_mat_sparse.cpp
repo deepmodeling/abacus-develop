@@ -51,6 +51,7 @@ void Output_Mat_Sparse<std::complex<double>>::write()
                   GlobalC::ucell,
                   this->_pv,
                   this->_lm,
+                  HS_Arrays,
                   this->_grid,
                   two_center_bundle_); // LiuXh add 2019-07-15
     }
