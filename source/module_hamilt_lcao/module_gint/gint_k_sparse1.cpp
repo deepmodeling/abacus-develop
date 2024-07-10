@@ -1,5 +1,4 @@
 #include "gint_k.h"
-#include "module_base/parallel_reduce.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 
 void Gint_k::distribute_pvdpR_sparseMatrix(

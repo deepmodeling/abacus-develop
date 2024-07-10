@@ -2,9 +2,6 @@
 // REFACTOR : Peize Lin, 2021.06.28
 //=========================================================
 #include "gint_gamma.h"
-#include "gint_tools.h"
-#include "module_base/blas_connector.h"
-#include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
 
 extern "C"
 {

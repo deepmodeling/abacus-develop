@@ -1,5 +1,5 @@
-#ifndef GINT_INTERFACE
-#define GINT_INTERFACE
+#ifndef GINT_H
+#define GINT_H
 
 // This class provides a unified interface to the
 //  grid intergration operation used to calculate
@@ -29,6 +29,10 @@
 #include "gint_force_gpu.h"
 #include "gint_rho_gpu.h"
 #include "gint_vl_gpu.h"
+#include "kernels/cuda/cuda_tools.cuh"
+#include <cublas_v2.h>
+#include <cuda.h> 
+#include <cuda_runtime.h>
 #endif
 class Gint {
   public:

@@ -1,6 +1,4 @@
 #include "gint_k.h"
-#include "module_base/parallel_reduce.h"
-#include "module_base/tool_threading.h"
 
 void Gint_k::allocate_pvdpR(void)
 {

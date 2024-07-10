@@ -1,5 +1,5 @@
 #include "gint_k.h"
-#include "module_base/blas_connector.h"
+
 
 void Gint::gint_kernel_rho(const int na_grid,
                            const int grid_index,

@@ -1,9 +1,4 @@
-#include "kernels/cuda/cuda_tools.cuh"
 #include "gint_rho_gpu.h"
-#include "gint_tools.h"
-#include "kernels/cuda/gint_rho.cuh"
-
-#include <omp.h>
 
 namespace GintKernel
 {

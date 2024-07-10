@@ -1,6 +1,4 @@
 #include "gint_k.h"
-#include "module_basis/module_ao/ORB_read.h"
-#include "module_base/blas_connector.h"
 
 void Gint::gint_kernel_tau(
 	const int na_grid,

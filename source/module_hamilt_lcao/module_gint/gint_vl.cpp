@@ -1,6 +1,4 @@
 #include "gint_k.h"
-#include "module_base/blas_connector.h"
-
 
 void Gint::gint_kernel_vlocal(
 	const int na_grid,

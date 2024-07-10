@@ -1,10 +1,4 @@
-#include <omp.h>
-
 #include "gint_force_gpu.h"
-#include "kernels/cuda/cuda_tools.cuh"
-#include "kernels/cuda/gint_force.cuh"
-#include "gint_tools.h"
-
 namespace GintKernel
 {
 /**
