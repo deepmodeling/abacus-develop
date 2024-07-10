@@ -11,7 +11,6 @@
 #include "module_elecstate/elecstate_lcao.h"
 #include "module_elecstate/magnetism.h"
 #include "module_elecstate/module_charge/charge.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 #include <cmath>

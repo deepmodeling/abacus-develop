@@ -180,7 +180,9 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(Input& inp, UnitCell& ucell)
     // 6) initialize Hamilt in LCAO
     // * allocate H and S matrices according to computational resources
     // * set the 'trace' between local H/S and global H/S
-    LCAO_domain::divide_HS_in_frag(this->LM, GlobalV::GAMMA_ONLY_LOCAL, orb_con.ParaV, this->kv.get_nks());
+    LCAO_domain::divide_HS_in_frag(GlobalV::GAMMA_ONLY_LOCAL,
+                               orb_con.ParaV,
+                               this->kv.get_nks());
 
 #ifdef __EXX
     // 7) initialize exx
@@ -347,7 +349,6 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(ModuleBase::matrix& force)
                        this->orb_con.ParaV,
                        this->pelec,
                        this->psi,
-                       this->LM,
                        this->GG, // mohan add 2024-04-01
                        this->GK, // mohan add 2024-04-01
                        two_center_bundle_,
@@ -1276,10 +1277,10 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
 
     // 15) write spin constrian MW?
     // spin constrain calculations, added by Tianqi Zhao.
-    if (GlobalV::sc_mag_switch)
-    {
-        SpinConstrain<TK, base_device::DEVICE_CPU>& sc = SpinConstrain<TK, base_device::DEVICE_CPU>::getScInstance();
-        sc.cal_MW(istep, &(this->LM), true);
+    if (GlobalV::sc_mag_switch) {
+        SpinConstrain<TK, base_device::DEVICE_CPU>& sc
+            = SpinConstrain<TK, base_device::DEVICE_CPU>::getScInstance();
+        sc.cal_MW(istep, true);
         sc.print_Mag_Force();
     }
 
@@ -1327,21 +1328,20 @@ bool ESolver_KS_LCAO<TK, TR>::do_after_converge(int& iter)
     }
 #endif
 #ifdef __EXX
-    if (GlobalC::exx_info.info_ri.real_number)
-    {
-        return this->exd->exx_after_converge(*this->p_hamilt,
-                                             this->LM,
-                                             *dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(),
-                                             this->kv,
-                                             iter);
-    }
-    else
-    {
-        return this->exc->exx_after_converge(*this->p_hamilt,
-                                             this->LM,
-                                             *dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(),
-                                             this->kv,
-                                             iter);
+    if (GlobalC::exx_info.info_ri.real_number) {
+        return this->exd->exx_after_converge(
+            *this->p_hamilt,
+            *dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)
+                 ->get_DM(),
+            this->kv,
+            iter);
+    } else {
+        return this->exc->exx_after_converge(
+            *this->p_hamilt,
+            *dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)
+                 ->get_DM(),
+            this->kv,
+            iter);
     }
 #endif // __EXX
 

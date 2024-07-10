@@ -11,7 +11,7 @@ berryphase::berryphase()
 }
 
 #ifdef __LCAO
-berryphase::berryphase(const Parallel_Orbitals& paraV_in) : paraV(paraV_in)
+berryphase::berryphase(const Parallel_Orbitals* paraV_in) : paraV(paraV_in)
 {
     GDIR = INPUT.gdir;
 }
@@ -19,7 +19,6 @@ berryphase::berryphase(const Parallel_Orbitals& paraV_in) : paraV(paraV_in)
 
 berryphase::~berryphase()
 {
-    // GlobalV::ofs_running << "this is ~berryphase()" << std::endl;
 }
 
 void berryphase::get_occupation_bands()
@@ -347,7 +346,7 @@ double berryphase::stringPhase(int index_str,
             if (GlobalV::NSPIN != 4)
             {
                 // std::complex<double> my_det = lcao_method.det_berryphase(ik_1,ik_2,dk,nbands);
-                zeta = zeta * lcao_method.det_berryphase(ik_1, ik_2, dk, nbands, this->paraV, psi_in, kv);
+                zeta = zeta * lcao_method.det_berryphase(ik_1, ik_2, dk, nbands, *(this->paraV), psi_in, kv);
                 // test by jingan
                 // GlobalV::ofs_running << "methon 1: det = " << my_det << std::endl;
                 // test by jingan

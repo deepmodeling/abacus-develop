@@ -34,7 +34,6 @@ void Force_LCAO<std::complex<double>>::cal_fedm(
     const psi::Psi<std::complex<double>>* psi,
     const Parallel_Orbitals& pv,
     const elecstate::ElecState* pelec,
-    LCAO_Matrix& lm,
     ModuleBase::matrix& foverlap,
     ModuleBase::matrix& soverlap,
     const K_Vectors* kv,

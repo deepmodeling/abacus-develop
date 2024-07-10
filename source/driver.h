@@ -24,7 +24,7 @@ class Driver
      * This function read the parameter in "INPUT", "STRU" etc,
      * and split the MPI world into different groups.
      */
-    static void reading();
+    void reading();
 
     /**
      * @brief An interface function.

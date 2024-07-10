@@ -87,8 +87,9 @@ void read_information(std::ifstream& ifs, std::vector<std::string>& output, cons
     std::string word;
     while (iss >> word)
     {
-        if (delimiters.find(word[0]) != std::string::npos)
+        if (delimiters.find(word[0]) != std::string::npos) {
             break;
+}
         output.push_back(word);
     }
     if (output.size() == 0)
@@ -231,8 +232,9 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
     while (ifs.good())
     {
         ifs >> word1;
-        if (ifs.eof())
+        if (ifs.eof()) {
             break;
+}
         strtolower(word1, word);
         auto it = std::find_if(input_lists.begin(),
                                input_lists.end(),
@@ -241,7 +243,8 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
         {
             Input_Item* p_item = &(it->second);
             this->readvalue_items.push_back(p_item);
-            read_information(ifs, it->second.str_values, "#/!");
+            // qianrui delete '/' 2024-07-10, because path has '/' head.
+            read_information(ifs, it->second.str_values, "#!");
         }
         else
         {
@@ -282,24 +285,27 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
     }
 
     // 2) count the number of atom types from STRU file
-    if (this->check_ntype_flag)
+    if (this->check_ntype_flag) {
         check_ntype(param.input.stru_file, param.input.ntype);
+}
 
     // 3) reset this value when some conditions are met
     //    e.g. if (calulation_type == "nscf") then set "init_chg" to "file".
     for (auto& input_item: this->input_lists)
     {
         Input_Item* resetvalue_item = &(input_item.second);
-        if (resetvalue_item->reset_value != nullptr)
+        if (resetvalue_item->reset_value != nullptr) {
             resetvalue_item->reset_value(*resetvalue_item, param);
+}
     }
 
     // 4) check the value of the parameters
     for (auto& input_item: this->input_lists)
     {
         Input_Item* checkvalue_item = &(input_item.second);
-        if (checkvalue_item->check_value != nullptr)
+        if (checkvalue_item->check_value != nullptr) {
             checkvalue_item->check_value(*checkvalue_item, param);
+}
     }
 }
 
@@ -314,8 +320,9 @@ void ReadInput::write_txt_input(const Parameter& param, const std::string& filen
     for (auto& item: this->input_lists)
     {
         Input_Item* p_item = &(item.second);
-        if (p_item->get_final_value == nullptr)
+        if (p_item->get_final_value == nullptr) {
             continue;
+}
         p_item->get_final_value(*p_item, param);
         if (p_item->label == "ecutwfc")
         {
@@ -454,8 +461,9 @@ void ReadInput::check_ntype(const std::string& fn, int& param_ntype)
     {
         ModuleBase::WARNING_QUIT("ReadInput", "ntype should be greater than 0.");
     }
-    else
+    else {
         GlobalV::ofs_running << " 'ntype' is automatically set to " << param_ntype << std::endl;
+}
 }
 
 void ReadInput::add_item(const Input_Item& item)
