@@ -1207,6 +1207,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
     LDI.out_deepks_labels(this->pelec->f_en.etot,
                           this->pelec->klist->get_nks(),
                           GlobalC::ucell.nat,
+                          GlobalV::NLOCAL,
                           this->pelec->ekb,
                           this->pelec->klist->kvec_d,
                           GlobalC::ucell,

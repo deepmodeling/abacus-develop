@@ -691,7 +691,6 @@ void Input_Conv::Convert()
         // EXX does not support symmetry=1
         if (INPUT.calculation != "nscf" && PARAM.inp.symmetry == "1")
             ModuleSymmetry::Symmetry::symm_flag = 0;
-}
     }
 #endif                                               // __LCAO
 #endif                                               // __EXX
@@ -832,7 +831,7 @@ void Input_Conv::Convert()
         GlobalV::deepks_setorb = true;
 }
 #else
-    if (INPUT.deepks_scf || INPUT.deepks_out_labels || INPUT.deepks_bandgap || INPUT.deepks_v_delta)
+    if (PARAM.inp.deepks_scf || PARAM.inp.deepks_out_labels || PARAM.inp.deepks_bandgap || PARAM.inp.deepks_v_delta)
     {
         ModuleBase::WARNING_QUIT("Input_conv", "please compile with DeePKS");
     }
