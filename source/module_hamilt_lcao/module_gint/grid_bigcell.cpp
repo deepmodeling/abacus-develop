@@ -1,4 +1,5 @@
 #include "grid_bigcell.h"
+
 Grid_BigCell::Grid_BigCell()
 {
     this->orbital_rmax = 0.0;

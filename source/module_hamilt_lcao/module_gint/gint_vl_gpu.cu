@@ -1,6 +1,4 @@
-#include <omp.h>
 #include "gint_vl_gpu.h"
-
 
 namespace GintKernel
 {

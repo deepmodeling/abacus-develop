@@ -1,6 +1,5 @@
 #include "gint_k.h"
 
-
 void Gint::gint_kernel_rho(const int na_grid,
                            const int grid_index,
                            const double delta_r,

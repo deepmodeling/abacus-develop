@@ -1,3 +1,5 @@
+#ifndef GRID_INDEX_H
+#define GRID_INDEX_H
 #include "module_base/vector3.h"
 /// index structure for grid integral module
 /// in ABACUS, this index is stored for tracing:
@@ -18,3 +20,4 @@ struct gridIndex
 };
 
 }
+#endif

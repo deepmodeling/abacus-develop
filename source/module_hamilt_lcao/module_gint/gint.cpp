@@ -1,6 +1,4 @@
 #include "gint.h"
-#include "module_basis/module_ao/ORB_read.h"
-#include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
 
 
 Gint::~Gint() {
