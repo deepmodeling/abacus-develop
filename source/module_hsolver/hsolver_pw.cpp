@@ -10,6 +10,8 @@
 #include "module_base/timer.h"
 #include "module_base/tool_quit.h"
 #include "module_elecstate/elecstate_pw.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
 #include "module_hsolver/diag_comm_info.h"
 #include "module_hsolver/diago_iter_assist.h"
