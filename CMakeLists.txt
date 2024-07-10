@@ -435,7 +435,7 @@ if(ENABLE_FLOAT_FFTW)
 endif()
 
 if(ENABLE_DEEPKS)
-  # Torch uses outdated components to detech CUDA arch, causing failure on
+  # Torch uses outdated components to detect CUDA arch, causing failure on
   # latest CUDA kits. Set CMake variable TORCH_CUDA_ARCH_LIST in the form of
   # "major.minor" if required.
   find_package(Torch REQUIRED)
