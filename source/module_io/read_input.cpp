@@ -241,7 +241,8 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
         {
             Input_Item* p_item = &(it->second);
             this->readvalue_items.push_back(p_item);
-            read_information(ifs, it->second.str_values, "#/!");
+            // qianrui delete '/' 2024-07-10, because path has '/' head.
+            read_information(ifs, it->second.str_values, "#!");
         }
         else
         {
