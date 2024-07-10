@@ -549,8 +549,9 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         const Real david_diag_thr = DiagoIterAssist<T, Device>::PW_DIAG_THR;
         const int david_maxiter = DiagoIterAssist<T, Device>::PW_DIAG_NMAX;
         // dimensions
-        const int dim = psi.get_k_first() ? psi.get_current_nbas() : psi.get_nk() * psi.get_nbasis();
-        const int ldPsi = psi.get_k_first() ? psi.get_nbasis() : psi.get_nk() * psi.get_nbasis();
+        const int dim = psi.get_current_nbas();
+        const int nband = psi.get_nbands();
+        const int ldPsi = psi.get_nbasis();
 
         DiagoDavid<T, Device> david(precondition.data(),
                                     GlobalV::PW_DIAG_NDIM,
@@ -559,6 +560,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         DiagoIterAssist<T, Device>::avg_iter
             += static_cast<double>(david.diag(hm,
                                               dim,
+                                              nband,
                                               ldPsi,
                                               psi,
                                               eigenvalue,
