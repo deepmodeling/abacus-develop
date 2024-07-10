@@ -34,7 +34,7 @@ void set_mat2d(
         std::cout << " ic = " << ic << std::endl;
         std::cout << " index = " << index << std::endl;
         std::cout << " ParaV->nloc = " << pv.nloc << std::endl;
-        ModuleBase::WARNING_QUIT("LCAO_Matrix", "set_mat2d");
+        ModuleBase::WARNING_QUIT("LCAO_domain", "set_mat2d");
     }	 
 
     //using input pointer HSloc

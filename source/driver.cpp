@@ -30,8 +30,6 @@ void Driver::init()
 
     time_t time_start = std::time(nullptr);
     ModuleBase::timer::start();
-    // (0) print the start information
-    this->print_start_info();
 
     // (1) read the input parameters.
     // INPUT should be initalized here and then pass to atomic world, mohan
@@ -124,8 +122,9 @@ void Driver::reading()
     ModuleIO::ReadInput read_input(PARAM.sys.myrank);
     read_input.read_parameters(PARAM, GlobalV::global_in_card);
 
-    // (2) create the output directory
+    // (2) create the output directory, running_*.log and print info
     read_input.create_directory(PARAM);
+    this->print_start_info();
 
     // (3) write the input file
     std::stringstream ss1;

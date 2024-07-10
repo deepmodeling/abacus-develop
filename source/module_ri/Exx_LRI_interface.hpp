@@ -123,7 +123,6 @@ void Exx_LRI_Interface<T, Tdata>::exx_hamilt2density(elecstate::ElecState& elec,
 template<typename T, typename Tdata>
 bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
     hamilt::Hamilt<T>& hamilt,
-    LCAO_Matrix& lm,
     const elecstate::DensityMatrix<T, double>& dm,
     const K_Vectors& kv,
     int& iter)

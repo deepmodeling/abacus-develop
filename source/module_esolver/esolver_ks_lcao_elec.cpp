@@ -222,7 +222,6 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
                    GlobalV::NSPIN,
                    this->kv,
                    GlobalV::KS_SOLVER,
-                   &(this->LM),
                    this->phsol,
                    this->p_hamilt,
                    this->psi,
@@ -713,7 +712,7 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
     if (berryphase::berry_phase_flag
         && ModuleSymmetry::Symmetry::symm_flag != 1) {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "Berry phase calculation");
-        berryphase bp(this->ParaV);
+        berryphase bp(&(this->ParaV));
         bp.lcao_init(this->kv,
                      this->GridT); // additional step before calling
                                    // macroscopic_polarization (why capitalize

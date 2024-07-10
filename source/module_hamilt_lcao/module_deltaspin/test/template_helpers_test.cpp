@@ -36,8 +36,8 @@ TEST_F(SpinConstrainTest, TemplatHelpers)
     std::vector<std::complex<double>> Sloc2;
     EXPECT_NO_THROW(sc.cal_h_lambda(nullptr, Sloc2.data(), true, 0));
     EXPECT_NO_THROW(sc.cal_mw_from_lambda(0));
-    EXPECT_NO_THROW(sc.cal_MW_k(nullptr, std::vector<std::vector<std::complex<double>>>(0)));
-    EXPECT_NO_THROW(sc.cal_MW(0, nullptr, false));
+    EXPECT_NO_THROW(sc.cal_MW_k(std::vector<std::vector<std::complex<double>>>(0)));
+    EXPECT_NO_THROW(sc.cal_MW(0,false));
     ModuleBase::matrix orbMulP;
     EXPECT_NO_THROW(sc.convert(orbMulP));
     EXPECT_NO_THROW(sc.run_lambda_loop(0));

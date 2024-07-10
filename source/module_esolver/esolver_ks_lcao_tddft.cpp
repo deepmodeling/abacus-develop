@@ -88,10 +88,11 @@ void ESolver_KS_LCAO_TDDFT::before_all_runners(Input& inp, UnitCell& ucell)
     this->init_basis_lcao(inp, ucell);
 
     // 5) allocate H and S matrices according to computational resources
-    LCAO_domain::divide_HS_in_frag(this->LM, GlobalV::GAMMA_ONLY_LOCAL, ParaV, kv.get_nks());
+    LCAO_domain::divide_HS_in_frag(GlobalV::GAMMA_ONLY_LOCAL, ParaV, kv.get_nks());
 
     // this part will be updated soon
     // pass Hamilt-pointer to Operator
+    this->LM.ParaV = &(this->orb_con.ParaV);
     this->LOC.ParaV = this->LM.ParaV;
 
     // 6) initialize Density Matrix
