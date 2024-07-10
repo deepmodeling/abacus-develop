@@ -1,13 +1,5 @@
 #include "gint_k.h"
-#include "gint_tools.h"
-#include "grid_technique.h"
 #include "module_base/blas_connector.h"
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
-#include "module_base/timer.h"
-#include "module_base/ylm.h"
-#include "module_basis/module_ao/ORB_read.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 void Gint::gint_kernel_rho(const int na_grid,
                            const int grid_index,

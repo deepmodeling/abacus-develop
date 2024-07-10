@@ -1,23 +1,7 @@
 #include "gint.h"
-
-#if ((defined __CUDA))
-#include "gint_force_gpu.h"
-#include "gint_rho_gpu.h"
-#include "gint_vl_gpu.h"
-#endif
-
-#include "module_base/memory.h"
-#include "module_base/timer.h"
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
-#ifdef _OPENMP
-#include <omp.h>
-#endif
 
-#ifdef __MKL
-#include <mkl_service.h>
-#endif
 
 Gint::~Gint() {
 

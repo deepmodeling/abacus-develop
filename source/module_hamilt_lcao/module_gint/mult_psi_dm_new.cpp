@@ -1,4 +1,5 @@
 #include "gint_tools.h"
+
 namespace Gint_Tools{
 void mult_psi_DM_new(
     const Grid_Technique& gt, const int bxyz, const int& grid_index,

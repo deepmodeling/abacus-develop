@@ -1,21 +1,6 @@
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
 #include "gint_k.h"
-#include "module_basis/module_ao/ORB_read.h"
-#include "grid_technique.h"
-#include "module_base/ylm.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/blas_connector.h"
-#include "module_base/timer.h"
-//#include <mkl_cblas.h>
 
-#ifdef _OPENMP
-#include <omp.h>
-#endif
-
-#ifdef __MKL
-#include <mkl_service.h>
-#endif
 
 void Gint::gint_kernel_vlocal(
 	const int na_grid,

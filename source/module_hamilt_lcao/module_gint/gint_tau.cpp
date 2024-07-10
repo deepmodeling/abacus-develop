@@ -1,16 +1,6 @@
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
 #include "gint_k.h"
 #include "module_basis/module_ao/ORB_read.h"
-#include "grid_technique.h"
-#include "module_base/ylm.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/blas_connector.h"
-#include "module_base/timer.h"
-#include "gint_tools.h"
-#include "module_base/memory.h"
-#include "module_hamilt_lcao/module_gint/grid_technique.h"
-
 
 void Gint::gint_kernel_tau(
 	const int na_grid,

@@ -2,9 +2,8 @@
 #define GINT_VL_GPU_H
 
 #include "gint.h"
-#include "grid_technique.h"
 #include "kernels/cuda/cuda_tools.cuh"
-
+#include "kernels/cuda/gint_vl.cuh"
 namespace GintKernel
 {
 

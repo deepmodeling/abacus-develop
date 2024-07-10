@@ -1,11 +1,10 @@
 #ifndef GINT_RHO_H
 #define GINT_RHO_H
 #include <cublas_v2.h>
-#include <cuda.h> // for CUDA_VERSION
+#include <cuda.h> 
 #include <cuda_runtime.h>
 
 #include "module_hamilt_lcao/module_gint/gint.h"
-#include "module_hamilt_lcao/module_gint/grid_technique.h"
 
 namespace GintKernel
 {

@@ -1,9 +1,4 @@
 #include "gint.h"
-#include "gint_force_gpu.h"
-#include "gint_rho_gpu.h"
-#include "gint_vl_gpu.h"
-#include "module_base/memory.h"
-#include "module_base/timer.h"
 
 void Gint::gamma_gpu_vlocal_interface(Gint_inout* inout) {
     ModuleBase::TITLE("Gint_interface", "cal_gint_vlocal");

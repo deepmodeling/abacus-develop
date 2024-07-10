@@ -1,6 +1,5 @@
 #if ((defined __CUDA) /* || (defined __ROCM) */)
-#include <cuda_runtime.h>
-#include "module_hsolver/kernels/cuda/helper_cuda.h"
+
 #endif
 #include "grid_technique.h"
 

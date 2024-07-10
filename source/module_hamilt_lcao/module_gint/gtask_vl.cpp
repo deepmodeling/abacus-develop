@@ -1,7 +1,4 @@
-#include <omp.h>
-
 #include "gint_vl_gpu.h"
-#include "module_base/ylm.h"
 #include "module_hamilt_lcao/module_gint/gint_tools.h"
 namespace GintKernel
 {

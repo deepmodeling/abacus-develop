@@ -1,6 +1,4 @@
 #include "gint.h"
-#include "module_base/memory.h"
-#include "module_base/timer.h"
 
 void Gint::cpu_force_interface(Gint_inout* inout) {
     ModuleBase::TITLE("Gint_interface", "cal_gint_force");
