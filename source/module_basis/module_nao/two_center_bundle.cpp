@@ -209,7 +209,7 @@ void TwoCenterBundle::to_LCAO_Orbitals(LCAO_Orbitals& ORB,
     ORB.nchimax = orb_->nzeta_max();
     ORB.rcutmax_Phi = orb_->rcut_max();
     ORB.dR = lcao_dr;
-    ORB.Rmax = lcao_rmax; // lcao_rmax, see ORB_control.cpp
+    ORB.Rmax = lcao_rmax;
     ORB.dr_uniform = 0.001;
 
     // Due to algorithmic difference in the spherical Bessel transform

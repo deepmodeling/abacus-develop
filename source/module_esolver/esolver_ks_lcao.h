@@ -4,7 +4,6 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/record_adj.h"
 // for grid integration
-#include "module_basis/module_ao/ORB_control.h"
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
 #ifdef __EXX
