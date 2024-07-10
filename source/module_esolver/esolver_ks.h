@@ -138,8 +138,6 @@ class ESolver_KS : public ESolver_FP
 		std::string basisname; //PW or LCAO
 
         void print_wfcfft(Input& inp, std::ofstream& ofs);
-
-        virtual void set_xc_first_loop(const UnitCell& ucell);
 };
 } // end of namespace
 #endif

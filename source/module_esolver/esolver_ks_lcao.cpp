@@ -188,7 +188,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(Input& inp, UnitCell& ucell)
         || GlobalV::CALCULATION == "cell-relax"
         || GlobalV::CALCULATION == "md") {
         if (GlobalC::exx_info.info_global.cal_exx) {
-            this->set_xc_first_loop(ucell);
+            XC_Functional::set_xc_first_loop(ucell);
             if (GlobalC::exx_info.info_ri.real_number) {
                 this->exx_lri_double->init(MPI_COMM_WORLD, this->kv);
             }
