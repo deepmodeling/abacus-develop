@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __WRITE_VXC_LIP_H_
+#define __WRITE_VXC_LIP_H_
 #include "module_base/parallel_reduce.h"
 #include "module_base/module_container/base/third_party/blas.h"
 #include "module_hamilt_pw/hamilt_pwdft/operator_pw/veff_pw.h"
@@ -248,3 +249,4 @@ namespace ModuleIO
         }
     }
 } // namespace ModuleIO
+#endif

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __WRITE_VXC_H_
+#define __WRITE_VXC_H_
 #include "module_base/parallel_reduce.h"
 #include "module_base/scalapack_connector.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_dftu_lcao.h"
@@ -436,3 +437,4 @@ void write_Vxc(int nspin,
     }
 }
 } // namespace ModuleIO
+#endif
