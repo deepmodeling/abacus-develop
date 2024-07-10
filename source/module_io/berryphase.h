@@ -16,7 +16,7 @@ class berryphase
   public:
     berryphase(); // for pw-line
 #ifdef __LCAO
-    berryphase(const Parallel_Orbitals& paraV_in); // for lcao-line
+    berryphase(const Parallel_Orbitals* paraV_in); // for lcao-line
 #endif
     ~berryphase();
 
@@ -25,7 +25,7 @@ class berryphase
     unkOverlap_pw pw_method;
 #ifdef __LCAO
     unkOverlap_lcao lcao_method;
-    Parallel_Orbitals paraV;
+    const Parallel_Orbitals* paraV;
 #endif
 
     int total_string;

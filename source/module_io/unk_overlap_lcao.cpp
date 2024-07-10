@@ -16,9 +16,9 @@ unkOverlap_lcao::~unkOverlap_lcao()
     {
         for (int iw = 0; iw < GlobalV::NLOCAL; iw++)
         {
-            delete cal_tag[iw];
+            delete [] cal_tag[iw];
         }
-        delete cal_tag;
+        delete [] cal_tag;
     }
 
     // GlobalV::ofs_running << "this is ~unkOverlap_lcao()" << std::endl;
