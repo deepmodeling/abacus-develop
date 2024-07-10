@@ -1,5 +1,4 @@
 #include "grid_meshk.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 Grid_MeshK::Grid_MeshK()
 {

@@ -1,13 +1,10 @@
 #if ((defined __CUDA) /* || (defined __ROCM) */)
 #include <cuda_runtime.h>
+#include "module_hsolver/kernels/cuda/helper_cuda.h"
 #endif
 #include "grid_technique.h"
 
-#include "module_base/memory.h"
-#include "module_base/parallel_reduce.h"
-#include "module_base/timer.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_hsolver/kernels/cuda/helper_cuda.h"
+
 
 Grid_Technique::Grid_Technique() {
     allocate_find_R2 = false;

@@ -3,10 +3,10 @@
 
 #include "grid_index.h"
 #include "grid_meshball.h"
+#include "module_base/parallel_reduce.h"
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
-#include "module_cell/unitcell.h"
 #if ((defined __CUDA) /* || (defined __ROCM) */)
 #include "kernels/cuda/gemm_selector.cuh"
 

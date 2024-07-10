@@ -2,7 +2,8 @@
 #define GRID_MESHK_H
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
-
+#include "module_base/memory.h"
+#include "module_base/matrix3.h"
 class Grid_MeshK
 {
 	public:

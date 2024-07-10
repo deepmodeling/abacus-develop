@@ -1,5 +1,4 @@
 #include "grid_meshball.h"
-#include "module_base/memory.h"
 
 Grid_MeshBall::Grid_MeshBall()
 {

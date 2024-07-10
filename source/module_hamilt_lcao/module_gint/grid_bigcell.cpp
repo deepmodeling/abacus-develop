@@ -1,10 +1,4 @@
 #include "grid_bigcell.h"
-
-#include "module_base/memory.h"
-#include "module_base/timer.h"
-#include "module_basis/module_ao/ORB_read.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_cell/unitcell.h"
 Grid_BigCell::Grid_BigCell()
 {
     this->orbital_rmax = 0.0;

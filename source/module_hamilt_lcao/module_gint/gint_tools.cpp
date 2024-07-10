@@ -5,10 +5,6 @@
 
 #include <cmath>
 
-#include "module_base/timer.h"
-#include "module_base/ylm.h"
-#include "module_basis/module_ao/ORB_read.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 namespace Gint_Tools{
 int* get_vindex(const int bxyz, const int bx, const int by, const int bz, const int nplane, const int start_ind,
