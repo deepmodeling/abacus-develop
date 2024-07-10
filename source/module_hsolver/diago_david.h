@@ -28,6 +28,7 @@ class DiagoDavid : public DiagH<T, Device>
 
     int diag(hamilt::Hamilt<T, Device>* phm_in,   // Pointer to the Hamiltonian object for diagonalization
                       const int dim,              // Dimension of the input matrix psi to be diagonalized
+                      const int nband,            // Number of required eigenpairs
                       const int ldPsi,            // Leading dimension of the psi input
                       psi::Psi<T, Device>& psi,   // Reference to the wavefunction object for eigenvectors
                       Real* eigenvalue_in,        // Pointer to store the resulting eigenvalues
@@ -44,14 +45,10 @@ class DiagoDavid : public DiagH<T, Device>
 
     /// number of searched eigenpairs
     int n_band = 0;
-    /// dimension of the input matrix psi to be diagonalized
-    // int dim = 0;
-    // leading dimension of the matrix data
-    // const int dmx = 0;
     /// dimension of the subspace allowed in Davidson
     int david_ndim = 4;
     /// maximum dimension of the reduced basis set
-    int nbase_x = 0;
+    // int nbase_x = 0;
     /// number of unconverged eigenvalues
     int notconv = 0;
 
@@ -83,6 +80,7 @@ class DiagoDavid : public DiagH<T, Device>
     void cal_grad(hamilt::Hamilt<T, Device>* phm_in,
                   const int& dim,
                   const int& nbase,
+                  const int nbase_x,
                   const int& notconv,
                   psi::Psi<T, Device>& basis,
                   T* hphi,
@@ -93,6 +91,7 @@ class DiagoDavid : public DiagH<T, Device>
 
     void cal_elem(const int& dim,
                   int& nbase,
+                  const int nbase_x,// maximum dimension of the reduced basis set
                   const int& notconv,
                   const psi::Psi<T, Device>& basis,
                   const T* hphi,
@@ -103,6 +102,7 @@ class DiagoDavid : public DiagH<T, Device>
     void refresh(const int& dim,
                  const int& nband,
                  int& nbase,
+                 const int nbase_x,
                  const Real* eigenvalue,
                  const psi::Psi<T, Device>& psi,
                  psi::Psi<T, Device>& basis,
@@ -133,6 +133,7 @@ class DiagoDavid : public DiagH<T, Device>
 
     int diag_mock(hamilt::Hamilt<T, Device>* phm_in,
                    const int dim,
+                   const int nband,
                    const int ldPsi,
                    psi::Psi<T, Device>& psi,
                    Real* eigenvalue_in,

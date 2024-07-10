@@ -32,10 +32,8 @@ class Diago_DavSubspace : public DiagH<T, Device>
     virtual ~Diago_DavSubspace() override;
 
     using HPsiFunc = std::function<void(T*, T*, const int, const int, const int, const int)>;
-    using SubspaceFunc = std::function<void(T*, T*, Real*, const int, const int)>;
 
     int diag(const HPsiFunc& hpsi_func,
-             const SubspaceFunc& subspace_func,
              T* psi_in,
              const int psi_in_dmax,
              Real* eigenvalue_in,
@@ -111,6 +109,21 @@ class Diago_DavSubspace : public DiagH<T, Device>
                  T* hcc,
                  T* scc,
                  T* vcc);
+
+    void diagH_subspace(T* psi_pointer, // [in] & [out] wavefunction
+                        Real* en,       // [out] eigenvalues
+                        const HPsiFunc hpsi_func,
+                        const int n_band,
+                        const int dmin,
+                        const int dmax);
+
+    // void diagH_LAPACK(const int nstart,
+    //                   const int nbands,
+    //                   const T* hcc,
+    //                   const T* sc,
+    //                   const int ldh, // nstart
+    //                   Real* e,
+    //                   T* vcc);
 
     void diag_zhegvx(const int& nbase,
                      const int& nband,
