@@ -1,9 +1,7 @@
 #if ((defined __CUDA) /* || (defined __ROCM) */)
-
+#include <cuda_runtime.h>
 #endif
 #include "grid_technique.h"
-
-
 
 Grid_Technique::Grid_Technique() {
     allocate_find_R2 = false;

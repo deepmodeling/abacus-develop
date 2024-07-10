@@ -3,6 +3,7 @@
 
 #include "grid_index.h"
 #include "grid_meshball.h"
+#include "module_base/module_device/device.h"
 #include "module_base/parallel_reduce.h"
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
