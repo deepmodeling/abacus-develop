@@ -110,8 +110,6 @@ void Driver::print_start_info()
     GlobalV::ofs_running << "\n READING GENERAL INFORMATION" << std::endl;
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "global_out_dir", GlobalV::global_out_dir);
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "global_in_card", GlobalV::global_in_card);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "pseudo_dir", GlobalV::global_pseudo_dir);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "orbital_dir", GlobalV::global_orbital_dir);
 }
 
 void Driver::reading()
