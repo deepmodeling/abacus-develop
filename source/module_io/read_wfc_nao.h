@@ -1,52 +1,45 @@
 #ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_IO_READ_WFC_NAO_H
 #define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_IO_READ_WFC_NAO_H
 
-#include "../module_base/global_function.h"
-#include "../module_base/global_variable.h"
-#include "module_base/complexmatrix.h"
-#include "module_base/matrix.h"
+#include "module_basis/module_ao/parallel_orbitals.h"
+#include "module_psi/psi.h"
 #include "module_elecstate/elecstate.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 
 // mohan add 2010-09-09
 namespace ModuleIO
 {
-void distri_wfc_nao(double** ctot,
-                    const int& is,
-                    const int& nb2d,
-                    const int& nbands_g,
-                    const int& nlocal_g,
-                    const Parallel_Orbitals* ParaV,
-                    psi::Psi<double>* psid);
-void distri_wfc_nao_complex(std::complex<double>** ctot,
-                            const int& ik,
-                            const int& nb2d,
-                            const int& nbands_g,
-                            const Parallel_Orbitals* ParaV,
-                            psi::Psi<std::complex<double>>* psi);
+/**
+ * @brief Reads a single data value from an input file stream.
+ * 
+ * @param ifs The input file stream to read from.
+ * @param data The variable to store the read data value.
+ */
+void read_wfc_nao_one_data(std::ifstream& ifs, double& data);
 
-int read_wfc_nao(const int& is,
-                 const bool& gamma_only_local,
-                 const int& nb2d,
-                 const int& nbands_g,
-                 const int& nlocal_g,
-                 const std::string& global_readin_dir,
-                 const Parallel_Orbitals*const ParaV,
-                 psi::Psi<double>*const psid,
-                 elecstate::ElecState*const pelec);
+/**
+ * @brief Reads a single complex data value from an input file stream.
+ * 
+ * @param ifs The input file stream to read from.
+ * @param data The variable to store the read complex data value.
+ */
+void read_wfc_nao_one_data(std::ifstream& ifs, std::complex<double>& data);
 
-int read_wfc_nao_complex(const int& ik,
-                         const int& nb2d,
-                         const int& nbands_g,
-                         const int& nlocal_g,
-                         const std::string& global_readin_dir,
-                         const ModuleBase::Vector3<double> kvec_c,
-                         const Parallel_Orbitals*const ParaV,
-                         psi::Psi<std::complex<double>>*const psi,
-                         elecstate::ElecState*const pelec);
-
-int globalIndex(int localindex, int nblk, int nprocs, int myproc);
-int localIndex(int globalindex, int nblk, int nprocs, int& myproc);
+/**
+ * @brief Reads the wavefunction coefficients from an input file.
+ * 
+ * @tparam T The type of the wavefunction coefficients.
+ * @param global_readin_dir The global directory for reading input files.
+ * @param ParaV The parallel orbitals object.
+ * @param psid The Psi object to store the wavefunction coefficients.
+ * @param pelec Pointer to the ElecState object.
+ * @return True if the wavefunction coefficients are successfully read, false otherwise.
+ */
+template <typename T>
+bool read_wfc_nao(
+    const std::string& global_readin_dir,
+    const Parallel_Orbitals& ParaV,
+    psi::Psi<T>& psid,
+    elecstate::ElecState*const pelec);
 
 } // namespace ModuleIO
 

@@ -42,22 +42,11 @@ void ElecStateLCAO<std::complex<double>>::psiToRho(const psi::Psi<std::complex<d
             || GlobalV::KS_SOLVER == "cusolver" || GlobalV::KS_SOLVER == "cusolvermp"
             || GlobalV::KS_SOLVER == "cg_in_lcao") // Peize Lin test 2019-05-15
         {
-            // cal_dm(this->loc->ParaV, this->wg, psi, this->loc->dm_k);
-            elecstate::cal_dm_psi(this->DM->get_paraV_pointer(), this->wg, psi, *(this->DM));
+            elecstate::cal_dm_psi(this->DM->get_paraV_pointer(),
+                                  this->wg,
+                                  psi,
+                                  *(this->DM));
             this->DM->cal_DMR();
-
-// interface for RI-related calculation, which needs loc.dm_k
-#ifdef __EXX
-            if (GlobalC::exx_info.info_global.cal_exx)
-            {
-                const K_Vectors* kv = this->DM->get_kv_pointer();
-                this->loc->dm_k.resize(kv->get_nks());
-                for (int ik = 0; ik < kv->get_nks(); ++ik)
-                {
-                    this->loc->set_dm_k(ik, this->DM->get_DMK_pointer(ik));
-                }
-            }
-#endif
         }
     }
 
@@ -108,8 +97,10 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
         ModuleBase::timer::tick("ElecStateLCAO", "cal_dm_2d");
 
         // get DMK in 2d-block format
-        // cal_dm(this->loc->ParaV, this->wg, psi, this->loc->dm_gamma);
-        elecstate::cal_dm_psi(this->DM->get_paraV_pointer(), this->wg, psi, *(this->DM));
+        elecstate::cal_dm_psi(this->DM->get_paraV_pointer(),
+                              this->wg,
+                              psi,
+                              *(this->DM));
         this->DM->cal_DMR();
     }
 

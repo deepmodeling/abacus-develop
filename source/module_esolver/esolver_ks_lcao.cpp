@@ -146,14 +146,14 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(Input& inp, UnitCell& ucell)
     if (this->pelec == nullptr)
     {
         // TK stands for double and complex<double>?
-        this->pelec = new elecstate::ElecStateLCAO<TK>(&(this->chr), // use which parameter?
-                                                       &(this->kv),
-                                                       this->kv.get_nks(),
-                                                       &(this->LOC), // use which parameter?
-                                                       &(this->GG),  // mohan add 2024-04-01
-                                                       &(this->GK),  // mohan add 2024-04-01
-                                                       this->pw_rho,
-                                                       this->pw_big);
+        this->pelec = new elecstate::ElecStateLCAO<TK>(
+            &(this->chr), // use which parameter?
+            &(this->kv),
+            this->kv.get_nks(),
+            &(this->GG),  // mohan add 2024-04-01
+            &(this->GK),  // mohan add 2024-04-01
+            this->pw_rho,
+            this->pw_big);
     }
 
     // 3) init LCAO basis
@@ -163,7 +163,6 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(Input& inp, UnitCell& ucell)
     //------------------init Basis_lcao----------------------
 
     //! pass basis-pointer to EState and Psi
-    this->LOC.ParaV = &(this->ParaV);
     this->LM.ParaV = &(this->ParaV);
 
     // 5) initialize density matrix
@@ -283,16 +282,17 @@ void ESolver_KS_LCAO<TK, TR>::init_after_vc(Input& inp, UnitCell& ucell)
     if (GlobalV::md_prec_level == 2)
     {
         delete this->pelec;
-        this->pelec = new elecstate::ElecStateLCAO<TK>(&(this->chr),
-                                                       &(this->kv),
-                                                       this->kv.get_nks(),
-                                                       &(this->LOC),
-                                                       &(this->GG), // mohan add 2024-04-01
-                                                       &(this->GK), // mohan add 2024-04-01
-                                                       this->pw_rho,
-                                                       this->pw_big);
+        this->pelec = new elecstate::ElecStateLCAO<TK>(
+            &(this->chr),
+            &(this->kv),
+            this->kv.get_nks(),
+            &(this->GG), // mohan add 2024-04-01
+            &(this->GK), // mohan add 2024-04-01
+            this->pw_rho,
+            this->pw_big);
 
-        dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->init_DM(&this->kv, this->LM.ParaV, GlobalV::NSPIN);
+        dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)
+            ->init_DM(&this->kv, this->LM.ParaV, GlobalV::NSPIN);
 
         GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, this->pw_rho);
 
@@ -582,6 +582,8 @@ void ESolver_KS_LCAO<TK, TR>::init_basis_lcao(Input& inp, UnitCell& ucell)
 
 #else
     ParaV.set_serial(nlocal, nlocal);
+    ParaV.nrow_bands = GlobalV::NLOCAL;
+    ParaV.ncol_bands = GlobalV::NBANDS;
     // Zhang Xiaoyang enable the serial version of LCAO and recovered this function usage. 2024-07-06
 #endif
 
