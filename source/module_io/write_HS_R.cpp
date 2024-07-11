@@ -89,7 +89,7 @@ void ModuleIO::output_HSR(const int& istep,
 void ModuleIO::output_dHR(const int& istep,
                           const ModuleBase::matrix& v_eff,
                           Gint_k& gint_k,    // mohan add 2024-04-01
-                          LCAO_Matrix& lm,   // mohan add 2024-04-01
+                          const Parallel_Orbitals& pv,
                           LCAO_HS_Arrays& HS_Arrays,
                           Grid_Driver& grid, // mohan add 2024-04-06
                           const TwoCenterBundle& two_center_bundle,
@@ -107,7 +107,7 @@ void ModuleIO::output_dHR(const int& istep,
         // mohan add 2024-04-01
         const int cspin = 0;
 
-        sparse_format::cal_dH(lm,
+        sparse_format::cal_dH(pv,
                               HS_Arrays,
                               grid,
                               two_center_bundle,
@@ -130,7 +130,7 @@ void ModuleIO::output_dHR(const int& istep,
                 }
             }
 
-            sparse_format::cal_dH(lm,
+            sparse_format::cal_dH(pv,
                                   HS_Arrays,
                                   grid,
                                   two_center_bundle,
