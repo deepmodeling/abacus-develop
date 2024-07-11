@@ -73,6 +73,13 @@ class HSolverPW : public HSolver<T, Device>
     hamilt::Hamilt<T, Device>* hamilt_ = nullptr;
 
     Device* ctx = {};
+
+#ifdef USE_PAW
+    void paw_func_in_kloop(const int ik);
+
+    void call_paw_cell_set_currentk(const int ik);
+#endif
+
 };
 
 template <typename T, typename Device>
