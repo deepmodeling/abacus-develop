@@ -3,9 +3,6 @@
 
 #include <string>
 #include "module_base/global_function.h"
-#ifdef __LCAO
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
-#endif
 class Restart
 {
 public:

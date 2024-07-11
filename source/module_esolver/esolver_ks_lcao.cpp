@@ -466,7 +466,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners()
 
     if (INPUT.out_proj_band) // Projeced band structure added by jiyy-2022-4-20
     {
-        ModuleIO::write_proj_band_lcao(this->psi, this->LM, this->pelec, this->kv, GlobalC::ucell, this->p_hamilt);
+        ModuleIO::write_proj_band_lcao(this->psi, this->ParaV, this->pelec, this->kv, GlobalC::ucell, this->p_hamilt);
     }
 
     if (INPUT.out_dos)

@@ -3,7 +3,8 @@
 
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
+#include "module_basis/module_ao/parallel_orbitals.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_HS_arrays.hpp"
 
 #include <string>
 
