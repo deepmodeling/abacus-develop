@@ -272,8 +272,10 @@ class DiagoLapackPrepare
         double maxerror = 0.0;
         int iindex = 0;
         bool pass = true;
+        std::cout << std::endl;
         for (int i = 0; i < nbands; i++)
         {
+            std::cout << e_lapack[i] << " ";
             double error = std::abs(e_lapack[i] - e_solver[i]);
             if (error > maxerror)
             {
@@ -284,6 +286,7 @@ class DiagoLapackPrepare
                 pass = false;
 }
         }
+        std::cout << std::endl;
 
         std::cout << "H/S matrix are read from " << hfname << ", " << sfname << std::endl;
         std::cout << ", NLOCAL=" << nlocal << ", nbands=" << nbands << ", nb2d=" << nb2d;
