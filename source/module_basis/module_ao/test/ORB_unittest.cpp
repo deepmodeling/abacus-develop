@@ -23,8 +23,9 @@ void test_orb::SetUp()
 void test_orb::TearDown()
 {
     int* nproj = new int[ORB.get_ntype()];
-    for (int i = 0; i < ORB.get_ntype(); ++i)
+    for (int i = 0; i < ORB.get_ntype(); ++i) {
         nproj[i] = 0;
+}
     ooo.clear_after_ions(OGT, ORB, 0, nproj);
     delete[] nproj;
     delete[] orbital_fn;
@@ -53,8 +54,9 @@ void test_orb::set_ekcut()
         while (in_ao.good())
         {
             in_ao >> word;
-            if (word == "Cutoff(Ry)")
+            if (word == "Cutoff(Ry)") {
                 break;
+}
         }
         in_ao >> ek_current;
         lcao_ecut = std::max(lcao_ecut, ek_current);
@@ -70,8 +72,7 @@ void test_orb::set_ekcut()
 void test_orb::set_orbs()
 {
 
-    ooo.read_orb_first(ofs_running,
-                       ORB,
+    ORB.init(ofs_running,
                        ntype_read,
                        "./",
                        orbital_fn,
@@ -87,8 +88,9 @@ void test_orb::set_orbs()
                        0); // myrank
 
     int* nproj = new int[ORB.get_ntype()];
-    for (int i = 0; i < ORB.get_ntype(); ++i)
+    for (int i = 0; i < ORB.get_ntype(); ++i) {
         nproj[i] = 0;
+}
     const Numerical_Nonlocal beta_[ORB.get_ntype()];
 
     ooo.set_orb_tables(ofs_running,
@@ -153,12 +155,14 @@ void test_orb::count_ntype()
         x.erase(x.find_last_not_of(typeOfWhitespaces) + 1);
         x.erase(0, x.find_first_not_of(typeOfWhitespaces));
 
-        if (x == "LATTICE_CONSTANT" || x == "NUMERICAL_ORBITAL" || x == "LATTICE_VECTORS" || x == "ATOMIC_POSITIONS")
+        if (x == "LATTICE_CONSTANT" || x == "NUMERICAL_ORBITAL" || x == "LATTICE_VECTORS" || x == "ATOMIC_POSITIONS") {
             break;
+}
 
         std::string tmpid = x.substr(0, 1);
-        if (!x.empty() && tmpid != "#")
+        if (!x.empty() && tmpid != "#") {
             ntype_read++;
+}
     }
     std::cout << "ntype=" << ntype_read << std::endl;
     ifs.close();
