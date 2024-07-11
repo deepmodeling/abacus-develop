@@ -13,7 +13,6 @@
 
 wavefunc::wavefunc()
 {
-	out_wfc_pw = 0;
 }
 
 wavefunc::~wavefunc()
@@ -45,7 +44,9 @@ psi::Psi<std::complex<double>>* wavefunc::allocate(const int nkstot, const int n
     // if use spin orbital, do not double nks but double allocate evc and wanf2.
     int prefactor = 1;
     if (GlobalV::NSPIN == 4)
+    {
         prefactor = GlobalV::NPOL; // added by zhengdy-soc
+    }
 
     const int nks2 = nks;
 
@@ -69,12 +70,17 @@ psi::Psi<std::complex<double>>* wavefunc::allocate(const int nkstot, const int n
     {
         if ((GlobalV::BASIS_TYPE == "lcao" || GlobalV::BASIS_TYPE == "lcao_in_pw") || winput::out_spillage == 2)
         { // for lcao_in_pw
-            if(this->wanf2 != nullptr) delete[] this->wanf2;
+			if(this->wanf2 != nullptr) 
+			{
+				delete[] this->wanf2;
+			}
             this->wanf2 = new ModuleBase::ComplexMatrix [nks2];
+
 			for (int ik = 0; ik < nks2; ik++)
 			{
 				this->wanf2[ik].create(GlobalV::NLOCAL, npwx * GlobalV::NPOL);
 			}
+
 			const size_t memory_cost = nks2 * GlobalV::NLOCAL*(npwx * GlobalV::NPOL) * sizeof(std::complex<double>);
 			std::cout << " Memory for wanf2 (MB): " << double(memory_cost)/1024.0/1024.0 << std::endl;
 			ModuleBase::Memory::record("WF::wanf2", memory_cost) ;
@@ -103,8 +109,10 @@ void wavefunc::wfcinit(psi::Psi<std::complex<double>> *psi_in, ModulePW::PW_Basi
     ModuleBase::timer::tick("wavefunc", "wfcinit");
     if (GlobalV::BASIS_TYPE == "pw")
     {
-        if (this->irindex != nullptr)
-            delete[] this->irindex;
+		if (this->irindex != nullptr)
+		{
+			delete[] this->irindex;
+		}
         this->irindex = new int[wfc_basis->fftnxy];
         wfc_basis->getfftixy2is(this->irindex);
 #if defined(__CUDA) || defined(__ROCM)
@@ -128,19 +136,28 @@ int wavefunc::get_starting_nw(void)const
     {
         if (GlobalC::ucell.natomwfc >= GlobalV::NBANDS)
         {
-            if(GlobalV::test_wf)GlobalV::ofs_running << " Start wave functions are all pseudo atomic wave functions." << std::endl;
+			if(GlobalV::test_wf)
+			{
+				GlobalV::ofs_running << " Start wave functions are all pseudo atomic wave functions." << std::endl;
+			}
         }
         else
         {
-            if(GlobalV::test_wf)GlobalV::ofs_running << " Start wave functions are atomic + "
-            << GlobalV::NBANDS - GlobalC::ucell.natomwfc
-            << " random wave functions." << std::endl;
+			if(GlobalV::test_wf)
+			{
+				GlobalV::ofs_running << " Start wave functions are atomic + "
+					<< GlobalV::NBANDS - GlobalC::ucell.natomwfc
+					<< " random wave functions." << std::endl;
+			}
         }
         return std::max(GlobalC::ucell.natomwfc,  GlobalV::NBANDS);
     }
     else if (init_wfc == "random")
     {
-        if(GlobalV::test_wf)GlobalV::ofs_running << " Start wave functions are all random." << std::endl;
+		if(GlobalV::test_wf)
+		{
+			GlobalV::ofs_running << " Start wave functions are all random." << std::endl;
+		}
         return GlobalV::NBANDS;
     }
     else
@@ -213,8 +230,10 @@ void diago_PAO_in_pw_k2(const int &ik,
     }
 
     const int starting_nw = p_wf->get_starting_nw();
-    if (starting_nw == 0)
-        return;
+	if (starting_nw == 0)
+	{
+		return;
+	}
     assert(starting_nw > 0);
     std::vector<float> etatom(starting_nw, 0.0);
 
@@ -257,7 +276,16 @@ void diago_PAO_in_pw_k2(const int &ik,
 		ModuleBase::ComplexMatrix wfcatom(starting_nw, nbasis);//added by zhengdy-soc
 		if(GlobalV::test_wf)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "starting_nw", starting_nw);
 
-		p_wf->atomic_wfc(ik, current_nbasis, GlobalC::ucell.lmax_ppwf, wfc_basis, wfcatom, GlobalC::ppcell.tab_at, GlobalV::NQX, GlobalV::DQ);
+		p_wf->atomic_wfc(
+				ik, 
+				current_nbasis, 
+				GlobalC::ucell.lmax_ppwf, 
+				wfc_basis, 
+				wfcatom, 
+				GlobalC::ppcell.tab_at, 
+				GlobalV::NQX, 
+				GlobalV::DQ);
+
 		if( p_wf->init_wfc == "atomic+random" && starting_nw == GlobalC::ucell.natomwfc )//added by qianrui 2021-5-16
 		{
 			p_wf->atomicrandom(wfcatom,0,starting_nw,ik, wfc_basis);
@@ -272,15 +300,12 @@ void diago_PAO_in_pw_k2(const int &ik,
 		// (7) Diago with cg method.
 		std::vector<std::complex<float>> s_wfcatom(starting_nw * nbasis);
 		castmem_z2c_h2h_op()(cpu_ctx, cpu_ctx, s_wfcatom.data(), wfcatom.c, starting_nw * nbasis);
+
 		//if(GlobalV::DIAGO_TYPE == "cg") xiaohui modify 2013-09-02
 		if(GlobalV::KS_SOLVER=="cg") //xiaohui add 2013-09-02
 		{
 			if(phm_in!= nullptr)
 			{
-				// hsolver::DiagoIterAssist<std::complex<double>>::diagH_subspace_init(phm_in,
-				//                          wfcatom,
-				//                          wvf,
-				//                          etatom.data());
 				hsolver::DiagoIterAssist<std::complex<float>>::diagH_subspace_init(phm_in,
 																	s_wfcatom.data(),
 																	wfcatom.nr,
@@ -382,8 +407,11 @@ void diago_PAO_in_pw_k2(const int &ik,
     */
 
     const int starting_nw = p_wf->get_starting_nw();
-    if (starting_nw == 0)
-        return;
+	if (starting_nw == 0)
+	{
+		return;
+	}
+
     assert(starting_nw > 0);
     std::vector<double> etatom(starting_nw, 0.0);
 
@@ -406,18 +434,21 @@ void diago_PAO_in_pw_k2(const int &ik,
     else if (p_wf->init_wfc.substr(0, 6) == "atomic")
     {
         ModuleBase::ComplexMatrix wfcatom(starting_nw, nbasis); // added by zhengdy-soc
-        if (GlobalV::test_wf)
-            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "starting_nw", starting_nw);
+		if (GlobalV::test_wf)
+		{
+			ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "starting_nw", starting_nw);
+		}
 
-        p_wf->atomic_wfc(ik,
-                               current_nbasis,
-                               GlobalC::ucell.lmax_ppwf,
-                               wfc_basis,
-                               wfcatom,
-                               GlobalC::ppcell.tab_at,
-                               GlobalV::NQX,
-                               GlobalV::DQ);
-        if (p_wf->init_wfc == "atomic+random"
+		p_wf->atomic_wfc(ik,
+				current_nbasis,
+				GlobalC::ucell.lmax_ppwf,
+				wfc_basis,
+				wfcatom,
+				GlobalC::ppcell.tab_at,
+				GlobalV::NQX,
+				GlobalV::DQ);
+
+		if (p_wf->init_wfc == "atomic+random"
             && starting_nw == GlobalC::ucell.natomwfc) // added by qianrui 2021-5-16
         {
             p_wf->atomicrandom(wfcatom, 0, starting_nw, ik, wfc_basis);
@@ -470,6 +501,8 @@ void diago_PAO_in_pw_k2(const base_device::DEVICE_CPU* ctx,
 {
     diago_PAO_in_pw_k2(ik, wvf, wfc_basis, p_wf, phm_in);
 }
+
+
 template <>
 void diago_PAO_in_pw_k2(const base_device::DEVICE_CPU* ctx,
                         const int& ik,
@@ -480,6 +513,7 @@ void diago_PAO_in_pw_k2(const base_device::DEVICE_CPU* ctx,
 {
     diago_PAO_in_pw_k2(ik, wvf, wfc_basis, p_wf, phm_in);
 }
+
 
 #if ((defined __CUDA) || (defined __ROCM))
 template <>
@@ -704,128 +738,6 @@ void diago_PAO_in_pw_k2(const base_device::DEVICE_GPU* ctx,
 
 }//namespace hamilt
 
-//--------------------------------------------
-// get the nearest unitcell positions
-// that exist overlaps between two orbitals
-// iw1 and iw2
-//--------------------------------------------
-int wavefunc::get_R(int ix, int iy, int iz)   // pengfei 2016-11-23
-{
-	int count;
-	ModuleBase::Vector3<double> r,r1,r2;
-
-	for(int iw1=0; iw1<GlobalV::NLOCAL; iw1++)
-	{
-		for(int iw2=0; iw2<GlobalV::NLOCAL; iw2++)
-		{
-			int it1 = iw2it(iw1); int ia1 = iw2ia(iw1);
-			int it2 = iw2it(iw2); int ia2 = iw2ia(iw2);
-			//std::cout <<"iw1= "<<iw1<<" iw2= "<<iw2<<" it1= "<<it1<<" ia1= "<<ia1<<" it2= "<<it2<<" ia2= "<<ia2<<std::endl;
-			count = 0;
-
-			for(int nx=-int(ix/2);nx<=int(ix/2);nx++)
-			{
-				for(int ny=-int(iy/2);ny<=int(iy/2);ny++)
-				{
-					for(int nz=-int(iz/2);nz<=int(iz/2);nz++)
-					{
-						//std::cout <<"count = "<<count<<std::endl;
-						//std::cout<<"nx= "<<nx<<" ny= "<<ny<<" nz= "<<nz<<std::endl;
-						r1.x = GlobalC::ucell.atoms[it1].tau[ia1].x * GlobalC::ucell.lat0;
-						r1.y = GlobalC::ucell.atoms[it1].tau[ia1].y * GlobalC::ucell.lat0;
-						r1.z = GlobalC::ucell.atoms[it1].tau[ia1].z * GlobalC::ucell.lat0;
-						r2.x = (GlobalC::ucell.atoms[it2].tau[ia2].x
-						+ GlobalC::ucell.latvec.e11 * nx + GlobalC::ucell.latvec.e21 * ny + GlobalC::ucell.latvec.e31 * nz) * GlobalC::ucell.lat0;
-						r2.y = (GlobalC::ucell.atoms[it2].tau[ia2].y
-						+ GlobalC::ucell.latvec.e12 * nx + GlobalC::ucell.latvec.e22 * ny + GlobalC::ucell.latvec.e32 * nz) * GlobalC::ucell.lat0;
-						r2.z = (GlobalC::ucell.atoms[it2].tau[ia2].z
-						+ GlobalC::ucell.latvec.e13 * nx + GlobalC::ucell.latvec.e23 * ny + GlobalC::ucell.latvec.e33 * nz) * GlobalC::ucell.lat0;
-						r = r2 - r1;
-						double distance = sqrt(r*r);
-
-						if(distance < (GlobalC::ucell.atoms[it1].Rcut + GlobalC::ucell.atoms[it2].Rcut))
-						{
-							R[iw1][iw2][count].x = nx;
-							R[iw1][iw2][count].y = ny;
-							R[iw1][iw2][count].z = nz;
-							count++;
-						}
-					}
-				}
-			}
-			Rmax[iw1][iw2] = count;
-		}
-	}
-
-	int NR = 0;
-	for(int iw1=0;iw1<GlobalV::NLOCAL;iw1++)
-	{
-		for(int iw2=0;iw2<GlobalV::NLOCAL;iw2++)
-		{
-			if(Rmax[iw1][iw2] > NR)
-			{
-				NR = Rmax[iw1][iw2];
-			}
-		}
-	}
-
-	return NR;
-}
-
-
-int wavefunc::iw2it(int iw)    // pengfei 2016-11-23
-{
-    int ic, type;
-    ic = 0;
-    type = 0;
-    for(int it = 0; it<GlobalC::ucell.ntype; it++)
-	{
-        for(int ia = 0; ia<GlobalC::ucell.atoms[it].na; ia++)
-        {
-            for(int L = 0; L<GlobalC::ucell.atoms[it].nwl+1; L++)
-			{
-                for(int N = 0; N<GlobalC::ucell.atoms[it].l_nchi[L]; N++)
-                {
-                    for(int i=0; i<(2*L+1); i++)
-                    {
-                        if(ic == iw)
-                        {
-                            type = it;
-                        }
-                        ic++;
-					}
-                }
-			}
-        }
-	}
-    return type;
-}
-
-int wavefunc::iw2ia( int iw)    // pengfei 2016-11-23
-{
-	int ic, na;
-	ic = 0;
-    na = 0;
-	for(int it =0; it<GlobalC::ucell.ntype; it++)
-	{
-		for(int ia = 0; ia<GlobalC::ucell.atoms[it].na; ia++)
-		{
-			for(int L=0; L<GlobalC::ucell.atoms[it].nwl+1; L++)
-				for(int N=0; N<GlobalC::ucell.atoms[it].l_nchi[L]; N++)
-				{
-					for(int i=0; i<(2*L+1); i++)
-					{
-						if(ic == iw)
-						{
-							na = ia;
-						}
-						ic++;
-					}
-				}
-		}
-	}
-	return na;
-}
 
 //LiuXh add a new function here,
 //20180515

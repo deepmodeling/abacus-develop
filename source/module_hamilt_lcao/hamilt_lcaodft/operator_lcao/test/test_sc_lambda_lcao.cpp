@@ -55,14 +55,6 @@ void hamilt::OperatorLCAO<double, double>::contributeHk(const int ik_in)
  *   -
  */
 
-LCAO_Matrix::LCAO_Matrix()
-{
-}
-
-LCAO_Matrix::~LCAO_Matrix()
-{
-}
-
 class ScLambdaLCAOTest : public ::testing::Test
 {
   protected:
@@ -86,17 +78,11 @@ TEST_F(ScLambdaLCAOTest, ContributeHk)
     int ncol = 2;
     paraV.set_serial(nrow, ncol);
     EXPECT_EQ(paraV.nloc, 4);
-    // set LM
-    LCAO_Matrix LM;
-    LM.ParaV = &paraV;
-    EXPECT_EQ(LM.ParaV->nloc, 4);
-    LM.Sloc2 = {
-        std::complex<double>{1.0, 0.0},
-        std::complex<double>{0.0, 0.0},
-        std::complex<double>{0.0, 0.0},
-        std::complex<double>{1.0, 0.0}
-    };
-    LM.Hloc2.resize(LM.ParaV->nloc, 0.0);
+    hamilt::HS_Matrix_K<std::complex<double>> hsk(&paraV);
+    hsk.set_zero_hk();
+    hsk.set_zero_sk();
+    hsk.get_sk()[0] = std::complex<double>{1.0, 0.0};
+    hsk.get_sk()[3] = std::complex<double>{1.0, 0.0};
     // set sc
     SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>& sc
         = SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>::getScInstance();
@@ -122,9 +108,8 @@ TEST_F(ScLambdaLCAOTest, ContributeHk)
     EXPECT_TRUE(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER());
     // set sc_lambda_op
     auto sc_lambda_op
-        = hamilt::OperatorScLambda<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>(&LM,
+        = hamilt::OperatorScLambda<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>(&hsk,
                                                                                                      this->kvec_d,
-                                                                                                     nullptr,
                                                                                                      nullptr,
                                                                                                      isk);
     sc_lambda_op.contributeHk(0);
@@ -134,14 +119,14 @@ TEST_F(ScLambdaLCAOTest, ContributeHk)
         std::complex<double>{-1.0, -1.0},
         std::complex<double>{1.0,  0.0}
     };
-    EXPECT_DOUBLE_EQ(LM.Hloc2[0].real(), columnMajor_h_lambda[0].real());
-    EXPECT_DOUBLE_EQ(LM.Hloc2[0].imag(), columnMajor_h_lambda[0].imag());
-    EXPECT_DOUBLE_EQ(LM.Hloc2[1].real(), columnMajor_h_lambda[1].real());
-    EXPECT_DOUBLE_EQ(LM.Hloc2[1].imag(), columnMajor_h_lambda[1].imag());
-    EXPECT_DOUBLE_EQ(LM.Hloc2[2].real(), columnMajor_h_lambda[2].real());
-    EXPECT_DOUBLE_EQ(LM.Hloc2[2].imag(), columnMajor_h_lambda[2].imag());
-    EXPECT_DOUBLE_EQ(LM.Hloc2[3].real(), columnMajor_h_lambda[3].real());
-    EXPECT_DOUBLE_EQ(LM.Hloc2[3].imag(), columnMajor_h_lambda[3].imag());
+    EXPECT_DOUBLE_EQ(hsk.get_hk()[0].real(), columnMajor_h_lambda[0].real());
+    EXPECT_DOUBLE_EQ(hsk.get_hk()[0].imag(), columnMajor_h_lambda[0].imag());
+    EXPECT_DOUBLE_EQ(hsk.get_hk()[1].real(), columnMajor_h_lambda[1].real());
+    EXPECT_DOUBLE_EQ(hsk.get_hk()[1].imag(), columnMajor_h_lambda[1].imag());
+    EXPECT_DOUBLE_EQ(hsk.get_hk()[2].real(), columnMajor_h_lambda[2].real());
+    EXPECT_DOUBLE_EQ(hsk.get_hk()[2].imag(), columnMajor_h_lambda[2].imag());
+    EXPECT_DOUBLE_EQ(hsk.get_hk()[3].real(), columnMajor_h_lambda[3].real());
+    EXPECT_DOUBLE_EQ(hsk.get_hk()[3].imag(), columnMajor_h_lambda[3].imag());
 }
 
 TEST_F(ScLambdaLCAOTest, ContributeHkS2)
@@ -154,13 +139,9 @@ TEST_F(ScLambdaLCAOTest, ContributeHkS2)
     paraV.set_serial(nrow, ncol);
     EXPECT_EQ(paraV.nloc, 1);
     // set LM
-    LCAO_Matrix LM;
-    LM.ParaV = &paraV;
-    EXPECT_EQ(LM.ParaV->nloc, 1);
-    LM.Sloc2 = {
-        std::complex<double>{1.0, 0.0}
-    };
-    LM.Hloc2.resize(LM.ParaV->nloc, 0.0);
+    hamilt::HS_Matrix_K<std::complex<double>> hsk(&paraV);
+    hsk.set_zero_hk();
+    hsk.get_sk()[0] = std::complex<double>{1.0, 0.0};
     // set sc
     SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>& sc
         = SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>::getScInstance();
@@ -186,17 +167,16 @@ TEST_F(ScLambdaLCAOTest, ContributeHkS2)
     EXPECT_TRUE(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER());
     // set sc_lambda_op
     auto sc_lambda_op
-        = hamilt::OperatorScLambda<hamilt::OperatorLCAO<std::complex<double>, double>>(&LM,
-                                                                                                     this->kvec_d,
-                                                                                                     nullptr,
-                                                                                                     nullptr,
-                                                                                                     isk);
+        = hamilt::OperatorScLambda<hamilt::OperatorLCAO<std::complex<double>, double>>(&hsk,
+                                                                                    this->kvec_d,
+                                                                                    nullptr,
+                                                                                    isk);
     sc_lambda_op.contributeHk(0);
     std::vector<std::complex<double>> columnMajor_h_lambda = {
         std::complex<double>{-1.0,  0.0}
     };
-    EXPECT_DOUBLE_EQ(LM.Hloc2[0].real(), columnMajor_h_lambda[0].real());
-    EXPECT_DOUBLE_EQ(LM.Hloc2[0].imag(), columnMajor_h_lambda[0].imag());
+    EXPECT_DOUBLE_EQ(hsk.get_hk()[0].real(), columnMajor_h_lambda[0].real());
+    EXPECT_DOUBLE_EQ(hsk.get_hk()[0].imag(), columnMajor_h_lambda[0].imag());
 }
 
 TEST_F(ScLambdaLCAOTest, TemplateHelpers)
@@ -205,15 +185,13 @@ TEST_F(ScLambdaLCAOTest, TemplateHelpers)
         = hamilt::OperatorScLambda<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>(nullptr,
                                                                                                      this->kvec_d,
                                                                                                      nullptr,
-                                                                                                     nullptr,
                                                                                                      isk);
     auto sc_lambda_op1 = hamilt::OperatorScLambda<hamilt::OperatorLCAO<std::complex<double>, double>>(nullptr,
                                                                                                       this->kvec_d,
                                                                                                       nullptr,
-                                                                                                      nullptr,
                                                                                                       isk);
     auto sc_lambda_op2
-        = hamilt::OperatorScLambda<hamilt::OperatorLCAO<double, double>>(nullptr, this->kvec_d, nullptr, nullptr, isk);
+        = hamilt::OperatorScLambda<hamilt::OperatorLCAO<double, double>>(nullptr, this->kvec_d, nullptr, isk);
     EXPECT_NO_THROW(sc_lambda_op.contributeHR());
     EXPECT_NO_THROW(sc_lambda_op1.contributeHR());
     EXPECT_NO_THROW(sc_lambda_op2.contributeHR());

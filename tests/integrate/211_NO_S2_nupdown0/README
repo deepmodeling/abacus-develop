@@ -1,0 +1,7 @@
+This test for:
+*Si-diamond with small perturbation
+*one additional electron
+*nspin = 2
+*sg15 pseudopotential
+*mixing_type plain
+*mixing_beta 0.7

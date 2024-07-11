@@ -1,66 +1,73 @@
 #include "gint_vl.cuh"
 #include "interp.cuh"
-#include "module_hamilt_lcao/module_gint/kernels/cuda/cuda_tools.cuh"
+#include "cuda_tools.cuh"
 #include "sph.cuh"
 namespace GintKernel
 {
 
-__global__ void get_psi_and_vldr3(double* ylmcoef,
-                                  double delta_r_g,
-                                  int bxyz_g,
-                                  double nwmax_g,
-                                  double* input_double,
-                                  int* input_int,
-                                  int* num_psir,
-                                  int psi_size_max,
-                                  int* ucell_atom_nwl,
-                                  bool* atom_iw2_new,
-                                  int* atom_iw2_ylm,
-                                  int* atom_nw,
-                                  int nr_max,
-                                  double* psi_u,
-                                  double* psir_ylm_left,
-                                  double* psir_r)
+__global__ void get_psi_and_vldr3(const double* const ylmcoef,
+                                  const double delta_r,
+                                  const int bxyz,
+                                  const double nwmax,
+                                  const double max_atom,
+                                  const int* const ucell_atom_nwl,
+                                  const bool* const atom_iw2_new,
+                                  const int* const atom_iw2_ylm,
+                                  const int* const atom_nw,
+                                  const double* const rcut,
+                                  const int nr_max,
+                                  const double* const psi_u,
+                                  const double* const mcell_pos,
+                                  const double* const dr_part,
+                                  const double* const vldr3,
+                                  const uint8_t* const atoms_type,
+                                  const int* const atoms_num_info,
+                                  double* psi,
+                                  double* psi_vldr3)
 {
-    int size = num_psir[blockIdx.x];
-    int start_index = psi_size_max * blockIdx.x;
-    int end_index = start_index + size;
-    start_index += threadIdx.x + blockDim.x * blockIdx.y;
-    for (int index = start_index; index < end_index;
-         index += blockDim.x * gridDim.y)
+    const int bcell_id = blockIdx.x;
+    const int num_atoms = atoms_num_info[2 * bcell_id];
+    const int pre_atoms = atoms_num_info[2 * bcell_id + 1];
+    const int mcell_id = blockIdx.y;
+    const double vldr3_value = vldr3[bcell_id * bxyz + mcell_id];
+    const double mcell_pos_x = mcell_pos[3 * mcell_id];
+    const double mcell_pos_y = mcell_pos[3 * mcell_id + 1];
+    const double mcell_pos_z = mcell_pos[3 * mcell_id + 2];
+
+    for(int atom_id = threadIdx.x; atom_id < num_atoms; atom_id += blockDim.x)
     {
-        double dr[3];
-        int index_double = index * 5;
-        dr[0] = input_double[index_double];
-        dr[1] = input_double[index_double + 1];
-        dr[2] = input_double[index_double + 2];
-        double distance = input_double[index_double + 3];
-        double vlbr3_value = input_double[index_double + 4];
-        double ylma[49];
-        int index_int = index * 2;
-        int it = input_int[index_int];
-        int dist_tmp = input_int[index_int + 1];
-        int nwl = ucell_atom_nwl[it];
-        spherical_harmonics(dr, distance, nwl, ylma, ylmcoef);
-
-        interpolate(distance,
-                    delta_r_g,
-                    it,
-                    nwmax_g,
-                    nr_max,
-                    atom_nw,
-                    atom_iw2_new,
-                    psi_u,
-                    ylma,
-                    atom_iw2_ylm,
-                    psir_ylm_left,
-                    dist_tmp,
-                    bxyz_g);
-
-        for (int iw = 0; iw < atom_nw[it]; ++iw)
+        const int dr_start = 3 * (pre_atoms + atom_id);
+        const double dr_x = dr_part[dr_start] + mcell_pos_x;
+        const double dr_y = dr_part[dr_start + 1] + mcell_pos_y;
+        const double dr_z = dr_part[dr_start + 2] + mcell_pos_z;
+        double dist = sqrt(dr_x * dr_x + dr_y * dr_y + dr_z * dr_z);
+        const int atype = __ldg(atoms_type + pre_atoms + atom_id);
+        if(dist < rcut[atype])
         {
-            psir_r[dist_tmp] = psir_ylm_left[dist_tmp] * vlbr3_value;
-            dist_tmp += bxyz_g;
+            if (dist < 1.0E-9)
+            {
+                dist += 1.0E-9;
+            }
+            double dr[3] = {dr_x / dist, dr_y / dist, dr_z / dist};
+            double ylma[49];
+            const int nwl = __ldg(ucell_atom_nwl + atype);
+            spherical_harmonics(dr, nwl, ylma, ylmcoef);
+            int psi_idx = (bcell_id * max_atom + atom_id) * bxyz * nwmax + mcell_id;
+            interp_vl(dist,
+                      delta_r,
+                      atype,
+                      nwmax,
+                      bxyz,
+                      nr_max,
+                      atom_nw,
+                      atom_iw2_new,
+                      psi_u,
+                      ylma,
+                      atom_iw2_ylm,
+                      vldr3_value,
+                      psi,
+                      psi_vldr3,
+                      psi_idx);
         }
     }
 }

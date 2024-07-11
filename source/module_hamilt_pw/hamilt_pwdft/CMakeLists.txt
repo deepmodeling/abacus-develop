@@ -8,6 +8,7 @@ list(APPEND objects
     operator_pw/meta_pw.cpp
     operator_pw/velocity_pw.cpp
     operator_pw/operator_pw.cpp
+    forces_nl.cpp
     forces.cpp
     forces_us.cpp
     stress_func_cc.cpp
@@ -25,11 +26,14 @@ list(APPEND objects
     VNL_grad_pw.cpp
     wavefunc.cpp
     wf_atomic.cpp
+    wfinit.cpp
     structure_factor.cpp
     structure_factor_k.cpp
     soc.cpp
     global.cpp
     parallel_grid.cpp
+    elecond.cpp
+    fs_nonlocal_tools.cpp
 )
 
 add_library(

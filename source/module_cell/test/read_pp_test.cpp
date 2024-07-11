@@ -746,6 +746,10 @@ TEST_F(ReadPPTest, AverageSimpleReturns)
 	upf->has_so = 1;
 	ierr = upf->average_p(lambda);
 	EXPECT_EQ(ierr,0);
+    upf->has_so = 1;
+    upf->tvanp = 1;
+    ierr = upf->average_p(lambda);
+    EXPECT_EQ(ierr, 1);
 }
 
 TEST_F(ReadPPTest, AverageErrReturns)

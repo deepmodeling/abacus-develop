@@ -1,8 +1,8 @@
 #include "output_hcontainer.h"
 
-#include <fstream>
-
 #include "module_io/sparse_matrix.h"
+
+#include <fstream>
 
 namespace hamilt
 {
@@ -13,17 +13,10 @@ namespace hamilt
  */
 template <typename T>
 Output_HContainer<T>::Output_HContainer(hamilt::HContainer<T>* hcontainer,
-                                        const Parallel_Orbitals* ParaV,
-                                        const UnitCell& ucell,
                                         std::ostream& ofs,
                                         double sparse_threshold,
                                         int precision)
-    : _hcontainer(hcontainer),
-      _ParaV(ParaV),
-      _ucell(ucell),
-      _ofs(ofs),
-      _sparse_threshold(sparse_threshold),
-      _precision(precision)
+    : _hcontainer(hcontainer), _ofs(ofs), _sparse_threshold(sparse_threshold), _precision(precision)
 {
 }
 
@@ -65,7 +58,8 @@ template <typename T>
 void Output_HContainer<T>::write_single_R(int rx, int ry, int rz)
 {
     this->_hcontainer->fix_R(rx, ry, rz);
-    ModuleIO::SparseMatrix<T> sparse_matrix = ModuleIO::SparseMatrix<T>(this->_ParaV->nrow, this->_ParaV->ncol);
+    ModuleIO::SparseMatrix<T> sparse_matrix
+        = ModuleIO::SparseMatrix<T>(_hcontainer->get_nbasis(), _hcontainer->get_nbasis());
     sparse_matrix.setSparseThreshold(this->_sparse_threshold);
     for (int iap = 0; iap < this->_hcontainer->size_atom_pairs(); ++iap)
     {

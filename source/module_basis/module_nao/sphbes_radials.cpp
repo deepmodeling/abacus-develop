@@ -1,17 +1,18 @@
 #include "module_basis/module_nao/sphbes_radials.h"
 
-#include <algorithm>
-#include <functional>
-#include <regex>
-#include <iterator>
-
 #include "module_base/math_sphbes.h"
 #include "module_base/parallel_common.h"
 #include "module_base/tool_quit.h"
 
+#include <algorithm>
+#include <functional>
+#include <iterator>
+#include <regex>
+
 SphbesRadials& SphbesRadials::operator=(const SphbesRadials& rhs)
 {
-    if (this != &rhs) {
+    if (this != &rhs)
+    {
         RadialSet::operator=(rhs);
         dr_ = rhs.dr_;
         sigma_ = rhs.sigma_;
@@ -20,7 +21,11 @@ SphbesRadials& SphbesRadials::operator=(const SphbesRadials& rhs)
     return *this;
 }
 
-void SphbesRadials::build(const std::string& file, const double dr, const int itype, std::ofstream* ptr_log, const int rank)
+void SphbesRadials::build(const std::string& file,
+                          const double dr,
+                          const int itype,
+                          std::ofstream* ptr_log,
+                          const int rank)
 {
     cleanup();
     coeff_.clear();
@@ -28,7 +33,8 @@ void SphbesRadials::build(const std::string& file, const double dr, const int it
     std::ifstream ifs;
     bool is_open = false;
 
-    if (rank == 0) {
+    if (rank == 0)
+    {
         ifs.open(file);
         is_open = ifs.is_open();
     }
@@ -67,7 +73,14 @@ void SphbesRadials::build(const std::string& file, const double dr, const int it
     }
 }
 
-void SphbesRadials::build(const int lmax, const int nbes, const double rcut, const double sigma, const double dr, const int itype, std::ofstream* ptr_log, const int rank)
+void SphbesRadials::build(const int lmax,
+                          const int nbes,
+                          const double rcut,
+                          const double sigma,
+                          const double dr,
+                          const int itype,
+                          std::ofstream* ptr_log,
+                          const int rank)
 {
     cleanup();
     coeff_.clear();
@@ -114,7 +127,9 @@ void SphbesRadials::read_coeff(std::ifstream& ifs, std::ofstream* ptr_log, const
     if (rank == 0)
     {
         // reach the Coefficient block (between <Coefficient rcut=...> and </Coefficient>)
-        while ((ifs >> tmp) && tmp != "<Coefficient") {}
+        while ((ifs >> tmp) && tmp != "<Coefficient")
+        {
+        }
 
         // read the rest part of the Coefficient block at once (before </Coefficient>)
         std::getline(ifs, info, '<');
@@ -125,7 +140,7 @@ void SphbesRadials::read_coeff(std::ifstream& ifs, std::ofstream* ptr_log, const
 #endif
 
     // extract rcut & sigma from the pattern KEYWORD=" VALUE "
-    if ( (tmp = extract(info, "rcut")).empty() )
+    if ((tmp = extract(info, "rcut")).empty())
     { // rcut must be provided by the file; quit if not found.
         ModuleBase::WARNING_QUIT("SphbesRadials::read_coeff", "Fails to read the cutoff radius (rcut).");
     }
@@ -138,11 +153,13 @@ void SphbesRadials::read_coeff(std::ifstream& ifs, std::ofstream* ptr_log, const
 
     // find the indices of all occurences of "Type" (plus the one-past-last index)
     std::vector<size_t> delim; // delimiters
-    std::for_each(v.begin(), v.end(), [&delim, &v] (std::string const& s) 
-            { if (s == "Type") delim.push_back(&s - &v[0]); }); // for_each is guaranteed to be sequential
+    std::for_each(v.begin(), v.end(), [&delim, &v](std::string const& s) {
+        if (s == "Type")
+            delim.push_back(&s - &v[0]);
+    }); // for_each is guaranteed to be sequential
     delim.push_back(v.size());
 
-    // NOTE: Zeta-Orbital in some ORBITAL_RESULTS.txt is one-based numbering 
+    // NOTE: Zeta-Orbital in some ORBITAL_RESULTS.txt is one-based numbering
     // which needs to be converted to a zero-based numbering.
     // Here we keep track of this index ourselves.
     int l_last = -1;
@@ -153,26 +170,29 @@ void SphbesRadials::read_coeff(std::ifstream& ifs, std::ofstream* ptr_log, const
         izeta = (l == l_last) ? izeta + 1 : 0;
         l_last = l;
 
-        std::vector<double> coeff_q(delim[i+1] - delim[i] - 6);
-        std::transform(v.begin() + delim[i] + 6, v.begin() + delim[i+1], coeff_q.begin(),
-                [](std::string const& s) { return std::stod(s); });
+        std::vector<double> coeff_q(delim[i + 1] - delim[i] - 6);
+        std::transform(v.begin() + delim[i] + 6, v.begin() + delim[i + 1], coeff_q.begin(), [](std::string const& s) {
+            return std::stod(s);
+        });
         coeff_.emplace(std::make_pair(l, izeta), std::move(coeff_q));
     }
 }
 
-std::string SphbesRadials::extract(std::string const& str, std::string const& keyword) {
-     std::smatch match;
-     std::string regex_string = keyword + "=\" *([^= ]+) *\"";
-     std::regex re(regex_string);
-     std::regex_search(str, match, re);
-     return match.empty() ? "" : match[1].str();
+std::string SphbesRadials::extract(std::string const& str, std::string const& keyword)
+{
+    std::smatch match;
+    std::string regex_string = keyword + "=\" *([^= ]+) *\"";
+    std::regex re(regex_string);
+    std::regex_search(str, match, re);
+    return match.empty() ? "" : match[1].str();
 }
 
-
-std::vector<std::string> SphbesRadials::split(std::string const& str, const char* delim) {
+std::vector<std::string> SphbesRadials::split(std::string const& str, const char* delim)
+{
     std::vector<std::string> v;
     std::string::size_type start = 0, end = 0;
-    while ((start = str.find_first_not_of(delim, end)) != std::string::npos) {
+    while ((start = str.find_first_not_of(delim, end)) != std::string::npos)
+    {
         end = str.find_first_of(delim, start);
         v.push_back(str.substr(start, end - start));
     }
@@ -180,7 +200,7 @@ std::vector<std::string> SphbesRadials::split(std::string const& str, const char
 }
 
 std::vector<double> SphbesRadials::sphbes_comb(const int l,
-                                               std::vector<double> const& coeff_q, 
+                                               std::vector<double> const& coeff_q,
                                                double rcut,
                                                double dr,
                                                std::vector<double> const& q)
@@ -191,7 +211,7 @@ std::vector<double> SphbesRadials::sphbes_comb(const int l,
 #endif
     int nr = static_cast<int>(rcut / dr) + 1;
     std::vector<double> r(nr);
-    std::for_each(r.begin(), r.end(), [&r, dr] (double& x) { x = (&x - r.data()) * dr; });
+    std::for_each(r.begin(), r.end(), [&r, dr](double& x) { x = (&x - r.data()) * dr; });
 
     std::vector<double> tmp(nr, 0.0);
     std::vector<double> f(nr, 0.0);
@@ -199,7 +219,8 @@ std::vector<double> SphbesRadials::sphbes_comb(const int l,
     // f[ir] = \sum_{iq} coeff[iq] * j_{l}(q[i] * r[ir])
     for (size_t iq = 0; iq != q.size(); ++iq)
     {
-        if (coeff_q[iq] == 0.0) continue;
+        if (coeff_q[iq] == 0.0)
+            continue;
 
         ModuleBase::Sphbes::sphbesj(nr, r.data(), q[iq], l, tmp.data());
         for (size_t ir = 0; ir != tmp.size(); ++ir)
@@ -213,7 +234,7 @@ std::vector<double> SphbesRadials::sphbes_comb(const int l,
 
 double SphbesRadials::smooth(double r, double rcut, double sigma)
 {
-    return (r < rcut) * (sigma == 0 ? 1.0 : 1.0 - std::exp(-0.5 * std::pow( (r - rcut) / sigma, 2)));
+    return (r < rcut) * (sigma == 0 ? 1.0 : 1.0 - std::exp(-0.5 * std::pow((r - rcut) / sigma, 2)));
 }
 
 void SphbesRadials::build_radset(const bool normalize)
@@ -226,7 +247,7 @@ void SphbesRadials::build_radset(const bool normalize)
 
     delete[] nzeta_;
     nzeta_ = new int[lmax_ + 1](); // zero initialized
-    for (auto const& p : coeff_)
+    for (auto const& p: coeff_)
     {
         nzeta_[p.first.first]++;
     }
@@ -235,11 +256,11 @@ void SphbesRadials::build_radset(const bool normalize)
 
     int nr = static_cast<int>(rcut_max_ / dr_) + 1;
     std::vector<double> r(nr);
-    std::for_each(r.begin(), r.end(), [&r, this] (double& x) { x = (&x - r.data()) * dr_; });
+    std::for_each(r.begin(), r.end(), [&r, this](double& x) { x = (&x - r.data()) * dr_; });
 
     nchi_ = coeff_.size();
     chi_ = new NumericalRadial[nchi_];
-    for (auto const& p : coeff_) // p has the form of ( (l, izeta), coeff_q )
+    for (auto const& p: coeff_) // p has the form of ( (l, izeta), coeff_q )
     {
         int l = p.first.first;
         int izeta = p.first.second;
@@ -248,16 +269,18 @@ void SphbesRadials::build_radset(const bool normalize)
         // find wave numbers such that j_l(q * rcut) = 0
         std::vector<double> q(coeff_q.size());
         ModuleBase::Sphbes::sphbes_zeros(l, coeff_q.size(), q.data());
-        std::for_each(q.begin(), q.end(), [this] (double& qi) { qi /= rcut_max_; });
+        std::for_each(q.begin(), q.end(), [this](double& qi) { qi /= rcut_max_; });
 
         // linear combination of spherical Bessel functions
         std::vector<double> f = sphbes_comb(l, coeff_q, rcut_max_, dr_, q);
 
         // smooth the function at rcut
-        std::transform(r.begin(), r.end(), f.begin(), f.begin(),
-                [this] (double ri, double fi) { return fi * smooth(ri, rcut_max_, sigma_); });
+        std::transform(r.begin(), r.end(), f.begin(), f.begin(), [this](double ri, double fi) {
+            return fi * smooth(ri, rcut_max_, sigma_);
+        });
 
         chi_[index(l, izeta)].build(l, true, nr, r.data(), f.data(), 0, izeta, symbol_, itype_, false);
-        if (normalize) chi_[index(l, izeta)].normalize();
+        if (normalize)
+            chi_[index(l, izeta)].normalize();
     }
 }

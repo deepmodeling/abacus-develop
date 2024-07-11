@@ -21,6 +21,8 @@ add_library(
     setup_nonlocal.cpp
     klist.cpp
     parallel_kpoints.cpp
+    cell_index.cpp
+    check_atomic_stru.cpp
 )
 
 if(ENABLE_COVERAGE)

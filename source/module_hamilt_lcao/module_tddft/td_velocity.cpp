@@ -1,11 +1,12 @@
 #include "td_velocity.h"
 
-#include "module_base/timer.h"
 #include "module_elecstate/potentials/H_TDDFT_pw.h"
 
 bool TD_Velocity::tddft_velocity = false;
 bool TD_Velocity::out_mat_R = false;
 bool TD_Velocity::out_vecpot = false;
+bool TD_Velocity::out_current = false;
+bool TD_Velocity::out_current_k = false;
 bool TD_Velocity::init_vecpot_file = false;
 
 TD_Velocity* TD_Velocity::td_vel_op = nullptr;
@@ -25,6 +26,14 @@ TD_Velocity::TD_Velocity()
 TD_Velocity::~TD_Velocity()
 {
     this->destroy_HS_R_td_sparse();
+    delete td_vel_op;
+    for (int dir = 0; dir < 3; dir++)
+    {
+        if (this->current_term[dir] != nullptr)
+        {
+            delete this->current_term[dir];
+        }
+    }
 }
 
 void TD_Velocity::output_cart_At(const std::string& out_dir)
@@ -51,7 +60,7 @@ void TD_Velocity::output_cart_At(const std::string& out_dir)
         // divide by 2.0 to get the atomic unit
         for (int i = 0; i < 3; i++)
         {
-            ofs << std::scientific << std::setprecision(4) << std::setw(15) << cart_At[i] / 2.0;
+            ofs << std::scientific << std::setprecision(4) << std::setw(15) << cart_At[i] ;
         }
         ofs << std::endl;
         ofs.close();
@@ -59,10 +68,7 @@ void TD_Velocity::output_cart_At(const std::string& out_dir)
     return;
 }
 
-void TD_Velocity::cal_cart_At(const ModuleBase::Vector3<double>& a0,
-                              const ModuleBase::Vector3<double>& a1,
-                              const ModuleBase::Vector3<double>& a2,
-                              const ModuleBase::Vector3<double>& At)
+void TD_Velocity::cal_cart_At(const ModuleBase::Vector3<double>& At)
 {
     istep++;
     if (init_vecpot_file)
@@ -71,8 +77,8 @@ void TD_Velocity::cal_cart_At(const ModuleBase::Vector3<double>& a0,
     }
     else
     {
-        const double l_norm[3] = {a0.norm(), a1.norm(), a2.norm()};
-        this->cart_At = a0 * At[0] / l_norm[0] + a1 * At[1] / l_norm[1] + a2 * At[2] / l_norm[2];
+        // transfrom into atomic unit
+        this->cart_At = At/2.0;
     }
     // output the vector potential if needed
     if (out_vecpot == true)
@@ -123,8 +129,6 @@ void TD_Velocity::read_cart_At(void)
             }
             At[i] = component;
         }
-        // unit transform ,change unit into Ry/bohr/e*t_a.u.
-        At *= 2.0;
         // add the tmporary vector3 to the vector potential vector
         At_from_file.push_back(At);
     }
@@ -134,6 +138,41 @@ void TD_Velocity::read_cart_At(void)
 
     return;
 }
+void TD_Velocity::initialize_current_term(const hamilt::HContainer<std::complex<double>>* HR,
+                                          const Parallel_Orbitals* paraV)
+{
+    ModuleBase::TITLE("TD_Velocity", "initialize_current_term");
+    ModuleBase::timer::tick("TD_Velocity", "initialize_current_term");
+
+    for (int dir = 0; dir < 3; dir++)
+    {
+        if (this->current_term[dir] == nullptr)
+            this->current_term[dir] = new hamilt::HContainer<std::complex<double>>(paraV);
+    }
+
+    for (int i = 0; i < HR->size_atom_pairs(); ++i)
+    {
+        hamilt::AtomPair<std::complex<double>>& tmp = HR->get_atom_pair(i);
+        for (int ir = 0; ir < tmp.get_R_size(); ++ir)
+        {
+            const ModuleBase::Vector3<int> R_index = tmp.get_R_index(ir);
+            const int iat1 = tmp.get_atom_i();
+            const int iat2 = tmp.get_atom_j();
+
+            hamilt::AtomPair<std::complex<double>> tmp1(iat1, iat2, R_index, paraV);
+            for (int dir = 0; dir < 3; dir++)
+            {
+                this->current_term[dir]->insert_pair(tmp1);
+            }
+        }
+    }
+    for (int dir = 0; dir < 3; dir++)
+    {
+        this->current_term[dir]->allocate(nullptr, true);
+    }
+    ModuleBase::timer::tick("TDEkinetic", "initialize_HR_tmp");
+}
+
 void TD_Velocity::destroy_HS_R_td_sparse(void)
 {
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>

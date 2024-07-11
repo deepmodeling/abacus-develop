@@ -1,20 +1,28 @@
 list(APPEND objects
-    diagh_consts.cpp
+    diag_const_nums.cpp
     diago_cg.cpp
     diago_david.cpp
     diago_dav_subspace.cpp
     diago_bpcg.cpp
     hsolver_pw.cpp
+    hsolver_lcaopw.cpp
     hsolver_pw_sdft.cpp
     diago_iter_assist.cpp
     
 )
 
 if(ENABLE_LCAO)
-  list(APPEND objects
-      hsolver_lcao.cpp
-      diago_scalapack.cpp
-  )
+  if (ENABLE_MPI)
+    list(APPEND objects
+        hsolver_lcao.cpp
+        diago_scalapack.cpp
+    )
+  else ()
+    list(APPEND objects
+        hsolver_lcao.cpp
+        diago_lapack.cpp
+    )
+  endif ()
   if (USE_ELPA)
     list(APPEND objects
         diago_elpa.cpp
@@ -29,6 +37,13 @@ if(ENABLE_LCAO)
           diago_cusolver.cpp
           diago_cusolver.h
       )
+      if(ENABLE_CUSOLVERMP)
+        list(APPEND objects
+            ./kernels/cuda/diag_cusolvermp.cu
+            diago_cusolvermp.cpp
+            diago_cusolvermp.h
+        )
+      endif()
     add_library(
         diag_cusolver
         OBJECT

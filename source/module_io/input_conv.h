@@ -19,8 +19,14 @@ namespace Input_Conv
 {
 
 /**
- * @brief Pass the data members from the INPUT instance(defined in module_io/input.cpp)
- *        to GlobalV and GlobalC.
+ * @brief template bridge codes for converting string to other types
+ *
+ */
+void tmp_convert();
+
+/**
+ * @brief Pass the data members from the INPUT instance(defined in
+ * module_io/input.cpp) to GlobalV and GlobalC.
  */
 void Convert(void);
 

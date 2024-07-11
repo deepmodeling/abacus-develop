@@ -18,16 +18,17 @@ namespace Json
     void init_output_array_obj();
 
     void add_output_cell_coo_stress_force(
-        UnitCell *ucell,
-        ModuleBase::matrix force, double fac,
-        ModuleBase::matrix stress, double unit_transform
+        const UnitCell *ucell,
+        const ModuleBase::matrix force, const double fac,
+        const ModuleBase::matrix stress, const double unit_transform
     );
 
-    void add_output_efermi_energy_converge(double efermi, double energy ,bool scf_converge );
+    void add_output_efermi_converge(const double efermi, const bool scf_converge );
+    void add_output_energy(const double energy );
 
     void add_output_scf_mag(
-        double total_mag, double absolute_mag,
-        double energy, double ediff, double drho,double time
+        const double total_mag, const double absolute_mag,
+        const double energy, const double ediff, const double drho,const double time
     );
 
 #endif

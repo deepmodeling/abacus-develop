@@ -65,6 +65,7 @@ VPATH=./src_global:\
 ./module_io/json_output:\
 ./src_ri:\
 ./module_ri:\
+./module_parameter:\
 ./\
 
 OBJS_ABACUS_PW=${OBJS_MAIN}\
@@ -109,6 +110,7 @@ ${OBJS_HSOLVER_PEXSI}\
 OBJS_MAIN=main.o\
     driver.o\
     driver_run.o\
+    parameter.o
 
 OBJS_BASE=abfs-vector3_order.o\
     assoc_laguerre.o\
@@ -171,6 +173,8 @@ OBJS_CELL=atom_pseudo.o\
     read_cell_pseudopots.o\
     setup_nonlocal.o\
     klist.o\
+    cell_index.o\
+    check_atomic_stru.o\
 
 OBJS_DEEPKS=LCAO_deepks.o\
         LCAO_deepks_fdelta.o\
@@ -210,9 +214,8 @@ OBJS_ESOLVER=esolver.o\
     esolver_ks.o\
     esolver_fp.o\
     esolver_ks_pw.o\
-    esolver_ks_pw_tool.o\
+    esolver_ks_lcaopw.o\
     esolver_sdft_pw.o\
-    esolver_sdft_pw_tool.o\
     esolver_lj.o\
     esolver_dp.o\
     esolver_of.o\
@@ -233,7 +236,6 @@ OBJS_GINT=gint.o\
       gint_tau.o\
       gint_vl.o\
       gint_k_env.o\
-      gint_k_sparse.o\
       gint_k_sparse1.o\
       gint_k_pvpr.o\
       gint_k_pvdpr.o\
@@ -243,6 +245,16 @@ OBJS_GINT=gint.o\
       grid_meshcell.o\
       grid_meshk.o\
       grid_technique.o\
+      gint_force_cpu_interface.o\
+      gint_rho_cpu_interface.o\
+      gint_vl_cpu_interface.o\
+      cal_psir_ylm.o\
+      cal_dpsir_ylm.o\
+      cal_ddpsir_ylm.o\
+      mult_psi_dm.o\
+      mult_psi_dm_new.o\
+      mult_psi_dmr.o\
+      init_orb.o\
 
 OBJS_HAMILT=hamilt_pw.o\
     operator.o\
@@ -288,16 +300,18 @@ OBJS_HCONTAINER=base_matrix.o\
 OBJS_HSOLVER=diago_cg.o\
     diago_david.o\
     diago_dav_subspace.o\
-    diagh_consts.o\
     diago_bpcg.o\
     hsolver_pw.o\
+    hsolver_lcaopw.o\
     hsolver_pw_sdft.o\
     diago_iter_assist.o\
     math_kernel_op.o\
     dngvd_op.o\
+    diag_const_nums.o\
     
 OBJS_HSOLVER_LCAO=hsolver_lcao.o\
       diago_scalapack.o\
+      diago_lapack.o\
       diago_elpa.o\
       elpa_new.o\
       elpa_new_real.o\
@@ -329,15 +343,10 @@ OBJS_NEIGHBOR=sltk_adjacent_set.o\
 
 OBJS_ORBITAL=ORB_atomic.o\
       ORB_atomic_lm.o\
-      ORB_control.o\
       ORB_gaunt_table.o\
-      ORB_gen_tables.o\
       ORB_nonlocal.o\
       ORB_nonlocal_lm.o\
       ORB_read.o\
-      ORB_table_alpha.o\
-      ORB_table_beta.o\
-      ORB_table_phi.o\
       parallel_2d.o\
       parallel_orbitals.o\
 	  atomic_radials.o\
@@ -418,6 +427,7 @@ OBJS_XC=xc_functional.o\
     xc_funct_hcth.o\
 
 OBJS_IO=input.o\
+    input_conv_tmp.o\
     input_conv.o\
     berryphase.o\
     bessel_basis.o\
@@ -448,10 +458,9 @@ OBJS_IO=input.o\
     unk_overlap_pw.o\
     write_wfc_pw.o\
     winput.o\
-    write_input.o\
     write_cube.o\
     write_rho.o\
-    write_potential.o\
+    write_pot.o\
     write_dipole.o\
     td_current_io.o\
     write_wfc_r.o\
@@ -465,6 +474,16 @@ OBJS_IO=input.o\
     init_info.o\
     readin_info.o\
     output_info.o\
+    parse_args.o\
+    read_input.o\
+    read_input_item_general.o\
+    read_input_item_pw.o\
+    read_input_item_sdft.o\
+    read_input_item_relax.o\
+    read_input_item_lcao.o\
+    read_input_item_postprocess.o\
+    read_input_item_md.o\
+    read_input_item_other.o\
 
 OBJS_IO_LCAO=cal_r_overlap_R.o\
       write_orb_info.o\
@@ -474,19 +493,19 @@ OBJS_IO_LCAO=cal_r_overlap_R.o\
       nscf_fermi_surf.o\
       istate_charge.o\
       istate_envelope.o\
-      mulliken_charge.o\
-      read_dm.o\
+      io_dmk.o\
       unk_overlap_lcao.o\
       read_wfc_nao.o\
+      read_wfc_lcao.o\
       write_wfc_nao.o\
       write_HS_sparse.o\
       single_R_io.o\
       write_HS_R.o\
-      write_dm.o\
-      output_dm.o\
-      output_dm1.o\
-      write_dm_sparse.o\
+      write_dmr.o\
       sparse_matrix.o\
+      output_mulliken.o\
+      output_sk.o\
+      output_dmk.o\
 
 OBJS_LCAO=DM_gamma.o\
       DM_gamma_2d_to_grid.o\
@@ -498,31 +517,38 @@ OBJS_LCAO=DM_gamma.o\
       norm_psi.o\
       propagator.o\
       td_velocity.o\
+      td_current.o\
+      snap_psibeta_half_tddft.o\
       upsi.o\
       FORCE_STRESS.o\
-      FORCE_gamma.o\
-      FORCE_gamma_edm.o\
-      FORCE_gamma_tvnl.o\
-      FORCE_gamma_vl.o\
-      FORCE_k.o\
-      foverlap_k.o\
-      ftvnl_dphi_k.o\
-      fvl_dphi_k.o\
-      fvnl_dbeta_k.o\
-      LCAO_gen_fixedH.o\
-      grid_init.o\
+	  FORCE_gamma.o\
+	  FORCE_k.o\
+	  fvl_dphi_gamma.o\
+	  fvl_dphi_k.o\
+	  fedm_gamma.o\
+	  fedm_k.o\
+	  ftvnl_dphi_gamma.o\
+	  ftvnl_dphi_k.o\
+	  fvnl_dbeta_gamma.o\
+	  fvnl_dbeta_k.o\
+	  grid_init.o\
       spar_dh.o\
       spar_exx.o\
       spar_hsr.o\
       spar_st.o\
       spar_u.o\
-      LCAO_matrix.o\
+      LCAO_set_fs.o\
+      LCAO_set_st.o\
+      LCAO_nl_mu.o\
       LCAO_nnr.o\
+      LCAO_set_zero.o\
+      LCAO_allocate.o\
+      LCAO_set_mat2d.o\
+      center2_orb.o\
       center2_orb-orb11.o\
       center2_orb-orb21.o\
       center2_orb-orb22.o\
       local_orbital_charge.o\
-      local_orbital_wfc.o\
       record_adj.o\
       dm_2d.o\
       wavefunc_in_pw.o\
@@ -562,6 +588,8 @@ OBJS_SRCPW=H_Ewald_pw.o\
     fp_energy.o\
     forces.o\
     forces_us.o\
+    forces_nl.o\
+    fs_nonlocal_tools.o\
     force_op.o\
     stress_op.o\
     wf_op.o\
@@ -594,6 +622,11 @@ OBJS_SRCPW=H_Ewald_pw.o\
     symmetry_rhog.o\
     wavefunc.o\
     wf_atomic.o\
+    wfinit.o\
+    elecond.o\
+    sto_tool.o\
+    sto_elecond.o\
+    sto_dos.o
 
 OBJS_VDW=vdw.o\
     vdwd2_parameters.o\

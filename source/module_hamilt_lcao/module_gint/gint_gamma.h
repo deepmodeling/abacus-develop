@@ -9,7 +9,6 @@
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "grid_technique.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -39,13 +38,13 @@ class Gint_Gamma : public Gint
     // in gint_gamma_env.cpp 
     //------------------------------------------------------
 	// calcualte the envelope function
-	void cal_env(const double* wfc, double* rho,LCAO_Orbitals &orb,UnitCell &ucell);
+	void cal_env(const double* wfc, double* rho,UnitCell &ucell);
 
     //------------------------------------------------------
     // in veff_lcao.cpp
     //------------------------------------------------------
     /// transfer this->hRGint to Veff::hR
-    void transfer_pvpR(hamilt::HContainer<double>* hR,const UnitCell* ucell,const LCAO_Orbitals& orb);
+    void transfer_pvpR(hamilt::HContainer<double>* hR,const UnitCell* ucell);
 
 private:
 

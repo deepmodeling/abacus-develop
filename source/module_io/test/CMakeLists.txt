@@ -8,28 +8,14 @@ install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES INPUTs DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 AddTest(
-  TARGET io_input_test
-  LIBS ${math_libs} base device
-  SOURCES input_test.cpp ../input.cpp
-)
-
-AddTest(
   TARGET io_input_test_para
-  LIBS ${math_libs} base device
-  SOURCES input_test_para.cpp ../input.cpp
+  LIBS ${math_libs} base device io_input parameter
+  SOURCES read_input_ptest.cpp
 )
 
-install(FILES input_test_para.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-find_program(BASH bash)
-add_test(NAME io_input_test_para4
-      COMMAND ${BASH} input_test_para.sh
+add_test(NAME io_input_test_para_4
+      COMMAND mpirun -np 4 ./io_input_test_para
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-)
-
-AddTest(
-  TARGET io_input_conv
-  LIBS ${math_libs} base device
-  SOURCES input_conv_test.cpp ../input.cpp ../input_conv.cpp
 )
 
 AddTest(
@@ -74,12 +60,6 @@ AddTest(
 )
 
 AddTest(
-  TARGET io_write_input_test
-  LIBS ${math_libs} base device
-  SOURCES write_input_test.cpp ../write_input.cpp ../input.cpp
-)
-
-AddTest(
   TARGET io_single_R_test
   LIBS ${math_libs}
   SOURCES single_R_io_test.cpp ../single_R_io.cpp
@@ -91,8 +71,15 @@ AddTest(
 
 AddTest(
   TARGET io_write_wfc_nao
-  LIBS ${math_libs} base device
-  SOURCES write_wfc_nao_test.cpp ../write_wfc_nao.cpp ../binstream.cpp
+  LIBS ${math_libs} base psi device
+  SOURCES write_wfc_nao_test.cpp ../write_wfc_nao.cpp ../../module_basis/module_ao/parallel_2d.cpp ../../module_basis/module_ao/parallel_orbitals.cpp ../binstream.cpp
+)
+
+install(FILES write_wfc_nao_para.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+find_program(BASH bash)
+add_test(NAME io_write_wfc_nao_para
+      COMMAND ${BASH} write_wfc_nao_para.sh
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
 AddTest(
@@ -103,7 +90,7 @@ AddTest(
 
 AddTest(
   TARGET io_parse_args
-  SOURCES parse_args_test.cpp
+  SOURCES parse_args_test.cpp ../parse_args.cpp
 )
 
 AddTest(
@@ -116,12 +103,6 @@ AddTest(
   TARGET io_output_log_test
   LIBS base ${math_libs} device
   SOURCES ../output_log.cpp outputlog_test.cpp
-)
-
-AddTest(
-  TARGET io_new_parse_set_test
-  LIBS ${math_libs} base device
-  SOURCES parameter_pool_set_test.cpp  ../parameter_pool.cpp ../input.cpp
 )
 
 AddTest(
@@ -160,6 +141,7 @@ AddTest(
   ../../module_cell/atom_spec.cpp
   ../../module_cell/parallel_kpoints.cpp
   ../../module_cell/test/support/mock_unitcell.cpp
+  ../../module_hamilt_lcao/hamilt_lcaodft/center2_orb.cpp
 )
 endif()
 
@@ -177,5 +159,29 @@ add_test(NAME read_wfc_pw_test_parallel
 AddTest(
   TARGET numerical_basis_test
   LIBS base ${math_libs} device numerical_atomic_orbitals container orb
-  SOURCES numerical_basis_test.cpp ../numerical_basis_jyjy.cpp
+  SOURCES numerical_basis_test.cpp ../numerical_basis_jyjy.cpp ../../module_hamilt_lcao/hamilt_lcaodft/center2_orb.cpp
 )
+
+
+AddTest(
+  TARGET io_mulliken_test
+  LIBS base ${math_libs} device
+  SOURCES output_mulliken_test.cpp output_mulliken_mock.cpp ../output_mulliken.cpp
+  ../../module_cell/cell_index.cpp
+  ../../module_basis/module_ao/parallel_2d.cpp
+  ../../module_basis/module_ao/parallel_orbitals.cpp
+)
+
+if(ENABLE_LCAO)
+AddTest(
+  TARGET read_wfc_lcao_test
+  LIBS base ${math_libs} device
+  SOURCES read_wfc_lcao_test.cpp ../read_wfc_lcao.cpp ../../module_basis/module_ao/parallel_2d.cpp
+)
+
+add_test(NAME read_wfc_lcao_test_parallel
+      COMMAND mpirun -np 4 ./read_wfc_lcao_test
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+endif()

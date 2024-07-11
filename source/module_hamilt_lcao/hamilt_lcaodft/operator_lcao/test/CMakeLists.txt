@@ -3,7 +3,7 @@ remove_definitions(-DUSE_NEW_TWO_CENTER)
 
 AddTest(
   TARGET operator_overlap_test
-  LIBS ${math_libs} psi base device numerical_atomic_orbitals container
+  LIBS ${math_libs} psi base device container
   SOURCES test_overlapnew.cpp ../overlap_new.cpp ../../../module_hcontainer/func_folding.cpp 
   ../../../module_hcontainer/base_matrix.cpp ../../../module_hcontainer/hcontainer.cpp ../../../module_hcontainer/atom_pair.cpp  
   ../../../../module_basis/module_ao/parallel_2d.cpp ../../../../module_basis/module_ao/parallel_orbitals.cpp 
@@ -13,7 +13,7 @@ AddTest(
 
 AddTest(
   TARGET operator_overlap_cd_test
-  LIBS ${math_libs} psi base device numerical_atomic_orbitals container
+  LIBS ${math_libs} psi base device container
   SOURCES test_overlapnew_cd.cpp ../overlap_new.cpp ../../../module_hcontainer/func_folding.cpp 
   ../../../module_hcontainer/base_matrix.cpp ../../../module_hcontainer/hcontainer.cpp ../../../module_hcontainer/atom_pair.cpp  
   ../../../../module_basis/module_ao/parallel_2d.cpp ../../../../module_basis/module_ao/parallel_orbitals.cpp 
@@ -23,7 +23,7 @@ AddTest(
 
 AddTest(
   TARGET operator_ekinetic_test
-  LIBS ${math_libs} psi base device numerical_atomic_orbitals container
+  LIBS ${math_libs} psi base device container
   SOURCES test_ekineticnew.cpp ../ekinetic_new.cpp ../../../module_hcontainer/func_folding.cpp 
   ../../../module_hcontainer/base_matrix.cpp ../../../module_hcontainer/hcontainer.cpp ../../../module_hcontainer/atom_pair.cpp  
   ../../../../module_basis/module_ao/parallel_2d.cpp ../../../../module_basis/module_ao/parallel_orbitals.cpp 
@@ -33,7 +33,7 @@ AddTest(
 
 AddTest(
   TARGET operator_nonlocal_test
-  LIBS ${math_libs} psi base device numerical_atomic_orbitals container
+  LIBS ${math_libs} psi base device container
   SOURCES test_nonlocalnew.cpp ../nonlocal_new.cpp ../../../module_hcontainer/func_folding.cpp 
   ../../../module_hcontainer/base_matrix.cpp ../../../module_hcontainer/hcontainer.cpp ../../../module_hcontainer/atom_pair.cpp  
   ../../../../module_basis/module_ao/parallel_2d.cpp ../../../../module_basis/module_ao/parallel_orbitals.cpp 
@@ -43,7 +43,7 @@ AddTest(
 
 AddTest(
   TARGET operator_T_NL_cd_test
-  LIBS ${math_libs} psi base device numerical_atomic_orbitals container 
+  LIBS ${math_libs} psi base device container 
   SOURCES test_T_NL_cd.cpp ../nonlocal_new.cpp ../ekinetic_new.cpp ../../../module_hcontainer/func_folding.cpp 
   ../../../module_hcontainer/base_matrix.cpp ../../../module_hcontainer/hcontainer.cpp ../../../module_hcontainer/atom_pair.cpp  
   ../../../../module_basis/module_ao/parallel_2d.cpp ../../../../module_basis/module_ao/parallel_orbitals.cpp 
@@ -53,7 +53,7 @@ AddTest(
 
 AddTest(
   TARGET operator_dftu_test
-  LIBS ${math_libs} psi base device numerical_atomic_orbitals container 
+  LIBS ${math_libs} psi base device container 
   SOURCES test_dftu.cpp ../dftu_lcao.cpp ../../../module_hcontainer/func_folding.cpp 
   ../../../module_hcontainer/base_matrix.cpp ../../../module_hcontainer/hcontainer.cpp ../../../module_hcontainer/atom_pair.cpp  
   ../../../../module_basis/module_ao/parallel_2d.cpp ../../../../module_basis/module_ao/parallel_orbitals.cpp 
