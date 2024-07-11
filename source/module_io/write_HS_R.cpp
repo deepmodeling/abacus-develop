@@ -140,7 +140,7 @@ void ModuleIO::output_dHR(const int& istep,
         }
     }
     // mohan update 2024-04-01
-    ModuleIO::save_dH_sparse(istep, lm, HS_Arrays, sparse_thr, binary);
+    ModuleIO::save_dH_sparse(istep, pv, HS_Arrays, sparse_thr, binary);
 
     sparse_format::destroy_dH_R_sparse(HS_Arrays);
 
