@@ -137,6 +137,8 @@ bool ModuleIO::read_wfc_nao(
 #ifdef __MPI
         Parallel_Common::bcast_bool(read_success);
         Parallel_Common::bcast_string(errors);
+        Parallel_Common::bcast_double(&(pelec->ekb(ik, 0)), nbands);
+        Parallel_Common::bcast_double(&(pelec->wg(ik, 0)), nbands);
 #endif 
         if (!read_success)
         {
