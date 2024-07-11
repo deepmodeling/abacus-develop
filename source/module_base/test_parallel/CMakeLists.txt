@@ -1,12 +1,12 @@
 AddTest(
   TARGET base_ParaCommon
-  LIBS MPI::MPI_CXX 
+  LIBS MPI::MPI_CXX
   SOURCES parallel_common_test.cpp ../global_variable.cpp ../parallel_common.cpp
 )
 
 AddTest(
   TARGET base_ParaGlobal
-  LIBS MPI::MPI_CXX 
+  LIBS MPI::MPI_CXX
   SOURCES parallel_global_test.cpp ../global_variable.cpp ../parallel_global.cpp
 )
 
@@ -37,7 +37,10 @@ add_test(NAME base_parallel_reduce_test
 if(ENABLE_LCAO)
   # figure out the lib that provides BLACS
   if(MKLROOT)
-    set(BLACS_LIB IntelMKL::MKL)
+    list(APPEND BLACS_LIB MKL::MKL)
+    if(TARGET MKL::MKL_SCALAPACK)
+      list(APPEND BLACS_LIB MKL::MKL_SCALAPACK)
+    endif()
   else()
     set(BLACS_LIB ScaLAPACK::ScaLAPACK)
   endif()
@@ -53,4 +56,3 @@ if(ENABLE_LCAO)
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   )
 endif()
-
