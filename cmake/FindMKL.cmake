@@ -81,3 +81,5 @@ else()
 endif()
 
 endif() # MKL::MKL
+
+add_library(IntelMKL::MKL ALIAS MKL::MKL) # For compatibility with libpaw_interface settings
