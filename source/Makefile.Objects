@@ -507,10 +507,7 @@ OBJS_IO_LCAO=cal_r_overlap_R.o\
       output_sk.o\
       output_dmk.o\
 
-OBJS_LCAO=DM_gamma.o\
-      DM_gamma_2d_to_grid.o\
-      DM_k.o\
-      evolve_elec.o\
+OBJS_LCAO=evolve_elec.o\
       evolve_psi.o\
       bandenergy.o\
       middle_hamilt.o\
@@ -548,9 +545,7 @@ OBJS_LCAO=DM_gamma.o\
       center2_orb-orb11.o\
       center2_orb-orb21.o\
       center2_orb-orb22.o\
-      local_orbital_charge.o\
       record_adj.o\
-      dm_2d.o\
       wavefunc_in_pw.o\
 
 OBJS_MODULE_RI=conv_coulomb_pot_k.o\

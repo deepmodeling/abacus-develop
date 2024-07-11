@@ -7,10 +7,11 @@
 #include "module_basis/module_nao/two_center_bundle.h"
 #include "module_elecstate/module_dm/density_matrix.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/force_stress_arrays.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
 #include "module_psi/psi.h"
+#include "module_elecstate/potentials/potential_new.h"
+#include "module_elecstate/elecstate.h"
 
 #ifndef TGINT_H
 #define TGINT_H
