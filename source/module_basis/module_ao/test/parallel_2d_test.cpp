@@ -67,7 +67,7 @@ TEST_F(test_para2d, Divide2D)
                     EXPECT_LE(p2d.dim0, p2d.dim1);
 
                 // 2. MPI 2d communicator
-                EXPECT_NE(p2d.comm_2D, MPI_COMM_NULL);
+                //EXPECT_NE(p2d.comm_2D, MPI_COMM_NULL);
 
                 // 3. local2global and local sizes
                 int lr = p2d.get_row_size();
@@ -124,7 +124,7 @@ TEST_F(test_para2d, DescReuseCtxt)
         p1.init(sizes[0].first, sizes[0].second, nb, MPI_COMM_WORLD);
 
         Parallel_2D p2; // use 2 different sizes, but they can share the same ctxt
-        p2.set(sizes[1].first, sizes[1].second, nb, p1.comm_2D, p1.blacs_ctxt);
+        p2.set(sizes[1].first, sizes[1].second, nb, p1.blacs_ctxt);
 
         EXPECT_EQ(p1.desc[1], p2.desc[1]);
 

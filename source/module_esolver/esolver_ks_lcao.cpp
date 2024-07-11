@@ -573,7 +573,7 @@ void ESolver_KS_LCAO<TK, TR>::init_basis_lcao(Input& inp, UnitCell& ucell)
     try_nb += ParaV.set_nloc_wfc_Eij(GlobalV::NBANDS, GlobalV::ofs_running, GlobalV::ofs_warning);
     if (try_nb != 0)
     {
-        ParaV.set(GlobalV::NLOCAL, GlobalV::NLOCAL, 1, ParaV.comm_2D, ParaV.blacs_ctxt);
+        ParaV.set(GlobalV::NLOCAL, GlobalV::NLOCAL, 1, ParaV.blacs_ctxt);
         try_nb = ParaV.set_nloc_wfc_Eij(GlobalV::NBANDS, GlobalV::ofs_running, GlobalV::ofs_warning);
     }
 

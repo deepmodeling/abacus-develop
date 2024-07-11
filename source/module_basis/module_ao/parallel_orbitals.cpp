@@ -209,7 +209,6 @@ void Parallel_Orbitals::set_desc_wfc_Eij(const int& nbasis, const int& nbands, c
 {
     ModuleBase::TITLE("Parallel_2D", "set_desc_wfc_Eij");
 #ifdef __DEBUG
-    assert(this->comm_2D != MPI_COMM_NULL);
     assert(nbasis > 0 && nbands > 0 && lld > 0);
     assert(this->nb > 0 && this->dim0 > 0 && this->dim1 > 0);
 #endif

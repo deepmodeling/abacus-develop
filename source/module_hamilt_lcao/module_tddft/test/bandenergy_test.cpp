@@ -47,12 +47,8 @@ TEST(BandEnergyTest, testBandEnergy)
     pv->nb = 1;
 
     int dim[2];
-    int period[2] = {1, 1};
-    int reorder = 0;
     dim[0] = nprow;
     dim[1] = npcol;
-
-    MPI_Cart_create(MPI_COMM_WORLD, 2, dim, period, reorder, &pv->comm_2D);
 
     // Initialize input matrices
     int info;

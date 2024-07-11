@@ -40,7 +40,7 @@ void set_para2d_MO(const Parallel_Orbitals& pv, const int nbands, Parallel_2D& p
 {
     std::ofstream ofs;
 #ifdef __MPI
-    p2d.set(nbands, nbands, pv.nb, pv.comm_2D, pv.blacs_ctxt);
+    p2d.set(nbands, nbands, pv.nb, pv.blacs_ctxt);
 #else
     p2d.set_serial(nbands, nbands);
 #endif

@@ -92,19 +92,13 @@ void norm_psi(const Parallel_Orbitals* pv,
         GlobalV::ofs_running << std::endl;
     }
 
-    int info;
-    int myid;
-    MPI_Comm_rank(pv->comm_2D, &myid);
     int naroc[2]; // maximum number of row or column
 
     for (int iprow = 0; iprow < pv->dim0; ++iprow)
     {
         for (int ipcol = 0; ipcol < pv->dim1; ++ipcol)
         {
-            const int coord[2] = {iprow, ipcol};
-            int src_rank;
-            info = MPI_Cart_rank(pv->comm_2D, coord, &src_rank);
-            if (myid == src_rank)
+            if (iprow == pv->coord[0] && ipcol == pv->coord[1])
             {
                 naroc[0] = pv->nrow;
                 naroc[1] = pv->ncol;

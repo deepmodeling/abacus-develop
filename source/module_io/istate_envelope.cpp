@@ -584,49 +584,42 @@ void IState_Envelope::wfc_2d_to_grid(const T* lowf_2d,
     // MPI and memory related
     const int mem_stride = 1;
     int mpi_info = 0;
-    auto mpi_dtype = std::is_same<T, double>::value ? MPI_DOUBLE : MPI_DOUBLE_COMPLEX;
 
     // get the rank of the current process
     int rank = 0;
-    MPI_Comm_rank(pv.comm_2D, &rank);
+    MPI_Comm_rank(pv.comm(), &rank);
 
-    // calculate the maximum number of nlocal over all processes in pv.comm_2D range
+    // calculate the maximum number of nlocal over all processes in pv.comm() range
     long buf_size;
-    mpi_info = MPI_Reduce(&pv.nloc_wfc, &buf_size, 1, MPI_LONG, MPI_MAX, 0, pv.comm_2D);
-    mpi_info = MPI_Bcast(&buf_size, 1, MPI_LONG, 0, pv.comm_2D); // get and then broadcast
+    mpi_info = MPI_Reduce(&pv.nloc_wfc, &buf_size, 1, MPI_LONG, MPI_MAX, 0, pv.comm());
+    mpi_info = MPI_Bcast(&buf_size, 1, MPI_LONG, 0, pv.comm()); // get and then broadcast
     std::vector<T> lowf_block(buf_size);
 
     // this quantity seems to have the value returned by function numroc_ in ScaLAPACK?
     int naroc[2];
+
+    // for BLACS broadcast
+    char scope = 'A';
+    char top = ' ';
 
     // loop over all processors
     for (int iprow = 0; iprow < pv.dim0; ++iprow)
     {
         for (int ipcol = 0; ipcol < pv.dim1; ++ipcol)
         {
-            // get the rank of the processor at the given coordinate
-            int rank_at_coord;
-            const int mpi_cart_coord[2] = {iprow, ipcol};
-            mpi_info = MPI_Cart_rank(pv.comm_2D, mpi_cart_coord, &rank_at_coord); // get the MPI rank
-
-            // keep in mind present function is concurrently called by all processors, thus
-            // the following code block will only be executed once for each processor, which means
-            // for each processor, get its MPI rank and MPI coord, then assign the naroc[0] and naroc[1]
-            // with the value which should have been calculated automatically by ScaLAPACK function
-            // numroc_.
-            if (rank == rank_at_coord)
+            if (iprow == pv.coord[0] && ipcol == pv.coord[1])
             {
                 BlasConnector::copy(pv.nloc_wfc, lowf_2d, mem_stride, lowf_block.data(), mem_stride);
                 naroc[0] = pv.nrow;
                 naroc[1] = pv.ncol_bands;
+                Cxgebs2d(pv.blacs_ctxt, &scope, &top, 2, 1, naroc, 2);
+                Cxgebs2d(pv.blacs_ctxt, &scope, &top, buf_size, 1, lowf_block.data(), buf_size);
             }
-
-            // broadcast the number of row and column
-            mpi_info = MPI_Bcast(naroc, 2, MPI_INT, rank_at_coord, pv.comm_2D);
-
-            // broadcast the data, this means the data owned by one processor is broadcast
-            // to all other processors in the communicator.
-            mpi_info = MPI_Bcast(lowf_block.data(), buf_size, mpi_dtype, rank_at_coord, pv.comm_2D);
+            else
+            {
+                Cxgebr2d(pv.blacs_ctxt, &scope, &top, 2, 1, naroc, 2, iprow, ipcol);
+                Cxgebr2d(pv.blacs_ctxt, &scope, &top, buf_size, 1, lowf_block.data(), buf_size, iprow, ipcol);
+            }
 
             // then use it to set the wfc_grid.
             mpi_info = this->set_wfc_grid(naroc,

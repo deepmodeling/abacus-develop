@@ -312,18 +312,13 @@ void Propagator::compute_propagator_taylor(const int nlocal,
 
     // set rank0
     int info;
-    int myid;
-    MPI_Comm_rank(this->ParaV->comm_2D, &myid);
     int naroc[2]; // maximum number of row or column
 
     for (int iprow = 0; iprow < this->ParaV->dim0; ++iprow)
     {
         for (int ipcol = 0; ipcol < this->ParaV->dim1; ++ipcol)
         {
-            const int coord[2] = {iprow, ipcol};
-            int src_rank;
-            info = MPI_Cart_rank(this->ParaV->comm_2D, coord, &src_rank);
-            if (myid == src_rank)
+            if (iprow == ParaV->coord[0] && ipcol == ParaV->coord[1])
             {
                 naroc[0] = this->ParaV->nrow;
                 naroc[1] = this->ParaV->ncol;
