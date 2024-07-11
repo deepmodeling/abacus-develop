@@ -2,7 +2,6 @@
 #define SPARSE_FORMAT_ST_H
 
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_HS_arrays.hpp"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 
 namespace sparse_format {

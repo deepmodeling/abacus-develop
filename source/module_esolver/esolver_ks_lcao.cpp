@@ -472,7 +472,6 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners()
     if (INPUT.out_dos)
     {
         ModuleIO::out_dos_nao(this->psi,
-                              this->LM,
                               this->ParaV,
                               this->pelec->ekb,
                               this->pelec->wg,

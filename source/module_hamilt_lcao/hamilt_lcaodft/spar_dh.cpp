@@ -230,7 +230,7 @@ void sparse_format::cal_dSTN_R(const Parallel_Orbitals& pv,
 
 void sparse_format::destroy_dH_R_sparse(LCAO_HS_Arrays& HS_Arrays)
 {
-    ModuleBase::TITLE("LCAO_Matrix", "destroy_dH_R_sparse");
+    ModuleBase::TITLE("LCAO_domain", "destroy_dH_R_sparse");
 
     if (GlobalV::NSPIN != 4)
     {

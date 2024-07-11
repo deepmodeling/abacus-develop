@@ -9,7 +9,6 @@
 #include <map>
 #include <vector>
 
-// use LCAO_Matrix
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_HS_arrays.hpp"
 #include "module_basis/module_ao/parallel_orbitals.h"
 
