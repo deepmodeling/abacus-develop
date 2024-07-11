@@ -3,7 +3,8 @@
 
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
+#include "module_basis/module_ao/parallel_orbitals.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_HS_arrays.hpp"
 
 #include <string>
 
@@ -12,7 +13,7 @@ namespace ModuleIO
 
 // jingan add 2021-6-4, modify 2021-12-2
 void save_HSR_sparse(const int& istep,
-                     LCAO_Matrix& lm,
+                     const Parallel_Orbitals& pv,
                      LCAO_HS_Arrays& HS_Arrays,
                      const double& sparse_thr,
                      const bool& binary,
@@ -21,7 +22,7 @@ void save_HSR_sparse(const int& istep,
                      const std::string& HR_filename_down);
 
 void save_dH_sparse(const int& istep,
-                    LCAO_Matrix& lm,
+                    const Parallel_Orbitals& pv,
                     LCAO_HS_Arrays& HS_Arrays,
                     const double& sparse_thr,
                     const bool& binary);

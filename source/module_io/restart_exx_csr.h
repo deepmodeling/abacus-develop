@@ -21,7 +21,7 @@ namespace ModuleIO
         const std::map<int, std::map<TAC, RI::Tensor<Tdata>>>& Hexxs);
 
     /// calculate CSR sparse matrix from the global matrix stored with RI::Tensor
-    /// the return type is same as LCAO_Matrix::SR_sparse,  HR_sparse, etc.
+    /// the return type is same as SR_sparse,  HR_sparse, etc.
     template<typename Tdata>
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, Tdata>>>
         calculate_RI_Tensor_sparse(const double& sparse_threshold,

@@ -39,8 +39,7 @@ void cal_HContainer_td(
     std::map<Abfs::Vector3_Order<int>,
              std::map<size_t, std::map<size_t, std::complex<double>>>>& target);
 
-void clear_zero_elements(LCAO_Matrix& lm,
-                         LCAO_HS_Arrays& HS_Arrays,
+void clear_zero_elements(LCAO_HS_Arrays& HS_Arrays,
                          const int& current_spin,
                          const double& sparse_thr);
 
