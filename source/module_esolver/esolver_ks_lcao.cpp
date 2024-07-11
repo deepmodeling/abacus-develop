@@ -1405,8 +1405,7 @@ void ESolver_KS_LCAO<TK, TR>::cal_mag(const int istep, const bool print)
                                 GlobalC::ucell.get_atomCounts(),
                                 GlobalC::ucell.get_lnchiCounts(),
                                 GlobalV::NSPIN);
-    auto out_sk = ModuleIO::Output_Sk<TK>(&(this->LM),
-                                          this->p_hamilt,
+    auto out_sk = ModuleIO::Output_Sk<TK>(this->p_hamilt,
                                           &(this->ParaV),
                                           GlobalV::NSPIN,
                                           this->kv.get_nks());

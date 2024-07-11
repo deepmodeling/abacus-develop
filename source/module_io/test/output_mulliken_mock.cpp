@@ -128,8 +128,8 @@ template class Output_DMK<double>;
 template class Output_DMK<std::complex<double>>;
 
 template <typename TK>
-Output_Sk<TK>::Output_Sk(LCAO_Matrix* LM, hamilt::Hamilt<TK>* p_hamilt, Parallel_Orbitals* ParaV, int nspin, int nks)
-    : LM_(LM), p_hamilt_(p_hamilt), ParaV_(ParaV), nspin_(nspin), nks_(nks)
+Output_Sk<TK>::Output_Sk(hamilt::Hamilt<TK>* p_hamilt, Parallel_Orbitals* ParaV, int nspin, int nks)
+    : p_hamilt_(p_hamilt), ParaV_(ParaV), nspin_(nspin), nks_(nks)
 {
 }
 
