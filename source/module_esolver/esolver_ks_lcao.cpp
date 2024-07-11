@@ -582,6 +582,8 @@ void ESolver_KS_LCAO<TK, TR>::init_basis_lcao(Input& inp, UnitCell& ucell)
 
 #else
     ParaV.set_serial(nlocal, nlocal);
+    ParaV.nrow_bands = GlobalV::NLOCAL;
+    ParaV.ncol_bands = GlobalV::NBANDS;
     // Zhang Xiaoyang enable the serial version of LCAO and recovered this function usage. 2024-07-06
 #endif
 
