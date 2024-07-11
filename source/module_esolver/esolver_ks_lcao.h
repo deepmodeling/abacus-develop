@@ -1,7 +1,6 @@
 #ifndef ESOLVER_KS_LCAO_H
 #define ESOLVER_KS_LCAO_H
 #include "esolver_ks.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/record_adj.h"
 // for grid integration
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
@@ -61,9 +60,6 @@ class ESolver_KS_LCAO : public ESolver_KS<TK> {
 
     // we will get rid of this class soon, don't use it, mohan 2024-03-28
     Record_adj RA;
-
-    // we will get rid of this class soon, don't use it, mohan 2024-03-28
-    Local_Orbital_Charge LOC;
 
     // 2d block-cyclic distribution info
     Parallel_Orbitals ParaV;
