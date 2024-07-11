@@ -72,7 +72,7 @@ void ModuleIO::output_HSR(const int& istep,
     }
 
     ModuleIO::save_HSR_sparse(istep,
-                              lm,
+                              pv,
                               HS_Arrays,
                               sparse_thr,
                               binary,

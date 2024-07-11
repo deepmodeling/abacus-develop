@@ -7,7 +7,7 @@
 #include "single_R_io.h"
 
 void ModuleIO::save_HSR_sparse(const int& istep,
-                               LCAO_Matrix& lm,
+                               const Parallel_Orbitals& pv,
                                LCAO_HS_Arrays& HS_Arrays,
                                const double& sparse_thr,
                                const bool& binary,
@@ -253,20 +253,20 @@ void ModuleIO::save_HSR_sparse(const int& istep,
                                             ->HR_sparse_td_vel[ispin][R_coor],
                                         sparse_thr,
                                         binary,
-                                        *lm.ParaV);
+                                        pv);
                     } else {
                         output_single_R(g1[ispin],
                                         HR_sparse_ptr[ispin][R_coor],
                                         sparse_thr,
                                         binary,
-                                        *lm.ParaV);
+                                        pv);
                     }
                 } else {
                     output_single_R(g1[ispin],
                                     HR_soc_sparse_ptr[R_coor],
                                     sparse_thr,
                                     binary,
-                                    *lm.ParaV);
+                                    pv);
                 }
             }
         }
@@ -291,13 +291,13 @@ void ModuleIO::save_HSR_sparse(const int& istep,
                                 SR_sparse_ptr[R_coor],
                                 sparse_thr,
                                 binary,
-                                *lm.ParaV);
+                                pv);
             } else {
                 output_single_R(g2,
                                 SR_soc_sparse_ptr[R_coor],
                                 sparse_thr,
                                 binary,
-                                *lm.ParaV);
+                                pv);
             }
         }
 
