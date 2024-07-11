@@ -466,13 +466,12 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners()
 
     if (INPUT.out_proj_band) // Projeced band structure added by jiyy-2022-4-20
     {
-        ModuleIO::write_proj_band_lcao(this->psi, this->LM, this->pelec, this->kv, GlobalC::ucell, this->p_hamilt);
+        ModuleIO::write_proj_band_lcao(this->psi, this->ParaV, this->pelec, this->kv, GlobalC::ucell, this->p_hamilt);
     }
 
     if (INPUT.out_dos)
     {
         ModuleIO::out_dos_nao(this->psi,
-                              this->LM,
                               this->ParaV,
                               this->pelec->ekb,
                               this->pelec->wg,
@@ -1408,8 +1407,7 @@ void ESolver_KS_LCAO<TK, TR>::cal_mag(const int istep, const bool print)
                                 GlobalC::ucell.get_atomCounts(),
                                 GlobalC::ucell.get_lnchiCounts(),
                                 GlobalV::NSPIN);
-    auto out_sk = ModuleIO::Output_Sk<TK>(&(this->LM),
-                                          this->p_hamilt,
+    auto out_sk = ModuleIO::Output_Sk<TK>(this->p_hamilt,
                                           &(this->ParaV),
                                           GlobalV::NSPIN,
                                           this->kv.get_nks());
