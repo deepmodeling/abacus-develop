@@ -16,7 +16,6 @@
 #ifdef __LCAO
 #include "module_cell/module_neighbor/sltk_atom_arrange.h" //qifeng-2019-01-21
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #endif
 
@@ -28,7 +27,6 @@
 
 template <>
 void ModuleIO::write_dos_lcao(const psi::Psi<double>* psi,
-                              LCAO_Matrix& lm,
                               const Parallel_Orbitals& pv,
                               const ModuleBase::matrix& ekb,
                               const ModuleBase::matrix& wg,
@@ -343,7 +341,6 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psi,
 
 template <>
 void ModuleIO::write_dos_lcao(const psi::Psi<std::complex<double>>* psi,
-                              LCAO_Matrix& lm,
                               const Parallel_Orbitals& pv,
                               const ModuleBase::matrix& ekb,
                               const ModuleBase::matrix& wg,

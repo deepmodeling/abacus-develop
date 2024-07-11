@@ -83,7 +83,7 @@ class Gint_k : public Gint {
                        std::map<size_t, std::map<size_t, double>>>&
             pvdpR_sparseMatrix,
         LCAO_HS_Arrays& HS_Arrays,
-        Parallel_Orbitals* pv);
+        const Parallel_Orbitals* pv);
 
     void distribute_pvdpR_soc_sparseMatrix(
         const int dim,
@@ -93,12 +93,12 @@ class Gint_k : public Gint {
             std::map<size_t, std::map<size_t, std::complex<double>>>>&
             pvdpR_soc_sparseMatrix,
         LCAO_HS_Arrays& HS_Arrays,
-        Parallel_Orbitals* pv);
+        const Parallel_Orbitals* pv);
 
     void cal_dvlocal_R_sparseMatrix(const int& current_spin,
                                     const double& sparse_threshold,
                                     LCAO_HS_Arrays& HS_Arrays,
-                                    Parallel_Orbitals* pv,
+                                    const Parallel_Orbitals* pv,
                                     UnitCell& ucell,
                                     Grid_Driver& gdriver);
 
