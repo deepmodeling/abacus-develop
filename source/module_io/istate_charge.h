@@ -2,7 +2,6 @@
 #define ISTATE_CHARGE_H
 #include "module_basis/module_pw/pw_basis.h"
 #include "module_elecstate/module_dm/density_matrix.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #include "module_hamilt_lcao/module_gint/gint.h"
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_psi/psi.h"

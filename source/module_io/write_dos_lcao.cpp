@@ -18,7 +18,6 @@
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #endif
 
 #include "module_base/blas_connector.h"
@@ -242,10 +241,11 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psi,
 
             out << "<pdos>" << std::endl;
             out << "<nspin>" << GlobalV::NSPIN << "</nspin>" << std::endl;
-            if (GlobalV::NSPIN == 4)
+            if (GlobalV::NSPIN == 4) {
                 out << "<norbitals>" << std::setw(2) << GlobalV::NLOCAL / 2 << "</norbitals>" << std::endl;
-            else
+            } else {
                 out << "<norbitals>" << std::setw(2) << GlobalV::NLOCAL << "</norbitals>" << std::endl;
+}
             out << "<energy_values units=\"eV\">" << std::endl;
 
             for (int n = 0; n < npoints; ++n)

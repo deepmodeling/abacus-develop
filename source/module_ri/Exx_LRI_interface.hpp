@@ -6,6 +6,7 @@
 #include "module_ri/exx_opt_orb.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
+#include "module_base/parallel_common.h"
 
 #include <sys/time.h>
 #include "module_io/csr_reader.h"

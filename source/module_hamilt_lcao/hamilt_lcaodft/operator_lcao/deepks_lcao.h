@@ -4,7 +4,6 @@
 #include "module_basis/module_nao/two_center_integrator.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_elecstate/module_dm/density_matrix.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "operator_lcao.h"
 
