@@ -37,7 +37,7 @@ namespace ModuleESolver
 
         //--------------temporary----------------------------
         int lj_rule;
-        double lj_rcut;
+        ModuleBase::matrix lj_rcut;
         ModuleBase::matrix lj_c12;
         ModuleBase::matrix lj_c6;
         ModuleBase::matrix en_shift;

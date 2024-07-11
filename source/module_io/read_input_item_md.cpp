@@ -108,21 +108,90 @@ void ReadInput::item_md()
         this->add_item(item);
     }
     {
+        Input_Item item("lj_rule");
+        item.annotation = "combination rules used to construct the parameter matrix for LJ potential";
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.mdp.lj_rule != 1 && para.input.mdp.lj_rule != 2)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "lj_rule must be 1 or 2");
+            }
+        };
+        read_sync_int(mdp.lj_rule);
+        this->add_item(item);
+    }
+    {
         Input_Item item("lj_rcut");
         item.annotation = "cutoff radius of LJ potential";
-        read_sync_double(mdp.lj_rcut);
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            size_t count = item.get_size();
+            for (int i = 0; i < count; i++)
+            {
+                para.input.mdp.lj_rcut.push_back(std::stod(item.str_values[i]));
+            }
+            para.input.sup.n_ljcut = count;
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.sup.n_ljcut != 1 && para.input.sup.n_ljcut != para.input.ntype * (para.input.ntype + 1) / 2)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", " the number of lj_rcut should be 1 or ntype(ntype+1)/2 ");
+            }
+            for (auto rcut: para.input.mdp.lj_rcut)
+            {
+                if (rcut <= 0)
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput", "lj_rcut must > 0");
+                }
+            }
+        };
+        add_int_bcast(sup.n_ljcut);
+        // We must firt bcast n_ljcut, then bcast mdp.lj_rcut
+        sync_doublevec(mdp.lj_rcut, para.input.sup.n_ljcut, 0.0);
         this->add_item(item);
     }
     {
         Input_Item item("lj_epsilon");
         item.annotation = "the value of epsilon for LJ potential";
-        read_sync_double(mdp.lj_epsilon);
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            size_t count = item.get_size();
+            for (int i = 0; i < count; i++)
+            {
+                para.input.mdp.lj_epsilon.push_back(std::stod(item.str_values[i]));
+            }
+            para.input.sup.n_ljepsilon = count;
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.sup.n_ljepsilon != para.input.ntype
+                && para.input.sup.n_ljepsilon != para.input.ntype * (para.input.ntype + 1) / 2)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", " the number of lj_epsilon should be ntype or ntype(ntype+1)/2 ");
+            }
+        };
+        add_int_bcast(sup.n_ljepsilon);
+        // We must firt bcast n_ljepsilon, then bcast mdp.lj_epsilon
+        sync_doublevec(mdp.lj_epsilon, para.input.sup.n_ljepsilon, 0.0);
         this->add_item(item);
     }
     {
         Input_Item item("lj_sigma");
         item.annotation = "the value of sigma for LJ potential";
-        read_sync_double(mdp.lj_sigma);
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            size_t count = item.get_size();
+            for (int i = 0; i < count; i++)
+            {
+                para.input.mdp.lj_sigma.push_back(std::stod(item.str_values[i]));
+            }
+            para.input.sup.n_ljsigma = count;
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.sup.n_ljsigma != para.input.ntype
+                && para.input.sup.n_ljsigma != para.input.ntype * (para.input.ntype + 1) / 2)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", " the number of lj_sigma should be ntype or ntype(ntype+1)/2 ");
+            }
+        };
+        add_int_bcast(sup.n_ljsigma);
+        // We must firt bcast n_ljcut, then bcast mdp.lj_rcut
+        sync_doublevec(mdp.lj_sigma, para.input.sup.n_ljsigma, 0.0);
         this->add_item(item);
     }
     {

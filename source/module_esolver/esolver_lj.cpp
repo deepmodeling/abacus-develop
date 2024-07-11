@@ -15,14 +15,43 @@ namespace ModuleESolver
         lj_virial.create(3, 3);
 
         lj_rule = inp.mdp.lj_rule;
-        lj_rcut = inp.mdp.lj_rcut;
-        GlobalV::SEARCH_RADIUS = (lj_rcut + 2.0) * ModuleBase::ANGSTROM_AU;
-        lj_rcut *= ModuleBase::ANGSTROM_AU;
-
         int ntype = ucell.ntype;
+        lj_rcut.create(ntype, ntype);
         lj_c6.create(ntype, ntype);
         lj_c12.create(ntype, ntype);
 
+        // determine the maximum rcut and lj_rcut
+        double rcut_max = 0.0;
+        if (inp.mdp.lj_rcut.size() == 1)
+        {
+            rcut_max = inp.mdp.lj_rcut[0] * ModuleBase::ANGSTROM_AU;
+            for (int i = 0; i < ntype; i++)
+            {
+                for (int j = 0; j <= i; j++)
+                {
+                    lj_rcut(i, j) = rcut_max;
+                    lj_rcut(j, i) = rcut_max;
+                }
+            }
+        }
+        else if (inp.mdp.lj_rcut.size() == ntype * (ntype + 1) / 2)
+        {
+            for (int i = 0; i < ntype; i++)
+            {
+                for (int j = 0; j <= i; j++)
+                {
+                    int k = i * (i + 1) / 2 + j;
+                    lj_rcut(i, j) = inp.mdp.lj_rcut[k] * ModuleBase::ANGSTROM_AU;
+                    lj_rcut(j, i) = lj_rcut(i, j);
+                    rcut_max = std::max(rcut_max, lj_rcut(i, j));
+                }
+            }
+        }
+
+        // set the search radius
+        GlobalV::SEARCH_RADIUS = rcut_max + 0.01;
+
+        // determine the LJ parameters
         std::vector<double> lj_epsilon = inp.mdp.lj_epsilon;
         std::vector<double> lj_sigma = inp.mdp.lj_sigma;
         std::transform(begin(lj_epsilon), end(lj_epsilon), begin(lj_epsilon), [](double x) {
@@ -90,11 +119,6 @@ namespace ModuleESolver
                 }
             }
         }
-        else
-        {
-            ModuleBase::WARNING_QUIT("ESolver_LJ",
-                                     " the number of lj_epsilon and lj_sigma should be ntype or ntype(ntype+1)/2 ");
-        }
 
         // calculate the energy shift so that LJ energy is zero at rcut
         en_shift.create(ntype, ntype);
@@ -102,7 +126,7 @@ namespace ModuleESolver
         {
             for (int j = 0; j <= i; j++)
             {
-                en_shift(i, j) = LJ_energy(lj_rcut, i, j);
+                en_shift(i, j) = LJ_energy(lj_rcut(i, j), i, j);
                 en_shift(j, i) = en_shift(i, j);
             }
         }
@@ -141,7 +165,7 @@ namespace ModuleESolver
                     int it2 = grid_neigh.getType(ad);
                     dtau = (tau1 - tau2) * ucell.lat0;
                     distance = dtau.norm();
-                    if (distance <= lj_rcut)
+                    if (distance <= lj_rcut(it, it2))
                     {
                         lj_potential += LJ_energy(distance, it, it2); // - LJ_energy(lj_rcut);
                         ModuleBase::Vector3<double> f_ij = LJ_force(dtau, it, it2);
@@ -214,15 +238,19 @@ namespace ModuleESolver
 
     double ESolver_LJ::LJ_energy(const double d, const int i, const int j)
     {
-        const double r6 = pow(d, 6);
+        const double r2 = d * d;
+        const double r4 = r2 * r2;
+        const double r6 = r2 * r4;
         return lj_c12(i, j) / (r6 * r6) - lj_c6(i, j) / r6;
     }
 
     ModuleBase::Vector3<double> ESolver_LJ::LJ_force(const ModuleBase::Vector3<double> dr, const int i, const int j)
     {
         const double d = dr.norm();
-        const double r8 = pow(d, 8);
-        const double r14 = r8 * pow(d, 6);
+        const double r2 = d * d;
+        const double r4 = r2 * r2;
+        const double r8 = r4 * r4;
+        const double r14 = r8 * r4 * r2;
         double coff = 12.0 * lj_c12(i, j) / r14 - 6.0 * lj_c6(i, j) / r8;
         return dr * coff;
     }

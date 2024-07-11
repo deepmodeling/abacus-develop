@@ -11,6 +11,11 @@ struct Input_supplement
 {
     bool two_fermi = false; ///< true if "nupdown" is set
 
+    // for lj pot
+    int n_ljcut = 0;     ///< number of lj_rcut, assuming 0 as no values provided
+    int n_ljepsilon = 0; ///< number of lj_epsilon, assuming 0 as no values provided
+    int n_ljsigma = 0;   ///< number of lj_sigma, assuming 0 as no values provided
+
     // For parameter "bessel_nao_rcuts"
     int nrcut = 0;                ///< number of bessel_nao_rcuts, assuming 0 as no values provided
     double bessel_nao_rcut = 6.0; ///< radial cutoff for spherical bessel functions(a.u.)
