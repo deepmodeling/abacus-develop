@@ -47,7 +47,6 @@ void output_TR(const int istep,
                const double& sparse_threshold = 1e-10);
 
 void output_SR(Parallel_Orbitals& pv,
-               LCAO_Matrix& lm,
                Grid_Driver& grid,
                hamilt::Hamilt<std::complex<double>>* p_ham,
                const std::string& SR_filename = "data-SR-sparse_SPIN0.csr",

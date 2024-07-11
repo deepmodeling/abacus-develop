@@ -151,7 +151,6 @@ void ModuleIO::output_dHR(const int& istep,
 }
 
 void ModuleIO::output_SR(Parallel_Orbitals& pv,
-                         LCAO_Matrix& lm,
                          Grid_Driver& grid,
                          hamilt::Hamilt<std::complex<double>>* p_ham,
                          const std::string& SR_filename,
@@ -177,7 +176,7 @@ void ModuleIO::output_SR(Parallel_Orbitals& pv,
                           sparse_thr,
                           binary,
                           SR_filename,
-                          *lm.ParaV,
+                          pv,
                           "S",
                           istep);
 

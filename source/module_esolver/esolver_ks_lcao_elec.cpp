@@ -550,7 +550,7 @@ void ESolver_KS_LCAO<std::complex<double>, double>::get_S(void)
 
     std::cout << " The file is saved in " << fn << std::endl;
 
-    ModuleIO::output_SR(ParaV, this->LM, GlobalC::GridD, this->p_hamilt, fn);
+    ModuleIO::output_SR(ParaV, GlobalC::GridD, this->p_hamilt, fn);
 
     return;
 }
@@ -592,7 +592,7 @@ void ESolver_KS_LCAO<std::complex<double>, std::complex<double>>::get_S(void)
 
     std::cout << " The file is saved in " << fn << std::endl;
 
-    ModuleIO::output_SR(ParaV, this->LM, GlobalC::GridD, this->p_hamilt, fn);
+    ModuleIO::output_SR(ParaV, GlobalC::GridD, this->p_hamilt, fn);
 
     return;
 }
