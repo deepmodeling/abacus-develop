@@ -10,7 +10,6 @@
 
 template <>
 ModuleBase::matrix SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>::cal_MW_k(
-    LCAO_Matrix* LM,
     const std::vector<std::vector<std::complex<double>>>& dm)
 {
     ModuleBase::TITLE("module_deltaspin", "cal_MW_k");
@@ -66,11 +65,11 @@ ModuleBase::matrix SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>:
 }
 
 template <>
-void SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>::cal_MW(const int& step, LCAO_Matrix* LM, bool print)
+void SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>::cal_MW(const int& step, bool print)
 {
     ModuleBase::TITLE("module_deltaspin", "cal_MW");
     const std::vector<std::vector<std::complex<double>>>& dm
         = dynamic_cast<const elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)->get_DM()->get_DMK_vector();
-    this->calculate_MW(this->convert(this->cal_MW_k(LM, dm)));
+    this->calculate_MW(this->convert(this->cal_MW_k(dm)));
     this->print_Mi(print);
 }

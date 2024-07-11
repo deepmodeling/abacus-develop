@@ -8,7 +8,7 @@ typedef std::tuple<int, int, int, int> key_tuple;
 
 #include "record_adj.h" //mohan add 2012-07-06
 
-void build_Nonlocal_mu_new(LCAO_Matrix& lm,
+void build_Nonlocal_mu_new(const Parallel_Orbitals& pv,
                            ForceStressArrays& fsr,
                            double* NLloc,
                            const bool& calc_deri,
@@ -19,7 +19,6 @@ void build_Nonlocal_mu_new(LCAO_Matrix& lm,
 {
     ModuleBase::TITLE("LCAO_domain", "vnl_mu_new");
     ModuleBase::timer::tick("LCAO_domain", "vnl_mu_new");
-    const Parallel_Orbitals* pv = lm.ParaV;
 
     const int nspin = GlobalV::NSPIN;
     const int npol = GlobalV::NPOL;
@@ -106,8 +105,8 @@ void build_Nonlocal_mu_new(LCAO_Matrix& lm,
             for (int iw1 = 0; iw1 < nw1_tot; ++iw1)
             {
                 const int iw1_all = start1 + iw1;
-                const int iw1_local = pv->global2local_row(iw1_all);
-                const int iw2_local = pv->global2local_col(iw1_all);
+                const int iw1_local = pv.global2local_row(iw1_all);
+                const int iw2_local = pv.global2local_col(iw1_all);
                 if (iw1_local < 0 && iw2_local < 0)
                     continue;
                 const int iw1_0 = iw1 / npol;
@@ -190,7 +189,7 @@ void build_Nonlocal_mu_new(LCAO_Matrix& lm,
                 GridD->Find_atom(ucell, atom1->tau[I1], T1, I1, &adjs);
                 const int start1 = ucell.itiaiw2iwt(T1, I1, 0);
                 // Record_adj.for_2d() may not called in some case
-                int nnr = pv->nlocstart ? pv->nlocstart[iat1] : 0;
+                int nnr = pv.nlocstart ? pv.nlocstart[iat1] : 0;
                 tau1 = atom1->tau[I1];
 
                 // psi2
@@ -301,7 +300,7 @@ void build_Nonlocal_mu_new(LCAO_Matrix& lm,
                             {
                                 const int j0 = j / npol; // added by zhengdy-soc
                                 const int iw1_all = start1 + j;
-                                const int mu = pv->global2local_row(iw1_all);
+                                const int mu = pv.global2local_row(iw1_all);
                                 if (mu < 0)
                                     continue;
 
@@ -311,7 +310,7 @@ void build_Nonlocal_mu_new(LCAO_Matrix& lm,
                                 {
                                     const int k0 = k / npol;
                                     const int iw2_all = start2 + k;
-                                    const int nu = pv->global2local_col(iw2_all);
+                                    const int nu = pv.global2local_col(iw2_all);
                                     if (nu < 0)
                                         continue;
 
@@ -344,9 +343,10 @@ void build_Nonlocal_mu_new(LCAO_Matrix& lm,
                                                 // mohan add 2010-12-20
                                                 if (nlm_tmp != 0.0)
                                                 {
-                                                    lm.set_HSgamma(iw1_all,
+                                                    LCAO_domain::set_mat2d(iw1_all,
                                                                    iw2_all,
                                                                    nlm_tmp,
+                                                                   pv,
                                                                    NLloc); // N stands for nonlocal.
                                                 }
                                             }
@@ -484,7 +484,7 @@ void build_Nonlocal_mu_new(LCAO_Matrix& lm,
                                                 }
                                                 assert(ib == nlm_1.size());
 
-                                                LCAO_domain::set_force(*lm.ParaV,
+                                                LCAO_domain::set_force(pv,
                                                                        iw1_all,
                                                                        iw2_all,
                                                                        nlm[0],
@@ -554,7 +554,7 @@ void build_Nonlocal_mu_new(LCAO_Matrix& lm,
                         {
                             const int j0 = j / npol; // added by zhengdy-soc
                             const int iw1_all = start1 + j;
-                            const int mu = pv->global2local_row(iw1_all);
+                            const int mu = pv.global2local_row(iw1_all);
                             if (mu < 0)
                             {
                                 continue;
@@ -566,7 +566,7 @@ void build_Nonlocal_mu_new(LCAO_Matrix& lm,
                             {
                                 const int k0 = k / npol;
                                 const int iw2_all = start2 + k;
-                                const int nu = pv->global2local_col(iw2_all);
+                                const int nu = pv.global2local_col(iw2_all);
                                 if (nu < 0)
                                 {
                                     continue;
@@ -584,10 +584,10 @@ void build_Nonlocal_mu_new(LCAO_Matrix& lm,
 #endif
     if (!gamma_only_local)
     {
-        if (total_nnr != pv->nnr)
+        if (total_nnr != pv.nnr)
         {
             GlobalV::ofs_running << " nr=" << total_nnr << std::endl;
-            GlobalV::ofs_running << " pv->nnr=" << pv->nnr << std::endl;
+            GlobalV::ofs_running << " pv->nnr=" << pv.nnr << std::endl;
             ModuleBase::WARNING_QUIT("LCAO_domain::build_Nonlocal_mu_new", "nnr!=LNNR.nnr");
         }
     }

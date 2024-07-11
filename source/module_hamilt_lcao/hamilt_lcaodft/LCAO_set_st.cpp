@@ -202,8 +202,7 @@ void single_derivative(ForceStressArrays& fsr,
     } // end condition 7, gamma or multiple k
 }
 
-void single_overlap(LCAO_Matrix& lm,
-                    const LCAO_Orbitals& orb,
+void single_overlap(const LCAO_Orbitals& orb,
                     const TwoCenterBundle& two_center_bundle,
                     const Parallel_Orbitals& pv,
                     const UnitCell& ucell,
@@ -272,7 +271,7 @@ void single_overlap(LCAO_Matrix& lm,
         // according to global2local_row and global2local_col
         // the last paramete: 1 for Sloc, 2 for Hloc
         // and 3 for Hloc_fixed.
-        lm.set_HSgamma(iw1_all, iw2_all, olm[0], HSloc);
+        LCAO_domain::set_mat2d(iw1_all, iw2_all, olm[0], pv, HSloc);
     }
     else // condition 7, multiple k-points algorithm
     {
@@ -309,8 +308,7 @@ void single_overlap(LCAO_Matrix& lm,
     } // end condition 7, gamma point or multiple k-points
 }
 
-void build_ST_new(LCAO_Matrix& lm,
-                  ForceStressArrays& fsr,
+void build_ST_new(ForceStressArrays& fsr,
                   const char& dtype,
                   const bool& calc_deri,
                   const UnitCell& ucell,
@@ -422,8 +420,7 @@ void build_ST_new(LCAO_Matrix& lm,
                             // condition 6, not calculate the derivative
                             if (!calc_deri)
                             {
-                                single_overlap(lm,
-                                               orb,
+                                single_overlap(orb,
                                                two_center_bundle,
                                                pv,
                                                ucell,
@@ -518,13 +515,15 @@ void build_ST_new(LCAO_Matrix& lm,
                         for (int jj = 0; jj < atom1->nw * npol; ++jj)
                         {
                             const int mu = pv.global2local_row(start1 + jj);
-                            if (mu < 0)
+                            if (mu < 0) {
                                 continue;
+}
                             for (int kk = 0; kk < atom2->nw * npol; ++kk)
                             {
                                 const int nu = pv.global2local_col(start2 + kk);
-                                if (nu < 0)
+                                if (nu < 0) {
                                     continue;
+}
                                 ++total_nnr;
                                 ++nnr;
                             } // kk

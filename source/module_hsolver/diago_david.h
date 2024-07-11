@@ -26,33 +26,34 @@ class DiagoDavid : public DiagH<T, Device>
 
     virtual ~DiagoDavid() override;
 
-    int diag(hamilt::Hamilt<T, Device>* phm_in,
-                      psi::Psi<T, Device>& psi,
-                      Real* eigenvalue_in,
-                      const Real david_diag_thr,
-                      const int david_maxiter,
-                      const int ntry_max = 5,
-                      const int notconv_max = 0);
+    int diag(hamilt::Hamilt<T, Device>* phm_in,   // Pointer to the Hamiltonian object for diagonalization
+                      const int dim,              // Dimension of the input matrix psi to be diagonalized
+                      const int nband,            // Number of required eigenpairs
+                      const int ldPsi,            // Leading dimension of the psi input
+                      psi::Psi<T, Device>& psi,   // Reference to the wavefunction object for eigenvectors
+                      Real* eigenvalue_in,        // Pointer to store the resulting eigenvalues
+                      const Real david_diag_thr,  // Convergence threshold for the Davidson iteration
+                      const int david_maxiter,    // Maximum allowed iterations for the Davidson method
+                      const int ntry_max = 5,     // Maximum number of diagonalization attempts (default is 5)
+                      const int notconv_max = 0); // Maximum number of allowed non-converged eigenvectors
 
   private:
-    int david_ndim = 4;
     bool use_paw = false;
     int test_david = 0;
 
     diag_comm_info diag_comm;
 
-    /// row size for input psi matrix
+    /// number of searched eigenpairs
     int n_band = 0;
-    /// non-zero col size for inputted psi matrix
-    int dim = 0;
-    int dmx = 0;
-    // maximum dimension of the reduced basis set
-    int nbase_x = 0;
-
-    /// record for how many bands not have convergence eigenvalues
+    /// dimension of the subspace allowed in Davidson
+    int david_ndim = 4;
+    /// maximum dimension of the reduced basis set
+    // int nbase_x = 0;
+    /// number of unconverged eigenvalues
     int notconv = 0;
 
-    /// precondition for cg diag
+    /// precondition for diag, diagonal approximation of
+    /// matrix A (i.e. Hamilt)
     const Real* precondition = nullptr;
     Real* d_precondition = nullptr;
 
@@ -79,6 +80,7 @@ class DiagoDavid : public DiagH<T, Device>
     void cal_grad(hamilt::Hamilt<T, Device>* phm_in,
                   const int& dim,
                   const int& nbase,
+                  const int nbase_x,
                   const int& notconv,
                   psi::Psi<T, Device>& basis,
                   T* hphi,
@@ -89,6 +91,7 @@ class DiagoDavid : public DiagH<T, Device>
 
     void cal_elem(const int& dim,
                   int& nbase,
+                  const int nbase_x,// maximum dimension of the reduced basis set
                   const int& notconv,
                   const psi::Psi<T, Device>& basis,
                   const T* hphi,
@@ -99,6 +102,7 @@ class DiagoDavid : public DiagH<T, Device>
     void refresh(const int& dim,
                  const int& nband,
                  int& nbase,
+                 const int nbase_x,
                  const Real* eigenvalue,
                  const psi::Psi<T, Device>& psi,
                  psi::Psi<T, Device>& basis,
@@ -117,7 +121,7 @@ class DiagoDavid : public DiagH<T, Device>
                     const int mm_size,
                     const int mv_size);
 
-    void planSchmitOrth(const int nband, int* pre_matrix_mm_m, int* pre_matrix_mv_m);
+    void planSchmitOrth(const int nband, std::vector<int>& pre_matrix_mm_m, std::vector<int>& pre_matrix_mv_m);
 
     void diag_zhegvx(const int& nbase,
                      const int& nband,
@@ -128,6 +132,9 @@ class DiagoDavid : public DiagH<T, Device>
                      T* vcc);
 
     int diag_mock(hamilt::Hamilt<T, Device>* phm_in,
+                   const int dim,
+                   const int nband,
+                   const int ldPsi,
                    psi::Psi<T, Device>& psi,
                    Real* eigenvalue_in,
                    const Real david_diag_thr,

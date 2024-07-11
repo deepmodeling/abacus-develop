@@ -65,6 +65,7 @@ VPATH=./src_global:\
 ./module_io/json_output:\
 ./src_ri:\
 ./module_ri:\
+./module_parameter:\
 ./\
 
 OBJS_ABACUS_PW=${OBJS_MAIN}\
@@ -109,6 +110,7 @@ ${OBJS_HSOLVER_PEXSI}\
 OBJS_MAIN=main.o\
     driver.o\
     driver_run.o\
+    parameter.o
 
 OBJS_BASE=abfs-vector3_order.o\
     assoc_laguerre.o\
@@ -212,6 +214,7 @@ OBJS_ESOLVER=esolver.o\
     esolver_ks.o\
     esolver_fp.o\
     esolver_ks_pw.o\
+    esolver_ks_lcaopw.o\
     esolver_sdft_pw.o\
     esolver_lj.o\
     esolver_dp.o\
@@ -299,6 +302,7 @@ OBJS_HSOLVER=diago_cg.o\
     diago_dav_subspace.o\
     diago_bpcg.o\
     hsolver_pw.o\
+    hsolver_lcaopw.o\
     hsolver_pw_sdft.o\
     diago_iter_assist.o\
     math_kernel_op.o\
@@ -339,7 +343,6 @@ OBJS_NEIGHBOR=sltk_adjacent_set.o\
 
 OBJS_ORBITAL=ORB_atomic.o\
       ORB_atomic_lm.o\
-      ORB_control.o\
       ORB_gaunt_table.o\
       ORB_nonlocal.o\
       ORB_nonlocal_lm.o\
@@ -424,6 +427,7 @@ OBJS_XC=xc_functional.o\
     xc_funct_hcth.o\
 
 OBJS_IO=input.o\
+    input_conv_tmp.o\
     input_conv.o\
     berryphase.o\
     bessel_basis.o\
@@ -454,7 +458,6 @@ OBJS_IO=input.o\
     unk_overlap_pw.o\
     write_wfc_pw.o\
     winput.o\
-    write_input.o\
     write_cube.o\
     write_rho.o\
     write_pot.o\
@@ -472,6 +475,15 @@ OBJS_IO=input.o\
     readin_info.o\
     output_info.o\
     parse_args.o\
+    read_input.o\
+    read_input_item_general.o\
+    read_input_item_pw.o\
+    read_input_item_sdft.o\
+    read_input_item_relax.o\
+    read_input_item_lcao.o\
+    read_input_item_postprocess.o\
+    read_input_item_md.o\
+    read_input_item_other.o\
 
 OBJS_IO_LCAO=cal_r_overlap_R.o\
       write_orb_info.o\
@@ -525,13 +537,13 @@ OBJS_LCAO=DM_gamma.o\
       spar_hsr.o\
       spar_st.o\
       spar_u.o\
-      LCAO_matrix.o\
       LCAO_set_fs.o\
       LCAO_set_st.o\
       LCAO_nl_mu.o\
       LCAO_nnr.o\
       LCAO_set_zero.o\
       LCAO_allocate.o\
+      LCAO_set_mat2d.o\
       center2_orb.o\
       center2_orb-orb11.o\
       center2_orb-orb21.o\

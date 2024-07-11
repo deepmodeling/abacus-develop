@@ -149,7 +149,7 @@ void Potential::allocate()
     }
 }
 
-void Potential::update_from_charge(const Charge* chg, const UnitCell* ucell)
+void Potential::update_from_charge(const Charge*const chg, const UnitCell*const ucell)
 {
     ModuleBase::TITLE("Potential", "update_from_charge");
     ModuleBase::timer::tick("Potential", "update_from_charge");
@@ -243,11 +243,11 @@ void Potential::cal_fixed_v(double* vl_pseudo)
     ModuleBase::timer::tick("Potential", "cal_fixed_v");
 }
 
-void Potential::cal_v_eff(const Charge* chg, const UnitCell* ucell, ModuleBase::matrix& v_eff)
+void Potential::cal_v_eff(const Charge*const chg, const UnitCell*const ucell, ModuleBase::matrix& v_eff)
 {
     ModuleBase::TITLE("Potential", "cal_v_eff");
-    int nspin_current = this->v_effective.nr;
-    int nrxx = this->v_effective.nc;
+    const int nspin_current = this->v_effective.nr;
+    const int nrxx = this->v_effective.nc;
     ModuleBase::timer::tick("Potential", "cal_v_eff");
     // first of all, set v_effective to zero.
     this->v_effective.zero_out();
@@ -275,7 +275,7 @@ void Potential::cal_v_eff(const Charge* chg, const UnitCell* ucell, ModuleBase::
     ModuleBase::timer::tick("Potential", "cal_v_eff");
 }
 
-void Potential::init_pot(int istep, const Charge* chg)
+void Potential::init_pot(int istep, const Charge*const chg)
 {
     ModuleBase::TITLE("Potential", "init_pot");
     ModuleBase::timer::tick("Potential", "init_pot");

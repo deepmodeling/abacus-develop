@@ -29,5 +29,5 @@ pseudo_rcut            10
 cal_force              1
 cal_stress             1
 
-init_chg               file
+init_chg               auto
 read_file_dir          .

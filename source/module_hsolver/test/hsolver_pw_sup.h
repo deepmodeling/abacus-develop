@@ -162,6 +162,9 @@ DiagoDavid<T, Device>::~DiagoDavid() {
 
 template <typename T, typename Device>
 int DiagoDavid<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in,
+                                const int dim,
+                                const int nband,
+                                const int ldPsi,
                                 psi::Psi<T, Device>& psi,
                                 Real* eigenvalue_in,
                                 const Real david_diag_thr,
@@ -217,8 +220,4 @@ void diago_PAO_in_pw_k2(
     }
 }
 
-} // namespace hamilt
-
-// template class hsolver::HSolverPW<std::complex<float>,
-// base_device::DEVICE_CPU>; template class
-// hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU>;
+}//namespace hsolver

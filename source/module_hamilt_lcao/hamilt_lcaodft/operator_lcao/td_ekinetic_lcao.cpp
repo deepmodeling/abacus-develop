@@ -1,11 +1,11 @@
 #include "td_ekinetic_lcao.h"
 
+#include "module_base/global_variable.h"
 #include "module_base/libm/libm.h"
 #include "module_base/timer.h"
 #include "module_base/tool_title.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_elecstate/potentials/H_TDDFT_pw.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/center2_orb-orb11.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/spar_hsr.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
@@ -219,14 +219,15 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& iat1,
         hr_mat_p += (npol - 1) * col_indexes.size();
         if (current_mat_p != nullptr)
         {
-            for (int dir = 0; dir < 3; dir++)
+            for (int dir = 0; dir < 3; dir++) {
                 current_mat_p[dir] += (npol - 1) * col_indexes.size();
+}
         }
     }
 }
 // init two center integrals and vector potential for td_ekintic term
 template <typename TK, typename TR>
-void TDEkinetic<OperatorLCAO<TK, TR>>::init_td(void)
+void TDEkinetic<OperatorLCAO<TK, TR>>::init_td()
 {
     TD_Velocity::td_vel_op = &td_velocity;
     // calculate At in cartesian coorinates.
@@ -379,7 +380,7 @@ void TDEkinetic<OperatorLCAO<std::complex<double>, double>>::contributeHk(int ik
         ModuleBase::timer::tick("TDEkinetic", "contributeHk");
         const Parallel_Orbitals* paraV = this->hR_tmp->get_atom_pair(0).get_paraV();
         // save HR data for output
-        int spin_tot = paraV->nspin;
+        int spin_tot = GlobalV::NSPIN;
         if (spin_tot == 4)
             ;
         else if (!output_hR_done && TD_Velocity::out_mat_R)
