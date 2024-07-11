@@ -7,7 +7,6 @@
 #define RI_2D_COMM_H
 
 #include "module_basis/module_ao/parallel_orbitals.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "module_cell/klist.h"
 

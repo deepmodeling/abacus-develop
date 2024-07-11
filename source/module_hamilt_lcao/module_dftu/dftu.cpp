@@ -8,7 +8,6 @@
 #include "module_base/timer.h"
 #include "module_elecstate/magnetism.h"
 #include "module_elecstate/module_charge/charge.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 #include <cmath>
@@ -356,8 +355,9 @@ void DFTU::cal_energy_correction(const int istep)
 void DFTU::uramping_update()
 {
     // if uramping < 0.1, use the original U
-    if (this->uramping < 0.01)
+    if (this->uramping < 0.01) {
         return;
+}
     // loop to change U
     for (int i = 0; i < this->U0.size(); i++)
     {

@@ -16,7 +16,7 @@ void sparse_format::cal_HSR(const Parallel_Orbitals& pv,
                             hamilt::Hamilt<std::complex<double>>* p_ham) {
     ModuleBase::TITLE("sparse_format", "cal_HSR");
 
-    sparse_format::set_R_range(lm.all_R_coor, grid);
+    sparse_format::set_R_range(HS_Arrays.all_R_coor, grid);
 
     const int nspin = GlobalV::NSPIN;
 
@@ -71,14 +71,14 @@ void sparse_format::cal_HSR(const Parallel_Orbitals& pv,
     if (GlobalV::dft_plus_u == 2) {
         if (nspin == 1 || nspin == 2) {
             cal_HR_dftu(pv,
-                        lm.all_R_coor,
+                        HS_Arrays.all_R_coor,
                         HS_Arrays.SR_sparse,
                         HS_Arrays.HR_sparse,
                         current_spin,
                         sparse_thr);
         } else if (nspin == 4) {
             cal_HR_dftu_soc(pv,
-                            lm.all_R_coor,
+                            HS_Arrays.all_R_coor,
                             HS_Arrays.SR_soc_sparse,
                             HS_Arrays.HR_soc_sparse,
                             current_spin,
