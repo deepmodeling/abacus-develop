@@ -93,14 +93,14 @@ void sparse_format::cal_HSR(const Parallel_Orbitals& pv,
     // if EXX is considered
     if (GlobalC::exx_info.info_global.cal_exx) {
         if (GlobalC::exx_info.info_ri.real_number) {
-            sparse_format::cal_HR_exx(lm,
+            sparse_format::cal_HR_exx(pv,
                                       HS_Arrays,
                                       current_spin,
                                       sparse_thr,
                                       nmp,
                                       *lm.Hexxd);
         } else {
-            sparse_format::cal_HR_exx(lm,
+            sparse_format::cal_HR_exx(pv,
                                       HS_Arrays,
                                       current_spin,
                                       sparse_thr,
