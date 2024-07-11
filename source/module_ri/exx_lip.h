@@ -14,18 +14,6 @@
 #include "module_hamilt_pw/hamilt_pwdft/wfinit.h"
 class K_Vectors;
 class UnitCell;
-
-// template<typename T>
-// struct RemoveComplex;
-// template<>
-// struct RemoveComplex<std::complex<double>> {
-//     using type = double;
-// };
-// template<>
-// struct RemoveComplex<std::complex<float>> {
-//     using type = float;
-// };
-
 template<typename T, typename Device = base_device::DEVICE_CPU>
 class Exx_Lip
 {
