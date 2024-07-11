@@ -50,7 +50,6 @@ void Output_Mat_Sparse<std::complex<double>>::write()
         output_TR(_istep,
                   GlobalC::ucell,
                   this->_pv,
-                  this->_lm,
                   HS_Arrays,
                   this->_grid,
                   two_center_bundle_); // LiuXh add 2019-07-15

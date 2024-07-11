@@ -21,7 +21,6 @@ void cal_SR(const Parallel_Orbitals& pv,
 //! calculate kinetic matrix with lattice vector R
 void cal_TR(const UnitCell& ucell,
             const Parallel_Orbitals& pv,
-            LCAO_Matrix& lm,
             LCAO_HS_Arrays& HS_arrays,
             Grid_Driver& grid,
             const TwoCenterBundle& two_center_bundle,
@@ -30,7 +29,6 @@ void cal_TR(const UnitCell& ucell,
 //! cal_STN_R_for_T is only called by cal_TR
 void cal_STN_R_for_T(const UnitCell& ucell,
                      const Parallel_Orbitals& pv,
-                     LCAO_Matrix& lm,
                      LCAO_HS_Arrays& HS_arrays,
                      Grid_Driver& grid,
                      const double& sparse_thr);
