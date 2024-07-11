@@ -78,8 +78,9 @@ class HSolverPW : public HSolver<T, Device>
     void paw_func_in_kloop(const int ik);
 
     void call_paw_cell_set_currentk(const int ik);
-#endif
 
+    void paw_func_after_kloop(psi::Psi<T, Device>& psi, elecstate::ElecState* pes);
+#endif
 };
 
 template <typename T, typename Device>
