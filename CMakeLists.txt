@@ -686,7 +686,6 @@ target_link_libraries(
   io_advanced
   relax
   driver
-  main
   xc_
   hsolver
   elecstate
