@@ -304,8 +304,9 @@ void write_Vxc(int nspin,
     // R (the number of hR: 1 for nspin=1, 4; 2 for nspin=2)
     int nspin0 = (nspin == 2) ? 2 : 1;
     std::vector<hamilt::HContainer<TR>> vxcs_R_ao(nspin0, hamilt::HContainer<TR>(pv));
-    for (int is = 0; is < nspin0; ++is)
+    for (int is = 0; is < nspin0; ++is) {
         vxcs_R_ao[is].set_zero();
+}
     // k (size for each k-point)
     hamilt::HS_Matrix_K<TK> vxc_k_ao(pv, 1); // only hk is needed, sk is skipped
 

@@ -123,16 +123,20 @@ namespace hsolver
             auto& exx_lip = dynamic_cast<hamilt::HamiltLIP<T>*>(pHamilt)->exx_lip;
             auto add_exx_to_subspace_hamilt = [&ik, &exx_lip](T* hcc, const int naos) -> void
                 {
-                    if (GlobalC::exx_info.info_global.cal_exx)
-                        for (int n = 0; n < naos; ++n)
-                            for (int m = 0; m < naos; ++m)
+                    if (GlobalC::exx_info.info_global.cal_exx) {
+                        for (int n = 0; n < naos; ++n) {
+                            for (int m = 0; m < naos; ++m) {
                                 hcc[n * naos + m] += (T)GlobalC::exx_info.info_global.hybrid_alpha *
                                 exx_lip.get_exx_matrix()[ik][m][n];
+}
+}
+}
                 };
             auto set_exxlip_lcaowfc = [&ik, &exx_lip](const T* const vcc, const int naos, const int nbands) -> void
                 {
-                    if (GlobalC::exx_info.info_global.cal_exx)
+                    if (GlobalC::exx_info.info_global.cal_exx) {
                         exx_lip.set_hvec(ik, vcc, naos, nbands);
+}
                 };
 #endif
             hsolver::DiagoIterAssist<T>::diagH_subspace_init(
