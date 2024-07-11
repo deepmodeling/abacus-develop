@@ -2570,8 +2570,8 @@ These variables are used to control molecular dynamics calculations. For more in
 ### lj_rcut
 
 - **Type**: Real
-- **Description**: Cut-off radius for Leonard Jones potential.
-- **Default**: 8.5 (for He)
+- **Description**: Cut-off radius for Leonard Jones potential. It can be a single value, which means that all pairs of atoms types share the same cut-off radius. Otherwise, it should be a multiple-component vector, containing $N(N+1)/2$ values, see details in [lj_rule](#lj_rule).
+- **Default**: No default
 - **Unit**: Angstrom
 
 ### lj_epsilon
