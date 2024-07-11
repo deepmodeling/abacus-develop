@@ -24,8 +24,6 @@ ORB_atomic.cpp: information for all of the atomic orbitals
 ORB_atomic.h
 ORB_atomic_lm.cpp: store each atomic orbitals
 ORB_atomic_lm.h
-ORB_control.cpp: control panel to read-in orbitals and generate tables 
-ORB_control.h
 ORB_gaunt_table.cpp: compute Gaunt tables
 ORB_gaunt_table.h
 ORB_nonlocal.cpp: information for all of the non-local projectors

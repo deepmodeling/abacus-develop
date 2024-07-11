@@ -9,7 +9,6 @@
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "grid_technique.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #ifdef _OPENMP
 #include <omp.h>
 #endif
