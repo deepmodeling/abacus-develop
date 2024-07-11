@@ -73,15 +73,14 @@ void ESolver_KS_LCAO_TDDFT::before_all_runners(Input& inp, UnitCell& ucell)
     GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, pw_rho);
 
     // 3) initialize the electronic states for TDDFT
-    if (this->pelec == nullptr)
-    {
-        this->pelec = new elecstate::ElecStateLCAO_TDDFT(&this->chr,
-                                                         &kv,
-                                                         kv.get_nks(),
-                                                         &this->LOC,
-                                                         &this->GK, // mohan add 2024-04-01
-                                                         this->pw_rho,
-                                                         pw_big);
+    if (this->pelec == nullptr) {
+        this->pelec = new elecstate::ElecStateLCAO_TDDFT(
+            &this->chr,
+            &kv,
+            kv.get_nks(),
+            &this->GK, // mohan add 2024-04-01
+            this->pw_rho,
+            pw_big);
     }
 
     // 4) read the local orbitals and construct the interpolation tables.
@@ -93,7 +92,6 @@ void ESolver_KS_LCAO_TDDFT::before_all_runners(Input& inp, UnitCell& ucell)
     // this part will be updated soon
     // pass Hamilt-pointer to Operator
     this->LM.ParaV = &(this->ParaV);
-    this->LOC.ParaV = this->LM.ParaV;
 
     // 6) initialize Density Matrix
     dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)
@@ -439,10 +437,10 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft()
     const int nlocal = GlobalV::NLOCAL;
     assert(nlocal >= 0);
 
-    // this->LOC.edm_k_tddft.resize(kv.get_nks());
-    dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)->get_DM()->EDMK.resize(kv.get_nks());
-    for (int ik = 0; ik < kv.get_nks(); ++ik)
-    {
+    dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)
+        ->get_DM()
+        ->EDMK.resize(kv.get_nks());
+    for (int ik = 0; ik < kv.get_nks(); ++ik) {
         std::complex<double>* tmp_dmk
             = dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)->get_DM()->get_DMK_pointer(ik);
 
