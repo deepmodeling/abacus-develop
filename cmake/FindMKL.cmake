@@ -82,4 +82,7 @@ endif()
 
 endif() # MKL::MKL
 
-add_library(IntelMKL::MKL ALIAS MKL::MKL) # For compatibility with libpaw_interface settings
+# For compatibility with legacy libpaw_interface CMakeLists.txt
+if(TARGET MKL::MKL)
+  add_library(IntelMKL::MKL ALIAS MKL::MKL)
+endif()
