@@ -113,7 +113,7 @@ void Parallel_Kpoints::get_startk_pool(const int& nkstot)
     return;
 }
 
-void Parallel_Kpoints::set_startpro_pool(void)
+void Parallel_Kpoints::set_startpro_pool()
 {
     startpro_pool.resize(this->kpar, 0);
 
@@ -246,8 +246,9 @@ void Parallel_Kpoints::pool_collection_aux(T* value, const V& w, const int& dim,
     T* p = &w.ptr[begin];
     // temprary restrict kpar=1 for NSPIN=2 case for generating_orbitals
     int pool = 0;
-    if (this->nspin != 2)
+    if (this->nspin != 2) {
         pool = this->whichpool[ik];
+}
 
 
     // ofs_running << "\n ik=" << ik;
