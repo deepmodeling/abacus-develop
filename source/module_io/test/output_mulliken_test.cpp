@@ -41,7 +41,7 @@ TYPED_TEST(OutputMullikenTest, nspin1)
     this->ncol = 13;
     this->paraV.init(this->nrow, this->ncol, 1, MPI_COMM_WORLD, 0);
     auto cell_index = CellIndex(this->atomLabels, this->atomCounts, this->lnchiCounts, 1);
-    auto out_sk = ModuleIO::Output_Sk<TypeParam>(nullptr, nullptr, &this->paraV, 1, 1);
+    auto out_sk = ModuleIO::Output_Sk<TypeParam>(nullptr, &this->paraV, 1, 1);
     auto out_dmk = ModuleIO::Output_DMK<TypeParam>(nullptr, &this->paraV, 1, 1);
     auto mulp = ModuleIO::Output_Mulliken<TypeParam>(&(out_sk), &(out_dmk), &(this->paraV), &(cell_index), {0}, 1);
     mulp.write(0, "./");
@@ -60,7 +60,7 @@ TYPED_TEST(OutputMullikenTest, nspin2)
     this->ncol = 13;
     this->paraV.init(this->nrow, this->ncol, 1, MPI_COMM_WORLD, 0);
     auto cell_index = CellIndex(this->atomLabels, this->atomCounts, this->lnchiCounts, 2);
-    auto out_sk = ModuleIO::Output_Sk<TypeParam>(nullptr, nullptr, &this->paraV, 2, 1);
+    auto out_sk = ModuleIO::Output_Sk<TypeParam>(nullptr, &this->paraV, 2, 1);
     auto out_dmk = ModuleIO::Output_DMK<TypeParam>(nullptr, &this->paraV, 2, 1);
     auto mulp = ModuleIO::Output_Mulliken<TypeParam>(&(out_sk), &(out_dmk), &(this->paraV), &(cell_index), {0, 1}, 2);
     mulp.write(0, "./");
@@ -83,7 +83,7 @@ TYPED_TEST(OutputMullikenTest, nspin4)
     this->ncol = 26;
     this->paraV.init(this->nrow, this->ncol, 1, MPI_COMM_WORLD, 0);
     auto cell_index = CellIndex(this->atomLabels, this->atomCounts, this->lnchiCounts, 4);
-    auto out_sk = ModuleIO::Output_Sk<std::complex<double>>(nullptr, nullptr, &this->paraV, 4, 1);
+    auto out_sk = ModuleIO::Output_Sk<std::complex<double>>(nullptr, &this->paraV, 4, 1);
     auto out_dmk = ModuleIO::Output_DMK<std::complex<double>>(nullptr, &this->paraV, 4, 1);
     auto mulp
         = ModuleIO::Output_Mulliken<std::complex<double>>(&(out_sk), &(out_dmk), &(this->paraV), &(cell_index), {0}, 4);
