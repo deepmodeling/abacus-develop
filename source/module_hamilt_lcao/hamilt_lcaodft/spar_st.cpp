@@ -54,7 +54,6 @@ void sparse_format::cal_SR(
 
 void sparse_format::cal_TR(const UnitCell& ucell,
                            const Parallel_Orbitals& pv,
-                           LCAO_Matrix& lm,
                            LCAO_HS_Arrays& HS_Arrays,
                            Grid_Driver& grid,
                            const TwoCenterBundle& two_center_bundle,
@@ -62,7 +61,7 @@ void sparse_format::cal_TR(const UnitCell& ucell,
     ModuleBase::TITLE("sparse_format", "cal_TR");
 
     // need to rebuild T(R)
-    HS_Arrays.Hloc_fixedR.resize(lm.ParaV->nnr);
+    HS_Arrays.Hloc_fixedR.resize(pv.nnr);
 
     LCAO_domain::zeros_HSR('T', HS_Arrays);
 
@@ -82,14 +81,13 @@ void sparse_format::cal_TR(const UnitCell& ucell,
 
     sparse_format::set_R_range(HS_Arrays.all_R_coor, grid);
 
-    sparse_format::cal_STN_R_for_T(ucell, pv, lm, HS_Arrays, grid, sparse_thr);
+    sparse_format::cal_STN_R_for_T(ucell, pv, HS_Arrays, grid, sparse_thr);
 
     return;
 }
 
 void sparse_format::cal_STN_R_for_T(const UnitCell& ucell,
                                     const Parallel_Orbitals& pv,
-                                    LCAO_Matrix& lm,
                                     LCAO_HS_Arrays& HS_arrays,
                                     Grid_Driver& grid,
                                     const double& sparse_thr) {
