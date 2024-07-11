@@ -19,7 +19,6 @@ void Force_LCAO<double>::cal_fedm(
     const psi::Psi<double>* psi,
     const Parallel_Orbitals& pv,
     const elecstate::ElecState *pelec,
-    LCAO_Matrix &lm,
     ModuleBase::matrix &foverlap,
     ModuleBase::matrix& soverlap,
     const K_Vectors* kv,

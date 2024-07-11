@@ -45,6 +45,52 @@ const LCAO_Orbitals& LCAO_Orbitals::get_const_instance()
     return GlobalC::ORB;
 }
 
+void LCAO_Orbitals::init(
+    std::ofstream& ofs_in,
+    const int& ntype,
+    const std::string& orbital_dir,
+    const std::string* orbital_file,
+    const std::string& descriptor_file,
+    const int& lmax,
+    const double& lcao_ecut_in,
+    const double& lcao_dk_in,
+    const double& lcao_dr_in,
+    const double& lcao_rmax_in,
+    const bool& deepks_setorb,
+    const int& out_mat_r,
+    const bool& force_flag,
+    const int& my_rank
+)
+{
+    assert(ntype > 0);
+    assert(lmax >= 0);
+    assert(lcao_ecut_in > 0.0);
+    assert(lcao_dk_in > 0.0);
+    assert(lcao_dr_in > 0.0);
+    assert(lcao_rmax_in > 0.0);
+
+    this->ecutwfc = lcao_ecut_in;
+    this->dk = lcao_dk_in;
+    this->dR = lcao_dr_in;
+    this->Rmax = lcao_rmax_in;
+
+    if (my_rank == 0 && !read_in_flag)
+    {
+        read_in_flag = true;
+        for (int it = 0; it < ntype; ++it)
+        {
+            this->orbital_file.push_back(orbital_dir + orbital_file[it]);
+        }
+    }
+
+#ifdef __MPI
+    bcast_files(ntype, my_rank);
+#endif
+    Read_Orbitals(ofs_in, ntype, lmax, deepks_setorb, out_mat_r, force_flag, my_rank);
+    return;
+}
+
+
 #ifdef __MPI
 // be called in UnitCell.
 void LCAO_Orbitals::bcast_files(const int& ntype_in, const int& my_rank)

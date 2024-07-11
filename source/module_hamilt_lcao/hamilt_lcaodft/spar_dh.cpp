@@ -12,7 +12,7 @@ void sparse_format::cal_dH(LCAO_Matrix& lm,
 {
     ModuleBase::TITLE("sparse_format", "cal_dH");
 
-    sparse_format::set_R_range(lm.all_R_coor, grid);
+    sparse_format::set_R_range(HS_Arrays.all_R_coor, grid);
 
     const int nnr = lm.ParaV->nnr;
 
@@ -31,8 +31,7 @@ void sparse_format::cal_dH(LCAO_Matrix& lm,
     {
         GlobalV::CAL_STRESS = false;
 
-        LCAO_domain::build_ST_new(lm,
-                                  fsr_dh,
+        LCAO_domain::build_ST_new(fsr_dh,
                                   'T',
                                   true,
                                   GlobalC::ucell,
@@ -46,8 +45,7 @@ void sparse_format::cal_dH(LCAO_Matrix& lm,
     }
     else
     {
-        LCAO_domain::build_ST_new(lm,
-                                  fsr_dh,
+        LCAO_domain::build_ST_new(fsr_dh,
                                   'T',
                                   true,
                                   GlobalC::ucell,
@@ -58,7 +56,7 @@ void sparse_format::cal_dH(LCAO_Matrix& lm,
                                   nullptr); // delete unused parameter lm.Hloc_fixedR
     }
 
-    LCAO_domain::build_Nonlocal_mu_new(lm,
+    LCAO_domain::build_Nonlocal_mu_new(*lm.ParaV,
                                        fsr_dh,
                                        nullptr,
                                        true,
@@ -74,7 +72,7 @@ void sparse_format::cal_dH(LCAO_Matrix& lm,
     delete[] fsr_dh.DHloc_fixedR_z;
 
     gint_k
-        .cal_dvlocal_R_sparseMatrix(current_spin, sparse_thr, &lm, HS_Arrays, lm.ParaV, GlobalC::ucell, GlobalC::GridD);
+        .cal_dvlocal_R_sparseMatrix(current_spin, sparse_thr, HS_Arrays, lm.ParaV, GlobalC::ucell, GlobalC::GridD);
 
     return;
 }

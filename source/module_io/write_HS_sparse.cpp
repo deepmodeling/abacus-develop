@@ -17,8 +17,8 @@ void ModuleIO::save_HSR_sparse(const int& istep,
     ModuleBase::TITLE("ModuleIO", "save_HSR_sparse");
     ModuleBase::timer::tick("ModuleIO", "save_HSR_sparse");
 
-    auto& all_R_coor_ptr = lm.all_R_coor;
-    auto& output_R_coor_ptr = lm.output_R_coor;
+    auto& all_R_coor_ptr = HS_Arrays.all_R_coor;
+    auto& output_R_coor_ptr = HS_Arrays.output_R_coor;
     auto& HR_sparse_ptr = HS_Arrays.HR_sparse;
     auto& SR_sparse_ptr = HS_Arrays.SR_sparse;
     auto& HR_soc_sparse_ptr = HS_Arrays.HR_soc_sparse;
@@ -330,8 +330,8 @@ void ModuleIO::save_dH_sparse(const int& istep,
     ModuleBase::TITLE("ModuleIO", "save_dH_sparse");
     ModuleBase::timer::tick("ModuleIO", "save_dH_sparse");
 
-    auto& all_R_coor_ptr = lm.all_R_coor;
-    auto& output_R_coor_ptr = lm.output_R_coor;
+    auto& all_R_coor_ptr = HS_Arrays.all_R_coor;
+    auto& output_R_coor_ptr = HS_Arrays.output_R_coor;
     auto& dHRx_sparse_ptr = HS_Arrays.dHRx_sparse;
     auto& dHRx_soc_sparse_ptr = HS_Arrays.dHRx_soc_sparse;
     auto& dHRy_sparse_ptr = HS_Arrays.dHRy_sparse;

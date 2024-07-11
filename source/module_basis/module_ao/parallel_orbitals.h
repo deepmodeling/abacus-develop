@@ -49,7 +49,6 @@ public:
         const int& lld);
 #endif
 
-    int nspin = 1;
     int* loc_sizes;
     int loc_size;
 

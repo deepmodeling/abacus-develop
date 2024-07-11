@@ -343,7 +343,6 @@ OBJS_NEIGHBOR=sltk_adjacent_set.o\
 
 OBJS_ORBITAL=ORB_atomic.o\
       ORB_atomic_lm.o\
-      ORB_control.o\
       ORB_gaunt_table.o\
       ORB_nonlocal.o\
       ORB_nonlocal_lm.o\

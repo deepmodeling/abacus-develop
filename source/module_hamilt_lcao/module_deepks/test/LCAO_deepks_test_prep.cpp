@@ -25,7 +25,7 @@ void test_deepks::set_parameters()
     GlobalV::global_out_dir = "./";
     GlobalV::ofs_warning.open("warning.log");
     GlobalV::ofs_running.open("running.log");
-    GlobalV::deepks_setorb = 1;
+    GlobalV::deepks_setorb = true;
     GlobalV::CAL_FORCE = 1;
 
     std::ifstream ifs("INPUT");
@@ -67,12 +67,14 @@ void test_deepks::count_ntype()
         x.erase(0, x.find_first_not_of(typeOfWhitespaces));
 
         if (x == "LATTICE_CONSTANT" || x == "NUMERICAL_ORBITAL" || x == "LATTICE_VECTORS" || x == "ATOMIC_POSITIONS"
-            || x == "NUMERICAL_DESCRIPTOR")
+            || x == "NUMERICAL_DESCRIPTOR") {
             break;
+}
 
         std::string tmpid = x.substr(0, 1);
-        if (!x.empty() && tmpid != "#")
+        if (!x.empty() && tmpid != "#") {
             ntype++;
+}
     }
 
     GlobalV::ofs_running << "ntype : " << ntype << std::endl;
@@ -103,8 +105,9 @@ void test_deepks::set_ekcut()
         while (in_ao.good())
         {
             in_ao >> word;
-            if (word == "Cutoff(Ry)")
+            if (word == "Cutoff(Ry)") {
                 break;
+}
         }
         in_ao >> ek_current;
         lcao_ecut = std::max(lcao_ecut, ek_current);
@@ -146,8 +149,7 @@ void test_deepks::set_orbs(const double& lat0_in)
 {
     for (int it = 0; it < ntype; it++)
     {
-        ooo.read_orb_first(GlobalV::ofs_running,
-                           ORB,
+        ORB.init(GlobalV::ofs_running,
                            ucell.ntype,
                            GlobalV::global_orbital_dir,
                            ucell.orbital_fn,

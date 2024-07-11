@@ -8,8 +8,6 @@ Parallel_Orbitals::Parallel_Orbitals()
 {
     loc_sizes = nullptr;
 
-    testpb = 0; // mohan add 2011-03-16
-
     // in multi-k, 2D-block-division variables for FT (R<->k)
     nnr = 1;
     nlocdim = nullptr;
