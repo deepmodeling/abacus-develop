@@ -142,7 +142,7 @@ set(ABACUS_BIN_PATH ${CMAKE_CURRENT_BINARY_DIR}/${ABACUS_BIN_NAME})
 include_directories(${ABACUS_SOURCE_DIR})
 include_directories(${ABACUS_SOURCE_DIR}/module_base/module_container)
 
-add_executable(${ABACUS_BIN_NAME} source/main.cpp)
+add_executable(${ABACUS_BIN_NAME})
 if(ENABLE_COVERAGE)
   add_coverage(${ABACUS_BIN_NAME})
 endif()
@@ -685,6 +685,7 @@ target_link_libraries(
   io_advanced
   relax
   driver
+  main
   xc_
   hsolver
   elecstate
