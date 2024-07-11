@@ -7,7 +7,7 @@ namespace LCAO_domain
 {
 
 void divide_HS_in_frag(const bool isGamma, Parallel_Orbitals& pv,const int& nks) {
-    ModuleBase::TITLE("LCAO_Matrix", "divide_HS_in_frag");
+    ModuleBase::TITLE("LCAO_domain", "divide_HS_in_frag");
 
     //(1), (2): set up matrix division have been moved into ESolver_KS_LCAO::init_basis_lcao
     // just pass `ParaV` as pointer is enough

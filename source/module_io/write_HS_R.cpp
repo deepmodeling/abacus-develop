@@ -72,7 +72,7 @@ void ModuleIO::output_HSR(const int& istep,
     }
 
     ModuleIO::save_HSR_sparse(istep,
-                              lm,
+                              pv,
                               HS_Arrays,
                               sparse_thr,
                               binary,
@@ -89,7 +89,7 @@ void ModuleIO::output_HSR(const int& istep,
 void ModuleIO::output_dHR(const int& istep,
                           const ModuleBase::matrix& v_eff,
                           Gint_k& gint_k,    // mohan add 2024-04-01
-                          LCAO_Matrix& lm,   // mohan add 2024-04-01
+                          const Parallel_Orbitals& pv,
                           LCAO_HS_Arrays& HS_Arrays,
                           Grid_Driver& grid, // mohan add 2024-04-06
                           const TwoCenterBundle& two_center_bundle,
@@ -107,7 +107,7 @@ void ModuleIO::output_dHR(const int& istep,
         // mohan add 2024-04-01
         const int cspin = 0;
 
-        sparse_format::cal_dH(lm,
+        sparse_format::cal_dH(pv,
                               HS_Arrays,
                               grid,
                               two_center_bundle,
@@ -130,7 +130,7 @@ void ModuleIO::output_dHR(const int& istep,
                 }
             }
 
-            sparse_format::cal_dH(lm,
+            sparse_format::cal_dH(pv,
                                   HS_Arrays,
                                   grid,
                                   two_center_bundle,
@@ -140,7 +140,7 @@ void ModuleIO::output_dHR(const int& istep,
         }
     }
     // mohan update 2024-04-01
-    ModuleIO::save_dH_sparse(istep, lm, HS_Arrays, sparse_thr, binary);
+    ModuleIO::save_dH_sparse(istep, pv, HS_Arrays, sparse_thr, binary);
 
     sparse_format::destroy_dH_R_sparse(HS_Arrays);
 
@@ -151,7 +151,6 @@ void ModuleIO::output_dHR(const int& istep,
 }
 
 void ModuleIO::output_SR(Parallel_Orbitals& pv,
-                         LCAO_Matrix& lm,
                          Grid_Driver& grid,
                          hamilt::Hamilt<std::complex<double>>* p_ham,
                          const std::string& SR_filename,
@@ -177,7 +176,7 @@ void ModuleIO::output_SR(Parallel_Orbitals& pv,
                           sparse_thr,
                           binary,
                           SR_filename,
-                          *lm.ParaV,
+                          pv,
                           "S",
                           istep);
 
@@ -190,7 +189,6 @@ void ModuleIO::output_SR(Parallel_Orbitals& pv,
 void ModuleIO::output_TR(const int istep,
                          const UnitCell& ucell,
                          const Parallel_Orbitals& pv,
-                         LCAO_Matrix& lm,
                          LCAO_HS_Arrays& HS_Arrays,
                          Grid_Driver& grid,
                          const TwoCenterBundle& two_center_bundle,
@@ -209,7 +207,6 @@ void ModuleIO::output_TR(const int istep,
 
     sparse_format::cal_TR(ucell,
                           pv,
-                          lm,
                           HS_Arrays,
                           grid,
                           two_center_bundle,
@@ -220,7 +217,7 @@ void ModuleIO::output_TR(const int istep,
                           sparse_thr,
                           binary,
                           sst.str().c_str(),
-                          *(lm.ParaV),
+                          pv,
                           "T",
                           istep);
 
