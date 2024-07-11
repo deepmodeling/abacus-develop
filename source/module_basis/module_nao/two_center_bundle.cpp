@@ -63,28 +63,33 @@ void TwoCenterBundle::tabulate()
     ModuleBase::SphericalBesselTransformer sbt(true);
     orb_->set_transformer(sbt);
     beta_->set_transformer(sbt);
-    if (alpha_)
+    if (alpha_) {
         alpha_->set_transformer(sbt);
-    if (orb_onsite_)
+}
+    if (orb_onsite_) {
         orb_onsite_->set_transformer(sbt);
+}
 
     //================================================================
     //              build two-center integration tables
     //================================================================
     // set up a universal radial grid
     double rmax = std::max(orb_->rcut_max(), beta_->rcut_max());
-    if (alpha_)
+    if (alpha_) {
         rmax = std::max(rmax, alpha_->rcut_max());
+}
     double dr = 0.01;
     double cutoff = 2.0 * rmax;
     int nr = static_cast<int>(rmax / dr) + 1;
 
     orb_->set_uniform_grid(true, nr, cutoff, 'i', true);
     beta_->set_uniform_grid(true, nr, cutoff, 'i', true);
-    if (alpha_)
+    if (alpha_) {
         alpha_->set_uniform_grid(true, nr, cutoff, 'i', true);
-    if (orb_onsite_)
+}
+    if (orb_onsite_) {
         orb_onsite_->set_uniform_grid(true, nr, cutoff, 'i', true);
+}
 
     // build TwoCenterIntegrator objects
     kinetic_orb = std::unique_ptr<TwoCenterIntegrator>(new TwoCenterIntegrator);
@@ -125,10 +130,12 @@ void TwoCenterBundle::tabulate(const double lcao_ecut,
     ModuleBase::SphericalBesselTransformer sbt(true);
     orb_->set_transformer(sbt);
     beta_->set_transformer(sbt);
-    if (alpha_)
+    if (alpha_) {
         alpha_->set_transformer(sbt);
-    if (orb_onsite_)
+}
+    if (orb_onsite_) {
         orb_onsite_->set_transformer(sbt);
+}
 
     //================================================================
     //              build two-center integration tables
@@ -209,7 +216,7 @@ void TwoCenterBundle::to_LCAO_Orbitals(LCAO_Orbitals& ORB,
     ORB.nchimax = orb_->nzeta_max();
     ORB.rcutmax_Phi = orb_->rcut_max();
     ORB.dR = lcao_dr;
-    ORB.Rmax = lcao_rmax; // lcao_rmax, see ORB_control.cpp
+    ORB.Rmax = lcao_rmax;
     ORB.dr_uniform = 0.001;
 
     // Due to algorithmic difference in the spherical Bessel transform

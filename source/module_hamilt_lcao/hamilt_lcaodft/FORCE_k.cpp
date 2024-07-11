@@ -24,7 +24,6 @@
 
 template <>
 void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
-                                                LCAO_Matrix& lm,
                                                 ForceStressArrays& fsr, // mohan add 2024-06-15
                                                 const TwoCenterBundle& two_center_bundle,
                                                 const int& nks,
@@ -86,8 +85,7 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
     // calculate dS = <phi | dphi>
     //-----------------------------
     bool cal_deri = true;
-    LCAO_domain::build_ST_new(lm,
-                              fsr,
+    LCAO_domain::build_ST_new(fsr,
                               'S',
                               cal_deri,
                               GlobalC::ucell,
@@ -117,8 +115,7 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
 
     // calculate dT=<phi|kin|dphi> in LCAO
     // calculate T + VNL(P1) in LCAO basis
-    LCAO_domain::build_ST_new(lm,
-                              fsr,
+    LCAO_domain::build_ST_new(fsr,
                               'T',
                               cal_deri,
                               GlobalC::ucell,
@@ -129,7 +126,7 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
                               nullptr); // delete lm.Hloc_fixedR
 
     // calculate dVnl=<phi|dVnl|dphi> in LCAO
-    LCAO_domain::build_Nonlocal_mu_new(lm,
+    LCAO_domain::build_Nonlocal_mu_new(pv,
                                        fsr,
                                        nullptr,
                                        cal_deri,
@@ -146,8 +143,7 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
         ModuleBase::WARNING_QUIT("cal_syns",
                                  "This function has been broken and will be fixed later.");
 
-        LCAO_domain::build_ST_new(lm,
-                                  fsr,
+        LCAO_domain::build_ST_new(fsr,
                                   'S',
                                   cal_deri,
                                   GlobalC::ucell,
@@ -163,29 +159,6 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
         {
             
             bool bit = false; // LiuXh, 2017-03-21
-            /*ModuleIO::save_mat(0,
-                               lm.Hloc2.data(),
-                               GlobalV::NLOCAL,
-                               bit,
-                               GlobalV::out_ndigits,
-                               0,
-                               GlobalV::out_app_flag,
-                               "H",
-                               "data-" + std::to_string(ik),
-                               pv,
-                               GlobalV::DRANK);
-
-            ModuleIO::save_mat(0,
-                               lm.Sloc2.data(),
-                               GlobalV::NLOCAL,
-                               bit,
-                               GlobalV::out_ndigits,
-                               0,
-                               GlobalV::out_app_flag,
-                               "S",
-                               "data-" + std::to_string(ik),
-                               pv,
-                               GlobalV::DRANK);*/
         }
     }
 
@@ -315,7 +288,6 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
                                               TGint<std::complex<double>>::type& gint,
                                               const TwoCenterBundle& two_center_bundle,
                                               const Parallel_Orbitals& pv,
-                                              LCAO_Matrix& lm,
                                               const K_Vectors* kv,
                                               Record_adj* ra)
 {
@@ -326,7 +298,6 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
         = dynamic_cast<const elecstate::ElecStateLCAO<std::complex<double>>*>(pelec)->get_DM();
 
     this->allocate(pv,
-                   lm,
                    fsr, // mohan add 2024-06-16
                    two_center_bundle,
                    kv->get_nks(),
@@ -334,7 +305,7 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
 
     // calculate the energy density matrix
     // and the force related to overlap matrix and energy density matrix.
-    this->cal_fedm(isforce, isstress, fsr, ucell, dm, psi, pv, pelec, lm, foverlap, soverlap, kv, ra);
+    this->cal_fedm(isforce, isstress, fsr, ucell, dm, psi, pv, pelec, foverlap, soverlap, kv, ra);
 
     this->cal_ftvnl_dphi(dm, pv, ucell, fsr, isforce, isstress, ftvnl_dphi, stvnl_dphi, ra);
 

@@ -6,12 +6,12 @@
 #include "module_base/matrix.h"
 #include "module_basis/module_nao/two_center_bundle.h"
 #include "module_elecstate/module_dm/density_matrix.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/force_stress_arrays.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
 #include "module_psi/psi.h"
+#include "module_elecstate/potentials/potential_new.h"
+#include "module_elecstate/elecstate.h"
 
 #ifndef TGINT_H
 #define TGINT_H
@@ -67,13 +67,11 @@ class Force_LCAO
                 typename TGint<T>::type& gint,
                 const TwoCenterBundle& two_center_bundle,
                 const Parallel_Orbitals& pv,
-                LCAO_Matrix& lm,
                 const K_Vectors* kv = nullptr,
                 Record_adj* ra = nullptr);
 
     // get the ds, dt, dvnl.
     void allocate(const Parallel_Orbitals& pv,
-                  LCAO_Matrix& lm,
                   ForceStressArrays& fsr, // mohan add 2024-06-15
                   const TwoCenterBundle& two_center_bundle,
                   const int& nks = 0,
@@ -98,7 +96,6 @@ class Force_LCAO
                   const psi::Psi<T>* psi,
                   const Parallel_Orbitals& pv,
                   const elecstate::ElecState* pelec,
-                  LCAO_Matrix& lm,
                   ModuleBase::matrix& foverlap,
                   ModuleBase::matrix& soverlap,
                   const K_Vectors* kv = nullptr,

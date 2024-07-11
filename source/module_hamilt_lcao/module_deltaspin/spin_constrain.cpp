@@ -510,8 +510,7 @@ void SpinConstrain<FPTYPE, Device>::set_solver_parameters(K_Vectors kv_in,
                                                           hamilt::Hamilt<FPTYPE, Device>* p_hamilt_in,
                                                           psi::Psi<FPTYPE>* psi_in,
                                                           elecstate::ElecState* pelec_in,
-                                                          std::string KS_SOLVER_in,
-                                                          LCAO_Matrix* LM_in)
+                                                          std::string KS_SOLVER_in)
 {
     this->kv_ = kv_in;
     this->phsol = phsol_in;
@@ -519,7 +518,6 @@ void SpinConstrain<FPTYPE, Device>::set_solver_parameters(K_Vectors kv_in,
     this->psi = psi_in;
     this->pelec = pelec_in;
     this->KS_SOLVER = KS_SOLVER_in;
-    this->LM = LM_in;
 }
 
 /// @brief  set ParaV

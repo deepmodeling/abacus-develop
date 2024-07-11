@@ -15,6 +15,7 @@ void output_HSR(const int& istep,
                 const ModuleBase::matrix& v_eff,
                 const Parallel_Orbitals& pv,
                 LCAO_Matrix& lm,
+                LCAO_HS_Arrays& HS_Arrays,
                 Grid_Driver& grid, // mohan add 2024-04-06
                 const K_Vectors& kv,
                 hamilt::Hamilt<std::complex<double>>* p_ham,
@@ -28,6 +29,7 @@ void output_dHR(const int& istep,
                 const ModuleBase::matrix& v_eff,
                 Gint_k& gint_k,    // mohan add 2024-04-01
                 LCAO_Matrix& lm,   // mohan add 2024-04-01
+                LCAO_HS_Arrays& HS_Arrays,
                 Grid_Driver& grid, // mohan add 2024-04-06
                 const TwoCenterBundle& two_center_bundle,
                 const K_Vectors& kv,
@@ -38,6 +40,7 @@ void output_TR(const int istep,
                const UnitCell& ucell,
                const Parallel_Orbitals& pv,
                LCAO_Matrix& lm,
+               LCAO_HS_Arrays& HS_Arrays,
                Grid_Driver& grid,
                const TwoCenterBundle& two_center_bundle,
                const std::string& TR_filename = "data-TR-sparse_SPIN0.csr",
