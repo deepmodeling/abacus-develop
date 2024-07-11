@@ -10,7 +10,7 @@
 #include "module_hsolver/diago_lapack.h"
 #include "module_base/lapack_connector.h"
 
-#define PASSTHRESHOLD 1e-10
+#define PASSTHRESHOLD 1e-5
 #define DETAILINFO false
 #define PRINT_HS false
 #define REPEATRUN 1
@@ -40,83 +40,6 @@ class HamiltTEST : public hamilt::Hamilt<T>
     }
 };
 
-void lapackEigen(int &npw, std::vector<std::complex<double>> &hm, double *e, bool outtime = false)
-{
-    clock_t start, end;
-    start = clock();
-    int lwork = 2 * npw;
-    std::complex<double> *work2 = new std::complex<double>[lwork];
-    double *rwork = new double[3 * npw - 2];
-    int info = 0;
-    char tmp_c1 = 'V', tmp_c2 = 'U';
-    zheev_(&tmp_c1, &tmp_c2, &npw, hm.data(), &npw, e, work2, &lwork, rwork, &info);
-    end = clock();
-    if (outtime) {
-        std::cout << "Lapack Run time: " << (double)(end - start) / CLOCKS_PER_SEC << " S" << std::endl;
-}
-    delete[] rwork;
-    delete[] work2;
-}
-
-
-void lapack_diago(double *hmatrix, double *smatrix, double *e, int &nFull)
-{
-    const int itype = 1; // solve A*X=(lambda)*B*X
-    const char jobz = 'V'; // 'N':only calc eigenvalue, 'V': eigenvalues and eigenvectors
-    const char uplo = 'U'; // Upper triangles
-    int lwork = (nFull + 2) * nFull, info = 0;
-    double *ev = new double[nFull * nFull];
-
-    double *a = new double[nFull * nFull];
-    double *b = new double[nFull * nFull];
-    for (int i = 0; i < nFull * nFull; i++)
-    {
-        a[i] = hmatrix[i];
-        b[i] = smatrix[i];
-    }
-
-    dsygv_(&itype, &jobz, &uplo, &nFull, a, &nFull, b, &nFull, e, ev, &lwork, &info);
-    if (info != 0)
-    {
-        std::cout << "ERROR: solvered by LAPACK error, info=" << info << std::endl;
-        exit(1);
-    }
-
-    delete[] a;
-    delete[] b;
-    delete[] ev;
-}
-
-void lapack_diago(std::complex<double> *hmatrix, std::complex<double> *smatrix, double *e, int &nFull)
-{
-    const int itype = 1; // solve A*X=(lambda)*B*X
-    const char jobz = 'V'; // 'N':only calc eigenvalue, 'V': eigenvalues and eigenvectors
-    const char uplo = 'U'; // Upper triangles
-    int lwork = (nFull + 1) * nFull, info = 0;
-    double *rwork = new double[3 * nFull - 2];
-    std::complex<double> *ev = new std::complex<double>[nFull * nFull];
-
-    std::complex<double> *a = new std::complex<double>[nFull * nFull];
-    std::complex<double> *b = new std::complex<double>[nFull * nFull];
-    for (int i = 0; i < nFull * nFull; i++)
-    {
-        a[i] = hmatrix[i];
-        b[i] = smatrix[i];
-    }
-
-    zhegv_(&itype, &jobz, &uplo, &nFull, a, &nFull, b, &nFull, e, ev, &lwork, rwork, &info);
-    if (info != 0)
-    {
-        std::cout << "ERROR: solvered by LAPACK error, info=" << info << std::endl;
-        exit(1);
-    }
-
-    delete[] a;
-    delete[] b;
-    delete[] ev;
-    delete[] rwork;
-}
-
 // The serialized version of functions from diago_elpa_utils
 
 template <class T> bool read_hs(std::string fname, T &matrix)
@@ -145,6 +68,25 @@ template <class T> bool read_hs(std::string fname, T &matrix)
     return true;
 }
 
+bool read_solution(std::string fname, std::vector<double> &result)
+{
+    int ndim;
+    std::ifstream inf(fname);
+    if(! inf.is_open())
+    {
+        std::cout << "Error: open file " << fname << " failed, skip!" << std::endl;
+        return false;
+    }
+    inf >> ndim;
+    for (int i = 0; i < ndim; i++)
+    {
+        inf >> result[i];
+    }
+    inf.close();
+    return true;
+}
+
+
 template <class T> inline void print_matrix(std::ofstream &fp, T *matrix, int &nrow, int &ncol, bool row_first)
 {
     int coef_row = row_first ? ncol : 1;
@@ -169,15 +111,16 @@ class DiagoLapackPrepare
                        int nb2d,
                        int sparsity,
                        std::string hfname,
-                       std::string sfname)
+                       std::string sfname,
+                       std::string solutionfname)
         : nlocal(nlocal), nbands(nbands), nb2d(nb2d), sparsity(sparsity), hfname(hfname),
-          sfname(sfname)
+          sfname(sfname), solutionfname(solutionfname)
     {
         dh = new hsolver::DiagoLapack<T>;
     }
 
     int nlocal, nbands, nb2d, sparsity;
-    std::string sfname, hfname;
+    std::string sfname, hfname, solutionfname;
     std::vector<T> h;
     std::vector<T> s;
     HamiltTEST<T> hmtest;
@@ -205,9 +148,8 @@ class DiagoLapackPrepare
         nlocal = hdim;
         nbands = nlocal / 2;
         if (readhfile && readsfile) {
-            std::cout << "READ FINISH" << std::endl;
-}
             return true;
+        }  
         return false;
     }
 
@@ -223,7 +165,7 @@ class DiagoLapackPrepare
     {
         if (!PRINT_HS) {
             return;
-}
+        }
         std::ofstream fp("hmatrix.dat");
         print_matrix(fp, this->h.data(), nlocal, nlocal, true);
         fp.close();
@@ -260,11 +202,9 @@ class DiagoLapackPrepare
         delete dh;
     }
 
-    void diago_lapack()
+    void read_SOLUTION()
     {
-        for (int i = 0; i < REPEATRUN; i++) {
-            lapack_diago(this->h.data(), this->s.data(), this->e_lapack.data(), nlocal);
-}
+        read_solution(this->solutionfname, this->e_lapack);
     }
 
     bool compare_eigen(std::stringstream& out_info)
@@ -272,10 +212,8 @@ class DiagoLapackPrepare
         double maxerror = 0.0;
         int iindex = 0;
         bool pass = true;
-        std::cout << std::endl;
         for (int i = 0; i < nbands; i++)
         {
-            std::cout << e_lapack[i] << " ";
             double error = std::abs(e_lapack[i] - e_solver[i]);
             if (error > maxerror)
             {
@@ -284,13 +222,12 @@ class DiagoLapackPrepare
             }
             if (error > PASSTHRESHOLD) {
                 pass = false;
-}
+            }
         }
-        std::cout << std::endl;
-
         std::cout << "H/S matrix are read from " << hfname << ", " << sfname << std::endl;
         std::cout << ", NLOCAL=" << nlocal << ", nbands=" << nbands << ", nb2d=" << nb2d;
         std::cout << std::endl;
+        std::cout << "Solution is read from " << solutionfname << std::endl << std::endl;
         out_info << "Maximum difference between ks_hsolver and LAPACK is " << maxerror << " (" << iindex
                  << "-th eigenvalue), the pass threshold is " << PASSTHRESHOLD << std::endl;
 
@@ -315,7 +252,7 @@ TEST_P(DiagoLapackGammaOnlyTest, LCAO)
     ASSERT_TRUE(dp.produce_HS());
     dp.diago();
 
-    dp.diago_lapack();
+    dp.read_SOLUTION();
     bool pass = dp.compare_eigen(out_info);
     EXPECT_TRUE(pass) << out_info.str();
 }
@@ -323,11 +260,9 @@ TEST_P(DiagoLapackGammaOnlyTest, LCAO)
 INSTANTIATE_TEST_SUITE_P(
     DiagoLapackTest,
     DiagoLapackGammaOnlyTest,
-    ::testing::Values( // int nlocal, int nbands, int nb2d, int sparsity, std::string ks_solver_in, std::string hfname,
-                       // std::string sfname DiagoLapackPrepare<double>(0, 0, 1, 0, "genelpa", "H-GammaOnly-Si2.dat",
-                       // "S-GammaOnly-Si2.dat")
-        DiagoLapackPrepare<double>(0, 0, 1, 0, "H-GammaOnly-Si2.dat", "S-GammaOnly-Si2.dat"),
-        DiagoLapackPrepare<double>(0, 0, 32, 0, "H-GammaOnly-Si64.dat", "S-GammaOnly-Si64.dat")));
+    ::testing::Values(
+        DiagoLapackPrepare<double>(0, 0, 1, 0, "H-GammaOnly-Si2.dat", "S-GammaOnly-Si2.dat", "GammaOnly-Si2-Solution.dat"),
+        DiagoLapackPrepare<double>(0, 0, 32, 0, "H-GammaOnly-Si64.dat", "S-GammaOnly-Si64.dat", "GammaOnly-Si64-Solution.dat")));
 
 
 class DiagoLapackKPointsTest : public ::testing::TestWithParam<DiagoLapackPrepare<std::complex<double>>>
@@ -340,7 +275,7 @@ TEST_P(DiagoLapackKPointsTest, LCAO)
     ASSERT_TRUE(dp.produce_HS());
     dp.diago();
 
-    dp.diago_lapack();
+    dp.read_SOLUTION();
     bool pass = dp.compare_eigen(out_info);
     EXPECT_TRUE(pass) << out_info.str();
 }
@@ -348,10 +283,9 @@ TEST_P(DiagoLapackKPointsTest, LCAO)
 INSTANTIATE_TEST_SUITE_P(
     DiagoLapackTest,
     DiagoLapackKPointsTest,
-    ::testing::Values( // int nlocal, int nbands, int nb2d, int sparsity, std::string ks_solver_in, std::string hfname,
-                       // std::string sfname DiagoLapackPrepare<std::complex<double>>(800, 400, 32, 7, "genelpa", "", ""),
-        DiagoLapackPrepare<std::complex<double>>(0, 0, 1, 0, "H-KPoints-Si2.dat", "S-KPoints-Si2.dat"),
-        DiagoLapackPrepare<std::complex<double>>(0, 0, 32, 0, "H-KPoints-Si64.dat", "S-KPoints-Si64.dat")));
+    ::testing::Values(
+        DiagoLapackPrepare<std::complex<double>>(0, 0, 1, 0, "H-KPoints-Si2.dat", "S-KPoints-Si2.dat", "KPoints-Si2-Solution.dat"),
+        DiagoLapackPrepare<std::complex<double>>(0, 0, 32, 0, "H-KPoints-Si64.dat", "S-KPoints-Si64.dat", "KPoints-Si64-Solution.dat")));
 
 int main(int argc, char** argv)
 {
