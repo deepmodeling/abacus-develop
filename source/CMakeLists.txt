@@ -24,12 +24,6 @@ add_library(
     driver_run.cpp
 )
 
-add_library(
-    main
-    OBJECT
-    main.cpp
-)
-
 list(APPEND device_srcs
   module_hamilt_pw/hamilt_pwdft/kernels/nonlocal_op.cpp
   module_hamilt_pw/hamilt_pwdft/kernels/veff_op.cpp
