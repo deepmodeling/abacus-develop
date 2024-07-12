@@ -31,7 +31,8 @@ void Gint::gint_kernel_vlocal(
 	//and accumulates to the corresponding element in Hamiltonian
     if(this->gridt->gamma_only_local)
     {
-		if(hR == nullptr) hR = this->hRGint;
+		if(hR == nullptr) { hR = this->hRGint;
+}
 		this->cal_meshball_vlocal_gamma(
 			na_grid, LD_pool, block_iw, block_size, block_index, grid_index, cal_flag,
 			psir_ylm.ptr_2D, psir_vlbr3.ptr_2D, hR);
@@ -156,7 +157,8 @@ void Gint::gint_kernel_vlocal_meta(
 
     if(this->gridt->gamma_only_local)
     {
-		if(hR == nullptr) hR = this->hRGint;
+		if(hR == nullptr) { hR = this->hRGint;
+}
 		//integrate (psi_mu*v(r)*dv) * psi_nu on grid
 		//and accumulates to the corresponding element in Hamiltonian
 		this->cal_meshball_vlocal_gamma(
@@ -250,7 +252,8 @@ void Gint::cal_meshball_vlocal_gamma(
                     }
                 }
                 const int ib_length = last_ib-first_ib;
-                if(ib_length<=0) continue;
+                if(ib_length<=0) { continue;
+}
 
 				// calculate the BaseMatrix of <iat1, iat2, R> atom-pair
 				hamilt::AtomPair<double>* tmp_ap = hR->find_pair(iat1, iat2);
@@ -352,11 +355,13 @@ void Gint::cal_meshball_vlocal_k(
     			int cal_num=0;
     			for(int ib=0; ib<this->bxyz; ++ib)
     			{
-    				if(cal_flag[ib][ia1] && cal_flag[ib][ia2])
+    				if(cal_flag[ib][ia1] && cal_flag[ib][ia2]) {
     				    ++cal_num;
+}
     			}
 
-    			if(cal_num==0) continue;
+    			if(cal_num==0) { continue;
+}
     			
                 const int idx2=block_index[ia2];
         		int n=block_size[ia2];

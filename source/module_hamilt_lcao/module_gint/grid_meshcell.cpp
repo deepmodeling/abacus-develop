@@ -94,7 +94,7 @@ void Grid_MeshCell::init_latvec(const UnitCell &ucell)
 	return;
 }
 
-void Grid_MeshCell::init_meshcell_pos(void)
+void Grid_MeshCell::init_meshcell_pos()
 {
 	assert(bx>0);
 	assert(by>0);
