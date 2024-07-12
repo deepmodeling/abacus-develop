@@ -58,7 +58,7 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<double>* hR, const UnitCell* ucell
     }
     this->hRGint->set_zero();
 
-    const int npol = GlobalV::NPOL;
+    const int npol = this->gridt->npol;
     const UnitCell& ucell = *ucell_in;
     for (int iat = 0; iat < ucell.nat; ++iat)
     {
@@ -182,7 +182,7 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<std::complex<double>>* hR, const U
     }
     this->hRGintCd->set_zero();
 
-    const int npol = GlobalV::NPOL;
+    const int npol = this->gridt->npol;
     const UnitCell& ucell = *ucell_in;
 
     for (int iat = 0; iat < ucell.nat; ++iat)
