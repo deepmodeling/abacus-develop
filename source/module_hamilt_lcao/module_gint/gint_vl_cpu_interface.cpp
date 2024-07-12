@@ -12,7 +12,7 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
 #ifdef _OPENMP
-    if (!GlobalV::GAMMA_ONLY_LOCAL) {
+    if (!this->gridt->gamma_only_local) {
         if (!pvpR_alloc_flag) {
             ModuleBase::WARNING_QUIT("Gint_interface::cal_gint",
                                      "pvpR has not been allocated yet!");
@@ -25,7 +25,7 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
     // define HContainer here to reference.
     hamilt::HContainer<double>* hRGint_thread =nullptr;
     //Under the condition of gamma_only, hRGint will be instantiated.
-    if (GlobalV::GAMMA_ONLY_LOCAL){
+    if (this->gridt->gamma_only_local){
         hRGint_thread = new hamilt::HContainer<double>(*this->hRGint);
     }
     //use vector instead of new-delete to avoid memory leak.
@@ -57,7 +57,7 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
                                  ucell,
                                  hRGint_thread);
 #else
-        if (GlobalV::GAMMA_ONLY_LOCAL) {
+        if (this->gridt->gamma_only_local) {
             this->gint_kernel_vlocal(na_grid,
                                      grid_index,
                                      delta_r,
@@ -78,7 +78,7 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
         delete[] vldr3;
     }
 #ifdef _OPENMP
-    if (GlobalV::GAMMA_ONLY_LOCAL) {
+    if (this->gridt->gamma_only_local) {
 #pragma omp critical(gint_gamma)
         {
             BlasConnector::axpy(this->hRGint->get_nnr(),
@@ -117,7 +117,7 @@ void Gint::cpu_dvlocal_interface(Gint_inout* inout) {
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
 
-    if (GlobalV::GAMMA_ONLY_LOCAL) {
+    if (this->gridt->gamma_only_local) {
         ModuleBase::WARNING_QUIT("Gint_interface::cal_gint",
                                  "dvlocal only for k point!");
         ZEROS(
@@ -196,7 +196,7 @@ void Gint::cpu_vlocal_meta_interface(Gint_inout* inout) {
     const double delta_r = this->gridt->dr_uniform;
 
 #ifdef _OPENMP
-    if (!GlobalV::GAMMA_ONLY_LOCAL) {
+    if (!this->gridt->gamma_only_local) {
         if (!pvpR_alloc_flag) {
             ModuleBase::WARNING_QUIT("Gint_interface::cal_gint",
                                         "pvpR has not been allocated yet!");
@@ -208,7 +208,7 @@ void Gint::cpu_vlocal_meta_interface(Gint_inout* inout) {
     // define HContainer here to reference.
     hamilt::HContainer<double>* hRGint_thread = nullptr;
     //Under the condition of gamma_only, hRGint will be instantiated.
-    if (GlobalV::GAMMA_ONLY_LOCAL)
+    if (this->gridt->gamma_only_local)
     {
         hRGint_thread =new hamilt::HContainer<double>(*this->hRGint);
     }
@@ -252,7 +252,7 @@ void Gint::cpu_vlocal_meta_interface(Gint_inout* inout) {
                                           ucell,
                                           hRGint_thread);
 #else
-        if (GlobalV::GAMMA_ONLY_LOCAL) {
+        if (this->gridt->gamma_only_local) {
             this->gint_kernel_vlocal_meta(na_grid,
                                           grid_index,
                                           delta_r,
@@ -276,7 +276,7 @@ void Gint::cpu_vlocal_meta_interface(Gint_inout* inout) {
         delete[] vkdr3;
     }
 #ifdef _OPENMP
-    if (GlobalV::GAMMA_ONLY_LOCAL) {
+    if (this->gridt->gamma_only_local) {
 #pragma omp critical(gint_gamma)
         {
             BlasConnector::axpy(this->hRGint->get_nnr(),

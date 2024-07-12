@@ -29,7 +29,7 @@ void Gint::gint_kernel_vlocal(
 
 	//integrate (psi_mu*v(r)*dv) * psi_nu on grid
 	//and accumulates to the corresponding element in Hamiltonian
-    if(GlobalV::GAMMA_ONLY_LOCAL)
+    if(this->gridt->gamma_only_local)
     {
 		if(hR == nullptr) hR = this->hRGint;
 		this->cal_meshball_vlocal_gamma(
@@ -154,7 +154,7 @@ void Gint::gint_kernel_vlocal_meta(
 	const Gint_Tools::Array_Pool<double> dpsiz_vlbr3 = Gint_Tools::get_psir_vlbr3(
 			this->bxyz, na_grid, LD_pool, block_index, cal_flag, vkdr3, dpsir_ylm_z.ptr_2D);
 
-    if(GlobalV::GAMMA_ONLY_LOCAL)
+    if(this->gridt->gamma_only_local)
     {
 		if(hR == nullptr) hR = this->hRGint;
 		//integrate (psi_mu*v(r)*dv) * psi_nu on grid

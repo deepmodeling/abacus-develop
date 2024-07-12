@@ -37,7 +37,7 @@ void Gint::gint_kernel_force(
 	ZEROS(psir_vlbr3_DM.ptr_1D, this->bxyz*LD_pool);
 
 	//calculating g_mu(r) = sum_nu rho_mu,nu f_nu(r)
-	if(GlobalV::GAMMA_ONLY_LOCAL)
+	if(this->gridt->gamma_only_local)
 	{
 		//Gint_Tools::mult_psi_DM(*this->gridt, this->bxyz, na_grid, LD_pool, block_iw, block_size, block_index, cal_flag,
 		//	psir_vlbr3.ptr_2D, psir_vlbr3_DM.ptr_2D, DM_in, 2);
@@ -199,7 +199,7 @@ void Gint::gint_kernel_force_meta(
 	ZEROS(dpsirz_v_DM.ptr_1D, this->bxyz*LD_pool);
 
 	//calculating g_mu(r) = sum_nu rho_mu,nu f_nu(r)
-	if(GlobalV::GAMMA_ONLY_LOCAL)
+	if(this->gridt->gamma_only_local)
 	{
 		Gint_Tools::mult_psi_DM_new(*this->gridt, this->bxyz, grid_index, 
             na_grid, LD_pool, block_iw, block_size,	block_index, cal_flag,

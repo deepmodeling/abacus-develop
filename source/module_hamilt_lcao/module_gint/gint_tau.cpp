@@ -39,7 +39,7 @@ void Gint::gint_kernel_tau(
 		ZEROS(dpsiz_DM.ptr_1D, this->bxyz*LD_pool);
 
 		//calculating g_i,mu(r) = sum_nu rho_mu,nu d/dx_i psi_nu(r), x_i=x,y,z
-		if(GlobalV::GAMMA_ONLY_LOCAL)
+		if(this->gridt->gamma_only_local)
 		{
 			/*
 			Gint_Tools::mult_psi_DM(

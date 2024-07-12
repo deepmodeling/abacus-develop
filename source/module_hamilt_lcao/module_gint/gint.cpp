@@ -27,7 +27,7 @@ void Gint::cal_gint(Gint_inout* inout) {
     }
     if (max_size > 0) {
 #ifdef __CUDA
-        if (GlobalV::device_flag == "gpu" && GlobalV::GAMMA_ONLY_LOCAL
+        if (GlobalV::device_flag == "gpu" && this->gridt->gamma_only_local
             && (inout->job == Gint_Tools::job_type::vlocal
                 || inout->job == Gint_Tools::job_type::rho
                 || inout->job == Gint_Tools::job_type::force)) {
@@ -180,7 +180,7 @@ void Gint::initialize_pvpR(const UnitCell& ucell_in, Grid_Driver* gd) {
         }
     }
 
-    if (GlobalV::GAMMA_ONLY_LOCAL && this->gridt->nspin!= 4) {
+    if (this->gridt->gamma_only_local && this->gridt->nspin!= 4) {
         this->hRGint->fix_gamma();
     }
     for (int T1 = 0; T1 < ucell_in.ntype; ++T1) {

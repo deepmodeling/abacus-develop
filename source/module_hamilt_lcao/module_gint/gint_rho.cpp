@@ -36,7 +36,7 @@ void Gint::gint_kernel_rho(const int na_grid,
     {
         Gint_Tools::Array_Pool<double> psir_DM(this->bxyz, LD_pool);
         ZEROS(psir_DM.ptr_1D, this->bxyz * LD_pool);
-        if (GlobalV::GAMMA_ONLY_LOCAL)
+        if (this->gridt->gamma_only_local)
         {
             Gint_Tools::mult_psi_DM_new(*this->gridt,
                                         this->bxyz,
