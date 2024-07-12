@@ -34,14 +34,12 @@ TEST(PropagatorTest, testPropagatorTaylor)
     pv->dim0 = 1;
     pv->dim1 = 1;
     pv->nb = 1;
+    pv->blacs_ctxt = 0;
+    pv->coord[0] = pv->coord[1] = 0;
 
     int dim[2];
-    int period[2] = {1, 1};
-    int reorder = 0;
     dim[0] = nprow;
     dim[1] = npcol;
-
-    MPI_Cart_create(MPI_COMM_WORLD, 2, dim, period, reorder, &pv->comm_2D);
 
     INPUT.mdp.md_dt = 4;
 

@@ -69,7 +69,6 @@ namespace hamilt
 
 template <typename TK, typename TR>
 OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
-	LCAO_Matrix* LM_in,
     HContainer<TR>*hR_in,
 	const K_Vectors& kv_in,
 	std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd_in,
@@ -77,8 +76,7 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
     Add_Hexx_Type add_hexx_type_in,
 	int* two_level_step_in,
 	const bool restart_in)
-	: OperatorLCAO<TK, TR>(hsk_in, kv_in.kvec_d, hR_in),
-    LM(LM_in),
+    : OperatorLCAO<TK, TR>(hsk_in, kv_in.kvec_d, hR_in),
     kv(kv_in),
     Hexxd(Hexxd_in),
     Hexxc(Hexxc_in),
@@ -88,6 +86,7 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
 {
     ModuleBase::TITLE("OperatorEXX", "OperatorEXX");
     this->cal_type = calculation_type::lcao_exx;
+    const Parallel_Orbitals* const pv = hR_in->get_paraV();
 
     if (GlobalV::CALCULATION == "nscf")
     {    // if nscf, read HexxR first and reallocate hR according to the read-in HexxR
@@ -142,25 +141,25 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
                 /// read in Hexx(k)
                 if (std::is_same<TK, double>::value)
                 {
-                    this->LM->Hexxd_k_load.resize(this->kv.get_nks());
+                    this->Hexxd_k_load.resize(this->kv.get_nks());
                     for (int ik = 0; ik < this->kv.get_nks(); ik++)
                     {
-                        this->LM->Hexxd_k_load[ik].resize(this->LM->ParaV->get_local_size(), 0.0);
+                        this->Hexxd_k_load[ik].resize(pv->get_local_size(), 0.0);
                         this->restart = GlobalC::restart.load_disk(
                             "Hexx", ik,
-                            this->LM->ParaV->get_local_size(), this->LM->Hexxd_k_load[ik].data(), false);
+                            pv->get_local_size(), this->Hexxd_k_load[ik].data(), false);
                         if (!this->restart) break;
                     }
                 }
                 else
                 {
-                    this->LM->Hexxc_k_load.resize(this->kv.get_nks());
+                    this->Hexxc_k_load.resize(this->kv.get_nks());
                     for (int ik = 0; ik < this->kv.get_nks(); ik++)
                     {
-                        this->LM->Hexxc_k_load[ik].resize(this->LM->ParaV->get_local_size(), 0.0);
+                        this->Hexxc_k_load[ik].resize(pv->get_local_size(), 0.0);
                         this->restart = GlobalC::restart.load_disk(
                             "Hexx", ik,
-                            this->LM->ParaV->get_local_size(), this->LM->Hexxc_k_load[ik].data(), false);
+                            pv->get_local_size(), this->Hexxc_k_load[ik].data(), false);
                         if (!this->restart) break;
                     }
                 }
@@ -198,8 +197,8 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHR()
             RI_2D_Comm::add_HexxR(
                 this->current_spin,
                 GlobalC::exx_info.info_global.hybrid_alpha,
-                this->Hexxd == nullptr ? *this->LM->Hexxd : *this->Hexxd,
-                *this->LM->ParaV,
+                *this->Hexxd,
+                *this->hR->get_paraV(),
                 GlobalV::NPOL,
                 *this->hR,
                 this->use_cell_nearest ? &this->cell_nearest : nullptr);
@@ -207,8 +206,8 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHR()
             RI_2D_Comm::add_HexxR(
                 this->current_spin,
                 GlobalC::exx_info.info_global.hybrid_alpha,
-                this->Hexxc == nullptr ? *this->LM->Hexxc : *this->Hexxc,
-                *this->LM->ParaV,
+                *this->Hexxc,
+                *this->hR->get_paraV(),
                 GlobalV::NPOL,
                 *this->hR,
                 this->use_cell_nearest ? &this->cell_nearest : nullptr);
@@ -233,15 +232,15 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHk(int ik)
             }
             else // clear loaded Hexx and release memory
             {
-                if (this->LM->Hexxd_k_load.size() > 0)
+                if (this->Hexxd_k_load.size() > 0)
                 {
-                    this->LM->Hexxd_k_load.clear();
-                    this->LM->Hexxd_k_load.shrink_to_fit();
+                    this->Hexxd_k_load.clear();
+                    this->Hexxd_k_load.shrink_to_fit();
                 }
-                else if (this->LM->Hexxc_k_load.size() > 0)
+                else if (this->Hexxc_k_load.size() > 0)
                 {
-                    this->LM->Hexxc_k_load.clear();
-                    this->LM->Hexxc_k_load.shrink_to_fit();
+                    this->Hexxc_k_load.clear();
+                    this->Hexxc_k_load.shrink_to_fit();
                 }
             }
         }
@@ -252,16 +251,16 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHk(int ik)
                 this->kv,
                 ik,
                 GlobalC::exx_info.info_global.hybrid_alpha,
-                this->Hexxd == nullptr ? *this->LM->Hexxd : *this->Hexxd,
-                *this->LM->ParaV,
+                *this->Hexxd,
+                *this->hR->get_paraV(),
                 this->hsk->get_hk());
         else
             RI_2D_Comm::add_Hexx(
                 this->kv,
                 ik,
                 GlobalC::exx_info.info_global.hybrid_alpha,
-                this->Hexxc == nullptr ? *this->LM->Hexxc : *this->Hexxc,
-                *this->LM->ParaV,
+                *this->Hexxc,
+                *this->hR->get_paraV(),
                 this->hsk->get_hk());
     }
 }

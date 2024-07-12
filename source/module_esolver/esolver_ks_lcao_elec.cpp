@@ -100,7 +100,7 @@ void ESolver_KS_LCAO<TK, TR>::set_matrix_grid(Record_adj& ra)
     // (2)For each atom, calculate the adjacent atoms in different cells
     // and allocate the space for H(R) and S(R).
     // If k point is used here, allocate HlocR after atom_arrange.
-    Parallel_Orbitals* pv = this->LM.ParaV;
+    Parallel_Orbitals* pv = &this->ParaV;
     ra.for_2d(*pv, GlobalV::GAMMA_ONLY_LOCAL);
     if (!GlobalV::GAMMA_ONLY_LOCAL)
     {
@@ -183,17 +183,17 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
         this->p_hamilt = new hamilt::HamiltLCAO<TK, TR>(
             GlobalV::GAMMA_ONLY_LOCAL ? &(this->GG) : nullptr,
             GlobalV::GAMMA_ONLY_LOCAL ? nullptr : &(this->GK),
-            &(this->LM),
             &this->ParaV,
             this->pelec->pot,
             this->kv,
             two_center_bundle_,
+            DM
 #ifdef __EXX
-            DM,
-            GlobalC::exx_info.info_ri.real_number ? &this->exd->two_level_step : &this->exc->two_level_step);
-#else
-            DM);
+            , GlobalC::exx_info.info_ri.real_number ? &this->exd->two_level_step : &this->exc->two_level_step
+            , GlobalC::exx_info.info_ri.real_number ? &exx_lri_double->Hexxs : nullptr
+            , GlobalC::exx_info.info_ri.real_number ? nullptr : &exx_lri_complex->Hexxs
 #endif
+        );
     }
 
 #ifdef __DEEPKS
@@ -201,7 +201,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
     // since it depends on ionic positions
     if (GlobalV::deepks_setorb)
     {
-        const Parallel_Orbitals* pv = this->LM.ParaV;
+        const Parallel_Orbitals* pv = &this->ParaV;
         // build and save <psi(0)|alpha(R)> at beginning
         GlobalC::ld.build_psialpha(GlobalV::CAL_FORCE,
                                    GlobalC::ucell,
@@ -284,10 +284,12 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
 #ifdef __EXX // set xc type before the first cal of xc in pelec->init_scf
     if (GlobalC::exx_info.info_ri.real_number)
     {
+        this->exd = std::make_shared<Exx_LRI_Interface<TK, double>>(exx_lri_double);
         this->exd->exx_beforescf(this->kv, *this->p_chgmix);
     }
     else
     {
+        this->exc = std::make_shared<Exx_LRI_Interface<TK, std::complex<double>>>(exx_lri_complex);
         this->exc->exx_beforescf(this->kv, *this->p_chgmix);
     }
 #endif // __EXX
@@ -583,7 +585,6 @@ void ESolver_KS_LCAO<std::complex<double>, std::complex<double>>::get_S(void)
                          GlobalV::test_atom_input);
 
     this->RA.for_2d(this->ParaV, GlobalV::GAMMA_ONLY_LOCAL);
-    this->LM.ParaV = &this->ParaV;
     if (this->p_hamilt == nullptr) {
         this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>,
                                                 std::complex<double>>(

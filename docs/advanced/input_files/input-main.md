@@ -262,6 +262,8 @@
     - [md\_pfirst, md\_plast](#md_pfirst-md_plast)
     - [md\_pfreq](#md_pfreq)
     - [md\_pchain](#md_pchain)
+    - [lj\_rule](#lj_rule)
+    - [lj\_eshift](#lj_eshift)
     - [lj\_rcut](#lj_rcut)
     - [lj\_epsilon](#lj_epsilon)
     - [lj\_sigma](#lj_sigma)
@@ -2556,25 +2558,51 @@ These variables are used to control molecular dynamics calculations. For more in
 - **Description**: The number of thermostats coupled with the barostat in the NPT ensemble based on the Nose-Hoover style non-Hamiltonian equations of motion.
 - **Default**: 1
 
+### lj_rule
+
+- **Type**: Integer
+- **Description**: The Lennard-Jones potential between two atoms equals: 
+  $$V_{LJ}(r_{ij})=4\epsilon_{ij}\left(\left(\frac{\sigma_{ij}}{r_{ij}}\right)^{12}-\left(\frac{\sigma_{ij}}{r_{ij}}\right)^{6}\right)=\frac{C_{ij}^{(12)}}{{r_{ij}}^{12}}-\frac{C_{ij}^{(6)}}{{r_{ij}}^{6}}.$$ 
+  
+  The parameters [lj_epsilon](#lj_epsilon) and [lj_sigma](#lj_sigma) should be multiple-component vectors. For example, there are two choices in the calculations of 3 atom species: 
+
+  Supply six-component vectors that describe the interactions between all possible atom pairs. The six-component vectors represent lower triangular symmetric matrixs, and the correspondence between the vector component $\sigma _k$ and the matrix element $\sigma (i,j)$ is
+  $$k= i(i+1)/2 +j$$
+  
+  Supply three-component vectors that describe the interactions between atoms of the same species. In this case, two types of combination rules can be used to construct non-diagonal elements in the parameter matrix. 
+
+  - 1: geometric average:
+  $$\begin{array}{rcl}C_{ij}^{(6)}&=&\left(C_{ii}^{(6)}C_{jj}^{(6)}\right)^{1/2}\\C_{ij}^{(12)}&=&\left(C_{ii}^{(12)}C_{jj}^{(12)}\right)^{1/2}\end{array}$$
+
+  - 2: arithmetic average:
+  $$\begin{array}{rcl}\sigma_{ij}&=&\frac{1}{2}\left(\sigma_{ii}+\sigma_{jj}\right)\\ \epsilon_{ij}&=&\left(\epsilon_{ii}\epsilon_{jj}\right)^{1/2}\end{array}$$
+- **Default**: 2
+
+### lj_eshift
+
+- **Type**: Boolean
+- **Description**: It True, the LJ potential is shifted by a constant such that it is zero at the cut-off distance.
+- **Default**: False
+
 ### lj_rcut
 
 - **Type**: Real
-- **Description**: Cut-off radius for Leonard Jones potential.
-- **Default**: 8.5 (for He)
+- **Description**: Cut-off radius for Leonard Jones potential, beyond which the interaction will be neglected. It can be a single value, which means that all pairs of atoms types share the same cut-off radius. Otherwise, it should be a multiple-component vector, containing $N(N+1)/2$ values, see details in [lj_rule](#lj_rule).
+- **Default**: No default
 - **Unit**: Angstrom
 
 ### lj_epsilon
 
 - **Type**: Real
-- **Description**: The value of epsilon for Leonard Jones potential.
-- **Default**: 0.01032 (for He)
+- **Description**: The vector representing the $\epsilon$ matrix for Leonard Jones potential. See details in [lj_rule](#lj_rule).
+- **Default**: No default
 - **Unit**: eV
 
 ### lj_sigma
 
 - **Type**: Real
-- **Description**: The value of sigma for Leonard Jones potential.
-- **Default**: 3.405 (for He)
+- **Description**: The vector representing the $\sigma$ matrix for Leonard Jones potential. See details in [lj_rule](#lj_rule).
+- **Default**: No default
 - **Unit**: Angstrom
 
 ### pot_file

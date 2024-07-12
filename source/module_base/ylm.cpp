@@ -6,6 +6,7 @@
 #include "constants.h"
 #include "timer.h"
 #include "tool_quit.h"
+#include "array_pool.h"
 
 namespace ModuleBase
 {
@@ -810,13 +811,10 @@ void Ylm::grad_rl_sph_harm
  	const double& x,
 	const double& y,
 	const double& z,
-	std::vector<double>& rly,
-	std::vector<std::vector<double>>& grly
+	double* rly,
+	double** grly
 )
 {
-	rly.resize( (Lmax+1)*(Lmax+1) );
-	grly.resize( (Lmax+1)*(Lmax+1), std::vector<double>(3) );
-
 	double radius2 = x*x+y*y+z*z;
 	double tx = 2.0*x;
 	double ty = 2.0*y;

@@ -9,24 +9,21 @@ namespace ModuleIO
 
 template <typename T>
 Output_Mat_Sparse<T>::Output_Mat_Sparse(int out_mat_hsR,
-                                        int out_mat_dh,
-                                        int out_mat_t,
-                                        int out_mat_r,
-                                        int istep,
-                                        const ModuleBase::matrix& v_eff,
-                                        const Parallel_Orbitals& pv,
-                                        Gint_k& gint_k, // mohan add 2024-04-01
-                                        const TwoCenterBundle& two_center_bundle,
-                                        LCAO_Matrix& lm,
-                                        Grid_Driver& grid, // mohan add 2024-04-06
-                                        const K_Vectors& kv,
-                                        hamilt::Hamilt<T>* p_ham)
+    int out_mat_dh,
+    int out_mat_t,
+    int out_mat_r,
+    int istep,
+    const ModuleBase::matrix& v_eff,
+    const Parallel_Orbitals& pv,
+    Gint_k& gint_k, // mohan add 2024-04-01
+    const TwoCenterBundle& two_center_bundle,
+    Grid_Driver& grid, // mohan add 2024-04-06
+    const K_Vectors& kv,
+    hamilt::Hamilt<T>* p_ham)
     : _out_mat_hsR(out_mat_hsR), _out_mat_dh(out_mat_dh), _out_mat_t(out_mat_t), _out_mat_r(out_mat_r), _istep(istep),
-      _v_eff(v_eff), _pv(pv), _gint_k(gint_k),                     // mohan add 2024-04-01
-      two_center_bundle_(two_center_bundle), _lm(lm), _grid(grid), // mohan add 2024-04-06
-      _kv(kv), _p_ham(p_ham)
-{
-}
+    _v_eff(v_eff), _pv(pv), _gint_k(gint_k),                     // mohan add 2024-04-01
+    two_center_bundle_(two_center_bundle), _grid(grid), // mohan add 2024-04-06
+    _kv(kv), _p_ham(p_ham) {}
 
 template <>
 void Output_Mat_Sparse<double>::write()
@@ -41,7 +38,7 @@ void Output_Mat_Sparse<std::complex<double>>::write()
     //! generate a file containing the Hamiltonian and S(overlap) matrices
     if (_out_mat_hsR)
     {
-        output_HSR(_istep, this->_v_eff, this->_pv, this->_lm, HS_Arrays, this->_grid, _kv, _p_ham);
+        output_HSR(_istep, this->_v_eff, this->_pv, HS_Arrays, this->_grid, _kv, _p_ham);
     }
 
     //! generate a file containing the kinetic energy matrix

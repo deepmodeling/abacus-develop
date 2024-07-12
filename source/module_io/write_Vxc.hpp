@@ -41,7 +41,7 @@ void set_para2d_MO(const Parallel_Orbitals& pv, const int nbands, Parallel_2D& p
 {
     std::ofstream ofs;
 #ifdef __MPI
-    p2d.set(nbands, nbands, pv.nb, pv.comm_2D, pv.blacs_ctxt);
+    p2d.set(nbands, nbands, pv.nb, pv.blacs_ctxt);
 #else
     p2d.set_serial(nbands, nbands);
 #endif
@@ -270,24 +270,28 @@ void set_gint_pointer<std::complex<double>>(Gint_Gamma& gint_gamma,
 /// including terms: local/semi-local XC, EXX, DFTU
 template <typename TK, typename TR>
 void write_Vxc(int nspin,
-               int nbasis,
-               int drank,
-               const psi::Psi<TK>& psi,
-               const UnitCell& ucell,
-               Structure_Factor& sf,
-               const ModulePW::PW_Basis& rho_basis,
-               const ModulePW::PW_Basis& rhod_basis,
-               const ModuleBase::matrix& vloc,
-               const Charge& chg,
-               Gint_Gamma& gint_gamma, // mohan add 2024-04-01
-               Gint_k& gint_k,         // mohan add 2024-04-01
-               LCAO_Matrix& lm,
-               const K_Vectors& kv,
-               const ModuleBase::matrix& wg,
-               Grid_Driver& gd)
+    int nbasis,
+    int drank,
+    const Parallel_Orbitals* pv,
+    const psi::Psi<TK>& psi,
+    const UnitCell& ucell,
+    Structure_Factor& sf,
+    const ModulePW::PW_Basis& rho_basis,
+    const ModulePW::PW_Basis& rhod_basis,
+    const ModuleBase::matrix& vloc,
+    const Charge& chg,
+    Gint_Gamma& gint_gamma, // mohan add 2024-04-01
+    Gint_k& gint_k,         // mohan add 2024-04-01
+    const K_Vectors& kv,
+    const ModuleBase::matrix& wg,
+    Grid_Driver& gd
+#ifdef __EXX
+    , std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd = nullptr
+    , std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc = nullptr
+#endif
+)
 {
     ModuleBase::TITLE("ModuleIO", "write_Vxc");
-    const Parallel_Orbitals* pv = lm.ParaV;
     int nbands = wg.nc;
     // 1. real-space xc potential
     // ModuleBase::matrix vr_xc(nspin, chg.nrxx);
@@ -332,9 +336,11 @@ void write_Vxc(int nspin,
     std::vector<std::vector<double>> e_orb_locxc; // orbital energy (local XC)
     std::vector<std::vector<double>> e_orb_tot;   // orbital energy (total)
 #ifdef __EXX
-    hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>> vexx_op_ao(&vxc_k_ao, &lm, nullptr, kv, lm.Hexxd, lm.Hexxc, hamilt::Add_Hexx_Type::k);
+    hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>> vexx_op_ao(&vxc_k_ao,
+        &vxcs_R_ao[0] /*for paraV*/, kv, Hexxd, Hexxc, hamilt::Add_Hexx_Type::k);
     hamilt::HS_Matrix_K<TK> vexxonly_k_ao(pv, 1); // only hk is needed, sk is skipped
-    hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>> vexxonly_op_ao(&vexxonly_k_ao, &lm, nullptr, kv, lm.Hexxd, lm.Hexxc, hamilt::Add_Hexx_Type::k);
+    hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>> vexxonly_op_ao(&vexxonly_k_ao,
+        &vxcs_R_ao[0]/*for paraV*/, kv, Hexxd, Hexxc, hamilt::Add_Hexx_Type::k);
     std::vector<std::vector<double>> e_orb_exx; // orbital energy (EXX)
 #endif
     hamilt::OperatorDFTU<hamilt::OperatorLCAO<TK, TR>> vdftu_op_ao(&vxc_k_ao, kv.kvec_d, nullptr, kv.isk);

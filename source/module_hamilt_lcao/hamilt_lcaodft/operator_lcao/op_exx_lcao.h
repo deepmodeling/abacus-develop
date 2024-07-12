@@ -7,7 +7,6 @@
 #include <RI/ri/Cell_Nearest.h>
 #include "operator_lcao.h"
 #include "module_cell/klist.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 
 namespace hamilt
 {
@@ -28,7 +27,6 @@ class OperatorEXX<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     using TAC = std::pair<int, std::array<int, 3>>;
 public:
     OperatorEXX<OperatorLCAO<TK, TR>>(HS_Matrix_K<TK>* hsk_in,
-        LCAO_Matrix* LM_in,
         hamilt::HContainer<TR>* hR_in,
         const K_Vectors& kv_in,
         std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd_in = nullptr,
@@ -57,14 +55,16 @@ public:
       bool restart = false;
 
       void add_loaded_Hexx(const int ik);
-      void add_loaded_HexxR() {};
-      void clear_loaded_HexxR() {};
+
       const K_Vectors& kv;
 
-      LCAO_Matrix* LM = nullptr;
       // if k points has no shift, use cell_nearest to reduce the memory cost
       RI::Cell_Nearest<int, int, 3, double, 3> cell_nearest;
       bool use_cell_nearest = true;
+
+      /// @brief Hexxk for all k-points, only for the 1st scf loop ofrestart load
+      std::vector<std::vector<double>> Hexxd_k_load;
+      std::vector<std::vector<std::complex<double>>> Hexxc_k_load;
 };
 
 } // namespace hamilt

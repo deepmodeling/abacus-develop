@@ -6,6 +6,7 @@
 #include "grid_technique.h"
 #include "module_elecstate/module_charge/charge.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
+#include "module_base/array_pool.h"
 
 #include <cstdlib>
 
@@ -135,19 +136,6 @@ class Gint_inout
 
 namespace Gint_Tools
 {
-template <typename T>
-class Array_Pool
-{
-  public:
-    T** ptr_2D;
-    T* ptr_1D;
-    Array_Pool(const int nr, const int nc);
-    Array_Pool(Array_Pool<T>&& array);
-    ~Array_Pool();
-    Array_Pool(const Array_Pool<T>& array) = delete;
-    Array_Pool(Array_Pool<T>& array) = delete;
-};
-
 // vindex[pw.bxyz]
 int* get_vindex(const int bxyz,
                 const int bx,
@@ -276,7 +264,7 @@ void cal_ddpsir_ylm(
     double* const* const ddpsir_ylm_zz);
 
 // psir_ylm * vldr3
-Gint_Tools::Array_Pool<double> get_psir_vlbr3(
+ModuleBase::Array_Pool<double> get_psir_vlbr3(
     const int bxyz,
     const int na_grid, // how many atoms on this (i,j,k) grid
     const int LD_pool,
@@ -330,33 +318,4 @@ void mult_psi_DM_new(
     const bool if_symm);
 
 } // namespace Gint_Tools
-
-namespace Gint_Tools
-{
-template <typename T>
-Array_Pool<T>::Array_Pool(const int nr, const int nc) // Attention: uninitialized
-{
-    ptr_1D = new T[nr * nc];
-    ptr_2D = new T*[nr];
-    for (int ir = 0; ir < nr; ++ir)
-        ptr_2D[ir] = &ptr_1D[ir * nc];
-}
-
-template <typename T>
-Array_Pool<T>::Array_Pool(Array_Pool<T>&& array)
-{
-    ptr_1D = array.ptr_1D;
-    ptr_2D = array.ptr_2D;
-    delete[] array.ptr_2D;
-    delete[] array.ptr_1D;
-}
-
-template <typename T>
-Array_Pool<T>::~Array_Pool()
-{
-    delete[] ptr_2D;
-    delete[] ptr_1D;
-}
-} // namespace Gint_Tools
-
 #endif

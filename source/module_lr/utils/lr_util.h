@@ -108,8 +108,7 @@ namespace LR_Util
 
 #ifdef __MPI
     // pack the process to setup 2d divion reusing blacs_ctxt of an existing 2d-matrix
-    void setup_2d_division(Parallel_2D& pv, int nb, int gr, int gc,
-        const MPI_Comm& comm_2D_in, const int& blacs_ctxt_in);
+    void setup_2d_division(Parallel_2D& pv, int nb, int gr, int gc, const int& blacs_ctxt_in);
     /// @brief  gather 2d matrix to full matrix
     /// the defination of row and col is consistent with setup_2d_division
     template <typename T>

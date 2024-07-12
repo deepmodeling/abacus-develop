@@ -46,7 +46,7 @@ bool ModuleIO::read_wfc_nao(
     psid.resize(nk, nbands_local, nlocal_local);
 
 #ifdef __MPI
-    MPI_Comm_rank(ParaV.comm_2D, &myrank);
+    MPI_Comm_rank(ParaV.comm(), &myrank);
 #endif   
 
     // lambda function to read one file
@@ -144,7 +144,7 @@ bool ModuleIO::read_wfc_nao(
         psid.fix_k(ik);
 #ifdef __MPI
         Parallel_2D pv_glb;
-        pv_glb.set(nlocal, nbands, std::max(nlocal, nbands), ParaV.comm_2D, ParaV.blacs_ctxt);
+        pv_glb.set(nlocal, nbands, std::max(nlocal, nbands), ParaV.blacs_ctxt);
         Cpxgemr2d(nlocal,
                   nbands,
                   ctot.data(),

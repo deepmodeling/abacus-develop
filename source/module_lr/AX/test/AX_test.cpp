@@ -41,12 +41,18 @@ public:
     }
 #endif
 
-    void set_ones(double* data, int size) { for (int i = 0;i < size;++i) data[i] = 1.0; };
-    void set_int(double* data, int size) { for (int i = 0;i < size;++i) data[i] = static_cast<double>(i + 1); };
-    void set_int(std::complex<double>* data, int size) { for (int i = 0;i < size;++i) data[i] = std::complex<double>(i + 1, -i - 1); };
-    void set_rand(double* data, int size) { for (int i = 0;i < size;++i) data[i] = double(rand()) / double(RAND_MAX) * 10.0 - 5.0; };
-    void set_rand(std::complex<double>* data, int size) { for (int i = 0;i < size;++i) data[i] = std::complex<double>(rand(), rand()) / double(RAND_MAX) * 10.0 - 5.0; };
-    void check_eq(double* data1, double* data2, int size) { for (int i = 0;i < size;++i) EXPECT_NEAR(data1[i], data2[i], 1e-10); };
+    void set_ones(double* data, int size) { for (int i = 0;i < size;++i) { data[i] = 1.0; 
+}};
+    void set_int(double* data, int size) { for (int i = 0;i < size;++i) { data[i] = static_cast<double>(i + 1); 
+}};
+    void set_int(std::complex<double>* data, int size) { for (int i = 0;i < size;++i) { data[i] = std::complex<double>(i + 1, -i - 1); 
+}};
+    void set_rand(double* data, int size) { for (int i = 0;i < size;++i) { data[i] = double(rand()) / double(RAND_MAX) * 10.0 - 5.0; 
+}};
+    void set_rand(std::complex<double>* data, int size) { for (int i = 0;i < size;++i) { data[i] = std::complex<double>(rand(), rand()) / double(RAND_MAX) * 10.0 - 5.0; 
+}};
+    void check_eq(double* data1, double* data2, int size) { for (int i = 0;i < size;++i) { EXPECT_NEAR(data1[i], data2[i], 1e-10); 
+}};
     void check_eq(std::complex<double>* data1, std::complex<double>* data2, int size)
     {
         for (int i = 0;i < size;++i)
@@ -70,7 +76,8 @@ TEST_F(AXTest, DoubleSerial)
             psi::Psi<double> c(s.nks, s.nocc + s.nvirt, s.naos);
             std::vector<container::Tensor> V(s.nks, container::Tensor(DAT::DT_DOUBLE, DEV::CpuDevice, { s.naos, s.naos }));
             set_rand(c.get_pointer(), size_c);
-            for (auto& v : V)set_rand(v.data<double>(), size_v);
+            for (auto& v : V) {set_rand(v.data<double>(), size_v);
+}
             AX_for.fix_b(istate);
             AX_blas.fix_b(istate);
             LR::cal_AX_forloop_serial(V, c, s.nocc, s.nvirt, AX_for);
@@ -95,7 +102,8 @@ TEST_F(AXTest, ComplexSerial)
             psi::Psi<std::complex<double>> c(s.nks, s.nocc + s.nvirt, s.naos);
             std::vector<container::Tensor> V(s.nks, container::Tensor(DAT::DT_COMPLEX_DOUBLE, DEV::CpuDevice, { s.naos, s.naos }));
             set_rand(c.get_pointer(), size_c);
-            for (auto& v : V)set_rand(v.data<std::complex<double>>(), size_v);
+            for (auto& v : V) {set_rand(v.data<std::complex<double>>(), size_v);
+}
             AX_for.fix_b(istate);
             AX_blas.fix_b(istate);
             LR::cal_AX_forloop_serial(V, c, s.nocc, s.nvirt, AX_for);
@@ -117,10 +125,10 @@ TEST_F(AXTest, DoubleParallel)
         LR_Util::setup_2d_division(pV, s.nb, s.naos, s.naos);
         std::vector<container::Tensor> V(s.nks, container::Tensor(DAT::DT_DOUBLE, DEV::CpuDevice, { pV.get_col_size(), pV.get_row_size() }));
         Parallel_2D pc;
-        LR_Util::setup_2d_division(pc, s.nb, s.naos, s.nocc + s.nvirt, pV.comm_2D, pV.blacs_ctxt);
+        LR_Util::setup_2d_division(pc, s.nb, s.naos, s.nocc + s.nvirt, pV.blacs_ctxt);
         psi::Psi<double> c(s.nks, pc.get_col_size(), pc.get_row_size());
         Parallel_2D px;
-        LR_Util::setup_2d_division(px, s.nb, s.nvirt, s.nocc, pV.comm_2D, pV.blacs_ctxt);
+        LR_Util::setup_2d_division(px, s.nb, s.nvirt, s.nocc, pV.blacs_ctxt);
 
         EXPECT_EQ(pV.dim0, pc.dim0);
         EXPECT_EQ(pV.dim1, pc.dim1);
@@ -178,10 +186,10 @@ TEST_F(AXTest, ComplexParallel)
         LR_Util::setup_2d_division(pV, s.nb, s.naos, s.naos);
         std::vector<container::Tensor> V(s.nks, container::Tensor(DAT::DT_COMPLEX_DOUBLE, DEV::CpuDevice, { pV.get_col_size(), pV.get_row_size() }));
         Parallel_2D pc;
-        LR_Util::setup_2d_division(pc, s.nb, s.naos, s.nocc + s.nvirt, pV.comm_2D, pV.blacs_ctxt);
+        LR_Util::setup_2d_division(pc, s.nb, s.naos, s.nocc + s.nvirt, pV.blacs_ctxt);
         psi::Psi<std::complex<double>> c(s.nks, pc.get_col_size(), pc.get_row_size());
         Parallel_2D px;
-        LR_Util::setup_2d_division(px, s.nb, s.nvirt, s.nocc, pV.comm_2D, pV.blacs_ctxt);
+        LR_Util::setup_2d_division(px, s.nb, s.nvirt, s.nocc, pV.blacs_ctxt);
 
         psi::Psi<std::complex<double>> AX_pblas_loc(s.nks, nstate, px.get_local_size());
         psi::Psi<std::complex<double>> AX_gather(s.nks, nstate, s.nocc * s.nvirt, nullptr, false);
@@ -230,7 +238,7 @@ TEST_F(AXTest, ComplexParallel)
 
 int main(int argc, char** argv)
 {
-    srand(time(NULL));  // for random number generator
+    srand(time(nullptr));  // for random number generator
     MPI_Init(&argc, &argv);
     testing::InitGoogleTest(&argc, argv);
     int result = RUN_ALL_TESTS();

@@ -2,6 +2,7 @@
 #include "grid_technique.h"
 #include "module_base/timer.h"
 #include "module_base/ylm.h"
+#include "module_base/array_pool.h"
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
@@ -42,7 +43,7 @@ void Gint_Gamma::cal_env(const double* wfc, double* rho, UnitCell& ucell)
                                        cal_flag);
 
             // evaluate psi on grids
-            Gint_Tools::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
+            ModuleBase::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
             Gint_Tools::cal_psir_ylm(*this->gridt,
                                      this->bxyz,
                                      size,
@@ -51,7 +52,7 @@ void Gint_Gamma::cal_env(const double* wfc, double* rho, UnitCell& ucell)
                                      block_index,
                                      block_size,
                                      cal_flag,
-                                     psir_ylm.ptr_2D);
+                                     psir_ylm.get_ptr_2D());
 
             int* vindex = Gint_Tools::get_vindex(this->bxyz,
                                                  this->bx,
@@ -75,7 +76,7 @@ void Gint_Gamma::cal_env(const double* wfc, double* rho, UnitCell& ucell)
                     if (cal_flag[ib][ia1])
                     {
                         int iw1_lo = this->gridt->trace_lo[start1];
-                        double* psi1 = &psir_ylm.ptr_2D[ib][block_index[ia1]];
+                        double* psi1 = &psir_ylm[ib][block_index[ia1]];
                         double tmp = 0.0;
                         for (int iw = 0; iw < atom1->nw; ++iw, ++iw1_lo)
                         {
