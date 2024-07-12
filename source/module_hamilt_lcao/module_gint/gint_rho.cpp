@@ -32,7 +32,7 @@ void Gint::gint_kernel_rho(const int na_grid,
                              cal_flag,
                              psir_ylm.ptr_2D);
 
-    for (int is = 0; is < GlobalV::NSPIN; ++is)
+    for (int is = 0; is < this->gridt->nspin; ++is)
     {
         Gint_Tools::Array_Pool<double> psir_DM(this->bxyz, LD_pool);
         ZEROS(psir_DM.ptr_1D, this->bxyz * LD_pool);

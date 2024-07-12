@@ -29,7 +29,7 @@ void Gint::gint_kernel_tau(
 		dpsir_ylm_y.ptr_2D,
 		dpsir_ylm_z.ptr_2D);
 
-	for(int is=0; is<GlobalV::NSPIN; ++is)
+	for(int is=0; is<this->gridt->nspin; ++is)
 	{
 		Gint_Tools::Array_Pool<double> dpsix_DM(this->bxyz, LD_pool);
 		Gint_Tools::Array_Pool<double> dpsiy_DM(this->bxyz, LD_pool);

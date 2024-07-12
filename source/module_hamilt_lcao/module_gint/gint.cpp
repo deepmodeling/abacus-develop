@@ -133,7 +133,7 @@ void Gint::initialize_pvpR(const UnitCell& ucell_in, Grid_Driver* gd) {
     int npol = 1;
     // there is the only resize code of DMRGint
     if (this->DMRGint.size() == 0) {
-        this->DMRGint.resize(GlobalV::NSPIN);
+        this->DMRGint.resize(this->gridt->nspin);
     }
     if (this->gridt->nspin!= 4) {
         if (this->hRGint != nullptr) {
@@ -147,7 +147,7 @@ void Gint::initialize_pvpR(const UnitCell& ucell_in, Grid_Driver* gd) {
         }
         this->hRGintCd
             = new hamilt::HContainer<std::complex<double>>(ucell_in.nat);
-        for (int is = 0; is < GlobalV::NSPIN; is++) {
+        for (int is = 0; is < this->gridt->nspin; is++) {
             if (this->DMRGint[is] != nullptr) {
                 delete this->DMRGint[is];
             }

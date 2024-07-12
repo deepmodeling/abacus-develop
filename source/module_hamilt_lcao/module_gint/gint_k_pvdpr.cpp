@@ -4,7 +4,7 @@ void Gint_k::allocate_pvdpR(void)
 {
     ModuleBase::TITLE("Gint_k","allocate_pvpR");
 
-    const int nspin = GlobalV::NSPIN;
+    const int nspin = this->gridt->nspin;
     assert(nspin>0);
 
     //xiaohui modify 2015-05-30
@@ -31,7 +31,7 @@ void Gint_k::destroy_pvdpR(void)
 {
     ModuleBase::TITLE("Gint_k","destroy_pvpR");
 
-    const int nspin = GlobalV::NSPIN;
+    const int nspin = this->gridt->nspin;
     assert(nspin>0);
     
 	for(int is =0;is<nspin;is++) 
