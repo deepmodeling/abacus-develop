@@ -62,6 +62,8 @@ class HSolverPW : public HSolver<T, Device>
     // calculate the precondition array for diagonalization in PW base
     void update_precondition(std::vector<Real>& h_diag, const int ik, const int npw);
 
+    void output_iterInfo();
+
     bool initialed_psi = false;
 
     ModulePW::PW_Basis_K* wfc_basis = nullptr;

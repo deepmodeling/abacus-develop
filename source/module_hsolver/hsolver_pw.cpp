@@ -315,17 +315,6 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
         eigenvalues.data(),
         pes->ekb.nr * pes->ekb.nc);
 
-    // in PW base, average iteration steps for each band and k-point should be printing
-    if (DiagoIterAssist<T, Device>::avg_iter > 0.0)
-    {
-        GlobalV::ofs_running << "Average iterative diagonalization steps: "
-                             << DiagoIterAssist<T, Device>::avg_iter / this->wfc_basis->nks
-                             << " ; where current threshold is: " << DiagoIterAssist<T, Device>::PW_DIAG_THR << " . "
-                             << std::endl;
-        // reset avg_iter
-        DiagoIterAssist<T, Device>::avg_iter = 0.0;
-    }
-
     // psi only should be initialed once for PW
     if (!this->initialed_psi)
     {
@@ -585,6 +574,21 @@ void HSolverPW<T, Device>::update_precondition(std::vector<Real>& h_diag, const 
         {
             h_diag[ig + size / 2] = h_diag[ig];
         }
+    }
+}
+
+template <typename T, typename Device>
+void HSolverPW<T, Device>::output_iterInfo()
+{
+    // in PW base, average iteration steps for each band and k-point should be printing
+    if (DiagoIterAssist<T, Device>::avg_iter > 0.0)
+    {
+        GlobalV::ofs_running << "Average iterative diagonalization steps: "
+                             << DiagoIterAssist<T, Device>::avg_iter / this->wfc_basis->nks
+                             << " ; where current threshold is: " << DiagoIterAssist<T, Device>::PW_DIAG_THR << " . "
+                             << std::endl;
+        // reset avg_iter
+        DiagoIterAssist<T, Device>::avg_iter = 0.0;
     }
 }
 

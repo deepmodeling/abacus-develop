@@ -65,7 +65,13 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
         stoiter.checkemm(ik, istep, iter, stowf); // check and reset emax & emin
     }
 
-    this->endDiagh();
+    this->output_iterInfo();
+
+    // psi only should be initialed once for PW
+    if (!this->initialed_psi)
+    {
+        this->initialed_psi = true;
+    }
 
     for (int ik = 0; ik < nks; ik++) {
         // init k
