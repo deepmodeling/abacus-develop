@@ -171,6 +171,20 @@ class HContainer
     HContainer(const Parallel_Orbitals* paraV, T* data_pointer = nullptr, const std::vector<int>* ijr_info = nullptr);
 
     /**
+* @brief set parallel orbital pointer to check parallel information
+*/
+    void set_paraV(const Parallel_Orbitals* paraV_in)
+    {
+        this->paraV = paraV_in;
+        for (auto& ap : atom_pairs) ap.set_paraV(paraV_in);
+    };
+    /**
+ * @brief get parallel orbital pointer to check parallel information
+ * @return const Parallel_Orbitals* , if return is nullptr, it means HContainer is not in parallel mode
+ */
+    const Parallel_Orbitals* get_paraV() const { return this->paraV; };
+
+    /**
      * @brief allocate memory for all <IJR> matrix
      * if data_array is not nullptr,
      *     use memory after data_array for each BaseMatrix;
@@ -418,12 +432,6 @@ class HContainer
     {
         return paraV->get_global_row_size();
     }
-
-    /**
-     * @brief get parallel orbital pointer to check parallel information
-     * @return const Parallel_Orbitals* , if return is nullptr, it means HContainer is not in parallel mode
-     */
-    const Parallel_Orbitals* get_paraV() const{return paraV;}
 
   private:
     // i-j atom pairs, sorted by matrix of (atom_i, atom_j)
