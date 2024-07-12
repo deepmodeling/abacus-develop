@@ -1,7 +1,7 @@
 #ifndef GRID_BIGCELL_H
 #define GRID_BIGCELL_H
 #include "grid_meshcell.h"
-#include "module_base/timer.h"
+
 class Grid_BigCell: public Grid_MeshCell
 {
 	public:

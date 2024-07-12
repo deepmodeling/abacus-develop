@@ -12,27 +12,23 @@
 #include "gint_tools.h"
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
-#include "module_hamilt_lcao/module_gint/grid_technique.h"
-#include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
-#include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
 
+#include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
 #ifdef __MKL
 #include <mkl_service.h>
 #endif
-
 #ifdef _OPENMP
 #include <omp.h>
 #endif
-
-
+// #include "kernels/cuda/cuda_tools.cuh"
 #if ((defined __CUDA))
 #include "gint_force_gpu.h"
 #include "gint_rho_gpu.h"
 #include "gint_vl_gpu.h"
+#include "kernels/cuda/gint_vl.cuh"
+#include "kernels/cuda/gint_rho.cuh"
+#include "kernels/cuda/gint_force.cuh"
 #include "kernels/cuda/cuda_tools.cuh"
-#include <cublas_v2.h>
-#include <cuda.h> 
-#include <cuda_runtime.h>
 #endif
 class Gint {
   public:

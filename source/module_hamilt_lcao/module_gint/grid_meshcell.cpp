@@ -1,6 +1,5 @@
 #include "grid_meshcell.h"
 
-
 Grid_MeshCell::Grid_MeshCell()
 {
 }
@@ -39,23 +38,6 @@ void Grid_MeshCell::set_grid_dim(
     this->nbxx = nbxx_in;
     this->nbzp_start = nbzp_start_in;
     this->nbzp = nbzp_in;
-
-
-	//xiaohui add 'GlobalV::OUT_LEVEL' line, 2015-09-16
-	if(GlobalV::OUT_LEVEL != "m") 
-	{
-		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"real space grid",ncx,ncy,ncz); // real space uniform grid
-	}
-
-	if(GlobalV::OUT_LEVEL != "m") 
-	{
-		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"big cell numbers in grid",nbx,nby,nbz); // reduced by BIG_CELL
-	}
-
-	if(GlobalV::OUT_LEVEL != "m") 
-	{
-		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"meshcell numbers in big cell",bx,by,bz); // is small integer, typical number 2*2*2
-	}
 
     return;
 }
@@ -108,28 +90,6 @@ void Grid_MeshCell::init_latvec(const UnitCell &ucell)
 	// we need to transform the formula to
 	// (x,y,z) * meshcell_latvec0^(-1) = (i,j,k)
 	this->meshcell_GT = this->meshcell_latvec0.Inverse();
-
-	if(GlobalV::test_gridt)
-	{
-		GlobalV::ofs_running << " the VECTORS of MESHCELL are (Bohr): " << std::endl;
-		GlobalV::ofs_running << " vec1( " 
-			<< std::setw(15) << meshcell_vec1[0]
-			<< std::setw(15) << meshcell_vec1[1]
-			<< std::setw(15) << meshcell_vec1[2] 
-			<< ")" << std::endl;
-
-		GlobalV::ofs_running << " vec2( " 
-			<< std::setw(15) << meshcell_vec2[0]
-			<< std::setw(15) << meshcell_vec2[1]
-			<< std::setw(15) << meshcell_vec2[2]
-			<< ")" << std::endl;
-
-		GlobalV::ofs_running << " vec3( " 
-			<< std::setw(15) << meshcell_vec3[0]
-			<< std::setw(15) << meshcell_vec3[1]
-			<< std::setw(15) << meshcell_vec3[2]
-			<< ")" << std::endl;
-	}
 	
 	return;
 }

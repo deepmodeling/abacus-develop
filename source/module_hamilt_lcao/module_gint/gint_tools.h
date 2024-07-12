@@ -8,8 +8,6 @@
 #include "module_elecstate/module_charge/charge.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 
-#include <cstdlib>
-
 namespace Gint_Tools
 {
 enum class job_type

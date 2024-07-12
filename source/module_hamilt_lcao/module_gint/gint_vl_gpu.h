@@ -3,7 +3,7 @@
 
 #include "gint.h"
 #include "kernels/cuda/cuda_tools.cuh"
-#include "kernels/cuda/gint_vl.cuh"
+
 namespace GintKernel
 {
 
