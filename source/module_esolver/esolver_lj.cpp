@@ -228,7 +228,7 @@ namespace ModuleESolver
         ModuleIO::print_stress("TOTAL-STRESS", stress, true, false);
     }
 
-    void ESolver_LJ::after_all_runners(void)
+    void ESolver_LJ::after_all_runners()
     {
         GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;
         GlobalV::ofs_running << std::setprecision(16);

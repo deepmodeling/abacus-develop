@@ -10,7 +10,7 @@
 struct MD_para
 {
     int md_nstep = 10;                 ///< md nstep
-    bool md_restart = 0;               ///< 1: restart MD, 0: no restart MD
+    bool md_restart = false;               ///< 1: restart MD, 0: no restart MD
     std::string md_type = "nvt";       ///< fire, nve, nvt, npt, langevin, msst
     std::string md_thermostat = "nhc"; ///< specify the thermostat: nhc, anderson, berendsen,
                                        ///< rescaling, rescale_v
