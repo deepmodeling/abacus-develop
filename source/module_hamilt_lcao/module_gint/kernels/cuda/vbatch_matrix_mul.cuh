@@ -8,8 +8,8 @@
 
 #include "cuda_tools.cuh"
 #include <functional>
+#include "../../grid_technique.h"
 #include "module_cell/unitcell.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/module_device/device.h"
 
 
