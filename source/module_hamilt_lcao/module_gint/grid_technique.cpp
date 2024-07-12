@@ -3,7 +3,7 @@
 Grid_Technique::Grid_Technique() {
     allocate_find_R2 = false;
 #if ((defined __CUDA) /* || (defined __ROCM) */)
-    if (this->gridt->device_flag == "gpu") {
+    if (this->device_flag == "gpu") {
         is_malloced = false;
     }
 #endif
@@ -12,7 +12,7 @@ Grid_Technique::Grid_Technique() {
 Grid_Technique::~Grid_Technique() {
 
 #if ((defined __CUDA) /* || (defined __ROCM) */)
-    if (this->gridt->device_flag == "gpu") {
+    if (this->device_flag == "gpu") {
         free_gpu_gint_variables(this->nat);
     }
 #endif
@@ -122,7 +122,7 @@ void Grid_Technique::set_pbc_grid(
 
     this->cal_trace_lo(ucell);
 #if ((defined __CUDA) /* || (defined __ROCM) */)
-    if (this->gridt->device_flag == "gpu") {
+    if (this->device_flag == "gpu") {
         this->init_gpu_gint_variables(ucell, num_stream);
     }
 #endif
