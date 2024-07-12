@@ -17,12 +17,12 @@ extern "C"
 //	void pzpotrf_(char *uplo, int *n, double _Complex *a, int *ia, int *ja, int *desca, int *info);
 	void pzpotrf_(char *uplo, int *n, std::complex<double> *a, int *ia, int *ja, int *desca, int *info);
 
-	void pdtran_(int *m , int *n ,
-		double *alpha , double *a , int *ia , int *ja , int *desca ,
-		double *beta ,  double *c , int *ic , int *jc , int *descc );
+    void pdtran_(const int* m, const int* n,
+        const double* alpha, const double* a, const int* ia, const int* ja, const  int* desca,
+        const double* beta, double* c, const int* ic, const int* jc, const int* descc);
 
 	void pztranu_(const int *m,const int*n,
-		const std::complex<double> *alpha , std::complex<double> *a , const int *ia , const int *ja ,const int *desca ,
+        const std::complex<double>* alpha, const std::complex<double>* a, const int* ia, const int* ja, const int* desca,
 		const std::complex<double> *beta ,  std::complex<double> *c , const int *ic ,const int *jc ,const int *descc);
 
 	void pzgemv_(

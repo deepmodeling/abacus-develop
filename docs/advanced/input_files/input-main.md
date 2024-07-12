@@ -409,7 +409,14 @@
     - [pexsi\_mu\_guard](#pexsi_mu_guard)
     - [pexsi\_elec\_thr](#pexsi_elec_thr)
     - [pexsi\_zero\_thr](#pexsi_zero_thr)
-
+  - [Linear Response TDDFT](#linear-response-tddft)
+    - [xc\_kernel](#xc_kernel)
+    - [lr\_solverl](#lr_solver)
+    - [lr\_thr](#lr_thr)
+    - [nvirt](#nvirt)
+    - [lr\_nstates](#lr_nstates)
+    - [abs\_wavelen\_range](#abs_wavelen_range)
+    - [out\_wfc\_lr](#out_wfc_lr)
 [back to top](#full-list-of-input-keywords)
 
 ## System variables
@@ -456,6 +463,8 @@ These variables are used to control general system parameters.
   - tddft: real-time time-dependent density functional theory (TDDFT)
   - lj: Leonard Jones potential
   - dp: DeeP potential, see details in [md.md](../md.md#dpmd)
+  - ks-lr: Kohn-Sham density functional theory + LR-TDDFT
+  - lr: LR-TDDFT with given KS orbitals
 - **Default**: ksdft
 
 ### symmetry
@@ -3764,5 +3773,65 @@ These variables are used to control the usage of PEXSI (Pole Expansion and Selec
 - **Type**: Real
 - **Description**: if the absolute value of CCS matrix element is less than this value, it will be considered as zero.
 - **Default**: 1e-10
+
+[back to top](#full-list-of-input-keywords)
+
+## Linear Response TDDFT
+
+These parameters are used to solve the excited states using. e.g. LR-TDDFT.
+
+### xc_kernel
+
+- **Type**: String
+- **Description**: The exchange-correlation kernel used in the calculation. 
+Currently supported: `RPA`, `LDA`, `PBE`, `HSE`, `HF`.
+- **Default**: LDA
+
+### lr_solver
+
+- **Type**: String
+- **Description**: The method to solve the Casida equation $AX=\Omega X$ in LR-TDDFT under Tamm-Dancoff approximation (TDA), where $A_{ai,bj}=(\epsilon_a-\epsilon_i)\delta_{ij}\delta_{ab}+(ai|f_{Hxc}|bj)+\alpha_{EX}(ab|ij)$ is the particle-hole excitation matrix and $X$ is the transition amplitude.
+  - `dav`: Construct $AX$ and diagonalize the Hamiltonian matrix iteratively with Davidson algorithm.
+  - `lapack`: Construct the full $A$ matrix and directly diagonalize with LAPACK.
+  - `spectrum`: Calculate absorption spectrum only without solving Casida equation. The `OUT.${suffix}/` directory should contain the
+  files for LR-TDDFT eigenstates and eigenvalues, i.e. `Excitation_Energy.dat` and `Excitation_Amplitude_${processor_rank}.dat`
+   output by setting `out_wfc_lr` to true.
+- **Default**: dav
+
+### lr_thr
+
+- **Type**: Real
+- **Description**: The convergence threshold of iterative diagonalization solver fo LR-TDDFT. It is a pure-math number with the same as [pw_diag_thr](#pw_diag_thr), but since the Casida equation is a one-shot eigenvalue problem, it is also the convergence threshold of LR-TDDFT.
+- **Default**: 1e-2
+
+### nvirt
+
+- **Type**: Integer
+- **Description**: The number of virtual orbitals used in the LR-TDDFT calculation.
+- **Default**: 1
+
+### lr_nstates
+
+- **Type**: Integer
+- **Description**:  The number of 2-particle states to be solved
+- **Default**: 0
+
+### abs_wavelen_range
+
+- **Type**: Real Real
+- **Description**: The range of the wavelength for the absorption spectrum calculation.
+- **Default**: 0.0 0.0
+
+### out_wfc_lr
+
+- **Type**: Boolean
+- **Description**: Whether to output the eigenstates (excitation energy) and eigenvectors (excitation amplitude) of the LR-TDDFT calculation.
+The output files are `OUT.${suffix}/Excitation_Energy.dat` and `OUT.${suffix}/Excitation_Amplitude_${processor_rank}.dat`.
+- **Default**: False
+
+### abs_broadening
+- **Type**: Real
+- **Description**: The broadening factor $\eta$ for the absorption spectrum calculation.
+- **Default**: 0.01
 
 [back to top](#full-list-of-input-keywords)

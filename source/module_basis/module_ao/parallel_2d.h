@@ -16,6 +16,8 @@ class Parallel_2D
     Parallel_2D() = default;
     ~Parallel_2D() = default;
 
+    Parallel_2D& operator=(Parallel_2D&& rhs) = default;
+
     /// number of local rows
     int get_row_size() const
     {

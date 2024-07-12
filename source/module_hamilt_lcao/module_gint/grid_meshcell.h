@@ -27,7 +27,10 @@ class Grid_MeshCell: public Grid_MeshK
 	std::vector<double> meshcell_vec2;
 	std::vector<double> meshcell_vec3;
 
-	void set_grid_dim(
+    /// move operator for the next ESolver to directly use its infomation
+    Grid_MeshCell& operator=(Grid_MeshCell&& rhs) = default;
+
+    void set_grid_dim(
 			const int &ncx_in,
 			const int &ncy_in,
 			const int &ncz_in,

@@ -37,10 +37,7 @@ add_test(NAME base_parallel_reduce_test
 if(ENABLE_LCAO)
   # figure out the lib that provides BLACS
   if(MKLROOT)
-    list(APPEND BLACS_LIB MKL::MKL)
-    if(TARGET MKL::MKL_SCALAPACK)
-      list(APPEND BLACS_LIB MKL::MKL_SCALAPACK)
-    endif()
+    list(APPEND BLACS_LIB MKL::MKL MKL::MKL_SCALAPACK)
   else()
     set(BLACS_LIB ScaLAPACK::ScaLAPACK)
   endif()
