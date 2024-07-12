@@ -135,7 +135,7 @@ void Gint::initialize_pvpR(const UnitCell& ucell_in, Grid_Driver* gd) {
     if (this->DMRGint.size() == 0) {
         this->DMRGint.resize(GlobalV::NSPIN);
     }
-    if (GlobalV::NSPIN != 4) {
+    if (this->gridt->nspin!= 4) {
         if (this->hRGint != nullptr) {
             delete this->hRGint;
         }
@@ -180,7 +180,7 @@ void Gint::initialize_pvpR(const UnitCell& ucell_in, Grid_Driver* gd) {
         }
     }
 
-    if (GlobalV::GAMMA_ONLY_LOCAL && GlobalV::NSPIN != 4) {
+    if (GlobalV::GAMMA_ONLY_LOCAL && this->gridt->nspin!= 4) {
         this->hRGint->fix_gamma();
     }
     for (int T1 = 0; T1 < ucell_in.ntype; ++T1) {
@@ -326,7 +326,7 @@ void Gint::transfer_DM2DtoGrid(std::vector<hamilt::HContainer<double>*> DM2D) {
 #endif
 
     ModuleBase::timer::tick("Gint", "transfer_DMR");
-    if (GlobalV::NSPIN != 4) {
+    if (this->gridt->nspin!= 4) {
         for (int is = 0; is < this->DMRGint.size(); is++) {
 #ifdef __MPI
             hamilt::transferParallels2Serials(*DM2D[is], DMRGint[is]);

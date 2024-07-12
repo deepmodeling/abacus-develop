@@ -44,7 +44,11 @@ void Grid_Technique::set_pbc_grid(
     const std::vector<std::vector<double>>& psi_u,
     const std::vector<std::vector<double>>& dpsi_u,
     const std::vector<std::vector<double>>& d2psi_u,
-    const int& num_stream) {
+    const int& num_stream,
+    const bool& gamma_only_local,
+    const int& nspin,
+    const bool& domag,
+    const int& npol) {
     ModuleBase::TITLE("Grid_Technique", "init");
     ModuleBase::timer::tick("Grid_Technique", "init");
 
@@ -63,6 +67,10 @@ void Grid_Technique::set_pbc_grid(
     this->psi_u = psi_u;
     this->dpsi_u = dpsi_u;
     this->d2psi_u = d2psi_u;
+    this->gamma_only_local=gamma_only_local;
+    this->nspin = nspin;
+    this->domag = domag;
+    this->npol = npol;
 
     // (1) init_meshcell cell and big cell.
     this->set_grid_dim(ncx_in,
@@ -489,7 +497,7 @@ void Grid_Technique::cal_trace_lo(const UnitCell& ucell) {
             } else {
                 // global index of atomic orbitals
                 iw_all += ucell.atoms[it].nw;
-                if (GlobalV::NSPIN == 4) {
+                if (this->nspin == 4) {
                     iw_all += ucell.atoms[it].nw;
 }
             }

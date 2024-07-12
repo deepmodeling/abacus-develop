@@ -91,6 +91,11 @@ class Grid_Technique : public Grid_MeshBall {
     std::vector<std::vector<double>> dpsi_u;
     std::vector<std::vector<double>> d2psi_u;
 
+    // replace GlobalV parameter
+    bool gamma_only_local;
+    bool domag;
+    int nspin;
+    int npol;
     // indexes for nnrg -> orbital index + R index
     std::vector<gridIntegral::gridIndex> nnrg_index;
 
@@ -120,7 +125,11 @@ class Grid_Technique : public Grid_MeshBall {
                       const std::vector<std::vector<double>>& psi_u,
                       const std::vector<std::vector<double>>& dpsi_u,
                       const std::vector<std::vector<double>>& d2psi_u,
-                      const int& num_stream);
+                      const int& num_stream,
+                      const bool& gamma_only_local,
+                      const int& nspin,
+                      const bool& domag,
+                      const int& npol);
 
     /// number of elements(basis-pairs) in this processon
     /// on all adjacent atoms-pairs(Grid division)

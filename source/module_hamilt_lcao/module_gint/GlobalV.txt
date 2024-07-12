@@ -1,0 +1,72 @@
+./gint_k_sparse1.cpp:    tmp = new double[GlobalV::NLOCAL];
+./gint_k_sparse1.cpp:            for (int row = 0; row < GlobalV::NLOCAL; ++row)
+./gint_k_sparse1.cpp:                ZEROS(tmp, GlobalV::NLOCAL);
+./gint_k_sparse1.cpp:                Parallel_Reduce::reduce_pool(tmp, GlobalV::NLOCAL);
+./gint_k_sparse1.cpp:                    for (int col = 0; col < GlobalV::NLOCAL; ++col)
+./gint_k_sparse1.cpp:    tmp_soc = new std::complex<double>[GlobalV::NLOCAL];
+./gint_k_sparse1.cpp:            for (int row = 0; row < GlobalV::NLOCAL; ++row)
+./gint_k_sparse1.cpp:                ZEROS(tmp_soc, GlobalV::NLOCAL);
+./gint_k_sparse1.cpp:                Parallel_Reduce::reduce_pool(tmp_soc, GlobalV::NLOCAL);
+./gint_k_sparse1.cpp:                    for (int col = 0; col < GlobalV::NLOCAL; ++col)
+./gint_k_sparse1.cpp:                            for (int iw = 0; iw < atom1->nw * GlobalV::NPOL; iw++)
+./gint_k_sparse1.cpp:                                for (int iw2 = 0; iw2 < atom2->nw * GlobalV::NPOL; iw2++)
+./gint_k_sparse1.cpp:                                    const int mug0 = iw / GlobalV::NPOL;
+./gint_k_sparse1.cpp:                                    const int nug0 = iw2 / GlobalV::NPOL;
+./gint_k_sparse1.cpp:                                    if (this->gridt->nspin== 4)
+./gint_k_sparse1.cpp:                                            if (!GlobalV::DOMAG)
+./gint_k_sparse1.cpp:                                            if (!GlobalV::DOMAG)
+./gint_k_sparse1.cpp:    if (this->gridt->nspin!= 4)
+./gint_k_env.cpp:                        if (this->gridt->nspin== 4) // is it a simple add of 2 spins?
+./gint_k_env.cpp:                                iw1_lo = this->gridt->trace_lo[start1] / GlobalV::NPOL
+./gint_k_env.cpp:                                         + this->gridt->lgd / GlobalV::NPOL * is;
+./test/test_sph.cu:    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
+./test/test_sph.cu:    MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
+./grid_technique.cpp:    if (GlobalV::device_flag == "gpu") {
+./grid_technique.cpp:    if (GlobalV::device_flag == "gpu") {
+./grid_technique.cpp:    if (GlobalV::device_flag == "gpu") {
+./grid_technique.cpp:        GlobalV::ofs_running << " No atoms on this sub-FFT-mesh." << std::endl;
+./grid_technique.cpp:    int* all = new int[GlobalV::NPROC];
+./grid_technique.cpp:    ZEROS(all, GlobalV::NPROC);
+./grid_technique.cpp:    if (GlobalV::MY_RANK == 0) {
+./grid_technique.cpp:        GlobalV::ofs_warning << std::setw(15) << "Processor" << std::setw(15)
+./grid_technique.cpp:        for (int i = 0; i < GlobalV::NPROC; i++) {
+./grid_technique.cpp:            GlobalV::ofs_warning << std::setw(15) << i + 1 << std::setw(15)
+./grid_technique.cpp:    this->trace_lo = std::vector<int>(GlobalV::NLOCAL, -1);
+./grid_technique.cpp:    ModuleBase::Memory::record("GT::trace_lo", sizeof(int) * GlobalV::NLOCAL);
+./grid_technique.cpp:                if (GlobalV::NSPIN
+./grid_technique.cpp:                if (this->gridt->nspin== 4) {
+./grid_technique.cpp:    assert(iw_all == GlobalV::NLOCAL);
+./gint_tau.cpp:	for(int is=0; is<GlobalV::NSPIN; ++is)
+./gint_tau.cpp:		if(GlobalV::GAMMA_ONLY_LOCAL)
+./gint.cpp:        if (GlobalV::device_flag == "gpu" && GlobalV::GAMMA_ONLY_LOCAL
+./gint.cpp:    ModuleBase::TITLE(GlobalV::ofs_running, "Gint_k", "prep_grid");
+./gint.cpp:        this->DMRGint.resize(GlobalV::NSPIN);
+./gint.cpp:    if (this->gridt->nspin!= 4) {
+./gint.cpp:        for (int is = 0; is < GlobalV::NSPIN; is++) {
+./gint.cpp:    if (GlobalV::GAMMA_ONLY_LOCAL && this->gridt->nspin!= 4) {
+./gint.cpp:    if (this->gridt->nspin!= 4) {
+./gint_k_pvpr.cpp:    this->pvpR_reduced = new double*[GlobalV::NSPIN];
+./gint_k_pvpr.cpp:    for (int is = 0; is < GlobalV::NSPIN; is++)
+./gint_k_pvpr.cpp:    ModuleBase::Memory::record("pvpR_reduced", sizeof(double) * this->gridt->nnrg * GlobalV::NSPIN);
+./gint_k_pvpr.cpp:    for (int is = 0; is < GlobalV::NSPIN; is++)
+./gint_k_pvpr.cpp:    const int npol = GlobalV::NPOL;
+./gint_k_pvpr.cpp:    const int npol = GlobalV::NPOL;
+./gint_k_pvpr.cpp:                            if (GlobalV::DOMAG)
+./gint_fvl.cpp:	if(GlobalV::GAMMA_ONLY_LOCAL)
+./gint_fvl.cpp:	if(GlobalV::GAMMA_ONLY_LOCAL)
+./gint_k_pvdpr.cpp:    const int nspin = GlobalV::NSPIN;
+./gint_k_pvdpr.cpp:    const int nspin = GlobalV::NSPIN;
+./gint_vl.cpp:    if(GlobalV::GAMMA_ONLY_LOCAL)
+./gint_vl.cpp:    if(GlobalV::GAMMA_ONLY_LOCAL)
+./gint_rho.cpp:    for (int is = 0; is < GlobalV::NSPIN; ++is)
+./gint_rho.cpp:        if (GlobalV::GAMMA_ONLY_LOCAL)
+./gint_gpu_interface.cpp:    for (int is = 0; is < GlobalV::NSPIN; ++is) {
+./gint_vl_cpu_interface.cpp:    if (!GlobalV::GAMMA_ONLY_LOCAL) {
+./gint_vl_cpu_interface.cpp:    if (GlobalV::GAMMA_ONLY_LOCAL){
+./gint_vl_cpu_interface.cpp:        if (GlobalV::GAMMA_ONLY_LOCAL) {
+./gint_vl_cpu_interface.cpp:    if (GlobalV::GAMMA_ONLY_LOCAL) {
+./gint_vl_cpu_interface.cpp:    if (GlobalV::GAMMA_ONLY_LOCAL) {
+./gint_vl_cpu_interface.cpp:    if (!GlobalV::GAMMA_ONLY_LOCAL) {
+./gint_vl_cpu_interface.cpp:    if (GlobalV::GAMMA_ONLY_LOCAL)
+./gint_vl_cpu_interface.cpp:        if (GlobalV::GAMMA_ONLY_LOCAL) {
+./gint_vl_cpu_interface.cpp:    if (GlobalV::GAMMA_ONLY_LOCAL) {

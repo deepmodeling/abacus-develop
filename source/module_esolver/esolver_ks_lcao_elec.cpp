@@ -89,7 +89,11 @@ void ESolver_KS_LCAO<TK, TR>::set_matrix_grid(Record_adj& ra)
                              psi_u,
                              dpsi_u,
                              d2psi_u,
-                             GlobalV::NUM_STREAM);
+                             GlobalV::NUM_STREAM,
+                             GlobalV::GAMMA_ONLY_LOCAL,
+                             GlobalV::NSPIN,
+                             GlobalV::DOMAG,
+                             GlobalV::NPOL);
     psi_u.clear();
     psi_u.shrink_to_fit();
     dpsi_u.clear();
