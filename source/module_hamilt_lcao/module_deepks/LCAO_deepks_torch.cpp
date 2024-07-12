@@ -116,8 +116,9 @@ void LCAO_Deepks::cal_descriptor(const int nat) {
 
 void LCAO_Deepks::check_descriptor(const UnitCell& ucell) {
     ModuleBase::TITLE("LCAO_Deepks", "check_descriptor");
-    if (GlobalV::MY_RANK != 0)
+    if (GlobalV::MY_RANK != 0) {
         return;
+}
     std::ofstream ofs("descriptor.dat");
     ofs << std::setprecision(10);
     if (!GlobalV::deepks_equiv) {
@@ -133,8 +134,9 @@ void LCAO_Deepks::check_descriptor(const UnitCell& ucell) {
                         const int ind = iat * inlmax / ucell.nat + inl;
                         ofs << d_tensor[ind].index({im}).item().toDouble()
                             << " ";
-                        if (id % 8 == 7)
+                        if (id % 8 == 7) {
                             ofs << std::endl;
+}
                         id++;
                     }
                 }
@@ -148,8 +150,9 @@ void LCAO_Deepks::check_descriptor(const UnitCell& ucell) {
                 << " n_descriptor " << this->des_per_atom << std::endl;
             for (int i = 0; i < this->des_per_atom; i++) {
                 ofs << this->pdm[iat][i] << " ";
-                if (i % 8 == 7)
+                if (i % 8 == 7) {
                     ofs << std::endl;
+}
             }
             ofs << std::endl << std::endl;
         }
@@ -183,15 +186,18 @@ void LCAO_Deepks::cal_gvx(const int nat) {
                         std::vector<double> mmv;
                         for (int m1 = 0; m1 < nm; ++m1) {
                             for (int m2 = 0; m2 < nm; ++m2) {
-                                if (i == 0)
+                                if (i == 0) {
                                     mmv.push_back(
                                         this->gdmx[ibt][inl][m1 * nm + m2]);
-                                if (i == 1)
+}
+                                if (i == 1) {
                                     mmv.push_back(
                                         this->gdmy[ibt][inl][m1 * nm + m2]);
-                                if (i == 2)
+}
+                                if (i == 2) {
                                     mmv.push_back(
                                         this->gdmz[ibt][inl][m1 * nm + m2]);
+}
                             }
                         } // nm^2
                         torch::Tensor mm
@@ -417,8 +423,9 @@ void LCAO_Deepks::load_model(const std::string& deepks_model) {
 }
 
 inline void generate_py_files(const int lmaxd, const int nmaxd) {
-    if (GlobalV::MY_RANK != 0)
+    if (GlobalV::MY_RANK != 0) {
         return;
+}
     std::ofstream ofs("cal_gedm.py");
     ofs << "import torch" << std::endl;
     ofs << "import numpy as np" << std::endl << std::endl;
@@ -603,8 +610,9 @@ void LCAO_Deepks::cal_orbital_precalc(
 
                 auto row_indexes = pv->get_indexes_row(ibt1);
                 const int row_size = row_indexes.size();
-                if (row_size == 0)
+                if (row_size == 0) {
                     continue;
+}
 
                 std::vector<double> s_1t(trace_alpha_size * row_size);
                 std::vector<double> g_1dmt(trace_alpha_size * row_size, 0.0);
@@ -634,8 +642,9 @@ void LCAO_Deepks::cal_orbital_precalc(
 
                     auto col_indexes = pv->get_indexes_col(ibt2);
                     const int col_size = col_indexes.size();
-                    if (col_size == 0)
+                    if (col_size == 0) {
                         continue;
+}
 
                     std::vector<double> s_2t(trace_alpha_size * col_size);
                     for (int icol = 0; icol < col_size; icol++) {
@@ -852,13 +861,15 @@ void LCAO_Deepks::cal_orbital_precalc_k(
 
                 auto row_indexes = pv->get_indexes_row(ibt1);
                 const int row_size = row_indexes.size();
-                if (row_size == 0)
+                if (row_size == 0) {
                     continue;
+}
 
                 key_tuple key_1(ibt1, dR1.x, dR1.y, dR1.z);
                 if (this->nlm_save_k[iat].find(key_1)
-                    == this->nlm_save_k[iat].end())
+                    == this->nlm_save_k[iat].end()) {
                     continue;
+}
                 std::vector<double> s_1t(trace_alpha_size * row_size);
                 std::vector<double> g_1dmt(nks * trace_alpha_size * row_size,
                                            0.0);
@@ -875,8 +886,9 @@ void LCAO_Deepks::cal_orbital_precalc_k(
                     const int T2 = GridD.getType(ad2);
                     const int I2 = GridD.getNatom(ad2);
                     const int ibt2 = ucell.itia2iat(T2, I2);
-                    if (ibt1 > ibt2)
+                    if (ibt1 > ibt2) {
                         continue;
+}
                     const ModuleBase::Vector3<double> tau2
                         = GridD.getAdjacentTau(ad2);
                     const Atom* atom2 = &ucell.atoms[T2];
@@ -894,14 +906,16 @@ void LCAO_Deepks::cal_orbital_precalc_k(
 
                     auto col_indexes = pv->get_indexes_col(ibt2);
                     const int col_size = col_indexes.size();
-                    if (col_size == 0)
+                    if (col_size == 0) {
                         continue;
+}
 
                     std::vector<double> s_2t(trace_alpha_size * col_size);
                     key_tuple key_2(ibt2, dR2.x, dR2.y, dR2.z);
                     if (this->nlm_save_k[iat].find(key_2)
-                        == this->nlm_save_k[iat].end())
+                        == this->nlm_save_k[iat].end()) {
                         continue;
+}
                     for (int icol = 0; icol < col_size; icol++) {
                         const double* col_ptr
                             = this->nlm_save_k[iat][key_2][col_indexes[icol]][0]
@@ -947,8 +961,9 @@ void LCAO_Deepks::cal_orbital_precalc_k(
                     // dgemm for s_2t and dm_array to get g_1dmt
                     constexpr char transa = 'T', transb = 'N';
                     double gemm_alpha = 1.0, gemm_beta = 1.0;
-                    if (ibt1 < ibt2)
+                    if (ibt1 < ibt2) {
                         gemm_alpha = 2.0;
+}
                     dgemm_(&transa,
                            &transb,
                            &row_size_nks,

@@ -39,7 +39,7 @@ int out_ndigits = 8;
 std::string DFT_FUNCTIONAL = "default";
 double XC_TEMPERATURE = 0.0;
 int NSPIN = 1;       // LDA
-bool TWO_EFERMI = 0; // two fermi energy, exist only magnetization is fixed.
+bool TWO_EFERMI = false; // two fermi energy, exist only magnetization is fixed.
 double nupdown = 0.0;
 int CURRENT_K = 0;
 int CAL_FORCE = 0; // if cal_force >1, means do the grid integration 'cal_force' times.
@@ -86,9 +86,9 @@ int NQX = 10000;   // number of points describing reciprocal radial tab
 int NQXQ = 10000;  // number of points describing reciprocal radial tab for Q
 
 int NURSE = 0; // used for debug.
-bool COLOUR = 0;
-bool GAMMA_ONLY_LOCAL = 0; // mohan add 2010-10-20
-bool GAMMA_ONLY_PW = 0;    // mohan add 2012-06-05
+bool COLOUR = false;
+bool GAMMA_ONLY_LOCAL = false; // mohan add 2010-10-20
+bool GAMMA_ONLY_PW = false;    // mohan add 2012-06-05
 
 int T_IN_H = 1; // mohan add 2010-11-28
 int VL_IN_H = 1;
@@ -252,8 +252,8 @@ double MIXING_BETA_MAG = 1.6;
 double MIXING_GG0_MAG = 1.00;
 double MIXING_GG0_MIN = 0.1;
 double MIXING_ANGLE = 0.0;
-bool MIXING_TAU = 0;
-bool MIXING_DMR = 0;
+bool MIXING_TAU = false;
+bool MIXING_DMR = false;
 
 //==========================================================
 // device flags added by denghui
@@ -281,8 +281,8 @@ int out_interval = 1;     // convert from out_hsR_interval liuyu 2023-04-18
 //==========================================================
 // Deltaspin related
 //==========================================================
-bool sc_mag_switch = 0;
-bool decay_grad_switch = 0;
+bool sc_mag_switch = false;
+bool decay_grad_switch = false;
 double sc_thr = 1.0e-6;
 int nsc = 100;
 int nsc_min = 2;
