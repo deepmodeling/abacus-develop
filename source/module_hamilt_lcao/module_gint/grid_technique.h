@@ -138,6 +138,8 @@ class Grid_Technique : public Grid_MeshBall {
                       const int& nproc,
                       const int& rank,
                       const int& nlocal,
+                      std::ofstream &ofs_running,
+                      std::ofstream &ofs_warning,
                       const std::string& device_flag);
 
     /// number of elements(basis-pairs) in this processon
@@ -169,9 +171,11 @@ class Grid_Technique : public Grid_MeshBall {
     void init_atoms_on_grid(const int& ny,
                             const int& nplane,
                             const int& startz_current,
-                            const UnitCell& ucell);
+                            const UnitCell& ucell,
+                            std::ofstream &ofs_running,
+                            std::ofstream& ofs_warning);
     void init_atoms_on_grid2(const int* index2normal, const UnitCell& ucell);
-    void cal_grid_integration_index();
+    void cal_grid_integration_index(std::ofstream &ofs_warning);
     void cal_trace_lo(const UnitCell& ucell);
     void check_bigcell(int* ind_bigcell, char* bigcell_on_processor);
     void get_startind(const int& ny,

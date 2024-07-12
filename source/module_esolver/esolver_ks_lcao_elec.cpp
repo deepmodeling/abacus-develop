@@ -97,6 +97,8 @@ void ESolver_KS_LCAO<TK, TR>::set_matrix_grid(Record_adj& ra)
                              GlobalV::NPROC,
                              GlobalV::MY_RANK,
                              GlobalV::NLOCAL,
+                             GlobalV::ofs_running,
+                             GlobalV::ofs_warning,
                              GlobalV::device_flag);
     // (2)For each atom, calculate the adjacent atoms in different cells
     // and allocate the space for H(R) and S(R).

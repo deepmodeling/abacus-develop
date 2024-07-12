@@ -52,6 +52,8 @@ void Grid_Technique::set_pbc_grid(
     const int& nproc,
     const int& rank,
     const int& nlocal,
+    std::ofstream &ofs_running,
+    std::ofstream &ofs_warning,
     const std::string& device_flag) {
     ModuleBase::TITLE("Grid_Technique", "init");
     ModuleBase::timer::tick("Grid_Technique", "init");
@@ -115,7 +117,8 @@ void Grid_Technique::set_pbc_grid(
 
     this->init_meshball();
 
-    this->init_atoms_on_grid(ny, nplane, startz_current, ucell);
+    this->init_atoms_on_grid(ny, nplane, startz_current, 
+                            ucell,ofs_running,ofs_warning);
 
     this->cal_trace_lo(ucell);
 #if ((defined __CUDA) /* || (defined __ROCM) */)
@@ -171,7 +174,9 @@ void Grid_Technique::get_startind(const int& ny,
 void Grid_Technique::init_atoms_on_grid(const int& ny,
                                         const int& nplane,
                                         const int& startz_current,
-                                        const UnitCell& ucell) {
+                                        const UnitCell& ucell,
+                                        std::ofstream &ofs_running,
+                                        std::ofstream &ofs_warning) {
     ModuleBase::TITLE("Grid_Technique", "init_atoms_on_grid");
 
     assert(nbxx >= 0);
@@ -270,7 +275,7 @@ void Grid_Technique::init_atoms_on_grid(const int& ny,
 
     int stop = 0;
     if (total_atoms_on_grid == 0) {
-        GlobalV::ofs_running << " No atoms on this sub-FFT-mesh." << std::endl;
+        ofs_running << " No atoms on this sub-FFT-mesh." << std::endl;
         stop = 1;
     }
     Parallel_Reduce::reduce_all(stop);
@@ -290,7 +295,7 @@ void Grid_Technique::init_atoms_on_grid(const int& ny,
     }
 
     // need how_many_atoms first.
-    this->cal_grid_integration_index();
+    this->cal_grid_integration_index(ofs_warning);
     // bcell_start is needed.
     this->init_atoms_on_grid2(index2normal.data(), ucell);
     return;
@@ -435,7 +440,7 @@ void Grid_Technique::init_atoms_on_grid2(const int* index2normal,
     return;
 }
 
-void Grid_Technique::cal_grid_integration_index() {
+void Grid_Technique::cal_grid_integration_index(std::ofstream &ofs_warning) {
     // save the start
     this->bcell_start = std::vector<int>(nbxx, 0);
     ModuleBase::Memory::record("GT::bcell_start", sizeof(int) * nbxx);
@@ -456,10 +461,10 @@ void Grid_Technique::cal_grid_integration_index() {
     ZEROS(all, this->nproc);
     Parallel_Reduce::gather_int_all(max_atom, all);
     if (this->rank == 0) {
-        GlobalV::ofs_warning << std::setw(15) << "Processor" << std::setw(15)
+        ofs_warning << std::setw(15) << "Processor" << std::setw(15)
                              << "Atom" << std::endl;
         for (int i = 0; i < this->nproc; i++) {
-            GlobalV::ofs_warning << std::setw(15) << i + 1 << std::setw(15)
+            ofs_warning << std::setw(15) << i + 1 << std::setw(15)
                                  << all[i] << std::endl;
         }
     }
