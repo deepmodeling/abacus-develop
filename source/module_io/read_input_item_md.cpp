@@ -111,7 +111,7 @@ void ReadInput::item_md()
         Input_Item item("lj_rule");
         item.annotation = "combination rules used to construct the parameter matrix for LJ potential";
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.mdp.lj_rule != 1 && para.input.mdp.lj_rule != 2)
+            if (para.input.esolver_type == "lj" && para.input.mdp.lj_rule != 1 && para.input.mdp.lj_rule != 2)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "lj_rule must be 1 or 2");
             }
@@ -131,7 +131,8 @@ void ReadInput::item_md()
             para.input.sup.n_ljcut = count;
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.sup.n_ljcut != 1 && para.input.sup.n_ljcut != para.input.ntype * (para.input.ntype + 1) / 2)
+            if (para.input.esolver_type == "lj" && para.input.sup.n_ljcut != 1
+                && para.input.sup.n_ljcut != para.input.ntype * (para.input.ntype + 1) / 2)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", " the number of lj_rcut should be 1 or ntype(ntype+1)/2 ");
             }
@@ -160,7 +161,7 @@ void ReadInput::item_md()
             para.input.sup.n_ljepsilon = count;
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.sup.n_ljepsilon != para.input.ntype
+            if (para.input.esolver_type == "lj" && para.input.sup.n_ljepsilon != para.input.ntype
                 && para.input.sup.n_ljepsilon != para.input.ntype * (para.input.ntype + 1) / 2)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", " the number of lj_epsilon should be ntype or ntype(ntype+1)/2 ");
@@ -183,7 +184,7 @@ void ReadInput::item_md()
             para.input.sup.n_ljsigma = count;
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.sup.n_ljsigma != para.input.ntype
+            if (para.input.esolver_type == "lj" && para.input.sup.n_ljsigma != para.input.ntype
                 && para.input.sup.n_ljsigma != para.input.ntype * (para.input.ntype + 1) / 2)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", " the number of lj_sigma should be ntype or ntype(ntype+1)/2 ");
