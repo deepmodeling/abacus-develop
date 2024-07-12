@@ -17,7 +17,7 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
             ModuleBase::WARNING_QUIT("Gint_interface::cal_gint",
                                      "pvpR has not been allocated yet!");
         } else {
-            ModuleBase::GlobalFunc::ZEROS(this->pvpR_reduced[inout->ispin],
+            ZEROS(this->pvpR_reduced[inout->ispin],
                                           nnrg);
         }
     }
@@ -120,13 +120,13 @@ void Gint::cpu_dvlocal_interface(Gint_inout* inout) {
     if (GlobalV::GAMMA_ONLY_LOCAL) {
         ModuleBase::WARNING_QUIT("Gint_interface::cal_gint",
                                  "dvlocal only for k point!");
-        ModuleBase::GlobalFunc::ZEROS(
+        ZEROS(
                         this->pvdpRx_reduced[inout->ispin],
                         nnrg);
-        ModuleBase::GlobalFunc::ZEROS(
+        ZEROS(
                         this->pvdpRy_reduced[inout->ispin],
                         nnrg);
-        ModuleBase::GlobalFunc::ZEROS(
+        ZEROS(
                         this->pvdpRz_reduced[inout->ispin],
                         nnrg);
     }
@@ -201,7 +201,7 @@ void Gint::cpu_vlocal_meta_interface(Gint_inout* inout) {
             ModuleBase::WARNING_QUIT("Gint_interface::cal_gint",
                                         "pvpR has not been allocated yet!");
         } else {
-            ModuleBase::GlobalFunc::ZEROS(this->pvpR_reduced[inout->ispin],
+            ZEROS(this->pvpR_reduced[inout->ispin],
                                             nnrg);
         }
     }

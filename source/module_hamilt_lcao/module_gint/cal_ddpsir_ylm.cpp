@@ -1,4 +1,5 @@
 #include "gint_tools.h"
+
 namespace Gint_Tools{
 void cal_ddpsir_ylm(
     const Grid_Technique& gt, const int bxyz,
@@ -51,12 +52,12 @@ void cal_ddpsir_ylm(
             double* const p_ddpsi_zz = &ddpsir_ylm_zz[ib][block_index[id]];
             if (!cal_flag[ib][id])
             {
-                ModuleBase::GlobalFunc::ZEROS(p_ddpsi_xx, block_size[id]);
-                ModuleBase::GlobalFunc::ZEROS(p_ddpsi_xy, block_size[id]);
-                ModuleBase::GlobalFunc::ZEROS(p_ddpsi_xz, block_size[id]);
-                ModuleBase::GlobalFunc::ZEROS(p_ddpsi_yy, block_size[id]);
-                ModuleBase::GlobalFunc::ZEROS(p_ddpsi_yz, block_size[id]);
-                ModuleBase::GlobalFunc::ZEROS(p_ddpsi_zz, block_size[id]);
+               ZEROS(p_ddpsi_xx, block_size[id]);
+                ZEROS(p_ddpsi_xy, block_size[id]);
+                ZEROS(p_ddpsi_xz, block_size[id]);
+                ZEROS(p_ddpsi_yy, block_size[id]);
+                ZEROS(p_ddpsi_yz, block_size[id]);
+                ZEROS(p_ddpsi_zz, block_size[id]);
             }
             else
             {
@@ -78,7 +79,7 @@ void cal_ddpsir_ylm(
                         for (int j = 0; j < 6; j++)
                         {
                             dpsi[i][j] = new double[3];
-                            ModuleBase::GlobalFunc::ZEROS(dpsi[i][j], 3);
+                            ZEROS(dpsi[i][j], 3);
                         }
                     }
 
@@ -88,7 +89,7 @@ void cal_ddpsir_ylm(
                     for (int i = 0; i < 6; i++)
                     {
                         displ[i] = new double[3];
-                        ModuleBase::GlobalFunc::ZEROS(displ[i], 3);
+                        ZEROS(displ[i], 3);
                     }
                     displ[0][0] = 0.0001; // in x direction
                     displ[1][0] = -0.0001;

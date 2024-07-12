@@ -437,7 +437,7 @@ void Grid_Technique::cal_grid_integration_index() {
 
 #ifdef __MPI
     int* all = new int[GlobalV::NPROC];
-    ModuleBase::GlobalFunc::ZEROS(all, GlobalV::NPROC);
+    ZEROS(all, GlobalV::NPROC);
     Parallel_Reduce::gather_int_all(max_atom, all);
     if (GlobalV::MY_RANK == 0) {
         GlobalV::ofs_warning << std::setw(15) << "Processor" << std::setw(15)
@@ -450,11 +450,6 @@ void Grid_Technique::cal_grid_integration_index() {
     delete[] all;
 #endif
 
-    if (GlobalV::test_gridt) {
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,
-                                    "Max atom on bigcell",
-                                    max_atom);
-    }
     return;
 }
 
@@ -518,7 +513,7 @@ void Grid_Technique::init_gpu_gint_variables(const UnitCell& ucell,
     }
     nstreams = num_stream;
     double ylmcoef[100];
-    ModuleBase::GlobalFunc::ZEROS(ylmcoef, 100);
+    ZEROS(ylmcoef, 100);
     for (int i = 0; i < 100; i++) {
         ylmcoef[i] = ModuleBase::Ylm::ylmcoef[i];
     }

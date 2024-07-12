@@ -15,11 +15,11 @@ void Gint_k::allocate_pvdpR(void)
     for(int is =0;is<nspin;is++)
     {
         this->pvdpRx_reduced[is] = new double[this->gridt->nnrg];	
-        ModuleBase::GlobalFunc::ZEROS( pvdpRx_reduced[is], this->gridt->nnrg);
+        ZEROS( pvdpRx_reduced[is], this->gridt->nnrg);
         this->pvdpRy_reduced[is] = new double[this->gridt->nnrg];	
-        ModuleBase::GlobalFunc::ZEROS( pvdpRy_reduced[is], this->gridt->nnrg);
+        ZEROS( pvdpRy_reduced[is], this->gridt->nnrg);
         this->pvdpRz_reduced[is] = new double[this->gridt->nnrg];	
-        ModuleBase::GlobalFunc::ZEROS( pvdpRz_reduced[is], this->gridt->nnrg);
+        ZEROS( pvdpRz_reduced[is], this->gridt->nnrg);
     }
 
     ModuleBase::Memory::record("pvdpR_reduced", 3 * sizeof(double) * this->gridt->nnrg * nspin);

@@ -34,7 +34,7 @@ void Gint::gint_kernel_force(
 		= Gint_Tools::get_psir_vlbr3(this->bxyz, na_grid, LD_pool, block_index, cal_flag, vldr3, psir_ylm.ptr_2D);
 
 	Gint_Tools::Array_Pool<double> psir_vlbr3_DM(this->bxyz, LD_pool);
-	ModuleBase::GlobalFunc::ZEROS(psir_vlbr3_DM.ptr_1D, this->bxyz*LD_pool);
+	ZEROS(psir_vlbr3_DM.ptr_1D, this->bxyz*LD_pool);
 
 	//calculating g_mu(r) = sum_nu rho_mu,nu f_nu(r)
 	if(GlobalV::GAMMA_ONLY_LOCAL)
@@ -139,25 +139,25 @@ void Gint::gint_kernel_force_meta(
 	//this part is for doing finite difference check
 	//since analytical evaluation of ddpsir is still not working correctly
 	//this part is saved here in case used in the future
-	ModuleBase::GlobalFunc::ZEROS(dpsir_ylm_x.ptr_1D, this->bxyz*LD_pool);
-	ModuleBase::GlobalFunc::ZEROS(dpsir_ylm_y.ptr_1D, this->bxyz*LD_pool);
-	ModuleBase::GlobalFunc::ZEROS(dpsir_ylm_z.ptr_1D, this->bxyz*LD_pool);
-	ModuleBase::GlobalFunc::ZEROS(ddpsir_ylm_xx.ptr_1D, this->bxyz*LD_pool);
-	ModuleBase::GlobalFunc::ZEROS(ddpsir_ylm_xy.ptr_1D, this->bxyz*LD_pool);
-	ModuleBase::GlobalFunc::ZEROS(ddpsir_ylm_xz.ptr_1D, this->bxyz*LD_pool);
-	ModuleBase::GlobalFunc::ZEROS(ddpsir_ylm_yy.ptr_1D, this->bxyz*LD_pool);
-	ModuleBase::GlobalFunc::ZEROS(ddpsir_ylm_yz.ptr_1D, this->bxyz*LD_pool);
-	ModuleBase::GlobalFunc::ZEROS(ddpsir_ylm_zz.ptr_1D, this->bxyz*LD_pool);
+	ZEROS(dpsir_ylm_x.ptr_1D, this->bxyz*LD_pool);
+	ZEROS(dpsir_ylm_y.ptr_1D, this->bxyz*LD_pool);
+	ZEROS(dpsir_ylm_z.ptr_1D, this->bxyz*LD_pool);
+	ZEROS(ddpsir_ylm_xx.ptr_1D, this->bxyz*LD_pool);
+	ZEROS(ddpsir_ylm_xy.ptr_1D, this->bxyz*LD_pool);
+	ZEROS(ddpsir_ylm_xz.ptr_1D, this->bxyz*LD_pool);
+	ZEROS(ddpsir_ylm_yy.ptr_1D, this->bxyz*LD_pool);
+	ZEROS(ddpsir_ylm_yz.ptr_1D, this->bxyz*LD_pool);
+	ZEROS(ddpsir_ylm_zz.ptr_1D, this->bxyz*LD_pool);
 
 	Gint_Tools::Array_Pool<double> psir_ylm1(this->bxyz, LD_pool);
 	Gint_Tools::Array_Pool<double> dpsir_ylm_x1(this->bxyz, LD_pool);
 	Gint_Tools::Array_Pool<double> dpsir_ylm_y1(this->bxyz, LD_pool);
 	Gint_Tools::Array_Pool<double> dpsir_ylm_z1(this->bxyz, LD_pool);
 	
-	ModuleBase::GlobalFunc::ZEROS(psir_ylm1.ptr_1D, this->bxyz*LD_pool);
-	ModuleBase::GlobalFunc::ZEROS(dpsir_ylm_x1.ptr_1D, this->bxyz*LD_pool);
-	ModuleBase::GlobalFunc::ZEROS(dpsir_ylm_y1.ptr_1D, this->bxyz*LD_pool);
-	ModuleBase::GlobalFunc::ZEROS(dpsir_ylm_z1.ptr_1D, this->bxyz*LD_pool);
+	ZEROS(psir_ylm1.ptr_1D, this->bxyz*LD_pool);
+	ZEROS(dpsir_ylm_x1.ptr_1D, this->bxyz*LD_pool);
+	ZEROS(dpsir_ylm_y1.ptr_1D, this->bxyz*LD_pool);
+	ZEROS(dpsir_ylm_z1.ptr_1D, this->bxyz*LD_pool);
 
 	std::vector<double> displ {0.0,0.0,0.0005};
 	std::vector<double> displ1{0.0,0.0,-0.0005};
@@ -193,10 +193,10 @@ void Gint::gint_kernel_force_meta(
 	Gint_Tools::Array_Pool<double> dpsiry_v_DM(this->bxyz, LD_pool);
 	Gint_Tools::Array_Pool<double> dpsirz_v_DM(this->bxyz, LD_pool);
 
-	ModuleBase::GlobalFunc::ZEROS(psir_vlbr3_DM.ptr_1D, this->bxyz*LD_pool);
-	ModuleBase::GlobalFunc::ZEROS(dpsirx_v_DM.ptr_1D, this->bxyz*LD_pool);
-	ModuleBase::GlobalFunc::ZEROS(dpsiry_v_DM.ptr_1D, this->bxyz*LD_pool);
-	ModuleBase::GlobalFunc::ZEROS(dpsirz_v_DM.ptr_1D, this->bxyz*LD_pool);
+	ZEROS(psir_vlbr3_DM.ptr_1D, this->bxyz*LD_pool);
+	ZEROS(dpsirx_v_DM.ptr_1D, this->bxyz*LD_pool);
+	ZEROS(dpsiry_v_DM.ptr_1D, this->bxyz*LD_pool);
+	ZEROS(dpsirz_v_DM.ptr_1D, this->bxyz*LD_pool);
 
 	//calculating g_mu(r) = sum_nu rho_mu,nu f_nu(r)
 	if(GlobalV::GAMMA_ONLY_LOCAL)

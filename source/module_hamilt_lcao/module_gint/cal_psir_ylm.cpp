@@ -55,7 +55,7 @@ void cal_psir_ylm(
             double* p = &psir_ylm[ib][block_index[id]];
             if (!cal_flag[ib][id])
             {
-                ModuleBase::GlobalFunc::ZEROS(p, block_size[id]);
+                ZEROS(p, block_size[id]);
             }
             else
             {
