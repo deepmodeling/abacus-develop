@@ -149,11 +149,13 @@ void DiagoIterAssist<T, Device>::diagH_subspace(hamilt::Hamilt<T, Device>* pHami
 
 template <typename T, typename Device>
 void DiagoIterAssist<T, Device>::diagH_subspace_init(hamilt::Hamilt<T, Device>* pHamilt,
-                                                     const T* psi,
-                                                     int psi_nr,
-                                                     int psi_nc,
-                                                     psi::Psi<T, Device>& evc,
-                                                     Real* en)
+    const T* psi,
+    int psi_nr,
+    int psi_nc,
+    psi::Psi<T, Device>& evc,
+    Real* en,
+    const std::function<void(T*, const int)>& add_to_hcc,
+    const std::function<void(const T* const, const int, const int)>& export_vcc)
 {
     ModuleBase::TITLE("DiagoIterAssist", "diagH_subspace_init");
     ModuleBase::timer::tick("DiagoIterAssist", "diagH_subspace_init");
@@ -266,6 +268,9 @@ void DiagoIterAssist<T, Device>::diagH_subspace_init(hamilt::Hamilt<T, Device>* 
 
         gemm_op<T, Device>()(ctx, 'C', 'N', nstart, nstart, dmin, &one, ppsi, dmax, spsi, dmax, &zero, scc, nstart);
         delmem_complex_op()(ctx, temp);
+
+        add_to_hcc(hcc, nstart);
+
     }
 
     if (GlobalV::NPROC_IN_POOL > 1)
@@ -289,6 +294,8 @@ void DiagoIterAssist<T, Device>::diagH_subspace_init(hamilt::Hamilt<T, Device>* 
     }*/
 
     DiagoIterAssist::diagH_LAPACK(nstart, n_band, hcc, scc, nstart, en, vcc);
+
+    export_vcc(vcc, nstart, n_band);
 
     //=======================
     // diagonize the H-matrix

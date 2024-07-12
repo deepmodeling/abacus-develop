@@ -80,8 +80,12 @@ class XC_Functional
 // 4. init_func : which converts func_id into corresponding xc_func_type vector
 
 	static int get_func_type();
-	static void set_xc_type(const std::string xc_func_in);
-	static void get_hybrid_alpha(const double alpha_in);
+    static void set_xc_type(const std::string xc_func_in);
+
+    // For hybrid functional
+    static void get_hybrid_alpha(const double alpha_in);
+    /// Usually in exx caculation, the first SCF loop should be converged with PBE
+    static void set_xc_first_loop(const UnitCell& ucell);
 #ifdef USE_LIBXC
 	static void set_xc_type_libxc(const std::string xc_func_in);
 	static std::vector<xc_func_type> init_func(const int xc_polarized);

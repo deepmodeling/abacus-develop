@@ -147,8 +147,6 @@ TEST_F(InputConvTest, Conv)
     EXPECT_EQ(GlobalV::out_pot, 2);
     EXPECT_EQ(GlobalV::out_app_flag, false);
     EXPECT_EQ(GlobalV::out_bandgap, false);
-    EXPECT_EQ(Local_Orbital_Charge::out_dm, false);
-    EXPECT_EQ(Local_Orbital_Charge::out_dm1, false);
     EXPECT_EQ(hsolver::HSolverLCAO<double>::out_mat_hs[0], false);
     EXPECT_EQ(hsolver::HSolverLCAO<std::complex<double>>::out_mat_hs[0], false);
     EXPECT_EQ(hsolver::HSolverLCAO<double>::out_mat_hsR, false);

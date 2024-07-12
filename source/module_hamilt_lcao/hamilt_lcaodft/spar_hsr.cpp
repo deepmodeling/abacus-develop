@@ -93,14 +93,14 @@ void sparse_format::cal_HSR(const Parallel_Orbitals& pv,
     // if EXX is considered
     if (GlobalC::exx_info.info_global.cal_exx) {
         if (GlobalC::exx_info.info_ri.real_number) {
-            sparse_format::cal_HR_exx(lm,
+            sparse_format::cal_HR_exx(pv,
                                       HS_Arrays,
                                       current_spin,
                                       sparse_thr,
                                       nmp,
                                       *lm.Hexxd);
         } else {
-            sparse_format::cal_HR_exx(lm,
+            sparse_format::cal_HR_exx(pv,
                                       HS_Arrays,
                                       current_spin,
                                       sparse_thr,
@@ -111,7 +111,7 @@ void sparse_format::cal_HSR(const Parallel_Orbitals& pv,
 #endif // __MPI
 #endif // __EXX
 
-    sparse_format::clear_zero_elements(lm, HS_Arrays, current_spin, sparse_thr);
+    sparse_format::clear_zero_elements(HS_Arrays, current_spin, sparse_thr);
 
     return;
 }
@@ -237,8 +237,7 @@ void sparse_format::cal_HContainer_td(
 }
 
 // in case there are elements smaller than the threshold
-void sparse_format::clear_zero_elements(LCAO_Matrix& lm,
-                                        LCAO_HS_Arrays& HS_Arrays,
+void sparse_format::clear_zero_elements(LCAO_HS_Arrays& HS_Arrays,
                                         const int& current_spin,
                                         const double& sparse_thr) {
     ModuleBase::TITLE("sparse_format", "clear_zero_elements");

@@ -5,7 +5,6 @@
 #include "module_ri/Mix_DMk_2D.h"
 #include <memory>
 
-class Local_Orbital_Charge;
 class LCAO_Matrix;
 class Charge_Mixing;
 namespace elecstate

@@ -11,7 +11,6 @@ namespace ModuleIO
     template<typename T>
 		void out_dos_nao(
 				const psi::Psi<T>* psi,
-				LCAO_Matrix &lm,
 				const Parallel_Orbitals &pv,
 				const ModuleBase::matrix& ekb,
 				const ModuleBase::matrix& wg,

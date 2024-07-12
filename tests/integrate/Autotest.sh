@@ -165,11 +165,6 @@ check_out(){
 
                 if [ $(check_deviation_pass $deviation $fatal_thr) = 0 ]; then
                     ifatal=1
-                    echo -e "\e[0;31m[ERROR      ] \e[0m"\
-                        "An unacceptable deviation occurs."
-                    calculation=`grep calculation INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
-                    running_path=`echo "OUT.autotest/running_$calculation"".log"`
-                    cat $running_path
                 fi
             else
                 echo -e "\e[0;32m[      OK  ] \e[0m $key"
@@ -180,9 +175,14 @@ check_out(){
     if [ $ifail -eq 1 ]; then
         let failed++
         failed_case_list+=$dir'\n'
+        calculation=`grep calculation INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
+        running_path=`echo "OUT.autotest/running_$calculation"".log"`
+        cat $running_path
     fi
     if [ $ifatal -eq 1 ]; then
         let fatal++
+        echo -e "\e[0;31m[ERROR      ] \e[0m"\
+                "An unacceptable deviation occurs."
         fatal_case_list+=$dir'\n'
     fi
 }

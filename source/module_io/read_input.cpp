@@ -160,15 +160,6 @@ void ReadInput::create_directory(const Parameter& param)
                                           param.input.mdp.md_restart,
                                           param.input.out_alllog); // xiaohui add 2013-09-01
 
-    GlobalV::ofs_running << std::setiosflags(std::ios::left);
-    std::cout << std::setiosflags(std::ios::left);
-
-    GlobalV::ofs_running << "\n READING GENERAL INFORMATION" << std::endl;
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "global_out_dir", GlobalV::global_out_dir);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "global_in_card", GlobalV::global_in_card);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "pseudo_dir", GlobalV::global_pseudo_dir);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "orbital_dir", GlobalV::global_orbital_dir);
-
     const std::string ss = "test -d " + PARAM.inp.read_file_dir;
     if (system(ss.c_str()))
     {

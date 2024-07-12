@@ -146,14 +146,14 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(Input& inp, UnitCell& ucell)
     if (this->pelec == nullptr)
     {
         // TK stands for double and complex<double>?
-        this->pelec = new elecstate::ElecStateLCAO<TK>(&(this->chr), // use which parameter?
-                                                       &(this->kv),
-                                                       this->kv.get_nks(),
-                                                       &(this->LOC), // use which parameter?
-                                                       &(this->GG),  // mohan add 2024-04-01
-                                                       &(this->GK),  // mohan add 2024-04-01
-                                                       this->pw_rho,
-                                                       this->pw_big);
+        this->pelec = new elecstate::ElecStateLCAO<TK>(
+            &(this->chr), // use which parameter?
+            &(this->kv),
+            this->kv.get_nks(),
+            &(this->GG),  // mohan add 2024-04-01
+            &(this->GK),  // mohan add 2024-04-01
+            this->pw_rho,
+            this->pw_big);
     }
 
     // 3) init LCAO basis
@@ -163,7 +163,6 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(Input& inp, UnitCell& ucell)
     //------------------init Basis_lcao----------------------
 
     //! pass basis-pointer to EState and Psi
-    this->LOC.ParaV = &(this->ParaV);
     this->LM.ParaV = &(this->ParaV);
 
     // 5) initialize density matrix
@@ -185,28 +184,12 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(Input& inp, UnitCell& ucell)
 #ifdef __EXX
     // 7) initialize exx
     // PLEASE simplify the Exx_Global interface
-    if (GlobalV::CALCULATION == "scf" || GlobalV::CALCULATION == "relax" || GlobalV::CALCULATION == "cell-relax"
-        || GlobalV::CALCULATION == "md")
-    {
-        if (GlobalC::exx_info.info_global.cal_exx)
-        {
-            /* In the special "two-level" calculation case,
-            first scf iteration only calculate the functional without exact
-            exchange. but in "nscf" calculation, there is no need of "two-level"
-            method. */
-            if (ucell.atoms[0].ncpp.xc_func == "HF" || ucell.atoms[0].ncpp.xc_func == "PBE0"
-                || ucell.atoms[0].ncpp.xc_func == "HSE")
-            {
-                XC_Functional::set_xc_type("pbe");
-            }
-            else if (ucell.atoms[0].ncpp.xc_func == "SCAN0")
-            {
-                XC_Functional::set_xc_type("scan");
-            }
-
-            // GlobalC::exx_lcao.init();
-            if (GlobalC::exx_info.info_ri.real_number)
-            {
+    if (GlobalV::CALCULATION == "scf" || GlobalV::CALCULATION == "relax"
+        || GlobalV::CALCULATION == "cell-relax"
+        || GlobalV::CALCULATION == "md") {
+        if (GlobalC::exx_info.info_global.cal_exx) {
+            XC_Functional::set_xc_first_loop(ucell);
+            if (GlobalC::exx_info.info_ri.real_number) {
                 this->exx_lri_double->init(MPI_COMM_WORLD, this->kv);
             }
             else
@@ -283,16 +266,17 @@ void ESolver_KS_LCAO<TK, TR>::init_after_vc(Input& inp, UnitCell& ucell)
     if (GlobalV::md_prec_level == 2)
     {
         delete this->pelec;
-        this->pelec = new elecstate::ElecStateLCAO<TK>(&(this->chr),
-                                                       &(this->kv),
-                                                       this->kv.get_nks(),
-                                                       &(this->LOC),
-                                                       &(this->GG), // mohan add 2024-04-01
-                                                       &(this->GK), // mohan add 2024-04-01
-                                                       this->pw_rho,
-                                                       this->pw_big);
+        this->pelec = new elecstate::ElecStateLCAO<TK>(
+            &(this->chr),
+            &(this->kv),
+            this->kv.get_nks(),
+            &(this->GG), // mohan add 2024-04-01
+            &(this->GK), // mohan add 2024-04-01
+            this->pw_rho,
+            this->pw_big);
 
-        dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->init_DM(&this->kv, this->LM.ParaV, GlobalV::NSPIN);
+        dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)
+            ->init_DM(&this->kv, this->LM.ParaV, GlobalV::NSPIN);
 
         GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, this->pw_rho);
 
@@ -466,13 +450,12 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners()
 
     if (INPUT.out_proj_band) // Projeced band structure added by jiyy-2022-4-20
     {
-        ModuleIO::write_proj_band_lcao(this->psi, this->LM, this->pelec, this->kv, GlobalC::ucell, this->p_hamilt);
+        ModuleIO::write_proj_band_lcao(this->psi, this->ParaV, this->pelec, this->kv, GlobalC::ucell, this->p_hamilt);
     }
 
     if (INPUT.out_dos)
     {
         ModuleIO::out_dos_nao(this->psi,
-                              this->LM,
                               this->ParaV,
                               this->pelec->ekb,
                               this->pelec->wg,
@@ -582,6 +565,8 @@ void ESolver_KS_LCAO<TK, TR>::init_basis_lcao(Input& inp, UnitCell& ucell)
 
 #else
     ParaV.set_serial(nlocal, nlocal);
+    ParaV.nrow_bands = GlobalV::NLOCAL;
+    ParaV.ncol_bands = GlobalV::NBANDS;
     // Zhang Xiaoyang enable the serial version of LCAO and recovered this function usage. 2024-07-06
 #endif
 
@@ -1406,8 +1391,7 @@ void ESolver_KS_LCAO<TK, TR>::cal_mag(const int istep, const bool print)
                                 GlobalC::ucell.get_atomCounts(),
                                 GlobalC::ucell.get_lnchiCounts(),
                                 GlobalV::NSPIN);
-    auto out_sk = ModuleIO::Output_Sk<TK>(&(this->LM),
-                                          this->p_hamilt,
+    auto out_sk = ModuleIO::Output_Sk<TK>(this->p_hamilt,
                                           &(this->ParaV),
                                           GlobalV::NSPIN,
                                           this->kv.get_nks());

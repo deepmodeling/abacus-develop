@@ -33,9 +33,9 @@ if(MKLROOT)
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
     add_link_options(${OpenMP_CXX_LIBRARIES})
   endif()
-  find_package(IntelMKL REQUIRED)
+  find_package(MKL REQUIRED)
   add_definitions(-D__MKL)
-  include_directories(${MKL_INCLUDE_DIRS} ${MKL_INCLUDE_DIRS}/fftw)
+  include_directories(${MKL_INCLUDE} ${MKL_INCLUDE}/fftw)
 
 # Since libtorch will find its own MKL, the fftw part conflicts with the original one.
 # When enable deepks, mkl will be linked within ${TORCH_LIBRARIES}.
