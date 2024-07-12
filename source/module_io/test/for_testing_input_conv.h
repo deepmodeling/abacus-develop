@@ -13,7 +13,6 @@
 #include "module_elecstate/potentials/efield.h"
 #include "module_elecstate/potentials/gatefield.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/FORCE_STRESS.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_lcao/module_tddft/evolve_elec.h"
 #include "module_hamilt_lcao/module_tddft/td_velocity.h"
@@ -34,8 +33,6 @@
 
 bool berryphase::berry_phase_flag = false;
 
-int Local_Orbital_Charge::out_dm = 0;
-int Local_Orbital_Charge::out_dm1 = 0;
 double module_tddft::Evolve_elec::td_force_dt;
 bool module_tddft::Evolve_elec::td_vext;
 std::vector<int> module_tddft::Evolve_elec::td_vext_dire_case;
@@ -185,8 +182,9 @@ wavefunc::~wavefunc()
 }
 UnitCell::UnitCell()
 {
-    if (GlobalV::test_unitcell)
+    if (GlobalV::test_unitcell) {
         ModuleBase::TITLE("unitcell", "Constructor");
+}
     Coordinate = "Direct";
     latName = "none";
     lat0 = 0.0;

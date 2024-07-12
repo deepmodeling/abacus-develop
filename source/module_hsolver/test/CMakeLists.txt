@@ -1,6 +1,7 @@
 remove_definitions(-D__CUDA)
 remove_definitions(-D__ROCM)
 remove_definitions(-DUSE_PAW)
+remove_definitions(-D__EXX)
 
 AddTest(
   TARGET HSolver_bpcg

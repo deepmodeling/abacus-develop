@@ -7,7 +7,6 @@
 #define RI_2D_COMM_H
 
 #include "module_basis/module_ao/parallel_orbitals.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "module_cell/klist.h"
 
@@ -32,11 +31,11 @@ namespace RI_2D_Comm
 //public:
 	template<typename Tdata, typename Tmatrix>
 	extern std::vector<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>>
-	split_m2D_ktoR(const K_Vectors &kv, const std::vector<const Tmatrix*> &mks_2D, const Parallel_Orbitals &pv);
+        split_m2D_ktoR(const K_Vectors& kv, const std::vector<const Tmatrix*>& mks_2D, const Parallel_2D& pv);
 
 	// judge[is] = {s0, s1}
 	extern std::vector<std::tuple<std::set<TA>, std::set<TA>>>
-	get_2D_judge(const Parallel_Orbitals &pv);
+        get_2D_judge(const Parallel_2D& pv);
 
     template<typename Tdata, typename TK>
     extern void add_Hexx(

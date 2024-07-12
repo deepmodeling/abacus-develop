@@ -36,10 +36,12 @@ void Output_Mat_Sparse<double>::write()
 template <>
 void Output_Mat_Sparse<std::complex<double>>::write()
 {
+    LCAO_HS_Arrays HS_Arrays; // store sparse arrays
+
     //! generate a file containing the Hamiltonian and S(overlap) matrices
     if (_out_mat_hsR)
     {
-        output_HSR(_istep, this->_v_eff, this->_pv, this->_lm, this->_grid, _kv, _p_ham);
+        output_HSR(_istep, this->_v_eff, this->_pv, this->_lm, HS_Arrays, this->_grid, _kv, _p_ham);
     }
 
     //! generate a file containing the kinetic energy matrix
@@ -48,7 +50,7 @@ void Output_Mat_Sparse<std::complex<double>>::write()
         output_TR(_istep,
                   GlobalC::ucell,
                   this->_pv,
-                  this->_lm,
+                  HS_Arrays,
                   this->_grid,
                   two_center_bundle_); // LiuXh add 2019-07-15
     }
@@ -59,7 +61,8 @@ void Output_Mat_Sparse<std::complex<double>>::write()
         output_dHR(_istep,
                    this->_v_eff,
                    this->_gint_k, // mohan add 2024-04-01
-                   this->_lm,
+                   this->_pv,
+                   HS_Arrays,
                    this->_grid, // mohan add 2024-04-06
                    two_center_bundle_,
                    _kv); // LiuXh add 2019-07-15
@@ -72,7 +75,7 @@ void Output_Mat_Sparse<std::complex<double>>::write()
         r_matrix.init(this->_pv);
         if (_out_mat_hsR)
         {
-            r_matrix.out_rR_other(_istep, this->_lm.output_R_coor);
+            r_matrix.out_rR_other(_istep, HS_Arrays.output_R_coor);
         }
         else
         {

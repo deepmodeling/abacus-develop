@@ -1923,5 +1923,66 @@ void ReadInput::item_others()
         read_sync_double(pexsi_zero_thr);
         this->add_item(item);
     }
+
+    // 25. Linear Response
+    {
+        Input_Item item("lr_nstates");
+        item.annotation = "the number of 2-particle states to be solved";
+        read_sync_int(lr_nstates);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("nvirt");
+        item.annotation = "the number of virtual orbitals to form the 2-particle basis (nocc + nvirt <= nbands)";
+        read_sync_int(nvirt);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("xc_kernel");
+        item.annotation = "exchange correlation (XC) kernel for LR-TDDFT";
+        read_sync_string(xc_kernel);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("lr_solver");
+        item.annotation = "the eigensolver for LR-TDDFT";
+        read_sync_string(lr_solver);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("lr_thr");
+        item.annotation = "convergence threshold of the LR-TDDFT eigensolver";
+        read_sync_double(lr_thr);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_wfc_lr");
+        item.annotation = "whether to output the eigenvectors (excitation amplitudes) in the particle-hole basis";
+        read_sync_bool(out_wfc_lr);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("abs_wavelen_range");
+        item.annotation = "the range of wavelength(nm) to output the absorption spectrum ";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            size_t count = item.get_size();
+            for (int i = 0; i < count; i++)
+            {
+                para.input.abs_wavelen_range.push_back(std::stod(item.str_values[i]));
+            }
+            };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            auto& awr = para.input.abs_wavelen_range;
+            if (awr.size() < 2) { ModuleBase::WARNING_QUIT("ReadInput", "abs_wavelen_range must have two values"); }
+            };
+        sync_doublevec(abs_wavelen_range, 2, 0.0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("abs_broadening");
+        item.annotation = "the broadening (eta) for LR-TDDFT absorption spectrum";
+        read_sync_double(abs_broadening);
+        this->add_item(item);
+    }
 }
 } // namespace ModuleIO

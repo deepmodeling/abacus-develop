@@ -205,32 +205,32 @@ void Gint::gint_kernel_force_meta(
             na_grid, LD_pool, block_iw, block_size,	block_index, cal_flag,
             psir_vlbr3.ptr_2D, psir_vlbr3_DM.ptr_2D, this->DMRGint[is], false);
 
-		Gint_Tools::mult_psi_DM_new(*this->gridt, this->bxyz, grid_index, 
-            na_grid, LD_pool, block_iw, block_size,	block_index, cal_flag,
+        Gint_Tools::mult_psi_DM_new(*this->gridt, this->bxyz, grid_index,
+            na_grid, LD_pool, block_iw, block_size, block_index, cal_flag,
             dpsir_x_vlbr3.ptr_2D, dpsirx_v_DM.ptr_2D, this->DMRGint[is], false);
 
-		Gint_Tools::mult_psi_DM_new(*this->gridt, this->bxyz, grid_index, 
+        Gint_Tools::mult_psi_DM_new(*this->gridt, this->bxyz, grid_index,
             na_grid, LD_pool, block_iw, block_size, block_index, cal_flag,
             dpsir_y_vlbr3.ptr_2D, dpsiry_v_DM.ptr_2D, this->DMRGint[is], false);
 
-		Gint_Tools::mult_psi_DM_new(*this->gridt, this->bxyz, grid_index, 
-            na_grid, LD_pool, block_iw, block_size,	block_index, cal_flag,
+        Gint_Tools::mult_psi_DM_new(*this->gridt, this->bxyz, grid_index,
+            na_grid, LD_pool, block_iw, block_size, block_index, cal_flag,
             dpsir_z_vlbr3.ptr_2D, dpsirz_v_DM.ptr_2D, this->DMRGint[is], false);
-	}
-	else
-	{
-		Gint_Tools::mult_psi_DMR(*this->gridt, this->bxyz, grid_index, na_grid, block_index, block_size, cal_flag,
+    }
+    else
+    {
+        Gint_Tools::mult_psi_DMR(*this->gridt, this->bxyz, grid_index, na_grid, block_index, block_size, cal_flag,
             psir_vlbr3.ptr_2D, psir_vlbr3_DM.ptr_2D, this->DMRGint[is], false);
 
-		Gint_Tools::mult_psi_DMR(*this->gridt, this->bxyz, grid_index, na_grid, block_index, block_size, cal_flag, 
+        Gint_Tools::mult_psi_DMR(*this->gridt, this->bxyz, grid_index, na_grid, block_index, block_size, cal_flag,
             dpsir_x_vlbr3.ptr_2D, dpsirx_v_DM.ptr_2D, this->DMRGint[is], false);
 
-		Gint_Tools::mult_psi_DMR(*this->gridt, this->bxyz, grid_index, na_grid, block_index, block_size, cal_flag, 
+        Gint_Tools::mult_psi_DMR(*this->gridt, this->bxyz, grid_index, na_grid, block_index, block_size, cal_flag,
             dpsir_y_vlbr3.ptr_2D, dpsiry_v_DM.ptr_2D, this->DMRGint[is], false);
 
-		Gint_Tools::mult_psi_DMR(*this->gridt, this->bxyz, grid_index, na_grid, block_index, block_size, cal_flag,
+        Gint_Tools::mult_psi_DMR(*this->gridt, this->bxyz, grid_index, na_grid, block_index, block_size, cal_flag,
             dpsir_z_vlbr3.ptr_2D, dpsirz_v_DM.ptr_2D, this->DMRGint[is], false);
-	}
+    }
 
 	if(isforce)
 	{
