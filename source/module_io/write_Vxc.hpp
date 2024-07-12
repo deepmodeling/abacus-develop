@@ -282,12 +282,13 @@ void write_Vxc(int nspin,
                Gint_Gamma& gint_gamma, // mohan add 2024-04-01
                Gint_k& gint_k,         // mohan add 2024-04-01
                LCAO_Matrix& lm,
+               const Parallel_Orbitals* pv,
                const K_Vectors& kv,
                const ModuleBase::matrix& wg,
                Grid_Driver& gd)
 {
     ModuleBase::TITLE("ModuleIO", "write_Vxc");
-    const Parallel_Orbitals* pv = lm.ParaV;
+    
     int nbands = wg.nc;
     // 1. real-space xc potential
     // ModuleBase::matrix vr_xc(nspin, chg.nrxx);

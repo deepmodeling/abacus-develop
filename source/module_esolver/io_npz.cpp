@@ -458,7 +458,7 @@ void ESolver_KS_LCAO<TK, TR>::output_mat_npz(std::string& zipname, const hamilt:
 
     }
 #else
-    const Parallel_Orbitals* paraV = this->LM->ParaV;
+    const Parallel_Orbitals* paraV = &(this->ParaV);
     auto row_indexes = paraV->get_indexes_row();
     auto col_indexes = paraV->get_indexes_col();
     for(int iap=0;iap<hR.size_atom_pairs();++iap)

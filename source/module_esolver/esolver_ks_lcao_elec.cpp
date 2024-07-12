@@ -100,7 +100,7 @@ void ESolver_KS_LCAO<TK, TR>::set_matrix_grid(Record_adj& ra)
     // (2)For each atom, calculate the adjacent atoms in different cells
     // and allocate the space for H(R) and S(R).
     // If k point is used here, allocate HlocR after atom_arrange.
-    Parallel_Orbitals* pv = this->LM.ParaV;
+    Parallel_Orbitals* pv = &this->ParaV;
     ra.for_2d(*pv, GlobalV::GAMMA_ONLY_LOCAL);
     if (!GlobalV::GAMMA_ONLY_LOCAL)
     {
@@ -201,7 +201,6 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
     // since it depends on ionic positions
     if (GlobalV::deepks_setorb)
     {
-        const Parallel_Orbitals* pv = this->LM.ParaV;
         // build and save <psi(0)|alpha(R)> at beginning
         GlobalC::ld.build_psialpha(GlobalV::CAL_FORCE,
                                    GlobalC::ucell,
@@ -583,7 +582,6 @@ void ESolver_KS_LCAO<std::complex<double>, std::complex<double>>::get_S(void)
                          GlobalV::test_atom_input);
 
     this->RA.for_2d(this->ParaV, GlobalV::GAMMA_ONLY_LOCAL);
-    this->LM.ParaV = &this->ParaV;
     if (this->p_hamilt == nullptr) {
         this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>,
                                                 std::complex<double>>(

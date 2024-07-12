@@ -162,9 +162,6 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(Input& inp, UnitCell& ucell)
     this->init_basis_lcao(inp, ucell);
     //------------------init Basis_lcao----------------------
 
-    //! pass basis-pointer to EState and Psi
-    this->LM.ParaV = &(this->ParaV);
-
     // 5) initialize density matrix
     dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)
         ->init_DM(&this->kv, &(this->ParaV), GlobalV::NSPIN);
@@ -202,7 +199,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(Input& inp, UnitCell& ucell)
 
     // 8) initialize DFT+U
     if (GlobalV::dft_plus_u) {
-        GlobalC::dftu.init(ucell, this->LM.ParaV, this->kv.get_nks());
+        GlobalC::dftu.init(ucell, &(this->ParaV), this->kv.get_nks());
     }
 
     // 9) initialize ppcell
@@ -276,7 +273,7 @@ void ESolver_KS_LCAO<TK, TR>::init_after_vc(Input& inp, UnitCell& ucell)
             this->pw_big);
 
         dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)
-            ->init_DM(&this->kv, this->LM.ParaV, GlobalV::NSPIN);
+            ->init_DM(&this->kv, &(this->ParaV), GlobalV::NSPIN);
 
         GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, this->pw_rho);
 
@@ -485,6 +482,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners()
                                     this->GG,
                                     this->GK,
                                     this->LM,
+                                    &(this->ParaV),
                                     this->kv,
                                     this->pelec->wg,
                                     GlobalC::GridD);

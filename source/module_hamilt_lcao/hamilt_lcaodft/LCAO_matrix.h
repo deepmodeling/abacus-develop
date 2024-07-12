@@ -5,8 +5,6 @@
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_base/vector3.h"
-#include "module_basis/module_ao/parallel_orbitals.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_HS_arrays.hpp"
 
 // add by jingan for map<> in 2021-12-2, will be deleted in the future
 #include "module_base/abfs-vector3_order.h"
@@ -18,8 +16,6 @@ class LCAO_Matrix {
   public:
    LCAO_Matrix(){};
   ~LCAO_Matrix(){};
-
-    Parallel_Orbitals* ParaV;
 
 #ifdef __EXX
     using TAC = std::pair<int, std::array<int, 3>>;

@@ -87,6 +87,10 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
     restart(restart_in)
 {
     ModuleBase::TITLE("OperatorEXX", "OperatorEXX");
+
+    // get parallel orbitals
+    auto* paraV = this->hsk->get_pv(); // get parallel orbitals from HK
+
     this->cal_type = calculation_type::lcao_exx;
 
     if (GlobalV::CALCULATION == "nscf")
@@ -145,10 +149,10 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
                     this->LM->Hexxd_k_load.resize(this->kv.get_nks());
                     for (int ik = 0; ik < this->kv.get_nks(); ik++)
                     {
-                        this->LM->Hexxd_k_load[ik].resize(this->LM->ParaV->get_local_size(), 0.0);
+                        this->LM->Hexxd_k_load[ik].resize(paraV->get_local_size(), 0.0);
                         this->restart = GlobalC::restart.load_disk(
                             "Hexx", ik,
-                            this->LM->ParaV->get_local_size(), this->LM->Hexxd_k_load[ik].data(), false);
+                            paraV->get_local_size(), this->LM->Hexxd_k_load[ik].data(), false);
                         if (!this->restart) break;
                     }
                 }
@@ -157,10 +161,10 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
                     this->LM->Hexxc_k_load.resize(this->kv.get_nks());
                     for (int ik = 0; ik < this->kv.get_nks(); ik++)
                     {
-                        this->LM->Hexxc_k_load[ik].resize(this->LM->ParaV->get_local_size(), 0.0);
+                        this->LM->Hexxc_k_load[ik].resize(paraV->get_local_size(), 0.0);
                         this->restart = GlobalC::restart.load_disk(
                             "Hexx", ik,
-                            this->LM->ParaV->get_local_size(), this->LM->Hexxc_k_load[ik].data(), false);
+                            paraV->get_local_size(), this->LM->Hexxc_k_load[ik].data(), false);
                         if (!this->restart) break;
                     }
                 }
@@ -189,6 +193,9 @@ template<typename TK, typename TR>
 void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHR()
 {
     ModuleBase::TITLE("OperatorEXX", "contributeHR");
+
+    auto* paraV = this->hsk->get_pv();// get parallel orbitals from HK
+
     // Peize Lin add 2016-12-03
     if (GlobalV::CALCULATION != "nscf" && this->two_level_step != nullptr && *this->two_level_step == 0 && !this->restart) return;  //in the non-exx loop, do nothing 
     if (XC_Functional::get_func_type() == 4 || XC_Functional::get_func_type() == 5)
@@ -199,7 +206,7 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHR()
                 this->current_spin,
                 GlobalC::exx_info.info_global.hybrid_alpha,
                 this->Hexxd == nullptr ? *this->LM->Hexxd : *this->Hexxd,
-                *this->LM->ParaV,
+                *paraV,
                 GlobalV::NPOL,
                 *this->hR,
                 this->use_cell_nearest ? &this->cell_nearest : nullptr);
@@ -208,7 +215,7 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHR()
                 this->current_spin,
                 GlobalC::exx_info.info_global.hybrid_alpha,
                 this->Hexxc == nullptr ? *this->LM->Hexxc : *this->Hexxc,
-                *this->LM->ParaV,
+                *paraV,
                 GlobalV::NPOL,
                 *this->hR,
                 this->use_cell_nearest ? &this->cell_nearest : nullptr);
@@ -220,6 +227,9 @@ template<typename TK, typename TR>
 void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHk(int ik)
 {
     ModuleBase::TITLE("OperatorEXX", "constributeHR");
+
+    auto* paraV = this->hsk->get_pv();// get parallel orbitals from HR
+
     // Peize Lin add 2016-12-03
     if (GlobalV::CALCULATION != "nscf" && this->two_level_step != nullptr && *this->two_level_step == 0 && !this->restart) return;  //in the non-exx loop, do nothing 
     if (XC_Functional::get_func_type() == 4 || XC_Functional::get_func_type() == 5)
@@ -253,7 +263,7 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHk(int ik)
                 ik,
                 GlobalC::exx_info.info_global.hybrid_alpha,
                 this->Hexxd == nullptr ? *this->LM->Hexxd : *this->Hexxd,
-                *this->LM->ParaV,
+                *paraV,
                 this->hsk->get_hk());
         else
             RI_2D_Comm::add_Hexx(
@@ -261,7 +271,7 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHk(int ik)
                 ik,
                 GlobalC::exx_info.info_global.hybrid_alpha,
                 this->Hexxc == nullptr ? *this->LM->Hexxc : *this->Hexxc,
-                *this->LM->ParaV,
+                *paraV,
                 this->hsk->get_hk());
     }
 }
