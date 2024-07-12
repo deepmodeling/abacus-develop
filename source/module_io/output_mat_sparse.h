@@ -3,7 +3,6 @@
 
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_basis/module_nao/two_center_bundle.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
 #include "module_hsolver/hsolver_lcao.h"
 
@@ -15,18 +14,17 @@ class Output_Mat_Sparse
 {
   public:
     Output_Mat_Sparse(int out_mat_hsR,
-                      int out_mat_dh,
-                      int out_mat_t,
-                      int out_mat_r,
-                      int istep,
-                      const ModuleBase::matrix& v_eff,
-                      const Parallel_Orbitals& pv,
-                      Gint_k& gint_k, // mohan add 2024-04-01
-                      const TwoCenterBundle& two_center_bundle,
-                      LCAO_Matrix& lm,
-                      Grid_Driver& grid, // mohan add 2024-04-06
-                      const K_Vectors& kv,
-                      hamilt::Hamilt<T>* p_ham);
+        int out_mat_dh,
+        int out_mat_t,
+        int out_mat_r,
+        int istep,
+        const ModuleBase::matrix& v_eff,
+        const Parallel_Orbitals& pv,
+        Gint_k& gint_k, // mohan add 2024-04-01
+        const TwoCenterBundle& two_center_bundle,
+        Grid_Driver& grid, // mohan add 2024-04-06
+        const K_Vectors& kv,
+        hamilt::Hamilt<T>* p_ham);
 
     void write();
 
@@ -53,8 +51,6 @@ class Output_Mat_Sparse
 
     // introduced temporarily for LCAO refactoring
     const TwoCenterBundle& two_center_bundle_;
-
-    LCAO_Matrix& _lm;
 
     // mohan fix bug 2024-04-07, a typical bug!!!
     Grid_Driver& _grid; // mohan add 2024-04-06

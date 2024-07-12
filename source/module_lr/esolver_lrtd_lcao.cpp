@@ -124,8 +124,8 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
     this->nbasis = GlobalV::NLOCAL;
     this->nstates = inp.lr_nstates;
     LR_Util::setup_2d_division(this->paraMat_, 1, this->nbasis, this->nbasis);
-    this->paraMat_.atom_begin_row = std::move(ks_sol.LM.ParaV->atom_begin_row);
-    this->paraMat_.atom_begin_col = std::move(ks_sol.LM.ParaV->atom_begin_col);
+    this->paraMat_.atom_begin_row = std::move(ks_sol.ParaV.atom_begin_row);
+    this->paraMat_.atom_begin_col = std::move(ks_sol.ParaV.atom_begin_col);
     this->paraMat_.iat2iwt_ = ucell.get_iat2iwt();
 
     // move the ground state info 
