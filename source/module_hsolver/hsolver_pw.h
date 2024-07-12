@@ -50,33 +50,34 @@ class HSolverPW : public HSolver<T, Device>
     virtual Real reset_diagethr(std::ofstream& ofs_running, const Real hsover_error, const Real drho) override;
 
   protected:
-    // void initDiagh(const psi::Psi<T, Device>& psi_in);
-    void endDiagh();
+    // diago caller
     void hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
                          psi::Psi<T, Device>& psi,
                          std::vector<Real>& pre_condition,
                          Real* eigenvalue);
 
+    // psi initializer && change k point in psi
     void updatePsiK(hamilt::Hamilt<T, Device>* pHamilt, psi::Psi<T, Device>& psi, const int ik);
-
-    ModulePW::PW_Basis_K* wfc_basis = nullptr;
-    wavefunc* pwf = nullptr;
 
     // calculate the precondition array for diagonalization in PW base
     void update_precondition(std::vector<Real>& h_diag, const int ik, const int npw);
 
     bool initialed_psi = false;
 
-    Device* ctx = {};
+    ModulePW::PW_Basis_K* wfc_basis = nullptr;
+
+    wavefunc* pwf = nullptr;
 
   private:
+    Device* ctx = {};
+
     void set_isOccupied(std::vector<bool>& is_occupied,
                         elecstate::ElecState* pes,
                         const int i_scf,
                         const int nk,
                         const int nband,
                         const bool diago_full_acc);
-
+                  
 #ifdef USE_PAW
     void paw_func_in_kloop(const int ik);
 

@@ -367,6 +367,12 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
                                            std::vector<Real>& pre_condition,
                                            Real* eigenvalue)
 {
+#ifdef __MPI
+    const diag_comm_info comm_info = {POOL_WORLD, GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL};
+#else
+    const diag_comm_info comm_info = {GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL};
+#endif
+
     if (this->method == "cg")
     {
         // warp the subspace_func into a lambda function
@@ -471,34 +477,15 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         // TODO: Double check tensormap's potential problem
         ct::TensorMap(psi.get_pointer(), psi_tensor, {psi.get_nbands(), psi.get_nbasis()}).sync(psi_tensor);
     }
+    else if (this->method == "bpcg")
+    {
+        DiagoBPCG<T, Device> bpcg(pre_condition.data());
+        bpcg.init_iter(psi);
+        bpcg.diag(hm, psi, eigenvalue);
+    }
     else if (this->method == "dav_subspace")
     {
-#ifdef __MPI
-        const diag_comm_info comm_info = {POOL_WORLD, GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL};
-#else
-        const diag_comm_info comm_info = {GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL};
-#endif
-        Diago_DavSubspace<T, Device> dav_subspace(pre_condition,
-                                                  psi.get_nbands(),
-                                                  psi.get_k_first() ? psi.get_current_nbas()
-                                                                    : psi.get_nk() * psi.get_nbasis(),
-                                                  GlobalV::PW_DIAG_NDIM,
-                                                  DiagoIterAssist<T, Device>::PW_DIAG_THR,
-                                                  DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
-                                                  DiagoIterAssist<T, Device>::need_subspace,
-                                                  comm_info);
-        bool scf;
-        if (GlobalV::CALCULATION == "nscf")
-        {
-            scf = false;
-        }
-        else
-        {
-            scf = true;
-        }
-
         auto ngk_pointer = psi.get_ngk_pointer();
-
         auto hpsi_func = [hm, ngk_pointer](T* hpsi_out,
                                            T* psi_in,
                                            const int nband_in,
@@ -518,39 +505,23 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
 
             ModuleBase::timer::tick("DavSubspace", "hpsi_func");
         };
+        bool scf = GlobalV::CALCULATION == "nscf" ? false : true;
 
-        auto subspace_func = [hm, ngk_pointer](T* psi_out,
-                                               T* psi_in,
-                                               Real* eigenvalue_in_hsolver,
-                                               const int nband_in,
-                                               const int nbasis_max_in) {
-            // Convert "pointer data stucture" to a psi::Psi object
-            auto psi_in_wrapper = psi::Psi<T, Device>(psi_in, 1, nband_in, nbasis_max_in, ngk_pointer);
-            auto psi_out_wrapper = psi::Psi<T, Device>(psi_out, 1, nband_in, nbasis_max_in, ngk_pointer);
-
-            DiagoIterAssist<T, Device>::diagH_subspace(hm,
-                                                       psi_in_wrapper,
-                                                       psi_out_wrapper,
-                                                       eigenvalue_in_hsolver,
-                                                       nband_in);
-        };
+        Diago_DavSubspace<T, Device> dav_subspace(pre_condition,
+                                                  psi.get_nbands(),
+                                                  psi.get_k_first() ? psi.get_current_nbas()
+                                                                    : psi.get_nk() * psi.get_nbasis(),
+                                                  GlobalV::PW_DIAG_NDIM,
+                                                  DiagoIterAssist<T, Device>::PW_DIAG_THR,
+                                                  DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
+                                                  DiagoIterAssist<T, Device>::need_subspace,
+                                                  comm_info);
 
         DiagoIterAssist<T, Device>::avg_iter
             += static_cast<double>(dav_subspace.diag(hpsi_func, psi.get_pointer(), psi.get_nbasis(), eigenvalue, scf));
     }
-    else if (this->method == "bpcg")
-    {
-        DiagoBPCG<T, Device> bpcg(pre_condition.data());
-        bpcg.init_iter(psi);
-        bpcg.diag(hm, psi, eigenvalue);
-    }
     else if (this->method == "dav")
     {
-#ifdef __MPI
-        const diag_comm_info comm_info = {POOL_WORLD, GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL};
-#else
-        const diag_comm_info comm_info = {GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL};
-#endif
         // Allow 5 tries at most. If ntry > ntry_max = 5, exit diag loop.
         const int ntry_max = 5;
         // In non-self consistent calculation, do until totally converged. Else
