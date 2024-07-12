@@ -174,7 +174,7 @@ int Diago_DavSubspace<T, Device>::diag_once(const HPsiFunc& hpsi_func,
         this->notconv = 0;
         for (int m = 0; m < this->n_band; m++)
         {
-            if (is_occupied[m])
+            if (is_occupied[m]) // always true
             {
                 convflag[m] = (std::abs(eigenvalue_iter[m] - eigenvalue_in_hsolver[m]) < this->diag_thr);
             }
@@ -732,7 +732,7 @@ int Diago_DavSubspace<T, Device>::diag(const HPsiFunc& hpsi_func,
                                        T* psi_in,
                                        const int psi_in_dmax,
                                        Real* eigenvalue_in_hsolver,
-                                       const std::vector<bool>& is_occupied,
+                                    //    const std::vector<bool>& is_occupied,
                                        const bool& scf_type)
 {
     /// record the times of trying iterative diagonalization
@@ -740,6 +740,9 @@ int Diago_DavSubspace<T, Device>::diag(const HPsiFunc& hpsi_func,
 
     int sum_iter = 0;
     int ntry = 0;
+
+    const std::vector<bool> is_occupied(n_band, true);
+
     do
     {
         if (this->is_subspace || ntry > 0)
