@@ -36,8 +36,9 @@ void ReadInput::item_md()
         Input_Item item("md_dt");
         item.annotation = "time step";
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.mdp.md_dt < 0)
+            if (para.input.mdp.md_dt < 0) {
                 ModuleBase::WARNING_QUIT("ReadInput", "time interval of MD calculation should be positive");
+}
         };
         read_sync_double(mdp.md_dt);
         this->add_item(item);
@@ -317,8 +318,9 @@ void ReadInput::item_md()
         Input_Item item("md_plast");
         item.annotation = "final target pressure";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (!item.is_read()) // no md_plast in INPUT
+            if (!item.is_read()) { // no md_plast in INPUT
                 para.input.mdp.md_plast = para.input.mdp.md_pfirst;
+}
         };
         read_sync_double(mdp.md_plast);
         this->add_item(item);
