@@ -711,7 +711,8 @@ if(ENABLE_LCAO)
     dftu
     hcontainer
     deltaspin
-    numerical_atomic_orbitals)
+    numerical_atomic_orbitals
+    lr)
   if(USE_ELPA)
     target_link_libraries(${ABACUS_BIN_NAME} genelpa)
   endif()

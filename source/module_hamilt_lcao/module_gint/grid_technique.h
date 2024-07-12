@@ -20,6 +20,9 @@ class Grid_Technique : public Grid_MeshBall {
   public:
     Grid_Technique();
     ~Grid_Technique();
+
+    /// move operator for the next ESolver to directly use its infomation
+    Grid_Technique& operator=(Grid_Technique&& rhs) = default;
     //------------------------------------
     // 1: Info about atom number on grid.
     //------------------------------------
