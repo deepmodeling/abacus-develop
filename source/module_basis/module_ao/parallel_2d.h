@@ -99,7 +99,7 @@ class Parallel_2D
     /// ScaLAPACK descriptor
     int desc[9] = {};
 
-    MPI_Comm comm() const { return Cblacs2sys_handle(blacs_ctxt); }
+    MPI_Comm comm() const;
 #endif
 
     void set_serial(const int mg, const int ng);

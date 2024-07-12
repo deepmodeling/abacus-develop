@@ -29,6 +29,16 @@ int Parallel_2D::get_global_col_size() const
 }
 
 #ifdef __MPI
+MPI_Comm Parallel_2D::comm() const
+{
+    int sys_ctxt = -1;
+    Cblacs_get(blacs_ctxt, 10, &sys_ctxt);
+    // blacs_get with "what" = 10 takes a BLACS context and returns the index
+    // of the associated system context (MPI communicator) that can be used by
+    // blacs2sys_handle to get the MPI communicator.
+    return Cblacs2sys_handle(sys_ctxt);
+}
+
 void Parallel_2D::_init_proc_grid(const MPI_Comm comm, const bool mode)
 {
     // determine the number of rows and columns of the process grid

@@ -34,6 +34,8 @@ TEST(PropagatorTest, testPropagatorTaylor)
     pv->dim0 = 1;
     pv->dim1 = 1;
     pv->nb = 1;
+    pv->blacs_ctxt = 0;
+    pv->coord[0] = pv->coord[1] = 0;
 
     int dim[2];
     dim[0] = nprow;
