@@ -192,12 +192,12 @@ void cal_dpsirr_ylm(
 				double*const p_dpsi_zz=&dpsir_ylm_zz[ib][block_index[id]];
 				if(!cal_flag[ib][id])
 				{
-					ZEROS(p_dpsi_xx, block_size[id]);
-					ZEROS(p_dpsi_xy, block_size[id]);
-					ZEROS(p_dpsi_xz, block_size[id]);
-					ZEROS(p_dpsi_yy, block_size[id]);
-					ZEROS(p_dpsi_yz, block_size[id]);
-					ZEROS(p_dpsi_zz, block_size[id]);
+					GINT_FUNC::ZEROS(p_dpsi_xx, block_size[id]);
+					GINT_FUNC::ZEROS(p_dpsi_xy, block_size[id]);
+					GINT_FUNC::ZEROS(p_dpsi_xz, block_size[id]);
+					GINT_FUNC::ZEROS(p_dpsi_yy, block_size[id]);
+					GINT_FUNC::ZEROS(p_dpsi_yz, block_size[id]);
+					GINT_FUNC::ZEROS(p_dpsi_zz, block_size[id]);
 				}
 				else
 				{

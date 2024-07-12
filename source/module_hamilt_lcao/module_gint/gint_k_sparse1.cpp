@@ -14,8 +14,8 @@ void Gint_k::distribute_pvdpR_sparseMatrix(
     int total_R_num = LM->all_R_coor.size();
     int* nonzero_num = new int[total_R_num];
     int* minus_nonzero_num = new int[total_R_num];
-    ZEROS(nonzero_num, total_R_num);
-    ZEROS(minus_nonzero_num, total_R_num);
+    GINT_FUNC::ZEROS(nonzero_num, total_R_num);
+    GINT_FUNC::ZEROS(minus_nonzero_num, total_R_num);
     int count = 0;
     for (auto& R_coor: LM->all_R_coor)
     {
@@ -59,7 +59,7 @@ void Gint_k::distribute_pvdpR_sparseMatrix(
 
             for (int row = 0; row < this->gridt->nlocal; ++row)
             {
-                ZEROS(tmp, this->gridt->nlocal);
+                GINT_FUNC::ZEROS(tmp, this->gridt->nlocal);
 
                 auto iter = pvdpR_sparseMatrix.find(R_coor);
                 if (iter != pvdpR_sparseMatrix.end())
@@ -169,8 +169,8 @@ void Gint_k::distribute_pvdpR_soc_sparseMatrix(
     int total_R_num = LM->all_R_coor.size();
     int* nonzero_num = new int[total_R_num];
     int* minus_nonzero_num = new int[total_R_num];
-    ZEROS(nonzero_num, total_R_num);
-    ZEROS(minus_nonzero_num, total_R_num);
+    GINT_FUNC::ZEROS(nonzero_num, total_R_num);
+    GINT_FUNC::ZEROS(minus_nonzero_num, total_R_num);
     int count = 0;
     for (auto& R_coor: LM->all_R_coor)
     {
@@ -214,7 +214,7 @@ void Gint_k::distribute_pvdpR_soc_sparseMatrix(
 
             for (int row = 0; row < this->gridt->nlocal; ++row)
             {
-                ZEROS(tmp_soc, this->gridt->nlocal);
+                GINT_FUNC::ZEROS(tmp_soc, this->gridt->nlocal);
 
                 auto iter = pvdpR_soc_sparseMatrix.find(R_coor);
                 if (iter != pvdpR_soc_sparseMatrix.end())

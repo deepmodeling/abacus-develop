@@ -16,7 +16,7 @@ void Gint_k::allocate_pvpR(void)
     for (int is = 0; is < this->gridt->nspin; is++)
     {
         this->pvpR_reduced[is] = new double[this->gridt->nnrg];
-        ZEROS(pvpR_reduced[is], this->gridt->nnrg);
+        GINT_FUNC::ZEROS(pvpR_reduced[is], this->gridt->nnrg);
     }
 
     ModuleBase::Memory::record("pvpR_reduced", sizeof(double) * this->gridt->nnrg * this->gridt->nspin);
