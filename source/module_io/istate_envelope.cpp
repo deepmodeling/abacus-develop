@@ -155,8 +155,9 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
     for (int is = 0; is < nspin; ++is)
     {
         wfc_gamma_grid[is] = new double*[nbands];
-        for (int ib = 0; ib < nbands; ++ib)
+        for (int ib = 0; ib < nbands; ++ib) {
             wfc_gamma_grid[is][ib] = new double[gg.gridt->lgd];
+}
     }
 
     const double mem_size = sizeof(double) * double(gg.gridt->lgd) * double(nbands) * double(nspin) / 1024.0 / 1024.0;
@@ -219,8 +220,9 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
                     &(GlobalC::ucell),
                     3);
 
-                if (out_wfc_pw || out_wfc_r) // only for gamma_only now
+                if (out_wfc_pw || out_wfc_r) { // only for gamma_only now
                     this->set_pw_wfc(wfcpw, 0, ib, nspin, pes_->charge->rho_save, pw_wfc_g);
+}
             }
         }
     }
@@ -240,8 +242,9 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
 
     for (int is = 0; is < nspin; ++is)
     {
-        for (int ib = 0; ib < nbands; ++ib)
+        for (int ib = 0; ib < nbands; ++ib) {
             delete[] wfc_gamma_grid[is][ib];
+}
         delete[] wfc_gamma_grid[is];
     }
     return;
@@ -482,8 +485,9 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
 
     for (int ik = 0; ik < nks; ++ik)
     {
-        for (int ib = 0; ib < nbands; ++ib)
+        for (int ib = 0; ib < nbands; ++ib) {
             delete[] wfc_k_grid[ik][ib];
+}
         delete[] wfc_k_grid[ik];
     }
 
@@ -498,15 +502,18 @@ void IState_Envelope::set_pw_wfc(const ModulePW::PW_Basis_K* wfcpw,
                                  const double* const* const rho,
                                  psi::Psi<std::complex<double>>& wfc_g)
 {
-    if (ib == 0) // once is enough
+    if (ib == 0) { // once is enough
         ModuleBase::TITLE("IState_Envelope", "set_pw_wfc");
+}
 
     std::vector<std::complex<double>> Porter(wfcpw->nrxx);
     // here I refer to v_hartree, but I don't know how to deal with NSPIN=4
     const int nspin0 = (nspin == 2) ? 2 : 1;
-    for (int is = 0; is < nspin0; is++)
-        for (int ir = 0; ir < wfcpw->nrxx; ir++)
+    for (int is = 0; is < nspin0; is++) {
+        for (int ir = 0; ir < wfcpw->nrxx; ir++) {
             Porter[ir] += std::complex<double>(rho[is][ir], 0.0);
+}
+}
 
     // call FFT
     wfcpw->real2recip(Porter.data(), &wfc_g(ib, 0), ik);
