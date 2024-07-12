@@ -147,7 +147,6 @@ class PexsiPrepare
         po.comm_2D = MPI_COMM_WORLD;
         po.dim0 = nprows;
         po.dim1 = npcols;
-        po.testpb = true;
 
         if (DETAILINFO && myrank == 0)
         {

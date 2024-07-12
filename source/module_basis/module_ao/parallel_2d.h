@@ -83,7 +83,7 @@ class Parallel_2D
              const int ng,
              const int nb, // square block is assumed
              const MPI_Comm comm,
-             bool mode = 0);
+             bool mode = false);
 
     /**
      * @brief Set up the info of a block-cyclic distribution using given
@@ -126,9 +126,6 @@ class Parallel_2D
 
     /// process coordinate in the MPI Cartesian grid
     int coord[2] = {-1, -1};
-
-    /// test parameter
-    int testpb = 0;
 
   protected:
     /// map from global index to local index

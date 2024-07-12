@@ -134,6 +134,9 @@ extern "C"
 	void zherk_(const char *uplo, const char *trans, const int *n, const int *k,
 		const double *alpha, const std::complex<double> *A, const int *lda,
 		const double *beta, std::complex<double> *C, const int *ldc);
+    void cherk_(const char* uplo, const char* trans, const int* n, const int* k,
+        const float* alpha, const std::complex<float>* A, const int* lda,
+        const float* beta, std::complex<float>* C, const int* ldc);
 
 	// computes all eigenvalues of a symmetric tridiagonal matrix
 	// using the Pal-Walker-Kahan variant of the QL or QR algorithm.
@@ -436,7 +439,7 @@ public:
 	// if trans=='N':	C = a * A * A.H + b * C
 	// if trans=='C':	C = a * A.H * A + b * C
 	static inline
-	void zherk(const char uplo, const char trans, const int n, const int k,
+        void herk(const char uplo, const char trans, const int n, const int k,
 		const double alpha, const std::complex<double> *A, const int lda,
 		const double beta, std::complex<double> *C, const int ldc)
 	{
@@ -444,5 +447,14 @@ public:
 		const char trans_changed = change_trans_NC(trans);
 		zherk_(&uplo_changed, &trans_changed, &n, &k, &alpha, A, &lda, &beta, C, &ldc);
 	}
+    static inline
+        void herk(const char uplo, const char trans, const int n, const int k,
+            const float alpha, const std::complex<float>* A, const int lda,
+            const float beta, std::complex<float>* C, const int ldc)
+    {
+        const char uplo_changed = change_uplo(uplo);
+        const char trans_changed = change_trans_NC(trans);
+        cherk_(&uplo_changed, &trans_changed, &n, &k, &alpha, A, &lda, &beta, C, &ldc);
+    }
 };
 #endif  // LAPACKCONNECTOR_HPP

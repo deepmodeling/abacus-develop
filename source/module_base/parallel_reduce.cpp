@@ -159,6 +159,26 @@ void Parallel_Reduce::reduce_all<std::complex<double>>(std::complex<double>* obj
     return;
 }
 
+
+template <>
+void Parallel_Reduce::reduce_all<std::complex<float>>(std::complex<float>& object)
+{
+#ifdef __MPI
+    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_C_FLOAT_COMPLEX, MPI_SUM, MPI_COMM_WORLD);
+#endif
+    return;
+}
+
+// LiuXh add 2019-07-16
+template <>
+void Parallel_Reduce::reduce_all<std::complex<float>>(std::complex<float>* object, const int n)
+{
+#ifdef __MPI
+    MPI_Allreduce(MPI_IN_PLACE, object, n, MPI_C_FLOAT_COMPLEX, MPI_SUM, MPI_COMM_WORLD);
+#endif
+    return;
+}
+
 template <>
 void Parallel_Reduce::reduce_pool<std::complex<double>>(std::complex<double>& object)
 {

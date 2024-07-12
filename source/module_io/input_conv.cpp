@@ -23,7 +23,6 @@
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_elecstate/potentials/H_TDDFT_pw.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/FORCE_STRESS.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_lcao/module_tddft/evolve_elec.h"
 #include "module_hamilt_lcao/module_tddft/td_velocity.h"
@@ -299,15 +298,20 @@ void Input_Conv::Convert()
         GlobalV::stru_file = INPUT.stru_file;
     }
     GlobalV::global_wannier_card = INPUT.wannier_card;
-    if (INPUT.kpoint_file != "") {
+    if (INPUT.kpoint_file != "")
+    {
         GlobalV::global_kpoint_card = INPUT.kpoint_file;
-}
-    if (INPUT.pseudo_dir != "") {
+    }
+    if (INPUT.pseudo_dir != "")
+    {
         GlobalV::global_pseudo_dir = INPUT.pseudo_dir + "/";
-}
-    if (INPUT.orbital_dir != "") {
+    }
+    if (INPUT.orbital_dir != "")
+    {
         GlobalV::global_orbital_dir = INPUT.orbital_dir + "/";
-}
+    }
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "pseudo_dir", GlobalV::global_pseudo_dir);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "orbital_dir", GlobalV::global_orbital_dir);
     // GlobalV::global_pseudo_type = INPUT.pseudo_type;
     GlobalC::ucell.setup(INPUT.latname, INPUT.ntype, INPUT.lmaxmax, INPUT.init_vel, INPUT.fixed_axes);
 
@@ -689,8 +693,9 @@ void Input_Conv::Convert()
         Exx_Abfs::Jle::tolerence = PARAM.inp.exx_opt_orb_tolerence;
 
         // EXX does not support symmetry=1
-        if (INPUT.calculation != "nscf" && PARAM.inp.symmetry == "1")
+        if (INPUT.calculation != "nscf" && PARAM.inp.symmetry == "1") {
             ModuleSymmetry::Symmetry::symm_flag = 0;
+}
     }
 #endif                                               // __LCAO
 #endif                                               // __EXX
@@ -751,8 +756,6 @@ void Input_Conv::Convert()
     GlobalV::out_bandgap = INPUT.out_bandgap; // QO added for bandgap printing
     GlobalV::out_interval = INPUT.out_interval;
 #ifdef __LCAO
-    Local_Orbital_Charge::out_dm = PARAM.inp.out_dm;
-    Local_Orbital_Charge::out_dm1 = PARAM.inp.out_dm1;
     hsolver::HSolverLCAO<double>::out_mat_hs = PARAM.inp.out_mat_hs;
     hsolver::HSolverLCAO<double>::out_mat_hsR = PARAM.inp.out_mat_hs2; // LiuXh add 2019-07-16
     hsolver::HSolverLCAO<double>::out_mat_t = PARAM.inp.out_mat_t;

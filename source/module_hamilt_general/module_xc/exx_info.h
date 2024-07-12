@@ -24,12 +24,11 @@ struct Exx_Info
     {
         const Conv_Coulomb_Pot_K::Ccp_Type& ccp_type;
         const double& hse_omega;
-        double lambda;
+        double lambda = 0.3;
 
         Exx_Info_Lip(const Exx_Info::Exx_Info_Global& info_global)
-            : ccp_type(info_global.ccp_type), hse_omega(info_global.hse_omega)
-        {
-        }
+            :ccp_type(info_global.ccp_type),
+            hse_omega(info_global.hse_omega) {}
     };
     Exx_Info_Lip info_lip;
 

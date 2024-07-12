@@ -54,24 +54,22 @@ void sparse_format::cal_SR(
 
 void sparse_format::cal_TR(const UnitCell& ucell,
                            const Parallel_Orbitals& pv,
-                           LCAO_Matrix& lm,
-                           LCAO_HS_Arrays& HS_arrays,
+                           LCAO_HS_Arrays& HS_Arrays,
                            Grid_Driver& grid,
                            const TwoCenterBundle& two_center_bundle,
                            const double& sparse_thr) {
     ModuleBase::TITLE("sparse_format", "cal_TR");
 
     // need to rebuild T(R)
-    HS_arrays.Hloc_fixedR.resize(lm.ParaV->nnr);
+    HS_Arrays.Hloc_fixedR.resize(pv.nnr);
 
-    LCAO_domain::zeros_HSR('T', HS_arrays);
+    LCAO_domain::zeros_HSR('T', HS_Arrays);
 
     // tmp array, will be deleted later,
     // mohan 2024-06-15
     ForceStressArrays fsr_tmp;
 
-    LCAO_domain::build_ST_new(lm,
-                              fsr_tmp,
+    LCAO_domain::build_ST_new(fsr_tmp,
                               'T',
                               false,
                               ucell,
@@ -79,18 +77,17 @@ void sparse_format::cal_TR(const UnitCell& ucell,
                               pv,
                               two_center_bundle,
                               &(GlobalC::GridD),
-                              HS_arrays.Hloc_fixedR.data());
+                              HS_Arrays.Hloc_fixedR.data());
 
-    sparse_format::set_R_range(lm.all_R_coor, grid);
+    sparse_format::set_R_range(HS_Arrays.all_R_coor, grid);
 
-    sparse_format::cal_STN_R_for_T(ucell, pv, lm, HS_arrays, grid, sparse_thr);
+    sparse_format::cal_STN_R_for_T(ucell, pv, HS_Arrays, grid, sparse_thr);
 
     return;
 }
 
 void sparse_format::cal_STN_R_for_T(const UnitCell& ucell,
                                     const Parallel_Orbitals& pv,
-                                    LCAO_Matrix& lm,
                                     LCAO_HS_Arrays& HS_arrays,
                                     Grid_Driver& grid,
                                     const double& sparse_thr) {
