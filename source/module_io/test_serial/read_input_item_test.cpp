@@ -1592,4 +1592,45 @@ TEST_F(InputTest, Item_test)
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.mdp.md_pfreq, 1.0 / 400 / 1.0);
     }
+    { // lj_rule
+        auto it = find_lable("lj_rule", readinput.input_lists);
+        param.input.mdp.lj_rule = 3;
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(0), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+    }
+    { // lj_rcut
+        auto it = find_lable("lj_rcut", readinput.input_lists);
+        param.input.ntype = 2;
+        param.input.mdp.lj_rcut = {1.0, 2.0};
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(0), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+
+        param.input.mdp.lj_rcut = {1.0, 2.0, -1.0};
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(0), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+    }
+    { // lj_epsilon
+        auto it = find_lable("lj_epsilon", readinput.input_lists);
+        param.input.ntype = 2;
+        param.input.mdp.lj_epsilon = {1.0};
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(0), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+    }
+    { // lj_sigma
+        auto it = find_lable("lj_sigma", readinput.input_lists);
+        param.input.ntype = 2;
+        param.input.mdp.lj_sigma = {1.0};
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(0), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+    }
 }
