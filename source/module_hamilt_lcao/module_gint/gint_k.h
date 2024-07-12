@@ -6,12 +6,9 @@
 #include "module_base/tool_threading.h"
 #include "module_base/libm/libm.h"
 #include "module_basis/module_ao/ORB_atomic_lm.h"
-// #include "module_elecstate/module_charge/charge.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_HS_arrays.hpp"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 
-// add by jingan for map<> in 2021-12-2, will be deleted in the future
-#include "module_base/abfs-vector3_order.h"
 
 class Gint_k : public Gint {
   public:

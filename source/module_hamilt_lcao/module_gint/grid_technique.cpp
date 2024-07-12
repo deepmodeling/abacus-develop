@@ -48,11 +48,6 @@ void Grid_Technique::set_pbc_grid(
     ModuleBase::TITLE("Grid_Technique", "init");
     ModuleBase::timer::tick("Grid_Technique", "init");
 
-    if (GlobalV::OUT_LEVEL != "m") {
-        GlobalV::ofs_running
-            << "\n SETUP EXTENDED REAL SPACE GRID FOR GRID INTEGRATION"
-            << std::endl;
-    }
     this->init_malloced = true;
 
     // copy ucell and orb parameters
@@ -256,12 +251,6 @@ void Grid_Technique::init_atoms_on_grid(const int& ny,
             ++nat_local;
         }
     }
-
-    if (GlobalV::test_gridt) {
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,
-                                    "Total_atoms_on_grid",
-                                    total_atoms_on_grid);
-}
 
     int stop = 0;
     if (total_atoms_on_grid == 0) {
@@ -511,15 +500,6 @@ void Grid_Technique::cal_trace_lo(const UnitCell& ucell) {
             }
             ++iat;
         }
-    }
-
-    if (GlobalV::OUT_LEVEL != "m") {
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,
-                                    "Atom number in sub-FFT-grid",
-                                    lnat);
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,
-                                    "Local orbitals number in sub-FFT-grid",
-                                    lgd);
     }
 
     assert(iw_local == lgd);
