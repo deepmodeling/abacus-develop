@@ -67,12 +67,15 @@ void LR::ESolver_LR<T, TR>::parameter_check()const
 {
     std::set<std::string> lr_solvers = { "dav", "lapack" , "spectrum", "dav_subspace" };
     std::set<std::string> xc_kernels = { "rpa", "lda", "pbe", "hf" , "hse" };
-    if (lr_solvers.find(this->input.lr_solver) == lr_solvers.end())
+    if (lr_solvers.find(this->input.lr_solver) == lr_solvers.end()) {
         throw std::invalid_argument("ESolver_LR: unknown type of lr_solver");
-    if (xc_kernels.find(this->xc_kernel) == xc_kernels.end())
+}
+    if (xc_kernels.find(this->xc_kernel) == xc_kernels.end()) {
         throw std::invalid_argument("ESolver_LR: unknown type of xc_kernel");
-    if (this->nspin != 1 && this->nspin != 2)
+}
+    if (this->nspin != 1 && this->nspin != 2) {
         throw std::invalid_argument("LR-TDDFT only supports nspin = 1 or 2 now");
+}
 }
 
 template<typename T, typename TR>
@@ -83,12 +86,14 @@ void LR::ESolver_LR<T, TR>::set_dimension()
     // which determines the basis size of the excited states
     this->nocc = LR_Util::cal_nocc(LR_Util::cal_nelec(ucell));
     this->nvirt = this->eig_ks.nc - nocc;   //nbands-nocc
-    if (input.nvirt > this->nvirt)
+    if (input.nvirt > this->nvirt) {
         GlobalV::ofs_warning << "ESolver_LR: input nvirt is too large to cover by nbands, set nvirt = nbands - nocc = " << this->nvirt << std::endl;
-    else if (input.nvirt > 0) this->nvirt = input.nvirt;
+    } else if (input.nvirt > 0) { this->nvirt = input.nvirt;
+}
     this->npairs = this->nocc * this->nvirt;
-    if (this->nstates > this->nocc * this->nvirt * this->kv.get_nks())
+    if (this->nstates > this->nocc * this->nvirt * this->kv.get_nks()) {
         throw std::invalid_argument("ESolver_LR: nstates > nocc*nvirt*nks");
+}
 
     GlobalV::ofs_running << "Setting LR-TDDFT parameters: " << std::endl;
     GlobalV::ofs_running << "number of occupied bands: " << this->nocc << std::endl;
@@ -108,8 +113,9 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
     redirect_log(inp.out_alllog);
     ModuleBase::TITLE("ESolver_LR", "ESolver_LR");
 
-    if (this->input.lr_solver == "spectrum")
+    if (this->input.lr_solver == "spectrum") {
         throw std::invalid_argument("when lr_solver==spectrum, esolver_type must be set to `lr` to skip the KS calculation.");
+}
 
     // xc kernel
     this->xc_kernel = inp.xc_kernel;
@@ -140,10 +146,11 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
 
     //grid integration
     this->gt_ = std::move(ks_sol.GridT);
-    if (std::is_same<T, double>::value)
+    if (std::is_same<T, double>::value) {
         this->gint_g_ = std::move(ks_sol.GG);
-    else
+    } else {
         this->gint_k_ = std::move(ks_sol.GK);
+}
     this->set_gint();
 
     // move pw basis
@@ -158,11 +165,11 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
         // if the same kernel is calculated in the esolver_ks, move it
         std::string dft_functional = input.dft_functional;
         std::transform(dft_functional.begin(), dft_functional.end(), dft_functional.begin(), tolower);
-        if (ks_sol.exx_lri_double && std::is_same<T, double>::value && xc_kernel == dft_functional)
+        if (ks_sol.exx_lri_double && std::is_same<T, double>::value && xc_kernel == dft_functional) {
             this->move_exx_lri(ks_sol.exx_lri_double);
-        else if (ks_sol.exx_lri_complex && std::is_same<T, std::complex<double>>::value && xc_kernel == dft_functional)
+        } else if (ks_sol.exx_lri_complex && std::is_same<T, std::complex<double>>::value && xc_kernel == dft_functional) {
             this->move_exx_lri(ks_sol.exx_lri_complex);
-        else    // construct C, V from scratch
+        } else    // construct C, V from scratch
         {
             this->exx_lri = std::make_shared<Exx_LRI<T>>(GlobalC::exx_info.info_ri);
             this->exx_lri->init(MPI_COMM_WORLD, this->kv); // using GlobalC::ORB
@@ -323,9 +330,10 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, Input& inp_tmp, UnitCel
         this->exx_lri->init(MPI_COMM_WORLD, this->kv); // using GlobalC::ORB
         this->exx_lri->cal_exx_ions();
     }
-    else
+    else {
 #endif
         ModuleBase::Ylm::set_coefficients();    // set Ylm only for Gint 
+}
 }
 template <typename T, typename TR>
 void LR::ESolver_LR<T, TR>::runner(int istep, UnitCell& cell)
@@ -353,8 +361,10 @@ void LR::ESolver_LR<T, TR>::runner(int istep, UnitCell& cell)
         std::ifstream ifs(GlobalV::global_out_dir + "Excitation_Energy.dat");
         std::cout << "reading the excitation energies from file: \n";
         this->pelec->ekb.create(1, this->X->get_nbands());
-        for (int i = 0;i < this->X->get_nbands();++i)  ifs >> this->pelec->ekb(0, i);
-        for (int i = 0;i < this->X->get_nbands();++i)std::cout << this->pelec->ekb(0, i) << " ";
+        for (int i = 0;i < this->X->get_nbands();++i) {  ifs >> this->pelec->ekb(0, i);
+}
+        for (int i = 0;i < this->X->get_nbands();++i) {std::cout << this->pelec->ekb(0, i) << " ";
+}
     }
     return;
 }
@@ -369,11 +379,13 @@ void LR::ESolver_LR<T, TR>::after_all_runners()
     spectrum.transition_analysis();
     std::vector<double> freq(100);
     std::vector<double> abs_wavelen_range({ 20, 200 });//default range
-    if (input.abs_wavelen_range.size() == 2 && std::abs(input.abs_wavelen_range[1] - input.abs_wavelen_range[0]) > 0.02)
+    if (input.abs_wavelen_range.size() == 2 && std::abs(input.abs_wavelen_range[1] - input.abs_wavelen_range[0]) > 0.02) {
         abs_wavelen_range = input.abs_wavelen_range;
+}
     double lambda_diff = std::abs(abs_wavelen_range[1] - abs_wavelen_range[0]);
     double lambda_min = std::min(abs_wavelen_range[1], abs_wavelen_range[0]);
-    for (int i = 0;i < freq.size();++i)freq[i] = 91.126664 / (lambda_min + 0.01 * static_cast<double>(i + 1) * lambda_diff);
+    for (int i = 0;i < freq.size();++i) {freq[i] = 91.126664 / (lambda_min + 0.01 * static_cast<double>(i + 1) * lambda_diff);
+}
     spectrum.optical_absorption(freq, input.abs_broadening);
 }
 
@@ -407,13 +419,16 @@ void LR::ESolver_LR<T, TR>::set_X_initial_guess()
 {
     // set the initial guess of X
   // if (E_{lumo}-E_{homo-1} < E_{lumo+1}-E{homo}), mode = 0, else 1(smaller first)
-    bool ix_mode = 0;   //default
+    bool ix_mode = false;   //default
     if (this->eig_ks.nc > nocc + 1 && nocc >= 2 &&
-        eig_ks(0, nocc) - eig_ks(0, nocc - 2) - 1e-5 > eig_ks(0, nocc + 1) - eig_ks(0, nocc - 1))
-        ix_mode = 1;
+        eig_ks(0, nocc) - eig_ks(0, nocc - 2) - 1e-5 > eig_ks(0, nocc + 1) - eig_ks(0, nocc - 1)) {
+        ix_mode = true;
+}
     GlobalV::ofs_running << "setting the initial guess of X: " << std::endl;
-    if (nocc >= 2 && eig_ks.nc > nocc)GlobalV::ofs_running << "E_{lumo}-E_{homo-1}=" << eig_ks(0, nocc) - eig_ks(0, nocc - 2) << std::endl;
-    if (nocc >= 1 && eig_ks.nc > nocc + 1) GlobalV::ofs_running << "E_{lumo+1}-E{homo}=" << eig_ks(0, nocc + 1) - eig_ks(0, nocc - 1) << std::endl;
+    if (nocc >= 2 && eig_ks.nc > nocc) {GlobalV::ofs_running << "E_{lumo}-E_{homo-1}=" << eig_ks(0, nocc) - eig_ks(0, nocc - 2) << std::endl;
+}
+    if (nocc >= 1 && eig_ks.nc > nocc + 1) { GlobalV::ofs_running << "E_{lumo+1}-E{homo}=" << eig_ks(0, nocc + 1) - eig_ks(0, nocc - 1) << std::endl;
+}
     GlobalV::ofs_running << "mode of X-index: " << ix_mode << std::endl;
 
     /// global index map between (i,c) and ix
@@ -462,8 +477,9 @@ void LR::ESolver_LR<T, TR>::read_ks_wfc()
     GlobalV::NB2D = 1;
     this->pelec->ekb.create(this->kv.get_nks(), GlobalV::NBANDS);
     this->pelec->wg.create(this->kv.get_nks(), GlobalV::NBANDS);
-    if (!ModuleIO::read_wfc_nao(GlobalV::global_readin_dir, this->paraMat_, *this->psi_ks, this->pelec))
+    if (!ModuleIO::read_wfc_nao(GlobalV::global_readin_dir, this->paraMat_, *this->psi_ks, this->pelec)) {
         ModuleBase::WARNING_QUIT("ESolver_LR", "read ground-state wavefunction failed.");
+}
     this->eig_ks = std::move(this->pelec->ekb);
 }
 
@@ -496,13 +512,14 @@ void LR::ESolver_LR<T, TR>::read_ks_chg(Charge& chg_gs)
             this->pw_rho->nz,
             ef,
             &(GlobalC::ucell),
-            chg_gs.prenspin))
+            chg_gs.prenspin)) {
             GlobalV::ofs_running << " Read in the charge density: " << ssc.str() << std::endl;
-        else    // prenspin for nspin=4 is not supported currently
+        } else {    // prenspin for nspin=4 is not supported currently
             ModuleBase::WARNING_QUIT(
                 "init_rho",
                 "!!! Couldn't find the charge file !!! The default directory \n of SPIN1_CHG.cube is OUT.suffix, "
                 "or you must set read_file_dir \n to a specific directory. ");
+}
     }
 }
 template class LR::ESolver_LR<double, double>;
