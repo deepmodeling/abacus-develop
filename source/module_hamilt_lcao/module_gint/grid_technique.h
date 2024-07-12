@@ -97,6 +97,8 @@ class Grid_Technique : public Grid_MeshBall {
     int nspin;
     int npol;
     int nlocal;
+    int rank;
+    int nproc;
     std::string device_flag;
 
     // indexes for nnrg -> orbital index + R index
@@ -133,6 +135,8 @@ class Grid_Technique : public Grid_MeshBall {
                       const int& nspin,
                       const bool& domag,
                       const int& npol,
+                      const int& nproc,
+                      const int& rank,
                       const int& nlocal,
                       const std::string& device_flag);
 

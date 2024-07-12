@@ -3,7 +3,7 @@
 Grid_Technique::Grid_Technique() {
     allocate_find_R2 = false;
 #if ((defined __CUDA) /* || (defined __ROCM) */)
-    if (GlobalV::device_flag == "gpu") {
+    if (this->gridt->device_flag == "gpu") {
         is_malloced = false;
     }
 #endif
@@ -12,7 +12,7 @@ Grid_Technique::Grid_Technique() {
 Grid_Technique::~Grid_Technique() {
 
 #if ((defined __CUDA) /* || (defined __ROCM) */)
-    if (GlobalV::device_flag == "gpu") {
+    if (this->gridt->device_flag == "gpu") {
         free_gpu_gint_variables(this->nat);
     }
 #endif
@@ -49,6 +49,8 @@ void Grid_Technique::set_pbc_grid(
     const int& nspin,
     const bool& domag,
     const int& npol,
+    const int& nproc,
+    const int& rank,
     const int& nlocal,
     const std::string& device_flag) {
     ModuleBase::TITLE("Grid_Technique", "init");
@@ -74,7 +76,10 @@ void Grid_Technique::set_pbc_grid(
     this->domag = domag;
     this->npol = npol;
     this->nlocal = nlocal;
+    this->nproc=nproc;
+    this->rank =rank;
     this->device_flag = device_flag;
+
     // (1) init_meshcell cell and big cell.
     this->set_grid_dim(ncx_in,
                        ncy_in,
@@ -114,7 +119,7 @@ void Grid_Technique::set_pbc_grid(
 
     this->cal_trace_lo(ucell);
 #if ((defined __CUDA) /* || (defined __ROCM) */)
-    if (GlobalV::device_flag == "gpu") {
+    if (this->gridt->device_flag == "gpu") {
         this->init_gpu_gint_variables(ucell, num_stream);
     }
 #endif
@@ -447,13 +452,13 @@ void Grid_Technique::cal_grid_integration_index() {
     }
 
 #ifdef __MPI
-    int* all = new int[GlobalV::NPROC];
-    ZEROS(all, GlobalV::NPROC);
+    int* all = new int[this->nproc];
+    ZEROS(all, this->nproc);
     Parallel_Reduce::gather_int_all(max_atom, all);
-    if (GlobalV::MY_RANK == 0) {
+    if (this->rank == 0) {
         GlobalV::ofs_warning << std::setw(15) << "Processor" << std::setw(15)
                              << "Atom" << std::endl;
-        for (int i = 0; i < GlobalV::NPROC; i++) {
+        for (int i = 0; i < this->nproc; i++) {
             GlobalV::ofs_warning << std::setw(15) << i + 1 << std::setw(15)
                                  << all[i] << std::endl;
         }

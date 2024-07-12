@@ -124,8 +124,8 @@ int main(int argc, char** argv)
 {
 #ifdef __MPI
     MPI_Init(&argc, &argv);
-    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
-    MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
+    MPI_Comm_size(MPI_COMM_WORLD, &Nproc);
+    MPI_Comm_rank(MPI_COMM_WORLD, &Rank);
 #endif
     testing::InitGoogleTest(&argc, argv);
     int result = RUN_ALL_TESTS();

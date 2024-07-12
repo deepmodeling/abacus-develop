@@ -94,14 +94,10 @@ void ESolver_KS_LCAO<TK, TR>::set_matrix_grid(Record_adj& ra)
                              GlobalV::NSPIN,
                              GlobalV::DOMAG,
                              GlobalV::NPOL,
+                             GlobalV::NPROC,
+                             GlobalV::MY_RANK,
                              GlobalV::NLOCAL,
                              GlobalV::device_flag);
-    psi_u.clear();
-    psi_u.shrink_to_fit();
-    dpsi_u.clear();
-    dpsi_u.shrink_to_fit();
-    d2psi_u.clear();
-    d2psi_u.shrink_to_fit();
     // (2)For each atom, calculate the adjacent atoms in different cells
     // and allocate the space for H(R) and S(R).
     // If k point is used here, allocate HlocR after atom_arrange.
