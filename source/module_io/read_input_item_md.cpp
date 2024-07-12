@@ -130,10 +130,11 @@ void ReadInput::item_md()
         item.annotation = "cutoff radius of LJ potential";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             size_t count = item.get_size();
-            for (int i = 0; i < count; i++)
-            {
-                para.input.mdp.lj_rcut.push_back(std::stod(item.str_values[i]));
-            }
+            para.input.mdp.lj_rcut.resize(count);
+            std::transform(begin(item.str_values),
+                           end(item.str_values),
+                           begin(para.input.mdp.lj_rcut),
+                           [](std::string str) { return std::stod(str); });
             para.input.sup.n_ljcut = count;
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
@@ -160,10 +161,11 @@ void ReadInput::item_md()
         item.annotation = "the value of epsilon for LJ potential";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             size_t count = item.get_size();
-            for (int i = 0; i < count; i++)
-            {
-                para.input.mdp.lj_epsilon.push_back(std::stod(item.str_values[i]));
-            }
+            para.input.mdp.lj_epsilon.resize(count);
+            std::transform(begin(item.str_values),
+                           end(item.str_values),
+                           begin(para.input.mdp.lj_epsilon),
+                           [](std::string str) { return std::stod(str); });
             para.input.sup.n_ljepsilon = count;
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
@@ -183,10 +185,11 @@ void ReadInput::item_md()
         item.annotation = "the value of sigma for LJ potential";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             size_t count = item.get_size();
-            for (int i = 0; i < count; i++)
-            {
-                para.input.mdp.lj_sigma.push_back(std::stod(item.str_values[i]));
-            }
+            para.input.mdp.lj_sigma.resize(count);
+            std::transform(begin(item.str_values),
+                           end(item.str_values),
+                           begin(para.input.mdp.lj_sigma),
+                           [](std::string str) { return std::stod(str); });
             para.input.sup.n_ljsigma = count;
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {

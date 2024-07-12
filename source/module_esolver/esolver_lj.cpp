@@ -15,7 +15,7 @@ namespace ModuleESolver
         lj_virial.create(3, 3);
 
         // determine the maximum rcut and lj_rcut
-        rcut_search_radius(inp.mdp.lj_rule, inp.mdp.lj_rcut);
+        rcut_search_radius(inp.mdp.lj_rcut);
 
         // determine the LJ parameters
         set_c6_c12(inp.mdp.lj_rule, inp.mdp.lj_epsilon, inp.mdp.lj_sigma);
@@ -161,7 +161,7 @@ namespace ModuleESolver
         }
     }
 
-    void ESolver_LJ::rcut_search_radius(const int rule, const std::vector<double>& rcut)
+    void ESolver_LJ::rcut_search_radius(const std::vector<double>& rcut)
     {
         const int ntype = this->ucell_->ntype;
         lj_rcut.create(ntype, ntype);
