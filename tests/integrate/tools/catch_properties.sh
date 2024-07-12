@@ -74,9 +74,14 @@ test -e $1 && rm $1
 #--------------------------------------------
 # if NOT non-self-consistent calculations or linear response
 #--------------------------------------------
+is_lr=0
+if [ ! -z $esolver_type ] && ([ $esolver_type == "lr" ] || [ $esolver_type == "ks-lr" ]); then
+	is_lr=1
+fi
+
 if [ $calculation != "nscf" ] && [ $calculation != "get_wf" ]\
 && [ $calculation != "get_pchg" ] && [ $calculation != "get_S" ]\
-&& [ $esolver_type != "ks-lr" ] && [ $esolver_type != "lr" ]; then
+&& [ $is_lr == 0 ]; then
 	#etot=`grep ETOT_ $running_path | awk '{print $2}'` 
 	etot=$(grep "ETOT_" "$running_path" | tail -1 | awk '{print $2}')
 	etotperatom=`awk 'BEGIN {x='$etot';y='$natom';printf "%.10f\n",x/y}'`
@@ -467,7 +472,7 @@ if ! test -z "$out_current" && [ $out_current ]; then
 	echo "CompareCurrent_pass $?" >>$1
 fi
 
-if ! test -z "$esolver_type" && ([ $esolver_type == "lr" ] || [ $esolver_type == "ks-lr" ]); then
+if [ $is_lr == 1 ]; then
 	lr_path=OUT.autotest/running_lr.log
 	lrns=$(get_input_key_value "lr_nstates" "INPUT")
 	lrns1=`echo "$lrns + 1" |bc`
