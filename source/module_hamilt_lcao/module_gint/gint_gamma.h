@@ -26,6 +26,11 @@ class Gint_Gamma : public Gint
 	// Gint_Gamma();
 	// ~Gint_Gamma();
 
+    /// @brief move operator for the next ESolver to directly use its infomation
+    /// @param rhs 
+    /// @return *this
+    Gint_Gamma& operator=(Gint_Gamma&& rhs);
+
     //------------------------------------------------------
     // in gint_gamma_vl.cpp 
     //------------------------------------------------------

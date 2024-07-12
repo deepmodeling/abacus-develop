@@ -29,7 +29,7 @@ inline RI::Tensor<std::complex<double>> tensor_conj(const RI::Tensor<std::comple
     return r;
 }
 template<typename Tdata, typename Tmatrix>
-auto RI_2D_Comm::split_m2D_ktoR(const K_Vectors &kv, const std::vector<const Tmatrix*> &mks_2D, const Parallel_Orbitals &pv)
+auto RI_2D_Comm::split_m2D_ktoR(const K_Vectors &kv, const std::vector<const Tmatrix*> &mks_2D, const Parallel_2D &pv)
 -> std::vector<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>>
 {
 	ModuleBase::TITLE("RI_2D_Comm","split_m2D_ktoR");

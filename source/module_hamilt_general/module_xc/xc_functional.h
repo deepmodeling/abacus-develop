@@ -227,9 +227,9 @@ class XC_Functional
                          const ModulePW::PW_Basis* rho_basis,
                          const double tpiba);
     static void grad_dot(const ModuleBase::Vector3<double>* h,
-                         double* dh,
-                         ModulePW::PW_Basis* rho_basis,
-                         const double tpiba);
+        double* dh,
+        const ModulePW::PW_Basis* rho_basis,
+        const double tpiba);
     static void noncolin_rho(double* rhoout1,
                              double* rhoout2,
                              double* seg,
