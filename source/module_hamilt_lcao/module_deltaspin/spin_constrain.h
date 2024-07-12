@@ -34,7 +34,7 @@ public:
                int NPOL,
                Parallel_Orbitals* ParaV_in,
                int nspin_in,
-               K_Vectors kv_in,
+               K_Vectors& kv_in,
                std::string KS_SOLVER_in,
                hsolver::HSolver<FPTYPE, Device>* phsol_in,
                hamilt::Hamilt<FPTYPE, Device>* p_hamilt_in,
@@ -201,7 +201,7 @@ public:
     /// @brief set orbital parallel info
     void set_ParaV(Parallel_Orbitals* ParaV_in);
     /// @brief set parameters for solver
-    void set_solver_parameters(K_Vectors kv_in,
+    void set_solver_parameters(K_Vectors& kv_in,
                                hsolver::HSolver<FPTYPE, Device>* phsol_in,
                                hamilt::Hamilt<FPTYPE, Device>* p_hamilt_in,
                                psi::Psi<FPTYPE>* psi_in,

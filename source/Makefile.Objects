@@ -66,6 +66,12 @@ VPATH=./src_global:\
 ./src_ri:\
 ./module_ri:\
 ./module_parameter:\
+./module_lr:\
+./module_lr/AX:\
+./module_lr/dm_trans:\
+./module_lr/operator_casida:\
+./module_lr/potentials:\
+./module_lr/utils:\
 ./\
 
 OBJS_ABACUS_PW=${OBJS_MAIN}\
@@ -106,6 +112,7 @@ ${OBJS_DFTU}\
 ${OBJS_DELTASPIN}\
 ${OBJS_TENSOR}\
 ${OBJS_HSOLVER_PEXSI}\
+${OBJS_LR}\
 
 OBJS_MAIN=main.o\
     driver.o\
@@ -664,3 +671,19 @@ OBJS_TENSOR=tensor.o\
     linalg_op.o\
     cpu_allocator.o\
     refcount.o
+
+    OBJS_LR=lr_util.o\
+    lr_util_hcontainer.o\
+    AX_parallel.o\
+    AX_serial.o\
+    dm_trans_parallel.o\
+    dm_trans_serial.o\
+    dmr_complex.o\
+    operator_lr_hxc.o\
+    operator_lr_exx.o\
+    kernel_xc.o\
+    pot_hxc_lrtd.o\
+    hsolver_lrtd.o\
+    lr_spectrum.o\
+    hamilt_casida.o\
+    esolver_lrtd_lcao.o\

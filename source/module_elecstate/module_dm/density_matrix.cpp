@@ -405,7 +405,7 @@ void DensityMatrix<TK,TR>::cal_DMR_test()
 #endif
         for (int iap = 0; iap < tmp_DMR->size_atom_pairs(); ++iap)
         {
-            hamilt::AtomPair<double>& tmp_ap = tmp_DMR->get_atom_pair(iap);
+            hamilt::AtomPair<TR>& tmp_ap = tmp_DMR->get_atom_pair(iap);
             int iat1 = tmp_ap.get_atom_i();
             int iat2 = tmp_ap.get_atom_j();
             // get global indexes of whole matrix for each atom in this process
@@ -699,8 +699,8 @@ void DensityMatrix<TK, TR>::sum_DMR_spin()
     ModuleBase::timer::tick("DensityMatrix", "sum_DMR_spin");
     if (this->_nspin == 2)
     {
-        hamilt::HContainer<double>* tmp_DMR_up = this->_DMR[0];
-        hamilt::HContainer<double>* tmp_DMR_down = this->_DMR[1];
+        hamilt::HContainer<TR>* tmp_DMR_up = this->_DMR[0];
+        hamilt::HContainer<TR>* tmp_DMR_down = this->_DMR[1];
         for (int i = 0; i < tmp_DMR_up->size_atom_pairs(); ++i)
         {
             hamilt::AtomPair<TR>& tmp_ap_up = tmp_DMR_up->get_atom_pair(i);
@@ -708,8 +708,8 @@ void DensityMatrix<TK, TR>::sum_DMR_spin()
             for (int ir = 0; ir < tmp_ap_up.get_R_size(); ++ir)
             {
                 const ModuleBase::Vector3<int> r_index = tmp_ap_up.get_R_index(ir);
-                hamilt::BaseMatrix<double>* tmp_matrix_up = tmp_ap_up.find_matrix(r_index);
-                hamilt::BaseMatrix<double>* tmp_matrix_down = tmp_ap_down.find_matrix(r_index);
+                hamilt::BaseMatrix<TR>* tmp_matrix_up = tmp_ap_up.find_matrix(r_index);
+                hamilt::BaseMatrix<TR>* tmp_matrix_down = tmp_ap_down.find_matrix(r_index);
                 TR* ptr_up = tmp_matrix_up->get_pointer();
                 TR* ptr_down = tmp_matrix_down->get_pointer();
                 for (int i = 0; i < tmp_ap_up.get_size(); ++i)
@@ -794,8 +794,9 @@ void DensityMatrix<double, double>::write_DMK(const std::string directory, const
     {
         for (int j = 0; j < this->_paraV->ncol; ++j)
         {
-            if (j % 8 == 0)
+            if (j % 8 == 0) {
                 ofs << "\n";
+}
             ofs << " " << this->_DMK[ik + this->_nks * (ispin - 1)][i * this->_paraV->ncol + j];
         }
     }
@@ -829,8 +830,9 @@ void DensityMatrix<std::complex<double>, double>::write_DMK(const std::string di
     {
         for (int j = 0; j < this->_paraV->ncol; ++j)
         {
-            if (j % 8 == 0)
+            if (j % 8 == 0) {
                 ofs << "\n";
+}
             ofs << " " << this->_DMK[ik + this->_nks * (ispin - 1)][i * this->_paraV->ncol + j].real();
         }
     }
@@ -841,6 +843,6 @@ void DensityMatrix<std::complex<double>, double>::write_DMK(const std::string di
 // T of HContainer can be double or complex<double>
 template class DensityMatrix<double, double>;               // Gamma-Only case
 template class DensityMatrix<std::complex<double>, double>; // Multi-k case
-//template class DensityMatrix<std::complex<double>, std::complex<double>>; // For EXX in future
+template class DensityMatrix<std::complex<double>, std::complex<double>>; // For EXX in future
 
 } // namespace elecstate
