@@ -234,8 +234,13 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
         {
             Input_Item* p_item = &(it->second);
             this->readvalue_items.push_back(p_item);
+            if(p_item->is_read())
+            {
+                std::string warningstr = "The parameter " + p_item->label + " has been read twice.";
+                ModuleBase::WARNING_QUIT("ReadInput", warningstr);
+            }
             // qianrui delete '/' 2024-07-10, because path has '/' head.
-            read_information(ifs, it->second.str_values, "#!");
+            read_information(ifs, p_item->str_values, "#!");
         }
         else
         {

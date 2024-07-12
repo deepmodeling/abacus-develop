@@ -18,7 +18,6 @@ nspin                          1 #1: single spin; 2: up and down spin; 4: noncol
 kspacing                       0 #unit in 1/bohr, should be > 0, default is 0 which means read KPT file
 min_dist_coef                  0.2 #factor related to the allowed minimum distance between two atoms
 nbands                         8 #number of bands
-nbands_sto                     256 #number of stochastic bands
 nbands_istate                  5 #number of bands around Fermi level for get_pchg calulation
 symmetry                       1 #the control of symmetry
 init_vel                       False #read velocity from STRU or not

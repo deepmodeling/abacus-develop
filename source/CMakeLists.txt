@@ -16,6 +16,7 @@ add_subdirectory(module_io)
 add_subdirectory(module_relax)
 add_subdirectory(module_ri)
 add_subdirectory(module_parameter)
+add_subdirectory(module_lr)
 
 add_library(
     driver
