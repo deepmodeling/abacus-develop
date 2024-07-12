@@ -89,6 +89,7 @@ endif()
 
 # In oneAPI 2022, MKL_SCALAPACK might not be linked properly
 if(NOT TARGET MKL::MKL_SCALAPACK)
-  find_library(MKL_SCALAPACK NAMES mkl_scalapack_lp64 HINTS ${MKLROOT}/lib ${MKLROOT}/lib/intel64 )
+  find_library(MKL_SCALAPACK NAMES mkl_scalapack_lp64 HINTS ${MKLROOT}/lib ${MKLROOT}/lib/intel64)
+  message(STATUS "Found MKL_SCALAPACK: ${MKL_SCALAPACK}")
   add_library(MKL::MKL_SCALAPACK OBJECT IMPORTED MKL_SCALAPACK)
 endif()
