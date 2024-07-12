@@ -48,7 +48,9 @@ void Grid_Technique::set_pbc_grid(
     const bool& gamma_only_local,
     const int& nspin,
     const bool& domag,
-    const int& npol) {
+    const int& npol,
+    const int& nlocal,
+    const std::string& device_flag) {
     ModuleBase::TITLE("Grid_Technique", "init");
     ModuleBase::timer::tick("Grid_Technique", "init");
 
@@ -71,7 +73,8 @@ void Grid_Technique::set_pbc_grid(
     this->nspin = nspin;
     this->domag = domag;
     this->npol = npol;
-
+    this->nlocal = nlocal;
+    this->device_flag = device_flag;
     // (1) init_meshcell cell and big cell.
     this->set_grid_dim(ncx_in,
                        ncy_in,
@@ -467,8 +470,8 @@ void Grid_Technique::cal_trace_lo(const UnitCell& ucell) {
     // save the atom information in trace_lo,
     // in fact the trace_lo dimension can be reduced
     // to ucell.nat, but I think this is another way.
-    this->trace_lo = std::vector<int>(GlobalV::NLOCAL, -1);
-    ModuleBase::Memory::record("GT::trace_lo", sizeof(int) * GlobalV::NLOCAL);
+    this->trace_lo = std::vector<int>(this->nlocal, -1);
+    ModuleBase::Memory::record("GT::trace_lo", sizeof(int) * this->nlocal);
 
     this->lnat = 0;
     this->lgd = 0;
@@ -505,7 +508,7 @@ void Grid_Technique::cal_trace_lo(const UnitCell& ucell) {
     }
 
     assert(iw_local == lgd);
-    assert(iw_all == GlobalV::NLOCAL);
+    assert(iw_all == this->nlocal);
     return;
 }
 

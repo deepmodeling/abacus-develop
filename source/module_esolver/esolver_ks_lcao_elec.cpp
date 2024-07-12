@@ -93,7 +93,9 @@ void ESolver_KS_LCAO<TK, TR>::set_matrix_grid(Record_adj& ra)
                              GlobalV::GAMMA_ONLY_LOCAL,
                              GlobalV::NSPIN,
                              GlobalV::DOMAG,
-                             GlobalV::NPOL);
+                             GlobalV::NPOL,
+                             GlobalV::NLOCAL,
+                             GlobalV::device_flag);
     psi_u.clear();
     psi_u.shrink_to_fit();
     dpsi_u.clear();

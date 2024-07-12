@@ -96,6 +96,9 @@ class Grid_Technique : public Grid_MeshBall {
     bool domag;
     int nspin;
     int npol;
+    int nlocal;
+    std::string device_flag;
+
     // indexes for nnrg -> orbital index + R index
     std::vector<gridIntegral::gridIndex> nnrg_index;
 
@@ -129,7 +132,9 @@ class Grid_Technique : public Grid_MeshBall {
                       const bool& gamma_only_local,
                       const int& nspin,
                       const bool& domag,
-                      const int& npol);
+                      const int& npol,
+                      const int& nlocal,
+                      const std::string& device_flag);
 
     /// number of elements(basis-pairs) in this processon
     /// on all adjacent atoms-pairs(Grid division)
