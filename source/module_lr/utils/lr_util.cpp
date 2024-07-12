@@ -183,11 +183,10 @@ namespace LR_Util
 
 #ifdef __MPI
     // for the other matrices in the commutator other than the first one
-    void setup_2d_division(Parallel_2D& pv, int nb, int gr, int gc,
-        const MPI_Comm& comm_2D_in, const int& blacs_ctxt_in)
+    void setup_2d_division(Parallel_2D& pv, int nb, int gr, int gc, const int& blacs_ctxt_in)
     {
         ModuleBase::TITLE("LR_Util", "setup_2d_division");
-        pv.set(gr, gc, nb, comm_2D_in, blacs_ctxt_in);
+        pv.set(gr, gc, nb, blacs_ctxt_in);
     }
 #endif
 

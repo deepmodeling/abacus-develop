@@ -135,8 +135,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
     this->eig_ks = std::move(ks_sol.pelec->ekb);
 
     this->set_dimension();
-    LR_Util::setup_2d_division(this->paraC_, 1, this->nbasis, this->nocc + this->nvirt,
-        this->paraMat_.comm_2D, this->paraMat_.blacs_ctxt);
+    LR_Util::setup_2d_division(this->paraC_, 1, this->nbasis, this->nocc + this->nvirt, this->paraMat_.blacs_ctxt);
 
     //grid integration
     this->gt_ = std::move(ks_sol.GridT);
@@ -220,8 +219,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, Input& inp_tmp, UnitCel
     this->read_ks_wfc();
 
     this->set_dimension();
-    LR_Util::setup_2d_division(this->paraC_, 1, this->nbasis, this->nocc + this->nvirt,
-        paraMat_.comm_2D, paraMat_.blacs_ctxt);
+    LR_Util::setup_2d_division(this->paraC_, 1, this->nbasis, this->nocc + this->nvirt, paraMat_.blacs_ctxt);
 
     //allocate 2-particle state and setup 2d division
     this->nstates = inp.lr_nstates;
@@ -383,7 +381,7 @@ void LR::ESolver_LR<T, TR>::setup_eigenvectors_X()
 {
     ModuleBase::TITLE("ESolver_LR", "setup_eigenvectors_X");
     // setup ParaX
-    LR_Util::setup_2d_division(this->paraX_, 1, this->nvirt, this->nocc, this->paraC_.comm_2D, this->paraC_.blacs_ctxt);//nvirt - row, nocc - col 
+    LR_Util::setup_2d_division(this->paraX_, 1, this->nvirt, this->nocc, this->paraC_.blacs_ctxt);//nvirt - row, nocc - col 
     // if spectrum-only, read the LR-eigenstates from file and return
     if (this->input.lr_solver == "spectrum")
     {

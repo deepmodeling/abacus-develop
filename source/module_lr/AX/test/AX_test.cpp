@@ -117,10 +117,10 @@ TEST_F(AXTest, DoubleParallel)
         LR_Util::setup_2d_division(pV, s.nb, s.naos, s.naos);
         std::vector<container::Tensor> V(s.nks, container::Tensor(DAT::DT_DOUBLE, DEV::CpuDevice, { pV.get_col_size(), pV.get_row_size() }));
         Parallel_2D pc;
-        LR_Util::setup_2d_division(pc, s.nb, s.naos, s.nocc + s.nvirt, pV.comm_2D, pV.blacs_ctxt);
+        LR_Util::setup_2d_division(pc, s.nb, s.naos, s.nocc + s.nvirt, pV.blacs_ctxt);
         psi::Psi<double> c(s.nks, pc.get_col_size(), pc.get_row_size());
         Parallel_2D px;
-        LR_Util::setup_2d_division(px, s.nb, s.nvirt, s.nocc, pV.comm_2D, pV.blacs_ctxt);
+        LR_Util::setup_2d_division(px, s.nb, s.nvirt, s.nocc, pV.blacs_ctxt);
 
         EXPECT_EQ(pV.dim0, pc.dim0);
         EXPECT_EQ(pV.dim1, pc.dim1);
@@ -178,10 +178,10 @@ TEST_F(AXTest, ComplexParallel)
         LR_Util::setup_2d_division(pV, s.nb, s.naos, s.naos);
         std::vector<container::Tensor> V(s.nks, container::Tensor(DAT::DT_COMPLEX_DOUBLE, DEV::CpuDevice, { pV.get_col_size(), pV.get_row_size() }));
         Parallel_2D pc;
-        LR_Util::setup_2d_division(pc, s.nb, s.naos, s.nocc + s.nvirt, pV.comm_2D, pV.blacs_ctxt);
+        LR_Util::setup_2d_division(pc, s.nb, s.naos, s.nocc + s.nvirt, pV.blacs_ctxt);
         psi::Psi<std::complex<double>> c(s.nks, pc.get_col_size(), pc.get_row_size());
         Parallel_2D px;
-        LR_Util::setup_2d_division(px, s.nb, s.nvirt, s.nocc, pV.comm_2D, pV.blacs_ctxt);
+        LR_Util::setup_2d_division(px, s.nb, s.nvirt, s.nocc, pV.blacs_ctxt);
 
         psi::Psi<std::complex<double>> AX_pblas_loc(s.nks, nstate, px.get_local_size());
         psi::Psi<std::complex<double>> AX_gather(s.nks, nstate, s.nocc * s.nvirt, nullptr, false);
