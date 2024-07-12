@@ -1,0 +1,41 @@
+INPUT_PARAMETERS
+#Parameters (1.General)
+suffix                  abacus
+pseudo_dir              ../../../tests/PP_ORB
+orbital_dir                 ../../../tests/PP_ORB
+calculation             scf
+nbands                23
+symmetry               	-1
+
+#Parameters (2.Iteration)
+ecutwfc                 50
+scf_thr                     1e-6
+scf_nmax                   100
+
+#Parameters (3.Basis)
+basis_type              lcao 
+gamma_only              1
+
+#Parameters (4.Smearing)
+smearing_method                gaussian
+smearing_sigma                   0.02
+
+#Parameters (5.Mixing)
+mixing_type             pulay
+mixing_beta             0.4
+mixing_gg0 0
+
+lr_nstates 2
+xc_kernel lda
+lr_solver dav
+lr_thr 1e-2
+pw_diag_ndim 2
+
+esolver_type ks-lr
+out_alllog	1
+# out_wfc_lcao 1
+# out_chg 1
+
+nvirt 19
+abs_wavelen_range  40 180
+abs_broadening 0.01

@@ -7,6 +7,7 @@
 #include "module_io/print_info.h"
 #include "module_io/winput.h"
 #include "module_md/run_md.h"
+#include "module_parameter/parameter.h"
 
 /**
  * @brief This is the driver function which defines the workflow of ABACUS
@@ -27,10 +28,7 @@ void Driver::driver_run() {
     ModuleBase::TITLE("Driver", "driver_line");
     ModuleBase::timer::tick("Driver", "driver_line");
 
-    //! 1: initialize the ESolver 
-    ModuleESolver::ESolver *p_esolver = ModuleESolver::init_esolver();
-
-    //! 2: setup cell and atom information
+    //! 1: setup cell and atom information
 
     // this warning should not be here, mohan 2024-05-22
 #ifndef __LCAO
@@ -45,6 +43,9 @@ void Driver::driver_run() {
     GlobalC::ucell.setup_cell(GlobalV::stru_file, GlobalV::ofs_running);
     Check_Atomic_Stru::check_atomic_stru(GlobalC::ucell,
                                          GlobalV::MIN_DIST_COEF);
+
+    //! 2: initialize the ESolver (depends on a set-up ucell after `setup_cell`)
+    ModuleESolver::ESolver* p_esolver = ModuleESolver::init_esolver(INPUT, PARAM.inp, GlobalC::ucell);
 
     //! 3: initialize Esolver and fill json-structure
     p_esolver->before_all_runners(INPUT, GlobalC::ucell);
@@ -77,6 +78,7 @@ void Driver::driver_run() {
 
     //! 5: clean up esolver
     p_esolver->after_all_runners();
+
     ModuleESolver::clean_esolver(p_esolver);
 
     ModuleBase::timer::tick("Driver", "driver_line");

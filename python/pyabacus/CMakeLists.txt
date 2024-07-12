@@ -19,7 +19,7 @@ if(DEFINED ENV{MKLROOT} AND NOT DEFINED MKLROOT)
     set(MKLROOT "$ENV{MKLROOT}")
 endif()
 if(MKLROOT)
-
+  set(MKL_INTERFACE lp64)
   set(ENABLE_MPI ON)
   if (ENABLE_MPI)
     find_package(MPI REQUIRED)
