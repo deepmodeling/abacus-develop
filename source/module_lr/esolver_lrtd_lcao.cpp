@@ -284,13 +284,17 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, Input& inp_tmp, UnitCel
         psi_u,
         dpsi_u,
         d2psi_u,
-        GlobalV::NUM_STREAM);
-    psi_u.clear();
-    psi_u.shrink_to_fit();
-    dpsi_u.clear();
-    dpsi_u.shrink_to_fit();
-    d2psi_u.clear();
-    d2psi_u.shrink_to_fit();
+        GlobalV::NUM_STREAM,
+        GlobalV::GAMMA_ONLY_LOCAL,
+        GlobalV::NSPIN,
+        GlobalV::DOMAG,
+        GlobalV::NPOL,
+        GlobalV::NPROC,
+        GlobalV::MY_RANK,
+        GlobalV::NLOCAL,
+        GlobalV::ofs_running,
+        GlobalV::ofs_warning,
+        GlobalV::device_flag);
 
     if (std::is_same<T, std::complex<double>>::value)
     {
@@ -311,6 +315,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, Input& inp_tmp, UnitCel
         this->pw_rho->ny,
         this->pw_rho->nplane,
         this->pw_rho->startz_current,
+        GlobalV::ofs_running,
         &ucell,
         &GlobalC::ORB);
     this->gint_->initialize_pvpR(ucell, &GlobalC::GridD);

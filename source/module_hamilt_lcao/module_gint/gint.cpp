@@ -94,7 +94,7 @@ void Gint::prep_grid(const Grid_Technique& gt,
                      std::ofstream& ofs_running,
                      const UnitCell* ucell_in,
                      const LCAO_Orbitals* orb_in) {
-    ModuleBase::TITLE(GlobalV::ofs_running, "Gint_k", "prep_grid");
+    ModuleBase::TITLE(ofs_running, "Gint_k", "prep_grid");
 
     this->gridt = &gt;
     this->nbx = nbx_in;
