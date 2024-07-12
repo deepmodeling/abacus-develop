@@ -31,7 +31,13 @@ int Parallel_2D::get_global_col_size() const
 #ifdef __MPI
 MPI_Comm Parallel_2D::comm() const
 {
-    int sys_ctxt = -1;
+    // it is an error to call blacs_get with an invalid BLACS context
+    if (blacs_ctxt < 0)
+    {
+        return MPI_COMM_NULL;
+    }
+
+    int sys_ctxt = 0;
     Cblacs_get(blacs_ctxt, 10, &sys_ctxt);
     // blacs_get with "what" = 10 takes a BLACS context and returns the index
     // of the associated system context (MPI communicator) that can be used by
