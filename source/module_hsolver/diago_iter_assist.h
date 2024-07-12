@@ -42,14 +42,17 @@ class DiagoIterAssist
     /// @param psi_nc number of columns (nbasis)
     /// @param evc new wavefunction
     /// @param en eigenenergies
-    /// @note exception handle: if there is no operator initialized in Hamilt, will directly copy value from psi to evc,
-    /// and return all-zero eigenenergies.
-    static void diagH_subspace_init(hamilt::Hamilt<T, Device>* pHamilt,
-                                    const T* psi,
-                                    int psi_nr,
-                                    int psi_nc,
-                                    psi::Psi<T, Device>& evc,
-                                    Real* en);
+    /// @note exception handle: if there is no operator initialized in Hamilt, will directly copy value from psi to evc, 
+    /// and return all - zero eigenenergies.
+    static void diagH_subspace_init(
+            hamilt::Hamilt<T, Device>* pHamilt,
+            const T* psi,
+            int psi_nr,
+            int psi_nc,
+            psi::Psi<T, Device> &evc,
+            Real* en,
+            const std::function<void(T*, const int)>& add_to_hcc = [](T* null, const int n) {},
+            const std::function<void(const T* const, const int, const int)>& export_vcc = [](const T* null, const int n, const int m) {});
 
     static void diagH_LAPACK(const int nstart,
                              const int nbands,

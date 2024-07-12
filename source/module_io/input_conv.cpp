@@ -298,15 +298,20 @@ void Input_Conv::Convert()
         GlobalV::stru_file = INPUT.stru_file;
     }
     GlobalV::global_wannier_card = INPUT.wannier_card;
-    if (INPUT.kpoint_file != "") {
+    if (INPUT.kpoint_file != "")
+    {
         GlobalV::global_kpoint_card = INPUT.kpoint_file;
-}
-    if (INPUT.pseudo_dir != "") {
+    }
+    if (INPUT.pseudo_dir != "")
+    {
         GlobalV::global_pseudo_dir = INPUT.pseudo_dir + "/";
-}
-    if (INPUT.orbital_dir != "") {
+    }
+    if (INPUT.orbital_dir != "")
+    {
         GlobalV::global_orbital_dir = INPUT.orbital_dir + "/";
-}
+    }
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "pseudo_dir", GlobalV::global_pseudo_dir);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "orbital_dir", GlobalV::global_orbital_dir);
     // GlobalV::global_pseudo_type = INPUT.pseudo_type;
     GlobalC::ucell.setup(INPUT.latname, INPUT.ntype, INPUT.lmaxmax, INPUT.init_vel, INPUT.fixed_axes);
 

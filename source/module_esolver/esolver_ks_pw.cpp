@@ -72,10 +72,7 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW() {
         this->pelec = nullptr;
     }
     // delete Hamilt
-    if (this->p_hamilt != nullptr) {
-        delete reinterpret_cast<hamilt::HamiltPW<T, Device>*>(this->p_hamilt);
-        this->p_hamilt = nullptr;
-    }
+    this->deallocate_hamilt();
     if (this->device == base_device::GpuDevice) {
 #if defined(__CUDA) || defined(__ROCM)
         hsolver::destoryBLAShandle();
@@ -222,6 +219,17 @@ void ESolver_KS_PW<T, Device>::deallocate_hsolver()
 {
     delete reinterpret_cast<hsolver::HSolverPW<T, Device>*>(this->phsol);
     this->phsol = nullptr;
+}
+template <typename T, typename Device>
+void ESolver_KS_PW<T, Device>::allocate_hamilt()
+{
+    this->p_hamilt = new hamilt::HamiltPW<T, Device>(this->pelec->pot, this->pw_wfc, &this->kv);
+}
+template <typename T, typename Device>
+void ESolver_KS_PW<T, Device>::deallocate_hamilt()
+{
+    delete reinterpret_cast<hamilt::HamiltPW<T, Device>*>(this->p_hamilt);
+    this->p_hamilt = nullptr;
 }
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::init_after_vc(Input& inp, UnitCell& ucell) {
@@ -394,17 +402,10 @@ void ESolver_KS_PW<T, Device>::before_scf(const int istep) {
     // init Hamilt, this should be allocated before each scf loop
     // Operators in HamiltPW should be reallocated once cell changed
     // delete Hamilt if not first scf
-    if (this->p_hamilt != nullptr) {
-        delete reinterpret_cast<hamilt::HamiltPW<T, Device>*>(this->p_hamilt);
-        this->p_hamilt = nullptr;
-    }
+    this->deallocate_hamilt();
 
     // allocate HamiltPW
-    if (this->p_hamilt == nullptr) {
-        this->p_hamilt = new hamilt::HamiltPW<T, Device>(this->pelec->pot,
-                                                         this->pw_wfc,
-                                                         &this->kv);
-    }
+    this->allocate_hamilt();
 
     //----------------------------------------------------------
     // about vdw, jiyy add vdwd3 and linpz add vdwd2
