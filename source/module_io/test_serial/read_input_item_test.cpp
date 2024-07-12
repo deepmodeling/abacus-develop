@@ -82,7 +82,7 @@ TEST_F(InputTest, Item_test)
     { // nspin
         auto it = find_lable("nspin", readinput.input_lists);
         param.input.nspin = 0;
-        param.input.noncolin = 1;
+        param.input.noncolin = true;
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.nspin, 4);
 
@@ -418,7 +418,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_EQ(param.input.out_proj_band, false);
 
         param.input.basis_type = "pw";
-        param.input.out_proj_band = 1;
+        param.input.out_proj_band = true;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(0), "");
         output = testing::internal::GetCapturedStdout();
@@ -661,7 +661,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_EQ(param.input.out_dm, false);
 
         param.input.sup.gamma_only_local = false;
-        param.input.out_dm = 1;
+        param.input.out_dm = true;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(0), "");
         output = testing::internal::GetCapturedStdout();
@@ -675,7 +675,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_EQ(param.input.out_dm1, false);
 
         param.input.sup.gamma_only_local = true;
-        param.input.out_dm1 = 1;
+        param.input.out_dm1 = true;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(0), "");
         output = testing::internal::GetCapturedStdout();
