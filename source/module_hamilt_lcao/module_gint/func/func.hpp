@@ -4,7 +4,7 @@
 namespace GINT_FUNC
 {
 template <class T, class TI>
-inline void ZEROS(std::complex<T>* u, const TI n) // Peize Lin change int to TI at 2020.03.03
+inline void ZEROS(std::complex<T>* u, const TI n) 
 {
     assert(n >= 0);
     for (TI i = 0; i < n; i++)
@@ -15,7 +15,7 @@ inline void ZEROS(std::complex<T>* u, const TI n) // Peize Lin change int to TI 
 }
 
 template <class T, class TI>
-inline void ZEROS(T* u, const TI n) // Peize Lin change int to TI at 2020.03.03
+inline void ZEROS(T* u, const TI n) 
 {
     assert(n >= 0);
     for (TI i = 0; i < n; i++)
