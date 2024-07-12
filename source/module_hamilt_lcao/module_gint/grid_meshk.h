@@ -1,6 +1,5 @@
 #ifndef GRID_MESHK_H
 #define GRID_MESHK_H
-// #include "module_base/global_function.h"
 #include "module_base/tool_quit.h"
 #include "module_base/tool_title.h"
 #include "module_base/timer.h"
