@@ -25,10 +25,11 @@ std::vector<container::Tensor> cal_dm_trans_pblas(const psi::Psi<double>& X_ista
     assert(px.comm() == pc.comm());
     assert(px.blacs_ctxt == pc.blacs_ctxt);
 
-    if (pmat.comm() != px.comm() || pmat.blacs_ctxt != px.blacs_ctxt)
+    if (pmat.comm() != px.comm() || pmat.blacs_ctxt != px.blacs_ctxt) {
         LR_Util::setup_2d_division(pmat, px.get_block_size(), naos, naos, px.blacs_ctxt);
-    else
+    } else {
         assert(pmat.get_local_size() > 0);
+}
 
     int nks = c.get_nk();
     assert(nks == X_istate.get_nk());
@@ -113,10 +114,11 @@ std::vector<container::Tensor> cal_dm_trans_pblas(const psi::Psi<std::complex<do
     assert(px.comm() == pc.comm());
     assert(px.blacs_ctxt == pc.blacs_ctxt);
 
-    if (pmat.comm() != px.comm() || pmat.blacs_ctxt != px.blacs_ctxt)
+    if (pmat.comm() != px.comm() || pmat.blacs_ctxt != px.blacs_ctxt) {
         LR_Util::setup_2d_division(pmat, px.get_block_size(), naos, naos, px.blacs_ctxt);
-    else
+    } else {
         assert(pmat.get_local_size() > 0);
+}
 
     int nks = c.get_nk();
     assert(nks == X_istate.get_nk());

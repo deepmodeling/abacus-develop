@@ -81,10 +81,12 @@ void norm_psi(const Parallel_Orbitals* pv,
                 double aa, bb;
                 aa = Cij[i * pv->ncol + j].real();
                 bb = Cij[i * pv->ncol + j].imag();
-                if (std::abs(aa) < 1e-8)
+                if (std::abs(aa) < 1e-8) {
                     aa = 0.0;
-                if (std::abs(bb) < 1e-8)
+}
+                if (std::abs(bb) < 1e-8) {
                     bb = 0.0;
+}
                 GlobalV::ofs_running << aa << "+" << bb << "i ";
             }
             GlobalV::ofs_running << std::endl;
@@ -105,13 +107,15 @@ void norm_psi(const Parallel_Orbitals* pv,
                 for (int j = 0; j < naroc[1]; ++j)
                 {
                     int igcol = globalIndex(j, pv->nb, pv->dim1, ipcol);
-                    if (igcol >= nband)
+                    if (igcol >= nband) {
                         continue;
+}
                     for (int i = 0; i < naroc[0]; ++i)
                     {
                         int igrow = globalIndex(i, pv->nb, pv->dim0, iprow);
-                        if (igrow >= nband)
+                        if (igrow >= nband) {
                             continue;
+}
                         if (igcol == igrow)
                         {
                             Cij[j * naroc[0] + i] = {1.0 / sqrt(Cij[j * naroc[0] + i].real()), 0.0};
@@ -169,10 +173,12 @@ void norm_psi(const Parallel_Orbitals* pv,
                 double aa, bb;
                 aa = psi_k[i * pv->ncol + j].real();
                 bb = psi_k[i * pv->ncol + j].imag();
-                if (std::abs(aa) < 1e-8)
+                if (std::abs(aa) < 1e-8) {
                     aa = 0.0;
-                if (std::abs(bb) < 1e-8)
+}
+                if (std::abs(bb) < 1e-8) {
                     bb = 0.0;
+}
                 GlobalV::ofs_running << aa << "+" << bb << "i ";
             }
             GlobalV::ofs_running << std::endl;
@@ -186,10 +192,12 @@ void norm_psi(const Parallel_Orbitals* pv,
                 double aa, bb;
                 aa = tmp1[i * pv->ncol + j].real();
                 bb = tmp1[i * pv->ncol + j].imag();
-                if (std::abs(aa) < 1e-8)
+                if (std::abs(aa) < 1e-8) {
                     aa = 0.0;
-                if (std::abs(bb) < 1e-8)
+}
+                if (std::abs(bb) < 1e-8) {
                     bb = 0.0;
+}
                 GlobalV::ofs_running << aa << "+" << bb << "i ";
             }
             GlobalV::ofs_running << std::endl;
