@@ -52,6 +52,7 @@ class Gint {
                    const int& ny_in,
                    const int& nplane_in,
                    const int& startz_current_in,
+                   std::ofstream& ofs_running,
                    const UnitCell* ucell_in,
                    const LCAO_Orbitals* orb_in);
 

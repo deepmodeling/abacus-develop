@@ -38,6 +38,7 @@ void grid_prepare(
 				rhopw.ny, 
 				rhopw.nplane, 
 				rhopw.startz_current,
+				GlobalV::ofs_running,
 				ucell,
 				orb);
 	}
@@ -59,6 +60,7 @@ void grid_prepare(
 				rhopw.ny, 
 				rhopw.nplane, 
 				rhopw.startz_current,
+				GlobalV::ofs_running,
 				ucell,
 				orb);
 	}
