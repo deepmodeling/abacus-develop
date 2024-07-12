@@ -35,8 +35,13 @@ namespace ModuleESolver
         void LJ_virial(const ModuleBase::Vector3<double>& force,
             const ModuleBase::Vector3<double>& dtau);
 
+        void rcut_search_radius(const int rule, const std::vector<double>& rcut);
+
+        void set_c6_c12(const int rule, const std::vector<double> epsilon, const std::vector<double> sigma);
+
+        void cal_en_shift(const bool is_shift);
+
         //--------------temporary----------------------------
-        int lj_rule;
         ModuleBase::matrix lj_rcut;
         ModuleBase::matrix lj_c12;
         ModuleBase::matrix lj_c6;

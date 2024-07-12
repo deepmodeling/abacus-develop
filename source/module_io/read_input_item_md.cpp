@@ -120,6 +120,12 @@ void ReadInput::item_md()
         this->add_item(item);
     }
     {
+        Input_Item item("lj_eshift");
+        item.annotation = "whether to use energy shift for LJ potential";
+        read_sync_bool(mdp.lj_eshift);
+        this->add_item(item);
+    }
+    {
         Input_Item item("lj_rcut");
         item.annotation = "cutoff radius of LJ potential";
         item.read_value = [](const Input_Item& item, Parameter& para) {

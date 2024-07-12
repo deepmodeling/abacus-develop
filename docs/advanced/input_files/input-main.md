@@ -263,6 +263,7 @@
     - [md\_pfreq](#md_pfreq)
     - [md\_pchain](#md_pchain)
     - [lj\_rule](#lj_rule)
+    - [lj\_eshift](#lj_eshift)
     - [lj\_rcut](#lj_rcut)
     - [lj\_epsilon](#lj_epsilon)
     - [lj\_sigma](#lj_sigma)
@@ -2567,10 +2568,16 @@ These variables are used to control molecular dynamics calculations. For more in
   $$\begin{array}{rcl}\sigma_{ij}&=&\frac{1}{2}\left(\sigma_{ii}+\sigma_{jj}\right)\\ \epsilon_{ij}&=&\left(\epsilon_{ii}\epsilon_{jj}\right)^{1/2}\end{array}$$
 - **Default**: 2
 
+### lj_eshift
+
+- **Type**: Boolean
+- **Description**: It True, the LJ potential is shifted by a constant such that it is zero at the cut-off distance.
+- **Default**: False
+
 ### lj_rcut
 
 - **Type**: Real
-- **Description**: Cut-off radius for Leonard Jones potential. It can be a single value, which means that all pairs of atoms types share the same cut-off radius. Otherwise, it should be a multiple-component vector, containing $N(N+1)/2$ values, see details in [lj_rule](#lj_rule).
+- **Description**: Cut-off radius for Leonard Jones potential, beyond which the interaction will be neglected. It can be a single value, which means that all pairs of atoms types share the same cut-off radius. Otherwise, it should be a multiple-component vector, containing $N(N+1)/2$ values, see details in [lj_rule](#lj_rule).
 - **Default**: No default
 - **Unit**: Angstrom
 
