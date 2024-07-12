@@ -582,5 +582,15 @@ struct Input_para
     double pexsi_mu_guard = 0.2;
     double pexsi_elec_thr = 0.001;
     double pexsi_zero_thr = 1e-10;
+
+    // ==============   #Parameters (25. Linear Response) =====================
+    int lr_nstates = 1;   ///< the number of 2-particle states to be solved
+    int nvirt = 1;        ///< the number of virtual orbitals to form the 2-particle basis (nocc + nvirt <= nbands)
+    std::string xc_kernel = "LDA"; ///< exchange correlation (XC) kernel for LR-TDDFT
+    std::string lr_solver = "dav"; ///< the eigensolver for LR-TDDFT
+    double lr_thr = 1e-2;  ///< convergence threshold of the LR-TDDFT eigensolver
+    bool out_wfc_lr = false;    ///< whether to output the eigenvectors (excitation amplitudes) in the particle-hole basis
+    std::vector<double> abs_wavelen_range = { 0., 0. };  ///< the range of wavelength(nm) to output the absorption spectrum 
+    double abs_broadening = 0.01;   ///< the broadening (eta) for LR-TDDFT absorption spectrum
 };
 #endif

@@ -30,7 +30,8 @@ namespace ModuleIO
         const std::string label,
         const std::string& file_name,
         const Parallel_2D& pv,
-        const int drank);
+        const int drank,
+        const bool reduce = true);
 
 
 // mohan comment out 2021-02-10

@@ -23,6 +23,21 @@ int XC_Functional::get_func_type()
 {
     return func_type;
 }
+void XC_Functional::set_xc_first_loop(const UnitCell& ucell)
+{
+    /** In the special "two-level" calculation case,
+the first scf iteration only calculate the functional without exact
+exchange. but in "nscf" calculation, there is no need of "two-level"
+method. */
+    if (ucell.atoms[0].ncpp.xc_func == "HF"
+        || ucell.atoms[0].ncpp.xc_func == "PBE0"
+        || ucell.atoms[0].ncpp.xc_func == "HSE") {
+        XC_Functional::set_xc_type("pbe");
+    }
+    else if (ucell.atoms[0].ncpp.xc_func == "SCAN0") {
+        XC_Functional::set_xc_type("scan");
+    }
+}
 
 // The setting values of functional id according to the index in LIBXC
 // for detail, refer to https://www.tddft.org/programs/libxc/functionals/

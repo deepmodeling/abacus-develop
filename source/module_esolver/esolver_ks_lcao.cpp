@@ -184,28 +184,12 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(Input& inp, UnitCell& ucell)
 #ifdef __EXX
     // 7) initialize exx
     // PLEASE simplify the Exx_Global interface
-    if (GlobalV::CALCULATION == "scf" || GlobalV::CALCULATION == "relax" || GlobalV::CALCULATION == "cell-relax"
-        || GlobalV::CALCULATION == "md")
-    {
-        if (GlobalC::exx_info.info_global.cal_exx)
-        {
-            /* In the special "two-level" calculation case,
-            first scf iteration only calculate the functional without exact
-            exchange. but in "nscf" calculation, there is no need of "two-level"
-            method. */
-            if (ucell.atoms[0].ncpp.xc_func == "HF" || ucell.atoms[0].ncpp.xc_func == "PBE0"
-                || ucell.atoms[0].ncpp.xc_func == "HSE")
-            {
-                XC_Functional::set_xc_type("pbe");
-            }
-            else if (ucell.atoms[0].ncpp.xc_func == "SCAN0")
-            {
-                XC_Functional::set_xc_type("scan");
-            }
-
-            // GlobalC::exx_lcao.init();
-            if (GlobalC::exx_info.info_ri.real_number)
-            {
+    if (GlobalV::CALCULATION == "scf" || GlobalV::CALCULATION == "relax"
+        || GlobalV::CALCULATION == "cell-relax"
+        || GlobalV::CALCULATION == "md") {
+        if (GlobalC::exx_info.info_global.cal_exx) {
+            XC_Functional::set_xc_first_loop(ucell);
+            if (GlobalC::exx_info.info_ri.real_number) {
                 this->exx_lri_double->init(MPI_COMM_WORLD, this->kv);
             }
             else

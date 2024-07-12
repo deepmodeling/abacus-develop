@@ -45,7 +45,7 @@ else()
 endif()
 
 # Incompatible with ELPA earlier than 2021.11.001
-# Before ELPA 2021.11.001, its pkg-config file 
+# Before ELPA 2021.11.001, its pkg-config file
 # is named like "elpa-2021.05.002.pc".
 if(NOT ELPA_INCLUDE_DIRS AND PKG_CONFIG_FOUND)
   if(DEFINED ELPA_DIR)
@@ -57,7 +57,7 @@ if(NOT ELPA_INCLUDE_DIRS AND PKG_CONFIG_FOUND)
     pkg_search_module(ELPA REQUIRED IMPORTED_TARGET GLOBAL elpa)
   endif()
 elseif(NOT PKG_CONFIG_FOUND)
-  message(
+  message(STATUS
     "ELPA : We need pkg-config to get all information about the elpa library")
 endif()
 

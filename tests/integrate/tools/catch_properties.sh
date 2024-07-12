@@ -64,6 +64,7 @@ has_mat_t=$(get_input_key_value "out_mat_t" "INPUT")
 has_mat_dh=$(get_input_key_value "out_mat_dh" "INPUT")
 has_scan=$(get_input_key_value "dft_functional" "INPUT")
 out_chg=$(get_input_key_value "out_chg" "INPUT") 
+esolver_type=$(get_input_key_value "esolver_type" "INPUT")
 #echo $running_path
 base=$(get_input_key_value "basis_type" "INPUT")
 word="driver_line"
@@ -71,10 +72,11 @@ symmetry=$(get_input_key_value "symmetry" "INPUT")
 out_current=$(get_input_key_value "out_current" "INPUT")
 test -e $1 && rm $1
 #--------------------------------------------
-# if NOT non-self-consistent calculations
+# if NOT non-self-consistent calculations or linear response
 #--------------------------------------------
 if [ $calculation != "nscf" ] && [ $calculation != "get_wf" ]\
-&& [ $calculation != "get_pchg" ] && [ $calculation != "get_S" ]; then
+&& [ $calculation != "get_pchg" ] && [ $calculation != "get_S" ]\
+&& [ $esolver_type != "ks-lr" ] && [ $esolver_type != "lr" ]; then
 	#etot=`grep ETOT_ $running_path | awk '{print $2}'` 
 	etot=$(grep "ETOT_" "$running_path" | tail -1 | awk '{print $2}')
 	etotperatom=`awk 'BEGIN {x='$etot';y='$natom';printf "%.10f\n",x/y}'`
@@ -463,6 +465,15 @@ if ! test -z "$out_current" && [ $out_current ]; then
 	current1cal=OUT.autotest/current_total.dat
 	python3 ../tools/CompareFile.py $current1ref $current1cal 10
 	echo "CompareCurrent_pass $?" >>$1
+fi
+
+if ! test -z "$esolver_type" && ([ $esolver_type == "lr" ] || [ $esolver_type == "ks-lr" ]); then
+	lr_path=OUT.autotest/running_lr.log
+	lrns=$(get_input_key_value "lr_nstates" "INPUT")
+	lrns1=`echo "$lrns + 1" |bc`
+	grep -A$lrns1 "Excitation Energy" $lr_path | tail -$lrns | awk '{print $2}' > lr_eig.txt
+	lreig_tot=`sum_file lr_eig.txt`
+	echo "totexcitationenergyref $lreig_tot" >>$1
 fi
 
 #echo $total_band

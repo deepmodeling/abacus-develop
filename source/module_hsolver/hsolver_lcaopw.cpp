@@ -19,6 +19,10 @@
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
 #endif
+
+#ifdef __EXX
+#include "module_hamilt_pw/hamilt_pwdft/hamilt_lcaopw.h"
+#endif
 namespace hsolver
 {
 
@@ -115,7 +119,26 @@ namespace hsolver
             //     eigenvalues.data() + ik * pes->ekb.nc,  // eigenvalues
             //     psi.get_nbands()                        // number of the lowest energies bands
             //     );
-
+#ifdef __EXX
+            auto& exx_lip = dynamic_cast<hamilt::HamiltLIP<T>*>(pHamilt)->exx_lip;
+            auto add_exx_to_subspace_hamilt = [&ik, &exx_lip](T* hcc, const int naos) -> void
+                {
+                    if (GlobalC::exx_info.info_global.cal_exx) {
+                        for (int n = 0; n < naos; ++n) {
+                            for (int m = 0; m < naos; ++m) {
+                                hcc[n * naos + m] += (T)GlobalC::exx_info.info_global.hybrid_alpha *
+                                exx_lip.get_exx_matrix()[ik][m][n];
+}
+}
+}
+                };
+            auto set_exxlip_lcaowfc = [&ik, &exx_lip](const T* const vcc, const int naos, const int nbands) -> void
+                {
+                    if (GlobalC::exx_info.info_global.cal_exx) {
+                        exx_lip.set_hvec(ik, vcc, naos, nbands);
+}
+                };
+#endif
             hsolver::DiagoIterAssist<T>::diagH_subspace_init(
                 pHamilt,                 // interface to hamilt
                 transform.get_pointer(), // transform matrix between lcao and pw
@@ -123,6 +146,10 @@ namespace hsolver
                 transform.get_nbasis(),
                 psi,                                  // psi in pw basis
                 eigenvalues.data() + ik * pes->ekb.nc // eigenvalues
+#ifdef __EXX
+                , add_exx_to_subspace_hamilt
+                , set_exxlip_lcaowfc
+#endif
             );
 
             if (skip_charge)
