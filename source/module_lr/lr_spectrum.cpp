@@ -219,7 +219,7 @@ void LR::LR_Spectrum<T>::transition_analysis()
                 ofs << std::setw(8) << (it == abs_order.cbegin() ? std::to_string(istate) : " ")
                     << std::setw(20) << ipair / nvirt + 1 << std::setw(20) << ipair % nvirt + nocc + 1// iocc and ivirt
                     << std::setw(30) << X_full(ik, ipair)
-                    << std::setw(30) << (std::conj(X_full(ik, ipair)) * X_full(ik, ipair)).real()
+                    << std::setw(30) << std::norm(X_full(ik, ipair))
                     << std::setw(10) << ik << std::endl;
             }
     }
