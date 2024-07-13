@@ -187,6 +187,8 @@ md_seed                        -1 #random seed for MD
 md_prec_level                  2 #precision level for vc-md
 ref_cell_factor                1.2 #construct a reference cell bigger than the initial cell
 md_restart                     0 #whether restart
+lj_rule                        2 #combination rules used to construct the parameter matrix for LJ potential
+lj_eshift                      0 #whether to use energy shift for LJ potential
 lj_rcut                        8.5 #cutoff radius of LJ potential
 lj_epsilon                     0.01032 #the value of epsilon for LJ potential
 lj_sigma                       3.405 #the value of sigma for LJ potential

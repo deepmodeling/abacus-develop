@@ -127,14 +127,13 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
     const elecstate::DensityMatrix<T, double>& dm,
     const K_Vectors& kv,
     int& iter)
-{
+{   // only called if (GlobalC::exx_info.info_global.cal_exx)
     auto restart_reset = [this]()
         { // avoid calling restart related procedure in the subsequent ion steps
             GlobalC::restart.info_load.restart_exx = true;
             this->exx_ptr->Eexx = 0;
         };
-    if (GlobalC::exx_info.info_global.cal_exx)
-    {
+
         // no separate_loop case
         if (!GlobalC::exx_info.info_global.separate_loop)
         {
@@ -197,7 +196,7 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
                 << std::defaultfloat << " (s)" << std::endl;
             return false;
         }
-    }
+
     restart_reset();
     return true;
 }

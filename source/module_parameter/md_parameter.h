@@ -10,7 +10,7 @@
 struct MD_para
 {
     int md_nstep = 10;                 ///< md nstep
-    bool md_restart = 0;               ///< 1: restart MD, 0: no restart MD
+    bool md_restart = false;               ///< 1: restart MD, 0: no restart MD
     std::string md_type = "nvt";       ///< fire, nve, nvt, npt, langevin, msst
     std::string md_thermostat = "nhc"; ///< specify the thermostat: nhc, anderson, berendsen,
                                        ///< rescaling, rescale_v
@@ -22,10 +22,12 @@ struct MD_para
     int md_seed = -1;                  ///< random seed for MD
     int md_prec_level = 0;             ///< precision level for vc-md
 
-    double lj_rcut = 8.5;              ///< cutoff radius of LJ potential (\AA)
-    double lj_epsilon = 0.01032;       ///< the value of epsilon for LJ potential (eV)
-    double lj_sigma = 3.405;           ///< the value of sigma for LJ potential (\AA)
-    std::string pot_file = "graph.pb"; ///< the filename of potential files for CMD such as DP
+    int lj_rule = 2;                     ///< combination rules used to construct the parameter matrix for LJ potential
+    bool lj_eshift = false;              ///< whether to use energy shift for LJ potential
+    std::vector<double> lj_rcut = {};    ///< cutoff radius of LJ potential (\AA)
+    std::vector<double> lj_epsilon = {}; ///< the value of epsilon for LJ potential (eV)
+    std::vector<double> lj_sigma = {};   ///< the value of sigma for LJ potential (\AA)
+    std::string pot_file = "graph.pb";   ///< the filename of potential files for CMD such as DP
 
     int msst_direction = 2;    ///< shock direction: 0, 1, 2
     double msst_vel = 0.0;     ///< shock msst_vel (\AA/fs)

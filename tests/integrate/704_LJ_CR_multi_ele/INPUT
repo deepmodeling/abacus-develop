@@ -6,9 +6,9 @@ pseudo_dir          ../../PP_ORB
 
 #Parameters (esolver)
 esolver_type        lj
-lj_rcut             8.5
-lj_epsilon          0.01032
-lj_sigma            3.405
+lj_rcut             8.5  8  8.4
+lj_epsilon          0.01  0.02  0.03
+lj_sigma            3.4  3.5  3.6
 
 #Parameters (relax)
 relax_new           1

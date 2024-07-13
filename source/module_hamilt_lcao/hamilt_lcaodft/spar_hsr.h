@@ -1,19 +1,22 @@
 #ifndef SPARSE_FORMAT_HSR_H
 #define SPARSE_FORMAT_HSR_H
 
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 
 namespace sparse_format {
-
-void cal_HSR(const Parallel_Orbitals& pv,
-             LCAO_Matrix& lm,
-             LCAO_HS_Arrays& HS_Arrays,
-             Grid_Driver& grid,
-             const int& current_spin,
-             const double& sparse_thr,
-             const int (&nmp)[3],
-             hamilt::Hamilt<std::complex<double>>* p_ham);
+    using TAC = std::pair<int, std::array<int, 3>>;
+    void cal_HSR(const Parallel_Orbitals& pv,
+        LCAO_HS_Arrays& HS_Arrays,
+        Grid_Driver& grid,
+        const int& current_spin,
+        const double& sparse_thr,
+        const int(&nmp)[3],
+        hamilt::Hamilt<std::complex<double>>* p_ham
+#ifdef __EXX
+        , const std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd = nullptr
+        , const std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc = nullptr
+#endif
+    );
 
 void cal_HContainer_d(
     const Parallel_Orbitals& pv,

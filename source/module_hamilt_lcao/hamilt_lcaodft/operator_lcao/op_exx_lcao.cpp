@@ -8,18 +8,17 @@ namespace hamilt
 template<>
 void OperatorEXX<OperatorLCAO<double, double>>::add_loaded_Hexx(const int ik)
 {
-    BlasConnector::axpy(this->LM->ParaV->get_local_size(), 1.0, this->LM->Hexxd_k_load[ik].data(), 1, this->hsk->get_hk(), 1);
+    BlasConnector::axpy(this->hR->get_paraV()->get_local_size(), 1.0, this->Hexxd_k_load[ik].data(), 1, this->hsk->get_hk(), 1);
 }
 template<>
 void OperatorEXX<OperatorLCAO<std::complex<double>, double>>::add_loaded_Hexx(const int ik)
 {
-
-    BlasConnector::axpy(this->LM->ParaV->get_local_size(), 1.0, this->LM->Hexxc_k_load[ik].data(), 1, this->hsk->get_hk(), 1);
+    BlasConnector::axpy(this->hR->get_paraV()->get_local_size(), 1.0, this->Hexxc_k_load[ik].data(), 1, this->hsk->get_hk(), 1);
 }
 template<>
 void OperatorEXX<OperatorLCAO<std::complex<double>, std::complex<double>>>::add_loaded_Hexx(const int ik)
 {
-    BlasConnector::axpy(this->LM->ParaV->get_local_size(), 1.0, this->LM->Hexxc_k_load[ik].data(), 1, this->hsk->get_hk(), 1);
+    BlasConnector::axpy(this->hR->get_paraV()->get_local_size(), 1.0, this->Hexxc_k_load[ik].data(), 1, this->hsk->get_hk(), 1);
 }
 
 } // namespace hamilt

@@ -8,17 +8,19 @@
 template<typename T>
 void LR::LR_Spectrum<T>::cal_gint_rho(double** rho, const int& nspin, const int& nrxx)
 {
-    for (int is = 0;is < nspin;++is)ModuleBase::GlobalFunc::ZEROS(rho[is], nrxx);
+    for (int is = 0;is < nspin;++is) {ModuleBase::GlobalFunc::ZEROS(rho[is], nrxx);
+}
     Gint_inout inout_rho(rho, Gint_Tools::job_type::rho, false);
     this->gint->cal_gint(&inout_rho);
 }
 
 inline void check_sum_rule(const double& osc_tot)
 {
-    if (std::abs(osc_tot - 1.0) > 1e-3)
+    if (std::abs(osc_tot - 1.0) > 1e-3) {
         std::cout << "Warning: in LR::LR_Spectrum::oscillator_strength, \
         the sum rule is not satisfied, try more nstates if needed.\n \
         Total oscillator strength = " + std::to_string(osc_tot) + "\n";
+}
 }
 
 template<>
@@ -164,15 +166,18 @@ void LR::LR_Spectrum<T>::optical_absorption(const std::vector<double>& freq, con
     ModuleBase::TITLE("LR::LR_Spectrum", "optical_absorption");
     std::vector<double>& osc = this->oscillator_strength_;
     std::ofstream ofs(GlobalV::global_out_dir + "absorption.dat");
-    if (GlobalV::MY_RANK == 0) ofs << "Frequency (eV) | wave length(nm) | Absorption (a.u.)" << std::endl;
+    if (GlobalV::MY_RANK == 0) { ofs << "Frequency (eV) | wave length(nm) | Absorption (a.u.)" << std::endl;
+}
     double FourPI_div_c = ModuleBase::FOUR_PI / 137.036;
     for (int f = 0;f < freq.size();++f)
     {
         std::complex<double> f_complex = std::complex<double>(freq[f], eta);
         double abs = 0.0;
-        for (int i = 0;i < osc.size();++i)  //nstates
+        for (int i = 0;i < osc.size();++i) {  //nstates
             abs += (osc[i] / (f_complex * f_complex - eig[i] * eig[i])).imag() * freq[f] * FourPI_div_c;
-        if (GlobalV::MY_RANK == 0)ofs << freq[f] * ModuleBase::Ry_to_eV << "\t" << 91.126664 / freq[f] << "\t" << std::abs(abs) << std::endl;
+}
+        if (GlobalV::MY_RANK == 0) {ofs << freq[f] * ModuleBase::Ry_to_eV << "\t" << 91.126664 / freq[f] << "\t" << std::abs(abs) << std::endl;
+}
     }
     ofs.close();
 }
@@ -210,8 +215,9 @@ void LR::LR_Spectrum<T>::transition_analysis()
         }
         std::map<double, int, std::greater<double>> abs_order;
         X_full.fix_k(0);
-        for (int i = 0;i < X.get_nk() * nocc * nvirt;++i) { double abs = std::abs(X_full.get_pointer()[i]);if (abs > 0.3) abs_order[abs] = i; }
-        if (abs_order.size() > 0)
+        for (int i = 0;i < X.get_nk() * nocc * nvirt;++i) { double abs = std::abs(X_full.get_pointer()[i]);if (abs > 0.3) { abs_order[abs] = i; 
+}}
+        if (abs_order.size() > 0) {
             for (auto it = abs_order.cbegin();it != abs_order.cend();++it)
             {
                 int ik = it->second / (nocc * nvirt);
@@ -219,9 +225,10 @@ void LR::LR_Spectrum<T>::transition_analysis()
                 ofs << std::setw(8) << (it == abs_order.cbegin() ? std::to_string(istate) : " ")
                     << std::setw(20) << ipair / nvirt + 1 << std::setw(20) << ipair % nvirt + nocc + 1// iocc and ivirt
                     << std::setw(30) << X_full(ik, ipair)
-                    << std::setw(30) << (std::conj(X_full(ik, ipair)) * X_full(ik, ipair)).real()
+                    << std::setw(30) << std::norm(X_full(ik, ipair))
                     << std::setw(10) << ik << std::endl;
             }
+}
     }
     ofs << "==================================================================== " << std::endl;
     X.fix_kb(0, 0);

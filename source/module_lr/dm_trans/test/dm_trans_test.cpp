@@ -106,7 +106,7 @@ TEST_F(DMTransTest, DoubleParallel)
         LR_Util::setup_2d_division(px, s.nb, s.nvirt, s.nocc);
         psi::Psi<double> X(s.nks, nstate, px.get_local_size(), nullptr, false);
         Parallel_2D pc;
-        LR_Util::setup_2d_division(pc, s.nb, s.naos, s.nocc + s.nvirt, px.comm_2D, px.blacs_ctxt);
+        LR_Util::setup_2d_division(pc, s.nb, s.naos, s.nocc + s.nvirt, px.blacs_ctxt);
         psi::Psi<double> c(s.nks, pc.get_col_size(), pc.get_row_size());
         Parallel_2D pmat;
 
@@ -170,7 +170,7 @@ TEST_F(DMTransTest, ComplexParallel)
         LR_Util::setup_2d_division(px, s.nb, s.nvirt, s.nocc);
         psi::Psi<std::complex<double>> X(s.nks, nstate, px.get_local_size(), nullptr, false);
         Parallel_2D pc;
-        LR_Util::setup_2d_division(pc, s.nb, s.naos, s.nocc + s.nvirt, px.comm_2D, px.blacs_ctxt);
+        LR_Util::setup_2d_division(pc, s.nb, s.naos, s.nocc + s.nvirt, px.blacs_ctxt);
         psi::Psi<std::complex<double>> c(s.nks, pc.get_col_size(), pc.get_row_size());
         Parallel_2D pmat;
 
