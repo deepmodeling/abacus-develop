@@ -125,6 +125,7 @@ int main(int argc, char** argv)
 {
 #ifdef __MPI
     MPI_Init(&argc, &argv);
+    int Nproc, Rank;
     MPI_Comm_size(MPI_COMM_WORLD, &Nproc);
     MPI_Comm_rank(MPI_COMM_WORLD, &Rank);
 #endif
