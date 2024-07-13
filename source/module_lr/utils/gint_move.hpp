@@ -21,7 +21,8 @@ D3<double> d3 = LR_Util::delete_p3<double>;
 
 Gint& Gint::operator=(Gint&& rhs)
 {
-    if (this == &rhs)return *this;
+    if (this == &rhs) {return *this;
+}
 
     this->nbx = rhs.nbx;
     this->nby = rhs.nby;
@@ -37,10 +38,14 @@ Gint& Gint::operator=(Gint&& rhs)
     this->nplane = rhs.nplane;
     this->startz_current = rhs.startz_current;
 
-    if (this->pvpR_reduced != nullptr) d2(this->pvpR_reduced, GlobalV::NSPIN);  //nspin*gridt.nnrg
-    if (this->pvdpRx_reduced != nullptr) d2(this->pvdpRx_reduced, GlobalV::NSPIN);
-    if (this->pvdpRy_reduced != nullptr) d2(this->pvdpRy_reduced, GlobalV::NSPIN);
-    if (this->pvdpRz_reduced != nullptr) d2(this->pvdpRz_reduced, GlobalV::NSPIN);
+    if (this->pvpR_reduced != nullptr) { d2(this->pvpR_reduced, GlobalV::NSPIN);  //nspin*gridt.nnrg
+}
+    if (this->pvdpRx_reduced != nullptr) { d2(this->pvdpRx_reduced, GlobalV::NSPIN);
+}
+    if (this->pvdpRy_reduced != nullptr) { d2(this->pvdpRy_reduced, GlobalV::NSPIN);
+}
+    if (this->pvdpRz_reduced != nullptr) { d2(this->pvdpRz_reduced, GlobalV::NSPIN);
+}
     this->pvpR_alloc_flag = rhs.pvpR_alloc_flag;
     rhs.pvpR_alloc_flag = false;
     this->pvpR_reduced = rhs.pvpR_reduced;
@@ -69,7 +74,8 @@ Gint& Gint::operator=(Gint&& rhs)
 
 Gint_Gamma& Gint_Gamma::operator=(Gint_Gamma&& rhs)
 {
-    if (this == &rhs)return *this;
+    if (this == &rhs) {return *this;
+}
     Gint::operator=(std::move(rhs));
 
     // DM may not needed in beyond DFT ESolver
@@ -80,7 +86,8 @@ Gint_Gamma& Gint_Gamma::operator=(Gint_Gamma&& rhs)
 
 Gint_k& Gint_k::operator=(Gint_k&& rhs)
 {
-    if (this == &rhs)return *this;
+    if (this == &rhs) {return *this;
+}
     this->Gint::operator=(std::move(rhs));
     return *this;
 }
