@@ -22,7 +22,7 @@ class Gint {
 
     hamilt::HContainer<double>* get_hRGint() const { return hRGint; }
     std::vector<hamilt::HContainer<double>*> get_DMRGint() const { return DMRGint; }
-    const int get_ncxyz() const { return ncxyz; }
+    int get_ncxyz() const { return ncxyz; }
 
     // the unified interface to grid integration
     void cal_gint(Gint_inout* inout);
