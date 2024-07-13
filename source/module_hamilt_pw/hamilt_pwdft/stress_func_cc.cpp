@@ -17,7 +17,7 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma,
         
 	FPTYPE fact=1.0;
 
-	if(is_pw&&INPUT.gamma_only) 
+	if(is_pw&&PARAM.inp.gamma_only) 
 	{
 		fact = 2.0; //is_pw:PW basis, gamma_only need to FPTYPE.
 	}

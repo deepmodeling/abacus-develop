@@ -159,7 +159,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
     }
 
     // init wfc from file
-    if(istep == 0 && INPUT.init_wfc == "file")
+    if(istep == 0 && PARAM.inp.init_wfc == "file")
     {
         if (! ModuleIO::read_wfc_nao(GlobalV::global_readin_dir, this->ParaV, *(this->psi), this->pelec))
         {
@@ -272,7 +272,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
     //----------------------------------------------------------
     // about vdw, jiyy add vdwd3 and linpz add vdwd2
     //----------------------------------------------------------
-    auto vdw_solver = vdw::make_vdw(GlobalC::ucell, INPUT);
+    auto vdw_solver = vdw::make_vdw(GlobalC::ucell, PARAM.inp);
     if (vdw_solver != nullptr)
     {
         this->pelec->f_en.evdw = vdw_solver->get_energy();

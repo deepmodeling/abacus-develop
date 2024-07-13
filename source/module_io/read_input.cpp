@@ -419,7 +419,7 @@ void ReadInput::check_ntype(const std::string& fn, int& param_ntype)
     if (!ifa)
     {
         GlobalV::ofs_warning << fn;
-        ModuleBase::WARNING_QUIT("Input::count_ntype", "Can not find the file containing atom positions.!");
+        ModuleBase::WARNING_QUIT("ReadInput::check_ntype", "Can not find the file containing atom positions.!");
     }
 
     int ntype_stru = 0;

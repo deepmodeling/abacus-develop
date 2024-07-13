@@ -49,7 +49,7 @@ void Driver::init()
 
     // (5) output the json file
     // Json::create_Json(&GlobalC::ucell.symm,GlobalC::ucell.atoms,&INPUT);
-    Json::create_Json(&GlobalC::ucell, &INPUT);
+    Json::create_Json(&GlobalC::ucell, PARAM);
 }
 
 void Driver::print_start_info()
@@ -68,7 +68,6 @@ void Driver::print_start_info()
 #endif
     time_t time_now = time(nullptr);
 
-    INPUT.start_time = time_now;
     PARAM.set_start_time(time_now);
     GlobalV::ofs_running << "                                                  "
                             "                                   "

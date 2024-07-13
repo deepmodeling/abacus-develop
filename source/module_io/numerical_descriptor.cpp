@@ -47,11 +47,11 @@ void Numerical_Descriptor::output_descriptor(const psi::Psi<std::complex<double>
     // 0 stands for : 'Faln' is not used.
     this->bessel_basis.init(
 		0,
-		std::stod(INPUT.bessel_descriptor_ecut),
+		std::stod(PARAM.inp.bessel_descriptor_ecut),
 		GlobalC::ucell.ntype,
 		this->lmax,
-		INPUT.bessel_descriptor_smooth,
-		INPUT.bessel_descriptor_sigma,
+		PARAM.inp.bessel_descriptor_smooth,
+		PARAM.inp.bessel_descriptor_sigma,
 		rcut_in,
 		tol_in,
         GlobalC::ucell
