@@ -28,6 +28,7 @@
 #include "module_io/rho_io.h"
 #include "module_io/write_pot.h"
 #include "module_io/write_wfc_nao.h"
+#include "module_io/read_wfc_nao.h"
 #include "module_base/formatter.h"
 #ifdef __EXX
 #include "module_io/restart_exx_csr.h"
@@ -99,7 +100,7 @@ void ESolver_KS_LCAO<TK, TR>::set_matrix_grid(Record_adj& ra)
     // (2)For each atom, calculate the adjacent atoms in different cells
     // and allocate the space for H(R) and S(R).
     // If k point is used here, allocate HlocR after atom_arrange.
-    Parallel_Orbitals* pv = this->LM.ParaV;
+    Parallel_Orbitals* pv = &this->ParaV;
     ra.for_2d(*pv, GlobalV::GAMMA_ONLY_LOCAL);
     if (!GlobalV::GAMMA_ONLY_LOCAL)
     {
@@ -157,6 +158,16 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
         this->psi = new psi::Psi<TK>(nsk, ncol, this->ParaV.nrow, nullptr);
     }
 
+    // init wfc from file
+    if(istep == 0 && INPUT.init_wfc == "file")
+    {
+        if (! ModuleIO::read_wfc_nao(GlobalV::global_readin_dir, this->ParaV, *(this->psi), this->pelec))
+        {
+            ModuleBase::WARNING_QUIT("ESolver_KS_LCAO<TK, TR>::beforesolver",
+                                     "read wfc nao failed");
+        }
+    }
+
     // prepare grid in Gint
     LCAO_domain::grid_prepare(this->GridT, this->GG, this->GK, *this->pw_rho, *this->pw_big);
 
@@ -172,27 +183,25 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
         this->p_hamilt = new hamilt::HamiltLCAO<TK, TR>(
             GlobalV::GAMMA_ONLY_LOCAL ? &(this->GG) : nullptr,
             GlobalV::GAMMA_ONLY_LOCAL ? nullptr : &(this->GK),
-            &(this->LM),
             &this->ParaV,
             this->pelec->pot,
             this->kv,
             two_center_bundle_,
+            DM
 #ifdef __EXX
-            DM,
-            GlobalC::exx_info.info_ri.real_number ? &this->exd->two_level_step : &this->exc->two_level_step);
-#else
-            DM);
+            , GlobalC::exx_info.info_ri.real_number ? &this->exd->two_level_step : &this->exc->two_level_step
+            , GlobalC::exx_info.info_ri.real_number ? &exx_lri_double->Hexxs : nullptr
+            , GlobalC::exx_info.info_ri.real_number ? nullptr : &exx_lri_complex->Hexxs
 #endif
+        );
     }
-    // init density kernel and wave functions.
-    this->LOC.allocate_dm_wfc(this->GridT, this->pelec, this->psi, this->kv, istep);
 
 #ifdef __DEEPKS
     // for each ionic step, the overlap <psi|alpha> must be rebuilt
     // since it depends on ionic positions
     if (GlobalV::deepks_setorb)
     {
-        const Parallel_Orbitals* pv = this->LM.ParaV;
+        const Parallel_Orbitals* pv = &this->ParaV;
         // build and save <psi(0)|alpha(R)> at beginning
         GlobalC::ld.build_psialpha(GlobalV::CAL_FORCE,
                                    GlobalC::ucell,
@@ -579,7 +588,7 @@ void ESolver_KS_LCAO<std::complex<double>, double>::get_S(void)
 
     std::cout << " The file is saved in " << fn << std::endl;
 
-    ModuleIO::output_SR(ParaV, this->LM, GlobalC::GridD, this->p_hamilt, fn);
+    ModuleIO::output_SR(ParaV, GlobalC::GridD, this->p_hamilt, fn);
 
     return;
 }
@@ -603,7 +612,6 @@ void ESolver_KS_LCAO<std::complex<double>, std::complex<double>>::get_S(void)
                          GlobalV::test_atom_input);
 
     this->RA.for_2d(this->ParaV, GlobalV::GAMMA_ONLY_LOCAL);
-    this->LM.ParaV = &this->ParaV;
     if (this->p_hamilt == nullptr) {
         this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>,
                                                 std::complex<double>>(
@@ -621,7 +629,7 @@ void ESolver_KS_LCAO<std::complex<double>, std::complex<double>>::get_S(void)
 
     std::cout << " The file is saved in " << fn << std::endl;
 
-    ModuleIO::output_SR(ParaV, this->LM, GlobalC::GridD, this->p_hamilt, fn);
+    ModuleIO::output_SR(ParaV, GlobalC::GridD, this->p_hamilt, fn);
 
     return;
 }

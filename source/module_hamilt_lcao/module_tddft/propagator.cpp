@@ -241,10 +241,12 @@ void Propagator::compute_propagator_cn2(const int nlocal,
                 double aa, bb;
                 aa = U_operator[i * this->ParaV->ncol + j].real();
                 bb = U_operator[i * this->ParaV->ncol + j].imag();
-                if (std::abs(aa) < 1e-8)
+                if (std::abs(aa) < 1e-8) {
                     aa = 0.0;
-                if (std::abs(bb) < 1e-8)
+}
+                if (std::abs(bb) < 1e-8) {
                     bb = 0.0;
+}
                 GlobalV::ofs_running << aa << "+" << bb << "i ";
             }
             GlobalV::ofs_running << std::endl;
@@ -312,31 +314,28 @@ void Propagator::compute_propagator_taylor(const int nlocal,
 
     // set rank0
     int info;
-    int myid;
-    MPI_Comm_rank(this->ParaV->comm_2D, &myid);
     int naroc[2]; // maximum number of row or column
 
     for (int iprow = 0; iprow < this->ParaV->dim0; ++iprow)
     {
         for (int ipcol = 0; ipcol < this->ParaV->dim1; ++ipcol)
         {
-            const int coord[2] = {iprow, ipcol};
-            int src_rank;
-            info = MPI_Cart_rank(this->ParaV->comm_2D, coord, &src_rank);
-            if (myid == src_rank)
+            if (iprow == ParaV->coord[0] && ipcol == ParaV->coord[1])
             {
                 naroc[0] = this->ParaV->nrow;
                 naroc[1] = this->ParaV->ncol;
                 for (int j = 0; j < naroc[1]; ++j)
                 {
                     int igcol = globalIndex(j, this->ParaV->nb, this->ParaV->dim1, ipcol);
-                    if (igcol >= nlocal)
+                    if (igcol >= nlocal) {
                         continue;
+}
                     for (int i = 0; i < naroc[0]; ++i)
                     {
                         int igrow = globalIndex(i, this->ParaV->nb, this->ParaV->dim0, iprow);
-                        if (igrow >= nlocal)
+                        if (igrow >= nlocal) {
                             continue;
+}
                         if (igcol == igrow)
                         {
                             rank0[j * naroc[0] + i] = {1.0, 0.0};
@@ -557,10 +556,12 @@ void Propagator::compute_propagator_taylor(const int nlocal,
                 double aa, bb;
                 aa = U_operator[i * this->ParaV->ncol + j].real();
                 bb = U_operator[i * this->ParaV->ncol + j].imag();
-                if (std::abs(aa) < 1e-8)
+                if (std::abs(aa) < 1e-8) {
                     aa = 0.0;
-                if (std::abs(bb) < 1e-8)
+}
+                if (std::abs(bb) < 1e-8) {
                     bb = 0.0;
+}
                 GlobalV::ofs_running << aa << "+" << bb << "i ";
             }
             GlobalV::ofs_running << std::endl;

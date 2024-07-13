@@ -147,6 +147,11 @@ class AtomPair
     */
     const Parallel_Orbitals* get_paraV() const;
 
+    /**
+ * @brief set Parallel_Orbitals pointer of this AtomPair for checking 2d-block parallel
+*/
+    void  set_paraV(const Parallel_Orbitals* paraV_in) { this->paraV = paraV_in; };
+
     /// use atom_i and atom_j to identify the atom-pair
     bool identify(const AtomPair<T>& other) const;
     bool identify(const int& atom_i_, const int& atom_j_) const;

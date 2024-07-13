@@ -27,19 +27,6 @@ void ElecStateLCAO_TDDFT::psiToRho_td(const psi::Psi<std::complex<double>>& psi)
     {
         elecstate::cal_dm_psi(this->DM->get_paraV_pointer(), this->wg, psi, *(this->DM));
         this->DM->cal_DMR();
-
-// interface for RI-related calculation, which needs loc.dm_k
-#ifdef __EXX
-        if (GlobalC::exx_info.info_global.cal_exx)
-        {
-            const K_Vectors* kv = this->DM->get_kv_pointer();
-            this->loc->dm_k.resize(kv->get_nks());
-            for (int ik = 0; ik < kv->get_nks(); ++ik)
-            {
-                this->loc->set_dm_k(ik, this->DM->get_DMK_pointer(ik));
-            }
-        }
-#endif
     }
 
     for (int is = 0; is < GlobalV::NSPIN; is++)

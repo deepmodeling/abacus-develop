@@ -120,15 +120,6 @@ class Setcell
         ucell.set_iat2itia();
     };
 
-    static void neighbor(Grid_Driver& grid_neigh, UnitCell& ucell)
-    {
-        GlobalV::SEARCH_RADIUS = 8.5 * ModuleBase::ANGSTROM_AU;
-        INPUT.mdp.lj_rcut = 8.5 * ModuleBase::ANGSTROM_AU;
-        INPUT.mdp.lj_epsilon = 0.01032 / ModuleBase::Hartree_to_eV;
-        INPUT.mdp.lj_sigma = 3.405 * ModuleBase::ANGSTROM_AU;
-        atom_arrange::search(1, GlobalV::ofs_running, grid_neigh, ucell, GlobalV::SEARCH_RADIUS, 0, 0);
-    };
-
     static void parameters()
     {
         GlobalV::global_out_dir = "./";
@@ -146,9 +137,9 @@ class Setcell
         INPUT.mdp.md_tfirst = INPUT.mdp.md_tlast = 300;
 
         GlobalV::ESOLVER_TYPE = "lj";
-        INPUT.mdp.lj_rcut = 8.5;
-        INPUT.mdp.lj_epsilon = 0.01032;
-        INPUT.mdp.lj_sigma = 3.405;
+        INPUT.mdp.lj_rcut = {8.5};
+        INPUT.mdp.lj_epsilon = {0.01032};
+        INPUT.mdp.lj_sigma = {3.405};
 
         INPUT.mdp.msst_direction = 2;
         INPUT.mdp.msst_qmass = 1;

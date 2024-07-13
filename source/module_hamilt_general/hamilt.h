@@ -51,6 +51,8 @@ class Hamilt
 			MatrixBlock<double> &hk_in, 
 			MatrixBlock<double> &sk_in){return;}
 
+    virtual std::vector<T> matrix() { return std::vector<T>(); }
+
     std::string classname = "none";
 
     int non_first_scf=0;

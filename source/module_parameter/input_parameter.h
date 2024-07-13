@@ -11,6 +11,11 @@ struct Input_supplement
 {
     bool two_fermi = false; ///< true if "nupdown" is set
 
+    // for lj pot
+    int n_ljcut = 0;     ///< number of lj_rcut, assuming 0 as no values provided
+    int n_ljepsilon = 0; ///< number of lj_epsilon, assuming 0 as no values provided
+    int n_ljsigma = 0;   ///< number of lj_sigma, assuming 0 as no values provided
+
     // For parameter "bessel_nao_rcuts"
     int nrcut = 0;                ///< number of bessel_nao_rcuts, assuming 0 as no values provided
     double bessel_nao_rcut = 6.0; ///< radial cutoff for spherical bessel functions(a.u.)
@@ -46,7 +51,7 @@ struct Input_para
     std::string pseudo_dir = "";                    ///< directory of pseudopotential
     std::string orbital_dir = "";                   ///< directory of orbital file
     double pseudo_rcut = 15.0;                      ///< cut-off radius for calculating msh
-    bool pseudo_mesh = 0;                           ///< 0: use msh to normalize radial wave functions; 1:
+    bool pseudo_mesh = false;                           ///< 0: use msh to normalize radial wave functions; 1:
                                                     ///< use mesh, which is used in QE.
     int lmaxmax = 2;                                ///< maximum of l channels used
     std::string dft_functional = "default";         ///< input DFT functional.
@@ -91,7 +96,7 @@ struct Input_para
     std::string wannier_card = "none"; ///< input card for wannier functions.
     double soc_lambda = 1.0;           ///< The fraction of averaged SOC pseudopotential
                                        ///< is given by (1-soc_lambda)
-    bool cal_force = 0;                ///< calculate the force
+    bool cal_force = false;                ///< calculate the force
     int out_freq_ion = 0;              ///< the frequency ( >= 0 ) of ionic step to output charge density
                                        ///< and wavefunction. 0: output only when ion steps are finished
     int elpa_num_thread = -1;          ///< Number of threads need to use in elpa
@@ -156,7 +161,7 @@ struct Input_para
     int cond_dtbatch = 0;       ///< exp(iH*dt*cond_dtbatch) is expanded with Chebyshev expansion.
     int cond_smear = 1;         ///< smearing method for conductivities 1: Gaussian 2: Lorentzian
     double cond_fwhm = 0.4;     ///< FWHM for conductivities
-    bool cond_nonlocal = 1;     ///< if calculate nonlocal effects
+    bool cond_nonlocal = true;     ///< if calculate nonlocal effects
 
     // ==============   #Parameters (4.Relaxation) ===========================
     std::string ks_solver = "default"; ///< xiaohui add 2013-09-01
@@ -197,6 +202,7 @@ struct Input_para
     bool deepks_scf = false;          ///< (need libnpy and libtorch) if set to true, a trained model
                                       ///< would be needed to calculate V_delta and F_delta
     bool deepks_bandgap = false;      ///< for bandgap label. QO added 2021-12-15
+    int deepks_v_delta = 0;           ///< for v_delta label. xuan added
     bool deepks_equiv = false;        ///< whether to use equivariant version of DeePKS
     bool deepks_out_unittest = false; ///< if set to true, prints intermediate quantities that shall
                                       ///< be used for making unit test
@@ -582,5 +588,15 @@ struct Input_para
     double pexsi_mu_guard = 0.2;
     double pexsi_elec_thr = 0.001;
     double pexsi_zero_thr = 1e-10;
+
+    // ==============   #Parameters (25. Linear Response) =====================
+    int lr_nstates = 1;   ///< the number of 2-particle states to be solved
+    int nvirt = 1;        ///< the number of virtual orbitals to form the 2-particle basis (nocc + nvirt <= nbands)
+    std::string xc_kernel = "LDA"; ///< exchange correlation (XC) kernel for LR-TDDFT
+    std::string lr_solver = "dav"; ///< the eigensolver for LR-TDDFT
+    double lr_thr = 1e-2;  ///< convergence threshold of the LR-TDDFT eigensolver
+    bool out_wfc_lr = false;    ///< whether to output the eigenvectors (excitation amplitudes) in the particle-hole basis
+    std::vector<double> abs_wavelen_range = { 0., 0. };  ///< the range of wavelength(nm) to output the absorption spectrum 
+    double abs_broadening = 0.01;   ///< the broadening (eta) for LR-TDDFT absorption spectrum
 };
 #endif

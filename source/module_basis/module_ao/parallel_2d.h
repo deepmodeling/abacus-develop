@@ -4,9 +4,7 @@
 #include <cstdint>
 #include <vector>
 
-#ifdef __MPI
-#include <mpi.h>
-#endif
+#include "module_base/blacs_connector.h"
 
 /// @brief  This class packs the basic information of
 /// 2D-block-cyclic parallel distribution of an arbitrary matrix.
@@ -15,6 +13,8 @@ class Parallel_2D
   public:
     Parallel_2D() = default;
     ~Parallel_2D() = default;
+
+    Parallel_2D& operator=(Parallel_2D&& rhs) = default;
 
     /// number of local rows
     int get_row_size() const
@@ -87,13 +87,12 @@ class Parallel_2D
 
     /**
      * @brief Set up the info of a block-cyclic distribution using given
-     * MPI communicator and BLACS context.
+     * BLACS context.
      *
      */
     int set(const int mg,
             const int ng,
             const int nb, // square block is assumed
-            const MPI_Comm comm_2D,
             const int blacs_ctxt);
 
     /// BLACS context
@@ -102,8 +101,7 @@ class Parallel_2D
     /// ScaLAPACK descriptor
     int desc[9] = {};
 
-    /// 2D Cartesian MPI communicator
-    MPI_Comm comm_2D = MPI_COMM_NULL;
+    MPI_Comm comm() const;
 #endif
 
     void set_serial(const int mg, const int ng);
@@ -116,6 +114,9 @@ class Parallel_2D
     int nrow = 0;
     int ncol = 0;
     int64_t nloc = 0;
+    // NOTE: ScaLAPACK descriptors use int type for the number of rows and columns of
+    // both the global and local matrices, so nrow & ncol have to be int type. Their
+    // product, however, can exceed the range of int type.
 
     /// block size
     int nb = 1;
@@ -124,7 +125,7 @@ class Parallel_2D
     int dim0 = 0;
     int dim1 = 0;
 
-    /// process coordinate in the MPI Cartesian grid
+    /// process coordinate in the BLACS grid
     int coord[2] = {-1, -1};
 
   protected:

@@ -142,13 +142,14 @@ set(ABACUS_BIN_PATH ${CMAKE_CURRENT_BINARY_DIR}/${ABACUS_BIN_NAME})
 include_directories(${ABACUS_SOURCE_DIR})
 include_directories(${ABACUS_SOURCE_DIR}/module_base/module_container)
 
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 add_executable(${ABACUS_BIN_NAME} source/main.cpp)
 if(ENABLE_COVERAGE)
   add_coverage(${ABACUS_BIN_NAME})
 endif()
 
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
 macro(set_if_higher VARIABLE VALUE)
   if(${VARIABLE} LESS ${VALUE})
     set(${VARIABLE} ${VALUE})
@@ -395,6 +396,7 @@ if(DEFINED ENV{MKLROOT} AND NOT DEFINED MKLROOT)
 endif()
 if(MKLROOT)
   set(MKL_INTERFACE lp64)
+  set(ENABLE_SCALAPACK ON)
   find_package(MKL REQUIRED)
   add_definitions(-D__MKL)
   include_directories(${MKL_INCLUDE} ${MKL_INCLUDE}/fftw)
@@ -709,7 +711,8 @@ if(ENABLE_LCAO)
     dftu
     hcontainer
     deltaspin
-    numerical_atomic_orbitals)
+    numerical_atomic_orbitals
+    lr)
   if(USE_ELPA)
     target_link_libraries(${ABACUS_BIN_NAME} genelpa)
   endif()

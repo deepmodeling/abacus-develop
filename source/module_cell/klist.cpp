@@ -608,6 +608,7 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry& symm,
     if (use_symm)
     {
         // bravais type of reciprocal lattice and k-lattice
+      
         double recip_vec_const[6];
         double recip_vec0_const[6];
         double k_vec_const[6];
@@ -636,7 +637,7 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry& symm,
                           false,
                           nullptr);
         GlobalV::ofs_running << "(for reciprocal lattice: )" << std::endl;
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "BRAVAIS TYPE", recip_brav_type);
+          ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "BRAVAIS TYPE", recip_brav_type);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "BRAVAIS LATTICE NAME", recip_brav_name);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "ibrav", recip_brav_type);
 

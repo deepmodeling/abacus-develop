@@ -1,7 +1,6 @@
 #ifndef ESOLVER_KS_LCAO_H
 #define ESOLVER_KS_LCAO_H
 #include "esolver_ks.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/record_adj.h"
 // for grid integration
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
@@ -15,7 +14,13 @@
 
 #include <memory>
 
-namespace ModuleESolver {
+namespace LR
+{
+    template<typename T, typename TR>
+    class ESolver_LR;
+}
+namespace ModuleESolver
+{
 template <typename TK, typename TR>
 class ESolver_KS_LCAO : public ESolver_KS<TK> {
   public:
@@ -62,9 +67,6 @@ class ESolver_KS_LCAO : public ESolver_KS<TK> {
     // we will get rid of this class soon, don't use it, mohan 2024-03-28
     Record_adj RA;
 
-    // we will get rid of this class soon, don't use it, mohan 2024-03-28
-    Local_Orbital_Charge LOC;
-
     // 2d block-cyclic distribution info
     Parallel_Orbitals ParaV;
 
@@ -73,9 +75,6 @@ class ESolver_KS_LCAO : public ESolver_KS<TK> {
 
     // used for gamma only algorithms.
     Gint_Gamma GG;
-
-    // we will get rid of this class soon, don't use it, mohan 2024-03-28
-    LCAO_Matrix LM;
 
     Grid_Technique GridT;
 
@@ -126,6 +125,8 @@ class ESolver_KS_LCAO : public ESolver_KS<TK> {
     void dpks_cal_projected_DM(
         const elecstate::DensityMatrix<TK, double>* dm) const;
 #endif
+    friend class LR::ESolver_LR<double, double>;
+    friend class LR::ESolver_LR<std::complex<double>, double>;
 };
 } // namespace ModuleESolver
 #endif

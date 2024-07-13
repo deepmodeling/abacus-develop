@@ -5,6 +5,7 @@
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_base/timer.h"
+#include "module_base/array_pool.h"
 #include "module_base/ylm.h"
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
@@ -30,7 +31,7 @@ void Gint::gint_kernel_rho(const int na_grid,
                                cal_flag);
 
     // evaluate psi on grids
-    Gint_Tools::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
+    ModuleBase::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
     Gint_Tools::cal_psir_ylm(*this->gridt,
                              this->bxyz,
                              na_grid,
@@ -39,12 +40,12 @@ void Gint::gint_kernel_rho(const int na_grid,
                              block_index,
                              block_size,
                              cal_flag,
-                             psir_ylm.ptr_2D);
+                             psir_ylm.get_ptr_2D());
 
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
-        Gint_Tools::Array_Pool<double> psir_DM(this->bxyz, LD_pool);
-        ModuleBase::GlobalFunc::ZEROS(psir_DM.ptr_1D, this->bxyz * LD_pool);
+        ModuleBase::Array_Pool<double> psir_DM(this->bxyz, LD_pool);
+        ModuleBase::GlobalFunc::ZEROS(psir_DM.get_ptr_1D(), this->bxyz * LD_pool);
         if (GlobalV::GAMMA_ONLY_LOCAL)
         {
             Gint_Tools::mult_psi_DM_new(*this->gridt,
@@ -56,8 +57,8 @@ void Gint::gint_kernel_rho(const int na_grid,
                                         block_size,
                                         block_index,
                                         cal_flag,
-                                        psir_ylm.ptr_2D,
-                                        psir_DM.ptr_2D,
+                                        psir_ylm.get_ptr_2D(),
+                                        psir_DM.get_ptr_2D(),
                                         this->DMRGint[is],
                                         inout->if_symm);
         }
@@ -71,14 +72,14 @@ void Gint::gint_kernel_rho(const int na_grid,
                                      block_index,
                                      block_size,
                                      cal_flag,
-                                     psir_ylm.ptr_2D,
-                                     psir_DM.ptr_2D,
+                                     psir_ylm.get_ptr_2D(),
+                                     psir_DM.get_ptr_2D(),
                                      this->DMRGint[is],
                                      inout->if_symm);
         }
 
         // do sum_mu g_mu(r)psi_mu(r) to get electron density on grid
-        this->cal_meshball_rho(na_grid, block_index, vindex, psir_ylm.ptr_2D, psir_DM.ptr_2D, inout->rho[is]);
+        this->cal_meshball_rho(na_grid, block_index, vindex, psir_ylm.get_ptr_2D(), psir_DM.get_ptr_2D(), inout->rho[is]);
     }
     delete[] block_iw;
     delete[] block_index;

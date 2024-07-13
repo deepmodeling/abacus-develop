@@ -73,15 +73,14 @@ void ESolver_KS_LCAO_TDDFT::before_all_runners(Input& inp, UnitCell& ucell)
     GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, pw_rho);
 
     // 3) initialize the electronic states for TDDFT
-    if (this->pelec == nullptr)
-    {
-        this->pelec = new elecstate::ElecStateLCAO_TDDFT(&this->chr,
-                                                         &kv,
-                                                         kv.get_nks(),
-                                                         &this->LOC,
-                                                         &this->GK, // mohan add 2024-04-01
-                                                         this->pw_rho,
-                                                         pw_big);
+    if (this->pelec == nullptr) {
+        this->pelec = new elecstate::ElecStateLCAO_TDDFT(
+            &this->chr,
+            &kv,
+            kv.get_nks(),
+            &this->GK, // mohan add 2024-04-01
+            this->pw_rho,
+            pw_big);
     }
 
     // 4) read the local orbitals and construct the interpolation tables.
@@ -90,19 +89,14 @@ void ESolver_KS_LCAO_TDDFT::before_all_runners(Input& inp, UnitCell& ucell)
     // 5) allocate H and S matrices according to computational resources
     LCAO_domain::divide_HS_in_frag(GlobalV::GAMMA_ONLY_LOCAL, ParaV, kv.get_nks());
 
-    // this part will be updated soon
-    // pass Hamilt-pointer to Operator
-    this->LM.ParaV = &(this->ParaV);
-    this->LOC.ParaV = this->LM.ParaV;
-
     // 6) initialize Density Matrix
     dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)
-        ->init_DM(&kv, this->LM.ParaV, GlobalV::NSPIN);
+        ->init_DM(&kv, &this->ParaV, GlobalV::NSPIN);
 
     // 7) initialize Hsolver
     if (this->phsol == nullptr)
     {
-        this->phsol = new hsolver::HSolverLCAO<std::complex<double>>(this->LM.ParaV);
+        this->phsol = new hsolver::HSolverLCAO<std::complex<double>>(&this->ParaV);
         this->phsol->method = GlobalV::KS_SOLVER;
     }
 
@@ -258,28 +252,28 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
                 if (hsolver::HSolverLCAO<std::complex<double>>::out_mat_hs[0])
                 {
                     ModuleIO::save_mat(istep,
-                                       h_mat.p,
-                                       GlobalV::NLOCAL,
-                                       bit,
-                                       hsolver::HSolverLCAO<std::complex<double>>::out_mat_hs[1],
-                                       1,
-                                       GlobalV::out_app_flag,
-                                       "H",
-                                       "data-" + std::to_string(ik),
-                                       *this->LM.ParaV,
-                                       GlobalV::DRANK);
+                        h_mat.p,
+                        GlobalV::NLOCAL,
+                        bit,
+                        hsolver::HSolverLCAO<std::complex<double>>::out_mat_hs[1],
+                        1,
+                        GlobalV::out_app_flag,
+                        "H",
+                        "data-" + std::to_string(ik),
+                        this->ParaV,
+                        GlobalV::DRANK);
 
                     ModuleIO::save_mat(istep,
-                                       s_mat.p,
-                                       GlobalV::NLOCAL,
-                                       bit,
-                                       hsolver::HSolverLCAO<std::complex<double>>::out_mat_hs[1],
-                                       1,
-                                       GlobalV::out_app_flag,
-                                       "S",
-                                       "data-" + std::to_string(ik),
-                                       *this->LM.ParaV,
-                                       GlobalV::DRANK);
+                        s_mat.p,
+                        GlobalV::NLOCAL,
+                        bit,
+                        hsolver::HSolverLCAO<std::complex<double>>::out_mat_hs[1],
+                        1,
+                        GlobalV::out_app_flag,
+                        "S",
+                        "data-" + std::to_string(ik),
+                        this->ParaV,
+                        GlobalV::DRANK);
                 }
             }
         }
@@ -313,8 +307,8 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
     }
 
     const int nloc = this->ParaV.nloc;
-    const int ncol_nbands = this->LM.ParaV->ncol_bands;
-    const int nrow = this->LM.ParaV->nrow;
+    const int ncol_nbands = this->ParaV.ncol_bands;
+    const int nrow = this->ParaV.nrow;
     const int nbands = GlobalV::NBANDS;
     const int nlocal = GlobalV::NLOCAL;
 
@@ -439,10 +433,10 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft()
     const int nlocal = GlobalV::NLOCAL;
     assert(nlocal >= 0);
 
-    // this->LOC.edm_k_tddft.resize(kv.get_nks());
-    dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)->get_DM()->EDMK.resize(kv.get_nks());
-    for (int ik = 0; ik < kv.get_nks(); ++ik)
-    {
+    dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)
+        ->get_DM()
+        ->EDMK.resize(kv.get_nks());
+    for (int ik = 0; ik < kv.get_nks(); ++ik) {
         std::complex<double>* tmp_dmk
             = dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)->get_DM()->get_DMK_pointer(ik);
 

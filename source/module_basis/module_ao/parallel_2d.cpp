@@ -1,6 +1,5 @@
 #include "parallel_2d.h"
 
-#include "module_base/blacs_connector.h"
 #include "module_base/scalapack_connector.h"
 
 #include <cassert>
@@ -30,6 +29,22 @@ int Parallel_2D::get_global_col_size() const
 }
 
 #ifdef __MPI
+MPI_Comm Parallel_2D::comm() const
+{
+    // it is an error to call blacs_get with an invalid BLACS context
+    if (blacs_ctxt < 0)
+    {
+        return MPI_COMM_NULL;
+    }
+
+    int sys_ctxt = 0;
+    Cblacs_get(blacs_ctxt, 10, &sys_ctxt);
+    // blacs_get with "what" = 10 takes a BLACS context and returns the index
+    // of the associated system context (MPI communicator) that can be used by
+    // blacs2sys_handle to get the MPI communicator.
+    return Cblacs2sys_handle(sys_ctxt);
+}
+
 void Parallel_2D::_init_proc_grid(const MPI_Comm comm, const bool mode)
 {
     // determine the number of rows and columns of the process grid
@@ -47,23 +62,11 @@ void Parallel_2D::_init_proc_grid(const MPI_Comm comm, const bool mode)
         std::swap(dim0, dim1);
     }
 
-    // create a 2D Cartesian MPI communicator (row-major by default)
-    int period[2] = {1, 1};
-    int dim[2] = {dim0, dim1};
-    const int reorder = 0;
-    MPI_Cart_create(comm, 2, dim, period, reorder, &comm_2D);
-    MPI_Cart_get(comm_2D, 2, dim, period, coord);
-
     // initialize the BLACS grid accordingly
-    blacs_ctxt = Csys2blacs_handle(comm_2D);
+    blacs_ctxt = Csys2blacs_handle(comm);
     char order = 'R'; // row-major
     Cblacs_gridinit(&blacs_ctxt, &order, dim0, dim1);
-
-    // TODO Currently MPI and BLACS are made to have the same Cartesian grid.
-    // In theory, however, BLACS would split any given communicator to create
-    // new ones for its own purpose when initializing the process grid, so it
-    // might be unnecessary to create an MPI communicator with Cartesian topology.
-    // ***This needs to be verified***
+    Cblacs_gridinfo(blacs_ctxt, &dim0, &dim1, &coord[0], &coord[1]);
 }
 
 void Parallel_2D::_set_dist_info(const int mg, const int ng, const int nb)
@@ -105,9 +108,8 @@ int Parallel_2D::init(const int mg, const int ng, const int nb, const MPI_Comm c
     return nrow == 0 || ncol == 0;
 }
 
-int Parallel_2D::set(const int mg, const int ng, const int nb, const MPI_Comm comm_2D, const int blacs_ctxt)
+int Parallel_2D::set(const int mg, const int ng, const int nb, const int blacs_ctxt)
 {
-    this->comm_2D = comm_2D;
     this->blacs_ctxt = blacs_ctxt;
     Cblacs_gridinfo(blacs_ctxt, &dim0, &dim1, &coord[0], &coord[1]);
     _set_dist_info(mg, ng, nb);
@@ -124,7 +126,7 @@ void Parallel_2D::set_serial(const int mg, const int ng)
     coord[0] = coord[1] = 0;
     nrow = mg;
     ncol = ng;
-    nloc = nrow * ncol;
+    nloc = static_cast<int64_t>(nrow) * ncol;
     local2global_row_.resize(nrow);
     local2global_col_.resize(ncol);
     std::iota(local2global_row_.begin(), local2global_row_.end(), 0);
@@ -132,7 +134,6 @@ void Parallel_2D::set_serial(const int mg, const int ng)
     global2local_row_ = local2global_row_;
     global2local_col_ = local2global_col_;
 #ifdef __MPI
-    comm_2D = MPI_COMM_NULL;
     blacs_ctxt = -1;
 #endif
 }

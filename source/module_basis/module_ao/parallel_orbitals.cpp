@@ -21,6 +21,24 @@ Parallel_Orbitals::~Parallel_Orbitals()
     delete[] nlocstart;
 }
 
+int Parallel_Orbitals::get_wfc_global_nbands() const
+{
+#ifdef __MPI
+    return this->desc_wfc[3];
+#else    
+    return this->ncol_bands;
+#endif
+}
+
+int Parallel_Orbitals::get_wfc_global_nbasis() const
+{
+#ifdef __MPI
+    return this->desc_wfc[2];
+#else
+    return this->nrow_bands;
+#endif
+}
+
 void Parallel_Orbitals::set_atomic_trace(const int* iat2iwt, const int &nat, const int &nlocal)
 {
     ModuleBase::TITLE("Parallel_Orbitals", "set_atomic_trace");
@@ -191,7 +209,6 @@ void Parallel_Orbitals::set_desc_wfc_Eij(const int& nbasis, const int& nbands, c
 {
     ModuleBase::TITLE("Parallel_2D", "set_desc_wfc_Eij");
 #ifdef __DEBUG
-    assert(this->comm_2D != MPI_COMM_NULL);
     assert(nbasis > 0 && nbands > 0 && lld > 0);
     assert(this->nb > 0 && this->dim0 > 0 && this->dim1 > 0);
 #endif
@@ -248,6 +265,7 @@ int Parallel_Orbitals::set_nloc_wfc_Eij(
     {
         this->ncol_bands = col_b_bands * nb;
     }
+    this->nrow_bands = this->nrow;
     this->nloc_wfc = this->ncol_bands * this->nrow;
 
     this->nloc_Eij = this->ncol_bands * this->ncol_bands;

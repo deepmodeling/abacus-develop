@@ -9,16 +9,15 @@
 #include <map>
 #include <vector>
 
-// use LCAO_Matrix
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_HS_arrays.hpp"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
+#include "module_basis/module_ao/parallel_orbitals.h"
 
 namespace sparse_format
 {
 
 template <typename Tdata>
 void cal_HR_exx(
-    LCAO_Matrix& lm,
+    const Parallel_Orbitals& pv,
     LCAO_HS_Arrays& HS_Arrays,
     const int& current_spin,
     const double& sparse_thr,

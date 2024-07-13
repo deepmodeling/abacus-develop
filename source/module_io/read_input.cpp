@@ -160,15 +160,6 @@ void ReadInput::create_directory(const Parameter& param)
                                           param.input.mdp.md_restart,
                                           param.input.out_alllog); // xiaohui add 2013-09-01
 
-    GlobalV::ofs_running << std::setiosflags(std::ios::left);
-    std::cout << std::setiosflags(std::ios::left);
-
-    GlobalV::ofs_running << "\n READING GENERAL INFORMATION" << std::endl;
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "global_out_dir", GlobalV::global_out_dir);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "global_in_card", GlobalV::global_in_card);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "pseudo_dir", GlobalV::global_pseudo_dir);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "orbital_dir", GlobalV::global_orbital_dir);
-
     const std::string ss = "test -d " + PARAM.inp.read_file_dir;
     if (system(ss.c_str()))
     {
@@ -243,8 +234,13 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
         {
             Input_Item* p_item = &(it->second);
             this->readvalue_items.push_back(p_item);
+            if(p_item->is_read())
+            {
+                std::string warningstr = "The parameter " + p_item->label + " has been read twice.";
+                ModuleBase::WARNING_QUIT("ReadInput", warningstr);
+            }
             // qianrui delete '/' 2024-07-10, because path has '/' head.
-            read_information(ifs, it->second.str_values, "#!");
+            read_information(ifs, p_item->str_values, "#!");
         }
         else
         {

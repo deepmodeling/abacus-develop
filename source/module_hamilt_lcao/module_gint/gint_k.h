@@ -12,7 +12,16 @@
 
 class Gint_k : public Gint {
   public:
-    ~Gint_k() { destroy_pvpR(); }
+    ~Gint_k()
+    {
+        destroy_pvpR();
+    }
+
+    /// @brief move operator for the next ESolver to directly use its infomation
+    /// @param rhs 
+    /// @return *this
+    Gint_k& operator=(Gint_k&& rhs);
+
     //------------------------------------------------------
     // in gint_k_pvpr.cpp
     //------------------------------------------------------
@@ -83,7 +92,7 @@ class Gint_k : public Gint {
                        std::map<size_t, std::map<size_t, double>>>&
             pvdpR_sparseMatrix,
         LCAO_HS_Arrays& HS_Arrays,
-        Parallel_Orbitals* pv);
+        const Parallel_Orbitals* pv);
 
     void distribute_pvdpR_soc_sparseMatrix(
         const int dim,
@@ -93,12 +102,12 @@ class Gint_k : public Gint {
             std::map<size_t, std::map<size_t, std::complex<double>>>>&
             pvdpR_soc_sparseMatrix,
         LCAO_HS_Arrays& HS_Arrays,
-        Parallel_Orbitals* pv);
+        const Parallel_Orbitals* pv);
 
     void cal_dvlocal_R_sparseMatrix(const int& current_spin,
                                     const double& sparse_threshold,
                                     LCAO_HS_Arrays& HS_Arrays,
-                                    Parallel_Orbitals* pv,
+                                    const Parallel_Orbitals* pv,
                                     UnitCell& ucell,
                                     Grid_Driver& gdriver);
 
