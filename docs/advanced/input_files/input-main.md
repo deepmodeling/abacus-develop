@@ -416,6 +416,7 @@
     - [xc\_kernel](#xc_kernel)
     - [lr\_solverl](#lr_solver)
     - [lr\_thr](#lr_thr)
+    - [nocc](#nocc)
     - [nvirt](#nvirt)
     - [lr\_nstates](#lr_nstates)
     - [abs\_wavelen\_range](#abs_wavelen_range)
@@ -3842,10 +3843,17 @@ Currently supported: `RPA`, `LDA`, `PBE`, `HSE`, `HF`.
 - **Description**: The convergence threshold of iterative diagonalization solver fo LR-TDDFT. It is a pure-math number with the same as [pw_diag_thr](#pw_diag_thr), but since the Casida equation is a one-shot eigenvalue problem, it is also the convergence threshold of LR-TDDFT.
 - **Default**: 1e-2
 
+### nocc
+
+- **Type**: Integer
+- **Description**: The number of occupied orbitals (up to HOMO) used in the LR-TDDFT calculation. 
+  - Note: If the value is illegal ( > [nelec](#nelec)\/2 or <= 0), it will be autoset to [nelec](#nelec)\/2.
+- **Default**: [nband](#nband)
+
 ### nvirt
 
 - **Type**: Integer
-- **Description**: The number of virtual orbitals used in the LR-TDDFT calculation.
+- **Description**: The number of virtual orbitals (staring from LUMO) used in the LR-TDDFT calculation.
 - **Default**: 1
 
 ### lr_nstates

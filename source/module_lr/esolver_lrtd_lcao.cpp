@@ -78,14 +78,17 @@ void LR::ESolver_LR<T, TR>::parameter_check()const
 template<typename T, typename TR>
 void LR::ESolver_LR<T, TR>::set_dimension()
 {
-    assert(this->eig_ks.nc > 0); // needs ground state info
+    this->nstates = input.lr_nstates;
+    this->nbasis = GlobalV::NLOCAL;
     // calculate the number of occupied and unoccupied states
     // which determines the basis size of the excited states
-    this->nocc = LR_Util::cal_nocc(LR_Util::cal_nelec(ucell));
-    this->nvirt = this->eig_ks.nc - nocc;   //nbands-nocc
+    this->nocc_max = LR_Util::cal_nocc(LR_Util::cal_nelec(ucell));
+    this->nocc = std::max(1, std::min(input.nocc, this->nocc_max));
+    this->nvirt = GlobalV::NBANDS - this->nocc_max;   //nbands-nocc
     if (input.nvirt > this->nvirt)
         GlobalV::ofs_warning << "ESolver_LR: input nvirt is too large to cover by nbands, set nvirt = nbands - nocc = " << this->nvirt << std::endl;
     else if (input.nvirt > 0) this->nvirt = input.nvirt;
+    this->nbands = this->nocc + this->nvirt;
     this->npairs = this->nocc * this->nvirt;
     if (this->nstates > this->nocc * this->nvirt * this->kv.get_nks())
         throw std::invalid_argument("ESolver_LR: nstates > nocc*nvirt*nks");
@@ -102,7 +105,7 @@ void LR::ESolver_LR<T, TR>::set_dimension()
 template <typename T, typename TR>
 LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol,
     const Input_para& inp,
-                                                 UnitCell& ucell)
+    UnitCell& ucell)
     : input(inp), ucell(ucell)
 {
     redirect_log(inp.out_alllog);
@@ -122,10 +125,9 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
 
     // set up the 2d division for nbasis*nbasis matrices
     this->nbasis = GlobalV::NLOCAL;
-    this->nstates = inp.lr_nstates;
-#ifdef __MPI
+    // setup_wd_division is not need to be covered in #ifdef __MPI, see its implementation
     LR_Util::setup_2d_division(this->paraMat_, 1, this->nbasis, this->nbasis);
-#endif
+
     this->paraMat_.atom_begin_row = std::move(ks_sol.ParaV.atom_begin_row);
     this->paraMat_.atom_begin_col = std::move(ks_sol.ParaV.atom_begin_col);
     this->paraMat_.iat2iwt_ = ucell.get_iat2iwt();
@@ -137,9 +139,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
     this->eig_ks = std::move(ks_sol.pelec->ekb);
 
     this->set_dimension();
-#ifdef __MPI
     LR_Util::setup_2d_division(this->paraC_, 1, this->nbasis, this->nocc + this->nvirt, this->paraMat_.blacs_ctxt);
-#endif
 
     //grid integration
     this->gt_ = std::move(ks_sol.GridT);
@@ -207,14 +207,17 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, Input& inp_tmp, UnitCel
     two_center_bundle_.build_orb(ucell.ntype, ucell.orbital_fn);
     two_center_bundle_.to_LCAO_Orbitals(GlobalC::ORB, inp.lcao_ecut, inp.lcao_dk, inp.lcao_dr, inp.lcao_rmax);
 
+    this->set_dimension();
     //  setup 2d-block distribution for AO-matrix and KS wfc
-    this->nbasis = GlobalV::NLOCAL;
-#ifdef __MPI
     LR_Util::setup_2d_division(this->paraMat_, 1, this->nbasis, this->nbasis);
-    this->paraMat_.set_desc_wfc_Eij(this->nbasis, GlobalV::NBANDS, paraMat_.get_row_size());
-    int err = this->paraMat_.set_nloc_wfc_Eij(GlobalV::NBANDS, GlobalV::ofs_running, GlobalV::ofs_warning);
-#endif
+    this->paraMat_.set_desc_wfc_Eij(this->nbasis, this->nbands, paraMat_.get_row_size());
+#ifdef __MPI
+    int err = this->paraMat_.set_nloc_wfc_Eij(this->nbands, GlobalV::ofs_running, GlobalV::ofs_warning);
     this->paraMat_.set_atomic_trace(ucell.get_iat2iwt(), ucell.nat, this->nbasis);
+#else
+    this->paraMat_.nrow_bands = this->nbasis;
+    this->paraMat_.ncol_bands = this->nbands;
+#endif
 
     // read the ground state info
     // now ModuleIO::read_wfc_nao needs `Parallel_Orbitals` and can only read all the bands
@@ -224,13 +227,9 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, Input& inp_tmp, UnitCel
         this->paraMat_.get_row_size());
     this->read_ks_wfc();
 
-    this->set_dimension();
-#ifdef __MPI
-    LR_Util::setup_2d_division(this->paraC_, 1, this->nbasis, this->nocc + this->nvirt, paraMat_.blacs_ctxt);
-#endif
+    LR_Util::setup_2d_division(this->paraC_, 1, this->nbasis, this->nbands, paraMat_.blacs_ctxt);
 
     //allocate 2-particle state and setup 2d division
-    this->nstates = inp.lr_nstates;
     this->pelec = new elecstate::ElecState();
 
     // read the ground state charge density and calculate xc kernel
@@ -468,9 +467,10 @@ void LR::ESolver_LR<T, TR>::read_ks_wfc()
 {
     assert(this->psi_ks != nullptr);
     GlobalV::NB2D = 1;
-    this->pelec->ekb.create(this->kv.get_nks(), GlobalV::NBANDS);
-    this->pelec->wg.create(this->kv.get_nks(), GlobalV::NBANDS);
-    if (!ModuleIO::read_wfc_nao(GlobalV::global_readin_dir, this->paraMat_, *this->psi_ks, this->pelec))
+    this->pelec->ekb.create(this->kv.get_nks(), this->nbands);
+    this->pelec->wg.create(this->kv.get_nks(), this->nbands);
+    if (!ModuleIO::read_wfc_nao(GlobalV::global_readin_dir, this->paraMat_, *this->psi_ks, this->pelec,
+        /*skip_bands=*/this->nocc_max - this->nocc))
         ModuleBase::WARNING_QUIT("ESolver_LR", "read ground-state wavefunction failed.");
     this->eig_ks = std::move(this->pelec->ekb);
 }

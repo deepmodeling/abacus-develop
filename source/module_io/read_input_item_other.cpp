@@ -1932,6 +1932,16 @@ void ReadInput::item_others()
         this->add_item(item);
     }
     {
+        Input_Item item("nocc");
+        item.annotation = "the number of occupied orbitals to form the 2-particle basis ( <= nelec/2)";
+        read_sync_int(nocc);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            const int nocc_default = std::max(static_cast<int>(para.input.nelec + 1) / 2, para.input.nbands);
+            if (para.input.nocc <= 0 || para.input.nocc > nocc_default) { para.input.nocc = nocc_default; }
+            };
+        this->add_item(item);
+    }
+    {
         Input_Item item("nvirt");
         item.annotation = "the number of virtual orbitals to form the 2-particle basis (nocc + nvirt <= nbands)";
         read_sync_int(nvirt);
