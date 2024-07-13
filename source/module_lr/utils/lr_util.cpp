@@ -5,7 +5,7 @@
 namespace LR_Util
 {
     /// =================PHYSICS====================
-    const int cal_nocc(int nelec) { return nelec / ModuleBase::DEGSPIN + nelec % static_cast<int>(ModuleBase::DEGSPIN); }
+    int cal_nocc(int nelec) { return nelec / ModuleBase::DEGSPIN + nelec % static_cast<int>(ModuleBase::DEGSPIN); }
 
     std::pair<ModuleBase::matrix, std::vector<std::pair<int, int>>>
         set_ix_map_diagonal(bool mode, int nocc, int nvirt)

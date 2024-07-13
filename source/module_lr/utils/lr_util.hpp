@@ -10,10 +10,11 @@ namespace LR_Util
     /// =================PHYSICS====================
 
     template <typename TCell>
-    const int cal_nelec(const TCell& ucell) {
+    int cal_nelec(const TCell& ucell) {
         int nelec = 0;
-        for (int it = 0; it < ucell.ntype; ++it)
+        for (int it = 0; it < ucell.ntype; ++it) {
             nelec += ucell.atoms[it].ncpp.zv * ucell.atoms[it].na;
+}
         return nelec;
     }
 
@@ -62,7 +63,8 @@ namespace LR_Util
         {
             for (size_t i = 0; i < size; ++i)
             {
-                if (p2[i] != nullptr) delete[] p2[i];
+                if (p2[i] != nullptr) { delete[] p2[i];
+}
             }
             delete[] p2;
         }
@@ -97,26 +99,30 @@ namespace LR_Util
     template <typename T>
     void matsym(const T* in, const int n, T* out)
     {
-        for (int i = 0; i < n; ++i)
+        for (int i = 0; i < n; ++i) {
             out[i * n + i] = 0.5 * in[i * n + i] + 0.5 * get_conj(in[i * n + i]);
-        for (int i = 0;i < n;++i)
+}
+        for (int i = 0;i < n;++i) {
             for (int j = i + 1;j < n;++j)
             {
                 out[i * n + j] = 0.5 * (in[i * n + j] + get_conj(in[j * n + i]));
                 out[j * n + i] = get_conj(out[i * n + j]);
             }
+}
     }
     template <typename T>
     void matsym(T* inout, const int n)
     {
-        for (int i = 0; i < n; ++i)
+        for (int i = 0; i < n; ++i) {
             inout[i * n + i] = 0.5 * (inout[i * n + i] + get_conj(inout[i * n + i]));
-        for (int i = 0;i < n;++i)
+}
+        for (int i = 0;i < n;++i) {
             for (int j = i + 1;j < n;++j)
             {
                 inout[i * n + j] = 0.5 * (inout[i * n + j] + get_conj(inout[j * n + i]));
                 inout[j * n + i] = get_conj(inout[i * n + j]);
             }
+}
     }
 
     /// psi(nk=1, nbands=nb, nk * nbasis) -> psi(nb, nk, nbasis) without memory copy
@@ -159,14 +165,18 @@ namespace LR_Util
             };
 
         // zeros
-        for (int i = 0;i < global_nrow * global_ncol;++i) fullmat[i] = 0.0;
+        for (int i = 0;i < global_nrow * global_ncol;++i) { fullmat[i] = 0.0;
+}
         //copy
-        for (int i = 0;i < pv.get_row_size();++i)
-            for (int j = 0;j < pv.get_col_size();++j)
-                if (col_first)
+        for (int i = 0;i < pv.get_row_size();++i) {
+            for (int j = 0;j < pv.get_col_size();++j) {
+                if (col_first) {
                     fullmat[pv.local2global_row(i) * global_ncol + pv.local2global_col(j)] = submat[i * pv.get_col_size() + j];
-                else
+                } else {
                     fullmat[pv.local2global_col(j) * global_nrow + pv.local2global_row(i)] = submat[j * pv.get_row_size() + i];
+}
+}
+}
 
         //reduce to root
         MPI_Allreduce(MPI_IN_PLACE, fullmat, global_nrow * global_ncol, get_mpi_datatype(), MPI_SUM, pv.comm());

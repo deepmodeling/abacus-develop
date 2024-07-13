@@ -72,10 +72,10 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const K_Vectors& kv, const Charg
                 this->mix_DMk_2D.set_mixing(nullptr);
 			} else {
 				this->mix_DMk_2D.set_mixing(chgmix.get_mixing());
-}
+            }
+            // for exx two_level scf
+            this->two_level_step = 0;
         }
-        // for exx two_level scf
-        this->two_level_step = 0;
 #endif // __MPI
 }
 
