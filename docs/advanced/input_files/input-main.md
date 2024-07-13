@@ -183,6 +183,7 @@
     - [bessel\_descriptor\_smooth](#bessel_descriptor_smooth)
     - [bessel\_descriptor\_sigma](#bessel_descriptor_sigma)
     - [deepks\_bandgap](#deepks_bandgap)
+    - [deepks\_v\_delta](#deepks_v_delta)
     - [deepks\_out\_unittest](#deepks_out_unittest)
   - [OFDFT: orbital free density functional theory](#ofdft-orbital-free-density-functional-theory)
     - [of\_kinetic](#of_kinetic)
@@ -1173,7 +1174,7 @@ Note: In new angle mixing, you should set `mixing_beta_mag >> mixing_beta`. The 
 - **Type**: Integer
 - **Description**: Choose the calculation method of convergence criterion.
   - **1**: the criterion is defined as $\Delta\rho_G = \frac{1}{2}\iint{\frac{\Delta\rho(r)\Delta\rho(r')}{|r-r'|}d^3r d^3r'}$.
-  - **2**: the criterion is defined as $\Delta\rho_R = \int{|\Delta\rho(r)|d^3r}$.
+  - **2**: the criterion is defined as $\Delta\rho_R = \frac{1}{N_e}\int{|\Delta\rho(r)|d^3r}$, where $N_e$ is the number of electron.
 
   Note: This parameter is still under testing and the default setting is usually sufficient.
 
@@ -1943,6 +1944,14 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Availability**: numerical atomic orbital basis and `deepks_scf` is true
 - **Description**: include bandgap label for DeePKS training
 - **Default**: False
+
+### deepks_v_delta
+
+- **Type**: int
+- **Availability**: numerical atomic orbital basis
+- **Description**: Include V_delta label for DeePKS training. When `deepks_out_labels` is true and `deepks_v_delta` > 0, ABACUS will output h_base.npy, v_delta.npy and h_tot.npy(h_tot=h_base+v_delta). 
+  Meanwhile, when `deepks_v_delta` equals 1, ABACUS will also output v_delta_precalc.npy, which is used to calculate V_delta during DeePKS training. However, when the number of atoms grows, the size of v_delta_precalc.npy will be very large. In this case, it's recommended to set `deepks_v_delta` as 2, and ABACUS will output psialpha.npy and grad_evdm.npy but not v_delta_precalc.npy. These two files are small and can be used to calculate v_delta_precalc in the procedure of training DeePKS.
+- **Default**: 0
 
 ### deepks_out_unittest
 

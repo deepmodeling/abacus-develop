@@ -29,5 +29,4 @@ mixing_beta		0.4
 deepks_out_labels          1 
 deepks_scf		1
 deepks_model		../Model_ProjOrb/model_lda_pbe_18.ptg
-cal_force			1
-cal_stress                      1
+deepks_v_delta  1

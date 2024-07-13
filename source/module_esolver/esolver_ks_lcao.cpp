@@ -63,6 +63,23 @@ ESolver_KS_LCAO<TK, TR>::ESolver_KS_LCAO()
 {
     this->classname = "ESolver_KS_LCAO";
     this->basisname = "LCAO";
+#ifdef __EXX
+    // 1. currently this initialization must be put in constructor rather than `before_all_runners()`
+    //  because the latter is not reused by ESolver_LCAO_TDDFT, 
+    //  which cause the failure of the subsequent procedure reused by ESolver_LCAO_TDDFT
+    // 2. always construct but only initialize when if(cal_exx) is true
+    //  because some members like two_level_step are used outside if(cal_exx)
+    if (GlobalC::exx_info.info_ri.real_number)
+    {
+        this->exx_lri_double = std::make_shared<Exx_LRI<double>>(GlobalC::exx_info.info_ri);
+        this->exd = std::make_shared<Exx_LRI_Interface<TK, double>>(exx_lri_double);
+    }
+    else
+    {
+        this->exx_lri_complex = std::make_shared<Exx_LRI<std::complex<double>>>(GlobalC::exx_info.info_ri);
+        this->exc = std::make_shared<Exx_LRI_Interface<TK, std::complex<double>>>(exx_lri_complex);
+    }
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -173,16 +190,8 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(Input& inp, UnitCell& ucell)
         {
             XC_Functional::set_xc_first_loop(ucell);
             // initialize 2-center radial tables for EXX-LRI
-            if (GlobalC::exx_info.info_ri.real_number)
-            {
-                this->exx_lri_double = std::make_shared<Exx_LRI<double>>(GlobalC::exx_info.info_ri);
-                this->exx_lri_double->init(MPI_COMM_WORLD, this->kv);
-            }
-            else
-            {
-                this->exx_lri_complex = std::make_shared<Exx_LRI<std::complex<double>>>(GlobalC::exx_info.info_ri);
-                this->exx_lri_complex->init(MPI_COMM_WORLD, this->kv);
-            }
+            if (GlobalC::exx_info.info_ri.real_number) { this->exx_lri_double->init(MPI_COMM_WORLD, this->kv); }
+            else { this->exx_lri_complex->init(MPI_COMM_WORLD, this->kv); }
         }
     }
 #endif
@@ -878,13 +887,13 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
     // 1) print Hamiltonian and Overlap matrix
     if (this->conv_elec || iter == GlobalV::SCF_NMAX)
     {
-        if (!GlobalV::GAMMA_ONLY_LOCAL && hsolver::HSolverLCAO<TK>::out_mat_hs[0])
+        if (!GlobalV::GAMMA_ONLY_LOCAL && (hsolver::HSolverLCAO<TK>::out_mat_hs[0] || GlobalV::deepks_v_delta))
         {
             this->GK.renew(true);
         }
         for (int ik = 0; ik < this->kv.get_nks(); ++ik)
         {
-            if (hsolver::HSolverLCAO<TK>::out_mat_hs[0])
+            if (hsolver::HSolverLCAO<TK>::out_mat_hs[0]|| GlobalV::deepks_v_delta)
             {
                 this->p_hamilt->updateHk(ik);
             }
@@ -920,6 +929,12 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
                                        this->ParaV,
                                        GlobalV::DRANK);
                 }
+#ifdef __DEEPKS
+                if(GlobalV::deepks_v_delta)
+                {
+                    GlobalC::ld.save_h_mat(h_mat.p,this->ParaV.nloc);
+                }
+#endif
             }
         }
     }
@@ -1180,6 +1195,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
     LDI.out_deepks_labels(this->pelec->f_en.etot,
                           this->pelec->klist->get_nks(),
                           GlobalC::ucell.nat,
+                          GlobalV::NLOCAL,
                           this->pelec->ekb,
                           this->pelec->klist->kvec_d,
                           GlobalC::ucell,
@@ -1187,7 +1203,8 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
                           GlobalC::GridD,
                           &(this->ParaV),
                           *(this->psi),
-                          dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM());
+                          dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(),
+                          GlobalV::deepks_v_delta);
 
     ModuleBase::timer::tick("ESolver_KS_LCAO", "out_deepks_labels");
 #endif

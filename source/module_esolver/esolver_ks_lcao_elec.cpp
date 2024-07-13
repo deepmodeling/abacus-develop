@@ -284,12 +284,10 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
 #ifdef __EXX // set xc type before the first cal of xc in pelec->init_scf
     if (GlobalC::exx_info.info_ri.real_number)
     {
-        this->exd = std::make_shared<Exx_LRI_Interface<TK, double>>(exx_lri_double);
         this->exd->exx_beforescf(this->kv, *this->p_chgmix);
     }
     else
     {
-        this->exc = std::make_shared<Exx_LRI_Interface<TK, std::complex<double>>>(exx_lri_complex);
         this->exc->exx_beforescf(this->kv, *this->p_chgmix);
     }
 #endif // __EXX

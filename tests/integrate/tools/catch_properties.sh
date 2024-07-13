@@ -45,6 +45,7 @@ has_xc=$(get_input_key_value "out_mat_xc" "INPUT")
 has_r=$(get_input_key_value "out_mat_r" "INPUT")
 deepks_out_labels=$(get_input_key_value "deepks_out_labels" "INPUT")
 deepks_bandgap=$(get_input_key_value "deepks_bandgap" "INPUT")
+deepks_v_delta=$(get_input_key_value "deepks_v_delta" "INPUT")
 has_lowf=$(get_input_key_value "out_wfc_lcao" "INPUT")
 out_app_flag=$(get_input_key_value "out_app_flag" "INPUT")
 has_wfc_r=$(get_input_key_value "out_wfc_r" "INPUT")
@@ -454,6 +455,26 @@ if ! test -z "$deepks_bandgap" && [ $deepks_bandgap == 1 ]; then
 	echo "odelta $odelta" >>$1
 	oprec=`python3 get_oprec.py`
 	echo "oprec $oprec" >> $1
+fi
+
+if ! test -z "$deepks_v_delta" && [ $deepks_v_delta == 1 ]; then
+	totalh=`python3 get_sum_numpy.py h_tot.npy `
+	echo "totalh $totalh" >>$1
+	totalvdelta=`python3 get_v_delta.py`
+	echo "totalvdelta $totalvdelta" >>$1
+	totalvdp=`python3 get_sum_numpy.py v_delta_precalc.npy `
+	echo "totalvdp $totalvdp" >> $1
+fi
+
+if ! test -z "$deepks_v_delta" && [ $deepks_v_delta == 2 ]; then
+	totalh=`python3 get_sum_numpy.py h_tot.npy `
+	echo "totalh $totalh" >>$1
+	totalvdelta=`python3 get_v_delta.py`
+	echo "totalvdelta $totalvdelta" >>$1
+	total_psialpha=`python3 get_sum_numpy.py psialpha.npy `
+	echo "total_psialpha $total_psialpha" >> $1
+	total_gevdm=`python3 get_sum_numpy.py grad_evdm.npy `
+	echo "total_gevdm $total_gevdm" >> $1
 fi
 
 if ! test -z "$symmetry" && [ $symmetry == 1 ]; then
