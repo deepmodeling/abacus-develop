@@ -2,11 +2,6 @@
 
 Grid_Technique::Grid_Technique() {
     allocate_find_R2 = false;
-#if ((defined __CUDA) /* || (defined __ROCM) */)
-    if (this->device_flag == "gpu") {
-        is_malloced = false;
-    }
-#endif
 }
 
 Grid_Technique::~Grid_Technique() {
@@ -81,7 +76,11 @@ void Grid_Technique::set_pbc_grid(
     this->nproc=nproc;
     this->rank =rank;
     this->device_flag = device_flag;
-
+    #if ((defined __CUDA) /* || (defined __ROCM) */)
+    if (this->device_flag == "gpu") {
+        is_malloced = false;
+    }
+    #endif
     // (1) init_meshcell cell and big cell.
     this->set_grid_dim(ncx_in,
                        ncy_in,

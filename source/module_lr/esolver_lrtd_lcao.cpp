@@ -106,9 +106,8 @@ void LR::ESolver_LR<T, TR>::set_dimension()
 
 template <typename T, typename TR>
 LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol,
-    const Input_para& inp,
-                                                 UnitCell& ucell)
-    : input(inp), ucell(ucell)
+                                                 const Input_para& inp,
+                                                 UnitCell& ucell): input(inp), ucell(ucell)
 {
     redirect_log(inp.out_alllog);
     ModuleBase::TITLE("ESolver_LR", "ESolver_LR");
