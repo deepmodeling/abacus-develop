@@ -336,6 +336,9 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, Input& inp_tmp, UnitCel
     else {
 #endif
         ModuleBase::Ylm::set_coefficients();    // set Ylm only for Gint 
+#ifdef __EXX
+    }
+#endif
 }
 
 template <typename T, typename TR>
