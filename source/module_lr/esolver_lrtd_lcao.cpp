@@ -12,6 +12,7 @@
 #include "module_io/print_info.h"
 #include "module_cell/module_neighbor/sltk_atom_arrange.h"
 #include "module_lr/utils/lr_util_print.h"
+#include "module_base/scalapack_connector.h"
 
 #ifdef __EXX
 template<>
@@ -123,8 +124,8 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
 
     this->parameter_check();
 
-    // set up the 2d division for nbasis*nbasis matrices
-    this->nbasis = GlobalV::NLOCAL;
+    this->set_dimension();
+
     // setup_wd_division is not need to be covered in #ifdef __MPI, see its implementation
     LR_Util::setup_2d_division(this->paraMat_, 1, this->nbasis, this->nbasis);
 
@@ -132,14 +133,28 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
     this->paraMat_.atom_begin_col = std::move(ks_sol.ParaV.atom_begin_col);
     this->paraMat_.iat2iwt_ = ucell.get_iat2iwt();
 
-    // move the ground state info 
-    this->psi_ks = ks_sol.psi;
-    ks_sol.psi = nullptr;
-    //only need the eigenvalues. the 'elecstates' of excited states is different from ground state.
-    this->eig_ks = std::move(ks_sol.pelec->ekb);
+    LR_Util::setup_2d_division(this->paraC_, 1, this->nbasis, this->nbands, this->paraMat_.blacs_ctxt);
 
-    this->set_dimension();
-    LR_Util::setup_2d_division(this->paraC_, 1, this->nbasis, this->nocc + this->nvirt, this->paraMat_.blacs_ctxt);
+    if (this->nbands == GlobalV::NBANDS)    // move the ground state info 
+    {
+        this->psi_ks = ks_sol.psi;
+        ks_sol.psi = nullptr;
+        //only need the eigenvalues. the 'elecstates' of excited states is different from ground state.
+        this->eig_ks = std::move(ks_sol.pelec->ekb);
+    }
+    else    // copy the part of ground state info according to paraC_
+    {
+        this->psi_ks = new psi::Psi<T>(this->kv.get_nks(), this->paraC_.get_col_size(), this->paraC_.get_row_size());
+        this->eig_ks.create(this->kv.get_nks(), this->nbands);
+        const int start_band = this->nocc_max - this->nocc;
+        for (int ik = 0;ik < this->kv.get_nks();++ik)
+        {
+            Cpxgemr2d(this->nbasis, this->nbands, &(*ks_sol.psi)(ik, 0, 0), 1, start_band + 1, ks_sol.ParaV.desc_wfc,
+                &(*this->psi_ks)(ik, 0, 0), 1, 1, this->paraC_.desc, this->paraC_.blacs_ctxt);
+            for (int ib = 0;ib < this->nbands;++ib)
+                this->eig_ks(ik, ib) = ks_sol.pelec->ekb(ik, start_band + ib);
+        }
+    }
 
     //grid integration
     this->gt_ = std::move(ks_sol.GridT);
@@ -387,10 +402,7 @@ template<typename T, typename TR>
 void LR::ESolver_LR<T, TR>::setup_eigenvectors_X()
 {
     ModuleBase::TITLE("ESolver_LR", "setup_eigenvectors_X");
-    // setup ParaX
-#ifdef __MPI
     LR_Util::setup_2d_division(this->paraX_, 1, this->nvirt, this->nocc, this->paraC_.blacs_ctxt);//nvirt - row, nocc - col 
-#endif
     // if spectrum-only, read the LR-eigenstates from file and return
     if (this->input.lr_solver == "spectrum")
     {
