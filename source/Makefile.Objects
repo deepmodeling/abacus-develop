@@ -66,6 +66,12 @@ VPATH=./src_global:\
 ./src_ri:\
 ./module_ri:\
 ./module_parameter:\
+./module_lr:\
+./module_lr/AX:\
+./module_lr/dm_trans:\
+./module_lr/operator_casida:\
+./module_lr/potentials:\
+./module_lr/utils:\
 ./\
 
 OBJS_ABACUS_PW=${OBJS_MAIN}\
@@ -106,6 +112,7 @@ ${OBJS_DFTU}\
 ${OBJS_DELTASPIN}\
 ${OBJS_TENSOR}\
 ${OBJS_HSOLVER_PEXSI}\
+${OBJS_LR}\
 
 OBJS_MAIN=main.o\
     driver.o\
@@ -175,6 +182,7 @@ OBJS_CELL=atom_pseudo.o\
     klist.o\
     cell_index.o\
     check_atomic_stru.o\
+    print_cif.o\
 
 OBJS_DEEPKS=LCAO_deepks.o\
         LCAO_deepks_fdelta.o\
@@ -343,7 +351,6 @@ OBJS_NEIGHBOR=sltk_adjacent_set.o\
 
 OBJS_ORBITAL=ORB_atomic.o\
       ORB_atomic_lm.o\
-      ORB_control.o\
       ORB_gaunt_table.o\
       ORB_nonlocal.o\
       ORB_nonlocal_lm.o\
@@ -509,10 +516,7 @@ OBJS_IO_LCAO=cal_r_overlap_R.o\
       output_sk.o\
       output_dmk.o\
 
-OBJS_LCAO=DM_gamma.o\
-      DM_gamma_2d_to_grid.o\
-      DM_k.o\
-      evolve_elec.o\
+OBJS_LCAO=evolve_elec.o\
       evolve_psi.o\
       bandenergy.o\
       middle_hamilt.o\
@@ -550,9 +554,7 @@ OBJS_LCAO=DM_gamma.o\
       center2_orb-orb11.o\
       center2_orb-orb21.o\
       center2_orb-orb22.o\
-      local_orbital_charge.o\
       record_adj.o\
-      dm_2d.o\
       wavefunc_in_pw.o\
 
 OBJS_MODULE_RI=conv_coulomb_pot_k.o\
@@ -671,3 +673,19 @@ OBJS_TENSOR=tensor.o\
     linalg_op.o\
     cpu_allocator.o\
     refcount.o
+
+    OBJS_LR=lr_util.o\
+    lr_util_hcontainer.o\
+    AX_parallel.o\
+    AX_serial.o\
+    dm_trans_parallel.o\
+    dm_trans_serial.o\
+    dmr_complex.o\
+    operator_lr_hxc.o\
+    operator_lr_exx.o\
+    kernel_xc.o\
+    pot_hxc_lrtd.o\
+    hsolver_lrtd.o\
+    lr_spectrum.o\
+    hamilt_casida.o\
+    esolver_lrtd_lcao.o\

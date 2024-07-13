@@ -1367,7 +1367,6 @@ void ReadInput::item_others()
                 }
             }
         };
-        // We must firt bcast ntype (in item_general), then bcast hubbard_u
         sync_doublevec(input.hubbard_u_eV, para.input.ntype, 0.0);
         add_doublevec_bcast(sys.hubbard_u, para.input.ntype, 0.0);
         this->add_item(item);
@@ -1401,7 +1400,6 @@ void ReadInput::item_others()
                 }
             }
         };
-        // We must firt bcast ntype (in item_general), then bcast orbital_corr
         sync_intvec(input.orbital_corr, para.input.ntype, -1);
         this->add_item(item);
     }
@@ -1451,7 +1449,6 @@ void ReadInput::item_others()
                 ModuleBase::WARNING_QUIT("ReadInput", "bessel_nao_rcut must >= 0");
             }
         };
-        // We must firt bcast nrcut, then bcast bessel_nao_rcut
         sync_doublevec(input.bessel_nao_rcuts, para.sys.nrcut, 0.0);
         this->add_item(item);
     }
@@ -1713,7 +1710,6 @@ void ReadInput::item_others()
                 }
             }
         };
-        // We must firt bcast ntype (in item_general), then bcast qo_strategy
         sync_stringvec(input.qo_strategy, para.input.ntype, "all");
         this->add_item(item);
     }
@@ -1763,8 +1759,6 @@ void ReadInput::item_others()
                 }
             }
         };
-        // We must firt bcast ntype (in item_general), then bcast
-        // qo_screening_coeff
         sync_doublevec(input.qo_screening_coeff, para.input.ntype, 0.1);
         this->add_item(item);
     }
@@ -1918,6 +1912,67 @@ void ReadInput::item_others()
         item.annotation = "if the absolute value of matrix element is less "
                           "than ZERO_Limit, it will be considered as 0";
         read_sync_double(input.pexsi_zero_thr);
+        this->add_item(item);
+    }
+
+    // 25. Linear Response
+    {
+        Input_Item item("lr_nstates");
+        item.annotation = "the number of 2-particle states to be solved";
+        read_sync_int(input.lr_nstates);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("nvirt");
+        item.annotation = "the number of virtual orbitals to form the 2-particle basis (nocc + nvirt <= nbands)";
+        read_sync_int(input.nvirt);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("xc_kernel");
+        item.annotation = "exchange correlation (XC) kernel for LR-TDDFT";
+        read_sync_string(input.xc_kernel);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("lr_solver");
+        item.annotation = "the eigensolver for LR-TDDFT";
+        read_sync_string(input.lr_solver);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("lr_thr");
+        item.annotation = "convergence threshold of the LR-TDDFT eigensolver";
+        read_sync_double(input.lr_thr);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_wfc_lr");
+        item.annotation = "whether to output the eigenvectors (excitation amplitudes) in the particle-hole basis";
+        read_sync_bool(input.out_wfc_lr);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("abs_wavelen_range");
+        item.annotation = "the range of wavelength(nm) to output the absorption spectrum ";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            size_t count = item.get_size();
+            for (int i = 0; i < count; i++)
+            {
+                para.input.abs_wavelen_range.push_back(std::stod(item.str_values[i]));
+            }
+            };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            auto& awr = para.input.abs_wavelen_range;
+            if (awr.size() < 2) { ModuleBase::WARNING_QUIT("ReadInput", "abs_wavelen_range must have two values"); }
+            };
+        sync_doublevec(input.abs_wavelen_range, 2, 0.0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("abs_broadening");
+        item.annotation = "the broadening (eta) for LR-TDDFT absorption spectrum";
+        read_sync_double(input.abs_broadening);
         this->add_item(item);
     }
 }

@@ -5,7 +5,6 @@
 #include "module_ri/Mix_DMk_2D.h"
 #include <memory>
 
-class Local_Orbital_Charge;
 class LCAO_Matrix;
 class Charge_Mixing;
 namespace elecstate
@@ -49,7 +48,6 @@ public:
     /// @brief: in do_after_converge: add exx operators; do DM mixing if seperate loop
     bool exx_after_converge(
         hamilt::Hamilt<T>& hamilt,
-        LCAO_Matrix& lm,
         const elecstate::DensityMatrix<T, double>& dm/**< double should be Tdata if complex-PBE-DM is supported*/,
         const K_Vectors& kv,
         int& iter);

@@ -45,6 +45,7 @@ has_xc=$(get_input_key_value "out_mat_xc" "INPUT")
 has_r=$(get_input_key_value "out_mat_r" "INPUT")
 deepks_out_labels=$(get_input_key_value "deepks_out_labels" "INPUT")
 deepks_bandgap=$(get_input_key_value "deepks_bandgap" "INPUT")
+deepks_v_delta=$(get_input_key_value "deepks_v_delta" "INPUT")
 has_lowf=$(get_input_key_value "out_wfc_lcao" "INPUT")
 out_app_flag=$(get_input_key_value "out_app_flag" "INPUT")
 has_wfc_r=$(get_input_key_value "out_wfc_r" "INPUT")
@@ -64,6 +65,7 @@ has_mat_t=$(get_input_key_value "out_mat_t" "INPUT")
 has_mat_dh=$(get_input_key_value "out_mat_dh" "INPUT")
 has_scan=$(get_input_key_value "dft_functional" "INPUT")
 out_chg=$(get_input_key_value "out_chg" "INPUT") 
+esolver_type=$(get_input_key_value "esolver_type" "INPUT")
 #echo $running_path
 base=$(get_input_key_value "basis_type" "INPUT")
 word="driver_line"
@@ -71,10 +73,16 @@ symmetry=$(get_input_key_value "symmetry" "INPUT")
 out_current=$(get_input_key_value "out_current" "INPUT")
 test -e $1 && rm $1
 #--------------------------------------------
-# if NOT non-self-consistent calculations
+# if NOT non-self-consistent calculations or linear response
 #--------------------------------------------
+is_lr=0
+if [ ! -z $esolver_type ] && ([ $esolver_type == "lr" ] || [ $esolver_type == "ks-lr" ]); then
+	is_lr=1
+fi
+
 if [ $calculation != "nscf" ] && [ $calculation != "get_wf" ]\
-&& [ $calculation != "get_pchg" ] && [ $calculation != "get_S" ]; then
+&& [ $calculation != "get_pchg" ] && [ $calculation != "get_S" ]\
+&& [ $is_lr == 0 ]; then
 	#etot=`grep ETOT_ $running_path | awk '{print $2}'` 
 	etot=$(grep "ETOT_" "$running_path" | tail -1 | awk '{print $2}')
 	etotperatom=`awk 'BEGIN {x='$etot';y='$natom';printf "%.10f\n",x/y}'`
@@ -449,6 +457,26 @@ if ! test -z "$deepks_bandgap" && [ $deepks_bandgap == 1 ]; then
 	echo "oprec $oprec" >> $1
 fi
 
+if ! test -z "$deepks_v_delta" && [ $deepks_v_delta == 1 ]; then
+	totalh=`python3 get_sum_numpy.py h_tot.npy `
+	echo "totalh $totalh" >>$1
+	totalvdelta=`python3 get_v_delta.py`
+	echo "totalvdelta $totalvdelta" >>$1
+	totalvdp=`python3 get_sum_numpy.py v_delta_precalc.npy `
+	echo "totalvdp $totalvdp" >> $1
+fi
+
+if ! test -z "$deepks_v_delta" && [ $deepks_v_delta == 2 ]; then
+	totalh=`python3 get_sum_numpy.py h_tot.npy `
+	echo "totalh $totalh" >>$1
+	totalvdelta=`python3 get_v_delta.py`
+	echo "totalvdelta $totalvdelta" >>$1
+	total_psialpha=`python3 get_sum_numpy.py psialpha.npy `
+	echo "total_psialpha $total_psialpha" >> $1
+	total_gevdm=`python3 get_sum_numpy.py grad_evdm.npy `
+	echo "total_gevdm $total_gevdm" >> $1
+fi
+
 if ! test -z "$symmetry" && [ $symmetry == 1 ]; then
 	pointgroup=`grep 'POINT GROUP' $running_path | tail -n 2 | head -n 1 | awk '{print $4}'`
 	spacegroup=`grep 'SPACE GROUP' $running_path | tail -n 1 | awk '{print $7}'`
@@ -463,6 +491,15 @@ if ! test -z "$out_current" && [ $out_current ]; then
 	current1cal=OUT.autotest/current_total.dat
 	python3 ../tools/CompareFile.py $current1ref $current1cal 10
 	echo "CompareCurrent_pass $?" >>$1
+fi
+
+if [ $is_lr == 1 ]; then
+	lr_path=OUT.autotest/running_lr.log
+	lrns=$(get_input_key_value "lr_nstates" "INPUT")
+	lrns1=`echo "$lrns + 1" |bc`
+	grep -A$lrns1 "Excitation Energy" $lr_path | tail -$lrns | awk '{print $2}' > lr_eig.txt
+	lreig_tot=`sum_file lr_eig.txt`
+	echo "totexcitationenergyref $lreig_tot" >>$1
 fi
 
 #echo $total_band

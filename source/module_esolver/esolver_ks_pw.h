@@ -58,6 +58,8 @@ class ESolver_KS_PW : public ESolver_KS<T, Device>
 
     virtual void allocate_hsolver();
     virtual void deallocate_hsolver();
+    virtual void allocate_hamilt();
+    virtual void deallocate_hamilt();
 
     //! hide the psi in ESolver_KS for tmp use
     psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi = nullptr;

@@ -19,6 +19,10 @@ void cal_ddpsir_ylm(
     std::vector<const double*> it_dpsi_uniform(gt.nwmax);
     std::vector<const double*> it_d2psi_uniform(gt.nwmax);
     std::vector<int> it_psi_nr_uniform(gt.nwmax);
+    // array to store spherical harmonics and its derivatives
+    // the first dimension equals 36 because the maximum nwl is 5.
+    double rly[36];
+    ModuleBase::Array_Pool<double> grly(36, 3);
 
     for (int id = 0; id < na_grid; id++)
     {
@@ -105,14 +109,12 @@ void cal_ddpsir_ylm(
                         dr1[1] = dr[1] + displ[i][1];
                         dr1[2] = dr[2] + displ[i][2];
 
-                        // array to store spherical harmonics and its derivatives
-                        std::vector<double> rly;
-                        std::vector<std::vector<double>> grly;
-                        ModuleBase::Ylm::grad_rl_sph_harm(ucell.atoms[it].nwl, dr1[0], dr1[1], dr1[2], rly, grly);
+                        ModuleBase::Ylm::grad_rl_sph_harm(ucell.atoms[it].nwl, dr1[0], dr1[1], dr1[2], rly, grly.get_ptr_2D());
 
                         double distance1 = std::sqrt(dr1[0] * dr1[0] + dr1[1] * dr1[1] + dr1[2] * dr1[2]);
-                        if (distance1 < 1e-9)
+                        if (distance1 < 1e-9) {
                             distance1 = 1e-9;
+}
 
                         const double position = distance1 / delta_r;
 
@@ -215,11 +217,8 @@ void cal_ddpsir_ylm(
                     }
                     // End of code addition section.
 
-                    // array to store spherical harmonics and its derivatives
-                    std::vector<double> rly;
-                    std::vector<std::vector<double>> grly;
                     std::vector<std::vector<double>> hrly;
-                    ModuleBase::Ylm::grad_rl_sph_harm(ucell.atoms[it].nwl, dr[0], dr[1], dr[2], rly, grly);
+                    ModuleBase::Ylm::grad_rl_sph_harm(ucell.atoms[it].nwl, dr[0], dr[1], dr[2], rly, grly.get_ptr_2D());
                     ModuleBase::Ylm::hes_rl_sph_harm(ucell.atoms[it].nwl, dr[0], dr[1], dr[2], hrly);
                     const double position = distance / delta_r;
 

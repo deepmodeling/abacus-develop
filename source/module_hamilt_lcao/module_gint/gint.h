@@ -17,6 +17,13 @@ class Gint {
   public:
     ~Gint();
 
+    /// move operator for the next ESolver to directly use its infomation
+    Gint& operator=(Gint&& rhs);
+
+    hamilt::HContainer<double>* get_hRGint() const { return hRGint; }
+    std::vector<hamilt::HContainer<double>*> get_DMRGint() const { return DMRGint; }
+    const int get_ncxyz() const { return ncxyz; }
+
     // the unified interface to grid integration
     void cal_gint(Gint_inout* inout);
 
@@ -85,6 +92,7 @@ class Gint {
     void cpu_force_interface(Gint_inout* inout);
 
     void cpu_force_meta_interface(Gint_inout* inout);
+
     //------------------------------------------------------
     // in gint_vl.cpp
     //------------------------------------------------------

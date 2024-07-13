@@ -4,7 +4,6 @@ namespace ModuleIO
 {
 void ReadInput::set_globalv_bcast()
 {
-    // They are bcasted before all INPUT parameters
     add_bool_bcast(sys.two_fermi);
     add_int_bcast(sys.nrcut);
     add_double_bcast(sys.bessel_nao_rcut);

@@ -6,6 +6,7 @@
 #include "module_ri/exx_opt_orb.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
+#include "module_base/parallel_common.h"
 
 #include <sys/time.h>
 #include "module_io/csr_reader.h"
@@ -123,18 +124,16 @@ void Exx_LRI_Interface<T, Tdata>::exx_hamilt2density(elecstate::ElecState& elec,
 template<typename T, typename Tdata>
 bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
     hamilt::Hamilt<T>& hamilt,
-    LCAO_Matrix& lm,
     const elecstate::DensityMatrix<T, double>& dm,
     const K_Vectors& kv,
     int& iter)
-{
+{   // only called if (GlobalC::exx_info.info_global.cal_exx)
     auto restart_reset = [this]()
         { // avoid calling restart related procedure in the subsequent ion steps
             GlobalC::restart.info_load.restart_exx = true;
             this->exx_ptr->Eexx = 0;
         };
-    if (GlobalC::exx_info.info_global.cal_exx)
-    {
+
         // no separate_loop case
         if (!GlobalC::exx_info.info_global.separate_loop)
         {
@@ -197,7 +196,7 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
                 << std::defaultfloat << " (s)" << std::endl;
             return false;
         }
-    }
+
     restart_reset();
     return true;
 }

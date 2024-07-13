@@ -36,8 +36,9 @@ void ReadInput::item_md()
         Input_Item item("md_dt");
         item.annotation = "time step";
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.mdp.md_dt < 0)
+            if (para.input.mdp.md_dt < 0) {
                 ModuleBase::WARNING_QUIT("ReadInput", "time interval of MD calculation should be positive");
+}
         };
         read_sync_double(input.mdp.md_dt);
         this->add_item(item);
@@ -108,21 +109,97 @@ void ReadInput::item_md()
         this->add_item(item);
     }
     {
+        Input_Item item("lj_rule");
+        item.annotation = "combination rules used to construct the parameter matrix for LJ potential";
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.esolver_type == "lj" && para.input.mdp.lj_rule != 1 && para.input.mdp.lj_rule != 2)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "lj_rule must be 1 or 2");
+            }
+        };
+        read_sync_int(input.mdp.lj_rule);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("lj_eshift");
+        item.annotation = "whether to use energy shift for LJ potential";
+        read_sync_bool(input.mdp.lj_eshift);
+        this->add_item(item);
+    }
+    {
         Input_Item item("lj_rcut");
         item.annotation = "cutoff radius of LJ potential";
-        read_sync_double(input.mdp.lj_rcut);
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            size_t count = item.get_size();
+            para.input.mdp.lj_rcut.resize(count);
+            std::transform(begin(item.str_values),
+                           end(item.str_values),
+                           begin(para.input.mdp.lj_rcut),
+                           [](std::string str) { return std::stod(str); });
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (!item.is_read())
+                return;
+            size_t n_ljrcut = para.input.mdp.lj_rcut.size();
+            if (n_ljrcut != 1 && n_ljrcut != para.input.ntype * (para.input.ntype + 1) / 2)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", " the number of lj_rcut should be 1 or ntype(ntype+1)/2 ");
+            }
+            for (auto rcut: para.input.mdp.lj_rcut)
+            {
+                if (rcut <= 0)
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput", "lj_rcut must > 0");
+                }
+            }
+        };
+        sync_doublevec(input.mdp.lj_rcut, para.input.mdp.lj_rcut.size(), 0.0);
         this->add_item(item);
     }
     {
         Input_Item item("lj_epsilon");
         item.annotation = "the value of epsilon for LJ potential";
-        read_sync_double(input.mdp.lj_epsilon);
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            size_t count = item.get_size();
+            para.input.mdp.lj_epsilon.resize(count);
+            std::transform(begin(item.str_values),
+                           end(item.str_values),
+                           begin(para.input.mdp.lj_epsilon),
+                           [](std::string str) { return std::stod(str); });
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (!item.is_read())
+                return;
+            size_t n_ljepsilon = para.input.mdp.lj_epsilon.size();
+            if (n_ljepsilon != para.input.ntype && n_ljepsilon != para.input.ntype * (para.input.ntype + 1) / 2)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", " the number of lj_epsilon should be ntype or ntype(ntype+1)/2 ");
+            }
+        };
+        sync_doublevec(input.mdp.lj_epsilon, para.input.mdp.lj_epsilon.size(), 0.0);
         this->add_item(item);
     }
     {
         Input_Item item("lj_sigma");
         item.annotation = "the value of sigma for LJ potential";
-        read_sync_double(input.mdp.lj_sigma);
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            size_t count = item.get_size();
+            para.input.mdp.lj_sigma.resize(count);
+            std::transform(begin(item.str_values),
+                           end(item.str_values),
+                           begin(para.input.mdp.lj_sigma),
+                           [](std::string str) { return std::stod(str); });
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (!item.is_read())
+                return;
+            size_t n_ljsigma = para.input.mdp.lj_sigma.size();
+            if (n_ljsigma != para.input.ntype && n_ljsigma != para.input.ntype * (para.input.ntype + 1) / 2)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", " the number of lj_sigma should be ntype or ntype(ntype+1)/2 ");
+            }
+        };
+        sync_doublevec(input.mdp.lj_sigma, para.input.mdp.lj_sigma.size(), 0.0);
         this->add_item(item);
     }
     {
@@ -238,8 +315,9 @@ void ReadInput::item_md()
         Input_Item item("md_plast");
         item.annotation = "final target pressure";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (!item.is_read()) // no md_plast in INPUT
+            if (!item.is_read()) { // no md_plast in INPUT
                 para.input.mdp.md_plast = para.input.mdp.md_pfirst;
+}
         };
         read_sync_double(input.mdp.md_plast);
         this->add_item(item);

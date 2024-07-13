@@ -3,8 +3,9 @@
 
 #include <string>
 #include "module_base/global_function.h"
-#ifdef __LCAO
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
+#include "module_base/abfs-vector3_order.h"
+#ifdef __EXX
+#include <RI/global/Tensor.h>
 #endif
 class Restart
 {

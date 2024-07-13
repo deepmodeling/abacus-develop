@@ -1,6 +1,7 @@
 #include "gint_tools.h"
 #include "module_base/timer.h"
 #include "module_base/ylm.h"
+#include "module_base/array_pool.h"
 namespace Gint_Tools{
 void cal_dpsir_ylm(
     const Grid_Technique& gt, const int bxyz,
@@ -18,6 +19,10 @@ void cal_dpsir_ylm(
     std::vector<const double*> it_psi_uniform(gt.nwmax);
     std::vector<const double*> it_dpsi_uniform(gt.nwmax);
     std::vector<int> it_psi_nr_uniform(gt.nwmax);
+    // array to store spherical harmonics and its derivatives
+    // the first dimension equals 36 because the maximum nwl is 5.
+    double rly[36];
+    ModuleBase::Array_Pool<double> grly(36, 3);
 
     for (int id = 0; id < na_grid; id++)
     {
@@ -62,10 +67,7 @@ void cal_dpsir_ylm(
                        gt.meshcell_pos[ib][0] + mt[0], gt.meshcell_pos[ib][1] + mt[1], gt.meshcell_pos[ib][2] + mt[2]};
                 double distance = std::sqrt(dr[0] * dr[0] + dr[1] * dr[1] + dr[2] * dr[2]);
 
-                // array to store spherical harmonics and its derivatives
-                std::vector<double> rly;
-                std::vector<std::vector<double>> grly;
-                ModuleBase::Ylm::grad_rl_sph_harm(ucell.atoms[it].nwl, dr[0], dr[1], dr[2], rly, grly);
+                ModuleBase::Ylm::grad_rl_sph_harm(ucell.atoms[it].nwl, dr[0], dr[1], dr[2], rly, grly.get_ptr_2D());
                 if (distance < 1e-9)
                     distance = 1e-9;
 

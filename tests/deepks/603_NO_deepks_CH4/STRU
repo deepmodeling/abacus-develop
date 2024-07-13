@@ -7,7 +7,7 @@ C_gga_8au_100Ry_2s2p1d.orb
 H_gga_8au_100Ry_2s1p.orb
 
 NUMERICAL_DESCRIPTOR
-jle.orb
+../Model_ProjOrb/6au_50Ry_jle.orb
 
 LATTICE_CONSTANT
 47.24314972   			#Lattice constant

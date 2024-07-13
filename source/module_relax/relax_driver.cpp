@@ -34,7 +34,8 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver)
 
         if (GlobalV::OUT_LEVEL == "ie"
             && (GlobalV::CALCULATION == "relax" || GlobalV::CALCULATION == "cell-relax" || GlobalV::CALCULATION == "scf"
-                || GlobalV::CALCULATION == "nscf"))
+                || GlobalV::CALCULATION == "nscf")
+            && (GlobalV::ESOLVER_TYPE != "lr"))
         {
             Print_Info::print_screen(stress_step, force_step, istep);
         }

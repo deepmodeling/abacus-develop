@@ -58,15 +58,18 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const Parallel_Orbitals* paraV, const K_Vectors& 
 
 template <typename TK, typename TR>
 HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
-                               Gint_k* GK_in,
-                               LCAO_Matrix* LM_in,
-                               const Parallel_Orbitals* paraV,
-                               elecstate::Potential* pot_in,
-                               const K_Vectors& kv_in,
-                               const TwoCenterBundle& two_center_bundle,
-                               elecstate::DensityMatrix<TK, double>* DM_in,
-                               int* exx_two_level_step)
-{
+    Gint_k* GK_in,
+    const Parallel_Orbitals* paraV,
+    elecstate::Potential* pot_in,
+    const K_Vectors& kv_in,
+    const TwoCenterBundle& two_center_bundle,
+    elecstate::DensityMatrix<TK, double>* DM_in
+#ifdef __EXX
+    , int* exx_two_level_step
+    , std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd
+    , std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc
+#endif
+) {
     this->kv = &kv_in;
     this->classname = "HamiltLCAO";
 
@@ -360,17 +363,19 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
 #ifdef __EXX
     if (GlobalC::exx_info.info_global.cal_exx)
     {
-    Operator<TK>*exx = new OperatorEXX<OperatorLCAO<TK, TR>>(this->hsk,
-            LM_in,
+        // Peize Lin add 2016-12-03
+        // set xc type before the first cal of xc in pelec->init_scf
+        // and calculate Cs, Vs
+        Operator<TK>* exx = new OperatorEXX<OperatorLCAO<TK, TR>>(this->hsk,
             this->hR,
             *this->kv,
-            LM_in->Hexxd,
-            LM_in->Hexxc,
+            Hexxd,
+            Hexxc,
             Add_Hexx_Type::R,
             exx_two_level_step,
             !GlobalC::restart.info_load.restart_exx
             && GlobalC::restart.info_load.load_H);
-            this->getOperator()->add(exx);
+        this->getOperator()->add(exx);
     }
 #endif
     // if NSPIN==2, HR should be separated into two parts, save HR into this->hRS2

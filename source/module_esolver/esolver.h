@@ -62,7 +62,7 @@ class ESolver
     // get conv_elec used in current scf
     virtual bool get_conv_elec()
     {
-        return 0;
+        return false;
     }
     std::string classname;
 };
@@ -74,7 +74,7 @@ class ESolver
  * 
  * @return [out] std::string The type of ESolver
  */
-std::string determine_type(void);
+std::string determine_type();
 
 /**
  * @brief Determine and initialize an ESolver based on input information.
@@ -85,9 +85,9 @@ std::string determine_type(void);
  *
  * @return [out] A pointer to an ESolver object that will be initialized.
  */
-ESolver* init_esolver();
+ESolver* init_esolver(const Input_para& inp, UnitCell& ucell);
 
-void clean_esolver(ESolver*& pesolver);
+void clean_esolver(ESolver*& pesolver, const bool lcao_cblacs_exit = false);
 
 } // namespace ModuleESolver
 

@@ -13,6 +13,7 @@
 #include "module_io/read_input.h"
 #include "module_io/winput.h"
 #include "module_parameter/parameter.h"
+#include "version.h"
 Driver::Driver()
 {
 }
@@ -30,8 +31,6 @@ void Driver::init()
 
     time_t time_start = std::time(nullptr);
     ModuleBase::timer::start();
-    // (0) print the start information
-    this->print_start_info();
 
     // (1) read the input parameters.
     // INPUT should be initalized here and then pass to atomic world, mohan
@@ -55,6 +54,7 @@ void Driver::init()
 
 void Driver::print_start_info()
 {
+    ModuleBase::TITLE("Driver", "print_start_info");
 #ifdef VERSION
     const char* version = VERSION;
 #else
@@ -93,16 +93,8 @@ void Driver::print_start_info()
     GlobalV::ofs_running << "                      Commit: " << commit << std::endl << std::endl;
     GlobalV::ofs_running << std::setiosflags(std::ios::right);
 
-#ifdef __MPI
-    // GlobalV::ofs_running << "    Version: Parallel, under ALPHA test" <<
-    // std::endl; GlobalV::ofs_running << "    Version: Parallel, in
-    // development" << std::endl; GlobalV::ofs_running << "    Processor Number
-    // is " << GlobalV::NPROC << std::endl;
-    ModuleBase::TITLE("Input", "init");
-    ModuleBase::TITLE("Input", "Bcast");
-#else
+#ifndef __MPI
     GlobalV::ofs_running << "    This is SERIES version." << std::endl;
-    ModuleBase::TITLE("Input", "init");
 #endif
     GlobalV::ofs_running << "    Start Time is " << ctime(&time_now);
     GlobalV::ofs_running << "                                                  "
@@ -111,6 +103,13 @@ void Driver::print_start_info()
     GlobalV::ofs_running << " -------------------------------------------------"
                             "-----------------------------------"
                          << std::endl;
+
+    GlobalV::ofs_running << std::setiosflags(std::ios::left);
+    std::cout << std::setiosflags(std::ios::left);
+
+    GlobalV::ofs_running << "\n READING GENERAL INFORMATION" << std::endl;
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "global_out_dir", GlobalV::global_out_dir);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "global_in_card", GlobalV::global_in_card);
 }
 
 void Driver::reading()
@@ -124,8 +123,9 @@ void Driver::reading()
     ModuleIO::ReadInput read_input(PARAM.globalv.myrank);
     read_input.read_parameters(PARAM, GlobalV::global_in_card);
 
-    // (2) create the output directory
+    // (2) create the output directory, running_*.log and print info
     read_input.create_directory(PARAM);
+    this->print_start_info();
 
     // (3) write the input file
     std::stringstream ss1;

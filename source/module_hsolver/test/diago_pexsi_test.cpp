@@ -144,10 +144,8 @@ class PexsiPrepare
         po.nrow = hmtest.nrow;
         po.nb = nb2d;
         po.blacs_ctxt = icontxt;
-        po.comm_2D = MPI_COMM_WORLD;
         po.dim0 = nprows;
         po.dim1 = npcols;
-        po.testpb = true;
 
         if (DETAILINFO && myrank == 0)
         {
