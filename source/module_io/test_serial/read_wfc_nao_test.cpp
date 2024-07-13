@@ -69,3 +69,32 @@ TEST_F(ReadWfcNaoTest,ReadWfcNao)
       EXPECT_NEAR(pelec.wg(0,1),0.0,1e-5);
       EXPECT_NEAR(psid(0,1,1),0.59595655928,1e-5);
 }
+TEST_F(ReadWfcNaoTest, ReadWfcNaoPart)
+{
+    //Global variables
+    const int nbands = 2;
+    const int skip_band = 1;
+    const int nlocal = 3;
+    GlobalV::global_readin_dir = "./support/";
+    const int nks = 1;
+
+    Parallel_Orbitals ParaV;
+#ifdef __MPI
+    ParaV.init(nlocal, nlocal, 1);
+    ParaV.set_desc_wfc_Eij(nlocal, nbands, pv->nrow);
+#else
+    ParaV.set_serial(nlocal, nlocal);
+    ParaV.nrow_bands = nlocal;
+    ParaV.ncol_bands = nbands;
+#endif 
+
+    psi::Psi<double> psid;
+    elecstate::ElecState pelec;
+    pelec.ekb.create(nks, nbands);
+    pelec.wg.create(nks, nbands);
+    // Act
+    ModuleIO::read_wfc_nao(GlobalV::global_readin_dir, ParaV, psid, &(pelec), /*skip_band=*/1);
+    // Assert
+    EXPECT_NEAR(pelec.ekb(0, 1), 7.4141254894954844445464914e-01, 1e-5);
+    EXPECT_NEAR(psid(0, 1, 1), 5.6401881891e-01, 1e-5);
+}
