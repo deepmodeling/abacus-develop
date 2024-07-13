@@ -47,7 +47,7 @@ namespace LR
             std::vector<container::Tensor>  dm_trans_2d = cal_dm_trans_pblas(psi_in_bfirst, *pX, *psi_ks, *pc, naos, nocc, nvirt, *pmat);
             if (this->tdm_sym) for (auto& t : dm_trans_2d) LR_Util::matsym(t.data<T>(), naos, *pmat);
 #else
-            std::vector<container::Tensor>  dm_trans_2d = cal_dm_trans_blas(psi_in_bfirst, psi_ks, nocc, nvirt);
+            std::vector<container::Tensor>  dm_trans_2d = cal_dm_trans_blas(psi_in_bfirst, *psi_ks, nocc, nvirt);
             if (this->tdm_sym) for (auto& t : dm_trans_2d) LR_Util::matsym(t.data<T>(), naos);
 #endif
             // tensor to vector, then set DMK
