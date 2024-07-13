@@ -211,9 +211,9 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, Input& inp_tmp, UnitCel
     this->nbasis = GlobalV::NLOCAL;
 #ifdef __MPI
     LR_Util::setup_2d_division(this->paraMat_, 1, this->nbasis, this->nbasis);
-#endif
     this->paraMat_.set_desc_wfc_Eij(this->nbasis, GlobalV::NBANDS, paraMat_.get_row_size());
     int err = this->paraMat_.set_nloc_wfc_Eij(GlobalV::NBANDS, GlobalV::ofs_running, GlobalV::ofs_warning);
+#endif
     this->paraMat_.set_atomic_trace(ucell.get_iat2iwt(), ucell.nat, this->nbasis);
 
     // read the ground state info
