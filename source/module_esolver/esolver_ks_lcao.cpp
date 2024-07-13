@@ -63,6 +63,23 @@ ESolver_KS_LCAO<TK, TR>::ESolver_KS_LCAO()
 {
     this->classname = "ESolver_KS_LCAO";
     this->basisname = "LCAO";
+#ifdef __EXX
+    // 1. currently this initialization must be put in constructor rather than `before_all_runners()`
+    //  because the latter is not reused by ESolver_LCAO_TDDFT, 
+    //  which cause the failure of the subsequent procedure reused by ESolver_LCAO_TDDFT
+    // 2. always construct but only initialize when if(cal_exx) is true
+    //  because some members like two_level_step are used outside if(cal_exx)
+    if (GlobalC::exx_info.info_ri.real_number)
+    {
+        this->exx_lri_double = std::make_shared<Exx_LRI<double>>(GlobalC::exx_info.info_ri);
+        this->exd = std::make_shared<Exx_LRI_Interface<TK, double>>(exx_lri_double);
+    }
+    else
+    {
+        this->exx_lri_complex = std::make_shared<Exx_LRI<std::complex<double>>>(GlobalC::exx_info.info_ri);
+        this->exc = std::make_shared<Exx_LRI_Interface<TK, std::complex<double>>>(exx_lri_complex);
+    }
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -173,16 +190,8 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(Input& inp, UnitCell& ucell)
         {
             XC_Functional::set_xc_first_loop(ucell);
             // initialize 2-center radial tables for EXX-LRI
-            if (GlobalC::exx_info.info_ri.real_number)
-            {
-                this->exx_lri_double = std::make_shared<Exx_LRI<double>>(GlobalC::exx_info.info_ri);
-                this->exx_lri_double->init(MPI_COMM_WORLD, this->kv);
-            }
-            else
-            {
-                this->exx_lri_complex = std::make_shared<Exx_LRI<std::complex<double>>>(GlobalC::exx_info.info_ri);
-                this->exx_lri_complex->init(MPI_COMM_WORLD, this->kv);
-            }
+            if (GlobalC::exx_info.info_ri.real_number) { this->exx_lri_double->init(MPI_COMM_WORLD, this->kv); }
+            else { this->exx_lri_complex->init(MPI_COMM_WORLD, this->kv); }
         }
     }
 #endif
