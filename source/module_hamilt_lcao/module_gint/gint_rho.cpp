@@ -21,7 +21,7 @@ void Gint::gint_kernel_rho(const int na_grid,
                                cal_flag);
 
     // evaluate psi on grids
-    Gint_Tools::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
+    ModuleBase::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
     Gint_Tools::cal_psir_ylm(*this->gridt,
                              this->bxyz,
                              na_grid,
@@ -30,13 +30,14 @@ void Gint::gint_kernel_rho(const int na_grid,
                              block_index,
                              block_size,
                              cal_flag,
-                             psir_ylm.ptr_2D);
+                             psir_ylm.get_ptr_2D());
 
     for (int is = 0; is < this->gridt->nspin; ++is)
     {
         Gint_Tools::Array_Pool<double> psir_DM(this->bxyz, LD_pool);
         GINT_FUNC::ZEROS(psir_DM.ptr_1D, this->bxyz * LD_pool);
         if (this->gridt->gamma_only_local)
+
         {
             Gint_Tools::mult_psi_DM_new(*this->gridt,
                                         this->bxyz,
@@ -47,8 +48,8 @@ void Gint::gint_kernel_rho(const int na_grid,
                                         block_size,
                                         block_index,
                                         cal_flag,
-                                        psir_ylm.ptr_2D,
-                                        psir_DM.ptr_2D,
+                                        psir_ylm.get_ptr_2D(),
+                                        psir_DM.get_ptr_2D(),
                                         this->DMRGint[is],
                                         inout->if_symm);
         }
@@ -62,14 +63,14 @@ void Gint::gint_kernel_rho(const int na_grid,
                                      block_index,
                                      block_size,
                                      cal_flag,
-                                     psir_ylm.ptr_2D,
-                                     psir_DM.ptr_2D,
+                                     psir_ylm.get_ptr_2D(),
+                                     psir_DM.get_ptr_2D(),
                                      this->DMRGint[is],
                                      inout->if_symm);
         }
 
         // do sum_mu g_mu(r)psi_mu(r) to get electron density on grid
-        this->cal_meshball_rho(na_grid, block_index, vindex, psir_ylm.ptr_2D, psir_DM.ptr_2D, inout->rho[is]);
+        this->cal_meshball_rho(na_grid, block_index, vindex, psir_ylm.get_ptr_2D(), psir_DM.get_ptr_2D(), inout->rho[is]);
     }
     delete[] block_iw;
     delete[] block_index;

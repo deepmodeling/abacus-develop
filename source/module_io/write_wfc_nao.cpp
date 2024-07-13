@@ -222,7 +222,7 @@ void write_wfc_nao(const int out_type,
     // If using MPI, the nbasis and nbands in psi is the value on local rank, 
     // so get nlocal and nbands from pv->desc_wfc[2] and pv->desc_wfc[3]
 #ifdef __MPI
-    MPI_Comm_rank(pv.comm_2D, &myid);
+    MPI_Comm_rank(pv.comm(), &myid);
     nlocal = pv.desc_wfc[2];
     nbands = pv.desc_wfc[3];
 #else
@@ -241,7 +241,7 @@ void write_wfc_nao(const int out_type,
     {
         psi.fix_k(ik);
 #ifdef __MPI        
-        pv_glb.set(nlocal, nbands, blk_glb, pv.comm_2D, pv.blacs_ctxt);   
+        pv_glb.set(nlocal, nbands, blk_glb, pv.blacs_ctxt);   
         Cpxgemr2d(nlocal,
                   nbands,
                   psi.get_pointer(),

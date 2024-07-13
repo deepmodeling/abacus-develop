@@ -4,6 +4,7 @@
 #include "module_base/kernels/math_op.h"
 #include "module_base/libm/libm.h"
 #include "module_base/module_device/memory_op.h"
+#include "module_base/array_pool.h"
 #include "realarray.h"
 #include "timer.h"
 #include "tool_quit.h"
@@ -629,7 +630,9 @@ void YlmReal::grad_Ylm_Real
     )
 {
 	ModuleBase::Ylm::set_coefficients();
-	int lmax = int(sqrt( double(lmax2) ) + 0.1) - 1;
+	const int lmax = int(sqrt( double(lmax2) ) + 0.1) - 1;
+	std::vector<double> tmpylm((lmax2+1) * (lmax2+1));
+	Array_Pool<double> tmpgylm((lmax2+1) * (lmax2+1), 3);
 
 	for (int ig = 0;ig < ng;ig++)
     {
@@ -648,9 +651,7 @@ void YlmReal::grad_Ylm_Real
 		}
 		else
 		{
-			std::vector<double> tmpylm;
-			std::vector<std::vector<double>> tmpgylm;
-			Ylm::grad_rl_sph_harm(lmax2, gg.x, gg.y, gg.z, tmpylm,tmpgylm);
+			Ylm::grad_rl_sph_harm(lmax2, gg.x, gg.y, gg.z, tmpylm.data(),tmpgylm.get_ptr_2D());
 			int lm = 0;
 			for(int il = 0 ; il <= lmax ; ++il)
 			{

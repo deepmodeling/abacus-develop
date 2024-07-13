@@ -15,19 +15,19 @@ void Gint::gint_kernel_tau(
 	Gint_Tools::get_block_info(*this->gridt, this->bxyz, na_grid, grid_index, block_iw, block_index, block_size, cal_flag);
 
     //evaluate psi and dpsi on grids
-	Gint_Tools::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
-	Gint_Tools::Array_Pool<double> dpsir_ylm_x(this->bxyz, LD_pool);
-	Gint_Tools::Array_Pool<double> dpsir_ylm_y(this->bxyz, LD_pool);
-	Gint_Tools::Array_Pool<double> dpsir_ylm_z(this->bxyz, LD_pool);
+	ModuleBase::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
+	ModuleBase::Array_Pool<double> dpsir_ylm_x(this->bxyz, LD_pool);
+	ModuleBase::Array_Pool<double> dpsir_ylm_y(this->bxyz, LD_pool);
+	ModuleBase::Array_Pool<double> dpsir_ylm_z(this->bxyz, LD_pool);
 
 	Gint_Tools::cal_dpsir_ylm(*this->gridt, 
 		this->bxyz, na_grid, grid_index, delta_r,
 		block_index, block_size, 
 		cal_flag,
-		psir_ylm.ptr_2D,
-		dpsir_ylm_x.ptr_2D,
-		dpsir_ylm_y.ptr_2D,
-		dpsir_ylm_z.ptr_2D);
+		psir_ylm.get_ptr_2D(),
+		dpsir_ylm_x.get_ptr_2D(),
+		dpsir_ylm_y.get_ptr_2D(),
+		dpsir_ylm_z.get_ptr_2D());
 
 	for(int is=0; is<this->gridt->nspin; ++is)
 	{
@@ -46,44 +46,44 @@ void Gint::gint_kernel_tau(
 				*this->gridt,this->bxyz, na_grid, LD_pool,
 				block_iw, block_size,
 				block_index, cal_flag,
-				dpsir_ylm_x.ptr_2D,
-				dpsix_DM.ptr_2D,
+				dpsir_ylm_x.get_ptr_2D(),
+				dpsix_DM.get_ptr_2D(),
 				inout->DM[is], 1);
 			Gint_Tools::mult_psi_DM(
 				*this->gridt, this->bxyz, na_grid, LD_pool,
 				block_iw, block_size,
 				block_index, cal_flag,
-				dpsir_ylm_y.ptr_2D,
-				dpsiy_DM.ptr_2D,
+				dpsir_ylm_y.get_ptr_2D(),
+				dpsiy_DM.get_ptr_2D(),
 				inout->DM[is], 1);	
 			Gint_Tools::mult_psi_DM(
 				*this->gridt, this->bxyz, na_grid, LD_pool,
 				block_iw, block_size,
 				block_index, cal_flag,
-				dpsir_ylm_z.ptr_2D,
-				dpsiz_DM.ptr_2D,
+				dpsir_ylm_z.get_ptr_2D(),
+				dpsiz_DM.get_ptr_2D(),
 				inout->DM[is], 1);
 			*/
 			Gint_Tools::mult_psi_DM_new(
 				*this->gridt,this->bxyz, grid_index, na_grid, LD_pool,
 				block_iw, block_size,
 				block_index, cal_flag,
-				dpsir_ylm_x.ptr_2D,
-				dpsix_DM.ptr_2D,
+				dpsir_ylm_x.get_ptr_2D(),
+				dpsix_DM.get_ptr_2D(),
 				this->DMRGint[is], 1);
 			Gint_Tools::mult_psi_DM_new(
 				*this->gridt, this->bxyz, grid_index, na_grid, LD_pool,
 				block_iw, block_size,
 				block_index, cal_flag,
-				dpsir_ylm_y.ptr_2D,
-				dpsiy_DM.ptr_2D,
+				dpsir_ylm_y.get_ptr_2D(),
+				dpsiy_DM.get_ptr_2D(),
 				this->DMRGint[is], 1);	
 			Gint_Tools::mult_psi_DM_new(
 				*this->gridt, this->bxyz, grid_index, na_grid, LD_pool,
 				block_iw, block_size,
 				block_index, cal_flag,
-				dpsir_ylm_z.ptr_2D,
-				dpsiz_DM.ptr_2D,
+				dpsir_ylm_z.get_ptr_2D(),
+				dpsiz_DM.get_ptr_2D(),
 				this->DMRGint[is], 1);
 		}
 		else
@@ -92,24 +92,24 @@ void Gint::gint_kernel_tau(
 				*this->gridt, this->bxyz, grid_index, na_grid,
 				block_index, block_size,
 				cal_flag, 
-				dpsir_ylm_x.ptr_2D,
-                dpsix_DM.ptr_2D,
+				dpsir_ylm_x.get_ptr_2D(),
+                dpsix_DM.get_ptr_2D(),
 				this->DMRGint[is],
 				1);
 			Gint_Tools::mult_psi_DMR(
 				*this->gridt, this->bxyz, grid_index, na_grid,
 				block_index, block_size,
 				cal_flag,
-				dpsir_ylm_y.ptr_2D,
-                dpsiy_DM.ptr_2D,
+				dpsir_ylm_y.get_ptr_2D(),
+                dpsiy_DM.get_ptr_2D(),
 				this->DMRGint[is],
 				1);
 			Gint_Tools::mult_psi_DMR(
 				*this->gridt, this->bxyz, grid_index, na_grid,
 				block_index, block_size,
 				cal_flag, 
-				dpsir_ylm_z.ptr_2D,
-                dpsiz_DM.ptr_2D,
+				dpsir_ylm_z.get_ptr_2D(),
+                dpsiz_DM.get_ptr_2D(),
 				this->DMRGint[is],
 				1);
 		}
@@ -120,8 +120,8 @@ void Gint::gint_kernel_tau(
 			this->cal_meshball_tau(
 				na_grid, block_index,
 				vindex,
-				dpsir_ylm_x.ptr_2D, dpsir_ylm_y.ptr_2D, dpsir_ylm_z.ptr_2D,
-				dpsix_DM.ptr_2D, dpsiy_DM.ptr_2D, dpsiz_DM.ptr_2D,
+				dpsir_ylm_x.get_ptr_2D(), dpsir_ylm_y.get_ptr_2D(), dpsir_ylm_z.get_ptr_2D(),
+				dpsix_DM.get_ptr_2D(), dpsiy_DM.get_ptr_2D(), dpsiz_DM.get_ptr_2D(),
 				inout->rho[is]);
 		}
 	}

@@ -13,7 +13,7 @@ void grad_rl_sph_harm(const int& Lmax, // max momentum of L
                       const double& x,
                       const double& y,
                       const double& z,
-                      std::vector<double>& rly,
-                      std::vector<std::vector<double>>& grly,
+                      double* rly,
+                      double** grly,
                       const double* ylmcoef);
 #endif

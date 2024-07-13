@@ -4,6 +4,7 @@
 abacus=abacus
 # number of MPI processes
 np=4
+nt=$OMP_NUM_THREADS # number of OpenMP threads, default is $OMP_NUM_THREADS
 # threshold with unit: eV
 threshold=0.0000001
 force_threshold=0.0001
@@ -26,7 +27,7 @@ threshold_file="threshold"
 # fatal_threshold 1
 
 
-while getopts a:n:t:c:s:r:f:g flag
+while getopts a:n:t:c:s:r:f:go: flag
 do
     case "${flag}" in
         a) abacus=${OPTARG};;
@@ -37,15 +38,15 @@ do
         r) case=${OPTARG};;
         f) cases_file=${OPTARG};;
         g) g=true;; #generate test reference
+        o) nt=${OPTARG};; # number of OpenMP threads
     esac
 done
 
 # number of OpenMP threads
-nt=$OMP_NUM_THREADS
 if [[ -z "$nt" ]]; then
     nt=$(expr `nproc` / ${np})
-    export OMP_NUM_THREADS=${nt}
 fi
+export OMP_NUM_THREADS=${nt}
 
 echo "-----AUTO TESTS OF ABACUS ------"
 echo "ABACUS path: $abacus"
@@ -178,7 +179,11 @@ check_out(){
         calculation=`grep calculation INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
         running_path=`echo "OUT.autotest/running_$calculation"".log"`
         cat $running_path
+        case_status+=$dir' 0\n'
+    else
+        case_status+=$dir' 1\n'
     fi
+
     if [ $ifatal -eq 1 ]; then
         let fatal++
         echo -e "\e[0;31m[ERROR      ] \e[0m"\
@@ -220,6 +225,7 @@ failed_case_list=()
 ok=0
 fatal=0
 fatal_case_list=()
+case_status=() # record if the test case passed or not
 fatal_threshold=1
 report=""
 repo="$(realpath ..)/"
@@ -294,6 +300,7 @@ fi
 
 if [ -z $g ]
 then
+echo -e $case_status > test.sum
 if [ $failed -eq 0 ]
 then
     echo -e "\e[0;32m[ PASSED   ] \e[0m $ok test cases passed."

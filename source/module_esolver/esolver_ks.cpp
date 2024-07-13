@@ -213,6 +213,8 @@ void ESolver_KS<T, Device>::before_all_runners(Input& inp, UnitCell& ucell)
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
     }
 
+    ucell.print_cell_cif("STRU.cif");
+
     //! 6) Setup the k points according to symmetry.
     this->kv.set(ucell.symm, GlobalV::global_kpoint_card, GlobalV::NSPIN, ucell.G, ucell.latvec, GlobalV::ofs_running);
 

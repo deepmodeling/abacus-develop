@@ -20,11 +20,11 @@ namespace LR_Util
     /// @tparam TCell 
     /// @param ucell 
     template <typename TCell>
-    const int cal_nelec(const TCell& ucell);
+    int cal_nelec(const TCell& ucell);
     
     /// @brief calculate the number of occupied orbitals
     /// @param nelec 
-    const int cal_nocc(int nelec);
+    int cal_nocc(int nelec);
     
     /// @brief  set the index map: ix to (ic, iv) and vice versa
     /// by diagonal traverse the c-v pairs
@@ -108,8 +108,7 @@ namespace LR_Util
 
 #ifdef __MPI
     // pack the process to setup 2d divion reusing blacs_ctxt of an existing 2d-matrix
-    void setup_2d_division(Parallel_2D& pv, int nb, int gr, int gc,
-        const MPI_Comm& comm_2D_in, const int& blacs_ctxt_in);
+    void setup_2d_division(Parallel_2D& pv, int nb, int gr, int gc, const int& blacs_ctxt_in);
     /// @brief  gather 2d matrix to full matrix
     /// the defination of row and col is consistent with setup_2d_division
     template <typename T>

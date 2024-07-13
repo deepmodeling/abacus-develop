@@ -7,13 +7,17 @@
 #include "spar_u.h"
 
 void sparse_format::cal_HSR(const Parallel_Orbitals& pv,
-                            LCAO_Matrix& lm,
-                            LCAO_HS_Arrays& HS_Arrays,
-                            Grid_Driver& grid,
-                            const int& current_spin,
-                            const double& sparse_thr,
-                            const int (&nmp)[3],
-                            hamilt::Hamilt<std::complex<double>>* p_ham) {
+    LCAO_HS_Arrays& HS_Arrays,
+    Grid_Driver& grid,
+    const int& current_spin,
+    const double& sparse_thr,
+    const int(&nmp)[3],
+    hamilt::Hamilt<std::complex<double>>* p_ham
+#ifdef __EXX
+    , const std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd
+    , const std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc
+#endif
+) {
     ModuleBase::TITLE("sparse_format", "cal_HSR");
 
     sparse_format::set_R_range(HS_Arrays.all_R_coor, grid);
@@ -94,18 +98,18 @@ void sparse_format::cal_HSR(const Parallel_Orbitals& pv,
     if (GlobalC::exx_info.info_global.cal_exx) {
         if (GlobalC::exx_info.info_ri.real_number) {
             sparse_format::cal_HR_exx(pv,
-                                      HS_Arrays,
-                                      current_spin,
-                                      sparse_thr,
-                                      nmp,
-                                      *lm.Hexxd);
+                HS_Arrays,
+                current_spin,
+                sparse_thr,
+                nmp,
+                *Hexxd);
         } else {
             sparse_format::cal_HR_exx(pv,
-                                      HS_Arrays,
-                                      current_spin,
-                                      sparse_thr,
-                                      nmp,
-                                      *lm.Hexxc);
+                HS_Arrays,
+                current_spin,
+                sparse_thr,
+                nmp,
+                *Hexxc);
         }
     }
 #endif // __MPI

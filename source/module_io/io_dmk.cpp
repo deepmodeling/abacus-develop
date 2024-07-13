@@ -133,7 +133,7 @@ bool ModuleIO::read_dmk(const int nspin,
 
     int my_rank = 0;
 #ifdef __MPI
-    MPI_Comm_rank(pv.comm_2D, &my_rank);
+    MPI_Comm_rank(pv.comm(), &my_rank);
 #endif
 
     int nlocal = pv.get_global_row_size();
@@ -216,7 +216,7 @@ bool ModuleIO::read_dmk(const int nspin,
     }     // rank0
 
 #ifdef __MPI
-    MPI_Bcast(&read_success, 1, MPI_C_BOOL, 0, pv.comm_2D);
+    MPI_Bcast(&read_success, 1, MPI_C_BOOL, 0, pv.comm());
 #endif
 
     if (read_success) {
@@ -225,7 +225,7 @@ bool ModuleIO::read_dmk(const int nspin,
         dmk.resize(nspin * nk,
                    std::vector<T>(pv.get_row_size() * pv.get_col_size()));
         Parallel_2D pv_glb;
-        pv_glb.set(nlocal, nlocal, nlocal, pv.comm_2D, pv.blacs_ctxt);
+        pv_glb.set(nlocal, nlocal, nlocal, pv.blacs_ctxt);
         for (int ik = 0; ik < nspin * nk; ik++) {
             Cpxgemr2d(nlocal,
                       nlocal,
@@ -258,7 +258,7 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
 
     int my_rank = 0;
 #ifdef __MPI
-    MPI_Comm_rank(pv.comm_2D, &my_rank);
+    MPI_Comm_rank(pv.comm(), &my_rank);
 #endif
 
     bool gamma_only = std::is_same<double, T>::value;
@@ -279,7 +279,7 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
             // gather dmk[ik] to dmk_global
             std::vector<T> dmk_global(my_rank == 0 ? nlocal * nlocal : 0);
 #ifdef __MPI
-            pv_glb.set(nlocal, nlocal, nlocal, pv.comm_2D, pv.blacs_ctxt);
+            pv_glb.set(nlocal, nlocal, nlocal, pv.blacs_ctxt);
             Cpxgemr2d(nlocal,
                       nlocal,
                       const_cast<T*>(dmk[ik + nk * ispin].data()),

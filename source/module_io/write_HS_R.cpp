@@ -12,18 +12,22 @@
 // If the absolute value of the matrix element is less than or equal to the
 // 'sparse_thr', it will be ignored.
 void ModuleIO::output_HSR(const int& istep,
-                          const ModuleBase::matrix& v_eff,
-                          const Parallel_Orbitals& pv,
-                          LCAO_Matrix& lm,
-                          LCAO_HS_Arrays& HS_Arrays,
-                          Grid_Driver& grid, // mohan add 2024-04-06
-                          const K_Vectors& kv,
-                          hamilt::Hamilt<std::complex<double>>* p_ham,
-                          const std::string& SR_filename,
-                          const std::string& HR_filename_up,
-                          const std::string HR_filename_down,
-                          const bool& binary,
-                          const double& sparse_thr) {
+    const ModuleBase::matrix& v_eff,
+    const Parallel_Orbitals& pv,
+    LCAO_HS_Arrays& HS_Arrays,
+    Grid_Driver& grid, // mohan add 2024-04-06
+    const K_Vectors& kv,
+    hamilt::Hamilt<std::complex<double>>* p_ham,
+#ifdef __EXX
+    const std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd,
+    const std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc,
+#endif
+    const std::string& SR_filename,
+    const std::string& HR_filename_up,
+    const std::string HR_filename_down,
+    const bool& binary,
+    const double& sparse_thr
+) {
     ModuleBase::TITLE("ModuleIO", "output_HSR");
     ModuleBase::timer::tick("ModuleIO", "output_HSR");
 
@@ -32,26 +36,21 @@ void ModuleIO::output_HSR(const int& istep,
     if (nspin == 1 || nspin == 4) {
         const int spin_now = 0;
         // jingan add 2021-6-4, modify 2021-12-2
-        sparse_format::cal_HSR(pv,
-                               lm,
-                               HS_Arrays,
-                               grid,
-                               spin_now,
-                               sparse_thr,
-                               kv.nmp,
-                               p_ham);
-    } else if (nspin == 2) {
+        sparse_format::cal_HSR(pv, HS_Arrays, grid, spin_now, sparse_thr, kv.nmp, p_ham
+#ifdef __EXX
+            , Hexxd, Hexxc
+#endif
+        );
+    }
+    else if (nspin == 2) {
         int spin_now = 1;
 
         // save HR of spin down first (the current spin always be down)
-        sparse_format::cal_HSR(pv,
-                               lm,
-                               HS_Arrays,
-                               grid,
-                               spin_now,
-                               sparse_thr,
-                               kv.nmp,
-                               p_ham);
+        sparse_format::cal_HSR(pv, HS_Arrays, grid, spin_now, sparse_thr, kv.nmp, p_ham
+#ifdef __EXX
+            , Hexxd, Hexxc
+#endif
+        );
 
         // cal HR of the spin up
         if (GlobalV::VL_IN_H) {
@@ -61,14 +60,11 @@ void ModuleIO::output_HSR(const int& istep,
             spin_now = 0;
         }
 
-        sparse_format::cal_HSR(pv,
-                               lm,
-                               HS_Arrays,
-                               grid,
-                               spin_now,
-                               sparse_thr,
-                               kv.nmp,
-                               p_ham);
+        sparse_format::cal_HSR(pv, HS_Arrays, grid, spin_now, sparse_thr, kv.nmp, p_ham
+#ifdef __EXX
+            , Hexxd, Hexxc
+#endif
+        );
     }
 
     ModuleIO::save_HSR_sparse(istep,

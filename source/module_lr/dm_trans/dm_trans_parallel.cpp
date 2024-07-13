@@ -22,13 +22,14 @@ std::vector<container::Tensor> cal_dm_trans_pblas(const psi::Psi<double>& X_ista
                                                   const int nspin)
 {
     ModuleBase::TITLE("hamilt_lrtd", "cal_dm_trans_pblas");
-    assert(px.comm_2D == pc.comm_2D);
+    assert(px.comm() == pc.comm());
     assert(px.blacs_ctxt == pc.blacs_ctxt);
 
-    if (pmat.comm_2D != px.comm_2D || pmat.blacs_ctxt != px.blacs_ctxt)
-        LR_Util::setup_2d_division(pmat, px.get_block_size(), naos, naos, px.comm_2D, px.blacs_ctxt);
-    else
+    if (pmat.comm() != px.comm() || pmat.blacs_ctxt != px.blacs_ctxt) {
+        LR_Util::setup_2d_division(pmat, px.get_block_size(), naos, naos, px.blacs_ctxt);
+    } else {
         assert(pmat.get_local_size() > 0);
+}
 
     int nks = c.get_nk();
     assert(nks == X_istate.get_nk());
@@ -49,7 +50,7 @@ std::vector<container::Tensor> cal_dm_trans_pblas(const psi::Psi<double>& X_ista
 
         // 1. [X*C_occ^T]^T=C_occ*X^T
         Parallel_2D pXc; // nvirt*naos
-        LR_Util::setup_2d_division(pXc, px.get_block_size(), naos, nvirt, px.comm_2D, px.blacs_ctxt);
+        LR_Util::setup_2d_division(pXc, px.get_block_size(), naos, nvirt, px.blacs_ctxt);
         container::Tensor Xc(DAT::DT_DOUBLE,
                              DEV::CpuDevice,
                              {pXc.get_col_size(), pXc.get_row_size()}); // row is "inside"(memory contiguity) for pblas
@@ -110,13 +111,14 @@ std::vector<container::Tensor> cal_dm_trans_pblas(const psi::Psi<std::complex<do
                                                   const int nspin)
 {
     ModuleBase::TITLE("hamilt_lrtd", "cal_dm_trans_pblas");
-    assert(px.comm_2D == pc.comm_2D);
+    assert(px.comm() == pc.comm());
     assert(px.blacs_ctxt == pc.blacs_ctxt);
 
-    if (pmat.comm_2D != px.comm_2D || pmat.blacs_ctxt != px.blacs_ctxt)
-        LR_Util::setup_2d_division(pmat, px.get_block_size(), naos, naos, px.comm_2D, px.blacs_ctxt);
-    else
+    if (pmat.comm() != px.comm() || pmat.blacs_ctxt != px.blacs_ctxt) {
+        LR_Util::setup_2d_division(pmat, px.get_block_size(), naos, naos, px.blacs_ctxt);
+    } else {
         assert(pmat.get_local_size() > 0);
+}
 
     int nks = c.get_nk();
     assert(nks == X_istate.get_nk());
@@ -157,7 +159,7 @@ std::vector<container::Tensor> cal_dm_trans_pblas(const psi::Psi<std::complex<do
         char transa = 'N';
         char transb = 'C';
         Parallel_2D pXc;
-        LR_Util::setup_2d_division(pXc, px.get_block_size(), nvirt, naos, px.comm_2D, px.blacs_ctxt);
+        LR_Util::setup_2d_division(pXc, px.get_block_size(), nvirt, naos, px.blacs_ctxt);
         container::Tensor Xc(DAT::DT_COMPLEX_DOUBLE,
                              DEV::CpuDevice,
                              {pXc.get_col_size(), pXc.get_row_size()}); // row is "inside"(memory contiguity) for pblas

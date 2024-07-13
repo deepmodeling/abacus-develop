@@ -47,7 +47,7 @@ void Gint_k::cal_env_k(int ik,
                                        cal_flag);
 
             // evaluate psi on grids
-            Gint_Tools::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
+            ModuleBase::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
             Gint_Tools::cal_psir_ylm(*this->gridt,
                                      this->bxyz,
                                      size,
@@ -56,7 +56,7 @@ void Gint_k::cal_env_k(int ik,
                                      block_index,
                                      block_size,
                                      cal_flag,
-                                     psir_ylm.ptr_2D);
+                                     psir_ylm.get_ptr_2D());
 
             int* vindex = Gint_Tools::get_vindex(this->bxyz,
                                                  this->bx,
@@ -96,7 +96,7 @@ void Gint_k::cal_env_k(int ik,
                     if (cal_flag[ib][ia1])
                     {
                         int iw1_lo = 0;
-                        double* psi1 = &psir_ylm.ptr_2D[ib][block_index[ia1]];
+                        double* psi1 = &psir_ylm[ib][block_index[ia1]];
                         std::complex<double> tmp{0.0, 0.0};
                         if (this->gridt->nspin == 4) // is it a simple add of 2 spins?
                         {
