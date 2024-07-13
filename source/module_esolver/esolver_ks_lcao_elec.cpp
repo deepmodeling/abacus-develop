@@ -247,7 +247,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
 
     if (GlobalC::ucell.cell_parameter_updated)
     {
-        this->init_after_vc(INPUT, GlobalC::ucell);
+        this->init_after_vc(PARAM.inp, GlobalC::ucell);
     }
     if (GlobalC::ucell.ionic_position_updated)
     {
@@ -469,7 +469,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                       this->pw_big,
                       this->orb_con.ParaV,
                       this->GG,
-                      INPUT.out_wfc_pw,
+                      PARAM.inp.out_wfc_pw,
                       this->wf.out_wfc_r,
                       this->kv,
                       GlobalV::nelec,
@@ -488,8 +488,8 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                       this->pw_big,
                       this->orb_con.ParaV,
                       this->GK,
-                      INPUT.out_wfc_pw,
-                      this->wf.out_wfc_r,
+                      1,
+                      1,
                       this->kv,
                       GlobalV::nelec,
                       GlobalV::NBANDS_ISTATE,
@@ -672,18 +672,18 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
     }
 
     // add by jingan in 2018.11.7
-    if (GlobalV::CALCULATION == "nscf" && INPUT.towannier90)
+    if (GlobalV::CALCULATION == "nscf" && PARAM.inp.towannier90)
     {
 #ifdef __LCAO
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "Wave function to Wannier90");
-        if (INPUT.wannier_method == 1) {
-            toWannier90_LCAO_IN_PW myWannier(INPUT.out_wannier_mmn,
-                                             INPUT.out_wannier_amn,
-                                             INPUT.out_wannier_unk,
-                                             INPUT.out_wannier_eig,
-                                             INPUT.out_wannier_wvfn_formatted,
-                                             INPUT.nnkpfile,
-                                             INPUT.wannier_spin);
+        if (PARAM.inp.wannier_method == 1) {
+            toWannier90_LCAO_IN_PW myWannier(PARAM.inp.out_wannier_mmn,
+                                             PARAM.inp.out_wannier_amn,
+                                             PARAM.inp.out_wannier_unk,
+                                             PARAM.inp.out_wannier_eig,
+                                             PARAM.inp.out_wannier_wvfn_formatted,
+                                             PARAM.inp.nnkpfile,
+                                             PARAM.inp.wannier_spin);
 
             myWannier.calculate(this->pelec->ekb,
                                 this->pw_wfc,
@@ -693,15 +693,15 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
                                 this->psi,
                                 &(this->orb_con.ParaV));
         }
-        else if (INPUT.wannier_method == 2)
+        else if (PARAM.inp.wannier_method == 2)
         {
-            toWannier90_LCAO myWannier(INPUT.out_wannier_mmn,
-                                       INPUT.out_wannier_amn,
-                                       INPUT.out_wannier_unk,
-                                       INPUT.out_wannier_eig,
-                                       INPUT.out_wannier_wvfn_formatted,
-                                       INPUT.nnkpfile,
-                                       INPUT.wannier_spin);
+            toWannier90_LCAO myWannier(PARAM.inp.out_wannier_mmn,
+                                       PARAM.inp.out_wannier_amn,
+                                       PARAM.inp.out_wannier_unk,
+                                       PARAM.inp.out_wannier_eig,
+                                       PARAM.inp.out_wannier_wvfn_formatted,
+                                       PARAM.inp.nnkpfile,
+                                       PARAM.inp.wannier_spin);
 
             myWannier.calculate(this->pelec->ekb, this->kv, *(this->psi), &(this->orb_con.ParaV));
         }

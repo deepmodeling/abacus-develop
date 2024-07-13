@@ -109,7 +109,7 @@ ESolver_KS_LCAO<TK, TR>::~ESolver_KS_LCAO()
 //! 14) set occupations?
 //------------------------------------------------------------------------------
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::before_all_runners(Input& inp, UnitCell& ucell)
+void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell& ucell)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "before_all_runners");
     ModuleBase::timer::tick("ESolver_KS_LCAO", "before_all_runners");
@@ -274,7 +274,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(Input& inp, UnitCell& ucell)
 //! mohan add 2024-05-11
 //------------------------------------------------------------------------------
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::init_after_vc(Input& inp, UnitCell& ucell)
+void ESolver_KS_LCAO<TK, TR>::init_after_vc(const Input_para& inp, UnitCell& ucell)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "init_after_vc");
     ModuleBase::timer::tick("ESolver_KS_LCAO", "init_after_vc");
@@ -407,7 +407,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners()
     GlobalV::ofs_running << " !FINAL_ETOT_IS " << this->pelec->f_en.etot * ModuleBase::Ry_to_eV << " eV" << std::endl;
     GlobalV::ofs_running << " --------------------------------------------\n\n" << std::endl;
 
-    if (INPUT.out_dos != 0 || INPUT.out_band[0] != 0 || INPUT.out_proj_band != 0)
+    if (PARAM.inp.out_dos != 0 || PARAM.inp.out_band[0] != 0 || PARAM.inp.out_proj_band != 0)
     {
         GlobalV::ofs_running << "\n\n\n\n";
         GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
@@ -447,7 +447,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners()
 
     const int nspin0 = (GlobalV::NSPIN == 2) ? 2 : 1;
 
-    if (INPUT.out_band[0])
+    if (PARAM.inp.out_band[0])
     {
         for (int is = 0; is < nspin0; is++)
         {
@@ -458,28 +458,28 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners()
                                 ss2.str(),
                                 GlobalV::NBANDS,
                                 0.0,
-                                INPUT.out_band[1],
+                                PARAM.inp.out_band[1],
                                 this->pelec->ekb,
                                 this->kv,
                                 &(GlobalC::Pkpoints));
         }
     } // out_band
 
-    if (INPUT.out_proj_band) // Projeced band structure added by jiyy-2022-4-20
+    if (PARAM.inp.out_proj_band) // Projeced band structure added by jiyy-2022-4-20
     {
         ModuleIO::write_proj_band_lcao(this->psi, this->LM, this->pelec, this->kv, GlobalC::ucell, this->p_hamilt);
     }
 
-    if (INPUT.out_dos)
+    if (PARAM.inp.out_dos)
     {
         ModuleIO::out_dos_nao(this->psi,
                               this->LM,
                               this->orb_con.ParaV,
                               this->pelec->ekb,
                               this->pelec->wg,
-                              INPUT.dos_edelta_ev,
-                              INPUT.dos_scale,
-                              INPUT.dos_sigma,
+                              PARAM.inp.dos_edelta_ev,
+                              PARAM.inp.dos_scale,
+                              PARAM.inp.dos_sigma,
                               *(this->pelec->klist),
                               GlobalC::Pkpoints,
                               GlobalC::ucell,
@@ -516,7 +516,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners()
 //! mohan add 2024-05-11
 //------------------------------------------------------------------------------
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::init_basis_lcao(ORB_control& orb_con, Input& inp, UnitCell& ucell)
+void ESolver_KS_LCAO<TK, TR>::init_basis_lcao(ORB_control& orb_con, const Input_para& inp, UnitCell& ucell)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "init_basis_lcao");
 
@@ -811,7 +811,7 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2density(int istep, int iter, double ethr)
     // 4) print bands for each k-point and each band
     for (int ik = 0; ik < this->kv.get_nks(); ++ik)
     {
-        this->pelec->print_band(ik, INPUT.printe, iter);
+        this->pelec->print_band(ik, PARAM.inp.printe, iter);
     }
 
     // 5) what's the exd used for?
@@ -1215,7 +1215,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
 
 #ifdef __EXX
     // 11) write rpa information
-    if (INPUT.rpa)
+    if (PARAM.inp.rpa)
     {
         // ModuleRPA::DFT_RPA_interface
         // rpa_interface(GlobalC::exx_info.info_global);
@@ -1368,7 +1368,7 @@ ModuleIO::Output_Mat_Sparse<TK> ESolver_KS_LCAO<TK, TR>::create_Output_Mat_Spars
     return ModuleIO::Output_Mat_Sparse<TK>(hsolver::HSolverLCAO<TK>::out_mat_hsR,
                                            hsolver::HSolverLCAO<TK>::out_mat_dh,
                                            hsolver::HSolverLCAO<TK>::out_mat_t,
-                                           INPUT.out_mat_r,
+                                           PARAM.inp.out_mat_r,
                                            istep,
                                            this->pelec->pot->get_effective_v(),
                                            this->orb_con.ParaV,

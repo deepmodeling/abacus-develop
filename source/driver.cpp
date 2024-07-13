@@ -117,11 +117,11 @@ void Driver::reading()
 {
     ModuleBase::timer::tick("Driver", "reading");
     // temperarily
-    GlobalV::MY_RANK = PARAM.sys.myrank;
-    GlobalV::NPROC = PARAM.sys.nproc;
+    GlobalV::MY_RANK = PARAM.globalv.myrank;
+    GlobalV::NPROC = PARAM.globalv.nproc;
 
     // (1) read the input file
-    ModuleIO::ReadInput read_input(PARAM.sys.myrank);
+    ModuleIO::ReadInput read_input(PARAM.globalv.myrank);
     read_input.read_parameters(PARAM, GlobalV::global_in_card);
 
     // (2) create the output directory

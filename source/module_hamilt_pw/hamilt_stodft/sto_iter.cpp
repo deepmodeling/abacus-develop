@@ -49,8 +49,8 @@ void Stochastic_Iter::init(const int method_in, K_Vectors* pkv_in, ModulePW::PW_
     this->method = method_in;
     if(method == 1)                 spolyv = new double [norder];
     else                            spolyv = new double [norder*norder];
-    stofunc.Emin = INPUT.emin_sto;
-    stofunc.Emax = INPUT.emax_sto;
+    stofunc.Emin = PARAM.inp.emin_sto;
+    stofunc.Emax = PARAM.inp.emax_sto;
     
     if(this->method == 2)
     {
@@ -101,7 +101,7 @@ void Stochastic_Iter::checkemm(const int& ik, const int istep, const int iter, S
 {
     ModuleBase::TITLE("Stochastic_Iter","checkemm");
     //iter = 1,2,...   istep = 0,1,2,...
-    // if( istep%INPUT.initsto_freq != 0 )    return;
+    // if( istep%PARAM.inp.initsto_freq != 0 )    return;
     const int npw = stowf.ngk[ik];
     const int nks = stowf.nks;
     if(istep == 0)

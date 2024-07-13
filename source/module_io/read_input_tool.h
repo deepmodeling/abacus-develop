@@ -14,42 +14,42 @@
 #ifdef __MPI
 #define add_double_bcast(PARAMETER)                                                                                    \
     {                                                                                                                  \
-        bcastfuncs.push_back([](Parameter& para) { Parallel_Common::bcast_double(para.input.PARAMETER); });            \
+        bcastfuncs.push_back([](Parameter& para) { Parallel_Common::bcast_double(para.PARAMETER); });            \
     }
 #define add_int_bcast(PARAMETER)                                                                                       \
     {                                                                                                                  \
-        bcastfuncs.push_back([](Parameter& para) { Parallel_Common::bcast_int(para.input.PARAMETER); });               \
+        bcastfuncs.push_back([](Parameter& para) { Parallel_Common::bcast_int(para.PARAMETER); });               \
     }
 #define add_bool_bcast(PARAMETER)                                                                                      \
     {                                                                                                                  \
-        bcastfuncs.push_back([](Parameter& para) { Parallel_Common::bcast_bool(para.input.PARAMETER); });              \
+        bcastfuncs.push_back([](Parameter& para) { Parallel_Common::bcast_bool(para.PARAMETER); });              \
     }
 #define add_string_bcast(PARAMETER)                                                                                    \
     {                                                                                                                  \
-        bcastfuncs.push_back([](Parameter& para) { Parallel_Common::bcast_string(para.input.PARAMETER); });            \
+        bcastfuncs.push_back([](Parameter& para) { Parallel_Common::bcast_string(para.PARAMETER); });            \
     }
 #define add_doublevec_bcast(PARAMETER, N, FILL)                                                                        \
     {                                                                                                                  \
         bcastfuncs.push_back([](Parameter& para) {                                                                     \
-            if (para.input.PARAMETER.size() != N)                                                                      \
-                para.input.PARAMETER.resize(N, FILL);                                                                  \
-            Parallel_Common::bcast_double(para.input.PARAMETER.data(), N);                                             \
+            if (para.PARAMETER.size() != N)                                                                      \
+                para.PARAMETER.resize(N, FILL);                                                                  \
+            Parallel_Common::bcast_double(para.PARAMETER.data(), N);                                             \
         });                                                                                                            \
     }
 #define add_intvec_bcast(PARAMETER, N, FILL)                                                                           \
     {                                                                                                                  \
         bcastfuncs.push_back([](Parameter& para) {                                                                     \
-            if (para.input.PARAMETER.size() != N)                                                                      \
-                para.input.PARAMETER.resize(N, FILL);                                                                  \
-            Parallel_Common::bcast_int(para.input.PARAMETER.data(), N);                                                \
+            if (para.PARAMETER.size() != N)                                                                      \
+                para.PARAMETER.resize(N, FILL);                                                                  \
+            Parallel_Common::bcast_int(para.PARAMETER.data(), N);                                                \
         });                                                                                                            \
     }
 #define add_stringvec_bcast(PARAMETER, N, FILL)                                                                        \
     {                                                                                                                  \
         bcastfuncs.push_back([](Parameter& para) {                                                                     \
-            if (para.input.PARAMETER.size() != N)                                                                      \
-                para.input.PARAMETER.resize(N, FILL);                                                                  \
-            Parallel_Common::bcast_string(para.input.PARAMETER.data(), N);                                             \
+            if (para.PARAMETER.size() != N)                                                                      \
+                para.PARAMETER.resize(N, FILL);                                                                  \
+            Parallel_Common::bcast_string(para.PARAMETER.data(), N);                                             \
         });                                                                                                            \
     }
 
@@ -61,8 +61,8 @@
 #define add_doublevec_bcast(PARAMETER, N, FILL)                                                                        \
     {                                                                                                                  \
         bcastfuncs.push_back([](Parameter& para) {                                                                     \
-            if (para.input.PARAMETER.size() != N)                                                                      \
-                para.input.PARAMETER.resize(N, FILL);                                                                  \
+            if (para.PARAMETER.size() != N)                                                                      \
+                para.PARAMETER.resize(N, FILL);                                                                  \
         });                                                                                                            \
     }
 
@@ -74,25 +74,25 @@
 #define sync_string(PARAMETER)                                                                                         \
     {                                                                                                                  \
         item.get_final_value                                                                                             \
-            = [](Input_Item& item, const Parameter& para) { item.final_value << para.input.PARAMETER; };               \
+            = [](Input_Item& item, const Parameter& para) { item.final_value << para.PARAMETER; };               \
         add_string_bcast(PARAMETER);                                                                                   \
     }
 #define sync_int(PARAMETER)                                                                                            \
     {                                                                                                                  \
         item.get_final_value                                                                                             \
-            = [](Input_Item& item, const Parameter& para) { item.final_value << para.input.PARAMETER; };               \
+            = [](Input_Item& item, const Parameter& para) { item.final_value << para.PARAMETER; };               \
         add_int_bcast(PARAMETER);                                                                                      \
     }
 #define sync_double(PARAMETER)                                                                                         \
     {                                                                                                                  \
         item.get_final_value                                                                                             \
-            = [](Input_Item& item, const Parameter& para) { item.final_value << para.input.PARAMETER; };               \
+            = [](Input_Item& item, const Parameter& para) { item.final_value << para.PARAMETER; };               \
         add_double_bcast(PARAMETER);                                                                                   \
     }
 #define sync_bool(PARAMETER)                                                                                           \
     {                                                                                                                  \
         item.get_final_value                                                                                             \
-            = [](Input_Item& item, const Parameter& para) { item.final_value << para.input.PARAMETER; };               \
+            = [](Input_Item& item, const Parameter& para) { item.final_value << para.PARAMETER; };               \
         add_bool_bcast(PARAMETER);                                                                                     \
     }
 #define sync_doublevec(PARAMETER, N, FILL)                                                                             \
@@ -100,7 +100,7 @@
         item.get_final_value = [](Input_Item& item, const Parameter& para) {                                             \
             for (int i = 0; i < N; i++)                                                                                \
             {                                                                                                          \
-                item.final_value << para.input.PARAMETER[i] << " ";                                                    \
+                item.final_value << para.PARAMETER[i] << " ";                                                    \
             }                                                                                                          \
         };                                                                                                             \
         add_doublevec_bcast(PARAMETER, N, FILL);                                                                       \
@@ -110,7 +110,7 @@
         item.get_final_value = [](Input_Item& item, const Parameter& para) {                                             \
             for (int i = 0; i < N; i++)                                                                                \
             {                                                                                                          \
-                item.final_value << para.input.PARAMETER[i] << " ";                                                    \
+                item.final_value << para.PARAMETER[i] << " ";                                                    \
             }                                                                                                          \
         };                                                                                                             \
         add_intvec_bcast(PARAMETER, N, FILL);                                                                          \
@@ -120,7 +120,7 @@
         item.get_final_value = [](Input_Item& item, const Parameter& para) {                                             \
             for (int i = 0; i < N; i++)                                                                                \
             {                                                                                                          \
-                item.final_value << para.input.PARAMETER[i] << " ";                                                    \
+                item.final_value << para.PARAMETER[i] << " ";                                                    \
             }                                                                                                          \
         };                                                                                                             \
         add_stringvec_bcast(PARAMETER, N, FILL);                                                                       \
@@ -128,21 +128,21 @@
 
 #define read_sync_string(PARAMETER)                                                                                    \
     {                                                                                                                  \
-        item.read_value = [](const Input_Item& item, Parameter& para) { para.input.PARAMETER = strvalue; };             \
+        item.read_value = [](const Input_Item& item, Parameter& para) { para.PARAMETER = strvalue; };             \
         sync_string(PARAMETER);                                                                                        \
     }
 #define read_sync_int(PARAMETER)                                                                                       \
     {                                                                                                                  \
-        item.read_value = [](const Input_Item& item, Parameter& para) { para.input.PARAMETER = intvalue; };             \
+        item.read_value = [](const Input_Item& item, Parameter& para) { para.PARAMETER = intvalue; };             \
         sync_int(PARAMETER);                                                                                           \
     }
 #define read_sync_double(PARAMETER)                                                                                    \
     {                                                                                                                  \
-        item.read_value = [](const Input_Item& item, Parameter& para) { para.input.PARAMETER = doublevalue; };          \
+        item.read_value = [](const Input_Item& item, Parameter& para) { para.PARAMETER = doublevalue; };          \
         sync_double(PARAMETER);                                                                                        \
     }
 #define read_sync_bool(PARAMETER)                                                                                      \
     {                                                                                                                  \
-        item.read_value = [](const Input_Item& item, Parameter& para) { para.input.PARAMETER = boolvalue; };            \
+        item.read_value = [](const Input_Item& item, Parameter& para) { para.PARAMETER = boolvalue; };            \
         sync_bool(PARAMETER);                                                                                          \
     }

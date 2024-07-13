@@ -10,13 +10,13 @@ void ReadInput::item_md()
     {
         Input_Item item("md_type");
         item.annotation = "choose ensemble";
-        read_sync_string(mdp.md_type);
+        read_sync_string(input.mdp.md_type);
         this->add_item(item);
     }
     {
         Input_Item item("md_thermostat");
         item.annotation = "choose thermostat";
-        read_sync_string(mdp.md_thermostat);
+        read_sync_string(input.mdp.md_thermostat);
         this->add_item(item);
     }
     {
@@ -29,7 +29,7 @@ void ReadInput::item_md()
                 para.input.mdp.md_nstep = 50;
             }
         };
-        read_sync_int(mdp.md_nstep);
+        read_sync_int(input.mdp.md_nstep);
         this->add_item(item);
     }
     {
@@ -39,43 +39,43 @@ void ReadInput::item_md()
             if (para.input.mdp.md_dt < 0)
                 ModuleBase::WARNING_QUIT("ReadInput", "time interval of MD calculation should be positive");
         };
-        read_sync_double(mdp.md_dt);
+        read_sync_double(input.mdp.md_dt);
         this->add_item(item);
     }
     {
         Input_Item item("md_tchain");
         item.annotation = "number of Nose-Hoover chains";
-        read_sync_int(mdp.md_tchain);
+        read_sync_int(input.mdp.md_tchain);
         this->add_item(item);
     }
     {
         Input_Item item("md_tfirst");
         item.annotation = "temperature first";
-        read_sync_double(mdp.md_tfirst);
+        read_sync_double(input.mdp.md_tfirst);
         this->add_item(item);
     }
     {
         Input_Item item("md_tlast");
         item.annotation = "temperature last";
-        read_sync_double(mdp.md_tlast);
+        read_sync_double(input.mdp.md_tlast);
         this->add_item(item);
     }
     {
         Input_Item item("md_dumpfreq");
         item.annotation = "The period to dump MD information";
-        read_sync_int(mdp.md_dumpfreq);
+        read_sync_int(input.mdp.md_dumpfreq);
         this->add_item(item);
     }
     {
         Input_Item item("md_restartfreq");
         item.annotation = "The period to output MD restart information";
-        read_sync_int(mdp.md_restartfreq);
+        read_sync_int(input.mdp.md_restartfreq);
         this->add_item(item);
     }
     {
         Input_Item item("md_seed");
         item.annotation = "random seed for MD";
-        read_sync_int(mdp.md_seed);
+        read_sync_int(input.mdp.md_seed);
         this->add_item(item);
     }
     {
@@ -92,67 +92,67 @@ void ReadInput::item_md()
                 para.input.mdp.md_prec_level = 0;
             }
         };
-        read_sync_int(mdp.md_prec_level);
+        read_sync_int(input.mdp.md_prec_level);
         this->add_item(item);
     }
     {
         Input_Item item("ref_cell_factor");
         item.annotation = "construct a reference cell bigger than the initial cell";
-        read_sync_double(ref_cell_factor);
+        read_sync_double(input.ref_cell_factor);
         this->add_item(item);
     }
     {
         Input_Item item("md_restart");
         item.annotation = "whether restart";
-        read_sync_bool(mdp.md_restart);
+        read_sync_bool(input.mdp.md_restart);
         this->add_item(item);
     }
     {
         Input_Item item("lj_rcut");
         item.annotation = "cutoff radius of LJ potential";
-        read_sync_double(mdp.lj_rcut);
+        read_sync_double(input.mdp.lj_rcut);
         this->add_item(item);
     }
     {
         Input_Item item("lj_epsilon");
         item.annotation = "the value of epsilon for LJ potential";
-        read_sync_double(mdp.lj_epsilon);
+        read_sync_double(input.mdp.lj_epsilon);
         this->add_item(item);
     }
     {
         Input_Item item("lj_sigma");
         item.annotation = "the value of sigma for LJ potential";
-        read_sync_double(mdp.lj_sigma);
+        read_sync_double(input.mdp.lj_sigma);
         this->add_item(item);
     }
     {
         Input_Item item("pot_file");
         item.annotation = "the filename of potential files for CMD such as DP";
-        read_sync_string(mdp.pot_file);
+        read_sync_string(input.mdp.pot_file);
         this->add_item(item);
     }
     {
         Input_Item item("msst_direction");
         item.annotation = "the direction of shock wave";
-        read_sync_int(mdp.msst_direction);
+        read_sync_int(input.mdp.msst_direction);
         this->add_item(item);
     }
     {
         Input_Item item("msst_vel");
         item.annotation = "the velocity of shock wave";
-        read_sync_double(mdp.msst_vel);
+        read_sync_double(input.mdp.msst_vel);
         this->add_item(item);
     }
     {
         Input_Item item("msst_vis");
         item.annotation = "artificial viscosity";
-        read_sync_double(mdp.msst_vis);
+        read_sync_double(input.mdp.msst_vis);
         this->add_item(item);
     }
     {
         Input_Item item("msst_tscale");
         item.annotation = "reduction in initial temperature";
-        read_sync_double(mdp.msst_tscale);
+        read_sync_double(input.mdp.msst_tscale);
         this->add_item(item);
     }
     {
@@ -164,7 +164,7 @@ void ReadInput::item_md()
                 ModuleBase::WARNING_QUIT("ReadInput", "msst_qmass must be greater than 0!");
             }
         };
-        read_sync_double(mdp.msst_qmass);
+        read_sync_double(input.mdp.msst_qmass);
         this->add_item(item);
     }
     {
@@ -176,62 +176,62 @@ void ReadInput::item_md()
                 para.input.mdp.md_tfreq = 1.0 / 40 / para.input.mdp.md_dt;
             }
         };
-        read_sync_double(mdp.md_tfreq);
+        read_sync_double(input.mdp.md_tfreq);
         this->add_item(item);
     }
     {
         Input_Item item("md_damp");
         item.annotation = "damping parameter (time units) used to add force in "
                           "Langevin method";
-        read_sync_double(mdp.md_damp);
+        read_sync_double(input.mdp.md_damp);
         this->add_item(item);
     }
     {
         Input_Item item("md_nraise");
         item.annotation = "parameters used when md_type=nvt";
-        read_sync_int(mdp.md_nraise);
+        read_sync_int(input.mdp.md_nraise);
         this->add_item(item);
     }
     {
         Input_Item item("cal_syns");
         item.annotation = "calculate asynchronous overlap matrix to output for Hefei-NAMD";
-        read_sync_bool(cal_syns);
+        read_sync_bool(input.cal_syns);
         this->add_item(item);
     }
     {
         Input_Item item("dmax");
         item.annotation = "maximum displacement of all atoms in one step (bohr)";
-        read_sync_double(dmax);
+        read_sync_double(input.dmax);
         this->add_item(item);
     }
     {
         Input_Item item("md_tolerance");
         item.annotation = "tolerance for velocity rescaling (K)";
-        read_sync_double(mdp.md_tolerance);
+        read_sync_double(input.mdp.md_tolerance);
         this->add_item(item);
     }
     {
         Input_Item item("md_pmode");
         item.annotation = "NPT ensemble mode: iso, aniso, tri";
-        read_sync_string(mdp.md_pmode);
+        read_sync_string(input.mdp.md_pmode);
         this->add_item(item);
     }
     {
         Input_Item item("md_pcouple");
         item.annotation = "whether couple different components: xyz, xy, yz, xz, none";
-        read_sync_string(mdp.md_pcouple);
+        read_sync_string(input.mdp.md_pcouple);
         this->add_item(item);
     }
     {
         Input_Item item("md_pchain");
         item.annotation = "num of thermostats coupled with barostat";
-        read_sync_int(mdp.md_pchain);
+        read_sync_int(input.mdp.md_pchain);
         this->add_item(item);
     }
     {
         Input_Item item("md_pfirst");
         item.annotation = "initial target pressure";
-        read_sync_double(mdp.md_pfirst);
+        read_sync_double(input.mdp.md_pfirst);
         this->add_item(item);
     }
     {
@@ -241,7 +241,7 @@ void ReadInput::item_md()
             if (!item.is_read()) // no md_plast in INPUT
                 para.input.mdp.md_plast = para.input.mdp.md_pfirst;
         };
-        read_sync_double(mdp.md_plast);
+        read_sync_double(input.mdp.md_plast);
         this->add_item(item);
     }
     {
@@ -254,25 +254,25 @@ void ReadInput::item_md()
                 para.input.mdp.md_pfreq = 1.0 / 400 / para.input.mdp.md_dt;
             }
         };
-        read_sync_double(mdp.md_pfreq);
+        read_sync_double(input.mdp.md_pfreq);
         this->add_item(item);
     }
     {
         Input_Item item("dump_force");
         item.annotation = "output atomic forces into the file MD_dump or not";
-        read_sync_bool(mdp.dump_force);
+        read_sync_bool(input.mdp.dump_force);
         this->add_item(item);
     }
     {
         Input_Item item("dump_vel");
         item.annotation = "output atomic velocities into the file MD_dump or not";
-        read_sync_bool(mdp.dump_vel);
+        read_sync_bool(input.mdp.dump_vel);
         this->add_item(item);
     }
     {
         Input_Item item("dump_virial");
         item.annotation = "output lattice virial into the file MD_dump or not";
-        read_sync_bool(mdp.dump_virial);
+        read_sync_bool(input.mdp.dump_virial);
         this->add_item(item);
     }
 }

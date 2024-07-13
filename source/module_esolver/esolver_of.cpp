@@ -57,7 +57,7 @@ ESolver_OF::~ESolver_OF()
     delete this->opt_cg_mag_;
 }
 
-void ESolver_OF::before_all_runners(Input& inp, UnitCell& ucell)
+void ESolver_OF::before_all_runners(const Input_para& inp, UnitCell& ucell)
 {
     ESolver_FP::before_all_runners(inp, ucell);
 
@@ -157,7 +157,7 @@ void ESolver_OF::before_all_runners(Input& inp, UnitCell& ucell)
     CE_.Init_CE(ucell.nat);
 }
 
-void ESolver_OF::init_after_vc(Input& inp, UnitCell& ucell)
+void ESolver_OF::init_after_vc(const Input_para& inp, UnitCell& ucell)
 {
     ModuleBase::timer::tick("ESolver_OF", "init_after_vc");
 
@@ -266,7 +266,7 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
 {
     if (ucell.cell_parameter_updated)
     {
-        this->init_after_vc(INPUT, ucell);
+        this->init_after_vc(PARAM.inp, ucell);
     }
     if (ucell.ionic_position_updated)
     {

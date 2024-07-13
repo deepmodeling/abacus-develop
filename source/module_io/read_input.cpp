@@ -102,6 +102,7 @@ bool ReadInput::check_mode = false;
 ReadInput::ReadInput(const int& rank)
 {
     this->rank = rank;
+    this->set_globalv_bcast();
     this->item_general();
     this->item_pw();
     this->item_sdft();

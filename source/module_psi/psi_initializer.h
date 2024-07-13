@@ -122,7 +122,7 @@ class psi_initializer
         // but to avoid ownership issue, use weak_ptr to share the pointer
         // therefore there is no really getter to get directly the shared_ptr.
         std::weak_ptr<psi::Psi<T, Device>> share_psig() { return this->psig_; }
-        const int psig_use_count() { return this->psig_.use_count(); }
+        int psig_use_count() { return this->psig_.use_count(); }
 
         void set_ucell(UnitCell* p_ucell_in) { this->p_ucell_ = p_ucell_in; }
         void set_pspot_nl(pseudopot_cell_vnl* p_pspot_nl_in) { this->p_pspot_nl_ = p_pspot_nl_in; }

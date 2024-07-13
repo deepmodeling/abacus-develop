@@ -185,7 +185,7 @@ ESolver* init_esolver()
 	}
 	else if (esolver_type == "dp_pot")
 	{
-		return new ESolver_DP(INPUT.mdp.pot_file);
+		return new ESolver_DP(PARAM.mdp.pot_file);
 	}
 	throw std::invalid_argument("esolver_type = "+std::string(esolver_type)+". Wrong in "+std::string(__FILE__)+" line "+std::to_string(__LINE__));
 }

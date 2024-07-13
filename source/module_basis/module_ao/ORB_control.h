@@ -4,6 +4,7 @@
 #include "ORB_read.h"
 #include "module_cell/unitcell.h"
 #include "module_io/input.h"
+#include "module_parameter/parameter.h"
 #include "parallel_orbitals.h"
 
 class ORB_control
@@ -29,7 +30,7 @@ class ORB_control
 
     ~ORB_control();
 
-    void Init(Input& inp, UnitCell& ucell);
+    void Init(const Input_para& inp, UnitCell& ucell);
 
     // first step: read orbital file
     void read_orb_first(std::ofstream& ofs_in,

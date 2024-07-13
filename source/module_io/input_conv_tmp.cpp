@@ -24,43 +24,12 @@ void Input_Conv::tmp_convert()
     INPUT.pw_seed = PARAM.inp.pw_seed;
     INPUT.init_vel = PARAM.inp.init_vel;
     INPUT.ref_cell_factor = PARAM.inp.ref_cell_factor;
-
-    INPUT.kpar = PARAM.inp.kpar;
-    INPUT.berry_phase = PARAM.inp.berry_phase;
-    INPUT.gdir = PARAM.inp.gdir;
-    INPUT.kspacing[0] = PARAM.inp.kspacing[0];
-    INPUT.kspacing[1] = PARAM.inp.kspacing[1];
-    INPUT.kspacing[2] = PARAM.inp.kspacing[2];
-    INPUT.min_dist_coef = PARAM.inp.min_dist_coef;
-    INPUT.towannier90 = PARAM.inp.towannier90;
-    INPUT.nnkpfile = PARAM.inp.nnkpfile;
-    INPUT.wannier_spin = PARAM.inp.wannier_spin;
-    INPUT.wannier_method = PARAM.inp.wannier_method;
-    INPUT.out_wannier_mmn = PARAM.inp.out_wannier_mmn;
-    INPUT.out_wannier_amn = PARAM.inp.out_wannier_amn;
-    INPUT.out_wannier_unk = PARAM.inp.out_wannier_unk;
-    INPUT.out_wannier_eig = PARAM.inp.out_wannier_eig;
-    INPUT.out_wannier_wvfn_formatted = PARAM.inp.out_wannier_wvfn_formatted;
-
-    INPUT.nche_sto = PARAM.inp.nche_sto;
-    INPUT.nbands_sto = PARAM.inp.nbands_sto;
-    INPUT.seed_sto = PARAM.inp.seed_sto;
-    INPUT.initsto_ecut = PARAM.inp.initsto_ecut;
-    INPUT.emax_sto = PARAM.inp.emax_sto;
-    INPUT.emin_sto = PARAM.inp.emin_sto;
-    INPUT.bndpar = PARAM.inp.bndpar;
-    INPUT.initsto_freq = PARAM.inp.initsto_freq;
-    INPUT.method_sto = PARAM.inp.method_sto;
-    INPUT.npart_sto = PARAM.inp.npart_sto;
-    INPUT.cal_cond = PARAM.inp.cal_cond;
-    INPUT.cond_che_thr = PARAM.inp.cond_che_thr;
-    INPUT.cond_smear = PARAM.inp.cond_smear;
-    INPUT.cond_dw = PARAM.inp.cond_dw;
-    INPUT.cond_wcut = PARAM.inp.cond_wcut;
-    INPUT.cond_dt = PARAM.inp.cond_dt;
+    INPUT.bessel_nao_rcut = PARAM.globalv.bessel_nao_rcut;
+    INPUT.mdp.md_tfirst = PARAM.mdp.md_tfirst;
     INPUT.cond_dtbatch = PARAM.inp.cond_dtbatch;
-    INPUT.cond_fwhm = PARAM.inp.cond_fwhm;
-    INPUT.cond_nonlocal = PARAM.inp.cond_nonlocal;
+    INPUT.nche_sto = PARAM.inp.nche_sto;
+
+    
 
     INPUT.dft_functional = PARAM.inp.dft_functional;
     INPUT.xc_temperature = PARAM.inp.xc_temperature;
@@ -85,16 +54,16 @@ void Input_Conv::tmp_convert()
     INPUT.relax_cg_thr = PARAM.inp.relax_cg_thr;
     INPUT.relax_scale_force = PARAM.inp.relax_scale_force;
     INPUT.gamma_only = PARAM.inp.gamma_only;
-    INPUT.gamma_only_local = PARAM.inp.sup.gamma_only_local;
+    INPUT.gamma_only_local = PARAM.globalv.gamma_only_local;
     INPUT.fft_mode = PARAM.inp.fft_mode;
     INPUT.ecutwfc = PARAM.inp.ecutwfc;
     INPUT.ecutrho = PARAM.inp.ecutrho;
     INPUT.erf_ecut = PARAM.inp.erf_ecut;
     INPUT.erf_height = PARAM.inp.erf_height;
     INPUT.erf_sigma = PARAM.inp.erf_sigma;
-    INPUT.ncx = PARAM.inp.sup.ncx;
-    INPUT.ncy = PARAM.inp.sup.ncy;
-    INPUT.ncz = PARAM.inp.sup.ncz;
+    INPUT.ncx = PARAM.globalv.ncx;
+    INPUT.ncy = PARAM.globalv.ncy;
+    INPUT.ncz = PARAM.globalv.ncz;
     INPUT.nx = PARAM.inp.nx;
     INPUT.ny = PARAM.inp.ny;
     INPUT.nz = PARAM.inp.nz;
@@ -125,7 +94,7 @@ void Input_Conv::tmp_convert()
     INPUT.scf_nmax = PARAM.inp.scf_nmax;
     INPUT.relax_nmax = PARAM.inp.relax_nmax;
     INPUT.out_level = PARAM.inp.out_level;
-    INPUT.out_md_control = PARAM.inp.sup.out_md_control;
+    INPUT.out_md_control = PARAM.globalv.out_md_control;
     INPUT.smearing_method = PARAM.inp.smearing_method;
     INPUT.smearing_sigma = PARAM.inp.smearing_sigma;
 
@@ -158,8 +127,8 @@ void Input_Conv::tmp_convert()
     INPUT.dos_edelta_ev = PARAM.inp.dos_edelta_ev;
     INPUT.dos_scale = PARAM.inp.dos_scale;
     INPUT.dos_nche = PARAM.inp.dos_nche;
-    INPUT.dos_setemin = PARAM.inp.sup.dos_setemin;
-    INPUT.dos_setemax = PARAM.inp.sup.dos_setemax;
+    INPUT.dos_setemin = PARAM.globalv.dos_setemin;
+    INPUT.dos_setemax = PARAM.globalv.dos_setemax;
     INPUT.dos_sigma = PARAM.inp.dos_sigma;
     INPUT.lcao_ecut = PARAM.inp.lcao_ecut;
     INPUT.lcao_dk = PARAM.inp.lcao_dk;
@@ -210,12 +179,12 @@ void Input_Conv::tmp_convert()
     INPUT.hubbard_u = new double[INPUT.ntype];
     for (int i = 0; i < INPUT.ntype; ++i)
     {
-        INPUT.hubbard_u[i] = PARAM.inp.sup.hubbard_u[i];
+        INPUT.hubbard_u[i] = PARAM.globalv.hubbard_u[i];
     }
     INPUT.omc = PARAM.inp.omc;
     INPUT.yukawa_potential = PARAM.inp.yukawa_potential;
     INPUT.yukawa_lambda = PARAM.inp.yukawa_lambda;
-    INPUT.uramping = PARAM.inp.sup.uramping;
+    INPUT.uramping = PARAM.globalv.uramping;
     INPUT.dft_plus_dmft = PARAM.inp.dft_plus_dmft;
     INPUT.rpa = PARAM.inp.rpa;
     INPUT.of_kinetic = PARAM.inp.of_kinetic;
@@ -237,7 +206,7 @@ void Input_Conv::tmp_convert()
     INPUT.bessel_nao_smooth = PARAM.inp.bessel_nao_smooth;
     INPUT.bessel_nao_sigma = PARAM.inp.bessel_nao_sigma;
     INPUT.bessel_nao_ecut = PARAM.inp.bessel_nao_ecut;
-    INPUT.bessel_nao_rcut = PARAM.inp.sup.bessel_nao_rcut;
+    INPUT.bessel_nao_rcut = PARAM.globalv.bessel_nao_rcut;
     INPUT.bessel_nao_rcuts = PARAM.inp.bessel_nao_rcuts;
     INPUT.bessel_nao_tolerence = PARAM.inp.bessel_nao_tolerence;
     INPUT.bessel_descriptor_lmax = PARAM.inp.bessel_descriptor_lmax;

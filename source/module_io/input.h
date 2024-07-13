@@ -48,6 +48,8 @@ class Input
     int nbands;               // number of bands
     int nbands_istate;        // number of bands around fermi level for get_pchg
                               // calculation.
+    int cond_dtbatch;  
+    int nche_sto;
 
     int pw_seed; // random seed for initializing wave functions qianrui
                  // 2021-8-12
@@ -55,54 +57,8 @@ class Input
     bool init_vel;          // read velocity from STRU or not  liuyu 2021-07-14
     double ref_cell_factor; // construct a reference cell bigger than the
                             // initial cell  liuyu 2023-03-21
-
-    int kpar; // ecch pool is for one k point
-
-    bool berry_phase; // berry phase calculation
-    int gdir;         // berry phase calculation
-    double kspacing[3];
-    double min_dist_coef;
-    //==========================================================
-    // Wannier functions
-    //==========================================================
-    bool towannier90;         // add by jingan for wannier90
-    std::string nnkpfile;     // add by jingan for wannier90
-    std::string wannier_spin; // add by jingan for wannier90
-    int wannier_method;       // different implementation methods under Lcao basis set
-    bool out_wannier_mmn;     // add by renxi for wannier90
-    bool out_wannier_amn;
-    bool out_wannier_unk;
-    bool out_wannier_eig;
-    bool out_wannier_wvfn_formatted;
-
-    //==========================================================
-    // Stochastic DFT
-    //==========================================================
-    int nche_sto;              // number of orders for Chebyshev expansion in stochastic DFT
-                               // //qinarui 2021-2-5
-    int nbands_sto;            // number of stochastic bands //qianrui 2021-2-5
-    std::string nbndsto_str;   // string parameter for stochastic bands
-    int seed_sto;              // random seed for sDFT
-    double initsto_ecut = 0.0; // maximum ecut to init stochastic bands
-    double emax_sto;           // Emax & Emin to normalize H
-    double emin_sto;
-    int bndpar;          // parallel for stochastic/deterministic bands
-    int initsto_freq;    // frequency to init stochastic orbitals when running md
-    int method_sto;      // different methods for sdft, 1: slow, less memory  2:
-                         // fast, more memory
-    int npart_sto;       // for method_sto = 2, reduce memory
-    bool cal_cond;       // calculate electronic conductivities
-    double cond_che_thr; // control the error of Chebyshev expansions for
-                         // conductivities
-    int cond_smear;      // smearing method for conductivities 1: Gaussian 2:
-                         // Lorentzian
-    double cond_dw;      // d\omega for conductivities
-    double cond_wcut;    // cutoff \omega for conductivities
-    double cond_dt;      // dt to integrate conductivities
-    int cond_dtbatch;    // exp(iH*dt*cond_dtbatch) is expanded with Chebyshev
-                         // expansion.
-    double cond_fwhm;    // FWHM for conductivities
-    bool cond_nonlocal;  // if calculate nonlocal effects
+    double md_tfirst;
+    double bessel_nao_rcut;      // radial cutoff for spherical bessel functions(a.u.)
 
     //==========================================================
     // electrons / spin
@@ -394,7 +350,7 @@ class Input
     bool bessel_nao_smooth;      // spherical bessel smooth or not
     double bessel_nao_sigma;     // spherical bessel smearing_sigma
     std::string bessel_nao_ecut; // energy cutoff for spherical bessel functions(Ry)
-    double bessel_nao_rcut;      // radial cutoff for spherical bessel functions(a.u.)
+    
     std::vector<double> bessel_nao_rcuts;
     double bessel_nao_tolerence;        // tolerence for spherical bessel root
                                         // the following are used when generating jle.orb
@@ -477,33 +433,6 @@ class Input
         getline(ifs, line); // read the rest of the line, directly discard it.
         return;
     }
-    void read_kspacing(std::ifstream& ifs)
-    {
-        std::string s;
-        std::getline(ifs, s);
-        std::stringstream ss(s);
-        // read 3 values
-        int count = 0;
-        while ((ss >> kspacing[count]) && count < 3)
-        {
-            count++;
-        }
-        // if not read even one value, or read two values, the input is invalid.
-        if (count == 0 || count == 2)
-        {
-            std::cout << "kspacing can only accept one or three double values." << std::endl;
-            ifs.setstate(std::ios::failbit);
-        }
-        // if only read one value, set all to kspacing[0]
-        if (count == 1)
-        {
-            kspacing[1] = kspacing[0];
-            kspacing[2] = kspacing[0];
-        }
-        // std::cout << "count: " << count << " kspacing: " << kspacing[0] << "
-        // " << kspacing[1] << " " << kspacing[2]
-        // << std::endl;
-    };
 
     /* I hope this function would be more and more useful if want to support
     vector/list of input */
