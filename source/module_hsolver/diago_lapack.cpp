@@ -33,7 +33,6 @@ void DiagoLapack<double>::diag(hamilt::Hamilt<double>* phm_in, psi::Psi<double>&
     for (int i = 0; i < size; i++)
     {
         eigenvalue_in[i] = eigen[i];
-        //std::cout << eigen[i] << std::endl;
     }
 }
 template <>
@@ -79,8 +78,6 @@ int DiagoLapack<T>::dsygvx_once(const int ncol,
     const double abstol = 0;
 
     int lwork = (ncol + 2) * ncol;
-
-    std::cout << h_tmp.c[0] << " " << h_tmp.c[1] << std::endl;
 
     std::vector<double> work(3, 0);
     std::vector<int> iwork(1, 0);
@@ -147,8 +144,6 @@ int DiagoLapack<T>::dsygvx_once(const int ncol,
     double *ev = new double[ncol * ncol];
 
     dsygv_(&itype, &jobz, &uplo, &GlobalV::NLOCAL, h_tmp.c, &ncol, s_tmp.c, &ncol, ekb, ev, &lwork, &info);
-
-    std::cout << ekb[0] << std::endl;
 
     return info;
 }

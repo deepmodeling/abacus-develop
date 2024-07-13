@@ -13,5 +13,7 @@ endif()
 set(ATen_CPU_SRCS ${ATen_CPU_SRCS} ${ATen_KERNELS_SRCS} PARENT_SCOPE)
 
 if(BUILD_TESTING)
-  add_subdirectory(test)
+  if(ENABLE_MPI)
+    add_subdirectory(test)
+  endif()
 endif()
