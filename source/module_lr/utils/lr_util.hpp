@@ -10,7 +10,7 @@ namespace LR_Util
     /// =================PHYSICS====================
 
     template <typename TCell>
-    const int cal_nelec(const TCell& ucell) {
+    int cal_nelec(const TCell& ucell) {
         int nelec = 0;
         for (int it = 0; it < ucell.ntype; ++it)
             nelec += ucell.atoms[it].ncpp.zv * ucell.atoms[it].na;
