@@ -807,6 +807,7 @@ void Input_Conv::Convert()
 #ifdef __DEEPKS
     GlobalV::deepks_scf = PARAM.inp.deepks_scf;
     GlobalV::deepks_bandgap = PARAM.inp.deepks_bandgap; // QO added for bandgap label 2021-12-15
+    GlobalV::deepks_v_delta = PARAM.inp.deepks_v_delta;
     GlobalV::deepks_out_unittest = PARAM.inp.deepks_out_unittest;
     GlobalV::deepks_out_labels = PARAM.inp.deepks_out_labels;
     GlobalV::deepks_equiv = PARAM.inp.deepks_equiv;
@@ -833,7 +834,7 @@ void Input_Conv::Convert()
         GlobalV::deepks_setorb = true;
 }
 #else
-    if (PARAM.inp.deepks_scf || PARAM.inp.deepks_out_labels || PARAM.inp.deepks_bandgap)
+    if (PARAM.inp.deepks_scf || PARAM.inp.deepks_out_labels || PARAM.inp.deepks_bandgap || PARAM.inp.deepks_v_delta)
     {
         ModuleBase::WARNING_QUIT("Input_conv", "please compile with DeePKS");
     }

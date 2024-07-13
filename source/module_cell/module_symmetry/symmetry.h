@@ -128,6 +128,8 @@ public:
 			const int n, const ModuleBase::Matrix3 &a, const ModuleBase::Matrix3 &b)const;
 	void gmatrix_invmap(const ModuleBase::Matrix3* s, const int n, int* invmap);
 	void hermite_normal_form(const ModuleBase::Matrix3 &s, ModuleBase::Matrix3 &H, ModuleBase::Matrix3 &b) const;
+	/// @brief return a map that is inequivalent atom index to its symmetry multiplicity
+	std::map<int, int> inequivalent_atoms() const;
 	private:
 
 	// (s)tart (p)osition of atom (t)ype which

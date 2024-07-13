@@ -1,4 +1,5 @@
 #include "gtest/gtest.h"
+#define private public
 #include "module_esolver/esolver_lj.h"
 #include "module_md/md_func.h"
 #include "setcell.h"
@@ -22,10 +23,10 @@ class LJ_pot_test : public testing::Test
     ModuleBase::matrix stress;
     double potential;
     int natom;
+    UnitCell ucell;
 
     void SetUp()
     {
-        UnitCell ucell;
         Setcell::setupcell(ucell);
 
         natom = ucell.nat;
@@ -33,10 +34,6 @@ class LJ_pot_test : public testing::Test
         stress.create(3, 3);
 
         Setcell::parameters();
-
-        ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
-        p_esolver->before_all_runners(INPUT, ucell);
-        MD_func::force_virial(p_esolver, 0, ucell, potential, force, true, stress);
     }
 
     void TearDown()
@@ -47,11 +44,17 @@ class LJ_pot_test : public testing::Test
 
 TEST_F(LJ_pot_test, potential)
 {
+    ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
+    p_esolver->before_all_runners(INPUT, ucell);
+    MD_func::force_virial(p_esolver, 0, ucell, potential, force, true, stress);
     EXPECT_NEAR(potential, -0.011957818623534381, doublethreshold);
 }
 
 TEST_F(LJ_pot_test, force)
 {
+    ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
+    p_esolver->before_all_runners(INPUT, ucell);
+    MD_func::force_virial(p_esolver, 0, ucell, potential, force, true, stress);
     EXPECT_NEAR(force[0].x, 0.00049817733089377704, doublethreshold);
     EXPECT_NEAR(force[0].y, 0.00082237246837022328, doublethreshold);
     EXPECT_NEAR(force[0].z, -3.0493186101154812e-20, doublethreshold);
@@ -68,6 +71,9 @@ TEST_F(LJ_pot_test, force)
 
 TEST_F(LJ_pot_test, stress)
 {
+    ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
+    p_esolver->before_all_runners(INPUT, ucell);
+    MD_func::force_virial(p_esolver, 0, ucell, potential, force, true, stress);
     EXPECT_NEAR(stress(0, 0), 8.0360222227631859e-07, doublethreshold);
     EXPECT_NEAR(stress(0, 1), 1.7207745586539077e-07, doublethreshold);
     EXPECT_NEAR(stress(0, 2), 0, doublethreshold);
@@ -77,4 +83,136 @@ TEST_F(LJ_pot_test, stress)
     EXPECT_NEAR(stress(2, 0), 0, doublethreshold);
     EXPECT_NEAR(stress(2, 1), -1.1858461261560206e-22, doublethreshold);
     EXPECT_NEAR(stress(2, 2), 6.4275429572682057e-07, doublethreshold);
+}
+
+TEST_F(LJ_pot_test, RcutSearchRadius)
+{
+    ModuleESolver::ESolver_LJ* p_esolver = new ModuleESolver::ESolver_LJ();
+    ucell.ntype = 2;
+    p_esolver->ucell_ = &ucell;
+    std::vector<double> rcut = {3.0};
+    p_esolver->rcut_search_radius(rcut);
+
+    for (int i = 0; i < ucell.ntype; i++)
+    {
+        for (int j = 0; j < ucell.ntype; j++)
+        {
+            EXPECT_NEAR(p_esolver->lj_rcut(i, j), 3.0 * ModuleBase::ANGSTROM_AU, doublethreshold);
+        }
+    }
+    EXPECT_NEAR(GlobalV::SEARCH_RADIUS, 3.0 * ModuleBase::ANGSTROM_AU + 0.01, doublethreshold);
+
+    rcut = {3.0, 4.0, 5.0};
+    p_esolver->rcut_search_radius(rcut);
+    EXPECT_NEAR(p_esolver->lj_rcut(0, 0), 3.0 * ModuleBase::ANGSTROM_AU, doublethreshold);
+    EXPECT_NEAR(p_esolver->lj_rcut(0, 1), 4.0 * ModuleBase::ANGSTROM_AU, doublethreshold);
+    EXPECT_NEAR(p_esolver->lj_rcut(1, 0), 4.0 * ModuleBase::ANGSTROM_AU, doublethreshold);
+    EXPECT_NEAR(p_esolver->lj_rcut(1, 1), 5.0 * ModuleBase::ANGSTROM_AU, doublethreshold);
+    EXPECT_NEAR(GlobalV::SEARCH_RADIUS, 5.0 * ModuleBase::ANGSTROM_AU + 0.01, doublethreshold);
+}
+
+TEST_F(LJ_pot_test, SetC6C12)
+{
+    ModuleESolver::ESolver_LJ* p_esolver = new ModuleESolver::ESolver_LJ();
+    ucell.ntype = 2;
+    p_esolver->ucell_ = &ucell;
+
+    // no rule
+    int rule = 1;
+    std::vector<double> lj_epsilon = {0.1, 0.2, 0.3};
+    std::vector<double> lj_sigma = {0.2, 0.4, 0.6};
+
+    p_esolver->set_c6_c12(rule, lj_epsilon, lj_sigma);
+
+    for (int i = 0; i < ucell.ntype; i++)
+    {
+        for (int j = 0; j <= i; j++)
+        {
+            int k = i * (i + 1) / 2 + j;
+            double temp = pow(lj_sigma[k] * ModuleBase::ANGSTROM_AU, 6);
+            EXPECT_NEAR(p_esolver->lj_c6(i, j), 4.0 * lj_epsilon[k] * temp / ModuleBase::Ry_to_eV, doublethreshold);
+            EXPECT_NEAR(p_esolver->lj_c12(i, j), p_esolver->lj_c6(i, j) * temp, doublethreshold);
+            EXPECT_DOUBLE_EQ(p_esolver->lj_c6(i, j), p_esolver->lj_c6(j, i));
+            EXPECT_DOUBLE_EQ(p_esolver->lj_c12(i, j), p_esolver->lj_c12(j, i));
+        }
+    }
+
+    // rule 1
+    rule = 1;
+    lj_epsilon = {0.1, 0.2};
+    lj_sigma = {0.2, 0.4};
+
+    p_esolver->set_c6_c12(rule, lj_epsilon, lj_sigma);
+
+    for (int i = 0; i < ucell.ntype; i++)
+    {
+        double temp = pow(lj_sigma[i] * ModuleBase::ANGSTROM_AU, 6);
+        EXPECT_NEAR(p_esolver->lj_c6(i, i), 4.0 * lj_epsilon[i] * temp / ModuleBase::Ry_to_eV, doublethreshold);
+        EXPECT_NEAR(p_esolver->lj_c12(i, i), p_esolver->lj_c6(i, i) * temp, doublethreshold);
+
+        for (int j = 0; j < i; j++)
+        {
+            EXPECT_NEAR(p_esolver->lj_c6(i, j),
+                        std::sqrt(p_esolver->lj_c6(i, i) * p_esolver->lj_c6(j, j)),
+                        doublethreshold);
+            EXPECT_NEAR(p_esolver->lj_c12(i, j),
+                        std::sqrt(p_esolver->lj_c12(i, i) * p_esolver->lj_c12(j, j)),
+                        doublethreshold);
+            EXPECT_DOUBLE_EQ(p_esolver->lj_c6(i, j), p_esolver->lj_c6(j, i));
+            EXPECT_DOUBLE_EQ(p_esolver->lj_c12(i, j), p_esolver->lj_c12(j, i));
+        }
+    }
+
+    // rule 2
+    rule = 2;
+    lj_epsilon = {0.1, 0.2};
+    lj_sigma = {0.2, 0.4};
+
+    p_esolver->set_c6_c12(rule, lj_epsilon, lj_sigma);
+
+    for (int i = 0; i < ucell.ntype; i++)
+    {
+        for (int j = 0; j <= i; j++)
+        {
+            double temp = pow((lj_sigma[i] + lj_sigma[j]) / 2 * ModuleBase::ANGSTROM_AU, 6);
+            EXPECT_NEAR(p_esolver->lj_c6(i, j),
+                        4.0 * std::sqrt(lj_epsilon[i] * lj_epsilon[j]) * temp / ModuleBase::Ry_to_eV,
+                        doublethreshold);
+            EXPECT_NEAR(p_esolver->lj_c12(i, j), p_esolver->lj_c6(i, j) * temp, doublethreshold);
+            EXPECT_DOUBLE_EQ(p_esolver->lj_c6(i, j), p_esolver->lj_c6(j, i));
+            EXPECT_DOUBLE_EQ(p_esolver->lj_c12(i, j), p_esolver->lj_c12(j, i));
+        }
+    }
+}
+
+TEST_F(LJ_pot_test, CalEnShift)
+{
+    ModuleESolver::ESolver_LJ* p_esolver = new ModuleESolver::ESolver_LJ();
+    ucell.ntype = 2;
+    p_esolver->ucell_ = &ucell;
+
+    std::vector<double> rcut = {3.0};
+    p_esolver->rcut_search_radius(rcut);
+
+    int rule = 1;
+    std::vector<double> lj_epsilon = {0.1, 0.2, 0.3};
+    std::vector<double> lj_sigma = {0.2, 0.4, 0.6};
+    p_esolver->set_c6_c12(rule, lj_epsilon, lj_sigma);
+
+    // false
+    p_esolver->cal_en_shift(false);
+    for (int i = 0; i < ucell.ntype; i++)
+    {
+        for (int j = 0; j < ucell.ntype; j++)
+        {
+            EXPECT_DOUBLE_EQ(p_esolver->en_shift(i, j), 0.0);
+        }
+    }
+
+    // true
+    p_esolver->cal_en_shift(true);
+    EXPECT_NEAR(p_esolver->en_shift(0, 0), -2.5810212013100967e-09, doublethreshold);
+    EXPECT_NEAR(p_esolver->en_shift(0, 1), -3.303688865319793e-07, doublethreshold);
+    EXPECT_NEAR(p_esolver->en_shift(1, 0), -3.303688865319793e-07, doublethreshold);
+    EXPECT_NEAR(p_esolver->en_shift(1, 1), -5.6443326024140752e-06, doublethreshold);
 }

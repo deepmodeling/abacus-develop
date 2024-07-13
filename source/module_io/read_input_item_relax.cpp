@@ -450,6 +450,12 @@ void ReadInput::item_relax()
         this->add_item(item);
     }
     {
+        Input_Item item("deepks_v_delta");
+        item.annotation = ">0 for v_delta label. when output, 1 for v_delta_precalc, 2 for psialpha and grad_evdm ( can save memory )";
+        read_sync_int(deepks_v_delta);
+        this->add_item(item);
+    }
+    {
         Input_Item item("deepks_out_unittest");
         item.annotation = "if set 1, prints intermediate quantities that shall "
                           "be used for making unit test";

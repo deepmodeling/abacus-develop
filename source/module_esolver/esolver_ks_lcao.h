@@ -76,9 +76,6 @@ class ESolver_KS_LCAO : public ESolver_KS<TK> {
     // used for gamma only algorithms.
     Gint_Gamma GG;
 
-    // we will get rid of this class soon, don't use it, mohan 2024-03-28
-    LCAO_Matrix LM;
-
     Grid_Technique GridT;
 
     TwoCenterBundle two_center_bundle_;

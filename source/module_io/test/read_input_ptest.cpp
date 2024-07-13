@@ -349,9 +349,11 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_NEAR(param.inp.force_thr_ev, 0.025711245953622324, 1e-8);
     EXPECT_DOUBLE_EQ(param.inp.sup.hubbard_u[0], 0);
     EXPECT_EQ(param.inp.orbital_corr[0], -1);
-    EXPECT_NEAR(param.inp.mdp.lj_epsilon, 0.01032, 1e-7);
-    EXPECT_NEAR(param.inp.mdp.lj_rcut, 8.5, 1e-7);
-    EXPECT_NEAR(param.inp.mdp.lj_sigma, 3.405, 1e-7);
+    EXPECT_EQ(param.inp.mdp.lj_rule, 2);
+    EXPECT_FALSE(param.inp.mdp.lj_eshift);
+    EXPECT_NEAR(param.inp.mdp.lj_epsilon[0], 0.01032, 1e-7);
+    EXPECT_NEAR(param.inp.mdp.lj_rcut[0], 8.5, 1e-7);
+    EXPECT_NEAR(param.inp.mdp.lj_sigma[0], 3.405, 1e-7);
     EXPECT_EQ(param.inp.mdp.md_damp, 1);
     EXPECT_EQ(param.inp.mdp.md_dt, 1);
     EXPECT_EQ(param.inp.mdp.md_dumpfreq, 1);
