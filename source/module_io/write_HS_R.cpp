@@ -12,47 +12,45 @@
 // If the absolute value of the matrix element is less than or equal to the
 // 'sparse_thr', it will be ignored.
 void ModuleIO::output_HSR(const int& istep,
-                          const ModuleBase::matrix& v_eff,
-                          const Parallel_Orbitals& pv,
-                          LCAO_Matrix& lm,
-                          Grid_Driver& grid, // mohan add 2024-04-06
-                          const K_Vectors& kv,
-                          hamilt::Hamilt<std::complex<double>>* p_ham,
-                          const std::string& SR_filename,
-                          const std::string& HR_filename_up,
-                          const std::string HR_filename_down,
-                          const bool& binary,
-                          const double& sparse_thr) {
+    const ModuleBase::matrix& v_eff,
+    const Parallel_Orbitals& pv,
+    LCAO_HS_Arrays& HS_Arrays,
+    Grid_Driver& grid, // mohan add 2024-04-06
+    const K_Vectors& kv,
+    hamilt::Hamilt<std::complex<double>>* p_ham,
+#ifdef __EXX
+    const std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd,
+    const std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc,
+#endif
+    const std::string& SR_filename,
+    const std::string& HR_filename_up,
+    const std::string HR_filename_down,
+    const bool& binary,
+    const double& sparse_thr
+) {
     ModuleBase::TITLE("ModuleIO", "output_HSR");
     ModuleBase::timer::tick("ModuleIO", "output_HSR");
 
     const int nspin = GlobalV::NSPIN;
 
-    LCAO_HS_Arrays HS_Arrays;
-
     if (nspin == 1 || nspin == 4) {
         const int spin_now = 0;
         // jingan add 2021-6-4, modify 2021-12-2
-        sparse_format::cal_HSR(pv,
-                               lm,
-                               HS_Arrays,
-                               grid,
-                               spin_now,
-                               sparse_thr,
-                               kv.nmp,
-                               p_ham);
-    } else if (nspin == 2) {
+        sparse_format::cal_HSR(pv, HS_Arrays, grid, spin_now, sparse_thr, kv.nmp, p_ham
+#ifdef __EXX
+            , Hexxd, Hexxc
+#endif
+        );
+    }
+    else if (nspin == 2) {
         int spin_now = 1;
 
         // save HR of spin down first (the current spin always be down)
-        sparse_format::cal_HSR(pv,
-                               lm,
-                               HS_Arrays,
-                               grid,
-                               spin_now,
-                               sparse_thr,
-                               kv.nmp,
-                               p_ham);
+        sparse_format::cal_HSR(pv, HS_Arrays, grid, spin_now, sparse_thr, kv.nmp, p_ham
+#ifdef __EXX
+            , Hexxd, Hexxc
+#endif
+        );
 
         // cal HR of the spin up
         if (GlobalV::VL_IN_H) {
@@ -62,18 +60,15 @@ void ModuleIO::output_HSR(const int& istep,
             spin_now = 0;
         }
 
-        sparse_format::cal_HSR(pv,
-                               lm,
-                               HS_Arrays,
-                               grid,
-                               spin_now,
-                               sparse_thr,
-                               kv.nmp,
-                               p_ham);
+        sparse_format::cal_HSR(pv, HS_Arrays, grid, spin_now, sparse_thr, kv.nmp, p_ham
+#ifdef __EXX
+            , Hexxd, Hexxc
+#endif
+        );
     }
 
     ModuleIO::save_HSR_sparse(istep,
-                              lm,
+                              pv,
                               HS_Arrays,
                               sparse_thr,
                               binary,
@@ -90,7 +85,8 @@ void ModuleIO::output_HSR(const int& istep,
 void ModuleIO::output_dHR(const int& istep,
                           const ModuleBase::matrix& v_eff,
                           Gint_k& gint_k,    // mohan add 2024-04-01
-                          LCAO_Matrix& lm,   // mohan add 2024-04-01
+                          const Parallel_Orbitals& pv,
+                          LCAO_HS_Arrays& HS_Arrays,
                           Grid_Driver& grid, // mohan add 2024-04-06
                           const TwoCenterBundle& two_center_bundle,
                           const K_Vectors& kv,
@@ -101,15 +97,13 @@ void ModuleIO::output_dHR(const int& istep,
 
     gint_k.allocate_pvdpR();
 
-    LCAO_HS_Arrays HS_Arrays;
-
     const int nspin = GlobalV::NSPIN;
 
     if (nspin == 1 || nspin == 4) {
         // mohan add 2024-04-01
         const int cspin = 0;
 
-        sparse_format::cal_dH(lm,
+        sparse_format::cal_dH(pv,
                               HS_Arrays,
                               grid,
                               two_center_bundle,
@@ -132,7 +126,7 @@ void ModuleIO::output_dHR(const int& istep,
                 }
             }
 
-            sparse_format::cal_dH(lm,
+            sparse_format::cal_dH(pv,
                                   HS_Arrays,
                                   grid,
                                   two_center_bundle,
@@ -142,7 +136,7 @@ void ModuleIO::output_dHR(const int& istep,
         }
     }
     // mohan update 2024-04-01
-    ModuleIO::save_dH_sparse(istep, lm, HS_Arrays, sparse_thr, binary);
+    ModuleIO::save_dH_sparse(istep, pv, HS_Arrays, sparse_thr, binary);
 
     sparse_format::destroy_dH_R_sparse(HS_Arrays);
 
@@ -153,7 +147,6 @@ void ModuleIO::output_dHR(const int& istep,
 }
 
 void ModuleIO::output_SR(Parallel_Orbitals& pv,
-                         LCAO_Matrix& lm,
                          Grid_Driver& grid,
                          hamilt::Hamilt<std::complex<double>>* p_ham,
                          const std::string& SR_filename,
@@ -165,7 +158,7 @@ void ModuleIO::output_SR(Parallel_Orbitals& pv,
     LCAO_HS_Arrays HS_Arrays;
 
     sparse_format::cal_SR(pv,
-                          lm.all_R_coor,
+                          HS_Arrays.all_R_coor,
                           HS_Arrays.SR_sparse,
                           HS_Arrays.SR_soc_sparse,
                           grid,
@@ -175,11 +168,11 @@ void ModuleIO::output_SR(Parallel_Orbitals& pv,
     const int istep = 0;
 
     ModuleIO::save_sparse(HS_Arrays.SR_sparse,
-                          lm.all_R_coor,
+                          HS_Arrays.all_R_coor,
                           sparse_thr,
                           binary,
                           SR_filename,
-                          *lm.ParaV,
+                          pv,
                           "S",
                           istep);
 
@@ -192,7 +185,7 @@ void ModuleIO::output_SR(Parallel_Orbitals& pv,
 void ModuleIO::output_TR(const int istep,
                          const UnitCell& ucell,
                          const Parallel_Orbitals& pv,
-                         LCAO_Matrix& lm,
+                         LCAO_HS_Arrays& HS_Arrays,
                          Grid_Driver& grid,
                          const TwoCenterBundle& two_center_bundle,
                          const std::string& TR_filename,
@@ -208,27 +201,23 @@ void ModuleIO::output_TR(const int istep,
         sst << GlobalV::global_out_dir << TR_filename;
     }
 
-    // need Hloc_fixedR
-    LCAO_HS_Arrays HS_arrays;
-
     sparse_format::cal_TR(ucell,
                           pv,
-                          lm,
-                          HS_arrays,
+                          HS_Arrays,
                           grid,
                           two_center_bundle,
                           sparse_thr);
 
-    ModuleIO::save_sparse(HS_arrays.TR_sparse,
-                          lm.all_R_coor,
+    ModuleIO::save_sparse(HS_Arrays.TR_sparse,
+                          HS_Arrays.all_R_coor,
                           sparse_thr,
                           binary,
                           sst.str().c_str(),
-                          *(lm.ParaV),
+                          pv,
                           "T",
                           istep);
 
-    sparse_format::destroy_T_R_sparse(HS_arrays);
+    sparse_format::destroy_T_R_sparse(HS_Arrays);
 
     ModuleBase::timer::tick("ModuleIO", "output_TR");
     return;

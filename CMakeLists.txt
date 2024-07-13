@@ -142,13 +142,14 @@ set(ABACUS_BIN_PATH ${CMAKE_CURRENT_BINARY_DIR}/${ABACUS_BIN_NAME})
 include_directories(${ABACUS_SOURCE_DIR})
 include_directories(${ABACUS_SOURCE_DIR}/module_base/module_container)
 
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 add_executable(${ABACUS_BIN_NAME} source/main.cpp)
 if(ENABLE_COVERAGE)
   add_coverage(${ABACUS_BIN_NAME})
 endif()
 
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
 macro(set_if_higher VARIABLE VALUE)
   if(${VARIABLE} LESS ${VALUE})
     set(${VARIABLE} ${VALUE})
@@ -309,7 +310,7 @@ if(USE_CUDA)
   # ${ABACUS_BIN_NAME} is added before CUDA is enabled
   set_property(TARGET ${ABACUS_BIN_NAME}
                PROPERTY CUDA_ARCHITECTURES ${CMAKE_CUDA_ARCHITECTURES})
-  target_link_libraries(${ABACUS_BIN_NAME} -lcudart -lnvToolsExt)
+  target_link_libraries(${ABACUS_BIN_NAME} cudart nvToolsExt)
   include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
   if(USE_CUDA)
     add_compile_definitions(__CUDA)
@@ -323,8 +324,8 @@ if(USE_CUDA)
     if (ENABLE_CUSOLVERMP)
       add_compile_definitions(__CUSOLVERMP)
       target_link_libraries(${ABACUS_BIN_NAME}
-          -lcal
-          -lcusolverMp
+          cal
+          cusolverMp
       )
     endif()
   endif()
@@ -394,16 +395,16 @@ if(DEFINED ENV{MKLROOT} AND NOT DEFINED MKLROOT)
   set(MKLROOT "$ENV{MKLROOT}")
 endif()
 if(MKLROOT)
-  find_package(IntelMKL REQUIRED)
+  set(MKL_INTERFACE lp64)
+  set(ENABLE_SCALAPACK ON)
+  find_package(MKL REQUIRED)
   add_definitions(-D__MKL)
-  include_directories(${MKL_INCLUDE_DIRS} ${MKL_INCLUDE_DIRS}/fftw)
-  list(APPEND math_libs IntelMKL::MKL)
-
+  include_directories(${MKL_INCLUDE} ${MKL_INCLUDE}/fftw)
+  list(APPEND math_libs MKL::MKL MKL::MKL_SCALAPACK)
   if(CMAKE_CXX_COMPILER_ID MATCHES Intel)
-    list(APPEND math_libs -lifcore)
+    list(APPEND math_libs ifcore)
   endif()
 else()
-
   find_package(FFTW3 REQUIRED)
   find_package(Lapack REQUIRED)
   include_directories(${FFTW3_INCLUDE_DIRS})
@@ -421,11 +422,11 @@ else()
     list(APPEND math_libs FFTW3::FFTW3_FLOAT)
   endif()
   if(CMAKE_CXX_COMPILER_ID MATCHES GNU)
-    list(APPEND math_libs -lgfortran)
+    list(APPEND math_libs gfortran)
   elseif(CMAKE_CXX_COMPILER_ID MATCHES Intel)
-    list(APPEND math_libs -lifcore)
+    list(APPEND math_libs ifcore)
   elseif(CMAKE_CXX_COMPILER_ID MATCHES Clang)
-    list(APPEND math_libs -lgfortran)
+    list(APPEND math_libs gfortran)
   else()
     message(WARNING "Cannot find the correct library for Fortran.")
   endif()
@@ -436,7 +437,7 @@ if(ENABLE_FLOAT_FFTW)
 endif()
 
 if(ENABLE_DEEPKS)
-  # Torch uses outdated components to detech CUDA arch, causing failure on
+  # Torch uses outdated components to detect CUDA arch, causing failure on
   # latest CUDA kits. Set CMake variable TORCH_CUDA_ARCH_LIST in the form of
   # "major.minor" if required.
   find_package(Torch REQUIRED)
@@ -446,10 +447,13 @@ if(ENABLE_DEEPKS)
     set_if_higher(CMAKE_CXX_STANDARD 14)
   endif()
   include_directories(${TORCH_INCLUDE_DIRS})
-  target_link_libraries(${ABACUS_BIN_NAME} deepks)
-  list(APPEND math_libs ${TORCH_LIBRARIES})
-
+  if(MKL_FOUND)
+    list(PREPEND math_libs ${TORCH_LIBRARIES})
+  else()
+    list(APPEND math_libs ${TORCH_LIBRARIES})
+  endif()
   add_compile_options(${TORCH_CXX_FLAGS})
+  target_link_libraries(${ABACUS_BIN_NAME} deepks)
 
   find_path(libnpy_SOURCE_DIR npy.hpp HINTS ${libnpy_INCLUDE_DIR})
   if(NOT libnpy_SOURCE_DIR)
@@ -524,6 +528,7 @@ if(ENABLE_LIBRI)
   else()
     message(FATAL_ERROR "Must provide LIBRI_DIR for RI related features.")
   endif()
+  target_link_libraries(${ABACUS_BIN_NAME} ri)
   add_compile_definitions(__EXX EXX_DM=3 EXX_H_COMM=2 TEST_EXX_LCAO=0
                           TEST_EXX_RADIAL=1)
 endif()
@@ -551,6 +556,7 @@ if(ENABLE_PAW)
   else()
     message(FATAL_ERROR "Must provide LIBPAW_DIR for PAW related features.")
   endif()
+  target_link_libraries(${ABACUS_BIN_NAME} paw)
   add_compile_definitions(USE_PAW)
 endif()
 
@@ -663,7 +669,6 @@ if(BUILD_TESTING)
       COMMAND ${UT_TARGET}
       WORKING_DIRECTORY $<TARGET_FILE_DIR:${UT_TARGET}>)
   endfunction(AddTest)
-
 endif()
 
 add_subdirectory(source)
@@ -677,6 +682,7 @@ target_link_libraries(
   planewave
   surchem
   neighbor
+  io_input
   io_basic
   io_advanced
   relax
@@ -692,13 +698,9 @@ target_link_libraries(
   psi_initializer
   esolver
   vdw
+  parameter
   device
   container)
-
-if(ENABLE_PAW)
-  target_link_libraries(${ABACUS_BIN_NAME} paw)
-endif()
-
 if(ENABLE_LCAO)
   target_link_libraries(
     ${ABACUS_BIN_NAME}
@@ -709,7 +711,8 @@ if(ENABLE_LCAO)
     dftu
     hcontainer
     deltaspin
-    numerical_atomic_orbitals)
+    numerical_atomic_orbitals
+    lr)
   if(USE_ELPA)
     target_link_libraries(${ABACUS_BIN_NAME} genelpa)
   endif()
@@ -717,9 +720,8 @@ if(ENABLE_LCAO)
     target_link_libraries(diag_cusolver)
   endif()
 endif()
-
-if(ENABLE_LIBRI)
-  target_link_libraries(${ABACUS_BIN_NAME} ri)
+if(ENABLE_RAPIDJSON)
+  target_link_libraries(${ABACUS_BIN_NAME} json_output)
 endif()
 
 install(PROGRAMS ${ABACUS_BIN_PATH}
@@ -729,8 +731,4 @@ install(PROGRAMS ${ABACUS_BIN_PATH}
 
 if(ENABLE_COVERAGE)
   coverage_evaluate()
-endif()
-
-if(ENABLE_RAPIDJSON)
-  target_link_libraries(${ABACUS_BIN_NAME} json_output)
 endif()

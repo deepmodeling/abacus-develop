@@ -25,8 +25,9 @@ void ModuleIO::read_abacus_lowf(const std::string& flowf,
 {
     // assert the T must be double or float
     std::ifstream ifs(flowf.c_str());
-    if (!ifs)
+    if (!ifs) {
         ModuleBase::WARNING_QUIT("read_abacus_lowf", "open file failed: " + flowf);
+}
     // will use line-by-line parse
     std::string line;
     bool read_kvec = false;
@@ -138,8 +139,9 @@ void ModuleIO::read_abacus_lowf(const std::string& flowf,
                                 double& wk)
 {
     std::ifstream ifs(flowf.c_str());
-    if (!ifs)
+    if (!ifs) {
         ModuleBase::WARNING_QUIT("read_abacus_lowf", "open file failed: " + flowf);
+}
     // will use line-by-line parse
     std::string line;
     bool read_kvec = false;
@@ -258,7 +260,7 @@ void ModuleIO::restart_from_file(const std::string& out_dir, // hard-code the fi
     const std::string flowf_prefix = gamma_only ? "WFC_GAMMA" : "WFC_NAO_K";
     // MPI-related variables init
     int iproc;
-    MPI_Comm_rank(p2d.comm_2D, &iproc);
+    MPI_Comm_rank(p2d.comm(), &iproc);
     // then start
     int nbands_ = -1, nbasis_ = -1;
     for (int ik = 0; ik < nks; ik++)
@@ -266,8 +268,9 @@ void ModuleIO::restart_from_file(const std::string& out_dir, // hard-code the fi
         // check existence of file
         const std::string flowf = out_dir + "/" + flowf_prefix + std::to_string(ik + 1) + ".txt";
         std::ifstream ifs(flowf);
-        if (!ifs)
+        if (!ifs) {
             ModuleBase::WARNING_QUIT("restart_from_file", "open file failed: " + flowf);
+}
 
         std::vector<T> lowf_glb;
         std::vector<T> lowf_loc_k;
@@ -289,12 +292,12 @@ void ModuleIO::restart_from_file(const std::string& out_dir, // hard-code the fi
             wk.push_back(wk_);
             kvec_c.push_back(kvec);
         }
-        MPI_Barrier(p2d.comm_2D); // wait for finishing the reading task
+        MPI_Barrier(p2d.comm()); // wait for finishing the reading task
         // scatter the lowf_glb to lowf_loc
         Parallel_2D p2d_glb;
         Parallel_Common::bcast_int(nbands);
         Parallel_Common::bcast_int(nbasis);
-        p2d_glb.init(nbasis, nbands, std::max(nbasis, nbands), p2d.comm_2D); // in the same comm world
+        p2d_glb.init(nbasis, nbands, std::max(nbasis, nbands), p2d.comm()); // in the same comm world
         lowf_loc_k.resize(p2d.nrow * p2d.ncol);
         Cpxgemr2d(nbasis,
                   nbands,
@@ -400,8 +403,9 @@ void ModuleIO::restart_from_file(const std::string& out_dir, // hard-code the fi
         // check existence of file
         const std::string flowf = out_dir + "/" + flowf_prefix + std::to_string(ik + 1) + ".txt";
         const std::ifstream ifs(flowf);
-        if (!ifs)
+        if (!ifs) {
             ModuleBase::WARNING_QUIT("restart_from_file", "open file failed: " + flowf);
+}
 
         std::vector<T> lowf_;
         std::vector<double> ekb_;

@@ -7,16 +7,20 @@
 #include "spar_u.h"
 
 void sparse_format::cal_HSR(const Parallel_Orbitals& pv,
-                            LCAO_Matrix& lm,
-                            LCAO_HS_Arrays& HS_Arrays,
-                            Grid_Driver& grid,
-                            const int& current_spin,
-                            const double& sparse_thr,
-                            const int (&nmp)[3],
-                            hamilt::Hamilt<std::complex<double>>* p_ham) {
+    LCAO_HS_Arrays& HS_Arrays,
+    Grid_Driver& grid,
+    const int& current_spin,
+    const double& sparse_thr,
+    const int(&nmp)[3],
+    hamilt::Hamilt<std::complex<double>>* p_ham
+#ifdef __EXX
+    , const std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd
+    , const std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc
+#endif
+) {
     ModuleBase::TITLE("sparse_format", "cal_HSR");
 
-    sparse_format::set_R_range(lm.all_R_coor, grid);
+    sparse_format::set_R_range(HS_Arrays.all_R_coor, grid);
 
     const int nspin = GlobalV::NSPIN;
 
@@ -71,14 +75,14 @@ void sparse_format::cal_HSR(const Parallel_Orbitals& pv,
     if (GlobalV::dft_plus_u == 2) {
         if (nspin == 1 || nspin == 2) {
             cal_HR_dftu(pv,
-                        lm.all_R_coor,
+                        HS_Arrays.all_R_coor,
                         HS_Arrays.SR_sparse,
                         HS_Arrays.HR_sparse,
                         current_spin,
                         sparse_thr);
         } else if (nspin == 4) {
             cal_HR_dftu_soc(pv,
-                            lm.all_R_coor,
+                            HS_Arrays.all_R_coor,
                             HS_Arrays.SR_soc_sparse,
                             HS_Arrays.HR_soc_sparse,
                             current_spin,
@@ -93,25 +97,25 @@ void sparse_format::cal_HSR(const Parallel_Orbitals& pv,
     // if EXX is considered
     if (GlobalC::exx_info.info_global.cal_exx) {
         if (GlobalC::exx_info.info_ri.real_number) {
-            sparse_format::cal_HR_exx(lm,
-                                      HS_Arrays,
-                                      current_spin,
-                                      sparse_thr,
-                                      nmp,
-                                      *lm.Hexxd);
+            sparse_format::cal_HR_exx(pv,
+                HS_Arrays,
+                current_spin,
+                sparse_thr,
+                nmp,
+                *Hexxd);
         } else {
-            sparse_format::cal_HR_exx(lm,
-                                      HS_Arrays,
-                                      current_spin,
-                                      sparse_thr,
-                                      nmp,
-                                      *lm.Hexxc);
+            sparse_format::cal_HR_exx(pv,
+                HS_Arrays,
+                current_spin,
+                sparse_thr,
+                nmp,
+                *Hexxc);
         }
     }
 #endif // __MPI
 #endif // __EXX
 
-    sparse_format::clear_zero_elements(lm, HS_Arrays, current_spin, sparse_thr);
+    sparse_format::clear_zero_elements(HS_Arrays, current_spin, sparse_thr);
 
     return;
 }
@@ -237,8 +241,7 @@ void sparse_format::cal_HContainer_td(
 }
 
 // in case there are elements smaller than the threshold
-void sparse_format::clear_zero_elements(LCAO_Matrix& lm,
-                                        LCAO_HS_Arrays& HS_Arrays,
+void sparse_format::clear_zero_elements(LCAO_HS_Arrays& HS_Arrays,
                                         const int& current_spin,
                                         const double& sparse_thr) {
     ModuleBase::TITLE("sparse_format", "clear_zero_elements");

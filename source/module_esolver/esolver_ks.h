@@ -137,7 +137,7 @@ class ESolver_KS : public ESolver_FP
 
 		std::string basisname; //PW or LCAO
 
-		void print_wfcfft(Input& inp, std::ofstream &ofs);
-};	
+        void print_wfcfft(Input& inp, std::ofstream& ofs);
+};
 } // end of namespace
 #endif

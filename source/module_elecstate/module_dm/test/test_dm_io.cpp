@@ -113,7 +113,7 @@ class DMTest : public testing::Test
         init_parav();
     }
 
-    void TearDown()
+    void TearDown() override
     {
         DMK.clear();
         delete kv;

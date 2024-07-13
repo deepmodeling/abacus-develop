@@ -4,6 +4,7 @@
 #include "module_base/matrix.h"
 #include "module_cell/unitcell.h"
 #include "module_io/input.h"
+#include "module_parameter/input_parameter.h"
 
 namespace ModuleESolver
 {
@@ -61,7 +62,7 @@ class ESolver
     // get conv_elec used in current scf
     virtual bool get_conv_elec()
     {
-        return 0;
+        return false;
     }
     std::string classname;
 };
@@ -73,7 +74,7 @@ class ESolver
  * 
  * @return [out] std::string The type of ESolver
  */
-std::string determine_type(void);
+std::string determine_type();
 
 /**
  * @brief Determine and initialize an ESolver based on input information.
@@ -84,9 +85,9 @@ std::string determine_type(void);
  *
  * @return [out] A pointer to an ESolver object that will be initialized.
  */
-ESolver* init_esolver();
+ESolver* init_esolver(Input& input, const Input_para& input_para, UnitCell& ucell);
 
-void clean_esolver(ESolver*& pesolver);
+void clean_esolver(ESolver*& pesolver, const bool lcao_cblacs_exit = false);
 
 } // namespace ModuleESolver
 

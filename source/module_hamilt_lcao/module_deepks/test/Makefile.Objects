@@ -60,8 +60,7 @@ read_atoms.o\
 read_cell_pseudopots.o\
 setup_nonlocal.o
 
-OBJS_ORB=ORB_control.o\
-ORB_read.o\
+OBJS_ORB=ORB_read.o\
 ORB_atomic.o\
 ORB_atomic_lm.o\
 ORB_nonlocal.o\

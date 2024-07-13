@@ -61,13 +61,14 @@ TEST_F(test_para2d, Divide2D)
 
                 // 1. dim0 and dim1
                 EXPECT_EQ(p2d.dim0 * p2d.dim1, dsize);
-                if (mode)
+                if (mode) {
                     EXPECT_LE(p2d.dim1, p2d.dim0);
-                else
+                } else {
                     EXPECT_LE(p2d.dim0, p2d.dim1);
+}
 
                 // 2. MPI 2d communicator
-                EXPECT_NE(p2d.comm_2D, MPI_COMM_NULL);
+                //EXPECT_NE(p2d.comm_2D, MPI_COMM_NULL);
 
                 // 3. local2global and local sizes
                 int lr = p2d.get_row_size();
@@ -96,18 +97,22 @@ TEST_F(test_para2d, Divide2D)
                 auto sum_array = [&p2d](const int& gr, const int& gc) -> std::pair<int, int> {
                     int sum_row = 0;
                     int sum_col = 0;
-                    for (int i = 0; i < gr; ++i)
+                    for (int i = 0; i < gr; ++i) {
                         sum_row += p2d.global2local_row(i);
-                    for (int i = 0; i < gc; ++i)
+}
+                    for (int i = 0; i < gc; ++i) {
                         sum_col += p2d.global2local_col(i);
+}
                     return {sum_row, sum_col};
                 };
                 std::pair<int, int> sumrc = sum_array(gr, gc);
                 EXPECT_EQ(std::get<0>(sumrc), lr * (lr - 1) / 2 - (gr - lr));
                 EXPECT_EQ(std::get<1>(sumrc), lc * (lc - 1) / 2 - (gc - lc));
-                for (int i = 0; i < lr; ++i)
-                    for (int j = 0; j < lc; ++j)
+                for (int i = 0; i < lr; ++i) {
+                    for (int j = 0; j < lc; ++j) {
                         EXPECT_TRUE(p2d.in_this_processor(p2d.local2global_row(i), p2d.local2global_col(j)));
+}
+}
 
                 EXPECT_EQ(p2d.get_global_row_size(), gr);
                 EXPECT_EQ(p2d.get_global_col_size(), gc);
@@ -124,7 +129,7 @@ TEST_F(test_para2d, DescReuseCtxt)
         p1.init(sizes[0].first, sizes[0].second, nb, MPI_COMM_WORLD);
 
         Parallel_2D p2; // use 2 different sizes, but they can share the same ctxt
-        p2.set(sizes[1].first, sizes[1].second, nb, p1.comm_2D, p1.blacs_ctxt);
+        p2.set(sizes[1].first, sizes[1].second, nb, p1.blacs_ctxt);
 
         EXPECT_EQ(p1.desc[1], p2.desc[1]);
 

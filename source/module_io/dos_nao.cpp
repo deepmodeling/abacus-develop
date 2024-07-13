@@ -7,7 +7,6 @@ namespace ModuleIO
 {
     /// @brief manege the output of dos in numerical atomic basis case
 /// @param[in] psi
-/// @param[in] lm
 /// @param[in] pv
 /// @param[in] ekb
 /// @param[in] wg
@@ -22,7 +21,6 @@ namespace ModuleIO
     template<typename T>
 		void out_dos_nao(
 				const psi::Psi<T>* psi,
-				LCAO_Matrix &lm,
 				const Parallel_Orbitals &pv,
 				const ModuleBase::matrix& ekb,
 				const ModuleBase::matrix& wg,
@@ -38,7 +36,7 @@ namespace ModuleIO
 {
     ModuleBase::TITLE("Module_IO", "out_dos_nao");
 
-    write_dos_lcao(psi, lm, pv, ekb, wg, dos_edelta_ev, dos_scale, dos_sigma, kv, p_ham);
+    write_dos_lcao(psi, pv, ekb, wg, dos_edelta_ev, dos_scale, dos_sigma, kv, p_ham);
 
     int nspin0 = (GlobalV::NSPIN == 2) ? 2 : 1;
     if (INPUT.out_dos == 3)
@@ -64,7 +62,6 @@ namespace ModuleIO
 
 template void out_dos_nao(
         const psi::Psi<double>* psi,
-		LCAO_Matrix &lm,
 		const Parallel_Orbitals &pv,
 		const ModuleBase::matrix& ekb,
         const ModuleBase::matrix& wg,
@@ -80,7 +77,6 @@ template void out_dos_nao(
 
 template void out_dos_nao(
         const psi::Psi<std::complex<double>>* psi,
-		LCAO_Matrix &lm,
 		const Parallel_Orbitals &pv,
 		const ModuleBase::matrix& ekb,
         const ModuleBase::matrix& wg,

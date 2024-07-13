@@ -93,7 +93,8 @@ void ModuleIO::save_mat(const int istep,
     const std::string label,
     const std::string& file_name,
     const Parallel_2D& pv,
-    const int drank)
+    const int drank,
+    const bool reduce)
 {
     ModuleBase::TITLE("ModuleIO", "save_mat");
     ModuleBase::timer::tick("ModuleIO", "save_mat");
@@ -149,7 +150,7 @@ void ModuleIO::save_mat(const int istep,
                 }
             }
 
-            Parallel_Reduce::reduce_all(line, tri ? dim - i : dim);
+            if (reduce) Parallel_Reduce::reduce_all(line, tri ? dim - i : dim);
 
             if (drank == 0)
             {
@@ -225,7 +226,7 @@ void ModuleIO::save_mat(const int istep,
                 }
             }
 
-            Parallel_Reduce::reduce_all(line, tri ? dim - i : dim);
+            if (reduce) Parallel_Reduce::reduce_all(line, tri ? dim - i : dim);
 
             if (drank == 0)
             {

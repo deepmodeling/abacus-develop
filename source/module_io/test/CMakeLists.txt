@@ -8,28 +8,14 @@ install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES INPUTs DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 AddTest(
-  TARGET io_input_test
-  LIBS ${math_libs} base device
-  SOURCES input_test.cpp ../input.cpp
-)
-
-AddTest(
   TARGET io_input_test_para
-  LIBS ${math_libs} base device
-  SOURCES input_test_para.cpp ../input.cpp
+  LIBS ${math_libs} base device io_input parameter
+  SOURCES read_input_ptest.cpp
 )
 
-install(FILES input_test_para.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-find_program(BASH bash)
-add_test(NAME io_input_test_para4
-      COMMAND ${BASH} input_test_para.sh
+add_test(NAME io_input_test_para_4
+      COMMAND mpirun -np 4 ./io_input_test_para
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-)
-
-AddTest(
-  TARGET io_input_conv
-  LIBS ${math_libs} base device
-  SOURCES input_conv_test.cpp ../input.cpp ../input_conv.cpp
 )
 
 AddTest(
@@ -71,12 +57,6 @@ AddTest(
   TARGET io_print_info
   LIBS ${math_libs} base device symmetry cell_info
   SOURCES print_info_test.cpp ../print_info.cpp ../input.cpp ../output.cpp ../../module_cell/klist.cpp ../../module_cell/parallel_kpoints.cpp
-)
-
-AddTest(
-  TARGET io_write_input_test
-  LIBS ${math_libs} base device
-  SOURCES write_input_test.cpp ../write_input.cpp ../input.cpp
 )
 
 AddTest(
@@ -123,12 +103,6 @@ AddTest(
   TARGET io_output_log_test
   LIBS base ${math_libs} device
   SOURCES ../output_log.cpp outputlog_test.cpp
-)
-
-AddTest(
-  TARGET io_new_parse_set_test
-  LIBS ${math_libs} base device
-  SOURCES parameter_pool_set_test.cpp  ../parameter_pool.cpp ../input.cpp
 )
 
 AddTest(

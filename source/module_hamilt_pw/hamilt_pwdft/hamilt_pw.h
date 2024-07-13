@@ -35,14 +35,13 @@ class HamiltPW : public Hamilt<T, Device>
               const int nbands // number of bands
     ) const override;
 
-  private:
+protected:
     // used in sPhi, which are calculated in hPsi or sPhi
     const pseudopot_cell_vnl* ppcell = nullptr;
     mutable T* vkb = nullptr;
     Real* qq_nt = nullptr;
     T* qq_so = nullptr;
 
-  protected:
     Device* ctx = {};
     using gemv_op = hsolver::gemv_op<T, Device>;
     using gemm_op = hsolver::gemm_op<T, Device>;
