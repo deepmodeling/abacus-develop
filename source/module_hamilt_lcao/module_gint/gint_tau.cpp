@@ -31,12 +31,12 @@ void Gint::gint_kernel_tau(
 
 	for(int is=0; is<this->gridt->nspin; ++is)
 	{
-		Gint_Tools::Array_Pool<double> dpsix_DM(this->bxyz, LD_pool);
-		Gint_Tools::Array_Pool<double> dpsiy_DM(this->bxyz, LD_pool);
-		Gint_Tools::Array_Pool<double> dpsiz_DM(this->bxyz, LD_pool);
-		GINT_FUNC::ZEROS(dpsix_DM.ptr_1D, this->bxyz*LD_pool);
-		GINT_FUNC::ZEROS(dpsiy_DM.ptr_1D, this->bxyz*LD_pool);
-		GINT_FUNC::ZEROS(dpsiz_DM.ptr_1D, this->bxyz*LD_pool);
+		ModuleBase::Array_Pool<double> dpsix_DM(this->bxyz, LD_pool);
+		ModuleBase::Array_Pool<double> dpsiy_DM(this->bxyz, LD_pool);
+		ModuleBase::Array_Pool<double> dpsiz_DM(this->bxyz, LD_pool);
+		GINT_FUNC::ZEROS(dpsix_DM.get_ptr_1D(), this->bxyz*LD_pool);
+		GINT_FUNC::ZEROS(dpsiy_DM.get_ptr_1D(), this->bxyz*LD_pool);
+		GINT_FUNC::ZEROS(dpsiz_DM.get_ptr_1D(), this->bxyz*LD_pool);
 
 		//calculating g_i,mu(r) = sum_nu rho_mu,nu d/dx_i psi_nu(r), x_i=x,y,z
 		if(this->gridt->gamma_only_local)

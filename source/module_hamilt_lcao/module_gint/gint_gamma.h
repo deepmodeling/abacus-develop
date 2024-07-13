@@ -6,7 +6,6 @@
 #ifndef GINT_GAMMA_H
 #define GINT_GAMMA_H
 #include "gint.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_base/blas_connector.h"
 //=========================================================
 // ModuleBase::Integral On 3D Grids, different from Grid_Integral

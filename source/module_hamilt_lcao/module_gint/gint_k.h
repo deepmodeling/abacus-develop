@@ -7,7 +7,7 @@
 #include "module_base/libm/libm.h"
 #include "module_basis/module_ao/ORB_atomic_lm.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_HS_arrays.hpp"
-
+#include "module_base/array_pool.h"
 
 class Gint_k : public Gint {
   public:
