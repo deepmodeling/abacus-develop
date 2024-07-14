@@ -721,7 +721,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_EQ(param.input.out_dm, false);
 
         param.sys.gamma_only_local = false;
-        param.input.out_dm = 1;
+        param.input.out_dm = true;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(0), "");
         output = testing::internal::GetCapturedStdout();
@@ -735,7 +735,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_EQ(param.input.out_dm1, false);
 
         param.sys.gamma_only_local = true;
-        param.input.out_dm1 = 1;
+        param.input.out_dm1 = true;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(0), "");
         output = testing::internal::GetCapturedStdout();

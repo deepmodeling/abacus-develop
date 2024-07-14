@@ -1,4 +1,4 @@
-#include <string.h>
+#include <cstring>
 
 #include <algorithm>
 #include <iostream>
@@ -430,14 +430,15 @@ void ReadInput::item_others()
                 std::string& dft_functional = para.input.dft_functional;
                 std::string dft_functional_lower = dft_functional;
                 std::transform(dft_functional.begin(), dft_functional.end(), dft_functional_lower.begin(), tolower);
-                if (dft_functional_lower == "hf")
+                if (dft_functional_lower == "hf") {
                     para.input.exx_hybrid_alpha = "1";
-                else if (dft_functional_lower == "pbe0" || dft_functional_lower == "hse"
-                         || dft_functional_lower == "scan0")
+                } else if (dft_functional_lower == "pbe0" || dft_functional_lower == "hse"
+                         || dft_functional_lower == "scan0") {
                     para.input.exx_hybrid_alpha = "0.25";
-                else // no exx in scf, but will change to non-zero in
+                } else { // no exx in scf, but will change to non-zero in
                      // postprocess like rpa
                     para.input.exx_hybrid_alpha = "0";
+}
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
@@ -496,10 +497,11 @@ void ReadInput::item_others()
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.exx_real_number == "default")
             {
-                if (para.input.gamma_only)
+                if (para.input.gamma_only) {
                     para.input.exx_real_number = "1";
-                else
+                } else {
                     para.input.exx_real_number = "0";
+}
             }
         };
         this->add_item(item);
@@ -576,12 +578,13 @@ void ReadInput::item_others()
                 std::string& dft_functional = para.input.dft_functional;
                 std::string dft_functional_lower = dft_functional;
                 std::transform(dft_functional.begin(), dft_functional.end(), dft_functional_lower.begin(), tolower);
-                if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0" || dft_functional_lower == "scan0")
+                if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0" || dft_functional_lower == "scan0") {
                     para.input.exx_ccp_rmesh_times = "5";
-                else if (dft_functional_lower == "hse")
+                } else if (dft_functional_lower == "hse") {
                     para.input.exx_ccp_rmesh_times = "1.5";
-                else // no exx in scf
+                } else { // no exx in scf
                     para.input.exx_ccp_rmesh_times = "1";
+}
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
@@ -1351,8 +1354,9 @@ void ReadInput::item_others()
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (!item.is_read())
+            if (!item.is_read()) {
                 return;
+}
             if (para.sys.hubbard_u.size() != para.input.ntype)
             {
                 ModuleBase::WARNING_QUIT("ReadInput",
@@ -1384,8 +1388,9 @@ void ReadInput::item_others()
         };
 
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (!item.is_read())
+            if (!item.is_read()) {
                 return;
+}
             if (para.input.orbital_corr.size() != para.input.ntype)
             {
                 ModuleBase::WARNING_QUIT("ReadInput",
@@ -1438,8 +1443,9 @@ void ReadInput::item_others()
             {
                 para.input.bessel_nao_rcuts.push_back(std::stod(item.str_values[i]));
             }
-            if (count > 0)
+            if (count > 0) {
                 para.sys.bessel_nao_rcut = para.input.bessel_nao_rcuts[0]; // also compatible with
+}
                                                                                  // old input file
             para.sys.nrcut = count;
         };
@@ -1695,11 +1701,11 @@ void ReadInput::item_others()
                 else
                 {
                     std::string default_strategy;
-                    if (para.input.qo_basis == "hydrogen")
+                    if (para.input.qo_basis == "hydrogen") {
                         default_strategy = "energy-valence";
-                    else if ((para.input.qo_basis == "pswfc") || (para.input.qo_basis == "szv"))
+                    } else if ((para.input.qo_basis == "pswfc") || (para.input.qo_basis == "szv")) {
                         default_strategy = "all";
-                    else
+                    } else
                     {
                         ModuleBase::WARNING_QUIT("ReadInput",
                                                  "When setting default values for qo_strategy, "
@@ -1724,8 +1730,9 @@ void ReadInput::item_others()
             }
         };
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (!item.is_read())
+            if (!item.is_read()) {
                 return;
+}
             if (para.input.qo_screening_coeff.size() != para.input.ntype)
             {
                 if (para.input.qo_basis == "pswfc")
