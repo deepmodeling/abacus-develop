@@ -299,11 +299,19 @@ void Input_Conv::Convert()
     }
     GlobalV::global_wannier_card = PARAM.inp.wannier_card;
     if (PARAM.inp.kpoint_file != "")
+    {
         GlobalV::global_kpoint_card = PARAM.inp.kpoint_file;
+    }
     if (PARAM.inp.pseudo_dir != "")
+    {
         GlobalV::global_pseudo_dir = PARAM.inp.pseudo_dir + "/";
+    }
     if (PARAM.inp.orbital_dir != "")
+    {
         GlobalV::global_orbital_dir = PARAM.inp.orbital_dir + "/";
+    }
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "pseudo_dir", GlobalV::global_pseudo_dir);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "orbital_dir", GlobalV::global_orbital_dir);
     // GlobalV::global_pseudo_type = PARAM.inp.pseudo_type;
     GlobalC::ucell.setup(PARAM.inp.latname, PARAM.inp.ntype, PARAM.inp.lmaxmax, PARAM.inp.init_vel, PARAM.inp.fixed_axes);
 
