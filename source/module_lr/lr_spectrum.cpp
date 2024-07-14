@@ -211,7 +211,9 @@ void LR::LR_Spectrum<T>::transition_analysis()
         {
             X.fix_k(isk);
             X_full.fix_k(isk);
+#ifdef __MPI
             LR_Util::gather_2d_to_full(this->pX, X.get_pointer(), X_full.get_pointer(), false, nvirt, nocc);
+#endif
         }
         std::map<double, int, std::greater<double>> abs_order;
         X_full.fix_k(0);

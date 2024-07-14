@@ -15,18 +15,28 @@ jobs:
     if: github.repository_owner == 'deepmodeling'
     container:
       image: ghcr.io/deepmodeling/abacus-cuda
+      volumes:
+        - /tmp/ccache:/github/home/.ccache
       options: --gpus all
+      
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: recursive
+
+      - name: Install Ccache
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ccache
+
       - name: Build
         run: |
           nvidia-smi
           cmake -B build -DUSE_CUDA=ON -DBUILD_TESTING=ON
           cmake --build build -j4
           cmake --install build
+
       - name: Test
         run: |
           cd tests/integrate

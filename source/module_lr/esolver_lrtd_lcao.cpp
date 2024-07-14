@@ -123,7 +123,9 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
     // set up the 2d division for nbasis*nbasis matrices
     this->nbasis = GlobalV::NLOCAL;
     this->nstates = inp.lr_nstates;
+#ifdef __MPI
     LR_Util::setup_2d_division(this->paraMat_, 1, this->nbasis, this->nbasis);
+#endif
     this->paraMat_.atom_begin_row = std::move(ks_sol.ParaV.atom_begin_row);
     this->paraMat_.atom_begin_col = std::move(ks_sol.ParaV.atom_begin_col);
     this->paraMat_.iat2iwt_ = ucell.get_iat2iwt();
@@ -135,7 +137,9 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
     this->eig_ks = std::move(ks_sol.pelec->ekb);
 
     this->set_dimension();
+#ifdef __MPI
     LR_Util::setup_2d_division(this->paraC_, 1, this->nbasis, this->nocc + this->nvirt, this->paraMat_.blacs_ctxt);
+#endif
 
     //grid integration
     this->gt_ = std::move(ks_sol.GridT);
@@ -205,9 +209,11 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, Input& inp_tmp, UnitCel
 
     //  setup 2d-block distribution for AO-matrix and KS wfc
     this->nbasis = GlobalV::NLOCAL;
+#ifdef __MPI
     LR_Util::setup_2d_division(this->paraMat_, 1, this->nbasis, this->nbasis);
     this->paraMat_.set_desc_wfc_Eij(this->nbasis, GlobalV::NBANDS, paraMat_.get_row_size());
     int err = this->paraMat_.set_nloc_wfc_Eij(GlobalV::NBANDS, GlobalV::ofs_running, GlobalV::ofs_warning);
+#endif
     this->paraMat_.set_atomic_trace(ucell.get_iat2iwt(), ucell.nat, this->nbasis);
 
     // read the ground state info
@@ -219,7 +225,9 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, Input& inp_tmp, UnitCel
     this->read_ks_wfc();
 
     this->set_dimension();
+#ifdef __MPI
     LR_Util::setup_2d_division(this->paraC_, 1, this->nbasis, this->nocc + this->nvirt, paraMat_.blacs_ctxt);
+#endif
 
     //allocate 2-particle state and setup 2d division
     this->nstates = inp.lr_nstates;
@@ -381,7 +389,9 @@ void LR::ESolver_LR<T, TR>::setup_eigenvectors_X()
 {
     ModuleBase::TITLE("ESolver_LR", "setup_eigenvectors_X");
     // setup ParaX
+#ifdef __MPI
     LR_Util::setup_2d_division(this->paraX_, 1, this->nvirt, this->nocc, this->paraC_.blacs_ctxt);//nvirt - row, nocc - col 
+#endif
     // if spectrum-only, read the LR-eigenstates from file and return
     if (this->input.lr_solver == "spectrum")
     {

@@ -973,6 +973,7 @@ calculations.
 
   For atomic orbitals basis,
 
+  - **lapack**: This method is only avaliable for serial version. For parallel version please use **scalapack_gvx**.
   - **genelpa**: This method should be used if you choose localized orbitals.
   - **scalapack_gvx**: Scalapack can also be used for localized orbitals.
   - **cusolver**: This method needs building with CUDA and at least one gpu is available.
@@ -984,7 +985,7 @@ calculations.
   ```
 
   Then the user has to correct the input file and restart the calculation.
-- **Default**: cg (plane-wave basis), or genelpa (localized atomic orbital basis, if compiling option `USE_ELPA` has been set), scalapack_gvx, (localized atomic orbital basis, if compiling option `USE_ELPA` has not been set)
+- **Default**: cg (plane-wave basis), or genelpa (localized atomic orbital basis, if compiling option `USE_ELPA` has been set),lapack (localized atomic orbital basis, if compiling option `ENABLE_MPI` has not been set), scalapack_gvx, (localized atomic orbital basis, if compiling option `USE_ELPA` has not been set and if compiling option `ENABLE_MPI` has been set)
 
 ### nbands
 

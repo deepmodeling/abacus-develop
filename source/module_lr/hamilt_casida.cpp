@@ -30,10 +30,12 @@ namespace LR
                     }
                     // reduce ai for a fixed bj
                     A_aibj.fix_kb(0, 0);
+#ifdef __MPI
                     for (int isk_ai = 0;isk_ai < this->nks;++isk_ai)
                         LR_Util::gather_2d_to_full(*this->pX, &A_aibj.get_pointer()[isk_ai * this->pX->get_local_size()],
                             Amat_full.data() + kbj * this->nks * npairs /*col, bj*/ + isk_ai * npairs/*row, ai*/,
                             false, this->nvirt, this->nocc);
+#endif
                 }
         // output Amat
         std::cout << "Amat_full:" << std::endl;
