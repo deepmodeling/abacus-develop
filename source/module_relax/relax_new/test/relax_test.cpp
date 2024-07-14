@@ -102,7 +102,7 @@ class Test_SETGRAD : public testing::Test
             //reset lattice vector
             GlobalC::ucell.latvec.Identity();
             input.fixed_axes = "a"; //anything other than "None"
-            input.fixed_ibrav = 1;
+            input.fixed_ibrav = true;
             GlobalC::ucell.lc[0] = 0;
             GlobalC::ucell.lc[1] = 0;
             GlobalC::ucell.lc[2] = 0;

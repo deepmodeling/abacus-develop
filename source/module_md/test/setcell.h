@@ -74,7 +74,7 @@ class Setcell
 
         ucell.nat = 4;
         ucell.atoms[0].na = 4;
-        ucell.init_vel = 1;
+        ucell.init_vel = true;
 
         delete[] ucell.atoms[0].tau;
         delete[] ucell.atoms[0].taud;
@@ -125,14 +125,14 @@ class Setcell
         GlobalV::global_out_dir = "./";
         GlobalV::global_readin_dir = "./";
         GlobalV::SEARCH_RADIUS = 8.5 * ModuleBase::ANGSTROM_AU;
-        GlobalV::CAL_STRESS = 1;
+        GlobalV::CAL_STRESS = true;
 
         input.mdp.dump_virial = true;
         input.mdp.dump_force = true;
         input.mdp.dump_vel = true;
         input.mdp.cal_stress = true;
 
-        input.mdp.md_restart = 0;
+        input.mdp.md_restart = false;
         input.mdp.md_dt = 1;
         input.mdp.md_tfirst = input.mdp.md_tlast = 300;
 
