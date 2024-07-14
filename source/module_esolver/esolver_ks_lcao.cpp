@@ -565,7 +565,7 @@ void ESolver_KS_LCAO<TK, TR>::init_basis_lcao(Input& inp, UnitCell& ucell)
     ParaV.set_desc_wfc_Eij(GlobalV::NLOCAL, GlobalV::NBANDS, ParaV.nrow);
 
 #else
-    ParaV.set_serial(nlocal, nlocal);
+    ParaV.set_serial(GlobalV::NLOCAL, GlobalV::NLOCAL);
     ParaV.nrow_bands = GlobalV::NLOCAL;
     ParaV.ncol_bands = GlobalV::NBANDS;
     // Zhang Xiaoyang enable the serial version of LCAO and recovered this function usage. 2024-07-06

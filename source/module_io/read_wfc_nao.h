@@ -32,6 +32,7 @@ void read_wfc_nao_one_data(std::ifstream& ifs, std::complex<double>& data);
  * @param ParaV The parallel orbitals object.
  * @param psid The Psi object to store the wavefunction coefficients.
  * @param pelec Pointer to the ElecState object.
+ * @param skip_band From which band to start reading.
  * @return True if the wavefunction coefficients are successfully read, false otherwise.
  */
 template <typename T>
@@ -39,7 +40,8 @@ bool read_wfc_nao(
     const std::string& global_readin_dir,
     const Parallel_Orbitals& ParaV,
     psi::Psi<T>& psid,
-    elecstate::ElecState*const pelec);
+    elecstate::ElecState* const pelec,
+    const int skip_band = 0);
 
 } // namespace ModuleIO
 

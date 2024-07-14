@@ -591,6 +591,7 @@ struct Input_para
 
     // ==============   #Parameters (25. Linear Response) =====================
     int lr_nstates = 1;   ///< the number of 2-particle states to be solved
+    int nocc = -1;  ///< the number of occupied orbitals to form the 2-particle basis
     int nvirt = 1;        ///< the number of virtual orbitals to form the 2-particle basis (nocc + nvirt <= nbands)
     std::string xc_kernel = "LDA"; ///< exchange correlation (XC) kernel for LR-TDDFT
     std::string lr_solver = "dav"; ///< the eigensolver for LR-TDDFT

@@ -20,11 +20,11 @@ namespace LR_Util
     /// @tparam TCell 
     /// @param ucell 
     template <typename TCell>
-    const int cal_nelec(const TCell& ucell);
+    int cal_nelec(const TCell& ucell);
     
     /// @brief calculate the number of occupied orbitals
     /// @param nelec 
-    const int cal_nocc(int nelec);
+    int cal_nocc(int nelec);
     
     /// @brief  set the index map: ix to (ic, iv) and vice versa
     /// by diagonal traverse the c-v pairs

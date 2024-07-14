@@ -127,7 +127,7 @@ double Grid_MeshBall::deal_with_atom_spillage(const double *pos)
 					cell[ip] = i*this->bigcell_vec1[ip] +
 						j*this->bigcell_vec2[ip] +
 						k*this->bigcell_vec3[ip];
-					dx += std::pow(cell[ip] - pos[ip], 2);
+					dx += (cell[ip] - pos[ip]) * (cell[ip] - pos[ip]);
 				}
 				r2 = std::min(dx, r2);
 			}
