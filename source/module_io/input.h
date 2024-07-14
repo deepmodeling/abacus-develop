@@ -442,6 +442,7 @@ class Input
     //Beyond DFT
     //==========================================================
     int lr_nstates;   // the number of 2-particle states to be solved
+    int nocc;         // the number of occupied orbitals to form the 2-particle basis
     int nvirt;        // the number of virtual orbitals to form the 2-particle basis (nocc + nvirt <= nbands)
     std::string xc_kernel; // xc kernel for LR-TDDFT
     std::string lr_solver; // the solver for LR-TDDFT

@@ -12,6 +12,7 @@
 #include "module_io/print_info.h"
 #include "module_cell/module_neighbor/sltk_atom_arrange.h"
 #include "module_lr/utils/lr_util_print.h"
+#include "module_base/scalapack_connector.h"
 
 #ifdef __EXX
 template<>
@@ -81,15 +82,20 @@ void LR::ESolver_LR<T, TR>::parameter_check()const
 template<typename T, typename TR>
 void LR::ESolver_LR<T, TR>::set_dimension()
 {
-    assert(this->eig_ks.nc > 0); // needs ground state info
+    this->nstates = input.lr_nstates;
+    this->nbasis = GlobalV::NLOCAL;
     // calculate the number of occupied and unoccupied states
     // which determines the basis size of the excited states
-    this->nocc = LR_Util::cal_nocc(LR_Util::cal_nelec(ucell));
-    this->nvirt = this->eig_ks.nc - nocc;   //nbands-nocc
+
+    this->nocc_max = LR_Util::cal_nocc(LR_Util::cal_nelec(ucell));
+    this->nocc = std::max(1, std::min(input.nocc, this->nocc_max));
+    this->nvirt = GlobalV::NBANDS - this->nocc_max;   //nbands-nocc
     if (input.nvirt > this->nvirt) {
         GlobalV::ofs_warning << "ESolver_LR: input nvirt is too large to cover by nbands, set nvirt = nbands - nocc = " << this->nvirt << std::endl;
     } else if (input.nvirt > 0) { this->nvirt = input.nvirt;
 }
+
+    this->nbands = this->nocc + this->nvirt;
     this->npairs = this->nocc * this->nvirt;
     if (this->nstates > this->nocc * this->nvirt * this->kv.get_nks()) {
         throw std::invalid_argument("ESolver_LR: nstates > nocc*nvirt*nks");
@@ -106,8 +112,9 @@ void LR::ESolver_LR<T, TR>::set_dimension()
 
 template <typename T, typename TR>
 LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol,
-                                                 const Input_para& inp,
-                                                 UnitCell& ucell): input(inp), ucell(ucell)
+    const Input_para& inp,
+    UnitCell& ucell)
+    : input(inp), ucell(ucell)
 {
     redirect_log(inp.out_alllog);
     ModuleBase::TITLE("ESolver_LR", "ESolver_LR");
@@ -125,25 +132,45 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
 
     this->parameter_check();
 
-    // set up the 2d division for nbasis*nbasis matrices
-    this->nbasis = GlobalV::NLOCAL;
-    this->nstates = inp.lr_nstates;
-#ifdef __MPI
+    this->set_dimension();
+
+    // setup_wd_division is not need to be covered in #ifdef __MPI, see its implementation
     LR_Util::setup_2d_division(this->paraMat_, 1, this->nbasis, this->nbasis);
-#endif
+
     this->paraMat_.atom_begin_row = std::move(ks_sol.ParaV.atom_begin_row);
     this->paraMat_.atom_begin_col = std::move(ks_sol.ParaV.atom_begin_col);
     this->paraMat_.iat2iwt_ = ucell.get_iat2iwt();
 
-    // move the ground state info 
-    this->psi_ks = ks_sol.psi;
-    ks_sol.psi = nullptr;
-    //only need the eigenvalues. the 'elecstates' of excited states is different from ground state.
-    this->eig_ks = std::move(ks_sol.pelec->ekb);
-
-    this->set_dimension();
+    LR_Util::setup_2d_division(this->paraC_, 1, this->nbasis, this->nbands
 #ifdef __MPI
-    LR_Util::setup_2d_division(this->paraC_, 1, this->nbasis, this->nocc + this->nvirt, this->paraMat_.blacs_ctxt);
+        , this->paraMat_.blacs_ctxt
+#endif
+    );
+    auto move_gs = [&, this]() -> void  // move the ground state info
+        {
+            this->psi_ks = ks_sol.psi;
+            ks_sol.psi = nullptr;
+            //only need the eigenvalues. the 'elecstates' of excited states is different from ground state.
+            this->eig_ks = std::move(ks_sol.pelec->ekb);
+        };
+#ifdef __MPI
+    if (this->nbands == GlobalV::NBANDS) { move_gs(); }
+    else    // copy the part of ground state info according to paraC_
+    {
+        this->psi_ks = new psi::Psi<T>(this->kv.get_nks(), this->paraC_.get_col_size(), this->paraC_.get_row_size());
+        this->eig_ks.create(this->kv.get_nks(), this->nbands);
+        const int start_band = this->nocc_max - this->nocc;
+        for (int ik = 0;ik < this->kv.get_nks();++ik)
+        {
+            Cpxgemr2d(this->nbasis, this->nbands, &(*ks_sol.psi)(ik, 0, 0), 1, start_band + 1, ks_sol.ParaV.desc_wfc,
+                &(*this->psi_ks)(ik, 0, 0), 1, 1, this->paraC_.desc, this->paraC_.blacs_ctxt);
+            for (int ib = 0;ib < this->nbands;++ib) {
+                this->eig_ks(ik, ib) = ks_sol.pelec->ekb(ik, start_band + ib);
+}
+        }
+    }
+#else
+    move_gs();
 #endif
 
     //grid integration
@@ -213,14 +240,17 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, Input& inp_tmp, UnitCel
     two_center_bundle_.build_orb(ucell.ntype, ucell.orbital_fn);
     two_center_bundle_.to_LCAO_Orbitals(GlobalC::ORB, inp.lcao_ecut, inp.lcao_dk, inp.lcao_dr, inp.lcao_rmax);
 
+    this->set_dimension();
     //  setup 2d-block distribution for AO-matrix and KS wfc
-    this->nbasis = GlobalV::NLOCAL;
-#ifdef __MPI
     LR_Util::setup_2d_division(this->paraMat_, 1, this->nbasis, this->nbasis);
-    this->paraMat_.set_desc_wfc_Eij(this->nbasis, GlobalV::NBANDS, paraMat_.get_row_size());
-    int err = this->paraMat_.set_nloc_wfc_Eij(GlobalV::NBANDS, GlobalV::ofs_running, GlobalV::ofs_warning);
-#endif
+#ifdef __MPI
+    this->paraMat_.set_desc_wfc_Eij(this->nbasis, this->nbands, paraMat_.get_row_size());
+    int err = this->paraMat_.set_nloc_wfc_Eij(this->nbands, GlobalV::ofs_running, GlobalV::ofs_warning);
     this->paraMat_.set_atomic_trace(ucell.get_iat2iwt(), ucell.nat, this->nbasis);
+#else
+    this->paraMat_.nrow_bands = this->nbasis;
+    this->paraMat_.ncol_bands = this->nbands;
+#endif
 
     // read the ground state info
     // now ModuleIO::read_wfc_nao needs `Parallel_Orbitals` and can only read all the bands
@@ -230,13 +260,13 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, Input& inp_tmp, UnitCel
         this->paraMat_.get_row_size());
     this->read_ks_wfc();
 
-    this->set_dimension();
+    LR_Util::setup_2d_division(this->paraC_, 1, this->nbasis, this->nbands
 #ifdef __MPI
-    LR_Util::setup_2d_division(this->paraC_, 1, this->nbasis, this->nocc + this->nvirt, paraMat_.blacs_ctxt);
+        , paraMat_.blacs_ctxt
 #endif
+    );
 
     //allocate 2-particle state and setup 2d division
-    this->nstates = inp.lr_nstates;
     this->pelec = new elecstate::ElecState();
 
     // read the ground state charge density and calculate xc kernel
@@ -332,7 +362,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, Input& inp_tmp, UnitCel
         &GlobalC::ORB);
     this->gint_->initialize_pvpR(ucell, &GlobalC::GridD);
 
-    // if EXX from scratch, init 2-center integral and calclate Cs, Vs 
+    // if EXX from scratch, init 2-center integral and calculate Cs, Vs 
 #ifdef __EXX
     if ((xc_kernel == "hf" || xc_kernel == "hse") && this->input.lr_solver != "spectrum")
     {
@@ -340,12 +370,9 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, Input& inp_tmp, UnitCel
         this->exx_lri->init(MPI_COMM_WORLD, this->kv); // using GlobalC::ORB
         this->exx_lri->cal_exx_ions();
     }
-    else {
+    // else
 #endif
-        ModuleBase::Ylm::set_coefficients();    // set Ylm only for Gint 
-#ifdef __EXX
-    }
-#endif
+        // ModuleBase::Ylm::set_coefficients() is deprecated
 }
 
 template <typename T, typename TR>
@@ -407,10 +434,11 @@ template<typename T, typename TR>
 void LR::ESolver_LR<T, TR>::setup_eigenvectors_X()
 {
     ModuleBase::TITLE("ESolver_LR", "setup_eigenvectors_X");
-    // setup ParaX
+    LR_Util::setup_2d_division(this->paraX_, 1, this->nvirt, this->nocc
 #ifdef __MPI
-    LR_Util::setup_2d_division(this->paraX_, 1, this->nvirt, this->nocc, this->paraC_.blacs_ctxt);//nvirt - row, nocc - col 
+        , this->paraC_.blacs_ctxt
 #endif
+    );//nvirt - row, nocc - col 
     // if spectrum-only, read the LR-eigenstates from file and return
     if (this->input.lr_solver == "spectrum")
     {
@@ -490,9 +518,10 @@ void LR::ESolver_LR<T, TR>::read_ks_wfc()
 {
     assert(this->psi_ks != nullptr);
     GlobalV::NB2D = 1;
-    this->pelec->ekb.create(this->kv.get_nks(), GlobalV::NBANDS);
-    this->pelec->wg.create(this->kv.get_nks(), GlobalV::NBANDS);
-    if (!ModuleIO::read_wfc_nao(GlobalV::global_readin_dir, this->paraMat_, *this->psi_ks, this->pelec)) {
+    this->pelec->ekb.create(this->kv.get_nks(), this->nbands);
+    this->pelec->wg.create(this->kv.get_nks(), this->nbands);
+    if (!ModuleIO::read_wfc_nao(GlobalV::global_readin_dir, this->paraMat_, *this->psi_ks, this->pelec,
+        /*skip_bands=*/this->nocc_max - this->nocc)) {
         ModuleBase::WARNING_QUIT("ESolver_LR", "read ground-state wavefunction failed.");
 }
     this->eig_ks = std::move(this->pelec->ekb);
