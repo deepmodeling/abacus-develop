@@ -88,6 +88,18 @@ class IState_Charge
   private:
     std::vector<int> bands_picked_;
 
+    void select_bands(const int nbands_istate,
+                      const std::vector<int>& out_band_kb,
+                      const int nbands,
+                      const double nelec,
+                      const int mode,
+                      const int fermi_band);
+
+    void read_istate_file(const std::string& global_out_dir,
+                          const int nbands,
+                          const int my_rank,
+                          std::ofstream& ofs_warning);
+
 #ifdef __MPI
     /**
      * @brief Calculates the density matrix for a given band and spin.

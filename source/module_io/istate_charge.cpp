@@ -55,11 +55,6 @@ void IState_Charge::begin(Gint_Gamma& gg,
 
     std::cout << " Perform |psi(i)|^2 for selected bands." << std::endl;
 
-    if (!gamma_only_local)
-    {
-        ModuleBase::WARNING_QUIT("IState_Charge::begin", "Only available for GAMMA_ONLY_LOCAL now.");
-    }
-
     int mode = 0;
     if (nbands_istate > 0 && static_cast<int>(out_band_kb.size()) == 0)
     {
@@ -76,137 +71,20 @@ void IState_Charge::begin(Gint_Gamma& gg,
         mode = 3;
     }
 
-    int fermi_band = 0;
-    int bands_below = 0;
-    int bands_above = 0;
-
-    // (2) cicle:
-    // (2.1) calculate the selected density matrix from wave functions.
-    // (2.2) carry out the grid integration to get the charge density.
-    this->bands_picked_.resize(nbands);
-    ModuleBase::GlobalFunc::ZEROS(bands_picked_.data(), nbands);
-
-    // (1)
-    // (1.2) read in WFC_NAO_GAMMA1.dat
-    std::cout << " number of electrons = " << nelec << std::endl;
-
-    // mohan update 2011-03-21
     // if ucell is odd, it's correct,
     // if ucell is even, it's also correct.
     // +1.0e-8 in case like (2.999999999+1)/2
-    fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
+    int fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
+    std::cout << " number of electrons = " << nelec << std::endl;
     std::cout << " number of occupied bands = " << fermi_band << std::endl;
 
-    if (mode == 1)
-    {
-        bands_below = nbands_istate;
-        bands_above = nbands_istate;
-
-        std::cout << " Plot band decomposed charge density below Fermi surface with " << bands_below << " bands."
-                  << std::endl;
-
-        std::cout << " Plot band decomposed charge density above Fermi surface with " << bands_above << " bands."
-                  << std::endl;
-
-        for (int ib = 0; ib < nbands; ++ib)
-        {
-            if (ib >= fermi_band - bands_below)
-            {
-                if (ib < fermi_band + bands_above)
-                {
-                    bands_picked_[ib] = 1;
-                }
-            }
-        }
-    }
-    else if (mode == 2)
-    {
-        // Check if length of out_band_kb is valid
-        if (static_cast<int>(out_band_kb.size()) > nbands)
-        {
-            ModuleBase::WARNING_QUIT(
-                "IState_Charge::begin",
-                "The number of bands specified by `bands_to_print` in the INPUT file exceeds `nbands`!");
-        }
-        // Check if all elements in bands_picked_ are 0 or 1
-        for (int value: out_band_kb)
-        {
-            if (value != 0 && value != 1)
-            {
-                ModuleBase::WARNING_QUIT(
-                    "IState_Charge::begin",
-                    "The elements of `bands_to_print` must be either 0 or 1. Invalid values found!");
-            }
-        }
-        // Fill bands_picked_ with values from out_band_kb
-        // Remaining bands are already set to 0
-        int length = std::min(static_cast<int>(out_band_kb.size()), nbands);
-        for (int i = 0; i < length; ++i)
-        {
-            // out_band_kb rely on function parse_expression from input_conv.cpp
-            bands_picked_[i] = out_band_kb[i];
-        }
-
-        std::cout << " Plot band decomposed charge density below the Fermi surface: band ";
-        for (int i = 0; i + 1 <= fermi_band; ++i)
-        {
-            if (bands_picked_[i] == 1)
-            {
-                std::cout << i + 1 << " ";
-            }
-        }
-        std::cout << std::endl;
-        std::cout << " Plot band decomposed charge density above the Fermi surface: band ";
-        for (int i = fermi_band; i < nbands; ++i)
-        {
-            if (bands_picked_[i] == 1)
-            {
-                std::cout << i + 1 << " ";
-            }
-        }
-        std::cout << std::endl;
-    }
-    else if (mode == 3)
-    {
-        bool stop = false;
-        std::stringstream ss;
-        ss << global_out_dir << "istate.info";
-        std::cout << " Open the file : " << ss.str() << std::endl;
-        if (my_rank == 0)
-        {
-            std::ifstream ifs(ss.str().c_str());
-            if (!ifs)
-            {
-                stop = true;
-            }
-            else
-            {
-                // int band_index;
-                for (int ib = 0; ib < nbands; ++ib)
-                {
-                    ModuleBase::GlobalFunc::READ_VALUE(ifs, bands_picked_[ib]);
-                }
-            }
-        }
-
-#ifdef __MPI
-        Parallel_Common::bcast_bool(stop);
-        Parallel_Common::bcast_int(bands_picked_.data(), nbands);
-#endif
-        if (stop)
-        {
-            ofs_warning << " Can't find the file : " << ss.str() << std::endl;
-            ModuleBase::WARNING_QUIT("IState_Charge::begin", "can't find the istate file.");
-        }
-    }
+    select_bands(nbands_istate, out_band_kb, nbands, nelec, mode, fermi_band);
 
     for (int ib = 0; ib < nbands; ++ib)
     {
         if (bands_picked_[ib])
         {
             std::cout << " Perform band decomposed charge density for band " << ib + 1 << std::endl;
-
-            // (1) calculate the density matrix for a partuclar band, whenever it is occupied or not.
 
             // Using new density matrix inplementation
             elecstate::DensityMatrix<double, double> DM(this->ParaV, nspin);
@@ -217,13 +95,10 @@ void IState_Charge::begin(Gint_Gamma& gg,
             ModuleBase::WARNING_QUIT("IState_Charge::begin", "The `pchg` calculation is only available for MPI now!");
 #endif
 
-            // (2) zero out of charge density array.
             for (int is = 0; is < nspin; ++is)
             {
                 ModuleBase::GlobalFunc::ZEROS(rho[is], rhopw_nrxx);
             }
-
-            // (3) calculate charge density for a particular band.
 
             DM.init_DMR(GridD_in, ucell_in);
             DM.cal_DMR();
@@ -332,82 +207,13 @@ void IState_Charge::begin(Gint_k& gk,
         mode = 3;
     }
 
-    int fermi_band = 0;
-    int bands_below = 0;
-    int bands_above = 0;
-
-    this->bands_picked_.resize(nbands);
-    ModuleBase::GlobalFunc::ZEROS(bands_picked_.data(), nbands);
-
+    int fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
     std::cout << " number of electrons = " << nelec << std::endl;
-    fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
     std::cout << " number of occupied bands = " << fermi_band << std::endl;
 
-    if (mode == 1)
-    {
-        bands_below = nbands_istate;
-        bands_above = nbands_istate;
+    select_bands(nbands_istate, out_band_kb, nbands, nelec, mode, fermi_band);
 
-        std::cout << " Plot band decomposed charge density below Fermi surface with " << bands_below << " bands."
-                  << std::endl;
-
-        std::cout << " Plot band decomposed charge density above Fermi surface with " << bands_above << " bands."
-                  << std::endl;
-
-        for (int ib = 0; ib < nbands; ++ib)
-        {
-            if (ib >= fermi_band - bands_below)
-            {
-                if (ib < fermi_band + bands_above)
-                {
-                    bands_picked_[ib] = 1;
-                }
-            }
-        }
-    }
-    else if (mode == 2)
-    {
-        if (static_cast<int>(out_band_kb.size()) > nbands)
-        {
-            ModuleBase::WARNING_QUIT(
-                "IState_Charge::begin",
-                "The number of bands specified by `bands_to_print` in the INPUT file exceeds `nbands`!");
-        }
-        for (int value: out_band_kb)
-        {
-            if (value != 0 && value != 1)
-            {
-                ModuleBase::WARNING_QUIT(
-                    "IState_Charge::begin",
-                    "The elements of `bands_to_print` must be either 0 or 1. Invalid values found!");
-            }
-        }
-        int length = std::min(static_cast<int>(out_band_kb.size()), nbands);
-        for (int i = 0; i < length; ++i)
-        {
-            bands_picked_[i] = out_band_kb[i];
-        }
-
-        std::cout << " Plot band decomposed charge density below the Fermi surface: band ";
-        for (int i = 0; i + 1 <= fermi_band; ++i)
-        {
-            if (bands_picked_[i] == 1)
-            {
-                std::cout << i + 1 << " ";
-            }
-        }
-        std::cout << std::endl;
-        std::cout << " Plot band decomposed charge density above the Fermi surface: band ";
-        for (int i = fermi_band; i < nbands; ++i)
-        {
-            if (bands_picked_[i] == 1)
-            {
-                std::cout << i + 1 << " ";
-            }
-        }
-        std::cout << std::endl;
-    }
-    else if (mode == 3)
+    if (mode == 3)
     {
         bool stop = false;
         std::stringstream ss;
@@ -458,24 +264,15 @@ void IState_Charge::begin(Gint_k& gk,
 
             for (int ik = 0; ik < kv.get_nks() / nspin; ++ik)
             {
-                const int ispin = kv.isk[ik];
-                std::cout << "ispin = " << ispin << std::endl;
-
                 for (int is = 0; is < nspin; ++is)
                 {
                     ModuleBase::GlobalFunc::ZEROS(rho[is], rhopw_nrxx);
                 }
 
-                std::cout << "Here is Okay." << std::endl;
-
                 DM.init_DMR(GridD_in, ucell_in);
-
-                std::cout << "Here is Okay." << std::endl;
 
                 DM.cal_DMR(ik);
                 // DM.cal_DMR();
-
-                std::cout << "Here is Okay." << std::endl;
 
                 gk.initialize_pvpR(*ucell_in, GridD_in);
 
@@ -534,6 +331,94 @@ void IState_Charge::begin(Gint_k& gk,
     return;
 }
 
+void IState_Charge::select_bands(const int nbands_istate,
+                                 const std::vector<int>& out_band_kb,
+                                 const int nbands,
+                                 const double nelec,
+                                 const int mode,
+                                 const int fermi_band)
+{
+    int bands_below = 0;
+    int bands_above = 0;
+
+    this->bands_picked_.resize(nbands);
+    ModuleBase::GlobalFunc::ZEROS(bands_picked_.data(), nbands);
+
+    if (mode == 1)
+    {
+        bands_below = nbands_istate;
+        bands_above = nbands_istate;
+
+        std::cout << " Plot band decomposed charge density below Fermi surface with " << bands_below << " bands."
+                  << std::endl;
+
+        std::cout << " Plot band decomposed charge density above Fermi surface with " << bands_above << " bands."
+                  << std::endl;
+
+        for (int ib = 0; ib < nbands; ++ib)
+        {
+            if (ib >= fermi_band - bands_below)
+            {
+                if (ib < fermi_band + bands_above)
+                {
+                    bands_picked_[ib] = 1;
+                }
+            }
+        }
+    }
+    else if (mode == 2)
+    {
+        // Check if length of out_band_kb is valid
+        if (static_cast<int>(out_band_kb.size()) > nbands)
+        {
+            ModuleBase::WARNING_QUIT(
+                "IState_Charge::select_bands",
+                "The number of bands specified by `bands_to_print` in the INPUT file exceeds `nbands`!");
+        }
+        // Check if all elements in out_band_kb are 0 or 1
+        for (int value: out_band_kb)
+        {
+            if (value != 0 && value != 1)
+            {
+                ModuleBase::WARNING_QUIT(
+                    "IState_Charge::select_bands",
+                    "The elements of `bands_to_print` must be either 0 or 1. Invalid values found!");
+            }
+        }
+        // Fill bands_picked_ with values from out_band_kb
+        // Remaining bands are already set to 0
+        int length = std::min(static_cast<int>(out_band_kb.size()), nbands);
+        for (int i = 0; i < length; ++i)
+        {
+            // out_band_kb rely on function parse_expression from input_conv.cpp
+            bands_picked_[i] = out_band_kb[i];
+        }
+
+        std::cout << " Plot band decomposed charge density below the Fermi surface: band ";
+        for (int i = 0; i + 1 <= fermi_band; ++i)
+        {
+            if (bands_picked_[i] == 1)
+            {
+                std::cout << i + 1 << " ";
+            }
+        }
+        std::cout << std::endl;
+        std::cout << " Plot band decomposed charge density above the Fermi surface: band ";
+        for (int i = fermi_band; i < nbands; ++i)
+        {
+            if (bands_picked_[i] == 1)
+            {
+                std::cout << i + 1 << " ";
+            }
+        }
+        std::cout << std::endl;
+    }
+    else
+    {
+        ModuleBase::WARNING_QUIT("IState_Charge::select_bands", "Invalid mode! Please check the code.");
+    }
+}
+
 #ifdef __MPI
 void IState_Charge::idmatrix(const int& ib,
                              const int nspin,
@@ -544,18 +429,13 @@ void IState_Charge::idmatrix(const int& ib,
                              const K_Vectors& kv)
 {
     ModuleBase::TITLE("IState_Charge", "idmatrix");
-    // assert(wg.nr == nspin);
-    std::cout << "wg.nr = " << wg.nr << std::endl;
+    assert(wg.nr == kv.get_nks());
 
     int fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
 
     for (int ik = 0; ik < kv.get_nks(); ++ik)
     {
         std::cout << " Perform band decomposed charge density for kpoint " << ik << ",  band" << ib + 1 << std::endl;
-
-        const int ispin = kv.isk[ik];
-
-        std::cout << "ispin = " << ispin << std::endl;
 
         std::vector<double> wg_local(this->ParaV->ncol, 0.0);
         const int ib_local = this->ParaV->global2local_col(ib);
@@ -593,10 +473,6 @@ void IState_Charge::idmatrix(const int& ib,
 {
     ModuleBase::TITLE("IState_Charge", "idmatrix");
     assert(wg.nr == nspin);
-
-    std::cout << "wg.nr = " << wg.nr << std::endl;
-    std::cout << "wg.nc = " << wg.nc << std::endl;
-    std::cout << "nspin = " << nspin << std::endl;
 
     int fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
 
