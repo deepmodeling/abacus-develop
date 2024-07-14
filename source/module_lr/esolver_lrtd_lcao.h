@@ -70,9 +70,11 @@ namespace LR
         psi::Psi<T>* X;
 
         int nocc = 1;
+        int nocc_max = 1;   ///< nelec/2
         int nvirt = 1;
+        int nbands = 2;
         int nbasis = 2;
-        /// n_occ*n_unocc, the basis size of electron-hole pair representation
+        /// n_occ*nvirt, the basis size of electron-hole pair representation
         int npairs = 1;
         /// how many 2-particle states to be solved
         int nstates = 1;
