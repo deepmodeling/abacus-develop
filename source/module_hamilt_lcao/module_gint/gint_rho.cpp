@@ -35,7 +35,7 @@ void Gint::gint_kernel_rho(const int na_grid,
     for (int is = 0; is < this->gridt->nspin; ++is)
     {
         ModuleBase::Array_Pool<double> psir_DM(this->bxyz, LD_pool);
-        GINT_FUNC::ZEROS(psir_DM.get_ptr_1D(), this->bxyz * LD_pool);
+        Gint_Func::ZEROS(psir_DM.get_ptr_1D(), this->bxyz * LD_pool);
         if (this->gridt->gamma_only_local)
 
         {

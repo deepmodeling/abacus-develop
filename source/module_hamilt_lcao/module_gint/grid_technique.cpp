@@ -457,7 +457,7 @@ void Grid_Technique::cal_grid_integration_index(std::ofstream &ofs_warning) {
 
 #ifdef __MPI
     int* all = new int[this->nproc];
-    GINT_FUNC::ZEROS(all, this->nproc);
+    Gint_Func::ZEROS(all, this->nproc);
     Parallel_Reduce::gather_int_all(max_atom, all);
     if (this->rank == 0) {
         ofs_warning << std::setw(15) << "Processor" << std::setw(15)
@@ -532,7 +532,7 @@ void Grid_Technique::init_gpu_gint_variables(const UnitCell& ucell,
     }
     nstreams = num_stream;
     double ylmcoef[100];
-    GINT_FUNC::ZEROS(ylmcoef, 100);
+    Gint_Func::ZEROS(ylmcoef, 100);
     for (int i = 0; i < 100; i++) {
         ylmcoef[i] = ModuleBase::Ylm::ylmcoef[i];
     }

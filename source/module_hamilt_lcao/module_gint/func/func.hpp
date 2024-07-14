@@ -1,7 +1,7 @@
 #ifndef FUNC_HPP
 #define FUNC_HPP
 
-namespace GINT_FUNC
+namespace Gint_Func
 {
 template <class T, class TI>
 inline void ZEROS(std::complex<T>* u, const TI n) 
@@ -23,5 +23,5 @@ inline void ZEROS(T* u, const TI n)
         u[i] = 0;
     }
 }
-}//GINT_FUNC
+}//Gint_Func
 #endif
