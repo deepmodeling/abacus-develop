@@ -215,7 +215,7 @@ ESolver* init_esolver(Input& input, const Input_para& input_para, UnitCell& ucel
         // they will be supported after the analytical gradient
         // of LR-TDDFT is implemented.
         // after_all_runners() is for output, it is not needed here.
-        std::cout << "Setting up the esolver for excited state..." << std::endl;
+        std::cout << "Setting up the esolver for excited states..." << std::endl;
         // initialize the 2nd ESolver_LR at the temporary pointer
         ModuleESolver::ESolver* p_esolver_lr = nullptr;
         if (GlobalV::GAMMA_ONLY_LOCAL)

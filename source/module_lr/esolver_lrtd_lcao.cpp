@@ -133,15 +133,20 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
     this->paraMat_.atom_begin_col = std::move(ks_sol.ParaV.atom_begin_col);
     this->paraMat_.iat2iwt_ = ucell.get_iat2iwt();
 
-    LR_Util::setup_2d_division(this->paraC_, 1, this->nbasis, this->nbands, this->paraMat_.blacs_ctxt);
-
-    if (this->nbands == GlobalV::NBANDS)    // move the ground state info 
-    {
-        this->psi_ks = ks_sol.psi;
-        ks_sol.psi = nullptr;
-        //only need the eigenvalues. the 'elecstates' of excited states is different from ground state.
-        this->eig_ks = std::move(ks_sol.pelec->ekb);
-    }
+    LR_Util::setup_2d_division(this->paraC_, 1, this->nbasis, this->nbands
+#ifdef __MPI
+        , this->paraMat_.blacs_ctxt
+#endif
+    );
+    auto move_gs = [&, this]() -> void  // move the ground state info
+        {
+            this->psi_ks = ks_sol.psi;
+            ks_sol.psi = nullptr;
+            //only need the eigenvalues. the 'elecstates' of excited states is different from ground state.
+            this->eig_ks = std::move(ks_sol.pelec->ekb);
+        };
+#ifdef __MPI
+    if (this->nbands == GlobalV::NBANDS) { move_gs(); }
     else    // copy the part of ground state info according to paraC_
     {
         this->psi_ks = new psi::Psi<T>(this->kv.get_nks(), this->paraC_.get_col_size(), this->paraC_.get_row_size());
@@ -155,6 +160,9 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
                 this->eig_ks(ik, ib) = ks_sol.pelec->ekb(ik, start_band + ib);
         }
     }
+#else
+    move_gs();
+#endif
 
     //grid integration
     this->gt_ = std::move(ks_sol.GridT);
@@ -225,8 +233,8 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, Input& inp_tmp, UnitCel
     this->set_dimension();
     //  setup 2d-block distribution for AO-matrix and KS wfc
     LR_Util::setup_2d_division(this->paraMat_, 1, this->nbasis, this->nbasis);
-    this->paraMat_.set_desc_wfc_Eij(this->nbasis, this->nbands, paraMat_.get_row_size());
 #ifdef __MPI
+    this->paraMat_.set_desc_wfc_Eij(this->nbasis, this->nbands, paraMat_.get_row_size());
     int err = this->paraMat_.set_nloc_wfc_Eij(this->nbands, GlobalV::ofs_running, GlobalV::ofs_warning);
     this->paraMat_.set_atomic_trace(ucell.get_iat2iwt(), ucell.nat, this->nbasis);
 #else
@@ -242,7 +250,11 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, Input& inp_tmp, UnitCel
         this->paraMat_.get_row_size());
     this->read_ks_wfc();
 
-    LR_Util::setup_2d_division(this->paraC_, 1, this->nbasis, this->nbands, paraMat_.blacs_ctxt);
+    LR_Util::setup_2d_division(this->paraC_, 1, this->nbasis, this->nbands
+#ifdef __MPI
+        , paraMat_.blacs_ctxt
+#endif
+    );
 
     //allocate 2-particle state and setup 2d division
     this->pelec = new elecstate::ElecState();
@@ -335,7 +347,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, Input& inp_tmp, UnitCel
         &GlobalC::ORB);
     this->gint_->initialize_pvpR(ucell, &GlobalC::GridD);
 
-    // if EXX from scratch, init 2-center integral and calclate Cs, Vs 
+    // if EXX from scratch, init 2-center integral and calculate Cs, Vs 
 #ifdef __EXX
     if ((xc_kernel == "hf" || xc_kernel == "hse") && this->input.lr_solver != "spectrum")
     {
@@ -343,9 +355,9 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, Input& inp_tmp, UnitCel
         this->exx_lri->init(MPI_COMM_WORLD, this->kv); // using GlobalC::ORB
         this->exx_lri->cal_exx_ions();
     }
-    else
+    // else
 #endif
-        ModuleBase::Ylm::set_coefficients();    // set Ylm only for Gint 
+        // ModuleBase::Ylm::set_coefficients() is deprecated
 }
 template <typename T, typename TR>
 void LR::ESolver_LR<T, TR>::runner(int istep, UnitCell& cell)
@@ -402,7 +414,11 @@ template<typename T, typename TR>
 void LR::ESolver_LR<T, TR>::setup_eigenvectors_X()
 {
     ModuleBase::TITLE("ESolver_LR", "setup_eigenvectors_X");
-    LR_Util::setup_2d_division(this->paraX_, 1, this->nvirt, this->nocc, this->paraC_.blacs_ctxt);//nvirt - row, nocc - col 
+    LR_Util::setup_2d_division(this->paraX_, 1, this->nvirt, this->nocc
+#ifdef __MPI
+        , this->paraC_.blacs_ctxt
+#endif
+    );//nvirt - row, nocc - col 
     // if spectrum-only, read the LR-eigenstates from file and return
     if (this->input.lr_solver == "spectrum")
     {

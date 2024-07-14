@@ -1637,4 +1637,15 @@ TEST_F(InputTest, Item_test)
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
+    { // nocc 
+        auto it = find_lable("nocc", readinput.input_lists);
+        param.input.nocc = 5;
+        param.input.nbands = 4;
+        param.input.nelec = 0.0;
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.nocc, 4);
+        param.input.nocc = 0;
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.nocc, 4);
+    }
 }
