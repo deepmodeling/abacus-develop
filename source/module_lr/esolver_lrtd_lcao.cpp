@@ -328,7 +328,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
         &GlobalC::ORB);
     this->gint_->initialize_pvpR(ucell, &GlobalC::GridD);
 
-    // if EXX from scratch, init 2-center integral and calclate Cs, Vs 
+    // if EXX from scratch, init 2-center integral and calclate Cs, Vs
 #ifdef __EXX
     if ((xc_kernel == "hf" || xc_kernel == "hse") && this->input.lr_solver != "spectrum")
     {
@@ -336,11 +336,13 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
         this->exx_lri->init(MPI_COMM_WORLD, this->kv); // using GlobalC::ORB
         this->exx_lri->cal_exx_ions();
     }
-    else {
+    else
 #endif
-        ModuleBase::Ylm::set_coefficients();    // set Ylm only for Gint 
+    {
+        ModuleBase::Ylm::set_coefficients(); // set Ylm only for Gint
+    }
 }
-}
+
 template <typename T, typename TR>
 void LR::ESolver_LR<T, TR>::runner(int istep, UnitCell& cell)
 {

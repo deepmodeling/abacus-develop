@@ -40,13 +40,14 @@ class FIREtest : public testing::Test
     MD_base* mdrun;
     UnitCell ucell;
     Input_para input;
+    ModuleESolver::ESolver* p_esolver;
 
     void SetUp()
     {
         Setcell::setupcell(ucell);
         Setcell::parameters(input);
 
-        ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
+        p_esolver = new ModuleESolver::ESolver_LJ();
         p_esolver->before_all_runners(input, ucell);
 
         mdrun = new FIRE(input.mdp, ucell);
@@ -56,6 +57,7 @@ class FIREtest : public testing::Test
     void TearDown()
     {
         delete mdrun;
+        delete p_esolver;
     }
 };
 
