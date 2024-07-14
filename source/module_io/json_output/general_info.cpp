@@ -26,7 +26,7 @@ void gen_general_info(const Parameter& param)
 #endif
 
     // start_time
-    std::time_t start_time = param.globalv.time_start;
+    std::time_t start_time = param.globalv.start_time;
     std::string start_time_str;
     convert_time(start_time, start_time_str);
 
@@ -45,25 +45,25 @@ void gen_general_info(const Parameter& param)
 
     AbacusJson::add_json({"general_info", "version"}, version, false);
     AbacusJson::add_json({"general_info", "commit"}, commit, false);
-    AbacusJson::add_json({"general_info", "device"}, param.input.device, false);
+    AbacusJson::add_json({"general_info", "device"}, param.inp.device, false);
     AbacusJson::add_json({"general_info", "mpi_num"}, mpi_num, false);
     AbacusJson::add_json({"general_info", "omp_num"}, omp_num, false);
-    AbacusJson::add_json({"general_info", "pseudo_dir"}, param.input.pseudo_dir, false);
-    AbacusJson::add_json({"general_info", "orbital_dir"}, param.input.orbital_dir, false);
-    AbacusJson::add_json({"general_info", "stru_file"}, param.input.stru_file, false);
-    AbacusJson::add_json({"general_info", "kpt_file"}, param.input.kpoint_file, false);
+    AbacusJson::add_json({"general_info", "pseudo_dir"}, param.inp.pseudo_dir, false);
+    AbacusJson::add_json({"general_info", "orbital_dir"}, param.inp.orbital_dir, false);
+    AbacusJson::add_json({"general_info", "stru_file"}, param.inp.stru_file, false);
+    AbacusJson::add_json({"general_info", "kpt_file"}, param.inp.kpoint_file, false);
     AbacusJson::add_json({"general_info", "start_time"}, start_time_str, false);
     AbacusJson::add_json({"general_info", "end_time"}, end_time_str, false);
 
     // AbacusJson::add_Json(version,false,"general_info", "version");
     // AbacusJson::add_Json(commit,false,"general_info", "commit");
-    // AbacusJson::add_Json(param.input.device,false,"general_info", "device");
+    // AbacusJson::add_Json(param.inp.device,false,"general_info", "device");
     // AbacusJson::add_Json(mpi_num,false,"general_info", "mpi_num");
     // AbacusJson::add_Json(omp_num,false,"general_info", "omp_num");
-    // AbacusJson::add_Json(param.input.pseudo_dir,false,"general_info", "pseudo_dir");
-    // AbacusJson::add_Json(param.input.orbital_dir,false,"general_info", "orbital_dir");
-    // AbacusJson::add_Json(param.input.stru_file,false,"general_info", "stru_file");
-    // AbacusJson::add_Json(param.input.kpoint_file,false,"general_info", "kpt_file");
+    // AbacusJson::add_Json(param.inp.pseudo_dir,false,"general_info", "pseudo_dir");
+    // AbacusJson::add_Json(param.inp.orbital_dir,false,"general_info", "orbital_dir");
+    // AbacusJson::add_Json(param.inp.stru_file,false,"general_info", "stru_file");
+    // AbacusJson::add_Json(param.inp.kpoint_file,false,"general_info", "kpt_file");
     // AbacusJson::add_Json(start_time_str,false,"general_info", "start_time");
     // AbacusJson::add_Json(end_time_str,false,"general_info", "end_time");
 }
