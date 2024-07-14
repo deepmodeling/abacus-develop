@@ -288,12 +288,9 @@ void ReadInput::item_general()
         };
         sync_string(input.bands_to_print);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            Input_Conv::parse_expression(para.input.bands_to_print, para.input.sup.out_band_kb);
-            para.input.sup.out_band_kb_size = para.input.sup.out_band_kb.size();
+            Input_Conv::parse_expression(para.input.bands_to_print, para.sys.out_band_kb);
+            para.sys.out_band_kb_size = para.sys.out_band_kb.size();
         };
-        // We need to broadcast the size of out_band_kb first, then broadcast the content of out_band_kb
-        add_int_bcast(sup.out_band_kb_size);
-        add_intvec_bcast(sup.out_band_kb, para.input.sup.out_band_kb_size, 0);
         this->add_item(item);
     }
     {
