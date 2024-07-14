@@ -587,9 +587,9 @@ void WF_atomic::random_t(std::complex<FPTYPE>* psi,
     //     srand(unsigned(INPUT.pw_seed + GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL] + ik));
     // }
     // #else
-    if (INPUT.pw_seed > 0) // qianrui add 2021-8-13
+    if (PARAM.inp.pw_seed > 0) // qianrui add 2021-8-13
     {
-        srand(unsigned(INPUT.pw_seed + GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL] + ik));
+        srand(unsigned(PARAM.inp.pw_seed + GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL] + ik));
         const int nxy = wfc_basis->fftnxy;
         const int nz = wfc_basis->nz;
         const int nstnz = wfc_basis->nst*nz;
@@ -639,9 +639,9 @@ void WF_atomic::random_t(std::complex<FPTYPE>* psi,
     {
 // #endif
 #else  // !__MPI
-    if (INPUT.pw_seed > 0) // qianrui add 2021-8-13
+    if (PARAM.inp.pw_seed > 0) // qianrui add 2021-8-13
     {
-        srand(unsigned(INPUT.pw_seed + ik));
+        srand(unsigned(PARAM.inp.pw_seed + ik));
     }
 #endif // __MPI
         for (int iw = iw_start ;iw < iw_end;iw++)
@@ -679,9 +679,9 @@ void WF_atomic::atomicrandom(ModuleBase::ComplexMatrix& psi,
     assert(psi.nr >= iw_end);
     const int ng = wfc_basis->npwk[ik];
 #ifdef __MPI
-    if (INPUT.pw_seed > 0) // qianrui add 2021-8-13
+    if (PARAM.inp.pw_seed > 0) // qianrui add 2021-8-13
     {
-        srand(unsigned(INPUT.pw_seed + GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL] + ik));
+        srand(unsigned(PARAM.inp.pw_seed + GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL] + ik));
         const int nxy = wfc_basis->fftnxy;
         const int nz = wfc_basis->nz;
         const int nstnz = wfc_basis->nst*nz;
@@ -727,9 +727,9 @@ void WF_atomic::atomicrandom(ModuleBase::ComplexMatrix& psi,
     else
     {
 #else
-    if (INPUT.pw_seed > 0) // qianrui add 2021-8-13
+    if (PARAM.inp.pw_seed > 0) // qianrui add 2021-8-13
     {
-            srand(unsigned(INPUT.pw_seed + GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL] + ik));
+            srand(unsigned(PARAM.inp.pw_seed + GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL] + ik));
         }
 #endif
         double rr, arg;

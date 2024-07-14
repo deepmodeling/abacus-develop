@@ -7,7 +7,7 @@
 #include "module_cell/module_neighbor/sltk_atom_arrange.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_cell/unitcell.h"
-#include "module_io/input.h"
+#include "module_parameter/parameter.h"
 
 Magnetism::Magnetism()
 {
@@ -120,42 +120,42 @@ class Setcell
         ucell.set_iat2itia();
     };
 
-    static void parameters()
+    static void parameters(Input_para& input)
     {
         GlobalV::global_out_dir = "./";
         GlobalV::global_readin_dir = "./";
         GlobalV::SEARCH_RADIUS = 8.5 * ModuleBase::ANGSTROM_AU;
         GlobalV::CAL_STRESS = 1;
 
-        INPUT.mdp.dump_virial = true;
-        INPUT.mdp.dump_force = true;
-        INPUT.mdp.dump_vel = true;
-        INPUT.mdp.cal_stress = true;
+        input.mdp.dump_virial = true;
+        input.mdp.dump_force = true;
+        input.mdp.dump_vel = true;
+        input.mdp.cal_stress = true;
 
-        INPUT.mdp.md_restart = 0;
-        INPUT.mdp.md_dt = 1;
-        INPUT.mdp.md_tfirst = INPUT.mdp.md_tlast = 300;
+        input.mdp.md_restart = 0;
+        input.mdp.md_dt = 1;
+        input.mdp.md_tfirst = input.mdp.md_tlast = 300;
 
         GlobalV::ESOLVER_TYPE = "lj";
-        INPUT.mdp.lj_rcut = {8.5};
-        INPUT.mdp.lj_epsilon = {0.01032};
-        INPUT.mdp.lj_sigma = {3.405};
+        input.mdp.lj_rcut = {8.5};
+        input.mdp.lj_epsilon = {0.01032};
+        input.mdp.lj_sigma = {3.405};
 
-        INPUT.mdp.msst_direction = 2;
-        INPUT.mdp.msst_qmass = 1;
-        INPUT.mdp.msst_vel = 0;
-        INPUT.mdp.msst_vis = 0;
-        INPUT.mdp.msst_tscale = 0.01;
+        input.mdp.msst_direction = 2;
+        input.mdp.msst_qmass = 1;
+        input.mdp.msst_vel = 0;
+        input.mdp.msst_vis = 0;
+        input.mdp.msst_tscale = 0.01;
 
-        INPUT.mdp.md_tfreq = 1;
-        INPUT.mdp.md_tchain = 4;
-        INPUT.mdp.md_pfreq = 1;
-        INPUT.mdp.md_pchain = 4;
+        input.mdp.md_tfreq = 1;
+        input.mdp.md_tchain = 4;
+        input.mdp.md_pfreq = 1;
+        input.mdp.md_pchain = 4;
 
-        INPUT.mdp.md_damp = 1;
+        input.mdp.md_damp = 1;
 
-        INPUT.mdp.md_nraise = 2;
-        INPUT.mdp.md_tolerance = 0;
+        input.mdp.md_nraise = 2;
+        input.mdp.md_tolerance = 0;
     };
 };
 

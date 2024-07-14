@@ -39,16 +39,17 @@ class MSST_test : public testing::Test
   protected:
     MD_base* mdrun;
     UnitCell ucell;
+    Input_para input;
 
     void SetUp()
     {
         Setcell::setupcell(ucell);
-        Setcell::parameters();
+        Setcell::parameters(input);
 
         ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
-        p_esolver->before_all_runners(INPUT, ucell);
+        p_esolver->before_all_runners(input, ucell);
 
-        mdrun = new MSST(INPUT.mdp, ucell);
+        mdrun = new MSST(input.mdp, ucell);
         mdrun->setup(p_esolver, GlobalV::global_readin_dir);
     }
 

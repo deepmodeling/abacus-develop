@@ -646,7 +646,6 @@ void Input_Conv::Convert()
         // EXX does not support symmetry=1
         if (PARAM.inp.calculation != "nscf" && PARAM.inp.symmetry == "1")
             ModuleSymmetry::Symmetry::symm_flag = 0;
-}
     }
 #endif                                               // __LCAO
 #endif                                               // __EXX
