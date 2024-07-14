@@ -125,10 +125,10 @@ int main(int argc, char** argv)
 {
 #ifdef __MPI
     MPI_Init(&argc, &argv);
-    int Nproc=0;
-    int Rank=0;
-    MPI_Comm_size(MPI_COMM_WORLD, &Nproc);
-    MPI_Comm_rank(MPI_COMM_WORLD, &Rank);
+    int nproc=0;
+    int rank=0;
+    MPI_Comm_size(MPI_COMM_WORLD, &nproc);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 #endif
     testing::InitGoogleTest(&argc, argv);
     int result = RUN_ALL_TESTS();

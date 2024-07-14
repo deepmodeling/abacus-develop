@@ -7,8 +7,7 @@
 #include "module_base/parallel_reduce.h"
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
-
-#include "func/func.hpp"
+#include "func/func.h"
 #if ((defined __CUDA) /* || (defined __ROCM) */)
 #include <cuda_runtime.h>
 #include "kernels/cuda/gemm_selector.cuh"

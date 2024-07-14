@@ -1,5 +1,5 @@
-#ifndef FUNC_HPP
-#define FUNC_HPP
+#ifndef FUNC_H
+#define FUNC_H
 
 namespace Gint_Func
 {
