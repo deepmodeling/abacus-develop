@@ -19,5 +19,7 @@ if(ENABLE_COVERAGE)
 endif()
 
 IF (BUILD_TESTING)
-  add_subdirectory(test)
+  if(ENABLE_MPI)
+    add_subdirectory(test)
+  endif()
 endif()
