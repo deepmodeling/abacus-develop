@@ -47,11 +47,12 @@ namespace LR
             std::vector<container::Tensor>  dm_trans_2d = cal_dm_trans_pblas(psi_in_bfirst, *pX, *psi_ks, *pc, naos, nocc, nvirt, *pmat);
             if (this->tdm_sym) for (auto& t : dm_trans_2d) LR_Util::matsym(t.data<T>(), naos, *pmat);
 #else
-            std::vector<container::Tensor>  dm_trans_2d = cal_dm_trans_blas(psi_in_bfirst, psi_ks, nocc, nvirt);
+            std::vector<container::Tensor>  dm_trans_2d = cal_dm_trans_blas(psi_in_bfirst, *psi_ks, nocc, nvirt);
             if (this->tdm_sym) for (auto& t : dm_trans_2d) LR_Util::matsym(t.data<T>(), naos);
 #endif
             // tensor to vector, then set DMK
-            for (int isk = 0;isk < nks;++isk)this->DM_trans[ib_dm]->set_DMK_pointer(isk, dm_trans_2d[isk].data<T>());
+            for (int isk = 0;isk < nks;++isk) {this->DM_trans[ib_dm]->set_DMK_pointer(isk, dm_trans_2d[isk].data<T>());
+}
 
             // if (this->first_print)
             //     for (int ik = 0;ik < nks;++ik)
@@ -71,8 +72,9 @@ namespace LR
                     { pmat->get_col_size(), pmat->get_row_size() }));
             for (auto& v : v_hxc_2d) v.zero();
             int nrow = ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER() ? this->pmat->get_row_size() : this->pmat->get_col_size();
-            for (int isk = 0;isk < nks;++isk)
+            for (int isk = 0;isk < nks;++isk) {
                 folding_HR(*this->hR, v_hxc_2d[isk].data<T>(), this->kv.kvec_d[isk], nrow, 1);            // V(R) -> V(k)
+}
             // LR_Util::print_HR(*this->hR, this->ucell.nat, "4.VR");
             // if (this->first_print)
             //     for (int ik = 0;ik < nks;++ik)
