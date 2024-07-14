@@ -47,10 +47,11 @@ void Stochastic_Iter::init(const int method_in, K_Vectors* pkv_in, ModulePW::PW_
     const int norder = p_che->norder;
     const int nks = wfc_basis->nks;
     this->method = method_in;
-    if(method == 1)                 spolyv = new double [norder];
-    else                            spolyv = new double [norder*norder];
-    stofunc.Emin = INPUT.emin_sto;
-    stofunc.Emax = INPUT.emax_sto;
+    if(method == 1) {                 spolyv = new double [norder];
+    } else {                            spolyv = new double [norder*norder];
+}
+    stofunc.Emin = PARAM.inp.emin_sto;
+    stofunc.Emax = PARAM.inp.emax_sto;
     
     if(this->method == 2)
     {
@@ -101,16 +102,18 @@ void Stochastic_Iter::checkemm(const int& ik, const int istep, const int iter, S
 {
     ModuleBase::TITLE("Stochastic_Iter","checkemm");
     //iter = 1,2,...   istep = 0,1,2,...
-    // if( istep%INPUT.initsto_freq != 0 )    return;
+    // if( istep%PARAM.inp.initsto_freq != 0 )    return;
     const int npw = stowf.ngk[ik];
     const int nks = stowf.nks;
     if(istep == 0)
     {
-        if(iter > 5)    return;
+        if(iter > 5) {    return;
+}
     }
     else
     {
-        if(iter > 1)    return;
+        if(iter > 1) {    return;
+}
     }
         
     const int norder = p_che->norder;
@@ -132,7 +135,7 @@ void Stochastic_Iter::checkemm(const int& ik, const int istep, const int iter, S
         {
             pchi = &stowf.chi0->operator()(ik, ichi, 0);
         }
-        while (1)
+        while (true)
         {
             bool converge;
             converge = p_che->checkconverge(
@@ -275,9 +278,10 @@ void Stochastic_Iter::itermu(const int iter, elecstate::ElecState* pes)
         {
             std::cout << "Fermi energy cannot be converged. Set THNE to " << th_ne << std::endl;
             th_ne *= 1e1;
-            if (th_ne > 1e1)
+            if (th_ne > 1e1) {
                 ModuleBase::WARNING_QUIT("Stochastic_Iter",
                                          "Cannot converge feimi energy. Please retry with different random number");
+}
         }
     }
     pes->eferm.ef = this->stofunc.mu = mu0 = mu3;
@@ -311,10 +315,11 @@ void Stochastic_Iter::calPn(const int& ik, Stochastic_WF& stowf)
     const int npwx = stowf.npwx;
     if(ik==0)
     {
-        if(this->method == 1)
+        if(this->method == 1) {
             ModuleBase::GlobalFunc::ZEROS(spolyv, norder);
-        else
+        } else {
             ModuleBase::GlobalFunc::ZEROS(spolyv, norder*norder);
+}
     }
     std::complex<double> * pchi;
     if(GlobalV::NBANDS > 0)  
@@ -553,15 +558,17 @@ void Stochastic_Iter::sum_stoband(Stochastic_WF& stowf, elecstate::ElecState* pe
     {
         GlobalV::ofs_running<<"Renormalize rho from ne = "<<sto_ne+KS_ne<<" to targetne = "<<targetne<< std::endl;
     }
-    else
+    else {
         factor = 1;
+}
 
     if(GlobalV::MY_STOGROUP == 0)
     {
-        if (GlobalV::NBANDS > 0)
+        if (GlobalV::NBANDS > 0) {
             ModuleBase::GlobalFunc::DCOPY(ksrho, pes->charge->rho[0], nrxx);
-        else
+        } else {
             ModuleBase::GlobalFunc::ZEROS(pes->charge->rho[0], nrxx);
+}
     }
 
 

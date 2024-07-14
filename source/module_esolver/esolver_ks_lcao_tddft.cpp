@@ -64,7 +64,7 @@ ESolver_KS_LCAO_TDDFT::~ESolver_KS_LCAO_TDDFT()
     }
 }
 
-void ESolver_KS_LCAO_TDDFT::before_all_runners(Input& inp, UnitCell& ucell)
+void ESolver_KS_LCAO_TDDFT::before_all_runners(const Input_para& inp, UnitCell& ucell)
 {
     // 1) run "before_all_runners" in ESolver_KS
     ESolver_KS::before_all_runners(inp, ucell);
@@ -201,7 +201,7 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(const int istep, const int iter, cons
 
     for (int ik = 0; ik < kv.get_nks(); ++ik)
     {
-        this->pelec_td->print_band(ik, INPUT.printe, iter);
+        this->pelec_td->print_band(ik, PARAM.inp.printe, iter);
     }
 
     // using new charge density.

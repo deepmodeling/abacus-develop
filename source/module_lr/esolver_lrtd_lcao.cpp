@@ -208,7 +208,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
 }
 
 template <typename T, typename TR>
-LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, Input& inp_tmp, UnitCell& ucell) : input(inp), ucell(ucell)
+LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : input(inp), ucell(ucell)
 {
     redirect_log(inp.out_alllog);
     ModuleBase::TITLE("ESolver_LR", "ESolver_LR");
@@ -217,7 +217,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, Input& inp_tmp, UnitCel
     std::transform(xc_kernel.begin(), xc_kernel.end(), xc_kernel.begin(), tolower);
 
     // necessary steps in ESolver_FP
-    ESolver_FP::before_all_runners(inp_tmp, ucell);
+    ESolver_FP::before_all_runners(inp, ucell);
     this->pelec = new elecstate::ElecStateLCAO<T>();
 
     // necessary steps in ESolver_KS::before_all_runners : symmetry and k-points
@@ -367,6 +367,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, Input& inp_tmp, UnitCel
 #endif
         // ModuleBase::Ylm::set_coefficients() is deprecated
 }
+
 template <typename T, typename TR>
 void LR::ESolver_LR<T, TR>::runner(int istep, UnitCell& cell)
 {

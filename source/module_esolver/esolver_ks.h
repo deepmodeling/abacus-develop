@@ -42,9 +42,9 @@ class ESolver_KS : public ESolver_FP
 
 		int out_freq_elec;// frequency for output
 
-		virtual void before_all_runners(Input& inp, UnitCell& cell) override;
+		virtual void before_all_runners(const Input_para& inp, UnitCell& cell) override;
 
-		virtual void init_after_vc(Input& inp, UnitCell& cell) override;    // liuyu add 2023-03-09
+		virtual void init_after_vc(const Input_para& inp, UnitCell& cell) override;    // liuyu add 2023-03-09
 
 		virtual void runner(const int istep, UnitCell& cell) override;
 
@@ -137,7 +137,7 @@ class ESolver_KS : public ESolver_FP
 
 		std::string basisname; //PW or LCAO
 
-        void print_wfcfft(Input& inp, std::ofstream& ofs);
-};
+		void print_wfcfft(const Input_para& inp, std::ofstream &ofs);
+};	
 } // end of namespace
 #endif

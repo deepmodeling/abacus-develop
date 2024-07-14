@@ -140,7 +140,7 @@ bool Relax::setup_gradient(const ModuleBase::matrix& force, const ModuleBase::ma
         grad_cell.zero_out();
         ModuleBase::matrix stress_ev = stress * (GlobalC::ucell.omega * ModuleBase::Ry_to_eV);
 
-        if(INPUT.fixed_axes == "shape")
+        if(PARAM.inp.fixed_axes == "shape")
         {
             double pressure = (stress_ev(0,0) + stress_ev(1,1) + stress_ev(2,2)) / 3.0;
             stress_ev.zero_out();
@@ -148,14 +148,14 @@ bool Relax::setup_gradient(const ModuleBase::matrix& force, const ModuleBase::ma
             stress_ev(1,1) = pressure;
             stress_ev(2,2) = pressure;
         }
-        else if(INPUT.fixed_axes == "volume")
+        else if(PARAM.inp.fixed_axes == "volume")
         {
             double pressure = (stress_ev(0,0) + stress_ev(1,1) + stress_ev(2,2)) / 3.0;
             stress_ev(0,0) -= pressure;
             stress_ev(1,1) -= pressure;
             stress_ev(2,2) -= pressure;
         }
-        else if (INPUT.fixed_axes != "None")
+        else if (PARAM.inp.fixed_axes != "None")
         {
             //Note stress is given in the directions of lattice vectors
             //So we need to first convert to Cartesian and then apply the constraint
@@ -509,12 +509,12 @@ void Relax::move_cell_ions(const bool is_new_dir)
         }
         GlobalC::ucell.latvec += move_cell * (step_size * fac * fac_stress);
 
-        if(INPUT.fixed_axes == "volume")
+        if(PARAM.inp.fixed_axes == "volume")
         {
             double omega_new = std::abs(GlobalC::ucell.latvec.Det()) * pow(GlobalC::ucell.lat0, 3);
             GlobalC::ucell.latvec *= pow(GlobalC::ucell.omega / omega_new, 1.0/3.0);
         }
-        if(INPUT.fixed_ibrav)
+        if(PARAM.inp.fixed_ibrav)
         {
             GlobalC::ucell.remake_cell();
         }

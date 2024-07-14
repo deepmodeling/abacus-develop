@@ -4,7 +4,7 @@
 #include "module_base/matrix.h"
 #include "module_cell/unitcell.h"
 #include "module_io/input.h"
-#include "module_parameter/input_parameter.h"
+#include "module_parameter/parameter.h"
 
 namespace ModuleESolver
 {
@@ -21,7 +21,7 @@ class ESolver
     }
 
     //! initialize the energy solver by using input parameters and cell modules
-    virtual void before_all_runners(Input& inp, UnitCell& cell) = 0;
+    virtual void before_all_runners(const Input_para& inp, UnitCell& cell) = 0;
 
     //! run energy solver
     virtual void runner(const int istep, UnitCell& cell) = 0;
@@ -85,7 +85,7 @@ std::string determine_type();
  *
  * @return [out] A pointer to an ESolver object that will be initialized.
  */
-ESolver* init_esolver(Input& input, const Input_para& input_para, UnitCell& ucell);
+ESolver* init_esolver(const Input_para& inp, UnitCell& ucell);
 
 void clean_esolver(ESolver*& pesolver, const bool lcao_cblacs_exit = false);
 

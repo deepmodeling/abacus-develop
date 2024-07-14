@@ -6,7 +6,7 @@
 namespace vdw
 {
 
-std::unique_ptr<Vdw> make_vdw(const UnitCell &ucell, const Input &input)
+std::unique_ptr<Vdw> make_vdw(const UnitCell &ucell, const Input_para &input)
 {
     if (ucell.nat < 2 && input.vdw_method != "none")
     {

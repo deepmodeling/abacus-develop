@@ -21,9 +21,9 @@ class ESolver_KS_PW : public ESolver_KS<T, Device>
 
     ~ESolver_KS_PW();
 
-    void before_all_runners(Input& inp, UnitCell& cell) override;
+    void before_all_runners(const Input_para& inp, UnitCell& cell) override;
 
-    void init_after_vc(Input& inp, UnitCell& cell) override;
+    void init_after_vc(const Input_para& inp, UnitCell& cell) override;
 
     double cal_energy() override;
 
@@ -54,7 +54,7 @@ class ESolver_KS_PW : public ESolver_KS<T, Device>
 
     // temporary, this will be removed in the future;
     // Init Global class
-    void Init_GlobalC(Input& inp, UnitCell& ucell, pseudopot_cell_vnl& ppcell);
+    void Init_GlobalC(const Input_para& inp, UnitCell& ucell, pseudopot_cell_vnl& ppcell);
 
     virtual void allocate_hsolver();
     virtual void deallocate_hsolver();

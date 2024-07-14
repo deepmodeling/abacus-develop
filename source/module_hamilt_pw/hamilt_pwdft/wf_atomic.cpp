@@ -36,8 +36,10 @@ WF_atomic::~WF_atomic()
 //==========================================================
 void WF_atomic::init_at_1(Structure_Factor *sf_in)
 {
-    if(GlobalV::use_paw) return;
-    if (GlobalV::test_wf) ModuleBase::TITLE("WF_atomic","init_at_1");
+    if(GlobalV::use_paw) { return;
+}
+    if (GlobalV::test_wf) { ModuleBase::TITLE("WF_atomic","init_at_1");
+}
     ModuleBase::timer::tick("WF_atomic","init_at_1");
     this->psf = sf_in;
     GlobalV::ofs_running << "\n Make real space PAO into reciprocal space." << std::endl;
@@ -85,10 +87,11 @@ void WF_atomic::init_at_1(Structure_Factor *sf_in)
         {
 			//std::cout << "\n T=" << it << " ic=" << ic << std::endl;
             int nmesh;
-            if(GlobalV::PSEUDO_MESH)
+            if(GlobalV::PSEUDO_MESH) {
                 nmesh = atom->ncpp.mesh;
-            else
+            } else {
                 nmesh = atom->ncpp.msh;
+}
 
             // check the unit condition
             double *inner_part = new double[nmesh];
@@ -216,9 +219,10 @@ void WF_atomic::init_at_1(Structure_Factor *sf_in)
     return;
 }// end init_at_1
 
-void WF_atomic::print_PAOs(void)const
+void WF_atomic::print_PAOs()const
 {
-    if (GlobalV::MY_RANK!=0) return;
+    if (GlobalV::MY_RANK!=0) { return;
+}
     for (int it=0; it<GlobalC::ucell.ntype; it++)
     {
         for (int icc=0; icc<GlobalC::ucell.atoms[it].ncpp.nchi ;icc++)
@@ -255,7 +259,8 @@ void WF_atomic::atomic_wfc(const int ik,
                            const int& table_dimension,
                            const double& dq) const
 {
-    if (GlobalV::test_wf>3) ModuleBase::TITLE("WF_atomic","atomic_wfc");
+    if (GlobalV::test_wf>3) { ModuleBase::TITLE("WF_atomic","atomic_wfc");
+}
     ModuleBase::timer::tick("WF_atomic","atomic_wfc");
     //=========================================================
     // This routine computes the superposition of atomic
@@ -332,15 +337,20 @@ void WF_atomic::atomic_wfc(const int ik,
                                               ModuleBase::GlobalFunc::ZEROS(aux, np);
                                               for(int n1=0;n1<2*l+1;n1++){
                                                  const int lm = l*l +n1;
-                                                 if(std::abs(soc.rotylm(n1,ind))>1e-8)
-                                                   for(int ig=0; ig<np;ig++)
+                                                 if(std::abs(soc.rotylm(n1,ind))>1e-8) {
+                                                   for(int ig=0; ig<np;ig++) {
                                                       aux[ig] += soc.rotylm(n1,ind)* ylm(lm,ig);
+}
+}
                                               }
-                                              for(int ig=0; ig<np;ig++)
+                                              for(int ig=0; ig<np;ig++) {
                                                  wfcatom(index, ig + this->npwx*is ) = lphase * fact[is] * sk[ig] * aux[ig] * flq[ig];
+}
                                           }
-                                          else
-                                            for(int ig=0; ig<np;ig++) wfcatom(index,ig+ this->npwx*is) = std::complex<double>(0.0 , 0.0);
+                                          else {
+                                            for(int ig=0; ig<np;ig++) { wfcatom(index,ig+ this->npwx*is) = std::complex<double>(0.0 , 0.0);
+}
+}
                                       }//is
                                       index++;
                                    }//if
@@ -353,15 +363,16 @@ void WF_atomic::atomic_wfc(const int ik,
                                 std::complex<double> fup,fdown;
                                 int nc;
                                 //This routine creates two functions only in the case j=l+1/2 or exit in the other case
-                                if(fabs(j-l+0.5)<1e-4) continue;
+                                if(fabs(j-l+0.5)<1e-4) { continue;
+}
                                 delete[] chiaux;
                                 chiaux = new double [np];
                                 //Find the functions j= l- 1/2
-                                if(l==0)
+                                if(l==0) {
                                     for(int ig=0;ig<np;ig++){
                                         chiaux[ig] = flq[ig];
                                     }
-                                else
+                                } else
                                 {
                                     for(int ib = 0;ib < GlobalC::ucell.atoms[it].ncpp.nchi;ib++)
                                     {
@@ -390,7 +401,8 @@ void WF_atomic::atomic_wfc(const int ik,
                                 for(int m = 0;m<2*l+1;m++)
                                 {
                                     const int lm = l*l +m;
-                                    if(index+2*l+1>GlobalC::ucell.natomwfc) ModuleBase::WARNING_QUIT("GlobalC::wf.atomic_wfc()","error: too many wfcs");
+                                    if(index+2*l+1>GlobalC::ucell.natomwfc) { ModuleBase::WARNING_QUIT("GlobalC::wf.atomic_wfc()","error: too many wfcs");
+}
                                     for(int ig = 0;ig<np;ig++)
                                     {
                                         aux[ig] = sk[ig] * ylm(lm,ig) * chiaux[ig];
@@ -427,7 +439,8 @@ void WF_atomic::atomic_wfc(const int ik,
                             for(int m = 0;m<2*l+1;m++)
                             {
                                 const int lm = l*l +m;
-                                if(index+2*l+1>GlobalC::ucell.natomwfc) ModuleBase::WARNING_QUIT("GlobalC::wf.atomic_wfc()","error: too many wfcs");
+                                if(index+2*l+1>GlobalC::ucell.natomwfc) { ModuleBase::WARNING_QUIT("GlobalC::wf.atomic_wfc()","error: too many wfcs");
+}
                                 for(int ig = 0;ig<np;ig++)
                                 {
                                      aux[ig] = sk[ig] * ylm(lm,ig) * flq[ig];
@@ -478,7 +491,8 @@ void WF_atomic::atomic_wfc(const int ik,
         } //end ia //mohan modify 2007-11-7
     } // end nt
 
-	if(GlobalV::test_wf)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"wf_index",index);
+	if(GlobalV::test_wf) {ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"wf_index",index);
+}
 
     if (index != GlobalC::ucell.natomwfc)
     {
@@ -587,9 +601,9 @@ void WF_atomic::random_t(std::complex<FPTYPE>* psi,
     //     srand(unsigned(INPUT.pw_seed + GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL] + ik));
     // }
     // #else
-    if (INPUT.pw_seed > 0) // qianrui add 2021-8-13
+    if (PARAM.inp.pw_seed > 0) // qianrui add 2021-8-13
     {
-        srand(unsigned(INPUT.pw_seed + GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL] + ik));
+        srand(unsigned(PARAM.inp.pw_seed + GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL] + ik));
         const int nxy = wfc_basis->fftnxy;
         const int nz = wfc_basis->nz;
         const int nstnz = wfc_basis->nst*nz;
@@ -607,7 +621,8 @@ void WF_atomic::random_t(std::complex<FPTYPE>* psi,
             
 	            for(int ir=0; ir < nxy; ir++)
 	            {
-                    if(wfc_basis->fftixy2ip[ir] < 0) continue;
+                    if(wfc_basis->fftixy2ip[ir] < 0) { continue;
+}
 	            	if(GlobalV::RANK_IN_POOL==0)
 	            	{
 	            		for(int iz=0; iz<nz; iz++)
@@ -639,9 +654,9 @@ void WF_atomic::random_t(std::complex<FPTYPE>* psi,
     {
 // #endif
 #else  // !__MPI
-    if (INPUT.pw_seed > 0) // qianrui add 2021-8-13
+    if (PARAM.inp.pw_seed > 0) // qianrui add 2021-8-13
     {
-        srand(unsigned(INPUT.pw_seed + ik));
+        srand(unsigned(PARAM.inp.pw_seed + ik));
     }
 #endif // __MPI
         for (int iw = iw_start ;iw < iw_end;iw++)
@@ -654,13 +669,14 @@ void WF_atomic::random_t(std::complex<FPTYPE>* psi,
                 const FPTYPE gk2 = wfc_basis->getgk2(ik,ig);
                 ppsi[ig] = std::complex<FPTYPE>(rr * cos(arg), rr * sin(arg)) / FPTYPE(gk2 + 1.0);
             }
-            if(GlobalV::NPOL==2)for (int ig = this->npwx;ig < this->npwx + ng;ig++)
+            if(GlobalV::NPOL==2) {for (int ig = this->npwx;ig < this->npwx + ng;ig++)
             {
                 const FPTYPE rr = std::rand()/FPTYPE(RAND_MAX);
                 const FPTYPE arg= ModuleBase::TWO_PI * std::rand()/FPTYPE(RAND_MAX);
                 const FPTYPE gk2 = wfc_basis->getgk2(ik,ig-this->npwx);
                 ppsi[ig] = std::complex<FPTYPE>(rr * cos(arg), rr * sin(arg)) / FPTYPE(gk2 + 1.0);
             }
+}
         }
 #ifdef __MPI
 // #if ((!defined __CUDA) && (!defined __ROCM))
@@ -679,9 +695,9 @@ void WF_atomic::atomicrandom(ModuleBase::ComplexMatrix& psi,
     assert(psi.nr >= iw_end);
     const int ng = wfc_basis->npwk[ik];
 #ifdef __MPI
-    if (INPUT.pw_seed > 0) // qianrui add 2021-8-13
+    if (PARAM.inp.pw_seed > 0) // qianrui add 2021-8-13
     {
-        srand(unsigned(INPUT.pw_seed + GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL] + ik));
+        srand(unsigned(PARAM.inp.pw_seed + GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL] + ik));
         const int nxy = wfc_basis->fftnxy;
         const int nz = wfc_basis->nz;
         const int nstnz = wfc_basis->nst*nz;
@@ -697,7 +713,8 @@ void WF_atomic::atomicrandom(ModuleBase::ComplexMatrix& psi,
             {
 	            for(int ir=0; ir < nxy; ir++)
 	            {
-                    if(wfc_basis->fftixy2ip[ir] < 0) continue;
+                    if(wfc_basis->fftixy2ip[ir] < 0) { continue;
+}
 	            	if(GlobalV::RANK_IN_POOL==0)
 	            	{
 	            		for(int iz=0; iz<nz; iz++)
@@ -727,9 +744,9 @@ void WF_atomic::atomicrandom(ModuleBase::ComplexMatrix& psi,
     else
     {
 #else
-    if (INPUT.pw_seed > 0) // qianrui add 2021-8-13
+    if (PARAM.inp.pw_seed > 0) // qianrui add 2021-8-13
     {
-            srand(unsigned(INPUT.pw_seed + GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL] + ik));
+            srand(unsigned(PARAM.inp.pw_seed + GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL] + ik));
         }
 #endif
         double rr, arg;

@@ -122,7 +122,7 @@ std::string determine_type()
 
 
 //Some API to operate E_Solver
-ESolver* init_esolver(Input& input, const Input_para& input_para, UnitCell& ucell)
+ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
 {
 	//determine type of esolver based on INPUT information
 	const std::string esolver_type = determine_type();
@@ -187,9 +187,9 @@ ESolver* init_esolver(Input& input, const Input_para& input_para, UnitCell& ucel
     {
         // use constructor rather than Init function to initialize reference (instead of pointers) to ucell
         if (GlobalV::GAMMA_ONLY_LOCAL)
-            return new LR::ESolver_LR<double, double>(input_para, input, ucell);
+            return new LR::ESolver_LR<double, double>(inp, ucell);
         else if (GlobalV::NSPIN < 2)
-            return new LR::ESolver_LR<std::complex<double>, double>(input_para, input, ucell);
+            return new LR::ESolver_LR<std::complex<double>, double>(inp, ucell);
         else
             throw std::runtime_error("LR-TDDFT is not implemented for spin polarized case");
     }
@@ -209,7 +209,7 @@ ESolver* init_esolver(Input& input, const Input_para& input_para, UnitCell& ucel
         {
             p_esolver = new ESolver_KS_LCAO<std::complex<double>, std::complex<double>>();
         }
-        p_esolver->before_all_runners(input, ucell);
+        p_esolver->before_all_runners(inp, ucell);
         p_esolver->runner(0, ucell); // scf-only
         // force and stress is not needed currently,
         // they will be supported after the analytical gradient
@@ -221,12 +221,12 @@ ESolver* init_esolver(Input& input, const Input_para& input_para, UnitCell& ucel
         if (GlobalV::GAMMA_ONLY_LOCAL)
             p_esolver_lr = new LR::ESolver_LR<double, double>(
                 std::move(*dynamic_cast<ModuleESolver::ESolver_KS_LCAO<double, double>*>(p_esolver)),
-                input_para,
+                inp,
                 ucell);
         else
             p_esolver_lr = new LR::ESolver_LR<std::complex<double>, double>(
                 std::move(*dynamic_cast<ModuleESolver::ESolver_KS_LCAO<std::complex<double>, double>*>(p_esolver)),
-                input_para,
+                inp,
                 ucell);
         // clean the 1st ESolver_KS and swap the pointer
         ModuleESolver::clean_esolver(p_esolver, false); // do not call Cblacs_exit, remain it for the 2nd ESolver
@@ -247,7 +247,7 @@ ESolver* init_esolver(Input& input, const Input_para& input_para, UnitCell& ucel
 	}
 	else if (esolver_type == "dp_pot")
 	{
-		return new ESolver_DP(INPUT.mdp.pot_file);
+		return new ESolver_DP(PARAM.mdp.pot_file);
 	}
 	throw std::invalid_argument("esolver_type = "+std::string(esolver_type)+". Wrong in "+std::string(__FILE__)+" line "+std::to_string(__LINE__));
 }

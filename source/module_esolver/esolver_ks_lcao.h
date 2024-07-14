@@ -27,9 +27,9 @@ class ESolver_KS_LCAO : public ESolver_KS<TK> {
     ESolver_KS_LCAO();
     ~ESolver_KS_LCAO();
 
-    void before_all_runners(Input& inp, UnitCell& cell) override;
+    void before_all_runners(const Input_para& inp, UnitCell& cell) override;
 
-    void init_after_vc(Input& inp, UnitCell& cell) override;
+    void init_after_vc(const Input_para& inp, UnitCell& cell) override;
 
     double cal_energy() override;
 
@@ -87,7 +87,7 @@ class ESolver_KS_LCAO : public ESolver_KS<TK> {
     ModuleBase::matrix scs;
     bool have_force = false;
 
-    void init_basis_lcao(Input& inp, UnitCell& ucell);
+    void init_basis_lcao(const Input_para& inp, UnitCell& ucell);
 
     //--------------common for all calculation, not only scf-------------
     // set matrix and grid integral
