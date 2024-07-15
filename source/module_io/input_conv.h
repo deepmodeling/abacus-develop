@@ -5,13 +5,12 @@
 #ifndef INPUT_CONVERT_H
 #define INPUT_CONVERT_H
 
-#include <regex.h>
-#include <stdio.h>
-#include <string.h>
-
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <regex.h>
+#include <stdio.h>
+#include <string.h>
 #include <string>
 #include <vector>
 
@@ -41,6 +40,9 @@ void Convert(void);
  */
 template <typename T>
 void parse_expression(const std::string& fn, std::vector<T>& arr);
+
+// Explicitly instantiate the template function
+extern template void parse_expression<int>(const std::string& fn, std::vector<int>& arr);
 
 #ifdef __LCAO
 /**
