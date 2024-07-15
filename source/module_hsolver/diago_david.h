@@ -26,7 +26,10 @@ class DiagoDavid : public DiagH<T, Device>
 
     virtual ~DiagoDavid() override;
 
-    int diag(hamilt::Hamilt<T, Device>* phm_in,   // Pointer to the Hamiltonian object for diagonalization
+    using HPsiFunc = std::function<void(T*, T*, const int, const int, const int, const int)>;
+
+    int diag(const HPsiFunc& hpsi_func,           // function void hpsi(T*, T*, const int, const int, const int, const int) 
+      // hamilt::Hamilt<T, Device>* phm_in,   // Pointer to the Hamiltonian object for diagonalization
                       const int dim,              // Dimension of the input matrix psi to be diagonalized
                       const int nband,            // Number of required eigenpairs
                       const int ldPsi,            // Leading dimension of the psi input
@@ -60,6 +63,8 @@ class DiagoDavid : public DiagH<T, Device>
     /// eigenvalue results
     Real* eigenvalue = nullptr;
 
+    T *pbasis = nullptr; // basis set
+
     T* hphi = nullptr; // the product of H and psi in the reduced basis set
 
     T* sphi = nullptr; // the Product of S and psi in the reduced basis set
@@ -77,7 +82,8 @@ class DiagoDavid : public DiagH<T, Device>
     base_device::DEVICE_CPU* cpu_ctx = {};
     base_device::AbacusDevice_t device = {};
 
-    void cal_grad(hamilt::Hamilt<T, Device>* phm_in,
+    void cal_grad(const HPsiFunc& hpsi_func,
+      // hamilt::Hamilt<T, Device>* phm_in,
                   const int& dim,
                   const int& nbase,
                   const int nbase_x,
@@ -104,7 +110,8 @@ class DiagoDavid : public DiagH<T, Device>
                  int& nbase,
                  const int nbase_x,
                  const Real* eigenvalue,
-                 const psi::Psi<T, Device>& psi,
+                 const T *psi_in, //const psi::Psi<T, Device>& psi,
+                 const int ldPsi,
                  psi::Psi<T, Device>& basis,
                  T* hphi,
                  T* sphi,
@@ -131,7 +138,8 @@ class DiagoDavid : public DiagH<T, Device>
                      Real* eigenvalue,
                      T* vcc);
 
-    int diag_mock(hamilt::Hamilt<T, Device>* phm_in,
+    int diag_mock(const HPsiFunc& hpsi_func,
+      // hamilt::Hamilt<T, Device>* phm_in,
                    const int dim,
                    const int nband,
                    const int ldPsi,

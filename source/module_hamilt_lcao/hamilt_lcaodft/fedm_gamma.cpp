@@ -51,7 +51,7 @@ void Force_LCAO<double>::cal_fedm(
         auto pes = dynamic_cast<const elecstate::ElecStateLCAO<double>*>(pelec);
         for (int ik = 0; ik < nspin; ik++)
         {
-            edm.set_DMK_pointer(ik, pes->get_DM()->pexsi_edm[ik]);
+            edm.set_DMK_pointer(ik, pes->get_DM()->pexsi_EDM[ik]);
         }
         
     }
