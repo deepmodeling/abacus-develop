@@ -492,7 +492,8 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                     GlobalV::ofs_warning,
                     &GlobalC::ucell,
                     &GlobalC::GridD,
-                    this->kv);
+                    this->kv,
+                    PARAM.inp.if_separate_k);
         }
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "getting partial charge");
     } else if (cal_type == "get_wf") {

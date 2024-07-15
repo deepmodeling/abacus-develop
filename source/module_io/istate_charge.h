@@ -79,19 +79,20 @@ class IState_Charge
                std::ofstream& ofs_warning,
                const UnitCell* ucell_in,
                Grid_Driver* GridD_in,
-               const K_Vectors& kv);
+               const K_Vectors& kv,
+               const bool if_separate_k);
 
   private:
-  /**
-   * @brief Set this->bands_picked_ according to the mode, and process an error if the mode is not recognized.
-   * 
-   * @param nbands_istate INPUT parameter nbands_istate.
-   * @param out_band_kb Calculated from INPUT parameter bands_to_print, vector.
-   * @param nbands INPUT parameter nbands.
-   * @param nelec Total number of electrons.
-   * @param mode Selected mode.
-   * @param fermi_band Calculated Fermi band.
-   */
+    /**
+     * @brief Set this->bands_picked_ according to the mode, and process an error if the mode is not recognized.
+     *
+     * @param nbands_istate INPUT parameter nbands_istate.
+     * @param out_band_kb Calculated from INPUT parameter bands_to_print, vector.
+     * @param nbands INPUT parameter nbands.
+     * @param nelec Total number of electrons.
+     * @param mode Selected mode.
+     * @param fermi_band Calculated Fermi band.
+     */
     void select_bands(const int nbands_istate,
                       const std::vector<int>& out_band_kb,
                       const int nbands,

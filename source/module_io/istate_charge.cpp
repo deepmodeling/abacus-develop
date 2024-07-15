@@ -187,7 +187,8 @@ void IState_Charge::begin(Gint_k& gk,
                           std::ofstream& ofs_warning,
                           const UnitCell* ucell_in,
                           Grid_Driver* GridD_in,
-                          const K_Vectors& kv)
+                          const K_Vectors& kv,
+                          const bool if_separate_k)
 {
     ModuleBase::TITLE("IState_Charge", "begin");
 
@@ -228,20 +229,84 @@ void IState_Charge::begin(Gint_k& gk,
 #else
             ModuleBase::WARNING_QUIT("IState_Charge::begin", "The `pchg` calculation is only available for MPI now!");
 #endif
+            if (if_separate_k)
+            {
+                // For multi-k, loop over all real k-points
+                for (int ik = 0; ik < kv.get_nks() / nspin; ++ik)
+                {
+                    for (int is = 0; is < nspin; ++is)
+                    {
+                        ModuleBase::GlobalFunc::ZEROS(rho[is], rhopw_nrxx);
+                    }
 
-            // For multi-k, loop over all real k-points
-            for (int ik = 0; ik < kv.get_nks() / nspin; ++ik)
+                    std::cout << " Performing grid integral over real space grid for band " << ib + 1 << ", k-point "
+                              << ik + 1 << "..." << std::endl;
+
+                    DM.init_DMR(GridD_in, ucell_in);
+                    DM.cal_DMR(ik);
+                    gk.initialize_pvpR(*ucell_in, GridD_in);
+                    gk.transfer_DM2DtoGrid(DM.get_DMR_vector());
+                    Gint_inout inout(rho, Gint_Tools::job_type::rho);
+                    gk.cal_gint(&inout);
+
+                    double** rho_save = new double*[nspin]; // Initialize an array of pointers
+                    for (int is = 0; is < nspin; is++)
+                    {
+                        rho_save[is] = new double[rhopw_nrxx]; // Allocate memory for each internal array
+                        ModuleBase::GlobalFunc::DCOPY(rho[is], rho_save[is],
+                                                      rhopw_nrxx); // Copy data after allocation
+                    }
+
+                    std::cout << " Writting cube files...";
+
+                    // 0 means definitely output charge density.
+                    for (int is = 0; is < nspin; ++is)
+                    {
+                        // ssc should be inside the inner loop to reset the string stream each time
+                        std::stringstream ssc;
+                        ssc << global_out_dir << "BAND" << ib + 1 << "_K" << ik + 1 << "_SPIN" << is + 1 << "_CHG.cube";
+
+                        double ef_spin = ef_all_spin[is];
+                        ModuleIO::write_rho(
+#ifdef __MPI
+                            bigpw_bz,
+                            bigpw_nbz,
+                            rhopw_nplane,
+                            rhopw_startz_current,
+#endif
+                            rho_save[is],
+                            is,
+                            nspin,
+                            0,
+                            ssc.str(),
+                            rhopw_nx,
+                            rhopw_ny,
+                            rhopw_nz,
+                            ef_spin,
+                            ucell_in);
+                    }
+
+                    std::cout << " Complete!" << std::endl;
+
+                    // Release memory of rho_save
+                    for (int is = 0; is < nspin; is++)
+                    {
+                        delete[] rho_save[is]; // Release memory of each internal array
+                    }
+                    delete[] rho_save; // Release memory of the array of pointers
+                }
+            }
+            else
             {
                 for (int is = 0; is < nspin; ++is)
                 {
                     ModuleBase::GlobalFunc::ZEROS(rho[is], rhopw_nrxx);
                 }
 
-                std::cout << " Performing grid integral over real space grid for band " << ib + 1 << ", k-point "
-                          << ik + 1 << "..." << std::endl;
+                std::cout << " Performing grid integral over real space grid for band " << ib + 1 << "..." << std::endl;
 
                 DM.init_DMR(GridD_in, ucell_in);
-                DM.cal_DMR(ik);
+                DM.cal_DMR();
                 gk.initialize_pvpR(*ucell_in, GridD_in);
                 gk.transfer_DM2DtoGrid(DM.get_DMR_vector());
                 Gint_inout inout(rho, Gint_Tools::job_type::rho);
@@ -262,7 +327,7 @@ void IState_Charge::begin(Gint_k& gk,
                 {
                     // ssc should be inside the inner loop to reset the string stream each time
                     std::stringstream ssc;
-                    ssc << global_out_dir << "BAND" << ib + 1 << "_K" << ik + 1 << "_SPIN" << is + 1 << "_CHG.cube";
+                    ssc << global_out_dir << "BAND" << ib + 1 << "_SPIN" << is + 1 << "_CHG.cube";
 
                     double ef_spin = ef_all_spin[is];
                     ModuleIO::write_rho(
@@ -317,10 +382,10 @@ void IState_Charge::select_bands(const int nbands_istate,
         bands_below = nbands_istate;
         bands_above = nbands_istate;
 
-        std::cout << " Plot band-decomposed charge density below Fermi surface with " << bands_below << " bands."
+        std::cout << " Plot band-decomposed charge densities below Fermi surface with " << bands_below << " bands."
                   << std::endl;
 
-        std::cout << " Plot band-decomposed charge density above Fermi surface with " << bands_above << " bands."
+        std::cout << " Plot band-decomposed charge densities above Fermi surface with " << bands_above << " bands."
                   << std::endl;
 
         for (int ib = 0; ib < nbands; ++ib)
@@ -374,7 +439,7 @@ void IState_Charge::select_bands(const int nbands_istate,
         }
         if (has_below)
         {
-            std::cout << " Plot band-decomposed charge density below the Fermi surface: band ";
+            std::cout << " Plot band-decomposed charge densities below the Fermi surface: band ";
             for (int i = 0; i + 1 <= fermi_band; ++i)
             {
                 if (bands_picked_[i] == 1)
@@ -397,7 +462,7 @@ void IState_Charge::select_bands(const int nbands_istate,
         }
         if (has_above)
         {
-            std::cout << " Plot band-decomposed charge density above the Fermi surface: band ";
+            std::cout << " Plot band-decomposed charge densities above the Fermi surface: band ";
             for (int i = fermi_band; i < nbands; ++i)
             {
                 if (bands_picked_[i] == 1)
