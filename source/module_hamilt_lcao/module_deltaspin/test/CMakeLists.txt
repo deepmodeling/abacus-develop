@@ -54,7 +54,7 @@ AddTest(
 
 install(FILES bcast_scdata_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
-find_program(BASH bash)
+
 add_test(NAME deltaspin_bcast_scdata_para
       COMMAND ${BASH} bcast_scdata_test.sh
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
@@ -90,4 +90,4 @@ AddTest(
     ../lambda_loop_helper.cpp
     ../basic_funcs.cpp
 )
-endif() 
+endif()

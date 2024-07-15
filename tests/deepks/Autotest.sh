@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set +e
 # ABACUS executable path
 abacus=/root/abacus-develop/build/abacus
 # number of mpi processes
@@ -88,7 +88,7 @@ check_out(){
 			../check_file descriptor.dat.ref descriptor.dat $threshold
 			state=`echo $?`
 			if [ $state == "0" ]; then
-				let failed++
+				let ++failed
 				break
 			fi
 		fi
@@ -97,7 +97,7 @@ check_out(){
 			../check_file jle.orb.ref OUT.autotest/jle.orb $threshold
 			state=`echo $?`
 			if [ $state == "0" ]; then
-				let failed++
+				let ++failed
 				break
 			fi
 		fi
@@ -105,7 +105,7 @@ check_out(){
 		if [ $key == "totaltimeref" ]; then
 			# echo "time=$cal ref=$ref"
 			break
-		fi		
+		fi
 
 
 		#--------------------------------------------------
@@ -116,15 +116,15 @@ check_out(){
 		#--------------------------------------------------
 		if [ ! -n "$deviation" ]; then
             echo -e "\e[1;31m Fatal Error! :(  \e[0m"
-			let failed++
+			let ++failed
 			break
         else
 			if [ $(echo "sqrt($deviation*$deviation) < $threshold"|bc) = 0 ]; then
 				echo -e "\e[1;31m [  FAILED  ] \e[0m"\
 					"$key cal=$cal ref=$ref deviation=$deviation"
-				let failed++
+				let ++failed
 				if [ $(echo "sqrt($deviation*$deviation) < $fatal_threshold"|bc) = 0 ]; then
-					let fatal++
+					let ++fatal
 					echo -e "\e[1;31m [  FAILED  ] \e[0m"\
 						"An unacceptable deviation occurs."
 				fi
@@ -135,7 +135,7 @@ check_out(){
 				echo -e "\e[1;32m [      OK  ] \e[0m $key"
 			fi
 		fi
-		let ok++
+		let ++ok
 	done
 }
 

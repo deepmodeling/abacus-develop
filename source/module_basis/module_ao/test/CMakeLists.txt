@@ -88,7 +88,7 @@ AddTest(
 )
 
 install(FILES parallel_2d_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-find_program(BASH bash)
+
 add_test(NAME parallel_2d_test_para
       COMMAND ${BASH} parallel_2d_test.sh
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
@@ -101,7 +101,7 @@ AddTest(
 )
 
 install(FILES parallel_orbitals_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-find_program(BASH bash)
+
 add_test(NAME parallel_orbitals_test_para
       COMMAND ${BASH} parallel_orbitals_test.sh
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
@@ -109,4 +109,3 @@ add_test(NAME parallel_orbitals_test_para
 
 install(DIRECTORY lcao_H2O DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(DIRECTORY lcao_H2O DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../../../tests)
-

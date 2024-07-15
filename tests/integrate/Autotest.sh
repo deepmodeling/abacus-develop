@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set +e
 # ABACUS executable path
 abacus=abacus
 # number of MPI processes
@@ -17,7 +17,7 @@ case='^[^#].*_.*$'
 # enable AddressSanitizer
 sanitize=false
 
-threshold_file="threshold"   
+threshold_file="threshold"
 # can specify the threshold for each test case
 # threshold file example:
 # threshold 0.0000001
@@ -103,7 +103,7 @@ check_out(){
     ifail=0  # if all properties have no warning. 0: no warning, 1: warning
     ifatal=0 # if all properties have no fatal error. 0: no fatal error, 1: fatal error
     for key in $properties; do
-    
+
         if [ $key == "totaltimeref" ]; then
             # echo "time=$cal ref=$ref"
             break
@@ -134,7 +134,7 @@ check_out(){
         #--------------------------------------------------
         if [ ! -n "$deviation" ]; then
             echo -e "\e[0;31m[ERROR     ] Fatal Error: key $key not found in output.\e[0m"
-            let fatal++
+            let ++fatal
             fatal_case_list+=$dir'\n'
             break
         else
@@ -195,7 +195,7 @@ get_threshold()
     threshold_f=$1
     threshold_name=$2
     default_value=$3
-    if [ -e $threshold_f ]; then 
+    if [ -e $threshold_f ]; then
         threshold_value=$(awk -v tn="$threshold_name" '$1==tn {print $2}' "$threshold_f")
          if [ -n "$threshold_value" ]; then
             echo $threshold_value
@@ -235,7 +235,7 @@ fi
 for dir in $testdir; do
     if [ ! -d $dir ];then
         echo -e "\e[0;31m[ERROR     ]\e[0m $dir is not a directory.\n"
-        let fatal++
+        let ++fatal
         fatal_case_list+=$dir'\n'
         continue
     fi
@@ -266,7 +266,7 @@ for dir in $testdir; do
             ../tools/catch_properties.sh result.out
             if [ $? == 1 ]; then
                 echo -e "\e[0;31m [ERROR     ]  Fatal Error in catch_properties.sh \e[0m"
-                let fatal++
+                let ++fatal
                 fatal_case_list+=$dir'\n'
                 break
             else

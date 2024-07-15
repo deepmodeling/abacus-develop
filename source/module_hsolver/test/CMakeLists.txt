@@ -6,7 +6,7 @@ remove_definitions(-D__EXX)
 AddTest(
   TARGET HSolver_bpcg
   LIBS ${math_libs} base psi device container
-  SOURCES diago_bpcg_test.cpp ../diago_bpcg.cpp  ../diago_iter_assist.cpp  
+  SOURCES diago_bpcg_test.cpp ../diago_bpcg.cpp  ../diago_iter_assist.cpp
           ../../module_basis/module_pw/test/test_tool.cpp
           ../../module_hamilt_general/operator.cpp
           ../../module_hamilt_pw/hamilt_pwdft/operator_pw/operator_pw.cpp
@@ -65,7 +65,7 @@ endif()
 AddTest(
   TARGET HSolver_base
   LIBS ${math_libs} psi device base
-  SOURCES test_hsolver.cpp 
+  SOURCES test_hsolver.cpp
 )
 
 AddTest(
@@ -85,13 +85,13 @@ if(ENABLE_LCAO)
   AddTest(
     TARGET HSolver_LCAO
     LIBS ${math_libs} ELPA::ELPA base genelpa psi device
-    SOURCES diago_lcao_test.cpp ../diago_elpa.cpp ../diago_scalapack.cpp 
+    SOURCES diago_lcao_test.cpp ../diago_elpa.cpp ../diago_scalapack.cpp
   )
   else()
     AddTest(
       TARGET HSolver_LCAO
       LIBS ${math_libs} base psi device
-      SOURCES diago_lcao_test.cpp ../diago_scalapack.cpp 
+      SOURCES diago_lcao_test.cpp ../diago_scalapack.cpp
     )
   endif()
 
@@ -106,8 +106,8 @@ endif()
 if (USE_CUDA)
 AddTest(
   TARGET HSolver_LCAO_cusolver
-  LIBS ${math_libs}  base psi device 
-  SOURCES diago_lcao_cusolver_test.cpp ../diago_cusolver.cpp ../diago_scalapack.cpp 
+  LIBS ${math_libs}  base psi device
+  SOURCES diago_lcao_cusolver_test.cpp ../diago_cusolver.cpp ../diago_scalapack.cpp
   ../kernels/math_kernel_op.cpp
   ../kernels/dngvd_op.cpp
   ../kernels/cuda/diag_cusolver.cu
@@ -130,7 +130,7 @@ install(FILES PEXSI-S-GammaOnly-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES PEXSI-DM-GammaOnly-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES diago_pexsi_parallel_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
-find_program(BASH bash)
+
 add_test(NAME HSolver_cg_parallel
       COMMAND ${BASH} diago_cg_parallel_test.sh
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
@@ -138,7 +138,7 @@ add_test(NAME HSolver_cg_parallel
 add_test(NAME HSolver_dav_parallel
       COMMAND ${BASH} diago_david_parallel_test.sh
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    ) 
+    )
 if(ENABLE_LCAO)
   add_test(NAME HSolver_LCAO_parallel
         COMMAND ${BASH} diago_lcao_parallel_test.sh
@@ -150,4 +150,4 @@ if(ENABLE_PEXSI)
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       )
 endif()
-endif()   
+endif()

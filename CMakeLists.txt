@@ -643,6 +643,10 @@ if(BUILD_TESTING)
   endif()
   # TODO: Try the GoogleTest module.
   # https://cmake.org/cmake/help/latest/module/GoogleTest.html
+
+  # Set bash -e to stop on error
+  find_program(BASH bash)
+  set(BASH ${BASH} -e)
   add_subdirectory(tests) # Contains integration tests
 
   function(AddTest) # function for UT
