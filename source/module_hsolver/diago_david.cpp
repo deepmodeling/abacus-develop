@@ -167,11 +167,25 @@ int DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
         }
         else
         {
+            /* sPsi func is actually a simple copy currently.
+               Reserve sPsi logical structure, which can be restored
+               once needed when S is really implemented.
+            virtual void sPsi(const T* psi_in, T* spsi, 
+                      const int nrow,  // dimension of spsi: nbands * nrow
+                      const int npw,   // number of plane waves
+                      const int nbands // number of bands
+            ) const {syncmem_op()(this->ctx, this->ctx, spsi, psi_in, static_cast<size_t>(nbands * nrow));}
+            using syncmem_op = base_device::memory::synchronize_memory_op<T, Device, Device>;
+            */
+            /* original code here
             phm_in->sPsi(psi_in + m*ldPsi,//&psi(m, 0),
                          &this->sphi[m * dim],
                          dim,
                          dim,
                          1);
+            */
+            // doing sPsi by copy, i.e. S=I, spsi=psi
+            syncmem_complex_op()(this->ctx, this->ctx, &this->sphi[m * dim], psi_in + m*ldPsi, static_cast<size_t>(1*dim));
         }
     }
     // begin SchmitOrth
@@ -197,7 +211,9 @@ int DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
         }
         else
         {
-            phm_in->sPsi(pbasis + dim*m /*&basis(m, 0)*/, &this->sphi[m * dim], dim, dim, 1);
+            // phm_in->sPsi(pbasis + dim*m, &this->sphi[m * dim], dim, dim, 1);
+            // doing sPsi by copy, i.e. S=I, spsi=psi
+            syncmem_complex_op()(this->ctx, this->ctx, &this->sphi[m * dim], pbasis + dim*m , static_cast<size_t>(1*dim));
         }
     }
 
@@ -506,7 +522,9 @@ void DiagoDavid<T, Device>::cal_grad(hamilt::Hamilt<T, Device>* phm_in,
         }
         else
         {
-            phm_in->sPsi(pbasis + dim*(nbase + m)/*&basis(nbase + m, 0)*/, &sphi[(nbase + m) * dim], dim, dim, 1);
+            // phm_in->sPsi(pbasis + dim*(nbase + m), &sphi[(nbase + m) * dim], dim, dim, 1);
+            // doing sPsi by copy, i.e. S=I, spsi=psi
+            syncmem_complex_op()(this->ctx, this->ctx, &sphi[(nbase + m) * dim], pbasis + dim*(nbase + m), static_cast<size_t>(1*dim));
         }
     }
     // first nbase bands psi* dot notconv bands spsi to prepare lagrange_matrix
@@ -551,7 +569,9 @@ void DiagoDavid<T, Device>::cal_grad(hamilt::Hamilt<T, Device>* phm_in,
         }
         else
         {
-            phm_in->sPsi(pbasis + dim*(nbase + m)/*&basis(nbase + m, 0)*/, &sphi[(nbase + m) * dim], dim, dim, 1);
+            // phm_in->sPsi(pbasis + dim*(nbase + m), &sphi[(nbase + m) * dim], dim, dim, 1);
+            // doing sPsi by copy, i.e. S=I, spsi=psi
+            syncmem_complex_op()(this->ctx, this->ctx, &sphi[(nbase + m) * dim], pbasis + dim*(nbase + m), static_cast<size_t>(1*dim));
         }
     }
     // calculate H|psi> for not convergence bands
