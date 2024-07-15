@@ -60,6 +60,8 @@ class DiagoDavid : public DiagH<T, Device>
     /// eigenvalue results
     Real* eigenvalue = nullptr;
 
+    T *pbasis = nullptr; // basis set
+
     T* hphi = nullptr; // the product of H and psi in the reduced basis set
 
     T* sphi = nullptr; // the Product of S and psi in the reduced basis set

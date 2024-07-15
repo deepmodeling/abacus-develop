@@ -103,7 +103,9 @@ int DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
     psi::Psi<T, Device> basis(1,
                               nbase_x,
                               dim,
-                              &(psi.get_ngk(0))); // the reduced basis set                              
+                              &(psi.get_ngk(0))); // the reduced basis set
+    // basis(dim, nbase_x)
+    pbasis = basis.get_pointer();
     ModuleBase::Memory::record("DAV::basis", nbase_x * dim * sizeof(T));
 
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -271,7 +273,7 @@ int DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
                                       nband,        // n: col of B,C
                                       nbase,               // k: col of A, row of B
                                       this->one,
-                                      basis.get_pointer(), // A dim * nbase
+                                      pbasis, // basis.get_pointer(), // A dim * nbase
                                       dim,
                                       this->vcc,           // B nbase * n_band
                                       nbase_x,
@@ -752,7 +754,7 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
                               this->vcc,            // B nbase * nband
                               nbase_x,
                               this->zero,
-                              basis.get_pointer(),  // C dim * nband
+                              pbasis, //basis.get_pointer(),  // C dim * nband
                               dim
     );
 
@@ -878,7 +880,8 @@ void DiagoDavid<T, Device>::SchmitOrth(const int& dim,
     // psi(m) -> psi(m) - \sum_{i < m} \langle psi(i)|S|psi(m) \rangle psi(i)
     // so the orthogonalize is performed about S.
 
-    assert(basis.get_nbands() >= nband);
+    // assert(basis.get_nbands() >= nband);
+    assert(dim >= nband);
     assert(m >= 0);
     assert(m < nband);
 
