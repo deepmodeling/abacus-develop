@@ -954,10 +954,7 @@ void ReadInput::item_others()
         item.get_final_value = [](Input_Item& item, const Parameter& para) {
             if(item.is_read())
             {
-                for(auto str : item.str_values)
-                {
-                    item.final_value << str << " ";
-                }
+                item.final_value.str(longstring(item.str_values, item.get_size()));
             }
         };
         add_doublevec_bcast(input.ocp_kb, para.input.ocp_kb.size(), 0.0);

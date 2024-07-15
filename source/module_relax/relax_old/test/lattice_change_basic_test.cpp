@@ -5,7 +5,6 @@
 #define private public
 #include "module_parameter/parameter.h"
 #undef private
-Parameter PARAM;
 /************************************************
  *  unit tests of namespace Lattice_Change_Basic
  ***********************************************/

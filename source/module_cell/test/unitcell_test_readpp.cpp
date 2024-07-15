@@ -26,7 +26,6 @@ Magnetism::~Magnetism() { delete[] this->start_magnetization; }
 #define private public
 #include "module_parameter/parameter.h"
 #undef private
-Parameter PARAM;
 
 /************************************************
  *  unit test of class UnitCell

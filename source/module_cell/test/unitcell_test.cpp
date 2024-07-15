@@ -40,7 +40,6 @@ Magnetism::~Magnetism()
 #define private public
 #include "module_parameter/parameter.h"
 #undef private
-Parameter PARAM;
 /************************************************
  *  unit test of class UnitCell
  ***********************************************/

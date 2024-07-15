@@ -49,13 +49,13 @@ AddTest(
 
 AddTest(
   TARGET io_write_dos_pw
-  LIBS ${math_libs} base device symmetry
+  LIBS ${math_libs} base device symmetry parameter
   SOURCES write_dos_pw_test.cpp ../cal_dos.cpp ../write_dos_pw.cpp ../output.cpp ../../module_cell/parallel_kpoints.cpp ../../module_cell/klist.cpp
 )
 
 AddTest(
   TARGET io_print_info
-  LIBS ${math_libs} base device symmetry cell_info
+  LIBS ${math_libs} base device symmetry cell_info parameter
   SOURCES print_info_test.cpp ../print_info.cpp ../input.cpp ../output.cpp ../../module_cell/klist.cpp ../../module_cell/parallel_kpoints.cpp
 )
 
@@ -84,7 +84,7 @@ add_test(NAME io_write_wfc_nao_para
 
 AddTest(
   TARGET io_write_orb_info
-  LIBS ${math_libs} base device cell_info
+  LIBS ${math_libs} base device cell_info parameter
   SOURCES write_orb_info_test.cpp ../write_orb_info.cpp ../output.cpp
 )
 
@@ -132,7 +132,7 @@ AddTest(
 if(ENABLE_LCAO)
 AddTest(
   TARGET to_qo_test
-  LIBS base ${math_libs} device numerical_atomic_orbitals container orb
+  LIBS base ${math_libs} device numerical_atomic_orbitals container orb parameter
   SOURCES 
   to_qo_test.cpp
   ../to_qo_kernel.cpp
@@ -158,7 +158,7 @@ add_test(NAME read_wfc_pw_test_parallel
 
 AddTest(
   TARGET numerical_basis_test
-  LIBS base ${math_libs} device numerical_atomic_orbitals container orb
+  LIBS base ${math_libs} device numerical_atomic_orbitals container orb parameter
   SOURCES numerical_basis_test.cpp ../numerical_basis_jyjy.cpp ../../module_hamilt_lcao/hamilt_lcaodft/center2_orb.cpp
 )
 

@@ -1,6 +1,7 @@
 
 #include <sstream>
 #include <string>
+#include <vector>
 
 #ifdef __MPI
 #include "module_base/parallel_common.h"

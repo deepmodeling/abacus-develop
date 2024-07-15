@@ -34,7 +34,6 @@ Magnetism::~Magnetism()
 #define private public
 #include "module_parameter/parameter.h"
 #undef private
-Parameter PARAM;
 
 /***************************************************************
  *  unit test of read_rho, write_rho and trilinear_interpolate

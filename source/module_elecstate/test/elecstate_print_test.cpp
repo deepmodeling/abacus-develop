@@ -2,6 +2,9 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include "module_elecstate/elecstate.h"
 #include "module_elecstate/elecstate_getters.h"
 #include "module_elecstate/potentials/efield.h"
@@ -14,10 +17,6 @@ K_Vectors::K_Vectors()
 K_Vectors::~K_Vectors()
 {
 }
-#define private public
-#include "module_parameter/parameter.h"
-#undef private
-Parameter PARAM;
 
 /***************************************************************
  *  mock functions

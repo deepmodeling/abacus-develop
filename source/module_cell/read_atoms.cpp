@@ -138,7 +138,7 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
         }
     }
 
-    if (PARAM.inp.rpa_setorb)
+    if (PARAM.globalv.rpa_setorb)
     {
         if (ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "ABFS_ORBITAL"))
         {
