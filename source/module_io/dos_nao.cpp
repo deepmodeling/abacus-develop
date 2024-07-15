@@ -1,7 +1,7 @@
 #include "module_io/dos_nao.h"
 #include "module_base/global_variable.h"
 #include "module_base/tool_title.h"
-#include "module_io/input.h"
+#include "module_parameter/parameter.h"
 
 namespace ModuleIO
 {
@@ -39,7 +39,7 @@ namespace ModuleIO
     write_dos_lcao(psi, pv, ekb, wg, dos_edelta_ev, dos_scale, dos_sigma, kv, p_ham);
 
     int nspin0 = (GlobalV::NSPIN == 2) ? 2 : 1;
-    if (INPUT.out_dos == 3)
+    if (PARAM.inp.out_dos == 3)
     {
         for (int i = 0; i < nspin0; i++)
         {

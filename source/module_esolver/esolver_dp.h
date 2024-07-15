@@ -36,7 +36,7 @@ class ESolver_DP : public ESolver
      * @param inp input parameters
      * @param cell unitcell information
      */
-    void before_all_runners(Input& inp, UnitCell& cell) override;
+    void before_all_runners(const Input_para& inp, UnitCell& cell) override;
 
     /**
      * @brief Run the DP solver for a given ion/md step and unit cell

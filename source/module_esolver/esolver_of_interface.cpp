@@ -9,7 +9,7 @@ namespace ModuleESolver
  *
  * @param inp
  */
-void ESolver_OF::init_kedf(Input& inp)
+void ESolver_OF::init_kedf(const Input_para& inp)
 {
     //! Thomas-Fermi (TF) KEDF, TF+ KEDF, and Want-Teter (WT) KEDF
     if (this->of_kinetic_ == "tf" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt")
@@ -167,7 +167,7 @@ void ESolver_OF::kinetic_stress(ModuleBase::matrix& kinetic_stress_)
 
     if (this->of_kinetic_ == "wt")
     {
-        this->wt_->get_stress(pelec->charge->rho, this->pw_rho, INPUT.of_vw_weight);
+        this->wt_->get_stress(pelec->charge->rho, this->pw_rho, PARAM.inp.of_vw_weight);
         kinetic_stress_ += this->wt_->stress;
     }
 

@@ -59,6 +59,8 @@ struct MD_para
     bool dump_virial = true; ///< output lattice virial into the file MD_dump or
                              ///< not. liuyu 2023-03-01
 
+    // !!!
+    // They are repeated in the MD_para and Parameter, which is not good.
     double force_thr = 1.0e-3; ///< force convergence threshold in FIRE method
     bool cal_stress = false;   ///< whether calculate stress
     int my_rank = 0;           ///< MPI rank of the processor

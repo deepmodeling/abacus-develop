@@ -6,39 +6,10 @@
 #include "md_parameter.h"
 #include "module_base/vector3.h"
 
-// It stores parameters not defined in INPUT file
-struct Input_supplement
-{
-    bool two_fermi = false; ///< true if "nupdown" is set
-
-    // for lj pot
-    int n_ljcut = 0;     ///< number of lj_rcut, assuming 0 as no values provided
-    int n_ljepsilon = 0; ///< number of lj_epsilon, assuming 0 as no values provided
-    int n_ljsigma = 0;   ///< number of lj_sigma, assuming 0 as no values provided
-
-    // For parameter "bessel_nao_rcuts"
-    int nrcut = 0;                ///< number of bessel_nao_rcuts, assuming 0 as no values provided
-    double bessel_nao_rcut = 6.0; ///< radial cutoff for spherical bessel functions(a.u.)
-
-    bool dos_setemin = false; ///< true: "dos_emin_ev" is set
-    bool dos_setemax = false; ///< true: "dos_emax_ev" is set
-    int ncx = 0, ncy = 0,
-        ncz = 0;                            ///< three dimension of FFT charge/grid, same as "nx,ny,nz"
-    bool out_md_control = false;            ///< true if "out_level" is set
-    bool rpa_setorb = false;                ///< true if "rpa" is set
-    bool gamma_only_local = false;          ///< true if "gamma_only" is true and "lcao"
-                                            ///< is true; for local orbitals.
-    bool double_grid = false;               ///< true if "ndx,ndy,ndz" is larger than "nx,ny,nz"
-    double uramping = -10.0 / 13.6;         /// U-Ramping method (Ry)
-    std::vector<double> hubbard_u = {};     ///< Hubbard Coulomb interaction parameter U (Ry)
-    std::string global_calculation = "scf"; ///< global calculation type decided by "calculation"
-};
-
 // It stores all input parameters both defined in INPUT file and not defined in
 // INPUT file
 struct Input_para
 {
-    Input_supplement sup;
     // ---------------------------------------------------------------
     // --------------       INPUT  Parameters         ----------------
     // ---------------------------------------------------------------

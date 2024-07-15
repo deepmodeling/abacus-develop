@@ -237,7 +237,7 @@ TEST_F(InputTest, Item_test)
         param.input.ecutrho = 5;
         param.input.ecutwfc = 1;
         it->second.reset_value(it->second, param);
-        EXPECT_EQ(param.input.sup.double_grid, true);
+        EXPECT_EQ(param.sys.double_grid, true);
 
         param.input.ecutwfc = 1;
         param.input.ecutrho = 1;
@@ -467,7 +467,7 @@ TEST_F(InputTest, Item_test)
         param.input.ndx = 2;
         param.input.nx = 1;
         it->second.reset_value(it->second, param);
-        EXPECT_EQ(param.input.sup.double_grid, true);
+        EXPECT_EQ(param.sys.double_grid, true);
 
         param.input.ndx = 1;
         param.input.ndy = 0;
@@ -489,7 +489,7 @@ TEST_F(InputTest, Item_test)
         param.input.ndy = 2;
         param.input.ny = 1;
         it->second.reset_value(it->second, param);
-        EXPECT_EQ(param.input.sup.double_grid, true);
+        EXPECT_EQ(param.sys.double_grid, true);
 
         param.input.ndy = 1;
         param.input.ndz = 0;
@@ -511,7 +511,7 @@ TEST_F(InputTest, Item_test)
         param.input.ndz = 2;
         param.input.nz = 1;
         it->second.reset_value(it->second, param);
-        EXPECT_EQ(param.input.sup.double_grid, true);
+        EXPECT_EQ(param.sys.double_grid, true);
 
         param.input.ndz = 1;
         param.input.nz = 2;
@@ -527,6 +527,13 @@ TEST_F(InputTest, Item_test)
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(0), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+    }
+    { // cell_factor
+        auto it = find_lable("cell_factor", readinput.input_lists);
+        param.input.calculation = "cell-relax";
+        param.input.cell_factor = 1.0;
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.cell_factor, 2.0);
     }
     { // ks_sovler
         auto it = find_lable("ks_solver", readinput.input_lists);
@@ -618,6 +625,47 @@ TEST_F(InputTest, Item_test)
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.cal_stress, true);
     }
+    { // fixed_axes
+        auto it = find_lable("fixed_axes", readinput.input_lists);
+        param.input.fixed_axes = "shape";
+        param.input.relax_new = false;
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(0), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+
+        param.input.fixed_axes = "volume";
+        param.input.relax_new = false;
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(0), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+    }
+    { // fixed_ibrav
+        auto it = find_lable("fixed_ibrav", readinput.input_lists);
+        param.input.fixed_ibrav = true;
+        param.input.relax_new = false;
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(0), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+
+        param.input.fixed_ibrav = true;
+        param.input.latname = "none";
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(0), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+    }
+    { // fixed_atoms
+        auto it = find_lable("fixed_atoms", readinput.input_lists);
+        param.input.fixed_atoms = true;
+        param.input.calculation = "relax";
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(0), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+    }
     { // relax_method
         auto it = find_lable("relax_method", readinput.input_lists);
         param.input.relax_method = "none";
@@ -625,6 +673,18 @@ TEST_F(InputTest, Item_test)
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(0), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+    }
+    { //relax_new
+        auto it = find_lable("relax_new", readinput.input_lists);
+        param.input.relax_new = true;
+        param.input.relax_method = "cg";
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.relax_new, true);
+
+        param.input.relax_new = true;
+        param.input.relax_method = "none";
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.relax_new, false);
     }
     { // force_thr
         auto it = find_lable("force_thr", readinput.input_lists);
@@ -649,7 +709,7 @@ TEST_F(InputTest, Item_test)
         auto it = find_lable("out_level", readinput.input_lists);
         param.input.out_level = "0";
         param.input.calculation = "md";
-        param.input.sup.out_md_control = false;
+        param.sys.out_md_control = false;
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.out_level, "m");
     }
@@ -660,7 +720,7 @@ TEST_F(InputTest, Item_test)
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.out_dm, false);
 
-        param.input.sup.gamma_only_local = false;
+        param.sys.gamma_only_local = false;
         param.input.out_dm = true;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(0), "");
@@ -674,7 +734,7 @@ TEST_F(InputTest, Item_test)
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.out_dm1, false);
 
-        param.input.sup.gamma_only_local = true;
+        param.sys.gamma_only_local = true;
         param.input.out_dm1 = true;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(0), "");
@@ -768,11 +828,11 @@ TEST_F(InputTest, Item_test)
         param.input.gamma_only = true;
         param.input.esolver_type = "tddft";
         it->second.reset_value(it->second, param);
-        EXPECT_EQ(param.input.sup.gamma_only_local, false);
+        EXPECT_EQ(param.sys.gamma_only_local, false);
 
         param.input.esolver_type = "lcao";
         param.input.out_mat_r = true;
-        param.input.sup.gamma_only_local = true;
+        param.sys.gamma_only_local = true;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.reset_value(it->second, param), ::testing::ExitedWithCode(0), "");
         output = testing::internal::GetCapturedStdout();
@@ -1325,10 +1385,10 @@ TEST_F(InputTest, Item_test)
     }
     { // uramping
         auto it = find_lable("uramping", readinput.input_lists);
-        param.input.sup.uramping = 1;
+        param.sys.uramping = 1;
         param.input.orbital_corr = {-1, -1};
         it->second.reset_value(it->second, param);
-        EXPECT_EQ(param.input.sup.uramping, 0);
+        EXPECT_EQ(param.sys.uramping, 0);
     }
     { // onsite_radius
         auto it = find_lable("onsite_radius", readinput.input_lists);
@@ -1341,7 +1401,7 @@ TEST_F(InputTest, Item_test)
         auto it = find_lable("hubbard_u", readinput.input_lists);
         param.input.ntype = 2;
         it->second.str_values = {"1.0", "2.0"};
-        param.input.sup.hubbard_u = {1.0, 2.0};
+        param.sys.hubbard_u = {1.0, 2.0};
         it->second.check_value(it->second, param);
         param.input.ntype = 3;
         testing::internal::CaptureStdout();
@@ -1350,7 +1410,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 
         param.input.ntype = 2;
-        param.input.sup.hubbard_u = {1.0, -1.0};
+        param.sys.hubbard_u = {1.0, -1.0};
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(0), "");
         output = testing::internal::GetCapturedStdout();
@@ -1390,7 +1450,7 @@ TEST_F(InputTest, Item_test)
     }
     { // bessel_nao_rcut
         auto it = find_lable("bessel_nao_rcut", readinput.input_lists);
-        param.input.sup.bessel_nao_rcut = -1;
+        param.sys.bessel_nao_rcut = -1;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(0), "");
         output = testing::internal::GetCapturedStdout();
@@ -1605,6 +1665,7 @@ TEST_F(InputTest, Item_test)
         auto it = find_lable("lj_rcut", readinput.input_lists);
         param.input.ntype = 2;
         param.input.esolver_type = "lj";
+        it->second.str_values = {"1.0", "2.0"};
         param.input.mdp.lj_rcut = {1.0, 2.0};
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(0), "");
@@ -1612,6 +1673,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 
         param.input.mdp.lj_rcut = {1.0, 2.0, -1.0};
+        it->second.str_values = {"1.0", "2.0", "-1.0"};
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(0), "");
         output = testing::internal::GetCapturedStdout();
@@ -1622,6 +1684,7 @@ TEST_F(InputTest, Item_test)
         param.input.ntype = 2;
         param.input.esolver_type = "lj";
         param.input.mdp.lj_epsilon = {1.0};
+        it->second.str_values = {"1.0"};
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(0), "");
         output = testing::internal::GetCapturedStdout();
@@ -1632,6 +1695,7 @@ TEST_F(InputTest, Item_test)
         param.input.ntype = 2;
         param.input.esolver_type = "lj";
         param.input.mdp.lj_sigma = {1.0};
+        it->second.str_values = {"1.0"};
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(0), "");
         output = testing::internal::GetCapturedStdout();
