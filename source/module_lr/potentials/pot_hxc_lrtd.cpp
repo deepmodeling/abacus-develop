@@ -25,7 +25,7 @@ namespace LR
         std::set<std::string> local_xc = { "lda", "pbe", "hse" };
         if (local_xc.find(this->xc_kernel) != local_xc.end())
         {
-            XC_Functional::set_xc_type(this->xc_kernel);
+            XC_Functional::set_xc_type(this->xc_kernel);    // for hse, (1-alpha) and omega are set here
             this->xc_kernel_components_.cal_kernel(chg_gs, ucell_in, this->nspin);
         }
     }
