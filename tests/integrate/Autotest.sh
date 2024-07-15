@@ -274,7 +274,6 @@ for dir in $testdir; do
                 echo -e "\e[0;31m [ERROR     ]  Fatal Error in catch_properties.sh \e[0m"
                 let fatal++
                 fatal_case_list+=$dir'\n'
-                break
             else
                 my_threshold=$(get_threshold $threshold_file "threshold" $threshold)
                 my_force_threshold=$(get_threshold $threshold_file "force_threshold" $force_threshold)
