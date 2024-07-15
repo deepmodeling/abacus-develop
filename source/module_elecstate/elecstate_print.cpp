@@ -395,7 +395,7 @@ void ElecState::print_etot(const bool converged,
         titles.push_back("E_Fermi");
         energies_Ry.push_back(this->eferm.ef);
     }
-    if (GlobalV::out_bandgap)
+    if (PARAM.inp.out_bandgap)
     {
         if (!GlobalV::TWO_EFERMI)
         {

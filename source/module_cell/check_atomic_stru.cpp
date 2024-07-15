@@ -2,7 +2,7 @@
 
 #include "module_base/element_covalent_radius.h"
 
-void Check_Atomic_Stru::check_atomic_stru(UnitCell& ucell, double& factor) {
+void Check_Atomic_Stru::check_atomic_stru(UnitCell& ucell, const double& factor) {
     // First we calculate all bond length in the structure,
     // and compare with the covalent_bond_length,
     // if there has bond length is shorter than covalent_bond_length * factor,

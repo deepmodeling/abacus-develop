@@ -1,6 +1,7 @@
 #include "setup_nonlocal.h"
 
 #include "module_base/parallel_common.h"
+#include "module_parameter/parameter.h"
 
 #ifdef __LCAO
 //#include "../module_hamilt_pw/hamilt_pwdft/global.h"
@@ -140,7 +141,7 @@ void InfoNonlocal::Set_NonLocal(const int& it,
                                    dk,
                                    dr_uniform); // delta k mesh in reciprocal space
 
-        if (GlobalV::out_element_info)
+        if (PARAM.inp.out_element_info)
             tmpBeta_lm[p1].plot(GlobalV::MY_RANK);
 
         delete[] beta_r;
@@ -389,7 +390,7 @@ void InfoNonlocal::Read_NonLocal(const int& it,
                                    dk,
                                    dr_uniform); // delta k mesh in reciprocal space
 
-        if (GlobalV::out_element_info)
+        if (PARAM.inp.out_element_info)
             tmpBeta_lm[p1].plot(my_rank);
 
         delete[] radial_ps;

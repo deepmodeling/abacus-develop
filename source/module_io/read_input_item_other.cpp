@@ -949,9 +949,18 @@ void ReadInput::item_others()
         Input_Item item("ocp_set");
         item.annotation = "set occupation";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            para.input.ocp_set = longstring(item.str_values, item.get_size());
+            parse_expression(item.str_values, para.input.ocp_kb);
         };
-        sync_string(input.ocp_set);
+        item.get_final_value = [](Input_Item& item, const Parameter& para) {
+            if(item.is_read())
+            {
+                for(auto str : item.str_values)
+                {
+                    item.final_value << str << " ";
+                }
+            }
+        };
+        add_doublevec_bcast(input.ocp_kb, para.input.ocp_kb.size(), 0.0);
         this->add_item(item);
     }
 

@@ -137,7 +137,7 @@ void test_deepks::prep_neighbour()
                                                    ucell.infoNL.get_rcutmax_Beta(),
                                                    GlobalV::GAMMA_ONLY_LOCAL);
 
-    atom_arrange::search(GlobalV::SEARCH_PBC,
+    atom_arrange::search(PARAM.inp.search_pbc,
                          GlobalV::ofs_running,
                          Test_Deepks::GridD,
                          ucell,

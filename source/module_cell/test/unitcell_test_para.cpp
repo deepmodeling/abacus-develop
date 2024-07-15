@@ -30,6 +30,10 @@ Magnetism::~Magnetism()
 {
     delete[] this->start_magnetization;
 }
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
+Parameter PARAM;
 
 /************************************************
  *  unit test of class UnitCell
@@ -148,8 +152,7 @@ TEST_F(UcellTest, UpdatePosTaud)
 TEST_F(UcellTest, ReadPseudo)
 {
     GlobalV::global_pseudo_dir = pp_dir;
-    GlobalV::out_element_info = true;
-    GlobalV::MIN_DIST_COEF = 0.2;
+    PARAM.input.out_element_info = true;
     ucell->read_pseudo(ofs);
     // check_structure will print some warning info
     // output nonlocal file

@@ -412,7 +412,8 @@ struct Input_para
     std::string td_heavi_amp = "1.0"; // V/A
 
     bool ocp = false;
-    std::string ocp_set = "";
+    // std::string ocp_set = "";
+    std::vector<double> ocp_kb = {};        ///< OCP kb values
 
     // ==============   #Parameters (17.berry_wannier) ================
     bool berry_phase = false; ///< berry phase calculation: calculate berry phase or not

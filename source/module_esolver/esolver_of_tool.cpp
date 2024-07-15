@@ -32,11 +32,11 @@ void ESolver_OF::init_elecstate(UnitCell& ucell)
                                                 &(this->pelec->f_en.vtxc));
     // There is no Operator in ESolver_OF, register Potentials here!
     std::vector<std::string> pot_register_in;
-    if (GlobalV::VION_IN_H)
+    if (PARAM.inp.vion_in_h)
     {
         pot_register_in.push_back("local");
     }
-    if (GlobalV::VH_IN_H)
+    if (PARAM.inp.vh_in_h)
     {
         pot_register_in.push_back("hartree");
     }

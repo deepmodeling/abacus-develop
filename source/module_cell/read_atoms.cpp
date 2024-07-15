@@ -138,7 +138,7 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
         }
     }
 
-    if (GlobalV::rpa_setorb)
+    if (PARAM.inp.rpa_setorb)
     {
         if (ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "ABFS_ORBITAL"))
         {
@@ -792,7 +792,7 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
 
                     }
                     
-                    if(!GlobalV::fixed_atoms)
+                    if(!PARAM.inp.fixed_atoms)
                     {
                         atoms[it].mbl[ia] = mv;
                     }

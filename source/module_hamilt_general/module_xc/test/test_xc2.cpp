@@ -20,7 +20,6 @@ namespace GlobalV
     bool CAL_STRESS = 0;
     int CAL_FORCE = 0;
     int NSPIN = 2;
-    double XC_TEMPERATURE;
 }
 
 namespace GlobalC

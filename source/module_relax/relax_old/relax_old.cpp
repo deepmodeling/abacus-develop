@@ -2,6 +2,7 @@
 
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
+#include "module_parameter/parameter.h"
 
 void Relax_old::init_relax(const int& natom)
 {
@@ -36,7 +37,7 @@ bool Relax_old::relax_step(const int& istep,
     ucell.cell_parameter_updated = false;
 
     // stop in last step
-    if (istep == GlobalV::RELAX_NMAX)
+    if (istep == PARAM.inp.relax_nmax)
     {
         return 1;
     }

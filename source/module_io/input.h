@@ -7,7 +7,6 @@
 #include <type_traits>
 #include <vector>
 
-#include "input_conv.h"
 #include "module_base/vector3.h"
 #include "module_parameter/md_parameter.h"
 
@@ -40,12 +39,7 @@ class Input
         return &bands_to_print_;
     }
     // Return parsed bands_to_print_ as a vector of integers
-    std::vector<int> get_out_band_kb() const
-    {
-        std::vector<int> out_band_kb;
-        Input_Conv::parse_expression(bands_to_print_, out_band_kb);
-        return out_band_kb;
-    }
+    std::vector<int> get_out_band_kb() const;
 };
 
 extern Input INPUT;

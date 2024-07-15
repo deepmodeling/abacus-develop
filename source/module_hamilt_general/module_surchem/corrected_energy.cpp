@@ -16,7 +16,7 @@ double surchem::cal_Ael(const UnitCell &cell, const int& nrxx, const int& nxyz)
 double surchem::cal_Acav(const UnitCell &cell, const int& nxyz)
 {
     double Acav = 0.0;
-    Acav = GlobalV::tau * qs;
+    Acav = PARAM.inp.tau * qs;
     Acav = Acav * cell.omega / nxyz; // unit Ry
     Parallel_Reduce::reduce_pool(Acav);
     // cout << "Acav: " << Acav << endl;

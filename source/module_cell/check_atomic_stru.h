@@ -5,7 +5,7 @@
 
 class Check_Atomic_Stru {
   public:
-    static void check_atomic_stru(UnitCell& ucell, double& factor);
+    static void check_atomic_stru(UnitCell& ucell, const double& factor);
 };
 
 #endif
