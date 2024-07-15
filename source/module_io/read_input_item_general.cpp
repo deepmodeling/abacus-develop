@@ -285,12 +285,9 @@ void ReadInput::item_general()
         item.annotation = "specify the bands to be calculated in get_wf and get_pchg calculation";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.bands_to_print = longstring(item.str_values, item.get_size());
+            Input_Conv::parse_expression(para.input.bands_to_print, para.sys.out_band_kb);
         };
         sync_string(input.bands_to_print);
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            Input_Conv::parse_expression(para.input.bands_to_print, para.sys.out_band_kb);
-            para.sys.out_band_kb_size = para.sys.out_band_kb.size();
-        };
         this->add_item(item);
     }
     {

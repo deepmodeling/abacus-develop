@@ -43,10 +43,6 @@
 #include "module_hsolver/hsolver_pw.h"
 #include "module_md/md_func.h"
 
-// Explicitly instantiate the template function
-template void Input_Conv::parse_expression<int>(const std::string& fn, std::vector<int>& arr);
-template void Input_Conv::parse_expression<double>(const std::string& fn, std::vector<double>& arr);
-
 #ifdef __LCAO
 std::vector<double> Input_Conv::convert_units(std::string params, double c)
 {

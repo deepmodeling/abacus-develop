@@ -39,6 +39,5 @@ struct System_para
     std::string global_calculation = "scf"; ///< global calculation type decided by "calculation"
 
     std::vector<int> out_band_kb = {};      ///< return parsed bands_to_print as a vector of integers
-    int out_band_kb_size = 0;               ///< size of out_band_kb
 };
 #endif
