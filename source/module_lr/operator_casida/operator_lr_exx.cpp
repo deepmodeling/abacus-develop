@@ -14,11 +14,11 @@ namespace LR
                 for (int iat2 = 0;iat2 < ucell.nat;++iat2) {
                     for (auto cell : this->BvK_cells) {
                         this->Ds_onebase[is][iat1][std::make_pair(iat2, cell)] =
-                        RI::Tensor<T>({ static_cast<size_t>(ucell.atoms[ucell.iat2it[iat1]].nw),  static_cast<size_t>(ucell.atoms[ucell.iat2it[iat2]].nw) });
-}
-}
-}
-}
+                            RI::Tensor<T>({ static_cast<size_t>(ucell.atoms[ucell.iat2it[iat1]].nw),  static_cast<size_t>(ucell.atoms[ucell.iat2it[iat2]].nw) });
+                    }
+                }
+            }
+        }
     }
 
     template<>
@@ -86,12 +86,11 @@ namespace LR
 
             // 1. set_Ds (once)
             // convert to vector<T*> for the interface of RI_2D_Comm::split_m2D_ktoR (interface will be unified to ct::Tensor)
-            std::cout << "ib=" << ib << std::endl;
             std::vector<std::vector<T>> DMk_trans_vector = this->DM_trans[ib]->get_DMK_vector();
             assert(DMk_trans_vector.size() == nks);
             std::vector<const std::vector<T>*> DMk_trans_pointer(nks);
-            for (int is = 0;is < nks;++is) { DMk_trans_pointer[is] = &DMk_trans_vector[is];
-}
+            for (int is = 0;is < nks;++is) { DMk_trans_pointer[is] = &DMk_trans_vector[is]; }
+
             // if multi-k, DM_trans(TR=double) -> Ds_trans(TR=T=complex<double>)
             std::vector<std::map<TA, std::map<TAC, RI::Tensor<T>>>> Ds_trans =
                 RI_2D_Comm::split_m2D_ktoR<T>(this->kv, DMk_trans_pointer, *this->pmat);
@@ -118,10 +117,8 @@ namespace LR
                         for (int is = 0;is < this->nspin;++is)
                         {
                             this->cal_DM_onebase(this->pX->local2global_col(io), this->pX->local2global_row(iv), ik, is);       //set Ds_onebase
-                            psi_out_bfirst(ik, io * this->pX->get_row_size() + iv) -=
-                                0.5 * //minus for exchange, 0.5 for spin
-                                GlobalC::exx_info.info_global.hybrid_alpha *
-                                this->exx_lri->exx_lri.post_2D.cal_energy(this->Ds_onebase[is], this->exx_lri->Hexxs[is]);
+                            psi_out_bfirst(ik, io * this->pX->get_row_size() + iv) -= 0.5 * //minus for exchange, 0.5 for spin
+                                alpha * this->exx_lri->exx_lri.post_2D.cal_energy(this->Ds_onebase[is], this->exx_lri->Hexxs[is]);
                         }
                     }
                 }
