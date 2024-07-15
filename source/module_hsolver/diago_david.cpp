@@ -55,7 +55,7 @@ DiagoDavid<T, Device>::~DiagoDavid()
 }
 
 template <typename T, typename Device>
-int DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
+int DiagoDavid<T, Device>::diag_mock(const HPsiFunc& hpsi_func,// hamilt::Hamilt<T, Device>* phm_in,
                                            const int dim,
                                            const int nband,
                                            const int ldPsi,
@@ -218,8 +218,9 @@ int DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
     }
 
     // end of SchmitOrth and calculate H|psi>
-    hpsi_info dav_hpsi_in(&basis, psi::Range(true, 0, 0, nband - 1), this->hphi);
-    phm_in->ops->hPsi(dav_hpsi_in);
+    // hpsi_info dav_hpsi_in(&basis, psi::Range(true, 0, 0, nband - 1), this->hphi);
+    // phm_in->ops->hPsi(dav_hpsi_in);
+    hpsi_func(this->hphi, pbasis, nbase_x, dim, 0, nband - 1);
 
     this->cal_elem(dim, nbase, nbase_x, this->notconv, basis, this->hphi, this->sphi, this->hcc, this->scc);
 
@@ -237,7 +238,7 @@ int DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
     {
         dav_iter++;
 
-        this->cal_grad(phm_in,
+        this->cal_grad(hpsi_func,
                        dim,
                        nbase,
                        nbase_x,
@@ -337,7 +338,7 @@ int DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
 }
 
 template <typename T, typename Device>
-void DiagoDavid<T, Device>::cal_grad(hamilt::Hamilt<T, Device>* phm_in,
+void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func, // hamilt::Hamilt<T, Device>* phm_in,
                                           const int& dim,
                                           const int& nbase, // current dimension of the reduced basis
                                           const int nbase_x, // maximum dimension of the reduced basis set
@@ -575,10 +576,11 @@ void DiagoDavid<T, Device>::cal_grad(hamilt::Hamilt<T, Device>* phm_in,
         }
     }
     // calculate H|psi> for not convergence bands
-    hpsi_info dav_hpsi_in(&basis,
-                          psi::Range(true, 0, nbase, nbase + notconv - 1),
-                          &hphi[nbase * dim]); // &hp(nbase, 0)
-    phm_in->ops->hPsi(dav_hpsi_in);
+    // hpsi_info dav_hpsi_in(&basis,
+    //                       psi::Range(true, 0, nbase, nbase + notconv - 1),
+    //                       &hphi[nbase * dim]); // &hp(nbase, 0)
+    // phm_in->ops->hPsi(dav_hpsi_in);
+    hpsi_func(&hphi[nbase * dim], pbasis, nbase_x, dim, nbase, nbase + notconv - 1);
 
     delmem_complex_op()(this->ctx, lagrange);
     delmem_complex_op()(this->ctx, vc_ev_vector);
@@ -1111,16 +1113,17 @@ void DiagoDavid<T, Device>::planSchmitOrth(const int nband, std::vector<int>& pr
  *       notconv_max is determined by the accuracy required for the calculation, default 0
  */
 template <typename T, typename Device>
-int DiagoDavid<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in,
-                                    const int dim,
-                                    const int nband,
-                                    const int ldPsi,
-                                    psi::Psi<T, Device>& psi,
-                                    Real* eigenvalue_in,
-                                    const Real david_diag_thr,
-                                    const int david_maxiter,
-                                    const int ntry_max,
-                                    const int notconv_max)
+int DiagoDavid<T, Device>::diag(const HPsiFunc& hpsi_func,
+    // hamilt::Hamilt<T, Device>* phm_in,
+                                const int dim,
+                                const int nband,
+                                const int ldPsi,
+                                psi::Psi<T, Device>& psi,
+                                Real* eigenvalue_in,
+                                const Real david_diag_thr,
+                                const int david_maxiter,
+                                const int ntry_max,
+                                const int notconv_max)
 {
     /// record the times of trying iterative diagonalization
     int ntry = 0;
@@ -1137,7 +1140,7 @@ int DiagoDavid<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in,
     int sum_dav_iter = 0;
     do
     {
-        sum_dav_iter += this->diag_mock(phm_in, dim, nband, ldPsi, psi, eigenvalue_in, david_diag_thr, david_maxiter);
+        sum_dav_iter += this->diag_mock(hpsi_func, dim, nband, ldPsi, psi, eigenvalue_in, david_diag_thr, david_maxiter);
         ++ntry;
     } while (!check_block_conv(ntry, this->notconv, ntry_max, notconv_max));
 
