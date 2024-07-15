@@ -547,6 +547,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::P
 #else
         const diag_comm_info comm_info = {GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL};
 #endif
+        // Davidson iter parameters
         // Allow 5 tries at most. If ntry > ntry_max = 5, exit diag loop.
         const int ntry_max = 5;
         // In non-self consistent calculation, do until totally converged. Else
@@ -555,7 +556,8 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::P
         // do diag and add davidson iteration counts up to avg_iter
         const Real david_diag_thr = DiagoIterAssist<T, Device>::PW_DIAG_THR;
         const int david_maxiter = DiagoIterAssist<T, Device>::PW_DIAG_NMAX;
-        // dimensions
+
+        // dimensions of matrix to be solved
         const int dim = psi.get_current_nbas();
         const int nband = psi.get_nbands();
         const int ldPsi = psi.get_nbasis();

@@ -743,7 +743,9 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
     ModuleBase::timer::tick("DiagoDavid", "refresh");
 
     // update hp,sp
-    basis.zero_out();
+    // basis.zero_out();
+    setmem_complex_op()(this->ctx, pbasis , 0, nbase_x * dim);
+
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     // haozhihan repalce 2022-10-18
     gemm_op<T, Device>()(this->ctx,
@@ -792,7 +794,9 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
     }*/
 
     // update basis
-    basis.zero_out();
+    // basis.zero_out();
+    setmem_complex_op()(this->ctx, pbasis , 0, nbase_x * dim);
+
     for (int m = 0; m < nband; m++)
     {
         syncmem_complex_op()(this->ctx, this->ctx, pbasis + dim*m/*&basis(m, 0)*/,psi_in + m*ldPsi/*&psi(m, 0)*/, dim);
