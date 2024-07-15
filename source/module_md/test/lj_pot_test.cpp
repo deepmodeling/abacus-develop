@@ -24,6 +24,7 @@ class LJ_pot_test : public testing::Test
     double potential;
     int natom;
     UnitCell ucell;
+    Input_para input;
 
     void SetUp()
     {
@@ -33,7 +34,7 @@ class LJ_pot_test : public testing::Test
         force = new ModuleBase::Vector3<double>[natom];
         stress.create(3, 3);
 
-        Setcell::parameters();
+        Setcell::parameters(input);
     }
 
     void TearDown()
@@ -45,7 +46,7 @@ class LJ_pot_test : public testing::Test
 TEST_F(LJ_pot_test, potential)
 {
     ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
-    p_esolver->before_all_runners(INPUT, ucell);
+    p_esolver->before_all_runners(input, ucell);
     MD_func::force_virial(p_esolver, 0, ucell, potential, force, true, stress);
     EXPECT_NEAR(potential, -0.011957818623534381, doublethreshold);
 }
@@ -53,7 +54,7 @@ TEST_F(LJ_pot_test, potential)
 TEST_F(LJ_pot_test, force)
 {
     ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
-    p_esolver->before_all_runners(INPUT, ucell);
+    p_esolver->before_all_runners(input, ucell);
     MD_func::force_virial(p_esolver, 0, ucell, potential, force, true, stress);
     EXPECT_NEAR(force[0].x, 0.00049817733089377704, doublethreshold);
     EXPECT_NEAR(force[0].y, 0.00082237246837022328, doublethreshold);
@@ -72,7 +73,7 @@ TEST_F(LJ_pot_test, force)
 TEST_F(LJ_pot_test, stress)
 {
     ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
-    p_esolver->before_all_runners(INPUT, ucell);
+    p_esolver->before_all_runners(input, ucell);
     MD_func::force_virial(p_esolver, 0, ucell, potential, force, true, stress);
     EXPECT_NEAR(stress(0, 0), 8.0360222227631859e-07, doublethreshold);
     EXPECT_NEAR(stress(0, 1), 1.7207745586539077e-07, doublethreshold);

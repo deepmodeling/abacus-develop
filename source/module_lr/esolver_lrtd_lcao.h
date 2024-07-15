@@ -30,7 +30,7 @@ namespace LR
         /// @brief  a move constructor from ESolver_KS_LCAO
         ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol, const Input_para& inp, UnitCell& ucell);
         /// @brief a from-scratch constructor
-        ESolver_LR(const Input_para& inp, Input& inp_tmp, UnitCell& ucell);
+        ESolver_LR(const Input_para& inp, UnitCell& ucell);
         ~ESolver_LR() {
             delete this->pot;
             delete this->psi_ks;
@@ -39,9 +39,9 @@ namespace LR
 
         ///input: input, call, basis(LCAO), psi(ground state), elecstate
         // initialize sth. independent of the ground state
-        virtual void before_all_runners(Input& inp, UnitCell& cell) override {};
+        virtual void before_all_runners(const Input_para& inp, UnitCell& cell) override {};
 
-        virtual void init_after_vc(Input& inp, UnitCell& cell) override {};
+        virtual void init_after_vc(const Input_para& inp, UnitCell& cell) override {};
         virtual void runner(int istep, UnitCell& ucell) override;
         virtual void after_all_runners() override;
 
@@ -70,9 +70,11 @@ namespace LR
         psi::Psi<T>* X;
 
         int nocc = 1;
+        int nocc_max = 1;   ///< nelec/2
         int nvirt = 1;
+        int nbands = 2;
         int nbasis = 2;
-        /// n_occ*n_unocc, the basis size of electron-hole pair representation
+        /// n_occ*nvirt, the basis size of electron-hole pair representation
         int npairs = 1;
         /// how many 2-particle states to be solved
         int nstates = 1;

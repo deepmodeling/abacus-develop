@@ -56,5 +56,3 @@ void ModuleSymmetry::Symmetry::symmetrize_vec3_nat(double* v)const {};
 Structure_Factor::Structure_Factor() {};
 Structure_Factor::~Structure_Factor(){};
 void Structure_Factor::setup_structure_factor(UnitCell* Ucell, const ModulePW::PW_Basis* rho_basis){};
-
-extern Input INPUT;

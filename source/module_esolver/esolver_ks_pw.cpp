@@ -91,7 +91,7 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW() {
 }
 
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::Init_GlobalC(Input& inp,
+void ESolver_KS_PW<T, Device>::Init_GlobalC(const Input_para& inp,
                                             UnitCell& ucell,
                                             pseudopot_cell_vnl& ppcell) {
     // GlobalC is a historically left-over namespace, it is used to store global
@@ -144,7 +144,7 @@ void ESolver_KS_PW<T, Device>::Init_GlobalC(Input& inp,
 }
 
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::before_all_runners(Input& inp, UnitCell& ucell) {
+void ESolver_KS_PW<T, Device>::before_all_runners(const Input_para& inp, UnitCell& ucell) {
     // 1) call before_all_runners() of ESolver_KS
     ESolver_KS<T, Device>::before_all_runners(inp, ucell);
 
@@ -232,7 +232,7 @@ void ESolver_KS_PW<T, Device>::deallocate_hamilt()
     this->p_hamilt = nullptr;
 }
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::init_after_vc(Input& inp, UnitCell& ucell) {
+void ESolver_KS_PW<T, Device>::init_after_vc(const Input_para& inp, UnitCell& ucell) {
     ModuleBase::TITLE("ESolver_KS_PW", "init_after_vc");
     ModuleBase::timer::tick("ESolver_KS_PW", "init_after_vc");
 
@@ -251,7 +251,7 @@ void ESolver_KS_PW<T, Device>::init_after_vc(Input& inp, UnitCell& ucell) {
                                      this->kv.kvec_d.data());
 
 #ifdef __MPI
-        if (INPUT.pw_seed > 0) {
+        if (PARAM.inp.pw_seed > 0) {
             MPI_Allreduce(MPI_IN_PLACE,
                           &this->pw_wfc->ggecut,
                           1,
@@ -316,7 +316,7 @@ void ESolver_KS_PW<T, Device>::init_after_vc(Input& inp, UnitCell& ucell) {
                                 this->pw_wfc->nz);
 
         this->pw_wfc->initparameters(false,
-                                     INPUT.ecutwfc,
+                                     PARAM.inp.ecutwfc,
                                      this->kv.get_nks(),
                                      this->kv.kvec_d.data());
 
@@ -329,8 +329,8 @@ void ESolver_KS_PW<T, Device>::init_after_vc(Input& inp, UnitCell& ucell) {
 
 #ifdef USE_PAW
     if (GlobalV::use_paw) {
-        GlobalC::paw_cell.set_libpaw_ecut(INPUT.ecutwfc / 2.0,
-                                          INPUT.ecutwfc / 2.0); // in Hartree
+        GlobalC::paw_cell.set_libpaw_ecut(PARAM.inp.ecutwfc / 2.0,
+                                          PARAM.inp.ecutwfc / 2.0); // in Hartree
         GlobalC::paw_cell.set_libpaw_fft(this->pw_wfc->nx,
                                          this->pw_wfc->ny,
                                          this->pw_wfc->nz,
@@ -386,7 +386,7 @@ void ESolver_KS_PW<T, Device>::before_scf(const int istep) {
     ModuleBase::TITLE("ESolver_KS_PW", "before_scf");
 
     if (GlobalC::ucell.cell_parameter_updated) {
-        this->init_after_vc(INPUT, GlobalC::ucell);
+        this->init_after_vc(PARAM.inp, GlobalC::ucell);
     }
     if (GlobalC::ucell.ionic_position_updated) {
         this->CE.update_all_dis(GlobalC::ucell);
@@ -410,7 +410,7 @@ void ESolver_KS_PW<T, Device>::before_scf(const int istep) {
     //----------------------------------------------------------
     // about vdw, jiyy add vdwd3 and linpz add vdwd2
     //----------------------------------------------------------
-    auto vdw_solver = vdw::make_vdw(GlobalC::ucell, INPUT);
+    auto vdw_solver = vdw::make_vdw(GlobalC::ucell, PARAM.inp);
     if (vdw_solver != nullptr) {
         this->pelec->f_en.evdw = vdw_solver->get_energy();
     }
@@ -524,9 +524,9 @@ void ESolver_KS_PW<T, Device>::others(const int istep) {
     } else if (cal_type == "gen_bessel") {
         Numerical_Descriptor nc;
         nc.output_descriptor(this->psi[0],
-                             INPUT.bessel_descriptor_lmax,
-                             INPUT.bessel_descriptor_rcut,
-                             INPUT.bessel_descriptor_tolerence,
+                             PARAM.inp.bessel_descriptor_lmax,
+                             PARAM.inp.bessel_descriptor_rcut,
+                             PARAM.inp.bessel_descriptor_tolerence,
                              this->kv.get_nks());
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,
                                      "GENERATE DESCRIPTOR FOR DEEPKS");
@@ -921,7 +921,7 @@ void ESolver_KS_PW<T, Device>::after_all_runners() {
     GlobalV::ofs_running << " --------------------------------------------\n\n"
                          << std::endl;
 
-    if (INPUT.out_dos != 0 || INPUT.out_band[0] != 0) {
+    if (PARAM.inp.out_dos != 0 || PARAM.inp.out_band[0] != 0) {
         GlobalV::ofs_running << "\n\n\n\n";
         GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
                                 ">>>>>>>>>>>>>>>>>>>>>>>>>"
@@ -964,13 +964,13 @@ void ESolver_KS_PW<T, Device>::after_all_runners() {
                                 &(GlobalC::Pkpoints));
 
     //! compute density of states
-    if (INPUT.out_dos) {
+    if (PARAM.inp.out_dos) {
         ModuleIO::write_dos_pw(this->pelec->ekb,
                                this->pelec->wg,
                                this->kv,
-                               INPUT.dos_edelta_ev,
-                               INPUT.dos_scale,
-                               INPUT.dos_sigma);
+                               PARAM.inp.dos_edelta_ev,
+                               PARAM.inp.dos_scale,
+                               PARAM.inp.dos_sigma);
 
         if (nspin0 == 1) {
             GlobalV::ofs_running << " Fermi energy is " << this->pelec->eferm.ef
@@ -985,7 +985,7 @@ void ESolver_KS_PW<T, Device>::after_all_runners() {
         }
     }
 
-    if (INPUT.out_band[0]) // pengfei 2014-10-13
+    if (PARAM.inp.out_band[0]) // pengfei 2014-10-13
     {
         for (int is = 0; is < nspin0; is++) {
             std::stringstream ss2;
@@ -996,7 +996,7 @@ void ESolver_KS_PW<T, Device>::after_all_runners() {
                                 ss2.str(),
                                 GlobalV::NBANDS,
                                 0.0,
-                                INPUT.out_band[1],
+                                PARAM.inp.out_band[1],
                                 this->pelec->ekb,
                                 this->kv,
                                 &(GlobalC::Pkpoints));
@@ -1011,13 +1011,13 @@ void ESolver_KS_PW<T, Device>::after_all_runners() {
         // ! Print out overlap before spillage optimization to generate atomic
         // orbitals
         if (winput::out_spillage <= 2) {
-            for (int i = 0; i < INPUT.bessel_nao_rcuts.size(); i++) {
+            for (int i = 0; i < PARAM.inp.bessel_nao_rcuts.size(); i++) {
                 if (GlobalV::MY_RANK == 0) {
                     std::cout << "update value: bessel_nao_rcut <- "
-                              << std::fixed << INPUT.bessel_nao_rcuts[i]
+                              << std::fixed << PARAM.inp.bessel_nao_rcuts[i]
                               << " a.u." << std::endl;
                 }
-                INPUT.bessel_nao_rcut = INPUT.bessel_nao_rcuts[i];
+                INPUT.bessel_nao_rcut = PARAM.inp.bessel_nao_rcuts[i];
                 Numerical_Basis numerical_basis;
                 numerical_basis.output_overlap(this->psi[0],
                                                this->sf,
@@ -1041,19 +1041,19 @@ void ESolver_KS_PW<T, Device>::after_all_runners() {
     }
 
     //! Use Kubo-Greenwood method to compute conductivities
-    if (INPUT.cal_cond) {
+    if (PARAM.inp.cal_cond) {
         EleCond elec_cond(&GlobalC::ucell,
                           &this->kv,
                           this->pelec,
                           this->pw_wfc,
                           this->psi,
                           &GlobalC::ppcell);
-        elec_cond.KG(INPUT.cond_smear,
-                     INPUT.cond_fwhm,
-                     INPUT.cond_wcut,
-                     INPUT.cond_dw,
-                     INPUT.cond_dt,
-                     INPUT.cond_nonlocal,
+        elec_cond.KG(PARAM.inp.cond_smear,
+                     PARAM.inp.cond_fwhm,
+                     PARAM.inp.cond_wcut,
+                     PARAM.inp.cond_dw,
+                     PARAM.inp.cond_dt,
+                     PARAM.inp.cond_nonlocal,
                      this->pelec->wg);
     }
 }
@@ -1152,15 +1152,15 @@ void ESolver_KS_PW<T, Device>::nscf() {
     }
 
     //! 6) calculate Wannier functions
-    if (INPUT.towannier90) {
+    if (PARAM.inp.towannier90) {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "Wannier functions calculation");
-        toWannier90_PW wan(INPUT.out_wannier_mmn,
-                           INPUT.out_wannier_amn,
-                           INPUT.out_wannier_unk,
-                           INPUT.out_wannier_eig,
-                           INPUT.out_wannier_wvfn_formatted,
-                           INPUT.nnkpfile,
-                           INPUT.wannier_spin);
+        toWannier90_PW wan(PARAM.inp.out_wannier_mmn,
+                           PARAM.inp.out_wannier_amn,
+                           PARAM.inp.out_wannier_unk,
+                           PARAM.inp.out_wannier_eig,
+                           PARAM.inp.out_wannier_wvfn_formatted,
+                           PARAM.inp.nnkpfile,
+                           PARAM.inp.wannier_spin);
 
         wan.calculate(this->pelec->ekb,
                       this->pw_wfc,

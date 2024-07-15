@@ -8,8 +8,8 @@
 
 Stochastic_hchi::Stochastic_hchi()
 {
-	Emin = INPUT.emin_sto;	
-	Emax = INPUT.emax_sto;
+	Emin = PARAM.inp.emin_sto;	
+	Emax = PARAM.inp.emax_sto;
 }
 
 Stochastic_hchi::~Stochastic_hchi()

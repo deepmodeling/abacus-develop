@@ -23,8 +23,8 @@ ESolver_FP::ESolver_FP()
 
     // temporary, it will be removed
     pw_big = static_cast<ModulePW::PW_Basis_Big*>(pw_rhod);
-    pw_big->setbxyz(INPUT.bx, INPUT.by, INPUT.bz);
-    sf.set(pw_rhod, INPUT.nbspline);
+    pw_big->setbxyz(PARAM.inp.bx, PARAM.inp.by, PARAM.inp.bz);
+    sf.set(pw_rhod, PARAM.inp.nbspline);
 
     GlobalC::ucell.symm.epsilon = GlobalC::ucell.symm.epsilon_input = PARAM.inp.symmetry_prec;
 }
@@ -39,7 +39,7 @@ ESolver_FP::~ESolver_FP()
     delete this->pelec;
 }
 
-void ESolver_FP::before_all_runners(Input& inp, UnitCell& cell)
+void ESolver_FP::before_all_runners(const Input_para& inp, UnitCell& cell)
 {
     ModuleBase::TITLE("ESolver_FP", "before_all_runners");
 
@@ -105,7 +105,7 @@ void ESolver_FP::before_all_runners(Input& inp, UnitCell& cell)
     return;
 }
 
-void ESolver_FP::init_after_vc(Input& inp, UnitCell& cell)
+void ESolver_FP::init_after_vc(const Input_para& inp, UnitCell& cell)
 {
     ModuleBase::TITLE("ESolver_FP", "init_after_vc");
 
@@ -174,7 +174,7 @@ void ESolver_FP::init_after_vc(Input& inp, UnitCell& cell)
     return;
 }
 
-void ESolver_FP::print_rhofft(Input& inp, std::ofstream& ofs)
+void ESolver_FP::print_rhofft(const Input_para& inp, std::ofstream& ofs)
 {
     std::cout << " UNIFORM GRID DIM        : " << pw_rho->nx << " * " << pw_rho->ny << " * " << pw_rho->nz << std::endl;
     std::cout << " UNIFORM GRID DIM(BIG)   : " << pw_big->nbx << " * " << pw_big->nby << " * " << pw_big->nbz
@@ -219,7 +219,7 @@ void ESolver_FP::print_rhofft(Input& inp, std::ofstream& ofs)
     ofs << "\n\n\n\n";
     ofs << "\n SETUP THE PLANE WAVE BASIS" << std::endl;
 
-    double ecut = 4 * INPUT.ecutwfc;
+    double ecut = 4 * PARAM.inp.ecutwfc;
     if (inp.nx * inp.ny * inp.nz > 0)
     {
         ecut = this->pw_rho->gridecut_lat * this->pw_rho->tpiba2;
@@ -264,7 +264,7 @@ void ESolver_FP::print_rhofft(Input& inp, std::ofstream& ofs)
         ofs << std::endl;
         ofs << std::endl;
         ofs << std::endl;
-        double ecut = INPUT.ecutrho;
+        double ecut = PARAM.inp.ecutrho;
         if (inp.ndx * inp.ndy * inp.ndz > 0)
         {
             ecut = this->pw_rhod->gridecut_lat * this->pw_rhod->tpiba2;

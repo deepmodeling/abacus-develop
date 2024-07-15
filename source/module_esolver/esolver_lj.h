@@ -14,7 +14,7 @@ namespace ModuleESolver
             classname = "ESolver_LJ";
         }
 
-        void before_all_runners(Input& inp, UnitCell& cell) override;
+        void before_all_runners(const Input_para& inp, UnitCell& cell) override;
 
         void runner(const int istep, UnitCell& cell) override;
 

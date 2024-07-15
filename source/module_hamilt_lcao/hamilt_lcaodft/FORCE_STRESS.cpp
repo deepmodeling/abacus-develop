@@ -169,7 +169,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
     //  jiyy add 2019-05-18, update 2021-05-02
     ModuleBase::matrix force_vdw;
     ModuleBase::matrix stress_vdw;
-    auto vdw_solver = vdw::make_vdw(GlobalC::ucell, INPUT);
+    auto vdw_solver = vdw::make_vdw(GlobalC::ucell, PARAM.inp);
     if (vdw_solver != nullptr)
     {
         if (isforce)

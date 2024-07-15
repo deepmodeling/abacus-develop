@@ -492,6 +492,7 @@ OBJS_IO=input.o\
     read_input_item_postprocess.o\
     read_input_item_md.o\
     read_input_item_other.o\
+    bcast_globalv.o
 
 OBJS_IO_LCAO=cal_r_overlap_R.o\
       write_orb_info.o\

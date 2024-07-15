@@ -16,7 +16,7 @@ class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO<std::complex<double>, doubl
 
     ~ESolver_KS_LCAO_TDDFT();
 
-    void before_all_runners(Input& inp, UnitCell& cell) override;
+    void before_all_runners(const Input_para& inp, UnitCell& cell) override;
 
     psi::Psi<std::complex<double>>* psi_laststep = nullptr;
 

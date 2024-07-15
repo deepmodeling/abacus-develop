@@ -38,7 +38,7 @@ ESolver_SDFT_PW::~ESolver_SDFT_PW()
 {
 }
 
-void ESolver_SDFT_PW::before_all_runners(Input& inp, UnitCell& ucell)
+void ESolver_SDFT_PW::before_all_runners(const Input_para& inp, UnitCell& ucell)
 {
     // 1) initialize parameters from int Input class
     this->nche_sto = inp.nche_sto;
@@ -131,9 +131,9 @@ void ESolver_SDFT_PW::before_all_runners(Input& inp, UnitCell& ucell)
 void ESolver_SDFT_PW::before_scf(const int istep)
 {
     ESolver_KS_PW::before_scf(istep);
-    if (istep > 0 && INPUT.nbands_sto != 0 && INPUT.initsto_freq > 0 && istep % INPUT.initsto_freq == 0)
+    if (istep > 0 && PARAM.inp.nbands_sto != 0 && PARAM.inp.initsto_freq > 0 && istep % PARAM.inp.initsto_freq == 0)
     {
-        Update_Sto_Orbitals(this->stowf, INPUT.seed_sto);
+        Update_Sto_Orbitals(this->stowf, PARAM.inp.seed_sto);
     }
 }
 
@@ -269,7 +269,7 @@ void ESolver_SDFT_PW::after_all_runners()
 
     ((hsolver::HSolverPW_SDFT*)phsol)->stoiter.cleanchiallorder(); // release lots of memories
 
-    if (INPUT.out_dos)
+    if (PARAM.inp.out_dos)
     {
         Sto_DOS sto_dos(this->pw_wfc,
                         &this->kv,
@@ -278,19 +278,19 @@ void ESolver_SDFT_PW::after_all_runners()
                         this->p_hamilt,
                         (hsolver::HSolverPW_SDFT*)phsol,
                         &stowf);
-        sto_dos.decide_param(INPUT.dos_nche,
-                             INPUT.emin_sto,
-                             INPUT.emax_sto,
-                             INPUT.dos_setemin,
-                             INPUT.dos_setemax,
-                             INPUT.dos_emin_ev,
-                             INPUT.dos_emax_ev,
-                             INPUT.dos_scale);
-        sto_dos.caldos(INPUT.dos_sigma, INPUT.dos_edelta_ev, INPUT.npart_sto);
+        sto_dos.decide_param(PARAM.inp.dos_nche,
+                             PARAM.inp.emin_sto,
+                             PARAM.inp.emax_sto,
+                             PARAM.globalv.dos_setemin,
+                             PARAM.globalv.dos_setemax,
+                             PARAM.inp.dos_emin_ev,
+                             PARAM.inp.dos_emax_ev,
+                             PARAM.inp.dos_scale);
+        sto_dos.caldos(PARAM.inp.dos_sigma, PARAM.inp.dos_edelta_ev, PARAM.inp.npart_sto);
     }
 
     // sKG cost memory, and it should be placed at the end of the program
-    if (INPUT.cal_cond)
+    if (PARAM.inp.cal_cond)
     {
         Sto_EleCond sto_elecond(&GlobalC::ucell,
                                 &this->kv,
@@ -302,15 +302,15 @@ void ESolver_SDFT_PW::after_all_runners()
                                 (hsolver::HSolverPW_SDFT*)phsol,
                                 &stowf);
         sto_elecond
-            .decide_nche(INPUT.cond_dt, INPUT.cond_dtbatch, 1e-8, this->nche_sto, INPUT.emin_sto, INPUT.emax_sto);
-        sto_elecond.sKG(INPUT.cond_smear,
-                        INPUT.cond_fwhm,
-                        INPUT.cond_wcut,
-                        INPUT.cond_dw,
-                        INPUT.cond_dt,
-                        INPUT.cond_nonlocal,
+            .decide_nche(PARAM.inp.cond_dt, INPUT.cond_dtbatch, 1e-8, this->nche_sto, PARAM.inp.emin_sto, PARAM.inp.emax_sto);
+        sto_elecond.sKG(PARAM.inp.cond_smear,
+                        PARAM.inp.cond_fwhm,
+                        PARAM.inp.cond_wcut,
+                        PARAM.inp.cond_dw,
+                        PARAM.inp.cond_dt,
+                        PARAM.inp.cond_nonlocal,
                         INPUT.cond_dtbatch,
-                        INPUT.npart_sto);
+                        PARAM.inp.npart_sto);
     }
 }
 

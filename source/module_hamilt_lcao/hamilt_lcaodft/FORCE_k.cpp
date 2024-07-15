@@ -136,7 +136,7 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
                                        &GlobalC::GridD);
 
     // calculate asynchronous S matrix to output for Hefei-NAMD
-    if (INPUT.cal_syns)
+    if (PARAM.inp.cal_syns)
     {
         cal_deri = false;
 
@@ -152,8 +152,8 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
                                   two_center_bundle,
                                   &(GlobalC::GridD),
                                   nullptr, // delete lm.SlocR
-                                  INPUT.cal_syns,
-                                  INPUT.dmax);
+                                  PARAM.inp.cal_syns,
+                                  PARAM.inp.dmax);
 
         for (int ik = 0; ik < nks; ik++)
         {

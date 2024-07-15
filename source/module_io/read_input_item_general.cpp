@@ -14,7 +14,7 @@ namespace ModuleIO
 // {
 //      Input_Item item("suffix");
 //      item.annotation = "the name of main output directory";
-//      read_sync_string(suffix);
+//      read_sync_string(input.suffix);
 //      this->add_item(item);
 // }
 //
@@ -50,68 +50,68 @@ void ReadInput::item_general()
     {
         Input_Item item("suffix");
         item.annotation = "the name of main output directory";
-        read_sync_string(suffix);
+        read_sync_string(input.suffix);
         this->add_item(item);
     }
     {
         Input_Item item("latname");
         item.annotation = "the name of lattice name";
-        read_sync_string(latname);
+        read_sync_string(input.latname);
         this->add_item(item);
     }
     {
         Input_Item item("stru_file");
         item.annotation = "the filename of file containing atom positions";
-        read_sync_string(stru_file);
+        read_sync_string(input.stru_file);
         this->add_item(item);
     }
     {
         Input_Item item("kpoint_file");
         item.annotation = "the name of file containing k points";
-        read_sync_string(kpoint_file);
+        read_sync_string(input.kpoint_file);
         this->add_item(item);
     }
     {
         Input_Item item("pseudo_dir");
         item.annotation = "the directory containing pseudo files";
-        read_sync_string(pseudo_dir);
+        read_sync_string(input.pseudo_dir);
         this->add_item(item);
     }
     {
         Input_Item item("orbital_dir");
         item.annotation = "the directory containing orbital files";
-        read_sync_string(orbital_dir);
+        read_sync_string(input.orbital_dir);
         this->add_item(item);
     }
     {
         Input_Item item("pseudo_rcut");
         item.annotation = "default #exchange correlation functional";
-        read_sync_double(pseudo_rcut);
+        read_sync_double(input.pseudo_rcut);
         this->add_item(item);
     }
     {
         Input_Item item("pseudo_mesh");
         item.annotation = "0: use our own mesh to do radial renormalization; "
                           "1: use mesh as in QE";
-        read_sync_bool(pseudo_mesh);
+        read_sync_bool(input.pseudo_mesh);
         this->add_item(item);
     }
     {
         Input_Item item("lmaxmax");
         item.annotation = "maximum of l channels used";
-        read_sync_int(lmaxmax);
+        read_sync_int(input.lmaxmax);
         this->add_item(item);
     }
     {
         Input_Item item("dft_functional");
         item.annotation = "exchange correlation functional";
-        read_sync_string(dft_functional);
+        read_sync_string(input.dft_functional);
         this->add_item(item);
     }
     {
         Input_Item item("xc_temperature");
         item.annotation = "temperature for finite temperature functionals";
-        read_sync_double(xc_temperature);
+        read_sync_double(input.xc_temperature);
         this->add_item(item);
     }
     {
@@ -120,11 +120,11 @@ void ReadInput::item_general()
         item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.calculation = strvalue;
             std::string& calculation = para.input.calculation;
-            para.input.sup.global_calculation = calculation;
+            para.sys.global_calculation = calculation;
             if (calculation == "nscf" || calculation == "get_S")
             {
                 // Maybe it should be modified.
-                para.input.sup.global_calculation = "nscf";
+                para.sys.global_calculation = "nscf";
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
@@ -161,14 +161,13 @@ void ReadInput::item_general()
                 }
             }
         };
-        sync_string(calculation);
-        add_string_bcast(sup.global_calculation);
+        sync_string(input.calculation);
         this->add_item(item);
     }
     {
         Input_Item item("esolver_type");
         item.annotation = "the energy solver: ksdft, sdft, ofdft, tddft, lj, dp";
-        read_sync_string(esolver_type);
+        read_sync_string(input.esolver_type);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             const std::vector<std::string> esolver_types = { "ksdft", "sdft", "ofdft", "tddft", "lj", "dp", "lr", "ks-lr" };
             if (!find_str(esolver_types, para.input.esolver_type))
@@ -191,13 +190,13 @@ void ReadInput::item_general()
         Input_Item item("ntype");
         item.annotation = "atom species number";
         // check of ntype is done in check_ntype
-        read_sync_int(ntype);
+        read_sync_int(input.ntype);
         this->add_item(item);
     }
     {
         Input_Item item("nspin");
         item.annotation = "1: single spin; 2: up and down spin; 4: noncollinear spin";
-        read_sync_int(nspin);
+        read_sync_int(input.nspin);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.noncolin || para.input.lspinorb)
             {
@@ -233,7 +232,7 @@ void ReadInput::item_general()
                 ModuleBase::WARNING_QUIT("ReadInput", "kspacing can only accept one or three values.");
             }
         };
-        sync_doublevec(kspacing, 3, 0.0);
+        sync_doublevec(input.kspacing, 3, 0.0);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             int kspacing_zero_num = 0;
             const std::vector<double>& kspacing = para.input.kspacing;
@@ -260,13 +259,13 @@ void ReadInput::item_general()
         Input_Item item("min_dist_coef");
         item.annotation = "factor related to the allowed minimum distance "
                           "between two atoms";
-        read_sync_double(min_dist_coef);
+        read_sync_double(input.min_dist_coef);
         this->add_item(item);
     }
     {
         Input_Item item("nbands");
         item.annotation = "number of bands";
-        read_sync_int(nbands);
+        read_sync_int(input.nbands);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.nbands < 0)
             {
@@ -278,7 +277,7 @@ void ReadInput::item_general()
     {
         Input_Item item("nbands_istate");
         item.annotation = "number of bands around Fermi level for get_pchg calulation";
-        read_sync_int(nbands_istate);
+        read_sync_int(input.nbands_istate);
         this->add_item(item);
     }
     {
@@ -287,13 +286,13 @@ void ReadInput::item_general()
         item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.bands_to_print = longstring(item.str_values, item.get_size());
         };
-        sync_string(bands_to_print);
+        sync_string(input.bands_to_print);
         this->add_item(item);
     }
     {
         Input_Item item("symmetry");
         item.annotation = "the control of symmetry";
-        read_sync_string(symmetry);
+        read_sync_string(input.symmetry);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.symmetry == "default")
             {
@@ -335,20 +334,20 @@ void ReadInput::item_general()
                 }
             }
         };
-        read_sync_bool(init_vel);
+        read_sync_bool(input.init_vel);
         this->add_item(item);
     }
     {
         Input_Item item("symmetry_prec");
         item.annotation = "accuracy for symmetry";
-        read_sync_double(symmetry_prec);
+        read_sync_double(input.symmetry_prec);
         this->add_item(item);
     }
     {
         Input_Item item("symmetry_autoclose");
         item.annotation = "whether to close symmetry automatically when error "
                           "occurs in symmetry analysis";
-        read_sync_bool(symmetry_autoclose);
+        read_sync_bool(input.symmetry_autoclose);
         this->add_item(item);
     }
     {
@@ -364,13 +363,13 @@ void ReadInput::item_general()
                 ModuleBase::WARNING_QUIT("ReadInput", "nelec > 2*nbnd , bands not enough!");
             }
         };
-        read_sync_double(nelec);
+        read_sync_double(input.nelec);
         this->add_item(item);
     }
     {
         Input_Item item("nelec_delta");
         item.annotation = "change in the number of total electrons";
-        read_sync_double(nelec_delta);
+        read_sync_double(input.nelec_delta);
         this->add_item(item);
     }
     {
@@ -379,36 +378,35 @@ void ReadInput::item_general()
                           "and spin-down";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.nupdown = doublevalue;
-            para.input.sup.two_fermi = true;
+            para.sys.two_fermi = true;
         };
 
-        sync_double(nupdown);
-        add_bool_bcast(sup.two_fermi);
+        sync_double(input.nupdown);
         this->add_item(item);
     }
     {
         Input_Item item("out_mul");
         item.annotation = "mulliken charge or not";
-        read_sync_bool(out_mul);
+        read_sync_bool(input.out_mul);
         this->add_item(item);
     }
     {
         Input_Item item("noncolin");
         item.annotation = "using non-collinear-spin";
-        read_sync_bool(noncolin);
+        read_sync_bool(input.noncolin);
         this->add_item(item);
     }
     {
         Input_Item item("lspinorb");
         item.annotation = "consider the spin-orbit interaction";
-        read_sync_bool(lspinorb);
+        read_sync_bool(input.lspinorb);
         this->add_item(item);
     }
     {
         Input_Item item("kpar");
         item.annotation = "devide all processors into kpar groups and k points "
                           "will be distributed among";
-        read_sync_int(kpar);
+        read_sync_int(input.kpar);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.basis_type == "lcao" && para.input.kpar > 1)
             {
@@ -421,7 +419,7 @@ void ReadInput::item_general()
         Input_Item item("bndpar");
         item.annotation = "devide all processors into bndpar groups and bands "
                           "will be distributed among each group";
-        read_sync_int(bndpar);
+        read_sync_int(input.bndpar);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.esolver_type != "sdft")
             {
@@ -439,13 +437,13 @@ void ReadInput::item_general()
         item.annotation = "the frequency ( >= 0) of electronic iter to output "
                           "charge density and wavefunction. 0: "
                           "output only when converged";
-        read_sync_int(out_freq_elec);
+        read_sync_int(input.out_freq_elec);
         this->add_item(item);
     }
     {
         Input_Item item("dft_plus_dmft");
         item.annotation = "true:DFT+DMFT; false: standard DFT calcullation(default)";
-        read_sync_bool(dft_plus_dmft);
+        read_sync_bool(input.dft_plus_dmft);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.basis_type != "lcao" && para.input.dft_plus_dmft)
             {
@@ -458,13 +456,13 @@ void ReadInput::item_general()
         Input_Item item("rpa");
         item.annotation = "true:generate output files used in rpa calculation; "
                           "false:(default)";
-        read_sync_bool(rpa);
+        read_sync_bool(input.rpa);
         this->add_item(item);
     }
     {
         Input_Item item("printe");
         item.annotation = "Print out energy for each band for every printe steps";
-        read_sync_int(printe);
+        read_sync_int(input.printe);
         this->add_item(item);
     }
     {
@@ -472,7 +470,7 @@ void ReadInput::item_general()
         item.annotation = "Only for nscf calculations. if set to 1, then a "
                           "memory saving technique will be used for "
                           "many k point calculations.";
-        read_sync_int(mem_saver);
+        read_sync_int(input.mem_saver);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.mem_saver == 1)
             {
@@ -488,7 +486,7 @@ void ReadInput::item_general()
     {
         Input_Item item("diago_proc");
         item.annotation = "the number of procs used to do diagonalization";
-        read_sync_int(diago_proc);
+        read_sync_int(input.diago_proc);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.diago_proc > GlobalV::NPROC || para.input.diago_proc <= 0)
             {
@@ -500,20 +498,20 @@ void ReadInput::item_general()
     {
         Input_Item item("nbspline");
         item.annotation = "the order of B-spline basis";
-        read_sync_int(nbspline);
+        read_sync_int(input.nbspline);
         this->add_item(item);
     }
     {
         Input_Item item("wannier_card");
         item.annotation = "input card for wannier functions";
-        read_sync_string(wannier_card);
+        read_sync_string(input.wannier_card);
         this->add_item(item);
     }
     {
         Input_Item item("soc_lambda");
         item.annotation = "The fraction of averaged SOC pseudopotential is "
                           "given by (1-soc_lambda)";
-        read_sync_double(soc_lambda);
+        read_sync_double(input.soc_lambda);
         this->add_item(item);
     }
     {
@@ -539,7 +537,7 @@ void ReadInput::item_general()
                 para.input.cal_force = false;
             }
         };
-        read_sync_bool(cal_force);
+        read_sync_bool(input.cal_force);
         this->add_item(item);
     }
     {
@@ -547,25 +545,25 @@ void ReadInput::item_general()
         item.annotation = "the frequency ( >= 0 ) of ionic step to output "
                           "charge density and wavefunction. 0: output "
                           "only when ion steps are finished";
-        read_sync_int(out_freq_ion);
+        read_sync_int(input.out_freq_ion);
         this->add_item(item);
     }
     {
         Input_Item item("elpa_num_thread");
         item.annotation = "Number of threads need to use in elpa";
-        read_sync_int(elpa_num_thread);
+        read_sync_int(input.elpa_num_thread);
         this->add_item(item);
     }
     {
         Input_Item item("device");
         item.annotation = "the computing device for ABACUS";
-        read_sync_string(device);
+        read_sync_string(input.device);
         this->add_item(item);
     }
     {
         Input_Item item("precision");
         item.annotation = "the computing precision for ABACUS";
-        read_sync_string(precision);
+        read_sync_string(input.precision);
         this->add_item(item);
     }
 }

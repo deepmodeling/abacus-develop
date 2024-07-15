@@ -7,13 +7,13 @@ bool berryphase::berry_phase_flag = false;
 
 berryphase::berryphase()
 {
-    GDIR = INPUT.gdir;
+    GDIR = PARAM.inp.gdir;
 }
 
 #ifdef __LCAO
 berryphase::berryphase(const Parallel_Orbitals* paraV_in) : paraV(paraV_in)
 {
-    GDIR = INPUT.gdir;
+    GDIR = PARAM.inp.gdir;
 }
 #endif
 

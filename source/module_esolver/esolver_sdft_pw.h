@@ -15,7 +15,7 @@ class ESolver_SDFT_PW : public ESolver_KS_PW<std::complex<double>>
     ESolver_SDFT_PW();
     ~ESolver_SDFT_PW();
 
-    void before_all_runners(Input& inp, UnitCell& cell) override;
+    void before_all_runners(const Input_para& inp, UnitCell& cell) override;
 
     double cal_energy() override;
 
