@@ -1,13 +1,14 @@
 #ifndef TDNONLOCAL_H
 #define TDNONLOCAL_H
-#include <unordered_map>
-
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_cell/unitcell.h"
+#include "module_elecstate/potentials/H_TDDFT_pw.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
-#include "module_elecstate/potentials/H_TDDFT_pw.h"
+#include "module_hamilt_lcao/module_tddft/td_velocity.h"
+
+#include <unordered_map>
 
 namespace hamilt
 {
@@ -33,13 +34,11 @@ template <typename TK, typename TR>
 class TDNonlocal<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 {
   public:
-    TDNonlocal<OperatorLCAO<TK, TR>>(LCAO_Matrix* LM_in,
-                                      const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
-                                      hamilt::HContainer<TR>* hR_in,
-                                      std::vector<TK>* hK_in,
-                                      const UnitCell* ucell_in,
-                                      Grid_Driver* GridD_in,
-                                      const Parallel_Orbitals* paraV);
+    TDNonlocal<OperatorLCAO<TK, TR>>(HS_Matrix_K<TK>* hsk_in,
+                                     const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
+                                     hamilt::HContainer<TR>* hR_in,
+                                     const UnitCell* ucell_in,
+                                     Grid_Driver* GridD_in);
     ~TDNonlocal<OperatorLCAO<TK, TR>>();
 
     /**
@@ -55,13 +54,12 @@ class TDNonlocal<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     const UnitCell* ucell = nullptr;
 
     HContainer<TR>* HR = nullptr;
-    /// @brief Store real space hamiltonian. TD term should include imaginary part, thus it has to be complex type. Only shared between TD operators.
+    /// @brief Store real space hamiltonian. TD term should include imaginary part, thus it has to be complex type. Only
+    /// shared between TD operators.
     HContainer<std::complex<double>>* hR_tmp = nullptr;
     Grid_Driver* Grid = nullptr;
 
     bool allocated = false;
-
-    TK* HK_pointer = nullptr;
 
     bool hR_tmp_done = false;
 
@@ -70,15 +68,15 @@ class TDNonlocal<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      * HContainer is used to store the non-local pseudopotential matrix with specific <I,J,R> atom-pairs
      * the size of HR will be fixed after initialization
      */
-    void initialize_HR(Grid_Driver* GridD_in, const Parallel_Orbitals* paraV);
+    void initialize_HR(Grid_Driver* GridD_in);
 
     /**
      * @brief initialize HR_tmp
      * Allocate the memory for HR_tmp with the same size as HR
-    */
+     */
     void initialize_HR_tmp(const Parallel_Orbitals* paraV);
     /// @brief init vector potential for td_nonlocal term
-    void init_td(void);
+    void init_td();
     /**
      * @brief calculate the non-local pseudopotential matrix with specific <I,J,R> atom-pairs
      * nearest neighbor atoms don't need to be calculated again
@@ -93,9 +91,10 @@ class TDNonlocal<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                     const int& iat2,
                     const int& T0,
                     const Parallel_Orbitals* paraV,
-                    const std::unordered_map<int, std::vector<std::complex<double>>>& nlm1_all,
-                    const std::unordered_map<int, std::vector<std::complex<double>>>& nlm2_all,
-                    std::complex<double>* data_pointer);
+                    const std::vector<std::unordered_map<int, std::vector<std::complex<double>>>>& nlm1_all,
+                    const std::vector<std::unordered_map<int, std::vector<std::complex<double>>>>& nlm2_all,
+                    std::complex<double>* data_pointer,
+                    std::complex<double>** data_pointer_c);
 
     /// @brief exact the nearest neighbor atoms from all adjacent atoms
     std::vector<AdjacentAtomInfo> adjs_all;

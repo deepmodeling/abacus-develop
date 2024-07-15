@@ -23,6 +23,7 @@ void cal_dm_psi(const Parallel_Orbitals* ParaV,
 
     // dm = wfc.T * wg * wfc.conj()
     // dm[is](iw1,iw2) = \sum_{ib} wfc[is](ib,iw1).T * wg(is,ib) * wfc[is](ib,iw2).conj()
+
     for (int ik = 0; ik < wfc.get_nk(); ++ik)
     {
         double* dmk_pointer = DM.get_DMK_pointer(ik);
@@ -49,6 +50,7 @@ void cal_dm_psi(const Parallel_Orbitals* ParaV,
 				continue;
 			}
             const double wg_local = wg(ik, ib_global);
+
             double* wg_wfc_pointer = &(wg_wfc(0, ib_local, 0));
             BlasConnector::scal(nbasis_local, wg_local, wg_wfc_pointer, 1);
         }
@@ -137,7 +139,7 @@ void cal_dm_psi(const Parallel_Orbitals* ParaV,
     return;
 }
 
-// #ifdef __MPI
+#ifdef __MPI
 void psiMulPsiMpi(const psi::Psi<double>& psi1,
                          const psi::Psi<double>& psi2,
                          double* dm_out,
@@ -150,6 +152,7 @@ void psiMulPsiMpi(const psi::Psi<double>& psi1,
     const char N_char = 'N', T_char = 'T';
     const int nlocal = desc_dm[2];
     const int nbands = desc_psi[3];
+
     pdgemm_(&N_char,
             &T_char,
             &nlocal,
@@ -206,7 +209,8 @@ void psiMulPsiMpi(const psi::Psi<std::complex<double>>& psi1,
     ModuleBase::timer::tick("psiMulPsiMpi", "pdgemm");
 }
 
-// #else
+#endif
+
 void psiMulPsi(const psi::Psi<double>& psi1, const psi::Psi<double>& psi2, double* dm_out)
 {
     const double one_float = 1.0, zero_float = 0.0;
@@ -253,6 +257,5 @@ void psiMulPsi(const psi::Psi<std::complex<double>>& psi1,
            dm_out,
            &nlocal);
 }
-// #endif
 
 } // namespace elecstate

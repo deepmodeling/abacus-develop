@@ -14,7 +14,7 @@
 namespace hsolver
 {
 
-template<typename T, typename Device = psi::DEVICE_CPU>
+template <typename T, typename Device = base_device::DEVICE_CPU>
 class HSolver
 {
   private:
@@ -77,7 +77,7 @@ class HSolver
   public:
     Real diag_ethr=0.0; //threshold for diagonalization
     //set diag_ethr according to drho
-    //for lcao, we suppose the error is zero and we set diag_ethr to 0
+    //for lcao and lcao-in-pw, we suppose the error is zero and we set diag_ethr to 0
     virtual Real set_diagethr(const int istep, const int iter, const Real drho)
     {
         return 0.0;
@@ -89,7 +89,7 @@ class HSolver
     }
 
     // calculate hsolver_error
-    // for sdft and lcao, we suppose the error is zero 
+    // for sdft, lcao and lcao-in-pw, we suppose the error is zero 
     virtual Real cal_hsolerror()
     {
         return 0.0;

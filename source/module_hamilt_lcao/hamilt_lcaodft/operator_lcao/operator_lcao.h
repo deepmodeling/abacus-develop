@@ -3,8 +3,8 @@
 #include "module_base/vector3.h"
 #include "module_hamilt_general/matrixblock.h"
 #include "module_hamilt_general/operator.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/hs_matrix_k.hpp"
 
 namespace hamilt
 {
@@ -14,16 +14,15 @@ class OperatorLCAO : public Operator<TK>
 {
   public:
     OperatorLCAO(
-        LCAO_Matrix* LM_in, 
+        HS_Matrix_K<TK>* hsk_in, 
         const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
-        HContainer<TR>* hR_in,
-        std::vector<TK>* hK_in)
-        : LM(LM_in), kvec_d(kvec_d_in), hR(hR_in), hK(hK_in){};
+        HContainer<TR>* hR_in)
+        : hsk(hsk_in), kvec_d(kvec_d_in), hR(hR_in){}
     virtual ~OperatorLCAO()
     {
         if (this->allocated_smatrix)
             delete[] this->smatrix_k;
-    };
+    }
 
     /* Function init(k) is used for update HR and HK ,
     data pointers of HR and HK are not passed by this function, but passed by constructors of every derived classes.
@@ -46,7 +45,6 @@ class OperatorLCAO : public Operator<TK>
     }
 
     /* Function matrixHk() is used for get information of HK matrix and SK matrix for diagolization.
-    Matrixes HK and SK come from LCAO_Matrix class.
     Gamma_only case (TK = double), SK would not changed during one SCF loop, a template triangle matrix SK_temp is used
     for accelerating. General case (TK = std::complex<double>), only pointers of HK and SK saved in OperatorLCAO
     */
@@ -55,16 +53,16 @@ class OperatorLCAO : public Operator<TK>
         this->get_hs_pointers();
 #ifdef __MPI
         hk_in = MatrixBlock<TK>{hmatrix_k,
-                               (size_t)this->LM->ParaV->nrow,
-                               (size_t)this->LM->ParaV->ncol,
-                               this->LM->ParaV->desc};
+                               (size_t)this->hsk->get_pv()->nrow,
+                               (size_t)this->hsk->get_pv()->ncol,
+                               this->hsk->get_pv()->desc};
         sk_in = MatrixBlock<TK>{smatrix_k,
-                               (size_t)this->LM->ParaV->nrow,
-                               (size_t)this->LM->ParaV->ncol,
-                               this->LM->ParaV->desc};
+                               (size_t)this->hsk->get_pv()->nrow,
+                               (size_t)this->hsk->get_pv()->ncol,
+                               this->hsk->get_pv()->desc};
 #else
-        hk_in = MatrixBlock<TK>{hmatrix_k, (size_t)this->LM->ParaV->nrow, (size_t)this->LM->ParaV->ncol, nullptr};
-        sk_in = MatrixBlock<TK>{smatrix_k, (size_t)this->LM->ParaV->nrow, (size_t)this->LM->ParaV->ncol, nullptr};
+        hk_in = MatrixBlock<TK>{hmatrix_k, (size_t)this->hsk->get_pv()->nrow, (size_t)this->hsk->get_pv()->ncol, nullptr};
+        sk_in = MatrixBlock<TK>{smatrix_k, (size_t)this->hsk->get_pv()->nrow, (size_t)this->hsk->get_pv()->ncol, nullptr};
 #endif
     }
 
@@ -87,8 +85,8 @@ class OperatorLCAO : public Operator<TK>
     void set_hr_done(bool hr_done_in);
 
     // protected:
-    //  Hamiltonian matrix which are stored in LCAO_Matrix and calculated in OperatorLCAO
-    LCAO_Matrix* LM = nullptr;
+    //  Hamiltonian matrix which are calculated in OperatorLCAO
+    HS_Matrix_K<TK>* hsk = nullptr;
     const std::vector<ModuleBase::Vector3<double>>& kvec_d;
 
   protected:
@@ -96,9 +94,6 @@ class OperatorLCAO : public Operator<TK>
 
     // Real space Hamiltonian pointer
     hamilt::HContainer<TR>* hR = nullptr;
-
-    // vector of HK matrix for current k point in reciprocal space
-    std::vector<TK>* hK = nullptr;
 
   private:
     void get_hs_pointers();

@@ -5,9 +5,8 @@
 #include "module_base/complexmatrix.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 
-#include "module_psi/kernels/types.h"
-#include "module_psi/kernels/device.h"
-#include "module_psi/kernels/memory_op.h"
+#include "module_base/module_device/types.h"
+#include "module_base/module_device/memory_op.h"
 
 #include "module_hsolver/kernels/math_kernel_op.h"
 #include "module_hsolver/kernels/dngvd_op.h"
@@ -24,7 +23,7 @@ namespace hsolver {
  * @tparam T The floating-point type used for calculations.
  * @tparam Device The device used for calculations (e.g., cpu or gpu).
  */
-template<typename T = std::complex<double>, typename Device = psi::DEVICE_CPU>
+template <typename T = std::complex<double>, typename Device = base_device::DEVICE_CPU>
 class DiagoBPCG : public DiagH<T, Device>
 {
   private:
@@ -116,7 +115,8 @@ class DiagoBPCG : public DiagH<T, Device>
      *
      * @note prec[dim: n_band]
      *
-     * @param dev Reference to the AbacusDevice_t object, speciy which device used in the calc_prec function.
+     * @param dev Reference to the base_device::AbacusDevice_t object, speciy which device used in the calc_prec
+     * function.
      * @param prec Pointer to the host precondition array with [dim: n_band, column major]
      * @param h_prec Pointer to the host precondition array with [dim: n_band, column major].
      * @param d_prec Pointer to the device precondition array with [dim: n_band, column major].

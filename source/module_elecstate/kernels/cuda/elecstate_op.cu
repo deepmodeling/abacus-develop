@@ -58,47 +58,43 @@ __global__ void elecstate_pw(
 }
 
 template <typename FPTYPE>
-void elecstate_pw_op<FPTYPE, psi::DEVICE_GPU>::operator() (
-    const psi::DEVICE_GPU* ctx,
-    const int& spin,
-    const int& nrxx,
-    const FPTYPE& w1,
-    FPTYPE** rho,
-    const std::complex<FPTYPE>* wfcr)
+void elecstate_pw_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* ctx,
+                                                                  const int& spin,
+                                                                  const int& nrxx,
+                                                                  const FPTYPE& w1,
+                                                                  FPTYPE** rho,
+                                                                  const std::complex<FPTYPE>* wfcr)
 {
   const int block = (nrxx + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
   elecstate_pw<FPTYPE><<<block, THREADS_PER_BLOCK>>>(
-    spin, nrxx, w1, rho[0], 
+    spin, nrxx, w1, rho[0],
     reinterpret_cast<const thrust::complex<FPTYPE>*>(wfcr)
   );
 
-  cudaErrcheck(cudaGetLastError());
-  cudaErrcheck(cudaDeviceSynchronize());
+  cudaCheckOnDebug();
 }
 
 template <typename FPTYPE>
-void elecstate_pw_op<FPTYPE, psi::DEVICE_GPU>::operator()(
-    const psi::DEVICE_GPU* ctx,
-    const bool& DOMAG,
-    const bool& DOMAG_Z,
-    const int& nrxx,
-    const FPTYPE& w1,
-    FPTYPE** rho,
-    const std::complex<FPTYPE>* wfcr,
-    const std::complex<FPTYPE>* wfcr_another_spin)
+void elecstate_pw_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* ctx,
+                                                                  const bool& DOMAG,
+                                                                  const bool& DOMAG_Z,
+                                                                  const int& nrxx,
+                                                                  const FPTYPE& w1,
+                                                                  FPTYPE** rho,
+                                                                  const std::complex<FPTYPE>* wfcr,
+                                                                  const std::complex<FPTYPE>* wfcr_another_spin)
 {
   const int block = (nrxx + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
   elecstate_pw<FPTYPE><<<block, THREADS_PER_BLOCK>>>(
-    DOMAG, DOMAG_Z, nrxx, w1, rho[0], 
-    reinterpret_cast<const thrust::complex<FPTYPE>*>(wfcr), 
+    DOMAG, DOMAG_Z, nrxx, w1, rho[0],
+    reinterpret_cast<const thrust::complex<FPTYPE>*>(wfcr),
     reinterpret_cast<const thrust::complex<FPTYPE>*>(wfcr_another_spin)
   );
 
-  cudaErrcheck(cudaGetLastError());
-  cudaErrcheck(cudaDeviceSynchronize());
+  cudaCheckOnDebug();
 }
 
-template struct elecstate_pw_op<float, psi::DEVICE_GPU>;
-template struct elecstate_pw_op<double, psi::DEVICE_GPU>;
+template struct elecstate_pw_op<float, base_device::DEVICE_GPU>;
+template struct elecstate_pw_op<double, base_device::DEVICE_GPU>;
 
 }  // namespace elecstate

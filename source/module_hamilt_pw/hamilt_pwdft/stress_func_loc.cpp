@@ -22,7 +22,7 @@ void Stress_Func<FPTYPE, Device>::stress_loc(ModuleBase::matrix& sigma,
 
 	const int nspin_rho = (GlobalV::NSPIN == 2) ? 2 : 1;
 
-	if (INPUT.gamma_only && is_pw) fact=2.0;
+	if (PARAM.inp.gamma_only && is_pw) fact=2.0;
 
     
 
@@ -288,7 +288,7 @@ void Stress_Func<FPTYPE, Device>::dvloc_coulomb(const FPTYPE& zp, FPTYPE* dvloc,
     return;
 }
 
-template class Stress_Func<double, psi::DEVICE_CPU>;
+template class Stress_Func<double, base_device::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
-template class Stress_Func<double, psi::DEVICE_GPU>;
+template class Stress_Func<double, base_device::DEVICE_GPU>;
 #endif

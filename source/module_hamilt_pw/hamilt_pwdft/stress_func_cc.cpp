@@ -17,7 +17,7 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma,
         
 	FPTYPE fact=1.0;
 
-	if(is_pw&&INPUT.gamma_only) 
+	if(is_pw&&PARAM.inp.gamma_only) 
 	{
 		fact = 2.0; //is_pw:PW basis, gamma_only need to FPTYPE.
 	}
@@ -255,7 +255,7 @@ void Stress_Func<FPTYPE, Device>::deriv_drhoc
 	return;
 }
 
-template class Stress_Func<double, psi::DEVICE_CPU>;
+template class Stress_Func<double, base_device::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
-template class Stress_Func<double, psi::DEVICE_GPU>;
+template class Stress_Func<double, base_device::DEVICE_GPU>;
 #endif

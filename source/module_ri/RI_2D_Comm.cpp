@@ -11,7 +11,7 @@
 #include <stdexcept>
 
 // judge[is] = {s0, s1}
-auto RI_2D_Comm::get_2D_judge(const Parallel_Orbitals &pv)
+auto RI_2D_Comm::get_2D_judge(const Parallel_2D& pv)
 -> std::vector<std::tuple<std::set<TA>, std::set<TA>>>
 {
 	ModuleBase::TITLE("RI_2D_Comm","get_2D_judge");
@@ -64,7 +64,7 @@ std::vector<int>
 RI_2D_Comm::get_ik_list(const K_Vectors &kv, const int is_k)
 {
 	std::vector<int> ik_list;
-	for(int ik=0; ik<kv.nks; ++ik)
+	for(int ik=0; ik<kv.get_nks(); ++ik)
 		if(kv.isk[ik]==is_k)
 			ik_list.push_back(ik);
 	return ik_list;

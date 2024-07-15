@@ -16,7 +16,7 @@ Meta<OperatorPW<T, Device>>::Meta(Real tpiba_in,
                                        const ModulePW::PW_Basis_K* wfcpw_in)
 {
     this->classname = "Meta";
-    this->cal_type = pw_meta;
+    this->cal_type = calculation_type::pw_meta;
     this->isk = isk_in;
     this->tpiba = tpiba_in;
     this->vk = vk_in;
@@ -81,7 +81,7 @@ template<typename T, typename Device>
 template<typename T_in, typename Device_in>
 Meta<OperatorPW<T, Device>>::Meta(const Meta<OperatorPW<T_in, Device_in>> *meta) {
     this->classname = "Meta";
-    this->cal_type = pw_meta;
+    this->cal_type = calculation_type::pw_meta;
     this->ik = meta->get_ik();
     this->isk = meta->get_isk();
     this->tpiba = meta->get_tpiba();
@@ -95,14 +95,17 @@ Meta<OperatorPW<T, Device>>::Meta(const Meta<OperatorPW<T_in, Device_in>> *meta)
     }
 }
 
-template class Meta<OperatorPW<std::complex<float>, psi::DEVICE_CPU>>;
-template class Meta<OperatorPW<std::complex<double>, psi::DEVICE_CPU>>;
-// template Meta<OperatorPW<std::complex<double>, psi::DEVICE_CPU>>::Meta(const Meta<OperatorPW<std::complex<double>, psi::DEVICE_CPU>> *meta);
+template class Meta<OperatorPW<std::complex<float>, base_device::DEVICE_CPU>>;
+template class Meta<OperatorPW<std::complex<double>, base_device::DEVICE_CPU>>;
+// template Meta<OperatorPW<std::complex<double>, base_device::DEVICE_CPU>>::Meta(const
+// Meta<OperatorPW<std::complex<double>, base_device::DEVICE_CPU>> *meta);
 #if ((defined __CUDA) || (defined __ROCM))
-template class Meta<OperatorPW<std::complex<float>, psi::DEVICE_GPU>>;
-template class Meta<OperatorPW<std::complex<double>, psi::DEVICE_GPU>>;
-// template Meta<OperatorPW<std::complex<double>, psi::DEVICE_CPU>>::Meta(const Meta<OperatorPW<std::complex<double>, psi::DEVICE_GPU>> *meta);
-// template Meta<OperatorPW<std::complex<double>, psi::DEVICE_GPU>>::Meta(const Meta<OperatorPW<std::complex<double>, psi::DEVICE_CPU>> *meta);
-// template Meta<OperatorPW<std::complex<double>, psi::DEVICE_GPU>>::Meta(const Meta<OperatorPW<std::complex<double>, psi::DEVICE_GPU>> *meta);
+template class Meta<OperatorPW<std::complex<float>, base_device::DEVICE_GPU>>;
+template class Meta<OperatorPW<std::complex<double>, base_device::DEVICE_GPU>>;
+// template Meta<OperatorPW<std::complex<double>, base_device::DEVICE_CPU>>::Meta(const
+// Meta<OperatorPW<std::complex<double>, base_device::DEVICE_GPU>> *meta); template
+// Meta<OperatorPW<std::complex<double>, base_device::DEVICE_GPU>>::Meta(const Meta<OperatorPW<std::complex<double>,
+// base_device::DEVICE_CPU>> *meta); template Meta<OperatorPW<std::complex<double>,
+// base_device::DEVICE_GPU>>::Meta(const Meta<OperatorPW<std::complex<double>, base_device::DEVICE_GPU>> *meta);
 #endif
 } // namespace hamilt

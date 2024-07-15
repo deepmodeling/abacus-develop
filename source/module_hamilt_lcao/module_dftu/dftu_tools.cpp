@@ -8,7 +8,7 @@ namespace ModuleDFTU
 void DFTU::cal_VU_pot_mat_complex(const int spin, const bool newlocale, std::complex<double>* VU)
 {
     ModuleBase::TITLE("DFTU", "cal_VU_pot_mat_complex");
-    ModuleBase::GlobalFunc::ZEROS(VU, this->LM->ParaV->nloc);
+    ModuleBase::GlobalFunc::ZEROS(VU, this->paraV->nloc);
 
     for (int it = 0; it < GlobalC::ucell.ntype; ++it)
     {
@@ -31,7 +31,7 @@ void DFTU::cal_VU_pot_mat_complex(const int spin, const bool newlocale, std::com
                     {
                         for (int ipol1 = 0; ipol1 < GlobalV::NPOL; ipol1++)
                         {
-                            const int mu = this->LM->ParaV->global2local_row(this->iatlnmipol2iwt[iat][L][n][m1][ipol1]);
+                            const int mu = this->paraV->global2local_row(this->iatlnmipol2iwt[iat][L][n][m1][ipol1]);
                             if (mu < 0)
                                 continue;
 
@@ -40,7 +40,7 @@ void DFTU::cal_VU_pot_mat_complex(const int spin, const bool newlocale, std::com
                                 for (int ipol2 = 0; ipol2 < GlobalV::NPOL; ipol2++)
                                 {
                                     const int nu
-                                        = this->LM->ParaV->global2local_col(this->iatlnmipol2iwt[iat][L][n][m2][ipol2]);
+                                        = this->paraV->global2local_col(this->iatlnmipol2iwt[iat][L][n][m2][ipol2]);
                                     if (nu < 0)
                                         continue;
 
@@ -48,7 +48,7 @@ void DFTU::cal_VU_pot_mat_complex(const int spin, const bool newlocale, std::com
                                     int m2_all = m2 + (2 * L + 1) * ipol2;
 
                                     double val = get_onebody_eff_pot(it, iat, L, n, spin, m1_all, m2_all, newlocale);
-                                    VU[nu * this->LM->ParaV->nrow + mu] = std::complex<double>(val, 0.0);
+                                    VU[nu * this->paraV->nrow + mu] = std::complex<double>(val, 0.0);
                                 } // ipol2
                             } // m2
                         } // ipol1
@@ -64,7 +64,7 @@ void DFTU::cal_VU_pot_mat_complex(const int spin, const bool newlocale, std::com
 void DFTU::cal_VU_pot_mat_real(const int spin, const bool newlocale, double* VU)
 {
     ModuleBase::TITLE("DFTU", "cal_VU_pot_mat_real");
-    ModuleBase::GlobalFunc::ZEROS(VU, this->LM->ParaV->nloc);
+    ModuleBase::GlobalFunc::ZEROS(VU, this->paraV->nloc);
 
     for (int it = 0; it < GlobalC::ucell.ntype; ++it)
     {
@@ -87,7 +87,7 @@ void DFTU::cal_VU_pot_mat_real(const int spin, const bool newlocale, double* VU)
                     {
                         for (int ipol1 = 0; ipol1 < GlobalV::NPOL; ipol1++)
                         {
-                            const int mu = this->LM->ParaV->global2local_row(this->iatlnmipol2iwt[iat][L][n][m1][ipol1]);
+                            const int mu = this->paraV->global2local_row(this->iatlnmipol2iwt[iat][L][n][m1][ipol1]);
                             if (mu < 0)
                                 continue;
                             for (int m2 = 0; m2 < 2 * L + 1; m2++)
@@ -95,14 +95,14 @@ void DFTU::cal_VU_pot_mat_real(const int spin, const bool newlocale, double* VU)
                                 for (int ipol2 = 0; ipol2 < GlobalV::NPOL; ipol2++)
                                 {
                                     const int nu
-                                        = this->LM->ParaV->global2local_col(this->iatlnmipol2iwt[iat][L][n][m2][ipol2]);
+                                        = this->paraV->global2local_col(this->iatlnmipol2iwt[iat][L][n][m2][ipol2]);
                                     if (nu < 0)
                                         continue;
 
                                     int m1_all = m1 + (2 * L + 1) * ipol1;
                                     int m2_all = m2 + (2 * L + 1) * ipol2;
 
-                                    VU[nu * this->LM->ParaV->nrow + mu]
+                                    VU[nu * this->paraV->nrow + mu]
                                         = this->get_onebody_eff_pot(it, iat, L, n, spin, m1_all, m2_all, newlocale);
 
                                 } // ipol2

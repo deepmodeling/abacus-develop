@@ -127,7 +127,7 @@ Here, 'build' is the path for building ABACUS; and '-D' is used for setting up s
   - `USE_OPENMP=ON`: Enable OpenMP support. Building ABACUS without OpenMP is not fully tested yet.
   - `BUILD_TESTING=OFF`: [Build unit tests](../advanced/install.md#build-unit-tests).
   - `ENABLE_GOOGLEBENCH=OFF`: [Build performance tests](../advanced/install.md#build-performance-tests)
-  - `ENABLE_MPI=ON`: Enable MPI parallel compilation. If set to `OFF`, a serial version of ABACUS with PW basis only will be compiled. Currently serial version of ABACUS with LCAO basis is not supported yet, so `ENABLE_LCAO` will be automatically set to `OFF`.
+  - `ENABLE_MPI=ON`: Enable MPI parallel compilation. If set to `OFF`, a serial version of ABACUS will be compiled. It now supports both PW and LCAO.
   - `ENABLE_COVERAGE=OFF`: Build ABACUS executable supporting [coverage analysis](../CONTRIBUTING.md#generating-code-coverage-report). This feature has a drastic impact on performance.
   - `ENABLE_ASAN=OFF`: Build with Address Sanitizer. This feature would help detecting memory problems.
   - `USE_ELPA=ON`: Use ELPA library in LCAO calculations. If this value is set to OFF, ABACUS can be compiled without ELPA library.
@@ -176,7 +176,16 @@ Use 4 MPI processes to run, for example:
 mpirun -n 4 abacus
 ```
 
-> The total thread count(i.e. OpenMP per-process thread count * MPI process count) should not exceed the number of cores in your machine.
+The total thread count (i.e. OpenMP per-process thread count * MPI process count) should not exceed the number of cores in your machine.
+To use 4 threads and 4 MPI processes, set the environment variable `OMP_NUM_THREADS` before running `mpirun`:
+
+```bash
+OMP_NUM_THREADS=4 mpirun -n 4 abacus
+```
+
+In this case, the total thread count is 16.
+
+ABACUS will try to determine the number of threads used by each process if `OMP_NUM_THREADS` is not set. However, it is **required** to set `OMP_NUM_THREADS` before running `mpirun` to avoid potential performance issues.
 
 Please refer to [hands-on guide](./hands_on.md) for more instructions.
 
@@ -244,3 +253,31 @@ And, follow the instructions in [Build and Install](#build-and-install) part abo
 See [the advanced installation guide](../advanced/install.md) for more features.
 Make sure the environment variables are set before running `cmake`.
 Possible command: `cmake -B build -DENABLE_DEEPKS=ON -DENABLE_LIBXC=ON -DENABLE_LIBRI=ON`.
+
+## Command line options
+
+Users can check the version of ABACUS by running the command `abacus --version`, the result will be like:
+```
+ABACUS version v3.6.5
+```
+
+Users may check the correctness of the setting of parameters in the `INPUT` file by running the command `abacus --check-input`, the result will be like:
+```
+                              ABACUS v3.6.5
+
+               Atomic-orbital Based Ab-initio Computation at UStc
+
+                     Website: http://abacus.ustc.edu.cn/
+               Documentation: https://abacus.deepmodeling.com/
+                  Repository: https://github.com/abacusmodeling/abacus-develop
+                              https://github.com/deepmodeling/abacus-develop
+                      Commit: unknown
+
+ Tue Jun 18 14:20:31 2024
+ MAKE THE DIR         : OUT.ABACUS/
+----------------------------------------------------------
+  INPUT parameters have been successfully checked!
+----------------------------------------------------------
+```
+
+Warnings will be given if there are any errors in the `INPUT` file.

@@ -11,8 +11,8 @@ nelec           10
 nspin           2
 
 #Parameters (2.Iteration)
-ecutwfc			20
-scf_thr				1e-9
+ecutwfc			10
+scf_thr				1e-7
 scf_nmax			100
 
 
@@ -24,7 +24,7 @@ smearing_method		gauss
 smearing_sigma			0.002
 
 #Parameters (5.Mixing)
-mixing_type		plain
+mixing_type		pulay
 mixing_beta		0.7
 
 cal_force           1

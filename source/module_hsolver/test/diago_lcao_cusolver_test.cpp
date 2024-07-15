@@ -1,10 +1,10 @@
-#include <vector>
-
-#include "gtest/gtest.h"
-#include "module_hsolver/diago_blas.h"
+#include "module_hsolver/diago_scalapack.h"
 #include "module_hsolver/test/diago_elpa_utils.h"
 #include "mpi.h"
 #include "string.h"
+
+#include "gtest/gtest.h"
+#include <vector>
 #ifdef __ELPA
 #include "module_hsolver/diago_elpa.h"
 #endif
@@ -24,7 +24,7 @@
 /**
  * Tested function:
  *  - hsolver::DiagoElpa::diag (for ELPA)
- *  - hsolver::DiagoBlas::diag (for Scalapack)
+ *  - hsolver::DiagoScalapack::diag (for Scalapack)
  *
  * The 2d block cyclic distribution of H/S matrix is done by
  * self-realized functions in module_hsolver/test/diago_elpa_utils.h
@@ -64,19 +64,14 @@ class DiagoPrepare
                  std::string ks_solver,
                  std::string hfname,
                  std::string sfname)
-        : nlocal(nlocal),
-          nbands(nbands),
-          nb2d(nb2d),
-          sparsity(sparsity),
-          ks_solver(ks_solver),
-          hfname(hfname),
+        : nlocal(nlocal), nbands(nbands), nb2d(nb2d), sparsity(sparsity), ks_solver(ks_solver), hfname(hfname),
           sfname(sfname)
     {
         MPI_Comm_size(MPI_COMM_WORLD, &dsize);
         MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
         if (ks_solver == "scalapack_gvx")
-            dh = new hsolver::DiagoBlas<T>;
+            dh = new hsolver::DiagoScalapack<T>;
 #ifdef __CUDA
         else if (ks_solver == "cusolver")
             dh = new hsolver::DiagoCusolver<T>;
@@ -347,7 +342,6 @@ int main(int argc, char** argv)
     MPI_Comm_rank(MPI_COMM_WORLD, &mypnum);
 
     testing::InitGoogleTest(&argc, argv);
-    // Parallel_Global::split_diag_world(dsize);
     ::testing::TestEventListeners& listeners = ::testing::UnitTest::GetInstance()->listeners();
     if (mypnum != 0)
     {

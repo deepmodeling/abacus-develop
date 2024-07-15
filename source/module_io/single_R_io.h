@@ -2,6 +2,7 @@
 #define SINGLE_R_IO_H
 
 #include "module_basis/module_ao/parallel_orbitals.h"
+#include <map>
 
 namespace ModuleIO
 {

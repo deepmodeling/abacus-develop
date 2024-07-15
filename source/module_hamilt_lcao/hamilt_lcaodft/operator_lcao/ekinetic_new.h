@@ -1,6 +1,7 @@
 #ifndef EKINETICNEW_H
 #define EKINETICNEW_H
 #include "module_basis/module_ao/parallel_orbitals.h"
+#include "module_basis/module_nao/two_center_integrator.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_cell/unitcell.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
@@ -38,13 +39,12 @@ class EkineticNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     /**
      * @brief Construct a new EkineticNew object
      */
-    EkineticNew<OperatorLCAO<TK, TR>>(LCAO_Matrix* LM_in,
+    EkineticNew<OperatorLCAO<TK, TR>>(HS_Matrix_K<TK>* hsk_in,
                                       const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
                                       HContainer<TR>* hR_in,
-                                      std::vector<TK>* hK_in,
                                       const UnitCell* ucell_in,
                                       Grid_Driver* GridD_in,
-                                      const Parallel_Orbitals* paraV);
+                                      const TwoCenterIntegrator* intor);
 
     /**
      * @brief Destroy the EkineticNew object
@@ -64,6 +64,8 @@ class EkineticNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 
     hamilt::HContainer<TR>* HR_fixed = nullptr;
 
+    const TwoCenterIntegrator* intor_ = nullptr;
+
     bool allocated = false;
 
     bool HR_fixed_done = false;
@@ -73,7 +75,7 @@ class EkineticNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      * HContainer is used to store the electronic kinetic matrix with specific <I,J,R> atom-pairs
      * the size of HR will be fixed after initialization
      */
-    void initialize_HR(Grid_Driver* GridD_in, const Parallel_Orbitals* paraV);
+    void initialize_HR(Grid_Driver* GridD_in);
 
     /**
      * @brief calculate the electronic kinetic matrix with specific <I,J,R> atom-pairs

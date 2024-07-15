@@ -19,7 +19,6 @@
 #include <mpi.h>
 #include <vector>
 
-class Local_Orbital_Charge;
 class Parallel_Orbitals;
 class K_Vectors;
 
@@ -56,7 +55,6 @@ template <typename T, typename Tdata> class RPA_LRI
     // void print_complex_matrix(char *desc, const ModuleBase::ComplexMatrix &mat);
     // void init(const MPI_Comm &mpi_comm_in);
     // void cal_rpa_ions();
-    // void cal_rpa_elec(const Local_Orbital_Charge &loc, const Parallel_Orbitals &pv);
 
     Tdata Erpa;
 

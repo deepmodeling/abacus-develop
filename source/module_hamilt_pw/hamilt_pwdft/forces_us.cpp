@@ -35,7 +35,7 @@ void Forces<FPTYPE, Device>::cal_force_us(ModuleBase::matrix& forcenl,
     // fourier transform of the total effective potential
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
-        rho_basis->real2recip(&veff(is, 0), &vg(is, 0));
+        rho_basis->real2recip(&veff.c[is * veff.nc], &vg(is, 0));
     }
 
     ModuleBase::matrix ylmk0(ppcell_in->lmaxq * ppcell_in->lmaxq, npw);
@@ -139,7 +139,7 @@ void Forces<FPTYPE, Device>::cal_force_us(ModuleBase::matrix& forcenl,
     ModuleBase::timer::tick("Forces", "cal_force_us");
 }
 
-template class Forces<double, psi::DEVICE_CPU>;
+template class Forces<double, base_device::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
-template class Forces<double, psi::DEVICE_GPU>;
+template class Forces<double, base_device::DEVICE_GPU>;
 #endif

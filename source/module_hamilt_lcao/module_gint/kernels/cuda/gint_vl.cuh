@@ -2,6 +2,7 @@
 #define GINT_VL_CUH
 
 #include <cuda_runtime.h>
+#include <cstdint>
 namespace GintKernel
 {
 /*
@@ -15,23 +16,25 @@ namespace GintKernel
  * Here, the matrix element of the left matrix is psi, and the matrix
  * element of the right matrix is vlocal * psi * dr^3.
  */
-
-__global__ void get_psi_and_vldr3(double* ylmcoef,
-                                  double delta_r_g,
-                                  int bxyz_g,
-                                  double nwmax_g,
-                                  double* input_double,
-                                  int* input_int,
-                                  int* num_psir,
-                                  int psi_size_max,
-                                  int* ucell_atom_nwl,
-                                  bool* atom_iw2_new,
-                                  int* atom_iw2_ylm,
-                                  int* atom_nw,
-                                  int nr_max,
-                                  double* psi_u,
-                                  double* psir_ylm_left,
-                                  double* psir_r);
+__global__ void get_psi_and_vldr3(const double* const ylmcoef,
+                                  const double delta_r,
+                                  const int bxyz,
+                                  const double nwmax,
+                                  const double max_atom,
+                                  const int* const ucell_atom_nwl,
+                                  const bool* const atom_iw2_new,
+                                  const int* const atom_iw2_ylm,
+                                  const int* const atom_nw,
+                                  const double* const rcut,
+                                  const int nr_max,
+                                  const double* const psi_u,
+                                  const double* const mcell_pos,
+                                  const double* const dr_part,
+                                  const double* const vldr3,
+                                  const uint8_t* const atoms_type,
+                                  const int* const atoms_num_info,
+                                  double* psi,
+                                  double* psi_vldr3);
 
 } // namespace GintKernel
 #endif // GINT_VL_CUH

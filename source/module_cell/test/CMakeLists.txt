@@ -24,6 +24,7 @@ list(APPEND cell_simple_srcs
     ../read_pp_upf100.cpp
     ../read_pp_vwr.cpp
     ../read_pp_blps.cpp
+    ../check_atomic_stru.cpp
 )
 
 add_library(cell_info OBJECT ${cell_simple_srcs})
@@ -99,8 +100,8 @@ add_test(NAME cell_parallel_kpoints_test
 
 AddTest(
   TARGET cell_unitcell_test
-  LIBS ${math_libs} base device cell_info
-  SOURCES unitcell_test.cpp ../../module_io/output.cpp
+  LIBS ${math_libs} base device cell_info symmetry
+  SOURCES unitcell_test.cpp ../../module_io/output.cpp ../print_cif.cpp
 )
 
 AddTest(
@@ -124,4 +125,10 @@ AddTest(
 add_test(NAME cell_unitcell_test_parallel
       COMMAND ${BASH} unitcell_test_parallel.sh
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+AddTest(
+  TARGET cell_index_test
+  LIBS ${math_libs} base device
+  SOURCES cell_index_test.cpp ../cell_index.cpp
 )

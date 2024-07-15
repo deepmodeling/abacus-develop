@@ -11,7 +11,7 @@
 template<>
 void ModuleIO::write_proj_band_lcao(
     const psi::Psi<double>* psi,
-    LCAO_Matrix& lm,
+    const Parallel_Orbitals &pv,
     const elecstate::ElecState* pelec,
     const K_Vectors& kv,
     const UnitCell &ucell,
@@ -20,7 +20,8 @@ void ModuleIO::write_proj_band_lcao(
     ModuleBase::TITLE("ModuleIO", "write_proj_band_lcao");
     ModuleBase::timer::tick("ModuleIO", "write_proj_band_lcao");
 
-    const Parallel_Orbitals* pv = lm.ParaV;
+    // get the date pointer of SK
+    const double* sk = dynamic_cast<const hamilt::HamiltLCAO<double, double>*>(p_ham)->getSk();
 
     int nspin0 = 1;
     if (GlobalV::NSPIN == 2)
@@ -28,11 +29,11 @@ void ModuleIO::write_proj_band_lcao(
     int nks = 0;
     if (nspin0 == 1)
     {
-        nks = kv.nkstot;
+        nks = kv.get_nkstot();
     }
     else if (nspin0 == 2)
     {
-        nks = kv.nkstot / 2;
+        nks = kv.get_nkstot() / 2;
     }
 
     ModuleBase::ComplexMatrix weightk;
@@ -46,7 +47,7 @@ void ModuleIO::write_proj_band_lcao(
     {
         std::vector<ModuleBase::matrix> Mulk;
         Mulk.resize(1);
-        Mulk[0].create(pv->ncol, pv->nrow);
+        Mulk[0].create(pv.ncol, pv.nrow);
 
         psi->fix_k(is);
         for (int i = 0; i < GlobalV::NBANDS; ++i)
@@ -61,29 +62,29 @@ void ModuleIO::write_proj_band_lcao(
                 &GlobalV::NLOCAL,
                 &GlobalV::NLOCAL,
                 &one_float,
-                lm.Sloc.data(),
+                sk,
                 &one_int,
                 &one_int,
-                pv->desc,
+                pv.desc,
                 psi->get_pointer(),
                 &one_int,
                 &NB,
-                pv->desc,
+                pv.desc,
                 &one_int,
                 &zero_float,
                 Mulk[0].c,
                 &one_int,
                 &NB,
-                pv->desc,
+                pv.desc,
                 &one_int);
 #endif
             for (int j = 0; j < GlobalV::NLOCAL; ++j)
             {
 
-                if (pv->in_this_processor(j, i))
+                if (pv.in_this_processor(j, i))
                 {
-                    const int ir = pv->global2local_row(j);
-                    const int ic = pv->global2local_col(i);
+                    const int ir = pv.global2local_row(j);
+                    const int ic = pv.global2local_col(i);
                     weightk(is, i * GlobalV::NLOCAL + j) = Mulk[0](ic, ir) * psi[0](ic, ir);
                 }
             }
@@ -166,7 +167,7 @@ void ModuleIO::write_proj_band_lcao(
 template<>
 void ModuleIO::write_proj_band_lcao(
     const psi::Psi<std::complex<double>>* psi,
-    LCAO_Matrix& lm,
+    const Parallel_Orbitals &pv,
     const elecstate::ElecState* pelec,
     const K_Vectors& kv,
     const UnitCell& ucell,
@@ -175,48 +176,46 @@ void ModuleIO::write_proj_band_lcao(
     ModuleBase::TITLE("ModuleIO", "write_proj_band_lcao");
     ModuleBase::timer::tick("ModuleIO", "write_proj_band_lcao");
 
-    const Parallel_Orbitals* pv = lm.ParaV;
-
     int nspin0 = 1;
     if (GlobalV::NSPIN == 2)
         nspin0 = 2;
     int nks = 0;
     if (nspin0 == 1)
     {
-        nks = kv.nkstot;
+        nks = kv.get_nkstot();
     }
     else if (nspin0 == 2)
     {
-        nks = kv.nkstot / 2;
+        nks = kv.get_nkstot() / 2;
     }
 
     ModuleBase::ComplexMatrix weightk;
     ModuleBase::matrix weight;
-    int NUM = GlobalV::NLOCAL * GlobalV::NBANDS * kv.nks;
-    weightk.create(kv.nks, GlobalV::NBANDS * GlobalV::NLOCAL, true);
-    weight.create(kv.nks, GlobalV::NBANDS * GlobalV::NLOCAL, true);
+    int NUM = GlobalV::NLOCAL * GlobalV::NBANDS * kv.get_nks();
+    weightk.create(kv.get_nks(), GlobalV::NBANDS * GlobalV::NLOCAL, true);
+    weight.create(kv.get_nks(), GlobalV::NBANDS * GlobalV::NLOCAL, true);
 
     for (int is = 0; is < nspin0; is++)
     {
             std::vector<ModuleBase::ComplexMatrix> Mulk;
             Mulk.resize(1);
-            Mulk[0].create(pv->ncol, pv->nrow);
+            Mulk[0].create(pv.ncol, pv.nrow);
 
-            for (int ik = 0; ik < kv.nks; ik++)
+            for (int ik = 0; ik < kv.get_nks(); ik++)
             {
                 if (is == kv.isk[ik])
                 {
                     // calculate SK for current k point
-                    // the target matrix is LM->Sloc2 with collumn-major
+                    const std::complex<double>* sk = nullptr;
                     if (GlobalV::NSPIN == 4)
                     {
-                        dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(p_ham)->updateSk(
-                          ik, &lm, 1);
+                        dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(p_ham)->updateSk(ik, 1);
+                        sk = dynamic_cast<const hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(p_ham)->getSk();
                     }
                     else
                     {
-                        dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham)->updateSk(
-                          ik, &lm, 1);
+                        dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham)->updateSk(ik, 1);
+                        sk = dynamic_cast<const hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham)->getSk();
                     }
 
                     // calculate Mulk
@@ -241,30 +240,30 @@ void ModuleIO::write_proj_band_lcao(
                             &GlobalV::NLOCAL,
                             &GlobalV::NLOCAL,
                             &one_float[0],
-                            lm.Sloc2.data(),
+                            sk,
                             &one_int,
                             &one_int,
-                            pv->desc,
+                            pv.desc,
                             p_dwfc,
                             &one_int,
                             &NB,
-                            pv->desc,
+                            pv.desc,
                             &one_int,
                             &zero_float[0],
                             Mulk[0].c,
                             &one_int,
                             &NB,
-                            pv->desc,
+                            pv.desc,
                             &one_int);
 #endif
                         for (int j = 0; j < GlobalV::NLOCAL; ++j)
                         {
 
-                            if (pv->in_this_processor(j, i))
+                            if (pv.in_this_processor(j, i))
                             {
 
-                                const int ir = pv->global2local_row(j);
-                                const int ic = pv->global2local_col(i);
+                                const int ir = pv.global2local_row(j);
+                                const int ic = pv.global2local_col(i);
 
                                 weightk(ik, i * GlobalV::NLOCAL + j) = Mulk[0](ic, ir) * psi[0](ic, ir);
                             }

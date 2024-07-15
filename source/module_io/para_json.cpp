@@ -1,12 +1,12 @@
 
 #include "para_json.h"
 
+#include "module_base/global_variable.h"
+
 #include <ctime>
 #include <iomanip>
 #include <sstream>
 #include <string>
-
-#include "module_base/global_variable.h"
 #ifdef __RAPIDJSON
 #include "json_output/abacusjson.h"
 #include "json_output/general_info.h"
@@ -31,27 +31,29 @@ void json_output()
 #ifdef __MPI
     if (GlobalV::MY_RANK == 0)
         AbacusJson::write_to_json("abacus.json");
-#elif
+#else
     AbacusJson::write_to_json("abacus.json");
 #endif
 #endif // __RAPIDJSON
 }
 
-void create_Json(UnitCell *ucell,Input *input){
+void create_Json(UnitCell* ucell, const Parameter& param)
+{
 #ifdef __RAPIDJSON
-    gen_general_info(input);
+    gen_general_info(param);
     gen_init(ucell);
     // gen_stru(ucell);
 #endif
     json_output();
 }
 
-void gen_stru_wrapper(UnitCell *ucell){
+void gen_stru_wrapper(UnitCell* ucell)
+{
 #ifdef __RAPIDJSON
 #ifdef __MPI
     if (GlobalV::MY_RANK == 0)
         gen_stru(ucell);
-#elif
+#else
     gen_stru(ucell);
 #endif
 #endif

@@ -38,7 +38,7 @@ double H_TDDFT_pw::lcut1;
 double H_TDDFT_pw::lcut2;
 
 //velocity gauge
-double H_TDDFT_pw::At[3]={0.0,0.0,0.0};
+ModuleBase::Vector3<double> H_TDDFT_pw::At;
 
 // time domain parameters
 
@@ -238,6 +238,7 @@ void H_TDDFT_pw::update_At(void)
     std::cout << "calculate electric potential" << std::endl;
     // time evolve
     H_TDDFT_pw::istep++;
+    
     // judgement to skip vext
     if (!module_tddft::Evolve_elec::td_vext || istep > tend || istep < tstart)
     {

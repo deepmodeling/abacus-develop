@@ -9,12 +9,13 @@
 #include "module_elecstate/module_charge/charge_mixing.h"
 #include "module_elecstate/occupy.h"
 #include "module_elecstate/potentials/H_TDDFT_pw.h"
+#include "module_hamilt_lcao/module_tddft/td_velocity.h"
 #include "module_elecstate/potentials/efield.h"
 #include "module_elecstate/potentials/gatefield.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/FORCE_STRESS.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_lcao/module_tddft/evolve_elec.h"
+#include "module_hamilt_lcao/module_tddft/td_velocity.h"
 #include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 #include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
@@ -32,14 +33,15 @@
 
 bool berryphase::berry_phase_flag = false;
 
-int Local_Orbital_Charge::out_dm = 0;
-int Local_Orbital_Charge::out_dm1 = 0;
 double module_tddft::Evolve_elec::td_force_dt;
 bool module_tddft::Evolve_elec::td_vext;
 std::vector<int> module_tddft::Evolve_elec::td_vext_dire_case;
 bool module_tddft::Evolve_elec::out_dipole;
 bool module_tddft::Evolve_elec::out_efield;
-bool module_tddft::Evolve_elec::out_current;
+bool TD_Velocity::out_current;
+bool TD_Velocity::out_current_k;
+bool TD_Velocity::out_vecpot;
+bool TD_Velocity::init_vecpot_file;
 double module_tddft::Evolve_elec::td_print_eij;
 int module_tddft::Evolve_elec::td_edm;
 double elecstate::Gatefield::zgate = 0.5;
@@ -76,6 +78,9 @@ double elecstate::H_TDDFT_pw::lcut1;
 double elecstate::H_TDDFT_pw::lcut2;
 
 // time domain parameters
+
+bool TD_Velocity::tddft_velocity;
+bool TD_Velocity::out_mat_R;
 
 // Gauss
 int elecstate::H_TDDFT_pw::gauss_count;
@@ -177,8 +182,9 @@ wavefunc::~wavefunc()
 }
 UnitCell::UnitCell()
 {
-    if (GlobalV::test_unitcell)
+    if (GlobalV::test_unitcell) {
         ModuleBase::TITLE("unitcell", "Constructor");
+}
     Coordinate = "Direct";
     latName = "none";
     lat0 = 0.0;

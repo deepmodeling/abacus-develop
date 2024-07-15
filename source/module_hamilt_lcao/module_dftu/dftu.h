@@ -8,12 +8,12 @@
 #include "module_cell/klist.h"
 #include "module_cell/unitcell.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_elecstate/module_charge/charge_mixing.h"
 #include "module_hamilt_general/hamilt.h"
 #include "module_elecstate/elecstate.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "module_elecstate/module_dm/density_matrix.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/force_stress_arrays.h" // mohan add 2024-06-15
 
 #include <string>
 
@@ -38,7 +38,7 @@ class DFTU
   public:
     // allocate relevant data strcutures
     void init(UnitCell& cell, // unitcell class
-              LCAO_Matrix& lm,
+              const Parallel_Orbitals* pv,
               const int& nks);
 
     // calculate the energy correction
@@ -56,7 +56,7 @@ class DFTU
 
     double EU; //+U energy
   private:
-    LCAO_Matrix* LM;
+    const Parallel_Orbitals* paraV = nullptr;
     int cal_type = 3; // 1:dftu_tpye=1, dc=1; 2:dftu_type=1, dc=2; 3:dftu_tpye=2, dc=1; 4:dftu_tpye=2, dc=2;
     
     // transform between iwt index and it, ia, L, N and m index
@@ -68,8 +68,8 @@ class DFTU
     // For calculating contribution to Hamiltonian matrices
     //=============================================================
   public:
-    void cal_eff_pot_mat_complex(const int ik, std::complex<double>* eff_pot, const std::vector<int>& isk);
-    void cal_eff_pot_mat_real(const int ik, double* eff_pot, const std::vector<int>& isk);
+    void cal_eff_pot_mat_complex(const int ik, std::complex<double>* eff_pot, const std::vector<int>& isk, const std::complex<double>* sk);
+    void cal_eff_pot_mat_real(const int ik, double* eff_pot, const std::vector<int>& isk, const double* sk);
     void cal_eff_pot_mat_R_double(const int ispin, double* SR, double* HR);
     void cal_eff_pot_mat_R_complex_double(const int ispin, std::complex<double>* SR, std::complex<double>* HR);
 
@@ -81,7 +81,7 @@ class DFTU
   public:
     // calculate the local occupation number matrix
     void cal_occup_m_k(const int iter, const std::vector<std::vector<std::complex<double>>>& dm_k, const K_Vectors& kv, const double& mixing_beta, hamilt::Hamilt<std::complex<double>>* p_ham);
-    void cal_occup_m_gamma(const int iter, const std::vector<std::vector<double>>& dm_gamma, const double& mixing_beta);
+    void cal_occup_m_gamma(const int iter, const std::vector<std::vector<double>>& dm_gamma, const double& mixing_beta, hamilt::Hamilt<double>* p_ham);
 
     // dftu can be calculated only after locale has been initialed
     bool initialed_locale = false;
@@ -121,15 +121,32 @@ private:
     // Subroutines for folding S and dS matrix
     //=============================================================
 
-    void fold_dSR_gamma(const int dim1, const int dim2, double* dSR_gamma);
+	void fold_dSR_gamma(
+			const UnitCell &ucell,
+			const Parallel_Orbitals &pv,
+			Grid_Driver* gd,
+			double* dsloc_x,
+			double* dsloc_y,
+			double* dsloc_z,
+			double* dh_r,
+			const int dim1, 
+			const int dim2, 
+			double* dSR_gamma);
+
     // dim = 0 : S, for Hamiltonian
     // dim = 1-3 : dS, for force
     // dim = 4-6 : dS * dR, for stress
-    void folding_matrix_k(const int ik, 
-                        const int dim1, 
-                        const int dim2, 
-                        std::complex<double>* mat_k, 
-                        std::vector<ModuleBase::Vector3<double>> kvec_d);
+
+    void folding_matrix_k(
+        ForceStressArrays &fsr,
+        const Parallel_Orbitals &pv,
+		const int ik, 
+		const int dim1, 
+		const int dim2, 
+		std::complex<double>* mat_k, 
+		const std::vector<ModuleBase::Vector3<double>> &kvec_d);
+
+
     /**
      * @brief new function of folding_S_matrix
      * only for Hamiltonian now, for force and stress will be developed later
@@ -142,23 +159,50 @@ private:
     // For calculating force and stress fomr DFT+U
     //=============================================================
   public:
-    void force_stress(const elecstate::ElecState* pelec,
-                      LCAO_Matrix& lm,
-                      ModuleBase::matrix& force_dftu,
-                      ModuleBase::matrix& stress_dftu,
-                      const K_Vectors& kv);
+
+   void force_stress(const elecstate::ElecState* pelec,
+		   const Parallel_Orbitals& pv,
+		   ForceStressArrays& fsr,
+		   ModuleBase::matrix& force_dftu,
+		   ModuleBase::matrix& stress_dftu,
+		   const K_Vectors& kv);
 
   private:
-    void cal_force_k(const int ik,
-                    const std::complex<double>* rho_VU,
-                    ModuleBase::matrix& force_dftu,
-                    const std::vector<ModuleBase::Vector3<double>>& kvec_d);
-    void cal_stress_k(const int ik,
-                      const std::complex<double>* rho_VU,
-                      ModuleBase::matrix& stress_dftu,
-                      const std::vector<ModuleBase::Vector3<double>>& kvec_d);
-    void cal_force_gamma(const double* rho_VU, ModuleBase::matrix& force_dftu);
-    void cal_stress_gamma(const double* rho_VU, ModuleBase::matrix& stress_dftu);
+
+   void cal_force_k(
+		   ForceStressArrays &fsr,
+		   const Parallel_Orbitals &pv,
+		   const int ik,
+		   const std::complex<double>* rho_VU,
+		   ModuleBase::matrix& force_dftu,
+		   const std::vector<ModuleBase::Vector3<double>>& kvec_d);
+
+    void cal_stress_k(
+			ForceStressArrays &fsr,
+			const Parallel_Orbitals &pv,
+			const int ik,
+			const std::complex<double>* rho_VU,
+			ModuleBase::matrix& stress_dftu,
+			const std::vector<ModuleBase::Vector3<double>>& kvec_d);
+
+	void cal_force_gamma(
+			const double* rho_VU, 
+			const Parallel_Orbitals &pv,
+			double* dsloc_x,
+			double* dsloc_y,
+			double* dsloc_z,
+			ModuleBase::matrix& force_dftu);
+
+	void cal_stress_gamma(
+			const UnitCell &ucell,
+			const Parallel_Orbitals &pv,
+			Grid_Driver* gd,
+			double* dsloc_x,
+			double* dsloc_y,
+			double* dsloc_z,
+			double* dh_r,
+			const double* rho_VU, 
+			ModuleBase::matrix& stress_dftu);
 
     //=============================================================
     // In dftu_io.cpp
@@ -211,10 +255,11 @@ private:
     const elecstate::DensityMatrix<double, double>* dm_in_dftu_d = nullptr;
     const elecstate::DensityMatrix<std::complex<double>, double>* dm_in_dftu_cd = nullptr;
 };
+
 } // namespace ModuleDFTU
 
 namespace GlobalC
 {
-extern ModuleDFTU::DFTU dftu;
+	extern ModuleDFTU::DFTU dftu;
 }
 #endif

@@ -25,7 +25,7 @@ Stochastic_WF::~Stochastic_WF()
 
 void Stochastic_WF::init(K_Vectors* p_kv, const int npwx_in)
 {
-    this->nks = p_kv->nks;
+    this->nks = p_kv->get_nks();
     this->ngk = p_kv->ngk.data();
     this->npwx = npwx_in;
     nchip = new int[nks];
@@ -66,7 +66,7 @@ void Allocate_Chi0(Stochastic_WF& stowf)
     {
         igroup = GlobalV::NSTOGROUP - GlobalV::MY_STOGROUP - 1;
     }
-    const int nchi = INPUT.nbands_sto;
+    const int nchi = PARAM.inp.nbands_sto;
     const int npwx = stowf.npwx;
     const int nks = stowf.nks;
     const int ngroup = GlobalV::NSTOGROUP;
@@ -93,7 +93,7 @@ void Allocate_Chi0(Stochastic_WF& stowf)
 
 void Update_Sto_Orbitals(Stochastic_WF& stowf, const int seed_in)
 {
-    const int nchi = INPUT.nbands_sto;
+    const int nchi = PARAM.inp.nbands_sto;
     stowf.chi0->fix_k(0);
     if (seed_in >= 0)
     {
@@ -243,9 +243,9 @@ void Init_Sto_Orbitals_Ecut(Stochastic_WF& stowf,
     const int nx = pwmax.nx;
     const int ny = pwmax.ny;
     const int nz = pwmax.nz;
-    const int nkstot = kv.nkstot;
-    const int nks = kv.nks;
-    const int nchitot = INPUT.nbands_sto;
+    const int nkstot = kv.get_nkstot();
+    const int nks = kv.get_nks();
+    const int nchitot = PARAM.inp.nbands_sto;
     bool* updown = new bool[nx * ny * nz];
     int* nrecv = new int[GlobalV::NSTOGROUP];
     const int nchiper = stowf.nchip[0];

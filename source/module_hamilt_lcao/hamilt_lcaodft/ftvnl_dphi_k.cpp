@@ -1,4 +1,4 @@
-#include "FORCE_k.h"
+#include "FORCE.h"
 
 #include <map>
 #include <unordered_map>
@@ -23,25 +23,26 @@
 #endif
 
 
-void Force_LCAO_k::cal_ftvnl_dphi_k(const elecstate::DensityMatrix<std::complex<double>, double>* DM,
-                                    const Parallel_Orbitals &pv,
-                                    const UnitCell& ucell,
-                                    LCAO_Matrix &lm,
-                                    const bool isforce,
-                                    const bool isstress,
-                                    Record_adj& ra,
-                                    ModuleBase::matrix& ftvnl_dphi,
-                                    ModuleBase::matrix& stvnl_dphi)
+template<>
+void Force_LCAO<std::complex<double>>::cal_ftvnl_dphi(
+    const elecstate::DensityMatrix<std::complex<double>, double>* dm,
+    const Parallel_Orbitals& pv,
+    const UnitCell& ucell,
+    ForceStressArrays& fsr,
+    const bool isforce,
+    const bool isstress,
+    ModuleBase::matrix& ftvnl_dphi,
+    ModuleBase::matrix& stvnl_dphi,
+    Record_adj* ra)
 {
-    ModuleBase::TITLE("Force_LCAO_k", "cal_ftvnl_dphi_k");
-    ModuleBase::timer::tick("Force_LCAO_k", "cal_ftvnl_dphi_k");
+    ModuleBase::TITLE("Force_LCAO", "cal_ftvnl_dphi");
+    ModuleBase::timer::tick("Force_LCAO", "cal_ftvnl_dphi");
 
     const int nspin_DMR = (GlobalV::NSPIN == 2) ? 2 : 1;
 
     int total_irr = 0;
     // get the adjacent atom's information.
 
-    //	GlobalV::ofs_running << " calculate the ftvnl_dphi_k force" << std::endl;
 #ifdef _OPENMP
 #pragma omp parallel
     {
@@ -76,17 +77,17 @@ void Force_LCAO_k::cal_ftvnl_dphi_k(const elecstate::DensityMatrix<std::complex<
                 ftvnl_dphi_iat = ftvnl_dphi_temp;
             }
 #endif
-            for (int cb = 0; cb < ra.na_each[iat]; ++cb)
+            for (int cb = 0; cb < ra->na_each[iat]; ++cb)
             {
-                const int T2 = ra.info[iat][cb][3];
-                const int I2 = ra.info[iat][cb][4];
+                const int T2 = ra->info[iat][cb][3];
+                const int I2 = ra->info[iat][cb][4];
                 const int start2 = ucell.itiaiw2iwt(T2, I2, 0);
                 Atom* atom2 = &ucell.atoms[T2];
                 // get iat2
                 int iat2 = ucell.itia2iat(T2, I2);
-                double Rx = ra.info[iat][cb][0];
-                double Ry = ra.info[iat][cb][1];
-                double Rz = ra.info[iat][cb][2];
+                double Rx = ra->info[iat][cb][0];
+                double Ry = ra->info[iat][cb][1];
+                double Rz = ra->info[iat][cb][2];
                 // get BaseMatrix
                 if (pv.get_row_size(iat1) <= 0 || pv.get_col_size(iat2) <= 0)
                 {
@@ -95,14 +96,14 @@ void Force_LCAO_k::cal_ftvnl_dphi_k(const elecstate::DensityMatrix<std::complex<
                 std::vector<hamilt::BaseMatrix<double>*> tmp_matrix;
                 for (int is = 0; is < nspin_DMR; ++is)
                 {
-                    tmp_matrix.push_back(DM->get_DMR_pointer(is+1)->find_matrix(iat1, iat2, Rx, Ry, Rz));
+                    tmp_matrix.push_back(dm->get_DMR_pointer(is+1)->find_matrix(iat1, iat2, Rx, Ry, Rz));
                 }
-                //hamilt::BaseMatrix<double>* tmp_matrix = DM->get_DMR_pointer(1)->find_matrix(iat1, iat2, Rx, Ry, Rz);
+
                 for (int mu = 0; mu < pv.get_row_size(iat1); ++mu)
                 {
                     for (int nu = 0; nu < pv.get_col_size(iat2); ++nu)
                     {
-                        // get value from DM
+                        // get value from dm
                         double dm2d1 = 0.0;
                         for (int is = 0; is < nspin_DMR; ++is)
                         {
@@ -112,18 +113,18 @@ void Force_LCAO_k::cal_ftvnl_dphi_k(const elecstate::DensityMatrix<std::complex<
                         //
                         if (isforce)
                         {
-                            ftvnl_dphi_iat[0] += dm2d2 * lm.DHloc_fixedR_x[irr];
-                            ftvnl_dphi_iat[1] += dm2d2 * lm.DHloc_fixedR_y[irr];
-                            ftvnl_dphi_iat[2] += dm2d2 * lm.DHloc_fixedR_z[irr];
+                            ftvnl_dphi_iat[0] += dm2d2 * fsr.DHloc_fixedR_x[irr];
+                            ftvnl_dphi_iat[1] += dm2d2 * fsr.DHloc_fixedR_y[irr];
+                            ftvnl_dphi_iat[2] += dm2d2 * fsr.DHloc_fixedR_z[irr];
                         }
                         if (isstress)
                         {
-                            local_stvnl_dphi(0, 0) -= dm2d1 * lm.stvnl11[irr];
-                            local_stvnl_dphi(0, 1) -= dm2d1 * lm.stvnl12[irr];
-                            local_stvnl_dphi(0, 2) -= dm2d1 * lm.stvnl13[irr];
-                            local_stvnl_dphi(1, 1) -= dm2d1 * lm.stvnl22[irr];
-                            local_stvnl_dphi(1, 2) -= dm2d1 * lm.stvnl23[irr];
-                            local_stvnl_dphi(2, 2) -= dm2d1 * lm.stvnl33[irr];
+                            local_stvnl_dphi(0, 0) -= dm2d1 * fsr.stvnl11[irr];
+                            local_stvnl_dphi(0, 1) -= dm2d1 * fsr.stvnl12[irr];
+                            local_stvnl_dphi(0, 2) -= dm2d1 * fsr.stvnl13[irr];
+                            local_stvnl_dphi(1, 1) -= dm2d1 * fsr.stvnl22[irr];
+                            local_stvnl_dphi(1, 2) -= dm2d1 * fsr.stvnl23[irr];
+                            local_stvnl_dphi(2, 2) -= dm2d1 * fsr.stvnl33[irr];
                         }
                         //}
                         ++local_total_irr;
@@ -163,6 +164,6 @@ void Force_LCAO_k::cal_ftvnl_dphi_k(const elecstate::DensityMatrix<std::complex<
         StressTools::stress_fill(ucell.lat0, ucell.omega, stvnl_dphi);
     }
 
-    ModuleBase::timer::tick("Force_LCAO_k", "cal_ftvnl_dphi_k");
+    ModuleBase::timer::tick("Force_LCAO", "cal_ftvnl_dphi");
     return;
 }

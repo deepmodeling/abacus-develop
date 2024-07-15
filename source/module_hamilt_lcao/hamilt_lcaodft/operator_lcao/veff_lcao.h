@@ -2,7 +2,6 @@
 #define VEFFLCAO_H
 #include "module_base/timer.h"
 #include "module_elecstate/potentials/potential_new.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
 #include "operator_lcao.h"
@@ -36,23 +35,18 @@ class Veff<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      * @param GK_in: the pointer of Gint_k object, used for grid integration
     */
     Veff<OperatorLCAO<TK, TR>>(Gint_k* GK_in,
-                          Local_Orbital_Charge* loc_in,
-                          LCAO_Matrix* LM_in,
-                          const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
-                          elecstate::Potential* pot_in,
-                          hamilt::HContainer<TR>* hR_in,
-                          std::vector<TK>* hK_in,
-                          const UnitCell* ucell_in,
-                          Grid_Driver* GridD_in,
-                          const Parallel_Orbitals* paraV)
-        : GK(GK_in),
-          loc(loc_in),
-          pot(pot_in),
-          OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in)
+                               HS_Matrix_K<TK>* hsk_in,
+                               const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
+                               elecstate::Potential* pot_in,
+                               hamilt::HContainer<TR>* hR_in,
+                               const UnitCell* ucell_in,
+                               Grid_Driver* GridD_in)
+        : GK(GK_in), pot(pot_in), ucell(ucell_in),
+          gd(GridD_in), OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in)
     {
-        this->cal_type = lcao_gint;
+        this->cal_type = calculation_type::lcao_gint;
 
-        this->initialize_HR(ucell_in, GridD_in, paraV);
+        this->initialize_HR(ucell_in, GridD_in);
         GK_in->initialize_pvpR(*ucell_in, GridD_in);
     }
     /**
@@ -60,22 +54,16 @@ class Veff<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      * @param GG_in: the pointer of Gint_Gamma object, used for grid integration
     */
     Veff<OperatorLCAO<TK, TR>>(Gint_Gamma* GG_in,
-                          Local_Orbital_Charge* loc_in,
-                          LCAO_Matrix* LM_in,
-                          const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
-                          elecstate::Potential* pot_in,
-                          hamilt::HContainer<TR>* hR_in,
-                          std::vector<TK>* hK_in,
-                          const UnitCell* ucell_in,
-                          Grid_Driver* GridD_in,
-                          const Parallel_Orbitals* paraV
-                          )
-        : GG(GG_in), loc(loc_in), pot(pot_in),
-        OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in)
+                               HS_Matrix_K<TK>* hsk_in,
+                               const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
+                               elecstate::Potential* pot_in,
+                               hamilt::HContainer<TR>* hR_in,
+                               const UnitCell* ucell_in,
+                               Grid_Driver* GridD_in)
+        : GG(GG_in), pot(pot_in), OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in)
     {
-        this->cal_type = lcao_gint;
-
-        this->initialize_HR(ucell_in, GridD_in, paraV);
+        this->cal_type = calculation_type::lcao_gint;
+        this->initialize_HR(ucell_in, GridD_in);
 
         GG_in->initialize_pvpR(*ucell_in, GridD_in);
     }
@@ -89,7 +77,9 @@ class Veff<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      * grid integration is used to calculate the contribution Hamiltonian of effective potential
      */
     virtual void contributeHR() override;
-
+  
+  const UnitCell* ucell;
+  Grid_Driver* gd;
   private:
     // used for k-dependent grid integration.
     Gint_k* GK = nullptr;
@@ -98,16 +88,18 @@ class Veff<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     Gint_Gamma* GG = nullptr;
 
     // Charge calculating method in LCAO base and contained grid base calculation: DM_R, DM, pvpR_reduced
-    Local_Orbital_Charge* loc = nullptr;
 
     elecstate::Potential* pot = nullptr;
+
+    int nspin = 1;
+    int current_spin = 0;
 
     /**
      * @brief initialize HR, search the nearest neighbor atoms
      * HContainer is used to store the electronic kinetic matrix with specific <I,J,R> atom-pairs
      * the size of HR will be fixed after initialization
      */
-    void initialize_HR(const UnitCell* ucell_in, Grid_Driver* GridD_in, const Parallel_Orbitals* paraV);
+    void initialize_HR(const UnitCell* ucell_in, Grid_Driver* GridD_in);
 
 };
 

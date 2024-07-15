@@ -1,9 +1,9 @@
-#include "../output_hcontainer.h"
-
 #include "../hcontainer.h"
+#include "../output_hcontainer.h"
+#include "module_cell/unitcell.h"
+
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "module_cell/unitcell.h"
 
 /************************************************
  *  unit test of output_hcontainer.cpp
@@ -76,7 +76,7 @@ TEST_F(OutputHContainerTest, Write)
     ParaV.nrow = 4;
     ParaV.ncol = 4;
     std::ofstream ofs("output_hcontainer.log");
-    ParaV.set_global2local(4, 4, false, ofs);
+    ParaV.set_serial(4, 4);
     // std::cout << "ParaV.global2local_row = " << ParaV.global2local_row(0) << " " << ParaV.global2local_row(1) << " "
     //           << ParaV.global2local_row(2) << " " << ParaV.global2local_row(3) << std::endl;
     // std::cout << "ParaV.global2local_col = " << ParaV.global2local_col(0) << " " << ParaV.global2local_col(1) << " "
@@ -131,7 +131,7 @@ TEST_F(OutputHContainerTest, Write)
         HR.unfix_R();
     }
     double sparse_threshold = 0.1;
-    hamilt::Output_HContainer<double> output_HR(&HR, &ParaV, ucell, std::cout, sparse_threshold, 2);
+    hamilt::Output_HContainer<double> output_HR(&HR, std::cout, sparse_threshold, 2);
     // the first R
     testing::internal::CaptureStdout();
     output_HR.write(0, 1, 1);

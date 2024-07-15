@@ -5,11 +5,10 @@ suffix		    autotest
 relax_nmax	    100
 force_thr_ev        0.01
 stress_thr          1
-out_stru            1
 out_level           ie
 pseudo_rcut         10.0
 pseudo_mesh         1
-ecutwfc             30
+ecutwfc             20
 basis_type          pw
 ks_solver           cg
 smearing_method     gaussian

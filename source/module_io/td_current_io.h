@@ -1,9 +1,9 @@
-#ifndef TD_CURRENT_H
-#define TD_CURRENT_H
+#ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_IO_TD_CURRENT_IO_H
+#define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_IO_TD_CURRENT_IO_H
 
-#include "module_elecstate/module_dm/density_matrix.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_gen_fixedH.h"
+#include "module_basis/module_nao/two_center_bundle.h"
 #include "module_elecstate/elecstate_lcao.h"
+#include "module_elecstate/module_dm/density_matrix.h"
 #include "module_psi/psi.h"
 
 namespace ModuleIO
@@ -11,26 +11,20 @@ namespace ModuleIO
 #ifdef __LCAO
 /// @brief func to output current, only used in tddft
 void write_current(const int istep,
-                    const psi::Psi<std::complex<double>>* psi,
-                    const elecstate::ElecState* pelec,
-                    const K_Vectors& kv,
-                    const Parallel_Orbitals* pv,
-					Record_adj& ra,
-					LCAO_Matrix &lm, // mohan add 2024-04-02
-					LCAO_gen_fixedH &gen_h); // mohan add 2024-04-02
+                   const psi::Psi<std::complex<double>>* psi,
+                   const elecstate::ElecState* pelec,
+                   const K_Vectors& kv,
+                   const TwoCenterIntegrator* intor,
+                   const Parallel_Orbitals* pv,
+                   Record_adj& ra);
 
 /// @brief calculate sum_n[𝜌_(𝑛𝑘,𝜇𝜈)] for current calculation
-void cal_tmp_DM(elecstate::DensityMatrix<std::complex<double>, double>& DM, const int ik, const int nspin);
-
-/// @brief Init DS_locR for currrent calculation
-void Init_DS_tmp(
-		const Parallel_Orbitals& pv,
-		LCAO_Matrix &lm,
-		LCAO_gen_fixedH &gen_h);
-
-/// @brief DS_locR will be initialized again in force calculation, so it must be destoryed here.
-void destory_DS_tmp(LCAO_Matrix &lm);
+void cal_tmp_DM(elecstate::DensityMatrix<std::complex<double>, double>& DM_real,
+                elecstate::DensityMatrix<std::complex<double>, double>& DM_imag,
+                const int ik,
+                const int nspin,
+                const int is);
 
 #endif // __LCAO
-}
-#endif // TD_CURRENT_H
+} // namespace ModuleIO
+#endif // W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_IO_TD_CURRENT_IO_H

@@ -7,7 +7,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/blas_connector.h"
 #include "module_base/timer.h"
-#include "module_base/memory.h"
+#include "module_base/array_pool.h"
 //#include <mkl_cblas.h>
 
 #ifdef _OPENMP
@@ -25,6 +25,7 @@ void Gint::gint_kernel_vlocal(
 	double* vldr3,
 	const int LD_pool,
 	double* pvpR_in,
+	const UnitCell& ucell,
 	hamilt::HContainer<double>* hR)
 {
 	//prepare block information
@@ -33,31 +34,32 @@ void Gint::gint_kernel_vlocal(
 	Gint_Tools::get_block_info(*this->gridt, this->bxyz, na_grid, grid_index, block_iw, block_index, block_size, cal_flag);
 	
 	//evaluate psi and dpsi on grids
-	Gint_Tools::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
+	ModuleBase::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
 	Gint_Tools::cal_psir_ylm(*this->gridt, 
 		this->bxyz, na_grid, grid_index, delta_r,
 		block_index, block_size, 
 		cal_flag,
-		psir_ylm.ptr_2D);
+		psir_ylm.get_ptr_2D());
 	
 	//calculating f_mu(r) = v(r)*psi_mu(r)*dv
-	const Gint_Tools::Array_Pool<double> psir_vlbr3 = Gint_Tools::get_psir_vlbr3(
-			this->bxyz, na_grid, LD_pool, block_index, cal_flag, vldr3, psir_ylm.ptr_2D);
-	ModuleBase::Memory::record("Gint::gint_kernel_vlocal",sizeof(double)*this->bxyz*(LD_pool+1)*2);
+	const ModuleBase::Array_Pool<double> psir_vlbr3 = Gint_Tools::get_psir_vlbr3(
+			this->bxyz, na_grid, LD_pool, block_index, cal_flag, vldr3, psir_ylm.get_ptr_2D());
+
 	//integrate (psi_mu*v(r)*dv) * psi_nu on grid
 	//and accumulates to the corresponding element in Hamiltonian
     if(GlobalV::GAMMA_ONLY_LOCAL)
     {
-		if(hR == nullptr) hR = this->hRGint;
+		if(hR == nullptr) { hR = this->hRGint;
+}
 		this->cal_meshball_vlocal_gamma(
 			na_grid, LD_pool, block_iw, block_size, block_index, grid_index, cal_flag,
-			psir_ylm.ptr_2D, psir_vlbr3.ptr_2D, hR);
+			psir_ylm.get_ptr_2D(), psir_vlbr3.get_ptr_2D(), hR);
     }
     else
     {
         this->cal_meshball_vlocal_k(
             na_grid, LD_pool, grid_index, block_size, block_index, block_iw, cal_flag,
-            psir_ylm.ptr_2D, psir_vlbr3.ptr_2D, pvpR_in);
+            psir_ylm.get_ptr_2D(), psir_vlbr3.get_ptr_2D(), pvpR_in,ucell);
     }
 
     //release memories
@@ -81,7 +83,8 @@ void Gint::gint_kernel_dvlocal(
 	const int LD_pool,
 	double* pvdpRx,
 	double* pvdpRy,
-	double* pvdpRz)
+	double* pvdpRz,
+	const UnitCell& ucell)
 {
 	//prepare block information
 	int * block_iw, * block_index, * block_size;
@@ -89,29 +92,29 @@ void Gint::gint_kernel_dvlocal(
 	Gint_Tools::get_block_info(*this->gridt, this->bxyz, na_grid, grid_index, block_iw, block_index, block_size, cal_flag);
 	
 	//evaluate psi and dpsi on grids
-	Gint_Tools::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
-	Gint_Tools::Array_Pool<double> dpsir_ylm_x(this->bxyz, LD_pool);
-	Gint_Tools::Array_Pool<double> dpsir_ylm_y(this->bxyz, LD_pool);
-	Gint_Tools::Array_Pool<double> dpsir_ylm_z(this->bxyz, LD_pool);
+	ModuleBase::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
+	ModuleBase::Array_Pool<double> dpsir_ylm_x(this->bxyz, LD_pool);
+	ModuleBase::Array_Pool<double> dpsir_ylm_y(this->bxyz, LD_pool);
+	ModuleBase::Array_Pool<double> dpsir_ylm_z(this->bxyz, LD_pool);
 
 	Gint_Tools::cal_dpsir_ylm(*this->gridt, this->bxyz, na_grid, grid_index, delta_r,	block_index, block_size, cal_flag,
-		psir_ylm.ptr_2D, dpsir_ylm_x.ptr_2D, dpsir_ylm_y.ptr_2D, dpsir_ylm_z.ptr_2D);
+		psir_ylm.get_ptr_2D(), dpsir_ylm_x.get_ptr_2D(), dpsir_ylm_y.get_ptr_2D(), dpsir_ylm_z.get_ptr_2D());
 
 	//calculating f_mu(r) = v(r)*psi_mu(r)*dv
-	const Gint_Tools::Array_Pool<double> psir_vlbr3 = Gint_Tools::get_psir_vlbr3(
-			this->bxyz, na_grid, LD_pool, block_index, cal_flag, vldr3, psir_ylm.ptr_2D);
-	ModuleBase::Memory::record("Gint::gint_kernel_dvlocal",sizeof(double)*this->bxyz*(LD_pool+1)*5);
+	const ModuleBase::Array_Pool<double> psir_vlbr3 = Gint_Tools::get_psir_vlbr3(
+			this->bxyz, na_grid, LD_pool, block_index, cal_flag, vldr3, psir_ylm.get_ptr_2D());
+
 	//integrate (psi_mu*v(r)*dv) * psi_nu on grid
 	//and accumulates to the corresponding element in Hamiltonian
 	this->cal_meshball_vlocal_k(
 		na_grid, LD_pool, grid_index, block_size, block_index, block_iw, cal_flag,
-		psir_vlbr3.ptr_2D, dpsir_ylm_x.ptr_2D, pvdpRx);
+		psir_vlbr3.get_ptr_2D(), dpsir_ylm_x.get_ptr_2D(), pvdpRx,ucell);
 	this->cal_meshball_vlocal_k(
 		na_grid, LD_pool, grid_index, block_size, block_index, block_iw, cal_flag,
-		psir_vlbr3.ptr_2D, dpsir_ylm_y.ptr_2D, pvdpRy);
+		psir_vlbr3.get_ptr_2D(), dpsir_ylm_y.get_ptr_2D(), pvdpRy,ucell);
 	this->cal_meshball_vlocal_k(
 		na_grid, LD_pool, grid_index, block_size, block_index, block_iw, cal_flag,
-		psir_vlbr3.ptr_2D, dpsir_ylm_z.ptr_2D, pvdpRz);
+		psir_vlbr3.get_ptr_2D(), dpsir_ylm_z.get_ptr_2D(), pvdpRz,ucell);
 
     //release memories
 	delete[] block_iw;
@@ -134,6 +137,7 @@ void Gint::gint_kernel_vlocal_meta(
 	double* vkdr3,
 	const int LD_pool,
 	double* pvpR_in,
+	const UnitCell& ucell,
 	hamilt::HContainer<double>* hR)
 {
 	//prepare block information
@@ -142,68 +146,68 @@ void Gint::gint_kernel_vlocal_meta(
 	Gint_Tools::get_block_info(*this->gridt, this->bxyz, na_grid, grid_index, block_iw, block_index, block_size, cal_flag);
 
     //evaluate psi and dpsi on grids
-	Gint_Tools::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
-	Gint_Tools::Array_Pool<double> dpsir_ylm_x(this->bxyz, LD_pool);
-	Gint_Tools::Array_Pool<double> dpsir_ylm_y(this->bxyz, LD_pool);
-	Gint_Tools::Array_Pool<double> dpsir_ylm_z(this->bxyz, LD_pool);
+	ModuleBase::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
+	ModuleBase::Array_Pool<double> dpsir_ylm_x(this->bxyz, LD_pool);
+	ModuleBase::Array_Pool<double> dpsir_ylm_y(this->bxyz, LD_pool);
+	ModuleBase::Array_Pool<double> dpsir_ylm_z(this->bxyz, LD_pool);
 
 	Gint_Tools::cal_dpsir_ylm(*this->gridt,
 		this->bxyz, na_grid, grid_index, delta_r,
 		block_index, block_size, 
 		cal_flag,
-		psir_ylm.ptr_2D,
-		dpsir_ylm_x.ptr_2D,
-		dpsir_ylm_y.ptr_2D,
-		dpsir_ylm_z.ptr_2D
+		psir_ylm.get_ptr_2D(),
+		dpsir_ylm_x.get_ptr_2D(),
+		dpsir_ylm_y.get_ptr_2D(),
+		dpsir_ylm_z.get_ptr_2D()
 	);
 	
 	//calculating f_mu(r) = v(r)*psi_mu(r)*dv
-	const Gint_Tools::Array_Pool<double> psir_vlbr3 = Gint_Tools::get_psir_vlbr3(
-			this->bxyz, na_grid, LD_pool, block_index, cal_flag, vldr3, psir_ylm.ptr_2D);
+	const ModuleBase::Array_Pool<double> psir_vlbr3 = Gint_Tools::get_psir_vlbr3(
+			this->bxyz, na_grid, LD_pool, block_index, cal_flag, vldr3, psir_ylm.get_ptr_2D());
 
 	//calculating df_mu(r) = vofk(r) * dpsi_mu(r) * dv
-	const Gint_Tools::Array_Pool<double> dpsix_vlbr3 = Gint_Tools::get_psir_vlbr3(
-			this->bxyz, na_grid, LD_pool, block_index, cal_flag, vkdr3, dpsir_ylm_x.ptr_2D);
-	const Gint_Tools::Array_Pool<double> dpsiy_vlbr3 = Gint_Tools::get_psir_vlbr3(
-			this->bxyz, na_grid, LD_pool, block_index, cal_flag, vkdr3, dpsir_ylm_y.ptr_2D);	
-	const Gint_Tools::Array_Pool<double> dpsiz_vlbr3 = Gint_Tools::get_psir_vlbr3(
-			this->bxyz, na_grid, LD_pool, block_index, cal_flag, vkdr3, dpsir_ylm_z.ptr_2D);
-	ModuleBase::Memory::record("Gint::gint_kernel_vlocal_meta",sizeof(double)*this->bxyz*(LD_pool+1)*8);
+	const ModuleBase::Array_Pool<double> dpsix_vlbr3 = Gint_Tools::get_psir_vlbr3(
+			this->bxyz, na_grid, LD_pool, block_index, cal_flag, vkdr3, dpsir_ylm_x.get_ptr_2D());
+	const ModuleBase::Array_Pool<double> dpsiy_vlbr3 = Gint_Tools::get_psir_vlbr3(
+			this->bxyz, na_grid, LD_pool, block_index, cal_flag, vkdr3, dpsir_ylm_y.get_ptr_2D());	
+	const ModuleBase::Array_Pool<double> dpsiz_vlbr3 = Gint_Tools::get_psir_vlbr3(
+			this->bxyz, na_grid, LD_pool, block_index, cal_flag, vkdr3, dpsir_ylm_z.get_ptr_2D());
 
     if(GlobalV::GAMMA_ONLY_LOCAL)
     {
-		if(hR == nullptr) hR = this->hRGint;
+		if(hR == nullptr) { hR = this->hRGint;
+}
 		//integrate (psi_mu*v(r)*dv) * psi_nu on grid
 		//and accumulates to the corresponding element in Hamiltonian
 		this->cal_meshball_vlocal_gamma(
 			na_grid, LD_pool, block_iw, block_size, block_index, grid_index, cal_flag,
-			psir_ylm.ptr_2D, psir_vlbr3.ptr_2D, hR);
+			psir_ylm.get_ptr_2D(), psir_vlbr3.get_ptr_2D(), hR);
 		//integrate (d/dx_i psi_mu*vk(r)*dv) * (d/dx_i psi_nu) on grid (x_i=x,y,z)
 		//and accumulates to the corresponding element in Hamiltonian
 		this->cal_meshball_vlocal_gamma(
 			na_grid, LD_pool, block_iw, block_size, block_index, grid_index, cal_flag,
-			dpsir_ylm_x.ptr_2D, dpsix_vlbr3.ptr_2D, hR);
+			dpsir_ylm_x.get_ptr_2D(), dpsix_vlbr3.get_ptr_2D(), hR);
 		this->cal_meshball_vlocal_gamma(
 			na_grid, LD_pool, block_iw, block_size, block_index, grid_index, cal_flag,
-			dpsir_ylm_y.ptr_2D, dpsiy_vlbr3.ptr_2D, hR);
+			dpsir_ylm_y.get_ptr_2D(), dpsiy_vlbr3.get_ptr_2D(), hR);
 		this->cal_meshball_vlocal_gamma(
 			na_grid, LD_pool, block_iw, block_size, block_index, grid_index, cal_flag,
-			dpsir_ylm_z.ptr_2D, dpsiz_vlbr3.ptr_2D, hR);
+			dpsir_ylm_z.get_ptr_2D(), dpsiz_vlbr3.get_ptr_2D(), hR);
     }
     else
     {
         this->cal_meshball_vlocal_k(
             na_grid, LD_pool, grid_index, block_size, block_index, block_iw, cal_flag,
-            psir_ylm.ptr_2D, psir_vlbr3.ptr_2D, pvpR_in);
+            psir_ylm.get_ptr_2D(), psir_vlbr3.get_ptr_2D(), pvpR_in,ucell);
 		this->cal_meshball_vlocal_k(
             na_grid, LD_pool, grid_index, block_size, block_index, block_iw, cal_flag,
-			dpsir_ylm_x.ptr_2D, dpsix_vlbr3.ptr_2D, pvpR_in);
+			dpsir_ylm_x.get_ptr_2D(), dpsix_vlbr3.get_ptr_2D(), pvpR_in,ucell);
 		this->cal_meshball_vlocal_k(
             na_grid, LD_pool, grid_index, block_size, block_index, block_iw, cal_flag,
-			dpsir_ylm_y.ptr_2D, dpsiy_vlbr3.ptr_2D, pvpR_in);
+			dpsir_ylm_y.get_ptr_2D(), dpsiy_vlbr3.get_ptr_2D(), pvpR_in,ucell);
 		this->cal_meshball_vlocal_k(
             na_grid, LD_pool, grid_index, block_size, block_index, block_iw, cal_flag,
-			dpsir_ylm_z.ptr_2D, dpsiz_vlbr3.ptr_2D, pvpR_in);
+			dpsir_ylm_z.get_ptr_2D(), dpsiz_vlbr3.get_ptr_2D(), pvpR_in,ucell);
     }
 
     //release memories
@@ -266,7 +270,8 @@ void Gint::cal_meshball_vlocal_gamma(
                     }
                 }
                 const int ib_length = last_ib-first_ib;
-                if(ib_length<=0) continue;
+                if(ib_length<=0) { continue;
+}
 
 				// calculate the BaseMatrix of <iat1, iat2, R> atom-pair
 				hamilt::AtomPair<double>* tmp_ap = hR->find_pair(iat1, iat2);
@@ -319,7 +324,8 @@ void Gint::cal_meshball_vlocal_k(
 	bool** cal_flag,  
 	double** psir_ylm,
 	double** psir_vlbr3,
-	double* pvpR)
+	double* pvpR,
+	const UnitCell& ucell)
 {
     auto find_offset = [&](const int id1, const int id2, const int iat1, const int iat2)->int
     {
@@ -354,28 +360,30 @@ void Gint::cal_meshball_vlocal_k(
 		int m=block_size[ia1];
 		const int mcell_index1 = this->gridt->bcell_start[grid_index] + ia1;
 		const int iat1= this->gridt->which_atom[mcell_index1];
-		const int T1 = GlobalC::ucell.iat2it[iat1];
+		const int T1 = ucell.iat2it[iat1];
 		const int id1 = this->gridt->which_unitcell[mcell_index1];
 		const int DM_start = this->gridt->nlocstartg[iat1];
 		for(int ia2=0; ia2<na_grid; ++ia2)
 		{
 			const int mcell_index2 = this->gridt->bcell_start[grid_index] + ia2;
 			const int iat2 = this->gridt->which_atom[mcell_index2];
-			const int T2 = GlobalC::ucell.iat2it[iat2];
+			const int T2 = ucell.iat2it[iat2];
 			if (iat1 <= iat2)
 			{
     			int cal_num=0;
     			for(int ib=0; ib<this->bxyz; ++ib)
     			{
-    				if(cal_flag[ib][ia1] && cal_flag[ib][ia2])
+    				if(cal_flag[ib][ia1] && cal_flag[ib][ia2]) {
     				    ++cal_num;
+}
     			}
 
-    			if(cal_num==0) continue;
+    			if(cal_num==0) { continue;
+}
     			
                 const int idx2=block_index[ia2];
         		int n=block_size[ia2];
-				//const int I2 = GlobalC::ucell.iat2ia[iat2];
+				//const int I2 = ucell.iat2ia[iat2];
 				const int mcell_index2 = this->gridt->bcell_start[grid_index] + ia2;
 				const int id2 = this->gridt->which_unitcell[mcell_index2];
 				int offset;

@@ -19,8 +19,6 @@
 
 Input INPUT;
 #define doublethreshold 1e-8
-Parallel_2D::Parallel_2D(){}
-Parallel_2D::~Parallel_2D(){}
 Parallel_Orbitals::Parallel_Orbitals()
 {
 }
@@ -39,6 +37,7 @@ TEST(PropagatorTest, testPropagatorCN)
     pv = new Parallel_Orbitals();
     pv->nloc = nlocal * nlocal;
     pv->ncol = nlocal;
+    pv->coord[0] = pv->coord[1] = 0;
     INPUT.mdp.md_dt = 4;
 
     // Initialize input matrices

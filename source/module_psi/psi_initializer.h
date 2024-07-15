@@ -116,13 +116,13 @@ class psi_initializer
         std::vector<int> ixy2is() const { return this->ixy2is_; }
         int mem_saver() const { return this->mem_saver_; }
         double random_mix() const { return this->random_mix_; }
-        bool initialized() const { return this->initialized_; }
         std::string method() const { return this->method_; }
         int nbands_complem() const { return this->nbands_complem_; }
         // because unique_ptr is not copyable or used as rvlaue, use shared_ptr instead
         // but to avoid ownership issue, use weak_ptr to share the pointer
         // therefore there is no really getter to get directly the shared_ptr.
         std::weak_ptr<psi::Psi<T, Device>> share_psig() { return this->psig_; }
+        int psig_use_count() { return this->psig_.use_count(); }
 
         void set_ucell(UnitCell* p_ucell_in) { this->p_ucell_ = p_ucell_in; }
         void set_pspot_nl(pseudopot_cell_vnl* p_pspot_nl_in) { this->p_pspot_nl_ = p_pspot_nl_in; }
@@ -132,10 +132,9 @@ class psi_initializer
         void set_ixy2is(const std::vector<int>& ixy2is_in) { this->ixy2is_ = ixy2is_in; }
         void set_random_seed(const int random_seed_in) { this->random_seed_ = random_seed_in; }
         void set_mem_saver(const int mem_saver_in) { this->mem_saver_ = mem_saver_in; }
-        void set_initialized(bool initialized_in) { this->initialized_ = initialized_in; }
         void set_method(std::string method_in) { this->method_ = method_in; }
         void set_nbands_complem(int nbands_in) { this->nbands_complem_ = nbands_in; }
-
+        void deallocate_psig() { this->psig_.reset(); }
         // tool methods
         // the following function is for compatibility concern, in ESolver_KS_PW the FPTYPE
         // now support double, float, std::complex<double> and std::complex<float>
@@ -179,7 +178,6 @@ class psi_initializer
         int mem_saver_ = 0;
         std::string method_ = "none";
         int nbands_complem_ = 0;
-        bool initialized_ = false;
         double random_mix_ = 0;
 };
 #endif

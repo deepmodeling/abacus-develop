@@ -35,7 +35,7 @@
  *  - SpinConstrain::get_iwt()
  *     get the index of orbital with spin component from (itype, iat, orbital_index)
  */
-
+#include "module_cell/klist.h"
 K_Vectors::K_Vectors(){}
 K_Vectors::~K_Vectors(){}
 
@@ -43,7 +43,7 @@ template <typename T>
 class SpinConstrainTest : public testing::Test
 {
   protected:
-    SpinConstrain<T, psi::DEVICE_CPU>& sc = SpinConstrain<T, psi::DEVICE_CPU>::getScInstance();
+    SpinConstrain<T, base_device::DEVICE_CPU>& sc = SpinConstrain<T, base_device::DEVICE_CPU>::getScInstance();
 };
 
 using MyTypes = ::testing::Types<double, std::complex<double>>;
@@ -363,14 +363,13 @@ TYPED_TEST(SpinConstrainTest, SetSolverParameters)
 {
     K_Vectors kv;
     this->sc.set_nspin(4);
-    this->sc.set_solver_parameters(kv, nullptr, nullptr, nullptr, nullptr, "genelpa", nullptr);
+    this->sc.set_solver_parameters(kv, nullptr, nullptr, nullptr, nullptr, "genelpa");
     EXPECT_EQ(this->sc.get_nspin(), 4);
     EXPECT_EQ(this->sc.phsol, nullptr);
     EXPECT_EQ(this->sc.p_hamilt, nullptr);
     EXPECT_EQ(this->sc.psi, nullptr);
     EXPECT_EQ(this->sc.pelec, nullptr);
     EXPECT_EQ(this->sc.KS_SOLVER, "genelpa");
-    EXPECT_EQ(this->sc.LM, nullptr);
 }
 
 TYPED_TEST(SpinConstrainTest, SetParaV)
@@ -386,7 +385,7 @@ TYPED_TEST(SpinConstrainTest, SetParaV)
     int nrow = 4;
     int ncol = 4;
     std::ofstream ofs("test.log");
-    paraV.set_global2local(nrow, ncol, false, ofs);
+    paraV.set_serial(nrow, ncol);
     this->sc.set_ParaV(&paraV);
     EXPECT_EQ(this->sc.ParaV->nloc, nrow * ncol);
     remove("test.log");

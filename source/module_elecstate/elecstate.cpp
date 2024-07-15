@@ -2,9 +2,9 @@
 
 #include "module_base/global_variable.h"
 #include "module_base/memory.h"
+#include "module_base/parallel_reduce.h"
 #include "module_base/tool_title.h"
 #include "occupy.h"
-#include "module_base/parallel_reduce.h"
 
 namespace elecstate
 {
@@ -16,11 +16,15 @@ const double* ElecState::getRho(int spin) const
     return &(this->charge->rho[spin][0]);
 }
 
-void ElecState::fixed_weights(const std::vector<double>& ocp_kb)
+void ElecState::fixed_weights(const std::vector<double>& ocp_kb, const int& nbands, const double& nelec)
 {
 
-    int num = 0;
-    num = this->klist->nks * GlobalV::NBANDS;
+    assert(nbands > 0);
+    assert(nelec > 0.0);
+
+    const double ne_thr = 1.0e-5;
+
+    const int num = this->klist->get_nks() * nbands;
     if (num != ocp_kb.size())
     {
         ModuleBase::WARNING_QUIT("ElecState::fixed_weights",
@@ -28,24 +32,27 @@ void ElecState::fixed_weights(const std::vector<double>& ocp_kb)
     }
 
     double num_elec = 0.0;
-    for (int i = 0; i < ocp_kb.size(); i++)
+    for (int i = 0; i < ocp_kb.size(); ++i)
     {
         num_elec += ocp_kb[i];
     }
-    if (std::abs(num_elec - GlobalV::nelec) > 1.0e-5)
+
+    if (std::abs(num_elec - nelec) > ne_thr)
     {
         ModuleBase::WARNING_QUIT("ElecState::fixed_weights",
                                  "total number of occupations is wrong , please check ocp_set");
     }
 
-    for (int ik = 0; ik < this->wg.nr; ik++)
+    for (int ik = 0; ik < this->wg.nr; ++ik)
     {
-        for (int ib = 0; ib < this->wg.nc; ib++)
+        for (int ib = 0; ib < this->wg.nc; ++ib)
         {
             this->wg(ik, ib) = ocp_kb[ik * this->wg.nc + ib];
         }
     }
     this->skip_weights = true;
+
+    return;
 }
 
 void ElecState::init_nelec_spin()
@@ -158,7 +165,7 @@ void ElecState::calculate_weights()
         }
 #ifdef __MPI
         // qianrui fix a bug on 2021-7-21
-        Parallel_Reduce::reduce_double_allpool(this->f_en.demet);
+        Parallel_Reduce::reduce_double_allpool(GlobalV::KPAR, GlobalV::NPROC_IN_POOL, this->f_en.demet);
 #endif
     }
     else if (Occupy::fixed_occupations)
@@ -175,7 +182,7 @@ void ElecState::calEBand()
     // calculate ebands using wg and ekb
     double eband = 0.0;
 #ifdef _OPENMP
-#pragma omp parallel for collapse(2) reduction(+:eband)
+#pragma omp parallel for collapse(2) reduction(+ : eband)
 #endif
     for (int ik = 0; ik < this->ekb.nr; ++ik)
     {
@@ -202,7 +209,7 @@ void ElecState::init_scf(const int istep, const ModuleBase::ComplexMatrix& struc
 {
     //---------Charge part-----------------
     // core correction potential.
-    if(!GlobalV::use_paw)
+    if (!GlobalV::use_paw)
     {
         this->charge->set_rho_core(strucfac);
     }
@@ -257,8 +264,9 @@ void ElecState::cal_nbands()
     // calculate number of bands (setup.f90)
     //=======================================
     double occupied_bands = static_cast<double>(GlobalV::nelec / ModuleBase::DEGSPIN);
-    if (GlobalV::LSPINORB == 1)
+    if (GlobalV::LSPINORB == 1) {
         occupied_bands = static_cast<double>(GlobalV::nelec);
+    }
 
     if ((occupied_bands - std::floor(occupied_bands)) > 0.0)
     {
@@ -267,16 +275,6 @@ void ElecState::cal_nbands()
 
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "occupied bands", occupied_bands);
 
-    // mohan add 2010-09-04
-    // std::cout << "nbands(this-> = " <<GlobalV::NBANDS <<std::endl;
-    if (GlobalV::NBANDS == occupied_bands)
-    {
-        if (Occupy::gauss())
-        {
-            ModuleBase::WARNING_QUIT("ElecState::cal_nbands", "for smearing, num. of bands > num. of occupied bands");
-        }
-    }
-
     if (GlobalV::NBANDS == 0)
     {
         if (GlobalV::NSPIN == 1)
@@ -284,16 +282,18 @@ void ElecState::cal_nbands()
             const int nbands1 = static_cast<int>(occupied_bands) + 10;
             const int nbands2 = static_cast<int>(1.2 * occupied_bands) + 1;
             GlobalV::NBANDS = std::max(nbands1, nbands2);
-            if (GlobalV::BASIS_TYPE != "pw")
+            if (GlobalV::BASIS_TYPE != "pw") {
                 GlobalV::NBANDS = std::min(GlobalV::NBANDS, GlobalV::NLOCAL);
+            }
         }
         else if (GlobalV::NSPIN == 4)
         {
             const int nbands3 = GlobalV::nelec + 20;
             const int nbands4 = static_cast<int>(1.2 * GlobalV::nelec) + 1;
             GlobalV::NBANDS = std::max(nbands3, nbands4);
-            if (GlobalV::BASIS_TYPE != "pw")
+            if (GlobalV::BASIS_TYPE != "pw") {
                 GlobalV::NBANDS = std::min(GlobalV::NBANDS, GlobalV::NLOCAL);
+            }
         }
         else if (GlobalV::NSPIN == 2)
         {
@@ -301,8 +301,9 @@ void ElecState::cal_nbands()
             const int nbands3 = static_cast<int>(max_occ) + 11;
             const int nbands4 = static_cast<int>(1.2 * max_occ) + 1;
             GlobalV::NBANDS = std::max(nbands3, nbands4);
-            if (GlobalV::BASIS_TYPE != "pw")
+            if (GlobalV::BASIS_TYPE != "pw") {
                 GlobalV::NBANDS = std::min(GlobalV::NBANDS, GlobalV::NLOCAL);
+            }
         }
         ModuleBase::GlobalFunc::AUTO_SET("NBANDS", GlobalV::NBANDS);
     }
@@ -310,8 +311,9 @@ void ElecState::cal_nbands()
     // 2014-10-13
     else
     {
-        if (GlobalV::NBANDS < occupied_bands)
+        if (GlobalV::NBANDS < occupied_bands) {
             ModuleBase::WARNING_QUIT("unitcell", "Too few bands!");
+        }
         if (GlobalV::NSPIN == 2)
         {
             if (GlobalV::NBANDS < this->nelec_spin[0])
@@ -324,6 +326,16 @@ void ElecState::cal_nbands()
                 ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "nelec_down", this->nelec_spin[1]);
                 ModuleBase::WARNING_QUIT("ElecState::cal_nbands", "Too few spin down bands!");
             }
+        }
+    }
+
+    // mohan add 2010-09-04
+    // std::cout << "nbands(this-> = " <<GlobalV::NBANDS <<std::endl;
+    if (GlobalV::NBANDS == occupied_bands)
+    {
+        if (Occupy::gauss())
+        {
+            ModuleBase::WARNING_QUIT("ElecState::cal_nbands", "for smearing, num. of bands > num. of occupied bands");
         }
     }
 

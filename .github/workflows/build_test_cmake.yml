@@ -34,6 +34,9 @@ jobs:
             name: "Build without ELPA"
           - tag: gnu
             build_args: "-DENABLE_MPI=0"
+            name: "Build without MPI"
+          - tag: gnu
+            build_args: "-DENABLE_MPI=0 -DENABLE_LCAO=0"
             name: "Build without LCAO and MPI"
 
     name: ${{ matrix.name }}

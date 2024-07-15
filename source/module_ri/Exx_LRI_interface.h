@@ -5,7 +5,6 @@
 #include "module_ri/Mix_DMk_2D.h"
 #include <memory>
 
-class Local_Orbital_Charge;
 class LCAO_Matrix;
 class Charge_Mixing;
 namespace elecstate
@@ -31,11 +30,7 @@ public:
     void write_Hexxs_cereal(const std::string& file_name) const;
     void read_Hexxs_cereal(const std::string& file_name);
 
-    /// read and write Hexxs in CSR format
-    void write_Hexxs_csr(const std::string& file_name, const UnitCell& ucell) const;
-    void read_Hexxs_csr(const std::string& file_name, const UnitCell& ucell);
-
-    std::vector< std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& get_Hexxs() const { return this->exx_ptr->Hexxs; }
+    std::vector<std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& get_Hexxs() const { return this->exx_ptr->Hexxs; }
     
     double& get_Eexx() const { return this->exx_ptr->Eexx; }
 
@@ -53,19 +48,11 @@ public:
     /// @brief: in do_after_converge: add exx operators; do DM mixing if seperate loop
     bool exx_after_converge(
         hamilt::Hamilt<T>& hamilt,
-        LCAO_Matrix& lm,
         const elecstate::DensityMatrix<T, double>& dm/**< double should be Tdata if complex-PBE-DM is supported*/,
         const K_Vectors& kv,
         int& iter);
     int two_level_step = 0;
 private:
-
-    /// calculate CSR sparse matrix from the global matrix stored with RI::Tensor
-    /// the return type is same as LCAO_Matrix::SR_sparse,  HR_sparse, etc.
-    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, Tdata>>>
-        calculate_RI_Tensor_sparse(const double& sparse_threshold,
-            const std::map<int, std::map<TAC, RI::Tensor<Tdata>>>& hR, const UnitCell& ucell)const;
-
     std::shared_ptr<Exx_LRI<Tdata>> exx_ptr;
     Mix_DMk_2D mix_DMk_2D;
 };

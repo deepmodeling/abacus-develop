@@ -9,16 +9,15 @@ calculation     md
 read_file_dir   ./
 
 #Parameters (Accuracy)
-ecutwfc			20
+ecutwfc			10
 scf_nmax			20
+scf_thr             1e-7
 
 basis_type		lcao
-md_nstep           10
+md_nstep           2
 
 cal_stress          1
-stress_thr      1e-6
 cal_force           1
-force_thr_ev    1.0e-3
 
 ks_solver       scalapack_gvx
 mixing_type     broyden

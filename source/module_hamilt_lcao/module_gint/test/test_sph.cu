@@ -8,6 +8,7 @@
 #include "gtest/gtest.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "test_sph.h"
+#include "module_base/array_pool.h"
 using namespace std;
 
 class gintTest : public ::testing::Test
@@ -15,10 +16,10 @@ class gintTest : public ::testing::Test
   public:
 };
 
-__global__ void cuda_test(double* dr, double distance, int nwl, double* ylma_g, double* ylmcoef)
+__global__ void cuda_test(double* dr, int nwl, double* ylma_g, double* ylmcoef)
 {
     double ylma[49] = {0.0};
-    GintKernel::spherical_harmonics(dr, distance, nwl, ylma, ylmcoef);
+    GintKernel::spherical_harmonics(dr, nwl, ylma, ylmcoef);
     for (int i = 0; i < 49; i++)
     {
         ylma_g[i] = ylma[i];
@@ -72,7 +73,7 @@ TEST_F(gintTest, test)
 
     std::vector<double> ylma_cpu(49, 0.0);
     std::vector<double> ylma_cpu_dpsir(49, 0.0);
-    std::vector<std::vector<double>> ylma_cpu_ddpsir(49, vector<double>(3, 0.0));
+    ModuleBase::Array_Pool<double> ylma_cpu_ddpsir(49, 3);
     
     nwl=3;
     for (int i=0;i<3;i++){
@@ -94,10 +95,10 @@ TEST_F(gintTest, test)
     cudaMemset(ylma_g, 0, 49 * sizeof(double));
     cudaMemset(dylma_g, 0, 49 * sizeof(double));
 
-    cuda_test<<<1, 1>>>(dr_g, distance, nwl, ylma_g, ylmcoef_g);
+    cuda_test<<<1, 1>>>(dr_g, nwl, ylma_g, ylmcoef_g);
     cuda_test2<<<1, 1>>>(dr_g, distance, nwl, dylma_g, ylmcoef_g);
     sph_harm(nwl, dr[0], dr[1], dr[2], ylma_cpu, ylmcoef);
-    grad_rl_sph_harm(nwl, dr[0], dr[1], dr[2], ylma_cpu_dpsir, ylma_cpu_ddpsir, ylmcoef);
+    grad_rl_sph_harm(nwl, dr[0], dr[1], dr[2], ylma_cpu_dpsir.data(), ylma_cpu_ddpsir.get_ptr_2D(), ylmcoef);
     cudaMemcpy(ylma, ylma_g, 49 * sizeof(double), cudaMemcpyDeviceToHost);
     cudaMemcpy(dylma, dylma_g, 49 * sizeof(double), cudaMemcpyDeviceToHost);
     cudaDeviceReset();

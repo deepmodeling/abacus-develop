@@ -5,11 +5,14 @@
 #include "module_base/global_variable.h"
 #include "module_base/parallel_common.h"
 #include "module_base/scalapack_connector.h"
+#include "module_elecstate/module_dm/cal_dm_psi.h"
+#include "module_elecstate/module_dm/density_matrix.h"
+#include "module_hamilt_lcao/module_gint/gint.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/rho_io.h"
 
-IState_Charge::IState_Charge(psi::Psi<double>* psi_gamma_in, Local_Orbital_Charge& loc_in)
-    : psi_gamma(psi_gamma_in), loc(&loc_in)
+IState_Charge::IState_Charge(psi::Psi<double>* psi_gamma_in, const Parallel_Orbitals* ParaV_in)
+    : psi_gamma(psi_gamma_in), ParaV(ParaV_in)
 {
 }
 
@@ -38,7 +41,9 @@ void IState_Charge::begin(Gint_Gamma& gg,
                           const int nlocal,
                           const std::string& global_out_dir,
                           const int my_rank,
-                          std::ofstream& ofs_warning)
+                          std::ofstream& ofs_warning,
+                          const UnitCell* ucell_in,
+                          Grid_Driver* GridD_in)
 {
     ModuleBase::TITLE("IState_Charge", "begin");
 
@@ -76,7 +81,7 @@ void IState_Charge::begin(Gint_Gamma& gg,
     ModuleBase::GlobalFunc::ZEROS(bands_picked_.data(), nbands);
 
     // (1)
-    // (1.2) read in LOWF_GAMMA.dat
+    // (1.2) read in WFC_NAO_GAMMA1.dat
     std::cout << " number of electrons = " << nelec << std::endl;
 
     // mohan update 2011-03-21
@@ -195,21 +200,34 @@ void IState_Charge::begin(Gint_Gamma& gg,
         {
             std::cout << " Perform band decomposed charge density for band " << ib + 1 << std::endl;
 
-            // (1) calculate the density matrix for a partuclar
-            // band, whenever it is occupied or not.
+            // (1) calculate the density matrix for a partuclar band, whenever it is occupied or not.
+
+            // Using new density matrix inplementation
+            elecstate::DensityMatrix<double, double> DM(this->ParaV, nspin);
 
 #ifdef __MPI
-            this->idmatrix(ib, nspin, nelec, nlocal, wg);
+            this->idmatrix(ib, nspin, nelec, nlocal, wg, DM);
+#else
+            ModuleBase::WARNING_QUIT("IState_Charge::begin", "The `pchg` calculation is only available for MPI now!");
 #endif
+
             // (2) zero out of charge density array.
             for (int is = 0; is < nspin; ++is)
             {
                 ModuleBase::GlobalFunc::ZEROS(rho[is], rhopw_nrxx);
             }
 
-            // (3) calculate charge density for a particular
-            // band.
-            Gint_inout inout(this->loc->DM, rho, Gint_Tools::job_type::rho);
+            // (3) calculate charge density for a particular band.
+
+            DM.init_DMR(GridD_in, ucell_in);
+            DM.cal_DMR();
+
+            // gg.DMRGint.resize(nspin);
+            gg.initialize_pvpR(*ucell_in, GridD_in);
+
+            gg.transfer_DM2DtoGrid(DM.get_DMR_vector());
+
+            Gint_inout inout((double***)nullptr, rho, Gint_Tools::job_type::rho);
             gg.cal_gint(&inout);
 
             // A solution to replace the original implementation of the following code:
@@ -248,7 +266,7 @@ void IState_Charge::begin(Gint_Gamma& gg,
                     rhopw_ny,
                     rhopw_nz,
                     ef_spin,
-                    &(GlobalC::ucell));
+                    ucell_in);
             }
 
             // Release memory of rho_save
@@ -266,9 +284,10 @@ void IState_Charge::begin(Gint_Gamma& gg,
 #ifdef __MPI
 void IState_Charge::idmatrix(const int& ib,
                              const int nspin,
-                             const double nelec,
+                             const double& nelec,
                              const int nlocal,
-                             const ModuleBase::matrix& wg)
+                             const ModuleBase::matrix& wg,
+                             elecstate::DensityMatrix<double, double>& DM)
 {
     ModuleBase::TITLE("IState_Charge", "idmatrix");
     assert(wg.nr == nspin);
@@ -277,8 +296,8 @@ void IState_Charge::idmatrix(const int& ib,
 
     for (int is = 0; is < nspin; ++is)
     {
-        std::vector<double> wg_local(this->loc->ParaV->ncol, 0.0);
-        const int ib_local = this->loc->ParaV->global2local_col(ib);
+        std::vector<double> wg_local(this->ParaV->ncol, 0.0);
+        const int ib_local = this->ParaV->global2local_col(ib);
 
         if (ib_local >= 0)
         {
@@ -294,37 +313,13 @@ void IState_Charge::idmatrix(const int& ib,
         {
             BlasConnector::scal(wg_wfc.get_nbasis(), wg_local[ir], wg_wfc.get_pointer() + ir * wg_wfc.get_nbasis(), 1);
         }
+        const int ik = 0; // Gamma point only
 
-        // dm(iw1,iw2) = wfc(ib,iw1).T * wg_wfc(ib,iw2)
-        const double one_float = 1.0, zero_float = 0.0;
-        const int one_int = 1;
-        const char N_char = 'N', T_char = 'T';
-
-        this->loc->dm_gamma.at(is).create(wg_wfc.get_nbands(), wg_wfc.get_nbasis());
-
-        pdgemm_(&N_char,
-                &T_char,
-                &nlocal,
-                &nlocal,
-                &wg.nc,
-                &one_float,
-                wg_wfc.get_pointer(),
-                &one_int,
-                &one_int,
-                this->loc->ParaV->desc,
-                this->psi_gamma->get_pointer(),
-                &one_int,
-                &one_int,
-                this->loc->ParaV->desc,
-                &zero_float,
-                this->loc->dm_gamma.at(is).c,
-                &one_int,
-                &one_int,
-                this->loc->ParaV->desc);
+        elecstate::psiMulPsiMpi(wg_wfc,
+                                *(this->psi_gamma),
+                                DM.get_DMK_pointer(ik),
+                                this->ParaV->desc_wfc,
+                                this->ParaV->desc);
     }
-
-    std::cout << " Finished calculating dm_2d." << std::endl;
-    this->loc->cal_dk_gamma_from_2D_pub();
-    std::cout << " Finished converting dm_2d to dk_gamma." << std::endl;
 }
 #endif

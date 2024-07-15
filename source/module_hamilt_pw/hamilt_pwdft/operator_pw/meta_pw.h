@@ -15,7 +15,7 @@ namespace hamilt {
 #define __METATEMPLATE
 
 template<class T> class Meta : public T {};
-// template<typename Real, typename Device = psi::DEVICE_CPU>
+// template<typename Real, typename Device = base_device::DEVICE_CPU>
 // class Meta : public OperatorPW<T, Device> {};
 
 #endif
@@ -77,12 +77,12 @@ class Meta<OperatorPW<T, Device>> : public OperatorPW<T, Device>
     const ModulePW::PW_Basis_K* wfcpw = nullptr;
 
     Device* ctx = {};
-    psi::DEVICE_CPU* cpu_ctx = {};
+    base_device::DEVICE_CPU* cpu_ctx = {};
     T *porter = nullptr;
     using meta_op = meta_pw_op<Real, Device>;
     using vector_mul_vector_op = hsolver::vector_mul_vector_op<T, Device>;
-    using resmem_complex_op = psi::memory::resize_memory_op<T, Device>;
-    using delmem_complex_op = psi::memory::delete_memory_op<T, Device>;
+    using resmem_complex_op = base_device::memory::resize_memory_op<T, Device>;
+    using delmem_complex_op = base_device::memory::delete_memory_op<T, Device>;
 };
 
 } // namespace hamilt

@@ -19,7 +19,8 @@ namespace ModuleESolver
 		GlobalC::dftu.cal_occup_m_gamma(
 				iter, 
 				dm, 
-				this->p_chgmix->get_mixing_beta());
+				this->p_chgmix->get_mixing_beta(),
+                this->p_hamilt);
     }
 
     //! dftu occupation matrix for multiple k-points using dm(complex)
@@ -63,7 +64,7 @@ namespace ModuleESolver
     void ESolver_KS_LCAO<complex<double>, double>::dpks_cal_e_delta_band(
         const vector<vector<complex<double>>>& dm)const
     {
-        GlobalC::ld.cal_e_delta_band_k(dm, this->kv.nks);
+        GlobalC::ld.cal_e_delta_band_k(dm, this->kv.get_nks());
     }
 
 
@@ -71,7 +72,7 @@ namespace ModuleESolver
     void ESolver_KS_LCAO<complex<double>, complex<double>>::dpks_cal_e_delta_band(
         const vector<vector<complex<double>>>& dm)const
     {
-        GlobalC::ld.cal_e_delta_band_k(dm, this->kv.nks);
+        GlobalC::ld.cal_e_delta_band_k(dm, this->kv.get_nks());
     }
 
 

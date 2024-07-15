@@ -6,7 +6,6 @@
 #include "module_psi/psi.h"
 #include "module_hamilt_general/hamilt.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 
 namespace ModuleIO
 {
@@ -14,7 +13,6 @@ namespace ModuleIO
     template <typename T>
     void write_dos_lcao(
         const psi::Psi<T>* psi,
-        LCAO_Matrix &lm,
         const Parallel_Orbitals &pv, 
         const ModuleBase::matrix& ekb,
         const ModuleBase::matrix& wg,

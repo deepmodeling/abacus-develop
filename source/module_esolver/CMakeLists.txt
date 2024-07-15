@@ -3,9 +3,8 @@ list(APPEND objects
     esolver_ks.cpp
     esolver_fp.cpp
     esolver_ks_pw.cpp
-    esolver_ks_pw_tool.cpp
+    esolver_ks_lcaopw.cpp
     esolver_sdft_pw.cpp
-    esolver_sdft_pw_tool.cpp
     esolver_lj.cpp
     esolver_dp.cpp
     esolver_of.cpp
@@ -33,6 +32,8 @@ if(ENABLE_COVERAGE)
 endif()
 
 if(BUILD_TESTING)
-  add_subdirectory(test)
+  if(ENABLE_MPI)
+    add_subdirectory(test)
+  endif()
 endif()
 

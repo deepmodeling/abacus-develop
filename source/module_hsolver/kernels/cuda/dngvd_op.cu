@@ -205,16 +205,16 @@ void xheevd_wrapper (
 }
 
 template <typename T>
-struct dngvd_op<T, psi::DEVICE_GPU> {
+struct dngvd_op<T, base_device::DEVICE_GPU>
+{
     using Real = typename GetTypeReal<T>::type;
-    void operator()(
-        const psi::DEVICE_GPU* d,
-        const int nstart,
-        const int ldh,
-        const T* A, // hcc
-        const T* B, // scc
-        Real* W, // eigenvalue
-        T* V)
+    void operator()(const base_device::DEVICE_GPU* d,
+                    const int nstart,
+                    const int ldh,
+                    const T* A, // hcc
+                    const T* B, // scc
+                    Real* W,    // eigenvalue
+                    T* V)
     {
         assert(nstart == ldh);
         // A to V
@@ -225,16 +225,16 @@ struct dngvd_op<T, psi::DEVICE_GPU> {
 };
 
 template <typename T>
-struct dnevx_op<T, psi::DEVICE_GPU> {
+struct dnevx_op<T, base_device::DEVICE_GPU>
+{
     using Real = typename GetTypeReal<T>::type;
-    void operator()(
-        const psi::DEVICE_GPU* d,
-        const int nstart,
-        const int ldh,
-        const T* A, // hcc
-        const int m,
-        Real* W, // eigenvalue
-        T* V)
+    void operator()(const base_device::DEVICE_GPU* d,
+                    const int nstart,
+                    const int ldh,
+                    const T* A, // hcc
+                    const int m,
+                    Real* W, // eigenvalue
+                    T* V)
     {
         assert(nstart <= ldh);
         // A to V
@@ -244,10 +244,10 @@ struct dnevx_op<T, psi::DEVICE_GPU> {
 };
 
 template <typename T>
-struct dngvx_op<T, psi::DEVICE_GPU>
+struct dngvx_op<T, base_device::DEVICE_GPU>
 {
     using Real = typename GetTypeReal<T>::type;
-    void operator()(const psi::DEVICE_GPU* d,
+    void operator()(const base_device::DEVICE_GPU* d,
                     const int nbase,
                     const int ldh,
                     T* hcc,
@@ -260,19 +260,18 @@ struct dngvx_op<T, psi::DEVICE_GPU>
     }
 };
 
+template struct dngvd_op<std::complex<float>, base_device::DEVICE_GPU>;
+template struct dnevx_op<std::complex<float>, base_device::DEVICE_GPU>;
+template struct dngvx_op<std::complex<float>, base_device::DEVICE_GPU>;
 
-template struct dngvd_op<std::complex<float>, psi::DEVICE_GPU>;
-template struct dnevx_op<std::complex<float>, psi::DEVICE_GPU>;
-template struct dngvx_op<std::complex<float>, psi::DEVICE_GPU>;
-
-template struct dngvd_op<std::complex<double>, psi::DEVICE_GPU>;
-template struct dnevx_op<std::complex<double>, psi::DEVICE_GPU>;
-template struct dngvx_op<std::complex<double>, psi::DEVICE_GPU>;
+template struct dngvd_op<std::complex<double>, base_device::DEVICE_GPU>;
+template struct dnevx_op<std::complex<double>, base_device::DEVICE_GPU>;
+template struct dngvx_op<std::complex<double>, base_device::DEVICE_GPU>;
 
 #ifdef __LCAO
-template struct dngvd_op<double, psi::DEVICE_GPU>;
-template struct dnevx_op<double, psi::DEVICE_GPU>;
-template struct dngvx_op<double, psi::DEVICE_GPU>;
+template struct dngvd_op<double, base_device::DEVICE_GPU>;
+template struct dnevx_op<double, base_device::DEVICE_GPU>;
+template struct dngvx_op<double, base_device::DEVICE_GPU>;
 #endif
 
 } // namespace hsolver

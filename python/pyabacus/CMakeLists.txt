@@ -19,7 +19,7 @@ if(DEFINED ENV{MKLROOT} AND NOT DEFINED MKLROOT)
     set(MKLROOT "$ENV{MKLROOT}")
 endif()
 if(MKLROOT)
-
+  set(MKL_INTERFACE lp64)
   set(ENABLE_MPI ON)
   if (ENABLE_MPI)
     find_package(MPI REQUIRED)
@@ -33,9 +33,9 @@ if(MKLROOT)
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
     add_link_options(${OpenMP_CXX_LIBRARIES})
   endif()
-  find_package(IntelMKL REQUIRED)
+  find_package(MKL REQUIRED)
   add_definitions(-D__MKL)
-  include_directories(${MKL_INCLUDE_DIRS} ${MKL_INCLUDE_DIRS}/fftw)
+  include_directories(${MKL_INCLUDE} ${MKL_INCLUDE}/fftw)
 
 # Since libtorch will find its own MKL, the fftw part conflicts with the original one.
 # When enable deepks, mkl will be linked within ${TORCH_LIBRARIES}.
@@ -91,7 +91,8 @@ list(APPEND _naos
     ${NAO_PATH}/projgen.cpp
     # dependency
     ${ABACUS_SOURCE_DIR}/module_base/kernels/math_op.cpp
-    ${ABACUS_SOURCE_DIR}/module_psi/kernels/psi_memory_op.cpp
+    # ${ABACUS_SOURCE_DIR}/module_psi/kernels/psi_memory_op.cpp
+    ${ABACUS_SOURCE_DIR}/module_base/module_device/memory_op.cpp
     )
 add_library(naopack SHARED 
     ${_naos}

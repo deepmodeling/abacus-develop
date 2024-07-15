@@ -48,7 +48,7 @@ class ESolverDPTest : public ::testing::Test
     }
 
     ModuleESolver::ESolver_DP* esolver;
-    Input inp;
+    Input_para inp;
     UnitCell ucell;
 };
 

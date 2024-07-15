@@ -1,11 +1,11 @@
-#include <fstream>
-
 #include "../hcontainer.h"
 #include "../output_hcontainer.h"
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "module_io/csr_reader.h"
 #include "prepare_unitcell.h"
+
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
+#include <fstream>
 
 // mock functions
 #ifdef __LCAO
@@ -73,7 +73,7 @@ TEST_F(ReadHContainerTest, ReadAndOutputHContainer)
     // construct paraV
     Parallel_Orbitals paraV;
     std::ofstream ofs("test.log");
-    paraV.set_global2local(nlocal, nlocal, false, ofs);
+    paraV.set_serial(nlocal, nlocal);
     ofs.close();
     remove("test.log");
     paraV.set_atomic_trace(ucell->get_iat2iwt(), ucell->nat, nlocal);
@@ -124,7 +124,7 @@ TEST_F(ReadHContainerTest, ReadAndOutputHContainer)
     // output SR
     std::ofstream ofs_out("SR.out");
     double sparse_threshold = 1e-10;
-    hamilt::Output_HContainer<double> output_SR(&SR, &paraV, *ucell, ofs_out, sparse_threshold, 8);
+    hamilt::Output_HContainer<double> output_SR(&SR, ofs_out, sparse_threshold, 8);
     // std::cout << SR.size_R_loop() << std::endl;
     // output_SR.write(-2, -1, 0);
     ofs_out << "STEP: " << 0 << std::endl;

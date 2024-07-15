@@ -7,6 +7,9 @@ if(ENABLE_LCAO)
         norm_psi.cpp
         propagator.cpp
         upsi.cpp
+        td_velocity.cpp
+        td_current.cpp
+        snap_psibeta_half_tddft.cpp
     )
 
     add_library(
@@ -20,7 +23,9 @@ if(ENABLE_LCAO)
     endif()
 
     IF (BUILD_TESTING)
-    add_subdirectory(test)
+        if(ENABLE_MPI)
+            add_subdirectory(test)
+        endif()
     endif()
 
 endif()

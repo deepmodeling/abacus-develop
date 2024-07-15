@@ -1,4 +1,4 @@
-#include "FORCE_k.h"
+#include "FORCE.h"
 
 #include <map>
 #include <unordered_map>
@@ -24,39 +24,33 @@
 
 
 // calculate the force due to < phi | Vlocal | dphi >
-void Force_LCAO_k::cal_fvl_dphi_k(const bool isforce,
-		const bool isstress,
-		LCAO_Matrix &lm,
-        Gint_k &gint_k,
-		const elecstate::Potential* pot_in,
-		ModuleBase::matrix& fvl_dphi,
-		ModuleBase::matrix& svl_dphi,
-		double** DM_R)
+template<>
+void Force_LCAO<std::complex<double>>::cal_fvl_dphi(
+    const bool isforce,
+    const bool isstress,
+    const elecstate::Potential* pot_in,
+    TGint<std::complex<double>>::type& gint,
+    ModuleBase::matrix& fvl_dphi,
+    ModuleBase::matrix& svl_dphi)
 {
-    ModuleBase::TITLE("Force_LCAO_k", "cal_fvl_dphi_k");
-    ModuleBase::timer::tick("Force_LCAO_k", "cal_fvl_dphi_k");
-
+    ModuleBase::TITLE("Force_LCAO", "cal_fvl_dphi");
     if (!isforce && !isstress)
     {
-        ModuleBase::timer::tick("Force_LCAO_k", "cal_fvl_dphi_k");
         return;
     }
 
-    assert(lm.DHloc_fixedR_x != NULL);
-    assert(lm.DHloc_fixedR_y != NULL);
-    assert(lm.DHloc_fixedR_z != NULL);
+    ModuleBase::timer::tick("Force_LCAO", "cal_fvl_dphi");
 
-    int istep = 1;
+    const int nspin = GlobalV::NSPIN;
 
-    for (int is = 0; is < GlobalV::NSPIN; ++is)
+    for (int is = 0; is < nspin; ++is)
     {
-        GlobalV::CURRENT_SPIN = is;
-
-        const double* vr_eff1 = pot_in->get_effective_v(GlobalV::CURRENT_SPIN);
+        const double* vr_eff1 = pot_in->get_effective_v(is);
         const double* vofk_eff1 = nullptr;
+
         if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
         {
-            vofk_eff1 = pot_in->get_effective_vofk(GlobalV::CURRENT_SPIN);
+            vofk_eff1 = pot_in->get_effective_vofk(is);
         }
 
         //--------------------------------
@@ -65,10 +59,10 @@ void Force_LCAO_k::cal_fvl_dphi_k(const bool isforce,
         // fvl_dphi can not be set to zero here if Vna is used
         if (isstress || isforce)
         {
+            // meta GGA functionals
             if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
             {
-                Gint_inout inout(DM_R,
-                                 is,
+                Gint_inout inout(is,
                                  vr_eff1,
                                  vofk_eff1,
                                  isforce,
@@ -76,12 +70,20 @@ void Force_LCAO_k::cal_fvl_dphi_k(const bool isforce,
                                  &fvl_dphi,
                                  &svl_dphi,
                                  Gint_Tools::job_type::force_meta);
-                gint_k.cal_gint(&inout);
+
+                gint.cal_gint(&inout);
             }
             else
             {
-                Gint_inout inout(DM_R, is, vr_eff1, isforce, isstress, &fvl_dphi, &svl_dphi, Gint_Tools::job_type::force);
-                gint_k.cal_gint(&inout);
+				Gint_inout inout(is, 
+						vr_eff1, 
+						isforce, 
+						isstress, 
+						&fvl_dphi, 
+						&svl_dphi, 
+						Gint_Tools::job_type::force);
+
+                gint.cal_gint(&inout);
             }
         }
     }
@@ -91,6 +93,6 @@ void Force_LCAO_k::cal_fvl_dphi_k(const bool isforce,
         StressTools::stress_fill(-1.0, GlobalC::ucell.omega, svl_dphi);
     }
 
-    ModuleBase::timer::tick("Force_LCAO_k", "cal_fvl_dphi_k");
+    ModuleBase::timer::tick("Force_LCAO", "cal_fvl_dphi");
     return;
 }

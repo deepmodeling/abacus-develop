@@ -2,6 +2,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+#include "module_cell/klist.h"
 K_Vectors::K_Vectors(){}
 K_Vectors::~K_Vectors(){}
 
@@ -18,8 +19,8 @@ K_Vectors::~K_Vectors(){}
 class SpinConstrainTest : public testing::Test
 {
   protected:
-    SpinConstrain<std::complex<double>, psi::DEVICE_CPU>& sc
-        = SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::getScInstance();
+    SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>& sc
+        = SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>::getScInstance();
 };
 
 TEST_F(SpinConstrainTest, CalHLambda)
@@ -29,7 +30,7 @@ TEST_F(SpinConstrainTest, CalHLambda)
     int nrow = 2;
     int ncol = 2;
     sc.set_nspin(4);
-    paraV.set_global2local(nrow, ncol, false, ofs);
+    paraV.set_serial(nrow, ncol);
     sc.set_ParaV(&paraV);
     EXPECT_EQ(sc.ParaV->nloc, 4);
     std::map<int, int> atomCounts = {
@@ -55,7 +56,7 @@ TEST_F(SpinConstrainTest, CalHLambda)
     sc_lambda[0][2] = 1.0;
     sc.set_sc_lambda(sc_lambda, 1);
     // column_major = true
-    sc.cal_h_lambda(&h_lambda[0], Sloc2, true, 0);
+    sc.cal_h_lambda(&h_lambda[0], Sloc2.data(), true, 0);
     // h_lambda = - [lambda_x * sigma_x + lambda_y * sigma_y + lambda_z * sigma_z] * Sloc2
     std::vector<std::complex<double>> columnMajor_h_lambda = {
         std::complex<double>{-1.0, 0.0 },
@@ -73,7 +74,7 @@ TEST_F(SpinConstrainTest, CalHLambda)
     EXPECT_DOUBLE_EQ(h_lambda[3].imag(), columnMajor_h_lambda[3].imag());
     // column_major = false
     delete[] sc_lambda;
-    sc.cal_h_lambda(&h_lambda[0], Sloc2, false, 0);
+    sc.cal_h_lambda(&h_lambda[0], Sloc2.data(), false, 0);
     std::vector<std::complex<double>> rowMajor_h_lambda = {
         std::complex<double>{-1.0, 0.0 },
         std::complex<double>{-1.0, -1.0},
@@ -98,7 +99,7 @@ TEST_F(SpinConstrainTest, CalHLambdaS2)
     int nrow = 1;
     int ncol = 1;
     sc.set_nspin(2);
-    paraV.set_global2local(nrow, ncol, false, ofs);
+    paraV.set_serial(nrow, ncol);
     sc.set_ParaV(&paraV);
     EXPECT_EQ(sc.ParaV->nloc, 1);
     std::map<int, int> atomCounts = {
@@ -121,14 +122,14 @@ TEST_F(SpinConstrainTest, CalHLambdaS2)
     sc_lambda[0][2] = 2.0;
     sc.set_sc_lambda(sc_lambda, 1);
     // column_major = true
-    sc.cal_h_lambda(&h_lambda[0], Sloc2, true, 0);
+    sc.cal_h_lambda(&h_lambda[0], Sloc2.data(), true, 0);
     // h_lambda = -Sloc2[icc] * this->lambda_[iat2][2]
     std::vector<std::complex<double>> columnMajor_h_lambda = {
         std::complex<double>{-2.0, 0.0 },
     };
     EXPECT_DOUBLE_EQ(h_lambda[0].real(), columnMajor_h_lambda[0].real());
     EXPECT_DOUBLE_EQ(h_lambda[0].imag(), columnMajor_h_lambda[0].imag());
-    sc.cal_h_lambda(&h_lambda[0], Sloc2, true, 1);
+    sc.cal_h_lambda(&h_lambda[0], Sloc2.data(), true, 1);
     // h_lambda = -Sloc2[icc] * (-this->lambda_[iat2][2])
     std::vector<std::complex<double>> columnMajor_h_lambda1 = {
         std::complex<double>{2.0, 0.0 },
@@ -138,14 +139,14 @@ TEST_F(SpinConstrainTest, CalHLambdaS2)
     // column_major = false
     delete[] sc_lambda;
     // h_lambda = -Sloc2[icc] * this->lambda_[iat2][2]
-    sc.cal_h_lambda(&h_lambda[0], Sloc2, false, 0);
+    sc.cal_h_lambda(&h_lambda[0], Sloc2.data(), false, 0);
     std::vector<std::complex<double>> rowMajor_h_lambda = {
         std::complex<double>{-2.0, 0.0 },
     };
     EXPECT_DOUBLE_EQ(h_lambda[0].real(), rowMajor_h_lambda[0].real());
     EXPECT_DOUBLE_EQ(h_lambda[0].imag(), rowMajor_h_lambda[0].imag());
     // h_lambda = -Sloc2[icc] * (-this->lambda_[iat2][2])
-    sc.cal_h_lambda(&h_lambda[0], Sloc2, false, 1);
+    sc.cal_h_lambda(&h_lambda[0], Sloc2.data(), false, 1);
     std::vector<std::complex<double>> rowMajor_h_lambda1 = {
         std::complex<double>{2.0, 0.0 },
     };
