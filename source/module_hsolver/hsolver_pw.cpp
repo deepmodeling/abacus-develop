@@ -495,6 +495,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
             ModuleBase::timer::tick("DavSubspace", "hpsi_func");
         };
         bool scf = GlobalV::CALCULATION == "nscf" ? false : true;
+        const std::vector<bool> is_occupied(psi.get_nbands(), true);
 
         Diago_DavSubspace<T, Device> dav_subspace(pre_condition,
                                                   psi.get_nbands(),
@@ -507,7 +508,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
                                                   comm_info);
 
         DiagoIterAssist<T, Device>::avg_iter
-            += static_cast<double>(dav_subspace.diag(hpsi_func, psi.get_pointer(), psi.get_nbasis(), eigenvalue, scf));
+            += static_cast<double>(dav_subspace.diag(hpsi_func, psi.get_pointer(), psi.get_nbasis(), eigenvalue, is_occupied, scf));
     }
     else if (this->method == "dav")
     {
