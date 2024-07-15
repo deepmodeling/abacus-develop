@@ -25,6 +25,7 @@ namespace LR
             const ModuleBase::matrix& eig_ks,
 #ifdef __EXX
             Exx_LRI<T>* exx_lri_in,
+            const double& exx_alpha,
 #endif 
             TGint* gint_in,
             PotHxcLR* pot_in,
@@ -44,10 +45,10 @@ namespace LR
                 this->DM_trans, gint_in, pot_in, ucell_in, gd_in, kv_in, pX_in, pc_in, pmat_in);
             this->ops->add(lr_hxc);
 #ifdef __EXX
-            if (xc_kernel == "hf")
+            if (xc_kernel == "hf" || xc_kernel == "hse")
             {   //add Exx operator
                 hamilt::Operator<T>* lr_exx = new OperatorLREXX<T>(nspin, naos, nocc, nvirt, ucell_in, psi_ks_in,
-                    this->DM_trans, exx_lri_in, kv_in, pX_in, pc_in, pmat_in);
+                    this->DM_trans, exx_lri_in, kv_in, pX_in, pc_in, pmat_in, exx_alpha);
                 this->ops->add(lr_exx);
             }
 #endif

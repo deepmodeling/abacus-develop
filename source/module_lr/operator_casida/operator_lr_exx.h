@@ -29,10 +29,11 @@ namespace LR
             const K_Vectors& kv_in,
             Parallel_2D* pX_in,
             Parallel_2D* pc_in,
-            Parallel_Orbitals* pmat_in)
+            Parallel_Orbitals* pmat_in,
+            const double& alpha = 1.0)
             : nspin(nspin), naos(naos), nocc(nocc), nvirt(nvirt),
             psi_ks(psi_ks_in), DM_trans(DM_trans_in), exx_lri(exx_lri_in), kv(kv_in),
-            pX(pX_in), pc(pc_in), pmat(pmat_in), ucell(ucell_in)
+            pX(pX_in), pc(pc_in), pmat(pmat_in), ucell(ucell_in), alpha(alpha)
         {
             ModuleBase::TITLE("OperatorLREXX", "OperatorLREXX");
             this->cal_type = hamilt::calculation_type::lcao_exx;
@@ -57,10 +58,11 @@ namespace LR
         virtual void act(const psi::Psi<T>& psi_in, psi::Psi<T>& psi_out, const int nbands) const override;
     private:
         //global sizes
-        int nspin = 1;
-        int naos;
-        int nocc;
-        int nvirt;
+        const int& nspin;
+        const int& naos;
+        const int& nocc;
+        const int& nvirt;
+        const double& alpha;
         const K_Vectors& kv;
         /// ground state wavefunction
         const psi::Psi<T>* psi_ks = nullptr;

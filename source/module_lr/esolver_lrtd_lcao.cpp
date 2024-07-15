@@ -110,9 +110,11 @@ void LR::ESolver_LR<T, TR>::set_dimension()
 
 template <typename T, typename TR>
 LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol,
-    const Input_para& inp,
-    UnitCell& ucell)
+    const Input_para& inp, UnitCell& ucell)
     : input(inp), ucell(ucell)
+#ifdef __EXX
+    , exx_info(GlobalC::exx_info)
+#endif
 {
     redirect_log(inp.out_alllog);
     ModuleBase::TITLE("ESolver_LR", "ESolver_LR");
@@ -162,9 +164,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
         {
             Cpxgemr2d(this->nbasis, this->nbands, &(*ks_sol.psi)(ik, 0, 0), 1, start_band + 1, ks_sol.ParaV.desc_wfc,
                 &(*this->psi_ks)(ik, 0, 0), 1, 1, this->paraC_.desc, this->paraC_.blacs_ctxt);
-            for (int ib = 0;ib < this->nbands;++ib) {
-                this->eig_ks(ik, ib) = ks_sol.pelec->ekb(ik, start_band + ib);
-}
+            for (int ib = 0;ib < this->nbands;++ib) { this->eig_ks(ik, ib) = ks_sol.pelec->ekb(ik, start_band + ib); }
         }
     }
 #else
@@ -198,8 +198,8 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
             this->move_exx_lri(ks_sol.exx_lri_complex);
         } else    // construct C, V from scratch
         {
-            this->exx_lri = std::make_shared<Exx_LRI<T>>(GlobalC::exx_info.info_ri);
-            this->exx_lri->init(MPI_COMM_WORLD, this->kv); // using GlobalC::ORB
+            this->exx_lri = std::make_shared<Exx_LRI<T>>(exx_info.info_ri);
+            this->exx_lri->init(MPI_COMM_WORLD, this->kv);
             this->exx_lri->cal_exx_ions();
         }
     }
@@ -209,6 +209,9 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
 
 template <typename T, typename TR>
 LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : input(inp), ucell(ucell)
+#ifdef __EXX
+, exx_info(GlobalC::exx_info)
+#endif
 {
     redirect_log(inp.out_alllog);
     ModuleBase::TITLE("ESolver_LR", "ESolver_LR");
@@ -359,8 +362,8 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
 #ifdef __EXX
     if ((xc_kernel == "hf" || xc_kernel == "hse") && this->input.lr_solver != "spectrum")
     {
-        this->exx_lri = std::make_shared<Exx_LRI<T>>(GlobalC::exx_info.info_ri);
-        this->exx_lri->init(MPI_COMM_WORLD, this->kv); // using GlobalC::ORB
+        this->exx_lri = std::make_shared<Exx_LRI<T>>(exx_info.info_ri);
+        this->exx_lri->init(MPI_COMM_WORLD, this->kv);
         this->exx_lri->cal_exx_ions();
     }
     // else
@@ -380,7 +383,7 @@ void LR::ESolver_LR<T, TR>::runner(int istep, UnitCell& cell)
         // allocate and initialize A matrix and density matrix
         hamilt::Hamilt<T>* phamilt = new HamiltCasidaLR<T>(xc_kernel, this->nspin, this->nbasis, this->nocc, this->nvirt, this->ucell, GlobalC::GridD, this->psi_ks, this->eig_ks,
 #ifdef __EXX
-            this->exx_lri.get(),
+            this->exx_lri.get(), this->exx_info.info_global.hybrid_alpha,
 #endif
             this->gint_, this->pot, this->kv, &this->paraX_, &this->paraC_, &this->paraMat_);
         // solve the Casida equation
