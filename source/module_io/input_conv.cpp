@@ -13,6 +13,8 @@
 #include "module_relax/relax_old/ions_move_basic.h"
 #include "module_relax/relax_old/lattice_change_basic.h"
 
+#include <algorithm>
+
 #ifdef __EXX
 #include "module_ri/exx_abfs-jle.h"
 #endif
@@ -225,7 +227,11 @@ void Input_Conv::Convert()
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "pseudo_dir", GlobalV::global_pseudo_dir);
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "orbital_dir", GlobalV::global_orbital_dir);
     // GlobalV::global_pseudo_type = PARAM.inp.pseudo_type;
-    GlobalC::ucell.setup(PARAM.inp.latname, PARAM.inp.ntype, PARAM.inp.lmaxmax, PARAM.inp.init_vel, PARAM.inp.fixed_axes);
+    GlobalC::ucell.setup(PARAM.inp.latname,
+                         PARAM.inp.ntype,
+                         PARAM.inp.lmaxmax,
+                         PARAM.inp.init_vel,
+                         PARAM.inp.fixed_axes);
 
     if (PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax")
     {
@@ -441,7 +447,10 @@ void Input_Conv::Convert()
     if (PARAM.inp.restart_save)
     {
         std::string dft_functional_lower = PARAM.inp.dft_functional;
-        std::transform(PARAM.inp.dft_functional.begin(), PARAM.inp.dft_functional.end(), dft_functional_lower.begin(), tolower);
+        std::transform(PARAM.inp.dft_functional.begin(),
+                       PARAM.inp.dft_functional.end(),
+                       dft_functional_lower.begin(),
+                       tolower);
         GlobalC::restart.folder = GlobalV::global_readin_dir + "restart/";
         ModuleBase::GlobalFunc::MAKE_DIR(GlobalC::restart.folder);
         if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0" || dft_functional_lower == "hse"
@@ -458,7 +467,10 @@ void Input_Conv::Convert()
     if (PARAM.inp.restart_load)
     {
         std::string dft_functional_lower = PARAM.inp.dft_functional;
-        std::transform(PARAM.inp.dft_functional.begin(), PARAM.inp.dft_functional.end(), dft_functional_lower.begin(), tolower);
+        std::transform(PARAM.inp.dft_functional.begin(),
+                       PARAM.inp.dft_functional.end(),
+                       dft_functional_lower.begin(),
+                       tolower);
         GlobalC::restart.folder = GlobalV::global_readin_dir + "restart/";
         if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0" || dft_functional_lower == "hse"
             || dft_functional_lower == "opt_orb" || dft_functional_lower == "scan0")
@@ -479,7 +491,10 @@ void Input_Conv::Convert()
 #ifdef __LCAO
 
     std::string dft_functional_lower = PARAM.inp.dft_functional;
-    std::transform(PARAM.inp.dft_functional.begin(), PARAM.inp.dft_functional.end(), dft_functional_lower.begin(), tolower);
+    std::transform(PARAM.inp.dft_functional.begin(),
+                   PARAM.inp.dft_functional.end(),
+                   dft_functional_lower.begin(),
+                   tolower);
     if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0" || dft_functional_lower == "scan0")
     {
         GlobalC::exx_info.info_global.cal_exx = true;
@@ -530,10 +545,12 @@ void Input_Conv::Convert()
 
         // EXX does not support symmetry=1
         if (PARAM.inp.calculation != "nscf" && PARAM.inp.symmetry == "1")
+        {
             ModuleSymmetry::Symmetry::symm_flag = 0;
+        }
     }
-#endif                                               // __LCAO
-#endif                                               // __EXX
+#endif                                                   // __LCAO
+#endif                                                   // __EXX
     GlobalC::ppcell.cell_factor = PARAM.inp.cell_factor; // LiuXh add 20180619
 
     //----------------------------------------------------------
@@ -645,19 +662,23 @@ void Input_Conv::Convert()
     {
         GlobalV::deepks_out_labels = true;
         GlobalV::deepks_scf = true;
-        if (GlobalV::NPROC > 1) {
+        if (GlobalV::NPROC > 1)
+        {
             ModuleBase::WARNING_QUIT("Input_conv", "generate deepks unittest with only 1 processor");
-}
-        if (GlobalV::CAL_FORCE != 1) {
+        }
+        if (GlobalV::CAL_FORCE != 1)
+        {
             ModuleBase::WARNING_QUIT("Input_conv", "force is required in generating deepks unittest");
-}
-        if (GlobalV::CAL_STRESS != 1) {
+        }
+        if (GlobalV::CAL_STRESS != 1)
+        {
             ModuleBase::WARNING_QUIT("Input_conv", "stress is required in generating deepks unittest");
-}
+        }
     }
-    if (GlobalV::deepks_scf || GlobalV::deepks_out_labels) {
+    if (GlobalV::deepks_scf || GlobalV::deepks_out_labels)
+    {
         GlobalV::deepks_setorb = true;
-}
+    }
 #else
     if (PARAM.inp.deepks_scf || PARAM.inp.deepks_out_labels || PARAM.inp.deepks_bandgap || PARAM.inp.deepks_v_delta)
     {

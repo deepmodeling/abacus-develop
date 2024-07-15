@@ -19,6 +19,7 @@ kspacing                       0 #unit in 1/bohr, should be > 0, default is 0 wh
 min_dist_coef                  0.2 #factor related to the allowed minimum distance between two atoms
 nbands                         8 #number of bands
 nbands_istate                  5 #number of bands around Fermi level for get_pchg calulation
+if_separate_k                  false #specify whether to write the partial charge densities for all k-points to individual files or merge them
 symmetry                       1 #the control of symmetry
 init_vel                       False #read velocity from STRU or not
 symmetry_prec                  1e-06 #accuracy for symmetry

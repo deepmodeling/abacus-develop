@@ -5,13 +5,15 @@
 #ifndef INPUT_CONVERT_H
 #define INPUT_CONVERT_H
 
-#include <regex.h>
-#include <stdio.h>
-#include <string.h>
+#include "module_base/global_function.h"
+#include "module_base/global_variable.h"
 
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <regex.h>
+#include <stdio.h>
+#include <string.h>
 #include <string>
 #include <vector>
 #include <algorithm>
@@ -36,13 +38,14 @@ void Convert(void);
  *
  * @tparam T
  * @param fn  (string): expressions such as "3*1 0 2*0.5 3*0"
- * @param arr (vector): stores parsing results,
+ * @param vec (vector): stores parsing results,
  *            for example, "3*1 0 2*0.5 1*1.5" can be parsed as
  *            [1, 1, 1, 0, 0.5, 0.5, 1.5]
  */
 template <typename T>
 void parse_expression(const std::string& fn, std::vector<T>& vec)
 {
+    ModuleBase::TITLE("Input_Conv", "parse_expression");
     int count = 0;
     std::string pattern("([0-9]+\\*[0-9.]+|[0-9,.]+)");
     std::vector<std::string> str;
@@ -105,7 +108,8 @@ void parse_expression(const std::string& fn, std::vector<T>& vec)
             // const std::vector<double>::iterator dest = vec.begin() + count;
             // copy(ocp_temp.begin(), ocp_temp.end(), dest);
             // count += num;
-            for (size_t k = 0; k != num; k++) {
+            for (size_t k = 0; k != num; k++)
+            {
                 vec.emplace_back(occ);
             }
         }

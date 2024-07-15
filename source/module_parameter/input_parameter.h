@@ -39,6 +39,7 @@ struct Input_para
     int nbands_istate = 5;                          ///< number of bands around fermi level for get_pchg calculation.
     std::string bands_to_print = "";                ///< specify the bands to be calculated in the get_pchg
                                                     ///< calculation, formalism similar to ocp_set.
+    bool if_separate_k = false;                     ///< whether to write partial charge for all k-points to individual files or merge them
     /* symmetry level:
       -1, no symmetry at all;
       0, only basic time reversal would be considered;
