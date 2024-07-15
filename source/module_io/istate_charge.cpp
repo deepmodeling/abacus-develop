@@ -53,7 +53,7 @@ void IState_Charge::begin(Gint_Gamma& gg,
 {
     ModuleBase::TITLE("IState_Charge", "begin");
 
-    std::cout << " Perform |psi(i)|^2 for selected bands." << std::endl;
+    std::cout << " Perform |psi(i)|^2 for selected bands (band-decomposed charge densities, gamma only)." << std::endl;
 
     int mode = 0;
     if (nbands_istate > 0 && static_cast<int>(out_band_kb.size()) == 0)
@@ -78,15 +78,14 @@ void IState_Charge::begin(Gint_Gamma& gg,
     std::cout << " number of electrons = " << nelec << std::endl;
     std::cout << " number of occupied bands = " << fermi_band << std::endl;
 
+    // Set this->bands_picked_ according to the mode
     select_bands(nbands_istate, out_band_kb, nbands, nelec, mode, fermi_band);
 
     for (int ib = 0; ib < nbands; ++ib)
     {
         if (bands_picked_[ib])
         {
-            std::cout << " Perform band decomposed charge density for band " << ib + 1 << std::endl;
-
-            // Using new density matrix inplementation
+            // Using new density matrix inplementation (gamma only)
             elecstate::DensityMatrix<double, double> DM(this->ParaV, nspin);
 
 #ifdef __MPI
@@ -100,14 +99,12 @@ void IState_Charge::begin(Gint_Gamma& gg,
                 ModuleBase::GlobalFunc::ZEROS(rho[is], rhopw_nrxx);
             }
 
+            std::cout << " Performing grid integral over real space grid for band " << ib + 1 << "..." << std::endl;
+
             DM.init_DMR(GridD_in, ucell_in);
             DM.cal_DMR();
-
-            // gg.DMRGint.resize(nspin);
             gg.initialize_pvpR(*ucell_in, GridD_in);
-
             gg.transfer_DM2DtoGrid(DM.get_DMR_vector());
-
             Gint_inout inout((double***)nullptr, rho, Gint_Tools::job_type::rho);
             gg.cal_gint(&inout);
 
@@ -121,12 +118,14 @@ void IState_Charge::begin(Gint_Gamma& gg,
                                               rhopw_nrxx); // Copy data after allocation
             }
 
+            std::cout << " Writting cube files...";
+
             // 0 means definitely output charge density.
             for (int is = 0; is < nspin; ++is)
             {
                 // ssc should be inside the inner loop to reset the string stream each time
                 std::stringstream ssc;
-                ssc << global_out_dir << "BAND" << ib + 1 << "_SPIN" << is << "_CHG.cube";
+                ssc << global_out_dir << "BAND" << ib + 1 << "_GAMMA" << "_SPIN" << is + 1 << "_CHG.cube";
 
                 // Use a const vector to store efermi for all spins, replace the original implementation:
                 // const double ef_tmp = pelec->eferm.get_efval(is);
@@ -149,6 +148,8 @@ void IState_Charge::begin(Gint_Gamma& gg,
                     ef_spin,
                     ucell_in);
             }
+
+            std::cout << " Complete!" << std::endl;
 
             // Release memory of rho_save
             for (int is = 0; is < nspin; is++)
@@ -190,7 +191,7 @@ void IState_Charge::begin(Gint_k& gk,
 {
     ModuleBase::TITLE("IState_Charge", "begin");
 
-    std::cout << " Perform |psi(i)|^2 for selected bands (multi-k)." << std::endl;
+    std::cout << " Perform |psi(i)|^2 for selected bands (band-decomposed charge densities, multi-k)." << std::endl;
 
     int mode = 0;
     if (nbands_istate > 0 && static_cast<int>(out_band_kb.size()) == 0)
@@ -199,6 +200,7 @@ void IState_Charge::begin(Gint_k& gk,
     }
     else if (static_cast<int>(out_band_kb.size()) > 0)
     {
+        // If out_band_kb (bands_to_print) is not empty, set mode to 2
         mode = 2;
         std::cout << " Notice: INPUT parameter `nbands_istate` overwritten by `bands_to_print`!" << std::endl;
     }
@@ -211,49 +213,14 @@ void IState_Charge::begin(Gint_k& gk,
     std::cout << " number of electrons = " << nelec << std::endl;
     std::cout << " number of occupied bands = " << fermi_band << std::endl;
 
+    // Set this->bands_picked_ according to the mode
     select_bands(nbands_istate, out_band_kb, nbands, nelec, mode, fermi_band);
-
-    if (mode == 3)
-    {
-        bool stop = false;
-        std::stringstream ss;
-        ss << global_out_dir << "istate.info";
-        std::cout << " Open the file : " << ss.str() << std::endl;
-        if (my_rank == 0)
-        {
-            std::ifstream ifs(ss.str().c_str());
-            if (!ifs)
-            {
-                stop = true;
-            }
-            else
-            {
-                for (int ib = 0; ib < nbands; ++ib)
-                {
-                    ModuleBase::GlobalFunc::READ_VALUE(ifs, bands_picked_[ib]);
-                }
-            }
-        }
-
-#ifdef __MPI
-        Parallel_Common::bcast_bool(stop);
-        Parallel_Common::bcast_int(bands_picked_.data(), nbands);
-#endif
-        if (stop)
-        {
-            ofs_warning << " Can't find the file : " << ss.str() << std::endl;
-            ModuleBase::WARNING_QUIT("IState_Charge::begin", "can't find the istate file.");
-        }
-    }
 
     for (int ib = 0; ib < nbands; ++ib)
     {
         if (bands_picked_[ib])
         {
-            // std::cout << " Perform band decomposed charge density for kpoint " << ik << ",  band" << ib + 1
-            //           << std::endl;
-
-            // elecstate::DensityMatrix<std::complex<double>, double> DM(this->ParaV, nspin);
+            // Using new density matrix inplementation (multi-k)
             elecstate::DensityMatrix<std::complex<double>, double> DM(&kv, this->ParaV, nspin);
 
 #ifdef __MPI
@@ -262,6 +229,7 @@ void IState_Charge::begin(Gint_k& gk,
             ModuleBase::WARNING_QUIT("IState_Charge::begin", "The `pchg` calculation is only available for MPI now!");
 #endif
 
+            // For multi-k, loop over all real k-points
             for (int ik = 0; ik < kv.get_nks() / nspin; ++ik)
             {
                 for (int is = 0; is < nspin; ++is)
@@ -269,15 +237,13 @@ void IState_Charge::begin(Gint_k& gk,
                     ModuleBase::GlobalFunc::ZEROS(rho[is], rhopw_nrxx);
                 }
 
+                std::cout << " Performing grid integral over real space grid for band " << ib + 1 << ", k-point "
+                          << ik + 1 << "..." << std::endl;
+
                 DM.init_DMR(GridD_in, ucell_in);
-
                 DM.cal_DMR(ik);
-                // DM.cal_DMR();
-
                 gk.initialize_pvpR(*ucell_in, GridD_in);
-
                 gk.transfer_DM2DtoGrid(DM.get_DMR_vector());
-
                 Gint_inout inout(rho, Gint_Tools::job_type::rho);
                 gk.cal_gint(&inout);
 
@@ -289,6 +255,8 @@ void IState_Charge::begin(Gint_k& gk,
                                                   rhopw_nrxx); // Copy data after allocation
                 }
 
+                std::cout << " Writting cube files...";
+
                 // 0 means definitely output charge density.
                 for (int is = 0; is < nspin; ++is)
                 {
@@ -296,8 +264,6 @@ void IState_Charge::begin(Gint_k& gk,
                     std::stringstream ssc;
                     ssc << global_out_dir << "BAND" << ib + 1 << "_K" << ik + 1 << "_SPIN" << is + 1 << "_CHG.cube";
 
-                    // Use a const vector to store efermi for all spins, replace the original implementation:
-                    // const double ef_tmp = pelec->eferm.get_efval(is);
                     double ef_spin = ef_all_spin[is];
                     ModuleIO::write_rho(
 #ifdef __MPI
@@ -317,6 +283,8 @@ void IState_Charge::begin(Gint_k& gk,
                         ef_spin,
                         ucell_in);
                 }
+
+                std::cout << " Complete!" << std::endl;
 
                 // Release memory of rho_save
                 for (int is = 0; is < nspin; is++)
@@ -349,10 +317,10 @@ void IState_Charge::select_bands(const int nbands_istate,
         bands_below = nbands_istate;
         bands_above = nbands_istate;
 
-        std::cout << " Plot band decomposed charge density below Fermi surface with " << bands_below << " bands."
+        std::cout << " Plot band-decomposed charge density below Fermi surface with " << bands_below << " bands."
                   << std::endl;
 
-        std::cout << " Plot band decomposed charge density above Fermi surface with " << bands_above << " bands."
+        std::cout << " Plot band-decomposed charge density above Fermi surface with " << bands_above << " bands."
                   << std::endl;
 
         for (int ib = 0; ib < nbands; ++ib)
@@ -394,24 +362,51 @@ void IState_Charge::select_bands(const int nbands_istate,
             bands_picked_[i] = out_band_kb[i];
         }
 
-        std::cout << " Plot band decomposed charge density below the Fermi surface: band ";
+        // Check if there are selected bands below the Fermi surface
+        bool has_below = false;
         for (int i = 0; i + 1 <= fermi_band; ++i)
         {
             if (bands_picked_[i] == 1)
             {
-                std::cout << i + 1 << " ";
+                has_below = true;
+                break;
             }
         }
-        std::cout << std::endl;
-        std::cout << " Plot band decomposed charge density above the Fermi surface: band ";
+        if (has_below)
+        {
+            std::cout << " Plot band-decomposed charge density below the Fermi surface: band ";
+            for (int i = 0; i + 1 <= fermi_band; ++i)
+            {
+                if (bands_picked_[i] == 1)
+                {
+                    std::cout << i + 1 << " ";
+                }
+            }
+            std::cout << std::endl;
+        }
+
+        // Check if there are selected bands above the Fermi surface
+        bool has_above = false;
         for (int i = fermi_band; i < nbands; ++i)
         {
             if (bands_picked_[i] == 1)
             {
-                std::cout << i + 1 << " ";
+                has_above = true;
+                break;
             }
         }
-        std::cout << std::endl;
+        if (has_above)
+        {
+            std::cout << " Plot band-decomposed charge density above the Fermi surface: band ";
+            for (int i = fermi_band; i < nbands; ++i)
+            {
+                if (bands_picked_[i] == 1)
+                {
+                    std::cout << i + 1 << " ";
+                }
+            }
+            std::cout << std::endl;
+        }
     }
     else
     {
@@ -420,6 +415,49 @@ void IState_Charge::select_bands(const int nbands_istate,
 }
 
 #ifdef __MPI
+void IState_Charge::idmatrix(const int& ib,
+                             const int nspin,
+                             const double& nelec,
+                             const int nlocal,
+                             const ModuleBase::matrix& wg,
+                             elecstate::DensityMatrix<double, double>& DM,
+                             const K_Vectors& kv)
+{
+    ModuleBase::TITLE("IState_Charge", "idmatrix");
+    assert(wg.nr == nspin);
+
+    int fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
+
+    for (int is = 0; is < nspin; ++is)
+    {
+        std::cout << " Calculating density matrix for band " << ib + 1 << ", spin " << is + 1 << std::endl;
+
+        std::vector<double> wg_local(this->ParaV->ncol, 0.0);
+        const int ib_local = this->ParaV->global2local_col(ib);
+
+        if (ib_local >= 0)
+        {
+            // For unoccupied bands, use occupation of HOMO
+            wg_local[ib_local] = (ib < fermi_band) ? wg(is, ib) : wg(is, fermi_band - 1);
+        }
+
+        // wg_wfc(ib,iw) = wg[ib] * wfc(ib,iw);
+        this->psi_gamma->fix_k(is);
+        psi::Psi<double> wg_wfc(*this->psi_gamma, 1);
+
+        for (int ir = 0; ir < wg_wfc.get_nbands(); ++ir)
+        {
+            BlasConnector::scal(wg_wfc.get_nbasis(), wg_local[ir], wg_wfc.get_pointer() + ir * wg_wfc.get_nbasis(), 1);
+        }
+
+        elecstate::psiMulPsiMpi(wg_wfc,
+                                *(this->psi_gamma),
+                                DM.get_DMK_pointer(is),
+                                this->ParaV->desc_wfc,
+                                this->ParaV->desc);
+    }
+}
+
 void IState_Charge::idmatrix(const int& ib,
                              const int nspin,
                              const double& nelec,
@@ -435,7 +473,8 @@ void IState_Charge::idmatrix(const int& ib,
 
     for (int ik = 0; ik < kv.get_nks(); ++ik)
     {
-        std::cout << " Perform band decomposed charge density for kpoint " << ik << ",  band" << ib + 1 << std::endl;
+        std::cout << " Calculating density matrix for band " << ib + 1 << ", k-point "
+                  << ik % (kv.get_nks() / nspin) + 1 << ", spin " << kv.isk[ik] + 1 << std::endl;
 
         std::vector<double> wg_local(this->ParaV->ncol, 0.0);
         const int ib_local = this->ParaV->global2local_col(ib);
@@ -456,50 +495,6 @@ void IState_Charge::idmatrix(const int& ib,
         elecstate::psiMulPsiMpi(wg_wfc,
                                 *(this->psi_k),
                                 DM.get_DMK_pointer(ik),
-                                this->ParaV->desc_wfc,
-                                this->ParaV->desc);
-    }
-}
-#endif
-
-#ifdef __MPI
-void IState_Charge::idmatrix(const int& ib,
-                             const int nspin,
-                             const double& nelec,
-                             const int nlocal,
-                             const ModuleBase::matrix& wg,
-                             elecstate::DensityMatrix<double, double>& DM,
-                             const K_Vectors& kv)
-{
-    ModuleBase::TITLE("IState_Charge", "idmatrix");
-    assert(wg.nr == nspin);
-
-    int fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
-
-    for (int is = 0; is < nspin; ++is)
-    {
-        std::vector<double> wg_local(this->ParaV->ncol, 0.0);
-        const int ib_local = this->ParaV->global2local_col(ib);
-
-        if (ib_local >= 0)
-        {
-            // For unoccupied bands, use occupation of HOMO
-            wg_local[ib_local] = (ib < fermi_band) ? wg(is, ib) : wg(is, fermi_band - 1);
-        }
-
-        // wg_wfc(ib,iw) = wg[ib] * wfc(ib,iw);
-        this->psi_gamma->fix_k(is);
-        psi::Psi<double> wg_wfc(*this->psi_gamma, 1);
-
-        for (int ir = 0; ir < wg_wfc.get_nbands(); ++ir)
-        {
-            BlasConnector::scal(wg_wfc.get_nbasis(), wg_local[ir], wg_wfc.get_pointer() + ir * wg_wfc.get_nbasis(), 1);
-        }
-        // const int ik = 0; // Gamma point only
-
-        elecstate::psiMulPsiMpi(wg_wfc,
-                                *(this->psi_gamma),
-                                DM.get_DMK_pointer(is),
                                 this->ParaV->desc_wfc,
                                 this->ParaV->desc);
     }
