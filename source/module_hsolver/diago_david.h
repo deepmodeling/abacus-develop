@@ -98,7 +98,7 @@ class DiagoDavid : public DiagH<T, Device>
 
     void cal_elem(const int& dim,
                   int& nbase,
-                  const int nbase_x,// maximum dimension of the reduced basis set
+                  const int nbase_x,
                   const int& notconv,
                   const psi::Psi<T, Device>& basis,
                   const T* hphi,
@@ -111,7 +111,7 @@ class DiagoDavid : public DiagH<T, Device>
                  int& nbase,
                  const int nbase_x,
                  const Real* eigenvalue,
-                 const T *psi_in, //const psi::Psi<T, Device>& psi,
+                 const T *psi_in,
                  const int ldPsi,
                  psi::Psi<T, Device>& basis,
                  T* hphi,
