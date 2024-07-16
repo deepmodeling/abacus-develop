@@ -122,8 +122,9 @@ void UnitCell::read_cell_pseudopots(const std::string& pp_dir, std::ofstream& lo
 
 void UnitCell::print_unitcell_pseudo(const std::string& fn)
 {
-    if (GlobalV::test_pseudo_cell)
+    if (GlobalV::test_pseudo_cell) {
         ModuleBase::TITLE("UnitCell", "print_unitcell_pseudo");
+}
     std::ofstream ofs(fn.c_str());
 
     this->print_cell(ofs);
