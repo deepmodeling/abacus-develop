@@ -49,7 +49,7 @@ namespace LR
             this->BvK_cells = RI_Util::get_Born_von_Karmen_cells(period);
 
             this->allocate_Ds_onebase();
-            this->exx_lri->Hexxs.resize(this->nspin);
+            this->exx_lri->Hexxs.resize(this->nspin_solve);
         };
 
         void init(const int ik_in) override {};
@@ -59,6 +59,7 @@ namespace LR
     private:
         //global sizes
         const int& nspin;
+        const int nspin_solve = 1;
         const int& naos;
         const int& nocc;
         const int& nvirt;

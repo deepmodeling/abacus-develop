@@ -17,6 +17,8 @@ namespace LR
         const bool skip_charge)
     {
         ModuleBase::TITLE("HSolverLR", "solve");
+        assert(psi.get_nk() == nk);
+        const std::vector<std::string> spin_types = { "Spin Singlet", "Spin Triplet" };
         // note: if not TDA, the eigenvalues will be complex
         // then we will need a new constructor of DiagoDavid
 
@@ -34,8 +36,8 @@ namespace LR
         if (this->method == "lapack")
         {
             std::vector<T> Amat_full = pHamilt->matrix();
-            eigenvalue.resize(nks * npairs);
-            LR_Util::diag_lapack(nks * npairs, Amat_full.data(), eigenvalue.data());
+            eigenvalue.resize(nk * npairs);
+            LR_Util::diag_lapack(nk * npairs, Amat_full.data(), eigenvalue.data());
             psi.fix_kb(0, 0);
             // copy eigenvectors
             for (int i = 0;i < psi.size();++i) psi.get_pointer()[i] = Amat_full[i];
@@ -147,8 +149,7 @@ namespace LR
         }
 
         // 5. copy eigenvalue to pes
-        pes->ekb.create(1, psi.get_nbands());
-        for (int ist = 0;ist < psi.get_nbands();++ist) pes->ekb(0, ist) = eigenvalue[ist];
+        for (int ist = 0;ist < psi.get_nbands();++ist) pes->ekb(ispin_solve, ist) = eigenvalue[ist];
 
 
         // 6. output eigenvalues and eigenvectors
@@ -159,12 +160,12 @@ namespace LR
         {
             if (GlobalV::MY_RANK == 0)
             {
-                std::ofstream ofs(GlobalV::global_out_dir + "Excitation_Energy.dat");
+                std::ofstream ofs(GlobalV::global_out_dir + "Excitation_Energy_" + spin_types[ispin_solve] + ".dat");
                 ofs << std::setprecision(8) << std::scientific;
                 for (auto& e : eigenvalue)ofs << e << " ";
                 ofs.close();
             }
-            LR_Util::write_psi_bandfirst(psi, GlobalV::global_out_dir + "Excitation_Amplitude", GlobalV::MY_RANK);
+            LR_Util::write_psi_bandfirst(psi, GlobalV::global_out_dir + "Excitation_Amplitude_" + spin_types[ispin_solve], GlobalV::MY_RANK);
         }
 
         // normalization is already satisfied

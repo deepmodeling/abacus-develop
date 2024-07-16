@@ -12,8 +12,7 @@ namespace LR
         psi::Psi<double>& AX_istate)
     {
         ModuleBase::TITLE("hamilt_lrtd", "cal_AX_forloop");
-        int nks = c.get_nk();
-        assert(V_istate.size() == nks);
+        const int nks = V_istate.size();
         int naos = c.get_nbasis();
         AX_istate.fix_k(0);
         ModuleBase::GlobalFunc::ZEROS(AX_istate.get_pointer(), nks * nocc * nvirt);
@@ -45,8 +44,7 @@ namespace LR
         psi::Psi<std::complex<double>>& AX_istate)
     {
         ModuleBase::TITLE("hamilt_lrtd", "cal_AX_forloop");
-        int nks = c.get_nk();
-        assert(V_istate.size() == nks);
+        const int nks = V_istate.size();
         int naos = c.get_nbasis();
         AX_istate.fix_k(0);
         ModuleBase::GlobalFunc::ZEROS(AX_istate.get_pointer(), nks * nocc * nvirt);
@@ -80,8 +78,7 @@ namespace LR
         const bool add_on)
     {
         ModuleBase::TITLE("hamilt_lrtd", "cal_AX_blas");
-        int nks = c.get_nk();
-        assert(V_istate.size() == nks);
+        const int nks = V_istate.size();
         int naos = c.get_nbasis();
 
         for (int isk = 0;isk < nks;++isk)
@@ -116,8 +113,7 @@ namespace LR
         const bool add_on)
     {
         ModuleBase::TITLE("hamilt_lrtd", "cal_AX_blas");
-        int nks = c.get_nk();
-        assert(V_istate.size() == nks);
+        const int nks = V_istate.size();
         int naos = c.get_nbasis();
 
         for (int isk = 0;isk < nks;++isk)

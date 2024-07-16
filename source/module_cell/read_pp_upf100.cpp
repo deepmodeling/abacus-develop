@@ -2,10 +2,10 @@
 
 //  read pseudopot_upf potential "upf" in the Unified
 //  Pseudopot_upfpotential Format
-int Pseudopot_upf::read_pseudo_upf(std::ifstream &ifs)
+int Pseudopot_upf::read_pseudo_upf(std::ifstream &ifs, Atom_pseudo& pp)
 {
     std::string dummy;
-    this->has_so = false;
+    pp.has_so = false;
     this->q_with_l = false;
 
     // addinfo_loop
@@ -16,14 +16,14 @@ int Pseudopot_upf::read_pseudo_upf(std::ifstream &ifs)
         ifs >> dummy;
         if (dummy == "<PP_ADDINFO>")
         {
-            this->has_so = true;
+            pp.has_so = true;
         }
         else if (dummy == "<PP_QIJ_WITH_L>")
         {
             this->q_with_l = true;
         }
 
-        if (has_so && q_with_l)
+        if (pp.has_so && q_with_l)
         {
             break;
         }
@@ -51,7 +51,7 @@ int Pseudopot_upf::read_pseudo_upf(std::ifstream &ifs)
             //---------------------
             // call member function
             //---------------------
-            read_pseudo_header(ifs);
+            read_pseudo_header(ifs, pp);
             ModuleBase::GlobalFunc::SCAN_END(ifs, "</PP_HEADER>");
             break;
         }
@@ -69,18 +69,18 @@ int Pseudopot_upf::read_pseudo_upf(std::ifstream &ifs)
         //---------------------
         // call member function
         //---------------------
-        read_pseudo_mesh(ifs);
+        read_pseudo_mesh(ifs, pp);
         ModuleBase::GlobalFunc::SCAN_END(ifs, "</PP_MESH>");
     }
 
     // If  present, search for nlcc
-    if (this->nlcc)
+    if (pp.nlcc)
     {
 		ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_NLCC>"); 
 		//---------------------
 		// call member function
 		//---------------------
-		read_pseudo_nlcc(ifs);
+		read_pseudo_nlcc(ifs, pp);
 		ModuleBase::GlobalFunc::SCAN_END(ifs, "</PP_NLCC>");
 	}
 
@@ -91,7 +91,7 @@ int Pseudopot_upf::read_pseudo_upf(std::ifstream &ifs)
         //---------------------
         // call member function
         //---------------------
-        read_pseudo_local(ifs);
+        read_pseudo_local(ifs, pp);
         ModuleBase::GlobalFunc::SCAN_END(ifs, "</PP_LOCAL>");
     }
 
@@ -100,7 +100,7 @@ int Pseudopot_upf::read_pseudo_upf(std::ifstream &ifs)
 	//---------------------
 	// call member function
 	//---------------------
-	read_pseudo_nl(ifs);
+	read_pseudo_nl(ifs, pp);
 	ModuleBase::GlobalFunc::SCAN_END(ifs, "</PP_NONLOCAL>");
 
 	// Search for atomic wavefunctions
@@ -108,7 +108,7 @@ int Pseudopot_upf::read_pseudo_upf(std::ifstream &ifs)
 	//---------------------
 	// call member function
 	//---------------------
-	read_pseudo_pswfc(ifs);
+	read_pseudo_pswfc(ifs, pp);
 	ModuleBase::GlobalFunc::SCAN_END(ifs, "</PP_PSWFC>");
 
 	// Search for atomic charge
@@ -116,23 +116,20 @@ int Pseudopot_upf::read_pseudo_upf(std::ifstream &ifs)
 	//---------------------
 	// call member function
 	//---------------------
-	read_pseudo_rhoatom(ifs);
+	read_pseudo_rhoatom(ifs, pp);
 	ModuleBase::GlobalFunc::SCAN_END(ifs, "</PP_RHOATOM>");
 
 	// Search for add_info
-	if (has_so)
+	if (pp.has_so)
 	{
 		ModuleBase::GlobalFunc::SCAN_BEGIN (ifs,"<PP_ADDINFO>");//added by zhengdy-soc
 		//---------------------
 		// call member function
 		//---------------------
-		read_pseudo_so (ifs);
+		read_pseudo_so(ifs, pp);
 		ModuleBase::GlobalFunc::SCAN_END (ifs,"</PP_ADDINFO>");
 	}
-    if (mesh%2 == 0)
-	{
-		mesh -= 1;
-	}
+
 	ifs.clear();
 	ifs.seekg(0);
 
@@ -141,32 +138,32 @@ int Pseudopot_upf::read_pseudo_upf(std::ifstream &ifs)
 }// end subroutine read_pseudopot_upf
 
 
-void Pseudopot_upf::read_pseudo_header(std::ifstream &ifs)
+void Pseudopot_upf::read_pseudo_header(std::ifstream &ifs, Atom_pseudo& pp)
 {
-	ModuleBase::GlobalFunc::READ_VALUE(ifs, this->nv);// Version number
-	ModuleBase::GlobalFunc::READ_VALUE(ifs, this->psd);// Element label
+	ModuleBase::GlobalFunc::READ_VALUE(ifs, pp.nv);// Version number
+	ModuleBase::GlobalFunc::READ_VALUE(ifs, pp.psd);// Element label
 
 	// Type of pseudo : NC or US
-	ModuleBase::GlobalFunc::READ_VALUE(ifs, this->pp_type);
-	if(pp_type=="US")
+	ModuleBase::GlobalFunc::READ_VALUE(ifs, pp.pp_type);
+	if(pp.pp_type=="US")
 	{
-		this->tvanp = true;
+		pp.tvanp = true;
         this->coulomb_potential = false;
     }
-    else if (pp_type == "NC")
+    else if (pp.pp_type == "NC")
     {
-        this->tvanp = false;
+        pp.tvanp = false;
         this->coulomb_potential = false;
     }
-    else if (pp_type == "1/r")
+    else if (pp.pp_type == "1/r")
     {
-        this->tvanp = false;
+        pp.tvanp = false;
         this->coulomb_potential = true;
     }
     else
     {
         // A bug here!!! can't quit together.
-        std::cout << " pp_type=" << pp_type << std::endl;
+        std::cout << " pp_type=" << pp.pp_type << std::endl;
         ModuleBase::WARNING_QUIT("Pseudopot_upf::read_pseudo_header", "unknown pseudo type");
     }
 
@@ -176,116 +173,120 @@ void Pseudopot_upf::read_pseudo_header(std::ifstream &ifs)
 
     if (nlc == "T")
     {
-		this->nlcc = true;
+		pp.nlcc = true;
 	}
 	else
 	{
-		this->nlcc = false;
+		pp.nlcc = false;
 	}
 
 	// mohan modify 2009-12-15
 	std::string junk;
 	ifs >> junk >> junk >> junk >> junk;
-	ModuleBase::GlobalFunc::READ_VALUE(ifs, xc_func);
+	ModuleBase::GlobalFunc::READ_VALUE(ifs, pp.xc_func);
 
-    ModuleBase::GlobalFunc::READ_VALUE(ifs, this->zp);
-	ModuleBase::GlobalFunc::READ_VALUE(ifs, this->etotps);
+    ModuleBase::GlobalFunc::READ_VALUE(ifs, pp.zv);
+	ModuleBase::GlobalFunc::READ_VALUE(ifs, pp.etotps);
 
-	ifs >> this->ecutwfc >> this->ecutrho;
+	ifs >> pp.ecutwfc >> pp.ecutrho;
 	ifs.ignore(75, '\n');
 
-	ModuleBase::GlobalFunc::READ_VALUE(ifs, this->lmax);
-	ModuleBase::GlobalFunc::READ_VALUE(ifs, this->mesh);
-
-	ifs >> this->nwfc >> this->nbeta ;
-	ifs.ignore(75, '\n');
-	ifs.ignore(75, '\n');
-
-	delete[] els;
-	delete[] lchi;
-	delete[] oc;
-	this->els = new std::string[nwfc];
-	this->lchi = new int[nwfc];
-	this->oc = new double[nwfc];
-
-	ModuleBase::GlobalFunc::ZEROS(lchi, nwfc); // angular momentum of each orbital
-	ModuleBase::GlobalFunc::ZEROS(oc, nwfc);//occupation of each orbital
-
-	for(int i=0;i<nwfc;i++)
+	ModuleBase::GlobalFunc::READ_VALUE(ifs, pp.lmax);
+	ModuleBase::GlobalFunc::READ_VALUE(ifs, pp.mesh);
+    if (pp.mesh%2 == 0)
 	{
-		ifs >> els[i] >> this->lchi[i] >> this->oc[i];
+		pp.mesh -= 1;
+	}
+
+	ifs >> pp.nchi >> pp.nbeta ;
+	ifs.ignore(75, '\n');
+	ifs.ignore(75, '\n');
+
+	delete[] pp.els;
+	delete[] pp.lchi;
+	delete[] pp.oc;
+	pp.els = new std::string[pp.nchi];
+	pp.lchi = new int[pp.nchi];
+	pp.oc = new double[pp.nchi];
+
+	ModuleBase::GlobalFunc::ZEROS(pp.lchi, pp.nchi); // angular momentum of each orbital
+	ModuleBase::GlobalFunc::ZEROS(pp.oc, pp.nchi);//occupation of each orbital
+
+	for(int i=0;i<pp.nchi;i++)
+	{
+		ifs >> pp.els[i] >> pp.lchi[i] >> pp.oc[i];
 	}
 	if (this->coulomb_potential)
 	{
-		this->nbeta = 0;
-        this->lmax = 0;
+		pp.nbeta = 0;
+        pp.lmax = 0;
         this->lloc = 0;
 	}
 	return;
 }
 
-void Pseudopot_upf::read_pseudo_mesh(std::ifstream &ifs)
+void Pseudopot_upf::read_pseudo_mesh(std::ifstream &ifs, Atom_pseudo& pp)
 {
-	assert(mesh>0);
+	assert(pp.mesh>0);
 
-	delete[] r;
-	delete[] rab;
-	this->r = new double[mesh];
-	this->rab = new double[mesh];
-	ModuleBase::GlobalFunc::ZEROS(r,mesh);
-	ModuleBase::GlobalFunc::ZEROS(rab,mesh);
+	delete[] pp.r;
+	delete[] pp.rab;
+	pp.r = new double[pp.mesh];
+	pp.rab = new double[pp.mesh];
+	ModuleBase::GlobalFunc::ZEROS(pp.r,pp.mesh);
+	ModuleBase::GlobalFunc::ZEROS(pp.rab,pp.mesh);
 
 	int ir = 0;
 
 	if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_R>", false) )
 	{
-		for (ir = 0;ir < mesh;ir++)
+		for (ir = 0;ir < pp.mesh;ir++)
 		{
-			ifs >> this->r[ir];
+			ifs >> pp.r[ir];
 		}
 		ModuleBase::GlobalFunc::SCAN_END(ifs, "</PP_R>");
 	}
 
 	if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_RAB>", false) )
 	{
-		for (ir = 0;ir < mesh;ir++)
+		for (ir = 0;ir < pp.mesh;ir++)
 		{
-			ifs >> this->rab[ir];
+			ifs >> pp.rab[ir];
 		}
 		ModuleBase::GlobalFunc::SCAN_END(ifs, "</PP_RAB>");
 	}
 	return;
 }
 
-void Pseudopot_upf::read_pseudo_nlcc(std::ifstream &ifs)
+void Pseudopot_upf::read_pseudo_nlcc(std::ifstream &ifs, Atom_pseudo& pp)
 {
-	assert(mesh>0);
-	delete[] rho_atc;
-	this->rho_atc = new double[mesh];
-	ModuleBase::GlobalFunc::ZEROS(rho_atc, mesh);
-	for (int ir = 0;ir < mesh;ir++)
+	assert(pp.mesh>0);
+	delete[] pp.rho_atc;
+	pp.rho_atc = new double[pp.mesh];
+	ModuleBase::GlobalFunc::ZEROS(pp.rho_atc, pp.mesh);
+	for (int ir = 0;ir < pp.mesh;ir++)
 	{
-		ifs >> this->rho_atc[ir];
+		ifs >> pp.rho_atc[ir];
 	}
 	return;
 }
 
-void Pseudopot_upf::read_pseudo_local(std::ifstream &ifs)
+void Pseudopot_upf::read_pseudo_local(std::ifstream &ifs, Atom_pseudo& pp)
 {
-	assert(mesh>0);
-	delete[] vloc;
-	this->vloc = new double[mesh];
-	ModuleBase::GlobalFunc::ZEROS(vloc, mesh);
+	assert(pp.mesh>0);
+	delete[] pp.vloc_at;
+	pp.vloc_at = new double[pp.mesh];
+	ModuleBase::GlobalFunc::ZEROS(pp.vloc_at, pp.mesh);
 
-	for (int ir = 0;ir < mesh;ir++)
+	for (int ir = 0;ir < pp.mesh;ir++)
 	{
-		ifs >> this->vloc[ir];
+		ifs >> pp.vloc_at[ir];
 	}
 	
 	return;
 }
 
-void Pseudopot_upf::read_pseudo_nl(std::ifstream &ifs)
+void Pseudopot_upf::read_pseudo_nl(std::ifstream &ifs, Atom_pseudo& pp)
 {
     //	int nb, mb, n, ir, idum, ldum, lp, i, ikk;
     int nb = 0;
@@ -294,37 +295,37 @@ void Pseudopot_upf::read_pseudo_nl(std::ifstream &ifs)
     int idum = 0;
     int ldum = 0;
 
-    if (nbeta == 0)
+    if (pp.nbeta == 0)
     {
         this->nqf = 0;
-        this->nqlc = 0;
-        this->kkbeta = 0;
+        pp.nqlc = 0;
+        pp.kkbeta = 0;
         return;
     }
     else
     {
-        delete[] kbeta;
-        delete[] lll;
-        this->kbeta = new int[nbeta];
-        this->lll = new int[nbeta];
-        this->beta.create(nbeta, mesh);
-        this->dion.create(nbeta, nbeta);
-        kkbeta = 0;
+        delete[] this->kbeta;
+        delete[] pp.lll;
+        this->kbeta = new int[pp.nbeta];
+        pp.lll = new int[pp.nbeta];
+        pp.betar.create(pp.nbeta, pp.mesh);
+        pp.dion.create(pp.nbeta, pp.nbeta);
+        pp.kkbeta = 0;
 
-        for (int i = 0; i < nbeta; i++)
+        for (int i = 0; i < pp.nbeta; i++)
         {
             ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_BETA>", false);
             ifs >> idum;
-            ModuleBase::GlobalFunc::READ_VALUE(ifs, this->lll[i]);// nl_1
+            ModuleBase::GlobalFunc::READ_VALUE(ifs, pp.lll[i]);// nl_1
             ModuleBase::GlobalFunc::READ_VALUE(ifs, this->kbeta[i]); // nl_2
             // number of mesh points for projectors
 
-            for (ir = 0; ir < kbeta[i]; ir++)
+            for (ir = 0; ir < this->kbeta[i]; ir++)
             {
-				ifs >> this->beta(i, ir);// nl_3
+				ifs >> pp.betar(i, ir);// nl_3
 			}
 			ModuleBase::GlobalFunc::SCAN_END(ifs, "</PP_BETA>");
-            kkbeta = (kbeta[i] > kkbeta) ? kbeta[i] : kkbeta;
+            pp.kkbeta = (this->kbeta[i] > pp.kkbeta) ? this->kbeta[i] : pp.kkbeta;
         }
 
         // DIJ
@@ -338,13 +339,13 @@ void Pseudopot_upf::read_pseudo_nl(std::ifstream &ifs)
 			mb--;
 			assert( nb >= 0); // mohan add 2011-03-10
 			assert( mb >= 0);
-			this->dion(mb, nb) = swap;// nl_5
-			this->dion(nb, mb) = swap;
+			pp.dion(mb, nb) = swap;// nl_5
+			pp.dion(nb, mb) = swap;
         }
         ModuleBase::GlobalFunc::SCAN_END(ifs, "</PP_DIJ>");
 
 		// QIJ
-		if (tvanp)
+		if (pp.tvanp)
 		{
             if (!ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_QIJ>", false))
             {
@@ -352,41 +353,41 @@ void Pseudopot_upf::read_pseudo_nl(std::ifstream &ifs)
             }
             // If nqf is not zero, Qij's inside rinner are computed using qfcoef's
             ModuleBase::GlobalFunc::READ_VALUE(ifs, this->nqf);
-            this->nqlc = 2 * this->lmax + 1;
+            pp.nqlc = 2 * pp.lmax + 1;
             delete[] rinner;
-            this->rinner = new double[nqlc];
-            qqq.create(nbeta, nbeta);
+            this->rinner = new double[pp.nqlc];
+            pp.qqq.create(pp.nbeta, pp.nbeta);
             if (q_with_l)
             {
-                this->qfuncl.create(2 * lmax + 1, nbeta * (nbeta + 1) / 2, mesh);
+                pp.qfuncl.create(2 * pp.lmax + 1, pp.nbeta * (pp.nbeta + 1) / 2, pp.mesh);
             }
             else
             {
-                this->qfunc.create(nbeta * (nbeta + 1) / 2, mesh);
+                this->qfunc.create(pp.nbeta * (pp.nbeta + 1) / 2, pp.mesh);
             }
 
             if (nqf <= 0)
             {
-                ModuleBase::GlobalFunc::ZEROS(rinner, nqlc);
+                ModuleBase::GlobalFunc::ZEROS(rinner, pp.nqlc);
                 this->qfcoef.create(1, 1, 1, 1);
             }
             else
             {
-                this->qfcoef.create(nbeta, nbeta, nqlc, nqf);
+                this->qfcoef.create(pp.nbeta, pp.nbeta, pp.nqlc, nqf);
                 ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_RINNER>", false);
-                for (int i = 0; i < nqlc; i++)
+                for (int i = 0; i < pp.nqlc; i++)
                 {
                     ifs >> idum >> rinner[i];
                 }
                 ModuleBase::GlobalFunc::SCAN_END(ifs, "</PP_RINNER>");
             }
 
-            for (int nb = 0; nb < nbeta; nb++)
+            for (int nb = 0; nb < pp.nbeta; nb++)
             {
-                int ln = lll[nb];
-                for (int mb = nb; mb < nbeta; mb++)
+                int ln = pp.lll[nb];
+                for (int mb = nb; mb < pp.nbeta; mb++)
                 {
-                    int lm = lll[mb];
+                    int lm = pp.lll[mb];
                     int nmb = mb * (mb + 1) / 2 + nb;
                     ifs >> idum >> idum >> ldum; // i  j  (l(j))
                     ifs.ignore(75, '\n');
@@ -397,22 +398,22 @@ void Pseudopot_upf::read_pseudo_nl(std::ifstream &ifs)
                                                  "inconsistent angular momentum for Q_ij");
                     }
 
-                    ModuleBase::GlobalFunc::READ_VALUE(ifs, this->qqq(nb, mb));
-                    this->qqq(mb, nb) = this->qqq(nb, mb);
+                    ModuleBase::GlobalFunc::READ_VALUE(ifs, pp.qqq(nb, mb));
+                    pp.qqq(mb, nb) = pp.qqq(nb, mb);
 
                     if (q_with_l)
                     {
                         for (int l = std::abs(ln - lm); l <= ln + lm; l += 2)
                         {
-                            for (int ir = 0; ir < mesh; ir++)
+                            for (int ir = 0; ir < pp.mesh; ir++)
                             {
-                                ifs >> qfuncl(l, nmb, ir);
+                                ifs >> pp.qfuncl(l, nmb, ir);
                             }
                         }
                     }
                     else
                     {
-                        for (int ir = 0; ir < mesh; ir++)
+                        for (int ir = 0; ir < pp.mesh; ir++)
                         {
                             ifs >> qfunc(nmb, ir);
                         }
@@ -421,7 +422,7 @@ void Pseudopot_upf::read_pseudo_nl(std::ifstream &ifs)
                     if (this->nqf > 0)
                     {
                         ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_QFCOEF>", false);
-                        for (int k = 0; k < nqlc; k++)
+                        for (int k = 0; k < pp.nqlc; k++)
                         {
                             for (int l = 0; l < nqf; l++)
                             {
@@ -442,97 +443,97 @@ void Pseudopot_upf::read_pseudo_nl(std::ifstream &ifs)
     return;
 }
 
-void Pseudopot_upf::read_pseudo_pswfc(std::ifstream &ifs)
+void Pseudopot_upf::read_pseudo_pswfc(std::ifstream &ifs, Atom_pseudo& pp)
 {
-	this->chi.create(this->nwfc, this->mesh);
-	for (int i=0;i<nwfc;i++)
+	pp.chi.create(pp.nchi, pp.mesh);
+	for (int i=0;i<pp.nchi;i++)
 	{
 		std::string OrbitalName;
 		int BelongToL = 0;
 		double occupation = 0.0;
 		std::string dummy;
 		ifs >> OrbitalName >> BelongToL >> occupation >> dummy;
-		for (int ir = 0;ir < mesh;ir++)
+		for (int ir = 0;ir < pp.mesh;ir++)
 		{
-			ifs >> this->chi(i, ir);
+			ifs >> pp.chi(i, ir);
 		}
 	}
 	return;
 }
 
-void Pseudopot_upf::read_pseudo_rhoatom(std::ifstream &ifs)
+void Pseudopot_upf::read_pseudo_rhoatom(std::ifstream &ifs, Atom_pseudo& pp)
 {
-	delete[] rho_at;
-	this->rho_at = new double[mesh];
-	ModuleBase::GlobalFunc::ZEROS(rho_at, mesh);
-	for (int ir = 0;ir < mesh;ir++)
+	delete[] pp.rho_at;
+	pp.rho_at = new double[pp.mesh];
+	ModuleBase::GlobalFunc::ZEROS(pp.rho_at, pp.mesh);
+	for (int ir = 0;ir < pp.mesh;ir++)
 	{
-		ifs >> this->rho_at[ir];
+		ifs >> pp.rho_at[ir];
 	}
 	return;
 }
 
-void Pseudopot_upf::read_pseudo_so(std::ifstream &ifs)
+void Pseudopot_upf::read_pseudo_so(std::ifstream &ifs, Atom_pseudo& pp)
 {
        //read soc info from upf, added by zhengdy-soc
-       if(!this->has_so) return;
-       delete[] nn;
-       delete[] jchi;
-       delete[] jjj;
-       this->nn = new int[nwfc];
-       this->jchi = new double[nwfc];
-       this->jjj = new double[nbeta];
-       ModuleBase::GlobalFunc::ZEROS(nn,nwfc);
-       ModuleBase::GlobalFunc::ZEROS(jchi,nwfc);
-       ModuleBase::GlobalFunc::ZEROS(jjj,nbeta);
+       if(!pp.has_so) return;
+       delete[] pp.nn;
+       delete[] pp.jchi;
+       delete[] pp.jjj;
+       pp.nn = new int[pp.nchi];
+       pp.jchi = new double[pp.nchi];
+       pp.jjj = new double[pp.nbeta];
+       ModuleBase::GlobalFunc::ZEROS(pp.nn,pp.nchi);
+       ModuleBase::GlobalFunc::ZEROS(pp.jchi,pp.nchi);
+       ModuleBase::GlobalFunc::ZEROS(pp.jjj,pp.nbeta);
        //RELWFC
-       for(int nw=0;nw< nwfc;nw++)
+       for(int nw=0;nw< pp.nchi;nw++)
        {
-             ifs >> this->els[nw] >>this->nn[nw] >> this->lchi[nw] >> this->jchi[nw] >> this->oc[nw];
-             if(this->lchi[nw]-this->jchi[nw]-0.5>1e-7 && this->lchi[nw]-this->jchi[nw]-0.5<1e-7)
+             ifs >> pp.els[nw] >>pp.nn[nw] >> pp.lchi[nw] >> pp.jchi[nw] >> pp.oc[nw];
+             if(pp.lchi[nw]-pp.jchi[nw]-0.5>1e-7 && pp.lchi[nw]-pp.jchi[nw]-0.5<1e-7)
              {
                   std::cout<<"Ignore ADDINFO section"<<std::endl;
-                  this->has_so = 0;
+                  pp.has_so = 0;
              }
        }
        //RELBETA
-       for(int nb = 0;nb < nbeta;nb++)
+       for(int nb = 0;nb < pp.nbeta;nb++)
        {
-             ifs >> this->lll[nb] >> this->jjj[nb];
-             if(this->lll[nb]-this->jjj[nb]-0.5>1e-7 && this->lll[nb]-this->jjj[nb]-0.5<1e-7)
+             ifs >> pp.lll[nb] >> pp.jjj[nb];
+             if(pp.lll[nb]-pp.jjj[nb]-0.5>1e-7 && pp.lll[nb]-pp.jjj[nb]-0.5<1e-7)
              {
                   std::cout<<"Ignore ADDINFO section"<<std::endl;
-                  this->has_so = 0;
+                  pp.has_so = 0;
              }
        }
        return;
 }
 
 
-void Pseudopot_upf::print_pseudo_upf(std::ofstream &ofs)
+void Pseudopot_upf::print_pseudo_upf(std::ofstream &ofs, Atom_pseudo& pp)
 {
 	ModuleBase::TITLE("Pseudopot_upf","print_pseudo_upf");
 	ofs << " ==== read_pseudo_upf === " << std::endl;
 
 	// print header
-	ofs << " has_so: " << has_so << std::endl;
-	ofs << " Version number : " << nv << std::endl;
-	ofs << " Element label : " << psd << std::endl;
-	ofs << " pp_type: " << pp_type << std::endl;
-	ofs << " tvanp: " << tvanp << std::endl;
-	ofs << " nlcc: " << nlcc << std::endl; 
-	ofs << " dft: " << xc_func << std::endl;
-	ofs << " zp: " << zp << std::endl;
-	ofs << " etotps: " << etotps << std::endl;
-	ofs << " ecutwfc: " << ecutwfc << std::endl;
-	ofs << " ecutrho: " << ecutrho << std::endl;
-	ofs << " lmax: " << lmax << std::endl;
-	ofs << " mesh: " << mesh << std::endl;
-	ofs << " nwfc: " << nwfc << std::endl;
-	ofs << " nbeta: " << nbeta << std::endl;
-	for(int i=0; i<nwfc; ++i)
+	ofs << " has_so: " << pp.has_so << std::endl;
+	ofs << " Version number : " << pp.nv << std::endl;
+	ofs << " Element label : " << pp.psd << std::endl;
+	ofs << " pp_type: " << pp.pp_type << std::endl;
+	ofs << " tvanp: " << pp.tvanp << std::endl;
+	ofs << " nlcc: " << pp.nlcc << std::endl; 
+	ofs << " dft: " << pp.xc_func << std::endl;
+	ofs << " zp: " << pp.zv << std::endl;
+	ofs << " etotps: " << pp.etotps << std::endl;
+	ofs << " ecutwfc: " << pp.ecutwfc << std::endl;
+	ofs << " ecutrho: " << pp.ecutrho << std::endl;
+	ofs << " lmax: " << pp.lmax << std::endl;
+	ofs << " mesh: " << pp.mesh << std::endl;
+	ofs << " nwfc: " << pp.nchi << std::endl;
+	ofs << " nbeta: " << pp.nbeta << std::endl;
+	for(int i=0; i<pp.nchi; ++i)
 	{
-		ofs << " iw=" << i << " els=" << els[i] << " lchi=" << lchi[i] << " oc=" << oc[i] << std::endl;
+		ofs << " iw=" << i << " els=" << pp.els[i] << " lchi=" << pp.lchi[i] << " oc=" << pp.oc[i] << std::endl;
 	}
 
 	ofs << " End of pseudopot_upf." << std::endl;

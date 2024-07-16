@@ -32,9 +32,7 @@ namespace LR
         /// @brief a from-scratch constructor
         ESolver_LR(const Input_para& inp, UnitCell& ucell);
         ~ESolver_LR() {
-            delete this->pot;
             delete this->psi_ks;
-            delete this->X;
         }
 
         ///input: input, call, basis(LCAO), psi(ground state), elecstate
@@ -56,7 +54,7 @@ namespace LR
         // not to use ElecState because 2-particle state is quite different from 1-particle state.
         // implement a independent one (ExcitedState) to pack physical properties if needed.
         // put the components of ElecState here: 
-        PotHxcLR* pot = nullptr;
+        std::vector<std::shared_ptr<PotHxcLR>> pot;
 
         // ground state info 
 
@@ -67,7 +65,7 @@ namespace LR
         ModuleBase::matrix eig_ks;///< energy of ground state
 
         /// @brief Excited state info. size: nstates * nks * (nocc(local) * nvirt (local))
-        psi::Psi<T>* X;
+        std::vector<std::shared_ptr<psi::Psi<T>>> X;
 
         int nocc = 1;
         int nocc_max = 1;   ///< nelec/2
@@ -79,6 +77,7 @@ namespace LR
         /// how many 2-particle states to be solved
         int nstates = 1;
         int nspin = 1;
+        int nk = 1;
         std::string xc_kernel;
 
         Grid_Technique gt_;
