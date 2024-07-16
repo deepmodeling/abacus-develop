@@ -585,9 +585,28 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::P
             ModuleBase::timer::tick("David", "hpsi_func");
         };
 
+        auto spsi_func = [hm](const T* psi_in,
+                               T* spsi_out,
+                               const int nrow,  // dimension of spsi: nbands * nrow
+                               const int npw,   // number of plane waves
+                               const int nbands // number of bands
+                            ){
+            ModuleBase::timer::tick("David", "spsi_func");
+            // sPsi determines S=I or not by GlobalV::use_uspp inside
+            hm->sPsi(psi_in, spsi_out, nrow, npw, nbands);
+            ModuleBase::timer::tick("David", "spsi_func");
+        };
+        /*
+        phm_in->sPsi(psi_in + m*ldPsi,//&psi(m, 0),
+                         &this->sphi[m * dim],
+                         dim,
+                         dim,
+                         1);
+        */
+
         DiagoDavid<T, Device> david(precondition.data(), GlobalV::PW_DIAG_NDIM, GlobalV::use_paw, comm_info);
         DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(
-            david.diag(hpsi_func, dim, nband, ldPsi, psi, eigenvalue, david_diag_thr, david_maxiter, ntry_max, notconv_max));
+            david.diag(hpsi_func, spsi_func, dim, nband, ldPsi, psi, eigenvalue, david_diag_thr, david_maxiter, ntry_max, notconv_max));
     }
     return;
 }
