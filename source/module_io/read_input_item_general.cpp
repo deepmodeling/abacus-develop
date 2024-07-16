@@ -311,6 +311,11 @@ void ReadInput::item_general()
             {
                 para.input.symmetry = "0";
             }
+            if (para.input.calculation == "cell-relax")
+            {
+                para.input.symmetry = "0"; // if cell-relax, symmetry will be closed
+                                           // until issue #4171 solved
+            }
             if (para.input.efield_flag)
             {
                 para.input.symmetry = "0";
