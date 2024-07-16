@@ -27,9 +27,10 @@ class DiagoDavid : public DiagH<T, Device>
     virtual ~DiagoDavid() override;
 
     using HPsiFunc = std::function<void(T*, T*, const int, const int, const int, const int)>;
+    using SPsiFunc = std::function<void(T*, T*, const int, const int, const int)>;
 
     int diag(const HPsiFunc& hpsi_func,           // function void hpsi(T*, T*, const int, const int, const int, const int) 
-      // hamilt::Hamilt<T, Device>* phm_in,   // Pointer to the Hamiltonian object for diagonalization
+             const SPsiFunc& spsi_func,           // function void spsi(T*, T*, const int, const int, const int) 
                       const int dim,              // Dimension of the input matrix psi to be diagonalized
                       const int nband,            // Number of required eigenpairs
                       const int ldPsi,            // Leading dimension of the psi input
@@ -83,7 +84,7 @@ class DiagoDavid : public DiagH<T, Device>
     base_device::AbacusDevice_t device = {};
 
     void cal_grad(const HPsiFunc& hpsi_func,
-      // hamilt::Hamilt<T, Device>* phm_in,
+                  const SPsiFunc& spsi_func,
                   const int& dim,
                   const int& nbase,
                   const int nbase_x,
@@ -139,14 +140,14 @@ class DiagoDavid : public DiagH<T, Device>
                      T* vcc);
 
     int diag_mock(const HPsiFunc& hpsi_func,
-      // hamilt::Hamilt<T, Device>* phm_in,
-                   const int dim,
-                   const int nband,
-                   const int ldPsi,
-                   psi::Psi<T, Device>& psi,
-                   Real* eigenvalue_in,
-                   const Real david_diag_thr,
-                   const int david_maxiter);
+                  const SPsiFunc& spsi_func,
+                  const int dim,
+                  const int nband,
+                  const int ldPsi,
+                  psi::Psi<T, Device>& psi,
+                  Real* eigenvalue_in,
+                  const Real david_diag_thr,
+                  const int david_maxiter);
 
     bool check_block_conv(const int &ntry, const int &notconv, const int &ntry_max, const int &notconv_max);
 

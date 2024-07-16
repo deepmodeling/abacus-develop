@@ -76,11 +76,16 @@ namespace LR
                         hpsi_info info(&psi_iter_wrapper, bands_range, hpsi_out);
                         pHamilt->ops->hPsi(info);
                     };
+                auto spsi_func = [pHamilt](const T* psi_in, T* spsi_out,
+                               const int nrow, const int npw,  const int nbands){
+                    // sPsi determines S=I or not by GlobalV::use_uspp inside
+                    pHamilt->sPsi(psi_in, spsi_out, nrow, npw, nbands);
+                };
 
                 const int& dim = psi_k1_dav.get_nbasis();   //equals to leading dimension here
                 const int& nband = psi_k1_dav.get_nbands();
                 hsolver::DiagoDavid<T, Device> david(precondition.data(), GlobalV::PW_DIAG_NDIM, GlobalV::use_paw, comm_info);
-                hsolver::DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(david.diag(hpsi_func,
+                hsolver::DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(david.diag(hpsi_func, spsi_func,
                     dim, nband, dim, psi_k1_dav, eigenvalue.data(), this->diag_ethr, david_maxiter, ntry_max, 0/*notconv_max*/));
             }
             else if (this->method == "dav_subspace") //need refactor
