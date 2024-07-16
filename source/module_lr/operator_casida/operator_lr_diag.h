@@ -12,8 +12,8 @@ namespace LR
     class OperatorLRDiag : public hamilt::Operator<T, Device>
     {
     public:
-        OperatorLRDiag(const ModuleBase::matrix& eig_ks_in, const Parallel_2D* pX_in, const int& nks_in, const int& nspin_in, const int& nocc_in, const int& nvirt_in)
-            : eig_ks(eig_ks_in), pX(pX_in), nks(nks_in), nspin(nspin_in), nocc(nocc_in), nvirt(nvirt_in)
+        OperatorLRDiag(const ModuleBase::matrix& eig_ks_in, const Parallel_2D* pX_in, const int& nk_in, const int& nocc_in, const int& nvirt_in)
+            : eig_ks(eig_ks_in), pX(pX_in), nk(nk_in), nocc(nocc_in), nvirt(nvirt_in)
         {   // calculate the difference of eigenvalues
             ModuleBase::TITLE("OperatorLRDiag", "OperatorLRDiag");
 #ifdef __MPI
@@ -21,8 +21,8 @@ namespace LR
 #endif
             this->act_type = 2;
             this->cal_type = hamilt::calculation_type::no;
-            this->eig_ks_diff.create(nks, pX->get_local_size(), false);
-            for (int ik = 0;ik < nks;++ik)
+            this->eig_ks_diff.create(nk, pX->get_local_size(), false);
+            for (int ik = 0;ik < nk;++ik)
                 for (int io = 0;io < pX->get_col_size();++io)    //nocc_local
                     for (int iv = 0;iv < pX->get_row_size();++iv)    //nvirt_local
                     {
@@ -40,8 +40,8 @@ namespace LR
             ModuleBase::TITLE("OperatorLRDiag", "act");
             assert(nbands <= psi_in.get_nbands());
 
-            psi::Psi<T> psi_in_bfirst = LR_Util::k1_to_bfirst_wrapper(psi_in, this->nks, this->pX->get_local_size());
-            psi::Psi<T> psi_out_bfirst = LR_Util::k1_to_bfirst_wrapper(psi_out, this->nks, this->pX->get_local_size());
+            psi::Psi<T> psi_in_bfirst = LR_Util::k1_to_bfirst_wrapper(psi_in, this->nk, this->pX->get_local_size());
+            psi::Psi<T> psi_out_bfirst = LR_Util::k1_to_bfirst_wrapper(psi_out, this->nk, this->pX->get_local_size());
             for (int ib = 0;ib < nbands;++ib)
             {
                 psi_in_bfirst.fix_b(ib);
@@ -57,10 +57,9 @@ namespace LR
         const ModuleBase::matrix& eig_ks;
         const Parallel_2D* pX;
         ModuleBase::matrix eig_ks_diff;
-        const int nks;
-        const int nspin;
-        const int nocc;
-        const int nvirt;
+        const int& nk;
+        const int& nocc;
+        const int& nvirt;
         Device* ctx = {};
     };
 }

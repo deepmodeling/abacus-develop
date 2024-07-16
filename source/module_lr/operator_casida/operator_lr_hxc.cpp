@@ -21,15 +21,15 @@ namespace LR
     {
         ModuleBase::TITLE("OperatorLRHxc", "act");
         assert(nbands <= psi_in.get_nbands());
-        const int& nks = this->kv.get_nks();
+        const int& nk = this->kv.get_nks() / this->nspin;
 
         //print 
         // if (this->first_print) LR_Util::print_psi_kfirst(*psi_ks, "psi_ks");
 
         this->init_DM_trans(nbands, this->DM_trans);    // initialize transion density matrix
 
-        psi::Psi<T> psi_in_bfirst = LR_Util::k1_to_bfirst_wrapper(psi_in, nks, this->pX->get_local_size());
-        psi::Psi<T> psi_out_bfirst = LR_Util::k1_to_bfirst_wrapper(psi_out, nks, this->pX->get_local_size());
+        psi::Psi<T> psi_in_bfirst = LR_Util::k1_to_bfirst_wrapper(psi_in, nk, this->pX->get_local_size());
+        psi::Psi<T> psi_out_bfirst = LR_Util::k1_to_bfirst_wrapper(psi_out, nk, this->pX->get_local_size());
 
         const int& lgd = gint->gridt->lgd;
         for (int ib = 0;ib < nbands;++ib)
@@ -51,11 +51,10 @@ namespace LR
             if (this->tdm_sym) for (auto& t : dm_trans_2d) LR_Util::matsym(t.data<T>(), naos);
 #endif
             // tensor to vector, then set DMK
-            for (int isk = 0;isk < nks;++isk) {this->DM_trans[ib_dm]->set_DMK_pointer(isk, dm_trans_2d[isk].data<T>());
-}
+            for (int ik = 0;ik < nk;++ik) { this->DM_trans[ib_dm]->set_DMK_pointer(ik, dm_trans_2d[ik].data<T>()); }
 
             // if (this->first_print)
-            //     for (int ik = 0;ik < nks;++ik)
+            //     for (int ik = 0;ik < nk;++ik)
             //         LR_Util::print_tensor<std::complex<double>>(dm_trans_2d[ik], "1.DMK[ik=" + std::to_string(ik) + "]", this->pmat);
 
             // use cal_DMR to get DMR form DMK by FT
@@ -72,12 +71,10 @@ namespace LR
                     { pmat->get_col_size(), pmat->get_row_size() }));
             for (auto& v : v_hxc_2d) v.zero();
             int nrow = ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER() ? this->pmat->get_row_size() : this->pmat->get_col_size();
-            for (int isk = 0;isk < nks;++isk) {
-                folding_HR(*this->hR, v_hxc_2d[isk].data<T>(), this->kv.kvec_d[isk], nrow, 1);            // V(R) -> V(k)
-}
+            for (int ik = 0;ik < nk;++ik) { folding_HR(*this->hR, v_hxc_2d[ik].data<T>(), this->kv.kvec_d[ik], nrow, 1); }  // V(R) -> V(k)
             // LR_Util::print_HR(*this->hR, this->ucell.nat, "4.VR");
             // if (this->first_print)
-            //     for (int ik = 0;ik < nks;++ik)
+            //     for (int ik = 0;ik < nk;++ik)
             //         LR_Util::print_tensor<T>(v_hxc_2d[ik], "4.V(k)[ik=" + std::to_string(ik) + "]", this->pmat);
 
             // 5. [AX]^{Hxc}_{ai}=\sum_{\mu,\nu}c^*_{a,\mu,}V^{Hxc}_{\mu,\nu}c_{\nu,i}
@@ -101,19 +98,20 @@ namespace LR
         // 2. transition electron density
         // \f[ \tilde{\rho}(r)=\sum_{\mu_j, \mu_b}\tilde{\rho}_{\mu_j,\mu_b}\phi_{\mu_b}(r)\phi_{\mu_j}(r) \f]
         double** rho_trans;
-        LR_Util::new_p2(rho_trans, nspin, this->pot->nrxx);
-        for (int is = 0;is < nspin;++is)ModuleBase::GlobalFunc::ZEROS(rho_trans[is], this->pot->nrxx);
+        // LR_Util::new_p2(rho_trans, nspin_solve, this->pot->nrxx);
+        LR_Util::new_p2(rho_trans, nspin, this->pot->nrxx); // currently gint_kernel_rho uses GlobalV::NSPIN, it needs refactor
+        for (int is = 0;is < nspin_solve;++is)ModuleBase::GlobalFunc::ZEROS(rho_trans[is], this->pot->nrxx);
         Gint_inout inout_rho(rho_trans, Gint_Tools::job_type::rho, false);
         this->gint->cal_gint(&inout_rho);
 
         // 3. v_hxc = f_hxc * rho_trans
-        ModuleBase::matrix vr_hxc(nspin, this->pot->nrxx);   //grid
+        ModuleBase::matrix vr_hxc(nspin_solve, this->pot->nrxx);   //grid
         this->pot->cal_v_eff(rho_trans, &GlobalC::ucell, vr_hxc);
-        LR_Util::delete_p2(rho_trans, nspin);
+        LR_Util::delete_p2(rho_trans, nspin_solve);
 
         // 4. V^{Hxc}_{\mu,\nu}=\int{dr} \phi_\mu(r) v_{Hxc}(r) \phi_\mu(r)
         // V(R) for each spin
-        for (int is = 0;is < nspin;++is)
+        for (int is = 0;is < nspin_solve;++is)
         {
             double* vr_hxc_is = &vr_hxc.c[is * this->pot->nrxx];   //v(r) at current spin
             Gint_inout inout_vlocal(vr_hxc_is, is, Gint_Tools::job_type::vlocal);
@@ -146,21 +144,22 @@ namespace LR
 
                 // 2. transition electron density
                 double** rho_trans;
-                LR_Util::new_p2(rho_trans, nspin, this->pot->nrxx);
-                for (int is = 0;is < nspin;++is)ModuleBase::GlobalFunc::ZEROS(rho_trans[is], this->pot->nrxx);
+                // LR_Util::new_p2(rho_trans, nspin_solve, this->pot->nrxx);
+                LR_Util::new_p2(rho_trans, nspin, this->pot->nrxx); // currently gint_kernel_rho uses GlobalV::NSPIN, it needs refactor
+                for (int is = 0;is < nspin_solve;++is)ModuleBase::GlobalFunc::ZEROS(rho_trans[is], this->pot->nrxx);
                 Gint_inout inout_rho(rho_trans, Gint_Tools::job_type::rho, false);
                 this->gint->cal_gint(&inout_rho);
                 // print_grid_nonzero(rho_trans[0], this->pot->nrxx, 10, "rho_trans");
 
                 // 3. v_hxc = f_hxc * rho_trans
-                ModuleBase::matrix vr_hxc(nspin, this->pot->nrxx);   //grid
+                ModuleBase::matrix vr_hxc(nspin_solve, this->pot->nrxx);   //grid
                 this->pot->cal_v_eff(rho_trans, &GlobalC::ucell, vr_hxc);
                 // print_grid_nonzero(vr_hxc.c, this->poticab->nrxx, 10, "vr_hxc");
 
-                LR_Util::delete_p2(rho_trans, nspin);
+                LR_Util::delete_p2(rho_trans, nspin_solve);
 
                 // 4. V^{Hxc}_{\mu,\nu}=\int{dr} \phi_\mu(r) v_{Hxc}(r) \phi_\mu(r)
-                for (int is = 0;is < nspin;++is)
+                for (int is = 0;is < nspin_solve;++is)
                 {
                     double* vr_hxc_is = &vr_hxc.c[is * this->pot->nrxx];   //v(r) at current spin
                     Gint_inout inout_vlocal(vr_hxc_is, is, Gint_Tools::job_type::vlocal);
@@ -175,7 +174,7 @@ namespace LR
             };
         this->hR->set_zero();
         dmR_to_hR(iband_dm, 'R');   //real
-        if (kv.get_nks() / this->nspin > 1)dmR_to_hR(iband_dm, 'I');   //imag for multi-k
+        if (kv.get_nks() / this->nspin > 1) { dmR_to_hR(iband_dm, 'I'); }   //imag for multi-k
         ModuleBase::timer::tick("OperatorLRHxc", "grid_calculation");
     }
 
