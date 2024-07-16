@@ -1,6 +1,7 @@
 #include "module_base/parallel_common.h"
 #include "module_io/input.h"
 #include "unitcell.h"
+#include "read_pp.h"
 
 #include <cstring> // Peize Lin fix bug about strcmp 2016-08-02
 
@@ -28,17 +29,17 @@ void UnitCell::read_cell_pseudopots(const std::string& pp_dir, std::ofstream& lo
         if (GlobalV::MY_RANK == 0)
         {
             pp_address = pp_dir + this->pseudo_fn[i];
-            error = upf.init_pseudo_reader(pp_address, this->pseudo_type[i]); // xiaohui add 2013-06-23
+            error = upf.init_pseudo_reader(pp_address, this->pseudo_type[i], this->atoms[i].ncpp); // xiaohui add 2013-06-23
 
             if (error == 0) // mohan add 2021-04-16
             {
                 if (this->atoms[i].flag_empty_element) // Peize Lin add for bsse 2021.04.07
                 {
-                    upf.set_empty_element();
+                    upf.set_empty_element(this->atoms[i].ncpp);
                 }
-                upf.set_upf_q(); // liuyu add 2023-09-21
+                upf.set_upf_q(this->atoms[i].ncpp); // liuyu add 2023-09-21
                 // average pseudopotential if needed
-                error_ap = upf.average_p(GlobalV::soc_lambda); // added by zhengdy 2020-10-20
+                error_ap = upf.average_p(GlobalV::soc_lambda, this->atoms[i].ncpp); // added by zhengdy 2020-10-20
             }
             this->atoms[i].coulomb_potential = upf.coulomb_potential;
         }
@@ -80,7 +81,7 @@ void UnitCell::read_cell_pseudopots(const std::string& pp_dir, std::ofstream& lo
 
         if (GlobalV::MY_RANK == 0)
         {
-            atoms[i].ncpp.set_pseudo(upf);
+            atoms[i].ncpp.set_pseudo(); // need to refactor, sunliang 20240716
 
             log << "\n Read in pseudopotential file is " << pseudo_fn[i] << std::endl;
             ModuleBase::GlobalFunc::OUT(log, "pseudopotential type", atoms[i].ncpp.pp_type);

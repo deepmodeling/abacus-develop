@@ -23,9 +23,8 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
     const int nbands = psi.get_nbands();
     const int nks = psi.get_nk();
 
-    this->hamilt_ = pHamilt;
     // prepare for the precondition of diagonalization
-    this->precondition.resize(psi.get_nbasis());
+    std::vector<double> precondition(psi.get_nbasis(), 0.0);
 
     // select the method of diagonalization
     this->method = method_in;
@@ -47,7 +46,7 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
             update_precondition(precondition, ik, this->wfc_basis->npwk[ik]);
             /// solve eigenvector and eigenvalue for H(k)
             double* p_eigenvalues = &(pes->ekb(ik, 0));
-            this->hamiltSolvePsiK(pHamilt, psi, p_eigenvalues);
+            this->hamiltSolvePsiK(pHamilt, psi, precondition, p_eigenvalues);
         }
 
         stoiter.stohchi.current_ik = ik;
@@ -66,12 +65,19 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
         stoiter.checkemm(ik, istep, iter, stowf); // check and reset emax & emin
     }
 
-    this->endDiagh();
+    this->output_iterInfo();
+
+    // psi only should be initialed once for PW
+    if (!this->initialed_psi)
+    {
+        this->initialed_psi = true;
+    }
 
     for (int ik = 0; ik < nks; ik++) {
         // init k
-        if (nks > 1)
+        if (nks > 1) {
             pHamilt->updateHk(ik);
+}
         stoiter.stohchi.current_ik = ik;
         stoiter.calPn(ik, stowf);
     }
@@ -112,15 +118,17 @@ double HSolverPW_SDFT::set_diagethr(const int istep,
                 this->diag_ethr = 1.0e-5;
             }
             this->diag_ethr = std::max(this->diag_ethr, GlobalV::PW_DIAG_THR);
-        } else
+        } else {
             this->diag_ethr = std::max(this->diag_ethr, 1.0e-5);
+}
     } else {
-        if (GlobalV::NBANDS > 0 && this->stoiter.KS_ne > 1e-6)
+        if (GlobalV::NBANDS > 0 && this->stoiter.KS_ne > 1e-6) {
             this->diag_ethr
                 = std::min(this->diag_ethr,
                            0.1 * drho / std::max(1.0, this->stoiter.KS_ne));
-        else
+        } else {
             this->diag_ethr = 0.0;
+}
     }
     return this->diag_ethr;
 }

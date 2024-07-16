@@ -42,20 +42,20 @@ TEST_F(AtomPseudoTest, SetDSo)
 	std::ifstream ifs;
 	ifs.open("./support/C.upf");
 	GlobalV::PSEUDORCUT = 15.0;
-	upf->read_pseudo_upf201(ifs);
-	atom_pseudo->set_pseudo(*upf);
+	upf->read_pseudo_upf201(ifs, *atom_pseudo);
+	atom_pseudo->set_pseudo();
 	ifs.close();
 	EXPECT_EQ(atom_pseudo->nh,14);
 	EXPECT_TRUE(atom_pseudo->has_so);
 	ModuleBase::ComplexMatrix d_so_in(atom_pseudo->nh*2,atom_pseudo->nh*2);
 	int nproj = 6;
 	int nproj_soc = 4;
-	bool has_so = 1;
+	bool has_so = true;
 	GlobalV::NSPIN = 4;
 	atom_pseudo->set_d_so(d_so_in,nproj,nproj_soc,has_so);
 	EXPECT_NEAR(atom_pseudo->d_so(0,0,0).real(),1e-8,1e-7);
 	EXPECT_NEAR(atom_pseudo->d_so(0,0,0).imag(),1e-8,1e-7);
-	GlobalV::LSPINORB = 1;
+	GlobalV::LSPINORB = true;
 	atom_pseudo->set_d_so(d_so_in,nproj,nproj_soc,has_so);
 	EXPECT_NEAR(atom_pseudo->d_so(0,0,0).real(),1e-8,1e-7);
 	EXPECT_NEAR(atom_pseudo->d_so(0,0,0).imag(),1e-8,1e-7);
@@ -72,8 +72,8 @@ TEST_F(AtomPseudoTest, BcastAtomPseudo)
 		std::ifstream ifs;
 		ifs.open("./support/C.upf");
 		GlobalV::PSEUDORCUT = 15.0;
-		upf->read_pseudo_upf201(ifs);
-		atom_pseudo->set_pseudo(*upf);
+		upf->read_pseudo_upf201(ifs, *atom_pseudo);
+		atom_pseudo->set_pseudo();
 		ifs.close();
 	}
 	atom_pseudo->bcast_atom_pseudo();
