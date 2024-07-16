@@ -1290,8 +1290,8 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
     {
         toQO tqo(PARAM.inp.qo_basis, PARAM.inp.qo_strategy, GlobalV::qo_thr, GlobalV::qo_screening_coeff);
         tqo.initialize(GlobalV::global_out_dir,
-                       GlobalV::global_pseudo_dir,
-                       GlobalV::global_orbital_dir,
+                       PARAM.inp.pseudo_dir,
+                       PARAM.inp.orbital_dir,
                        &GlobalC::ucell,
                        this->kv.kvec_d,
                        GlobalV::ofs_running,

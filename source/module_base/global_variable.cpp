@@ -102,8 +102,6 @@ std::string global_in_card = "INPUT";
 std::string stru_file = "STRU";
 std::string global_kpoint_card = "KPT";
 
-std::string global_pseudo_dir = "";
-std::string global_orbital_dir = ""; // liuyu add 2021-08-14
 
 // std::string global_pseudo_type = "auto";
 std::string global_epm_pseudo_card;

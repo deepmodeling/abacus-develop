@@ -5,6 +5,7 @@
 #include "module_base/parallel_common.h"
 #include "module_base/ylm.h"
 #include "module_basis/module_nao/real_gaunt_table.h"
+#include "module_parameter/parameter.h"
 
 #include <memory>
 
@@ -14,7 +15,7 @@ void TwoCenterBundle::build_orb(int ntype, const std::string* file_orb0)
     if (GlobalV::MY_RANK == 0)
     {
         std::transform(file_orb0, file_orb0 + ntype, file_orb.begin(), [](const std::string& file) {
-            return GlobalV::global_orbital_dir + file;
+            return PARAM.inp.orbital_dir + file;
         });
     }
 #ifdef __MPI

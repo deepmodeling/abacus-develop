@@ -151,7 +151,7 @@ void test_deepks::set_orbs(const double& lat0_in)
     {
         ORB.init(GlobalV::ofs_running,
                            ucell.ntype,
-                           GlobalV::global_orbital_dir,
+                           PARAM.inp.orbital_dir,
                            ucell.orbital_fn,
                            ucell.descriptor_file,
                            ucell.lmax,
@@ -168,11 +168,11 @@ void test_deepks::set_orbs(const double& lat0_in)
 
         std::vector<std::string> file_orb(ntype);
         std::transform(ucell.orbital_fn, ucell.orbital_fn + ntype, file_orb.begin(), [](const std::string& file) {
-            return GlobalV::global_orbital_dir + file;
+            return PARAM.inp.orbital_dir + file;
         });
         orb_.build(ntype, file_orb.data());
 
-        std::string file_alpha = GlobalV::global_orbital_dir + ucell.descriptor_file;
+        std::string file_alpha = PARAM.inp.orbital_dir + ucell.descriptor_file;
         alpha_.build(1, &file_alpha);
 
         double cutoff = orb_.rcut_max() + alpha_.rcut_max();

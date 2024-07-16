@@ -77,7 +77,7 @@ void gen_stru(UnitCell* ucell)
 
         Json::AbacusJson::add_json({"init", "element", atom_label}, atom_element, false);
 
-        std::string orbital_str = GlobalV::global_orbital_dir + orbital_fn[i];
+        std::string orbital_str = PARAM.inp.orbital_dir + orbital_fn[i];
         if (!orbital_str.compare(""))
         {
             Json::jsonValue nullValue;

@@ -731,7 +731,7 @@ void UnitCell::read_pseudo(std::ofstream& ofs) {
         << std::endl;
     ofs << "\n\n\n\n";
 
-    read_cell_pseudopots(GlobalV::global_pseudo_dir, ofs);
+    read_cell_pseudopots(PARAM.inp.pseudo_dir, ofs);
 
     if (GlobalV::MY_RANK == 0) {
         for (int it = 0; it < this->ntype; it++) {

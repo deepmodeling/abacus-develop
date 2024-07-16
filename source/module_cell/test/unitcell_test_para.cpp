@@ -150,7 +150,7 @@ TEST_F(UcellTest, UpdatePosTaud)
 
 TEST_F(UcellTest, ReadPseudo)
 {
-    GlobalV::global_pseudo_dir = pp_dir;
+    PARAM.input.pseudo_dir = pp_dir;
     PARAM.input.out_element_info = true;
     ucell->read_pseudo(ofs);
     // check_structure will print some warning info

@@ -365,7 +365,7 @@ TEST_F(UcellDeathTest, CheckStructure) {
 }
 
 TEST_F(UcellDeathTest, ReadPseudoWarning1) {
-    GlobalV::global_pseudo_dir = pp_dir;
+    PARAM.input.pseudo_dir = pp_dir;
     PARAM.input.out_element_info = 1;
     ucell->pseudo_fn[1] = "H_sr_lda.upf";
     testing::internal::CaptureStdout();
@@ -376,7 +376,7 @@ TEST_F(UcellDeathTest, ReadPseudoWarning1) {
 }
 
 TEST_F(UcellDeathTest, ReadPseudoWarning2) {
-    GlobalV::global_pseudo_dir = pp_dir;
+    PARAM.input.pseudo_dir = pp_dir;
     PARAM.input.out_element_info = 1;
     ucell->pseudo_fn[0] = "Al_ONCV_PBE-1.0.upf";
     testing::internal::CaptureStdout();
