@@ -208,6 +208,16 @@ void Input_Conv::Convert()
             GlobalV::stru_file = INPUT.stru_file = GlobalV::global_readin_dir + "STRU_MD_" + std::to_string(istep);
         }
     }
+    else if (INPUT.stru_file != "")
+    {
+        GlobalV::stru_file = INPUT.stru_file;
+    }
+    if (PARAM.inp.kpoint_file != "")
+    {
+        GlobalV::global_kpoint_card = PARAM.inp.kpoint_file;
+    }
+    GlobalV::global_pseudo_dir = PARAM.inp.pseudo_dir;
+    GlobalV::global_orbital_dir = PARAM.inp.orbital_dir;
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "pseudo_dir", GlobalV::global_pseudo_dir);
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "orbital_dir", GlobalV::global_orbital_dir);
     // GlobalV::global_pseudo_type = PARAM.inp.pseudo_type;
