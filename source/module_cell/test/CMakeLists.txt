@@ -32,14 +32,14 @@ add_library(cell_info OBJECT ${cell_simple_srcs})
 AddTest(
   TARGET cell_read_pp
   LIBS ${math_libs} base device
-  SOURCES read_pp_test.cpp ../read_pp.cpp ../read_pp_upf201.cpp ../read_pp_upf100.cpp ../read_pp_vwr.cpp ../read_pp_blps.cpp 
+  SOURCES read_pp_test.cpp ../atom_pseudo.cpp ../pseudo.cpp ../read_pp.cpp ../read_pp_upf201.cpp ../read_pp_upf100.cpp ../read_pp_vwr.cpp ../read_pp_blps.cpp 
   ../../module_io/output.cpp
 )
 
 AddTest(
   TARGET cell_pseudo_nc
   LIBS ${math_libs} base device
-  SOURCES pseudo_nc_test.cpp ../pseudo.cpp ../read_pp.cpp ../read_pp_upf201.cpp ../read_pp_upf100.cpp ../read_pp_vwr.cpp 
+  SOURCES pseudo_nc_test.cpp ../pseudo.cpp ../atom_pseudo.cpp ../read_pp.cpp ../read_pp_upf201.cpp ../read_pp_upf100.cpp ../read_pp_vwr.cpp 
   	../read_pp_blps.cpp ../../module_io/output.cpp
 )
 

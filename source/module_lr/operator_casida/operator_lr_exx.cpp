@@ -8,8 +8,8 @@ namespace LR
     void OperatorLREXX<T>::allocate_Ds_onebase()
     {
         ModuleBase::TITLE("OperatorLREXX", "allocate_Ds_onebase");
-        this->Ds_onebase.resize(this->nspin);
-        for (int is = 0;is < this->nspin;++is) {
+        this->Ds_onebase.resize(this->nspin_solve);
+        for (int is = 0;is < this->nspin_solve;++is) {
             for (int iat1 = 0;iat1 < ucell.nat;++iat1) {
                 for (int iat2 = 0;iat2 < ucell.nat;++iat2) {
                     for (auto cell : this->BvK_cells) {
@@ -72,9 +72,9 @@ namespace LR
         ModuleBase::TITLE("OperatorLREXX", "act");
 
         assert(nbands <= psi_in.get_nbands());
-        const int& nks = this->kv.get_nks();
-        psi::Psi<T> psi_in_bfirst = LR_Util::k1_to_bfirst_wrapper(psi_in, nks, this->pX->get_local_size());
-        psi::Psi<T> psi_out_bfirst = LR_Util::k1_to_bfirst_wrapper(psi_out, nks, this->pX->get_local_size());
+        const int& nk = this->kv.get_nks() / this->nspin;
+        psi::Psi<T> psi_in_bfirst = LR_Util::k1_to_bfirst_wrapper(psi_in, nk, this->pX->get_local_size());
+        psi::Psi<T> psi_out_bfirst = LR_Util::k1_to_bfirst_wrapper(psi_out, nk, this->pX->get_local_size());
 
         // convert parallel info to LibRI interfaces
         std::vector<std::tuple<std::set<TA>, std::set<TA>>> judge = RI_2D_Comm::get_2D_judge(*this->pmat);
@@ -87,22 +87,21 @@ namespace LR
             // 1. set_Ds (once)
             // convert to vector<T*> for the interface of RI_2D_Comm::split_m2D_ktoR (interface will be unified to ct::Tensor)
             std::vector<std::vector<T>> DMk_trans_vector = this->DM_trans[ib]->get_DMK_vector();
-            assert(DMk_trans_vector.size() == nks);
-            std::vector<const std::vector<T>*> DMk_trans_pointer(nks);
-            for (int is = 0;is < nks;++is) { DMk_trans_pointer[is] = &DMk_trans_vector[is]; }
-
+            // assert(DMk_trans_vector.size() == nk);
+            std::vector<const std::vector<T>*> DMk_trans_pointer(nk);
+            for (int ik = 0;ik < nk;++ik) {DMk_trans_pointer[ik] = &DMk_trans_vector[ik];}
             // if multi-k, DM_trans(TR=double) -> Ds_trans(TR=T=complex<double>)
             std::vector<std::map<TA, std::map<TAC, RI::Tensor<T>>>> Ds_trans =
-                RI_2D_Comm::split_m2D_ktoR<T>(this->kv, DMk_trans_pointer, *this->pmat);
+                RI_2D_Comm::split_m2D_ktoR<T>(this->kv, DMk_trans_pointer, *this->pmat, this->nspin_solve);
 
             // 2. cal_Hs
-            for (int is = 0;is < nks;++is)
+            for (int ik = 0;ik < nk;++ik)
             {
-                this->exx_lri->exx_lri.set_Ds(std::move(Ds_trans[is]), this->exx_lri->info.dm_threshold);
+                this->exx_lri->exx_lri.set_Ds(std::move(Ds_trans[ik]), this->exx_lri->info.dm_threshold);
                 this->exx_lri->exx_lri.cal_Hs();
-                this->exx_lri->Hexxs[is] = RI::Communicate_Tensors_Map_Judge::comm_map2_first(
-                    this->exx_lri->mpi_comm, std::move(this->exx_lri->exx_lri.Hs), std::get<0>(judge[is]), std::get<1>(judge[is]));
-                this->exx_lri->post_process_Hexx(this->exx_lri->Hexxs[is]);
+                this->exx_lri->Hexxs[ik] = RI::Communicate_Tensors_Map_Judge::comm_map2_first(
+                    this->exx_lri->mpi_comm, std::move(this->exx_lri->exx_lri.Hs), std::get<0>(judge[ik]), std::get<1>(judge[ik]));
+                this->exx_lri->post_process_Hexx(this->exx_lri->Hexxs[ik]);
             }
 
             // 3. set [AX]_iak = DM_onbase * Hexxs for each occ-virt pair and each k-point
@@ -112,9 +111,9 @@ namespace LR
             {
                 for (int iv = 0;iv < this->pX->get_row_size();++iv)   // nvirt for serial
                 {
-                    for (int ik = 0;ik < nks;++ik)
+                    for (int ik = 0;ik < nk;++ik)
                     {
-                        for (int is = 0;is < this->nspin;++is)
+                        for (int is = 0;is < this->nspin_solve;++is)
                         {
                             this->cal_DM_onebase(this->pX->local2global_col(io), this->pX->local2global_row(iv), ik, is);       //set Ds_onebase
                             psi_out_bfirst(ik, io * this->pX->get_row_size() + iv) -= 0.5 * //minus for exchange, 0.5 for spin

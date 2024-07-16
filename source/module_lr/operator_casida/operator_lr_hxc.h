@@ -63,18 +63,21 @@ namespace LR
                     const int T2 = adjs.ntype[ad];
                     const int I2 = adjs.natom[ad];
                     int iat2 = this->ucell.itia2iat(T2, I2);
-                    if (pmat->get_row_size(iat1) <= 0 || pmat->get_col_size(iat2) <= 0) continue;
+                    if (pmat->get_row_size(iat1) <= 0 || pmat->get_col_size(iat2) <= 0) { continue;
+}
                     const ModuleBase::Vector3<int>& R_index = adjs.box[ad];
                     const LCAO_Orbitals& orb = LCAO_Orbitals::get_const_instance();
                     if (ucell.cal_dtau(iat1, iat2, R_index).norm() * this->ucell.lat0
-                        >= orb.Phi[T1].getRcut() + orb.Phi[T2].getRcut()) continue;
+                        >= orb.Phi[T1].getRcut() + orb.Phi[T2].getRcut()) { continue;
+}
                     hamilt::AtomPair<TR> tmp(iat1, iat2, R_index.x, R_index.y, R_index.z, pmat);
                     hR->insert_pair(tmp);
                 }
             }
             hR->allocate(nullptr, true);
             hR->set_paraV(pmat);
-            if (std::is_same<T, double>::value) hR->fix_gamma();
+            if (std::is_same<T, double>::value) { hR->fix_gamma();
+}
         }
         template<typename TR>
         void init_DM_trans(const int& nbands, std::vector<elecstate::DensityMatrix<T, TR>*>& DM_trans)const
@@ -83,10 +86,13 @@ namespace LR
             if (this->next_op != nullptr)
             {
                 int prev_size = DM_trans.size();
-                if (prev_size > nbands)for (int ib = nbands;ib < prev_size;++ib)delete DM_trans[ib];
+                if (prev_size > nbands) {for (int ib = nbands;ib < prev_size;++ib) {delete DM_trans[ib];
+}
+}
                 DM_trans.resize(nbands);
                 for (int ib = prev_size;ib < nbands;++ib)
                 {
+                    // the first dimenstion of DensityMatrix is nk=nks/nspin 
                     DM_trans[ib] = new elecstate::DensityMatrix<T, TR>(&this->kv, this->pmat, this->nspin);
                     DM_trans[ib]->init_DMR(*this->hR);
                 }
@@ -95,10 +101,11 @@ namespace LR
         void grid_calculation(const int& nbands, const int& iband_dm)const;
 
         //global sizes
-        int nspin = 1;
-        int naos;
-        int nocc;
-        int nvirt;
+        const int& nspin;
+        const int nspin_solve = 1;    ///< in singlet-triplet calculation, the Casida equation is solved respectively so nspin_solve in a single problem is 1
+        const int& naos;
+        const int& nocc;
+        const int& nvirt;
         const K_Vectors& kv;
         /// ground state wavefunction
         const psi::Psi<T, Device>* psi_ks = nullptr;
@@ -109,7 +116,7 @@ namespace LR
         /// transition hamiltonian in AO representation
         hamilt::HContainer<T>* hR = nullptr;
 
-        //parallel info
+        /// parallel info
         Parallel_2D* pc = nullptr;
         Parallel_2D* pX = nullptr;
         Parallel_Orbitals* pmat = nullptr;

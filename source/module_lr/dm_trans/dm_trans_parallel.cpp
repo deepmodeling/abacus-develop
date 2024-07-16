@@ -31,8 +31,7 @@ std::vector<container::Tensor> cal_dm_trans_pblas(const psi::Psi<double>& X_ista
         assert(pmat.get_local_size() > 0);
 }
 
-    int nks = c.get_nk();
-    assert(nks == X_istate.get_nk());
+    const int nks = X_istate.get_nk();
 
     std::vector<container::Tensor> dm_trans(
         nks,
@@ -119,9 +118,7 @@ std::vector<container::Tensor> cal_dm_trans_pblas(const psi::Psi<std::complex<do
     } else {
         assert(pmat.get_local_size() > 0);
 }
-
-    int nks = c.get_nk();
-    assert(nks == X_istate.get_nk());
+    const int nks = X_istate.get_nk();
 
     std::vector<container::Tensor> dm_trans(
         nks,

@@ -2,41 +2,41 @@
 #include "module_base/atom_in.h"
 #include "module_base/element_name.h"
 
-int Pseudopot_upf::read_pseudo_blps(std::ifstream &ifs)
+int Pseudopot_upf::read_pseudo_blps(std::ifstream &ifs, Atom_pseudo& pp)
 {
     // double bohr2a = 0.529177249;
-    this->nlcc = false;
-    this->tvanp = false;
-    this->has_so = false;
+    pp.nlcc = false;
+    pp.tvanp = false;
+    pp.has_so = false;
 
-    this->nbeta = 0;
-    this->kkbeta = 0;
-    delete[] kbeta;
-    delete[] lll;
+    pp.nbeta = 0;
+    pp.kkbeta = 0;
+    delete[] this->kbeta;
+    delete[] pp.lll;
     this->kbeta = nullptr;
-    this->lll = nullptr;
-    this->beta.create(1, 1);
-    this->dion.create(1, 1);
+    pp.lll = nullptr;
+    pp.betar.create(1, 1);
+    pp.dion.create(1, 1);
 
-    this->nwfc = 0;
-    delete[] nn;
-    delete[] jchi;
-    delete[] jjj;
-    this->nn = new int[1];
-    this->jchi = new double[1];
-    this->jjj = new double[1];
-    ModuleBase::GlobalFunc::ZEROS(nn, 1);
-    ModuleBase::GlobalFunc::ZEROS(jchi, 1);
-    ModuleBase::GlobalFunc::ZEROS(jjj, 1);
+    pp.nchi = 0;
+    delete[] pp.nn;
+    delete[] pp.jchi;
+    delete[] pp.jjj;
+    pp.nn = new int[pp.nchi];
+    pp.jchi = new double[pp.nchi];
+    pp.jjj = new double[pp.nchi];
+    ModuleBase::GlobalFunc::ZEROS(pp.nn, pp.nchi);
+    ModuleBase::GlobalFunc::ZEROS(pp.jchi, pp.nchi);
+    ModuleBase::GlobalFunc::ZEROS(pp.jjj, pp.nchi);
 
-    ifs >> this->psd;
+    ifs >> pp.psd;
     // if(!SCAN_BEGIN(ifs,"BLPS")) WARNING_QUIT("read_pp_blps","Find no PP_HEADER");
     ifs.ignore(300, '\n');
 
     double zatom;
     double zion;
     ifs >> zatom >> zion;
-    this->zp = static_cast<int>(zion);
+    pp.zv = static_cast<int>(zion);
     ifs.ignore(300, '\n');
 
     atom_in ai;
@@ -44,21 +44,25 @@ int Pseudopot_upf::read_pseudo_blps(std::ifstream &ifs)
     {
         if (zatom == ai.atom_Z[each_type])
         {
-            this->psd = each_type;
+            pp.psd = each_type;
             break;
         }
     }
 
     int pspcod, pspxc, lloc, r2well;
-    ifs >> pspcod >> pspxc >> this->lmax >> lloc >> this->mesh >> r2well;
+    ifs >> pspcod >> pspxc >> pp.lmax >> lloc >> pp.mesh >> r2well;
+    if (pp.mesh%2 == 0)
+	{
+		pp.mesh -= 1;
+	}
 
     if (pspxc == 2)
     {
-        this->xc_func = "PZ";
+        pp.xc_func = "PZ";
     }
     else if (pspxc == 11)
     {
-        this->xc_func = "PBE";
+        pp.xc_func = "PBE";
     }
     else
     {
@@ -86,49 +90,49 @@ int Pseudopot_upf::read_pseudo_blps(std::ifstream &ifs)
         ModuleBase::WARNING_QUIT("Pseudopot_upf::read_pseudo_blps", msg);
     }
 
-    assert(mesh > 0);
+    assert(pp.mesh > 0);
 
-    delete[] r;
-    delete[] rab;
-    delete[] vloc;
-    this->r = new double[mesh]; // Bohr
-    this->rab = new double[mesh];
-    this->vloc = new double[mesh]; // Hartree
-    ModuleBase::GlobalFunc::ZEROS(r,mesh);
-    ModuleBase::GlobalFunc::ZEROS(rab,mesh);
-    ModuleBase::GlobalFunc::ZEROS(vloc,mesh);
+    delete[] pp.r;
+    delete[] pp.rab;
+    delete[] pp.vloc_at;
+    pp.r = new double[pp.mesh]; // Bohr
+    pp.rab = new double[pp.mesh];
+    pp.vloc_at = new double[pp.mesh]; // Hartree
+    ModuleBase::GlobalFunc::ZEROS(pp.r, pp.mesh);
+    ModuleBase::GlobalFunc::ZEROS(pp.rab, pp.mesh);
+    ModuleBase::GlobalFunc::ZEROS(pp.vloc_at, pp.mesh);
     int num = 0;
     if (pspcod == 8)
     {
-        for(int i = 0;i < mesh; ++i)
+        for(int i = 0;i < pp.mesh; ++i)
         {
-            ifs >> num >> this->r[i] >> this->vloc[i];
-            this->vloc[i] = this->vloc[i]*2; // Hartree to Ry
+            ifs >> num >> pp.r[i] >> pp.vloc_at[i];
+            pp.vloc_at[i] = pp.vloc_at[i]*2; // Hartree to Ry
         }
     }
     else if (pspcod == 6)
     {
         double temp = 0.;
-        for(int i = 0;i < mesh; ++i)
+        for(int i = 0;i < pp.mesh; ++i)
         {
-            ifs >> num >> this->r[i] >> temp >> this->vloc[i];
-            this->vloc[i] = this->vloc[i]*2; // Hartree to Ry
+            ifs >> num >> pp.r[i] >> temp >> pp.vloc_at[i];
+            pp.vloc_at[i] = pp.vloc_at[i]*2; // Hartree to Ry
         }
     }
-    rab[0] = r[1] - r[0];
-    for(int i = 1; i < mesh - 1; ++i)
+    pp.rab[0] = pp.r[1] - pp.r[0];
+    for(int i = 1; i < pp.mesh - 1; ++i)
     {
-        rab[i] = (r[i+1] - r[i-1])/2.0;
+        pp.rab[i] = (pp.r[i+1] - pp.r[i-1])/2.0;
     }
-    rab[mesh-1] = r[mesh-1] - r[mesh-2];
+    pp.rab[pp.mesh - 1] = pp.r[pp.mesh - 1] - pp.r[pp.mesh - 2];
 
-    delete[] rho_at;
-    this->rho_at = new double[mesh];
-    ModuleBase::GlobalFunc::ZEROS(rho_at,mesh);
-    double charge = zion/r[mesh-1];
-    for(int i = 0;i < mesh; ++i)
+    delete[] pp.rho_at;
+    pp.rho_at = new double[pp.mesh];
+    ModuleBase::GlobalFunc::ZEROS(pp.rho_at, pp.mesh);
+    double charge = zion/pp.r[pp.mesh - 1];
+    for(int i = 0;i < pp.mesh; ++i)
     {
-        rho_at[i] = charge;
+        pp.rho_at[i] = charge;
     }
     return 0;
 }
