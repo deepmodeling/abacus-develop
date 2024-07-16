@@ -7,23 +7,38 @@
 class ReadInputTool : public ::testing::Test
 {
   protected:
-    // Helper function to check if two vectors are equal
-    template <typename T>
-    bool vectorsEqual(const std::vector<T>& vec1, const std::vector<T>& vec2)
-    {
-        return vec1.size() == vec2.size() && std::equal(vec1.begin(), vec1.end(), vec2.begin());
-    }
 };
 
 TEST_F(ReadInputTool, parse_expression)
 {
+    // Test case for empty expressions
+    {
+        std::vector<std::string> expressions = {};
+        std::vector<int> result;
+
+        parse_expression(expressions, result);
+        EXPECT_TRUE(result.empty());
+    }
+    // Test case for ""
+    {
+        std::vector<std::string> expressions = {""};
+        std::vector<int> result;
+
+        parse_expression(expressions, result);
+        EXPECT_TRUE(result.empty());
+    }
     // Test case for expressions without '*'
     {
         std::vector<std::string> expressions = {"3", "4", "10"};
         std::vector<int> expected = {3, 4, 10};
         std::vector<int> result;
 
-        EXPECT_TRUE(vectorsEqual(result, expected));
+        parse_expression(expressions, result);
+        EXPECT_EQ(expected.size(), result.size());
+        for (size_t i = 0; i < expected.size(); i++)
+        {
+            EXPECT_EQ(expected[i], result[i]);
+        }
     }
     // Test case for expressions with one '*'
     {
@@ -31,7 +46,13 @@ TEST_F(ReadInputTool, parse_expression)
         std::vector<double> expected = {3.0, 4.2, 4.2, 7.0};
         std::vector<double> result;
 
-        EXPECT_TRUE(vectorsEqual(result, expected));
+        
+        parse_expression(expressions, result);
+        EXPECT_EQ(expected.size(), result.size());
+        for (size_t i = 0; i < expected.size(); i++)
+        {
+            EXPECT_NEAR(expected[i], result[i], 1e-5);
+        }
     }
     // Test case for expressions with more than one '*'
     {

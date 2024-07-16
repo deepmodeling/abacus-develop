@@ -743,11 +743,8 @@ void ESolver_KS_PW<T, Device>::after_scf(const int istep) {
 
     // Get bands_to_print through public function of INPUT (returns a const
     // pointer to string)
-    std::string bands_to_print = *INPUT.get_bands_to_print();
-    if (!bands_to_print.empty()) {
-        std::vector<double> out_band_kb;
-        Input_Conv::parse_expression(bands_to_print, out_band_kb);
-
+    const std::vector<int> bands_to_print = PARAM.inp.bands_to_print;
+    if (bands_to_print.size() > 0) {
         // bands_picked is a vector of 0s and 1s, where 1 means the band is
         // picked to output
         std::vector<int> bands_picked;
@@ -756,7 +753,7 @@ void ESolver_KS_PW<T, Device>::after_scf(const int istep) {
                                       this->kspw_psi->get_nbands());
 
         // Check if length of out_band_kb is valid
-        if (static_cast<int>(out_band_kb.size())
+        if (static_cast<int>(bands_to_print.size())
             > this->kspw_psi->get_nbands()) {
             ModuleBase::WARNING_QUIT(
                 "ESolver_KS_PW::after_scf",
@@ -765,7 +762,7 @@ void ESolver_KS_PW<T, Device>::after_scf(const int istep) {
         }
 
         // Check if all elements in bands_picked are 0 or 1
-        for (int value: out_band_kb) {
+        for (int value: bands_to_print) {
             if (value != 0 && value != 1) {
                 ModuleBase::WARNING_QUIT(
                     "ESolver_KS_PW::after_scf",
@@ -776,12 +773,12 @@ void ESolver_KS_PW<T, Device>::after_scf(const int istep) {
 
         // Fill bands_picked with values from out_band_kb, converting to int
         // Remaining bands are already set to 0
-        int length = std::min(static_cast<int>(out_band_kb.size()),
+        int length = std::min(static_cast<int>(bands_to_print.size()),
                               this->kspw_psi->get_nbands());
         for (int i = 0; i < length; ++i) {
             // out_band_kb rely on function parse_expression from input_conv.cpp
             // Initially designed for ocp_set, which can be double
-            bands_picked[i] = static_cast<int>(out_band_kb[i]);
+            bands_picked[i] = static_cast<int>(bands_to_print[i]);
         }
 
         std::complex<double>* wfcr

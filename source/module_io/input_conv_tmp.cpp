@@ -26,5 +26,4 @@ void Input_Conv::tmp_convert()
     {
         INPUT.hubbard_u[i] = PARAM.globalv.hubbard_u[i];
     }
-    INPUT.bands_to_print_ = PARAM.inp.bands_to_print;
 }

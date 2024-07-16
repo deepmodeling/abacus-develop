@@ -367,10 +367,7 @@ void ReadInput::item_pw()
             {
                 para.input.read_file_dir = para.input.read_file_dir;
             }
-            if (para.input.read_file_dir.back() != '/')
-            {
-                para.input.read_file_dir += '/';
-            }
+            para.input.read_file_dir = to_dir(para.input.read_file_dir);
         };
         this->add_item(item);
     }

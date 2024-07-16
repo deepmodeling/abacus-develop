@@ -163,6 +163,14 @@ template <typename T>
 void parse_expression(const std::vector<std::string>& expressions, std::vector<T>& result)
 {
     result.clear(); // Clear the output vector to prepare for new entries
+    if (expressions.empty())
+    {
+        return;
+    }
+    else if (expressions[0].empty())
+    {
+        return;
+    }
 
     for (const auto& expr: expressions)
     {
