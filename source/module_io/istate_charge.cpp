@@ -110,12 +110,12 @@ void IState_Charge::begin(Gint_Gamma& gg,
 
             // A solution to replace the original implementation of the following code:
             // pelec->charge->save_rho_before_sum_band();
-            double** rho_save = new double*[nspin]; // Initialize an array of pointers
-            for (int is = 0; is < nspin; is++)
+            // Using std::vector to replace the original double** rho_save
+            std::vector<std::vector<double>> rho_save(nspin, std::vector<double>(rhopw_nrxx));
+
+            for (int is = 0; is < nspin; ++is)
             {
-                rho_save[is] = new double[rhopw_nrxx]; // Allocate memory for each internal array
-                ModuleBase::GlobalFunc::DCOPY(rho[is], rho_save[is],
-                                              rhopw_nrxx); // Copy data after allocation
+                ModuleBase::GlobalFunc::DCOPY(rho[is], rho_save[is].data(), rhopw_nrxx); // Copy data
             }
 
             std::cout << " Writting cube files...";
@@ -137,7 +137,7 @@ void IState_Charge::begin(Gint_Gamma& gg,
                     rhopw_nplane,
                     rhopw_startz_current,
 #endif
-                    rho_save[is],
+                    rho_save[is].data(),
                     is,
                     nspin,
                     0,
@@ -150,13 +150,6 @@ void IState_Charge::begin(Gint_Gamma& gg,
             }
 
             std::cout << " Complete!" << std::endl;
-
-            // Release memory of rho_save
-            for (int is = 0; is < nspin; is++)
-            {
-                delete[] rho_save[is]; // Release memory of each internal array
-            }
-            delete[] rho_save; // Release memory of the array of pointers
         }
     }
 
@@ -249,12 +242,12 @@ void IState_Charge::begin(Gint_k& gk,
                     Gint_inout inout(rho, Gint_Tools::job_type::rho);
                     gk.cal_gint(&inout);
 
-                    double** rho_save = new double*[nspin]; // Initialize an array of pointers
-                    for (int is = 0; is < nspin; is++)
+                    // Using std::vector to replace the original double** rho_save
+                    std::vector<std::vector<double>> rho_save(nspin, std::vector<double>(rhopw_nrxx));
+
+                    for (int is = 0; is < nspin; ++is)
                     {
-                        rho_save[is] = new double[rhopw_nrxx]; // Allocate memory for each internal array
-                        ModuleBase::GlobalFunc::DCOPY(rho[is], rho_save[is],
-                                                      rhopw_nrxx); // Copy data after allocation
+                        ModuleBase::GlobalFunc::DCOPY(rho[is], rho_save[is].data(), rhopw_nrxx); // Copy data
                     }
 
                     std::cout << " Writting cube files...";
@@ -274,7 +267,7 @@ void IState_Charge::begin(Gint_k& gk,
                             rhopw_nplane,
                             rhopw_startz_current,
 #endif
-                            rho_save[is],
+                            rho_save[is].data(),
                             is,
                             nspin,
                             0,
@@ -287,13 +280,6 @@ void IState_Charge::begin(Gint_k& gk,
                     }
 
                     std::cout << " Complete!" << std::endl;
-
-                    // Release memory of rho_save
-                    for (int is = 0; is < nspin; is++)
-                    {
-                        delete[] rho_save[is]; // Release memory of each internal array
-                    }
-                    delete[] rho_save; // Release memory of the array of pointers
                 }
             }
             else
@@ -312,12 +298,12 @@ void IState_Charge::begin(Gint_k& gk,
                 Gint_inout inout(rho, Gint_Tools::job_type::rho);
                 gk.cal_gint(&inout);
 
-                double** rho_save = new double*[nspin]; // Initialize an array of pointers
-                for (int is = 0; is < nspin; is++)
+                // Using std::vector to replace the original double** rho_save
+                std::vector<std::vector<double>> rho_save(nspin, std::vector<double>(rhopw_nrxx));
+
+                for (int is = 0; is < nspin; ++is)
                 {
-                    rho_save[is] = new double[rhopw_nrxx]; // Allocate memory for each internal array
-                    ModuleBase::GlobalFunc::DCOPY(rho[is], rho_save[is],
-                                                  rhopw_nrxx); // Copy data after allocation
+                    ModuleBase::GlobalFunc::DCOPY(rho[is], rho_save[is].data(), rhopw_nrxx); // Copy data
                 }
 
                 std::cout << " Writting cube files...";
@@ -337,7 +323,7 @@ void IState_Charge::begin(Gint_k& gk,
                         rhopw_nplane,
                         rhopw_startz_current,
 #endif
-                        rho_save[is],
+                        rho_save[is].data(),
                         is,
                         nspin,
                         0,
@@ -350,13 +336,6 @@ void IState_Charge::begin(Gint_k& gk,
                 }
 
                 std::cout << " Complete!" << std::endl;
-
-                // Release memory of rho_save
-                for (int is = 0; is < nspin; is++)
-                {
-                    delete[] rho_save[is]; // Release memory of each internal array
-                }
-                delete[] rho_save; // Release memory of the array of pointers
             }
         }
     }
