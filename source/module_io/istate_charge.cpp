@@ -74,7 +74,7 @@ void IState_Charge::begin(Gint_Gamma& gg,
     // if ucell is odd, it's correct,
     // if ucell is even, it's also correct.
     // +1.0e-8 in case like (2.999999999+1)/2
-    int fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
+    const int fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
     std::cout << " number of electrons = " << nelec << std::endl;
     std::cout << " number of occupied bands = " << fermi_band << std::endl;
 
@@ -203,7 +203,7 @@ void IState_Charge::begin(Gint_k& gk,
         mode = 3;
     }
 
-    int fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
+    const int fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
     std::cout << " number of electrons = " << nelec << std::endl;
     std::cout << " number of occupied bands = " << fermi_band << std::endl;
 
@@ -399,7 +399,7 @@ void IState_Charge::select_bands(const int nbands_istate,
         }
         // Fill bands_picked_ with values from out_band_kb
         // Remaining bands are already set to 0
-        int length = std::min(static_cast<int>(out_band_kb.size()), nbands);
+        const int length = std::min(static_cast<int>(out_band_kb.size()), nbands);
         for (int i = 0; i < length; ++i)
         {
             // out_band_kb rely on function parse_expression from input_conv.cpp
@@ -470,7 +470,7 @@ void IState_Charge::idmatrix(const int& ib,
     ModuleBase::TITLE("IState_Charge", "idmatrix");
     assert(wg.nr == nspin);
 
-    int fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
+    const int fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
 
     for (int is = 0; is < nspin; ++is)
     {
@@ -513,7 +513,7 @@ void IState_Charge::idmatrix(const int& ib,
     ModuleBase::TITLE("IState_Charge", "idmatrix");
     assert(wg.nr == kv.get_nks());
 
-    int fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
+    const int fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
 
     for (int ik = 0; ik < kv.get_nks(); ++ik)
     {
