@@ -50,12 +50,12 @@ TEST_F(AtomPseudoTest, SetDSo)
 	ModuleBase::ComplexMatrix d_so_in(atom_pseudo->nh*2,atom_pseudo->nh*2);
 	int nproj = 6;
 	int nproj_soc = 4;
-	bool has_so = 1;
+	bool has_so = true;
 	GlobalV::NSPIN = 4;
 	atom_pseudo->set_d_so(d_so_in,nproj,nproj_soc,has_so);
 	EXPECT_NEAR(atom_pseudo->d_so(0,0,0).real(),1e-8,1e-7);
 	EXPECT_NEAR(atom_pseudo->d_so(0,0,0).imag(),1e-8,1e-7);
-	GlobalV::LSPINORB = 1;
+	GlobalV::LSPINORB = true;
 	atom_pseudo->set_d_so(d_so_in,nproj,nproj_soc,has_so);
 	EXPECT_NEAR(atom_pseudo->d_so(0,0,0).real(),1e-8,1e-7);
 	EXPECT_NEAR(atom_pseudo->d_so(0,0,0).imag(),1e-8,1e-7);

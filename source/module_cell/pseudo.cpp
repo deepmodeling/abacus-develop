@@ -31,13 +31,14 @@ void pseudo::set_pseudo()
 	this->set_pseudo_atom();
 	this->set_pseudo_vl();
 
-	if (nbeta == 0)
+	if (nbeta == 0) {
 		return;
+}
 	
 	if (lll == nullptr)
 	{
 		lll = new int[nbeta];
-		assert(lll != 0);
+		assert(lll != nullptr);
 	}
 
 	nh = 0;
@@ -78,19 +79,19 @@ void pseudo::set_pseudo_h()
 	if (this->els == nullptr)
 	{
 		this->els = new std::string[nchi];
-		assert(this->els != 0);
+		assert(this->els != nullptr);
 	}
 
 	if (this->lchi == nullptr)
 	{
 		this->lchi = new int[this->nchi];
-		assert(this->lchi != 0);
+		assert(this->lchi != nullptr);
 	}
 
 	if (this->oc == nullptr)
 	{
 		this->oc = new double[nchi];
-		assert(this->oc != 0);
+		assert(this->oc != nullptr);
 	}
 
 	if (jjj == nullptr) {
