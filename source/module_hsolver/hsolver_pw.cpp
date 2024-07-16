@@ -547,6 +547,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::P
 #else
         const diag_comm_info comm_info = {GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL};
 #endif
+        // Davidson iter parameters
         // Allow 5 tries at most. If ntry > ntry_max = 5, exit diag loop.
         const int ntry_max = 5;
         // In non-self consistent calculation, do until totally converged. Else
@@ -555,14 +556,38 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::P
         // do diag and add davidson iteration counts up to avg_iter
         const Real david_diag_thr = DiagoIterAssist<T, Device>::PW_DIAG_THR;
         const int david_maxiter = DiagoIterAssist<T, Device>::PW_DIAG_NMAX;
-        // dimensions
+
+        // dimensions of matrix to be solved
         const int dim = psi.get_current_nbas();
         const int nband = psi.get_nbands();
         const int ldPsi = psi.get_nbasis();
 
+        
+        auto ngk_pointer = psi.get_ngk_pointer();
+        /// wrap for hpsi function, Matrix \times blockvector
+        auto hpsi_func = [hm, ngk_pointer](T* hpsi_out,
+                                           T* psi_in,
+                                           const int nband_in,
+                                           const int nbasis_in,
+                                           const int band_index1,
+                                           const int band_index2) {
+            ModuleBase::timer::tick("David", "hpsi_func");
+
+            // Convert "pointer data stucture" to a psi::Psi object
+            auto psi_iter_wrapper = psi::Psi<T, Device>(psi_in, 1, nband_in, nbasis_in, ngk_pointer);
+
+            psi::Range bands_range(true, 0, band_index1, band_index2);
+
+            using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
+            hpsi_info info(&psi_iter_wrapper, bands_range, hpsi_out);
+            hm->ops->hPsi(info);
+
+            ModuleBase::timer::tick("David", "hpsi_func");
+        };
+
         DiagoDavid<T, Device> david(precondition.data(), GlobalV::PW_DIAG_NDIM, GlobalV::use_paw, comm_info);
         DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(
-            david.diag(hm, dim, nband, ldPsi, psi, eigenvalue, david_diag_thr, david_maxiter, ntry_max, notconv_max));
+            david.diag(hpsi_func, dim, nband, ldPsi, psi, eigenvalue, david_diag_thr, david_maxiter, ntry_max, notconv_max));
     }
     return;
 }
