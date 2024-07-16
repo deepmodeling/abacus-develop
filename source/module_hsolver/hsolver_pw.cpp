@@ -568,7 +568,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         };
 
 
-        DiagoDavid<T, Device> david(precondition.data(), GlobalV::PW_DIAG_NDIM, GlobalV::use_paw, comm_info);
+        DiagoDavid<T, Device> david(pre_condition.data(), GlobalV::PW_DIAG_NDIM, GlobalV::use_paw, comm_info);
         // do diag and add davidson iteration counts up to avg_iter
         DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(
             david.diag(hpsi_func, spsi_func, dim, nband, ldPsi, psi, eigenvalue, david_diag_thr, david_maxiter, ntry_max, notconv_max));
