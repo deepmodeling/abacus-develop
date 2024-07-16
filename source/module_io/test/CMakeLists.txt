@@ -67,6 +67,7 @@ AddTest(
 	../../module_base/parallel_reduce.cpp
 	../../module_base/parallel_common.cpp
 	../../module_base/parallel_global.cpp
+  ../../module_base/parallel_comm.cpp
 )
 
 AddTest(
