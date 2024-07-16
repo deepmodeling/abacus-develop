@@ -575,6 +575,7 @@ OBJS_MODULE_RI=conv_coulomb_pot_k.o\
 
 OBJS_PARALLEL=parallel_common.o\
     parallel_global.o\
+    parallel_comm.o\
     parallel_grid.o\
     parallel_kpoints.o\
     parallel_reduce.o\
