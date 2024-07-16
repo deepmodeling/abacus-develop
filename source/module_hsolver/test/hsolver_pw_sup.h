@@ -162,6 +162,7 @@ DiagoDavid<T, Device>::~DiagoDavid() {
 
 template <typename T, typename Device>
 int DiagoDavid<T, Device>::diag(const std::function<void(T*, T*, const int, const int, const int, const int)>& hpsi_func,
+                                const std::function<void(T*, T*, const int, const int, const int)>& spsi_func,
                                 const int dim,
                                 const int nband,
                                 const int ldPsi,
