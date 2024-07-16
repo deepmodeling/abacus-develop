@@ -172,8 +172,6 @@ void pseudo::set_pseudo_atom()
 		ModuleBase::GlobalFunc::ZEROS(rho_atc, mesh);
 	}
 
-
-
 	bool br = false;
 
 	this->msh = 0;

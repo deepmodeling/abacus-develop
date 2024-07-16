@@ -42,8 +42,8 @@ TEST_F(AtomPseudoTest, SetDSo)
 	std::ifstream ifs;
 	ifs.open("./support/C.upf");
 	GlobalV::PSEUDORCUT = 15.0;
-	upf->read_pseudo_upf201(ifs);
-	atom_pseudo->set_pseudo(*upf);
+	upf->read_pseudo_upf201(ifs, *atom_pseudo);
+	atom_pseudo->set_pseudo();
 	ifs.close();
 	EXPECT_EQ(atom_pseudo->nh,14);
 	EXPECT_TRUE(atom_pseudo->has_so);
@@ -72,8 +72,8 @@ TEST_F(AtomPseudoTest, BcastAtomPseudo)
 		std::ifstream ifs;
 		ifs.open("./support/C.upf");
 		GlobalV::PSEUDORCUT = 15.0;
-		upf->read_pseudo_upf201(ifs);
-		atom_pseudo->set_pseudo(*upf);
+		upf->read_pseudo_upf201(ifs, *atom_pseudo);
+		atom_pseudo->set_pseudo();
 		ifs.close();
 	}
 	atom_pseudo->bcast_atom_pseudo();
