@@ -120,7 +120,6 @@ void IState_Charge::begin(Gint_Gamma& gg,
 
             std::cout << " Writting cube files...";
 
-            // 0 means definitely output charge density.
             for (int is = 0; is < nspin; ++is)
             {
                 // ssc should be inside the inner loop to reset the string stream each time
@@ -252,7 +251,6 @@ void IState_Charge::begin(Gint_k& gk,
 
                     std::cout << " Writting cube files...";
 
-                    // 0 means definitely output charge density.
                     for (int is = 0; is < nspin; ++is)
                     {
                         // ssc should be inside the inner loop to reset the string stream each time
@@ -308,7 +306,6 @@ void IState_Charge::begin(Gint_k& gk,
 
                 std::cout << " Writting cube files...";
 
-                // 0 means definitely output charge density.
                 for (int is = 0; is < nspin; ++is)
                 {
                     // ssc should be inside the inner loop to reset the string stream each time
