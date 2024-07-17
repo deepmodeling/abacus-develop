@@ -43,7 +43,7 @@ class Grid_MeshK
 		void cal_extended_cell(const int &dxe, const int &dye, const int &dze,
 								const int& nbx, const int& nby, const int& nbz);
 		// initialize the unitcell parameters.
-		void init_ucell_para(void);
+		void init_ucell_para();
 };
 
 #endif
