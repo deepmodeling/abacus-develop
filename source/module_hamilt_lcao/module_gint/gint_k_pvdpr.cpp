@@ -5,7 +5,7 @@
 #include "module_base/timer.h"
 #include "module_base/ylm.h"
 
-void Gint_k::allocate_pvdpR(void)
+void Gint_k::allocate_pvdpR()
 {
     ModuleBase::TITLE("Gint_k","allocate_pvpR");
 
@@ -32,7 +32,7 @@ void Gint_k::allocate_pvdpR(void)
     return;
 }
 
-void Gint_k::destroy_pvdpR(void)
+void Gint_k::destroy_pvdpR()
 {
     ModuleBase::TITLE("Gint_k","destroy_pvpR");
 

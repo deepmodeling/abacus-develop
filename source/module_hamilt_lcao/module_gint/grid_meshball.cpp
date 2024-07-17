@@ -9,7 +9,7 @@ Grid_MeshBall::~Grid_MeshBall()
 {
 }
 
-void Grid_MeshBall::init_meshball(void)
+void Grid_MeshBall::init_meshball()
 {	
 	ModuleBase::TITLE("Grid_MeshBall","init_meshball");
 

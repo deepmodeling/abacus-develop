@@ -299,7 +299,7 @@ void Gint::initialize_pvpR(const UnitCell& ucell_in, Grid_Driver* gd) {
                                    this->DMRGint[0]->get_memory_size()
                                        * this->DMRGint.size());
     } else {
-        this->hRGintCd->allocate(nullptr, 0);
+        this->hRGintCd->allocate(nullptr, false);
         ModuleBase::Memory::record("Gint::hRGintCd",
                                    this->hRGintCd->get_memory_size());
         for (int is = 0; is < this->DMRGint.size(); is++) {

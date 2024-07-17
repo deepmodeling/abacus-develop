@@ -25,8 +25,9 @@ void Gint_Gamma::cal_env(const double* wfc, double* rho, UnitCell& ucell)
 
             // get the value: how many atoms has orbital value on this grid.
             const int size = this->gridt->how_many_atoms[grid_index];
-            if (size == 0)
+            if (size == 0) {
                 continue;
+}
 
             int *block_iw, *block_index, *block_size;
             bool** cal_flag;
