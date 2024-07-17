@@ -50,13 +50,13 @@ class DiagoDavid : public DiagH<T, Device>
     diag_comm_info diag_comm;
 
     /// number of searched eigenpairs
-    int nband = 0;
+    const int nband;
     /// Dimension of the input matrix psi to be diagonalized
     const int dim;
     /// maximum dimension of the reduced basis set
     const int nbase_x;
     /// dimension of the subspace allowed in Davidson
-    int david_ndim = 4;
+    const int david_ndim = 4;
     /// number of unconverged eigenvalues
     int notconv = 0;
 
