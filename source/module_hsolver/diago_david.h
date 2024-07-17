@@ -56,25 +56,24 @@ class DiagoDavid : public DiagH<T, Device>
     /// number of unconverged eigenvalues
     int notconv = 0;
 
-    /// precondition for diag, diagonal approximation of
-    /// matrix A (i.e. Hamilt)
+    /// precondition for diag, diagonal approximation of matrix A(i.e. Hamilt)
     const Real* precondition = nullptr;
     Real* d_precondition = nullptr;
 
     /// eigenvalue results
     Real* eigenvalue = nullptr;
 
-    T *pbasis = nullptr; // basis set
+    T *pbasis = nullptr; /// pointer to basis set(dim, nbase_x), leading dimension = dim
 
-    T* hphi = nullptr; // the product of H and psi in the reduced basis set
+    T* hphi = nullptr; /// the product of H and psi in the reduced basis set
 
-    T* sphi = nullptr; // the Product of S and psi in the reduced basis set
+    T* sphi = nullptr; /// the Product of S and psi in the reduced basis set
 
-    T* hcc = nullptr; // Hamiltonian on the reduced basis
+    T* hcc = nullptr; /// Hamiltonian on the reduced basis
 
-    T* scc = nullptr; // Overlap on the reduced basis
+    T* scc = nullptr; /// Overlap on the reduced basis
 
-    T* vcc = nullptr; // Eigenvectors of hc
+    T* vcc = nullptr; /// Eigenvectors of hc
 
     T* lagrange_matrix = nullptr;
 
@@ -99,7 +98,6 @@ class DiagoDavid : public DiagH<T, Device>
                   const int& nbase,
                   const int nbase_x,
                   const int& notconv,
-                  // psi::Psi<T, Device>& basis,
                   T* hphi,
                   T* sphi,
                   const T* vcc,
@@ -110,7 +108,6 @@ class DiagoDavid : public DiagH<T, Device>
                   int& nbase,
                   const int nbase_x,
                   const int& notconv,
-                  // const psi::Psi<T, Device>& basis,
                   const T* hphi,
                   const T* sphi,
                   T* hcc,
@@ -123,7 +120,6 @@ class DiagoDavid : public DiagH<T, Device>
                  const Real* eigenvalue,
                  const T *psi_in,
                  const int ldPsi,
-                //  psi::Psi<T, Device>& basis,
                  T* hphi,
                  T* sphi,
                  T* hcc,
@@ -133,7 +129,6 @@ class DiagoDavid : public DiagH<T, Device>
     void SchmitOrth(const int& dim,
                     const int nband,
                     const int m,
-                    // psi::Psi<T, Device>& basis,
                     const T* sphi,
                     T* lagrange_m,
                     const int mm_size,
