@@ -34,7 +34,7 @@ class DiagoDavid : public DiagH<T, Device>
                       const int dim,              // Dimension of the input matrix psi to be diagonalized
                       const int nband,            // Number of required eigenpairs
                       const int ldPsi,            // Leading dimension of the psi input
-                      T *psi_in,//psi::Psi<T, Device>& psi,   // Reference to the wavefunction object for eigenvectors
+                      T *psi_in,                  // Pointer to eigenvectors
                       Real* eigenvalue_in,        // Pointer to store the resulting eigenvalues
                       const Real david_diag_thr,  // Convergence threshold for the Davidson iteration
                       const int david_maxiter,    // Maximum allowed iterations for the Davidson method
@@ -88,7 +88,7 @@ class DiagoDavid : public DiagH<T, Device>
                   const int dim,
                   const int nband,
                   const int ldPsi,
-                  T *psi_in,//psi::Psi<T, Device>& psi,
+                  T *psi_in,
                   Real* eigenvalue_in,
                   const Real david_diag_thr,
                   const int david_maxiter);
@@ -99,7 +99,7 @@ class DiagoDavid : public DiagH<T, Device>
                   const int& nbase,
                   const int nbase_x,
                   const int& notconv,
-                  psi::Psi<T, Device>& basis,
+                  // psi::Psi<T, Device>& basis,
                   T* hphi,
                   T* sphi,
                   const T* vcc,
@@ -110,7 +110,7 @@ class DiagoDavid : public DiagH<T, Device>
                   int& nbase,
                   const int nbase_x,
                   const int& notconv,
-                  const psi::Psi<T, Device>& basis,
+                  // const psi::Psi<T, Device>& basis,
                   const T* hphi,
                   const T* sphi,
                   T* hcc,
@@ -123,7 +123,7 @@ class DiagoDavid : public DiagH<T, Device>
                  const Real* eigenvalue,
                  const T *psi_in,
                  const int ldPsi,
-                 psi::Psi<T, Device>& basis,
+                //  psi::Psi<T, Device>& basis,
                  T* hphi,
                  T* sphi,
                  T* hcc,
@@ -133,7 +133,7 @@ class DiagoDavid : public DiagH<T, Device>
     void SchmitOrth(const int& dim,
                     const int nband,
                     const int m,
-                    psi::Psi<T, Device>& basis,
+                    // psi::Psi<T, Device>& basis,
                     const T* sphi,
                     T* lagrange_m,
                     const int mm_size,
@@ -148,8 +148,6 @@ class DiagoDavid : public DiagH<T, Device>
                      const int& nbase_x,
                      Real* eigenvalue,
                      T* vcc);
-
-    
 
     bool check_block_conv(const int &ntry, const int &notconv, const int &ntry_max, const int &notconv_max);
 
