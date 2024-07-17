@@ -50,6 +50,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.nbands, 8);
     EXPECT_EQ(param.inp.nbands_sto, 256);
     EXPECT_EQ(param.inp.nbands_istate, 5);
+    EXPECT_FALSE(param.inp.if_separate_k);
     EXPECT_EQ(param.inp.pw_seed, 1);
     EXPECT_EQ(param.inp.emin_sto, 0.0);
     EXPECT_EQ(param.inp.emax_sto, 0.0);

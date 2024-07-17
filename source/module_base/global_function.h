@@ -162,6 +162,13 @@ static inline void DCOPY(const T& a, T& b, const int& dim)
 }
 
 template <typename T>
+inline void DCOPY(const T* a, T* b, const int& dim) {
+    for (int i = 0; i < dim; ++i) {
+        b[i] = a[i];
+    }
+}
+
+template <typename T>
 inline void COPYARRAY(const T* a, T* b, const long dim);
 
 template <>
