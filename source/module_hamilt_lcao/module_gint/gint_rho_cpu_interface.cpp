@@ -12,8 +12,10 @@ void Gint::cpu_rho_interface(Gint_inout* inout) {
     const int ncyz = this->ny * this->nplane;
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
-    
+    std::vector<int> vindex(this->bxyz, 0);
 #ifdef _OPENMP
+#pragma omp parallel firstprivate(vindex)
+{
 #pragma omp for 
 #endif
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
@@ -21,8 +23,6 @@ void Gint::cpu_rho_interface(Gint_inout* inout) {
         if (na_grid == 0) {
             continue;
         }
-        std::vector<int> vindex(this->bxyz, 0);
-        // int* vindex = Gint_Tools::get_vindex(ncyz, ibx, jby, kbz);
         Gint_Tools::get_vindex(this->bxyz,
                                              this->bx,
                                              this->by,
@@ -39,7 +39,9 @@ void Gint::cpu_rho_interface(Gint_inout* inout) {
                               ucell,
                               inout);
     }
-
+#ifdef _OPENMP
+}
+#endif
     ModuleBase::TITLE("Gint_interface", "cal_gint_rho");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_rho");
 }
@@ -56,6 +58,8 @@ void Gint::cpu_tau_interface(Gint_inout* inout) {
     const double delta_r = this->gridt->dr_uniform;
     std::vector<int> vindex(this->bxyz, 0);
 #ifdef _OPENMP
+#pragma omp parallel firstprivate(vindex)
+{
 #pragma omp for
 #endif
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
@@ -80,6 +84,9 @@ void Gint::cpu_tau_interface(Gint_inout* inout) {
                               inout,
                               ucell);
     }
+#ifdef _OPENMP
+}
+#endif
     ModuleBase::TITLE("Gint_interface", "cal_gint_tau");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_tau");
 }

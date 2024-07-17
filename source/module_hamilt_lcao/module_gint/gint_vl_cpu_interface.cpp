@@ -17,6 +17,8 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
 #ifdef _OPENMP
+#pragma omp parallel 
+{
     if (!this->gridt->gamma_only_local) {
         if (!pvpR_alloc_flag) {
             ModuleBase::WARNING_QUIT("Gint_interface::cal_gint",
@@ -105,6 +107,7 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
         }
     }
      delete hRGint_thread;
+}
 #endif
     ModuleBase::TITLE("Gint_interface", "cal_gint_vlocal");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal");
@@ -137,6 +140,8 @@ void Gint::cpu_dvlocal_interface(Gint_inout* inout) {
     }
 
 #ifdef _OPENMP
+#pragma omp parallel 
+{
     std::vector<double> pvdpRx_thread = std::vector<double>(nnrg, 0.0);
     std::vector<double> pvdpRy_thread = std::vector<double>(nnrg, 0.0);
     std::vector<double> pvdpRz_thread = std::vector<double>(nnrg, 0.0);
@@ -183,6 +188,7 @@ void Gint::cpu_dvlocal_interface(Gint_inout* inout) {
     }
 #ifdef _OPENMP
     delete hRGint_thread;
+}
 #endif
     ModuleBase::TITLE("Gint_interface", "cal_gint_dvlocal");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_dvlocal");
@@ -201,6 +207,8 @@ void Gint::cpu_vlocal_meta_interface(Gint_inout* inout) {
     const double delta_r = this->gridt->dr_uniform;
 
 #ifdef _OPENMP
+#pragma omp parallel 
+{
     if (!this->gridt->gamma_only_local) {
         if (!pvpR_alloc_flag) {
             ModuleBase::WARNING_QUIT("Gint_interface::cal_gint",
@@ -304,6 +312,7 @@ void Gint::cpu_vlocal_meta_interface(Gint_inout* inout) {
         }
         delete hRGint_thread;
     }
+}
 #endif
     ModuleBase::TITLE("Gint_interface", "cal_gint_vlocal_meta");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal_meta");
