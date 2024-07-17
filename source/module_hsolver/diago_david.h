@@ -65,9 +65,9 @@ class DiagoDavid : public DiagH<T, Device>
 
     T *pbasis = nullptr;  /// pointer to basis set(dim, nbase_x), leading dimension = dim
 
-    T* hphi = nullptr;    /// the product of H and psi in the reduced basis set
+    T* hpsi = nullptr;    /// the product of H and psi in the reduced basis set
 
-    T* sphi = nullptr;    /// the Product of S and psi in the reduced basis set
+    T* spsi = nullptr;    /// the Product of S and psi in the reduced basis set
 
     T* hcc = nullptr;     /// Hamiltonian on the reduced basis
 
@@ -98,8 +98,8 @@ class DiagoDavid : public DiagH<T, Device>
                   const int& nbase,
                   const int nbase_x,
                   const int& notconv,
-                  T* hphi,
-                  T* sphi,
+                  T* hpsi,
+                  T* spsi,
                   const T* vcc,
                   const int* unconv,
                   const Real* eigenvalue);
@@ -108,8 +108,8 @@ class DiagoDavid : public DiagH<T, Device>
                   int& nbase,
                   const int nbase_x,
                   const int& notconv,
-                  const T* hphi,
-                  const T* sphi,
+                  const T* hpsi,
+                  const T* spsi,
                   T* hcc,
                   T* scc);
 
@@ -120,8 +120,8 @@ class DiagoDavid : public DiagH<T, Device>
                  const Real* eigenvalue,
                  const T *psi_in,
                  const int ldPsi,
-                 T* hphi,
-                 T* sphi,
+                 T* hpsi,
+                 T* spsi,
                  T* hcc,
                  T* scc,
                  T* vcc);
@@ -129,7 +129,7 @@ class DiagoDavid : public DiagH<T, Device>
     void SchmidtOrth(const int& dim,
                     const int nband,
                     const int m,
-                    const T* sphi,
+                    const T* spsi,
                     T* lagrange_m,
                     const int mm_size,
                     const int mv_size);
