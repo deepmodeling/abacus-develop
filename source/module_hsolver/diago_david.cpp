@@ -60,7 +60,7 @@ int DiagoDavid<T, Device>::diag_mock(const HPsiFunc& hpsi_func,
                                      const int dim,
                                      const int nband,
                                      const int ldPsi,
-                                     psi::Psi<T, Device>& psi,
+                                     T *psi_in,//psi::Psi<T, Device>& psi,
                                      Real* eigenvalue_in,
                                      const Real david_diag_thr,
                                      const int david_maxiter)
@@ -90,7 +90,7 @@ int DiagoDavid<T, Device>::diag_mock(const HPsiFunc& hpsi_func,
 
     const int nbase_x = this->david_ndim * nband; // maximum dimension of the reduced basis set
 
-    T *psi_in = psi.get_pointer();
+    // T *psi_in = psi.get_pointer();
 
     // the lowest N eigenvalues
     base_device::memory::resize_memory_op<Real, base_device::DEVICE_CPU>()(
@@ -101,10 +101,13 @@ int DiagoDavid<T, Device>::diag_mock(const HPsiFunc& hpsi_func,
     psi::Psi<T, Device> basis(1,
                               nbase_x,
                               dim,
-                              &(psi.get_ngk(0))); // the reduced basis set
+                              nullptr);
+                              //&(psi.get_ngk(0))); // the reduced basis set
     // basis(dim, nbase_x), leading dimension = dim
     pbasis = basis.get_pointer();
     ModuleBase::Memory::record("DAV::basis", nbase_x * dim * sizeof(T));
+    resmem_complex_op()(this->ctx, pbasis, nbase_x * dim, "DAV::basis");
+    setmem_complex_op()(this->ctx, pbasis, 0, nbase_x * dim);
 
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     // ModuleBase::ComplexMatrix hp(nbase_x, dim); // the product of H and psi in the reduced basis set
@@ -1079,7 +1082,7 @@ int DiagoDavid<T, Device>::diag(const HPsiFunc& hpsi_func,
                                 const int dim,
                                 const int nband,
                                 const int ldPsi,
-                                psi::Psi<T, Device>& psi,
+                                T *psi_in,//psi::Psi<T, Device>& psi,
                                 Real* eigenvalue_in,
                                 const Real david_diag_thr,
                                 const int david_maxiter,
@@ -1101,7 +1104,7 @@ int DiagoDavid<T, Device>::diag(const HPsiFunc& hpsi_func,
     int sum_dav_iter = 0;
     do
     {
-        sum_dav_iter += this->diag_mock(hpsi_func, spsi_func, dim, nband, ldPsi, psi, eigenvalue_in, david_diag_thr, david_maxiter);
+        sum_dav_iter += this->diag_mock(hpsi_func, spsi_func, dim, nband, ldPsi, psi_in, eigenvalue_in, david_diag_thr, david_maxiter);
         ++ntry;
     } while (!check_block_conv(ntry, this->notconv, ntry_max, notconv_max));
 

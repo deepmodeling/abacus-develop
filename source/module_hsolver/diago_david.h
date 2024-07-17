@@ -34,7 +34,7 @@ class DiagoDavid : public DiagH<T, Device>
                       const int dim,              // Dimension of the input matrix psi to be diagonalized
                       const int nband,            // Number of required eigenpairs
                       const int ldPsi,            // Leading dimension of the psi input
-                      psi::Psi<T, Device>& psi,   // Reference to the wavefunction object for eigenvectors
+                      T *psi_in,//psi::Psi<T, Device>& psi,   // Reference to the wavefunction object for eigenvectors
                       Real* eigenvalue_in,        // Pointer to store the resulting eigenvalues
                       const Real david_diag_thr,  // Convergence threshold for the Davidson iteration
                       const int david_maxiter,    // Maximum allowed iterations for the Davidson method
@@ -82,6 +82,16 @@ class DiagoDavid : public DiagH<T, Device>
     Device* ctx = {};
     base_device::DEVICE_CPU* cpu_ctx = {};
     base_device::AbacusDevice_t device = {};
+
+    int diag_mock(const HPsiFunc& hpsi_func,
+                  const SPsiFunc& spsi_func,
+                  const int dim,
+                  const int nband,
+                  const int ldPsi,
+                  T *psi_in,//psi::Psi<T, Device>& psi,
+                  Real* eigenvalue_in,
+                  const Real david_diag_thr,
+                  const int david_maxiter);
 
     void cal_grad(const HPsiFunc& hpsi_func,
                   const SPsiFunc& spsi_func,
@@ -139,15 +149,7 @@ class DiagoDavid : public DiagH<T, Device>
                      Real* eigenvalue,
                      T* vcc);
 
-    int diag_mock(const HPsiFunc& hpsi_func,
-                  const SPsiFunc& spsi_func,
-                  const int dim,
-                  const int nband,
-                  const int ldPsi,
-                  psi::Psi<T, Device>& psi,
-                  Real* eigenvalue_in,
-                  const Real david_diag_thr,
-                  const int david_maxiter);
+    
 
     bool check_block_conv(const int &ntry, const int &notconv, const int &ntry_max, const int &notconv_max);
 

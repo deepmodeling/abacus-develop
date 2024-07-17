@@ -166,22 +166,23 @@ int DiagoDavid<T, Device>::diag(const std::function<void(T*, T*, const int, cons
                                 const int dim,
                                 const int nband,
                                 const int ldPsi,
-                                psi::Psi<T, Device>& psi,
+                                T *psi_in,
                                 Real* eigenvalue_in,
                                 const Real david_diag_thr,
                                 const int david_maxiter,
                                 const int ntry_max,
                                 const int notconv_max) {
+    // do nothing, we dont need it
     // do something
-    for (int ib = 0; ib < psi.get_nbands(); ib++) {
-        eigenvalue_in[ib] = 0.0;
-        for (int ig = 0; ig < psi.get_nbasis(); ig++) {
-            psi(ib, ig) += T(1.0, 0.0);
-            eigenvalue_in[ib] += psi(ib, ig).real();
-        }
-        eigenvalue_in[ib] /= psi.get_nbasis();
-    }
-    DiagoIterAssist<T, Device>::avg_iter += 1.0;
+    // for (int ib = 0; ib < psi.get_nbands(); ib++) {
+    //     eigenvalue_in[ib] = 0.0;
+    //     for (int ig = 0; ig < psi.get_nbasis(); ig++) {
+    //         psi(ib, ig) += T(1.0, 0.0);
+    //         eigenvalue_in[ib] += psi(ib, ig).real();
+    //     }
+    //     eigenvalue_in[ib] /= psi.get_nbasis();
+    // }
+    // DiagoIterAssist<T, Device>::avg_iter += 1.0;
     return 1;
 }
 template class DiagoDavid<std::complex<float>, base_device::DEVICE_CPU>;

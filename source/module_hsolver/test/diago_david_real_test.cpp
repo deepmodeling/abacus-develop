@@ -118,7 +118,7 @@ public:
         auto spsi_func = [phm](const double* psi_in, double* spsi_out,const int nrow, const int npw,  const int nbands){
 			phm->sPsi(psi_in, spsi_out, nrow, npw, nbands);
 		};
-        dav.diag(hpsi_func,spsi_func, dim, nband, ldPsi, phi, en, eps, maxiter);
+        dav.diag(hpsi_func,spsi_func, dim, nband, ldPsi, phi.get_pointer(), en, eps, maxiter);
 
 #ifdef __MPI		
         end = MPI_Wtime();
