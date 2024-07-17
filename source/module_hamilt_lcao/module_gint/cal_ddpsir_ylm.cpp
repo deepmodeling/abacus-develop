@@ -160,7 +160,7 @@ void cal_ddpsir_ylm(
                             const int ll = atom->iw2l[iw];
                             const int idx_lm = atom->iw2_ylm[iw];
 
-                            const double rl = pow(distance1, ll);
+                            const double rl = pow_int(distance1, ll);
 
                             // derivative of wave functions with respect to atom positions.
                             const double tmpdphi_rly = (dtmp - tmp * ll / distance1) / rl * rly[idx_lm] / distance1;
@@ -268,8 +268,8 @@ void cal_ddpsir_ylm(
                         const int ll = atom->iw2l[iw];
                         const int idx_lm = atom->iw2_ylm[iw];
 
-                        const double rl = pow(distance, ll);
-                        const double r_lp2 = pow(distance, ll + 2);
+                        const double rl = pow_int(distance, ll);
+                        const double r_lp2 =rl * distance * distance;
 
                         // d/dr (R_l / r^l)
                         const double tmpdphi = (dtmp - tmp * ll / distance) / rl;

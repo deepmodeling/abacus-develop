@@ -29,7 +29,7 @@ inline RI::Tensor<std::complex<double>> tensor_conj(const RI::Tensor<std::comple
     return r;
 }
 template<typename Tdata, typename Tmatrix>
-auto RI_2D_Comm::split_m2D_ktoR(const K_Vectors &kv, const std::vector<const Tmatrix*> &mks_2D, const Parallel_2D &pv)
+auto RI_2D_Comm::split_m2D_ktoR(const K_Vectors& kv, const std::vector<const Tmatrix*>& mks_2D, const Parallel_2D& pv, const int nspin)
 -> std::vector<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>>
 {
 	ModuleBase::TITLE("RI_2D_Comm","split_m2D_ktoR");
@@ -37,10 +37,10 @@ auto RI_2D_Comm::split_m2D_ktoR(const K_Vectors &kv, const std::vector<const Tma
 
 	const TC period = RI_Util::get_Born_vonKarmen_period(kv);
 	const std::map<int,int> nspin_k = {{1,1}, {2,2}, {4,1}};
-	const double SPIN_multiple = std::map<int,double>{{1,0.5}, {2,1}, {4,1}}.at(GlobalV::NSPIN);							// why?
+    const double SPIN_multiple = std::map<int, double>{ {1,0.5}, {2,1}, {4,1} }.at(nspin);							// why?
 
-	std::vector<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>> mRs_a2D(GlobalV::NSPIN);
-	for(int is_k=0; is_k<nspin_k.at(GlobalV::NSPIN); ++is_k)
+    std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> mRs_a2D(nspin);
+    for (int is_k = 0; is_k < nspin_k.at(nspin); ++is_k)
 	{
 		const std::vector<int> ik_list = RI_2D_Comm::get_ik_list(kv, is_k);
 		for(const TC &cell : RI_Util::get_Born_von_Karmen_cells(period))

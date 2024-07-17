@@ -147,7 +147,7 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
 template <typename FPTYPE, typename Device>
 void Stress_PW<FPTYPE, Device>::stress_vdw(ModuleBase::matrix& sigma, UnitCell& ucell)
 {
-    auto vdw_solver = vdw::make_vdw(ucell, INPUT);
+    auto vdw_solver = vdw::make_vdw(ucell, PARAM.inp);
     if (vdw_solver != nullptr)
     {
         sigma = vdw_solver->get_stress().to_matrix();

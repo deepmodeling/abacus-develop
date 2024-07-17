@@ -37,10 +37,10 @@ void json_output()
 #endif // __RAPIDJSON
 }
 
-void create_Json(UnitCell* ucell, Input* input)
+void create_Json(UnitCell* ucell, const Parameter& param)
 {
 #ifdef __RAPIDJSON
-    gen_general_info(input);
+    gen_general_info(param);
     gen_init(ucell);
     // gen_stru(ucell);
 #endif

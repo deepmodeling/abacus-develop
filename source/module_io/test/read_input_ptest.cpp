@@ -50,6 +50,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.nbands, 8);
     EXPECT_EQ(param.inp.nbands_sto, 256);
     EXPECT_EQ(param.inp.nbands_istate, 5);
+    EXPECT_FALSE(param.inp.if_separate_k);
     EXPECT_EQ(param.inp.pw_seed, 1);
     EXPECT_EQ(param.inp.emin_sto, 0.0);
     EXPECT_EQ(param.inp.emax_sto, 0.0);
@@ -112,7 +113,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.relax_method, "cg");
     EXPECT_DOUBLE_EQ(param.inp.relax_cg_thr, 0.5);
     EXPECT_EQ(param.inp.out_level, "ie");
-    EXPECT_TRUE(param.inp.sup.out_md_control);
+    EXPECT_TRUE(param.globalv.out_md_control);
     EXPECT_TRUE(param.inp.relax_new);
     EXPECT_DOUBLE_EQ(param.inp.relax_bfgs_w1, 0.01);
     EXPECT_DOUBLE_EQ(param.inp.relax_bfgs_w2, 0.5);
@@ -122,16 +123,16 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_DOUBLE_EQ(param.inp.relax_scale_force, 0.5);
     EXPECT_EQ(param.inp.nbspline, -1);
     EXPECT_TRUE(param.inp.gamma_only);
-    EXPECT_TRUE(param.inp.sup.gamma_only_local);
+    EXPECT_TRUE(param.globalv.gamma_only_local);
     EXPECT_DOUBLE_EQ(param.inp.ecutwfc, 20.0);
     EXPECT_DOUBLE_EQ(param.inp.erf_ecut, 20.0);
     EXPECT_DOUBLE_EQ(param.inp.erf_height, 20.0);
     EXPECT_DOUBLE_EQ(param.inp.erf_sigma, 4.0);
     EXPECT_DOUBLE_EQ(param.inp.ecutrho, 80);
     EXPECT_EQ(param.inp.fft_mode, 0);
-    EXPECT_EQ(param.inp.sup.ncx, 0);
-    EXPECT_EQ(param.inp.sup.ncy, 0);
-    EXPECT_EQ(param.inp.sup.ncz, 0);
+    EXPECT_EQ(param.globalv.ncx, 0);
+    EXPECT_EQ(param.globalv.ncy, 0);
+    EXPECT_EQ(param.globalv.ncz, 0);
     EXPECT_EQ(param.inp.nx, 0);
     EXPECT_EQ(param.inp.ny, 0);
     EXPECT_EQ(param.inp.nz, 0);
@@ -210,7 +211,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_TRUE(param.inp.bessel_nao_smooth);
     EXPECT_DOUBLE_EQ(param.inp.bessel_nao_sigma, 0.1);
     EXPECT_EQ(std::stod(param.inp.bessel_nao_ecut), 20);
-    EXPECT_DOUBLE_EQ(param.inp.sup.bessel_nao_rcut, 6.0);
+    EXPECT_DOUBLE_EQ(param.globalv.bessel_nao_rcut, 6.0);
     EXPECT_DOUBLE_EQ(param.inp.bessel_nao_tolerence, 1E-12);
     EXPECT_EQ(param.inp.bessel_descriptor_lmax, 2);
     EXPECT_TRUE(param.inp.bessel_descriptor_smooth);
@@ -343,11 +344,11 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_FALSE(param.inp.of_read_kernel);
     EXPECT_EQ(param.inp.of_kernel_file, "WTkernel.txt");
     EXPECT_EQ(param.inp.device, "cpu");
-    EXPECT_EQ(param.inp.sup.ncx, 0);
-    EXPECT_EQ(param.inp.sup.ncy, 0);
-    EXPECT_EQ(param.inp.sup.ncz, 0);
+    EXPECT_EQ(param.globalv.ncx, 0);
+    EXPECT_EQ(param.globalv.ncy, 0);
+    EXPECT_EQ(param.globalv.ncz, 0);
     EXPECT_NEAR(param.inp.force_thr_ev, 0.025711245953622324, 1e-8);
-    EXPECT_DOUBLE_EQ(param.inp.sup.hubbard_u[0], 0);
+    EXPECT_DOUBLE_EQ(param.globalv.hubbard_u[0], 0);
     EXPECT_EQ(param.inp.orbital_corr[0], -1);
     EXPECT_EQ(param.inp.mdp.lj_rule, 2);
     EXPECT_FALSE(param.inp.mdp.lj_eshift);
@@ -397,6 +398,16 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_DOUBLE_EQ(param.inp.alpha_trial, 0.02);
     EXPECT_DOUBLE_EQ(param.inp.sccut, 4.0);
     EXPECT_EQ(param.inp.sc_file, "sc.json");
+    EXPECT_EQ(param.inp.lr_nstates, 1);
+    EXPECT_EQ(param.inp.nocc, param.inp.nbands);
+    EXPECT_EQ(param.inp.nvirt, 1);
+    EXPECT_EQ(param.inp.xc_kernel, "LDA");
+    EXPECT_EQ(param.inp.lr_solver, "dav");
+    EXPECT_DOUBLE_EQ(param.inp.lr_thr, 1e-2);
+    EXPECT_FALSE(param.inp.out_wfc_lr);
+    EXPECT_EQ(param.inp.abs_wavelen_range.size(), 2);
+    EXPECT_DOUBLE_EQ(param.inp.abs_wavelen_range[0], 0.0);
+    EXPECT_DOUBLE_EQ(param.inp.abs_broadening, 0.01);
 }
 
 TEST_F(InputParaTest, Check)

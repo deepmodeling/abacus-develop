@@ -5,6 +5,30 @@
 
 namespace GintKernel
 {
+// if exponent is an integer between 0 and 5 (the most common cases in gint),
+// pow_int is much faster than std::pow
+static __device__ double pow_int(double base, int exp)
+{
+    switch (exp)
+    {
+    case 0:
+        return 1.0;
+    case 1:
+        return base;
+    case 2:
+        return base * base;
+    case 3:
+        return base * base * base;
+    case 4:
+        return base * base * base * base;
+    case 5:
+        return base * base * base * base * base;
+    default:
+        double result = pow(base, exp);
+        return result;      
+    }
+}
+
 static __device__ void interp_rho(const double dist,
                                   const double delta_r,
                                   const int atype,
@@ -145,7 +169,7 @@ static __device__ void interp_f(const double dist,
         // Extract information from atom_iw2_* arrays
         const int ll = atom_iw2_l[it_nw_iw];
         const int idx_lm = atom_iw2_ylm[it_nw_iw];
-        const double rl = pow(dist, ll);
+        const double rl = pow_int(dist, ll);
         const double rl_r = 1.0 / rl;
         const double dist_r = 1 / dist;
         const int dpsi_idx = psi_idx * 3;

@@ -49,7 +49,7 @@ void Driver::init()
 
     // (5) output the json file
     // Json::create_Json(&GlobalC::ucell.symm,GlobalC::ucell.atoms,&INPUT);
-    Json::create_Json(&GlobalC::ucell, &INPUT);
+    Json::create_Json(&GlobalC::ucell, PARAM);
 }
 
 void Driver::print_start_info()
@@ -68,7 +68,6 @@ void Driver::print_start_info()
 #endif
     time_t time_now = time(nullptr);
 
-    INPUT.start_time = time_now;
     PARAM.set_start_time(time_now);
     GlobalV::ofs_running << "                                                  "
                             "                                   "
@@ -116,11 +115,11 @@ void Driver::reading()
 {
     ModuleBase::timer::tick("Driver", "reading");
     // temperarily
-    GlobalV::MY_RANK = PARAM.sys.myrank;
-    GlobalV::NPROC = PARAM.sys.nproc;
+    GlobalV::MY_RANK = PARAM.globalv.myrank;
+    GlobalV::NPROC = PARAM.globalv.nproc;
 
     // (1) read the input file
-    ModuleIO::ReadInput read_input(PARAM.sys.myrank);
+    ModuleIO::ReadInput read_input(PARAM.globalv.myrank);
     read_input.read_parameters(PARAM, GlobalV::global_in_card);
 
     // (2) create the output directory, running_*.log and print info

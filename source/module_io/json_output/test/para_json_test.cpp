@@ -5,7 +5,7 @@
 #include "../general_info.h"
 #include "../init_info.h"
 #include "../readin_info.h"
-#include "module_io/input.h"
+#include "module_parameter/parameter.h"
 #include "module_io/para_json.h"
 #include "version.h"
 
@@ -209,16 +209,16 @@ TEST(AbacusJsonTest, GeneralInfo)
     std::time_t time_now = std::time(nullptr);
     std::string start_time_str;
     Json::convert_time(time_now, start_time_str);
-    INPUT.start_time = time_now;
+    PARAM.sys.start_time = time_now;
 
-    INPUT.device = "cpu";
-    INPUT.pseudo_dir = "./abacus/test/pseudo_dir";
-    INPUT.orbital_dir = "./abacus/test/orbital_dir";
-    INPUT.stru_file = "./abacus/test/stru_file";
-    INPUT.kpoint_file = "./abacus/test/kpoint_file";
+    PARAM.input.device = "cpu";
+    PARAM.input.pseudo_dir = "./abacus/test/pseudo_dir";
+    PARAM.input.orbital_dir = "./abacus/test/orbital_dir";
+    PARAM.input.stru_file = "./abacus/test/stru_file";
+    PARAM.input.kpoint_file = "./abacus/test/kpoint_file";
     // output the json file
     Json::AbacusJson::doc.Parse("{}");
-    Json::gen_general_info(&INPUT);
+    Json::gen_general_info(PARAM);
     Json::json_output();
 
     std::string filename = "abacus.json";

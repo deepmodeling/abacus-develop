@@ -190,8 +190,8 @@ TEST_F(AtomSpecTest, BcastAtom2)
 	{
 		ifs.open("./support/C.upf");
 		GlobalV::PSEUDORCUT = 15.0;
-		upf.read_pseudo_upf201(ifs);
-		atom.ncpp.set_pseudo(upf);
+		upf.read_pseudo_upf201(ifs, atom.ncpp);
+		atom.ncpp.set_pseudo();
 		ifs.close();
 		EXPECT_TRUE(atom.ncpp.has_so);
 	}

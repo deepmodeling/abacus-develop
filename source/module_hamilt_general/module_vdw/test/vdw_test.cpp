@@ -149,7 +149,7 @@ class vdwd2Test: public testing::Test
 {
     protected:
     UnitCell ucell;
-    Input input;
+    Input_para input;
 
     void SetUp(){
         stru_ structure{std::vector<double>{0.5,0.5,0.0,0.5,0.0,0.5,0.0,0.5,0.5},
@@ -349,7 +349,7 @@ class vdwd3Test: public testing::Test
 {
     protected:
     UnitCell ucell;
-    Input input;
+    Input_para input;
 
     void SetUp(){
         stru_ structure{std::vector<double>{0.5,0.5,0.0,0.5,0.0,0.5,0.0,0.5,0.5},
@@ -497,7 +497,7 @@ class vdwd3abcTest: public testing::Test
 {
     protected:
     UnitCell ucell;
-    Input input;
+    Input_para input;
 
     void SetUp(){
         stru_ structure{

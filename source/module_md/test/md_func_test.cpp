@@ -58,11 +58,12 @@ class MD_func_test : public testing::Test
     int natom;                          // atom number
     double temperature;                 // temperature
     int frozen_freedom;                 // frozen_freedom
+    Input_para input;
 
     void SetUp()
     {
         Setcell::setupcell(ucell);
-        Setcell::parameters();
+        Setcell::parameters(input);
         natom = ucell.nat;
         allmass = new double[natom];
         pos = new ModuleBase::Vector3<double>[natom];
@@ -209,7 +210,7 @@ TEST_F(MD_func_test, compute_stress)
 
 TEST_F(MD_func_test, dump_info)
 {
-    MD_func::dump_info(0, GlobalV::global_out_dir, ucell, INPUT.mdp, virial, force, vel);
+    MD_func::dump_info(0, GlobalV::global_out_dir, ucell, input.mdp, virial, force, vel);
     std::ifstream ifs("MD_dump");
     std::string output_str;
     getline(ifs, output_str);
@@ -255,7 +256,7 @@ TEST_F(MD_func_test, dump_info)
     ifs.close();
 
     // append
-    MD_func::dump_info(1, GlobalV::global_out_dir, ucell, INPUT.mdp, virial, force, vel);
+    MD_func::dump_info(1, GlobalV::global_out_dir, ucell, input.mdp, virial, force, vel);
     std::ifstream ifs2("MD_dump");
     getline(ifs2, output_str);
     EXPECT_THAT(output_str, testing::HasSubstr("MDSTEP:  0"));

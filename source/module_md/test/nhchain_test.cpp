@@ -32,30 +32,32 @@
  *   - Nose_Hoover::print_md
  *     - output MD information such as energy, temperature, and pressure
  */
-
+Input_para input; // md_pfirst/md_last will change at differen tests
 class NHC_test : public testing::Test
 {
   protected:
     MD_base* mdrun;
     UnitCell ucell;
+    ModuleESolver::ESolver* p_esolver;
 
     void SetUp()
     {
         Setcell::setupcell(ucell);
-        Setcell::parameters();
+        Setcell::parameters(input);
 
-        ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
-        p_esolver->before_all_runners(INPUT, ucell);
+        p_esolver = new ModuleESolver::ESolver_LJ();
+        p_esolver->before_all_runners(input, ucell);
 
-        INPUT.mdp.md_type = "npt";
-        INPUT.mdp.md_pmode = "tri";
-        mdrun = new Nose_Hoover(INPUT.mdp, ucell);
+        input.mdp.md_type = "npt";
+        input.mdp.md_pmode = "tri";
+        mdrun = new Nose_Hoover(input.mdp, ucell);
         mdrun->setup(p_esolver, GlobalV::global_readin_dir);
     }
 
     void TearDown()
     {
         delete mdrun;
+        delete p_esolver;
     }
 };
 

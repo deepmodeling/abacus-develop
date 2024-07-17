@@ -170,7 +170,7 @@ namespace Json
 {
 
 #ifdef __RAPIDJSON
-void gen_general_info(Input *input)
+void gen_general_info(const Parameter& param)
 {
 
 #ifdef VERSION

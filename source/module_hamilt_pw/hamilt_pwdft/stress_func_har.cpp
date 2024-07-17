@@ -100,7 +100,7 @@ void Stress_Func<FPTYPE, Device>::stress_har(ModuleBase::matrix& sigma, ModulePW
     //        Parallel_Reduce::reduce_pool( ehart );
 //        ehart *= 0.5 * GlobalC::ucell.omega;
         //psic(:)=(0.0,0.0)
-	if(is_pw&&INPUT.gamma_only)
+	if(is_pw&&PARAM.inp.gamma_only)
 	{
 		for(int l=0;l<3;l++)
 		{

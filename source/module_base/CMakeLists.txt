@@ -48,6 +48,7 @@ add_library(
     abfs-vector3_order.cpp
     parallel_common.cpp
     parallel_global.cpp
+    parallel_comm.cpp
     parallel_reduce.cpp
     spherical_bessel_transformer.cpp
     cubic_spline.cpp

@@ -177,6 +177,11 @@ class DensityMatrix
     void cal_DMR();
 
     /**
+     * @brief calculate density matrix DMR from dm(k) using blas::axpy for multi-k calculation, without summing over k-points
+     */
+    void cal_DMR(const int ik);
+
+    /**
      * @brief calculate density matrix DMR from dm(k) using base_matrix->add_element()
      */
     void cal_DMR_test(); // for reference during development

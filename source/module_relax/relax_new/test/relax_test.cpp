@@ -1,15 +1,18 @@
 #include "gtest/gtest.h"
 #include "../relax.h"
 #include "module_cell/unitcell.h"
-#include "module_io/input.h"
 #include "relax_test.h"
 #include <fstream>
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 
 class Test_SETGRAD : public testing::Test
 {
     protected:
         Relax rl;
         std::vector<double> result;
+        Input_para& input = PARAM.input;
 
         void SetUp()
         {
@@ -84,22 +87,22 @@ class Test_SETGRAD : public testing::Test
 
             //reset lattice vector
             GlobalC::ucell.latvec.Identity();
-            INPUT.fixed_axes = "shape";
+            input.fixed_axes = "shape";
             rl.init_relax(nat);
             rl.relax_step(force_in,stress_in,0.0);
             push_result();
 
             //reset lattice vector
             GlobalC::ucell.latvec.Identity();
-            INPUT.fixed_axes = "volume";
+            input.fixed_axes = "volume";
             rl.init_relax(nat);
             rl.relax_step(force_in,stress_in,0.0);
             push_result();
 
             //reset lattice vector
             GlobalC::ucell.latvec.Identity();
-            INPUT.fixed_axes = "a"; //anything other than "None"
-            INPUT.fixed_ibrav = 1;
+            input.fixed_axes = "a"; //anything other than "None"
+            input.fixed_ibrav = true;
             GlobalC::ucell.lc[0] = 0;
             GlobalC::ucell.lc[1] = 0;
             GlobalC::ucell.lc[2] = 0;

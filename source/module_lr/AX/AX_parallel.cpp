@@ -29,8 +29,7 @@ namespace LR
             LR_Util::setup_2d_division(pX, pmat.get_block_size(), nvirt, nocc, pmat.blacs_ctxt);
         else assert(pX.get_local_size() > 0 && AX_istate.get_nbasis() == pX.get_local_size());
 
-        int nks = c.get_nk();
-        assert(V_istate.size() == nks);
+        const int nks = V_istate.size();
 
         Parallel_2D pVc;        // for intermediate Vc
         LR_Util::setup_2d_division(pVc, pmat.get_block_size(), naos, nocc, pmat.blacs_ctxt);
@@ -86,8 +85,7 @@ namespace LR
             LR_Util::setup_2d_division(pX, pmat.get_block_size(), nvirt, nocc, pmat.blacs_ctxt);
         else assert(pX.get_local_size() > 0 && AX_istate.get_nbasis() == pX.get_local_size());
 
-        int nks = c.get_nk();
-        assert(V_istate.size() == nks);
+        const int nks = V_istate.size();
 
         Parallel_2D pVc;        // for intermediate Vc
         LR_Util::setup_2d_division(pVc, pmat.get_block_size(), naos, nocc, pmat.blacs_ctxt);

@@ -82,7 +82,7 @@ namespace ModuleESolver
     }
 
     template <typename T>
-    void ESolver_KS_LIP<T>::before_all_runners(Input& inp, UnitCell& cell)
+    void ESolver_KS_LIP<T>::before_all_runners(const Input_para& inp, UnitCell& cell)
     {
         ESolver_KS_PW<T>::before_all_runners(inp, cell);
 #ifdef __EXX

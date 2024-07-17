@@ -20,9 +20,9 @@ class ESolver_OF : public ESolver_FP
     ESolver_OF();
     ~ESolver_OF();
 
-    virtual void before_all_runners(Input& inp, UnitCell& ucell) override;
+    virtual void before_all_runners(const Input_para& inp, UnitCell& ucell) override;
 
-    virtual void init_after_vc(Input& inp, UnitCell& ucell) override;
+    virtual void init_after_vc(const Input_para& inp, UnitCell& ucell) override;
 
     virtual void runner(const int istep, UnitCell& ucell) override;
 
@@ -128,7 +128,7 @@ class ESolver_OF : public ESolver_FP
     }
 
     // ---------------------- interfaces to KEDF ------------------------
-    void init_kedf(Input& inp);
+    void init_kedf(const Input_para& inp);
     void kinetic_potential(double** prho, double** pphi, ModuleBase::matrix& rpot);
     double kinetic_energy();
     void kinetic_stress(ModuleBase::matrix& kinetic_stress);

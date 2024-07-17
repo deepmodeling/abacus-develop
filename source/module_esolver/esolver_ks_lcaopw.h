@@ -23,7 +23,7 @@ namespace ModuleESolver
         /// All the other interfaces except this one are the same as ESolver_KS_PW.
         virtual void hamilt2density(const int istep, const int iter, const double ethr) override;
 
-        void before_all_runners(Input& inp, UnitCell& cell) override;
+        void before_all_runners(const Input_para& inp, UnitCell& cell) override;
         void iter_init(const int istep, const int iter) override;
         void after_all_runners()override;
 

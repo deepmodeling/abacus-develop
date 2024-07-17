@@ -6,39 +6,10 @@
 #include "md_parameter.h"
 #include "module_base/vector3.h"
 
-// It stores parameters not defined in INPUT file
-struct Input_supplement
-{
-    bool two_fermi = false; ///< true if "nupdown" is set
-
-    // for lj pot
-    int n_ljcut = 0;     ///< number of lj_rcut, assuming 0 as no values provided
-    int n_ljepsilon = 0; ///< number of lj_epsilon, assuming 0 as no values provided
-    int n_ljsigma = 0;   ///< number of lj_sigma, assuming 0 as no values provided
-
-    // For parameter "bessel_nao_rcuts"
-    int nrcut = 0;                ///< number of bessel_nao_rcuts, assuming 0 as no values provided
-    double bessel_nao_rcut = 6.0; ///< radial cutoff for spherical bessel functions(a.u.)
-
-    bool dos_setemin = false; ///< true: "dos_emin_ev" is set
-    bool dos_setemax = false; ///< true: "dos_emax_ev" is set
-    int ncx = 0, ncy = 0,
-        ncz = 0;                            ///< three dimension of FFT charge/grid, same as "nx,ny,nz"
-    bool out_md_control = false;            ///< true if "out_level" is set
-    bool rpa_setorb = false;                ///< true if "rpa" is set
-    bool gamma_only_local = false;          ///< true if "gamma_only" is true and "lcao"
-                                            ///< is true; for local orbitals.
-    bool double_grid = false;               ///< true if "ndx,ndy,ndz" is larger than "nx,ny,nz"
-    double uramping = -10.0 / 13.6;         /// U-Ramping method (Ry)
-    std::vector<double> hubbard_u = {};     ///< Hubbard Coulomb interaction parameter U (Ry)
-    std::string global_calculation = "scf"; ///< global calculation type decided by "calculation"
-};
-
 // It stores all input parameters both defined in INPUT file and not defined in
 // INPUT file
 struct Input_para
 {
-    Input_supplement sup;
     // ---------------------------------------------------------------
     // --------------       INPUT  Parameters         ----------------
     // ---------------------------------------------------------------
@@ -68,6 +39,7 @@ struct Input_para
     int nbands_istate = 5;                          ///< number of bands around fermi level for get_pchg calculation.
     std::string bands_to_print = "";                ///< specify the bands to be calculated in the get_pchg
                                                     ///< calculation, formalism similar to ocp_set.
+    bool if_separate_k = false;                     ///< whether to write partial charge for all k-points to individual files or merge them
     /* symmetry level:
       -1, no symmetry at all;
       0, only basic time reversal would be considered;
@@ -591,6 +563,7 @@ struct Input_para
 
     // ==============   #Parameters (25. Linear Response) =====================
     int lr_nstates = 1;   ///< the number of 2-particle states to be solved
+    int nocc = -1;  ///< the number of occupied orbitals to form the 2-particle basis
     int nvirt = 1;        ///< the number of virtual orbitals to form the 2-particle basis (nocc + nvirt <= nbands)
     std::string xc_kernel = "LDA"; ///< exchange correlation (XC) kernel for LR-TDDFT
     std::string lr_solver = "dav"; ///< the eigensolver for LR-TDDFT

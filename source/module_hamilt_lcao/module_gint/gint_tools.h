@@ -136,6 +136,29 @@ class Gint_inout
 
 namespace Gint_Tools
 {
+// if exponent is an integer between 0 and 5 (the most common cases in gint),
+// pow_int is much faster than std::pow
+inline double pow_int(const double base, const int exp)
+{
+    switch (exp)
+    {
+    case 0:
+        return 1.0;
+    case 1:
+        return base;
+    case 2:
+        return base * base;
+    case 3:
+        return base * base * base;
+    case 4:
+        return base * base * base * base;
+    case 5:
+        return base * base * base * base * base;
+    default:
+        double result = std::pow(base, exp);
+        return result;
+    }
+}
 // vindex[pw.bxyz]
 int* get_vindex(const int bxyz,
                 const int bx,

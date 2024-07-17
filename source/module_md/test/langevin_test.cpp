@@ -39,22 +39,25 @@ class Langevin_test : public testing::Test
   protected:
     MD_base* mdrun;
     UnitCell ucell;
+    Input_para input;
+    ModuleESolver::ESolver* p_esolver;
 
     void SetUp()
     {
         Setcell::setupcell(ucell);
-        Setcell::parameters();
+        Setcell::parameters(input);
 
-        ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
-        p_esolver->before_all_runners(INPUT, ucell);
+        p_esolver = new ModuleESolver::ESolver_LJ();
+        p_esolver->before_all_runners(input, ucell);
 
-        mdrun = new Langevin(INPUT.mdp, ucell);
+        mdrun = new Langevin(input.mdp, ucell);
         mdrun->setup(p_esolver, GlobalV::global_readin_dir);
     }
 
     void TearDown()
     {
         delete mdrun;
+        delete p_esolver;
     }
 };
 

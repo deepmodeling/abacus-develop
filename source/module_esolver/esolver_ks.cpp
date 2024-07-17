@@ -56,7 +56,7 @@ ESolver_KS<T, Device>::ESolver_KS()
     ModulePW::PW_Basis_K_Big* tmp = static_cast<ModulePW::PW_Basis_K_Big*>(pw_wfc);
 
     // should not use INPUT here, mohan 2024-05-12
-    tmp->setbxyz(INPUT.bx, INPUT.by, INPUT.bz);
+    tmp->setbxyz(PARAM.inp.bx, PARAM.inp.by, PARAM.inp.bz);
 
     ///----------------------------------------------------------
     /// charge mixing
@@ -67,10 +67,10 @@ ESolver_KS<T, Device>::ESolver_KS()
     ///----------------------------------------------------------
     /// wavefunc
     ///----------------------------------------------------------
-    this->wf.init_wfc = INPUT.init_wfc;
-    this->wf.mem_saver = INPUT.mem_saver;
-    this->wf.out_wfc_pw = INPUT.out_wfc_pw;
-    this->wf.out_wfc_r = INPUT.out_wfc_r;
+    this->wf.init_wfc = PARAM.inp.init_wfc;
+    this->wf.mem_saver = PARAM.inp.mem_saver;
+    this->wf.out_wfc_pw = PARAM.inp.out_wfc_pw;
+    this->wf.out_wfc_r = PARAM.inp.out_wfc_r;
 }
 
 //------------------------------------------------------------------------------
@@ -92,7 +92,7 @@ ESolver_KS<T, Device>::~ESolver_KS()
 //! mohan add 2024-05-11
 //------------------------------------------------------------------------------
 template <typename T, typename Device>
-void ESolver_KS<T, Device>::before_all_runners(Input& inp, UnitCell& ucell)
+void ESolver_KS<T, Device>::before_all_runners(const Input_para& inp, UnitCell& ucell)
 {
     ModuleBase::TITLE("ESolver_KS", "before_all_runners");
 
@@ -344,7 +344,7 @@ void ESolver_KS<T, Device>::before_all_runners(Input& inp, UnitCell& ucell)
 //! mohan add 2024-05-11
 //------------------------------------------------------------------------------
 template <typename T, typename Device>
-void ESolver_KS<T, Device>::init_after_vc(Input& inp, UnitCell& ucell)
+void ESolver_KS<T, Device>::init_after_vc(const Input_para& inp, UnitCell& ucell)
 {
     ModuleBase::TITLE("ESolver_KS", "init_after_vc");
 
@@ -388,7 +388,7 @@ void ESolver_KS<T, Device>::hamilt2density(const int istep, const int iter, cons
 //! mohan add 2024-05-11
 //------------------------------------------------------------------------------
 template <typename T, typename Device>
-void ESolver_KS<T, Device>::print_wfcfft(Input& inp, std::ofstream& ofs)
+void ESolver_KS<T, Device>::print_wfcfft(const Input_para& inp, std::ofstream& ofs)
 {
     ofs << "\n\n\n\n";
     ofs << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
@@ -718,7 +718,7 @@ void ESolver_KS<T, Device>::print_iter(const int iter,
                                        const double duration,
                                        const double ethr)
 {
-    this->pelec->print_etot(this->conv_elec, iter, drho, dkin, duration, INPUT.printe, ethr);
+    this->pelec->print_etot(this->conv_elec, iter, drho, dkin, duration, PARAM.inp.printe, ethr);
 }
 
 //------------------------------------------------------------------------------

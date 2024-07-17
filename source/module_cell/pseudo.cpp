@@ -1,4 +1,5 @@
 #include "pseudo.h"
+#include "module_base/tool_title.h"
 
 pseudo::pseudo()
 {
@@ -21,36 +22,24 @@ pseudo::~pseudo()
 }
 
 //---------------------------------------------------------------------
-void pseudo::set_pseudo(const Pseudopot_upf& upf)
+void pseudo::set_pseudo()
 {
     ModuleBase::TITLE("pseudo", "set_pseudo");
 
     // call subroutines
-    this->set_pseudo_h(upf);
-	this->set_pseudo_atom(upf);
-	this->set_pseudo_vl(upf);
+    this->set_pseudo_h();
+	this->set_pseudo_atom();
+	this->set_pseudo_vl();
 
-	if (nbeta == 0)
+	if (nbeta == 0) {
 		return;
-	delete[] lll;
-	lll = new int[nbeta];
-	assert(lll != 0);
-
-	for (int i = 0;i < nbeta;i++)
-	{
-		lll[i] = upf.lll[i];
-	}
-
-    betar.create(upf.beta.nr, upf.beta.nc);
+}
 	
-//	OUT("betar.nr",upf.beta.nr); // nbeta
-//	OUT("betar.nc",upf.beta.nc); // mesh
-
-	dion.create(nbeta, nbeta);
-
-	betar = upf.beta;
-
-	dion = upf.dion;
+	if (lll == nullptr)
+	{
+		lll = new int[nbeta];
+		assert(lll != nullptr);
+	}
 
 	nh = 0;
 
@@ -75,28 +64,9 @@ void pseudo::print_pseudo(std::ofstream& ofs)
 }
 
 
-void pseudo::set_pseudo_h(const Pseudopot_upf &upf)
+void pseudo::set_pseudo_h()
 {
 	ModuleBase::TITLE("pseudo","set_pseudo_h");
-	// set pseudopotential for each atom type
-	// by using the Unified Pseudopotential Format
-
-	this->nv = upf.nv;// UPF file version number
-	this->psd = upf.psd;
-	this->pp_type = upf.pp_type;
-
-	this->tvanp = upf.tvanp;// if USPP
-	this->nlcc = upf.nlcc;// Non linear core corrections( bool ?)
-	
-	this->xc_func = upf.xc_func;
-
-	this->zv = upf.zp;
-	this->etotps = upf.etotps;
-	this->ecutwfc = upf.ecutwfc;
-	this->ecutrho = upf.ecutrho;
-
-	this->lmax = upf.lmax;
-	this->mesh = upf.mesh;
 	
 	// mohan update 2021-02-22
 	//  max number of points in the atomic radial mesh
@@ -106,82 +76,59 @@ void pseudo::set_pseudo_h(const Pseudopot_upf &upf)
 		std::cout << "\n set_pseudo_h, too many grid points,";
 	}
 
-	this->nchi = upf.nwfc;
-	this->nbeta = upf.nbeta;
-    this->kkbeta = upf.kkbeta;
-
-    delete[] els;
-    this->els = new std::string[nchi];
-    assert(this->els != 0);
-
-    delete[] lchi;
-    this->lchi = new int[this->nchi];
-    assert(this->lchi != 0);
-
-    delete[] oc;
-    this->oc = new double[nchi];
-    assert(this->oc != 0);
-
-    for (int i = 0; i < nchi; i++)
-    {
-        this->els[i] = upf.els[i];
-        this->lchi[i] = upf.lchi[i];
-        this->oc[i] = upf.oc[i];
-    }
-
-    delete[] jjj;
-    this->jjj = new double[nbeta];
-    assert(this->jjj != 0);
-
-    delete[] nn;
-	this->nn = new int[nchi];
-	assert(this->nn != 0);
-
-	delete[] jchi;
-	this->jchi = new double[nchi];
-	assert(this->jchi != 0);
-
-	this->has_so = upf.has_so;//added by zhengdy-soc
-
-	if (this->has_so)
-	{ 
-		for(int i=0;i < nchi;i++)
-		{
-			this->nn[i] = upf.nn[i];
-			this->jchi[i] = upf.jchi[i];
-		}
-		for(int i=0;i < upf.nbeta;i++)
-		{
-			this->jjj[i]  = upf.jjj [i];
-		}
-	}
-	else
+	if (this->els == nullptr)
 	{
-		for (int i=0; i<nchi; i++)
-		{
-			this->nn[i] = 0;
-			this->jchi[i] = 0;
-		}
-		for (int i=0; i<upf.nbeta; i++)
+		this->els = new std::string[nchi];
+		assert(this->els != nullptr);
+	}
+
+	if (this->lchi == nullptr)
+	{
+		this->lchi = new int[this->nchi];
+		assert(this->lchi != nullptr);
+	}
+
+	if (this->oc == nullptr)
+	{
+		this->oc = new double[nchi];
+		assert(this->oc != nullptr);
+	}
+
+	if (jjj == nullptr) {
+		this->jjj = new double[nbeta];
+		assert(this->jjj != nullptr);
+		assert(!this->has_so);
+		for (int i=0; i<nbeta; i++)
 		{
 			this->jjj[i]  = 0;
 		}
-    }
+	}
 
-    // uspp
-    if (tvanp)
-    {
-        this->nqlc = upf.nqlc;
-        this->qfuncl.create(nqlc, nbeta * (nbeta + 1) / 2, mesh);
-        this->qfuncl = upf.qfuncl;
-        this->qqq.create(nbeta, nbeta);
-        this->qqq = upf.qqq;
-    }
+	if (nn == nullptr) {
+		this->nn = new int[nchi];
+		assert(this->nn != nullptr);
+		assert(!this->has_so);
+		for (int i=0; i<nchi; i++)
+		{
+			this->nn[i] = 0;
+		}
+	}
+
+	if (jchi == nullptr) {
+		this->jchi = new double[nchi];
+		assert(this->jchi != nullptr);
+		assert(!this->has_so);
+		for (int i=0; i<nchi; i++)
+		{
+			this->jchi[i] = 0;
+		}
+	}
+
     return;
 } // end subroutine set_pseudo_upf
 
 
-void pseudo::set_pseudo_atom(const Pseudopot_upf &upf)
+void pseudo::set_pseudo_atom()
 {
 	ModuleBase::TITLE("pseudo","set_pseudo_atom");
 
@@ -199,59 +146,32 @@ void pseudo::set_pseudo_atom(const Pseudopot_upf &upf)
 		ModuleBase::WARNING_QUIT("pseudo_atom::set_pseudo_atom","PAO rcut<=0.0");
 	}
 
-	chi.create(nchi, mesh);
+	// chi.create(nchi, mesh);
 
-	delete[] r;
-	r = new double[mesh];
-	assert(r != 0);
-	ModuleBase::GlobalFunc::ZEROS(r, mesh);
-
-	delete[] rab;
-	rab = new double[mesh];
-	assert(rab != 0);
-	ModuleBase::GlobalFunc::ZEROS(rab, mesh);
-
-	delete[] rho_at;
-	rho_at  = new double[mesh];
-	assert(rho_at != 0);
-	ModuleBase::GlobalFunc::ZEROS(rho_at,mesh);
-
-	delete[] rho_atc;
-	rho_atc = new double[mesh];
-	assert(rho_atc != 0);
-
-	for (int i = 0;i < nchi;i++)
-	{
-		for (int j = 0; j < mesh; j++)
-		{
-			chi(i, j) = upf.chi(i, j);
-		}
+	if (r == nullptr) {
+		r = new double[mesh];
+		assert(r != nullptr);
+		ModuleBase::GlobalFunc::ZEROS(r, mesh);
 	}
 
-	for (int i = 0;i < mesh;i++)
-	{
-		r  [i]     = upf.r  [i];
-		rab[i]     = upf.rab[i];
-		rho_at [i] = upf.rho_at [i];
+	if (rab == nullptr) {
+		rab = new double[mesh];
+		assert(rab != nullptr);
+		ModuleBase::GlobalFunc::ZEROS(rab, mesh);
 	}
 
-	// nlcc: non-linear core corrections
-	// rho_atc: core atomic charge
-	if (nlcc)
-	{
-		for (int i = 0;i < mesh;i++)
-		{
-			rho_atc[i] = upf.rho_atc[i];
-		}
+	if (rho_at == nullptr) {
+		rho_at = new double[mesh];
+		assert(rho_at != nullptr);
+		ModuleBase::GlobalFunc::ZEROS(rho_at, mesh);
 	}
-	else
-	{
-		for (int i = 0;i < upf.mesh;i++)
-		{
-			rho_atc[i] = 0.0;
-		}
-	} // end if
 
+	if (rho_atc == nullptr) {
+		rho_atc = new double[mesh];
+		assert(rho_atc != nullptr);
+		assert(!nlcc);
+		ModuleBase::GlobalFunc::ZEROS(rho_atc, mesh);
+	}
 
 	bool br = false;
 
@@ -282,23 +202,17 @@ void pseudo::set_pseudo_atom(const Pseudopot_upf &upf)
 
 
 
-void pseudo::set_pseudo_vl(const Pseudopot_upf &upf)
+void pseudo::set_pseudo_vl()
 {
 	ModuleBase::TITLE("pseudo","set_pseudo_vl");
 
 	assert(mesh>0);//mohan add 2021-05-01
 
-	delete[] vloc_at;
-	vloc_at = new double[mesh];
-	assert(vloc_at != 0);
-
-    if (upf.coulomb_potential)
-        return;
-
-    for (int i = 0;i < mesh;i++)
-	{
-		vloc_at[i] = upf.vloc[i];
+	if (vloc_at == nullptr) {
+		vloc_at = new double[mesh];
+		assert(vloc_at != nullptr);
 	}
+
 
 	return;
 } 

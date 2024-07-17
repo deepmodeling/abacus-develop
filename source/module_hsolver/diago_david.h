@@ -26,11 +26,15 @@ class DiagoDavid : public DiagH<T, Device>
 
     virtual ~DiagoDavid() override;
 
-    int diag(hamilt::Hamilt<T, Device>* phm_in,   // Pointer to the Hamiltonian object for diagonalization
+    using HPsiFunc = std::function<void(T*, T*, const int, const int, const int, const int)>;
+    using SPsiFunc = std::function<void(T*, T*, const int, const int, const int)>;
+
+    int diag(const HPsiFunc& hpsi_func,           // function void hpsi(T*, T*, const int, const int, const int, const int) 
+             const SPsiFunc& spsi_func,           // function void spsi(T*, T*, const int, const int, const int) 
                       const int dim,              // Dimension of the input matrix psi to be diagonalized
                       const int nband,            // Number of required eigenpairs
                       const int ldPsi,            // Leading dimension of the psi input
-                      psi::Psi<T, Device>& psi,   // Reference to the wavefunction object for eigenvectors
+                      T *psi_in,                  // Pointer to eigenvectors
                       Real* eigenvalue_in,        // Pointer to store the resulting eigenvalues
                       const Real david_diag_thr,  // Convergence threshold for the Davidson iteration
                       const int david_maxiter,    // Maximum allowed iterations for the Davidson method
@@ -52,23 +56,24 @@ class DiagoDavid : public DiagH<T, Device>
     /// number of unconverged eigenvalues
     int notconv = 0;
 
-    /// precondition for diag, diagonal approximation of
-    /// matrix A (i.e. Hamilt)
+    /// precondition for diag, diagonal approximation of matrix A(i.e. Hamilt)
     const Real* precondition = nullptr;
     Real* d_precondition = nullptr;
 
     /// eigenvalue results
     Real* eigenvalue = nullptr;
 
-    T* hphi = nullptr; // the product of H and psi in the reduced basis set
+    T *pbasis = nullptr; /// pointer to basis set(dim, nbase_x), leading dimension = dim
 
-    T* sphi = nullptr; // the Product of S and psi in the reduced basis set
+    T* hphi = nullptr; /// the product of H and psi in the reduced basis set
 
-    T* hcc = nullptr; // Hamiltonian on the reduced basis
+    T* sphi = nullptr; /// the Product of S and psi in the reduced basis set
 
-    T* scc = nullptr; // Overlap on the reduced basis
+    T* hcc = nullptr; /// Hamiltonian on the reduced basis
 
-    T* vcc = nullptr; // Eigenvectors of hc
+    T* scc = nullptr; /// Overlap on the reduced basis
+
+    T* vcc = nullptr; /// Eigenvectors of hc
 
     T* lagrange_matrix = nullptr;
 
@@ -77,12 +82,22 @@ class DiagoDavid : public DiagH<T, Device>
     base_device::DEVICE_CPU* cpu_ctx = {};
     base_device::AbacusDevice_t device = {};
 
-    void cal_grad(hamilt::Hamilt<T, Device>* phm_in,
+    int diag_mock(const HPsiFunc& hpsi_func,
+                  const SPsiFunc& spsi_func,
+                  const int dim,
+                  const int nband,
+                  const int ldPsi,
+                  T *psi_in,
+                  Real* eigenvalue_in,
+                  const Real david_diag_thr,
+                  const int david_maxiter);
+
+    void cal_grad(const HPsiFunc& hpsi_func,
+                  const SPsiFunc& spsi_func,
                   const int& dim,
                   const int& nbase,
                   const int nbase_x,
                   const int& notconv,
-                  psi::Psi<T, Device>& basis,
                   T* hphi,
                   T* sphi,
                   const T* vcc,
@@ -91,9 +106,8 @@ class DiagoDavid : public DiagH<T, Device>
 
     void cal_elem(const int& dim,
                   int& nbase,
-                  const int nbase_x,// maximum dimension of the reduced basis set
+                  const int nbase_x,
                   const int& notconv,
-                  const psi::Psi<T, Device>& basis,
                   const T* hphi,
                   const T* sphi,
                   T* hcc,
@@ -104,8 +118,8 @@ class DiagoDavid : public DiagH<T, Device>
                  int& nbase,
                  const int nbase_x,
                  const Real* eigenvalue,
-                 const psi::Psi<T, Device>& psi,
-                 psi::Psi<T, Device>& basis,
+                 const T *psi_in,
+                 const int ldPsi,
                  T* hphi,
                  T* sphi,
                  T* hcc,
@@ -115,7 +129,6 @@ class DiagoDavid : public DiagH<T, Device>
     void SchmitOrth(const int& dim,
                     const int nband,
                     const int m,
-                    psi::Psi<T, Device>& basis,
                     const T* sphi,
                     T* lagrange_m,
                     const int mm_size,
@@ -130,15 +143,6 @@ class DiagoDavid : public DiagH<T, Device>
                      const int& nbase_x,
                      Real* eigenvalue,
                      T* vcc);
-
-    int diag_mock(hamilt::Hamilt<T, Device>* phm_in,
-                   const int dim,
-                   const int nband,
-                   const int ldPsi,
-                   psi::Psi<T, Device>& psi,
-                   Real* eigenvalue_in,
-                   const Real david_diag_thr,
-                   const int david_maxiter);
 
     bool check_block_conv(const int &ntry, const int &notconv, const int &ntry_max, const int &notconv_max);
 

@@ -23,9 +23,9 @@ void DFTU::cal_yukawa_lambda(double** rho, const int& nrxx)
 {
     ModuleBase::TITLE("DFTU", "cal_yukawa_lambda");
 
-    if (INPUT.yukawa_lambda > 0)
+    if (PARAM.inp.yukawa_lambda > 0)
     {
-        this->lambda = INPUT.yukawa_lambda;
+        this->lambda = PARAM.inp.yukawa_lambda;
         return;
     }
 
