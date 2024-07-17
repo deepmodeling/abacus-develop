@@ -16,10 +16,11 @@ using namespace hsolver;
 
 template <typename T, typename Device>
 DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in, 
+                                  const int nband_in,
                                   const int david_ndim_in,
                                   const bool use_paw_in,
                                   const diag_comm_info& diag_comm_in)
-    : david_ndim(david_ndim_in), use_paw(use_paw_in), diag_comm(diag_comm_in)
+    : nband(nband_in), nbase_x(david_ndim_in * nband_in), david_ndim(david_ndim_in), use_paw(use_paw_in), diag_comm(diag_comm_in)
 {
     this->device = base_device::get_device_type<Device>(this->ctx);
     this->precondition = precondition_in;
@@ -88,7 +89,7 @@ int DiagoDavid<T, Device>::diag_mock(const HPsiFunc& hpsi_func,
     /// - k : k-points, the same meaning as the ground state
     /// - "basis" : number of occupied ks-orbitals(subscripts i,j) * number of unoccupied ks-orbitals(subscripts a,b), corresponding to "bands" of the ground state
 
-    const int nbase_x = this->david_ndim * nband; // maximum dimension of the reduced basis set
+    // const int nbase_x = this->david_ndim * nband; // maximum dimension of the reduced basis set
 
     // the lowest N eigenvalues
     base_device::memory::resize_memory_op<Real, base_device::DEVICE_CPU>()(
@@ -1054,7 +1055,7 @@ template <typename T, typename Device>
 int DiagoDavid<T, Device>::diag(const HPsiFunc& hpsi_func,
                                 const SPsiFunc& spsi_func,
                                 const int dim,
-                                const int nband,
+                                // const int nband,
                                 const int ldPsi,
                                 T *psi_in,
                                 Real* eigenvalue_in,
