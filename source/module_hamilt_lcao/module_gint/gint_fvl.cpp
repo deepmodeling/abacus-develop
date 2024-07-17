@@ -35,7 +35,7 @@ void Gint::gint_kernel_force(
 		= Gint_Tools::get_psir_vlbr3(this->bxyz, na_grid, LD_pool, block_index, cal_flag, vldr3, psir_ylm.get_ptr_2D());
 
 	ModuleBase::Array_Pool<double> psir_vlbr3_DM(this->bxyz, LD_pool);
-	Gint_Func::ZEROS(psir_vlbr3_DM.get_ptr_1D(), this->bxyz*LD_pool);
+	ModuleBase::GlobalFunc::ZEROS(psir_vlbr3_DM.get_ptr_1D(), this->bxyz*LD_pool);
 
 	//calculating g_mu(r) = sum_nu rho_mu,nu f_nu(r)
 	if(this->gridt->gamma_only_local)
@@ -141,25 +141,25 @@ void Gint::gint_kernel_force_meta(
 	//since analytical evaluation of ddpsir is still not working correctly
 	//this part is saved here in case used in the future
 
-	Gint_Func::ZEROS(dpsir_ylm_x.get_ptr_1D(), this->bxyz*LD_pool);
-	Gint_Func::ZEROS(dpsir_ylm_y.get_ptr_1D(), this->bxyz*LD_pool);
-	Gint_Func::ZEROS(dpsir_ylm_z.get_ptr_1D(), this->bxyz*LD_pool);
-	Gint_Func::ZEROS(ddpsir_ylm_xx.get_ptr_1D(), this->bxyz*LD_pool);
-	Gint_Func::ZEROS(ddpsir_ylm_xy.get_ptr_1D(), this->bxyz*LD_pool);
-	Gint_Func::ZEROS(ddpsir_ylm_xz.get_ptr_1D(), this->bxyz*LD_pool);
-	Gint_Func::ZEROS(ddpsir_ylm_yy.get_ptr_1D(), this->bxyz*LD_pool);
-	Gint_Func::ZEROS(ddpsir_ylm_yz.get_ptr_1D(), this->bxyz*LD_pool);
-	Gint_Func::ZEROS(ddpsir_ylm_zz.get_ptr_1D(), this->bxyz*LD_pool);
+	ModuleBase::GlobalFunc::ZEROS(dpsir_ylm_x.get_ptr_1D(), this->bxyz*LD_pool);
+	ModuleBase::GlobalFunc::ZEROS(dpsir_ylm_y.get_ptr_1D(), this->bxyz*LD_pool);
+	ModuleBase::GlobalFunc::ZEROS(dpsir_ylm_z.get_ptr_1D(), this->bxyz*LD_pool);
+	ModuleBase::GlobalFunc::ZEROS(ddpsir_ylm_xx.get_ptr_1D(), this->bxyz*LD_pool);
+	ModuleBase::GlobalFunc::ZEROS(ddpsir_ylm_xy.get_ptr_1D(), this->bxyz*LD_pool);
+	ModuleBase::GlobalFunc::ZEROS(ddpsir_ylm_xz.get_ptr_1D(), this->bxyz*LD_pool);
+	ModuleBase::GlobalFunc::ZEROS(ddpsir_ylm_yy.get_ptr_1D(), this->bxyz*LD_pool);
+	ModuleBase::GlobalFunc::ZEROS(ddpsir_ylm_yz.get_ptr_1D(), this->bxyz*LD_pool);
+	ModuleBase::GlobalFunc::ZEROS(ddpsir_ylm_zz.get_ptr_1D(), this->bxyz*LD_pool);
 
 	ModuleBase::Array_Pool<double> psir_ylm1(this->bxyz, LD_pool);
 	ModuleBase::Array_Pool<double> dpsir_ylm_x1(this->bxyz, LD_pool);
 	ModuleBase::Array_Pool<double> dpsir_ylm_y1(this->bxyz, LD_pool);
 	ModuleBase::Array_Pool<double> dpsir_ylm_z1(this->bxyz, LD_pool);
 	
-	Gint_Func::ZEROS(psir_ylm1.get_ptr_1D(), this->bxyz*LD_pool);
-	Gint_Func::ZEROS(dpsir_ylm_x1.get_ptr_1D(), this->bxyz*LD_pool);
-	Gint_Func::ZEROS(dpsir_ylm_y1.get_ptr_1D(), this->bxyz*LD_pool);
-	Gint_Func::ZEROS(dpsir_ylm_z1.get_ptr_1D(), this->bxyz*LD_pool);
+	ModuleBase::GlobalFunc::ZEROS(psir_ylm1.get_ptr_1D(), this->bxyz*LD_pool);
+	ModuleBase::GlobalFunc::ZEROS(dpsir_ylm_x1.get_ptr_1D(), this->bxyz*LD_pool);
+	ModuleBase::GlobalFunc::ZEROS(dpsir_ylm_y1.get_ptr_1D(), this->bxyz*LD_pool);
+	ModuleBase::GlobalFunc::ZEROS(dpsir_ylm_z1.get_ptr_1D(), this->bxyz*LD_pool);
 
 	std::vector<double> displ {0.0,0.0,0.0005};
 	std::vector<double> displ1{0.0,0.0,-0.0005};
@@ -196,10 +196,10 @@ void Gint::gint_kernel_force_meta(
 	ModuleBase::Array_Pool<double> dpsiry_v_DM(this->bxyz, LD_pool);
 	ModuleBase::Array_Pool<double> dpsirz_v_DM(this->bxyz, LD_pool);
 
-	Gint_Func::ZEROS(psir_vlbr3_DM.get_ptr_1D(), this->bxyz*LD_pool);
-	Gint_Func::ZEROS(dpsirx_v_DM.get_ptr_1D(), this->bxyz*LD_pool);
-	Gint_Func::ZEROS(dpsiry_v_DM.get_ptr_1D(), this->bxyz*LD_pool);
-	Gint_Func::ZEROS(dpsirz_v_DM.get_ptr_1D(), this->bxyz*LD_pool);
+	ModuleBase::GlobalFunc::ZEROS(psir_vlbr3_DM.get_ptr_1D(), this->bxyz*LD_pool);
+	ModuleBase::GlobalFunc::ZEROS(dpsirx_v_DM.get_ptr_1D(), this->bxyz*LD_pool);
+	ModuleBase::GlobalFunc::ZEROS(dpsiry_v_DM.get_ptr_1D(), this->bxyz*LD_pool);
+	ModuleBase::GlobalFunc::ZEROS(dpsirz_v_DM.get_ptr_1D(), this->bxyz*LD_pool);
 
 	//calculating g_mu(r) = sum_nu rho_mu,nu f_nu(r)
 	if(this->gridt->gamma_only_local)

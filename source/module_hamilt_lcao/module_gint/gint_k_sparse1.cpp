@@ -13,8 +13,8 @@ void Gint_k::distribute_pvdpR_sparseMatrix(
     int total_R_num = HS_Arrays.all_R_coor.size();
     int* nonzero_num = new int[total_R_num];
     int* minus_nonzero_num = new int[total_R_num];
-    Gint_Func::ZEROS(nonzero_num, total_R_num);
-    Gint_Func::ZEROS(minus_nonzero_num, total_R_num);
+    ModuleBase::GlobalFunc::ZEROS(nonzero_num, total_R_num);
+    ModuleBase::GlobalFunc::ZEROS(minus_nonzero_num, total_R_num);
     int count = 0;
     for (auto& R_coor: HS_Arrays.all_R_coor)
     {
@@ -58,7 +58,7 @@ void Gint_k::distribute_pvdpR_sparseMatrix(
 
             for (int row = 0; row < this->gridt->nlocal; ++row)
             {
-                Gint_Func::ZEROS(tmp, this->gridt->nlocal);
+                ModuleBase::GlobalFunc::ZEROS(tmp, this->gridt->nlocal);
 
                 auto iter = pvdpR_sparseMatrix.find(R_coor);
                 if (iter != pvdpR_sparseMatrix.end())
@@ -167,8 +167,8 @@ void Gint_k::distribute_pvdpR_soc_sparseMatrix(
     int total_R_num = HS_Arrays.all_R_coor.size();
     int* nonzero_num = new int[total_R_num];
     int* minus_nonzero_num = new int[total_R_num];
-    Gint_Func::ZEROS(nonzero_num, total_R_num);
-    Gint_Func::ZEROS(minus_nonzero_num, total_R_num);
+    ModuleBase::GlobalFunc::ZEROS(nonzero_num, total_R_num);
+    ModuleBase::GlobalFunc::ZEROS(minus_nonzero_num, total_R_num);
     int count = 0;
     for (auto& R_coor: HS_Arrays.all_R_coor)
     {
@@ -212,7 +212,7 @@ void Gint_k::distribute_pvdpR_soc_sparseMatrix(
 
             for (int row = 0; row < this->gridt->nlocal; ++row)
             {
-                Gint_Func::ZEROS(tmp_soc, this->gridt->nlocal);
+                ModuleBase::GlobalFunc::ZEROS(tmp_soc, this->gridt->nlocal);
 
                 auto iter = pvdpR_soc_sparseMatrix.find(R_coor);
                 if (iter != pvdpR_soc_sparseMatrix.end())

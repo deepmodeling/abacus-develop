@@ -7,7 +7,7 @@ void Gint::gamma_gpu_vlocal_interface(Gint_inout* inout) {
     const UnitCell& ucell = *this->ucell;
     const double dr = this->gridt->dr_uniform;
     double ylmcoef[100];
-    Gint_Func::ZEROS(ylmcoef, 100);
+    ModuleBase::GlobalFunc::ZEROS(ylmcoef, 100);
     for (int i = 0; i < 100; i++) {
         ylmcoef[i] = ModuleBase::Ylm::ylmcoef[i];
     }
@@ -31,13 +31,13 @@ void Gint::gamma_gpu_rho_interface(Gint_inout* inout) {
     const UnitCell& ucell = *this->ucell;
     const double dr = this->gridt->dr_uniform;
     double ylmcoef[100];
-    Gint_Func::ZEROS(ylmcoef, 100);
+    ModuleBase::GlobalFunc::ZEROS(ylmcoef, 100);
     for (int i = 0; i < 100; i++) {
         ylmcoef[i] = ModuleBase::Ylm::ylmcoef[i];
     }
     int nrxx = this->gridt->ncx * this->gridt->ncy * this->nplane;
     for (int is = 0; is < this->gridt->nspin; ++is) {
-        Gint_Func::ZEROS(inout->rho[is], nrxx);
+        ModuleBase::GlobalFunc::ZEROS(inout->rho[is], nrxx);
         GintKernel::gint_gamma_rho_gpu(this->DMRGint[is],
                                        ylmcoef,
                                        dr,
@@ -57,7 +57,7 @@ void Gint::gamma_gpu_force_interface(Gint_inout* inout) {
     const UnitCell& ucell = *this->ucell;
     const double dr = this->gridt->dr_uniform;
     double ylmcoef[100];
-    Gint_Func::ZEROS(ylmcoef, 100);
+    ModuleBase::GlobalFunc::ZEROS(ylmcoef, 100);
     for (int i = 0; i < 100; i++) {
         ylmcoef[i] = ModuleBase::Ylm::ylmcoef[i];
     }

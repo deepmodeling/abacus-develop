@@ -52,10 +52,10 @@ void cal_dpsir_ylm(
             double* const p_dpsi_z = &dpsir_ylm_z[ib][block_index[id]];
             if (!cal_flag[ib][id])
             {
-                Gint_Func::ZEROS(p_psi, block_size[id]);
-                Gint_Func::ZEROS(p_dpsi_x, block_size[id]);
-                Gint_Func::ZEROS(p_dpsi_y, block_size[id]);
-                Gint_Func::ZEROS(p_dpsi_z, block_size[id]);
+                ModuleBase::GlobalFunc::ZEROS(p_psi, block_size[id]);
+                ModuleBase::GlobalFunc::ZEROS(p_dpsi_x, block_size[id]);
+                ModuleBase::GlobalFunc::ZEROS(p_dpsi_y, block_size[id]);
+                ModuleBase::GlobalFunc::ZEROS(p_dpsi_z, block_size[id]);
             }
             else
             {

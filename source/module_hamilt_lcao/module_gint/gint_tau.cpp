@@ -34,9 +34,9 @@ void Gint::gint_kernel_tau(
 		ModuleBase::Array_Pool<double> dpsix_DM(this->bxyz, LD_pool);
 		ModuleBase::Array_Pool<double> dpsiy_DM(this->bxyz, LD_pool);
 		ModuleBase::Array_Pool<double> dpsiz_DM(this->bxyz, LD_pool);
-		Gint_Func::ZEROS(dpsix_DM.get_ptr_1D(), this->bxyz*LD_pool);
-		Gint_Func::ZEROS(dpsiy_DM.get_ptr_1D(), this->bxyz*LD_pool);
-		Gint_Func::ZEROS(dpsiz_DM.get_ptr_1D(), this->bxyz*LD_pool);
+		ModuleBase::GlobalFunc::ZEROS(dpsix_DM.get_ptr_1D(), this->bxyz*LD_pool);
+		ModuleBase::GlobalFunc::ZEROS(dpsiy_DM.get_ptr_1D(), this->bxyz*LD_pool);
+		ModuleBase::GlobalFunc::ZEROS(dpsiz_DM.get_ptr_1D(), this->bxyz*LD_pool);
 
 		//calculating g_i,mu(r) = sum_nu rho_mu,nu d/dx_i psi_nu(r), x_i=x,y,z
 		if(this->gridt->gamma_only_local)
