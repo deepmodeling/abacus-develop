@@ -1,3 +1,4 @@
+#pragma once
 #include <ATen/tensor.h>
 #include "module_psi/psi.h"
 namespace LR_Util
@@ -46,10 +47,13 @@ namespace LR_Util
         int nbands, nks, nbasis;
         ifs >> nbands >> nks >> nbasis;
         psi::Psi<T> psi(nks, nbands, nbasis, nullptr, false);
-        for (int ib = 0;ib < psi.get_nbands();++ib)
-            for (int ik = 0;ik < psi.get_nk();++ik)
-                for (int i = 0;i < psi.get_nbasis();++i)
+        for (int ib = 0;ib < psi.get_nbands();++ib) {
+            for (int ik = 0;ik < psi.get_nk();++ik) {
+                for (int i = 0;i < psi.get_nbasis();++i) {
                     ifs >> psi(ib, ik, i);
+}
+}
+}
         ifs.close();
         return psi;
     }
@@ -92,8 +96,9 @@ namespace LR_Util
     {
         std::cout << "first " << nnz << " non-zero elements of " << label << "\n";
         int inz = 0;int i = 0;
-        while (inz < nnz && i < nrxx)
-            if (rho[++i] - 0.0 > threshold) { std::cout << rho[i] << " ";++inz; };
+        while (inz < nnz && i < nrxx) {
+            if (rho[++i] - 0.0 > threshold) { std::cout << rho[i] << " ";++inz; }
+};
     }
 
 }

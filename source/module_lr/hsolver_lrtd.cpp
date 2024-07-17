@@ -17,6 +17,8 @@ namespace LR
         const bool skip_charge)
     {
         ModuleBase::TITLE("HSolverLR", "solve");
+        assert(psi.get_nk() == nk);
+        const std::vector<std::string> spin_types = { "Spin Singlet", "Spin Triplet" };
         // note: if not TDA, the eigenvalues will be complex
         // then we will need a new constructor of DiagoDavid
 
@@ -34,8 +36,8 @@ namespace LR
         if (this->method == "lapack")
         {
             std::vector<T> Amat_full = pHamilt->matrix();
-            eigenvalue.resize(nks * npairs);
-            LR_Util::diag_lapack(nks * npairs, Amat_full.data(), eigenvalue.data());
+            eigenvalue.resize(nk * npairs);
+            LR_Util::diag_lapack(nk * npairs, Amat_full.data(), eigenvalue.data());
             psi.fix_kb(0, 0);
             // copy eigenvectors
             for (int i = 0;i < psi.size();++i) psi.get_pointer()[i] = Amat_full[i];
@@ -62,10 +64,30 @@ namespace LR
                 const int notconv_max = ("nscf" == GlobalV::CALCULATION) ? 0 : 5;
                 // do diag and add davidson iteration counts up to avg_iter
 
+                auto hpsi_func = [pHamilt](
+                    T* hpsi_out,
+                    T* psi_in,
+                    const int nband_in,
+                    const int nbasis_in,
+                    const int band_index1,
+                    const int band_index2)
+                    {
+                        auto psi_iter_wrapper = psi::Psi<T, Device>(psi_in, 1, nband_in, nbasis_in, nullptr);
+                        psi::Range bands_range(1, 0, band_index1, band_index2);
+                        using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
+                        hpsi_info info(&psi_iter_wrapper, bands_range, hpsi_out);
+                        pHamilt->ops->hPsi(info);
+                    };
+                auto spsi_func = [pHamilt](const T* psi_in, T* spsi_out,
+                               const int nrow, const int npw,  const int nbands){
+                    // sPsi determines S=I or not by GlobalV::use_uspp inside
+                    pHamilt->sPsi(psi_in, spsi_out, nrow, npw, nbands);
+                };
+
                 const int& dim = psi_k1_dav.get_nbasis();   //equals to leading dimension here
                 const int& nband = psi_k1_dav.get_nbands();
                 hsolver::DiagoDavid<T, Device> david(precondition.data(), GlobalV::PW_DIAG_NDIM, GlobalV::use_paw, comm_info);
-                hsolver::DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(david.diag(pHamilt,
+                hsolver::DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(david.diag(hpsi_func, spsi_func,
                     dim, nband, dim, psi_k1_dav, eigenvalue.data(), this->diag_ethr, david_maxiter, ntry_max, 0/*notconv_max*/));
             }
             else if (this->method == "dav_subspace") //need refactor
@@ -127,8 +149,7 @@ namespace LR
         }
 
         // 5. copy eigenvalue to pes
-        pes->ekb.create(1, psi.get_nbands());
-        for (int ist = 0;ist < psi.get_nbands();++ist) pes->ekb(0, ist) = eigenvalue[ist];
+        for (int ist = 0;ist < psi.get_nbands();++ist) pes->ekb(ispin_solve, ist) = eigenvalue[ist];
 
 
         // 6. output eigenvalues and eigenvectors
@@ -139,12 +160,12 @@ namespace LR
         {
             if (GlobalV::MY_RANK == 0)
             {
-                std::ofstream ofs(GlobalV::global_out_dir + "Excitation_Energy.dat");
+                std::ofstream ofs(GlobalV::global_out_dir + "Excitation_Energy_" + spin_types[ispin_solve] + ".dat");
                 ofs << std::setprecision(8) << std::scientific;
                 for (auto& e : eigenvalue)ofs << e << " ";
                 ofs.close();
             }
-            LR_Util::write_psi_bandfirst(psi, GlobalV::global_out_dir + "Excitation_Amplitude", GlobalV::MY_RANK);
+            LR_Util::write_psi_bandfirst(psi, GlobalV::global_out_dir + "Excitation_Amplitude_" + spin_types[ispin_solve], GlobalV::MY_RANK);
         }
 
         // normalization is already satisfied

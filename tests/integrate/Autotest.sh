@@ -269,12 +269,11 @@ for dir in $testdir; do
         test -d OUT.autotest || (echo "No 'OUT.autotest' dir presented. Some errors may happened in ABACUS." && exit 1)
         if test -z $g
         then
-            ../tools/catch_properties.sh result.out
-            if [ $? == 1 ]; then
+            bash -e ../tools/catch_properties.sh result.out
+            if [ $? -ne 0 ]; then
                 echo -e "\e[0;31m [ERROR     ]  Fatal Error in catch_properties.sh \e[0m"
                 let fatal++
                 fatal_case_list+=$dir'\n'
-                break
             else
                 my_threshold=$(get_threshold $threshold_file "threshold" $threshold)
                 my_force_threshold=$(get_threshold $threshold_file "force_threshold" $force_threshold)
@@ -301,7 +300,7 @@ fi
 if [ -z $g ]
 then
 echo -e $case_status > test.sum
-if [ $failed -eq 0 ]
+if [[ "$failed" -eq 0 && "$fatal" -eq 0 ]]
 then
     echo -e "\e[0;32m[ PASSED   ] \e[0m $ok test cases passed."
 else

@@ -22,13 +22,13 @@
 
 #define private public
 #include "module_cell/read_pp.h"
-#include "module_cell/pseudo.h"
+#include "module_cell/atom_pseudo.h"
 
 class NCPPTest : public testing::Test
 {
 protected:
 	std::unique_ptr<Pseudopot_upf> upf{new Pseudopot_upf};
-	std::unique_ptr<pseudo> ncpp{new pseudo};
+	std::unique_ptr<Atom_pseudo> ncpp{new Atom_pseudo};
 };
 
 TEST_F(NCPPTest, SetPseudoH)
@@ -37,43 +37,11 @@ TEST_F(NCPPTest, SetPseudoH)
 	//set
 	ifs.open("./support/C.upf");
 	GlobalV::PSEUDORCUT = 15.0;
-	upf->read_pseudo_upf201(ifs);
+	upf->read_pseudo_upf201(ifs, *ncpp);
 	//set_pseudo_h
-	ncpp->set_pseudo_h(*upf);
-	EXPECT_EQ(ncpp->nv,upf->nv);
-	EXPECT_EQ(ncpp->psd,upf->psd);
-	EXPECT_EQ(ncpp->pp_type,upf->pp_type);
-	EXPECT_EQ(ncpp->tvanp,upf->tvanp);
-	EXPECT_EQ(ncpp->nlcc,upf->nlcc);
-	EXPECT_EQ(ncpp->xc_func,upf->xc_func);
-	EXPECT_EQ(ncpp->zv,upf->zp);
-	EXPECT_EQ(ncpp->etotps,upf->etotps);
-	EXPECT_EQ(ncpp->ecutwfc,upf->ecutwfc);
-	EXPECT_EQ(ncpp->ecutrho,upf->ecutrho);
-	EXPECT_EQ(ncpp->lmax,upf->lmax);
-	EXPECT_EQ(ncpp->mesh,upf->mesh);
-	EXPECT_EQ(ncpp->nchi,upf->nwfc);
-	EXPECT_EQ(ncpp->nbeta,upf->nbeta);
-	for (int i=0;i<ncpp->nchi;i++)
-	{
-		EXPECT_EQ(ncpp->els[i],upf->els[i]);
-		EXPECT_EQ(ncpp->lchi[i],upf->lchi[i]);
-		EXPECT_EQ(ncpp->oc[i],upf->oc[i]);
-	}
-	EXPECT_EQ(ncpp->has_so,upf->has_so);
-	if(ncpp->has_so)
-	{
-		for (int i=0;i<ncpp->nchi;i++)
-		{
-			EXPECT_EQ(ncpp->nn[i],upf->nn[i]);
-			EXPECT_EQ(ncpp->jchi[i],upf->jchi[i]);
-		}
-		for (int i=0;i<ncpp->nbeta;i++)
-		{
-			EXPECT_EQ(ncpp->jjj[i],upf->jjj[i]);
-		}
-	}
-	else
+	ncpp->set_pseudo_h();
+
+	if(!ncpp->has_so)
 	{
 		for (int i=0;i<ncpp->nchi;i++)
 		{
@@ -94,32 +62,13 @@ TEST_F(NCPPTest, SetPseudoAtom)
 	//set
 	ifs.open("./support/C.upf");
 	GlobalV::PSEUDORCUT = 15.0;
-	upf->read_pseudo_upf201(ifs);
+	upf->read_pseudo_upf201(ifs, *ncpp);
 	//set_pseudo_atom
-	ncpp->set_pseudo_h(*upf);
-	ncpp->set_pseudo_atom(*upf);
+	ncpp->set_pseudo_h();
+	ncpp->set_pseudo_atom();
 	EXPECT_EQ(ncpp->rcut,GlobalV::PSEUDORCUT);
-	for(int i=0;i<ncpp->nchi;i++)
-	{
-		for(int j=0;j<ncpp->mesh;j++)
-		{
-			EXPECT_EQ(ncpp->chi(i,j),upf->chi(i,j));
-		}
-	}
-	for(int i=0;i<ncpp->mesh;i++)
-	{
-		EXPECT_EQ(ncpp->r[i],upf->r[i]);
-		EXPECT_EQ(ncpp->rab[i],upf->rab[i]);
-		EXPECT_EQ(ncpp->rho_at[i],upf->rho_at[i]);
-	}
-	if(ncpp->nlcc)
-	{
-		for(int i=0;i<ncpp->mesh;i++)
-		{
-			EXPECT_EQ(ncpp->rho_atc[i],upf->rho_atc[i]);
-		}
-	}
-	else
+
+	if(!ncpp->nlcc)
 	{
 		for(int i=0;i<ncpp->mesh;i++)
 		{
@@ -137,17 +86,13 @@ TEST_F(NCPPTest, SetPseudoNC)
 	ifs.open("./support/C.upf");
 	GlobalV::PSEUDORCUT = 15.0;
 	// set pseudo nbeta = 0
-	upf->read_pseudo_upf201(ifs);
+	upf->read_pseudo_upf201(ifs, *ncpp);
 	ncpp->nbeta = 0;
-	ncpp->set_pseudo(*upf);
-	EXPECT_EQ(ncpp->nh,14);
+	ncpp->set_pseudo();
+	EXPECT_EQ(ncpp->nh,0);
     // set_pseudo nbeta > 0
-	upf->read_pseudo_upf201(ifs);
-    ncpp->set_pseudo(*upf);
-    for(int i=0;i<ncpp->nbeta;i++)
-	{
-		EXPECT_EQ(ncpp->lll[i],upf->lll[i]);
-	}
+	upf->read_pseudo_upf201(ifs, *ncpp);
+    ncpp->set_pseudo();
 	EXPECT_EQ(ncpp->nh,14);
 	EXPECT_EQ(ncpp->kkbeta,132);
 	ifs.close();
@@ -160,8 +105,8 @@ TEST_F(NCPPTest, PrintNC)
 	//set
 	ifs.open("./support/C.upf");
 	GlobalV::PSEUDORCUT = 15.0;
-	upf->read_pseudo_upf201(ifs);
-    ncpp->set_pseudo(*upf);
+	upf->read_pseudo_upf201(ifs, *ncpp);
+    ncpp->set_pseudo();
     ifs.close();
 	//print
 	std::ofstream ofs;
