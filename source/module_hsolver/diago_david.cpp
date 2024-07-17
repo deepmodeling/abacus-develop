@@ -90,8 +90,6 @@ int DiagoDavid<T, Device>::diag_mock(const HPsiFunc& hpsi_func,
 
     const int nbase_x = this->david_ndim * nband; // maximum dimension of the reduced basis set
 
-    // T *psi_in = psi.get_pointer();
-
     // the lowest N eigenvalues
     base_device::memory::resize_memory_op<Real, base_device::DEVICE_CPU>()(
                         this->cpu_ctx, this->eigenvalue, nbase_x, "DAV::eig");
@@ -103,23 +101,23 @@ int DiagoDavid<T, Device>::diag_mock(const HPsiFunc& hpsi_func,
     setmem_complex_op()(this->ctx, pbasis, 0, nbase_x * dim);
 
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    // ModuleBase::ComplexMatrix hp(nbase_x, dim); // the product of H and psi in the reduced basis set
+    // hphi(nbase_x, dim); // the product of H and psi in the reduced basis set
     resmem_complex_op()(this->ctx, this->hphi, nbase_x * dim, "DAV::hphi");
     setmem_complex_op()(this->ctx, this->hphi, 0, nbase_x * dim);
 
-    // ModuleBase::ComplexMatrix sp(nbase_x, dim); // the Product of S and psi in the reduced basis set
+    // sphi(nbase_x, dim); // the Product of S and psi in the reduced basis set
     resmem_complex_op()(this->ctx, this->sphi, nbase_x * dim, "DAV::sphi");
     setmem_complex_op()(this->ctx, this->sphi, 0, nbase_x * dim);
 
-    // ModuleBase::ComplexMatrix hc(nbase_x, nbase_x); // Hamiltonian on the reduced basis
+    // hcc(nbase_x, nbase_x); // Hamiltonian on the reduced basis
     resmem_complex_op()(this->ctx, this->hcc, nbase_x * nbase_x, "DAV::hcc");
     setmem_complex_op()(this->ctx, this->hcc, 0, nbase_x * nbase_x);
 
-    // ModuleBase::ComplexMatrix sc(nbase_x, nbase_x); // Overlap on the reduced basis
+    // scc(nbase_x, nbase_x); // Overlap on the reduced basis
     resmem_complex_op()(this->ctx, this->scc, nbase_x * nbase_x, "DAV::scc");
     setmem_complex_op()(this->ctx, this->scc, 0, nbase_x * nbase_x);
 
-    // ModuleBase::ComplexMatrix vc(nbase_x, nbase_x); // Eigenvectors of hc
+    // vcc(nbase_x, nbase_x); // Eigenvectors of hcc
     resmem_complex_op()(this->ctx, this->vcc, nbase_x * nbase_x, "DAV::vcc");
     setmem_complex_op()(this->ctx, this->vcc, 0, nbase_x * nbase_x);
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -141,14 +139,14 @@ int DiagoDavid<T, Device>::diag_mock(const HPsiFunc& hpsi_func,
 
     // orthogonalise the initial trial psi(0~nband-1)
 
-    // ModuleBase::ComplexMatrix lagrange_matrix(nband, nband);
+    // lagrange_matrix(nband, nband);
     resmem_complex_op()(this->ctx, this->lagrange_matrix, nband * nband);
     setmem_complex_op()(this->ctx, this->lagrange_matrix, 0, nband * nband);
 
-    // plan for SchmitOrth
+    // plan for SchmidtOrth
     std::vector<int> pre_matrix_mm_m(nband, 0);
     std::vector<int> pre_matrix_mv_m(nband, 1);
-    this->planSchmitOrth(nband, pre_matrix_mm_m, pre_matrix_mv_m);
+    this->planSchmidtOrth(nband, pre_matrix_mm_m, pre_matrix_mv_m);
 
     for (int m = 0; m < nband; m++)
     {
@@ -165,12 +163,12 @@ int DiagoDavid<T, Device>::diag_mock(const HPsiFunc& hpsi_func,
             spsi_func(psi_in + m*ldPsi,&this->sphi[m*dim],dim,dim,1);
         }
     }
-    // begin SchmitOrth
+    // begin SchmidtOrth
     for (int m = 0; m < nband; m++)
     {
         syncmem_complex_op()(this->ctx, this->ctx, pbasis + dim*m, psi_in + m*ldPsi, dim);
 
-        this->SchmitOrth(dim,
+        this->SchmidtOrth(dim,
                          nband,
                          m,
                          this->sphi,
@@ -191,7 +189,7 @@ int DiagoDavid<T, Device>::diag_mock(const HPsiFunc& hpsi_func,
         }
     }
 
-    // end of SchmitOrth and calculate H|psi>
+    // end of SchmidtOrth and calculate H|psi>
     // hpsi_info dav_hpsi_in(&basis, psi::Range(true, 0, 0, nband - 1), this->hphi);
     // phm_in->ops->hPsi(dav_hpsi_in);
     hpsi_func(this->hphi, pbasis, nbase_x, dim, 0, nband - 1);
@@ -253,7 +251,6 @@ int DiagoDavid<T, Device>::diag_mock(const HPsiFunc& hpsi_func,
 
             // updata eigenvectors of Hamiltonian
 
-            // ModuleBase::GlobalFunc::ZEROS(psi.get_pointer(), n_band * this->dmx);
             setmem_complex_op()(this->ctx, psi_in, 0, n_band * ldPsi);
             //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
             gemm_op<T, Device>()(this->ctx,
@@ -469,14 +466,14 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     }
 
     // there is a nbase to nbase + notconv band orthogonalise
-    // plan for SchmitOrth
+    // plan for SchmidtOrth
     T* lagrange = nullptr;
     resmem_complex_op()(this->ctx, lagrange, notconv * (nbase + notconv));
     setmem_complex_op()(this->ctx, lagrange, 0, notconv * (nbase + notconv));
 
     std::vector<int> pre_matrix_mm_m(notconv, 0);
     std::vector<int> pre_matrix_mv_m(notconv, 1);
-    this->planSchmitOrth(notconv, pre_matrix_mm_m, pre_matrix_mv_m);
+    this->planSchmidtOrth(notconv, pre_matrix_mm_m, pre_matrix_mv_m);
     for (int m = 0; m < notconv; m++)
     {
         if(this->use_paw)
@@ -514,7 +511,7 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
 
     for (int m = 0; m < notconv; m++)
     {
-        this->SchmitOrth(dim,
+        this->SchmidtOrth(dim,
                          nbase + notconv,
                          nbase + m,
                          sphi,
@@ -722,23 +719,22 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
     ModuleBase::timer::tick("DiagoDavid", "refresh");
 
     // update hp,sp
-    // basis.zero_out();
     setmem_complex_op()(this->ctx, pbasis , 0, nbase_x * dim);
 
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     gemm_op<T, Device>()(this->ctx,
                               'N',
                               'N',
-                              dim,            // m: row of A,C
-                              nband,                // n: col of B,C
-                              nbase,                // k: col of A, row of B
+                              dim,              // m: row of A,C
+                              nband,            // n: col of B,C
+                              nbase,            // k: col of A, row of B
                               this->one,
-                              this->hphi,           // A dim * nbase
+                              this->hphi,       // A dim * nbase
                               dim,
-                              this->vcc,            // B nbase * nband
+                              this->vcc,        // B nbase * nband
                               nbase_x,
                               this->zero,
-                              pbasis, //basis.get_pointer(),  // C dim * nband
+                              pbasis,           // C dim * nband
                               dim
     );
 
@@ -771,7 +767,6 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
     }*/
 
     // update basis
-    // basis.zero_out();
     setmem_complex_op()(this->ctx, pbasis , 0, nbase_x * dim);
 
     for (int m = 0; m < nband; m++)
@@ -847,7 +842,7 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
 }
 
 template <typename T, typename Device>
-void DiagoDavid<T, Device>::SchmitOrth(const int& dim,
+void DiagoDavid<T, Device>::SchmidtOrth(const int& dim,
                                             const int nband,
                                             const int m,
                                             const T* sphi,
@@ -855,8 +850,8 @@ void DiagoDavid<T, Device>::SchmitOrth(const int& dim,
                                             const int mm_size,
                                             const int mv_size)
 {
-    //	if(test_david == 1) ModuleBase::TITLE("DiagoDavid","SchmitOrth");
-    ModuleBase::timer::tick("DiagoDavid", "SchmitOrth");
+    //	if(test_david == 1) ModuleBase::TITLE("DiagoDavid","SchmidtOrth");
+    ModuleBase::timer::tick("DiagoDavid", "SchmidtOrth");
 
     // orthogonalize starting eigenfunction to those already calculated
     // psi_m orthogonalize to psi(0) ~ psi(m-1)
@@ -949,7 +944,7 @@ void DiagoDavid<T, Device>::SchmitOrth(const int& dim,
 
     if (psi_norm < 1.0e-12)
     {
-        std::cout << "DiagoDavid::SchmitOrth:aborted for psi_norm <1.0e-12" << std::endl;
+        std::cout << "DiagoDavid::SchmidtOrth:aborted for psi_norm <1.0e-12" << std::endl;
         std::cout << "nband = " << nband << std::endl;
         std::cout << "m = " << m << std::endl;
         exit(0);
@@ -966,18 +961,16 @@ void DiagoDavid<T, Device>::SchmitOrth(const int& dim,
     }
 
     // delete[] lagrange;
-    ModuleBase::timer::tick("DiagoDavid", "SchmitOrth");
+    ModuleBase::timer::tick("DiagoDavid", "SchmidtOrth");
     return;
 }
 
 template <typename T, typename Device>
-void DiagoDavid<T, Device>::planSchmitOrth(const int nband, std::vector<int>& pre_matrix_mm_m, std::vector<int>& pre_matrix_mv_m)
+void DiagoDavid<T, Device>::planSchmidtOrth(const int nband, std::vector<int>& pre_matrix_mm_m, std::vector<int>& pre_matrix_mv_m)
 {
     if (nband <= 0) {
         return;
 }
-    // ModuleBase::GlobalFunc::ZEROS(pre_matrix_mm_m.data(), nband);
-    // ModuleBase::GlobalFunc::ZEROS(pre_matrix_mv_m.data(), nband);
     std::fill(pre_matrix_mm_m.begin(), pre_matrix_mm_m.end(), 0);
     std::fill(pre_matrix_mv_m.begin(), pre_matrix_mv_m.end(), 0);
     int last_matrix_size = nband;

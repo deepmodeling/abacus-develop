@@ -63,17 +63,17 @@ class DiagoDavid : public DiagH<T, Device>
     /// eigenvalue results
     Real* eigenvalue = nullptr;
 
-    T *pbasis = nullptr; /// pointer to basis set(dim, nbase_x), leading dimension = dim
+    T *pbasis = nullptr;  /// pointer to basis set(dim, nbase_x), leading dimension = dim
 
-    T* hphi = nullptr; /// the product of H and psi in the reduced basis set
+    T* hphi = nullptr;    /// the product of H and psi in the reduced basis set
 
-    T* sphi = nullptr; /// the Product of S and psi in the reduced basis set
+    T* sphi = nullptr;    /// the Product of S and psi in the reduced basis set
 
-    T* hcc = nullptr; /// Hamiltonian on the reduced basis
+    T* hcc = nullptr;     /// Hamiltonian on the reduced basis
 
-    T* scc = nullptr; /// Overlap on the reduced basis
+    T* scc = nullptr;     /// Overlap on the reduced basis
 
-    T* vcc = nullptr; /// Eigenvectors of hc
+    T* vcc = nullptr;     /// Eigenvectors of hc
 
     T* lagrange_matrix = nullptr;
 
@@ -126,7 +126,7 @@ class DiagoDavid : public DiagH<T, Device>
                  T* scc,
                  T* vcc);
 
-    void SchmitOrth(const int& dim,
+    void SchmidtOrth(const int& dim,
                     const int nband,
                     const int m,
                     const T* sphi,
@@ -134,7 +134,7 @@ class DiagoDavid : public DiagH<T, Device>
                     const int mm_size,
                     const int mv_size);
 
-    void planSchmitOrth(const int nband, std::vector<int>& pre_matrix_mm_m, std::vector<int>& pre_matrix_mv_m);
+    void planSchmidtOrth(const int nband, std::vector<int>& pre_matrix_mm_m, std::vector<int>& pre_matrix_mv_m);
 
     void diag_zhegvx(const int& nbase,
                      const int& nband,
