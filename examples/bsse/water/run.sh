@@ -35,7 +35,7 @@ echo "E_H1: $E_H1" >> result.out
 echo "E_H2: $E_H2" >> result.out
 result_ref=$(cat result.ref | head -1)
 difference=$(echo "scale=12; $result - $result_ref" | bc -l)
-difference=$(awk -v a=$difference 'BEGIN{if(a<0) print -1*a; else print a}')
+abs_difference=$(echo "scale=12; if ($difference < 0) $difference * -1 else $difference" | bc)
 
 if [[ ! -f H2O_scf.output ]] || 
    [[ ! -f O_scf.output ]] ||
@@ -49,7 +49,7 @@ if [[ ! -f H2O_scf.output ]] ||
    [[ ! ( "$(tail -1 OUT.ABACUS/running_scf_O.log)" == " Total  Time  :"* ) ]] ||
    [[ ! ( "$(tail -1 OUT.ABACUS/running_scf_H1.log)" == " Total  Time  :"* ) ]] ||
    [[ ! ( "$(tail -1 OUT.ABACUS/running_scf_H2.log)" == " Total  Time  :"* ) ]] ||
-   [[ $difference > 0.000001 ]] 
+   [ $(echo "$abs_difference < 0.00001" | bc) -ne 1 ]
 then
 	echo "job is failed!"
 	exit 1
