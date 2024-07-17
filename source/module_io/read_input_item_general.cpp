@@ -1,11 +1,11 @@
-#include <unistd.h>
-
-#include <fstream>
-
+#include "input_conv.h"
 #include "module_base/global_function.h"
 #include "module_base/tool_quit.h"
 #include "read_input.h"
 #include "read_input_tool.h"
+
+#include <fstream>
+#include <unistd.h>
 
 namespace ModuleIO
 {
@@ -173,8 +173,8 @@ void ReadInput::item_general()
             if (!find_str(esolver_types, para.input.esolver_type))
             {
                 ModuleBase::WARNING_QUIT("ReadInput",
-                    "esolver_type should be ksdft, sdft, "
-                    "ofdft, tddft, lr, ks-lr, lj or dp.");
+                                         "esolver_type should be ksdft, sdft, "
+                                         "ofdft, tddft, lr, ks-lr, lj or dp.");
             }
             if (para.input.esolver_type == "dp")
             {
@@ -276,17 +276,24 @@ void ReadInput::item_general()
     }
     {
         Input_Item item("nbands_istate");
-        item.annotation = "number of bands around Fermi level for get_pchg calulation";
+        item.annotation = "number of bands around Fermi level for get_wf and get_pchg calulation";
         read_sync_int(input.nbands_istate);
         this->add_item(item);
     }
     {
         Input_Item item("bands_to_print");
-        item.annotation = "specify the bands to be calculated in the get_pchg calculation";
+        item.annotation = "specify the bands to be calculated in get_wf and get_pchg calculation";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.bands_to_print = longstring(item.str_values, item.get_size());
+            Input_Conv::parse_expression(para.input.bands_to_print, para.sys.out_band_kb);
         };
         sync_string(input.bands_to_print);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("if_separate_k");
+        item.annotation = "specify whether to write the partial charge densities for all k-points to individual files or merge them";
+        read_sync_bool(input.if_separate_k);
         this->add_item(item);
     }
     {

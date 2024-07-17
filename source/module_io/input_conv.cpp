@@ -1,7 +1,5 @@
 #include "module_io/input_conv.h"
 
-#include <algorithm>
-
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_cell/module_symmetry/symmetry.h"
@@ -14,6 +12,8 @@
 #include "module_parameter/parameter.h"
 #include "module_relax/relax_old/ions_move_basic.h"
 #include "module_relax/relax_old/lattice_change_basic.h"
+
+#include <algorithm>
 
 #ifdef __EXX
 #include "module_ri/exx_abfs-jle.h"
@@ -42,91 +42,6 @@
 #include "module_hsolver/hsolver_lcao.h"
 #include "module_hsolver/hsolver_pw.h"
 #include "module_md/md_func.h"
-
-template <typename T>
-void Input_Conv::parse_expression(const std::string& fn, std::vector<T>& vec)
-{
-    ModuleBase::TITLE("Input_Conv", "parse_expression");
-    int count = 0;
-    std::string pattern("([0-9]+\\*[0-9.]+|[0-9,.]+)");
-    std::vector<std::string> str;
-    std::stringstream ss(fn);
-    std::string section;
-    while (ss >> section)
-    {
-        int index = 0;
-        if (str.empty())
-        {
-            while (index < section.size() && std::isspace(section[index]))
-            {
-                index++;
-            }
-        }
-        section.erase(0, index);
-        str.push_back(section);
-    }
-    // std::string::size_type pos1, pos2;
-    // std::string c = " ";
-    // pos2 = fn.find(c);
-    // pos1 = 0;
-    // while (std::string::npos != pos2)
-    // {
-    //     str.push_back(fn.substr(pos1, pos2 - pos1));
-    //     pos1 = pos2 + c.size();
-    //     pos2 = fn.find(c, pos1);
-    // }
-    // if (pos1 != fn.length())
-    // {
-    //     str.push_back(fn.substr(pos1));
-    // }
-    regex_t reg;
-    regcomp(&reg, pattern.c_str(), REG_EXTENDED);
-    regmatch_t pmatch[1];
-    const size_t nmatch = 1;
-    for (size_t i = 0; i < str.size(); ++i)
-    {
-        if (str[i] == "")
-        {
-            continue;
-        }
-        int status = regexec(&reg, str[i].c_str(), nmatch, pmatch, 0);
-        std::string sub_str = "";
-        for (size_t j = pmatch[0].rm_so; j != pmatch[0].rm_eo; ++j)
-        {
-            sub_str += str[i][j];
-        }
-        std::string sub_pattern("\\*");
-        regex_t sub_reg;
-        regcomp(&sub_reg, sub_pattern.c_str(), REG_EXTENDED);
-        regmatch_t sub_pmatch[1];
-        const size_t sub_nmatch = 1;
-        if (regexec(&sub_reg, sub_str.c_str(), sub_nmatch, sub_pmatch, 0) == 0)
-        {
-            int pos = sub_str.find("*");
-            int num = stoi(sub_str.substr(0, pos));
-            T occ = stof(sub_str.substr(pos + 1, sub_str.size()));
-            // std::vector<double> ocp_temp(num, occ);
-            // const std::vector<double>::iterator dest = vec.begin() + count;
-            // copy(ocp_temp.begin(), ocp_temp.end(), dest);
-            // count += num;
-            for (size_t k = 0; k != num; k++) {
-                vec.emplace_back(occ);
-}
-        }
-        else
-        {
-            // vec[count] = stof(sub_str);
-            // count += 1;
-            std::stringstream convert;
-            convert << sub_str;
-            T occ;
-            convert >> occ;
-            vec.emplace_back(occ);
-        }
-        regfree(&sub_reg);
-    }
-    regfree(&reg);
-}
 
 #ifdef __LCAO
 std::vector<double> Input_Conv::convert_units(std::string params, double c)
@@ -313,7 +228,11 @@ void Input_Conv::Convert()
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "pseudo_dir", GlobalV::global_pseudo_dir);
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "orbital_dir", GlobalV::global_orbital_dir);
     // GlobalV::global_pseudo_type = PARAM.inp.pseudo_type;
-    GlobalC::ucell.setup(PARAM.inp.latname, PARAM.inp.ntype, PARAM.inp.lmaxmax, PARAM.inp.init_vel, PARAM.inp.fixed_axes);
+    GlobalC::ucell.setup(PARAM.inp.latname,
+                         PARAM.inp.ntype,
+                         PARAM.inp.lmaxmax,
+                         PARAM.inp.init_vel,
+                         PARAM.inp.fixed_axes);
 
     if (PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax")
     {
@@ -564,7 +483,10 @@ void Input_Conv::Convert()
     if (PARAM.inp.restart_save)
     {
         std::string dft_functional_lower = PARAM.inp.dft_functional;
-        std::transform(PARAM.inp.dft_functional.begin(), PARAM.inp.dft_functional.end(), dft_functional_lower.begin(), tolower);
+        std::transform(PARAM.inp.dft_functional.begin(),
+                       PARAM.inp.dft_functional.end(),
+                       dft_functional_lower.begin(),
+                       tolower);
         GlobalC::restart.folder = GlobalV::global_readin_dir + "restart/";
         ModuleBase::GlobalFunc::MAKE_DIR(GlobalC::restart.folder);
         if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0" || dft_functional_lower == "hse"
@@ -581,7 +503,10 @@ void Input_Conv::Convert()
     if (PARAM.inp.restart_load)
     {
         std::string dft_functional_lower = PARAM.inp.dft_functional;
-        std::transform(PARAM.inp.dft_functional.begin(), PARAM.inp.dft_functional.end(), dft_functional_lower.begin(), tolower);
+        std::transform(PARAM.inp.dft_functional.begin(),
+                       PARAM.inp.dft_functional.end(),
+                       dft_functional_lower.begin(),
+                       tolower);
         GlobalC::restart.folder = GlobalV::global_readin_dir + "restart/";
         if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0" || dft_functional_lower == "hse"
             || dft_functional_lower == "opt_orb" || dft_functional_lower == "scan0")
@@ -602,7 +527,10 @@ void Input_Conv::Convert()
 #ifdef __LCAO
 
     std::string dft_functional_lower = PARAM.inp.dft_functional;
-    std::transform(PARAM.inp.dft_functional.begin(), PARAM.inp.dft_functional.end(), dft_functional_lower.begin(), tolower);
+    std::transform(PARAM.inp.dft_functional.begin(),
+                   PARAM.inp.dft_functional.end(),
+                   dft_functional_lower.begin(),
+                   tolower);
     if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0" || dft_functional_lower == "scan0")
     {
         GlobalC::exx_info.info_global.cal_exx = true;
@@ -653,10 +581,12 @@ void Input_Conv::Convert()
 
         // EXX does not support symmetry=1
         if (PARAM.inp.calculation != "nscf" && PARAM.inp.symmetry == "1")
+        {
             ModuleSymmetry::Symmetry::symm_flag = 0;
+        }
     }
-#endif                                               // __LCAO
-#endif                                               // __EXX
+#endif                                                   // __LCAO
+#endif                                                   // __EXX
     GlobalC::ppcell.cell_factor = PARAM.inp.cell_factor; // LiuXh add 20180619
 
     //----------------------------------------------------------
@@ -778,19 +708,23 @@ void Input_Conv::Convert()
     {
         GlobalV::deepks_out_labels = true;
         GlobalV::deepks_scf = true;
-        if (GlobalV::NPROC > 1) {
+        if (GlobalV::NPROC > 1)
+        {
             ModuleBase::WARNING_QUIT("Input_conv", "generate deepks unittest with only 1 processor");
-}
-        if (GlobalV::CAL_FORCE != 1) {
+        }
+        if (GlobalV::CAL_FORCE != 1)
+        {
             ModuleBase::WARNING_QUIT("Input_conv", "force is required in generating deepks unittest");
-}
-        if (GlobalV::CAL_STRESS != 1) {
+        }
+        if (GlobalV::CAL_STRESS != 1)
+        {
             ModuleBase::WARNING_QUIT("Input_conv", "stress is required in generating deepks unittest");
-}
+        }
     }
-    if (GlobalV::deepks_scf || GlobalV::deepks_out_labels) {
+    if (GlobalV::deepks_scf || GlobalV::deepks_out_labels)
+    {
         GlobalV::deepks_setorb = true;
-}
+    }
 #else
     if (PARAM.inp.deepks_scf || PARAM.inp.deepks_out_labels || PARAM.inp.deepks_bandgap || PARAM.inp.deepks_v_delta)
     {

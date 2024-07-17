@@ -37,5 +37,7 @@ struct System_para
     double uramping = -10.0 / 13.6;         /// U-Ramping method (Ry)
     std::vector<double> hubbard_u = {};     ///< Hubbard Coulomb interaction parameter U (Ry)
     std::string global_calculation = "scf"; ///< global calculation type decided by "calculation"
+
+    std::vector<int> out_band_kb = {};      ///< return parsed bands_to_print as a vector of integers
 };
 #endif

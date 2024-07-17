@@ -18,5 +18,6 @@ void ReadInput::set_globalv_bcast()
     add_bool_bcast(sys.double_grid);
     add_double_bcast(sys.uramping);
     add_string_bcast(sys.global_calculation);
+    add_intvec_bcast(sys.out_band_kb, para.sys.out_band_kb.size(), 0);
 }
 } // namespace ModuleIO
