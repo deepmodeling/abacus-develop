@@ -33,8 +33,6 @@ class DiagoDavid : public DiagH<T, Device>
 
     int diag(const HPsiFunc& hpsi_func,           // function void hpsi(T*, T*, const int, const int, const int, const int) 
              const SPsiFunc& spsi_func,           // function void spsi(T*, T*, const int, const int, const int) 
-                      // const int dim,              // Dimension of the input matrix psi to be diagonalized
-                      // const int nband,            // Number of required eigenpairs
                       const int ldPsi,            // Leading dimension of the psi input
                       T *psi_in,                  // Pointer to eigenvectors
                       Real* eigenvalue_in,        // Pointer to store the resulting eigenvalues
@@ -49,9 +47,9 @@ class DiagoDavid : public DiagH<T, Device>
 
     diag_comm_info diag_comm;
 
-    /// number of searched eigenpairs
+    /// number of required eigenpairs
     const int nband;
-    /// Dimension of the input matrix psi to be diagonalized
+    /// dimension of the input matrix to be diagonalized
     const int dim;
     /// maximum dimension of the reduced basis set
     const int nbase_x;
