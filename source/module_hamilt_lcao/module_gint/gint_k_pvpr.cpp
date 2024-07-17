@@ -1,5 +1,10 @@
 #include "gint_k.h"
-
+#include "grid_technique.h"
+#include "module_base/global_function.h"
+#include "module_base/memory.h"
+#include "module_base/timer.h"
+#include "module_base/ylm.h"
+#include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
 void Gint_k::allocate_pvpR(void)
 {
     ModuleBase::TITLE("Gint_k", "allocate_pvpR");
@@ -44,7 +49,7 @@ void Gint_k::destroy_pvpR(void)
     return;
 }
 
-#include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
+
 
 // transfer_pvpR, NSPIN = 1 or 2
 void Gint_k::transfer_pvpR(hamilt::HContainer<double>* hR, const UnitCell* ucell_in, Grid_Driver* gd)

@@ -3,6 +3,9 @@
 //=========================================================
 #include "gint_tools.h"
 
+#include "module_base/timer.h"
+#include "module_base/ylm.h"
+#include "module_base/array_pool.h"
 namespace Gint_Tools{
 int* get_vindex(const int bxyz, const int bx, const int by, const int bz, const int nplane, const int start_ind,
                 const int ncyz)

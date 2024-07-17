@@ -1,4 +1,6 @@
 #include "grid_technique.h"
+#include "module_base/memory.h"
+#include "module_base/timer.h"
 
 Grid_Technique::Grid_Technique() {
     allocate_find_R2 = false;

@@ -1,6 +1,7 @@
 #ifndef GINT_RHO_GPU_H
 #define GINT_RHO_GPU_H
 #include "gint.h"
+#include "grid_technique.h"
 
 namespace GintKernel
 {

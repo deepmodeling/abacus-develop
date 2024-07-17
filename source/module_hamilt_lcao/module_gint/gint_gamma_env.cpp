@@ -1,5 +1,7 @@
 #include "gint_gamma.h"
-
+#include "module_base/timer.h"
+#include "module_base/ylm.h"
+#include "module_base/array_pool.h"
 
 void Gint_Gamma::cal_env(const double* wfc, double* rho, UnitCell& ucell)
 {

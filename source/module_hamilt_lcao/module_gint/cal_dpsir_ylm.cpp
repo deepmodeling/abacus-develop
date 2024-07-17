@@ -1,4 +1,9 @@
 #include "gint_tools.h"
+#include "module_base/timer.h"
+#include "module_base/ylm.h"
+#include "module_base/global_function.h"
+#include "module_base/array_pool.h"
+
 namespace Gint_Tools{
 void cal_dpsir_ylm(
     const Grid_Technique& gt, const int bxyz,
@@ -67,7 +72,7 @@ void cal_dpsir_ylm(
                 ModuleBase::Ylm::grad_rl_sph_harm(ucell.atoms[it].nwl, dr[0], dr[1], dr[2], rly, grly.get_ptr_2D());
                 if (distance < 1e-9) {
                     distance = 1e-9;
-}
+                }
 
                 const double position = distance / delta_r;
 

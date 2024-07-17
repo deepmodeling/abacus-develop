@@ -1,6 +1,6 @@
 #include "gint.h"
-
-
+#include "module_base/memory.h"
+#include "module_base/timer.h"
 Gint::~Gint() {
 
     delete this->hRGint;

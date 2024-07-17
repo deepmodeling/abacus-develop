@@ -1,4 +1,7 @@
 #include "grid_bigcell.h"
+#include "module_base/memory.h"
+#include "module_base/timer.h"
+
 
 Grid_BigCell::Grid_BigCell()
 {

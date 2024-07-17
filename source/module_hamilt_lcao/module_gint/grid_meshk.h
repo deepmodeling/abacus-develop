@@ -1,10 +1,7 @@
 #ifndef GRID_MESHK_H
 #define GRID_MESHK_H
-#include "module_base/tool_quit.h"
-#include "module_base/tool_title.h"
-#include "module_base/timer.h"
-#include "module_base/memory.h"
-#include "module_base/matrix3.h"
+#include <vector>
+
 class Grid_MeshK
 {
 	public:

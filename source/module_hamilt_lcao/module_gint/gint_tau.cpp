@@ -1,4 +1,10 @@
 #include "gint_k.h"
+#include "grid_technique.h"
+#include "module_base/ylm.h"
+#include "module_base/timer.h"
+#include "module_base/array_pool.h"
+#include "module_base/memory.h"
+
 
 void Gint::gint_kernel_tau(
 	const int na_grid,

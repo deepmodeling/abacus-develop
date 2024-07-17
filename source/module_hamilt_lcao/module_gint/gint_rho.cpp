@@ -1,4 +1,10 @@
 #include "gint_k.h"
+#include "gint_tools.h"
+#include "grid_technique.h"
+#include "module_base/global_function.h"
+#include "module_base/timer.h"
+#include "module_base/array_pool.h"
+#include "module_base/ylm.h"
 
 void Gint::gint_kernel_rho(const int na_grid,
                            const int grid_index,

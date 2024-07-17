@@ -12,24 +12,8 @@
 #include "gint_tools.h"
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
-
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
-#ifdef __MKL
-#include <mkl_service.h>
-#endif
-#ifdef _OPENMP
-#include <omp.h>
-#endif
-// #include "kernels/cuda/cuda_tools.cuh"
-#if ((defined __CUDA))
-#include "gint_force_gpu.h"
-#include "gint_rho_gpu.h"
-#include "gint_vl_gpu.h"
-#include "kernels/cuda/gint_vl.cuh"
-#include "kernels/cuda/gint_rho.cuh"
-#include "kernels/cuda/gint_force.cuh"
-#include "kernels/cuda/cuda_tools.cuh"
-#endif
+
 class Gint {
   public:
     ~Gint();
@@ -279,8 +263,8 @@ class Gint {
         = nullptr; // stores Hamiltonian in sparse format
     hamilt::HContainer<std::complex<double>>* hRGintCd
         = nullptr; // stores Hamiltonian in sparse format
-    std::vector<hamilt::HContainer<double>*>
-        DMRGint; // stores DMR in sparse format
+    std::vector<hamilt::HContainer<double>*>DMRGint; 
+        // stores DMR in sparse format
     hamilt::HContainer<double>* DMRGint_full
         = nullptr; // tmp tools used in transfer_DM2DtoGrid
     double** pvdpRx_reduced = nullptr;

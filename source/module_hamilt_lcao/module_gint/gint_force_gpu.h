@@ -2,6 +2,7 @@
 #define GINT_FORCE_GPU_H
 
 #include "gint.h"
+#include "grid_technique.h"
 namespace GintKernel
 {
 void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,

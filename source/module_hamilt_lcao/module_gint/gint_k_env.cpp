@@ -1,5 +1,8 @@
 #include "gint_k.h"
-
+#include "grid_technique.h"
+#include "module_base/timer.h"
+#include "module_base/ylm.h"
+#include "module_base/array_pool.h"
 void Gint_k::cal_env_k(int ik,
                        const std::complex<double>* psi_k,
                        double* rho,

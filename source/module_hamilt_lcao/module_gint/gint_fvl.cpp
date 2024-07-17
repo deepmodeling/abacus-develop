@@ -1,5 +1,8 @@
 #include "gint_k.h"
-
+#include "module_base/timer.h"
+#include "module_base/ylm.h"
+#include "module_base/matrix.h"
+#include "module_base/array_pool.h"
 
 void Gint::gint_kernel_force(
 	const int na_grid,

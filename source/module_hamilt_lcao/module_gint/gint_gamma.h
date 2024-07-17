@@ -6,7 +6,10 @@
 #ifndef GINT_GAMMA_H
 #define GINT_GAMMA_H
 #include "gint.h"
-#include "module_base/blas_connector.h"
+#include "grid_technique.h"
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 //=========================================================
 // ModuleBase::Integral On 3D Grids, different from Grid_Integral
 // Feature : Matrix Elements Of Local Potential For 

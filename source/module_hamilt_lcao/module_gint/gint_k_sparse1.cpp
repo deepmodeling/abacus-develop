@@ -1,4 +1,9 @@
 #include "gint_k.h"
+#include "grid_technique.h"
+#include "module_base/global_function.h"
+#include "module_base/memory.h"
+#include "module_base/timer.h"
+#include "module_base/ylm.h"
 
 void Gint_k::distribute_pvdpR_sparseMatrix(
     const int current_spin,

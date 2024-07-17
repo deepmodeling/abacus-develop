@@ -1,5 +1,10 @@
 #include "gint_rho_gpu.h"
+#include "kernels/cuda/cuda_tools.cuh"
+#include "kernels/cuda/gint_rho.cuh"
+#include "module_base/ylm.h"
+#include "gint_rho_gpu.h"
 
+#include <omp.h>
 namespace GintKernel
 {
 

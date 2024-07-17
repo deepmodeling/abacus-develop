@@ -1,4 +1,5 @@
 #include "grid_meshcell.h"
+#include "module_base/memory.h"
 
 Grid_MeshCell::Grid_MeshCell()
 {

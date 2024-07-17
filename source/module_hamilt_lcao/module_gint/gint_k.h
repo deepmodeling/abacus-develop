@@ -2,8 +2,7 @@
 #define GINT_K_H
 
 #include "gint.h"
-#include "module_base/parallel_reduce.h"
-#include "module_base/tool_threading.h"
+#include "grid_technique.h"
 #include "module_base/libm/libm.h"
 #include "module_basis/module_ao/ORB_atomic_lm.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_HS_arrays.hpp"

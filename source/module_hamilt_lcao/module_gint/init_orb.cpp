@@ -1,4 +1,5 @@
 #include "gint_tools.h"
+#include "module_base/memory.h"
 
 namespace Gint_Tools{
 void init_orb(double& dr_uniform, 
