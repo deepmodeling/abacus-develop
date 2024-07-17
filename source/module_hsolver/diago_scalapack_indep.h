@@ -14,14 +14,15 @@ class DiagoScalapack : public DiagH<T>
 {
     private:
         using Real = typename GetTypeReal<T>::type;
+        const int n_band;
+        const int n_local;
+        const int d_size;
         const int dim;
-        const double diag_thr_in;
-        const int iter_nmax;
     public:
         DiagoScalapack(const int& nband_in,
+                        const int& nlocal_in,
                         const int& nbasis_in,
-                        const double& diag_thr_in,
-                        const int& diag_nmax_in);
+                        const int& dsize_in);
         ~DiagoScalapack();
         void diag(T* h_mat, T* s_mat, const int* const desc, T* psi, Real* eigenvalue_in) override;
 

@@ -9,10 +9,10 @@ using namespace hsolver;
 
 template <typename T>
 DiagoScalapack<T>::DiagoScalapack(const int& nband_in,
+                                    const int& nlocal_in,
                                     const int& nbasis_in,
-                                    const double& diag_thr_in,
-                                    const int& diag_nmax_in)
-    : n_band(nband_in), dim(nbasis_in), diag_thr(diag_thr_in), iter_nmax(diag_nmax_in)
+                                    const int& dsize_in)
+    : n_band(nband_in), n_local(nlocal_in), dim(nbasis_in), d_size(dsize_in)
 {
 }
 
@@ -28,13 +28,14 @@ void DiagoScalapack<double>::diag(double* h_mat, double* s_mat, const int* const
     // Desc is for h_mat
     ModuleBase::TITLE("DiagoScalapack", "diag");
 
-    std::vector<double> eigen(GlobalV::NLOCAL, 0.0);
+    // Initialize enginvalue storage
+    std::vector<double> eigen(this->n_local, 0.0);
 
+    // Caculate
     this->pdsygvx_diag(desc, this->dim, this->dim, h_mat, s_mat, eigen.data(), psi);
 
-    const int inc = 1;
-
-    for (int i = 0; i < GlobalV::NBANDS; i++)
+    // Copy caculation result
+    for (int i = 0; i < this->n_band; i++)
     {
         eigenvalue_in[i] = eigen[i];
     }
@@ -46,13 +47,13 @@ void DiagoScalapack<std::complex<double>>::diag(std::complex<double>* h_mat, std
 {
     ModuleBase::TITLE("DiagoScalapack", "diag");
 
-    std::vector<double> eigen(GlobalV::NLOCAL, 0.0);
+    std::vector<double> eigen(this->n_local, 0.0);
 
     this->pzhegvx_diag(desc, this->dim, this->dim, h_mat, s_mat, eigen.data(), psi);
 
     const int inc = 1;
 
-    for (int i = 0; i < GlobalV::NBANDS; i++)
+    for (int i = 0; i < this->n_band; i++)
     {
         eigenvalue_in[i] = eigen[i];
     }
@@ -70,21 +71,21 @@ std::pair<int, std::vector<int>> DiagoScalapack<T>::pdsygvx_once(const int* cons
 {
 
     const char jobz = 'V', range = 'I', uplo = 'U';
-    const int itype = 1, il = 1, iu = GlobalV::NBANDS, one = 1;
+    const int itype = 1, il = 1, iu = this->nband, one = 1;
     int M = 0, NZ = 0, lwork = -1, liwork = -1, info = 0;
     double vl = 0, vu = 0;
     const double abstol = 0, orfac = -1;
     std::vector<double> work(3, 0);
     std::vector<int> iwork(1, 0);
-    std::vector<int> ifail(GlobalV::NLOCAL, 0);
-    std::vector<int> iclustr(2 * GlobalV::DSIZE);
-    std::vector<double> gap(GlobalV::DSIZE);
+    std::vector<int> ifail(this->n_local, 0);
+    std::vector<int> iclustr(2 * this->d_size);
+    std::vector<double> gap(this->d_size);
 
     pdsygvx_(&itype,
              &jobz,
              &range,
              &uplo,
-             &GlobalV::NLOCAL,
+             &this->n_local,
              h_mat,
              &one,
              &one,
@@ -128,7 +129,7 @@ std::pair<int, std::vector<int>> DiagoScalapack<T>::pdsygvx_once(const int* cons
              &jobz,
              &range,
              &uplo,
-             &GlobalV::NLOCAL,
+             &this->n_local,
              h_mat,
              &one,
              &one,
@@ -187,7 +188,7 @@ std::pair<int, std::vector<int>> DiagoScalapack<T>::pzhegvx_once(const int* cons
                                                          std::complex<double> *wfc_2d) const
 {
     const char jobz = 'V', range = 'I', uplo = 'U';
-    const int itype = 1, il = 1, iu = GlobalV::NBANDS, one = 1;
+    const int itype = 1, il = 1, iu = this->n_band, one = 1;
     int M = 0, NZ = 0, lwork = -1, lrwork = -1, liwork = -1, info = 0;
     const double abstol = 0, orfac = -1;
     //Note: pzhegvx_ has a bug
@@ -197,15 +198,15 @@ std::pair<int, std::vector<int>> DiagoScalapack<T>::pzhegvx_once(const int* cons
     std::vector<std::complex<double>> work(1, 0);
     std::vector<double> rwork(3, 0);
     std::vector<int> iwork(1, 0);
-    std::vector<int> ifail(GlobalV::NLOCAL, 0);
-    std::vector<int> iclustr(2 * GlobalV::DSIZE);
-    std::vector<double> gap(GlobalV::DSIZE);
+    std::vector<int> ifail(this->n_local, 0);
+    std::vector<int> iclustr(2 * this->d_size);
+    std::vector<double> gap(this->d_size);
 
     pzhegvx_(&itype,
              &jobz,
              &range,
              &uplo,
-             &GlobalV::NLOCAL,
+             &this->n_local,
              h_mat,
              &one,
              &one,
@@ -244,7 +245,7 @@ std::pair<int, std::vector<int>> DiagoScalapack<T>::pzhegvx_once(const int* cons
 
     lwork = work[0].real();
     work.resize(lwork, 0);
-    lrwork = rwork[0] + this->degeneracy_max * GlobalV::NLOCAL;
+    lrwork = rwork[0] + this->degeneracy_max * this->n_local;
     int maxlrwork = std::max(lrwork,3);
     rwork.resize(maxlrwork, 0);
     liwork = iwork[0];
@@ -254,7 +255,7 @@ std::pair<int, std::vector<int>> DiagoScalapack<T>::pzhegvx_once(const int* cons
              &jobz,
              &range,
              &uplo,
-             &GlobalV::NLOCAL,
+             &this->n_local,
              h_mat,
              &one,
              &one,
@@ -373,7 +374,7 @@ void DiagoScalapack<T> ::pzhegvx_diag(const int* const desc,
     else if (info / 2 % 2)
     {
         int degeneracy_need = 0;
-        for (int irank = 0; irank < GlobalV::DSIZE; ++irank)
+        for (int irank = 0; irank < this->d_size; ++irank)
             degeneracy_need = std::max(degeneracy_need, vec[2 * irank + 1] - vec[2 * irank]);
         const std::string str_need = "degeneracy_need = " + ModuleBase::GlobalFunc::TO_STRING(degeneracy_need) + ".\n";
         const std::string str_saved
@@ -384,7 +385,7 @@ void DiagoScalapack<T> ::pzhegvx_diag(const int* const desc,
         }
         else
         {
-            GlobalV::ofs_running << str_need << str_saved;
+            std::cout << str_need << str_saved;
             this->degeneracy_max = degeneracy_need;
             return;
         }
@@ -394,7 +395,7 @@ void DiagoScalapack<T> ::pzhegvx_diag(const int* const desc,
         const std::string str_M = "M = " + ModuleBase::GlobalFunc::TO_STRING(vec[0]) + ".\n";
         const std::string str_NZ = "NZ = " + ModuleBase::GlobalFunc::TO_STRING(vec[1]) + ".\n";
         const std::string str_NBANDS
-            = "GlobalV::NBANDS = " + ModuleBase::GlobalFunc::TO_STRING(GlobalV::NBANDS) + ".\n";
+            = "NBANDS = " + ModuleBase::GlobalFunc::TO_STRING(this->n_band) + ".\n";
         throw std::runtime_error(str_info_FILE + str_M + str_NZ + str_NBANDS);
     }
     else if (info / 16 % 2)
