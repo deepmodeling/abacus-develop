@@ -233,13 +233,11 @@ int DiagoDavid<T, Device>::diag_mock(const HPsiFunc& hpsi_func,
         for (int m = 0; m < nband; m++)
         {
             convflag[m] = (std::abs(this->eigenvalue[m] - eigenvalue_in[m]) < david_diag_thr);
-
             if (!convflag[m])
             {
                 unconv[this->notconv] = m;
                 this->notconv++;
             }
-
             eigenvalue_in[m] = this->eigenvalue[m];
         }
 
@@ -249,9 +247,9 @@ int DiagoDavid<T, Device>::diag_mock(const HPsiFunc& hpsi_func,
         {
             ModuleBase::timer::tick("DiagoDavid", "last");
 
-            // updata eigenvectors of Hamiltonian
+            // update eigenvectors of Hamiltonian
 
-            setmem_complex_op()(this->ctx, psi_in, 0, n_band * ldPsi);
+            setmem_complex_op()(this->ctx, psi_in, 0, nband * ldPsi);
             //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
             gemm_op<T, Device>()(this->ctx,
                                       'N',
@@ -262,17 +260,16 @@ int DiagoDavid<T, Device>::diag_mock(const HPsiFunc& hpsi_func,
                                       this->one,
                                       pbasis,       // A dim * nbase
                                       dim,
-                                      this->vcc,    // B nbase * n_band
+                                      this->vcc,    // B nbase * nband
                                       nbase_x,
                                       this->zero,
-                                      psi_in,       // C dim * n_band
+                                      psi_in,       // C dim * nband
                                       ldPsi
             );
 
             if (!this->notconv || (dav_iter == david_maxiter))
             {
                 // overall convergence or last iteration: exit the iteration
-
                 ModuleBase::timer::tick("DiagoDavid", "last");
                 break;
             }
@@ -281,7 +278,6 @@ int DiagoDavid<T, Device>::diag_mock(const HPsiFunc& hpsi_func,
                 // if the dimension of the reduced basis set is becoming too large,
                 // then replace the first N (=nband) basis vectors with the current
                 // estimate of the eigenvectors and set the basis dimension to N;
-
                 this->refresh(dim,
                               nband,
                               nbase,
@@ -328,14 +324,14 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     ModuleBase::timer::tick("DiagoDavid", "cal_grad");
 
     // use template pointer for accelerate
-    std::complex<double>* spsi;
-    std::complex<double>* ppsi;
+    // std::complex<double>* spsi;
+    // std::complex<double>* ppsi;
 
     // expand the reduced basis set with the new basis vectors P|Real(psi)>...
     // in which psi are the last eigenvectors
     // we define |Real(psi)> as (H-ES)*|Psi>, E = <psi|H|psi>/<psi|S|psi>
 
-    // ModuleBase::ComplexMatrix vc_ev_vector(notconv, nbase);
+    // vc_ev_vector(notconv, nbase);
     T* vc_ev_vector = nullptr;
     resmem_complex_op()(this->ctx, vc_ev_vector, notconv * nbase);
     setmem_complex_op()(this->ctx, vc_ev_vector, 0, notconv * nbase);

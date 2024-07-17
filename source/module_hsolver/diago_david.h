@@ -71,9 +71,9 @@ class DiagoDavid : public DiagH<T, Device>
 
     T* hcc = nullptr;     /// Hamiltonian on the reduced basis
 
-    T* scc = nullptr;     /// Overlap on the reduced basis
+    T* scc = nullptr;     /// overlap on the reduced basis
 
-    T* vcc = nullptr;     /// Eigenvectors of hc
+    T* vcc = nullptr;     /// eigenvectors of hc
 
     T* lagrange_matrix = nullptr;
 
