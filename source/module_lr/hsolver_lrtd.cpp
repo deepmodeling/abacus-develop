@@ -88,7 +88,7 @@ namespace LR
                 const int& nband = psi_k1_dav.get_nbands();
                 hsolver::DiagoDavid<T, Device> david(precondition.data(), GlobalV::PW_DIAG_NDIM, GlobalV::use_paw, comm_info);
                 hsolver::DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(david.diag(hpsi_func, spsi_func,
-                    dim, nband, dim, psi_k1_dav, eigenvalue.data(), this->diag_ethr, david_maxiter, ntry_max, 0/*notconv_max*/));
+                    dim, nband, dim, psi_k1_dav.get_pointer(), eigenvalue.data(), this->diag_ethr, david_maxiter, ntry_max, 0/*notconv_max*/));
             }
             else if (this->method == "dav_subspace") //need refactor
             {
