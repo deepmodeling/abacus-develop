@@ -89,7 +89,7 @@ public:
 		const int dim = phi.get_current_nbas();
         const int nband = phi.get_nbands();
         const int ldPsi = phi.get_nbasis();
-        hsolver::DiagoDavid<double> dav(precondition, nband, order, false, comm_info);
+        hsolver::DiagoDavid<double> dav(precondition, nband, dim, order, false, comm_info);
 
         hsolver::DiagoIterAssist<double>::PW_DIAG_NMAX = maxiter;
         hsolver::DiagoIterAssist<double>::PW_DIAG_THR = eps;
@@ -119,7 +119,7 @@ public:
         auto spsi_func = [phm](const double* psi_in, double* spsi_out,const int nrow, const int npw,  const int nbands){
 			phm->sPsi(psi_in, spsi_out, nrow, npw, nbands);
 		};
-        dav.diag(hpsi_func,spsi_func, dim, ldPsi, phi.get_pointer(), en, eps, maxiter);
+        dav.diag(hpsi_func,spsi_func, ldPsi, phi.get_pointer(), en, eps, maxiter);
 
 #ifdef __MPI		
         end = MPI_Wtime();

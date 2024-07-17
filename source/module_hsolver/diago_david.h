@@ -20,7 +20,8 @@ class DiagoDavid : public DiagH<T, Device>
   public:
 
     DiagoDavid(const Real* precondition_in,
-               const int nband,
+               const int nband_in,
+               const int dim_in,
                const int david_ndim_in,
                const bool use_paw_in,
                const diag_comm_info& diag_comm_in);
@@ -32,7 +33,7 @@ class DiagoDavid : public DiagH<T, Device>
 
     int diag(const HPsiFunc& hpsi_func,           // function void hpsi(T*, T*, const int, const int, const int, const int) 
              const SPsiFunc& spsi_func,           // function void spsi(T*, T*, const int, const int, const int) 
-                      const int dim,              // Dimension of the input matrix psi to be diagonalized
+                      // const int dim,              // Dimension of the input matrix psi to be diagonalized
                       // const int nband,            // Number of required eigenpairs
                       const int ldPsi,            // Leading dimension of the psi input
                       T *psi_in,                  // Pointer to eigenvectors
@@ -50,10 +51,12 @@ class DiagoDavid : public DiagH<T, Device>
 
     /// number of searched eigenpairs
     int nband = 0;
-    /// dimension of the subspace allowed in Davidson
-    int david_ndim = 4;
+    /// Dimension of the input matrix psi to be diagonalized
+    const int dim;
     /// maximum dimension of the reduced basis set
     const int nbase_x;
+    /// dimension of the subspace allowed in Davidson
+    int david_ndim = 4;
     /// number of unconverged eigenvalues
     int notconv = 0;
 
