@@ -35,44 +35,8 @@ DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in,
     // 2: check the eigenvalues of the result of each iteration
     // 3: check the eigenvalues and errors of the last result
     // default: no check
-}
 
-template <typename T, typename Device>
-DiagoDavid<T, Device>::~DiagoDavid()
-{
-    delmem_complex_op()(this->ctx, this->hpsi);
-    delmem_complex_op()(this->ctx, this->spsi);
-    delmem_complex_op()(this->ctx, this->hcc);
-    delmem_complex_op()(this->ctx, this->scc);
-    delmem_complex_op()(this->ctx, this->vcc);
-    delmem_complex_op()(this->ctx, this->lagrange_matrix);
-    base_device::memory::delete_memory_op<Real, base_device::DEVICE_CPU>()(this->cpu_ctx, this->eigenvalue);
-
-#if defined(__CUDA) || defined(__ROCM)
-    if (this->device == base_device::GpuDevice)
-    {
-        delmem_var_op()(this->ctx, this->d_precondition);
-    }
-#endif
-}
-
-template <typename T, typename Device>
-int DiagoDavid<T, Device>::diag_mock(const HPsiFunc& hpsi_func,
-                                     const SPsiFunc& spsi_func,
-                                     const int dim,
-                                     const int nband,
-                                     const int ldPsi,
-                                     T *psi_in,
-                                     Real* eigenvalue_in,
-                                     const Real david_diag_thr,
-                                     const int david_maxiter)
-{
-    if (test_david == 1)
-    {
-        ModuleBase::TITLE("DiagoDavid", "diag_mock");
-    }
-    ModuleBase::timer::tick("DiagoDavid", "diag_mock");
-
+    // set auxiliary memory
     assert(this->david_ndim > 1);
     assert(this->david_ndim * nband < dim * diag_comm.nproc);
 
@@ -123,6 +87,43 @@ int DiagoDavid<T, Device>::diag_mock(const HPsiFunc& hpsi_func,
     resmem_complex_op()(this->ctx, this->vcc, nbase_x * nbase_x, "DAV::vcc");
     setmem_complex_op()(this->ctx, this->vcc, 0, nbase_x * nbase_x);
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+}
+
+template <typename T, typename Device>
+DiagoDavid<T, Device>::~DiagoDavid()
+{
+    delmem_complex_op()(this->ctx, this->hpsi);
+    delmem_complex_op()(this->ctx, this->spsi);
+    delmem_complex_op()(this->ctx, this->hcc);
+    delmem_complex_op()(this->ctx, this->scc);
+    delmem_complex_op()(this->ctx, this->vcc);
+    delmem_complex_op()(this->ctx, this->lagrange_matrix);
+    base_device::memory::delete_memory_op<Real, base_device::DEVICE_CPU>()(this->cpu_ctx, this->eigenvalue);
+
+#if defined(__CUDA) || defined(__ROCM)
+    if (this->device == base_device::GpuDevice)
+    {
+        delmem_var_op()(this->ctx, this->d_precondition);
+    }
+#endif
+}
+
+template <typename T, typename Device>
+int DiagoDavid<T, Device>::diag_mock(const HPsiFunc& hpsi_func,
+                                     const SPsiFunc& spsi_func,
+                                     const int dim,
+                                     const int nband,
+                                     const int ldPsi,
+                                     T *psi_in,
+                                     Real* eigenvalue_in,
+                                     const Real david_diag_thr,
+                                     const int david_maxiter)
+{
+    if (test_david == 1)
+    {
+        ModuleBase::TITLE("DiagoDavid", "diag_mock");
+    }
+    ModuleBase::timer::tick("DiagoDavid", "diag_mock");
 
     // convflag[m] = true if the m th band is converged
     std::vector<bool> convflag(nband, false);
@@ -135,7 +136,7 @@ int DiagoDavid<T, Device>::diag_mock(const HPsiFunc& hpsi_func,
 
     for (int m = 0; m < nband; m++) {
         unconv[m] = m;
-}
+    }
 
     ModuleBase::timer::tick("DiagoDavid", "first");
 
@@ -357,10 +358,6 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
                              nbase);
     }
 
-
-    //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     gemm_op<T, Device>()(this->ctx,
                               'N',
                               'N',
@@ -376,7 +373,6 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
                               pbasis + dim*nbase, // C dim * notconv
                               dim // LDC: if(N) max(1, m)
     );
-    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     // for (int m = 0; m < notconv; m++)
@@ -490,7 +486,6 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     // first nbase bands psi* dot notconv bands spsi to prepare lagrange_matrix
 
     // calculate the square matrix for future lagranges
-    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     gemm_op<T, Device>()(this->ctx,
                               'C',
                               'N',
@@ -555,11 +550,11 @@ void DiagoDavid<T, Device>::cal_elem(const int& dim,
 {
     if (test_david == 1) {
         ModuleBase::TITLE("DiagoDavid", "cal_elem");
-}
+    }
 
     if (notconv == 0) {
         return;
-}
+    }
     ModuleBase::timer::tick("DiagoDavid", "cal_elem");
 
     gemm_op<T, Device>()(this->ctx,
@@ -656,7 +651,6 @@ void DiagoDavid<T, Device>::diag_zhegvx(const int& nbase,
                                              Real* eigenvalue, // in CPU
                                              T* vcc)
 {
-    //	ModuleBase::TITLE("DiagoDavid","diag_zhegvx");
     ModuleBase::timer::tick("DiagoDavid", "diag_zhegvx");
     if (diag_comm.rank == 0)
     {
@@ -713,7 +707,7 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
 {
     if (test_david == 1) {
         ModuleBase::TITLE("DiagoDavid", "refresh");
-}
+    }
     ModuleBase::timer::tick("DiagoDavid", "refresh");
 
     // update hp,sp
@@ -755,8 +749,7 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
 
     syncmem_complex_op()(this->ctx, this->ctx, hpsi, pbasis, dim * nband);
     syncmem_complex_op()(this->ctx, this->ctx, spsi, pbasis + dim*nband, dim * nband);
-    /*for (int m = 0; m < nband; m++)
-    {
+    /*for (int m = 0; m < nband; m++) {
         for (int ig = 0; ig < dim; ig++)
         {
             hp(m, ig) = basis(m, ig);
@@ -774,16 +767,12 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
             basis(m, ig) = psi(m, ig);*/
     }
 
-    // updata the reduced Hamiltonian
+    // update the reduced Hamiltonian
     nbase = nband;
 
-    // hc.zero_out();
     setmem_complex_op()(this->ctx, hcc, 0, nbase_x * nbase_x);
 
-    // sc.zero_out();
     setmem_complex_op()(this->ctx, scc, 0, nbase_x * nbase_x);
-
-    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
     if (this->device == base_device::GpuDevice)
     {
@@ -887,7 +876,6 @@ void DiagoDavid<T, Device>::SchmidtOrth(const int& dim,
         );
     }
     // calculate other lagranges for this band
-    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     gemv_op<T, Device>()(this->ctx,
                               'C',
                               dim,
@@ -900,7 +888,6 @@ void DiagoDavid<T, Device>::SchmidtOrth(const int& dim,
                               this->zero,
                               &lagrange_m[m - mv_size + 1],
                               1);
-    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     Parallel_Reduce::reduce_pool(lagrange_m, m + 1);
 
@@ -949,9 +936,7 @@ void DiagoDavid<T, Device>::SchmidtOrth(const int& dim,
     }
     else
     {
-        //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         vector_div_constant_op<T, Device>()(this->ctx, dim, psi_m, psi_m, psi_norm);
-        //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         // for (int i = 0; i < npw; i++)
         // {
         //     psi_m[i] /= psi_norm;
@@ -1055,8 +1040,6 @@ void DiagoDavid<T, Device>::planSchmidtOrth(const int nband, std::vector<int>& p
 template <typename T, typename Device>
 int DiagoDavid<T, Device>::diag(const HPsiFunc& hpsi_func,
                                 const SPsiFunc& spsi_func,
-                                // const int dim,
-                                // const int nband,
                                 const int ldPsi,
                                 T *psi_in,
                                 Real* eigenvalue_in,
