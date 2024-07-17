@@ -12,32 +12,32 @@ void Gint::cpu_rho_interface(Gint_inout* inout) {
     const int ncyz = this->ny * this->nplane;
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
-    double* pvpR_thread = nullptr;
-    hamilt::HContainer<double>* hRGint_thread = nullptr;
+    
 #ifdef _OPENMP
-#pragma omp for
+#pragma omp for 
 #endif
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
         const int na_grid = this->gridt->how_many_atoms[grid_index];
         if (na_grid == 0) {
             continue;
         }
+        std::vector<int> vindex(this->bxyz, 0);
         // int* vindex = Gint_Tools::get_vindex(ncyz, ibx, jby, kbz);
-        int* vindex = Gint_Tools::get_vindex(this->bxyz,
+        Gint_Tools::get_vindex(this->bxyz,
                                              this->bx,
                                              this->by,
                                              this->bz,
                                              this->nplane,
                                              this->gridt->start_ind[grid_index],
-                                             ncyz);
+                                             ncyz,
+                                             vindex.data());
         this->gint_kernel_rho(na_grid,
                               grid_index,
                               delta_r,
-                              vindex,
+                              vindex.data(),
                               LD_pool,
                               ucell,
                               inout);
-        delete[] vindex;
     }
 
     ModuleBase::TITLE("Gint_interface", "cal_gint_rho");
@@ -54,7 +54,7 @@ void Gint::cpu_tau_interface(Gint_inout* inout) {
     const int ncyz = this->ny * this->nplane;
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
-
+    std::vector<int> vindex(this->bxyz, 0);
 #ifdef _OPENMP
 #pragma omp for
 #endif
@@ -63,22 +63,22 @@ void Gint::cpu_tau_interface(Gint_inout* inout) {
         if (na_grid == 0) {
             continue;
         }
-        // int* vindex = Gint_Tools::get_vindex(ncyz, ibx, jby, kbz);
-        int* vindex = Gint_Tools::get_vindex(this->bxyz,
-                                             this->bx,
-                                             this->by,
-                                             this->bz,
-                                             this->nplane,
-                                             this->gridt->start_ind[grid_index],
-                                             ncyz);
+        
+        Gint_Tools::get_vindex(this->bxyz,
+                                    this->bx,
+                                    this->by,
+                                    this->bz,
+                                    this->nplane,
+                                    this->gridt->start_ind[grid_index],
+                                    ncyz,
+                                    vindex.data());
         this->gint_kernel_tau(na_grid,
                               grid_index,
                               delta_r,
-                              vindex,
+                              vindex.data(),
                               LD_pool,
                               inout,
                               ucell);
-        delete[] vindex;
     }
     ModuleBase::TITLE("Gint_interface", "cal_gint_tau");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_tau");

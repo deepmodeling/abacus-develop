@@ -7,12 +7,10 @@
 #include "module_base/ylm.h"
 #include "module_base/array_pool.h"
 namespace Gint_Tools{
-int* get_vindex(const int bxyz, const int bx, const int by, const int bz, const int nplane, const int start_ind,
-                const int ncyz)
+void get_vindex(const int bxyz, const int bx, const int by, const int bz, const int nplane, 
+				const int start_ind, const int ncyz,int* vindex)
 {
-    int* vindex = new int[bxyz];
     int bindex = 0;
-
 		for(int ii=0; ii<bx; ii++)
 		{
 			const int ipart = ii*ncyz;
@@ -26,11 +24,10 @@ int* get_vindex(const int bxyz, const int bx, const int by, const int bz, const 
 				}
 			}
 		}
-		return vindex;
 	}
 
 	// here vindex refers to local potentials
-    int* get_vindex(
+    void get_vindex(
         const int bxyz,
         const int bx,
         const int by,
@@ -39,9 +36,10 @@ int* get_vindex(const int bxyz, const int bx, const int by, const int bz, const 
         const int ncyz,
 		const int ibx,
 		const int jby,
-		const int kbz)
+		const int kbz,
+		int* vindex)
 	{
-		int *vindex = new int[bxyz];
+		// int *vindex = new int[bxyz];
 		int bindex=0;
 		// z is the fastest,
 		// ipart can be obtained by using a previously stored array
@@ -59,7 +57,7 @@ int* get_vindex(const int bxyz, const int bx, const int by, const int bz, const 
 				}
 			}
 		}
-		return vindex;
+		// return vindex;
 	}
 
 	// extract the local potentials.
@@ -77,13 +75,13 @@ int* get_vindex(const int bxyz, const int bx, const int by, const int bz, const 
 		const double dv)
 	{
 		// set the index for obtaining local potentials
-		int* vindex = Gint_Tools::get_vindex(bxyz, bx, by, bz, nplane, ncyz, ibx, jby, kbz);
+		std::vector<int> vindex=std::vector<int>(bxyz);
+		Gint_Tools::get_vindex(bxyz, bx, by, bz, nplane, ncyz, ibx, jby, kbz,vindex.data());
 		double *vldr3 = new double[bxyz];
 		for(int ib=0; ib<bxyz; ib++)
 		{
 			vldr3[ib]=vlocal[vindex[ib]] * dv;
 		}
-		delete[] vindex;
 		return vldr3;
 	}
 
@@ -99,13 +97,13 @@ int* get_vindex(const int bxyz, const int bx, const int by, const int bz, const 
 		const double dv)
 	{
 		// set the index for obtaining local potentials
-		int* vindex = Gint_Tools::get_vindex(bxyz, bx, by, bz, nplane, start_ind, ncyz);
+		std::vector<int> vindex=std::vector<int>(bxyz);
+		Gint_Tools::get_vindex(bxyz, bx, by, bz, nplane, start_ind, ncyz,vindex.data());
 		double *vldr3 = new double[bxyz];
 		for(int ib=0; ib<bxyz; ib++)
 		{
 			vldr3[ib]=vlocal[vindex[ib]] * dv;
 		}
-		delete[] vindex;
 		return vldr3;
 	}
 

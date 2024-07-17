@@ -25,7 +25,7 @@ void Gint_k::cal_env_k(int ik,
         const int nbz_start = this->gridt->nbzp_start;
         const int nbz = this->gridt->nbzp;
         const int ncyz = this->ny * this->nplane; // mohan add 2012-03-25
-
+        std::vector<int> vindex(this->bxyz, 0);
         for (int grid_index = 0; grid_index < this->nbxx; grid_index++)
         {
 
@@ -61,13 +61,14 @@ void Gint_k::cal_env_k(int ik,
                                      cal_flag,
                                      psir_ylm.get_ptr_2D());
 
-            int* vindex = Gint_Tools::get_vindex(this->bxyz,
-                                                 this->bx,
-                                                 this->by,
-                                                 this->bz,
-                                                 this->nplane,
-                                                 this->gridt->start_ind[grid_index],
-                                                 ncyz);
+            Gint_Tools::get_vindex(this->bxyz,
+                                    this->bx,
+                                    this->by,
+                                    this->bz,
+                                    this->nplane,
+                                    this->gridt->start_ind[grid_index],
+                                    ncyz,
+                                    vindex.data());
 
             for (int ia1 = 0; ia1 < size; ia1++)
             {
@@ -125,7 +126,6 @@ void Gint_k::cal_env_k(int ik,
                     } // cal_flag
                 }     // ib
             }         // ia1
-            delete[] vindex;
             delete[] block_iw;
             delete[] block_index;
             delete[] block_size;

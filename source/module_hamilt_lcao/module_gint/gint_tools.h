@@ -158,7 +158,7 @@ inline double pow_int(const double base, const int exp)
     }
 }
 // vindex[pw.bxyz]
-int* get_vindex(const int bxyz,
+void get_vindex(const int bxyz,
                 const int bx,
                 const int by,
                 const int bz,
@@ -166,15 +166,17 @@ int* get_vindex(const int bxyz,
                 const int ncyz,
                 const int ibx,
                 const int jby,
-                const int kbz);
+                const int kbz,
+                int *vindex);
 
-int* get_vindex(const int bxyz,
+void get_vindex(const int bxyz,
                 const int bx,
                 const int by,
                 const int bz,
                 const int nplane,
                 const int start_ind,
-                const int ncyz);
+                const int ncyz,
+                int *vindex);
 
 // extract the local potentials.
 // vldr3[bxyz]
