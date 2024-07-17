@@ -92,7 +92,7 @@ void InfoNonlocal::Set_NonLocal(const int& it,
                                 }
                                 else
                                 {
-                                    if (is1 == is2 && ip1 == ip2)
+                                    if (is1 == is2 && m1 == m2)
                                     {
                                         coefficient_D_nc_in(ip1 + nh * is1, ip2 + nh * is2) = atom->ncpp.dion(p1, p2);
                                     }

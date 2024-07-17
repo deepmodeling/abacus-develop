@@ -7,13 +7,13 @@ AddTest(
 AddTest(
   TARGET base_ParaGlobal
   LIBS MPI::MPI_CXX
-  SOURCES parallel_global_test.cpp ../global_variable.cpp ../parallel_global.cpp
+  SOURCES parallel_global_test.cpp ../global_variable.cpp ../parallel_global.cpp ../parallel_comm.cpp
 )
 
 AddTest(
   TARGET base_ParaReduce
   LIBS MPI::MPI_CXX
-  SOURCES parallel_reduce_test.cpp ../global_variable.cpp ../parallel_global.cpp ../parallel_common.cpp ../parallel_reduce.cpp
+  SOURCES parallel_reduce_test.cpp ../global_variable.cpp ../parallel_global.cpp ../parallel_comm.cpp ../parallel_common.cpp ../parallel_reduce.cpp
 )
 
 install(FILES parallel_common_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

@@ -107,8 +107,9 @@ void build_Nonlocal_mu_new(const Parallel_Orbitals& pv,
                 const int iw1_all = start1 + iw1;
                 const int iw1_local = pv.global2local_row(iw1_all);
                 const int iw2_local = pv.global2local_col(iw1_all);
-                if (iw1_local < 0 && iw2_local < 0)
+                if (iw1_local < 0 && iw2_local < 0) {
                     continue;
+}
                 const int iw1_0 = iw1 / npol;
                 std::vector<std::vector<double>> nlm;
                 // nlm is a vector of vectors, but size of outer vector is only 1 here
@@ -214,9 +215,9 @@ void build_Nonlocal_mu_new(const Parallel_Orbitals& pv,
                     // this rcut is in order to make nnr consistent
                     // with other matrix.
                     rcut = pow(orb.Phi[T1].getRcut() + orb.Phi[T2].getRcut(), 2);
-                    if (distance < rcut)
+                    if (distance < rcut) {
                         is_adj = true;
-                    else if (distance >= rcut)
+                    } else if (distance >= rcut)
                     {
                         for (int ad0 = 0; ad0 < adjs.adj_num + 1; ++ad0)
                         {
@@ -301,8 +302,9 @@ void build_Nonlocal_mu_new(const Parallel_Orbitals& pv,
                                 const int j0 = j / npol; // added by zhengdy-soc
                                 const int iw1_all = start1 + j;
                                 const int mu = pv.global2local_row(iw1_all);
-                                if (mu < 0)
+                                if (mu < 0) {
                                     continue;
+}
 
                                 // fix a serious bug: atom2[T2] -> atom2
                                 // mohan 2010-12-20
@@ -311,8 +313,9 @@ void build_Nonlocal_mu_new(const Parallel_Orbitals& pv,
                                     const int k0 = k / npol;
                                     const int iw2_all = start2 + k;
                                     const int nu = pv.global2local_col(iw2_all);
-                                    if (nu < 0)
+                                    if (nu < 0) {
                                         continue;
+}
 
                                     if (!calc_deri)
                                     {
@@ -321,22 +324,14 @@ void build_Nonlocal_mu_new(const Parallel_Orbitals& pv,
                                         if (nspin == 2 || nspin == 1)
                                         {
                                             double nlm_tmp = 0.0;
-                                            const int nproj = ucell.infoNL.nproj[T0];
-                                            int ib = 0;
-                                            for (int nb = 0; nb < nproj; nb++)
+                                            const double* tmp_d = nullptr;
+                                            for (int no = 0; no < ucell.atoms[T0].ncpp.non_zero_count_soc[0]; no++)
                                             {
-                                                const int L0 = ucell.infoNL.Beta[T0].Proj[nb].getL();
-                                                for (int m = 0; m < 2 * L0 + 1; m++)
-                                                {
-                                                    if (nlm_1[ib] != 0.0 && nlm_2[ib] != 0.0)
-                                                    {
-                                                        nlm_tmp += nlm_1[ib] * nlm_2[ib]
-                                                                   * ucell.atoms[T0].ncpp.dion(nb, nb);
-                                                    }
-                                                    ib += 1;
-                                                }
+                                                const int p1 = ucell.atoms[T0].ncpp.index1_soc[0][no];
+                                                const int p2 = ucell.atoms[T0].ncpp.index2_soc[0][no];
+                                                ucell.atoms[T0].ncpp.get_d(0, p1, p2, tmp_d);
+                                                nlm_tmp += nlm_2[p2] * nlm_1[p1] * (*tmp_d);
                                             }
-                                            assert(ib == nlm_1.size());
 
                                             if (gamma_only_local)
                                             {
@@ -467,22 +462,17 @@ void build_Nonlocal_mu_new(const Parallel_Orbitals& pv,
 
                                                 assert(nlm_1.size() == nlm_2[0].size());
 
-                                                const int nproj = ucell.infoNL.nproj[T0];
-                                                int ib = 0;
-                                                for (int nb = 0; nb < nproj; nb++)
+                                                const double* tmp_d = nullptr;
+                                                for (int no = 0; no < ucell.atoms[T0].ncpp.non_zero_count_soc[0]; no++)
                                                 {
-                                                    const int L0 = ucell.infoNL.Beta[T0].Proj[nb].getL();
-                                                    for (int m = 0; m < 2 * L0 + 1; m++)
+                                                    const int p1 = ucell.atoms[T0].ncpp.index1_soc[0][no];
+                                                    const int p2 = ucell.atoms[T0].ncpp.index2_soc[0][no];
+                                                    ucell.atoms[T0].ncpp.get_d(0, p1, p2, tmp_d);
+                                                    for (int ir = 0; ir < 3; ir++)
                                                     {
-                                                        for (int ir = 0; ir < 3; ir++)
-                                                        {
-                                                            nlm[ir] += nlm_2[ir][ib] * nlm_1[ib]
-                                                                       * ucell.atoms[T0].ncpp.dion(nb, nb);
-                                                        }
-                                                        ib += 1;
+                                                        nlm[ir] += nlm_2[ir][p2] * nlm_1[p1] * (*tmp_d);
                                                     }
                                                 }
-                                                assert(ib == nlm_1.size());
 
                                                 LCAO_domain::set_force(pv,
                                                                        iw1_all,
@@ -516,22 +506,17 @@ void build_Nonlocal_mu_new(const Parallel_Orbitals& pv,
 
                                                 assert(nlm_1.size() == nlm_2[0].size());
 
-                                                const int nproj = ucell.infoNL.nproj[T0];
-                                                int ib = 0;
-                                                for (int nb = 0; nb < nproj; nb++)
+                                                const double* tmp_d = nullptr;
+                                                for (int no = 0; no < ucell.atoms[T0].ncpp.non_zero_count_soc[0]; no++)
                                                 {
-                                                    const int L0 = ucell.infoNL.Beta[T0].Proj[nb].getL();
-                                                    for (int m = 0; m < 2 * L0 + 1; m++)
+                                                    const int p1 = ucell.atoms[T0].ncpp.index1_soc[0][no];
+                                                    const int p2 = ucell.atoms[T0].ncpp.index2_soc[0][no];
+                                                    ucell.atoms[T0].ncpp.get_d(0, p1, p2, tmp_d);
+                                                    for (int ir = 0; ir < 3; ir++)
                                                     {
-                                                        for (int ir = 0; ir < 3; ir++)
-                                                        {
-                                                            nlm[ir] += nlm_2[ir][ib] * nlm_1[ib]
-                                                                       * ucell.atoms[T0].ncpp.dion(nb, nb);
-                                                        }
-                                                        ib += 1;
+                                                        nlm[ir] += nlm_2[ir][p2] * nlm_1[p1] * (*tmp_d);
                                                     }
                                                 }
-                                                assert(ib == nlm_1.size());
 
                                                 fsr.DHloc_fixedR_x[nnr + nnr_inner] += nlm[0];
                                                 fsr.DHloc_fixedR_y[nnr + nnr_inner] += nlm[1];

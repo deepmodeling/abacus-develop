@@ -514,20 +514,24 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
     {
         // Davidson iter parameters
 
-        // Allow 5 tries at most. If ntry > ntry_max = 5, exit diag loop.
+        /// Allow 5 tries at most. If ntry > ntry_max = 5, exit diag loop.
         const int ntry_max = 5;
-        // In non-self consistent calculation, do until totally converged. Else
-        // allow 5 eigenvecs to be NOT converged.
+        /// In non-self consistent calculation, do until totally converged. Else
+        /// allow 5 eigenvecs to be NOT converged.
         const int notconv_max = ("nscf" == GlobalV::CALCULATION) ? 0 : 5;
-        // do diag and add davidson iteration counts up to avg_iter
+        /// convergence threshold
         const Real david_diag_thr = DiagoIterAssist<T, Device>::PW_DIAG_THR;
+        /// maximum iterations
         const int david_maxiter = DiagoIterAssist<T, Device>::PW_DIAG_NMAX;
 
         // dimensions of matrix to be solved
-        const int dim = psi.get_current_nbas();
-        const int nband = psi.get_nbands();
-        const int ldPsi = psi.get_nbasis();
-        
+
+        const int dim = psi.get_current_nbas(); /// dimension of matrix
+        const int nband = psi.get_nbands();     /// number of eigenpairs sought
+        const int ldPsi = psi.get_nbasis();     /// leading dimension of psi
+
+        // Davidson matrix-blockvector functions
+
         auto ngk_pointer = psi.get_ngk_pointer();
         /// wrap for hpsi function, Matrix \times blockvector
         auto hpsi_func = [hm, ngk_pointer](T* hpsi_out,
@@ -550,6 +554,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
             ModuleBase::timer::tick("David", "hpsi_func");
         };
 
+        /// wrap for spsi function, Matrix \times blockvector
         auto spsi_func = [hm](const T* psi_in,
                                T* spsi_out,
                                const int nrow,  // dimension of spsi: nbands * nrow
@@ -561,15 +566,10 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
             hm->sPsi(psi_in, spsi_out, nrow, npw, nbands);
             ModuleBase::timer::tick("David", "spsi_func");
         };
-        /*
-        phm_in->sPsi(psi_in + m*ldPsi,//&psi(m, 0),
-                         &this->sphi[m * dim],
-                         dim,
-                         dim,
-                         1);
-        */
+
 
         DiagoDavid<T, Device> david(pre_condition.data(), GlobalV::PW_DIAG_NDIM, GlobalV::use_paw, comm_info);
+        // do diag and add davidson iteration counts up to avg_iter
         DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(
             david.diag(hpsi_func, spsi_func, dim, nband, ldPsi, psi, eigenvalue, david_diag_thr, david_maxiter, ntry_max, notconv_max));
     }

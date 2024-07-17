@@ -151,18 +151,15 @@ void Force_LCAO<double>::cal_fvnl_dbeta(const elecstate::DensityMatrix<double, d
                             nlm2[i] = nlm_tot[ad2][iw2][i + 1].data();
                         }
 
-                        const int nproj = ucell.infoNL.nproj[T0];
-                        int ib = 0;
-                        for (int nb = 0; nb < nproj; nb++)
+                        const double* tmp_d = nullptr;
+                        for (int no = 0; no < ucell.atoms[T0].ncpp.non_zero_count_soc[0]; no++)
                         {
-                            const int L0 = ucell.infoNL.Beta[T0].Proj[nb].getL();
-                            for (int m = 0; m < 2 * L0 + 1; m++)
+                            const int p1 = ucell.atoms[T0].ncpp.index1_soc[0][no];
+                            const int p2 = ucell.atoms[T0].ncpp.index2_soc[0][no];
+                            ucell.atoms[T0].ncpp.get_d(0, p1, p2, tmp_d);
+                            for (int ir = 0; ir < 3; ir++)
                             {
-                                for (int ir = 0; ir < 3; ir++)
-                                {
-                                    nlm[ir] += nlm2[ir][ib] * nlm1[ib] * ucell.atoms[T0].ncpp.dion(nb, nb);
-                                }
-                                ib += 1;
+                                nlm[ir] += nlm2[ir][p2] * nlm1[p1] * (*tmp_d);
                             }
                         }
 
@@ -174,18 +171,15 @@ void Force_LCAO<double>::cal_fvnl_dbeta(const elecstate::DensityMatrix<double, d
                                 nlm2[i] = nlm_tot[ad1][iw1][i + 1].data();
                             }
 
-                            const int nproj = ucell.infoNL.nproj[T0];
-                            int ib = 0;
-                            for (int nb = 0; nb < nproj; nb++)
+                            const double* tmp_d = nullptr;
+                            for (int no = 0; no < ucell.atoms[T0].ncpp.non_zero_count_soc[0]; no++)
                             {
-                                const int L0 = ucell.infoNL.Beta[T0].Proj[nb].getL();
-                                for (int m = 0; m < 2 * L0 + 1; m++)
+                                const int p1 = ucell.atoms[T0].ncpp.index1_soc[0][no];
+                                const int p2 = ucell.atoms[T0].ncpp.index2_soc[0][no];
+                                ucell.atoms[T0].ncpp.get_d(0, p1, p2, tmp_d);
+                                for (int ir = 0; ir < 3; ir++)
                                 {
-                                    for (int ir = 0; ir < 3; ir++)
-                                    {
-                                        nlm_t[ir] += nlm2[ir][ib] * nlm1[ib] * ucell.atoms[T0].ncpp.dion(nb, nb);
-                                    }
-                                    ib += 1;
+                                    nlm_t[ir] += nlm2[ir][p1] * nlm1[p2] * (*tmp_d);
                                 }
                             }
                         }

@@ -7,17 +7,7 @@
 #define PARALLEL_GLOBAL_H
 
 #include <complex>
-
-#ifdef __MPI
-#include "mpi.h"
-extern MPI_Comm POOL_WORLD;
-extern MPI_Comm INTER_POOL; // communicator among different pools
-extern MPI_Comm STO_WORLD;
-extern MPI_Comm PARAPW_WORLD;
-extern MPI_Comm GRID_WORLD; // mohan add 2012-01-13
-extern MPI_Comm DIAG_WORLD; // mohan add 2012-01-13
-
-#endif
+#include "parallel_comm.h"
 
 // void myProd(std::complex<double> *in,std::complex<double> *inout,int *len,MPI_Datatype *dptr);
 

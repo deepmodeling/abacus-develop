@@ -179,20 +179,16 @@ struct cal_vq_deri_op
                     FPTYPE* vq);
 };
 
-// // cpu version first, gpu version later
-// template <typename FPTYPE, typename Device>
-// struct prepare_vkb_deri_ptr_op<FPTYPE, base_device::DEVICE_GPU>{
-//     void operator()(
-//         const Device *ctx,
-//         int nbeta, double* nhtol, int nhtol_nc, int npw, int it,
-//         int ipol, int jpol,
-//         std::complex<FPTYPE>*vkb_out, std::complex<FPTYPE>** vkb_ptrs,
-//         FPTYPE* ylm_in, FPTYPE** ylm_ptrs,
-//         FPTYPE* ylm_deri_in, FPTYPE** ylm_deri_ptr1s, FPTYPE** ylm_deri_ptr2s,
-//         FPTYPE* vq_in, FPTYPE** vq_ptrs,
-//         FPTYPE* vq_deri_in, FPTYPE** vq_deri_ptrs
-//     );
-// };
+
+template <typename FPTYPE, typename Device>
+struct cal_stress_drhoc_aux_op{
+    void operator()(
+        const FPTYPE* r, const FPTYPE* rhoc, 
+        const FPTYPE *gx_arr, const FPTYPE *rab, FPTYPE *drhocg, 
+        const int mesh, const int igl0, const int ngg, const double omega,
+        int type
+    );
+};
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 template <typename FPTYPE>
@@ -309,20 +305,20 @@ struct cal_vq_deri_op<FPTYPE, base_device::DEVICE_GPU>
                     FPTYPE* vq);
 };
 
-// // cpu version first, gpu version later
-// template <typename FPTYPE>
-// struct prepare_vkb_deri_ptr_op<FPTYPE, base_device::DEVICE_GPU>{
-//     void operator()(
-//         const base_device::DEVICE_GPU* ctx,
-//         int nbeta, double* nhtol, int nhtol_nc, int npw, int it,
-//         int ipol, int jpol,
-//         std::complex<FPTYPE>*vkb_out, std::complex<FPTYPE>** vkb_ptrs,
-//         FPTYPE* ylm_in, FPTYPE** ylm_ptrs,
-//         FPTYPE* ylm_deri_in, FPTYPE** ylm_deri_ptr1s, FPTYPE** ylm_deri_ptr2s,
-//         FPTYPE* vq_in, FPTYPE** vq_ptrs,
-//         FPTYPE* vq_deri_in, FPTYPE** vq_deri_ptrs
-//     );
-// };
+
+
+template <typename FPTYPE>
+struct cal_stress_drhoc_aux_op<FPTYPE, base_device::DEVICE_GPU>{
+    void operator()(
+        const FPTYPE* r, const FPTYPE* rhoc, 
+        const FPTYPE *gx_arr, const FPTYPE *rab, FPTYPE *drhocg, 
+        const int mesh, const int igl0, const int ngg, const double omega,
+        int type
+    );
+};
+
+
+
 
 #endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 
