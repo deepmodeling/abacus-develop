@@ -217,7 +217,7 @@ void IState_Charge::begin(Gint_k& gk,
             elecstate::DensityMatrix<std::complex<double>, double> DM(&kv, this->ParaV, nspin);
 
 #ifdef __MPI
-            this->idmatrix(ib, nspin, nelec, nlocal, wg, DM, kv);
+            this->idmatrix(ib, nspin, nelec, nlocal, wg, DM, kv, if_separate_k);
 #else
             ModuleBase::WARNING_QUIT("IState_Charge::begin", "The `pchg` calculation is only available for MPI now!");
 #endif
@@ -347,6 +347,8 @@ void IState_Charge::select_bands(const int nbands_istate,
                                  const int mode,
                                  const int fermi_band)
 {
+    ModuleBase::TITLE("IState_Charge", "select_bands");
+
     int bands_below = 0;
     int bands_above = 0;
 
@@ -358,10 +360,10 @@ void IState_Charge::select_bands(const int nbands_istate,
         bands_below = nbands_istate;
         bands_above = nbands_istate;
 
-        std::cout << " Plot band-decomposed charge densities below Fermi surface with " << bands_below << " bands."
+        std::cout << " Plot band-decomposed charge densities below the Fermi surface with " << bands_below << " bands."
                   << std::endl;
 
-        std::cout << " Plot band-decomposed charge densities above Fermi surface with " << bands_above << " bands."
+        std::cout << " Plot band-decomposed charge densities above the Fermi surface with " << bands_above << " bands."
                   << std::endl;
 
         for (int ib = 0; ib < nbands; ++ib)
@@ -505,12 +507,22 @@ void IState_Charge::idmatrix(const int& ib,
                              const int nlocal,
                              const ModuleBase::matrix& wg,
                              elecstate::DensityMatrix<std::complex<double>, double>& DM,
-                             const K_Vectors& kv)
+                             const K_Vectors& kv,
+                             const bool if_separate_k)
 {
     ModuleBase::TITLE("IState_Charge", "idmatrix");
     assert(wg.nr == kv.get_nks());
 
     const int fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
+
+    // To ensure the normalization of charge density in multi-k calculation (if if_separate_k is true)
+    double wg_sum_k = 0;
+    double wg_sum_k_homo = 0;
+    for (int ik = 0; ik < kv.get_nks() / nspin; ++ik)
+    {
+        wg_sum_k += wg(ik, ib);
+        wg_sum_k_homo += wg(ik, fermi_band - 1);
+    }
 
     for (int ik = 0; ik < kv.get_nks(); ++ik)
     {
@@ -522,7 +534,16 @@ void IState_Charge::idmatrix(const int& ib,
 
         if (ib_local >= 0)
         {
-            wg_local[ib_local] = (ib < fermi_band) ? wg(ik, ib) : wg(ik, fermi_band - 1);
+            double wg_value;
+            if (if_separate_k)
+            {
+                wg_value = (ib < fermi_band) ? wg_sum_k : wg_sum_k_homo;
+            }
+            else
+            {
+                wg_value = (ib < fermi_band) ? wg(ik, ib) : wg(ik, fermi_band - 1);
+            }
+            wg_local[ib_local] = wg_value;
         }
 
         this->psi_k->fix_k(ik);
