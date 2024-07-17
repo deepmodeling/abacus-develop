@@ -6,7 +6,6 @@
 #include <vector>
 
 #include "diagh.h"
-#include "module_basis/module_ao/parallel_orbitals.h"
 
 namespace hsolver
 {
@@ -15,14 +14,16 @@ class DiagoScalapack : public DiagH<T>
 {
     private:
         using Real = typename GetTypeReal<T>::type;
+        const int dim;
+        const double diag_thr_in;
+        const int iter_nmax;
     public:
-        DiagoScalapack(const std::vector<Real>& precondition_in,
-                                                const int& nband_in,
-                                                const int& nbasis_in,
-                                                const double& diag_thr_in,
-                                                const int& diag_nmax_in);
+        DiagoScalapack(const int& nband_in,
+                        const int& nbasis_in,
+                        const double& diag_thr_in,
+                        const int& diag_nmax_in);
         ~DiagoScalapack();
-        void diag(T* h_mat, T* s_mat, const int ncol, const int nrow, const int* const desc, T* psi, Real* eigenvalue_in) override;
+        void diag(T* h_mat, T* s_mat, const int* const desc, T* psi, Real* eigenvalue_in) override;
 
     private:
         void pdsygvx_diag(const int *const desc,

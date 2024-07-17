@@ -1,25 +1,19 @@
 #include "diago_scalapack_indep.h"
 
 #include "module_base/global_variable.h"
+#include "module_base/scalapack_connector.h"
 
 #include <vector>
 
 using namespace hsolver;
 
 template <typename T>
-DiagoScalapack<T>::DiagoScalapack(const std::vector<Real>& precondition_in,
-                                                const int& nband_in,
-                                                const int& nbasis_in,
-                                                const double& diag_thr_in,
-                                                const int& diag_nmax_in)
-    : precondition(precondition_in), n_band(nband_in), dim(nbasis_in), nbase_x(nband_in * david_ndim_in),
-      diag_thr(diag_thr_in), iter_nmax(diag_nmax_in), is_subspace(need_subspace_in), diag_comm(diag_comm_in)
+DiagoScalapack<T>::DiagoScalapack(const int& nband_in,
+                                    const int& nbasis_in,
+                                    const double& diag_thr_in,
+                                    const int& diag_nmax_in)
+    : n_band(nband_in), dim(nbasis_in), diag_thr(diag_thr_in), iter_nmax(diag_nmax_in)
 {
-    this->device = base_device::get_device_type<Device>(this->ctx);
-
-    this->one = &this->cs.one;
-    this->zero = &this->cs.zero;
-    this->neg_one = &this->cs.neg_one;
 }
 
 template <typename T>
@@ -29,33 +23,39 @@ DiagoScalapack<T>::~DiagoScalapack()
 
 
 template<>
-void DiagoScalapack<double>::diag(double* h_mat, double* s_mat, const int ncol, const int nrow, const int* const desc, double* psi, Real* eigenvalue_in)
+void DiagoScalapack<double>::diag(double* h_mat, double* s_mat, const int* const desc, double* psi, Real* eigenvalue_in)
 {
     // Desc is for h_mat
     ModuleBase::TITLE("DiagoScalapack", "diag");
 
     std::vector<double> eigen(GlobalV::NLOCAL, 0.0);
 
-    this->pdsygvx_diag(desc, ncol, nrow, h_mat, s_mat, eigen.data(), psi);
+    this->pdsygvx_diag(desc, this->dim, this->dim, h_mat, s_mat, eigen.data(), psi);
 
     const int inc = 1;
 
-    BlasConnector::copy(GlobalV::NBANDS, eigen.data(), inc, eigenvalue_in, inc);
+    for (int i = 0; i < GlobalV::NBANDS; i++)
+    {
+        eigenvalue_in[i] = eigen[i];
+    }
 }
 
 
 template<>
-void DiagoScalapack<std::complex<double>>::diag(std::complex<double>* h_mat, std::complex<double>* s_mat, const int ncol, const int nrow, const int* const desc, std::complex<double>* psi, Real* eigenvalue_in)
+void DiagoScalapack<std::complex<double>>::diag(std::complex<double>* h_mat, std::complex<double>* s_mat, const int* const desc, std::complex<double>* psi, Real* eigenvalue_in)
 {
     ModuleBase::TITLE("DiagoScalapack", "diag");
 
     std::vector<double> eigen(GlobalV::NLOCAL, 0.0);
 
-    this->pzhegvx_diag(desc, ncol, nrow, h_mat, s_mat, eigen.data(), psi);
+    this->pzhegvx_diag(desc, this->dim, this->dim, h_mat, s_mat, eigen.data(), psi);
 
     const int inc = 1;
 
-    BlasConnector::copy(GlobalV::NBANDS, eigen.data(), inc, eigenvalue_in, inc);
+    for (int i = 0; i < GlobalV::NBANDS; i++)
+    {
+        eigenvalue_in[i] = eigen[i];
+    }
 }
 
 
