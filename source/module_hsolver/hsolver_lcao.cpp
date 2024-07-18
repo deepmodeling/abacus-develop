@@ -198,7 +198,22 @@ void HSolverLCAO<T, Device>::solveTemplate(hamilt::Hamilt<T>* pHamilt,
     {
         ModuleBase::WARNING_QUIT("HSolverLCAO::solve", "This method of DiagH is not supported!");
     }
+}
 
+template <typename T, typename Device>
+void HSolverLCAO<T, Device>::solve(hamilt::Hamilt<T>* pHamilt,
+                                   psi::Psi<T>& psi,
+                                   elecstate::ElecState* pes,
+                                   const std::string method_in,
+                                   const bool skip_charge)
+{
+    ModuleBase::TITLE("HSolverLCAO", "solve");
+    ModuleBase::timer::tick("HSolverLCAO", "solve");
+    // select the method of diagonalization
+    this->method = method_in;
+    //this->solveTemplate(pHamilt, psi, pes, this->method, skip_charge);
+
+    // 此处往下待修改！！！
     if (this->method == "cg_in_lcao")
     {
         this->precondition_lcao.resize(psi.get_nbasis());
@@ -265,31 +280,54 @@ void HSolverLCAO<T, Device>::solveTemplate(hamilt::Hamilt<T>* pHamilt,
 }
 
 template <typename T, typename Device>
-void HSolverLCAO<T, Device>::solve(hamilt::Hamilt<T>* pHamilt,
-                                   psi::Psi<T>& psi,
-                                   elecstate::ElecState* pes,
-                                   const std::string method_in,
-                                   const bool skip_charge)
-{
-    this->solveTemplate(pHamilt, psi, pes, this->method, skip_charge);
-}
-
-template <typename T, typename Device>
 void HSolverLCAO<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>& psi, double* eigenvalue)
 {
     ModuleBase::TITLE("HSolverLCAO", "hamiltSolvePsiK");
     ModuleBase::timer::tick("HSolverLCAO", "hamiltSolvePsiK");
 
-    if (this->method == "scalapack_gvx"){
+    if (this->method == "scalapack_gvx")
+    {
+#ifdef __MPI
         
         hamilt::MatrixBlock<T> h_mat, s_mat;
         hm->matrix(h_mat, s_mat);
 
-        this->pdiagh->diag(h_mat.p, s_mat.p, h_mat.desc, psi.get_pointer(), eigenvalue);
+        DiagoScalapack<T> sa(GlobalV::NBANDS, GlobalV::NLOCAL, GlobalV::NLOCAL, GlobalV::DSIZE);
+
+        sa.diag(h_mat.p, s_mat.p, h_mat.desc, psi.get_pointer(), eigenvalue);
+#endif
     }
-    if (this->method != "cg_in_lcao")
+#ifdef __ELPA
+    else if (this->method == "genelpa")
     {
-        this->pdiagh->diag(hm, psi, eigenvalue);
+        DiagoElpa<T> el();
+        el.diag(hm, psi, eigenvalue);
+    }
+#endif
+#ifdef __CUDA
+    else if (this->method == "cusolver")
+    {
+        DiagoCusolver<T> cs(this->ParaV);
+        cs.diag(hm, psi, eigenvalue);
+    }
+    else if (this->method == "cusolvermp")
+    {
+#ifdef __CUSOLVERMP
+        DiagoCusolverMP<T> cm();
+        cm.diag(hm, psi, eigenvalue);
+#else
+        ModuleBase::WARNING_QUIT("HSolverLCAO", "CUSOLVERMP did not compiled!");
+#endif
+    }
+#endif
+    else if (this->method == "lapack")
+    {
+#ifndef __MPI
+        DiagoLapack<T> la();
+        la.diag(hm, psi, eigenvalue);
+#else
+        ModuleBase::WARNING_QUIT("HSolverLCAO::solve", "This method of DiagH is not supported!");
+#endif
     }
     else
     {
