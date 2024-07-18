@@ -38,6 +38,7 @@ DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in,
 template <typename T, typename Device>
 DiagoDavid<T, Device>::~DiagoDavid()
 {
+    delmem_complex_op()(this->ctx, this->pbasis);
     delmem_complex_op()(this->ctx, this->hphi);
     delmem_complex_op()(this->ctx, this->sphi);
     delmem_complex_op()(this->ctx, this->hcc);
