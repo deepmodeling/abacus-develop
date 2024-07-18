@@ -28,7 +28,37 @@ class DiagoDavid : public DiagH<T, Device>
 
     virtual ~DiagoDavid() override;
 
+
+    /**
+     * @brief A function type representing the HPsi function.
+     *
+     * This function type is used to define a matrix-blockvector operator.
+     * For eigenvalue problem HX = λX or generalized eigenvalue problem HX = λSX,
+     * the HPsi function computes the product of the Hamiltonian matrix H and a blockvector psi.
+     *
+     * @param[out] AX  Pointer to output blockvector of type `T*`.
+     * @param[in]  X  Pointer to input blockvector of type `T*`.
+     * @param[in]  dim  Dimension of matrix.
+     * @param[in]  ldx  Leading dimension of blockvector.
+     * @param[in]  id_start  Start index of blockvector.
+     * @param[in]  id_end  End index of blockvector.
+     */
     using HPsiFunc = std::function<void(T*, T*, const int, const int, const int, const int)>;
+
+    /**
+     * @brief A function type representing a callback for computing SPsi values.
+     *
+     * This function type is used to define a callback function that computes SPsi values.
+     * It takes in parameters `T*`, `T*`, `const int`, `const int`, and `const int`.
+     * The first two parameters are pointers to the input and output arrays.
+     * The next three parameters represent the size of the arrays.
+     *
+     * @param[in]   X Pointer to the input array.
+     * @param[out] SX Pointer to the output array.
+     * @param[in] nrow Dimension of SX: nbands * nrow.
+     * @param[in] npw  Number of plane waves.
+     * @param[in] nbands Number of bands.
+     */
     using SPsiFunc = std::function<void(T*, T*, const int, const int, const int)>;
 
     int diag(const HPsiFunc& hpsi_func,           // function void hpsi(T*, T*, const int, const int, const int, const int) 
