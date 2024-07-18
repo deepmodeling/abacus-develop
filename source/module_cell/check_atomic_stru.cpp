@@ -58,13 +58,14 @@ void Check_Atomic_Stru::check_atomic_stru(UnitCell& ucell, const double& factor)
                     for (int a = -1; a < 2; a++) {
                         for (int b = -1; b < 2; b++) {
                             for (int c = -1; c < 2; c++) {
-                                if (it1 > it2)
+                                if (it1 > it2) {
                                     continue;
-                                else if (it1 == it2 && ia1 > ia2)
+                                } else if (it1 == it2 && ia1 > ia2) {
                                     continue;
-                                else if (it1 == it2 && ia1 == ia2 && a == 0
-                                         && b == 0 && c == 0)
+                                } else if (it1 == it2 && ia1 == ia2 && a == 0
+                                         && b == 0 && c == 0) {
                                     continue;
+}
 
                                 double x2 = ucell.atoms[it2].taud[ia2].x + a;
                                 double y2 = ucell.atoms[it2].taud[ia2].y + b;

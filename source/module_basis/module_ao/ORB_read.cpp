@@ -233,8 +233,9 @@ void LCAO_Orbitals::Read_Orbitals(std::ofstream& ofs_in,
     // }
 
     //	this->kmesh = static_cast<int> (PI / 0.01 / 4 / this->dk);
-    if (kmesh % 2 == 0)
+    if (kmesh % 2 == 0) {
         kmesh++;
+}
     ModuleBase::GlobalFunc::OUT(ofs_in, "kmesh", kmesh);
     //-----------------------------------------------------------------
 
