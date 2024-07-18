@@ -95,7 +95,7 @@ class DiagoDavid : public DiagH<T, Device>
     /// eigenvalue results
     Real* eigenvalue = nullptr;
 
-    T *pbasis = nullptr;  /// pointer to basis set(dim, nbase_x), leading dimension = dim
+    T *basis = nullptr;  /// pointer to basis set(dim, nbase_x), leading dimension = dim
 
     T* hpsi = nullptr;    /// the product of H and psi in the reduced basis set
 

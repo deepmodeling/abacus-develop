@@ -65,8 +65,8 @@ DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in,
                         this->cpu_ctx, this->eigenvalue, 0, nbase_x);
 
     // basis(dim, nbase_x), leading dimension = dim
-    resmem_complex_op()(this->ctx, pbasis, nbase_x * dim, "DAV::basis");
-    setmem_complex_op()(this->ctx, pbasis, 0, nbase_x * dim);
+    resmem_complex_op()(this->ctx, basis, nbase_x * dim, "DAV::basis");
+    setmem_complex_op()(this->ctx, basis, 0, nbase_x * dim);
 
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     // hpsi(nbase_x, dim); // the product of H and psi in the reduced basis set
@@ -98,7 +98,7 @@ DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in,
 template <typename T, typename Device>
 DiagoDavid<T, Device>::~DiagoDavid()
 {
-    delmem_complex_op()(this->ctx, this->pbasis);
+    delmem_complex_op()(this->ctx, this->basis);
     delmem_complex_op()(this->ctx, this->hpsi);
     delmem_complex_op()(this->ctx, this->spsi);
     delmem_complex_op()(this->ctx, this->hcc);
@@ -172,7 +172,7 @@ int DiagoDavid<T, Device>::diag_mock(const HPsiFunc& hpsi_func,
     // begin SchmidtOrth
     for (int m = 0; m < nband; m++)
     {
-        syncmem_complex_op()(this->ctx, this->ctx, pbasis + dim*m, psi_in + m*ldPsi, dim);
+        syncmem_complex_op()(this->ctx, this->ctx, basis + dim*m, psi_in + m*ldPsi, dim);
 
         this->SchmidtOrth(dim,
                          nband,
@@ -184,21 +184,21 @@ int DiagoDavid<T, Device>::diag_mock(const HPsiFunc& hpsi_func,
         if(this->use_paw)
         {
 #ifdef USE_PAW
-            GlobalC::paw_cell.paw_nl_psi(1,reinterpret_cast<const std::complex<double>*> (pbasis + dim*m),
+            GlobalC::paw_cell.paw_nl_psi(1,reinterpret_cast<const std::complex<double>*> (basis + dim*m),
                 reinterpret_cast<std::complex<double>*>(&this->spsi[m * dim]));
 #endif
         }
         else
         {
-            // phm_in->sPsi(pbasis + dim*m, &this->spsi[m * dim], dim, dim, 1);
-            spsi_func(pbasis + dim*m, &this->spsi[m * dim], dim, dim, 1);
+            // phm_in->sPsi(basis + dim*m, &this->spsi[m * dim], dim, dim, 1);
+            spsi_func(basis + dim*m, &this->spsi[m * dim], dim, dim, 1);
         }
     }
 
     // end of SchmidtOrth and calculate H|psi>
     // hpsi_info dav_hpsi_in(&basis, psi::Range(true, 0, 0, nband - 1), this->hpsi);
     // phm_in->ops->hPsi(dav_hpsi_in);
-    hpsi_func(this->hpsi, pbasis, nbase_x, dim, 0, nband - 1);
+    hpsi_func(this->hpsi, basis, nbase_x, dim, 0, nband - 1);
 
     this->cal_elem(dim, nbase, nbase_x, this->notconv, this->hpsi, this->spsi, this->hcc, this->scc);
 
@@ -264,7 +264,7 @@ int DiagoDavid<T, Device>::diag_mock(const HPsiFunc& hpsi_func,
                                       nband,        // n: col of B,C
                                       nbase,        // k: col of A, row of B
                                       this->one,
-                                      pbasis,       // A dim * nbase
+                                      basis,       // A dim * nbase
                                       dim,
                                       this->vcc,    // B nbase * nband
                                       nbase_x,
@@ -373,7 +373,7 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
                               vc_ev_vector, // B nbase * notconv
                               nbase, // LDB: if(N) max(1,k) if(T) max(1,n)
                               this->zero, // belta
-                              pbasis + dim*nbase, // C dim * notconv
+                              basis + dim*nbase, // C dim * notconv
                               dim // LDC: if(N) max(1, m)
     );
 
@@ -428,7 +428,7 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
                               vc_ev_vector, // B
                               nbase, // LDB: if(N) max(1,k) if(T) max(1,n)
                               this->one, // belta
-                              pbasis + dim*nbase, // C dim * notconv
+                              basis + dim*nbase, // C dim * notconv
                               dim // LDC: if(N) max(1, m)
     );
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -441,8 +441,8 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
 #if defined(__CUDA) || defined(__ROCM)
             vector_div_vector_op<T, Device>()(this->ctx,
                                                    dim,
-                                                   pbasis + dim*(nbase + m),
-                                                   pbasis + dim*(nbase + m),
+                                                   basis + dim*(nbase + m),
+                                                   basis + dim*(nbase + m),
                                                    this->d_precondition);
 #endif
         }
@@ -450,8 +450,8 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
         {
             vector_div_vector_op<T, Device>()(this->ctx,
                                                    dim,
-                                                   pbasis + dim*(nbase + m),
-                                                   pbasis + dim*(nbase + m),
+                                                   basis + dim*(nbase + m),
+                                                   basis + dim*(nbase + m),
                                                    this->precondition);
         }
         //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -476,14 +476,14 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
         if(this->use_paw)
         {
 #ifdef USE_PAW
-            GlobalC::paw_cell.paw_nl_psi(1,reinterpret_cast<const std::complex<double>*> (pbasis + dim*(nbase + m)),
+            GlobalC::paw_cell.paw_nl_psi(1,reinterpret_cast<const std::complex<double>*> (basis + dim*(nbase + m)),
                 reinterpret_cast<std::complex<double>*>(&spsi[(nbase + m) * dim]));
 #endif
         }
         else
         {
-            // phm_in->sPsi(pbasis + dim*(nbase + m), &spsi[(nbase + m) * dim], dim, dim, 1);
-            spsi_func(pbasis + dim*(nbase + m), &spsi[(nbase + m) * dim], dim, dim, 1);
+            // phm_in->sPsi(basis + dim*(nbase + m), &spsi[(nbase + m) * dim], dim, dim, 1);
+            spsi_func(basis + dim*(nbase + m), &spsi[(nbase + m) * dim], dim, dim, 1);
         }
     }
     // first nbase bands psi* dot notconv bands spsi to prepare lagrange_matrix
@@ -496,7 +496,7 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
                               notconv, // n: col of B,C
                               dim, // k: col of A, row of B
                               this->one, // alpha
-                              pbasis, // A
+                              basis, // A
                               dim, // LDA: if(N) max(1,m) if(T) max(1,k)
                               &spsi[nbase * dim], // B
                               dim, // LDB: if(N) max(1,k) if(T) max(1,n)
@@ -517,14 +517,14 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
         if(this->use_paw)
         {
 #ifdef USE_PAW
-            GlobalC::paw_cell.paw_nl_psi(1,reinterpret_cast<const std::complex<double>*> (pbasis + dim*(nbase + m)),
+            GlobalC::paw_cell.paw_nl_psi(1,reinterpret_cast<const std::complex<double>*> (basis + dim*(nbase + m)),
                 reinterpret_cast<std::complex<double>*>(&spsi[(nbase + m) * dim]));
 #endif
         }
         else
         {
-            // phm_in->sPsi(pbasis + dim*(nbase + m), &spsi[(nbase + m) * dim], dim, dim, 1);
-            spsi_func(pbasis + dim*(nbase + m), &spsi[(nbase + m) * dim], dim, dim, 1);
+            // phm_in->sPsi(basis + dim*(nbase + m), &spsi[(nbase + m) * dim], dim, dim, 1);
+            spsi_func(basis + dim*(nbase + m), &spsi[(nbase + m) * dim], dim, dim, 1);
         }
     }
     // calculate H|psi> for not convergence bands
@@ -532,7 +532,7 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     //                       psi::Range(true, 0, nbase, nbase + notconv - 1),
     //                       &hpsi[nbase * dim]); // &hp(nbase, 0)
     // phm_in->ops->hPsi(dav_hpsi_in);
-    hpsi_func(&hpsi[nbase * dim], pbasis, nbase_x, dim, nbase, nbase + notconv - 1);
+    hpsi_func(&hpsi[nbase * dim], basis, nbase_x, dim, nbase, nbase + notconv - 1);
 
     delmem_complex_op()(this->ctx, lagrange);
     delmem_complex_op()(this->ctx, vc_ev_vector);
@@ -567,7 +567,7 @@ void DiagoDavid<T, Device>::cal_elem(const int& dim,
                               nbase + notconv,
                               dim,
                               this->one,
-                              pbasis + dim*nbase, // dim * notconv
+                              basis + dim*nbase, // dim * notconv
                               dim,
                               hpsi,               // dim * (nbase + notconv)
                               dim,
@@ -582,7 +582,7 @@ void DiagoDavid<T, Device>::cal_elem(const int& dim,
                               nbase + notconv,
                               dim,
                               this->one,
-                              pbasis + dim*nbase, // dim * notconv
+                              basis + dim*nbase, // dim * notconv
                               dim,
                               spsi,               // dim * (nbase + notconv)
                               dim,
@@ -714,7 +714,7 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
     ModuleBase::timer::tick("DiagoDavid", "refresh");
 
     // update hp,sp
-    setmem_complex_op()(this->ctx, pbasis , 0, nbase_x * dim);
+    setmem_complex_op()(this->ctx, basis , 0, nbase_x * dim);
 
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     gemm_op<T, Device>()(this->ctx,
@@ -729,7 +729,7 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
                               this->vcc,        // B nbase * nband
                               nbase_x,
                               this->zero,
-                              pbasis,           // C dim * nband
+                              basis,           // C dim * nband
                               dim
     );
 
@@ -746,12 +746,12 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
                               this->vcc,                // B nbase * nband
                               nbase_x,
                               this->zero,
-                              pbasis + dim*nband,        // C dim * nband
+                              basis + dim*nband,        // C dim * nband
                               dim
     );
 
-    syncmem_complex_op()(this->ctx, this->ctx, hpsi, pbasis, dim * nband);
-    syncmem_complex_op()(this->ctx, this->ctx, spsi, pbasis + dim*nband, dim * nband);
+    syncmem_complex_op()(this->ctx, this->ctx, hpsi, basis, dim * nband);
+    syncmem_complex_op()(this->ctx, this->ctx, spsi, basis + dim*nband, dim * nband);
     /*for (int m = 0; m < nband; m++) {
         for (int ig = 0; ig < dim; ig++)
         {
@@ -761,11 +761,11 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
     }*/
 
     // update basis
-    setmem_complex_op()(this->ctx, pbasis , 0, nbase_x * dim);
+    setmem_complex_op()(this->ctx, basis , 0, nbase_x * dim);
 
     for (int m = 0; m < nband; m++)
     {
-        syncmem_complex_op()(this->ctx, this->ctx, pbasis + dim*m,psi_in + m*ldPsi, dim);
+        syncmem_complex_op()(this->ctx, this->ctx, basis + dim*m,psi_in + m*ldPsi, dim);
         /*for (int ig = 0; ig < npw; ig++)
             basis(m, ig) = psi(m, ig);*/
     }
@@ -853,7 +853,7 @@ void DiagoDavid<T, Device>::SchmidtOrth(const int& dim,
     assert(m >= 0);
     assert(m < nband);
 
-    T* psi_m = pbasis + dim*m;
+    T* psi_m = basis + dim*m;
 
     // std::complex<double> *lagrange = new std::complex<double>[m + 1];
     // ModuleBase::GlobalFunc::ZEROS(lagrange, m + 1);
@@ -869,7 +869,7 @@ void DiagoDavid<T, Device>::SchmidtOrth(const int& dim,
                                   mm_size, // n: col of B,C
                                   dim, // k: col of A, row of B
                                   this->one, // alpha
-                                  pbasis + dim*(m - mv_size + 1 - mm_size), // A
+                                  basis + dim*(m - mv_size + 1 - mm_size), // A
                                   dim, // LDA: if(N) max(1,m) if(T) max(1,k)
                                   &spsi[m * dim], // B
                                   dim, // LDB: if(N) max(1,k) if(T) max(1,n)
@@ -884,7 +884,7 @@ void DiagoDavid<T, Device>::SchmidtOrth(const int& dim,
                               dim,
                               mv_size,
                               this->one,
-                              pbasis + dim*(m - mv_size + 1),
+                              basis + dim*(m - mv_size + 1),
                               dim,
                               &spsi[m * dim],
                               1,
@@ -905,7 +905,7 @@ void DiagoDavid<T, Device>::SchmidtOrth(const int& dim,
                               dim,
                               m,
                               this->neg_one,
-                              pbasis,
+                              basis,
                               dim,
                               lagrange_m,
                               1,
