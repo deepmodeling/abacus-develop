@@ -1,9 +1,11 @@
-#include "for_test.h"
-#include "../esolver_dp.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "for_test.h"
+
 #define private public
 #define protected public
+#include "../esolver_dp.h"
+
 /************************************************
  *  unit tests of class ESolver_DP
  ***********************************************/
