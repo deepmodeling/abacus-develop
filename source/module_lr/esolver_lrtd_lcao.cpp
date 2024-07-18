@@ -328,6 +328,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
         psi_u,
         dpsi_u,
         d2psi_u,
+        PARAM.inp.nstream,
         GlobalV::GAMMA_ONLY_LOCAL,
         GlobalV::NSPIN,
         GlobalV::DOMAG,
@@ -337,8 +338,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
         GlobalV::NLOCAL,
         GlobalV::ofs_running,
         GlobalV::ofs_warning,
-        GlobalV::device_flag,
-        PARAM.inp.nstream);
+        GlobalV::device_flag);
     if (std::is_same<T, std::complex<double>>::value)
     {
         this->gt_.cal_nnrg(&this->paraMat_);
