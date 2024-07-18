@@ -12,6 +12,7 @@ void Gint::cpu_rho_interface(Gint_inout* inout) {
     const int ncyz = this->ny * this->nplane;
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
+
     std::vector<int> vindex(this->bxyz, 0);
 #ifdef _OPENMP
 #pragma omp parallel firstprivate(vindex)

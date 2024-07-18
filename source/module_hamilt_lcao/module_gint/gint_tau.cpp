@@ -95,7 +95,9 @@ void Gint::gint_kernel_tau(
 		else
 		{
 			Gint_Tools::mult_psi_DMR(
-				*this->gridt, this->bxyz, grid_index, na_grid,
+				*this->gridt, this->bxyz,
+				LD_pool,
+				grid_index, na_grid,
 				block_index, block_size,
 				cal_flag, 
 				dpsir_ylm_x.get_ptr_2D(),
@@ -103,7 +105,9 @@ void Gint::gint_kernel_tau(
 				this->DMRGint[is],
 				1);
 			Gint_Tools::mult_psi_DMR(
-				*this->gridt, this->bxyz, grid_index, na_grid,
+				*this->gridt, this->bxyz,
+				LD_pool,
+				grid_index, na_grid,
 				block_index, block_size,
 				cal_flag,
 				dpsir_ylm_y.get_ptr_2D(),
@@ -111,7 +115,9 @@ void Gint::gint_kernel_tau(
 				this->DMRGint[is],
 				1);
 			Gint_Tools::mult_psi_DMR(
-				*this->gridt, this->bxyz, grid_index, na_grid,
+				*this->gridt, this->bxyz,
+				LD_pool,
+				grid_index, na_grid,
 				block_index, block_size,
 				cal_flag, 
 				dpsir_ylm_z.get_ptr_2D(),
