@@ -36,7 +36,11 @@ DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in,
     // 3: check the eigenvalues and errors of the last result
     // default: no check
 
+
     // set auxiliary memory
+    // !!!
+    // allocate operaions MUST be paired with deallocate operations
+    // in the destructor
     assert(this->david_ndim > 1);
     assert(this->david_ndim * nband < dim * diag_comm.nproc);
 
@@ -53,8 +57,6 @@ DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in,
     /// - "band" means the superscript I : the number of excited states to be solved
     /// - k : k-points, the same meaning as the ground state
     /// - "basis" : number of occupied ks-orbitals(subscripts i,j) * number of unoccupied ks-orbitals(subscripts a,b), corresponding to "bands" of the ground state
-
-    // const int nbase_x = this->david_ndim * nband; // maximum dimension of the reduced basis set
 
     // the lowest N eigenvalues
     base_device::memory::resize_memory_op<Real, base_device::DEVICE_CPU>()(
@@ -87,6 +89,10 @@ DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in,
     resmem_complex_op()(this->ctx, this->vcc, nbase_x * nbase_x, "DAV::vcc");
     setmem_complex_op()(this->ctx, this->vcc, 0, nbase_x * nbase_x);
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    
+    // lagrange_matrix(nband, nband); // for orthogonalization
+    resmem_complex_op()(this->ctx, this->lagrange_matrix, nband * nband);
+    setmem_complex_op()(this->ctx, this->lagrange_matrix, 0, nband * nband);
 }
 
 template <typename T, typename Device>
@@ -142,10 +148,6 @@ int DiagoDavid<T, Device>::diag_mock(const HPsiFunc& hpsi_func,
     ModuleBase::timer::tick("DiagoDavid", "first");
 
     // orthogonalise the initial trial psi(0~nband-1)
-
-    // lagrange_matrix(nband, nband);
-    resmem_complex_op()(this->ctx, this->lagrange_matrix, nband * nband);
-    setmem_complex_op()(this->ctx, this->lagrange_matrix, 0, nband * nband);
 
     // plan for SchmidtOrth
     std::vector<int> pre_matrix_mm_m(nband, 0);
