@@ -1,5 +1,5 @@
 #include "module_base/parallel_common.h"
-#include "module_io/input.h"
+#include "module_parameter/parameter.h"
 #include "unitcell.h"
 #include "read_pp.h"
 
@@ -39,7 +39,7 @@ void UnitCell::read_cell_pseudopots(const std::string& pp_dir, std::ofstream& lo
                 }
                 upf.set_upf_q(this->atoms[i].ncpp); // liuyu add 2023-09-21
                 // average pseudopotential if needed
-                error_ap = upf.average_p(GlobalV::soc_lambda, this->atoms[i].ncpp); // added by zhengdy 2020-10-20
+                error_ap = upf.average_p(PARAM.inp.soc_lambda, this->atoms[i].ncpp); // added by zhengdy 2020-10-20
             }
             this->atoms[i].coulomb_potential = upf.coulomb_potential;
         }
@@ -123,8 +123,9 @@ void UnitCell::read_cell_pseudopots(const std::string& pp_dir, std::ofstream& lo
 
 void UnitCell::print_unitcell_pseudo(const std::string& fn)
 {
-    if (GlobalV::test_pseudo_cell)
+    if (GlobalV::test_pseudo_cell) {
         ModuleBase::TITLE("UnitCell", "print_unitcell_pseudo");
+}
     std::ofstream ofs(fn.c_str());
 
     this->print_cell(ofs);

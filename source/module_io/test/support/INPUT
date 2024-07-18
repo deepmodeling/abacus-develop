@@ -19,6 +19,7 @@ kspacing                       0 #unit in 1/bohr, should be > 0, default is 0 wh
 min_dist_coef                  0.2 #factor related to the allowed minimum distance between two atoms
 nbands                         8 #number of bands
 nbands_istate                  5 #number of bands around Fermi level for get_pchg calulation
+bands_to_print                 # specify the bands to be calculated in get_wf and get_pchg calculation
 if_separate_k                  false #specify whether to write the partial charge densities for all k-points to individual files or merge them
 symmetry                       1 #the control of symmetry
 init_vel                       False #read velocity from STRU or not
@@ -120,7 +121,7 @@ deepks_out_labels              0 #>0 compute descriptor for deepks
 deepks_scf                     0 #>0 add V_delta to Hamiltonian
 deepks_bandgap                 0 #>0 for bandgap label
 deepks_out_unittest            0 #if set 1, prints intermediate quantities that shall be used for making unit test
-deepks_model                    #file dir of traced pytorch model: 'model.ptg
+deepks_model                   None #file dir of traced pytorch model: 'model.ptg
 
 #Parameters (5.LCAO)
 basis_type                     lcao #PW; LCAO in pw; LCAO
@@ -326,7 +327,7 @@ td_edm                         0 # 0: new edm method   1: old edm method
 out_dipole                   0 #output dipole or not
 out_efield                     0 #output efield or not
 ocp                            0 #change occupation or not
-ocp_set                        none #set occupation
+ocp_set                        2*1 #set occupation
 
 #Parameters (17.berry_wannier)
 berry_phase                    0 #calculate berry phase or not

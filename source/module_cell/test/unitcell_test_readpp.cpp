@@ -23,6 +23,9 @@ Magnetism::Magnetism() {
     this->start_magnetization = nullptr;
 }
 Magnetism::~Magnetism() { delete[] this->start_magnetization; }
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 
 /************************************************
  *  unit test of class UnitCell
@@ -362,9 +365,8 @@ TEST_F(UcellDeathTest, CheckStructure) {
 }
 
 TEST_F(UcellDeathTest, ReadPseudoWarning1) {
-    GlobalV::global_pseudo_dir = pp_dir;
-    GlobalV::out_element_info = 1;
-    GlobalV::MIN_DIST_COEF = 0.2;
+    PARAM.input.pseudo_dir = pp_dir;
+    PARAM.input.out_element_info = true;
     ucell->pseudo_fn[1] = "H_sr_lda.upf";
     testing::internal::CaptureStdout();
     EXPECT_EXIT(ucell->read_pseudo(ofs), ::testing::ExitedWithCode(0), "");
@@ -374,9 +376,8 @@ TEST_F(UcellDeathTest, ReadPseudoWarning1) {
 }
 
 TEST_F(UcellDeathTest, ReadPseudoWarning2) {
-    GlobalV::global_pseudo_dir = pp_dir;
-    GlobalV::out_element_info = 1;
-    GlobalV::MIN_DIST_COEF = 0.2;
+    PARAM.input.pseudo_dir = pp_dir;
+    PARAM.input.out_element_info = true;
     ucell->pseudo_fn[0] = "Al_ONCV_PBE-1.0.upf";
     testing::internal::CaptureStdout();
     EXPECT_NO_THROW(ucell->read_pseudo(ofs));

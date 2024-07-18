@@ -253,22 +253,14 @@ void cal_dpsir_ylm(
 
 // dpsir_ylm * (r-R), R is the atomic position
 void cal_dpsirr_ylm(
-    const Grid_Technique& gt,
-    const int bxyz,
+    const Grid_Technique& gt, const int bxyz,
     const int na_grid,                 // number of atoms on this grid
     const int grid_index,              // 1d index of FFT index (i,j,k)
     const int* const block_index,      // block_index[na_grid+1], count total number of atomis orbitals
     const int* const block_size,       // block_size[na_grid],	number of columns of a band
     const bool* const* const cal_flag, // cal_flag[bxyz][na_grid],	whether the atom-grid distance is larger than cutoff
-    double* const* const dpsir_ylm_x,
-    double* const* const dpsir_ylm_y,
-    double* const* const dpsir_ylm_z,
-    double* const* const dpsir_ylm_xx,
-    double* const* const dpsir_ylm_xy,
-    double* const* const dpsir_ylm_xz,
-    double* const* const dpsir_ylm_yy,
-    double* const* const dpsir_ylm_yz,
-    double* const* const dpsir_ylm_zz);
+    double* const* const dpsir_ylm_x, double* const* const dpsir_ylm_y, double* const* const dpsir_ylm_z,
+    double* const* const dpsir_ylm);
 
 void cal_ddpsir_ylm(
     const Grid_Technique& gt,
@@ -314,6 +306,7 @@ void mult_psi_DM(
 // sum_nu,R rho_mu,nu(R) psi_nu, for multi-k
 void mult_psi_DMR(const Grid_Technique& gt,
                   const int bxyz,
+                  const int LD_pool,
                   const int& grid_index,
                   const int& na_grid,
                   const int* const block_index,

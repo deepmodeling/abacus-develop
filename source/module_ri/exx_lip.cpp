@@ -549,7 +549,7 @@ void Exx_Lip<T, Device>::exx_energy_cal()
 template <typename T, typename Device>
 void Exx_Lip<T, Device>::write_q_pack() const
 {
-    if (GlobalV::out_chg == 0)
+    if (PARAM.inp.out_chg == 0)
         return;
 
     if (!GlobalV::RANK_IN_POOL)

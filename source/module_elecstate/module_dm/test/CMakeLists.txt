@@ -10,7 +10,7 @@ endif()
 
 AddTest(
   TARGET dm_io_test_serial
-  LIBS ${math_libs} base device cell_info
+  LIBS ${math_libs} base device cell_info parameter
   SOURCES test_dm_io.cpp ../density_matrix.cpp
   ${ABACUS_SOURCE_DIR}/module_hamilt_lcao/module_hcontainer/base_matrix.cpp
   ${ABACUS_SOURCE_DIR}/module_hamilt_lcao/module_hcontainer/hcontainer.cpp

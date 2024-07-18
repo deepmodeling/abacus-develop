@@ -31,6 +31,10 @@ Magnetism::~Magnetism()
     delete[] this->start_magnetization;
 }
 
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
+
 /***************************************************************
  *  unit test of read_rho, write_rho and trilinear_interpolate
  ***************************************************************/
@@ -116,7 +120,7 @@ TEST_F(RhoIOTest, Write)
     // then write
     std::string ssc = "SPIN1_CHG.cube";
     GlobalV::MY_RANK = 0;
-    GlobalV::out_chg = 1;
+    PARAM.input.out_chg = 1;
     ModuleIO::write_rho(rho[is], is, nspin, 0, ssc, nx, ny, nz, ef, ucell);
     std::ifstream ifs;
     ifs.open("SPIN1_CHG.cube");

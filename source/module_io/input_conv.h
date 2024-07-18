@@ -16,6 +16,7 @@
 #include <string.h>
 #include <string>
 #include <vector>
+#include <algorithm>
 
 namespace Input_Conv
 {

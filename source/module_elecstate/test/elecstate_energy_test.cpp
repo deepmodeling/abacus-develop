@@ -4,6 +4,10 @@
 #include "gtest/gtest.h"
 #include "module_elecstate/elecstate.h"
 #include "module_elecstate/elecstate_getters.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
+Parameter PARMA;
 
 // mock functions
 namespace elecstate
@@ -83,7 +87,7 @@ class MockElecState : public ElecState
         GlobalV::BASIS_TYPE = "pw";
         GlobalV::KPAR = 1;
         GlobalV::NPROC_IN_POOL = 1;
-        GlobalV::sc_mag_switch = 1;
+        PARAM.input.sc_mag_switch = 1;
     }
 };
 const double* ElecState::getRho(int spin) const

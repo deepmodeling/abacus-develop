@@ -212,21 +212,12 @@ void Input_Conv::Convert()
     {
         GlobalV::stru_file = INPUT.stru_file;
     }
-    GlobalV::global_wannier_card = PARAM.inp.wannier_card;
     if (PARAM.inp.kpoint_file != "")
     {
         GlobalV::global_kpoint_card = PARAM.inp.kpoint_file;
     }
-    if (PARAM.inp.pseudo_dir != "")
-    {
-        GlobalV::global_pseudo_dir = PARAM.inp.pseudo_dir + "/";
-    }
-    if (PARAM.inp.orbital_dir != "")
-    {
-        GlobalV::global_orbital_dir = PARAM.inp.orbital_dir + "/";
-    }
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "pseudo_dir", GlobalV::global_pseudo_dir);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "orbital_dir", GlobalV::global_orbital_dir);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "pseudo_dir", PARAM.inp.pseudo_dir);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "orbital_dir", PARAM.inp.orbital_dir);
     // GlobalV::global_pseudo_type = PARAM.inp.pseudo_type;
     GlobalC::ucell.setup(PARAM.inp.latname,
                          PARAM.inp.ntype,
@@ -243,9 +234,7 @@ void Input_Conv::Convert()
     {
         GlobalV::KSPACING[i] = PARAM.inp.kspacing[i];
     }
-    GlobalV::MIN_DIST_COEF = PARAM.inp.min_dist_coef;
     GlobalV::NBANDS = PARAM.inp.nbands;
-    GlobalV::NBANDS_ISTATE = PARAM.inp.nbands_istate;
 
     GlobalV::device_flag = base_device::information::get_device_flag(PARAM.inp.device,
                                                                      PARAM.inp.ks_solver,
@@ -275,20 +264,13 @@ void Input_Conv::Convert()
     GlobalV::ESOLVER_TYPE = PARAM.inp.esolver_type;
 
     GlobalV::PSEUDORCUT = PARAM.inp.pseudo_rcut;
-    GlobalV::PSEUDO_MESH = PARAM.inp.pseudo_mesh;
 
     GlobalV::DFT_FUNCTIONAL = PARAM.inp.dft_functional;
-    GlobalV::XC_TEMPERATURE = PARAM.inp.xc_temperature;
     GlobalV::NSPIN = PARAM.inp.nspin;
 
     GlobalV::CAL_FORCE = PARAM.inp.cal_force;
     GlobalV::FORCE_THR = PARAM.inp.force_thr;
 
-    GlobalV::STRESS_THR = PARAM.inp.stress_thr;
-    GlobalV::PRESS1 = PARAM.inp.press1;
-    GlobalV::PRESS2 = PARAM.inp.press2;
-    GlobalV::PRESS3 = PARAM.inp.press3;
-    GlobalV::out_element_info = PARAM.inp.out_element_info;
 #ifdef __LCAO
     Force_Stress_LCAO<double>::force_invalid_threshold_ev = PARAM.inp.force_thr_ev2;
     Force_Stress_LCAO<std::complex<double>>::force_invalid_threshold_ev = PARAM.inp.force_thr_ev2;
@@ -305,10 +287,8 @@ void Input_Conv::Convert()
 
     GlobalV::CAL_STRESS = PARAM.inp.cal_stress;
 
-    GlobalV::NUM_STREAM = PARAM.inp.nstream;
 
     GlobalV::RELAX_METHOD = PARAM.inp.relax_method;
-    GlobalV::relax_scale_force = PARAM.inp.relax_scale_force;
     GlobalV::relax_new = PARAM.inp.relax_new;
 
     GlobalV::use_paw = PARAM.inp.use_paw;
@@ -321,7 +301,6 @@ void Input_Conv::Convert()
     GlobalV::BASIS_TYPE = PARAM.inp.basis_type;
     GlobalV::KS_SOLVER = PARAM.inp.ks_solver;
     GlobalV::SEARCH_RADIUS = PARAM.inp.search_radius;
-    GlobalV::SEARCH_PBC = PARAM.inp.search_pbc;
 
     //----------------------------------------------------------
     // planewave (8/8)
@@ -331,9 +310,7 @@ void Input_Conv::Convert()
     //----------------------------------------------------------
     // diagonalization  (5/5)
     //----------------------------------------------------------
-    GlobalV::DIAGO_PROC = PARAM.inp.diago_proc;
     GlobalV::PW_DIAG_NMAX = PARAM.inp.pw_diag_nmax;
-    GlobalV::DIAGO_CG_PREC = PARAM.inp.diago_cg_prec;
     GlobalV::PW_DIAG_NDIM = PARAM.inp.pw_diag_ndim;
 
     hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_CPU>::diago_full_acc = PARAM.inp.diago_full_acc;
@@ -346,21 +323,12 @@ void Input_Conv::Convert()
 
     GlobalV::PW_DIAG_THR = PARAM.inp.pw_diag_thr;
     GlobalV::NB2D = PARAM.inp.nb2d;
-    GlobalV::NURSE = PARAM.inp.nurse;
-    GlobalV::COLOUR = PARAM.inp.colour;
-    GlobalV::T_IN_H = PARAM.inp.t_in_h;
-    GlobalV::VL_IN_H = PARAM.inp.vl_in_h;
-    GlobalV::VNL_IN_H = PARAM.inp.vnl_in_h;
-    GlobalV::VH_IN_H = PARAM.inp.vh_in_h;
-    GlobalV::VION_IN_H = PARAM.inp.vion_in_h;
     GlobalV::TEST_FORCE = PARAM.inp.test_force;
     GlobalV::TEST_STRESS = PARAM.inp.test_stress;
-    GlobalV::test_skip_ewald = PARAM.inp.test_skip_ewald;
 
     //----------------------------------------------------------
     // iteration (1/3)
     //----------------------------------------------------------
-    GlobalV::SCF_THR = PARAM.inp.scf_thr;
     GlobalV::SCF_THR_TYPE = PARAM.inp.scf_thr_type;
 
 #ifdef __LCAO
@@ -379,7 +347,6 @@ void Input_Conv::Convert()
             ModuleBase::GlobalFunc::ZEROS(GlobalC::dftu.U, GlobalC::ucell.ntype);
         }
     }
-    GlobalV::onsite_radius = PARAM.inp.onsite_radius;
 #endif
     //--------------------------------------------
     // added by zhengdy-soc
@@ -399,7 +366,6 @@ void Input_Conv::Convert()
         GlobalV::DOMAG = false;
         GlobalV::DOMAG_Z = true;
         GlobalV::LSPINORB = PARAM.inp.lspinorb;
-        GlobalV::soc_lambda = PARAM.inp.soc_lambda;
         if (PARAM.globalv.gamma_only_local)
         {
             ModuleBase::WARNING_QUIT("input_conv",
@@ -464,18 +430,7 @@ void Input_Conv::Convert()
     read_td_efield();
 #endif
 
-    // setting for constrained DFT, jiyy add 2020.10.11
-    // For example, when we studying nitrogen-vacancy center,
-    // it requires an additional excitation of an electron conduction band to
-    // simulate the excited state, used for TDDFT only.
-    GlobalV::ocp = PARAM.inp.ocp;
-    GlobalV::ocp_set = PARAM.inp.ocp_set;
-    if (GlobalV::ocp == 1)
-    {
-        parse_expression(GlobalV::ocp_set, GlobalV::ocp_kb);
-    }
-
-    GlobalV::out_mul = PARAM.inp.out_mul; // qifeng add 2019/9/10
+   
 
     //----------------------------------------------------------
     // about restart, // Peize Lin add 2020-04-04
@@ -622,27 +577,18 @@ void Input_Conv::Convert()
     // iteration
     //----------------------------------------------------------
     GlobalV::SCF_NMAX = PARAM.inp.scf_nmax;
-    GlobalV::RELAX_NMAX = PARAM.inp.relax_nmax;
-    GlobalV::md_prec_level = PARAM.mdp.md_prec_level;
 
     //----------------------------------------------------------
     // wavefunction / charge / potential / (2/4)
     //----------------------------------------------------------
-    GlobalV::OUT_FREQ_ELEC = PARAM.inp.out_freq_elec;
-    GlobalV::OUT_FREQ_ION = PARAM.inp.out_freq_ion;
     GlobalV::init_chg = PARAM.inp.init_chg;
     GlobalV::init_wfc = PARAM.inp.init_wfc;
     GlobalV::psi_initializer = PARAM.inp.psi_initializer;
     GlobalV::chg_extrap = PARAM.inp.chg_extrap; // xiaohui modify 2015-02-01
-    GlobalV::out_chg = PARAM.inp.out_chg;
     GlobalV::nelec = PARAM.inp.nelec;
-    GlobalV::nelec_delta = PARAM.inp.nelec_delta;
     GlobalV::out_pot = PARAM.inp.out_pot;
     GlobalV::out_app_flag = PARAM.inp.out_app_flag;
-    GlobalV::out_ndigits = PARAM.inp.out_ndigits;
 
-    GlobalV::out_bandgap = PARAM.inp.out_bandgap; // QO added for bandgap printing
-    GlobalV::out_interval = PARAM.inp.out_interval;
 #ifdef __LCAO
     hsolver::HSolverLCAO<double>::out_mat_hs = PARAM.inp.out_mat_hs;
     hsolver::HSolverLCAO<double>::out_mat_hsR = PARAM.inp.out_mat_hs2; // LiuXh add 2019-07-16
@@ -696,7 +642,6 @@ void Input_Conv::Convert()
     GlobalV::deepks_scf = PARAM.inp.deepks_scf;
     GlobalV::deepks_bandgap = PARAM.inp.deepks_bandgap; // QO added for bandgap label 2021-12-15
     GlobalV::deepks_v_delta = PARAM.inp.deepks_v_delta;
-    GlobalV::deepks_out_unittest = PARAM.inp.deepks_out_unittest;
     GlobalV::deepks_out_labels = PARAM.inp.deepks_out_labels;
     GlobalV::deepks_equiv = PARAM.inp.deepks_equiv;
 
@@ -704,7 +649,7 @@ void Input_Conv::Convert()
     {
         ModuleBase::WARNING_QUIT("Input_conv", "deepks_equiv and deepks_bandgap cannot be used together");
     }
-    if (GlobalV::deepks_out_unittest)
+    if (PARAM.inp.deepks_out_unittest)
     {
         GlobalV::deepks_out_labels = true;
         GlobalV::deepks_scf = true;
@@ -736,22 +681,11 @@ void Input_Conv::Convert()
     //-----------------------------------------------
     GlobalV::imp_sol = PARAM.inp.imp_sol;
     GlobalV::eb_k = PARAM.inp.eb_k;
-    GlobalV::tau = PARAM.inp.tau;
-    GlobalV::sigma_k = PARAM.inp.sigma_k;
-    GlobalV::nc_k = PARAM.inp.nc_k;
 
     //-----------------------------------------------
     // Deltaspin related parameters
     //-----------------------------------------------
-    GlobalV::sc_mag_switch = PARAM.inp.sc_mag_switch;
-    GlobalV::decay_grad_switch = PARAM.inp.decay_grad_switch;
     GlobalV::sc_thr = PARAM.inp.sc_thr;
-    GlobalV::nsc = PARAM.inp.nsc;
-    GlobalV::nsc_min = PARAM.inp.nsc_min;
-    GlobalV::sc_scf_nmin = PARAM.inp.sc_scf_nmin;
-    GlobalV::alpha_trial = PARAM.inp.alpha_trial;
-    GlobalV::sccut = PARAM.inp.sccut;
-    GlobalV::sc_file = PARAM.inp.sc_file;
 
     // mixing parameters
     GlobalV::MIXING_MODE = PARAM.inp.mixing_mode;
@@ -769,9 +703,6 @@ void Input_Conv::Convert()
     //-----------------------------------------------
     // Quasiatomic Orbital analysis
     //-----------------------------------------------
-    GlobalV::qo_switch = PARAM.inp.qo_switch;
-    GlobalV::qo_basis = PARAM.inp.qo_basis;
-    GlobalV::qo_strategy = PARAM.inp.qo_strategy;
     GlobalV::qo_thr = PARAM.inp.qo_thr;
     GlobalV::qo_screening_coeff = PARAM.inp.qo_screening_coeff;
 

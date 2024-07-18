@@ -288,7 +288,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
         GlobalC::ORB.get_rcutmax_Phi(),
         GlobalC::ucell.infoNL.get_rcutmax_Beta(),
         GlobalV::GAMMA_ONLY_LOCAL);
-    atom_arrange::search(GlobalV::SEARCH_PBC,
+    atom_arrange::search(PARAM.inp.search_pbc,
         GlobalV::ofs_running,
         GlobalC::GridD,
         this->ucell,
@@ -326,7 +326,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
         psi_u,
         dpsi_u,
         d2psi_u,
-        GlobalV::NUM_STREAM);
+        PARAM.inp.nstream);
     psi_u.clear();
     psi_u.shrink_to_fit();
     dpsi_u.clear();

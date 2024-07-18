@@ -239,9 +239,9 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
 #endif
 
     // 14) set occupations
-    if (GlobalV::ocp)
+    if (PARAM.inp.ocp)
     {
-        this->pelec->fixed_weights(GlobalV::ocp_kb, GlobalV::NBANDS, GlobalV::nelec);
+        this->pelec->fixed_weights(PARAM.inp.ocp_kb, GlobalV::NBANDS, GlobalV::nelec);
     }
 
     ModuleBase::timer::tick("ESolver_KS_LCAO", "before_all_runners");
@@ -259,7 +259,7 @@ void ESolver_KS_LCAO<TK, TR>::init_after_vc(const Input_para& inp, UnitCell& uce
     ModuleBase::timer::tick("ESolver_KS_LCAO", "init_after_vc");
 
     ESolver_KS<TK>::init_after_vc(inp, ucell);
-    if (GlobalV::md_prec_level == 2)
+    if (inp.mdp.md_prec_level == 2)
     {
         delete this->pelec;
         this->pelec = new elecstate::ElecStateLCAO<TK>(
@@ -525,7 +525,7 @@ void ESolver_KS_LCAO<TK, TR>::init_basis_lcao(const Input_para& inp, UnitCell& u
 
     two_center_bundle_.build_orb(ucell.ntype, ucell.orbital_fn);
     two_center_bundle_.build_alpha(GlobalV::deepks_setorb, &ucell.descriptor_file);
-    two_center_bundle_.build_orb_onsite(ucell.ntype, GlobalV::onsite_radius);
+    two_center_bundle_.build_orb_onsite(PARAM.inp.onsite_radius);
     // currently deepks only use one descriptor file, so cast bool to int is
     // fine
 
@@ -720,7 +720,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
     }
 #endif
 
-    if (GlobalV::VL_IN_H)
+    if (PARAM.inp.vl_in_h)
     {
         // update Gint_K
         if (!GlobalV::GAMMA_ONLY_LOCAL)
@@ -733,7 +733,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
 
     // run the inner lambda loop to contrain atomic moments with the DeltaSpin
     // method
-    if (GlobalV::sc_mag_switch && iter > GlobalV::sc_scf_nmin)
+    if (PARAM.inp.sc_mag_switch && iter > PARAM.inp.sc_scf_nmin)
     {
         SpinConstrain<TK, base_device::DEVICE_CPU>& sc = SpinConstrain<TK, base_device::DEVICE_CPU>::getScInstance();
         sc.run_lambda_loop(iter - 1);
@@ -780,7 +780,7 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2density(int istep, int iter, double ethr)
 
         this->phsol->solve(this->p_hamilt, this->psi[0], this->pelec, GlobalV::KS_SOLVER);
 
-        if (GlobalV::out_bandgap)
+        if (PARAM.inp.out_bandgap)
         {
             if (!GlobalV::TWO_EFERMI)
             {
@@ -846,7 +846,7 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2density(int istep, int iter, double ethr)
 #endif
 
     // 8) for delta spin
-    if (GlobalV::sc_mag_switch)
+    if (PARAM.inp.sc_mag_switch)
     {
         SpinConstrain<TK, base_device::DEVICE_CPU>& sc = SpinConstrain<TK, base_device::DEVICE_CPU>::getScInstance();
         sc.cal_MW(iter, this->p_hamilt);
@@ -900,7 +900,7 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
             bool bit = false; // LiuXh, 2017-03-21
             // if set bit = true, there would be error in soc-multi-core
             // calculation, noted by zhengdy-soc
-            if (this->psi != nullptr && (istep % GlobalV::out_interval == 0))
+            if (this->psi != nullptr && (istep % PARAM.inp.out_interval == 0))
             {
                 hamilt::MatrixBlock<TK> h_mat, s_mat;
                 this->p_hamilt->matrix(h_mat, s_mat);
@@ -941,7 +941,7 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
 
     // 2) print wavefunctions
     if (elecstate::ElecStateLCAO<TK>::out_wfc_lcao && (this->conv_elec || iter == GlobalV::SCF_NMAX)
-        && (istep % GlobalV::out_interval == 0))
+        && (istep % PARAM.inp.out_interval == 0))
     {
         ModuleIO::write_wfc_nao(elecstate::ElecStateLCAO<TK>::out_wfc_lcao,
                                 this->psi[0],
@@ -1072,7 +1072,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int iter)
     // 5) cal_MW?
     // escon: energy of spin constraint depends on Mi, so cal_energies should be
     // called after cal_MW
-    if (GlobalV::sc_mag_switch)
+    if (PARAM.inp.sc_mag_switch)
     {
         SpinConstrain<TK, base_device::DEVICE_CPU>& sc = SpinConstrain<TK, base_device::DEVICE_CPU>::getScInstance();
         sc.cal_MW(iter, this->p_hamilt);
@@ -1130,7 +1130,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
                         istep);
 
     // 3) write charge density
-    if (GlobalV::out_chg)
+    if (PARAM.inp.out_chg)
     {
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
@@ -1260,11 +1260,11 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
     }
 
     // 14) write md related
-    if (!md_skip_out(GlobalV::CALCULATION, istep, GlobalV::out_interval))
+    if (!md_skip_out(GlobalV::CALCULATION, istep, PARAM.inp.out_interval))
     {
         this->create_Output_Mat_Sparse(istep).write();
         // mulliken charge analysis
-        if (GlobalV::out_mul)
+        if (PARAM.inp.out_mul)
         {
             this->cal_mag(istep, true);
         }
@@ -1272,7 +1272,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
 
     // 15) write spin constrian MW?
     // spin constrain calculations, added by Tianqi Zhao.
-    if (GlobalV::sc_mag_switch) {
+    if (PARAM.inp.sc_mag_switch) {
         SpinConstrain<TK, base_device::DEVICE_CPU>& sc
             = SpinConstrain<TK, base_device::DEVICE_CPU>::getScInstance();
         sc.cal_MW(istep, true);
@@ -1286,12 +1286,12 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
     }
 
     // 17) write quasi-orbitals, added by Yike Huang.
-    if (GlobalV::qo_switch)
+    if (PARAM.inp.qo_switch)
     {
-        toQO tqo(GlobalV::qo_basis, GlobalV::qo_strategy, GlobalV::qo_thr, GlobalV::qo_screening_coeff);
+        toQO tqo(PARAM.inp.qo_basis, PARAM.inp.qo_strategy, GlobalV::qo_thr, GlobalV::qo_screening_coeff);
         tqo.initialize(GlobalV::global_out_dir,
-                       GlobalV::global_pseudo_dir,
-                       GlobalV::global_orbital_dir,
+                       PARAM.inp.pseudo_dir,
+                       PARAM.inp.orbital_dir,
                        &GlobalC::ucell,
                        this->kv.kvec_d,
                        GlobalV::ofs_running,

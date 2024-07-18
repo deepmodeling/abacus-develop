@@ -19,14 +19,11 @@ namespace GlobalV
 // input.cpp.
 //----------------------------------------------------------
 int NBANDS = 0;
-int NBANDS_ISTATE = 0; // default number.
 int NLOCAL = 0;        // total number of local basis.
 
 double KSPACING[3] = {0.0, 0.0, 0.0};
-double MIN_DIST_COEF = 0.2;
 
 double PSEUDORCUT = 0;
-bool PSEUDO_MESH = false;
 
 std::string CALCULATION = "scf";
 std::string ESOLVER_TYPE = "ksdft";
@@ -35,9 +32,7 @@ int DIP_COR_FLAG = 0;     // 7: add dipole field
 bool GATE_FLAG = false;   // add gate field
 bool out_app_flag = true; // whether output r(R), H(R), S(R), T(R), and dH(R) matrices in an
                           // append manner during MD  liuyu 2023-03-20
-int out_ndigits = 8;
 std::string DFT_FUNCTIONAL = "default";
-double XC_TEMPERATURE = 0.0;
 int NSPIN = 1;       // LDA
 bool TWO_EFERMI = false; // two fermi energy, exist only magnetization is fixed.
 double nupdown = 0.0;
@@ -45,20 +40,11 @@ int CURRENT_K = 0;
 int CAL_FORCE = 0; // if cal_force >1, means do the grid integration 'cal_force' times.
 double FORCE_THR = 1.0e-3;
 bool CAL_STRESS = false;
-int NUM_STREAM = 4;
-double PRESS1 = 0.0;
-double PRESS2 = 0.0;
-double PRESS3 = 0.0;
 double PRESSURE = 0.0;
 std::string RELAX_METHOD = "bfgs";
 std::string OUT_LEVEL = "ie";
-double relax_scale_force = 0.5;
 bool relax_new = true;
 bool fixed_atoms = false;
-int OUT_FREQ_ELEC = 0;
-int OUT_FREQ_ION = 0;
-int RELAX_NMAX = 20;
-int md_prec_level = 0;
 int SCF_NMAX = 100;
 
 bool use_paw = false;
@@ -68,41 +54,25 @@ bool double_grid = false;
 std::string BASIS_TYPE = "pw"; // xiaohui add 2013-09-01
 std::string KS_SOLVER = "cg";  // xiaohui add 2013-09-01
 double SEARCH_RADIUS = -1.0;
-bool SEARCH_PBC = true;
-bool SPARSE_MATRIX = false;
 
-int DIAGO_PROC = 0;
 int PW_DIAG_NMAX = 30;
-int DIAGO_CG_PREC = 1; // mohan add 2012-03-31
 int PW_DIAG_NDIM = 4;
 double PW_DIAG_THR = 1.0e-2;
 int NB2D = 1;
 
-double SCF_THR = 1.0e-9;
 int SCF_THR_TYPE = 1;
 
 double DQ = 0.010; // space between Q points of the reciprocal radial tab
 int NQX = 10000;   // number of points describing reciprocal radial tab
 int NQXQ = 10000;  // number of points describing reciprocal radial tab for Q
 
-int NURSE = 0; // used for debug.
 bool COLOUR = false;
 bool GAMMA_ONLY_LOCAL = false; // mohan add 2010-10-20
 bool GAMMA_ONLY_PW = false;    // mohan add 2012-06-05
 
-int T_IN_H = 1; // mohan add 2010-11-28
-int VL_IN_H = 1;
-int VNL_IN_H = 1;
-int VH_IN_H = 1;
-int VION_IN_H = 1;
 int ZEEMAN_IN_H = 1;
-double STRESS_THR = 0.5; // LiuXh add 20180515 liuyu update 2023-05-10
 
-int ocp = 0;
-std::string ocp_set = "none";
-std::vector<double> ocp_kb;
 // int ocp_n=0;
-// double ocp_kb[10000];
 bool out_mul = false; // qifeng add 2019/9/10
 //----------------------------------------------------------
 // EXPLAIN : Parallel information
@@ -131,10 +101,7 @@ int GSIZE = DSIZE;
 std::string global_in_card = "INPUT";
 std::string stru_file = "STRU";
 std::string global_kpoint_card = "KPT";
-std::string global_wannier_card;
 
-std::string global_pseudo_dir = "";
-std::string global_orbital_dir = ""; // liuyu add 2021-08-14
 
 // std::string global_pseudo_type = "auto";
 std::string global_epm_pseudo_card;
@@ -158,20 +125,15 @@ int test_atom = 0;
 int test_unitcell = 0;
 int test_symmetry = 0;
 
-int test_fft = 0;
 int test_pw = 0;
-int test_elec = 0;
 
 int test_wf = 0;
 int test_charge = 0;
 int test_potential = 0;
 int test_energy = 0;
-// for test purpose, skip ewald calculation
-bool test_skip_ewald = false;
 //----------------------------------------------------------
 // module_hamilt_lcao/hamilt_lcaodft
 //----------------------------------------------------------
-int test_atom_arrange = 0;
 int test_atom_input = 0;
 int test_grid = 0;        // 4 now
 int test_grid_driver = 0; // 4 now
@@ -197,7 +159,6 @@ bool LSPINORB = false;
 bool DOMAG = false;
 bool DOMAG_Z = false;
 int NPOL = 1;
-double soc_lambda = 1.0;
 
 bool FINAL_SCF = false; // LiuXh add 20180619
 
@@ -205,19 +166,14 @@ bool deepks_out_labels = false; // caoyu add 2021-10-16 for DeePKS, wenfei 2022-
 bool deepks_scf = false; // caoyu add 2021-10-16 for DeePKS, wenfei 2022-1-16
 bool deepks_bandgap = false; // for bandgap label. QO added 2021-12-15
 int  deepks_v_delta = 0; // for v_delta label. xinyuan added 2023-2-15
-bool deepks_out_unittest = false;
 
 bool deepks_equiv = false;
 
 bool deepks_setorb = false;
 
-bool out_element_info = false; // added by zhengdy 2021-11-26
 
 bool imp_sol = false; // implicit solvation.  sunml added 2022-04-04
 double eb_k = 80.0;
-double tau = 1.0798 * 1e-5;
-double sigma_k = 0.6;
-double nc_k = 0.00037;
 
 int dft_plus_u = 0; // DFTU control
 
@@ -272,31 +228,17 @@ std::string init_chg = "";
 std::string init_wfc = "atomic";
 bool psi_initializer = false;
 
-int out_chg = 0;
 double nelec = 0;
-double nelec_delta = 0;
 bool out_bandgap = false; // QO added for bandgap printing
-int out_interval = 1;     // convert from out_hsR_interval liuyu 2023-04-18
 
 //==========================================================
 // Deltaspin related
 //==========================================================
-bool sc_mag_switch = false;
-bool decay_grad_switch = false;
 double sc_thr = 1.0e-6;
-int nsc = 100;
-int nsc_min = 2;
-int sc_scf_nmin = 2;
-double alpha_trial = 0.01; // eV/uB^2
-double sccut = 3;          // eV/uB
-std::string sc_file = "none";
 
 //==========================================================
 // Quasiatomic orbital related
 //==========================================================
-bool qo_switch = false;
-std::string qo_basis = "szv";
-std::vector<std::string> qo_strategy = {};
 double qo_thr = 1.0e-6;
 std::vector<double> qo_screening_coeff = {};
 

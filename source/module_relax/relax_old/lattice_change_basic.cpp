@@ -3,6 +3,7 @@
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_base/parallel_common.h"
+#include "module_parameter/parameter.h"
 
 int Lattice_Change_Basic::dim = 0;
 bool Lattice_Change_Basic::converged = true;
@@ -202,8 +203,8 @@ void Lattice_Change_Basic::check_converged(const UnitCell &ucell, ModuleBase::ma
     }
     else if (ucell.lc[0] == 1 && ucell.lc[1] == 1 && ucell.lc[2] == 1)
     {
-        // if(Lattice_Change_Basic::largest_grad < GlobalV::STRESS_THR)
-        if (Lattice_Change_Basic::largest_grad < GlobalV::STRESS_THR && stress_ii_max < GlobalV::STRESS_THR)
+        // if(Lattice_Change_Basic::largest_grad < PARAM.inp.stress_thr)
+        if (Lattice_Change_Basic::largest_grad < PARAM.inp.stress_thr && stress_ii_max < PARAM.inp.stress_thr)
         {
             GlobalV::ofs_running << "\n Lattice relaxation is converged!" << std::endl;
             GlobalV::ofs_running << "\n Largest gradient is = " << largest_grad << std::endl;
@@ -212,7 +213,7 @@ void Lattice_Change_Basic::check_converged(const UnitCell &ucell, ModuleBase::ma
         }
         else
         {
-            GlobalV::ofs_running << "\n Lattice relaxation is not converged yet (threshold is " << GlobalV::STRESS_THR
+            GlobalV::ofs_running << "\n Lattice relaxation is not converged yet (threshold is " << PARAM.inp.stress_thr
                                  << ")" << std::endl;
             Lattice_Change_Basic::converged = false;
         }
@@ -223,7 +224,7 @@ void Lattice_Change_Basic::check_converged(const UnitCell &ucell, ModuleBase::ma
         {
             std::cout<<"i= "<<i<<" "<<grad[i]<<std::endl;
         }*/
-        if (Lattice_Change_Basic::largest_grad < 10 * GlobalV::STRESS_THR)
+        if (Lattice_Change_Basic::largest_grad < 10 * PARAM.inp.stress_thr)
         {
             GlobalV::ofs_running << "\n Lattice relaxation is converged!" << std::endl;
             GlobalV::ofs_running << "\n Largest gradient is = " << largest_grad << std::endl;
@@ -232,7 +233,7 @@ void Lattice_Change_Basic::check_converged(const UnitCell &ucell, ModuleBase::ma
         }
         else
         {
-            GlobalV::ofs_running << "\n Lattice relaxation is not converged yet (threshold is " << GlobalV::STRESS_THR
+            GlobalV::ofs_running << "\n Lattice relaxation is not converged yet (threshold is " << PARAM.inp.stress_thr
                                  << ")" << std::endl;
             Lattice_Change_Basic::converged = false;
         }

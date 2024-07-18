@@ -118,7 +118,7 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
             }
         }
         else{
-            descriptor_file = GlobalV::global_orbital_dir + orbital_fn[0];
+            descriptor_file = PARAM.inp.orbital_dir + orbital_fn[0];
         }
     }
 #ifdef __LCAO
@@ -138,7 +138,7 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
         }
     }
 
-    if (GlobalV::rpa_setorb)
+    if (PARAM.globalv.rpa_setorb)
     {
         if (ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "ABFS_ORBITAL"))
         {
@@ -460,14 +460,14 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
 
             if ((GlobalV::BASIS_TYPE == "lcao")||(GlobalV::BASIS_TYPE == "lcao_in_pw"))
             {
-                std::string orbital_file = GlobalV::global_orbital_dir + orbital_fn[it];
+                std::string orbital_file = PARAM.inp.orbital_dir + orbital_fn[it];
                 this->read_orb_file(it, orbital_file, ofs_running, &(atoms[it]));
             }
             else if(GlobalV::BASIS_TYPE == "pw")
             {
                 if ((GlobalV::psi_initializer)&&(GlobalV::init_wfc.substr(0, 3) == "nao"))
                 {
-                    std::string orbital_file = GlobalV::global_orbital_dir + orbital_fn[it];
+                    std::string orbital_file = PARAM.inp.orbital_dir + orbital_fn[it];
                     this->read_orb_file(it, orbital_file, ofs_running, &(atoms[it]));
                 }
                 else
@@ -792,7 +792,7 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
 
                     }
                     
-                    if(!GlobalV::fixed_atoms)
+                    if(!PARAM.inp.fixed_atoms)
                     {
                         atoms[it].mbl[ia] = mv;
                     }
