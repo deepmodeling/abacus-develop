@@ -95,6 +95,7 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
                                 this->hRGint->get_wrapper(),
                                 1);
         }
+        delete hRGint_thread;
     } else {
 #pragma omp critical(gint_k)
         {
@@ -106,7 +107,6 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
                                 1);
         }
     }
-     delete hRGint_thread;
 }
 #endif
     ModuleBase::TITLE("Gint_interface", "cal_gint_vlocal");
@@ -299,8 +299,8 @@ void Gint::cpu_vlocal_meta_interface(Gint_inout* inout) {
                                 this->hRGint->get_wrapper(),
                                 1);
         }
-    }
-    else{
+        delete hRGint_thread;
+    }else{
 #pragma omp critical(gint_k)
         {
             BlasConnector::axpy(nnrg,
@@ -310,7 +310,6 @@ void Gint::cpu_vlocal_meta_interface(Gint_inout* inout) {
                                 pvpR_reduced[inout->ispin],
                                 1);
         }
-      delete hRGint_thread;
     }
 }
   #endif
