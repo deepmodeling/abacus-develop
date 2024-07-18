@@ -50,12 +50,12 @@ void TwoCenterBundle::build_alpha(int ndesc, std::string* file_desc0)
     }
 }
 
-void TwoCenterBundle::build_orb_onsite(int ntype, double radius)
+void TwoCenterBundle::build_orb_onsite(const double& radius)
 {
-    if (GlobalV::onsite_radius > 0)
+    if (radius > 0)
     {
         orb_onsite_ = std::unique_ptr<RadialCollection>(new RadialCollection);
-        orb_onsite_->build(orb_.get(), GlobalV::onsite_radius);
+        orb_onsite_->build(orb_.get(), radius);
     }
 }
 

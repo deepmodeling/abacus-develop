@@ -347,7 +347,6 @@ void Input_Conv::Convert()
             ModuleBase::GlobalFunc::ZEROS(GlobalC::dftu.U, GlobalC::ucell.ntype);
         }
     }
-    GlobalV::onsite_radius = GlobalV::onsite_radius;
 #endif
     //--------------------------------------------
     // added by zhengdy-soc

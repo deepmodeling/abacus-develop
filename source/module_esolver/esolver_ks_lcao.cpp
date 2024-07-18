@@ -525,7 +525,7 @@ void ESolver_KS_LCAO<TK, TR>::init_basis_lcao(const Input_para& inp, UnitCell& u
 
     two_center_bundle_.build_orb(ucell.ntype, ucell.orbital_fn);
     two_center_bundle_.build_alpha(GlobalV::deepks_setorb, &ucell.descriptor_file);
-    two_center_bundle_.build_orb_onsite(ucell.ntype, GlobalV::onsite_radius);
+    two_center_bundle_.build_orb_onsite(PARAM.inp.onsite_radius);
     // currently deepks only use one descriptor file, so cast bool to int is
     // fine
 

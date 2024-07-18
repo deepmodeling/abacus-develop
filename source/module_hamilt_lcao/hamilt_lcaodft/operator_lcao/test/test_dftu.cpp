@@ -4,6 +4,9 @@
 #include <chrono>
 
 // mock of DFTU
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 ModuleDFTU::DFTU::DFTU(){};
 ModuleDFTU::DFTU::~DFTU(){};
@@ -95,7 +98,7 @@ class DFTUTest : public ::testing::Test
         GlobalC::dftu.U = &U_test;
         GlobalC::dftu.orbital_corr = &orbital_c_test;
 
-        GlobalV::onsite_radius = 1.0;
+        PARAM.input.onsite_radius = 1.0;
     }
 
     void TearDown() override
