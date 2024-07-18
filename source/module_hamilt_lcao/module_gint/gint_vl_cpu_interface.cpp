@@ -299,8 +299,8 @@ void Gint::cpu_vlocal_meta_interface(Gint_inout* inout) {
                                 pvpR_reduced[inout->ispin],
                                 1);
         }
-        delete hRGint_thread;
     }
+    delete hRGint_thread;
 #endif
     ModuleBase::TITLE("Gint_interface", "cal_gint_vlocal_meta");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal_meta");

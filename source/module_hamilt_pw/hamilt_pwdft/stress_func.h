@@ -117,8 +117,9 @@ class Stress_Func
                      const FPTYPE* rab,
                      const FPTYPE* rhoc,
                      FPTYPE* drhocg,
-                     ModulePW::PW_Basis* rho_basis); // used in nonlinear core correction stress
-
+                     ModulePW::PW_Basis* rho_basis,
+                     int type); // used in nonlinear core correction stress
+                     
     // 6) the stress from the exchange-correlation functional term
     void stress_gga(ModuleBase::matrix& sigma,
                     ModulePW::PW_Basis* rho_basis,

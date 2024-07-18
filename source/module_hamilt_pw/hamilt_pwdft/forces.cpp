@@ -157,7 +157,7 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
     // not relevant for PAW
     if (!GlobalV::use_paw)
     {
-        this->cal_force_cc(forcecc, rho_basis, chr);
+        Forces::cal_force_cc(forcecc, rho_basis, chr);
     }
     else
     {
@@ -803,163 +803,6 @@ void Forces<FPTYPE, Device>::cal_force_ew(ModuleBase::matrix& forceion,
     return;
 }
 
-template <typename FPTYPE, typename Device>
-void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
-                                          ModulePW::PW_Basis* rho_basis,
-                                          const Charge* const chr)
-{
-    ModuleBase::TITLE("Forces", "cal_force_cc");
-    // recalculate the exchange-correlation potential.
-    ModuleBase::timer::tick("Forces", "cal_force_cc");
-
-    int total_works = 0;
-    // cal total works for skipping preprocess
-    for (int it = 0; it < GlobalC::ucell.ntype; ++it)
-    {
-        if (GlobalC::ucell.atoms[it].ncpp.nlcc)
-        {
-            total_works += GlobalC::ucell.atoms[it].na;
-        }
-    }
-    if (total_works == 0)
-    {
-        ModuleBase::timer::tick("Forces", "cal_force_cc");
-        return;
-    }
-
-    ModuleBase::matrix v(GlobalV::NSPIN, rho_basis->nrxx);
-
-    if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
-    {
-#ifdef USE_LIBXC
-        const auto etxc_vtxc_v
-            = XC_Functional::v_xc_meta(rho_basis->nrxx, GlobalC::ucell.omega, GlobalC::ucell.tpiba, chr);
-
-        // etxc = std::get<0>(etxc_vtxc_v);
-        // vtxc = std::get<1>(etxc_vtxc_v);
-        v = std::get<2>(etxc_vtxc_v);
-#else
-        ModuleBase::WARNING_QUIT("cal_force_cc", "to use mGGA, compile with LIBXC");
-#endif
-    }
-    else
-    {
-        if (GlobalV::NSPIN == 4)
-            GlobalC::ucell.cal_ux();
-        const auto etxc_vtxc_v = XC_Functional::v_xc(rho_basis->nrxx, chr, &GlobalC::ucell);
-
-        // etxc = std::get<0>(etxc_vtxc_v);
-        // vtxc = std::get<1>(etxc_vtxc_v);
-        v = std::get<2>(etxc_vtxc_v);
-    }
-
-    const ModuleBase::matrix vxc = v;
-    std::complex<double>* psiv = new std::complex<double>[rho_basis->nmaxgr];
-    if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 4)
-    {
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 1024)
-#endif
-        for (int ir = 0; ir < rho_basis->nrxx; ir++)
-        {
-            psiv[ir] = std::complex<double>(vxc(0, ir), 0.0);
-        }
-    }
-    else
-    {
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 1024)
-#endif
-        for (int ir = 0; ir < rho_basis->nrxx; ir++)
-        {
-            psiv[ir] = 0.5 * (vxc(0, ir) + vxc(1, ir));
-        }
-    }
-
-    // to G space
-    rho_basis->real2recip(psiv, psiv);
-
-    // psiv contains now Vxc(G)
-    double* rhocg = new double[rho_basis->ngg];
-    ModuleBase::GlobalFunc::ZEROS(rhocg, rho_basis->ngg);
-
-    for (int it = 0; it < GlobalC::ucell.ntype; ++it)
-    {
-        if (GlobalC::ucell.atoms[it].ncpp.nlcc)
-        {
-            chr->non_linear_core_correction(GlobalC::ppcell.numeric,
-                                            GlobalC::ucell.atoms[it].ncpp.msh,
-                                            GlobalC::ucell.atoms[it].ncpp.r,
-                                            GlobalC::ucell.atoms[it].ncpp.rab,
-                                            GlobalC::ucell.atoms[it].ncpp.rho_atc,
-                                            rhocg);
-#ifdef _OPENMP
-#pragma omp parallel
-            {
-#endif
-                for (int ia = 0; ia < GlobalC::ucell.atoms[it].na; ++ia)
-                {
-                    // get iat form table
-                    int iat = GlobalC::ucell.itia2iat(it, ia);
-                    double force[3] = {0, 0, 0};
-#ifdef _OPENMP
-#pragma omp for nowait
-#endif
-                    for (int ig = 0; ig < rho_basis->npw; ig++)
-                    {
-                        const ModuleBase::Vector3<double> gv = rho_basis->gcar[ig];
-                        const ModuleBase::Vector3<double> pos = GlobalC::ucell.atoms[it].tau[ia];
-                        const double rhocgigg = rhocg[rho_basis->ig2igg[ig]];
-                        const std::complex<double> psiv_conj = conj(psiv[ig]);
-
-                        const double arg = ModuleBase::TWO_PI * (gv.x * pos.x + gv.y * pos.y + gv.z * pos.z);
-                        double sinp, cosp;
-                        ModuleBase::libm::sincos(arg, &sinp, &cosp);
-                        const std::complex<double> expiarg = std::complex<double>(sinp, cosp);
-
-                        auto ipol0
-                            = GlobalC::ucell.tpiba * GlobalC::ucell.omega * rhocgigg * gv.x * psiv_conj * expiarg;
-                        force[0] += ipol0.real();
-
-                        auto ipol1
-                            = GlobalC::ucell.tpiba * GlobalC::ucell.omega * rhocgigg * gv.y * psiv_conj * expiarg;
-                        force[1] += ipol1.real();
-
-                        auto ipol2
-                            = GlobalC::ucell.tpiba * GlobalC::ucell.omega * rhocgigg * gv.z * psiv_conj * expiarg;
-                        force[2] += ipol2.real();
-                    }
-#ifdef _OPENMP
-                    if (omp_get_num_threads() > 1)
-                    {
-#pragma omp atomic
-                        forcecc(iat, 0) += force[0];
-#pragma omp atomic
-                        forcecc(iat, 1) += force[1];
-#pragma omp atomic
-                        forcecc(iat, 2) += force[2];
-                    }
-                    else
-#endif
-                    {
-                        forcecc(iat, 0) += force[0];
-                        forcecc(iat, 1) += force[1];
-                        forcecc(iat, 2) += force[2];
-                    }
-                }
-#ifdef _OPENMP
-            } // omp parallel
-#endif
-        }
-    }
-
-    delete[] rhocg;
-
-    delete[] psiv;                                                    // mohan fix bug 2012-03-22
-    Parallel_Reduce::reduce_pool(forcecc.c, forcecc.nr * forcecc.nc); // qianrui fix a bug for kpar > 1
-    ModuleBase::timer::tick("Forces", "cal_force_cc");
-    return;
-}
 
 template <typename FPTYPE, typename Device>
 void Forces<FPTYPE, Device>::cal_force_scc(ModuleBase::matrix& forcescc,
@@ -1023,8 +866,9 @@ void Forces<FPTYPE, Device>::cal_force_scc(ModuleBase::matrix& forcescc,
 
     int igg0 = 0;
     const int ig0 = rho_basis->ig_gge0;
-    if (rho_basis->gg_uniq[0] < 1.0e-8)
+    if (rho_basis->gg_uniq[0] < 1.0e-8) {
         igg0 = 1;
+}
 
     double fact = 2.0;
     for (int nt = 0; nt < GlobalC::ucell.ntype; nt++)
@@ -1068,8 +912,9 @@ void Forces<FPTYPE, Device>::cal_force_scc(ModuleBase::matrix& forcescc,
 #endif
                     for (int ig = 0; ig < rho_basis->npw; ++ig)
                     {
-                        if (ig == ig0)
+                        if (ig == ig0) {
                             continue;
+}
                         const ModuleBase::Vector3<double> gv = rho_basis->gcar[ig];
                         const double rhocgntigg = rhocgnt[rho_basis->ig2igg[ig]];
                         const double arg = ModuleBase::TWO_PI * (gv * pos);

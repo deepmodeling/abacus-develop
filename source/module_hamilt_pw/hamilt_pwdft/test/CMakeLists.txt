@@ -16,6 +16,7 @@ AddTest(
 	../../../module_base/memory.cpp
 	../../../module_base/timer.cpp
 	../../../module_base/parallel_global.cpp
+	../../../module_base/parallel_comm.cpp
 	../../../module_base/parallel_common.cpp
 	../../../module_base/parallel_reduce.cpp
 )

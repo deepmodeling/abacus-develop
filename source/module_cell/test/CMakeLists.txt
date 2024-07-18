@@ -78,7 +78,7 @@ AddTest(
   TARGET cell_ParaKpoints
   LIBS MPI::MPI_CXX
   SOURCES parallel_kpoints_test.cpp ../../module_base/global_variable.cpp ../../module_base/parallel_global.cpp 
-  	../../module_base/parallel_common.cpp ../parallel_kpoints.cpp
+  	../../module_base/parallel_common.cpp ../../module_base/parallel_comm.cpp ../parallel_kpoints.cpp
 )
 
 find_program(BASH bash)

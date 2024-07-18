@@ -130,7 +130,8 @@ class IState_Charge
                   const int nlocal,
                   const ModuleBase::matrix& wg,
                   elecstate::DensityMatrix<std::complex<double>, double>& DM,
-                  const K_Vectors& kv);
+                  const K_Vectors& kv,
+                  const bool if_separate_k);
 
 #endif
     std::vector<int> bands_picked_;

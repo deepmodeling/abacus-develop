@@ -74,7 +74,7 @@ void IState_Charge::begin(Gint_Gamma& gg,
     // if ucell is odd, it's correct,
     // if ucell is even, it's also correct.
     // +1.0e-8 in case like (2.999999999+1)/2
-    int fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
+    const int fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
     std::cout << " number of electrons = " << nelec << std::endl;
     std::cout << " number of occupied bands = " << fermi_band << std::endl;
 
@@ -110,17 +110,16 @@ void IState_Charge::begin(Gint_Gamma& gg,
 
             // A solution to replace the original implementation of the following code:
             // pelec->charge->save_rho_before_sum_band();
-            double** rho_save = new double*[nspin]; // Initialize an array of pointers
-            for (int is = 0; is < nspin; is++)
+            // Using std::vector to replace the original double** rho_save
+            std::vector<std::vector<double>> rho_save(nspin, std::vector<double>(rhopw_nrxx));
+
+            for (int is = 0; is < nspin; ++is)
             {
-                rho_save[is] = new double[rhopw_nrxx]; // Allocate memory for each internal array
-                ModuleBase::GlobalFunc::DCOPY(rho[is], rho_save[is],
-                                              rhopw_nrxx); // Copy data after allocation
+                ModuleBase::GlobalFunc::DCOPY(rho[is], rho_save[is].data(), rhopw_nrxx); // Copy data
             }
 
             std::cout << " Writting cube files...";
 
-            // 0 means definitely output charge density.
             for (int is = 0; is < nspin; ++is)
             {
                 // ssc should be inside the inner loop to reset the string stream each time
@@ -137,7 +136,7 @@ void IState_Charge::begin(Gint_Gamma& gg,
                     rhopw_nplane,
                     rhopw_startz_current,
 #endif
-                    rho_save[is],
+                    rho_save[is].data(),
                     is,
                     nspin,
                     0,
@@ -150,13 +149,6 @@ void IState_Charge::begin(Gint_Gamma& gg,
             }
 
             std::cout << " Complete!" << std::endl;
-
-            // Release memory of rho_save
-            for (int is = 0; is < nspin; is++)
-            {
-                delete[] rho_save[is]; // Release memory of each internal array
-            }
-            delete[] rho_save; // Release memory of the array of pointers
         }
     }
 
@@ -210,7 +202,7 @@ void IState_Charge::begin(Gint_k& gk,
         mode = 3;
     }
 
-    int fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
+    const int fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
     std::cout << " number of electrons = " << nelec << std::endl;
     std::cout << " number of occupied bands = " << fermi_band << std::endl;
 
@@ -225,7 +217,7 @@ void IState_Charge::begin(Gint_k& gk,
             elecstate::DensityMatrix<std::complex<double>, double> DM(&kv, this->ParaV, nspin);
 
 #ifdef __MPI
-            this->idmatrix(ib, nspin, nelec, nlocal, wg, DM, kv);
+            this->idmatrix(ib, nspin, nelec, nlocal, wg, DM, kv, if_separate_k);
 #else
             ModuleBase::WARNING_QUIT("IState_Charge::begin", "The `pchg` calculation is only available for MPI now!");
 #endif
@@ -249,17 +241,16 @@ void IState_Charge::begin(Gint_k& gk,
                     Gint_inout inout(rho, Gint_Tools::job_type::rho);
                     gk.cal_gint(&inout);
 
-                    double** rho_save = new double*[nspin]; // Initialize an array of pointers
-                    for (int is = 0; is < nspin; is++)
+                    // Using std::vector to replace the original double** rho_save
+                    std::vector<std::vector<double>> rho_save(nspin, std::vector<double>(rhopw_nrxx));
+
+                    for (int is = 0; is < nspin; ++is)
                     {
-                        rho_save[is] = new double[rhopw_nrxx]; // Allocate memory for each internal array
-                        ModuleBase::GlobalFunc::DCOPY(rho[is], rho_save[is],
-                                                      rhopw_nrxx); // Copy data after allocation
+                        ModuleBase::GlobalFunc::DCOPY(rho[is], rho_save[is].data(), rhopw_nrxx); // Copy data
                     }
 
                     std::cout << " Writting cube files...";
 
-                    // 0 means definitely output charge density.
                     for (int is = 0; is < nspin; ++is)
                     {
                         // ssc should be inside the inner loop to reset the string stream each time
@@ -274,7 +265,7 @@ void IState_Charge::begin(Gint_k& gk,
                             rhopw_nplane,
                             rhopw_startz_current,
 #endif
-                            rho_save[is],
+                            rho_save[is].data(),
                             is,
                             nspin,
                             0,
@@ -287,13 +278,6 @@ void IState_Charge::begin(Gint_k& gk,
                     }
 
                     std::cout << " Complete!" << std::endl;
-
-                    // Release memory of rho_save
-                    for (int is = 0; is < nspin; is++)
-                    {
-                        delete[] rho_save[is]; // Release memory of each internal array
-                    }
-                    delete[] rho_save; // Release memory of the array of pointers
                 }
             }
             else
@@ -312,17 +296,16 @@ void IState_Charge::begin(Gint_k& gk,
                 Gint_inout inout(rho, Gint_Tools::job_type::rho);
                 gk.cal_gint(&inout);
 
-                double** rho_save = new double*[nspin]; // Initialize an array of pointers
-                for (int is = 0; is < nspin; is++)
+                // Using std::vector to replace the original double** rho_save
+                std::vector<std::vector<double>> rho_save(nspin, std::vector<double>(rhopw_nrxx));
+
+                for (int is = 0; is < nspin; ++is)
                 {
-                    rho_save[is] = new double[rhopw_nrxx]; // Allocate memory for each internal array
-                    ModuleBase::GlobalFunc::DCOPY(rho[is], rho_save[is],
-                                                  rhopw_nrxx); // Copy data after allocation
+                    ModuleBase::GlobalFunc::DCOPY(rho[is], rho_save[is].data(), rhopw_nrxx); // Copy data
                 }
 
                 std::cout << " Writting cube files...";
 
-                // 0 means definitely output charge density.
                 for (int is = 0; is < nspin; ++is)
                 {
                     // ssc should be inside the inner loop to reset the string stream each time
@@ -337,7 +320,7 @@ void IState_Charge::begin(Gint_k& gk,
                         rhopw_nplane,
                         rhopw_startz_current,
 #endif
-                        rho_save[is],
+                        rho_save[is].data(),
                         is,
                         nspin,
                         0,
@@ -350,13 +333,6 @@ void IState_Charge::begin(Gint_k& gk,
                 }
 
                 std::cout << " Complete!" << std::endl;
-
-                // Release memory of rho_save
-                for (int is = 0; is < nspin; is++)
-                {
-                    delete[] rho_save[is]; // Release memory of each internal array
-                }
-                delete[] rho_save; // Release memory of the array of pointers
             }
         }
     }
@@ -371,6 +347,8 @@ void IState_Charge::select_bands(const int nbands_istate,
                                  const int mode,
                                  const int fermi_band)
 {
+    ModuleBase::TITLE("IState_Charge", "select_bands");
+
     int bands_below = 0;
     int bands_above = 0;
 
@@ -382,10 +360,10 @@ void IState_Charge::select_bands(const int nbands_istate,
         bands_below = nbands_istate;
         bands_above = nbands_istate;
 
-        std::cout << " Plot band-decomposed charge densities below Fermi surface with " << bands_below << " bands."
+        std::cout << " Plot band-decomposed charge densities below the Fermi surface with " << bands_below << " bands."
                   << std::endl;
 
-        std::cout << " Plot band-decomposed charge densities above Fermi surface with " << bands_above << " bands."
+        std::cout << " Plot band-decomposed charge densities above the Fermi surface with " << bands_above << " bands."
                   << std::endl;
 
         for (int ib = 0; ib < nbands; ++ib)
@@ -420,7 +398,7 @@ void IState_Charge::select_bands(const int nbands_istate,
         }
         // Fill bands_picked_ with values from out_band_kb
         // Remaining bands are already set to 0
-        int length = std::min(static_cast<int>(out_band_kb.size()), nbands);
+        const int length = std::min(static_cast<int>(out_band_kb.size()), nbands);
         for (int i = 0; i < length; ++i)
         {
             // out_band_kb rely on function parse_expression from input_conv.cpp
@@ -491,7 +469,7 @@ void IState_Charge::idmatrix(const int& ib,
     ModuleBase::TITLE("IState_Charge", "idmatrix");
     assert(wg.nr == nspin);
 
-    int fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
+    const int fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
 
     for (int is = 0; is < nspin; ++is)
     {
@@ -529,12 +507,22 @@ void IState_Charge::idmatrix(const int& ib,
                              const int nlocal,
                              const ModuleBase::matrix& wg,
                              elecstate::DensityMatrix<std::complex<double>, double>& DM,
-                             const K_Vectors& kv)
+                             const K_Vectors& kv,
+                             const bool if_separate_k)
 {
     ModuleBase::TITLE("IState_Charge", "idmatrix");
     assert(wg.nr == kv.get_nks());
 
-    int fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
+    const int fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
+
+    // To ensure the normalization of charge density in multi-k calculation (if if_separate_k is true)
+    double wg_sum_k = 0;
+    double wg_sum_k_homo = 0;
+    for (int ik = 0; ik < kv.get_nks() / nspin; ++ik)
+    {
+        wg_sum_k += wg(ik, ib);
+        wg_sum_k_homo += wg(ik, fermi_band - 1);
+    }
 
     for (int ik = 0; ik < kv.get_nks(); ++ik)
     {
@@ -546,7 +534,16 @@ void IState_Charge::idmatrix(const int& ib,
 
         if (ib_local >= 0)
         {
-            wg_local[ib_local] = (ib < fermi_band) ? wg(ik, ib) : wg(ik, fermi_band - 1);
+            double wg_value;
+            if (if_separate_k)
+            {
+                wg_value = (ib < fermi_band) ? wg_sum_k : wg_sum_k_homo;
+            }
+            else
+            {
+                wg_value = (ib < fermi_band) ? wg(ik, ib) : wg(ik, fermi_band - 1);
+            }
+            wg_local[ib_local] = wg_value;
         }
 
         this->psi_k->fix_k(ik);
