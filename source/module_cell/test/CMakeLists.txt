@@ -100,25 +100,25 @@ add_test(NAME cell_parallel_kpoints_test
 
 AddTest(
   TARGET cell_unitcell_test
-  LIBS ${math_libs} base device cell_info symmetry
+  LIBS ${math_libs} base device cell_info parameter symmetry
   SOURCES unitcell_test.cpp ../../module_io/output.cpp ../print_cif.cpp
 )
 
 AddTest(
   TARGET cell_unitcell_test_readpp
-  LIBS ${math_libs} base device cell_info
+  LIBS ${math_libs} base device cell_info parameter
   SOURCES unitcell_test_readpp.cpp ../../module_io/output.cpp
 )
 
 AddTest(
   TARGET cell_unitcell_test_para
-  LIBS ${math_libs} base device cell_info
+  LIBS ${math_libs} base device cell_info parameter
   SOURCES unitcell_test_para.cpp ../../module_io/output.cpp
 )
 
 AddTest(
   TARGET cell_unitcell_test_setupcell
-  LIBS ${math_libs} base device cell_info
+  LIBS ${math_libs} base device cell_info parameter
   SOURCES unitcell_test_setupcell.cpp ../../module_io/output.cpp
 )
 

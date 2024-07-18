@@ -290,7 +290,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
         GlobalC::ORB.get_rcutmax_Phi(),
         GlobalC::ucell.infoNL.get_rcutmax_Beta(),
         GlobalV::GAMMA_ONLY_LOCAL);
-    atom_arrange::search(GlobalV::SEARCH_PBC,
+    atom_arrange::search(PARAM.inp.search_pbc,
         GlobalV::ofs_running,
         GlobalC::GridD,
         this->ucell,
@@ -328,7 +328,6 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
         psi_u,
         dpsi_u,
         d2psi_u,
-        GlobalV::NUM_STREAM,
         GlobalV::GAMMA_ONLY_LOCAL,
         GlobalV::NSPIN,
         GlobalV::DOMAG,
@@ -338,8 +337,8 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
         GlobalV::NLOCAL,
         GlobalV::ofs_running,
         GlobalV::ofs_warning,
-        GlobalV::device_flag);
-
+        GlobalV::device_flag,
+        PARAM.inp.nstream);
     if (std::is_same<T, std::complex<double>>::value)
     {
         this->gt_.cal_nnrg(&this->paraMat_);

@@ -1,4 +1,3 @@
-#include "input_conv.h"
 #include "module_base/global_function.h"
 #include "module_base/tool_quit.h"
 #include "read_input.h"
@@ -74,13 +73,19 @@ void ReadInput::item_general()
     {
         Input_Item item("pseudo_dir");
         item.annotation = "the directory containing pseudo files";
-        read_sync_string(input.pseudo_dir);
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            para.input.pseudo_dir = to_dir(strvalue);
+        };
+        sync_string(input.pseudo_dir);
         this->add_item(item);
     }
     {
         Input_Item item("orbital_dir");
         item.annotation = "the directory containing orbital files";
-        read_sync_string(input.orbital_dir);
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            para.input.orbital_dir = to_dir(strvalue);
+        };
+        sync_string(input.orbital_dir);
         this->add_item(item);
     }
     {
@@ -284,10 +289,21 @@ void ReadInput::item_general()
         Input_Item item("bands_to_print");
         item.annotation = "specify the bands to be calculated in get_wf and get_pchg calculation";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            para.input.bands_to_print = longstring(item.str_values, item.get_size());
-            Input_Conv::parse_expression(para.input.bands_to_print, para.sys.out_band_kb);
+            parse_expression(item.str_values, para.input.bands_to_print);
         };
-        sync_string(input.bands_to_print);
+        item.get_final_value = [](Input_Item& item, const Parameter& para) {
+            if(item.is_read())
+            {
+                item.final_value.str(longstring(item.str_values));
+            }
+        };
+        add_intvec_bcast(input.bands_to_print, para.input.bands_to_print.size(), 0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("if_separate_k");
+        item.annotation = "specify whether to write the partial charge densities for all k-points to individual files or merge them";
+        read_sync_bool(input.if_separate_k);
         this->add_item(item);
     }
     {
@@ -553,12 +569,6 @@ void ReadInput::item_general()
                           "charge density and wavefunction. 0: output "
                           "only when ion steps are finished";
         read_sync_int(input.out_freq_ion);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("elpa_num_thread");
-        item.annotation = "Number of threads need to use in elpa";
-        read_sync_int(input.elpa_num_thread);
         this->add_item(item);
     }
     {

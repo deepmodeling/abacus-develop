@@ -42,7 +42,7 @@ void Stochastic_hchi:: hchi(complex<double> *chig, complex<double> *hchig, const
 	//------------------------------------
 	complex<double> *chibg = chig;
 	complex<double> *hchibg = hchig;
-	if(GlobalV::T_IN_H)
+	if(PARAM.inp.t_in_h)
 	{
 		for (int ib = 0; ib < m ; ++ib)
 		{
@@ -60,7 +60,7 @@ void Stochastic_hchi:: hchi(complex<double> *chig, complex<double> *hchig, const
 	//------------------------------------
 	ModuleBase::timer::tick("Stochastic_hchi","vloc");
 	std::complex<double>* porter = new std::complex<double>[nrxx];
-	if(GlobalV::VL_IN_H)
+	if(PARAM.inp.vl_in_h)
 	{
 		chibg = chig;
 		hchibg = hchig;
@@ -87,7 +87,7 @@ void Stochastic_hchi:: hchi(complex<double> *chig, complex<double> *hchig, const
 	// (3) the nonlocal pseudopotential.
 	//------------------------------------
 	ModuleBase::timer::tick("Stochastic_hchi","vnl");
-	if(GlobalV::VNL_IN_H)
+	if(PARAM.inp.vnl_in_h)
 	{
 		if ( GlobalC::ppcell.nkb > 0)
 		{

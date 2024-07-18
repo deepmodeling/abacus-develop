@@ -10,6 +10,7 @@
 #include "module_base/timer.h"
 // three global variables definition
 #include "module_base/global_variable.h"
+#include "module_parameter/parameter.h"
 
 // free function, compared with common radial function normalization, it does not multiply r to function
 // due to pswfc is already multiplied by r
@@ -119,7 +120,7 @@ void psi_initializer_atomic<T, Device>::tabulate()
 
         for (int ic = 0; ic < atom->ncpp.nchi ;ic++)
         {
-            int n_rgrid = (GlobalV::PSEUDO_MESH)?atom->ncpp.mesh:atom->ncpp.msh;
+            int n_rgrid = (PARAM.inp.pseudo_mesh)?atom->ncpp.mesh:atom->ncpp.msh;
             std::vector<double> pswfcr(n_rgrid);
             for (int ir=0; ir<n_rgrid; ir++) pswfcr[ir] = atom->ncpp.chi(ic, ir);
             normalize(n_rgrid, pswfcr, atom->ncpp.rab);

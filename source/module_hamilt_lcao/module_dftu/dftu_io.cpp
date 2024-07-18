@@ -52,7 +52,7 @@ void DFTU::output()
     
     //Write onsite.dm
     std::ofstream ofdftu;
-    if(GlobalV::out_chg){
+    if(PARAM.inp.out_chg){
       if(GlobalV::MY_RANK == 0){
         ofdftu.open(GlobalV::global_out_dir + "onsite.dm");
       }

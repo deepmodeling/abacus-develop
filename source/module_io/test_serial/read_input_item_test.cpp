@@ -577,13 +577,6 @@ TEST_F(InputTest, Item_test)
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 
-        param.input.ks_solver = "genelpa";
-        param.input.basis_type = "lcao";
-        testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(0), "");
-        output = testing::internal::GetCapturedStdout();
-        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
-
         param.input.ks_solver = "scalapack_gvx";
         param.input.basis_type = "lcao";
         testing::internal::CaptureStdout();

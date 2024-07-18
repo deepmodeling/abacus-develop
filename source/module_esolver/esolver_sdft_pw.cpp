@@ -82,9 +82,9 @@ void ESolver_SDFT_PW::before_all_runners(const Input_para& inp, UnitCell& ucell)
                                                             &this->wf,
                                                             this->pw_wfc);
     // 7) set occupatio, redundant?
-    if (GlobalV::ocp)
+    if (PARAM.inp.ocp)
     {
-        this->pelec->fixed_weights(GlobalV::ocp_kb, GlobalV::NBANDS, GlobalV::nelec);
+        this->pelec->fixed_weights(PARAM.inp.ocp_kb, GlobalV::NBANDS, GlobalV::nelec);
     }
 
     // 8) initialize the global classes
@@ -157,7 +157,7 @@ void ESolver_SDFT_PW::after_scf(const int istep)
                             &this->sf);
     }
 
-    if (GlobalV::out_chg > 0)
+    if (PARAM.inp.out_chg > 0)
     {
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
@@ -339,7 +339,7 @@ void ESolver_SDFT_PW::nscf()
 
     const int iter = 1;
 
-    const double diag_thr = std::max(std::min(1e-5, 0.1 * GlobalV::SCF_THR / std::max(1.0, GlobalV::nelec)), 1e-12);
+    const double diag_thr = std::max(std::min(1e-5, 0.1 *PARAM.inp.scf_thr / std::max(1.0, GlobalV::nelec)), 1e-12);
 
     std::cout << " DIGA_THR          : " << diag_thr << std::endl;
 

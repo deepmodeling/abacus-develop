@@ -43,7 +43,7 @@ void Driver::driver_run() {
     // delete ucell as a GlobalC in near future
     GlobalC::ucell.setup_cell(GlobalV::stru_file, GlobalV::ofs_running);
     Check_Atomic_Stru::check_atomic_stru(GlobalC::ucell,
-                                         GlobalV::MIN_DIST_COEF);
+                                         PARAM.inp.min_dist_coef);
 
     //! 2: initialize the ESolver (depends on a set-up ucell after `setup_cell`)
     ModuleESolver::ESolver* p_esolver = ModuleESolver::init_esolver(PARAM.inp, GlobalC::ucell);

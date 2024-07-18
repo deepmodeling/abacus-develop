@@ -109,7 +109,7 @@ void ESolver_FP::init_after_vc(const Input_para& inp, UnitCell& cell)
 {
     ModuleBase::TITLE("ESolver_FP", "init_after_vc");
 
-    if (GlobalV::md_prec_level == 2)
+    if (inp.mdp.md_prec_level == 2)
     {
         if (inp.nx * inp.ny * inp.nz == 0)
         {

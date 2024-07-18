@@ -30,7 +30,7 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K
     const int* isk = pkv->isk.data();
     const Real* gk2 = wfc_basis->get_gk2_data<Real>();
 
-    if (GlobalV::T_IN_H)
+    if (PARAM.inp.t_in_h)
     {
         // Operator<double>* ekinetic = new Ekinetic<OperatorLCAO<double>>
         Operator<T, Device>* ekinetic
@@ -44,14 +44,14 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K
             this->ops->add(ekinetic);
         }
     }
-    if (GlobalV::VL_IN_H)
+    if (PARAM.inp.vl_in_h)
     {
         std::vector<std::string> pot_register_in;
-        if (GlobalV::VION_IN_H)
+        if (PARAM.inp.vion_in_h)
         {
             pot_register_in.push_back("local");
         }
-        if (GlobalV::VH_IN_H)
+        if (PARAM.inp.vh_in_h)
         {
             pot_register_in.push_back("hartree");
         }
@@ -96,7 +96,7 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K
             this->ops->add(meta);
         }
     }
-    if (GlobalV::VNL_IN_H)
+    if (PARAM.inp.vnl_in_h)
     {
         Operator<T, Device>* nonlocal
             = new Nonlocal<OperatorPW<T, Device>>(isk, &GlobalC::ppcell, &GlobalC::ucell, wfc_basis);
