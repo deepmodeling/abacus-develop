@@ -129,10 +129,12 @@ template class DiagoCG<std::complex<double>, base_device::DEVICE_CPU>;
 
 template <typename T, typename Device>
 DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in,
+                                  const int nband_in,
+                                  const int dim_in,
                                   const int david_ndim_in,
                                   const bool use_paw_in,
                                   const diag_comm_info& diag_comm_in)
-    : david_ndim(david_ndim_in), use_paw(use_paw_in), diag_comm(diag_comm_in) {
+    : nband(nband_in), dim(dim_in), nbase_x(david_ndim_in * nband_in), david_ndim(david_ndim_in), use_paw(use_paw_in), diag_comm(diag_comm_in) {
     this->device = base_device::get_device_type<Device>(this->ctx);
     this->precondition = precondition_in;
 
@@ -149,8 +151,8 @@ DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in,
 
 template <typename T, typename Device>
 DiagoDavid<T, Device>::~DiagoDavid() {
-    delmem_complex_op()(this->ctx, this->hphi);
-    delmem_complex_op()(this->ctx, this->sphi);
+    delmem_complex_op()(this->ctx, this->hpsi);
+    delmem_complex_op()(this->ctx, this->spsi);
     delmem_complex_op()(this->ctx, this->hcc);
     delmem_complex_op()(this->ctx, this->scc);
     delmem_complex_op()(this->ctx, this->vcc);
@@ -163,8 +165,6 @@ DiagoDavid<T, Device>::~DiagoDavid() {
 template <typename T, typename Device>
 int DiagoDavid<T, Device>::diag(const std::function<void(T*, T*, const int, const int, const int, const int)>& hpsi_func,
                                 const std::function<void(T*, T*, const int, const int, const int)>& spsi_func,
-                                const int dim,
-                                const int nband,
                                 const int ldPsi,
                                 T *psi_in,
                                 Real* eigenvalue_in,

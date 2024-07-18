@@ -19,20 +19,50 @@ class DiagoDavid : public DiagH<T, Device>
   
   public:
 
-    DiagoDavid(const Real* precondition_in, 
+    DiagoDavid(const Real* precondition_in,
+               const int nband_in,
+               const int dim_in,
                const int david_ndim_in,
                const bool use_paw_in,
                const diag_comm_info& diag_comm_in);
 
     virtual ~DiagoDavid() override;
 
+
+    /**
+     * @brief A function type representing the HPsi function.
+     *
+     * This function type is used to define a matrix-blockvector operator.
+     * For eigenvalue problem HX = λX or generalized eigenvalue problem HX = λSX,
+     * the HPsi function computes the product of the Hamiltonian matrix H and a blockvector psi.
+     *
+     * @param[out] AX  Pointer to output blockvector of type `T*`.
+     * @param[in]  X  Pointer to input blockvector of type `T*`.
+     * @param[in]  dim  Dimension of matrix.
+     * @param[in]  ldx  Leading dimension of blockvector.
+     * @param[in]  id_start  Start index of blockvector.
+     * @param[in]  id_end  End index of blockvector.
+     */
     using HPsiFunc = std::function<void(T*, T*, const int, const int, const int, const int)>;
+
+    /**
+     * @brief A function type representing a callback for computing SPsi values.
+     *
+     * This function type is used to define a callback function that computes SPsi values.
+     * It takes in parameters `T*`, `T*`, `const int`, `const int`, and `const int`.
+     * The first two parameters are pointers to the input and output arrays.
+     * The next three parameters represent the size of the arrays.
+     *
+     * @param[in]   X Pointer to the input array.
+     * @param[out] SX Pointer to the output array.
+     * @param[in] nrow Dimension of SX: nbands * nrow.
+     * @param[in] npw  Number of plane waves.
+     * @param[in] nbands Number of bands.
+     */
     using SPsiFunc = std::function<void(T*, T*, const int, const int, const int)>;
 
     int diag(const HPsiFunc& hpsi_func,           // function void hpsi(T*, T*, const int, const int, const int, const int) 
              const SPsiFunc& spsi_func,           // function void spsi(T*, T*, const int, const int, const int) 
-                      const int dim,              // Dimension of the input matrix psi to be diagonalized
-                      const int nband,            // Number of required eigenpairs
                       const int ldPsi,            // Leading dimension of the psi input
                       T *psi_in,                  // Pointer to eigenvectors
                       Real* eigenvalue_in,        // Pointer to store the resulting eigenvalues
@@ -47,12 +77,14 @@ class DiagoDavid : public DiagH<T, Device>
 
     diag_comm_info diag_comm;
 
-    /// number of searched eigenpairs
-    int n_band = 0;
-    /// dimension of the subspace allowed in Davidson
-    int david_ndim = 4;
+    /// number of required eigenpairs
+    const int nband;
+    /// dimension of the input matrix to be diagonalized
+    const int dim;
     /// maximum dimension of the reduced basis set
-    // int nbase_x = 0;
+    const int nbase_x;
+    /// dimension of the subspace allowed in Davidson
+    const int david_ndim = 4;
     /// number of unconverged eigenvalues
     int notconv = 0;
 
@@ -63,17 +95,17 @@ class DiagoDavid : public DiagH<T, Device>
     /// eigenvalue results
     Real* eigenvalue = nullptr;
 
-    T *pbasis = nullptr; /// pointer to basis set(dim, nbase_x), leading dimension = dim
+    T *pbasis = nullptr;  /// pointer to basis set(dim, nbase_x), leading dimension = dim
 
-    T* hphi = nullptr; /// the product of H and psi in the reduced basis set
+    T* hpsi = nullptr;    /// the product of H and psi in the reduced basis set
 
-    T* sphi = nullptr; /// the Product of S and psi in the reduced basis set
+    T* spsi = nullptr;    /// the Product of S and psi in the reduced basis set
 
-    T* hcc = nullptr; /// Hamiltonian on the reduced basis
+    T* hcc = nullptr;     /// Hamiltonian on the reduced basis
 
-    T* scc = nullptr; /// Overlap on the reduced basis
+    T* scc = nullptr;     /// overlap on the reduced basis
 
-    T* vcc = nullptr; /// Eigenvectors of hc
+    T* vcc = nullptr;     /// eigenvectors of hc
 
     T* lagrange_matrix = nullptr;
 
@@ -98,8 +130,8 @@ class DiagoDavid : public DiagH<T, Device>
                   const int& nbase,
                   const int nbase_x,
                   const int& notconv,
-                  T* hphi,
-                  T* sphi,
+                  T* hpsi,
+                  T* spsi,
                   const T* vcc,
                   const int* unconv,
                   const Real* eigenvalue);
@@ -108,8 +140,8 @@ class DiagoDavid : public DiagH<T, Device>
                   int& nbase,
                   const int nbase_x,
                   const int& notconv,
-                  const T* hphi,
-                  const T* sphi,
+                  const T* hpsi,
+                  const T* spsi,
                   T* hcc,
                   T* scc);
 
@@ -120,21 +152,21 @@ class DiagoDavid : public DiagH<T, Device>
                  const Real* eigenvalue,
                  const T *psi_in,
                  const int ldPsi,
-                 T* hphi,
-                 T* sphi,
+                 T* hpsi,
+                 T* spsi,
                  T* hcc,
                  T* scc,
                  T* vcc);
 
-    void SchmitOrth(const int& dim,
+    void SchmidtOrth(const int& dim,
                     const int nband,
                     const int m,
-                    const T* sphi,
+                    const T* spsi,
                     T* lagrange_m,
                     const int mm_size,
                     const int mv_size);
 
-    void planSchmitOrth(const int nband, std::vector<int>& pre_matrix_mm_m, std::vector<int>& pre_matrix_mv_m);
+    void planSchmidtOrth(const int nband, std::vector<int>& pre_matrix_mm_m, std::vector<int>& pre_matrix_mv_m);
 
     void diag_zhegvx(const int& nbase,
                      const int& nband,
