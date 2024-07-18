@@ -114,7 +114,7 @@ int loadPEXSIOption(MPI_Comm comm,
     int_para[15] = 0;
     int_para[16] = pexsi::PEXSI_Solver::pexsi_nproc_pole;
 
-    double_para[0] = GlobalV::NSPIN; // pexsi::PEXSI_Solver::pexsi_spin;
+    double_para[0] = 2;//GlobalV::NSPIN; // pexsi::PEXSI_Solver::pexsi_spin;
     double_para[1] = pexsi::PEXSI_Solver::pexsi_temp;
     double_para[2] = pexsi::PEXSI_Solver::pexsi_gap;
     double_para[3] = pexsi::PEXSI_Solver::pexsi_delta_e;
@@ -298,15 +298,15 @@ int simplePEXSI(MPI_Comm comm_PEXSI,
         int numTotalInertiaIter; // Number of total inertia[out]
         // LiuXh modify 2021-04-29, add DONE(ofs_running,"xx") for test
         ModuleBase::timer::tick("Diago_LCAO_Matrix", "PEXSIDFT");
-        PPEXSIDFTDriver(plan,                 // PEXSI plan[in]
-                        options,              // PEXSI Options[in]
+        PPEXSIDFTDriver2(plan,                 // PEXSI plan[in]
+                        &options,              // PEXSI Options[in]
                         numElectronExact,     // exact electron number[in]
                         &mu,                  // chemical potential[out]
                         &nelec,               // number of electrons[out]
-                        &muMinInertia,        // Lower bound for mu after the last inertia[out]
-                        &muMaxInertia,        // Upper bound for mu after the last inertia[out]
+                        // &muMinInertia,        // Lower bound for mu after the last inertia[out]
+                        // &muMaxInertia,        // Upper bound for mu after the last inertia[out]
                         &numTotalInertiaIter, // Number of total inertia[out]
-                        &numTotalPEXSIIter,   // number of total pexsi evaluation procedure[out]
+                        // &numTotalPEXSIIter,   // number of total pexsi evaluation procedure[out]
                         &info);               // 0: successful; otherwise: unsuccessful
         // LiuXh modify 2021-04-29, add DONE(ofs_running,"xx") for test
         ModuleBase::timer::tick("Diago_LCAO_Matrix", "PEXSIDFT");
