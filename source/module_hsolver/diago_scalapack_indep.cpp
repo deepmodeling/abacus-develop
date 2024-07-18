@@ -71,7 +71,7 @@ std::pair<int, std::vector<int>> DiagoScalapack<T>::pdsygvx_once(const int* cons
 {
 
     const char jobz = 'V', range = 'I', uplo = 'U';
-    const int itype = 1, il = 1, iu = this->nband, one = 1;
+    const int itype = 1, il = 1, iu = this->n_band, one = 1;
     int M = 0, NZ = 0, lwork = -1, liwork = -1, info = 0;
     double vl = 0, vu = 0;
     const double abstol = 0, orfac = -1;

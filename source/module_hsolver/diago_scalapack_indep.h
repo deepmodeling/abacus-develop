@@ -24,7 +24,7 @@ class DiagoScalapack : public DiagH<T>
                         const int& nbasis_in,
                         const int& dsize_in);
         ~DiagoScalapack();
-        void diag(T* h_mat, T* s_mat, const int* const desc, T* psi, Real* eigenvalue_in) override;
+        void diag(T* h_mat, T* s_mat, const int* const desc, T* psi, Real* eigenvalue_in);
 
     private:
         void pdsygvx_diag(const int *const desc,

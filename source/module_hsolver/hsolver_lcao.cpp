@@ -3,7 +3,7 @@
 #include "diago_cg.h"
 
 #ifdef __MPI
-#include "diago_scalapack.h"
+#include "diago_scalapack_indep.h"
 #else
 #include "diago_lapack.h"
 #endif
@@ -12,6 +12,8 @@
 #include "module_hsolver/diago_iter_assist.h"
 #include "module_hsolver/kernels/math_kernel_op.h"
 #include "module_io/write_HS.h"
+
+#include "module_base/global_variable.h"
 
 #include <ATen/core/tensor.h>
 #include <ATen/core/tensor_map.h>
@@ -59,7 +61,7 @@ void HSolverLCAO<T, Device>::solveTemplate(hamilt::Hamilt<T>* pHamilt,
         }
         if (this->pdiagh == nullptr)
         {
-            this->pdiagh = new DiagoScalapack<T>();
+            this->pdiagh = new DiagoScalapack<T>(GlobalV::NBANDS, GlobalV::NLOCAL, GlobalV::NLOCAL, GlobalV::DSIZE);
             this->pdiagh->method = this->method;
         }
 #else
@@ -278,6 +280,13 @@ void HSolverLCAO<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>&
     ModuleBase::TITLE("HSolverLCAO", "hamiltSolvePsiK");
     ModuleBase::timer::tick("HSolverLCAO", "hamiltSolvePsiK");
 
+    if (this->method == "scalapack_gvx"){
+        
+        hamilt::MatrixBlock<T> h_mat, s_mat;
+        hm->matrix(h_mat, s_mat);
+
+        this->pdiagh->diag(h_mat.p, s_mat.p, h_mat.desc, psi.get_pointer(), eigenvalue);
+    }
     if (this->method != "cg_in_lcao")
     {
         this->pdiagh->diag(hm, psi, eigenvalue);
