@@ -167,7 +167,6 @@ class Gint {
                            const int grid_index,
                            const double delta_r,
                            double* vldr3,
-                           const int LD_pool,
                            const int is,
                            const bool isforce,
                            const bool isstress,
@@ -180,7 +179,6 @@ class Gint {
                                 const double delta_r,
                                 double* vldr3,
                                 double* vkdr3,
-                                const int LD_pool,
                                 const int is,
                                 const bool isforce,
                                 const bool isstress,
@@ -202,17 +200,11 @@ class Gint {
         ModuleBase::matrix* force);
 
     void cal_meshball_stress(
-        const int na_grid,            // how many atoms on this (i,j,k) grid
-        const int* const block_index, // block_index[na_grid+1], count total
-                                      // number of atomis orbitals
-        const double* const* const psir_vlbr3_DMR,
-        const double* const* const dpsir_xx,
-        const double* const* const dpsir_xy,
-        const double* const* const dpsir_xz,
-        const double* const* const dpsir_yy,
-        const double* const* const dpsir_yz,
-        const double* const* const dpsir_zz,
-        ModuleBase::matrix* stress);
+        const int na_grid,  					    // how many atoms on this (i,j,k) grid
+        const int*const block_index,		    	// block_index[na_grid+1], count total number of atomis orbitals
+        const double*const psir_vlbr3_DMR,
+        const double*const dpsirr,
+        ModuleBase::matrix *stress);
 
     //------------------------------------------------------
     // in gint_k_rho.cpp

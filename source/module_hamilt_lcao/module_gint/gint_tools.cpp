@@ -170,8 +170,7 @@ void cal_dpsirr_ylm(
     const int* const block_size,       // block_size[na_grid],	number of columns of a band
     const bool* const* const cal_flag, // cal_flag[bxyz][na_grid],	whether the atom-grid distance is larger than cutoff
     double* const* const dpsir_ylm_x, double* const* const dpsir_ylm_y, double* const* const dpsir_ylm_z,
-    double* const* const dpsir_ylm_xx, double* const* const dpsir_ylm_xy, double* const* const dpsir_ylm_xz,
-    double* const* const dpsir_ylm_yy, double* const* const dpsir_ylm_yz, double* const* const dpsir_ylm_zz)
+    double* const* const dpsirr_ylm)
 {
     ModuleBase::timer::tick("Gint_Tools", "cal_dpsirr_ylm");
     const UnitCell& ucell = *gt.ucell;
@@ -193,20 +192,10 @@ void cal_dpsirr_ylm(
 				double*const p_dpsi_x=&dpsir_ylm_x[ib][block_index[id]];
 				double*const p_dpsi_y=&dpsir_ylm_y[ib][block_index[id]];
 				double*const p_dpsi_z=&dpsir_ylm_z[ib][block_index[id]];
-				double*const p_dpsi_xx=&dpsir_ylm_xx[ib][block_index[id]];
-				double*const p_dpsi_xy=&dpsir_ylm_xy[ib][block_index[id]];
-				double*const p_dpsi_xz=&dpsir_ylm_xz[ib][block_index[id]];
-				double*const p_dpsi_yy=&dpsir_ylm_yy[ib][block_index[id]];
-				double*const p_dpsi_yz=&dpsir_ylm_yz[ib][block_index[id]];
-				double*const p_dpsi_zz=&dpsir_ylm_zz[ib][block_index[id]];
+				double*const p_dpsirr=&dpsirr_ylm[ib][block_index[id] * 6];
 				if(!cal_flag[ib][id])
 				{
-					ModuleBase::GlobalFunc::ZEROS(p_dpsi_xx, block_size[id]);
-					ModuleBase::GlobalFunc::ZEROS(p_dpsi_xy, block_size[id]);
-					ModuleBase::GlobalFunc::ZEROS(p_dpsi_xz, block_size[id]);
-					ModuleBase::GlobalFunc::ZEROS(p_dpsi_yy, block_size[id]);
-					ModuleBase::GlobalFunc::ZEROS(p_dpsi_yz, block_size[id]);
-					ModuleBase::GlobalFunc::ZEROS(p_dpsi_zz, block_size[id]);
+					ModuleBase::GlobalFunc::ZEROS(p_dpsirr, block_size[id] * 6);
 				}
 				else
 				{
@@ -217,14 +206,12 @@ void cal_dpsirr_ylm(
 
 					for (int iw=0; iw< atom->nw; ++iw)
 					{
-
-						p_dpsi_xx[iw] = p_dpsi_x[iw]*dr[0];
-						p_dpsi_xy[iw] = p_dpsi_x[iw]*dr[1];
-						p_dpsi_xz[iw] = p_dpsi_x[iw]*dr[2];
-						p_dpsi_yy[iw] = p_dpsi_y[iw]*dr[1];
-						p_dpsi_yz[iw] = p_dpsi_y[iw]*dr[2];
-						p_dpsi_zz[iw] = p_dpsi_z[iw]*dr[2];
-
+						p_dpsirr[iw * 6] = p_dpsi_x[iw]*dr[0];
+						p_dpsirr[iw * 6 + 1] = p_dpsi_x[iw]*dr[1];
+						p_dpsirr[iw * 6 + 2] = p_dpsi_x[iw]*dr[2];
+						p_dpsirr[iw * 6 + 3] = p_dpsi_y[iw]*dr[1];
+						p_dpsirr[iw * 6 + 4] = p_dpsi_y[iw]*dr[2];
+						p_dpsirr[iw * 6 + 5] = p_dpsi_z[iw]*dr[2];
 					}//iw
 				}//else
 			}
