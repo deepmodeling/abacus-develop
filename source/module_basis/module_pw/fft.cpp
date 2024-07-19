@@ -98,7 +98,7 @@ void FFT::initfft(int nx_in, int ny_in, int nz_in, int lixy_in, int rixy_in, int
         d_rspace = (double*)z_auxg;
         // auxr_3d = static_cast<std::complex<double> *>(
         //     fftw_malloc(sizeof(fftw_complex) * (this->nx * this->ny * this->nz)));
-#if defined(__CUDA) || defined(__ROCM)
+#if  ((defined(__CUDA) || defined(__ROCM)) && (!defined(__LCAO)))
         if (this->device == "gpu")
         {
             resmem_cd_op()(gpu_ctx, this->c_auxr_3d, this->nx * this->ny * this->nz);
@@ -249,7 +249,7 @@ void FFT ::initplan(const unsigned int& flag)
     //    reinterpret_cast<fftw_complex *>(auxr_3d),
     //    FFTW_BACKWARD, flag);
 
-#if defined(__CUDA) || defined(__ROCM)
+#if  ((defined(__CUDA) || defined(__ROCM)) && (!defined(__LCAO)))
     if (this->device == "gpu")
     {
 #if defined(__CUDA)
