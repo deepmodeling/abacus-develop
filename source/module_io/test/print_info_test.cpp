@@ -24,7 +24,7 @@ void LCAO_Orbitals::bcast_files(
 Magnetism::Magnetism(){}
 Magnetism::~Magnetism(){}
 
-bool berryphase::berry_phase_flag=0;
+bool berryphase::berry_phase_flag=false;
 
 namespace GlobalC
 {
@@ -219,8 +219,8 @@ TEST_F(PrintInfoTest, PrintScreen)
 
 TEST_F(PrintInfoTest, PrintTime)
 {
-	time_t time_start = std::time(NULL);
-	time_t time_finish = std::time(NULL);
+	time_t time_start = std::time(nullptr);
+	time_t time_finish = std::time(nullptr);
 	testing::internal::CaptureStdout();
 	EXPECT_NO_THROW(Print_Info::print_time(time_start,time_finish));
 	output = testing::internal::GetCapturedStdout();
