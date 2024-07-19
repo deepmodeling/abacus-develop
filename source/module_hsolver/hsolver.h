@@ -34,6 +34,15 @@ class HSolver
     virtual void update(
         Input &in )=0;*/
 
+    virtual void solve(hamilt::Hamilt<T, Device>* phm,
+                       psi::Psi<T, Device>& ppsi,
+                       elecstate::ElecState* pes,
+                       const std::string method,
+                       const bool skip_charge = false)
+    {
+        return;
+    }
+
     // solve Hamiltonian to electronic density in ElecState
     virtual void solve(hamilt::Hamilt<T, Device>* phm,
                        psi::Psi<T, Device>& ppsi,
