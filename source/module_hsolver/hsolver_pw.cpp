@@ -241,6 +241,17 @@ void HSolverPW<T, Device>::set_isOccupied(std::vector<bool>& is_occupied,
     }
 }
 
+// template <typename T, typename Device>
+// void HSolverPW<T, Device>::init(const std::string calculation_type,
+//                                 const bool use_paw,
+//                                 const int rank_in_pool,
+//                                 const int nproc_in_pool
+//                                 )
+// {
+
+// }
+
+
 template <typename T, typename Device>
 void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
                                  psi::Psi<T, Device>& psi,

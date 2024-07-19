@@ -583,10 +583,14 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep,
         hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX
             = GlobalV::PW_DIAG_NMAX;
 
-        this->phsol->solve(this->p_hamilt,      // hamilt::Hamilt<T, Device>* pHamilt,
-            this->kspw_psi[0],   // psi::Psi<T, Device>& psi,
-            this->pelec,         // elecstate::ElecState<T, Device>* pelec,
-            GlobalV::KS_SOLVER); // const std::string method_in,
+        // this->phsol->solve(this->p_hamilt,      // hamilt::Hamilt<T, Device>* pHamilt,
+        //     this->kspw_psi[0],   // psi::Psi<T, Device>& psi,
+        //     this->pelec,         // elecstate::ElecState<T, Device>* pelec,
+        //     GlobalV::KS_SOLVER); // const std::string method_in,
+
+        hsolver::HSolverPW<T, Device> hsolver_pw_obj(this->pw_wfc, &this->wf);
+        hsolver_pw_obj.solve(this->p_hamilt, this->kspw_psi[0], this->pelec, GlobalV::KS_SOLVER, false);
+
 
         if (PARAM.inp.out_bandgap)
         {
