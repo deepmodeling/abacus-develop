@@ -4,7 +4,7 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
-
+#include <sstream>
 #include "module_base/global_file.h"
 #include "module_base/global_function.h"
 #include "module_base/tool_quit.h"

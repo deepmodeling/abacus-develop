@@ -6,6 +6,8 @@
 #include "module_cell/unitcell.h"
 #include "module_elecstate/module_charge/charge.h"
 #include "prepare_unitcell.h"
+#undef protected
+#undef private
 
 // mock functions for UnitCell
 #ifdef __LCAO
@@ -219,5 +221,3 @@ TEST_F(ChargeTest, InitFinalScf)
     EXPECT_TRUE(charge->allocate_rho_final_scf);
 }
 
-#undef protected
-#undef private

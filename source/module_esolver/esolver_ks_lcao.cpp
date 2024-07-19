@@ -164,6 +164,8 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
     //------------------init Basis_lcao----------------------
 
     // 5) initialize density matrix
+    // DensityMatrix is allocated here, DMK is also initialized here
+    // DMR is not initialized here, it will be constructed in each before_scf
     dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)
         ->init_DM(&this->kv, &(this->ParaV), GlobalV::NSPIN);
 
@@ -1315,13 +1317,9 @@ bool ESolver_KS_LCAO<TK, TR>::do_after_converge(int& iter)
         // use the converged occupation matrix for next MD/Relax SCF calculation
         GlobalC::dftu.initialed_locale = true;
     }
+    // FIXME: for developer who want to test restarting DeePKS with same Descriptor/PDM in last MD step
+    // RUN: " GlobalC::ld.set_init_pdm(true); " can skip the calculation of PDM in the next iter_init
 
-#ifdef __DEEPKS
-    if (GlobalV::deepks_scf)
-    {
-        GlobalC::ld.set_init_pdm(true);
-    }
-#endif
 #ifdef __EXX
     if (GlobalC::exx_info.info_global.cal_exx)
     {
