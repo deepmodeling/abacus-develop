@@ -752,7 +752,7 @@ void ESolver_KS_PW<T, Device>::after_scf(const int istep) {
         ModuleBase::GlobalFunc::ZEROS(bands_picked.data(),
                                       this->kspw_psi->get_nbands());
 
-        // Check if length of out_band_kb is valid
+        // Check if length of bands_to_print is valid
         if (static_cast<int>(bands_to_print.size())
             > this->kspw_psi->get_nbands()) {
             ModuleBase::WARNING_QUIT(
@@ -771,12 +771,12 @@ void ESolver_KS_PW<T, Device>::after_scf(const int istep) {
             }
         }
 
-        // Fill bands_picked with values from out_band_kb, converting to int
+        // Fill bands_picked with values from bands_to_print
         // Remaining bands are already set to 0
         int length = std::min(static_cast<int>(bands_to_print.size()),
                               this->kspw_psi->get_nbands());
         for (int i = 0; i < length; ++i) {
-            // out_band_kb rely on function parse_expression from input_conv.cpp
+            // bands_to_print rely on function parse_expression
             // Initially designed for ocp_set, which can be double
             bands_picked[i] = static_cast<int>(bands_to_print[i]);
         }
