@@ -229,7 +229,6 @@ void ESolver_KS<T, Device>::before_all_runners(const Input_para& inp, UnitCell& 
 #endif
 
 #ifdef __LCAO
-    printf("in lcao in the esolver_ks.cpp\n");
     if (PARAM.inp.basis_type == "lcao")
     {
         this->pw_wfc->init_basis_type(false);

@@ -64,7 +64,7 @@ void FFT::clear()
 }
 
 void FFT::initfft(int nx_in, int ny_in, int nz_in, int lixy_in, int rixy_in, int ns_in, int nplane_in, int nproc_in,
-                  bool gamma_only_in, bool xprime_in, bool mpifft_in)
+                  bool gamma_only_in, bool xprime_in,bool mpifft_in,bool cuda_memory_allocate)
 {
     this->gamma_only = gamma_only_in;
     this->xprime = xprime_in;
@@ -89,6 +89,7 @@ void FFT::initfft(int nx_in, int ny_in, int nz_in, int lixy_in, int rixy_in, int
     // this->maxgrids = (this->nz * this->ns > this->nxy * nplane) ? this->nz * this->ns : this->nxy * nplane;
     const int nrxx = this->nxy * this->nplane;
     const int nsz = this->nz * this->ns;
+    this->cuda_memory_allocate = cuda_memory_allocate;
     int maxgrids = (nsz > nrxx) ? nsz : nrxx;
     if (!this->mpifft)
     {
@@ -99,7 +100,7 @@ void FFT::initfft(int nx_in, int ny_in, int nz_in, int lixy_in, int rixy_in, int
         // auxr_3d = static_cast<std::complex<double> *>(
         //     fftw_malloc(sizeof(fftw_complex) * (this->nx * this->ny * this->nz)));
 #if  ((defined(__CUDA) || defined(__ROCM)) && (!defined(__LCAO)))
-        if (this->device == "gpu")
+        if (this->device == "gpu" && this->cuda_memory_allocate==true)
         {
             resmem_cd_op()(gpu_ctx, this->c_auxr_3d, this->nx * this->ny * this->nz);
             resmem_zd_op()(gpu_ctx, this->z_auxr_3d, this->nx * this->ny * this->nz);
@@ -250,7 +251,7 @@ void FFT ::initplan(const unsigned int& flag)
     //    FFTW_BACKWARD, flag);
 
 #if  ((defined(__CUDA) || defined(__ROCM)) && (!defined(__LCAO)))
-    if (this->device == "gpu")
+    if (this->device == "gpu" && this->cuda_memory_allocate== true)
     {
 #if defined(__CUDA)
         cufftPlan3d(&c_handle, this->nx, this->ny, this->nz, CUFFT_C2C);
