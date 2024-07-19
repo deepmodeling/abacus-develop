@@ -228,6 +228,9 @@ void ESolver_KS<T, Device>::before_all_runners(const Input_para& inp, UnitCell& 
     this->pw_wfc->initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, POOL_WORLD);
 #endif
 
+#ifdef __LCAO
+    this->pw_wfc->init_basis_type(GlobalV::BASIS_TYPE);
+#endif
     this->pw_wfc->initgrids(inp.ref_cell_factor * ucell.lat0,
                             ucell.latvec,
                             this->pw_rho->nx,

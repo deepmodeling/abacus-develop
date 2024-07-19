@@ -16,6 +16,14 @@ void PW_Basis:: initmpi(
 }
 #endif
 
+#ifdef __LCAO
+    void PW_Basis::init_basis_type(
+        std::string basis_type_in
+    )
+    {
+        this->basis_type = basis_type_in;
+    }
+#endif
 /// 
 /// Init the grids for FFT
 /// Input: lattice vectors of the cell, Energy cut off for G^2/2

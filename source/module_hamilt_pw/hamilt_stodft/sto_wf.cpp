@@ -239,6 +239,9 @@ void Init_Sto_Orbitals_Ecut(Stochastic_WF& stowf,
 #ifdef __MPI
     pwmax.initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, POOL_WORLD);
 #endif
+#ifdef __LCAO
+    pwmax.init_basis_type(GlobalV::BASIS_TYPE);
+#endif
     pwmax.initgrids(wfcpw.lat0, wfcpw.latvec, max_ecut);
     const int nx = pwmax.nx;
     const int ny = pwmax.ny;

@@ -53,6 +53,9 @@ void ESolver_FP::before_all_runners(const Input_para& inp, UnitCell& cell)
 #ifdef __MPI
     this->pw_rho->initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, POOL_WORLD);
 #endif
+#ifdef __LCAO
+    this->pw_rho->init_basis_type(PARAM.inp.basis_type);
+#endif
     if (this->classname == "ESolver_OF")
     {
         this->pw_rho->setfullpw(inp.of_full_pw, inp.of_full_pw_dim);
@@ -79,6 +82,9 @@ void ESolver_FP::before_all_runners(const Input_para& inp, UnitCell& cell)
         ModulePW::PW_Basis_Sup* pw_rhod_sup = static_cast<ModulePW::PW_Basis_Sup*>(pw_rhod);
 #ifdef __MPI
         this->pw_rhod->initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, POOL_WORLD);
+#endif
+#ifdef __LCAO
+        this->pw_rhod->init_basis_type(PARAM.inp.basis_type);
 #endif
         if (this->classname == "ESolver_OF")
         {

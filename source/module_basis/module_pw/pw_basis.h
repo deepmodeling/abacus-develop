@@ -67,6 +67,11 @@ public:
     );
 #endif
 
+#ifdef __LCAO
+    //Reduce the memory consumption of the lcao module.
+    void init_basis_type(
+        std::string basis_type_in);
+#endif
     //Init the grids for FFT
     virtual void initgrids(
         const double lat0_in, //unit length (unit in bohr)
@@ -178,6 +183,7 @@ public:
                        ///< odd only; (2) even only. sunliang added 2022-08-30.
   int poolnproc = 1;
   int poolrank = 0;
+  std::string basis_type = "pw";
 
 protected:
     //distribute plane waves to different processors
