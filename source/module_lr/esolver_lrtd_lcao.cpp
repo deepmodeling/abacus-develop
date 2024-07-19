@@ -387,7 +387,7 @@ void LR::ESolver_LR<T, TR>::runner(int istep, UnitCell& cell)
             if (nspin == 2) { std::cout << "Calculating " << spin_type[is] << " excitations" << std::endl; }
             hamilt::Hamilt<T>* phamilt = new HamiltCasidaLR<T>(xc_kernel, nspin, this->nbasis, this->nocc, this->nvirt, this->ucell, GlobalC::GridD, this->psi_ks, this->eig_ks,
 #ifdef __EXX
-                this->exx_lri.get(), this->exx_info.info_global.hybrid_alpha,
+                this->exx_lri, this->exx_info.info_global.hybrid_alpha,
 #endif
                 this->gint_, this->pot[is], this->kv, & this->paraX_, & this->paraC_, & this->paraMat_);
             // solve the Casida equation
