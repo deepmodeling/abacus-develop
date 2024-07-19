@@ -17,9 +17,9 @@ void PW_Basis:: initmpi(
 #endif
 
 #ifdef __LCAO
-void PW_Basis::init_basis_type(const bool cuda_memory_allocate)
+void PW_Basis::init_basis_type(const bool gpu_flag)
 {
-    this->cuda_memory_allocate = cuda_memory_allocate;
+    this->gpu_flag = gpu_flag;
 }
 #endif
 /// 

@@ -32,7 +32,7 @@ void PW_Basis_Sup::setuptransform(const ModulePW::PW_Basis* pw_rho)
                          this->gamma_only,
                          this->xprime,
                          false,
-                         this->cuda_memory_allocate);
+                         this->gpu_flag);
     else
         this->ft.initfft(this->nx,
                          this->ny,
@@ -45,7 +45,7 @@ void PW_Basis_Sup::setuptransform(const ModulePW::PW_Basis* pw_rho)
                          this->gamma_only,
                          this->xprime,
                          false,
-                         this->cuda_memory_allocate);
+                         this->gpu_flag);
     this->ft.setupFFT();
     ModuleBase::timer::tick(this->classname, "setuptransform");
 }

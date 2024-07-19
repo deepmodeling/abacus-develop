@@ -58,9 +58,9 @@ void PW_Basis::setuptransform()
     this->getstartgr();
     this->ft.clear();
     if(this->xprime)    this->ft.initfft(this->nx,this->ny,this->nz,this->lix,this->rix,this->nst,this->nplane,this->poolnproc,
-                                        this->gamma_only, this->xprime, false, this->cuda_memory_allocate);
+                                        this->gamma_only, this->xprime, false, this->gpu_flag);
     else                this->ft.initfft(this->nx,this->ny,this->nz,this->liy,this->riy,this->nst,this->nplane,this->poolnproc,
-                                        this->gamma_only, this->xprime,false, this->cuda_memory_allocate);
+                                        this->gamma_only, this->xprime,false, this->gpu_flag);
     this->ft.setupFFT();
     ModuleBase::timer::tick(this->classname, "setuptransform");
 }

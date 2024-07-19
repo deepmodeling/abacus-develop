@@ -23,7 +23,7 @@ PW_Basis_K::~PW_Basis_K()
     delete[] gk2;
     delete[] ig2ixyz_k_;
 #if (defined(__CUDA) || defined(__ROCM))
-    if (this->device == "gpu" && this->cuda_memory_allocate == true) {
+    if (this->device == "gpu" && this->gpu_flag == true) {
         if (this->precision == "single") {
             delmem_sd_op()(gpu_ctx, this->s_kvec_c);
             delmem_sd_op()(gpu_ctx, this->s_gcar);
@@ -97,7 +97,7 @@ void PW_Basis_K:: initparameters(
     this->fftnxyz = this->fftnxy * this->fftnz;
     this->distribution_type = distribution_type_in;
 #if  (defined(__CUDA) || defined(__ROCM))
-    if (this->device == "gpu" && this->cuda_memory_allocate == true) {
+    if (this->device == "gpu" && this->gpu_flag == true) {
         if (this->precision == "single") {
             resmem_sd_op()(gpu_ctx, this->s_kvec_c, this->nks * 3);
             castmem_d2s_h2d_op()(gpu_ctx, cpu_ctx, this->s_kvec_c, reinterpret_cast<double *>(&this->kvec_c[0][0]), this->nks * 3);
@@ -163,7 +163,7 @@ void PW_Basis_K::setupIndGk()
         }
     }
 #if  (defined(__CUDA) || defined(__ROCM))
-    if (this->device == "gpu" && this->cuda_memory_allocate == true) {
+    if (this->device == "gpu" && this->gpu_flag == true) {
         resmem_int_op()(gpu_ctx, this->d_igl2isz_k, this->npwk_max * this->nks);
         syncmem_int_h2d_op()(gpu_ctx, cpu_ctx, this->d_igl2isz_k, this->igl2isz_k, this->npwk_max * this->nks);
     }
@@ -185,9 +185,9 @@ void PW_Basis_K::setuptransform()
     this->setupIndGk();
     this->ft.clear();
     if(this->xprime) {    this->ft.initfft(this->nx,this->ny,this->nz,this->lix,this->rix,this->nst,this->nplane,
-                                            this->poolnproc,this->gamma_only, this->xprime,false,this->cuda_memory_allocate);
+                                            this->poolnproc,this->gamma_only, this->xprime,false,this->gpu_flag);
     } else {                this->ft.initfft(this->nx,this->ny,this->nz,this->liy,this->riy,this->nst,this->nplane,
-                                            this->poolnproc,this->gamma_only, this->xprime,false,this->cuda_memory_allocate);
+                                            this->poolnproc,this->gamma_only, this->xprime,false,this->gpu_flag);
 }
     this->ft.setupFFT();
     ModuleBase::timer::tick(this->classname, "setuptransform");
@@ -243,7 +243,7 @@ void PW_Basis_K::collect_local_pw(const double& erf_ecut_in, const double& erf_h
         }
     }
 #if  (defined(__CUDA) || defined(__ROCM))
-    if (this->device == "gpu" && this->cuda_memory_allocate == true) {
+    if (this->device == "gpu" && this->gpu_flag == true) {
         if (this->precision == "single") {
             resmem_sd_op()(gpu_ctx, this->s_gk2, this->npwk_max * this->nks);
             resmem_sd_op()(gpu_ctx, this->s_gcar, this->npwk_max * this->nks * 3);

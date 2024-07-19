@@ -44,7 +44,7 @@ public:
 	// init parameters of fft
 	void initfft(int nx_in, int ny_in, int nz_in, int lixy_in, int rixy_in, int ns_in, int nplane_in, 
 				 int nproc_in, bool gamma_only_in, bool xprime_in = true,bool mpifft_in = false,
-				 bool cuda_memory_allocate=true);
+				 bool gpu_flag=true);
 
 	//init fftw_plans
 	void setupFFT(); 
@@ -115,7 +115,7 @@ public :
 //add by A.s 202406 considering that no all people are familiar with fftw3,some comments should be added.
 	// When using lcao, cudafft is not needed 
 	//and the use of this part of the GPU memory can be turned off. 
-	bool cuda_memory_allocate=true; 
+	bool gpu_flag=true; 
     fftw_plan planzfor  = NULL;//create a special pointer pointing to the fftw_plan class as a plan for performing FFT
     fftw_plan planzbac  = NULL;
 	fftw_plan planxfor1 = NULL;
