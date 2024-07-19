@@ -22,8 +22,8 @@ PW_Basis_K::~PW_Basis_K()
     delete[] igl2ig_k;
     delete[] gk2;
     delete[] ig2ixyz_k_;
-#if ((defined(__CUDA) || defined(__ROCM)) && (!defined(__LCAO)))
-    if (this->device == "gpu" && this->cuda_memory_allocate == "pw") {
+#if (defined(__CUDA) || defined(__ROCM))
+    if (this->device == "gpu" && this->cuda_memory_allocate == true) {
         if (this->precision == "single") {
             delmem_sd_op()(gpu_ctx, this->s_kvec_c);
             delmem_sd_op()(gpu_ctx, this->s_gcar);
@@ -45,7 +45,7 @@ PW_Basis_K::~PW_Basis_K()
             delmem_sh_op()(cpu_ctx, this->s_gk2);
         }
         // There's no need to delete double pointers while in a CPU environment.
-#if ((defined(__CUDA) || defined(__ROCM)) && (!defined(__LCAO)))
+#if (defined(__CUDA) || defined(__ROCM))
     }
 #endif
 }
@@ -93,8 +93,8 @@ void PW_Basis_K:: initparameters(
     this->fftnxy = this->fftnx * this->fftny;
     this->fftnxyz = this->fftnxy * this->fftnz;
     this->distribution_type = distribution_type_in;
-#if  ((defined(__CUDA) || defined(__ROCM)) && (!defined(__LCAO)))
-    if (this->device == "gpu" && this->basis_type == "pw") {
+#if  (defined(__CUDA) || defined(__ROCM))
+    if (this->device == "gpu" && this->cuda_memory_allocate == true) {
         if (this->precision == "single") {
             resmem_sd_op()(gpu_ctx, this->s_kvec_c, this->nks * 3);
             castmem_d2s_h2d_op()(gpu_ctx, cpu_ctx, this->s_kvec_c, reinterpret_cast<double *>(&this->kvec_c[0][0]), this->nks * 3);
@@ -110,7 +110,7 @@ void PW_Basis_K:: initparameters(
         }
         this->d_kvec_c = reinterpret_cast<double *>(&this->kvec_c[0][0]);
         // There's no need to allocate double pointers while in a CPU environment.
-#if (((defined(__CUDA) || defined(__ROCM)) && (!defined(__LCAO))))
+#if ((defined(__CUDA) || defined(__ROCM)))
     }
 #endif
 }
@@ -158,7 +158,7 @@ void PW_Basis_K::setupIndGk()
             }
         }
     }
-#if  ((defined(__CUDA) || defined(__ROCM)) && (!defined(__LCAO)))
+#if  (defined(__CUDA) || defined(__ROCM))
     if (this->device == "gpu" && this->cuda_memory_allocate == true) {
         resmem_int_op()(gpu_ctx, this->d_igl2isz_k, this->npwk_max * this->nks);
         syncmem_int_h2d_op()(gpu_ctx, cpu_ctx, this->d_igl2isz_k, this->igl2isz_k, this->npwk_max * this->nks);
@@ -233,7 +233,7 @@ void PW_Basis_K::collect_local_pw(const double& erf_ecut_in, const double& erf_h
             }
         }
     }
-#if  ((defined(__CUDA) || defined(__ROCM)) && (!defined(__LCAO)))
+#if  (defined(__CUDA) || defined(__ROCM))
     if (this->device == "gpu" && this->cuda_memory_allocate == true) {
         if (this->precision == "single") {
             resmem_sd_op()(gpu_ctx, this->s_gk2, this->npwk_max * this->nks);
@@ -261,7 +261,7 @@ void PW_Basis_K::collect_local_pw(const double& erf_ecut_in, const double& erf_h
             this->d_gk2 = this->gk2;
         }
         // There's no need to allocate double pointers while in a CPU environment.
-#if ((defined(__CUDA) || defined(__ROCM)) && (!defined(__LCAO)))
+#if (defined(__CUDA) || defined(__ROCM))
     }
 #endif
 }

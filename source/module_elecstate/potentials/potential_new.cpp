@@ -45,7 +45,7 @@ Potential::~Potential()
         }
         this->components.clear();
     }
-#if  ((defined(__CUDA) || defined(__ROCM)) && (!defined(__LCAO)))
+#if  (defined(__CUDA) || defined(__ROCM))
     if (GlobalV::device_flag == "gpu") {
         if (GlobalV::precision_flag == "single" && GlobalV::BASIS_TYPE != "lcao") {
             delmem_sd_op()(gpu_ctx, s_veff_smooth);
@@ -62,7 +62,7 @@ Potential::~Potential()
             delmem_sh_op()(cpu_ctx, s_veff_smooth);
             delmem_sh_op()(cpu_ctx, s_vofk_smooth);
         }
-#if  ((defined(__CUDA) || defined(__ROCM)) && (!defined(__LCAO)))
+#if  (defined(__CUDA) || defined(__ROCM))
     }
 #endif
 }
@@ -130,7 +130,7 @@ void Potential::allocate()
         this->vofk_smooth.create(GlobalV::NSPIN, nrxx_smooth);
         ModuleBase::Memory::record("Pot::vofk_smooth", sizeof(double) * GlobalV::NSPIN * nrxx_smooth);
     }
-#if ((defined(__CUDA) || defined(__ROCM)) && (!defined(__LCAO)))
+#if (defined(__CUDA) || defined(__ROCM))
     if (GlobalV::device_flag == "gpu"  && GlobalV::BASIS_TYPE != "lcao") {
         if (GlobalV::precision_flag == "single") {
             resmem_sd_op()(gpu_ctx, s_veff_smooth, GlobalV::NSPIN * nrxx_smooth);
@@ -152,7 +152,7 @@ void Potential::allocate()
             this->d_vofk_smooth = this->vofk_smooth.c;
         }
         // There's no need to allocate memory for double precision pointers while in a CPU environment
-#if ((defined(__CUDA) || defined(__ROCM)) && (!defined(__LCAO)))
+#if (defined(__CUDA) || defined(__ROCM))
     }
 #endif
 }
@@ -182,7 +182,7 @@ void Potential::update_from_charge(const Charge*const chg, const UnitCell*const 
     }
 #endif
 
-#if ((defined(__CUDA) || defined(__ROCM)) && (!defined(__LCAO)))
+#if (defined(__CUDA) || defined(__ROCM))
     if (GlobalV::device_flag == "gpu"  && GlobalV::BASIS_TYPE != "lcao") {
         if (GlobalV::precision_flag == "single") {
             castmem_d2s_h2d_op()(gpu_ctx,
@@ -224,7 +224,7 @@ void Potential::update_from_charge(const Charge*const chg, const UnitCell*const 
                                  this->vofk_smooth.nr * this->vofk_smooth.nc);
         }
         // There's no need to synchronize memory for double precision pointers while in a CPU environment
-#if ((defined(__CUDA) || defined(__ROCM)) && (!defined(__LCAO)))
+#if (defined(__CUDA) || defined(__ROCM))
     }
 #endif
 #ifdef USE_PAW
