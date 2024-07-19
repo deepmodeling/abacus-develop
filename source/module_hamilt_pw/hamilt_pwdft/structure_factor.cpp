@@ -20,6 +20,7 @@ Structure_Factor::Structure_Factor()
 
 Structure_Factor::~Structure_Factor()
 {
+#if ((defined(__CUDA) || defined(__ROCM)) && (!defined(__LCAO)))
     if (GlobalV::device_flag == "gpu") {
         if (GlobalV::precision_flag == "single") {
             delmem_cd_op()(gpu_ctx, this->c_eigts1);
@@ -31,13 +32,16 @@ Structure_Factor::~Structure_Factor()
         delmem_zd_op()(gpu_ctx, this->z_eigts3);
     }
     else {
+#endif
         if (GlobalV::precision_flag == "single") {
             delmem_ch_op()(cpu_ctx, this->c_eigts1);
             delmem_ch_op()(cpu_ctx, this->c_eigts2);
             delmem_ch_op()(cpu_ctx, this->c_eigts3);
         }
         // There's no need to delete double precision pointers while in a CPU environment.
+#if ((defined(__CUDA) || defined(__ROCM)) && (!defined(__LCAO)))
     }
+#endif
 }
 
 // called in input.cpp
@@ -147,6 +151,7 @@ void Structure_Factor::setup_structure_factor(UnitCell* Ucell, const ModulePW::P
             inat++;
         }
     }
+#if ((defined(__CUDA) || defined(__ROCM)) && (!defined(__LCAO)))
     if (GlobalV::device_flag == "gpu") {
         if (GlobalV::precision_flag == "single") {
             resmem_cd_op()(gpu_ctx, this->c_eigts1, Ucell->nat * (2 * rho_basis->nx + 1));
@@ -164,6 +169,7 @@ void Structure_Factor::setup_structure_factor(UnitCell* Ucell, const ModulePW::P
         syncmem_z2z_h2d_op()(gpu_ctx, cpu_ctx, this->z_eigts3, this->eigts3.c, Ucell->nat * (2 * rho_basis->nz + 1));
     }
     else {
+#endif
         if (GlobalV::precision_flag == "single") {
             resmem_ch_op()(cpu_ctx, this->c_eigts1, Ucell->nat * (2 * rho_basis->nx + 1));
             resmem_ch_op()(cpu_ctx, this->c_eigts2, Ucell->nat * (2 * rho_basis->ny + 1));
@@ -176,7 +182,9 @@ void Structure_Factor::setup_structure_factor(UnitCell* Ucell, const ModulePW::P
         this->z_eigts2 = this->eigts2.c;
         this->z_eigts3 = this->eigts3.c;
         // There's no need to delete double precision pointers while in a CPU environment.
+#if ((defined(__CUDA) || defined(__ROCM)) && (!defined(__LCAO)))
     }
+#endif
     ModuleBase::timer::tick("PW_Basis","setup_struc_factor"); 
     return;
 }
