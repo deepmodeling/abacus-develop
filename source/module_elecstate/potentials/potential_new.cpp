@@ -47,7 +47,7 @@ Potential::~Potential()
     }
 #if  ((defined(__CUDA) || defined(__ROCM)) && (!defined(__LCAO)))
     if (GlobalV::device_flag == "gpu") {
-        if (GlobalV::precision_flag == "single") {
+        if (GlobalV::precision_flag == "single" && GlobalV::BASIS_TYPE != "lcao") {
             delmem_sd_op()(gpu_ctx, s_veff_smooth);
             delmem_sd_op()(gpu_ctx, s_vofk_smooth);
         }
@@ -131,7 +131,7 @@ void Potential::allocate()
         ModuleBase::Memory::record("Pot::vofk_smooth", sizeof(double) * GlobalV::NSPIN * nrxx_smooth);
     }
 #if ((defined(__CUDA) || defined(__ROCM)) && (!defined(__LCAO)))
-    if (GlobalV::device_flag == "gpu") {
+    if (GlobalV::device_flag == "gpu"  && GlobalV::BASIS_TYPE != "lcao") {
         if (GlobalV::precision_flag == "single") {
             resmem_sd_op()(gpu_ctx, s_veff_smooth, GlobalV::NSPIN * nrxx_smooth);
             resmem_sd_op()(gpu_ctx, s_vofk_smooth, GlobalV::NSPIN * nrxx_smooth);
@@ -183,7 +183,7 @@ void Potential::update_from_charge(const Charge*const chg, const UnitCell*const 
 #endif
 
 #if ((defined(__CUDA) || defined(__ROCM)) && (!defined(__LCAO)))
-    if (GlobalV::device_flag == "gpu") {
+    if (GlobalV::device_flag == "gpu"  && GlobalV::BASIS_TYPE != "lcao") {
         if (GlobalV::precision_flag == "single") {
             castmem_d2s_h2d_op()(gpu_ctx,
                                  cpu_ctx,

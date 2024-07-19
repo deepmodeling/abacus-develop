@@ -21,7 +21,7 @@ Structure_Factor::Structure_Factor()
 Structure_Factor::~Structure_Factor()
 {
 #if ((defined(__CUDA) || defined(__ROCM)) && (!defined(__LCAO)))
-    if (GlobalV::device_flag == "gpu") {
+    if (GlobalV::device_flag == "gpu" && GlobalV::BASIS_TYPE != "lcao") {
         if (GlobalV::precision_flag == "single") {
             delmem_cd_op()(gpu_ctx, this->c_eigts1);
             delmem_cd_op()(gpu_ctx, this->c_eigts2);
@@ -152,7 +152,7 @@ void Structure_Factor::setup_structure_factor(UnitCell* Ucell, const ModulePW::P
         }
     }
 #if ((defined(__CUDA) || defined(__ROCM)) && (!defined(__LCAO)))
-    if (GlobalV::device_flag == "gpu") {
+    if (GlobalV::device_flag == "gpu" && GlobalV::BASIS_TYPE != "lcao") {
         if (GlobalV::precision_flag == "single") {
             resmem_cd_op()(gpu_ctx, this->c_eigts1, Ucell->nat * (2 * rho_basis->nx + 1));
             resmem_cd_op()(gpu_ctx, this->c_eigts2, Ucell->nat * (2 * rho_basis->ny + 1));
