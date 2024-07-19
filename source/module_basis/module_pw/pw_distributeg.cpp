@@ -191,7 +191,7 @@ void PW_Basis::get_ig2isz_is2fftixy(
         }
         if (st_move == this->nst && pw_filled == this->npw) break;
     }
-#if  (defined(__CUDA) || defined(__ROCM))
+#if  ((defined(__CUDA) || defined(__ROCM)) && (!defined(__LCAO)))
     if (this->device == "gpu" && this->cuda_memory_allocate == true) {
         resmem_int_op()(gpu_ctx, d_is2fftixy, this->nst);
         syncmem_int_h2d_op()(gpu_ctx, cpu_ctx, this->d_is2fftixy, this->is2fftixy, this->nst);
