@@ -14,6 +14,23 @@
 using namespace hsolver;
 
 
+/**
+ * @brief Constructor for the DiagoDavid class.
+ * 
+ * @param[in] precondition_in Pointer to the preconditioning matrix.
+ * @param[in] nband_in Number of eigenpairs required(i.e. bands).
+ * @param[in] dim_in Dimension of the matrix.
+ * @param[in] david_ndim_in Dimension of the reduced basis set of Davidson.
+ *                      `david_ndim_in` * `nband_in` is the maximum allowed size of
+ *                      the reduced basis set before \b restart of Davidson.
+ * @param[in] use_paw_in Flag indicating whether to use PAW.
+ * @param[in] diag_comm_in Communication information for diagonalization.
+ * 
+ * @tparam T The data type of the matrices and arrays.
+ * @tparam Device The device type (base_device::DEVICE_CPU or DEVICE_GPU).
+ * 
+ * @note Auxiliary memory is allocated in the constructor and deallocated in the destructor.
+ */
 template <typename T, typename Device>
 DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in, 
                                   const int nband_in,
@@ -95,6 +112,14 @@ DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in,
     setmem_complex_op()(this->ctx, this->lagrange_matrix, 0, nband * nband);
 }
 
+/**
+ * @brief Destructor for the DiagoDavid class.
+ * 
+ * This destructor releases the dynamically allocated memory used by the class members.
+ * It deletes the basis, hpsi, spsi, hcc, scc, vcc, lagrange_matrix, and eigenvalue arrays.
+ * If the device is a GPU device, it also deletes the d_precondition array.
+ * 
+ */
 template <typename T, typename Device>
 DiagoDavid<T, Device>::~DiagoDavid()
 {
