@@ -1,25 +1,27 @@
 #include "hsolver_pw.h"
 
-#include "diago_bpcg.h"
-#include "diago_cg.h"
-#include "diago_dav_subspace.h"
-#include "diago_david.h"
 #include "module_base/global_variable.h"
-#include "module_base/parallel_global.h" // for MPI
 #include "module_base/timer.h"
 #include "module_base/tool_quit.h"
 #include "module_elecstate/elecstate_pw.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
+#include "module_hamilt_general/hamilt.h"
 #include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
 #include "module_hsolver/diag_comm_info.h"
+#include "module_hsolver/diago_bpcg.h"
+#include "module_hsolver/diago_cg.h"
+#include "module_hsolver/diago_dav_subspace.h"
+#include "module_hsolver/diago_david.h"
 #include "module_hsolver/diago_iter_assist.h"
+#include "module_psi/psi.h"
 
 #include <algorithm>
 #include <vector>
 
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+// #include "module_base/parallel_global.h" // for MPI
+// #include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
 #endif
 namespace hsolver
 {
@@ -343,7 +345,7 @@ template <typename T, typename Device>
 void HSolverPW<T, Device>::updatePsiK(hamilt::Hamilt<T, Device>* pHamilt, psi::Psi<T, Device>& psi, const int ik)
 {
     psi.fix_k(ik);
-    if (!GlobalV::psi_initializer && !this->initialed_psi && GlobalV::BASIS_TYPE == "pw")
+    if (!GlobalV::psi_initializer && !this->initialed_psi)
     {
         hamilt::diago_PAO_in_pw_k2(this->ctx, ik, psi, this->wfc_basis, this->pwf, pHamilt);
     }
@@ -388,7 +390,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
 
             DiagoIterAssist<T, Device>::diagH_subspace(hm, psi_in_wrapper, psi_out_wrapper, eigen.data<Real>());
         };
-        DiagoCG<T, Device> cg(GlobalV::BASIS_TYPE,
+        DiagoCG<T, Device> cg("pw",
                               GlobalV::CALCULATION,
                               DiagoIterAssist<T, Device>::need_subspace,
                               subspace_func,
@@ -507,8 +509,8 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
                                                   DiagoIterAssist<T, Device>::need_subspace,
                                                   comm_info);
 
-        DiagoIterAssist<T, Device>::avg_iter
-            += static_cast<double>(dav_subspace.diag(hpsi_func, psi.get_pointer(), psi.get_nbasis(), eigenvalue, is_occupied, scf));
+        DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(
+            dav_subspace.diag(hpsi_func, psi.get_pointer(), psi.get_nbasis(), eigenvalue, is_occupied, scf));
     }
     else if (this->method == "dav")
     {
@@ -554,22 +556,34 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         };
 
         /// wrap spsi into lambda function, Matrix \times blockvector
-        auto spsi_func = [hm](const T* psi_in, T* spsi_out,
-                               const int nrow,  // dimension of spsi: nbands * nrow
-                               const int npw,   // number of plane waves
-                               const int nbands // number of bands
-                            ){
+        auto spsi_func = [hm](const T* psi_in,
+                              T* spsi_out,
+                              const int nrow,  // dimension of spsi: nbands * nrow
+                              const int npw,   // number of plane waves
+                              const int nbands // number of bands
+                         ) {
             ModuleBase::timer::tick("David", "spsi_func");
             // sPsi determines S=I or not by GlobalV::use_uspp inside
             hm->sPsi(psi_in, spsi_out, nrow, npw, nbands);
             ModuleBase::timer::tick("David", "spsi_func");
         };
 
-
-        DiagoDavid<T, Device> david(pre_condition.data(), nband, dim, GlobalV::PW_DIAG_NDIM, GlobalV::use_paw, comm_info);
+        DiagoDavid<T, Device> david(pre_condition.data(),
+                                    nband,
+                                    dim,
+                                    GlobalV::PW_DIAG_NDIM,
+                                    GlobalV::use_paw,
+                                    comm_info);
         // do diag and add davidson iteration counts up to avg_iter
-        DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(
-            david.diag(hpsi_func, spsi_func, ldPsi, psi.get_pointer(), eigenvalue, david_diag_thr, david_maxiter, ntry_max, notconv_max));
+        DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(david.diag(hpsi_func,
+                                                                               spsi_func,
+                                                                               ldPsi,
+                                                                               psi.get_pointer(),
+                                                                               eigenvalue,
+                                                                               david_diag_thr,
+                                                                               david_maxiter,
+                                                                               ntry_max,
+                                                                               notconv_max));
     }
     return;
 }
