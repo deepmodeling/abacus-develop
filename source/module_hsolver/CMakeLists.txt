@@ -15,7 +15,7 @@ if(ENABLE_LCAO)
   if (ENABLE_MPI)
     list(APPEND objects
         hsolver_lcao.cpp
-        diago_scalapack_indep.cpp
+        diago_scalapack.cpp
     )
   else ()
     list(APPEND objects
