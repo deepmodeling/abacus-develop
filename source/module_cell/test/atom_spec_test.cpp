@@ -30,7 +30,7 @@
 #include "module_cell/pseudo.h"
 #include "module_cell/atom_pseudo.h"
 #include "module_cell/atom_spec.h"
-
+#undef private
 class AtomSpecTest : public testing::Test
 {
 protected:
@@ -190,8 +190,8 @@ TEST_F(AtomSpecTest, BcastAtom2)
 	{
 		ifs.open("./support/C.upf");
 		GlobalV::PSEUDORCUT = 15.0;
-		upf.read_pseudo_upf201(ifs);
-		atom.ncpp.set_pseudo(upf);
+		upf.read_pseudo_upf201(ifs, atom.ncpp);
+		atom.ncpp.set_pseudo();
 		ifs.close();
 		EXPECT_TRUE(atom.ncpp.has_so);
 	}
@@ -218,4 +218,4 @@ int main(int argc, char **argv)
 	return result;
 }
 #endif
-#undef private
+

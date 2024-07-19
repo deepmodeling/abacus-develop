@@ -8,7 +8,7 @@
 #include "module_base/global_variable.h"
 #include "module_base/parallel_global.h"
 #include "module_base/tool_title.h"
-#include "module_io/input.h"
+#include "module_parameter/parameter.h"
 
 void ModuleIO::write_wfc_pw(const std::string& fn,
                             const psi::Psi<std::complex<double>>& psi,
@@ -24,21 +24,21 @@ void ModuleIO::write_wfc_pw(const std::string& fn,
     for(int ik = 0; ik < nkstot ; ++ik)
     { 
         std::stringstream wfss;
-        if(INPUT.out_wfc_pw==1)
+        if(PARAM.inp.out_wfc_pw==1)
             wfss<<fn<<ik+1<<".txt";
-        else if(INPUT.out_wfc_pw==2)
+        else if(PARAM.inp.out_wfc_pw==2)
         {
             wfss<<fn<<ik+1<<".dat";
         }
         wfilename[ik]=wfss.str();
         if ( GlobalV::MY_RANK == 0 )
         {
-            if(INPUT.out_wfc_pw==1)
+            if(PARAM.inp.out_wfc_pw==1)
             {
                 std::ofstream ofs(wfss.str().c_str()); //clear all wavefunc files.
                 ofs.close();
             }
-            else if(INPUT.out_wfc_pw==2)
+            else if(PARAM.inp.out_wfc_pw==2)
             {
                 Binstream wfs(wfss.str(),"w");
                 wfs.close();
@@ -83,7 +83,7 @@ void ModuleIO::write_wfc_pw(const std::string& fn,
 #else
                     int id=0;               
 #endif
-                    if(INPUT.out_wfc_pw==1)
+                    if(PARAM.inp.out_wfc_pw==1)
                     {
                         std::ofstream ofs2( wfilename[ikstot].c_str(),std::ios::app);
                         if(id==0)
@@ -95,7 +95,7 @@ void ModuleIO::write_wfc_pw(const std::string& fn,
                             ofs2 << std::setw(10) << ikstot + 1 << std::setw(10) << nkstot << std::setw(10)
                                  << kv.kvec_c[ik].x << std::setw(10) << kv.kvec_c[ik].y << std::setw(10)
                                  << kv.kvec_c[ik].z << std::setw(10) << kv.wk[ik] << std::setw(10) << ikngtot
-                                 << std::setw(10) << GlobalV::NBANDS << std::setw(10) << INPUT.ecutwfc << std::setw(10)
+                                 << std::setw(10) << GlobalV::NBANDS << std::setw(10) << PARAM.inp.ecutwfc << std::setw(10)
                                  << wfcpw->lat0 << std::setw(10) << wfcpw->tpiba << std::endl;
                             ofs2<<"\n<Reciprocal Lattice Vector>"<<std::endl;
                             ofs2<<std::setw(10)<<wfcpw->G.e11<<std::setw(10)<<wfcpw->G.e12<<std::setw(10)<<wfcpw->G.e13<<std::endl;
@@ -121,13 +121,13 @@ void ModuleIO::write_wfc_pw(const std::string& fn,
                         }
 						ofs2.close();
                     }
-                    else if(INPUT.out_wfc_pw==2)
+                    else if(PARAM.inp.out_wfc_pw==2)
                     {
                         Binstream wfs2( wfilename[ikstot],"a");
                         if(id==0)
                         {
                             wfs2 << int(72) << ikstot + 1 << nkstot << kv.kvec_c[ik].x << kv.kvec_c[ik].y
-                                 << kv.kvec_c[ik].z << kv.wk[ik] << ikngtot << GlobalV::NBANDS << INPUT.ecutwfc
+                                 << kv.kvec_c[ik].z << kv.wk[ik] << ikngtot << GlobalV::NBANDS << PARAM.inp.ecutwfc
                                  << wfcpw->lat0 << wfcpw->tpiba << 72; // 4 int + 7 double is 72B
                             wfs2<<72<<wfcpw->G.e11<<wfcpw->G.e12<<wfcpw->G.e13
                                     <<wfcpw->G.e21<<wfcpw->G.e22<<wfcpw->G.e23
@@ -169,7 +169,7 @@ void ModuleIO::write_wfc_pw(const std::string& fn,
 #else
                     int id=0;
 #endif
-                        if(INPUT.out_wfc_pw==1)
+                        if(PARAM.inp.out_wfc_pw==1)
                         {
                             std::ofstream ofs2( wfilename[ikstot].c_str(),std::ios::app);
                             if(id==0)   ofs2 << "\n< Band "<<ib+1 <<" >" <<std::endl; 
@@ -184,7 +184,7 @@ void ModuleIO::write_wfc_pw(const std::string& fn,
                             if(id==GlobalV::NPROC_IN_POOL-1)   ofs2 << "\n< Band "<<ib+1 <<" >" <<std::endl; 
 							ofs2.close();
                         }
-                        else if(INPUT.out_wfc_pw==2)
+                        else if(PARAM.inp.out_wfc_pw==2)
                         {
                             Binstream wfs2(wfilename[ikstot],"a");
                             if(id==0) wfs2<<ikngtot*16;

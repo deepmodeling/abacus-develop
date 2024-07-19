@@ -5,6 +5,9 @@
 #include "../psi_initializer_nao.h"
 #include "../psi_initializer_atomic_random.h"
 #include "../psi_initializer_nao_random.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 
 /*
 =========================
@@ -112,8 +115,8 @@ class PsiIntializerUnitTest : public ::testing::Test {
             // mock
             GlobalV::NBANDS = 1;
             GlobalV::NSPIN = 1;
-            GlobalV::global_orbital_dir = "./support/";
-            GlobalV::global_pseudo_dir = "./support/";
+            PARAM.input.orbital_dir = "./support/";
+            PARAM.input.pseudo_dir = "./support/";
             GlobalV::NPOL = 1;
             GlobalV::CALCULATION = "scf";
             GlobalV::init_wfc = "random";

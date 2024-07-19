@@ -19,8 +19,8 @@
 #include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 #include "module_io/berryphase.h"
-
-bool berryphase::berry_phase_flag = 0;
+#undef private
+bool berryphase::berry_phase_flag = false;
 
 pseudo::pseudo()
 {
@@ -213,8 +213,9 @@ TEST_F(KlistParaTest, Set)
     // construct cell and symmetry
     ModuleSymmetry::Symmetry symm;
     construct_ucell(stru_lib[0]);
-    if (GlobalV::MY_RANK == 0)
+    if (GlobalV::MY_RANK == 0) {
         GlobalV::ofs_running.open("tmp_klist_5");
+}
     symm.analy_sys(GlobalC::ucell.lat, GlobalC::ucell.st, GlobalC::ucell.atoms, GlobalV::ofs_running);
     // read KPT
     std::string k_file = "./support/KPT1";
@@ -242,14 +243,18 @@ TEST_F(KlistParaTest, Set)
     EXPECT_TRUE(kv->kd_done);
     if (GlobalV::NPROC == 4)
     {
-        if (GlobalV::MY_RANK == 0)
+        if (GlobalV::MY_RANK == 0) {
             EXPECT_EQ(kv->get_nks(), 18);
-        if (GlobalV::MY_RANK == 1)
+}
+        if (GlobalV::MY_RANK == 1) {
             EXPECT_EQ(kv->get_nks(), 18);
-        if (GlobalV::MY_RANK == 2)
+}
+        if (GlobalV::MY_RANK == 2) {
             EXPECT_EQ(kv->get_nks(), 17);
-        if (GlobalV::MY_RANK == 3)
+}
+        if (GlobalV::MY_RANK == 3) {
             EXPECT_EQ(kv->get_nks(), 17);
+}
     }
     ClearUcell();
     if (GlobalV::MY_RANK == 0)
@@ -265,8 +270,9 @@ TEST_F(KlistParaTest, SetAfterVC)
     // construct cell and symmetry
     ModuleSymmetry::Symmetry symm;
     construct_ucell(stru_lib[0]);
-    if (GlobalV::MY_RANK == 0)
+    if (GlobalV::MY_RANK == 0) {
         GlobalV::ofs_running.open("tmp_klist_6");
+}
     symm.analy_sys(GlobalC::ucell.lat, GlobalC::ucell.st, GlobalC::ucell.atoms, GlobalV::ofs_running);
     // read KPT
     std::string k_file = "./support/KPT1";
@@ -294,17 +300,21 @@ TEST_F(KlistParaTest, SetAfterVC)
     EXPECT_TRUE(kv->kd_done);
     if (GlobalV::NPROC == 4)
     {
-        if (GlobalV::MY_RANK == 0)
+        if (GlobalV::MY_RANK == 0) {
             EXPECT_EQ(kv->get_nks(), 35);
-        if (GlobalV::MY_RANK == 1)
+}
+        if (GlobalV::MY_RANK == 1) {
             EXPECT_EQ(kv->get_nks(), 35);
-        if (GlobalV::MY_RANK == 2)
+}
+        if (GlobalV::MY_RANK == 2) {
             EXPECT_EQ(kv->get_nks(), 35);
-        if (GlobalV::MY_RANK == 3)
+}
+        if (GlobalV::MY_RANK == 3) {
             EXPECT_EQ(kv->get_nks(), 35);
+}
     }
     // call set_after_vc here
-    kv->kc_done = 0;
+    kv->kc_done = false;
     kv->set_after_vc(kv->nspin, GlobalC::ucell.G, GlobalC::ucell.latvec);
     EXPECT_TRUE(kv->kc_done);
     EXPECT_TRUE(kv->kd_done);
@@ -331,4 +341,3 @@ int main(int argc, char** argv)
     return result;
 }
 #endif
-#undef private

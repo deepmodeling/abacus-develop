@@ -6,7 +6,8 @@
 #define private public
 #define protected public
 #include "module_md/verlet.h"
-
+#undef private
+#undef protected
 #define doublethreshold 1e-12
 
 
@@ -40,16 +41,17 @@ class Verlet_test : public testing::Test
   protected:
     MD_base* mdrun;
     UnitCell ucell;
+    Input_para input;
 
     void SetUp()
     {
         Setcell::setupcell(ucell);
-        Setcell::parameters();
+        Setcell::parameters(input);
 
         ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
-        p_esolver->before_all_runners(INPUT, ucell);
+        p_esolver->before_all_runners(input, ucell);
 
-        mdrun = new Verlet(INPUT.mdp, ucell);
+        mdrun = new Verlet(input.mdp, ucell);
         mdrun->setup(p_esolver, GlobalV::global_readin_dir);
     }
 

@@ -48,7 +48,7 @@ class Vdw
     virtual void cal_stress() = 0;
 };
 
-std::unique_ptr<Vdw> make_vdw(const UnitCell &ucell, const Input &input);
+std::unique_ptr<Vdw> make_vdw(const UnitCell &ucell, const Input_para &input);
 
 } // namespace vdw
 

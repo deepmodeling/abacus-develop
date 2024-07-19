@@ -12,8 +12,6 @@ void Gint::cpu_rho_interface(Gint_inout* inout) {
     const int ncyz = this->ny * this->nplane;
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
-    double* pvpR_thread = nullptr;
-    hamilt::HContainer<double>* hRGint_thread = nullptr;
 #ifdef _OPENMP
 #pragma omp for
 #endif

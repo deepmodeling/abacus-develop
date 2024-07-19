@@ -109,7 +109,7 @@ void Stress_Func<FPTYPE, Device>::stress_kin(ModuleBase::matrix& sigma,
 		}
 	}
 
-	if(INPUT.gamma_only)
+	if(PARAM.inp.gamma_only)
 	{
 		for(int l=0;l<3;l++)
 		{

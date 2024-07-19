@@ -1,6 +1,6 @@
 #include "parallel_reduce.h"
 
-#include "parallel_global.h"
+#include "parallel_comm.h"
 
 #include <vector>
 

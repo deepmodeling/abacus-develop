@@ -1,5 +1,4 @@
 #include "tool_check.h"
-
 #include "tool_quit.h"
 
 namespace ModuleBase

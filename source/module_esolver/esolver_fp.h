@@ -40,9 +40,9 @@ namespace ModuleESolver
         virtual ~ESolver_FP();
 
         //! Initialize of the first-principels energy solver
-        virtual void before_all_runners(Input& inp, UnitCell& cell) override;
+        virtual void before_all_runners(const Input_para& inp, UnitCell& cell) override;
 
-        virtual void init_after_vc(Input& inp, UnitCell& cell);    // liuyu add 2023-03-09
+        virtual void init_after_vc(const Input_para& inp, UnitCell& cell);    // liuyu add 2023-03-09
 
         //! Electronic states
         elecstate::ElecState* pelec = nullptr;
@@ -62,7 +62,7 @@ namespace ModuleESolver
       private:
        
         //! Print charge density using FFT
-        void print_rhofft(Input& inp, std::ofstream &ofs);
+        void print_rhofft(const Input_para& inp, std::ofstream &ofs);
     };
 }
 

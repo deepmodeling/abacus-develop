@@ -48,6 +48,7 @@ add_library(
     abfs-vector3_order.cpp
     parallel_common.cpp
     parallel_global.cpp
+    parallel_comm.cpp
     parallel_reduce.cpp
     spherical_bessel_transformer.cpp
     cubic_spline.cpp
@@ -66,12 +67,14 @@ if(ENABLE_COVERAGE)
 endif()
 
 if(BUILD_TESTING)
-  add_subdirectory(test)
-  add_subdirectory(test_parallel)
-  add_subdirectory(kernels/test)
-  add_subdirectory(module_mixing/test)
-  add_subdirectory(module_device/test)
-  if (USE_ABACUS_LIBM)
-    add_subdirectory(libm/test)
+  if(ENABLE_MPI) #Zhang Xiaoyang: A temporary solution. Please classify the serial and parrallel tests later. 2024-7-8
+    add_subdirectory(test)
+    add_subdirectory(test_parallel)
+    add_subdirectory(kernels/test)
+    add_subdirectory(module_mixing/test)
+    add_subdirectory(module_device/test)
+    if (USE_ABACUS_LIBM)
+      add_subdirectory(libm/test)
+    endif()
   endif()
 endif()

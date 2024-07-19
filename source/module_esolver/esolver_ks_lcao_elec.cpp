@@ -50,7 +50,7 @@ void ESolver_KS_LCAO<TK, TR>::set_matrix_grid(Record_adj& ra)
                                                      GlobalC::ucell.infoNL.get_rcutmax_Beta(),
                                                      GlobalV::GAMMA_ONLY_LOCAL);
 
-    atom_arrange::search(GlobalV::SEARCH_PBC,
+    atom_arrange::search(PARAM.inp.search_pbc,
                          GlobalV::ofs_running,
                          GlobalC::GridD,
                          GlobalC::ucell,
@@ -90,7 +90,7 @@ void ESolver_KS_LCAO<TK, TR>::set_matrix_grid(Record_adj& ra)
                              psi_u,
                              dpsi_u,
                              d2psi_u,
-                             GlobalV::NUM_STREAM);
+                             PARAM.inp.nstream);
     psi_u.clear();
     psi_u.shrink_to_fit();
     dpsi_u.clear();
@@ -159,7 +159,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
     }
 
     // init wfc from file
-    if(istep == 0 && INPUT.init_wfc == "file")
+    if(istep == 0 && PARAM.inp.init_wfc == "file")
     {
         if (! ModuleIO::read_wfc_nao(GlobalV::global_readin_dir, this->ParaV, *(this->psi), this->pelec))
         {
@@ -209,23 +209,23 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
                                    GlobalC::GridD,
                                    *(two_center_bundle_.overlap_orb_alpha));
 
-        if (GlobalV::deepks_out_unittest)
+        if (PARAM.inp.deepks_out_unittest)
         {
             GlobalC::ld.check_psialpha(GlobalV::CAL_FORCE, GlobalC::ucell, GlobalC::ORB, GlobalC::GridD);
         }
     }
 #endif
-    if (GlobalV::sc_mag_switch)
+    if (PARAM.inp.sc_mag_switch)
     {
         SpinConstrain<TK, base_device::DEVICE_CPU>& sc = SpinConstrain<TK, base_device::DEVICE_CPU>::getScInstance();
         sc.init_sc(GlobalV::sc_thr,
-                   GlobalV::nsc,
-                   GlobalV::nsc_min,
-                   GlobalV::alpha_trial,
-                   GlobalV::sccut,
-                   GlobalV::decay_grad_switch,
+                   PARAM.inp.nsc,
+                   PARAM.inp.nsc_min,
+                   PARAM.inp.alpha_trial,
+                   PARAM.inp.sccut,
+                   PARAM.inp.sc_mag_switch,
                    GlobalC::ucell,
-                   GlobalV::sc_file,
+                   PARAM.inp.sc_file,
                    GlobalV::NPOL,
                    &(this->ParaV),
                    GlobalV::NSPIN,
@@ -255,7 +255,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
 
     if (GlobalC::ucell.cell_parameter_updated)
     {
-        this->init_after_vc(INPUT, GlobalC::ucell);
+        this->init_after_vc(PARAM.inp, GlobalC::ucell);
     }
     if (GlobalC::ucell.ionic_position_updated)
     {
@@ -272,7 +272,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
     //----------------------------------------------------------
     // about vdw, jiyy add vdwd3 and linpz add vdwd2
     //----------------------------------------------------------
-    auto vdw_solver = vdw::make_vdw(GlobalC::ucell, INPUT);
+    auto vdw_solver = vdw::make_vdw(GlobalC::ucell, PARAM.inp);
     if (vdw_solver != nullptr)
     {
         this->pelec->f_en.evdw = vdw_solver->get_energy();
@@ -293,7 +293,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
 #endif // __EXX
 
     this->pelec->init_scf(istep, this->sf.strucFac);
-    if (GlobalV::out_chg == 2)
+    if (PARAM.inp.out_chg == 2)
     {
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
@@ -339,6 +339,15 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
     dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)
         ->get_DM()
         ->init_DMR(*(dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt)->getHR()));
+    // two cases are considered:
+    // 1. DMK in DensityMatrix is not empty (istep > 0), then DMR is initialized by DMK
+    // 2. DMK in DensityMatrix is empty (istep == 0), then DMR is initialized by zeros
+    if(istep > 0)
+    {
+        dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)
+            ->get_DM()
+            ->cal_DMR();
+    }
 
     if (PARAM.inp.dm_to_rho)
     {
@@ -373,7 +382,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
 
     // 1. calculate ewald energy.
     // mohan update 2021-02-25
-    if (!GlobalV::test_skip_ewald)
+    if (!PARAM.inp.test_skip_ewald)
     {
         this->pelec->f_en.ewald_energy = H_Ewald_pw::compute_ewald(GlobalC::ucell, this->pw_rho, this->sf.strucFac);
     }
@@ -420,7 +429,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
             std::cout << " please make sure search_radius > 0" << std::endl;
         }
 
-        atom_arrange::search(GlobalV::SEARCH_PBC,
+        atom_arrange::search(PARAM.inp.search_pbc,
                              GlobalV::ofs_running,
                              GlobalC::GridD,
                              GlobalC::ucell,
@@ -441,30 +450,60 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
     } else if (cal_type == "get_pchg") {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "getting partial charge");
         IState_Charge ISC(this->psi, &(this->ParaV));
-        ISC.begin(this->GG,
-                  this->pelec->charge->rho,
-                  this->pelec->wg,
-                  this->pelec->eferm.get_all_ef(),
-                  this->pw_rho->nrxx,
-                  this->pw_rho->nplane,
-                  this->pw_rho->startz_current,
-                  this->pw_rho->nx,
-                  this->pw_rho->ny,
-                  this->pw_rho->nz,
-                  this->pw_big->bz,
-                  this->pw_big->nbz,
-                  GlobalV::GAMMA_ONLY_LOCAL,
-                  GlobalV::NBANDS_ISTATE,
-                  INPUT.get_out_band_kb(),
-                  GlobalV::NBANDS,
-                  GlobalV::nelec,
-                  GlobalV::NSPIN,
-                  GlobalV::NLOCAL,
-                  GlobalV::global_out_dir,
-                  GlobalV::MY_RANK,
-                  GlobalV::ofs_warning,
-                  &GlobalC::ucell,
-                  &GlobalC::GridD);
+        if (GlobalV::GAMMA_ONLY_LOCAL) {
+            ISC.begin(this->GG,
+                    this->pelec->charge->rho,
+                    this->pelec->wg,
+                    this->pelec->eferm.get_all_ef(),
+                    this->pw_rho->nrxx,
+                    this->pw_rho->nplane,
+                    this->pw_rho->startz_current,
+                    this->pw_rho->nx,
+                    this->pw_rho->ny,
+                    this->pw_rho->nz,
+                    this->pw_big->bz,
+                    this->pw_big->nbz,
+                    GlobalV::GAMMA_ONLY_LOCAL,
+                    PARAM.inp.nbands_istate,
+                    PARAM.inp.bands_to_print,
+                    GlobalV::NBANDS,
+                    GlobalV::nelec,
+                    GlobalV::NSPIN,
+                    GlobalV::NLOCAL,
+                    GlobalV::global_out_dir,
+                    GlobalV::MY_RANK,
+                    GlobalV::ofs_warning,
+                    &GlobalC::ucell,
+                    &GlobalC::GridD,
+                    this->kv);
+        } else {
+            ISC.begin(this->GK,
+                    this->pelec->charge->rho,
+                    this->pelec->wg,
+                    this->pelec->eferm.get_all_ef(),
+                    this->pw_rho->nrxx,
+                    this->pw_rho->nplane,
+                    this->pw_rho->startz_current,
+                    this->pw_rho->nx,
+                    this->pw_rho->ny,
+                    this->pw_rho->nz,
+                    this->pw_big->bz,
+                    this->pw_big->nbz,
+                    GlobalV::GAMMA_ONLY_LOCAL,
+                    PARAM.inp.nbands_istate,
+                    PARAM.inp.bands_to_print,
+                    GlobalV::NBANDS,
+                    GlobalV::nelec,
+                    GlobalV::NSPIN,
+                    GlobalV::NLOCAL,
+                    GlobalV::global_out_dir,
+                    GlobalV::MY_RANK,
+                    GlobalV::ofs_warning,
+                    &GlobalC::ucell,
+                    &GlobalC::GridD,
+                    this->kv,
+                    PARAM.inp.if_separate_k);
+        }
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "getting partial charge");
     } else if (cal_type == "get_wf") {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "getting wave function");
@@ -477,12 +516,12 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                       this->pw_big,
                       this->ParaV,
                       this->GG,
-                      INPUT.out_wfc_pw,
+                      PARAM.inp.out_wfc_pw,
                       this->wf.out_wfc_r,
                       this->kv,
                       GlobalV::nelec,
-                      GlobalV::NBANDS_ISTATE,
-                      INPUT.get_out_band_kb(),
+                      PARAM.inp.nbands_istate,
+                      PARAM.inp.bands_to_print,
                       GlobalV::NBANDS,
                       GlobalV::NSPIN,
                       GlobalV::NLOCAL,
@@ -496,12 +535,12 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                       this->pw_big,
                       this->ParaV,
                       this->GK,
-                      INPUT.out_wfc_pw,
+                      PARAM.inp.out_wfc_pw,
                       this->wf.out_wfc_r,
                       this->kv,
                       GlobalV::nelec,
-                      GlobalV::NBANDS_ISTATE,
-                      INPUT.get_out_band_kb(),
+                      PARAM.inp.nbands_istate,
+                      PARAM.inp.bands_to_print,
                       GlobalV::NBANDS,
                       GlobalV::NSPIN,
                       GlobalV::NLOCAL,
@@ -535,7 +574,7 @@ void ESolver_KS_LCAO<std::complex<double>, double>::get_S(void)
                                                      GlobalC::ucell.infoNL.get_rcutmax_Beta(),
                                                      GlobalV::GAMMA_ONLY_LOCAL);
 
-    atom_arrange::search(GlobalV::SEARCH_PBC,
+    atom_arrange::search(PARAM.inp.search_pbc,
                          GlobalV::ofs_running,
                          GlobalC::GridD,
                          GlobalC::ucell,
@@ -575,7 +614,7 @@ void ESolver_KS_LCAO<std::complex<double>, std::complex<double>>::get_S(void)
                                                      GlobalC::ucell.infoNL.get_rcutmax_Beta(),
                                                      GlobalV::GAMMA_ONLY_LOCAL);
 
-    atom_arrange::search(GlobalV::SEARCH_PBC,
+    atom_arrange::search(PARAM.inp.search_pbc,
                          GlobalV::ofs_running,
                          GlobalC::GridD,
                          GlobalC::ucell,
@@ -661,7 +700,7 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
         }
         GlobalV::ofs_running << std::endl;
     }
-    if (GlobalV::out_bandgap) {
+    if (PARAM.inp.out_bandgap) {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "band gap calculation");
         if (!GlobalV::TWO_EFERMI) {
             this->pelec->cal_bandgap();
@@ -679,18 +718,18 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
     }
 
     // add by jingan in 2018.11.7
-    if (GlobalV::CALCULATION == "nscf" && INPUT.towannier90)
+    if (GlobalV::CALCULATION == "nscf" && PARAM.inp.towannier90)
     {
 #ifdef __LCAO
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "Wave function to Wannier90");
-        if (INPUT.wannier_method == 1) {
-            toWannier90_LCAO_IN_PW myWannier(INPUT.out_wannier_mmn,
-                                             INPUT.out_wannier_amn,
-                                             INPUT.out_wannier_unk,
-                                             INPUT.out_wannier_eig,
-                                             INPUT.out_wannier_wvfn_formatted,
-                                             INPUT.nnkpfile,
-                                             INPUT.wannier_spin);
+        if (PARAM.inp.wannier_method == 1) {
+            toWannier90_LCAO_IN_PW myWannier(PARAM.inp.out_wannier_mmn,
+                                             PARAM.inp.out_wannier_amn,
+                                             PARAM.inp.out_wannier_unk,
+                                             PARAM.inp.out_wannier_eig,
+                                             PARAM.inp.out_wannier_wvfn_formatted,
+                                             PARAM.inp.nnkpfile,
+                                             PARAM.inp.wannier_spin);
 
             myWannier.calculate(this->pelec->ekb,
                                 this->pw_wfc,
@@ -700,15 +739,15 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
                                 this->psi,
                                 &(this->ParaV));
         }
-        else if (INPUT.wannier_method == 2)
+        else if (PARAM.inp.wannier_method == 2)
         {
-            toWannier90_LCAO myWannier(INPUT.out_wannier_mmn,
-                                       INPUT.out_wannier_amn,
-                                       INPUT.out_wannier_unk,
-                                       INPUT.out_wannier_eig,
-                                       INPUT.out_wannier_wvfn_formatted,
-                                       INPUT.nnkpfile,
-                                       INPUT.wannier_spin);
+            toWannier90_LCAO myWannier(PARAM.inp.out_wannier_mmn,
+                                       PARAM.inp.out_wannier_amn,
+                                       PARAM.inp.out_wannier_unk,
+                                       PARAM.inp.out_wannier_eig,
+                                       PARAM.inp.out_wannier_wvfn_formatted,
+                                       PARAM.inp.nnkpfile,
+                                       PARAM.inp.wannier_spin);
 
             myWannier.calculate(this->pelec->ekb, this->kv, *(this->psi), &(this->ParaV));
         }
@@ -749,7 +788,7 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
     this->create_Output_Mat_Sparse(0).write();
 
     // mulliken charge analysis
-    if (GlobalV::out_mul) {
+    if (PARAM.inp.out_mul) {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "Mulliken charge analysis");
         elecstate::ElecStateLCAO<TK>* pelec_lcao
             = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec);

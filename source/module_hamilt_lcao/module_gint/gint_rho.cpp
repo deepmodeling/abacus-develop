@@ -67,6 +67,7 @@ void Gint::gint_kernel_rho(const int na_grid,
             // calculating g_mu(r) = sum_nu rho_mu,nu psi_nu(r)
             Gint_Tools::mult_psi_DMR(*this->gridt,
                                      this->bxyz,
+                                     LD_pool,
                                      grid_index,
                                      na_grid,
                                      block_index,

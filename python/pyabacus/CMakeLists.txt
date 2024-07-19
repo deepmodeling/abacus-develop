@@ -69,6 +69,9 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 # add base
 set(BASE_BINARY_DIR "${PROJECT_SOURCE_DIR}/build/base")
 add_subdirectory(${ABACUS_SOURCE_DIR}/module_base ${BASE_BINARY_DIR})
+# add parameter
+set(PARAMETER_BINARY_DIR "${PROJECT_SOURCE_DIR}/build/parameter")
+add_subdirectory(${ABACUS_SOURCE_DIR}/module_parameter ${PARAMETER_BINARY_DIR})
 # add orb
 set(ORB_BINARY_DIR "${PROJECT_SOURCE_DIR}/build/orb")
 add_subdirectory(${ABACUS_SOURCE_DIR}/module_basis/module_ao ${ORB_BINARY_DIR})
@@ -101,6 +104,7 @@ add_library(naopack SHARED
 if(MKLROOT)
   target_link_libraries(naopack
     base
+    parameter
     container
     orb
     ${math_libs}
@@ -110,6 +114,7 @@ if(MKLROOT)
 else()
   target_link_libraries(naopack
     base
+    parameter
     container
     orb
     ${math_libs}

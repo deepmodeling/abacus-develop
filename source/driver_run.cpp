@@ -3,6 +3,7 @@
 #include "module_cell/module_neighbor/sltk_atom_arrange.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/input.h"
+#include "module_parameter/parameter.h"
 #include "module_io/para_json.h"
 #include "module_io/print_info.h"
 #include "module_io/winput.h"
@@ -42,13 +43,13 @@ void Driver::driver_run() {
     // delete ucell as a GlobalC in near future
     GlobalC::ucell.setup_cell(GlobalV::stru_file, GlobalV::ofs_running);
     Check_Atomic_Stru::check_atomic_stru(GlobalC::ucell,
-                                         GlobalV::MIN_DIST_COEF);
+                                         PARAM.inp.min_dist_coef);
 
     //! 2: initialize the ESolver (depends on a set-up ucell after `setup_cell`)
-    ModuleESolver::ESolver* p_esolver = ModuleESolver::init_esolver(INPUT, PARAM.inp, GlobalC::ucell);
+    ModuleESolver::ESolver* p_esolver = ModuleESolver::init_esolver(PARAM.inp, GlobalC::ucell);
 
     //! 3: initialize Esolver and fill json-structure
-    p_esolver->before_all_runners(INPUT, GlobalC::ucell);
+    p_esolver->before_all_runners(PARAM.inp, GlobalC::ucell);
 
     // this Json part should be moved to before_all_runners, mohan 2024-05-12
 #ifdef __RAPIDJSON

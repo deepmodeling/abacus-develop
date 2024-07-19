@@ -1,9 +1,11 @@
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include "for_test.h"
+
 #define private public
 #define protected public
 #include "../esolver_dp.h"
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
+#undef private
 /************************************************
  *  unit tests of class ESolver_DP
  ***********************************************/
@@ -48,7 +50,7 @@ class ESolverDPTest : public ::testing::Test
     }
 
     ModuleESolver::ESolver_DP* esolver;
-    Input inp;
+    Input_para inp;
     UnitCell ucell;
 };
 

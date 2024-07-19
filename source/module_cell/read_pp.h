@@ -3,6 +3,7 @@
 
 #include <string>
 
+#include "atom_pseudo.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_base/matrix.h"
@@ -25,23 +26,8 @@ public:
 	Pseudopot_upf();
 	~Pseudopot_upf();
 
-    std::string psd;          // Element label
-    std::string pp_type;      // Pseudo type ( NC or US )
     std::string relativistic; // relativistic: no, scalar, full
-    bool tvanp;               // .true. if Ultrasoft
-    bool nlcc;                // Non linear core corrections
-    std::string xc_func;      // Exch-Corr type
-    int zp;                   // z valence
-    double etotps;            // total energy
-    double ecutwfc;           // suggested cut-off for wfc
-    double ecutrho;           // suggested cut-off for rho
-    int nv = 0;               // UPF file version number
-    int lmax;                 // maximum angular momentum component in beta
     int lmax_rho;             // maximum angular momentum component in rho (should be 2*lmax)
-    int nwfc;                 // number of wavefunctions
-    int nbeta;                // number of projectors
-    int kkbeta;               // kkbeta=max(kbeta())
-    int mesh;                 // number of point in the radial mesh
     double xmin;              // the minimum x of the linear mesh
     double rmax;              // the maximum radius of the mesh
     double zmesh;             // the nuclear charge used for mesh
@@ -52,46 +38,24 @@ public:
     // double rcloc;             // vloc = v_ae for r > rcloc
     bool q_with_l;            // if .true. qfunc is pseudized in
     int nqf;                  // number of Q coefficients
-    int nqlc;                 // number of angular momenta in Q
     // bool has_wfc;             // if true, UPF contain AE and PS wfc for each beta
-    bool has_so;              // if .true. includes spin-orbit
 
     // need 'new' and 'delete'
-    double* r = nullptr;             // r(mesh) radial grid
-    double* rab = nullptr;           // rab(mesh) dr(x)/dx (x=linear grid)
-    double* rho_atc = nullptr;       // rho_atc(mesh) atomic core charge "Nonlinear Core Correction"
-    double* vloc = nullptr;          // vloc(mesh) local atomic potential
     bool coulomb_potential = false;  // coulomb potentail : z/r
     ModuleBase::matrix chi;          // chi(nwfc,mesh) atomic wavefcts
-    double* rho_at = nullptr;        // rho_at(mesh) atomic charge
-    int* lll = nullptr;              // lll(nbeta):angular momentum of projector i
     int* kbeta = nullptr;            // kbeta(nbeta):number of mesh points for projector i (must be .le. mesh )
-    ModuleBase::matrix beta;         // beta(nbeta,mesh) projectors
-    ModuleBase::matrix dion;         // dion(nbeta,nbeta) atomic D_{mu,nu}
-                                     //  the D_ij factors (Ry^{-1}) of the nonlocal PP:
-                                     //  V_NL = \sum_{i,j} D_{i,j} |\beta_i><\beta_j|
-    std::string* els = nullptr;      // els(nwfc):label for the i-th atomic orbital (4s, 4p, etc)
     std::string* els_beta = nullptr; // els_beta(nwfc):label for the beta
     int* nchi = nullptr;             // nchi(nwfc) value of pseudo-n for wavefcts
-    int* lchi = nullptr;             // lchi(nwfc) value of angular momentum for wavefcts
-    double* oc = nullptr;            // oc(nwfc) occupancies for wavefcts
     double* epseu = nullptr;         // epseu(nwfc) pseudo one-particle energy
     double* rcut_chi = nullptr;      // rcut_chi(nwfc) cutoff inner radius
     double* rcutus_chi = nullptr;    // rcutus_chi(nwfc) ultrasoft outer radius
     double* rinner = nullptr;        // rinner(2*lmax+1) r_L
-    ModuleBase::matrix qqq;          // qqq(nbeta,nbeta) q_{mu,nu}
     ModuleBase::matrix qfunc;        // qfunc(nbeta*(nbeta+1)/2,mesh) Q_{mu,nu}(|r|) function for |r|> r_L
-    ModuleBase::realArray qfuncl;    // qfuncl(2*lmax+1,nbeta*(nbeta+1)/2,mesh) Q_{mu,nu}(|r|) function for |r|> r_L
     ModuleBase::realArray qfcoef;    // qfcoef(nbeta,nbeta,2*lmax+1,nqf) coefficients for Q for |r|<r_L
     // ModuleBase::matrix aewfc;        // wfc(nbeta,mesh) all-electron wfc
     // ModuleBase::matrix pswfc;        // wfc(nbeta,mesh) pseudo wfc
     double* rcut = nullptr;          // cut-off radius(nbeta)
     double* rcutus = nullptr;        // ultrasoft cut-off radius (nbeta)
-
-    // added by zhengdy-soc
-    int* nn = nullptr;      // nn(nwfc) quantum number of wfc
-    double* jchi = nullptr; // jchi(nwfc) j=l+1/2 or l-1/2 of wfc
-    double* jjj = nullptr;  // jjj(nbeta) j=l+1/2 or l-1/2 of beta
 
     int nd; // nl_5 // Number of nonzero Dij
 
@@ -102,39 +66,39 @@ public:
     int iTB_d;
 
     // return error
-    int init_pseudo_reader(const std::string& fn, std::string& type);
-    void print_pseudo_upf(std::ofstream& ofs);
+    int init_pseudo_reader(const std::string& fn, std::string& type, Atom_pseudo& pp);
+    void print_pseudo_upf(std::ofstream& ofs, Atom_pseudo& pp);
 
-    int average_p(const double& lambda); // zhengdy add 2020-10-20
-    void set_empty_element();            // Peize Lin add for bsse 2022.04.07
-    void set_upf_q();                    // liuyu add 2023-09-21
+    int average_p(const double& lambda, Atom_pseudo& pp); // zhengdy add 2020-10-20
+    void set_empty_element(Atom_pseudo& pp);            // Peize Lin add for bsse 2022.04.07
+    void set_upf_q(Atom_pseudo& pp);                    // liuyu add 2023-09-21
 
   private:
     int set_pseudo_type(const std::string& fn, std::string& type);
     std::string& trim(std::string& in_str);
     std::string trimend(std::string& in_str);
 
-    int read_pseudo_upf(std::ifstream& ifs);
-    int read_pseudo_vwr(std::ifstream& ifs);
-    int read_pseudo_blps(std::ifstream& ifs); // sunliang added 2021.07.08
-    void read_pseudo_header(std::ifstream& ifs);
-    void read_pseudo_mesh(std::ifstream& ifs);
-    void read_pseudo_nlcc(std::ifstream& ifs);
-    void read_pseudo_local(std::ifstream& ifs);
-    void read_pseudo_nl(std::ifstream& ifs);
-    void read_pseudo_pswfc(std::ifstream& ifs);
-    void read_pseudo_rhoatom(std::ifstream& ifs);
-    void read_pseudo_addinfo(std::ifstream& ifs);
-    void read_pseudo_so(std::ifstream& ifs);
+    int read_pseudo_upf(std::ifstream& ifs, Atom_pseudo& pp);
+    int read_pseudo_vwr(std::ifstream& ifs, Atom_pseudo& pp);
+    int read_pseudo_blps(std::ifstream& ifs, Atom_pseudo& pp); // sunliang added 2021.07.08
+    void read_pseudo_header(std::ifstream& ifs, Atom_pseudo& pp);
+    void read_pseudo_mesh(std::ifstream& ifs, Atom_pseudo& pp);
+    void read_pseudo_nlcc(std::ifstream& ifs, Atom_pseudo& pp);
+    void read_pseudo_local(std::ifstream& ifs, Atom_pseudo& pp);
+    void read_pseudo_nl(std::ifstream& ifs, Atom_pseudo& pp);
+    void read_pseudo_pswfc(std::ifstream& ifs, Atom_pseudo& pp);
+    void read_pseudo_rhoatom(std::ifstream& ifs, Atom_pseudo& pp);
+    void read_pseudo_addinfo(std::ifstream& ifs, Atom_pseudo& pp);
+    void read_pseudo_so(std::ifstream& ifs, Atom_pseudo& pp);
 
     // upf201
-    int read_pseudo_upf201(std::ifstream& ifs);
-    void read_pseudo_upf201_header(std::ifstream& ifs);
-    void read_pseudo_upf201_mesh(std::ifstream& ifs);
-    void read_pseudo_upf201_nonlocal(std::ifstream& ifs);
-    void read_pseudo_upf201_pswfc(std::ifstream& ifs);
+    int read_pseudo_upf201(std::ifstream& ifs, Atom_pseudo& pp);
+    void read_pseudo_upf201_header(std::ifstream& ifs, Atom_pseudo& pp);
+    void read_pseudo_upf201_mesh(std::ifstream& ifs, Atom_pseudo& pp);
+    void read_pseudo_upf201_nonlocal(std::ifstream& ifs, Atom_pseudo& pp);
+    void read_pseudo_upf201_pswfc(std::ifstream& ifs, Atom_pseudo& pp);
     // void read_pseudo_upf201_fullwfc(std::ifstream& ifs);
-    void read_pseudo_upf201_so(std::ifstream& ifs);
+    void read_pseudo_upf201_so(std::ifstream& ifs, Atom_pseudo& pp);
     void getnameval(std::ifstream&, int&, std::string*, std::string*);
 
     /**

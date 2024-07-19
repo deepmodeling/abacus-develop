@@ -110,7 +110,7 @@ void Force_LCAO<double>::allocate(const Parallel_Orbitals& pv,
                                        &GlobalC::GridD);
 
     // calculate asynchronous S matrix to output for Hefei-NAMD
-    if (INPUT.cal_syns)
+    if (PARAM.inp.cal_syns)
     {
         cal_deri = false;
         ModuleBase::WARNING_QUIT("cal_syns", "this function has been broken and will be fixed later.");
@@ -251,7 +251,7 @@ void Force_LCAO<double>::ftable(const bool isforce,
         }
 #endif
 
-        if (GlobalV::deepks_out_unittest)
+        if (PARAM.inp.deepks_out_unittest)
         {
             GlobalC::ld.print_dm(dm_gamma[0]);
             GlobalC::ld.check_projected_dm();

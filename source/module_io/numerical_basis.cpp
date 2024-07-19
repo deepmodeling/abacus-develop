@@ -47,9 +47,9 @@ void Numerical_Basis::start_from_file_k(const int& ik, ModuleBase::ComplexMatrix
     if (!this->init_label)
     {
         // true stands for : start_from_file
-        this->bessel_basis.init(true, std::stod(INPUT.bessel_nao_ecut), ucell.ntype, ucell.lmax,
-                                INPUT.bessel_nao_smooth, INPUT.bessel_nao_sigma, INPUT.bessel_nao_rcut,
-                                INPUT.bessel_nao_tolerence, ucell);
+        this->bessel_basis.init(true, std::stod(PARAM.inp.bessel_nao_ecut), ucell.ntype, ucell.lmax,
+                                PARAM.inp.bessel_nao_smooth, PARAM.inp.bessel_nao_sigma, PARAM.globalv.bessel_nao_rcut,
+                                PARAM.inp.bessel_nao_tolerence, ucell);
         this->mu_index = this->init_mu_index(ucell);
         this->init_label = true;
     }
@@ -70,9 +70,9 @@ void Numerical_Basis::output_overlap(const psi::Psi<std::complex<double>>& psi, 
     if (!this->init_label)
     {
         // false stands for : 'Faln' is not used.
-        this->bessel_basis.init(false, std::stod(INPUT.bessel_nao_ecut), ucell.ntype, ucell.lmax,
-                                INPUT.bessel_nao_smooth, INPUT.bessel_nao_sigma, INPUT.bessel_nao_rcut,
-                                INPUT.bessel_nao_tolerence, ucell);
+        this->bessel_basis.init(false, std::stod(PARAM.inp.bessel_nao_ecut), ucell.ntype, ucell.lmax,
+                                PARAM.inp.bessel_nao_smooth, PARAM.inp.bessel_nao_sigma, PARAM.globalv.bessel_nao_rcut,
+                                PARAM.inp.bessel_nao_tolerence, ucell);
         this->mu_index = this->init_mu_index(ucell);
         this->init_label = true;
     }
@@ -84,9 +84,9 @@ void Numerical_Basis::output_overlap(const psi::Psi<std::complex<double>>& psi, 
         // the parameter 'winput::spillage_outdir' is read from INPUTw.
         ss << winput::spillage_outdir << "/";
 
-        if (INPUT.bessel_nao_rcuts.size() > 1)
+        if (PARAM.inp.bessel_nao_rcuts.size() > 1)
         {
-            ss << "orb_matrix_rcut" << INPUT.bessel_nao_rcut << "deriv";
+            ss << "orb_matrix_rcut" << PARAM.globalv.bessel_nao_rcut << "deriv";
         }
         else
         {
@@ -585,7 +585,7 @@ void Numerical_Basis::output_info(std::ofstream& ofs, const Bessel_Basis& bessel
             }
         }
         // ecutwfc_jlq determine the jlq corresponding to plane wave calculation.
-        ofs << INPUT.ecutwfc << " ecutwfc" << std::endl; // mohan add 2009-09-08
+        ofs << PARAM.inp.ecutwfc << " ecutwfc" << std::endl; // mohan add 2009-09-08
 
         // this parameter determine the total number of jlq.
         ofs << bessel_basis.get_ecut() << " ecutwfc_jlq" << std::endl; // mohan modify 2009-09-08

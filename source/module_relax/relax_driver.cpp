@@ -28,7 +28,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver)
     int stress_step = 1;
     bool stop = false;
 
-    while (istep <= GlobalV::RELAX_NMAX && !stop)
+    while (istep <= PARAM.inp.relax_nmax && !stop)
     {
         time_t estart = time(nullptr);
 
@@ -103,7 +103,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver)
                                                GlobalV::NSPIN,
                                                true,
                                                GlobalV::CALCULATION == "md",
-                                               GlobalV::out_mul,
+                                               PARAM.inp.out_mul,
                                                need_orb,
                                                GlobalV::deepks_setorb,
                                                GlobalV::MY_RANK);
@@ -116,7 +116,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver)
                                                    GlobalV::NSPIN,
                                                    true,
                                                    GlobalV::CALCULATION == "md",
-                                                   GlobalV::out_mul,
+                                                   PARAM.inp.out_mul,
                                                    need_orb,
                                                    GlobalV::deepks_setorb,
                                                    GlobalV::MY_RANK);

@@ -19,6 +19,7 @@
 101_PW_upf201_uspp_NaCl
 101_PW_VW_pseudopots
 101_PW_Coulomb
+101_PW_GTH_CF_CS_Si
 102_PW_DA_davidson
 102_PW_BPCG
 102_PW_CG
@@ -132,6 +133,7 @@
 201_NO_KP_DJ_Si
 201_NO_OU_pseudopots
 201_NO_upf201_pseudopots
+201_NO_GTH_CF_CS_Si
 #202_NO_KP_HP_hpseps
 203_NO_bspline
 203_NO_CF_CS_S1_smallg

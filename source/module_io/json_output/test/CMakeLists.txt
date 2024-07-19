@@ -6,7 +6,7 @@ remove_definitions(-DUSE_PAW)
 
 AddTest(
   TARGET io_json_output_json
-  LIBS ${math_libs} base device cell_info
+  LIBS ${math_libs} base device cell_info parameter
   SOURCES para_json_test.cpp ../general_info.cpp ../init_info.cpp ../readin_info.cpp 
-  ../../para_json.cpp ../abacusjson.cpp ../../input.cpp ../../output.cpp 
+  ../../para_json.cpp ../abacusjson.cpp ../../output.cpp 
 )

@@ -32,11 +32,11 @@ void ESolver_OF::init_elecstate(UnitCell& ucell)
                                                 &(this->pelec->f_en.vtxc));
     // There is no Operator in ESolver_OF, register Potentials here!
     std::vector<std::string> pot_register_in;
-    if (GlobalV::VION_IN_H)
+    if (PARAM.inp.vion_in_h)
     {
         pot_register_in.push_back("local");
     }
-    if (GlobalV::VH_IN_H)
+    if (PARAM.inp.vh_in_h)
     {
         pot_register_in.push_back("hartree");
     }
@@ -132,8 +132,9 @@ void ESolver_OF::cal_potential(double* ptemp_phi, double* rdLdphi)
         }
     }
 
-    if (GlobalV::NSPIN == 4)
+    if (GlobalV::NSPIN == 4) {
         GlobalC::ucell.cal_ux();
+}
     this->pelec->pot->update_from_charge(this->ptemp_rho_, &GlobalC::ucell);
     ModuleBase::matrix& vr_eff = this->pelec->pot->get_effective_v();
 
@@ -170,8 +171,9 @@ void ESolver_OF::cal_dEdtheta(double** ptemp_phi, Charge* temp_rho, UnitCell& uc
 {
     double* dphi_dtheta = new double[this->pw_rho->nrxx];
 
-    if (GlobalV::NSPIN == 4)
+    if (GlobalV::NSPIN == 4) {
         ucell.cal_ux();
+}
     this->pelec->pot->update_from_charge(temp_rho, &ucell);
     ModuleBase::matrix& vr_eff = this->pelec->pot->get_effective_v();
 
@@ -370,8 +372,9 @@ void ESolver_OF::test_direction(double* dEdtheta, double** ptemp_phi, UnitCell& 
             Parallel_Reduce::reduce_all(pseudopot_energy);
             temp_energy += kinetic_energy + pseudopot_energy;
             GlobalV::ofs_warning << i << "    " << dEdtheta[0] << "    " << temp_energy << std::endl;
-            if (this->theta_[0] == 0)
+            if (this->theta_[0] == 0) {
                 std::cout << "dEdtheta    " << dEdtheta[0] << std::endl;
+}
         }
         exit(0);
     }
@@ -426,7 +429,7 @@ void ESolver_OF::print_info()
     std::vector<std::string> titles;
     std::vector<double> energies_Ry;
     std::vector<double> energies_eV;
-    if (INPUT.printe > 0 && ((this->iter_ + 1) % INPUT.printe == 0 || this->conv_ || this->iter_ == GlobalV::SCF_NMAX))
+    if (PARAM.inp.printe > 0 && ((this->iter_ + 1) % PARAM.inp.printe == 0 || this->conv_ || this->iter_ == GlobalV::SCF_NMAX))
     {
         titles.push_back("E_Total");
         energies_Ry.push_back(this->pelec->f_en.etot);
@@ -461,7 +464,7 @@ void ESolver_OF::print_info()
             titles.push_back("LKT KEDF");
             energies_Ry.push_back(this->lkt_->lkt_energy);
         }
-        std::string vdw_method = INPUT.vdw_method;
+        std::string vdw_method = PARAM.inp.vdw_method;
         if (vdw_method == "d2") // Peize Lin add 2014-04, update 2021-03-09
         {
             titles.push_back("E_vdwD2");

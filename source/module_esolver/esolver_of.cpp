@@ -57,7 +57,7 @@ ESolver_OF::~ESolver_OF()
     delete this->opt_cg_mag_;
 }
 
-void ESolver_OF::before_all_runners(Input& inp, UnitCell& ucell)
+void ESolver_OF::before_all_runners(const Input_para& inp, UnitCell& ucell)
 {
     ESolver_FP::before_all_runners(inp, ucell);
 
@@ -157,7 +157,7 @@ void ESolver_OF::before_all_runners(Input& inp, UnitCell& ucell)
     CE_.Init_CE(ucell.nat);
 }
 
-void ESolver_OF::init_after_vc(Input& inp, UnitCell& ucell)
+void ESolver_OF::init_after_vc(const Input_para& inp, UnitCell& ucell)
 {
     ModuleBase::timer::tick("ESolver_OF", "init_after_vc");
 
@@ -165,7 +165,7 @@ void ESolver_OF::init_after_vc(Input& inp, UnitCell& ucell)
 
     this->dV_ = ucell.omega / this->pw_rho->nxyz;
 
-    if (GlobalV::md_prec_level == 2)
+    if (inp.mdp.md_prec_level == 2)
     {
         // initialize the real-space uniform grid for FFT and parallel
         // distribution of plane waves
@@ -266,7 +266,7 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
 {
     if (ucell.cell_parameter_updated)
     {
-        this->init_after_vc(INPUT, ucell);
+        this->init_after_vc(PARAM.inp, ucell);
     }
     if (ucell.ionic_position_updated)
     {
@@ -520,7 +520,7 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell)
 
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
-        if (GlobalV::out_chg == 1)
+        if (PARAM.inp.out_chg == 1)
         {
             std::stringstream ssc;
             ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG.cube";

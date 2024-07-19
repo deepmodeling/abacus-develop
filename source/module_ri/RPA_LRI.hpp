@@ -78,8 +78,8 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>
     mix_DMk_2D.mix(dm.get_DMK_vector(), true);
     const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> Ds
         = GlobalV::GAMMA_ONLY_LOCAL
-              ? RI_2D_Comm::split_m2D_ktoR<Tdata>(kv, mix_DMk_2D.get_DMk_gamma_out(), *dm.get_paraV_pointer())
-              : RI_2D_Comm::split_m2D_ktoR<Tdata>(kv, mix_DMk_2D.get_DMk_k_out(), *dm.get_paraV_pointer());
+        ? RI_2D_Comm::split_m2D_ktoR<Tdata>(kv, mix_DMk_2D.get_DMk_gamma_out(), *dm.get_paraV_pointer(), GlobalV::NSPIN)
+        : RI_2D_Comm::split_m2D_ktoR<Tdata>(kv, mix_DMk_2D.get_DMk_k_out(), *dm.get_paraV_pointer(), GlobalV::NSPIN);
 
     // set parameters for bare Coulomb potential
     GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hf;

@@ -5,7 +5,8 @@
 #define protected public
 #include "module_elecstate/module_charge/charge_extra.h"
 #include "prepare_unitcell.h"
-
+#undef private
+#undef protected
 // mock functions for UnitCell
 #ifdef __LCAO
 InfoNonlocal::InfoNonlocal()

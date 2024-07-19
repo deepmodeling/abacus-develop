@@ -64,7 +64,7 @@ ESolver_KS_LCAO_TDDFT::~ESolver_KS_LCAO_TDDFT()
     }
 }
 
-void ESolver_KS_LCAO_TDDFT::before_all_runners(Input& inp, UnitCell& ucell)
+void ESolver_KS_LCAO_TDDFT::before_all_runners(const Input_para& inp, UnitCell& ucell)
 {
     // 1) run "before_all_runners" in ESolver_KS
     ESolver_KS::before_all_runners(inp, ucell);
@@ -201,7 +201,7 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(const int istep, const int iter, cons
 
     for (int ik = 0; ik < kv.get_nks(); ++ik)
     {
-        this->pelec_td->print_band(ik, INPUT.printe, iter);
+        this->pelec_td->print_band(ik, PARAM.inp.printe, iter);
     }
 
     // using new charge density.
@@ -245,7 +245,7 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
             bool bit = false; // LiuXh, 2017-03-21
             // if set bit = true, there would be error in soc-multi-core
             // calculation, noted by zhengdy-soc
-            if (this->psi != nullptr && (istep % GlobalV::out_interval == 0))
+            if (this->psi != nullptr && (istep % PARAM.inp.out_interval == 0))
             {
                 hamilt::MatrixBlock<complex<double>> h_mat, s_mat;
                 this->p_hamilt->matrix(h_mat, s_mat);
@@ -280,7 +280,7 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
     }
 
     if (elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_lcao && (this->conv_elec || iter == GlobalV::SCF_NMAX)
-        && (istep % GlobalV::out_interval == 0))
+        && (istep % PARAM.inp.out_interval == 0))
     {
         ModuleIO::write_wfc_nao(elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_lcao,
                                 this->psi[0],

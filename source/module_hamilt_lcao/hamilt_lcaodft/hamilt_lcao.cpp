@@ -80,13 +80,13 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
 
     // Effective potential term (\sum_r <psi(r)|Veff(r)|psi(r)>) is registered without template
     std::vector<std::string> pot_register_in;
-    if (GlobalV::VL_IN_H)
+    if (PARAM.inp.vl_in_h)
     {
-        if (GlobalV::VION_IN_H)
+        if (PARAM.inp.vion_in_h)
         {
             pot_register_in.push_back("local");
         }
-        if (GlobalV::VH_IN_H)
+        if (PARAM.inp.vh_in_h)
         {
             pot_register_in.push_back("hartree");
         }
@@ -128,7 +128,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
                                                                    two_center_bundle.overlap_orb.get());
 
         // kinetic term (<psi|T|psi>)
-        if (GlobalV::T_IN_H)
+        if (PARAM.inp.t_in_h)
         {
             Operator<TK>* ekinetic = new EkineticNew<OperatorLCAO<TK, TR>>(this->hsk,
                                                                            this->kv->kvec_d,
@@ -141,7 +141,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
 
         // nonlocal term (<psi|beta>D<beta|psi>)
         // in general case, target HR is this->hR, while target HK is this->hsk->get_hk()
-        if (GlobalV::VNL_IN_H)
+        if (PARAM.inp.vnl_in_h)
         {
             Operator<TK>* nonlocal = new NonlocalNew<OperatorLCAO<TK, TR>>(this->hsk,
                                                                            this->kv->kvec_d,
@@ -154,7 +154,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
 
         // Effective potential term (\sum_r <psi(r)|Veff(r)|psi(r)>)
         // in general case, target HR is Gint::hRGint, while target HK is this->hsk->get_hk()
-        if (GlobalV::VL_IN_H)
+        if (PARAM.inp.vl_in_h)
         {
             // only Potential is not empty, Veff and Meta are available
             if (pot_register_in.size() > 0)
@@ -219,7 +219,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
         // Effective potential term (\sum_r <psi(r)|Veff(r)|psi(r)>)
         // Meta potential term (\sum_r <psi(r)|tau(r)|psi(r)>)
         // in general case, target HR is Gint::pvpR_reduced, while target HK is this->hsk->get_hk()
-        if (GlobalV::VL_IN_H)
+        if (PARAM.inp.vl_in_h)
         {
             // only Potential is not empty, Veff and Meta are available
             if (pot_register_in.size() > 0)
@@ -262,7 +262,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
 
         // kinetic term (<psi|T|psi>),
         // in general case, target HR is this->hR, while target HK is this->hsk->get_hk()
-        if (GlobalV::T_IN_H)
+        if (PARAM.inp.t_in_h)
         {
             Operator<TK>* ekinetic = new EkineticNew<OperatorLCAO<TK, TR>>(this->hsk,
                                                                            this->kv->kvec_d,
@@ -275,7 +275,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
 
         // nonlocal term (<psi|beta>D<beta|psi>)
         // in general case, target HR is this->hR, while target HK is this->hsk->get_hk()
-        if (GlobalV::VNL_IN_H)
+        if (PARAM.inp.vnl_in_h)
         {
             Operator<TK>* nonlocal = new NonlocalNew<OperatorLCAO<TK, TR>>(this->hsk,
                                                                            this->kv->kvec_d,
@@ -350,7 +350,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
             }
             this->getOperator()->add(dftu);
         }
-        if (GlobalV::sc_mag_switch)
+        if (PARAM.inp.sc_mag_switch)
         {
             Operator<TK>* sc_lambda = new OperatorScLambda<OperatorLCAO<TK, TR>>(this->hsk,
                                                                                  kv->kvec_d,
@@ -411,7 +411,7 @@ void HamiltLCAO<TK, TR>::updateHk(const int ik)
     if (GlobalV::NSPIN == 2)
     {
         // if Veff is added and current_spin is changed, refresh HR
-        if (GlobalV::VL_IN_H && this->kv->isk[ik] != this->current_spin)
+        if (PARAM.inp.vl_in_h && this->kv->isk[ik] != this->current_spin)
         {
             // change data pointer of HR
             this->hR->allocate(this->hRS2.data() + this->hRS2.size() / 2 * this->kv->isk[ik], 0);

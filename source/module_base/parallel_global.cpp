@@ -18,15 +18,7 @@
 
 #include <iostream>
 #include <thread>
-
 #if defined __MPI
-MPI_Comm POOL_WORLD;
-MPI_Comm INTER_POOL = MPI_COMM_NULL;
-MPI_Comm STO_WORLD;
-MPI_Comm PARAPW_WORLD; // qianrui add it for sto-dft 2021-4-14
-MPI_Comm GRID_WORLD;   // mohan add 2012-01-13z
-MPI_Comm DIAG_WORLD;   // mohan add 2012-01-13
-
 namespace Parallel_Global
 {
 int mpi_number = 0;

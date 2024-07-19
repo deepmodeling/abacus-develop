@@ -8,6 +8,8 @@ remove_definitions(-D__DEEPKS)
 remove_definitions(-D_OPENMP)
 remove_definitions(-DUSE_PAW)
 
+if (ENABLE_MPI)
+
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 AddTest(
@@ -36,7 +38,7 @@ AddTest(
 
 AddTest(
   TARGET elecstate_print
-  LIBS ${math_libs} base device
+  LIBS ${math_libs} base device parameter
   SOURCES elecstate_print_test.cpp ../elecstate_print.cpp ../occupy.cpp
 )
 
@@ -60,7 +62,7 @@ AddTest(
 
 AddTest(
   TARGET elecstate_energy
-  LIBS ${math_libs} base device
+  LIBS ${math_libs} base device parameter
   SOURCES elecstate_energy_test.cpp ../elecstate_energy.cpp ../fp_energy.cpp
 )
 
@@ -77,14 +79,14 @@ AddTest(
 
 AddTest(
   TARGET charge_test
-  LIBS ${math_libs} planewave_serial base device cell_info
+  LIBS ${math_libs} planewave_serial base device cell_info parameter
   SOURCES charge_test.cpp ../module_charge/charge.cpp
     ../../module_io/output.cpp
 )
 
 AddTest(
   TARGET charge_mixing
-  LIBS  base ${math_libs}  psi  device planewave_serial cell_info
+  LIBS  base ${math_libs}  psi  device planewave_serial cell_info parameter
   SOURCES charge_mixing_test.cpp  
   ../module_charge/charge_mixing.cpp
   ../../module_io/output.cpp
@@ -92,7 +94,9 @@ AddTest(
 
 AddTest(
   TARGET charge_extra
-  LIBS ${math_libs} base device cell_info
+  LIBS ${math_libs} base device cell_info parameter
   SOURCES charge_extra_test.cpp ../module_charge/charge_extra.cpp ../../module_io/read_cube.cpp ../../module_io/write_cube.cpp
   ../../module_io/output.cpp
 )
+
+endif()

@@ -2,7 +2,6 @@
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_base/timer.h"
 #include "module_lr/utils/lr_util.h"
-
 #ifdef USE_LIBXC
 #include <xc.h>
 void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const double& tpiba, const Charge* chg_gs)
@@ -228,12 +227,3 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
         }
 }
 #endif
-
-void LR::KernelXC::cal_kernel(const Charge* chg_gs/* ground state*/, const UnitCell* ucell, int& nspin)
-{
-#ifdef USE_LIBXC
-    this->f_xc_libxc(nspin, ucell->omega, ucell->tpiba, chg_gs);
-#else
-    ModuleBase::WARNING_QUIT("KernelXC", "to calculate xc-kernel in LR-TDDFT, compile with LIBXC");
-#endif
-}

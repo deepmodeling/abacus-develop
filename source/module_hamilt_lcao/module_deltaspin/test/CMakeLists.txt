@@ -62,7 +62,7 @@ add_test(NAME deltaspin_bcast_scdata_para
 
 AddTest(
   TARGET deltaspin_init_sc
-  LIBS ${math_libs} base device cell_info
+  LIBS ${math_libs} base device cell_info parameter
   SOURCES init_sc_test.cpp
     ../spin_constrain.cpp
     ../sc_parse_json.cpp

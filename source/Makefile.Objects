@@ -492,6 +492,7 @@ OBJS_IO=input.o\
     read_input_item_postprocess.o\
     read_input_item_md.o\
     read_input_item_other.o\
+    bcast_globalv.o
 
 OBJS_IO_LCAO=cal_r_overlap_R.o\
       write_orb_info.o\
@@ -574,6 +575,7 @@ OBJS_MODULE_RI=conv_coulomb_pot_k.o\
 
 OBJS_PARALLEL=parallel_common.o\
     parallel_global.o\
+    parallel_comm.o\
     parallel_grid.o\
     parallel_kpoints.o\
     parallel_reduce.o\
@@ -592,6 +594,7 @@ OBJS_SRCPW=H_Ewald_pw.o\
     forces.o\
     forces_us.o\
     forces_nl.o\
+    forces_cc.o\
     fs_nonlocal_tools.o\
     force_op.o\
     stress_op.o\

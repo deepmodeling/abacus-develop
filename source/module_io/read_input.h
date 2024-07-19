@@ -1,6 +1,6 @@
 #ifndef READ_INPUT_H
 #define READ_INPUT_H
-#include <sstream>
+
 #include <string>
 
 #include "input_item.h"
@@ -76,6 +76,8 @@ class ReadInput
      * @param item input_item
      */
     void add_item(const Input_Item& item);
+    // add bcast functions for global values
+    void set_globalv_bcast();
     // general items
     void item_general();
     // items for pw
@@ -115,11 +117,13 @@ class ReadInput
 // convert string to lower case
 void strtolower(char* sa, char* sb);
 // convert string vector to a long string
-std::string longstring(const std::vector<std::string>& str_values, const int length);
+std::string longstring(const std::vector<std::string>& str_values);
 // convert string to bool
 bool convert_bool(std::string str);
 // if find a string in a vector of strings
 bool find_str(const std::vector<std::string>& strings, const std::string& strToFind);
+// convert to directory format
+std::string to_dir(const std::string& str);
 
 } // namespace ModuleIO
 

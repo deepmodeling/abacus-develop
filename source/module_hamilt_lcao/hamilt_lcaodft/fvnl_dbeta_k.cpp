@@ -440,19 +440,15 @@ void Force_LCAO<std::complex<double>>::cal_fvnl_dbeta(const elecstate::DensityMa
                                             nlm_2[i] = nlm_tot[iat][key1][iw1_all][i + 1].data();
                                         }
 
-                                        const int nproj = ucell.infoNL.nproj[T0];
-                                        int ib = 0;
-                                        for (int nb = 0; nb < nproj; nb++)
+                                        const double* tmp_d = nullptr;
+                                        for (int no = 0; no < ucell.atoms[T0].ncpp.non_zero_count_soc[0]; no++)
                                         {
-                                            const int L0 = ucell.infoNL.Beta[T0].Proj[nb].getL();
-                                            for (int m = 0; m < 2 * L0 + 1; m++)
+                                            const int p1 = ucell.atoms[T0].ncpp.index1_soc[0][no];
+                                            const int p2 = ucell.atoms[T0].ncpp.index2_soc[0][no];
+                                            ucell.atoms[T0].ncpp.get_d(0, p1, p2, tmp_d);
+                                            for (int ir = 0; ir < 3; ir++)
                                             {
-                                                for (int ir = 0; ir < 3; ir++)
-                                                {
-                                                    nlm[ir] += nlm_2[ir][ib] * nlm_1[ib]
-                                                               * ucell.atoms[T0].ncpp.dion(nb, nb);
-                                                }
-                                                ib += 1;
+                                                nlm[ir] += nlm_2[ir][p2] * nlm_1[p1] * (*tmp_d);
                                             }
                                         }
 
@@ -466,19 +462,15 @@ void Force_LCAO<std::complex<double>>::cal_fvnl_dbeta(const elecstate::DensityMa
                                                 nlm_2[i] = nlm_tot[iat][key2][iw2_all][i + 1].data();
                                             }
 
-                                            const int nproj = ucell.infoNL.nproj[T0];
-                                            int ib = 0;
-                                            for (int nb = 0; nb < nproj; nb++)
+                                            const double* tmp_d = nullptr;
+                                            for (int no = 0; no < ucell.atoms[T0].ncpp.non_zero_count_soc[0]; no++)
                                             {
-                                                const int L0 = ucell.infoNL.Beta[T0].Proj[nb].getL();
-                                                for (int m = 0; m < 2 * L0 + 1; m++)
+                                                const int p1 = ucell.atoms[T0].ncpp.index1_soc[0][no];
+                                                const int p2 = ucell.atoms[T0].ncpp.index2_soc[0][no];
+                                                ucell.atoms[T0].ncpp.get_d(0, p1, p2, tmp_d);
+                                                for (int ir = 0; ir < 3; ir++)
                                                 {
-                                                    for (int ir = 0; ir < 3; ir++)
-                                                    {
-                                                        nlm1[ir] += nlm_2[ir][ib] * nlm_1[ib]
-                                                                    * ucell.atoms[T0].ncpp.dion(nb, nb);
-                                                    }
-                                                    ib += 1;
+                                                    nlm1[ir] += nlm_2[ir][p1] * nlm_1[p2] * (*tmp_d);
                                                 }
                                             }
                                         }

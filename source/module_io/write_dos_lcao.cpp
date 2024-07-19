@@ -66,17 +66,17 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psi,
 
     emax *= ModuleBase::Ry_to_eV;
     emin *= ModuleBase::Ry_to_eV;
-    if (INPUT.dos_setemax)
+    if (PARAM.globalv.dos_setemax)
     {
-        emax = INPUT.dos_emax_ev;
+        emax = PARAM.inp.dos_emax_ev;
     }
 
-    if (INPUT.dos_setemin)
+    if (PARAM.globalv.dos_setemin)
     {
-        emin = INPUT.dos_emin_ev;
+        emin = PARAM.inp.dos_emin_ev;
     }
 
-    if (!INPUT.dos_setemax && !INPUT.dos_setemin)
+    if (!PARAM.globalv.dos_setemax && !PARAM.globalv.dos_setemin)
     {
         // scale up a little bit so the end peaks are displaced better
         double delta = (emax - emin) * dos_scale;
@@ -377,17 +377,17 @@ void ModuleIO::write_dos_lcao(const psi::Psi<std::complex<double>>* psi,
 
     emax *= ModuleBase::Ry_to_eV;
     emin *= ModuleBase::Ry_to_eV;
-    if (INPUT.dos_setemax)
+    if (PARAM.globalv.dos_setemax)
     {
-        emax = INPUT.dos_emax_ev;
+        emax = PARAM.inp.dos_emax_ev;
     }
 
-    if (INPUT.dos_setemin)
+    if (PARAM.globalv.dos_setemin)
     {
-        emin = INPUT.dos_emin_ev;
+        emin = PARAM.inp.dos_emin_ev;
     }
 
-    if (!INPUT.dos_setemax && !INPUT.dos_setemin)
+    if (!PARAM.globalv.dos_setemax && !PARAM.globalv.dos_setemin)
     {
         // scale up a little bit so the end peaks are displaced better
         double delta = (emax - emin) * dos_scale;

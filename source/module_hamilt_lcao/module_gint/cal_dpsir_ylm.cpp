@@ -68,8 +68,9 @@ void cal_dpsir_ylm(
                 double distance = std::sqrt(dr[0] * dr[0] + dr[1] * dr[1] + dr[2] * dr[2]);
 
                 ModuleBase::Ylm::grad_rl_sph_harm(ucell.atoms[it].nwl, dr[0], dr[1], dr[2], rly, grly.get_ptr_2D());
-                if (distance < 1e-9)
+                if (distance < 1e-9) {
                     distance = 1e-9;
+}
 
                 const double position = distance / delta_r;
 
@@ -115,14 +116,14 @@ void cal_dpsir_ylm(
                     const int ll = atom->iw2l[iw];
                     const int idx_lm = atom->iw2_ylm[iw];
 
-                    const double rl = pow(distance, ll);
-
+                    const double rl = pow_int(distance, ll);
+                    const double tmprl = tmp / rl;
+                    
                     // 3D wave functions
-                    p_psi[iw] = tmp * rly[idx_lm] / rl;
+                    p_psi[iw] = tmprl * rly[idx_lm];
 
                     // derivative of wave functions with respect to atom positions.
                     const double tmpdphi_rly = (dtmp - tmp * ll / distance) / rl * rly[idx_lm] / distance;
-                    const double tmprl = tmp / rl;
 
                     p_dpsi_x[iw] = tmpdphi_rly * dr[0] + tmprl * grly[idx_lm][0];
                     p_dpsi_y[iw] = tmpdphi_rly * dr[1] + tmprl * grly[idx_lm][1];

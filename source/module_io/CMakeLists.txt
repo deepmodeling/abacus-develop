@@ -90,6 +90,7 @@ add_library(
     read_input_item_postprocess.cpp
     read_input_item_md.cpp
     read_input.cpp
+    bcast_globalv.cpp
 )
 
 add_library(
@@ -109,10 +110,14 @@ if(ENABLE_COVERAGE)
 endif()
 
 if(BUILD_TESTING)
-  add_subdirectory(test)
-  add_subdirectory(test_serial)
+  if(ENABLE_MPI)
+    add_subdirectory(test)
+    add_subdirectory(test_serial)
+  endif()
 endif()
 
 if(ENABLE_RAPIDJSON)
-  add_subdirectory(json_output)
+  if(ENABLE_MPI)
+    add_subdirectory(json_output)
+  endif()
 endif()

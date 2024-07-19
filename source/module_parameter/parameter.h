@@ -23,8 +23,8 @@ class Parameter
     const Input_para& inp = input;
     // We can only read the value of mdp, but cannot modify it.
     const MD_para& mdp = input.mdp;
-    // We can only read the value of other parameters, but cannot modify it.
-    const System_para& sys = system;
+    // We can only read the value of globalv parameters, but cannot modify it.
+    const System_para& globalv = sys;
 
     // Set the rank & nproc
     void set_rank_nproc(const int& myrank, const int& nproc);
@@ -37,7 +37,7 @@ class Parameter
     // INPUT parameters
     Input_para input;
     // System parameters
-    System_para system;
+    System_para sys;
 };
 
 extern Parameter PARAM;

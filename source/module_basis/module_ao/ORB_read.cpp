@@ -4,6 +4,7 @@
 #include "module_base/parallel_common.h"
 #include "module_base/timer.h"
 #include "module_base/tool_check.h"
+#include "module_parameter/parameter.h"
 
 #include <algorithm>
 #include <cassert>
@@ -232,8 +233,9 @@ void LCAO_Orbitals::Read_Orbitals(std::ofstream& ofs_in,
     // }
 
     //	this->kmesh = static_cast<int> (PI / 0.01 / 4 / this->dk);
-    if (kmesh % 2 == 0)
+    if (kmesh % 2 == 0) {
         kmesh++;
+}
     ModuleBase::GlobalFunc::OUT(ofs_in, "kmesh", kmesh);
     //-----------------------------------------------------------------
 
@@ -589,7 +591,7 @@ void LCAO_Orbitals::read_orb_file(std::ofstream& ofs_in, // GlobalV::ofs_running
                                                  this->kmesh,
                                                  this->dk,
                                                  this->dr_uniform,
-                                                 GlobalV::out_element_info,
+                                                 PARAM.inp.out_element_info,
                                                  true,
                                                  force_flag); // delta k mesh in reciprocal space
 
