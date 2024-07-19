@@ -23,9 +23,9 @@ namespace LR
             const int& nvirt,
             const UnitCell& ucell_in,
             const psi::Psi<T>* psi_ks_in,
-            std::vector<elecstate::DensityMatrix<T, T>*>& DM_trans_in,
+            std::vector<std::unique_ptr<elecstate::DensityMatrix<T, T>>>& DM_trans_in,
             // HContainer<double>* hR_in,
-            Exx_LRI<T>* exx_lri_in,
+            std::weak_ptr<Exx_LRI<T>> exx_lri_in,
             const K_Vectors& kv_in,
             Parallel_2D* pX_in,
             Parallel_2D* pc_in,
@@ -49,7 +49,7 @@ namespace LR
             this->BvK_cells = RI_Util::get_Born_von_Karmen_cells(period);
 
             this->allocate_Ds_onebase();
-            this->exx_lri->Hexxs.resize(this->nspin_solve);
+            this->exx_lri.lock()->Hexxs.resize(this->nspin_solve);
         };
 
         void init(const int ik_in) override {};
@@ -70,7 +70,7 @@ namespace LR
         psi::Psi<T> psi_ks_full;
 
         /// transition density matrix 
-        std::vector<elecstate::DensityMatrix<T, T>*>& DM_trans;
+        std::vector<std::unique_ptr<elecstate::DensityMatrix<T, T>>>& DM_trans;
 
         /// density matrix of a certain (i, a, k), with full naos*naos size for each key
         /// D^{iak}_{\mu\nu}(k): 1/N_k * c^*_{ak,\mu} c_{ik,\nu}
@@ -88,7 +88,7 @@ namespace LR
         /// gamma_only: T=double, Tpara of exx (equal to Tpara of Ds(R) ) is also double 
         ///.multi-k: T=complex<double>, Tpara of exx here must be complex, because Ds_onebase is complex
         /// so TR in DensityMatrix and Tdata in Exx_LRI are all equal to T
-        Exx_LRI<T>* exx_lri = nullptr;
+        std::weak_ptr<Exx_LRI<T>> exx_lri;
 
         const UnitCell& ucell;
 
