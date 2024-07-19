@@ -587,15 +587,13 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep,
         this->phsol->solve(this->p_hamilt,      // hamilt::Hamilt<T, Device>* pHamilt,
             this->kspw_psi[0],   // psi::Psi<T, Device>& psi,
             this->pelec,         // elecstate::ElecState<T, Device>* pelec,
-            GlobalV::KS_SOLVER,
+            GlobalV::KS_SOLVER,  // const std::string method_in,
 
             GlobalV::CALCULATION,
             GlobalV::use_paw,
             GlobalV::use_uspp,
             GlobalV::RANK_IN_POOL,
-            GlobalV::NPROC_IN_POOL,
-            
-            false); // const std::string method_in,
+            GlobalV::NPROC_IN_POOL); 
 
         if (PARAM.inp.out_bandgap)
         {
