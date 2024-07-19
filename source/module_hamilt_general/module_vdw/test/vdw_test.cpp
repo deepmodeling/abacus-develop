@@ -12,7 +12,7 @@
 #include "module_hamilt_general/module_vdw/vdwd2.h"
 #include "module_hamilt_general/module_vdw/vdwd3.h"
 #include "module_hamilt_general/module_vdw/vdw.h"
-
+#undef private
 
 /************************************************
 *  unit test of class VDW and related functions
@@ -596,9 +596,6 @@ TEST_F(vdwd3abcTest, D3bjGetStress)
     EXPECT_NEAR(stress.e32, 4.3904235877576833e-06,1e-12);
     EXPECT_NEAR(stress.e33, -3.4278442125590892e-05,1e-12);
 }
-
-#undef private
-
 
 int main(int argc, char **argv)
 {

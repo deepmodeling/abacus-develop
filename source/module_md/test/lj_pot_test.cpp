@@ -3,7 +3,7 @@
 #include "module_esolver/esolver_lj.h"
 #include "module_md/md_func.h"
 #include "setcell.h"
-
+#undef private
 #define doublethreshold 1e-12
 
 /************************************************

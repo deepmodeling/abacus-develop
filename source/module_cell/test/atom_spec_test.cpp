@@ -30,7 +30,7 @@
 #include "module_cell/pseudo.h"
 #include "module_cell/atom_pseudo.h"
 #include "module_cell/atom_spec.h"
-
+#undef private
 class AtomSpecTest : public testing::Test
 {
 protected:
@@ -218,4 +218,4 @@ int main(int argc, char **argv)
 	return result;
 }
 #endif
-#undef private
+
