@@ -23,7 +23,7 @@
 #define private public
 #include "module_cell/read_pp.h"
 #include "module_cell/atom_pseudo.h"
-
+#undef private
 class NCPPTest : public testing::Test
 {
 protected:
@@ -126,4 +126,3 @@ TEST_F(NCPPTest, PrintNC)
 	ifs.close();
 	remove("./tmp_log");
 }
-#undef private

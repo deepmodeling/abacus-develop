@@ -339,6 +339,15 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
     dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)
         ->get_DM()
         ->init_DMR(*(dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt)->getHR()));
+    // two cases are considered:
+    // 1. DMK in DensityMatrix is not empty (istep > 0), then DMR is initialized by DMK
+    // 2. DMK in DensityMatrix is empty (istep == 0), then DMR is initialized by zeros
+    if(istep > 0)
+    {
+        dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)
+            ->get_DM()
+            ->cal_DMR();
+    }
 
     if (PARAM.inp.dm_to_rho)
     {

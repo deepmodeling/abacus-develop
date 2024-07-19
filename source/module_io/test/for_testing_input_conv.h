@@ -2,7 +2,6 @@
 #define INPUT_CONV_TEST_H
 
 #define private public
-
 #include "module_cell/module_symmetry/symmetry.h"
 #include "module_cell/unitcell.h"
 #include "module_elecstate/elecstate_lcao.h"
@@ -30,7 +29,7 @@
 #ifdef __PEXSI
 #include "module_hsolver/module_pexsi/pexsi_solver.h"
 #endif
-
+#undef private
 bool berryphase::berry_phase_flag = false;
 
 double module_tddft::Evolve_elec::td_force_dt;
@@ -394,7 +393,4 @@ double PEXSI_Solver::pexsi_elec_thr = 0.0;
 double PEXSI_Solver::pexsi_zero_thr = 0.0;
 } // namespace pexsi
 #endif
-
-#undef private
-
 #endif

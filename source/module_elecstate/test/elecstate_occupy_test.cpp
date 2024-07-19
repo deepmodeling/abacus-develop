@@ -15,7 +15,7 @@
  */
 #define private public
 #include "module_elecstate/occupy.h"
-
+#undef private
 class OccupyTest : public ::testing::Test
 {
 protected:
@@ -296,5 +296,3 @@ TEST_F(OccupyTest, Gweights)
   EXPECT_NEAR(demet, 0.0, 1e-13);
   EXPECT_NEAR(wg(0, 0), 1.0, 1e-13);
 }
-
-#undef private

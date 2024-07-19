@@ -6,7 +6,6 @@
 #include <string>
 #include <fstream>
 #include <iostream>
-#include <sstream>
 #include <iomanip>
 #include <complex>
 #include <cassert>

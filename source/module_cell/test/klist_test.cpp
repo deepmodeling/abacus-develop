@@ -19,8 +19,8 @@
 #include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 #include "module_io/berryphase.h"
-
-bool berryphase::berry_phase_flag = 0;
+#undef private
+bool berryphase::berry_phase_flag = false;
 
 pseudo::pseudo()
 {
@@ -296,7 +296,7 @@ TEST_F(KlistTest, MP)
 
 TEST_F(KlistTest, ReadKpointsGammaOnlyLocal)
 {
-    GlobalV::GAMMA_ONLY_LOCAL = 1;
+    GlobalV::GAMMA_ONLY_LOCAL = true;
     std::string kfile = "KPT_GO";
     kv->nspin = 1;
     kv->read_kpoints(kfile);
@@ -305,7 +305,7 @@ TEST_F(KlistTest, ReadKpointsGammaOnlyLocal)
     EXPECT_THAT(str, testing::HasSubstr("Gamma"));
     EXPECT_THAT(str, testing::HasSubstr("1 1 1 0 0 0"));
     ifs.close();
-    GlobalV::GAMMA_ONLY_LOCAL = 0; // this is important for the following tests because it is global
+    GlobalV::GAMMA_ONLY_LOCAL = false; // this is important for the following tests because it is global
 }
 
 TEST_F(KlistTest, ReadKpointsKspacing)
@@ -651,9 +651,9 @@ TEST_F(KlistTest, SetBothKvecFinalSCF)
     kv->kvec_c[0].y = 0.0;
     kv->kvec_c[0].z = 0.0;
     std::string skpt;
-    GlobalV::FINAL_SCF = 1;
-    kv->kd_done = 0;
-    kv->kc_done = 0;
+    GlobalV::FINAL_SCF = true;
+    kv->kd_done = false;
+    kv->kc_done = false;
     // case 1
     kv->k_nkstot = 0;
     kv->set_both_kvec(GlobalC::ucell.G, GlobalC::ucell.latvec, skpt);
@@ -691,14 +691,14 @@ TEST_F(KlistTest, SetBothKvec)
     kv->kvec_d[0].x = 0.0;
     kv->kvec_d[0].y = 0.0;
     kv->kvec_d[0].z = 0.0;
-    kv->kc_done = 0;
-    kv->kd_done = 1;
+    kv->kc_done = false;
+    kv->kd_done = true;
     std::string skpt;
-    GlobalV::FINAL_SCF = 0;
+    GlobalV::FINAL_SCF = false;
     kv->set_both_kvec(GlobalC::ucell.G, GlobalC::ucell.latvec, skpt);
     EXPECT_TRUE(kv->kc_done);
-    kv->kc_done = 1;
-    kv->kd_done = 0;
+    kv->kc_done = true;
+    kv->kd_done = false;
     kv->set_both_kvec(GlobalC::ucell.G, GlobalC::ucell.latvec, skpt);
     EXPECT_TRUE(kv->kd_done);
 }
@@ -778,5 +778,3 @@ TEST_F(KlistTest, IbzKpointIsMP)
     ClearUcell();
     remove("tmp_klist_4");
 }
-
-#undef private

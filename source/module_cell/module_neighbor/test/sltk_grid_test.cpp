@@ -4,7 +4,7 @@
 #define private public
 #include "../sltk_grid.h"
 #include "prepare_unitcell.h"
-
+#undef private
 #ifdef __LCAO
 InfoNonlocal::InfoNonlocal()
 {
@@ -174,5 +174,3 @@ TEST_F(SltkGridTest, InitNoExpand)
     ofs.close();
 }
 */
-
-#undef private

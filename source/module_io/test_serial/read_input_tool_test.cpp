@@ -1,7 +1,5 @@
 #include "../read_input_tool.h"
-
 #include <gtest/gtest.h>
-#include <stdexcept>
 
 // Test fixture for parse_expression tests
 class ReadInputTool : public ::testing::Test

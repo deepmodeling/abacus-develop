@@ -6,7 +6,8 @@
 #define private public
 #define protected public
 #include "module_md/msst.h"
-
+#undef private
+#undef protected
 #define doublethreshold 1e-12
 
 /************************************************
