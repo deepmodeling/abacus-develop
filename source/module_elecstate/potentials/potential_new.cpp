@@ -45,6 +45,7 @@ Potential::~Potential()
         }
         this->components.clear();
     }
+#if  ((defined(__CUDA) || defined(__ROCM)) && (!defined(__LCAO)))
     if (GlobalV::device_flag == "gpu") {
         if (GlobalV::precision_flag == "single") {
             delmem_sd_op()(gpu_ctx, s_veff_smooth);
@@ -56,11 +57,14 @@ Potential::~Potential()
         }
     }
     else {
+#endif
         if (GlobalV::precision_flag == "single") {
             delmem_sh_op()(cpu_ctx, s_veff_smooth);
             delmem_sh_op()(cpu_ctx, s_vofk_smooth);
         }
+#if  ((defined(__CUDA) || defined(__ROCM)) && (!defined(__LCAO)))
     }
+#endif
 }
 
 void Potential::pot_register(std::vector<std::string>& components_list)
@@ -126,6 +130,7 @@ void Potential::allocate()
         this->vofk_smooth.create(GlobalV::NSPIN, nrxx_smooth);
         ModuleBase::Memory::record("Pot::vofk_smooth", sizeof(double) * GlobalV::NSPIN * nrxx_smooth);
     }
+#if ((defined(__CUDA) || defined(__ROCM)) && (!defined(__LCAO)))
     if (GlobalV::device_flag == "gpu") {
         if (GlobalV::precision_flag == "single") {
             resmem_sd_op()(gpu_ctx, s_veff_smooth, GlobalV::NSPIN * nrxx_smooth);
@@ -137,6 +142,7 @@ void Potential::allocate()
         }
     }
     else {
+#endif
         if (GlobalV::precision_flag == "single") {
             resmem_sh_op()(cpu_ctx, s_veff_smooth, GlobalV::NSPIN * nrxx_smooth, "POT::sveff_smooth");
             resmem_sh_op()(cpu_ctx, s_vofk_smooth, GlobalV::NSPIN * nrxx_smooth, "POT::svofk_smooth");
@@ -146,7 +152,9 @@ void Potential::allocate()
             this->d_vofk_smooth = this->vofk_smooth.c;
         }
         // There's no need to allocate memory for double precision pointers while in a CPU environment
+#if ((defined(__CUDA) || defined(__ROCM)) && (!defined(__LCAO)))
     }
+#endif
 }
 
 void Potential::update_from_charge(const Charge*const chg, const UnitCell*const ucell)
@@ -174,6 +182,7 @@ void Potential::update_from_charge(const Charge*const chg, const UnitCell*const 
     }
 #endif
 
+#if ((defined(__CUDA) || defined(__ROCM)) && (!defined(__LCAO)))
     if (GlobalV::device_flag == "gpu") {
         if (GlobalV::precision_flag == "single") {
             castmem_d2s_h2d_op()(gpu_ctx,
@@ -201,6 +210,7 @@ void Potential::update_from_charge(const Charge*const chg, const UnitCell*const 
         }
     }
     else {
+#endif
         if (GlobalV::precision_flag == "single") {
             castmem_d2s_h2h_op()(cpu_ctx,
                                  cpu_ctx,
@@ -214,8 +224,9 @@ void Potential::update_from_charge(const Charge*const chg, const UnitCell*const 
                                  this->vofk_smooth.nr * this->vofk_smooth.nc);
         }
         // There's no need to synchronize memory for double precision pointers while in a CPU environment
+#if ((defined(__CUDA) || defined(__ROCM)) && (!defined(__LCAO)))
     }
-
+#endif
 #ifdef USE_PAW
     if(GlobalV::use_paw)
     {
