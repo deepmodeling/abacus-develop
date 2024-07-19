@@ -70,7 +70,7 @@ void HSolverLCAO<T, Device>::solve(hamilt::Hamilt<T>* pHamilt,
 #endif
 
 
-    // 此处往下待修改！！！
+    // Zhang Xiaoyang :  Please modify Pesxi usage later
     if (this->method == "cg_in_lcao")
     {
         this->precondition_lcao.resize(psi.get_nbasis());
