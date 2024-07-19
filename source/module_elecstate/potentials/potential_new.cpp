@@ -46,8 +46,8 @@ Potential::~Potential()
         this->components.clear();
     }
 #if  (defined(__CUDA) || defined(__ROCM))
-    if (GlobalV::device_flag == "gpu") {
-        if (GlobalV::precision_flag == "single" && GlobalV::BASIS_TYPE != "lcao") {
+    if (GlobalV::device_flag == "gpu" && GlobalV::BASIS_TYPE != "lcao") {
+        if (GlobalV::precision_flag == "single") {
             delmem_sd_op()(gpu_ctx, s_veff_smooth);
             delmem_sd_op()(gpu_ctx, s_vofk_smooth);
         }
