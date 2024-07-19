@@ -43,7 +43,8 @@ public:
 	
 	// init parameters of fft
 	void initfft(int nx_in, int ny_in, int nz_in, int lixy_in, int rixy_in, int ns_in, int nplane_in, 
-				 int nproc_in, bool gamma_only_in, bool xprime_in = true, bool mpifft_in = false);
+				 int nproc_in, bool gamma_only_in, bool xprime_in = true, bool mpifft_in = false,
+				 std::string basis_type_in="pw");
 
 	//init fftw_plans
 	void setupFFT(); 
@@ -161,7 +162,7 @@ public :
 
     std::string device = "cpu";
     std::string precision = "double";
-
+	std::string basis_type = "pw";
 public:
     void set_device(std::string device_);
     void set_precision(std::string precision_);
