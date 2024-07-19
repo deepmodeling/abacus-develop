@@ -5,7 +5,6 @@
 Diag_Cusolver_gvd::Diag_Cusolver_gvd(){
 // step 1: create cusolver/cublas handle
     cusolverH = NULL;
-    checkCudaErrors( cusolverDnCreate(&cusolverH) );
 
     itype = CUSOLVER_EIG_TYPE_1; // A*x = (lambda)*B*x
     jobz = CUSOLVER_EIG_MODE_VECTOR; // compute eigenvalues and eigenvectors.
@@ -39,7 +38,7 @@ void Diag_Cusolver_gvd::finalize(){
 
 Diag_Cusolver_gvd::~Diag_Cusolver_gvd(){
     finalize();
-    if (cusolverH) {checkCudaErrors( cusolverDnDestroy(cusolverH) );    cusolverH = NULL;}
+    
     //checkCudaErrors( cudaDeviceReset() );
 }
 
@@ -63,15 +62,16 @@ void Diag_Cusolver_gvd::init_complex(int N){
 }
         
 void Diag_Cusolver_gvd::Dngvd_double(int N, int M, double *A, double *B, double *W, double *V){
-
+    
     // copy A, B to the GPU
         assert(N == M);
         if (M != m) {
             this->finalize();
-            this->init_double(M);
         }
-        checkCudaErrors( cudaMemcpy(d_A, A, sizeof(double) * lda * m, cudaMemcpyHostToDevice) );
-        checkCudaErrors( cudaMemcpy(d_B, B, sizeof(double) * lda * m, cudaMemcpyHostToDevice) );
+    checkCudaErrors( cusolverDnCreate(&cusolverH));
+    this->init_double(M);
+    checkCudaErrors( cudaMemcpy(d_A, A, sizeof(double) * lda * m, cudaMemcpyHostToDevice) );
+    checkCudaErrors( cudaMemcpy(d_B, B, sizeof(double) * lda * m, cudaMemcpyHostToDevice) );
 
     // Query working space of sygvd
     // The helper functions below can calculate the sizes needed for pre-allocated buffer.
@@ -116,8 +116,9 @@ void Diag_Cusolver_gvd::Dngvd_double(int N, int M, double *A, double *B, double 
         checkCudaErrors( cudaMemcpy(&info_gpu, devInfo, sizeof(int), cudaMemcpyDeviceToHost) );
         assert(0 == info_gpu);
     // free the buffer
-        if (d_work ) checkCudaErrors( cudaFree(d_work) );
-
+    if (d_work ) checkCudaErrors( cudaFree(d_work) );
+    if (cusolverH) {checkCudaErrors( cusolverDnDestroy(cusolverH) );    cusolverH = NULL;}
+    this->finalize();
 }
 
 
@@ -127,8 +128,9 @@ void Diag_Cusolver_gvd::Dngvd_complex(int N, int M, std::complex<double> *A, std
         assert(N == M);
         if (M != m) {
             this->finalize();
-            this->init_complex(M);
         }
+        checkCudaErrors( cusolverDnCreate(&cusolverH));
+        this->init_complex(M);
         checkCudaErrors( cudaMemcpy(d_A2, A, sizeof(cuDoubleComplex) * lda * m, cudaMemcpyHostToDevice) );
         checkCudaErrors( cudaMemcpy(d_B2, B, sizeof(cuDoubleComplex) * lda * m, cudaMemcpyHostToDevice) );
 
@@ -179,4 +181,6 @@ void Diag_Cusolver_gvd::Dngvd_complex(int N, int M, std::complex<double> *A, std
 
     // free the buffer
         if (d_work2 ) checkCudaErrors( cudaFree(d_work2) );
+        if (cusolverH) {checkCudaErrors( cusolverDnDestroy(cusolverH) );    cusolverH = NULL;}
+        this->finalize();
 }
