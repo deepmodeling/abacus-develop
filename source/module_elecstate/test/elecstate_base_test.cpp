@@ -6,6 +6,7 @@
 #define protected public
 #include "module_elecstate/elecstate.h"
 #include "module_elecstate/occupy.h"
+#undef protected
 #undef private
 
 // Mock functions for testing elecstate.cpp
@@ -700,7 +701,3 @@ TEST_F(ElecStateTest, CalculateWeightsGWeightsTwoFermi)
     delete klist;
     Occupy::use_gaussian_broadening = false;
 }
-
-
-#undef protected
-#undef private

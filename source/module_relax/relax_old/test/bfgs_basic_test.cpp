@@ -5,6 +5,7 @@
 #define protected public
 #include "module_relax/relax_old/bfgs_basic.h"
 #undef private
+#undef protected
 /************************************************
  *  unit tests of class BFGS_Basic
  ***********************************************/

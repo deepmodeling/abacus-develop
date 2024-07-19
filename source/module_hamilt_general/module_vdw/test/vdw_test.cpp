@@ -597,9 +597,6 @@ TEST_F(vdwd3abcTest, D3bjGetStress)
     EXPECT_NEAR(stress.e33, -3.4278442125590892e-05,1e-12);
 }
 
-#undef private
-
-
 int main(int argc, char **argv)
 {
     MPI_Init(&argc, &argv);

@@ -7,7 +7,7 @@
 #define protected public
 #include "module_md/verlet.h"
 #undef private
-
+#undef protected
 #define doublethreshold 1e-12
 
 

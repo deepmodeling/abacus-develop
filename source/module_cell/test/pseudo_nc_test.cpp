@@ -126,4 +126,3 @@ TEST_F(NCPPTest, PrintNC)
 	ifs.close();
 	remove("./tmp_log");
 }
-#undef private

@@ -1018,5 +1018,3 @@ TEST_F(ChargeMixingTest, MixDivCombTest)
     EXPECT_EQ(datas2, nullptr);
     EXPECT_EQ(datahf2, nullptr);
 }
-
-#undef private

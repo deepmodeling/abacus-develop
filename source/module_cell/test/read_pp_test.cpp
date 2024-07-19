@@ -807,4 +807,3 @@ TEST_F(ReadPPTest, AverageLSPINORB1)
 	EXPECT_EQ(upf->nbeta,6);
 	EXPECT_TRUE(upf->has_so); // has soc info
 }
-#undef private

@@ -152,4 +152,3 @@ TEST_F(MemoryTest, finish)
 	ofs.close();
 	EXPECT_FALSE(ModuleBase::Memory::init_flag);
 }
-#undef private

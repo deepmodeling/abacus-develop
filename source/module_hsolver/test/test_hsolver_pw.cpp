@@ -12,6 +12,7 @@
 #include "module_base/global_variable.h"
 #include "module_hsolver/hsolver_pw.h"
 #undef private
+#undef protected
 /************************************************
  *  unit test of HSolverPW class
  ***********************************************/

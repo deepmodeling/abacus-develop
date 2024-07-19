@@ -228,4 +228,3 @@ TEST_F(PrintInfoTest, PrintTime)
 	EXPECT_THAT(output,testing::HasSubstr("FINISH Time"));
 	EXPECT_THAT(output,testing::HasSubstr("TOTAL  Time"));
 }
-#undef private

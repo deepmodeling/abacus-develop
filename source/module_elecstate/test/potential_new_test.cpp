@@ -643,5 +643,3 @@ TEST_F(PotentialNewTest, InterpolateVrsSingleGrids)
     }
 
 }
-
-#undef private

@@ -778,5 +778,3 @@ TEST_F(KlistTest, IbzKpointIsMP)
     ClearUcell();
     remove("tmp_klist_4");
 }
-
-#undef private

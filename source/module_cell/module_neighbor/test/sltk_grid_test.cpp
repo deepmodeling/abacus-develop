@@ -174,5 +174,3 @@ TEST_F(SltkGridTest, InitNoExpand)
     ofs.close();
 }
 */
-
-#undef private

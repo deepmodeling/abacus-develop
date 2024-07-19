@@ -393,7 +393,4 @@ double PEXSI_Solver::pexsi_elec_thr = 0.0;
 double PEXSI_Solver::pexsi_zero_thr = 0.0;
 } // namespace pexsi
 #endif
-
-#undef private
-
 #endif
