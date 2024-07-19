@@ -289,7 +289,7 @@ int DiagoDavid<T, Device>::diag_mock(const HPsiFunc& hpsi_func,
                               nbase,
                               nbase_x,
                               eigenvalue_in,
-                              psi_in, //psi,
+                              psi_in,
                               ldPsi,
                               this->hpsi,
                               this->spsi,
@@ -716,7 +716,7 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
     // update hp,sp
     setmem_complex_op()(this->ctx, basis , 0, nbase_x * dim);
 
-    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    // basis(dim, nband) = hpsi(dim, nbase) * vcc(nbase, nband)
     gemm_op<T, Device>()(this->ctx,
                               'N',
                               'N',
@@ -738,15 +738,15 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
                               'N',
                               'N',
                               dim,                // m: row of A,C
-                              nband,                    // n: col of B,C
-                              nbase,                    // k: col of A, row of B
+                              nband,              // n: col of B,C
+                              nbase,              // k: col of A, row of B
                               this->one,
-                              this->spsi,               // A dim * nbase
+                              this->spsi,         // A dim * nbase
                               dim,
-                              this->vcc,                // B nbase * nband
+                              this->vcc,          // B nbase * nband
                               nbase_x,
                               this->zero,
-                              basis + dim*nband,        // C dim * nband
+                              basis + dim*nband,  // C dim * nband
                               dim
     );
 
