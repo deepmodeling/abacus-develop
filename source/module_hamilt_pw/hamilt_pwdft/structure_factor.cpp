@@ -20,7 +20,7 @@ Structure_Factor::Structure_Factor()
 
 Structure_Factor::~Structure_Factor()
 {
-#if ((defined(__CUDA) || defined(__ROCM)) && (!defined(__LCAO)))
+#if (defined(__CUDA) || defined(__ROCM))
     if (GlobalV::device_flag == "gpu" && GlobalV::BASIS_TYPE != "lcao") {
         if (GlobalV::precision_flag == "single") {
             delmem_cd_op()(gpu_ctx, this->c_eigts1);
@@ -39,7 +39,7 @@ Structure_Factor::~Structure_Factor()
             delmem_ch_op()(cpu_ctx, this->c_eigts3);
         }
         // There's no need to delete double precision pointers while in a CPU environment.
-#if ((defined(__CUDA) || defined(__ROCM)) && (!defined(__LCAO)))
+#if (defined(__CUDA) || defined(__ROCM))
     }
 #endif
 }
@@ -151,7 +151,7 @@ void Structure_Factor::setup_structure_factor(UnitCell* Ucell, const ModulePW::P
             inat++;
         }
     }
-#if ((defined(__CUDA) || defined(__ROCM)) && (!defined(__LCAO)))
+#if (defined(__CUDA) || defined(__ROCM))
     if (GlobalV::device_flag == "gpu" && GlobalV::BASIS_TYPE != "lcao") {
         if (GlobalV::precision_flag == "single") {
             resmem_cd_op()(gpu_ctx, this->c_eigts1, Ucell->nat * (2 * rho_basis->nx + 1));
@@ -182,7 +182,7 @@ void Structure_Factor::setup_structure_factor(UnitCell* Ucell, const ModulePW::P
         this->z_eigts2 = this->eigts2.c;
         this->z_eigts3 = this->eigts3.c;
         // There's no need to delete double precision pointers while in a CPU environment.
-#if ((defined(__CUDA) || defined(__ROCM)) && (!defined(__LCAO)))
+#if (defined(__CUDA) || defined(__ROCM))
     }
 #endif
     ModuleBase::timer::tick("PW_Basis","setup_struc_factor"); 
