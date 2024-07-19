@@ -6,7 +6,7 @@
 #include "module_cell/unitcell.h"
 #include "module_elecstate/module_charge/charge.h"
 #include "prepare_unitcell.h"
-
+#undef private
 // mock functions for UnitCell
 #ifdef __LCAO
 InfoNonlocal::InfoNonlocal()

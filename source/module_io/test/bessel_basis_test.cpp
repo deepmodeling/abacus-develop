@@ -389,7 +389,7 @@ void output::printM3(std::ofstream &ofs, const std::string &description, const M
  *     - return (cubic spline) interpolated element value of Faln 4d-matrix
  */
 
-#define private public
+
 class TestBesselBasis : public ::testing::Test {
 protected:
     UnitCell ucell;

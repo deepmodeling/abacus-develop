@@ -8,7 +8,7 @@
 #include "module_cell/klist.h"
 #include "module_cell/parallel_kpoints.h"
 #include "module_io/berryphase.h"
-
+#undef private
 #ifdef __LCAO
 InfoNonlocal::InfoNonlocal(){}
 InfoNonlocal::~InfoNonlocal(){}

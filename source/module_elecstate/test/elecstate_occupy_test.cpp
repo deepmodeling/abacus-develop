@@ -15,7 +15,7 @@
  */
 #define private public
 #include "module_elecstate/occupy.h"
-
+#undef private
 class OccupyTest : public ::testing::Test
 {
 protected:

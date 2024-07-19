@@ -19,7 +19,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 #include "module_io/berryphase.h"
-
+#undef private
 bool berryphase::berry_phase_flag = 0;
 
 pseudo::pseudo()

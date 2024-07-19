@@ -20,7 +20,7 @@
 
 #define private public
 #include "module_elecstate/magnetism.h"
-
+#undef private
 Charge::Charge()
 {
 }

@@ -5,7 +5,7 @@
 #define private public
 #define protected public
 #include "../esolver_dp.h"
-
+#undef private
 /************************************************
  *  unit tests of class ESolver_DP
  ***********************************************/

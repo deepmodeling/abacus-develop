@@ -27,6 +27,7 @@ namespace GlobalV
 
 #define private public
 #include "../memory.h"
+#undef private
 
 class MemoryTest : public testing::Test
 {

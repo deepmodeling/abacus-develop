@@ -6,7 +6,7 @@
 #define private public
 #define protected public
 #include "module_md/langevin.h"
-
+#undef private
 #define doublethreshold 1e-12
 
 /************************************************

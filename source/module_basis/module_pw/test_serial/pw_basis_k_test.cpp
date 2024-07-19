@@ -28,6 +28,7 @@
 #include "../pw_basis_k.h"
 #include "../pw_basis.h"
 #include "../fft.h"
+#undef private
 class PWBasisKTEST: public testing::Test
 {
 public:

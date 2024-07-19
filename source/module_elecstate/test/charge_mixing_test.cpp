@@ -5,6 +5,7 @@
 #include "../module_charge/charge_mixing.h"
 #include "module_basis/module_pw/pw_basis.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
+#undef private
 #include <omp.h>
 
 int FUNC_TYPE = 1;

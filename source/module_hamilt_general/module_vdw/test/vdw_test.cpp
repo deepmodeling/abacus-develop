@@ -12,7 +12,7 @@
 #include "module_hamilt_general/module_vdw/vdwd2.h"
 #include "module_hamilt_general/module_vdw/vdwd3.h"
 #include "module_hamilt_general/module_vdw/vdw.h"
-
+#undef private
 
 /************************************************
 *  unit test of class VDW and related functions

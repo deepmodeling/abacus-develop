@@ -25,7 +25,7 @@
 #include "module_cell/read_pp.h"
 #include "module_cell/pseudo.h"
 #include "module_cell/atom_pseudo.h"
-
+#undef private
 class AtomPseudoTest : public testing::Test
 {
 protected:

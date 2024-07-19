@@ -1,6 +1,7 @@
 #include "paw_element.h"
 #include "module_base/tool_title.h"
 #include "module_base/tool_quit.h"
+#include <sstream>
 
 void Paw_Element::init_paw_element(const double ecutwfc_in, const double cell_factor_in)
 {

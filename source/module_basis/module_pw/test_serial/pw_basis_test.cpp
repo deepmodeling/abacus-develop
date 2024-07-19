@@ -39,6 +39,7 @@
 #define private public
 #include "../pw_basis.h"
 #include "../fft.h"
+#undef private
 class PWBasisTEST: public testing::Test
 {
 public:

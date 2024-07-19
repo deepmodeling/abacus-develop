@@ -18,6 +18,7 @@
 #define private public
 #include "module_io/input_item.h"
 #include "module_io/read_input.h"
+#undef private
 
 class InputTest : public testing::Test
 {

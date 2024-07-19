@@ -6,7 +6,7 @@
 #define protected public
 #include "module_elecstate/elecstate.h"
 #include "module_elecstate/occupy.h"
-
+#undef private
 
 // Mock functions for testing elecstate.cpp
 namespace elecstate

@@ -62,7 +62,7 @@
 #define private public
 #include "module_cell/read_pp.h"
 #include "module_cell/atom_pseudo.h"
-
+#undef private
 class ReadPPTest : public testing::Test
 {
 protected:
