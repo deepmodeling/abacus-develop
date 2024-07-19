@@ -17,12 +17,10 @@ void PW_Basis:: initmpi(
 #endif
 
 #ifdef __LCAO
-    void PW_Basis::init_basis_type(
-        std::string basis_type_in
-    )
-    {
-        this->basis_type = basis_type_in;
-    }
+void PW_Basis::init_basis_type(const bool cuda_memory_allocate)
+{
+    this->cuda_memory_allocate = cuda_memory_allocate;
+}
 #endif
 /// 
 /// Init the grids for FFT

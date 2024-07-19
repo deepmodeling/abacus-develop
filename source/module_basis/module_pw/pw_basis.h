@@ -69,8 +69,7 @@ public:
 
 #ifdef __LCAO
     //Reduce the memory consumption of the lcao module.
-    void init_basis_type(
-        std::string basis_type_in);
+    void init_basis_type(const bool cuda_memory_allocate);
 #endif
     //Init the grids for FFT
     virtual void initgrids(
@@ -183,7 +182,7 @@ public:
                        ///< odd only; (2) even only. sunliang added 2022-08-30.
   int poolnproc = 1;
   int poolrank = 0;
-  std::string basis_type = "pw";
+  bool cuda_memory_allocate = true; // whether to allocate memory on GPU
 
 protected:
     //distribute plane waves to different processors

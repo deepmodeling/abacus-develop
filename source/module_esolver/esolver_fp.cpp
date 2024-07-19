@@ -54,7 +54,10 @@ void ESolver_FP::before_all_runners(const Input_para& inp, UnitCell& cell)
     this->pw_rho->initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, POOL_WORLD);
 #endif
 #ifdef __LCAO
-    this->pw_rho->init_basis_type(PARAM.inp.basis_type);
+    if (PARAM.inp.basis_type == "lcao")
+    {
+        this->pw_rho->init_basis_type(false);
+    }
 #endif
     if (this->classname == "ESolver_OF")
     {
@@ -84,7 +87,10 @@ void ESolver_FP::before_all_runners(const Input_para& inp, UnitCell& cell)
         this->pw_rhod->initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, POOL_WORLD);
 #endif
 #ifdef __LCAO
-        this->pw_rhod->init_basis_type(PARAM.inp.basis_type);
+        if (PARAM.inp.basis_type == "lcao")
+        {
+            this->pw_rho->init_basis_type(false);
+        }
 #endif
         if (this->classname == "ESolver_OF")
         {
