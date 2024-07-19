@@ -39,6 +39,14 @@ class HSolver
                        psi::Psi<T, Device>& ppsi,
                        elecstate::ElecState* pes,
                        const std::string method,
+
+                        const std::string calculation_type_in,
+                        const bool use_paw_in,
+                        const bool use_uspp_in,
+                        const int rank_in_pool_in,
+                        const int nproc_in_pool_in,
+
+
                        const bool skip_charge = false)
     {
         return;

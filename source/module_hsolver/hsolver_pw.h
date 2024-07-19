@@ -41,13 +41,16 @@ class HSolverPW : public HSolver<T, Device>
                psi::Psi<T, Device>& psi,
                elecstate::ElecState* pes,
                const std::string method_in,
-               const bool skip_charge) override;
+               
+              const std::string calculation_type_in,
+              const bool use_paw_in,
+              const bool use_uspp_in,
+              const int rank_in_pool_in,
+              const int nproc_in_pool_in,
+              
+              const bool skip_charge
+              ) override;
 
-
-    // void init(const std::string calculation_type,
-    //           const bool use_paw,
-    //           const int rank_in_pool,
-    //           const int nproc_in_pool);
 
     virtual Real cal_hsolerror() override;
 
@@ -79,10 +82,15 @@ class HSolverPW : public HSolver<T, Device>
   private:
     Device* ctx = {};
 
-    // const std::string calculation_type_;
-    // const bool use_paw_;
-    // const int rank_in_pool_;
-    // const int nproc_in_pool_;
+    std::string calculation_type = "scf";
+    
+    bool use_paw = false;
+    bool use_uspp = false;
+
+    int rank_in_pool = 0;
+    int nproc_in_pool = 1;
+
+    int nspin = 1;
 
     void set_isOccupied(std::vector<bool>& is_occupied,
                         elecstate::ElecState* pes,
