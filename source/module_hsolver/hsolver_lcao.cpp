@@ -13,6 +13,8 @@
 #include "module_hsolver/kernels/math_kernel_op.h"
 #include "module_io/write_HS.h"
 
+#include "module_base/global_variable.h"
+
 #include <ATen/core/tensor.h>
 #include <ATen/core/tensor_map.h>
 #include <ATen/core/tensor_types.h>
@@ -34,145 +36,19 @@ namespace hsolver
 {
 
 template <typename T, typename Device>
-void HSolverLCAO<T, Device>::solveTemplate(hamilt::Hamilt<T>* pHamilt,
-                                           psi::Psi<T>& psi,
-                                           elecstate::ElecState* pes,
-                                           const std::string method_in,
-                                           const bool skip_charge)
+void HSolverLCAO<T, Device>::solve(hamilt::Hamilt<T>* pHamilt,
+                                   psi::Psi<T>& psi,
+                                   elecstate::ElecState* pes,
+                                   const std::string method_in,
+                                   const bool skip_charge)
 {
     ModuleBase::TITLE("HSolverLCAO", "solve");
     ModuleBase::timer::tick("HSolverLCAO", "solve");
     // select the method of diagonalization
     this->method = method_in;
 
-    // init
-    if (this->method == "scalapack_gvx")
-    {
-#ifdef __MPI
-        if (this->pdiagh != nullptr)
-        {
-            if (this->pdiagh->method != this->method)
-            {
-                delete[] this->pdiagh;
-                this->pdiagh = nullptr;
-            }
-        }
-        if (this->pdiagh == nullptr)
-        {
-            this->pdiagh = new DiagoScalapack<T>();
-            this->pdiagh->method = this->method;
-        }
-#else
-        ModuleBase::WARNING_QUIT("HSolverLCAO", "Scalapack not supported in SERIAL VERSION");
-#endif
-    }
-#ifdef __ELPA
-    else if (this->method == "genelpa")
-    {
-        if (this->pdiagh != nullptr)
-        {
-            if (this->pdiagh->method != this->method)
-            {
-                delete[] this->pdiagh;
-                this->pdiagh = nullptr;
-            }
-        }
-        if (this->pdiagh == nullptr)
-        {
-            this->pdiagh = new DiagoElpa<T>();
-            this->pdiagh->method = this->method;
-        }
-    }
-#endif
-#ifdef __CUDA
-    else if (this->method == "cusolver")
-    {
-        if (this->pdiagh != nullptr)
-        {
-            if (this->pdiagh->method != this->method)
-            {
-                delete[] this->pdiagh;
-                this->pdiagh = nullptr;
-            }
-        }
-        if (this->pdiagh == nullptr)
-        {
-            this->pdiagh = new DiagoCusolver<T>(this->ParaV);
-            this->pdiagh->method = this->method;
-        }
-    }
-    else if (this->method == "cusolvermp")
-    {
-#ifdef __CUSOLVERMP
-        if (this->pdiagh != nullptr)
-        {
-            if (this->pdiagh->method != this->method)
-            {
-                delete[] this->pdiagh;
-                this->pdiagh = nullptr;
-            }
-        }
-        if (this->pdiagh == nullptr)
-        {
-            this->pdiagh = new DiagoCusolverMP<T>();
-            this->pdiagh->method = this->method;
-        }
-#else
-        ModuleBase::WARNING_QUIT("HSolverLCAO", "CUSOLVERMP did not compiled!");
-#endif
-    }
-#endif
-    else if (this->method == "lapack")
-    {
-#ifndef __MPI
-        if (this->pdiagh != nullptr)
-        {
-            if (this->pdiagh->method != this->method)
-            {
-                delete[] this->pdiagh;
-                this->pdiagh = nullptr;
-            }
-        }
-        if (this->pdiagh == nullptr)
-        {
-            this->pdiagh = new DiagoLapack<T>();
-            this->pdiagh->method = this->method;
-        }
-#else
-        ModuleBase::WARNING_QUIT("HSolverLCAO::solve", "This method of DiagH is not supported!");
-#endif
-    }
-    else if (this->method == "cg_in_lcao")
-    {
-
-        if (this->pdiagh != nullptr)
-        {
-            if (this->pdiagh->method != this->method)
-            {
-                delete reinterpret_cast<DiagoCG<T>*>(this->pdiagh);
-                this->pdiagh = nullptr;
-            }
-        }
-        if (this->pdiagh == nullptr)
-        {
-            auto subspace_func = [](const ct::Tensor& psi_in, ct::Tensor& psi_out) {
-                // psi_in should be a 2D tensor:
-                // psi_in.shape() = [nbands, nbasis]
-                const auto ndim = psi_in.shape().ndim();
-                REQUIRES_OK(ndim == 2, "dims of psi_in should be less than or equal to 2");
-            };
-            this->pdiagh = new DiagoCG<T>(GlobalV::BASIS_TYPE,
-                                          GlobalV::CALCULATION,
-                                          false,
-                                          subspace_func,
-                                          DiagoIterAssist<T>::LCAO_DIAG_THR,
-                                          DiagoIterAssist<T>::LCAO_DIAG_NMAX,
-                                          GlobalV::NPROC_IN_POOL);
-            this->pdiagh->method = this->method;
-        }
-    }
 #ifdef __PEXSI
-    else if (this->method == "pexsi")
+    if (this->method == "pexsi")
     {
         if (this->pdiagh != nullptr)
         {
@@ -192,11 +68,9 @@ void HSolverLCAO<T, Device>::solveTemplate(hamilt::Hamilt<T>* pHamilt,
         }
     }
 #endif
-    else
-    {
-        ModuleBase::WARNING_QUIT("HSolverLCAO::solve", "This method of DiagH is not supported!");
-    }
 
+
+    // Zhang Xiaoyang :  Please modify Pesxi usage later
     if (this->method == "cg_in_lcao")
     {
         this->precondition_lcao.resize(psi.get_nbasis());
@@ -230,8 +104,8 @@ void HSolverLCAO<T, Device>::solveTemplate(hamilt::Hamilt<T>* pHamilt,
         && this->method != "cusolver" && this->method != "cusolvermp" && this->method != "cg_in_lcao"
         && this->method != "pexsi")
     {
-        delete this->pdiagh;
-        this->pdiagh = nullptr;
+        //delete this->pdiagh;
+        //this->pdiagh = nullptr;
     }
 
     // used in nscf calculation
@@ -246,7 +120,7 @@ void HSolverLCAO<T, Device>::solveTemplate(hamilt::Hamilt<T>* pHamilt,
 #ifdef __PEXSI
     if (this->method == "pexsi")
     {
-        DiagoPexsi<T>* tem = dynamic_cast<DiagoPexsi<T>*>(this->pdiagh);
+        DiagoPexsi<T> tem = dynamic_cast<DiagoPexsi<T>*>(this->pdiagh);
         if (tem == nullptr)
             ModuleBase::WARNING_QUIT("HSolverLCAO", "pexsi need debug!");
         elecstate::ElecStateLCAO<T>* _pes = dynamic_cast<elecstate::ElecStateLCAO<T>*>(pes);
@@ -263,30 +137,75 @@ void HSolverLCAO<T, Device>::solveTemplate(hamilt::Hamilt<T>* pHamilt,
 }
 
 template <typename T, typename Device>
-void HSolverLCAO<T, Device>::solve(hamilt::Hamilt<T>* pHamilt,
-                                   psi::Psi<T>& psi,
-                                   elecstate::ElecState* pes,
-                                   const std::string method_in,
-                                   const bool skip_charge)
-{
-    this->solveTemplate(pHamilt, psi, pes, this->method, skip_charge);
-}
-
-template <typename T, typename Device>
 void HSolverLCAO<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>& psi, double* eigenvalue)
 {
     ModuleBase::TITLE("HSolverLCAO", "hamiltSolvePsiK");
     ModuleBase::timer::tick("HSolverLCAO", "hamiltSolvePsiK");
 
-    if (this->method != "cg_in_lcao")
+    if (this->method == "scalapack_gvx")
+    {
+#ifdef __MPI
+        DiagoScalapack<T> sa;
+        sa.diag(hm, psi, eigenvalue);
+#endif
+    }
+#ifdef __ELPA
+    else if (this->method == "genelpa")
+    {
+        DiagoElpa<T> el;
+        el.diag(hm, psi, eigenvalue);
+    }
+#endif
+#ifdef __CUDA
+    else if (this->method == "cusolver")
+    {
+        DiagoCusolver<T> cs(this->ParaV);
+        cs.diag(hm, psi, eigenvalue);
+    }
+    else if (this->method == "cusolvermp")
+    {
+#ifdef __CUSOLVERMP
+        DiagoCusolverMP<T> cm;
+        cm.diag(hm, psi, eigenvalue);
+#else
+        ModuleBase::WARNING_QUIT("HSolverLCAO", "CUSOLVERMP did not compiled!");
+#endif
+    }
+#endif
+    else if (this->method == "lapack")
+    {
+#ifndef __MPI
+        DiagoLapack<T> la;
+        la.diag(hm, psi, eigenvalue);
+#else
+        ModuleBase::WARNING_QUIT("HSolverLCAO::solve", "This method of DiagH is not supported!");
+#endif
+#ifdef __PEXSI
+    else if (this->method == "pexsi")
     {
         this->pdiagh->diag(hm, psi, eigenvalue);
+    }
+#endif
     }
     else
     {
 
         using ct_Device = typename ct::PsiToContainer<base_device::DEVICE_CPU>::type;
-        auto cg = reinterpret_cast<DiagoCG<T>*>(this->pdiagh);
+
+        auto subspace_func = [](const ct::Tensor& psi_in, ct::Tensor& psi_out) {
+                // psi_in should be a 2D tensor:
+                // psi_in.shape() = [nbands, nbasis]
+                const auto ndim = psi_in.shape().ndim();
+                REQUIRES_OK(ndim == 2, "dims of psi_in should be less than or equal to 2");
+            };
+
+        DiagoCG<T, Device> cg(GlobalV::BASIS_TYPE,
+                              GlobalV::CALCULATION,
+                              DiagoIterAssist<T, Device>::need_subspace,
+                              subspace_func,
+                              DiagoIterAssist<T, Device>::PW_DIAG_THR,
+                              DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
+                              GlobalV::NPROC_IN_POOL);
 
         hamilt::MatrixBlock<T> h_mat, s_mat;
         hm->matrix(h_mat, s_mat);
@@ -384,7 +303,7 @@ void HSolverLCAO<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>&
                                          ct::TensorShape({static_cast<int>(this->precondition_lcao.size())}))
                                .slice({0}, {psi.get_current_nbas()});
 
-        cg->diag(hpsi_func, spsi_func, psi_tensor, eigen_tensor, prec_tensor);
+        cg.diag(hpsi_func, spsi_func, psi_tensor, eigen_tensor, prec_tensor);
 
         // TODO: Double check tensormap's potential problem
         ct::TensorMap(psi.get_pointer(), psi_tensor, {psi.get_nbands(), psi.get_nbasis()}).sync(psi_tensor);
