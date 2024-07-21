@@ -160,7 +160,14 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
     // 3) init LCAO basis
     // reading the localized orbitals/projectors
     // construct the interpolation tables.
-    LCAO_domain::init_basis_lcao(this->ParaV, inp, ucell, two_center_bundle_);
+    LCAO_domain::init_basis_lcao(this->ParaV, 
+                                 inp.onsite_radius, 
+								 inp.lcao_ecut,
+								 inp.lcao_dk,
+								 inp.lcao_dr,
+								 inp.lcao_rmax,
+                                 ucell, 
+                                 two_center_bundle_);
     //------------------init Basis_lcao----------------------
 
     // 5) initialize density matrix

@@ -1,9 +1,14 @@
+#include "LCAO_domain.h"
 
 namespace LCAO_domain
 {
 
-void init_basis_lcao(const Parallel_Orbitals& pv,
-		const Input_para& inp, 
+void init_basis_lcao(Parallel_Orbitals& pv,
+        const double &onsite_radius,
+        const double &lcao_ecut,
+        const double &lcao_dk,
+        const double &lcao_dr,
+        const double &lcao_rmax,
 		UnitCell& ucell,
         TwoCenterBundle& two_center_bundle)
 {
@@ -33,13 +38,13 @@ void init_basis_lcao(const Parallel_Orbitals& pv,
 
     two_center_bundle.build_orb(ucell.ntype, ucell.orbital_fn);
     two_center_bundle.build_alpha(GlobalV::deepks_setorb, &ucell.descriptor_file);
-    two_center_bundle.build_orb_onsite(PARAM.inp.onsite_radius);
+    two_center_bundle.build_orb_onsite(onsite_radius);
     // currently deepks only use one descriptor file, so cast bool to int is
     // fine
 
     // TODO Due to the omnipresence of GlobalC::ORB, we still have to rely
     // on the old interface for now.
-    two_center_bundle.to_LCAO_Orbitals(GlobalC::ORB, inp.lcao_ecut, inp.lcao_dk, inp.lcao_dr, inp.lcao_rmax);
+    two_center_bundle.to_LCAO_Orbitals(GlobalC::ORB, lcao_ecut, lcao_dk, lcao_dr, lcao_rmax);
 
     ucell.infoNL.setupNonlocal(ucell.ntype, ucell.atoms, GlobalV::ofs_running, GlobalC::ORB);
 
@@ -53,7 +58,7 @@ void init_basis_lcao(const Parallel_Orbitals& pv,
 #ifdef USE_NEW_TWO_CENTER
     two_center_bundle.tabulate();
 #else
-    two_center_bundle.tabulate(inp.lcao_ecut, inp.lcao_dk, inp.lcao_dr, inp.lcao_rmax);
+    two_center_bundle.tabulate(lcao_ecut, lcao_dk, lcao_dr, lcao_rmax);
 #endif
 
     // setup_2d_division
@@ -79,7 +84,7 @@ void init_basis_lcao(const Parallel_Orbitals& pv,
     // Zhang Xiaoyang enable the serial version of LCAO and recovered this function usage. 2024-07-06
 #endif
 
-    pv.set_atomic_trace(GlobalC::ucell.get_iat2iwt(), GlobalC::ucell.nat, nlocal);
+    pv.set_atomic_trace(ucell.get_iat2iwt(), ucell.nat, nlocal);
 
     return;
 }
