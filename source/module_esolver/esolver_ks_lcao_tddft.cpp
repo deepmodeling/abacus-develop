@@ -84,7 +84,14 @@ void ESolver_KS_LCAO_TDDFT::before_all_runners(const Input_para& inp, UnitCell& 
     }
 
     // 4) read the local orbitals and construct the interpolation tables.
-    this->init_basis_lcao(inp, ucell);
+    LCAO_domain::init_basis_lcao(this->ParaV, 
+                                 inp.onsite_radius, 
+								 inp.lcao_ecut,
+								 inp.lcao_dk,
+								 inp.lcao_dr,
+								 inp.lcao_rmax,
+                                 ucell, 
+                                 two_center_bundle_);
 
     // 5) allocate H and S matrices according to computational resources
     LCAO_domain::divide_HS_in_frag(GlobalV::GAMMA_ONLY_LOCAL, ParaV, kv.get_nks());
