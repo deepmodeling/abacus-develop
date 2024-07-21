@@ -325,6 +325,7 @@ OBJS_HSOLVER_LCAO=hsolver_lcao.o\
       elpa_new_real.o\
       elpa_new_complex.o\
       utils.o\
+      parallel_k2d.o\
 
 OBJS_HSOLVER_PEXSI=diago_pexsi.o\
       pexsi_solver.o\

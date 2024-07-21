@@ -132,3 +132,4 @@ AddTest(
   LIBS ${math_libs} base device
   SOURCES cell_index_test.cpp ../cell_index.cpp
 )
+

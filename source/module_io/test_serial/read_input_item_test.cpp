@@ -167,15 +167,6 @@ TEST_F(InputTest, Item_test)
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
-    { // kpar
-        auto it = find_lable("kpar", readinput.input_lists);
-        param.input.kpar = 2;
-        param.input.basis_type = "lcao";
-        testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(0), "");
-        output = testing::internal::GetCapturedStdout();
-        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
-    }
     { // bndpar
         auto it = find_lable("bndpar", readinput.input_lists);
         param.input.esolver_type = "ksdft";
