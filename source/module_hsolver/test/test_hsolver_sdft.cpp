@@ -4,13 +4,13 @@
 
 #define private public
 #define protected public
-
 #include "module_hsolver/hsolver_pw.h"
 #include "hsolver_supplementary_mock.h"
 #include "hsolver_pw_sup.h"
 #include "module_hsolver/hsolver_pw_sdft.h"
-
 #include "module_base/global_variable.h"
+#undef private
+#undef protected
 
 //mock for module_sdft
 template<typename REAL>

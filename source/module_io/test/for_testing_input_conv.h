@@ -2,14 +2,12 @@
 #define INPUT_CONV_TEST_H
 
 #define private public
-
 #include "module_cell/module_symmetry/symmetry.h"
 #include "module_cell/unitcell.h"
 #include "module_elecstate/elecstate_lcao.h"
 #include "module_elecstate/module_charge/charge_mixing.h"
 #include "module_elecstate/occupy.h"
 #include "module_elecstate/potentials/H_TDDFT_pw.h"
-#include "module_hamilt_lcao/module_tddft/td_velocity.h"
 #include "module_elecstate/potentials/efield.h"
 #include "module_elecstate/potentials/gatefield.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/FORCE_STRESS.h"
@@ -30,7 +28,7 @@
 #ifdef __PEXSI
 #include "module_hsolver/module_pexsi/pexsi_solver.h"
 #endif
-
+#undef private
 bool berryphase::berry_phase_flag = false;
 
 double module_tddft::Evolve_elec::td_force_dt;
@@ -224,118 +222,87 @@ UnitCell::UnitCell()
 
     set_atom_flag = false;
 }
-UnitCell::~UnitCell()
-{
-}
+UnitCell::~UnitCell() {}
 #ifdef __LCAO
-InfoNonlocal::InfoNonlocal()
-{
-}
-InfoNonlocal::~InfoNonlocal()
-{
-}
-LCAO_Orbitals::LCAO_Orbitals()
-{
-}
-LCAO_Orbitals::~LCAO_Orbitals()
-{
-}
+InfoNonlocal::InfoNonlocal() {}
+InfoNonlocal::~InfoNonlocal() {}
+LCAO_Orbitals::LCAO_Orbitals() {}
+LCAO_Orbitals::~LCAO_Orbitals() {}
 #endif
-Magnetism::Magnetism()
-{
-}
-Magnetism::~Magnetism()
-{
-}
-void Occupy::decision(const std::string& name, const std::string& smearing_method, const double& smearing_sigma)
-{
+Magnetism::Magnetism() {}
+Magnetism::~Magnetism() {}
+void Occupy::decision(const std::string& name,
+                      const std::string& smearing_method,
+                      const double& smearing_sigma) {
     return;
 }
-// void UnitCell::setup(const std::string&,const int&,const int&,const bool&,const std::string&){return;}
+// void UnitCell::setup(const std::string&,const int&,const int&,const
+// bool&,const std::string&){return;}
 void UnitCell::setup(const std::string& latname_in,
                      const int& ntype_in,
                      const int& lmaxmax_in,
                      const bool& init_vel_in,
-                     const std::string& fixed_axes_in)
-{
+                     const std::string& fixed_axes_in) {
     this->latName = latname_in;
     this->ntype = ntype_in;
     this->lmaxmax = lmaxmax_in;
     this->init_vel = init_vel_in;
     // pengfei Li add 2018-11-11
-    if (fixed_axes_in == "None")
-    {
+    if (fixed_axes_in == "None") {
         this->lc[0] = 1;
         this->lc[1] = 1;
         this->lc[2] = 1;
-    }
-    else if (fixed_axes_in == "volume")
-    {
+    } else if (fixed_axes_in == "volume") {
         this->lc[0] = 1;
         this->lc[1] = 1;
         this->lc[2] = 1;
-        if (!GlobalV::relax_new)
-        {
+        if (!GlobalV::relax_new) {
             ModuleBase::WARNING_QUIT(
                 "Input",
-                "there are bugs in the old implementation; set relax_new to be 1 for fixed_volume relaxation");
+                "there are bugs in the old implementation; set relax_new to be "
+                "1 for fixed_volume relaxation");
         }
-    }
-    else if (fixed_axes_in == "shape")
-    {
-        if (!GlobalV::relax_new)
-        {
-            ModuleBase::WARNING_QUIT("Input", "set relax_new to be 1 for fixed_shape relaxation");
+    } else if (fixed_axes_in == "shape") {
+        if (!GlobalV::relax_new) {
+            ModuleBase::WARNING_QUIT(
+                "Input",
+                "set relax_new to be 1 for fixed_shape relaxation");
         }
         this->lc[0] = 1;
         this->lc[1] = 1;
         this->lc[2] = 1;
-    }
-    else if (fixed_axes_in == "a")
-    {
+    } else if (fixed_axes_in == "a") {
         this->lc[0] = 0;
         this->lc[1] = 1;
         this->lc[2] = 1;
-    }
-    else if (fixed_axes_in == "b")
-    {
+    } else if (fixed_axes_in == "b") {
         this->lc[0] = 1;
         this->lc[1] = 0;
         this->lc[2] = 1;
-    }
-    else if (fixed_axes_in == "c")
-    {
+    } else if (fixed_axes_in == "c") {
         this->lc[0] = 1;
         this->lc[1] = 1;
         this->lc[2] = 0;
-    }
-    else if (fixed_axes_in == "ab")
-    {
+    } else if (fixed_axes_in == "ab") {
         this->lc[0] = 0;
         this->lc[1] = 0;
         this->lc[2] = 1;
-    }
-    else if (fixed_axes_in == "ac")
-    {
+    } else if (fixed_axes_in == "ac") {
         this->lc[0] = 0;
         this->lc[1] = 1;
         this->lc[2] = 0;
-    }
-    else if (fixed_axes_in == "bc")
-    {
+    } else if (fixed_axes_in == "bc") {
         this->lc[0] = 1;
         this->lc[1] = 0;
         this->lc[2] = 0;
-    }
-    else if (fixed_axes_in == "abc")
-    {
+    } else if (fixed_axes_in == "abc") {
         this->lc[0] = 0;
         this->lc[1] = 0;
         this->lc[2] = 0;
-    }
-    else
-    {
-        ModuleBase::WARNING_QUIT("Input", "fixed_axes should be None,volume,shape,a,b,c,ab,ac,bc or abc!");
+    } else {
+        ModuleBase::WARNING_QUIT(
+            "Input",
+            "fixed_axes should be None,volume,shape,a,b,c,ab,ac,bc or abc!");
     }
     return;
 }
@@ -344,16 +311,16 @@ void UnitCell::setup(const std::string& latname_in,
 //     return;
 // }
 
-namespace MD_func
-{
-void current_md_info(const int& my_rank, const std::string& file_dir, int& md_step, double& temperature)
-{
+namespace MD_func {
+void current_md_info(const int& my_rank,
+                     const std::string& file_dir,
+                     int& md_step,
+                     double& temperature) {
     return;
 }
 } // namespace MD_func
 
-namespace GlobalC
-{
+namespace GlobalC {
 UnitCell ucell;
 wavefunc wf;
 ModuleSymmetry::Symmetry symm;
@@ -364,9 +331,8 @@ pseudopot_cell_vnl ppcell;
 Charge_Mixing CHR_MIX;
 } // namespace GlobalC
 
-#ifdef  __PEXSI
-namespace pexsi
-{
+#ifdef __PEXSI
+namespace pexsi {
 int PEXSI_Solver::pexsi_npole = 0;
 bool PEXSI_Solver::pexsi_inertia = 0;
 int PEXSI_Solver::pexsi_nmax = 0;
@@ -394,7 +360,5 @@ double PEXSI_Solver::pexsi_elec_thr = 0.0;
 double PEXSI_Solver::pexsi_zero_thr = 0.0;
 } // namespace pexsi
 #endif
-
-#undef private
 
 #endif

@@ -14,7 +14,7 @@
 
 #define private public
 #include "../winput.h"
-
+#undef private
 class WInputTest : public testing::Test
 {
 protected:

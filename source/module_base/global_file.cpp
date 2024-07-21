@@ -9,7 +9,7 @@
 #endif
 
 #include <unistd.h>
-
+#include <sstream>
 #include "global_function.h"
 #include "global_variable.h"
 #include "module_base/parallel_common.h"

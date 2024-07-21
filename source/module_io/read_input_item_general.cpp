@@ -433,7 +433,7 @@ void ReadInput::item_general()
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.basis_type == "lcao" && para.input.kpar > 1)
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "kpar > 1 has not been supported for lcao calculation.");
+                ModuleBase::WARNING("ReadInput", "kpar > 1 has not been supported for lcao calculation.");
             }
         };
         this->add_item(item);

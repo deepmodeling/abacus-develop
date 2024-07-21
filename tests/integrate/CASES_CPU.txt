@@ -128,6 +128,7 @@
 186_PW_SNLKG_10D10S
 201_NO_15_f_pseudopots
 201_NO_15_pseudopots
+201_NO_15_pseudopots_kpar
 201_NO_KP_15_CF_CS_Si
 201_NO_KP_DJ_CF_CS_GaAs
 201_NO_KP_DJ_Si

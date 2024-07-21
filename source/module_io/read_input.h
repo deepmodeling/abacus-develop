@@ -1,6 +1,6 @@
 #ifndef READ_INPUT_H
 #define READ_INPUT_H
-#include <sstream>
+
 #include <string>
 
 #include "input_item.h"

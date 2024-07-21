@@ -164,6 +164,8 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
     //------------------init Basis_lcao----------------------
 
     // 5) initialize density matrix
+    // DensityMatrix is allocated here, DMK is also initialized here
+    // DMR is not initialized here, it will be constructed in each before_scf
     dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)
         ->init_DM(&this->kv, &(this->ParaV), GlobalV::NSPIN);
 
@@ -242,6 +244,27 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
     if (PARAM.inp.ocp)
     {
         this->pelec->fixed_weights(PARAM.inp.ocp_kb, GlobalV::NBANDS, GlobalV::nelec);
+    }
+
+    // 15) if kpar is not divisible by nks, print a warning
+    if (GlobalV::KPAR_LCAO > 1)
+    {
+        if (this->kv.get_nks() % GlobalV::KPAR_LCAO != 0)
+        {
+            ModuleBase::WARNING("ESolver_KS_LCAO::before_all_runners",
+                                 "nks is not divisible by kpar.");
+            std::cout << "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
+                        "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
+                        "%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
+            std::cout << " Warning: nks (" << this->kv.get_nks() << ") is not divisible by kpar ("
+                      << GlobalV::KPAR_LCAO << ")." << std::endl;
+            std::cout << " This may lead to poor load balance. It is strongly suggested to" << std::endl;
+            std::cout << " set nks to be divisible by kpar, but if this is really what" << std::endl;
+            std::cout << " you want, please ignore this warning." << std::endl;
+            std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
+                             "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
+                             "%%%%%%%%%%%%\n";
+        }
     }
 
     ModuleBase::timer::tick("ESolver_KS_LCAO", "before_all_runners");
@@ -1315,13 +1338,9 @@ bool ESolver_KS_LCAO<TK, TR>::do_after_converge(int& iter)
         // use the converged occupation matrix for next MD/Relax SCF calculation
         GlobalC::dftu.initialed_locale = true;
     }
+    // FIXME: for developer who want to test restarting DeePKS with same Descriptor/PDM in last MD step
+    // RUN: " GlobalC::ld.set_init_pdm(true); " can skip the calculation of PDM in the next iter_init
 
-#ifdef __DEEPKS
-    if (GlobalV::deepks_scf)
-    {
-        GlobalC::ld.set_init_pdm(true);
-    }
-#endif
 #ifdef __EXX
     if (GlobalC::exx_info.info_global.cal_exx)
     {
