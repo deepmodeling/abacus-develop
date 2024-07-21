@@ -551,6 +551,7 @@ OBJS_LCAO=evolve_elec.o\
       LCAO_set_zero.o\
       LCAO_allocate.o\
       LCAO_set_mat2d.o\
+      LCAO_init_basis.o\
       center2_orb.o\
       center2_orb-orb11.o\
       center2_orb-orb21.o\
