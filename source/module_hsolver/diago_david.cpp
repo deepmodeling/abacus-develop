@@ -1040,27 +1040,20 @@ void DiagoDavid<T, Device>::planSchmidtOrth(const int nband, std::vector<int>& p
 }
 
 /**
- * @brief Perform iterative diagonalization using the Davidson method.
- *
- * This function implements the iterative Davidson algorithm to solve the
- * eigenvalue problem for a given Hamiltonian. It is a member function of the
- * template class DiagoDavid, which is designed to work with various data types
- * and device backends (CPU, GPU, etc.).
- *
- * @tparam T The data type (e.g., float, double, std::complex<float/double>).
- * @tparam Device The device type (e.g., base_device::DEVICE_CPU).
- * @param phm_in Pointer to the Hamiltonian matrix object.
- * @param dim Dimension of the input matrix psi to be diagonalized.
- * @param nband Number of required eigenpairs.
- * @param ldPsi The leading dimension of the psi array, which is the stride 
- *              between the columns in the psi array.
- * @param psi The wavefunction to be diagonalized.
- * @param eigenvalue_in Pointer to the array storing the eigenvalues.
- * @param david_diag_thr Convergence threshold for the Davidson iteration.
- * @param david_maxiter Maximum number of iterations allowed for the Davidson method.
- * @param ntry_max Maximum number of tries for the iterative diagonalization.
- * @param notconv_max Maximum number of allowed non-converged bands.
- * @return The sum of Davidson iterations performed during the diagonalization.
+ * @brief Performs iterative diagonalization using the David algorithm.
+ * 
+ * @tparam T The type of the elements in the matrix.
+ * @tparam Device The device type (CPU or GPU).
+ * @param hpsi_func The function object that computes the matrix-vector product H * psi.
+ * @param spsi_func The function object that computes the matrix-vector product S * psi.
+ * @param ldPsi The leading dimension of the psi_in array.
+ * @param psi_in The input wavefunction.
+ * @param eigenvalue_in The array to store the eigenvalues.
+ * @param david_diag_thr The convergence threshold for the diagonalization.
+ * @param david_maxiter The maximum number of iterations for the diagonalization.
+ * @param ntry_max The maximum number of attempts for the diagonalization restart.
+ * @param notconv_max The maximum number of bands unconverged allowed.
+ * @return The total number of iterations performed during the diagonalization.
  * 
  * @note ntry_max is an empirical parameter that should be specified in external routine, default 5
  *       notconv_max is determined by the accuracy required for the calculation, default 0
