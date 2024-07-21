@@ -59,6 +59,13 @@ namespace ModuleESolver
         //! K points in Brillouin zone
         K_Vectors kv;
 
+        void init_orb(double& dr_uniform, 
+        std::vector<double>& rcuts,
+        UnitCell& ucell,
+        std::vector<std::vector<double>>& psi_u,
+        std::vector<std::vector<double>>& dpsi_u,
+        std::vector<std::vector<double>>& d2psi_u);
+        
       private:
        
         //! Print charge density using FFT

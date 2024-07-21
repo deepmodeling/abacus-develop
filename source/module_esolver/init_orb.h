@@ -1,13 +1,15 @@
-#include "gint_tools.h"
+#ifndef INIT_ORB_HPP
+#define INIT_ORB_HPP
+#include <vector>
 #include "module_base/memory.h"
-
-namespace Gint_Tools{
-void init_orb(double& dr_uniform, 
-                std::vector<double>& rcuts,
-                UnitCell& ucell,
-                std::vector<std::vector<double>>& psi_u,
-                std::vector<std::vector<double>>& dpsi_u,
-                std::vector<std::vector<double>>& d2psi_u)
+#include "module_cell/unitcell.h"
+#include "module_basis/module_ao/ORB_read.h"
+void init_orb(double& dr_uniform,
+              std::vector<double>& rcuts,
+              UnitCell& ucell,
+              std::vector<std::vector<double>>& psi_u,
+              std::vector<std::vector<double>>& dpsi_u,
+              std::vector<std::vector<double>>& d2psi_u)
 {
     // set the grid parameters
     dr_uniform=GlobalC::ORB.dr_uniform;
@@ -47,4 +49,4 @@ void init_orb(double& dr_uniform,
         }
     }
 }
-}// Gint_Tools
+#endif
