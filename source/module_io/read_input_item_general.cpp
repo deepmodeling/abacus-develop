@@ -307,12 +307,6 @@ void ReadInput::item_general()
         this->add_item(item);
     }
     {
-        Input_Item item("if_separate_k");
-        item.annotation = "specify whether to write the partial charge densities for all k-points to individual files or merge them";
-        read_sync_bool(input.if_separate_k);
-        this->add_item(item);
-    }
-    {
         Input_Item item("symmetry");
         item.annotation = "the control of symmetry";
         read_sync_string(input.symmetry);
