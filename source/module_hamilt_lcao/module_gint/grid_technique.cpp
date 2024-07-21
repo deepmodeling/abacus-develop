@@ -1,6 +1,7 @@
 #include "grid_technique.h"
 #include "module_base/memory.h"
 #include "module_base/timer.h"
+#include "mpi.h"
 
 Grid_Technique::Grid_Technique() {
     allocate_find_R2 = false;
@@ -44,14 +45,11 @@ void Grid_Technique::set_pbc_grid(
     const int& num_stream,
     const bool& gamma_only_local,
     const int& nspin,
-    const bool& domag,
-    const int& npol,
-    const int& nproc,
-    const int& rank,
+    const std::string& device_flag,
     const int& nlocal,
+    const bool& domag,
     std::ofstream &ofs_running,
-    std::ofstream &ofs_warning,
-    const std::string& device_flag) {
+    std::ofstream &ofs_warning) {
     ModuleBase::TITLE("Grid_Technique", "init");
     ModuleBase::timer::tick("Grid_Technique", "init");
 
@@ -73,8 +71,13 @@ void Grid_Technique::set_pbc_grid(
     this->gamma_only_local=gamma_only_local;
     this->nspin = nspin;
     this->domag = domag;
-    this->npol = npol;
+    this->npol = ucell.get_npol();
     this->nlocal = nlocal;
+
+    int nproc;
+    int rank;
+    MPI_Comm_size(MPI_COMM_WORLD, &nproc);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     this->nproc=nproc;
     this->rank =rank;
     this->device_flag = device_flag;

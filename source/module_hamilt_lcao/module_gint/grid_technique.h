@@ -134,14 +134,11 @@ class Grid_Technique : public Grid_MeshBall {
                       const int& num_stream,
                       const bool& gamma_only_local,
                       const int& nspin,
-                      const bool& domag,
-                      const int& npol,
-                      const int& nproc,
-                      const int& rank,
+                      const std::string& device_flag,
                       const int& nlocal,
+                      const bool& domag,
                       std::ofstream &ofs_running,
-                      std::ofstream &ofs_warning,
-                      const std::string& device_flag);
+                      std::ofstream &ofs_warning);
 
     /// number of elements(basis-pairs) in this processon
     /// on all adjacent atoms-pairs(Grid division)
