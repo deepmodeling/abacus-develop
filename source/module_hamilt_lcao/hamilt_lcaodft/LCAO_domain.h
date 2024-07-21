@@ -15,6 +15,16 @@
 namespace LCAO_domain
 {
 
+void init_basis_lcao(Parallel_Orbitals& pv,
+        const double &onsite_radius,
+        const double &lcao_ecut,
+        const double &lcao_dk,
+        const double &lcao_dr,
+        const double &lcao_rmax,
+		UnitCell& ucell,
+        TwoCenterBundle& two_center_bundle);
+
+
 void build_Nonlocal_mu_new(const Parallel_Orbitals& pv,
                            ForceStressArrays& fsr, // mohan 2024-06-16
                            double* HlocR,
