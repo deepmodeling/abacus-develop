@@ -58,24 +58,24 @@ void mult_psi_DM_new(
                 cal_num += cal_flag[ib][ia1];
             }
             // if enough cal_flag is nonzero
-            if (cal_num > ib_length / 4)
-            {
+            // if (cal_num > ib_length / 4)
+            // {
                 dsymm_(&side, &uplo, &block_size[ia1], &ib_length, &alpha_symm, tmp_matrix, &block_size[ia1],
                        &psi[first_ib][block_index[ia1]], &LD_pool, &beta, &psi_DM[first_ib][block_index[ia1]],
                        &LD_pool);
-            }
-            else
-            {
-                // int k=1;
-                for (int ib = first_ib; ib < last_ib; ++ib)
-                {
-                    if (cal_flag[ib][ia1])
-                    {
-                        dsymv_(&uplo, &block_size[ia1], &alpha_symm, tmp_matrix, &block_size[ia1],
-                               &psi[ib][block_index[ia1]], &inc, &beta, &psi_DM[ib][block_index[ia1]], &inc);
-                    }
-                }
-            }
+            // }
+            // else
+            // {
+            //     // int k=1;
+            //     for (int ib = first_ib; ib < last_ib; ++ib)
+            //     {
+            //         if (cal_flag[ib][ia1])
+            //         {
+            //             dsymv_(&uplo, &block_size[ia1], &alpha_symm, tmp_matrix, &block_size[ia1],
+            //                    &psi[ib][block_index[ia1]], &inc, &beta, &psi_DM[ib][block_index[ia1]], &inc);
+            //         }
+            //     }
+            // }
         }
 
         int start = if_symm ? ia1 + 1 : 0;
@@ -130,23 +130,23 @@ void mult_psi_DM_new(
                 cal_pair_num += cal_flag[ib][ia1] && cal_flag[ib][ia2];
             }
             const int iw2_lo = block_iw[ia2];
-            if (cal_pair_num > ib_length / 4)
-            {
+            // if (cal_pair_num > ib_length / 4)
+            // {
                 dgemm_(&transa, &transb, &block_size[ia2], &ib_length, &block_size[ia1], &alpha_gemm, tmp_matrix,
                        &block_size[ia2], &psi[first_ib][block_index[ia1]], &LD_pool, &beta,
                        &psi_DM[first_ib][block_index[ia2]], &LD_pool);
-            }
-            else
-            {
-                for (int ib = first_ib; ib < last_ib; ++ib)
-                {
-                    if (cal_flag[ib][ia1] && cal_flag[ib][ia2])
-                    {
-                        dgemv_(&transa, &block_size[ia2], &block_size[ia1], &alpha_gemm, tmp_matrix, &block_size[ia2],
-                               &psi[ib][block_index[ia1]], &inc, &beta, &psi_DM[ib][block_index[ia2]], &inc);
-                    }
-                }
-            }
+            // }
+            // else
+            // {
+            //     for (int ib = first_ib; ib < last_ib; ++ib)
+            //     {
+            //         if (cal_flag[ib][ia1] && cal_flag[ib][ia2])
+            //         {
+            //             dgemv_(&transa, &block_size[ia2], &block_size[ia1], &alpha_gemm, tmp_matrix, &block_size[ia2],
+            //                    &psi[ib][block_index[ia1]], &inc, &beta, &psi_DM[ib][block_index[ia2]], &inc);
+            //         }
+            //     }
+            // }
         } // ia2
     }     // ia1
 }

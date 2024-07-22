@@ -1,5 +1,4 @@
 #include "gint_k.h"
-
 void Gint::gint_kernel_vlocal(
 	const int na_grid,
 	const int grid_index,
@@ -31,8 +30,7 @@ void Gint::gint_kernel_vlocal(
 	//and accumulates to the corresponding element in Hamiltonian
     if(this->gridt->gamma_only_local)
     {
-		if(hR == nullptr) { hR = this->hRGint;
-}
+		if(hR == nullptr) { hR = this->hRGint;}
 		this->cal_meshball_vlocal_gamma(
 			na_grid, LD_pool, block_iw, block_size, block_index, grid_index, cal_flag,
 			psir_ylm.get_ptr_2D(), psir_vlbr3.get_ptr_2D(), hR);
@@ -252,44 +250,40 @@ void Gint::cal_meshball_vlocal_gamma(
                     }
                 }
                 const int ib_length = last_ib-first_ib;
-                if(ib_length<=0) { continue;
-}
-
 				// calculate the BaseMatrix of <iat1, iat2, R> atom-pair
 				hamilt::AtomPair<double>* tmp_ap = hR->find_pair(iat1, iat2);
 #ifdef __DEBUG
 				assert(tmp_ap!=nullptr);
 #endif
-                int cal_pair_num=0;
-                for(int ib=first_ib; ib<last_ib; ++ib)
-                {
-                    cal_pair_num += cal_flag[ib][ia1] && cal_flag[ib][ia2];
-                }
+                // int cal_pair_num=0;
+                // for(int ib=first_ib; ib<last_ib; ++ib)
+                // {
+                //     cal_pair_num += cal_flag[ib][ia1] && cal_flag[ib][ia2];
+                // }
 
                 const int n=block_size[ia2];
 				//std::cout<<__FILE__<<__LINE__<<" "<<n<<" "<<m<<" "<<tmp_ap->get_row_size()<<" "<<tmp_ap->get_col_size()<<std::endl;
-                if(cal_pair_num>ib_length/4)
-                {
-                    dgemm_(&transa, &transb, &n, &m, &ib_length, &alpha,
-                        &psir_vlbr3[first_ib][block_index[ia2]], &LD_pool,
-                        &psir_ylm[first_ib][block_index[ia1]], &LD_pool,
-                        &beta, tmp_ap->get_pointer(0), &n);
+                // if(cal_pair_num>ib_length/4)
+                    blas_trans(transa, transb, n, m, ib_length, alpha,
+                        &psir_vlbr3[first_ib][block_index[ia2]], LD_pool,
+                        &psir_ylm[first_ib][block_index[ia1]], LD_pool,
+                        &beta, tmp_ap->get_pointer(0), n);
 						//&GridVlocal[iw1_lo*lgd_now+iw2_lo], &lgd_now);   
-                }
-                else
-                {
-                    for(int ib=first_ib; ib<last_ib; ++ib)
-                    {
-                        if(cal_flag[ib][ia1] && cal_flag[ib][ia2])
-                        {
-                            int k=1;                            
-                            dgemm_(&transa, &transb, &n, &m, &k, &alpha,
-                                &psir_vlbr3[ib][block_index[ia2]], &LD_pool,
-                                &psir_ylm[ib][block_index[ia1]], &LD_pool,
-                                &beta, tmp_ap->get_pointer(0), &n);                          
-                        }
-                    }
-                }
+                // }
+                // else
+                // {
+                //     for(int ib=first_ib; ib<last_ib; ++ib)
+                //     {
+                //         if(cal_flag[ib][ia1] && cal_flag[ib][ia2])
+                //         {
+                //             int k=1;                            
+                //             dgemm_(&transa, &transb, &n, &m, &k, &alpha,
+                //                 &psir_vlbr3[ib][block_index[ia2]], &LD_pool,
+                //                 &psir_ylm[ib][block_index[ia1]], &LD_pool,
+                //                 &beta, tmp_ap->get_pointer(0), &n);                          
+                //         }
+                //     }
+                // }
 				//std::cout<<__FILE__<<__LINE__<<" "<<tmp_ap->get_pointer(0)[2]<<std::endl;
 			}
 		}
