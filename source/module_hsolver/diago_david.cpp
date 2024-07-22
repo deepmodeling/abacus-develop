@@ -396,6 +396,8 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
     // set vc_ev_vector = vcc (unconverged index, leading dimension = nbase_x)
+    // vc_ev_vector(m, i) = vc(i, unconv[m]);
+    //         vc_ev_vector[m * nbase + i] = vcc[i * nbase_x + unconv[m]];
     for (int m = 0; m < notconv; m++)
     {
         syncmem_complex_op()(this->ctx,
@@ -406,6 +408,7 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     }
 
     // basis(:, nbase) = hpsi * vc_ev_vector
+    // basis'        =   vc_ev_vector' * hpsi'
     // (dim, notconv)  (dim, nbase) (nbase, notconv)
     gemm_op<T, Device>()(this->ctx,
                               'N',
@@ -432,7 +435,9 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     //     }
     // }
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    // e_temp_cpu = {-lambda}
     // vc_ev_vector[nbase] = vc_ev_vector[nbase] * e_temp_cpu
+    // now vc_ev_vector = - lambda * ev
     for (int m = 0; m < notconv; m++)
     {
         std::vector<Real> e_temp_cpu(nbase, (-1.0 * this->eigenvalue[unconv[m]]));
@@ -462,6 +467,8 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     }
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
+    // basis = basis - spsi * vc_ev_vector
+    //       = basis - spsi * lambda * ev
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     gemm_op<T, Device>()(this->ctx,
                               'N',
@@ -480,6 +487,10 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     );
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
+    // basis = P^-1 * basis
+    // where P^-1, the preconditioning matrix, is an approximate inverse of H
+    //          P is a diagonal stored in array precondition
+    // to do preconditioning, multiply each column of basis by the corresponding element of precondition
     for (int m = 0; m < notconv; m++)
     {
         //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
