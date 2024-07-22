@@ -110,7 +110,7 @@ int loadPEXSIOption(MPI_Comm comm,
     int_para[11] = pexsi::PEXSI_Solver::pexsi_symm;
     int_para[12] = pexsi::PEXSI_Solver::pexsi_trans;
     int_para[13] = pexsi::PEXSI_Solver::pexsi_method;
-    int_para[14] = 2;
+    int_para[14] = 1;
     int_para[15] = 0;
     int_para[16] = pexsi::PEXSI_Solver::pexsi_nproc_pole;
 
