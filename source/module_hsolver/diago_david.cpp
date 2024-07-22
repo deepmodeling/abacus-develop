@@ -363,10 +363,11 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
 {
     if (test_david == 1) {
         ModuleBase::TITLE("DiagoDavid", "cal_grad");
-}
+    }
+    // if all eigenpairs have converged, return
     if (notconv == 0) {
         return;
-}
+    }
     ModuleBase::timer::tick("DiagoDavid", "cal_grad");
 
     // use template pointer for accelerate
@@ -378,6 +379,7 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     // we define |Real(psi)> as (H-ES)*|Psi>, E = <psi|H|psi>/<psi|S|psi>
 
     // vc_ev_vector(notconv, nbase);
+    // eigenvectors of unconverged index extracted from vcc
     T* vc_ev_vector = nullptr;
     resmem_complex_op()(this->ctx, vc_ev_vector, notconv * nbase);
     setmem_complex_op()(this->ctx, vc_ev_vector, 0, notconv * nbase);
@@ -392,6 +394,8 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     //     }
     // }
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+    // set vc_ev_vector = vcc (unconverged index, leading dimension = nbase_x)
     for (int m = 0; m < notconv; m++)
     {
         syncmem_complex_op()(this->ctx,
@@ -401,6 +405,8 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
                              nbase);
     }
 
+    // basis(:, nbase) = hpsi * vc_ev_vector
+    // (dim, notconv)  (dim, nbase) (nbase, notconv)
     gemm_op<T, Device>()(this->ctx,
                               'N',
                               'N',
@@ -426,6 +432,7 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     //     }
     // }
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    // vc_ev_vector[nbase] = vc_ev_vector[nbase] * e_temp_cpu
     for (int m = 0; m < notconv; m++)
     {
         std::vector<Real> e_temp_cpu(nbase, (-1.0 * this->eigenvalue[unconv[m]]));
