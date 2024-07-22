@@ -687,7 +687,7 @@ template <typename T, typename Device>
 void DiagoDavid<T, Device>::diag_zhegvx(const int& nbase,
                                              const int& nband,
                                              const T* hcc,
-                                             const T* scc,
+                                             const T* /*scc*/,
                                              const int& nbase_x,
                                              Real* eigenvalue, // in CPU
                                              T* vcc)
