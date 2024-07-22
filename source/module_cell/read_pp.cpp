@@ -16,6 +16,7 @@ Pseudopot_upf::Pseudopot_upf()
 
 Pseudopot_upf::~Pseudopot_upf()
 {
+    delete[] kbeta;
     delete[] els_beta;
     delete[] nchi;
     delete[] epseu;
