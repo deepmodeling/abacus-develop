@@ -333,6 +333,21 @@ int DiagoDavid<T, Device>::diag_mock(const HPsiFunc& hpsi_func,
     return dav_iter;
 }
 
+/**
+ * Calculates the gradient of the wavefunction using the Davidson diagonalization method.
+ *
+ * @param hpsi_func The function to calculate the matrix-blockvector product H * psi.
+ * @param spsi_func The function to calculate the matrix-blockvector product overlap S * psi.
+ * @param dim The dimension of the wavefunction.
+ * @param nbase The current dimension of the reduced basis.
+ * @param nbase_x The maximum dimension of the reduced basis set.
+ * @param notconv The number of unconverged bands.
+ * @param hpsi The output array for the Hamiltonian H times blockvector psi.
+ * @param spsi The output array for the overlap matrix S times blockvector psi.
+ * @param vcc The input array for the wavefunction coefficients.
+ * @param unconv The array of indices for the unconverged bands.
+ * @param eigenvalue The array of eigenvalues.
+ */
 template <typename T, typename Device>
 void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
                                         const SPsiFunc& spsi_func,
@@ -573,8 +588,8 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
  * @param nbase The current dimension of the reduced basis.
  * @param nbase_x The maximum dimension of the reduced basis set.
  * @param notconv The number of newly added basis vectors.
- * @param hpsi Pointer to the array containing the Hamiltonian matrix elements multiplied by the wavefunctions.
- * @param spsi Pointer to the array containing the overlap matrix elements multiplied by the wavefunctions.
+ * @param hpsi The output array for the Hamiltonian H times blockvector psi.
+ * @param spsi The output array for the overlap matrix S times blockvector psi.
  * @param hcc Pointer to the array where the calculated Hamiltonian matrix elements will be stored.
  * @param scc Pointer to the array where the calculated overlap matrix elements will be stored.
  */
@@ -1057,8 +1072,8 @@ void DiagoDavid<T, Device>::planSchmidtOrth(const int nband, std::vector<int>& p
  * 
  * @tparam T The type of the elements in the matrix.
  * @tparam Device The device type (CPU or GPU).
- * @param hpsi_func The function object that computes the matrix-vector product H * psi.
- * @param spsi_func The function object that computes the matrix-vector product S * psi.
+ * @param hpsi_func The function object that computes the matrix-blockvector product H * psi.
+ * @param spsi_func The function object that computes the matrix-blockvector product overlap S * psi.
  * @param ldPsi The leading dimension of the psi_in array.
  * @param psi_in The input wavefunction.
  * @param eigenvalue_in The array to store the eigenvalues.
