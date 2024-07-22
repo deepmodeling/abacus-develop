@@ -249,6 +249,8 @@ void Gint::cal_meshball_vlocal_gamma(
                         break;
                     }
                 }
+
+				
                 const int ib_length = last_ib-first_ib;
 				// calculate the BaseMatrix of <iat1, iat2, R> atom-pair
 				hamilt::AtomPair<double>* tmp_ap = hR->find_pair(iat1, iat2);
@@ -264,10 +266,11 @@ void Gint::cal_meshball_vlocal_gamma(
                 const int n=block_size[ia2];
 				//std::cout<<__FILE__<<__LINE__<<" "<<n<<" "<<m<<" "<<tmp_ap->get_row_size()<<" "<<tmp_ap->get_col_size()<<std::endl;
                 // if(cal_pair_num>ib_length/4)
-                    blas_trans(transa, transb, n, m, ib_length, alpha,
-                        &psir_vlbr3[first_ib][block_index[ia2]], LD_pool,
-                        &psir_ylm[first_ib][block_index[ia1]], LD_pool,
-                        &beta, tmp_ap->get_pointer(0), n);
+                // {
+                    dgemm_(&transa, &transb, &n, &m, &ib_length, &alpha,
+                        &psir_vlbr3[first_ib][block_index[ia2]], &LD_pool,
+                        &psir_ylm[first_ib][block_index[ia1]], &LD_pool,
+                        &beta, tmp_ap->get_pointer(0), &n);
 						//&GridVlocal[iw1_lo*lgd_now+iw2_lo], &lgd_now);   
                 // }
                 // else
