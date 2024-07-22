@@ -345,15 +345,17 @@ void CubicSpline::_validate_eval(
     const double* x_interp
 )
 {
+    # if __DEBUG
     assert(n > 1 && y && dy);
     assert((x && std::is_sorted(x, x + n, std::less_equal<double>())) || u[1] > 0.0);
-
     assert((n_interp > 0 && x_interp) || n_interp == 0);
-
+    # endif
     double xmin = x ? x[0] : u[0];
     double xmax = x ? x[n - 1] : u[0] + (n - 1) * u[1];
+    #ifdef __DEBUG
     assert(std::all_of(x_interp, x_interp + n_interp,
                        [xmin, xmax](double x_i) { return xmin <= x_i && x_i <= xmax; }));
+    #endif
 }
 
 

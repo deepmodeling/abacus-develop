@@ -311,8 +311,23 @@ void SphericalBesselTransformer::Impl::direct(
     std::adjacent_difference(grid_in, grid_in + ngrid_in, rab);
 
     std::copy(in, in + ngrid_in, tmp);
-    std::for_each(tmp, tmp + ngrid_in,
-        [&](double& x) { x *= std::pow(grid_in[&x - tmp], 2 - p); });
+    std::for_each(tmp, tmp + ngrid_in,[&](double& x) 
+    { switch (2-p)
+        {
+        case 0:
+            x=1.0;
+            break;
+        case 1:
+            x*=grid_in[&x - tmp];
+            break;
+        case 2:
+            x*=grid_in[&x - tmp]*grid_in[&x - tmp];
+            break;
+        default:
+            x *= std::pow(grid_in[&x - tmp], 2 - p); 
+            break;
+        }
+    });
 
     // compute spherical Bessel function on the grid and store the results in jl_
     // (will be cleared at the end of this function if cache is disabled)
