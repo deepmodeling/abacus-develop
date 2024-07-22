@@ -566,6 +566,18 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     return;
 }
 
+/**
+ * Calculates the elements of the diagonalization matrix for the DiagoDavid class.
+ * 
+ * @param dim The dimension of the problem.
+ * @param nbase The current dimension of the reduced basis.
+ * @param nbase_x The maximum dimension of the reduced basis set.
+ * @param notconv The number of newly added basis vectors.
+ * @param hpsi Pointer to the array containing the Hamiltonian matrix elements multiplied by the wavefunctions.
+ * @param spsi Pointer to the array containing the overlap matrix elements multiplied by the wavefunctions.
+ * @param hcc Pointer to the array where the calculated Hamiltonian matrix elements will be stored.
+ * @param scc Pointer to the array where the calculated overlap matrix elements will be stored.
+ */
 template <typename T, typename Device>
 void DiagoDavid<T, Device>::cal_elem(const int& dim,
                                           int& nbase,           // current dimension of the reduced basis
@@ -585,6 +597,7 @@ void DiagoDavid<T, Device>::cal_elem(const int& dim,
     }
     ModuleBase::timer::tick("DiagoDavid", "cal_elem");
 
+    // hcc(notconv, nbase + notconv)= basis' * hpsi
     gemm_op<T, Device>()(this->ctx,
                               'C',
                               'N',
@@ -592,14 +605,14 @@ void DiagoDavid<T, Device>::cal_elem(const int& dim,
                               nbase + notconv,
                               dim,
                               this->one,
-                              basis + dim*nbase, // dim * notconv
+                              basis + dim*nbase, // basis(:,nbase:)  dim * notconv
                               dim,
                               hpsi,               // dim * (nbase + notconv)
                               dim,
                               this->zero,
                               hcc + nbase,        // notconv * (nbase + notconv)
                               nbase_x);
-
+    // scc = basis(:,nbase:)'*spsi
     gemm_op<T, Device>()(this->ctx,
                               'C',
                               'N',
