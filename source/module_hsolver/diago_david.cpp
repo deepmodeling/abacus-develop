@@ -141,7 +141,7 @@ DiagoDavid<T, Device>::~DiagoDavid()
 }
 
 template <typename T, typename Device>
-int DiagoDavid<T, Device>::diag_mock(const HPsiFunc& hpsi_func,
+int DiagoDavid<T, Device>::diag_once(const HPsiFunc& hpsi_func,
                                      const SPsiFunc& spsi_func,
                                      const int dim,
                                      const int nband,
@@ -153,9 +153,9 @@ int DiagoDavid<T, Device>::diag_mock(const HPsiFunc& hpsi_func,
 {
     if (test_david == 1)
     {
-        ModuleBase::TITLE("DiagoDavid", "diag_mock");
+        ModuleBase::TITLE("DiagoDavid", "diag_once");
     }
-    ModuleBase::timer::tick("DiagoDavid", "diag_mock");
+    ModuleBase::timer::tick("DiagoDavid", "diag_once");
 
     // convflag[m] = true if the m th band is converged
     std::vector<bool> convflag(nband, false);
@@ -328,7 +328,7 @@ int DiagoDavid<T, Device>::diag_mock(const HPsiFunc& hpsi_func,
 
     } while (true);
 
-    ModuleBase::timer::tick("DiagoDavid", "diag_mock");
+    ModuleBase::timer::tick("DiagoDavid", "diag_once");
 
     return dav_iter;
 }
@@ -1119,7 +1119,7 @@ int DiagoDavid<T, Device>::diag(const HPsiFunc& hpsi_func,
     int sum_dav_iter = 0;
     do
     {
-        sum_dav_iter += this->diag_mock(hpsi_func, spsi_func, dim, nband, ldPsi, psi_in, eigenvalue_in, david_diag_thr, david_maxiter);
+        sum_dav_iter += this->diag_once(hpsi_func, spsi_func, dim, nband, ldPsi, psi_in, eigenvalue_in, david_diag_thr, david_maxiter);
         ++ntry;
     } while (!check_block_conv(ntry, this->notconv, ntry_max, notconv_max));
 

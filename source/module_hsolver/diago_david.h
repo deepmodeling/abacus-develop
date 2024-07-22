@@ -117,7 +117,7 @@ class DiagoDavid : public DiagH<T, Device>
     base_device::DEVICE_CPU* cpu_ctx = {};
     base_device::AbacusDevice_t device = {};
 
-    int diag_mock(const HPsiFunc& hpsi_func,
+    int diag_once(const HPsiFunc& hpsi_func,
                   const SPsiFunc& spsi_func,
                   const int dim,
                   const int nband,
