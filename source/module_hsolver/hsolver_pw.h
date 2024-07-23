@@ -43,6 +43,7 @@ class HSolverPW : public HSolver<T, Device>
                const std::string method_in,
 
                const std::string calculation_type_in,
+               const std::string basis_type_in,
                const bool use_paw_in,
                const bool use_uspp_in,
                const int rank_in_pool_in,
@@ -79,6 +80,17 @@ class HSolverPW : public HSolver<T, Device>
 
   private:
     Device* ctx = {};
+
+    std::string calculation_type = "scf";
+    std::string basis_type = "pw";
+
+    bool use_paw = false;
+    bool use_uspp = false;
+
+    int rank_in_pool = 0;
+    int nproc_in_pool = 1;
+
+    int nspin = 1;
 
     void set_isOccupied(std::vector<bool>& is_occupied,
                         elecstate::ElecState* pes,
