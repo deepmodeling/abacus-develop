@@ -116,21 +116,21 @@ double HSolverPW_SDFT::set_diagethr(double diag_ethr_in,
     if (iter == 1) {
         if (istep == 0) {
             if (GlobalV::init_chg == "file") {
-                this->diag_ethr = 1.0e-5;
+                diag_ethr_in = 1.0e-5;
             }
-            this->diag_ethr = std::max(this->diag_ethr, GlobalV::PW_DIAG_THR);
+            diag_ethr_in = std::max(diag_ethr_in, GlobalV::PW_DIAG_THR);
         } else {
-            this->diag_ethr = std::max(this->diag_ethr, 1.0e-5);
+            diag_ethr_in = std::max(diag_ethr_in, 1.0e-5);
 }
     } else {
         if (GlobalV::NBANDS > 0 && this->stoiter.KS_ne > 1e-6) {
-            this->diag_ethr
-                = std::min(this->diag_ethr,
+            diag_ethr_in
+                = std::min(diag_ethr_in,
                            0.1 * drho / std::max(1.0, this->stoiter.KS_ne));
         } else {
-            this->diag_ethr = 0.0;
+            diag_ethr_in = 0.0;
 }
     }
-    return this->diag_ethr;
+    return diag_ethr_in;
 }
 } // namespace hsolver
