@@ -407,7 +407,7 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
                              nbase);
     }
 
-    // basis[nbase] = hpsi * vc_ev_vector
+    // basis[nbase] = hpsi * vc_ev_vector = hpsi*vcc
     // basis'        =   vc_ev_vector' * hpsi'
     // (dim, notconv)  (dim, nbase) (nbase, notconv)
     gemm_op<T, Device>()(this->ctx,
@@ -438,7 +438,7 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
 
     // e_temp_cpu = {-lambda}
     // vc_ev_vector[nbase] = vc_ev_vector[nbase] * e_temp_cpu
-    // now vc_ev_vector[nbase] = - lambda * ev
+    // now vc_ev_vector[nbase] = - lambda * ev = -lambda * vcc
     for (int m = 0; m < notconv; m++)
     {
         std::vector<Real> e_temp_cpu(nbase, (-1.0 * this->eigenvalue[unconv[m]]));
@@ -469,8 +469,9 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     // basis[nbase] = basis[nbase] - spsi * vc_ev_vector
-    //              = hpsi - spsi * lambda * ev
-    //              = (H - lambda * S) * ev
+    //              = hpsi - spsi * lambda * vcc
+    //              = (H - lambda * S) * psi * vcc
+    //              = (H - lambda * S) * psi_new 
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     gemm_op<T, Device>()(this->ctx,
                               'N',
@@ -490,7 +491,7 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     // Preconditioning
-    // basis[nbase] = T * basis[nbase] = T * (H - lambda * S) * ev
+    // basis[nbase] = T * basis[nbase] = T * (H - lambda * S) * psi
     // where T, the preconditioner, is an approximate inverse of H
     //          T is a diagonal stored in array `precondition`
     // to do preconditioning, multiply each column of basis by the corresponding element of precondition
@@ -768,6 +769,22 @@ void DiagoDavid<T, Device>::diag_zhegvx(const int& nbase,
     return;
 }
 
+/**
+ * Refreshes the diagonalization solver by updating the basis and the reduced Hamiltonian.
+ * 
+ * @param dim The dimension of the problem.
+ * @param nband The number of bands.
+ * @param nbase The number of basis states.
+ * @param nbase_x The maximum dimension of the reduced basis set.
+ * @param eigenvalue_in Pointer to the array of eigenvalues.
+ * @param psi_in Pointer to the array of wavefunctions.
+ * @param ldPsi The leading dimension of the wavefunction array.
+ * @param hp Pointer to the array for storing the updated hp values.
+ * @param sp Pointer to the array for storing the updated sp values.
+ * @param hc Pointer to the array for storing the updated hc values.
+ * @param sc Pointer to the array for storing the updated sc values.
+ * @param vc Pointer to the array for storing the updated vc values.
+ */
 template <typename T, typename Device>
 void DiagoDavid<T, Device>::refresh(const int& dim,
                                          const int& nband,
@@ -808,6 +825,7 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
     );
 
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    // basis[nband] = spsi * vcc
     gemm_op<T, Device>()(this->ctx,
                               'N',
                               'N',
@@ -824,6 +842,7 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
                               dim
     );
 
+    // hpsi = basis, spsi = basis[nband]
     syncmem_complex_op()(this->ctx, this->ctx, hpsi, basis, dim * nband);
     syncmem_complex_op()(this->ctx, this->ctx, spsi, basis + dim*nband, dim * nband);
     /*for (int m = 0; m < nband; m++) {
@@ -845,6 +864,7 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
     }
 
     // update the reduced Hamiltonian
+    // basis set size reset to nband
     nbase = nband;
 
     setmem_complex_op()(this->ctx, hcc, 0, nbase_x * nbase_x);
