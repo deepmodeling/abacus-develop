@@ -10,10 +10,11 @@
 #include "hsolver_pw_sup.h"
 #include "hsolver_supplementary_mock.h"
 #include "module_base/global_variable.h"
-#include "module_parameter/parameter.h"
 #include "module_hsolver/hsolver_pw.h"
 #undef private
 #undef protected
+
+#include "module_parameter/parameter.h"
 /************************************************
  *  unit test of HSolverPW class
  ***********************************************/
@@ -80,12 +81,12 @@ TEST_F(TestHSolverPW, solve) {
                      psi_test_cf,
                      &elecstate_test,
                      method_test,
-                     PARAM.inp.calculation,
-                     PARAM.inp.basis_type,
-                     PARAM.inp.use_paw,
+                     "scf",
+                     "pw",
+                     false,
                      GlobalV::use_uspp,
-                     PARAM.globalv.myrank,
-                     PARAM.globalv.nproc,
+                     GlobalV::RANK_IN_POOL,
+                     GlobalV::NPROC_IN_POOL,
                      true);
     EXPECT_EQ(this->hs_f.initialed_psi, true);
     for (int i = 0; i < psi_test_cf.size(); i++) {
@@ -100,12 +101,12 @@ TEST_F(TestHSolverPW, solve) {
                      psi_test_cd,
                      &elecstate_test,
                      method_test,
-                     PARAM.inp.calculation,
-                     PARAM.inp.basis_type,
-                     PARAM.inp.use_paw,
+                     "scf",
+                     "pw",
+                     false,
                      GlobalV::use_uspp,
-                     PARAM.globalv.myrank,
-                     PARAM.globalv.nproc,
+                     GlobalV::RANK_IN_POOL,
+                     GlobalV::NPROC_IN_POOL,
                      true);
     EXPECT_EQ(this->hs_d.initialed_psi, true);
     EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<double>>::avg_iter,
