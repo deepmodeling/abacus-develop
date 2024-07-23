@@ -74,8 +74,8 @@ void Grid_Technique::set_pbc_grid(
     this->npol = ucell.get_npol();
     this->nlocal = nlocal;
 
-    int nproc;
-    int rank;
+    int nproc=0;
+    int rank=0;
     MPI_Comm_size(MPI_COMM_WORLD, &nproc);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     this->nproc=nproc;
