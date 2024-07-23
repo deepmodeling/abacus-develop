@@ -779,11 +779,12 @@ void DiagoDavid<T, Device>::diag_zhegvx(const int& nbase,
  * @param eigenvalue_in Pointer to the array of eigenvalues.
  * @param psi_in Pointer to the array of wavefunctions.
  * @param ldPsi The leading dimension of the wavefunction array.
- * @param hp Pointer to the array for storing the updated hp values.
- * @param sp Pointer to the array for storing the updated sp values.
- * @param hc Pointer to the array for storing the updated hc values.
- * @param sc Pointer to the array for storing the updated sc values.
- * @param vc Pointer to the array for storing the updated vc values.
+ * @param hpsi Pointer to the output array for the updated basis set.
+ * @param spsi Pointer to the output array for the updated basis set (nband-th column).
+ * @param hcc Pointer to the output array for the updated reduced Hamiltonian.
+ * @param scc Pointer to the output array for the updated overlap matrix.
+ * @param vcc Pointer to the output array for the updated eigenvector matrix.
+ * 
  */
 template <typename T, typename Device>
 void DiagoDavid<T, Device>::refresh(const int& dim,
@@ -793,11 +794,11 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
                                          const Real* eigenvalue_in,
                                          const T *psi_in,
                                          const int ldPsi,
-                                         T* hp,
-                                         T* sp,
-                                         T* hc,
-                                         T* sc,
-                                         T* vc)
+                                         T* hpsi,
+                                         T* spsi,
+                                         T* hcc,
+                                         T* scc,
+                                         T* vcc)
 {
     if (test_david == 1) {
         ModuleBase::TITLE("DiagoDavid", "refresh");
@@ -815,11 +816,11 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
                               nband,            // n: col of B,C
                               nbase,            // k: col of A, row of B
                               this->one,
-                              this->hpsi,       // A dim * nbase
+                              hpsi,       // A dim * nbase
                               dim,
-                              this->vcc,        // B nbase * nband
+                              vcc,        // B nbase * nband
                               nbase_x,
-                              this->zero,
+                              zero,
                               basis,           // C dim * nband
                               dim
     );
@@ -833,9 +834,9 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
                               nband,              // n: col of B,C
                               nbase,              // k: col of A, row of B
                               this->one,
-                              this->spsi,         // A dim * nbase
+                              spsi,         // A dim * nbase
                               dim,
-                              this->vcc,          // B nbase * nband
+                              vcc,          // B nbase * nband
                               nbase_x,
                               this->zero,
                               basis + dim*nband,  // C dim * nband
