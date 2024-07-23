@@ -80,16 +80,12 @@ TEST_F(TestHSolverPW, solve) {
                      psi_test_cf,
                      &elecstate_test,
                      method_test,
-
-                    PARAM.inp.ks_solver,
-                    PARAM.inp.calculation,
-                    PARAM.inp.basis_type,
-                    PARAM.inp.use_paw,
-                    GlobalV::use_uspp,
-                    PARAM.globalv.myrank,
-                    PARAM.globalv.nproc,
-
-
+                     PARAM.inp.calculation,
+                     PARAM.inp.basis_type,
+                     PARAM.inp.use_paw,
+                     GlobalV::use_uspp,
+                     PARAM.globalv.myrank,
+                     PARAM.globalv.nproc,
                      true);
     EXPECT_EQ(this->hs_f.initialed_psi, true);
     for (int i = 0; i < psi_test_cf.size(); i++) {
@@ -104,15 +100,12 @@ TEST_F(TestHSolverPW, solve) {
                      psi_test_cd,
                      &elecstate_test,
                      method_test,
-                    
-                    PARAM.inp.ks_solver,
-                    PARAM.inp.calculation,
-                    PARAM.inp.basis_type,
-                    PARAM.inp.use_paw,
-                    GlobalV::use_uspp,
-                    PARAM.globalv.myrank,
-                    PARAM.globalv.nproc,
-
+                     PARAM.inp.calculation,
+                     PARAM.inp.basis_type,
+                     PARAM.inp.use_paw,
+                     GlobalV::use_uspp,
+                     PARAM.globalv.myrank,
+                     PARAM.globalv.nproc,
                      true);
     EXPECT_EQ(this->hs_d.initialed_psi, true);
     EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<double>>::avg_iter,
