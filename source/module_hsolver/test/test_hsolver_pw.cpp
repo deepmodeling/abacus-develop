@@ -10,6 +10,7 @@
 #include "hsolver_pw_sup.h"
 #include "hsolver_supplementary_mock.h"
 #include "module_base/global_variable.h"
+#include "module_parameter/parameter.h"
 #include "module_hsolver/hsolver_pw.h"
 #undef private
 #undef protected
@@ -80,12 +81,13 @@ TEST_F(TestHSolverPW, solve) {
                      &elecstate_test,
                      method_test,
 
-                    GlobalV::CALCULATION,
-                    GlobalV::BASIS_TYPE,
-                    GlobalV::use_paw,
+                    PARAM.inp.ks_solver,
+                    PARAM.inp.calculation,
+                    PARAM.inp.basis_type,
+                    PARAM.inp.use_paw,
                     GlobalV::use_uspp,
-                    GlobalV::RANK_IN_POOL,
-                    GlobalV::NPROC_IN_POOL,
+                    PARAM.globalv.my_rank,
+                    PARAM.globalv.nproc,
 
 
                      true);
@@ -103,12 +105,13 @@ TEST_F(TestHSolverPW, solve) {
                      &elecstate_test,
                      method_test,
                     
-                    GlobalV::CALCULATION,
-                    GlobalV::BASIS_TYPE,
-                    GlobalV::use_paw,
+                    PARAM.inp.ks_solver,
+                    PARAM.inp.calculation,
+                    PARAM.inp.basis_type,
+                    PARAM.inp.use_paw,
                     GlobalV::use_uspp,
-                    GlobalV::RANK_IN_POOL,
-                    GlobalV::NPROC_IN_POOL,
+                    PARAM.globalv.my_rank,
+                    PARAM.globalv.nproc,
 
                      true);
     EXPECT_EQ(this->hs_d.initialed_psi, true);
