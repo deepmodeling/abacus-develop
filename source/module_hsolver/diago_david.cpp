@@ -334,18 +334,18 @@ int DiagoDavid<T, Device>::diag_once(const HPsiFunc& hpsi_func,
 }
 
 /**
- * Calculates the gradient of the wavefunction using the Davidson diagonalization method.
+ * Calculates the preconditioned gradient of the eigenvectors in Davidson method.
  *
  * @param hpsi_func The function to calculate the matrix-blockvector product H * psi.
  * @param spsi_func The function to calculate the matrix-blockvector product overlap S * psi.
- * @param dim The dimension of the wavefunction.
+ * @param dim The dimension of the blockvector.
  * @param nbase The current dimension of the reduced basis.
  * @param nbase_x The maximum dimension of the reduced basis set.
- * @param notconv The number of unconverged bands.
+ * @param notconv The number of unconverged eigenpairs.
  * @param hpsi The output array for the Hamiltonian H times blockvector psi.
  * @param spsi The output array for the overlap matrix S times blockvector psi.
- * @param vcc The input array for the wavefunction coefficients.
- * @param unconv The array of indices for the unconverged bands.
+ * @param vcc The input array for the eigenvector coefficients.
+ * @param unconv The array of indices for the unconverged eigenpairs.
  * @param eigenvalue The array of eigenvalues.
  */
 template <typename T, typename Device>
@@ -407,7 +407,7 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
                              nbase);
     }
 
-    // basis(:, nbase) = hpsi * vc_ev_vector
+    // basis[nbase] = hpsi * vc_ev_vector
     // basis'        =   vc_ev_vector' * hpsi'
     // (dim, notconv)  (dim, nbase) (nbase, notconv)
     gemm_op<T, Device>()(this->ctx,
@@ -435,9 +435,10 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     //     }
     // }
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
     // e_temp_cpu = {-lambda}
     // vc_ev_vector[nbase] = vc_ev_vector[nbase] * e_temp_cpu
-    // now vc_ev_vector = - lambda * ev
+    // now vc_ev_vector[nbase] = - lambda * ev
     for (int m = 0; m < notconv; m++)
     {
         std::vector<Real> e_temp_cpu(nbase, (-1.0 * this->eigenvalue[unconv[m]]));
@@ -467,8 +468,9 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     }
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-    // basis = basis - spsi * vc_ev_vector
-    //       = basis - spsi * lambda * ev
+    // basis[nbase] = basis[nbase] - spsi * vc_ev_vector
+    //              = hpsi - spsi * lambda * ev
+    //              = (H - lambda * S) * ev
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     gemm_op<T, Device>()(this->ctx,
                               'N',
@@ -487,9 +489,10 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     );
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-    // basis = P^-1 * basis
-    // where P^-1, the preconditioning matrix, is an approximate inverse of H
-    //          P is a diagonal stored in array precondition
+    // Preconditioning
+    // basis[nbase] = T * basis[nbase] = T * (H - lambda * S) * ev
+    // where T, the preconditioner, is an approximate inverse of H
+    //          T is a diagonal stored in array `precondition`
     // to do preconditioning, multiply each column of basis by the corresponding element of precondition
     for (int m = 0; m < notconv; m++)
     {
