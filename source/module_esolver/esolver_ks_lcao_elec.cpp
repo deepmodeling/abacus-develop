@@ -50,7 +50,7 @@ void ESolver_KS_LCAO<TK, TR>::set_matrix_grid(Record_adj& ra)
                                                      GlobalC::ucell.infoNL.get_rcutmax_Beta(),
                                                      GlobalV::GAMMA_ONLY_LOCAL);
 
-    atom_arrange::search(GlobalV::SEARCH_PBC,
+    atom_arrange::search(PARAM.inp.search_pbc,
                          GlobalV::ofs_running,
                          GlobalC::GridD,
                          GlobalC::ucell,
@@ -90,7 +90,7 @@ void ESolver_KS_LCAO<TK, TR>::set_matrix_grid(Record_adj& ra)
                              psi_u,
                              dpsi_u,
                              d2psi_u,
-                             GlobalV::NUM_STREAM);
+                             PARAM.inp.nstream);
     psi_u.clear();
     psi_u.shrink_to_fit();
     dpsi_u.clear();
@@ -209,23 +209,23 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
                                    GlobalC::GridD,
                                    *(two_center_bundle_.overlap_orb_alpha));
 
-        if (GlobalV::deepks_out_unittest)
+        if (PARAM.inp.deepks_out_unittest)
         {
             GlobalC::ld.check_psialpha(GlobalV::CAL_FORCE, GlobalC::ucell, GlobalC::ORB, GlobalC::GridD);
         }
     }
 #endif
-    if (GlobalV::sc_mag_switch)
+    if (PARAM.inp.sc_mag_switch)
     {
         SpinConstrain<TK, base_device::DEVICE_CPU>& sc = SpinConstrain<TK, base_device::DEVICE_CPU>::getScInstance();
         sc.init_sc(GlobalV::sc_thr,
-                   GlobalV::nsc,
-                   GlobalV::nsc_min,
-                   GlobalV::alpha_trial,
-                   GlobalV::sccut,
-                   GlobalV::decay_grad_switch,
+                   PARAM.inp.nsc,
+                   PARAM.inp.nsc_min,
+                   PARAM.inp.alpha_trial,
+                   PARAM.inp.sccut,
+                   PARAM.inp.sc_mag_switch,
                    GlobalC::ucell,
-                   GlobalV::sc_file,
+                   PARAM.inp.sc_file,
                    GlobalV::NPOL,
                    &(this->ParaV),
                    GlobalV::NSPIN,
@@ -293,7 +293,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
 #endif // __EXX
 
     this->pelec->init_scf(istep, this->sf.strucFac);
-    if (GlobalV::out_chg == 2)
+    if (PARAM.inp.out_chg == 2)
     {
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
@@ -339,6 +339,15 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
     dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)
         ->get_DM()
         ->init_DMR(*(dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt)->getHR()));
+    // two cases are considered:
+    // 1. DMK in DensityMatrix is not empty (istep > 0), then DMR is initialized by DMK
+    // 2. DMK in DensityMatrix is empty (istep == 0), then DMR is initialized by zeros
+    if(istep > 0)
+    {
+        dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)
+            ->get_DM()
+            ->cal_DMR();
+    }
 
     if (PARAM.inp.dm_to_rho)
     {
@@ -373,7 +382,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
 
     // 1. calculate ewald energy.
     // mohan update 2021-02-25
-    if (!GlobalV::test_skip_ewald)
+    if (!PARAM.inp.test_skip_ewald)
     {
         this->pelec->f_en.ewald_energy = H_Ewald_pw::compute_ewald(GlobalC::ucell, this->pw_rho, this->sf.strucFac);
     }
@@ -420,7 +429,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
             std::cout << " please make sure search_radius > 0" << std::endl;
         }
 
-        atom_arrange::search(GlobalV::SEARCH_PBC,
+        atom_arrange::search(PARAM.inp.search_pbc,
                              GlobalV::ofs_running,
                              GlobalC::GridD,
                              GlobalC::ucell,
@@ -455,8 +464,8 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                     this->pw_big->bz,
                     this->pw_big->nbz,
                     GlobalV::GAMMA_ONLY_LOCAL,
-                    GlobalV::NBANDS_ISTATE,
-                    PARAM.globalv.out_band_kb,
+                    PARAM.inp.nbands_istate,
+                    PARAM.inp.bands_to_print,
                     GlobalV::NBANDS,
                     GlobalV::nelec,
                     GlobalV::NSPIN,
@@ -481,8 +490,8 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                     this->pw_big->bz,
                     this->pw_big->nbz,
                     GlobalV::GAMMA_ONLY_LOCAL,
-                    GlobalV::NBANDS_ISTATE,
-                    PARAM.globalv.out_band_kb,
+                    PARAM.inp.nbands_istate,
+                    PARAM.inp.bands_to_print,
                     GlobalV::NBANDS,
                     GlobalV::nelec,
                     GlobalV::NSPIN,
@@ -511,8 +520,8 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                       this->wf.out_wfc_r,
                       this->kv,
                       GlobalV::nelec,
-                      GlobalV::NBANDS_ISTATE,
-                      INPUT.get_out_band_kb(),
+                      PARAM.inp.nbands_istate,
+                      PARAM.inp.bands_to_print,
                       GlobalV::NBANDS,
                       GlobalV::NSPIN,
                       GlobalV::NLOCAL,
@@ -530,8 +539,8 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                       this->wf.out_wfc_r,
                       this->kv,
                       GlobalV::nelec,
-                      GlobalV::NBANDS_ISTATE,
-                      INPUT.get_out_band_kb(),
+                      PARAM.inp.nbands_istate,
+                      PARAM.inp.bands_to_print,
                       GlobalV::NBANDS,
                       GlobalV::NSPIN,
                       GlobalV::NLOCAL,
@@ -565,7 +574,7 @@ void ESolver_KS_LCAO<std::complex<double>, double>::get_S(void)
                                                      GlobalC::ucell.infoNL.get_rcutmax_Beta(),
                                                      GlobalV::GAMMA_ONLY_LOCAL);
 
-    atom_arrange::search(GlobalV::SEARCH_PBC,
+    atom_arrange::search(PARAM.inp.search_pbc,
                          GlobalV::ofs_running,
                          GlobalC::GridD,
                          GlobalC::ucell,
@@ -605,7 +614,7 @@ void ESolver_KS_LCAO<std::complex<double>, std::complex<double>>::get_S(void)
                                                      GlobalC::ucell.infoNL.get_rcutmax_Beta(),
                                                      GlobalV::GAMMA_ONLY_LOCAL);
 
-    atom_arrange::search(GlobalV::SEARCH_PBC,
+    atom_arrange::search(PARAM.inp.search_pbc,
                          GlobalV::ofs_running,
                          GlobalC::GridD,
                          GlobalC::ucell,
@@ -691,7 +700,7 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
         }
         GlobalV::ofs_running << std::endl;
     }
-    if (GlobalV::out_bandgap) {
+    if (PARAM.inp.out_bandgap) {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "band gap calculation");
         if (!GlobalV::TWO_EFERMI) {
             this->pelec->cal_bandgap();
@@ -779,7 +788,7 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
     this->create_Output_Mat_Sparse(0).write();
 
     // mulliken charge analysis
-    if (GlobalV::out_mul) {
+    if (PARAM.inp.out_mul) {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "Mulliken charge analysis");
         elecstate::ElecStateLCAO<TK>* pelec_lcao
             = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec);

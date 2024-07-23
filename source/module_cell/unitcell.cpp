@@ -7,6 +7,7 @@
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "unitcell.h"
+#include "module_parameter/parameter.h"
 
 #ifdef __LCAO
 #include "../module_basis/module_ao/ORB_read.h" // to use 'ORB' -- mohan 2021-01-30
@@ -730,7 +731,7 @@ void UnitCell::read_pseudo(std::ofstream& ofs) {
         << std::endl;
     ofs << "\n\n\n\n";
 
-    read_cell_pseudopots(GlobalV::global_pseudo_dir, ofs);
+    read_cell_pseudopots(PARAM.inp.pseudo_dir, ofs);
 
     if (GlobalV::MY_RANK == 0) {
         for (int it = 0; it < this->ntype; it++) {
@@ -740,7 +741,7 @@ void UnitCell::read_pseudo(std::ofstream& ofs) {
             }
         }
 
-        if (GlobalV::out_element_info) {
+        if (PARAM.inp.out_element_info) {
             for (int i = 0; i < this->ntype; i++) {
                 ModuleBase::Global_File::make_dir_atom(this->atoms[i].label);
             }
@@ -1616,13 +1617,13 @@ void UnitCell::cal_nelec(double& nelec) {
                                         nelec);
         }
     }
-    if (GlobalV::nelec_delta != 0) {
+    if (PARAM.inp.nelec_delta != 0) {
         ModuleBase::GlobalFunc::OUT(
             GlobalV::ofs_running,
             "nelec_delta is NOT zero, please make sure you know what you are "
             "doing! nelec_delta: ",
-            GlobalV::nelec_delta);
-        nelec += GlobalV::nelec_delta;
+            PARAM.inp.nelec_delta);
+        nelec += PARAM.inp.nelec_delta;
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "nelec now: ", nelec);
     }
     return;

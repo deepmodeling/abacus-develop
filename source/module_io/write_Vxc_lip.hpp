@@ -181,7 +181,7 @@ namespace ModuleIO
             }
 #endif
             /// add-up and write
-            ModuleIO::save_mat(-1, vxc_tot_k_mo.data(), nbands, false, GlobalV::out_ndigits, true, false, "Vxc", "k-" + std::to_string(ik), p2d_serial, drank, false);
+            ModuleIO::save_mat(-1, vxc_tot_k_mo.data(), nbands, false, PARAM.inp.out_ndigits, true, false, "Vxc", "k-" + std::to_string(ik), p2d_serial, drank, false);
             e_orb_tot.emplace_back(orbital_energy(ik, nbands, vxc_tot_k_mo));
         }
         //===== test total xc energy =======

@@ -60,7 +60,7 @@ install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 AddTest(
   TARGET hcontainer_readCSR_test
-  LIBS base ${math_libs} device cell_info
+  LIBS base ${math_libs} device cell_info parameter
   SOURCES test_hcontainer_readCSR.cpp
     ../base_matrix.cpp
     ../hcontainer.cpp

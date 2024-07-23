@@ -44,8 +44,7 @@
 #include "module_md/md_func.h"
 
 #ifdef __LCAO
-std::vector<double> Input_Conv::convert_units(std::string params, double c)
-{
+std::vector<double> Input_Conv::convert_units(std::string params, double c) {
     std::vector<double> params_ori;
     std::vector<double> params_out;
     parse_expression(params, params_ori);
@@ -61,17 +60,13 @@ void Input_Conv::read_td_efield()
     if (PARAM.inp.esolver_type == "tddft" && elecstate::H_TDDFT_pw::stype == 1)
     {
         TD_Velocity::tddft_velocity = true;
-    }
-    else
-    {
+    } else {
         TD_Velocity::tddft_velocity = false;
     }
     if (PARAM.inp.out_mat_hs2 == 1)
     {
         TD_Velocity::out_mat_R = true;
-    }
-    else
-    {
+    } else {
         TD_Velocity::out_mat_R = false;
     }
     parse_expression(PARAM.inp.td_ttype, elecstate::H_TDDFT_pw::ttype);
@@ -99,15 +94,12 @@ void Input_Conv::read_td_efield()
     elecstate::H_TDDFT_pw::gauss_amp = convert_units(PARAM.inp.td_gauss_amp,
                                                      ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV); // Ry/bohr
     // init ncut for velocity gauge integral
-    for (auto omega: elecstate::H_TDDFT_pw::gauss_omega)
-    {
-        int ncut = int(100.0 * omega * elecstate::H_TDDFT_pw::dt / ModuleBase::PI);
-        if (ncut % 2 == 0)
-        {
+    for (auto omega: elecstate::H_TDDFT_pw::gauss_omega) {
+        int ncut
+            = int(100.0 * omega * elecstate::H_TDDFT_pw::dt / ModuleBase::PI);
+        if (ncut % 2 == 0) {
             ncut += 2;
-        }
-        else
-        {
+        } else {
             ncut += 1;
         }
         if (elecstate::H_TDDFT_pw::stype == 0)
@@ -124,15 +116,12 @@ void Input_Conv::read_td_efield()
     elecstate::H_TDDFT_pw::trape_amp = convert_units(PARAM.inp.td_trape_amp,
                                                      ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV); // Ry/bohr
     // init ncut for velocity gauge integral
-    for (auto omega: elecstate::H_TDDFT_pw::trape_omega)
-    {
-        int ncut = int(100.0 * omega * elecstate::H_TDDFT_pw::dt / ModuleBase::PI);
-        if (ncut % 2 == 0)
-        {
+    for (auto omega: elecstate::H_TDDFT_pw::trape_omega) {
+        int ncut
+            = int(100.0 * omega * elecstate::H_TDDFT_pw::dt / ModuleBase::PI);
+        if (ncut % 2 == 0) {
             ncut += 2;
-        }
-        else
-        {
+        } else {
             ncut += 1;
         }
         if (elecstate::H_TDDFT_pw::stype == 0)
@@ -149,15 +138,12 @@ void Input_Conv::read_td_efield()
     elecstate::H_TDDFT_pw::trigo_amp = convert_units(PARAM.inp.td_trigo_amp,
                                                      ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV); // Ry/bohr
     // init ncut for velocity gauge integral
-    for (auto omega: elecstate::H_TDDFT_pw::trigo_omega1)
-    {
-        int ncut = int(100.0 * omega * elecstate::H_TDDFT_pw::dt / ModuleBase::PI);
-        if (ncut % 2 == 0)
-        {
+    for (auto omega: elecstate::H_TDDFT_pw::trigo_omega1) {
+        int ncut
+            = int(100.0 * omega * elecstate::H_TDDFT_pw::dt / ModuleBase::PI);
+        if (ncut % 2 == 0) {
             ncut += 2;
-        }
-        else
-        {
+        } else {
             ncut += 1;
         }
         if (elecstate::H_TDDFT_pw::stype == 0)
@@ -203,30 +189,15 @@ void Input_Conv::Convert()
         {
             GlobalV::stru_file = INPUT.stru_file = GlobalV::global_stru_dir + "STRU_MD_" + std::to_string(istep);
         }
-        else
-        {
-            GlobalV::stru_file = INPUT.stru_file = GlobalV::global_readin_dir + "STRU_MD_" + std::to_string(istep);
-        }
-    }
-    else if (INPUT.stru_file != "")
-    {
+    } else if (INPUT.stru_file != "") {
         GlobalV::stru_file = INPUT.stru_file;
     }
-    GlobalV::global_wannier_card = PARAM.inp.wannier_card;
     if (PARAM.inp.kpoint_file != "")
     {
         GlobalV::global_kpoint_card = PARAM.inp.kpoint_file;
     }
-    if (PARAM.inp.pseudo_dir != "")
-    {
-        GlobalV::global_pseudo_dir = PARAM.inp.pseudo_dir + "/";
-    }
-    if (PARAM.inp.orbital_dir != "")
-    {
-        GlobalV::global_orbital_dir = PARAM.inp.orbital_dir + "/";
-    }
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "pseudo_dir", GlobalV::global_pseudo_dir);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "orbital_dir", GlobalV::global_orbital_dir);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "pseudo_dir", PARAM.inp.pseudo_dir);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "orbital_dir", PARAM.inp.orbital_dir);
     // GlobalV::global_pseudo_type = PARAM.inp.pseudo_type;
     GlobalC::ucell.setup(PARAM.inp.latname,
                          PARAM.inp.ntype,
@@ -243,9 +214,7 @@ void Input_Conv::Convert()
     {
         GlobalV::KSPACING[i] = PARAM.inp.kspacing[i];
     }
-    GlobalV::MIN_DIST_COEF = PARAM.inp.min_dist_coef;
     GlobalV::NBANDS = PARAM.inp.nbands;
-    GlobalV::NBANDS_ISTATE = PARAM.inp.nbands_istate;
 
     GlobalV::device_flag = base_device::information::get_device_flag(PARAM.inp.device,
                                                                      PARAM.inp.ks_solver,
@@ -256,6 +225,14 @@ void Input_Conv::Convert()
     {
         GlobalV::KPAR = base_device::information::get_device_kpar(PARAM.inp.kpar);
     }
+#ifdef __LCAO
+    else if (PARAM.inp.basis_type == "lcao") {
+        /// GlobalV::KPAR_LCAO is used in LCAO diagonalization only
+        GlobalV::KPAR_LCAO = PARAM.inp.kpar;
+        /// all other parts of the code use GlobalV::KPAR = 1
+        GlobalV::KPAR = 1;
+    }
+#endif
     else
     {
         GlobalV::KPAR = PARAM.inp.kpar;
@@ -266,8 +243,9 @@ void Input_Conv::Convert()
     {
 // cpu single precision is not supported while float_fftw lib is not available
 #ifndef __ENABLE_FLOAT_FFTW
-        ModuleBase::WARNING_QUIT("Input_Conv",
-                                 "Single precision with cpu is not supported while float_fftw lib is not available; \
+        ModuleBase::WARNING_QUIT(
+            "Input_Conv",
+            "Single precision with cpu is not supported while float_fftw lib is not available; \
             \n Please recompile with cmake flag \"-DENABLE_FLOAT_FFTW=ON\".\n");
 #endif // __ENABLE_FLOAT_FFTW
     }
@@ -275,20 +253,13 @@ void Input_Conv::Convert()
     GlobalV::ESOLVER_TYPE = PARAM.inp.esolver_type;
 
     GlobalV::PSEUDORCUT = PARAM.inp.pseudo_rcut;
-    GlobalV::PSEUDO_MESH = PARAM.inp.pseudo_mesh;
 
     GlobalV::DFT_FUNCTIONAL = PARAM.inp.dft_functional;
-    GlobalV::XC_TEMPERATURE = PARAM.inp.xc_temperature;
     GlobalV::NSPIN = PARAM.inp.nspin;
 
     GlobalV::CAL_FORCE = PARAM.inp.cal_force;
     GlobalV::FORCE_THR = PARAM.inp.force_thr;
 
-    GlobalV::STRESS_THR = PARAM.inp.stress_thr;
-    GlobalV::PRESS1 = PARAM.inp.press1;
-    GlobalV::PRESS2 = PARAM.inp.press2;
-    GlobalV::PRESS3 = PARAM.inp.press3;
-    GlobalV::out_element_info = PARAM.inp.out_element_info;
 #ifdef __LCAO
     Force_Stress_LCAO<double>::force_invalid_threshold_ev = PARAM.inp.force_thr_ev2;
     Force_Stress_LCAO<std::complex<double>>::force_invalid_threshold_ev = PARAM.inp.force_thr_ev2;
@@ -305,10 +276,8 @@ void Input_Conv::Convert()
 
     GlobalV::CAL_STRESS = PARAM.inp.cal_stress;
 
-    GlobalV::NUM_STREAM = PARAM.inp.nstream;
 
     GlobalV::RELAX_METHOD = PARAM.inp.relax_method;
-    GlobalV::relax_scale_force = PARAM.inp.relax_scale_force;
     GlobalV::relax_new = PARAM.inp.relax_new;
 
     GlobalV::use_paw = PARAM.inp.use_paw;
@@ -321,7 +290,6 @@ void Input_Conv::Convert()
     GlobalV::BASIS_TYPE = PARAM.inp.basis_type;
     GlobalV::KS_SOLVER = PARAM.inp.ks_solver;
     GlobalV::SEARCH_RADIUS = PARAM.inp.search_radius;
-    GlobalV::SEARCH_PBC = PARAM.inp.search_pbc;
 
     //----------------------------------------------------------
     // planewave (8/8)
@@ -331,9 +299,7 @@ void Input_Conv::Convert()
     //----------------------------------------------------------
     // diagonalization  (5/5)
     //----------------------------------------------------------
-    GlobalV::DIAGO_PROC = PARAM.inp.diago_proc;
     GlobalV::PW_DIAG_NMAX = PARAM.inp.pw_diag_nmax;
-    GlobalV::DIAGO_CG_PREC = PARAM.inp.diago_cg_prec;
     GlobalV::PW_DIAG_NDIM = PARAM.inp.pw_diag_ndim;
 
     hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_CPU>::diago_full_acc = PARAM.inp.diago_full_acc;
@@ -346,21 +312,12 @@ void Input_Conv::Convert()
 
     GlobalV::PW_DIAG_THR = PARAM.inp.pw_diag_thr;
     GlobalV::NB2D = PARAM.inp.nb2d;
-    GlobalV::NURSE = PARAM.inp.nurse;
-    GlobalV::COLOUR = PARAM.inp.colour;
-    GlobalV::T_IN_H = PARAM.inp.t_in_h;
-    GlobalV::VL_IN_H = PARAM.inp.vl_in_h;
-    GlobalV::VNL_IN_H = PARAM.inp.vnl_in_h;
-    GlobalV::VH_IN_H = PARAM.inp.vh_in_h;
-    GlobalV::VION_IN_H = PARAM.inp.vion_in_h;
     GlobalV::TEST_FORCE = PARAM.inp.test_force;
     GlobalV::TEST_STRESS = PARAM.inp.test_stress;
-    GlobalV::test_skip_ewald = PARAM.inp.test_skip_ewald;
 
     //----------------------------------------------------------
     // iteration (1/3)
     //----------------------------------------------------------
-    GlobalV::SCF_THR = PARAM.inp.scf_thr;
     GlobalV::SCF_THR_TYPE = PARAM.inp.scf_thr_type;
 
 #ifdef __LCAO
@@ -379,7 +336,6 @@ void Input_Conv::Convert()
             ModuleBase::GlobalFunc::ZEROS(GlobalC::dftu.U, GlobalC::ucell.ntype);
         }
     }
-    GlobalV::onsite_radius = PARAM.inp.onsite_radius;
 #endif
     //--------------------------------------------
     // added by zhengdy-soc
@@ -399,16 +355,13 @@ void Input_Conv::Convert()
         GlobalV::DOMAG = false;
         GlobalV::DOMAG_Z = true;
         GlobalV::LSPINORB = PARAM.inp.lspinorb;
-        GlobalV::soc_lambda = PARAM.inp.soc_lambda;
         if (PARAM.globalv.gamma_only_local)
         {
             ModuleBase::WARNING_QUIT("input_conv",
                                      "nspin=4(soc or noncollinear-spin) does "
                                      "not support gamma only calculation");
         }
-    }
-    else
-    {
+    } else {
         GlobalV::LSPINORB = false;
         GlobalV::NONCOLIN = false;
         GlobalV::DOMAG = false;
@@ -464,18 +417,7 @@ void Input_Conv::Convert()
     read_td_efield();
 #endif
 
-    // setting for constrained DFT, jiyy add 2020.10.11
-    // For example, when we studying nitrogen-vacancy center,
-    // it requires an additional excitation of an electron conduction band to
-    // simulate the excited state, used for TDDFT only.
-    GlobalV::ocp = PARAM.inp.ocp;
-    GlobalV::ocp_set = PARAM.inp.ocp_set;
-    if (GlobalV::ocp == 1)
-    {
-        parse_expression(GlobalV::ocp_set, GlobalV::ocp_kb);
-    }
-
-    GlobalV::out_mul = PARAM.inp.out_mul; // qifeng add 2019/9/10
+   
 
     //----------------------------------------------------------
     // about restart, // Peize Lin add 2020-04-04
@@ -489,14 +431,13 @@ void Input_Conv::Convert()
                        tolower);
         GlobalC::restart.folder = GlobalV::global_readin_dir + "restart/";
         ModuleBase::GlobalFunc::MAKE_DIR(GlobalC::restart.folder);
-        if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0" || dft_functional_lower == "hse"
-            || dft_functional_lower == "opt_orb" || dft_functional_lower == "scan0")
-        {
+        if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0"
+            || dft_functional_lower == "hse"
+            || dft_functional_lower == "opt_orb"
+            || dft_functional_lower == "scan0") {
             GlobalC::restart.info_save.save_charge = true;
             GlobalC::restart.info_save.save_H = true;
-        }
-        else
-        {
+        } else {
             GlobalC::restart.info_save.save_charge = true;
         }
     }
@@ -508,14 +449,13 @@ void Input_Conv::Convert()
                        dft_functional_lower.begin(),
                        tolower);
         GlobalC::restart.folder = GlobalV::global_readin_dir + "restart/";
-        if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0" || dft_functional_lower == "hse"
-            || dft_functional_lower == "opt_orb" || dft_functional_lower == "scan0")
-        {
+        if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0"
+            || dft_functional_lower == "hse"
+            || dft_functional_lower == "opt_orb"
+            || dft_functional_lower == "scan0") {
             GlobalC::restart.info_load.load_charge = true;
             GlobalC::restart.info_load.load_H = true;
-        }
-        else
-        {
+        } else {
             GlobalC::restart.info_load.load_charge = true;
         }
     }
@@ -534,20 +474,16 @@ void Input_Conv::Convert()
     if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0" || dft_functional_lower == "scan0")
     {
         GlobalC::exx_info.info_global.cal_exx = true;
-        GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hf;
-    }
-    else if (dft_functional_lower == "hse")
-    {
+        GlobalC::exx_info.info_global.ccp_type
+            = Conv_Coulomb_Pot_K::Ccp_Type::Hf;
+    } else if (dft_functional_lower == "hse") {
         GlobalC::exx_info.info_global.cal_exx = true;
-        GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hse;
-    }
-    else if (dft_functional_lower == "opt_orb")
-    {
+        GlobalC::exx_info.info_global.ccp_type
+            = Conv_Coulomb_Pot_K::Ccp_Type::Hse;
+    } else if (dft_functional_lower == "opt_orb") {
         GlobalC::exx_info.info_global.cal_exx = false;
         Exx_Abfs::Jle::generate_matrix = true;
-    }
-    else
-    {
+    } else {
         GlobalC::exx_info.info_global.cal_exx = false;
     }
 
@@ -622,27 +558,18 @@ void Input_Conv::Convert()
     // iteration
     //----------------------------------------------------------
     GlobalV::SCF_NMAX = PARAM.inp.scf_nmax;
-    GlobalV::RELAX_NMAX = PARAM.inp.relax_nmax;
-    GlobalV::md_prec_level = PARAM.mdp.md_prec_level;
 
     //----------------------------------------------------------
     // wavefunction / charge / potential / (2/4)
     //----------------------------------------------------------
-    GlobalV::OUT_FREQ_ELEC = PARAM.inp.out_freq_elec;
-    GlobalV::OUT_FREQ_ION = PARAM.inp.out_freq_ion;
     GlobalV::init_chg = PARAM.inp.init_chg;
     GlobalV::init_wfc = PARAM.inp.init_wfc;
     GlobalV::psi_initializer = PARAM.inp.psi_initializer;
     GlobalV::chg_extrap = PARAM.inp.chg_extrap; // xiaohui modify 2015-02-01
-    GlobalV::out_chg = PARAM.inp.out_chg;
     GlobalV::nelec = PARAM.inp.nelec;
-    GlobalV::nelec_delta = PARAM.inp.nelec_delta;
     GlobalV::out_pot = PARAM.inp.out_pot;
     GlobalV::out_app_flag = PARAM.inp.out_app_flag;
-    GlobalV::out_ndigits = PARAM.inp.out_ndigits;
 
-    GlobalV::out_bandgap = PARAM.inp.out_bandgap; // QO added for bandgap printing
-    GlobalV::out_interval = PARAM.inp.out_interval;
 #ifdef __LCAO
     hsolver::HSolverLCAO<double>::out_mat_hs = PARAM.inp.out_mat_hs;
     hsolver::HSolverLCAO<double>::out_mat_hsR = PARAM.inp.out_mat_hs2; // LiuXh add 2019-07-16
@@ -665,10 +592,9 @@ void Input_Conv::Convert()
         if (GlobalV::GAMMA_ONLY_LOCAL)
         {
             elecstate::ElecStateLCAO<double>::need_psi_grid = false;
-        }
-        else if (!GlobalV::GAMMA_ONLY_LOCAL)
-        {
-            elecstate::ElecStateLCAO<std::complex<double>>::need_psi_grid = false;
+        } else if (!GlobalV::GAMMA_ONLY_LOCAL) {
+            elecstate::ElecStateLCAO<std::complex<double>>::need_psi_grid
+                = false;
         }
     }
     if (PARAM.inp.calculation == "test_neighbour" && GlobalV::NPROC > 1)
@@ -696,15 +622,15 @@ void Input_Conv::Convert()
     GlobalV::deepks_scf = PARAM.inp.deepks_scf;
     GlobalV::deepks_bandgap = PARAM.inp.deepks_bandgap; // QO added for bandgap label 2021-12-15
     GlobalV::deepks_v_delta = PARAM.inp.deepks_v_delta;
-    GlobalV::deepks_out_unittest = PARAM.inp.deepks_out_unittest;
     GlobalV::deepks_out_labels = PARAM.inp.deepks_out_labels;
     GlobalV::deepks_equiv = PARAM.inp.deepks_equiv;
 
-    if (GlobalV::deepks_equiv && GlobalV::deepks_bandgap)
-    {
-        ModuleBase::WARNING_QUIT("Input_conv", "deepks_equiv and deepks_bandgap cannot be used together");
+    if (GlobalV::deepks_equiv && GlobalV::deepks_bandgap) {
+        ModuleBase::WARNING_QUIT(
+            "Input_conv",
+            "deepks_equiv and deepks_bandgap cannot be used together");
     }
-    if (GlobalV::deepks_out_unittest)
+    if (PARAM.inp.deepks_out_unittest)
     {
         GlobalV::deepks_out_labels = true;
         GlobalV::deepks_scf = true;
@@ -736,22 +662,11 @@ void Input_Conv::Convert()
     //-----------------------------------------------
     GlobalV::imp_sol = PARAM.inp.imp_sol;
     GlobalV::eb_k = PARAM.inp.eb_k;
-    GlobalV::tau = PARAM.inp.tau;
-    GlobalV::sigma_k = PARAM.inp.sigma_k;
-    GlobalV::nc_k = PARAM.inp.nc_k;
 
     //-----------------------------------------------
     // Deltaspin related parameters
     //-----------------------------------------------
-    GlobalV::sc_mag_switch = PARAM.inp.sc_mag_switch;
-    GlobalV::decay_grad_switch = PARAM.inp.decay_grad_switch;
     GlobalV::sc_thr = PARAM.inp.sc_thr;
-    GlobalV::nsc = PARAM.inp.nsc;
-    GlobalV::nsc_min = PARAM.inp.nsc_min;
-    GlobalV::sc_scf_nmin = PARAM.inp.sc_scf_nmin;
-    GlobalV::alpha_trial = PARAM.inp.alpha_trial;
-    GlobalV::sccut = PARAM.inp.sccut;
-    GlobalV::sc_file = PARAM.inp.sc_file;
 
     // mixing parameters
     GlobalV::MIXING_MODE = PARAM.inp.mixing_mode;
@@ -769,9 +684,6 @@ void Input_Conv::Convert()
     //-----------------------------------------------
     // Quasiatomic Orbital analysis
     //-----------------------------------------------
-    GlobalV::qo_switch = PARAM.inp.qo_switch;
-    GlobalV::qo_basis = PARAM.inp.qo_basis;
-    GlobalV::qo_strategy = PARAM.inp.qo_strategy;
     GlobalV::qo_thr = PARAM.inp.qo_thr;
     GlobalV::qo_screening_coeff = PARAM.inp.qo_screening_coeff;
 

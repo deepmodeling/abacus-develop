@@ -70,7 +70,7 @@ AddTest(
         ../ORB_read.cpp
         ../ORB_atomic.cpp
         ../ORB_atomic_lm.cpp
-    LIBS ${math_libs} device base
+    LIBS ${math_libs} device base parameter
 )
 
 #AddTest(
@@ -95,7 +95,7 @@ add_test(NAME parallel_2d_test_para
 )
 
 AddTest(
-    TARGET parallel_orbitals_test
+    TARGET parallel_orbitals_test parameter
     SOURCES parallel_orbitals_test.cpp ../parallel_2d.cpp ../parallel_orbitals.cpp
     LIBS ${math_libs} device base
 )

@@ -139,7 +139,7 @@ void ESolver_DP::cal_stress(ModuleBase::matrix& stress)
 
     // external stress
     double unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
-    double external_stress[3] = {GlobalV::PRESS1, GlobalV::PRESS2, GlobalV::PRESS3};
+    double external_stress[3] = {PARAM.inp.press1, PARAM.inp.press2, PARAM.inp.press3};
     for (int i = 0; i < 3; i++)
     {
         stress(i, i) -= external_stress[i] / unit_transform;

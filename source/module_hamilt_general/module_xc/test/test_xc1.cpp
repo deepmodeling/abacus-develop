@@ -21,7 +21,6 @@ namespace GlobalV
     bool CAL_STRESS = 0;
     int CAL_FORCE = 0;
     int NSPIN = 1;
-    double XC_TEMPERATURE;
 }
 
 namespace GlobalC
@@ -68,7 +67,6 @@ class XCTest_KSDT : public testing::Test
         void SetUp()
         {
             XC_Functional::set_xc_type("XC_LDA_XC_KSDT");
-            GlobalV::XC_TEMPERATURE = 0.5;
         }
 };
 

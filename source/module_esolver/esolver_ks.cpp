@@ -40,7 +40,7 @@ ESolver_KS<T, Device>::ESolver_KS()
     basisname = "PLEASE ADD BASISNAME FOR CURRENT ESOLVER.";
 
     // should not use GlobalV here, mohan 2024-05-12
-    scf_thr = GlobalV::SCF_THR;
+    scf_thr = PARAM.inp.scf_thr;
     drho = 0.0;
 
     // should not use GlobalV here, mohan 2024-05-12
@@ -48,7 +48,7 @@ ESolver_KS<T, Device>::ESolver_KS()
     niter = maxniter;
 
     // should not use GlobalV here, mohan 2024-05-12
-    out_freq_elec = GlobalV::OUT_FREQ_ELEC;
+    out_freq_elec = PARAM.inp.out_freq_elec;
 
     // pw_rho = new ModuleBase::PW_Basis();
     // temporary, it will be removed
@@ -350,7 +350,7 @@ void ESolver_KS<T, Device>::init_after_vc(const Input_para& inp, UnitCell& ucell
 
     ESolver_FP::init_after_vc(inp, ucell);
 
-    if (GlobalV::md_prec_level == 2)
+    if (inp.mdp.md_prec_level == 2)
     {
         // initialize the real-space uniform grid for FFT and parallel
         // distribution of plane waves

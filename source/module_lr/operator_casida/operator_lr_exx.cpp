@@ -95,13 +95,14 @@ namespace LR
                 RI_2D_Comm::split_m2D_ktoR<T>(this->kv, DMk_trans_pointer, *this->pmat, this->nspin_solve);
 
             // 2. cal_Hs
+            auto lri = this->exx_lri.lock();
             for (int ik = 0;ik < nk;++ik)
             {
-                this->exx_lri->exx_lri.set_Ds(std::move(Ds_trans[ik]), this->exx_lri->info.dm_threshold);
-                this->exx_lri->exx_lri.cal_Hs();
-                this->exx_lri->Hexxs[ik] = RI::Communicate_Tensors_Map_Judge::comm_map2_first(
-                    this->exx_lri->mpi_comm, std::move(this->exx_lri->exx_lri.Hs), std::get<0>(judge[ik]), std::get<1>(judge[ik]));
-                this->exx_lri->post_process_Hexx(this->exx_lri->Hexxs[ik]);
+                lri->exx_lri.set_Ds(std::move(Ds_trans[ik]), lri->info.dm_threshold);
+                lri->exx_lri.cal_Hs();
+                lri->Hexxs[ik] = RI::Communicate_Tensors_Map_Judge::comm_map2_first(
+                    lri->mpi_comm, std::move(lri->exx_lri.Hs), std::get<0>(judge[ik]), std::get<1>(judge[ik]));
+                lri->post_process_Hexx(lri->Hexxs[ik]);
             }
 
             // 3. set [AX]_iak = DM_onbase * Hexxs for each occ-virt pair and each k-point
@@ -117,7 +118,7 @@ namespace LR
                         {
                             this->cal_DM_onebase(this->pX->local2global_col(io), this->pX->local2global_row(iv), ik, is);       //set Ds_onebase
                             psi_out_bfirst(ik, io * this->pX->get_row_size() + iv) -= 0.5 * //minus for exchange, 0.5 for spin
-                                alpha * this->exx_lri->exx_lri.post_2D.cal_energy(this->Ds_onebase[is], this->exx_lri->Hexxs[is]);
+                                alpha * lri->exx_lri.post_2D.cal_energy(this->Ds_onebase[is], lri->Hexxs[is]);
                         }
                     }
                 }

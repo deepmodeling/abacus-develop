@@ -4,6 +4,7 @@
 #include "module_base/macros.h"
 #include "module_hamilt_general/hamilt.h"
 #include "module_psi/psi.h"
+#include "module_hamilt_general/matrixblock.h"
 
 #include <string>
 
@@ -38,6 +39,13 @@ class DiagH
     {
         ModuleBase::WARNING_QUIT("diagh", "diag method not implemented for the base class!");
     };
+#ifdef __MPI
+    // diagnolization used in parallel-k case
+    virtual void diag_pool(hamilt::MatrixBlock<T>& h_mat, hamilt::MatrixBlock<T>& s_mat, psi::Psi<T>& psi, Real* eigenvalue_in, MPI_Comm& comm)
+    {
+        ModuleBase::WARNING_QUIT("diagh", "diag_pool method not implemented for the base class!");
+    };
+#endif
 };
 
 } // namespace hsolver

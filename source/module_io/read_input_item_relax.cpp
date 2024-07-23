@@ -95,9 +95,6 @@ void ReadInput::item_relax()
                 }
                 else if (ks_solver == "genelpa")
                 {
-#ifndef __MPI
-                    ModuleBase::WARNING_QUIT("ReadInput", "genelpa can not be used for series version.");
-#endif
 #ifndef __ELPA
                     ModuleBase::WARNING_QUIT("Input",
                                              "Can not use genelpa if abacus is not compiled with "

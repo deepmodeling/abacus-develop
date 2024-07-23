@@ -136,13 +136,13 @@ void Driver::reading()
     Input_Conv::Convert();
 
     // (4) define the 'DIAGONALIZATION' world in MPI
-    Parallel_Global::split_diag_world(GlobalV::DIAGO_PROC,
+    Parallel_Global::split_diag_world(PARAM.inp.diago_proc,
                                       GlobalV::NPROC,
                                       GlobalV::MY_RANK,
                                       GlobalV::DRANK,
                                       GlobalV::DSIZE,
                                       GlobalV::DCOLOR);
-    Parallel_Global::split_grid_world(GlobalV::DIAGO_PROC,
+    Parallel_Global::split_grid_world(PARAM.inp.diago_proc,
                                       GlobalV::NPROC,
                                       GlobalV::MY_RANK,
                                       GlobalV::GRANK,
@@ -169,7 +169,7 @@ void Driver::reading()
 #endif
 
     // (6) Read in parameters about wannier functions.
-    winput::Init(GlobalV::global_wannier_card);
+    winput::Init(PARAM.inp.wannier_card);
 
     ModuleBase::timer::tick("Driver", "reading");
 }

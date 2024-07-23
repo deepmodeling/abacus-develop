@@ -62,6 +62,12 @@ class Parallel_Kpoints
         return startpro_pool[pool];
     }
 
+    // get the maximum number of k-points in all pools
+    int get_max_nks_pool() const
+    {
+        return *std::max_element(nks_pool.begin(), nks_pool.end());
+    }
+
   private:
 
     int kpar = 0;         // number of pools
@@ -76,7 +82,7 @@ class Parallel_Kpoints
     void get_startk_pool(const int& nkstot);
     void get_whichpool(const int& nkstot);
 
-    void set_startpro_pool(void);
+    void set_startpro_pool();
 #endif
 };
 

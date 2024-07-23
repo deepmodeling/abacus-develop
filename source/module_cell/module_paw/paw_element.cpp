@@ -1,6 +1,7 @@
 #include "paw_element.h"
 #include "module_base/tool_title.h"
 #include "module_base/tool_quit.h"
+#include <sstream>
 
 void Paw_Element::init_paw_element(const double ecutwfc_in, const double cell_factor_in)
 {
@@ -172,7 +173,7 @@ std::string Paw_Element::scan_file(std::ifstream &ifs, std::string pattern)
     }
 
     ModuleBase::WARNING_QUIT("Paw_Element::scan_file","pattern not found in xml file!");
-    return 0;    
+    return nullptr;    
 }
 
 double Paw_Element::extract_double(std::string line, std::string key)
@@ -212,7 +213,7 @@ std::string Paw_Element::extract_string(std::string line, std::string key)
         ModuleBase::WARNING_QUIT("Paw_Element::extract_double","key not found in line!");
     }
 
-    return 0;
+    return nullptr;
 }
 
 int Paw_Element::extract_int(std::string line, std::string key)

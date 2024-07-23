@@ -44,6 +44,7 @@ has_hs2=$(get_input_key_value "out_mat_hs2" "INPUT")
 has_xc=$(get_input_key_value "out_mat_xc" "INPUT")
 has_r=$(get_input_key_value "out_mat_r" "INPUT")
 deepks_out_labels=$(get_input_key_value "deepks_out_labels" "INPUT")
+deepks_scf=$(get_input_key_value "deepks_scf" "INPUT")
 deepks_bandgap=$(get_input_key_value "deepks_bandgap" "INPUT")
 deepks_v_delta=$(get_input_key_value "deepks_v_delta" "INPUT")
 has_lowf=$(get_input_key_value "out_wfc_lcao" "INPUT")
@@ -448,6 +449,18 @@ if ! test -z "$deepks_out_labels" && [ $deepks_out_labels == 1 ]; then
 	total_des=`sum_file des_tmp.txt 5`
 	rm des_tmp.txt
 	echo "totaldes $total_des" >>$1
+	if ! test -z "$deepks_scf" && [ $deepks_scf == 1 ]; then
+		deepks_e_dm=`python3 get_dm_eig.py`
+	    echo "deepks_e_dm $deepks_e_dm" >>$1
+	fi
+	if ! test -z "$has_force" && [ $has_force == 1 ]; then
+	    deepks_f_label=`python3 get_grad_vx.py`
+		echo "deepks_f_label $deepks_f_label" >>$1
+	fi
+	if ! test -z "$has_stress" && [ $has_stress == 1 ]; then
+	    deepks_s_label=`python3 get_grad_vepsl.py`
+		echo "deepks_s_label $deepks_s_label" >>$1
+	fi
 fi
 
 if ! test -z "$deepks_bandgap" && [ $deepks_bandgap == 1 ]; then

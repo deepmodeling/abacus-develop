@@ -19,8 +19,8 @@ struct Input_para
     std::string stru_file = "STRU";                 ///< file contains atomic positions --
                                                     ///< xiaohui modify 2015-02-01
     std::string kpoint_file = "KPT";                ///< file contains k-points -- xiaohui modify 2015-02-01
-    std::string pseudo_dir = "";                    ///< directory of pseudopotential
-    std::string orbital_dir = "";                   ///< directory of orbital file
+    std::string pseudo_dir = "./";                  ///< directory of pseudopotential
+    std::string orbital_dir = "./";                 ///< directory of orbital file
     double pseudo_rcut = 15.0;                      ///< cut-off radius for calculating msh
     bool pseudo_mesh = false;                           ///< 0: use msh to normalize radial wave functions; 1:
                                                     ///< use mesh, which is used in QE.
@@ -37,9 +37,9 @@ struct Input_para
     double min_dist_coef = 0.2;                     ///< allowed minimum distance between two atoms
     int nbands = 0;                                 ///< number of bands
     int nbands_istate = 5;                          ///< number of bands around fermi level for get_pchg calculation.
-    std::string bands_to_print = "";                ///< specify the bands to be calculated in the get_pchg
-                                                    ///< calculation, formalism similar to ocp_set.
-    bool if_separate_k = false;                     ///< whether to write partial charge for all k-points to individual files or merge them
+    std::vector<int> bands_to_print = {};           ///< specify the bands to be calculated in the get_pchg
+
+    bool if_separate_k = false; ///< whether to write partial charge for all k-points to individual files or merge them
     /* symmetry level:
       -1, no symmetry at all;
       0, only basic time reversal would be considered;
@@ -178,7 +178,8 @@ struct Input_para
     bool deepks_equiv = false;        ///< whether to use equivariant version of DeePKS
     bool deepks_out_unittest = false; ///< if set to true, prints intermediate quantities that shall
                                       ///< be used for making unit test
-    std::string deepks_model = "";    ///< needed when deepks_scf=1
+
+    std::string deepks_model = "None"; ///< needed when deepks_scf=1
 
     // ==============   #Parameters (5.LCAO) ===========================
     std::string basis_type = "pw"; ///< xiaohui add 2013-09-01, for structural adjustment
@@ -413,7 +414,8 @@ struct Input_para
     std::string td_heavi_amp = "1.0"; // V/A
 
     bool ocp = false;
-    std::string ocp_set = "";
+    // std::string ocp_set = "";
+    std::vector<double> ocp_kb = {};        ///< OCP kb values
 
     // ==============   #Parameters (17.berry_wannier) ================
     bool berry_phase = false; ///< berry phase calculation: calculate berry phase or not

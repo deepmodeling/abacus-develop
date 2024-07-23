@@ -21,8 +21,8 @@ add_library(
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 AddTest(
   TARGET io_read_input_serial
-  LIBS ${math_libs} base device io_input_serial parameter
-  SOURCES read_input_test.cpp
+  LIBS ${math_libs} io_input_serial parameter
+  SOURCES read_input_test.cpp ../../module_base/test/tool_quit_no_exit.cpp
 )
 
 AddTest(
@@ -32,14 +32,19 @@ AddTest(
 )
 
 AddTest(
+  TARGET io_read_input_tool
+  SOURCES read_input_tool_test.cpp
+)
+
+AddTest(
   TARGET io_rho_io
-  LIBS ${math_libs} base device cell_info
+  LIBS ${math_libs} base device cell_info parameter
   SOURCES rho_io_test.cpp ../read_cube.cpp ../write_cube.cpp ../read_rho.cpp ../write_rho.cpp ../output.cpp
 )
 
 AddTest(
   TARGET io_dmk_io
-  LIBS ${math_libs} base device cell_info
+  LIBS ${math_libs} base device cell_info parameter
   SOURCES io_dmk_test.cpp ../io_dmk.cpp ../output.cpp ../../module_basis/module_ao/parallel_2d.cpp
 )
 

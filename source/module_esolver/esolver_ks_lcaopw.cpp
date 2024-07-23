@@ -144,7 +144,7 @@ namespace ModuleESolver
                 this->pelec,           // elecstate::ElecState<T>* pelec,
                 psig.lock().get()[0]); // psi::Psi<T>& transform,
 
-            if (GlobalV::out_bandgap)
+            if (PARAM.inp.out_bandgap)
             {
                 if (!GlobalV::TWO_EFERMI)
                 {

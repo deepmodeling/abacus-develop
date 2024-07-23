@@ -1,6 +1,6 @@
 #include "read_pp.h"
 
-#include <math.h>
+#include <cmath>
 
 #include <cstring> // Peize Lin fix bug about strcpy 2016-08-02
 #include <fstream>
@@ -16,6 +16,7 @@ Pseudopot_upf::Pseudopot_upf()
 
 Pseudopot_upf::~Pseudopot_upf()
 {
+    delete[] kbeta;
     delete[] els_beta;
     delete[] nchi;
     delete[] epseu;
@@ -201,7 +202,8 @@ int Pseudopot_upf::average_p(const double& lambda, Atom_pseudo& pp)
 					ind1 = old_nbeta +1;
 				}
 				double vion1 = ((l+1.0) * pp.dion(ind,ind) + l * pp.dion(ind1,ind1)) / (2.0*l+1.0);
-				if(std::abs(vion1)<1.0e-8) vion1 = 0.1;
+				if(std::abs(vion1)<1.0e-8) { vion1 = 0.1;
+}
 				//average beta (betar)
 				for(int ir = 0; ir<pp.mesh;ir++)
 				{
@@ -217,8 +219,9 @@ int Pseudopot_upf::average_p(const double& lambda, Atom_pseudo& pp)
 			}
 			else
 			{
-				for(int ir = 0; ir<pp.mesh;ir++)
+				for(int ir = 0; ir<pp.mesh;ir++) {
 					pp.betar(nb, ir) = pp.betar(old_nbeta, ir);
+}
 				pp.dion(nb, nb) = pp.dion(old_nbeta, old_nbeta);
 			}
 			pp.lll[nb] = pp.lll[old_nbeta]; //reset the lll index, ignore jjj index
@@ -283,12 +286,13 @@ int Pseudopot_upf::average_p(const double& lambda, Atom_pseudo& pp)
 				old_nwfc++;
 			}
 			else{
-				for(int ir = 0; ir<pp.mesh;ir++)
+				for(int ir = 0; ir<pp.mesh;ir++) {
 					pp.chi(nb, ir) = pp.chi(old_nwfc, ir);
+}
 			}
 			pp.lchi[nb] = pp.lchi[old_nwfc]; //reset lchi index
 		}
-		pp.has_so = 0;	
+		pp.has_so = false;	
 		return error;
 	}
 	else//lambda_ != 0, modulate the soc effect in pseudopotential
@@ -322,7 +326,8 @@ int Pseudopot_upf::average_p(const double& lambda, Atom_pseudo& pp)
 					ind1 = nb +1;
 				}
 				double vion1 = ((l+1.0) * pp.dion(ind,ind) + l * pp.dion(ind1,ind1)) / (2.0*l+1.0);
-				if(std::abs(vion1)<1.0e-10) vion1 = 0.1;
+				if(std::abs(vion1)<1.0e-10) { vion1 = 0.1;
+}
 				//average beta (betar)
 				const double sqrtDplus = sqrt(std::abs(pp.dion(ind,ind) / vion1));
 				const double sqrtDminus = sqrt(std::abs(pp.dion(ind1,ind1) / vion1));

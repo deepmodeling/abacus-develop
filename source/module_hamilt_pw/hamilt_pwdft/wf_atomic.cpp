@@ -87,7 +87,7 @@ void WF_atomic::init_at_1(Structure_Factor *sf_in)
         {
 			//std::cout << "\n T=" << it << " ic=" << ic << std::endl;
             int nmesh;
-            if(GlobalV::PSEUDO_MESH) {
+            if(PARAM.inp.pseudo_mesh) {
                 nmesh = atom->ncpp.mesh;
             } else {
                 nmesh = atom->ncpp.msh;

@@ -145,6 +145,13 @@ install(FILES PEXSI-H-GammaOnly-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES PEXSI-S-GammaOnly-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES PEXSI-DM-GammaOnly-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES diago_pexsi_parallel_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+install(FILES parallel_k2d_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
+AddTest(
+  TARGET hsolver_parak2d_test
+  LIBS ${math_libs} base device MPI::MPI_CXX
+  SOURCES parallel_k2d_test.cpp ../parallel_k2d.cpp ../../module_cell/parallel_kpoints.cpp  ../../module_basis/module_ao/parallel_2d.cpp
+)
 
 find_program(BASH bash)
 if (ENABLE_MPI)
@@ -152,6 +159,10 @@ if (ENABLE_MPI)
         COMMAND ${BASH} diago_cg_parallel_test.sh
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       )
+  add_test(NAME hsolver_parak2d_test_parallel
+        COMMAND ${BASH} parallel_k2d_test.sh
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+  )
   add_test(NAME HSolver_dav_parallel
         COMMAND ${BASH} diago_david_parallel_test.sh
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
@@ -168,4 +179,4 @@ if (ENABLE_MPI)
     )
 endif()
 endif()
-endif()   
+endif()

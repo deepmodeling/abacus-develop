@@ -50,6 +50,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.nbands, 8);
     EXPECT_EQ(param.inp.nbands_sto, 256);
     EXPECT_EQ(param.inp.nbands_istate, 5);
+    EXPECT_EQ(param.inp.bands_to_print.size(), 0);
     EXPECT_FALSE(param.inp.if_separate_k);
     EXPECT_EQ(param.inp.pw_seed, 1);
     EXPECT_EQ(param.inp.emin_sto, 0.0);
@@ -72,6 +73,9 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_DOUBLE_EQ(param.inp.cond_fwhm, 0.3);
     EXPECT_TRUE(param.inp.cond_nonlocal);
     EXPECT_FALSE(param.inp.berry_phase);
+    EXPECT_EQ(param.inp.ocp_kb.size(), 2);
+    EXPECT_EQ(param.inp.ocp_kb[0], 1);
+    EXPECT_EQ(param.inp.ocp_kb[1], 1);
     EXPECT_EQ(param.inp.gdir, 3);
     EXPECT_FALSE(param.inp.towannier90);
     EXPECT_EQ(param.inp.nnkpfile, "seedname.nnkp");

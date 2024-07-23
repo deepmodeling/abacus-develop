@@ -4,6 +4,7 @@
 #include "elecstate_getters.h"
 #include "module_base/global_variable.h"
 #include "module_base/parallel_reduce.h"
+#include "module_parameter/parameter.h"
 #ifdef USE_PAW
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
@@ -287,7 +288,7 @@ void ElecState::cal_energies(const int type)
 
     //! spin constrained energy
 #ifdef __LCAO
-    if (GlobalV::sc_mag_switch)
+    if (PARAM.inp.sc_mag_switch)
     {
         this->f_en.escon = get_spin_constrain_energy();
     }

@@ -2,6 +2,9 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include "module_elecstate/elecstate.h"
 #include "module_elecstate/elecstate_getters.h"
 #include "module_elecstate/potentials/efield.h"
@@ -240,7 +243,7 @@ TEST_F(ElecStatePrintTest, PrintEtot)
     GlobalV::EFIELD_FLAG = true;
     GlobalV::GATE_FLAG = true;
     GlobalV::TWO_EFERMI = true;
-    GlobalV::out_bandgap = true;
+    PARAM.input.out_bandgap = true;
     GlobalV::COLOUR = false;
     GlobalV::MY_RANK = 0;
     GlobalV::BASIS_TYPE = "pw";
@@ -321,7 +324,7 @@ TEST_F(ElecStatePrintTest, PrintEtot2)
     GlobalV::EFIELD_FLAG = true;
     GlobalV::GATE_FLAG = true;
     GlobalV::TWO_EFERMI = false;
-    GlobalV::out_bandgap = true;
+    PARAM.input.out_bandgap = true;
     GlobalV::COLOUR = false;
     GlobalV::MY_RANK = 0;
     GlobalV::BASIS_TYPE = "pw";
@@ -359,7 +362,7 @@ TEST_F(ElecStatePrintTest, PrintEtotColorS2)
     GlobalV::EFIELD_FLAG = true;
     GlobalV::GATE_FLAG = true;
     GlobalV::TWO_EFERMI = true;
-    GlobalV::out_bandgap = true;
+    PARAM.input.out_bandgap = true;
     GlobalV::COLOUR = true;
     GlobalV::NSPIN = 2;
     GlobalV::MY_RANK = 0;
@@ -384,7 +387,7 @@ TEST_F(ElecStatePrintTest, PrintEtotColorS4)
     GlobalV::EFIELD_FLAG = true;
     GlobalV::GATE_FLAG = true;
     GlobalV::TWO_EFERMI = true;
-    GlobalV::out_bandgap = true;
+    PARAM.input.out_bandgap = true;
     GlobalV::COLOUR = true;
     GlobalV::NSPIN = 4;
     GlobalV::NONCOLIN = true;
@@ -411,7 +414,7 @@ TEST_F(ElecStatePrintTest, PrintEtotColorS4)
 //     GlobalV::EFIELD_FLAG = true;
 //     GlobalV::GATE_FLAG = true;
 //     GlobalV::TWO_EFERMI = false;
-//     GlobalV::out_bandgap = true;
+//     PARAM.input.out_bandgap = true;
 //     GlobalV::COLOUR = false;
 //     GlobalV::MY_RANK = 0;
 //     GlobalV::BASIS_TYPE = "pw";
