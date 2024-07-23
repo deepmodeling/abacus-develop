@@ -306,6 +306,7 @@ void ESolver_FP::print_rhofft(const Input_para& inp, std::ofstream& ofs)
     }
 }
 
+#ifdef __LCAO
 void ESolver_FP::init_orb(double& dr_uniform,
               std::vector<double>& rcuts,
               UnitCell& ucell,
@@ -351,4 +352,5 @@ void ESolver_FP::init_orb(double& dr_uniform,
         }
     }
 }
+#endif
 } // namespace ModuleESolver

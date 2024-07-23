@@ -300,6 +300,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
     this->gint_->gridt = &this->gt_;
 
     // (3) Periodic condition search for each grid.
+    #ifdef __LCAO
     double dr_uniform = 0.001;
     std::vector<double> rcuts;
     std::vector<std::vector<double>> psi_u;
@@ -307,6 +308,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
     std::vector<std::vector<double>> d2psi_u;
 
     this->init_orb(dr_uniform, rcuts, GlobalC::ucell, psi_u, dpsi_u, d2psi_u);
+    #endif
     this->gt_.set_pbc_grid(this->pw_rho->nx,
                              this->pw_rho->ny,
                              this->pw_rho->nz,
@@ -357,8 +359,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
         this->pw_rho->nplane,
         this->pw_rho->startz_current,
         GlobalV::ofs_running,
-        &ucell,
-        &GlobalC::ORB);
+        &ucell);
     this->gint_->initialize_pvpR(ucell, &GlobalC::GridD);
 
     // if EXX from scratch, init 2-center integral and calculate Cs, Vs 

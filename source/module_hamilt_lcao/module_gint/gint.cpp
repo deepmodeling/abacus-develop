@@ -83,8 +83,7 @@ void Gint::prep_grid(const Grid_Technique& gt,
                      const int& nplane_in,
                      const int& startz_current_in,
                      std::ofstream& ofs_running,
-                     const UnitCell* ucell_in,
-                     const LCAO_Orbitals* orb_in) {
+                     const UnitCell* ucell_in) {
     ModuleBase::TITLE(ofs_running, "Gint_k", "prep_grid");
 
     this->gridt = &gt;
