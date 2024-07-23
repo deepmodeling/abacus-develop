@@ -211,7 +211,7 @@ TEST_F(TestHSolverPW_SDFT, solve)
 	test_diagethr_d = hs_d.set_diagethr(GlobalV::PW_DIAG_THR, 0, 3, 1.0e-3);
 	//std::cout<<__FILE__<<__LINE__<<" "<<test_diagethr_d<<std::endl;
 	EXPECT_EQ(test_diagethr_d, 0);
-    test_diagethr_d = hs_d.cal_hsolerror();
+    test_diagethr_d = hs_d.cal_hsolerror(GlobalV::PW_DIAG_THR);
 	EXPECT_EQ(test_diagethr_d, 0.0);
 
 

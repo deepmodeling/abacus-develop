@@ -179,11 +179,11 @@ TEST_F(TestHSolverPW, solve) {
     EXPECT_NEAR(test_diagethr, 0.01, 1.0e-7);
     test_diagethr = hs_f.set_diagethr(GlobalV::PW_DIAG_THR, 0, 3, 1.0e-3);
     EXPECT_NEAR(test_diagethr, 0.0001, 1.0e-7);
-    test_diagethr = hs_f.reset_diagethr(temp_ofs, 2.0, 1.0);
+    test_diagethr = hs_f.reset_diagethr(temp_ofs, 2.0, 1.0, GlobalV::PW_DIAG_THR);
     EXPECT_NEAR(test_diagethr, 0.1, 1.0e-7);
-    test_diagethr = hs_f.reset_diagethr(temp_ofs, 0.5, 1.0);
+    test_diagethr = hs_f.reset_diagethr(temp_ofs, 0.5, 1.0, GlobalV::PW_DIAG_THR);
     EXPECT_NEAR(test_diagethr, 0.1, 1.0e-7);
-    test_diagethr = hs_f.cal_hsolerror();
+    test_diagethr = hs_f.cal_hsolerror(GlobalV::PW_DIAG_THR);
     EXPECT_NEAR(test_diagethr, 0.1, 1.0e-7);
 
     GlobalV::init_chg = "atomic";
@@ -200,11 +200,11 @@ TEST_F(TestHSolverPW, solve) {
     EXPECT_EQ(test_diagethr_d, 0.01);
     test_diagethr_d = hs_d.set_diagethr(GlobalV::PW_DIAG_THR, 0, 3, 1.0e-3);
     EXPECT_EQ(test_diagethr_d, 0.0001);
-    test_diagethr_d = hs_d.reset_diagethr(temp_ofs, 2.0, 1.0);
+    test_diagethr_d = hs_d.reset_diagethr(temp_ofs, 2.0, 1.0, GlobalV::PW_DIAG_THR);
     EXPECT_EQ(test_diagethr_d, 0.1);
-    test_diagethr_d = hs_d.reset_diagethr(temp_ofs, 0.5, 1.0);
+    test_diagethr_d = hs_d.reset_diagethr(temp_ofs, 0.5, 1.0, GlobalV::PW_DIAG_THR);
     EXPECT_EQ(test_diagethr_d, 0.1);
-    test_diagethr_d = hs_d.cal_hsolerror();
+    test_diagethr_d = hs_d.cal_hsolerror(GlobalV::PW_DIAG_THR);
     EXPECT_EQ(test_diagethr_d, 0.1);
 }
 
