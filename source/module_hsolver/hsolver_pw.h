@@ -41,6 +41,13 @@ class HSolverPW : public HSolver<T, Device>
                psi::Psi<T, Device>& psi,
                elecstate::ElecState* pes,
                const std::string method_in,
+
+               const std::string calculation_type_in,
+               const bool use_paw_in,
+               const bool use_uspp_in,
+               const int rank_in_pool_in,
+               const int nproc_in_pool_in,
+
                const bool skip_charge) override;
 
     virtual Real cal_hsolerror() override;
@@ -79,7 +86,7 @@ class HSolverPW : public HSolver<T, Device>
                         const int nk,
                         const int nband,
                         const bool diago_full_acc);
-                  
+
 #ifdef USE_PAW
     void paw_func_in_kloop(const int ik);
 
