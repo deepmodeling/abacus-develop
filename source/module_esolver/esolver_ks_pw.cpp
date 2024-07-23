@@ -1077,7 +1077,7 @@ void ESolver_KS_PW<T, Device>::hamilt2estates(const double ethr) {
                            PARAM.inp.basis_type,
                            PARAM.inp.use_paw,
                            GlobalV::use_uspp,
-                           PARAM.globalv.my_rank,
+                           PARAM.globalv.myrank,
                            PARAM.globalv.nproc,
                            true);
     } else {

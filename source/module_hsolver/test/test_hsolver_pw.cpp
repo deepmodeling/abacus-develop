@@ -86,7 +86,7 @@ TEST_F(TestHSolverPW, solve) {
                     PARAM.inp.basis_type,
                     PARAM.inp.use_paw,
                     GlobalV::use_uspp,
-                    PARAM.globalv.my_rank,
+                    PARAM.globalv.myrank,
                     PARAM.globalv.nproc,
 
 
@@ -110,7 +110,7 @@ TEST_F(TestHSolverPW, solve) {
                     PARAM.inp.basis_type,
                     PARAM.inp.use_paw,
                     GlobalV::use_uspp,
-                    PARAM.globalv.my_rank,
+                    PARAM.globalv.myrank,
                     PARAM.globalv.nproc,
 
                      true);
