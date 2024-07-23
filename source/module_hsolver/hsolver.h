@@ -52,6 +52,7 @@ class HSolver
                        const std::string method,
 
                        const std::string calculation_type_in,
+                       const std::string basis_type_in,
                        const bool use_paw_in,
                        const bool use_uspp_in,
                        const int rank_in_pool_in,

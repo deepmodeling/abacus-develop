@@ -589,6 +589,7 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep,
             GlobalV::KS_SOLVER, // const std::string method_in,
             
             GlobalV::CALCULATION,
+            GlobalV::BASIS_TYPE,
             GlobalV::use_paw,
             GlobalV::use_uspp,
             GlobalV::RANK_IN_POOL,
@@ -1075,6 +1076,7 @@ void ESolver_KS_PW<T, Device>::hamilt2estates(const double ethr) {
                            GlobalV::KS_SOLVER,
 
                         GlobalV::CALCULATION,
+                        GlobalV::BASIS_TYPE,
                         GlobalV::use_paw,
                         GlobalV::use_uspp,
                         GlobalV::RANK_IN_POOL,

@@ -81,6 +81,7 @@ TEST_F(TestHSolverPW, solve) {
                      method_test,
 
                     GlobalV::CALCULATION,
+                    GlobalV::BASIS_TYPE,
                     GlobalV::use_paw,
                     GlobalV::use_uspp,
                     GlobalV::RANK_IN_POOL,
@@ -103,6 +104,7 @@ TEST_F(TestHSolverPW, solve) {
                      method_test,
                     
                     GlobalV::CALCULATION,
+                    GlobalV::BASIS_TYPE,
                     GlobalV::use_paw,
                     GlobalV::use_uspp,
                     GlobalV::RANK_IN_POOL,
