@@ -248,7 +248,6 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
                                  elecstate::ElecState* pes,
                                  const std::string method_in,
 
-
                                  const std::string calculation_type_in,
                                  const std::string basis_type_in,
                                  const bool use_paw_in,
