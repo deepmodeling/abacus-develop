@@ -229,7 +229,7 @@ OBJS_ESOLVER=esolver.o\
     esolver_of.o\
     esolver_of_tool.o\
     esolver_of_interface.o\
-
+    
 OBJS_ESOLVER_LCAO=esolver_ks_lcao.o\
       esolver_ks_lcao_elec.o\
       esolver_ks_lcao_tddft.o\
@@ -262,7 +262,7 @@ OBJS_GINT=gint.o\
       mult_psi_dm.o\
       mult_psi_dm_new.o\
       mult_psi_dmr.o\
-      init_orb.o\
+
 
 OBJS_HAMILT=hamilt_pw.o\
     operator.o\
