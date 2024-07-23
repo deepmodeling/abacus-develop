@@ -494,7 +494,7 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     // basis[nbase] = T * basis[nbase] = T * (H - lambda * S) * psi
     // where T, the preconditioner, is an approximate inverse of H
     //          T is a diagonal stored in array `precondition`
-    // to do preconditioning, multiply each column of basis by the corresponding element of precondition
+    // to do preconditioning, divide each column of basis by the corresponding element of precondition
     for (int m = 0; m < notconv; m++)
     {
         //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -634,7 +634,7 @@ void DiagoDavid<T, Device>::cal_elem(const int& dim,
     }
     ModuleBase::timer::tick("DiagoDavid", "cal_elem");
 
-    // hcc(notconv, nbase + notconv)= basis' * hpsi
+    // hcc[nbase](notconv, nbase + notconv)= basis[nbase]' * hpsi
     gemm_op<T, Device>()(this->ctx,
                               'C',
                               'N',
@@ -649,7 +649,7 @@ void DiagoDavid<T, Device>::cal_elem(const int& dim,
                               this->zero,
                               hcc + nbase,        // notconv * (nbase + notconv)
                               nbase_x);
-    // scc = basis(:,nbase:)'*spsi
+    // scc[nbase] = basis[nbase]' * spsi
     gemm_op<T, Device>()(this->ctx,
                               'C',
                               'N',
