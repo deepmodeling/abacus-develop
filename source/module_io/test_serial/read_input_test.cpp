@@ -25,6 +25,7 @@ namespace GlobalFunc
 {
 bool SCAN_BEGIN(std::ifstream& ifs, const std::string& TargetName, const bool restart, const bool ifwarn)
 {
+    return 0;
 }
 } // namespace GlobalFunc
 namespace Global_File
