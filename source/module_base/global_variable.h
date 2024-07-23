@@ -117,6 +117,13 @@ extern int DCOLOR;
 extern int GRANK;
 extern int GSIZE;
 
+//========================================================================
+// EXPLAIN : Parallel information
+// GLOBAL VARIABLES :
+// NAME : KPAR_LCAO ( global number of pools for LCAO diagonalization only)
+//========================================================================
+extern int KPAR_LCAO;
+
 //==========================================================
 // EXPLAIN : readin file dir, output file std::ofstream
 // GLOBAL VARIABLES :

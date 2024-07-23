@@ -78,6 +78,10 @@ public:
     int get_col_size(int iat) const;
     int get_row_size(int iat) const;
 
+    int get_nbands() const;
+
+    int nbands = 0;
+
     /**
      * @brief gather global indexes of orbitals in this processor
      * get_indexes_row() : global indexes (~NLOCAL) of rows of Hamiltonian matrix in this processor
