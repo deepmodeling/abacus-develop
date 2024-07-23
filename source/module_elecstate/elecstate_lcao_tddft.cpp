@@ -53,20 +53,20 @@ void ElecStateLCAO_TDDFT::calculate_weights_td()
 {
     ModuleBase::TITLE("ElecState", "calculate_weights");
 
-    if (GlobalV::ocp == 1)
+    if (PARAM.inp.ocp == 1)
     {
         int num = 0;
         num = this->klist->get_nks() * GlobalV::NBANDS;
-        if (num != GlobalV::ocp_kb.size())
+        if (num != PARAM.inp.ocp_kb.size())
         {
             ModuleBase::WARNING_QUIT("ElecStateLCAO_TDDFT::calculate_weights_td",
                                      "size of occupation array is wrong , please check ocp_set");
         }
 
         double num_elec = 0.0;
-        for (int i = 0; i < GlobalV::ocp_kb.size(); i++)
+        for (int i = 0; i < PARAM.inp.ocp_kb.size(); i++)
         {
-            num_elec += GlobalV::ocp_kb[i];
+            num_elec += PARAM.inp.ocp_kb[i];
         }
         if (std::abs(num_elec - GlobalV::nelec) > 1.0e-5)
         {
@@ -78,7 +78,7 @@ void ElecStateLCAO_TDDFT::calculate_weights_td()
         {
             for (int ib = 0; ib < GlobalV::NBANDS; ib++)
             {
-                this->wg(ik, ib) = GlobalV::ocp_kb[ik * GlobalV::NBANDS + ib];
+                this->wg(ik, ib) = PARAM.inp.ocp_kb[ik * GlobalV::NBANDS + ib];
             }
         }
     }

@@ -16,7 +16,7 @@ namespace LR
         this->nrxx = chg_gs->nrxx;
         this->nspin = (GlobalV::NSPIN == 1 || (GlobalV::NSPIN == 4 && !GlobalV::DOMAG && !GlobalV::DOMAG_Z)) ? 1 : 2;
 
-        this->pot_hartree = new elecstate::PotHartree(this->rho_basis_);
+        this->pot_hartree = LR_Util::make_unique<elecstate::PotHartree>(this->rho_basis_);
         std::set<std::string> local_xc = { "lda", "pbe", "hse" };
         if (local_xc.find(this->xc_kernel) != local_xc.end())
         {
@@ -62,7 +62,7 @@ namespace LR
     }
 
 #ifdef USE_LIBXC
-    void PotHxcLR::set_integral_func(SpinType s, XCType xc)
+    void PotHxcLR::set_integral_func(const SpinType& s, const XCType& xc)
     {
         auto& funcs = this->kernel_to_potential_;
         auto& fxc = this->xc_kernel_components_;
@@ -97,7 +97,7 @@ namespace LR
                 };
             break;
         default:
-            throw std::domain_error("SpinType =" + std::to_string(s)
+            throw std::domain_error("SpinType =" + std::to_string(static_cast<int>(s))
                 + " unfinished in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
             break;
         }
@@ -148,7 +148,7 @@ namespace LR
             // case SpinType::S2_triplet:
             //     break;
         default:
-            throw std::domain_error("SpinType =" + std::to_string(s) + "for GGA or HYB_GGA is unfinished in "
+            throw std::domain_error("SpinType =" + std::to_string(static_cast<int>(s)) + "for GGA or HYB_GGA is unfinished in "
                 + std::string(__FILE__) + " line " + std::to_string(__LINE__));
             break;
         }

@@ -4,6 +4,7 @@
 
 #define private public
 #include "module_elecstate/potentials/potential_new.h"
+#undef private
 // mock functions
 Structure_Factor::Structure_Factor()
 {
@@ -642,5 +643,3 @@ TEST_F(PotentialNewTest, InterpolateVrsSingleGrids)
     }
 
 }
-
-#undef private

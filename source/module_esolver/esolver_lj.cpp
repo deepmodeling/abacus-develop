@@ -28,7 +28,7 @@ namespace ModuleESolver
     {
         Grid_Driver grid_neigh(GlobalV::test_deconstructor, GlobalV::test_grid_driver, GlobalV::test_grid);
         atom_arrange::search(
-            GlobalV::SEARCH_PBC,
+            PARAM.inp.search_pbc,
             GlobalV::ofs_running,
             grid_neigh,
             ucell,
@@ -86,7 +86,7 @@ namespace ModuleESolver
 #ifdef __MPI
         atom_arrange::delete_vector(
             GlobalV::ofs_running,
-            GlobalV::SEARCH_PBC,
+            PARAM.inp.search_pbc,
             grid_neigh,
             ucell, 
             GlobalV::SEARCH_RADIUS,
@@ -111,7 +111,7 @@ namespace ModuleESolver
 
         // external stress
         double unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
-        double external_stress[3] = {GlobalV::PRESS1, GlobalV::PRESS2, GlobalV::PRESS3};
+        double external_stress[3] = {PARAM.inp.press1, PARAM.inp.press2, PARAM.inp.press3};
         for (int i = 0; i < 3; i++)
         {
             stress(i, i) -= external_stress[i] / unit_transform;

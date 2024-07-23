@@ -37,6 +37,9 @@ Magnetism::~Magnetism()
     delete[] this->start_magnetization;
 }
 
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 /************************************************
  *  unit test of class UnitCell
  ***********************************************/
@@ -1585,7 +1588,7 @@ TEST_F(UcellTest, ReadAtomPositionsCAU)
     GlobalV::BASIS_TYPE = "lcao";
     GlobalV::deepks_setorb = true;
     GlobalV::NSPIN = 1;
-    GlobalV::fixed_atoms = true;
+    PARAM.input.fixed_atoms = true;
     EXPECT_NO_THROW(ucell->read_atom_species(ifa, ofs_running));
     EXPECT_DOUBLE_EQ(ucell->latvec.e11, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e22, 4.27957);

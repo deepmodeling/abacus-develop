@@ -4,7 +4,7 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
-
+#include <sstream>
 #include "module_base/global_file.h"
 #include "module_base/global_function.h"
 #include "module_base/tool_quit.h"
@@ -24,10 +24,11 @@ void strtolower(char* sa, char* sb)
     sb[len] = '\0';
 }
 
-std::string longstring(const std::vector<std::string>& str_values, const int length)
+std::string longstring(const std::vector<std::string>& str_values)
 {
     std::string output;
     output = "";
+    const size_t length = str_values.size();
     for (int i = 0; i < length; ++i)
     {
         output += str_values[i];
@@ -77,6 +78,20 @@ bool convert_bool(std::string str)
         ModuleBase::WARNING_QUIT("Input", warningstr);
     }
 }
+std::string to_dir(const std::string& str)
+{
+    std::string str_dir = str;
+    if (str_dir.empty())
+    {
+        return "./";
+    }
+    else if (str_dir.back() != '/')
+    {
+        str_dir += "/";
+    }
+    
+    return str_dir;
+}
 
 void read_information(std::ifstream& ifs, std::vector<std::string>& output, const std::string& delimiters)
 {
@@ -87,14 +102,11 @@ void read_information(std::ifstream& ifs, std::vector<std::string>& output, cons
     std::string word;
     while (iss >> word)
     {
-        if (delimiters.find(word[0]) != std::string::npos) {
+        if (delimiters.find(word[0]) != std::string::npos)
+        {
             break;
-}
+        }
         output.push_back(word);
-    }
-    if (output.size() == 0)
-    {
-        output.push_back("");
     }
 }
 

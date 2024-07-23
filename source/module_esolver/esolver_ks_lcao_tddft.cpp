@@ -84,7 +84,14 @@ void ESolver_KS_LCAO_TDDFT::before_all_runners(const Input_para& inp, UnitCell& 
     }
 
     // 4) read the local orbitals and construct the interpolation tables.
-    this->init_basis_lcao(inp, ucell);
+    LCAO_domain::init_basis_lcao(this->ParaV, 
+                                 inp.onsite_radius, 
+								 inp.lcao_ecut,
+								 inp.lcao_dk,
+								 inp.lcao_dr,
+								 inp.lcao_rmax,
+                                 ucell, 
+                                 two_center_bundle_);
 
     // 5) allocate H and S matrices according to computational resources
     LCAO_domain::divide_HS_in_frag(GlobalV::GAMMA_ONLY_LOCAL, ParaV, kv.get_nks());
@@ -245,7 +252,7 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
             bool bit = false; // LiuXh, 2017-03-21
             // if set bit = true, there would be error in soc-multi-core
             // calculation, noted by zhengdy-soc
-            if (this->psi != nullptr && (istep % GlobalV::out_interval == 0))
+            if (this->psi != nullptr && (istep % PARAM.inp.out_interval == 0))
             {
                 hamilt::MatrixBlock<complex<double>> h_mat, s_mat;
                 this->p_hamilt->matrix(h_mat, s_mat);
@@ -280,7 +287,7 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
     }
 
     if (elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_lcao && (this->conv_elec || iter == GlobalV::SCF_NMAX)
-        && (istep % GlobalV::out_interval == 0))
+        && (istep % PARAM.inp.out_interval == 0))
     {
         ModuleIO::write_wfc_nao(elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_lcao,
                                 this->psi[0],

@@ -203,8 +203,8 @@ void ESolver_KS_PW<T, Device>::before_all_runners(const Input_para& inp, UnitCel
     this->Init_GlobalC(inp, ucell, GlobalC::ppcell);
 
     //! 9) setup occupations
-    if (GlobalV::ocp) {
-        this->pelec->fixed_weights(GlobalV::ocp_kb,
+    if (PARAM.inp.ocp) {
+        this->pelec->fixed_weights(PARAM.inp.ocp_kb,
                                    GlobalV::NBANDS,
                                    GlobalV::nelec);
     }
@@ -238,7 +238,7 @@ void ESolver_KS_PW<T, Device>::init_after_vc(const Input_para& inp, UnitCell& uc
 
     ESolver_KS<T, Device>::init_after_vc(inp, ucell);
 
-    if (GlobalV::md_prec_level == 2) {
+    if (inp.mdp.md_prec_level == 2) {
         this->pw_wfc->initgrids(ucell.lat0,
                                 ucell.latvec,
                                 this->pw_rho->nx,
@@ -416,7 +416,7 @@ void ESolver_KS_PW<T, Device>::before_scf(const int istep) {
     }
 
     // calculate ewald energy
-    if (!GlobalV::test_skip_ewald) {
+    if (!PARAM.inp.test_skip_ewald) {
         this->pelec->f_en.ewald_energy
             = H_Ewald_pw::compute_ewald(GlobalC::ucell,
                                         this->pw_rhod,
@@ -432,7 +432,7 @@ void ESolver_KS_PW<T, Device>::before_scf(const int istep) {
     //! calculate the total local pseudopotential in real space
     this->pelec->init_scf(istep, this->sf.strucFac);
 
-    if (GlobalV::out_chg == 2) {
+    if (PARAM.inp.out_chg == 2) {
         for (int is = 0; is < GlobalV::NSPIN; is++) {
             std::stringstream ss;
             ss << GlobalV::global_out_dir << "SPIN" << is + 1
@@ -588,7 +588,7 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep,
             this->pelec,         // elecstate::ElecState<T, Device>* pelec,
             GlobalV::KS_SOLVER); // const std::string method_in,
 
-        if (GlobalV::out_bandgap)
+        if (PARAM.inp.out_bandgap)
         {
             if (!GlobalV::TWO_EFERMI)
             {
@@ -667,7 +667,7 @@ void ESolver_KS_PW<T, Device>::iter_finish(const int iter) {
     }
 
     if (print == true) {
-        if (GlobalV::out_chg > 0) {
+        if (PARAM.inp.out_chg > 0) {
             for (int is = 0; is < GlobalV::NSPIN; is++) {
                 this->create_Output_Rho(is, iter, "tmp_").write();
                 if (XC_Functional::get_func_type() == 3
@@ -707,7 +707,7 @@ void ESolver_KS_PW<T, Device>::after_scf(const int istep) {
                             &this->sf);
     }
 
-    if (GlobalV::out_chg) {
+    if (PARAM.inp.out_chg) {
         for (int is = 0; is < GlobalV::NSPIN; is++) {
             this->create_Output_Rho(is, istep).write();
             if (XC_Functional::get_func_type() == 3
@@ -743,11 +743,8 @@ void ESolver_KS_PW<T, Device>::after_scf(const int istep) {
 
     // Get bands_to_print through public function of INPUT (returns a const
     // pointer to string)
-    std::string bands_to_print = *INPUT.get_bands_to_print();
-    if (!bands_to_print.empty()) {
-        std::vector<double> out_band_kb;
-        Input_Conv::parse_expression(bands_to_print, out_band_kb);
-
+    const std::vector<int> bands_to_print = PARAM.inp.bands_to_print;
+    if (bands_to_print.size() > 0) {
         // bands_picked is a vector of 0s and 1s, where 1 means the band is
         // picked to output
         std::vector<int> bands_picked;
@@ -756,7 +753,7 @@ void ESolver_KS_PW<T, Device>::after_scf(const int istep) {
                                       this->kspw_psi->get_nbands());
 
         // Check if length of out_band_kb is valid
-        if (static_cast<int>(out_band_kb.size())
+        if (static_cast<int>(bands_to_print.size())
             > this->kspw_psi->get_nbands()) {
             ModuleBase::WARNING_QUIT(
                 "ESolver_KS_PW::after_scf",
@@ -765,7 +762,7 @@ void ESolver_KS_PW<T, Device>::after_scf(const int istep) {
         }
 
         // Check if all elements in bands_picked are 0 or 1
-        for (int value: out_band_kb) {
+        for (int value: bands_to_print) {
             if (value != 0 && value != 1) {
                 ModuleBase::WARNING_QUIT(
                     "ESolver_KS_PW::after_scf",
@@ -776,12 +773,12 @@ void ESolver_KS_PW<T, Device>::after_scf(const int istep) {
 
         // Fill bands_picked with values from out_band_kb, converting to int
         // Remaining bands are already set to 0
-        int length = std::min(static_cast<int>(out_band_kb.size()),
+        int length = std::min(static_cast<int>(bands_to_print.size()),
                               this->kspw_psi->get_nbands());
         for (int i = 0; i < length; ++i) {
             // out_band_kb rely on function parse_expression from input_conv.cpp
             // Initially designed for ocp_set, which can be double
-            bands_picked[i] = static_cast<int>(out_band_kb[i]);
+            bands_picked[i] = static_cast<int>(bands_to_print[i]);
         }
 
         std::complex<double>* wfcr
@@ -903,7 +900,7 @@ void ESolver_KS_PW<T, Device>::cal_stress(ModuleBase::matrix& stress) {
     unit_transform
         = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
     double external_stress[3]
-        = {GlobalV::PRESS1, GlobalV::PRESS2, GlobalV::PRESS3};
+        = {PARAM.inp.press1, PARAM.inp.press2, PARAM.inp.press3};
     for (int i = 0; i < 3; i++) {
         stress(i, i) -= external_stress[i] / unit_transform;
     }
@@ -1088,7 +1085,7 @@ void ESolver_KS_PW<T, Device>::nscf() {
     if (diag_ethr - 1e-2 > -1e-5) {
         diag_ethr
             = std::max(1e-13,
-                       0.1 * std::min(1e-2, GlobalV::SCF_THR / GlobalV::nelec));
+                       0.1 * std::min(1e-2, PARAM.inp.scf_thr / GlobalV::nelec));
     }
     GlobalV::ofs_running << " PW_DIAG_THR  = " << diag_ethr << std::endl;
 
@@ -1130,7 +1127,7 @@ void ESolver_KS_PW<T, Device>::nscf() {
     std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "writing band energies");
 
     //! 5) print out band gaps
-    if (GlobalV::out_bandgap) {
+    if (PARAM.inp.out_bandgap) {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "writing band gaps");
         if (!GlobalV::TWO_EFERMI) {
             this->pelec->cal_bandgap();

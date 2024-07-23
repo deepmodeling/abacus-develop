@@ -679,7 +679,7 @@ void ReadInput::item_others()
         Input_Item item("td_vext_dire");
         item.annotation = "extern potential direction";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            para.input.td_vext_dire = longstring(item.str_values, item.get_size());
+            para.input.td_vext_dire = longstring(item.str_values);
         };
         sync_string(input.td_vext_dire);
         this->add_item(item);
@@ -748,7 +748,7 @@ void ReadInput::item_others()
         Input_Item item("td_ttype");
         item.annotation = "type of electric field in time domain";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            para.input.td_ttype = longstring(item.str_values, item.get_size());
+            para.input.td_ttype = longstring(item.str_values);
         };
         sync_string(input.td_ttype);
         this->add_item(item);
@@ -781,7 +781,7 @@ void ReadInput::item_others()
         Input_Item item("td_gauss_freq");
         item.annotation = "frequency (freq) of Gauss type electric field";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            para.input.td_gauss_freq = longstring(item.str_values, item.get_size());
+            para.input.td_gauss_freq = longstring(item.str_values);
         };
         sync_string(input.td_gauss_freq);
         this->add_item(item);
@@ -790,7 +790,7 @@ void ReadInput::item_others()
         Input_Item item("td_gauss_phase");
         item.annotation = "phase of Gauss type electric field";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            para.input.td_gauss_phase = longstring(item.str_values, item.get_size());
+            para.input.td_gauss_phase = longstring(item.str_values);
         };
         sync_string(input.td_gauss_phase);
         this->add_item(item);
@@ -799,7 +799,7 @@ void ReadInput::item_others()
         Input_Item item("td_gauss_sigma");
         item.annotation = "sigma of Gauss type electric field";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            para.input.td_gauss_sigma = longstring(item.str_values, item.get_size());
+            para.input.td_gauss_sigma = longstring(item.str_values);
         };
         sync_string(input.td_gauss_sigma);
         this->add_item(item);
@@ -808,7 +808,7 @@ void ReadInput::item_others()
         Input_Item item("td_gauss_t0");
         item.annotation = "step number of time center (t0) of Gauss type electric field";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            para.input.td_gauss_t0 = longstring(item.str_values, item.get_size());
+            para.input.td_gauss_t0 = longstring(item.str_values);
         };
         sync_string(input.td_gauss_t0);
         this->add_item(item);
@@ -817,7 +817,7 @@ void ReadInput::item_others()
         Input_Item item("td_gauss_amp");
         item.annotation = "amplitude of Gauss type electric field";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            para.input.td_gauss_amp = longstring(item.str_values, item.get_size());
+            para.input.td_gauss_amp = longstring(item.str_values);
         };
         sync_string(input.td_gauss_amp);
         this->add_item(item);
@@ -826,7 +826,7 @@ void ReadInput::item_others()
         Input_Item item("td_trape_freq");
         item.annotation = "frequency of Trapezoid type electric field";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            para.input.td_trape_freq = longstring(item.str_values, item.get_size());
+            para.input.td_trape_freq = longstring(item.str_values);
         };
         sync_string(input.td_trape_freq);
         this->add_item(item);
@@ -835,7 +835,7 @@ void ReadInput::item_others()
         Input_Item item("td_trape_phase");
         item.annotation = "phase of Trapezoid type electric field";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            para.input.td_trape_phase = longstring(item.str_values, item.get_size());
+            para.input.td_trape_phase = longstring(item.str_values);
         };
         sync_string(input.td_trape_phase);
         this->add_item(item);
@@ -844,7 +844,7 @@ void ReadInput::item_others()
         Input_Item item("td_trape_t1");
         item.annotation = "t1 of Trapezoid type electric field";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            para.input.td_trape_t1 = longstring(item.str_values, item.get_size());
+            para.input.td_trape_t1 = longstring(item.str_values);
         };
         sync_string(input.td_trape_t1);
         this->add_item(item);
@@ -853,7 +853,7 @@ void ReadInput::item_others()
         Input_Item item("td_trape_t2");
         item.annotation = "t2 of Trapezoid type electric field";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            para.input.td_trape_t2 = longstring(item.str_values, item.get_size());
+            para.input.td_trape_t2 = longstring(item.str_values);
         };
         sync_string(input.td_trape_t2);
         this->add_item(item);
@@ -862,7 +862,7 @@ void ReadInput::item_others()
         Input_Item item("td_trape_t3");
         item.annotation = "t3 of Trapezoid type electric field";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            para.input.td_trape_t3 = longstring(item.str_values, item.get_size());
+            para.input.td_trape_t3 = longstring(item.str_values);
         };
         sync_string(input.td_trape_t3);
         this->add_item(item);
@@ -871,7 +871,7 @@ void ReadInput::item_others()
         Input_Item item("td_trape_amp");
         item.annotation = "amplitude of Trapezoid type electric field";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            para.input.td_trape_amp = longstring(item.str_values, item.get_size());
+            para.input.td_trape_amp = longstring(item.str_values);
         };
         sync_string(input.td_trape_amp);
         this->add_item(item);
@@ -880,7 +880,7 @@ void ReadInput::item_others()
         Input_Item item("td_trigo_freq1");
         item.annotation = "frequency 1 of Trigonometric type electric field";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            para.input.td_trigo_freq1 = longstring(item.str_values, item.get_size());
+            para.input.td_trigo_freq1 = longstring(item.str_values);
         };
         sync_string(input.td_trigo_freq1);
         this->add_item(item);
@@ -889,7 +889,7 @@ void ReadInput::item_others()
         Input_Item item("td_trigo_freq2");
         item.annotation = "frequency 2 of Trigonometric type electric field";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            para.input.td_trigo_freq2 = longstring(item.str_values, item.get_size());
+            para.input.td_trigo_freq2 = longstring(item.str_values);
         };
         sync_string(input.td_trigo_freq2);
         this->add_item(item);
@@ -898,7 +898,7 @@ void ReadInput::item_others()
         Input_Item item("td_trigo_phase1");
         item.annotation = "phase 1 of Trigonometric type electric field";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            para.input.td_trigo_phase1 = longstring(item.str_values, item.get_size());
+            para.input.td_trigo_phase1 = longstring(item.str_values);
         };
         sync_string(input.td_trigo_phase1);
         this->add_item(item);
@@ -907,7 +907,7 @@ void ReadInput::item_others()
         Input_Item item("td_trigo_phase2");
         item.annotation = "phase 2 of Trigonometric type electric field";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            para.input.td_trigo_phase2 = longstring(item.str_values, item.get_size());
+            para.input.td_trigo_phase2 = longstring(item.str_values);
         };
         sync_string(input.td_trigo_phase2);
         this->add_item(item);
@@ -916,7 +916,7 @@ void ReadInput::item_others()
         Input_Item item("td_trigo_amp");
         item.annotation = "amplitude of Trigonometric type electric field";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            para.input.td_trigo_amp = longstring(item.str_values, item.get_size());
+            para.input.td_trigo_amp = longstring(item.str_values);
         };
         sync_string(input.td_trigo_amp);
         this->add_item(item);
@@ -925,7 +925,7 @@ void ReadInput::item_others()
         Input_Item item("td_heavi_t0");
         item.annotation = "t0 of Heaviside type electric field";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            para.input.td_heavi_t0 = longstring(item.str_values, item.get_size());
+            para.input.td_heavi_t0 = longstring(item.str_values);
         };
         sync_string(input.td_heavi_t0);
         this->add_item(item);
@@ -934,7 +934,7 @@ void ReadInput::item_others()
         Input_Item item("td_heavi_amp");
         item.annotation = "amplitude of Heaviside type electric field";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            para.input.td_heavi_amp = longstring(item.str_values, item.get_size());
+            para.input.td_heavi_amp = longstring(item.str_values);
         };
         sync_string(input.td_heavi_amp);
         this->add_item(item);
@@ -949,9 +949,15 @@ void ReadInput::item_others()
         Input_Item item("ocp_set");
         item.annotation = "set occupation";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            para.input.ocp_set = longstring(item.str_values, item.get_size());
+            parse_expression(item.str_values, para.input.ocp_kb);
         };
-        sync_string(input.ocp_set);
+        item.get_final_value = [](Input_Item& item, const Parameter& para) {
+            if(item.is_read())
+            {
+                item.final_value.str(longstring(item.str_values));
+            }
+        };
+        add_doublevec_bcast(input.ocp_kb, para.input.ocp_kb.size(), 0.0);
         this->add_item(item);
     }
 

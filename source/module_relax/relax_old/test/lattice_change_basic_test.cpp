@@ -2,6 +2,9 @@
 
 #include "for_test.h"
 #include "gtest/gtest.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 /************************************************
  *  unit tests of namespace Lattice_Change_Basic
  ***********************************************/
@@ -217,7 +220,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase1)
 {
     // Set up test data
     Lattice_Change_Basic::update_iter = 0;
-    GlobalV::STRESS_THR = 10.0;
+    PARAM.input.stress_thr = 10.0;
     GlobalV::ofs_running.open("log");
     ucell.lc[0] = 1;
     ucell.lc[1] = 1;
@@ -254,7 +257,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase2)
 {
     // Set up test data
     Lattice_Change_Basic::update_iter = 0;
-    GlobalV::STRESS_THR = 10.0;
+    PARAM.input.stress_thr = 10.0;
     GlobalV::ofs_running.open("log");
     ucell.lc[0] = 1;
     ucell.lc[1] = 1;
@@ -292,7 +295,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase3)
 {
     // Set up test data
     Lattice_Change_Basic::update_iter = 0;
-    GlobalV::STRESS_THR = 10.0;
+    PARAM.input.stress_thr = 10.0;
     GlobalV::ofs_running.open("log");
     ucell.lc[0] = 1;
     ucell.lc[1] = 1;
@@ -329,7 +332,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase4)
 {
     // Set up test data
     Lattice_Change_Basic::update_iter = 0;
-    GlobalV::STRESS_THR = 10.0;
+    PARAM.input.stress_thr = 10.0;
     GlobalV::ofs_running.open("log");
     ucell.lc[0] = 0;
     ucell.lc[1] = 0;
@@ -366,7 +369,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase5)
 {
     // Set up test data
     Lattice_Change_Basic::update_iter = 0;
-    GlobalV::STRESS_THR = 10.0;
+    PARAM.input.stress_thr = 10.0;
     GlobalV::ofs_running.open("log");
     ucell.lc[0] = 0;
     ucell.lc[1] = 0;
@@ -404,7 +407,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase6)
 {
     // Set up test data
     Lattice_Change_Basic::update_iter = 0;
-    GlobalV::STRESS_THR = 10.0;
+    PARAM.input.stress_thr = 10.0;
     GlobalV::ofs_running.open("log");
     ucell.lc[0] = 0;
     ucell.lc[1] = 0;

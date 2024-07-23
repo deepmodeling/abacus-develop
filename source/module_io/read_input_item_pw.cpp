@@ -91,8 +91,9 @@ void ReadInput::item_pw()
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.calculation == "get_S" && para.input.basis_type == "pw")
             {
-                if (para.input.pw_diag_thr > 1.0e-3)
+                if (para.input.pw_diag_thr > 1.0e-3) {
                     para.input.pw_diag_thr = 1.0e-5;
+}
             }
         };
         this->add_item(item);
@@ -247,8 +248,9 @@ void ReadInput::item_pw()
         Input_Item item("out_chg");
         item.annotation = ">0 output charge density for selected electron steps";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
+            if (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg") {
                 para.input.out_chg = 1;
+}
         };
         read_sync_int(input.out_chg);
         this->add_item(item);
@@ -257,8 +259,9 @@ void ReadInput::item_pw()
         Input_Item item("out_pot");
         item.annotation = "output realspace potential";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
+            if (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg") {
                 para.input.out_pot = 0;
+}
         };
         read_sync_int(input.out_pot);
         this->add_item(item);
@@ -280,8 +283,9 @@ void ReadInput::item_pw()
         item.annotation = "output energy and dos";
         read_sync_int(input.out_dos);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
+            if (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg") {
                 para.input.out_dos = 0;
+}
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.out_dos == 3 && para.input.symmetry == "1")
@@ -320,8 +324,9 @@ void ReadInput::item_pw()
             }
         };
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
+            if (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg") {
                 para.input.out_band[0] = 0;
+}
         };
         sync_intvec(input.out_band, 2, 0);
         this->add_item(item);
@@ -331,8 +336,9 @@ void ReadInput::item_pw()
         item.annotation = "output projected band structure";
         read_sync_bool(input.out_proj_band);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
+            if (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg") {
                 para.input.out_proj_band = false;
+}
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.basis_type == "pw" && para.input.out_proj_band)
@@ -367,10 +373,7 @@ void ReadInput::item_pw()
             {
                 para.input.read_file_dir = para.input.read_file_dir;
             }
-            if (para.input.read_file_dir.back() != '/')
-            {
-                para.input.read_file_dir += '/';
-            }
+            para.input.read_file_dir = to_dir(para.input.read_file_dir);
         };
         this->add_item(item);
     }
@@ -433,8 +436,9 @@ void ReadInput::item_pw()
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (!item.is_read())
+            if (!item.is_read()) {
                 return;
+}
             if (para.input.ndx * para.input.ndy * para.input.ndz == 0 && para.input.ndx != 0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "ndx, ndy, ndz should be all set to non-zero");
@@ -457,8 +461,9 @@ void ReadInput::item_pw()
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (!item.is_read())
+            if (!item.is_read()) {
                 return;
+}
             if (para.input.ndx * para.input.ndy * para.input.ndz == 0 && para.input.ndy != 0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "ndx, ndy, ndz should be all set to non-zero");
@@ -481,8 +486,9 @@ void ReadInput::item_pw()
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (!item.is_read())
+            if (!item.is_read()) {
                 return;
+}
             if (para.input.ndx * para.input.ndy * para.input.ndz == 0 && para.input.ndz != 0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "ndx, ndy, ndz should be all set to non-zero");

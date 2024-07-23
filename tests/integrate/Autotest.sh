@@ -269,7 +269,7 @@ for dir in $testdir; do
         test -d OUT.autotest || (echo "No 'OUT.autotest' dir presented. Some errors may happened in ABACUS." && exit 1)
         if test -z $g
         then
-            bash -e ../tools/catch_properties.sh result.out
+            bash -e ../../integrate/tools/catch_properties.sh result.out
             if [ $? -ne 0 ]; then
                 echo -e "\e[0;31m [ERROR     ]  Fatal Error in catch_properties.sh \e[0m"
                 let fatal++

@@ -111,7 +111,7 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, MD_para& md_p
                                     GlobalV::NSPIN, 
                                     false, // Cartesian coordinates
                                     GlobalV::CALCULATION == "md", 
-                                    GlobalV::out_mul,
+                                    PARAM.inp.out_mul,
                                     need_orb,
                                     GlobalV::deepks_setorb,
                                     GlobalV::MY_RANK);

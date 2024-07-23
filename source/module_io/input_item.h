@@ -42,12 +42,6 @@ class Input_Item
 
     size_t get_size() const ///< get size of the input item
     {
-        if (str_values.empty())
-            return 0;
-        else if (str_values.size() == 1 && str_values[0].empty())
-            return 0;
-        else
-            return str_values.size();
         return str_values.size();
     }
 

@@ -288,7 +288,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
         GlobalC::ORB.get_rcutmax_Phi(),
         GlobalC::ucell.infoNL.get_rcutmax_Beta(),
         GlobalV::GAMMA_ONLY_LOCAL);
-    atom_arrange::search(GlobalV::SEARCH_PBC,
+    atom_arrange::search(PARAM.inp.search_pbc,
         GlobalV::ofs_running,
         GlobalC::GridD,
         this->ucell,
@@ -326,7 +326,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
         psi_u,
         dpsi_u,
         d2psi_u,
-        GlobalV::NUM_STREAM);
+        PARAM.inp.nstream);
     psi_u.clear();
     psi_u.shrink_to_fit();
     dpsi_u.clear();
@@ -387,7 +387,7 @@ void LR::ESolver_LR<T, TR>::runner(int istep, UnitCell& cell)
             if (nspin == 2) { std::cout << "Calculating " << spin_type[is] << " excitations" << std::endl; }
             hamilt::Hamilt<T>* phamilt = new HamiltCasidaLR<T>(xc_kernel, nspin, this->nbasis, this->nocc, this->nvirt, this->ucell, GlobalC::GridD, this->psi_ks, this->eig_ks,
 #ifdef __EXX
-                this->exx_lri.get(), this->exx_info.info_global.hybrid_alpha,
+                this->exx_lri, this->exx_info.info_global.hybrid_alpha,
 #endif
                 this->gint_, this->pot[is], this->kv, & this->paraX_, & this->paraC_, & this->paraMat_);
             // solve the Casida equation

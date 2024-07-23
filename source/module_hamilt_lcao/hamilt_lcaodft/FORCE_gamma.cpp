@@ -251,7 +251,7 @@ void Force_LCAO<double>::ftable(const bool isforce,
         }
 #endif
 
-        if (GlobalV::deepks_out_unittest)
+        if (PARAM.inp.deepks_out_unittest)
         {
             GlobalC::ld.print_dm(dm_gamma[0]);
             GlobalC::ld.check_projected_dm();
