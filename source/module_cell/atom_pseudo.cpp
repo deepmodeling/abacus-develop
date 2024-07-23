@@ -165,7 +165,7 @@ void Atom_pseudo::bcast_atom_pseudo()
     Parallel_Common::bcast_int(nchi);
     Parallel_Common::bcast_int(nbeta);
     Parallel_Common::bcast_int(nv);
-    Parallel_Common::bcast_int(zv);
+    Parallel_Common::bcast_double(zv);
 
     // double
     Parallel_Common::bcast_double(etotps);

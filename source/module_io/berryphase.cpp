@@ -507,7 +507,8 @@ void berryphase::Macroscopic_polarization(const int npwx,
     {
         for (int ia = 0; ia < GlobalC::ucell.atoms[it].na; ia++)
         {
-            if (GlobalC::ucell.atoms[it].ncpp.zv % 2 == 1)
+            // should consider fractional electron number
+            if (int(GlobalC::ucell.atoms[it].ncpp.zv) % 2 == 1)
             {
                 mod_ion[atom_index] = 1;
                 lodd = true;
