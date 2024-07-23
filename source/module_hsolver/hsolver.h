@@ -74,7 +74,7 @@ class HSolver
     // choose method of DiagH for solve Hamiltonian matrix
     // cg, dav, elpa, scalapack_gvx, cusolver
     std::string method = "none";
-  public:
+
     Real diag_ethr=0.0; //threshold for diagonalization
     //set diag_ethr according to drho
     //for lcao and lcao-in-pw, we suppose the error is zero and we set diag_ethr to 0
@@ -87,10 +87,25 @@ class HSolver
     {
         return 0.0;
     }
-
     // calculate hsolver_error
     // for sdft, lcao and lcao-in-pw, we suppose the error is zero 
     virtual Real cal_hsolerror()
+    {
+        return 0.0;
+    };
+
+    virtual Real set_diagethr(Real diag_ethr_in, const int istep, const int iter, const Real drho)
+    {
+        return 0.0;
+    }
+    //reset diag_ethr according to drho and hsolver_error
+    virtual Real reset_diagethr(std::ofstream& ofs_running, const Real hsover_error, const Real drho, Real diag_ethr_in)
+    {
+        return 0.0;
+    }
+    // calculate hsolver_error
+    // for sdft, lcao and lcao-in-pw, we suppose the error is zero 
+    virtual Real cal_hsolerror(const Real diag_ethr_in)
     {
         return 0.0;
     };

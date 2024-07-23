@@ -109,7 +109,8 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
     return;
 }
 
-double HSolverPW_SDFT::set_diagethr(const int istep,
+double HSolverPW_SDFT::set_diagethr(double diag_ethr_in,
+                                    const int istep,
                                     const int iter,
                                     const double drho) {
     if (iter == 1) {
