@@ -38,6 +38,7 @@
 #ifdef __DEEPKS
 
 #include "LCAO_deepks.h"
+#include "LCAO_deepks_io.h" // mohan add 2024-07-22
 #include "module_base/blas_connector.h"
 #include "module_base/constants.h"
 #include "module_base/libm/libm.h"
@@ -472,16 +473,32 @@ inline void generate_py_files(const int lmaxd, const int nmaxd) {
 void LCAO_Deepks::cal_gedm_equiv(const int nat) {
     ModuleBase::TITLE("LCAO_Deepks", "cal_gedm_equiv");
 
-    this->save_npy_d(nat);
+	LCAO_deepks_io::save_npy_d(
+			nat, 
+			this->des_per_atom, 
+			this->inlmax, 
+			this->inl_l,
+			GlobalV::deepks_equiv, 
+			this->d_tensor, 
+			GlobalV::MY_RANK); // libnpy needed
+
     generate_py_files(this->lmaxd, this->nmaxd);
+
     if (GlobalV::MY_RANK == 0) {
         std::string cmd = "python cal_gedm.py " + PARAM.inp.deepks_model;
         int stat = std::system(cmd.c_str());
         assert(stat == 0);
     }
+
     MPI_Barrier(MPI_COMM_WORLD);
 
-    this->load_npy_gedm(nat);
+	LCAO_deepks_io::load_npy_gedm(
+			nat,
+			this->des_per_atom,
+			this->gedm,
+			this->E_delta,
+			GlobalV::MY_RANK);
+
     std::string cmd = "rm -f cal_gedm.py basis.yaml";
     std::system(cmd.c_str());
 }

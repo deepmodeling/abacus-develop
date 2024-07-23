@@ -36,7 +36,7 @@ int Pseudopot_upf::read_pseudo_blps(std::ifstream &ifs, Atom_pseudo& pp)
     double zatom;
     double zion;
     ifs >> zatom >> zion;
-    pp.zv = static_cast<int>(zion);
+    pp.zv = zion;
     ifs.ignore(300, '\n');
 
     atom_in ai;
