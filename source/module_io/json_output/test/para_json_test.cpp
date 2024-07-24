@@ -304,9 +304,9 @@ TEST(AbacusJsonTest, InitInfo)
     ASSERT_STREQ(Json::AbacusJson::doc["init"]["point_group"].GetString(), "T_d");
     ASSERT_STREQ(Json::AbacusJson::doc["init"]["point_group_in_space"].GetString(), "O_h");
 
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["nelectron_each_type"]["Si"].GetInt(), 3);
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["nelectron_each_type"]["C"].GetInt(), 4);
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["nelectron_each_type"]["O"].GetInt(), 5);
+    ASSERT_EQ(Json::AbacusJson::doc["init"]["nelectron_each_type"]["Si"].GetDouble(), 3);
+    ASSERT_EQ(Json::AbacusJson::doc["init"]["nelectron_each_type"]["C"].GetDouble(), 4);
+    ASSERT_EQ(Json::AbacusJson::doc["init"]["nelectron_each_type"]["O"].GetDouble(), 5);
 
     ASSERT_EQ(Json::AbacusJson::doc["init"]["natom_each_type"]["Si"].GetInt(), 1);
     ASSERT_EQ(Json::AbacusJson::doc["init"]["natom_each_type"]["C"].GetInt(), 2);

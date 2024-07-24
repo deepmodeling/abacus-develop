@@ -98,7 +98,8 @@ class LCAO_Deepks
     //-------------------
     // private variables
     //-------------------
-  private:
+//  private:
+  public: // change to public to reconstuct the code, 2024-07-22 by mohan
     int lmaxd = 0;  // max l of descirptors
     int nmaxd = 0;  //#. descriptors per l
     int inlmax = 0; // tot. number {i,n,l} - atom, n, l
@@ -539,84 +540,6 @@ class LCAO_Deepks
   private:
     const Parallel_Orbitals* pv;
     void cal_gvdm(const int nat);
-
-    //-------------------
-    // LCAO_deepks_io.cpp
-    //-------------------
-
-    // This file contains subroutines that contains interface with libnpy
-    // since many arrays must be saved in numpy format
-    // It also contains subroutines for printing density matrices
-    // which is used in unit tests
-
-    // There are 2 subroutines for printing density matrices:
-    // 1. print_dm : for gamma only
-    // 2. print_dm_k : for multi-k
-
-    // And 6 which prints quantities in .npy format
-    // 3. save_npy_d : descriptor ->dm_eig.npy
-    // 4. save_npy_gvx : gvx ->grad_vx.npy
-    // 5. save_npy_e : energy
-    // 6. save_npy_f : force
-    // 7. save_npy_s : stress
-    // 8. save_npy_o: orbital
-    // 9. save_npy_orbital_precalc: orbital_precalc -> orbital_precalc.npy
-    //10. save_npy_h : Hamiltonian
-    //11. save_npy_v_delta_precalc : v_delta_precalc
-    //12. save_npy_psialpha : psialpha
-    //13. save_npy_gevdm : grav_evdm , can use psialpha and gevdm to calculate v_delta_precalc
-
-  public:
-    /// print density matrices
-    // void print_dm(const ModuleBase::matrix &dm);
-    void print_dm(const std::vector<double>& dm);
-    // void print_dm_k(const int nks, const std::vector<ModuleBase::ComplexMatrix>& dm);
-    void print_dm_k(const int nks, const std::vector<std::vector<std::complex<double>>>& dm);
-
-    ///----------------------------------------------------------------------
-    /// The following 4 functions save the `[dm_eig], [e_base], [f_base], [grad_vx]`
-    /// of current configuration as `.npy` file, when `deepks_scf = 1`.
-    /// After a full group of consfigurations are calculated,
-    /// we need a python script to `load` and `torch.cat` these `.npy` files,
-    /// and get `l_e_delta,npy` and `l_f_delta.npy` corresponding to the exact E, F data.
-    ///
-    /// Unit of energy: Ry
-    ///
-    /// Unit of force: Ry/Bohr
-    ///----------------------------------------------------------------------
-    void save_npy_d(const int nat);
-    void save_npy_e(const double& e /**<[in] \f$E_{base}\f$ or \f$E_{tot}\f$, in Ry*/, const std::string& e_file);
-    void save_npy_f(const ModuleBase::matrix& fbase /**<[in] \f$F_{base}\f$ or \f$F_{tot}\f$, in Ry/Bohr*/,
-                    const std::string& f_file,
-                    const int nat);
-
-    void save_npy_s(const ModuleBase::matrix& sbase /**<[in] \f$S_{base}\f$ or \f$S_{tot}\f$, in Ry/Bohr^3*/,
-                    const std::string& s_file,
-                    const double omega);
-    void save_npy_gvx(const int nat);
-    void save_npy_gvepsl(const int nat);
-
-    // QO added on 2021-12-15
-    void save_npy_o(const ModuleBase::matrix& bandgap /**<[in] \f$E_{base}\f$ or \f$E_{tot}\f$, in Ry*/,
-                    const std::string& o_file,
-                    const int nks);
-    void save_npy_orbital_precalc(const int nat, const int nks);
-
-    void load_npy_gedm(const int nat);
-
-    //xinyuan added on 2023-2-20
-    void save_npy_h(const ModuleBase::matrix &H,const std::string &h_file,const int nlocal);//just for gamma only
-    void save_npy_v_delta_precalc(const int nat, const int nks,const int nlocal);
-    void save_npy_psialpha(const int nat, const int nks,const int nlocal);
-    void save_npy_gevdm(const int nat);
-
-    //-------------------
-    // LCAO_deepks_mpi.cpp
-    //-------------------
-
-    // This file contains only one subroutine, allsum_deepks
-    // which is used to perform allsum on a two-level pointer
-    // It is used in a few places in the deepks code
 
 #ifdef __MPI
 
