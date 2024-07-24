@@ -11,6 +11,8 @@ if(ENABLE_DEEPKS)
       LCAO_deepks_vdelta.cpp
       LCAO_deepks_hmat.cpp
       LCAO_deepks_interface.cpp
+      orbital_precalc.cpp
+      orbital_precalc_k.cpp
   )
 
   add_library(

@@ -142,6 +142,8 @@ public:
 
     /// @brief  set atom map for each symmetry operation
     void set_atom_map(const Atom* atoms);
+    /// @brief deal with the rarely happen incomplete atom map due to a subtle symmetry_prec
+    void reset_atom_map(const Atom* atoms);
     /// @brief check if all the atoms are movable
     ///  delta_pos symmetrization in relax is only meaningful when all the atoms are movable in all the directions.
     bool is_all_movable(const Atom* atoms, const Statistics& st)const;

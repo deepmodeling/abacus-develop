@@ -533,6 +533,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
 
         auto ngk_pointer = psi.get_ngk_pointer();
         /// wrap hpsi into lambda function, Matrix \times blockvector
+        /// hpsi(HX, X, nband, dim, band_index1, band_index2)
         auto hpsi_func = [hm, ngk_pointer](T* hpsi_out,
                                            T* psi_in,
                                            const int nband_in,
@@ -554,6 +555,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         };
 
         /// wrap spsi into lambda function, Matrix \times blockvector
+        /// spsi(X, SX, nrow, npw, nbands)
         auto spsi_func = [hm](const T* psi_in, T* spsi_out,
                                const int nrow,  // dimension of spsi: nbands * nrow
                                const int npw,   // number of plane waves
