@@ -6,6 +6,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #ifdef __DEEPKS
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h" //caoyu add for deepks on 20210813
+#include "module_hamilt_lcao/module_deepks/LCAO_deepks_io.h"
 #endif
 #include "module_cell/module_neighbor/sltk_grid_driver.h" //GridD
 #include "module_elecstate/elecstate_lcao.h"
@@ -253,16 +254,22 @@ void Force_LCAO<double>::ftable(const bool isforce,
 
         if (PARAM.inp.deepks_out_unittest)
         {
-            GlobalC::ld.print_dm(dm_gamma[0]);
+            LCAO_deepks_io::print_dm(dm_gamma[0], GlobalV::NLOCAL, this->ParaV->nrow);
+
             GlobalC::ld.check_projected_dm();
+
             GlobalC::ld.check_descriptor(ucell);
+
             GlobalC::ld.check_gedm();
 
             GlobalC::ld.cal_e_delta_band(dm_gamma);
+
             std::ofstream ofs("E_delta_bands.dat");
             ofs << std::setprecision(10) << GlobalC::ld.e_delta_band;
+
             std::ofstream ofs1("E_delta.dat");
             ofs1 << std::setprecision(10) << GlobalC::ld.E_delta;
+
             GlobalC::ld.check_f_delta(ucell.nat, svnl_dalpha);
         }
     }

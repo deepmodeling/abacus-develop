@@ -49,7 +49,7 @@ int Pseudopot_upf::read_pseudo_vwr(std::ifstream &ifs, Atom_pseudo& pp)
 	GlobalV::ofs_running << std::setw(15) << "ATOM" << std::setw(15) << pp.psd << std::endl;
 	// (4) valence electron number
 	ifs >> value; length = value.find(","); value.erase(length,1);
-	pp.zv = std::atoi( value.c_str() );
+	pp.zv = std::stod( value );
 	GlobalV::ofs_running << std::setw(15) << "Z(VALENCE)" << std::setw(15) << pp.zv << std::endl;
 	// (5) spd_loc, which local pseudopotential should I choose
 	ifs >> value; length = value.find(","); value.erase(length,1);
