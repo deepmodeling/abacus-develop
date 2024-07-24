@@ -1,8 +1,6 @@
 #ifndef HSOLVER_H
 #define HSOLVER_H
 
-#include <complex>
-
 #include "diagh.h"
 #include "module_base/macros.h"
 #include "module_elecstate/elecstate.h"
@@ -10,6 +8,8 @@
 #include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
 #include "module_hamilt_pw/hamilt_stodft/sto_wf.h"
 #include "module_psi/psi.h"
+
+#include <complex>
 
 namespace hsolver
 {
@@ -19,9 +19,11 @@ class HSolver
 {
   private:
     using Real = typename GetTypeReal<T>::type;
+
   public:
-    HSolver(){};
-    virtual ~HSolver(){
+    HSolver() {};
+    virtual ~HSolver()
+    {
         delete pdiagh;
     };
     /*//initialization, used in construct function or restruct a new HSolver
@@ -43,12 +45,30 @@ class HSolver
     {
         return;
     }
+
+    virtual void solve(hamilt::Hamilt<T, Device>* phm,
+                       psi::Psi<T, Device>& ppsi,
+                       elecstate::ElecState* pes,
+                       const std::string method,
+
+                       const std::string calculation_type_in,
+                       const std::string basis_type_in,
+                       const bool use_paw_in,
+                       const bool use_uspp_in,
+                       const int rank_in_pool_in,
+                       const int nproc_in_pool_in,
+
+                       const bool skip_charge = false)
+    {
+        return;
+    }
+
     /// @brief solve function for lcao_in_pw
     /// @param phm interface to hamilt
     /// @param ppsi reference to psi
     /// @param pes interface to elecstate
     /// @param transform transformation matrix between lcao and pw
-    /// @param skip_charge 
+    /// @param skip_charge
     virtual void solve(hamilt::Hamilt<T, Device>* phm,
                        psi::Psi<T, Device>& ppsi,
                        elecstate::ElecState* pes,
@@ -74,22 +94,23 @@ class HSolver
     // choose method of DiagH for solve Hamiltonian matrix
     // cg, dav, elpa, scalapack_gvx, cusolver
     std::string method = "none";
+
   public:
-    Real diag_ethr=0.0; //threshold for diagonalization
-    //set diag_ethr according to drho
-    //for lcao and lcao-in-pw, we suppose the error is zero and we set diag_ethr to 0
+    Real diag_ethr = 0.0; // threshold for diagonalization
+    // set diag_ethr according to drho
+    // for lcao and lcao-in-pw, we suppose the error is zero and we set diag_ethr to 0
     virtual Real set_diagethr(const int istep, const int iter, const Real drho)
     {
         return 0.0;
     }
-    //reset diag_ethr according to drho and hsolver_error
+    // reset diag_ethr according to drho and hsolver_error
     virtual Real reset_diagethr(std::ofstream& ofs_running, const Real hsover_error, const Real drho)
     {
         return 0.0;
     }
 
     // calculate hsolver_error
-    // for sdft, lcao and lcao-in-pw, we suppose the error is zero 
+    // for sdft, lcao and lcao-in-pw, we suppose the error is zero
     virtual Real cal_hsolerror()
     {
         return 0.0;
@@ -97,7 +118,6 @@ class HSolver
 
   protected:
     DiagH<T, Device>* pdiagh = nullptr; // for single Hamiltonian matrix diagonal solver
-
 };
 
 } // namespace hsolver

@@ -12,8 +12,6 @@ class Symmetry : public Symmetry_Basic
 public:
     Symmetry() {
         this->epsilon = 1e-6;
-        this->tab = 12;
-        this->available = true;
     };
     ~Symmetry() {};
 
@@ -22,11 +20,16 @@ public:
 	//0 : only basic time-reversal symmetry is considered, point k and -k would fold to k
 	//1 : point group symmetry is considered
     static int symm_flag;
-    static bool symm_autoclose;
-    static bool pricell_loop;   ///< whether to loop primitive cell in rhog_symmetry
+    static bool symm_autoclose; // controled by INPUT
+    static bool pricell_loop;   ///< whether to loop primitive cell in rhog_symmetry, Only for AFM
 
+    /// @brief analyze the symmetry of the system
+    /// @param lat structure of lattice
+    /// @param st 
+    /// @param atoms all atoms
+    /// @param ofs_running 
+	/// get the symmetry information of the system, gmatries (rotation 3*3 matrixs), gtrans (transfer a collections vector3), etc.
     void analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, std::ofstream& ofs_running);
-	bool available;
 
 	ModuleBase::Vector3<double> s1, s2, s3;
 	ModuleBase::Vector3<double> a1, a2, a3;	//primitive cell vectors(might be changed during the process of the program)
@@ -45,13 +48,13 @@ public:
 	double *rotpos;
 	
 	
-	std::vector<ModuleBase::Vector3<double>> ptrans;
+	std::vector<ModuleBase::Vector3<double>> ptrans; // the translation vectors of the primitive cell in the input structure
     int ncell=1;	//the number of primitive cells within one supercell
 	int *index;
 	
 	double cel_const[6];
 	double pcel_const[6];	//cel_const of primitive cell
-	double pre_const[6];	//cel_const of input configuration
+	double pre_const[6];	//cel_const of input configuration, first 3 is moduli of a1, a2, a3, last 3 is eular angle
 
 	bool symflag_fft[48];
 	int sym_test;
@@ -68,7 +71,7 @@ public:
 	int nop;	//the number of point group operations of the pure bravais lattice without basis
 	int s_flag;	//whether the current matrix is one of all space group operations
 	int nrot;	//the number of pure point group rotations
-    int nrotk = -1; 	//the number of all space group operations
+    int nrotk = -1; 	//the number of all space group operations, >0 means the nrotk has been analyzed
     int max_nrotk = -1;  ///< record the maximum number of symmetry operations during cell-relax
     int pgnumber;	//the serial number of point group
 	int spgnumber;	//the serial number of point group in space group
@@ -77,8 +80,6 @@ public:
 
 	ModuleBase::Matrix3 optlat;		//the optimized-symmetry lattice
 	ModuleBase::Matrix3 plat;		//the primitive lattice
-
-	int tab;
 
     bool all_mbl = true;    ///< whether all the atoms are movable in all the directions
 
@@ -89,34 +90,21 @@ public:
         double* cel_const, double* pre_const, int& real_brav, std::string& bravname, const Atom* atoms,
         bool convert_atoms, double* newpos = nullptr)const;
 
-	void recip(
-			const double a,
-			const ModuleBase::Vector3<double> &a1,
-			const ModuleBase::Vector3<double> &a2,
-			const ModuleBase::Vector3<double> &a3,
-			ModuleBase::Vector3<double> &b1,
-			ModuleBase::Vector3<double> &b2,
-			ModuleBase::Vector3<double> &b3
-			);
-	
-	void change_lattice(void);
-
     void getgroup(int& nrot, int& nrotk, std::ofstream& ofs_running, double* pos);
     void checksym(ModuleBase::Matrix3& s, ModuleBase::Vector3<double>& gtrans, double* pos);
     /// @brief  primitive cell analysis
     void pricell(double* pos, const Atom* atoms);
+
+	/// -----------------------
+	/// Symmetrize the charge density, the forces, and the stress
+	/// -----------------------
 	void rho_symmetry(double *rho, const int &nr1, const int &nr2, const int &nr3);
 	void rhog_symmetry(std::complex<double> *rhogtot, int* ixyz2ipw, const int &nx, 
 			const int &ny, const int &nz, const int & fftnx, const int &fftny, const int &fftnz);
-
     /// symmetrize a vector3 with nat elements, which can be forces or variation of atom positions in relax
-    void symmetrize_vec3_nat(double* v)const;
+    void symmetrize_vec3_nat(double* v)const;   // force
     /// symmetrize a 3*3 tensor, which can be stress or variation of unitcell in cell-relax
-    void symmetrize_mat3(ModuleBase::matrix& sigma, const Lattice& lat)const;
-
-    void write();
-
-	void print_pos(const double* pos, const int &nat);
+    void symmetrize_mat3(ModuleBase::matrix& sigma, const Lattice& lat)const; // stress
 
 	//convert n rotation-matrices from sa on basis {a1, a2, a3} to sb on basis {b1, b2, b3}
 	void gmatrix_convert(const ModuleBase::Matrix3* sa, ModuleBase::Matrix3* sb, 

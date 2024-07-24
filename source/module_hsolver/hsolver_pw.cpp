@@ -1,18 +1,18 @@
 #include "hsolver_pw.h"
 
-#include "diago_bpcg.h"
-#include "diago_cg.h"
-#include "diago_dav_subspace.h"
-#include "diago_david.h"
 #include "module_base/global_variable.h"
-#include "module_base/parallel_global.h" // for MPI
 #include "module_base/timer.h"
 #include "module_base/tool_quit.h"
 #include "module_elecstate/elecstate_pw.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
+#include "module_hamilt_general/hamilt.h"
 #include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
+#include "module_psi/psi.h"
+
 #include "module_hsolver/diag_comm_info.h"
+#include "module_hsolver/diago_bpcg.h"
+#include "module_hsolver/diago_cg.h"
+#include "module_hsolver/diago_dav_subspace.h"
+#include "module_hsolver/diago_david.h"
 #include "module_hsolver/diago_iter_assist.h"
 
 #include <algorithm>
@@ -20,24 +20,18 @@
 
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+// #include "module_base/parallel_global.h" // for MPI
+// #include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
 #endif
 namespace hsolver
 {
-
-template <typename T, typename Device>
-HSolverPW<T, Device>::HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in, wavefunc* pwf_in)
-{
-    this->classname = "HSolverPW";
-    this->wfc_basis = wfc_basis_in;
-    this->pwf = pwf_in;
-    this->diag_ethr = GlobalV::PW_DIAG_THR;
-}
 
 #ifdef USE_PAW
 template <typename T, typename Device>
 void HSolverPW<T, Device>::paw_func_in_kloop(const int ik)
 {
-    if (GlobalV::use_paw)
+    if (this->use_paw)
     {
         const int npw = this->wfc_basis->npwk[ik];
         ModuleBase::Vector3<double>* _gk = new ModuleBase::Vector3<double>[npw];
@@ -96,7 +90,7 @@ void HSolverPW<T, Device>::paw_func_in_kloop(const int ik)
 template <typename T, typename Device>
 void HSolverPW<T, Device>::call_paw_cell_set_currentk(const int ik)
 {
-    if (GlobalV::use_paw)
+    if (this->use_paw)
     {
         GlobalC::paw_cell.set_currentk(ik);
     }
@@ -105,7 +99,7 @@ void HSolverPW<T, Device>::call_paw_cell_set_currentk(const int ik)
 template <typename T, typename Device>
 void HSolverPW<T, Device>::paw_func_after_kloop(psi::Psi<T, Device>& psi, elecstate::ElecState* pes)
 {
-    if (GlobalV::use_paw)
+    if (this->use_paw)
     {
         if (typeid(Real) != typeid(double))
         {
@@ -180,7 +174,7 @@ void HSolverPW<T, Device>::paw_func_after_kloop(psi::Psi<T, Device>& psi, elecst
         std::vector<int> nrhoijsel;
 
 #ifdef __MPI
-        if (GlobalV::RANK_IN_POOL == 0)
+        if (this->rank_in_pool == 0)
         {
             GlobalC::paw_cell.get_rhoijp(rhoijp, rhoijselect, nrhoijsel);
 
@@ -214,6 +208,15 @@ void HSolverPW<T, Device>::paw_func_after_kloop(psi::Psi<T, Device>& psi, elecst
 #endif
 
 template <typename T, typename Device>
+HSolverPW<T, Device>::HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in, wavefunc* pwf_in)
+{
+    this->classname = "HSolverPW";
+    this->wfc_basis = wfc_basis_in;
+    this->pwf = pwf_in;
+    this->diag_ethr = GlobalV::PW_DIAG_THR;
+}
+
+template <typename T, typename Device>
 void HSolverPW<T, Device>::set_isOccupied(std::vector<bool>& is_occupied,
                                           elecstate::ElecState* pes,
                                           const int i_scf,
@@ -244,6 +247,14 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
                                  psi::Psi<T, Device>& psi,
                                  elecstate::ElecState* pes,
                                  const std::string method_in,
+
+                                 const std::string calculation_type_in,
+                                 const std::string basis_type_in,
+                                 const bool use_paw_in,
+                                 const bool use_uspp_in,
+                                 const int rank_in_pool_in,
+                                 const int nproc_in_pool_in,
+
                                  const bool skip_charge)
 {
     ModuleBase::TITLE("HSolverPW", "solve");
@@ -251,6 +262,14 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
 
     // select the method of diagonalization
     this->method = method_in;
+    this->calculation_type = calculation_type_in;
+    this->basis_type = basis_type_in;
+
+    this->use_paw = use_paw_in;
+    this->use_uspp = use_uspp_in;
+
+    this->rank_in_pool = rank_in_pool_in;
+    this->nproc_in_pool = nproc_in_pool_in;
 
     // report if the specified diagonalization method is not supported
     const std::initializer_list<std::string> _methods = {"cg", "dav", "dav_subspace", "bpcg"};
@@ -343,7 +362,7 @@ template <typename T, typename Device>
 void HSolverPW<T, Device>::updatePsiK(hamilt::Hamilt<T, Device>* pHamilt, psi::Psi<T, Device>& psi, const int ik)
 {
     psi.fix_k(ik);
-    if (!GlobalV::psi_initializer && !this->initialed_psi && GlobalV::BASIS_TYPE == "pw")
+    if (!GlobalV::psi_initializer && !this->initialed_psi && this->basis_type == "pw")
     {
         hamilt::diago_PAO_in_pw_k2(this->ctx, ik, psi, this->wfc_basis, this->pwf, pHamilt);
     }
@@ -357,9 +376,9 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
                                            Real* eigenvalue)
 {
 #ifdef __MPI
-    const diag_comm_info comm_info = {POOL_WORLD, GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL};
+    const diag_comm_info comm_info = {POOL_WORLD, this->rank_in_pool, this->nproc_in_pool};
 #else
-    const diag_comm_info comm_info = {GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL};
+    const diag_comm_info comm_info = {this->rank_in_pool, this->nproc_in_pool};
 #endif
 
     if (this->method == "cg")
@@ -388,13 +407,13 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
 
             DiagoIterAssist<T, Device>::diagH_subspace(hm, psi_in_wrapper, psi_out_wrapper, eigen.data<Real>());
         };
-        DiagoCG<T, Device> cg(GlobalV::BASIS_TYPE,
-                              GlobalV::CALCULATION,
+        DiagoCG<T, Device> cg(this->basis_type,
+                              this->calculation_type,
                               DiagoIterAssist<T, Device>::need_subspace,
                               subspace_func,
                               DiagoIterAssist<T, Device>::PW_DIAG_THR,
                               DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
-                              GlobalV::NPROC_IN_POOL);
+                              this->nproc_in_pool);
 
         // warp the hpsi_func and spsi_func into a lambda function
         using ct_Device = typename ct::PsiToContainer<Device>::type;
@@ -425,7 +444,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
             const auto ndim = psi_in.shape().ndim();
             REQUIRES_OK(ndim <= 2, "dims of psi_in should be less than or equal to 2");
 
-            if (GlobalV::use_uspp)
+            if (this->use_uspp)
             {
                 // Convert a Tensor object to a psi::Psi object
                 hm->sPsi(psi_in.data<T>(),
@@ -494,7 +513,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
 
             ModuleBase::timer::tick("DavSubspace", "hpsi_func");
         };
-        bool scf = GlobalV::CALCULATION == "nscf" ? false : true;
+        bool scf = this->calculation_type == "nscf" ? false : true;
         const std::vector<bool> is_occupied(psi.get_nbands(), true);
 
         Diago_DavSubspace<T, Device> dav_subspace(pre_condition,
@@ -507,8 +526,8 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
                                                   DiagoIterAssist<T, Device>::need_subspace,
                                                   comm_info);
 
-        DiagoIterAssist<T, Device>::avg_iter
-            += static_cast<double>(dav_subspace.diag(hpsi_func, psi.get_pointer(), psi.get_nbasis(), eigenvalue, is_occupied, scf));
+        DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(
+            dav_subspace.diag(hpsi_func, psi.get_pointer(), psi.get_nbasis(), eigenvalue, is_occupied, scf));
     }
     else if (this->method == "dav")
     {
@@ -518,7 +537,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         const int ntry_max = 5;
         /// In non-self consistent calculation, do until totally converged. Else
         /// allow 5 eigenvecs to be NOT converged.
-        const int notconv_max = ("nscf" == GlobalV::CALCULATION) ? 0 : 5;
+        const int notconv_max = ("nscf" == this->calculation_type) ? 0 : 5;
         /// convergence threshold
         const Real david_diag_thr = DiagoIterAssist<T, Device>::PW_DIAG_THR;
         /// maximum iterations
@@ -567,11 +586,22 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
             ModuleBase::timer::tick("David", "spsi_func");
         };
 
-
-        DiagoDavid<T, Device> david(pre_condition.data(), nband, dim, GlobalV::PW_DIAG_NDIM, GlobalV::use_paw, comm_info);
+        DiagoDavid<T, Device> david(pre_condition.data(),
+                                    nband,
+                                    dim,
+                                    GlobalV::PW_DIAG_NDIM,
+                                    this->use_paw,
+                                    comm_info);
         // do diag and add davidson iteration counts up to avg_iter
-        DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(
-            david.diag(hpsi_func, spsi_func, ldPsi, psi.get_pointer(), eigenvalue, david_diag_thr, david_maxiter, ntry_max, notconv_max));
+        DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(david.diag(hpsi_func,
+                                                                               spsi_func,
+                                                                               ldPsi,
+                                                                               psi.get_pointer(),
+                                                                               eigenvalue,
+                                                                               david_diag_thr,
+                                                                               david_maxiter,
+                                                                               ntry_max,
+                                                                               notconv_max));
     }
     return;
 }
