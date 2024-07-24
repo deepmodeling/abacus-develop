@@ -1,6 +1,6 @@
 # The running_scf.log file
 
-- [The running\_scf.log file](#the-running_scflog-file)
+- [The running\_scf.log file](#the-running_scf.log-file)
   - [Reading information](#reading-information)
     - [Reading version information](#reading-version-information)
     - [Reading general information](#reading-general-information)
