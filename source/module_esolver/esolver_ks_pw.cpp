@@ -1,5 +1,6 @@
 #include "esolver_ks_pw.h"
 
+#include "module_base/global_variable.h"
 #include "module_hamilt_pw/hamilt_pwdft/elecond.h"
 #include "module_io/input_conv.h"
 #include "module_io/nscf_band.h"
@@ -592,8 +593,8 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep,
                            PARAM.inp.basis_type,
                            PARAM.inp.use_paw,
                            GlobalV::use_uspp,
-                           PARAM.globalv.myrank,
-                           PARAM.globalv.nproc,
+                           GlobalV::RANK_IN_POOL,
+                           GlobalV::NPROC_IN_POOL,
                            false);
 
 
@@ -1077,8 +1078,8 @@ void ESolver_KS_PW<T, Device>::hamilt2estates(const double ethr) {
                            PARAM.inp.basis_type,
                            PARAM.inp.use_paw,
                            GlobalV::use_uspp,
-                           PARAM.globalv.myrank,
-                           PARAM.globalv.nproc,
+                           GlobalV::RANK_IN_POOL,
+                           GlobalV::NPROC_IN_POOL,
                            true);
     } else {
         ModuleBase::WARNING_QUIT("ESolver_KS_PW",
