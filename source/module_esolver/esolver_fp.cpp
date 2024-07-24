@@ -345,9 +345,15 @@ void ESolver_FP::init_orb(double& dr_uniform,
             if (j < atomx->nw)
             {
                 pointer = &GlobalC::ORB.Phi[i].PhiLN(atomx->iw2l[j],atomx->iw2n[j]);
-                psi_u[i*nwmax+j]=pointer->psi_uniform;
-                dpsi_u[i*nwmax+j]=pointer->dpsi_uniform;
-                d2psi_u[i*nwmax+j]=pointer->ddpsi_uniform;
+                for (int k=0;k<pointer->psi_uniform.size();k++)
+                {
+                    psi_u[i*nwmax+j].push_back(pointer->psi_uniform[k]);
+                    // psi_u[i*nwmax+j].push_back(pointer->dpsi_uniform[k]);
+                    dpsi_u[i*nwmax+j].push_back(pointer->dpsi_uniform[k]);
+                }
+                // psi_u[i*nwmax+j]=pointer->psi_uniform;
+                // dpsi_u[i*nwmax+j]=pointer->dpsi_uniform;
+                // d2psi_u[i*nwmax+j]=pointer->ddpsi_uniform;
             }
         }
     }
