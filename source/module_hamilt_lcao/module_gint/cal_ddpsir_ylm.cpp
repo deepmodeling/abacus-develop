@@ -18,7 +18,7 @@ void cal_ddpsir_ylm(
     ModuleBase::timer::tick("Gint_Tools", "cal_ddpsir_ylm");
     const UnitCell& ucell = *gt.ucell;
     std::vector<const double*> it_psi_uniform(gt.nwmax);
-    std::vector<const double*> it_dpsi_uniform(gt.nwmax);
+    // std::vector<const double*> it_dpsi_uniform(gt.nwmax);
     std::vector<const double*> it_d2psi_uniform(gt.nwmax);
     std::vector<int> it_psi_nr_uniform(gt.nwmax);
     // array to store spherical harmonics and its derivatives
@@ -44,7 +44,7 @@ void cal_ddpsir_ylm(
             if ( atom->iw2_new[iw] )
             {
                 it_psi_uniform[iw]= gt.psi_u[it*gt.nwmax + iw].data();
-                it_dpsi_uniform[iw] = gt.dpsi_u[it*gt.nwmax + iw].data();
+                // it_dpsi_uniform[iw] = gt.dpsi_u[it*gt.nwmax + iw].data();
                 it_psi_nr_uniform[iw]= gt.psi_u[it*gt.nwmax + iw].size();
             }
         }
@@ -138,7 +138,7 @@ void cal_ddpsir_ylm(
                             if (atom->iw2_new[iw])
                             {
                                 auto psi_uniform = it_psi_uniform[iw];
-                                auto dpsi_uniform = it_dpsi_uniform[iw];
+                                // auto dpsi_uniform = it_dpsi_uniform[iw];
 
                                 // if ( iq[id] >= philn.nr_uniform-4)
                                 if (iq >= it_psi_nr_uniform[iw]-4)
@@ -150,11 +150,11 @@ void cal_ddpsir_ylm(
                                     // use Polynomia Interpolation method to get the
                                     // wave functions
 
-                                    tmp = x12 * (psi_uniform[ip] * x3 + psi_uniform[ip + 3] * x0)
-                                          + x03 * (psi_uniform[ip + 1] * x2 - psi_uniform[ip + 2] * x1);
+                                    tmp = x12 * (psi_uniform[2*ip] * x3 + psi_uniform[2*ip + 6] * x0)
+                                          + x03 * (psi_uniform[2*ip + 2] * x2 - psi_uniform[2*ip + 4] * x1);
 
-                                    dtmp = x12 * (dpsi_uniform[ip] * x3 + dpsi_uniform[ip + 3] * x0)
-                                           + x03 * (dpsi_uniform[ip + 1] * x2 - dpsi_uniform[ip + 2] * x1);
+                                    dtmp = x12 * (psi_uniform[2*ip+1] * x3 + psi_uniform[2*ip + 7] * x0)
+                                           + x03 * (psi_uniform[2*ip + 3] * x2 - psi_uniform[2*ip + 5] * x1);
                                 }
                             } // new l is used.
 
@@ -242,7 +242,7 @@ void cal_ddpsir_ylm(
                         if (atom->iw2_new[iw])
                         {
                             auto psi_uniform = it_psi_uniform[iw];
-                            auto dpsi_uniform = it_dpsi_uniform[iw];
+                            // auto dpsi_uniform = it_dpsi_uniform[iw];
                             auto ddpsi_uniform = it_d2psi_uniform[iw];
 
                             // if ( iq[id] >= philn.nr_uniform-4)
@@ -258,11 +258,11 @@ void cal_ddpsir_ylm(
                                 tmp = x12 * (psi_uniform[ip] * x3 + psi_uniform[ip + 3] * x0)
                                       + x03 * (psi_uniform[ip + 1] * x2 - psi_uniform[ip + 2] * x1);
 
-                                dtmp = x12 * (dpsi_uniform[ip] * x3 + dpsi_uniform[ip + 3] * x0)
-                                       + x03 * (dpsi_uniform[ip + 1] * x2 - dpsi_uniform[ip + 2] * x1);
+                                // dtmp = x12 * (dpsi_uniform[ip] * x3 + dpsi_uniform[ip + 3] * x0)
+                                //        + x03 * (dpsi_uniform[ip + 1] * x2 - dpsi_uniform[ip + 2] * x1);
 
-                                ddtmp = x12 * (ddpsi_uniform[ip] * x3 + ddpsi_uniform[ip + 3] * x0)
-                                        + x03 * (ddpsi_uniform[ip + 1] * x2 - ddpsi_uniform[ip + 2] * x1);
+                                // ddtmp = x12 * (ddpsi_uniform[ip] * x3 + ddpsi_uniform[ip + 3] * x0)
+                                //         + x03 * (ddpsi_uniform[ip + 1] * x2 - ddpsi_uniform[ip + 2] * x1);
                             }
                         } // new l is used.
 

@@ -29,14 +29,12 @@ void cal_psir_ylm(
         const int it = ucell.iat2it[iat];           // index of atom type
         const Atom* const atom = &ucell.atoms[it];
         std::vector<const double*> it_psi_uniform(atom->nw);
-        std::vector<const double*> it_dpsi_uniform(atom->nw);
         // preprocess index
         for (int iw = 0; iw < atom->nw; ++iw)
         {
             if (atom->iw2_new[iw])
             {
                 it_psi_uniform[iw]= gt.psi_u[it*gt.nwmax + iw].data();
-                it_dpsi_uniform[iw] = gt.dpsi_u[it*gt.nwmax + iw].data();
             }
         }
 
@@ -74,7 +72,10 @@ void cal_psir_ylm(
                 // spherical harmonic functions Ylm
                 //------------------------------------------------------
                 //	Ylm::get_ylm_real(this->nnn[it], this->dr[id], ylma);
-                ModuleBase::Ylm::sph_harm(ucell.atoms[it].nwl, dr[0] / distance, dr[1] / distance, dr[2] / distance,
+                ModuleBase::Ylm::sph_harm(ucell.atoms[it].nwl, 
+                                            dr[0] / distance, 
+                                            dr[1] / distance, 
+                                            dr[2] / distance,
                                           ylma);
                 // these parameters are related to interpolation
                 // because once the distance from atom to grid point is known,
@@ -97,9 +98,9 @@ void cal_psir_ylm(
                     if (atom->iw2_new[iw])
                     {
                         auto psi_uniform = it_psi_uniform[iw];
-                        auto dpsi_uniform = it_dpsi_uniform[iw];
-                        phi = c1 * psi_uniform[ip] + c2 * dpsi_uniform[ip] // radial wave functions
-                              + c3 * psi_uniform[ip + 1] + c4 * dpsi_uniform[ip + 1];
+                        // auto dpsi_uniform = it_dpsi_uniform[iw];
+                        phi = c1 * psi_uniform[2*ip] + c2 * psi_uniform[2*ip+1] // radial wave functions
+                              + c3 * psi_uniform[2*ip + 2] + c4 * psi_uniform[2*ip + 3];
                     }
                     p[iw] = phi * ylma[atom->iw2_ylm[iw]];
                 } // end iw
