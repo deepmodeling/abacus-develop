@@ -311,21 +311,30 @@ void SphericalBesselTransformer::Impl::direct(
     std::adjacent_difference(grid_in, grid_in + ngrid_in, rab);
 
     std::copy(in, in + ngrid_in, tmp);
+    
     std::for_each(tmp, tmp + ngrid_in,[&](double& x) 
-    { switch (2-p)
+    { 
+        double base=grid_in[&x-tmp];
+        switch (2-p)
         {
-        case 0:
-            x=1.0;
-            break;
-        case 1:
-            x*=grid_in[&x - tmp];
-            break;
-        case 2:
-            x*=grid_in[&x - tmp]*grid_in[&x - tmp];
-            break;
-        default:
-            x *= std::pow(grid_in[&x - tmp], 2 - p); 
-            break;
+            case 0:
+                x*=1;
+                break;
+            case 1:
+                x*=base;
+                break;
+            case 2:
+                x*=base*base;
+                break;
+            case 3:
+                x*=base*base*base;
+                break;
+            case 4:
+                x*=base*base*base*base;
+                break;
+            default:
+                x *= std::pow(grid_in[&x - tmp], 2 - p); 
+                break;
         }
     });
 
