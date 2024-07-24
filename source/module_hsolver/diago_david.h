@@ -29,35 +29,38 @@ class DiagoDavid : public DiagH<T, Device>
     virtual ~DiagoDavid() override;
 
 
+    // declare type of matrix-blockvector functions.
+    // the function type is defined as a std::function object.
+    // notice that hpsi and spsi functions require
+    // !different! order of input and output blockvectors.
     /**
-     * @brief A function type representing the HPsi function.
+     * @brief A function type representing the HX function.
      *
-     * This function type is used to define a matrix-blockvector operator.
+     * This function type is used to define a matrix-blockvector operator H.
      * For eigenvalue problem HX = λX or generalized eigenvalue problem HX = λSX,
-     * the HPsi function computes the product of the Hamiltonian matrix H and a blockvector psi.
+     * this function computes the product of the Hamiltonian matrix H and a blockvector X.
      *
-     * @param[out] AX  Pointer to output blockvector of type `T*`.
+     * @param[out] HX  Pointer to output blockvector of type `T*`.
      * @param[in]  X  Pointer to input blockvector of type `T*`.
+     * @param[in]  neig  Number of eigebpairs required.
      * @param[in]  dim  Dimension of matrix.
-     * @param[in]  ldx  Leading dimension of blockvector.
      * @param[in]  id_start  Start index of blockvector.
      * @param[in]  id_end  End index of blockvector.
      */
     using HPsiFunc = std::function<void(T*, T*, const int, const int, const int, const int)>;
 
     /**
-     * @brief A function type representing a callback for computing SPsi values.
+     * @brief A function type representing the SX function.
      *
-     * This function type is used to define a callback function that computes SPsi values.
-     * It takes in parameters `T*`, `T*`, `const int`, `const int`, and `const int`.
-     * The first two parameters are pointers to the input and output arrays.
-     * The next three parameters represent the size of the arrays.
+     * This function type is used to define a matrix-blockvector operator S.
+     * For generalized eigenvalue problem HX = λSX,
+     * this function computes the product of the overlap matrix S and a blockvector X.
      *
-     * @param[in]   X Pointer to the input array.
-     * @param[out] SX Pointer to the output array.
-     * @param[in] nrow Dimension of SX: nbands * nrow.
-     * @param[in] npw  Number of plane waves.
-     * @param[in] nbands Number of bands.
+     * @param[in]   X     Pointer to the input array.
+     * @param[out] SX     Pointer to the output array.
+     * @param[in] nrow    Dimension of SX: nbands * nrow.
+     * @param[in] npw     Number of plane waves.
+     * @param[in] nbands  Number of bands.
      */
     using SPsiFunc = std::function<void(T*, T*, const int, const int, const int)>;
 
@@ -95,7 +98,7 @@ class DiagoDavid : public DiagH<T, Device>
     /// eigenvalue results
     Real* eigenvalue = nullptr;
 
-    T *pbasis = nullptr;  /// pointer to basis set(dim, nbase_x), leading dimension = dim
+    T *basis = nullptr;  /// pointer to basis set(dim, nbase_x), leading dimension = dim
 
     T* hpsi = nullptr;    /// the product of H and psi in the reduced basis set
 
@@ -114,7 +117,7 @@ class DiagoDavid : public DiagH<T, Device>
     base_device::DEVICE_CPU* cpu_ctx = {};
     base_device::AbacusDevice_t device = {};
 
-    int diag_mock(const HPsiFunc& hpsi_func,
+    int diag_once(const HPsiFunc& hpsi_func,
                   const SPsiFunc& spsi_func,
                   const int dim,
                   const int nband,
