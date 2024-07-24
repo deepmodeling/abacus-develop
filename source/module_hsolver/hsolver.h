@@ -1,8 +1,6 @@
 #ifndef HSOLVER_H
 #define HSOLVER_H
 
-#include <complex>
-
 #include "diagh.h"
 #include "module_base/macros.h"
 #include "module_elecstate/elecstate.h"
@@ -10,6 +8,8 @@
 #include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
 #include "module_hamilt_pw/hamilt_stodft/sto_wf.h"
 #include "module_psi/psi.h"
+
+#include <complex>
 
 namespace hsolver
 {
@@ -19,9 +19,11 @@ class HSolver
 {
   private:
     using Real = typename GetTypeReal<T>::type;
+
   public:
-    HSolver(){};
-    virtual ~HSolver(){
+    HSolver() {};
+    virtual ~HSolver()
+    {
         delete pdiagh;
     };
     /*//initialization, used in construct function or restruct a new HSolver
@@ -43,12 +45,30 @@ class HSolver
     {
         return;
     }
+
+    virtual void solve(hamilt::Hamilt<T, Device>* phm,
+                       psi::Psi<T, Device>& ppsi,
+                       elecstate::ElecState* pes,
+                       const std::string method,
+
+                       const std::string calculation_type_in,
+                       const std::string basis_type_in,
+                       const bool use_paw_in,
+                       const bool use_uspp_in,
+                       const int rank_in_pool_in,
+                       const int nproc_in_pool_in,
+
+                       const bool skip_charge = false)
+    {
+        return;
+    }
+
     /// @brief solve function for lcao_in_pw
     /// @param phm interface to hamilt
     /// @param ppsi reference to psi
     /// @param pes interface to elecstate
     /// @param transform transformation matrix between lcao and pw
-    /// @param skip_charge 
+    /// @param skip_charge
     virtual void solve(hamilt::Hamilt<T, Device>* phm,
                        psi::Psi<T, Device>& ppsi,
                        elecstate::ElecState* pes,
@@ -97,7 +117,6 @@ class HSolver
 
   protected:
     DiagH<T, Device>* pdiagh = nullptr; // for single Hamiltonian matrix diagonal solver
-
 };
 
 } // namespace hsolver
