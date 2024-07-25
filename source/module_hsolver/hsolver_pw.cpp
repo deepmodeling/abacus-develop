@@ -255,6 +255,11 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
                                  const int rank_in_pool_in,
                                  const int nproc_in_pool_in,
 
+                                 const int scf_iter_in,
+                                 const bool need_subspace_in,
+                                 const int diag_iter_max_in,
+                                 const double pw_diag_thr_in,
+
                                  const bool skip_charge)
 {
     ModuleBase::TITLE("HSolverPW", "solve");
@@ -271,6 +276,11 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
     this->rank_in_pool = rank_in_pool_in;
     this->nproc_in_pool = nproc_in_pool_in;
 
+    this->scf_iter = scf_iter_in;
+    this->need_subspace = need_subspace_in;
+    this->diag_iter_max = diag_iter_max_in;
+    this->pw_diag_thr = pw_diag_thr_in;
+
     // report if the specified diagonalization method is not supported
     const std::initializer_list<std::string> _methods = {"cg", "dav", "dav_subspace", "bpcg"};
     if (std::find(std::begin(_methods), std::end(_methods), this->method) == std::end(_methods))
@@ -286,7 +296,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
     {
         this->set_isOccupied(is_occupied,
                              pes,
-                             DiagoIterAssist<T, Device>::SCF_ITER,
+                             this->scf_iter,
                              psi.get_nk(),
                              psi.get_nbands(),
                              this->diago_full_acc);
@@ -318,7 +328,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
         {
             GlobalV::ofs_running << "Average iterative diagonalization steps for k-points " << ik
                                  << " is: " << DiagoIterAssist<T, Device>::avg_iter
-                                 << " ; where current threshold is: " << DiagoIterAssist<T, Device>::PW_DIAG_THR
+                                 << " ; where current threshold is: " << this->pw_diag_thr
                                  << " . " << std::endl;
             DiagoIterAssist<T, Device>::avg_iter = 0.0;
         }
@@ -409,10 +419,10 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         };
         DiagoCG<T, Device> cg(this->basis_type,
                               this->calculation_type,
-                              DiagoIterAssist<T, Device>::need_subspace,
+                              this->need_subspace,
                               subspace_func,
-                              DiagoIterAssist<T, Device>::PW_DIAG_THR,
-                              DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
+                              this->pw_diag_thr,
+                              this->diag_iter_max,
                               this->nproc_in_pool);
 
         // warp the hpsi_func and spsi_func into a lambda function
@@ -521,9 +531,9 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
                                                   psi.get_k_first() ? psi.get_current_nbas()
                                                                     : psi.get_nk() * psi.get_nbasis(),
                                                   GlobalV::PW_DIAG_NDIM,
-                                                  DiagoIterAssist<T, Device>::PW_DIAG_THR,
-                                                  DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
-                                                  DiagoIterAssist<T, Device>::need_subspace,
+                                                  this->pw_diag_thr,
+                                                  this->diag_iter_max,
+                                                  this->need_subspace,
                                                   comm_info);
 
         DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(
@@ -539,9 +549,9 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         /// allow 5 eigenvecs to be NOT converged.
         const int notconv_max = ("nscf" == this->calculation_type) ? 0 : 5;
         /// convergence threshold
-        const Real david_diag_thr = DiagoIterAssist<T, Device>::PW_DIAG_THR;
+        const Real david_diag_thr = this->pw_diag_thr;
         /// maximum iterations
-        const int david_maxiter = DiagoIterAssist<T, Device>::PW_DIAG_NMAX;
+        const int david_maxiter = this->diag_iter_max;
 
         // dimensions of matrix to be solved
         const int dim = psi.get_current_nbas(); /// dimension of matrix
@@ -660,7 +670,7 @@ void HSolverPW<T, Device>::output_iterInfo()
     {
         GlobalV::ofs_running << "Average iterative diagonalization steps: "
                              << DiagoIterAssist<T, Device>::avg_iter / this->wfc_basis->nks
-                             << " ; where current threshold is: " << DiagoIterAssist<T, Device>::PW_DIAG_THR << " . "
+                             << " ; where current threshold is: " << this->pw_diag_thr << " . "
                              << std::endl;
         // reset avg_iter
         DiagoIterAssist<T, Device>::avg_iter = 0.0;
