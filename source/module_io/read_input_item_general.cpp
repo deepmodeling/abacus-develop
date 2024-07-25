@@ -307,12 +307,6 @@ void ReadInput::item_general()
         this->add_item(item);
     }
     {
-        Input_Item item("if_separate_k");
-        item.annotation = "specify whether to write the partial charge densities for all k-points to individual files or merge them";
-        read_sync_bool(input.if_separate_k);
-        this->add_item(item);
-    }
-    {
         Input_Item item("symmetry");
         item.annotation = "the control of symmetry";
         read_sync_string(input.symmetry);
@@ -433,7 +427,7 @@ void ReadInput::item_general()
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.basis_type == "lcao" && para.input.kpar > 1)
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "kpar > 1 has not been supported for lcao calculation.");
+                ModuleBase::WARNING("ReadInput", "kpar > 1 has not been supported for lcao calculation.");
             }
         };
         this->add_item(item);

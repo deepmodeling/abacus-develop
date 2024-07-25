@@ -87,8 +87,6 @@ class ESolver_KS_LCAO : public ESolver_KS<TK> {
     ModuleBase::matrix scs;
     bool have_force = false;
 
-    void init_basis_lcao(const Input_para& inp, UnitCell& ucell);
-
     //--------------common for all calculation, not only scf-------------
     // set matrix and grid integral
     void set_matrix_grid(Record_adj& ra);

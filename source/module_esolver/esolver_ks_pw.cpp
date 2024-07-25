@@ -1,5 +1,6 @@
 #include "esolver_ks_pw.h"
 
+#include "module_base/global_variable.h"
 #include "module_hamilt_pw/hamilt_pwdft/elecond.h"
 #include "module_io/input_conv.h"
 #include "module_io/nscf_band.h"
@@ -38,6 +39,7 @@
 #include "module_io/winput.h"
 #include "module_io/write_pot.h"
 #include "module_io/write_wfc_r.h"
+#include "module_parameter/parameter.h"
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
 #endif
@@ -584,9 +586,17 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep,
             = GlobalV::PW_DIAG_NMAX;
 
         this->phsol->solve(this->p_hamilt,      // hamilt::Hamilt<T, Device>* pHamilt,
-            this->kspw_psi[0],   // psi::Psi<T, Device>& psi,
-            this->pelec,         // elecstate::ElecState<T, Device>* pelec,
-            GlobalV::KS_SOLVER); // const std::string method_in,
+                           this->kspw_psi[0],   // psi::Psi<T, Device>& psi,
+                           this->pelec,         // elecstate::ElecState<T, Device>* pelec,
+                           PARAM.inp.ks_solver,
+                           PARAM.inp.calculation,
+                           PARAM.inp.basis_type,
+                           PARAM.inp.use_paw,
+                           GlobalV::use_uspp,
+                           GlobalV::RANK_IN_POOL,
+                           GlobalV::NPROC_IN_POOL,
+                           false);
+
 
         if (PARAM.inp.out_bandgap)
         {
@@ -1063,7 +1073,13 @@ void ESolver_KS_PW<T, Device>::hamilt2estates(const double ethr) {
         this->phsol->solve(this->p_hamilt,
                            this->kspw_psi[0],
                            this->pelec,
-                           GlobalV::KS_SOLVER,
+                           PARAM.inp.ks_solver,
+                           PARAM.inp.calculation,
+                           PARAM.inp.basis_type,
+                           PARAM.inp.use_paw,
+                           GlobalV::use_uspp,
+                           GlobalV::RANK_IN_POOL,
+                           GlobalV::NPROC_IN_POOL,
                            true);
     } else {
         ModuleBase::WARNING_QUIT("ESolver_KS_PW",
