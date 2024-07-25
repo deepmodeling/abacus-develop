@@ -737,8 +737,8 @@ typename HSolverPW<T, Device>::Real HSolverPW<T, Device>::set_diagethr(Real diag
         diag_ethr_in = std::max(diag_ethr_in, static_cast<Real>(0.5e-4));
     }
 
-    // // Temporarily added to ensure correctness
-    // this->diag_ethr = diag_ethr_in;
+    // Temporarily added to ensure correctness
+    this->diag_ethr = diag_ethr_in;
     return diag_ethr_in;
 }
 
@@ -766,8 +766,8 @@ typename HSolverPW<T, Device>::Real HSolverPW<T, Device>::reset_diagethr(std::of
     }
     ofs_running << " New    diag_ethr = " << diag_ethr_in << std::endl;
     
-    // // Temporarily added to ensure correctness
-    // this->diag_ethr = diag_ethr_in;
+    // Temporarily added to ensure correctness
+    this->diag_ethr = diag_ethr_in;
     return diag_ethr_in;
 }
 
