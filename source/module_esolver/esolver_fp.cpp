@@ -358,9 +358,6 @@ void ESolver_FP::init_orb(double& dr_uniform,
                 {
                     psi_u[i*nwmax+j].push_back(0.0);
                 }
-                // psi_u[i*nwmax+j]=pointer->psi_uniform;
-                // dpsi_u[i*nwmax+j]=pointer->dpsi_uniform;
-                // d2psi_u[i*nwmax+j]=pointer->ddpsi_uniform;
             }
         }
     }

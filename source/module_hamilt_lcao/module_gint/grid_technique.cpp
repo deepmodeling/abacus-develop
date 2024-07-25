@@ -569,6 +569,9 @@ void Grid_Technique::init_gpu_gint_variables(const UnitCell& ucell,
     memset(atom_iw2_l_now, 0, ucell.ntype * ucell.nwmax * sizeof(int));
 
     Atom* atomx;
+    // The psi_u needs to 
+    // store both psi_u and dpsi_u.
+    int nr_max_twice = this->nr_max*2;
     for (int i = 0; i < ucell.ntype; i++) {
         atomx = &ucell.atoms[i];
         for (int j = 0; j < ucell.nwmax; j++) {
@@ -576,15 +579,12 @@ void Grid_Technique::init_gpu_gint_variables(const UnitCell& ucell,
                 atom_iw2_new_now[i * ucell.nwmax + j] = atomx->iw2_new[j];
                 atom_iw2_ylm_now[i * ucell.nwmax + j] = atomx->iw2_ylm[j];
                 atom_iw2_l_now[i * ucell.nwmax + j] = atomx->iw2l[j];
-                for (int k = 0; k < this->nr_max; k++) {
-                    int index_temp = (i * ucell.nwmax * this->nr_max
-                                      + j * this->nr_max + k)
-                                     * 2;
+                for (int k = 0; k < nr_max_twice; k++) {
+                    int index_temp = (i * ucell.nwmax * nr_max_twice
+                                      + j * nr_max_twice + k);
                     if (k < this->psi_u[i * this->nwmax + j].size()) {
                         psi_u_now[index_temp]
                             = this->psi_u[i * this->nwmax + j].data()[k];
-                        psi_u_now[index_temp + 1]
-                            = this->dpsi_u[i * this->nwmax + j].data()[k];
                     }
                 }
             }
