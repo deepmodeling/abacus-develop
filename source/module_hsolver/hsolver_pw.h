@@ -57,6 +57,15 @@ class HSolverPW : public HSolver<T, Device>
 
     virtual Real reset_diagethr(std::ofstream& ofs_running, const Real hsover_error, const Real drho, Real diag_ethr_in) override;
 
+    ModulePW::PW_Basis_K* get_wfc_basis_p()
+    {
+        return this->wfc_basis;
+    }; 
+    wavefunc* get_pwf_p()
+    {
+        return this->pwf;
+    };
+    
   protected:
     // diago caller
     void hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
@@ -98,6 +107,7 @@ class HSolverPW : public HSolver<T, Device>
                         const int nk,
                         const int nband,
                         const bool diago_full_acc);
+
 
 #ifdef USE_PAW
     void paw_func_in_kloop(const int ik);

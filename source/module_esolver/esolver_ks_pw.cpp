@@ -597,7 +597,8 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep,
         //                    GlobalV::NPROC_IN_POOL,
         //                    false);
 
-        hsolver::HSolverPW<T, Device> hsolver_pw_obj(this->pw_wfc, &this->wf);
+        hsolver::HSolverPW<T, Device> hsolver_pw_obj(dynamic_cast<hsolver::HSolverPW<T, Device>*>(this->phsol)->get_wfc_basis_p(), 
+                                                     dynamic_cast<hsolver::HSolverPW<T, Device>*>(this->phsol)->get_pwf_p());
         
         hsolver_pw_obj.solve(this->p_hamilt,      // hamilt::Hamilt<T, Device>* pHamilt,
                            this->kspw_psi[0],   // psi::Psi<T, Device>& psi,
