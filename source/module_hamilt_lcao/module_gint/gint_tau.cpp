@@ -76,21 +76,21 @@ void Gint::gint_kernel_tau(
 				block_index, cal_flag,
 				dpsir_ylm_x.get_ptr_2D(),
 				dpsix_DM.get_ptr_2D(),
-				this->DMRGint[is], 1);
+				this->DMRGint[is], true);
 			Gint_Tools::mult_psi_DM_new(
 				*this->gridt, this->bxyz, grid_index, na_grid, LD_pool,
 				block_iw, block_size,
 				block_index, cal_flag,
 				dpsir_ylm_y.get_ptr_2D(),
 				dpsiy_DM.get_ptr_2D(),
-				this->DMRGint[is], 1);	
+				this->DMRGint[is], true);	
 			Gint_Tools::mult_psi_DM_new(
 				*this->gridt, this->bxyz, grid_index, na_grid, LD_pool,
 				block_iw, block_size,
 				block_index, cal_flag,
 				dpsir_ylm_z.get_ptr_2D(),
 				dpsiz_DM.get_ptr_2D(),
-				this->DMRGint[is], 1);
+				this->DMRGint[is], true);
 		}
 		else
 		{
@@ -103,7 +103,7 @@ void Gint::gint_kernel_tau(
 				dpsir_ylm_x.get_ptr_2D(),
                 dpsix_DM.get_ptr_2D(),
 				this->DMRGint[is],
-				1);
+				true);
 			Gint_Tools::mult_psi_DMR(
 				*this->gridt, this->bxyz,
 				LD_pool,
@@ -113,7 +113,7 @@ void Gint::gint_kernel_tau(
 				dpsir_ylm_y.get_ptr_2D(),
                 dpsiy_DM.get_ptr_2D(),
 				this->DMRGint[is],
-				1);
+				true);
 			Gint_Tools::mult_psi_DMR(
 				*this->gridt, this->bxyz,
 				LD_pool,
@@ -123,7 +123,7 @@ void Gint::gint_kernel_tau(
 				dpsir_ylm_z.get_ptr_2D(),
                 dpsiz_DM.get_ptr_2D(),
 				this->DMRGint[is],
-				1);
+				true);
 		}
 
 		//do sum_i,mu g_i,mu(r) * d/dx_i psi_mu(r) to get kinetic energy density on grid
