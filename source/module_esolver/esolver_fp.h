@@ -7,7 +7,7 @@
 #include "module_cell/module_symmetry/symmetry.h"
 #include "module_elecstate/elecstate.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
-#include "module_basis/module_ao/ORB_read.h"
+
 //! The First-Principles (FP) Energy Solver Class
 /**
  * This class represents components that needed in 
@@ -58,13 +58,6 @@ namespace ModuleESolver
 
         //! K points in Brillouin zone
         K_Vectors kv;
-
-#ifdef __LCAO
-        void init_orb(double& dr_uniform, 
-                      std::vector<double>& rcuts,
-                      UnitCell& ucell,
-                      std::vector<std::vector<double>>& psi_u);
-#endif
 
       private:
        

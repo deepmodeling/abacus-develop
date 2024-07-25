@@ -13,7 +13,7 @@
 #include "module_cell/module_neighbor/sltk_atom_arrange.h"
 #include "module_lr/utils/lr_util_print.h"
 #include "module_base/scalapack_connector.h"
-
+#include "module_esolver/init_orb.hpp"
 #ifdef __EXX
 template<>
 void LR::ESolver_LR<double>::move_exx_lri(std::shared_ptr<Exx_LRI<double>>& exx_ks)
@@ -305,7 +305,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
     std::vector<double> rcuts;
     std::vector<std::vector<double>> psi_u;
 
-    this->init_orb(dr_uniform, rcuts, GlobalC::ucell, psi_u);
+    init_orb(dr_uniform, rcuts, GlobalC::ucell, psi_u);
     #endif
     this->gt_.set_pbc_grid(this->pw_rho->nx,
                              this->pw_rho->ny,

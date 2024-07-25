@@ -33,7 +33,9 @@
 #ifdef __EXX
 #include "module_io/restart_exx_csr.h"
 #endif
-
+#ifdef __LCAO
+#include "init_orb.hpp"
+#endif
 namespace ModuleESolver
 {
 
@@ -65,8 +67,7 @@ void ESolver_KS_LCAO<TK, TR>::set_matrix_grid(Record_adj& ra)
     double dr_uniform = 0.001;
     std::vector<double> rcuts;
     std::vector<std::vector<double>> psi_u;
-
-    this->init_orb(dr_uniform, rcuts, GlobalC::ucell, psi_u);
+    init_orb(dr_uniform, rcuts, GlobalC::ucell, psi_u);
     #endif
     this->GridT.set_pbc_grid(this->pw_rho->nx,
                              this->pw_rho->ny,
