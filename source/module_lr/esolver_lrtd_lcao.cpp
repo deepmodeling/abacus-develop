@@ -181,6 +181,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
     this->set_gint();
 
     // move pw basis
+    delete this->pw_rho;    // newed in ESolver_FP::ESolver_FP
     this->pw_rho = ks_sol.pw_rho;
     ks_sol.pw_rho = nullptr;
     //init potential and calculate kernels using ground state charge
