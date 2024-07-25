@@ -349,9 +349,12 @@ void ESolver_FP::init_orb(double& dr_uniform,
                 {
                     psi_u[i*nwmax+j].push_back(pointer->psi_uniform[k]);
                     psi_u[i*nwmax+j].push_back(pointer->dpsi_uniform[k]);
-                    dpsi_u[i*nwmax+j].push_back(pointer->dpsi_uniform[k]);
+                    // dpsi_u[i*nwmax+j].push_back(pointer->dpsi_uniform[k]);
                 }
-                for (int k=0;k<4;k++)
+                // When the pointer points to nr_uniform, 
+                // take up to 8 numbers backwards when calculating force, 
+                // and set them to 0.
+                for (int k=0;k<8;k++)
                 {
                     psi_u[i*nwmax+j].push_back(0.0);
                 }

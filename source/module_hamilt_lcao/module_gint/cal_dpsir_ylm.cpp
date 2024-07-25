@@ -44,8 +44,7 @@ void cal_dpsir_ylm(
             if ( atom->iw2_new[iw] )
             {
                 it_psi_uniform[iw]= gt.psi_u[it*gt.nwmax + iw].data();
-                // it_dpsi_uniform[iw] = gt.dpsi_u[it*gt.nwmax + iw].data();
-                it_psi_nr_uniform[iw]= gt.psi_u[it*gt.nwmax + iw].size();
+                // it_psi_nr_uniform[iw]= gt.psi_u[it*gt.nwmax + iw].size();
             }
         }
 
@@ -97,12 +96,12 @@ void cal_dpsir_ylm(
                         auto psi_uniform = it_psi_uniform[iw];
                         // auto dpsi_uniform = it_dpsi_uniform[iw];
                         // if ( iq[id] >= philn.nr_uniform-4)
-                        if (iq >= it_psi_nr_uniform[iw] - 4)
-                        {
-                            tmp = dtmp = 0.0;
-                        }
-                        else
-                        {
+                        // if (iq >= it_psi_nr_uniform[iw] - 4)
+                        // {
+                        //     tmp = dtmp = 0.0;
+                        // }
+                        // else
+                        // {
                             // use Polynomia Interpolation method to get the
                             // wave functions
 
@@ -111,7 +110,7 @@ void cal_dpsir_ylm(
 
                             dtmp = x12 * (psi_uniform[2*ip+1] * x3 + psi_uniform[2*ip + 7] * x0)
                                    + x03 * (psi_uniform[2*ip + 3] * x2 - psi_uniform[2*ip + 5] * x1);
-                        }
+                        // }
                     } // new l is used.
 
                     // get the 'l' of this localized wave function
