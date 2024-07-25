@@ -179,6 +179,165 @@ void write_elecstat_pot(
     }
 
     //-------------------------------------------
+    //! Get the vacuum level of the system
+    //-------------------------------------------
+    int direction = 2, length = rho_basis->nz;
+    if (efield > 0 && dip_corr > 0)
+    {
+        direction = elecstate::Efield::efield_dir;
+    }
+    else
+    {
+        // determine the vacuum direction
+        double vacuum[3] = {0.0};
+        for (int dir = 0; dir < 3; dir++)
+        {
+            std::vector<double> pos;
+            for (int it = 0; it < ucell->ntype; ++it)
+            {
+                for (int ia = 0; ia < ucell->atoms[it].na; ++ia)
+                {
+                    pos.push_back(ucell->atoms[it].taud[ia][dir]);
+                }
+            }
+
+            std::sort(pos.begin(), pos.end());
+            for (int i = 1; i < pos.size(); i++)
+            {
+                vacuum[dir] = std::max(vacuum[dir], pos[i] - pos[i - 1]);
+            }
+
+            // consider the periodic boundary condition
+            vacuum[dir] = std::max(vacuum[dir], pos[0] + 1 - pos[pos.size() - 1]);
+        }
+
+        // get the direction with the largest vacuum
+        direction = 0;
+        if (vacuum[1] > vacuum[0])
+        {
+            direction = 1;
+        }
+        if (vacuum[2] > vacuum[direction])
+        {
+            direction = 2;
+        }
+    }
+
+    if (direction == 0)
+    {
+        length = rho_basis->nx;
+    }
+    else if (direction == 1)
+    {
+        length = rho_basis->ny;
+    }
+
+    // get the average along the direction in real space
+    auto average = [](ModulePW::PW_Basis* rho_basis, const int direction, double* v, double* ave, bool abs) {
+        for (int ir = 0; ir < rho_basis->nrxx; ++ir)
+        {
+            int index = 0;
+            if (direction == 0)
+            {
+                index = ir / (rho_basis->ny * rho_basis->nplane);
+            }
+            else if (direction == 1)
+            {
+                int i = ir / (rho_basis->ny * rho_basis->nplane);
+                index = ir / rho_basis->nplane - i * rho_basis->ny;
+            }
+            else if (direction == 2)
+            {
+                index = ir % rho_basis->nplane + rho_basis->startz_current;
+            }
+
+            double value = abs ? std::fabs(v[ir]) : v[ir];
+
+            ave[index] += value;
+        }
+
+        // determine the length along the direction
+        int length = rho_basis->nz, surface = rho_basis->nx * rho_basis->ny;
+        if (direction == 0)
+        {
+            length = rho_basis->nx;
+            surface = rho_basis->ny * rho_basis->nz;
+        }
+        else if (direction == 1)
+        {
+            length = rho_basis->ny;
+            surface = rho_basis->nx * rho_basis->nz;
+        }
+
+#ifdef __MPI
+        MPI_Allreduce(MPI_IN_PLACE, ave, length, MPI_DOUBLE, MPI_SUM, POOL_WORLD);
+#endif
+
+        for (int i = 0; i < length; ++i)
+        {
+            ave[i] /= surface;
+        }
+    };
+
+    // average charge density along direction
+    double* totchg = new double[rho_basis->nrxx];
+    for (int ir = 0; ir < rho_basis->nrxx; ++ir)
+    {
+        totchg[ir] = chr->rho[0][ir];
+    }
+    if (GlobalV::NSPIN == 2)
+    {
+        for (int ir = 0; ir < rho_basis->nrxx; ++ir)
+        {
+            totchg[ir] += chr->rho[1][ir];
+        }
+    }
+
+    double* ave = new double[length];
+    for (int i = 0; i < length; i++)
+    {
+        ave[i] = 0.0;
+    }
+    average(rho_basis, direction, totchg, ave, true);
+
+    // set vacuum to be the point in space where the electronic charge density is the minimum
+    // get the index corresponding to the minimum charge density
+    int min_index = 0;
+    double min_value = 1e9;
+    double windows[7] = {0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1};
+    for (int i = 0; i < length; i++)
+    {
+        double sum = 0;
+        // use a sliding average to smoothen in charge density
+        for (int win = 0; win < 7; win++)
+        {
+            int index = (i - 3 + win + length) % length;
+            sum += ave[index] * windows[win];
+        }
+
+        if (sum < min_value)
+        {
+            min_value = sum;
+            min_index = i;
+        }
+    }
+
+    // average electrostatic potential along direction
+    for (int i = 0; i < length; i++)
+    {
+        ave[i] = 0.0;
+    }
+    average(rho_basis, direction, v_elecstat.data(), ave, false);
+
+    // get the vacuum level
+    double vacuum = ave[min_index] * ModuleBase::Ry_to_eV;
+    std::cout << " min index = " << min_index << " min value = " << min_value << std::endl;
+    GlobalV::ofs_running << "The vacuum level is " << vacuum << " eV" << std::endl;
+
+    delete[] ave;
+    delete[] totchg;
+
+    //-------------------------------------------
     //! Write down the electrostatic potential
     //-------------------------------------------
     int precision = 9;
