@@ -104,10 +104,12 @@ void pseudopot_cell_vnl::radial_fft_q<double, base_device::DEVICE_CPU>(base_devi
 template <>
 std::complex<float>* pseudopot_cell_vnl::get_vkb_data<float>() const
 {
+    return nullptr;
 }
 template <>
 std::complex<double>* pseudopot_cell_vnl::get_vkb_data<double>() const
 {
+    return nullptr;
 }
 template <>
 void pseudopot_cell_vnl::getvnl<float, base_device::DEVICE_CPU>(base_device::DEVICE_CPU*,
