@@ -48,7 +48,7 @@ void Numerical_Basis::start_from_file_k(const int& ik, ModuleBase::ComplexMatrix
     {
         // true stands for : start_from_file
         this->bessel_basis.init(true, std::stod(PARAM.inp.bessel_nao_ecut), ucell.ntype, ucell.lmax,
-                                PARAM.inp.bessel_nao_smooth, PARAM.inp.bessel_nao_sigma, PARAM.globalv.bessel_nao_rcut,
+                                PARAM.inp.bessel_nao_smooth, PARAM.inp.bessel_nao_sigma, INPUT.bessel_nao_rcut,
                                 PARAM.inp.bessel_nao_tolerence, ucell);
         this->mu_index = this->init_mu_index(ucell);
         this->init_label = true;
@@ -71,7 +71,7 @@ void Numerical_Basis::output_overlap(const psi::Psi<std::complex<double>>& psi, 
     {
         // false stands for : 'Faln' is not used.
         this->bessel_basis.init(false, std::stod(PARAM.inp.bessel_nao_ecut), ucell.ntype, ucell.lmax,
-                                PARAM.inp.bessel_nao_smooth, PARAM.inp.bessel_nao_sigma, PARAM.globalv.bessel_nao_rcut,
+                                PARAM.inp.bessel_nao_smooth, PARAM.inp.bessel_nao_sigma, INPUT.bessel_nao_rcut,
                                 PARAM.inp.bessel_nao_tolerence, ucell);
         this->mu_index = this->init_mu_index(ucell);
         this->init_label = true;
@@ -86,7 +86,7 @@ void Numerical_Basis::output_overlap(const psi::Psi<std::complex<double>>& psi, 
 
         if (PARAM.inp.bessel_nao_rcuts.size() > 1)
         {
-            ss << "orb_matrix_rcut" << PARAM.globalv.bessel_nao_rcut << "deriv";
+            ss << "orb_matrix_rcut" << INPUT.bessel_nao_rcut << "deriv";
         }
         else
         {
