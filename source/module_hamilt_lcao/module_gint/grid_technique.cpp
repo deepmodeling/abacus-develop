@@ -254,9 +254,9 @@ void Grid_Technique::init_atoms_on_grid(const int& ny,
             const double dr_z_part = this->meshball_positions[im][2] - this->tau_in_bigcell[iat][2];
             for(int imcell = 0; imcell < this -> bxyz; imcell++)
             {
-                const double dr_x = this->meshcell_pos[imcell*3] + dr_x_part;
-                const double dr_y = this->meshcell_pos[imcell*3+1] + dr_y_part;
-                const double dr_z = this->meshcell_pos[imcell*3+2] + dr_z_part;
+                const double dr_x = this->meshcell_pos[imcell][0] + dr_x_part;
+                const double dr_y = this->meshcell_pos[imcell][1] + dr_y_part;
+                const double dr_z = this->meshcell_pos[imcell][2] + dr_z_part;
                 const double dist_square = dr_x * dr_x + dr_y * dr_y + dr_z * dr_z;
                 if(dist_square <= rcut_square)
                 {
@@ -404,9 +404,9 @@ void Grid_Technique::init_atoms_on_grid2(const int* index2normal,
             const double dr_z_part = this->meshball_positions[im][2] - this->tau_in_bigcell[iat][2];
             for(int imcell = 0; imcell < this -> bxyz; imcell++)
             {
-                const double dr_x = this->meshcell_pos[imcell*3] + dr_x_part;
-                const double dr_y = this->meshcell_pos[imcell*3+1] + dr_y_part;
-                const double dr_z = this->meshcell_pos[imcell*3+2] + dr_z_part;
+                const double dr_x = this->meshcell_pos[imcell][0] + dr_x_part;
+                const double dr_y = this->meshcell_pos[imcell][1] + dr_y_part;
+                const double dr_z = this->meshcell_pos[imcell][2] + dr_z_part;
                 const double dist_square = dr_x * dr_x + dr_y * dr_y + dr_z * dr_z;
                 if(dist_square <= rcut_square)
                 {

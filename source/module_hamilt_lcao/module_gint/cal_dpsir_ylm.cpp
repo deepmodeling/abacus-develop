@@ -65,7 +65,7 @@ void cal_dpsir_ylm(
             {
                 const double dr[3]
                     = {// vectors between atom and grid
-                       gt.meshcell_pos[ib*3] + mt[0], gt.meshcell_pos[ib*3+1] + mt[1], gt.meshcell_pos[ib*3+2] + mt[2]};
+                       gt.meshcell_pos[ib][0] + mt[0], gt.meshcell_pos[ib][1] + mt[1], gt.meshcell_pos[ib][2] + mt[2]};
                 double distance = std::sqrt(dr[0] * dr[0] + dr[1] * dr[1] + dr[2] * dr[2]);
 
                 ModuleBase::Ylm::grad_rl_sph_harm(ucell.atoms[it].nwl, dr[0], dr[1], dr[2], rly, grly.get_ptr_2D());

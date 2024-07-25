@@ -2,7 +2,6 @@
 #define GRID_MESHCELL_H
 #include "grid_meshk.h"
 #include "module_cell/unitcell.h"
-#include "module_base/array_pool.h"
 class Grid_MeshCell: public Grid_MeshK
 {
 	public:
@@ -15,7 +14,7 @@ class Grid_MeshCell: public Grid_MeshK
 	int nbxx;
 	int nbzp_start,nbzp;
 	// save the position of each meshcell.
-	std::vector<double> meshcell_pos;
+	std::vector<std::vector<double>> meshcell_pos;
 	ModuleBase::Matrix3 meshcell_latvec0;
 	ModuleBase::Matrix3 meshcell_GT;
 	

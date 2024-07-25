@@ -13,7 +13,7 @@ void cal_psir_ylm(
     double* const* const psir_ylm) // cal_flag[bxyz][na_grid],	whether the atom-grid distance is larger than cutoff
 {
     ModuleBase::timer::tick("Gint_Tools", "cal_psir_ylm");
-    std::vector<double> ylma(36,0.0);
+    double ylma[36];
     const UnitCell& ucell = *gt.ucell;
     std::vector<const double*> it_psi_uniform(gt.nwmax);
     std::vector<const double*> it_dpsi_uniform(gt.nwmax);

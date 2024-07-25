@@ -70,7 +70,7 @@ void cal_ddpsir_ylm(
             {
                 const double dr[3]
                     = {// vectors between atom and grid
-                       gt.meshcell_pos[ib*3] + mt[0], gt.meshcell_pos[ib*3+1] + mt[1], gt.meshcell_pos[ib*3+2] + mt[2]};
+                       gt.meshcell_pos[ib][0] + mt[0], gt.meshcell_pos[ib][1] + mt[1], gt.meshcell_pos[ib][2] + mt[2]};
                 double distance = std::sqrt(dr[0] * dr[0] + dr[1] * dr[1] + dr[2] * dr[2]);
 
                 // for some unknown reason, the finite difference between dpsi and ddpsi
