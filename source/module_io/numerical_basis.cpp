@@ -57,8 +57,12 @@ void Numerical_Basis::start_from_file_k(const int& ik, ModuleBase::ComplexMatrix
 }
 
 // The function is called in run_fp.cpp.
-void Numerical_Basis::output_overlap(const psi::Psi<std::complex<double>>& psi, const Structure_Factor& sf,
-                                     const K_Vectors& kv, const ModulePW::PW_Basis_K* wfcpw, const UnitCell& ucell)
+void Numerical_Basis::output_overlap(const psi::Psi<std::complex<double>>& psi, 
+                                     const Structure_Factor& sf,
+                                     const K_Vectors& kv, 
+                                     const ModulePW::PW_Basis_K* wfcpw, 
+                                     const UnitCell& ucell,
+                                     const double& bessel_nao_rcut)
 {
     ModuleBase::TITLE("Numerical_Basis", "output_overlap");
     ModuleBase::GlobalFunc::NEW_PART("Overlap Data For Spillage Minimization");
@@ -71,7 +75,7 @@ void Numerical_Basis::output_overlap(const psi::Psi<std::complex<double>>& psi, 
     {
         // false stands for : 'Faln' is not used.
         this->bessel_basis.init(false, std::stod(PARAM.inp.bessel_nao_ecut), ucell.ntype, ucell.lmax,
-                                PARAM.inp.bessel_nao_smooth, PARAM.inp.bessel_nao_sigma, INPUT.bessel_nao_rcut,
+                                PARAM.inp.bessel_nao_smooth, PARAM.inp.bessel_nao_sigma, bessel_nao_rcut,
                                 PARAM.inp.bessel_nao_tolerence, ucell);
         this->mu_index = this->init_mu_index(ucell);
         this->init_label = true;
@@ -86,7 +90,7 @@ void Numerical_Basis::output_overlap(const psi::Psi<std::complex<double>>& psi, 
 
         if (PARAM.inp.bessel_nao_rcuts.size() > 1)
         {
-            ss << "orb_matrix_rcut" << INPUT.bessel_nao_rcut << "deriv";
+            ss << "orb_matrix_rcut" << bessel_nao_rcut << "deriv";
         }
         else
         {
@@ -153,7 +157,7 @@ void Numerical_Basis::output_overlap(const psi::Psi<std::complex<double>>& psi, 
                 }
 
                 overlap_Sq[ik] = NumericalBasis::cal_overlap_Sq(
-                    type, ucell.lmaxmax, this->bessel_basis.get_ecut_number(), INPUT.bessel_nao_rcut, tau_cart,
+                    type, ucell.lmaxmax, this->bessel_basis.get_ecut_number(), bessel_nao_rcut, tau_cart,
                     ucell.lat0 * ucell.latvec, NumericalBasis::indexgen(natom, lmax));
 #endif
                 ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "cal_overlap_Sq");
