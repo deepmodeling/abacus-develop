@@ -112,7 +112,8 @@ void save_npy_orbital_precalc(const int nat,
 /// for gamma only
 void save_npy_h(const ModuleBase::matrix &hamilt,
 		const std::string &h_file,
-		const int nlocal);
+		const int nlocal,
+		const int rank);
 
 void save_npy_v_delta_precalc(const int nat,
 		const int nks,

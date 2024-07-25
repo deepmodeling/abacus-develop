@@ -351,7 +351,7 @@
     - [td\_heavi\_amp](#td_heavi_amp)
     - [out\_dipole](#out_dipole)
     - [out\_current](#out_current)
-    - [out\_current_k](#out_current_k)
+    - [out\_current\_k](#out_current_k)
     - [out\_efield](#out_efield)
     - [out\_vecpot](#out_vecpot)
     - [init\_vecpot\_file](#init_vecpot_file)
@@ -415,7 +415,7 @@
     - [pexsi\_zero\_thr](#pexsi_zero_thr)
   - [Linear Response TDDFT](#linear-response-tddft)
     - [xc\_kernel](#xc_kernel)
-    - [lr\_solverl](#lr_solver)
+    - [lr\_solver](#lr_solver)
     - [lr\_thr](#lr_thr)
     - [nocc](#nocc)
     - [nvirt](#nvirt)
@@ -1300,7 +1300,7 @@ These variables are used to control the parameters of stochastic DFT (SDFT),  mi
 ### npart_sto
 
 - **Type**: Integer
-- **Availability**: [method_sto](#method_sto) = `2` and [out_dos](#out_dos) = `True` or [cal_cond](#cal_cond) = `True`
+- **Availability**: [method_sto](#method_sto) = `2` and [out_dos](#out_dos) = 1 or [cal_cond](#cal_cond) = `True`
 - **Description**: Make memory cost to 1/npart_sto times of the previous one when running the post process of SDFT like DOS or conductivities.
 - **Default**: 1
 
@@ -1588,9 +1588,13 @@ These variables are used to control the output of properties.
 
 ### out_dos
 
-- **Type**: Boolean
+- **Type**: Integer
 - **Description**: Whether to output the density of states (DOS). For more information, refer to the [dos.md](../elec_properties/dos.md).
-- **Default**: False
+  - 0: no output
+  - 1: output the density of states (DOS)
+  - 2: 
+    - lcao-only: output the density of states (DOS) and the projected density of states (PDOS)
+- **Default**: 0
 
 ### out_band
 
