@@ -40,8 +40,6 @@ void Grid_Technique::set_pbc_grid(
     const double& dr_uniform,
     const std::vector<double>& rcuts,
     const std::vector<std::vector<double>>& psi_u,
-    const std::vector<std::vector<double>>& dpsi_u,
-    const std::vector<std::vector<double>>& d2psi_u,
     const int& num_stream,
     const bool& gamma_only_local,
     const int& nspin,
@@ -66,8 +64,6 @@ void Grid_Technique::set_pbc_grid(
     double max_cut = *std::max_element(this->rcuts.begin(), this->rcuts.end());
     this->nr_max = static_cast<int>(1 / this->dr_uniform * max_cut) + 10;
     this->psi_u = psi_u;
-    this->dpsi_u = dpsi_u;
-    this->d2psi_u = d2psi_u;
     this->gamma_only_local=gamma_only_local;
     this->nspin = nspin;
     this->domag = domag;

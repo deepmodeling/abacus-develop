@@ -128,8 +128,6 @@ class Grid_Technique : public Grid_MeshBall {
                       const double& dr_uniform,
                       const std::vector<double>& rcuts,
                       const std::vector<std::vector<double>>& psi_u,
-                      const std::vector<std::vector<double>>& dpsi_u,
-                      const std::vector<std::vector<double>>& d2psi_u,
                       const int& num_stream,
                       const bool& gamma_only_local,
                       const int& nspin,

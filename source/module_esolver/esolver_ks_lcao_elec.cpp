@@ -65,10 +65,8 @@ void ESolver_KS_LCAO<TK, TR>::set_matrix_grid(Record_adj& ra)
     double dr_uniform = 0.001;
     std::vector<double> rcuts;
     std::vector<std::vector<double>> psi_u;
-    std::vector<std::vector<double>> dpsi_u;
-    std::vector<std::vector<double>> d2psi_u;
 
-    this->init_orb(dr_uniform, rcuts, GlobalC::ucell, psi_u, dpsi_u, d2psi_u);
+    this->init_orb(dr_uniform, rcuts, GlobalC::ucell, psi_u);
     #endif
     this->GridT.set_pbc_grid(this->pw_rho->nx,
                              this->pw_rho->ny,
@@ -89,8 +87,6 @@ void ESolver_KS_LCAO<TK, TR>::set_matrix_grid(Record_adj& ra)
                              dr_uniform,
                              rcuts,
                              psi_u,
-                             dpsi_u,
-                             d2psi_u,
                              PARAM.inp.nstream,
                              PARAM.inp.gamma_only,
                              PARAM.inp.nspin,

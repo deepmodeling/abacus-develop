@@ -304,10 +304,8 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
     double dr_uniform = 0.001;
     std::vector<double> rcuts;
     std::vector<std::vector<double>> psi_u;
-    std::vector<std::vector<double>> dpsi_u;
-    std::vector<std::vector<double>> d2psi_u;
 
-    this->init_orb(dr_uniform, rcuts, GlobalC::ucell, psi_u, dpsi_u, d2psi_u);
+    this->init_orb(dr_uniform, rcuts, GlobalC::ucell, psi_u);
     #endif
     this->gt_.set_pbc_grid(this->pw_rho->nx,
                              this->pw_rho->ny,
@@ -328,8 +326,6 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
                              dr_uniform,
                              rcuts,
                              psi_u,
-                             dpsi_u,
-                             d2psi_u,
                              PARAM.inp.nstream,
                              PARAM.inp.gamma_only,
                              PARAM.inp.nspin,

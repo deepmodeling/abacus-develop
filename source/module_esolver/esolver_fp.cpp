@@ -310,9 +310,7 @@ void ESolver_FP::print_rhofft(const Input_para& inp, std::ofstream& ofs)
 void ESolver_FP::init_orb(double& dr_uniform,
               std::vector<double>& rcuts,
               UnitCell& ucell,
-              std::vector<std::vector<double>>& psi_u,
-              std::vector<std::vector<double>>& dpsi_u,
-              std::vector<std::vector<double>>& d2psi_u)
+              std::vector<std::vector<double>>& psi_u)
 {
     // set the grid parameters
     dr_uniform=GlobalC::ORB.dr_uniform;
@@ -330,8 +328,6 @@ void ESolver_FP::init_orb(double& dr_uniform,
     const double max_cut = *std::max_element(rcuts.begin(), rcuts.end());
     const int nr_max = static_cast<int>(1/dr_uniform * max_cut) + 10;
     psi_u=std::vector<std::vector<double>>(ntype * nwmax);
-    dpsi_u=std::vector<std::vector<double>>(ntype * nwmax);
-    d2psi_u=std::vector<std::vector<double>>(ntype * nwmax);
     ModuleBase::Memory::record("psi_u", sizeof(double)*nwmax*ntype*3);
     
     Atom* atomx;
