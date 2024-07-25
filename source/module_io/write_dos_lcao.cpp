@@ -408,256 +408,259 @@ void ModuleIO::write_dos_lcao(const psi::Psi<std::complex<double>>* psi,
     int NUM = GlobalV::NLOCAL * npoints;
 
     const int np = npoints;
-    ModuleBase::matrix* pdosk = new ModuleBase::matrix[nspin0];
 
-    for (int is = 0; is < nspin0; ++is)
+    if (PARAM.inp.out_dos == 2)
     {
-        pdosk[is].create(GlobalV::NLOCAL, np, true);
-    }
+        ModuleBase::matrix* pdosk = new ModuleBase::matrix[nspin0];
 
-    ModuleBase::matrix* pdos = new ModuleBase::matrix[nspin0];
-
-    for (int is = 0; is < nspin0; ++is)
-    {
-        pdos[is].create(GlobalV::NLOCAL, np, true);
-    }
-
-    double a = bcoeff;
-    double c = 2 * 3.141592653;
-    double b = sqrt(c) * a;
-
-    std::complex<double>* waveg = new std::complex<double>[GlobalV::NLOCAL];
-
-    double* Gauss = new double[np]();
-
-    for (int is = 0; is < nspin0; ++is)
-    {
-        std::vector<ModuleBase::ComplexMatrix> Mulk;
-        Mulk.resize(1);
-        Mulk[0].create(pv.ncol, pv.nrow);
-
-        for (int ik = 0; ik < kv.get_nks(); ik++)
+        for (int is = 0; is < nspin0; ++is)
         {
+            pdosk[is].create(GlobalV::NLOCAL, np, true);
+        }
 
-            if (is == kv.isk[ik])
+        ModuleBase::matrix* pdos = new ModuleBase::matrix[nspin0];
+
+        for (int is = 0; is < nspin0; ++is)
+        {
+            pdos[is].create(GlobalV::NLOCAL, np, true);
+        }
+
+        double a = bcoeff;
+        double c = 2 * 3.141592653;
+        double b = sqrt(c) * a;
+
+        std::complex<double>* waveg = new std::complex<double>[GlobalV::NLOCAL];
+
+        double* Gauss = new double[np]();
+
+        for (int is = 0; is < nspin0; ++is)
+        {
+            std::vector<ModuleBase::ComplexMatrix> Mulk;
+            Mulk.resize(1);
+            Mulk[0].create(pv.ncol, pv.nrow);
+
+            for (int ik = 0; ik < kv.get_nks(); ik++)
             {
-                // calculate SK for current k point
-                const std::complex<double>* sk = nullptr;
+
+                if (is == kv.isk[ik])
+                {
+                    // calculate SK for current k point
+                    const std::complex<double>* sk = nullptr;
+                    if (GlobalV::NSPIN == 4)
+                    {
+                        dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(p_ham)->updateSk(ik, 1);
+                        sk = dynamic_cast<const hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(p_ham)->getSk();
+                    }
+                    else
+                    {
+                        dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham)->updateSk(ik, 1);
+                        sk = dynamic_cast<const hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham)->getSk();
+                    }
+
+                    psi->fix_k(ik);
+                    psi::Psi<std::complex<double>> Dwfc(psi[0], 1);
+                    std::complex<double>* p_dwfc = Dwfc.get_pointer();
+                    for (int index = 0; index < Dwfc.size(); ++index)
+                    {
+                        p_dwfc[index] = conj(p_dwfc[index]);
+                    }
+
+                    for (int i = 0; i < GlobalV::NBANDS; ++i)
+                    {
+
+                        ModuleBase::GlobalFunc::ZEROS(waveg, GlobalV::NLOCAL);
+
+                        ModuleBase::GlobalFunc::ZEROS(Gauss, np);
+                        for (int n = 0; n < npoints; ++n)
+                        {
+                            double en = emin + n * de_ev;
+                            double en0 = ekb(ik, i) * ModuleBase::Ry_to_eV;
+                            double de = en - en0;
+                            double de2 = 0.5 * de * de;
+                            Gauss[n] = kv.wk[ik] * exp(-de2 / a / a) / b;
+                        }
+
+                        const int NB = i + 1;
+
+                        const double one_float[2] = {1.0, 0.0}, zero_float[2] = {0.0, 0.0};
+                        const int one_int = 1;
+                        //   const int two_int=2;
+                        const char T_char = 'T'; // N_char='N',U_char='U'
+
+#ifdef __MPI
+                        pzgemv_(&T_char,
+                                &GlobalV::NLOCAL,
+                                &GlobalV::NLOCAL,
+                                &one_float[0],
+                                sk,
+                                &one_int,
+                                &one_int,
+                                pv.desc,
+                                p_dwfc,
+                                &one_int,
+                                &NB,
+                                pv.desc,
+                                &one_int,
+                                &zero_float[0],
+                                Mulk[0].c,
+                                &one_int,
+                                &NB,
+                                pv.desc,
+                                &one_int);
+#endif
+
+                        for (int j = 0; j < GlobalV::NLOCAL; ++j)
+                        {
+
+                            if (pv.in_this_processor(j, i))
+                            {
+
+                                const int ir = pv.global2local_row(j);
+                                const int ic = pv.global2local_col(i);
+
+                                waveg[j] = Mulk[0](ic, ir) * psi[0](ic, ir);
+                                const double x = waveg[j].real();
+                                BlasConnector::axpy(np, x, Gauss, 1, pdosk[is].c + j * pdosk[is].nc, 1);
+                            }
+                        }
+
+                    } // ib
+
+                } // if
+            }     // ik
+
+#ifdef __MPI
+            MPI_Reduce(pdosk[is].c, pdos[is].c, NUM, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+#endif
+        } // is
+        delete[] pdosk;
+        delete[] waveg;
+        delete[] Gauss;
+
+        if (GlobalV::MY_RANK == 0)
+        {
+            {
+                std::stringstream ps;
+                ps << GlobalV::global_out_dir << "TDOS";
+                std::ofstream out(ps.str().c_str());
+                if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 4)
+                {
+
+                    for (int n = 0; n < npoints; ++n)
+                    {
+                        double y = 0.0;
+                        double en = emin + n * de_ev;
+                        for (int i = 0; i < GlobalV::NLOCAL; i++)
+                        {
+                            y += pdos[0](i, n);
+                        }
+
+                        out << std::setw(20) << en << std::setw(30) << y << std::endl;
+                    }
+                }
+                else if (GlobalV::NSPIN == 2)
+                {
+                    for (int n = 0; n < npoints; ++n)
+                    {
+                        double y = 0.0;
+                        double z = 0.0;
+                        double en = emin + n * de_ev;
+                        for (int i = 0; i < GlobalV::NLOCAL; i++)
+                        {
+                            y += pdos[0](i, n);
+                            z += pdos[1](i, n);
+                        }
+
+                        out << std::setw(20) << en << std::setw(30) << y << std::setw(30) << z << std::endl;
+                    }
+                }
+                out.close();
+            }
+
+            /* decomposed Mulliken charge */
+
+            {
+                std::stringstream as;
+                as << GlobalV::global_out_dir << "PDOS";
+                std::ofstream out(as.str().c_str());
+
+                out << "<pdos>" << std::endl;
+                out << "<nspin>" << GlobalV::NSPIN << "</nspin>" << std::endl;
                 if (GlobalV::NSPIN == 4)
                 {
-                    dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(p_ham)->updateSk(ik, 1);
-                    sk = dynamic_cast<const hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(p_ham)->getSk();
+                    out << "<norbitals>" << std::setw(2) << GlobalV::NLOCAL / 2 << "</norbitals>" << std::endl;
                 }
                 else
                 {
-                    dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham)->updateSk(ik, 1);
-                    sk = dynamic_cast<const hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham)->getSk();
+                    out << "<norbitals>" << std::setw(2) << GlobalV::NLOCAL << "</norbitals>" << std::endl;
                 }
+                out << "<energy_values units=\"eV\">" << std::endl;
 
-                psi->fix_k(ik);
-                psi::Psi<std::complex<double>> Dwfc(psi[0], 1);
-                std::complex<double>* p_dwfc = Dwfc.get_pointer();
-                for (int index = 0; index < Dwfc.size(); ++index)
+                for (int n = 0; n < npoints; ++n)
                 {
-                    p_dwfc[index] = conj(p_dwfc[index]);
+                    double y = 0.0;
+                    double en = emin + n * de_ev;
+                    out << std::setw(20) << en << std::endl;
                 }
-
-                for (int i = 0; i < GlobalV::NBANDS; ++i)
+                out << "</energy_values>" << std::endl;
+                for (int i = 0; i < GlobalC::ucell.nat; i++)
                 {
-
-                    ModuleBase::GlobalFunc::ZEROS(waveg, GlobalV::NLOCAL);
-
-                    ModuleBase::GlobalFunc::ZEROS(Gauss, np);
-                    for (int n = 0; n < npoints; ++n)
+                    int a = GlobalC::ucell.iat2ia[i];
+                    int t = GlobalC::ucell.iat2it[i];
+                    Atom* atom1 = &GlobalC::ucell.atoms[t];
+                    const int s0 = GlobalC::ucell.itiaiw2iwt(t, a, 0);
+                    for (int j = 0; j < atom1->nw; ++j)
                     {
-                        double en = emin + n * de_ev;
-                        double en0 = ekb(ik, i) * ModuleBase::Ry_to_eV;
-                        double de = en - en0;
-                        double de2 = 0.5 * de * de;
-                        Gauss[n] = kv.wk[ik] * exp(-de2 / a / a) / b;
-                    }
+                        const int L1 = atom1->iw2l[j];
+                        const int N1 = atom1->iw2n[j];
+                        const int m1 = atom1->iw2m[j];
+                        const int w = GlobalC::ucell.itiaiw2iwt(t, a, j);
 
-                    const int NB = i + 1;
-
-                    const double one_float[2] = {1.0, 0.0}, zero_float[2] = {0.0, 0.0};
-                    const int one_int = 1;
-                    //   const int two_int=2;
-                    const char T_char = 'T'; // N_char='N',U_char='U'
-
-#ifdef __MPI
-                    pzgemv_(&T_char,
-                            &GlobalV::NLOCAL,
-                            &GlobalV::NLOCAL,
-                            &one_float[0],
-                            sk,
-                            &one_int,
-                            &one_int,
-                            pv.desc,
-                            p_dwfc,
-                            &one_int,
-                            &NB,
-                            pv.desc,
-                            &one_int,
-                            &zero_float[0],
-                            Mulk[0].c,
-                            &one_int,
-                            &NB,
-                            pv.desc,
-                            &one_int);
-#endif
-
-                    for (int j = 0; j < GlobalV::NLOCAL; ++j)
-                    {
-
-                        if (pv.in_this_processor(j, i))
+                        // out << "</energy_values>" <<std::endl;
+                        out << "<orbital" << std::endl;
+                        out << std::setw(6) << "index=\"" << std::setw(40) << w + 1 << "\"" << std::endl;
+                        out << std::setw(5) << "atom_index=\"" << std::setw(40) << i + 1 << "\"" << std::endl;
+                        out << std::setw(8) << "species=\"" << GlobalC::ucell.atoms[t].label << "\"" << std::endl;
+                        out << std::setw(2) << "l=\"" << std::setw(40) << L1 << "\"" << std::endl;
+                        out << std::setw(2) << "m=\"" << std::setw(40) << m1 << "\"" << std::endl;
+                        out << std::setw(2) << "z=\"" << std::setw(40) << N1 + 1 << "\"" << std::endl;
+                        out << ">" << std::endl;
+                        out << "<data>" << std::endl;
+                        if (GlobalV::NSPIN == 1)
                         {
-
-                            const int ir = pv.global2local_row(j);
-                            const int ic = pv.global2local_col(i);
-
-                            waveg[j] = Mulk[0](ic, ir) * psi[0](ic, ir);
-                            const double x = waveg[j].real();
-                            BlasConnector::axpy(np, x, Gauss, 1, pdosk[is].c + j * pdosk[is].nc, 1);
+                            for (int n = 0; n < npoints; ++n)
+                            {
+                                out << std::setw(13) << pdos[0](w, n) << std::endl;
+                            } // n
                         }
-                    }
+                        else if (GlobalV::NSPIN == 2)
+                        {
+                            for (int n = 0; n < npoints; ++n)
+                            {
+                                out << std::setw(20) << pdos[0](w, n) << std::setw(30) << pdos[1](w, n) << std::endl;
+                            } // n
+                        }
+                        else if (GlobalV::NSPIN == 4)
+                        {
+                            int w0 = w - s0;
+                            for (int n = 0; n < npoints; ++n)
+                            {
+                                out << std::setw(20) << pdos[0](s0 + 2 * w0, n) + pdos[0](s0 + 2 * w0 + 1, n) << std::endl;
+                            } // n
+                        }
 
-                } // ib
+                        out << "</data>" << std::endl;
+                        out << "</orbital>" << std::endl;
+                    } // j
+                }     // i
 
-            } // if
-        }     // ik
-
-#ifdef __MPI
-        MPI_Reduce(pdosk[is].c, pdos[is].c, NUM, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-#endif
-    } // is
-    delete[] pdosk;
-    delete[] waveg;
-    delete[] Gauss;
-
-    if (GlobalV::MY_RANK == 0)
-    {
-        {
-            std::stringstream ps;
-            ps << GlobalV::global_out_dir << "TDOS";
-            std::ofstream out(ps.str().c_str());
-            if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 4)
-            {
-
-                for (int n = 0; n < npoints; ++n)
-                {
-                    double y = 0.0;
-                    double en = emin + n * de_ev;
-                    for (int i = 0; i < GlobalV::NLOCAL; i++)
-                    {
-                        y += pdos[0](i, n);
-                    }
-
-                    out << std::setw(20) << en << std::setw(30) << y << std::endl;
-                }
+                out << "</pdos>" << std::endl;
+                out.close();
             }
-            else if (GlobalV::NSPIN == 2)
-            {
-                for (int n = 0; n < npoints; ++n)
-                {
-                    double y = 0.0;
-                    double z = 0.0;
-                    double en = emin + n * de_ev;
-                    for (int i = 0; i < GlobalV::NLOCAL; i++)
-                    {
-                        y += pdos[0](i, n);
-                        z += pdos[1](i, n);
-                    }
-
-                    out << std::setw(20) << en << std::setw(30) << y << std::setw(30) << z << std::endl;
-                }
-            }
-            out.close();
+            ModuleIO::write_orb_info(&(GlobalC::ucell));
         }
-
-        /* decomposed Mulliken charge */
-
-        {
-            std::stringstream as;
-            as << GlobalV::global_out_dir << "PDOS";
-            std::ofstream out(as.str().c_str());
-
-            out << "<pdos>" << std::endl;
-            out << "<nspin>" << GlobalV::NSPIN << "</nspin>" << std::endl;
-            if (GlobalV::NSPIN == 4)
-            {
-                out << "<norbitals>" << std::setw(2) << GlobalV::NLOCAL / 2 << "</norbitals>" << std::endl;
-            }
-            else
-            {
-                out << "<norbitals>" << std::setw(2) << GlobalV::NLOCAL << "</norbitals>" << std::endl;
-            }
-            out << "<energy_values units=\"eV\">" << std::endl;
-
-            for (int n = 0; n < npoints; ++n)
-            {
-                double y = 0.0;
-                double en = emin + n * de_ev;
-                out << std::setw(20) << en << std::endl;
-            }
-            out << "</energy_values>" << std::endl;
-            for (int i = 0; i < GlobalC::ucell.nat; i++)
-            {
-                int a = GlobalC::ucell.iat2ia[i];
-                int t = GlobalC::ucell.iat2it[i];
-                Atom* atom1 = &GlobalC::ucell.atoms[t];
-                const int s0 = GlobalC::ucell.itiaiw2iwt(t, a, 0);
-                for (int j = 0; j < atom1->nw; ++j)
-                {
-                    const int L1 = atom1->iw2l[j];
-                    const int N1 = atom1->iw2n[j];
-                    const int m1 = atom1->iw2m[j];
-                    const int w = GlobalC::ucell.itiaiw2iwt(t, a, j);
-
-                    // out << "</energy_values>" <<std::endl;
-                    out << "<orbital" << std::endl;
-                    out << std::setw(6) << "index=\"" << std::setw(40) << w + 1 << "\"" << std::endl;
-                    out << std::setw(5) << "atom_index=\"" << std::setw(40) << i + 1 << "\"" << std::endl;
-                    out << std::setw(8) << "species=\"" << GlobalC::ucell.atoms[t].label << "\"" << std::endl;
-                    out << std::setw(2) << "l=\"" << std::setw(40) << L1 << "\"" << std::endl;
-                    out << std::setw(2) << "m=\"" << std::setw(40) << m1 << "\"" << std::endl;
-                    out << std::setw(2) << "z=\"" << std::setw(40) << N1 + 1 << "\"" << std::endl;
-                    out << ">" << std::endl;
-                    out << "<data>" << std::endl;
-                    if (GlobalV::NSPIN == 1)
-                    {
-                        for (int n = 0; n < npoints; ++n)
-                        {
-                            out << std::setw(13) << pdos[0](w, n) << std::endl;
-                        } // n
-                    }
-                    else if (GlobalV::NSPIN == 2)
-                    {
-                        for (int n = 0; n < npoints; ++n)
-                        {
-                            out << std::setw(20) << pdos[0](w, n) << std::setw(30) << pdos[1](w, n) << std::endl;
-                        } // n
-                    }
-                    else if (GlobalV::NSPIN == 4)
-                    {
-                        int w0 = w - s0;
-                        for (int n = 0; n < npoints; ++n)
-                        {
-                            out << std::setw(20) << pdos[0](s0 + 2 * w0, n) + pdos[0](s0 + 2 * w0 + 1, n) << std::endl;
-                        } // n
-                    }
-
-                    out << "</data>" << std::endl;
-                    out << "</orbital>" << std::endl;
-                } // j
-            }     // i
-
-            out << "</pdos>" << std::endl;
-            out.close();
-        }
-        ModuleIO::write_orb_info(&(GlobalC::ucell));
+        delete[] pdos;
     }
-    delete[] pdos;
-
     // output the DOS file.
     for (int is = 0; is < nspin0; ++is)
     {

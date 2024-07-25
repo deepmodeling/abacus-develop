@@ -185,7 +185,8 @@ OBJS_CELL=atom_pseudo.o\
     print_cif.o\
 
 OBJS_DEEPKS=LCAO_deepks.o\
-        LCAO_deepks_fdelta.o\
+        LCAO_deepks_fgamma.o\
+        LCAO_deepks_fk.o\
         LCAO_deepks_odelta.o\
         LCAO_deepks_io.o\
         LCAO_deepks_mpi.o\
@@ -193,7 +194,17 @@ OBJS_DEEPKS=LCAO_deepks.o\
         LCAO_deepks_psialpha.o\
         LCAO_deepks_torch.o\
         LCAO_deepks_vdelta.o\
+        LCAO_deepks_hmat.o\
         LCAO_deepks_interface.o\
+        orbital_precalc.o\
+        orbital_precalc_k.o\
+        cal_gdmx.o\
+        cal_gdmx_k.o\
+        cal_gedm.o\
+        cal_gvx.o\
+        cal_descriptor.o\
+        v_delta_precalc.o\
+        
 
 OBJS_ELECSTAT=elecstate.o\
     elecstate_energy_terms.o\

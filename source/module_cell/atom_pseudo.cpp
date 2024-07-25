@@ -2,20 +2,24 @@
 
 Atom_pseudo::Atom_pseudo()
 {
-    for (int is = 0; is < 4; is++)
+    for (int is = 0; is < 4; is++) {
         this->index1_soc[is] = nullptr;
-    for (int is = 0; is < 4; is++)
+}
+    for (int is = 0; is < 4; is++) {
         this->index2_soc[is] = nullptr;
+}
 }
 
 Atom_pseudo::~Atom_pseudo()
 {
     for (int is = 0; is < 4; is++)
     {
-        if (this->index1_soc[is] != nullptr)
+        if (this->index1_soc[is] != nullptr) {
             delete[] this->index1_soc[is];
-        if (this->index2_soc[is] != nullptr)
+}
+        if (this->index2_soc[is] != nullptr) {
             delete[] this->index2_soc[is];
+}
     }
 }
 
@@ -118,8 +122,9 @@ void Atom_pseudo::set_d_so(ModuleBase::ComplexMatrix& d_so_in,
                 {
                     for (int is2 = 0; is2 < 2; is2++)
                     {
-                        if (is >= GlobalV::NSPIN)
+                        if (is >= GlobalV::NSPIN) {
                             break;
+}
                         for (int L1 = 0; L1 < nproj_soc; L1++)
                         {
                             for (int L2 = 0; L2 < nproj_soc; L2++)
@@ -165,7 +170,7 @@ void Atom_pseudo::bcast_atom_pseudo()
     Parallel_Common::bcast_int(nchi);
     Parallel_Common::bcast_int(nbeta);
     Parallel_Common::bcast_int(nv);
-    Parallel_Common::bcast_int(zv);
+    Parallel_Common::bcast_double(zv);
 
     // double
     Parallel_Common::bcast_double(etotps);
@@ -240,8 +245,9 @@ void Atom_pseudo::bcast_atom_pseudo()
     // == end of pseudo_vl ==
 
     // == pseudo ==
-    if (nbeta == 0)
+    if (nbeta == 0) {
         return;
+}
 
     if (GlobalV::MY_RANK != 0)
     {

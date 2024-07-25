@@ -328,44 +328,6 @@ void HSolverLCAO<T, Device>::parakSolve(hamilt::Hamilt<T>* pHamilt,
                                    int kpar)
 {
 #ifdef __MPI
-    DiagH<T>* pdiag_parak = nullptr;
-    if (this->method == "scalapack_gvx")
-    {
-        if (this->pdiagh != nullptr)
-        {
-            if (this->pdiagh->method != this->method)
-            {
-                delete[] this->pdiagh;
-                this->pdiagh = nullptr;
-            }
-        }
-        if (this->pdiagh == nullptr) {
-            this->pdiagh = new DiagoScalapack<T>();
-            this->pdiagh->method = this->method;
-        }
-        pdiag_parak = dynamic_cast<DiagoScalapack<T>*>(this->pdiagh);
-    }
-#ifdef __ELPA
-    else if (this->method == "genelpa")
-    {
-        if (this->pdiagh != nullptr) {
-            if (this->pdiagh->method != this->method) {
-                delete[] this->pdiagh;
-                this->pdiagh = nullptr;
-            }
-        }
-        if (this->pdiagh == nullptr) {
-            this->pdiagh = new DiagoElpa<T>();
-            this->pdiagh->method = this->method;
-        }
-        pdiag_parak = dynamic_cast<DiagoElpa<T>*>(this->pdiagh);
-    }
-#endif
-    else
-    {
-        ModuleBase::WARNING_QUIT("HSolverLCAO::solve",
-                                 "This method of DiagH for k-parallelism diagnolization is not supported!");
-    }
     ModuleBase::timer::tick("HSolverLCAO", "parakSolve");
     auto k2d = Parallel_K2D<T>();
     k2d.set_kpar(kpar);
@@ -416,7 +378,23 @@ void HSolverLCAO<T, Device>::parakSolve(hamilt::Hamilt<T>* pHamilt,
             hamilt::MatrixBlock<T> sk_pool = hamilt::MatrixBlock<T>{k2d.sk_pool.data(),
                 (size_t)k2d.get_p2D_pool()->get_row_size(), (size_t)k2d.get_p2D_pool()->get_col_size(), k2d.get_p2D_pool()->desc};
             /// solve eigenvector and eigenvalue for H(k)
-            pdiag_parak->diag_pool(hk_pool, sk_pool, psi_pool,&(pes->ekb(ik_global, 0)), k2d.POOL_WORLD_K2D);
+            if (this->method == "scalapack_gvx")
+            {
+                DiagoScalapack<T> sa;
+                sa.diag_pool(hk_pool, sk_pool, psi_pool,&(pes->ekb(ik_global, 0)), k2d.POOL_WORLD_K2D);
+            }
+#ifdef __ELPA
+            else if (this->method == "genelpa")
+            {
+                DiagoElpa<T> el;
+                el.diag_pool(hk_pool, sk_pool, psi_pool,&(pes->ekb(ik_global, 0)), k2d.POOL_WORLD_K2D);
+            }
+#endif
+            else
+            {
+                ModuleBase::WARNING_QUIT("HSolverLCAO::solve",
+                                 "This method of DiagH for k-parallelism diagnolization is not supported!");
+            }
         }
         MPI_Barrier(MPI_COMM_WORLD);
         ModuleBase::timer::tick("HSolverLCAO", "collect_psi");

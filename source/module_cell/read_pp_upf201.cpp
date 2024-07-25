@@ -289,7 +289,7 @@ void Pseudopot_upf::read_pseudo_upf201_header(std::ifstream& ifs, Atom_pseudo& p
         }
         else if (name[ip] == "z_valence")
         {
-            pp.zv = atof(val[ip].c_str());
+            pp.zv = std::stod(val[ip]);
         }
         else if (name[ip] == "total_psenergy")
         {
