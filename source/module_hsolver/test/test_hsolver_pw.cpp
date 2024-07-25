@@ -88,10 +88,10 @@ TEST_F(TestHSolverPW, solve) {
                      GlobalV::RANK_IN_POOL,
                      GlobalV::NPROC_IN_POOL,
 
-                    hsolver::DiagoIterAssist<std::complex<float>, base_device::DEVICE_CPU>::need_subspace,
-                    hsolver::DiagoIterAssist<std::complex<float>, base_device::DEVICE_CPU>::SCF_ITER,
-                    hsolver::DiagoIterAssist<std::complex<float>, base_device::DEVICE_CPU>::PW_DIAG_THR,
-                    hsolver::DiagoIterAssist<std::complex<float>, base_device::DEVICE_CPU>::PW_DIAG_NMAX,
+                    hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::SCF_ITER,
+                    hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::need_subspace,
+                    hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_NMAX,
+                    hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_THR,
 
                      true);
     EXPECT_EQ(this->hs_f.initialed_psi, true);
@@ -114,10 +114,10 @@ TEST_F(TestHSolverPW, solve) {
                      GlobalV::RANK_IN_POOL,
                      GlobalV::NPROC_IN_POOL,
 
-                    hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::need_subspace,
                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::SCF_ITER,
-                    hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_THR,
+                    hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::need_subspace,
                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_NMAX,
+                    hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_THR,
 
                      true);
     EXPECT_EQ(this->hs_d.initialed_psi, true);
