@@ -1435,7 +1435,7 @@ TEST_F(InputTest, Item_test)
     }
     { // bessel_nao_rcut
         auto it = find_lable("bessel_nao_rcut", readinput.input_lists);
-        param.sys.bessel_nao_rcut = -1;
+        param.input.bessel_nao_rcuts = {-1};
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(0), "");
         output = testing::internal::GetCapturedStdout();
