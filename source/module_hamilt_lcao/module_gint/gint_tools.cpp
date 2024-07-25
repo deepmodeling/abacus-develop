@@ -141,9 +141,9 @@ void get_block_info(const Grid_Technique& gt, const int bxyz, const int na_grid,
 			{
 				// meshcell_pos: z is the fastest
 				const double dr[3] = {
-					gt.meshcell_pos[ib][0] + mt[0],
-					gt.meshcell_pos[ib][1] + mt[1],
-					gt.meshcell_pos[ib][2] + mt[2]};
+					gt.meshcell_pos[ib*3] + mt[0],
+					gt.meshcell_pos[ib*3+1] + mt[1],
+					gt.meshcell_pos[ib*3+2] + mt[2]};
 				const double distance = std::sqrt(dr[0]*dr[0] + dr[1]*dr[1] + dr[2]*dr[2]);	// distance between atom and grid
 
             if (distance > gt.rcuts[it] - 1.0e-10) {
@@ -193,9 +193,9 @@ void cal_dpsirr_ylm(
 				else
 				{
 					const double dr[3]={						// vectors between atom and grid
-						gt.meshcell_pos[ib][0] + mt[0],
-						gt.meshcell_pos[ib][1] + mt[1],
-						gt.meshcell_pos[ib][2] + mt[2]};
+						gt.meshcell_pos[ib*3] + mt[0],
+						gt.meshcell_pos[ib*3+1] + mt[1],
+						gt.meshcell_pos[ib*3+2] + mt[2]};
 
 					for (int iw=0; iw< atom->nw; ++iw)
 					{

@@ -102,7 +102,7 @@ void Grid_MeshCell::init_meshcell_pos()
 	assert(bz>0);
 	assert(bxyz>0);
 
-	meshcell_pos = std::vector<std::vector<double>>(bxyz,std::vector<double>(3,0.0));
+	meshcell_pos = std::vector<double>(bxyz*3,0.0);
 	ModuleBase::Memory::record("meshcell_pos", sizeof(double) * bxyz*3);
 
 	int index=0;
@@ -114,9 +114,10 @@ void Grid_MeshCell::init_meshcell_pos()
 			{
 				for(int p=0; p<3; p++)
 				{
-					meshcell_pos[index][p] = i*meshcell_vec1[p] + j*meshcell_vec2[p] + k*meshcell_vec3[p];
+					meshcell_pos[index] = i*meshcell_vec1[p] + j*meshcell_vec2[p] + k*meshcell_vec3[p];
+					index++;
 				}
-				++index;
+				// ++index;
 			}
 		}
 	}
