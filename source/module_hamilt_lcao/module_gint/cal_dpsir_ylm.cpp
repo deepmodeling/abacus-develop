@@ -19,8 +19,7 @@ void cal_dpsir_ylm(
     ModuleBase::timer::tick("Gint_Tools", "cal_dpsir_ylm");
     const UnitCell& ucell = *gt.ucell;
     std::vector<const double*> it_psi_uniform(gt.nwmax);
-    std::vector<const double*> it_dpsi_uniform(gt.nwmax);
-    std::vector<int> it_psi_nr_uniform(gt.nwmax);
+
     // array to store spherical harmonics and its derivatives
     // the first dimension equals 36 because the maximum nwl is 5.
     double rly[36];
@@ -44,7 +43,6 @@ void cal_dpsir_ylm(
             if ( atom->iw2_new[iw] )
             {
                 it_psi_uniform[iw]= gt.psi_u[it*gt.nwmax + iw].data();
-                // it_psi_nr_uniform[iw]= gt.psi_u[it*gt.nwmax + iw].size();
             }
         }
 

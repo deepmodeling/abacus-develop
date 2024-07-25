@@ -13,10 +13,9 @@ void cal_psir_ylm(
     double* const* const psir_ylm) // cal_flag[bxyz][na_grid],	whether the atom-grid distance is larger than cutoff
 {
     ModuleBase::timer::tick("Gint_Tools", "cal_psir_ylm");
-    double ylma[36];
+    std::vector<double> ylma(36, 0.0);
     const UnitCell& ucell = *gt.ucell;
     std::vector<const double*> it_psi_uniform(gt.nwmax);
-    std::vector<const double*> it_dpsi_uniform(gt.nwmax);
 
     for (int id = 0; id < na_grid; id++)
     {
@@ -61,7 +60,7 @@ void cal_psir_ylm(
             {
                 // meshcell_pos: z is the fastest
                 const double dr[3]
-                    = {gt.meshcell_pos[ib*3] + mt[0], gt.meshcell_pos[3*ib+1] + mt[1], gt.meshcell_pos[3*ib+2] + mt[2]};
+                    = {gt.meshcell_pos[ib][0] + mt[0], gt.meshcell_pos[ib][1] + mt[1], gt.meshcell_pos[ib][2] + mt[2]};
                 double distance
                     = std::sqrt(dr[0] * dr[0] + dr[1] * dr[1] + dr[2] * dr[2]); // distance between atom and grid
                 // if(distance[id] > gt.orbital_rmax) continue;
