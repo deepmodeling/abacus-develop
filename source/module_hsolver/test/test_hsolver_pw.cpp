@@ -87,6 +87,12 @@ TEST_F(TestHSolverPW, solve) {
                      GlobalV::use_uspp,
                      GlobalV::RANK_IN_POOL,
                      GlobalV::NPROC_IN_POOL,
+
+                    hsolver::DiagoIterAssist<T, Device>::need_subspace,
+                    hsolver::DiagoIterAssist<T, Device>::SCF_ITER,
+                    hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR,
+                    hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
+
                      true);
     EXPECT_EQ(this->hs_f.initialed_psi, true);
     for (int i = 0; i < psi_test_cf.size(); i++) {
@@ -107,6 +113,12 @@ TEST_F(TestHSolverPW, solve) {
                      GlobalV::use_uspp,
                      GlobalV::RANK_IN_POOL,
                      GlobalV::NPROC_IN_POOL,
+
+                    hsolver::DiagoIterAssist<T, Device>::need_subspace,
+                    hsolver::DiagoIterAssist<T, Device>::SCF_ITER,
+                    hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR,
+                    hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
+
                      true);
     EXPECT_EQ(this->hs_d.initialed_psi, true);
     EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<double>>::avg_iter,
