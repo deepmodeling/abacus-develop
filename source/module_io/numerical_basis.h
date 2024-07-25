@@ -33,7 +33,12 @@ class Numerical_Basis
     Numerical_Basis();
     ~Numerical_Basis();
 
-    void start_from_file_k(const int& ik, ModuleBase::ComplexMatrix& psi, const Structure_Factor& sf, const ModulePW::PW_Basis_K* wfcpw, const UnitCell& ucell);
+    void start_from_file_k(const int& ik, 
+                           ModuleBase::ComplexMatrix& psi, 
+                           const Structure_Factor& sf, 
+                           const ModulePW::PW_Basis_K* wfcpw, 
+                           const UnitCell& ucell,
+                           const double& beseel_nao_rcut);
     // this is a very heavy function, should be refactored.
     void output_overlap(const psi::Psi<std::complex<double>>& psi, 
                         const Structure_Factor& sf, 

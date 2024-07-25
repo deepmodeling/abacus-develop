@@ -39,8 +39,12 @@ Numerical_Basis::~Numerical_Basis()
 // to generate TableOne
 // Secondly output overlap, use psi(evc) and jlq3d.
 //============================================================
-void Numerical_Basis::start_from_file_k(const int& ik, ModuleBase::ComplexMatrix& psi, const Structure_Factor& sf,
-                                        const ModulePW::PW_Basis_K* wfcpw, const UnitCell& ucell)
+void Numerical_Basis::start_from_file_k(const int& ik, 
+                                        ModuleBase::ComplexMatrix& psi, 
+                                        const Structure_Factor& sf,
+                                        const ModulePW::PW_Basis_K* wfcpw, 
+                                        const UnitCell& ucell,
+                                        const double& beseel_nao_rcut)
 {
     ModuleBase::TITLE("Numerical_Basis", "start_from_file_k");
 
@@ -48,7 +52,7 @@ void Numerical_Basis::start_from_file_k(const int& ik, ModuleBase::ComplexMatrix
     {
         // true stands for : start_from_file
         this->bessel_basis.init(true, std::stod(PARAM.inp.bessel_nao_ecut), ucell.ntype, ucell.lmax,
-                                PARAM.inp.bessel_nao_smooth, PARAM.inp.bessel_nao_sigma, INPUT.bessel_nao_rcut,
+                                PARAM.inp.bessel_nao_smooth, PARAM.inp.bessel_nao_sigma, beseel_nao_rcut,
                                 PARAM.inp.bessel_nao_tolerence, ucell);
         this->mu_index = this->init_mu_index(ucell);
         this->init_label = true;
