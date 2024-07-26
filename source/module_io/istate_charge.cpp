@@ -5,6 +5,7 @@
 #include "module_base/global_variable.h"
 #include "module_base/parallel_common.h"
 #include "module_base/scalapack_connector.h"
+#include "module_elecstate/module_charge/symmetry_rho.h"
 #include "module_elecstate/module_dm/cal_dm_psi.h"
 #include "module_elecstate/module_dm/density_matrix.h"
 #include "module_hamilt_lcao/module_gint/gint.h"
@@ -157,8 +158,10 @@ void IState_Charge::begin(Gint_Gamma& gg,
 
 void IState_Charge::begin(Gint_k& gk,
                           double** rho,
+                          std::complex<double>** rhog,
                           const ModuleBase::matrix& wg,
                           const std::vector<double>& ef_all_spin,
+                          const ModulePW::PW_Basis* rho_pw,
                           const int rhopw_nrxx,
                           const int rhopw_nplane,
                           const int rhopw_startz_current,
@@ -180,7 +183,8 @@ void IState_Charge::begin(Gint_k& gk,
                           const UnitCell* ucell_in,
                           Grid_Driver* GridD_in,
                           const K_Vectors& kv,
-                          const bool if_separate_k)
+                          const bool if_separate_k,
+                          const int ngmc)
 {
     ModuleBase::TITLE("IState_Charge", "begin");
 
@@ -302,6 +306,26 @@ void IState_Charge::begin(Gint_k& gk,
                 for (int is = 0; is < nspin; ++is)
                 {
                     ModuleBase::GlobalFunc::DCOPY(rho[is], rho_save[is].data(), rhopw_nrxx); // Copy data
+                }
+
+                // Symmetrize the charge density
+                std::cout << " Symmetrizing charge density..." << std::endl;
+                Symmetry_rho srho;
+                for (int is = 0; is < nspin; ++is)
+                {
+                    std::vector<double*> rho_save_pointers(nspin);
+                    for (int i = 0; i < nspin; ++i)
+                    {
+                        rho_save_pointers[i] = rho_save[i].data();
+                    }
+                    srho.begin(is,
+                               rho_save_pointers.data(),
+                               rhog,
+                               ngmc,
+                               nullptr,
+                               rho_pw,
+                               GlobalC::Pgrid,
+                               GlobalC::ucell.symm);
                 }
 
                 std::cout << " Writting cube files...";

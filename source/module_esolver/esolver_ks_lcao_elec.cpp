@@ -479,8 +479,10 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
         } else {
             ISC.begin(this->GK,
                     this->pelec->charge->rho,
+                    this->pelec->charge->rhog,
                     this->pelec->wg,
                     this->pelec->eferm.get_all_ef(),
+                    this->pw_rho,
                     this->pw_rho->nrxx,
                     this->pw_rho->nplane,
                     this->pw_rho->startz_current,
@@ -502,7 +504,8 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                     &GlobalC::ucell,
                     &GlobalC::GridD,
                     this->kv,
-                    PARAM.inp.if_separate_k);
+                    PARAM.inp.if_separate_k,
+                    this->pelec->charge->ngmc);
         }
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "getting partial charge");
     } else if (cal_type == "get_wf") {
