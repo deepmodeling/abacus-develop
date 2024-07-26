@@ -194,6 +194,7 @@ OBJS_DEEPKS=LCAO_deepks.o\
         LCAO_deepks_psialpha.o\
         LCAO_deepks_torch.o\
         LCAO_deepks_vdelta.o\
+        LCAO_deepks_hmat.o\
         LCAO_deepks_interface.o\
         orbital_precalc.o\
         orbital_precalc_k.o\

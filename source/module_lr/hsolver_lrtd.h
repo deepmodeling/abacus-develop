@@ -15,7 +15,7 @@ namespace LR
     public:
         HSolverLR(const int& nk_in, const int& npairs_in, const int& ispin_solve_in = 0, const bool& out_wfc_lr_in = false)
             :nk(nk_in), npairs(npairs_in), out_wfc_lr(out_wfc_lr_in), ispin_solve(ispin_solve_in) {};
-        virtual Real set_diagethr(const int istep, const int iter, const Real ethr) override
+        virtual Real set_diagethr(Real diag_ethr_in, const int istep, const int iter, const Real ethr) override
         {
             this->diag_ethr = ethr;
             return ethr;

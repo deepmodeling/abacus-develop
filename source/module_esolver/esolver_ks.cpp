@@ -510,7 +510,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
 #else
         auto iterstart = std::chrono::system_clock::now();
 #endif
-        double diag_ethr = this->phsol->set_diagethr(istep, iter, drho);
+        double diag_ethr = this->phsol->set_diagethr(this->phsol->diag_ethr, istep, iter, drho);
 
         // 6) initialization of SCF iterations
         this->iter_init(istep, iter);
@@ -538,15 +538,15 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
             if (firstscf)
             {
                 firstscf = false;
-                hsolver_error = this->phsol->cal_hsolerror();
+                hsolver_error = this->phsol->cal_hsolerror(diag_ethr);
                 // The error of HSolver is larger than drho,
                 // so a more precise HSolver should be excuconv_elected.
                 if (hsolver_error > drho)
                 {
-                    diag_ethr = this->phsol->reset_diagethr(GlobalV::ofs_running, hsolver_error, drho);
+                    diag_ethr = this->phsol->reset_diagethr(GlobalV::ofs_running, hsolver_error, drho, diag_ethr);
                     this->hamilt2density(istep, iter, diag_ethr);
                     drho = p_chgmix->get_drho(pelec->charge, GlobalV::nelec);
-                    hsolver_error = this->phsol->cal_hsolerror();
+                    hsolver_error = this->phsol->cal_hsolerror(diag_ethr);
                 }
             }
             // mixing will restart at this->p_chgmix->mixing_restart steps

@@ -1024,13 +1024,13 @@ void ESolver_KS_PW<T, Device>::after_all_runners() {
                               << std::fixed << PARAM.inp.bessel_nao_rcuts[i]
                               << " a.u." << std::endl;
                 }
-                INPUT.bessel_nao_rcut = PARAM.inp.bessel_nao_rcuts[i];
                 Numerical_Basis numerical_basis;
                 numerical_basis.output_overlap(this->psi[0],
                                                this->sf,
                                                this->kv,
                                                this->pw_wfc,
-                                               GlobalC::ucell);
+                                               GlobalC::ucell,
+                                               PARAM.inp.bessel_nao_rcuts[i]);
             }
             ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,
                                          "BASIS OVERLAP (Q and S) GENERATION.");

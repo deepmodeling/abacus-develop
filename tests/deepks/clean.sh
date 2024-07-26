@@ -24,34 +24,13 @@ for directory in `ls | grep $module`; do
 	# delete OUT.autotest (if it exists) 
 	#--------------------------------------------
 	OUT_directory="$directory/OUT.autotest"
-	#test -e "$OUT_directory" && echo $OUT_directory
 	test -e "$OUT_directory" && rm -rf $OUT_directory
-
-	#--------------------------------------------
-    # delete descriptor.dat (if it exists) 
-    #--------------------------------------------
-	descriptor="$directory/descriptor.dat"
-	test -e "$descriptor" && rm -rf $descriptor
-
-	#--------------------------------------------
-    # delete H_V_delta.dat (if it exists) 
-    #--------------------------------------------
-	H_V_delta="$directory/H_V_delta.dat"
-	test -e "$H_V_delta" && rm -rf $H_V_delta
 
 	#--------------------------------------------
     # delete projected_DM.dat (if it exists) 
     #--------------------------------------------
 	projected_DM="$directory/projected_DM.dat"
 	test -e "$projected_DM" && rm -rf $projected_DM
-
-	#--------------------------------------------
-    # delete *.npy (if it exists) 
-    #--------------------------------------------
-	num=$(find -name '*.npy' | wc -l)
-    if [ $num != "0" ]; then
-		rm -rf $directory/*.npy
-	fi
 
 done
 

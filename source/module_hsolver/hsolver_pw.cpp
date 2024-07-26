@@ -668,28 +668,31 @@ void HSolverPW<T, Device>::output_iterInfo()
 }
 
 template <typename T, typename Device>
-typename HSolverPW<T, Device>::Real HSolverPW<T, Device>::cal_hsolerror()
+typename HSolverPW<T, Device>::Real HSolverPW<T, Device>::cal_hsolerror(const Real diag_ethr_in)
 {
-    return this->diag_ethr * static_cast<Real>(std::max(1.0, GlobalV::nelec));
+    return diag_ethr_in * static_cast<Real>(std::max(1.0, GlobalV::nelec));
 }
 
 template <typename T, typename Device>
-typename HSolverPW<T, Device>::Real HSolverPW<T, Device>::set_diagethr(const int istep, const int iter, const Real drho)
+typename HSolverPW<T, Device>::Real HSolverPW<T, Device>::set_diagethr(Real diag_ethr_in,
+                                                                       const int istep, 
+                                                                       const int iter, 
+                                                                       const Real drho)
 {
     // It is too complex now and should be modified.
     if (iter == 1)
     {
-        if (std::abs(this->diag_ethr - 1.0e-2) < 1.0e-6)
+        if (std::abs(diag_ethr_in - 1.0e-2) < 1.0e-6)
         {
             if (GlobalV::init_chg == "file")
             {
                 //======================================================
                 // if you think that the starting potential is good
                 // do not spoil it with a louly first diagonalization:
-                // set a strict this->diag_ethr in the input file
+                // set a strict diag_ethr in the input file
                 // ()diago_the_init
                 //======================================================
-                this->diag_ethr = 1.0e-5;
+                diag_ethr_in = 1.0e-5;
             }
             else
             {
@@ -697,22 +700,22 @@ typename HSolverPW<T, Device>::Real HSolverPW<T, Device>::set_diagethr(const int
                 // starting atomic potential is probably far from scf
                 // don't waste iterations in the first diagonalization
                 //=======================================================
-                this->diag_ethr = 1.0e-2;
+                diag_ethr_in = 1.0e-2;
             }
         }
-        // if (GlobalV::FINAL_SCF) this->diag_ethr = 1.0e-2;
+        // if (GlobalV::FINAL_SCF) diag_ethr = 1.0e-2;
         if (GlobalV::CALCULATION == "md" || GlobalV::CALCULATION == "relax" || GlobalV::CALCULATION == "cell-relax")
         {
-            this->diag_ethr = std::max(this->diag_ethr, static_cast<Real>(GlobalV::PW_DIAG_THR));
+            diag_ethr_in = std::max(diag_ethr_in, static_cast<Real>(GlobalV::PW_DIAG_THR));
         }
     }
     else
     {
         if (iter == 2)
         {
-            this->diag_ethr = 1.e-2;
+            diag_ethr_in = 1.e-2;
         }
-        this->diag_ethr = std::min(this->diag_ethr,
+        diag_ethr_in = std::min(diag_ethr_in,
                                    static_cast<Real>(0.1) * drho
                                        / std::max(static_cast<Real>(1.0), static_cast<Real>(GlobalV::nelec)));
     }
@@ -721,30 +724,41 @@ typename HSolverPW<T, Device>::Real HSolverPW<T, Device>::set_diagethr(const int
     // modified by denghuilu at 2023-05-15
     if (GlobalV::precision_flag == "single")
     {
-        this->diag_ethr = std::max(this->diag_ethr, static_cast<Real>(0.5e-4));
+        diag_ethr_in = std::max(diag_ethr_in, static_cast<Real>(0.5e-4));
     }
-    return this->diag_ethr;
+
+    // Temporarily added to ensure correctness
+    this->diag_ethr = diag_ethr_in;
+    return diag_ethr_in;
 }
 
 template <typename T, typename Device>
 typename HSolverPW<T, Device>::Real HSolverPW<T, Device>::reset_diagethr(std::ofstream& ofs_running,
                                                                          const Real hsover_error,
-                                                                         const Real drho)
+                                                                         const Real drho,
+                                                                         Real diag_ethr_in)
 {
     ofs_running << " Notice: Threshold on eigenvalues was too large.\n";
+    
     ModuleBase::WARNING("scf", "Threshold on eigenvalues was too large.");
+
     ofs_running << " hsover_error=" << hsover_error << " > DRHO=" << drho << std::endl;
-    ofs_running << " Origin diag_ethr = " << this->diag_ethr << std::endl;
-    this->diag_ethr = 0.1 * drho / GlobalV::nelec;
+    ofs_running << " Origin diag_ethr = " << diag_ethr_in << std::endl;
+    
+    diag_ethr_in = 0.1 * drho / GlobalV::nelec;
+
     // It is essential for single precision implementation to keep the diag_ethr
     // value less or equal to the single-precision limit of convergence(0.5e-4).
     // modified by denghuilu at 2023-05-15
     if (GlobalV::precision_flag == "single")
     {
-        this->diag_ethr = std::max(this->diag_ethr, static_cast<Real>(0.5e-4));
+        diag_ethr_in = std::max(diag_ethr_in, static_cast<Real>(0.5e-4));
     }
-    ofs_running << " New    diag_ethr = " << this->diag_ethr << std::endl;
-    return this->diag_ethr;
+    ofs_running << " New    diag_ethr = " << diag_ethr_in << std::endl;
+    
+    // Temporarily added to ensure correctness
+    this->diag_ethr = diag_ethr_in;
+    return diag_ethr_in;
 }
 
 template class HSolverPW<std::complex<float>, base_device::DEVICE_CPU>;
