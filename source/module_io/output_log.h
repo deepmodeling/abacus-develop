@@ -22,6 +22,18 @@ void output_convergence_after_scf(bool& convergence, double& energy, std::ofstre
 /// @param ofs_running the output stream
 void output_efermi(bool& convergence, double& efermi, std::ofstream& ofs_running = GlobalV::ofs_running);
 
+/// @brief calculate and output the vacuum level
+/// @param rho_basis the FFT grids
+/// @param ucell the unitcell
+/// @param rho charge density
+/// @param v_elecstat electrostatic potential
+/// @param ofs_running the output stream
+void output_vacuum_level(const ModulePW::PW_Basis* rho_basis,
+                         const UnitCell* ucell,
+                         const double* const* rho,
+                         const double* v_elecstat,
+                         std::ofstream& ofs_running = GlobalV::ofs_running);
+
 /// @brief output atomic forces
 /// @param ofs the output stream
 /// @param cell the unitcell

@@ -9,6 +9,11 @@
 #include "module_base/constants.h"
 #include "module_base/global_variable.h"
 #include "module_io/output_log.h"
+
+#ifdef __MPI
+#include "module_basis/module_pw/test/test_tool.h"
+#include "mpi.h"
+#endif
 /**
  * - Tested Functions:
  *  - output_convergence_after_scf()
@@ -123,9 +128,19 @@ UnitCell::UnitCell()
     ntype = 1;
     nat = 2;
     atoms = new Atom[ntype];
+
+    latvec.e11 = latvec.e22 = latvec.e33 = 10;
+    latvec.e12 = latvec.e13 = latvec.e23 = 0;
+    latvec.e21 = latvec.e31 = latvec.e32 = 0;
+
+    atoms[0].taud = new ModuleBase::Vector3<double>[2];
+    atoms[0].taud[0].set(0.5456, 0, 0.54275);
+    atoms[0].taud[1].set(0.54, 0.8495, 0.34175);
 }
 UnitCell::~UnitCell()
 {
+    if (atoms != nullptr)
+        delete[] atoms;
 }
 InfoNonlocal::InfoNonlocal()
 {
@@ -146,6 +161,8 @@ Atom::Atom()
 }
 Atom::~Atom()
 {
+    if (taud != nullptr)
+        delete[] taud;
 }
 Atom_pseudo::Atom_pseudo()
 {
@@ -158,6 +175,68 @@ pseudo::pseudo()
 }
 pseudo::~pseudo()
 {
+}
+
+class OutputVacuumLevelTest : public ::testing::Test
+{
+  protected:
+    ModulePW::PW_Basis* rhopw = nullptr;
+
+    virtual void SetUp()
+    {
+        rhopw = new ModulePW::PW_Basis;
+    }
+    virtual void TearDown()
+    {
+        if (rhopw != nullptr)
+            delete rhopw;
+    }
+};
+
+TEST_F(OutputVacuumLevelTest, OutputVacuumLevel)
+{
+    GlobalV::NSPIN = 1;
+    std::cout << GlobalV::NSPIN << std::endl;
+    UnitCell ucell;
+    std::cout << ucell.latvec.e11 << std::endl;
+    std::cout << ucell.latvec.e22 << std::endl;
+    std::cout << ucell.latvec.e33 << std::endl;
+
+#ifdef __MPI
+    rhopw->initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, MPI_COMM_WORLD);
+#endif
+    rhopw->initgrids(1.5, ucell.latvec, 60);
+    rhopw->initparameters(false, 60);
+    rhopw->setuptransform();
+    rhopw->collect_local_pw();
+
+    double** rho = new double*[1];
+    rho[0] = new double[rhopw->nrxx];
+    double* v_elecstat = new double[rhopw->nrxx];
+    for (int ir = 0; ir < rhopw->nrxx; ++ir)
+    {
+        rho[0][ir] = 0.01 * ir;
+        v_elecstat[ir] = 0.02 * ir;
+    }
+
+    std::ofstream ofs_running("test_output_vacuum_level.txt");
+    ModuleIO::output_vacuum_level(rhopw, &ucell, rho, v_elecstat, ofs_running);
+    ofs_running.close();
+
+    std::ifstream ifs_running("test_output_vacuum_level.txt");
+    std::stringstream ss;
+    ss << ifs_running.rdbuf();
+    std::string file_content = ss.str();
+    ifs_running.close();
+
+    std::string expected_content = "The vacuum level is 1523.7 eV\n";
+
+    EXPECT_EQ(file_content, expected_content);
+    std::remove("test_output_vacuum_level.txt");
+
+    delete[] rho[0];
+    delete[] rho;
+    delete[] v_elecstat;
 }
 
 TEST(PrintForce, PrintForce)
@@ -237,4 +316,25 @@ TEST(PrintStress, PrintStress)
     EXPECT_THAT(output_str, testing::HasSubstr(" TOTAL-PRESSURE: 49035.075992 KBAR"));
     ifs.close();
     std::remove("test.txt");
+}
+
+int main(int argc, char** argv)
+{
+#ifdef __MPI
+    setupmpi(argc, argv, GlobalV::NPROC, GlobalV::MY_RANK);
+    divide_pools(GlobalV::NPROC,
+                 GlobalV::MY_RANK,
+                 GlobalV::NPROC_IN_POOL,
+                 GlobalV::KPAR,
+                 GlobalV::MY_POOL,
+                 GlobalV::RANK_IN_POOL);
+#endif
+
+    testing::InitGoogleTest(&argc, argv);
+    int result = RUN_ALL_TESTS();
+
+#ifdef __MPI
+    finishmpi();
+#endif
+    return result;
 }
