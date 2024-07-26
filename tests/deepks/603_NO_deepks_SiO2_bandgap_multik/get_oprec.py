@@ -1,3 +1,3 @@
 import numpy
-a=numpy.load('orbital_precalc.npy')
+a=numpy.load('OUT.autotest/deepks_orbpre.npy')
 print(numpy.sum(a))

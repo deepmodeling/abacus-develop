@@ -41,18 +41,6 @@ for directory in `ls | grep $module`; do
 	test -e "$time_json" && rm $time_json
 
 	#--------------------------------------------
-	# delete descriptor.dat (if it exists) 
-	#--------------------------------------------
-	descriptor="$directory/descriptor.dat"
-	test -e "$descriptor" && rm -rf $descriptor
-
-	#--------------------------------------------
-	# delete H_V_delta.dat (if it exists) 
-	#--------------------------------------------
-	H_V_delta="$directory/H_V_delta.dat"
-	test -e "$H_V_delta" && rm -rf $H_V_delta
-
-	#--------------------------------------------
 	# delete projected_DM.dat (if it exists) 
 	#--------------------------------------------
 	projected_DM="$directory/projected_DM.dat"

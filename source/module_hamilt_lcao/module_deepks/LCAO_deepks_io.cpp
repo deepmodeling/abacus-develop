@@ -148,7 +148,9 @@ void LCAO_deepks_io::save_npy_d(const int nat,
         const long unsigned dshape[] = {static_cast<unsigned long>(nat), static_cast<unsigned long>(des_per_atom)};
         if (rank == 0)
         {
-            npy::SaveArrayAsNumpy("dm_eig.npy", false, 2, dshape, npy_des);
+            //std::string file_dm_eig = GlobalV::global_out_dir + "dm_eig.npy";
+            std::string file_dm_eig = "dm_eig.npy";
+            npy::SaveArrayAsNumpy(file_dm_eig, false, 2, dshape, npy_des);
         }
     }
     else
@@ -165,7 +167,9 @@ void LCAO_deepks_io::save_npy_d(const int nat,
         const long unsigned dshape[] = {static_cast<unsigned long>(nat), static_cast<unsigned long>(des_per_atom)};
         if (rank == 0)
         {
-            npy::SaveArrayAsNumpy("dm_eig.npy", false, 2, dshape, npy_des);
+            //std::string file_dm_eig = GlobalV::global_out_dir + "dm_eig.npy";
+            std::string file_dm_eig = "dm_eig.npy";
+            npy::SaveArrayAsNumpy(file_dm_eig, false, 2, dshape, npy_des);
         }        
     }
     return;
@@ -176,6 +180,7 @@ void LCAO_deepks_io::save_npy_d(const int nat,
 void LCAO_deepks_io::save_npy_gvx(const int nat, 
                                   const int des_per_atom,
                                   const torch::Tensor &gvx_tensor,
+                                  const std::string &out_dir,
                                   const int rank)
 {
     ModuleBase::TITLE("LCAO_deepks_io", "save_npy_gvx");
@@ -209,7 +214,9 @@ void LCAO_deepks_io::save_npy_gvx(const int nat,
             }
         }
     }
-    npy::SaveArrayAsNumpy("grad_vx.npy", false, 4, gshape, npy_gvx);
+    
+    std::string file_gradvx = out_dir + "deepks_gradvx.npy";
+    npy::SaveArrayAsNumpy(file_gradvx, false, 4, gshape, npy_gvx);
     return;
 }
 
@@ -217,6 +224,7 @@ void LCAO_deepks_io::save_npy_gvx(const int nat,
 void LCAO_deepks_io::save_npy_gvepsl(const int nat,
                                      const int des_per_atom,
                                      const torch::Tensor &gvepsl_tensor,
+                                     const std::string& out_dir,
                                      const int rank)
 {
     ModuleBase::TITLE("LCAO_deepks_io", "save_npy_gvepsl");
@@ -246,7 +254,10 @@ void LCAO_deepks_io::save_npy_gvepsl(const int nat,
 
         }
     }
-    npy::SaveArrayAsNumpy("grad_vepsl.npy", false, 3, gshape, npy_gvepsl);
+
+    // change the name from grad_vepsl.npy to deepks_gvepsl.npy
+    const std::string file = out_dir + "deepks_gvepsl.npy";
+    npy::SaveArrayAsNumpy(file, false, 3, gshape, npy_gvepsl);
     return;
 }
 
@@ -346,7 +357,7 @@ void LCAO_deepks_io::save_npy_o(const ModuleBase::matrix &bandgap,
     std::vector<double> npy_o;
     for (int iks = 0; iks < nks; ++iks)
     {
-        for (int hl = 0;hl < 1;hl++)
+        for (int hl = 0;hl < 1; ++hl)
         {
             npy_o.push_back(bandgap(iks,hl));
         }
@@ -361,6 +372,7 @@ void LCAO_deepks_io::save_npy_orbital_precalc(const int nat,
                                               const int nks, 
                                               const int des_per_atom,
                                               const torch::Tensor& orbital_precalc_tensor,
+                                              const std::string& out_dir,
                                               const int rank)
 {
     ModuleBase::TITLE("LCAO_deepks_io", "save_npy_orbital_precalc");
@@ -390,7 +402,9 @@ void LCAO_deepks_io::save_npy_orbital_precalc(const int nat,
             }
         }
     }
-    npy::SaveArrayAsNumpy("orbital_precalc.npy", false, 4, gshape, npy_orbital_precalc);
+
+    const std::string file_orbpre = out_dir + "deepks_orbpre.npy";
+    npy::SaveArrayAsNumpy(file_orbpre, false, 4, gshape, npy_orbital_precalc);
     return;
 }
 
