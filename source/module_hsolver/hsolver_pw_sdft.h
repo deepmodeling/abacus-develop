@@ -12,7 +12,7 @@ namespace hsolver
                          wavefunc* pwf_in,
                          Stochastic_WF& stowf,
                          const int method_sto)
-              : HSolverPW(wfc_basis_in, pwf_in)
+              : HSolverPW(wfc_basis_in, pwf_in, false)
           {
               this->classname = "HSolverPW_SDFT";
               stoiter.init(method_sto, pkv, wfc_basis_in, stowf);

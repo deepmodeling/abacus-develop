@@ -208,12 +208,16 @@ void HSolverPW<T, Device>::paw_func_after_kloop(psi::Psi<T, Device>& psi, elecst
 #endif
 
 template <typename T, typename Device>
-HSolverPW<T, Device>::HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in, wavefunc* pwf_in)
+HSolverPW<T, Device>::HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in,
+                                wavefunc* pwf_in,
+                                const bool initialed_psi_in)
 {
     this->classname = "HSolverPW";
     this->wfc_basis = wfc_basis_in;
     this->pwf = pwf_in;
     this->diag_ethr = GlobalV::PW_DIAG_THR;
+
+    this->initialed_psi = initialed_psi_in;
 }
 
 template <typename T, typename Device>

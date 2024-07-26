@@ -29,7 +29,9 @@ class HSolverPW : public HSolver<T, Device>
      */
     static bool diago_full_acc;
 
-    HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in, wavefunc* pwf_in);
+    HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in,
+              wavefunc* pwf_in,
+              const bool initialed_psi_in);
 
     /// @brief solve function for pw
     /// @param pHamilt interface to hamilt
@@ -57,13 +59,18 @@ class HSolverPW : public HSolver<T, Device>
 
     virtual Real reset_diagethr(std::ofstream& ofs_running, const Real hsover_error, const Real drho, Real diag_ethr_in) override;
 
-    ModulePW::PW_Basis_K* get_wfc_basis_p()
+    // ModulePW::PW_Basis_K* get_wfc_basis_p()
+    // {
+    //     return this->wfc_basis;
+    // };
+    // wavefunc* get_pwf_p()
+    // {
+    //     return this->pwf;
+    // };
+
+    bool get_initpsi()
     {
-        return this->wfc_basis;
-    }; 
-    wavefunc* get_pwf_p()
-    {
-        return this->pwf;
+        return initialed_psi;
     };
     
   protected:

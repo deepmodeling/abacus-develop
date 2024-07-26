@@ -214,7 +214,7 @@ void ESolver_KS_PW<T, Device>::before_all_runners(const Input_para& inp, UnitCel
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::allocate_hsolver()
 {
-    this->phsol = new hsolver::HSolverPW<T, Device>(this->pw_wfc, &this->wf);
+    this->phsol = new hsolver::HSolverPW<T, Device>(this->pw_wfc, &this->wf, false);
 }
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::deallocate_hsolver()
@@ -597,26 +597,13 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep,
         //                    GlobalV::NPROC_IN_POOL,
         //                    false);
 
-        // hsolver::HSolverPW<T, Device> hsolver_pw_obj(dynamic_cast<hsolver::HSolverPW<T, Device>*>(this->phsol)->get_wfc_basis_p(), 
-        //                                              dynamic_cast<hsolver::HSolverPW<T, Device>*>(this->phsol)->get_pwf_p());
+        hsolver::HSolverPW<T, Device> hsolver_pw_obj(this->pw_wfc,
+                                                     &this->wf,
+                                                     dynamic_cast<hsolver::HSolverPW<T, Device>*>(this->phsol)->get_initpsi());
 
-        // hsolver_pw_obj.solve(this->p_hamilt,      // hamilt::Hamilt<T, Device>* pHamilt,
-        //                    this->kspw_psi[0],   // psi::Psi<T, Device>& psi,
-        //                    this->pelec,         // elecstate::ElecState<T, Device>* pelec,
-        //                    PARAM.inp.ks_solver,
-        //                    PARAM.inp.calculation,
-        //                    PARAM.inp.basis_type,
-        //                    PARAM.inp.use_paw,
-        //                    GlobalV::use_uspp,
-        //                    GlobalV::RANK_IN_POOL,
-        //                    GlobalV::NPROC_IN_POOL,
-        //                    false);
-
-        this->phsol = new hsolver::HSolverPW<T, Device>(this->pw_wfc, &this->wf);
-
-        this->phsol->solve(this->p_hamilt, 
-                           this->kspw_psi[0], 
-                           this->pelec, 
+        hsolver_pw_obj.solve(this->p_hamilt,      // hamilt::Hamilt<T, Device>* pHamilt,
+                           this->kspw_psi[0],   // psi::Psi<T, Device>& psi,
+                           this->pelec,         // elecstate::ElecState<T, Device>* pelec,
                            PARAM.inp.ks_solver,
                            PARAM.inp.calculation,
                            PARAM.inp.basis_type,
@@ -625,6 +612,19 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep,
                            GlobalV::RANK_IN_POOL,
                            GlobalV::NPROC_IN_POOL,
                            false);
+
+        // this->phsol = new hsolver::HSolverPW<T, Device>(this->pw_wfc, &this->wf);
+        // this->phsol->solve(this->p_hamilt, 
+        //                    this->kspw_psi[0], 
+        //                    this->pelec, 
+        //                    PARAM.inp.ks_solver,
+        //                    PARAM.inp.calculation,
+        //                    PARAM.inp.basis_type,
+        //                    PARAM.inp.use_paw,
+        //                    GlobalV::use_uspp,
+        //                    GlobalV::RANK_IN_POOL,
+        //                    GlobalV::NPROC_IN_POOL,
+        //                    false);
 
         if (PARAM.inp.out_bandgap)
         {
