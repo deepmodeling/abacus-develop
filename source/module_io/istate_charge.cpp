@@ -228,6 +228,7 @@ void IState_Charge::begin(Gint_k& gk,
 #else
             ModuleBase::WARNING_QUIT("IState_Charge::begin", "The `pchg` calculation is only available for MPI now!");
 #endif
+            // If contribution from different k-points need to be output separately
             if (if_separate_k)
             {
                 // For multi-k, loop over all real k-points
@@ -312,7 +313,7 @@ void IState_Charge::begin(Gint_k& gk,
                 }
 
                 // Symmetrize the charge density, otherwise the results are incorrect if the symmetry is on
-                std::cout << " Symmetrizing charge density..." << std::endl;
+                std::cout << " Symmetrizing band-decomposed charge density..." << std::endl;
                 Symmetry_rho srho;
                 for (int is = 0; is < nspin; ++is)
                 {

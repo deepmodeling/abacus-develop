@@ -795,7 +795,8 @@ void ESolver_KS_PW<T, Device>::after_scf(const int istep) {
             = new std::complex<double>[this->pw_rho->nxyz];
         double* rho_band = new double[this->pw_rho->nxyz];
 
-        for (int ib = 0; ib < this->kspw_psi->get_nbands(); ++ib) {
+        for (int ib = 0; ib < this->kspw_psi->get_nbands(); ++ib)
+        {
             // Skip the loop iteration if bands_picked[ib] is 0
             if (!bands_picked[ib]) {
                 continue;
@@ -816,14 +817,45 @@ void ESolver_KS_PW<T, Device>::after_scf(const int istep) {
                 double w1 = static_cast<double>(this->kv.wk[ik]
                                                 / GlobalC::ucell.omega);
 
-                for (int i = 0; i < this->pw_rho->nxyz; i++) {
+                for (int i = 0; i < this->pw_rho->nxyz; i++)
+                {
                     rho_band[i] += std::norm(wfcr[i]) * w1;
                 }
             }
 
+            // Symmetrize the charge density, otherwise the results are incorrect if the symmetry is on
+            std::cout << " Symmetrizing band-decomposed charge density..." << std::endl;
+            Symmetry_rho srho;
+            for (int is = 0; is < GlobalV::NSPIN; is++)
+            {
+                // Create pointers to the data structures
+                double** rho_save_pointers = new double*[GlobalV::NSPIN];
+                std::complex<double>** rhog = new std::complex<double>*[GlobalV::NSPIN];
+
+                for (int s = 0; s < GlobalV::NSPIN; s++) {
+                    rho_save_pointers[s] = rho_band;
+                    rhog[s] = new std::complex<double>[this->pelec->charge->ngmc];
+                }
+
+                srho.begin(is,
+                           rho_save_pointers,
+                           rhog,
+                           this->pelec->charge->ngmc,
+                           nullptr,
+                           this->pw_rhod,
+                           GlobalC::Pgrid,
+                           GlobalC::ucell.symm);
+
+                for (int s = 0; s < GlobalV::NSPIN; s++)
+                {
+                    delete[] rhog[s];
+                }
+                delete[] rho_save_pointers;
+                delete[] rhog;
+            }
+
             std::stringstream ssc;
-            ssc << GlobalV::global_out_dir << "band" << ib + 1
-                << ".cube"; // band index starts from 1
+            ssc << GlobalV::global_out_dir << "BAND" << ib + 1 << "_CHG.cube"; // band index starts from 1
 
             ModuleIO::write_rho(
 #ifdef __MPI
