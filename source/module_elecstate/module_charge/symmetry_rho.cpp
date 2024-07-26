@@ -18,8 +18,9 @@ void Symmetry_rho::begin(const int& spin_now,
 {
     assert(spin_now < 4); // added by zhengdy-soc
 
-    if (ModuleSymmetry::Symmetry::symm_flag != 1)
+    if (ModuleSymmetry::Symmetry::symm_flag != 1) {
         return;
+}
     // both parallel and serial
     // if(symm.nrot==symm.nrotk) //pure point-group, do rho_symm in real space
     // {
