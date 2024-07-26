@@ -26,11 +26,26 @@
 class Numerical_Basis
 {
   public:
+    // this is not a good idea to construct the instance. Instead, there are many variables that CAN DEFINE the identity of this instance,
+    // these parameters should be provided in the constructor. For future refactor, I list them here:
+    // bessel_nao_*: including ecut, rcut, smearing, sigma, etc.
+    // a file name: for the function start_from_file_k, if starts from file, can construct a different instance, instead of using the same instance.
     Numerical_Basis();
     ~Numerical_Basis();
 
-    void start_from_file_k(const int& ik, ModuleBase::ComplexMatrix& psi, const Structure_Factor& sf, const ModulePW::PW_Basis_K* wfcpw, const UnitCell& ucell);
-    void output_overlap(const psi::Psi<std::complex<double>>& psi, const Structure_Factor& sf, const K_Vectors& kv, const ModulePW::PW_Basis_K* wfcpw, const UnitCell& ucell);
+    void start_from_file_k(const int& ik, 
+                           ModuleBase::ComplexMatrix& psi, 
+                           const Structure_Factor& sf, 
+                           const ModulePW::PW_Basis_K* wfcpw, 
+                           const UnitCell& ucell,
+                           const double& beseel_nao_rcut);
+    // this is a very heavy function, should be refactored.
+    void output_overlap(const psi::Psi<std::complex<double>>& psi, 
+                        const Structure_Factor& sf, 
+                        const K_Vectors& kv, 
+                        const ModulePW::PW_Basis_K* wfcpw, 
+                        const UnitCell& ucell,
+                        const double& beseel_nao_rcut);
 
   private:
     bool init_label = false;

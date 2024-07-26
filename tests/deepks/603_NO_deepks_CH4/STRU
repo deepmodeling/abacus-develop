@@ -10,7 +10,7 @@ NUMERICAL_DESCRIPTOR
 ../Model_ProjOrb/6au_50Ry_jle.orb
 
 LATTICE_CONSTANT
-47.24314972   			#Lattice constant
+20   			#Lattice constant
 
 LATTICE_VECTORS
 1 0 0
