@@ -25,50 +25,65 @@ void LCAO_Deepks_Interface::out_deepks_labels(const double& etot,
                                               const int& deepks_v_delta)
 {
     ModuleBase::TITLE("LCAO_Deepks_Interface", "out_deepks_labels");
+
+    const int my_rank = GlobalV::MY_RANK;
+    const int nspin = GlobalV::NSPIN;
+
     // calculating deepks correction to bandgap
     // and save the results
-    if (GlobalV::deepks_out_labels) // caoyu add 2021-06-04
+    if (GlobalV::deepks_out_labels)
     {
-        LCAO_deepks_io::save_npy_e(etot, "e_tot.npy", GlobalV::MY_RANK);
+        // mohan updated 2024-07-25
+        const std::string file_etot = GlobalV::global_out_dir + "deepks_etot.npy";
+        const std::string file_ebase = GlobalV::global_out_dir + "deepks_ebase.npy";
+
+        LCAO_deepks_io::save_npy_e(etot, file_etot, my_rank);
+
         if (GlobalV::deepks_scf)
         {
+            /// ebase :no deepks E_delta including
             LCAO_deepks_io::save_npy_e(etot - ld->E_delta,
-                           "e_base.npy", GlobalV::MY_RANK); // ebase :no deepks E_delta including
+                           file_ebase, my_rank);
         }
         else // deepks_scf = 0; base calculation
         {
-            LCAO_deepks_io::save_npy_e(etot, "e_base.npy", GlobalV::MY_RANK); // no scf, e_tot=e_base
+            /// no scf, e_tot=e_base
+            LCAO_deepks_io::save_npy_e(etot, file_ebase, my_rank);
         }
 
         if (GlobalV::deepks_bandgap)
         {
-            int nocc = GlobalV::nelec / 2;
+            const int nocc = GlobalV::nelec / 2;
             ModuleBase::matrix deepks_bands;
             deepks_bands.create(nks, 1);
-            for (int iks = 0; iks < nks; iks++)
+            for (int iks = 0; iks < nks; ++iks)
             {
-                for (int hl = 0; hl < 1; hl++)
+                // record band gap for each k point (including spin)
+                for (int hl = 0; hl < 1; ++hl)
                 {
                     deepks_bands(iks, hl) = ekb(iks, nocc + hl) - ekb(iks, nocc - 1 + hl);
                 }
             }
-            LCAO_deepks_io::save_npy_o(deepks_bands, "o_tot.npy", nks, GlobalV::MY_RANK);
+
+            const std::string file_otot = GlobalV::global_out_dir + "deepks_otot.npy";
+            LCAO_deepks_io::save_npy_o(deepks_bands, file_otot, nks, my_rank);
 
             if (GlobalV::deepks_scf)
             {
-                int nocc = GlobalV::nelec / 2;
                 ModuleBase::matrix wg_hl;
-                wg_hl.create(GlobalV::NSPIN, GlobalV::NBANDS);
+                wg_hl.create(nspin, GlobalV::NBANDS);
+
                 std::vector<std::vector<ModuleBase::matrix>> dm_bandgap_gamma;
-                dm_bandgap_gamma.resize(GlobalV::NSPIN);
-                for (int is = 0; is < GlobalV::NSPIN; is++)
+
+                dm_bandgap_gamma.resize(nspin);
+                for (int is = 0; is < nspin; ++is)
                 {
-                    for (int ib = 0; ib < 1; ib++)
+                    for (int ib = 0; ib < 1; ++ib)
                     {
                         wg_hl.zero_out();
                         wg_hl(is, ib + nocc - 1) = -1.0;
                         wg_hl(is, ib + nocc) = 1.0;
-                        dm_bandgap_gamma[ib].resize(GlobalV::NSPIN);
+                        dm_bandgap_gamma[ib].resize(nspin);
                         elecstate::cal_dm(ParaV, wg_hl, psid, dm_bandgap_gamma[ib]);
                     }
                 }
@@ -79,24 +94,30 @@ void LCAO_Deepks_Interface::out_deepks_labels(const double& etot,
                                                          nks, 
                                                          ld->des_per_atom, 
                                                          ld->orbital_precalc_tensor, 
-                                                         GlobalV::MY_RANK);
+                                                         GlobalV::global_out_dir,
+                                                         my_rank);
 
                 ld->cal_o_delta(dm_bandgap_gamma);
 
-                LCAO_deepks_io::save_npy_o(deepks_bands - ld->o_delta, "o_base.npy", nks, GlobalV::MY_RANK);
+                const std::string file_obase = GlobalV::global_out_dir + "deepks_obase.npy";
+                LCAO_deepks_io::save_npy_o(deepks_bands - ld->o_delta, file_obase, nks, my_rank);
             }     // end deepks_scf == 1
             else  // deepks_scf == 0
             {
-                LCAO_deepks_io::save_npy_o(deepks_bands, "o_base.npy", nks, GlobalV::MY_RANK); // no scf, o_tot=o_base
+                const std::string file_obase = GlobalV::global_out_dir + "deepks_obase.npy";
+                LCAO_deepks_io::save_npy_o(deepks_bands, file_obase, nks, my_rank); // no scf, o_tot=o_base
             }                                                    // end deepks_scf == 0
-        }                                                        // end bandgap label                                                  
+        } // end bandgap label
+
         if(deepks_v_delta)//gamma only now
         {
             ModuleBase::matrix h_tot;
             h_tot.create(nlocal,nlocal);
 
             ld->collect_h_mat(ld->h_mat,h_tot,nlocal);
-            LCAO_deepks_io::save_npy_h(h_tot, "h_tot.npy",nlocal,GlobalV::MY_RANK);
+
+            const std::string file_htot = GlobalV::global_out_dir + "deepks_htot.npy";
+            LCAO_deepks_io::save_npy_h(h_tot, file_htot, nlocal, my_rank);
 
             if(GlobalV::deepks_scf)
             {
@@ -104,8 +125,11 @@ void LCAO_Deepks_Interface::out_deepks_labels(const double& etot,
                 v_delta.create(nlocal,nlocal);
                 ld->collect_h_mat(ld->H_V_delta,v_delta,nlocal);
 
-                LCAO_deepks_io::save_npy_h(h_tot-v_delta, "h_base.npy",nlocal,GlobalV::MY_RANK);
-                LCAO_deepks_io::save_npy_h(v_delta, "v_delta.npy",nlocal,GlobalV::MY_RANK);
+                const std::string file_hbase = GlobalV::global_out_dir + "deepks_hbase.npy";
+                LCAO_deepks_io::save_npy_h(h_tot-v_delta, file_hbase, nlocal, my_rank);
+
+                const std::string file_vdelta = GlobalV::global_out_dir + "deepks_vdelta.npy";
+                LCAO_deepks_io::save_npy_h(v_delta, file_vdelta, nlocal, my_rank);
 
                 if(deepks_v_delta==1)//v_delta_precalc storage method 1
                 {
@@ -122,7 +146,7 @@ void LCAO_Deepks_Interface::out_deepks_labels(const double& etot,
                       nlocal,
                       ld->des_per_atom,
                       ld->v_delta_precalc_tensor,
-                      GlobalV::MY_RANK);
+                      my_rank);
                 }
                 else if(deepks_v_delta==2)//v_delta_precalc storage method 2
                 {
@@ -139,7 +163,7 @@ void LCAO_Deepks_Interface::out_deepks_labels(const double& etot,
                                 ld->inlmax,
                                 ld->lmaxd,
                                 ld->psialpha_tensor,
-                                GlobalV::MY_RANK);
+                                my_rank);
 
                     ld->prepare_gevdm(
                                 nat,
@@ -149,16 +173,18 @@ void LCAO_Deepks_Interface::out_deepks_labels(const double& etot,
                       ld->inlmax,
                       ld->lmaxd,
                       ld->gevdm_tensor,
-                      GlobalV::MY_RANK);
+                      my_rank);
                 }
             }
             else //deepks_scf == 0
             {
-                LCAO_deepks_io::save_npy_h(h_tot, "h_base.npy",nlocal,GlobalV::MY_RANK);
+                const std::string file_hbase = GlobalV::global_out_dir + "deepks_hbase.npy";
+                LCAO_deepks_io::save_npy_h(h_tot, file_hbase, nlocal, my_rank);
             }
         }//end v_delta label
     
-    }                                                            // end deepks_out_labels
+    } // end deepks_out_labels
+
 
     // DeePKS PDM and descriptor
     if (GlobalV::deepks_out_labels || GlobalV::deepks_scf)
@@ -174,7 +200,7 @@ void LCAO_Deepks_Interface::out_deepks_labels(const double& etot,
 
         ld->cal_descriptor(nat);     // final descriptor
 
-        ld->check_descriptor(ucell);
+        ld->check_descriptor(ucell, GlobalV::global_out_dir);
 
 		if (GlobalV::deepks_out_labels)
 		{
@@ -185,13 +211,13 @@ void LCAO_Deepks_Interface::out_deepks_labels(const double& etot,
                     ld->inl_l,
 					GlobalV::deepks_equiv, 
 					ld->d_tensor, 
-					GlobalV::MY_RANK); // libnpy needed
+					my_rank); // libnpy needed
 		}
     }
-    //
+    
+    /// print out deepks information to the screen
     if (GlobalV::deepks_scf)
     {
-
         ld->cal_e_delta_band(dm->get_DMK_vector());
         std::cout << "E_delta_band = " << std::setprecision(8) << ld->e_delta_band << " Ry"
                   << " = " << std::setprecision(8) << ld->e_delta_band * ModuleBase::Ry_to_eV << " eV"
@@ -218,24 +244,28 @@ void LCAO_Deepks_Interface::out_deepks_labels(const double& etot,
 {
     ModuleBase::TITLE("LCAO_Deepks_Interface", "out_deepks_labels");
     ModuleBase::timer::tick("LCAO_Deepks_Interface", "out_deepks_labels");
-    // calculating deepks correction to bandgap
-    // and save the results
-    if (GlobalV::deepks_out_labels) // caoyu add 2021-06-04
+
+    const int my_rank = GlobalV::MY_RANK;
+    const int nspin = GlobalV::NSPIN;
+
+    /// calculating deepks correction to bandgap and save the results
+    if (GlobalV::deepks_out_labels)
     {
-		LCAO_deepks_io::save_npy_e(etot, 
-				"e_tot.npy",
-				GlobalV::MY_RANK);
+        // mohan updated 2024-07-25
+        const std::string file_etot = GlobalV::global_out_dir + "deepks_etot.npy";
+        const std::string file_ebase = GlobalV::global_out_dir + "deepks_ebase.npy";
+
+        LCAO_deepks_io::save_npy_e(etot, file_etot, my_rank);
 
         if (GlobalV::deepks_scf)
         {
-			LCAO_deepks_io::save_npy_e(
-					etot - ld->E_delta,
-					"e_base.npy",
-					GlobalV::MY_RANK); // ebase :no deepks E_delta including
+            /// ebase :no deepks E_delta including
+            LCAO_deepks_io::save_npy_e(etot - ld->E_delta,
+                           file_ebase, my_rank);
         }
         else // deepks_scf = 0; base calculation
         {
-            LCAO_deepks_io::save_npy_e(etot, "e_base.npy", GlobalV::MY_RANK); // no scf, e_tot=e_base
+            LCAO_deepks_io::save_npy_e(etot, file_ebase, my_rank);
         }
 
         if (GlobalV::deepks_bandgap)
@@ -251,7 +281,8 @@ void LCAO_Deepks_Interface::out_deepks_labels(const double& etot,
                 }
             }
 
-            LCAO_deepks_io::save_npy_o(deepks_bands, "o_tot.npy", nks, GlobalV::MY_RANK);
+            const std::string file_otot = GlobalV::global_out_dir + "deepks_otot.npy";
+            LCAO_deepks_io::save_npy_o(deepks_bands, file_otot, nks, my_rank);
 
             if (GlobalV::deepks_scf)
             {
@@ -281,24 +312,18 @@ void LCAO_Deepks_Interface::out_deepks_labels(const double& etot,
 						nks, 
 						ld->des_per_atom, 
 						ld->orbital_precalc_tensor, 
+                        GlobalV::global_out_dir,
 						GlobalV::MY_RANK);
 
                 ld->cal_o_delta_k(dm_bandgap_k, nks);
 
-				LCAO_deepks_io::save_npy_o(
-						deepks_bands - ld->o_delta, 
-						"o_base.npy", 
-						nks, 
-						GlobalV::MY_RANK);
-
+                const std::string file_obase = GlobalV::global_out_dir + "deepks_obase.npy";
+                LCAO_deepks_io::save_npy_o(deepks_bands - ld->o_delta, file_obase, nks, my_rank);
             }     // end deepks_scf == 1
             else  // deepks_scf == 0
             {
-				LCAO_deepks_io::save_npy_o(
-						deepks_bands, 
-						"o_base.npy", 
-						nks, 
-						GlobalV::MY_RANK); // no scf, o_tot=o_base
+                const std::string file_obase = GlobalV::global_out_dir + "deepks_obase.npy";
+                LCAO_deepks_io::save_npy_o(deepks_bands, file_obase, nks, my_rank); // no scf, o_tot=o_base
             }     // end deepks_scf == 0
         } // end bandgap label
         if(deepks_v_delta)
@@ -323,7 +348,7 @@ void LCAO_Deepks_Interface::out_deepks_labels(const double& etot,
 
         ld->cal_descriptor(nat);     // final descriptor
 
-        ld->check_descriptor(ucell);
+        ld->check_descriptor(ucell, GlobalV::global_out_dir);
 
         if (GlobalV::deepks_out_labels)
         {

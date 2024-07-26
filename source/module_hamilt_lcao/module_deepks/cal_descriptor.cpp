@@ -13,7 +13,8 @@
 #include "module_hamilt_lcao/module_hcontainer/atom_pair.h"
 #include "module_parameter/parameter.h"
 
-void LCAO_Deepks::cal_descriptor_equiv(const int nat) {
+void LCAO_Deepks::cal_descriptor_equiv(const int nat) 
+{
     ModuleBase::TITLE("LCAO_Deepks", "cal_descriptor_equiv");
     ModuleBase::timer::tick("LCAO_Deepks", "cal_descriptor_equiv");
 
@@ -38,7 +39,8 @@ void LCAO_Deepks::cal_descriptor(const int nat) {
     ModuleBase::TITLE("LCAO_Deepks", "cal_descriptor");
     ModuleBase::timer::tick("LCAO_Deepks", "cal_descriptor");
 
-    if (GlobalV::deepks_equiv) {
+    if (GlobalV::deepks_equiv) 
+    {
         this->cal_descriptor_equiv(nat);
         return;
     }
@@ -47,32 +49,42 @@ void LCAO_Deepks::cal_descriptor(const int nat) {
     torch::Tensor tmp;
 
     // if pdm_tensor and d_tensor is not empty, clear it !!
-    if (!this->d_tensor.empty()) {
+    if (!this->d_tensor.empty()) 
+    {
         this->d_tensor.erase(this->d_tensor.begin(), this->d_tensor.end());
     }
-    if (!this->pdm_tensor.empty()) {
+
+    if (!this->pdm_tensor.empty()) 
+    {
         this->pdm_tensor.erase(this->pdm_tensor.begin(),
                                this->pdm_tensor.end());
     }
 
-    for (int inl = 0; inl < this->inlmax; ++inl) {
-        int nm = 2 * inl_l[inl] + 1;
+    for (int inl = 0; inl < this->inlmax; ++inl) 
+    {
+        const int nm = 2 * inl_l[inl] + 1;
         tmp = torch::ones({nm, nm},
                           torch::TensorOptions().dtype(torch::kFloat64));
-        for (int m1 = 0; m1 < nm; ++m1) {
-            for (int m2 = 0; m2 < nm; ++m2) {
+
+        for (int m1 = 0; m1 < nm; ++m1) 
+        {
+            for (int m2 = 0; m2 < nm; ++m2) 
+            {
                 tmp.index_put_({m1, m2}, this->pdm[inl][m1 * nm + m2]);
             }
         }
+
         // torch::Tensor tmp = torch::from_blob(this->pdm[inl], { nm, nm },
         // torch::requires_grad());
+
         tmp.requires_grad_(true);
         this->pdm_tensor.push_back(tmp);
         this->d_tensor.push_back(torch::ones({nm}, torch::requires_grad(true)));
     }
 
     // cal d_tensor
-    for (int inl = 0; inl < inlmax; ++inl) {
+    for (int inl = 0; inl < inlmax; ++inl) 
+    {
         torch::Tensor vd;
         std::tuple<torch::Tensor, torch::Tensor> d_v(this->d_tensor[inl], vd);
         // d_v = torch::symeig(pdm_tensor[inl], /*eigenvalues=*/true,
@@ -84,15 +96,19 @@ void LCAO_Deepks::cal_descriptor(const int nat) {
     return;
 }
 
-void LCAO_Deepks::check_descriptor(const UnitCell& ucell) {
+
+void LCAO_Deepks::check_descriptor(const UnitCell& ucell, const std::string& out_dir) {
     ModuleBase::TITLE("LCAO_Deepks", "check_descriptor");
 
     if (GlobalV::MY_RANK != 0) 
     {
         return;
     }
+
+    // mohan updated 2024-07-25
+    std::string file = out_dir + "deepks_desc.dat";
     
-    std::ofstream ofs("descriptor.dat");
+    std::ofstream ofs(file.c_str());
 	ofs << std::setprecision(10);
 	if (!GlobalV::deepks_equiv) 
 	{

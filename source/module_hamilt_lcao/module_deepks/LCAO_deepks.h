@@ -62,6 +62,7 @@ class LCAO_Deepks
     /// In k space:
     std::vector<std::vector<std::complex<double>>> H_V_delta_k;
 
+    // F_delta will be deleted soon, mohan 2024-07-25
     ///(Unit: Ry/Bohr) Total Force due to the DeePKS correction term \f$E_{\delta}\f$
     ModuleBase::matrix F_delta;
 
@@ -374,41 +375,6 @@ class LCAO_Deepks
                             const int nks);
 
     //-------------------
-    // LCAO_deepks_fdelta.cpp
-    //-------------------
-
-    // This file contains subroutines for calculating F_delta,
-    // which is defind as sum_mu,nu rho_mu,nu d/dX (<chi_mu|alpha>V(D)<alpha|chi_nu>)
-
-    // There are 3 subroutines in this file:
-    // 1. cal_f_delta_gamma, which is used for gamma point calculation
-    // 2. cal_f_delta_k, which is used for multi-k calculation
-    // 3. check_f_delta, which prints F_delta into F_delta.dat for checking
-
-  public:
-    // for gamma only, pulay and HF terms of force are calculated together
-    void cal_f_delta_gamma( // const std::vector<ModuleBase::matrix>& dm/**< [in] density matrix*/,
-        const std::vector<std::vector<double>>& dm,
-        const UnitCell& ucell,
-        const LCAO_Orbitals& orb,
-        Grid_Driver& GridD,
-        const bool isstress,
-        ModuleBase::matrix& svnl_dalpha);
-
-    // for multi-k, pulay and HF terms of force are calculated together
-    void cal_f_delta_k( // const std::vector<ModuleBase::ComplexMatrix>& dm/**<[in] density matrix*/,
-        const std::vector<std::vector<std::complex<double>>>& dm,
-        const UnitCell& ucell,
-        const LCAO_Orbitals& orb,
-        Grid_Driver& GridD,
-        const int nks,
-        const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-        const bool isstress,
-        ModuleBase::matrix& svnl_dalpha);
-
-    void check_f_delta(const int nat, ModuleBase::matrix& svnl_dalpha);
-
-    //-------------------
     // LCAO_deepks_odelta.cpp
     //-------------------
 
@@ -471,7 +437,7 @@ class LCAO_Deepks
     /// which are eigenvalues of pdm in blocks of I_n_l
     void cal_descriptor(const int nat);
     /// print descriptors based on LCAO basis
-    void check_descriptor(const UnitCell& ucell);
+    void check_descriptor(const UnitCell& ucell, const std::string &out_dir);
 
     void cal_descriptor_equiv(const int nat);
 
@@ -561,10 +527,70 @@ class LCAO_Deepks
   
 };
 
+
+namespace DeePKS_domain
+{
+    //------------------------
+    // LCAO_deepks_fgamma.cpp
+    // LCAO_deepks_fk.cpp
+    //------------------------
+
+    // This file contains subroutines for calculating F_delta,
+    // which is defind as sum_mu,nu rho_mu,nu d/dX (<chi_mu|alpha>V(D)<alpha|chi_nu>)
+
+    // There are 3 subroutines in this file:
+    // 1. cal_f_delta_gamma, which is used for gamma point calculation
+    // 2. cal_f_delta_k, which is used for multi-k calculation
+    // 3. check_f_delta, which prints F_delta into F_delta.dat for checking
+
+    // for gamma only, pulay and HF terms of force are calculated together
+	void cal_f_delta_gamma(
+			const std::vector<std::vector<double>>& dm,
+			const UnitCell &ucell,
+			const LCAO_Orbitals &orb,
+			Grid_Driver& gd,
+            const Parallel_Orbitals &pv,
+			const int lmaxd,
+			std::vector<std::vector<std::unordered_map<int, std::vector<std::vector<double>>>>>& nlm_save,
+			double** gedm,
+			ModuleBase::IntArray* inl_index,
+			ModuleBase::matrix& f_delta,
+			const bool isstress,
+			ModuleBase::matrix& svnl_dalpha);
+
+    // for multi-k, pulay and HF terms of force are calculated together
+
+    typedef std::tuple<int, int, int, int> key_tuple;
+
+	void cal_f_delta_k(
+			const std::vector<std::vector<std::complex<double>>>& dm,/**<[in] density matrix*/
+			const UnitCell &ucell,
+			const LCAO_Orbitals &orb,
+			Grid_Driver& GridD,
+            const Parallel_Orbitals& pv,
+			const int lmaxd,
+			const int nks,
+			const std::vector<ModuleBase::Vector3<double>> &kvec_d,
+			std::vector<std::map<key_tuple, std::unordered_map<int, std::vector<std::vector<double>>>>> &nlm_save_k,
+			double** gedm,
+			ModuleBase::IntArray* inl_index,
+			ModuleBase::matrix& f_delta,
+			const bool isstress,
+			ModuleBase::matrix& svnl_dalpha);
+
+	void check_f_delta(
+			const int nat, 
+			ModuleBase::matrix& f_delta,
+			ModuleBase::matrix& svnl_dalpha);
+}
+
+
+
 namespace GlobalC
 {
-extern LCAO_Deepks ld;
+    extern LCAO_Deepks ld;
 }
+
 
 #endif
 #endif
