@@ -90,7 +90,13 @@ class HSolver
                        const int istep,
                        const int iter,
                        const std::string method,
-                       const bool skip_charge = false)
+
+                       const int scf_iter_in,
+                       const bool need_subspace_in,
+                       const int diag_iter_max_in,
+                       const double pw_diag_thr_in,
+                       
+                       const bool skip_charge)
     {
         return;
     }
