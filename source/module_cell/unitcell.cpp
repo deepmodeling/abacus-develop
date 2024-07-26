@@ -1599,7 +1599,7 @@ void UnitCell::cal_nelec(double& nelec) {
             for (int it = 0; it < this->ntype; it++) {
                 std::stringstream ss1, ss2;
                 ss1 << "electron number of element " << this->atoms[it].label;
-                const int nelec_it
+                const double nelec_it
                     = this->atoms[it].ncpp.zv * this->atoms[it].na;
                 nelec += nelec_it;
                 ss2 << "total electron number of element "

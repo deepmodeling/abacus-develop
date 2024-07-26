@@ -117,7 +117,6 @@ DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in,
  * 
  * This destructor releases the dynamically allocated memory used by the class members.
  * It deletes the basis, hpsi, spsi, hcc, scc, vcc, lagrange_matrix, and eigenvalue arrays.
- * If the device is a GPU device, it also deletes the d_precondition array.
  * 
  */
 template <typename T, typename Device>
@@ -131,13 +130,6 @@ DiagoDavid<T, Device>::~DiagoDavid()
     delmem_complex_op()(this->ctx, this->vcc);
     delmem_complex_op()(this->ctx, this->lagrange_matrix);
     base_device::memory::delete_memory_op<Real, base_device::DEVICE_CPU>()(this->cpu_ctx, this->eigenvalue);
-
-#if defined(__CUDA) || defined(__ROCM)
-    if (this->device == base_device::GpuDevice)
-    {
-        delmem_var_op()(this->ctx, this->d_precondition);
-    }
-#endif
 }
 
 template <typename T, typename Device>
@@ -1163,6 +1155,14 @@ int DiagoDavid<T, Device>::diag(const HPsiFunc& hpsi_func,
         std::cout << "\n notconv = " << this->notconv;
         std::cout << "\n DiagoDavid::diag', too many bands are not converged! \n";
     }
+    // If the device is a GPU device, free the d_precondition array.
+#if defined(__CUDA) || defined(__ROCM)
+    if (this->device == base_device::GpuDevice)
+    {
+        delmem_var_op()(this->ctx, this->d_precondition);
+    }
+#endif
+
     return sum_dav_iter;
 }
 

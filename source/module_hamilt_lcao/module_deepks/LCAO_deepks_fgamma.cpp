@@ -18,42 +18,52 @@
 
 //force for gamma only calculations
 //Pulay and HF terms are calculated together
-void LCAO_Deepks::cal_f_delta_gamma(const std::vector<std::vector<double>>& dm,
+void DeePKS_domain::cal_f_delta_gamma(
+    const std::vector<std::vector<double>>& dm,
     const UnitCell &ucell,
     const LCAO_Orbitals &orb,
-    Grid_Driver& GridD,
-    const bool isstress, ModuleBase::matrix& svnl_dalpha)
+    Grid_Driver& gd,
+    const Parallel_Orbitals &pv,
+    const int lmaxd,
+    std::vector<std::vector<std::unordered_map<int, std::vector<std::vector<double>>>>>& nlm_save,
+    double** gedm,
+    ModuleBase::IntArray* inl_index,
+    ModuleBase::matrix& f_delta,
+    const bool isstress, 
+    ModuleBase::matrix& svnl_dalpha)
 {
-    ModuleBase::TITLE("LCAO_Deepks", "cal_f_delta_gamma");
-    this->F_delta.zero_out();
+    ModuleBase::TITLE("DeePKS_domain", "cal_f_delta_gamma");
+    f_delta.zero_out();
 
     const double Rcut_Alpha = orb.Alpha[0].getRcut();
-    int nrow = this->pv->nrow;
+
+    const int nrow = pv.nrow;
+
     for (int T0 = 0; T0 < ucell.ntype; T0++)
     {
 		Atom* atom0 = &ucell.atoms[T0]; 
         for (int I0 =0; I0< atom0->na; I0++)
         {
-            int iat = ucell.itia2iat(T0,I0);
+            const int iat = ucell.itia2iat(T0,I0);
             const ModuleBase::Vector3<double> tau0 = atom0->tau[I0];
-            GridD.Find_atom(ucell, atom0->tau[I0] ,T0, I0);
+            gd.Find_atom(ucell, atom0->tau[I0] ,T0, I0);
 
-            for (int ad1=0; ad1<GridD.getAdjacentNum()+1 ; ++ad1)
+            for (int ad1=0; ad1<gd.getAdjacentNum()+1 ; ++ad1)
             {
-                const int T1 = GridD.getType(ad1);
-                const int I1 = GridD.getNatom(ad1);
+                const int T1 = gd.getType(ad1);
+                const int I1 = gd.getNatom(ad1);
                 const int ibt1 = ucell.itia2iat(T1,I1);
-                const ModuleBase::Vector3<double> tau1 = GridD.getAdjacentTau(ad1);
+                const ModuleBase::Vector3<double> tau1 = gd.getAdjacentTau(ad1);
                 const Atom* atom1 = &ucell.atoms[T1];
                 const int nw1_tot = atom1->nw*GlobalV::NPOL;
                 const double Rcut_AO1 = orb.Phi[T1].getRcut();
 
-                for (int ad2=0; ad2 < GridD.getAdjacentNum()+1 ; ad2++)
+                for (int ad2=0; ad2 < gd.getAdjacentNum()+1 ; ad2++)
                 {
-                    const int T2 = GridD.getType(ad2);
-                    const int I2 = GridD.getNatom(ad2);
+                    const int T2 = gd.getType(ad2);
+                    const int I2 = gd.getNatom(ad2);
                     const int ibt2 = ucell.itia2iat(T2,I2);
-                    const ModuleBase::Vector3<double> tau2 = GridD.getAdjacentTau(ad2);
+                    const ModuleBase::Vector3<double> tau2 = gd.getAdjacentTau(ad2);
                     const Atom* atom2 = &ucell.atoms[T2];
                     const int nw2_tot = atom2->nw*GlobalV::NPOL;
                     
@@ -79,23 +89,30 @@ void LCAO_Deepks::cal_f_delta_gamma(const std::vector<std::vector<double>>& dm,
                         r0[2] = ( tau2.z - tau0.z) ;
                     }
 
-                    auto row_indexes = pv->get_indexes_row(ibt1);
-                    auto col_indexes = pv->get_indexes_col(ibt2);
-                    if(row_indexes.size() * col_indexes.size() == 0) continue;
+                    auto row_indexes = pv.get_indexes_row(ibt1);
+                    auto col_indexes = pv.get_indexes_col(ibt2);
 
-                    hamilt::AtomPair<double> dm_pair(ibt1, ibt2, 0, 0, 0, pv);
+					if(row_indexes.size() * col_indexes.size() == 0) 
+					{
+						continue;
+					}
+
+                    hamilt::AtomPair<double> dm_pair(ibt1, ibt2, 0, 0, 0, &pv);
+
                     dm_pair.allocate(nullptr, 1);
+
                     for(int is=0;is<dm.size();is++)
                     {
                         if(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
                         {
-                            dm_pair.add_from_matrix(dm[is].data(), pv->get_row_size(), 1.0, 1);
+                            dm_pair.add_from_matrix(dm[is].data(), pv.get_row_size(), 1.0, 1);
                         }
                         else
                         {
-                            dm_pair.add_from_matrix(dm[is].data(), pv->get_col_size(), 1.0, 0);
+                            dm_pair.add_from_matrix(dm[is].data(), pv.get_col_size(), 1.0, 0);
                         }
                     }
+
                     const double* dm_current = dm_pair.get_pointer();
 
                     for (int iw1=0; iw1<row_indexes.size(); ++iw1)
@@ -104,13 +121,13 @@ void LCAO_Deepks::cal_f_delta_gamma(const std::vector<std::vector<double>>& dm,
                         {
                             double nlm[3]={0,0,0};
                             double nlm_t[3] = {0,0,0}; //for stress
-                            std::vector<double> nlm1 = this->nlm_save[iat][ad1][row_indexes[iw1]][0];
+                            std::vector<double> nlm1 = nlm_save[iat][ad1][row_indexes[iw1]][0];
                             std::vector<std::vector<double>> nlm2;
                             nlm2.resize(3);
 
-                            for(int dim=0;dim<3;dim++)
+                            for(int dim=0;dim<3;++dim)
                             {
-                                nlm2[dim] = this->nlm_save[iat][ad2][col_indexes[iw2]][dim+1];
+                                nlm2[dim] = nlm_save[iat][ad2][col_indexes[iw2]][dim+1];
                             }
 
                             assert(nlm1.size()==nlm2[0].size());
@@ -122,7 +139,7 @@ void LCAO_Deepks::cal_f_delta_gamma(const std::vector<std::vector<double>>& dm,
                                 {
                                     for (int N0 = 0;N0 < orb.Alpha[0].getNchi(L0);++N0)
                                     {
-                                        const int inl = this->inl_index[T0](I0, L0, N0);
+                                        const int inl = inl_index[T0](I0, L0, N0);
                                         const int nm = 2*L0+1;
                                         for (int m1 = 0;m1 < nm; ++m1)
                                         {
@@ -130,7 +147,7 @@ void LCAO_Deepks::cal_f_delta_gamma(const std::vector<std::vector<double>>& dm,
                                             {
                                                 for(int dim=0;dim<3;dim++)
                                                 {                                            
-                                                    nlm[dim] += this->gedm[inl][m1*nm+m2]*nlm1[ib+m1]*nlm2[dim][ib+m2];
+                                                    nlm[dim] += gedm[inl][m1*nm+m2]*nlm1[ib+m1]*nlm2[dim][ib+m2];
                                                 }
                                             }
                                         }
@@ -142,7 +159,7 @@ void LCAO_Deepks::cal_f_delta_gamma(const std::vector<std::vector<double>>& dm,
                             else
                             {
                                 int nproj = 0;
-                                for(int il = 0; il < this->lmaxd + 1; il++)
+                                for(int il = 0; il < lmaxd + 1; il++)
                                 {
                                     nproj += (2 * il + 1) * orb.Alpha[0].getNchi(il);
                                 }
@@ -152,28 +169,28 @@ void LCAO_Deepks::cal_f_delta_gamma(const std::vector<std::vector<double>>& dm,
                                     {
                                         for(int dim=0;dim<3;dim++)
                                         {
-                                            nlm[dim] += this->gedm[iat][iproj*nproj+jproj] * nlm1[iproj] * nlm2[dim][jproj];
+                                            nlm[dim] += gedm[iat][iproj*nproj+jproj] * nlm1[iproj] * nlm2[dim][jproj];
                                         }
                                     }
                                 }                    
                             }
 
                             // HF term is minus, only one projector for each atom force.
-                            this->F_delta(iat, 0) -= 2 * *dm_current * nlm[0];
-                            this->F_delta(iat, 1) -= 2 * *dm_current * nlm[1];
-                            this->F_delta(iat, 2) -= 2 * *dm_current * nlm[2];
+                            f_delta(iat, 0) -= 2 * *dm_current * nlm[0];
+                            f_delta(iat, 1) -= 2 * *dm_current * nlm[1];
+                            f_delta(iat, 2) -= 2 * *dm_current * nlm[2];
 
                             // Pulay term is plus, only one projector for each atom force.
-                            this->F_delta(ibt2, 0) += 2 * *dm_current * nlm[0];
-                            this->F_delta(ibt2, 1) += 2 * *dm_current * nlm[1];
-                            this->F_delta(ibt2, 2) += 2 * *dm_current * nlm[2];
+                            f_delta(ibt2, 0) += 2 * *dm_current * nlm[0];
+                            f_delta(ibt2, 1) += 2 * *dm_current * nlm[1];
+                            f_delta(ibt2, 2) += 2 * *dm_current * nlm[2];
 
                             if(isstress)
                             {
-                                nlm1 = this->nlm_save[iat][ad2][col_indexes[iw2]][0];
+                                nlm1 = nlm_save[iat][ad2][col_indexes[iw2]][0];
                                 for(int i=0;i<3;i++)
                                 {
-                                    nlm2[i] = this->nlm_save[iat][ad1][row_indexes[iw1]][i+1];
+                                    nlm2[i] = nlm_save[iat][ad1][row_indexes[iw1]][i+1];
                                 }
 
                                 assert(nlm1.size()==nlm2[0].size());                                
@@ -185,15 +202,16 @@ void LCAO_Deepks::cal_f_delta_gamma(const std::vector<std::vector<double>>& dm,
                                     {
                                         for (int N0 = 0;N0 < orb.Alpha[0].getNchi(L0);++N0)
                                         {
-                                            const int inl = this->inl_index[T0](I0, L0, N0);
+                                            const int inl = inl_index[T0](I0, L0, N0);
                                             const int nm = 2*L0+1;
+
                                             for (int m1 = 0;m1 < nm; ++m1)
                                             {
                                                 for (int m2 = 0; m2 < nm; ++m2)
                                                 {
-                                                    for(int dim=0;dim<3;dim++)
+                                                    for(int dim=0;dim<3;++dim)
                                                     {                                            
-                                                        nlm_t[dim] += this->gedm[inl][m1*nm+m2]*nlm1[ib+m1]*nlm2[dim][ib+m2];
+                                                        nlm_t[dim] += gedm[inl][m1*nm+m2]*nlm1[ib+m1]*nlm2[dim][ib+m2];
                                                     }
                                                 }
                                             }
@@ -205,7 +223,7 @@ void LCAO_Deepks::cal_f_delta_gamma(const std::vector<std::vector<double>>& dm,
                                 else
                                 {
                                     int nproj = 0;
-                                    for(int il = 0; il < this->lmaxd + 1; il++)
+                                    for(int il = 0; il < lmaxd + 1; il++)
                                     {
                                         nproj += (2 * il + 1) * orb.Alpha[0].getNchi(il);
                                     }
@@ -215,7 +233,7 @@ void LCAO_Deepks::cal_f_delta_gamma(const std::vector<std::vector<double>>& dm,
                                         {
                                             for(int dim=0;dim<3;dim++)
                                             {
-                                                nlm_t[dim] += this->gedm[iat][iproj*nproj+jproj] * nlm1[iproj] * nlm2[dim][jproj];
+                                                nlm_t[dim] += gedm[iat][iproj*nproj+jproj] * nlm1[iproj] * nlm2[dim][jproj];
                                             }
                                         }
                                     }
@@ -225,8 +243,8 @@ void LCAO_Deepks::cal_f_delta_gamma(const std::vector<std::vector<double>>& dm,
                                 {
                                     for(int jpol=ipol;jpol<3;jpol++)
                                     {
-                                        //svnl_dalpha(ipol, jpol) += dm[is](iw1_local, iw2_local) * (nlm[jpol] * r0[ipol] + nlm_t[jpol] * r1[ipol]);
-                                        svnl_dalpha(ipol, jpol) += *dm_current * (nlm[jpol] * r0[ipol] + nlm_t[jpol] * r1[ipol]);
+                                        svnl_dalpha(ipol, jpol) += *dm_current * 
+                                        (nlm[jpol] * r0[ipol] + nlm_t[jpol] * r1[ipol]);
                                     }
                                 }
                             }
@@ -246,8 +264,9 @@ void LCAO_Deepks::cal_f_delta_gamma(const std::vector<std::vector<double>>& dm,
 		{
 			for(int j=0;j<3;++j)
 			{
-				if(j>i) svnl_dalpha(j,i) = svnl_dalpha(i,j);
-				svnl_dalpha(i,j) *= weight ;
+				if(j>i) { svnl_dalpha(j,i) = svnl_dalpha(i,j);
+}
+				svnl_dalpha(i,j) *= weight;
 			}
 		}
 	}
@@ -256,8 +275,11 @@ void LCAO_Deepks::cal_f_delta_gamma(const std::vector<std::vector<double>>& dm,
 }
 
 
-//prints F_delta into F_delta.dat
-void LCAO_Deepks::check_f_delta(const int nat, ModuleBase::matrix& svnl_dalpha)
+//prints forces and stress from DeePKS (LCAO) 
+void DeePKS_domain::check_f_delta(
+    const int nat, 
+    ModuleBase::matrix& f_delta,
+    ModuleBase::matrix& svnl_dalpha)
 {
     ModuleBase::TITLE("LCAO_Deepks", "check_F_delta");
 
@@ -266,7 +288,7 @@ void LCAO_Deepks::check_f_delta(const int nat, ModuleBase::matrix& svnl_dalpha)
 
     for (int iat=0; iat<nat; iat++)
     {
-        ofs << F_delta(iat,0) << " " << F_delta(iat,1) << " " << F_delta(iat,2) << std::endl;
+        ofs << f_delta(iat,0) << " " << f_delta(iat,1) << " " << f_delta(iat,2) << std::endl;
     }
 
     std::ofstream ofs1("stress_delta.dat");
