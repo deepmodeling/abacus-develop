@@ -29,10 +29,16 @@ void output_efermi(bool& convergence, double& efermi, std::ofstream& ofs_running
     }
 }
 
-void output_vacuum_level(const ModulePW::PW_Basis* rho_basis,
-                         const UnitCell* ucell,
+void output_vacuum_level(const UnitCell* ucell,
                          const double* const* rho,
                          const double* v_elecstat,
+                         const int& nx,
+                         const int& ny,
+                         const int& nz,
+                         const int& nxyz,
+                         const int& nrxx,
+                         const int& nplane,
+                         const int& startz_current,
                          std::ofstream& ofs_running)
 {
     // determine the vacuum direction
@@ -73,38 +79,42 @@ void output_vacuum_level(const ModulePW::PW_Basis* rho_basis,
         direction = 1;
     }
 
-    int length = rho_basis->nz;
+    int length = nz;
     if (direction == 0)
     {
-        length = rho_basis->nx;
+        length = nx;
     }
     else if (direction == 1)
     {
-        length = rho_basis->ny;
+        length = ny;
     }
 
     // get the average along the direction in real space
-    auto average = [](const ModulePW::PW_Basis* rho_basis,
+    auto average = [](const int& ny,
+                      const int& nxyz,
+                      const int& nrxx,
+                      const int& nplane,
+                      const int& startz_current,
                       const int& direction,
                       const int& length,
                       const double* v,
                       double* ave,
                       bool abs) {
-        for (int ir = 0; ir < rho_basis->nrxx; ++ir)
+        for (int ir = 0; ir < nrxx; ++ir)
         {
             int index = 0;
             if (direction == 0)
             {
-                index = ir / (rho_basis->ny * rho_basis->nplane);
+                index = ir / (ny * nplane);
             }
             else if (direction == 1)
             {
-                int i = ir / (rho_basis->ny * rho_basis->nplane);
-                index = ir / rho_basis->nplane - i * rho_basis->ny;
+                int i = ir / (ny * nplane);
+                index = ir / nplane - i * ny;
             }
             else if (direction == 2)
             {
-                index = ir % rho_basis->nplane + rho_basis->startz_current;
+                index = ir % nplane + startz_current;
             }
 
             double value = abs ? std::fabs(v[ir]) : v[ir];
@@ -116,7 +126,7 @@ void output_vacuum_level(const ModulePW::PW_Basis* rho_basis,
         MPI_Allreduce(MPI_IN_PLACE, ave, length, MPI_DOUBLE, MPI_SUM, POOL_WORLD);
 #endif
 
-        int surface = rho_basis->nxyz / length;
+        int surface = nxyz / length;
         for (int i = 0; i < length; ++i)
         {
             ave[i] /= surface;
@@ -124,22 +134,21 @@ void output_vacuum_level(const ModulePW::PW_Basis* rho_basis,
     };
 
     // average charge density along direction
-    double* totchg = new double[rho_basis->nrxx];
-    for (int ir = 0; ir < rho_basis->nrxx; ++ir)
+    std::vector<double> totchg(nrxx, 0.0);
+    for (int ir = 0; ir < nrxx; ++ir)
     {
         totchg[ir] = rho[0][ir];
     }
     if (GlobalV::NSPIN == 2)
     {
-        for (int ir = 0; ir < rho_basis->nrxx; ++ir)
+        for (int ir = 0; ir < nrxx; ++ir)
         {
             totchg[ir] += rho[1][ir];
         }
     }
 
-    double* ave = new double[length];
-    memset(ave, 0, sizeof(double) * length);
-    average(rho_basis, direction, length, totchg, ave, true);
+    std::vector<double> ave(length, 0.0);
+    average(ny, nxyz, nrxx, nplane, startz_current, direction, length, totchg.data(), ave.data(), true);
 
     // set vacuum to be the point in space where the electronic charge density is the minimum
     // get the index corresponding to the minimum charge density
@@ -165,15 +174,12 @@ void output_vacuum_level(const ModulePW::PW_Basis* rho_basis,
     }
 
     // average electrostatic potential along direction
-    memset(ave, 0, sizeof(double) * length);
-    average(rho_basis, direction, length, v_elecstat, ave, false);
+    ave.assign(ave.size(), 0.0);
+    average(ny, nxyz, nrxx, nplane, startz_current, direction, length, v_elecstat, ave.data(), false);
 
     // get the vacuum level
     double vacuum_level = ave[min_index] * ModuleBase::Ry_to_eV;
     ofs_running << "The vacuum level is " << vacuum_level << " eV" << std::endl;
-
-    delete[] ave;
-    delete[] totchg;
 }
 
 void print_force(std::ofstream& ofs_running,

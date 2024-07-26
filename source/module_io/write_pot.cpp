@@ -182,7 +182,16 @@ void write_elecstat_pot(
     //-------------------------------------------
     //! Get the vacuum level of the system
     //-------------------------------------------
-    ModuleIO::output_vacuum_level(rho_basis, ucell, chr->rho, v_elecstat.data());
+    ModuleIO::output_vacuum_level(ucell,
+                                  chr->rho,
+                                  v_elecstat.data(),
+                                  rho_basis->nx,
+                                  rho_basis->ny,
+                                  rho_basis->nz,
+                                  rho_basis->nxyz,
+                                  rho_basis->nrxx,
+                                  rho_basis->nplane,
+                                  rho_basis->startz_current);
 
     //-------------------------------------------
     //! Write down the electrostatic potential

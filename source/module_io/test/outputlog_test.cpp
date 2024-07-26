@@ -177,50 +177,23 @@ pseudo::~pseudo()
 {
 }
 
-class OutputVacuumLevelTest : public ::testing::Test
-{
-  protected:
-    ModulePW::PW_Basis* rhopw = nullptr;
-
-    virtual void SetUp()
-    {
-        rhopw = new ModulePW::PW_Basis;
-    }
-    virtual void TearDown()
-    {
-        if (rhopw != nullptr)
-            delete rhopw;
-    }
-};
-
-TEST_F(OutputVacuumLevelTest, OutputVacuumLevel)
+TEST(OutputVacuumLevelTest, OutputVacuumLevel)
 {
     GlobalV::NSPIN = 1;
-    std::cout << GlobalV::NSPIN << std::endl;
     UnitCell ucell;
-    std::cout << ucell.latvec.e11 << std::endl;
-    std::cout << ucell.latvec.e22 << std::endl;
-    std::cout << ucell.latvec.e33 << std::endl;
-
-#ifdef __MPI
-    rhopw->initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, MPI_COMM_WORLD);
-#endif
-    rhopw->initgrids(1.5, ucell.latvec, 60);
-    rhopw->initparameters(false, 60);
-    rhopw->setuptransform();
-    rhopw->collect_local_pw();
+    const int nx = 50, ny = 50, nz = 50, nxyz = 125000, nrxx = 125000, nplane = 50, startz_current = 0;
 
     double** rho = new double*[1];
-    rho[0] = new double[rhopw->nrxx];
-    double* v_elecstat = new double[rhopw->nrxx];
-    for (int ir = 0; ir < rhopw->nrxx; ++ir)
+    rho[0] = new double[nrxx];
+    double* v_elecstat = new double[nrxx];
+    for (int ir = 0; ir < nrxx; ++ir)
     {
         rho[0][ir] = 0.01 * ir;
         v_elecstat[ir] = 0.02 * ir;
     }
 
     std::ofstream ofs_running("test_output_vacuum_level.txt");
-    ModuleIO::output_vacuum_level(rhopw, &ucell, rho, v_elecstat, ofs_running);
+    ModuleIO::output_vacuum_level(&ucell, rho, v_elecstat, nx, ny, nz, nxyz, nrxx, nplane, startz_current, ofs_running);
     ofs_running.close();
 
     std::ifstream ifs_running("test_output_vacuum_level.txt");
@@ -229,7 +202,7 @@ TEST_F(OutputVacuumLevelTest, OutputVacuumLevel)
     std::string file_content = ss.str();
     ifs_running.close();
 
-    std::string expected_content = "The vacuum level is 1523.7 eV\n";
+    std::string expected_content = "The vacuum level is 2380.86 eV\n";
 
     EXPECT_EQ(file_content, expected_content);
     std::remove("test_output_vacuum_level.txt");
