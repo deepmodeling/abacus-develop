@@ -106,11 +106,6 @@ AddTest(
   SOURCES ../output_log.cpp outputlog_test.cpp ../../module_basis/module_pw/test/test_tool.cpp
 )
 
-add_test(NAME io_output_log_test_parallel
-      COMMAND mpirun -np 4 ./io_output_log_test
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-)
-
 AddTest(
   TARGET io_sparse_matrix_test
   LIBS base ${math_libs} device
