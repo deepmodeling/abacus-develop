@@ -496,14 +496,19 @@ OBJS_IO=input.o\
     output_info.o\
     parse_args.o\
     read_input.o\
-    read_input_item_general.o\
-    read_input_item_pw.o\
-    read_input_item_sdft.o\
+    read_input_item_system.o\
+    read_input_item_elec_stru.o\
     read_input_item_relax.o\
-    read_input_item_lcao.o\
-    read_input_item_postprocess.o\
     read_input_item_md.o\
+    read_input_item_ofdft.o\
+    read_input_item_sdft.o\
+    read_input_item_tddft.o\
+    read_input_item_deepks.o\
+    read_input_item_model.o\
+    read_input_item_postprocess.o\
+    read_input_item_exx_dftu.o\
     read_input_item_other.o\
+    read_input_item_output.o\
     bcast_globalv.o
 
 OBJS_IO_LCAO=cal_r_overlap_R.o\
