@@ -43,10 +43,13 @@ void LCAO_Deepks::read_projected_DM(bool read_pdm_file, bool is_equiv, const Num
             }
             pdm_size = nproj * nproj;
         }
-        std::ifstream ifs("pdm.dat");
+
+        const std::string file_projdm = GlobalV::global_out_dir + "deepks_projdm.dat";
+        std::ifstream ifs(file_projdm.c_str());
+
         if (!ifs)
         {
-            ModuleBase::WARNING_QUIT("LCAO_Deepks::cal_projected_DM", "Can not find the file pdm.dat . Please do DeePKS SCF calculation first.");
+            ModuleBase::WARNING_QUIT("LCAO_Deepks::cal_projected_DM", "Cannot find the file deepks_projdm.dat");
         }
         for(int inl=0;inl<this->inlmax;inl++)
         {
@@ -560,7 +563,9 @@ void LCAO_Deepks::cal_projected_DM_k(const elecstate::DensityMatrix<std::complex
 
 void LCAO_Deepks::check_projected_dm(void)
 {
-    std::ofstream ofs("pdm.dat");
+    const std::string file_projdm = GlobalV::global_out_dir + "deepks_projdm.dat";
+    std::ofstream ofs(file_projdm.c_str());
+
     const int pdm_size = (this->lmaxd * 2 + 1) * (this->lmaxd * 2 + 1);
     ofs<<std::setprecision(10);
     for(int inl=0;inl<inlmax;inl++)
