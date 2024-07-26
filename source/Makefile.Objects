@@ -505,9 +505,9 @@ OBJS_IO=input.o\
     read_input_item_tddft.o\
     read_input_item_deepks.o\
     read_input_item_model.o\
-    read_input_item_postprocess.o\  
+    read_input_item_postprocess.o\
     read_input_item_exx_dftu.o\
-    read_input_item_other.o\   
+    read_input_item_other.o\
     read_input_item_output.o\
     bcast_globalv.o
 
