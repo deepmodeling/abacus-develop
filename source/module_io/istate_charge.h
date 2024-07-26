@@ -5,6 +5,7 @@
 #include "module_hamilt_lcao/module_gint/gint.h"
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
+#include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 #include "module_psi/psi.h"
 
 #include <module_base/complexmatrix.h>
@@ -79,10 +80,11 @@ class IState_Charge
                const std::string& global_out_dir,
                const int my_rank,
                std::ofstream& ofs_warning,
-               const UnitCell* ucell_in,
+               UnitCell* ucell_in,
                Grid_Driver* GridD_in,
                const K_Vectors& kv,
                const bool if_separate_k,
+               Parallel_Grid* Pgrid,
                const int ngmc);
 
   private:

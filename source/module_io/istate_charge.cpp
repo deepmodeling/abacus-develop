@@ -26,6 +26,7 @@ IState_Charge::~IState_Charge()
 {
 }
 
+// for gamma only
 void IState_Charge::begin(Gint_Gamma& gg,
                           double** rho,
                           const ModuleBase::matrix& wg,
@@ -156,6 +157,7 @@ void IState_Charge::begin(Gint_Gamma& gg,
     return;
 }
 
+// For multi-k
 void IState_Charge::begin(Gint_k& gk,
                           double** rho,
                           std::complex<double>** rhog,
@@ -180,10 +182,11 @@ void IState_Charge::begin(Gint_k& gk,
                           const std::string& global_out_dir,
                           const int my_rank,
                           std::ofstream& ofs_warning,
-                          const UnitCell* ucell_in,
+                          UnitCell* ucell_in,
                           Grid_Driver* GridD_in,
                           const K_Vectors& kv,
                           const bool if_separate_k,
+                          Parallel_Grid* Pgrid,
                           const int ngmc)
 {
     ModuleBase::TITLE("IState_Charge", "begin");
@@ -308,7 +311,7 @@ void IState_Charge::begin(Gint_k& gk,
                     ModuleBase::GlobalFunc::DCOPY(rho[is], rho_save[is].data(), rhopw_nrxx); // Copy data
                 }
 
-                // Symmetrize the charge density
+                // Symmetrize the charge density, otherwise the results are incorrect if the symmetry is on
                 std::cout << " Symmetrizing charge density..." << std::endl;
                 Symmetry_rho srho;
                 for (int is = 0; is < nspin; ++is)
@@ -324,8 +327,8 @@ void IState_Charge::begin(Gint_k& gk,
                                ngmc,
                                nullptr,
                                rho_pw,
-                               GlobalC::Pgrid,
-                               GlobalC::ucell.symm);
+                               *Pgrid,
+                               ucell_in->symm);
                 }
 
                 std::cout << " Writting cube files...";
@@ -482,6 +485,7 @@ void IState_Charge::select_bands(const int nbands_istate,
 }
 
 #ifdef __MPI
+// for gamma only
 void IState_Charge::idmatrix(const int& ib,
                              const int nspin,
                              const double& nelec,
@@ -525,6 +529,7 @@ void IState_Charge::idmatrix(const int& ib,
     }
 }
 
+// For multi-k
 void IState_Charge::idmatrix(const int& ib,
                              const int nspin,
                              const double& nelec,

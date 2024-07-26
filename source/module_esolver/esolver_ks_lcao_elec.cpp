@@ -505,6 +505,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                     &GlobalC::GridD,
                     this->kv,
                     PARAM.inp.if_separate_k,
+                    &GlobalC::Pgrid,
                     this->pelec->charge->ngmc);
         }
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "getting partial charge");
