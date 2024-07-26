@@ -35,11 +35,11 @@ void Symmetry_rho::begin(const int& spin_now,
 
         if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
         {
-            std::complex<double>* kin_g = new std::complex<double>[CHR.ngmc];
-            rho_basis->real2recip(CHR.kin_r[spin_now], kin_g);
-            psymmg(kin_g, rho_basis, Pgrid, symm);
-            rho_basis->recip2real(kin_g, CHR.kin_r[spin_now]);
-            delete[] kin_g;
+            // Use std::vector to manage kin_g instead of raw pointer
+            std::vector<std::complex<double>> kin_g(CHR.ngmc);
+            rho_basis->real2recip(CHR.kin_r[spin_now], kin_g.data());
+            psymmg(kin_g.data(), rho_basis, Pgrid, symm);
+            rho_basis->recip2real(kin_g.data(), CHR.kin_r[spin_now]);
         }
     }
     return;
@@ -75,11 +75,11 @@ void Symmetry_rho::begin(const int& spin_now,
 
         if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
         {
-            std::complex<double>* kin_g = new std::complex<double>[ngmc];
-            rho_basis->real2recip(kin_r[spin_now], kin_g);
-            psymmg(kin_g, rho_basis, Pgrid, symm);
-            rho_basis->recip2real(kin_g, kin_r[spin_now]);
-            delete[] kin_g;
+            // Use std::vector to manage kin_g instead of raw pointer
+            std::vector<std::complex<double>> kin_g(ngmc);
+            rho_basis->real2recip(kin_r[spin_now], kin_g.data());
+            psymmg(kin_g.data(), rho_basis, Pgrid, symm);
+            rho_basis->recip2real(kin_g.data(), kin_r[spin_now]);
         }
     }
     return;
@@ -92,18 +92,18 @@ void Symmetry_rho::psymm(double* rho_part,
 {
 #ifdef __MPI
     // (1) reduce all rho from the first pool.
-    double* rhotot;
+    std::vector<double> rhotot;
     if (GlobalV::MY_RANK == 0)
     {
-        rhotot = new double[rho_basis->nxyz];
-        ModuleBase::GlobalFunc::ZEROS(rhotot, rho_basis->nxyz);
+        rhotot.resize(rho_basis->nxyz);
+        ModuleBase::GlobalFunc::ZEROS(rhotot.data(), rho_basis->nxyz);
     }
-    Pgrid.reduce_to_fullrho(rhotot, rho_part);
+    Pgrid.reduce_to_fullrho(rhotot.data(), rho_part);
 
     // (2)
     if (GlobalV::MY_RANK == 0)
     {
-        symm.rho_symmetry(rhotot, rho_basis->nx, rho_basis->ny, rho_basis->nz);
+        symm.rho_symmetry(rhotot.data(), rho_basis->nx, rho_basis->ny, rho_basis->nz);
 #else
     symm.rho_symmetry(rho_part, rho_basis->nx, rho_basis->ny, rho_basis->nz);
 #endif
@@ -129,11 +129,10 @@ void Symmetry_rho::psymm(double* rho_part,
 
     // (3)
     const int ncxy = rho_basis->nx * rho_basis->ny;
-    double* zpiece = new double[ncxy];
+    std::vector<double> zpiece(ncxy);
     for (int iz = 0; iz < rho_basis->nz; iz++)
     {
-        // GlobalV::ofs_running << "\n iz=" << iz;
-        ModuleBase::GlobalFunc::ZEROS(zpiece, ncxy);
+        ModuleBase::GlobalFunc::ZEROS(zpiece.data(), ncxy);
         if (GlobalV::MY_RANK == 0)
         {
             for (int ix = 0; ix < rho_basis->nx; ix++)
@@ -142,16 +141,11 @@ void Symmetry_rho::psymm(double* rho_part,
                 {
                     const int ir = ix * rho_basis->ny + iy;
                     zpiece[ir] = rhotot[ix * rho_basis->ny * rho_basis->nz + iy * rho_basis->nz + iz];
-                    // rho[ir*nczp+znow] = zpiece[ir];
                 }
             }
         }
-        Pgrid.zpiece_to_all(zpiece, iz, rho_part);
+        Pgrid.zpiece_to_all(zpiece.data(), iz, rho_part);
     }
-
-    if (GlobalV::MY_RANK == 0)
-        delete[] rhotot;
-    delete[] zpiece;
 #endif
     return;
 }
