@@ -21,10 +21,6 @@ struct System_para
     // ---------------------------------------------------------------
     bool two_fermi = false; ///< true if "nupdown" is set
 
-    // For parameter "bessel_nao_rcuts"
-    int nrcut = 0;                ///< number of bessel_nao_rcuts, assuming 0 as no values provided
-    double bessel_nao_rcut = 6.0; ///< radial cutoff for spherical bessel functions(a.u.)
-
     bool dos_setemin = false; ///< true: "dos_emin_ev" is set
     bool dos_setemax = false; ///< true: "dos_emax_ev" is set
     int ncx = 0, ncy = 0,

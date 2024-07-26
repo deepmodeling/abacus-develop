@@ -1449,19 +1449,17 @@ void ReadInput::item_others()
             {
                 para.input.bessel_nao_rcuts.push_back(std::stod(item.str_values[i]));
             }
-            if (count > 0) {
-                para.sys.bessel_nao_rcut = para.input.bessel_nao_rcuts[0]; // also compatible with
-}
-                                                                                 // old input file
-            para.sys.nrcut = count;
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.sys.bessel_nao_rcut < 0)
+            for(auto rcut: para.input.bessel_nao_rcuts)
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "bessel_nao_rcut must >= 0");
+                if (rcut < 0)
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput", "bessel_nao_rcut must >= 0");
+                }
             }
         };
-        sync_doublevec(input.bessel_nao_rcuts, para.sys.nrcut, 0.0);
+        sync_doublevec(input.bessel_nao_rcuts, para.input.bessel_nao_rcuts.size(), 0.0);
         this->add_item(item);
     }
     {
