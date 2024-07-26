@@ -28,8 +28,9 @@
 #endif
 
 UnitCell::UnitCell() {
-    if (GlobalV::test_unitcell)
+    if (GlobalV::test_unitcell) {
         ModuleBase::TITLE("unitcell", "Constructor");
+}
     Coordinate = "Direct";
     latName = "none";
     lat0 = 0.0;
@@ -87,8 +88,9 @@ UnitCell::~UnitCell() {
 #include "module_base/parallel_common.h"
 #ifdef __MPI
 void UnitCell::bcast_unitcell() {
-    if (GlobalV::test_unitcell)
+    if (GlobalV::test_unitcell) {
         ModuleBase::TITLE("UnitCell", "bcast_unitcell");
+}
     Parallel_Common::bcast_string(Coordinate);
     Parallel_Common::bcast_int(nat);
 
@@ -167,8 +169,9 @@ void UnitCell::bcast_unitcell2() {
 #endif
 
 void UnitCell::print_cell(std::ofstream& ofs) const {
-    if (GlobalV::test_unitcell)
+    if (GlobalV::test_unitcell) {
         ModuleBase::TITLE("UnitCell", "print_cell");
+}
 
     ModuleBase::GlobalFunc::OUT(ofs, "print_unitcell()");
 
@@ -380,18 +383,24 @@ void UnitCell::periodic_boundary_adjustment() {
         Atom* atom = &this->atoms[it];
         for (int ia = 0; ia < atom->na; ia++) {
             // mohan update 2011-03-21
-            if (atom->taud[ia].x < 0)
+            if (atom->taud[ia].x < 0) {
                 atom->taud[ia].x += 1.0;
-            if (atom->taud[ia].y < 0)
+}
+            if (atom->taud[ia].y < 0) {
                 atom->taud[ia].y += 1.0;
-            if (atom->taud[ia].z < 0)
+}
+            if (atom->taud[ia].z < 0) {
                 atom->taud[ia].z += 1.0;
-            if (atom->taud[ia].x >= 1.0)
+}
+            if (atom->taud[ia].x >= 1.0) {
                 atom->taud[ia].x -= 1.0;
-            if (atom->taud[ia].y >= 1.0)
+}
+            if (atom->taud[ia].y >= 1.0) {
                 atom->taud[ia].y -= 1.0;
-            if (atom->taud[ia].z >= 1.0)
+}
+            if (atom->taud[ia].z >= 1.0) {
                 atom->taud[ia].z -= 1.0;
+}
 
             if (atom->taud[ia].x < 0 || atom->taud[ia].y < 0
                 || atom->taud[ia].z < 0 || atom->taud[ia].x >= 1.0
@@ -445,8 +454,9 @@ void UnitCell::cal_ux() {
                 break;
             }
         }
-        if (magnet.lsign_)
+        if (magnet.lsign_) {
             break;
+}
     }
     // whether the initial magnetizations is parallel
     for (int it = starting_it; it < ntype; it++) {
@@ -789,8 +799,9 @@ void UnitCell::read_pseudo(std::ofstream& ofs) {
                             break;
                         }
                     }
-                    if (cut_mesh % 2 == 0)
+                    if (cut_mesh % 2 == 0) {
                         ++cut_mesh;
+}
 
                     ofs << std::setw(10) << cut_mesh << "\t"
                         << "the number of mesh points." << std::endl;
@@ -1084,8 +1095,9 @@ void UnitCell::set_iat2iwt(const int& npol_in) {
 // Demand : atoms[].msh
 //======================
 void UnitCell::cal_meshx() {
-    if (GlobalV::test_pseudo_cell)
+    if (GlobalV::test_pseudo_cell) {
         ModuleBase::TITLE("UnitCell", "cal_meshx");
+}
     this->meshx = 0;
     for (int it = 0; it < this->ntype; it++) {
         const int mesh = this->atoms[it].ncpp.msh;
@@ -1104,8 +1116,9 @@ void UnitCell::cal_meshx() {
 // 			atoms[].na
 //=========================
 void UnitCell::cal_natomwfc(std::ofstream& log) {
-    if (GlobalV::test_pseudo_cell)
+    if (GlobalV::test_pseudo_cell) {
         ModuleBase::TITLE("UnitCell", "cal_natomwfc");
+}
 
     this->natomwfc = 0;
     for (int it = 0; it < ntype; it++) {
@@ -1120,13 +1133,15 @@ void UnitCell::cal_natomwfc(std::ofstream& log) {
                         tmp += 2 * atoms[it].ncpp.lchi[l];
                         if (fabs(atoms[it].ncpp.jchi[l] - atoms[it].ncpp.lchi[l]
                                  - 0.5)
-                            < 1e-6)
+                            < 1e-6) {
                             tmp += 2;
+}
                     } else {
                         tmp += 2 * (2 * atoms[it].ncpp.lchi[l] + 1);
                     }
-                } else
+                } else {
                     tmp += 2 * atoms[it].ncpp.lchi[l] + 1;
+}
             }
         }
         natomwfc += tmp * atoms[it].na;
@@ -1208,8 +1223,9 @@ bool UnitCell::if_atoms_can_move() const {
     for (int it = 0; it < this->ntype; it++) {
         Atom* atom = &atoms[it];
         for (int ia = 0; ia < atom->na; ia++) {
-            if (atom->mbl[ia].x || atom->mbl[ia].y || atom->mbl[ia].z)
+            if (atom->mbl[ia].x || atom->mbl[ia].y || atom->mbl[ia].z) {
                 return true;
+}
         }
     }
     return false;

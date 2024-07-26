@@ -22,7 +22,6 @@ class Input
     int cond_dtbatch;  
     int nche_sto;
     double md_tfirst;
-    double bessel_nao_rcut;      // radial cutoff for spherical bessel functions(a.u.)
     MD_para mdp;
     int* orbital_corr = nullptr; ///< which correlated orbitals need corrected ;
     double* hubbard_u = nullptr; ///< Hubbard Coulomb interaction parameter U(ev)

@@ -39,37 +39,34 @@ Numerical_Basis::~Numerical_Basis()
 // to generate TableOne
 // Secondly output overlap, use psi(evc) and jlq3d.
 //============================================================
-void Numerical_Basis::start_from_file_k(const int& ik, 
-                                        ModuleBase::ComplexMatrix& psi, 
-                                        const Structure_Factor& sf,
-                                        const ModulePW::PW_Basis_K* wfcpw, 
-                                        const UnitCell& ucell,
-                                        const double& beseel_nao_rcut)
-{
-    ModuleBase::TITLE("Numerical_Basis", "start_from_file_k");
+// void Numerical_Basis::start_from_file_k(const int& ik, ModuleBase::ComplexMatrix& psi, const Structure_Factor& sf,
+//                                         const ModulePW::PW_Basis_K* wfcpw, const UnitCell& ucell)
+// {
+//     ModuleBase::TITLE("Numerical_Basis", "start_from_file_k");
 
-    if (!this->init_label)
-    {
-        // true stands for : start_from_file
-        this->bessel_basis.init(true, std::stod(PARAM.inp.bessel_nao_ecut), ucell.ntype, ucell.lmax,
-                                PARAM.inp.bessel_nao_smooth, PARAM.inp.bessel_nao_sigma, beseel_nao_rcut,
-                                PARAM.inp.bessel_nao_tolerence, ucell);
-        this->mu_index = this->init_mu_index(ucell);
-        this->init_label = true;
-    }
-    this->numerical_atomic_wfc(ik, wfcpw, psi, sf, ucell);
-}
+//     if (!this->init_label)
+//     {
+//         // true stands for : start_from_file
+//         this->bessel_basis.init(true, std::stod(PARAM.inp.bessel_nao_ecut), ucell.ntype, ucell.lmax,
+//                                 PARAM.inp.bessel_nao_smooth, PARAM.inp.bessel_nao_sigma, PARAM.globalv.bessel_nao_rcut,
+//                                 PARAM.inp.bessel_nao_tolerence, ucell);
+//         this->mu_index = this->init_mu_index(ucell);
+//         this->init_label = true;
+//     }
+//     this->numerical_atomic_wfc(ik, wfcpw, psi, sf, ucell);
+// }
 
 // The function is called in run_fp.cpp.
-void Numerical_Basis::output_overlap(const psi::Psi<std::complex<double>>& psi, 
+void Numerical_Basis::output_overlap(const psi::Psi<std::complex<double>>& psi,
                                      const Structure_Factor& sf,
-                                     const K_Vectors& kv, 
-                                     const ModulePW::PW_Basis_K* wfcpw, 
+                                     const K_Vectors& kv,
+                                     const ModulePW::PW_Basis_K* wfcpw,
                                      const UnitCell& ucell,
-                                     const double& bessel_nao_rcut)
+                                     const int& index)
 {
     ModuleBase::TITLE("Numerical_Basis", "output_overlap");
     ModuleBase::GlobalFunc::NEW_PART("Overlap Data For Spillage Minimization");
+    const double bessel_nao_rcut = PARAM.inp.bessel_nao_rcuts[index];
 
     //---------------------------------------------------------
     // if the numerical_basis hasn't been initialized yet,
@@ -181,37 +178,43 @@ void Numerical_Basis::output_overlap(const psi::Psi<std::complex<double>>& psi,
         Parallel_Reduce::reduce_pool(overlap_V.c, overlap_V.nr * overlap_V.nc); // Peize Lin add 2020.04.23
 #endif
         // exception handling following, for FileNotOpenFailure
-        if (ofs.good())
+        if (ofs.good()) {
             this->output_info(ofs, bessel_basis, kv, ucell); // header of orb_matrix* file
-        else
+        } else {
             ModuleBase::WARNING_QUIT("Numerical_Basis", "Failed to open file for writing the overlap matrix.");
+}
         // because one stage of file io complete, re-check the file status.
-        if (ofs.good())
+        if (ofs.good()) {
             this->output_k(ofs, kv); // <WEIGHTS_OF_KPOINTS>...</WEIGHTS_OF_KPOINTS>
-        else
+        } else {
             ModuleBase::WARNING_QUIT("Numerical_Basis", "Failed to write k-points to file.");
+}
         // because one stage of file io complete, re-check the file status.
-        if (ofs.good())
+        if (ofs.good()) {
             this->output_overlap_Q(ofs, overlap_Q, kv); // <OVERLAP_Q>...</OVERLAP_Q>
-        else
+        } else {
             ModuleBase::WARNING_QUIT("Numerical_Basis", "Failed to write overlap Q to file.");
+}
         // because one stage of file io complete, re-check the file status.
         if (winput::out_spillage == 2)
         {
             // caution: this is the largest matrix to be output, always flush
-            if (ofs.good())
+            if (ofs.good()) {
                 this->output_overlap_Sq(ss.str(), ofs, overlap_Sq, kv); // <OVERLAP_Sq>...</OVERLAP_Sq>
-            else
+            } else {
                 ModuleBase::WARNING_QUIT("Numerical_Basis", "Failed to write overlap S to file.");
+}
         }
         // because one stage of file io complete, re-check the file status.
-        if (ofs.good())
+        if (ofs.good()) {
             this->output_overlap_V(ofs, overlap_V); // <OVERLAP_V>...</OVERLAP_V>
                                                     // Peize Lin add 2020.04.23
-        else
+        } else {
             ModuleBase::WARNING_QUIT("Numerical_Basis", "Failed to write overlap V to file.");
-        if (GlobalV::MY_RANK == 0)
+}
+        if (GlobalV::MY_RANK == 0) {
             ofs.close();
+}
     }
     return;
 }
@@ -312,8 +315,9 @@ ModuleBase::ComplexArray Numerical_Basis::cal_overlap_Sq(const int& ik, const in
         = (4 * ModuleBase::PI) * (4 * ModuleBase::PI) / ucell.omega; // Peize Lin add normalization 2015-12-29
 
     std::vector<ModuleBase::Vector3<double>> gk(np);
-    for (int ig = 0; ig < np; ig++)
+    for (int ig = 0; ig < np; ig++) {
         gk[ig] = wfcpw->getgpluskcar(ik, ig) * ucell.tpiba;
+}
 
     const std::vector<double> gpow = Numerical_Basis::cal_gpow(gk, derivative_order);
 
@@ -357,9 +361,10 @@ ModuleBase::ComplexArray Numerical_Basis::cal_overlap_Sq(const int& ik, const in
                                         const int iwt1 = this->mu_index[T1](I1, l1, ic1, m1);
 
                                         std::vector<std::complex<double>> about_ig1(np, std::complex<double>(0.0, 0.0));
-                                        for (int ig = 0; ig < np; ig++)
+                                        for (int ig = 0; ig < np; ig++) {
                                             about_ig1[ig] = conj(lphase1 * sk1[ig] * ylm(lm1, ig))
                                                             * gpow[ig]; // Peize Lin add for dpsi 2020.04.23
+}
 
                                         for (int m2 = 0; m2 < 2 * l2 + 1; m2++) // 2.6
                                         {
@@ -368,8 +373,9 @@ ModuleBase::ComplexArray Numerical_Basis::cal_overlap_Sq(const int& ik, const in
 
                                             std::vector<std::complex<double>> about_ig2(np,
                                                                                         std::complex<double>(0.0, 0.0));
-                                            for (int ig = 0; ig < np; ++ig)
+                                            for (int ig = 0; ig < np; ++ig) {
                                                 about_ig2[ig] = lphase2 * sk2[ig] * ylm(lm2, ig) * about_ig1[ig];
+}
 
                                             /* same as:
                                             for (int ig=0; ig<np; ig++)
@@ -383,10 +389,11 @@ ModuleBase::ComplexArray Numerical_Basis::cal_overlap_Sq(const int& ik, const in
                                             std::copy(&flq(l1, 0, 0), &flq(l1, 0, 0) + enumber * np, about_ig3_1.c);
 
                                             ModuleBase::ComplexMatrix about_ig3_2(enumber, np);
-                                            for (int ie2 = 0; ie2 < enumber; ++ie2)
+                                            for (int ie2 = 0; ie2 < enumber; ++ie2) {
                                                 std::transform(&flq(l2, ie2, 0), &flq(l2, ie2, 0) + np,
                                                                about_ig2.data(), about_ig3_2.c + ie2 * np,
                                                                std::multiplies<std::complex<double>>());
+}
 
                                             BlasConnector::gemm('N', 'T', enumber, enumber, np, 1.0, about_ig3_1.c, np,
                                                                 about_ig3_2.c, np, 1.0, &overlap_Sq(iwt1, iwt2, 0, 0),
@@ -420,14 +427,17 @@ ModuleBase::matrix Numerical_Basis::cal_overlap_V(const ModulePW::PW_Basis_K* wf
     for (int ik = 0; ik < kv.get_nks(); ++ik)
     {
         std::vector<ModuleBase::Vector3<double>> gk(kv.ngk[ik]);
-        for (int ig = 0; ig < gk.size(); ig++)
+        for (int ig = 0; ig < gk.size(); ig++) {
             gk[ig] = wfcpw->getgpluskcar(ik, ig) * tpiba;
+}
 
         const std::vector<double> gpow = Numerical_Basis::cal_gpow(gk, derivative_order);
 
-        for (int ib = 0; ib < GlobalV::NBANDS; ++ib)
-            for (int ig = 0; ig < kv.ngk[ik]; ++ig)
+        for (int ib = 0; ib < GlobalV::NBANDS; ++ib) {
+            for (int ig = 0; ig < kv.ngk[ik]; ++ig) {
                 overlap_V(ik, ib) += norm(psi(ik, ib, ig)) * gpow[ig];
+}
+}
     }
     return overlap_V;
 }
@@ -474,8 +484,9 @@ std::vector<double> Numerical_Basis::cal_gpow(const std::vector<ModuleBase::Vect
         }
         else
         {
-            if (gk[ig].norm2() >= thr)
+            if (gk[ig].norm2() >= thr) {
                 gpow[ig] = std::pow(gk[ig].norm2(), derivative_order);
+}
         }
     }
     return gpow;
@@ -524,8 +535,9 @@ void Numerical_Basis::numerical_atomic_wfc(const int& ik, const ModulePW::PW_Bas
     ModuleBase::TITLE("Numerical_Basis", "numerical_atomic_wfc");
     const int np = wfcpw->npwk[ik];
     std::vector<ModuleBase::Vector3<double>> gk(np);
-    for (int ig = 0; ig < np; ig++)
+    for (int ig = 0; ig < np; ig++) {
         gk[ig] = wfcpw->getgpluskcar(ik, ig);
+}
 
     const int total_lm = (ucell.lmax + 1) * (ucell.lmax + 1);
     ModuleBase::matrix ylm(total_lm, np);
@@ -640,8 +652,9 @@ void Numerical_Basis::output_k(std::ofstream& ofs, const K_Vectors& kv)
 #ifdef __MPI
         // temprary restrict kpar=1 for NSPIN=2 case for generating_orbitals
         int pool = 0;
-        if (GlobalV::NSPIN != 2)
+        if (GlobalV::NSPIN != 2) {
             pool = GlobalC::Pkpoints.whichpool[ik];
+}
         const int iknow = ik - GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL];
         if (GlobalV::RANK_IN_POOL == 0)
         {
@@ -749,8 +762,9 @@ void Numerical_Basis::output_overlap_Q(std::ofstream& ofs, const std::vector<Mod
             const int dim = Qtmp.getSize();
             for (int i = 0; i < dim; i++)
             {
-                if (count % 4 == 0)
+                if (count % 4 == 0) {
                     ofs << std::endl;
+}
                 ofs << " " << Qtmp.ptr[i].real() << " " << Qtmp.ptr[i].imag();
                 ++count;
             }
@@ -779,8 +793,9 @@ void Numerical_Basis::output_overlap_Sq(const std::string& name, std::ofstream& 
 
     // only half of nkstot should be output in "NSPIN == 2" case, k_up and k_down has same k infomation
     int ispin = 1;
-    if (GlobalV::NSPIN == 2)
+    if (GlobalV::NSPIN == 2) {
         ispin = 2;
+}
     int nkstot = kv.get_nkstot() / ispin;
     int count = 0;
     for (int is = 0; is < ispin; is++)
@@ -797,8 +812,9 @@ void Numerical_Basis::output_overlap_Sq(const std::string& name, std::ofstream& 
                     const int size = overlap_Sq[ik_now].getSize();
                     for (int i = 0; i < size; i++)
                     {
-                        if (count % 2 == 0)
+                        if (count % 2 == 0) {
                             ofs << std::endl;
+}
                         ofs << " " << overlap_Sq[ik_now].ptr[i].real() << " " << overlap_Sq[ik_now].ptr[i].imag();
                         ++count;
                     }
