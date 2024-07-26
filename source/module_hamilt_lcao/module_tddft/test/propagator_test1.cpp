@@ -1,11 +1,13 @@
 #include <gtest/gtest.h>
-#include <module_base/scalapack_connector.h>
-#include <mpi.h>
-
+#define private public
+#define protected public
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_hamilt_lcao/module_tddft/propagator.h"
-#include "module_io/input.h"
+#include "module_parameter/parameter.h"
 #include "tddft_test.h"
+
+#include <module_base/scalapack_connector.h>
+#include <mpi.h>
 
 /************************************************
  *  unit test of functions in propagator.h
@@ -17,7 +19,6 @@
  *     - compute propagator of method Crank-Nicolson.
  */
 
-Input INPUT;
 #define doublethreshold 1e-8
 Parallel_Orbitals::Parallel_Orbitals()
 {
@@ -38,7 +39,7 @@ TEST(PropagatorTest, testPropagatorCN)
     pv->nloc = nlocal * nlocal;
     pv->ncol = nlocal;
     pv->coord[0] = pv->coord[1] = 0;
-    INPUT.mdp.md_dt = 4;
+    PARAM.input.mdp.md_dt = 4;
 
     // Initialize input matrices
     int info;
