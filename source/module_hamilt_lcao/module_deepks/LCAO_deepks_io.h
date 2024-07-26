@@ -24,6 +24,7 @@ namespace LCAO_deepks_io
     /// 2. print_dm_k : for multi-k
 
     /// others print quantities in .npy format
+
     /// 3. save_npy_d : descriptor ->dm_eig.npy
     /// 4. save_npy_gvx : gvx ->grad_vx.npy
     /// 5. save_npy_e : energy
@@ -75,11 +76,13 @@ void save_npy_d(const int nat,
 void save_npy_gvx(const int nat,
 		const int des_per_atom,
 		const torch::Tensor &gvx_tensor,
+        const std::string& out_dir,
 		const int rank);
 
 void save_npy_gvepsl(const int nat,
 		const int des_per_atom,
 		const torch::Tensor &gvepsl_tensor,
+		const std::string& out_dir,
 		const int rank);
 
 void save_npy_e(const double &e,  /**<[in] \f$E_{base}\f$ or \f$E_{tot}\f$, in Ry*/
@@ -106,6 +109,7 @@ void save_npy_orbital_precalc(const int nat,
 		const int nks,
 		const int des_per_atom,
 		const torch::Tensor& orbital_precalc_tensor,
+        const std::string& out_dir,
 		const int rank);
 
 /// xinyuan added on 2023-2-20
