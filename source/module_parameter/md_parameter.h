@@ -2,6 +2,7 @@
 #define MD_PARA_H
 
 #include <string>
+#include <vector>
 
 /**
  * @brief input parameters used in md
