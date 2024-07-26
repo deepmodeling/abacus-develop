@@ -59,13 +59,17 @@ void Driver::driver_run() {
     const std::string cal_type = GlobalV::CALCULATION;
 
     //! 4: different types of calculations
-    if (cal_type == "md") {
-        Run_MD::md_line(GlobalC::ucell, p_esolver, INPUT.mdp);
-    } else if (cal_type == "scf" || cal_type == "relax"
-               || cal_type == "cell-relax") {
+    if (cal_type == "md")
+    {
+        Run_MD::md_line(GlobalC::ucell, p_esolver, PARAM);
+    }
+    else if (cal_type == "scf" || cal_type == "relax" || cal_type == "cell-relax")
+    {
         Relax_Driver rl_driver;
         rl_driver.relax_driver(p_esolver);
-    } else {
+    }
+    else
+    {
         //! supported "other" functions:
         //! nscf(PW,LCAO),
         //! get_pchg(LCAO),

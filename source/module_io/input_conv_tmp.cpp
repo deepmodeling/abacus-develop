@@ -10,7 +10,6 @@ void Input_Conv::tmp_convert()
     INPUT.stru_file = PARAM.inp.stru_file;
     INPUT.cond_dtbatch = PARAM.inp.cond_dtbatch;
     INPUT.nche_sto = PARAM.inp.nche_sto;
-    INPUT.mdp = PARAM.mdp;
 
     const int ntype = PARAM.inp.ntype;
     delete[] INPUT.orbital_corr;

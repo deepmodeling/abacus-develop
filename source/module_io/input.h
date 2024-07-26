@@ -19,10 +19,8 @@ class Input
     }
     
     // They will be removed.
-    int cond_dtbatch;  
+    int cond_dtbatch;
     int nche_sto;
-    double md_tfirst;
-    MD_para mdp;
     int* orbital_corr = nullptr; ///< which correlated orbitals need corrected ;
     double* hubbard_u = nullptr; ///< Hubbard Coulomb interaction parameter U(ev)
     std::string stru_file;     // file contains atomic positions -- xiaohui modify

@@ -13,32 +13,32 @@
 namespace Run_MD
 {
 
-void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, MD_para& md_para)
+void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, const Parameter& param_in)
 {
     ModuleBase::TITLE("Run_MD", "md_line");
     ModuleBase::timer::tick("Run_MD", "md_line");
 
     /// determine the md_type
     MD_base* mdrun;
-    if (md_para.md_type == "fire")
+    if (param_in.mdp.md_type == "fire")
     {
-        mdrun = new FIRE(md_para, unit_in);
+        mdrun = new FIRE(param_in, unit_in);
     }
-    else if ((md_para.md_type == "nvt" && md_para.md_thermostat == "nhc") || md_para.md_type == "npt")
+    else if ((param_in.mdp.md_type == "nvt" && param_in.mdp.md_thermostat == "nhc") || param_in.mdp.md_type == "npt")
     {
-        mdrun = new Nose_Hoover(md_para, unit_in);
+        mdrun = new Nose_Hoover(param_in, unit_in);
     }
-    else if (md_para.md_type == "nve" || md_para.md_type == "nvt")
+    else if (param_in.mdp.md_type == "nve" || param_in.mdp.md_type == "nvt")
     {
-        mdrun = new Verlet(md_para, unit_in);
+        mdrun = new Verlet(param_in, unit_in);
     }
-    else if (md_para.md_type == "langevin")
+    else if (param_in.mdp.md_type == "langevin")
     {
-        mdrun = new Langevin(md_para, unit_in);
+        mdrun = new Langevin(param_in, unit_in);
     }
-    else if (md_para.md_type == "msst")
+    else if (param_in.mdp.md_type == "msst")
     {
-        mdrun = new MSST(md_para, unit_in);
+        mdrun = new MSST(param_in, unit_in);
     }
     else
     {
@@ -46,7 +46,7 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, MD_para& md_p
     }
 
     /// md cycle
-    while ((mdrun->step_ + mdrun->step_rst_) <= md_para.md_nstep && !mdrun->stop)
+    while ((mdrun->step_ + mdrun->step_rst_) <= param_in.mdp.md_nstep && !mdrun->stop)
     {
         if (mdrun->step_ == 0)
         {
@@ -63,7 +63,7 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, MD_para& md_p
                                   unit_in,
                                   mdrun->potential,
                                   mdrun->force,
-                                  md_para.cal_stress,
+                                  param_in.inp.cal_stress,
                                   mdrun->virial);
 
             mdrun->second_half();
@@ -71,7 +71,7 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, MD_para& md_p
             MD_func::compute_stress(unit_in,
                                     mdrun->vel,
                                     mdrun->allmass,
-                                    md_para.cal_stress,
+                                    param_in.inp.cal_stress,
                                     mdrun->virial,
                                     mdrun->stress);
             mdrun->t_current = MD_func::current_temp(mdrun->kinetic,
@@ -81,20 +81,20 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, MD_para& md_p
                                                      mdrun->vel);
         }
 
-        if ((mdrun->step_ + mdrun->step_rst_) % md_para.md_dumpfreq == 0)
+        if ((mdrun->step_ + mdrun->step_rst_) % param_in.mdp.md_dumpfreq == 0)
         {
             mdrun->print_md(GlobalV::ofs_running, GlobalV::CAL_STRESS);
 
             MD_func::dump_info(mdrun->step_ + mdrun->step_rst_,
                                GlobalV::global_out_dir,
                                unit_in,
-                               md_para,
+                               param_in,
                                mdrun->virial,
                                mdrun->force,
                                mdrun->vel);
         }
 
-        if ((mdrun->step_ + mdrun->step_rst_) % md_para.md_restartfreq == 0)
+        if ((mdrun->step_ + mdrun->step_rst_) % param_in.mdp.md_restartfreq == 0)
         {
             unit_in.update_vel(mdrun->vel);
             std::stringstream file;

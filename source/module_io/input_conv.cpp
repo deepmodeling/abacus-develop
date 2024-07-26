@@ -183,8 +183,8 @@ void Input_Conv::Convert()
     if (PARAM.inp.calculation == "md" && PARAM.mdp.md_restart) // md restart  liuyu add 2023-04-12
     {
         int istep = 0;
-        MD_func::current_md_info(GlobalV::MY_RANK, GlobalV::global_readin_dir, istep, INPUT.md_tfirst);
-        INPUT.md_tfirst *= ModuleBase::Hartree_to_K;
+        double temperature = 0.0;
+        MD_func::current_md_info(GlobalV::MY_RANK, GlobalV::global_readin_dir, istep, temperature);
         if (PARAM.inp.read_file_dir == "auto")
         {
             GlobalV::stru_file = INPUT.stru_file = GlobalV::global_stru_dir + "STRU_MD_" + std::to_string(istep);

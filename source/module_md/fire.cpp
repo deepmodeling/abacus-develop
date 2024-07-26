@@ -6,8 +6,9 @@
 #endif
 #include "module_base/timer.h"
 
-FIRE::FIRE(MD_para& MD_para_in, UnitCell& unit_in) : MD_base(MD_para_in, unit_in)
+FIRE::FIRE(const Parameter& param_in, UnitCell& unit_in) : MD_base(param_in, unit_in)
 {
+    force_thr = param_in.inp.force_thr;
     dt_max = -1.0;
     alpha_start = 0.10;
     alpha = alpha_start;
@@ -82,18 +83,18 @@ void FIRE::print_md(std::ofstream& ofs, const bool& cal_stress)
 
 void FIRE::write_restart(const std::string& global_out_dir)
 {
-    if (!mdp.my_rank)
+    if (!my_rank)
     {
         std::stringstream ssc;
         ssc << global_out_dir << "Restart_md.dat";
         std::ofstream file(ssc.str().c_str());
 
         file << step_ + step_rst_ << std::endl;
-        file << mdp.md_tfirst << std::endl;
+        file << md_tfirst << std::endl;
         file << alpha << std::endl;
         file << negative_count << std::endl;
         file << dt_max << std::endl;
-        file << mdp.md_dt << std::endl;
+        file << md_dt << std::endl;
         file.close();
     }
 #ifdef __MPI
@@ -108,7 +109,7 @@ void FIRE::restart(const std::string& global_readin_dir)
 {
     bool ok = true;
 
-    if (!mdp.my_rank)
+    if (!my_rank)
     {
         std::stringstream ssc;
         ssc << global_readin_dir << "Restart_md.dat";
@@ -121,7 +122,7 @@ void FIRE::restart(const std::string& global_readin_dir)
 
         if (ok)
         {
-            file >> step_rst_ >> mdp.md_tfirst >> alpha >> negative_count >> dt_max >> mdp.md_dt;
+            file >> step_rst_ >> md_tfirst >> alpha >> negative_count >> dt_max >> md_dt;
             file.close();
         }
     }
@@ -137,11 +138,11 @@ void FIRE::restart(const std::string& global_readin_dir)
 
 #ifdef __MPI
     MPI_Bcast(&step_rst_, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&mdp.md_tfirst, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&md_tfirst, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     MPI_Bcast(&alpha, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     MPI_Bcast(&negative_count, 1, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Bcast(&dt_max, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&mdp.md_dt, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&md_dt, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif
 
     return;
@@ -163,7 +164,7 @@ void FIRE::check_force(void)
         }
     }
 
-    if (2.0 * max < mdp.force_thr)
+    if (2.0 * max < force_thr)
     {
         stop = true;
     }
@@ -181,7 +182,7 @@ void FIRE::check_fire(void)
     /// initial dt_max
     if (dt_max < 0)
     {
-        dt_max = 2.5 * mdp.md_dt;
+        dt_max = 2.5 * md_dt;
     }
 
     for (int i = 0; i < ucell.nat; ++i)
@@ -207,13 +208,13 @@ void FIRE::check_fire(void)
         negative_count++;
         if (negative_count >= n_min)
         {
-            mdp.md_dt = std::min(mdp.md_dt * finc, dt_max);
+            md_dt = std::min(md_dt * finc, dt_max);
             alpha *= f_alpha;
         }
     }
     else
     {
-        mdp.md_dt *= fdec;
+        md_dt *= fdec;
         negative_count = 0;
 
         for (int i = 0; i < ucell.nat; ++i)
