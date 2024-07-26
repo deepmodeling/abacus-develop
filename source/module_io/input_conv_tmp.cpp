@@ -8,7 +8,6 @@
 void Input_Conv::tmp_convert()
 {
     INPUT.stru_file = PARAM.inp.stru_file;
-    INPUT.bessel_nao_rcut = PARAM.globalv.bessel_nao_rcut;
     INPUT.cond_dtbatch = PARAM.inp.cond_dtbatch;
     INPUT.nche_sto = PARAM.inp.nche_sto;
     INPUT.mdp = PARAM.mdp;

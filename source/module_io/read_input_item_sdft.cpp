@@ -107,59 +107,5 @@ void ReadInput::item_sdft()
         read_sync_int(input.initsto_freq);
         this->add_item(item);
     }
-    {
-        Input_Item item("cal_cond");
-        item.annotation = "calculate electronic conductivities";
-        read_sync_bool(input.cal_cond);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("cond_che_thr");
-        item.annotation = "control the error of Chebyshev expansions for conductivities";
-        read_sync_double(input.cond_che_thr);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("cond_dw");
-        item.annotation = "frequency interval for conductivities";
-        read_sync_double(input.cond_dw);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("cond_wcut");
-        item.annotation = "cutoff frequency (omega) for conductivities";
-        read_sync_double(input.cond_wcut);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("cond_dt");
-        item.annotation = "t interval to integrate Onsager coefficiencies";
-        read_sync_double(input.cond_dt);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("cond_dtbatch");
-        item.annotation = "exp(iH*dt*cond_dtbatch) is expanded with Chebyshev expansion";
-        read_sync_int(input.cond_dtbatch);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("cond_smear");
-        item.annotation = "Smearing method for conductivities";
-        read_sync_int(input.cond_smear);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("cond_fwhm");
-        item.annotation = "FWHM for conductivities";
-        read_sync_double(input.cond_fwhm);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("cond_nonlocal");
-        item.annotation = "Nonlocal effects for conductivities";
-        read_sync_bool(input.cond_nonlocal);
-        this->add_item(item);
-    }
 }
 } // namespace ModuleIO

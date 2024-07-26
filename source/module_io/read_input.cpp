@@ -116,13 +116,21 @@ ReadInput::ReadInput(const int& rank)
 {
     this->rank = rank;
     this->set_globalv_bcast();
-    this->item_general();
-    this->item_pw();
-    this->item_sdft();
+    // add items
+    this->item_system();
+    this->item_elec_stru();
     this->item_relax();
-    this->item_lcao();
-    this->item_postprocess();
     this->item_md();
+    this->item_ofdft();
+    this->item_sdft();
+    this->item_deepks();
+    this->item_rt_tddft();
+    this->item_lr_tddft();
+    this->item_output();
+    this->item_postprocess();
+    this->item_model();
+    this->item_exx();
+    this->item_dftu();
     this->item_others();
 }
 
@@ -325,7 +333,7 @@ void ReadInput::write_txt_input(const Parameter& param, const std::string& filen
     ofs << "INPUT_PARAMETERS" << std::endl;
     ofs << std::setiosflags(std::ios::left);
 
-    ofs << "#Parameters (1.General)" << std::endl;
+    ofs << "#Parameters (1.System)" << std::endl;
     for (auto& item: this->input_lists)
     {
         Input_Item* p_item = &(item.second);
@@ -333,94 +341,83 @@ void ReadInput::write_txt_input(const Parameter& param, const std::string& filen
             continue;
 }
         p_item->get_final_value(*p_item, param);
-        if (p_item->label == "ecutwfc")
+        if (p_item->label == "ks_solver")
         {
-            ofs << "\n#Parameters (2.PW)" << std::endl;
+            ofs << "\n#Parameters (2.Electronic structure)" << std::endl;
         }
-        else if (p_item->label == "method_sto")
+        else if (p_item->label == "nb2d")
         {
-            ofs << "\n#Parameters (3.Stochastic DFT)" << std::endl;
+            ofs << "\n#Parameters (3.LCAO)" << std::endl;
         }
-        else if (p_item->label == "ks_solver")
+        else if (p_item->label == "relax_method")
         {
             ofs << "\n#Parameters (4.Relaxation)" << std::endl;
         }
-        else if (p_item->label == "basis_type")
-        {
-            ofs << "\n#Parameters (5.LCAO)" << std::endl;
-        }
-        else if (p_item->label == "smearing_method")
-        {
-            ofs << "\n#Parameters (6.Smearing)" << std::endl;
-        }
-        else if (p_item->label == "mixing_type")
-        {
-            ofs << "\n#Parameters (7.Charge Mixing)" << std::endl;
-        }
-        else if (p_item->label == "dos_emin_ev")
-        {
-            ofs << "\n#Parameters (8.DOS)" << std::endl;
-        }
         else if (p_item->label == "md_type")
         {
-            ofs << "\n#Parameters (9.Molecular dynamics)" << std::endl;
-        }
-        else if (p_item->label == "efield_flag")
-        {
-            ofs << "\n#Parameters (10.Electric field and dipole correction)" << std::endl;
-        }
-        else if (p_item->label == "gate_flag")
-        {
-            ofs << "\n#Parameters (11.Gate field)" << std::endl;
-        }
-        else if (p_item->label == "out_alllog")
-        {
-            ofs << "\n#Parameters (12.Test)" << std::endl;
-        }
-        else if (p_item->label == "vdw_method")
-        {
-            ofs << "\n#Parameters (13.vdW Correction)" << std::endl;
-        }
-        else if (p_item->label == "exx_hybrid_alpha")
-        {
-            ofs << "\n#Parameters (14.exx)" << std::endl;
-        }
-        else if (p_item->label == "td_force_dt")
-        {
-            ofs << "\n#Parameters (16.tddft)" << std::endl;
-        }
-        else if (p_item->label == "berry_phase")
-        {
-            ofs << "\n#Parameters (17.berry_wannier)" << std::endl;
-        }
-        else if (p_item->label == "imp_sol")
-        {
-            ofs << "\n#Parameters (18.implicit_solvation)" << std::endl;
+            ofs << "\n#Parameters (5.Molecular dynamics)" << std::endl;
         }
         else if (p_item->label == "of_kinetic")
         {
-            ofs << "\n#Parameters (19.orbital free density functional theory)" << std::endl;
+            ofs << "\n#Parameters (6.orbital free density functional theory)" << std::endl;
+        }
+        else if (p_item->label == "method_sto")
+        {
+            ofs << "\n#Parameters (7.Stochastic DFT)" << std::endl;
+        }
+        else if (p_item->label == "deepks_out_labels")
+        {
+            ofs << "\n#Parameters (8.DeepKS)" << std::endl;
+        }
+        else if (p_item->label == "td_force_dt")
+        {
+            ofs << "\n#Parameters (9.rt-tddft)" << std::endl;
+        }
+        else if (p_item->label == "lr_nstates")
+        {
+            ofs << "\n#Parameters (10.lr-tddft)" << std::endl;
+        }
+        else if (p_item->label == "out_stru")
+        {
+            ofs << "\n#Parameters (11.Output)" << std::endl;
+        }
+        else if (p_item->label == "dos_emin_ev")
+        {
+            ofs << "\n#Parameters (12.Postprocess)" << std::endl;
+        }
+        else if (p_item->label == "efield_flag")
+        {
+            ofs << "\n#Parameters (13.Model)" << std::endl;
+        }
+        else if (p_item->label == "vdw_method")
+        {
+            ofs << "\n#Parameters (14.vdW Correction)" << std::endl;
+        }
+        else if (p_item->label == "exx_hybrid_alpha")
+        {
+            ofs << "\n#Parameters (15.exx)" << std::endl;
         }
         else if (p_item->label == "dft_plus_u")
         {
-            ofs << "\n#Parameters (20.dft+u)" << std::endl;
-        }
-        else if (p_item->label == "bessel_nao_ecut")
-        {
-            ofs << "\n#Parameters (21.spherical bessel)" << std::endl;
+            ofs << "\n#Parameters (16.dft+u)" << std::endl;
         }
         else if (p_item->label == "sc_mag_switch")
         {
-            ofs << "\n#Parameters (22.non-collinear spin-constrained DFT)" << std::endl;
+            ofs << "\n#Parameters (17.non-collinear spin-constrained DFT)" << std::endl;
         }
         else if (p_item->label == "qo_switch")
         {
-            ofs << "\n#Parameters (23.Quasiatomic Orbital analysis)" << std::endl;
+            ofs << "\n#Parameters (18.Quasiatomic Orbital analysis)" << std::endl;
         }
         else if (p_item->label == "pexsi_npole")
         {
-            ofs << "\n#Parameters (24.PEXSI)" << std::endl;
+            ofs << "\n#Parameters (19.PEXSI)" << std::endl;
         }
+        else if (p_item->label == "out_alllog")
+        {
+            ofs << "\n#Parameters (20.Test)" << std::endl;
+        }
+
         ModuleBase::GlobalFunc::OUTP(ofs, p_item->label, p_item->final_value.str(), p_item->annotation);
     }
 }
