@@ -1030,7 +1030,7 @@ void ESolver_KS_PW<T, Device>::after_all_runners() {
                                                this->kv,
                                                this->pw_wfc,
                                                GlobalC::ucell,
-                                               PARAM.inp.bessel_nao_rcuts[i]);
+                                               i);
             }
             ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,
                                          "BASIS OVERLAP (Q and S) GENERATION.");
