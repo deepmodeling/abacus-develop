@@ -12,6 +12,8 @@ void Gint::cpu_force_interface(Gint_inout* inout) {
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
 #ifdef _OPENMP
+#pragma omp parallel
+{
     ModuleBase::matrix fvl_dphi_thread;
     ModuleBase::matrix svl_dphi_thread;
     if (inout->isforce) {
@@ -74,6 +76,7 @@ void Gint::cpu_force_interface(Gint_inout* inout) {
             inout->svl_dphi[0] += svl_dphi_thread;
         }
     }
+}
 #endif
     ModuleBase::TITLE("Gint_interface", "cal_gint_force");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_force");

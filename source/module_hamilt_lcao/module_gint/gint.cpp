@@ -66,10 +66,6 @@ void Gint::cal_gint(Gint_inout* inout) {
             {
 // Here we write omp parallel, each job in this parallel region, uses omp for, 
 // which conforms to the running rules of OpenMP.
-#ifdef _OPENMP
-#pragma omp parallel
-{
-#endif
                 if (inout->job == Gint_Tools::job_type::vlocal) {
                     cpu_vlocal_interface(inout);
                 } else if (inout->job == Gint_Tools::job_type::dvlocal) {
@@ -85,9 +81,6 @@ void Gint::cal_gint(Gint_inout* inout) {
                 } else if (inout->job == Gint_Tools::job_type::force_meta) {
                     cpu_force_meta_interface(inout);
                 }
-#ifdef _OPENMP
-}
-#endif
             }
         }
         ModuleBase::timer::tick("Gint_interface", "cal_gint");

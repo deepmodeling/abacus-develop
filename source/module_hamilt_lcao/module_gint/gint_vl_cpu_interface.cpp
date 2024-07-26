@@ -14,6 +14,8 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
 #ifdef _OPENMP
+#pragma omp parallel
+{
     if (!GlobalV::GAMMA_ONLY_LOCAL) {
         if (!pvpR_alloc_flag) {
             ModuleBase::WARNING_QUIT("Gint_interface::cal_gint",
@@ -102,6 +104,7 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
         }
     }
      delete hRGint_thread;
+}
 #endif
     ModuleBase::TITLE("Gint_interface", "cal_gint_vlocal");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal");

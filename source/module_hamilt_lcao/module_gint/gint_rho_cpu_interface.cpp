@@ -13,6 +13,8 @@ void Gint::cpu_rho_interface(Gint_inout* inout) {
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
 #ifdef _OPENMP
+#pragma omp parallel
+{
 #pragma omp for
 #endif
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
@@ -37,7 +39,9 @@ void Gint::cpu_rho_interface(Gint_inout* inout) {
                               inout);
         delete[] vindex;
     }
-
+#ifdef _OPENMP
+}
+#endif
     ModuleBase::TITLE("Gint_interface", "cal_gint_rho");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_rho");
 }
