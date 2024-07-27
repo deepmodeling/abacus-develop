@@ -13,9 +13,6 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
     const int ncyz = this->ny * this->nplane;
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
-#ifdef _OPENMP
-#pragma omp parallel
-{
     if (!GlobalV::GAMMA_ONLY_LOCAL) {
         if (!pvpR_alloc_flag) {
             ModuleBase::WARNING_QUIT("Gint_interface::cal_gint",
@@ -34,8 +31,6 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
     }
     //use vector instead of new-delete to avoid memory leak.
     std::vector<double> pvpR_thread = std::vector<double>(nnrg, 0.0);
-#pragma omp for
-#endif
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
         const int na_grid = this->gridt->how_many_atoms[grid_index];
         if (na_grid == 0) {
@@ -51,20 +46,19 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
                                     this->gridt->start_ind[grid_index],
                                     ncyz,
                                     dv);
-#ifdef _OPENMP
         //prepare block information
-	int * block_iw, * block_index, * block_size;
-	bool** cal_flag;
-	Gint_Tools::get_block_info(*this->gridt, this->bxyz, na_grid, grid_index, block_iw, block_index, block_size, cal_flag);
+	    int * block_iw, * block_index, * block_size;
+	    bool** cal_flag;
+    	Gint_Tools::get_block_info(*this->gridt, this->bxyz, na_grid, grid_index, block_iw, block_index, block_size, cal_flag);
 	
 	//evaluate psi and dpsi on grids
-	ModuleBase::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
-	Gint_Tools::cal_psir_ylm(*this->gridt, 
-		this->bxyz, na_grid, grid_index, delta_r,
-		block_index, block_size, 
-		cal_flag,
-		psir_ylm.get_ptr_2D());
-	
+	    ModuleBase::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
+	    Gint_Tools::cal_psir_ylm(*this->gridt, 
+            this->bxyz, na_grid, grid_index, delta_r,
+            block_index, block_size, 
+            cal_flag,
+            psir_ylm.get_ptr_2D());
+        
 	//calculating f_mu(r) = v(r)*psi_mu(r)*dv
 	const ModuleBase::Array_Pool<double> psir_vlbr3 = Gint_Tools::get_psir_vlbr3(
 			this->bxyz, na_grid, LD_pool, block_index, cal_flag, vldr3, psir_ylm.get_ptr_2D());
@@ -94,30 +88,10 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
 		delete[] cal_flag[ib];
 	}
 	delete[] cal_flag;
-#else
-        if (GlobalV::GAMMA_ONLY_LOCAL) {
-            this->gint_kernel_vlocal(na_grid,
-                                     grid_index,
-                                     delta_r,
-                                     vldr3,
-                                     LD_pool,
-                                     nullptr,
-                                     ucell);
-        } else {
-            this->gint_kernel_vlocal(na_grid,
-                                     grid_index,
-                                     delta_r,
-                                     vldr3,
-                                     LD_pool,
-                                     this->pvpR_reduced[inout->ispin],
-                                     ucell);
-        }
-#endif
         delete[] vldr3;
     }
-#ifdef _OPENMP
+    
     if (GlobalV::GAMMA_ONLY_LOCAL) {
-#pragma omp critical(gint_gamma)
         {
             BlasConnector::axpy(this->hRGint->get_nnr(),
                                 1.0,
@@ -127,7 +101,6 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
                                 1);
         }
     } else {
-#pragma omp critical(gint_k)
         {
             BlasConnector::axpy(nnrg,
                                 1.0,
@@ -136,14 +109,10 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
                                 pvpR_reduced[inout->ispin],
                                 1);
         }
-    }
-     delete hRGint_thread;
-}
-#endif
     ModuleBase::TITLE("Gint_interface", "cal_gint_vlocal");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal");
 }
-
+}
 void Gint::cpu_dvlocal_interface(Gint_inout* inout) {
     ModuleBase::TITLE("Gint_interface", "cal_gint_dvlocal");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_dvlocal");
