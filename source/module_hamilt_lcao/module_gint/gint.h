@@ -99,12 +99,14 @@ class Gint {
     // calculate the matrix elements of Hamiltonian matrix,
     // < phi_0 | Vl + Vh + Vxc | phi_R> or if the Vna is used,
     // < phi_0 | delta_Vh + Vxc | phi_R>.
-    void gint_kernel_vlocal(const int ncxyz,
-                            const double dv,
+    void gint_kernel_vlocal(const int na_grid,
+                            const int grid_index,
                             const double delta_r,
+                            double* vldr3,
                             const int LD_pool,
+                            double* pvpR_reduced,
                             const UnitCell& ucell,
-                            Gint_inout* inout);
+                            hamilt::HContainer<double>* hR = nullptr);
 
     // calculate < phi_0 | vlocal | dphi_R >
     void gint_kernel_dvlocal(const int na_grid,
