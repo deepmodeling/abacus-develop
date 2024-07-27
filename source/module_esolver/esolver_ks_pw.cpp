@@ -610,6 +610,7 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep,
                            GlobalV::NPROC_IN_POOL,
                            false);
         init_psi = true;
+        dynamic_cast<hsolver::HSolverPW<T, Device>*>(this->phsol)->set_initpsi(init_psi);
 
         if (PARAM.inp.out_bandgap)
         {

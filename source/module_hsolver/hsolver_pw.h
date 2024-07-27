@@ -71,6 +71,11 @@ class HSolverPW : public HSolver<T, Device>
     // {
     //     return initialed_psi;
     // };
+
+    void set_initpsi(bool init_psi)
+    {
+      this->initialed_psi = init_psi;
+    }
     
   protected:
     // diago caller
