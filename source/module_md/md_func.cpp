@@ -6,7 +6,7 @@
 namespace MD_func
 {
 
-double gaussrand(void)
+double gaussrand()
 {
     static double v1=0.0;
     static double v2=0.0;
@@ -83,12 +83,15 @@ void read_vel(const UnitCell& unit_in, ModuleBase::Vector3<double>* vel)
         for (int ia = 0; ia < unit_in.atoms[it].na; ++ia)
         {
             vel[iat] = unit_in.atoms[it].vel[ia];
-            if (unit_in.atoms[it].mbl[ia].x == 0)
+            if (unit_in.atoms[it].mbl[ia].x == 0) {
                 vel[iat].x = 0;
-            if (unit_in.atoms[it].mbl[ia].y == 0)
+}
+            if (unit_in.atoms[it].mbl[ia].y == 0) {
                 vel[iat].y = 0;
-            if (unit_in.atoms[it].mbl[ia].z == 0)
+}
+            if (unit_in.atoms[it].mbl[ia].z == 0) {
                 vel[iat].z = 0;
+}
             ++iat;
         }
     }
@@ -407,12 +410,15 @@ void get_mass_mbl(const UnitCell& unit_in,
         {
             allmass[ion] = unit_in.atoms[it].mass / ModuleBase::AU_to_MASS;
             ionmbl[ion] = unit_in.atoms[it].mbl[i];
-            if (ionmbl[ion].x == 0)
+            if (ionmbl[ion].x == 0) {
                 ++frozen.x;
-            if (ionmbl[ion].y == 0)
+}
+            if (ionmbl[ion].y == 0) {
                 ++frozen.y;
-            if (ionmbl[ion].z == 0)
+}
+            if (ionmbl[ion].z == 0) {
                 ++frozen.z;
+}
 
             ion++;
         }

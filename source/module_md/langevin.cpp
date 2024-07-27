@@ -49,7 +49,7 @@ void Langevin::first_half(std::ofstream& ofs)
 }
 
 
-void Langevin::second_half(void)
+void Langevin::second_half()
 {
     ModuleBase::TITLE("Langevin", "second_half");
     ModuleBase::timer::tick("Langevin", "second_half");
@@ -83,7 +83,7 @@ void Langevin::restart(const std::string& global_readin_dir)
 }
 
 
-void Langevin::post_force(void)
+void Langevin::post_force()
 {
     if (my_rank == 0)
     {
