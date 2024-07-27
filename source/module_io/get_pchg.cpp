@@ -1,4 +1,4 @@
-#include "istate_charge.h"
+#include "get_pchg.h"
 
 #include "module_base/blas_connector.h"
 #include "module_base/global_function.h"
