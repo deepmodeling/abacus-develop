@@ -13,6 +13,10 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
     const int ncyz = this->ny * this->nplane;
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
+
+#ifdef _OPENMP
+#pragma omp parallel
+{
     if (!GlobalV::GAMMA_ONLY_LOCAL) {
         if (!pvpR_alloc_flag) {
             ModuleBase::WARNING_QUIT("Gint_interface::cal_gint",
@@ -21,8 +25,7 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
             ModuleBase::GlobalFunc::ZEROS(this->pvpR_reduced[inout->ispin],
                                           nnrg);
         }
-    }
-
+    }   
     // define HContainer here to reference.
     hamilt::HContainer<double>* hRGint_thread =nullptr;
     //Under the condition of gamma_only, hRGint will be instantiated.
@@ -31,13 +34,13 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
     }
     //use vector instead of new-delete to avoid memory leak.
     std::vector<double> pvpR_thread = std::vector<double>(nnrg, 0.0);
+    #pragma omp for
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
         const int na_grid = this->gridt->how_many_atoms[grid_index];
         if (na_grid == 0) {
             continue;
         }
-        double* vldr3
-            = Gint_Tools::get_vldr3(inout->vl,
+        double* vldr3 = Gint_Tools::get_vldr3(inout->vl,
                                     this->bxyz,
                                     this->bx,
                                     this->by,
@@ -46,7 +49,7 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
                                     this->gridt->start_ind[grid_index],
                                     ncyz,
                                     dv);
-        //prepare block information
+    //prepare block information
 	    int * block_iw, * block_index, * block_size;
 	    bool** cal_flag;
     	Gint_Tools::get_block_info(*this->gridt, this->bxyz, na_grid, grid_index, block_iw, block_index, block_size, cal_flag);
@@ -76,7 +79,7 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
     {
         this->cal_meshball_vlocal_k(
             na_grid, LD_pool, grid_index, block_size, block_index, block_iw, cal_flag,
-            psir_ylm.get_ptr_2D(), psir_vlbr3.get_ptr_2D(), this->pvpR_reduced[inout->ispin],ucell);
+            psir_ylm.get_ptr_2D(), psir_vlbr3.get_ptr_2D(),pvpR_thread.data(),ucell);
     }
 
     //release memories
@@ -93,6 +96,7 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
     
     if (GlobalV::GAMMA_ONLY_LOCAL) {
         {
+        #pragma omp critical(gint_gamma)
             BlasConnector::axpy(this->hRGint->get_nnr(),
                                 1.0,
                                 hRGint_thread->get_wrapper(),
@@ -102,6 +106,7 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
         }
     } else {
         {
+        #pragma omp critical(gint_k)
             BlasConnector::axpy(nnrg,
                                 1.0,
                                 pvpR_thread.data(),
@@ -109,9 +114,11 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
                                 pvpR_reduced[inout->ispin],
                                 1);
         }
+    }
+}
+#endif
     ModuleBase::TITLE("Gint_interface", "cal_gint_vlocal");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal");
-}
 }
 void Gint::cpu_dvlocal_interface(Gint_inout* inout) {
     ModuleBase::TITLE("Gint_interface", "cal_gint_dvlocal");
