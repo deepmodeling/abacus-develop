@@ -1,5 +1,12 @@
 #ifdef __DEEPKS
 
+/// cal_orbital_precalc : orbital_precalc is usted for training with orbital label,
+///                          which equals gvdm * orbital_pdm_shell,
+///                          orbital_pdm_shell[1,Inl,nm*nm] = dm_hl * overlap * overlap
+/// cal_orbital_precalc_k : orbital_precalc is usted for training with orbital label,
+///                          for multi-k case, which equals gvdm * orbital_pdm_shell,
+///                          orbital_pdm_shell[1,Inl,nm*nm] = dm_hl_k * overlap * overlap
+
 #include "LCAO_deepks.h"
 #include "LCAO_deepks_io.h" // mohan add 2024-07-22
 #include "module_base/blas_connector.h"

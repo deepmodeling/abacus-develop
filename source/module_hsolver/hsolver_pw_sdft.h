@@ -25,9 +25,16 @@ namespace hsolver
                            const int istep,
                            const int iter,
                            const std::string method_in,
+
+                           const int scf_iter_in,
+                           const bool need_subspace_in,
+                           const int diag_iter_max_in,
+                           const double pw_diag_thr_in,
+                           
                            const bool skip_charge) override;
-        virtual double set_diagethr(const int istep, const int iter, const double drho) override;                   
-        virtual double cal_hsolerror() override
+
+        virtual double set_diagethr(double diag_ethr_in, const int istep, const int iter, const double drho) override;                   
+        virtual double cal_hsolerror(const double diag_ethr_in) override
         {
             return 0.0;
         }

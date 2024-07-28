@@ -110,6 +110,14 @@ DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in,
     // lagrange_matrix(nband, nband); // for orthogonalization
     resmem_complex_op()(this->ctx, this->lagrange_matrix, nband * nband);
     setmem_complex_op()(this->ctx, this->lagrange_matrix, 0, nband * nband);
+
+#if defined(__CUDA) || defined(__ROCM)
+    if (this->device == base_device::GpuDevice)
+    {
+        resmem_var_op()(this->ctx, this->d_precondition, dim);
+        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, this->d_precondition, this->precondition, dim);
+    }
+#endif
 }
 
 /**
@@ -117,7 +125,6 @@ DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in,
  * 
  * This destructor releases the dynamically allocated memory used by the class members.
  * It deletes the basis, hpsi, spsi, hcc, scc, vcc, lagrange_matrix, and eigenvalue arrays.
- * If the device is a GPU device, it also deletes the d_precondition array.
  * 
  */
 template <typename T, typename Device>
@@ -131,7 +138,7 @@ DiagoDavid<T, Device>::~DiagoDavid()
     delmem_complex_op()(this->ctx, this->vcc);
     delmem_complex_op()(this->ctx, this->lagrange_matrix);
     base_device::memory::delete_memory_op<Real, base_device::DEVICE_CPU>()(this->cpu_ctx, this->eigenvalue);
-
+    // If the device is a GPU device, free the d_precondition array.
 #if defined(__CUDA) || defined(__ROCM)
     if (this->device == base_device::GpuDevice)
     {
@@ -1142,14 +1149,6 @@ int DiagoDavid<T, Device>::diag(const HPsiFunc& hpsi_func,
     /// record the times of trying iterative diagonalization
     int ntry = 0;
     this->notconv = 0;
-
-#if defined(__CUDA) || defined(__ROCM)
-    if (this->device == base_device::GpuDevice)
-    {
-        resmem_var_op()(this->ctx, this->d_precondition, ldPsi);
-        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, this->d_precondition, this->precondition, ldPsi);
-    }
-#endif
 
     int sum_dav_iter = 0;
     do

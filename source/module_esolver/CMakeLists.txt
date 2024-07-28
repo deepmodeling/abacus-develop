@@ -10,14 +10,17 @@ list(APPEND objects
     esolver_of.cpp
     esolver_of_interface.cpp
     esolver_of_tool.cpp
+    print_funcs.cpp
 )
 if(ENABLE_LCAO)
   list(APPEND objects
       esolver_ks_lcao.cpp
       esolver_ks_lcao_elec.cpp
       esolver_ks_lcao_tddft.cpp
-      esolver_ks_lcao_tmpfunc.cpp
+      dpks_cal_e_delta_band.cpp
       io_npz.cpp
+      set_matrix_grid.cpp
+      dftu_cal_occup_m.cpp
   )
 endif()
 
