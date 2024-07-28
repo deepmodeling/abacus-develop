@@ -145,15 +145,15 @@ void Gint::cpu_dvlocal_interface(Gint_inout* inout) {
     std::vector<double> pvdpRx_thread;
     std::vector<double> pvdpRy_thread;
     std::vector<double> pvdpRz_thread;
-// #ifdef _OPENMP
-// #pragma omp parallel private(pvdpRx_thread, pvdpRy_thread, pvdpRz_thread,hRGint_thread)
-// {
-//     pvdpRx_thread = std::vector<double>(nnrg, 0.0);
-//     pvdpRy_thread = std::vector<double>(nnrg, 0.0);
-//     pvdpRz_thread = std::vector<double>(nnrg, 0.0);
-//     hRGint_thread = new hamilt::HContainer<double>(*this->hRGint);
-// #pragma omp for
-// #endif
+#ifdef _OPENMP
+#pragma omp parallel private(pvdpRx_thread, pvdpRy_thread, pvdpRz_thread,hRGint_thread)
+{
+    pvdpRx_thread = std::vector<double>(nnrg, 0.0);
+    pvdpRy_thread = std::vector<double>(nnrg, 0.0);
+    pvdpRz_thread = std::vector<double>(nnrg, 0.0);
+    hRGint_thread = new hamilt::HContainer<double>(*this->hRGint);
+#pragma omp for
+#endif
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
         const int na_grid = this->gridt->how_many_atoms[grid_index];
         if (na_grid == 0) {
