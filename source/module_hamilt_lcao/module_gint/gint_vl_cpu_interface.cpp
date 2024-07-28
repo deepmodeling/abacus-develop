@@ -13,10 +13,6 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
     const int ncyz = this->ny * this->nplane;
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
-
-#ifdef _OPENMP
-#pragma omp parallel
-{
     if (!GlobalV::GAMMA_ONLY_LOCAL) {
         if (!pvpR_alloc_flag) {
             ModuleBase::WARNING_QUIT("Gint_interface::cal_gint",
@@ -25,7 +21,10 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
             ModuleBase::GlobalFunc::ZEROS(this->pvpR_reduced[inout->ispin],
                                           nnrg);
         }
-    }   
+    } 
+#ifdef _OPENMP
+#pragma omp parallel
+{  
     // define HContainer here to reference.
     hamilt::HContainer<double>* hRGint_thread =nullptr;
     //Under the condition of gamma_only, hRGint will be instantiated.
@@ -35,6 +34,7 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
     //use vector instead of new-delete to avoid memory leak.
     std::vector<double> pvpR_thread = std::vector<double>(nnrg, 0.0);
     #pragma omp for
+#endif
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
         const int na_grid = this->gridt->how_many_atoms[grid_index];
         if (na_grid == 0) {
@@ -93,7 +93,7 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
 	delete[] cal_flag;
         delete[] vldr3;
     }
-    
+#ifdef _OPENMP
     if (GlobalV::GAMMA_ONLY_LOCAL) {
         {
         #pragma omp critical(gint_gamma)
