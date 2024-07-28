@@ -39,7 +39,7 @@ TEST(PropagatorTest, testPropagatorCN)
     pv->nloc = nlocal * nlocal;
     pv->ncol = nlocal;
     pv->coord[0] = pv->coord[1] = 0;
-    PARAM.input.mdp.md_dt = 4;
+    PARAM.input.mdp.md_dt = 4 * ModuleBase::AU_to_FS;
 
     // Initialize input matrices
     int info;
@@ -72,7 +72,7 @@ TEST(PropagatorTest, testPropagatorCN)
 
     // Call the function
     int propagator = 0;
-    module_tddft::Propagator prop(propagator, pv);
+    module_tddft::Propagator prop(propagator, pv, PARAM.mdp.md_dt);
     prop.compute_propagator(nlocal, Stmp, Htmp, nullptr, U_operator, print_matrix);
 
     // Check the results
