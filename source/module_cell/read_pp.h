@@ -72,6 +72,7 @@ public:
     int average_p(const double& lambda, Atom_pseudo& pp); // zhengdy add 2020-10-20
     void set_empty_element(Atom_pseudo& pp);            // Peize Lin add for bsse 2022.04.07
     void set_upf_q(Atom_pseudo& pp);                    // liuyu add 2023-09-21
+    void complete_default(Atom_pseudo& pp);
 
   private:
     int set_pseudo_type(const std::string& fn, std::string& type);
@@ -120,7 +121,7 @@ public:
                   double* rho);
 
     // complete default
-    void complete_default(Atom_pseudo& pp);
+    // void complete_default(Atom_pseudo& pp);
     void complete_default_h(Atom_pseudo& pp);
     void complete_default_atom(Atom_pseudo& pp);
     void complete_default_vl(Atom_pseudo& pp);
