@@ -99,6 +99,9 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
 }
 
 template <typename T, typename Device>
+<<<<<<< HEAD
+void ESolver_KS_PW<T, Device>::before_all_runners(const Input_para& inp, UnitCell& ucell) {
+=======
 void ESolver_KS_PW<T, Device>::Init_GlobalC(const Input_para& inp, UnitCell& ucell, pseudopot_cell_vnl& ppcell)
 {
     // GlobalC is a historically left-over namespace, it is used to store global
@@ -153,6 +156,7 @@ void ESolver_KS_PW<T, Device>::Init_GlobalC(const Input_para& inp, UnitCell& uce
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::before_all_runners(const Input_para& inp, UnitCell& ucell)
 {
+>>>>>>> 3ef860a1f020c083f37d355c49bfc425a955fa44
     // 1) call before_all_runners() of ESolver_KS
     ESolver_KS<T, Device>::before_all_runners(inp, ucell);
 
@@ -218,6 +222,8 @@ void ESolver_KS_PW<T, Device>::before_all_runners(const Input_para& inp, UnitCel
         this->pelec->fixed_weights(PARAM.inp.ocp_kb, GlobalV::NBANDS, GlobalV::nelec);
     }
 }
+<<<<<<< HEAD
+=======
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::allocate_hsolver()
 {
@@ -372,9 +378,8 @@ void ESolver_KS_PW<T, Device>::init_after_vc(const Input_para& inp, UnitCell& uc
 #endif
     }
 #endif
+>>>>>>> 3ef860a1f020c083f37d355c49bfc425a955fa44
 
-    ModuleBase::timer::tick("ESolver_KS_PW", "init_after_vc");
-}
 
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::before_scf(const int istep)
@@ -503,6 +508,8 @@ void ESolver_KS_PW<T, Device>::before_scf(const int istep)
     }
 }
 
+<<<<<<< HEAD
+=======
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::others(const int istep)
 {
@@ -538,6 +545,7 @@ void ESolver_KS_PW<T, Device>::others(const int istep)
 
     return;
 }
+>>>>>>> 3ef860a1f020c083f37d355c49bfc425a955fa44
 
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::iter_init(const int istep, const int iter)
@@ -1090,6 +1098,8 @@ void ESolver_KS_PW<T, Device>::after_all_runners()
     }
 }
 
+<<<<<<< HEAD
+=======
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::hamilt2estates(const double ethr)
 {
@@ -1229,6 +1239,7 @@ void ESolver_KS_PW<T, Device>::nscf()
     return;
 }
 
+>>>>>>> 3ef860a1f020c083f37d355c49bfc425a955fa44
 template class ESolver_KS_PW<std::complex<float>, base_device::DEVICE_CPU>;
 template class ESolver_KS_PW<std::complex<double>, base_device::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
