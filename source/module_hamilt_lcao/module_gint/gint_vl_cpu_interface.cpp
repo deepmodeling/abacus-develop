@@ -140,14 +140,20 @@ void Gint::cpu_dvlocal_interface(Gint_inout* inout) {
         ModuleBase::WARNING_QUIT("Gint_interface::cal_gint",
                                  "dvlocal only for k point!");
     }
-    printf("dvlocal\n");
-#ifdef _OPENMP
-    std::vector<double> pvdpRx_thread = std::vector<double>(nnrg, 0.0);
-    std::vector<double> pvdpRy_thread = std::vector<double>(nnrg, 0.0);
-    std::vector<double> pvdpRz_thread = std::vector<double>(nnrg, 0.0);
-    hamilt::HContainer<double>* hRGint_thread = new hamilt::HContainer<double>(*this->hRGint);
-#pragma omp for
-#endif
+    printf("nnrg is %d\n",this->gridt->nnrg);
+    hamilt::HContainer<double>* hRGint_thread =nullptr;
+    std::vector<double> pvdpRx_thread;
+    std::vector<double> pvdpRy_thread;
+    std::vector<double> pvdpRz_thread;
+// #ifdef _OPENMP
+// #pragma omp parallel private(pvdpRx_thread, pvdpRy_thread, pvdpRz_thread,hRGint_thread)
+// {
+//     pvdpRx_thread = std::vector<double>(nnrg, 0.0);
+//     pvdpRy_thread = std::vector<double>(nnrg, 0.0);
+//     pvdpRz_thread = std::vector<double>(nnrg, 0.0);
+//     hRGint_thread = new hamilt::HContainer<double>(*this->hRGint);
+// #pragma omp for
+// #endif
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
         const int na_grid = this->gridt->how_many_atoms[grid_index];
         if (na_grid == 0) {
@@ -163,7 +169,7 @@ void Gint::cpu_dvlocal_interface(Gint_inout* inout) {
                                     this->gridt->start_ind[grid_index],
                                     ncyz,
                                     dv);
-#ifdef _OPENMP
+// #ifdef _OPENMP
         this->gint_kernel_dvlocal(na_grid,
                                   grid_index,
                                   delta_r,
@@ -173,21 +179,22 @@ void Gint::cpu_dvlocal_interface(Gint_inout* inout) {
                                   pvdpRy_thread.data(),
                                   pvdpRz_thread.data(),
                                   ucell);
-#else
-        this->gint_kernel_dvlocal(na_grid,
-                                  grid_index,
-                                  delta_r,
-                                  vldr3,
-                                  LD_pool,
-                                  this->pvdpRx_reduced[inout->ispin],
-                                  this->pvdpRy_reduced[inout->ispin],
-                                  this->pvdpRz_reduced[inout->ispin],
-                                  ucell);
-#endif
+// #else
+//         this->gint_kernel_dvlocal(na_grid,
+//                                   grid_index,
+//                                   delta_r,
+//                                   vldr3,
+//                                   LD_pool,
+//                                   this->pvdpRx_reduced[inout->ispin],
+//                                   this->pvdpRy_reduced[inout->ispin],
+//                                   this->pvdpRz_reduced[inout->ispin],
+//                                   ucell);
+// #endif
         delete[] vldr3;
     }
 #ifdef _OPENMP
     delete hRGint_thread;
+}
 #endif
     ModuleBase::TITLE("Gint_interface", "cal_gint_dvlocal");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_dvlocal");
