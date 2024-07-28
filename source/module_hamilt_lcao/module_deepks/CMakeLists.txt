@@ -1,8 +1,8 @@
 if(ENABLE_DEEPKS)
   list(APPEND objects
       LCAO_deepks.cpp
-      LCAO_deepks_fgamma.cpp
-      LCAO_deepks_fk.cpp
+      deepks_fgamma.cpp
+      deepks_fk.cpp
       LCAO_deepks_odelta.cpp
       LCAO_deepks_io.cpp
       LCAO_deepks_mpi.cpp
@@ -10,7 +10,7 @@ if(ENABLE_DEEPKS)
       LCAO_deepks_psialpha.cpp
       LCAO_deepks_torch.cpp
       LCAO_deepks_vdelta.cpp
-      LCAO_deepks_hmat.cpp
+      deepks_hmat.cpp
       LCAO_deepks_interface.cpp
       orbital_precalc.cpp
       orbital_precalc_k.cpp

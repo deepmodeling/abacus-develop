@@ -44,7 +44,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/hamilt_lcaopw.h"
 #include "module_parameter/parameter.h"
 #ifdef __LCAO
-#include "module_io/write_Vxc_lip.hpp"
+#include "module_io/write_vxc_lip.hpp"
 #endif
 
 namespace ModuleESolver
@@ -88,7 +88,7 @@ namespace ModuleESolver
 #ifdef __EXX
         if (GlobalV::CALCULATION == "scf" || GlobalV::CALCULATION == "relax"
             || GlobalV::CALCULATION == "cell-relax"
-            || GlobalV::CALCULATION == "md")
+            || GlobalV::CALCULATION == "md") {
             if (GlobalC::exx_info.info_global.cal_exx)
             {
                 XC_Functional::set_xc_first_loop(cell);
@@ -96,6 +96,7 @@ namespace ModuleESolver
                     cell.symm, &this->kv, this->p_wf_init, this->kspw_psi, this->pw_wfc, this->pw_rho, this->sf, &cell, this->pelec));
                 // this->exx_lip.init(GlobalC::exx_info.info_lip, cell.symm, &this->kv, this->p_wf_init, this->kspw_psi, this->pw_wfc, this->pw_rho, this->sf, &cell, this->pelec);
             }
+}
 #endif
     }
 
@@ -104,8 +105,9 @@ namespace ModuleESolver
     {
         ESolver_KS_PW<T>::iter_init(istep, iter);
 #ifdef __EXX
-        if (GlobalC::exx_info.info_global.cal_exx && !GlobalC::exx_info.info_global.separate_loop && this->two_level_step)
+        if (GlobalC::exx_info.info_global.cal_exx && !GlobalC::exx_info.info_global.separate_loop && this->two_level_step) {
             this->exx_lip->cal_exx();
+}
 #endif
     }
 
@@ -162,8 +164,9 @@ namespace ModuleESolver
         }
         // add exx
 #ifdef __EXX
-        if (GlobalC::exx_info.info_global.cal_exx)
+        if (GlobalC::exx_info.info_global.cal_exx) {
             this->pelec->set_exx(this->exx_lip->get_exx_energy()); // Peize Lin add 2019-03-09
+}
 #endif
 
         // calculate the delta_harris energy
@@ -206,9 +209,9 @@ namespace ModuleESolver
                 // in first scf loop, exx updated once in beginning,
                 // in second scf loop, exx updated every iter
 
-                if (this->two_level_step)
+                if (this->two_level_step) {
                     return true;
-                else
+                } else
                 {
                     // update exx and redo scf
                     XC_Functional::set_xc_type(GlobalC::ucell.atoms[0].ncpp.xc_func);
@@ -221,9 +224,9 @@ namespace ModuleESolver
             // has separate_loop case
             // exx converged or get max exx steps
             else if (this->two_level_step == GlobalC::exx_info.info_global.hybrid_step
-                || (iter == 1 && this->two_level_step != 0))
+                || (iter == 1 && this->two_level_step != 0)) {
                 return true;
-            else
+            } else
             {
                 // update exx and redo scf
                 if (this->two_level_step == 0)
@@ -232,13 +235,13 @@ namespace ModuleESolver
                 }
 
                 std::cout << " Updating EXX " << std::flush;
-                timeval t_start;       gettimeofday(&t_start, NULL);
+                timeval t_start;       gettimeofday(&t_start, nullptr);
 
                 this->exx_lip->cal_exx();
                 iter = 0;
                 this->two_level_step++;
 
-                timeval t_end;       gettimeofday(&t_end, NULL);
+                timeval t_end;       gettimeofday(&t_end, nullptr);
                 std::cout << "and rerun SCF\t"
                     << std::setprecision(3) << std::setiosflags(std::ios::scientific)
                     << (double)(t_end.tv_sec - t_start.tv_sec) + (double)(t_end.tv_usec - t_start.tv_usec) / 1000000.0
