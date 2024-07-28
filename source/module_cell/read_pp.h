@@ -118,6 +118,12 @@ public:
                   const double* qfcoef,
                   const double* r,
                   double* rho);
+
+    // complete default
+    void complete_default(Atom_pseudo& pp);
+    void complete_default_h(Atom_pseudo& pp);
+    void complete_default_atom(Atom_pseudo& pp);
+    void complete_default_vl(Atom_pseudo& pp);
 };
 
 #endif //pseudopot_upf class
