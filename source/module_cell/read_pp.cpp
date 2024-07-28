@@ -73,7 +73,10 @@ int Pseudopot_upf::init_pseudo_reader(const std::string &fn, std::string &type, 
         return 4;
     }
 
-	this->complete_default(pp);
+	if (info == 0)
+	{
+		this->complete_default(pp);
+	}
 
 	return info;
 }
