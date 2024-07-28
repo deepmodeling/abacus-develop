@@ -16,7 +16,7 @@ namespace module_tddft
 class Propagator
 {
   public:
-    Propagator(const int ptype, const Parallel_Orbitals* pv, const int& dt)
+    Propagator(const int ptype, const Parallel_Orbitals* pv, const double& dt)
     {
         this->ptype = ptype;
         this->ParaV = pv;
@@ -46,7 +46,7 @@ class Propagator
   private:
     int ptype; // type of propagator
     const Parallel_Orbitals* ParaV;
-    int dt; // time step
+    double dt; // time step
 
 #ifdef __MPI
 
