@@ -82,16 +82,17 @@ void ESolver_KS_LCAO<TK, TR>::set_matrix_grid(Record_adj& ra)
     dpsi_u.shrink_to_fit();
     d2psi_u.clear();
     d2psi_u.shrink_to_fit();
+
     // (2)For each atom, calculate the adjacent atoms in different cells
     // and allocate the space for H(R) and S(R).
     // If k point is used here, allocate HlocR after atom_arrange.
-    Parallel_Orbitals* pv = &this->ParaV;
-    ra.for_2d(*pv, GlobalV::GAMMA_ONLY_LOCAL);
+    ra.for_2d(this->pv, GlobalV::GAMMA_ONLY_LOCAL);
+
     if (!GlobalV::GAMMA_ONLY_LOCAL)
     {
         // need to first calculae lgd.
         // using GridT.init.
-        this->GridT.cal_nnrg(pv);
+        this->GridT.cal_nnrg(&this->pv);
     }
 
     ModuleBase::timer::tick("ESolver_KS_LCAO", "set_matrix_grid");
