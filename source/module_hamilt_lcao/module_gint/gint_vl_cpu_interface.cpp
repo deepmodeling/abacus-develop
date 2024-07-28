@@ -78,6 +78,9 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
         }
         else
         {
+            if (pvpR_thread.empty()) { 
+                pvpR_thread=std::vector<double>(this->pvpR_reduced[inout->ispin],
+                                                this->pvpR_reduced[inout->ispin]+nnrg);}
             this->cal_meshball_vlocal_k(
                 na_grid, LD_pool, grid_index, block_size, block_index, block_iw, cal_flag,
                 psir_ylm.get_ptr_2D(), psir_vlbr3.get_ptr_2D(),pvpR_thread.data(),ucell);
