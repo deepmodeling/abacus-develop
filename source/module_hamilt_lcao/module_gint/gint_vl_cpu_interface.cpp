@@ -139,17 +139,8 @@ void Gint::cpu_dvlocal_interface(Gint_inout* inout) {
     if (GlobalV::GAMMA_ONLY_LOCAL) {
         ModuleBase::WARNING_QUIT("Gint_interface::cal_gint",
                                  "dvlocal only for k point!");
-        ModuleBase::GlobalFunc::ZEROS(
-                        this->pvdpRx_reduced[inout->ispin],
-                        nnrg);
-        ModuleBase::GlobalFunc::ZEROS(
-                        this->pvdpRy_reduced[inout->ispin],
-                        nnrg);
-        ModuleBase::GlobalFunc::ZEROS(
-                        this->pvdpRz_reduced[inout->ispin],
-                        nnrg);
     }
-
+    printf("dvlocal\n");
 #ifdef _OPENMP
     std::vector<double> pvdpRx_thread = std::vector<double>(nnrg, 0.0);
     std::vector<double> pvdpRy_thread = std::vector<double>(nnrg, 0.0);
