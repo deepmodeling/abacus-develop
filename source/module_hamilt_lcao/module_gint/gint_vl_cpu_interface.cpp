@@ -21,18 +21,20 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
             ModuleBase::GlobalFunc::ZEROS(this->pvpR_reduced[inout->ispin],
                                           nnrg);
         }
-    } 
+    }
+    hamilt::HContainer<double>* hRGint_thread =nullptr;
+    std::vector<double> pvpR_thread; 
 #ifdef _OPENMP
-#pragma omp parallel
+#pragma omp parallel private(hRGint_thread, pvpR_thread)
 {  
     // define HContainer here to reference.
-    hamilt::HContainer<double>* hRGint_thread =nullptr;
+    
     //Under the condition of gamma_only, hRGint will be instantiated.
     if (GlobalV::GAMMA_ONLY_LOCAL){
         hRGint_thread = new hamilt::HContainer<double>(*this->hRGint);
     }
     //use vector instead of new-delete to avoid memory leak.
-    std::vector<double> pvpR_thread = std::vector<double>(nnrg, 0.0);
+    pvpR_thread = std::vector<double>(nnrg, 0.0);
     #pragma omp for
 #endif
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
