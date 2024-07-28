@@ -196,7 +196,8 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.out_mat_hs[0], 0);
     EXPECT_EQ(param.inp.out_mat_hs[1], 8);
     EXPECT_EQ(param.inp.out_mat_hs2, 0);
-    EXPECT_EQ(param.inp.out_mat_xc, 0);
+    EXPECT_FALSE(param.inp.out_mat_xc);
+    EXPECT_FALSE(param.inp.out_eband_terms);
     EXPECT_EQ(param.inp.out_interval, 1);
     EXPECT_EQ(param.inp.out_app_flag, 0);
     EXPECT_EQ(param.inp.out_mat_r, 0);
