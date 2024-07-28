@@ -93,7 +93,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
         this->nscf();
     } else if (cal_type == "get_pchg") {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "getting partial charge");
-        IState_Charge ISC(this->psi, &(this->ParaV));
+        IState_Charge ISC(this->psi, &(this->pv));
         if (GlobalV::GAMMA_ONLY_LOCAL) {
             ISC.begin(this->GG,
                     this->pelec->charge->rho,
@@ -162,7 +162,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                       this->pw_rho,
                       this->pw_wfc,
                       this->pw_big,
-                      this->ParaV,
+                      this->pv,
                       this->GG,
                       PARAM.inp.out_wfc_pw,
                       this->wf.out_wfc_r,
@@ -181,7 +181,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                       this->pw_rho,
                       this->pw_wfc,
                       this->pw_big,
-                      this->ParaV,
+                      this->pv,
                       this->GK,
                       PARAM.inp.out_wfc_pw,
                       this->wf.out_wfc_r,

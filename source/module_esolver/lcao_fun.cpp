@@ -58,7 +58,7 @@ ModuleIO::Output_Mat_Sparse<TK> ESolver_KS_LCAO<TK, TR>::create_Output_Mat_Spars
         PARAM.inp.out_mat_r,
         istep,
         this->pelec->pot->get_effective_v(),
-        this->ParaV,
+        this->pv,
         this->GK, // mohan add 2024-04-01
         two_center_bundle_,
         GlobalC::GridD, // mohan add 2024-04-06
@@ -91,16 +91,16 @@ void ESolver_KS_LCAO<TK, TR>::cal_mag(const int istep, const bool print)
                                 GlobalC::ucell.get_lnchiCounts(),
                                 GlobalV::NSPIN);
     auto out_sk = ModuleIO::Output_Sk<TK>(this->p_hamilt,
-                                          &(this->ParaV),
+                                          &(this->pv),
                                           GlobalV::NSPIN,
                                           this->kv.get_nks());
     auto out_dmk = ModuleIO::Output_DMK<TK>(dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(),
-                                            &(this->ParaV),
+                                            &(this->pv),
                                             GlobalV::NSPIN,
                                             this->kv.get_nks());
     auto mulp = ModuleIO::Output_Mulliken<TK>(&(out_sk),
                                               &(out_dmk),
-                                              &(this->ParaV),
+                                              &(this->pv),
                                               &cell_index,
                                               this->kv.isk,
                                               GlobalV::NSPIN);

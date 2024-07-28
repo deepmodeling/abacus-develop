@@ -98,7 +98,7 @@ ESolver_KS_LCAO<TK, TR>::~ESolver_KS_LCAO()
 //! 1) calculate overlap matrix S or initialize
 //! 2) init ElecState
 //! 3) init LCAO basis
-//! 4) redundant ParaV and LM pointers
+//! 4) redundant pv and LM pointers
 //! 5) initialize Density Matrix
 //! 6) initialize Hamilt in LCAO
 //! 7) initialize exx
@@ -161,7 +161,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
     // 3) init LCAO basis
     // reading the localized orbitals/projectors
     // construct the interpolation tables.
-    LCAO_domain::init_basis_lcao(this->ParaV, 
+    LCAO_domain::init_basis_lcao(this->pv, 
                                  inp.onsite_radius, 
 								 inp.lcao_ecut,
 								 inp.lcao_dk,
@@ -175,7 +175,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
     // DensityMatrix is allocated here, DMK is also initialized here
     // DMR is not initialized here, it will be constructed in each before_scf
     dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)
-        ->init_DM(&this->kv, &(this->ParaV), GlobalV::NSPIN);
+        ->init_DM(&this->kv, &(this->pv), GlobalV::NSPIN);
 
     // this function should be removed outside of the function
     if (GlobalV::CALCULATION == "get_S")
@@ -187,7 +187,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
     // 6) initialize Hamilt in LCAO
     // * allocate H and S matrices according to computational resources
     // * set the 'trace' between local H/S and global H/S
-    LCAO_domain::divide_HS_in_frag(GlobalV::GAMMA_ONLY_LOCAL, ParaV, this->kv.get_nks());
+    LCAO_domain::divide_HS_in_frag(GlobalV::GAMMA_ONLY_LOCAL, pv, this->kv.get_nks());
 
 #ifdef __EXX
     // 7) initialize exx
@@ -208,7 +208,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
 
     // 8) initialize DFT+U
     if (GlobalV::dft_plus_u) {
-        GlobalC::dftu.init(ucell, &this->ParaV, this->kv.get_nks());
+        GlobalC::dftu.init(ucell, &this->pv, this->kv.get_nks());
     }
 
     // 9) initialize ppcell
@@ -217,7 +217,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
     // 10) initialize the HSolver
     if (this->phsol == nullptr)
     {
-        this->phsol = new hsolver::HSolverLCAO<TK>(&(this->ParaV));
+        this->phsol = new hsolver::HSolverLCAO<TK>(&(this->pv));
         this->phsol->method = GlobalV::KS_SOLVER;
     }
 
@@ -307,7 +307,7 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(ModuleBase::matrix& force)
                        GlobalV::CAL_STRESS,
                        GlobalV::TEST_FORCE,
                        GlobalV::TEST_STRESS,
-                       this->ParaV,
+                       this->pv,
                        this->pelec,
                        this->psi,
                        this->GG, // mohan add 2024-04-01
@@ -429,13 +429,13 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners()
 
     if (PARAM.inp.out_proj_band) // Projeced band structure added by jiyy-2022-4-20
     {
-        ModuleIO::write_proj_band_lcao(this->psi, this->ParaV, this->pelec, this->kv, GlobalC::ucell, this->p_hamilt);
+        ModuleIO::write_proj_band_lcao(this->psi, this->pv, this->pelec, this->kv, GlobalC::ucell, this->p_hamilt);
     }
 
     if (PARAM.inp.out_dos)
     {
         ModuleIO::out_dos_nao(this->psi,
-                              this->ParaV,
+                              this->pv,
                               this->pelec->ekb,
                               this->pelec->wg,
                               PARAM.inp.dos_edelta_ev,
@@ -454,7 +454,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners()
         ModuleIO::write_Vxc<TK, TR>(GlobalV::NSPIN,
             GlobalV::NLOCAL,
             GlobalV::DRANK,
-            &this->ParaV,
+            &this->pv,
             *this->psi,
             GlobalC::ucell,
             this->sf,
@@ -479,7 +479,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners()
         ModuleIO::write_eband_terms<TK, TR>(GlobalV::NSPIN,
             GlobalV::NLOCAL,
             GlobalV::DRANK,
-            &this->ParaV,
+            &this->pv,
             *this->psi,
             GlobalC::ucell,
             this->sf,
@@ -735,11 +735,11 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2density(int istep, int iter, double ethr)
 #ifdef __EXX
     if (GlobalC::exx_info.info_ri.real_number)
     {
-        this->exd->exx_hamilt2density(*this->pelec, this->ParaV, iter);
+        this->exd->exx_hamilt2density(*this->pelec, this->pv, iter);
     }
     else
     {
-        this->exc->exx_hamilt2density(*this->pelec, this->ParaV, iter);
+        this->exc->exx_hamilt2density(*this->pelec, this->pv, iter);
     }
 #endif
 
@@ -846,7 +846,7 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
                                        GlobalV::out_app_flag,
                                        "H",
                                        "data-" + std::to_string(ik),
-                                       this->ParaV,
+                                       this->pv,
                                        GlobalV::DRANK);
                     ModuleIO::save_mat(istep,
                                        s_mat.p,
@@ -857,13 +857,13 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
                                        GlobalV::out_app_flag,
                                        "S",
                                        "data-" + std::to_string(ik),
-                                       this->ParaV,
+                                       this->pv,
                                        GlobalV::DRANK);
                 }
 #ifdef __DEEPKS
                 if(GlobalV::deepks_out_labels && GlobalV::deepks_v_delta)
                 {
-                    DeePKS_domain::save_h_mat(h_mat.p, this->ParaV.nloc);
+                    DeePKS_domain::save_h_mat(h_mat.p, this->pv.nloc);
                 }
 #endif
             }
@@ -879,7 +879,7 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
                                 this->pelec->ekb,
                                 this->pelec->wg,
                                 this->pelec->klist->kvec_c,
-                                this->ParaV,
+                                this->pv,
                                 istep);
     }
 
@@ -949,7 +949,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int iter)
     {
         ////////// for Add_Hexx_Type::k
         /*
-        hamilt::HS_Matrix_K<TK> Hexxk_save(&this->ParaV, 1);
+        hamilt::HS_Matrix_K<TK> Hexxk_save(&this->pv, 1);
         for (int ik = 0; ik < this->kv.get_nks(); ++ik) {
             Hexxk_save.set_zero_hk();
 
@@ -961,7 +961,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int iter)
 
             GlobalC::restart.save_disk("Hexx",
                                        ik,
-                                       this->ParaV.get_local_size(),
+                                       this->pv.get_local_size(),
                                        Hexxk_save.get_hk());
         }*/
         ////////// for Add_Hexx_Type:R
@@ -1054,7 +1054,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
 
     // 2) write density matrix for sparse matrix
     ModuleIO::write_dmr(dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->get_DMR_vector(),
-                        this->ParaV,
+                        this->pv,
                         PARAM.inp.out_dm1,
                         false,
                         GlobalV::out_app_flag,
@@ -1086,7 +1086,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
                             precision,
                             efermis,
                             &(GlobalC::ucell),
-                            this->ParaV);
+                            this->pv);
     }
 
 #ifdef __EXX
@@ -1132,7 +1132,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
                           GlobalC::ucell,
                           GlobalC::ORB,
                           GlobalC::GridD,
-                          &(this->ParaV),
+                          &(this->pv),
                           *(this->psi),
                           dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(),
                           GlobalV::deepks_v_delta);
@@ -1152,7 +1152,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
                                        MPI_COMM_WORLD,
                                        this->kv);
         rpa_lri_double.init(MPI_COMM_WORLD, this->kv);
-        rpa_lri_double.out_for_RPA(this->ParaV, *(this->psi), this->pelec);
+        rpa_lri_double.out_for_RPA(this->pv, *(this->psi), this->pelec);
     }
 #endif
 

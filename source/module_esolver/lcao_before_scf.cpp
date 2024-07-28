@@ -61,31 +61,31 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
         if (GlobalV::GAMMA_ONLY_LOCAL)
         {
             nsk = GlobalV::NSPIN;
-            ncol = this->ParaV.ncol_bands;
+            ncol = this->pv.ncol_bands;
             if (GlobalV::KS_SOLVER == "genelpa"
                 || GlobalV::KS_SOLVER == "lapack"
                 || GlobalV::KS_SOLVER == "pexsi"
                 || GlobalV::KS_SOLVER == "cusolver"
                 || GlobalV::KS_SOLVER == "cusolvermp") {
-                ncol = this->ParaV.ncol;
+                ncol = this->pv.ncol;
             }
         }
         else
         {
             nsk = this->kv.get_nks();
 #ifdef __MPI
-            ncol = this->ParaV.ncol_bands;
+            ncol = this->pv.ncol_bands;
 #else
             ncol = GlobalV::NBANDS;
 #endif
         }
-        this->psi = new psi::Psi<TK>(nsk, ncol, this->ParaV.nrow, nullptr);
+        this->psi = new psi::Psi<TK>(nsk, ncol, this->pv.nrow, nullptr);
     }
 
     // init wfc from file
     if(istep == 0 && PARAM.inp.init_wfc == "file")
     {
-        if (! ModuleIO::read_wfc_nao(GlobalV::global_readin_dir, this->ParaV, *(this->psi), this->pelec))
+        if (! ModuleIO::read_wfc_nao(GlobalV::global_readin_dir, this->pv, *(this->psi), this->pelec))
         {
             ModuleBase::WARNING_QUIT("ESolver_KS_LCAO<TK, TR>::beforesolver",
                                      "read wfc nao failed");
@@ -107,7 +107,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
         this->p_hamilt = new hamilt::HamiltLCAO<TK, TR>(
             GlobalV::GAMMA_ONLY_LOCAL ? &(this->GG) : nullptr,
             GlobalV::GAMMA_ONLY_LOCAL ? nullptr : &(this->GK),
-            &this->ParaV,
+            &this->pv,
             this->pelec->pot,
             this->kv,
             two_center_bundle_,
@@ -125,7 +125,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
     // since it depends on ionic positions
     if (GlobalV::deepks_setorb)
     {
-        const Parallel_Orbitals* pv = &this->ParaV;
+        const Parallel_Orbitals* pv = &this->pv;
         // build and save <psi(0)|alpha(R)> at beginning
         GlobalC::ld.build_psialpha(GlobalV::CAL_FORCE,
                                    GlobalC::ucell,
@@ -151,7 +151,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
                    GlobalC::ucell,
                    PARAM.inp.sc_file,
                    GlobalV::NPOL,
-                   &(this->ParaV),
+                   &(this->pv),
                    GlobalV::NSPIN,
                    this->kv,
                    GlobalV::KS_SOLVER,

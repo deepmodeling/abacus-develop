@@ -84,7 +84,8 @@ void ESolver_KS_LCAO_TDDFT::before_all_runners(const Input_para& inp, UnitCell& 
     }
 
     // 4) read the local orbitals and construct the interpolation tables.
-    LCAO_domain::init_basis_lcao(this->ParaV, 
+    // initialize the pv
+    LCAO_domain::init_basis_lcao(this->pv, 
                                  inp.onsite_radius, 
 								 inp.lcao_ecut,
 								 inp.lcao_dk,
@@ -94,16 +95,16 @@ void ESolver_KS_LCAO_TDDFT::before_all_runners(const Input_para& inp, UnitCell& 
                                  two_center_bundle_);
 
     // 5) allocate H and S matrices according to computational resources
-    LCAO_domain::divide_HS_in_frag(GlobalV::GAMMA_ONLY_LOCAL, ParaV, kv.get_nks());
+    LCAO_domain::divide_HS_in_frag(GlobalV::GAMMA_ONLY_LOCAL, this->pv, kv.get_nks());
 
     // 6) initialize Density Matrix
     dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)
-        ->init_DM(&kv, &this->ParaV, GlobalV::NSPIN);
+        ->init_DM(&kv, &this->pv, GlobalV::NSPIN);
 
     // 7) initialize Hsolver
     if (this->phsol == nullptr)
     {
-        this->phsol = new hsolver::HSolverLCAO<std::complex<double>>(&this->ParaV);
+        this->phsol = new hsolver::HSolverLCAO<std::complex<double>>(&this->pv);
         this->phsol->method = GlobalV::KS_SOLVER;
     }
 
@@ -136,7 +137,7 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(const int istep, const int iter, cons
                                                  GlobalV::NBANDS,
                                                  GlobalV::NLOCAL,
                                                  this->p_hamilt,
-                                                 this->ParaV,
+                                                 this->pv,
                                                  this->psi,
                                                  this->psi_laststep,
                                                  this->Hk_laststep,
@@ -155,7 +156,7 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(const int istep, const int iter, cons
                                              GlobalV::NBANDS,
                                              GlobalV::NLOCAL,
                                              this->p_hamilt,
-                                             this->ParaV,
+                                             this->pv,
                                              this->psi,
                                              this->psi_laststep,
                                              this->Hk_laststep,
@@ -267,7 +268,7 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
                         GlobalV::out_app_flag,
                         "H",
                         "data-" + std::to_string(ik),
-                        this->ParaV,
+                        this->pv,
                         GlobalV::DRANK);
 
                     ModuleIO::save_mat(istep,
@@ -279,7 +280,7 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
                         GlobalV::out_app_flag,
                         "S",
                         "data-" + std::to_string(ik),
-                        this->ParaV,
+                        this->pv,
                         GlobalV::DRANK);
                 }
             }
@@ -294,7 +295,7 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
                                 this->pelec->ekb,
                                 this->pelec->wg,
                                 this->pelec->klist->kvec_c,
-                                this->ParaV,
+                                this->pv,
                                 istep);
     }
 
@@ -313,9 +314,9 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
         this->pelec->cal_converged();
     }
 
-    const int nloc = this->ParaV.nloc;
-    const int ncol_nbands = this->ParaV.ncol_bands;
-    const int nrow = this->ParaV.nrow;
+    const int nloc = this->pv.nloc;
+    const int ncol_nbands = this->pv.ncol_bands;
+    const int nrow = this->pv.nrow;
     const int nbands = GlobalV::NBANDS;
     const int nlocal = GlobalV::NLOCAL;
 
@@ -420,7 +421,9 @@ void ESolver_KS_LCAO_TDDFT::after_scf(const int istep)
     }
     if (TD_Velocity::out_current == true)
     {
-        elecstate::DensityMatrix<std::complex<double>, double>* tmp_DM = dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)->get_DM();
+        elecstate::DensityMatrix<std::complex<double>, double>* tmp_DM = 
+        dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)->get_DM();
+
         ModuleIO::write_current(istep,
                                 this->psi,
                                 pelec,

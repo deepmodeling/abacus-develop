@@ -57,11 +57,11 @@ void ESolver_KS_LCAO<std::complex<double>, double>::get_S(void)
                          GlobalV::SEARCH_RADIUS,
                          GlobalV::test_atom_input);
 
-    this->RA.for_2d(this->ParaV, GlobalV::GAMMA_ONLY_LOCAL);
+    this->RA.for_2d(this->pv, GlobalV::GAMMA_ONLY_LOCAL);
 
     if (this->p_hamilt == nullptr) {
         this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, double>(
-            &this->ParaV,
+            &this->pv,
             this->kv,
             *(two_center_bundle_.overlap_orb));
         dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, double>*>(
@@ -74,7 +74,7 @@ void ESolver_KS_LCAO<std::complex<double>, double>::get_S(void)
 
     std::cout << " The file is saved in " << fn << std::endl;
 
-    ModuleIO::output_SR(ParaV, GlobalC::GridD, this->p_hamilt, fn);
+    ModuleIO::output_SR(pv, GlobalC::GridD, this->p_hamilt, fn);
 
     return;
 }
@@ -97,11 +97,11 @@ void ESolver_KS_LCAO<std::complex<double>, std::complex<double>>::get_S(void)
                          GlobalV::SEARCH_RADIUS,
                          GlobalV::test_atom_input);
 
-    this->RA.for_2d(this->ParaV, GlobalV::GAMMA_ONLY_LOCAL);
+    this->RA.for_2d(this->pv, GlobalV::GAMMA_ONLY_LOCAL);
     if (this->p_hamilt == nullptr) {
         this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>,
                                                 std::complex<double>>(
-            &this->ParaV,
+            &this->pv,
             this->kv,
             *(two_center_bundle_.overlap_orb));
         dynamic_cast<
@@ -115,7 +115,7 @@ void ESolver_KS_LCAO<std::complex<double>, std::complex<double>>::get_S(void)
 
     std::cout << " The file is saved in " << fn << std::endl;
 
-    ModuleIO::output_SR(ParaV, GlobalC::GridD, this->p_hamilt, fn);
+    ModuleIO::output_SR(pv, GlobalC::GridD, this->p_hamilt, fn);
 
     return;
 }

@@ -130,7 +130,7 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
                                 this->sf,
                                 this->kv,
                                 this->psi,
-                                &(this->ParaV));
+                                &(this->pv));
         }
         else if (PARAM.inp.wannier_method == 2)
         {
@@ -142,7 +142,7 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
                                        PARAM.inp.nnkpfile,
                                        PARAM.inp.wannier_spin);
 
-            myWannier.calculate(this->pelec->ekb, this->kv, *(this->psi), &(this->ParaV));
+            myWannier.calculate(this->pelec->ekb, this->kv, *(this->psi), &(this->pv));
         }
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "Wave function to Wannier90");
 #endif
@@ -152,7 +152,7 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
     if (berryphase::berry_phase_flag
         && ModuleSymmetry::Symmetry::symm_flag != 1) {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "Berry phase calculation");
-        berryphase bp(&(this->ParaV));
+        berryphase bp(&(this->pv));
         bp.lcao_init(this->kv,
                      this->GridT); // additional step before calling
                                    // macroscopic_polarization (why capitalize
@@ -187,7 +187,7 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
             = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec);
         this->pelec->calculate_weights();
         this->pelec->calEBand();
-        elecstate::cal_dm_psi(&(this->ParaV), pelec_lcao->wg, *(this->psi), *(pelec_lcao->get_DM()));
+        elecstate::cal_dm_psi(&(this->pv), pelec_lcao->wg, *(this->psi), *(pelec_lcao->get_DM()));
         this->cal_mag(istep, true);
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "Mulliken charge analysis");
     }
@@ -204,7 +204,7 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
                                 this->pelec->ekb,
                                 this->pelec->wg,
                                 this->pelec->klist->kvec_c,
-                                this->ParaV,
+                                this->pv,
                                 istep);
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "writing wave function");
     }
