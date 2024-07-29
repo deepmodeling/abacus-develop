@@ -95,8 +95,8 @@ class DFTUTest : public ::testing::Test
                 GlobalC::dftu.locale[iat][l][0][1].create(2 * l + 1, 2 * l + 1);
             }
         }
-        GlobalC::dftu.U = &U_test;
-        GlobalC::dftu.orbital_corr = &orbital_c_test;
+        GlobalC::dftu.U = {U_test};
+        GlobalC::dftu.orbital_corr = {orbital_c_test};
 
         PARAM.input.onsite_radius = 1.0;
     }
