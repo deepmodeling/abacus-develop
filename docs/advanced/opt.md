@@ -82,7 +82,7 @@ Sometimes we want to do variable-cell relaxation with some of the cell degrees o
 ### Stop Geometry Optimization Manually
 
 It is usually difficult to converge when calculating large systems, but people do not want to give up this calculation result.
-Providinf a file named `STOPCAR`:
+Providinf a file named `EXIT`:
 ```
 stop_ion    true
 ```

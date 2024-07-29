@@ -24,7 +24,7 @@ class ReadStopFileTest : public testing::Test
 
 TEST_F(ReadStopFileTest, read_stop_file)
 {
-    std::string filename = "STOPCAR";
+    std::string filename = "EXIT";
     std::string output = "running.txt";
     std::ofstream ofs_running(output.c_str(), std::ios::out);
 
