@@ -2,7 +2,7 @@
 #include "module_base/memory.h"
 #include "module_base/timer.h"
 
-void Gint::cpu_rho_interface(Gint_inout* inout) {
+void Gint::gint_kernel_rho(Gint_inout* inout) {
     ModuleBase::TITLE("Gint_interface", "cal_gint_rho");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_rho");
     const UnitCell& ucell = *this->ucell;
@@ -111,7 +111,7 @@ void Gint::cpu_rho_interface(Gint_inout* inout) {
     ModuleBase::timer::tick("Gint_interface", "cal_gint_rho");
 }
 
-void Gint::cpu_tau_interface(Gint_inout* inout) {
+void Gint::gint_kernel_tau(Gint_inout* inout) {
     ModuleBase::TITLE("Gint_interface", "cal_gint_tau");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_tau");
     const UnitCell& ucell = *this->ucell;

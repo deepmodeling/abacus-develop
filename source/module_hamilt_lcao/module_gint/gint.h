@@ -85,9 +85,9 @@ class Gint {
 
     void gint_kernel_vlocal_meta(Gint_inout* inout);
 
-    void cpu_rho_interface(Gint_inout* inout);
+    void gint_kernel_rho(Gint_inout* inout);
 
-    void cpu_tau_interface(Gint_inout* inout);
+    void gint_kernel_tau(Gint_inout* inout);
 
     void cpu_force_interface(Gint_inout* inout);
 
