@@ -526,8 +526,7 @@ void ESolver_KS_PW<T, Device>::after_scf(const int istep)
     const std::vector<int> bands_to_print = PARAM.inp.bands_to_print;
     if (bands_to_print.size() > 0)
     {
-        // bands_picked is a vector of 0s and 1s, where 1 means the band is
-        // picked to output
+        // bands_picked is a vector of 0s and 1s, where 1 means the band is picked to output
         std::vector<int> bands_picked;
         bands_picked.resize(this->kspw_psi->get_nbands());
         ModuleBase::GlobalFunc::ZEROS(bands_picked.data(), this->kspw_psi->get_nbands());
@@ -557,7 +556,6 @@ void ESolver_KS_PW<T, Device>::after_scf(const int istep)
         for (int i = 0; i < length; ++i)
         {
             // bands_to_print rely on function parse_expression
-            // Initially designed for ocp_set, which can be double
             bands_picked[i] = static_cast<int>(bands_to_print[i]);
         }
 
@@ -690,7 +688,7 @@ void ESolver_KS_PW<T, Device>::after_scf(const int istep)
                 {
                     std::stringstream ssc;
                     ssc << GlobalV::global_out_dir << "BAND" << ib + 1 << "_SPIN" << is + 1
-                        << "_CHG.cube"; // band index starts from 1
+                        << "_CHG.cube";
 
                     ModuleIO::write_rho(
 #ifdef __MPI
