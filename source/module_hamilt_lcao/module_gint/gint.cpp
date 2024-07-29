@@ -65,11 +65,11 @@ void Gint::cal_gint(Gint_inout* inout) {
 #endif
             {
                 if (inout->job == Gint_Tools::job_type::vlocal) {
-                    cpu_vlocal_interface(inout);
+                    gint_kernel_vlocal(inout);
                 } else if (inout->job == Gint_Tools::job_type::dvlocal) {
-                    cpu_dvlocal_interface(inout);
+                    gint_kernel_dvlocal(inout);
                 } else if (inout->job == Gint_Tools::job_type::vlocal_meta) {
-                    cpu_vlocal_meta_interface(inout);
+                    gint_kernel_vlocal_meta(inout);
                 } else if (inout->job == Gint_Tools::job_type::rho) {
                     cpu_rho_interface(inout);
                 } else if (inout->job == Gint_Tools::job_type::tau) {

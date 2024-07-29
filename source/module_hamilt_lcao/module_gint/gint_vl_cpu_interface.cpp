@@ -2,7 +2,7 @@
 #include "module_base/memory.h"
 #include "module_base/timer.h"
 
-void Gint::cpu_vlocal_interface(Gint_inout* inout) {
+void Gint::gint_kernel_vlocal(Gint_inout* inout) {
     ModuleBase::TITLE("Gint_interface", "cal_gint_vlocal");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal");
     const UnitCell& ucell = *this->ucell;
@@ -122,7 +122,7 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
     ModuleBase::TITLE("Gint_interface", "cal_gint_vlocal");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal");
 }
-void Gint::cpu_dvlocal_interface(Gint_inout* inout) {
+void Gint::gint_kernel_dvlocal(Gint_inout* inout) {
     ModuleBase::TITLE("Gint_interface", "cal_gint_dvlocal");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_dvlocal");
     const UnitCell& ucell = *this->ucell;
@@ -244,7 +244,7 @@ void Gint::cpu_dvlocal_interface(Gint_inout* inout) {
     ModuleBase::timer::tick("Gint_interface", "cal_gint_dvlocal");
 }
 
-void Gint::cpu_vlocal_meta_interface(Gint_inout* inout) {
+void Gint::gint_kernel_vlocal_meta(Gint_inout* inout) {
     ModuleBase::TITLE("Gint_interface", "cal_gint_vlocal_meta");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal_meta");
     const UnitCell& ucell = *this->ucell;
