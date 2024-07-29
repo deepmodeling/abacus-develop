@@ -6,7 +6,6 @@ void Parameter::set_rank_nproc(const int& myrank, const int& nproc)
 {
     sys.myrank = myrank;
     sys.nproc = nproc;
-    input.mdp.my_rank = myrank;
 }
 
 void Parameter::set_start_time(const std::time_t& start_time)

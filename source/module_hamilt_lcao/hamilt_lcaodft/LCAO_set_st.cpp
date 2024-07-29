@@ -1,6 +1,6 @@
 #include "module_base/timer.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h" // only for INPUT
+#include "module_parameter/parameter.h"
 
 namespace LCAO_domain
 {
@@ -362,7 +362,7 @@ void build_ST_new(ForceStressArrays& fsr,
             {
                 for (int k = 0; k < 3; k++)
                 {
-                    tau1[k] = tau1[k] - atom1->vel[I1][k] * INPUT.mdp.md_dt / ucell.lat0;
+                    tau1[k] = tau1[k] - atom1->vel[I1][k] * PARAM.mdp.md_dt / ModuleBase::AU_to_FS / ucell.lat0;
                 }
             }
 

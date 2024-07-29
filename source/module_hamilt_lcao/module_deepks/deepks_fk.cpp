@@ -2,7 +2,7 @@
 
 #ifdef __DEEPKS
 
-#include "LCAO_deepks.h"
+#include "deepks_force.h"
 #include "module_base/vector3.h"
 #include "module_base/timer.h"
 #include "module_base/constants.h"

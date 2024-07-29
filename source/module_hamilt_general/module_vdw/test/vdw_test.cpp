@@ -1,6 +1,5 @@
 #include "module_cell/unitcell.h"
 #include "module_cell/setup_nonlocal.h"
-#include "module_io/input.h"
 #include "module_base/mathzone.h"
 #include "module_base/vector3.h"
 #include"gtest/gtest.h"

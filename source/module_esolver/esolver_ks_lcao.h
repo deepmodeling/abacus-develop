@@ -68,7 +68,7 @@ class ESolver_KS_LCAO : public ESolver_KS<TK> {
     Record_adj RA;
 
     // 2d block-cyclic distribution info
-    Parallel_Orbitals ParaV;
+    Parallel_Orbitals pv;
 
     // used for k-dependent grid integration.
     Gint_k GK;

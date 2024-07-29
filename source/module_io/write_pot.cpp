@@ -6,6 +6,7 @@
 #include "module_elecstate/potentials/efield.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/cube_io.h"
+#include "module_io/output_log.h"
 
 namespace ModuleIO
 {
@@ -177,6 +178,20 @@ void write_elecstat_pot(
             v_elecstat[ir] += GlobalC::solvent_model.delta_phi[ir];
         }
     }
+
+    //-------------------------------------------
+    //! Get the vacuum level of the system
+    //-------------------------------------------
+    ModuleIO::output_vacuum_level(ucell,
+                                  chr->rho,
+                                  v_elecstat.data(),
+                                  rho_basis->nx,
+                                  rho_basis->ny,
+                                  rho_basis->nz,
+                                  rho_basis->nxyz,
+                                  rho_basis->nrxx,
+                                  rho_basis->nplane,
+                                  rho_basis->startz_current);
 
     //-------------------------------------------
     //! Write down the electrostatic potential

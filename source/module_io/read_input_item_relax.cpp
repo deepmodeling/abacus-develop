@@ -93,10 +93,8 @@ void ReadInput::item_relax()
                 ModuleBase::WARNING("ReadInput", "both force_thr and force_thr_ev are set, use force_thr");
                 para.input.force_thr_ev = para.input.force_thr * 13.6058 / 0.529177;
             }
-            para.input.mdp.force_thr = para.input.force_thr; // temperaory
         };
         sync_double(input.force_thr);
-        add_double_bcast(input.mdp.force_thr);
         this->add_item(item);
     }
     {

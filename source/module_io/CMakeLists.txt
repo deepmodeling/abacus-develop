@@ -1,6 +1,4 @@
 list(APPEND objects
-    input.cpp
-    input_conv_tmp.cpp
     input_conv.cpp
     bessel_basis.cpp
     cal_test.cpp
@@ -50,8 +48,8 @@ if(ENABLE_LCAO)
       write_orb_info.cpp
       write_proj_band_lcao.cpp
       nscf_fermi_surf.cpp
-      istate_charge.cpp
-      istate_envelope.cpp
+      get_pchg.cpp
+      get_wf.cpp
       read_wfc_nao.cpp
       read_wfc_lcao.cpp
       write_wfc_nao.cpp

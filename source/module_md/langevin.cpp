@@ -4,12 +4,12 @@
 #include "module_base/parallel_common.h"
 #include "module_base/timer.h"
 
-Langevin::Langevin(MD_para& MD_para_in, UnitCell& unit_in) : MD_base(MD_para_in, unit_in)
+Langevin::Langevin(const Parameter& param_in, UnitCell& unit_in) : MD_base(param_in, unit_in)
 {
     /// convert to a.u. unit
     assert(ModuleBase::AU_to_FS!=0.0);
 
-    mdp.md_damp /= ModuleBase::AU_to_FS;
+    md_damp = mdp.md_damp / ModuleBase::AU_to_FS;
 
     assert(ucell.nat>0);
 
@@ -49,7 +49,7 @@ void Langevin::first_half(std::ofstream& ofs)
 }
 
 
-void Langevin::second_half(void)
+void Langevin::second_half()
 {
     ModuleBase::TITLE("Langevin", "second_half");
     ModuleBase::timer::tick("Langevin", "second_half");
@@ -83,18 +83,18 @@ void Langevin::restart(const std::string& global_readin_dir)
 }
 
 
-void Langevin::post_force(void)
+void Langevin::post_force()
 {
-    if (mdp.my_rank == 0)
+    if (my_rank == 0)
     {
-        double t_target = MD_func::target_temp(step_ + step_rst_, mdp.md_nstep, mdp.md_tfirst, mdp.md_tlast);
+        double t_target = MD_func::target_temp(step_ + step_rst_, mdp.md_nstep, md_tfirst, md_tlast);
         ModuleBase::Vector3<double> fictitious_force;
         for (int i = 0; i < ucell.nat; ++i)
         {
-            fictitious_force = -allmass[i] * vel[i] / mdp.md_damp;
+            fictitious_force = -allmass[i] * vel[i] / md_damp;
             for (int j = 0; j < 3; ++j)
             {
-                fictitious_force[j] += sqrt(24.0 * t_target * allmass[i] / mdp.md_damp / mdp.md_dt)
+                fictitious_force[j] += sqrt(24.0 * t_target * allmass[i] / md_damp / md_dt)
                                        * (static_cast<double>(std::rand()) / RAND_MAX - 0.5);
             }
             total_force[i] = force[i] + fictitious_force;
