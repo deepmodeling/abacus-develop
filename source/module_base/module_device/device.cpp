@@ -193,7 +193,8 @@ else if (device == "gpu")
 {
   ModuleBase::WARNING_QUIT("device", error_message);
 }
-else return "cpu";
+else { return "cpu";
+}
 }
 
 int get_device_kpar(const int &kpar) {
