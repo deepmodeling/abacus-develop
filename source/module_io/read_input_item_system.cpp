@@ -193,10 +193,8 @@ void ReadInput::item_system()
             {
                 para.input.cal_stress = true;
             }
-            para.input.mdp.cal_stress = para.input.cal_stress; // temperaory
         };
         read_sync_bool(input.cal_stress);
-        add_bool_bcast(input.mdp.cal_stress);
         this->add_item(item);
     }
     {

@@ -315,15 +315,13 @@ void ESolver_SDFT_PW::after_all_runners()
                                 this->p_hamilt,
                                 (hsolver::HSolverPW_SDFT*)phsol,
                                 &stowf);
-        sto_elecond
-            .decide_nche(PARAM.inp.cond_dt, INPUT.cond_dtbatch, 1e-8, this->nche_sto, PARAM.inp.emin_sto, PARAM.inp.emax_sto);
+        sto_elecond.decide_nche(PARAM.inp.cond_dt, 1e-8, this->nche_sto, PARAM.inp.emin_sto, PARAM.inp.emax_sto);
         sto_elecond.sKG(PARAM.inp.cond_smear,
                         PARAM.inp.cond_fwhm,
                         PARAM.inp.cond_wcut,
                         PARAM.inp.cond_dw,
                         PARAM.inp.cond_dt,
                         PARAM.inp.cond_nonlocal,
-                        INPUT.cond_dtbatch,
                         PARAM.inp.npart_sto);
     }
 }
@@ -353,7 +351,7 @@ void ESolver_SDFT_PW::nscf()
 
     const int iter = 1;
 
-    const double diag_thr = std::max(std::min(1e-5, 0.1 *PARAM.inp.scf_thr / std::max(1.0, GlobalV::nelec)), 1e-12);
+    const double diag_thr = std::max(std::min(1e-5, 0.1 * PARAM.inp.scf_thr / std::max(1.0, GlobalV::nelec)), 1e-12);
 
     std::cout << " DIGA_THR          : " << diag_thr << std::endl;
 

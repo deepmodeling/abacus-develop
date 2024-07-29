@@ -764,7 +764,7 @@ void Force_Stress_LCAO<T>::calForcePwPart(ModuleBase::matrix& fvl_dvl,
     //--------------------------------------------------------
     // force due to self-consistent charge.
     //--------------------------------------------------------
-    f_pw.cal_force_scc(fscc, rhopw, vnew, vnew_exist);
+    f_pw.cal_force_scc(fscc, rhopw, vnew, vnew_exist,GlobalC::ucell);
     return;
 }
 

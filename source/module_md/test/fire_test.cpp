@@ -1,13 +1,10 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "module_esolver/esolver_lj.h"
-#include "setcell.h"
-
 #define private public
 #define protected public
+#include "module_esolver/esolver_lj.h"
 #include "module_md/fire.h"
-#undef private
-#undef protected
+#include "setcell.h"
 #define doublethreshold 1e-12
 
 /************************************************
@@ -40,18 +37,18 @@ class FIREtest : public testing::Test
   protected:
     MD_base* mdrun;
     UnitCell ucell;
-    Input_para input;
+    Parameter param_in;
     ModuleESolver::ESolver* p_esolver;
 
     void SetUp()
     {
         Setcell::setupcell(ucell);
-        Setcell::parameters(input);
+        Setcell::parameters(param_in.input);
 
         p_esolver = new ModuleESolver::ESolver_LJ();
-        p_esolver->before_all_runners(input, ucell);
+        p_esolver->before_all_runners(param_in.inp, ucell);
 
-        mdrun = new FIRE(input.mdp, ucell);
+        mdrun = new FIRE(param_in, ucell);
         mdrun->setup(p_esolver, GlobalV::global_readin_dir);
     }
 
@@ -172,7 +169,7 @@ TEST_F(FIREtest, Restart)
     EXPECT_EQ(fire->alpha, 0.1);
     EXPECT_EQ(fire->negative_count, 0);
     EXPECT_EQ(fire->dt_max, -1);
-    EXPECT_EQ(mdrun->mdp.md_dt, 41.3414);
+    EXPECT_EQ(fire->md_dt, 41.3414);
 }
 
 TEST_F(FIREtest, PrintMD)

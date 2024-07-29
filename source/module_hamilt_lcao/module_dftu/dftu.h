@@ -16,6 +16,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/force_stress_arrays.h" // mohan add 2024-06-15
 
 #include <string>
+#include <vector>
 
 //==========================================================
 // CLASS :
@@ -47,9 +48,9 @@ class DFTU
     void uramping_update(); // update U by uramping
     bool u_converged(); // check if U is converged
 
-    double* U; // U (Hubbard parameter U)
+    std::vector<double> U = {}; // U (Hubbard parameter U)
     std::vector<double> U0; // U0 (target Hubbard parameter U0)
-    int* orbital_corr; //
+    std::vector<int> orbital_corr = {}; //
     double uramping; // increase U by uramping, default is -1.0
     int omc; // occupation matrix control
     int mixing_dftu; //whether to mix locale

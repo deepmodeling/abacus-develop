@@ -2,7 +2,6 @@
 
 #include "module_base/global_variable.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_io/input.h"
 #include "module_parameter/parameter.h"
 namespace ModuleESolver
 {

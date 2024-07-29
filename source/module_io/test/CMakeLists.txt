@@ -56,7 +56,7 @@ AddTest(
 AddTest(
   TARGET io_print_info
   LIBS ${math_libs} base device symmetry cell_info parameter
-  SOURCES print_info_test.cpp ../print_info.cpp ../input.cpp ../output.cpp ../../module_cell/klist.cpp ../../module_cell/parallel_kpoints.cpp
+  SOURCES print_info_test.cpp ../print_info.cpp ../output.cpp ../../module_cell/klist.cpp ../../module_cell/parallel_kpoints.cpp
 )
 
 AddTest(

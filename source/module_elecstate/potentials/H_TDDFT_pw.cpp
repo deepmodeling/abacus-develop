@@ -4,7 +4,6 @@
 #include "module_base/timer.h"
 #include "module_hamilt_lcao/module_tddft/evolve_elec.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_io/input.h"
 #include "module_io/input_conv.h"
 
 namespace elecstate
@@ -80,7 +79,8 @@ void H_TDDFT_pw::cal_fixed_v(double *vl_pseudo)
     ModuleBase::TITLE("H_TDDFT_pw", "cal_fixed_v");
 
     //skip if velocity_gague
-    if(stype==1)return;
+    if(stype==1) {return;
+}
 
     // time evolve
     H_TDDFT_pw::istep++;
@@ -233,7 +233,7 @@ int H_TDDFT_pw::check_ncut(int t_type)
     }
     return ncut;
 }
-void H_TDDFT_pw::update_At(void)
+void H_TDDFT_pw::update_At()
 {
     std::cout << "calculate electric potential" << std::endl;
     // time evolve
@@ -345,7 +345,8 @@ double H_TDDFT_pw::cal_v_time_Gauss(const bool last)
 
     double gauss_t = (istep_int - t0 * ncut) * dt_int;
     vext_time = cos(omega * gauss_t + phase) * exp(-gauss_t * gauss_t * 0.5 / (sigma * sigma)) * amp;
-    if(last)gauss_count++;
+    if(last) {gauss_count++;
+}
 
     return vext_time;
 }
@@ -375,7 +376,8 @@ double H_TDDFT_pw::cal_v_time_trapezoid(const bool last)
     }
 
     vext_time = vext_time * amp * cos(omega * istep_int * dt_int + phase);
-    if(last)trape_count++;
+    if(last) {trape_count++;
+}
 
     return vext_time;
 }
@@ -392,7 +394,8 @@ double H_TDDFT_pw::cal_v_time_trigonometric(const bool last)
     const double timenow = istep_int * dt_int;
 
     vext_time = amp * cos(omega1 * timenow + phase1) * sin(omega2 * timenow + phase2) * sin(omega2 * timenow + phase2);
-    if(last)trigo_count++;
+    if(last) {trigo_count++;
+}
 
     return vext_time;
 }
@@ -402,10 +405,11 @@ double H_TDDFT_pw::cal_v_time_heaviside()
     double t0 = *(heavi_t0.begin() + heavi_count);
     double amp = *(heavi_amp.begin() + heavi_count);
     double vext_time = 0.0;
-    if (istep < t0)
+    if (istep < t0) {
         vext_time = amp;
-    else if (istep >= t0)
+    } else if (istep >= t0) {
         vext_time = 0.0;
+}
     heavi_count++;
 
     return vext_time;

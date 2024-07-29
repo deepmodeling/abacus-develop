@@ -131,7 +131,7 @@ void print_stress(std::ofstream& ofs, const ModuleBase::matrix& virial, const Mo
  * @param step current md step
  * @param global_out_dir directory of output files
  * @param unit_in unitcell information
- * @param mdp input parameters used in md
+ * @param param_in input parameters used in md
  * @param virial lattice virial tensor
  * @param force atomic forces
  * @param vel atomic velocities
@@ -139,7 +139,7 @@ void print_stress(std::ofstream& ofs, const ModuleBase::matrix& virial, const Mo
 void dump_info(const int& step,
                const std::string& global_out_dir,
                const UnitCell& unit_in,
-               const MD_para& mdp,
+               const Parameter& param_in,
                const ModuleBase::matrix& virial,
                const ModuleBase::Vector3<double>* force,
                const ModuleBase::Vector3<double>* vel);
