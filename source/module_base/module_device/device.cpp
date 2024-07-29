@@ -174,7 +174,7 @@ if (device_count <= 0)
   error_message += "Cannot find GPU on this computer!\n";
 }
 #else // CPU only
-error_message += "ABACUS is built with CPU support only. Please rebuild with GPU support.\n"
+error_message += "ABACUS is built with CPU support only. Please rebuild with GPU support.\n";
 #endif
 
 if (basis_type == "lcao_in_pw") {
