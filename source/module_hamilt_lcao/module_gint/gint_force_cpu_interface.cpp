@@ -11,18 +11,18 @@ void Gint::cpu_force_interface(Gint_inout* inout) {
     const int ncyz = this->ny * this->nplane;
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
-    ModuleBase::matrix* fvl_dphi_thread=inout->fvl_dphi;
-    ModuleBase::matrix* svl_dphi_thread=inout->svl_dphi;
+    ModuleBase::matrix fvl_dphi_thread=*inout->fvl_dphi;
+    ModuleBase::matrix svl_dphi_thread=*inout->svl_dphi;
 #ifdef _OPENMP
 #pragma omp parallel private(fvl_dphi_thread, svl_dphi_thread)
 {
     if (inout->isforce) {
-        fvl_dphi_thread->create(inout->fvl_dphi->nr, inout->fvl_dphi->nc);
-        fvl_dphi_thread->zero_out();
+        fvl_dphi_thread.create(inout->fvl_dphi->nr, inout->fvl_dphi->nc);
+        fvl_dphi_thread.zero_out();
     }
     if (inout->isstress) {
-        svl_dphi_thread->create(inout->svl_dphi->nr, inout->svl_dphi->nc);
-        svl_dphi_thread->zero_out();
+        svl_dphi_thread.create(inout->svl_dphi->nr, inout->svl_dphi->nc);
+        svl_dphi_thread.zero_out();
     }
 #pragma omp for
 #endif
@@ -96,7 +96,7 @@ void Gint::cpu_force_interface(Gint_inout* inout) {
             //do integration to get force
             this-> cal_meshball_force(grid_index, na_grid, block_size, block_index,psir_vlbr3_DM.get_ptr_2D(), 
                                         dpsir_ylm_x.get_ptr_2D(), dpsir_ylm_y.get_ptr_2D(), dpsir_ylm_z.get_ptr_2D(),
-                                        fvl_dphi_thread);
+                                        &fvl_dphi_thread);
         }
         if(inout->isstress)
         {
@@ -111,7 +111,7 @@ void Gint::cpu_force_interface(Gint_inout* inout) {
 
             //do integration to get stress
             this-> cal_meshball_stress(na_grid, block_index, psir_vlbr3_DM.get_ptr_1D(), 
-                                        dpsirr_ylm.get_ptr_1D(), svl_dphi_thread);
+                                        dpsirr_ylm.get_ptr_1D(), &svl_dphi_thread);
         }
 
     //release memories
@@ -129,10 +129,10 @@ void Gint::cpu_force_interface(Gint_inout* inout) {
 #pragma omp critical(gint)
     {
         if (inout->isforce) {
-            inout->fvl_dphi[0] += fvl_dphi_thread[0];
+            inout->fvl_dphi[0] += fvl_dphi_thread;
         }
         if (inout->isstress) {
-            inout->svl_dphi[0] += svl_dphi_thread[0];
+            inout->svl_dphi[0] += svl_dphi_thread;
         }
     }
 }
