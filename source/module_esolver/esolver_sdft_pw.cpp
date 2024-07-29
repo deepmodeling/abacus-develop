@@ -145,17 +145,8 @@ void ESolver_SDFT_PW::iter_finish(int iter)
 
 void ESolver_SDFT_PW::after_scf(const int istep)
 {
-    // save charge difference into files for charge extrapolation
-    if (GlobalV::CALCULATION != "scf")
-    {
-        this->CE.save_files(istep,
-                            GlobalC::ucell,
-#ifdef __MPI
-                            this->pw_big,
-#endif
-                            this->pelec->charge,
-                            &this->sf);
-    }
+    // 1) call after_scf() of ESolver_FP
+    ESolver_FP::after_scf(istep);
 
     if (PARAM.inp.out_chg > 0)
     {

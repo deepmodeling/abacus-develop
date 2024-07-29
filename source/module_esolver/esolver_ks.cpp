@@ -274,9 +274,6 @@ void ESolver_KS<T, Device>::before_all_runners(const Input_para& inp, UnitCell& 
     //! 11) calculate the structure factor
     this->sf.setup_structure_factor(&ucell, this->pw_rhod);
 
-    //! 12) initialize the charge extrapolation method if necessary
-    CE.Init_CE(ucell.nat);
-
 #ifdef USE_PAW
     if (GlobalV::use_paw)
     {

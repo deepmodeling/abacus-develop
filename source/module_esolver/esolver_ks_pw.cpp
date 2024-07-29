@@ -471,19 +471,10 @@ void ESolver_KS_PW<T, Device>::iter_finish(const int iter)
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::after_scf(const int istep)
 {
-    this->create_Output_Potential(istep).write();
+    // 1) call after_scf() of ESolver_FP
+    ESolver_FP::after_scf(istep);
 
-    // save charge difference into files for charge extrapolation
-    if (GlobalV::CALCULATION != "scf")
-    {
-        this->CE.save_files(istep,
-                            GlobalC::ucell,
-#ifdef __MPI
-                            this->pw_big,
-#endif
-                            this->pelec->charge,
-                            &this->sf);
-    }
+    this->create_Output_Potential(istep).write();
 
     if (PARAM.inp.out_chg)
     {

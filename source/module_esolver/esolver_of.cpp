@@ -152,9 +152,6 @@ void ESolver_OF::before_all_runners(const Input_para& inp, UnitCell& ucell)
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT OPTIMIZATION");
 
     this->allocate_array();
-
-    // Initialize charge extrapolation
-    CE_.Init_CE(ucell.nat);
 }
 
 void ESolver_OF::init_after_vc(const Input_para& inp, UnitCell& ucell)
@@ -270,8 +267,8 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
     }
     if (ucell.ionic_position_updated)
     {
-        CE_.update_all_dis(ucell);
-        CE_.extrapolate_charge(
+        CE.update_all_dis(ucell);
+        CE.extrapolate_charge(
 #ifdef __MPI
             &(GlobalC::Pgrid),
 #endif
@@ -506,17 +503,8 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell)
 {
     ModuleIO::output_convergence_after_scf(this->conv_, this->pelec->f_en.etot);
 
-    // save charge difference into files for charge extrapolation
-    if (GlobalV::CALCULATION != "scf")
-    {
-        this->CE_.save_files(istep,
-                             ucell,
-#ifdef __MPI
-                             this->pw_big,
-#endif
-                             this->pelec->charge,
-                             &this->sf);
-    }
+    // 1) call after_scf() of ESolver_FP
+    ESolver_FP::after_scf(istep);
 
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
