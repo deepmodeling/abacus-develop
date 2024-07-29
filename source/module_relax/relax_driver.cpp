@@ -4,6 +4,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h" // use chr.
 #include "module_io/json_output/output_info.h"
 #include "module_io/print_info.h"
+#include "module_io/read_stop_file.h"
 #include "module_io/write_wfc_r.h"
 
 void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver)
@@ -168,6 +169,8 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver)
         double fac = ModuleBase::Ry_to_eV / 0.529177;
         Json::add_output_cell_coo_stress_force(&GlobalC::ucell, force, fac, stress, unit_transform);
 #endif //__RAPIDJSON
+
+        stop = ModuleIO::read_stop_file("STOPCAR", GlobalV::ofs_running);
 
         time_t fend = time(nullptr);
 
