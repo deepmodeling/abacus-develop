@@ -116,6 +116,8 @@ void Broyden_Mixing::tem_cal_coef(const Mixing_Data& mdata, std::function<double
     if (ndim_cal_dF > 0)
     {
         ModuleBase::matrix beta_tmp(ndim_cal_dF, ndim_cal_dF);
+        ModuleBase::matrix beta_tmp2(ndim_cal_dF, ndim_cal_dF);
+        ModuleBase::matrix beta_tmp_diag(ndim_cal_dF, ndim_cal_dF);
         // beta(i, j) = <dF_i, dF_j>
         for (int i = 0; i < ndim_cal_dF; ++i)
         {
@@ -137,6 +139,38 @@ void Broyden_Mixing::tem_cal_coef(const Mixing_Data& mdata, std::function<double
                 }
             }
         }
+        // value tmp2
+        for (int i = 0; i < ndim_cal_dF; ++i)
+        {
+            for (int j = 0; j < ndim_cal_dF; ++j)
+            {
+                beta_tmp2(i, j) = beta_tmp(i, j);
+                beta_tmp_diag(i, j) = beta_tmp(i, j);
+            }
+        }
+        // diag
+        double* val = new double[ndim_cal_dF];
+        diag(ndim_cal_dF, beta_tmp_diag.c, val);
+        // output beta matrix
+        std::cout << "----------------------beta matrix Begin---------------------" << std::endl;
+        for (int i = 0; i < ndim_cal_dF; ++i)
+        {
+            for (int j = 0; j < ndim_cal_dF; ++j)
+            {
+                std::cout << beta_tmp(i, j) << " ";
+            }
+            std::cout << std::endl;
+        }
+        std::cout << "-----------------------------------------------------------" << std::endl;
+        // output eigenvalues
+        std::cout << "----------------------Eigenvalues Begin---------------------" << std::endl;
+        for (int i = 0; i < ndim_cal_dF; ++i)
+        {
+            std::cout << val[i] << " ";
+        }
+        std::cout << std::endl;
+        std::cout << "-------------------------------------------------------------" << std::endl;
+
         double* work = new double[ndim_cal_dF];
         int* iwork = new int[ndim_cal_dF];
         char uu = 'U';
@@ -154,6 +188,17 @@ void Broyden_Mixing::tem_cal_coef(const Mixing_Data& mdata, std::function<double
                 beta_tmp(i, j) = beta_tmp(j, i);
             }
         }
+        //output inverse beta matrix
+        std::cout << "----------------------Inverse beta matrix Begin---------------------" << std::endl;
+        for (int i = 0; i < ndim_cal_dF; ++i)
+        {
+            for (int j = 0; j < ndim_cal_dF; ++j)
+            {
+                std::cout << beta_tmp(i, j) << " ";
+            }
+            std::cout << std::endl;
+        }
+        std::cout << "---------------------------------------------------------------------" << std::endl;
         for (int i = 0; i < ndim_cal_dF; ++i)
         {
             FPTYPE* dFi = FP_dF + i * length;
@@ -172,12 +217,50 @@ void Broyden_Mixing::tem_cal_coef(const Mixing_Data& mdata, std::function<double
                                        0.0,
                                        gamma.data(),
                                        1);
+        // output gamma
+        std::cout << "----------------------x=A^{-1}b Begin---------------------" << std::endl;
+        for (int i = 0; i < ndim_cal_dF; ++i)
+        {
+            std::cout << gamma[i] << " ";
+        }
+        std::cout << std::endl;
+        std::cout << "----------------------------------------------------------" << std::endl;
         coef[mdata.start] = 1 + gamma[dFindex_move(0)];
         for (int i = 1; i < ndim_cal_dF; ++i)
         {
             coef[mdata.index_move(-i)] = gamma[dFindex_move(-i)] - gamma[dFindex_move(-i + 1)];
         }
         coef[mdata.index_move(-ndim_cal_dF)] = -gamma[dFindex_move(-ndim_cal_dF + 1)];
+        
+        // try another way to calculate coef
+        double* work2 = new double[ndim_cal_dF];
+        for (int i = 0; i < ndim_cal_dF; ++i)
+        {
+            FPTYPE* dFi = FP_dF + i * length;
+            work2[i] = inner_product(dFi, FP_F);
+        }
+        // use dsysv
+        int m = 1;
+        dsysv_(&uu, &ndim_cal_dF, &m, beta_tmp2.c, &ndim_cal_dF, iwork, work2, &ndim_cal_dF, work, &ndim_cal_dF, &info);
+
+        //ouput work2
+        std::cout << "----------------------Ax=b Begin---------------------" << std::endl;
+        for (int i = 0; i < ndim_cal_dF; ++i)
+        {
+            std::cout << work2[i] << " ";
+        }
+        std::cout << std::endl;
+        std::cout << "-----------------------------------------------------" << std::endl;
+
+        // calculate the diff between gamma and work2
+        double diff = 0;
+        for (int i = 0; i < ndim_cal_dF; ++i)
+        {
+            diff += std::abs(gamma[i] - work2[i]);
+        }
+        std::cout << "----------------------diff between gamma and work2---------------------" << std::endl;
+        std::cout << diff << std::endl;
+        std::cout << "-------------------------------------------------------------------------" << std::endl;
 
         delete[] work;
         delete[] iwork;
@@ -197,4 +280,20 @@ void Broyden_Mixing::tem_cal_coef(const Mixing_Data& mdata, std::function<double
     }
     ModuleBase::timer::tick("Charge", "Broyden_mixing");
 };
+
+void Broyden_Mixing::diag(int n, double* A, double* val) {
+    // diagonalize a real symmetric matrix A
+    // A: input matrix (n x n); overwritten with eigenvectors
+    // val: eigenvalues
+    // work space query
+    int lwork = -1;
+    int info = 0;
+    std::vector<double> work(1);
+    dsyev_("V", "U", &n, A, &n, val, work.data(), &lwork, &info);
+    lwork = work[0];
+    work.resize(lwork);
+    // actual computation
+    dsyev_("V", "U", &n, A, &n, val, work.data(), &lwork, &info);
+}
+
 } // namespace Base_Mixing

@@ -174,6 +174,9 @@ extern "C"
 
     // solve a tridiagonal linear system
     void dgtsv_(int* N, int* NRHS, double* DL, double* D, double* DU, double* B, int* LDB, int* INFO);
+
+    void dsysv_(const char* uplo, const int* n, const int* m, double * a, const int* lda,
+                 int *ipiv, double * b, const int* ldb, double *work, const int* lwork ,int *info);
 }
 
 #ifdef GATHER_INFO

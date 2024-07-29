@@ -130,6 +130,8 @@ class Broyden_Mixing : public Mixing
     template <class FPTYPE>
     void tem_cal_coef(const Mixing_Data& mdata, std::function<double(FPTYPE*, FPTYPE*)> inner_product);
 
+    void diag(int n, double* A, double* val);
+
   private:
     // F = data_out - data_in
     void* F = nullptr;
