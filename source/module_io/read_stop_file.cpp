@@ -1,59 +1,79 @@
 #include "read_stop_file.h"
 
-#include "module_io/read_input.h"
-
 #include <fstream>
 #include <iostream>
 #include <sstream>
 
+#ifdef __MPI
+#include <mpi.h>
+#endif
+
 namespace ModuleIO
 {
 
-int read_stop_file(const std::string& filename, std::ofstream& ofs_running)
+int read_stop_file(const int& my_rank, const std::string& filename, std::ofstream& ofs_running)
 {
-    std::ifstream ifs(filename.c_str(), std::ios::in);
-
-    if (!ifs)
-    {
-        return 0;
-    }
-
-    ifs.clear();
-    ifs.seekg(0);
-    ifs.rdstate();
-    int stop = 0;
-
-    while (ifs.good())
-    {
-        std::string line;
-        std::getline(ifs, line);
-        if (line.empty())
+    auto str2bool = [](std::string str) {
+        for (auto& i: str)
         {
-            continue;
+            i = tolower(i);
         }
-        std::istringstream iss(line);
-        std::string word, result;
-        iss >> word;
-        if (iss.eof())
+        if (str == "true" || str == "t" || str == "1")
         {
-            continue;
+            return true;
         }
         else
         {
-            iss >> result;
+            return false;
         }
+    };
+    int stop = 0;
+    if (my_rank == 0)
+    {
+        std::ifstream ifs(filename.c_str(), std::ios::in);
 
-        bool value = convert_bool(result);
+        if (ifs)
+        {
+            ifs.clear();
+            ifs.seekg(0);
+            ifs.rdstate();
 
-        if (word == "stop_ion" && value && stop == 0)
-        {
-            stop = 1;
-        }
-        else if (word == "stop_elec" && value && stop < 2)
-        {
-            stop = 2;
+            while (ifs.good())
+            {
+                std::string line;
+                std::getline(ifs, line);
+                if (line.empty())
+                {
+                    continue;
+                }
+                std::istringstream iss(line);
+                std::string word, result;
+                iss >> word;
+                if (iss.eof())
+                {
+                    continue;
+                }
+                else
+                {
+                    iss >> result;
+                }
+
+                if (word == "stop_ion" && str2bool(result) && stop < 1)
+                {
+                    stop = 1;
+                }
+                else if (word == "stop_elec" && str2bool(result) && stop < 2)
+                {
+                    stop = 2;
+                }
+            }
         }
     }
+
+#ifdef __MPI
+    MPI_Bcast(&stop, 1, MPI_INT, 0, MPI_COMM_WORLD);
+#endif
+
     if (stop == 1)
     {
         std::cout << "\n\n--------------------------------------------------------------------" << std::endl;

@@ -8,6 +8,7 @@ namespace ModuleIO
 /**
  * @brief read file to determine whether to stop the current execution
  *
+ * @param my_rank the rank of the current process
  * @param filename the name of the file to read
  * @param ofs_running the output stream
  *
@@ -15,7 +16,7 @@ namespace ModuleIO
  * @return 1 if the file is found and contains "stop_ion", the current execution stops at the next ionic step
  * @return 2 if the file is found and contains "stop_elec", the current execution stops at the next electronic step
  */
-int read_stop_file(const std::string& filename, std::ofstream& ofs_running);
+int read_stop_file(const int& my_rank, const std::string& filename, std::ofstream& ofs_running);
 } // namespace ModuleIO
 
 #endif
