@@ -75,9 +75,9 @@ void Gint::cal_gint(Gint_inout* inout) {
                 } else if (inout->job == Gint_Tools::job_type::tau) {
                     gint_kernel_tau(inout);
                 } else if (inout->job == Gint_Tools::job_type::force) {
-                    cpu_force_interface(inout);
+                    gint_kernel_force(inout);
                 } else if (inout->job == Gint_Tools::job_type::force_meta) {
-                    cpu_force_meta_interface(inout);
+                    gint_kernel_force_meta(inout);
                 }
             }
         }

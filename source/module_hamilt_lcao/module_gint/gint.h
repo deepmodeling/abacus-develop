@@ -89,9 +89,9 @@ class Gint {
 
     void gint_kernel_tau(Gint_inout* inout);
 
-    void cpu_force_interface(Gint_inout* inout);
+    void gint_kernel_force(Gint_inout* inout);
 
-    void cpu_force_meta_interface(Gint_inout* inout);
+    void gint_kernel_force_meta(Gint_inout* inout);
 
     //------------------------------------------------------
     // in gint_vl.cpp
