@@ -142,17 +142,18 @@ void Gint::cpu_dvlocal_interface(Gint_inout* inout) {
     ModuleBase::GlobalFunc::ZEROS(this->pvdpRy_reduced[inout->ispin],nnrg);
     ModuleBase::GlobalFunc::ZEROS(this->pvdpRz_reduced[inout->ispin],nnrg);
 
-    hamilt::HContainer<double>* hRGint_thread =this->hRGint;
-    std::vector<double> pvdpRx_thread = std::vector<double>(nnrg, 0.0);
-    std::vector<double> pvdpRy_thread = std::vector<double>(nnrg, 0.0);
-    std::vector<double> pvdpRz_thread = std::vector<double>(nnrg, 0.0);
+    double* pvdpRx_thread = this->pvdpRx_reduced[inout->ispin];
+    double* pvdpRy_thread = this->pvdpRy_reduced[inout->ispin];
+    double* pvdpRz_thread = this->pvdpRz_reduced[inout->ispin];
 #ifdef _OPENMP
-#pragma omp parallel private(pvdpRx_thread, pvdpRy_thread, pvdpRz_thread,hRGint_thread)
+#pragma omp parallel private(pvdpRx_thread, pvdpRy_thread, pvdpRz_thread)
 {
-    pvdpRx_thread = std::vector<double>(nnrg, 0.0);
-    pvdpRy_thread = std::vector<double>(nnrg, 0.0);
-    pvdpRz_thread = std::vector<double>(nnrg, 0.0);
-    hRGint_thread = new hamilt::HContainer<double>(*this->hRGint);
+    pvdpRx_thread = new double[nnrg];
+    ModuleBase::GlobalFunc::ZEROS(pvdpRx_thread, nnrg);
+    pvdpRy_thread = new double[nnrg];
+    ModuleBase::GlobalFunc::ZEROS(pvdpRy_thread, nnrg);
+    pvdpRz_thread = new double[nnrg];
+    ModuleBase::GlobalFunc::ZEROS(pvdpRz_thread, nnrg);
 #pragma omp for
 #endif
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
@@ -191,15 +192,15 @@ void Gint::cpu_dvlocal_interface(Gint_inout* inout) {
 
 	//integrate (psi_mu*v(r)*dv) * psi_nu on grid
 	//and accumulates to the corresponding element in Hamiltonian
-        this->cal_meshball_vlocal_k(
-            na_grid, LD_pool, grid_index, block_size, block_index, block_iw, cal_flag,
-            psir_vlbr3.get_ptr_2D(), dpsir_ylm_x.get_ptr_2D(), pvdpRx_thread.data(),ucell);
-        this->cal_meshball_vlocal_k(
-            na_grid, LD_pool, grid_index, block_size, block_index, block_iw, cal_flag,
-            psir_vlbr3.get_ptr_2D(), dpsir_ylm_y.get_ptr_2D(), pvdpRy_thread.data(),ucell);
-	    this->cal_meshball_vlocal_k(
-		    na_grid, LD_pool, grid_index, block_size, block_index, block_iw, cal_flag,
-		    psir_vlbr3.get_ptr_2D(), dpsir_ylm_z.get_ptr_2D(), pvdpRz_thread.data(),ucell);
+        this->cal_meshball_vlocal_k(na_grid, LD_pool, grid_index, block_size, block_index,
+                                    block_iw, cal_flag,psir_vlbr3.get_ptr_2D(),
+                                    dpsir_ylm_x.get_ptr_2D(), pvdpRx_thread,ucell);
+        this->cal_meshball_vlocal_k(na_grid, LD_pool, grid_index, block_size, block_index,
+                                    block_iw, cal_flag,psir_vlbr3.get_ptr_2D(),
+                                    dpsir_ylm_y.get_ptr_2D(), pvdpRy_thread,ucell);
+	    this->cal_meshball_vlocal_k(na_grid, LD_pool, grid_index, block_size, block_index, 
+                                    block_iw, cal_flag,psir_vlbr3.get_ptr_2D(),
+                                    dpsir_ylm_z.get_ptr_2D(), pvdpRz_thread,ucell);
 
     //release memories
 	delete[] block_iw;
@@ -213,10 +214,32 @@ void Gint::cpu_dvlocal_interface(Gint_inout* inout) {
         delete[] vldr3;
     }
 #ifdef _OPENMP
-    delete hRGint_thread;
+    #pragma omp critical(gint_k)
+    {
+        BlasConnector::axpy(nnrg,
+                            1.0,
+                            pvdpRx_thread,
+                            1,
+                            this->pvdpRx_reduced[inout->ispin],
+                            1);
+        BlasConnector::axpy(nnrg,
+                            1.0,
+                            pvdpRy_thread,
+                            1,
+                            this->pvdpRy_reduced[inout->ispin],
+                            1);
+        BlasConnector::axpy(nnrg,
+                            1.0,
+                            pvdpRz_thread,
+                            1,
+                            this->pvdpRz_reduced[inout->ispin],
+                            1);
+    }
+    delete[] pvdpRx_thread;
+    delete[] pvdpRy_thread;
+    delete[] pvdpRz_thread;
 }
 #endif
-    delete hRGint_thread;
     ModuleBase::TITLE("Gint_interface", "cal_gint_dvlocal");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_dvlocal");
 }
