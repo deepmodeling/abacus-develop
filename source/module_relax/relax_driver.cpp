@@ -4,7 +4,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h" // use chr.
 #include "module_io/json_output/output_info.h"
 #include "module_io/print_info.h"
-#include "module_io/read_stop_file.h"
+#include "module_io/read_exit_file.h"
 #include "module_io/write_wfc_r.h"
 
 void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver)
@@ -172,7 +172,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver)
 
         if (stop == false)
         {
-            stop = ModuleIO::read_stop_file(GlobalV::MY_RANK, "EXIT", GlobalV::ofs_running);
+            stop = ModuleIO::read_exit_file(GlobalV::MY_RANK, "EXIT", GlobalV::ofs_running);
         }
 
         time_t fend = time(nullptr);

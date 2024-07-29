@@ -1,4 +1,4 @@
-#include "read_stop_file.h"
+#include "read_exit_file.h"
 
 #include <fstream>
 #include <iostream>
@@ -11,7 +11,7 @@
 namespace ModuleIO
 {
 
-int read_stop_file(const int& my_rank, const std::string& filename, std::ofstream& ofs_running)
+int read_exit_file(const int& my_rank, const std::string& filename, std::ofstream& ofs_running)
 {
     auto str2bool = [](std::string str) {
         for (auto& i: str)
