@@ -18,20 +18,22 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
             ModuleBase::WARNING_QUIT("Gint_interface::cal_gint",
                                      "pvpR has not been allocated yet!");
         } else {
-            ModuleBase::GlobalFunc::ZEROS(this->pvpR_reduced[inout->ispin],
-                                          nnrg);
+            ModuleBase::GlobalFunc::ZEROS(this->pvpR_reduced[inout->ispin], nnrg);
         }
     }
     // define HContainer here to reference.
-    hamilt::HContainer<double>* hRGint_thread =new hamilt::HContainer<double>(*this->hRGint);
-    std::vector<double> pvpR_thread=std::vector<double>(nnrg, 0.0); 
+    hamilt::HContainer<double>* hRGint_thread =this->hRGint;
+    double* pvpR_thread=this->pvpR_reduced[inout->ispin]; 
 #ifdef _OPENMP
 #pragma omp parallel private(hRGint_thread, pvpR_thread)
 {   
     //Under the condition of gamma_only, hRGint will be instantiated.
-    hRGint_thread = new hamilt::HContainer<double>(*this->hRGint);
-    //use vector instead of new-delete to avoid memory leak.
-    pvpR_thread = std::vector<double>(nnrg, 0.0);
+    if (GlobalV::GAMMA_ONLY_LOCAL) {
+        hRGint_thread = new hamilt::HContainer<double>(*this->hRGint);
+    } else {
+        pvpR_thread = new double[nnrg];
+        ModuleBase::GlobalFunc::ZEROS(pvpR_thread, nnrg);
+    }
     #pragma omp for
 #endif
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
@@ -69,19 +71,15 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
 	//and accumulates to the corresponding element in Hamiltonian
         if(GlobalV::GAMMA_ONLY_LOCAL)
         {
-            if(hRGint_thread == nullptr) { hRGint_thread = this->hRGint;}
             this->cal_meshball_vlocal_gamma(
                 na_grid, LD_pool, block_iw, block_size, block_index, grid_index, cal_flag,
                 psir_ylm.get_ptr_2D(), psir_vlbr3.get_ptr_2D(), hRGint_thread);
         }
         else
         {
-            if (pvpR_thread.empty()) { 
-                pvpR_thread=std::vector<double>(this->pvpR_reduced[inout->ispin],
-                                                this->pvpR_reduced[inout->ispin]+nnrg);}
             this->cal_meshball_vlocal_k(
                 na_grid, LD_pool, grid_index, block_size, block_index, block_iw, cal_flag,
-                psir_ylm.get_ptr_2D(), psir_vlbr3.get_ptr_2D(),pvpR_thread.data(),ucell);
+                psir_ylm.get_ptr_2D(), psir_vlbr3.get_ptr_2D(),pvpR_thread,ucell);
         }
 
     //release memories
@@ -112,14 +110,14 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
         #pragma omp critical(gint_k)
             BlasConnector::axpy(nnrg,
                                 1.0,
-                                pvpR_thread.data(),
+                                pvpR_thread,
                                 1,
-                                pvpR_reduced[inout->ispin],
+                                this->pvpR_reduced[inout->ispin],
                                 1);
         }
+        delete[] pvpR_thread;
     }
 }
-    delete hRGint_thread;
 #endif
     ModuleBase::TITLE("Gint_interface", "cal_gint_vlocal");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal");
@@ -144,7 +142,7 @@ void Gint::cpu_dvlocal_interface(Gint_inout* inout) {
     ModuleBase::GlobalFunc::ZEROS(this->pvdpRy_reduced[inout->ispin],nnrg);
     ModuleBase::GlobalFunc::ZEROS(this->pvdpRz_reduced[inout->ispin],nnrg);
 
-    hamilt::HContainer<double>* hRGint_thread =new hamilt::HContainer<double>(*this->hRGint);
+    hamilt::HContainer<double>* hRGint_thread =this->hRGint;
     std::vector<double> pvdpRx_thread = std::vector<double>(nnrg, 0.0);
     std::vector<double> pvdpRy_thread = std::vector<double>(nnrg, 0.0);
     std::vector<double> pvdpRz_thread = std::vector<double>(nnrg, 0.0);
