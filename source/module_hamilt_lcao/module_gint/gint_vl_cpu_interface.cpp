@@ -22,7 +22,7 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
         }
     }
     // define HContainer here to reference.
-    hamilt::HContainer<double>* hRGint_thread =this->hRGint;
+    hamilt::HContainer<double>* hRGint_thread = this->hRGint;
     double* pvpR_thread=this->pvpR_reduced[inout->ispin]; 
 #ifdef _OPENMP
 #pragma omp parallel private(hRGint_thread, pvpR_thread)
@@ -256,7 +256,6 @@ void Gint::cpu_vlocal_meta_interface(Gint_inout* inout) {
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
 
-#ifdef _OPENMP
     if (!GlobalV::GAMMA_ONLY_LOCAL) {
         if (!pvpR_alloc_flag) {
             ModuleBase::WARNING_QUIT("Gint_interface::cal_gint",
@@ -266,15 +265,22 @@ void Gint::cpu_vlocal_meta_interface(Gint_inout* inout) {
                                             nnrg);
         }
     }
+    hamilt::HContainer<double>* hRGint_thread =this->hRGint;
+    double* pvpR_thread=this->pvpR_reduced[inout->ispin];
+
+#ifdef _OPENMP
+#pragma omp parallel private(hRGint_thread, pvpR_thread)
+{
     // define HContainer here to reference.
-    hamilt::HContainer<double>* hRGint_thread = nullptr;
     //Under the condition of gamma_only, hRGint will be instantiated.
     if (GlobalV::GAMMA_ONLY_LOCAL)
     {
         hRGint_thread =new hamilt::HContainer<double>(*this->hRGint);
-    }
+    }else{
     //use vector instead of new-delete to avoid memory leak.
-    std::vector<double>pvpR_thread = std::vector<double>(nnrg, 0.0);
+        pvpR_thread = new double[nnrg];
+        ModuleBase::GlobalFunc::ZEROS(pvpR_thread, nnrg);
+    }
 #pragma omp for
 #endif
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
@@ -302,37 +308,84 @@ void Gint::cpu_vlocal_meta_interface(Gint_inout* inout) {
                                     this->gridt->start_ind[grid_index],
                                     ncyz,
                                     dv);
-#ifdef _OPENMP
-            this->gint_kernel_vlocal_meta(na_grid,
-                                          grid_index,
-                                          delta_r,
-                                          vldr3,
-                                          vkdr3,
-                                          LD_pool,
-                                          pvpR_thread.data(),
-                                          ucell,
-                                          hRGint_thread);
-#else
-        if (GlobalV::GAMMA_ONLY_LOCAL) {
-            this->gint_kernel_vlocal_meta(na_grid,
-                                          grid_index,
-                                          delta_r,
-                                          vldr3,
-                                          vkdr3,
-                                          LD_pool,
-                                          nullptr,
-                                          ucell);
-        } else {
-            this->gint_kernel_vlocal_meta(na_grid,
-                                          grid_index,
-                                          delta_r,
-                                          vldr3,
-                                          vkdr3,
-                                          LD_pool,
-                                          this->pvpR_reduced[inout->ispin],
-                                          ucell);
+            	//prepare block information
+	    int * block_iw, * block_index, * block_size;
+	    bool** cal_flag;
+	    Gint_Tools::get_block_info(*this->gridt, this->bxyz, na_grid, grid_index, 
+                                    block_iw, block_index, block_size, cal_flag);
+
+    //evaluate psi and dpsi on grids
+        ModuleBase::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
+        ModuleBase::Array_Pool<double> dpsir_ylm_x(this->bxyz, LD_pool);
+        ModuleBase::Array_Pool<double> dpsir_ylm_y(this->bxyz, LD_pool);
+        ModuleBase::Array_Pool<double> dpsir_ylm_z(this->bxyz, LD_pool);
+
+        Gint_Tools::cal_dpsir_ylm(*this->gridt,
+            this->bxyz, na_grid, grid_index, delta_r,
+            block_index, block_size, 
+            cal_flag,
+            psir_ylm.get_ptr_2D(),
+            dpsir_ylm_x.get_ptr_2D(),
+            dpsir_ylm_y.get_ptr_2D(),
+            dpsir_ylm_z.get_ptr_2D()
+        );
+	
+	//calculating f_mu(r) = v(r)*psi_mu(r)*dv
+	    const ModuleBase::Array_Pool<double> psir_vlbr3 = Gint_Tools::get_psir_vlbr3(
+		    	this->bxyz, na_grid, LD_pool, block_index, cal_flag, vldr3, psir_ylm.get_ptr_2D());
+
+	//calculating df_mu(r) = vofk(r) * dpsi_mu(r) * dv
+	    const ModuleBase::Array_Pool<double> dpsix_vlbr3 = Gint_Tools::get_psir_vlbr3(
+			this->bxyz, na_grid, LD_pool, block_index, cal_flag, vkdr3, dpsir_ylm_x.get_ptr_2D());
+	    const ModuleBase::Array_Pool<double> dpsiy_vlbr3 = Gint_Tools::get_psir_vlbr3(
+			this->bxyz, na_grid, LD_pool, block_index, cal_flag, vkdr3, dpsir_ylm_y.get_ptr_2D());	
+	    const ModuleBase::Array_Pool<double> dpsiz_vlbr3 = Gint_Tools::get_psir_vlbr3(
+			this->bxyz, na_grid, LD_pool, block_index, cal_flag, vkdr3, dpsir_ylm_z.get_ptr_2D());
+
+        if(GlobalV::GAMMA_ONLY_LOCAL)
+        {
+            //integrate (psi_mu*v(r)*dv) * psi_nu on grid
+            //and accumulates to the corresponding element in Hamiltonian
+            this->cal_meshball_vlocal_gamma(
+                na_grid, LD_pool, block_iw, block_size, block_index, grid_index, cal_flag,
+                psir_ylm.get_ptr_2D(), psir_vlbr3.get_ptr_2D(), hRGint_thread);
+            //integrate (d/dx_i psi_mu*vk(r)*dv) * (d/dx_i psi_nu) on grid (x_i=x,y,z)
+            //and accumulates to the corresponding element in Hamiltonian
+            this->cal_meshball_vlocal_gamma(
+                na_grid, LD_pool, block_iw, block_size, block_index, grid_index, cal_flag,
+                dpsir_ylm_x.get_ptr_2D(), dpsix_vlbr3.get_ptr_2D(), hRGint_thread);
+            this->cal_meshball_vlocal_gamma(
+                na_grid, LD_pool, block_iw, block_size, block_index, grid_index, cal_flag,
+                dpsir_ylm_y.get_ptr_2D(), dpsiy_vlbr3.get_ptr_2D(), hRGint_thread);
+            this->cal_meshball_vlocal_gamma(
+                na_grid, LD_pool, block_iw, block_size, block_index, grid_index, cal_flag,
+                dpsir_ylm_z.get_ptr_2D(), dpsiz_vlbr3.get_ptr_2D(), hRGint_thread);
         }
-#endif
+        else
+        {
+            this->cal_meshball_vlocal_k(
+                na_grid, LD_pool, grid_index, block_size, block_index, block_iw, cal_flag,
+                psir_ylm.get_ptr_2D(), psir_vlbr3.get_ptr_2D(), pvpR_thread,ucell);
+            this->cal_meshball_vlocal_k(
+                na_grid, LD_pool, grid_index, block_size, block_index, block_iw, cal_flag,
+                dpsir_ylm_x.get_ptr_2D(), dpsix_vlbr3.get_ptr_2D(), pvpR_thread,ucell);
+            this->cal_meshball_vlocal_k(
+                na_grid, LD_pool, grid_index, block_size, block_index, block_iw, cal_flag,
+                dpsir_ylm_y.get_ptr_2D(), dpsiy_vlbr3.get_ptr_2D(), pvpR_thread,ucell);
+            this->cal_meshball_vlocal_k(
+                na_grid, LD_pool, grid_index, block_size, block_index, block_iw, cal_flag,
+                dpsir_ylm_z.get_ptr_2D(), dpsiz_vlbr3.get_ptr_2D(), pvpR_thread,ucell);
+        }
+
+    //release memories
+        delete[] block_iw;
+        delete[] block_index;
+        delete[] block_size;
+        for(int ib=0; ib<this->bxyz; ++ib)
+        {
+            delete[] cal_flag[ib];
+        }
+        delete[] cal_flag;
         delete[] vldr3;
         delete[] vkdr3;
     }
@@ -347,19 +400,22 @@ void Gint::cpu_vlocal_meta_interface(Gint_inout* inout) {
                                 this->hRGint->get_wrapper(),
                                 1);
         }
+        delete hRGint_thread;
     }
     else{
 #pragma omp critical(gint_k)
         {
             BlasConnector::axpy(nnrg,
                                 1.0,
-                                pvpR_thread.data(),
+                                pvpR_thread,
                                 1,
                                 pvpR_reduced[inout->ispin],
                                 1);
         }
+        delete[] pvpR_thread;
     }
-    delete hRGint_thread;
+    
+}
 #endif
     ModuleBase::TITLE("Gint_interface", "cal_gint_vlocal_meta");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal_meta");
