@@ -9,7 +9,6 @@
 #include <iostream>
 
 #include "module_base/timer.h"
-#include "module_io/input.h"
 #include "module_io/json_output/init_info.h"
 #include "module_io/print_info.h"
 #include "module_parameter/parameter.h"

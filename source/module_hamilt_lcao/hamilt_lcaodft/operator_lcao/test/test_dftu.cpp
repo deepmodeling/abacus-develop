@@ -95,8 +95,8 @@ class DFTUTest : public ::testing::Test
                 GlobalC::dftu.locale[iat][l][0][1].create(2 * l + 1, 2 * l + 1);
             }
         }
-        GlobalC::dftu.U = &U_test;
-        GlobalC::dftu.orbital_corr = &orbital_c_test;
+        GlobalC::dftu.U = {U_test};
+        GlobalC::dftu.orbital_corr = {orbital_c_test};
 
         PARAM.input.onsite_radius = 1.0;
     }
@@ -150,7 +150,7 @@ TEST_F(DFTUTest, constructHRd2d)
     // test for nspin=1
     GlobalV::NSPIN = 1;
     std::vector<ModuleBase::Vector3<double>> kvec_d_in(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
-    hamilt::HS_Matrix_K<double> hsk(paraV, 1);
+    hamilt::HS_Matrix_K<double> hsk(paraV, true);
     hsk.set_zero_hk();
     Grid_Driver gd(0, 0, 0);
     // check some input values
@@ -218,7 +218,7 @@ TEST_F(DFTUTest, constructHRd2cd)
     // test for nspin=2
     GlobalV::NSPIN = 2;
     std::vector<ModuleBase::Vector3<double>> kvec_d_in(2, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
-    hamilt::HS_Matrix_K<std::complex<double>> hsk(paraV, 1);
+    hamilt::HS_Matrix_K<std::complex<double>> hsk(paraV, true);
     hsk.set_zero_hk();
     Grid_Driver gd(0, 0, 0);
     EXPECT_EQ(LCAO_Orbitals::get_const_instance().Phi[0].getRcut(), 1.0);

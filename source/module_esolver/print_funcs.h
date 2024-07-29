@@ -1,7 +1,7 @@
 #ifndef PRINT_FUNCTIONS_H
 #define PRINT_FUNCTIONS_H
 
-#include "module_io/input.h"
+#include "module_parameter/input_parameter.h"
 #include "module_basis/module_pw/pw_basis_k.h"
 
 namespace Print_functions

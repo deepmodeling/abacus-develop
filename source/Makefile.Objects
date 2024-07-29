@@ -460,9 +460,7 @@ OBJS_XC=xc_functional.o\
     xc_funct_corr_gga.o\
     xc_funct_hcth.o\
 
-OBJS_IO=input.o\
-    input_conv_tmp.o\
-    input_conv.o\
+OBJS_IO=input_conv.o\
     berryphase.o\
     bessel_basis.o\
     cal_test.o\
@@ -628,6 +626,7 @@ OBJS_SRCPW=H_Ewald_pw.o\
     forces_us.o\
     forces_nl.o\
     forces_cc.o\
+    forces_scc.o\
     fs_nonlocal_tools.o\
     force_op.o\
     stress_op.o\

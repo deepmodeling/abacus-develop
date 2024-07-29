@@ -8,7 +8,6 @@
 #include "module_hamilt_general/module_surchem/surchem.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/berryphase.h"
-#include "module_io/input.h"
 #include "module_parameter/parameter.h"
 #include "module_relax/relax_old/ions_move_basic.h"
 #include "module_relax/relax_old/lattice_change_basic.h"
@@ -187,10 +186,10 @@ void Input_Conv::Convert()
         MD_func::current_md_info(GlobalV::MY_RANK, GlobalV::global_readin_dir, istep, temperature);
         if (PARAM.inp.read_file_dir == "auto")
         {
-            GlobalV::stru_file = INPUT.stru_file = GlobalV::global_stru_dir + "STRU_MD_" + std::to_string(istep);
+            GlobalV::stru_file = GlobalV::global_stru_dir + "STRU_MD_" + std::to_string(istep);
         }
-    } else if (INPUT.stru_file != "") {
-        GlobalV::stru_file = INPUT.stru_file;
+    } else if (PARAM.inp.stru_file != "") {
+        GlobalV::stru_file = PARAM.inp.stru_file;
     }
     if (PARAM.inp.kpoint_file != "")
     {
@@ -326,14 +325,14 @@ void Input_Conv::Convert()
         GlobalV::dft_plus_u = PARAM.inp.dft_plus_u;
         GlobalC::dftu.Yukawa = PARAM.inp.yukawa_potential;
         GlobalC::dftu.omc = PARAM.inp.omc;
-        GlobalC::dftu.orbital_corr = INPUT.orbital_corr;
+        GlobalC::dftu.orbital_corr = PARAM.inp.orbital_corr;
         GlobalC::dftu.uramping = PARAM.globalv.uramping;
         GlobalC::dftu.mixing_dftu = PARAM.inp.mixing_dftu;
-        GlobalC::dftu.U = INPUT.hubbard_u;
-        GlobalC::dftu.U0 = std::vector<double>(INPUT.hubbard_u, INPUT.hubbard_u + GlobalC::ucell.ntype);
+        GlobalC::dftu.U = PARAM.globalv.hubbard_u;
+        GlobalC::dftu.U0 = PARAM.globalv.hubbard_u;
         if (PARAM.globalv.uramping > 0.01)
         {
-            ModuleBase::GlobalFunc::ZEROS(GlobalC::dftu.U, GlobalC::ucell.ntype);
+            ModuleBase::GlobalFunc::ZEROS(GlobalC::dftu.U.data(), GlobalC::ucell.ntype);
         }
     }
 #endif

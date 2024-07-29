@@ -12,10 +12,15 @@
 #define TWOSQRT2LN2 2.354820045030949 // FWHM = 2sqrt(2ln2) * \sigma
 #define FACTOR 1.839939223835727e7
 
-Sto_EleCond::Sto_EleCond(UnitCell* p_ucell_in, K_Vectors* p_kv_in, elecstate::ElecState* p_elec_in,
-                         ModulePW::PW_Basis_K* p_wfcpw_in, psi::Psi<std::complex<double>>* p_psi_in,
-                         pseudopot_cell_vnl* p_ppcell_in, hamilt::Hamilt<std::complex<double>>* p_hamilt_in,
-                         hsolver::HSolverPW_SDFT* p_hsol_in, Stochastic_WF* p_stowf_in)
+Sto_EleCond::Sto_EleCond(UnitCell* p_ucell_in,
+                         K_Vectors* p_kv_in,
+                         elecstate::ElecState* p_elec_in,
+                         ModulePW::PW_Basis_K* p_wfcpw_in,
+                         psi::Psi<std::complex<double>>* p_psi_in,
+                         pseudopot_cell_vnl* p_ppcell_in,
+                         hamilt::Hamilt<std::complex<double>>* p_hamilt_in,
+                         hsolver::HSolverPW_SDFT* p_hsol_in,
+                         Stochastic_WF* p_stowf_in)
     : EleCond(p_ucell_in, p_kv_in, p_elec_in, p_wfcpw_in, p_psi_in, p_ppcell_in)
 {
     this->p_hamilt = p_hamilt_in;
@@ -25,7 +30,10 @@ Sto_EleCond::Sto_EleCond(UnitCell* p_ucell_in, K_Vectors* p_kv_in, elecstate::El
     this->nbands_sto = p_stowf_in->nchi;
 }
 
-void Sto_EleCond::decide_nche(const double dt, int& nbatch, const double cond_thr, const int& fd_nche, double try_emin,
+void Sto_EleCond::decide_nche(const double dt,
+                              const double cond_thr,
+                              const int& fd_nche,
+                              double try_emin,
                               double try_emax)
 {
     int nche_guess = 1000;
@@ -33,6 +41,7 @@ void Sto_EleCond::decide_nche(const double dt, int& nbatch, const double cond_th
     Stochastic_Iter& stoiter = p_hsol->stoiter;
     const double mu = this->p_elec->eferm.ef;
     stoiter.stofunc.mu = mu;
+    int& nbatch = this->cond_dtbatch;
     // try to find nbatch
     if (nbatch == 0)
     {
@@ -80,8 +89,14 @@ void Sto_EleCond::decide_nche(const double dt, int& nbatch, const double cond_th
     int nche_new = 0;
 loop:
     // re-set Emin & Emax both in stohchi & stofunc
-    check_che(std::max(nche_old * 2, fd_nche), try_emin, try_emax, this->nbands_sto, this->p_kv, this->p_stowf,
-              this->p_hamilt, this->p_hsol);
+    check_che(std::max(nche_old * 2, fd_nche),
+              try_emin,
+              try_emax,
+              this->nbands_sto,
+              this->p_kv,
+              this->p_stowf,
+              this->p_hamilt,
+              this->p_hsol);
 
     // second try to find nche with new Emin & Emax
     getnche(nche_new);
@@ -113,18 +128,29 @@ loop:
 }
 
 void Sto_EleCond::cal_jmatrix(const psi::Psi<std::complex<float>>& kspsi_all,
-                              const psi::Psi<std::complex<float>>& vkspsi, const double* en, const double* en_all,
-                              std::complex<double>* leftfact, std::complex<double>* rightfact,
-                              const psi::Psi<std::complex<double>>& leftchi, psi::Psi<std::complex<double>>& rightchi,
-                              psi::Psi<std::complex<double>>& left_hchi, psi::Psi<std::complex<double>>& batch_vchi,
+                              const psi::Psi<std::complex<float>>& vkspsi,
+                              const double* en,
+                              const double* en_all,
+                              std::complex<double>* leftfact,
+                              std::complex<double>* rightfact,
+                              const psi::Psi<std::complex<double>>& leftchi,
+                              psi::Psi<std::complex<double>>& rightchi,
+                              psi::Psi<std::complex<double>>& left_hchi,
+                              psi::Psi<std::complex<double>>& batch_vchi,
                               psi::Psi<std::complex<double>>& batch_vhchi,
 #ifdef __MPI
-                              psi::Psi<std::complex<float>>& chi_all, psi::Psi<std::complex<float>>& hchi_all,
-                              void* gatherinfo_ks, void* gatherinfo_sto,
+                              psi::Psi<std::complex<float>>& chi_all,
+                              psi::Psi<std::complex<float>>& hchi_all,
+                              void* gatherinfo_ks,
+                              void* gatherinfo_sto,
 #endif
-                              const int& bsize_psi, std::vector<std::complex<float>>& j1,
-                              std::vector<std::complex<float>>& j2, hamilt::Velocity& velop, const int& ik,
-                              const std::complex<double>& factor, const int bandinfo[6])
+                              const int& bsize_psi,
+                              std::vector<std::complex<float>>& j1,
+                              std::vector<std::complex<float>>& j2,
+                              hamilt::Velocity& velop,
+                              const int& ik,
+                              const std::complex<double>& factor,
+                              const int bandinfo[6])
 {
     ModuleBase::timer::tick("Sto_EleCond", "cal_jmatrix");
     const char transa = 'C';
@@ -168,8 +194,14 @@ void Sto_EleCond::cal_jmatrix(const psi::Psi<std::complex<float>>& kspsi_all,
     {
         vec_rightf_all.resize(allbands_ks);
         rightf_all = vec_rightf_all.data();
-        MPI_Allgatherv(rightfact, perbands_ks, MPI_DOUBLE_COMPLEX, rightf_all, ks_fact->nrecv, ks_fact->displs,
-                       MPI_DOUBLE_COMPLEX, PARAPW_WORLD);
+        MPI_Allgatherv(rightfact,
+                       perbands_ks,
+                       MPI_DOUBLE_COMPLEX,
+                       rightf_all,
+                       ks_fact->nrecv,
+                       ks_fact->displs,
+                       MPI_DOUBLE_COMPLEX,
+                       PARAPW_WORLD);
     }
 #endif
 
@@ -188,8 +220,19 @@ void Sto_EleCond::cal_jmatrix(const psi::Psi<std::complex<float>>& kspsi_all,
             std::complex<float>* j1mat = &j1[id * dim_jmatrix];
             std::complex<float>* j2mat = &j2[id * dim_jmatrix];
             //(<\psi|v|\chi>)^T
-            cgemm_(&transa, &transb, &allbands_sto, &perbands_ks, &npw, &conjfactor, rightchi_all->get_pointer(), &npwx,
-                   &vkspsi(idnb, 0), &npwx, &zero, j1mat, &allbands_sto);
+            cgemm_(&transa,
+                   &transb,
+                   &allbands_sto,
+                   &perbands_ks,
+                   &npw,
+                   &conjfactor,
+                   rightchi_all->get_pointer(),
+                   &npwx,
+                   &vkspsi(idnb, 0),
+                   &npwx,
+                   &zero,
+                   j1mat,
+                   &allbands_sto);
 
             //(<\psi|Hv|\chi>)^T
             // for(int i = 0 ; i < perbands_ks ; ++i)
@@ -204,8 +247,19 @@ void Sto_EleCond::cal_jmatrix(const psi::Psi<std::complex<float>>& kspsi_all,
             // }
 
             //(<\psi|vH|\chi>)^T
-            cgemm_(&transa, &transb, &allbands_sto, &perbands_ks, &npw, &conjfactor, righthchi_all->get_pointer(),
-                   &npwx, &vkspsi(idnb, 0), &npwx, &zero, j2mat, &allbands_sto);
+            cgemm_(&transa,
+                   &transb,
+                   &allbands_sto,
+                   &perbands_ks,
+                   &npw,
+                   &conjfactor,
+                   righthchi_all->get_pointer(),
+                   &npwx,
+                   &vkspsi(idnb, 0),
+                   &npwx,
+                   &zero,
+                   j2mat,
+                   &allbands_sto);
         }
     }
 
@@ -231,8 +285,19 @@ void Sto_EleCond::cal_jmatrix(const psi::Psi<std::complex<float>>& kspsi_all,
                 std::complex<float>* j1mat = &j1[id * dim_jmatrix + jbais];
                 std::complex<float>* j2mat = &j2[id * dim_jmatrix + jbais];
                 //<\chi|v|\psi>
-                cgemm_(&transa, &transb, &tmpnb, &allbands_ks, &npw, &float_factor, &f_batch_vchi(idnb, 0), &npwx,
-                       kspsi_all.get_pointer(), &npwx, &zero, j1mat, &perbands_sto);
+                cgemm_(&transa,
+                       &transb,
+                       &tmpnb,
+                       &allbands_ks,
+                       &npw,
+                       &float_factor,
+                       &f_batch_vchi(idnb, 0),
+                       &npwx,
+                       kspsi_all.get_pointer(),
+                       &npwx,
+                       &zero,
+                       j1mat,
+                       &perbands_sto);
 
                 //<\chi|vH|\psi> = \epsilon * <\chi|v|\psi>
                 // for(int i = 0 ; i < allbands_ks ; ++i)
@@ -247,8 +312,19 @@ void Sto_EleCond::cal_jmatrix(const psi::Psi<std::complex<float>>& kspsi_all,
                 // }
 
                 //<\chi|Hv|\psi>
-                cgemm_(&transa, &transb, &tmpnb, &allbands_ks, &npw, &float_factor, &f_batch_vhchi(idnb, 0), &npwx,
-                       kspsi_all.get_pointer(), &npwx, &zero, j2mat, &perbands_sto);
+                cgemm_(&transa,
+                       &transb,
+                       &tmpnb,
+                       &allbands_ks,
+                       &npw,
+                       &float_factor,
+                       &f_batch_vhchi(idnb, 0),
+                       &npwx,
+                       kspsi_all.get_pointer(),
+                       &npwx,
+                       &zero,
+                       j2mat,
+                       &perbands_sto);
             }
         }
 
@@ -262,16 +338,49 @@ void Sto_EleCond::cal_jmatrix(const psi::Psi<std::complex<float>>& kspsi_all,
             std::complex<float>* j2mat = &j2[id * dim_jmatrix + jbais];
             std::complex<float>* tmpjmat = &tmpj[id * allbands_sto * perbands_sto + startnb];
             //<\chi|v|\chi>
-            cgemm_(&transa, &transb, &tmpnb, &allbands_sto, &npw, &float_factor, &f_batch_vchi(idnb, 0), &npwx,
-                   rightchi_all->get_pointer(), &npwx, &zero, j1mat, &perbands_sto);
+            cgemm_(&transa,
+                   &transb,
+                   &tmpnb,
+                   &allbands_sto,
+                   &npw,
+                   &float_factor,
+                   &f_batch_vchi(idnb, 0),
+                   &npwx,
+                   rightchi_all->get_pointer(),
+                   &npwx,
+                   &zero,
+                   j1mat,
+                   &perbands_sto);
 
             //<\chi|Hv|\chi>
-            cgemm_(&transa, &transb, &tmpnb, &allbands_sto, &npw, &float_factor, &f_batch_vhchi(idnb, 0), &npwx,
-                   rightchi_all->get_pointer(), &npwx, &zero, j2mat, &perbands_sto);
+            cgemm_(&transa,
+                   &transb,
+                   &tmpnb,
+                   &allbands_sto,
+                   &npw,
+                   &float_factor,
+                   &f_batch_vhchi(idnb, 0),
+                   &npwx,
+                   rightchi_all->get_pointer(),
+                   &npwx,
+                   &zero,
+                   j2mat,
+                   &perbands_sto);
 
             //<\chi|vH|\chi>
-            cgemm_(&transa, &transb, &tmpnb, &allbands_sto, &npw, &float_factor, &f_batch_vchi(idnb, 0), &npwx,
-                   righthchi_all->get_pointer(), &npwx, &zero, tmpjmat, &perbands_sto);
+            cgemm_(&transa,
+                   &transb,
+                   &tmpnb,
+                   &allbands_sto,
+                   &npw,
+                   &float_factor,
+                   &f_batch_vchi(idnb, 0),
+                   &npwx,
+                   righthchi_all->get_pointer(),
+                   &npwx,
+                   &zero,
+                   tmpjmat,
+                   &perbands_sto);
         }
 
         remain -= tmpnb;
@@ -352,8 +461,13 @@ void Sto_EleCond::cal_jmatrix(const psi::Psi<std::complex<float>>& kspsi_all,
     return;
 }
 
-void Sto_EleCond::sKG(const int& smear_type, const double& fwhmin, const double& wcut, const double& dw_in,
-                      const double& dt_in, const bool& nonlocal, const int& nbatch, const int& npart_sto)
+void Sto_EleCond::sKG(const int& smear_type,
+                      const double& fwhmin,
+                      const double& wcut,
+                      const double& dw_in,
+                      const double& dt_in,
+                      const bool& nonlocal,
+                      const int& npart_sto)
 {
     ModuleBase::TITLE("Sto_EleCond", "sKG");
     ModuleBase::timer::tick("Sto_EleCond", "sKG");
@@ -367,6 +481,7 @@ void Sto_EleCond::sKG(const int& smear_type, const double& fwhmin, const double&
     //                    Init
     //------------------------------------------------------------------
     // Parameters
+    const int nbatch = this->cond_dtbatch;
     int nw = ceil(wcut / dw_in);
     double dw = dw_in / ModuleBase::Ry_to_eV; // converge unit in eV to Ry
     double sigma = fwhmin / TWOSQRT2LN2 / ModuleBase::Ry_to_eV;
@@ -614,13 +729,23 @@ void Sto_EleCond::sKG(const int& smear_type, const double& fwhmin, const double&
         }
 
         che.calcoef_real(&stoiter.stofunc, &Sto_Func<double>::nroot_fd);
-        che.calfinalvec_real(&stohchi, &Stochastic_hchi::hchi_norm, stopsi->get_pointer(), sfchi.get_pointer(), npw,
-                             npwx, perbands_sto);
+        che.calfinalvec_real(&stohchi,
+                             &Stochastic_hchi::hchi_norm,
+                             stopsi->get_pointer(),
+                             sfchi.get_pointer(),
+                             npw,
+                             npwx,
+                             perbands_sto);
 
         che.calcoef_real(&stoiter.stofunc, &Sto_Func<double>::nroot_mfd);
 
-        che.calfinalvec_real(&stohchi, &Stochastic_hchi::hchi_norm, stopsi->get_pointer(), smfchi.get_pointer(), npw,
-                             npwx, perbands_sto);
+        che.calfinalvec_real(&stohchi,
+                             &Stochastic_hchi::hchi_norm,
+                             stopsi->get_pointer(),
+                             smfchi.get_pointer(),
+                             npw,
+                             npwx,
+                             perbands_sto);
 
         //------------------------  allocate ------------------------
         psi::Psi<std::complex<double>>& expmtsfchi = sfchi;
@@ -699,14 +824,34 @@ void Sto_EleCond::sKG(const int& smear_type, const double& fwhmin, const double&
             // Sto
             if (nbatch == 1)
             {
-                chemt.calfinalvec_complex(&stohchi, &Stochastic_hchi::hchi_norm, expmtsfchi.get_pointer(),
-                                          expmtsfchi.get_pointer(), npw, npwx, perbands_sto);
-                chemt.calfinalvec_complex(&stohchi, &Stochastic_hchi::hchi_norm, expmtsmfchi.get_pointer(),
-                                          expmtsmfchi.get_pointer(), npw, npwx, perbands_sto);
-                chet.calfinalvec_complex(&stohchi, &Stochastic_hchi::hchi_norm, exptsfchi.get_pointer(),
-                                         exptsfchi.get_pointer(), npw, npwx, perbands_sto);
-                chet.calfinalvec_complex(&stohchi, &Stochastic_hchi::hchi_norm, exptsmfchi.get_pointer(),
-                                         exptsmfchi.get_pointer(), npw, npwx, perbands_sto);
+                chemt.calfinalvec_complex(&stohchi,
+                                          &Stochastic_hchi::hchi_norm,
+                                          expmtsfchi.get_pointer(),
+                                          expmtsfchi.get_pointer(),
+                                          npw,
+                                          npwx,
+                                          perbands_sto);
+                chemt.calfinalvec_complex(&stohchi,
+                                          &Stochastic_hchi::hchi_norm,
+                                          expmtsmfchi.get_pointer(),
+                                          expmtsmfchi.get_pointer(),
+                                          npw,
+                                          npwx,
+                                          perbands_sto);
+                chet.calfinalvec_complex(&stohchi,
+                                         &Stochastic_hchi::hchi_norm,
+                                         exptsfchi.get_pointer(),
+                                         exptsfchi.get_pointer(),
+                                         npw,
+                                         npwx,
+                                         perbands_sto);
+                chet.calfinalvec_complex(&stohchi,
+                                         &Stochastic_hchi::hchi_norm,
+                                         exptsmfchi.get_pointer(),
+                                         exptsmfchi.get_pointer(),
+                                         npw,
+                                         npwx,
+                                         perbands_sto);
             }
             else
             {
@@ -720,14 +865,34 @@ void Sto_EleCond::sKG(const int& smear_type, const double& fwhmin, const double&
                 std::complex<double>* stoexptsmfchi = exptsmfchi.get_pointer();
                 if ((it - 1) % nbatch == 0)
                 {
-                    chet.calpolyvec_complex(&stohchi, &Stochastic_hchi::hchi_norm, stoexptsfchi, tmppolyexptsfchi, npw,
-                                            npwx, perbands_sto);
-                    chet.calpolyvec_complex(&stohchi, &Stochastic_hchi::hchi_norm, stoexptsmfchi, tmppolyexptsmfchi,
-                                            npw, npwx, perbands_sto);
-                    chemt.calpolyvec_complex(&stohchi, &Stochastic_hchi::hchi_norm, stoexpmtsfchi, tmppolyexpmtsfchi,
-                                             npw, npwx, perbands_sto);
-                    chemt.calpolyvec_complex(&stohchi, &Stochastic_hchi::hchi_norm, stoexpmtsmfchi, tmppolyexpmtsmfchi,
-                                             npw, npwx, perbands_sto);
+                    chet.calpolyvec_complex(&stohchi,
+                                            &Stochastic_hchi::hchi_norm,
+                                            stoexptsfchi,
+                                            tmppolyexptsfchi,
+                                            npw,
+                                            npwx,
+                                            perbands_sto);
+                    chet.calpolyvec_complex(&stohchi,
+                                            &Stochastic_hchi::hchi_norm,
+                                            stoexptsmfchi,
+                                            tmppolyexptsmfchi,
+                                            npw,
+                                            npwx,
+                                            perbands_sto);
+                    chemt.calpolyvec_complex(&stohchi,
+                                             &Stochastic_hchi::hchi_norm,
+                                             stoexpmtsfchi,
+                                             tmppolyexpmtsfchi,
+                                             npw,
+                                             npwx,
+                                             perbands_sto);
+                    chemt.calpolyvec_complex(&stohchi,
+                                             &Stochastic_hchi::hchi_norm,
+                                             stoexpmtsmfchi,
+                                             tmppolyexpmtsmfchi,
+                                             npw,
+                                             npwx,
+                                             perbands_sto);
                 }
 
                 std::complex<double>* tmpcoef = batchcoef.data() + (it - 1) % nbatch * cond_nche;
@@ -737,33 +902,105 @@ void Sto_EleCond::sKG(const int& smear_type, const double& fwhmin, const double&
                 const int M = perbands_sto * npwx;
                 const int N = cond_nche;
                 const int inc = 1;
-                zgemv_(&transa, &M, &N, &ModuleBase::ONE, tmppolyexptsfchi, &LDA, tmpcoef, &inc, &ModuleBase::ZERO,
-                       stoexptsfchi, &inc);
-                zgemv_(&transa, &M, &N, &ModuleBase::ONE, tmppolyexptsmfchi, &LDA, tmpcoef, &inc, &ModuleBase::ZERO,
-                       stoexptsmfchi, &inc);
-                zgemv_(&transa, &M, &N, &ModuleBase::ONE, tmppolyexpmtsfchi, &LDA, tmpmcoef, &inc, &ModuleBase::ZERO,
-                       stoexpmtsfchi, &inc);
-                zgemv_(&transa, &M, &N, &ModuleBase::ONE, tmppolyexpmtsmfchi, &LDA, tmpmcoef, &inc, &ModuleBase::ZERO,
-                       stoexpmtsmfchi, &inc);
+                zgemv_(&transa,
+                       &M,
+                       &N,
+                       &ModuleBase::ONE,
+                       tmppolyexptsfchi,
+                       &LDA,
+                       tmpcoef,
+                       &inc,
+                       &ModuleBase::ZERO,
+                       stoexptsfchi,
+                       &inc);
+                zgemv_(&transa,
+                       &M,
+                       &N,
+                       &ModuleBase::ONE,
+                       tmppolyexptsmfchi,
+                       &LDA,
+                       tmpcoef,
+                       &inc,
+                       &ModuleBase::ZERO,
+                       stoexptsmfchi,
+                       &inc);
+                zgemv_(&transa,
+                       &M,
+                       &N,
+                       &ModuleBase::ONE,
+                       tmppolyexpmtsfchi,
+                       &LDA,
+                       tmpmcoef,
+                       &inc,
+                       &ModuleBase::ZERO,
+                       stoexpmtsfchi,
+                       &inc);
+                zgemv_(&transa,
+                       &M,
+                       &N,
+                       &ModuleBase::ONE,
+                       tmppolyexpmtsmfchi,
+                       &LDA,
+                       tmpmcoef,
+                       &inc,
+                       &ModuleBase::ZERO,
+                       stoexpmtsmfchi,
+                       &inc);
             }
             ModuleBase::timer::tick("Sto_EleCond", "evolution");
 
             // calculate i<\psi|sqrt(f) exp(-iHt/2)*J*exp(iHt/2) sqrt(1-f)|\psi>^+
             //         = i<\psi|sqrt(1-f) exp(-iHt/2)*J*exp(iHt/2) sqrt(f)|\psi>
-            cal_jmatrix(*kspsi_all, f_vkspsi, en.data(), en_all, nullptr, nullptr, exptsmfchi, exptsfchi, tmphchil,
-                        batch_vchi, batch_vhchi,
+            cal_jmatrix(*kspsi_all,
+                        f_vkspsi,
+                        en.data(),
+                        en_all,
+                        nullptr,
+                        nullptr,
+                        exptsmfchi,
+                        exptsfchi,
+                        tmphchil,
+                        batch_vchi,
+                        batch_vhchi,
 #ifdef __MPI
-                        chi_all, hchi_all, (void*)&ks_fact, (void*)&sto_npwx,
+                        chi_all,
+                        hchi_all,
+                        (void*)&ks_fact,
+                        (void*)&sto_npwx,
 #endif
-                        bsize_psi, j1l, j2l, velop, ik, ModuleBase::IMAG_UNIT, bandsinfo);
+                        bsize_psi,
+                        j1l,
+                        j2l,
+                        velop,
+                        ik,
+                        ModuleBase::IMAG_UNIT,
+                        bandsinfo);
 
             // calculate <\psi|sqrt(1-f) exp(iHt/2)*J*exp(-iHt/2) sqrt(f)|\psi>
-            cal_jmatrix(*kspsi_all, f_vkspsi, en.data(), en_all, expmtmf_fact.data(), expmtf_fact.data(), expmtsmfchi,
-                        expmtsfchi, tmphchil, batch_vchi, batch_vhchi,
+            cal_jmatrix(*kspsi_all,
+                        f_vkspsi,
+                        en.data(),
+                        en_all,
+                        expmtmf_fact.data(),
+                        expmtf_fact.data(),
+                        expmtsmfchi,
+                        expmtsfchi,
+                        tmphchil,
+                        batch_vchi,
+                        batch_vhchi,
 #ifdef __MPI
-                        chi_all, hchi_all, (void*)&ks_fact, (void*)&sto_npwx,
+                        chi_all,
+                        hchi_all,
+                        (void*)&ks_fact,
+                        (void*)&sto_npwx,
 #endif
-                        bsize_psi, j1r, j2r, velop, ik, ModuleBase::ONE, bandsinfo);
+                        bsize_psi,
+                        j1r,
+                        j2r,
+                        velop,
+                        ik,
+                        ModuleBase::ONE,
+                        bandsinfo);
 
             // prepare for parallel
             int num_per = parajmat.num_per;
