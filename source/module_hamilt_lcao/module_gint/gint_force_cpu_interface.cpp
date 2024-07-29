@@ -17,12 +17,12 @@ void Gint::cpu_force_interface(Gint_inout* inout) {
 #pragma omp parallel private(fvl_dphi_thread, svl_dphi_thread)
 {
     if (inout->isforce) {
-        fvl_dphi_thread.create(inout->fvl_dphi->nr, inout->fvl_dphi->nc);
-        fvl_dphi_thread.zero_out();
+        fvl_dphi_thread->create(inout->fvl_dphi->nr, inout->fvl_dphi->nc);
+        fvl_dphi_thread->zero_out();
     }
     if (inout->isstress) {
-        svl_dphi_thread.create(inout->svl_dphi->nr, inout->svl_dphi->nc);
-        svl_dphi_thread.zero_out();
+        svl_dphi_thread->create(inout->svl_dphi->nr, inout->svl_dphi->nc);
+        svl_dphi_thread->zero_out();
     }
 #pragma omp for
 #endif
@@ -129,10 +129,10 @@ void Gint::cpu_force_interface(Gint_inout* inout) {
 #pragma omp critical(gint)
     {
         if (inout->isforce) {
-            inout->fvl_dphi[0] += fvl_dphi_thread;
+            inout->fvl_dphi[0] += fvl_dphi_thread[0];
         }
         if (inout->isstress) {
-            inout->svl_dphi[0] += svl_dphi_thread;
+            inout->svl_dphi[0] += svl_dphi_thread[0];
         }
     }
 }
