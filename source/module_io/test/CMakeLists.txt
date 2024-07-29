@@ -103,7 +103,7 @@ AddTest(
 AddTest(
   TARGET io_output_log_test
   LIBS base ${math_libs} device
-  SOURCES ../output_log.cpp outputlog_test.cpp
+  SOURCES ../output_log.cpp outputlog_test.cpp ../../module_basis/module_pw/test/test_tool.cpp
 )
 
 AddTest(

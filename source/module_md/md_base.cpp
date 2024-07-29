@@ -79,7 +79,7 @@ void MD_base::first_half(std::ofstream& ofs)
 }
 
 
-void MD_base::second_half(void)
+void MD_base::second_half()
 {
     update_vel(force);
 

@@ -1,10 +1,12 @@
 #ifndef __WRITE_VXC_H_
 #define __WRITE_VXC_H_
 #include "module_base/parallel_reduce.h"
+#include "module_base/module_container/base/third_party/blas.h"
 #include "module_base/scalapack_connector.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_dftu_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/veff_lcao.h"
 #include "module_psi/psi.h"
+#include "module_io/write_HS.h"
 
 #ifndef TGINT_H
 #define TGINT_H
@@ -37,7 +39,7 @@ inline void gint_vl(Gint_k& gk, Gint_inout& io, ModuleBase::matrix& wg)
     gk.cal_gint(&io);
 };
 
-void set_para2d_MO(const Parallel_Orbitals& pv, const int nbands, Parallel_2D& p2d)
+inline void set_para2d_MO(const Parallel_Orbitals& pv, const int nbands, Parallel_2D& p2d)
 {
     std::ofstream ofs;
 #ifdef __MPI
@@ -47,154 +49,39 @@ void set_para2d_MO(const Parallel_Orbitals& pv, const int nbands, Parallel_2D& p
 #endif
 }
 
-std::vector<std::complex<double>> cVc(std::complex<double>* V,
-                                      std::complex<double>* c,
-                                      int nbasis,
-                                      int nbands,
-                                      const Parallel_Orbitals& pv,
-                                      const Parallel_2D& p2d)
+template <typename T>
+inline std::vector<T> cVc(T* V,
+    T* c,
+    const int nbasis,
+    const int nbands,
+    const Parallel_Orbitals& pv,
+    const Parallel_2D& p2d)
 {
-    std::vector<std::complex<double>> Vc(pv.nloc_wfc, 0.0);
+    std::vector<T> Vc(pv.nloc_wfc, 0.0);
     char transa = 'N';
     char transb = 'N';
-    const std::complex<double> alpha(1.0, 0.0);
-    const std::complex<double> beta(0.0, 0.0);
+    const T alpha = (T)1.0;
+    const T beta = (T)0.0;
 #ifdef __MPI
     const int i1 = 1;
-    pzgemm_(&transa,
-            &transb,
-            &nbasis,
-            &nbands,
-            &nbasis,
-            &alpha,
-            V,
-            &i1,
-            &i1,
-            pv.desc,
-            c,
-            &i1,
-            &i1,
-            pv.desc_wfc,
-            &beta,
-            Vc.data(),
-            &i1,
-            &i1,
-            pv.desc_wfc);
+    ScalapackConnector::gemm(transa, transb,
+        nbasis, nbands, nbasis,
+        alpha, V, i1, i1, pv.desc,
+        c, i1, i1, pv.desc_wfc,
+        beta, Vc.data(), i1, i1, pv.desc_wfc);
 #else
-    zgemm_(&transa, &transb, &nbasis, &nbands, &nbasis, &alpha, V, &nbasis, c, &nbasis, &beta, Vc.data(), &nbasis);
+    container::BlasConnector::gemm(transa, transb, nbasis, nbands, nbasis, alpha, V, nbasis, c, nbasis, beta, Vc.data(), nbasis);
 #endif
-    std::vector<std::complex<double>> cVc(p2d.nloc, 0.0);
-    transa = 'C';
+    std::vector<T> cVc(p2d.nloc, 0.0);
+    transa = (std::is_same<T, double>::value ? 'T' : 'C');
 #ifdef __MPI
-    pzgemm_(&transa,
-            &transb,
-            &nbands,
-            &nbands,
-            &nbasis,
-            &alpha,
-            c,
-            &i1,
-            &i1,
-            pv.desc_wfc,
-            Vc.data(),
-            &i1,
-            &i1,
-            pv.desc_wfc,
-            &beta,
-            cVc.data(),
-            &i1,
-            &i1,
-            p2d.desc);
+    ScalapackConnector::gemm(transa, transb,
+        nbands, nbands, nbasis,
+        alpha, c, i1, i1, pv.desc_wfc,
+        Vc.data(), i1, i1, pv.desc_wfc,
+        beta, cVc.data(), i1, i1, p2d.desc);
 #else
-    zgemm_(&transa,
-           &transb,
-           &nbands,
-           &nbands,
-           &nbasis,
-           &alpha,
-           c,
-           &nbasis,
-           Vc.data(),
-           &nbasis,
-           &beta,
-           cVc.data(),
-           &nbasis);
-#endif
-    return cVc;
-}
-
-std::vector<double> cVc(double* V,
-                        double* c,
-                        int nbasis,
-                        int nbands,
-                        const Parallel_Orbitals& pv,
-                        const Parallel_2D& p2d)
-{
-    std::vector<double> Vc(pv.nloc_wfc, 0.0);
-    char transa = 'N';
-    char transb = 'N';
-    const double alpha = 1.0;
-    const double beta = 0.0;
-#ifdef __MPI
-    const int i1 = 1;
-    pdgemm_(&transa,
-            &transb,
-            &nbasis,
-            &nbands,
-            &nbasis,
-            &alpha,
-            V,
-            &i1,
-            &i1,
-            pv.desc,
-            c,
-            &i1,
-            &i1,
-            pv.desc_wfc,
-            &beta,
-            Vc.data(),
-            &i1,
-            &i1,
-            pv.desc_wfc);
-#else
-    dgemm_(&transa, &transb, &nbasis, &nbands, &nbasis, &alpha, V, &nbasis, c, &nbasis, &beta, Vc.data(), &nbasis);
-#endif
-    std::vector<double> cVc(p2d.nloc, 0.0);
-    transa = 'T';
-#ifdef __MPI
-    pdgemm_(&transa,
-            &transb,
-            &nbands,
-            &nbands,
-            &nbasis,
-            &alpha,
-            c,
-            &i1,
-            &i1,
-            pv.desc_wfc,
-            Vc.data(),
-            &i1,
-            &i1,
-            pv.desc_wfc,
-            &beta,
-            cVc.data(),
-            &i1,
-            &i1,
-            p2d.desc);
-#else
-    dgemm_(&transa,
-           &transb,
-           &nbands,
-           &nbands,
-           &nbasis,
-           &alpha,
-           c,
-           &nbasis,
-           Vc.data(),
-           &nbasis,
-           &beta,
-           cVc.data(),
-           &nbasis);
+    container::BlasConnector::gemm(transa, transb, nbands, nbands, nbasis, alpha, c, nbasis, Vc.data(), nbasis, beta, cVc.data(), nbasis);
 #endif
     return cVc;
 }
@@ -266,12 +153,36 @@ void set_gint_pointer<std::complex<double>>(Gint_Gamma& gint_gamma,
     gint = &gint_k;
 }
 
+inline void write_orb_energy(const K_Vectors& kv,
+    const int nspin0, const int nbands,
+    const std::vector<std::vector<double>>& e_orb,
+    const std::string& term, const std::string& label, const bool app = false)
+{
+    assert(e_orb.size() == kv.get_nks());
+    const int nk = kv.get_nks() / nspin0;
+    std::ofstream ofs;
+    ofs.open(GlobalV::global_out_dir + term + "_" + (label == "" ? "out.dat" : label + "_out.dat"),
+        app ? std::ios::app : std::ios::out);
+    ofs << nk << "\n" << nspin0 << "\n" << nbands << "\n";
+    ofs << std::scientific << std::setprecision(16);
+    for (int ik = 0; ik < nk; ++ik)
+    {
+        for (int is = 0; is < nspin0; ++is)
+        {
+            for (auto e : e_orb[is * nk + ik])
+            { // Hartree and eV
+                ofs << e / 2. << "\t" << e * ModuleBase::Ry_to_eV << "\n";
+            }
+        }
+    }
+}
+
 /// @brief  write the Vxc matrix in KS orbital representation, usefull for GW calculation
 /// including terms: local/semi-local XC, EXX, DFTU
 template <typename TK, typename TR>
-void write_Vxc(int nspin,
-    int nbasis,
-    int drank,
+void write_Vxc(const int nspin,
+    const int nbasis,
+    const int drank,
     const Parallel_Orbitals* pv,
     const psi::Psi<TK>& psi,
     const UnitCell& ucell,
@@ -308,9 +219,7 @@ void write_Vxc(int nspin,
     // R (the number of hR: 1 for nspin=1, 4; 2 for nspin=2)
     int nspin0 = (nspin == 2) ? 2 : 1;
     std::vector<hamilt::HContainer<TR>> vxcs_R_ao(nspin0, hamilt::HContainer<TR>(pv));
-    for (int is = 0; is < nspin0; ++is) {
-        vxcs_R_ao[is].set_zero();
-}
+    for (int is = 0; is < nspin0; ++is) { vxcs_R_ao[is].set_zero(); }
     // k (size for each k-point)
     hamilt::HS_Matrix_K<TK> vxc_k_ao(pv, 1); // only hk is needed, sk is skipped
 
@@ -409,36 +318,15 @@ void write_Vxc(int nspin,
     {
         delete vxcs_op_ao[is];
     }
-    // write the orbital energy for xc and exx in LibRPA format
-    auto write_orb_energy = [&kv, &nspin0, &nbands](const std::vector<std::vector<double>>& e_orb,
-                                                    const std::string& label,
-                                                    const bool app = false) {
-        assert(e_orb.size() == kv.get_nks());
-        const int nk = kv.get_nks() / nspin0;
-        std::ofstream ofs;
-        ofs.open(GlobalV::global_out_dir + "vxc_" + (label == "" ? "out" : label + "_out"),
-                 app ? std::ios::app : std::ios::out);
-        ofs << nk << "\n" << nspin0 << "\n" << nbands << "\n";
-        ofs << std::scientific << std::setprecision(16);
-        for (int ik = 0; ik < nk; ++ik)
-        {
-            for (int is = 0; is < nspin0; ++is)
-            {
-                for (auto e: e_orb[is * nk + ik])
-                { // Hartree and eV
-                    ofs << e / 2. << "\t" << e * ModuleBase::Ry_to_eV << "\n";
-                }
-            }
-        }
-    };
+
     if (GlobalV::MY_RANK == 0)
     {
-        write_orb_energy(e_orb_tot, "");
+        write_orb_energy(kv, nspin0, nbands, e_orb_tot, "vxc", "");
 #ifdef __EXX
         if (GlobalC::exx_info.info_global.cal_exx)
         {
-            write_orb_energy(e_orb_locxc, "local");
-            write_orb_energy(e_orb_exx, "exx");
+            write_orb_energy(kv, nspin0, nbands, e_orb_locxc, "vxc", "local");
+            write_orb_energy(kv, nspin0, nbands, e_orb_exx, "vxc", "exx");
         }
 #endif
     }

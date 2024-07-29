@@ -5,6 +5,7 @@
 #include "module_hamilt_lcao/module_gint/gint.h"
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
+#include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 #include "module_psi/psi.h"
 
 #include <module_base/complexmatrix.h>
@@ -57,8 +58,10 @@ class IState_Charge
     // For multi-k
     void begin(Gint_k& gk,
                double** rho,
+               std::complex<double>** rhog,
                const ModuleBase::matrix& wg,
                const std::vector<double>& ef_all_spin,
+               const ModulePW::PW_Basis* rho_pw,
                const int rhopw_nrxx,
                const int rhopw_nplane,
                const int rhopw_startz_current,
@@ -77,10 +80,12 @@ class IState_Charge
                const std::string& global_out_dir,
                const int my_rank,
                std::ofstream& ofs_warning,
-               const UnitCell* ucell_in,
+               UnitCell* ucell_in,
                Grid_Driver* GridD_in,
                const K_Vectors& kv,
-               const bool if_separate_k);
+               const bool if_separate_k,
+               Parallel_Grid* Pgrid,
+               const int ngmc);
 
   private:
     /**

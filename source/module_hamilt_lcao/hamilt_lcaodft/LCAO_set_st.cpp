@@ -362,7 +362,7 @@ void build_ST_new(ForceStressArrays& fsr,
             {
                 for (int k = 0; k < 3; k++)
                 {
-                    tau1[k] = tau1[k] - atom1->vel[I1][k] * PARAM.mdp.md_dt / ucell.lat0;
+                    tau1[k] = tau1[k] - atom1->vel[I1][k] * PARAM.mdp.md_dt / ModuleBase::AU_to_FS / ucell.lat0;
                 }
             }
 

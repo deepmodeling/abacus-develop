@@ -43,7 +43,7 @@ TEST(PropagatorTest, testPropagatorTaylor)
     dim[0] = nprow;
     dim[1] = npcol;
 
-    PARAM.input.mdp.md_dt = 4;
+    PARAM.input.mdp.md_dt = 4 * ModuleBase::AU_to_FS;
 
     // Initialize input matrices
     int info;
@@ -76,7 +76,7 @@ TEST(PropagatorTest, testPropagatorTaylor)
 
     // Call the function
     int propagator = 1;
-    module_tddft::Propagator prop(propagator, pv);
+    module_tddft::Propagator prop(propagator, pv, PARAM.mdp.md_dt);
     prop.compute_propagator(nlocal, Stmp, Htmp, nullptr, U_operator, print_matrix);
 
     // Check the results

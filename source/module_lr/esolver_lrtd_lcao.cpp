@@ -140,8 +140,8 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
     // setup_wd_division is not need to be covered in #ifdef __MPI, see its implementation
     LR_Util::setup_2d_division(this->paraMat_, 1, this->nbasis, this->nbasis);
 
-    this->paraMat_.atom_begin_row = std::move(ks_sol.ParaV.atom_begin_row);
-    this->paraMat_.atom_begin_col = std::move(ks_sol.ParaV.atom_begin_col);
+    this->paraMat_.atom_begin_row = std::move(ks_sol.pv.atom_begin_row);
+    this->paraMat_.atom_begin_col = std::move(ks_sol.pv.atom_begin_col);
     this->paraMat_.iat2iwt_ = ucell.get_iat2iwt();
 
     LR_Util::setup_2d_division(this->paraC_, 1, this->nbasis, this->nbands
@@ -165,7 +165,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
         const int start_band = this->nocc_max - this->nocc;
         for (int ik = 0;ik < this->kv.get_nks();++ik)
         {
-            Cpxgemr2d(this->nbasis, this->nbands, &(*ks_sol.psi)(ik, 0, 0), 1, start_band + 1, ks_sol.ParaV.desc_wfc,
+            Cpxgemr2d(this->nbasis, this->nbands, &(*ks_sol.psi)(ik, 0, 0), 1, start_band + 1, ks_sol.pv.desc_wfc,
                 &(*this->psi_ks)(ik, 0, 0), 1, 1, this->paraC_.desc, this->paraC_.blacs_ctxt);
             for (int ib = 0;ib < this->nbands;++ib) { this->eig_ks(ik, ib) = ks_sol.pelec->ekb(ik, start_band + ib); }
         }

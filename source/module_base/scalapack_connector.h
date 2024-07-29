@@ -180,7 +180,21 @@ public:
 		pzgeadd_(&transa, &m, &n, &alpha, a, &ia, &ja, desca, &beta, c, &ic, &jc, descc);
 	}
 
-	static inline
+    static inline
+        void gemm(
+            const char transa, const char transb,
+            const int M, const int N, const int K,
+            const double alpha,
+            const double* A, const int IA, const int JA, const int* DESCA,
+            const double* B, const int IB, const int JB, const int* DESCB,
+            const double beta,
+            double* C, const int IC, const int JC, const int* DESCC)
+    {
+        pdgemm_(&transa, &transb, &M, &N, &K, &alpha, A, &IA, &JA, DESCA,
+            B, &IB, &JB, DESCB, &beta, C, &IC, &JC, DESCC);
+    }
+
+    static inline
 	void gemm(
 		const char transa, const char transb,
 		const int M, const int N, const int K,

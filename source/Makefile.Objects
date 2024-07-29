@@ -185,8 +185,8 @@ OBJS_CELL=atom_pseudo.o\
     print_cif.o\
 
 OBJS_DEEPKS=LCAO_deepks.o\
-        LCAO_deepks_fgamma.o\
-        LCAO_deepks_fk.o\
+        deepks_fgamma.o\
+        deepks_fk.o\
         LCAO_deepks_odelta.o\
         LCAO_deepks_io.o\
         LCAO_deepks_mpi.o\
@@ -194,7 +194,7 @@ OBJS_DEEPKS=LCAO_deepks.o\
         LCAO_deepks_psialpha.o\
         LCAO_deepks_torch.o\
         LCAO_deepks_vdelta.o\
-        LCAO_deepks_hmat.o\
+        deepks_hmat.o\
         LCAO_deepks_interface.o\
         orbital_precalc.o\
         orbital_precalc_k.o\
@@ -240,12 +240,26 @@ OBJS_ESOLVER=esolver.o\
     esolver_of.o\
     esolver_of_tool.o\
     esolver_of_interface.o\
+    print_funcs.o\
+    pw_fun.o\
+    pw_init_after_vc.o\
+    pw_init_globalc.o\
+    pw_nscf.o\
+    pw_others.o\
 
 OBJS_ESOLVER_LCAO=esolver_ks_lcao.o\
-      esolver_ks_lcao_elec.o\
       esolver_ks_lcao_tddft.o\
-      esolver_ks_lcao_tmpfunc.o\
+      dpks_cal_e_delta_band.o\
+      dftu_cal_occup_m.o\
       io_npz.o\
+      set_matrix_grid.o\
+      lcao_before_scf.o\
+      lcao_gets.o\
+      lcao_nscf.o\
+      lcao_others.o\
+      lcao_init_after_vc.o\
+      lcao_fun.o\
+      cal_edm_tddft.o\
 
 OBJS_GINT=gint.o\
       gint_gamma_env.o\
@@ -515,8 +529,8 @@ OBJS_IO_LCAO=cal_r_overlap_R.o\
       write_proj_band_lcao.o\
       write_istate_info.o\
       nscf_fermi_surf.o\
-      istate_charge.o\
-      istate_envelope.o\
+      get_pchg.o\
+      get_wf.o\
       io_dmk.o\
       unk_overlap_lcao.o\
       read_wfc_nao.o\

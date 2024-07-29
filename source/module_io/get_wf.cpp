@@ -1,4 +1,4 @@
-#include "istate_envelope.h"
+#include "get_wf.h"
 
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
@@ -112,7 +112,7 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
         int length = std::min(static_cast<int>(out_band_kb.size()), nbands);
         for (int i = 0; i < length; ++i)
         {
-            // out_band_kb rely on function parse_expression from input_conv.cpp
+            // out_band_kb rely on function parse_expression
             bands_picked_[i] = out_band_kb[i];
         }
 
@@ -347,7 +347,7 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
         int length = std::min(static_cast<int>(out_band_kb.size()), nbands);
         for (int i = 0; i < length; ++i)
         {
-            // out_band_kb rely on function parse_expression from input_conv.cpp
+            // out_band_kb rely on function parse_expression
             bands_picked_[i] = out_band_kb[i];
         }
 
