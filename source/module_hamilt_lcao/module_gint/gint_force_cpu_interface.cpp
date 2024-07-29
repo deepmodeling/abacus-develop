@@ -11,18 +11,18 @@ void Gint::cpu_force_interface(Gint_inout* inout) {
     const int ncyz = this->ny * this->nplane;
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
-    ModuleBase::matrix fvl_dphi_thread=*inout->fvl_dphi;
-    ModuleBase::matrix svl_dphi_thread=*inout->svl_dphi;
+    ModuleBase::matrix* fvl_dphi_thread=inout->fvl_dphi;
+    ModuleBase::matrix* svl_dphi_thread=inout->svl_dphi;
 #ifdef _OPENMP
 #pragma omp parallel private(fvl_dphi_thread, svl_dphi_thread)
 {
     if (inout->isforce) {
-        fvl_dphi_thread.create(inout->fvl_dphi->nr, inout->fvl_dphi->nc);
-        fvl_dphi_thread.zero_out();
+        fvl_dphi_thread=new ModuleBase::matrix(*inout->fvl_dphi);
+        fvl_dphi_thread->zero_out();
     }
     if (inout->isstress) {
-        svl_dphi_thread.create(inout->svl_dphi->nr, inout->svl_dphi->nc);
-        svl_dphi_thread.zero_out();
+        svl_dphi_thread=new ModuleBase::matrix(*inout->svl_dphi);
+        svl_dphi_thread->zero_out();
     }
 #pragma omp for
 #endif
@@ -41,9 +41,9 @@ void Gint::cpu_force_interface(Gint_inout* inout) {
                                     ncyz,
                                     dv);
          //prepare block information
-        int* block_iw=nullptr;
-        int* block_index=nullptr;
-        int* block_size=nullptr;
+        int* block_iw;
+        int* block_index;
+        int* block_size;
         bool** cal_flag;
         Gint_Tools::get_block_info(*this->gridt, this->bxyz, na_grid, grid_index, block_iw, block_index, block_size, cal_flag);
         int LD_pool = block_index[na_grid];
@@ -58,8 +58,8 @@ void Gint::cpu_force_interface(Gint_inout* inout) {
             psir_ylm.get_ptr_2D(), dpsir_ylm_x.get_ptr_2D(), dpsir_ylm_y.get_ptr_2D(), dpsir_ylm_z.get_ptr_2D());
 
     //calculating f_mu(r) = v(r)*psi_mu(r)*dv
-        const ModuleBase::Array_Pool<double> psir_vlbr3 
-            = Gint_Tools::get_psir_vlbr3(this->bxyz, na_grid, LD_pool, block_index, cal_flag, vldr3, psir_ylm.get_ptr_2D());
+        const ModuleBase::Array_Pool<double> psir_vlbr3 = Gint_Tools::get_psir_vlbr3(this->bxyz, na_grid, LD_pool, block_index, 
+                                                                                    cal_flag, vldr3, psir_ylm.get_ptr_2D());
 
         ModuleBase::Array_Pool<double> psir_vlbr3_DM(this->bxyz, LD_pool);
         ModuleBase::GlobalFunc::ZEROS(psir_vlbr3_DM.get_ptr_1D(), this->bxyz*LD_pool);
@@ -96,7 +96,7 @@ void Gint::cpu_force_interface(Gint_inout* inout) {
             //do integration to get force
             this-> cal_meshball_force(grid_index, na_grid, block_size, block_index,psir_vlbr3_DM.get_ptr_2D(), 
                                         dpsir_ylm_x.get_ptr_2D(), dpsir_ylm_y.get_ptr_2D(), dpsir_ylm_z.get_ptr_2D(),
-                                        &fvl_dphi_thread);
+                                        fvl_dphi_thread);
         }
         if(inout->isstress)
         {
@@ -111,7 +111,7 @@ void Gint::cpu_force_interface(Gint_inout* inout) {
 
             //do integration to get stress
             this-> cal_meshball_stress(na_grid, block_index, psir_vlbr3_DM.get_ptr_1D(), 
-                                        dpsirr_ylm.get_ptr_1D(), &svl_dphi_thread);
+                                        dpsirr_ylm.get_ptr_1D(), svl_dphi_thread);
         }
 
     //release memories
@@ -129,10 +129,12 @@ void Gint::cpu_force_interface(Gint_inout* inout) {
 #pragma omp critical(gint)
     {
         if (inout->isforce) {
-            inout->fvl_dphi[0] += fvl_dphi_thread;
+            inout->fvl_dphi[0] += fvl_dphi_thread[0];
+            delete fvl_dphi_thread;
         }
         if (inout->isstress) {
-            inout->svl_dphi[0] += svl_dphi_thread;
+            inout->svl_dphi[0] += svl_dphi_thread[0];
+            delete svl_dphi_thread;
         }
     }
 }
