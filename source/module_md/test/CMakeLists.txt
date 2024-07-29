@@ -4,7 +4,6 @@ remove_definitions(-DUSE_PAW)
 
 list(APPEND depend_files 
   ../md_func.cpp
-  ../../module_io/input.cpp
   ../../module_cell/unitcell.cpp
   ../../module_cell/atom_spec.cpp
   ../../module_cell/atom_pseudo.cpp

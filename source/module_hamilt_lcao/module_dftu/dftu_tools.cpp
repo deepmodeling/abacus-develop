@@ -12,14 +12,14 @@ void DFTU::cal_VU_pot_mat_complex(const int spin, const bool newlocale, std::com
 
     for (int it = 0; it < GlobalC::ucell.ntype; ++it)
     {
-        if (INPUT.orbital_corr[it] == -1)
+        if (PARAM.inp.orbital_corr[it] == -1)
             continue;
         for (int ia = 0; ia < GlobalC::ucell.atoms[it].na; ia++)
         {
             const int iat = GlobalC::ucell.itia2iat(it, ia);
             for (int L = 0; L <= GlobalC::ucell.atoms[it].nwl; L++)
             {
-                if (L != INPUT.orbital_corr[it])
+                if (L != PARAM.inp.orbital_corr[it])
                     continue;
 
                 for (int n = 0; n < GlobalC::ucell.atoms[it].l_nchi[L]; n++)
@@ -68,14 +68,14 @@ void DFTU::cal_VU_pot_mat_real(const int spin, const bool newlocale, double* VU)
 
     for (int it = 0; it < GlobalC::ucell.ntype; ++it)
     {
-        if (INPUT.orbital_corr[it] == -1)
+        if (PARAM.inp.orbital_corr[it] == -1)
             continue;
         for (int ia = 0; ia < GlobalC::ucell.atoms[it].na; ia++)
         {
             const int iat = GlobalC::ucell.itia2iat(it, ia);
             for (int L = 0; L <= GlobalC::ucell.atoms[it].nwl; L++)
             {
-                if (L != INPUT.orbital_corr[it])
+                if (L != PARAM.inp.orbital_corr[it])
                     continue;
 
                 for (int n = 0; n < GlobalC::ucell.atoms[it].l_nchi[L]; n++)

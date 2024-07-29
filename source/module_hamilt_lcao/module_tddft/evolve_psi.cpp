@@ -8,7 +8,6 @@
 #include "module_base/scalapack_connector.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_io/input.h"
 #include "norm_psi.h"
 #include "propagator.h"
 #include "upsi.h"

@@ -6,7 +6,6 @@
 #include "module_esolver/esolver.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/cal_test.h"
-#include "module_io/input.h"
 #include "module_io/input_conv.h"
 #include "module_io/para_json.h"
 #include "module_io/print_info.h"
@@ -132,7 +131,6 @@ void Driver::reading()
     read_input.write_parameters(PARAM, ss1.str());
 
     // (*temp*) copy the variables from INPUT to each class
-    Input_Conv::tmp_convert();
     Input_Conv::Convert();
 
     // (4) define the 'DIAGONALIZATION' world in MPI

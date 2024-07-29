@@ -138,9 +138,9 @@ void DFTU::cal_slater_UJ(double** rho, const int& nrxx)
         {
             const int N = GlobalC::ucell.atoms[T].l_nchi[L];
 
-            if (L >= INPUT.orbital_corr[T] && INPUT.orbital_corr[T] != -1)
+            if (L >= PARAM.inp.orbital_corr[T] && PARAM.inp.orbital_corr[T] != -1)
             {
-                if (L != INPUT.orbital_corr[T])
+                if (L != PARAM.inp.orbital_corr[T])
                     continue;
                 this->cal_slater_Fk(L, T);
 

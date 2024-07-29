@@ -38,7 +38,7 @@ Stochastic_Iter::~Stochastic_Iter()
 
 void Stochastic_Iter::init(const int method_in, K_Vectors* pkv_in, ModulePW::PW_Basis_K* wfc_basis, Stochastic_WF& stowf)
 {
-    p_che = new ModuleBase::Chebyshev<double>(INPUT.nche_sto);
+    p_che = new ModuleBase::Chebyshev<double>(PARAM.inp.nche_sto);
     nchip = stowf.nchip;
     targetne = GlobalV::nelec;
     this->pkv = pkv_in;
