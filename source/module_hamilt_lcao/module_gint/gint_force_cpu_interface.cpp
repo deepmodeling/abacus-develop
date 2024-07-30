@@ -12,14 +12,6 @@ void Gint::gint_kernel_force(Gint_inout* inout) {
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
 
-    // int block_iw[max_size];
-    // int block_index[max_size+1];
-    // int block_size[max_size];
-    // double vldr3[this->bxyz];
-    // ModuleBase::GlobalFunc::ZEROS(block_iw, max_size);
-    // ModuleBase::GlobalFunc::ZEROS(block_index, max_size+1);
-    // ModuleBase::GlobalFunc::ZEROS(block_size, max_size);
-    // ModuleBase::GlobalFunc::ZEROS(vldr3, this->bxyz);
     std::vector<int> block_iw(max_size,0);
     std::vector<int> block_index(max_size+1,0);
     std::vector<int> block_size(max_size,0);
@@ -38,10 +30,10 @@ void Gint::gint_kernel_force(Gint_inout* inout) {
         svl_dphi_thread=new ModuleBase::matrix(*inout->svl_dphi);
         svl_dphi_thread->zero_out();
     }
-    block_iw.resize(max_size,0);
-    block_index.resize(max_size+1,0);
-    block_size.resize(max_size,0);
-    vldr3.resize(this->bxyz,0.0);
+    block_iw.assign(max_size,0);
+    block_index.assign(max_size+1,0);
+    block_size.assign(max_size,0);
+    vldr3.assign(this->bxyz,0.0);
 #pragma omp for
 #endif
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
@@ -164,16 +156,6 @@ void Gint::gint_kernel_force_meta(Gint_inout* inout) {
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
 
-    // int block_iw[max_size];
-    // int block_index[max_size+1];
-    // int block_size[max_size];
-    // double vldr3[this->bxyz];
-    // double vkdr3[this->bxyz];
-    // ModuleBase::GlobalFunc::ZEROS(block_iw, max_size);
-    // ModuleBase::GlobalFunc::ZEROS(block_index, max_size+1);
-    // ModuleBase::GlobalFunc::ZEROS(block_size, max_size);
-    // ModuleBase::GlobalFunc::ZEROS(vldr3, this->bxyz);
-    // ModuleBase::GlobalFunc::ZEROS(vkdr3, this->bxyz);
     std::vector<int> block_iw(max_size,0);
     std::vector<int> block_index(max_size+1,0);
     std::vector<int> block_size(max_size,0);
@@ -194,11 +176,11 @@ void Gint::gint_kernel_force_meta(Gint_inout* inout) {
         svl_dphi_thread=new ModuleBase::matrix(*inout->svl_dphi);
         svl_dphi_thread->zero_out();
     }
-    block_iw.resize(max_size,0);
-    block_index.resize(max_size+1,0);
-    block_size.resize(max_size,0);
-    vldr3.resize(this->bxyz,0.0);
-    vkdr3.resize(this->bxyz,0.0);
+    block_iw.assign(max_size,0);
+    block_index.assign(max_size+1,0);
+    block_size.assign(max_size,0);
+    vldr3.assign(this->bxyz,0.0);
+    vkdr3.assign(this->bxyz,0.0);
 #pragma omp for
 #endif
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {

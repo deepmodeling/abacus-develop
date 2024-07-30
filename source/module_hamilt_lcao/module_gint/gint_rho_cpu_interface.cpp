@@ -13,17 +13,17 @@ void Gint::gint_kernel_rho(Gint_inout* inout) {
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
 
-    int block_iw[max_size];
-    int block_index[max_size+1];
-    int block_size[max_size];
-    int vindex[bxyz];
-    ModuleBase::GlobalFunc::ZEROS(block_iw, max_size);
-    ModuleBase::GlobalFunc::ZEROS(block_index, max_size+1);
-    ModuleBase::GlobalFunc::ZEROS(block_size, max_size);
-    ModuleBase::GlobalFunc::ZEROS(vindex, bxyz);
+    std::vector<int> block_iw(max_size, 0);
+    std::vector<int> block_index(max_size+1, 0);
+    std::vector<int> block_size(max_size, 0);
+    std::vector<int> vindex(bxyz, 0);
 #ifdef _OPENMP
 #pragma omp parallel private(block_iw, block_index, block_size,vindex)
 {
+    block_iw.assign(max_size, 0);
+    block_index.assign(max_size+1, 0);
+    block_size.assign(max_size, 0);
+    vindex.assign(bxyz, 0);
 #pragma omp for
 #endif
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
@@ -38,28 +38,28 @@ void Gint::gint_kernel_rho(Gint_inout* inout) {
                                     this->nplane,
                                     this->gridt->start_ind[grid_index],
                                     ncyz,
-                                    vindex);
+                                    vindex.data());
          // prepare block information
         ModuleBase::Array_Pool<bool> cal_flag(this->bxyz,max_size);
         Gint_Tools::get_block_info(*this->gridt,
                                 this->bxyz,
                                 na_grid,
                                 grid_index,
-                                block_iw,
-                                block_index,
-                                block_size,
+                                block_iw.data(),
+                                block_index.data(),
+                                block_size.data(),
                                 cal_flag.get_ptr_2D());
 
     // evaluate psi on grids
-        int LD_pool = block_index[na_grid];
+        int LD_pool = block_index.data()[na_grid];
         ModuleBase::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
         Gint_Tools::cal_psir_ylm(*this->gridt,
                                 this->bxyz,
                                 na_grid,
                                 grid_index,
                                 delta_r,
-                                block_index,
-                                block_size,
+                                block_index.data(),
+                                block_size.data(),
                                 cal_flag.get_ptr_2D(),
                                 psir_ylm.get_ptr_2D());
 
@@ -74,9 +74,9 @@ void Gint::gint_kernel_rho(Gint_inout* inout) {
                                             grid_index,
                                             na_grid,
                                             LD_pool,
-                                            block_iw,
-                                            block_size,
-                                            block_index,
+                                            block_iw.data(),
+                                            block_size.data(),
+                                            block_index.data(),
                                             cal_flag.get_ptr_2D(),
                                             psir_ylm.get_ptr_2D(),
                                             psir_DM.get_ptr_2D(),
@@ -91,8 +91,8 @@ void Gint::gint_kernel_rho(Gint_inout* inout) {
                                         LD_pool,
                                         grid_index,
                                         na_grid,
-                                        block_index,
-                                        block_size,
+                                        block_index.data(),
+                                        block_size.data(),
                                         cal_flag.get_ptr_2D(),
                                         psir_ylm.get_ptr_2D(),
                                         psir_DM.get_ptr_2D(),
@@ -101,7 +101,7 @@ void Gint::gint_kernel_rho(Gint_inout* inout) {
             }
 
             // do sum_mu g_mu(r)psi_mu(r) to get electron density on grid
-            this->cal_meshball_rho(na_grid, block_index, vindex, psir_ylm.get_ptr_2D(), psir_DM.get_ptr_2D(), inout->rho[is]);
+            this->cal_meshball_rho(na_grid, block_index.data(), vindex.data(), psir_ylm.get_ptr_2D(), psir_DM.get_ptr_2D(), inout->rho[is]);
         }
         }
 #ifdef _OPENMP
@@ -122,17 +122,17 @@ void Gint::gint_kernel_tau(Gint_inout* inout) {
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
 
-    int block_iw[max_size];
-    int block_index[max_size+1];
-    int block_size[max_size];
-    int vindex[bxyz];
-    ModuleBase::GlobalFunc::ZEROS(block_iw, max_size);
-    ModuleBase::GlobalFunc::ZEROS(block_index, max_size+1);
-    ModuleBase::GlobalFunc::ZEROS(block_size, max_size);
-    ModuleBase::GlobalFunc::ZEROS(vindex, bxyz);
+    std::vector<int> block_iw(max_size, 0);
+    std::vector<int> block_index(max_size+1, 0);
+    std::vector<int> block_size(max_size, 0);
+    std::vector<int> vindex(bxyz, 0);
 #ifdef _OPENMP
 #pragma omp parallel private(block_iw, block_index, block_size,vindex)
 {
+    block_iw.assign(max_size, 0);
+    block_index.assign(max_size+1, 0);
+    block_size.assign(max_size, 0);
+    vindex.assign(bxyz, 0);
 #pragma omp for
 #endif
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
@@ -148,14 +148,14 @@ void Gint::gint_kernel_tau(Gint_inout* inout) {
                                 this->nplane,
                                 this->gridt->start_ind[grid_index],
                                 ncyz,
-                                vindex);
+                                vindex.data());
         //prepare block information
         ModuleBase::Array_Pool<bool> cal_flag(this->bxyz,max_size);
         Gint_Tools::get_block_info(*this->gridt, this->bxyz, na_grid, grid_index, 
-                                            block_iw, block_index, block_size, cal_flag.get_ptr_2D());
+                                            block_iw.data(), block_index.data(), block_size.data(), cal_flag.get_ptr_2D());
 
     //evaluate psi and dpsi on grids
-        int LD_pool = block_index[na_grid];
+        int LD_pool = block_index.data()[na_grid];
         ModuleBase::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
         ModuleBase::Array_Pool<double> dpsir_ylm_x(this->bxyz, LD_pool);
         ModuleBase::Array_Pool<double> dpsir_ylm_y(this->bxyz, LD_pool);
@@ -163,7 +163,7 @@ void Gint::gint_kernel_tau(Gint_inout* inout) {
 
         Gint_Tools::cal_dpsir_ylm(*this->gridt, 
             this->bxyz, na_grid, grid_index, delta_r,
-            block_index, block_size, 
+            block_index.data(), block_size.data(), 
             cal_flag.get_ptr_2D(),
             psir_ylm.get_ptr_2D(),
             dpsir_ylm_x.get_ptr_2D(),
@@ -184,22 +184,22 @@ void Gint::gint_kernel_tau(Gint_inout* inout) {
             {
                 Gint_Tools::mult_psi_DM_new(
                     *this->gridt,this->bxyz, grid_index, na_grid, LD_pool,
-                    block_iw, block_size,
-                    block_index, cal_flag.get_ptr_2D(),
+                    block_iw.data(), block_size.data(),
+                    block_index.data(), cal_flag.get_ptr_2D(),
                     dpsir_ylm_x.get_ptr_2D(),
                     dpsix_DM.get_ptr_2D(),
                     this->DMRGint[is], 1);
                 Gint_Tools::mult_psi_DM_new(
                     *this->gridt, this->bxyz, grid_index, na_grid, LD_pool,
-                    block_iw, block_size,
-                    block_index, cal_flag.get_ptr_2D(),
+                    block_iw.data(), block_size.data(),
+                    block_index.data(), cal_flag.get_ptr_2D(),
                     dpsir_ylm_y.get_ptr_2D(),
                     dpsiy_DM.get_ptr_2D(),
                     this->DMRGint[is], 1);	
                 Gint_Tools::mult_psi_DM_new(
                     *this->gridt, this->bxyz, grid_index, na_grid, LD_pool,
-                    block_iw, block_size,
-                    block_index, cal_flag.get_ptr_2D(),
+                    block_iw.data(), block_size.data(),
+                    block_index.data(), cal_flag.get_ptr_2D(),
                     dpsir_ylm_z.get_ptr_2D(),
                     dpsiz_DM.get_ptr_2D(),
                     this->DMRGint[is], 1);
@@ -210,7 +210,7 @@ void Gint::gint_kernel_tau(Gint_inout* inout) {
                     *this->gridt, this->bxyz,
                     LD_pool,
                     grid_index, na_grid,
-                    block_index, block_size,
+                    block_index.data(), block_size.data(),
                     cal_flag.get_ptr_2D(), 
                     dpsir_ylm_x.get_ptr_2D(),
                     dpsix_DM.get_ptr_2D(),
@@ -220,7 +220,7 @@ void Gint::gint_kernel_tau(Gint_inout* inout) {
                     *this->gridt, this->bxyz,
                     LD_pool,
                     grid_index, na_grid,
-                    block_index, block_size,
+                    block_index.data(), block_size.data(),
                     cal_flag.get_ptr_2D(),
                     dpsir_ylm_y.get_ptr_2D(),
                     dpsiy_DM.get_ptr_2D(),
@@ -230,7 +230,7 @@ void Gint::gint_kernel_tau(Gint_inout* inout) {
                     *this->gridt, this->bxyz,
                     LD_pool,
                     grid_index, na_grid,
-                    block_index, block_size,
+                    block_index.data(), block_size.data(),
                     cal_flag.get_ptr_2D(), 
                     dpsir_ylm_z.get_ptr_2D(),
                     dpsiz_DM.get_ptr_2D(),
@@ -242,8 +242,8 @@ void Gint::gint_kernel_tau(Gint_inout* inout) {
             if(inout->job==Gint_Tools::job_type::tau)
             {
                 this->cal_meshball_tau(
-                    na_grid, block_index,
-                    vindex,
+                    na_grid, block_index.data(),
+                    vindex.data(),
                     dpsir_ylm_x.get_ptr_2D(), dpsir_ylm_y.get_ptr_2D(), dpsir_ylm_z.get_ptr_2D(),
                     dpsix_DM.get_ptr_2D(), dpsiy_DM.get_ptr_2D(), dpsiz_DM.get_ptr_2D(),
                     inout->rho[is]);
