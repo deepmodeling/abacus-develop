@@ -8,7 +8,6 @@
 #include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
 #include "module_hsolver/hsolver.h"
 #include "module_io/cal_test.h"
-#include "module_io/output_potential.h"
 #include "module_psi/psi.h"
 
 #include <fstream>
@@ -103,9 +102,6 @@ class ESolver_KS : public ESolver_FP
 				std::ofstream& ofs_running, 
 				const int istep, 
 				const int iter);
-
-        /// @brief create a new ModuleIO::Output_Potential object to print potential
-        ModuleIO::Output_Potential create_Output_Potential(int iter, const std::string& prefix = "None");
 
         //! Solve Hamitonian
 		hsolver::HSolver<T, Device>* phsol = nullptr;

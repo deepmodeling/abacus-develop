@@ -24,7 +24,6 @@ list(APPEND objects
     td_current_io.cpp
     write_wfc_r.cpp
     output_log.cpp
-    output_potential.cpp
     para_json.cpp
     parse_args.cpp
 )

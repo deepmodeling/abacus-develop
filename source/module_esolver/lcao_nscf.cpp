@@ -8,11 +8,13 @@
 #include "module_cell/module_neighbor/sltk_atom_arrange.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_io/berryphase.h"
+#include "module_io/cube_io.h"
 #include "module_io/get_pchg.h"
 #include "module_io/get_wf.h"
 #include "module_io/to_wannier90_lcao.h"
 #include "module_io/to_wannier90_lcao_in_pw.h"
 #include "module_io/write_HS_R.h"
+#include "module_io/write_pot.h"
 #include "module_parameter/parameter.h"
 #ifdef __DEEPKS
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
@@ -193,7 +195,47 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
     }
 
     /// write potential
-    this->create_Output_Potential(0).write();
+    if (PARAM.inp.out_pot == 1 || PARAM.inp.out_pot == 3)
+    {
+        for (int is = 0; is < GlobalV::NSPIN; is++)
+        {
+            std::string fn = GlobalV::global_out_dir + "/SPIN" + std::to_string(is + 1) + "_POT.cube";
+
+            ModuleIO::write_cube(
+#ifdef __MPI
+                this->pw_big->bz,
+                this->pw_big->nbz,
+                this->pw_rhod->nplane,
+                this->pw_rhod->startz_current,
+#endif
+                this->pelec->pot->get_effective_v(is),
+                is,
+                GlobalV::NSPIN,
+                istep,
+                fn,
+                this->pw_rhod->nx,
+                this->pw_rhod->ny,
+                this->pw_rhod->nz,
+                0.0, // efermi
+                &(GlobalC::ucell),
+                3,  // precision
+                0); // out_fermi
+        }
+    }
+    else if (PARAM.inp.out_pot == 2)
+    {
+        std::string fn = GlobalV::global_out_dir + "/ElecStaticPot.cube";
+        ModuleIO::write_elecstat_pot(
+#ifdef __MPI
+            this->pw_big->bz,
+            this->pw_big->nbz,
+#endif
+            fn,
+            this->pw_rhod,
+            this->pelec->charge,
+            &(GlobalC::ucell),
+            this->pelec->pot->get_fixed_v());
+    }
 
     // write wfc
     if (PARAM.inp.out_wfc_lcao)

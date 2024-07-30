@@ -688,30 +688,6 @@ bool ESolver_KS<T, Device>::get_conv_elec()
 }
 
 //------------------------------------------------------------------------------
-//! the 15th function of ESolver_KS: create_Output_Potential
-//! mohan add 2024-05-12
-//------------------------------------------------------------------------------
-template <typename T, typename Device>
-ModuleIO::Output_Potential ESolver_KS<T, Device>::create_Output_Potential(int iter, const std::string& prefix)
-{
-    const int precision = 3;
-    std::string tag = "POT";
-    return ModuleIO::Output_Potential(this->pw_big,
-                                      this->pw_rhod,
-                                      GlobalV::NSPIN,
-                                      iter,
-                                      GlobalV::out_pot,
-                                      this->pelec->pot->get_effective_v(),
-                                      this->pelec->pot->get_fixed_v(),
-                                      &(GlobalC::ucell),
-                                      pelec->charge,
-                                      precision,
-                                      GlobalV::global_out_dir,
-                                      tag,
-                                      prefix);
-}
-
-//------------------------------------------------------------------------------
 //! the 16th-20th functions of ESolver_KS
 //! mohan add 2024-05-12
 //------------------------------------------------------------------------------

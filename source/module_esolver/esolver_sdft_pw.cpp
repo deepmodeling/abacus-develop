@@ -159,17 +159,17 @@ void ESolver_SDFT_PW::after_scf(const int istep)
 #ifdef __MPI
                 pw_big->bz,
                 pw_big->nbz,
-                pw_rho->nplane,
-                pw_rho->startz_current,
+                pw_rhod->nplane,
+                pw_rhod->startz_current,
 #endif
                 pelec->charge->rho_save[is],
                 is,
                 GlobalV::NSPIN,
                 0,
                 ssc.str(),
-                pw_rho->nx,
-                pw_rho->ny,
-                pw_rho->nz,
+                pw_rhod->nx,
+                pw_rhod->ny,
+                pw_rhod->nz,
                 ef_tmp,
                 &(GlobalC::ucell));
         }

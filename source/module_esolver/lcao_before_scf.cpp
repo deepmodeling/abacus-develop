@@ -217,6 +217,8 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
 #endif // __EXX
 
     this->pelec->init_scf(istep, this->sf.strucFac);
+
+    //! output the initial charge density
     if (PARAM.inp.out_chg == 2)
     {
         for (int is = 0; is < GlobalV::NSPIN; is++)
@@ -227,35 +229,50 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
 #ifdef __MPI
                 this->pw_big->bz, // bz first, then nbz
                 this->pw_big->nbz,
-                this->pw_rho->nplane,
-                this->pw_rho->startz_current,
+                this->pw_rhod->nplane,
+                this->pw_rhod->startz_current,
 #endif
                 this->pelec->charge->rho[is],
                 is,
                 GlobalV::NSPIN,
                 0,
                 ss.str(),
-                this->pw_rho->nx,
-                this->pw_rho->ny,
-                this->pw_rho->nz,
+                this->pw_rhod->nx,
+                this->pw_rhod->ny,
+                this->pw_rhod->nz,
                 this->pelec->eferm.ef,
                 &(GlobalC::ucell));
         }
     }
 
-    ModuleIO::write_pot(GlobalV::out_pot,
-                        GlobalV::NSPIN,
-                        GlobalV::global_out_dir,
+    //! output total local potential of the initial charge density
+    if (PARAM.inp.out_pot == 3)
+    {
+        for (int is = 0; is < GlobalV::NSPIN; is++)
+        {
+            std::stringstream ss;
+            ss << GlobalV::global_out_dir << "SPIN" << is + 1 << "_POT_INI.cube";
+            ModuleIO::write_cube(
 #ifdef __MPI
-                        this->pw_big->bz,
-                        this->pw_big->nbz,
-                        this->pw_rho->nplane,
-                        this->pw_rho->startz_current,
+                this->pw_big->bz,
+                this->pw_big->nbz,
+                this->pw_rhod->nplane,
+                this->pw_rhod->startz_current,
 #endif
-                        this->pw_rho->nx,
-                        this->pw_rho->ny,
-                        this->pw_rho->nz,
-                        this->pelec->pot->get_effective_v());
+                this->pelec->pot->get_effective_v(is),
+                is,
+                GlobalV::NSPIN,
+                0, // iter
+                ss.str(),
+                this->pw_rhod->nx,
+                this->pw_rhod->ny,
+                this->pw_rhod->nz,
+                0.0, // efermi
+                &(GlobalC::ucell),
+                11, // precsion
+                0); // out_fermi
+        }
+    }
 
     // initalize DMR
     // DMR should be same size with Hamiltonian(R)
