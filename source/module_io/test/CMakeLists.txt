@@ -19,6 +19,17 @@ add_test(NAME io_input_test_para_4
 )
 
 AddTest(
+  TARGET read_exit_file_test
+  LIBS ${math_libs} base device parameter
+  SOURCES read_exit_file_test.cpp ../read_exit_file.cpp
+)
+
+add_test(NAME read_exit_file_test_para_4
+      COMMAND mpirun -np 4 ./read_exit_file_test
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+AddTest(
   TARGET io_winput_test
   LIBS ${math_libs} base device
   SOURCES winput_test.cpp ../winput.cpp

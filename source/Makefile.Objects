@@ -171,6 +171,7 @@ OBJS_CELL=atom_pseudo.o\
     atom_spec.o\
     pseudo.o\
     read_pp.o\
+    read_pp_complete.o\
     read_pp_upf100.o\
     read_pp_upf201.o\
     read_pp_blps.o\
@@ -476,6 +477,7 @@ OBJS_IO=input_conv.o\
     read_cube.o\
     read_rho.o\
     read_rhog.o\
+    read_exit_file.o\
     read_wfc_pw.o\
     restart.o\
     binstream.o\
