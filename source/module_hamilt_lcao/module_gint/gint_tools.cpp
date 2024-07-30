@@ -113,7 +113,28 @@ int* get_vindex(const int bxyz, const int bx, const int by, const int bz, const 
 		delete[] vindex;
 		return vldr3;
 	}
-
+	void get_vldr3_vlocal(
+		double* vldr3,
+        const double* const vlocal,		// vlocal[ir]
+        const int bxyz,
+        const int bx,
+        const int by,
+        const int bz,
+        const int nplane,
+        const int start_ind,
+		const int ncyz,
+		const double dv)
+	{
+		// set the index for obtaining local potentials
+		int* vindex = Gint_Tools::get_vindex(bxyz, bx, by, bz, nplane, start_ind, ncyz);
+		// double *vldr3 = new double[bxyz];
+		for(int ib=0; ib<bxyz; ib++)
+		{
+			vldr3[ib]=vlocal[vindex[ib]] * dv;
+		}
+		delete[] vindex;
+		// return vldr3;
+	}
 void get_block_info_vlocal(const Grid_Technique& gt, const int bxyz, const int na_grid, const int grid_index, int* block_iw,
                     int* block_index, int* block_size, bool** cal_flag)
 {

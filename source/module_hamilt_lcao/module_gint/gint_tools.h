@@ -201,7 +201,17 @@ double* get_vldr3(const double* const vlocal,
                   const int start_ind,
                   const int ncyz,
                   const double dv);
-
+                  
+void get_vldr3_vlocal(double* vldr3,
+                        const double* const vlocal,
+                        const int bxyz,
+                        const int bx,
+                        const int by,
+                        const int bz,
+                        const int nplane,
+                        const int start_ind,
+                        const int ncyz,
+                        const double dv);
 //------------------------------------------------------
 // na_grid : #. atoms for this group of grids
 // block_iw : size na_grid, index of the first orbital on this atom

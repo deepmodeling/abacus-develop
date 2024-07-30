@@ -30,16 +30,12 @@ void Gint::gint_kernel_vlocal(Gint_inout* inout) {
     ModuleBase::GlobalFunc::ZEROS(block_index, max_size+1);
     int block_size[max_size];
     ModuleBase::GlobalFunc::ZEROS(block_size, max_size);
-
-    // for (int ib = 0; ib < max_size; ++ib) {
-    //     for (int id = 0; id < this->bxyz; ++id) {
-    //         cal_flag[ib][id] = false;
-    //     }
-    // }
+    double vldr3[this->bxyz];
+    ModuleBase::GlobalFunc::ZEROS(vldr3, this->bxyz);
 
 #ifdef _OPENMP
 #pragma omp parallel private(hRGint_thread, pvpR_thread, \
-                            block_iw, block_index, block_size)
+                            block_iw, block_index, block_size,vldr3)
 {   
     //Under the condition of gamma_only, hRGint will be instantiated.
     if (GlobalV::GAMMA_ONLY_LOCAL) {
@@ -57,22 +53,23 @@ void Gint::gint_kernel_vlocal(Gint_inout* inout) {
         }
         ModuleBase::Array_Pool<bool> cal_flag(this->bxyz,max_size);
         ModuleBase::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
-        
-        double* vldr3 = Gint_Tools::get_vldr3(inout->vl,
-                                        this->bxyz,
-                                        this->bx,
-                                        this->by,
-                                        this->bz,
-                                        this->nplane,
-                                        this->gridt->start_ind[grid_index],
-                                        ncyz,
-                                        dv);
-        //prepare block information
+
+        Gint_Tools::get_vldr3_vlocal(vldr3,
+                                    inout->vl,
+                                    this->bxyz,
+                                    this->bx,
+                                    this->by,
+                                    this->bz,
+                                    this->nplane,
+                                    this->gridt->start_ind[grid_index],
+                                    ncyz,
+                                    dv);
+    //prepare block information
 
         Gint_Tools::get_block_info_vlocal(*this->gridt, this->bxyz, na_grid, grid_index, 
                                             block_iw, block_index, block_size, cal_flag.get_ptr_2D());
 
-        //evaluate psi and dpsi on grids
+    //evaluate psi and dpsi on grids
         
 	    Gint_Tools::cal_psir_ylm(*this->gridt, 
             this->bxyz, na_grid, grid_index, delta_r,
@@ -110,7 +107,7 @@ void Gint::gint_kernel_vlocal(Gint_inout* inout) {
         //     delete[] cal_flag[ib];
         // }
         // delete[] cal_flag;
-            delete[] vldr3;
+            // delete[] vldr3;
     }
 #ifdef _OPENMP
     if (GlobalV::GAMMA_ONLY_LOCAL) {
