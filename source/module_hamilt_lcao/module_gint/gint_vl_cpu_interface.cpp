@@ -273,9 +273,20 @@ void Gint::gint_kernel_vlocal_meta(Gint_inout* inout) {
     }
     hamilt::HContainer<double>* hRGint_thread =this->hRGint;
     double* pvpR_thread=this->pvpR_reduced[inout->ispin];
-
+    int block_iw[max_size];
+    ModuleBase::GlobalFunc::ZEROS(block_iw, max_size);
+    int block_index[max_size+1];
+    ModuleBase::GlobalFunc::ZEROS(block_index, max_size+1);
+    int block_size[max_size];
+    ModuleBase::GlobalFunc::ZEROS(block_size, max_size);
+    double vldr3[this->bxyz];
+    ModuleBase::GlobalFunc::ZEROS(vldr3, this->bxyz);
+    double vkdr3[this->bxyz];
+    ModuleBase::GlobalFunc::ZEROS(vkdr3, this->bxyz);
 #ifdef _OPENMP
-#pragma omp parallel private(hRGint_thread, pvpR_thread)
+#pragma omp parallel private(hRGint_thread, pvpR_thread, \
+                            block_iw, block_index, block_size,\
+                            vldr3, vkdr3)
 {
     // define HContainer here to reference.
     //Under the condition of gamma_only, hRGint will be instantiated.
@@ -294,8 +305,18 @@ void Gint::gint_kernel_vlocal_meta(Gint_inout* inout) {
         if (na_grid == 0) {
             continue;
         }
-        double* vldr3
-            = Gint_Tools::get_vldr3(inout->vl,
+        Gint_Tools::get_vldr3_vlocal(vldr3,
+                                inout->vl,
+                                this->bxyz,
+                                this->bx,
+                                this->by,
+                                this->bz,
+                                this->nplane,
+                                this->gridt->start_ind[grid_index],
+                                ncyz,
+                                dv);
+        Gint_Tools::get_vldr3_vlocal(vkdr3,
+                                    inout->vofk,
                                     this->bxyz,
                                     this->bx,
                                     this->by,
@@ -304,21 +325,10 @@ void Gint::gint_kernel_vlocal_meta(Gint_inout* inout) {
                                     this->gridt->start_ind[grid_index],
                                     ncyz,
                                     dv);
-        double* vkdr3
-            = Gint_Tools::get_vldr3(inout->vofk,
-                                    this->bxyz,
-                                    this->bx,
-                                    this->by,
-                                    this->bz,
-                                    this->nplane,
-                                    this->gridt->start_ind[grid_index],
-                                    ncyz,
-                                    dv);
-            	//prepare block information
-	    int * block_iw, * block_index, * block_size;
-	    bool** cal_flag;
-	    Gint_Tools::get_block_info(*this->gridt, this->bxyz, na_grid, grid_index, 
-                                    block_iw, block_index, block_size, cal_flag);
+    //prepare block information
+        ModuleBase::Array_Pool<bool> cal_flag(this->bxyz,max_size);
+	    Gint_Tools::get_block_info_vlocal(*this->gridt, this->bxyz, na_grid, grid_index, 
+                                    block_iw, block_index, block_size, cal_flag.get_ptr_2D());
 
     //evaluate psi and dpsi on grids
         ModuleBase::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
@@ -329,7 +339,7 @@ void Gint::gint_kernel_vlocal_meta(Gint_inout* inout) {
         Gint_Tools::cal_dpsir_ylm(*this->gridt,
             this->bxyz, na_grid, grid_index, delta_r,
             block_index, block_size, 
-            cal_flag,
+            cal_flag.get_ptr_2D(),
             psir_ylm.get_ptr_2D(),
             dpsir_ylm_x.get_ptr_2D(),
             dpsir_ylm_y.get_ptr_2D(),
@@ -338,62 +348,50 @@ void Gint::gint_kernel_vlocal_meta(Gint_inout* inout) {
 	
 	//calculating f_mu(r) = v(r)*psi_mu(r)*dv
 	    const ModuleBase::Array_Pool<double> psir_vlbr3 = Gint_Tools::get_psir_vlbr3(
-		    	this->bxyz, na_grid, LD_pool, block_index, cal_flag, vldr3, psir_ylm.get_ptr_2D());
+		    	this->bxyz, na_grid, LD_pool, block_index, cal_flag.get_ptr_2D(), vldr3, psir_ylm.get_ptr_2D());
 
 	//calculating df_mu(r) = vofk(r) * dpsi_mu(r) * dv
 	    const ModuleBase::Array_Pool<double> dpsix_vlbr3 = Gint_Tools::get_psir_vlbr3(
-			this->bxyz, na_grid, LD_pool, block_index, cal_flag, vkdr3, dpsir_ylm_x.get_ptr_2D());
+			this->bxyz, na_grid, LD_pool, block_index, cal_flag.get_ptr_2D(), vkdr3, dpsir_ylm_x.get_ptr_2D());
 	    const ModuleBase::Array_Pool<double> dpsiy_vlbr3 = Gint_Tools::get_psir_vlbr3(
-			this->bxyz, na_grid, LD_pool, block_index, cal_flag, vkdr3, dpsir_ylm_y.get_ptr_2D());	
+			this->bxyz, na_grid, LD_pool, block_index, cal_flag.get_ptr_2D(), vkdr3, dpsir_ylm_y.get_ptr_2D());	
 	    const ModuleBase::Array_Pool<double> dpsiz_vlbr3 = Gint_Tools::get_psir_vlbr3(
-			this->bxyz, na_grid, LD_pool, block_index, cal_flag, vkdr3, dpsir_ylm_z.get_ptr_2D());
+			this->bxyz, na_grid, LD_pool, block_index, cal_flag.get_ptr_2D(), vkdr3, dpsir_ylm_z.get_ptr_2D());
 
         if(GlobalV::GAMMA_ONLY_LOCAL)
         {
             //integrate (psi_mu*v(r)*dv) * psi_nu on grid
             //and accumulates to the corresponding element in Hamiltonian
             this->cal_meshball_vlocal_gamma(
-                na_grid, LD_pool, block_iw, block_size, block_index, grid_index, cal_flag,
+                na_grid, LD_pool, block_iw, block_size, block_index, grid_index, cal_flag.get_ptr_2D(),
                 psir_ylm.get_ptr_2D(), psir_vlbr3.get_ptr_2D(), hRGint_thread);
             //integrate (d/dx_i psi_mu*vk(r)*dv) * (d/dx_i psi_nu) on grid (x_i=x,y,z)
             //and accumulates to the corresponding element in Hamiltonian
             this->cal_meshball_vlocal_gamma(
-                na_grid, LD_pool, block_iw, block_size, block_index, grid_index, cal_flag,
+                na_grid, LD_pool, block_iw, block_size, block_index, grid_index, cal_flag.get_ptr_2D(),
                 dpsir_ylm_x.get_ptr_2D(), dpsix_vlbr3.get_ptr_2D(), hRGint_thread);
             this->cal_meshball_vlocal_gamma(
-                na_grid, LD_pool, block_iw, block_size, block_index, grid_index, cal_flag,
+                na_grid, LD_pool, block_iw, block_size, block_index, grid_index, cal_flag.get_ptr_2D(),
                 dpsir_ylm_y.get_ptr_2D(), dpsiy_vlbr3.get_ptr_2D(), hRGint_thread);
             this->cal_meshball_vlocal_gamma(
-                na_grid, LD_pool, block_iw, block_size, block_index, grid_index, cal_flag,
+                na_grid, LD_pool, block_iw, block_size, block_index, grid_index, cal_flag.get_ptr_2D(),
                 dpsir_ylm_z.get_ptr_2D(), dpsiz_vlbr3.get_ptr_2D(), hRGint_thread);
         }
         else
         {
             this->cal_meshball_vlocal_k(
-                na_grid, LD_pool, grid_index, block_size, block_index, block_iw, cal_flag,
+                na_grid, LD_pool, grid_index, block_size, block_index, block_iw, cal_flag.get_ptr_2D(),
                 psir_ylm.get_ptr_2D(), psir_vlbr3.get_ptr_2D(), pvpR_thread,ucell);
             this->cal_meshball_vlocal_k(
-                na_grid, LD_pool, grid_index, block_size, block_index, block_iw, cal_flag,
+                na_grid, LD_pool, grid_index, block_size, block_index, block_iw, cal_flag.get_ptr_2D(),
                 dpsir_ylm_x.get_ptr_2D(), dpsix_vlbr3.get_ptr_2D(), pvpR_thread,ucell);
             this->cal_meshball_vlocal_k(
-                na_grid, LD_pool, grid_index, block_size, block_index, block_iw, cal_flag,
+                na_grid, LD_pool, grid_index, block_size, block_index, block_iw, cal_flag.get_ptr_2D(),
                 dpsir_ylm_y.get_ptr_2D(), dpsiy_vlbr3.get_ptr_2D(), pvpR_thread,ucell);
             this->cal_meshball_vlocal_k(
-                na_grid, LD_pool, grid_index, block_size, block_index, block_iw, cal_flag,
+                na_grid, LD_pool, grid_index, block_size, block_index, block_iw, cal_flag.get_ptr_2D(),
                 dpsir_ylm_z.get_ptr_2D(), dpsiz_vlbr3.get_ptr_2D(), pvpR_thread,ucell);
         }
-
-    //release memories
-        delete[] block_iw;
-        delete[] block_index;
-        delete[] block_size;
-        for(int ib=0; ib<this->bxyz; ++ib)
-        {
-            delete[] cal_flag[ib];
-        }
-        delete[] cal_flag;
-        delete[] vldr3;
-        delete[] vkdr3;
     }
 #ifdef _OPENMP
     if (GlobalV::GAMMA_ONLY_LOCAL) {
