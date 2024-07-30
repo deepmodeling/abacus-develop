@@ -140,7 +140,6 @@ void Gint::gint_kernel_tau(Gint_inout* inout) {
         if (na_grid == 0) {
             continue;
         }
-        // int* vindex = Gint_Tools::get_vindex(ncyz, ibx, jby, kbz);
         Gint_Tools::get_vindex(this->bxyz,
                                 this->bx,
                                 this->by,
