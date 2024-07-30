@@ -169,7 +169,9 @@ int* get_vindex(const int bxyz,
                 const int ibx,
                 const int jby,
                 const int kbz);
-
+void get_vindex_rho(const int bxyz, const int bx, const int by,
+                    const int bz, const int nplane, 
+                    const int start_ind,const int ncyz,int* vindex);
 int* get_vindex(const int bxyz,
                 const int bx,
                 const int by,
@@ -201,7 +203,7 @@ double* get_vldr3(const double* const vlocal,
                   const int start_ind,
                   const int ncyz,
                   const double dv);
-                  
+
 void get_vldr3_vlocal(double* vldr3,
                         const double* const vlocal,
                         const int bxyz,

@@ -34,6 +34,28 @@ int* get_vindex(const int bxyz, const int bx, const int by, const int bz, const 
 		return vindex;
 	}
 
+void get_vindex_rho(const int bxyz, const int bx, const int by, const int bz, const int nplane, const int start_ind,
+                	const int ncyz,int* vindex)
+{
+    // int* vindex = new int[bxyz];
+    int bindex = 0;
+
+		for(int ii=0; ii<bx; ii++)
+		{
+			const int ipart = ii*ncyz;
+			for(int jj=0; jj<by; jj++)
+			{
+				const int jpart = jj*nplane + ipart;
+				for(int kk=0; kk<bz; kk++)
+				{
+					vindex[bindex] = start_ind + kk + jpart;
+					++bindex;
+				}
+			}
+		}
+		// return vindex;
+	}
+
 	// here vindex refers to local potentials
     int* get_vindex(
         const int bxyz,

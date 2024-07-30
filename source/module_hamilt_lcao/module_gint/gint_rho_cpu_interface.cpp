@@ -12,8 +12,17 @@ void Gint::gint_kernel_rho(Gint_inout* inout) {
     const int ncyz = this->ny * this->nplane;
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
+
+    int block_iw[max_size];
+    ModuleBase::GlobalFunc::ZEROS(block_iw, max_size);
+    int block_index[max_size+1];
+    ModuleBase::GlobalFunc::ZEROS(block_index, max_size+1);
+    int block_size[max_size];
+    ModuleBase::GlobalFunc::ZEROS(block_size, max_size);
+    int vindex[bxyz];
+    ModuleBase::GlobalFunc::ZEROS(vindex, bxyz);
 #ifdef _OPENMP
-#pragma omp parallel
+#pragma omp parallel private(block_iw, block_index, block_size)
 {
 #pragma omp for
 #endif
@@ -22,25 +31,24 @@ void Gint::gint_kernel_rho(Gint_inout* inout) {
         if (na_grid == 0) {
             continue;
         }
-        // int* vindex = Gint_Tools::get_vindex(ncyz, ibx, jby, kbz);
-        int* vindex = Gint_Tools::get_vindex(this->bxyz,
-                                             this->bx,
-                                             this->by,
-                                             this->bz,
-                                             this->nplane,
-                                             this->gridt->start_ind[grid_index],
-                                             ncyz);
+        Gint_Tools::get_vindex_rho(this->bxyz,
+                                    this->bx,
+                                    this->by,
+                                    this->bz,
+                                    this->nplane,
+                                    this->gridt->start_ind[grid_index],
+                                    ncyz,
+                                    vindex);
          // prepare block information
-        int *block_iw, *block_index, *block_size;
-        bool** cal_flag;
-        Gint_Tools::get_block_info(*this->gridt,
+        ModuleBase::Array_Pool<bool> cal_flag(this->bxyz,max_size);
+        Gint_Tools::get_block_info_vlocal(*this->gridt,
                                 this->bxyz,
                                 na_grid,
                                 grid_index,
                                 block_iw,
                                 block_index,
                                 block_size,
-                                cal_flag);
+                                cal_flag.get_ptr_2D());
 
     // evaluate psi on grids
         ModuleBase::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
@@ -51,7 +59,7 @@ void Gint::gint_kernel_rho(Gint_inout* inout) {
                                 delta_r,
                                 block_index,
                                 block_size,
-                                cal_flag,
+                                cal_flag.get_ptr_2D(),
                                 psir_ylm.get_ptr_2D());
 
         for (int is = 0; is < GlobalV::NSPIN; ++is)
@@ -68,7 +76,7 @@ void Gint::gint_kernel_rho(Gint_inout* inout) {
                                             block_iw,
                                             block_size,
                                             block_index,
-                                            cal_flag,
+                                            cal_flag.get_ptr_2D(),
                                             psir_ylm.get_ptr_2D(),
                                             psir_DM.get_ptr_2D(),
                                             this->DMRGint[is],
@@ -84,7 +92,7 @@ void Gint::gint_kernel_rho(Gint_inout* inout) {
                                         na_grid,
                                         block_index,
                                         block_size,
-                                        cal_flag,
+                                        cal_flag.get_ptr_2D(),
                                         psir_ylm.get_ptr_2D(),
                                         psir_DM.get_ptr_2D(),
                                         this->DMRGint[is],
@@ -94,15 +102,6 @@ void Gint::gint_kernel_rho(Gint_inout* inout) {
             // do sum_mu g_mu(r)psi_mu(r) to get electron density on grid
             this->cal_meshball_rho(na_grid, block_index, vindex, psir_ylm.get_ptr_2D(), psir_DM.get_ptr_2D(), inout->rho[is]);
         }
-        delete[] block_iw;
-        delete[] block_index;
-        delete[] block_size;
-        for (int ib = 0; ib < this->bxyz; ++ib)
-        {
-            delete[] cal_flag[ib];
-        }
-        delete[] cal_flag;
-            delete[] vindex;
         }
 #ifdef _OPENMP
 }
@@ -133,7 +132,7 @@ void Gint::gint_kernel_tau(Gint_inout* inout) {
             continue;
         }
         // int* vindex = Gint_Tools::get_vindex(ncyz, ibx, jby, kbz);
-        int* vindex = Gint_Tools::get_vindex(this->bxyz,
+        Gint_Tools::get_vindex_rho(this->bxyz,
                                              this->bx,
                                              this->by,
                                              this->bz,
