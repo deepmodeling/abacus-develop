@@ -17,6 +17,7 @@
 #ifdef __DEEPKS
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #endif
+#include "module_base/formatter.h"
 #include "module_elecstate/elecstate_lcao.h"
 #include "module_elecstate/module_dm/cal_dm_psi.h"
 #include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
@@ -25,11 +26,10 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
-#include "module_io/rho_io.h"
+#include "module_io/cube_io.h"
+#include "module_io/read_wfc_nao.h"
 #include "module_io/write_pot.h"
 #include "module_io/write_wfc_nao.h"
-#include "module_io/read_wfc_nao.h"
-#include "module_base/formatter.h"
 #ifdef __EXX
 #include "module_io/restart_exx_csr.h"
 #endif
@@ -223,7 +223,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
         {
             std::stringstream ss;
             ss << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG_INI.cube";
-            ModuleIO::write_rho(
+            ModuleIO::write_cube(
 #ifdef __MPI
                 this->pw_big->bz, // bz first, then nbz
                 this->pw_big->nbz,
@@ -239,8 +239,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
                 this->pw_rho->ny,
                 this->pw_rho->nz,
                 this->pelec->eferm.ef,
-                &(GlobalC::ucell),
-                11);
+                &(GlobalC::ucell));
         }
     }
 
@@ -287,10 +286,29 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
 
         this->pelec->psiToRho(*this->psi);
 
-        this->create_Output_Rho(0, istep).write();
-        if (GlobalV::NSPIN == 2)
+        int nspin0 = GlobalV::NSPIN == 2 ? 2 : 1;
+        for (int is = 0; is < nspin0; is++)
         {
-            this->create_Output_Rho(1, istep).write();
+            std::string fn = GlobalV::global_out_dir + "/SPIN" + std::to_string(is + 1) + "_CHG.cube";
+            ModuleIO::write_cube(
+#ifdef __MPI
+                this->pw_big->bz,
+                this->pw_big->nbz,
+                this->pw_rhod->nplane,
+                this->pw_rhod->startz_current,
+#endif
+                this->pelec->charge->rho[is],
+                is,
+                GlobalV::NSPIN,
+                istep,
+                fn,
+                this->pw_rhod->nx,
+                this->pw_rhod->ny,
+                this->pw_rhod->nz,
+                this->pelec->eferm.get_efval(is),
+                &(GlobalC::ucell),
+                3,
+                1);
         }
 
         return;

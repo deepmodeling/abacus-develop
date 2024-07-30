@@ -688,67 +688,6 @@ bool ESolver_KS<T, Device>::get_conv_elec()
 }
 
 //------------------------------------------------------------------------------
-//! the 13th function of ESolver_KS: create_Output_Rho
-//! mohan add 2024-05-12
-//------------------------------------------------------------------------------
-template <typename T, typename Device>
-ModuleIO::Output_Rho ESolver_KS<T, Device>::create_Output_Rho(int is, int iter, const std::string& prefix)
-{
-    const int precision = 3;
-    std::string tag = "CHG";
-    if (PARAM.inp.dm_to_rho)
-    {
-        return ModuleIO::Output_Rho(this->pw_big,
-                                    this->pw_rhod,
-                                    is,
-                                    GlobalV::NSPIN,
-                                    pelec->charge->rho[is],
-                                    iter,
-                                    this->pelec->eferm.get_efval(is),
-                                    &(GlobalC::ucell),
-                                    GlobalV::global_out_dir,
-                                    precision,
-                                    tag,
-                                    prefix);
-    }
-    return ModuleIO::Output_Rho(this->pw_big,
-                                this->pw_rhod,
-                                is,
-                                GlobalV::NSPIN,
-                                pelec->charge->rho_save[is],
-                                iter,
-                                this->pelec->eferm.get_efval(is),
-                                &(GlobalC::ucell),
-                                GlobalV::global_out_dir,
-                                precision,
-                                tag,
-                                prefix);
-}
-
-//------------------------------------------------------------------------------
-//! the 14th function of ESolver_KS: create_Output_Kin
-//! mohan add 2024-05-12
-//------------------------------------------------------------------------------
-template <typename T, typename Device>
-ModuleIO::Output_Rho ESolver_KS<T, Device>::create_Output_Kin(int is, int iter, const std::string& prefix)
-{
-    const int precision = 11;
-    std::string tag = "TAU";
-    return ModuleIO::Output_Rho(this->pw_big,
-                                this->pw_rhod,
-                                is,
-                                GlobalV::NSPIN,
-                                pelec->charge->kin_r_save[is],
-                                iter,
-                                this->pelec->eferm.get_efval(is),
-                                &(GlobalC::ucell),
-                                GlobalV::global_out_dir,
-                                precision,
-                                tag,
-                                prefix);
-}
-
-//------------------------------------------------------------------------------
 //! the 15th function of ESolver_KS: create_Output_Potential
 //! mohan add 2024-05-12
 //------------------------------------------------------------------------------

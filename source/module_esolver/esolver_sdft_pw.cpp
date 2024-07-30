@@ -7,8 +7,8 @@
 #include "module_hamilt_pw/hamilt_stodft/sto_elecond.h"
 #include "module_hsolver/diago_iter_assist.h"
 #include "module_hsolver/hsolver_pw_sdft.h"
+#include "module_io/cube_io.h"
 #include "module_io/output_log.h"
-#include "module_io/rho_io.h"
 #include "module_io/write_istate_info.h"
 
 #include <algorithm>
@@ -155,7 +155,7 @@ void ESolver_SDFT_PW::after_scf(const int istep)
             std::stringstream ssc;
             ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG.cube";
             const double ef_tmp = this->pelec->eferm.get_efval(is);
-            ModuleIO::write_rho(
+            ModuleIO::write_cube(
 #ifdef __MPI
                 pw_big->bz,
                 pw_big->nbz,

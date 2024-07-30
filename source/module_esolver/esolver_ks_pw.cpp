@@ -32,9 +32,9 @@
 #include "module_hsolver/kernels/dngvd_op.h"
 #include "module_hsolver/kernels/math_kernel_op.h"
 #include "module_io/berryphase.h"
+#include "module_io/cube_io.h"
 #include "module_io/numerical_basis.h"
 #include "module_io/numerical_descriptor.h"
-#include "module_io/rho_io.h"
 #include "module_io/to_wannier90_pw.h"
 #include "module_io/winput.h"
 #include "module_io/write_pot.h"
@@ -227,7 +227,7 @@ void ESolver_KS_PW<T, Device>::before_scf(const int istep)
         {
             std::stringstream ss;
             ss << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG_INI.cube";
-            ModuleIO::write_rho(
+            ModuleIO::write_cube(
 #ifdef __MPI
                 this->pw_big->bz,
                 this->pw_big->nbz,
@@ -243,8 +243,7 @@ void ESolver_KS_PW<T, Device>::before_scf(const int istep)
                 this->pw_rho->ny,
                 this->pw_rho->nz,
                 this->pelec->eferm.ef,
-                &(GlobalC::ucell),
-                11);
+                &(GlobalC::ucell));
         }
     }
 
@@ -447,10 +446,55 @@ void ESolver_KS_PW<T, Device>::iter_finish(const int iter)
         {
             for (int is = 0; is < GlobalV::NSPIN; is++)
             {
-                this->create_Output_Rho(is, iter, "tmp_").write();
+                double* data = nullptr;
+                if (PARAM.inp.dm_to_rho)
+                {
+                    data = this->pelec->charge->rho[is];
+                }
+                else
+                {
+                    data = this->pelec->charge->rho_save[is];
+                }
+                std::string fn = GlobalV::global_out_dir + "/tmp_SPIN" + std::to_string(is + 1) + "_CHG.cube";
+                ModuleIO::write_cube(
+#ifdef __MPI
+                    this->pw_big->bz,
+                    this->pw_big->nbz,
+                    this->pw_rhod->nplane,
+                    this->pw_rhod->startz_current,
+#endif
+                    data,
+                    is,
+                    GlobalV::NSPIN,
+                    iter,
+                    fn,
+                    this->pw_rhod->nx,
+                    this->pw_rhod->ny,
+                    this->pw_rhod->nz,
+                    this->pelec->eferm.get_efval(is),
+                    &(GlobalC::ucell),
+                    3,
+                    1);
                 if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
                 {
-                    this->create_Output_Kin(is, iter, "tmp_").write();
+                    fn = GlobalV::global_out_dir + "/tmp_SPIN" + std::to_string(is + 1) + "_TAU.cube";
+                    ModuleIO::write_cube(
+#ifdef __MPI
+                        this->pw_big->bz,
+                        this->pw_big->nbz,
+                        this->pw_rhod->nplane,
+                        this->pw_rhod->startz_current,
+#endif
+                        this->pelec->charge->kin_r_save[is],
+                        is,
+                        GlobalV::NSPIN,
+                        iter,
+                        fn,
+                        this->pw_rhod->nx,
+                        this->pw_rhod->ny,
+                        this->pw_rhod->nz,
+                        this->pelec->eferm.get_efval(is),
+                        &(GlobalC::ucell));
                 }
             }
         }
@@ -480,10 +524,55 @@ void ESolver_KS_PW<T, Device>::after_scf(const int istep)
     {
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
-            this->create_Output_Rho(is, istep).write();
+            double* data = nullptr;
+            if (PARAM.inp.dm_to_rho)
+            {
+                data = this->pelec->charge->rho[is];
+            }
+            else
+            {
+                data = this->pelec->charge->rho_save[is];
+            }
+            std::string fn = GlobalV::global_out_dir + "/SPIN" + std::to_string(is + 1) + "_CHG.cube";
+            ModuleIO::write_cube(
+#ifdef __MPI
+                this->pw_big->bz,
+                this->pw_big->nbz,
+                this->pw_rhod->nplane,
+                this->pw_rhod->startz_current,
+#endif
+                data,
+                is,
+                GlobalV::NSPIN,
+                istep,
+                fn,
+                this->pw_rhod->nx,
+                this->pw_rhod->ny,
+                this->pw_rhod->nz,
+                this->pelec->eferm.get_efval(is),
+                &(GlobalC::ucell),
+                3,
+                1);
             if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
             {
-                this->create_Output_Kin(is, istep).write();
+                fn = GlobalV::global_out_dir + "/SPIN" + std::to_string(is + 1) + "_TAU.cube";
+                ModuleIO::write_cube(
+#ifdef __MPI
+                    this->pw_big->bz,
+                    this->pw_big->nbz,
+                    this->pw_rhod->nplane,
+                    this->pw_rhod->startz_current,
+#endif
+                    this->pelec->charge->kin_r_save[is],
+                    is,
+                    GlobalV::NSPIN,
+                    istep,
+                    fn,
+                    this->pw_rhod->nx,
+                    this->pw_rhod->ny,
+                    this->pw_rhod->nz,
+                    this->pelec->eferm.get_efval(is),
+                    &(GlobalC::ucell));
             }
         }
     }
@@ -614,7 +703,7 @@ void ESolver_KS_PW<T, Device>::after_scf(const int istep)
             std::stringstream ssc;
             ssc << GlobalV::global_out_dir << "BAND" << ib + 1 << "_CHG.cube"; // band index starts from 1
 
-            ModuleIO::write_rho(
+            ModuleIO::write_cube(
 #ifdef __MPI
                 this->pw_big->bz,
                 this->pw_big->nbz,
@@ -630,8 +719,7 @@ void ESolver_KS_PW<T, Device>::after_scf(const int istep)
                 this->pw_rho->ny,
                 this->pw_rho->nz,
                 0.0,
-                &(GlobalC::ucell),
-                11);
+                &(GlobalC::ucell));
         }
         delete[] wfcr;
         delete[] rho_band;
