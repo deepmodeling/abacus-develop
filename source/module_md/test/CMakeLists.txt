@@ -11,6 +11,7 @@ list(APPEND depend_files
   ../../module_cell/read_cell_pseudopots.cpp
   ../../module_cell/pseudo.cpp
   ../../module_cell/read_pp.cpp
+  ../../module_cell/read_pp_complete.cpp
   ../../module_cell/read_pp_upf100.cpp
   ../../module_cell/read_pp_upf201.cpp
   ../../module_cell/read_pp_vwr.cpp

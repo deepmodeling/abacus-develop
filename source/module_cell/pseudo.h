@@ -75,11 +75,6 @@ class pseudo
     ModuleBase::realArray qfuncl; // qfuncl(2*lmax+1,nbeta*(nbeta+1)/2,mesh) Q_{mu,nu}(|r|) function for |r|> r_L
     ModuleBase::matrix qqq;       // qqq(nbeta,nbeta) q_{mu,nu}
 
-    void set_pseudo_h();
-    void set_pseudo_atom();
-    void set_pseudo_vl();
-    void set_pseudo();
-
     void print_pseudo_h(std::ofstream& ofs);
     void print_pseudo_atom(std::ofstream& ofs);
     void print_pseudo_vl(std::ofstream& ofs);

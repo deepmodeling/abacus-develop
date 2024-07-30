@@ -10,10 +10,10 @@
  * - Tested Functions:
  *   - pseudo
  *   - ~pseudo
- *   - set_pseudo_h
- *   - set_pseudo_atom
- *   - set_pseudo_vl
- *   - set_pseudo
+ *   - complete_default_h
+ *   - complete_default_atom
+ *   - complete_default_vl
+ *   - complete_default
  *   - print_pseudo_h
  *   - print_pseudo_atom
  *   - print_pseudo_vl
@@ -39,7 +39,7 @@ TEST_F(NCPPTest, SetPseudoH)
 	GlobalV::PSEUDORCUT = 15.0;
 	upf->read_pseudo_upf201(ifs, *ncpp);
 	//set_pseudo_h
-	ncpp->set_pseudo_h();
+	upf->complete_default_h(*ncpp);
 
 	if(!ncpp->has_so)
 	{
@@ -64,8 +64,8 @@ TEST_F(NCPPTest, SetPseudoAtom)
 	GlobalV::PSEUDORCUT = 15.0;
 	upf->read_pseudo_upf201(ifs, *ncpp);
 	//set_pseudo_atom
-	ncpp->set_pseudo_h();
-	ncpp->set_pseudo_atom();
+	upf->complete_default_h(*ncpp);
+	upf->complete_default_atom(*ncpp);
 	EXPECT_EQ(ncpp->rcut,GlobalV::PSEUDORCUT);
 
 	if(!ncpp->nlcc)
@@ -88,11 +88,11 @@ TEST_F(NCPPTest, SetPseudoNC)
 	// set pseudo nbeta = 0
 	upf->read_pseudo_upf201(ifs, *ncpp);
 	ncpp->nbeta = 0;
-	ncpp->set_pseudo();
+	upf->complete_default(*ncpp);
 	EXPECT_EQ(ncpp->nh,0);
-    // set_pseudo nbeta > 0
+    // set pseudo nbeta > 0
 	upf->read_pseudo_upf201(ifs, *ncpp);
-    ncpp->set_pseudo();
+    upf->complete_default(*ncpp);
 	EXPECT_EQ(ncpp->nh,14);
 	EXPECT_EQ(ncpp->kkbeta,132);
 	ifs.close();
@@ -106,7 +106,7 @@ TEST_F(NCPPTest, PrintNC)
 	ifs.open("./support/C.upf");
 	GlobalV::PSEUDORCUT = 15.0;
 	upf->read_pseudo_upf201(ifs, *ncpp);
-    ncpp->set_pseudo();
+    upf->complete_default(*ncpp);
     ifs.close();
 	//print
 	std::ofstream ofs;
