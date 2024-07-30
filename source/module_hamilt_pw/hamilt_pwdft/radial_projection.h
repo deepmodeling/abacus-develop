@@ -2,9 +2,6 @@
 #define RADIAL_PROJECTION_H
 
 #include "module_base/vector3.h"
-#include "module_base/matrix.h"
-#include "module_base/math_ylmreal.h"
-#include "module_base/spherical_bessel_transformer.h"
 #include <memory>
 #include <vector>
 #include <complex>
@@ -15,27 +12,57 @@
 // onto the planewave basis
 namespace RadialProjection
 {
+    /**
+     * @brief RadialProjector is for projecting function who has seperatable radial
+     * and angular parts:
+     * f(r) = f(|r|) * Ylm(theta, phi)
+     * onto planewave basis. Each instance of RadialProjector can project any of
+     * this function onto a fixed set of q-points (or say one well-defined G-grid
+     * points)
+     * 
+     * This class is designed based on the fact that ABACUS will always calculate
+     * all Ylm values from 0 to lmax in-one-shot, therefore it is not wise to always
+     * recalculate it, instead this class will cache at the very beginning, with one
+     * specified lmax.
+     * Additionally, the SphericalBesselTransformer is also cached at the very
+     * beginning.
+     * 
+     * The "language" here will be always: "do something on fixed-bundled q-grids"
+     */
     class RadialProjector
     {
         public:
-            RadialProjector(const int lmax, 
-                            const std::vector<ModuleBase::Vector3<double>>& qs,
-                            const double& omega = 1.0,
-                            const double& tpiba = 1.0)
-            {
-                // can cache the Ylm and SphericalBesselTransformer at the very beginning
-                const int total_lm = std::pow(lmax+1, 2);
-                const int npw = qs.size();
-                ylm_.create(total_lm, npw);
-                ModuleBase::YlmReal::Ylm_Real(total_lm, npw, qs.data(), ylm_);
-                sbt_ = std::unique_ptr<ModuleBase::SphericalBesselTransformer>(
-                    new ModuleBase::SphericalBesselTransformer(true));
-                qnorm_.resize(npw);
-                std::transform(qs.begin(), qs.end(), qnorm_.begin(), 
-                [tpiba](const ModuleBase::Vector3<double>& q){return tpiba * q.norm();});
-                omega_ = omega;
-            }
+            RadialProjector() {}
             ~RadialProjector() {}
+
+            // it is more feasible to build interpolation table. this function will tabulate
+            // for those functions. This function will write the in-build tab_, to place the
+            // values of Jl[f](q) for each q and l.
+            // Here I provide two versions of tabulate, one for the case may be capable to 
+            // avoid the memory copy operation, and the other one is for the case of 
+            // std::vector<double> and std::vector<std::vector<double>>.
+            /**
+             * @brief make a interpolation table for the Spherical Bessel Transform of f(r)
+             * 
+             * @param nr number of grid points, shared by all radial functions
+             * @param r radial grids, shared by all radial functions
+             * @param radials radial functions, each element is a radial function
+             * @param l angular momentum quantum number for each radial function
+             * @param nq number of q-points
+             * @param dq space between q-points
+             */
+            void _build_sbt_tab(const int nr,
+                                const double* r,
+                                const std::vector<double*>& radials,
+                                const std::vector<int>& l,
+                                const int nq,                             //< GlobalV::DQ
+                                const double& dq);                        //< GlobalV::NQX
+            void _build_sbt_tab(const std::vector<double>& r,
+                                const std::vector<std::vector<double>>& radials,
+                                const std::vector<int>& l,
+                                const int nq,                             //< GlobalV::DQ
+                                const double& dq);                        //< GlobalV::NQX
+
             /**
              * @brief perform analytical version of the Fourier transform:
              * F(q) = int(f(r)*exp(-iq.r) d^3r)
@@ -46,38 +73,22 @@ namespace RadialProjection
              * , where j_l(q*r) is the spherical Bessel function of the first kind.
              * 
              */
-            void sbtfft(const int nr,
-                        const double* r,
-                        const double* in,
-                        const int l,
-                        std::complex<double>* out) const;
-            void sbtfft(const std::vector<double>& r,
-                        const std::vector<double>& in,
-                        const int l,
-                        std::vector<std::complex<double>>& out) const;
+            
+            void sbtft(const std::vector<ModuleBase::Vector3<double>>& qs,
+                       std::vector<std::complex<double>>& out,
+                       const double& omega,
+                       const double& tpiba,
+                       const char type = 'r'); // 'r' for ket |>, 'l' for bra <|
+            
+            void sbfft(); // interface for SBFFT
 
         private:
-            ModuleBase::matrix ylm_;
-            std::unique_ptr<ModuleBase::SphericalBesselTransformer> sbt_;
-            std::vector<double> qnorm_;
-            double omega_;
+            std::vector<double> tab_;
+            // cache dim
+            std::vector<double> qgrid_tab_;
+            std::vector<int> l_;
     };
-
-    /**
-     * @brief build a map from [it][l][zeta] to vectorized index, together with its reverse
-     * 
-     * @param ntype number of atom types
-     * @param lmax maximal angular momentum for each kind
-     * @param nzeta number of zeta for each l for each kind
-     * @param map [out] map from [it][l][zeta] to vectorized index
-     * @param rmap [out] reverse map from vectorized index to [it][l][zeta]
-     */
-    void _radial_indexing(const int ntype,                                  //< from UnitCell::ntype
-                          const std::vector<int>& lmax,
-                          const std::vector<std::vector<int>>& nzeta,
-                          std::map<std::tuple<int, int, int>, int>& map,
-                          std::vector<std::tuple<int, int, int>>& rmap);
-    
+  
     /** ====================================================================================
      * 
      *                       Small box Fast-Fourier-Transform (SBFFT)
@@ -102,18 +113,6 @@ namespace RadialProjection
      *    wm'(r).
      * 5. Perform real-space integration on function w'(r)*m(r)*exp(iqr).
      */
-
-    /**
-     * @brief initialize a q-grid for SBFFT
-     * 
-     * @param ecutwfc 
-     * @param ecutrho 
-     * @param R 
-     * @return ModulePW::PW_Basis 
-     */
-    // static ModulePW::PW_Basis _init_qgrid(const double& ecutwfc,
-    //                                       const double& ecutrho,
-    //                                       const ModuleBase::Matrix3& R); // do I need to change to std::vector?
 
     /**
      * @brief get the mask function for SBFFT

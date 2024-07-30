@@ -4,58 +4,94 @@
 #include <numeric>
 #include "module_hamilt_pw/hamilt_pwdft/radial_projection.h"
 #include "module_base/constants.h"
+#include "module_base/matrix.h"
+#include "module_base/math_ylmreal.h"
+#include "module_base/cubic_spline.h"
+#include "module_base/spherical_bessel_transformer.h"
 
-void RadialProjection::RadialProjector::sbtfft(const int nr, 
-                                               const double* r, 
-                                               const double* in, 
-                                               const int l, 
-                                               std::complex<double>* out) const
+void RadialProjection::RadialProjector::_build_sbt_tab(const int nr,
+                                                       const double* r,
+                                                       const std::vector<double*>& radials,
+                                                       const std::vector<int>& l,
+                                                       const int nq,
+                                                       const double& dq)
 {
-    /* user should take care of the memory allocation by own, the size required
-    would be (2*l+1)*npw */
-    const int npw = qnorm_.size();
-    std::vector<double> jlq(npw);
-    sbt_->direct(l, nr, r, in, npw, qnorm_.data(), jlq.data());
-    for(int m = -l; m <= l; m++)
+    l_ = l;
+    const int nrad = radials.size();
+#ifdef __DEBUG
+    assert(nrad == l.size());
+#endif
+    std::vector<double> qgrid(nq);
+    std::iota(qgrid.begin(), qgrid.end(), 0);
+    std::transform(qgrid.begin(), qgrid.end(), qgrid.begin(), [dq](const double& q){return q*dq;});
+    qgrid_tab_ = qgrid;
+
+    tab_.resize(nrad*nq);
+
+    ModuleBase::SphericalBesselTransformer sbt_(true);
+    for(int i = 0; i < nrad; i++)
     {
-        int lm = l*l + m;
-        for(int iq = 0; iq < npw; iq++)
-        {
-            out[m+l+lm*npw] = ModuleBase::FOUR_PI/std::sqrt(omega_) * std::pow(ModuleBase::IMAG_UNIT, l) * jlq[iq] * ylm_(lm, iq);
-        }
+        sbt_.direct(l[i], nr, r, radials[i], nq, qgrid.data(), tab_.data()+i*nq);
     }
 }
 
-void RadialProjection::RadialProjector::sbtfft(const std::vector<double>& r,
-                                               const std::vector<double>& in,
-                                               const int l,
-                                               std::vector<std::complex<double>>& out) const
+void RadialProjection::RadialProjector::_build_sbt_tab(const std::vector<double>& r,
+                                                       const std::vector<std::vector<double>>& radials,
+                                                       const std::vector<int>& l,
+                                                       const int nq,
+                                                       const double& dq)
 {
     const int nr = r.size();
-    const int npw = qnorm_.size();
-    out.resize((2*l+1)*npw);
-    sbtfft(nr, r.data(), in.data(), l, out.data()); 
+#ifdef __DEBUG
+    for(int i = 0; i < nrad; i++) { assert(radials[i].size() == nr); }
+#endif
+    std::vector<double*> radptrs(radials.size());
+    for(int i = 0; i < radials.size(); i++) { radptrs[i] = const_cast<double*>(radials[i].data()); }
+    _build_sbt_tab(nr, r.data(), radptrs, l, nq, dq);
 }
 
-void RadialProjection::_radial_indexing(const int ntype,
-                                        const std::vector<int>& lmax,
-                                        const std::vector<std::vector<int>>& nzeta,
-                                        std::map<std::tuple<int, int, int>, int>& map,
-                                        std::vector<std::tuple<int, int, int>>& rmap)
+void RadialProjection::RadialProjector::sbtft(const std::vector<ModuleBase::Vector3<double>>& qs,
+                                              std::vector<std::complex<double>>& out,
+                                              const double& omega,
+                                              const double& tpiba,
+                                              const char type)
 {
+    // first cache the Ylm values
+    const int lmax_ = *std::max_element(l_.begin(), l_.end());
+    const int total_lm = std::pow(lmax_+1, 2);
+    const int npw = qs.size();
+    ModuleBase::matrix ylm_(total_lm, npw);
+    ModuleBase::YlmReal::Ylm_Real(total_lm, npw, qs.data(), ylm_);
+
+    const int nrad = l_.size();
+    int nchannel = 0;
+    for(auto l: l_) { nchannel += 2*l+1; }
+    out.resize(nchannel*npw);
+
+    std::vector<double> qnorm(npw);
+    std::transform(qs.begin(), qs.end(), qnorm.begin(), [tpiba](const ModuleBase::Vector3<double>& q){return tpiba*q.norm();});
+    const int ncol_tab_ = qgrid_tab_.size();
+    
     int iproj = 0;
-    for(int it = 0; it < ntype; it++)
+    for(int i = 0; i < nrad; i++)
     {
-        for(int l = 0; l <= lmax[it]; l++)
+        const int l = l_[i];
+        std::complex<double> pref = (type == 'r')? std::pow(ModuleBase::IMAG_UNIT, l) : std::pow(ModuleBase::NEG_IMAG_UNIT, l);
+        pref = pref * ModuleBase::FOUR_PI/std::sqrt(omega);
+        // cubic spline interpolation
+        std::vector<double> Jlfq(npw);
+        ModuleBase::CubicSpline cubspl_(ncol_tab_, qgrid_tab_.data(), tab_.data()+i*ncol_tab_);
+        cubspl_.eval(npw, qnorm.data(), Jlfq.data());
+        for(int m = -l; m <= l; m++)
         {
-            for(int zeta = 0; zeta < nzeta[it][l]; zeta++)
+            for(int iq = 0; iq < npw; iq++)
             {
-                map[std::make_tuple(it, l, zeta)] = iproj;
-                rmap.push_back(std::make_tuple(it, l, zeta));
-                iproj++;
+                out[iproj*npw+iq] = pref * Jlfq[iq] * ylm_(l*l + l + m, iq);
             }
+            iproj++;
         }
     }
+    assert(iproj == nchannel); // should write to inflate each radial to 2l+1 channels
 }
 
 void RadialProjection::_mask_func(std::vector<double>& mask)
