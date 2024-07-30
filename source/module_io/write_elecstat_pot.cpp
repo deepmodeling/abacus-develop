@@ -1,5 +1,3 @@
-#include "write_pot.h"
-
 #include "module_base/element_name.h"
 #include "module_base/timer.h"
 #include "module_elecstate/potentials/H_Hartree_pw.h"
@@ -7,6 +5,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/cube_io.h"
 #include "module_io/output_log.h"
+#include "write_elecstat_pot.h"
 
 namespace ModuleIO
 {

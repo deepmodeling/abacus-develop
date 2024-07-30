@@ -19,7 +19,7 @@ list(APPEND objects
     binstream.cpp
     write_wfc_pw.cpp
     write_cube.cpp
-    write_pot.cpp
+    write_elecstat_pot.cpp
     write_dipole.cpp
     td_current_io.cpp
     write_wfc_r.cpp
