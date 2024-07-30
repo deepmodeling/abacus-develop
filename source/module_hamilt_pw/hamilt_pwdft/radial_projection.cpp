@@ -1,207 +1,47 @@
-#include "module_hamilt_pw/hamilt_pwdft/radial_projection.h"
-#include "module_base/spherical_bessel_transformer.h"
-#include "module_base/constants.h"
-#include "module_base/matrix.h"
-#include "module_base/math_ylmreal.h"
-#include "module_base/formatter.h"
-#include <algorithm>
 #include <sstream>
 #include <cassert>
 #include <cmath>
+#include <numeric>
+#include "module_hamilt_pw/hamilt_pwdft/radial_projection.h"
+#include "module_base/constants.h"
 
-void RadialProjection::_sbtfft(const int nr,
-                               const double* r,
-                               const double* in,
-                               const int l,
-                               const int m,
-                               const ModuleBase::Vector3<double>& q,
-                               const double& omega,
-                               const double& tpiba,
-                               std::complex<double>& out)
+void RadialProjection::RadialProjector::sbtfft(const int nr, 
+                                               const double* r, 
+                                               const double* in, 
+                                               const int l, 
+                                               std::complex<double>* out) const
 {
-    // first calculate the Ylm(q)
-    ModuleBase::matrix ylm_mat(2*l + 1, 1);
-    ModuleBase::YlmReal::Ylm_Real(2*l + 1, 1, &q, ylm_mat); // get the Ylm(q) value
-    const double ylm_q = ylm_mat(l*l + m, 0);
-    // then perform the SBT
-    const double qnorm = q.norm() * tpiba;
-    RadialProjection::_sbtfft(nr, r, in, l, qnorm, ylm_q, omega, out);
-}
-
-void RadialProjection::_sbtfft(const int nr,
-                               const double* r,
-                               const double* in,
-                               const int l,
-                               const double& qnorm,
-                               const double& ylm_q,
-                               const double& omega,
-                               std::complex<double>& out)
-{
-    ModuleBase::SphericalBesselTransformer sbt(true);
-    double temp;
-    // perform Sphereical Bessel Transform on radial function
-    sbt.direct(l, nr, r, in, 1, &qnorm, &temp);
-    // formula: F[f](q) = 4*pi/sqrt(omega) * i^l * Jl[f](q) * Ylm(q)
-    //                  = integral(f(r) * exp(-iqr) * dr), where r is vector
-    out = ModuleBase::FOUR_PI / std::sqrt(omega) * std::pow(ModuleBase::IMAG_UNIT, l) * temp * ylm_q;
-}
-
-void RadialProjection::_sbtfft(const std::vector<double>& r,
-                               const std::vector<double>& in,
-                               const int l,
-                               const int m,
-                               const ModuleBase::Vector3<double>& q,
-                               const double& omega,
-                               const double& tpiba,
-                               std::complex<double>& out)
-{
-#ifdef __DEBUG
-    assert(r.size() == in.size());
-#endif // the size of rgrid and input function should be the same
-    RadialProjection::_sbtfft(r.size(), //< const int nr,
-                              r.data(), //< const double* r,
-                              in.data(),//< const double* in,
-                              l,        //< const int l,
-                              m,        //< const int m,
-                              q,        //< const ModuleBase::Vector3<double>& q,
-                              omega,    //< const double omega,
-                              tpiba,    //< const double tpiba,
-                              out);     //< std::complex<double>&
-}
-
-void RadialProjection::_sbtfft(const std::vector<double>& r,
-                               const std::vector<double>& in,
-                               const int l,
-                               const double& qnorm,
-                               const double& ylm_q,
-                               const double& omega,
-                               std::complex<double>& out)
-{
-#ifdef __DEBUG
-    assert(r.size() == in.size());
-#endif // the size of rgrid and input function should be the same
-    RadialProjection::_sbtfft(r.size(), //< const int nr,
-                              r.data(), //< const double* r,
-                              in.data(),//< const double* in,
-                              l,        //< const int l,
-                              qnorm,    //< const double& qnorm,
-                              ylm_q,    //< const double& ylm_q,
-                              omega,    //< const double& omega,
-                              out);     //< std::complex<double>&
-}
-
-void RadialProjection::_sbtfft_for_each_q(const int nr,
-                                          const double* r,
-                                          const double* in,
-                                          const int l,
-                                          const std::vector<ModuleBase::Vector3<double>>& qs,
-                                          const double& omega,
-                                          const double& tpiba,
-                                          std::complex<double>* out)
-{
-    const int npw = qs.size();
-    const int total_lm = (l + 1) * (l + 1);
-    ModuleBase::matrix ylm(total_lm, npw);
-    ModuleBase::YlmReal::Ylm_Real(total_lm, npw, qs.data(), ylm);
-    for(int ig = 0; ig < npw; ig++)
+    /* user should take care of the memory allocation by own, the size required
+    would be (2*l+1)*npw */
+    const int npw = qnorm_.size();
+    std::vector<double> jlq(npw);
+    sbt_->direct(l, nr, r, in, npw, qnorm_.data(), jlq.data());
+    for(int m = -l; m <= l; m++)
     {
-        double qnorm = qs[ig].norm() * tpiba;
-        for(int m = 0; m <= 2*l + 1; m++)
+        int lm = l*l + m;
+        for(int iq = 0; iq < npw; iq++)
         {
-            const int lm = l*l + m;
-            const double ylm_q = ylm(lm, ig);
-            RadialProjection::_sbtfft(nr,                   //< const int n
-                                      r,                    //< const double* r
-                                      in,                   //< const double* in
-                                      l,                    //< const int l
-                                      qnorm,                //< const double qnorm
-                                      ylm_q,                //< const double ylm_q
-                                      omega,                //< const double omega
-                                      out[ig*total_lm + m]);//< std::complex<double>* out
+            out[m+l+lm*npw] = ModuleBase::FOUR_PI/std::sqrt(omega_) * std::pow(ModuleBase::IMAG_UNIT, l) * jlq[iq] * ylm_(lm, iq);
         }
     }
 }
 
-void RadialProjection::_sbtfft_for_each_q(const std::vector<double>& r,
-                                          const std::vector<double>& in,
-                                          const int l,
-                                          const std::vector<ModuleBase::Vector3<double>>& qs,
-                                          const double& omega,
-                                          const double& tpiba,
-                                          std::vector<std::complex<double>>& out)
+void RadialProjection::RadialProjector::sbtfft(const std::vector<double>& r,
+                                               const std::vector<double>& in,
+                                               const int l,
+                                               std::vector<std::complex<double>>& out) const
 {
     const int nr = r.size();
-    RadialProjection::_sbtfft_for_each_q(nr,           //< const int nr,
-                                         r.data(),     //< const double* r,
-                                         in.data(),    //< const double* in,
-                                         l,            //< const int l,
-                                         qs,           //< const std::vector<ModuleBase::Vector3<double>>& qs,
-                                         omega,        //< const double omega,
-                                         tpiba,        //< const double tpiba,
-                                         out.data());  //< std::complex<double>* out
+    const int npw = qnorm_.size();
+    out.resize((2*l+1)*npw);
+    sbtfft(nr, r.data(), in.data(), l, out.data()); 
 }
 
-void RadialProjection::_proj_each_type(const std::vector<double>& r,
-                                       const std::vector<std::vector<double>>& in_clkxn,
-                                       const std::vector<int>& l_clkxn,
-                                       const std::vector<ModuleBase::Vector3<double>>& qs,
-                                       const double& omega,
-                                       const double& tpiba,
-                                       std::vector<std::complex<double>>& out)
-{
-    int nproj = 0;
-    for(auto& l: l_clkxn)
-    {
-        nproj += (l + 1) * (l + 1);
-    }
-    const int npw = qs.size();
-    out.resize(nproj * npw);
-    for(int i = 0; i < in_clkxn.size(); i++)
-    {
-        std::vector<std::complex<double>> out_i;
-        RadialProjection::_sbtfft_for_each_q(r,             //< const std::vector<double>& r,
-                                             in_clkxn[i],   //< const std::vector<double>& in_clkxn[i],
-                                             l_clkxn[i],    //< const int l_clkxn[i],
-                                             qs,            //< const std::vector<ModuleBase::Vector3<double>>& qs,
-                                             omega,         //< const double omega,
-                                             tpiba,         //< const double tpiba,
-                                             out_i);        //< std::vector<std::complex<double>>& out_i
-        std::copy(out_i.begin(), out_i.end(), out.begin() + i*nproj); // copy to out in range i*nproj to (i+1)*nproj
-    }
-}
-
-void RadialProjection::_proj_each_type(const int nr,
-                                       const double* r,
-                                       const std::vector<double*> in_clkxn,
-                                       const int* l_clkxn,
-                                       const std::vector<ModuleBase::Vector3<double>>& qs,
-                                       const double omega,
-                                       const double tpiba,
-                                       std::complex<double>* out)
-{
-    int nproj = 0;
-    for(int i = 0; i < in_clkxn.size(); i++)
-    {
-        nproj += (l_clkxn[i] + 1) * (l_clkxn[i] + 1);
-    }
-    for(int i = 0; i < in_clkxn.size(); i++)
-    {
-        RadialProjection::_sbtfft_for_each_q(nr,            //< const int nr,
-                                             r,             //< const double* r,
-                                             in_clkxn[i],   //< const double* in,
-                                             l_clkxn[i],    //< const int l,
-                                             qs,            //< const std::vector<ModuleBase::Vector3<double>>& qs,
-                                             omega,         //< const double omega,
-                                             tpiba,         //< const double tpiba,
-                                             out + i*nproj);//< std::complex<double>* out
-    }
-}
-
-void RadialProjection::_indexing(const int ntype,
-                                 const std::vector<int>& lmax,
-                                 const std::vector<std::vector<int>>& nzeta,
-                                 std::map<std::tuple<int, int, int>, int>& map,
-                                 std::vector<std::tuple<int, int, int>>& rmap)
+void RadialProjection::_radial_indexing(const int ntype,
+                                        const std::vector<int>& lmax,
+                                        const std::vector<std::vector<int>>& nzeta,
+                                        std::map<std::tuple<int, int, int>, int>& map,
+                                        std::vector<std::tuple<int, int, int>>& rmap)
 {
     int iproj = 0;
     for(int it = 0; it < ntype; it++)

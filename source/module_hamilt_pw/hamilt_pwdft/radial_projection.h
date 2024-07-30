@@ -1,166 +1,67 @@
 #ifndef RADIAL_PROJECTION_H
 #define RADIAL_PROJECTION_H
-// project any atom-centered function that has seperatable radial and angular parts
-// onto the planewave basis
+
+#include "module_base/vector3.h"
+#include "module_base/matrix.h"
+#include "module_base/math_ylmreal.h"
+#include "module_base/spherical_bessel_transformer.h"
+#include <memory>
 #include <vector>
 #include <complex>
 #include <map>
 #include <utility>
-#include "module_base/vector3.h"
-#include "module_basis/module_pw/pw_basis.h"
-
+#include <algorithm>
+// project any atom-centered function that has seperatable radial and angular parts
+// onto the planewave basis
 namespace RadialProjection
 {
-    /**
-     * ====================================================================================
-     * 
-     *              Basic functions for performing analytical Fourier transform
-     * 
-     * ====================================================================================
-     * 
-     */
-    /**
-     * @brief perform analytical version of the Fourier transform:
-     * F(q) = int(f(r)*exp(-iq.r) d^3r)
-     *      = 4*pi/sqrt(omega) * i^l * Jl[f](q) * Ylm(q)
-     * , where Ylm(q) is real spherical harmonic function, and Jl[f](q) is 
-     * the Spherial Bessel Transform of f(r):
-     * Jl[f](q) = int(f(r)*j_l(q*r)*r^2 dr)
-     * , where j_l(q*r) is the spherical Bessel function of the first kind.
-     * 
-     * @note
-     * One may need the opposite phase, in such case, simply do out.conj().
-     * This function also has overloaded version for std::vector input, and
-     * cached version for ylm_q.
-     * 
-     * @param nr number of real space grid
-     * @param r real space grid (radial)
-     * @param in radial part of the input function
-     * @param l angular momentum of the angular part
-     * @param m magnetic quantum number of the angular part
-     * @param q wavevector
-     * @param omega cell volume
-     * @param tpiba 2*pi/lat0
-     * @param out output value
-     */
-    static void _sbtfft(const int nr,
+    class RadialProjector
+    {
+        public:
+            RadialProjector(const int lmax, 
+                            const std::vector<ModuleBase::Vector3<double>>& qs,
+                            const double& omega = 1.0,
+                            const double& tpiba = 1.0)
+            {
+                // can cache the Ylm and SphericalBesselTransformer at the very beginning
+                const int total_lm = std::pow(lmax+1, 2);
+                const int npw = qs.size();
+                ylm_.create(total_lm, npw);
+                ModuleBase::YlmReal::Ylm_Real(total_lm, npw, qs.data(), ylm_);
+                sbt_ = std::unique_ptr<ModuleBase::SphericalBesselTransformer>(
+                    new ModuleBase::SphericalBesselTransformer(true));
+                qnorm_.resize(npw);
+                std::transform(qs.begin(), qs.end(), qnorm_.begin(), 
+                [tpiba](const ModuleBase::Vector3<double>& q){return tpiba * q.norm();});
+                omega_ = omega;
+            }
+            ~RadialProjector() {}
+            /**
+             * @brief perform analytical version of the Fourier transform:
+             * F(q) = int(f(r)*exp(-iq.r) d^3r)
+             *      = 4*pi/sqrt(omega) * i^l * Jl[f](q) * Ylm(q)
+             * , where Ylm(q) is real spherical harmonic function, and Jl[f](q) is 
+             * the Spherial Bessel Transform of f(r):
+             * Jl[f](q) = int(f(r)*j_l(q*r)*r^2 dr)
+             * , where j_l(q*r) is the spherical Bessel function of the first kind.
+             * 
+             */
+            void sbtfft(const int nr,
                         const double* r,
                         const double* in,
                         const int l,
-                        const int m,
-                        const ModuleBase::Vector3<double>& q,
-                        const double& omega,
-                        const double& tpiba,
-                        std::complex<double>& out);
-    // for cached call of ylm_q. Details on param list, see the above function
-    static void _sbtfft(const int nr,
-                        const double* r,
-                        const double* in,
-                        const int l,
-                        const double& qnorm,
-                        const double& ylm_q,
-                        const double& omega,
-                        std::complex<double>& out);
-    // std::vector version
-    static void _sbtfft(const std::vector<double>& r,
+                        std::complex<double>* out) const;
+            void sbtfft(const std::vector<double>& r,
                         const std::vector<double>& in,
                         const int l,
-                        const int m,
-                        const ModuleBase::Vector3<double>& q,
-                        const double& omega,
-                        const double& tpiba,
-                        std::complex<double>& out);
-    // for cached call of ylm_q, std::vector version
-    static void _sbtfft(const std::vector<double>& r,
-                        const std::vector<double>& in,
-                        const int l,
-                        const double& qnorm,
-                        const double& ylm_q,
-                        const double& omega,
-                        std::complex<double>& out);
-    /**
-     * @brief project any atom-centered function that has seperatable radial and angular parts
-     * onto the planewave basis (based on Spherical Bessel Transformer)
-     * 
-     * @param nr number of real space grid
-     * @param r real space grid
-     * @param in input function
-     * @param l angular momentum
-     * @param qs wavevectors
-     * @param omega cell volume
-     * @param tpiba 2*pi/lat0
-     * @param out output value
-     */
-    static void _sbtfft_for_each_q(const int nr,
-                                   const double* r,
-                                   const double* in,
-                                   const int l,
-                                   const std::vector<ModuleBase::Vector3<double>>& qs, // do I need to change to std::vector?
-                                   const double& omega,
-                                   const double& tpiba,
-                                   std::complex<double>* out);
-    // std::vector version
-    static void _sbtfft_for_each_q(const std::vector<double>& r,
-                                   const std::vector<double>& in,
-                                   const int l,
-                                   const std::vector<ModuleBase::Vector3<double>>& qs, // do I need to change to std::vector?
-                                   const double& omega,
-                                   const double& tpiba,
-                                   std::vector<std::complex<double>>& out);
-    /**
-     * @brief project a collection of atom-centered functions that have seperatable radial and angular parts
-     * onto the planewave basis (based on Spherical Bessel Transformer). In principle the collection
-     * is organized as flattened [it][l][zeta], and l is organized as [i], the index of the input function
-     * 
-     * @param r uniformed radial grid
-     * @param in_clkxn collection(clkxn) of input functions
-     * @param l_clkxn collection of angular momentum for each input function
-     * @param qs wavevectors
-     * @param omega cell volume
-     * @param tpiba 2*pi/lat0
-     * @param out output value
-     */
-    static void _proj_each_type(const std::vector<double>& r,
-                                const std::vector<std::vector<double>>& in_clkxn,
-                                const std::vector<int>& l_clkxn,
-                                const std::vector<ModuleBase::Vector3<double>>& qs, //< from PW_Basis::getgpluskcar
-                                const double& omega,                                //< from UnitCell::omega
-                                const double& tpiba,                                //< from UnitCell::tpiba
-                                std::vector<std::complex<double>>& out);
-    
-    /**
-     * @brief raw pointer version of project function. This version can support in-continuous
-     * memory layout of input functions. For example if there are beta distributed in Atom
-     * instances, build a vector of pointers, [it][l][zeta]. Then save l into another raw pointer
-     * , indexed by [izeta]
-     * 
-     * @param nr number of real space grid
-     * @param r C-style array of real space grid
-     * @param in_clkxn C-style array of input functions, indexed by [iproj][ir]
-     * @param l_clkxn C-style array of angular momentum for each input function, indexed by [iproj]
-     * @param npw number of wavevectors
-     * @param qs C-style array of wavevectors
-     * @param omega cell volume
-     * @param tpiba 2*pi/lat0
-     * @param out C-style array of output values, indexed by [iproj][iq]
-     */
-    static void _proj_each_type(const int nr,
-                                const double* r,
-                                const std::vector<double*> in_clkxn,
-                                const int* l_clkxn,
-                                const std::vector<ModuleBase::Vector3<double>>& qs, // do I need to change to std::vector?
-                                const double omega,
-                                const double tpiba,
-                                std::complex<double>* out);
+                        std::vector<std::complex<double>>& out) const;
 
-    static void proj_all_atoms(const int nr,
-                               const double* r,
-                               const std::vector<std::vector<double*>>& in_clkxn,
-                               const std::vector<int>& l_clkxn,
-                               const std::vector<ModuleBase::Vector3<double>>& qs,
-                               const double omega,
-                               const double tpiba,
-                               std::vector<std::complex<double>>& out);
+        private:
+            ModuleBase::matrix ylm_;
+            std::unique_ptr<ModuleBase::SphericalBesselTransformer> sbt_;
+            std::vector<double> qnorm_;
+            double omega_;
+    };
 
     /**
      * @brief build a map from [it][l][zeta] to vectorized index, together with its reverse
@@ -171,7 +72,7 @@ namespace RadialProjection
      * @param map [out] map from [it][l][zeta] to vectorized index
      * @param rmap [out] reverse map from vectorized index to [it][l][zeta]
      */
-    static void _indexing(const int ntype,                                  //< from UnitCell::ntype
+    void _radial_indexing(const int ntype,                                  //< from UnitCell::ntype
                           const std::vector<int>& lmax,
                           const std::vector<std::vector<int>>& nzeta,
                           std::map<std::tuple<int, int, int>, int>& map,
@@ -210,16 +111,16 @@ namespace RadialProjection
      * @param R 
      * @return ModulePW::PW_Basis 
      */
-    static ModulePW::PW_Basis _init_qgrid(const double& ecutwfc,
-                                          const double& ecutrho,
-                                          const ModuleBase::Matrix3& R); // do I need to change to std::vector?
+    // static ModulePW::PW_Basis _init_qgrid(const double& ecutwfc,
+    //                                       const double& ecutrho,
+    //                                       const ModuleBase::Matrix3& R); // do I need to change to std::vector?
 
     /**
      * @brief get the mask function for SBFFT
      * 
      * @param mask mask function
      */
-    static void _mask_func(std::vector<double>& mask);
+    void _mask_func(std::vector<double>& mask);
 
     /**
      * @brief do operation w(r)/m(r) on a radial function. The cutoff radius of w(r) 
@@ -233,12 +134,12 @@ namespace RadialProjection
      * @param mask mask function
      * @param out output value
      */
-    static void _do_mask_on_radial(const int nr1,
-                                   const double* r,
-                                   const double* in,
-                                   const int nr2,
-                                   const double* mask,
-                                   double* out);
+    void _do_mask_on_radial(const int nr1,
+                            const double* r,
+                            const double* in,
+                            const int nr2,
+                            const double* mask,
+                            double* out);
 }
 
 #endif // RADIAL_PROJECTION_H
