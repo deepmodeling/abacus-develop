@@ -530,8 +530,8 @@ OBJS_IO_LCAO=cal_r_overlap_R.o\
       write_proj_band_lcao.o\
       write_istate_info.o\
       nscf_fermi_surf.o\
-      get_pchg.o\
-      get_wf.o\
+      get_pchg_lcao.o\
+      get_wf_lcao.o\
       io_dmk.o\
       unk_overlap_lcao.o\
       read_wfc_nao.o\

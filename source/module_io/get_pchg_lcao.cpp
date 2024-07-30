@@ -1,4 +1,4 @@
-#include "get_pchg.h"
+#include "get_pchg_lcao.h"
 
 #include "module_base/blas_connector.h"
 #include "module_base/global_function.h"
