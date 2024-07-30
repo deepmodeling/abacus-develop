@@ -45,7 +45,8 @@ namespace ModuleSymmetry
         {   //the BvK supercell has the same symmetry as the original cell
             this->bvk_nsym_ = symm.nrotk;
             this->isymbvk_to_isym_.resize(symm.nrotk);
-            for (int isym = 0;isym < symm.nrotk;++isym) this->isymbvk_to_isym_[isym] = isym;
+            for (int isym = 0;isym < symm.nrotk;++isym) { this->isymbvk_to_isym_[isym] = isym;
+}
             return;
         }
 
@@ -59,7 +60,8 @@ namespace ModuleSymmetry
         for (int it = 0;it < st.ntype;++it)
         {
             bvk_na[it] = atoms[it].na * bvk_min_period[0] * bvk_min_period[1] * bvk_min_period[2];
-            if (it > 0) bvk_istart[it] = bvk_istart[it - 1] + bvk_na[it - 1];
+            if (it > 0) { bvk_istart[it] = bvk_istart[it - 1] + bvk_na[it - 1];
+}
             if (bvk_na[it] < bvk_na[bvk_itmin_type])
             {
                 bvk_itmin_type = it;
@@ -76,10 +78,10 @@ namespace ModuleSymmetry
         s3 = a3 = lat.a3 * static_cast<double>(bvk_min_period[2]);
         ModuleBase::Matrix3 bvk_min_lat = set_matrix3(s1, s2, s3);
         int at = 0;
-        for (int it = 0; it < st.ntype; ++it)
-            for (int c1 = 0;c1 < bvk_min_period[0];++c1)
-                for (int c2 = 0;c2 < bvk_min_period[1];++c2)
-                    for (int c3 = 0;c3 < bvk_min_period[2];++c3)
+        for (int it = 0; it < st.ntype; ++it) {
+            for (int c1 = 0;c1 < bvk_min_period[0];++c1) {
+                for (int c2 = 0;c2 < bvk_min_period[1];++c2) {
+                    for (int c3 = 0;c3 < bvk_min_period[2];++c3) {
                         for (int ia = 0; ia < atoms[it].na; ++ia)
                         {
                             bvk_dpos[3 * at] = (static_cast<double> (c1) + atoms[it].taud[ia].x) / static_cast<double>(bvk_min_period[0]);
@@ -92,6 +94,10 @@ namespace ModuleSymmetry
                             }
                             ++at;
                         }
+}
+}
+}
+}
 
         // analyze bravis and generate optimized lattice for minimal BvK lattice
         double cel_const[6], pre_const[6];
@@ -157,4 +163,4 @@ namespace ModuleSymmetry
     //     return in_plain;
     // }
 
-}
+};

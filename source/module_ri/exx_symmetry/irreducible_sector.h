@@ -22,18 +22,20 @@ namespace ModuleSymmetry
         {
             bool operator()(const Tap& lhs, const Tap& rhs) const
             {
-                if (lhs.first < rhs.first)return true;
-                else if (lhs.first > rhs.first)return false;
-                else return lhs.second < rhs.second;
+                if (lhs.first < rhs.first) {return true;
+                } else if (lhs.first > rhs.first) {return false;
+                } else { return lhs.second < rhs.second;
+}
             }
         };
         struct apR_less_func
         {
             bool operator()(const TapR& lhs, const TapR& rhs) const
             {
-                if (lhs.first < rhs.first)return true;
-                else if (lhs.first > rhs.first)return false;
-                else return lhs.second < rhs.second;
+                if (lhs.first < rhs.first) {return true;
+                } else if (lhs.first > rhs.first) {return false;
+                } else { return lhs.second < rhs.second;
+}
             }
         };
         struct len_less_func
@@ -44,9 +46,10 @@ namespace ModuleSymmetry
             }
             bool operator()(const TC& lhs, const TC& rhs) const
             {
-                if (norm2(lhs) < norm2(rhs))return true;
-                else if (norm2(lhs) > norm2(rhs))return false;
-                else return lhs < rhs;
+                if (norm2(lhs) < norm2(rhs)) {return true;
+                } else if (norm2(lhs) > norm2(rhs)) {return false;
+                } else { return lhs < rhs;
+}
             }
         };
 
