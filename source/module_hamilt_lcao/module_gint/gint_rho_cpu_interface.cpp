@@ -51,7 +51,7 @@ void Gint::gint_kernel_rho(Gint_inout* inout) {
                                 cal_flag.get_ptr_2D());
 
     // evaluate psi on grids
-        int LD_pool = block_index.data()[na_grid];
+        int LD_pool = block_index[na_grid];
         ModuleBase::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
         Gint_Tools::cal_psir_ylm(*this->gridt,
                                 this->bxyz,
@@ -155,7 +155,7 @@ void Gint::gint_kernel_tau(Gint_inout* inout) {
                                             block_iw.data(), block_index.data(), block_size.data(), cal_flag.get_ptr_2D());
 
     //evaluate psi and dpsi on grids
-        int LD_pool = block_index.data()[na_grid];
+        int LD_pool = block_index[na_grid];
         ModuleBase::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
         ModuleBase::Array_Pool<double> dpsir_ylm_x(this->bxyz, LD_pool);
         ModuleBase::Array_Pool<double> dpsir_ylm_y(this->bxyz, LD_pool);
