@@ -1,10 +1,3 @@
-//=====================
-// AUTHOR : Peize Lin
-// DATE : 2021-11-02
-// REFACTORING AUTHOR : Daye Zheng
-// DATE : 2022-04-14
-//=====================
-
 #ifndef DIAGO_SCALAPACK_H
 #define DIAGO_SCALAPACK_H
 
@@ -13,58 +6,60 @@
 #include <vector>
 
 #include "diagh.h"
-#include "module_base/complexmatrix.h"
-#include "module_base/matrix.h"
-#include "module_basis/module_ao/parallel_orbitals.h"
 
 namespace hsolver
 {
-    template<typename T>
-    class DiagoScalapack : public DiagH<T>
+template <typename T = std::complex<double>>
+class DiagoScalapack : public DiagH<T>
 {
-private:
-    using Real = typename GetTypeReal<T>::type;
-  public:
-    void diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* eigenvalue_in) override;
-#ifdef __MPI
-    // diagnolization used in parallel-k case
-    void diag_pool(hamilt::MatrixBlock<T>& h_mat, hamilt::MatrixBlock<T>& s_mat, psi::Psi<T>& psi, Real* eigenvalue_in, MPI_Comm& comm) override;
-#endif
+    private:
+        using Real = typename GetTypeReal<T>::type;
+        const int n_band;
+        const int n_local;
+        const int d_size;
+        const int dim;
+    public:
+        DiagoScalapack(const int& nband_in,
+                        const int& nlocal_in,
+                        const int& nbasis_in,
+                        const int& dsize_in);
+        ~DiagoScalapack();
+        void diag(T* h_mat, T* s_mat, const int* const desc, T* psi, Real* eigenvalue_in);
 
-  private:
-    void pdsygvx_diag(const int *const desc,
-                      const int ncol,
-                      const int nrow,
-                      const double *const h_mat,
-                      const double *const s_mat,
-                      double *const ekb,
-                      psi::Psi<double> &wfc_2d);
-    void pzhegvx_diag(const int *const desc,
-                      const int ncol,
-                      const int nrow,
-                      const std::complex<double> *const h_mat,
-                      const std::complex<double> *const s_mat,
-                      double *const ekb,
-                      psi::Psi<std::complex<double>> &wfc_2d);
+    private:
+        void pdsygvx_diag(const int *const desc,
+                        const int ncol,
+                        const int nrow,
+                        double* h_mat,
+                        double* s_mat,
+                        double *const ekb,
+                        double *wfc_2d);
+        void pzhegvx_diag(const int *const desc,
+                        const int ncol,
+                        const int nrow,
+                        std::complex<double>* h_mat,
+                        std::complex<double>* s_mat,
+                        double *const ekb,
+                        std::complex<double> *wfc_2d);
 
-    std::pair<int, std::vector<int>> pdsygvx_once(const int *const desc,
-                                                  const int ncol,
-                                                  const int nrow,
-                                                  const double *const h_mat,
-                                                  const double *const s_mat,
-                                                  double *const ekb,
-                                                  psi::Psi<double> &wfc_2d) const;
-    std::pair<int, std::vector<int>> pzhegvx_once(const int *const desc,
-                                                  const int ncol,
-                                                  const int nrow,
-                                                  const std::complex<double> *const h_mat,
-                                                  const std::complex<double> *const s_mat,
-                                                  double *const ekb,
-                                                  psi::Psi<std::complex<double>> &wfc_2d) const;
+        std::pair<int, std::vector<int>> pdsygvx_once(const int *const desc,
+                                                    const int ncol,
+                                                    const int nrow,
+                                                    double* h_mat,
+                                                    double* s_mat,
+                                                    double *const ekb,
+                                                    double *wfc_2d) const;
+        std::pair<int, std::vector<int>> pzhegvx_once(const int *const desc,
+                                                    const int ncol,
+                                                    const int nrow,
+                                                    std::complex<double>* h_mat,
+                                                    std::complex<double>* s_mat,
+                                                    double *const ekb,
+                                                    std::complex<double> *wfc_2d) const;
 
-    int degeneracy_max = 12; // For reorthogonalized memory. 12 followes siesta.
+        int degeneracy_max = 12; // For reorthogonalized memory. 12 followes siesta.
 
-    void post_processing(const int info, const std::vector<int> &vec);
+        void post_processing(const int info, const std::vector<int> &vec);
 };
 
 } // namespace hsolver

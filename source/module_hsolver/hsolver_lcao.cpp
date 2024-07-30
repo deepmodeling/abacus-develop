@@ -154,8 +154,10 @@ void HSolverLCAO<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>&
     if (this->method == "scalapack_gvx")
     {
 #ifdef __MPI
-        DiagoScalapack<T> sa;
-        sa.diag(hm, psi, eigenvalue);
+        hamilt::MatrixBlock<T> h_mat, s_mat;
+        hm->matrix(h_mat, s_mat);
+        DiagoScalapack<T> sa(GlobalV::NBANDS, GlobalV::NLOCAL, GlobalV::NLOCAL, GlobalV::DSIZE);
+        sa.diag(h_mat.p,s_mat.p,h_mat.desc, psi.get_pointer(),eigenvalue);
 #endif
     }
 #ifdef __ELPA
@@ -380,8 +382,8 @@ void HSolverLCAO<T, Device>::parakSolve(hamilt::Hamilt<T>* pHamilt,
             /// solve eigenvector and eigenvalue for H(k)
             if (this->method == "scalapack_gvx")
             {
-                DiagoScalapack<T> sa;
-                sa.diag_pool(hk_pool, sk_pool, psi_pool,&(pes->ekb(ik_global, 0)), k2d.POOL_WORLD_K2D);
+                DiagoScalapack<T> sa(GlobalV::NBANDS, GlobalV::NLOCAL, GlobalV::NLOCAL, GlobalV::DSIZE);
+                sa.diag(hk_pool.p,sk_pool.p,hk_pool.desc,psi_pool.get_pointer(),&(pes->ekb(ik_global, 0)));
             }
 #ifdef __ELPA
             else if (this->method == "genelpa")
