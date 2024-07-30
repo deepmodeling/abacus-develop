@@ -14,6 +14,7 @@ list(APPEND objects
     read_cube.cpp
     read_rho.cpp
     read_rhog.cpp
+    read_exit_file.cpp
     read_wfc_pw.cpp
     restart.cpp
     binstream.cpp
