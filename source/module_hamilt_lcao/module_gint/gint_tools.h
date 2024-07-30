@@ -172,27 +172,8 @@ int* get_vindex(const int bxyz,
 void get_vindex(const int bxyz, const int bx, const int by,
                     const int bz, const int nplane, 
                     const int start_ind,const int ncyz,int* vindex);
-// int* get_vindex(const int bxyz,
-//                 const int bx,
-//                 const int by,
-//                 const int bz,
-//                 const int nplane,
-//                 const int start_ind,
-//                 const int ncyz);
-
 // extract the local potentials.
 // vldr3[bxyz]
-double* get_vldr3(const double* const vlocal,
-                  const int bxyz,
-                  const int bx,
-                  const int by,
-                  const int bz,
-                  const int nplane,
-                  const int ncyz,
-                  const int ibx,
-                  const int jby,
-                  const int kbz,
-                  const double dv);
 
 void get_gint_vldr3(double* vldr3,
                     const double* const vlocal,

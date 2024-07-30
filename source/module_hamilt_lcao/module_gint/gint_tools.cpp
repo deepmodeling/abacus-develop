@@ -12,27 +12,27 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 namespace Gint_Tools{
-int* get_vindex(const int bxyz, const int bx, const int by, const int bz, const int nplane, const int start_ind,
-                const int ncyz)
-{
-    int* vindex = new int[bxyz];
-    int bindex = 0;
+// int* get_vindex(const int bxyz, const int bx, const int by, const int bz, const int nplane, const int start_ind,
+//                 const int ncyz)
+// {
+//     int* vindex = new int[bxyz];
+//     int bindex = 0;
 
-		for(int ii=0; ii<bx; ii++)
-		{
-			const int ipart = ii*ncyz;
-			for(int jj=0; jj<by; jj++)
-			{
-				const int jpart = jj*nplane + ipart;
-				for(int kk=0; kk<bz; kk++)
-				{
-					vindex[bindex] = start_ind + kk + jpart;
-					++bindex;
-				}
-			}
-		}
-		return vindex;
-	}
+// 		for(int ii=0; ii<bx; ii++)
+// 		{
+// 			const int ipart = ii*ncyz;
+// 			for(int jj=0; jj<by; jj++)
+// 			{
+// 				const int jpart = jj*nplane + ipart;
+// 				for(int kk=0; kk<bz; kk++)
+// 				{
+// 					vindex[bindex] = start_ind + kk + jpart;
+// 					++bindex;
+// 				}
+// 			}
+// 		}
+// 		return vindex;
+// 	}
 
 void get_vindex(const int bxyz, const int bx, const int by, const int bz, const int nplane, const int start_ind,
                 	const int ncyz,int* vindex)
@@ -90,52 +90,6 @@ void get_vindex(const int bxyz, const int bx, const int by, const int bz, const 
 	}
 
 	// extract the local potentials.
-	double* get_vldr3(
-        const double* const vlocal,		// vlocal[ir]
-        const int bxyz,
-        const int bx,
-        const int by,
-        const int bz,
-        const int nplane,
-        const int ncyz,
-		const int ibx,
-		const int jby,
-		const int kbz,
-		const double dv)
-	{
-		// set the index for obtaining local potentials
-		int* vindex = Gint_Tools::get_vindex(bxyz, bx, by, bz, nplane, ncyz, ibx, jby, kbz);
-		double *vldr3 = new double[bxyz];
-		for(int ib=0; ib<bxyz; ib++)
-		{
-			vldr3[ib]=vlocal[vindex[ib]] * dv;
-		}
-		delete[] vindex;
-		return vldr3;
-	}
-
-	double* get_vldr3(
-        const double* const vlocal,		// vlocal[ir]
-        const int bxyz,
-        const int bx,
-        const int by,
-        const int bz,
-        const int nplane,
-        const int start_ind,
-		const int ncyz,
-		const double dv)
-	{
-		// set the index for obtaining local potentials
-		int* vindex = Gint_Tools::get_vindex(bxyz, bx, by, bz, nplane, start_ind, ncyz);
-		double *vldr3 = new double[bxyz];
-		for(int ib=0; ib<bxyz; ib++)
-		{
-			vldr3[ib]=vlocal[vindex[ib]] * dv;
-		}
-		delete[] vindex;
-		return vldr3;
-	}
-
 	void get_gint_vldr3(
 		double* vldr3,
         const double* const vlocal,		// vlocal[ir]
