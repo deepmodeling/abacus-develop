@@ -34,7 +34,7 @@ int* get_vindex(const int bxyz, const int bx, const int by, const int bz, const 
 		return vindex;
 	}
 
-void get_vindex_rho(const int bxyz, const int bx, const int by, const int bz, const int nplane, const int start_ind,
+void get_vindex(const int bxyz, const int bx, const int by, const int bz, const int nplane, const int start_ind,
                 	const int ncyz,int* vindex)
 {
     // int* vindex = new int[bxyz];
@@ -149,7 +149,6 @@ void get_vindex_rho(const int bxyz, const int bx, const int by, const int bz, co
 	{
 		// set the index for obtaining local potentials
 		int* vindex = Gint_Tools::get_vindex(bxyz, bx, by, bz, nplane, start_ind, ncyz);
-		// double *vldr3 = new double[bxyz];
 		for(int ib=0; ib<bxyz; ib++)
 		{
 			vldr3[ib]=vlocal[vindex[ib]] * dv;
@@ -173,77 +172,30 @@ void get_block_info(const Grid_Technique& gt, const int bxyz, const int na_grid,
         block_index[id + 1] = block_index[id] + ucell.atoms[it].nw;
         block_size[id] = ucell.atoms[it].nw;
 
-			const int imcell=gt.which_bigcell[mcell_index];
-			const double mt[3] = {
-				gt.meshball_positions[imcell][0] - gt.tau_in_bigcell[iat][0],
-				gt.meshball_positions[imcell][1] - gt.tau_in_bigcell[iat][1],
-				gt.meshball_positions[imcell][2] - gt.tau_in_bigcell[iat][2]};
+		const int imcell=gt.which_bigcell[mcell_index];
+		const double mt[3] = {
+			gt.meshball_positions[imcell][0] - gt.tau_in_bigcell[iat][0],
+			gt.meshball_positions[imcell][1] - gt.tau_in_bigcell[iat][1],
+			gt.meshball_positions[imcell][2] - gt.tau_in_bigcell[iat][2]};
 
-			for(int ib=0; ib<bxyz; ib++)
-			{
-				// meshcell_pos: z is the fastest
-				const double dr[3] = {
-					gt.meshcell_pos[ib][0] + mt[0],
-					gt.meshcell_pos[ib][1] + mt[1],
-					gt.meshcell_pos[ib][2] + mt[2]};
-				const double distance = std::sqrt(dr[0]*dr[0] + dr[1]*dr[1] + dr[2]*dr[2]);	// distance between atom and grid
+		for(int ib=0; ib<bxyz; ib++)
+		{
+			// meshcell_pos: z is the fastest
+			const double dr[3] = {
+				gt.meshcell_pos[ib][0] + mt[0],
+				gt.meshcell_pos[ib][1] + mt[1],
+				gt.meshcell_pos[ib][2] + mt[2]};
+			const double distance = std::sqrt(dr[0]*dr[0] + dr[1]*dr[1] + dr[2]*dr[2]);	// distance between atom and grid
 
-            if (distance > gt.rcuts[it] - 1.0e-10) {
-                cal_flag[ib][id] = false;
-            } else {
-                cal_flag[ib][id] = true;
-}
+		if (distance > gt.rcuts[it] - 1.0e-10) {
+			cal_flag[ib][id] = false;
+		} else {
+			cal_flag[ib][id] = true;
+		}
         } // end ib
     }
 }
 
-void get_block_info(const Grid_Technique& gt, const int bxyz, const int na_grid, const int grid_index, int*& block_iw,
-                    int*& block_index, int*& block_size, bool**& cal_flag)
-{
-    block_iw = new int[na_grid];
-    block_index = new int[na_grid + 1];
-    block_size = new int[na_grid];
-    cal_flag = new bool*[bxyz];
-    for (int ib = 0; ib < bxyz; ib++)
-    {
-        cal_flag[ib] = new bool[na_grid];
-    }
-    const UnitCell& ucell = *gt.ucell;
-    block_index[0] = 0;
-    for (int id = 0; id < na_grid; id++)
-    {
-        const int mcell_index = gt.bcell_start[grid_index] + id;
-        const int iat = gt.which_atom[mcell_index];    // index of atom
-        const int it = ucell.iat2it[iat];              // index of atom type
-        const int ia = ucell.iat2ia[iat];              // index of atoms within each type
-        const int start = ucell.itiaiw2iwt(it, ia, 0); // the index of the first wave function for atom (it,ia)
-        block_iw[id] = gt.trace_lo[start];
-        block_index[id + 1] = block_index[id] + ucell.atoms[it].nw;
-        block_size[id] = ucell.atoms[it].nw;
-
-			const int imcell=gt.which_bigcell[mcell_index];
-			const double mt[3] = {
-				gt.meshball_positions[imcell][0] - gt.tau_in_bigcell[iat][0],
-				gt.meshball_positions[imcell][1] - gt.tau_in_bigcell[iat][1],
-				gt.meshball_positions[imcell][2] - gt.tau_in_bigcell[iat][2]};
-
-			for(int ib=0; ib<bxyz; ib++)
-			{
-				// meshcell_pos: z is the fastest
-				const double dr[3] = {
-					gt.meshcell_pos[ib][0] + mt[0],
-					gt.meshcell_pos[ib][1] + mt[1],
-					gt.meshcell_pos[ib][2] + mt[2]};
-				const double distance = std::sqrt(dr[0]*dr[0] + dr[1]*dr[1] + dr[2]*dr[2]);	// distance between atom and grid
-
-            if (distance > gt.rcuts[it] - 1.0e-10) {
-                cal_flag[ib][id] = false;
-            } else {
-                cal_flag[ib][id] = true;
-}
-        } // end ib
-    }
-}
 
 void cal_dpsirr_ylm(
     const Grid_Technique& gt, const int bxyz,

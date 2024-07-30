@@ -169,7 +169,7 @@ int* get_vindex(const int bxyz,
                 const int ibx,
                 const int jby,
                 const int kbz);
-void get_vindex_rho(const int bxyz, const int bx, const int by,
+void get_vindex(const int bxyz, const int bx, const int by,
                     const int bz, const int nplane, 
                     const int start_ind,const int ncyz,int* vindex);
 int* get_vindex(const int bxyz,
