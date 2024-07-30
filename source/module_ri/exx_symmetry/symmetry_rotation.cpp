@@ -92,8 +92,8 @@ namespace ModuleSymmetry
             };
         std::vector<std::vector<std::complex<double>>> dm_k_full;
         int nspin0 = GlobalV::NSPIN == 2 ? 2 : 1;
-        dm_k_full.reserve(kv.nkstot_full * nspin0); //nkstot_full didn't doubled by spin
-        int nk = kv.nkstot / nspin0;
+        dm_k_full.reserve(kv.get_nkstot_full() * nspin0); //nkstot_full didn't doubled by spin
+        int nk = kv.get_nkstot() / nspin0;
         for (int is = 0;is < nspin0;++is)
             for (int ik_ibz = 0;ik_ibz < nk;++ik_ibz)
                 for (auto& isym_kvd : kv.kstars[ik_ibz])
@@ -116,7 +116,7 @@ namespace ModuleSymmetry
 /*
         std::ofstream ofs("DM.dat");
         int ik = 0;
-        for (int ikibz = 0;ikibz < kv.nkstot / nspin0;++ikibz)
+        for (int ikibz = 0;ikibz < kv.get_nkstot() / nspin0;++ikibz)
             for (auto& isym_kvd : kv.kstars[ikibz])
             {
                 ofs << "isym=" << isym_kvd.first << std::endl;

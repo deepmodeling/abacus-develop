@@ -91,9 +91,9 @@ public:
 
     void getgroup(int& nrot, int& nrotk, std::ofstream& ofs_running, const int& nop,
         const ModuleBase::Matrix3* symop, ModuleBase::Matrix3* gmatrix, ModuleBase::Vector3<double>* gtrans,
-        double* pos, double* rotpos, int* index, int itmin_type, int itmin_start, int* istart, int* na)const;
+        double* pos, double* rotpos, int* index, const int itmin_type, const int itmin_start, int* istart, int* na)const;
     bool checksym(const ModuleBase::Matrix3& s, ModuleBase::Vector3<double>& gtrans,
-        double* pos, double* rotpos, int* index, int itmin_type, int itmin_start, int* istart, int* na)const;
+        double* pos, double* rotpos, int* index, const int itmin_type, const int itmin_start, int* istart, int* na)const;
     /// @brief  primitive cell analysis
     void pricell(double* pos, const Atom* atoms);
 

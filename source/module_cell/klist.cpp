@@ -880,7 +880,7 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry& symm,
         {
 			//if it's a new ibz kpoint.
 			//nkstot_ibz indicate the index of ibz kpoint.
-            this->kvec_d_ibz[nkstot_ibz] = kvec_d[i];
+            kvec_d_ibz[nkstot_ibz] = kvec_d[i];
             // output in kpoints file
             ibz_index[i] = nkstot_ibz;
 
@@ -938,11 +938,11 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry& symm,
             {
                 kvec_rot = kvec_d[i] * kgmatrix[j];
                 restrict_kpt(kvec_rot);
-                for (int k = 0; k < this->nkstot_ibz; ++k)
+                for (int k = 0; k < nkstot_ibz; ++k)
                 {
-                    if (symm.equal(kvec_rot.x, this->kvec_d_ibz[k].x) &&
-                        symm.equal(kvec_rot.y, this->kvec_d_ibz[k].y) &&
-                        symm.equal(kvec_rot.z, this->kvec_d_ibz[k].z))
+                    if (symm.equal(kvec_rot.x, kvec_d_ibz[k].x) &&
+                        symm.equal(kvec_rot.y, kvec_d_ibz[k].y) &&
+                        symm.equal(kvec_rot.z, kvec_d_ibz[k].z))
                     {
                         isym = j;
                         exist_number = k;
@@ -1241,7 +1241,7 @@ void K_Vectors::mpi_k()
             auto ks = this->kstars[ikibz].begin();
             for (int ik = 0;ik < starsize;++ik)
             {
-                int isym;
+                int isym = 0;
                 ModuleBase::Vector3<double> ks_vec(0, 0, 0);
                 if (GlobalV::MY_RANK == 0)
                 {

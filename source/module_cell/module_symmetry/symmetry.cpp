@@ -887,7 +887,7 @@ void Symmetry::lattice_type(
 
 void Symmetry::getgroup(int& nrot, int& nrotk, std::ofstream& ofs_running, const int& nop,
     const ModuleBase::Matrix3* symop, ModuleBase::Matrix3* gmatrix, ModuleBase::Vector3<double>* gtrans,
-    double* pos, double* rotpos, int* index, int itmin_type, int itmin_start, int* istart, int* na)const
+    double* pos, double* rotpos, int* index, const int itmin_type, const int itmin_start, int* istart, int* na)const
 {
     ModuleBase::TITLE("Symmetry", "getgroup");
 
@@ -990,7 +990,7 @@ void Symmetry::getgroup(int& nrot, int& nrotk, std::ofstream& ofs_running, const
 }
 
 bool Symmetry::checksym(const ModuleBase::Matrix3& s, ModuleBase::Vector3<double>& gtrans,
-    double* pos, double* rotpos, int* index, int itmin_type, int itmin_start, int* istart, int* na)const
+    double* pos, double* rotpos, int* index, const int itmin_type, const int itmin_start, int* istart, int* na)const
 {
 	//----------------------------------------------
     // checks whether a point group symmetry element 

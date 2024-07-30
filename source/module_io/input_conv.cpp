@@ -496,7 +496,7 @@ void Input_Conv::Convert()
         GlobalC::exx_info.info_global.separate_loop = PARAM.inp.exx_separate_loop;
         GlobalC::exx_info.info_global.hybrid_step = PARAM.inp.exx_hybrid_step;
         GlobalC::exx_info.info_global.mixing_beta_for_loop1 = PARAM.inp.exx_mixing_beta;
-        GlobalC::exx_info.info_global.exx_symmetry_realspace = INPUT.exx_symmetry_realspace;
+        GlobalC::exx_info.info_global.exx_symmetry_realspace = PARAM.inp.exx_symmetry_realspace;
         GlobalC::exx_info.info_lip.lambda = PARAM.inp.exx_lambda;
 
         GlobalC::exx_info.info_ri.real_number = std::stoi(PARAM.inp.exx_real_number);

@@ -43,13 +43,7 @@ protected:
         int myrank, dsize;
         MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
         MPI_Comm_size(MPI_COMM_WORLD, &dsize);
-        pv.set_block_size(1);
-        pv.set_proc_dim(dsize);
-        pv.mpi_create_cart(MPI_COMM_WORLD);
-        std::ofstream ofs;
-        pv.set_local2global(matsize, matsize, ofs, ofs);
-        pv.set_desc(matsize, matsize, pv.get_row_size());
-        pv.set_global2local(matsize, matsize, true, ofs);
+        pv.init(matsize, matsize, 1, MPI_COMM_WORLD);
     }
     ModuleBase::Matrix3 C41 = ModuleBase::Matrix3(0, 1, 0, -1, 0, 0, 0, 0, 1);
     std::vector<std::complex<double>> wigerD_p_C41_ref = { ModuleBase::IMAG_UNIT, 0, 0, 0, 1, 0, 0, 0, -ModuleBase::IMAG_UNIT };
