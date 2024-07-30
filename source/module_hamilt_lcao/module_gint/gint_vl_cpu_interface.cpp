@@ -21,23 +21,29 @@ void Gint::gint_kernel_vlocal(Gint_inout* inout) {
             ModuleBase::GlobalFunc::ZEROS(this->pvpR_reduced[inout->ispin], nnrg);
         }
     }
-    // define HContainer here to reference.
-    hamilt::HContainer<double>* hRGint_thread = this->hRGint;
-    double* pvpR_thread=this->pvpR_reduced[inout->ispin]; 
+
     int block_iw[max_size];
-    ModuleBase::GlobalFunc::ZEROS(block_iw, max_size);
     int block_index[max_size+1];
-    ModuleBase::GlobalFunc::ZEROS(block_index, max_size+1);
     int block_size[max_size];
-    ModuleBase::GlobalFunc::ZEROS(block_size, max_size);
     double vldr3[this->bxyz];
+    ModuleBase::GlobalFunc::ZEROS(block_iw, max_size);
+    ModuleBase::GlobalFunc::ZEROS(block_index, max_size+1);
+    ModuleBase::GlobalFunc::ZEROS(block_size, max_size);
     ModuleBase::GlobalFunc::ZEROS(vldr3, this->bxyz);
 
+    /**
+     * @brief Use a pointer. When in OpenMP, it points to a newly allocated memory, 
+     * and finally adds back to the existing memory. Otherwise, it points to 
+     * an already existing memory.
+    */
+    hamilt::HContainer<double>* hRGint_thread = this->hRGint;
+    double* pvpR_thread=this->pvpR_reduced[inout->ispin]; 
 #ifdef _OPENMP
 #pragma omp parallel private(hRGint_thread, pvpR_thread, \
                             block_iw, block_index, block_size,vldr3)
-{   
-    //Under the condition of gamma_only, hRGint will be instantiated.
+{   /**
+     * @brief When in OpenMP, it points to a newly allocated memory,
+    */
     if (GlobalV::GAMMA_ONLY_LOCAL) {
         hRGint_thread = new hamilt::HContainer<double>(*this->hRGint);
     } else {
@@ -51,6 +57,9 @@ void Gint::gint_kernel_vlocal(Gint_inout* inout) {
         if (na_grid == 0) {
             continue;
         }
+        /**
+         * @brief Prepare block information
+        */
         ModuleBase::Array_Pool<bool> cal_flag(this->bxyz,max_size);
         ModuleBase::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
 
@@ -64,12 +73,13 @@ void Gint::gint_kernel_vlocal(Gint_inout* inout) {
                                     this->gridt->start_ind[grid_index],
                                     ncyz,
                                     dv);
-    //prepare block information
 
         Gint_Tools::get_block_info_vlocal(*this->gridt, this->bxyz, na_grid, grid_index, 
                                             block_iw, block_index, block_size, cal_flag.get_ptr_2D());
 
-    //evaluate psi and dpsi on grids
+        /**
+         * @brief Evaluate psi and dpsi on grids
+        */
         
 	    Gint_Tools::cal_psir_ylm(*this->gridt, 
             this->bxyz, na_grid, grid_index, delta_r,
@@ -141,25 +151,25 @@ void Gint::gint_kernel_dvlocal(Gint_inout* inout) {
     const double delta_r = this->gridt->dr_uniform;
 
     if (GlobalV::GAMMA_ONLY_LOCAL) {
-        ModuleBase::WARNING_QUIT("Gint_interface::cal_gint",
-                                 "dvlocal only for k point!");
+        ModuleBase::WARNING_QUIT("Gint_interface::cal_gint","dvlocal only for k point!");
     }
+
+    int block_iw[max_size];
+    int block_index[max_size+1];
+    int block_size[max_size];
+    double vldr3[this->bxyz];
+    ModuleBase::GlobalFunc::ZEROS(block_iw, max_size);
+    ModuleBase::GlobalFunc::ZEROS(block_index, max_size+1);
+    ModuleBase::GlobalFunc::ZEROS(block_size, max_size);
+    ModuleBase::GlobalFunc::ZEROS(vldr3, this->bxyz);
+    
+
     ModuleBase::GlobalFunc::ZEROS(this->pvdpRx_reduced[inout->ispin],nnrg);
     ModuleBase::GlobalFunc::ZEROS(this->pvdpRy_reduced[inout->ispin],nnrg);
     ModuleBase::GlobalFunc::ZEROS(this->pvdpRz_reduced[inout->ispin],nnrg);
-
     double* pvdpRx_thread = this->pvdpRx_reduced[inout->ispin];
     double* pvdpRy_thread = this->pvdpRy_reduced[inout->ispin];
     double* pvdpRz_thread = this->pvdpRz_reduced[inout->ispin];
-    int block_iw[max_size];
-    ModuleBase::GlobalFunc::ZEROS(block_iw, max_size);
-    int block_index[max_size+1];
-    ModuleBase::GlobalFunc::ZEROS(block_index, max_size+1);
-    int block_size[max_size];
-    ModuleBase::GlobalFunc::ZEROS(block_size, max_size);
-    double vldr3[this->bxyz];
-    ModuleBase::GlobalFunc::ZEROS(vldr3, this->bxyz);
-
 #ifdef _OPENMP
 #pragma omp parallel private(pvdpRx_thread, pvdpRy_thread, pvdpRz_thread,\
                             block_iw, block_index, block_size,vldr3)
@@ -267,22 +277,24 @@ void Gint::gint_kernel_vlocal_meta(Gint_inout* inout) {
             ModuleBase::WARNING_QUIT("Gint_interface::cal_gint",
                                         "pvpR has not been allocated yet!");
         } else {
-            ModuleBase::GlobalFunc::ZEROS(this->pvpR_reduced[inout->ispin],
-                                            nnrg);
+            ModuleBase::GlobalFunc::ZEROS(this->pvpR_reduced[inout->ispin],nnrg);
         }
     }
+
+    int block_iw[max_size];
+    int block_index[max_size+1];
+    int block_size[max_size];
+    double vldr3[this->bxyz];
+    double vkdr3[this->bxyz];
+    ModuleBase::GlobalFunc::ZEROS(block_iw, max_size);
+    ModuleBase::GlobalFunc::ZEROS(block_index, max_size+1);
+    ModuleBase::GlobalFunc::ZEROS(block_size, max_size);
+    ModuleBase::GlobalFunc::ZEROS(vldr3, this->bxyz);
+    ModuleBase::GlobalFunc::ZEROS(vkdr3, this->bxyz);
+
+    // define HContainer here to reference.
     hamilt::HContainer<double>* hRGint_thread =this->hRGint;
     double* pvpR_thread=this->pvpR_reduced[inout->ispin];
-    int block_iw[max_size];
-    ModuleBase::GlobalFunc::ZEROS(block_iw, max_size);
-    int block_index[max_size+1];
-    ModuleBase::GlobalFunc::ZEROS(block_index, max_size+1);
-    int block_size[max_size];
-    ModuleBase::GlobalFunc::ZEROS(block_size, max_size);
-    double vldr3[this->bxyz];
-    ModuleBase::GlobalFunc::ZEROS(vldr3, this->bxyz);
-    double vkdr3[this->bxyz];
-    ModuleBase::GlobalFunc::ZEROS(vkdr3, this->bxyz);
 #ifdef _OPENMP
 #pragma omp parallel private(hRGint_thread, pvpR_thread, \
                             block_iw, block_index, block_size,\

@@ -14,12 +14,12 @@ void Gint::gint_kernel_rho(Gint_inout* inout) {
     const double delta_r = this->gridt->dr_uniform;
 
     int block_iw[max_size];
-    ModuleBase::GlobalFunc::ZEROS(block_iw, max_size);
     int block_index[max_size+1];
-    ModuleBase::GlobalFunc::ZEROS(block_index, max_size+1);
     int block_size[max_size];
-    ModuleBase::GlobalFunc::ZEROS(block_size, max_size);
     int vindex[bxyz];
+    ModuleBase::GlobalFunc::ZEROS(block_iw, max_size);
+    ModuleBase::GlobalFunc::ZEROS(block_index, max_size+1);
+    ModuleBase::GlobalFunc::ZEROS(block_size, max_size);
     ModuleBase::GlobalFunc::ZEROS(vindex, bxyz);
 #ifdef _OPENMP
 #pragma omp parallel private(block_iw, block_index, block_size,vindex)
@@ -123,12 +123,12 @@ void Gint::gint_kernel_tau(Gint_inout* inout) {
     const double delta_r = this->gridt->dr_uniform;
 
     int block_iw[max_size];
-    ModuleBase::GlobalFunc::ZEROS(block_iw, max_size);
     int block_index[max_size+1];
-    ModuleBase::GlobalFunc::ZEROS(block_index, max_size+1);
     int block_size[max_size];
-    ModuleBase::GlobalFunc::ZEROS(block_size, max_size);
     int vindex[bxyz];
+    ModuleBase::GlobalFunc::ZEROS(block_iw, max_size);
+    ModuleBase::GlobalFunc::ZEROS(block_index, max_size+1);
+    ModuleBase::GlobalFunc::ZEROS(block_size, max_size);
     ModuleBase::GlobalFunc::ZEROS(vindex, bxyz);
 #ifdef _OPENMP
 #pragma omp parallel private(block_iw, block_index, block_size,vindex)

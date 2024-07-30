@@ -11,16 +11,18 @@ void Gint::gint_kernel_force(Gint_inout* inout) {
     const int ncyz = this->ny * this->nplane;
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
+
+    int block_iw[max_size];
+    int block_index[max_size+1];
+    int block_size[max_size];
+    double vldr3[this->bxyz];
+    ModuleBase::GlobalFunc::ZEROS(block_iw, max_size);
+    ModuleBase::GlobalFunc::ZEROS(block_index, max_size+1);
+    ModuleBase::GlobalFunc::ZEROS(block_size, max_size);
+    ModuleBase::GlobalFunc::ZEROS(vldr3, this->bxyz);
+
     ModuleBase::matrix* fvl_dphi_thread=inout->fvl_dphi;
     ModuleBase::matrix* svl_dphi_thread=inout->svl_dphi;
-    int block_iw[max_size];
-    ModuleBase::GlobalFunc::ZEROS(block_iw, max_size);
-    int block_index[max_size+1];
-    ModuleBase::GlobalFunc::ZEROS(block_index, max_size+1);
-    int block_size[max_size];
-    ModuleBase::GlobalFunc::ZEROS(block_size, max_size);
-    double vldr3[this->bxyz];
-    ModuleBase::GlobalFunc::ZEROS(vldr3, this->bxyz);
 #ifdef _OPENMP
 #pragma omp parallel private(fvl_dphi_thread, svl_dphi_thread, \
                             block_iw, block_index, block_size, vldr3)
@@ -158,21 +160,21 @@ void Gint::gint_kernel_force_meta(Gint_inout* inout) {
     const double delta_r = this->gridt->dr_uniform;
 
     int block_iw[max_size];
-    ModuleBase::GlobalFunc::ZEROS(block_iw, max_size);
     int block_index[max_size+1];
-    ModuleBase::GlobalFunc::ZEROS(block_index, max_size+1);
     int block_size[max_size];
-    ModuleBase::GlobalFunc::ZEROS(block_size, max_size);
     double vldr3[this->bxyz];
-    ModuleBase::GlobalFunc::ZEROS(vldr3, this->bxyz);
     double vkdr3[this->bxyz];
+    ModuleBase::GlobalFunc::ZEROS(block_iw, max_size);
+    ModuleBase::GlobalFunc::ZEROS(block_index, max_size+1);
+    ModuleBase::GlobalFunc::ZEROS(block_size, max_size);
+    ModuleBase::GlobalFunc::ZEROS(vldr3, this->bxyz);
     ModuleBase::GlobalFunc::ZEROS(vkdr3, this->bxyz);
 
     ModuleBase::matrix* fvl_dphi_thread=inout->fvl_dphi;
     ModuleBase::matrix* svl_dphi_thread=inout->svl_dphi;
 #ifdef _OPENMP
 #pragma omp parallel private(fvl_dphi_thread, svl_dphi_thread,\
-                            block_iw, block_index, block_size, \
+                            block_iw, block_index, block_size,\
                             vldr3,vkdr3)
 {
     if (inout->isforce) {
