@@ -12,10 +12,15 @@ void Gint::gint_kernel_force(Gint_inout* inout) {
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
 
-    std::vector<int> block_iw(max_size,0);
-    std::vector<int> block_index(max_size+1,0);
-    std::vector<int> block_size(max_size,0);
-    std::vector<double> vldr3(this->bxyz,0);
+    int block_iw[max_size];
+    int block_index[max_size+1];
+    int block_size[max_size];
+    double vldr3[this->bxyz];
+    ModuleBase::GlobalFunc::ZEROS(block_iw, max_size);
+    ModuleBase::GlobalFunc::ZEROS(block_index, max_size+1);
+    ModuleBase::GlobalFunc::ZEROS(block_size, max_size);
+    ModuleBase::GlobalFunc::ZEROS(vldr3, this->bxyz);
+
     ModuleBase::matrix* fvl_dphi_thread=inout->fvl_dphi;
     ModuleBase::matrix* svl_dphi_thread=inout->svl_dphi;
 #ifdef _OPENMP
@@ -30,10 +35,6 @@ void Gint::gint_kernel_force(Gint_inout* inout) {
         svl_dphi_thread=new ModuleBase::matrix(*inout->svl_dphi);
         svl_dphi_thread->zero_out();
     }
-    block_iw.resize(max_size,0);
-    block_index.resize(max_size+1,0);
-    block_size.resize(max_size,0);
-    vldr3.resize(this->bxyz,0);
 #pragma omp for
 #endif
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
@@ -41,7 +42,7 @@ void Gint::gint_kernel_force(Gint_inout* inout) {
         if (na_grid == 0) {
             continue;
         }
-        Gint_Tools::get_gint_vldr3(vldr3.data(),
+        Gint_Tools::get_gint_vldr3(vldr3,
                                     inout->vl,
                                     this->bxyz,
                                     this->bx,
@@ -54,7 +55,7 @@ void Gint::gint_kernel_force(Gint_inout* inout) {
          //prepare block information
         ModuleBase::Array_Pool<bool> cal_flag(this->bxyz,max_size);
         Gint_Tools::get_block_info(*this->gridt, this->bxyz, na_grid, grid_index,
-                                            block_iw.data(), block_index.data(), block_size.data(), 
+                                            block_iw, block_index, block_size, 
                                             cal_flag.get_ptr_2D());
         int LD_pool = block_index[na_grid];
 
@@ -65,14 +66,14 @@ void Gint::gint_kernel_force(Gint_inout* inout) {
         ModuleBase::Array_Pool<double> dpsir_ylm_z(this->bxyz, LD_pool);
 
         Gint_Tools::cal_dpsir_ylm(*this->gridt, this->bxyz, na_grid, grid_index, delta_r,	
-                                    block_index.data(), block_size.data(),
+                                    block_index, block_size,
                                     cal_flag.get_ptr_2D(),psir_ylm.get_ptr_2D(),
                                     dpsir_ylm_x.get_ptr_2D(), dpsir_ylm_y.get_ptr_2D(), dpsir_ylm_z.get_ptr_2D());
 
     //calculating f_mu(r) = v(r)*psi_mu(r)*dv
         const ModuleBase::Array_Pool<double> psir_vlbr3 = 
-                Gint_Tools::get_psir_vlbr3(this->bxyz, na_grid, LD_pool, block_index.data(), 
-                cal_flag.get_ptr_2D(), vldr3.data(), psir_ylm.get_ptr_2D());
+                Gint_Tools::get_psir_vlbr3(this->bxyz, na_grid, LD_pool, block_index, 
+                cal_flag.get_ptr_2D(), vldr3, psir_ylm.get_ptr_2D());
 
         ModuleBase::Array_Pool<double> psir_vlbr3_DM(this->bxyz, LD_pool);
         ModuleBase::GlobalFunc::ZEROS(psir_vlbr3_DM.get_ptr_1D(), this->bxyz*LD_pool);
@@ -80,7 +81,7 @@ void Gint::gint_kernel_force(Gint_inout* inout) {
 	//calculating g_mu(r) = sum_nu rho_mu,nu f_nu(r)
         if(GlobalV::GAMMA_ONLY_LOCAL)
         {
-		//Gint_Tools::mult_psi_DM(*this->gridt, this->bxyz, na_grid, LD_pool, block_iw.data(), block_size.data(), block_index.data(), cal_flag.get_ptr_2D(),
+		//Gint_Tools::mult_psi_DM(*this->gridt, this->bxyz, na_grid, LD_pool, block_iw, block_size, block_index, cal_flag.get_ptr_2D(),
 		//	psir_vlbr3.get_ptr_2D(), psir_vlbr3_DM.get_ptr_2D(), DM_in, 2);
             Gint_Tools::mult_psi_DM_new(
                     *this->gridt, 
@@ -88,9 +89,9 @@ void Gint::gint_kernel_force(Gint_inout* inout) {
                     grid_index, 
                     na_grid, 
                     LD_pool, 
-                    block_iw.data(), 
-                    block_size.data(), 
-                    block_index.data(), 
+                    block_iw, 
+                    block_size, 
+                    block_index, 
                     cal_flag.get_ptr_2D(),
                     psir_vlbr3.get_ptr_2D(), 
                     psir_vlbr3_DM.get_ptr_2D(), 
@@ -100,7 +101,7 @@ void Gint::gint_kernel_force(Gint_inout* inout) {
         else
         {
             Gint_Tools::mult_psi_DMR(*this->gridt, this->bxyz, LD_pool, grid_index, na_grid, 
-                                        block_index.data(), block_size.data(),cal_flag.get_ptr_2D(), 
+                                        block_index, block_size,cal_flag.get_ptr_2D(), 
                                         psir_vlbr3.get_ptr_2D(), psir_vlbr3_DM.get_ptr_2D(), 
                                         this->DMRGint[inout->ispin], false);
         }
@@ -108,7 +109,7 @@ void Gint::gint_kernel_force(Gint_inout* inout) {
         if(inout->isforce)
         {
             //do integration to get force
-            this-> cal_meshball_force(grid_index, na_grid, block_size.data(), block_index.data(),
+            this-> cal_meshball_force(grid_index, na_grid, block_size, block_index,
                                         psir_vlbr3_DM.get_ptr_2D(), dpsir_ylm_x.get_ptr_2D(),
                                         dpsir_ylm_y.get_ptr_2D(), dpsir_ylm_z.get_ptr_2D(),
                                         fvl_dphi_thread);
@@ -120,13 +121,13 @@ void Gint::gint_kernel_force(Gint_inout* inout) {
             // The array dpsirr contains derivatives of psir in the xx, xy, xz, yy, yz, zz directions,
             // with each set of six numbers representing the derivatives in these respective directions.
             ModuleBase::Array_Pool<double> dpsirr_ylm(this->bxyz, LD_pool * 6);
-            Gint_Tools::cal_dpsirr_ylm(*this->gridt, this->bxyz, na_grid, grid_index, block_index.data(), 
-                                        block_size.data(), cal_flag.get_ptr_2D(),dpsir_ylm_x.get_ptr_2D(), 
+            Gint_Tools::cal_dpsirr_ylm(*this->gridt, this->bxyz, na_grid, grid_index, block_index, 
+                                        block_size, cal_flag.get_ptr_2D(),dpsir_ylm_x.get_ptr_2D(), 
                                         dpsir_ylm_y.get_ptr_2D(),dpsir_ylm_z.get_ptr_2D(),
                                         dpsirr_ylm.get_ptr_2D());
 
             //do integration to get stress
-            this-> cal_meshball_stress(na_grid, block_index.data(), psir_vlbr3_DM.get_ptr_1D(), 
+            this-> cal_meshball_stress(na_grid, block_index, psir_vlbr3_DM.get_ptr_1D(), 
                                         dpsirr_ylm.get_ptr_1D(), svl_dphi_thread);
         }
     }
@@ -158,11 +159,16 @@ void Gint::gint_kernel_force_meta(Gint_inout* inout) {
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
 
-    std::vector<int> block_iw(max_size,0);
-    std::vector<int> block_index(max_size+1,0);
-    std::vector<int> block_size(max_size,0);
-    std::vector<double> vldr3(this->bxyz,0.0);
-    std::vector<double> vkdr3(this->bxyz,0.0);
+    int block_iw[max_size];
+    int block_index[max_size+1];
+    int block_size[max_size];
+    double vldr3[this->bxyz];
+    double vkdr3[this->bxyz];
+    ModuleBase::GlobalFunc::ZEROS(block_iw, max_size);
+    ModuleBase::GlobalFunc::ZEROS(block_index, max_size+1);
+    ModuleBase::GlobalFunc::ZEROS(block_size, max_size);
+    ModuleBase::GlobalFunc::ZEROS(vldr3, this->bxyz);
+    ModuleBase::GlobalFunc::ZEROS(vkdr3, this->bxyz);
 
     ModuleBase::matrix* fvl_dphi_thread=inout->fvl_dphi;
     ModuleBase::matrix* svl_dphi_thread=inout->svl_dphi;
@@ -179,11 +185,6 @@ void Gint::gint_kernel_force_meta(Gint_inout* inout) {
         svl_dphi_thread=new ModuleBase::matrix(*inout->svl_dphi);
         svl_dphi_thread->zero_out();
     }
-    block_iw.resize(max_size,0);
-    block_index.resize(max_size+1,0);
-    block_size.resize(max_size,0);
-    vldr3.resize(this->bxyz,0.0);
-    vkdr3.resize(this->bxyz,0.0);
 #pragma omp for
 #endif
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
@@ -191,7 +192,7 @@ void Gint::gint_kernel_force_meta(Gint_inout* inout) {
         if (na_grid == 0) {
             continue;
         }
-        Gint_Tools::get_gint_vldr3(vldr3.data(),
+        Gint_Tools::get_gint_vldr3(vldr3,
                                     inout->vl,
                                     this->bxyz,
                                     this->bx,
@@ -202,7 +203,7 @@ void Gint::gint_kernel_force_meta(Gint_inout* inout) {
                                     ncyz,
                                     dv);
 
-        Gint_Tools::get_gint_vldr3(vkdr3.data(),
+        Gint_Tools::get_gint_vldr3(vkdr3,
                                     inout->vofk,
                                     this->bxyz,
                                     this->bx,
@@ -215,7 +216,7 @@ void Gint::gint_kernel_force_meta(Gint_inout* inout) {
          //prepare block information
         ModuleBase::Array_Pool<bool> cal_flag(this->bxyz,max_size);
         Gint_Tools::get_block_info(*this->gridt, this->bxyz, na_grid, grid_index, 
-                                            block_iw.data(), block_index.data(), block_index.data(), cal_flag.get_ptr_2D());
+                                            block_iw, block_index, block_size, cal_flag.get_ptr_2D());
         int LD_pool = block_index[na_grid];
 
     //evaluate psi and dpsi on grids
@@ -231,23 +232,23 @@ void Gint::gint_kernel_force_meta(Gint_inout* inout) {
         ModuleBase::Array_Pool<double> ddpsir_ylm_zz(this->bxyz, LD_pool);
 
 	//psi and gradient of psi
-        Gint_Tools::cal_dpsir_ylm(*this->gridt, this->bxyz, na_grid, grid_index, delta_r,	block_index.data(), block_index.data(), cal_flag.get_ptr_2D(),
+        Gint_Tools::cal_dpsir_ylm(*this->gridt, this->bxyz, na_grid, grid_index, delta_r,	block_index, block_size, cal_flag.get_ptr_2D(),
             psir_ylm.get_ptr_2D(), dpsir_ylm_x.get_ptr_2D(), dpsir_ylm_y.get_ptr_2D(), dpsir_ylm_z.get_ptr_2D());
 
 	//hessian of psi
-        Gint_Tools::cal_ddpsir_ylm(*this->gridt, this->bxyz, na_grid, grid_index, delta_r, block_index.data(), block_index.data(), cal_flag.get_ptr_2D(),
+        Gint_Tools::cal_ddpsir_ylm(*this->gridt, this->bxyz, na_grid, grid_index, delta_r, block_index, block_size, cal_flag.get_ptr_2D(),
             ddpsir_ylm_xx.get_ptr_2D(), ddpsir_ylm_xy.get_ptr_2D(), ddpsir_ylm_xz.get_ptr_2D(),
             ddpsir_ylm_yy.get_ptr_2D(), ddpsir_ylm_yz.get_ptr_2D(), ddpsir_ylm_zz.get_ptr_2D());
 
     //calculating f_mu(r) = v(r)*psi_mu(r)*dv 
         const ModuleBase::Array_Pool<double> psir_vlbr3 
-            = Gint_Tools::get_psir_vlbr3(this->bxyz, na_grid, LD_pool, block_index.data(), cal_flag.get_ptr_2D(), vldr3.data(), psir_ylm.get_ptr_2D());
+            = Gint_Tools::get_psir_vlbr3(this->bxyz, na_grid, LD_pool, block_index, cal_flag.get_ptr_2D(), vldr3, psir_ylm.get_ptr_2D());
         const ModuleBase::Array_Pool<double> dpsir_x_vlbr3 
-            = Gint_Tools::get_psir_vlbr3(this->bxyz, na_grid, LD_pool, block_index.data(), cal_flag.get_ptr_2D(), vkdr3.data(), dpsir_ylm_x.get_ptr_2D());
+            = Gint_Tools::get_psir_vlbr3(this->bxyz, na_grid, LD_pool, block_index, cal_flag.get_ptr_2D(), vkdr3, dpsir_ylm_x.get_ptr_2D());
         const ModuleBase::Array_Pool<double> dpsir_y_vlbr3 
-            = Gint_Tools::get_psir_vlbr3(this->bxyz, na_grid, LD_pool, block_index.data(), cal_flag.get_ptr_2D(), vkdr3.data(), dpsir_ylm_y.get_ptr_2D());
+            = Gint_Tools::get_psir_vlbr3(this->bxyz, na_grid, LD_pool, block_index, cal_flag.get_ptr_2D(), vkdr3, dpsir_ylm_y.get_ptr_2D());
         const ModuleBase::Array_Pool<double> dpsir_z_vlbr3 
-            = Gint_Tools::get_psir_vlbr3(this->bxyz, na_grid, LD_pool, block_index.data(), cal_flag.get_ptr_2D(), vkdr3.data(), dpsir_ylm_z.get_ptr_2D());
+            = Gint_Tools::get_psir_vlbr3(this->bxyz, na_grid, LD_pool, block_index, cal_flag.get_ptr_2D(), vkdr3, dpsir_ylm_z.get_ptr_2D());
 
         ModuleBase::Array_Pool<double> psir_vlbr3_DM(this->bxyz, LD_pool);
         ModuleBase::Array_Pool<double> dpsirx_v_DM(this->bxyz, LD_pool);
@@ -263,50 +264,50 @@ void Gint::gint_kernel_force_meta(Gint_inout* inout) {
         if(GlobalV::GAMMA_ONLY_LOCAL)
         {
             Gint_Tools::mult_psi_DM_new(*this->gridt, this->bxyz, grid_index, 
-                na_grid, LD_pool, block_iw.data(), block_index.data(),	block_index.data(), cal_flag.get_ptr_2D(),
+                na_grid, LD_pool, block_iw, block_size,	block_index, cal_flag.get_ptr_2D(),
                 psir_vlbr3.get_ptr_2D(), psir_vlbr3_DM.get_ptr_2D(), this->DMRGint[inout->ispin], false);
 
             Gint_Tools::mult_psi_DM_new(*this->gridt, this->bxyz, grid_index, 
-                na_grid, LD_pool, block_iw.data(), block_index.data(),	block_index.data(), cal_flag.get_ptr_2D(),
+                na_grid, LD_pool, block_iw, block_size,	block_index, cal_flag.get_ptr_2D(),
                 dpsir_x_vlbr3.get_ptr_2D(), dpsirx_v_DM.get_ptr_2D(), this->DMRGint[inout->ispin], false);
 
             Gint_Tools::mult_psi_DM_new(*this->gridt, this->bxyz, grid_index,
-                na_grid, LD_pool, block_iw.data(), block_index.data(), block_index.data(), cal_flag.get_ptr_2D(),
+                na_grid, LD_pool, block_iw, block_size, block_index, cal_flag.get_ptr_2D(),
                 dpsir_y_vlbr3.get_ptr_2D(), dpsiry_v_DM.get_ptr_2D(), this->DMRGint[inout->ispin], false);
 
             Gint_Tools::mult_psi_DM_new(*this->gridt, this->bxyz, grid_index, 
-                na_grid, LD_pool, block_iw.data(), block_index.data(),	block_index.data(), cal_flag.get_ptr_2D(),
+                na_grid, LD_pool, block_iw, block_size,	block_index, cal_flag.get_ptr_2D(),
                 dpsir_z_vlbr3.get_ptr_2D(), dpsirz_v_DM.get_ptr_2D(), this->DMRGint[inout->ispin], false);
         }
         else
         {
-            Gint_Tools::mult_psi_DMR(*this->gridt, this->bxyz, LD_pool, grid_index, na_grid, block_index.data(), block_index.data(), cal_flag.get_ptr_2D(),
+            Gint_Tools::mult_psi_DMR(*this->gridt, this->bxyz, LD_pool, grid_index, na_grid, block_index, block_size, cal_flag.get_ptr_2D(),
                 psir_vlbr3.get_ptr_2D(), psir_vlbr3_DM.get_ptr_2D(), this->DMRGint[inout->ispin], false);
 
-            Gint_Tools::mult_psi_DMR(*this->gridt, this->bxyz, LD_pool, grid_index, na_grid, block_index.data(), block_index.data(), cal_flag.get_ptr_2D(), 
+            Gint_Tools::mult_psi_DMR(*this->gridt, this->bxyz, LD_pool, grid_index, na_grid, block_index, block_size, cal_flag.get_ptr_2D(), 
                 dpsir_x_vlbr3.get_ptr_2D(), dpsirx_v_DM.get_ptr_2D(), this->DMRGint[inout->ispin], false);
 
-            Gint_Tools::mult_psi_DMR(*this->gridt, this->bxyz, LD_pool, grid_index, na_grid, block_index.data(), block_index.data(), cal_flag.get_ptr_2D(), 
+            Gint_Tools::mult_psi_DMR(*this->gridt, this->bxyz, LD_pool, grid_index, na_grid, block_index, block_size, cal_flag.get_ptr_2D(), 
                 dpsir_y_vlbr3.get_ptr_2D(), dpsiry_v_DM.get_ptr_2D(), this->DMRGint[inout->ispin], false);
 
-            Gint_Tools::mult_psi_DMR(*this->gridt, this->bxyz, LD_pool, grid_index, na_grid, block_index.data(), block_index.data(), cal_flag.get_ptr_2D(),
+            Gint_Tools::mult_psi_DMR(*this->gridt, this->bxyz, LD_pool, grid_index, na_grid, block_index, block_size, cal_flag.get_ptr_2D(),
                 dpsir_z_vlbr3.get_ptr_2D(), dpsirz_v_DM.get_ptr_2D(), this->DMRGint[inout->ispin], false);
         }
 
         if(inout->isforce)
         {
             //do integration to get force
-            this-> cal_meshball_force(grid_index, na_grid, block_index.data(), block_index.data(),
+            this-> cal_meshball_force(grid_index, na_grid, block_size, block_index,
                 psir_vlbr3_DM.get_ptr_2D(), dpsir_ylm_x.get_ptr_2D(), dpsir_ylm_y.get_ptr_2D(), dpsir_ylm_z.get_ptr_2D(), 
                 fvl_dphi_thread);
                 
-            this-> cal_meshball_force(grid_index, na_grid, block_index.data(), block_index.data(),
+            this-> cal_meshball_force(grid_index, na_grid, block_size, block_index,
                 dpsirx_v_DM.get_ptr_2D(), ddpsir_ylm_xx.get_ptr_2D(), ddpsir_ylm_xy.get_ptr_2D(), ddpsir_ylm_xz.get_ptr_2D(), 
                 fvl_dphi_thread);
-            this-> cal_meshball_force(grid_index, na_grid, block_index.data(), block_index.data(),
+            this-> cal_meshball_force(grid_index, na_grid, block_size, block_index,
                 dpsiry_v_DM.get_ptr_2D(), ddpsir_ylm_xy.get_ptr_2D(), ddpsir_ylm_yy.get_ptr_2D(), ddpsir_ylm_yz.get_ptr_2D(), 
                 fvl_dphi_thread);
-            this-> cal_meshball_force(grid_index, na_grid, block_index.data(), block_index.data(),
+            this-> cal_meshball_force(grid_index, na_grid, block_size, block_index,
                 dpsirz_v_DM.get_ptr_2D(), ddpsir_ylm_xz.get_ptr_2D(), ddpsir_ylm_yz.get_ptr_2D(), ddpsir_ylm_zz.get_ptr_2D(), 
                 fvl_dphi_thread);		
             
@@ -317,31 +318,31 @@ void Gint::gint_kernel_force_meta(Gint_inout* inout) {
             ModuleBase::Array_Pool<double> array(this->bxyz, LD_pool * 6);
 
             //the vxc part
-            Gint_Tools::cal_dpsirr_ylm(*this->gridt, this->bxyz, na_grid, grid_index, block_index.data(), block_index.data(), cal_flag.get_ptr_2D(),
+            Gint_Tools::cal_dpsirr_ylm(*this->gridt, this->bxyz, na_grid, grid_index, block_index, block_size, cal_flag.get_ptr_2D(),
                 dpsir_ylm_x.get_ptr_2D(), dpsir_ylm_y.get_ptr_2D(),	dpsir_ylm_z.get_ptr_2D(), array.get_ptr_2D());
             //do integration to get stress
-            this-> cal_meshball_stress(na_grid, block_index.data(), psir_vlbr3_DM.get_ptr_1D(),
+            this-> cal_meshball_stress(na_grid, block_index, psir_vlbr3_DM.get_ptr_1D(),
                 array.get_ptr_1D(), svl_dphi_thread);
 
             //partial x of vtau part
-            Gint_Tools::cal_dpsirr_ylm(*this->gridt, this->bxyz, na_grid, grid_index, block_index.data(), block_index.data(), cal_flag.get_ptr_2D(),
+            Gint_Tools::cal_dpsirr_ylm(*this->gridt, this->bxyz, na_grid, grid_index, block_index, block_size, cal_flag.get_ptr_2D(),
                 ddpsir_ylm_xx.get_ptr_2D(), ddpsir_ylm_xy.get_ptr_2D(),	ddpsir_ylm_xz.get_ptr_2D(), array.get_ptr_2D());
             //do integration to get stress
-            this-> cal_meshball_stress(na_grid, block_index.data(), dpsirx_v_DM.get_ptr_1D(),
+            this-> cal_meshball_stress(na_grid, block_index, dpsirx_v_DM.get_ptr_1D(),
                 array.get_ptr_1D(), svl_dphi_thread);
 
             //partial y of vtau part
-            Gint_Tools::cal_dpsirr_ylm(*this->gridt, this->bxyz, na_grid, grid_index, block_index.data(), block_index.data(), cal_flag.get_ptr_2D(),
+            Gint_Tools::cal_dpsirr_ylm(*this->gridt, this->bxyz, na_grid, grid_index, block_index, block_size, cal_flag.get_ptr_2D(),
                 ddpsir_ylm_xy.get_ptr_2D(), ddpsir_ylm_yy.get_ptr_2D(),	ddpsir_ylm_yz.get_ptr_2D(), array.get_ptr_2D());
             //do integration to get stress
-            this-> cal_meshball_stress(na_grid, block_index.data(), dpsiry_v_DM.get_ptr_1D(),
+            this-> cal_meshball_stress(na_grid, block_index, dpsiry_v_DM.get_ptr_1D(),
                 array.get_ptr_1D(), svl_dphi_thread);
 
             //partial z of vtau part
-            Gint_Tools::cal_dpsirr_ylm(*this->gridt, this->bxyz, na_grid, grid_index, block_index.data(), block_index.data(), cal_flag.get_ptr_2D(),
+            Gint_Tools::cal_dpsirr_ylm(*this->gridt, this->bxyz, na_grid, grid_index, block_index, block_size, cal_flag.get_ptr_2D(),
                 ddpsir_ylm_xz.get_ptr_2D(), ddpsir_ylm_yz.get_ptr_2D(), ddpsir_ylm_zz.get_ptr_2D(), array.get_ptr_2D());
             //do integration to get stress
-            this-> cal_meshball_stress(na_grid, block_index.data(), dpsirz_v_DM.get_ptr_1D(),
+            this-> cal_meshball_stress(na_grid, block_index, dpsirz_v_DM.get_ptr_1D(),
                 array.get_ptr_1D(), svl_dphi_thread);
         }
     }
