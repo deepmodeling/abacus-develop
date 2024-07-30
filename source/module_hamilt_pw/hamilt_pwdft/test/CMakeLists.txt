@@ -20,3 +20,9 @@ AddTest(
 	../../../module_base/parallel_common.cpp
 	../../../module_base/parallel_reduce.cpp
 )
+
+AddTest(
+	TARGET radial_projection
+	LIBS ${math_libs}
+	SOURCES radial_projection_test.cpp ../radial_projection.cpp
+)
