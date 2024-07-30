@@ -217,6 +217,9 @@ void get_block_info(const Grid_Technique& gt,
                     int*& block_index,
                     int*& block_size,
                     bool**& cal_flag);
+                    
+void get_block_info_vlocal(const Grid_Technique& gt, const int bxyz, const int na_grid, const int grid_index, int* block_iw,
+                    int* block_index, int* block_size, bool** cal_flag);
 
 void init_orb(double& dr_uniform,
               std::vector<double>& rcuts,
