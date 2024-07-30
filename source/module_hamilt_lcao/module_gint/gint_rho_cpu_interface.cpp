@@ -22,7 +22,7 @@ void Gint::gint_kernel_rho(Gint_inout* inout) {
     int vindex[bxyz];
     ModuleBase::GlobalFunc::ZEROS(vindex, bxyz);
 #ifdef _OPENMP
-#pragma omp parallel private(block_iw, block_index, block_size)
+#pragma omp parallel private(block_iw, block_index, block_size,vindex)
 {
 #pragma omp for
 #endif
@@ -40,6 +40,7 @@ void Gint::gint_kernel_rho(Gint_inout* inout) {
                                     ncyz,
                                     vindex);
          // prepare block information
+        // int *block_iw, *block_index, *block_size;
         ModuleBase::Array_Pool<bool> cal_flag(this->bxyz,max_size);
         Gint_Tools::get_block_info_vlocal(*this->gridt,
                                 this->bxyz,
@@ -132,7 +133,7 @@ void Gint::gint_kernel_tau(Gint_inout* inout) {
             continue;
         }
         // int* vindex = Gint_Tools::get_vindex(ncyz, ibx, jby, kbz);
-        Gint_Tools::get_vindex_rho(this->bxyz,
+        int* vindex = Gint_Tools::get_vindex(this->bxyz,
                                              this->bx,
                                              this->by,
                                              this->bz,
