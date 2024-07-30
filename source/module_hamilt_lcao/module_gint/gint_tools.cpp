@@ -12,32 +12,10 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 namespace Gint_Tools{
-// int* get_vindex(const int bxyz, const int bx, const int by, const int bz, const int nplane, const int start_ind,
-//                 const int ncyz)
-// {
-//     int* vindex = new int[bxyz];
-//     int bindex = 0;
-
-// 		for(int ii=0; ii<bx; ii++)
-// 		{
-// 			const int ipart = ii*ncyz;
-// 			for(int jj=0; jj<by; jj++)
-// 			{
-// 				const int jpart = jj*nplane + ipart;
-// 				for(int kk=0; kk<bz; kk++)
-// 				{
-// 					vindex[bindex] = start_ind + kk + jpart;
-// 					++bindex;
-// 				}
-// 			}
-// 		}
-// 		return vindex;
-// 	}
-
-void get_vindex(const int bxyz, const int bx, const int by, const int bz, const int nplane, const int start_ind,
-                	const int ncyz,int* vindex)
+void get_vindex(const int bxyz, const int bx, const int by, const int bz, 
+				const int nplane, const int start_ind,
+				const int ncyz,int* vindex)
 {
-    // int* vindex = new int[bxyz];
     int bindex = 0;
 
 		for(int ii=0; ii<bx; ii++)
@@ -53,41 +31,9 @@ void get_vindex(const int bxyz, const int bx, const int by, const int bz, const 
 				}
 			}
 		}
-		// return vindex;
 	}
 
 	// here vindex refers to local potentials
-    int* get_vindex(
-        const int bxyz,
-        const int bx,
-        const int by,
-        const int bz,
-        const int nplane,
-        const int ncyz,
-		const int ibx,
-		const int jby,
-		const int kbz)
-	{
-		int *vindex = new int[bxyz];
-		int bindex=0;
-		// z is the fastest,
-		// ipart can be obtained by using a previously stored array
-		for(int ii=0; ii<bx; ii++)
-		{
-			const int ipart = (ibx+ii)*ncyz;
-			for(int jj=0; jj<by; jj++)
-			{
-				// jpart can be obtained by using a previously stored array
-				const int jpart = (jby+jj)*nplane + ipart;
-				for(int kk=0; kk<bz; kk++)
-				{
-					vindex[bindex] = kbz+kk + jpart;
-					++bindex;
-				}
-			}
-		}
-		return vindex;
-	}
 
 	// extract the local potentials.
 	void get_gint_vldr3(
