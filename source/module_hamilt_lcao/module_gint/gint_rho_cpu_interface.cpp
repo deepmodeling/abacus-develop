@@ -122,8 +122,16 @@ void Gint::gint_kernel_tau(Gint_inout* inout) {
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
 
+    int block_iw[max_size];
+    ModuleBase::GlobalFunc::ZEROS(block_iw, max_size);
+    int block_index[max_size+1];
+    ModuleBase::GlobalFunc::ZEROS(block_index, max_size+1);
+    int block_size[max_size];
+    ModuleBase::GlobalFunc::ZEROS(block_size, max_size);
+    int vindex[bxyz];
+    ModuleBase::GlobalFunc::ZEROS(vindex, bxyz);
 #ifdef _OPENMP
-#pragma omp parallel
+#pragma omp parallel private(block_iw, block_index, block_size,vindex)
 {
 #pragma omp for
 #endif
@@ -133,17 +141,18 @@ void Gint::gint_kernel_tau(Gint_inout* inout) {
             continue;
         }
         // int* vindex = Gint_Tools::get_vindex(ncyz, ibx, jby, kbz);
-        int* vindex = Gint_Tools::get_vindex(this->bxyz,
-                                             this->bx,
-                                             this->by,
-                                             this->bz,
-                                             this->nplane,
-                                             this->gridt->start_ind[grid_index],
-                                             ncyz);
+        Gint_Tools::get_vindex_rho(this->bxyz,
+                                this->bx,
+                                this->by,
+                                this->bz,
+                                this->nplane,
+                                this->gridt->start_ind[grid_index],
+                                ncyz,
+                                vindex);
         //prepare block information
-	    int * block_iw, * block_index, * block_size;
-        bool** cal_flag;
-        Gint_Tools::get_block_info(*this->gridt, this->bxyz, na_grid, grid_index, block_iw, block_index, block_size, cal_flag);
+        ModuleBase::Array_Pool<bool> cal_flag(this->bxyz,max_size);
+        Gint_Tools::get_block_info_vlocal(*this->gridt, this->bxyz, na_grid, grid_index, 
+                                            block_iw, block_index, block_size, cal_flag.get_ptr_2D());
 
     //evaluate psi and dpsi on grids
         ModuleBase::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
@@ -154,7 +163,7 @@ void Gint::gint_kernel_tau(Gint_inout* inout) {
         Gint_Tools::cal_dpsir_ylm(*this->gridt, 
             this->bxyz, na_grid, grid_index, delta_r,
             block_index, block_size, 
-            cal_flag,
+            cal_flag.get_ptr_2D(),
             psir_ylm.get_ptr_2D(),
             dpsir_ylm_x.get_ptr_2D(),
             dpsir_ylm_y.get_ptr_2D(),
@@ -175,21 +184,21 @@ void Gint::gint_kernel_tau(Gint_inout* inout) {
                 Gint_Tools::mult_psi_DM_new(
                     *this->gridt,this->bxyz, grid_index, na_grid, LD_pool,
                     block_iw, block_size,
-                    block_index, cal_flag,
+                    block_index, cal_flag.get_ptr_2D(),
                     dpsir_ylm_x.get_ptr_2D(),
                     dpsix_DM.get_ptr_2D(),
                     this->DMRGint[is], 1);
                 Gint_Tools::mult_psi_DM_new(
                     *this->gridt, this->bxyz, grid_index, na_grid, LD_pool,
                     block_iw, block_size,
-                    block_index, cal_flag,
+                    block_index, cal_flag.get_ptr_2D(),
                     dpsir_ylm_y.get_ptr_2D(),
                     dpsiy_DM.get_ptr_2D(),
                     this->DMRGint[is], 1);	
                 Gint_Tools::mult_psi_DM_new(
                     *this->gridt, this->bxyz, grid_index, na_grid, LD_pool,
                     block_iw, block_size,
-                    block_index, cal_flag,
+                    block_index, cal_flag.get_ptr_2D(),
                     dpsir_ylm_z.get_ptr_2D(),
                     dpsiz_DM.get_ptr_2D(),
                     this->DMRGint[is], 1);
@@ -201,7 +210,7 @@ void Gint::gint_kernel_tau(Gint_inout* inout) {
                     LD_pool,
                     grid_index, na_grid,
                     block_index, block_size,
-                    cal_flag, 
+                    cal_flag.get_ptr_2D(), 
                     dpsir_ylm_x.get_ptr_2D(),
                     dpsix_DM.get_ptr_2D(),
                     this->DMRGint[is],
@@ -211,7 +220,7 @@ void Gint::gint_kernel_tau(Gint_inout* inout) {
                     LD_pool,
                     grid_index, na_grid,
                     block_index, block_size,
-                    cal_flag,
+                    cal_flag.get_ptr_2D(),
                     dpsir_ylm_y.get_ptr_2D(),
                     dpsiy_DM.get_ptr_2D(),
                     this->DMRGint[is],
@@ -221,7 +230,7 @@ void Gint::gint_kernel_tau(Gint_inout* inout) {
                     LD_pool,
                     grid_index, na_grid,
                     block_index, block_size,
-                    cal_flag, 
+                    cal_flag.get_ptr_2D(), 
                     dpsir_ylm_z.get_ptr_2D(),
                     dpsiz_DM.get_ptr_2D(),
                     this->DMRGint[is],
@@ -239,17 +248,7 @@ void Gint::gint_kernel_tau(Gint_inout* inout) {
                     inout->rho[is]);
             }
         }
-
-        delete[] block_iw;
-        delete[] block_index;
-        delete[] block_size;
-        for(int ib=0; ib<this->bxyz; ++ib)
-        {
-            delete[] cal_flag[ib];
-        }
-        delete[] cal_flag;
-            delete[] vindex;
-        }
+    }
 #ifdef _OPENMP
 }
 #endif
