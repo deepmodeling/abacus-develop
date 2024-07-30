@@ -42,7 +42,7 @@ void Gint::gint_kernel_force(Gint_inout* inout) {
         if (na_grid == 0) {
             continue;
         }
-        Gint_Tools::get_vldr3_vlocal(vldr3,
+        Gint_Tools::get_gint_vldr3(vldr3,
                                     inout->vl,
                                     this->bxyz,
                                     this->bx,
@@ -54,7 +54,7 @@ void Gint::gint_kernel_force(Gint_inout* inout) {
                                     dv);
          //prepare block information
         ModuleBase::Array_Pool<bool> cal_flag(this->bxyz,max_size);
-        Gint_Tools::get_block_info_vlocal(*this->gridt, this->bxyz, na_grid, grid_index,
+        Gint_Tools::get_block_info(*this->gridt, this->bxyz, na_grid, grid_index,
                                             block_iw, block_index, block_size, 
                                             cal_flag.get_ptr_2D());
         int LD_pool = block_index[na_grid];
@@ -192,7 +192,7 @@ void Gint::gint_kernel_force_meta(Gint_inout* inout) {
         if (na_grid == 0) {
             continue;
         }
-        Gint_Tools::get_vldr3_vlocal(vldr3,
+        Gint_Tools::get_gint_vldr3(vldr3,
                                     inout->vl,
                                     this->bxyz,
                                     this->bx,
@@ -203,7 +203,7 @@ void Gint::gint_kernel_force_meta(Gint_inout* inout) {
                                     ncyz,
                                     dv);
 
-        Gint_Tools::get_vldr3_vlocal(vkdr3,
+        Gint_Tools::get_gint_vldr3(vkdr3,
                                     inout->vofk,
                                     this->bxyz,
                                     this->bx,
@@ -215,7 +215,7 @@ void Gint::gint_kernel_force_meta(Gint_inout* inout) {
                                     dv);
          //prepare block information
         ModuleBase::Array_Pool<bool> cal_flag(this->bxyz,max_size);
-        Gint_Tools::get_block_info_vlocal(*this->gridt, this->bxyz, na_grid, grid_index, 
+        Gint_Tools::get_block_info(*this->gridt, this->bxyz, na_grid, grid_index, 
                                             block_iw, block_index, block_size, cal_flag.get_ptr_2D());
         int LD_pool = block_index[na_grid];
 

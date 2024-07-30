@@ -135,7 +135,7 @@ void get_vindex_rho(const int bxyz, const int bx, const int by, const int bz, co
 		delete[] vindex;
 		return vldr3;
 	}
-	void get_vldr3_vlocal(
+	void get_gint_vldr3(
 		double* vldr3,
         const double* const vlocal,		// vlocal[ir]
         const int bxyz,
@@ -157,7 +157,7 @@ void get_vindex_rho(const int bxyz, const int bx, const int by, const int bz, co
 		delete[] vindex;
 		// return vldr3;
 	}
-void get_block_info_vlocal(const Grid_Technique& gt, const int bxyz, const int na_grid, const int grid_index, int* block_iw,
+void get_block_info(const Grid_Technique& gt, const int bxyz, const int na_grid, const int grid_index, int* block_iw,
                     int* block_index, int* block_size, bool** cal_flag)
 {
     const UnitCell& ucell = *gt.ucell;

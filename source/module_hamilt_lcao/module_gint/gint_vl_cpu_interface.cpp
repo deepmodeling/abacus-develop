@@ -61,9 +61,8 @@ void Gint::gint_kernel_vlocal(Gint_inout* inout) {
          * @brief Prepare block information
         */
         ModuleBase::Array_Pool<bool> cal_flag(this->bxyz,max_size);
-        ModuleBase::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
 
-        Gint_Tools::get_vldr3_vlocal(vldr3,
+        Gint_Tools::get_gint_vldr3(vldr3,
                                     inout->vl,
                                     this->bxyz,
                                     this->bx,
@@ -74,13 +73,14 @@ void Gint::gint_kernel_vlocal(Gint_inout* inout) {
                                     ncyz,
                                     dv);
 
-        Gint_Tools::get_block_info_vlocal(*this->gridt, this->bxyz, na_grid, grid_index, 
+        Gint_Tools::get_block_info(*this->gridt, this->bxyz, na_grid, grid_index, 
                                             block_iw, block_index, block_size, cal_flag.get_ptr_2D());
 
         /**
          * @brief Evaluate psi and dpsi on grids
         */
-        
+        int LD_pool = block_index[na_grid];
+        ModuleBase::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
 	    Gint_Tools::cal_psir_ylm(*this->gridt, 
             this->bxyz, na_grid, grid_index, delta_r,
             block_index, block_size, 
@@ -187,12 +187,7 @@ void Gint::gint_kernel_dvlocal(Gint_inout* inout) {
         if (na_grid == 0) {
             continue;
         }
-        ModuleBase::Array_Pool<bool> cal_flag(this->bxyz,max_size);
-        ModuleBase::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
-        ModuleBase::Array_Pool<double> dpsir_ylm_x(this->bxyz, LD_pool);
-        ModuleBase::Array_Pool<double> dpsir_ylm_y(this->bxyz, LD_pool);
-        ModuleBase::Array_Pool<double> dpsir_ylm_z(this->bxyz, LD_pool);
-        Gint_Tools::get_vldr3_vlocal(vldr3,
+        Gint_Tools::get_gint_vldr3(vldr3,
                                     inout->vl,
                                     this->bxyz,
                                     this->bx,
@@ -203,12 +198,17 @@ void Gint::gint_kernel_dvlocal(Gint_inout* inout) {
                                     ncyz,
                                     dv);
     //prepare block information
-        Gint_Tools::get_block_info_vlocal(*this->gridt, this->bxyz, na_grid, grid_index, 
+        ModuleBase::Array_Pool<bool> cal_flag(this->bxyz,max_size);
+        Gint_Tools::get_block_info(*this->gridt, this->bxyz, na_grid, grid_index, 
                                     block_iw, block_index, block_size, cal_flag.get_ptr_2D());
         
 	//evaluate psi and dpsi on grids
+        int LD_pool = block_index[na_grid];
 
-
+        ModuleBase::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
+        ModuleBase::Array_Pool<double> dpsir_ylm_x(this->bxyz, LD_pool);
+        ModuleBase::Array_Pool<double> dpsir_ylm_y(this->bxyz, LD_pool);
+        ModuleBase::Array_Pool<double> dpsir_ylm_z(this->bxyz, LD_pool);
         Gint_Tools::cal_dpsir_ylm(*this->gridt, this->bxyz, na_grid, grid_index, delta_r, 
                                     block_index, block_size, cal_flag.get_ptr_2D(),psir_ylm.get_ptr_2D(),
                                     dpsir_ylm_x.get_ptr_2D(), dpsir_ylm_y.get_ptr_2D(), dpsir_ylm_z.get_ptr_2D());
@@ -317,7 +317,7 @@ void Gint::gint_kernel_vlocal_meta(Gint_inout* inout) {
         if (na_grid == 0) {
             continue;
         }
-        Gint_Tools::get_vldr3_vlocal(vldr3,
+        Gint_Tools::get_gint_vldr3(vldr3,
                                 inout->vl,
                                 this->bxyz,
                                 this->bx,
@@ -327,7 +327,7 @@ void Gint::gint_kernel_vlocal_meta(Gint_inout* inout) {
                                 this->gridt->start_ind[grid_index],
                                 ncyz,
                                 dv);
-        Gint_Tools::get_vldr3_vlocal(vkdr3,
+        Gint_Tools::get_gint_vldr3(vkdr3,
                                     inout->vofk,
                                     this->bxyz,
                                     this->bx,
@@ -339,10 +339,11 @@ void Gint::gint_kernel_vlocal_meta(Gint_inout* inout) {
                                     dv);
     //prepare block information
         ModuleBase::Array_Pool<bool> cal_flag(this->bxyz,max_size);
-	    Gint_Tools::get_block_info_vlocal(*this->gridt, this->bxyz, na_grid, grid_index, 
+	    Gint_Tools::get_block_info(*this->gridt, this->bxyz, na_grid, grid_index, 
                                     block_iw, block_index, block_size, cal_flag.get_ptr_2D());
 
     //evaluate psi and dpsi on grids
+        int LD_pool = block_index[na_grid];
         ModuleBase::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
         ModuleBase::Array_Pool<double> dpsir_ylm_x(this->bxyz, LD_pool);
         ModuleBase::Array_Pool<double> dpsir_ylm_y(this->bxyz, LD_pool);
