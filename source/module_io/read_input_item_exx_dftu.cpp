@@ -150,6 +150,18 @@ void ReadInput::item_exx()
         this->add_item(item);
     }
     {
+        Input_Item item("exx_c_grad_r_threshold");
+        item.annotation = "threshold to screen nabla C matrix in exx";
+        read_sync_double(input.exx_c_grad_r_threshold);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("exx_v_grad_r_threshold");
+        item.annotation = "threshold to screen nabla V matrix in exx";
+        read_sync_double(input.exx_v_grad_r_threshold);
+        this->add_item(item);
+    }
+    {
         Input_Item item("exx_cauchy_force_threshold");
         item.annotation = "threshold to screen exx force using Cauchy-Schwartz inequality";
         read_sync_double(input.exx_cauchy_force_threshold);
