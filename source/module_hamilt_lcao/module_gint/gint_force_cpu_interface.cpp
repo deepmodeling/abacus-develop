@@ -13,8 +13,17 @@ void Gint::gint_kernel_force(Gint_inout* inout) {
     const double delta_r = this->gridt->dr_uniform;
     ModuleBase::matrix* fvl_dphi_thread=inout->fvl_dphi;
     ModuleBase::matrix* svl_dphi_thread=inout->svl_dphi;
+    int block_iw[max_size];
+    ModuleBase::GlobalFunc::ZEROS(block_iw, max_size);
+    int block_index[max_size+1];
+    ModuleBase::GlobalFunc::ZEROS(block_index, max_size+1);
+    int block_size[max_size];
+    ModuleBase::GlobalFunc::ZEROS(block_size, max_size);
+    double vldr3[this->bxyz];
+    ModuleBase::GlobalFunc::ZEROS(vldr3, this->bxyz);
 #ifdef _OPENMP
-#pragma omp parallel private(fvl_dphi_thread, svl_dphi_thread)
+#pragma omp parallel private(fvl_dphi_thread, svl_dphi_thread, \
+                            block_iw, block_index, block_size, vldr3)
 {
     if (inout->isforce) {
         fvl_dphi_thread=new ModuleBase::matrix(*inout->fvl_dphi);
@@ -31,7 +40,8 @@ void Gint::gint_kernel_force(Gint_inout* inout) {
         if (na_grid == 0) {
             continue;
         }
-        double* vldr3 = Gint_Tools::get_vldr3(inout->vl,
+        Gint_Tools::get_vldr3_vlocal(vldr3,
+                                    inout->vl,
                                     this->bxyz,
                                     this->bx,
                                     this->by,
@@ -41,11 +51,14 @@ void Gint::gint_kernel_force(Gint_inout* inout) {
                                     ncyz,
                                     dv);
          //prepare block information
-        int* block_iw;
-        int* block_index;
-        int* block_size;
-        bool** cal_flag;
-        Gint_Tools::get_block_info(*this->gridt, this->bxyz, na_grid, grid_index, block_iw, block_index, block_size, cal_flag);
+        // int* block_iw;
+        // int* block_index;
+        // int* block_size;
+        // bool** cal_flag;
+        ModuleBase::Array_Pool<bool> cal_flag(this->bxyz,max_size);
+        Gint_Tools::get_block_info_vlocal(*this->gridt, this->bxyz, na_grid, grid_index,
+                                            block_iw, block_index, block_size, 
+                                            cal_flag.get_ptr_2D());
         int LD_pool = block_index[na_grid];
 
     //evaluate psi and dpsi on grids
@@ -54,12 +67,15 @@ void Gint::gint_kernel_force(Gint_inout* inout) {
         ModuleBase::Array_Pool<double> dpsir_ylm_y(this->bxyz, LD_pool);
         ModuleBase::Array_Pool<double> dpsir_ylm_z(this->bxyz, LD_pool);
 
-        Gint_Tools::cal_dpsir_ylm(*this->gridt, this->bxyz, na_grid, grid_index, delta_r,	block_index, block_size, cal_flag,
-            psir_ylm.get_ptr_2D(), dpsir_ylm_x.get_ptr_2D(), dpsir_ylm_y.get_ptr_2D(), dpsir_ylm_z.get_ptr_2D());
+        Gint_Tools::cal_dpsir_ylm(*this->gridt, this->bxyz, na_grid, grid_index, delta_r,	
+                                    block_index, block_size,
+                                    cal_flag.get_ptr_2D(),psir_ylm.get_ptr_2D(),
+                                    dpsir_ylm_x.get_ptr_2D(), dpsir_ylm_y.get_ptr_2D(), dpsir_ylm_z.get_ptr_2D());
 
     //calculating f_mu(r) = v(r)*psi_mu(r)*dv
-        const ModuleBase::Array_Pool<double> psir_vlbr3 = Gint_Tools::get_psir_vlbr3(this->bxyz, na_grid, LD_pool, block_index, 
-                                                                                    cal_flag, vldr3, psir_ylm.get_ptr_2D());
+        const ModuleBase::Array_Pool<double> psir_vlbr3 = 
+                Gint_Tools::get_psir_vlbr3(this->bxyz, na_grid, LD_pool, block_index, 
+                cal_flag.get_ptr_2D(), vldr3, psir_ylm.get_ptr_2D());
 
         ModuleBase::Array_Pool<double> psir_vlbr3_DM(this->bxyz, LD_pool);
         ModuleBase::GlobalFunc::ZEROS(psir_vlbr3_DM.get_ptr_1D(), this->bxyz*LD_pool);
@@ -67,7 +83,7 @@ void Gint::gint_kernel_force(Gint_inout* inout) {
 	//calculating g_mu(r) = sum_nu rho_mu,nu f_nu(r)
         if(GlobalV::GAMMA_ONLY_LOCAL)
         {
-		//Gint_Tools::mult_psi_DM(*this->gridt, this->bxyz, na_grid, LD_pool, block_iw, block_size, block_index, cal_flag,
+		//Gint_Tools::mult_psi_DM(*this->gridt, this->bxyz, na_grid, LD_pool, block_iw, block_size, block_index, cal_flag.get_ptr_2D(),
 		//	psir_vlbr3.get_ptr_2D(), psir_vlbr3_DM.get_ptr_2D(), DM_in, 2);
             Gint_Tools::mult_psi_DM_new(
                     *this->gridt, 
@@ -78,7 +94,7 @@ void Gint::gint_kernel_force(Gint_inout* inout) {
                     block_iw, 
                     block_size, 
                     block_index, 
-                    cal_flag,
+                    cal_flag.get_ptr_2D(),
                     psir_vlbr3.get_ptr_2D(), 
                     psir_vlbr3_DM.get_ptr_2D(), 
                     this->DMRGint[inout->ispin], 
@@ -86,16 +102,18 @@ void Gint::gint_kernel_force(Gint_inout* inout) {
         }
         else
         {
-            Gint_Tools::mult_psi_DMR(*this->gridt, this->bxyz, LD_pool, grid_index, na_grid, block_index, 
-                                        block_size, cal_flag, psir_vlbr3.get_ptr_2D(), psir_vlbr3_DM.get_ptr_2D(), 
+            Gint_Tools::mult_psi_DMR(*this->gridt, this->bxyz, LD_pool, grid_index, na_grid, 
+                                        block_index, block_size,cal_flag.get_ptr_2D(), 
+                                        psir_vlbr3.get_ptr_2D(), psir_vlbr3_DM.get_ptr_2D(), 
                                         this->DMRGint[inout->ispin], false);
         }
 
         if(inout->isforce)
         {
             //do integration to get force
-            this-> cal_meshball_force(grid_index, na_grid, block_size, block_index,psir_vlbr3_DM.get_ptr_2D(), 
-                                        dpsir_ylm_x.get_ptr_2D(), dpsir_ylm_y.get_ptr_2D(), dpsir_ylm_z.get_ptr_2D(),
+            this-> cal_meshball_force(grid_index, na_grid, block_size, block_index,
+                                        psir_vlbr3_DM.get_ptr_2D(), dpsir_ylm_x.get_ptr_2D(),
+                                        dpsir_ylm_y.get_ptr_2D(), dpsir_ylm_z.get_ptr_2D(),
                                         fvl_dphi_thread);
         }
         if(inout->isstress)
@@ -106,25 +124,15 @@ void Gint::gint_kernel_force(Gint_inout* inout) {
             // with each set of six numbers representing the derivatives in these respective directions.
             ModuleBase::Array_Pool<double> dpsirr_ylm(this->bxyz, LD_pool * 6);
             Gint_Tools::cal_dpsirr_ylm(*this->gridt, this->bxyz, na_grid, grid_index, block_index, 
-                                        block_size, cal_flag,dpsir_ylm_x.get_ptr_2D(), dpsir_ylm_y.get_ptr_2D(),
-                                        dpsir_ylm_z.get_ptr_2D(),dpsirr_ylm.get_ptr_2D());
+                                        block_size, cal_flag.get_ptr_2D(),dpsir_ylm_x.get_ptr_2D(), 
+                                        dpsir_ylm_y.get_ptr_2D(),dpsir_ylm_z.get_ptr_2D(),
+                                        dpsirr_ylm.get_ptr_2D());
 
             //do integration to get stress
             this-> cal_meshball_stress(na_grid, block_index, psir_vlbr3_DM.get_ptr_1D(), 
                                         dpsirr_ylm.get_ptr_1D(), svl_dphi_thread);
         }
-
-    //release memories
-        delete[] block_iw;
-        delete[] block_index;
-        delete[] block_size;
-        for(int ib=0; ib<this->bxyz; ++ib)
-        {
-            delete[] cal_flag[ib];
-        }
-        delete[] cal_flag;
-            delete[] vldr3;
-        }
+    }
 #ifdef _OPENMP
 #pragma omp critical(gint)
     {
