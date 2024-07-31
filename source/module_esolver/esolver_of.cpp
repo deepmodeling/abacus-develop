@@ -42,7 +42,6 @@ ESolver_OF::~ESolver_OF()
 
     delete[] this->nelec_;
     delete[] this->theta_;
-    delete[] this->mu_;
     delete[] this->task_;
     delete this->ptemp_rho_;
 
@@ -311,7 +310,7 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
 
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
-        this->mu_[is] = 0;
+        this->pelec->eferm.get_ef(is) = 0.;
         this->theta_[is] = 0.;
         ModuleBase::GlobalFunc::ZEROS(this->pdLdphi_[is], this->pw_rho->nrxx);
         ModuleBase::GlobalFunc::ZEROS(this->pdEdphi_[is], this->pw_rho->nrxx);
@@ -348,11 +347,11 @@ void ESolver_OF::update_potential(UnitCell& ucell)
         {
             this->pdEdphi_[is][ir] = vr_eff[ir];
         }
-        this->mu_[is] = this->cal_mu(this->pphi_[is], this->pdEdphi_[is], this->nelec_[is]);
+        this->pelec->eferm.get_ef(is) = this->cal_mu(this->pphi_[is], this->pdEdphi_[is], this->nelec_[is]);
 
         for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
         {
-            this->pdLdphi_[is][ir] = this->pdEdphi_[is][ir] - 2. * this->mu_[is] * this->pphi_[is][ir];
+            this->pdLdphi_[is][ir] = this->pdEdphi_[is][ir] - 2. * this->pelec->eferm.get_efval(is) * this->pphi_[is][ir];
         }
     }
 
@@ -527,7 +526,7 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell)
                 this->pw_rhod->nx,
                 this->pw_rhod->ny,
                 this->pw_rhod->nz,
-                this->mu_[is],
+                this->pelec->eferm.get_efval(is),
                 &(ucell),
                 3,
                 1);
