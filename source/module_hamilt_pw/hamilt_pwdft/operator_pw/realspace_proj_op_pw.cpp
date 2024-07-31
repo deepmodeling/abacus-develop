@@ -109,15 +109,18 @@ namespace hamilt
         std::iota(rgrid.begin(), rgrid.end(), 0);
         std::for_each(rgrid.begin(), rgrid.end(), [dr](double& r_i) { r_i *= dr; });
 
-        DFTU<OperatorPW<T, Device>>(isk,        // what is this?
-                                    l_hubbard,  // std::vector<int>
-                                    u,          // std::vector<double>
-                                    rgrid,      // std::vector<double>
-                                    projs,      // std::vector<std::vector<double>>
-                                    natom,      // std::vector<int>
-                                    tau,        // std::vector<ModuleBase::Vector3<double>*>
-                                    omega,      // double
-                                    tpiba,      // double
-                                    q);         // std::vector<ModuleBase::Vector3<double>>
+        RadialProjection::RadialProjector rp;
+        rp._build_sbt_tab(rgrid,     // std::vector<double>
+                          projs,     // std::vector<std::vector<double>>
+                          l_hubbard, // std::vector<int>
+                          10000,     // int
+                          0.01);     // double
+        
+        std::vector<std::complex<double>> out;
+        rp.sbtft(q,     // std::vector<ModuleBase::Vector3<double>>
+                 out,   // std::vector<std::complex<double>>
+                 omega, // double
+                 tpiba, // double
+                 'r');  // char, 'r' for <G+k|p>, 'l' for <p|G+k>
     }
 }
