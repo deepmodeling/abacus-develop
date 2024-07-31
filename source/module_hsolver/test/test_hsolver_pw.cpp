@@ -80,6 +80,7 @@ TEST_F(TestHSolverPW, solve) {
     this->hs_f.solve(&hamilt_test_f,
                      psi_test_cf,
                      &elecstate_test,
+                     elecstate_test.ekb.c,
                      method_test,
                      "scf",
                      "pw",
@@ -106,6 +107,7 @@ TEST_F(TestHSolverPW, solve) {
     this->hs_d.solve(&hamilt_test_d,
                      psi_test_cd,
                      &elecstate_test,
+                     elecstate_test.ekb.c,
                      method_test,
                      "scf",
                      "pw",
@@ -233,23 +235,6 @@ TEST_F(TestHSolverPW, solve) {
     test_diagethr_d = hs_d.cal_hsolerror(hs_d.diag_ethr);
     EXPECT_EQ(test_diagethr_d, 0.1);
 }
-
-/*#include "mpi.h"
-#include "module_base/timer.h"
-int main(int argc, char **argv)
-{
-    ModuleBase::timer::disable();
-    MPI_Init(&argc, &argv);
-    testing::InitGoogleTest(&argc, argv);
-
-    MPI_Comm_size(MPI_COMM_WORLD,&GlobalV::NPROC);
-    MPI_Comm_rank(MPI_COMM_WORLD,&GlobalV::MY_RANK);
-    int result = RUN_ALL_TESTS();
-
-    MPI_Finalize();
-
-    return result;
-}*/
 
 TEST_F(TestHSolverPW, SolveLcaoInPW) {
     pwbk.nks = 1;

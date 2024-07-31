@@ -81,6 +81,7 @@ void ESolver_KS_PW<T, Device>::hamilt2estates(const double ethr) {
         this->phsol->solve(this->p_hamilt,
                            this->kspw_psi[0],
                            this->pelec,
+                           this->pelec->ekb.c,
                            PARAM.inp.ks_solver,
                            PARAM.inp.calculation,
                            PARAM.inp.basis_type,

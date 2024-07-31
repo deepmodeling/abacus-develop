@@ -246,6 +246,9 @@ template <typename T, typename Device>
 void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
                                  psi::Psi<T, Device>& psi,
                                  elecstate::ElecState* pes,
+
+                                 double* out_eigenvalues,
+
                                  const std::string method_in,
 
                                  const std::string calculation_type_in,
@@ -290,7 +293,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
 
     // prepare for the precondition of diagonalization
     std::vector<Real> precondition(psi.get_nbasis(), 0.0);
-    std::vector<Real> eigenvalues(pes->ekb.nr * pes->ekb.nc, 0.0);
+    std::vector<Real> eigenvalues(psi.get_nk() * psi.get_nbands(), 0.0);
     std::vector<bool> is_occupied(psi.get_nk() * psi.get_nbands(), true);
     if (this->method == "dav_subspace")
     {
@@ -322,7 +325,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
 #endif
 
         /// solve eigenvector and eigenvalue for H(k)
-        this->hamiltSolvePsiK(pHamilt, psi, precondition, eigenvalues.data() + ik * pes->ekb.nc);
+        this->hamiltSolvePsiK(pHamilt, psi, precondition, eigenvalues.data() + ik * psi.get_nbands());
 
         if (skip_charge)
         {
@@ -336,13 +339,14 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
     }
     // END Loop over k points
 
-    // copy eigenvalues to pes->ekb in ElecState
+    // copy eigenvalues to ekb in ElecState
     base_device::memory::cast_memory_op<double, Real, base_device::DEVICE_CPU, base_device::DEVICE_CPU>()(
         cpu_ctx,
         cpu_ctx,
-        pes->ekb.c,
+        // pes->ekb.c,
+        out_eigenvalues,
         eigenvalues.data(),
-        pes->ekb.nr * pes->ekb.nc);
+        psi.get_nk() * psi.get_nbands());
 
     // psi only should be initialed once for PW
     if (!this->initialed_psi)
