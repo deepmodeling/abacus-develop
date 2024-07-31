@@ -743,24 +743,23 @@ void ESolver_KS_PW<T, Device>::after_scf(const int istep)
                     ssc << GlobalV::global_out_dir << "BAND" << ib + 1 << "_K"
                         << ik % (this->kv.get_nks() / GlobalV::NSPIN) + 1 << "_SPIN" << spin_index + 1 << "_CHG.cube";
 
-                    ModuleIO::write_rho(
+                    ModuleIO::write_cube(
 #ifdef __MPI
                         this->pw_big->bz,
                         this->pw_big->nbz,
-                        this->pw_big->nplane,
-                        this->pw_big->startz_current,
+                        this->pw_rhod->nplane,
+                        this->pw_rhod->startz_current,
 #endif
                         rho_band[spin_index].data(),
                         spin_index,
                         GlobalV::NSPIN,
                         0,
                         ssc.str(),
-                        this->pw_rho->nx,
-                        this->pw_rho->ny,
-                        this->pw_rho->nz,
+                        this->pw_rhod->nx,
+                        this->pw_rhod->ny,
+                        this->pw_rhod->nz,
                         0.0,
-                        &(GlobalC::ucell),
-                        11);
+                        &(GlobalC::ucell));
 
                     std::cout << " Complete!" << std::endl;
                 }
@@ -823,8 +822,7 @@ void ESolver_KS_PW<T, Device>::after_scf(const int istep)
                 for (int is = 0; is < GlobalV::NSPIN; ++is)
                 {
                     std::stringstream ssc;
-                    ssc << GlobalV::global_out_dir << "BAND" << ib + 1 << "_SPIN" << is + 1
-                        << "_CHG.cube";
+                    ssc << GlobalV::global_out_dir << "BAND" << ib + 1 << "_SPIN" << is + 1 << "_CHG.cube";
 
                     ModuleIO::write_cube(
 #ifdef __MPI
@@ -833,8 +831,8 @@ void ESolver_KS_PW<T, Device>::after_scf(const int istep)
                         this->pw_rhod->nplane,
                         this->pw_rhod->startz_current,
 #endif
-                        rho_band,
-                        0,
+                        rho_band[is].data(),
+                        is,
                         GlobalV::NSPIN,
                         0,
                         ssc.str(),

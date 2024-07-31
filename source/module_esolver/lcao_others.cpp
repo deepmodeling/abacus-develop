@@ -101,8 +101,6 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
         IState_Charge ISC(this->psi, &(this->pv));
         if (GlobalV::GAMMA_ONLY_LOCAL)
         {
-        if (GlobalV::GAMMA_ONLY_LOCAL)
-        {
             ISC.begin(this->GG,
                       this->pelec->charge->rho,
                       this->pelec->wg,
