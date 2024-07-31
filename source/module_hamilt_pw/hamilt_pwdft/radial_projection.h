@@ -2,6 +2,7 @@
 #define RADIAL_PROJECTION_H
 
 #include "module_base/vector3.h"
+#include "module_base/cubic_spline.h"
 #include <memory>
 #include <vector>
 #include <complex>
@@ -83,9 +84,7 @@ namespace RadialProjection
             void sbfft(); // interface for SBFFT
 
         private:
-            std::vector<double> tab_;
-            // cache dim
-            std::vector<double> qgrid_tab_;
+            std::unique_ptr<ModuleBase::CubicSpline> cubspl_;
             std::vector<int> l_;
     };
   

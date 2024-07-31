@@ -6,7 +6,7 @@
 #include "module_base/constants.h"
 #include "module_base/matrix.h"
 #include "module_base/math_ylmreal.h"
-#include "module_base/cubic_spline.h"
+
 #include "module_base/spherical_bessel_transformer.h"
 
 void RadialProjection::RadialProjector::_build_sbt_tab(const int nr,
@@ -24,14 +24,16 @@ void RadialProjection::RadialProjector::_build_sbt_tab(const int nr,
     std::vector<double> qgrid(nq);
     std::iota(qgrid.begin(), qgrid.end(), 0);
     std::transform(qgrid.begin(), qgrid.end(), qgrid.begin(), [dq](const double& q){return q*dq;});
-    qgrid_tab_ = qgrid;
-
-    tab_.resize(nrad*nq);
 
     ModuleBase::SphericalBesselTransformer sbt_(true);
-    for(int i = 0; i < nrad; i++)
+    std::vector<double> _temp(nq);
+    sbt_.direct(l[0], nr, r, radials[0], nq, qgrid.data(), _temp.data());
+    cubspl_ = std::unique_ptr<ModuleBase::CubicSpline>(new ModuleBase::CubicSpline(nq, qgrid.data(), _temp.data()));
+    cubspl_->reserve(nrad);
+    for(int i = 1; i < nrad; i++)
     {
-        sbt_.direct(l[i], nr, r, radials[i], nq, qgrid.data(), tab_.data()+i*nq);
+        sbt_.direct(l[i], nr, r, radials[i], nq, qgrid.data(), _temp.data());
+        cubspl_->add(_temp.data());
     }
 }
 
@@ -70,18 +72,15 @@ void RadialProjection::RadialProjector::sbtft(const std::vector<ModuleBase::Vect
 
     std::vector<double> qnorm(npw);
     std::transform(qs.begin(), qs.end(), qnorm.begin(), [tpiba](const ModuleBase::Vector3<double>& q){return tpiba*q.norm();});
-    const int ncol_tab_ = qgrid_tab_.size();
     
+    std::vector<double> Jlfq(npw);
     int iproj = 0;
     for(int i = 0; i < nrad; i++)
     {
         const int l = l_[i];
         std::complex<double> pref = (type == 'r')? std::pow(ModuleBase::IMAG_UNIT, l) : std::pow(ModuleBase::NEG_IMAG_UNIT, l);
         pref = pref * ModuleBase::FOUR_PI/std::sqrt(omega);
-        // cubic spline interpolation
-        std::vector<double> Jlfq(npw);
-        ModuleBase::CubicSpline cubspl_(ncol_tab_, qgrid_tab_.data(), tab_.data()+i*ncol_tab_);
-        cubspl_.eval(npw, qnorm.data(), Jlfq.data());
+        cubspl_->eval(npw, qnorm.data(), Jlfq.data(), nullptr, nullptr, i);
         for(int m = -l; m <= l; m++)
         {
             for(int iq = 0; iq < npw; iq++)
