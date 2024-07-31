@@ -28,7 +28,7 @@
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 #include "module_io/read_wfc_nao.h"
 #include "module_io/rho_io.h"
-#include "module_io/write_pot.h"
+#include "module_io/write_elecstat_pot.h"
 #include "module_io/write_wfc_nao.h"
 #ifdef __EXX
 #include "module_io/restart_exx_csr.h"
@@ -101,16 +101,18 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
         IState_Charge ISC(this->psi, &(this->pv));
         if (GlobalV::GAMMA_ONLY_LOCAL)
         {
+        if (GlobalV::GAMMA_ONLY_LOCAL)
+        {
             ISC.begin(this->GG,
                       this->pelec->charge->rho,
                       this->pelec->wg,
                       this->pelec->eferm.get_all_ef(),
-                      this->pw_rho->nrxx,
-                      this->pw_rho->nplane,
-                      this->pw_rho->startz_current,
-                      this->pw_rho->nx,
-                      this->pw_rho->ny,
-                      this->pw_rho->nz,
+                      this->pw_rhod->nrxx,
+                      this->pw_rhod->nplane,
+                      this->pw_rhod->startz_current,
+                      this->pw_rhod->nx,
+                      this->pw_rhod->ny,
+                      this->pw_rhod->nz,
                       this->pw_big->bz,
                       this->pw_big->nbz,
                       GlobalV::GAMMA_ONLY_LOCAL,
@@ -134,13 +136,13 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                       this->pelec->charge->rhog,
                       this->pelec->wg,
                       this->pelec->eferm.get_all_ef(),
-                      this->pw_rho,
-                      this->pw_rho->nrxx,
-                      this->pw_rho->nplane,
-                      this->pw_rho->startz_current,
-                      this->pw_rho->nx,
-                      this->pw_rho->ny,
-                      this->pw_rho->nz,
+                      this->pw_rhod,
+                      this->pw_rhod->nrxx,
+                      this->pw_rhod->nplane,
+                      this->pw_rhod->startz_current,
+                      this->pw_rhod->nx,
+                      this->pw_rhod->ny,
+                      this->pw_rhod->nz,
                       this->pw_big->bz,
                       this->pw_big->nbz,
                       GlobalV::GAMMA_ONLY_LOCAL,
@@ -169,7 +171,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
         if (GlobalV::GAMMA_ONLY_LOCAL)
         {
             IEP.begin(this->psi,
-                      this->pw_rho,
+                      this->pw_rhod,
                       this->pw_wfc,
                       this->pw_big,
                       this->pv,
@@ -188,7 +190,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
         else
         {
             IEP.begin(this->psi,
-                      this->pw_rho,
+                      this->pw_rhod,
                       this->pw_wfc,
                       this->pw_big,
                       this->pv,

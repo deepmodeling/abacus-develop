@@ -1,5 +1,3 @@
-#include "write_pot.h"
-
 #include "module_base/element_name.h"
 #include "module_base/timer.h"
 #include "module_elecstate/potentials/H_Hartree_pw.h"
@@ -7,118 +5,10 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/cube_io.h"
 #include "module_io/output_log.h"
+#include "write_elecstat_pot.h"
 
 namespace ModuleIO
 {
-
-void write_pot(
-    const int &out_pot,
-    const int &nspin, 
-    const std::string &global_out_dir,
-#ifdef __MPI
-    const int& bz,
-    const int& nbz,
-    const int& nplane,
-    const int& startz_current,
-#endif
-    const int& nx,
-    const int& ny,
-    const int& nz,
-    const ModuleBase::matrix& v)
-{
-    ModuleBase::TITLE("ModuleIO", "write_pot");
-    if(out_pot == 3)
-    {
-        for(int is = 0; is < nspin; is++)
-        {
-            std::stringstream ss;
-            ss << global_out_dir << "SPIN" << is+1 << "_POT_INI.cube";
-            ModuleIO::write_pot_spin(
-                    out_pot,
-#ifdef __MPI
-					bz,
-					nbz,
-					nplane,
-					startz_current,
-#endif
-                    is,
-                    0, // iter
-                    ss.str(),
-                    nx,
-                    ny,
-                    nz,
-                    v,
-                    11); // precsion
-        }
-    }
-
-    ModuleBase::TITLE("ModuleIO", "write_pot");
-    return;
-}
-
-
-
-void write_pot_spin(
-    const int& out_pot,
-#ifdef __MPI
-    const int& bz,
-    const int& nbz,
-    const int& nplane,
-    const int& startz_current,
-#endif
-    const int& is,
-    const int& iter,
-    const std::string& fn,
-    const int& nx,
-    const int& ny,
-    const int& nz,
-    const ModuleBase::matrix& v,
-    const int& precision,
-    const int& hartree)
-{
-    ModuleBase::TITLE("ModuleIO", "write_pot_spin");
-    if (out_pot != 1 && out_pot != 3)
-    {
-        return;
-    }
-    ModuleBase::timer::tick("ModuleIO", "write_pot_spin");
-
-    double* temp_v = nullptr;
-    if (is == 0)
-    {
-        temp_v = v.c;
-    }
-    else if (is == 1)
-    {
-        temp_v = &(v.c[nx * ny * nz]);
-    }
-
-    double ef_tmp = 0.0;
-    int out_fermi = 0;
-
-    ModuleIO::write_cube(
-#ifdef __MPI
-        bz,
-        nbz,
-        nplane,
-        startz_current,
-#endif
-        temp_v,
-        is,
-        GlobalV::NSPIN,
-        iter,
-        fn,
-        nx,
-        ny,
-        nz,
-        ef_tmp,
-        &(GlobalC::ucell),
-        precision,
-        out_fermi);
-
-    ModuleBase::timer::tick("ModuleIO", "write_pot_spin");
-    return;
-}
 
 void write_elecstat_pot(
 #ifdef __MPI
