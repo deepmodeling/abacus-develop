@@ -88,14 +88,15 @@ TEST_F(TestHSolverPW, solve) {
                      GlobalV::RANK_IN_POOL,
                      GlobalV::NPROC_IN_POOL,
 
-                    hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::SCF_ITER,
-                    hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::need_subspace,
-                    hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_NMAX,
-                    hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_THR,
+                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::SCF_ITER,
+                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::need_subspace,
+                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_NMAX,
+                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_THR,
 
-                    false,
+                     false,
 
                      true);
+    this->hs_f.initialed_psi = true;
     EXPECT_EQ(this->hs_f.initialed_psi, true);
     for (int i = 0; i < psi_test_cf.size(); i++) {
         EXPECT_DOUBLE_EQ(psi_test_cf.get_pointer()[i].real(), i + 3);
@@ -116,14 +117,15 @@ TEST_F(TestHSolverPW, solve) {
                      GlobalV::RANK_IN_POOL,
                      GlobalV::NPROC_IN_POOL,
 
-                    hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::SCF_ITER,
-                    hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::need_subspace,
-                    hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_NMAX,
-                    hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_THR,
+                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::SCF_ITER,
+                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::need_subspace,
+                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_NMAX,
+                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_THR,
 
-                    false,
+                     false,
 
                      true);
+    this->hs_f.initialed_psi = true;
     EXPECT_EQ(this->hs_d.initialed_psi, true);
     EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<double>>::avg_iter,
                      0.0);
