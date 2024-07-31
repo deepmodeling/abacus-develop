@@ -1,11 +1,10 @@
 #include "get_pchg_pw.h"
 
-#include "module_base/global_variable.h"
+#include "cube_io.h"
 #include "module_base/tool_quit.h"
-#include "rho_io.h"
+#include "symmetry_rho.h"
 
 #include <algorithm>
-#include <cmath>
 #include <iostream>
 #include <sstream>
 
@@ -80,9 +79,9 @@ void get_pchg_pw(const std::vector<int>& bands_to_print,
             std::fill(rho_band[is].begin(), rho_band[is].end(), 0.0);
         }
 
-        if (PARAM.inp.if_separate_k)
+        if (if_separate_k)
         {
-            for (int ik = 0; ik < nks; ik++)
+            for (int ik = 0; ik < nks; ++ik)
             {
                 const int spin_index = isk[ik];
                 std::cout << " Calculating band-decomposed charge density for band " << ib + 1 << ", k-point "
@@ -100,7 +99,7 @@ void get_pchg_pw(const std::vector<int>& bands_to_print,
 
                 double w1 = static_cast<double>(wg_sum_k / ucell->omega);
 
-                for (int i = 0; i < nxyz; i++)
+                for (int i = 0; i < nxyz; ++i)
                 {
                     rho_band[spin_index][i] = std::norm(wfcr[i]) * w1;
                 }
@@ -134,7 +133,7 @@ void get_pchg_pw(const std::vector<int>& bands_to_print,
         }
         else
         {
-            for (int ik = 0; ik < nks; ik++)
+            for (int ik = 0; ik < nks; ++ik)
             {
                 const int spin_index = isk[ik];
                 std::cout << " Calculating band-decomposed charge density for band " << ib + 1 << ", k-point "
@@ -145,7 +144,7 @@ void get_pchg_pw(const std::vector<int>& bands_to_print,
 
                 double w1 = static_cast<double>(wk[ik] / ucell->omega);
 
-                for (int i = 0; i < nxyz; i++)
+                for (int i = 0; i < nxyz; ++i)
                 {
                     rho_band[spin_index][i] += std::norm(wfcr[i]) * w1;
                 }
@@ -154,11 +153,11 @@ void get_pchg_pw(const std::vector<int>& bands_to_print,
             // Symmetrize the charge density, otherwise the results are incorrect if the symmetry is on
             std::cout << " Symmetrizing band-decomposed charge density..." << std::endl;
             Symmetry_rho srho;
-            for (int is = 0; is < nspin; is++)
+            for (int is = 0; is < nspin; ++is)
             {
                 // Use vector instead of raw pointers
                 std::vector<double*> rho_save_pointers(nspin);
-                for (int s = 0; s < nspin; s++)
+                for (int s = 0; s < nspin; ++s)
                 {
                     rho_save_pointers[s] = rho_band[s].data();
                 }
@@ -167,7 +166,7 @@ void get_pchg_pw(const std::vector<int>& bands_to_print,
 
                 // Convert vector of vectors to vector of pointers
                 std::vector<std::complex<double>*> rhog_pointers(nspin);
-                for (int s = 0; s < nspin; s++)
+                for (int s = 0; s < nspin; ++s)
                 {
                     rhog_pointers[s] = rhog[s].data();
                 }
