@@ -58,10 +58,12 @@ class HSolver
                        const int rank_in_pool_in,
                        const int nproc_in_pool_in,
 
-                        const int scf_iter_in,
-                        const bool need_subspace_in,
-                        const int diag_iter_max_in,
-                        const double pw_diag_thr_in,
+                       const int scf_iter_in,
+                       const bool need_subspace_in,
+                       const int diag_iter_max_in,
+                       const double pw_diag_thr_in,
+
+                       const bool is_psi_init_in,
 
                        const bool skip_charge)
     {

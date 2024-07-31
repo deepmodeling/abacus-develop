@@ -54,6 +54,8 @@ class HSolverPW : public HSolver<T, Device>
                const int diag_iter_max_in,
                const double pw_diag_thr_in,
 
+               const bool is_psi_init_in,
+
                const bool skip_charge) override;
 
     virtual Real cal_hsolerror(const Real diag_ethr_in) override;

@@ -260,6 +260,8 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
                                  const int diag_iter_max_in,
                                  const double pw_diag_thr_in,
 
+                                 const bool is_psi_init_in,
+
                                  const bool skip_charge)
 {
     ModuleBase::TITLE("HSolverPW", "solve");
@@ -280,6 +282,8 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
     this->need_subspace = need_subspace_in;
     this->diag_iter_max = diag_iter_max_in;
     this->pw_diag_thr = pw_diag_thr_in;
+
+    this->initialed_psi = is_psi_init_in;
 
     // report if the specified diagonalization method is not supported
     const std::initializer_list<std::string> _methods = {"cg", "dav", "dav_subspace", "bpcg"};
@@ -344,11 +348,11 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
         eigenvalues.data(),
         pes->ekb.nr * pes->ekb.nc);
 
-    // psi only should be initialed once for PW
-    if (!this->initialed_psi)
-    {
-        this->initialed_psi = true;
-    }
+    // // psi only should be initialed once for PW
+    // if (!this->initialed_psi)
+    // {
+    //     this->initialed_psi = true;
+    // }
 
     if (skip_charge)
     {

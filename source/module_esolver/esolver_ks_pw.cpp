@@ -354,7 +354,11 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, c
                            hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
                            hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR,
 
+                           init_psi
+
                            false);
+
+        init_psi = true;
 
         if (PARAM.inp.out_bandgap)
         {
