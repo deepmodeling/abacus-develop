@@ -28,6 +28,7 @@ void RadialProjection::RadialProjector::_build_sbt_tab(const int nr,
     ModuleBase::SphericalBesselTransformer sbt_(true);
     std::vector<double> _temp(nq);
     sbt_.direct(l[0], nr, r, radials[0], nq, qgrid.data(), _temp.data());
+    if(cubspl_.get()) { cubspl_.reset(); } // release the old one if it is not the first time
     cubspl_ = std::unique_ptr<ModuleBase::CubicSpline>(new ModuleBase::CubicSpline(nq, qgrid.data(), _temp.data()));
     cubspl_->reserve(nrad);
     for(int i = 1; i < nrad; i++)

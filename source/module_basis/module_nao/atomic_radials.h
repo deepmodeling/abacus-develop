@@ -51,6 +51,17 @@ class AtomicRadials : public RadialSet
                          std::ofstream* ptr_log = nullptr, //!< output file stream for logging
                          const int rank = 0                //!< MPI rank
     );
+    //! static version of read_abacus_orb
+    static void read_abacus_orb(std::ifstream& ifs,
+                                std::string& elem,
+                                double& ecut,
+                                int& lmax,
+                                int& nr,
+                                double& dr,
+                                std::vector<int>& nzeta,
+                                std::vector<std::vector<double>>& radials,
+                                std::ofstream* ptr_log = nullptr,
+                                const int rank = 0);
 };
 
 #endif

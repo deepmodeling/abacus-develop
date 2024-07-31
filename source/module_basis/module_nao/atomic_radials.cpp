@@ -268,3 +268,148 @@ void AtomicRadials::read_abacus_orb(std::ifstream& ifs, std::ofstream* ptr_log, 
     delete[] rvalue;
     delete[] rgrid;
 }
+
+void AtomicRadials::read_abacus_orb(std::ifstream& ifs,
+                                    std::string& elem,
+                                    double& ecut,
+                                    int& lmax,
+                                    int& nr,
+                                    double& dr,
+                                    std::vector<int>& nzeta,
+                                    std::vector<std::vector<double>>& radials,
+                                    std::ofstream* ptr_log,
+                                    const int rank)
+{
+    /*
+     * Read the orbital file.
+     *
+     * For orbital file format, see
+     * (new) abacus-develop/tools/SIAB/PyTorchGradient/source/IO/print_orbital.py
+     * (old) abacus-develop/tools/SIAB/SimulatedAnnealing/source/src_spillage/Plot_Psi.cpp
+     *                                                                                  */
+    nr = 0; // number of grid points
+    dr = 0; // grid spacing
+    int nchi = 0; // number of radial functions
+    std::vector<std::vector<int>> radial_map_;
+
+    std::string tmp;
+    if (rank == 0)
+    {
+        if (!ifs.is_open())
+        {
+            ModuleBase::WARNING_QUIT("AtomicRadials::read_abacus_orb", "Couldn't open orbital file.");
+        }
+        while (ifs >> tmp)
+        {
+            if (tmp == "Element")
+            {
+                ifs >> elem;
+            }
+            else if (tmp == "Cutoff(Ry)")
+            {
+                ifs >> ecut;
+            }
+            else if (tmp == "Lmax")
+            {
+                ifs >> lmax;
+#ifdef __DEBUG
+                assert(lmax >= 0);
+#endif
+                nzeta.resize(lmax + 1);
+                for (int l = 0; l <= lmax; ++l)
+                {
+                    ifs >> tmp >> tmp >> tmp >> nzeta[l]; // skip "Number" "of" "Xorbital-->"
+                }
+            }
+            else if (tmp == "Mesh")
+            {
+                ifs >> nr;
+                continue;
+            }
+            else if (tmp == "dr")
+            {
+                ifs >> dr;
+                break;
+            }
+        }
+        // it is feasible to have a map from [l][iz] to 1-d array index now
+        radial_map_.resize(lmax);
+        for (int l = 0; l <= lmax; ++l)
+        {
+            radial_map_[l].resize(nzeta[l]);
+        }
+        int index = 0;
+        for (int l = 0; l <= lmax; ++l)
+        {
+            for (int iz = 0; iz < nzeta[l]; ++iz)
+            {
+                radial_map_[l][iz] = index++;
+            }
+        }
+        nchi = index;
+        radials.resize(nchi);
+        for (int i = 0; i != nchi; ++i)
+        {
+            radials[i].resize(nr);
+        }
+    }
+
+#ifdef __MPI
+    Parallel_Common::bcast_string(elem);
+    Parallel_Common::bcast_double(ecut);
+    Parallel_Common::bcast_int(lmax);
+    Parallel_Common::bcast_int(nchi);
+    Parallel_Common::bcast_int(nr);
+    Parallel_Common::bcast_double(dr);
+#endif
+    if (rank != 0)
+    {
+        nzeta.resize(lmax + 1);
+        radials.resize(nchi);
+        for (int i = 0; i != nchi; ++i)
+        {
+            radials[i].resize(nr);
+        }
+    }
+#ifdef __MPI
+    Parallel_Common::bcast_int(nzeta, lmax + 1);
+#endif
+
+    int l = 0;
+    int izeta = 0;
+    for (int i = 0; i != nchi; ++i)
+    {
+        if (rank == 0)
+        {
+            /*
+             * read the orbital information, including
+             *
+             * 1. angular momentum
+             * 2. zeta number
+             * 3. values on the grid
+             *                                                                              */
+            // ifs >> tmp >> tmp >> tmp; // skip "Type" "L" "N"
+            ifs >> tmp >> tmp >> tmp;
+#ifdef __DEBUG
+            assert(tmp == "N");
+#endif
+
+            ifs >> tmp >> l >> izeta;
+#ifdef __DEBUG
+            assert(l >= 0 && l <= lmax);
+            assert(izeta >= 0 && izeta < nzeta[l]);
+#endif
+
+            for (int ir = 0; ir != nr; ++ir)
+            {
+                ifs >> radials[radial_map_[l][izeta]][ir];
+            }
+        }
+
+#ifdef __MPI
+        Parallel_Common::bcast_int(l);
+        Parallel_Common::bcast_int(izeta);
+        Parallel_Common::bcast_double(radials[radial_map_[l][izeta]].data(), nr);
+#endif
+    }
+}

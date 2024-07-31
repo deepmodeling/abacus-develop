@@ -9,7 +9,9 @@ namespace hamilt {
 
     #ifndef DFTUTEMPLATE_H
     #define DFTUTEMPLATE_H
-    template<class T> class DFTU: public T {};
+    template<class T>
+    class DFTU: public T
+    {}; // this is a dummy class, it will be specialized later
     #endif
     template<typename T, typename Device>
     class DFTU<OperatorPW<T, Device>> : public OperatorPW<T, Device>

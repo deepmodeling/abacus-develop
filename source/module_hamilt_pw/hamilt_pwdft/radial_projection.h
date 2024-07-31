@@ -1,3 +1,13 @@
+/**
+ * @file radial_projection.h
+ * 
+ * project any atom-centered function that has seperatable radial and angular parts
+ * or any function can expanded with spherical harmonics onto the planewave basis,
+ * although the latter will be somewhat cumbersome:
+ * f(r) = sum_{l,m} f_{lm}(r) * Ylm(theta, phi)
+ * F(q) = sum_{l,m} i^l * 4*pi/sqrt(omega) * Jl[f_{lm}](q) * Ylm(q)
+ */
+
 #ifndef RADIAL_PROJECTION_H
 #define RADIAL_PROJECTION_H
 
@@ -9,31 +19,49 @@
 #include <map>
 #include <utility>
 #include <algorithm>
-// project any atom-centered function that has seperatable radial and angular parts
-// onto the planewave basis
+
 namespace RadialProjection
 {
     /**
-     * @brief RadialProjector is for projecting function who has seperatable radial
+     * @brief RadialProjector is for projecting a function who has seperatable radial
      * and angular parts:
      * f(r) = f(|r|) * Ylm(theta, phi)
-     * onto planewave basis. Each instance of RadialProjector can project any of
-     * this function onto a fixed set of q-points (or say one well-defined G-grid
-     * points)
+     * onto planewave basis. 
      * 
-     * This class is designed based on the fact that ABACUS will always calculate
-     * all Ylm values from 0 to lmax in-one-shot, therefore it is not wise to always
-     * recalculate it, instead this class will cache at the very beginning, with one
-     * specified lmax.
-     * Additionally, the SphericalBesselTransformer is also cached at the very
-     * beginning.
+     * Usage:
      * 
-     * The "language" here will be always: "do something on fixed-bundled q-grids"
+     * 1. classical way: reciprocal space integration
+     * ```c++
+     * RadialProjector rp(false);  
+     * const int nq = 1000;  
+     * const double dq = 0.01;  
+     * // given `r` is the real space grid and `radials` is the collection of radial
+     * // functions, `l` is the angular momentum quantum number for each radial function
+     * // then the interpolation table can be rapidly built by calling SphericalBesselTransformer
+     * // and CubicSpline modules.
+     * rp._build_sbt_tab(r, radials, l, nq, dq);
+     * // then the set of q will used to calculate the Fourier transform
+     * rp.sbtft(qs, out, omega, tpiba, 'r');
+     * // in `out`, there will be the Fourier transform of the radial functions organized
+     * // in the same way as the input `radials` and `qs`, as row and column respectively.
+     * // but one should note for each radials, there are 2*l+1 components now instead of
+     * // just one.
+     * ```
+     * 
+     * 2. SBFFT: small box fast-fourier-transform (not implemented yet)
      */
     class RadialProjector
     {
         public:
-            RadialProjector() {}
+            /**
+             * @brief Construct a new Radial Projector object
+             * 
+             * @param realspace if perform integration in real space rather than reciprocal space
+             * , default is false
+             * 
+             * @attention Currectly only reciprocal space method is implemented
+             */
+            RadialProjector(const bool realspace = false) {}
             ~RadialProjector() {}
 
             // it is more feasible to build interpolation table. this function will tabulate
