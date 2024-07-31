@@ -663,217 +663,27 @@ void ESolver_KS_PW<T, Device>::after_scf(const int istep)
     const std::vector<int> bands_to_print = PARAM.inp.bands_to_print;
     if (bands_to_print.size() > 0)
     {
-        //         // bands_picked is a vector of 0s and 1s, where 1 means the band is picked to output
-        //         std::vector<int> bands_picked;
-        //         bands_picked.resize(this->kspw_psi->get_nbands());
-        //         ModuleBase::GlobalFunc::ZEROS(bands_picked.data(), this->kspw_psi->get_nbands());
-
-        //         // Check if length of bands_to_print is valid
-        //         if (static_cast<int>(bands_to_print.size()) > this->kspw_psi->get_nbands())
-        //         {
-        //             ModuleBase::WARNING_QUIT("ESolver_KS_PW::after_scf",
-        //                                      "The number of bands specified by `bands_to_print` in the "
-        //                                      "INPUT file exceeds `nbands`!");
-        //         }
-
-        //         // Check if all elements in bands_picked are 0 or 1
-        //         for (int value: bands_to_print)
-        //         {
-        //             if (value != 0 && value != 1)
-        //             {
-        //                 ModuleBase::WARNING_QUIT("ESolver_KS_PW::after_scf",
-        //                                          "The elements of `bands_to_print` must be either 0 or 1. "
-        //                                          "Invalid values found!");
-        //             }
-        //         }
-
-        //         // Fill bands_picked with values from bands_to_print
-        //         // Remaining bands are already set to 0
-        //         int length = std::min(static_cast<int>(bands_to_print.size()), this->kspw_psi->get_nbands());
-        //         for (int i = 0; i < length; ++i)
-        //         {
-        //             // bands_to_print rely on function parse_expression
-        //             bands_picked[i] = static_cast<int>(bands_to_print[i]);
-        //         }
-
-        //         std::vector<std::complex<double>> wfcr(this->pw_rho->nxyz);
-        //         std::vector<std::vector<double>> rho_band(GlobalV::NSPIN, std::vector<double>(this->pw_rho->nxyz));
-
-        //         for (int ib = 0; ib < this->kspw_psi->get_nbands(); ++ib)
-        //         {
-        //             // Skip the loop iteration if bands_picked[ib] is 0
-        //             if (!bands_picked[ib])
-        //             {
-        //                 continue;
-        //             }
-
-        //             for (int is = 0; is < GlobalV::NSPIN; ++is)
-        //             {
-        //                 std::fill(rho_band[is].begin(), rho_band[is].end(), 0.0);
-        //             }
-
-        //             if (PARAM.inp.if_separate_k)
-        //             {
-        //                 for (int ik = 0; ik < this->kv.get_nks(); ik++)
-        //                 {
-        //                     const int spin_index = this->kv.isk[ik];
-        //                     std::cout << " Calculating band-decomposed charge density for band " << ib + 1 << ",
-        //                     k-point "
-        //                               << ik % (this->kv.get_nks() / GlobalV::NSPIN) + 1 << ", spin " << spin_index +
-        //                               1
-        //                               << std::endl;
-
-        //                     this->psi->fix_k(ik);
-        //                     this->pw_wfc->recip_to_real(this->ctx, &psi[0](ib, 0), wfcr.data(), ik);
-
-        //                     // To ensure the normalization of charge density in multi-k calculation (if if_separate_k
-        //                     is true) double wg_sum_k = 0; for (int ik_tmp = 0; ik_tmp < this->kv.get_nks() /
-        //                     GlobalV::NSPIN; ++ik_tmp)
-        //                     {
-        //                         wg_sum_k += this->kv.wk[ik_tmp];
-        //                     }
-
-        //                     double w1 = static_cast<double>(wg_sum_k / GlobalC::ucell.omega);
-
-        //                     for (int i = 0; i < this->pw_rho->nxyz; i++)
-        //                     {
-        //                         rho_band[spin_index][i] = std::norm(wfcr[i]) * w1;
-        //                     }
-
-        //                     std::cout << " Writing cube files...";
-
-        //                     std::stringstream ssc;
-        //                     ssc << GlobalV::global_out_dir << "BAND" << ib + 1 << "_K"
-        //                         << ik % (this->kv.get_nks() / GlobalV::NSPIN) + 1 << "_SPIN" << spin_index + 1 <<
-        //                         "_CHG.cube";
-
-        //                     ModuleIO::write_cube(
-        // #ifdef __MPI
-        //                         this->pw_big->bz,
-        //                         this->pw_big->nbz,
-        //                         this->pw_rhod->nplane,
-        //                         this->pw_rhod->startz_current,
-        // #endif
-        //                         rho_band[spin_index].data(),
-        //                         spin_index,
-        //                         GlobalV::NSPIN,
-        //                         0,
-        //                         ssc.str(),
-        //                         this->pw_rhod->nx,
-        //                         this->pw_rhod->ny,
-        //                         this->pw_rhod->nz,
-        //                         0.0,
-        //                         &(GlobalC::ucell));
-
-        //                     std::cout << " Complete!" << std::endl;
-        //                 }
-        //             }
-        //             else
-        //             {
-        //                 for (int ik = 0; ik < this->kv.get_nks(); ik++)
-        //                 {
-        //                     const int spin_index = this->kv.isk[ik];
-        //                     std::cout << " Calculating band-decomposed charge density for band " << ib + 1 << ",
-        //                     k-point "
-        //                               << ik % (this->kv.get_nks() / GlobalV::NSPIN) + 1 << ", spin " << spin_index +
-        //                               1
-        //                               << std::endl;
-
-        //                     this->psi->fix_k(ik);
-        //                     this->pw_wfc->recip_to_real(this->ctx, &psi[0](ib, 0), wfcr.data(), ik);
-
-        //                     double w1 = static_cast<double>(this->kv.wk[ik] / GlobalC::ucell.omega);
-
-        //                     for (int i = 0; i < this->pw_rho->nxyz; i++)
-        //                     {
-        //                         rho_band[spin_index][i] += std::norm(wfcr[i]) * w1;
-        //                     }
-        //                 }
-
-        //                 // Symmetrize the charge density, otherwise the results are incorrect if the symmetry is on
-        //                 std::cout << " Symmetrizing band-decomposed charge density..." << std::endl;
-        //                 Symmetry_rho srho;
-        //                 for (int is = 0; is < GlobalV::NSPIN; is++)
-        //                 {
-        //                     // Use vector instead of raw pointers
-        //                     std::vector<double*> rho_save_pointers(GlobalV::NSPIN);
-        //                     for (int s = 0; s < GlobalV::NSPIN; s++)
-        //                     {
-        //                         rho_save_pointers[s] = rho_band[s].data();
-        //                     }
-
-        //                     std::vector<std::vector<std::complex<double>>> rhog(
-        //                         GlobalV::NSPIN,
-        //                         std::vector<std::complex<double>>(this->pelec->charge->ngmc));
-
-        //                     // Convert vector of vectors to vector of pointers
-        //                     std::vector<std::complex<double>*> rhog_pointers(GlobalV::NSPIN);
-        //                     for (int s = 0; s < GlobalV::NSPIN; s++)
-        //                     {
-        //                         rhog_pointers[s] = rhog[s].data();
-        //                     }
-
-        //                     srho.begin(is,
-        //                                rho_save_pointers.data(),
-        //                                rhog_pointers.data(),
-        //                                this->pelec->charge->ngmc,
-        //                                nullptr,
-        //                                this->pw_rhod,
-        //                                GlobalC::Pgrid,
-        //                                GlobalC::ucell.symm);
-        //                 }
-
-        //                 std::cout << " Writing cube files...";
-
-        //                 for (int is = 0; is < GlobalV::NSPIN; ++is)
-        //                 {
-        //                     std::stringstream ssc;
-        //                     ssc << GlobalV::global_out_dir << "BAND" << ib + 1 << "_SPIN" << is + 1 << "_CHG.cube";
-
-        //                     ModuleIO::write_cube(
-        // #ifdef __MPI
-        //                         this->pw_big->bz,
-        //                         this->pw_big->nbz,
-        //                         this->pw_rhod->nplane,
-        //                         this->pw_rhod->startz_current,
-        // #endif
-        //                         rho_band[is].data(),
-        //                         is,
-        //                         GlobalV::NSPIN,
-        //                         0,
-        //                         ssc.str(),
-        //                         this->pw_rhod->nx,
-        //                         this->pw_rhod->ny,
-        //                         this->pw_rhod->nz,
-        //                         0.0,
-        //                         &(GlobalC::ucell));
-        //                 }
-
-        //                 std::cout << " Complete!" << std::endl;
-        //             }
-        //         }
-
         ModuleIO::get_pchg_pw(bands_to_print,
-                          this->kspw_psi->get_nbands(),
-                          GlobalV::NSPIN,
-                          this->pw_rhod->nx,
-                          this->pw_rhod->ny,
-                          this->pw_rhod->nz,
-                          this->pw_rhod->nxyz,
-                          this->kv.get_nks(),
-                          this->kv.isk,
-                          this->kv.wk,
-                          this->pw_big->bz,
-                          this->pw_big->nbz,
-                          this->pelec->charge->ngmc,
-                          &GlobalC::ucell,
-                          this->psi,
-                          this->pw_rhod,
-                          this->pw_wfc,
-                          this->ctx,
-                          GlobalC::Pgrid,
-                          GlobalV::global_out_dir,
-                          PARAM.inp.if_separate_k);
+                              this->kspw_psi->get_nbands(),
+                              GlobalV::NSPIN,
+                              this->pw_rhod->nx,
+                              this->pw_rhod->ny,
+                              this->pw_rhod->nz,
+                              this->pw_rhod->nxyz,
+                              this->kv.get_nks(),
+                              this->kv.isk,
+                              this->kv.wk,
+                              this->pw_big->bz,
+                              this->pw_big->nbz,
+                              this->pelec->charge->ngmc,
+                              &GlobalC::ucell,
+                              this->psi,
+                              this->pw_rhod,
+                              this->pw_wfc,
+                              this->ctx,
+                              GlobalC::Pgrid,
+                              GlobalV::global_out_dir,
+                              PARAM.inp.if_separate_k);
     }
 }
 
