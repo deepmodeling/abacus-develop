@@ -9,24 +9,26 @@
 
 namespace hsolver
 {
-template <typename T = std::complex<double>>
+template <typename T>
 class DiagoScalapack : public DiagH<T>
 {
     private:
         using Real = typename GetTypeReal<T>::type;
-        const int n_band;
-        const int n_local;
-        const int d_size;
-        const int dim;
     public:
         DiagoScalapack(const int& nband_in,
                         const int& nlocal_in,
                         const int& nbasis_in,
                         const int& dsize_in);
-        ~DiagoScalapack();
+        // ~DiagoScalapack();
         void diag(T* h_mat, T* s_mat, const int* const desc, T* psi, Real* eigenvalue_in);
 
     private:
+
+        const int n_band;
+        const int n_local;
+        const int d_size;
+        const int dim;
+
         void pdsygvx_diag(const int *const desc,
                         const int ncol,
                         const int nrow,

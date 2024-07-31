@@ -4,23 +4,38 @@
 #include "module_base/scalapack_connector.h"
 
 #include <vector>
+#include <cassert>
+#include <cstring>
 
 using namespace hsolver;
 
-template <typename T>
-DiagoScalapack<T>::DiagoScalapack(const int& nband_in,
-                                    const int& nlocal_in,
-                                    const int& nbasis_in,
-                                    const int& dsize_in)
+template <>
+DiagoScalapack<double>::DiagoScalapack(const int& nband_in,
+                                        const int& nlocal_in,
+                                        const int& nbasis_in,
+                                        const int& dsize_in)
     : n_band(nband_in), n_local(nlocal_in), dim(nbasis_in), d_size(dsize_in)
 {
 }
 
-template <typename T>
-DiagoScalapack<T>::~DiagoScalapack()
+template <>
+DiagoScalapack<std::complex<double>>::DiagoScalapack(const int& nband_in,
+                                        const int& nlocal_in,
+                                        const int& nbasis_in,
+                                        const int& dsize_in)
+    : n_band(nband_in), n_local(nlocal_in), dim(nbasis_in), d_size(dsize_in)
 {
 }
 
+// template <>
+// DiagoScalapack<std::complex<double>>::~DiagoScalapack()
+// {
+// }
+
+// template <>
+// DiagoScalapack<double>::~DiagoScalapack()
+// {
+// }
 
 template<>
 void DiagoScalapack<double>::diag(double* h_mat, double* s_mat, const int* const desc, double* psi, Real* eigenvalue_in)
