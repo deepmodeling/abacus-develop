@@ -1,7 +1,7 @@
 #include "esolver_ks_pw.h"
-
 #include "module_base/global_variable.h"
 #include "module_hamilt_pw/hamilt_pwdft/elecond.h"
+#include "module_io/cube_io.h"
 #include "module_io/input_conv.h"
 #include "module_io/nscf_band.h"
 #include "module_io/output_log.h"
@@ -37,7 +37,7 @@
 #include "module_io/rho_io.h"
 #include "module_io/to_wannier90_pw.h"
 #include "module_io/winput.h"
-#include "module_io/write_pot.h"
+#include "module_io/write_elecstat_pot.h"
 #include "module_io/write_wfc_r.h"
 #include "module_parameter/parameter.h"
 #ifdef USE_PAW
@@ -160,7 +160,47 @@ void ESolver_KS_PW<T, Device>::nscf() {
     }
 
     /// write potential
-    this->create_Output_Potential(0).write();
+    if (PARAM.inp.out_pot == 1 || PARAM.inp.out_pot == 3)
+    {
+        for (int is = 0; is < GlobalV::NSPIN; is++)
+        {
+            std::string fn = GlobalV::global_out_dir + "/SPIN" + std::to_string(is + 1) + "_POT.cube";
+
+            ModuleIO::write_cube(
+#ifdef __MPI
+                this->pw_big->bz,
+                this->pw_big->nbz,
+                this->pw_rhod->nplane,
+                this->pw_rhod->startz_current,
+#endif
+                this->pelec->pot->get_effective_v(is),
+                is,
+                GlobalV::NSPIN,
+                0,
+                fn,
+                this->pw_rhod->nx,
+                this->pw_rhod->ny,
+                this->pw_rhod->nz,
+                0.0, // efermi
+                &(GlobalC::ucell),
+                3,  // precision
+                0); // out_fermi
+        }
+    }
+    else if (PARAM.inp.out_pot == 2)
+    {
+        std::string fn = GlobalV::global_out_dir + "/ElecStaticPot.cube";
+        ModuleIO::write_elecstat_pot(
+#ifdef __MPI
+            this->pw_big->bz,
+            this->pw_big->nbz,
+#endif
+            fn,
+            this->pw_rhod,
+            this->pelec->charge,
+            &(GlobalC::ucell),
+            this->pelec->pot->get_fixed_v());
+    }
 
     ModuleBase::timer::tick("ESolver_KS_PW", "nscf");
     return;

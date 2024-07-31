@@ -5,7 +5,7 @@
 #include "module_base/memory.h"
 #include "module_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_io/rho_io.h"
+#include "module_io/cube_io.h"
 #include "module_io/write_wfc_pw.h"
 #include "module_io/write_wfc_r.h"
 IState_Envelope::IState_Envelope(const elecstate::ElecState* pes)
@@ -201,7 +201,7 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
                 std::stringstream ss;
                 ss << global_out_dir << "BAND" << ib + 1 << "_s_" << is + 1 << "_ENV.cube";
                 const double ef_tmp = this->pes_->eferm.get_efval(is);
-                ModuleIO::write_rho(
+                ModuleIO::write_cube(
 #ifdef __MPI
                     bigpw->bz,
                     bigpw->nbz,
@@ -218,7 +218,8 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
                     rhopw->nz,
                     ef_tmp,
                     &(GlobalC::ucell),
-                    3);
+                    3,
+                    1);
 
                 if (out_wfc_pw || out_wfc_r) { // only for gamma_only now
                     this->set_pw_wfc(wfcpw, 0, ib, nspin, pes_->charge->rho_save, pw_wfc_g);
@@ -439,7 +440,7 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
                    << "_ENV.cube";
                 const double ef_tmp = this->pes_->eferm.get_efval(ispin);
 
-                ModuleIO::write_rho(
+                ModuleIO::write_cube(
 #ifdef __MPI
                     bigpw->bz,
                     bigpw->nbz,
@@ -456,7 +457,8 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
                     rhopw->nz,
                     ef_tmp,
                     &(GlobalC::ucell),
-                    3);
+                    3,
+                    1);
 
                 if (out_wf || out_wf_r) // only for gamma_only now
                 {

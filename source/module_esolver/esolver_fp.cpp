@@ -101,7 +101,26 @@ void ESolver_FP::before_all_runners(const Input_para& inp, UnitCell& cell)
     //! 4) print some information
     this->print_rhofft(inp, GlobalV::ofs_running);
 
+    //! 5) initialize the charge extrapolation method if necessary
+    this->CE.Init_CE(GlobalC::ucell.nat);
+
     return;
+}
+
+//! Something to do after SCF iterations when SCF is converged or comes to the max iter step.
+void ESolver_FP::after_scf(const int istep)
+{
+    // 1) write charge difference into files for charge extrapolation
+    if (PARAM.inp.calculation != "scf")
+    {
+        this->CE.save_files(istep,
+                            GlobalC::ucell,
+#ifdef __MPI
+                            this->pw_big,
+#endif
+                            this->pelec->charge,
+                            &this->sf);
+    }
 }
 
 void ESolver_FP::init_after_vc(const Input_para& inp, UnitCell& cell)
