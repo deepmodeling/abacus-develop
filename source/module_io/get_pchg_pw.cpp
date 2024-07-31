@@ -2,7 +2,7 @@
 
 #include "cube_io.h"
 #include "module_base/tool_quit.h"
-#include "symmetry_rho.h"
+#include "module_elecstate/module_charge/symmetry_rho.h"
 
 #include <algorithm>
 #include <iostream>
@@ -24,11 +24,12 @@ void get_pchg_pw(const std::vector<int>& bands_to_print,
                  const int pw_big_bz,
                  const int pw_big_nbz,
                  const int ngmc,
-                 const UnitCell* ucell,
-                 psi::Psi<std::complex<double>>* psi,
-                 ModulePW::PW_Basis* pw_rhod,
-                 ModulePW::PW_Basis_K* pw_wfc,
+                 UnitCell* ucell,
+                 const psi::Psi<std::complex<double>>* psi,
+                 const ModulePW::PW_Basis* pw_rhod,
+                 const ModulePW::PW_Basis_K* pw_wfc,
                  const Device* ctx,
+                 Parallel_Grid& Pgrid,
                  const std::string& global_out_dir,
                  const bool if_separate_k)
 {
@@ -177,7 +178,7 @@ void get_pchg_pw(const std::vector<int>& bands_to_print,
                            ngmc,
                            nullptr,
                            pw_rhod,
-                           GlobalC::Pgrid,
+                           Pgrid,
                            ucell->symm);
             }
 

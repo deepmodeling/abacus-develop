@@ -27,6 +27,7 @@ list(APPEND objects
     output_log.cpp
     para_json.cpp
     parse_args.cpp
+    get_pchg_pw.cpp
 )
 
 list(APPEND objects_advanced
