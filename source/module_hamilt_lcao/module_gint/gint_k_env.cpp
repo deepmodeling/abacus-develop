@@ -29,6 +29,18 @@ void Gint_k::cal_env_k(int ik,
         const int nbz = this->gridt->nbzp;
         const int ncyz = this->ny * this->nplane; // mohan add 2012-03-25
         std::vector<int> vindex(this->bxyz, 0);
+        std::vector<int> block_iw(max_size, 0);
+        std::vector<int> block_index(max_size + 1, 0);
+        std::vector<int> block_size(max_size, 0);
+#ifdef _OPENMP
+#pragma omp parallel private(vindex, block_iw, block_index, block_size)
+{
+    vindex.assign(this->bxyz, 0);
+    block_iw.assign(max_size, 0);
+    block_index.assign(max_size + 1, 0);
+    block_size.assign(max_size, 0);
+    #pragma omp for
+#endif  
         for (int grid_index = 0; grid_index < this->nbxx; grid_index++)
         {
 
@@ -38,19 +50,15 @@ void Gint_k::cal_env_k(int ik,
             {
                 continue;
             }
-
-            int* block_iw = nullptr;
-            int* block_index = nullptr;
-            int* block_size = nullptr;
-            bool** cal_flag;
+            ModuleBase::Array_Pool<bool> cal_flag(this->bxyz, max_size);
             Gint_Tools::get_block_info(*this->gridt,
                                        this->bxyz,
                                        size,
                                        grid_index,
-                                       block_iw,
-                                       block_index,
-                                       block_size,
-                                       cal_flag);
+                                       block_iw.data(),
+                                       block_index.data(),
+                                       block_size.data(),
+                                       cal_flag.get_ptr_2D());
 
             // evaluate psi on grids
             ModuleBase::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
@@ -59,9 +67,9 @@ void Gint_k::cal_env_k(int ik,
                                      size,
                                      grid_index,
                                      delta_r,
-                                     block_index,
-                                     block_size,
-                                     cal_flag,
+                                     block_index.data(),
+                                     block_size.data(),
+                                     cal_flag.get_ptr_2D(),
                                      psir_ylm.get_ptr_2D());
 
             Gint_Tools::get_vindex(this->bxyz,
@@ -129,15 +137,10 @@ void Gint_k::cal_env_k(int ik,
                     } // cal_flag
                 }     // ib
             }         // ia1
-            delete[] block_iw;
-            delete[] block_index;
-            delete[] block_size;
-            for (int ib = 0; ib < this->bxyz; ++ib)
-            {
-                delete[] cal_flag[ib];
-            }
-            delete[] cal_flag;
         } // i
+#ifdef _OPENMP
+}
+#endif
     }
     ModuleBase::timer::tick("Gint_k", "cal_env_k");
     return;
