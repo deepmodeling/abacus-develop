@@ -125,7 +125,7 @@ TEST_F(TestHSolverPW, solve) {
                      false,
 
                      true);
-    this->hs_f.initialed_psi = true;
+    this->hs_d.initialed_psi = true;
     EXPECT_EQ(this->hs_d.initialed_psi, true);
     EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<double>>::avg_iter,
                      0.0);
@@ -138,6 +138,7 @@ TEST_F(TestHSolverPW, solve) {
     // check initDiagh()
     this->hs_f.method = "dav";
     this->hs_d.method = "dav";
+    
     this->hs_f.initialed_psi = false;
     this->hs_d.initialed_psi = false;
     // this->hs_f.initDiagh(psi_test_cf);
