@@ -457,15 +457,18 @@ bool ESolver_OF::check_exit()
     bool potHold = false; // if normdLdphi nearly remains unchanged
     bool energyConv = false;
 
-    if (this->normdLdphi_ < this->of_tolp_)
+    if (this->normdLdphi_ < this->of_tolp_) {
         potConv = true;
+}
     if (this->iter_ >= 3 && std::abs(this->normdLdphi_ - this->normdLdphi_last_) < 1e-10
-        && std::abs(this->normdLdphi_ - this->normdLdphi_llast_) < 1e-10)
+        && std::abs(this->normdLdphi_ - this->normdLdphi_llast_) < 1e-10) {
         potHold = true;
+}
 
     if (this->iter_ >= 3 && std::abs(this->energy_current_ - this->energy_last_) < this->of_tole_
-        && std::abs(this->energy_current_ - this->energy_llast_) < this->of_tole_)
+        && std::abs(this->energy_current_ - this->energy_llast_) < this->of_tole_) {
         energyConv = true;
+}
 
     this->conv_ = (this->of_conv_ == "energy" && energyConv) || (this->of_conv_ == "potential" && potConv)
                   || (this->of_conv_ == "both" && potConv && energyConv);
