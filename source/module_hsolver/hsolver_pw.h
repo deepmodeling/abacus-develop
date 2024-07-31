@@ -19,16 +19,6 @@ class HSolverPW : public HSolver<T, Device>
     using Real = typename GetTypeReal<T>::type;
 
   public:
-    /**
-     * @brief diago_full_acc
-     * If .TRUE. all the empty states are diagonalized at the same level of
-     * accuracy of the occupied ones. Otherwise the empty states are
-     * diagonalized using a larger threshold (this should not affect total
-     * energy, forces, and other ground-state properties).
-     *
-     */
-    static bool diago_full_acc;
-
     HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in, wavefunc* pwf_in);
 
     /// @brief solve function for pw
@@ -42,6 +32,7 @@ class HSolverPW : public HSolver<T, Device>
                elecstate::ElecState* pes,
 
                double* out_eigenvalues,
+               const std::vector<bool>& is_occupied_in,
                
                const std::string method_in,
 
@@ -105,13 +96,6 @@ class HSolverPW : public HSolver<T, Device>
 
     int nspin = 1;
 
-    void set_isOccupied(std::vector<bool>& is_occupied,
-                        elecstate::ElecState* pes,
-                        const int i_scf,
-                        const int nk,
-                        const int nband,
-                        const bool diago_full_acc);
-
 #ifdef USE_PAW
     void paw_func_in_kloop(const int ik);
 
@@ -121,8 +105,6 @@ class HSolverPW : public HSolver<T, Device>
 #endif
 };
 
-template <typename T, typename Device>
-bool HSolverPW<T, Device>::diago_full_acc = true;
 
 } // namespace hsolver
 

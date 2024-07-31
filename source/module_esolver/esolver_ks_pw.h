@@ -77,6 +77,15 @@ class ESolver_KS_PW : public ESolver_KS<T, Device>
 
     using castmem_2d_d2h_op
         = base_device::memory::cast_memory_op<std::complex<double>, T, base_device::DEVICE_CPU, Device>;
+
+  private:
+    void set_is_occupied(std::vector<bool>& is_occupied,
+                         elecstate::ElecState* pes,
+                         const int i_scf,
+                         const int nk,
+                         const int nband,
+                         const bool diago_full_acc);
+
 };
 } // namespace ModuleESolver
 #endif

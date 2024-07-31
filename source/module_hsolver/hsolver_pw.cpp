@@ -217,37 +217,12 @@ HSolverPW<T, Device>::HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in, wavefunc* pw
 }
 
 template <typename T, typename Device>
-void HSolverPW<T, Device>::set_isOccupied(std::vector<bool>& is_occupied,
-                                          elecstate::ElecState* pes,
-                                          const int i_scf,
-                                          const int nk,
-                                          const int nband,
-                                          const bool diago_full_acc_)
-{
-    if (i_scf != 0 && diago_full_acc_ == false)
-    {
-        for (int i = 0; i < nk; i++)
-        {
-            if (pes->klist->wk[i] > 0.0)
-            {
-                for (int j = 0; j < nband; j++)
-                {
-                    if (pes->wg(i, j) / pes->klist->wk[i] < 0.01)
-                    {
-                        is_occupied[i * nband + j] = false;
-                    }
-                }
-            }
-        }
-    }
-}
-
-template <typename T, typename Device>
 void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
                                  psi::Psi<T, Device>& psi,
                                  elecstate::ElecState* pes,
 
                                  double* out_eigenvalues,
+                                 const std::vector<bool>& is_occupied_in,
 
                                  const std::string method_in,
 
@@ -294,16 +269,6 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
     // prepare for the precondition of diagonalization
     std::vector<Real> precondition(psi.get_nbasis(), 0.0);
     std::vector<Real> eigenvalues(psi.get_nk() * psi.get_nbands(), 0.0);
-    std::vector<bool> is_occupied(psi.get_nk() * psi.get_nbands(), true);
-    if (this->method == "dav_subspace")
-    {
-        this->set_isOccupied(is_occupied,
-                             pes,
-                             this->scf_iter,
-                             psi.get_nk(),
-                             psi.get_nbands(),
-                             this->diago_full_acc);
-    }
 
     /// Loop over k points for solve Hamiltonian to charge density
     for (int ik = 0; ik < this->wfc_basis->nks; ++ik)
@@ -343,8 +308,8 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
     base_device::memory::cast_memory_op<double, Real, base_device::DEVICE_CPU, base_device::DEVICE_CPU>()(
         cpu_ctx,
         cpu_ctx,
-        // pes->ekb.c,
-        out_eigenvalues,
+        pes->ekb.c,
+        // out_eigenvalues,
         eigenvalues.data(),
         psi.get_nk() * psi.get_nbands());
 

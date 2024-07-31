@@ -334,6 +334,32 @@ void ESolver_KS_PW<T, Device>::iter_init(const int istep, const int iter)
     }
 }
 
+template <typename T, typename Device>
+void ESolver_KS_PW<T, Device>::set_is_occupied(std::vector<bool>& is_occupied,
+                                               elecstate::ElecState* pes,
+                                               const int i_scf,
+                                               const int nk,
+                                               const int nband,
+                                               const bool diago_full_acc)
+{
+    if (i_scf != 0 && diago_full_acc == false)
+    {
+        for (int i = 0; i < nk; i++)
+        {
+            if (pes->klist->wk[i] > 0.0)
+            {
+                for (int j = 0; j < nband; j++)
+                {
+                    if (pes->wg(i, j) / pes->klist->wk[i] < 0.01)
+                    {
+                        is_occupied[i * nband + j] = false;
+                    }
+                }
+            }
+        }
+    }
+}
+
 // Temporary, it should be replaced by hsolver later.
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, const double ethr)
@@ -353,11 +379,21 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, c
         hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR = ethr;
         hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX = GlobalV::PW_DIAG_NMAX;
 
+        std::vector<bool> is_occupied(this->kspw_psi->get_nk() * this->kspw_psi->get_nbands(), true);
+
+        this->set_is_occupied(is_occupied,
+                              this->pelec,
+                              hsolver::DiagoIterAssist<T, Device>::SCF_ITER,
+                              this->kspw_psi->get_nk(),
+                              this->kspw_psi->get_nbands(),
+                              PARAM.inp.diago_full_acc);
+
         this->phsol->solve(this->p_hamilt,    // hamilt::Hamilt<T, Device>* pHamilt,
                            this->kspw_psi[0], // psi::Psi<T, Device>& psi,
                            this->pelec,       // elecstate::ElecState<T, Device>* pelec,
 
                            this->pelec->ekb.c,
+                           is_occupied,
 
                            PARAM.inp.ks_solver,
                            PARAM.inp.calculation,

@@ -77,10 +77,14 @@ TEST_F(TestHSolverPW, solve) {
     // check solve()
     EXPECT_EQ(this->hs_f.initialed_psi, false);
     EXPECT_EQ(this->hs_d.initialed_psi, false);
+
+    std::vector<bool> is_occupied(1 * 2, true);
+
     this->hs_f.solve(&hamilt_test_f,
                      psi_test_cf,
                      &elecstate_test,
                      elecstate_test.ekb.c,
+                     is_occupied,
                      method_test,
                      "scf",
                      "pw",
@@ -108,6 +112,7 @@ TEST_F(TestHSolverPW, solve) {
                      psi_test_cd,
                      &elecstate_test,
                      elecstate_test.ekb.c,
+                     is_occupied,
                      method_test,
                      "scf",
                      "pw",

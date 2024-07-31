@@ -301,14 +301,6 @@ void Input_Conv::Convert()
     GlobalV::PW_DIAG_NMAX = PARAM.inp.pw_diag_nmax;
     GlobalV::PW_DIAG_NDIM = PARAM.inp.pw_diag_ndim;
 
-    hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_CPU>::diago_full_acc = PARAM.inp.diago_full_acc;
-    hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU>::diago_full_acc = PARAM.inp.diago_full_acc;
-
-#if ((defined __CUDA) || (defined __ROCM))
-    hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_GPU>::diago_full_acc = PARAM.inp.diago_full_acc;
-    hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_GPU>::diago_full_acc = PARAM.inp.diago_full_acc;
-#endif
-
     GlobalV::PW_DIAG_THR = PARAM.inp.pw_diag_thr;
     GlobalV::NB2D = PARAM.inp.nb2d;
     GlobalV::TEST_FORCE = PARAM.inp.test_force;

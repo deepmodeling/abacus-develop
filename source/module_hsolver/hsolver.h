@@ -51,6 +51,7 @@ class HSolver
                        elecstate::ElecState* pes,
 
                        double* out_eigenvalues,
+                       const std::vector<bool>& is_occupied_in,
                        
                        const std::string method,
 
