@@ -7,8 +7,8 @@
 #include "module_hamilt_pw/hamilt_stodft/sto_elecond.h"
 #include "module_hsolver/diago_iter_assist.h"
 #include "module_hsolver/hsolver_pw_sdft.h"
+#include "module_io/cube_io.h"
 #include "module_io/output_log.h"
-#include "module_io/rho_io.h"
 #include "module_io/write_istate_info.h"
 
 #include <algorithm>
@@ -145,17 +145,8 @@ void ESolver_SDFT_PW::iter_finish(int iter)
 
 void ESolver_SDFT_PW::after_scf(const int istep)
 {
-    // save charge difference into files for charge extrapolation
-    if (GlobalV::CALCULATION != "scf")
-    {
-        this->CE.save_files(istep,
-                            GlobalC::ucell,
-#ifdef __MPI
-                            this->pw_big,
-#endif
-                            this->pelec->charge,
-                            &this->sf);
-    }
+    // 1) call after_scf() of ESolver_FP
+    ESolver_FP::after_scf(istep);
 
     if (PARAM.inp.out_chg > 0)
     {
@@ -164,21 +155,21 @@ void ESolver_SDFT_PW::after_scf(const int istep)
             std::stringstream ssc;
             ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG.cube";
             const double ef_tmp = this->pelec->eferm.get_efval(is);
-            ModuleIO::write_rho(
+            ModuleIO::write_cube(
 #ifdef __MPI
                 pw_big->bz,
                 pw_big->nbz,
-                pw_rho->nplane,
-                pw_rho->startz_current,
+                pw_rhod->nplane,
+                pw_rhod->startz_current,
 #endif
                 pelec->charge->rho_save[is],
                 is,
                 GlobalV::NSPIN,
                 0,
                 ssc.str(),
-                pw_rho->nx,
-                pw_rho->ny,
-                pw_rho->nz,
+                pw_rhod->nx,
+                pw_rhod->ny,
+                pw_rhod->nz,
                 ef_tmp,
                 &(GlobalC::ucell));
         }
