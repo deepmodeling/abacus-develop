@@ -94,6 +94,8 @@ void ESolver_KS_PW<T, Device>::hamilt2estates(const double ethr) {
                            hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
                            hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR,
 
+                           init_psi,
+
                            true);
     } else {
         ModuleBase::WARNING_QUIT("ESolver_KS_PW",
