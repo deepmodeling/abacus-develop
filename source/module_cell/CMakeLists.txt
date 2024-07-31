@@ -11,6 +11,7 @@ add_library(
     atom_spec.cpp
     pseudo.cpp
     read_pp.cpp
+    read_pp_complete.cpp
     read_pp_upf100.cpp
     read_pp_upf201.cpp
     read_pp_blps.cpp

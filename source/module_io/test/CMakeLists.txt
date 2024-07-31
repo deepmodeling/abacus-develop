@@ -19,6 +19,17 @@ add_test(NAME io_input_test_para_4
 )
 
 AddTest(
+  TARGET read_exit_file_test
+  LIBS ${math_libs} base device parameter
+  SOURCES read_exit_file_test.cpp ../read_exit_file.cpp
+)
+
+add_test(NAME read_exit_file_test_para_4
+      COMMAND mpirun -np 4 ./read_exit_file_test
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+AddTest(
   TARGET io_winput_test
   LIBS ${math_libs} base device
   SOURCES winput_test.cpp ../winput.cpp
@@ -56,7 +67,7 @@ AddTest(
 AddTest(
   TARGET io_print_info
   LIBS ${math_libs} base device symmetry cell_info parameter
-  SOURCES print_info_test.cpp ../print_info.cpp ../input.cpp ../output.cpp ../../module_cell/klist.cpp ../../module_cell/parallel_kpoints.cpp
+  SOURCES print_info_test.cpp ../print_info.cpp ../output.cpp ../../module_cell/klist.cpp ../../module_cell/parallel_kpoints.cpp
 )
 
 AddTest(
@@ -103,7 +114,7 @@ AddTest(
 AddTest(
   TARGET io_output_log_test
   LIBS base ${math_libs} device
-  SOURCES ../output_log.cpp outputlog_test.cpp
+  SOURCES ../output_log.cpp outputlog_test.cpp ../../module_basis/module_pw/test/test_tool.cpp
 )
 
 AddTest(

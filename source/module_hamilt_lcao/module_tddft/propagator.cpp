@@ -1,11 +1,11 @@
 #include "propagator.h"
 
-#include <complex>
-#include <iostream>
-
 #include "module_base/lapack_connector.h"
 #include "module_base/scalapack_connector.h"
-#include "module_io/input.h"
+#include "module_parameter/parameter.h"
+
+#include <complex>
+#include <iostream>
 
 namespace module_tddft
 {
@@ -97,11 +97,11 @@ void Propagator::compute_propagator_cn2(const int nlocal,
 
     // ->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // (2) compute Numerator & Denominator by GEADD
-    // Numerator = Stmp - i*para * Htmp;     beta1 = - para = -0.25 * INPUT.mdp.md_dt
-    // Denominator = Stmp + i*para * Htmp;   beta2 = para = 0.25 * INPUT.mdp.md_dt
+    // Numerator = Stmp - i*para * Htmp;     beta1 = - para = -0.25 * this->dt
+    // Denominator = Stmp + i*para * Htmp;   beta2 = para = 0.25 * this->dt
     std::complex<double> alpha = {1.0, 0.0};
-    std::complex<double> beta1 = {0.0, -0.25 * INPUT.mdp.md_dt};
-    std::complex<double> beta2 = {0.0, 0.25 * INPUT.mdp.md_dt};
+    std::complex<double> beta1 = {0.0, -0.25 * this->dt};
+    std::complex<double> beta2 = {0.0, 0.25 * this->dt};
 
     ScalapackConnector::geadd('N',
                               nlocal,
@@ -350,7 +350,7 @@ void Propagator::compute_propagator_taylor(const int nlocal,
         } // loop ipcol
     }     // loop iprow
 
-    std::complex<double> beta = {0.0, -0.5 * INPUT.mdp.md_dt / tag}; // for ETRS tag=2 , for taylor tag=1
+    std::complex<double> beta = {0.0, -0.5 * this->dt / tag}; // for ETRS tag=2 , for taylor tag=1
 
     //->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // invert Stmp

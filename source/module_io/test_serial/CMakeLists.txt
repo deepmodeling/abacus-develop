@@ -44,7 +44,7 @@ AddTest(
 AddTest(
   TARGET io_rho_io
   LIBS ${math_libs} base device cell_info parameter
-  SOURCES rho_io_test.cpp ../read_cube.cpp ../write_cube.cpp ../read_rho.cpp ../write_rho.cpp ../output.cpp
+  SOURCES rho_io_test.cpp ../read_cube.cpp ../write_cube.cpp ../read_rho.cpp ../output.cpp
 )
 
 AddTest(

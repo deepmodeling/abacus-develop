@@ -1,5 +1,9 @@
 etotref -212.6300856413655
 etotperatomref -106.3150428207
-CompareXC_pass 0
-CompareOE_pass 0
+CompareVXC_pass 0
+CompareOrbXC_pass 0
+CompareOrbKinetic_pass 0
+CompareOrbVL_pass 0
+CompareOrbVNL_pass 0
+CompareOrbVHartree_pass 0
 totaltimeref 22.06

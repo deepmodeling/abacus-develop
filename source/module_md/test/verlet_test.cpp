@@ -1,13 +1,10 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "module_esolver/esolver_lj.h"
-#include "setcell.h"
-
 #define private public
 #define protected public
+#include "module_esolver/esolver_lj.h"
 #include "module_md/verlet.h"
-#undef private
-#undef protected
+#include "setcell.h"
 #define doublethreshold 1e-12
 
 
@@ -41,17 +38,18 @@ class Verlet_test : public testing::Test
   protected:
     MD_base* mdrun;
     UnitCell ucell;
-    Input_para input;
+    Parameter param_in;
+    ModuleESolver::ESolver* p_esolver;
 
     void SetUp()
     {
         Setcell::setupcell(ucell);
-        Setcell::parameters(input);
+        Setcell::parameters(param_in.input);
 
-        ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
-        p_esolver->before_all_runners(input, ucell);
+        p_esolver = new ModuleESolver::ESolver_LJ();
+        p_esolver->before_all_runners(param_in.inp, ucell);
 
-        mdrun = new Verlet(input.mdp, ucell);
+        mdrun = new Verlet(param_in, ucell);
         mdrun->setup(p_esolver, GlobalV::global_readin_dir);
     }
 
@@ -109,7 +107,7 @@ TEST_F(Verlet_test, first_half)
 TEST_F(Verlet_test, NVE)
 {
     mdrun->first_half(GlobalV::ofs_running);
-    mdrun->mdp.md_type = "nve";
+    param_in.input.mdp.md_type = "nve";
     mdrun->second_half();
     ;
 
@@ -143,8 +141,8 @@ TEST_F(Verlet_test, NVE)
 TEST_F(Verlet_test, Anderson)
 {
     mdrun->first_half(GlobalV::ofs_running);
-    mdrun->mdp.md_type = "nvt";
-    mdrun->mdp.md_thermostat = "anderson";
+    param_in.input.mdp.md_type = "nvt";
+    param_in.input.mdp.md_thermostat = "anderson";
     mdrun->second_half();
     ;
 
@@ -178,8 +176,8 @@ TEST_F(Verlet_test, Anderson)
 TEST_F(Verlet_test, Berendsen)
 {
     mdrun->first_half(GlobalV::ofs_running);
-    mdrun->mdp.md_type = "nvt";
-    mdrun->mdp.md_thermostat = "berendsen";
+    param_in.input.mdp.md_type = "nvt";
+    param_in.input.mdp.md_thermostat = "berendsen";
     mdrun->second_half();
     ;
 
@@ -213,8 +211,8 @@ TEST_F(Verlet_test, Berendsen)
 TEST_F(Verlet_test, rescaling)
 {
     mdrun->first_half(GlobalV::ofs_running);
-    mdrun->mdp.md_type = "nvt";
-    mdrun->mdp.md_thermostat = "rescaling";
+    param_in.input.mdp.md_type = "nvt";
+    param_in.input.mdp.md_thermostat = "rescaling";
     mdrun->second_half();
     ;
 
@@ -248,8 +246,8 @@ TEST_F(Verlet_test, rescaling)
 TEST_F(Verlet_test, rescale_v)
 {
     mdrun->first_half(GlobalV::ofs_running);
-    mdrun->mdp.md_type = "nvt";
-    mdrun->mdp.md_thermostat = "rescale_v";
+    param_in.input.mdp.md_type = "nvt";
+    param_in.input.mdp.md_thermostat = "rescale_v";
     mdrun->second_half();
     ;
 

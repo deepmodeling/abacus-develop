@@ -171,6 +171,7 @@ OBJS_CELL=atom_pseudo.o\
     atom_spec.o\
     pseudo.o\
     read_pp.o\
+    read_pp_complete.o\
     read_pp_upf100.o\
     read_pp_upf201.o\
     read_pp_blps.o\
@@ -185,8 +186,8 @@ OBJS_CELL=atom_pseudo.o\
     print_cif.o\
 
 OBJS_DEEPKS=LCAO_deepks.o\
-        LCAO_deepks_fgamma.o\
-        LCAO_deepks_fk.o\
+        deepks_fgamma.o\
+        deepks_fk.o\
         LCAO_deepks_odelta.o\
         LCAO_deepks_io.o\
         LCAO_deepks_mpi.o\
@@ -194,7 +195,7 @@ OBJS_DEEPKS=LCAO_deepks.o\
         LCAO_deepks_psialpha.o\
         LCAO_deepks_torch.o\
         LCAO_deepks_vdelta.o\
-        LCAO_deepks_hmat.o\
+        deepks_hmat.o\
         LCAO_deepks_interface.o\
         orbital_precalc.o\
         orbital_precalc_k.o\
@@ -240,12 +241,26 @@ OBJS_ESOLVER=esolver.o\
     esolver_of.o\
     esolver_of_tool.o\
     esolver_of_interface.o\
+    print_funcs.o\
+    pw_fun.o\
+    pw_init_after_vc.o\
+    pw_init_globalc.o\
+    pw_nscf.o\
+    pw_others.o\
 
 OBJS_ESOLVER_LCAO=esolver_ks_lcao.o\
-      esolver_ks_lcao_elec.o\
       esolver_ks_lcao_tddft.o\
-      esolver_ks_lcao_tmpfunc.o\
+      dpks_cal_e_delta_band.o\
+      dftu_cal_occup_m.o\
       io_npz.o\
+      set_matrix_grid.o\
+      lcao_before_scf.o\
+      lcao_gets.o\
+      lcao_nscf.o\
+      lcao_others.o\
+      lcao_init_after_vc.o\
+      lcao_fun.o\
+      cal_edm_tddft.o\
 
 OBJS_GINT=gint.o\
       gint_gamma_env.o\
@@ -446,9 +461,7 @@ OBJS_XC=xc_functional.o\
     xc_funct_corr_gga.o\
     xc_funct_hcth.o\
 
-OBJS_IO=input.o\
-    input_conv_tmp.o\
-    input_conv.o\
+OBJS_IO=input_conv.o\
     berryphase.o\
     bessel_basis.o\
     cal_test.o\
@@ -464,6 +477,7 @@ OBJS_IO=input.o\
     read_cube.o\
     read_rho.o\
     read_rhog.o\
+    read_exit_file.o\
     read_wfc_pw.o\
     restart.o\
     binstream.o\
@@ -479,14 +493,11 @@ OBJS_IO=input.o\
     write_wfc_pw.o\
     winput.o\
     write_cube.o\
-    write_rho.o\
-    write_pot.o\
+    write_elecstat_pot.o\
     write_dipole.o\
     td_current_io.o\
     write_wfc_r.o\
     output_log.o\
-    output_rho.o\
-    output_potential.o\
     output_mat_sparse.o\
     para_json.o\
     abacusjson.o\
@@ -517,8 +528,8 @@ OBJS_IO_LCAO=cal_r_overlap_R.o\
       write_proj_band_lcao.o\
       write_istate_info.o\
       nscf_fermi_surf.o\
-      istate_charge.o\
-      istate_envelope.o\
+      get_pchg.o\
+      get_wf.o\
       io_dmk.o\
       unk_overlap_lcao.o\
       read_wfc_nao.o\
@@ -613,6 +624,7 @@ OBJS_SRCPW=H_Ewald_pw.o\
     forces_us.o\
     forces_nl.o\
     forces_cc.o\
+    forces_scc.o\
     fs_nonlocal_tools.o\
     force_op.o\
     stress_op.o\

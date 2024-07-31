@@ -2,7 +2,7 @@
 #define MD_BASE_H
 
 #include "module_esolver/esolver.h"
-#include "module_parameter/md_parameter.h"
+#include "module_parameter/parameter.h"
 
 /**
  * @brief base class of md
@@ -15,7 +15,7 @@
 class MD_base
 {
   public:
-    MD_base(MD_para& MD_para_in, UnitCell& unit_in);
+    MD_base(const Parameter& param_in, UnitCell& unit_in);
     virtual ~MD_base();
 
     /**
@@ -86,9 +86,15 @@ class MD_base
     double kinetic;                     ///< kinetic energy
 
   protected:
-    MD_para& mdp;    ///< input parameters used in md
+    const MD_para& mdp; ///< input parameters used in md
     UnitCell& ucell; ///< unitcell information
     double energy_;  ///< total energy of the system
+
+    bool cal_stress;  ///< whether calculate stress
+    int my_rank;      ///< MPI rank of the processor
+    double md_dt;     ///< Time increment (hbar/E_hartree)
+    double md_tfirst; ///< Temperature (in Hartree, 1 Hartree ~ 3E5 K)
+    double md_tlast;  ///< Target temperature
 };
 
 #endif // MD_BASE_H

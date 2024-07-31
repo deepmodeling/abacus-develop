@@ -16,12 +16,25 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
                            const int istep,
                            const int iter,
                            const std::string method_in,
-                           const bool skip_charge) {
+
+                           const int scf_iter_in,
+                           const bool need_subspace_in,
+                           const int diag_iter_max_in,
+                           const double pw_diag_thr_in,
+
+                           const bool skip_charge)
+{
     ModuleBase::TITLE(this->classname, "solve");
     ModuleBase::timer::tick(this->classname, "solve");
+
     const int npwx = psi.get_nbasis();
     const int nbands = psi.get_nbands();
     const int nks = psi.get_nk();
+
+    this->scf_iter = scf_iter_in;
+    this->need_subspace = need_subspace_in;
+    this->diag_iter_max = diag_iter_max_in;
+    this->pw_diag_thr = pw_diag_thr_in;
 
     // prepare for the precondition of diagonalization
     std::vector<double> precondition(psi.get_nbasis(), 0.0);

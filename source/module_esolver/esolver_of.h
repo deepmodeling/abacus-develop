@@ -5,7 +5,6 @@
 #include "module_base/opt_DCsrch.h"
 #include "module_base/opt_TN.hpp"
 #include "module_elecstate/module_charge/charge.h"
-#include "module_elecstate/module_charge/charge_extra.h" // liuyu add 2022-11-07
 #include "module_hamilt_pw/hamilt_ofdft/kedf_lkt.h"
 #include "module_hamilt_pw/hamilt_ofdft/kedf_tf.h"
 #include "module_hamilt_pw/hamilt_ofdft/kedf_vw.h"
@@ -46,9 +45,6 @@ class ESolver_OF : public ESolver_FP
     KEDF_vW* vw_ = nullptr;
     KEDF_WT* wt_ = nullptr;
     KEDF_LKT* lkt_ = nullptr;
-
-    // charge extrapolation liuyu add 2022-11-07
-    Charge_Extra CE_;
 
     // ----------------- the optimization methods ------------------
     ModuleBase::Opt_CG* opt_cg_ = nullptr;

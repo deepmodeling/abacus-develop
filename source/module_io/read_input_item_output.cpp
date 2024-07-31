@@ -268,6 +268,12 @@ void ReadInput::item_output()
         this->add_item(item);
     }
     {
+        Input_Item item("out_eband_terms");
+        item.annotation = "output the band energy terms separately";
+        read_sync_bool(input.out_eband_terms);
+        this->add_item(item);
+    }
+    {
         Input_Item item("out_hr_npz");
         item.annotation = "output hr(I0,JR) submatrices in npz format";
         read_sync_bool(input.out_hr_npz);

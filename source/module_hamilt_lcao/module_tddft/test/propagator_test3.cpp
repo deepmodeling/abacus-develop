@@ -1,11 +1,13 @@
 #include <gtest/gtest.h>
-#include <module_base/scalapack_connector.h>
-#include <mpi.h>
-
+#define private public
+#define protected public
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_hamilt_lcao/module_tddft/propagator.h"
-#include "module_io/input.h"
+#include "module_parameter/parameter.h"
 #include "tddft_test.h"
+
+#include <module_base/scalapack_connector.h>
+#include <mpi.h>
 
 /************************************************
  *  unit test of functions in propagator.h
@@ -42,7 +44,7 @@ TEST(PropagatorTest, testPropagatorETRS)
     dim[0] = nprow;
     dim[1] = npcol;
 
-    INPUT.mdp.md_dt = 4;
+    PARAM.input.mdp.md_dt = 4 * ModuleBase::AU_to_FS;
 
     // Initialize input matrices
     int info;
@@ -78,7 +80,7 @@ TEST(PropagatorTest, testPropagatorETRS)
 
     // Call the function
     int propagator = 2;
-    module_tddft::Propagator prop(propagator, pv);
+    module_tddft::Propagator prop(propagator, pv, PARAM.mdp.md_dt);
     prop.compute_propagator(nlocal, Stmp, Htmp, Hlaststep, U_operator, print_matrix);
 
     // Check the results
