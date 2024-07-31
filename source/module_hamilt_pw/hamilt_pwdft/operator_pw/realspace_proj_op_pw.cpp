@@ -46,12 +46,11 @@ namespace hamilt
                           nq,        // int
                           dq);       // double
         
-        std::vector<std::complex<double>> out;
-        rp.sbtft(q,     // std::vector<ModuleBase::Vector3<double>>
-                 out,   // std::vector<std::complex<double>>
-                 omega, // double
-                 tpiba, // double
-                 'r');  // char, 'r' for <G+k|p>, 'l' for <p|G+k>
+        rp.sbtft(q,             // std::vector<ModuleBase::Vector3<double>>
+                 proj_q_tab_,   // std::vector<std::complex<double>>
+                 omega,         // double
+                 tpiba,         // double
+                 'r');          // char, 'r' for <G+k|p>, 'l' for <p|G+k>
     }
 
     template<typename T, typename Device>
@@ -73,14 +72,17 @@ namespace hamilt
         std::vector<double> onsite_r(ntype); // read from UnitCell or somewhere else
         
         std::vector<std::vector<double>> projs(ntype);
-        int nr;
+        int nr = -1;
         double dr;
+        bool padding = false;
         for(int it = 0; it < ntype; ++it)
         {
             std::vector<std::vector<double>> temp_;
-            int lmax;
+            int lmax, nr_;
             std::vector<int> nzeta;
-            read_abacus_orb(ucell_in->orbital_fn[it], lmax, nzeta, nr, dr, temp_);
+            read_abacus_orb(ucell_in->orbital_fn[it], lmax, nzeta, nr_, dr, temp_);
+            padding = padding || (nr != -1 && nr != nr_);
+            nr = std::max(nr, nr_);
             // then get the first one of given l in l_hubbard[it]
             int idx = 0;
             // accumulate nzeta up to l_hubbard[it] (exclusive)
@@ -91,6 +93,10 @@ namespace hamilt
 
             smoothgen(nr, r.data(), temp_[idx].data(), onsite_r[it], projs[it]); 
             // but... does this always hold??? forever only one proj for one type???
+        }
+        if(padding)
+        {
+            std::for_each(projs.begin(), projs.end(), [nr](std::vector<double>& proj) { proj.resize(nr, 0.0); });
         }
         std::vector<int> natom(ntype);
         std::vector<ModuleBase::Vector3<double>*> tau(ucell_in->nat);
@@ -116,11 +122,10 @@ namespace hamilt
                           10000,     // int
                           0.01);     // double
         
-        std::vector<std::complex<double>> out;
-        rp.sbtft(q,     // std::vector<ModuleBase::Vector3<double>>
-                 out,   // std::vector<std::complex<double>>
-                 omega, // double
-                 tpiba, // double
-                 'r');  // char, 'r' for <G+k|p>, 'l' for <p|G+k>
+        rp.sbtft(q,             // std::vector<ModuleBase::Vector3<double>>
+                 proj_q_tab_,   // std::vector<std::complex<double>>
+                 omega,         // double
+                 tpiba,         // double
+                 'r');          // char, 'r' for <G+k|p>, 'l' for <p|G+k>
     }
 }
