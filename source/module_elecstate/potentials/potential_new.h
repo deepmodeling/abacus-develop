@@ -65,7 +65,7 @@ class Potential : public PotBase
     // initialize potential when SCF begin
     void init_pot(int istep, const Charge*const chg);
     // initialize potential components before SCF
-    void pot_register(std::vector<std::string>& components_list);
+    void pot_register(const std::vector<std::string>& components_list);
     // update potential from current charge
     void update_from_charge(const Charge*const chg, const UnitCell*const ucell);
     // interface for SCF-converged, etxc vtxc for Energy, vnew for force_scc

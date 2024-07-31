@@ -196,7 +196,8 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.out_mat_hs[0], 0);
     EXPECT_EQ(param.inp.out_mat_hs[1], 8);
     EXPECT_EQ(param.inp.out_mat_hs2, 0);
-    EXPECT_EQ(param.inp.out_mat_xc, 0);
+    EXPECT_FALSE(param.inp.out_mat_xc);
+    EXPECT_FALSE(param.inp.out_eband_terms);
     EXPECT_EQ(param.inp.out_interval, 1);
     EXPECT_EQ(param.inp.out_app_flag, 0);
     EXPECT_EQ(param.inp.out_mat_r, 0);
@@ -215,7 +216,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_TRUE(param.inp.bessel_nao_smooth);
     EXPECT_DOUBLE_EQ(param.inp.bessel_nao_sigma, 0.1);
     EXPECT_EQ(std::stod(param.inp.bessel_nao_ecut), 20);
-    EXPECT_DOUBLE_EQ(param.globalv.bessel_nao_rcut, 6.0);
+    EXPECT_DOUBLE_EQ(param.inp.bessel_nao_rcuts[0], 6.0);
     EXPECT_DOUBLE_EQ(param.inp.bessel_nao_tolerence, 1E-12);
     EXPECT_EQ(param.inp.bessel_descriptor_lmax, 2);
     EXPECT_TRUE(param.inp.bessel_descriptor_smooth);
@@ -367,7 +368,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.dmax, 0.01);
     EXPECT_EQ(param.inp.mdp.md_nstep, 10);
     EXPECT_EQ(param.inp.mdp.md_pchain, 1);
-    EXPECT_EQ(param.inp.mdp.md_pcouple, "none");
+    EXPECT_EQ(param.inp.mdp.md_pcouple, "xyz");
     EXPECT_DOUBLE_EQ(param.inp.mdp.md_pfirst, -1);
     EXPECT_DOUBLE_EQ(param.inp.mdp.md_pfreq, 0);
     EXPECT_DOUBLE_EQ(param.inp.mdp.md_plast, -1);

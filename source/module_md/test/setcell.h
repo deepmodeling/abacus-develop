@@ -134,7 +134,7 @@ class Setcell
         input.mdp.dump_virial = true;
         input.mdp.dump_force = true;
         input.mdp.dump_vel = true;
-        input.mdp.cal_stress = true;
+        input.cal_stress = true;
 
         input.mdp.md_restart = false;
         input.mdp.md_dt = 1;

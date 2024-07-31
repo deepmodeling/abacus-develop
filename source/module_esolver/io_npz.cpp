@@ -33,7 +33,7 @@ void ESolver_KS_LCAO<TK, TR>::read_mat_npz(std::string& zipname, hamilt::HContai
 {
     ModuleBase::TITLE("LCAO_Hamilt","read_mat_npz");
 
-    const Parallel_Orbitals* paraV = &(this->ParaV);
+    const Parallel_Orbitals* paraV = &(this->pv);
 
 #ifdef __USECNPY
 

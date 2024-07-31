@@ -10,6 +10,7 @@ list(APPEND objects
     operator_pw/operator_pw.cpp
     forces_nl.cpp
     forces_cc.cpp
+    forces_scc.cpp
     forces.cpp
     forces_us.cpp
     stress_func_cc.cpp

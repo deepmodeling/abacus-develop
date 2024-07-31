@@ -26,6 +26,7 @@ mixing_type		broyden
 mixing_beta		0.7
 
 out_mat_xc  1
+out_eband_terms 1
 ks_solver       scalapack_gvx
 
 dft_functional hse

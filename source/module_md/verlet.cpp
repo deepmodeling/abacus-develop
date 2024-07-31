@@ -3,7 +3,7 @@
 #include "md_func.h"
 #include "module_base/timer.h"
 
-Verlet::Verlet(MD_para& MD_para_in, UnitCell& unit_in) : MD_base(MD_para_in, unit_in)
+Verlet::Verlet(const Parameter& param_in, UnitCell& unit_in) : MD_base(param_in, unit_in)
 {
 }
 
@@ -57,7 +57,7 @@ void Verlet::apply_thermostat(void)
     }
     else if (mdp.md_thermostat == "rescaling")
     {
-        t_target = MD_func::target_temp(step_ + step_rst_, mdp.md_nstep, mdp.md_tfirst, mdp.md_tlast);
+        t_target = MD_func::target_temp(step_ + step_rst_, mdp.md_nstep, md_tfirst, md_tlast);
         if (std::abs(t_target - t_current) * ModuleBase::Hartree_to_K > mdp.md_tolerance)
         {
             thermalize(0, t_current, t_target);
@@ -67,20 +67,20 @@ void Verlet::apply_thermostat(void)
     {
         if ((step_ + step_rst_) % mdp.md_nraise == 0)
         {
-            t_target = MD_func::target_temp(step_ + step_rst_, mdp.md_nstep, mdp.md_tfirst, mdp.md_tlast);
+            t_target = MD_func::target_temp(step_ + step_rst_, mdp.md_nstep, md_tfirst, md_tlast);
             thermalize(0, t_current, t_target);
         }
     }
     else if (mdp.md_thermostat == "anderson")
     {
-        if (mdp.my_rank == 0)
+        if (my_rank == 0)
         {
             double deviation;
             for (int i = 0; i < ucell.nat; ++i)
             {
                 if (static_cast<double>(std::rand()) / RAND_MAX <= 1.0 / mdp.md_nraise)
                 {
-                    deviation = sqrt(mdp.md_tlast / allmass[i]);
+                    deviation = sqrt(md_tlast / allmass[i]);
                     for (int k = 0; k < 3; ++k)
                     {
                         if (ionmbl[i][k])
@@ -97,7 +97,7 @@ void Verlet::apply_thermostat(void)
     }
     else if (mdp.md_thermostat == "berendsen")
     {
-        t_target = MD_func::target_temp(step_ + step_rst_, mdp.md_nstep, mdp.md_tfirst, mdp.md_tlast);
+        t_target = MD_func::target_temp(step_ + step_rst_, mdp.md_nstep, md_tfirst, md_tlast);
         thermalize(mdp.md_nraise, t_current, t_target);
     }
     else

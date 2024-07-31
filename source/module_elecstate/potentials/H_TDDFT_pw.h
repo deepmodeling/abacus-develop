@@ -1,7 +1,6 @@
 #ifndef H_TDDFT_PW_H
 #define H_TDDFT_PW_H
 
-#include "module_io/input.h"
 #include "module_io/input_conv.h"
 #include "pot_base.h"
 

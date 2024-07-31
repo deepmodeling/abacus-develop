@@ -14,7 +14,7 @@
 class MSST : public MD_base
 {
   public:
-    MSST(MD_para& MD_para_in, UnitCell& unit_in);
+    MSST(const Parameter& param_in, UnitCell& unit_in);
     ~MSST();
 
   private:
@@ -61,6 +61,9 @@ class MSST : public MD_base
     double totmass;                       ///< total mass of the cell
     double lag_pos;                       ///< Lagrangian location of cell
     double vsum;                          ///< sum over v^2
+    double msst_vel;                      ///< shock msst_vel (\AA/fs)
+    double msst_qmass;                    ///< cell mass-like parameter (mass^2/length^4)
+    double msst_vis;                      ///< artificial msst_vis (mass/length/time)
 };
 
 #endif

@@ -71,7 +71,8 @@ class Forces
     void cal_force_scc(ModuleBase::matrix& forcescc,
                        ModulePW::PW_Basis* rho_basis,
                        const ModuleBase::matrix& v_current,
-                       const bool vnew_exist);
+                       const bool vnew_exist,
+                       const UnitCell& ucell_in);
     void cal_force_us(ModuleBase::matrix& forcenl,
                       ModulePW::PW_Basis* rho_basis,
                       pseudopot_cell_vnl* ppcell_in,
@@ -86,6 +87,14 @@ class Forces
                      FPTYPE* drhocg,
                      ModulePW::PW_Basis* rho_basis,
                      int type); // used in nonlinear core correction stress
+    void deriv_drhoc_scc(const bool& numeric,
+                     const int mesh,
+                     const FPTYPE* r,
+                     const FPTYPE* rab,
+                     const FPTYPE* rhoc,
+                     FPTYPE* drhocg,
+                     ModulePW::PW_Basis* rho_basis,
+                     const UnitCell& ucell_in); // used in nonlinear core correction stress
   private:
     Device* ctx = {};
     base_device::DEVICE_CPU* cpu_ctx = {};

@@ -13,8 +13,7 @@
 class FIRE : public MD_base
 {
   public:
-
-    FIRE(MD_para& MD_para_in, UnitCell& unit_in);
+    FIRE(const Parameter& param_in, UnitCell& unit_in);
 
     ~FIRE();
 
@@ -51,6 +50,7 @@ class FIRE : public MD_base
     int n_min;          ///< n_min
     double dt_max;      ///< dt_max
     int negative_count; ///< Negative count
+    double force_thr = 1.0e-3; ///< force convergence threshold in FIRE method
 };
 
 #endif

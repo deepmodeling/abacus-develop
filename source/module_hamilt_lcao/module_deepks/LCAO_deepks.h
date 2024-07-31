@@ -1,5 +1,5 @@
-#ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_LCAO_MODULE_DEEPKS_LCAO_DEEPKS_H
-#define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_LCAO_MODULE_DEEPKS_LCAO_DEEPKS_H
+#ifndef LCAO_DEEPKS_H 
+#define LCAO_DEEPKS_H 
 
 #ifdef __DEEPKS
 
@@ -16,6 +16,9 @@
 #include <torch/script.h>
 #include <torch/torch.h>
 #include <unordered_map>
+
+#include "deepks_force.h"
+#include "deepks_hmat.h"
 
 ///
 /// The LCAO_Deepks contains subroutines for implementation of the DeePKS method in atomic basis.
@@ -62,6 +65,7 @@ class LCAO_Deepks
     /// In k space:
     std::vector<std::vector<std::complex<double>>> H_V_delta_k;
 
+    // F_delta will be deleted soon, mohan 2024-07-25
     ///(Unit: Ry/Bohr) Total Force due to the DeePKS correction term \f$E_{\delta}\f$
     ModuleBase::matrix F_delta;
 
@@ -221,6 +225,7 @@ class LCAO_Deepks
 
     /// Allocate memory for correction to Hamiltonian
     void allocate_V_delta(const int nat, const int nks = 1);
+
     void allocate_V_deltaR(const int nnr);
 
     // array for storing gdmx, used for calculating gvx
@@ -305,16 +310,19 @@ class LCAO_Deepks
                           const UnitCell& ucell,
                           const LCAO_Orbitals& orb,
                           Grid_Driver& GridD);
+
     void cal_projected_DM_k(const elecstate::DensityMatrix<std::complex<double>, double>* dm,
                             const UnitCell& ucell,
                             const LCAO_Orbitals& orb,
                             Grid_Driver& GridD);
+
     void check_projected_dm();
 
     void cal_projected_DM_equiv(const elecstate::DensityMatrix<double, double>* dm,
                                 const UnitCell& ucell,
                                 const LCAO_Orbitals& orb,
                                 Grid_Driver& GridD);
+
     void cal_projected_DM_k_equiv(const elecstate::DensityMatrix<std::complex<double>, double>* dm,
                                   const UnitCell& ucell,
                                   const LCAO_Orbitals& orb,
@@ -328,6 +336,7 @@ class LCAO_Deepks
         const LCAO_Orbitals& orb,
         Grid_Driver& GridD,
         const bool isstress);
+
     void cal_gdmx_k( // const std::vector<ModuleBase::ComplexMatrix>& dm,
         const std::vector<std::vector<std::complex<double>>>& dm,
         const UnitCell& ucell,
@@ -372,41 +381,6 @@ class LCAO_Deepks
     //     const int nks);
     void cal_e_delta_band_k(const std::vector<std::vector<std::complex<double>>>& dm /**<[in] density matrix*/,
                             const int nks);
-
-    //-------------------
-    // LCAO_deepks_fdelta.cpp
-    //-------------------
-
-    // This file contains subroutines for calculating F_delta,
-    // which is defind as sum_mu,nu rho_mu,nu d/dX (<chi_mu|alpha>V(D)<alpha|chi_nu>)
-
-    // There are 3 subroutines in this file:
-    // 1. cal_f_delta_gamma, which is used for gamma point calculation
-    // 2. cal_f_delta_k, which is used for multi-k calculation
-    // 3. check_f_delta, which prints F_delta into F_delta.dat for checking
-
-  public:
-    // for gamma only, pulay and HF terms of force are calculated together
-    void cal_f_delta_gamma( // const std::vector<ModuleBase::matrix>& dm/**< [in] density matrix*/,
-        const std::vector<std::vector<double>>& dm,
-        const UnitCell& ucell,
-        const LCAO_Orbitals& orb,
-        Grid_Driver& GridD,
-        const bool isstress,
-        ModuleBase::matrix& svnl_dalpha);
-
-    // for multi-k, pulay and HF terms of force are calculated together
-    void cal_f_delta_k( // const std::vector<ModuleBase::ComplexMatrix>& dm/**<[in] density matrix*/,
-        const std::vector<std::vector<std::complex<double>>>& dm,
-        const UnitCell& ucell,
-        const LCAO_Orbitals& orb,
-        Grid_Driver& GridD,
-        const int nks,
-        const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-        const bool isstress,
-        ModuleBase::matrix& svnl_dalpha);
-
-    void check_f_delta(const int nat, ModuleBase::matrix& svnl_dalpha);
 
     //-------------------
     // LCAO_deepks_odelta.cpp
@@ -471,7 +445,7 @@ class LCAO_Deepks
     /// which are eigenvalues of pdm in blocks of I_n_l
     void cal_descriptor(const int nat);
     /// print descriptors based on LCAO basis
-    void check_descriptor(const UnitCell& ucell);
+    void check_descriptor(const UnitCell& ucell, const std::string &out_dir);
 
     void cal_descriptor_equiv(const int nat);
 
@@ -521,6 +495,7 @@ class LCAO_Deepks
         const UnitCell &ucell,
         const LCAO_Orbitals &orb,
         Grid_Driver &GridD);
+
     void check_v_delta_precalc(const int nat, const int nks,const int nlocal);
 
     // prepare psialpha for outputting npy file
@@ -550,21 +525,14 @@ class LCAO_Deepks
                        double** mat); // the array being reduced
 #endif
 
-//-------------------
-// LCAO_deepks_hmat.cpp
-//-------------------
-    void save_h_mat(const double *h_mat_in,const int nloc);
-    void save_h_mat(const std::complex<double> *h_mat_in,const int nloc);
-    //Collect data in h_in to matrix h_out. Note that left lower trianger in h_out is filled
-    void collect_h_mat(const std::vector<double> h_in,ModuleBase::matrix &h_out,const int nlocal);//just for gamma only
-    void check_h_mat(const ModuleBase::matrix &H,const std::string &h_file,const int nlocal);//just for gamma only
   
 };
 
 namespace GlobalC
 {
-extern LCAO_Deepks ld;
+    extern LCAO_Deepks ld;
 }
+
 
 #endif
 #endif

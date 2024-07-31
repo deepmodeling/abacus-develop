@@ -6,7 +6,9 @@
 #ifndef PROPAGATOR_H
 #define PROPAGATOR_H
 
+#include "module_base/constants.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
+
 #include <complex>
 
 namespace module_tddft
@@ -14,10 +16,11 @@ namespace module_tddft
 class Propagator
 {
   public:
-    Propagator(const int ptype, const Parallel_Orbitals* pv)
+    Propagator(const int ptype, const Parallel_Orbitals* pv, const double& dt)
     {
         this->ptype = ptype;
         this->ParaV = pv;
+        this->dt = dt / ModuleBase::AU_to_FS;
     }
     ~Propagator();
 
@@ -43,6 +46,7 @@ class Propagator
   private:
     int ptype; // type of propagator
     const Parallel_Orbitals* ParaV;
+    double dt; // time step
 
 #ifdef __MPI
 
