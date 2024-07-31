@@ -348,12 +348,6 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
         eigenvalues.data(),
         pes->ekb.nr * pes->ekb.nc);
 
-    // psi only should be initialed once for PW
-    if (!this->initialed_psi)
-    {
-        this->initialed_psi = true;
-    }
-
     if (skip_charge)
     {
         ModuleBase::timer::tick("HSolverPW", "solve");
