@@ -1,21 +1,17 @@
 #ifndef ESOLVER_KS_H
 #define ESOLVER_KS_H
-#include <string.h>
-
-#include <fstream>
-
 #include "esolver_fp.h"
 #include "module_basis/module_pw/pw_basis_k.h"
 #include "module_cell/klist.h"
-#include "module_elecstate/module_charge/charge_extra.h"
 #include "module_elecstate/module_charge/charge_mixing.h"
 #include "module_hamilt_general/hamilt.h"
 #include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
 #include "module_hsolver/hsolver.h"
-#include "module_psi/psi.h"
 #include "module_io/cal_test.h"
-#include "module_io/output_potential.h"
-#include "module_io/output_rho.h"
+#include "module_psi/psi.h"
+
+#include <fstream>
+#include <string.h>
 namespace ModuleESolver
 {
 
@@ -107,15 +103,6 @@ class ESolver_KS : public ESolver_FP
 				const int istep, 
 				const int iter);
 
-		/// @brief create a new ModuleIO::Output_Rho object to output charge density
-		ModuleIO::Output_Rho create_Output_Rho(int is, int iter, const std::string& prefix="None");
-
-		/// @brief create a new ModuleIO::Output_Rho object to print kinetic energy density
-		ModuleIO::Output_Rho create_Output_Kin(int is, int iter, const std::string& prefix = "None");
-
-		/// @brief create a new ModuleIO::Output_Potential object to print potential
-		ModuleIO::Output_Potential create_Output_Potential(int iter, const std::string& prefix = "None");
-
         //! Solve Hamitonian
 		hsolver::HSolver<T, Device>* phsol = nullptr;
 
@@ -128,10 +115,8 @@ class ESolver_KS : public ESolver_FP
 
 		wavefunc wf;
 
-		Charge_Extra CE;
-
-		// wavefunction coefficients
-		psi::Psi<T>* psi = nullptr;
+        // wavefunction coefficients
+        psi::Psi<T>* psi = nullptr;
 
 	protected:
 

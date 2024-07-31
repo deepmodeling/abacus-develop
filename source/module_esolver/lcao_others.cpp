@@ -17,6 +17,7 @@
 #ifdef __DEEPKS
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #endif
+#include "module_base/formatter.h"
 #include "module_elecstate/elecstate_lcao.h"
 #include "module_elecstate/module_dm/cal_dm_psi.h"
 #include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
@@ -25,11 +26,10 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
-#include "module_io/rho_io.h"
-#include "module_io/write_pot.h"
-#include "module_io/write_wfc_nao.h"
 #include "module_io/read_wfc_nao.h"
-#include "module_base/formatter.h"
+#include "module_io/rho_io.h"
+#include "module_io/write_elecstat_pot.h"
+#include "module_io/write_wfc_nao.h"
 #ifdef __EXX
 #include "module_io/restart_exx_csr.h"
 #endif
@@ -91,75 +91,82 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
     if (GlobalV::CALCULATION == "nscf")
     {
         this->nscf();
-    } else if (cal_type == "get_pchg") {
+    }
+    else if (cal_type == "get_pchg")
+    {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "getting partial charge");
         IState_Charge ISC(this->psi, &(this->pv));
-        if (GlobalV::GAMMA_ONLY_LOCAL) {
+        if (GlobalV::GAMMA_ONLY_LOCAL)
+        {
             ISC.begin(this->GG,
-                    this->pelec->charge->rho,
-                    this->pelec->wg,
-                    this->pelec->eferm.get_all_ef(),
-                    this->pw_rho->nrxx,
-                    this->pw_rho->nplane,
-                    this->pw_rho->startz_current,
-                    this->pw_rho->nx,
-                    this->pw_rho->ny,
-                    this->pw_rho->nz,
-                    this->pw_big->bz,
-                    this->pw_big->nbz,
-                    GlobalV::GAMMA_ONLY_LOCAL,
-                    PARAM.inp.nbands_istate,
-                    PARAM.inp.bands_to_print,
-                    GlobalV::NBANDS,
-                    GlobalV::nelec,
-                    GlobalV::NSPIN,
-                    GlobalV::NLOCAL,
-                    GlobalV::global_out_dir,
-                    GlobalV::MY_RANK,
-                    GlobalV::ofs_warning,
-                    &GlobalC::ucell,
-                    &GlobalC::GridD,
-                    this->kv);
-        } else {
+                      this->pelec->charge->rho,
+                      this->pelec->wg,
+                      this->pelec->eferm.get_all_ef(),
+                      this->pw_rhod->nrxx,
+                      this->pw_rhod->nplane,
+                      this->pw_rhod->startz_current,
+                      this->pw_rhod->nx,
+                      this->pw_rhod->ny,
+                      this->pw_rhod->nz,
+                      this->pw_big->bz,
+                      this->pw_big->nbz,
+                      GlobalV::GAMMA_ONLY_LOCAL,
+                      PARAM.inp.nbands_istate,
+                      PARAM.inp.bands_to_print,
+                      GlobalV::NBANDS,
+                      GlobalV::nelec,
+                      GlobalV::NSPIN,
+                      GlobalV::NLOCAL,
+                      GlobalV::global_out_dir,
+                      GlobalV::MY_RANK,
+                      GlobalV::ofs_warning,
+                      &GlobalC::ucell,
+                      &GlobalC::GridD,
+                      this->kv);
+        }
+        else
+        {
             ISC.begin(this->GK,
-                    this->pelec->charge->rho,
-                    this->pelec->charge->rhog,
-                    this->pelec->wg,
-                    this->pelec->eferm.get_all_ef(),
-                    this->pw_rho,
-                    this->pw_rho->nrxx,
-                    this->pw_rho->nplane,
-                    this->pw_rho->startz_current,
-                    this->pw_rho->nx,
-                    this->pw_rho->ny,
-                    this->pw_rho->nz,
-                    this->pw_big->bz,
-                    this->pw_big->nbz,
-                    GlobalV::GAMMA_ONLY_LOCAL,
-                    PARAM.inp.nbands_istate,
-                    PARAM.inp.bands_to_print,
-                    GlobalV::NBANDS,
-                    GlobalV::nelec,
-                    GlobalV::NSPIN,
-                    GlobalV::NLOCAL,
-                    GlobalV::global_out_dir,
-                    GlobalV::MY_RANK,
-                    GlobalV::ofs_warning,
-                    &GlobalC::ucell,
-                    &GlobalC::GridD,
-                    this->kv,
-                    PARAM.inp.if_separate_k,
-                    &GlobalC::Pgrid,
-                    this->pelec->charge->ngmc);
+                      this->pelec->charge->rho,
+                      this->pelec->charge->rhog,
+                      this->pelec->wg,
+                      this->pelec->eferm.get_all_ef(),
+                      this->pw_rhod,
+                      this->pw_rhod->nrxx,
+                      this->pw_rhod->nplane,
+                      this->pw_rhod->startz_current,
+                      this->pw_rhod->nx,
+                      this->pw_rhod->ny,
+                      this->pw_rhod->nz,
+                      this->pw_big->bz,
+                      this->pw_big->nbz,
+                      GlobalV::GAMMA_ONLY_LOCAL,
+                      PARAM.inp.nbands_istate,
+                      PARAM.inp.bands_to_print,
+                      GlobalV::NBANDS,
+                      GlobalV::nelec,
+                      GlobalV::NSPIN,
+                      GlobalV::NLOCAL,
+                      GlobalV::global_out_dir,
+                      GlobalV::MY_RANK,
+                      GlobalV::ofs_warning,
+                      &GlobalC::ucell,
+                      &GlobalC::GridD,
+                      this->kv,
+                      PARAM.inp.if_separate_k,
+                      &GlobalC::Pgrid,
+                      this->pelec->charge->ngmc);
         }
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "getting partial charge");
-    } else if (cal_type == "get_wf") {
+    }
+    else if (cal_type == "get_wf")
+    {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "getting wave function");
         IState_Envelope IEP(this->pelec);
         if (GlobalV::GAMMA_ONLY_LOCAL)
         {
             IEP.begin(this->psi,
-                      this->pw_rho,
+                      this->pw_rhod,
                       this->pw_wfc,
                       this->pw_big,
                       this->pv,
@@ -178,7 +185,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
         else
         {
             IEP.begin(this->psi,
-                      this->pw_rho,
+                      this->pw_rhod,
                       this->pw_wfc,
                       this->pw_big,
                       this->pv,
@@ -195,7 +202,9 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                       GlobalV::global_out_dir);
         }
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "getting wave function");
-    } else {
+    }
+    else
+    {
         ModuleBase::WARNING_QUIT("ESolver_KS_LCAO<TK, TR>::others",
                                  "CALCULATION type not supported");
     }

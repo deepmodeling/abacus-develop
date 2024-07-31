@@ -23,6 +23,7 @@
 //---------------------------------------------------
 #include "module_base/memory.h"
 #include "module_elecstate/elecstate_pw.h"
+#include "module_hamilt_pw/hamilt_pwdft/hamilt_lcaopw.h"
 #include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
 #include "module_hsolver/diago_iter_assist.h"
 #include "module_hsolver/hsolver_lcaopw.h"
@@ -34,15 +35,13 @@
 #include "module_io/rho_io.h"
 #include "module_io/to_wannier90_pw.h"
 #include "module_io/winput.h"
-#include "module_io/write_pot.h"
+#include "module_io/write_elecstat_pot.h"
 #include "module_io/write_wfc_r.h"
+#include "module_parameter/parameter.h"
 
 #include <ATen/kernels/blas.h>
 #include <ATen/kernels/lapack.h>
-
 #include <sys/time.h>
-#include "module_hamilt_pw/hamilt_pwdft/hamilt_lcaopw.h"
-#include "module_parameter/parameter.h"
 #ifdef __LCAO
 #include "module_io/write_vxc_lip.hpp"
 #endif

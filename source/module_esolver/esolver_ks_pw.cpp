@@ -32,12 +32,12 @@
 #include "module_hsolver/kernels/dngvd_op.h"
 #include "module_hsolver/kernels/math_kernel_op.h"
 #include "module_io/berryphase.h"
+#include "module_io/cube_io.h"
 #include "module_io/numerical_basis.h"
 #include "module_io/numerical_descriptor.h"
-#include "module_io/rho_io.h"
 #include "module_io/to_wannier90_pw.h"
 #include "module_io/winput.h"
-#include "module_io/write_pot.h"
+#include "module_io/write_elecstat_pot.h"
 #include "module_io/write_wfc_r.h"
 #include "module_parameter/parameter.h"
 #ifdef USE_PAW
@@ -221,46 +221,61 @@ void ESolver_KS_PW<T, Device>::before_scf(const int istep)
     //! calculate the total local pseudopotential in real space
     this->pelec->init_scf(istep, this->sf.strucFac);
 
+    //! output the initial charge density
     if (PARAM.inp.out_chg == 2)
     {
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
             std::stringstream ss;
             ss << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG_INI.cube";
-            ModuleIO::write_rho(
+            ModuleIO::write_cube(
 #ifdef __MPI
                 this->pw_big->bz,
                 this->pw_big->nbz,
-                this->pw_rho->nplane,
-                this->pw_rho->startz_current,
+                this->pw_rhod->nplane,
+                this->pw_rhod->startz_current,
 #endif
                 this->pelec->charge->rho[is],
                 is,
                 GlobalV::NSPIN,
                 0,
                 ss.str(),
-                this->pw_rho->nx,
-                this->pw_rho->ny,
-                this->pw_rho->nz,
+                this->pw_rhod->nx,
+                this->pw_rhod->ny,
+                this->pw_rhod->nz,
                 this->pelec->eferm.ef,
-                &(GlobalC::ucell),
-                11);
+                &(GlobalC::ucell));
         }
     }
 
-    ModuleIO::write_pot(GlobalV::out_pot,
-                        GlobalV::NSPIN,
-                        GlobalV::global_out_dir,
+    //! output total local potential of the initial charge density
+    if (PARAM.inp.out_pot == 3)
+    {
+        for (int is = 0; is < GlobalV::NSPIN; is++)
+        {
+            std::stringstream ss;
+            ss << GlobalV::global_out_dir << "SPIN" << is + 1 << "_POT_INI.cube";
+            ModuleIO::write_cube(
 #ifdef __MPI
-                        this->pw_big->bz,
-                        this->pw_big->nbz,
-                        this->pw_rho->nplane,
-                        this->pw_rho->startz_current,
+                this->pw_big->bz,
+                this->pw_big->nbz,
+                this->pw_rhod->nplane,
+                this->pw_rhod->startz_current,
 #endif
-                        this->pw_rho->nx,
-                        this->pw_rho->ny,
-                        this->pw_rho->nz,
-                        this->pelec->pot->get_effective_v());
+                this->pelec->pot->get_effective_v(is),
+                is,
+                GlobalV::NSPIN,
+                0, // iter
+                ss.str(),
+                this->pw_rhod->nx,
+                this->pw_rhod->ny,
+                this->pw_rhod->nz,
+                0.0, // efermi
+                &(GlobalC::ucell),
+                11, // precsion
+                0); // out_fermi
+        }
+    }
 
     //! Symmetry_rho should behind init_scf, because charge should be
     //! initialized first. liuyu comment: Symmetry_rho should be located between
@@ -447,10 +462,55 @@ void ESolver_KS_PW<T, Device>::iter_finish(const int iter)
         {
             for (int is = 0; is < GlobalV::NSPIN; is++)
             {
-                this->create_Output_Rho(is, iter, "tmp_").write();
+                double* data = nullptr;
+                if (PARAM.inp.dm_to_rho)
+                {
+                    data = this->pelec->charge->rho[is];
+                }
+                else
+                {
+                    data = this->pelec->charge->rho_save[is];
+                }
+                std::string fn = GlobalV::global_out_dir + "/tmp_SPIN" + std::to_string(is + 1) + "_CHG.cube";
+                ModuleIO::write_cube(
+#ifdef __MPI
+                    this->pw_big->bz,
+                    this->pw_big->nbz,
+                    this->pw_rhod->nplane,
+                    this->pw_rhod->startz_current,
+#endif
+                    data,
+                    is,
+                    GlobalV::NSPIN,
+                    iter,
+                    fn,
+                    this->pw_rhod->nx,
+                    this->pw_rhod->ny,
+                    this->pw_rhod->nz,
+                    this->pelec->eferm.get_efval(is),
+                    &(GlobalC::ucell),
+                    3,
+                    1);
                 if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
                 {
-                    this->create_Output_Kin(is, iter, "tmp_").write();
+                    fn = GlobalV::global_out_dir + "/tmp_SPIN" + std::to_string(is + 1) + "_TAU.cube";
+                    ModuleIO::write_cube(
+#ifdef __MPI
+                        this->pw_big->bz,
+                        this->pw_big->nbz,
+                        this->pw_rhod->nplane,
+                        this->pw_rhod->startz_current,
+#endif
+                        this->pelec->charge->kin_r_save[is],
+                        is,
+                        GlobalV::NSPIN,
+                        iter,
+                        fn,
+                        this->pw_rhod->nx,
+                        this->pw_rhod->ny,
+                        this->pw_rhod->nz,
+                        this->pelec->eferm.get_efval(is),
+                        &(GlobalC::ucell));
                 }
             }
         }
@@ -471,28 +531,104 @@ void ESolver_KS_PW<T, Device>::iter_finish(const int iter)
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::after_scf(const int istep)
 {
-    this->create_Output_Potential(istep).write();
+    // 1) call after_scf() of ESolver_FP
+    ESolver_FP::after_scf(istep);
 
-    // save charge difference into files for charge extrapolation
-    if (GlobalV::CALCULATION != "scf")
+    if (PARAM.inp.out_pot == 1 || PARAM.inp.out_pot == 3)
     {
-        this->CE.save_files(istep,
-                            GlobalC::ucell,
+        for (int is = 0; is < GlobalV::NSPIN; is++)
+        {
+            std::string fn = GlobalV::global_out_dir + "/SPIN" + std::to_string(is + 1) + "_POT.cube";
+
+            ModuleIO::write_cube(
 #ifdef __MPI
-                            this->pw_big,
+                this->pw_big->bz,
+                this->pw_big->nbz,
+                this->pw_rhod->nplane,
+                this->pw_rhod->startz_current,
 #endif
-                            this->pelec->charge,
-                            &this->sf);
+                this->pelec->pot->get_effective_v(is),
+                is,
+                GlobalV::NSPIN,
+                istep,
+                fn,
+                this->pw_rhod->nx,
+                this->pw_rhod->ny,
+                this->pw_rhod->nz,
+                0.0, // efermi
+                &(GlobalC::ucell),
+                3,  // precision
+                0); // out_fermi
+        }
+    }
+    else if (PARAM.inp.out_pot == 2)
+    {
+        std::string fn = GlobalV::global_out_dir + "/ElecStaticPot.cube";
+        ModuleIO::write_elecstat_pot(
+#ifdef __MPI
+            this->pw_big->bz,
+            this->pw_big->nbz,
+#endif
+            fn,
+            this->pw_rhod,
+            this->pelec->charge,
+            &(GlobalC::ucell),
+            this->pelec->pot->get_fixed_v());
     }
 
     if (PARAM.inp.out_chg)
     {
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
-            this->create_Output_Rho(is, istep).write();
+            double* data = nullptr;
+            if (PARAM.inp.dm_to_rho)
+            {
+                data = this->pelec->charge->rho[is];
+            }
+            else
+            {
+                data = this->pelec->charge->rho_save[is];
+            }
+            std::string fn = GlobalV::global_out_dir + "/SPIN" + std::to_string(is + 1) + "_CHG.cube";
+            ModuleIO::write_cube(
+#ifdef __MPI
+                this->pw_big->bz,
+                this->pw_big->nbz,
+                this->pw_rhod->nplane,
+                this->pw_rhod->startz_current,
+#endif
+                data,
+                is,
+                GlobalV::NSPIN,
+                istep,
+                fn,
+                this->pw_rhod->nx,
+                this->pw_rhod->ny,
+                this->pw_rhod->nz,
+                this->pelec->eferm.get_efval(is),
+                &(GlobalC::ucell),
+                3,
+                1);
             if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
             {
-                this->create_Output_Kin(is, istep).write();
+                fn = GlobalV::global_out_dir + "/SPIN" + std::to_string(is + 1) + "_TAU.cube";
+                ModuleIO::write_cube(
+#ifdef __MPI
+                    this->pw_big->bz,
+                    this->pw_big->nbz,
+                    this->pw_rhod->nplane,
+                    this->pw_rhod->startz_current,
+#endif
+                    this->pelec->charge->kin_r_save[is],
+                    is,
+                    GlobalV::NSPIN,
+                    istep,
+                    fn,
+                    this->pw_rhod->nx,
+                    this->pw_rhod->ny,
+                    this->pw_rhod->nz,
+                    this->pelec->eferm.get_efval(is),
+                    &(GlobalC::ucell));
             }
         }
     }
@@ -623,24 +759,23 @@ void ESolver_KS_PW<T, Device>::after_scf(const int istep)
             std::stringstream ssc;
             ssc << GlobalV::global_out_dir << "BAND" << ib + 1 << "_CHG.cube"; // band index starts from 1
 
-            ModuleIO::write_rho(
+            ModuleIO::write_cube(
 #ifdef __MPI
                 this->pw_big->bz,
                 this->pw_big->nbz,
-                this->pw_big->nplane,
-                this->pw_big->startz_current,
+                this->pw_rhod->nplane,
+                this->pw_rhod->startz_current,
 #endif
                 rho_band,
                 0,
                 GlobalV::NSPIN,
                 0,
                 ssc.str(),
-                this->pw_rho->nx,
-                this->pw_rho->ny,
-                this->pw_rho->nz,
+                this->pw_rhod->nx,
+                this->pw_rhod->ny,
+                this->pw_rhod->nz,
                 0.0,
-                &(GlobalC::ucell),
-                11);
+                &(GlobalC::ucell));
         }
         delete[] wfcr;
         delete[] rho_band;

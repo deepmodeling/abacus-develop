@@ -1,8 +1,8 @@
 #include "esolver_of.h"
 
+#include "module_io/cube_io.h"
 #include "module_io/output_log.h"
-#include "module_io/write_pot.h"
-#include "module_io/rho_io.h"
+#include "module_io/write_elecstat_pot.h"
 //-----------temporary-------------------------
 #include "module_base/global_function.h"
 #include "module_elecstate/module_charge/symmetry_rho.h"
@@ -152,9 +152,6 @@ void ESolver_OF::before_all_runners(const Input_para& inp, UnitCell& ucell)
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT OPTIMIZATION");
 
     this->allocate_array();
-
-    // Initialize charge extrapolation
-    CE_.Init_CE(ucell.nat);
 }
 
 void ESolver_OF::init_after_vc(const Input_para& inp, UnitCell& ucell)
@@ -270,8 +267,8 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
     }
     if (ucell.ionic_position_updated)
     {
-        CE_.update_all_dis(ucell);
-        CE_.extrapolate_charge(
+        CE.update_all_dis(ucell);
+        CE.extrapolate_charge(
 #ifdef __MPI
             &(GlobalC::Pgrid),
 #endif
@@ -506,17 +503,8 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell)
 {
     ModuleIO::output_convergence_after_scf(this->conv_, this->pelec->f_en.etot);
 
-    // save charge difference into files for charge extrapolation
-    if (GlobalV::CALCULATION != "scf")
-    {
-        this->CE_.save_files(istep,
-                             ucell,
-#ifdef __MPI
-                             this->pw_big,
-#endif
-                             this->pelec->charge,
-                             &this->sf);
-    }
+    // 1) call after_scf() of ESolver_FP
+    ESolver_FP::after_scf(istep);
 
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
@@ -524,50 +512,53 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell)
         {
             std::stringstream ssc;
             ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG.cube";
-            ModuleIO::write_rho(
+            ModuleIO::write_cube(
 #ifdef __MPI
                 this->pw_big->bz,
                 this->pw_big->nbz,
-                this->pw_rho->nplane,
-                this->pw_rho->startz_current,
+                this->pw_rhod->nplane,
+                this->pw_rhod->startz_current,
 #endif
                 this->pelec->charge->rho[is],
                 is,
                 GlobalV::NSPIN,
-                this->iter_,
+                istep,
                 ssc.str(),
-                this->pw_rho->nx,
-                this->pw_rho->ny,
-                this->pw_rho->nz,
+                this->pw_rhod->nx,
+                this->pw_rhod->ny,
+                this->pw_rhod->nz,
                 this->mu_[is],
                 &(ucell),
-                3);
+                3,
+                1);
         }
 
-        if (GlobalV::out_pot == 1 || GlobalV::out_pot == 3) // output the effective potential, sunliang 2023-03-16
+        if (PARAM.inp.out_pot == 1 || PARAM.inp.out_pot == 3) // output the effective potential, sunliang 2023-03-16
         {
-            int precision = 3; // be consistent with esolver_ks_lcao.cpp
-            std::stringstream ssp;
-            ssp << GlobalV::global_out_dir << "SPIN" << is + 1 << "_POT.cube";
-            ModuleIO::write_pot_spin(
-                GlobalV::out_pot,
+            std::string fn = GlobalV::global_out_dir + "/SPIN" + std::to_string(is + 1) + "_POT.cube";
+
+            ModuleIO::write_cube(
 #ifdef __MPI
                 this->pw_big->bz,
                 this->pw_big->nbz,
-                this->pw_rho->nplane,
-                this->pw_rho->startz_current,
+                this->pw_rhod->nplane,
+                this->pw_rhod->startz_current,
 #endif
+                this->pelec->pot->get_effective_v(is),
                 is,
-                0,
-                ssp.str(),
-                this->pw_rho->nx,
-                this->pw_rho->ny,
-                this->pw_rho->nz,
-                this->pelec->pot->get_effective_v(),
-                precision);
+                GlobalV::NSPIN,
+                istep,
+                fn,
+                this->pw_rhod->nx,
+                this->pw_rhod->ny,
+                this->pw_rhod->nz,
+                0.0, // efermi
+                &(ucell),
+                3,  // precision
+                0); // out_fermi
         }
     }
-    if (GlobalV::out_pot == 2) // output the static electronic potential, sunliang 2023-08-11
+    if (PARAM.inp.out_pot == 2) // output the static electronic potential, sunliang 2023-08-11
     {
         int precision = 3;
         std::stringstream ssp;
@@ -578,7 +569,7 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell)
             this->pw_big->nbz,
 #endif
             ssp.str(),
-            this->pw_rho,
+            this->pw_rhod,
             this->pelec->charge,
             &(ucell),
             this->pelec->pot->get_fixed_v());
