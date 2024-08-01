@@ -12,10 +12,11 @@ void Gint::gint_kernel_force(Gint_inout* inout) {
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
 
+
+#pragma omp parallel 
+{
     ModuleBase::matrix* fvl_dphi_thread=inout->fvl_dphi;
     ModuleBase::matrix* svl_dphi_thread=inout->svl_dphi;
-#pragma omp parallel private(fvl_dphi_thread, svl_dphi_thread)
-{
     if (inout->isforce) {
         fvl_dphi_thread=new ModuleBase::matrix(*inout->fvl_dphi);
         fvl_dphi_thread->zero_out();
@@ -147,10 +148,11 @@ void Gint::gint_kernel_force_meta(Gint_inout* inout) {
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
 
+
+#pragma omp parallel 
+{
     ModuleBase::matrix* fvl_dphi_thread=inout->fvl_dphi;
     ModuleBase::matrix* svl_dphi_thread=inout->svl_dphi;
-#pragma omp parallel private(fvl_dphi_thread, svl_dphi_thread)
-{
     if (inout->isforce) {
         fvl_dphi_thread=new ModuleBase::matrix(*inout->fvl_dphi);
         fvl_dphi_thread->zero_out();

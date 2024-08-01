@@ -23,23 +23,12 @@ void Gint::gint_kernel_vlocal(Gint_inout* inout) {
     }
 
 
-    /**
-     * @brief Use a pointer. When in OpenMP, it points to a newly allocated memory, 
-     * and finally adds back to the existing memory. Otherwise, it points to 
-     * an already existing memory.
-    */
-    hamilt::HContainer<double>* hRGint_thread;
-    double* pvpR_thread; 
-    if (GlobalV::GAMMA_ONLY_LOCAL) {
-            hRGint_thread = this->hRGint;
-    } else {
-        
-        pvpR_thread=this->pvpR_reduced[inout->ispin]; 
-    }
-#pragma omp parallel private(hRGint_thread, pvpR_thread)
+#pragma omp parallel 
 {   /**
      * @brief When in OpenMP, it points to a newly allocated memory,
     */
+    hamilt::HContainer<double>* hRGint_thread;
+    double* pvpR_thread; 
     if (GlobalV::GAMMA_ONLY_LOCAL) {
         hRGint_thread = new hamilt::HContainer<double>(*this->hRGint);
     } else {
@@ -134,6 +123,7 @@ void Gint::gint_kernel_vlocal(Gint_inout* inout) {
     ModuleBase::TITLE("Gint_interface", "cal_gint_vlocal");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal");
 }
+}
 void Gint::gint_kernel_dvlocal(Gint_inout* inout) {
     ModuleBase::TITLE("Gint_interface", "cal_gint_dvlocal");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_dvlocal");
@@ -150,22 +140,16 @@ void Gint::gint_kernel_dvlocal(Gint_inout* inout) {
         ModuleBase::WARNING_QUIT("Gint_interface::cal_gint","dvlocal only for k point!");
     }
 
-
-
+#pragma omp parallel 
+{
     ModuleBase::GlobalFunc::ZEROS(this->pvdpRx_reduced[inout->ispin],nnrg);
     ModuleBase::GlobalFunc::ZEROS(this->pvdpRy_reduced[inout->ispin],nnrg);
     ModuleBase::GlobalFunc::ZEROS(this->pvdpRz_reduced[inout->ispin],nnrg);
-    double* pvdpRx_thread = this->pvdpRx_reduced[inout->ispin];
-    double* pvdpRy_thread = this->pvdpRy_reduced[inout->ispin];
-    double* pvdpRz_thread = this->pvdpRz_reduced[inout->ispin];
-
-#pragma omp parallel private(pvdpRx_thread, pvdpRy_thread, pvdpRz_thread)
-{
-    pvdpRx_thread = new double[nnrg];
+    double* pvdpRx_thread = new double[nnrg];
     ModuleBase::GlobalFunc::ZEROS(pvdpRx_thread, nnrg);
-    pvdpRy_thread = new double[nnrg];
+    double* pvdpRy_thread = new double[nnrg];
     ModuleBase::GlobalFunc::ZEROS(pvdpRy_thread, nnrg);
-    pvdpRz_thread = new double[nnrg];
+    double* pvdpRz_thread = new double[nnrg];
     ModuleBase::GlobalFunc::ZEROS(pvdpRz_thread, nnrg);
     std::vector<int> block_iw(max_size,0);
     std::vector<int> block_index(max_size+1,0);
@@ -260,28 +244,12 @@ void Gint::gint_kernel_vlocal_meta(Gint_inout* inout) {
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
 
-    if (!GlobalV::GAMMA_ONLY_LOCAL) {
-        if (!pvpR_alloc_flag) {
-            ModuleBase::WARNING_QUIT("Gint_interface::cal_gint",
-                                        "pvpR has not been allocated yet!");
-        } else {
-            ModuleBase::GlobalFunc::ZEROS(this->pvpR_reduced[inout->ispin],nnrg);
-        }
-    }
-
-    // define HContainer here to reference.
-    hamilt::HContainer<double>* hRGint_thread;
-    double* pvpR_thread; 
-    if (GlobalV::GAMMA_ONLY_LOCAL) {
-            hRGint_thread = this->hRGint;
-    } else {
-        
-        pvpR_thread=this->pvpR_reduced[inout->ispin]; 
-    }
-#pragma omp parallel private(hRGint_thread, pvpR_thread)
+#pragma omp parallel
 {
     // define HContainer here to reference.
     //Under the condition of gamma_only, hRGint will be instantiated.
+    hamilt::HContainer<double>* hRGint_thread;
+    double* pvpR_thread; 
     if (GlobalV::GAMMA_ONLY_LOCAL)
     {
         hRGint_thread =new hamilt::HContainer<double>(*this->hRGint);
