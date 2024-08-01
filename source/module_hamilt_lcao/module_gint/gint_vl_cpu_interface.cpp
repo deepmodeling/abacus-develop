@@ -31,9 +31,14 @@ void Gint::gint_kernel_vlocal(Gint_inout* inout) {
      * and finally adds back to the existing memory. Otherwise, it points to 
      * an already existing memory.
     */
-    hamilt::HContainer<double>* hRGint_thread = this->hRGint;
-    double* pvpR_thread=this->pvpR_reduced[inout->ispin]; 
-#ifdef _OPENMP
+    hamilt::HContainer<double>* hRGint_thread;
+    double* pvpR_thread; 
+    if (GlobalV::GAMMA_ONLY_LOCAL) {
+            hRGint_thread = this->hRGint;
+    } else {
+        
+        pvpR_thread=this->pvpR_reduced[inout->ispin]; 
+    }
 #pragma omp parallel private(hRGint_thread, pvpR_thread, \
                             block_iw, block_index, block_size,vldr3)
 {   /**
@@ -50,7 +55,6 @@ void Gint::gint_kernel_vlocal(Gint_inout* inout) {
     block_size.assign(max_size,0);
     vldr3.assign(this->bxyz,0.0);
     #pragma omp for
-#endif
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
         const int na_grid = this->gridt->how_many_atoms[grid_index];
         if (na_grid == 0) {
@@ -108,7 +112,6 @@ void Gint::gint_kernel_vlocal(Gint_inout* inout) {
         }
 
     }
-#ifdef _OPENMP
     if (GlobalV::GAMMA_ONLY_LOCAL) {
         {
         #pragma omp critical(gint_gamma)
@@ -133,7 +136,6 @@ void Gint::gint_kernel_vlocal(Gint_inout* inout) {
         delete[] pvpR_thread;
     }
 }
-#endif
     ModuleBase::TITLE("Gint_interface", "cal_gint_vlocal");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal");
 }
@@ -164,7 +166,7 @@ void Gint::gint_kernel_dvlocal(Gint_inout* inout) {
     double* pvdpRx_thread = this->pvdpRx_reduced[inout->ispin];
     double* pvdpRy_thread = this->pvdpRy_reduced[inout->ispin];
     double* pvdpRz_thread = this->pvdpRz_reduced[inout->ispin];
-#ifdef _OPENMP
+
 #pragma omp parallel private(pvdpRx_thread, pvdpRy_thread, pvdpRz_thread,\
                             block_iw, block_index, block_size,vldr3)
 {
@@ -179,7 +181,6 @@ void Gint::gint_kernel_dvlocal(Gint_inout* inout) {
     block_size.assign(max_size,0);
     vldr3.assign(this->bxyz,0.0);
 #pragma omp for
-#endif
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
         const int na_grid = this->gridt->how_many_atoms[grid_index];
         if (na_grid == 0) {
@@ -227,7 +228,6 @@ void Gint::gint_kernel_dvlocal(Gint_inout* inout) {
                                     block_iw.data(), cal_flag.get_ptr_2D(),psir_vlbr3.get_ptr_2D(),
                                     dpsir_ylm_z.get_ptr_2D(), pvdpRz_thread,ucell);
     }
-#ifdef _OPENMP
     #pragma omp critical(gint_k)
     {
         BlasConnector::axpy(nnrg,
@@ -253,7 +253,6 @@ void Gint::gint_kernel_dvlocal(Gint_inout* inout) {
     delete[] pvdpRy_thread;
     delete[] pvdpRz_thread;
 }
-#endif
     ModuleBase::TITLE("Gint_interface", "cal_gint_dvlocal");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_dvlocal");
 }
@@ -286,9 +285,14 @@ void Gint::gint_kernel_vlocal_meta(Gint_inout* inout) {
     std::vector<double> vkdr3(this->bxyz,0.0);
 
     // define HContainer here to reference.
-    hamilt::HContainer<double>* hRGint_thread =this->hRGint;
-    double* pvpR_thread=this->pvpR_reduced[inout->ispin];
-#ifdef _OPENMP
+    hamilt::HContainer<double>* hRGint_thread;
+    double* pvpR_thread; 
+    if (GlobalV::GAMMA_ONLY_LOCAL) {
+            hRGint_thread = this->hRGint;
+    } else {
+        
+        pvpR_thread=this->pvpR_reduced[inout->ispin]; 
+    }
 #pragma omp parallel private(hRGint_thread, pvpR_thread, \
                             block_iw, block_index, block_size,\
                             vldr3, vkdr3)
@@ -404,7 +408,6 @@ void Gint::gint_kernel_vlocal_meta(Gint_inout* inout) {
                 dpsir_ylm_z.get_ptr_2D(), dpsiz_vlbr3.get_ptr_2D(), pvpR_thread,ucell);
         }
     }
-#ifdef _OPENMP
     if (GlobalV::GAMMA_ONLY_LOCAL) {
 #pragma omp critical(gint_gamma)
         {
@@ -431,7 +434,6 @@ void Gint::gint_kernel_vlocal_meta(Gint_inout* inout) {
     }
     
 }
-#endif
     ModuleBase::TITLE("Gint_interface", "cal_gint_vlocal_meta");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal_meta");
 }
