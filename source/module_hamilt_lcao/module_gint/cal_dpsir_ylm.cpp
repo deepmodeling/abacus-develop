@@ -15,6 +15,8 @@ void cal_dpsir_ylm(
     double* const* const dpsir_ylm_z)
 {
     ModuleBase::timer::tick("Gint_Tools", "cal_dpsir_ylm");
+    const int bcell_start = gt.bcell_start[grid_index];
+    Atom* atom;
     const UnitCell& ucell = *gt.ucell;
     std::vector<const double*> it_psi_uniform(gt.nwmax);
     std::vector<const double*> it_dpsi_uniform(gt.nwmax);
@@ -26,26 +28,19 @@ void cal_dpsir_ylm(
 
     for (int id = 0; id < na_grid; id++)
     {
-        const int mcell_index = gt.bcell_start[grid_index] + id;
+        const int mcell_index = bcell_start + id;
         const int imcell = gt.which_bigcell[mcell_index];
         int iat = gt.which_atom[mcell_index];
         const int it = ucell.iat2it[iat];
         const int ia = ucell.iat2ia[iat];
-        Atom* atom = &ucell.atoms[it];
-
+        
         const double mt[3] = {gt.meshball_positions[imcell][0] - gt.tau_in_bigcell[iat][0],
                               gt.meshball_positions[imcell][1] - gt.tau_in_bigcell[iat][1],
                               gt.meshball_positions[imcell][2] - gt.tau_in_bigcell[iat][2]};
-        // preprocess index
-        for (int iw=0; iw< atom->nw; ++iw)
-        {
-            if ( atom->iw2_new[iw] )
-            {
-                it_psi_uniform[iw]= gt.psi_u[it*gt.nwmax + iw].data();
-                it_dpsi_uniform[iw] = gt.dpsi_u[it*gt.nwmax + iw].data();
-                it_psi_nr_uniform[iw]= gt.psi_u[it*gt.nwmax + iw].size();
-            }
-        }
+
+        Atom* atom = &ucell.atoms[it];
+        get_psi_dpsi(gt,atom->nw, it,
+                atom->iw2_new,it_psi_uniform, it_dpsi_uniform);
 
         for (int ib = 0; ib < bxyz; ib++)
         {
@@ -62,16 +57,18 @@ void cal_dpsir_ylm(
             }
             else
             {
-                const double dr[3]
-                    = {// vectors between atom and grid
-                       gt.meshcell_pos[ib][0] + mt[0], gt.meshcell_pos[ib][1] + mt[1], gt.meshcell_pos[ib][2] + mt[2]};
+                double dr[3]= {gt.meshcell_pos[ib][0] + mt[0], 
+                                     gt.meshcell_pos[ib][1] + mt[1], 
+                                     gt.meshcell_pos[ib][2] + mt[2]};
+
                 double distance = std::sqrt(dr[0] * dr[0] + dr[1] * dr[1] + dr[2] * dr[2]);
 
+                
+                if (distance < 1e-9) { distance = 1e-9;}
                 ModuleBase::Ylm::grad_rl_sph_harm(ucell.atoms[it].nwl, dr[0], dr[1], dr[2], rly, grly.get_ptr_2D());
-                if (distance < 1e-9) {
-                    distance = 1e-9;
-}
 
+                // dpsi_spline_interpolation(distance,delta_r,atom->nw,atom->iw2_new,atom->iw2_ylm,
+                //                             rly,grly,it_psi_uniform,it_dpsi_uniform,p_psi,p_dpsi_x,p_dpsi_y,p_dpsi_z);
                 const double position = distance / delta_r;
 
                 const double iq = static_cast<int>(position);

@@ -237,7 +237,13 @@ void get_psi_dpsi(const Grid_Technique& gt,int nw,int it,bool * iw2_new,
                   std::vector<const double*>& it_psi_uniform,
                   std::vector<const double*>& it_dpsi_uniform);
 
-void cal_grid_mesh_psi(const double distance,const double delta_r,
+void cal_grid_atom_distance(double &distance,
+                            int ib,
+                            double* dr,
+                            const double* mt,
+                            std::vector<std::vector<double>> meshcell_pos);
+                            
+void spline_interpolation(const double distance,const double delta_r,
                         const int nw,const bool* iw2_new,
                         const int* iw2_ylm,
                         std::vector<double>& ylma,

@@ -39,9 +39,10 @@ void cal_psir_ylm(
                               gt.meshball_positions[imcell][2] - gt.tau_in_bigcell[iat][2]};
         
         atom = &ucell.atoms[it];
-        get_psi_dpsi(gt,atom->nw, it,
-                atom->iw2_new,it_psi_uniform, it_dpsi_uniform);
-        // number of grids in each big cell (bxyz)
+        get_psi_dpsi(gt,atom->nw, it, atom->iw2_new, it_psi_uniform, it_dpsi_uniform);
+        double distance;
+        double dr[3];
+        // loop over the grids in the big cell
         for (int ib = 0; ib < bxyz; ib++)
         {
             double* p = &psir_ylm[ib][block_index[id]];
@@ -51,18 +52,16 @@ void cal_psir_ylm(
             }
             else
             {
-                const double dr[3]= {gt.meshcell_pos[ib][0] + mt[0],
-                                     gt.meshcell_pos[ib][1] + mt[1], 
-                                     gt.meshcell_pos[ib][2] + mt[2]};
-                // distance between atom and grid
-                double distance = std::sqrt(dr[0] * dr[0] + dr[1] * dr[1] + dr[2] * dr[2]); 
-                
-                if (distance < 1.0E-9) distance += 1.0E-9;
 
+                // double dr[3]= {gt.meshcell_pos[ib][0] + mt[0],
+                //                      gt.meshcell_pos[ib][1] + mt[1], 
+                //                      gt.meshcell_pos[ib][2] + mt[2]};
+                // distance between atom and grid
+
+                cal_grid_atom_distance(distance, ib,dr,mt,gt.meshcell_pos);
                 //------------------------------------------------------
                 // spherical harmonic functions Ylm
                 //------------------------------------------------------
-                //	Ylm::get_ylm_real(this->nnn[it], this->dr[id], ylma);
                 ModuleBase::Ylm::sph_harm(ucell.atoms[it].nwl, 
                                          dr[0] / distance, 
                                          dr[1] / distance, 
@@ -72,32 +71,10 @@ void cal_psir_ylm(
                 // because once the distance from atom to grid point is known,
                 // we can obtain the parameters for interpolation and
                 // store them first! these operations can save lots of efforts.
-                cal_grid_mesh_psi(distance,delta_r,atom->nw,atom->iw2_new,atom->iw2_ylm,ylma,
-                                    it_psi_uniform,it_dpsi_uniform,p);
-                // const double position = distance / delta_r;
-                // const int ip = static_cast<int>(position);
-                // const double dx = position - ip;
-                // const double dx2 = dx * dx;
-                // const double dx3 = dx2 * dx;
+                spline_interpolation(distance,delta_r,atom->nw,atom->iw2_new,atom->iw2_ylm,
+                                    ylma,it_psi_uniform,it_dpsi_uniform,p);
 
-                // const double c3 = 3.0 * dx2 - 2.0 * dx3;
-                // const double c1 = 1.0 - c3;
-                // const double c2 = (dx - 2.0 * dx2 + dx3) * delta_r;
-                // const double c4 = (dx3 - dx2) * delta_r;
-
-                // double phi = 0;
-                // for (int iw = 0; iw < atom->nw; ++iw)
-                // {
-                //     if (atom->iw2_new[iw])
-                //     {
-                //         auto psi_uniform = it_psi_uniform[iw];
-                //         auto dpsi_uniform = it_dpsi_uniform[iw];
-                //         phi = c1 * psi_uniform[ip] + c2 * dpsi_uniform[ip] // radial wave functions
-                //               + c3 * psi_uniform[ip + 1] + c4 * dpsi_uniform[ip + 1];
-                //     }
-                //     p[iw] = phi * ylma[atom->iw2_ylm[iw]];
-                // } // end iw
-            }     // end distance<=(rcuts[it]-1.0e-15)
+            }     
         }         // end ib
     }             // end id
     ModuleBase::timer::tick("Gint_Tools", "cal_psir_ylm");
