@@ -165,24 +165,24 @@ class PsiIntializerUnitTest : public ::testing::Test {
             this->p_ucell->atoms[0].ncpp.msh = 10;
             this->p_ucell->atoms[0].ncpp.lmax = 2;
             //if(this->p_ucell->atoms[0].ncpp.rab != nullptr) delete[] this->p_ucell->atoms[0].ncpp.rab;
-            this->p_ucell->atoms[0].ncpp.rab = new double[10];
+            this->p_ucell->atoms[0].ncpp.rab = std::vector<double>(10, 0.0);
             for(int i = 0; i < 10; ++i) this->p_ucell->atoms[0].ncpp.rab[i] = 0.01;
             //if(this->p_ucell->atoms[0].ncpp.r != nullptr) delete[] this->p_ucell->atoms[0].ncpp.r;
-            this->p_ucell->atoms[0].ncpp.r = new double[10];
+            this->p_ucell->atoms[0].ncpp.r = std::vector<double>(10, 0.0);
             for(int i = 0; i < 10; ++i) this->p_ucell->atoms[0].ncpp.r[i] = 0.01*i;
             this->p_ucell->atoms[0].ncpp.chi.create(2, 10);
             for(int i = 0; i < 2; ++i) for(int j = 0; j < 10; ++j) this->p_ucell->atoms[0].ncpp.chi(i, j) = 0.01;
             //if(this->p_ucell->atoms[0].ncpp.lchi != nullptr) delete[] this->p_ucell->atoms[0].ncpp.lchi;
-            this->p_ucell->atoms[0].ncpp.lchi = new int[2];
+            this->p_ucell->atoms[0].ncpp.lchi = std::vector<int>(2, 0);
             this->p_ucell->atoms[0].ncpp.lchi[0] = 0;
             this->p_ucell->atoms[0].ncpp.lchi[1] = 1;
             this->p_ucell->lmax_ppwf = 1;
-            this->p_ucell->atoms[0].ncpp.oc = new double[2];
+            this->p_ucell->atoms[0].ncpp.oc = std::vector<double>(2, 0.0);
             this->p_ucell->atoms[0].ncpp.oc[0] = 1.0;
             this->p_ucell->atoms[0].ncpp.oc[1] = 1.0;
 
             this->p_ucell->atoms[0].ncpp.has_so = false;
-            this->p_ucell->atoms[0].ncpp.jchi = new double[2];
+            this->p_ucell->atoms[0].ncpp.jchi = std::vector<double>(2, 0.0);
             this->p_ucell->atoms[0].ncpp.jchi[0] = 0.5;
             this->p_ucell->atoms[0].ncpp.jchi[1] = 1.5;
             // atom numerical orbital
