@@ -94,9 +94,7 @@ void ESolver_KS_PW<T, Device>::hamilt2estates(const double ethr) {
                              this->kspw_psi[0],
                              this->pelec,
                              this->pelec->ekb.c,
-
                              is_occupied,
-
                              PARAM.inp.ks_solver,
                              PARAM.inp.calculation,
                              PARAM.inp.basis_type,
@@ -104,12 +102,10 @@ void ESolver_KS_PW<T, Device>::hamilt2estates(const double ethr) {
                              GlobalV::use_uspp,
                              GlobalV::RANK_IN_POOL,
                              GlobalV::NPROC_IN_POOL,
-
                              hsolver::DiagoIterAssist<T, Device>::SCF_ITER,
                              hsolver::DiagoIterAssist<T, Device>::need_subspace,
                              hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
                              hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR,
-
                              true);
 
         this->init_psi = true;

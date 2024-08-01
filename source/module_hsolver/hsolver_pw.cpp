@@ -224,24 +224,19 @@ template <typename T, typename Device>
 void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
                                  psi::Psi<T, Device>& psi,
                                  elecstate::ElecState* pes,
-
                                  double* out_eigenvalues,
                                  const std::vector<bool>& is_occupied_in,
-
                                  const std::string method_in,
-
                                  const std::string calculation_type_in,
                                  const std::string basis_type_in,
                                  const bool use_paw_in,
                                  const bool use_uspp_in,
                                  const int rank_in_pool_in,
                                  const int nproc_in_pool_in,
-
                                  const int scf_iter_in,
                                  const bool need_subspace_in,
                                  const int diag_iter_max_in,
                                  const double pw_diag_thr_in,
-
                                  const bool skip_charge)
 {
     ModuleBase::TITLE("HSolverPW", "solve");
