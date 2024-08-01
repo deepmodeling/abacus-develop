@@ -307,8 +307,8 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
     base_device::memory::cast_memory_op<double, Real, base_device::DEVICE_CPU, base_device::DEVICE_CPU>()(
         cpu_ctx,
         cpu_ctx,
-        pes->ekb.c,
-        // out_eigenvalues,
+        // pes->ekb.c,
+        out_eigenvalues,
         eigenvalues.data(),
         pes->ekb.nr * pes->ekb.nc);
 
