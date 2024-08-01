@@ -224,6 +224,18 @@ void init_orb(double& dr_uniform,
               std::vector<std::vector<double>>& psi_u,
               std::vector<std::vector<double>>& dpsi_u,
               std::vector<std::vector<double>>& d2psi_u);
+/**
+ * @brief Get the psi and dpsi from the it type atom
+ * @param gt Grid_Technique
+ * @param nw number of the it type atom orbital basis set
+ * @param it index of the it type atom
+ * @param iw2_new whether the atom orbital basis set is set
+ * @param it_psi_uniform psi of the it type atom
+ * @param it_dpsi_uniform dpsi of the it type atom
+*/
+void get_psi_dpsi(const Grid_Technique& gt,int nw,int it,bool * iw2_new,
+                  std::vector<const double*>& it_psi_uniform,
+                  std::vector<const double*>& it_dpsi_uniform);
 
 // psir_ylm[pw.bxyz][LD_pool]
 void cal_psir_ylm(const Grid_Technique& gt,

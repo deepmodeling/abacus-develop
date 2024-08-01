@@ -3,6 +3,20 @@
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_cell/unitcell.h"
 namespace Gint_Tools{
+void get_psi_dpsi(const Grid_Technique& gt,int nw,int it,bool * iw2_new,
+                  std::vector<const double*>& it_psi_uniform,
+                  std::vector<const double*>& it_dpsi_uniform)
+{
+	for (int iw = 0; iw <nw; ++iw)
+	{
+		if (iw2_new[iw])
+		{
+			it_psi_uniform[iw]= gt.psi_u[it*gt.nwmax + iw].data();
+			it_dpsi_uniform[iw] = gt.dpsi_u[it*gt.nwmax + iw].data();
+		}
+	}
+}
+
 void init_orb(double& dr_uniform, 
                 std::vector<double>& rcuts,
                 UnitCell& ucell,

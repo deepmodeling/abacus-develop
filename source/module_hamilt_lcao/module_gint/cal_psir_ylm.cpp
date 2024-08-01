@@ -13,33 +13,24 @@ void cal_psir_ylm(
     double* const* const psir_ylm) // cal_flag[bxyz][na_grid],	whether the atom-grid distance is larger than cutoff
 {
     ModuleBase::timer::tick("Gint_Tools", "cal_psir_ylm");
+    const int bcell_start = gt.bcell_start[grid_index];
     std::vector<double> ylma;
-    const UnitCell& ucell = *gt.ucell;
     std::vector<const double*> it_psi_uniform(gt.nwmax);
     std::vector<const double*> it_dpsi_uniform(gt.nwmax);
-
+    Atom* atom;
+    const UnitCell& ucell = *gt.ucell;
     for (int id = 0; id < na_grid; id++)
     {
         // there are two parameters we want to know here:
         // in which bigcell of the meshball the atom is in?
         // what's the cartesian coordinate of the bigcell?
-        const int mcell_index = gt.bcell_start[grid_index] + id;
-
+        const int mcell_index = bcell_start + id;
         const int iat = gt.which_atom[mcell_index]; // index of atom
         const int it = ucell.iat2it[iat];           // index of atom type
-        const Atom* const atom = &ucell.atoms[it];
-        std::vector<const double*> it_psi_uniform(atom->nw);
-        std::vector<const double*> it_dpsi_uniform(atom->nw);
+        atom = &ucell.atoms[it];
         // preprocess index
-        for (int iw = 0; iw < atom->nw; ++iw)
-        {
-            if (atom->iw2_new[iw])
-            {
-                it_psi_uniform[iw]= gt.psi_u[it*gt.nwmax + iw].data();
-                it_dpsi_uniform[iw] = gt.dpsi_u[it*gt.nwmax + iw].data();
-            }
-        }
-
+        get_psi_dpsi(gt,atom->nw, it,
+                atom->iw2_new,it_psi_uniform, it_dpsi_uniform);
         // meshball_positions should be the bigcell position in meshball
         // to the center of meshball.
         // calculated in cartesian coordinates
