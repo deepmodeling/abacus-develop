@@ -629,7 +629,7 @@ If only one value is set (such as `kspacing 0.5`), then kspacing values of a/b/c
   - cpu: for CPUs via Intel, AMD, or Other supported CPU devices
   - gpu: for GPUs via CUDA or ROCm.
 
-  Known limitations: If using the pw basis, the ks_solver must be cg/bpcg/dav to support `gpu` acceleration. If using the lcao basis, `gamma_only` must be set to `1`, as multi-k calculation is currently not supported for `gpu`. lcao_in_pw also does not support `gpu`.
+  Known limitations: `ks_solver` must also be set to the algorithms supported. lcao_in_pw currently does not support `gpu`.
 
 - **Default**: cpu
 

@@ -131,7 +131,6 @@ void Gint::gint_kernel_vlocal(Gint_inout* inout) {
         }
         delete[] pvpR_thread;
     }
-}
     ModuleBase::TITLE("Gint_interface", "cal_gint_vlocal");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal");
 }

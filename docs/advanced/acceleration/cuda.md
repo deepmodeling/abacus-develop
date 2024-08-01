@@ -6,13 +6,13 @@ In ABACUS, we provide the option to use GPU devices to accelerate performance. T
 
 - **Electronic state data**: (e.g. electronic density) are moved from the GPU to the CPU(s) every scf step.
 
-- **Acclerated by the NVIDIA libraries**: `cuBLAS` for common linear algebra calculations, `cuSolver` for eigen values/vectors, and `cuFFT` for the conversions between the real and recip spaces.
+- **Accelerated by the NVIDIA libraries**: `cuBLAS` for common linear algebra calculations, `cuSolver` for eigen values/vectors, and `cuFFT` for the conversions between the real and recip spaces.
 
 - **Multi GPU supprted**: Using multiple MPI tasks will often give the best performance. Note each MPI task will be bind to a GPU device with automatically computing load balancing.
 
 - **Parallel strategy**: K point parallel.
 
-Unlike PW basis, only the grid integration module (module_gint) and the diagonalization of the Hamiltonian matrix (module_hsolver) have been implemented with GPU acceleration under LCAO basis, and the acceleration is limited to gamma only calculation. Additionally, LCAO basis does not support multi-GPU acceleration. Both the grid integration module and the Hamiltonian matrix solver only support acceleration on a single GPU.
+Unlike PW basis, only the grid integration module (module_gint) and the diagonalization of the Hamiltonian matrix (module_hsolver) have been implemented with GPU acceleration under LCAO basis.
 
 ## Required hardware/software
 
@@ -31,17 +31,14 @@ Check the [Advanced Installation Options](https://abacus-rtd.readthedocs.io/en/l
 
 ## Run with the GPU support by editing the INPUT script:
 
-In `INPUT` file we need to set the value keyword [device](../input_files/input-main.md#device) to be `gpu`.
+In `INPUT` file we need to set the input parameter [device](../input_files/input-main.md#device) to `gpu`. If this parameter is not set, ABACUS will try to determine if there are available GPUs.
+- Set `ks_solver`: For the PW basis, CG, BPCG and Davidson methods are supported on GPU; set the input parameter [ks_solver](../input_files/input-main.md#ks_solver) to `cg`, `bpcg` or `dav`. For the LCAO basis, `cusolver` is supported on GPU.
+- **multi-card**: ABACUS allows for multi-GPU acceleration. If you have multiple GPU cards, you can run ABACUS with several MPI processes, and each process will utilize one GPU card. For example, the command `mpirun -n 2 abacus` will by default launch two GPUs for computation. If you only have one card, this command will only start one GPU.
 
 ## Examples
 We provides [examples](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/gpu) of gpu calculations.
 
 ## Known limitations
 PW basis:
-- CG, BPCG and Davidson methods are supported, so the input keyword `ks_solver` can take the values `cg`, `bpcg` or `dav`.
 - Only k point parallelization is supported, so the input keyword `kpar` will be set to match the number of MPI tasks automatically.
 - By default, CUDA architectures 60, 70, 75, 80, 86, and 89 are compiled (if supported). It can be overriden using the CMake variable [`CMAKE_CUDA_ARCHITECTURES`](https://cmake.org/cmake/help/latest/variable/CMAKE_CUDA_ARCHITECTURES.html) or the environmental variable [`CUDAARCHS`](https://cmake.org/cmake/help/latest/envvar/CUDAARCHS.html).
-
-LCAO basis:
-- Does not support multi-k calculation, so if the input keyword `device` is set to `gpu`, the input keyword `gamma_only` can only take the value `1`.
-- Does not support multi-GPU acceleration.

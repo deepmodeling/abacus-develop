@@ -5,7 +5,7 @@
 #include "module_base/memory.h"
 #include "module_base/timer.h"
 
-void Gint::gamma_gpu_vlocal_interface(Gint_inout* inout) {
+void Gint::gpu_vlocal_interface(Gint_inout* inout) {
     ModuleBase::TITLE("Gint_interface", "cal_gint_vlocal");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal");
 
@@ -17,19 +17,22 @@ void Gint::gamma_gpu_vlocal_interface(Gint_inout* inout) {
         ylmcoef[i] = ModuleBase::Ylm::ylmcoef[i];
     }
 
-    GintKernel::gint_gamma_vl_gpu(this->hRGint,
-                                  inout->vl,
-                                  ylmcoef,
-                                  dr,
-                                  this->gridt->rcuts.data(),
-                                  *this->gridt,
-                                  ucell);
+    double* pvpR = GlobalV::GAMMA_ONLY_LOCAL ? nullptr : this->pvpR_reduced[inout->ispin];
+    GintKernel::gint_vl_gpu(this->hRGint,
+                            inout->vl,
+                            ylmcoef,
+                            dr,
+                            this->gridt->rcuts.data(),
+                            *this->gridt,
+                            ucell,
+                            pvpR,
+                            GlobalV::GAMMA_ONLY_LOCAL);
 
     ModuleBase::TITLE("Gint_interface", "cal_gint_vlocal");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal");
 }
 
-void Gint::gamma_gpu_rho_interface(Gint_inout* inout) {
+void Gint::gpu_rho_interface(Gint_inout* inout) {
     ModuleBase::TITLE("Gint_interface", "cal_gint_rho");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_rho");
 
@@ -43,7 +46,7 @@ void Gint::gamma_gpu_rho_interface(Gint_inout* inout) {
     int nrxx = this->gridt->ncx * this->gridt->ncy * this->nplane;
     for (int is = 0; is < GlobalV::NSPIN; ++is) {
         ModuleBase::GlobalFunc::ZEROS(inout->rho[is], nrxx);
-        GintKernel::gint_gamma_rho_gpu(this->DMRGint[is],
+        GintKernel::gint_rho_gpu(this->DMRGint[is],
                                        ylmcoef,
                                        dr,
                                        this->gridt->rcuts.data(),
@@ -55,7 +58,7 @@ void Gint::gamma_gpu_rho_interface(Gint_inout* inout) {
     ModuleBase::timer::tick("Gint_interface", "cal_gint_rho");
 }
 
-void Gint::gamma_gpu_force_interface(Gint_inout* inout) {
+void Gint::gpu_force_interface(Gint_inout* inout) {
     ModuleBase::TITLE("Gint_interface", "cal_gint_force");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_force");
 
@@ -74,7 +77,7 @@ void Gint::gamma_gpu_force_interface(Gint_inout* inout) {
     if (isforce || isstress) {
         std::vector<double> force(nat * 3, 0.0);
         std::vector<double> stress(6, 0.0);
-        GintKernel::gint_fvl_gamma_gpu(this->DMRGint[inout->ispin],
+        GintKernel::gint_fvl_gpu(this->DMRGint[inout->ispin],
                                        inout->vl,
                                        force.data(),
                                        stress.data(),

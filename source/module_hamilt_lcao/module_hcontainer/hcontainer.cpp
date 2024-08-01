@@ -294,6 +294,33 @@ const BaseMatrix<T>* HContainer<T>::find_matrix(int atom_i, int atom_j,const Mod
     }
 }
 
+template <typename T>
+int HContainer<T>::find_matrix_offset(int atom_i, int atom_j, int rx, int ry, int rz) const
+{
+    const BaseMatrix<T>* tmp = this->find_matrix(atom_i, atom_j, rx, ry, rz);
+    if(tmp == nullptr)
+    {
+        return -1;
+    }
+    else
+    {
+        return tmp->get_pointer() - this->wrapper_pointer;
+    }
+}
+
+template <typename T>
+int HContainer<T>::find_matrix_offset(int atom_i, int atom_j, const ModuleBase::Vector3<int>& R_index) const
+{
+    const BaseMatrix<T>* tmp = this->find_matrix(atom_i, atom_j, R_index);
+    if(tmp == nullptr)
+    {
+        return -1;
+    }
+    else
+    {
+        return tmp->get_pointer() - this->wrapper_pointer;
+    }
+}
 
 // get_atom_pair with atom_ij
 template <typename T>

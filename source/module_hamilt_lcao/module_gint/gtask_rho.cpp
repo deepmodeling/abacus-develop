@@ -16,17 +16,17 @@ void gtask_rho(const Grid_Technique& gridt,
     atoms_per_z = 0;
     for (int z_index = 0; z_index < gridt.nbzp; z_index++)
     {
-        int grid_index = grid_index_ij + z_index;
-        int bcell_start_index = gridt.bcell_start[grid_index];
-        int na_grid = gridt.how_many_atoms[grid_index];
+        const int grid_index = grid_index_ij + z_index;
+        const int bcell_start_index = gridt.bcell_start[grid_index];
+        const int na_grid = gridt.how_many_atoms[grid_index];
         atoms_num_info[2 * z_index] = na_grid;
         atoms_num_info[2 * z_index + 1] = atoms_per_z;
         for (int id = 0; id < na_grid; id++)
         {
-            int mcell_index = bcell_start_index + id;
-            int imcell = gridt.which_bigcell[mcell_index];
-            int iat = gridt.which_atom[mcell_index];
-            int it_temp = ucell.iat2it[iat];
+            const int mcell_index = bcell_start_index + id;
+            const int imcell = gridt.which_bigcell[mcell_index];
+            const int iat = gridt.which_atom[mcell_index];
+            const int it_temp = ucell.iat2it[iat];
 
             dr_part[atoms_per_z * 3] = gridt.meshball_positions[imcell][0]
                       - gridt.tau_in_bigcell[iat][0];
@@ -40,7 +40,8 @@ void gtask_rho(const Grid_Technique& gridt,
     }
 }
 
-void alloc_mult_dot_rho(const Grid_Technique& gridt,
+void alloc_mult_dot_rho(const hamilt::HContainer<double>* dm,
+                        const Grid_Technique& gridt,
                         const UnitCell& ucell,
                         const int grid_index_ij,
                         const int max_atom,
@@ -74,44 +75,56 @@ void alloc_mult_dot_rho(const Grid_Technique& gridt,
     // generate matrix multiplication tasks
     for (int z_index = 0; z_index < gridt.nbzp; z_index++)
     {
-        int grid_index = grid_index_ij + z_index;
-        int bcell_start_index = gridt.bcell_start[grid_index];
-        int bcell_start_psir = atoms_num_info[2 * z_index + 1] * gridt.bxyz * nwmax;
-        int na_grid = atoms_num_info[2 * z_index];
+        const int grid_index = grid_index_ij + z_index;
+        const int bcell_start_index = gridt.bcell_start[grid_index];
+        const int bcell_start_psir = atoms_num_info[2 * z_index + 1] * gridt.bxyz * nwmax;
+        const int na_grid = atoms_num_info[2 * z_index];
 
         for (int atom1 = 0; atom1 < gridt.how_many_atoms[grid_index]; atom1++)
         {
-            int mcell_index1 = bcell_start_index + atom1;
-            int iat1 = gridt.which_atom[mcell_index1];
-            int it1 = ucell.iat2it[iat1];
-            int lo1
+            const int mcell_index1 = bcell_start_index + atom1;
+            const int iat1 = gridt.which_atom[mcell_index1];
+            const int uc1 = gridt.which_unitcell[mcell_index1];
+            const int rx1 = gridt.ucell_index2x[uc1];
+            const int ry1 = gridt.ucell_index2y[uc1];
+            const int rz1 = gridt.ucell_index2z[uc1];
+            const int it1 = ucell.iat2it[iat1];
+            const int lo1
                 = gridt.trace_lo[ucell.itiaiw2iwt(it1, ucell.iat2ia[iat1], 0)];
-            int nw1 = ucell.atoms[it1].nw;
+            const int nw1 = ucell.atoms[it1].nw;
 
             for (int atom2 = atom1; atom2 < gridt.how_many_atoms[grid_index];
                  atom2++)
             {
-                int mcell_index2 = bcell_start_index + atom2;
-                int iat2 = gridt.which_atom[mcell_index2];
-                int it2 = ucell.iat2it[iat2];
-                int lo2 = gridt.trace_lo[ucell.itiaiw2iwt(it2,
+                const int mcell_index2 = bcell_start_index + atom2;
+                const int iat2 = gridt.which_atom[mcell_index2];
+                const int uc2 = gridt.which_unitcell[mcell_index2];
+                const int rx2 = gridt.ucell_index2x[uc2];
+                const int ry2 = gridt.ucell_index2y[uc2];
+                const int rz2 = gridt.ucell_index2z[uc2];
+                const int offset = dm->find_matrix_offset(iat1, iat2, rx1-rx2, ry1-ry2, rz1-rz2);
+                if (offset == -1)
+                {
+                    continue;
+                }
+                const int it2 = ucell.iat2it[iat2];
+                const int lo2 = gridt.trace_lo[ucell.itiaiw2iwt(it2,
                                                           ucell.iat2ia[iat2],
                                                           0)];
-                int nw2 = ucell.atoms[it2].nw;
+                const int nw2 = ucell.atoms[it2].nw;
 
-                int mat_A_idx = bcell_start_psir + atom2 * nwmax;
-                int mat_B_idx = lgd * lo1 + lo2;
-                int mat_C_idx = bcell_start_psir + atom1 * nwmax;
+                const int mat_A_idx = bcell_start_psir + atom2 * nwmax;
+                const int mat_C_idx = bcell_start_psir + atom1 * nwmax;
 
                 mat_alpha[tid] = atom2 == atom1 ? 1 : 2;
                 mat_m[tid] = gridt.bxyz;
                 mat_n[tid] = nw1;
                 mat_k[tid] = nw2;
                 mat_lda[tid] = nwmax * na_grid;
-                mat_ldb[tid] = lgd;
+                mat_ldb[tid] = nw2;
                 mat_ldc[tid] = nwmax * na_grid;
                 mat_A[tid] = psir_ylm_g + mat_A_idx;
-                mat_B[tid] = dm_matrix_g + mat_B_idx;
+                mat_B[tid] = dm_matrix_g + offset;
                 mat_C[tid] = psir_dm_g + mat_C_idx;
 
                 if (mat_m[tid] > max_m)

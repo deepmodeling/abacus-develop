@@ -9,7 +9,7 @@
 namespace GintKernel
 {
 
-void gint_gamma_rho_gpu(const hamilt::HContainer<double>* dm,
+void gint_rho_gpu(const hamilt::HContainer<double>* dm,
                         const double* ylmcoef_now,
                         const double dr,
                         const double* rcut,
@@ -60,35 +60,12 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double>* dm,
     Cuda_Mem_Wrapper<double> rho_g(num_mcell_on_proc, 1, false);
     Cuda_Mem_Wrapper<double*> dot_product(nbzp * gridt.bxyz, num_streams, true);
 
-    Cuda_Mem_Wrapper<double> dm_matrix(lgd * lgd, 1, true);
+    Cuda_Mem_Wrapper<double> dm_matrix(dm->get_nnr(), 1, false);
     // retrieve the density matrix on the host
-    for (int iat1 = 0; iat1 < ucell.nat; iat1++)
-    {
-        for (int iat2 = 0; iat2 < ucell.nat; iat2++)
-        {
-            const int it1 = ucell.iat2it[iat1];
-            const int it2 = ucell.iat2it[iat2];
-            const int lo1 = gridt.trace_lo[ucell.itiaiw2iwt(it1, ucell.iat2ia[iat1], 0)];
-            const int lo2 = gridt.trace_lo[ucell.itiaiw2iwt(it2, ucell.iat2ia[iat2], 0)];
-
-            hamilt::AtomPair<double>* tmp_ap = dm->find_pair(iat1, iat2);
-            int orb_index = 0;
-            if (tmp_ap == NULL)
-            {
-                continue;
-            }
-            for (int orb_i = 0; orb_i < tmp_ap->get_row_size(); orb_i++)
-            {
-                for (int orb_j = 0; orb_j < tmp_ap->get_col_size(); orb_j++)
-                {
-                    dm_matrix.get_host_pointer()[(lo1 + orb_i) * lgd + (lo2 + orb_j)]
-                        = tmp_ap->get_pointer(0)[orb_index];
-                    orb_index++;
-                }
-            }
-        }
-    }
-    dm_matrix.copy_host_to_device_sync();
+    checkCuda(cudaMemcpy(dm_matrix.get_device_pointer(),
+                         dm->get_wrapper(),
+                         dm->get_nnr() * sizeof(double),
+                         cudaMemcpyHostToDevice));
 
 // calculate the rho for every nbzp bigcells
 #pragma omp parallel for num_threads(num_streams) collapse(2)
@@ -120,6 +97,7 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double>* dm,
                       atoms_per_z);
 
             alloc_mult_dot_rho(
+                dm,
                 gridt,
                 ucell,
                 grid_index_ij,

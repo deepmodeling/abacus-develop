@@ -20,7 +20,7 @@ namespace GintKernel
  * 6. force dot on the GPU.
  * 7. Copy the results back to the host.
  */
-void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
+void gint_fvl_gpu(const hamilt::HContainer<double>* dm,
                         const double* vlocal,
                         double* force_in,
                         double* stress_in,
@@ -82,36 +82,12 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
     Cuda_Mem_Wrapper<double> force(3 * nat, num_streams, true);
     Cuda_Mem_Wrapper<double> stress(6, num_streams, true);
 
-    Cuda_Mem_Wrapper<double> dm_matrix(lgd * lgd, 1, true);
-    for (int iat1 = 0; iat1 < ucell.nat; iat1++)
-    {
-        for (int iat2 = 0; iat2 < ucell.nat; iat2++)
-        {
-            const int it1 = ucell.iat2it[iat1];
-            const int it2 = ucell.iat2it[iat2];
-            const int lo1
-                = gridt.trace_lo[ucell.itiaiw2iwt(it1, ucell.iat2ia[iat1], 0)];
-            const int lo2
-                = gridt.trace_lo[ucell.itiaiw2iwt(it2, ucell.iat2ia[iat2], 0)];
-
-            hamilt::AtomPair<double>* tmp_ap = dm->find_pair(iat1, iat2);
-            int orb_index = 0;
-            if (tmp_ap == NULL)
-            {
-                continue;
-            }
-            for (int orb_i = 0; orb_i < tmp_ap->get_row_size(); orb_i++)
-            {
-                for (int orb_j = 0; orb_j < tmp_ap->get_col_size(); orb_j++)
-                {
-                    dm_matrix.get_host_pointer()[(lo1 + orb_i) * lgd + (lo2 + orb_j)]
-                        = tmp_ap->get_pointer(0)[orb_index];
-                    orb_index++;
-                }
-            }
-        }
-    }
-    dm_matrix.copy_host_to_device_sync();
+    Cuda_Mem_Wrapper<double> dm_matrix(dm->get_nnr(), 1, false);
+    // retrieve the density matrix on the host
+    checkCuda(cudaMemcpy(dm_matrix.get_device_pointer(),
+                         dm->get_wrapper(),
+                         dm->get_nnr() * sizeof(double),
+                         cudaMemcpyHostToDevice));
 
     #pragma omp parallel for num_threads(num_streams) collapse(2)
     for (int i = 0; i < gridt.nbx; i++)
@@ -142,7 +118,8 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
                         dr_part.get_host_pointer(sid),
                         vldr3.get_host_pointer(sid));
            
-            alloc_mult_force(gridt,
+            alloc_mult_force(dm,
+                             gridt,
                              ucell, 
                              grid_index_ij,
                              max_atom,

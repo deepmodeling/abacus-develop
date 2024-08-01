@@ -353,12 +353,22 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, c
         hsolver::DiagoIterAssist<T, Device>::SCF_ITER = iter;
         hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR = ethr;
         hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX = GlobalV::PW_DIAG_NMAX;
-      
+
+        std::vector<bool> is_occupied(this->kspw_psi->get_nk() * this->kspw_psi->get_nbands(), true);
+
+        elecstate::set_is_occupied(is_occupied,
+                                   this->pelec,
+                                   hsolver::DiagoIterAssist<T, Device>::SCF_ITER,
+                                   this->kspw_psi->get_nk(),
+                                   this->kspw_psi->get_nbands(),
+                                   PARAM.inp.diago_full_acc);
+        
         hsolver::HSolverPW<T, Device> hsolver_pw_obj(this->pw_wfc, &this->wf, this->init_psi);
         hsolver_pw_obj.solve(this->p_hamilt,         // hamilt::Hamilt<T, Device>* pHamilt,
                            this->kspw_psi[0],        // psi::Psi<T, Device>& psi,
-                           this->pelec,              // elecstate::ElecState<T, Device>* pelec,
+                           this->pelec,               // elecstate::ElecState<T, Device>* pelec,
                            this->pelec->ekb.c,
+                           is_occupied,
                            PARAM.inp.ks_solver,
                            PARAM.inp.calculation,
                            PARAM.inp.basis_type,
