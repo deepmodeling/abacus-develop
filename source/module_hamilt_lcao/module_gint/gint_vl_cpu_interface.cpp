@@ -313,7 +313,6 @@ void Gint::gint_kernel_vlocal_meta(Gint_inout* inout) {
     vldr3.assign(this->bxyz,0.0);
     vkdr3.assign(this->bxyz,0.0);
 #pragma omp for
-#endif
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
         const int na_grid = this->gridt->how_many_atoms[grid_index];
         if (na_grid == 0) {

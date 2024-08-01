@@ -17,7 +17,6 @@ void Gint::gint_kernel_rho(Gint_inout* inout) {
     std::vector<int> block_index(max_size+1, 0);
     std::vector<int> block_size(max_size, 0);
     std::vector<int> vindex(bxyz, 0);
-#ifdef _OPENMP
 #pragma omp parallel private(block_iw, block_index, block_size,vindex)
 {
     block_iw.assign(max_size, 0);
@@ -25,7 +24,6 @@ void Gint::gint_kernel_rho(Gint_inout* inout) {
     block_size.assign(max_size, 0);
     vindex.assign(bxyz, 0);
 #pragma omp for
-#endif
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
         const int na_grid = this->gridt->how_many_atoms[grid_index];
         if (na_grid == 0) {
@@ -103,10 +101,8 @@ void Gint::gint_kernel_rho(Gint_inout* inout) {
             // do sum_mu g_mu(r)psi_mu(r) to get electron density on grid
             this->cal_meshball_rho(na_grid, block_index.data(), vindex.data(), psir_ylm.get_ptr_2D(), psir_DM.get_ptr_2D(), inout->rho[is]);
         }
-        }
-#ifdef _OPENMP
+    }
 }
-#endif
     ModuleBase::TITLE("Gint_interface", "cal_gint_rho");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_rho");
 }
@@ -126,7 +122,6 @@ void Gint::gint_kernel_tau(Gint_inout* inout) {
     std::vector<int> block_index(max_size+1, 0);
     std::vector<int> block_size(max_size, 0);
     std::vector<int> vindex(bxyz, 0);
-#ifdef _OPENMP
 #pragma omp parallel private(block_iw, block_index, block_size,vindex)
 {
     block_iw.assign(max_size, 0);
@@ -134,7 +129,6 @@ void Gint::gint_kernel_tau(Gint_inout* inout) {
     block_size.assign(max_size, 0);
     vindex.assign(bxyz, 0);
 #pragma omp for
-#endif
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
         const int na_grid = this->gridt->how_many_atoms[grid_index];
         if (na_grid == 0) {
@@ -249,9 +243,7 @@ void Gint::gint_kernel_tau(Gint_inout* inout) {
             }
         }
     }
-#ifdef _OPENMP
 }
-#endif
     ModuleBase::TITLE("Gint_interface", "cal_gint_tau");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_tau");
 }
