@@ -5,7 +5,7 @@
 //==========================================================
 #include "timer.h"
 
-#include <math.h>
+#include <cmath>
 
 #ifdef __MPI
 #include <mpi.h>
@@ -32,20 +32,21 @@ std::map<std::string,std::map<std::string,timer::Timer_One>> timer::timer_pool;
 void timer::finish(std::ofstream &ofs,const bool print_flag)
 {
 	timer::tick("","total");
-	if(print_flag)
+	if(print_flag) {
 		print_all( ofs );
+}
 }
 
 //----------------------------------------------------------
 //
 //----------------------------------------------------------
-void timer::start(void)
+void timer::start()
 {
 	// first init ,then we can use tick
 	timer::tick("","total");
 }
 
-double timer::cpu_time(void)
+double timer::cpu_time()
 {
 //----------------------------------------------------------
 // EXPLAIN : here static is important !!
@@ -72,8 +73,9 @@ void timer::tick(const std::string &class_name,const std::string &name)
 //----------------------------------------------------------
 // EXPLAIN : if timer is disabled , return
 //----------------------------------------------------------
-	if (disabled)
+	if (disabled) {
 		return;
+}
 
 #ifdef _OPENMP
 	if(!omp_get_thread_num())
@@ -130,7 +132,7 @@ void timer::tick(const std::string &class_name,const std::string &name)
 	} // end if(!omp_get_thread_num())
 }
 
-long double timer::print_until_now(void)
+long double timer::print_until_now()
 {
 	// stop the clock
 	timer::tick("","total");
@@ -146,12 +148,14 @@ void timer::write_to_json(std::string file_name)
 	// if mpi is not initialized, we do not run this function
 	int is_initialized = 0;
     MPI_Initialized(&is_initialized);
-	if (!is_initialized)
+	if (!is_initialized) {
 		return;	
+}
 	int my_rank = 0;
 	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
-	if (my_rank != 0)
+	if (my_rank != 0) {
 		return;
+}
 #endif
 
     // check if a double is inf, if so, return "null", else return a string of the input double
