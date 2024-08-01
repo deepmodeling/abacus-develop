@@ -8,8 +8,8 @@
 #include "module_cell/module_neighbor/sltk_atom_arrange.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_io/berryphase.h"
-#include "module_io/get_pchg.h"
-#include "module_io/get_wf.h"
+#include "module_io/get_pchg_lcao.h"
+#include "module_io/get_wf_lcao.h"
 #include "module_io/to_wannier90_lcao.h"
 #include "module_io/to_wannier90_lcao_in_pw.h"
 #include "module_io/write_HS_R.h"
@@ -45,7 +45,8 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
 
     const std::string cal_type = GlobalV::CALCULATION;
 
-    if (cal_type == "get_S") {
+    if (cal_type == "get_S")
+    {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "writing the overlap matrix");
         this->get_S();
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "writing the overlap matrix");
@@ -54,7 +55,9 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
 
         // return; // use 'return' will cause segmentation fault. by mohan
         // 2024-06-09
-    } else if (cal_type == "test_memory") {
+    }
+    else if (cal_type == "test_memory")
+    {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "testing memory");
         Cal_Test::test_memory(this->pw_rho,
                               this->pw_wfc,
@@ -67,9 +70,9 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
     {
         // test_search_neighbor();
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "testing neighbour");
-        if (GlobalV::SEARCH_RADIUS < 0) {
-            std::cout << " SEARCH_RADIUS : " << GlobalV::SEARCH_RADIUS
-                      << std::endl;
+        if (GlobalV::SEARCH_RADIUS < 0)
+        {
+            std::cout << " SEARCH_RADIUS : " << GlobalV::SEARCH_RADIUS << std::endl;
             std::cout << " please make sure search_radius > 0" << std::endl;
         }
 
@@ -205,8 +208,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
     }
     else
     {
-        ModuleBase::WARNING_QUIT("ESolver_KS_LCAO<TK, TR>::others",
-                                 "CALCULATION type not supported");
+        ModuleBase::WARNING_QUIT("ESolver_KS_LCAO<TK, TR>::others", "CALCULATION type not supported");
     }
 
     ModuleBase::timer::tick("ESolver_KS_LCAO", "others");

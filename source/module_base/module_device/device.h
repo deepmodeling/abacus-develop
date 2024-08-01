@@ -48,8 +48,7 @@ int get_device_kpar(const int& kpar);
  */
 std::string get_device_flag(const std::string& device,
                             const std::string& ks_solver,
-                            const std::string& basis_type,
-                            const bool& gamma_only);
+                            const std::string& basis_type);
 
 #if __MPI
 int get_node_rank();

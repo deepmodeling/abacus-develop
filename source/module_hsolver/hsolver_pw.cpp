@@ -208,58 +208,35 @@ void HSolverPW<T, Device>::paw_func_after_kloop(psi::Psi<T, Device>& psi, elecst
 #endif
 
 template <typename T, typename Device>
-HSolverPW<T, Device>::HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in, wavefunc* pwf_in)
+HSolverPW<T, Device>::HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in,
+                                wavefunc* pwf_in,
+                                const bool initialed_psi_in)
 {
     this->classname = "HSolverPW";
     this->wfc_basis = wfc_basis_in;
     this->pwf = pwf_in;
     this->diag_ethr = GlobalV::PW_DIAG_THR;
-}
 
-template <typename T, typename Device>
-void HSolverPW<T, Device>::set_isOccupied(std::vector<bool>& is_occupied,
-                                          elecstate::ElecState* pes,
-                                          const int i_scf,
-                                          const int nk,
-                                          const int nband,
-                                          const bool diago_full_acc_)
-{
-    if (i_scf != 0 && diago_full_acc_ == false)
-    {
-        for (int i = 0; i < nk; i++)
-        {
-            if (pes->klist->wk[i] > 0.0)
-            {
-                for (int j = 0; j < nband; j++)
-                {
-                    if (pes->wg(i, j) / pes->klist->wk[i] < 0.01)
-                    {
-                        is_occupied[i * nband + j] = false;
-                    }
-                }
-            }
-        }
-    }
+    this->initialed_psi = initialed_psi_in;
 }
 
 template <typename T, typename Device>
 void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
                                  psi::Psi<T, Device>& psi,
                                  elecstate::ElecState* pes,
+                                 double* out_eigenvalues,
+                                 const std::vector<bool>& is_occupied_in,
                                  const std::string method_in,
-
                                  const std::string calculation_type_in,
                                  const std::string basis_type_in,
                                  const bool use_paw_in,
                                  const bool use_uspp_in,
                                  const int rank_in_pool_in,
                                  const int nproc_in_pool_in,
-
                                  const int scf_iter_in,
                                  const bool need_subspace_in,
                                  const int diag_iter_max_in,
                                  const double pw_diag_thr_in,
-
                                  const bool skip_charge)
 {
     ModuleBase::TITLE("HSolverPW", "solve");
@@ -291,16 +268,6 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
     // prepare for the precondition of diagonalization
     std::vector<Real> precondition(psi.get_nbasis(), 0.0);
     std::vector<Real> eigenvalues(pes->ekb.nr * pes->ekb.nc, 0.0);
-    std::vector<bool> is_occupied(psi.get_nk() * psi.get_nbands(), true);
-    if (this->method == "dav_subspace")
-    {
-        this->set_isOccupied(is_occupied,
-                             pes,
-                             this->scf_iter,
-                             psi.get_nk(),
-                             psi.get_nbands(),
-                             this->diago_full_acc);
-    }
 
     /// Loop over k points for solve Hamiltonian to charge density
     for (int ik = 0; ik < this->wfc_basis->nks; ++ik)
@@ -336,19 +303,14 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
     }
     // END Loop over k points
 
-    // copy eigenvalues to pes->ekb in ElecState
+    // copy eigenvalues to ekb in ElecState
     base_device::memory::cast_memory_op<double, Real, base_device::DEVICE_CPU, base_device::DEVICE_CPU>()(
         cpu_ctx,
         cpu_ctx,
         pes->ekb.c,
+        // out_eigenvalues,
         eigenvalues.data(),
         pes->ekb.nr * pes->ekb.nc);
-
-    // psi only should be initialed once for PW
-    if (!this->initialed_psi)
-    {
-        this->initialed_psi = true;
-    }
 
     if (skip_charge)
     {
