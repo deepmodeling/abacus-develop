@@ -65,8 +65,9 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
     }
     else
     {
-        if (GlobalV::NSPIN == 4)
+        if (GlobalV::NSPIN == 4) {
             GlobalC::ucell.cal_ux();
+}
         const auto etxc_vtxc_v = XC_Functional::v_xc(rho_basis->nrxx, chr, &GlobalC::ucell);
 
         // etxc = std::get<0>(etxc_vtxc_v);
