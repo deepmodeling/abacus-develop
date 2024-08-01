@@ -14,8 +14,7 @@ void Gint::gint_kernel_force(Gint_inout* inout) {
 
     ModuleBase::matrix* fvl_dphi_thread=inout->fvl_dphi;
     ModuleBase::matrix* svl_dphi_thread=inout->svl_dphi;
-#pragma omp parallel private(fvl_dphi_thread, svl_dphi_thread, \
-                            block_iw, block_index, block_size, vldr3)
+#pragma omp parallel private(fvl_dphi_thread, svl_dphi_thread)
 {
     if (inout->isforce) {
         fvl_dphi_thread=new ModuleBase::matrix(*inout->fvl_dphi);
