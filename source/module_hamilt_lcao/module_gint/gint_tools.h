@@ -237,6 +237,13 @@ void get_psi_dpsi(const Grid_Technique& gt,int nw,int it,bool * iw2_new,
                   std::vector<const double*>& it_psi_uniform,
                   std::vector<const double*>& it_dpsi_uniform);
 
+void cal_grid_mesh_psi(const double distance,const double delta_r,
+                        const int nw,const bool* iw2_new,
+                        const int* iw2_ylm,
+                        std::vector<double>& ylma,
+                        std::vector<const double*>& it_psi_uniform,
+                        std::vector<const double*>& it_dpsi_uniform,
+                        double *p);
 // psir_ylm[pw.bxyz][LD_pool]
 void cal_psir_ylm(const Grid_Technique& gt,
                   const int bxyz,

@@ -161,6 +161,38 @@ void get_block_info(const Grid_Technique& gt, const int bxyz, const int na_grid,
         } // end ib
     }
 }
+void cal_grid_mesh_psi(const double distance,const double delta_r,
+                        const int nw,const bool* iw2_new,
+                        const int* iw2_ylm,
+                        std::vector<double>& ylma,
+                        std::vector<const double*>& it_psi_uniform,
+                        std::vector<const double*>& it_dpsi_uniform,
+                        double *p)
+{
+	const double position = distance / delta_r;
+	const int ip = static_cast<int>(position);
+	const double dx = position - ip;
+	const double dx2 = dx * dx;
+	const double dx3 = dx2 * dx;
+
+	const double c3 = 3.0 * dx2 - 2.0 * dx3;
+	const double c1 = 1.0 - c3;
+	const double c2 = (dx - 2.0 * dx2 + dx3) * delta_r;
+	const double c4 = (dx3 - dx2) * delta_r;
+
+	double phi = 0;
+	for (int iw = 0; iw < nw; ++iw)
+	{
+		if (iw2_new[iw])
+		{
+			auto psi_uniform = it_psi_uniform[iw];
+			auto dpsi_uniform = it_dpsi_uniform[iw];
+			phi = c1 * psi_uniform[ip] + c2 * dpsi_uniform[ip] // radial wave functions
+					+ c3 * psi_uniform[ip + 1] + c4 * dpsi_uniform[ip + 1];
+		}
+		p[iw] = phi * ylma[iw2_ylm[iw]];
+	} // end iw
+}
 
 void cal_dpsirr_ylm(
     const Grid_Technique& gt, const int bxyz,
