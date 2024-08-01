@@ -17,7 +17,6 @@ void Gint_Gamma::cal_env(const double* wfc, double* rho, UnitCell& ucell)
         ModuleBase::WARNING_QUIT("Gint_Gamma::cal_env",
                                     "the max_size is less than 0!");
     }
-    const int LD_pool = max_size * ucell.nwmax;
     const int nbx = this->gridt->nbx;
     const int nby = this->gridt->nby;
     const int nbz_start = this->gridt->nbzp_start;
@@ -50,6 +49,7 @@ void Gint_Gamma::cal_env(const double* wfc, double* rho, UnitCell& ucell)
                                        block_index.data(),
                                        block_size.data(),
                                        cal_flag.get_ptr_2D());
+            const int LD_pool = block_index[size]; 
 
             // evaluate psi on grids
             ModuleBase::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);

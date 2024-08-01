@@ -7,7 +7,6 @@ void Gint::gint_kernel_rho(Gint_inout* inout) {
     ModuleBase::timer::tick("Gint_interface", "cal_gint_rho");
     const UnitCell& ucell = *this->ucell;
     const int max_size = this->gridt->max_atom;
-    const int LD_pool = max_size * ucell.nwmax;
     const int lgd = this->gridt->lgd;
     const int ncyz = this->ny * this->nplane;
     const double dv = ucell.omega / this->ncxyz;
@@ -108,7 +107,6 @@ void Gint::gint_kernel_tau(Gint_inout* inout) {
     ModuleBase::timer::tick("Gint_interface", "cal_gint_tau");
     const UnitCell& ucell = *this->ucell;
     const int max_size = this->gridt->max_atom;
-    const int LD_pool = max_size * ucell.nwmax;
     const int lgd = this->gridt->lgd;
     const int ncyz = this->ny * this->nplane;
     const double dv = ucell.omega / this->ncxyz;

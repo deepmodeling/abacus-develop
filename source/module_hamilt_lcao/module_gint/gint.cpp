@@ -33,17 +33,13 @@ Gint::~Gint() {
 
 void Gint::cal_gint(Gint_inout* inout) {
     ModuleBase::timer::tick("Gint_interface", "cal_gint");
-    const UnitCell& ucell = *this->ucell;
-    const int max_size = this->gridt->max_atom;
-    const int LD_pool = max_size * ucell.nwmax;
-    const int lgd = this->gridt->lgd;
     // In multi-process environments,
     // some processes may not be allocated any data.
     if (this->gridt->get_init_malloced() == false) {
         ModuleBase::WARNING_QUIT("Gint_interface::cal_gint",
                                  "gridt has not been allocated yet!");
     }
-    if (max_size > 0) {
+    if (this->gridt->max_atom > 0) {
 #ifdef __CUDA
         if (GlobalV::device_flag == "gpu"
             && (inout->job == Gint_Tools::job_type::vlocal

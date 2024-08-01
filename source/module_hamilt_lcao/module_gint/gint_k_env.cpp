@@ -19,7 +19,6 @@ void Gint_k::cal_env_k(int ik,
     // it's a uniform grid to save orbital values, so the delta_r is a constant.
     const double delta_r = this->gridt->dr_uniform;
     const int max_size = this->gridt->max_atom;
-    const int LD_pool = max_size * ucell.nwmax;
     if (max_size <= 0){
         ModuleBase::WARNING_QUIT("Gint_Gamma::cal_env",
                                     "the max_size is less than 0!");
@@ -55,6 +54,7 @@ void Gint_k::cal_env_k(int ik,
                                        block_index.data(),
                                        block_size.data(),
                                        cal_flag.get_ptr_2D());
+            const int LD_pool = block_index[size];
 
             // evaluate psi on grids
             ModuleBase::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);

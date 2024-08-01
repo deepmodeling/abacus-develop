@@ -7,7 +7,6 @@ void Gint::gint_kernel_force(Gint_inout* inout) {
     ModuleBase::timer::tick("Gint_interface", "cal_gint_force");
     const UnitCell& ucell = *this->ucell;
     const int max_size = this->gridt->max_atom;
-    const int LD_pool = max_size * ucell.nwmax;
     const int ncyz = this->ny * this->nplane;
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
@@ -143,7 +142,6 @@ void Gint::gint_kernel_force_meta(Gint_inout* inout) {
     ModuleBase::timer::tick("Gint_interface", "cal_gint_force_meta");
     const UnitCell& ucell = *this->ucell;
     const int max_size = this->gridt->max_atom;
-    const int LD_pool = max_size * ucell.nwmax;
     const int ncyz = this->ny * this->nplane;
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;

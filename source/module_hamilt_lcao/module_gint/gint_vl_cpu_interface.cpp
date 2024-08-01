@@ -7,7 +7,6 @@ void Gint::gint_kernel_vlocal(Gint_inout* inout) {
     ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal");
     const UnitCell& ucell = *this->ucell;
     const int max_size = this->gridt->max_atom;
-    const int LD_pool = max_size * ucell.nwmax;
     const int lgd = this->gridt->lgd;
     const int nnrg = this->gridt->nnrg;
     const int ncyz = this->ny * this->nplane;
@@ -129,7 +128,6 @@ void Gint::gint_kernel_dvlocal(Gint_inout* inout) {
     ModuleBase::timer::tick("Gint_interface", "cal_gint_dvlocal");
     const UnitCell& ucell = *this->ucell;
     const int max_size = this->gridt->max_atom;
-    const int LD_pool = max_size * ucell.nwmax;
     const int lgd = this->gridt->lgd;
     const int nnrg = this->gridt->nnrg;
     const int ncyz = this->ny * this->nplane;
@@ -237,7 +235,6 @@ void Gint::gint_kernel_vlocal_meta(Gint_inout* inout) {
     ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal_meta");
     const UnitCell& ucell = *this->ucell;
     const int max_size = this->gridt->max_atom;
-    const int LD_pool = max_size * ucell.nwmax;
     const int lgd = this->gridt->lgd;
     const int nnrg = this->gridt->nnrg;
     const int ncyz = this->ny * this->nplane;
@@ -295,7 +292,7 @@ void Gint::gint_kernel_vlocal_meta(Gint_inout* inout) {
                                     block_iw.data(), block_index.data(), block_size.data(), cal_flag.get_ptr_2D());
 
     //evaluate psi and dpsi on grids
-        int LD_pool = block_index[na_grid];
+        const int LD_pool = block_index[na_grid];
         ModuleBase::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
         ModuleBase::Array_Pool<double> dpsir_ylm_x(this->bxyz, LD_pool);
         ModuleBase::Array_Pool<double> dpsir_ylm_y(this->bxyz, LD_pool);
