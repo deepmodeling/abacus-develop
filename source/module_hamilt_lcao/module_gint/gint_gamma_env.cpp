@@ -13,29 +13,25 @@ void Gint_Gamma::cal_env(const double* wfc, double* rho, UnitCell& ucell)
     // it's a uniform grid to save orbital values, so the delta_r is a constant.
     const double delta_r = this->gridt->dr_uniform;
     const int max_size = this->gridt->max_atom;
+    if (max_size <= 0){
+        ModuleBase::WARNING_QUIT("Gint_Gamma::cal_env",
+                                    "the max_size is less than 0!");
+    }
     const int LD_pool = max_size * ucell.nwmax;
+    const int nbx = this->gridt->nbx;
+    const int nby = this->gridt->nby;
+    const int nbz_start = this->gridt->nbzp_start;
+    const int nbz = this->gridt->nbzp;
+    const int ncyz = this->ny * this->nplane; // mohan add 2012-03-25
+    const int bxyz = this->bxyz;
 
-    if (max_size != 0)
+    #pragma omp parallel 
     {
-        const int nbx = this->gridt->nbx;
-        const int nby = this->gridt->nby;
-        const int nbz_start = this->gridt->nbzp_start;
-        const int nbz = this->gridt->nbzp;
-        const int ncyz = this->ny * this->nplane; // mohan add 2012-03-25
-        const int bxyz = this->bxyz;
         std::vector<int> block_iw(max_size, 0);
         std::vector<int> block_index(max_size+1, 0);
         std::vector<int> block_size(max_size, 0);
         std::vector<int> vindex(bxyz,0);
-#ifdef _OPENMP
-#pragma omp parallel private(block_iw, block_index, block_size, vindex)
-{
-    block_iw.assign(max_size, 0);
-    block_index.assign(max_size+1, 0);
-    block_size.assign(max_size, 0);
-    vindex.assign(bxyz, 0);
-#pragma omp for
-#endif
+        #pragma omp for
         for (int grid_index = 0; grid_index < this->nbxx; grid_index++)
         {
 
@@ -101,9 +97,6 @@ void Gint_Gamma::cal_env(const double* wfc, double* rho, UnitCell& ucell)
                 }     // ib
             }         // ia1
         }
-#ifdef _OPENMP
-}
-#endif
-}
+    }
     return;
 }

@@ -20,27 +20,23 @@ void Gint_k::cal_env_k(int ik,
     const double delta_r = this->gridt->dr_uniform;
     const int max_size = this->gridt->max_atom;
     const int LD_pool = max_size * ucell.nwmax;
+    if (max_size <= 0){
+        ModuleBase::WARNING_QUIT("Gint_Gamma::cal_env",
+                                    "the max_size is less than 0!");
+    }
+    const int nbx = this->gridt->nbx;
+    const int nby = this->gridt->nby;
+    const int nbz_start = this->gridt->nbzp_start;
+    const int nbz = this->gridt->nbzp;
+    const int ncyz = this->ny * this->nplane; // mohan add 2012-03-25
 
-    if (max_size != 0)
+    #pragma omp parallel 
     {
-        const int nbx = this->gridt->nbx;
-        const int nby = this->gridt->nby;
-        const int nbz_start = this->gridt->nbzp_start;
-        const int nbz = this->gridt->nbzp;
-        const int ncyz = this->ny * this->nplane; // mohan add 2012-03-25
         std::vector<int> vindex(this->bxyz, 0);
         std::vector<int> block_iw(max_size, 0);
         std::vector<int> block_index(max_size + 1, 0);
         std::vector<int> block_size(max_size, 0);
-#ifdef _OPENMP
-#pragma omp parallel private(vindex, block_iw, block_index, block_size)
-{
-    vindex.assign(this->bxyz, 0);
-    block_iw.assign(max_size, 0);
-    block_index.assign(max_size + 1, 0);
-    block_size.assign(max_size, 0);
-    #pragma omp for
-#endif  
+        #pragma omp for
         for (int grid_index = 0; grid_index < this->nbxx; grid_index++)
         {
 
@@ -138,9 +134,6 @@ void Gint_k::cal_env_k(int ik,
                 }     // ib
             }         // ia1
         } // i
-#ifdef _OPENMP
-}
-#endif
     }
     ModuleBase::timer::tick("Gint_k", "cal_env_k");
     return;
