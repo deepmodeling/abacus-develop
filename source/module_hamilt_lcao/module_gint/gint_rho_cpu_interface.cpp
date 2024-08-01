@@ -13,16 +13,12 @@ void Gint::gint_kernel_rho(Gint_inout* inout) {
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
 
+#pragma omp parallel 
+{
     std::vector<int> block_iw(max_size, 0);
     std::vector<int> block_index(max_size+1, 0);
     std::vector<int> block_size(max_size, 0);
     std::vector<int> vindex(bxyz, 0);
-#pragma omp parallel private(block_iw, block_index, block_size,vindex)
-{
-    block_iw.assign(max_size, 0);
-    block_index.assign(max_size+1, 0);
-    block_size.assign(max_size, 0);
-    vindex.assign(bxyz, 0);
 #pragma omp for
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
         const int na_grid = this->gridt->how_many_atoms[grid_index];
@@ -118,16 +114,13 @@ void Gint::gint_kernel_tau(Gint_inout* inout) {
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
 
+
+#pragma omp parallel 
+{
     std::vector<int> block_iw(max_size, 0);
     std::vector<int> block_index(max_size+1, 0);
     std::vector<int> block_size(max_size, 0);
     std::vector<int> vindex(bxyz, 0);
-#pragma omp parallel private(block_iw, block_index, block_size,vindex)
-{
-    block_iw.assign(max_size, 0);
-    block_index.assign(max_size+1, 0);
-    block_size.assign(max_size, 0);
-    vindex.assign(bxyz, 0);
 #pragma omp for
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
         const int na_grid = this->gridt->how_many_atoms[grid_index];

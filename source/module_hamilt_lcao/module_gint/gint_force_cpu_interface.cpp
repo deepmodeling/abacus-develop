@@ -12,10 +12,6 @@ void Gint::gint_kernel_force(Gint_inout* inout) {
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
 
-    std::vector<int> block_iw(max_size,0);
-    std::vector<int> block_index(max_size+1,0);
-    std::vector<int> block_size(max_size,0);
-    std::vector<double> vldr3(this->bxyz,0.0);
     ModuleBase::matrix* fvl_dphi_thread=inout->fvl_dphi;
     ModuleBase::matrix* svl_dphi_thread=inout->svl_dphi;
 #pragma omp parallel private(fvl_dphi_thread, svl_dphi_thread, \
@@ -29,10 +25,10 @@ void Gint::gint_kernel_force(Gint_inout* inout) {
         svl_dphi_thread=new ModuleBase::matrix(*inout->svl_dphi);
         svl_dphi_thread->zero_out();
     }
-    block_iw.assign(max_size,0);
-    block_index.assign(max_size+1,0);
-    block_size.assign(max_size,0);
-    vldr3.assign(this->bxyz,0.0);
+    std::vector<int> block_iw(max_size,0);
+    std::vector<int> block_index(max_size+1,0);
+    std::vector<int> block_size(max_size,0);
+    std::vector<double> vldr3(this->bxyz,0.0);
 #pragma omp for
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
         const int na_grid = this->gridt->how_many_atoms[grid_index];
@@ -152,16 +148,9 @@ void Gint::gint_kernel_force_meta(Gint_inout* inout) {
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
 
-    std::vector<int> block_iw(max_size,0);
-    std::vector<int> block_index(max_size+1,0);
-    std::vector<int> block_size(max_size,0);
-    std::vector<double> vldr3(this->bxyz,0.0);
-    std::vector<double> vkdr3(this->bxyz,0.0);
     ModuleBase::matrix* fvl_dphi_thread=inout->fvl_dphi;
     ModuleBase::matrix* svl_dphi_thread=inout->svl_dphi;
-#pragma omp parallel private(fvl_dphi_thread, svl_dphi_thread,\
-                            block_iw, block_index, block_size,\
-                            vldr3,vkdr3)
+#pragma omp parallel private(fvl_dphi_thread, svl_dphi_thread)
 {
     if (inout->isforce) {
         fvl_dphi_thread=new ModuleBase::matrix(*inout->fvl_dphi);
@@ -171,11 +160,11 @@ void Gint::gint_kernel_force_meta(Gint_inout* inout) {
         svl_dphi_thread=new ModuleBase::matrix(*inout->svl_dphi);
         svl_dphi_thread->zero_out();
     }
-    block_iw.assign(max_size,0);
-    block_index.assign(max_size+1,0);
-    block_size.assign(max_size,0);
-    vldr3.assign(this->bxyz,0.0);
-    vkdr3.assign(this->bxyz,0.0);
+    std::vector<int> block_iw(max_size,0);
+    std::vector<int> block_index(max_size+1,0);
+    std::vector<int> block_size(max_size,0);
+    std::vector<double> vldr3(this->bxyz,0.0);
+    std::vector<double> vkdr3(this->bxyz,0.0);
 #pragma omp for
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
         const int na_grid = this->gridt->how_many_atoms[grid_index];

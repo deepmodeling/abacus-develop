@@ -22,10 +22,7 @@ void Gint::gint_kernel_vlocal(Gint_inout* inout) {
         }
     }
 
-    std::vector<int> block_iw(max_size,0);
-    std::vector<int> block_index(max_size+1,0);
-    std::vector<int> block_size(max_size,0);
-    std::vector<double> vldr3(this->bxyz,0.0);
+
     /**
      * @brief Use a pointer. When in OpenMP, it points to a newly allocated memory, 
      * and finally adds back to the existing memory. Otherwise, it points to 
@@ -39,8 +36,7 @@ void Gint::gint_kernel_vlocal(Gint_inout* inout) {
         
         pvpR_thread=this->pvpR_reduced[inout->ispin]; 
     }
-#pragma omp parallel private(hRGint_thread, pvpR_thread, \
-                            block_iw, block_index, block_size,vldr3)
+#pragma omp parallel private(hRGint_thread, pvpR_thread)
 {   /**
      * @brief When in OpenMP, it points to a newly allocated memory,
     */
@@ -50,10 +46,10 @@ void Gint::gint_kernel_vlocal(Gint_inout* inout) {
         pvpR_thread = new double[nnrg];
         ModuleBase::GlobalFunc::ZEROS(pvpR_thread, nnrg);
     }
-    block_iw.assign(max_size,0);
-    block_index.assign(max_size+1,0);
-    block_size.assign(max_size,0);
-    vldr3.assign(this->bxyz,0.0);
+    std::vector<int> block_iw(max_size,0);
+    std::vector<int> block_index(max_size+1,0);
+    std::vector<int> block_size(max_size,0);
+    std::vector<double> vldr3(this->bxyz,0.0);
     #pragma omp for
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
         const int na_grid = this->gridt->how_many_atoms[grid_index];
@@ -155,10 +151,7 @@ void Gint::gint_kernel_dvlocal(Gint_inout* inout) {
         ModuleBase::WARNING_QUIT("Gint_interface::cal_gint","dvlocal only for k point!");
     }
 
-    std::vector<int> block_iw(max_size,0);
-    std::vector<int> block_index(max_size+1,0);
-    std::vector<int> block_size(max_size,0);
-    std::vector<double> vldr3(this->bxyz,0.0);
+
 
     ModuleBase::GlobalFunc::ZEROS(this->pvdpRx_reduced[inout->ispin],nnrg);
     ModuleBase::GlobalFunc::ZEROS(this->pvdpRy_reduced[inout->ispin],nnrg);
@@ -167,8 +160,7 @@ void Gint::gint_kernel_dvlocal(Gint_inout* inout) {
     double* pvdpRy_thread = this->pvdpRy_reduced[inout->ispin];
     double* pvdpRz_thread = this->pvdpRz_reduced[inout->ispin];
 
-#pragma omp parallel private(pvdpRx_thread, pvdpRy_thread, pvdpRz_thread,\
-                            block_iw, block_index, block_size,vldr3)
+#pragma omp parallel private(pvdpRx_thread, pvdpRy_thread, pvdpRz_thread)
 {
     pvdpRx_thread = new double[nnrg];
     ModuleBase::GlobalFunc::ZEROS(pvdpRx_thread, nnrg);
@@ -176,10 +168,10 @@ void Gint::gint_kernel_dvlocal(Gint_inout* inout) {
     ModuleBase::GlobalFunc::ZEROS(pvdpRy_thread, nnrg);
     pvdpRz_thread = new double[nnrg];
     ModuleBase::GlobalFunc::ZEROS(pvdpRz_thread, nnrg);
-    block_iw.assign(max_size,0);
-    block_index.assign(max_size+1,0);
-    block_size.assign(max_size,0);
-    vldr3.assign(this->bxyz,0.0);
+    std::vector<int> block_iw(max_size,0);
+    std::vector<int> block_index(max_size+1,0);
+    std::vector<int> block_size(max_size,0);
+    std::vector<double> vldr3(this->bxyz,0.0);
 #pragma omp for
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
         const int na_grid = this->gridt->how_many_atoms[grid_index];
@@ -278,12 +270,6 @@ void Gint::gint_kernel_vlocal_meta(Gint_inout* inout) {
         }
     }
 
-    std::vector<int> block_iw(max_size,0);
-    std::vector<int> block_index(max_size+1,0);
-    std::vector<int> block_size(max_size,0);
-    std::vector<double> vldr3(this->bxyz,0.0);
-    std::vector<double> vkdr3(this->bxyz,0.0);
-
     // define HContainer here to reference.
     hamilt::HContainer<double>* hRGint_thread;
     double* pvpR_thread; 
@@ -293,9 +279,7 @@ void Gint::gint_kernel_vlocal_meta(Gint_inout* inout) {
         
         pvpR_thread=this->pvpR_reduced[inout->ispin]; 
     }
-#pragma omp parallel private(hRGint_thread, pvpR_thread, \
-                            block_iw, block_index, block_size,\
-                            vldr3, vkdr3)
+#pragma omp parallel private(hRGint_thread, pvpR_thread)
 {
     // define HContainer here to reference.
     //Under the condition of gamma_only, hRGint will be instantiated.
@@ -307,11 +291,11 @@ void Gint::gint_kernel_vlocal_meta(Gint_inout* inout) {
         pvpR_thread = new double[nnrg];
         ModuleBase::GlobalFunc::ZEROS(pvpR_thread, nnrg);
     }
-    block_iw.assign(max_size,0);
-    block_index.assign(max_size+1,0);
-    block_size.assign(max_size,0);
-    vldr3.assign(this->bxyz,0.0);
-    vkdr3.assign(this->bxyz,0.0);
+    std::vector<int> block_iw(max_size,0);
+    std::vector<int> block_index(max_size+1,0);
+    std::vector<int> block_size(max_size,0);
+    std::vector<double> vldr3(this->bxyz,0.0);
+    std::vector<double> vkdr3(this->bxyz,0.0);
 #pragma omp for
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
         const int na_grid = this->gridt->how_many_atoms[grid_index];
