@@ -151,44 +151,50 @@ std::string get_device_flag(const std::string &device,
                             const std::string &ks_solver,
                             const std::string &basis_type,
                             const bool &gamma_only) {
-  if (device == "cpu") {
-    return "cpu";
-  } else if (device == "gpu") {
+if (device == "cpu") {
+  return "cpu"; // no extra checks required
+}
+std::string error_message;
+if (device != "" and device != "gpu")
+{
+  error_message += "Parameter \"device\" can only be set to \"cpu\" or \"gpu\"!";
+  ModuleBase::WARNING_QUIT("device", error_message);
+}
+
+// Get available GPU count
+int device_count = -1;
 #if ((defined __CUDA) || (defined __ROCM))
-    int device_num = -1;
 #if defined(__CUDA)
-    cudaGetDeviceCount(&device_num);
+cudaGetDeviceCount(&device_count);
 #elif defined(__ROCM)
-    hipGetDeviceCount(&device_num);
+hipGetDeviceCount(&device_count);
 #endif
-    if (device_num <= 0) {
-      std::string msg = "Cannot find GPU on this computer!";
-      ModuleBase::WARNING_QUIT("device", msg);
-      return "unknown";
-    }
-#else
-    std::string msg = "The GPU is not supported in this build!";
-    ModuleBase::WARNING_QUIT("device", msg);
-    return "unknown";
+if (device_count <= 0)
+{
+  error_message += "Cannot find GPU on this computer!\n";
+}
+#else // CPU only
+error_message += "ABACUS is built with CPU support only. Please rebuild with GPU support.\n";
 #endif
-    if (basis_type == "lcao_in_pw") {
-      std::string msg =
-          "The GPU currently does not support the basis type \"lcao_in_pw\"!";
-      ModuleBase::WARNING_QUIT("device", msg);
-      return "unknown";
-    } else if (basis_type == "lcao" && gamma_only == false) {
-      std::string msg = "The GPU currently does not support the basis type "
-                        "\"lcao\" with \"gamma_only\" set to \"0\"!";
-      ModuleBase::WARNING_QUIT("device", msg);
-      return "unknow";
-    } else {
-      return "gpu";
-    }
-  } else {
-    std::string msg = "INPUT device can only be set to \"cpu\" or \"gpu\"!";
-    ModuleBase::WARNING_QUIT("device", msg);
-    return "unknown";
-  }
+
+if (basis_type == "lcao_in_pw") {
+  error_message +=
+      "The GPU currently does not support the basis type \"lcao_in_pw\"!";
+}
+if (basis_type == "lcao" && gamma_only == false) {
+  error_message += "The GPU currently does not support the basis type "
+                    "\"lcao\" with \"gamma_only\" set to \"0\"!";
+}
+if(error_message.empty())
+{
+  return "gpu"; // possibly automatically set to GPU
+}
+else if (device == "gpu")
+{
+  ModuleBase::WARNING_QUIT("device", error_message);
+}
+else { return "cpu";
+}
 }
 
 int get_device_kpar(const int &kpar) {
