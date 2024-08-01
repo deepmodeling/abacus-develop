@@ -33,6 +33,7 @@
 #include "module_hsolver/kernels/math_kernel_op.h"
 #include "module_io/berryphase.h"
 #include "module_io/cube_io.h"
+#include "module_io/get_pchg_pw.h"
 #include "module_io/numerical_basis.h"
 #include "module_io/numerical_descriptor.h"
 #include "module_io/to_wannier90_pw.h"
@@ -99,7 +100,8 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
 }
 
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::before_all_runners(const Input_para& inp, UnitCell& ucell) {
+void ESolver_KS_PW<T, Device>::before_all_runners(const Input_para& inp, UnitCell& ucell)
+{
     // 1) call before_all_runners() of ESolver_KS
     ESolver_KS<T, Device>::before_all_runners(inp, ucell);
 
@@ -165,7 +167,6 @@ void ESolver_KS_PW<T, Device>::before_all_runners(const Input_para& inp, UnitCel
         this->pelec->fixed_weights(PARAM.inp.ocp_kb, GlobalV::NBANDS, GlobalV::nelec);
     }
 }
-
 
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::before_scf(const int istep)
@@ -353,9 +354,11 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, c
         hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR = ethr;
         hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX = GlobalV::PW_DIAG_NMAX;
 
-        this->phsol->solve(this->p_hamilt,    // hamilt::Hamilt<T, Device>* pHamilt,
-                           this->kspw_psi[0], // psi::Psi<T, Device>& psi,
-                           this->pelec,       // elecstate::ElecState<T, Device>* pelec,
+      
+        hsolver::HSolverPW<T, Device> hsolver_pw_obj(this->pw_wfc, &this->wf, this->init_psi);
+        hsolver_pw_obj.solve(this->p_hamilt,      // hamilt::Hamilt<T, Device>* pHamilt,
+                           this->kspw_psi[0],        // psi::Psi<T, Device>& psi,
+                           this->pelec,               // elecstate::ElecState<T, Device>* pelec,
                            PARAM.inp.ks_solver,
                            PARAM.inp.calculation,
                            PARAM.inp.basis_type,
@@ -370,6 +373,8 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, c
                            hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR,
 
                            false);
+      
+        this->init_psi = true;
 
         if (PARAM.inp.out_bandgap)
         {
@@ -658,127 +663,31 @@ void ESolver_KS_PW<T, Device>::after_scf(const int istep)
                             this->psi[0].size());
     }
 
-    // Get bands_to_print through public function of INPUT (returns a const
-    // pointer to string)
+    // Calculate band-decomposed (partial) charge density
     const std::vector<int> bands_to_print = PARAM.inp.bands_to_print;
     if (bands_to_print.size() > 0)
     {
-        // bands_picked is a vector of 0s and 1s, where 1 means the band is
-        // picked to output
-        std::vector<int> bands_picked;
-        bands_picked.resize(this->kspw_psi->get_nbands());
-        ModuleBase::GlobalFunc::ZEROS(bands_picked.data(), this->kspw_psi->get_nbands());
-
-        // Check if length of bands_to_print is valid
-        if (static_cast<int>(bands_to_print.size()) > this->kspw_psi->get_nbands())
-        {
-            ModuleBase::WARNING_QUIT("ESolver_KS_PW::after_scf",
-                                     "The number of bands specified by `bands_to_print` in the "
-                                     "INPUT file exceeds `nbands`!");
-        }
-
-        // Check if all elements in bands_picked are 0 or 1
-        for (int value: bands_to_print)
-        {
-            if (value != 0 && value != 1)
-            {
-                ModuleBase::WARNING_QUIT("ESolver_KS_PW::after_scf",
-                                         "The elements of `bands_to_print` must be either 0 or 1. "
-                                         "Invalid values found!");
-            }
-        }
-
-        // Fill bands_picked with values from bands_to_print
-        // Remaining bands are already set to 0
-        int length = std::min(static_cast<int>(bands_to_print.size()), this->kspw_psi->get_nbands());
-        for (int i = 0; i < length; ++i)
-        {
-            // bands_to_print rely on function parse_expression
-            // Initially designed for ocp_set, which can be double
-            bands_picked[i] = static_cast<int>(bands_to_print[i]);
-        }
-
-        std::complex<double>* wfcr = new std::complex<double>[this->pw_rho->nxyz];
-        double* rho_band = new double[this->pw_rho->nxyz];
-
-        for (int ib = 0; ib < this->kspw_psi->get_nbands(); ++ib)
-        {
-            // Skip the loop iteration if bands_picked[ib] is 0
-            if (!bands_picked[ib])
-            {
-                continue;
-            }
-
-            for (int i = 0; i < this->pw_rho->nxyz; i++)
-            {
-                // Initialize rho_band to zero for each band
-                rho_band[i] = 0.0;
-            }
-
-            for (int ik = 0; ik < this->kv.get_nks(); ik++)
-            {
-                this->psi->fix_k(ik);
-                this->pw_wfc->recip_to_real(this->ctx, &psi[0](ib, 0), wfcr, ik);
-
-                double w1 = static_cast<double>(this->kv.wk[ik] / GlobalC::ucell.omega);
-
-                for (int i = 0; i < this->pw_rho->nxyz; i++)
-                {
-                    rho_band[i] += std::norm(wfcr[i]) * w1;
-                }
-            }
-
-            // Symmetrize the charge density, otherwise the results are incorrect if the symmetry is on
-            std::cout << " Symmetrizing band-decomposed charge density..." << std::endl;
-            Symmetry_rho srho;
-            for (int is = 0; is < GlobalV::NSPIN; is++)
-            {
-                // Use vector instead of raw pointers
-                std::vector<double*> rho_save_pointers(GlobalV::NSPIN, rho_band);
-                std::vector<std::vector<std::complex<double>>> rhog(
-                    GlobalV::NSPIN,
-                    std::vector<std::complex<double>>(this->pelec->charge->ngmc));
-
-                // Convert vector of vectors to vector of pointers
-                std::vector<std::complex<double>*> rhog_pointers(GlobalV::NSPIN);
-                for (int s = 0; s < GlobalV::NSPIN; s++)
-                {
-                    rhog_pointers[s] = rhog[s].data();
-                }
-
-                srho.begin(is,
-                           rho_save_pointers.data(),
-                           rhog_pointers.data(),
-                           this->pelec->charge->ngmc,
-                           nullptr,
-                           this->pw_rhod,
-                           GlobalC::Pgrid,
-                           GlobalC::ucell.symm);
-            }
-
-            std::stringstream ssc;
-            ssc << GlobalV::global_out_dir << "BAND" << ib + 1 << "_CHG.cube"; // band index starts from 1
-
-            ModuleIO::write_cube(
-#ifdef __MPI
-                this->pw_big->bz,
-                this->pw_big->nbz,
-                this->pw_rhod->nplane,
-                this->pw_rhod->startz_current,
-#endif
-                rho_band,
-                0,
-                GlobalV::NSPIN,
-                0,
-                ssc.str(),
-                this->pw_rhod->nx,
-                this->pw_rhod->ny,
-                this->pw_rhod->nz,
-                0.0,
-                &(GlobalC::ucell));
-        }
-        delete[] wfcr;
-        delete[] rho_band;
+        ModuleIO::get_pchg_pw(bands_to_print,
+                              this->kspw_psi->get_nbands(),
+                              GlobalV::NSPIN,
+                              this->pw_rhod->nx,
+                              this->pw_rhod->ny,
+                              this->pw_rhod->nz,
+                              this->pw_rhod->nxyz,
+                              this->kv.get_nks(),
+                              this->kv.isk,
+                              this->kv.wk,
+                              this->pw_big->bz,
+                              this->pw_big->nbz,
+                              this->pelec->charge->ngmc,
+                              &GlobalC::ucell,
+                              this->psi,
+                              this->pw_rhod,
+                              this->pw_wfc,
+                              this->ctx,
+                              GlobalC::Pgrid,
+                              GlobalV::global_out_dir,
+                              PARAM.inp.if_separate_k);
     }
 }
 

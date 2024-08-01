@@ -208,12 +208,16 @@ void HSolverPW<T, Device>::paw_func_after_kloop(psi::Psi<T, Device>& psi, elecst
 #endif
 
 template <typename T, typename Device>
-HSolverPW<T, Device>::HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in, wavefunc* pwf_in)
+HSolverPW<T, Device>::HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in,
+                                wavefunc* pwf_in,
+                                const bool initialed_psi_in)
 {
     this->classname = "HSolverPW";
     this->wfc_basis = wfc_basis_in;
     this->pwf = pwf_in;
     this->diag_ethr = GlobalV::PW_DIAG_THR;
+
+    this->initialed_psi = initialed_psi_in;
 }
 
 template <typename T, typename Device>
@@ -343,12 +347,6 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
         pes->ekb.c,
         eigenvalues.data(),
         pes->ekb.nr * pes->ekb.nc);
-
-    // psi only should be initialed once for PW
-    if (!this->initialed_psi)
-    {
-        this->initialed_psi = true;
-    }
 
     if (skip_charge)
     {
