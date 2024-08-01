@@ -143,12 +143,12 @@ void Broyden_Mixing::tem_cal_coef(const Mixing_Data& mdata, std::function<double
         int info;
         int m = 1;
         // gamma means the coeficients for mixing
-        // nut now gamma store <dFi|Fm>, namely c
+        // but now gamma store <dFi|Fm>, namely c
         std::vector<double> gamma(ndim_cal_dF);
         for (int i = 0; i < ndim_cal_dF; ++i)
         {
             FPTYPE* dFi = FP_dF + i * length;
-            work[i] = inner_product(dFi, FP_F);
+            gamma[i] = inner_product(dFi, FP_F);
         }
         // solve aG = c 
         dsysv_(&uu, &ndim_cal_dF, &m, beta_tmp.c, &ndim_cal_dF, iwork, gamma.data(), &ndim_cal_dF, work, &ndim_cal_dF, &info);
