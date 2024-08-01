@@ -25,15 +25,21 @@ void RadialProjection::RadialProjector::_build_sbt_tab(const int nr,
     std::iota(qgrid.begin(), qgrid.end(), 0);
     std::transform(qgrid.begin(), qgrid.end(), qgrid.begin(), [dq](const double& q){return q*dq;});
 
-    ModuleBase::SphericalBesselTransformer sbt_(true);
+    ModuleBase::SphericalBesselTransformer sbt_(true); // enable cache
     std::vector<double> _temp(nq);
     sbt_.direct(l[0], nr, r, radials[0], nq, qgrid.data(), _temp.data());
+    // the SphericalBesselTransformer's result is multiplied by one extra factor sqrt(2/pi), should remove it
+    // see module_base/spherical_bessel_transformer.h and module_base/spherical_bessel_transformer.cpp:328
+    const double pref = std::sqrt(2.0/std::acos(-1.0)); 
     if(cubspl_.get()) { cubspl_.reset(); } // release the old one if it is not the first time
+    std::for_each(_temp.begin(), _temp.end(), [pref](double& x){x = x/pref;});
     cubspl_ = std::unique_ptr<ModuleBase::CubicSpline>(new ModuleBase::CubicSpline(nq, qgrid.data(), _temp.data()));
+
     cubspl_->reserve(nrad);
     for(int i = 1; i < nrad; i++)
     {
         sbt_.direct(l[i], nr, r, radials[i], nq, qgrid.data(), _temp.data());
+        std::for_each(_temp.begin(), _temp.end(), [pref](double& x){x = x/pref;});
         cubspl_->add(_temp.data());
     }
 }
@@ -55,9 +61,9 @@ void RadialProjection::RadialProjector::_build_sbt_tab(const std::vector<double>
 
 void RadialProjection::RadialProjector::sbtft(const std::vector<ModuleBase::Vector3<double>>& qs,
                                               std::vector<std::complex<double>>& out,
+                                              const char type,
                                               const double& omega,
-                                              const double& tpiba,
-                                              const char type)
+                                              const double& tpiba)
 {
     // first cache the Ylm values
     const int lmax_ = *std::max_element(l_.begin(), l_.end());
@@ -150,7 +156,8 @@ void RadialProjection::_mask_func(std::vector<double>& mask)
     src += " 0.69250769E-04 0.55873673E-04 0.44461100E-04 0.34793983E-04";
     src += " 0.26671449E-04 0.19909778E-04 0.14341381E-04 0.98138215E-05";
     std::stringstream ss(src);
-    for(int i = 0; i < mask.size(); i++)
+    mask[0] = 1.0;
+    for(int i = 1; i < mask.size(); i++)
     {
         ss >> mask[i];
     }

@@ -1,6 +1,7 @@
 #include "realspace_proj_op_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/radial_projection.h"
 #include "module_basis/module_nao/projgen.h"
+#include "module_basis/module_nao/atomic_radials.h"
 #include <cassert>
 #include <numeric>
 namespace hamilt
@@ -13,8 +14,10 @@ namespace hamilt
                                                       double& dr,
                                                       std::vector<std::vector<double>>& radials)
     {
-        // waiting for AtomicRadials::read_abacus_orb to be static or being overloaded a
-        // static version. Then this implementation will be removed.
+        std::string elem;
+        double ecut;
+        std::ifstream ifs(forb);
+        AtomicRadials::read_abacus_orb(ifs, elem, ecut, nr, dr, nzeta, radials); 
     }
 
     template<typename T, typename Device>
@@ -48,9 +51,10 @@ namespace hamilt
         
         rp.sbtft(q,             // std::vector<ModuleBase::Vector3<double>>
                  proj_q_tab_,   // std::vector<std::complex<double>>
+                 'r',           // char, 'r' for <G+k|p>, 'l' for <p|G+k>
                  omega,         // double
-                 tpiba,         // double
-                 'r');          // char, 'r' for <G+k|p>, 'l' for <p|G+k>
+                 tpiba          // double
+                 );
     }
 
     template<typename T, typename Device>
@@ -124,8 +128,9 @@ namespace hamilt
         
         rp.sbtft(q,             // std::vector<ModuleBase::Vector3<double>>
                  proj_q_tab_,   // std::vector<std::complex<double>>
+                 'r',           // char, 'r' for <G+k|p>, 'l' for <p|G+k>
                  omega,         // double
-                 tpiba,         // double
-                 'r');          // char, 'r' for <G+k|p>, 'l' for <p|G+k>
+                 tpiba          // double
+                 );
     }
 }

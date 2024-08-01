@@ -105,9 +105,9 @@ namespace RadialProjection
             
             void sbtft(const std::vector<ModuleBase::Vector3<double>>& qs,
                        std::vector<std::complex<double>>& out,
-                       const double& omega,
-                       const double& tpiba,
-                       const char type = 'r'); // 'r' for ket |>, 'l' for bra <|
+                       const char type = 'r',
+                       const double& omega = 1.0,
+                       const double& tpiba = 1.0); // 'r' for ket |>, 'l' for bra <|
             
             void sbfft(); // interface for SBFFT
 
