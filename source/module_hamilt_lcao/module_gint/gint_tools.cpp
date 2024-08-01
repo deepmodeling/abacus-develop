@@ -166,11 +166,11 @@ void cal_grid_atom_distance(double &distance,
 							int ib,
                             double* dr,
                             const double* mt,
-                            std::vector<std::vector<double>>& meshcell_pos)
+                            const double* meshcell_pos)
 {
 	for (int i=0;i<3;i++)
 	{
-		dr[i]=meshcell_pos[ib][i]+mt[i];
+		dr[i]=meshcell_pos[i]+mt[i];
 	}
 	distance = std::sqrt(dr[0] * dr[0] + dr[1] * dr[1] + dr[2] * dr[2]); 
 	if (distance < 1.0E-9) distance += 1.0E-9;

@@ -241,7 +241,7 @@ void cal_grid_atom_distance(double &distance,
                             int ib,
                             double* dr,
                             const double* mt,
-                            std::vector<std::vector<double>> meshcell_pos);
+                            const double* meshcell_pos);
                             
 void spline_interpolation(const double distance,const double delta_r,
                         const int nw,const bool* iw2_new,
