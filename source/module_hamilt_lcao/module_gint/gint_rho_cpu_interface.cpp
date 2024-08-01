@@ -5,11 +5,8 @@
 void Gint::gint_kernel_rho(Gint_inout* inout) {
     ModuleBase::TITLE("Gint_interface", "cal_gint_rho");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_rho");
-    const UnitCell& ucell = *this->ucell;
     const int max_size = this->gridt->max_atom;
-    const int lgd = this->gridt->lgd;
     const int ncyz = this->ny * this->nplane;
-    const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
 
 #pragma omp parallel 
@@ -105,11 +102,8 @@ void Gint::gint_kernel_rho(Gint_inout* inout) {
 void Gint::gint_kernel_tau(Gint_inout* inout) {
     ModuleBase::TITLE("Gint_interface", "cal_gint_tau");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_tau");
-    const UnitCell& ucell = *this->ucell;
     const int max_size = this->gridt->max_atom;
-    const int lgd = this->gridt->lgd;
     const int ncyz = this->ny * this->nplane;
-    const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
 
 
