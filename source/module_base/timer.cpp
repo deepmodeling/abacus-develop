@@ -255,6 +255,7 @@ void timer::print_all(std::ofstream &ofs)
 	std::vector<int> calls;
 	std::vector<double> avgs;
 	std::vector<double> pers;
+	const double TIME_EPSILON = 1e-9;
 	for(auto &timer_pool_order_A : timer_pool_order)
 	{
 		const std::string &class_name = timer_pool_order_A.first.first;
@@ -268,7 +269,11 @@ void timer::print_all(std::ofstream &ofs)
 		times.push_back(timer_one.cpu_second);
 		calls.push_back(timer_one.calls);
 		avgs.push_back(timer_one.cpu_second/timer_one.calls);
-		pers.push_back(timer_one.cpu_second / timer_pool_order[0].second.cpu_second * 100);
+		if (timer_pool_order[0].second.cpu_second < TIME_EPSILON) {
+    		pers.push_back(0);
+		} else {
+    		pers.push_back(timer_one.cpu_second / timer_pool_order[0].second.cpu_second * 100);
+		}
 	}
 	assert(class_names.size() == names.size());
 	assert(class_names.size() == times.size());
