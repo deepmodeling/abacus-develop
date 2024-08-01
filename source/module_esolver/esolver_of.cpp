@@ -42,7 +42,6 @@ ESolver_OF::~ESolver_OF()
 
     delete[] this->nelec_;
     delete[] this->theta_;
-    delete[] this->mu_;
     delete[] this->task_;
     delete this->ptemp_rho_;
 
@@ -89,7 +88,7 @@ void ESolver_OF::before_all_runners(const Input_para& inp, UnitCell& ucell)
 
     // Setup the k points according to symmetry.
     kv.set(ucell.symm, GlobalV::global_kpoint_card, GlobalV::NSPIN, ucell.G, ucell.latvec, GlobalV::ofs_running);
-    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"INIT K-POINTS");
+    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
 
     // print information
     // mohan add 2021-01-30
@@ -232,10 +231,10 @@ void ESolver_OF::runner(int istep, UnitCell& ucell)
         this->energy_current_ = this->cal_energy();
 
         // check if the job is done
-		if (this->check_exit())
-		{
-			break;
-		}
+        if (this->check_exit())
+        {
+            break;
+        }
 
         // find the optimization direction and step lenghth theta according to the potential
         this->optimize(ucell);
@@ -311,7 +310,7 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
 
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
-        this->mu_[is] = 0;
+        this->pelec->eferm.get_ef(is) = 0.;
         this->theta_[is] = 0.;
         ModuleBase::GlobalFunc::ZEROS(this->pdLdphi_[is], this->pw_rho->nrxx);
         ModuleBase::GlobalFunc::ZEROS(this->pdEdphi_[is], this->pw_rho->nrxx);
@@ -348,11 +347,12 @@ void ESolver_OF::update_potential(UnitCell& ucell)
         {
             this->pdEdphi_[is][ir] = vr_eff[ir];
         }
-        this->mu_[is] = this->cal_mu(this->pphi_[is], this->pdEdphi_[is], this->nelec_[is]);
+        this->pelec->eferm.get_ef(is) = this->cal_mu(this->pphi_[is], this->pdEdphi_[is], this->nelec_[is]);
 
         for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
         {
-            this->pdLdphi_[is][ir] = this->pdEdphi_[is][ir] - 2. * this->mu_[is] * this->pphi_[is][ir];
+            this->pdLdphi_[is][ir]
+                = this->pdEdphi_[is][ir] - 2. * this->pelec->eferm.get_efval(is) * this->pphi_[is][ir];
         }
     }
 
@@ -459,14 +459,20 @@ bool ESolver_OF::check_exit()
     bool energyConv = false;
 
     if (this->normdLdphi_ < this->of_tolp_)
+    {
         potConv = true;
+    }
     if (this->iter_ >= 3 && std::abs(this->normdLdphi_ - this->normdLdphi_last_) < 1e-10
         && std::abs(this->normdLdphi_ - this->normdLdphi_llast_) < 1e-10)
+    {
         potHold = true;
+    }
 
     if (this->iter_ >= 3 && std::abs(this->energy_current_ - this->energy_last_) < this->of_tole_
         && std::abs(this->energy_current_ - this->energy_llast_) < this->of_tole_)
+    {
         energyConv = true;
+    }
 
     this->conv_ = (this->of_conv_ == "energy" && energyConv) || (this->of_conv_ == "potential" && potConv)
                   || (this->of_conv_ == "both" && potConv && energyConv);

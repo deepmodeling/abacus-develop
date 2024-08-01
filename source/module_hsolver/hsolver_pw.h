@@ -29,7 +29,9 @@ class HSolverPW : public HSolver<T, Device>
      */
     static bool diago_full_acc;
 
-    HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in, wavefunc* pwf_in);
+    HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in,
+              wavefunc* pwf_in,
+              const bool initialed_psi_in);
 
     /// @brief solve function for pw
     /// @param pHamilt interface to hamilt
@@ -40,6 +42,9 @@ class HSolverPW : public HSolver<T, Device>
     void solve(hamilt::Hamilt<T, Device>* pHamilt,
                psi::Psi<T, Device>& psi,
                elecstate::ElecState* pes,
+
+               double* out_eigenvalues,
+               
                const std::string method_in,
 
                const std::string calculation_type_in,
@@ -62,6 +67,24 @@ class HSolverPW : public HSolver<T, Device>
 
     virtual Real reset_diagethr(std::ofstream& ofs_running, const Real hsover_error, const Real drho, Real diag_ethr_in) override;
 
+    // ModulePW::PW_Basis_K* get_wfc_basis_p()
+    // {
+    //     return this->wfc_basis;
+    // };
+    // wavefunc* get_pwf_p()
+    // {
+    //     return this->pwf;
+    // };
+    // bool get_initpsi()
+    // {
+    //     return initialed_psi;
+    // };
+
+    void set_initpsi(bool init_psi)
+    {
+      this->initialed_psi = init_psi;
+    }
+    
   protected:
     // diago caller
     void hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
@@ -108,6 +131,7 @@ class HSolverPW : public HSolver<T, Device>
                         const int nk,
                         const int nband,
                         const bool diago_full_acc);
+
 
 #ifdef USE_PAW
     void paw_func_in_kloop(const int ik);
