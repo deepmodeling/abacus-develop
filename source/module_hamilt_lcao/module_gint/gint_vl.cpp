@@ -112,7 +112,7 @@ void Gint::cal_meshball_vlocal_gamma(
 
 void Gint::cal_meshball_vlocal_k(
 	int na_grid,
-	int LD_pool,
+	const int LD_pool,
 	int grid_index, 
 	int* block_size,
 	int* block_index,

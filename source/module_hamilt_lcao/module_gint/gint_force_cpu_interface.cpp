@@ -50,7 +50,7 @@ void Gint::gint_kernel_force(Gint_inout* inout) {
         Gint_Tools::get_block_info(*this->gridt, this->bxyz, na_grid, grid_index,
                                             block_iw.data(), block_index.data(), block_size.data(), 
                                             cal_flag.get_ptr_2D());
-        int LD_pool = block_index[na_grid];
+        const int LD_pool = block_index[na_grid];
 
     //evaluate psi and dpsi on grids
         ModuleBase::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
@@ -197,7 +197,7 @@ void Gint::gint_kernel_force_meta(Gint_inout* inout) {
         ModuleBase::Array_Pool<bool> cal_flag(this->bxyz,max_size);
         Gint_Tools::get_block_info(*this->gridt, this->bxyz, na_grid, grid_index, 
                                             block_iw.data(), block_index.data(), block_size.data(), cal_flag.get_ptr_2D());
-        int LD_pool = block_index[na_grid];
+        const int LD_pool = block_index[na_grid];
 
     //evaluate psi and dpsi on grids
         ModuleBase::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
