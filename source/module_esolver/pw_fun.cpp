@@ -81,12 +81,12 @@ void ESolver_KS_PW<T, Device>::hamilt2estates(const double ethr) {
 
         std::vector<bool> is_occupied(this->kspw_psi->get_nk() * this->kspw_psi->get_nbands(), true);
 
-        this->set_is_occupied(is_occupied,
-                              this->pelec,
-                              hsolver::DiagoIterAssist<T, Device>::SCF_ITER,
-                              this->kspw_psi->get_nk(),
-                              this->kspw_psi->get_nbands(),
-                              PARAM.inp.diago_full_acc);
+        elecstate::set_is_occupied(is_occupied,
+                                   this->pelec,
+                                   hsolver::DiagoIterAssist<T, Device>::SCF_ITER,
+                                   this->kspw_psi->get_nk(),
+                                   this->kspw_psi->get_nbands(),
+                                   PARAM.inp.diago_full_acc);
 
         hsolver::HSolverPW<T, Device> hsolver_pw_obj(this->pw_wfc, &this->wf, this->init_psi);
 
