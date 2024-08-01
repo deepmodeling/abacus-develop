@@ -35,7 +35,6 @@ void gint_fvl_gpu(const hamilt::HContainer<double>* dm,
     // checkCuda(cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync));
 
     const int nbzp = gridt.nbzp;
-    const int lgd = gridt.lgd;
     const int max_atom = gridt.max_atom;
     const int nwmax = ucell.nwmax;
     const int bxyz = gridt.bxyz;

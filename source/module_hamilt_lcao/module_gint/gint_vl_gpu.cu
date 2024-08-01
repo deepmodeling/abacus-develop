@@ -40,7 +40,6 @@ void gint_vl_gpu(hamilt::HContainer<double>* hRGint,
     const int max_atompair_per_z = max_atom * max_atom * nbzp;
     const double vfactor = ucell.omega / gridt.ncxyz;
     const int nczp = nbzp * gridt.bz;
-    const int nbxx = gridt.nbxx;  // total number of grid points
     std::vector<cudaStream_t> streams(num_streams);
 
     for (int i = 0; i < num_streams; i++)
