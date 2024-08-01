@@ -117,9 +117,9 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
             //                                 rhocg);
             this->deriv_drhoc(GlobalC::ppcell.numeric,
                               GlobalC::ucell.atoms[it].ncpp.msh,
-                              GlobalC::ucell.atoms[it].ncpp.r,
-                              GlobalC::ucell.atoms[it].ncpp.rab,
-                              GlobalC::ucell.atoms[it].ncpp.rho_atc,
+                              GlobalC::ucell.atoms[it].ncpp.r.data(),
+                              GlobalC::ucell.atoms[it].ncpp.rab.data(),
+                              GlobalC::ucell.atoms[it].ncpp.rho_atc.data(),
                               rhocg,
                               rho_basis,
                               1);

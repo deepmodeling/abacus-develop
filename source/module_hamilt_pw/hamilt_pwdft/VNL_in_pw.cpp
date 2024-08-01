@@ -835,14 +835,14 @@ void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_
             for (int iq = 0; iq < GlobalV::NQX; iq++)
             {
                 const double q = iq * GlobalV::DQ;
-                ModuleBase::Sphbes::Spherical_Bessel(kkbeta, cell.atoms[it].ncpp.r, q, l, jl);
+                ModuleBase::Sphbes::Spherical_Bessel(kkbeta, cell.atoms[it].ncpp.r.data(), q, l, jl);
 
                 for (int ir = 0; ir < kkbeta; ir++)
                 {
                     aux[ir] = cell.atoms[it].ncpp.betar(ib, ir) * jl[ir] * cell.atoms[it].ncpp.r[ir];
                 }
                 double vqint;
-                ModuleBase::Integral::Simpson_Integral(kkbeta, aux, cell.atoms[it].ncpp.rab, vqint);
+                ModuleBase::Integral::Simpson_Integral(kkbeta, aux, cell.atoms[it].ncpp.rab.data(), vqint);
                 this->tab(it, ib, iq) = vqint * pref;
             }
         }
@@ -915,7 +915,7 @@ void pseudopot_cell_vnl::compute_qrad(UnitCell& cell)
                 {
                     const double q = iq * GlobalV::DQ;
                     // here we compute the spherical bessel function for each q_i
-                    ModuleBase::Sphbes::Spherical_Bessel(kkbeta, upf->r, q, l, besr);
+                    ModuleBase::Sphbes::Spherical_Bessel(kkbeta, upf->r.data(), q, l, besr);
                     for (int nb = 0; nb < nbeta; nb++)
                     {
                         // the Q are symmetric with respect to indices nb and mb
@@ -931,7 +931,7 @@ void pseudopot_cell_vnl::compute_qrad(UnitCell& cell)
                                 }
                                 // then we integrate with all the Q functions
                                 double vqint;
-                                ModuleBase::Integral::Simpson_Integral(kkbeta, aux, upf->rab, vqint);
+                                ModuleBase::Integral::Simpson_Integral(kkbeta, aux, upf->rab.data(), vqint);
                                 qrad(it, l, ijv, iq) = vqint * pref;
                             }
                         }
@@ -1331,7 +1331,7 @@ void pseudopot_cell_vnl::init_vnl_alpha(void) // pengfei Li 2018-3-23
                 for (int iq = 0; iq < GlobalV::NQX; iq++)
                 {
                     const double q = iq * GlobalV::DQ;
-                    ModuleBase::Sphbes::Spherical_Bessel(kkbeta, GlobalC::ucell.atoms[it].ncpp.r, q, L, jl);
+                    ModuleBase::Sphbes::Spherical_Bessel(kkbeta, GlobalC::ucell.atoms[it].ncpp.r.data(), q, L, jl);
 
                     for (int ir = 0; ir < kkbeta; ir++)
                     {
@@ -1339,7 +1339,7 @@ void pseudopot_cell_vnl::init_vnl_alpha(void) // pengfei Li 2018-3-23
                                   * GlobalC::ucell.atoms[it].ncpp.r[ir] * GlobalC::ucell.atoms[it].ncpp.r[ir];
                     }
                     double vqint;
-                    ModuleBase::Integral::Simpson_Integral(kkbeta, aux, GlobalC::ucell.atoms[it].ncpp.rab, vqint);
+                    ModuleBase::Integral::Simpson_Integral(kkbeta, aux, GlobalC::ucell.atoms[it].ncpp.rab.data(), vqint);
                     this->tab_alpha(it, ib, L, iq) = vqint * pref;
                 }
             }

@@ -134,8 +134,8 @@ void InfoNonlocal::Set_NonLocal(const int& it,
                                    it,       // type
                                    lnow,     // angular momentum L
                                    cut_mesh, // number of radial mesh
-                                   atom->ncpp.rab,
-                                   atom->ncpp.r, // radial mesh value (a.u.)
+                                   atom->ncpp.rab.data(),
+                                   atom->ncpp.r.data(), // radial mesh value (a.u.)
                                    beta_r,
                                    kmesh,
                                    dk,

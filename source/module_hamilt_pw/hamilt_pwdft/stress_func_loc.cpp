@@ -95,8 +95,8 @@ void Stress_Func<FPTYPE, Device>::stress_loc(ModuleBase::matrix& sigma,
 		//
 		// normal case: dvloc contains dV_loc(G)/dG
 		//
-			this->dvloc_of_g ( atom->ncpp.msh, atom->ncpp.rab, atom->ncpp.r,
-					atom->ncpp.vloc_at, atom->ncpp.zv, dvloc.data(), rho_basis);
+			this->dvloc_of_g ( atom->ncpp.msh, atom->ncpp.rab.data(), atom->ncpp.r.data(),
+					atom->ncpp.vloc_at.data(), atom->ncpp.zv, dvloc.data(), rho_basis);
 		//
 		}
 #ifndef _OPENMP

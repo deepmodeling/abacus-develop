@@ -254,9 +254,9 @@ void Charge::set_rho_core(
             this->non_linear_core_correction(
                 GlobalC::ppcell.numeric,
                 GlobalC::ucell.atoms[it].ncpp.msh,
-                GlobalC::ucell.atoms[it].ncpp.r,
-                GlobalC::ucell.atoms[it].ncpp.rab,
-                GlobalC::ucell.atoms[it].ncpp.rho_atc,
+                GlobalC::ucell.atoms[it].ncpp.r.data(),
+                GlobalC::ucell.atoms[it].ncpp.rab.data(),
+                GlobalC::ucell.atoms[it].ncpp.rho_atc.data(),
                 rhocg);
 //----------------------------------------------------------
 // EXPLAIN : multiply by the structure factor and sum

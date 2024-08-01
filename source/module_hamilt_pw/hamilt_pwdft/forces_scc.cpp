@@ -86,9 +86,9 @@ void Forces<FPTYPE, Device>::cal_force_scc(ModuleBase::matrix& forcescc,
         const int mesh = ucell_in.atoms[nt].ncpp.msh;
         this->deriv_drhoc_scc(GlobalC::ppcell.numeric,
                             mesh,
-                            ucell_in.atoms[nt].ncpp.r,
-                            ucell_in.atoms[nt].ncpp.rab,
-                            ucell_in.atoms[nt].ncpp.rho_at,
+                            ucell_in.atoms[nt].ncpp.r.data(),
+                            ucell_in.atoms[nt].ncpp.rab.data(),
+                            ucell_in.atoms[nt].ncpp.rho_at.data(),
                             rhocgnt.data(),
                             rho_basis,
                             ucell_in);        

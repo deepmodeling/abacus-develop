@@ -202,15 +202,12 @@ void Pseudopot_upf::read_pseudo_header(std::ifstream &ifs, Atom_pseudo& pp)
 	ifs.ignore(75, '\n');
 	ifs.ignore(75, '\n');
 
-	delete[] pp.els;
-	delete[] pp.lchi;
-	delete[] pp.oc;
-	pp.els = new std::string[pp.nchi];
-	pp.lchi = new int[pp.nchi];
-	pp.oc = new double[pp.nchi];
-
-	ModuleBase::GlobalFunc::ZEROS(pp.lchi, pp.nchi); // angular momentum of each orbital
-	ModuleBase::GlobalFunc::ZEROS(pp.oc, pp.nchi);//occupation of each orbital
+	pp.els.clear();
+	pp.lchi.clear();
+	pp.oc.clear();
+	pp.els = std::vector<std::string>(pp.nchi, "");
+	pp.lchi = std::vector<int>(pp.nchi, 0);
+	pp.oc = std::vector<double>(pp.nchi, 0.0);
 
 	for(int i=0;i<pp.nchi;i++)
 	{
@@ -229,12 +226,10 @@ void Pseudopot_upf::read_pseudo_mesh(std::ifstream &ifs, Atom_pseudo& pp)
 {
 	assert(pp.mesh>0);
 
-	delete[] pp.r;
-	delete[] pp.rab;
-	pp.r = new double[pp.mesh];
-	pp.rab = new double[pp.mesh];
-	ModuleBase::GlobalFunc::ZEROS(pp.r,pp.mesh);
-	ModuleBase::GlobalFunc::ZEROS(pp.rab,pp.mesh);
+	pp.r.clear();
+	pp.rab.clear();
+	pp.r = std::vector<double>(pp.mesh, 0.0);
+	pp.rab = std::vector<double>(pp.mesh, 0.0);
 
 	int ir = 0;
 
@@ -261,9 +256,8 @@ void Pseudopot_upf::read_pseudo_mesh(std::ifstream &ifs, Atom_pseudo& pp)
 void Pseudopot_upf::read_pseudo_nlcc(std::ifstream &ifs, Atom_pseudo& pp)
 {
 	assert(pp.mesh>0);
-	delete[] pp.rho_atc;
-	pp.rho_atc = new double[pp.mesh];
-	ModuleBase::GlobalFunc::ZEROS(pp.rho_atc, pp.mesh);
+	pp.rho_atc.clear();
+	pp.rho_atc = std::vector<double>(pp.mesh, 0.0);
 	for (int ir = 0;ir < pp.mesh;ir++)
 	{
 		ifs >> pp.rho_atc[ir];
@@ -274,9 +268,8 @@ void Pseudopot_upf::read_pseudo_nlcc(std::ifstream &ifs, Atom_pseudo& pp)
 void Pseudopot_upf::read_pseudo_local(std::ifstream &ifs, Atom_pseudo& pp)
 {
 	assert(pp.mesh>0);
-	delete[] pp.vloc_at;
-	pp.vloc_at = new double[pp.mesh];
-	ModuleBase::GlobalFunc::ZEROS(pp.vloc_at, pp.mesh);
+	pp.vloc_at.clear();
+	pp.vloc_at = std::vector<double>(pp.mesh, 0.0);
 
 	for (int ir = 0;ir < pp.mesh;ir++)
 	{
@@ -304,10 +297,10 @@ void Pseudopot_upf::read_pseudo_nl(std::ifstream &ifs, Atom_pseudo& pp)
     }
     else
     {
-        delete[] this->kbeta;
-        delete[] pp.lll;
-        this->kbeta = new int[pp.nbeta];
-        pp.lll = new int[pp.nbeta];
+        this->kbeta.clear();
+        pp.lll.clear();
+        this->kbeta = std::vector<int>(pp.nbeta, 0);
+        pp.lll = std::vector<int>(pp.nbeta, 0);
         pp.betar.create(pp.nbeta, pp.mesh);
         pp.dion.create(pp.nbeta, pp.nbeta);
         pp.kkbeta = 0;
@@ -354,8 +347,8 @@ void Pseudopot_upf::read_pseudo_nl(std::ifstream &ifs, Atom_pseudo& pp)
             // If nqf is not zero, Qij's inside rinner are computed using qfcoef's
             ModuleBase::GlobalFunc::READ_VALUE(ifs, this->nqf);
             pp.nqlc = 2 * pp.lmax + 1;
-            delete[] rinner;
-            this->rinner = new double[pp.nqlc];
+            rinner.clear();
+            this->rinner = std::vector<double>(pp.nqlc, 0.0);
             pp.qqq.create(pp.nbeta, pp.nbeta);
             if (q_with_l)
             {
@@ -368,7 +361,6 @@ void Pseudopot_upf::read_pseudo_nl(std::ifstream &ifs, Atom_pseudo& pp)
 
             if (nqf <= 0)
             {
-                ModuleBase::GlobalFunc::ZEROS(rinner, pp.nqlc);
                 this->qfcoef.create(1, 1, 1, 1);
             }
             else
@@ -463,9 +455,8 @@ void Pseudopot_upf::read_pseudo_pswfc(std::ifstream &ifs, Atom_pseudo& pp)
 
 void Pseudopot_upf::read_pseudo_rhoatom(std::ifstream &ifs, Atom_pseudo& pp)
 {
-	delete[] pp.rho_at;
-	pp.rho_at = new double[pp.mesh];
-	ModuleBase::GlobalFunc::ZEROS(pp.rho_at, pp.mesh);
+	pp.rho_at.clear();
+	pp.rho_at = std::vector<double>(pp.mesh, 0.0);
 	for (int ir = 0;ir < pp.mesh;ir++)
 	{
 		ifs >> pp.rho_at[ir];
@@ -477,15 +468,12 @@ void Pseudopot_upf::read_pseudo_so(std::ifstream &ifs, Atom_pseudo& pp)
 {
        //read soc info from upf, added by zhengdy-soc
        if(!pp.has_so) return;
-       delete[] pp.nn;
-       delete[] pp.jchi;
-       delete[] pp.jjj;
-       pp.nn = new int[pp.nchi];
-       pp.jchi = new double[pp.nchi];
-       pp.jjj = new double[pp.nbeta];
-       ModuleBase::GlobalFunc::ZEROS(pp.nn,pp.nchi);
-       ModuleBase::GlobalFunc::ZEROS(pp.jchi,pp.nchi);
-       ModuleBase::GlobalFunc::ZEROS(pp.jjj,pp.nbeta);
+       pp.nn.clear();
+       pp.jchi.clear();
+       pp.jjj.clear();
+       pp.nn = std::vector<int>(pp.nchi, 0);
+       pp.jchi = std::vector<double>(pp.nchi, 0.0);
+       pp.jjj = std::vector<double>(pp.nbeta, 0.0);
        //RELWFC
        for(int nw=0;nw< pp.nchi;nw++)
        {

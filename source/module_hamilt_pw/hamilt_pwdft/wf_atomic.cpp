@@ -100,7 +100,7 @@ void WF_atomic::init_at_1(Structure_Factor *sf_in)
                 inner_part[ir] = atom->ncpp.chi(ic,ir) * atom->ncpp.chi(ic,ir);
             }
             double unit = 0.0;
-            ModuleBase::Integral::Simpson_Integral(nmesh, inner_part, atom->ncpp.rab, unit);
+            ModuleBase::Integral::Simpson_Integral(nmesh, inner_part, atom->ncpp.rab.data(), unit);
             delete[] inner_part;
 
             // liuyu add 2023-10-06
@@ -150,7 +150,7 @@ void WF_atomic::init_at_1(Structure_Factor *sf_in)
                         {
                             norm_beta[ik] = atom->ncpp.betar(ib, ik) * atom->ncpp.chi(ic, ik);
                         }
-                        ModuleBase::Integral::Simpson_Integral(kkbeta, norm_beta, atom->ncpp.rab, work[ib]);
+                        ModuleBase::Integral::Simpson_Integral(kkbeta, norm_beta, atom->ncpp.rab.data(), work[ib]);
                     }
                     else
                     {
@@ -188,14 +188,14 @@ void WF_atomic::init_at_1(Structure_Factor *sf_in)
                 for (int iq=startq; iq<GlobalV::NQX; iq++)
                 {
                     const double q = GlobalV::DQ * iq;
-                    ModuleBase::Sphbes::Spherical_Bessel(atom->ncpp.msh, atom->ncpp.r, q, l, aux);
+                    ModuleBase::Sphbes::Spherical_Bessel(atom->ncpp.msh, atom->ncpp.r.data(), q, l, aux);
                     for (int ir = 0;ir < atom->ncpp.msh;ir++)
                     {
                         vchi[ir] = atom->ncpp.chi(ic,ir) * aux[ir] * atom->ncpp.r[ir];
                     }
 
                     double vqint = 0.0;
-                    ModuleBase::Integral::Simpson_Integral(atom->ncpp.msh, vchi, atom->ncpp.rab, vqint);
+                    ModuleBase::Integral::Simpson_Integral(atom->ncpp.msh, vchi, atom->ncpp.rab.data(), vqint);
 
                     GlobalC::ppcell.tab_at(it, ic, iq) =  vqint * pref;
                     //				if( it == 0 && ic == 0 )
