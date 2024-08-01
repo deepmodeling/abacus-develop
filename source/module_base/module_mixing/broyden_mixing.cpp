@@ -115,8 +115,7 @@ void Broyden_Mixing::tem_cal_coef(const Mixing_Data& mdata, std::function<double
     FPTYPE* FP_F = static_cast<FPTYPE*>(F);
     if (ndim_cal_dF > 0)
     {
-        ModuleBase::matrix beta_tmp(ndim_cal_dF, ndim_cal_dF);
-        ModuleBase::matrix beta_tmp_diag(ndim_cal_dF, ndim_cal_dF); // for diagonalization
+        ModuleBase::matrix beta_tmp(ndim_cal_dF, ndim_cal_dF); // store <dF|dF>
         // beta(i, j) = <dF_i, dF_j>
         for (int i = 0; i < ndim_cal_dF; ++i)
         {
@@ -139,183 +138,119 @@ void Broyden_Mixing::tem_cal_coef(const Mixing_Data& mdata, std::function<double
             }
         }
 
-        // Diagonalization and Inverse
-        // value tmp2
-        std::cout << "----------------------mixing analysis----------------------------" << std::endl;
-        for (int i = 0; i < ndim_cal_dF; ++i)
-        {
-            for (int j = 0; j < ndim_cal_dF; ++j)
-            {
-                beta_tmp_diag(i, j) = beta_tmp(i, j);
-            }
-        }
+        // diagonalization for Singularly Valuable Decomposition (SVD)
+        ModuleBase::matrix beta_diag(ndim_cal_dF, ndim_cal_dF); // for diagonalization
+        beta_diag = beta_tmp;
+        double* val = new double[ndim_cal_dF]; // store eigenvalues
 
-        // output beta
-        std::cout << "beta matrix:" << std::endl;
-        for (int i = 0; i < ndim_cal_dF; ++i)
-        {
-            for (int j = 0; j < ndim_cal_dF; ++j)
-            {
-                std::cout << std::setprecision(17) << beta_tmp_diag(i, j) << " ";
-            }
-            std::cout << std::endl;
-        }
-        // acutal diagonalization
-        double* val = new double[ndim_cal_dF];
-        diag(ndim_cal_dF, beta_tmp_diag.c, val);
+        diag(ndim_cal_dF, beta_diag.c, val); // diagonalize beta_tmp
         
-        double eps = 1e-12 * val[ndim_cal_dF];
-        int filter_num = 0;
+        double eps = 1e-12 * val[ndim_cal_dF - 1]; // threshold for filtering eigenvalues
+        int sv_num = 0;  // number of singularly valuables
         for (int i = 0; i < ndim_cal_dF; ++i)
         {
             if (val[i] < eps)
             {
-                filter_num++;
+                sv_num++;  // find a sv
             }
         }
 
-        // output eigenvalues
-        std::cout << "eigenvalues: " << std::endl;
-        for (int i = 0; i < ndim_cal_dF; ++i)
-        {
-            std::cout << val[i] << " ";
-        }
-        std::cout << filter_num << " ";
-        std::cout << std::endl;
+        std::vector<double> gamma(ndim_cal_dF); // store gamma coeficients for Broyden mixing
 
-        const double alpha = 1.0;
-        const double beta = 0.0;
-
-        // Filter the eigenvalues
-        ModuleBase::matrix inverse_eigenval_filter(ndim_cal_dF-filter_num, ndim_cal_dF-filter_num);
-        ModuleBase::matrix inverse_tmp_filter(ndim_cal_dF, ndim_cal_dF - filter_num);
-        ModuleBase::matrix inverse_beta_filter(ndim_cal_dF, ndim_cal_dF);
-        inverse_eigenval_filter.zero_out();
-        inverse_beta_filter.zero_out();
-        for (int i = 0; i < ndim_cal_dF - filter_num; ++i)
+        if (sv_num > 0)  // pesudo inverse is sv is found
         {
-            inverse_eigenval_filter(i, i) = 1.0 / val[i + filter_num];
-        }
-        // 1: inverse_beta = U * D^-1
-        double* a_ptr = beta_tmp_diag.c + filter_num * ndim_cal_dF;
-        double* b_ptr = inverse_eigenval_filter.c;
-        double* c_ptr = inverse_tmp_filter.c;
-        const int ndim_cal_dF_filter = ndim_cal_dF - filter_num;
-        dgemm_("N", "N", &ndim_cal_dF, &ndim_cal_dF_filter, &ndim_cal_dF_filter, &alpha, 
-                a_ptr, &ndim_cal_dF,
-                b_ptr, &ndim_cal_dF_filter, &beta, 
-                c_ptr, &ndim_cal_dF);
-        // 2: (U * D^-1) * U^T
-        a_ptr = inverse_tmp_filter.c;
-        b_ptr = beta_tmp_diag.c + filter_num * ndim_cal_dF;
-        c_ptr = inverse_beta_filter.c;
-        dgemm_("N", "T", &ndim_cal_dF, &ndim_cal_dF, &ndim_cal_dF_filter, &alpha, 
-                a_ptr, &ndim_cal_dF,
-                b_ptr, &ndim_cal_dF, &beta, 
-                c_ptr, &ndim_cal_dF);
-        // output inverse_beta
-        std::cout << "pesudo inverse beta: " << std::endl;
-        for (int i = 0; i < ndim_cal_dF; ++i)
-        {
-            for (int j = 0; j < ndim_cal_dF; ++j)
+            // output eigenvalues, will be removed later
+            std::cout << "eigenvalues(sv): " << std::endl;
+            for (int i = 0; i < sv_num; ++i)
             {
-                std::cout << inverse_beta_filter(i, j) << " ";
+                std::cout << val[i] << " ";
             }
             std::cout << std::endl;
-        }
-
-        double* work = new double[ndim_cal_dF];
-        int* iwork = new int[ndim_cal_dF];
-        char uu = 'U';
-        int info;
-        dsytrf_(&uu, &ndim_cal_dF, beta_tmp.c, &ndim_cal_dF, iwork, work, &ndim_cal_dF, &info);
-        if (info != 0)
-            ModuleBase::WARNING_QUIT("Charge_Mixing", "Error when factorizing beta.");
-        dsytri_(&uu, &ndim_cal_dF, beta_tmp.c, &ndim_cal_dF, iwork, work, &info);
-        if (info != 0)
-            ModuleBase::WARNING_QUIT("Charge_Mixing", "Error when DSYTRI beta.");
-        for (int i = 0; i < ndim_cal_dF; ++i)
-        {
-            for (int j = i + 1; j < ndim_cal_dF; ++j)
+            // pesudo inverse eigenvalue matrix without sv
+            ModuleBase::matrix inverse_eigenval_wosv(ndim_cal_dF-sv_num, ndim_cal_dF-sv_num);
+            inverse_eigenval_wosv.zero_out();
+            for (int i = 0; i < ndim_cal_dF - sv_num; ++i)
             {
-                beta_tmp(i, j) = beta_tmp(j, i);
+                inverse_eigenval_wosv(i, i) = 1.0 / val[i + sv_num];
             }
-        }
-        // output inverse_beta
-        std::cout << "fully inverse beta: " << std::endl;
-        for (int i = 0; i < ndim_cal_dF; ++i)
-        {
-            for (int j = 0; j < ndim_cal_dF; ++j)
+            // 
+            ModuleBase::matrix inverse_tmp_wosv(ndim_cal_dF, ndim_cal_dF - sv_num); // store tmp matrix U * D^-1
+            ModuleBase::matrix inverse_beta_wosv(ndim_cal_dF, ndim_cal_dF); // store final matrix U * D^-1 * U^T
+            inverse_tmp_wosv.zero_out();
+            inverse_beta_wosv.zero_out();
+            // 1: inverse_beta = U * D^-1
+            const double alpha = 1.0;
+            const double beta = 0.0;
+            double* a_ptr = beta_diag.c + sv_num * ndim_cal_dF; // U
+            double* b_ptr = inverse_eigenval_wosv.c;  // D^-1
+            double* c_ptr = inverse_tmp_wosv.c; // U * D^-1
+            const int ndim_cal_dF_wosv = ndim_cal_dF - sv_num;
+            dgemm_("N", "N", &ndim_cal_dF, &ndim_cal_dF_wosv, &ndim_cal_dF_wosv, &alpha, 
+                    a_ptr, &ndim_cal_dF,
+                    b_ptr, &ndim_cal_dF_wosv, &beta, 
+                    c_ptr, &ndim_cal_dF);
+            // 2: (U * D^-1) * U^T
+            a_ptr = inverse_tmp_wosv.c; // U * D^-1
+            b_ptr = beta_diag.c + sv_num * ndim_cal_dF; // U
+            c_ptr = inverse_beta_wosv.c; // U * D^-1 * U^T
+            dgemm_("N", "T", &ndim_cal_dF, &ndim_cal_dF, &ndim_cal_dF_wosv, &alpha, 
+                    a_ptr, &ndim_cal_dF,
+                    b_ptr, &ndim_cal_dF, &beta, 
+                    c_ptr, &ndim_cal_dF);
+
+            // get <dF|F>
+            double* dFF_vector = new double[ndim_cal_dF]; // <dF|F>
+            for (int i = 0; i < ndim_cal_dF; ++i)
             {
-                std::cout << beta_tmp(i, j) << " ";
+                FPTYPE* dFi = FP_dF + i * length;
+                dFF_vector[i] = inner_product(dFi, FP_F);
             }
-            std::cout << std::endl;
+            // gamma[i] = \sum_j beta_tmp(i,j) * dFF[j]
+            container::BlasConnector::gemv('N',
+                                        ndim_cal_dF,
+                                        ndim_cal_dF,
+                                        1.0,
+                                        inverse_beta_wosv.c,
+                                        ndim_cal_dF,
+                                        dFF_vector,
+                                        1,
+                                        0.0,
+                                        gamma.data(),
+                                        1);
         }
-
-        for (int i = 0; i < ndim_cal_dF; ++i)
+        else if (sv_num == 0)
         {
-            FPTYPE* dFi = FP_dF + i * length;
-            work[i] = inner_product(dFi, FP_F);
+            double* work = new double[ndim_cal_dF];   // workspace
+            int* iwork = new int[ndim_cal_dF];   // ipiv
+            char uu = 'U';
+            int info;
+            int m = 1;
+            // gamma means the coeficients for mixing
+            // but now gamma store <dFi|Fm> since the gamma is input/output in DSYSV
+            for (int i = 0; i < ndim_cal_dF; ++i)
+            {
+                FPTYPE* dFi = FP_dF + i * length;
+                gamma[i] = inner_product(dFi, FP_F);
+            }
+            // solve aG = c 
+            dsysv_(&uu, &ndim_cal_dF, &m, beta_tmp.c, &ndim_cal_dF, iwork, gamma.data(), &ndim_cal_dF, work, &ndim_cal_dF, &info);
+            if (info != 0)
+                ModuleBase::WARNING_QUIT("Charge_Mixing", "Error when DSYSV.");
+            // after solving, gamma store the coeficients for mixing
+            delete[] work;
+            delete[] iwork;
         }
-        // gamma[i] = \sum_j beta_tmp(i,j) * work[j]
-        std::vector<double> gamma(ndim_cal_dF);
-        container::BlasConnector::gemv('N',
-                                       ndim_cal_dF,
-                                       ndim_cal_dF,
-                                       1.0,
-                                       beta_tmp.c,
-                                       ndim_cal_dF,
-                                       work,
-                                       1,
-                                       0.0,
-                                       gamma.data(),
-                                       1);
-
-        // new gamma
-        for (int i = 0; i < ndim_cal_dF; ++i)
+        else
         {
-            FPTYPE* dFi = FP_dF + i * length;
-            work[i] = inner_product(dFi, FP_F);
+            ModuleBase::WARNING_QUIT("Charge_Mixing", "sv_num < 0");
         }
-        std::vector<double> gamma2(ndim_cal_dF);
-        container::BlasConnector::gemv('N',
-                                       ndim_cal_dF,
-                                       ndim_cal_dF,
-                                       1.0,
-                                       inverse_beta_filter.c,
-                                       ndim_cal_dF,
-                                       work,
-                                       1,
-                                       0.0,
-                                       gamma2.data(),
-                                       1);
-
-        // output gamma
-        std::cout << "gamma: " << std::endl;
-        for (int i = 0; i < ndim_cal_dF; ++i)
-        {
-            std::cout << gamma[i] << " ";
-        }
-        std::cout << std::endl;
-
-        std::cout << "gamma2: " << std::endl;
-        for (int i = 0; i < ndim_cal_dF; ++i)
-        {
-            std::cout << gamma2[i] << " ";
-        }
-        std::cout << std::endl;
-
-        gamma = gamma2; // use the new gamma
+        // get the coeficients for mixing from gamma
         coef[mdata.start] = 1 + gamma[dFindex_move(0)];
         for (int i = 1; i < ndim_cal_dF; ++i)
         {
             coef[mdata.index_move(-i)] = gamma[dFindex_move(-i)] - gamma[dFindex_move(-i + 1)];
         }
         coef[mdata.index_move(-ndim_cal_dF)] = -gamma[dFindex_move(-ndim_cal_dF + 1)];
-
-        delete[] work;
-        delete[] iwork;
-        std::cout << "------------------------------------------------------------------" << std::endl;
     }
     else
     {
