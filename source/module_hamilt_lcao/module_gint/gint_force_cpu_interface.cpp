@@ -18,7 +18,6 @@ void Gint::gint_kernel_force(Gint_inout* inout) {
     std::vector<double> vldr3(this->bxyz,0.0);
     ModuleBase::matrix* fvl_dphi_thread=inout->fvl_dphi;
     ModuleBase::matrix* svl_dphi_thread=inout->svl_dphi;
-#ifdef _OPENMP
 #pragma omp parallel private(fvl_dphi_thread, svl_dphi_thread, \
                             block_iw, block_index, block_size, vldr3)
 {
@@ -35,7 +34,6 @@ void Gint::gint_kernel_force(Gint_inout* inout) {
     block_size.assign(max_size,0);
     vldr3.assign(this->bxyz,0.0);
 #pragma omp for
-#endif
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
         const int na_grid = this->gridt->how_many_atoms[grid_index];
         if (na_grid == 0) {
@@ -128,7 +126,6 @@ void Gint::gint_kernel_force(Gint_inout* inout) {
                                         dpsirr_ylm.get_ptr_1D(), svl_dphi_thread);
         }
     }
-#ifdef _OPENMP
 #pragma omp critical(gint)
     {
         if (inout->isforce) {
@@ -141,7 +138,6 @@ void Gint::gint_kernel_force(Gint_inout* inout) {
         }
     }
 }
-#endif
     ModuleBase::TITLE("Gint_interface", "cal_gint_force");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_force");
 }
@@ -163,7 +159,6 @@ void Gint::gint_kernel_force_meta(Gint_inout* inout) {
     std::vector<double> vkdr3(this->bxyz,0.0);
     ModuleBase::matrix* fvl_dphi_thread=inout->fvl_dphi;
     ModuleBase::matrix* svl_dphi_thread=inout->svl_dphi;
-#ifdef _OPENMP
 #pragma omp parallel private(fvl_dphi_thread, svl_dphi_thread,\
                             block_iw, block_index, block_size,\
                             vldr3,vkdr3)
@@ -182,7 +177,6 @@ void Gint::gint_kernel_force_meta(Gint_inout* inout) {
     vldr3.assign(this->bxyz,0.0);
     vkdr3.assign(this->bxyz,0.0);
 #pragma omp for
-#endif
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
         const int na_grid = this->gridt->how_many_atoms[grid_index];
         if (na_grid == 0) {
@@ -342,7 +336,6 @@ void Gint::gint_kernel_force_meta(Gint_inout* inout) {
                 array.get_ptr_1D(), svl_dphi_thread);
         }
     }
-#ifdef _OPENMP
 #pragma omp critical(gint)
     {
         if (inout->isforce) {
@@ -355,7 +348,6 @@ void Gint::gint_kernel_force_meta(Gint_inout* inout) {
         }
     }
 }
-#endif
     ModuleBase::TITLE("Gint_interface", "cal_gint_force_meta");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_force_meta");
 }
