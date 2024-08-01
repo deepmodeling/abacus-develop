@@ -41,11 +41,24 @@ namespace RadialProjection
      * // and CubicSpline modules.
      * rp._build_sbt_tab(r, radials, l, nq, dq);
      * // then the set of q will used to calculate the Fourier transform
-     * rp.sbtft(qs, out, omega, tpiba, 'r');
+     * rp.sbtft(qs, out, 'r', omega, tpiba);
      * // in `out`, there will be the Fourier transform of the radial functions organized
      * // in the same way as the input `radials` and `qs`, as row and column respectively.
      * // but one should note for each radials, there are 2*l+1 components now instead of
      * // just one.
+     * 
+     * // one may find it is not easy to maintain such a large table, so here, also provides
+     * // a tool function to map the 2D index to 1D index, and vice versa. With the angular
+     * // momentum used in function _build_sbt_tab, one can easily build a map from 
+     * // [irad][im] to 1D index, and use two functions _irad_m_to_idx and _idx_to_irad_m
+     * // to convert between 1D index and [irad][m] (instead of im!).
+     * std::vector<std::vector<int>> map_;
+     * rp._build_sbtft_map(l, map_);
+     * int irad, m;
+     * int idx;
+     * rp._irad_m_to_idx(irad, m, map_, idx); // you can get the 1D index
+     * rp._idx_to_irad_m(idx, map_, irad, m); // you can get the irad and m,
+     * // the latter ranges from -l to l.
      * ```
      * 
      * 2. SBFFT: small box fast-fourier-transform (not implemented yet)
@@ -109,6 +122,20 @@ namespace RadialProjection
                        const double& omega = 1.0,
                        const double& tpiba = 1.0); // 'r' for ket |>, 'l' for bra <|
             
+            // a tool function for mapping [irad][m] to 1D index
+            static void _build_sbtft_map(const std::vector<int>& l,
+                                         std::vector<std::vector<int>>& map_);
+            // convert the irad and m to 1D index
+            static void _irad_m_to_idx(const int irad,
+                                       const int m,
+                                       const std::vector<std::vector<int>>& map_,
+                                       int& idx);
+            // convert the 1D index to irad and m
+            static void _idx_to_irad_m(const int idx,
+                                       const std::vector<std::vector<int>>& map_,
+                                       int& irad,
+                                       int& m);
+
             void sbfft(); // interface for SBFFT
 
         private:

@@ -6,8 +6,67 @@
 #include "module_base/constants.h"
 #include "module_base/matrix.h"
 #include "module_base/math_ylmreal.h"
-
 #include "module_base/spherical_bessel_transformer.h"
+
+void RadialProjection::RadialProjector::_build_sbtft_map(const std::vector<int>& l,
+                                                         std::vector<std::vector<int>>& map_)
+{
+    const int nrad = l.size();
+    int nchannel = 0;
+    for(auto l: l) { nchannel += 2*l+1; }
+    map_.resize(nrad);
+    int iproj = 0;
+    // m in sequence 0, 1, -1, 2, -2, ...
+    for(int i = 0; i < nrad; i++)
+    {
+        const int l_ = l[i];
+        map_[i].resize(2*l_+1);
+        std::iota(map_[i].begin(), map_[i].end(), iproj);
+        iproj += 2*l_+1;
+    }
+}
+
+void RadialProjection::RadialProjector::_irad_m_to_idx(const int irad,
+                                                       const int m,
+                                                       const std::vector<std::vector<int>>& map_,
+                                                       int& idx)
+{
+    idx = 0;
+    for(int i = 0; i < irad; i++)
+    {
+        idx += map_[i].size();
+    }
+    const int l = (map_[irad].size() - 1)/2;
+    assert(m <= l && m >= -l);
+    // the m is arranged in sequence 0, 1, -1, 2, -2, ...
+    // therefore
+    // 0 -1 -2 -3
+    // 0  2  4  6
+    //   +1 +2 +3
+    //    1  3  5
+    idx += (m > 0)? 2*m-1: -m*2;
+}
+
+void RadialProjection::RadialProjector::_idx_to_irad_m(const int idx,
+                                                       const std::vector<std::vector<int>>& map_,
+                                                       int& irad,
+                                                       int& m)
+{
+    const int nrad = map_.size();
+    int iproj = 0;
+    for(int i = 0; i < nrad; i++)
+    {
+        const int l = map_[i].size();
+        if(iproj <= idx && idx < iproj + 2*l+1)
+        {
+            irad = i;
+            m = (idx - iproj)/2;
+            return;
+        }
+        iproj += 2*l+1;
+    }
+    assert(false); // should not reach here
+}
 
 void RadialProjection::RadialProjector::_build_sbt_tab(const int nr,
                                                        const double* r,
@@ -18,9 +77,7 @@ void RadialProjection::RadialProjector::_build_sbt_tab(const int nr,
 {
     l_ = l;
     const int nrad = radials.size();
-#ifdef __DEBUG
     assert(nrad == l.size());
-#endif
     std::vector<double> qgrid(nq);
     std::iota(qgrid.begin(), qgrid.end(), 0);
     std::transform(qgrid.begin(), qgrid.end(), qgrid.begin(), [dq](const double& q){return q*dq;});
@@ -28,6 +85,7 @@ void RadialProjection::RadialProjector::_build_sbt_tab(const int nr,
     ModuleBase::SphericalBesselTransformer sbt_(true); // enable cache
     std::vector<double> _temp(nq);
     sbt_.direct(l[0], nr, r, radials[0], nq, qgrid.data(), _temp.data());
+
     // the SphericalBesselTransformer's result is multiplied by one extra factor sqrt(2/pi), should remove it
     // see module_base/spherical_bessel_transformer.h and module_base/spherical_bessel_transformer.cpp:328
     const double pref = std::sqrt(2.0/std::acos(-1.0)); 
@@ -51,9 +109,8 @@ void RadialProjection::RadialProjector::_build_sbt_tab(const std::vector<double>
                                                        const double& dq)
 {
     const int nr = r.size();
-#ifdef __DEBUG
+    const int nrad = radials.size();
     for(int i = 0; i < nrad; i++) { assert(radials[i].size() == nr); }
-#endif
     std::vector<double*> radptrs(radials.size());
     for(int i = 0; i < radials.size(); i++) { radptrs[i] = const_cast<double*>(radials[i].data()); }
     _build_sbt_tab(nr, r.data(), radptrs, l, nq, dq);
@@ -104,7 +161,7 @@ void RadialProjection::_mask_func(std::vector<double>& mask)
 {
     /* mask function is hard coded here, eta = 15 */
     mask.resize(201);
-    std::string src;
+    std::string src = "0.10000000E+01";
     src += " 0.10000000E+01 0.99948662E+00 0.99863154E+00 0.99743557E+00";
     src += " 0.99589985E+00 0.99402586E+00 0.99181538E+00 0.98927052E+00";
     src += " 0.98639370E+00 0.98318766E+00 0.97965544E+00 0.97580040E+00";
@@ -156,8 +213,7 @@ void RadialProjection::_mask_func(std::vector<double>& mask)
     src += " 0.69250769E-04 0.55873673E-04 0.44461100E-04 0.34793983E-04";
     src += " 0.26671449E-04 0.19909778E-04 0.14341381E-04 0.98138215E-05";
     std::stringstream ss(src);
-    mask[0] = 1.0;
-    for(int i = 1; i < mask.size(); i++)
+    for(int i = 0; i < mask.size(); i++)
     {
         ss >> mask[i];
     }
