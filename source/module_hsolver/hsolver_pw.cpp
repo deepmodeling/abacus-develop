@@ -250,6 +250,9 @@ template <typename T, typename Device>
 void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
                                  psi::Psi<T, Device>& psi,
                                  elecstate::ElecState* pes,
+
+                                 double* out_eigenvalues,
+
                                  const std::string method_in,
 
                                  const std::string calculation_type_in,
@@ -340,11 +343,12 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
     }
     // END Loop over k points
 
-    // copy eigenvalues to pes->ekb in ElecState
+    // copy eigenvalues to ekb in ElecState
     base_device::memory::cast_memory_op<double, Real, base_device::DEVICE_CPU, base_device::DEVICE_CPU>()(
         cpu_ctx,
         cpu_ctx,
         pes->ekb.c,
+        // out_eigenvalues,
         eigenvalues.data(),
         pes->ekb.nr * pes->ekb.nc);
 

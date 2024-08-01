@@ -49,6 +49,9 @@ class HSolver
     virtual void solve(hamilt::Hamilt<T, Device>* phm,
                        psi::Psi<T, Device>& ppsi,
                        elecstate::ElecState* pes,
+
+                       double* out_eigenvalues,
+                       
                        const std::string method,
 
                        const std::string calculation_type_in,

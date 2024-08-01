@@ -42,6 +42,9 @@ class HSolverPW : public HSolver<T, Device>
     void solve(hamilt::Hamilt<T, Device>* pHamilt,
                psi::Psi<T, Device>& psi,
                elecstate::ElecState* pes,
+
+               double* out_eigenvalues,
+               
                const std::string method_in,
 
                const std::string calculation_type_in,
