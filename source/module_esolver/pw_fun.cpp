@@ -80,7 +80,6 @@ void ESolver_KS_PW<T, Device>::hamilt2estates(const double ethr) {
         hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR = ethr;
 
         std::vector<bool> is_occupied(this->kspw_psi->get_nk() * this->kspw_psi->get_nbands(), true);
-
         elecstate::set_is_occupied(is_occupied,
                                    this->pelec,
                                    hsolver::DiagoIterAssist<T, Device>::SCF_ITER,
@@ -88,8 +87,20 @@ void ESolver_KS_PW<T, Device>::hamilt2estates(const double ethr) {
                                    this->kspw_psi->get_nbands(),
                                    PARAM.inp.diago_full_acc);
 
-        hsolver::HSolverPW<T, Device> hsolver_pw_obj(this->pw_wfc, &this->wf, this->init_psi);
 
+        if (!GlobalV::psi_initializer && !this->init_psi && PARAM.inp.basis_type == "pw")
+        {
+            // psi initializer
+            // only for pw (not for lcao_in_pw & lcao)
+            for (int ik = 0; ik < this->kspw_psi->get_nk(); ++ik)
+            {
+                this->kspw_psi->fix_k(ik);
+
+                hamilt::diago_PAO_in_pw_k2(this->ctx, ik, this->kspw_psi[0], this->pw_wfc, &this->wf, this->p_hamilt);
+            }
+        }
+
+        hsolver::HSolverPW<T, Device> hsolver_pw_obj(this->pw_wfc, &this->wf, this->init_psi);
         hsolver_pw_obj.solve(this->p_hamilt,
                              this->kspw_psi[0],
                              this->pelec,

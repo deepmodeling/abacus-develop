@@ -159,7 +159,14 @@ TEST_F(TestHSolverPW_SDFT, solve)
 	EXPECT_EQ(this->hs_d.classname, "HSolverPW_SDFT");
 	EXPECT_NEAR(this->hs_d.diag_ethr, 0.01, 1.0e-7);
 	//check solve()
-	EXPECT_EQ(this->hs_d.initialed_psi, false);
+    EXPECT_EQ(this->hs_d.initialed_psi, false);
+
+    for (int ik = 0; ik < psi_test_cd.get_nk(); ++ik)
+    {
+        psi_test_cd.fix_k(ik);
+
+        hamilt::diago_PAO_in_pw_k2(hs_d.ctx, ik, psi_test_cd, &pwbk, nullptr, &hamilt_test_d);
+    }
 
     this->hs_d.solve(&hamilt_test_d,
                      psi_test_cd,
@@ -246,6 +253,13 @@ TEST_F(TestHSolverPW_SDFT, solve_noband_skipcharge)
 	EXPECT_NEAR(this->hs_d.diag_ethr, 1e-7, 1.0e-10);
 	//check solve()
     hs_d.initialed_psi = true;
+
+    for (int ik = 0; ik < psi_test_cd.get_nk(); ++ik)
+    {
+        psi_test_cd.fix_k(ik);
+
+        hamilt::diago_PAO_in_pw_k2(hs_d.ctx, ik, psi_test_cd, &pwbk, nullptr, &hamilt_test_d);
+    }
 
     this->hs_d.solve(&hamilt_test_d,
                      psi_test_no,

@@ -80,6 +80,13 @@ TEST_F(TestHSolverPW, solve) {
 
     std::vector<bool> is_occupied(1 * 2, true);
 
+    for (int ik = 0; ik < psi_test_cd.get_nk(); ++ik)
+    {
+        psi_test_cd.fix_k(ik);
+
+        hamilt::diago_PAO_in_pw_k2(hs_f.ctx, ik, psi_test_cf, &pwbk, nullptr, &hamilt_test_f);
+    }
+
     this->hs_f.solve(&hamilt_test_f,
                      psi_test_cf,
                      &elecstate_test,
@@ -105,9 +112,15 @@ TEST_F(TestHSolverPW, solve) {
     }
     EXPECT_DOUBLE_EQ(elecstate_test.ekb.c[0], 4.0);
     EXPECT_DOUBLE_EQ(elecstate_test.ekb.c[1], 7.0);
-    EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<float>>::avg_iter,
-                     0.0);
+    EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<float>>::avg_iter, 0.0);
 
+    for (int ik = 0; ik < psi_test_cd.get_nk(); ++ik)
+    {
+        psi_test_cd.fix_k(ik);
+
+        hamilt::diago_PAO_in_pw_k2(hs_d.ctx, ik, psi_test_cd, &pwbk, nullptr, &hamilt_test_d);
+    }
+    
     this->hs_d.solve(&hamilt_test_d,
                      psi_test_cd,
                      &elecstate_test,
