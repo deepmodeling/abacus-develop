@@ -145,95 +145,6 @@ void print_scf_iterinfo(const std::string& ks_solver,
     }
     std::cout << buf;
 }
-/// @brief print and check for band energy and occupations
-/// @param ofs
-void ElecState::print_eigenvalue(std::ofstream& ofs)
-{
-    bool wrong = false;
-    for (int ik = 0; ik < this->klist->get_nks(); ++ik)
-    {
-        for (int ib = 0; ib < this->ekb.nc; ++ib)
-        {
-            if (std::abs(this->ekb(ik, ib)) > 1.0e10)
-            {
-                GlobalV::ofs_warning << " ik=" << ik + 1 << " ib=" << ib + 1 << " " << this->ekb(ik, ib) << " Ry"
-                                     << std::endl;
-                wrong = true;
-            }
-        }
-    }
-    if (wrong)
-    {
-        ModuleBase::WARNING_QUIT("print_eigenvalue", "Eigenvalues are too large!");
-    }
-
-    if (GlobalV::MY_RANK != 0)
-    {
-        return;
-    }
-
-    ModuleBase::TITLE("ESolver_KS_PW", "print_eigenvalue");
-
-    ofs << "\n STATE ENERGY(eV) AND OCCUPATIONS ";
-    for (int ik = 0; ik < this->klist->get_nks(); ik++)
-    {
-        ofs << std::setprecision(5);
-        ofs << std::setiosflags(std::ios::showpoint);
-        if (ik == 0)
-        {
-            ofs << "   NSPIN == " << GlobalV::NSPIN << std::endl;
-            if (GlobalV::NSPIN == 2)
-            {
-                ofs << "SPIN UP : " << std::endl;
-            }
-        }
-        else if (ik == this->klist->get_nks() / 2)
-        {
-            if (GlobalV::NSPIN == 2)
-            {
-                ofs << "SPIN DOWN : " << std::endl;
-            }
-        }
-
-        if (GlobalV::NSPIN == 2)
-        {
-            if (this->klist->isk[ik] == 0)
-            {
-                ofs << " " << ik + 1 << "/" << this->klist->get_nks() / 2
-                    << " kpoint (Cartesian) = " << this->klist->kvec_c[ik].x << " " << this->klist->kvec_c[ik].y << " "
-                    << this->klist->kvec_c[ik].z << " (" << this->klist->ngk[ik] << " pws)" << std::endl;
-
-                ofs << std::setprecision(6);
-            }
-            if (this->klist->isk[ik] == 1)
-            {
-                ofs << " " << ik + 1 - this->klist->get_nks() / 2 << "/" << this->klist->get_nks() / 2
-                    << " kpoint (Cartesian) = " << this->klist->kvec_c[ik].x << " " << this->klist->kvec_c[ik].y << " "
-                    << this->klist->kvec_c[ik].z << " (" << this->klist->ngk[ik] << " pws)" << std::endl;
-
-                ofs << std::setprecision(6);
-            }
-        } // Pengfei Li  added  14-9-9
-        else
-        {
-            ofs << " " << ik + 1 << "/" << this->klist->get_nks()
-                << " kpoint (Cartesian) = " << this->klist->kvec_c[ik].x << " " << this->klist->kvec_c[ik].y << " "
-                << this->klist->kvec_c[ik].z << " (" << this->klist->ngk[ik] << " pws)" << std::endl;
-
-            ofs << std::setprecision(6);
-        }
-
-        ofs << std::setprecision(6);
-        ofs << std::setiosflags(std::ios::showpoint);
-        for (int ib = 0; ib < this->ekb.nc; ib++)
-        {
-            ofs << std::setw(8) << ib + 1 << std::setw(15) << this->ekb(ik, ib) * ModuleBase::Ry_to_eV << std::setw(15)
-                << this->wg(ik, ib) << std::endl;
-        }
-        ofs << std::endl;
-    } // end ik
-    return;
-}
 
 /// @brief function for printing eigenvalues : ekb
 /// @param ik: index of kpoints
@@ -254,7 +165,7 @@ void ElecState::print_band(const int& ik, const int& printe, const int& iter)
     }
     if (wrong)
     {
-        ModuleBase::WARNING_QUIT("print_eigenvalue", "Eigenvalues are too large!");
+        ModuleBase::WARNING_QUIT("print_band", "Eigenvalues are too large!");
     }
 
     if (GlobalV::MY_RANK == 0)

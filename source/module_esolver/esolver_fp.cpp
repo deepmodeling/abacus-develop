@@ -2,6 +2,9 @@
 
 #include "module_base/global_variable.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_io/cube_io.h"
+#include "module_io/output_log.h"
+#include "module_io/write_elecstat_pot.h"
 #include "module_parameter/parameter.h"
 namespace ModuleESolver
 {
@@ -110,7 +113,13 @@ void ESolver_FP::before_all_runners(const Input_para& inp, UnitCell& cell)
 //! Something to do after SCF iterations when SCF is converged or comes to the max iter step.
 void ESolver_FP::after_scf(const int istep)
 {
-    // 1) write charge difference into files for charge extrapolation
+    // 0) output convergence information
+    ModuleIO::output_convergence_after_scf(this->conv_elec, this->pelec->f_en.etot);
+
+    // 1) write fermi energy
+    ModuleIO::output_efermi(this->conv_elec, this->pelec->eferm.ef);
+
+    // 2) write charge difference into files for charge extrapolation
     if (PARAM.inp.calculation != "scf")
     {
         this->CE.save_files(istep,
@@ -122,7 +131,7 @@ void ESolver_FP::after_scf(const int istep)
                             &this->sf);
     }
 
-    // 2) write charge density
+    // 3) write charge density
     if (PARAM.inp.out_chg)
     {
         for (int is = 0; is < GlobalV::NSPIN; is++)
@@ -180,7 +189,7 @@ void ESolver_FP::after_scf(const int istep)
         }
     }
 
-    // 3) write potential
+    // 4) write potential
     if (PARAM.inp.out_pot == 1 || PARAM.inp.out_pot == 3)
     {
         for (int is = 0; is < GlobalV::NSPIN; is++)

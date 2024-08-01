@@ -38,11 +38,6 @@ void ElecState::print_band(const int& ik, const int& printe, const int& iter)
     return;
 }
 
-void ElecState::print_eigenvalue(std::ofstream& ofs)
-{
-    return;
-}
-
 void ElecState::init_scf(const int istep, const ModuleBase::ComplexMatrix& strucfac)
 {
     return;

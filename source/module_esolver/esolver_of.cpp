@@ -453,7 +453,7 @@ void ESolver_OF::update_rho()
  */
 bool ESolver_OF::check_exit()
 {
-    this->conv_ = false;
+    this->conv_elec = false;
     bool potConv = false;
     bool potHold = false; // if normdLdphi nearly remains unchanged
     bool energyConv = false;
@@ -474,12 +474,12 @@ bool ESolver_OF::check_exit()
         energyConv = true;
     }
 
-    this->conv_ = (this->of_conv_ == "energy" && energyConv) || (this->of_conv_ == "potential" && potConv)
-                  || (this->of_conv_ == "both" && potConv && energyConv);
+    this->conv_elec = (this->of_conv_ == "energy" && energyConv) || (this->of_conv_ == "potential" && potConv)
+                      || (this->of_conv_ == "both" && potConv && energyConv);
 
     this->print_info();
 
-    if (this->conv_ || this->iter_ >= this->max_iter_)
+    if (this->conv_elec || this->iter_ >= this->max_iter_)
     {
         return true;
     }
@@ -507,8 +507,6 @@ bool ESolver_OF::check_exit()
  */
 void ESolver_OF::after_opt(const int istep, UnitCell& ucell)
 {
-    ModuleIO::output_convergence_after_scf(this->conv_, this->pelec->f_en.etot);
-
     // 1) call after_scf() of ESolver_FP
     ESolver_FP::after_scf(istep);
 }

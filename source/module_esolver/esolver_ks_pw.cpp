@@ -536,8 +536,8 @@ void ESolver_KS_PW<T, Device>::iter_finish(const int iter)
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::after_scf(const int istep)
 {
-    // 1) call after_scf() of ESolver_FP
-    ESolver_FP::after_scf(istep);
+    // 1) call after_scf() of ESolver_KS
+    ESolver_KS<T, Device>::after_scf(istep);
 
     // 2) output wavefunctions
     if (this->wf.out_wfc_pw == 1 || this->wf.out_wfc_pw == 2)
@@ -545,15 +545,6 @@ void ESolver_KS_PW<T, Device>::after_scf(const int istep)
         std::stringstream ssw;
         ssw << GlobalV::global_out_dir << "WAVEFUNC";
         ModuleIO::write_wfc_pw(ssw.str(), this->psi[0], this->kv, this->pw_wfc);
-    }
-
-    ModuleIO::output_convergence_after_scf(this->conv_elec, this->pelec->f_en.etot);
-
-    ModuleIO::output_efermi(this->conv_elec, this->pelec->eferm.ef);
-
-    if (GlobalV::OUT_LEVEL != "m")
-    {
-        this->pelec->print_eigenvalue(GlobalV::ofs_running);
     }
 
     if (this->device == base_device::GpuDevice)

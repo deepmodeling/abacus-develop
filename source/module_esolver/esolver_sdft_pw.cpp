@@ -139,16 +139,13 @@ void ESolver_SDFT_PW::before_scf(const int istep)
 
 void ESolver_SDFT_PW::iter_finish(int iter)
 {
-    // this->pelec->print_eigenvalue(GlobalV::ofs_running);
     this->pelec->cal_energies(2);
 }
 
 void ESolver_SDFT_PW::after_scf(const int istep)
 {
-    // 1) call after_scf() of ESolver_FP
-    ESolver_FP::after_scf(istep);
-
-    ModuleIO::output_convergence_after_scf(this->conv_elec, this->pelec->f_en.etot);
+    // 1) call after_scf() of ESolver_KS_PW
+    ESolver_KS_PW<std::complex<double>>::after_scf(istep);
 }
 
 void ESolver_SDFT_PW::hamilt2density(int istep, int iter, double ethr)

@@ -34,11 +34,9 @@ class ESolver_KS : public ESolver_FP
 
 		int niter;        // iter steps actually used in scf
 
-		bool conv_elec;   // If electron density is converged in scf.
+        int out_freq_elec; // frequency for output
 
-		int out_freq_elec;// frequency for output
-
-		virtual void before_all_runners(const Input_para& inp, UnitCell& cell) override;
+        virtual void before_all_runners(const Input_para& inp, UnitCell& cell) override;
 
 		virtual void init_after_vc(const Input_para& inp, UnitCell& cell) override;    // liuyu add 2023-03-09
 
@@ -70,9 +68,9 @@ class ESolver_KS : public ESolver_FP
 		virtual void iter_finish(const int iter) {};
 
 		//! Something to do after SCF iterations when SCF is converged or comes to the max iter step.
-		virtual void after_scf(const int istep) {};
+        virtual void after_scf(const int istep);
 
-		//! <Temporary> It should be replaced by a function in Hamilt Class
+        //! <Temporary> It should be replaced by a function in Hamilt Class
 		virtual void update_pot(const int istep, const int iter) {};
 
 		//! choose strategy when charge density convergence achieved

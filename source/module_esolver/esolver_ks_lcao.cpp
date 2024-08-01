@@ -1063,16 +1063,10 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int iter)
 //------------------------------------------------------------------------------
 //! the 14th function of ESolver_KS_LCAO: after_scf
 //! mohan add 2024-05-11
-//! 1) write charge difference into files for charge extrapolation
+//! 1) call after_scf() of ESolver_KS
 //! 2) write density matrix for sparse matrix
-//! 3) write charge density
 //! 4) write density matrix
-//! 5) write Vxc
 //! 6) write Exx matrix
-//! 7) write potential
-//! 8) write convergence
-//! 9) write fermi energy
-//! 10) write eigenvalues
 //! 11) write deepks information
 //! 12) write rpa information
 //! 13) write HR in npz format
@@ -1087,8 +1081,8 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "after_scf");
 
-    // 1) call after_scf() of ESolver_FP
-    ESolver_FP::after_scf(istep);
+    // 1) call after_scf() of ESolver_KS
+    ESolver_KS<TK>::after_scf(istep);
 
     // 2) write density matrix for sparse matrix
     ModuleIO::write_dmr(dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->get_DMR_vector(),
@@ -1127,18 +1121,6 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
         }
     }
 #endif
-
-    // 7) write convergence
-    ModuleIO::output_convergence_after_scf(this->conv_elec, this->pelec->f_en.etot);
-
-    // 8) write fermi energy
-    ModuleIO::output_efermi(this->conv_elec, this->pelec->eferm.ef);
-
-    // 9) write eigenvalues
-    if (GlobalV::OUT_LEVEL != "m")
-    {
-        this->pelec->print_eigenvalue(GlobalV::ofs_running);
-    }
 
     // 10) write deepks information
 #ifdef __DEEPKS
