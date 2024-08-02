@@ -79,19 +79,19 @@ class Gint {
 
     // in cal_gint_cpu.cpp
 
-    void cpu_vlocal_interface(Gint_inout* inout);
+    void gint_kernel_vlocal(Gint_inout* inout);
 
-    void cpu_dvlocal_interface(Gint_inout* inout);
+    void gint_kernel_dvlocal(Gint_inout* inout);
 
-    void cpu_vlocal_meta_interface(Gint_inout* inout);
+    void gint_kernel_vlocal_meta(Gint_inout* inout);
 
-    void cpu_rho_interface(Gint_inout* inout);
+    void gint_kernel_rho(Gint_inout* inout);
 
-    void cpu_tau_interface(Gint_inout* inout);
+    void gint_kernel_tau(Gint_inout* inout);
 
-    void cpu_force_interface(Gint_inout* inout);
+    void gint_kernel_force(Gint_inout* inout);
 
-    void cpu_force_meta_interface(Gint_inout* inout);
+    void gint_kernel_force_meta(Gint_inout* inout);
 
     //------------------------------------------------------
     // in gint_vl.cpp
@@ -99,14 +99,14 @@ class Gint {
     // calculate the matrix elements of Hamiltonian matrix,
     // < phi_0 | Vl + Vh + Vxc | phi_R> or if the Vna is used,
     // < phi_0 | delta_Vh + Vxc | phi_R>.
-    void gint_kernel_vlocal(const int na_grid,
-                            const int grid_index,
-                            const double delta_r,
-                            double* vldr3,
-                            const int LD_pool,
-                            double* pvpR_reduced,
-                            const UnitCell& ucell,
-                            hamilt::HContainer<double>* hR = nullptr);
+    // void gint_kernel_vlocal(const int na_grid,
+    //                         const int grid_index,
+    //                         const double delta_r,
+    //                         double* vldr3,
+    //                         const int LD_pool,
+    //                         double* pvpR_reduced,
+    //                         const UnitCell& ucell,
+    //                         hamilt::HContainer<double>* hR = nullptr);
 
     // calculate < phi_0 | vlocal | dphi_R >
     void gint_kernel_dvlocal(const int na_grid,
@@ -148,7 +148,7 @@ class Gint {
                                          // V | phi_R> matrix element.
 
     void cal_meshball_vlocal_k(int na_grid,
-                               int LD_pool,
+                               const int LD_pool,
                                int grid_index,
                                int* block_size,
                                int* block_index,
