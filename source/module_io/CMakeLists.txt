@@ -1,6 +1,4 @@
 list(APPEND objects
-    input.cpp
-    input_conv_tmp.cpp
     input_conv.cpp
     bessel_basis.cpp
     cal_test.cpp
@@ -16,19 +14,17 @@ list(APPEND objects
     read_cube.cpp
     read_rho.cpp
     read_rhog.cpp
+    read_exit_file.cpp
     read_wfc_pw.cpp
     restart.cpp
     binstream.cpp
     write_wfc_pw.cpp
     write_cube.cpp
-    write_rho.cpp
-    write_pot.cpp
+    write_elecstat_pot.cpp
     write_dipole.cpp
     td_current_io.cpp
     write_wfc_r.cpp
     output_log.cpp
-    output_rho.cpp
-    output_potential.cpp
     para_json.cpp
     parse_args.cpp
 )
@@ -50,8 +46,8 @@ if(ENABLE_LCAO)
       write_orb_info.cpp
       write_proj_band_lcao.cpp
       nscf_fermi_surf.cpp
-      istate_charge.cpp
-      istate_envelope.cpp
+      get_pchg_lcao.cpp
+      get_wf_lcao.cpp
       read_wfc_nao.cpp
       read_wfc_lcao.cpp
       write_wfc_nao.cpp
@@ -81,14 +77,19 @@ endif()
 add_library(
     io_input
     OBJECT
-    read_input_item_other.cpp
-    read_input_item_general.cpp
-    read_input_item_pw.cpp
-    read_input_item_sdft.cpp
+    read_input_item_system.cpp
+    read_input_item_elec_stru.cpp
     read_input_item_relax.cpp
-    read_input_item_lcao.cpp
-    read_input_item_postprocess.cpp
     read_input_item_md.cpp
+    read_input_item_ofdft.cpp
+    read_input_item_sdft.cpp
+    read_input_item_tddft.cpp
+    read_input_item_deepks.cpp
+    read_input_item_model.cpp
+    read_input_item_postprocess.cpp  
+    read_input_item_exx_dftu.cpp
+    read_input_item_other.cpp   
+    read_input_item_output.cpp  
     read_input.cpp
     bcast_globalv.cpp
 )

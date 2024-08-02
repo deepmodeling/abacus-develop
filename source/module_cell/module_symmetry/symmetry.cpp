@@ -1807,54 +1807,13 @@ void Symmetry::set_atom_map(const Atom* atoms)
                     if (equal(diff1, 0.0) && equal(diff2, 0.0) && equal(diff3, 0.0))
                     {
                         this->isym_rotiat_[k][ia] = ja;
+
                         break;
                     }
                 }
             }
         }
     }
-    this->reset_atom_map(atoms);
-}
-
-inline bool check_full_atom_map(const std::vector<std::vector<int>>& m)
-{
-    if (m.empty()) { return false;
-}
-    for (const auto& v1 : m) { for (const auto& v2 : v1) { if (v2 == -1) { return false; } } }
-    return true;
-}
-
-void Symmetry::reset_atom_map(const Atom* atoms)
-{
-    const double eps_start = this->epsilon;
-    while (!check_full_atom_map(this->isym_rotiat_) && this->epsilon < 100 * eps_start)
-    {
-        this->epsilon *= 2;
-        this->isym_rotiat_.clear();
-        this->set_atom_map(atoms);
-
-        std::cout << "try eps=" << this->epsilon << std::endl;
-        std::cout << check_full_atom_map(this->isym_rotiat_) << std::endl;
-    }
-    if (this->epsilon > 100 * eps_start)
-    {
-        ModuleBase::WARNING("Symmetry::reset_atom_map", "Cannot find all the equivalent atoms even at 100*symmetry_prec.");
-        if (ModuleSymmetry::Symmetry::symm_autoclose)
-        {
-            ModuleBase::WARNING("K_Vectors::ibz_kpoint", "Automatically set symmetry to 0 and continue ...");
-            std::cout << "Automatically set symmetry to 0 and continue ..." << std::endl;
-            ModuleSymmetry::Symmetry::symm_flag = 0;
-        }
-        else {
-            ModuleBase::WARNING_QUIT("Symmetry::reset_atom_map",
-                "Possible solutions: \n \
-1. Refine the lattice parameters in STRU;\n \
-2. Use a different`symmetry_prec`.  \n \
-3. Close symemtry: set `symmetry` to 0 in INPUT. \n \
-4. Set `symmetry_autoclose` to 1 in INPUT to automatically close symmetry when this error occurs.");
-        }
-    }
-    this->epsilon = eps_start;  //recover symmetry_prec after a successful reset
 }
 
 /// @brief return a map that is inequivalent atom index to its symmetry multiplicity

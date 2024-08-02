@@ -20,6 +20,7 @@ list(APPEND cell_simple_srcs
     ../atom_pseudo.cpp
     ../pseudo.cpp
     ../read_pp.cpp
+    ../read_pp_complete.cpp
     ../read_pp_upf201.cpp
     ../read_pp_upf100.cpp
     ../read_pp_vwr.cpp
@@ -32,28 +33,28 @@ add_library(cell_info OBJECT ${cell_simple_srcs})
 AddTest(
   TARGET cell_read_pp
   LIBS ${math_libs} base device
-  SOURCES read_pp_test.cpp ../atom_pseudo.cpp ../pseudo.cpp ../read_pp.cpp ../read_pp_upf201.cpp ../read_pp_upf100.cpp ../read_pp_vwr.cpp ../read_pp_blps.cpp 
+  SOURCES read_pp_test.cpp ../atom_pseudo.cpp ../pseudo.cpp ../read_pp.cpp ../read_pp_complete.cpp ../read_pp_upf201.cpp ../read_pp_upf100.cpp ../read_pp_vwr.cpp ../read_pp_blps.cpp 
   ../../module_io/output.cpp
 )
 
 AddTest(
   TARGET cell_pseudo_nc
   LIBS ${math_libs} base device
-  SOURCES pseudo_nc_test.cpp ../pseudo.cpp ../atom_pseudo.cpp ../read_pp.cpp ../read_pp_upf201.cpp ../read_pp_upf100.cpp ../read_pp_vwr.cpp 
+  SOURCES pseudo_nc_test.cpp ../pseudo.cpp ../atom_pseudo.cpp ../read_pp.cpp ../read_pp_complete.cpp ../read_pp_upf201.cpp ../read_pp_upf100.cpp ../read_pp_vwr.cpp 
   	../read_pp_blps.cpp ../../module_io/output.cpp
 )
 
 AddTest(
   TARGET cell_atom_pseudo
   LIBS ${math_libs} base device
-  SOURCES atom_pseudo_test.cpp ../atom_pseudo.cpp ../pseudo.cpp ../read_pp.cpp ../read_pp_upf201.cpp ../read_pp_upf100.cpp 
+  SOURCES atom_pseudo_test.cpp ../atom_pseudo.cpp ../pseudo.cpp ../read_pp.cpp ../read_pp_complete.cpp ../read_pp_upf201.cpp ../read_pp_upf100.cpp 
   	../read_pp_vwr.cpp ../read_pp_blps.cpp ../../module_io/output.cpp
 )
 
 AddTest(
   TARGET cell_atom_spec
   LIBS ${math_libs} base device
-  SOURCES atom_spec_test.cpp ../atom_spec.cpp ../atom_pseudo.cpp ../pseudo.cpp ../read_pp.cpp ../read_pp_upf201.cpp 
+  SOURCES atom_spec_test.cpp ../atom_spec.cpp ../atom_pseudo.cpp ../pseudo.cpp ../read_pp.cpp ../read_pp_complete.cpp ../read_pp_upf201.cpp 
   	../read_pp_upf100.cpp ../read_pp_vwr.cpp ../read_pp_blps.cpp ../../module_io/output.cpp
 )
 

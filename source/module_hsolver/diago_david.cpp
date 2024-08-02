@@ -1,6 +1,6 @@
 #include "diago_david.h"
 
-#include "module_base/memory.h"
+// #include "module_base/memory.h"
 #include "module_base/timer.h"
 #include "module_base/module_device/device.h"
 
@@ -110,6 +110,15 @@ DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in,
     // lagrange_matrix(nband, nband); // for orthogonalization
     resmem_complex_op()(this->ctx, this->lagrange_matrix, nband * nband);
     setmem_complex_op()(this->ctx, this->lagrange_matrix, 0, nband * nband);
+
+#if defined(__CUDA) || defined(__ROCM)
+    // device precondition array
+    if (this->device == base_device::GpuDevice)
+    {
+        resmem_var_op()(this->ctx, this->d_precondition, dim);
+        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, this->d_precondition, this->precondition, dim);
+    }
+#endif
 }
 
 /**
@@ -117,7 +126,6 @@ DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in,
  * 
  * This destructor releases the dynamically allocated memory used by the class members.
  * It deletes the basis, hpsi, spsi, hcc, scc, vcc, lagrange_matrix, and eigenvalue arrays.
- * If the device is a GPU device, it also deletes the d_precondition array.
  * 
  */
 template <typename T, typename Device>
@@ -131,7 +139,7 @@ DiagoDavid<T, Device>::~DiagoDavid()
     delmem_complex_op()(this->ctx, this->vcc);
     delmem_complex_op()(this->ctx, this->lagrange_matrix);
     base_device::memory::delete_memory_op<Real, base_device::DEVICE_CPU>()(this->cpu_ctx, this->eigenvalue);
-
+    // If the device is a GPU device, free the d_precondition array.
 #if defined(__CUDA) || defined(__ROCM)
     if (this->device == base_device::GpuDevice)
     {
@@ -926,6 +934,19 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
     return;
 }
 
+/**
+ * SchmidtOrth function performs orthogonalization of the starting eigenfunction to those already calculated.
+ * It takes the dimension of the basis, number of bands, index of the current band, starting eigenfunction psi_m,
+ * lagrange_m array, mm_size, and mv_size as input parameters.
+ *
+ * @param dim The dimension of the basis.
+ * @param nband The number of bands.
+ * @param m The index of the current band.
+ * @param spsi Pointer to the starting eigenfunction psi_m.
+ * @param lagrange_m Pointer to the lagrange_m array.
+ * @param mm_size The size of the square matrix for future lagranges.
+ * @param mv_size The size of the lagrange_m array.
+ */
 template <typename T, typename Device>
 void DiagoDavid<T, Device>::SchmidtOrth(const int& dim,
                                             const int nband,
@@ -948,6 +969,7 @@ void DiagoDavid<T, Device>::SchmidtOrth(const int& dim,
     assert(m >= 0);
     assert(m < nband);
 
+    // psi_m = basis[m]
     T* psi_m = basis + dim*m;
 
     // std::complex<double> *lagrange = new std::complex<double>[m + 1];
@@ -956,7 +978,8 @@ void DiagoDavid<T, Device>::SchmidtOrth(const int& dim,
     // calculate the square matrix for future lagranges
     if (mm_size != 0)
     {
-        //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        // lagrange_m[m - mv_size + 1 - mm_size]
+        // = basis[m - mv_size + 1 - mm_size]' * spsi[m]
         gemm_op<T, Device>()(this->ctx,
                                   'C',
                                   'N',
@@ -974,6 +997,8 @@ void DiagoDavid<T, Device>::SchmidtOrth(const int& dim,
         );
     }
     // calculate other lagranges for this band
+    // lagrange_m[m - mv_size + 1]
+    // = basis[m - mv_size + 1]' * spsi[m]
     gemv_op<T, Device>()(this->ctx,
                               'C',
                               dim,
@@ -995,6 +1020,8 @@ void DiagoDavid<T, Device>::SchmidtOrth(const int& dim,
 
     assert(psi_norm > 0.0);
 
+    // / psi_m = psi_m - \sum_{i < m} \langle psi(i)|S|psi(m) \rangle psi(i)
+    // psi_m = psi_m - basis * lagrange_m
     gemv_op<T, Device>()(this->ctx,
                               'N',
                               dim,
@@ -1008,6 +1035,7 @@ void DiagoDavid<T, Device>::SchmidtOrth(const int& dim,
                               psi_m,
                               1);
 
+    // psi_norm = psi_norm - lagrange_m · lagrange_m
     psi_norm -= dot_real_op<T, Device>()(this->ctx, m, lagrange_m, lagrange_m, false);
 
     // for (int j = 0; j < m; j++)
@@ -1034,6 +1062,7 @@ void DiagoDavid<T, Device>::SchmidtOrth(const int& dim,
     }
     else
     {
+        // psi_m = psi_m / psi_norm
         vector_div_constant_op<T, Device>()(this->ctx, dim, psi_m, psi_m, psi_norm);
         // for (int i = 0; i < npw; i++)
         // {
@@ -1046,6 +1075,15 @@ void DiagoDavid<T, Device>::SchmidtOrth(const int& dim,
     return;
 }
 
+/**
+ * @brief Plans the Schmidt orthogonalization for a given number of bands.
+ * 
+ * @tparam T The type of the elements in the vectors.
+ * @tparam Device The device on which the computation will be performed.
+ * @param nband The number of bands.
+ * @param pre_matrix_mm_m The vector to store the matrix sizes.
+ * @param pre_matrix_mv_m The vector to store the number of matrix-vector multiplications.
+ */
 template <typename T, typename Device>
 void DiagoDavid<T, Device>::planSchmidtOrth(const int nband, std::vector<int>& pre_matrix_mm_m, std::vector<int>& pre_matrix_mv_m)
 {
@@ -1142,14 +1180,6 @@ int DiagoDavid<T, Device>::diag(const HPsiFunc& hpsi_func,
     /// record the times of trying iterative diagonalization
     int ntry = 0;
     this->notconv = 0;
-
-#if defined(__CUDA) || defined(__ROCM)
-    if (this->device == base_device::GpuDevice)
-    {
-        resmem_var_op()(this->ctx, this->d_precondition, ldPsi);
-        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, this->d_precondition, this->precondition, ldPsi);
-    }
-#endif
 
     int sum_dav_iter = 0;
     do

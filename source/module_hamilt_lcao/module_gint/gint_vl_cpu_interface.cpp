@@ -79,6 +79,7 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
 #endif
         delete[] vldr3;
     }
+    
 #ifdef _OPENMP
     if (GlobalV::GAMMA_ONLY_LOCAL) {
 #pragma omp critical(gint_gamma)
@@ -101,7 +102,7 @@ void Gint::cpu_vlocal_interface(Gint_inout* inout) {
                                 1);
         }
     }
-     delete hRGint_thread;
+    delete hRGint_thread;
 #endif
     ModuleBase::TITLE("Gint_interface", "cal_gint_vlocal");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal");

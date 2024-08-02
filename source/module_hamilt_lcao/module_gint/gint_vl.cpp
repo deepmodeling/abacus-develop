@@ -327,26 +327,6 @@ void Gint::cal_meshball_vlocal_k(
 	double* pvpR,
 	const UnitCell& ucell)
 {
-    auto find_offset = [&](const int id1, const int id2, const int iat1, const int iat2)->int
-    {
-        const int R1x=this->gridt->ucell_index2x[id1];
-        const int R2x=this->gridt->ucell_index2x[id2];
-        const int dRx=R1x-R2x;
-        const int R1y=this->gridt->ucell_index2y[id1];
-        const int R2y=this->gridt->ucell_index2y[id2];
-        const int dRy=R1y-R2y;
-        const int R1z=this->gridt->ucell_index2z[id1];
-        const int R2z=this->gridt->ucell_index2z[id2];
-        const int dRz=R1z-R2z;
-
-        const int index=this->gridt->cal_RindexAtom(dRx, dRy, dRz, iat2);
-
-        const int offset = this->gridt->binary_search_find_R2_offset(index, iat1);
-
-        assert(offset < this->gridt->nad[iat1]);
-        return offset;
-    };
-    
     char transa = 'N', transb = 'T';
 	double alpha=1, beta=1;
 	int allnw=block_index[na_grid];
@@ -387,7 +367,7 @@ void Gint::cal_meshball_vlocal_k(
 				const int mcell_index2 = this->gridt->bcell_start[grid_index] + ia2;
 				const int id2 = this->gridt->which_unitcell[mcell_index2];
 				int offset;
-				offset=find_offset(id1, id2, iat1, iat2);
+				offset=this->gridt->find_offset(id1, id2, iat1, iat2);
 
 				const int iatw = DM_start + this->gridt->find_R2st[iat1][offset];	
 

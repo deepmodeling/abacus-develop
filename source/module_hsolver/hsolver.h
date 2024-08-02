@@ -49,16 +49,20 @@ class HSolver
     virtual void solve(hamilt::Hamilt<T, Device>* phm,
                        psi::Psi<T, Device>& ppsi,
                        elecstate::ElecState* pes,
+                       double* out_eigenvalues,
+                       const std::vector<bool>& is_occupied_in,
                        const std::string method,
-
                        const std::string calculation_type_in,
                        const std::string basis_type_in,
                        const bool use_paw_in,
                        const bool use_uspp_in,
                        const int rank_in_pool_in,
                        const int nproc_in_pool_in,
-
-                       const bool skip_charge = false)
+                       const int scf_iter_in,
+                       const bool need_subspace_in,
+                       const int diag_iter_max_in,
+                       const double pw_diag_thr_in,
+                       const bool skip_charge)
     {
         return;
     }
@@ -85,7 +89,13 @@ class HSolver
                        const int istep,
                        const int iter,
                        const std::string method,
-                       const bool skip_charge = false)
+
+                       const int scf_iter_in,
+                       const bool need_subspace_in,
+                       const int diag_iter_max_in,
+                       const double pw_diag_thr_in,
+                       
+                       const bool skip_charge)
     {
         return;
     }

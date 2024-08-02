@@ -3,7 +3,6 @@
 #include <cstdlib>
 #include <iostream>
 
-#include "module_io/input.h"
 #include "module_io/read_input.h"
 #include "version.h"
 

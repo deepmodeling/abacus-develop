@@ -1,3 +1,4 @@
+#include "module_base/global_function.h"
 #include "module_base/tool_quit.h"
 #include "read_input.h"
 #include "read_input_tool.h"
@@ -5,142 +6,7 @@ namespace ModuleIO
 {
 void ReadInput::item_postprocess()
 {
-    // 6. Smearing
-    {
-        Input_Item item("smearing_method");
-        item.annotation = "type of smearing_method: gauss; fd; fixed; mp; mp2; mv";
-        read_sync_string(input.smearing_method);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("smearing_sigma");
-        item.annotation = "energy range for smearing";
-        read_sync_double(input.smearing_sigma);
-        this->add_item(item);
-    }
-    {
-        // Energy range for smearing,
-        //`smearing_sigma` = 1/2 *kB* `smearing_sigma_temp`.
-        Input_Item tmp_item("smearing_sigma_temp");
-        tmp_item.read_value
-            = [](const Input_Item& item, Parameter& para) { para.input.smearing_sigma = 3.166815e-6 * doublevalue; };
-        // only to set smearing_sigma, so no need to write to output INPUT file
-        // or bcast.
-        this->add_item(tmp_item);
-    }
-
-    // 7. Charge Mixing
-    {
-        Input_Item item("mixing_type");
-        item.annotation = "plain; pulay; broyden";
-        read_sync_string(input.mixing_mode);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("mixing_beta");
-        item.annotation = "mixing parameter: 0 means no new charge";
-        read_sync_double(input.mixing_beta);
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.mixing_beta < 0.0)
-            {
-                if (para.input.nspin == 1)
-                {
-                    para.input.mixing_beta = 0.8;
-                }
-                else if (para.input.nspin == 2)
-                {
-                    para.input.mixing_beta = 0.4;
-                    para.input.mixing_beta_mag = 1.6;
-                    para.input.mixing_gg0_mag = 0.0;
-                }
-                else if (para.input.nspin == 4) // I will add this
-                {
-                    para.input.mixing_beta = 0.4;
-                    para.input.mixing_beta_mag = 1.6;
-                    para.input.mixing_gg0_mag = 0.0;
-                }
-            }
-        };
-        this->add_item(item);
-    }
-    {
-        Input_Item item("mixing_ndim");
-        item.annotation = "mixing dimension in pulay or broyden";
-        read_sync_int(input.mixing_ndim);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("mixing_restart");
-        item.annotation = "threshold to restart mixing during SCF";
-        read_sync_double(input.mixing_restart);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("mixing_gg0");
-        item.annotation = "mixing parameter in kerker";
-        read_sync_double(input.mixing_gg0);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("mixing_beta_mag");
-        item.annotation = "mixing parameter for magnetic density";
-        read_sync_double(input.mixing_beta_mag);
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.mixing_beta_mag < 0.0)
-            {
-                if (para.input.nspin == 2 || para.input.nspin == 4)
-                {
-                    if (para.input.mixing_beta <= 0.4)
-                    {
-                        para.input.mixing_beta_mag = 4 * para.input.mixing_beta;
-                    }
-                    else
-                    {
-                        para.input.mixing_beta_mag = 1.6; // 1.6 can be discussed
-                    }
-                }
-            }
-        };
-        this->add_item(item);
-    }
-    {
-        Input_Item item("mixing_gg0_mag");
-        item.annotation = "mixing parameter in kerker";
-        read_sync_double(input.mixing_gg0_mag);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("mixing_gg0_min");
-        item.annotation = "the minimum kerker coefficient";
-        read_sync_double(input.mixing_gg0_min);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("mixing_angle");
-        item.annotation = "angle mixing parameter for non-colinear calculations";
-        read_sync_double(input.mixing_angle);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("mixing_tau");
-        item.annotation = "whether to mix tau in mGGA calculation";
-        read_sync_bool(input.mixing_tau);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("mixing_dftu");
-        item.annotation = "whether to mix locale in DFT+U calculation";
-        read_sync_bool(input.mixing_dftu);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("mixing_dmr");
-        item.annotation = "whether to mix real-space density matrix";
-        read_sync_bool(input.mixing_dmr);
-        this->add_item(item);
-    }
-
-    // 8. DOS
+    // DOS
     {
         Input_Item item("dos_emin_ev");
         item.annotation = "minimal range for dos";
@@ -183,6 +49,188 @@ void ReadInput::item_postprocess()
         Input_Item item("dos_nche");
         item.annotation = "orders of Chebyshev expansions for dos";
         read_sync_int(input.dos_nche);
+        this->add_item(item);
+    }
+
+    // Electronic Conductivity
+    {
+        Input_Item item("cal_cond");
+        item.annotation = "calculate electronic conductivities";
+        read_sync_bool(input.cal_cond);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("cond_che_thr");
+        item.annotation = "control the error of Chebyshev expansions for conductivities";
+        read_sync_double(input.cond_che_thr);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("cond_dw");
+        item.annotation = "frequency interval for conductivities";
+        read_sync_double(input.cond_dw);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("cond_wcut");
+        item.annotation = "cutoff frequency (omega) for conductivities";
+        read_sync_double(input.cond_wcut);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("cond_dt");
+        item.annotation = "t interval to integrate Onsager coefficiencies";
+        read_sync_double(input.cond_dt);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("cond_dtbatch");
+        item.annotation = "exp(iH*dt*cond_dtbatch) is expanded with Chebyshev expansion";
+        read_sync_int(input.cond_dtbatch);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("cond_smear");
+        item.annotation = "Smearing method for conductivities";
+        read_sync_int(input.cond_smear);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("cond_fwhm");
+        item.annotation = "FWHM for conductivities";
+        read_sync_double(input.cond_fwhm);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("cond_nonlocal");
+        item.annotation = "Nonlocal effects for conductivities";
+        read_sync_bool(input.cond_nonlocal);
+        this->add_item(item);
+    }
+
+    // berry_wannier
+    {
+        Input_Item item("berry_phase");
+        item.annotation = "calculate berry phase or not";
+        read_sync_bool(input.berry_phase);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.berry_phase)
+            {
+                if (para.input.basis_type != "pw" && para.input.basis_type != "lcao")
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput",
+                                             "calculate berry phase, please "
+                                             "set basis_type = pw or lcao");
+                }
+                if (para.input.calculation != "nscf")
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput", "calculate berry phase, please set calculation = nscf");
+                }
+                if (!(para.input.gdir == 1 || para.input.gdir == 2 || para.input.gdir == 3))
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput", "calculate berry phase, please set gdir = 1 or 2 or 3");
+                }
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("gdir");
+        item.annotation = "calculate the polarization in the direction of the "
+                          "lattice vector";
+        read_sync_int(input.gdir);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("towannier90");
+        item.annotation = "use wannier90 code interface or not";
+        read_sync_bool(input.towannier90);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.towannier90)
+            {
+                if (para.input.calculation != "nscf")
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput", "to use towannier90, please set calculation = nscf");
+                }
+                if (para.input.nspin == 2)
+                {
+                    if (para.input.wannier_spin != "up" && para.input.wannier_spin != "down")
+                    {
+                        ModuleBase::WARNING_QUIT("ReadInput",
+                                                 "to use towannier90, please set wannier_spin = up "
+                                                 "or down");
+                    }
+                }
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("nnkpfile");
+        item.annotation = "the wannier90 code nnkp file name";
+        read_sync_string(input.nnkpfile);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("wannier_spin");
+        item.annotation = "calculate spin in wannier90 code interface";
+        read_sync_string(input.wannier_spin);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("wannier_method");
+        item.annotation = "different implementation methods under Lcao basis set";
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            /*
+                       Developer's notes: on the repair of lcao_in_pw
+
+                       lcao_in_pw is a special basis_type, for scf calculation,
+                      it follows workflow of pw, but for nscf the toWannier90
+                      calculation, the interface is in ESolver_KS_LCAO_elec,
+                       therefore lcao_in_pw for towannier90 calculation follows
+                      lcao.
+
+                       In the future lcao_in_pw will have its own ESolver.
+
+                       2023/12/22 use new psi_initializer to expand numerical
+                      atomic orbitals, ykhuang
+                   */
+            if (para.input.towannier90 && para.input.basis_type == "lcao_in_pw")
+            {
+                para.input.wannier_method = 1;
+            }
+        };
+        read_sync_int(input.wannier_method);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_wannier_mmn");
+        item.annotation = "output .mmn file or not";
+        read_sync_bool(input.out_wannier_mmn);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_wannier_amn");
+        item.annotation = "output .amn file or not";
+        read_sync_bool(input.out_wannier_amn);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_wannier_unk");
+        item.annotation = "output UNK. file or not";
+        read_sync_bool(input.out_wannier_unk);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_wannier_eig");
+        item.annotation = "output .eig file or not";
+        read_sync_bool(input.out_wannier_eig);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_wannier_wvfn_formatted");
+        item.annotation = "output UNK. file in text format or in binary format";
+        read_sync_bool(input.out_wannier_wvfn_formatted);
         this->add_item(item);
     }
 }

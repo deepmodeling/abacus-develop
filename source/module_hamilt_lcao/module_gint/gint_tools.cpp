@@ -256,11 +256,4 @@ void cal_dpsirr_ylm(
 		return psir_vlbr3;
 	}
 
-
-// calculating (psi_DMR)_mu = sum_nu DMR_mu,nu psi_nu
-// note : there is a difference between rho and force
-// in calculating rho, due to symmetry, the summation over mu,nu
-// can be done as sum_mu,mu + 2 sum_mu<nu, saving some time
-// but for force, we cannot exchange the index
-
 } // namespace Gint_Tools

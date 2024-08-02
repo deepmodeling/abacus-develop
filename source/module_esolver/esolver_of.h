@@ -5,7 +5,6 @@
 #include "module_base/opt_DCsrch.h"
 #include "module_base/opt_TN.hpp"
 #include "module_elecstate/module_charge/charge.h"
-#include "module_elecstate/module_charge/charge_extra.h" // liuyu add 2022-11-07
 #include "module_hamilt_pw/hamilt_ofdft/kedf_lkt.h"
 #include "module_hamilt_pw/hamilt_ofdft/kedf_tf.h"
 #include "module_hamilt_pw/hamilt_ofdft/kedf_vw.h"
@@ -47,9 +46,6 @@ class ESolver_OF : public ESolver_FP
     KEDF_WT* wt_ = nullptr;
     KEDF_LKT* lkt_ = nullptr;
 
-    // charge extrapolation liuyu add 2022-11-07
-    Charge_Extra CE_;
-
     // ----------------- the optimization methods ------------------
     ModuleBase::Opt_CG* opt_cg_ = nullptr;
     ModuleBase::Opt_TN* opt_tn_ = nullptr;
@@ -77,7 +73,6 @@ class ESolver_OF : public ESolver_FP
     double** pdLdphi_ = nullptr;                  // dL/dphi
     double** pphi_ = nullptr;                     // pphi[i] = ppsi.get_pointer(i), which will be freed in ~Psi().
     char* task_ = nullptr;                        // used in line search
-    double* mu_ = nullptr;                        // chemical potential
     int tn_spin_flag_ = -1;                       // spin flag used in cal_potential, which will be called by opt_tn
     int max_dcsrch_ = 200;                        // max no. of line search
     int flag_ = -1;                               // flag of TN

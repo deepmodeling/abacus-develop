@@ -161,16 +161,19 @@ TEST_F(TestHSolverPW_SDFT, solve)
 	//check solve()
 	EXPECT_EQ(this->hs_d.initialed_psi, false);
 
-	this->hs_d.solve(
-        &hamilt_test_d, 
-        psi_test_cd, 
-        &elecstate_test,
-        &pwbk, 
-        stowf, 
-        istep, 
-        iter, 
-        method_test, 
-        false
+    this->hs_d.solve(&hamilt_test_d,
+                     psi_test_cd,
+                     &elecstate_test,
+                     &pwbk,
+                     stowf,
+                     istep,
+                     iter,
+                     method_test,
+                     hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER,
+                     hsolver::DiagoIterAssist<std::complex<double>>::need_subspace,
+                     hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX,
+                     hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR,
+                     false
     );
 	EXPECT_EQ(this->hs_d.initialed_psi, true);
 	EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<double>>::avg_iter, 0.0);
@@ -244,16 +247,19 @@ TEST_F(TestHSolverPW_SDFT, solve_noband_skipcharge)
 	//check solve()
     hs_d.initialed_psi = true;
 
-	this->hs_d.solve(
-        &hamilt_test_d, 
-        psi_test_no, 
-        &elecstate_test, 
-        &pwbk,
-        stowf, 
-        istep, 
-        iter, 
-        method_test, 
-        false
+    this->hs_d.solve(&hamilt_test_d,
+                     psi_test_no,
+                     &elecstate_test,
+                     &pwbk,
+                     stowf,
+                     istep,
+                     iter,
+                     method_test,
+                     hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER,
+                     hsolver::DiagoIterAssist<std::complex<double>>::need_subspace,
+                     hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX,
+                     hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR,
+                     false
     );
 	EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<double>>::avg_iter, 0.0);
     EXPECT_EQ(stowf.nbands_diag, 2);
@@ -268,16 +274,19 @@ TEST_F(TestHSolverPW_SDFT, solve_noband_skipcharge)
     std::cout<<__FILE__<<__LINE__<<" "<<elecstate_test.f_en.eband<<std::endl;*/
 
     //test for skip charge
-    this->hs_d.solve(
-        &hamilt_test_d, 
-        psi_test_no, 
-        &elecstate_test, 
-        &pwbk,
-        stowf, 
-        istep, 
-        iter, 
-        method_test, 
-        true
+    this->hs_d.solve(&hamilt_test_d,
+                     psi_test_no,
+                     &elecstate_test,
+                     &pwbk,
+                     stowf,
+                     istep,
+                     iter,
+                     method_test,
+                     hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER,
+                     hsolver::DiagoIterAssist<std::complex<double>>::need_subspace,
+                     hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX,
+                     hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR,
+                     true
     );
     EXPECT_EQ(stowf.nbands_diag, 4);
     EXPECT_EQ(stowf.nbands_total, 1);

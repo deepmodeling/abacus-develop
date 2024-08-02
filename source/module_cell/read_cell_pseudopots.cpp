@@ -81,8 +81,7 @@ void UnitCell::read_cell_pseudopots(const std::string& pp_dir, std::ofstream& lo
 
         if (GlobalV::MY_RANK == 0)
         {
-            atoms[i].ncpp.set_pseudo(); // need to refactor, sunliang 20240716
-
+		    upf.complete_default(this->atoms[i].ncpp);
             log << "\n Read in pseudopotential file is " << pseudo_fn[i] << std::endl;
             ModuleBase::GlobalFunc::OUT(log, "pseudopotential type", atoms[i].ncpp.pp_type);
             ModuleBase::GlobalFunc::OUT(log, "exchange-correlation functional", atoms[i].ncpp.xc_func);
