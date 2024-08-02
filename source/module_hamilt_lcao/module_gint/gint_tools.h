@@ -237,6 +237,12 @@ void get_psi_dpsi(const Grid_Technique& gt,int nw,int it,bool * iw2_new,
                   std::vector<const double*>& it_psi_uniform,
                   std::vector<const double*>& it_dpsi_uniform);
 
+void get_grid_bigcell_distance(const Grid_Technique& gt,
+                                const int bcell_start,
+								const int ib,
+								int& it,
+								double* mt);
+
 void cal_grid_atom_distance(double &distance,
                             double* dr,
                             const double* mt,

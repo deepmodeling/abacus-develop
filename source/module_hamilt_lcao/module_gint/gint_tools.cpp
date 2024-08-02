@@ -97,19 +97,33 @@ void get_vindex(const int bxyz, const int bx, const int by, const int bz,
 		}
 	}
 
+void get_grid_bigcell_distance(const Grid_Technique& gt,
+                                const int bcell_start,
+								const int ib,
+								int& it,
+								double* mt)
+{
+	const int mcell_index = bcell_start + ib;
+	const int iat = gt.which_atom[mcell_index]; 
+	const int it = gt.ucell->iat2it[iat];  
+	const int imcell = gt.which_bigcell[mcell_index];
+	const double mt[3] = {gt.meshball_positions[imcell][0] - gt.tau_in_bigcell[iat][0],
+							gt.meshball_positions[imcell][1] - gt.tau_in_bigcell[iat][1],
+							gt.meshball_positions[imcell][2] - gt.tau_in_bigcell[iat][2]};
+}
 
 void cal_grid_atom_distance(double &distance,
                             double* dr,
                             const double* mt,
                             const double* meshcell_pos)
 {
-	for (int i=0;i<3;i++)
-	{
-		dr[i]=meshcell_pos[i]+mt[i];
-	}
+	dr[0] = meshcell_pos[0] + mt[0];
+	dr[1] = meshcell_pos[1] + mt[1];
+	dr[2] = meshcell_pos[2] + mt[2];
 	distance = std::sqrt(dr[0] * dr[0] + dr[1] * dr[1] + dr[2] * dr[2]); 
 	if (distance < 1.0E-9) distance += 1.0E-9;
 }
+
 void interp_coeff(const double distance,
 				const double delta_r,
 				int& ip,
