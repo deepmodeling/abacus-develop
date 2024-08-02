@@ -99,7 +99,6 @@ void get_vindex(const int bxyz, const int bx, const int by, const int bz,
 
 
 void cal_grid_atom_distance(double &distance,
-							int ib,
                             double* dr,
                             const double* mt,
                             const double* meshcell_pos)

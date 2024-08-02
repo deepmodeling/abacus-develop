@@ -58,7 +58,7 @@ void cal_psir_ylm(
                 //                      gt.meshcell_pos[ib][2] + mt[2]};
                 // distance between atom and grid
 
-                cal_grid_atom_distance(distance, ib,dr,mt,gt.meshcell_pos[ib].data());
+                cal_grid_atom_distance(distance,dr,mt,gt.meshcell_pos[ib].data());
                 //------------------------------------------------------
                 // spherical harmonic functions Ylm
                 //------------------------------------------------------

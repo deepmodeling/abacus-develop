@@ -39,7 +39,6 @@ void cal_dpsir_ylm(
                               gt.meshball_positions[imcell][2] - gt.tau_in_bigcell[iat][2]};
 
         Atom* atom = &ucell.atoms[it];
-        
         get_psi_dpsi(gt,atom->nw, it,
                 atom->iw2_new,it_psi_uniform, it_dpsi_uniform);
         double distance;
@@ -59,7 +58,7 @@ void cal_dpsir_ylm(
             }
             else
             {
-                cal_grid_atom_distance(distance, ib,dr,mt,gt.meshcell_pos[ib].data());
+                cal_grid_atom_distance(distance,dr,mt,gt.meshcell_pos[ib].data());
 
                 ModuleBase::Ylm::grad_rl_sph_harm(ucell.atoms[it].nwl,
                                                   dr[0], dr[1], dr[2], 

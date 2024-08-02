@@ -238,7 +238,6 @@ void get_psi_dpsi(const Grid_Technique& gt,int nw,int it,bool * iw2_new,
                   std::vector<const double*>& it_dpsi_uniform);
 
 void cal_grid_atom_distance(double &distance,
-                            int ib,
                             double* dr,
                             const double* mt,
                             const double* meshcell_pos);

@@ -18,7 +18,7 @@ void cal_ddpsir_ylm(
     std::vector<const double*> it_psi_uniform(gt.nwmax);
     std::vector<const double*> it_dpsi_uniform(gt.nwmax);
     std::vector<const double*> it_d2psi_uniform(gt.nwmax);
-    std::vector<int> it_psi_nr_uniform(gt.nwmax);
+    // std::vector<int> it_psi_nr_uniform(gt.nwmax);
     // array to store spherical harmonics and its derivatives
     // the first dimension equals 36 because the maximum nwl is 5.
     double rly[36];
@@ -30,22 +30,14 @@ void cal_ddpsir_ylm(
         const int imcell = gt.which_bigcell[mcell_index];
         int iat = gt.which_atom[mcell_index];
         const int it = ucell.iat2it[iat];
-
-        Atom* atom = &ucell.atoms[it];
         const double mt[3] = {gt.meshball_positions[imcell][0] - gt.tau_in_bigcell[iat][0],
                               gt.meshball_positions[imcell][1] - gt.tau_in_bigcell[iat][1],
                               gt.meshball_positions[imcell][2] - gt.tau_in_bigcell[iat][2]};
-
-        for (int iw=0; iw< atom->nw; ++iw)
-        {
-            if ( atom->iw2_new[iw] )
-            {
-                it_psi_uniform[iw]= gt.psi_u[it*gt.nwmax + iw].data();
-                it_dpsi_uniform[iw] = gt.dpsi_u[it*gt.nwmax + iw].data();
-                it_psi_nr_uniform[iw]= gt.psi_u[it*gt.nwmax + iw].size();
-            }
-        }
-
+        Atom* atom = &ucell.atoms[it];
+        get_psi_dpsi(gt,atom->nw, it,
+                atom->iw2_new,it_psi_uniform, it_dpsi_uniform);
+        double distance;
+        double dr[3];
         for (int ib = 0; ib < bxyz; ib++)
         {
             double* const p_ddpsi_xx = &ddpsir_ylm_xx[ib][block_index[id]];
@@ -65,11 +57,11 @@ void cal_ddpsir_ylm(
             }
             else
             {
-                const double dr[3]
-                    = {// vectors between atom and grid
-                       gt.meshcell_pos[ib][0] + mt[0], gt.meshcell_pos[ib][1] + mt[1], gt.meshcell_pos[ib][2] + mt[2]};
-                double distance = std::sqrt(dr[0] * dr[0] + dr[1] * dr[1] + dr[2] * dr[2]);
-
+                // const double dr[3]
+                //     = {// vectors between atom and grid
+                //        gt.meshcell_pos[ib][0] + mt[0], gt.meshcell_pos[ib][1] + mt[1], gt.meshcell_pos[ib][2] + mt[2]};
+                // double distance = std::sqrt(dr[0] * dr[0] + dr[1] * dr[1] + dr[2] * dr[2]);
+                cal_grid_atom_distance(distance,dr,mt,gt.meshcell_pos[ib].data());
                 // for some unknown reason, the finite difference between dpsi and ddpsi
                 // using analytical expression is always wrong; as a result,
                 // I switch to explicit finite difference method for evaluating
@@ -138,12 +130,12 @@ void cal_ddpsir_ylm(
                                 auto dpsi_uniform = it_dpsi_uniform[iw];
 
                                 // if ( iq[id] >= philn.nr_uniform-4)
-                                if (iq >= it_psi_nr_uniform[iw]-4)
-                                {
-                                    tmp = dtmp = 0.0;
-                                }
-                                else
-                                {
+                                // if (iq >= it_psi_nr_uniform[iw]-4)
+                                // {
+                                //     tmp = dtmp = 0.0;
+                                // }
+                                // else
+                                // {
                                     // use Polynomia Interpolation method to get the
                                     // wave functions
 
@@ -152,7 +144,7 @@ void cal_ddpsir_ylm(
 
                                     dtmp = x12 * (dpsi_uniform[ip] * x3 + dpsi_uniform[ip + 3] * x0)
                                            + x03 * (dpsi_uniform[ip + 1] * x2 - dpsi_uniform[ip + 2] * x1);
-                                }
+                                // }
                             } // new l is used.
 
                             // get the 'l' of this localized wave function
@@ -243,12 +235,12 @@ void cal_ddpsir_ylm(
                             auto ddpsi_uniform = it_d2psi_uniform[iw];
 
                             // if ( iq[id] >= philn.nr_uniform-4)
-                            if (iq >= it_psi_nr_uniform[iw]-4)
-                            {
-                                tmp = dtmp = ddtmp = 0.0;
-                            }
-                            else
-                            {
+                            // if (iq >= it_psi_nr_uniform[iw]-4)
+                            // {
+                            //     tmp = dtmp = ddtmp = 0.0;
+                            // }
+                            // else
+                            // {
                                 // use Polynomia Interpolation method to get the
                                 // wave functions
 
@@ -260,7 +252,7 @@ void cal_ddpsir_ylm(
 
                                 ddtmp = x12 * (ddpsi_uniform[ip] * x3 + ddpsi_uniform[ip + 3] * x0)
                                         + x03 * (ddpsi_uniform[ip + 1] * x2 - ddpsi_uniform[ip + 2] * x1);
-                            }
+                            // }
                         } // new l is used.
 
                         // get the 'l' of this localized wave function

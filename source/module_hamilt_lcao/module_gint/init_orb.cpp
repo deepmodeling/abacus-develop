@@ -58,7 +58,7 @@ void init_orb(double& dr_uniform,
                 psi_u[i*nwmax+j]=pointer->psi_uniform;
                 dpsi_u[i*nwmax+j]=pointer->dpsi_uniform;
                 d2psi_u[i*nwmax+j]=pointer->ddpsi_uniform;
-                for (int i =0;i<8;i++)
+                for (int k =0;k<8;k++)
                 {
                     psi_u[i*nwmax+j].push_back(0.0);
                     dpsi_u[i*nwmax+j].push_back(0.0);
