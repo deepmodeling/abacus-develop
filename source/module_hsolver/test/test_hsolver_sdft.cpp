@@ -127,7 +127,7 @@ class TestHSolverPW_SDFT : public ::testing::Test
     Stochastic_WF stowf;
     K_Vectors kv;
     wavefunc wf;
-    hsolver::HSolverPW_SDFT hs_d = hsolver::HSolverPW_SDFT(&kv, &pwbk, &wf, stowf, 0);
+    hsolver::HSolverPW_SDFT hs_d = hsolver::HSolverPW_SDFT(&kv, &pwbk, &wf, stowf, 0, false);
 
     hamilt::Hamilt<std::complex<double>> hamilt_test_d;
 
