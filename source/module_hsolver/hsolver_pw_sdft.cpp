@@ -50,6 +50,11 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
                                  "This method of DiagH is not supported!");
     }
 
+    if (nbands > 0 && GlobalV::MY_STOGROUP == 0) 
+    {
+        this->init_PsiK(pHamilt, psi);
+    }
+
     // part of KSDFT to get KS orbitals
     for (int ik = 0; ik < nks; ++ik) {
         pHamilt->updateHk(ik);

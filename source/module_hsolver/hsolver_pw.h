@@ -23,12 +23,6 @@ class HSolverPW : public HSolver<T, Device>
               wavefunc* pwf_in,
               const bool initialed_psi_in);
 
-    /// @brief solve function for pw
-    /// @param pHamilt interface to hamilt
-    /// @param psi reference to psi
-    /// @param pes interface to elecstate
-    /// @param method_in dav or cg
-    /// @param skip_charge
     void solve(hamilt::Hamilt<T, Device>* pHamilt,
                psi::Psi<T, Device>& psi,
                elecstate::ElecState* pes,
@@ -52,24 +46,6 @@ class HSolverPW : public HSolver<T, Device>
     virtual Real set_diagethr(Real diag_ethr_in, const int istep, const int iter, const Real drho) override;
 
     virtual Real reset_diagethr(std::ofstream& ofs_running, const Real hsover_error, const Real drho, Real diag_ethr_in) override;
-
-    // ModulePW::PW_Basis_K* get_wfc_basis_p()
-    // {
-    //     return this->wfc_basis;
-    // };
-    // wavefunc* get_pwf_p()
-    // {
-    //     return this->pwf;
-    // };
-    // bool get_initpsi()
-    // {
-    //     return initialed_psi;
-    // };
-
-    void set_initpsi(bool init_psi)
-    {
-      this->initialed_psi = init_psi;
-    }
     
   protected:
     // diago caller
@@ -78,7 +54,10 @@ class HSolverPW : public HSolver<T, Device>
                          std::vector<Real>& pre_condition,
                          Real* eigenvalue);
 
-    // psi initializer && change k point in psi
+    // psi initializer
+    void init_PsiK(hamilt::Hamilt<T, Device>* pHamilt, psi::Psi<T, Device>& psi);
+
+    // change k point in psi
     void updatePsiK(hamilt::Hamilt<T, Device>* pHamilt, psi::Psi<T, Device>& psi, const int ik);
 
     // calculate the precondition array for diagonalization in PW base

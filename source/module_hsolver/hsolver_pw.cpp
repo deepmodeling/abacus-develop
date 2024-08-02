@@ -269,6 +269,10 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
     std::vector<Real> precondition(psi.get_nbasis(), 0.0);
     std::vector<Real> eigenvalues(pes->ekb.nr * pes->ekb.nc, 0.0);
 
+
+    // for all k points, init psi
+    this->init_PsiK(pHamilt, psi);
+
     /// Loop over k points for solve Hamiltonian to charge density
     for (int ik = 0; ik < this->wfc_basis->nks; ++ik)
     {
@@ -331,14 +335,22 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
 }
 
 template <typename T, typename Device>
+void HSolverPW<T, Device>::init_PsiK(hamilt::Hamilt<T, Device>* pHamilt, psi::Psi<T, Device>& psi)
+{
+    if (!GlobalV::psi_initializer && !this->initialed_psi && this->basis_type == "pw")
+    {
+        for (int ik = 0; ik < this->wfc_basis->nks; ++ik)
+        {
+            hamilt::diago_PAO_in_pw_k2(this->ctx, ik, psi, this->wfc_basis, this->pwf, pHamilt);   
+        }
+    }
+    /* lcao_in_pw now is based on newly implemented psi initializer, so it does not appear here*/
+}
+
+template <typename T, typename Device>
 void HSolverPW<T, Device>::updatePsiK(hamilt::Hamilt<T, Device>* pHamilt, psi::Psi<T, Device>& psi, const int ik)
 {
     psi.fix_k(ik);
-    if (!GlobalV::psi_initializer && !this->initialed_psi && this->basis_type == "pw")
-    {
-        hamilt::diago_PAO_in_pw_k2(this->ctx, ik, psi, this->wfc_basis, this->pwf, pHamilt);
-    }
-    /* lcao_in_pw now is based on newly implemented psi initializer, so it does not appear here*/
 }
 
 template <typename T, typename Device>
