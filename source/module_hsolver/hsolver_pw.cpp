@@ -267,7 +267,8 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
 
     // prepare for the precondition of diagonalization
     std::vector<Real> precondition(psi.get_nbasis(), 0.0);
-    std::vector<Real> eigenvalues(pes->ekb.nr * pes->ekb.nc, 0.0);
+    // std::vector<Real> eigenvalues(pes->ekb.nr * pes->ekb.nc, 0.0);
+    std::vector<Real> eigenvalues(psi.get_nk() * psi.get_nbands(), 0.0);
 
     /// Loop over k points for solve Hamiltonian to charge density
     for (int ik = 0; ik < this->wfc_basis->nks; ++ik)
@@ -289,7 +290,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
 #endif
 
         /// solve eigenvector and eigenvalue for H(k)
-        this->hamiltSolvePsiK(pHamilt, psi, precondition, eigenvalues.data() + ik * pes->ekb.nc);
+        this->hamiltSolvePsiK(pHamilt, psi, precondition, eigenvalues.data() + ik * psi.get_nbands());
 
         if (skip_charge)
         {
@@ -310,7 +311,8 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
         // pes->ekb.c,
         out_eigenvalues,
         eigenvalues.data(),
-        pes->ekb.nr * pes->ekb.nc);
+        // pes->ekb.nr * pes->ekb.nc
+        psi.get_nk() * psi.get_nbands());
 
     if (skip_charge)
     {
