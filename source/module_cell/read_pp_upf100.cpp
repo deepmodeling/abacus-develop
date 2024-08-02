@@ -202,9 +202,6 @@ void Pseudopot_upf::read_pseudo_header(std::ifstream &ifs, Atom_pseudo& pp)
 	ifs.ignore(75, '\n');
 	ifs.ignore(75, '\n');
 
-	pp.els.clear();
-	pp.lchi.clear();
-	pp.oc.clear();
 	pp.els = std::vector<std::string>(pp.nchi, "");
 	pp.lchi = std::vector<int>(pp.nchi, 0);
 	pp.oc = std::vector<double>(pp.nchi, 0.0);
@@ -226,8 +223,6 @@ void Pseudopot_upf::read_pseudo_mesh(std::ifstream &ifs, Atom_pseudo& pp)
 {
 	assert(pp.mesh>0);
 
-	pp.r.clear();
-	pp.rab.clear();
 	pp.r = std::vector<double>(pp.mesh, 0.0);
 	pp.rab = std::vector<double>(pp.mesh, 0.0);
 
@@ -256,7 +251,6 @@ void Pseudopot_upf::read_pseudo_mesh(std::ifstream &ifs, Atom_pseudo& pp)
 void Pseudopot_upf::read_pseudo_nlcc(std::ifstream &ifs, Atom_pseudo& pp)
 {
 	assert(pp.mesh>0);
-	pp.rho_atc.clear();
 	pp.rho_atc = std::vector<double>(pp.mesh, 0.0);
 	for (int ir = 0;ir < pp.mesh;ir++)
 	{
@@ -268,7 +262,6 @@ void Pseudopot_upf::read_pseudo_nlcc(std::ifstream &ifs, Atom_pseudo& pp)
 void Pseudopot_upf::read_pseudo_local(std::ifstream &ifs, Atom_pseudo& pp)
 {
 	assert(pp.mesh>0);
-	pp.vloc_at.clear();
 	pp.vloc_at = std::vector<double>(pp.mesh, 0.0);
 
 	for (int ir = 0;ir < pp.mesh;ir++)
@@ -297,8 +290,6 @@ void Pseudopot_upf::read_pseudo_nl(std::ifstream &ifs, Atom_pseudo& pp)
     }
     else
     {
-        this->kbeta.clear();
-        pp.lll.clear();
         this->kbeta = std::vector<int>(pp.nbeta, 0);
         pp.lll = std::vector<int>(pp.nbeta, 0);
         pp.betar.create(pp.nbeta, pp.mesh);
@@ -347,7 +338,6 @@ void Pseudopot_upf::read_pseudo_nl(std::ifstream &ifs, Atom_pseudo& pp)
             // If nqf is not zero, Qij's inside rinner are computed using qfcoef's
             ModuleBase::GlobalFunc::READ_VALUE(ifs, this->nqf);
             pp.nqlc = 2 * pp.lmax + 1;
-            rinner.clear();
             this->rinner = std::vector<double>(pp.nqlc, 0.0);
             pp.qqq.create(pp.nbeta, pp.nbeta);
             if (q_with_l)
@@ -455,7 +445,6 @@ void Pseudopot_upf::read_pseudo_pswfc(std::ifstream &ifs, Atom_pseudo& pp)
 
 void Pseudopot_upf::read_pseudo_rhoatom(std::ifstream &ifs, Atom_pseudo& pp)
 {
-	pp.rho_at.clear();
 	pp.rho_at = std::vector<double>(pp.mesh, 0.0);
 	for (int ir = 0;ir < pp.mesh;ir++)
 	{
@@ -468,9 +457,6 @@ void Pseudopot_upf::read_pseudo_so(std::ifstream &ifs, Atom_pseudo& pp)
 {
        //read soc info from upf, added by zhengdy-soc
        if(!pp.has_so) return;
-       pp.nn.clear();
-       pp.jchi.clear();
-       pp.jjj.clear();
        pp.nn = std::vector<int>(pp.nchi, 0);
        pp.jchi = std::vector<double>(pp.nchi, 0.0);
        pp.jjj = std::vector<double>(pp.nbeta, 0.0);

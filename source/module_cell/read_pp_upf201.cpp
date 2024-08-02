@@ -27,7 +27,6 @@ int Pseudopot_upf::read_pseudo_upf201(std::ifstream &ifs, Atom_pseudo& pp)
         {
             ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_NLCC>");
         }
-        pp.rho_atc.clear();
         pp.rho_atc = std::vector<double>(pp.mesh, 0.0);
         for (int ir = 0; ir < pp.mesh; ir++)
         {
@@ -49,7 +48,6 @@ int Pseudopot_upf::read_pseudo_upf201(std::ifstream &ifs, Atom_pseudo& pp)
         {
             ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_LOCAL>");
         }
-        pp.vloc_at.clear();
         pp.vloc_at = std::vector<double>(pp.mesh, 0.0);
         for (int ir = 0; ir < pp.mesh; ir++)
         {
@@ -87,7 +85,6 @@ int Pseudopot_upf::read_pseudo_upf201(std::ifstream &ifs, Atom_pseudo& pp)
     {
         ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_RHOATOM>");
     }
-    pp.rho_at.clear();
     pp.rho_at = std::vector<double>(pp.mesh, 0.0);
     for (int ir = 0; ir < pp.mesh; ir++)
     {
@@ -398,8 +395,6 @@ void Pseudopot_upf::read_pseudo_upf201_mesh(std::ifstream& ifs, Atom_pseudo& pp)
     {
         ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_R>");
     }
-    pp.r.clear();
-    pp.rab.clear();
     assert(pp.mesh > 0);
     pp.r = std::vector<double>(pp.mesh, 0.0);
     pp.rab = std::vector<double>(pp.mesh, 0.0);
@@ -436,11 +431,6 @@ void Pseudopot_upf::read_pseudo_upf201_nonlocal(std::ifstream& ifs, Atom_pseudo&
     std::string name[50];
     std::string val[50];
     int nparameter;
-    this->kbeta.clear();
-    pp.lll.clear();
-    els_beta.clear();
-    rcut.clear();
-    rcutus.clear();
     this->kbeta = std::vector<int>(pp.nbeta);
     pp.lll = std::vector<int>(pp.nbeta);
     this->els_beta = std::vector<std::string>(pp.nbeta);
@@ -581,7 +571,6 @@ void Pseudopot_upf::read_pseudo_upf201_nonlocal(std::ifstream& ifs, Atom_pseudo&
         ModuleBase::GlobalFunc::SCAN_END(ifs, "</PP_Q>");
 
         // Read polinomial coefficients for Q_ij expansion at small radius
-        rinner.clear();
         this->rinner = std::vector<double>(pp.nqlc, 0.0);
         if (nqf <= 0)
         {
@@ -683,13 +672,6 @@ void Pseudopot_upf::read_pseudo_upf201_pswfc(std::ifstream& ifs, Atom_pseudo& pp
     std::string val[50];
     int nparameter;
     ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_PSWFC>");
-    pp.els.clear();
-    pp.lchi.clear();
-    nchi.clear();
-    pp.oc.clear();
-    epseu.clear();
-    rcut_chi.clear();
-    rcutus_chi.clear();
     pp.els = std::vector<std::string>(pp.nchi, "");
     pp.lchi = std::vector<int>(pp.nchi, 0);
     this->nchi = std::vector<int>(pp.nchi, 0);
@@ -824,9 +806,6 @@ void Pseudopot_upf::read_pseudo_upf201_so(std::ifstream& ifs, Atom_pseudo& pp)
     std::string val[50];
     int nparameter;
     ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_SPIN_ORB>");
-    pp.jchi.clear();
-    pp.jjj.clear();
-    pp.nn.clear();
     pp.jchi = std::vector<double>(pp.nchi, 0.0);
     pp.jjj = std::vector<double>(pp.nbeta, 0.0);
     pp.nn = std::vector<int>(pp.nchi, 0);

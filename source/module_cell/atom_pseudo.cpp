@@ -27,9 +27,7 @@ void Atom_pseudo::set_d_so(ModuleBase::ComplexMatrix& d_so_in,
     for (int is = 0; is < spin_dimension; is++)
     {
         this->non_zero_count_soc[is] = 0;
-        this->index1_soc[is].clear();
         this->index1_soc[is] = std::vector<int>(nproj_soc * nproj_soc, 0);
-        this->index2_soc[is].clear();
         this->index2_soc[is] = std::vector<int>(nproj_soc * nproj_soc, 0);
     }
 
@@ -174,12 +172,6 @@ void Atom_pseudo::bcast_atom_pseudo()
 
     if (GlobalV::MY_RANK != 0)
     {
-        jjj.clear();
-        els.clear();
-        lchi.clear();
-        oc.clear();
-        jchi.clear();
-        nn.clear();
         jjj = std::vector<double>(nbeta, 0.0);
         els = std::vector<std::string>(nchi, "");
         lchi = std::vector<int>(nchi, 0);
@@ -202,10 +194,6 @@ void Atom_pseudo::bcast_atom_pseudo()
     if (GlobalV::MY_RANK != 0)
     {
         assert(mesh != 0);
-        r.clear();
-        rab.clear();
-        rho_atc.clear();
-        rho_at.clear();
         r = std::vector<double>(mesh, 0.0);
         rab = std::vector<double>(mesh, 0.0);
         rho_atc = std::vector<double>(mesh, 0.0);
@@ -223,7 +211,6 @@ void Atom_pseudo::bcast_atom_pseudo()
     // == pseudo_vl ==
     if (GlobalV::MY_RANK != 0)
     {
-        vloc_at.clear();
         vloc_at = std::vector<double>(mesh, 0.0);
     }
     Parallel_Common::bcast_double(vloc_at.data(), mesh);
@@ -236,7 +223,6 @@ void Atom_pseudo::bcast_atom_pseudo()
 
     if (GlobalV::MY_RANK != 0)
     {
-        lll.clear();
         lll = std::vector<int>(nbeta, 0);
     }
     Parallel_Common::bcast_int(lll.data(), nbeta);

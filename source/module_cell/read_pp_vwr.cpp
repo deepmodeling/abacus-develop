@@ -90,12 +90,9 @@ int Pseudopot_upf::read_pseudo_vwr(std::ifstream &ifs, Atom_pseudo& pp)
 	if(iTB_d) ++pp.nchi;
 	GlobalV::ofs_running << std::setw(15) << "NWFC" << std::setw(15) << pp.nchi << std::endl;
 	// allocate occupation number array for wave functions
-	pp.oc.clear();
-	pp.els.clear();
 	pp.oc = std::vector<double>(pp.nchi, 0.0);
 	pp.els = std::vector<std::string>(pp.nchi, "");
 	// set the value of occupations
-	pp.lchi.clear();
 	pp.lchi = std::vector<int>(pp.nchi, 0);
 	int iwfc=0;
 	if(iTB_s){pp.oc[iwfc]=tmp_oc[0];pp.lchi[iwfc]=0;pp.els[iwfc]="S";++iwfc;}
@@ -106,14 +103,9 @@ int Pseudopot_upf::read_pseudo_vwr(std::ifstream &ifs, Atom_pseudo& pp)
 
 	// global variables that will be used
 	// in other classes.
-	pp.r.clear();
-	pp.rab.clear();
-	pp.vloc_at.clear();
 	pp.r = std::vector<double>(pp.mesh, 0.0);
 	pp.rab = std::vector<double>(pp.mesh, 0.0);
 	pp.vloc_at = std::vector<double>(pp.mesh, 0.0);
-	pp.rho_at.clear();
-	pp.rho_atc.clear();
 	pp.rho_at = std::vector<double>(pp.mesh, 0.0);
 	pp.rho_atc = std::vector<double>(pp.mesh, 0.0);
 	// local variables in this function
@@ -268,7 +260,6 @@ int Pseudopot_upf::read_pseudo_vwr(std::ifstream &ifs, Atom_pseudo& pp)
 	this->nd = pp.nbeta;
 	GlobalV::ofs_running << std::setw(15) << "N-Dij" << std::setw(15) << nd << std::endl;
 	// calculate the angular momentum for each pp.betar
-	pp.lll.clear();
 	pp.lll = std::vector<int>(pp.nbeta, 0); 
 	int icount=0;
 	if(iref_s==1) {pp.lll[icount]=0; ++icount;}// s projector
@@ -279,7 +270,6 @@ int Pseudopot_upf::read_pseudo_vwr(std::ifstream &ifs, Atom_pseudo& pp)
 		GlobalV::ofs_running << " lll[" << i << "]=" << pp.lll[i] << std::endl;
 	}
     // this->kbeta(pp.nbeta): number of mesh points for projector i (must be .le.mesh )
-    this->kbeta.clear();
     this->kbeta = std::vector<int>(pp.nbeta, 0);
     pp.kkbeta = 0;
     for (int ib = 0; ib < pp.nbeta; ++ib)

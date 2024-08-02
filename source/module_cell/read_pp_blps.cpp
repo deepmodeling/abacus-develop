@@ -11,14 +11,11 @@ int Pseudopot_upf::read_pseudo_blps(std::ifstream &ifs, Atom_pseudo& pp)
 
     pp.nbeta = 0;
     pp.kkbeta = 0;
-    pp.lll.clear();
-    pp.betar.create(1, 1);
-    pp.dion.create(1, 1);
+    pp.lll = std::vector<int>(pp.nbeta, 0);
+    pp.betar.create(0, 0);
+    pp.dion.create(pp.nbeta, pp.nbeta);
 
     pp.nchi = 0;
-    pp.nn.clear();
-    pp.jchi.clear();
-    pp.jjj.clear();
     pp.nn = std::vector<int>(pp.nchi, 0);
     pp.jchi = std::vector<double>(pp.nchi, 0.0);
     pp.jjj = std::vector<double>(pp.nchi, 0.0);
@@ -86,9 +83,6 @@ int Pseudopot_upf::read_pseudo_blps(std::ifstream &ifs, Atom_pseudo& pp)
 
     assert(pp.mesh > 0);
 
-    pp.r.clear();
-    pp.rab.clear();
-    pp.vloc_at.clear();
     pp.r = std::vector<double>(pp.mesh, 0.0); // Bohr
     pp.rab = std::vector<double>(pp.mesh, 0.0);
     pp.vloc_at = std::vector<double>(pp.mesh, 0.0); // Hartree
@@ -117,7 +111,6 @@ int Pseudopot_upf::read_pseudo_blps(std::ifstream &ifs, Atom_pseudo& pp)
     }
     pp.rab[pp.mesh - 1] = pp.r[pp.mesh - 1] - pp.r[pp.mesh - 2];
 
-    pp.rho_at.clear();
     pp.rho_at = std::vector<double>(pp.mesh, 0.0);
     double charge = zion/pp.r[pp.mesh - 1];
     for(int i = 0;i < pp.mesh; ++i)
