@@ -58,7 +58,7 @@ void Pseudopot_upf::complete_default_h(Atom_pseudo& pp)
 
 	if (pp.jjj.empty()) {
 		pp.jjj = std::vector<double>(pp.nbeta, 0.0);
-		assert(!pp.has_so);
+		assert(!pp.has_so or pp.nbeta == 0);
 		for (int i=0; i<pp.nbeta; i++)
 		{
 			pp.jjj[i]  = 0;
@@ -67,7 +67,7 @@ void Pseudopot_upf::complete_default_h(Atom_pseudo& pp)
 
 	if (pp.nn.empty()) {
 		pp.nn = std::vector<int>(pp.nchi, 0);
-		assert(!pp.has_so);
+		assert(!pp.has_so or pp.nchi == 0);
 		for (int i=0; i<pp.nchi; i++)
 		{
 			pp.nn[i] = 0;
@@ -76,7 +76,7 @@ void Pseudopot_upf::complete_default_h(Atom_pseudo& pp)
 
 	if (pp.jchi.empty()) {
 		pp.jchi = std::vector<double>(pp.nchi, 0.0);
-		assert(!pp.has_so);
+		assert(!pp.has_so or pp.nchi == 0);
 		for (int i=0; i<pp.nchi; i++)
 		{
 			pp.jchi[i] = 0;
@@ -120,7 +120,7 @@ void Pseudopot_upf::complete_default_atom(Atom_pseudo& pp)
 
 	if (pp.rho_atc.empty()) {
 		pp.rho_atc = std::vector<double>(pp.mesh, 0.0);
-		assert(!pp.nlcc);
+		assert(!pp.nlcc or pp.mesh == 0);
 	}
 
 	bool br = false;
