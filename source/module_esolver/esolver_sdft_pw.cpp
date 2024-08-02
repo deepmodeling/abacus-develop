@@ -203,7 +203,7 @@ void ESolver_SDFT_PW::hamilt2density(int istep, int iter, double ethr)
                                         &wf, 
                                         this->stowf,
                                         PARAM.inp.method_sto,
-                                        this->init_psi = true);
+                                        this->init_psi);
     pw_sdft_obj.solve(this->p_hamilt,
                        this->psi[0],
                        this->pelec,
