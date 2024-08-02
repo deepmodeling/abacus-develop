@@ -202,7 +202,7 @@ void ESolver_SDFT_PW::hamilt2density(int istep, int iter, double ethr)
     {
         // psi initializer
         // only for pw (not for lcao_in_pw & lcao)
-        for (int ik = 0; ik < this->psi->get_nk(); ++ik)
+        for (int ik = 0; ik < this->pw_wfc->nks; ++ik)
         {
             this->psi->fix_k(ik);
 

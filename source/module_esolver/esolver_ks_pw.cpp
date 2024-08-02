@@ -367,7 +367,7 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, c
         {
             // psi initializer
             // only for pw (not for lcao_in_pw & lcao)
-            for (int ik = 0; ik < this->kspw_psi->get_nk(); ++ik)
+            for (int ik = 0; ik < this->pw_wfc->nks; ++ik)
             {
                 this->kspw_psi->fix_k(ik);
 
