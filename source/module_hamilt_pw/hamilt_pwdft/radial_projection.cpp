@@ -82,19 +82,17 @@ void RadialProjection::RadialProjector::_build_sbt_tab(const int nr,
     std::iota(qgrid.begin(), qgrid.end(), 0);
     std::transform(qgrid.begin(), qgrid.end(), qgrid.begin(), [dq](const double& q){return q*dq;});
 
-    ModuleBase::SphericalBesselTransformer sbt_(true); // enable cache
-    std::vector<double> _temp(nq);
-    sbt_.direct(l[0], nr, r, radials[0], nq, qgrid.data(), _temp.data());
+    if(cubspl_.get()) { cubspl_.reset(); } // release the old one if it is not the first time
+    cubspl_ = std::unique_ptr<ModuleBase::CubicSpline>(new ModuleBase::CubicSpline(nq,              // int
+                                                                                   qgrid.data()));  // double*
+    cubspl_->reserve(nrad);
+    ModuleBase::SphericalBesselTransformer sbt_(true); // bool: enable cache
 
+    std::vector<double> _temp(nq);
     // the SphericalBesselTransformer's result is multiplied by one extra factor sqrt(2/pi), should remove it
     // see module_base/spherical_bessel_transformer.h and module_base/spherical_bessel_transformer.cpp:328
     const double pref = std::sqrt(2.0/std::acos(-1.0)); 
-    if(cubspl_.get()) { cubspl_.reset(); } // release the old one if it is not the first time
-    std::for_each(_temp.begin(), _temp.end(), [pref](double& x){x = x/pref;});
-    cubspl_ = std::unique_ptr<ModuleBase::CubicSpline>(new ModuleBase::CubicSpline(nq, qgrid.data(), _temp.data()));
-
-    cubspl_->reserve(nrad);
-    for(int i = 1; i < nrad; i++)
+    for(int i = 0; i < nrad; i++)
     {
         sbt_.direct(l[i], nr, r, radials[i], nq, qgrid.data(), _temp.data());
         std::for_each(_temp.begin(), _temp.end(), [pref](double& x){x = x/pref;});
