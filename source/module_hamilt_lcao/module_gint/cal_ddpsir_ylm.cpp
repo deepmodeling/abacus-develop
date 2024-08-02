@@ -30,9 +30,8 @@ void cal_ddpsir_ylm(
         const int imcell = gt.which_bigcell[mcell_index];
         int iat = gt.which_atom[mcell_index];
         const int it = ucell.iat2it[iat];
-        const int ia = ucell.iat2ia[iat];
-        Atom* atom = &ucell.atoms[it];
 
+        Atom* atom = &ucell.atoms[it];
         const double mt[3] = {gt.meshball_positions[imcell][0] - gt.tau_in_bigcell[iat][0],
                               gt.meshball_positions[imcell][1] - gt.tau_in_bigcell[iat][1],
                               gt.meshball_positions[imcell][2] - gt.tau_in_bigcell[iat][2]};
