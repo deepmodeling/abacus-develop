@@ -184,9 +184,9 @@ public:
     FmtTable(const std::vector<std::string>& titles, 
              const size_t& nrows, 
              const std::vector<std::string>& fmts,
-             const Alignments& aligns = {},
              const Frames& frames = {},
-             const Delimiters& delimiters = {}): titles_(titles), data_(nrows, titles.size()), fmts_(fmts), aligns_(aligns), frames_(frames), delimiters_(delimiters)
+             const Delimiters& delimiters = {},
+             const Alignments& aligns = {}): titles_(titles), data_(nrows, titles.size()), fmts_(fmts), frames_(frames), delimiters_(delimiters), aligns_(aligns)
     { assert(titles.size() == fmts.size()); };
     ~FmtTable() {};
     /**
@@ -381,8 +381,8 @@ private:
     size_t j_ = 0;
 
     std::vector<std::string> titles_;
-    std::vector<std::string> fmts_; // format strings for each column
     NDArray<std::string> data_; // data
+    std::vector<std::string> fmts_; // format strings for each column
 };
 
 #endif
