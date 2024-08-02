@@ -341,6 +341,7 @@ void HSolverPW<T, Device>::init_PsiK(hamilt::Hamilt<T, Device>* pHamilt, psi::Ps
     {
         for (int ik = 0; ik < this->wfc_basis->nks; ++ik)
         {
+            psi.fix_k(ik);
             hamilt::diago_PAO_in_pw_k2(this->ctx, ik, psi, this->wfc_basis, this->pwf, pHamilt);   
         }
     }
