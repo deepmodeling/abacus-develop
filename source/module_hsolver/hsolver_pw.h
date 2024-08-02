@@ -54,8 +54,8 @@ class HSolverPW : public HSolver<T, Device>
                          std::vector<Real>& pre_condition,
                          Real* eigenvalue);
 
-    // psi initializer
-    void init_PsiK(hamilt::Hamilt<T, Device>* pHamilt, psi::Psi<T, Device>& psi);
+    // // psi initializer
+    // void init_PsiK(hamilt::Hamilt<T, Device>* pHamilt, psi::Psi<T, Device>& psi);
 
     // change k point in psi
     void updatePsiK(hamilt::Hamilt<T, Device>* pHamilt, psi::Psi<T, Device>& psi, const int ik);
