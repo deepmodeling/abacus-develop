@@ -276,12 +276,6 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
     /// Loop over k points for solve Hamiltonian to charge density
     for (int ik = 0; ik < this->wfc_basis->nks; ++ik)
     {
-        /// update H(k) for each k point
-        pHamilt->updateHk(ik);
-
-#ifdef USE_PAW
-        this->paw_func_in_kloop(ik);
-#endif
 
         // this->updatePsiK(pHamilt, psi, ik);
         psi.fix_k(ik);
@@ -289,6 +283,13 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
         {
             hamilt::diago_PAO_in_pw_k2(this->ctx, ik, psi, this->wfc_basis, this->pwf, pHamilt);
         }
+
+        /// update H(k) for each k point
+        pHamilt->updateHk(ik);
+
+#ifdef USE_PAW
+        this->paw_func_in_kloop(ik);
+#endif
 
         // template add precondition calculating here
         update_precondition(precondition, ik, this->wfc_basis->npwk[ik]);
