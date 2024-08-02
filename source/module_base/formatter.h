@@ -159,6 +159,10 @@ public:
     enum class Align{LEFT, RIGHT, CENTER};
 private:
     typedef FmtCore core;
+    struct Alignments{
+        Alignments(const Align& val = Align::RIGHT, const Align& title = Align::CENTER): val_(val), title_(title) {};
+        Align val_, title_; // value and title alignments
+    } aligns_;
     struct Frames{
         Frames(char up = '-', char mid = '-', char dw = '-', char l = ' ', char r = ' '): up_(up), mid_(mid), dw_(dw), l_(l), r_(r) {};
         char up_, mid_ , dw_, l_, r_; // up, middle, down, left, right frames. up: the frame above title, middle: the one between title and data
@@ -167,10 +171,6 @@ private:
         Delimiters(char h = '-', char v = ' '): h_(h), v_(v) {};
         char h_, v_; // horizontal and vertical delimiters
     } delimiters_;
-    struct Alignments{
-        Alignments(const Align& val = Align::RIGHT, const Align& title = Align::CENTER): val_(val), title_(title) {};
-        Align val_, title_; // value and title alignments
-    } aligns_;
 public:
     /**
      * @brief Construct a new Fmt Table object
@@ -184,9 +184,9 @@ public:
     FmtTable(const std::vector<std::string>& titles, 
              const size_t& nrows, 
              const std::vector<std::string>& fmts,
+             const Alignments& aligns = {},
              const Frames& frames = {},
-             const Delimiters& delimiters = {},
-             const Alignments& aligns = {}): titles_(titles), data_(nrows, titles.size()), fmts_(fmts), frames_(frames), delimiters_(delimiters), aligns_(aligns)
+             const Delimiters& delimiters = {}): titles_(titles), data_(nrows, titles.size()), fmts_(fmts), aligns_(aligns), frames_(frames), delimiters_(delimiters)
     { assert(titles.size() == fmts.size()); };
     ~FmtTable() {};
     /**
