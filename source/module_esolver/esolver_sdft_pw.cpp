@@ -123,7 +123,7 @@ void ESolver_SDFT_PW::before_all_runners(const Input_para& inp, UnitCell& ucell)
     }
 
     // 9) initialize the hsolver
-    this->phsol = new hsolver::HSolverPW_SDFT(&kv, pw_wfc, &wf, this->stowf, inp.method_sto);
+    this->phsol = new hsolver::HSolverPW_SDFT(&kv, pw_wfc, &wf, this->stowf, inp.method_sto, false);
 
     return;
 }
@@ -198,7 +198,12 @@ void ESolver_SDFT_PW::hamilt2density(int istep, int iter, double ethr)
 
     hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX = GlobalV::PW_DIAG_NMAX;
 
-    hsolver::HSolverPW_SDFT pw_sdft_obj(&kv, pw_wfc, &wf, this->stowf, PARAM.inp.method_sto);
+    hsolver::HSolverPW_SDFT pw_sdft_obj(&kv, 
+                                        pw_wfc, 
+                                        &wf, 
+                                        this->stowf,
+                                        PARAM.inp.method_sto,
+                                        this->init_psi = true);
     pw_sdft_obj.solve(this->p_hamilt,
                        this->psi[0],
                        this->pelec,
@@ -212,6 +217,8 @@ void ESolver_SDFT_PW::hamilt2density(int istep, int iter, double ethr)
                        hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX,
                        hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR,
                        false);
+
+    this->init_psi = true;
 
     if (GlobalV::MY_STOGROUP == 0)
     {
