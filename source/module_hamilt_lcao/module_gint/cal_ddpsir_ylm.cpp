@@ -14,25 +14,32 @@ void cal_ddpsir_ylm(
     double* const* const ddpsir_ylm_yy, double* const* const ddpsir_ylm_yz, double* const* const ddpsir_ylm_zz)
 {
     ModuleBase::timer::tick("Gint_Tools", "cal_ddpsir_ylm");
+    const int bcell_start = gt.bcell_start[grid_index];
     const UnitCell& ucell = *gt.ucell;
     std::vector<const double*> it_psi_uniform(gt.nwmax);
     std::vector<const double*> it_dpsi_uniform(gt.nwmax);
     std::vector<const double*> it_d2psi_uniform(gt.nwmax);
-    // std::vector<int> it_psi_nr_uniform(gt.nwmax);
+
     // array to store spherical harmonics and its derivatives
     // the first dimension equals 36 because the maximum nwl is 5.
     double rly[36];
     ModuleBase::Array_Pool<double> grly(36, 3);
+    std::vector<std::vector<double>> displ(6, std::vector<double>(3, 0.0));
+
+    displ[0][0] = 0.0001; displ[1][0] = -0.0001; // in x direction
+    displ[2][1] = 0.0001; displ[3][1] = -0.0001; // in y direction
+    displ[4][2] = 0.0001; displ[5][2] = -0.0001; // in z direction
 
     for (int id = 0; id < na_grid; id++)
     {
-        const int mcell_index = gt.bcell_start[grid_index] + id;
+        const int mcell_index = bcell_start + id;
         const int imcell = gt.which_bigcell[mcell_index];
         int iat = gt.which_atom[mcell_index];
-        const int it = ucell.iat2it[iat];
         const double mt[3] = {gt.meshball_positions[imcell][0] - gt.tau_in_bigcell[iat][0],
                               gt.meshball_positions[imcell][1] - gt.tau_in_bigcell[iat][1],
                               gt.meshball_positions[imcell][2] - gt.tau_in_bigcell[iat][2]};
+
+        const int it = ucell.iat2it[iat];
         Atom* atom = &ucell.atoms[it];
         get_psi_dpsi(gt,atom->nw, it,
                 atom->iw2_new,it_psi_uniform, it_dpsi_uniform);
@@ -57,16 +64,13 @@ void cal_ddpsir_ylm(
             }
             else
             {
-                // const double dr[3]
-                //     = {// vectors between atom and grid
-                //        gt.meshcell_pos[ib][0] + mt[0], gt.meshcell_pos[ib][1] + mt[1], gt.meshcell_pos[ib][2] + mt[2]};
-                // double distance = std::sqrt(dr[0] * dr[0] + dr[1] * dr[1] + dr[2] * dr[2]);
+
                 cal_grid_atom_distance(distance,dr,mt,gt.meshcell_pos[ib].data());
                 // for some unknown reason, the finite difference between dpsi and ddpsi
                 // using analytical expression is always wrong; as a result,
                 // I switch to explicit finite difference method for evaluating
                 // the second derivatives of the orbitals
-                if (/*distance < 1e-9*/ true)
+                if (true)
                 {
                     double*** dpsi = new double**[atom->nw];
                     for (int i = 0; i < atom->nw; i++)
@@ -79,33 +83,14 @@ void cal_ddpsir_ylm(
                         }
                     }
 
-                    double* dr1 = new double[3];
-
-                    double** displ = new double*[6];
+                    double dr1[3];
+                    double distance1;
                     for (int i = 0; i < 6; i++)
                     {
-                        displ[i] = new double[3];
-                        ModuleBase::GlobalFunc::ZEROS(displ[i], 3);
-                    }
-                    displ[0][0] = 0.0001; // in x direction
-                    displ[1][0] = -0.0001;
-                    displ[2][1] = 0.0001; // in y direction
-                    displ[3][1] = -0.0001;
-                    displ[4][2] = 0.0001; // in z direction
-                    displ[5][2] = -0.0001;
-
-                    for (int i = 0; i < 6; i++)
-                    {
-                        dr1[0] = dr[0] + displ[i][0];
-                        dr1[1] = dr[1] + displ[i][1];
-                        dr1[2] = dr[2] + displ[i][2];
-
-                        ModuleBase::Ylm::grad_rl_sph_harm(ucell.atoms[it].nwl, dr1[0], dr1[1], dr1[2], rly, grly.get_ptr_2D());
-
-                        double distance1 = std::sqrt(dr1[0] * dr1[0] + dr1[1] * dr1[1] + dr1[2] * dr1[2]);
-                        if (distance1 < 1e-9) {
-                            distance1 = 1e-9;
-}
+                        cal_grid_atom_distance(distance1,dr1,dr,displ[i].data());
+                        ModuleBase::Ylm::grad_rl_sph_harm(ucell.atoms[it].nwl, 
+                                                          dr1[0], dr1[1], dr1[2],
+                                                          rly, grly.get_ptr_2D());
 
                         const double position = distance1 / delta_r;
 
@@ -128,23 +113,14 @@ void cal_ddpsir_ylm(
                             {
                                 auto psi_uniform = it_psi_uniform[iw];
                                 auto dpsi_uniform = it_dpsi_uniform[iw];
-
-                                // if ( iq[id] >= philn.nr_uniform-4)
-                                // if (iq >= it_psi_nr_uniform[iw]-4)
-                                // {
-                                //     tmp = dtmp = 0.0;
-                                // }
-                                // else
-                                // {
                                     // use Polynomia Interpolation method to get the
                                     // wave functions
 
-                                    tmp = x12 * (psi_uniform[ip] * x3 + psi_uniform[ip + 3] * x0)
-                                          + x03 * (psi_uniform[ip + 1] * x2 - psi_uniform[ip + 2] * x1);
+                                tmp = x12 * (psi_uniform[ip] * x3 + psi_uniform[ip + 3] * x0)
+                                        + x03 * (psi_uniform[ip + 1] * x2 - psi_uniform[ip + 2] * x1);
 
-                                    dtmp = x12 * (dpsi_uniform[ip] * x3 + dpsi_uniform[ip + 3] * x0)
-                                           + x03 * (dpsi_uniform[ip + 1] * x2 - dpsi_uniform[ip + 2] * x1);
-                                // }
+                                dtmp = x12 * (dpsi_uniform[ip] * x3 + dpsi_uniform[ip + 3] * x0)
+                                        + x03 * (dpsi_uniform[ip + 1] * x2 - dpsi_uniform[ip + 2] * x1);
                             } // new l is used.
 
                             // get the 'l' of this localized wave function
@@ -166,13 +142,13 @@ void cal_ddpsir_ylm(
                     for (int iw = 0; iw < atom->nw; iw++)
                     {
                         p_ddpsi_xx[iw] = (dpsi[iw][0][0] - dpsi[iw][1][0]) / 0.0002;
-                        p_ddpsi_xy[iw]
-                            = ((dpsi[iw][2][0] - dpsi[iw][3][0]) + (dpsi[iw][0][1] - dpsi[iw][1][1])) / 0.0004;
-                        p_ddpsi_xz[iw]
-                            = ((dpsi[iw][4][0] - dpsi[iw][5][0]) + (dpsi[iw][0][2] - dpsi[iw][1][2])) / 0.0004;
+                        p_ddpsi_xy[iw] = ((dpsi[iw][2][0] - dpsi[iw][3][0]) + 
+                                          (dpsi[iw][0][1] - dpsi[iw][1][1])) / 0.0004;
+                        p_ddpsi_xz[iw] = ((dpsi[iw][4][0] - dpsi[iw][5][0]) + 
+                                          (dpsi[iw][0][2] - dpsi[iw][1][2])) / 0.0004;
                         p_ddpsi_yy[iw] = (dpsi[iw][2][1] - dpsi[iw][3][1]) / 0.0002;
-                        p_ddpsi_yz[iw]
-                            = ((dpsi[iw][4][1] - dpsi[iw][5][1]) + (dpsi[iw][2][2] - dpsi[iw][3][2])) / 0.0004;
+                        p_ddpsi_yz[iw] = ((dpsi[iw][4][1] - dpsi[iw][5][1]) + 
+                                          (dpsi[iw][2][2] - dpsi[iw][3][2])) / 0.0004;
                         p_ddpsi_zz[iw] = (dpsi[iw][4][2] - dpsi[iw][5][2]) / 0.0002;
                     }
 
@@ -185,13 +161,6 @@ void cal_ddpsir_ylm(
                         delete[] dpsi[i];
                     }
                     delete[] dpsi;
-
-                    delete[] dr1;
-                    for (int i = 0; i < 6; i++)
-                    {
-                        delete[] displ[i];
-                    }
-                    delete[] displ;
                 }
                 else
                 // the analytical method for evaluating 2nd derivatives
