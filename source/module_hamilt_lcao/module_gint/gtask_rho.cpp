@@ -142,20 +142,20 @@ void alloc_mult_dot_rho(const hamilt::HContainer<double>* dm,
         }
 
         // generate vec dot product tasks
-        int* vindex = Gint_Tools::get_vindex(gridt.bxyz,
-                                             gridt.bx,
-                                             gridt.by,
-                                             gridt.bz,
-                                             nczp,
-                                             gridt.start_ind[grid_index],
-                                             gridt.ncy * nczp);
+        std::vector<int> vindex(gridt.bxyz);
+        Gint_Tools::get_vindex(gridt.bxyz,
+                                gridt.bx,
+                                gridt.by,
+                                gridt.bz,
+                                nczp,
+                                gridt.start_ind[grid_index],
+                                gridt.ncy * nczp,
+                                vindex.data());
         for (int i = 0; i < gridt.bxyz; i++)
         {
             dot_product[dot_count] = rho_g + vindex[i];
             dot_count++;
         }
-        
-        delete[] vindex;
     }
     atom_pair_num = tid;
 }
