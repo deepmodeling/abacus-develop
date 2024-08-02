@@ -102,6 +102,7 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
                               psi,
                               *(this->DM));
         this->DM->cal_DMR();
+        ModuleBase::timer::tick("ElecStateLCAO", "cal_dm_2d");
     }
 
     for (int is = 0; is < GlobalV::NSPIN; is++)

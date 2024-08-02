@@ -131,6 +131,8 @@ class Grid_Technique : public Grid_MeshBall {
                        const int& u3,
                        const int& iat2) const;
 
+    int find_offset(const int id1, const int id2, const int iat1, const int iat2) const;
+
   private:
 
     int maxB1;
