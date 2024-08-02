@@ -43,12 +43,12 @@ void ModuleIO::write_dipole(const double* rho_save,
         {
             for (int i = 0; i < rhopw->nx; i++)
             {
-                dipole_elec_x += rho_save[i * rhopw->ny * rhopw->nz + j * rhopw->nz + k] * i
-                                 * GlobalC::ucell.lat0 * 0.529177 / rhopw->nx;
-                dipole_elec_y += rho_save[i * rhopw->ny * rhopw->nz + j * rhopw->nz + k] * j
-                                 * GlobalC::ucell.lat0 * 0.529177 / rhopw->ny;
-                dipole_elec_z += rho_save[i * rhopw->ny * rhopw->nz + j * rhopw->nz + k] * k
-                                 * GlobalC::ucell.lat0 * 0.529177 / rhopw->nz;
+                dipole_elec_x += rho_save[i * rhopw->ny * rhopw->nz + j * rhopw->nz + k] * i * GlobalC::ucell.lat0
+                                 * 0.529177 / rhopw->nx;
+                dipole_elec_y += rho_save[i * rhopw->ny * rhopw->nz + j * rhopw->nz + k] * j * GlobalC::ucell.lat0
+                                 * 0.529177 / rhopw->ny;
+                dipole_elec_z += rho_save[i * rhopw->ny * rhopw->nz + j * rhopw->nz + k] * k * GlobalC::ucell.lat0
+                                 * 0.529177 / rhopw->nz;
             }
         }
     }
@@ -103,7 +103,6 @@ void ModuleIO::write_dipole(const double* rho_save,
             double sum = 0;
             for (int ia = 0; ia < GlobalC::ucell.atoms[it].na; ++ia)
             {
-
                 sum += GlobalC::ucell.atoms[it].taud[ia][i];
             }
             dipole_ion[i] += sum * GlobalC::ucell.atoms[it].ncpp.zv;
@@ -138,7 +137,7 @@ void ModuleIO::write_dipole(const double* rho_save,
     return;
 }
 
-double ModuleIO::prepare(const UnitCell &cell, int &dir)
+double ModuleIO::prepare(const UnitCell& cell, int& dir)
 {
     double bvec[3] = {0.0};
     double bmod = 0.0;
