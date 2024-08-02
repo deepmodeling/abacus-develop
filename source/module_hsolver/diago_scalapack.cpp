@@ -129,10 +129,11 @@ std::pair<int, std::vector<int>> DiagoScalapack<T>::pdsygvx_once(const int* cons
              iclustr.data(),
              gap.data(),
              &info);
-    if (info)
+    if (info) {
         throw std::runtime_error("info = " + ModuleBase::GlobalFunc::TO_STRING(info) + ".\n"
                                  + ModuleBase::GlobalFunc::TO_STRING(__FILE__) + " line "
                                  + ModuleBase::GlobalFunc::TO_STRING(__LINE__));
+}
 
     lwork = work[0];
     work.resize(std::max(lwork,3), 0);
@@ -174,22 +175,23 @@ std::pair<int, std::vector<int>> DiagoScalapack<T>::pdsygvx_once(const int* cons
              gap.data(),
              &info);
 
-    if (info == 0)
+    if (info == 0) {
         return std::make_pair(info, std::vector<int>{});
-    else if (info < 0)
+    } else if (info < 0) {
         return std::make_pair(info, std::vector<int>{});
-    else if (info % 2)
+    } else if (info % 2) {
         return std::make_pair(info, ifail);
-    else if (info / 2 % 2)
+    } else if (info / 2 % 2) {
         return std::make_pair(info, iclustr);
-    else if (info / 4 % 2)
+    } else if (info / 4 % 2) {
         return std::make_pair(info, std::vector<int>{M, NZ});
-    else if (info / 16 % 2)
+    } else if (info / 16 % 2) {
         return std::make_pair(info, ifail);
-    else
+    } else {
         throw std::runtime_error("info = " + ModuleBase::GlobalFunc::TO_STRING(info) + ".\n"
                                  + ModuleBase::GlobalFunc::TO_STRING(__FILE__) + " line "
                                  + ModuleBase::GlobalFunc::TO_STRING(__LINE__));
+}
 }
 
 template<typename T>
@@ -252,10 +254,11 @@ std::pair<int, std::vector<int>> DiagoScalapack<T>::pzhegvx_once(const int* cons
              iclustr.data(),
              gap.data(),
              &info);
-    if (info)
+    if (info) {
         throw std::runtime_error("info=" + ModuleBase::GlobalFunc::TO_STRING(info) + ". "
                                  + ModuleBase::GlobalFunc::TO_STRING(__FILE__) + " line "
                                  + ModuleBase::GlobalFunc::TO_STRING(__LINE__));
+}
 
     lwork = work[0].real();
     work.resize(lwork, 0);
@@ -302,22 +305,23 @@ std::pair<int, std::vector<int>> DiagoScalapack<T>::pzhegvx_once(const int* cons
              gap.data(),
              &info);
 
-    if (info == 0)
+    if (info == 0) {
         return std::make_pair(info, std::vector<int>{});
-    else if (info < 0)
+    } else if (info < 0) {
         return std::make_pair(info, std::vector<int>{});
-    else if (info % 2)
+    } else if (info % 2) {
         return std::make_pair(info, ifail);
-    else if (info / 2 % 2)
+    } else if (info / 2 % 2) {
         return std::make_pair(info, iclustr);
-    else if (info / 4 % 2)
+    } else if (info / 4 % 2) {
         return std::make_pair(info, std::vector<int>{M, NZ});
-    else if (info / 16 % 2)
+    } else if (info / 16 % 2) {
         return std::make_pair(info, ifail);
-    else
+    } else {
         throw std::runtime_error("info = " + ModuleBase::GlobalFunc::TO_STRING(info) + ".\n"
                                  + ModuleBase::GlobalFunc::TO_STRING(__FILE__) + " line "
                                  + ModuleBase::GlobalFunc::TO_STRING(__LINE__));
+}
 }
 
 template<typename T>
@@ -333,8 +337,9 @@ void DiagoScalapack<T>::pdsygvx_diag(const int* const desc,
     {
         const std::pair<int, std::vector<int>> info_vec = pdsygvx_once(desc, ncol, nrow, h_mat, s_mat, ekb, wfc_2d);
         post_processing(info_vec.first, info_vec.second);
-        if (info_vec.first == 0)
+        if (info_vec.first == 0) {
             break;
+}
     }
 }
 
@@ -351,8 +356,9 @@ void DiagoScalapack<T> ::pzhegvx_diag(const int* const desc,
     {
         const std::pair<int, std::vector<int>> info_vec = pzhegvx_once(desc, ncol, nrow, h_mat, s_mat, ekb, wfc_2d);
         post_processing(info_vec.first, info_vec.second);
-        if (info_vec.first == 0)
+        if (info_vec.first == 0) {
             break;
+}
     }
 }
 
@@ -381,15 +387,17 @@ void DiagoScalapack<T> ::pzhegvx_diag(const int* const desc,
     else if (info % 2)
     {
         std::string str_ifail = "ifail = ";
-        for (const int i: vec)
+        for (const int i: vec) {
             str_ifail += ModuleBase::GlobalFunc::TO_STRING(i) + " ";
+}
         throw std::runtime_error(str_info_FILE + str_ifail);
     }
     else if (info / 2 % 2)
     {
         int degeneracy_need = 0;
-        for (int irank = 0; irank < this->d_size; ++irank)
+        for (int irank = 0; irank < this->d_size; ++irank) {
             degeneracy_need = std::max(degeneracy_need, vec[2 * irank + 1] - vec[2 * irank]);
+}
         const std::string str_need = "degeneracy_need = " + ModuleBase::GlobalFunc::TO_STRING(degeneracy_need) + ".\n";
         const std::string str_saved
             = "degeneracy_saved = " + ModuleBase::GlobalFunc::TO_STRING(this->degeneracy_max) + ".\n";
