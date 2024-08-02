@@ -5,7 +5,6 @@ list(APPEND operator_ks_pw_srcs
     nonlocal_pw.cpp
     meta_pw.cpp
     velocity_pw.cpp
-    realspace_proj_op_pw.cpp
 )
 
 add_library(

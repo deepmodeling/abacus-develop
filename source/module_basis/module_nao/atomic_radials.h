@@ -43,15 +43,6 @@ class AtomicRadials : public RadialSet
     //! Get the energy cutoff as given by the orbital file
     double orb_ecut() const { return orb_ecut_; }
 
-  private:
-    double orb_ecut_; //!< energy cutoff as given by the orbital file
-
-    //! Read the orbital file in the ABACUS format
-    void read_abacus_orb(std::ifstream& ifs,               //!< input file stream from orbital file
-                         std::ofstream* ptr_log = nullptr, //!< output file stream for logging
-                         const int rank = 0                //!< MPI rank
-    );
-
     /**
      * @brief static version of read_abacus_orb. A delete-new operation may cause the memory leak, 
      * it is better to use std::vector to replace the raw pointer.
@@ -73,6 +64,16 @@ class AtomicRadials : public RadialSet
                                 std::vector<int>& nzeta,
                                 std::vector<std::vector<double>>& radials,
                                 const int rank = 0);
+
+  private:
+    double orb_ecut_; //!< energy cutoff as given by the orbital file
+
+    //! Read the orbital file in the ABACUS format
+    void read_abacus_orb(std::ifstream& ifs,               //!< input file stream from orbital file
+                         std::ofstream* ptr_log = nullptr, //!< output file stream for logging
+                         const int rank = 0                //!< MPI rank
+    );
+
 };
 
 #endif

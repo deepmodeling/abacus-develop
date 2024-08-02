@@ -320,7 +320,7 @@ void AtomicRadials::read_abacus_orb(std::ifstream& ifs,
                 break;
             }
         }
-        radial_map_.resize(lmax);
+        radial_map_.resize(lmax + 1);
         for (int l = 0; l <= lmax; ++l)
         {
             radial_map_[l].resize(nzeta[l]);

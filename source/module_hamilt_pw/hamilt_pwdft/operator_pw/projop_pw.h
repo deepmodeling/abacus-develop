@@ -1,3 +1,10 @@
+/**
+ * A temporary demo for illustrating how to employ the real-space projection to implement
+ * local orbital projector-based operators and derived algorithms.
+ * 
+ * This file will be removed after the implementation of DFT+U in PW basis.
+ * 
+ */
 #include <string>
 #include <vector>
 #include "operator_pw.h"
