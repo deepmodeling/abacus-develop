@@ -64,10 +64,21 @@ void cal_dpsir_ylm(
                                                   dr[0], dr[1], dr[2], 
                                                   rly, grly.get_ptr_2D());
 
-                dpsi_spline_interpolation(distance,dr,delta_r,atom->nw,
-                                          atom->iw2_new,atom->iw2l,atom->iw2_ylm,
-                                          rly,grly.get_ptr_2D(),it_psi_uniform,
-                                          it_dpsi_uniform,p_psi,p_dpsi_x,p_dpsi_y,p_dpsi_z);
+                dpsi_spline_interpolation(distance,
+                                          dr,
+                                          delta_r,
+                                          atom->nw,
+                                          atom->iw2_new,
+                                          atom->iw2l,
+                                          atom->iw2_ylm,
+                                          rly,
+                                          grly.get_ptr_2D(),
+                                          it_psi_uniform,
+                                          it_dpsi_uniform,
+                                          p_psi,
+                                          p_dpsi_x,
+                                          p_dpsi_y,
+                                          p_dpsi_z);
             }     // else
         }
     }

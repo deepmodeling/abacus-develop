@@ -110,8 +110,22 @@ void cal_grid_atom_distance(double &distance,
 	distance = std::sqrt(dr[0] * dr[0] + dr[1] * dr[1] + dr[2] * dr[2]); 
 	if (distance < 1.0E-9) distance += 1.0E-9;
 }
-
-void spline_interpolation(const double distance,const double delta_r,
+void interp_coeff(const double distance,
+				const double delta_r,
+				int& ip,
+				double* coeffs)
+{
+	const double position = distance / delta_r;
+	ip = static_cast<int>(position);
+	const double dx = position - ip;
+	const double dx2 = dx * dx;
+	const double dx3 = dx2 * dx;
+	coeffs[2] = 3.0 * dx2 - 2.0 * dx3;
+	coeffs[0] = 1.0 - coeffs[2];
+	coeffs[1] = (dx - 2.0 * dx2 + dx3) * delta_r;
+	coeffs[4] = (dx3 - dx2) * delta_r;
+}
+void spline_interpolation(const double* coeffs,
                         const int nw,const bool* iw2_new,
                         const int* iw2_ylm,
                         std::vector<double>& ylma,
@@ -119,29 +133,7 @@ void spline_interpolation(const double distance,const double delta_r,
                         std::vector<const double*>& it_dpsi_uniform,
                         double *p)
 {
-	const double position = distance / delta_r;
-	const int ip = static_cast<int>(position);
-	const double dx = position - ip;
-	const double dx2 = dx * dx;
-	const double dx3 = dx2 * dx;
 
-	const double c3 = 3.0 * dx2 - 2.0 * dx3;
-	const double c1 = 1.0 - c3;
-	const double c2 = (dx - 2.0 * dx2 + dx3) * delta_r;
-	const double c4 = (dx3 - dx2) * delta_r;
-
-	double phi = 0;
-	for (int iw = 0; iw < nw; ++iw)
-	{
-		if (iw2_new[iw])
-		{
-			auto psi_uniform = it_psi_uniform[iw];
-			auto dpsi_uniform = it_dpsi_uniform[iw];
-			phi = c1 * psi_uniform[ip] + c2 * dpsi_uniform[ip] // radial wave functions
-					+ c3 * psi_uniform[ip + 1] + c4 * dpsi_uniform[ip + 1];
-		}
-		p[iw] = phi * ylma[iw2_ylm[iw]];
-	} // end iw
 }
 
 void dpsi_spline_interpolation(const double distance,const double* dr,const double delta_r,int nw,
@@ -172,8 +164,8 @@ void dpsi_spline_interpolation(const double distance,const double* dr,const doub
 		{
 			auto psi_uniform = it_psi_uniform[iw];
 			auto dpsi_uniform = it_dpsi_uniform[iw];
-                            // use Polynomia Interpolation method to get the
-                            // wave functions
+			// use Polynomia Interpolation method to get the
+			// wave functions
 
 			tmp = x12 * (psi_uniform[ip] * x3 + psi_uniform[ip + 3] * x0)
 					+ x03 * (psi_uniform[ip + 1] * x2 - psi_uniform[ip + 2] * x1);

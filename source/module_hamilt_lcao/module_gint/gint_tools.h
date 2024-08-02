@@ -241,7 +241,12 @@ void cal_grid_atom_distance(double &distance,
                             double* dr,
                             const double* mt,
                             const double* meshcell_pos);
-                            
+
+void interp_coeff(const double distance,
+                const double delta_r,
+                int& ip,
+                double* coeffs);
+
 void spline_interpolation(const double distance,const double delta_r,
                         const int nw,const bool* iw2_new,
                         const int* iw2_ylm,

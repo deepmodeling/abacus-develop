@@ -3,15 +3,20 @@
 #include "module_base/ylm.h"
 namespace Gint_Tools{
 void cal_ddpsir_ylm(
-    const Grid_Technique& gt, const int bxyz,
+    const Grid_Technique& gt, 
+    const int bxyz,
     const int na_grid,                 // number of atoms on this grid
     const int grid_index,              // 1d index of FFT index (i,j,k)
     const double delta_r,              // delta_r of the uniform FFT grid
     const int* const block_index,      // block_index[na_grid+1], count total number of atomis orbitals
     const int* const block_size,       // block_size[na_grid],	number of columns of a band
     const bool* const* const cal_flag, // cal_flag[bxyz][na_grid],	whether the atom-grid distance is larger than cutoff
-    double* const* const ddpsir_ylm_xx, double* const* const ddpsir_ylm_xy, double* const* const ddpsir_ylm_xz,
-    double* const* const ddpsir_ylm_yy, double* const* const ddpsir_ylm_yz, double* const* const ddpsir_ylm_zz)
+    double* const* const ddpsir_ylm_xx, 
+    double* const* const ddpsir_ylm_xy, 
+    double* const* const ddpsir_ylm_xz,
+    double* const* const ddpsir_ylm_yy, 
+    double* const* const ddpsir_ylm_yz, 
+    double* const* const ddpsir_ylm_zz)
 {
     ModuleBase::timer::tick("Gint_Tools", "cal_ddpsir_ylm");
     const int bcell_start = gt.bcell_start[grid_index];
@@ -24,11 +29,14 @@ void cal_ddpsir_ylm(
     // the first dimension equals 36 because the maximum nwl is 5.
     double rly[36];
     ModuleBase::Array_Pool<double> grly(36, 3);
-    std::vector<std::vector<double>> displ(6, std::vector<double>(3, 0.0));
 
-    displ[0][0] = 0.0001; displ[1][0] = -0.0001; // in x direction
-    displ[2][1] = 0.0001; displ[3][1] = -0.0001; // in y direction
-    displ[4][2] = 0.0001; displ[5][2] = -0.0001; // in z direction
+    std::vector<std::vector<double>> displ(6, std::vector<double>(3, 0.0));
+    displ[0][0] = 0.0001; 
+    displ[1][0] = -0.0001; // in x direction
+    displ[2][1] = 0.0001; 
+    displ[3][1] = -0.0001; // in y direction
+    displ[4][2] = 0.0001; 
+    displ[5][2] = -0.0001; // in z direction
 
     for (int id = 0; id < na_grid; id++)
     {
@@ -41,8 +49,12 @@ void cal_ddpsir_ylm(
 
         const int it = ucell.iat2it[iat];
         Atom* atom = &ucell.atoms[it];
-        get_psi_dpsi(gt,atom->nw, it,
-                atom->iw2_new,it_psi_uniform, it_dpsi_uniform);
+        get_psi_dpsi(gt,atom->nw,
+                     it,
+                     atom->iw2_new,
+                     it_psi_uniform,
+                     it_dpsi_uniform);
+                
         double distance;
         double dr[3];
         for (int ib = 0; ib < bxyz; ib++)
@@ -87,7 +99,10 @@ void cal_ddpsir_ylm(
                     double distance1;
                     for (int i = 0; i < 6; i++)
                     {
-                        cal_grid_atom_distance(distance1,dr1,dr,displ[i].data());
+                        cal_grid_atom_distance(distance1,
+                                                dr1,
+                                                dr,
+                                                displ[i].data());
                         ModuleBase::Ylm::grad_rl_sph_harm(ucell.atoms[it].nwl, 
                                                           dr1[0], dr1[1], dr1[2],
                                                           rly, grly.get_ptr_2D());

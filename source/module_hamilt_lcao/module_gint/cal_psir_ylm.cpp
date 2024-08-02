@@ -42,6 +42,8 @@ void cal_psir_ylm(
         get_psi_dpsi(gt,atom->nw, it, atom->iw2_new, it_psi_uniform, it_dpsi_uniform);
         double distance;
         double dr[3];
+        double coeffs[4];
+        int ip;
         // loop over the grids in the big cell
         for (int ib = 0; ib < bxyz; ib++)
         {
@@ -53,10 +55,6 @@ void cal_psir_ylm(
             else
             {
 
-                // double dr[3]= {gt.meshcell_pos[ib][0] + mt[0],
-                //                      gt.meshcell_pos[ib][1] + mt[1], 
-                //                      gt.meshcell_pos[ib][2] + mt[2]};
-                // distance between atom and grid
 
                 cal_grid_atom_distance(distance,dr,mt,gt.meshcell_pos[ib].data());
                 //------------------------------------------------------
@@ -71,8 +69,21 @@ void cal_psir_ylm(
                 // because once the distance from atom to grid point is known,
                 // we can obtain the parameters for interpolation and
                 // store them first! these operations can save lots of efforts.
-                spline_interpolation(distance,delta_r,atom->nw,atom->iw2_new,atom->iw2_ylm,
-                                    ylma,it_psi_uniform,it_dpsi_uniform,p);
+                interp_coeff(distance, delta_r, ip, coeffs);
+
+
+                double phi = 0;
+                for (int iw = 0; iw < atom->nw; ++iw)
+                {
+                    if (atom->iw2_new[iw])
+                    {
+                        auto psi_uniform = it_psi_uniform[iw];
+                        auto dpsi_uniform = it_dpsi_uniform[iw];
+                        phi = coeffs[0] * psi_uniform[ip] + coeffs[1] * dpsi_uniform[ip] // radial wave functions
+                                + coeffs[2] * psi_uniform[ip + 1] + coeffs[3] * dpsi_uniform[ip + 1];
+                    }
+                    p[iw] = phi * ylma[atom->iw2_ylm[iw]];
+                } // end iw
 
             }     
         }         // end ib
