@@ -186,7 +186,7 @@ public:
              const std::vector<std::string>& fmts,
              const Alignments& aligns = {},
              const Frames& frames = {},
-             const Delimiters& delimiters = {}): titles_(titles), fmts_(fmts), data_(nrows, titles.size()), aligns_(aligns), frames_(frames), delimiters_(delimiters)
+             const Delimiters& delimiters = {}): titles_(titles), data_(nrows, titles.size()), fmts_(fmts), aligns_(aligns), frames_(frames), delimiters_(delimiters)
     { assert(titles.size() == fmts.size()); };
     ~FmtTable() {};
     /**
