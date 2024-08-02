@@ -52,7 +52,7 @@ namespace ModuleESolver {
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::allocate_hsolver()
 {
-    this->phsol = new hsolver::HSolverPW<T, Device>(this->pw_wfc, &this->wf);
+    this->phsol = new hsolver::HSolverPW<T, Device>(this->pw_wfc, &this->wf, false);
 }
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::deallocate_hsolver()
@@ -78,23 +78,38 @@ void ESolver_KS_PW<T, Device>::hamilt2estates(const double ethr) {
     if (this->phsol != nullptr) {
         hsolver::DiagoIterAssist<T, Device>::need_subspace = false;
         hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR = ethr;
-        this->phsol->solve(this->p_hamilt,
-                           this->kspw_psi[0],
-                           this->pelec,
-                           PARAM.inp.ks_solver,
-                           PARAM.inp.calculation,
-                           PARAM.inp.basis_type,
-                           PARAM.inp.use_paw,
-                           GlobalV::use_uspp,
-                           GlobalV::RANK_IN_POOL,
-                           GlobalV::NPROC_IN_POOL,
 
-                           hsolver::DiagoIterAssist<T, Device>::SCF_ITER,
-                           hsolver::DiagoIterAssist<T, Device>::need_subspace,
-                           hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
-                           hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR,
+        std::vector<bool> is_occupied(this->kspw_psi->get_nk() * this->kspw_psi->get_nbands(), true);
 
-                           true);
+        elecstate::set_is_occupied(is_occupied,
+                                   this->pelec,
+                                   hsolver::DiagoIterAssist<T, Device>::SCF_ITER,
+                                   this->kspw_psi->get_nk(),
+                                   this->kspw_psi->get_nbands(),
+                                   PARAM.inp.diago_full_acc);
+
+        hsolver::HSolverPW<T, Device> hsolver_pw_obj(this->pw_wfc, &this->wf, this->init_psi);
+
+        hsolver_pw_obj.solve(this->p_hamilt,
+                             this->kspw_psi[0],
+                             this->pelec,
+                             this->pelec->ekb.c,
+                             is_occupied,
+                             PARAM.inp.ks_solver,
+                             PARAM.inp.calculation,
+                             PARAM.inp.basis_type,
+                             PARAM.inp.use_paw,
+                             GlobalV::use_uspp,
+                             GlobalV::RANK_IN_POOL,
+                             GlobalV::NPROC_IN_POOL,
+                             hsolver::DiagoIterAssist<T, Device>::SCF_ITER,
+                             hsolver::DiagoIterAssist<T, Device>::need_subspace,
+                             hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
+                             hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR,
+                             true);
+
+        this->init_psi = true;
+        
     } else {
         ModuleBase::WARNING_QUIT("ESolver_KS_PW",
                                  "HSolver has not been initialed!");

@@ -194,7 +194,7 @@ void psi_initializer_nao<T, Device>::read_external_orbs(std::string* orbital_fil
         this->n_rgrid_.resize(this->p_ucell_->ntype);
     }
 
-    int nchi[this->p_ucell_->ntype];
+    std::vector<int> nchi(this->p_ucell_->ntype);
     if (rank == 0)
     {
         for (int it = 0; it < this->p_ucell_->ntype; it++)
@@ -204,7 +204,7 @@ void psi_initializer_nao<T, Device>::read_external_orbs(std::string* orbital_fil
     }
 
     // bcast
-    Parallel_Common::bcast_int(nchi, this->p_ucell_->ntype);
+    Parallel_Common::bcast_int(nchi.data(), this->p_ucell_->ntype);
     // resize
     if (rank != 0)
     {

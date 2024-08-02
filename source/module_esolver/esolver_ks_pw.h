@@ -75,8 +75,11 @@ class ESolver_KS_PW : public ESolver_KS<T, Device>
 
     psi::Psi<std::complex<double>, Device>* __kspw_psi = nullptr;
 
+    bool init_psi = false;
+
     using castmem_2d_d2h_op
         = base_device::memory::cast_memory_op<std::complex<double>, T, base_device::DEVICE_CPU, Device>;
+
 };
 } // namespace ModuleESolver
 #endif
