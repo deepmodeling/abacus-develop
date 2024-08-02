@@ -1,6 +1,5 @@
 #include "diago_david.h"
 
-// #include "module_base/memory.h"
 #include "module_base/timer.h"
 #include "module_base/module_device/device.h"
 
@@ -749,7 +748,7 @@ void DiagoDavid<T, Device>::diag_zhegvx(const int& nbase,
             resmem_var_op()(this->ctx, eigenvalue_gpu, nbase_x);
             syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, eigenvalue_gpu, this->eigenvalue, nbase_x);
 
-            dnevx_op<T, Device>()(this->ctx, nbase, nbase_x, this->hcc, nband, eigenvalue_gpu, this->vcc);
+            dnevx_op<T, Device>()(this->ctx, nbase, nbase_x, hcc, nband, eigenvalue_gpu, vcc);
 
             syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, this->eigenvalue, eigenvalue_gpu, nbase_x);
             delmem_var_op()(this->ctx, eigenvalue_gpu);
@@ -757,7 +756,7 @@ void DiagoDavid<T, Device>::diag_zhegvx(const int& nbase,
         }
         else
         {
-            dnevx_op<T, Device>()(this->ctx, nbase, nbase_x, this->hcc, nband, this->eigenvalue, this->vcc);
+            dnevx_op<T, Device>()(this->ctx, nbase, nbase_x, hcc, nband, this->eigenvalue, vcc);
         }
     }
 
