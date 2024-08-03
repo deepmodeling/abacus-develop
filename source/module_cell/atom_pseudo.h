@@ -1,12 +1,11 @@
 #ifndef ATOM_PSEUDO_H
 #define ATOM_PSEUDO_H
 
-#include "../module_base/global_function.h"
-#include "../module_base/global_variable.h"
-#include "../module_base/vector3.h"
-#include "../module_io/output.h"
-#include "../module_base/complexarray.h"
-#include "../module_base/complexmatrix.h"
+#include "module_base/global_variable.h"
+#include "module_base/vector3.h"
+#include "module_io/output.h"
+#include "module_base/complexarray.h"
+#include "module_base/complexmatrix.h"
 #include "pseudo.h"
 
 
@@ -22,9 +21,9 @@ public:
 	ModuleBase::matrix d_real; //(:,:), non-spin-orbit case
 	int nproj;
 	int nproj_soc; // dimension of D_ij^so
-	int non_zero_count_soc[4];
-	int *index1_soc[4];
-	int *index2_soc[4];
+	std::vector<int> non_zero_count_soc = {0, 0, 0, 0};
+	std::vector<std::vector<int>> index1_soc = {{}, {}, {}, {}};
+	std::vector<std::vector<int>> index2_soc = {{}, {}, {}, {}};
 
 	void set_d_so( // mohan add 2021-05-07
 		ModuleBase::ComplexMatrix &d_so_in,
