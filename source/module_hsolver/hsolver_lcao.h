@@ -11,10 +11,9 @@ template <typename T, typename Device = base_device::DEVICE_CPU>
 class HSolverLCAO : public HSolver<T, Device>
 {
   public:
-    HSolverLCAO(const Parallel_Orbitals* ParaV_in)
-    {
-      this->ParaV = ParaV_in;
-    }
+    HSolverLCAO(const Parallel_Orbitals* ParaV_in, std::string method_in)
+          : ParaV(ParaV_in), method(method_in)
+    {};
 
     void solve(hamilt::Hamilt<T>* pHamilt, psi::Psi<T>& psi, elecstate::ElecState* pes, const std::string method_in, const bool skip_charge) override;
 

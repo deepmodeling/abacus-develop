@@ -21,9 +21,12 @@ namespace LR
             return ethr;
         }
         virtual void solve(hamilt::Hamilt<T, Device>* pHamilt,
-            psi::Psi<T, Device>& psi,
-            elecstate::ElecState* pes,
-            const std::string method_in,
-            const bool skip_charge = false) override;
+                           psi::Psi<T, Device>& psi,
+                           elecstate::ElecState* pes,
+                           const std::string method_in,
+                           const bool skip_charge = false) override;
+
+      private:
+        std::string method = "none";
     };
 };
