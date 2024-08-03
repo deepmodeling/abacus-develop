@@ -23,8 +23,6 @@ class HSolver
   public:
     HSolver() {};
 
-    // virtual ~HSolver();
-
     // solve Hamiltonian to electronic density in ElecState
     virtual void solve(hamilt::Hamilt<T, Device>* phm,
                        psi::Psi<T, Device>& ppsi,
@@ -70,6 +68,7 @@ class HSolver
     {
         return;
     }
+
     virtual void solve(hamilt::Hamilt<T, Device>* phm,
                        psi::Psi<T, Device>& ppsi,
                        elecstate::ElecState* pes,
@@ -78,19 +77,14 @@ class HSolver
                        const int istep,
                        const int iter,
                        const std::string method,
-
                        const int scf_iter_in,
                        const bool need_subspace_in,
                        const int diag_iter_max_in,
-                       const double pw_diag_thr_in,
-                       
+                       const double pw_diag_thr_in,   
                        const bool skip_charge)
     {
         return;
     }
-
-    // // choose method of DiagH for solve Hamiltonian matrix(cg, dav, elpa, scalapack_gvx, cusolver
-    // std::string method = "none";
 
     Real diag_ethr = 0.0; // threshold for diagonalization
 
@@ -111,9 +105,6 @@ class HSolver
     {
         return 0.0;
     };
-
-//   protected:
-    // DiagH<T, Device>* pdiagh = nullptr; // for single Hamiltonian matrix diagonal solver
 };
 
 } // namespace hsolver
