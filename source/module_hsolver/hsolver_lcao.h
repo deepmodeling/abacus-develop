@@ -13,15 +13,8 @@ class HSolverLCAO : public HSolver<T, Device>
   public:
     HSolverLCAO(const Parallel_Orbitals* ParaV_in)
     {
-      this->classname = "HSolverPW"; 
       this->ParaV = ParaV_in;
-      }
-    /*void init(
-        const Basis* pbas
-        //const Input &in,
-    ) override;
-    void update(//Input &in
-    ) override;*/
+    }
 
     void solve(hamilt::Hamilt<T>* pHamilt, psi::Psi<T>& psi, elecstate::ElecState* pes, const std::string method_in, const bool skip_charge) override;
 

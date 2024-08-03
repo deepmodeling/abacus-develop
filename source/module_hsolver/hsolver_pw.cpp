@@ -212,7 +212,6 @@ HSolverPW<T, Device>::HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in,
                                 wavefunc* pwf_in,
                                 const bool initialed_psi_in)
 {
-    this->classname = "HSolverPW";
     this->wfc_basis = wfc_basis_in;
     this->pwf = pwf_in;
     this->diag_ethr = GlobalV::PW_DIAG_THR;

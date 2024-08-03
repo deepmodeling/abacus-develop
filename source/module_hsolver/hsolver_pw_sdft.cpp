@@ -24,8 +24,8 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
 
                            const bool skip_charge)
 {
-    ModuleBase::TITLE(this->classname, "solve");
-    ModuleBase::timer::tick(this->classname, "solve");
+    ModuleBase::TITLE("HSolverPW_SDFT", "solve");
+    ModuleBase::timer::tick("HSolverPW_SDFT", "solve");
 
     const int npwx = psi.get_nbasis();
     const int nbands = psi.get_nbands();
@@ -98,7 +98,7 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
     stoiter.itermu(iter, pes);
     stoiter.calHsqrtchi(stowf);
     if (skip_charge) {
-        ModuleBase::timer::tick(this->classname, "solve");
+        ModuleBase::timer::tick("HSolverPW_SDFT", "solve");
         return;
     }
     //(5) calculate new charge density
@@ -118,7 +118,7 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
     stoiter.sum_stoband(stowf, pes, pHamilt, wfc_basis);
 
     // will do rho symmetry and energy calculation in esolver
-    ModuleBase::timer::tick(this->classname, "solve");
+    ModuleBase::timer::tick("HSolverPW_SDFT", "solve");
     return;
 }
 

@@ -22,19 +22,11 @@ class HSolver
 
   public:
     HSolver() {};
+
     virtual ~HSolver()
     {
         delete pdiagh;
     };
-    /*//initialization, used in construct function or restruct a new HSolver
-    virtual void init(
-        const Basis* pbas //We need Basis class here, use global class for this initialization first
-        //const Input &in, //We need new Input class here, use global variable for this initialization first
-        //elecstate::ElecState *pes
-        )=0;
-    //initialization, only be called for change some parameters only
-    virtual void update(
-        Input &in )=0;*/
 
     // solve Hamiltonian to electronic density in ElecState
     virtual void solve(hamilt::Hamilt<T, Device>* phm,
@@ -99,8 +91,6 @@ class HSolver
     {
         return;
     }
-
-    std::string classname = "none";
 
     // choose method of DiagH for solve Hamiltonian matrix(cg, dav, elpa, scalapack_gvx, cusolver
     std::string method = "none";

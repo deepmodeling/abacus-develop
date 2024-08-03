@@ -52,24 +52,6 @@ class HSolverPW : public HSolver<T, Device>
     virtual Real set_diagethr(Real diag_ethr_in, const int istep, const int iter, const Real drho) override;
 
     virtual Real reset_diagethr(std::ofstream& ofs_running, const Real hsover_error, const Real drho, Real diag_ethr_in) override;
-
-    // ModulePW::PW_Basis_K* get_wfc_basis_p()
-    // {
-    //     return this->wfc_basis;
-    // };
-    // wavefunc* get_pwf_p()
-    // {
-    //     return this->pwf;
-    // };
-    // bool get_initpsi()
-    // {
-    //     return initialed_psi;
-    // };
-
-    void set_initpsi(bool init_psi)
-    {
-      this->initialed_psi = init_psi;
-    }
     
   protected:
     // diago caller
