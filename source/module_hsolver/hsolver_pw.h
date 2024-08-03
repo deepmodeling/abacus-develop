@@ -79,6 +79,8 @@ class HSolverPW : public HSolver<T, Device>
     int diag_iter_max = 50;
     double pw_diag_thr = 1.0e-2;
 
+    std::string method = "none";
+
   private:
     Device* ctx = {};
 

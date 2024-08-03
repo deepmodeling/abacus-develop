@@ -89,8 +89,8 @@ class HSolver
         return;
     }
 
-    // choose method of DiagH for solve Hamiltonian matrix(cg, dav, elpa, scalapack_gvx, cusolver
-    std::string method = "none";
+    // // choose method of DiagH for solve Hamiltonian matrix(cg, dav, elpa, scalapack_gvx, cusolver
+    // std::string method = "none";
 
     Real diag_ethr = 0.0; // threshold for diagonalization
 

@@ -37,6 +37,8 @@ class HSolverLCAO : public HSolver<T, Device>
     std::vector<Real> precondition_lcao;
 
     DiagH<T, Device>* pdiagh = nullptr; // for single Hamiltonian matrix diagonal solver
+
+    std::string method = "none";
 };
 
 template <typename T, typename Device>
