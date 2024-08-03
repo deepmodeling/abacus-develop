@@ -156,7 +156,6 @@ TEST_F(TestHSolverPW_SDFT, solve)
     int istep = 0;
     int iter = 0;
 	//check constructor
-	EXPECT_EQ(this->hs_d.classname, "HSolverPW_SDFT");
 	EXPECT_NEAR(this->hs_d.diag_ethr, 0.01, 1.0e-7);
 	//check solve()
 	EXPECT_EQ(this->hs_d.initialed_psi, false);
@@ -242,7 +241,6 @@ TEST_F(TestHSolverPW_SDFT, solve_noband_skipcharge)
     int istep = 0;
     int iter = 0;
 	//check constructor
-	EXPECT_EQ(this->hs_d.classname, "HSolverPW_SDFT");
 	EXPECT_NEAR(this->hs_d.diag_ethr, 1e-7, 1.0e-10);
 	//check solve()
     hs_d.initialed_psi = true;
