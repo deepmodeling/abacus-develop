@@ -141,7 +141,6 @@ public:
         /**************************************************************/
         //  New interface of cg method
         /**************************************************************/
-        // this->pdiagh = new DiagoCG<double, Device>(precondition.data());
         // warp the subspace_func into a lambda function
         auto subspace_func = [ha](const ct::Tensor& psi_in, ct::Tensor& psi_out) { /*do nothing*/ };
         hsolver::DiagoCG<double> cg(

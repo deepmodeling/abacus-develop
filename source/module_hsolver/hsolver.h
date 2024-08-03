@@ -23,10 +23,7 @@ class HSolver
   public:
     HSolver() {};
 
-    virtual ~HSolver()
-    {
-        delete pdiagh;
-    };
+    // virtual ~HSolver();
 
     // solve Hamiltonian to electronic density in ElecState
     virtual void solve(hamilt::Hamilt<T, Device>* phm,
@@ -115,8 +112,8 @@ class HSolver
         return 0.0;
     };
 
-  protected:
-    DiagH<T, Device>* pdiagh = nullptr; // for single Hamiltonian matrix diagonal solver
+//   protected:
+    // DiagH<T, Device>* pdiagh = nullptr; // for single Hamiltonian matrix diagonal solver
 };
 
 } // namespace hsolver

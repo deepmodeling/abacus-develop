@@ -127,23 +127,23 @@ class DiagH_mock : public DiagH<T, Device>
 	template class DiagH_mock<std::complex<double>>;
 }
 
-TEST_F(TestHSolver, diagh)
-{
-    //test DiagH::diag
-    this->hs_cf.pdiagh = new hsolver::DiagH_mock<std::complex<float>>;
-    this->hs_cf.pdiagh->diag(nullptr, this->psi_test_cf, nullptr);
-    EXPECT_EQ(this->hs_cf.pdiagh->method, "none");
+// TEST_F(TestHSolver, diagh)
+// {
+//     //test DiagH::diag
+//     this->hs_cf.pdiagh = new hsolver::DiagH_mock<std::complex<float>>;
+//     this->hs_cf.pdiagh->diag(nullptr, this->psi_test_cf, nullptr);
+//     EXPECT_EQ(this->hs_cf.pdiagh->method, "none");
 
-    this->hs_cd.pdiagh = new hsolver::DiagH_mock<std::complex<double>>;
-    this->hs_cd.pdiagh->diag(nullptr, this->psi_test_cd, nullptr);
-    EXPECT_EQ(this->hs_cd.pdiagh->method, "none");
+//     this->hs_cd.pdiagh = new hsolver::DiagH_mock<std::complex<double>>;
+//     this->hs_cd.pdiagh->diag(nullptr, this->psi_test_cd, nullptr);
+//     EXPECT_EQ(this->hs_cd.pdiagh->method, "none");
 
-    this->hs_f.pdiagh = new hsolver::DiagH_mock<float>;
-    this->hs_f.pdiagh->diag(nullptr, this->psi_test_f, nullptr);
-    EXPECT_EQ(this->hs_f.pdiagh->method, "none");
+//     this->hs_f.pdiagh = new hsolver::DiagH_mock<float>;
+//     this->hs_f.pdiagh->diag(nullptr, this->psi_test_f, nullptr);
+//     EXPECT_EQ(this->hs_f.pdiagh->method, "none");
 
-    this->hs_d.pdiagh = new hsolver::DiagH_mock<double>;
-    this->hs_d.pdiagh->diag(nullptr, this->psi_test_d, nullptr);
-    EXPECT_EQ(this->hs_d.pdiagh->method, "none");
-    //test HSolver::~HSolver() it will delete pdiagh
-}
+//     this->hs_d.pdiagh = new hsolver::DiagH_mock<double>;
+//     this->hs_d.pdiagh->diag(nullptr, this->psi_test_d, nullptr);
+//     EXPECT_EQ(this->hs_d.pdiagh->method, "none");
+//     //test HSolver::~HSolver() it will delete pdiagh
+// }

@@ -132,7 +132,6 @@ class DiagoCGPrepare
         /**************************************************************/
         //  New interface of cg method
         /**************************************************************/
-        // this->pdiagh = new DiagoCG<std::complex<double>, Device>(precondition.data());
         // warp the subspace_func into a lambda function
         auto subspace_func = [ha](const ct::Tensor& psi_in, ct::Tensor& psi_out) { /*do nothing*/ };
         hsolver::DiagoCG<std::complex<double>> cg(
