@@ -73,7 +73,10 @@ template <typename T, typename Device>
 ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
 {
     // delete HSolver and ElecState
+    std::cout << "1" << std::endl;
+    std::cout << "2" << std::endl;
     this->deallocate_hsolver();
+    std::cout << "2" << std::endl;
     if (this->pelec != nullptr)
     {
         delete reinterpret_cast<elecstate::ElecStatePW<T, Device>*>(this->pelec);
