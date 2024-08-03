@@ -145,8 +145,8 @@ double HSolverPW_SDFT::set_diagethr(double diag_ethr_in,
 }
     }
     
-    // Temporarily added to ensure correctness
-    this->diag_ethr = diag_ethr_in;
+    // // Temporarily added to ensure correctness
+    // this->diag_ethr = diag_ethr_in;
 
     return diag_ethr_in;
 }
