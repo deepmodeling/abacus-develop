@@ -424,6 +424,8 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
     this->niter = this->maxniter;
 
     // 4) SCF iterations
+    double diag_ethr = GlobalV::PW_DIAG_THR;
+
     std::cout << " * * * * * *\n << Start SCF iteration." << std::endl;
     for (int iter = 1; iter <= this->maxniter; ++iter)
     {
@@ -435,7 +437,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
 #else
         auto iterstart = std::chrono::system_clock::now();
 #endif
-        double diag_ethr = this->phsol->set_diagethr(this->phsol->diag_ethr, istep, iter, drho);
+        diag_ethr = this->phsol->set_diagethr(diag_ethr, istep, iter, drho);
 
         // 6) initialization of SCF iterations
         this->iter_init(istep, iter);

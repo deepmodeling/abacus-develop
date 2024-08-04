@@ -44,7 +44,7 @@ class HSolverPW : public HSolver<T, Device>
                const int scf_iter_in,
                const bool need_subspace_in,
                const int diag_iter_max_in,
-               const double pw_diag_thr_in,
+               const double iter_diag_thr_in,
                const bool skip_charge) override;
 
     virtual Real cal_hsolerror(const Real diag_ethr_in) override;
@@ -52,24 +52,6 @@ class HSolverPW : public HSolver<T, Device>
     virtual Real set_diagethr(Real diag_ethr_in, const int istep, const int iter, const Real drho) override;
 
     virtual Real reset_diagethr(std::ofstream& ofs_running, const Real hsover_error, const Real drho, Real diag_ethr_in) override;
-
-    // ModulePW::PW_Basis_K* get_wfc_basis_p()
-    // {
-    //     return this->wfc_basis;
-    // };
-    // wavefunc* get_pwf_p()
-    // {
-    //     return this->pwf;
-    // };
-    // bool get_initpsi()
-    // {
-    //     return initialed_psi;
-    // };
-
-    void set_initpsi(bool init_psi)
-    {
-      this->initialed_psi = init_psi;
-    }
     
   protected:
     // diago caller
@@ -95,7 +77,9 @@ class HSolverPW : public HSolver<T, Device>
     int scf_iter = 1; // Start from 1
     bool need_subspace = false;
     int diag_iter_max = 50;
-    double pw_diag_thr = 1.0e-2;
+    double iter_diag_thr = 1.0e-2;  // threshold for diagonalization
+
+    std::string method = "none";
 
   private:
     Device* ctx = {};

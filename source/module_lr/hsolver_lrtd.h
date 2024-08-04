@@ -21,9 +21,14 @@ namespace LR
             return ethr;
         }
         virtual void solve(hamilt::Hamilt<T, Device>* pHamilt,
-            psi::Psi<T, Device>& psi,
-            elecstate::ElecState* pes,
-            const std::string method_in,
-            const bool skip_charge = false) override;
+                           psi::Psi<T, Device>& psi,
+                           elecstate::ElecState* pes,
+                           const std::string method_in,
+                           const bool skip_charge = false) override;
+
+        Real diag_ethr = 0.0; // threshold for diagonalization
+
+      private:
+        std::string method = "none";
     };
 };
