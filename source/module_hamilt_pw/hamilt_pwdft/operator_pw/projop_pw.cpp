@@ -1,5 +1,5 @@
 #include "projop_pw.h"
-#include "module_hamilt_pw/hamilt_pwdft/radial_projection.h"
+#include "module_hamilt_pw/hamilt_pwdft/radial_proj.h"
 #include "module_basis/module_nao/projgen.h"
 #include "module_basis/module_nao/atomic_radials.h"
 #include <cassert>
@@ -14,10 +14,15 @@ namespace hamilt
                                                       double& dr,
                                                       std::vector<std::vector<double>>& radials)
     {
-        std::string elem;
-        double ecut;
+        // the following two variables will actually be deprecated, in Python it can be "_" but not in C++
+        std::string elem = "__invalid__";
+        double ecut = -0.1;
         std::ifstream ifs(forb);
-        AtomicRadials::read_abacus_orb(ifs, elem, ecut, nr, dr, nzeta, radials); 
+        AtomicRadials::read_abacus_orb(ifs, elem, ecut, nr, dr, nzeta, radials);
+#ifdef __DEBUG
+        assert(elem != "__invalid__");
+        assert(ecut != -0.1);
+#endif 
     }
 
     template<typename T, typename Device>
@@ -82,9 +87,14 @@ namespace hamilt
         for(int it = 0; it < ntype; ++it)
         {
             std::vector<std::vector<double>> temp_;
-            int lmax, nr_;
+            int lmax = -1;
+            int nr_ = -1;
             std::vector<int> nzeta;
             read_abacus_orb(ucell_in->orbital_fn[it], lmax, nzeta, nr_, dr, temp_);
+#ifdef __DEBUG
+            assert(lmax != -1);
+            assert(nr_ != -1);
+#endif
             padding = padding || (nr != -1 && nr != nr_);
             nr = std::max(nr, nr_);
             // then get the first one of given l in l_hubbard[it]
