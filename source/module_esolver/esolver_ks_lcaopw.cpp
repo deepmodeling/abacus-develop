@@ -274,8 +274,7 @@ namespace ModuleESolver
     void ESolver_KS_LIP<T>::after_all_runners()
     {
         ESolver_KS_PW<T>::after_all_runners();
-
-        std::cout << "after_all_runners" << std::endl; 
+        
 #ifdef __LCAO
         if (PARAM.inp.out_mat_xc)
         {
@@ -288,7 +287,6 @@ namespace ModuleESolver
 #endif
             );
         }
-        std::cout << "after_all_runners" << std::endl; 
 #endif
     }
     template class ESolver_KS_LIP<std::complex<float>>;

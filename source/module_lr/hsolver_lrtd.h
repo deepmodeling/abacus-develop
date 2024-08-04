@@ -26,6 +26,8 @@ namespace LR
                            const std::string method_in,
                            const bool skip_charge = false) override;
 
+        Real diag_ethr = 0.0; // threshold for diagonalization
+
       private:
         std::string method = "none";
     };

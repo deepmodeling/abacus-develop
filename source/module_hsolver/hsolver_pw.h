@@ -44,7 +44,7 @@ class HSolverPW : public HSolver<T, Device>
                const int scf_iter_in,
                const bool need_subspace_in,
                const int diag_iter_max_in,
-               const double pw_diag_thr_in,
+               const double iter_diag_thr_in,
                const bool skip_charge) override;
 
     virtual Real cal_hsolerror(const Real diag_ethr_in) override;
@@ -77,7 +77,7 @@ class HSolverPW : public HSolver<T, Device>
     int scf_iter = 1; // Start from 1
     bool need_subspace = false;
     int diag_iter_max = 50;
-    double pw_diag_thr = 1.0e-2;
+    double iter_diag_thr = 1.0e-2;  // threshold for diagonalization
 
     std::string method = "none";
 

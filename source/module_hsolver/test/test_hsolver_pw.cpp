@@ -69,9 +69,7 @@ TEST_F(TestHSolverPW, solve) {
     psi_test_cf.resize(1, 2, 3);
     psi_test_cd.resize(1, 2, 3);
     GlobalV::nelec = 1.0;
-    // check constructor
-    EXPECT_NEAR(this->hs_f.diag_ethr, 0.01, 1.0e-7);
-    EXPECT_NEAR(this->hs_d.diag_ethr, 0.01, 1.0e-7);
+
     // check solve()
     EXPECT_EQ(this->hs_f.initialed_psi, false);
     EXPECT_EQ(this->hs_d.initialed_psi, false);
