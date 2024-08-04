@@ -22,7 +22,7 @@ AddTest(
 )
 
 AddTest(
-	TARGET radial_projection_test
+	TARGET radial_proj_test
 	LIBS base device ${math_libs}
-	SOURCES radial_projection_test.cpp ../radial_projection.cpp
+	SOURCES radial_proj_test.cpp ../radial_proj.cpp
 )

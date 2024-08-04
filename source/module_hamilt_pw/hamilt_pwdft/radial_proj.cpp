@@ -2,7 +2,7 @@
 #include <cassert>
 #include <cmath>
 #include <numeric>
-#include "module_hamilt_pw/hamilt_pwdft/radial_projection.h"
+#include "module_hamilt_pw/hamilt_pwdft/radial_proj.h"
 #include "module_base/constants.h"
 #include "module_base/matrix.h"
 #include "module_base/math_ylmreal.h"
