@@ -264,22 +264,26 @@ void H_TDDFT_pw::update_At()
     for (auto direc: module_tddft::Evolve_elec::td_vext_dire_case)
     {
         last = false;
-        // cut the integral space and initial relvant parameters
+        // cut the integral space and initialize relevant parameters
         ncut = check_ncut(ttype[count]);
         istep_int = istep * ncut;
         dt_int = dt / double(ncut);
 
         // store vext_time for each time point, include the first and last point
-        double* vext_time = new double[ncut + 1]();
+        std::vector<double> vext_time(ncut + 1, 0.0); // Use std::vector to manage memory
         for (int i = 0; i <= ncut; i++)
         {
             // if this is the last point, type_count++
             if (i == ncut)
+            {
                 last = true;
+            }
             vext_time[i] = cal_v_time(ttype[count], last);
             istep_int++;
         }
-        ModuleBase::Integral::Simpson_Integral(ncut + 1, vext_time, dt_int, out);
+        // Call the Simpson's rule integration using std::vector data
+        ModuleBase::Integral::Simpson_Integral(ncut + 1, vext_time.data(), dt_int, out);
+
         // update At value for its direction
         switch (stype)
         {
@@ -302,7 +306,6 @@ void H_TDDFT_pw::update_At()
             ofs.close();
         }
         // total count++
-        delete[] vext_time;
         count++;
     }
     return;
