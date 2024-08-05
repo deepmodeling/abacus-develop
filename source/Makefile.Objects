@@ -302,6 +302,7 @@ OBJS_HAMILT=hamilt_pw.o\
     meta_pw.o\
     meta_op.o\
     velocity_pw.o\
+    radial_proj.o\
 
 OBJS_HAMILT_OF=kedf_tf.o\
     kedf_vw.o\
