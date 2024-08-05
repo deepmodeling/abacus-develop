@@ -82,7 +82,7 @@ namespace hamilt
         
         std::vector<std::vector<double>> projs(ntype);
         int nr = -1;
-        double dr;
+        double dr = -1.0;
         bool padding = false;
         for(int it = 0; it < ntype; ++it)
         {
@@ -94,6 +94,7 @@ namespace hamilt
 #ifdef __DEBUG
             assert(lmax != -1);
             assert(nr_ != -1);
+            assert(dr != -1.0);
 #endif
             padding = padding || (nr != -1 && nr != nr_);
             nr = std::max(nr, nr_);
