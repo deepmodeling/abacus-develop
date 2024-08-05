@@ -145,7 +145,8 @@ void Broyden_Mixing::tem_cal_coef(const Mixing_Data& mdata, std::function<double
 
         diag(ndim_cal_dF, beta_diag.c, val); // diagonalize beta_tmp
         
-        double eps = 1e-12 * val[ndim_cal_dF - 1]; // threshold for filtering eigenvalues
+        double eps = GlobalV::MIXING_EPS * val[ndim_cal_dF - 1]; // threshold for filtering eigenvalues
+        std::cout << "eps: " << GlobalV::MIXING_EPS << std::endl;
         int sv_num = 0;  // number of singularly valuables
         for (int i = 0; i < ndim_cal_dF; ++i)
         {

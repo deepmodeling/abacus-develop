@@ -208,6 +208,7 @@ double MIXING_GG0 = 1.00;
 double MIXING_BETA_MAG = 1.6;
 double MIXING_GG0_MAG = 1.00;
 double MIXING_GG0_MIN = 0.1;
+double MIXING_EPS = 0.0;
 double MIXING_ANGLE = 0.0;
 bool MIXING_TAU = false;
 bool MIXING_DMR = false;

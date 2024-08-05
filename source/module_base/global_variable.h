@@ -228,6 +228,7 @@ extern bool MIXING_TAU;
 extern double MIXING_BETA_MAG;
 extern double MIXING_GG0_MAG;
 extern double MIXING_GG0_MIN;
+extern double MIXING_EPS;
 extern double MIXING_ANGLE;
 extern bool MIXING_DMR;
 

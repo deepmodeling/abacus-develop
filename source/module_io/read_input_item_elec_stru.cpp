@@ -413,6 +413,12 @@ void ReadInput::item_elec_stru()
         this->add_item(item);
     }
     {
+        Input_Item item("mixing_eps");
+        item.annotation = "the mixing precision";
+        read_sync_double(input.mixing_eps);
+        this->add_item(item);
+    }
+    {
         Input_Item item("mixing_angle");
         item.annotation = "angle mixing parameter for non-colinear calculations";
         read_sync_double(input.mixing_angle);
