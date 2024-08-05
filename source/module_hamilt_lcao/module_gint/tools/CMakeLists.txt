@@ -8,7 +8,7 @@ list(APPEND objects
     mult_psi_dm.cpp
     mult_psi_dm_new.cpp
     mult_psi_dmr.cpp
-    gint_inout.hpp)
+    gint_inout.cpp)
 
 add_library(
     tools
