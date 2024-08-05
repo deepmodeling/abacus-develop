@@ -57,6 +57,7 @@ VPATH=./src_global:\
 ./module_hamilt_lcao/module_deltaspin:\
 ./module_hamilt_lcao/hamilt_lcaodft/operator_lcao:\
 ./module_hamilt_lcao/module_gint:\
+./module_hamilt_lcao/module_gint/tools:\
 ./module_relax:\
 ./module_relax/relax_old:\
 ./module_relax/relax_new:\
@@ -294,6 +295,7 @@ OBJS_TOOLS=gint_tools.o\
         mult_psi_dm.o\
         mult_psi_dm_new.o\
         mult_psi_dmr.o\
+
 OBJS_HAMILT=hamilt_pw.o\
     operator.o\
     operator_pw.o\
