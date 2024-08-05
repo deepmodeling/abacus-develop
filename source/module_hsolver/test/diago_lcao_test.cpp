@@ -68,7 +68,8 @@ class DiagoPrepare
         MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
         if (ks_solver == "scalapack_gvx")
-            dh = new hsolver::DiagoScalapack<T>;
+            dh = new hsolver::DiagoScalapack<T>(GlobalV::NBANDS, GlobalV::NLOCAL, GlobalV::NLOCAL, GlobalV::DSIZE);
+            //dh = new hsolver::DiagoScalapack<T>;
 #ifdef __ELPA
         else if (ks_solver == "genelpa")
             dh = new hsolver::DiagoElpa<T>;
@@ -216,7 +217,15 @@ class DiagoPrepare
         {
             hmtest.h_local = this->h_local;
             hmtest.s_local = this->s_local;
-            dh->diag(&hmtest, psi, e_solver.data());
+            if (ks_solver == "scalapack_gvx"){
+                dh->diag(&hmtest, psi, e_solver.data());
+            }
+            else{
+                hamilt::MatrixBlock<T> h_mat, s_mat;
+                hmtest->matrix(h_mat, s_mat);
+                dh->diag(h_mat.p,s_mat.p,h_mat.desc, psi.get_pointer(),e_solver.data());
+            }
+
         }
         endtime = MPI_Wtime();
         hsolver_time = (endtime - starttime) / REPEATRUN;
