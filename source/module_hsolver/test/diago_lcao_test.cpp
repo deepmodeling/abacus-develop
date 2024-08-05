@@ -68,7 +68,9 @@ class DiagoPrepare
         MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
         if (ks_solver == "scalapack_gvx")
-            dh = new hsolver::DiagoScalapack<T>(GlobalV::NBANDS, GlobalV::NLOCAL, GlobalV::NLOCAL, GlobalV::DSIZE);
+            std::cout << " Use scalapack solver." << std::endl;
+            // Dont need to use dh pointer here after refactor
+            //dh = new hsolver::DiagoScalapack<T>(GlobalV::NBANDS, GlobalV::NLOCAL, GlobalV::NLOCAL, GlobalV::DSIZE);
             //dh = new hsolver::DiagoScalapack<T>;
 #ifdef __ELPA
         else if (ks_solver == "genelpa")
@@ -222,8 +224,9 @@ class DiagoPrepare
             }
             else{
                 hamilt::MatrixBlock<T> h_mat, s_mat;
-                hmtest->matrix(h_mat, s_mat);
-                dh->diag(h_mat.p,s_mat.p,h_mat.desc, psi.get_pointer(),e_solver.data());
+                hmtest.matrix(h_mat, s_mat);
+                hsolver::DiagoScalapack<T> sa(GlobalV::NBANDS, GlobalV::NLOCAL, GlobalV::NLOCAL, GlobalV::DSIZE);
+                sa.diag(h_mat.p,s_mat.p,h_mat.desc, psi.get_pointer(),e_solver.data());
             }
 
         }
