@@ -83,16 +83,6 @@ void cal_ddpsir_ylm(
                 // the second derivatives of the orbitals
                 if (true)
                 {
-                    // double*** dpsi = new double**[atom->nw];
-                    // for (int i = 0; i < atom->nw; i++)
-                    // {
-                    //     dpsi[i] = new double*[6];
-                    //     for (int j = 0; j < 6; j++)
-                    //     {
-                    //         dpsi[i][j] = new double[3];
-                    //         ModuleBase::GlobalFunc::ZEROS(dpsi[i][j], 3);
-                    //     }
-                    // }
 
                     double dr1[3];
                     double distance1;
