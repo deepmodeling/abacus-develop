@@ -4,7 +4,8 @@ list(APPEND objects
     gint_tools/cal_dpsir_ylm.cpp
     gint_tools/cal_dpsirr_ylm.cpp
     gint_tools/cal_psir_ylm.cpp
-    gint_tools/gint_tools.cpp)
+    gint_tools/gint_tools.cpp
+    gint_tools/gint_inout.hpp)
 
 list(APPEND objects
     gint.cpp

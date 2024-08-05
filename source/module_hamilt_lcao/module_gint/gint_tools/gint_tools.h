@@ -23,119 +23,7 @@ enum class job_type
     dvlocal
 };
 // Hamiltonian, electron density, force, kinetic energy density, Hamiltonian for mGGA
-} // namespace Gint_Tools
 
-// the class is used to pass input/output variables
-// into the unified interface gint
-// not sure if this is the best practice though ..
-class Gint_inout
-{
-  public:
-    // input
-    double*** DM;
-    const double* vl;
-    const double* vofk;
-    bool isforce;
-    bool isstress;
-    int ispin;
-    bool if_symm = false; // if true, use dsymv in gint_kernel_rho; if false, use dgemv.
-
-    // output
-    double** rho;
-    ModuleBase::matrix* fvl_dphi;
-    ModuleBase::matrix* svl_dphi;
-    Gint_Tools::job_type job;
-
-    // electron density and kin_r, multi-k
-    Gint_inout(double** rho_in, Gint_Tools::job_type job_in, bool if_symm_in = true)
-    {
-        rho = rho_in;
-        job = job_in;
-        if_symm = if_symm_in;
-    }
-
-    // force
-    Gint_inout(const int ispin_in,
-               const double* vl_in,
-               bool isforce_in,
-               bool isstress_in,
-               ModuleBase::matrix* fvl_dphi_in,
-               ModuleBase::matrix* svl_dphi_in,
-               Gint_Tools::job_type job_in)
-    {
-        vl = vl_in;
-        isforce = isforce_in;
-        isstress = isstress_in;
-        fvl_dphi = fvl_dphi_in;
-        svl_dphi = svl_dphi_in;
-        job = job_in;
-        ispin = ispin_in;
-    }
-
-    // force (mGGA)
-    Gint_inout(const int ispin_in,
-               const double* vl_in,
-               const double* vofk_in,
-               const bool isforce_in,
-               const bool isstress_in,
-               ModuleBase::matrix* fvl_dphi_in,
-               ModuleBase::matrix* svl_dphi_in,
-               Gint_Tools::job_type job_in)
-    {
-        vl = vl_in;
-        vofk = vofk_in;
-        isforce = isforce_in;
-        isstress = isstress_in;
-        fvl_dphi = fvl_dphi_in;
-        svl_dphi = svl_dphi_in;
-        job = job_in;
-        ispin = ispin_in;
-    }
-
-    // vlocal, multi-k
-    Gint_inout(const double* vl_in, int ispin_in, Gint_Tools::job_type job_in)
-    {
-        vl = vl_in;
-        ispin = ispin_in;
-        job = job_in;
-    }
-
-    // mGGA vlocal, multi-k
-    Gint_inout(const double* vl_in, const double* vofk_in, int ispin_in, Gint_Tools::job_type job_in)
-    {
-        vl = vl_in;
-        vofk = vofk_in;
-        ispin = ispin_in;
-        job = job_in;
-    }
-
-    // electron density and kin_r, gamma point
-    Gint_inout(double*** DM_in, double** rho_in, Gint_Tools::job_type job_in, bool if_symm_in = true)
-    {
-        DM = DM_in;
-        rho = rho_in;
-        job = job_in;
-        if_symm = if_symm_in;
-    }
-
-    // vlocal, gamma point
-    Gint_inout(const double* vl_in, Gint_Tools::job_type job_in)
-    {
-        vl = vl_in;
-        job = job_in;
-    }
-
-    // mGGA vlocal, gamma point
-    Gint_inout(const double* vl_in, const double* vofk_in, Gint_Tools::job_type job_in)
-    {
-        vl = vl_in;
-        vofk = vofk_in;
-        job = job_in;
-    }
-};
-
-namespace Gint_Tools
-{
 // if exponent is an integer between 0 and 5 (the most common cases in gint),
 // pow_int is much faster than std::pow
 inline double pow_int(const double base, const int exp)
@@ -215,8 +103,14 @@ void get_gint_vldr3(double* vldr3,
  * @param block_size count the number of atomis orbitals in each atom
  * @param cal_flag whether the atom-grid distance is larger than cutoff
 */                    
-void get_block_info(const Grid_Technique& gt, const int bxyz, const int na_grid, const int grid_index,
-                    int* block_iw, int* block_index, int* block_size, bool** cal_flag);
+void get_block_info(const Grid_Technique& gt, 
+                    const int bxyz, 
+                    const int na_grid, 
+                    const int grid_index,
+                    int* block_iw, 
+                    int* block_index, 
+                    int* block_size, 
+                    bool** cal_flag);
 
 void init_orb(double& dr_uniform,
               std::vector<double>& rcuts,
@@ -274,7 +168,7 @@ void cal_grid_atom_distance(double &distance,
  * @param it_psi_uniform psi of the it type atom
  * @param it_dpsi_uniform dpsi of the it type atom
 */
-void spline_interpolation(const double distance,
+void spl_intrp(const double distance,
 							const double delta_r,
 							Atom*& atom,
 							std::vector<double>& ylma,
@@ -282,7 +176,7 @@ void spline_interpolation(const double distance,
 							std::vector<const double*>& it_dpsi_uniform,
 							double *p);
 
-void dpsi_spline_interpolation(const double distance,
+void dpsi_spl_intrp(const double distance,
 								const double* dr,
 								const double delta_r,
 								Atom*& atom,
@@ -295,7 +189,7 @@ void dpsi_spline_interpolation(const double distance,
 								double *p_dpsi_y,
 								double *p_dpsi_z);
 
-void dpsi_spline_interpolation1(const double distance1,
+void dpsi_spl_intrp(const double distance1,
 								const double* dr1,
 								const double delta_r,
 								const int i,

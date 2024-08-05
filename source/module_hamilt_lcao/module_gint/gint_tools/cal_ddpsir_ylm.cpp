@@ -100,7 +100,7 @@ void cal_ddpsir_ylm(
                                                           rly, 
                                                           grly.get_ptr_2D());
 
-                        dpsi_spline_interpolation1(distance1,
+                        dpsi_spl_intrp(distance1,
                                                     dr1,
                                                     delta_r,
                                                     i,

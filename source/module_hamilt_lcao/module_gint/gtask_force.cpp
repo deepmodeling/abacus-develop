@@ -2,7 +2,7 @@
 
 #include "gint_force_gpu.h"
 #include "module_base/ylm.h"
-#include "module_hamilt_lcao/module_gint/gint_tools.h"
+#include "gint_tools/gint_tools.h"
 namespace GintKernel
 {
 

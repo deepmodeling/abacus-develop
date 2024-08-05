@@ -10,6 +10,7 @@
 //  specific operations for gamma point/multi-k calculations
 
 #include "gint_tools/gint_tools.h"
+#include "gint_tools/gint_inout.hpp"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_lcao/module_gint/grid_technique.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"

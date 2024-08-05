@@ -123,7 +123,7 @@ void cal_grid_atom_distance(double &distance,
 }
 
 
-void spline_interpolation(const double distance,
+void spl_intrp(const double distance,
 							const double delta_r,
 							Atom*& atom,
 							std::vector<double>& ylma,
@@ -156,7 +156,7 @@ void spline_interpolation(const double distance,
 	} // end iw
 }
 
-void dpsi_spline_interpolation(const double distance,
+void dpsi_spl_intrp(const double distance,
 								const double* dr,
 								const double delta_r,
 								Atom*& atom,
@@ -221,7 +221,7 @@ void dpsi_spline_interpolation(const double distance,
 		} // iw
 }
 
-void dpsi_spline_interpolation1(const double distance1,
+void dpsi_spl_intrp(const double distance1,
 								const double* dr1,
 								const double delta_r,
 								const int i,

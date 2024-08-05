@@ -69,7 +69,7 @@ void cal_psir_ylm(
                 // we can obtain the parameters for interpolation and
                 // store them first! these operations can save lots of efforts.
 
-                spline_interpolation(distance,
+                spl_intrp(distance,
                                      delta_r, 
                                      atom, 
                                      ylma,
