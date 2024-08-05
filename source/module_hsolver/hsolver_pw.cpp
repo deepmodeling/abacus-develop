@@ -208,58 +208,33 @@ void HSolverPW<T, Device>::paw_func_after_kloop(psi::Psi<T, Device>& psi, elecst
 #endif
 
 template <typename T, typename Device>
-HSolverPW<T, Device>::HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in, wavefunc* pwf_in)
+HSolverPW<T, Device>::HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in,
+                                wavefunc* pwf_in,
+                                const bool initialed_psi_in)
 {
-    this->classname = "HSolverPW";
     this->wfc_basis = wfc_basis_in;
     this->pwf = pwf_in;
-    this->diag_ethr = GlobalV::PW_DIAG_THR;
-}
 
-template <typename T, typename Device>
-void HSolverPW<T, Device>::set_isOccupied(std::vector<bool>& is_occupied,
-                                          elecstate::ElecState* pes,
-                                          const int i_scf,
-                                          const int nk,
-                                          const int nband,
-                                          const bool diago_full_acc_)
-{
-    if (i_scf != 0 && diago_full_acc_ == false)
-    {
-        for (int i = 0; i < nk; i++)
-        {
-            if (pes->klist->wk[i] > 0.0)
-            {
-                for (int j = 0; j < nband; j++)
-                {
-                    if (pes->wg(i, j) / pes->klist->wk[i] < 0.01)
-                    {
-                        is_occupied[i * nband + j] = false;
-                    }
-                }
-            }
-        }
-    }
+    this->initialed_psi = initialed_psi_in;
 }
 
 template <typename T, typename Device>
 void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
                                  psi::Psi<T, Device>& psi,
                                  elecstate::ElecState* pes,
+                                 double* out_eigenvalues,
+                                 const std::vector<bool>& is_occupied_in,
                                  const std::string method_in,
-
                                  const std::string calculation_type_in,
                                  const std::string basis_type_in,
                                  const bool use_paw_in,
                                  const bool use_uspp_in,
                                  const int rank_in_pool_in,
                                  const int nproc_in_pool_in,
-
                                  const int scf_iter_in,
                                  const bool need_subspace_in,
                                  const int diag_iter_max_in,
-                                 const double pw_diag_thr_in,
-
+                                 const double iter_diag_thr_in,
                                  const bool skip_charge)
 {
     ModuleBase::TITLE("HSolverPW", "solve");
@@ -279,7 +254,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
     this->scf_iter = scf_iter_in;
     this->need_subspace = need_subspace_in;
     this->diag_iter_max = diag_iter_max_in;
-    this->pw_diag_thr = pw_diag_thr_in;
+    this->iter_diag_thr = iter_diag_thr_in;
 
     // report if the specified diagonalization method is not supported
     const std::initializer_list<std::string> _methods = {"cg", "dav", "dav_subspace", "bpcg"};
@@ -290,17 +265,8 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
 
     // prepare for the precondition of diagonalization
     std::vector<Real> precondition(psi.get_nbasis(), 0.0);
-    std::vector<Real> eigenvalues(pes->ekb.nr * pes->ekb.nc, 0.0);
-    std::vector<bool> is_occupied(psi.get_nk() * psi.get_nbands(), true);
-    if (this->method == "dav_subspace")
-    {
-        this->set_isOccupied(is_occupied,
-                             pes,
-                             this->scf_iter,
-                             psi.get_nk(),
-                             psi.get_nbands(),
-                             this->diago_full_acc);
-    }
+    // std::vector<Real> eigenvalues(pes->ekb.nr * pes->ekb.nc, 0.0);
+    std::vector<Real> eigenvalues(this->wfc_basis->nks * psi.get_nbands(), 0.0);
 
     /// Loop over k points for solve Hamiltonian to charge density
     for (int ik = 0; ik < this->wfc_basis->nks; ++ik)
@@ -322,13 +288,13 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
 #endif
 
         /// solve eigenvector and eigenvalue for H(k)
-        this->hamiltSolvePsiK(pHamilt, psi, precondition, eigenvalues.data() + ik * pes->ekb.nc);
+        this->hamiltSolvePsiK(pHamilt, psi, precondition, eigenvalues.data() + ik * psi.get_nbands());
 
         if (skip_charge)
         {
             GlobalV::ofs_running << "Average iterative diagonalization steps for k-points " << ik
                                  << " is: " << DiagoIterAssist<T, Device>::avg_iter
-                                 << " ; where current threshold is: " << this->pw_diag_thr
+                                 << " ; where current threshold is: " << this->iter_diag_thr
                                  << " . " << std::endl;
             DiagoIterAssist<T, Device>::avg_iter = 0.0;
         }
@@ -336,19 +302,15 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
     }
     // END Loop over k points
 
-    // copy eigenvalues to pes->ekb in ElecState
+    // copy eigenvalues to ekb in ElecState
     base_device::memory::cast_memory_op<double, Real, base_device::DEVICE_CPU, base_device::DEVICE_CPU>()(
         cpu_ctx,
         cpu_ctx,
-        pes->ekb.c,
+        // pes->ekb.c,
+        out_eigenvalues,
         eigenvalues.data(),
-        pes->ekb.nr * pes->ekb.nc);
-
-    // psi only should be initialed once for PW
-    if (!this->initialed_psi)
-    {
-        this->initialed_psi = true;
-    }
+        // pes->ekb.nr * pes->ekb.nc
+        this->wfc_basis->nks * psi.get_nbands());
 
     if (skip_charge)
     {
@@ -421,7 +383,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
                               this->calculation_type,
                               this->need_subspace,
                               subspace_func,
-                              this->pw_diag_thr,
+                              this->iter_diag_thr,
                               this->diag_iter_max,
                               this->nproc_in_pool);
 
@@ -531,7 +493,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
                                                   psi.get_k_first() ? psi.get_current_nbas()
                                                                     : psi.get_nk() * psi.get_nbasis(),
                                                   GlobalV::PW_DIAG_NDIM,
-                                                  this->pw_diag_thr,
+                                                  this->iter_diag_thr,
                                                   this->diag_iter_max,
                                                   this->need_subspace,
                                                   comm_info);
@@ -549,7 +511,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         /// allow 5 eigenvecs to be NOT converged.
         const int notconv_max = ("nscf" == this->calculation_type) ? 0 : 5;
         /// convergence threshold
-        const Real david_diag_thr = this->pw_diag_thr;
+        const Real david_diag_thr = this->iter_diag_thr;
         /// maximum iterations
         const int david_maxiter = this->diag_iter_max;
 
@@ -670,7 +632,7 @@ void HSolverPW<T, Device>::output_iterInfo()
     {
         GlobalV::ofs_running << "Average iterative diagonalization steps: "
                              << DiagoIterAssist<T, Device>::avg_iter / this->wfc_basis->nks
-                             << " ; where current threshold is: " << this->pw_diag_thr << " . "
+                             << " ; where current threshold is: " << this->iter_diag_thr << " . "
                              << std::endl;
         // reset avg_iter
         DiagoIterAssist<T, Device>::avg_iter = 0.0;
@@ -699,7 +661,7 @@ typename HSolverPW<T, Device>::Real HSolverPW<T, Device>::set_diagethr(Real diag
                 //======================================================
                 // if you think that the starting potential is good
                 // do not spoil it with a louly first diagonalization:
-                // set a strict diag_ethr in the input file
+                // set a strict diag ethr in the input file
                 // ()diago_the_init
                 //======================================================
                 diag_ethr_in = 1.0e-5;
@@ -713,7 +675,7 @@ typename HSolverPW<T, Device>::Real HSolverPW<T, Device>::set_diagethr(Real diag
                 diag_ethr_in = 1.0e-2;
             }
         }
-        // if (GlobalV::FINAL_SCF) diag_ethr = 1.0e-2;
+
         if (GlobalV::CALCULATION == "md" || GlobalV::CALCULATION == "relax" || GlobalV::CALCULATION == "cell-relax")
         {
             diag_ethr_in = std::max(diag_ethr_in, static_cast<Real>(GlobalV::PW_DIAG_THR));
@@ -729,7 +691,7 @@ typename HSolverPW<T, Device>::Real HSolverPW<T, Device>::set_diagethr(Real diag
                                    static_cast<Real>(0.1) * drho
                                        / std::max(static_cast<Real>(1.0), static_cast<Real>(GlobalV::nelec)));
     }
-    // It is essential for single precision implementation to keep the diag_ethr
+    // It is essential for single precision implementation to keep the diag ethr
     // value less or equal to the single-precision limit of convergence(0.5e-4).
     // modified by denghuilu at 2023-05-15
     if (GlobalV::precision_flag == "single")
@@ -737,8 +699,6 @@ typename HSolverPW<T, Device>::Real HSolverPW<T, Device>::set_diagethr(Real diag
         diag_ethr_in = std::max(diag_ethr_in, static_cast<Real>(0.5e-4));
     }
 
-    // Temporarily added to ensure correctness
-    this->diag_ethr = diag_ethr_in;
     return diag_ethr_in;
 }
 
@@ -753,21 +713,19 @@ typename HSolverPW<T, Device>::Real HSolverPW<T, Device>::reset_diagethr(std::of
     ModuleBase::WARNING("scf", "Threshold on eigenvalues was too large.");
 
     ofs_running << " hsover_error=" << hsover_error << " > DRHO=" << drho << std::endl;
-    ofs_running << " Origin diag_ethr = " << diag_ethr_in << std::endl;
+    ofs_running << " Origin diag ethr = " << diag_ethr_in << std::endl;
     
     diag_ethr_in = 0.1 * drho / GlobalV::nelec;
 
-    // It is essential for single precision implementation to keep the diag_ethr
+    // It is essential for single precision implementation to keep the diag ethr
     // value less or equal to the single-precision limit of convergence(0.5e-4).
     // modified by denghuilu at 2023-05-15
     if (GlobalV::precision_flag == "single")
     {
         diag_ethr_in = std::max(diag_ethr_in, static_cast<Real>(0.5e-4));
     }
-    ofs_running << " New    diag_ethr = " << diag_ethr_in << std::endl;
+    ofs_running << " New diag ethr = " << diag_ethr_in << std::endl;
     
-    // Temporarily added to ensure correctness
-    this->diag_ethr = diag_ethr_in;
     return diag_ethr_in;
 }
 

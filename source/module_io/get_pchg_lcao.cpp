@@ -1,4 +1,4 @@
-#include "get_pchg.h"
+#include "get_pchg_lcao.h"
 
 #include "module_base/blas_connector.h"
 #include "module_base/global_function.h"
@@ -120,7 +120,7 @@ void IState_Charge::begin(Gint_Gamma& gg,
                 ModuleBase::GlobalFunc::DCOPY(rho[is], rho_save[is].data(), rhopw_nrxx); // Copy data
             }
 
-            std::cout << " Writting cube files...";
+            std::cout << " Writing cube files...";
 
             for (int is = 0; is < nspin; ++is)
             {
@@ -257,7 +257,7 @@ void IState_Charge::begin(Gint_k& gk,
                         ModuleBase::GlobalFunc::DCOPY(rho[is], rho_save[is].data(), rhopw_nrxx); // Copy data
                     }
 
-                    std::cout << " Writting cube files...";
+                    std::cout << " Writing cube files...";
 
                     for (int is = 0; is < nspin; ++is)
                     {
@@ -332,7 +332,7 @@ void IState_Charge::begin(Gint_k& gk,
                                ucell_in->symm);
                 }
 
-                std::cout << " Writting cube files...";
+                std::cout << " Writing cube files...";
 
                 for (int is = 0; is < nspin; ++is)
                 {

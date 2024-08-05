@@ -42,7 +42,6 @@ ESolver_OF::~ESolver_OF()
 
     delete[] this->nelec_;
     delete[] this->theta_;
-    delete[] this->mu_;
     delete[] this->task_;
     delete this->ptemp_rho_;
 
@@ -311,7 +310,7 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
 
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
-        this->mu_[is] = 0;
+        this->pelec->eferm.get_ef(is) = 0.;
         this->theta_[is] = 0.;
         ModuleBase::GlobalFunc::ZEROS(this->pdLdphi_[is], this->pw_rho->nrxx);
         ModuleBase::GlobalFunc::ZEROS(this->pdEdphi_[is], this->pw_rho->nrxx);
@@ -348,11 +347,11 @@ void ESolver_OF::update_potential(UnitCell& ucell)
         {
             this->pdEdphi_[is][ir] = vr_eff[ir];
         }
-        this->mu_[is] = this->cal_mu(this->pphi_[is], this->pdEdphi_[is], this->nelec_[is]);
+        this->pelec->eferm.get_ef(is) = this->cal_mu(this->pphi_[is], this->pdEdphi_[is], this->nelec_[is]);
 
         for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
         {
-            this->pdLdphi_[is][ir] = this->pdEdphi_[is][ir] - 2. * this->mu_[is] * this->pphi_[is][ir];
+            this->pdLdphi_[is][ir] = this->pdEdphi_[is][ir] - 2. * this->pelec->eferm.get_efval(is) * this->pphi_[is][ir];
         }
     }
 
@@ -458,15 +457,18 @@ bool ESolver_OF::check_exit()
     bool potHold = false; // if normdLdphi nearly remains unchanged
     bool energyConv = false;
 
-    if (this->normdLdphi_ < this->of_tolp_)
+    if (this->normdLdphi_ < this->of_tolp_) {
         potConv = true;
+}
     if (this->iter_ >= 3 && std::abs(this->normdLdphi_ - this->normdLdphi_last_) < 1e-10
-        && std::abs(this->normdLdphi_ - this->normdLdphi_llast_) < 1e-10)
+        && std::abs(this->normdLdphi_ - this->normdLdphi_llast_) < 1e-10) {
         potHold = true;
+}
 
     if (this->iter_ >= 3 && std::abs(this->energy_current_ - this->energy_last_) < this->of_tole_
-        && std::abs(this->energy_current_ - this->energy_llast_) < this->of_tole_)
+        && std::abs(this->energy_current_ - this->energy_llast_) < this->of_tole_) {
         energyConv = true;
+}
 
     this->conv_ = (this->of_conv_ == "energy" && energyConv) || (this->of_conv_ == "potential" && potConv)
                   || (this->of_conv_ == "both" && potConv && energyConv);
@@ -527,7 +529,7 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell)
                 this->pw_rhod->nx,
                 this->pw_rhod->ny,
                 this->pw_rhod->nz,
-                this->mu_[is],
+                this->pelec->eferm.get_efval(is),
                 &(ucell),
                 3,
                 1);

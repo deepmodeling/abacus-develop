@@ -39,6 +39,9 @@ namespace hsolver {
         std::vector<Real> eigenvalues;
         using castmem_2d_2h_op
             = base_device::memory::cast_memory_op<double, Real, base_device::DEVICE_CPU, base_device::DEVICE_CPU>;
+
+    private:
+        std::string method = "none";
     };
 
 } // namespace hsolver

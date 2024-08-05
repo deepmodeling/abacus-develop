@@ -47,9 +47,9 @@ void pseudopot_cell_vl::init_vloc(ModuleBase::matrix& vloc_in, const ModulePW::P
 		{
 			this->vloc_of_g(
 					atom->ncpp.msh, // after cutoff 
-					atom->ncpp.rab,
-		          	atom->ncpp.r, 
-					atom->ncpp.vloc_at, // local potential in real space radial form.  
+					atom->ncpp.rab.data(),
+		          	atom->ncpp.r.data(), 
+					atom->ncpp.vloc_at.data(), // local potential in real space radial form.  
 		          	this->zp[it],
 					vloc1d,
 					rho_basis);

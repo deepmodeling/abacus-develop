@@ -104,8 +104,7 @@ void ESolver_KS_LCAO_TDDFT::before_all_runners(const Input_para& inp, UnitCell& 
     // 7) initialize Hsolver
     if (this->phsol == nullptr)
     {
-        this->phsol = new hsolver::HSolverLCAO<std::complex<double>>(&this->pv);
-        this->phsol->method = GlobalV::KS_SOLVER;
+        this->phsol = new hsolver::HSolverLCAO<std::complex<double>>(&this->pv, GlobalV::KS_SOLVER);
     }
 
     // 8) initialize the charge density
