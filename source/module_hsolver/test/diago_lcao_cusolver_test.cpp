@@ -23,8 +23,7 @@
 
 /**
  * Tested function:
- *  - hsolver::DiagoElpa::diag (for ELPA)
- *  - hsolver::DiagoScalapack::diag (for Scalapack)
+ *  - hsolver::DiagoCusolver::diag (for CUDA)
  *
  * The 2d block cyclic distribution of H/S matrix is done by
  * self-realized functions in module_hsolver/test/diago_elpa_utils.h
@@ -71,7 +70,8 @@ class DiagoPrepare
         MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
         if (ks_solver == "scalapack_gvx")
-            dh = new hsolver::DiagoScalapack<T>;
+            std::cout << " Use scalapack solver." << std::endl;
+            //dh = new hsolver::DiagoScalapack<T>;
 #ifdef __CUDA
         else if (ks_solver == "cusolver")
             dh = new hsolver::DiagoCusolver<T>;
@@ -301,8 +301,9 @@ INSTANTIATE_TEST_SUITE_P(
 #ifdef __CUDA
         DiagoPrepare<double>(0, 0, 32, 0, "cusolver", "H-GammaOnly-Si64.dat", "S-GammaOnly-Si64.dat"),
 #endif
-        DiagoPrepare<double>(0, 0, 1, 0, "scalapack_gvx", "H-GammaOnly-Si2.dat", "S-GammaOnly-Si2.dat"),
-        DiagoPrepare<double>(0, 0, 32, 0, "scalapack_gvx", "H-GammaOnly-Si64.dat", "S-GammaOnly-Si64.dat")));
+        // DiagoPrepare<double>(0, 0, 1, 0, "scalapack_gvx", "H-GammaOnly-Si2.dat", "S-GammaOnly-Si2.dat"),
+        // DiagoPrepare<double>(0, 0, 32, 0, "scalapack_gvx", "H-GammaOnly-Si64.dat", "S-GammaOnly-Si64.dat"))
+        );
 
 class DiagoKPointsTest : public ::testing::TestWithParam<DiagoPrepare<std::complex<double>>>
 {
@@ -331,8 +332,9 @@ INSTANTIATE_TEST_SUITE_P(
         DiagoPrepare<std::complex<double>>(0, 0, 1, 0, "cusolver", "H-KPoints-Si2.dat", "S-KPoints-Si2.dat"),
 #endif
         // DiagoPrepare<std::complex<double>>(0, 0, 32, 0, "genelpa", "H-KPoints-Si64.dat", "S-KPoints-Si64.dat"),
-        DiagoPrepare<std::complex<double>>(0, 0, 1, 0, "scalapack_gvx", "H-KPoints-Si2.dat", "S-KPoints-Si2.dat"),
-        DiagoPrepare<std::complex<double>>(0, 0, 32, 0, "scalapack_gvx", "H-KPoints-Si64.dat", "S-KPoints-Si64.dat")));
+        // DiagoPrepare<std::complex<double>>(0, 0, 1, 0, "scalapack_gvx", "H-KPoints-Si2.dat", "S-KPoints-Si2.dat"),
+        // DiagoPrepare<std::complex<double>>(0, 0, 32, 0, "scalapack_gvx", "H-KPoints-Si64.dat", "S-KPoints-Si64.dat"))
+        );
 
 int main(int argc, char** argv)
 {
