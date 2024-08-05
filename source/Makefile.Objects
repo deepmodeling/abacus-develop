@@ -100,6 +100,7 @@ ${OBJS_DEEPKS}\
 ${OBJS_ELECSTAT_LCAO}\
 ${OBJS_ESOLVER_LCAO}\
 ${OBJS_GINT}\
+${OBJS_TOOLS}\
 ${OBJS_HAMILT_LCAO}\
 ${OBJS_HSOLVER_LCAO}\
 ${OBJS_HCONTAINER}\
@@ -273,7 +274,6 @@ OBJS_GINT=gint.o\
       gint_k_sparse1.o\
       gint_k_pvpr.o\
       gint_k_pvdpr.o\
-      gint_tools.o\
       grid_bigcell.o\
       grid_meshball.o\
       grid_meshcell.o\
@@ -282,15 +282,17 @@ OBJS_GINT=gint.o\
       gint_force_cpu_interface.o\
       gint_rho_cpu_interface.o\
       gint_vl_cpu_interface.o\
-      cal_psir_ylm.o\
-      cal_dpsir_ylm.o\
-      cal_ddpsir_ylm.o\
-      cal_dpsirr_ylm.o\
-      gint_inout.o\
       mult_psi_dm.o\
       mult_psi_dm_new.o\
       mult_psi_dmr.o\
       init_orb.o\
+
+OBJS_TOOLS=gint_tools.o\
+        cal_psir_ylm.o\
+        cal_dpsir_ylm.o\
+        cal_ddpsir_ylm.o\
+        cal_dpsirr_ylm.o\
+        gint_inout.o\
 
 OBJS_HAMILT=hamilt_pw.o\
     operator.o\
