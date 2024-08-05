@@ -103,13 +103,13 @@ void get_grid_bigcell_distance(const Grid_Technique& gt,
 								int& it,
 								double* mt)
 {
-	const int mcell_index = bcell_start + ib;
-	const int iat = gt.which_atom[mcell_index]; 
-	const int it = gt.ucell->iat2it[iat];  
-	const int imcell = gt.which_bigcell[mcell_index];
-	const double mt[3] = {gt.meshball_positions[imcell][0] - gt.tau_in_bigcell[iat][0],
-							gt.meshball_positions[imcell][1] - gt.tau_in_bigcell[iat][1],
-							gt.meshball_positions[imcell][2] - gt.tau_in_bigcell[iat][2]};
+	// const int mcell_index = bcell_start + ib;
+	// const int iat = gt.which_atom[mcell_index]; 
+	// const int it = gt.ucell->iat2it[iat];  
+	// const int imcell = gt.which_bigcell[mcell_index];
+	// const double mt[3] = {gt.meshball_positions[imcell][0] - gt.tau_in_bigcell[iat][0],
+	// 						gt.meshball_positions[imcell][1] - gt.tau_in_bigcell[iat][1],
+	// 						gt.meshball_positions[imcell][2] - gt.tau_in_bigcell[iat][2]};
 }
 
 void cal_grid_atom_distance(double &distance,
@@ -137,7 +137,7 @@ void interp_coeff(const double distance,
 	coeffs[2] = 3.0 * dx2 - 2.0 * dx3;
 	coeffs[0] = 1.0 - coeffs[2];
 	coeffs[1] = (dx - 2.0 * dx2 + dx3) * delta_r;
-	coeffs[4] = (dx3 - dx2) * delta_r;
+	coeffs[3] = (dx3 - dx2) * delta_r;
 }
 void spline_interpolation(const double* coeffs,
                         const int nw,const bool* iw2_new,

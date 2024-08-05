@@ -19,9 +19,9 @@ void cal_psir_ylm(
     double distance;
     double dr[3];
     double mt[3];
-    double coeffs[4];
-    
+
     Atom* atom;
+    std::vector<double> coeffs(4,0.0);
     std::vector<double> ylma;
     std::vector<const double*> it_psi_uniform(gt.nwmax);
     std::vector<const double*> it_dpsi_uniform(gt.nwmax);
@@ -38,8 +38,14 @@ void cal_psir_ylm(
         // the std::vector from the grid which is now being operated to the atom position.
         // in meshball language, is the std::vector from imcell to the center cel, plus
         // tau_in_bigcell.
-
-        get_grid_bigcell_distance(gt, bcell_start, id ,it, mt);
+        	const int mcell_index = bcell_start + id;
+	const int iat = gt.which_atom[mcell_index]; 
+	const int it = gt.ucell->iat2it[iat];  
+	const int imcell = gt.which_bigcell[mcell_index];
+	const double mt[3] = {gt.meshball_positions[imcell][0] - gt.tau_in_bigcell[iat][0],
+							gt.meshball_positions[imcell][1] - gt.tau_in_bigcell[iat][1],
+							gt.meshball_positions[imcell][2] - gt.tau_in_bigcell[iat][2]};
+        // get_grid_bigcell_distance(gt, bcell_start, id ,it, mt);
 
         atom = &ucell.atoms[it];
         get_psi_dpsi(gt, atom->nw, it, atom->iw2_new, it_psi_uniform, it_dpsi_uniform);
@@ -59,16 +65,16 @@ void cal_psir_ylm(
                 // spherical harmonic functions Ylm
                 //------------------------------------------------------
                 ModuleBase::Ylm::sph_harm(atom->nwl, 
-                                         dr[0] / distance, 
-                                         dr[1] / distance, 
-                                         dr[2] / distance,
-                                         ylma);
+                                            dr[0] / distance,
+                                            dr[1] / distance, 
+                                            dr[2] / distance,
+                                            ylma);
+
+                interp_coeff(distance, delta_r, ip, coeffs.data());
                 // these parameters are related to interpolation
                 // because once the distance from atom to grid point is known,
                 // we can obtain the parameters for interpolation and
                 // store them first! these operations can save lots of efforts.
-                interp_coeff(distance, delta_r, ip, coeffs);
-
                 double phi = 0;
                 for (int iw = 0; iw < atom->nw; ++iw)
                 {
