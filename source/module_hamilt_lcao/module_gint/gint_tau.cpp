@@ -8,7 +8,7 @@
 #include "module_base/blas_connector.h"
 #include "module_base/timer.h"
 #include "module_base/array_pool.h"
-#include "gint_tools.h"
+#include "gint_tools/gint_tools.h"
 #include "module_base/memory.h"
 #include "module_hamilt_lcao/module_gint/grid_technique.h"
 
