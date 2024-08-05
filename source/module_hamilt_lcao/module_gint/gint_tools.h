@@ -294,6 +294,17 @@ void dpsi_spline_interpolation(const double distance,
 								double *p_dpsi_x,
 								double *p_dpsi_y,
 								double *p_dpsi_z);
+
+void dpsi_spline_interpolation(const double distance1,
+								const double* dr1,
+								const double delta_r,
+								const int i,
+								Atom*& atom,
+                                double* rly,
+								double** grly,
+                                std::vector<const double*>& it_psi_uniform,
+                                std::vector<const double*>& it_dpsi_uniform,
+                                double ***dpsi);
 // psir_ylm[pw.bxyz][LD_pool]
 void cal_psir_ylm(const Grid_Technique& gt,
                   const int bxyz,

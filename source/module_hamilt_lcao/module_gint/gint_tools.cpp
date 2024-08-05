@@ -221,6 +221,64 @@ void dpsi_spline_interpolation(const double distance,
 		} // iw
 }
 
+void dpsi_spline_interpolation(const double distance1,
+								const double* dr1,
+								const double delta_r,
+								const int i,
+								Atom*& atom,
+                                double* rly,
+								double** grly,
+                                std::vector<const double*>& it_psi_uniform,
+                                std::vector<const double*>& it_dpsi_uniform,
+                                double ***dpsi)
+{
+	const double position = distance1 / delta_r;
+
+	const int ip = static_cast<int>(position);
+	const double iq = static_cast<int>(position);
+	const double x0 = position - iq;
+	const double x1 = 1.0 - x0;
+	const double x2 = 2.0 - x0;
+	const double x3 = 3.0 - x0;
+	const double x12 = x1 * x2 / 6;
+	const double x03 = x0 * x3 / 2;
+
+	double tmp, dtmp;
+
+		for (int iw = 0; iw < atom->nw; ++iw)
+		{
+			// this is a new 'l', we need 1D orbital wave
+			// function from interpolation method.
+			if (atom->iw2_new[iw])
+			{
+				auto psi_uniform = it_psi_uniform[iw];
+				auto dpsi_uniform = it_dpsi_uniform[iw];
+					// use Polynomia Interpolation method to get the
+					// wave functions
+
+				tmp = x12 * (psi_uniform[ip] * x3 + psi_uniform[ip + 3] * x0)
+						+ x03 * (psi_uniform[ip + 1] * x2 - psi_uniform[ip + 2] * x1);
+
+				dtmp = x12 * (dpsi_uniform[ip] * x3 + dpsi_uniform[ip + 3] * x0)
+						+ x03 * (dpsi_uniform[ip + 1] * x2 - dpsi_uniform[ip + 2] * x1);
+			} // new l is used.
+
+			// get the 'l' of this localized wave function
+			const int ll = atom->iw2l[iw];
+			const int idx_lm = atom->iw2_ylm[iw];
+
+			const double rl = pow_int(distance1, ll);
+
+			// derivative of wave functions with respect to atom positions.
+			const double tmpdphi_rly = (dtmp - tmp * ll / distance1) / rl * rly[idx_lm] / distance1;
+			const double tmprl = tmp / rl;
+
+			dpsi[iw][i][0] = tmpdphi_rly * dr1[0] + tmprl * grly[idx_lm][0];
+			dpsi[iw][i][1] = tmpdphi_rly * dr1[1] + tmprl * grly[idx_lm][1];
+			dpsi[iw][i][2] = tmpdphi_rly * dr1[2] + tmprl * grly[idx_lm][2];
+		} // end iw
+}     // end i = 0-6
+
 void cal_dpsirr_ylm(
     const Grid_Technique& gt, const int bxyz,
     const int na_grid,                 // number of atoms on this grid

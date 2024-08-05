@@ -19,7 +19,12 @@ void cal_ddpsir_ylm(
     double* const* const ddpsir_ylm_zz)
 {
     ModuleBase::timer::tick("Gint_Tools", "cal_ddpsir_ylm");
-    const int bcell_start = gt.bcell_start[grid_index];
+
+    int it;
+    double distance;
+    double dr[3];
+    double mt[3];
+    Atom* atom;
     const UnitCell& ucell = *gt.ucell;
     std::vector<const double*> it_psi_uniform(gt.nwmax);
     std::vector<const double*> it_dpsi_uniform(gt.nwmax);
@@ -29,7 +34,6 @@ void cal_ddpsir_ylm(
     // the first dimension equals 36 because the maximum nwl is 5.
     double rly[36];
     ModuleBase::Array_Pool<double> grly(36, 3);
-
     std::vector<std::vector<double>> displ(6, std::vector<double>(3, 0.0));
     displ[0][0] = 0.0001; 
     displ[1][0] = -0.0001; // in x direction
@@ -38,21 +42,14 @@ void cal_ddpsir_ylm(
     displ[4][2] = 0.0001; 
     displ[5][2] = -0.0001; // in z direction
 
+    const int bcell_start = gt.bcell_start[grid_index];
     for (int id = 0; id < na_grid; id++)
     {
         const int mcell_index = bcell_start + id;
-        const int imcell = gt.which_bigcell[mcell_index];
-        int iat = gt.which_atom[mcell_index];
-        const double mt[3] = {gt.meshball_positions[imcell][0] - gt.tau_in_bigcell[iat][0],
-                              gt.meshball_positions[imcell][1] - gt.tau_in_bigcell[iat][1],
-                              gt.meshball_positions[imcell][2] - gt.tau_in_bigcell[iat][2]};
-
-        const int it = ucell.iat2it[iat];
+        get_grid_bigcell_distance(gt, mcell_index ,it, mt);
         Atom* atom = &ucell.atoms[it];
         get_psi_dpsi(gt, it, atom, it_psi_uniform, it_dpsi_uniform);
                 
-        double distance;
-        double dr[3];
         for (int ib = 0; ib < bxyz; ib++)
         {
             double* const p_ddpsi_xx = &ddpsir_ylm_xx[ib][block_index[id]];
@@ -99,56 +96,71 @@ void cal_ddpsir_ylm(
                                                 dr1,
                                                 dr,
                                                 displ[i].data());
-                        ModuleBase::Ylm::grad_rl_sph_harm(ucell.atoms[it].nwl, 
-                                                          dr1[0], dr1[1], dr1[2],
-                                                          rly, grly.get_ptr_2D());
 
-                        const double position = distance1 / delta_r;
+                        ModuleBase::Ylm::grad_rl_sph_harm(atom->nwl, 
+                                                          dr1[0],
+                                                          dr1[1], 
+                                                          dr1[2],
+                                                          rly, 
+                                                          grly.get_ptr_2D());
 
-                        const int ip = static_cast<int>(position);
-                        const double iq = static_cast<int>(position);
-                        const double x0 = position - iq;
-                        const double x1 = 1.0 - x0;
-                        const double x2 = 2.0 - x0;
-                        const double x3 = 3.0 - x0;
-                        const double x12 = x1 * x2 / 6;
-                        const double x03 = x0 * x3 / 2;
+                        dpsi_spline_interpolation(distance1,
+                                                    dr1,
+                                                    delta_r,
+                                                    i,
+                                                    atom,
+                                                    rly,
+                                                    grly.get_ptr_2D(),
+                                                    it_psi_uniform,
+                                                    it_dpsi_uniform,
+                                                    dpsi);
+                    }
+                    //     const double position = distance1 / delta_r;
 
-                        double tmp, dtmp;
+                    //     const int ip = static_cast<int>(position);
+                    //     const double iq = static_cast<int>(position);
+                    //     const double x0 = position - iq;
+                    //     const double x1 = 1.0 - x0;
+                    //     const double x2 = 2.0 - x0;
+                    //     const double x3 = 3.0 - x0;
+                    //     const double x12 = x1 * x2 / 6;
+                    //     const double x03 = x0 * x3 / 2;
 
-                        for (int iw = 0; iw < atom->nw; ++iw)
-                        {
-                            // this is a new 'l', we need 1D orbital wave
-                            // function from interpolation method.
-                            if (atom->iw2_new[iw])
-                            {
-                                auto psi_uniform = it_psi_uniform[iw];
-                                auto dpsi_uniform = it_dpsi_uniform[iw];
-                                    // use Polynomia Interpolation method to get the
-                                    // wave functions
+                    //     double tmp, dtmp;
 
-                                tmp = x12 * (psi_uniform[ip] * x3 + psi_uniform[ip + 3] * x0)
-                                        + x03 * (psi_uniform[ip + 1] * x2 - psi_uniform[ip + 2] * x1);
+                    //     for (int iw = 0; iw < atom->nw; ++iw)
+                    //     {
+                    //         // this is a new 'l', we need 1D orbital wave
+                    //         // function from interpolation method.
+                    //         if (atom->iw2_new[iw])
+                    //         {
+                    //             auto psi_uniform = it_psi_uniform[iw];
+                    //             auto dpsi_uniform = it_dpsi_uniform[iw];
+                    //                 // use Polynomia Interpolation method to get the
+                    //                 // wave functions
 
-                                dtmp = x12 * (dpsi_uniform[ip] * x3 + dpsi_uniform[ip + 3] * x0)
-                                        + x03 * (dpsi_uniform[ip + 1] * x2 - dpsi_uniform[ip + 2] * x1);
-                            } // new l is used.
+                    //             tmp = x12 * (psi_uniform[ip] * x3 + psi_uniform[ip + 3] * x0)
+                    //                     + x03 * (psi_uniform[ip + 1] * x2 - psi_uniform[ip + 2] * x1);
 
-                            // get the 'l' of this localized wave function
-                            const int ll = atom->iw2l[iw];
-                            const int idx_lm = atom->iw2_ylm[iw];
+                    //             dtmp = x12 * (dpsi_uniform[ip] * x3 + dpsi_uniform[ip + 3] * x0)
+                    //                     + x03 * (dpsi_uniform[ip + 1] * x2 - dpsi_uniform[ip + 2] * x1);
+                    //         } // new l is used.
 
-                            const double rl = pow_int(distance1, ll);
+                    //         // get the 'l' of this localized wave function
+                    //         const int ll = atom->iw2l[iw];
+                    //         const int idx_lm = atom->iw2_ylm[iw];
 
-                            // derivative of wave functions with respect to atom positions.
-                            const double tmpdphi_rly = (dtmp - tmp * ll / distance1) / rl * rly[idx_lm] / distance1;
-                            const double tmprl = tmp / rl;
+                    //         const double rl = pow_int(distance1, ll);
 
-                            dpsi[iw][i][0] = tmpdphi_rly * dr1[0] + tmprl * grly[idx_lm][0];
-                            dpsi[iw][i][1] = tmpdphi_rly * dr1[1] + tmprl * grly[idx_lm][1];
-                            dpsi[iw][i][2] = tmpdphi_rly * dr1[2] + tmprl * grly[idx_lm][2];
-                        } // end iw
-                    }     // end i = 0-6
+                    //         // derivative of wave functions with respect to atom positions.
+                    //         const double tmpdphi_rly = (dtmp - tmp * ll / distance1) / rl * rly[idx_lm] / distance1;
+                    //         const double tmprl = tmp / rl;
+
+                    //         dpsi[iw][i][0] = tmpdphi_rly * dr1[0] + tmprl * grly[idx_lm][0];
+                    //         dpsi[iw][i][1] = tmpdphi_rly * dr1[1] + tmprl * grly[idx_lm][1];
+                    //         dpsi[iw][i][2] = tmpdphi_rly * dr1[2] + tmprl * grly[idx_lm][2];
+                    //     } // end iw
+                    // }     // end i = 0-6
 
                     for (int iw = 0; iw < atom->nw; iw++)
                     {
