@@ -285,6 +285,8 @@ OBJS_GINT=gint.o\
       cal_psir_ylm.o\
       cal_dpsir_ylm.o\
       cal_ddpsir_ylm.o\
+      cal_dpsirr_ylm.o\
+      gint_inout.o\
       mult_psi_dm.o\
       mult_psi_dm_new.o\
       mult_psi_dmr.o\
