@@ -247,18 +247,14 @@ void cal_grid_atom_distance(double &distance,
                             const double* mt,
                             const double* meshcell_pos);
 
-void interp_coeff(const double distance,
-                const double delta_r,
-                int& ip,
-                double* coeffs);
+void spline_interpolation(const double distance,
+							const double delta_r,
+							Atom*& atom,
+							std::vector<double>& ylma,
+							std::vector<const double*>& it_psi_uniform,
+							std::vector<const double*>& it_dpsi_uniform,
+							double *p);
 
-void spline_interpolation(const double distance,const double delta_r,
-                        const int nw,const bool* iw2_new,
-                        const int* iw2_ylm,
-                        std::vector<double>& ylma,
-                        std::vector<const double*>& it_psi_uniform,
-                        std::vector<const double*>& it_dpsi_uniform,
-                        double *p);
 void dpsi_spline_interpolation(const double distance,const double* dr,const double delta_r,int nw,
                                 bool *iw2_new,int* iw2l,int *iw2_ylm,double *rly,double** grly,
                                 std::vector<const double*>& it_psi_uniform,

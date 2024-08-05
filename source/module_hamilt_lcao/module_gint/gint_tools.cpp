@@ -122,13 +122,18 @@ void cal_grid_atom_distance(double &distance,
 	if (distance < 1.0E-9) distance += 1.0E-9;
 }
 
-void interp_coeff(const double distance,
-				const double delta_r,
-				int& ip,
-				double* coeffs)
+
+void spline_interpolation(const double distance,
+							const double delta_r,
+							Atom*& atom,
+							std::vector<double>& ylma,
+							std::vector<const double*>& it_psi_uniform,
+							std::vector<const double*>& it_dpsi_uniform,
+							double *p)
 {
+	double coeffs[4] = {0.0};
 	const double position = distance / delta_r;
-	ip = static_cast<int>(position);
+	int ip = static_cast<int>(position);
 	const double dx = position - ip;
 	const double dx2 = dx * dx;
 	const double dx3 = dx2 * dx;
@@ -136,16 +141,19 @@ void interp_coeff(const double distance,
 	coeffs[0] = 1.0 - coeffs[2];
 	coeffs[1] = (dx - 2.0 * dx2 + dx3) * delta_r;
 	coeffs[3] = (dx3 - dx2) * delta_r;
-}
-void spline_interpolation(const double* coeffs,
-                        const int nw,const bool* iw2_new,
-                        const int* iw2_ylm,
-                        std::vector<double>& ylma,
-                        std::vector<const double*>& it_psi_uniform,
-                        std::vector<const double*>& it_dpsi_uniform,
-                        double *p)
-{
 
+	double phi = 0;
+	for (int iw = 0; iw < atom->nw; ++iw)
+	{
+		if (atom->iw2_new[iw])
+		{
+			auto psi_uniform = it_psi_uniform[iw];
+			auto dpsi_uniform = it_dpsi_uniform[iw];
+			phi = coeffs[0] * psi_uniform[ip] + coeffs[1] * dpsi_uniform[ip] // radial wave functions
+					+ coeffs[2] * psi_uniform[ip + 1] + coeffs[3] * dpsi_uniform[ip + 1];
+		}
+		p[iw] = phi * ylma[atom->iw2_ylm[iw]];
+	} // end iw
 }
 
 void dpsi_spline_interpolation(const double distance,const double* dr,const double delta_r,int nw,
