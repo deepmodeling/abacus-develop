@@ -115,52 +115,6 @@ void cal_ddpsir_ylm(
                                                     it_dpsi_uniform,
                                                     dpsi);
                     }
-                    //     const double position = distance1 / delta_r;
-
-                    //     const int ip = static_cast<int>(position);
-                    //     const double iq = static_cast<int>(position);
-                    //     const double x0 = position - iq;
-                    //     const double x1 = 1.0 - x0;
-                    //     const double x2 = 2.0 - x0;
-                    //     const double x3 = 3.0 - x0;
-                    //     const double x12 = x1 * x2 / 6;
-                    //     const double x03 = x0 * x3 / 2;
-
-                    //     double tmp, dtmp;
-
-                    //     for (int iw = 0; iw < atom->nw; ++iw)
-                    //     {
-                    //         // this is a new 'l', we need 1D orbital wave
-                    //         // function from interpolation method.
-                    //         if (atom->iw2_new[iw])
-                    //         {
-                    //             auto psi_uniform = it_psi_uniform[iw];
-                    //             auto dpsi_uniform = it_dpsi_uniform[iw];
-                    //                 // use Polynomia Interpolation method to get the
-                    //                 // wave functions
-
-                    //             tmp = x12 * (psi_uniform[ip] * x3 + psi_uniform[ip + 3] * x0)
-                    //                     + x03 * (psi_uniform[ip + 1] * x2 - psi_uniform[ip + 2] * x1);
-
-                    //             dtmp = x12 * (dpsi_uniform[ip] * x3 + dpsi_uniform[ip + 3] * x0)
-                    //                     + x03 * (dpsi_uniform[ip + 1] * x2 - dpsi_uniform[ip + 2] * x1);
-                    //         } // new l is used.
-
-                    //         // get the 'l' of this localized wave function
-                    //         const int ll = atom->iw2l[iw];
-                    //         const int idx_lm = atom->iw2_ylm[iw];
-
-                    //         const double rl = pow_int(distance1, ll);
-
-                    //         // derivative of wave functions with respect to atom positions.
-                    //         const double tmpdphi_rly = (dtmp - tmp * ll / distance1) / rl * rly[idx_lm] / distance1;
-                    //         const double tmprl = tmp / rl;
-
-                    //         dpsi[iw][i][0] = tmpdphi_rly * dr1[0] + tmprl * grly[idx_lm][0];
-                    //         dpsi[iw][i][1] = tmpdphi_rly * dr1[1] + tmprl * grly[idx_lm][1];
-                    //         dpsi[iw][i][2] = tmpdphi_rly * dr1[2] + tmprl * grly[idx_lm][2];
-                    //     } // end iw
-                    // }     // end i = 0-6
 
                     for (int iw = 0; iw < atom->nw; iw++)
                     {
@@ -275,18 +229,18 @@ void cal_ddpsir_ylm(
                         const double term_1y = dr[1] * term4;
                         const double term_1z = dr[2] * term4;
 
-                        p_ddpsi_xx[iw]
-                            = term_xx * rly[idx_lm] + 2.0 * term_1x * grly[idx_lm][0] + tmp / rl * hrly[idx_lm][0];
-                        p_ddpsi_xy[iw] = term_xy * rly[idx_lm] + term_1x * grly[idx_lm][1] + term_1y * grly[idx_lm][0]
-                                         + tmp / rl * hrly[idx_lm][1];
-                        p_ddpsi_xz[iw] = term_xz * rly[idx_lm] + term_1x * grly[idx_lm][2] + term_1z * grly[idx_lm][0]
-                                         + tmp / rl * hrly[idx_lm][2];
-                        p_ddpsi_yy[iw]
-                            = term_yy * rly[idx_lm] + 2.0 * term_1y * grly[idx_lm][1] + tmp / rl * hrly[idx_lm][3];
-                        p_ddpsi_yz[iw] = term_yz * rly[idx_lm] + term_1y * grly[idx_lm][2] + term_1z * grly[idx_lm][1]
-                                         + tmp / rl * hrly[idx_lm][4];
-                        p_ddpsi_zz[iw]
-                            = term_zz * rly[idx_lm] + 2.0 * term_1z * grly[idx_lm][2] + tmp / rl * hrly[idx_lm][5];
+                        p_ddpsi_xx[iw] = term_xx * rly[idx_lm] + 2.0 * term_1x * grly[idx_lm][0] + 
+                                        tmp / rl * hrly[idx_lm][0];
+                        p_ddpsi_xy[iw] = term_xy * rly[idx_lm] + term_1x * grly[idx_lm][1] + 
+                                        term_1y * grly[idx_lm][0] + tmp / rl * hrly[idx_lm][1];
+                        p_ddpsi_xz[iw] = term_xz * rly[idx_lm] + term_1x * grly[idx_lm][2] + 
+                                        term_1z * grly[idx_lm][0] + tmp / rl * hrly[idx_lm][2];
+                        p_ddpsi_yy[iw] = term_yy * rly[idx_lm] + 2.0 * term_1y * grly[idx_lm][1] + 
+                                        tmp / rl * hrly[idx_lm][3];
+                        p_ddpsi_yz[iw] = term_yz * rly[idx_lm] + term_1y * grly[idx_lm][2] + 
+                                        term_1z * grly[idx_lm][1] + tmp / rl * hrly[idx_lm][4];
+                        p_ddpsi_zz[iw] = term_zz * rly[idx_lm] + 2.0 * term_1z * grly[idx_lm][2] +
+                                        tmp / rl * hrly[idx_lm][5];
 
                     } // iw
                 }     // end if
