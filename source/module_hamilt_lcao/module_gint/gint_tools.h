@@ -282,11 +282,18 @@ void spline_interpolation(const double distance,
 							std::vector<const double*>& it_dpsi_uniform,
 							double *p);
 
-void dpsi_spline_interpolation(const double distance,const double* dr,const double delta_r,int nw,
-                                bool *iw2_new,int* iw2l,int *iw2_ylm,double *rly,double** grly,
+void dpsi_spline_interpolation(const double distance,
+								const double* dr,
+								const double delta_r,
+								Atom*& atom,
+                                double* rly,
+								double** grly,
                                 std::vector<const double*>& it_psi_uniform,
                                 std::vector<const double*>& it_dpsi_uniform,
-                                double *p_psi,double *p_dpsi_x,double *p_dpsi_y,double *p_dpsi_z);
+                                double *p_psi,
+								double *p_dpsi_x,
+								double *p_dpsi_y,
+								double *p_dpsi_z);
 // psir_ylm[pw.bxyz][LD_pool]
 void cal_psir_ylm(const Grid_Technique& gt,
                   const int bxyz,

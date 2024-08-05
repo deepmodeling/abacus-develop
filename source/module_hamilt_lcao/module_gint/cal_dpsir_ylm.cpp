@@ -15,32 +15,27 @@ void cal_dpsir_ylm(
     double* const* const dpsir_ylm_z)
 {
     ModuleBase::timer::tick("Gint_Tools", "cal_dpsir_ylm");
-    const int bcell_start = gt.bcell_start[grid_index];
+    int it;
+    double distance;
+    double dr[3];
+    double mt[3];
+
     Atom* atom;
     const UnitCell& ucell = *gt.ucell;
     std::vector<const double*> it_psi_uniform(gt.nwmax);
-    std::vector<const double*> it_dpsi_uniform(gt.nwmax);
-    std::vector<int> it_psi_nr_uniform(gt.nwmax);
+    std::vector<const double*> it_dpsi_uniform(gt.nwmax);;
     // array to store spherical harmonics and its derivatives
     // the first dimension equals 36 because the maximum nwl is 5.
     double rly[36];
     ModuleBase::Array_Pool<double> grly(36, 3);
-
+    const int bcell_start = gt.bcell_start[grid_index];
     for (int id = 0; id < na_grid; id++)
     {
         const int mcell_index = bcell_start + id;
-        const int imcell = gt.which_bigcell[mcell_index];
-        int iat = gt.which_atom[mcell_index];
-        const int it = ucell.iat2it[iat];
-        const int ia = ucell.iat2ia[iat];
-        
-        const double mt[3] = {gt.meshball_positions[imcell][0] - gt.tau_in_bigcell[iat][0],
-                              gt.meshball_positions[imcell][1] - gt.tau_in_bigcell[iat][1],
-                              gt.meshball_positions[imcell][2] - gt.tau_in_bigcell[iat][2]};
-
+        get_grid_bigcell_distance(gt, mcell_index ,it, mt);
         Atom* atom = &ucell.atoms[it];
         get_psi_dpsi(gt, it, atom, it_psi_uniform, it_dpsi_uniform);
-        
+
         double distance;
         double dr[3];
         for (int ib = 0; ib < bxyz; ib++)
@@ -60,17 +55,17 @@ void cal_dpsir_ylm(
             {
                 cal_grid_atom_distance(distance,dr,mt,gt.meshcell_pos[ib].data());
 
-                ModuleBase::Ylm::grad_rl_sph_harm(ucell.atoms[it].nwl,
-                                                  dr[0], dr[1], dr[2], 
-                                                  rly, grly.get_ptr_2D());
+                ModuleBase::Ylm::grad_rl_sph_harm(atom->nwl,
+                                                  dr[0], 
+                                                  dr[1], 
+                                                  dr[2], 
+                                                  rly, 
+                                                  grly.get_ptr_2D());
 
                 dpsi_spline_interpolation(distance,
                                           dr,
                                           delta_r,
-                                          atom->nw,
-                                          atom->iw2_new,
-                                          atom->iw2l,
-                                          atom->iw2_ylm,
+                                          atom,
                                           rly,
                                           grly.get_ptr_2D(),
                                           it_psi_uniform,

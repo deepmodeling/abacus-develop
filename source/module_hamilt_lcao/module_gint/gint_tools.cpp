@@ -156,11 +156,18 @@ void spline_interpolation(const double distance,
 	} // end iw
 }
 
-void dpsi_spline_interpolation(const double distance,const double* dr,const double delta_r,int nw,
-                                bool *iw2_new,int* iw2l,int* iw2_ylm,double *rly,double** grly,
+void dpsi_spline_interpolation(const double distance,
+								const double* dr,
+								const double delta_r,
+								Atom*& atom,
+                                double* rly,
+								double** grly,
                                 std::vector<const double*>& it_psi_uniform,
                                 std::vector<const double*>& it_dpsi_uniform,
-                                double *p_psi,double *p_dpsi_x,double *p_dpsi_y,double *p_dpsi_z)
+                                double *p_psi,
+								double *p_dpsi_x,
+								double *p_dpsi_y,
+								double *p_dpsi_z)
 {
 	const double position = distance / delta_r;
 
@@ -175,12 +182,12 @@ void dpsi_spline_interpolation(const double distance,const double* dr,const doub
 
 	double tmp, dtmp;
 
-	for (int iw = 0; iw < nw; ++iw)
+	for (int iw = 0; iw < atom->nw; ++iw)
 	{
 
 		// this is a new 'l', we need 1D orbital wave
 		// function from interpolation method.
-		if (iw2_new[iw])
+		if (atom->iw2_new[iw])
 		{
 			auto psi_uniform = it_psi_uniform[iw];
 			auto dpsi_uniform = it_dpsi_uniform[iw];
@@ -196,8 +203,8 @@ void dpsi_spline_interpolation(const double distance,const double* dr,const doub
 		} // new l is used.
 
 		// get the 'l' of this localized wave function
-			const int ll = iw2l[iw];
-			const int idx_lm = iw2_ylm[iw];
+			const int ll = atom->iw2l[iw];
+			const int idx_lm = atom->iw2_ylm[iw];
 
 			const double rl = pow_int(distance, ll);
 			const double tmprl = tmp / rl;
@@ -213,6 +220,7 @@ void dpsi_spline_interpolation(const double distance,const double* dr,const doub
 			p_dpsi_z[iw] = tmpdphi_rly * dr[2] + tmprl * grly[idx_lm][2];
 		} // iw
 }
+
 void cal_dpsirr_ylm(
     const Grid_Technique& gt, const int bxyz,
     const int na_grid,                 // number of atoms on this grid
