@@ -285,7 +285,6 @@ OBJS_GINT=gint.o\
       mult_psi_dm.o\
       mult_psi_dm_new.o\
       mult_psi_dmr.o\
-      init_orb.o\
 
 OBJS_TOOLS=gint_tools.o\
         cal_psir_ylm.o\
@@ -293,6 +292,7 @@ OBJS_TOOLS=gint_tools.o\
         cal_ddpsir_ylm.o\
         cal_dpsirr_ylm.o\
         gint_inout.o\
+        init_orb.o\
 
 OBJS_HAMILT=hamilt_pw.o\
     operator.o\
