@@ -175,20 +175,52 @@ void spl_intrp(const double distance,
 							std::vector<const double*>& it_psi_uniform,
 							std::vector<const double*>& it_dpsi_uniform,
 							double *p);
-
+/**
+ * @brief Calculate the gradient of the 
+ * spherical harmonic functions Ylm.
+ * 
+ * @param distance the distance between the meshcell and the atoms.
+ * @param dr The three-dimensional distance from the starting position
+ * of the small grid point to the atom.
+ * @param delta_r the interval of atom segmentation.
+ * @param atom the atom type contianing the nw, iw2_new
+ * @param rly the spherical harmonic functions Ylm.
+ * @param grly the gradient of the spherical harmonic functions Ylm.
+ * @param it_psi_uniform psi of the it type atom
+ * @param it_dpsi_uniform dpsi of the it type atom
+ * @param p_psi psi of between the meshcell and the it type atom
+ * @param p_dpsi_x gradient psi_x of the grid point
+ * @param p_dpsi_y gradient psi_y of the grid point
+ * @param p_dpsi_z gradient psi_z of the grid point
+*/
 void dpsi_spl_intrp(const double distance,
-								const double* dr,
-								const double delta_r,
-								Atom*& atom,
-                                double* rly,
-								double** grly,
-                                std::vector<const double*>& it_psi_uniform,
-                                std::vector<const double*>& it_dpsi_uniform,
-                                double *p_psi,
-								double *p_dpsi_x,
-								double *p_dpsi_y,
-								double *p_dpsi_z);
+                    const double* dr,
+                    const double delta_r,
+                    Atom*& atom,
+                    double* rly,
+                    double** grly,
+                    std::vector<const double*>& it_psi_uniform,
+                    std::vector<const double*>& it_dpsi_uniform,
+                    double *p_psi,
+                    double *p_dpsi_x,
+                    double *p_dpsi_y,
+                    double *p_dpsi_z);
 
+/**
+ * @brief Calculate the spherical harmonic functions Ylm and its derivatives.
+ * 
+ * @param distance the distance between the meshcell and the atoms.
+ * @param dr The three-dimensional distance from the starting position
+ * of the small grid point to the atom.
+ * @param delta_r the interval of atom segmentation.
+ * @param atom the atom type contianing the nw, iw2_new
+ * @param rly the spherical harmonic functions Ylm.
+ * @param grly the gradient of the spherical harmonic functions Ylm.
+ * @param it_psi_uniform psi of the it type atom.
+ * @param it_dpsi_uniform dpsi of the it type atom.
+ * @param psi psi and three gradient psi of 
+ * between the meshcell and the it type atom.
+*/
 void dpsi_spl_intrp(const double distance1,
 								const double* dr1,
 								const double delta_r,
