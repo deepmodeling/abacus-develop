@@ -1,11 +1,7 @@
 #add_subdirectory(kernels/cuda)
-list(APPEND objects
-    gint_tools/cal_ddpsir_ylm.cpp
-    gint_tools/cal_dpsir_ylm.cpp
-    gint_tools/cal_dpsirr_ylm.cpp
-    gint_tools/cal_psir_ylm.cpp
-    gint_tools/gint_tools.cpp
-    gint_tools/gint_inout.hpp)
+add_subdirectory(tools)
+
+
 
 list(APPEND objects
     gint.cpp
@@ -70,7 +66,7 @@ add_library(
     OBJECT
     ${objects}
 )
-
+target_link_libraries(gint tools)
 if(ENABLE_COVERAGE)
   add_coverage(gint)
 endif()

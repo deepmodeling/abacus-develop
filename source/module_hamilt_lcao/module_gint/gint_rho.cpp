@@ -1,5 +1,5 @@
 #include "gint_k.h"
-#include "gint_tools/gint_tools.h"
+#include "tools/gint_tools.h"
 #include "grid_technique.h"
 #include "module_base/blas_connector.h"
 #include "module_base/global_function.h"

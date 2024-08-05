@@ -1,6 +1,6 @@
 #include "gint_rho_gpu.h"
 #include "module_base/ylm.h"
-#include "gint_tools/gint_tools.h"
+#include "tools/gint_tools.h"
 #include "omp.h"
 namespace GintKernel
 {
