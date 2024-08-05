@@ -372,8 +372,8 @@ void Charge::atomic_rho(const int spin_number_need,
 
                                 double charge = 0.0;
                                 ModuleBase::Integral::Simpson_Integral(atom->ncpp.msh,
-                                                                       atom->ncpp.rho_at,
-                                                                       atom->ncpp.rab,
+                                                                       atom->ncpp.rho_at.data(),
+                                                                       atom->ncpp.rab.data(),
                                                                        charge);
                                 ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning, "charge from rho_at", charge);
                                 assert(charge != 0.0
@@ -410,7 +410,7 @@ void Charge::atomic_rho(const int spin_number_need,
                             {
                                 rho1d[ir] = rhoatm[ir];
                             }
-                            ModuleBase::Integral::Simpson_Integral(mesh, rho1d.data(), atom->ncpp.rab, rho_lgl[0]);
+                            ModuleBase::Integral::Simpson_Integral(mesh, rho1d.data(), atom->ncpp.rab.data(), rho_lgl[0]);
                             gstart = 1;
                         }
                         if (GlobalV::test_charge > 0)
@@ -445,7 +445,7 @@ void Charge::atomic_rho(const int spin_number_need,
                                         rho1d[ir] = rhoatm[ir] * ModuleBase::libm::sin(gxx) / gxx;
                                     }
                                 }
-                                ModuleBase::Integral::Simpson_Integral(mesh, rho1d.data(), atom->ncpp.rab, rho_lgl[igg]);
+                                ModuleBase::Integral::Simpson_Integral(mesh, rho1d.data(), atom->ncpp.rab.data(), rho_lgl[igg]);
                             }
     #ifdef _OPENMP
     #pragma omp single

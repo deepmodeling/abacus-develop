@@ -57,8 +57,11 @@ void ESolver_KS_PW<T, Device>::allocate_hsolver()
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::deallocate_hsolver()
 {
-    delete reinterpret_cast<hsolver::HSolverPW<T, Device>*>(this->phsol);
-    this->phsol = nullptr;
+    if (this->phsol != nullptr)
+    {
+        delete reinterpret_cast<hsolver::HSolverPW<T, Device>*>(this->phsol);
+        this->phsol = nullptr;
+    }
 }
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::allocate_hamilt()
@@ -68,8 +71,11 @@ void ESolver_KS_PW<T, Device>::allocate_hamilt()
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::deallocate_hamilt()
 {
-    delete reinterpret_cast<hamilt::HamiltPW<T, Device>*>(this->p_hamilt);
-    this->p_hamilt = nullptr;
+    if (this->p_hamilt != nullptr)
+    {
+        delete reinterpret_cast<hamilt::HamiltPW<T, Device>*>(this->p_hamilt);
+        this->p_hamilt = nullptr;
+    }
 }
 
 

@@ -56,7 +56,7 @@ int Pseudopot_upf::read_pseudo_vwr(std::ifstream &ifs, Atom_pseudo& pp)
 	spd_loc = std::atoi( value.c_str() );
 	GlobalV::ofs_running << std::setw(15) << "LOC(spd)" << std::setw(15) << spd_loc << std::endl;
 	// (6) read in the occupations
-	double* tmp_oc = new double[3];
+	std::vector<double> tmp_oc(3, 0.0);
 	ifs >> value; length = value.find(","); value.erase(length,1);
 	tmp_oc[0]= std::atoi( value.c_str() );
 	ifs >> value; length = value.find(","); value.erase(length,1);
@@ -90,51 +90,31 @@ int Pseudopot_upf::read_pseudo_vwr(std::ifstream &ifs, Atom_pseudo& pp)
 	if(iTB_d) ++pp.nchi;
 	GlobalV::ofs_running << std::setw(15) << "NWFC" << std::setw(15) << pp.nchi << std::endl;
 	// allocate occupation number array for wave functions
-	delete[] pp.oc;
-	delete[] pp.els;
-	pp.oc = new double[pp.nchi];
-	pp.els = new std::string[pp.nchi];
+	pp.oc = std::vector<double>(pp.nchi, 0.0);
+	pp.els = std::vector<std::string>(pp.nchi, "");
 	// set the value of occupations
-	delete[] pp.lchi;
-	pp.lchi = new int[pp.nchi];
+	pp.lchi = std::vector<int>(pp.nchi, 0);
 	int iwfc=0;
 	if(iTB_s){pp.oc[iwfc]=tmp_oc[0];pp.lchi[iwfc]=0;pp.els[iwfc]="S";++iwfc;}
 	if(iTB_p){pp.oc[iwfc]=tmp_oc[1];pp.lchi[iwfc]=1;pp.els[iwfc]="P";++iwfc;}
 	if(iTB_d){pp.oc[iwfc]=tmp_oc[2];pp.lchi[iwfc]=2;pp.els[iwfc]="D";++iwfc;}
-	delete[] tmp_oc;
 	getline(ifs,value);
 
 
 	// global variables that will be used
 	// in other classes.
-	delete[] pp.r;
-	delete[] pp.rab;
-	delete[] pp.vloc_at;
-	pp.r = new double[pp.mesh];
-	pp.rab = new double[pp.mesh];
-	pp.vloc_at = new double[pp.mesh];
-	ModuleBase::GlobalFunc::ZEROS(pp.r,pp.mesh);
-	ModuleBase::GlobalFunc::ZEROS(pp.rab,pp.mesh);
-	ModuleBase::GlobalFunc::ZEROS(pp.vloc_at,pp.mesh);
-	delete[] pp.rho_at;
-	delete[] pp.rho_atc;
-	pp.rho_at = new double[pp.mesh];
-	pp.rho_atc = new double[pp.mesh];
-	ModuleBase::GlobalFunc::ZEROS(pp.rho_at, pp.mesh);
-	ModuleBase::GlobalFunc::ZEROS(pp.rho_atc, pp.mesh);
+	pp.r = std::vector<double>(pp.mesh, 0.0);
+	pp.rab = std::vector<double>(pp.mesh, 0.0);
+	pp.vloc_at = std::vector<double>(pp.mesh, 0.0);
+	pp.rho_at = std::vector<double>(pp.mesh, 0.0);
+	pp.rho_atc = std::vector<double>(pp.mesh, 0.0);
 	// local variables in this function
-    double* vs = new double[pp.mesh]; // local pseudopotential for s, unit is Hartree
-    double* vp = new double[pp.mesh]; // local pseudopotential for p
-    double* vd = new double[pp.mesh]; // local pseudopotential for d
-    double* ws = new double[pp.mesh]; // wave function for s
-    double* wp = new double[pp.mesh]; // wave function for p
-    double* wd = new double[pp.mesh]; // wave function for d
-    ModuleBase::GlobalFunc::ZEROS(vs,pp.mesh);
-    ModuleBase::GlobalFunc::ZEROS(vp,pp.mesh);
-	ModuleBase::GlobalFunc::ZEROS(vd,pp.mesh);
-	ModuleBase::GlobalFunc::ZEROS(ws,pp.mesh);
-	ModuleBase::GlobalFunc::ZEROS(wp,pp.mesh);
-	ModuleBase::GlobalFunc::ZEROS(wd,pp.mesh);
+    std::vector<double> vs = std::vector<double>(pp.mesh, 0.0); // local pseudopotential for s, unit is Hartree
+    std::vector<double> vp = std::vector<double>(pp.mesh, 0.0); // local pseudopotential for p
+    std::vector<double> vd = std::vector<double>(pp.mesh, 0.0); // local pseudopotential for d
+    std::vector<double> ws = std::vector<double>(pp.mesh, 0.0); // wave function for s
+    std::vector<double> wp = std::vector<double>(pp.mesh, 0.0); // wave function for p
+    std::vector<double> wd = std::vector<double>(pp.mesh, 0.0); // wave function for d
 	std::string line;
 	if(spd_loc>0 && pp.nlcc==0)
 	{
@@ -280,8 +260,7 @@ int Pseudopot_upf::read_pseudo_vwr(std::ifstream &ifs, Atom_pseudo& pp)
 	this->nd = pp.nbeta;
 	GlobalV::ofs_running << std::setw(15) << "N-Dij" << std::setw(15) << nd << std::endl;
 	// calculate the angular momentum for each pp.betar
-	delete[] pp.lll;
-	pp.lll = new int[pp.nbeta]; 
+	pp.lll = std::vector<int>(pp.nbeta, 0); 
 	int icount=0;
 	if(iref_s==1) {pp.lll[icount]=0; ++icount;}// s projector
 	if(iref_p==1) {pp.lll[icount]=1; ++icount;}// p projector
@@ -291,8 +270,7 @@ int Pseudopot_upf::read_pseudo_vwr(std::ifstream &ifs, Atom_pseudo& pp)
 		GlobalV::ofs_running << " lll[" << i << "]=" << pp.lll[i] << std::endl;
 	}
     // this->kbeta(pp.nbeta): number of mesh points for projector i (must be .le.mesh )
-    delete[] this->kbeta;
-    this->kbeta = new int[pp.nbeta];
+    this->kbeta = std::vector<int>(pp.nbeta, 0);
     pp.kkbeta = 0;
     for (int ib = 0; ib < pp.nbeta; ++ib)
     {
@@ -309,14 +287,11 @@ int Pseudopot_upf::read_pseudo_vwr(std::ifstream &ifs, Atom_pseudo& pp)
 	// (6) generate nonlocal pseudopotentials
 	// --------------------------------------
 	// tmp function to evaluate < pp.betar | delta_v | pp.betar>
-	double* func = new double[pp.mesh];
+	std::vector<double> func = std::vector<double>(pp.mesh, 0.0);
 	// tmp value (vs, vp or vd)
-	double* vl = new double[pp.mesh];
+	std::vector<double> vl = std::vector<double>(pp.mesh, 0.0);
 	// tmp wave function (ws, wp or wd with r)
-	double* wlr = new double[pp.mesh];
-	ModuleBase::GlobalFunc::ZEROS(func, pp.mesh);
-	ModuleBase::GlobalFunc::ZEROS(vl, pp.mesh);
-	ModuleBase::GlobalFunc::ZEROS(wlr, pp.mesh);
+	std::vector<double> wlr = std::vector<double>(pp.mesh, 0.0);
 	double rcut = 5.0/1.03;
 	GlobalV::ofs_running << std::setw(15) << "RCUT_NL" << std::setw(15) << rcut << std::endl;
 	for(int ib=0; ib<pp.nbeta; ++ib)
@@ -383,22 +358,5 @@ int Pseudopot_upf::read_pseudo_vwr(std::ifstream &ifs, Atom_pseudo& pp)
 	}
 	*/
 	GlobalV::ofs_running << " -------------------------------------------------" << std::endl;
-
-
-	// --------------------------------------
-	// (5) clean up 
-	// --------------------------------------
-	delete[] func;
-	delete[] vl;
-	delete[] wlr;
-
-	delete[] vs;
-	delete[] vp;
-	delete[] vd;
-
-	delete[] ws;
-	delete[] wp;
-	delete[] wd;
-
 	return 0;
 }

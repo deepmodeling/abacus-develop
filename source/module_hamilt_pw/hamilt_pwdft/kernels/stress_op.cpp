@@ -6,7 +6,7 @@
 #include "vnl_tools.hpp"
 #include <vector>
 #include <iomanip>
-
+#include "module_base/libm/libm.h"
 namespace hamilt
 {
 
@@ -374,14 +374,25 @@ struct cal_stress_drhoc_aux_op<FPTYPE, base_device::DEVICE_CPU> {
                 } else if(type == 1) {
                     aux [ir] = ir!=0 ? std::sin(gx_arr[igl] * r[ir]) / (gx_arr[igl] * r[ir]) : 1.0;
                     aux [ir] = r[ir] * r[ir] * rhoc [ir] * aux [ir];
-                } else {
+                } else if(type == 2) {
                     aux [ir] = r[ir] < 1.0e-8 ? rhoc [ir] : rhoc [ir] * sin(gx_arr[igl] * r[ir]) / (gx_arr[igl] * r[ir]);
+                } else if(type == 3) {
+                    FPTYPE sinp, cosp;
+                    sinp = std::sin(gx_arr[igl] * r[ir]);
+                    cosp = std::cos(gx_arr[igl] * r[ir]);
+                    aux[ir] = rhoc [ir] *  (r [ir] * cosp / gx_arr[igl] - sinp / pow(gx_arr[igl],2));
                 }
             }//ir
             Simpson_Integral<FPTYPE>(mesh, aux.data(), rab, rhocg1);
-            if(type ==0 ) drhocg [igl] = FOUR_PI / omega * rhocg1;
-            else if(type == 1) drhocg [igl] = FOUR_PI * rhocg1 / omega;
-            else drhocg [igl] = rhocg1;
+            if(type ==0 ) { drhocg [igl] = FOUR_PI / omega * rhocg1;
+            } else if(type == 1) { drhocg [igl] = FOUR_PI * rhocg1 / omega;
+            } else if(type == 2) { drhocg [igl] = rhocg1;
+            } else if(type == 3) {
+                rhocg1 *= FOUR_PI / omega / 2.0 / gx_arr[igl];
+                FPTYPE g2a = (gx_arr[igl]*gx_arr[igl]) / 4.0;
+                rhocg1 += FOUR_PI / omega * gx_arr[ngg] * ModuleBase::libm::exp ( - g2a) * (g2a + 1) / pow(gx_arr[igl]*gx_arr[igl] , 2);
+                drhocg [igl] = rhocg1;
+            }
         }
 #ifdef _OPENMP
         }
