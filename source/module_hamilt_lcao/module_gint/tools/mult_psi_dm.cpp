@@ -45,8 +45,9 @@ void mult_psi_DM(
                 }
             }
             const int ib_length = last_ib - first_ib;
-            if (ib_length <= 0)
+            if (ib_length <= 0) {
                 continue;
+}
 
             int cal_num = 0;
             for (int ib = first_ib; ib < last_ib; ++ib)
@@ -96,8 +97,9 @@ void mult_psi_DM(
                 }
             }
             const int ib_length = last_ib - first_ib;
-            if (ib_length <= 0)
+            if (ib_length <= 0) {
                 continue;
+}
 
             int cal_pair_num = 0;
             for (int ib = first_ib; ib < last_ib; ++ib)
