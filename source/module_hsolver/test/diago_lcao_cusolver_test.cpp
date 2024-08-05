@@ -302,8 +302,8 @@ INSTANTIATE_TEST_SUITE_P(
         DiagoPrepare<double>(0, 0, 32, 0, "cusolver", "H-GammaOnly-Si64.dat", "S-GammaOnly-Si64.dat"),
 #endif
         // DiagoPrepare<double>(0, 0, 1, 0, "scalapack_gvx", "H-GammaOnly-Si2.dat", "S-GammaOnly-Si2.dat"),
-        // DiagoPrepare<double>(0, 0, 32, 0, "scalapack_gvx", "H-GammaOnly-Si64.dat", "S-GammaOnly-Si64.dat"))
-        );
+        // DiagoPrepare<double>(0, 0, 32, 0, "scalapack_gvx", "H-GammaOnly-Si64.dat", "S-GammaOnly-Si64.dat")
+        ));
 
 class DiagoKPointsTest : public ::testing::TestWithParam<DiagoPrepare<std::complex<double>>>
 {
@@ -333,8 +333,8 @@ INSTANTIATE_TEST_SUITE_P(
 #endif
         // DiagoPrepare<std::complex<double>>(0, 0, 32, 0, "genelpa", "H-KPoints-Si64.dat", "S-KPoints-Si64.dat"),
         // DiagoPrepare<std::complex<double>>(0, 0, 1, 0, "scalapack_gvx", "H-KPoints-Si2.dat", "S-KPoints-Si2.dat"),
-        // DiagoPrepare<std::complex<double>>(0, 0, 32, 0, "scalapack_gvx", "H-KPoints-Si64.dat", "S-KPoints-Si64.dat"))
-        );
+        // DiagoPrepare<std::complex<double>>(0, 0, 32, 0, "scalapack_gvx", "H-KPoints-Si64.dat", "S-KPoints-Si64.dat")
+        ));
 
 int main(int argc, char** argv)
 {
