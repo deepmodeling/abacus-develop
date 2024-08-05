@@ -239,7 +239,6 @@ void get_psi_dpsi(const Grid_Technique& gt,int nw,int it,bool * iw2_new,
 
 void get_grid_bigcell_distance(const Grid_Technique& gt,
                                 const int bcell_start,
-								const int ib,
 								int& it,
 								double* mt);
 

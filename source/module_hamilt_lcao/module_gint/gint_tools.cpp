@@ -98,18 +98,16 @@ void get_vindex(const int bxyz, const int bx, const int by, const int bz,
 	}
 
 void get_grid_bigcell_distance(const Grid_Technique& gt,
-                                const int bcell_start,
-								const int ib,
+                                const int mcell_index,
 								int& it,
 								double* mt)
 {
-	// const int mcell_index = bcell_start + ib;
-	// const int iat = gt.which_atom[mcell_index]; 
-	// const int it = gt.ucell->iat2it[iat];  
-	// const int imcell = gt.which_bigcell[mcell_index];
-	// const double mt[3] = {gt.meshball_positions[imcell][0] - gt.tau_in_bigcell[iat][0],
-	// 						gt.meshball_positions[imcell][1] - gt.tau_in_bigcell[iat][1],
-	// 						gt.meshball_positions[imcell][2] - gt.tau_in_bigcell[iat][2]};
+	const int iat = gt.which_atom[mcell_index]; 
+	const int imcell = gt.which_bigcell[mcell_index];
+	it = gt.ucell->iat2it[iat];  
+	mt[0] = gt.meshball_positions[imcell][0] - gt.tau_in_bigcell[iat][0];
+	mt[1] =	gt.meshball_positions[imcell][1] - gt.tau_in_bigcell[iat][1];
+	mt[2] =	gt.meshball_positions[imcell][2] - gt.tau_in_bigcell[iat][2];
 }
 
 void cal_grid_atom_distance(double &distance,

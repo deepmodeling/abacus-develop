@@ -38,14 +38,14 @@ void cal_psir_ylm(
         // the std::vector from the grid which is now being operated to the atom position.
         // in meshball language, is the std::vector from imcell to the center cel, plus
         // tau_in_bigcell.
-        	const int mcell_index = bcell_start + id;
-	const int iat = gt.which_atom[mcell_index]; 
-	const int it = gt.ucell->iat2it[iat];  
-	const int imcell = gt.which_bigcell[mcell_index];
-	const double mt[3] = {gt.meshball_positions[imcell][0] - gt.tau_in_bigcell[iat][0],
-							gt.meshball_positions[imcell][1] - gt.tau_in_bigcell[iat][1],
-							gt.meshball_positions[imcell][2] - gt.tau_in_bigcell[iat][2]};
-        // get_grid_bigcell_distance(gt, bcell_start, id ,it, mt);
+        const int mcell_index = bcell_start + id;
+	    // const int iat = gt.which_atom[mcell_index]; 
+	    // const int it = gt.ucell->iat2it[iat];  
+	    // const int imcell = gt.which_bigcell[mcell_index];
+	    // const double mt[3] = {gt.meshball_positions[imcell][0] - gt.tau_in_bigcell[iat][0],
+		// 					gt.meshball_positions[imcell][1] - gt.tau_in_bigcell[iat][1],
+		// 					gt.meshball_positions[imcell][2] - gt.tau_in_bigcell[iat][2]};
+        get_grid_bigcell_distance(gt, mcell_index ,it, mt);
 
         atom = &ucell.atoms[it];
         get_psi_dpsi(gt, atom->nw, it, atom->iw2_new, it_psi_uniform, it_dpsi_uniform);
@@ -69,8 +69,16 @@ void cal_psir_ylm(
                                             dr[1] / distance, 
                                             dr[2] / distance,
                                             ylma);
-
-                interp_coeff(distance, delta_r, ip, coeffs.data());
+                double coeffs[4];
+                const double position = distance / delta_r;
+	            ip = static_cast<int>(position);
+	            const double dx = position - ip;
+	            const double dx2 = dx * dx;
+	            const double dx3 = dx2 * dx;
+	            coeffs[2] = 3.0 * dx2 - 2.0 * dx3;
+	            coeffs[0] = 1.0 - coeffs[2];
+                coeffs[1] = (dx - 2.0 * dx2 + dx3) * delta_r;
+                coeffs[3] = (dx3 - dx2) * delta_r;
                 // these parameters are related to interpolation
                 // because once the distance from atom to grid point is known,
                 // we can obtain the parameters for interpolation and
