@@ -34,6 +34,12 @@ void cal_ddpsir_ylm(
     // the first dimension equals 36 because the maximum nwl is 5.
     double rly[36];
     ModuleBase::Array_Pool<double> grly(36, 3);
+    ModuleBase::Array_Pool<double*> dpsi(gt.nwmax,6);
+    for (int i=0; i<dpsi.get_nc()*dpsi.get_nr(); i++)
+    {
+        dpsi.get_ptr_1D()[i] = new double[3];
+    }
+
     std::vector<std::vector<double>> displ(6, std::vector<double>(3, 0.0));
     displ[0][0] = 0.0001; 
     displ[1][0] = -0.0001; // in x direction
@@ -77,16 +83,16 @@ void cal_ddpsir_ylm(
                 // the second derivatives of the orbitals
                 if (true)
                 {
-                    double*** dpsi = new double**[atom->nw];
-                    for (int i = 0; i < atom->nw; i++)
-                    {
-                        dpsi[i] = new double*[6];
-                        for (int j = 0; j < 6; j++)
-                        {
-                            dpsi[i][j] = new double[3];
-                            ModuleBase::GlobalFunc::ZEROS(dpsi[i][j], 3);
-                        }
-                    }
+                    // double*** dpsi = new double**[atom->nw];
+                    // for (int i = 0; i < atom->nw; i++)
+                    // {
+                    //     dpsi[i] = new double*[6];
+                    //     for (int j = 0; j < 6; j++)
+                    //     {
+                    //         dpsi[i][j] = new double[3];
+                    //         ModuleBase::GlobalFunc::ZEROS(dpsi[i][j], 3);
+                    //     }
+                    // }
 
                     double dr1[3];
                     double distance1;
@@ -104,7 +110,7 @@ void cal_ddpsir_ylm(
                                                           rly, 
                                                           grly.get_ptr_2D());
 
-                        dpsi_spline_interpolation(distance1,
+                        dpsi_spline_interpolation1(distance1,
                                                     dr1,
                                                     delta_r,
                                                     i,
@@ -113,7 +119,7 @@ void cal_ddpsir_ylm(
                                                     grly.get_ptr_2D(),
                                                     it_psi_uniform,
                                                     it_dpsi_uniform,
-                                                    dpsi);
+                                                    dpsi.get_ptr_2D());
                     }
 
                     for (int iw = 0; iw < atom->nw; iw++)
@@ -128,16 +134,6 @@ void cal_ddpsir_ylm(
                                           (dpsi[iw][2][2] - dpsi[iw][3][2])) / 0.0004;
                         p_ddpsi_zz[iw] = (dpsi[iw][4][2] - dpsi[iw][5][2]) / 0.0002;
                     }
-
-                    for (int i = 0; i < atom->nw; i++)
-                    {
-                        for (int j = 0; j < 6; j++)
-                        {
-                            delete[] dpsi[i][j];
-                        }
-                        delete[] dpsi[i];
-                    }
-                    delete[] dpsi;
                 }
                 else
                 // the analytical method for evaluating 2nd derivatives
@@ -246,7 +242,12 @@ void cal_ddpsir_ylm(
                 }     // end if
             }         // else
         }             // end ib
+
     }                 // end id(atom)
+    for (int i=0; i<dpsi.get_nc()*dpsi.get_nr(); i++)
+    {
+        delete[] dpsi.get_ptr_1D()[i];
+    }
     ModuleBase::timer::tick("Gint_Tools", "cal_ddpsir_ylm");
     return;
 }

@@ -295,7 +295,7 @@ void dpsi_spline_interpolation(const double distance,
 								double *p_dpsi_y,
 								double *p_dpsi_z);
 
-void dpsi_spline_interpolation(const double distance1,
+void dpsi_spline_interpolation1(const double distance1,
 								const double* dr1,
 								const double delta_r,
 								const int i,
