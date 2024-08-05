@@ -37,16 +37,11 @@ void cal_psir_ylm(
         // in meshball language, is the std::vector from imcell to the center cel, plus
         // tau_in_bigcell.
         const int mcell_index = bcell_start + id;
-	    // const int iat = gt.which_atom[mcell_index]; 
-	    // const int it = gt.ucell->iat2it[iat];  
-	    // const int imcell = gt.which_bigcell[mcell_index];
-	    // const double mt[3] = {gt.meshball_positions[imcell][0] - gt.tau_in_bigcell[iat][0],
-		// 					gt.meshball_positions[imcell][1] - gt.tau_in_bigcell[iat][1],
-		// 					gt.meshball_positions[imcell][2] - gt.tau_in_bigcell[iat][2]};
+
         get_grid_bigcell_distance(gt, mcell_index ,it, mt);
 
         atom = &ucell.atoms[it];
-        get_psi_dpsi(gt, atom->nw, it, atom->iw2_new, it_psi_uniform, it_dpsi_uniform);
+        get_psi_dpsi(gt, it, atom, it_psi_uniform, it_dpsi_uniform);
 
         // loop over the grids in the big cell
         for (int ib = 0; ib < bxyz; ib++)

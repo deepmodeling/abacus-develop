@@ -39,8 +39,8 @@ void cal_dpsir_ylm(
                               gt.meshball_positions[imcell][2] - gt.tau_in_bigcell[iat][2]};
 
         Atom* atom = &ucell.atoms[it];
-        get_psi_dpsi(gt,atom->nw, it,
-                atom->iw2_new,it_psi_uniform, it_dpsi_uniform);
+        get_psi_dpsi(gt, it, atom, it_psi_uniform, it_dpsi_uniform);
+        
         double distance;
         double dr[3];
         for (int ib = 0; ib < bxyz; ib++)

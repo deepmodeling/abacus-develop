@@ -227,26 +227,53 @@ void init_orb(double& dr_uniform,
 /**
  * @brief Get the psi and dpsi from the it type atom
  * @param gt Grid_Technique
- * @param nw number of the it type atom orbital basis set
  * @param it index of the it type atom
- * @param iw2_new whether the atom orbital basis set is set
+ * @param atom the atom type contianing the nw, iw2_new
  * @param it_psi_uniform psi of the it type atom
  * @param it_dpsi_uniform dpsi of the it type atom
 */
-void get_psi_dpsi(const Grid_Technique& gt,int nw,int it,bool * iw2_new,
+void get_psi_dpsi(const Grid_Technique& gt,
+                  int it,
+                  Atom* atom,
                   std::vector<const double*>& it_psi_uniform,
                   std::vector<const double*>& it_dpsi_uniform);
-
+/**
+ * @brief Obtain the distance between the grid points and the atoms,
+ *  and the type of atoms.
+ * @param gt Grid_Technique.
+ * @param bcell_start start index of the big cell.
+ * @param it index of the atom type.
+ * @param mt the distance between the big grid and the atom.
+*/
 void get_grid_bigcell_distance(const Grid_Technique& gt,
                                 const int bcell_start,
 								int& it,
 								double* mt);
-
+/**
+ * @brief Calculate the distance between the meshcell and the atoms.
+ * 
+ * @param distance the distance between the meshcell and the atoms.
+ * @param dr The three-dimensional distance from the starting position
+ *  of the small grid point to the atom.
+ * @param mt the distance between the big grid and the atom.
+ * @param meshcell_pos The distance between the starting positions 
+ * of the small grid point and the large grid point.
+*/
 void cal_grid_atom_distance(double &distance,
                             double* dr,
                             const double* mt,
                             const double* meshcell_pos);
 
+/**
+ * @brief Calculate the spherical harmonic functions Ylm.
+ * 
+ * @param distance the distance between the meshcell and the atoms.
+ * @param delta_r the interval of atom segmentation.
+ * @param atom the atom type contianing the nw, iw2_new
+ * @param ylma the spherical harmonic functions Ylm.
+ * @param it_psi_uniform psi of the it type atom
+ * @param it_dpsi_uniform dpsi of the it type atom
+*/
 void spline_interpolation(const double distance,
 							const double delta_r,
 							Atom*& atom,

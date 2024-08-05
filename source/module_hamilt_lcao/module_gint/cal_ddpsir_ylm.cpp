@@ -49,11 +49,7 @@ void cal_ddpsir_ylm(
 
         const int it = ucell.iat2it[iat];
         Atom* atom = &ucell.atoms[it];
-        get_psi_dpsi(gt,atom->nw,
-                     it,
-                     atom->iw2_new,
-                     it_psi_uniform,
-                     it_dpsi_uniform);
+        get_psi_dpsi(gt, it, atom, it_psi_uniform, it_dpsi_uniform);
                 
         double distance;
         double dr[3];
