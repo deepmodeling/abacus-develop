@@ -74,13 +74,16 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
 {
     // delete HSolver and ElecState
     this->deallocate_hsolver();
+
+    // delete Hamilt
+    this->deallocate_hamilt();
+
     if (this->pelec != nullptr)
     {
         delete reinterpret_cast<elecstate::ElecStatePW<T, Device>*>(this->pelec);
         this->pelec = nullptr;
     }
-    // delete Hamilt
-    this->deallocate_hamilt();
+
     if (this->device == base_device::GpuDevice)
     {
 #if defined(__CUDA) || defined(__ROCM)
@@ -91,10 +94,12 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
 #endif
         delete reinterpret_cast<psi::Psi<T, Device>*>(this->kspw_psi);
     }
+    
     if (GlobalV::precision_flag == "single")
     {
         delete reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->__kspw_psi);
     }
+
     delete this->psi;
     delete this->p_wf_init;
 }

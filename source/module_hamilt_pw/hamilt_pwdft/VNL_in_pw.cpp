@@ -20,15 +20,17 @@ pseudopot_cell_vnl::pseudopot_cell_vnl()
 
 pseudopot_cell_vnl::~pseudopot_cell_vnl()
 {
-    if (GlobalV::use_paw)
+    if (GlobalV::use_paw) {
         return;
+}
     delete[] indv_ijkb0;
 }
 
 void pseudopot_cell_vnl::release_memory()
 {
-    if (this->nhm <= 0 || memory_released)
+    if (this->nhm <= 0 || memory_released) {
         return;
+}
     if (GlobalV::device_flag == "gpu")
     {
         if (GlobalV::precision_flag == "single")
@@ -84,8 +86,9 @@ void pseudopot_cell_vnl::init(const int ntype,
                               const ModulePW::PW_Basis_K* wfc_basis,
                               const bool allocate_vkb)
 {
-    if (GlobalV::use_paw)
+    if (GlobalV::use_paw) {
         return;
+}
 
     ModuleBase::TITLE("pseudopot_cell_vnl", "init");
     ModuleBase::timer::tick("ppcell_vnl", "init");
@@ -300,10 +303,12 @@ void pseudopot_cell_vnl::init(const int ntype,
 //----------------------------------------------------------
 void pseudopot_cell_vnl::getvnl(const int& ik, ModuleBase::ComplexMatrix& vkb_in) const
 {
-    if (GlobalV::use_paw)
+    if (GlobalV::use_paw) {
         return;
-    if (GlobalV::test_pp)
+}
+    if (GlobalV::test_pp) {
         ModuleBase::TITLE("pseudopot_cell_vnl", "getvnl");
+}
     ModuleBase::timer::tick("pp_cell_vnl", "getvnl");
 
     if (lmaxkb < 0)
@@ -344,13 +349,15 @@ void pseudopot_cell_vnl::getvnl(const int& ik, ModuleBase::ComplexMatrix& vkb_in
         const int nbeta = GlobalC::ucell.atoms[it].ncpp.nbeta;
         const int nh = GlobalC::ucell.atoms[it].ncpp.nh;
 
-        if (GlobalV::test_pp > 1)
+        if (GlobalV::test_pp > 1) {
             ModuleBase::GlobalFunc::OUT("nbeta", nbeta);
+}
 
         for (int nb = 0; nb < nbeta; nb++)
         {
-            if (GlobalV::test_pp > 1)
+            if (GlobalV::test_pp > 1) {
                 ModuleBase::GlobalFunc::OUT("ib", nb);
+}
             for (int ig = 0; ig < npw; ig++)
             {
                 const double gnorm = gk[ig].norm() * GlobalC::ucell.tpiba;
@@ -406,10 +413,12 @@ void pseudopot_cell_vnl::getvnl(const int& ik, ModuleBase::ComplexMatrix& vkb_in
 template <typename FPTYPE, typename Device>
 void pseudopot_cell_vnl::getvnl(Device* ctx, const int& ik, std::complex<FPTYPE>* vkb_in) const
 {
-    if (GlobalV::use_paw)
+    if (GlobalV::use_paw) {
         return;
-    if (GlobalV::test_pp)
+}
+    if (GlobalV::test_pp) {
         ModuleBase::TITLE("pseudopot_cell_vnl", "getvnl");
+}
     ModuleBase::timer::tick("pp_cell_vnl", "getvnl");
 
     using cal_vnl_op = hamilt::cal_vnl_op<FPTYPE, Device>;
@@ -532,8 +541,9 @@ void pseudopot_cell_vnl::getvnl(Device* ctx, const int& ik, std::complex<FPTYPE>
 
 void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_basis)
 {
-    if (GlobalV::use_paw)
+    if (GlobalV::use_paw) {
         return;
+}
     ModuleBase::TITLE("pseudopot_cell_vnl", "init_vnl");
     ModuleBase::timer::tick("ppcell_vnl", "init_vnl");
 
@@ -555,8 +565,9 @@ void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_
         if (cell.atoms[it].ncpp.tvanp)
         {
             cell.atoms[it].ncpp.nqlc = std::min(cell.atoms[it].ncpp.nqlc, lmaxq);
-            if (cell.atoms[it].ncpp.nqlc < 0)
+            if (cell.atoms[it].ncpp.nqlc < 0) {
                 cell.atoms[it].ncpp.nqlc = 0;
+}
         }
     }
 
@@ -673,14 +684,15 @@ void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_
                             this->dvan_so(ijs, it, ip, ip2)
                                 = cell.atoms[it].ncpp.dion(ir, is) * soc.fcoef(it, is1, is2, ip, ip2);
                             ++ijs;
-                            if (ir != is)
+                            if (ir != is) {
                                 soc.fcoef(it, is1, is2, ip, ip2) = std::complex<double>(0.0, 0.0);
+}
                         }
                     }
                 }
             }
         }
-        else
+        else {
             for (int ip = 0; ip < Nprojectors; ip++)
             {
                 for (int ip2 = 0; ip2 < Nprojectors; ip2++)
@@ -701,6 +713,7 @@ void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_
                     }
                 }
             }
+}
     }
 
     // e) It computes the coefficients c_{LM}^{nm} which relates the
@@ -835,14 +848,14 @@ void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_
             for (int iq = 0; iq < GlobalV::NQX; iq++)
             {
                 const double q = iq * GlobalV::DQ;
-                ModuleBase::Sphbes::Spherical_Bessel(kkbeta, cell.atoms[it].ncpp.r, q, l, jl);
+                ModuleBase::Sphbes::Spherical_Bessel(kkbeta, cell.atoms[it].ncpp.r.data(), q, l, jl);
 
                 for (int ir = 0; ir < kkbeta; ir++)
                 {
                     aux[ir] = cell.atoms[it].ncpp.betar(ib, ir) * jl[ir] * cell.atoms[it].ncpp.r[ir];
                 }
                 double vqint;
-                ModuleBase::Integral::Simpson_Integral(kkbeta, aux, cell.atoms[it].ncpp.rab, vqint);
+                ModuleBase::Integral::Simpson_Integral(kkbeta, aux, cell.atoms[it].ncpp.rab.data(), vqint);
                 this->tab(it, ib, iq) = vqint * pref;
             }
         }
@@ -915,7 +928,7 @@ void pseudopot_cell_vnl::compute_qrad(UnitCell& cell)
                 {
                     const double q = iq * GlobalV::DQ;
                     // here we compute the spherical bessel function for each q_i
-                    ModuleBase::Sphbes::Spherical_Bessel(kkbeta, upf->r, q, l, besr);
+                    ModuleBase::Sphbes::Spherical_Bessel(kkbeta, upf->r.data(), q, l, besr);
                     for (int nb = 0; nb < nbeta; nb++)
                     {
                         // the Q are symmetric with respect to indices nb and mb
@@ -931,7 +944,7 @@ void pseudopot_cell_vnl::compute_qrad(UnitCell& cell)
                                 }
                                 // then we integrate with all the Q functions
                                 double vqint;
-                                ModuleBase::Integral::Simpson_Integral(kkbeta, aux, upf->rab, vqint);
+                                ModuleBase::Integral::Simpson_Integral(kkbeta, aux, upf->rab.data(), vqint);
                                 qrad(it, l, ijv, iq) = vqint * pref;
                             }
                         }
@@ -1279,10 +1292,11 @@ double pseudopot_cell_vnl::CG(int l1, int m1, int l2, int m2, int L, int M) // p
 // }
 #endif
 
-void pseudopot_cell_vnl::init_vnl_alpha(void) // pengfei Li 2018-3-23
+void pseudopot_cell_vnl::init_vnl_alpha() // pengfei Li 2018-3-23
 {
-    if (GlobalV::test_pp)
+    if (GlobalV::test_pp) {
         ModuleBase::TITLE("pseudopot_cell_vnl", "init_vnl_alpha");
+}
     ModuleBase::timer::tick("ppcell_vnl", "init_vnl_alpha");
 
     for (int it = 0; it < GlobalC::ucell.ntype; it++)
@@ -1331,7 +1345,7 @@ void pseudopot_cell_vnl::init_vnl_alpha(void) // pengfei Li 2018-3-23
                 for (int iq = 0; iq < GlobalV::NQX; iq++)
                 {
                     const double q = iq * GlobalV::DQ;
-                    ModuleBase::Sphbes::Spherical_Bessel(kkbeta, GlobalC::ucell.atoms[it].ncpp.r, q, L, jl);
+                    ModuleBase::Sphbes::Spherical_Bessel(kkbeta, GlobalC::ucell.atoms[it].ncpp.r.data(), q, L, jl);
 
                     for (int ir = 0; ir < kkbeta; ir++)
                     {
@@ -1339,7 +1353,7 @@ void pseudopot_cell_vnl::init_vnl_alpha(void) // pengfei Li 2018-3-23
                                   * GlobalC::ucell.atoms[it].ncpp.r[ir] * GlobalC::ucell.atoms[it].ncpp.r[ir];
                     }
                     double vqint;
-                    ModuleBase::Integral::Simpson_Integral(kkbeta, aux, GlobalC::ucell.atoms[it].ncpp.rab, vqint);
+                    ModuleBase::Integral::Simpson_Integral(kkbeta, aux, GlobalC::ucell.atoms[it].ncpp.rab.data(), vqint);
                     this->tab_alpha(it, ib, L, iq) = vqint * pref;
                 }
             }
@@ -1362,8 +1376,9 @@ void pseudopot_cell_vnl::cal_effective_D(const ModuleBase::matrix& veff,
                                          const ModulePW::PW_Basis* rho_basis,
                                          UnitCell& cell)
 {
-    if (GlobalV::use_paw)
+    if (GlobalV::use_paw) {
         return;
+}
     ModuleBase::TITLE("pseudopot_cell_vnl", "cal_effective_D");
 
     /*

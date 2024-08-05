@@ -16,15 +16,6 @@ Pseudopot_upf::Pseudopot_upf()
 
 Pseudopot_upf::~Pseudopot_upf()
 {
-    delete[] kbeta;
-    delete[] els_beta;
-    delete[] nchi;
-    delete[] epseu;
-    delete[] rcut_chi;
-    delete[] rcutus_chi;
-    delete[] rinner;
-    delete[] rcut;
-    delete[] rcutus;
 }
 
 int Pseudopot_upf::init_pseudo_reader(const std::string &fn, std::string &type, Atom_pseudo& pp)
@@ -460,7 +451,7 @@ void Pseudopot_upf::set_upf_q(Atom_pseudo& pp)
                                 break;
                             }
                         }
-                        this->setqfnew(nqf, ilast, l, 2, &(qfcoef(nb, mb, l, 0)), pp.r, &(pp.qfuncl(l, nmb, 0)));
+                        this->setqfnew(nqf, ilast, l, 2, &(qfcoef(nb, mb, l, 0)), pp.r.data(), &(pp.qfuncl(l, nmb, 0)));
                     }
                 }
             }

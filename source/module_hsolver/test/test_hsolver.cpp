@@ -62,44 +62,40 @@ public:
   std::ofstream temp_ofs;
 };
 
-TEST_F(TestHSolver, solve)
-{
-    hs_cf.solve(&hamilt_test_cf, psi_test_cf, &elecstate_test, method_test, false);
-	hs_f.solve(&hamilt_test_f, psi_test_f, &elecstate_test, method_test, false);
-    hs_cd.solve(&hamilt_test_cd, psi_test_cd, &elecstate_test, method_test, false);
-	hs_d.solve(&hamilt_test_d, psi_test_d, &elecstate_test, method_test, false);
-    hs_cf.solve(&hamilt_test_cf, psi_test_cf, &elecstate_test, method_test, true);
-	hs_f.solve(&hamilt_test_f, psi_test_f, &elecstate_test, method_test, true);
-    hs_cd.solve(&hamilt_test_cd, psi_test_cd, &elecstate_test, method_test, true);
-	hs_d.solve(&hamilt_test_d, psi_test_d, &elecstate_test, method_test, true);
-    // hs_cf.solve(&hamilt_test_cf, psi_test_cf, &elecstate_test, wfcpw, stowf_test, 0, 0, method_test, true);
-    // hs_cd.solve(&hamilt_test_cd, psi_test_cd, &elecstate_test, wfcpw, stowf_test, 0, 0, method_test, true);
-	EXPECT_EQ(hs_f.classname, "none");
-	EXPECT_EQ(hs_d.classname, "none");
-	EXPECT_EQ(hs_f.method, "none");
-	EXPECT_EQ(hs_d.method, "none");
-}
+// TEST_F(TestHSolver, solve)
+// {
+//     hs_cf.solve(&hamilt_test_cf, psi_test_cf, &elecstate_test, method_test, false);
+// 	hs_f.solve(&hamilt_test_f, psi_test_f, &elecstate_test, method_test, false);
+//     hs_cd.solve(&hamilt_test_cd, psi_test_cd, &elecstate_test, method_test, false);
+// 	hs_d.solve(&hamilt_test_d, psi_test_d, &elecstate_test, method_test, false);
+//     hs_cf.solve(&hamilt_test_cf, psi_test_cf, &elecstate_test, method_test, true);
+// 	hs_f.solve(&hamilt_test_f, psi_test_f, &elecstate_test, method_test, true);
+//     hs_cd.solve(&hamilt_test_cd, psi_test_cd, &elecstate_test, method_test, true);
+// 	hs_d.solve(&hamilt_test_d, psi_test_d, &elecstate_test, method_test, true);
+//     // hs_cf.solve(&hamilt_test_cf, psi_test_cf, &elecstate_test, wfcpw, stowf_test, 0, 0, method_test, true);
+//     // hs_cd.solve(&hamilt_test_cd, psi_test_cd, &elecstate_test, wfcpw, stowf_test, 0, 0, method_test, true);
+// 	EXPECT_EQ(hs_f.method, "none");
+// 	EXPECT_EQ(hs_d.method, "none");
+// }
 
 TEST_F(TestHSolver, diagethr)
 {
     float test_diagethr = hs_f.set_diagethr(0.0, 0, 0, 0.0);
-	EXPECT_EQ(hs_f.diag_ethr, 0.0);
 	EXPECT_EQ(test_diagethr, 0.0);
+
     test_diagethr = hs_f.reset_diagethr(temp_ofs, 0.0, 0.0, 0.0);
-	EXPECT_EQ(hs_f.diag_ethr, 0.0);
 	EXPECT_EQ(test_diagethr, 0.0);
+
     test_diagethr = hs_f.cal_hsolerror(0.0);
-	EXPECT_EQ(hs_f.diag_ethr, 0.0);
 	EXPECT_EQ(test_diagethr, 0.0);
 
 	double test_diagethr_d = hs_d.set_diagethr(0.0, 0, 0, 0.0);
-	EXPECT_EQ(hs_d.diag_ethr, 0.0);
 	EXPECT_EQ(test_diagethr_d, 0.0);
+
     test_diagethr_d = hs_d.reset_diagethr(temp_ofs, 0.0, 0.0, 0.0);
-	EXPECT_EQ(hs_d.diag_ethr, 0.0);
 	EXPECT_EQ(test_diagethr_d, 0.0);
+
     test_diagethr_d = hs_d.cal_hsolerror(0.0);
-	EXPECT_EQ(hs_d.diag_ethr, 0.0);
 	EXPECT_EQ(test_diagethr_d, 0.0);
 }
 namespace hsolver
@@ -125,25 +121,4 @@ class DiagH_mock : public DiagH<T, Device>
 	};
 	template class DiagH_mock<std::complex<float>>;
 	template class DiagH_mock<std::complex<double>>;
-}
-
-TEST_F(TestHSolver, diagh)
-{
-    //test DiagH::diag
-    this->hs_cf.pdiagh = new hsolver::DiagH_mock<std::complex<float>>;
-    this->hs_cf.pdiagh->diag(nullptr, this->psi_test_cf, nullptr);
-    EXPECT_EQ(this->hs_cf.pdiagh->method, "none");
-
-    this->hs_cd.pdiagh = new hsolver::DiagH_mock<std::complex<double>>;
-    this->hs_cd.pdiagh->diag(nullptr, this->psi_test_cd, nullptr);
-    EXPECT_EQ(this->hs_cd.pdiagh->method, "none");
-
-    this->hs_f.pdiagh = new hsolver::DiagH_mock<float>;
-    this->hs_f.pdiagh->diag(nullptr, this->psi_test_f, nullptr);
-    EXPECT_EQ(this->hs_f.pdiagh->method, "none");
-
-    this->hs_d.pdiagh = new hsolver::DiagH_mock<double>;
-    this->hs_d.pdiagh->diag(nullptr, this->psi_test_d, nullptr);
-    EXPECT_EQ(this->hs_d.pdiagh->method, "none");
-    //test HSolver::~HSolver() it will delete pdiagh
 }

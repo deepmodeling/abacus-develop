@@ -55,6 +55,14 @@ namespace ModuleESolver
         this->classname = "ESolver_KS_LIP";
         this->basisname = "LIP";
     }
+    template <typename T>
+    ESolver_KS_LIP<T>::~ESolver_KS_LIP()
+    {
+        // delete HSolver and ElecState
+        this->deallocate_hsolver();
+        // delete Hamilt
+        this->deallocate_hamilt();
+    }
 
     template <typename T>
     void ESolver_KS_LIP<T>::allocate_hsolver()
@@ -66,6 +74,7 @@ namespace ModuleESolver
     {
         if (this->phsol != nullptr)
         {
+            std::cout << "test" << std::endl;
             delete reinterpret_cast<hsolver::HSolverLIP<T>*>(this->phsol);
             this->phsol = nullptr;
         }
@@ -78,6 +87,15 @@ namespace ModuleESolver
             , *this->exx_lip
 #endif
         );
+    }
+    template <typename T>
+    void ESolver_KS_LIP<T>::deallocate_hamilt()
+    {
+        if (this->p_hamilt != nullptr)
+        {
+            delete reinterpret_cast<hamilt::HamiltLIP<T>*>(this->p_hamilt);
+            this->p_hamilt = nullptr;
+        }
     }
 
     template <typename T>
@@ -256,6 +274,7 @@ namespace ModuleESolver
     void ESolver_KS_LIP<T>::after_all_runners()
     {
         ESolver_KS_PW<T>::after_all_runners();
+        
 #ifdef __LCAO
         if (PARAM.inp.out_mat_xc)
         {
