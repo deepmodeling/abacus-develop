@@ -282,9 +282,7 @@ OBJS_GINT=gint.o\
       gint_force_cpu_interface.o\
       gint_rho_cpu_interface.o\
       gint_vl_cpu_interface.o\
-      mult_psi_dm.o\
-      mult_psi_dm_new.o\
-      mult_psi_dmr.o\
+
 
 OBJS_TOOLS=gint_tools.o\
         cal_psir_ylm.o\
@@ -293,7 +291,9 @@ OBJS_TOOLS=gint_tools.o\
         cal_dpsirr_ylm.o\
         gint_inout.o\
         init_orb.o\
-
+        mult_psi_dm.o\
+        mult_psi_dm_new.o\
+        mult_psi_dmr.o\
 OBJS_HAMILT=hamilt_pw.o\
     operator.o\
     operator_pw.o\
