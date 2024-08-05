@@ -70,8 +70,6 @@ class DiagoPrepare
         if (ks_solver == "scalapack_gvx")
             std::cout << " Use scalapack solver." << std::endl;
             // Dont need to use dh pointer here after refactor
-            //dh = new hsolver::DiagoScalapack<T>(GlobalV::NBANDS, GlobalV::NLOCAL, GlobalV::NLOCAL, GlobalV::DSIZE);
-            //dh = new hsolver::DiagoScalapack<T>;
 #ifdef __ELPA
         else if (ks_solver == "genelpa")
             dh = new hsolver::DiagoElpa<T>;
@@ -219,7 +217,7 @@ class DiagoPrepare
         {
             hmtest.h_local = this->h_local;
             hmtest.s_local = this->s_local;
-            if (ks_solver == "scalapack_gvx"){
+            if (ks_solver != "scalapack_gvx"){
                 dh->diag(&hmtest, psi, e_solver.data());
             }
             else{
@@ -232,7 +230,9 @@ class DiagoPrepare
         }
         endtime = MPI_Wtime();
         hsolver_time = (endtime - starttime) / REPEATRUN;
-        delete dh;
+        if (ks_solver != "scalapack_gvx"){
+            delete dh;
+        }
     }
 
     void diago_lapack()
