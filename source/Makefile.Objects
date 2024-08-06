@@ -57,7 +57,6 @@ VPATH=./src_global:\
 ./module_hamilt_lcao/module_deltaspin:\
 ./module_hamilt_lcao/hamilt_lcaodft/operator_lcao:\
 ./module_hamilt_lcao/module_gint:\
-./module_hamilt_lcao/module_gint/tools:\
 ./module_relax:\
 ./module_relax/relax_old:\
 ./module_relax/relax_new:\
@@ -101,7 +100,6 @@ ${OBJS_DEEPKS}\
 ${OBJS_ELECSTAT_LCAO}\
 ${OBJS_ESOLVER_LCAO}\
 ${OBJS_GINT}\
-${OBJS_TOOLS}\
 ${OBJS_HAMILT_LCAO}\
 ${OBJS_HSOLVER_LCAO}\
 ${OBJS_HCONTAINER}\
@@ -283,18 +281,16 @@ OBJS_GINT=gint.o\
       gint_force_cpu_interface.o\
       gint_rho_cpu_interface.o\
       gint_vl_cpu_interface.o\
-
-
-OBJS_TOOLS=gint_tools.o\
-        cal_psir_ylm.o\
-        cal_dpsir_ylm.o\
-        cal_ddpsir_ylm.o\
-        cal_dpsirr_ylm.o\
-        gint_inout.o\
-        init_orb.o\
-        mult_psi_dm.o\
-        mult_psi_dm_new.o\
-        mult_psi_dmr.o\
+      gint_tools.o\
+      cal_psir_ylm.o\
+      cal_dpsir_ylm.o\
+      cal_ddpsir_ylm.o\
+      cal_dpsirr_ylm.o\
+      gint_inout.o\
+      init_orb.o\
+      mult_psi_dm.o\
+      mult_psi_dm_new.o\
+      mult_psi_dmr.o\
 
 OBJS_HAMILT=hamilt_pw.o\
     operator.o\
