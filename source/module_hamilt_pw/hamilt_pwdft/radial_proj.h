@@ -58,11 +58,6 @@ namespace RadialProjection
      * // to convert between 1D index and [irad][m] (instead of im!).
      * std::vector<std::vector<int>> map_;
      * rp._build_sbtft_map(l, map_);
-     * int irad, m;
-     * int idx;
-     * rp._irad_m_to_idx(irad, m, map_, idx); // you can get the 1D index
-     * rp._idx_to_irad_m(idx, map_, irad, m); // you can get the irad and m,
-     * // the latter ranges from -l to l.
      * ```
      * 
      * 2. SBFFT: small box fast-fourier-transform (not implemented yet)
