@@ -54,6 +54,6 @@ class Grid_BigCell: public Grid_MeshCell
 		//---------------------------------
 		void init_tau_in_bigcell(const UnitCell& ucell);
 		//---------------------------------
-		void init_grid_expansion(const UnitCell& ucell,double* rcut);
+		void grid_expansion(const UnitCell& ucell,double* rcut);
 };
 #endif

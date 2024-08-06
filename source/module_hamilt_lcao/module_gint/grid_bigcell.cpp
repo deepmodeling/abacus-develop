@@ -73,9 +73,9 @@ void Grid_BigCell::init_big_latvec(const UnitCell& ucell)
 }
 
 
-void Grid_BigCell::init_grid_expansion(const UnitCell& ucell,double* rcut)
+void Grid_BigCell::grid_expansion(const UnitCell& ucell,double* rcut)
 {
-	ModuleBase::TITLE("Grid_BigCell","init_grid_expansion");
+	ModuleBase::TITLE("Grid_BigCell","grid_expansion");
 
 	// calculate the max cutoff radius among all orbitals.
 	// then we will use this parameter to generate grid expansion.

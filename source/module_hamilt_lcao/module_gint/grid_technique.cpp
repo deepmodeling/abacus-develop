@@ -99,7 +99,7 @@ void Grid_Technique::set_pbc_grid(
 
     // (2) expand the grid
 
-    this->init_grid_expansion(ucell, this->rcuts.data());
+    this->grid_expansion(ucell, this->rcuts.data());
 
     // (3) calculate the extended grid.
     this->cal_extended_cell(this->dxe,
@@ -113,7 +113,7 @@ void Grid_Technique::set_pbc_grid(
 
     this->init_meshball();
 
-    this->init_atoms_on_grid(ny, nplane, startz_current, ucell);
+    this->atoms_on_grid(ny, nplane, startz_current, ucell);
 
     this->cal_trace_lo(ucell);
 #if ((defined __CUDA) /* || (defined __ROCM) */)
@@ -162,14 +162,14 @@ void Grid_Technique::get_startind(const int& ny,
     return;
 }
 
-// PLEASE update this 'init_atoms_on_grid' to make
+// PLEASE update this 'atoms_on_grid' to make
 // it adapted to 'cuboid' shape of grid
 // mohan add 2021-04-06
-void Grid_Technique::init_atoms_on_grid(const int& ny,
+void Grid_Technique::atoms_on_grid(const int& ny,
                                         const int& nplane,
                                         const int& startz_current,
                                         const UnitCell& ucell) {
-    ModuleBase::TITLE("Grid_Technique", "init_atoms_on_grid");
+    ModuleBase::TITLE("Grid_Technique", "atoms_on_grid");
 
     assert(nbxx >= 0);
     this->get_startind(ny, nplane, startz_current);
@@ -217,7 +217,7 @@ void Grid_Technique::init_atoms_on_grid(const int& ny,
                     std::cout << " normal=" << normal << std::endl;
                     std::cout << " nbxyz=" << nbxyz << std::endl;
                     ModuleBase::WARNING_QUIT(
-                        "Grid_Technique::init_atoms_on_grid",
+                        "Grid_Technique::atoms_on_grid",
                         "normal >= nbxyz");
                 }
             }
@@ -271,7 +271,7 @@ void Grid_Technique::init_atoms_on_grid(const int& ny,
     }
     Parallel_Reduce::reduce_all(stop);
     if (stop) {
-        ModuleBase::WARNING("Grid_Technique::init_atoms_on_grid",
+        ModuleBase::WARNING("Grid_Technique::atoms_on_grid",
                             "No atom on this sub-FFT-mesh.");
     }
 

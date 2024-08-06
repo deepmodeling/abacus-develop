@@ -84,7 +84,8 @@ class Gint_k : public Gint {
     // in gint_k_sparse1.cpp
     //------------------------------------------------------
     // similar to the above 3, just for the derivative
-    void distribute_pvdpR_sparseMatrix(
+    // distribute_cpvdpR_sparseMatrix
+    void pvdpR_smatrix(
         const int current_spin,
         const int dim,
         const double& sparse_threshold,
@@ -94,7 +95,8 @@ class Gint_k : public Gint {
         LCAO_HS_Arrays& HS_Arrays,
         const Parallel_Orbitals* pv);
 
-    void distribute_pvdpR_soc_sparseMatrix(
+    // distribute_pvdpR_soc_sparseMatrix
+    void pvdpR_soc_smatrix(
         const int dim,
         const double& sparse_threshold,
         const std::map<
@@ -104,7 +106,8 @@ class Gint_k : public Gint {
         LCAO_HS_Arrays& HS_Arrays,
         const Parallel_Orbitals* pv);
 
-    void cal_dvlocal_R_sparseMatrix(const int& current_spin,
+    // cal_dvlocal_R_sparseMatrix
+    void dvlocal_R_smatrix(const int& current_spin,
                                     const double& sparse_threshold,
                                     LCAO_HS_Arrays& HS_Arrays,
                                     const Parallel_Orbitals* pv,
