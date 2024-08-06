@@ -164,7 +164,7 @@ void Gint_k::pvdpR_smatrix(
     return;
 }
 
-void Gint_k::pvdpR_soc_smatrix(
+void Gint_k::pvdpR_soc_smat(
     const int dim,
     const double& sparse_threshold,
     const std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>&
@@ -172,7 +172,7 @@ void Gint_k::pvdpR_soc_smatrix(
     LCAO_HS_Arrays& HS_Arrays,
     const Parallel_Orbitals* pv)
 {
-    ModuleBase::TITLE("Gint_k", "pvdpR_soc_smatrix");
+    ModuleBase::TITLE("Gint_k", "pvdpR_soc_smat");
 
     int total_R_num = HS_Arrays.all_R_coor.size();
     int* nonzero_num = new int[total_R_num];
@@ -317,14 +317,14 @@ void Gint_k::pvdpR_soc_smatrix(
     return;
 }
 
-void Gint_k::dvlocal_R_smatrix(const int& current_spin,
+void Gint_k::dvlocal_R_smat(const int& current_spin,
                                         const double& sparse_threshold,
                                         LCAO_HS_Arrays& HS_Arrays,
                                         const Parallel_Orbitals* pv,
                                         UnitCell& ucell,
                                         Grid_Driver& gdriver)
 {
-    ModuleBase::TITLE("Gint_k", "dvlocal_R_smatrix");
+    ModuleBase::TITLE("Gint_k", "dvlocal_R_smat");
 
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> pvdpRx_sparseMatrix;
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> pvdpRy_sparseMatrix;
@@ -564,9 +564,9 @@ void Gint_k::dvlocal_R_smatrix(const int& current_spin,
     }
     else
     {
-        pvdpR_soc_smatrix(0, sparse_threshold, pvdpRx_soc_sparseMatrix, HS_Arrays, pv);
-        pvdpR_soc_smatrix(1, sparse_threshold, pvdpRy_soc_sparseMatrix, HS_Arrays, pv);
-        pvdpR_soc_smatrix(2, sparse_threshold, pvdpRz_soc_sparseMatrix, HS_Arrays, pv);
+        pvdpR_soc_smat(0, sparse_threshold, pvdpRx_soc_sparseMatrix, HS_Arrays, pv);
+        pvdpR_soc_smat(1, sparse_threshold, pvdpRy_soc_sparseMatrix, HS_Arrays, pv);
+        pvdpR_soc_smat(2, sparse_threshold, pvdpRz_soc_sparseMatrix, HS_Arrays, pv);
     }
 
     return;

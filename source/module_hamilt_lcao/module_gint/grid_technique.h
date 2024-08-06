@@ -156,8 +156,8 @@ class Grid_Technique : public Grid_MeshBall {
                             const int& nplane,
                             const int& startz_current,
                             const UnitCell& ucell);
-    void init_atoms_on_grid2(const int* index2normal, const UnitCell& ucell);
-    void cal_grid_integration_index();
+    void atoms_on_grid2(const int* index2normal, const UnitCell& ucell);
+    void cal_gint_index();
     void cal_trace_lo(const UnitCell& ucell);
     void check_bigcell(int* ind_bigcell, char* bigcell_on_processor);
     void get_startind(const int& ny,
@@ -184,8 +184,8 @@ class Grid_Technique : public Grid_MeshBall {
     matrix_multiple_func_type fastest_matrix_mul;
 
   private:
-    void init_gpu_gint_variables(const UnitCell& ucell, const int num_stream);
-    void free_gpu_gint_variables(int nat);
+    void init_gpu_var(const UnitCell& ucell, const int num_stream);
+    void free_gpu_var(int nat);
 
 #endif
 };

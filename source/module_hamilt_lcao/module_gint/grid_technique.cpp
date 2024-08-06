@@ -22,7 +22,7 @@ Grid_Technique::~Grid_Technique() {
 
 #if ((defined __CUDA) /* || (defined __ROCM) */)
     if (GlobalV::device_flag == "gpu") {
-        free_gpu_gint_variables(this->nat);
+        free_gpu_var(this->nat);
     }
 #endif
 }
@@ -118,7 +118,7 @@ void Grid_Technique::set_pbc_grid(
     this->cal_trace_lo(ucell);
 #if ((defined __CUDA) /* || (defined __ROCM) */)
     if (GlobalV::device_flag == "gpu") {
-        this->init_gpu_gint_variables(ucell, num_stream);
+        this->init_gpu_var(ucell, num_stream);
     }
 #endif
 
@@ -286,9 +286,9 @@ void Grid_Technique::atoms_on_grid(const int& ny,
     }
 
     // need how_many_atoms first.
-    this->cal_grid_integration_index();
+    this->cal_gint_index();
     // bcell_start is needed.
-    this->init_atoms_on_grid2(index2normal.data(), ucell);
+    this->atoms_on_grid2(index2normal.data(), ucell);
     return;
 }
 
@@ -327,12 +327,12 @@ void Grid_Technique::check_bigcell(int* ind_bigcell,
     return;
 }
 
-void Grid_Technique::init_atoms_on_grid2(const int* index2normal,
+void Grid_Technique::atoms_on_grid2(const int* index2normal,
                                          const UnitCell& ucell) {
-    ModuleBase::TITLE("Grid_Techinique", "init_atoms_on_grid2");
+    ModuleBase::TITLE("Grid_Techinique", "atoms_on_grid2");
 
     if (total_atoms_on_grid == 0) {
-        ModuleBase::WARNING("Grid_Technique::init_atoms_on_grid2",
+        ModuleBase::WARNING("Grid_Technique::atoms_on_grid2",
                             "no atom on this sub FFT grid.");
         return;
     }
@@ -422,7 +422,7 @@ void Grid_Technique::init_atoms_on_grid2(const int* index2normal,
     return;
 }
 
-void Grid_Technique::cal_grid_integration_index() {
+void Grid_Technique::cal_gint_index() {
     // save the start
     this->bcell_start = std::vector<int>(nbxx, 0);
     for (int i = 1; i < nbxx; i++) {
@@ -539,12 +539,12 @@ int Grid_Technique::find_offset(const int id1, const int id2, const int iat1, co
 
 #if ((defined __CUDA) /* || (defined __ROCM) */)
 
-void Grid_Technique::init_gpu_gint_variables(const UnitCell& ucell,
+void Grid_Technique::init_gpu_var(const UnitCell& ucell,
                                              const int num_stream) {
 
     int dev_id = base_device::information::set_device_by_rank();
     if (is_malloced) {
-        free_gpu_gint_variables(this->nat);
+        free_gpu_var(this->nat);
     }
     nstreams = num_stream;
     double ylmcoef[100];
@@ -674,7 +674,7 @@ void Grid_Technique::init_gpu_gint_variables(const UnitCell& ucell,
     free(atom_iw2_ylm_now);
 }
 
-void Grid_Technique::free_gpu_gint_variables(int nat) {
+void Grid_Technique::free_gpu_var(int nat) {
     if (!is_malloced) {
         return;
     }

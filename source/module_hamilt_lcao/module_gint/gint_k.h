@@ -96,7 +96,7 @@ class Gint_k : public Gint {
         const Parallel_Orbitals* pv);
 
     // distribute_pvdpR_soc_sparseMatrix
-    void pvdpR_soc_smatrix(
+    void pvdpR_soc_smat(
         const int dim,
         const double& sparse_threshold,
         const std::map<
@@ -107,7 +107,7 @@ class Gint_k : public Gint {
         const Parallel_Orbitals* pv);
 
     // cal_dvlocal_R_sparseMatrix
-    void dvlocal_R_smatrix(const int& current_spin,
+    void dvlocal_R_smat(const int& current_spin,
                                     const double& sparse_threshold,
                                     LCAO_HS_Arrays& HS_Arrays,
                                     const Parallel_Orbitals* pv,
