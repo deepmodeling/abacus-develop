@@ -136,7 +136,6 @@ void Grid_Technique::get_startind(const int& ny,
     // calculates start_ind, which stores the
     // starting index of each bigcell
     this->start_ind = std::vector<int>(nbxx, 0);
-    ModuleBase::Memory::record("GT::start_ind", sizeof(int) * nbxx);
 
     for (int i = 0; i < nbxx; i++) {
         int ibx = 0;
@@ -179,27 +178,22 @@ void Grid_Technique::init_atoms_on_grid(const int& ny,
     // counting the number of atoms whose orbitals have
     // values on the bigcell.
     this->how_many_atoms = std::vector<int>(nbxx, 0);
-    ModuleBase::Memory::record("GT::how_many_atoms", sizeof(int) * nbxx);
 
     // (2) information about gloabl grid
     // and local grid.
     // mohan add 2010-07-02
     std::vector<int> ind_bigcell = std::vector<int>(nbxyz, 0);
-    ModuleBase::Memory::record("GT::ind_bigcell", sizeof(int) * this->nxyze);
     std::vector<char> bigcell_on_processor = std::vector<char>(nbxyz, 0);
-    ModuleBase::Memory::record("GT::bigcell_on_processor",
                                sizeof(char) * this->nxyze);
     this->check_bigcell(ind_bigcell.data(), bigcell_on_processor.data());
 
     // (3) Find the atoms using
     // when doing grid integration.
     this->in_this_processor = std::vector<bool>(ucell.nat, false);
-    ModuleBase::Memory::record("GT::in_this_processor",
                                sizeof(int) * this->nxyze);
 
     // (4) init atoms on grid
     std::vector<int> index2normal = std::vector<int>(this->nxyze, 0);
-    ModuleBase::Memory::record("GT::index2normal", sizeof(int) * this->nxyze);
     this->grid_expansion_index(true, index2normal.data());
 
     // (5) record how many atoms on
@@ -346,11 +340,9 @@ void Grid_Technique::init_atoms_on_grid2(const int* index2normal,
     }
 
     std::vector<int> index2ucell = std::vector<int>(this->nxyze, 0);
-    ModuleBase::Memory::record("GT::index2ucell", sizeof(int) * this->nxyze);
     this->grid_expansion_index(false, index2ucell.data());
 
     std::vector<int> ind_bigcell = std::vector<int>(nbxyz, 0);
-    ModuleBase::Memory::record("GT::ind_bigcell", sizeof(int) * nbxyz);
     std::vector<char> bigcell_on_processor = std::vector<char>(nbxyz, 0);
     this->check_bigcell(ind_bigcell.data(), bigcell_on_processor.data());
 
@@ -359,15 +351,12 @@ void Grid_Technique::init_atoms_on_grid2(const int* index2normal,
     //--------------------------------------
     assert(total_atoms_on_grid != 0);
     this->which_atom = std::vector<int>(total_atoms_on_grid, 0);
-    ModuleBase::Memory::record("GT::which_atom",
                                sizeof(int) * total_atoms_on_grid);
 
     this->which_bigcell = std::vector<int>(total_atoms_on_grid, 0);
-    ModuleBase::Memory::record("GT::which_bigcell",
                                sizeof(int) * total_atoms_on_grid);
 
     this->which_unitcell = std::vector<int>(total_atoms_on_grid, 0);
-    ModuleBase::Memory::record("GT::which_unitcell",
                                sizeof(int) * total_atoms_on_grid);
 
     // for each atom, first we need to locate which cell
@@ -375,7 +364,6 @@ void Grid_Technique::init_atoms_on_grid2(const int* index2normal,
     // grid, and record each grid's atom position.
     int count = 0;
     this->how_many_atoms = std::vector<int>(nbxx, 0);
-    ModuleBase::Memory::record("GT::how many atoms", sizeof(int) * nbxx);
     for(int iat = 0; iat < ucell.nat; iat++)
     {
         const int it = ucell.iat2it[iat];
@@ -442,7 +430,6 @@ void Grid_Technique::init_atoms_on_grid2(const int* index2normal,
 void Grid_Technique::cal_grid_integration_index() {
     // save the start
     this->bcell_start = std::vector<int>(nbxx, 0);
-    ModuleBase::Memory::record("GT::bcell_start", sizeof(int) * nbxx);
     for (int i = 1; i < nbxx; i++) {
         this->bcell_start[i]
             = this->bcell_start[i - 1] + this->how_many_atoms[i - 1];
@@ -485,7 +472,6 @@ void Grid_Technique::cal_trace_lo(const UnitCell& ucell) {
     // in fact the trace_lo dimension can be reduced
     // to ucell.nat, but I think this is another way.
     this->trace_lo = std::vector<int>(GlobalV::NLOCAL, -1);
-    ModuleBase::Memory::record("GT::trace_lo", sizeof(int) * GlobalV::NLOCAL);
 
     this->lnat = 0;
     this->lgd = 0;

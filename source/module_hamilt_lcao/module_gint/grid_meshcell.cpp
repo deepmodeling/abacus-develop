@@ -144,7 +144,6 @@ void Grid_MeshCell::init_meshcell_pos(void)
 	assert(bxyz>0);
 
 	meshcell_pos = std::vector<std::vector<double>>(bxyz,std::vector<double>(3,0.0));
-	ModuleBase::Memory::record("meshcell_pos", sizeof(double) * bxyz*3);
 
 	int index=0;
 	for(int i=0; i<bx; i++)

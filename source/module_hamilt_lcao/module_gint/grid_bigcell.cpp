@@ -157,11 +157,9 @@ void Grid_BigCell::init_tau_in_bigcell(const UnitCell& ucell)
 	// allcoate space for atom positions relative
 	// to meshcell.
 	this->tau_in_bigcell = std::vector<std::vector<double>>(ucell.nat,std::vector<double>(3,0.0));
-	ModuleBase::Memory::record("tau_in_bigcell", sizeof(double) * ucell.nat*3);
 	// allocate space, these arrays record which meshcell
 	// the atom is in.
 	this->index_atom = std::vector<int>(ucell.nat, 0);
-	ModuleBase::Memory::record("index_atom", sizeof(double) * ucell.nat);
 	
 	// get the fraction number of (i,j,k)
 	ModuleBase::Vector3<double> fraction;

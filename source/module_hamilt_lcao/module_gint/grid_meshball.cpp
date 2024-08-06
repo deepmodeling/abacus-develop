@@ -68,9 +68,7 @@ void Grid_MeshBall::init_meshball(void)
 
 	// prepare for the second calculation.
 	this->meshball_positions = std::vector<std::vector<double>>(meshball_ncells, std::vector<double>(3, 0.0));
-	ModuleBase::Memory::record("meshball_pos", sizeof(double) * meshball_ncells*3);
     this->index_ball = std::vector<int>(meshball_ncells);
-	ModuleBase::Memory::record("index_ball", sizeof(int) * meshball_ncells);
 
 	// second time.
 	int count = 0;
