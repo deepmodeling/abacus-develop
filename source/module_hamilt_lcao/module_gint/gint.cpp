@@ -131,7 +131,7 @@ void Gint::prep_grid(const Grid_Technique& gt,
     return;
 }
 
-void Gint::initialize_pvpR(const UnitCell& ucell_in, Grid_Driver* gd) {
+void Gint::initialize_pvpR(const UnitCell& ucell_in) {
     ModuleBase::TITLE("Gint", "initialize_pvpR");
 
     int npol = 1;
@@ -192,7 +192,7 @@ void Gint::initialize_pvpR(const UnitCell& ucell_in, Grid_Driver* gd) {
         for (int I1 = 0; I1 < atom1->na; ++I1) {
             auto& tau1 = atom1->tau[I1];
 
-            gd->Find_atom(ucell_in, tau1, T1, I1);
+            gridt->gd->Find_atom(ucell_in, tau1, T1, I1);
 
             const int iat1 = ucell_in.itia2iat(T1, I1);
 
@@ -201,9 +201,9 @@ void Gint::initialize_pvpR(const UnitCell& ucell_in, Grid_Driver* gd) {
 
             // whether this atom is in this processor.
             if (this->gridt->in_this_processor[iat1]) {
-                for (int ad = 0; ad < gd->getAdjacentNum() + 1; ++ad) {
-                    const int T2 = gd->getType(ad);
-                    const int I2 = gd->getNatom(ad);
+                for (int ad = 0; ad < gridt->gd->getAdjacentNum() + 1; ++ad) {
+                    const int T2 = gridt->gd->getType(ad);
+                    const int I2 = gridt->gd->getNatom(ad);
                     const int iat2 = ucell_in.itia2iat(T2, I2);
                     const Atom* atom2 = &(ucell_in.atoms[T2]);
 
@@ -213,7 +213,7 @@ void Gint::initialize_pvpR(const UnitCell& ucell_in, Grid_Driver* gd) {
                     // is in this processor.
                     if (this->gridt->in_this_processor[iat2]) {
                         ModuleBase::Vector3<double> dtau
-                            = gd->getAdjacentTau(ad) - tau1;
+                            = gridt->gd->getAdjacentTau(ad) - tau1;
                         double distance = dtau.norm() * ucell_in.lat0;
                         double rcut
                             = this->gridt->rcuts[T1] + this->gridt->rcuts[T2];
@@ -228,7 +228,7 @@ void Gint::initialize_pvpR(const UnitCell& ucell_in, Grid_Driver* gd) {
                         //  rcuts[it] = 7.0000000000000008
                         if (distance < rcut - 1.0e-15) {
                             // calculate R index
-                            auto& R_index = gd->getBox(ad);
+                            auto& R_index = gridt->gd->getBox(ad);
                             // insert this atom-pair into this->hRGint
                             if (npol == 1) {
                                 hamilt::AtomPair<double> tmp_atom_pair(

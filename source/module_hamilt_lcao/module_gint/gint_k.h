@@ -63,11 +63,9 @@ class Gint_k : public Gint {
      * then pass this->hRGint to Veff<OperatorLCAO>::hR
      */
     void transfer_pvpR(hamilt::HContainer<double>* hR,
-                       const UnitCell* ucell_in,
-                       Grid_Driver* gd);
+                       const UnitCell* ucell_in);
     void transfer_pvpR(hamilt::HContainer<std::complex<double>>* hR,
-                       const UnitCell* ucell_in,
-                       Grid_Driver* gd);
+                       const UnitCell* ucell_in);
 
     //------------------------------------------------------
     // in gint_k_env.cpp
