@@ -109,26 +109,7 @@ class Gint {
     //                         hamilt::HContainer<double>* hR = nullptr);
 
     // calculate < phi_0 | vlocal | dphi_R >
-    void cpu_dvlocal(const int na_grid,
-                             const int grid_index,
-                             const double delta_r,
-                             double* vldr3,
-                             const int LD_pool,
-                             double* pvdpRx_reduced,
-                             double* pvdpRy_reduced,
-                             double* pvdpRz_reduced,
-                             const UnitCell& ucell);
-
-    void cpu_vlocal_meta(const int na_grid,
-                                 const int grid_index,
-                                 const double delta_r,
-                                 double* vldr3,
-                                 double* vkdr3,
-                                 const int LD_pool,
-                                 double* pvpR_reduced,
-                                 const UnitCell& ucell,
-                                 hamilt::HContainer<double>* hR = nullptr);
-
+  
     void cal_meshball_vlocal_gamma(
         const int na_grid, // how many atoms on this (i,j,k) grid
         const int LD_pool,
@@ -163,28 +144,6 @@ class Gint {
     // in gint_fvl.cpp
     //------------------------------------------------------
     // calculate vl contributuion to force & stress via grid integrals
-    void cpu_force(const int na_grid,
-                           const int grid_index,
-                           const double delta_r,
-                           double* vldr3,
-                           const int is,
-                           const bool isforce,
-                           const bool isstress,
-                           ModuleBase::matrix* fvl_dphi,
-                           ModuleBase::matrix* svl_dphi,
-                           const UnitCell& ucell);
-
-    void cpu_force_meta(const int na_grid,
-                                const int grid_index,
-                                const double delta_r,
-                                double* vldr3,
-                                double* vkdr3,
-                                const int is,
-                                const bool isforce,
-                                const bool isstress,
-                                ModuleBase::matrix* fvl_dphi,
-                                ModuleBase::matrix* svl_dphi,
-                                const UnitCell& ucell);
 
     void cal_meshball_force(
         const int grid_index,
@@ -211,13 +170,6 @@ class Gint {
     //------------------------------------------------------
     // calculate the charge density & kinetic energy density (tau) via grid
     // integrals
-    void cpu_rho(const int na_grid,
-                         const int grid_index,
-                         const double delta_r,
-                         int* vindex,
-                         const int LD_pool,
-                         const UnitCell& ucell,
-                         Gint_inout* inout);
 
     void cal_meshball_rho(const int na_grid,
                           int* block_index,
@@ -226,13 +178,6 @@ class Gint {
                           double** psir_DMR,
                           double* rho);
 
-    void cpu_tau(const int na_grid,
-                         const int grid_index,
-                         const double delta_r,
-                         int* vindex,
-                         const int LD_pool,
-                         Gint_inout* inout,
-                         const UnitCell& ucell);
 
     void cal_meshball_tau(const int na_grid,
                           int* block_index,
