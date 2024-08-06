@@ -48,11 +48,11 @@ class Grid_BigCell: public Grid_MeshCell
 		ModuleBase::Matrix3 bigcell_GT;
 		
 		//---------------------------------
-		void grid_expansion_index(bool f2normal, int *target)const;
+		void cal_grid_index(bool f2normal, int *target)const;
 		//---------------------------------
 		void init_big_latvec(const UnitCell &ucell);
 		//---------------------------------
-		void init_tau_in_bigcell(const UnitCell& ucell);
+		void cal_bigcell_tau(const UnitCell& ucell);
 		//---------------------------------
 		void grid_expansion(const UnitCell& ucell,double* rcut);
 };

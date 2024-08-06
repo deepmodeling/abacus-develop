@@ -109,7 +109,7 @@ void Grid_Technique::set_pbc_grid(
                             this->nby,
                             this->nbz);
 
-    this->init_tau_in_bigcell(ucell);
+    this->cal_bigcell_tau(ucell);
 
     this->init_meshball();
 
@@ -192,7 +192,7 @@ void Grid_Technique::atoms_on_grid(const int& ny,
 
     // (4) init atoms on grid
     std::vector<int> index2normal = std::vector<int>(this->nxyze, 0);
-    this->grid_expansion_index(true, index2normal.data());
+    this->cal_grid_index(true, index2normal.data());
 
     // (5) record how many atoms on
     // each local grid point (ix,iy,iz)
@@ -338,7 +338,7 @@ void Grid_Technique::atoms_on_grid2(const int* index2normal,
     }
 
     std::vector<int> index2ucell = std::vector<int>(this->nxyze, 0);
-    this->grid_expansion_index(false, index2ucell.data());
+    this->cal_grid_index(false, index2ucell.data());
 
     std::vector<int> ind_bigcell = std::vector<int>(nbxyz, 0);
     std::vector<char> bigcell_on_processor = std::vector<char>(nbxyz, 0);

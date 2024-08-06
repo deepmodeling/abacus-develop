@@ -125,9 +125,9 @@ void Grid_BigCell::grid_expansion(const UnitCell& ucell,double* rcut)
 }
 
 
-void Grid_BigCell::init_tau_in_bigcell(const UnitCell& ucell)
+void Grid_BigCell::cal_bigcell_tau(const UnitCell& ucell)
 {
-	ModuleBase::TITLE("Grid_BigCell","init_tau_in_bigcell");
+	ModuleBase::TITLE("Grid_BigCell","cal_bigcell_tau");
 	
 	// allcoate space for atom positions relative
 	// to meshcell.
@@ -182,7 +182,7 @@ void Grid_BigCell::init_tau_in_bigcell(const UnitCell& ucell)
 				std::cout << fraction.y << " ";
 				std::cout << fraction.z << " ";
 				std::cout << std::endl;
-				ModuleBase::WARNING_QUIT("Grid_BigCell::init_tau_in_bigcell","fraction.x<0 || fraction.y<0 || fraction.z<0");
+				ModuleBase::WARNING_QUIT("Grid_BigCell::cal_bigcell_tau","fraction.x<0 || fraction.y<0 || fraction.z<0");
 			}
 
 			assert(fraction.x >= 0.0);
@@ -245,10 +245,10 @@ void Grid_BigCell::init_tau_in_bigcell(const UnitCell& ucell)
 // (3)
 // if f2normal == true, calculate the index2normal.
 // if f2normal == false, calculate the index2cell. 
-void Grid_BigCell::grid_expansion_index(bool f2normal, int *target)const
+void Grid_BigCell::cal_grid_index(bool f2normal, int *target)const
 {
-	ModuleBase::TITLE("Grid_BigCell","grid_expansion_index");
-	ModuleBase::timer::tick("Grid_BigCell","grid_expansion_index");
+	ModuleBase::TITLE("Grid_BigCell","cal_grid_index");
+	ModuleBase::timer::tick("Grid_BigCell","cal_grid_index");
 	
 	int ii,jj,kk,in_ext,in_normal;
 	for(int i=0; i<this->nxe; i++)
@@ -331,6 +331,6 @@ void Grid_BigCell::grid_expansion_index(bool f2normal, int *target)const
 			}// k
 		}// j
 	}// i
-	ModuleBase::timer::tick("Grid_BigCell","grid_expansion_index");
+	ModuleBase::timer::tick("Grid_BigCell","cal_grid_index");
 	return;
 }
