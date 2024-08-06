@@ -71,27 +71,27 @@ class Gint {
     int ny, nplane, startz_current; // from rhopw
 
     // in cal_gint_gpu.cpp
-    void gpu_vlocal_interface(Gint_inout* inout);
+    void gpu_vlocal(Gint_inout* inout);
 
-    void gpu_rho_interface(Gint_inout* inout);
+    void gpu_rho(Gint_inout* inout);
 
-    void gpu_force_interface(Gint_inout* inout);
+    void gpu_force(Gint_inout* inout);
 
     // in cal_gint_cpu.cpp
 
-    void gint_kernel_vlocal(Gint_inout* inout);
+    void cpu_vlocal(Gint_inout* inout);
 
-    void gint_kernel_dvlocal(Gint_inout* inout);
+    void cpu_dvlocal(Gint_inout* inout);
 
-    void gint_kernel_vlocal_meta(Gint_inout* inout);
+    void cpu_vlocal_meta(Gint_inout* inout);
 
-    void gint_kernel_rho(Gint_inout* inout);
+    void cpu_rho(Gint_inout* inout);
 
-    void gint_kernel_tau(Gint_inout* inout);
+    void cpu_tau(Gint_inout* inout);
 
-    void gint_kernel_force(Gint_inout* inout);
+    void cpu_force(Gint_inout* inout);
 
-    void gint_kernel_force_meta(Gint_inout* inout);
+    void cpu_force_meta(Gint_inout* inout);
 
     //------------------------------------------------------
     // in gint_vl.cpp
@@ -99,7 +99,7 @@ class Gint {
     // calculate the matrix elements of Hamiltonian matrix,
     // < phi_0 | Vl + Vh + Vxc | phi_R> or if the Vna is used,
     // < phi_0 | delta_Vh + Vxc | phi_R>.
-    // void gint_kernel_vlocal(const int na_grid,
+    // void cpu_vlocal(const int na_grid,
     //                         const int grid_index,
     //                         const double delta_r,
     //                         double* vldr3,
@@ -109,7 +109,7 @@ class Gint {
     //                         hamilt::HContainer<double>* hR = nullptr);
 
     // calculate < phi_0 | vlocal | dphi_R >
-    void gint_kernel_dvlocal(const int na_grid,
+    void cpu_dvlocal(const int na_grid,
                              const int grid_index,
                              const double delta_r,
                              double* vldr3,
@@ -119,7 +119,7 @@ class Gint {
                              double* pvdpRz_reduced,
                              const UnitCell& ucell);
 
-    void gint_kernel_vlocal_meta(const int na_grid,
+    void cpu_vlocal_meta(const int na_grid,
                                  const int grid_index,
                                  const double delta_r,
                                  double* vldr3,
@@ -163,7 +163,7 @@ class Gint {
     // in gint_fvl.cpp
     //------------------------------------------------------
     // calculate vl contributuion to force & stress via grid integrals
-    void gint_kernel_force(const int na_grid,
+    void cpu_force(const int na_grid,
                            const int grid_index,
                            const double delta_r,
                            double* vldr3,
@@ -174,7 +174,7 @@ class Gint {
                            ModuleBase::matrix* svl_dphi,
                            const UnitCell& ucell);
 
-    void gint_kernel_force_meta(const int na_grid,
+    void cpu_force_meta(const int na_grid,
                                 const int grid_index,
                                 const double delta_r,
                                 double* vldr3,
@@ -211,7 +211,7 @@ class Gint {
     //------------------------------------------------------
     // calculate the charge density & kinetic energy density (tau) via grid
     // integrals
-    void gint_kernel_rho(const int na_grid,
+    void cpu_rho(const int na_grid,
                          const int grid_index,
                          const double delta_r,
                          int* vindex,
@@ -226,7 +226,7 @@ class Gint {
                           double** psir_DMR,
                           double* rho);
 
-    void gint_kernel_tau(const int na_grid,
+    void cpu_tau(const int na_grid,
                          const int grid_index,
                          const double delta_r,
                          int* vindex,

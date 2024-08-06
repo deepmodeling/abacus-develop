@@ -1,3 +1,4 @@
+#include "grid_technique.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "../hamilt_lcaodft/record_adj.h" //mohan add 2012-07-06

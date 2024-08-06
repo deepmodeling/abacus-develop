@@ -2,7 +2,7 @@
 #include "module_base/memory.h"
 #include "module_base/timer.h"
 
-void Gint::gint_kernel_rho(Gint_inout* inout) {
+void Gint::cpu_rho(Gint_inout* inout) {
     ModuleBase::TITLE("Gint_interface", "cal_gint_rho");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_rho");
     const int max_size = this->gridt->max_atom;
@@ -99,7 +99,7 @@ void Gint::gint_kernel_rho(Gint_inout* inout) {
     ModuleBase::timer::tick("Gint_interface", "cal_gint_rho");
 }
 
-void Gint::gint_kernel_tau(Gint_inout* inout) {
+void Gint::cpu_tau(Gint_inout* inout) {
     ModuleBase::TITLE("Gint_interface", "cal_gint_tau");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_tau");
     const int max_size = this->gridt->max_atom;

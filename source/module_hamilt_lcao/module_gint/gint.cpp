@@ -46,11 +46,11 @@ void Gint::cal_gint(Gint_inout* inout) {
                 || inout->job == Gint_Tools::job_type::rho
                 || inout->job == Gint_Tools::job_type::force)) {
             if (inout->job == Gint_Tools::job_type::vlocal) {
-                gpu_vlocal_interface(inout);
+                gpu_vlocal(inout);
             } else if (inout->job == Gint_Tools::job_type::rho) {
-                gpu_rho_interface(inout);
+                gpu_rho(inout);
             } else if (inout->job == Gint_Tools::job_type::force) {
-                gpu_force_interface(inout);
+                gpu_force(inout);
             }
         } else
 #endif
@@ -61,19 +61,19 @@ void Gint::cal_gint(Gint_inout* inout) {
 #endif
             {
                 if (inout->job == Gint_Tools::job_type::vlocal) {
-                    gint_kernel_vlocal(inout);
+                    cpu_vlocal(inout);
                 } else if (inout->job == Gint_Tools::job_type::dvlocal) {
-                    gint_kernel_dvlocal(inout);
+                    cpu_dvlocal(inout);
                 } else if (inout->job == Gint_Tools::job_type::vlocal_meta) {
-                    gint_kernel_vlocal_meta(inout);
+                    cpu_vlocal_meta(inout);
                 } else if (inout->job == Gint_Tools::job_type::rho) {
-                    gint_kernel_rho(inout);
+                    cpu_rho(inout);
                 } else if (inout->job == Gint_Tools::job_type::tau) {
-                    gint_kernel_tau(inout);
+                    cpu_tau(inout);
                 } else if (inout->job == Gint_Tools::job_type::force) {
-                    gint_kernel_force(inout);
+                    cpu_force(inout);
                 } else if (inout->job == Gint_Tools::job_type::force_meta) {
-                    gint_kernel_force_meta(inout);
+                    cpu_force_meta(inout);
                 }
             }
         }
