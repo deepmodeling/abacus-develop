@@ -321,8 +321,7 @@ void Gint_k::dvlocal_R_smat(const int& current_spin,
                                         const double& sparse_threshold,
                                         LCAO_HS_Arrays& HS_Arrays,
                                         const Parallel_Orbitals* pv,
-                                        UnitCell& ucell,
-                                        Grid_Driver& gdriver)
+                                        UnitCell& ucell)
 {
     ModuleBase::TITLE("Gint_k", "dvlocal_R_smat");
 
@@ -353,28 +352,28 @@ void Gint_k::dvlocal_R_smat(const int& current_spin,
 
                 const int DM_start = this->gridt->nlocstartg[iat];
                 tau1 = ucell.atoms[T1].tau[I1];
-                gdriver.Find_atom(ucell, tau1, T1, I1);
+                gridt->gd->Find_atom(ucell, tau1, T1, I1);
                 int nad2 = 0;
 
-                for (int ad = 0; ad < gdriver.getAdjacentNum() + 1; ad++)
+                for (int ad = 0; ad < gridt->gd->getAdjacentNum() + 1; ad++)
                 {
-                    const int T2 = gdriver.getType(ad);
-                    const int I2 = gdriver.getNatom(ad);
+                    const int T2 = gridt->gd->getType(ad);
+                    const int I2 = gridt->gd->getNatom(ad);
                     const int iat2 = ucell.itia2iat(T2, I2);
 
                     if (this->gridt->in_this_processor[iat2])
                     {
                         Atom* atom2 = &ucell.atoms[T2];
-                        dtau = gdriver.getAdjacentTau(ad) - tau1;
+                        dtau = gridt->gd->getAdjacentTau(ad) - tau1;
                         double distance = dtau.norm() * ucell.lat0;
                         double rcut = this->gridt->rcuts[T1] + this->gridt->rcuts[T2];
 
                         if (distance < rcut)
                         {
                             const int start2 = ucell.itiaiw2iwt(T2, I2, 0);
-                            Abfs::Vector3_Order<int> dR(gdriver.getBox(ad).x,
-                                                        gdriver.getBox(ad).y,
-                                                        gdriver.getBox(ad).z);
+                            Abfs::Vector3_Order<int> dR(gridt->gd->getBox(ad).x,
+                                                        gridt->gd->getBox(ad).y,
+                                                        gridt->gd->getBox(ad).z);
 
                             int ixxx = DM_start + this->gridt->find_R2st[iat][nad2];
 

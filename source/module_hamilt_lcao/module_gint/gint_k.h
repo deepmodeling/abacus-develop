@@ -109,8 +109,7 @@ class Gint_k : public Gint {
                                     const double& sparse_threshold,
                                     LCAO_HS_Arrays& HS_Arrays,
                                     const Parallel_Orbitals* pv,
-                                    UnitCell& ucell,
-                                    Grid_Driver& gdriver);
+                                    UnitCell& ucell);
 
   private:
     //----------------------------
