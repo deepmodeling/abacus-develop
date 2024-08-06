@@ -282,6 +282,7 @@ OBJS_GINT=gint.o\
       gint_force_cpu_interface.o\
       gint_rho_cpu_interface.o\
       gint_vl_cpu_interface.o\
+      cal_nnrg.o\
       cal_psir_ylm.o\
       cal_dpsir_ylm.o\
       cal_ddpsir_ylm.o\
@@ -575,7 +576,6 @@ OBJS_LCAO=evolve_elec.o\
       LCAO_set_fs.o\
       LCAO_set_st.o\
       LCAO_nl_mu.o\
-      LCAO_nnr.o\
       LCAO_set_zero.o\
       LCAO_allocate.o\
       LCAO_set_mat2d.o\
