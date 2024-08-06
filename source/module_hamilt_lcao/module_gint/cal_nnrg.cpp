@@ -70,16 +70,16 @@ void Grid_Technique::cal_nnrg(Parallel_Orbitals* pv)
 						tau2 = GlobalC::GridD.getAdjacentTau(ad);
 						dtau = GlobalC::GridD.getAdjacentTau(ad) - tau1;
 						double distance = dtau.norm() * ucell->lat0;
-						double rcut = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ORB.Phi[T2].getRcut();
+						double rcut = rcuts[T1] + rcuts[T2];
 
 
 						//if(distance < rcut)
 						// mohan reset this 2013-07-02 in Princeton
-						// we should make absolutely sure that the distance is smaller than GlobalC::ORB.Phi[it].getRcut
+						// we should make absolutely sure that the distance is smaller than rcut[it]
 						// this should be consistant with LCAO_nnr::cal_nnrg function 
 						// typical example : 7 Bohr cutoff Si orbital in 14 Bohr length of cell.
 						// distance = 7.0000000000000000
-						// GlobalC::ORB.Phi[it].getRcut = 7.0000000000000008
+						// rcut[it] = 7.0000000000000008
 						if(distance < rcut - 1.0e-15)
 						{
 							//storing the indexed for nnrg
@@ -158,7 +158,7 @@ void Grid_Technique::cal_nnrg(Parallel_Orbitals* pv)
 					{
 						dtau = GlobalC::GridD.getAdjacentTau(ad) - tau1;
                         double distance = dtau.norm() * ucell->lat0;
-                        double rcut = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ORB.Phi[T2].getRcut();
+                        double rcut = rcuts[T1] + rcuts[T2];
 
 						const int b1 = GlobalC::GridD.getBox(ad).x;
 						const int b2 = GlobalC::GridD.getBox(ad).y;
@@ -168,11 +168,11 @@ void Grid_Technique::cal_nnrg(Parallel_Orbitals* pv)
 						//			if(distance < rcut)
 
 						// mohan reset this 2013-07-02 in Princeton
-						// we should make absolutely sure that the distance is smaller than GlobalC::ORB.Phi[it].getRcut
+						// we should make absolutely sure that the distance is smaller than rcut[it]
 						// this should be consistant with LCAO_nnr::cal_nnrg function 
 						// typical example : 7 Bohr cutoff Si orbital in 14 Bohr length of cell.
 						// distance = 7.0000000000000000
-						// GlobalC::ORB.Phi[it].getRcut = 7.0000000000000008
+						// rcut[it] = 7.0000000000000008
 						if(distance < rcut - 1.0e-15)
 						{
 						//	assert( count < nad[iat] );

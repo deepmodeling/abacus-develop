@@ -322,6 +322,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
         this->pw_rho->nplane,
         this->pw_rho->startz_current,
         GlobalC::ucell,
+        GlobalC::GridD,
         dr_uniform,
         rcuts,
         psi_u,

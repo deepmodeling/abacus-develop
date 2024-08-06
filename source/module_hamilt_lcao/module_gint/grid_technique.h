@@ -80,7 +80,7 @@ class Grid_Technique : public Grid_MeshBall {
     // UnitCell and LCAO_Obrbitals
     const UnitCell* ucell;
     const LCAO_Orbitals* orb;
-
+    const Grid_Driver* gd;
     // UnitCell parameters
     int nwmax;
     int nr_max;
@@ -117,6 +117,7 @@ class Grid_Technique : public Grid_MeshBall {
                       const int& nplane,
                       const int& startz_current,
                       const UnitCell& ucell,
+                      const Grid_Driver& gd,
                       const double& dr_uniform,
                       const std::vector<double>& rcuts,
                       const std::vector<std::vector<double>>& psi_u,
