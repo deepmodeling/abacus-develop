@@ -184,11 +184,13 @@ void Grid_Technique::init_atoms_on_grid(const int& ny,
     // mohan add 2010-07-02
     std::vector<int> ind_bigcell = std::vector<int>(nbxyz, 0);
     std::vector<char> bigcell_on_processor = std::vector<char>(nbxyz, 0);
+                               sizeof(char) * this->nxyze);
     this->check_bigcell(ind_bigcell.data(), bigcell_on_processor.data());
 
     // (3) Find the atoms using
     // when doing grid integration.
     this->in_this_processor = std::vector<bool>(ucell.nat, false);
+                               sizeof(int) * this->nxyze);
 
     // (4) init atoms on grid
     std::vector<int> index2normal = std::vector<int>(this->nxyze, 0);
@@ -349,10 +351,13 @@ void Grid_Technique::init_atoms_on_grid2(const int* index2normal,
     //--------------------------------------
     assert(total_atoms_on_grid != 0);
     this->which_atom = std::vector<int>(total_atoms_on_grid, 0);
+                               sizeof(int) * total_atoms_on_grid);
 
     this->which_bigcell = std::vector<int>(total_atoms_on_grid, 0);
+                               sizeof(int) * total_atoms_on_grid);
 
     this->which_unitcell = std::vector<int>(total_atoms_on_grid, 0);
+                               sizeof(int) * total_atoms_on_grid);
 
     // for each atom, first we need to locate which cell
     // the atom is in, then we search meshball aroung this

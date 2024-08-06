@@ -1,7 +1,7 @@
 #ifndef ESOLVER_KS_LCAO_H
 #define ESOLVER_KS_LCAO_H
 #include "esolver_ks.h"
-#include "module_hamilt_lcao/module_gint/record_adj.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/record_adj.h"
 // for grid integration
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"

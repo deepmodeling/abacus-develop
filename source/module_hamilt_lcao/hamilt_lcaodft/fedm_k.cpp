@@ -22,7 +22,7 @@
 #include <omp.h>
 #endif
 
-#include "module_hamilt_lcao/module_gint/record_adj.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/record_adj.h"
 
 template<>
 void Force_LCAO<std::complex<double>>::cal_fedm(
