@@ -1,7 +1,4 @@
 #add_subdirectory(kernels/cuda)
-add_subdirectory(tools)
-
-
 
 list(APPEND objects
     gint.cpp
@@ -23,6 +20,15 @@ list(APPEND objects
     gint_force_cpu_interface.cpp
     gint_rho_cpu_interface.cpp
     gint_vl_cpu_interface.cpp
+    cal_ddpsir_ylm.cpp
+    cal_dpsir_ylm.cpp
+    cal_dpsirr_ylm.cpp
+    cal_psir_ylm.cpp
+    gint_tools.cpp
+    init_orb.cpp
+    mult_psi_dm_new.cpp
+    mult_psi_dmr.cpp
+    gint_inout.cpp
 )
 
 if(USE_CUDA)
@@ -57,7 +63,7 @@ add_library(
     OBJECT
     ${objects}
 )
-target_link_libraries(gint tools)
+
 if(ENABLE_COVERAGE)
   add_coverage(gint)
 endif()

@@ -2,7 +2,7 @@
 // REFACTOR : Peize Lin, 2021.06.28
 //=========================================================
 #include "gint_gamma.h"
-#include "tools/gint_tools.h"
+#include "gint_tools.h"
 #include "grid_technique.h"
 #include "module_base/blas_connector.h"
 #include "module_base/memory.h"
