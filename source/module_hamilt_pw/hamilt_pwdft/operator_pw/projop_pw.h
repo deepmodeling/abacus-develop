@@ -11,7 +11,7 @@
 #include "module_base/macros.h"
 #include "module_cell/unitcell.h"
 #include "module_basis/module_pw/pw_basis_k.h"
-
+#include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 namespace hamilt {
 
     #ifndef DFTUTEMPLATE_H
@@ -67,7 +67,7 @@ namespace hamilt {
                  const double& tpiba,                                   //< UnitCell::tpiba
                  const std::vector<ModuleBase::Vector3<double>>& q,     //< PW_Basis::getgpluskcar
                  const double& dq = 0.01,                               //< GlobalV::DQ
-                 const double& nq = 10000);                             //< GlobalV::NQX
+                 const int& nq = 10000);                             //< GlobalV::NQX
 
             /**
              * @brief the CENTRAL function that can act on the wavefunction psi

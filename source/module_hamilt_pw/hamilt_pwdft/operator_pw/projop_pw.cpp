@@ -37,7 +37,7 @@ namespace hamilt
                                       const double& tpiba,
                                       const std::vector<ModuleBase::Vector3<double>>& q,
                                       const double& dq,
-                                      const double& nq)
+                                      const int& nq)
     {
         RadialProjection::RadialProjector rp;
         const int nr = rgrid.size();
@@ -144,4 +144,100 @@ namespace hamilt
                  tpiba          // double
                  );
     }
+}
+
+// I am sorry but what does becp mean?...
+#include "module_base/blas_connector.h"
+void cal_becp(const int ik,
+              Structure_Factor& sf,
+              const ModulePW::PW_Basis_K& pw_basis,
+              const psi::Psi<std::complex<double>, base_device::DEVICE_CPU>& psi,
+              const std::vector<std::vector<int>>& it2ia,
+              const std::vector<std::vector<int>>& it2iproj,
+              const std::vector<double>& rgrid,
+              const std::vector<std::vector<double>>& projs,
+              const std::vector<int>& iproj2l,
+              std::vector<std::complex<double>>& becp,
+              const double& omega,
+              const double& tpiba,
+              const int nq = 10000,
+              const double dq = 0.01)
+{
+    // For given ik, can have set of q
+    const int npw = pw_basis.npwk[ik];
+    std::vector<ModuleBase::Vector3<double>> q(npw);
+    for(int ig = 0; ig < npw; ++ig)
+    {
+        q[ig] = pw_basis.getgpluskcar(ik, ig);
+    }
+
+    RadialProjection::RadialProjector rp;
+    std::vector<int> irow2it;
+    std::vector<int> irow2iproj;
+    std::vector<int> irow2m;
+    std::map<std::tuple<int, int, int, int>, int> itiaiprojm2irow;
+    RadialProjection::RadialProjector::_build_backward_map(it2iproj, iproj2l, irow2it, irow2iproj, irow2m);
+    RadialProjection::RadialProjector::_build_forward_map(it2ia, it2iproj, iproj2l, itiaiprojm2irow);
+    const int nrow = irow2it.size();
+    std::vector<std::complex<double>> tab_(nrow*npw);
+    rp._build_sbt_tab(rgrid, projs, iproj2l, nq, dq);
+    rp.sbtft(q, tab_, 'r', omega, tpiba);
+    q.clear();
+    q.shrink_to_fit(); // release memory
+
+    std::vector<int> na(it2ia.size());
+    for(int it = 0; it < it2ia.size(); ++it)
+    {
+        na[it] = it2ia[it].size();
+    }
+    // make_atomic
+    const int nrow_out = itiaiprojm2irow.size();
+    std::vector<std::complex<double>> tab_atomic_(nrow_out*npw);
+    tab_atomic_.resize(nrow_out*npw);
+    for(int irow = 0; irow < nrow; ++irow)
+    {
+        const int it = irow2it[irow];
+        const int iproj = irow2iproj[irow];
+        const int m = irow2m[irow];
+        for(int ia = 0; ia < na[it]; ++ia)
+        {
+            // why Structure_Factor needs the FULL pw_basis???
+            std::complex<double>* sk = sf.get_sk(ik, it, ia, &pw_basis);
+            const int irow_out = itiaiprojm2irow.at(std::make_tuple(it, ia, iproj, m));
+            for(int ig = 0; ig < npw; ++ig)
+            {
+                tab_atomic_[irow_out*npw + ig] = sk[ig]*tab_[irow*npw + ig];
+            }
+        }
+    }
+    tab_.clear();
+    tab_.shrink_to_fit(); // release memory
+
+    // cal_becp
+    const int nbands = psi.get_nbands();
+    const char transa = 'N';
+    const char transb = 'N';
+    const int one = 1;
+    const int lda = nrow_out;
+    const int ldb = npw;
+    const int ldc = nrow_out;
+    const std::complex<double> alpha = 1.0;
+    const std::complex<double> beta = 0.0;
+
+    becp.resize(nbands*nrow_out);
+    BlasConnector::gemm(transa,                 // const char transa
+                        transb,                 // const char transb
+                        nrow_out,               // const int m
+                        nbands,                 // const int n
+                        npw,                    // const int k
+                        alpha,                  // const std::complex<double> alpha
+                        tab_atomic_.data(),     // const std::complex<double>* a
+                        lda,                    // const int lda
+                        psi.get_pointer(),      // const std::complex<double>* b
+                        ldb,                    // const int ldb
+                        beta,                   // const std::complex<double> beta
+                        becp.data(),            // std::complex<double>* c
+                        ldc);                   // const int ldc
+    tab_atomic_.clear();
+    tab_atomic_.shrink_to_fit(); // release memory
 }
