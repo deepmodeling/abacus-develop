@@ -69,27 +69,6 @@ void Grid_BigCell::init_big_latvec(const UnitCell& ucell)
 	// (x,y,z) * bigcell_latvec0^(-1) = (i,j,k)
 	this->bigcell_GT = this->bigcell_latvec0.Inverse();
 
-	if(GlobalV::test_gridt)
-	{
-		GlobalV::ofs_running << " the VECTORS of BIGCELL are (Bohr): " << std::endl;
-		GlobalV::ofs_running << " vec1( " 
-			<< std::setw(15) << bigcell_vec1[0]
-			<< std::setw(15) << bigcell_vec1[1]
-			<< std::setw(15) << bigcell_vec1[2] 
-			<< ")" << std::endl;
-
-		GlobalV::ofs_running << " vec2( " 
-			<< std::setw(15) << bigcell_vec2[0]
-			<< std::setw(15) << bigcell_vec2[1]
-			<< std::setw(15) << bigcell_vec2[2]
-			<< ")" << std::endl;
-
-		GlobalV::ofs_running << " vec3( " 
-			<< std::setw(15) << bigcell_vec3[0]
-			<< std::setw(15) << bigcell_vec3[1]
-			<< std::setw(15) << bigcell_vec3[2]
-			<< ")" << std::endl;
-	}
 	return;
 }
 
@@ -105,24 +84,20 @@ void Grid_BigCell::init_grid_expansion(const UnitCell& ucell,double* rcut)
 	{
 		this->orbital_rmax = std::max( rcut[T], this->orbital_rmax);
 	}
-	if(GlobalV::test_gridt)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"rmax of periodic grid (bohr)",orbital_rmax);
 
 	// mohan fixed serious bug 2010-03-06
 	// G = GT^T
 	// g1 = the norm of first std::vector of G 
 	// g2 = the norm of second std::vector of G 
 	// g3 = the norm of third std::vector of G 
-	double g1 = sqrt(bigcell_GT.e11 * bigcell_GT.e11 
-	+ bigcell_GT.e21 * bigcell_GT.e21 
-	+ bigcell_GT.e31 * bigcell_GT.e31);
+	double g1 = sqrt(bigcell_GT.e11 * bigcell_GT.e11 + bigcell_GT.e21 * bigcell_GT.e21 
+					+ bigcell_GT.e31 * bigcell_GT.e31);
 	
-	double g2 = sqrt(bigcell_GT.e12 * bigcell_GT.e12 
-	+ bigcell_GT.e22 * bigcell_GT.e22 
-	+ bigcell_GT.e32 * bigcell_GT.e32);
+	double g2 = sqrt(bigcell_GT.e12 * bigcell_GT.e12 + bigcell_GT.e22 * bigcell_GT.e22 
+					+ bigcell_GT.e32 * bigcell_GT.e32);
 	
-	double g3 = sqrt(bigcell_GT.e13 * bigcell_GT.e13 
-	+ bigcell_GT.e23 * bigcell_GT.e23 
-	+ bigcell_GT.e33 * bigcell_GT.e33);
+	double g3 = sqrt(bigcell_GT.e13 * bigcell_GT.e13 + bigcell_GT.e23 * bigcell_GT.e23 
+					+ bigcell_GT.e33 * bigcell_GT.e33);
 
 	// we assume the added bigcell can present even the atom
 	// is at the edge of the origin grid.
