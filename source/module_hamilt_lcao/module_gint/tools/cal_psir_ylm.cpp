@@ -39,10 +39,17 @@ void cal_psir_ylm(
         // tau_in_bigcell.
         const int mcell_index = bcell_start + id;
 
-        get_grid_bigcell_distance(gt, mcell_index ,it, mt);
+        get_grid_bigcell_distance(gt,
+                                 mcell_index ,
+                                 it, 
+                                 mt);
 
         atom = &ucell.atoms[it];
-        get_psi_dpsi(gt, it, atom, it_psi_uniform, it_dpsi_uniform);
+        get_psi_dpsi(gt, 
+                     it, 
+                     atom, 
+                     it_psi_uniform, 
+                     it_dpsi_uniform);
 
         // loop over the grids in the big cell
         for (int ib = 0; ib < bxyz; ib++)
@@ -64,31 +71,18 @@ void cal_psir_ylm(
                                             dr[2] / distance,
                                             ylma);
 
-                // interp_coeff(distance, delta_r, ip,coeffs.data());
                 // these parameters are related to interpolation
                 // because once the distance from atom to grid point is known,
                 // we can obtain the parameters for interpolation and
                 // store them first! these operations can save lots of efforts.
 
                 spl_intrp(distance,
-                                     delta_r, 
-                                     atom, 
-                                     ylma,
-                                     it_psi_uniform, 
-                                     it_dpsi_uniform, 
-                                     p);
-                // double phi = 0;
-                // for (int iw = 0; iw < atom->nw; ++iw)
-                // {
-                //     if (atom->iw2_new[iw])
-                //     {
-                //         auto psi_uniform = it_psi_uniform[iw];
-                //         auto dpsi_uniform = it_dpsi_uniform[iw];
-                //         phi = coeffs[0] * psi_uniform[ip] + coeffs[1] * dpsi_uniform[ip] // radial wave functions
-                //                 + coeffs[2] * psi_uniform[ip + 1] + coeffs[3] * dpsi_uniform[ip + 1];
-                //     }
-                //     p[iw] = phi * ylma[atom->iw2_ylm[iw]];
-                // } // end iw
+                            delta_r, 
+                            atom, 
+                            ylma,
+                            it_psi_uniform, 
+                            it_dpsi_uniform, 
+                            p);
 
             }     
         }         // end ib

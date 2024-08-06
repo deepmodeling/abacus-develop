@@ -15,7 +15,6 @@ list(APPEND objects
     gint_k_sparse1.cpp
     gint_k_pvpr.cpp
     gint_k_pvdpr.cpp
-    # gint_tools.cpp
     grid_bigcell.cpp
     grid_meshball.cpp
     grid_meshcell.cpp
@@ -24,14 +23,6 @@ list(APPEND objects
     gint_force_cpu_interface.cpp
     gint_rho_cpu_interface.cpp
     gint_vl_cpu_interface.cpp
-    # cal_psir_ylm.cpp
-    # cal_dpsir_ylm.cpp
-    # cal_ddpsir_ylm.cpp
-    # cal_dpsirr_ylm.cpp
-    # mult_psi_dm.cpp
-    # mult_psi_dm_new.cpp
-    # mult_psi_dmr.cpp
-    # init_orb.cpp
 )
 
 if(USE_CUDA)
