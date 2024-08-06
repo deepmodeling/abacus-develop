@@ -53,7 +53,7 @@ void Grid_MeshBall::init_meshball(void)
 				{
 					pos[ip] = i*bigcell_vec1[ip]+j*bigcell_vec2[ip]+k*bigcell_vec3[ip];
 				}
-				r2 = this->deal_with_atom_spillage( pos );
+				r2 = this->atom_spillage( pos );
 				//r2 = pos[0]*pos[0]+pos[1]*pos[1]+pos[2]*pos[2];
 	
 				// calculate the distance.
@@ -82,7 +82,7 @@ void Grid_MeshBall::init_meshball(void)
 				{
 					pos[ip] = i*bigcell_vec1[ip]+j*bigcell_vec2[ip]+k*bigcell_vec3[ip];
 				}
-				r2 = this->deal_with_atom_spillage( pos );
+				r2 = this->atom_spillage( pos );
 
 				// calculate the distance.
 				if( r2 < rcut2 )
@@ -104,7 +104,7 @@ void Grid_MeshBall::init_meshball(void)
 	return;
 }
 
-double Grid_MeshBall::deal_with_atom_spillage(const double *pos)
+double Grid_MeshBall::atom_spillage(const double *pos)
 {
 	double dx;
 	double r2 = 100000;

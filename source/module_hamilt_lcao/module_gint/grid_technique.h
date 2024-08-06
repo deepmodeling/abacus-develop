@@ -74,7 +74,8 @@ class Grid_Technique : public Grid_MeshBall {
     std::vector<std::vector<int>> find_R2_sorted_index;
     std::vector<std::vector<int>> find_R2st;
 
-    int binary_search_find_R2_offset(int val, int iat) const;
+    // binary_search_find_R2_offset
+    int bsf_R2_offset(int val, int iat) const;
 
     // UnitCell and LCAO_Obrbitals
     const UnitCell* ucell;
@@ -93,7 +94,7 @@ class Grid_Technique : public Grid_MeshBall {
     std::vector<std::vector<double>> d2psi_u;
 
     // indexes for nnrg -> orbital index + R index
-    std::vector<gridIntegral::gridIndex> nnrg_index;
+    std::vector<grid_integral::gridIndex> nnrg_index;
 
     // Determine whether the grid point integration is initialized.
     bool  init_malloced;

@@ -531,7 +531,7 @@ int Grid_Technique::find_offset(const int id1, const int id2, const int iat1, co
 
 		const int index=this->cal_RindexAtom(dRx, dRy, dRz, iat2);
 
-		const int offset = this->binary_search_find_R2_offset(index, iat1);
+		const int offset = this->bsf_R2_offset(index, iat1);
 
 		assert(offset < this->nad[iat1]);
 		return offset;

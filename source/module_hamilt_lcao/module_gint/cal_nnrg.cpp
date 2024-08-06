@@ -16,7 +16,7 @@ void Grid_Technique::cal_nnrg(Parallel_Orbitals* pv)
 {
 	ModuleBase::TITLE("LCAO_nnr","cal_nnrg");
 
-	this->cal_max_box_index();
+	this->max_box_index();
 
 	this->nnrg = 0;
 
@@ -85,7 +85,7 @@ void Grid_Technique::cal_nnrg(Parallel_Orbitals* pv)
 							//storing the indexed for nnrg
 							const int mu = pv->global2local_row(iat);
 							const int nu = pv->global2local_col(iat2);
-							this->nnrg_index.push_back(gridIntegral::gridIndex{this->nnrg, mu, nu, GlobalC::GridD.getBox(ad), atom1->nw, atom2->nw});
+							this->nnrg_index.push_back(grid_integral::gridIndex{this->nnrg, mu, nu, GlobalC::GridD.getBox(ad), atom1->nw, atom2->nw});
 							
 							const int nelement = atom1->nw * atom2->nw;
 							this->nnrg += nelement;
@@ -207,9 +207,9 @@ void Grid_Technique::cal_nnrg(Parallel_Orbitals* pv)
 	return;
 }
 
-void Grid_Technique::cal_max_box_index(void)
+void Grid_Technique::max_box_index(void)
 {
-	ModuleBase::TITLE("LCAO_nnr","cal_max_box_index");
+	ModuleBase::TITLE("LCAO_nnr","max_box_index");
 	this->maxB1 = this->maxB2 = this->maxB3 = -10000;
 	this->minB1 = this->minB2 = this->minB3 = 10000;
 	for (int T1 = 0; T1 < GlobalC::ucell.ntype; T1++)
@@ -264,7 +264,7 @@ int Grid_Technique::cal_RindexAtom(const int &u1, const int &u2, const int &u3, 
 	return (iat2 + (x3 + x2 * this->nB3 + x1 * this->nB2 * this->nB3) * GlobalC::ucell.nat);
 }
 
-int Grid_Technique::binary_search_find_R2_offset(int val, int iat) const
+int Grid_Technique::bsf_R2_offset(int val, int iat) const
 {
     auto findR2 = this->find_R2[iat];
 	auto findR2_index = this->find_R2_sorted_index[iat];
