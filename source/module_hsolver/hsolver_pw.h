@@ -21,31 +21,38 @@ class HSolverPW : public HSolver<T, Device>
   public:
     HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in,
               wavefunc* pwf_in,
-              const bool initialed_psi_in);
+              const bool initialed_psi_in,
+
+              const std::string calculation_type_in,
+              const std::string basis_type_in,
+              const std::string method_in,
+              
+              const bool use_paw_in,
+              const bool use_uspp_in,
+              
+              const int rank_in_pool_in,
+              const int nproc_in_pool_in,
+
+              const int scf_iter_in,
+              const bool need_subspace_in,
+              const int diag_iter_max_in,
+              const double iter_diag_thr_in) :
+
+              wfc_basis(wfc_basis_in), pwf(pwf_in), initialed_psi(initialed_psi_in),
+
+              calculation_type(calculation_type_in), basis_type(basis_type_in), method(method_in),
+              use_paw(use_paw_in), use_uspp(use_uspp_in),
+              rank_in_pool(rank_in_pool_in), nproc_in_pool(nproc_in_pool_in),
+              scf_iter(scf_iter_in), need_subspace(need_subspace_in),
+              diag_iter_max(diag_iter_max_in), iter_diag_thr(iter_diag_thr_in) {};
 
     /// @brief solve function for pw
-    /// @param pHamilt interface to hamilt
-    /// @param psi reference to psi
-    /// @param pes interface to elecstate
-    /// @param method_in dav or cg
-    /// @param skip_charge
     void solve(hamilt::Hamilt<T, Device>* pHamilt,
                psi::Psi<T, Device>& psi,
                elecstate::ElecState* pes,
                double* out_eigenvalues,
                const std::vector<bool>& is_occupied_in,
-               const std::string method_in,
-               const std::string calculation_type_in,
-               const std::string basis_type_in,
-               const bool use_paw_in,
-               const bool use_uspp_in,
-               const int rank_in_pool_in,
-               const int nproc_in_pool_in,
-               const int scf_iter_in,
-               const bool need_subspace_in,
-               const int diag_iter_max_in,
-               const double iter_diag_thr_in,
-               const bool skip_charge) override;
+               const bool skip_charge);
 
     virtual Real cal_hsolerror(const Real diag_ethr_in) override;
 
@@ -79,21 +86,18 @@ class HSolverPW : public HSolver<T, Device>
     int diag_iter_max = 50;
     double iter_diag_thr = 1.0e-2;  // threshold for diagonalization
 
-    std::string method = "none";
-
   private:
     Device* ctx = {};
 
-    std::string calculation_type = "scf";
-    std::string basis_type = "pw";
+    const std::string calculation_type;
+    const std::string basis_type;
+    const std::string method;
 
-    bool use_paw = false;
-    bool use_uspp = false;
+    const bool use_paw;
+    const bool use_uspp;
 
-    int rank_in_pool = 0;
-    int nproc_in_pool = 1;
-
-    int nspin = 1;
+    const int rank_in_pool;
+    const int nproc_in_pool;
 
 #ifdef USE_PAW
     void paw_func_in_kloop(const int ik);

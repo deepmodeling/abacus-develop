@@ -208,17 +208,6 @@ void HSolverPW<T, Device>::paw_func_after_kloop(psi::Psi<T, Device>& psi, elecst
 #endif
 
 template <typename T, typename Device>
-HSolverPW<T, Device>::HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in,
-                                wavefunc* pwf_in,
-                                const bool initialed_psi_in)
-{
-    this->wfc_basis = wfc_basis_in;
-    this->pwf = pwf_in;
-
-    this->initialed_psi = initialed_psi_in;
-}
-
-template <typename T, typename Device>
 void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
                                  psi::Psi<T, Device>& psi,
                                  elecstate::ElecState* pes,
@@ -239,22 +228,6 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
 {
     ModuleBase::TITLE("HSolverPW", "solve");
     ModuleBase::timer::tick("HSolverPW", "solve");
-
-    // select the method of diagonalization
-    this->method = method_in;
-    this->calculation_type = calculation_type_in;
-    this->basis_type = basis_type_in;
-
-    this->use_paw = use_paw_in;
-    this->use_uspp = use_uspp_in;
-
-    this->rank_in_pool = rank_in_pool_in;
-    this->nproc_in_pool = nproc_in_pool_in;
-
-    this->scf_iter = scf_iter_in;
-    this->need_subspace = need_subspace_in;
-    this->diag_iter_max = diag_iter_max_in;
-    this->iter_diag_thr = iter_diag_thr_in;
 
     // report if the specified diagonalization method is not supported
     const std::initializer_list<std::string> _methods = {"cg", "dav", "dav_subspace", "bpcg"};
