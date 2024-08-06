@@ -1,6 +1,6 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
-#include "../hamilt_lcaodft/record_adj.h" //mohan add 2012-07-06
+#include "record_adj.h" //mohan add 2012-07-06
 #include "module_base/timer.h"
 #include "module_base/tool_threading.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"

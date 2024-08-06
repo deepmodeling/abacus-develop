@@ -39,7 +39,6 @@ if(ENABLE_LCAO)
         LCAO_allocate.cpp
         LCAO_set_mat2d.cpp
         LCAO_init_basis.cpp
-		record_adj.cpp
         center2_orb.cpp
         center2_orb-orb11.cpp
         center2_orb-orb21.cpp

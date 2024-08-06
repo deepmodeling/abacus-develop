@@ -6,7 +6,7 @@ namespace LCAO_domain
 
 typedef std::tuple<int, int, int, int> key_tuple;
 
-#include "record_adj.h" //mohan add 2012-07-06
+#include "module_hamilt_lcao/module_gint/record_adj.h" //mohan add 2012-07-06
 
 void build_Nonlocal_mu_new(const Parallel_Orbitals& pv,
                            ForceStressArrays& fsr,
