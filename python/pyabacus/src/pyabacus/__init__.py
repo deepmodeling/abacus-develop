@@ -1,3 +1,16 @@
 from __future__ import annotations
-from ._core import ModuleBase, ModuleNAO, hsolver
-__all__ = ["ModuleBase", "ModuleNAO", "hsolver"]
+
+__submodules__ = ["ModuleBase", "ModuleNAO", "hsolver"]
+
+__all__ = list(__submodules__)
+
+def __getattr__(attr):
+    if attr == "ModuleBase":
+        from ._core import ModuleBase
+        return ModuleBase
+    elif attr == "ModuleNAO":
+        from ._core import ModuleNAO
+        return ModuleNAO
+    elif attr == "hsolver":
+        from ._core import hsolver
+        return hsolver
