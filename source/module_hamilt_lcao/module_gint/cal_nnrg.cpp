@@ -38,7 +38,7 @@ void Grid_Technique::cal_nnrg(Parallel_Orbitals* pv)
 		{
 			tau1 = atom1->tau[I1];
 
-			GlobalC::GridD.Find_atom(*ucell, tau1, T1, I1);
+			gd->Find_atom(*ucell, tau1, T1, I1);
 
 			const int iat = ucell->itia2iat(T1,I1);
 
@@ -57,18 +57,18 @@ void Grid_Technique::cal_nnrg(Parallel_Orbitals* pv)
 				this->nad[iat] = 0;
 
 				int count = 0;
-				for (int ad = 0; ad < GlobalC::GridD.getAdjacentNum()+1; ++ad)
+				for (int ad = 0; ad < gd->getAdjacentNum()+1; ++ad)
 				{
-					const int T2 = GlobalC::GridD.getType(ad);
-					const int I2 = GlobalC::GridD.getNatom(ad);
+					const int T2 = gd->getType(ad);
+					const int I2 = gd->getNatom(ad);
 					const int iat2 = ucell->itia2iat(T2, I2);
 					Atom* atom2 = &ucell->atoms[T2]; 
 
 					// if the adjacent atom is in this processor.
 					if(this->in_this_processor[iat2])
 					{
-						tau2 = GlobalC::GridD.getAdjacentTau(ad);
-						dtau = GlobalC::GridD.getAdjacentTau(ad) - tau1;
+						tau2 = gd->getAdjacentTau(ad);
+						dtau = gd->getAdjacentTau(ad) - tau1;
 						double distance = dtau.norm() * ucell->lat0;
 						double rcut = rcuts[T1] + rcuts[T2];
 
@@ -85,7 +85,7 @@ void Grid_Technique::cal_nnrg(Parallel_Orbitals* pv)
 							//storing the indexed for nnrg
 							const int mu = pv->global2local_row(iat);
 							const int nu = pv->global2local_col(iat2);
-							this->nnrg_index.push_back(grid_integral::gridIndex{this->nnrg, mu, nu, GlobalC::GridD.getBox(ad), atom1->nw, atom2->nw});
+							this->nnrg_index.push_back(grid_integral::gridIndex{this->nnrg, mu, nu, gd->getBox(ad), atom1->nw, atom2->nw});
 							
 							const int nelement = atom1->nw * atom2->nw;
 							this->nnrg += nelement;
@@ -138,17 +138,17 @@ void Grid_Technique::cal_nnrg(Parallel_Orbitals* pv)
 		{
 //			std::cout << " T1=" << T1 << " I1=" << I1 << std::endl; 
 			tau1 = ucell->atoms[T1].tau[I1];
-			GlobalC::GridD.Find_atom(*ucell, tau1, T1, I1);
+			gd->Find_atom(*ucell, tau1, T1, I1);
 			const int iat = ucell->itia2iat(T1,I1);
 
-//			std::cout << " Number of adjacent = " << GlobalC::GridD.getAdjacentNum()+1 << std::endl;
+//			std::cout << " Number of adjacent = " << gd->getAdjacentNum()+1 << std::endl;
 			
 			int count=0;
-			for (int ad = 0; ad < GlobalC::GridD.getAdjacentNum()+1; ad++)
+			for (int ad = 0; ad < gd->getAdjacentNum()+1; ad++)
 			{
 		//		std::cout << " ad=" << ad << std::endl;
-				const int T2 = GlobalC::GridD.getType(ad);
-				const int I2 = GlobalC::GridD.getNatom(ad);
+				const int T2 = gd->getType(ad);
+				const int I2 = gd->getNatom(ad);
 				const int iat2 = ucell->itia2iat(T2,I2);
 
 				// if this atom is in this processor.
@@ -156,13 +156,13 @@ void Grid_Technique::cal_nnrg(Parallel_Orbitals* pv)
 				{
 					if(this->in_this_processor[iat2])
 					{
-						dtau = GlobalC::GridD.getAdjacentTau(ad) - tau1;
+						dtau = gd->getAdjacentTau(ad) - tau1;
                         double distance = dtau.norm() * ucell->lat0;
                         double rcut = rcuts[T1] + rcuts[T2];
 
-						const int b1 = GlobalC::GridD.getBox(ad).x;
-						const int b2 = GlobalC::GridD.getBox(ad).y;
-						const int b3 = GlobalC::GridD.getBox(ad).z;
+						const int b1 = gd->getBox(ad).x;
+						const int b2 = gd->getBox(ad).y;
+						const int b3 = gd->getBox(ad).z;
 					
 						// mohan fix bug 2011-06-26, should be '<', not '<='	
 						//			if(distance < rcut)
@@ -217,17 +217,17 @@ void Grid_Technique::max_box_index(void)
 		for (int I1 = 0; I1 < ucell->atoms[T1].na; I1++)
 		{
 			ModuleBase::Vector3<double> tau1 = ucell->atoms[T1].tau[I1];
-			//GlobalC::GridD.Find_atom(tau1);
-			GlobalC::GridD.Find_atom(*ucell, tau1, T1, I1);
-			for (int ad = 0; ad < GlobalC::GridD.getAdjacentNum()+1; ad++)
+			//gd->Find_atom(tau1);
+			gd->Find_atom(*ucell, tau1, T1, I1);
+			for (int ad = 0; ad < gd->getAdjacentNum()+1; ad++)
 			{
-				this->maxB1 = std::max( GlobalC::GridD.getBox(ad).x, maxB1 ); 
-				this->maxB2 = std::max( GlobalC::GridD.getBox(ad).y, maxB2 ); 
-				this->maxB3 = std::max( GlobalC::GridD.getBox(ad).z, maxB3 ); 
+				this->maxB1 = std::max( gd->getBox(ad).x, maxB1 ); 
+				this->maxB2 = std::max( gd->getBox(ad).y, maxB2 ); 
+				this->maxB3 = std::max( gd->getBox(ad).z, maxB3 ); 
 
-				this->minB1 = std::min( GlobalC::GridD.getBox(ad).x, minB1 ); 
-				this->minB2 = std::min( GlobalC::GridD.getBox(ad).y, minB2 ); 
-				this->minB3 = std::min( GlobalC::GridD.getBox(ad).z, minB3 ); 
+				this->minB1 = std::min( gd->getBox(ad).x, minB1 ); 
+				this->minB2 = std::min( gd->getBox(ad).y, minB2 ); 
+				this->minB3 = std::min( gd->getBox(ad).z, minB3 ); 
 			}
 		}
 	}

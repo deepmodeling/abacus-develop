@@ -48,7 +48,7 @@ void Grid_Technique::set_pbc_grid(
     const int& nplane,
     const int& startz_current,
     const UnitCell& ucell,
-    const Grid_Driver& gd,
+    Grid_Driver& gd,
     const double& dr_uniform,
     const std::vector<double>& rcuts,
     const std::vector<std::vector<double>>& psi_u,
