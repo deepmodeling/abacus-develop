@@ -17,6 +17,75 @@
 #include "module_base/blas_connector.h"
 
 /**
+ * ===============================================================================================
+ * 
+ *                                          README
+ * 
+ * ===============================================================================================
+ * 
+ * This is a code demo for illustrating how to use unified radial projection in implementation of
+ * Operators involving local radial projectors on PW-expanded wavefunctions.
+ * 
+ * Example usage:
+ * ```c++
+ * // select the range of atoms that impose the operator in std::vector<std::vector<int>> it2ia like
+ * // it2ia[it] = {ia1, ia2, ...} for each type
+ * // if all atoms in present kind is "selected", just set it2ia[it].resize(na) and call 
+ * // std::iota(it2ia[it].begin(), it2ia[it].end(), 0)
+ * 
+ * std::vector<std::vector<int>> it2ia; // as if we have given its value...
+ * 
+ * // you should have the `orbital_dir` as the directory containing the orbital files, then those
+ * // will be read by a static function `AtomicRadials::read_abacus_orb` to get the radial orbitals
+ * 
+ * // call `init_proj` to initialize the radial projector, this function only needs to be called
+ * // once during the runtime.
+ * // its input... 
+ * // the `nproj`, is for specifying number of projectors of each atom type, can be zero,
+ * // but cannot be the value larger than the number of zeta functions for the given angular momentum.
+ * // the `lproj` is the angular momentum of the projectors, and `iproj` is the index of zeta function
+ * // that each projector generated from.
+ * // the `lproj` along with `iproj` can enable radial projectors in any number developer wants.
+ * 
+ * // the `onsite_r` is the onsite-radius for all valid projectors, it is used to generate the new
+ * // radial function that more localized than the original one, which is expected to have enhanced
+ * // projection efficiency.
+ * 
+ * std::vector<double> rgrid;
+ * std::vector<std::vector<double>> projs;
+ * std::vector<std::vector<int>> it2iproj;
+ * init_proj(orbital_dir, ucell, nproj, lproj, iproj, onsite_r, rgrid, projs, it2iproj);
+ * 
+ * // then call the function `cal_becp` to calculate the becp. HOWEVER, there are quantities that
+ * // can be calculated in advance and reused in the following calculations. Please see the function
+ * // implementation, especially the comments about CACHE 0, CACHE 1, CACHE 2..., etc.
+ * 
+ * // the input param of `cal_becp`...
+ * // the `it2ia` has been explained above
+ * // the `it2iproj` is the output of function `init_proj`, so you do not need to worry about it
+ * // the `rgrid` and `projs` are also the output of function `init_proj`
+ * // the `iproj2l` is the angular momentum for each projector, actually you have used it in `init_proj`, it
+ * // is the same as `lproj`
+ * // the `nq` is the number of G+k vectors, typically it is always GlobalV::NQX
+ * // the `dq` is the step size of G+k vectors, typically it is always GlobalV::DQ
+ * // the `ik` is the k-point index
+ * // the `pw_basis` is the plane wave basis, need ik
+ * // the `omega` is the cell volume
+ * // the `tpiba` is 2*pi/lat0
+ * // the `sf` is the structure factor calculator
+ * // the `psi` is the wavefunction
+ * // the `becp` is the output of the function, it is the becp
+ * cal_becp(it2ia, it2iproj, rgrid, projs, iproj2l, nq, dq, ik, pw_basis, omega, tpiba, sf, psi, becp);
+ * 
+ * // About parallelization, presently, the function `AtomicRadials::read_abacus_orb` is actually parallelized
+ * // by MPI, so after the reading of orbital, actually all processors have the same data. Therefore it is not
+ * // needed to call functions like `Parallel_Reduce` or `Parallel_Bcast` to synchronize the data.
+ * // However, what is strikingly memory-consuming is the table `tab_atomic_`. Performance optimization will
+ * // be needed if the memory is not enough.
+ */
+
+
+/**
  * @brief initialize the radial projector for real-space projection involving operators
  * 
  * @param orbital_dir You know what it is
@@ -57,13 +126,19 @@ void init_proj(const std::string& orbital_dir,
         const int nproj_it = nproj[it];
         it2iproj[it].resize(nproj_it);
         std::ifstream ifs(orbital_dir + "/" + ucell.orbital_fn[it]);
-        std::string elem;
-        double ecut;
-        int nr_;
-        double dr_;
+        std::string elem = "";
+        double ecut = -1.0;
+        int nr_ = -1;
+        double dr_ = -1.0;
         std::vector<int> nzeta; // number of radials for each l
         std::vector<std::vector<double>> radials; // radials arranged in serial
         AtomicRadials::read_abacus_orb(ifs, elem, ecut, nr_, dr_, nzeta, radials);
+#ifdef __DEBUG
+        assert(elem != "");
+        assert(ecut != -1.0);
+        assert(nr_ != -1);
+        assert(dr_ != -1.0);
+#endif
         nr = std::max(nr, nr_); // the maximal nr
         assert(dr == -1.0 || dr == dr_); // the dr should be the same for all types
         dr = (dr == -1.0) ? dr_ : dr;
