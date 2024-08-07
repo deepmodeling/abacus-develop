@@ -1,7 +1,7 @@
 #include "module_hsolver/diago_scalapack.h"
 #include "module_hsolver/test/diago_elpa_utils.h"
 #include "mpi.h"
-#include "string.h"
+#include <cstring>
 
 #include "gtest/gtest.h"
 #include <vector>
@@ -67,18 +67,19 @@ class DiagoPrepare
         MPI_Comm_size(MPI_COMM_WORLD, &dsize);
         MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
-        if (ks_solver == "scalapack_gvx")
+        if (ks_solver == "scalapack_gvx") {
             std::cout << " Use scalapack solver." << std::endl;
             // Dont need to use dh pointer here after refactor
             // dh = new hsolver::DiagoScalapack<T>;
 #ifdef __ELPA
-        else if (ks_solver == "genelpa")
+        } else if (ks_solver == "genelpa") {
             dh = new hsolver::DiagoElpa<T>;
 #endif
-        else
+        } else
         {
-            if (myrank == 0)
+            if (myrank == 0) {
                 std::cout << "ERROR: undefined ks_solver: " << ks_solver << std::endl;
+}
             exit(1);
         }
     }
@@ -92,7 +93,7 @@ class DiagoPrepare
     std::vector<T> s;
     std::vector<T> h_local;
     std::vector<T> s_local;
-    hsolver::DiagH<T>* dh = 0;
+    hsolver::DiagH<T>* dh = nullptr;
     psi::Psi<T> psi;
     std::vector<double> e_solver;
     std::vector<double> e_lapack;
@@ -121,8 +122,9 @@ class DiagoPrepare
         MPI_Bcast(&readhfile, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
         MPI_Bcast(&readsfile, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
         nbands = nlocal / 2;
-        if (readhfile && readsfile)
+        if (readhfile && readsfile) {
             return true;
+}
         return false;
     }
 
@@ -138,8 +140,9 @@ class DiagoPrepare
 
     void print_hs()
     {
-        if (!PRINT_HS)
+        if (!PRINT_HS) {
             return;
+}
         if (myrank == 0)
         {
             std::ofstream fp("hmatrix.dat");
@@ -239,8 +242,9 @@ class DiagoPrepare
     {
         double starttime = 0.0, endtime = 0.0;
         starttime = MPI_Wtime();
-        for (int i = 0; i < REPEATRUN; i++)
+        for (int i = 0; i < REPEATRUN; i++) {
             LCAO_DIAGO_TEST::lapack_diago(this->h.data(), this->s.data(), this->e_lapack.data(), nlocal);
+}
         endtime = MPI_Wtime();
         lapack_time = (endtime - starttime) / REPEATRUN;
     }
@@ -259,8 +263,9 @@ class DiagoPrepare
                 maxerror = error;
                 iindex = i;
             }
-            if (error > PASSTHRESHOLD)
+            if (error > PASSTHRESHOLD) {
                 pass = false;
+}
         }
 
         std::cout << "H/S matrix are read from " << hfname << ", " << sfname << std::endl;
