@@ -168,7 +168,6 @@ namespace GlobalV
     int CAL_FORCE = 0;
     int NSPIN;
     int NPOL;
-    double XC_TEMPERATURE;
     bool DOMAG;
     bool DOMAG_Z;
     bool use_paw = false;

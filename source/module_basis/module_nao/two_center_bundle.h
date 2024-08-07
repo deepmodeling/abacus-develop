@@ -17,7 +17,7 @@ class TwoCenterBundle
     void build_orb(int ntype, const std::string* file_orb0);
     void build_beta(int ntype, Numerical_Nonlocal* nl);
     void build_alpha(int ndesc = 0, std::string* file_desc0 = nullptr);
-    void build_orb_onsite(int ntype, double radius);
+    void build_orb_onsite(const double& radius);
 
     void tabulate();
 

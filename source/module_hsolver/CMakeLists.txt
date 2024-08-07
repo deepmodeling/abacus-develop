@@ -16,6 +16,7 @@ if(ENABLE_LCAO)
     list(APPEND objects
         hsolver_lcao.cpp
         diago_scalapack.cpp
+        parallel_k2d.cpp
     )
   else ()
     list(APPEND objects

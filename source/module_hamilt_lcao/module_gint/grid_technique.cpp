@@ -536,6 +536,26 @@ void Grid_Technique::cal_trace_lo(const UnitCell& ucell) {
     return;
 }
 
+int Grid_Technique::find_offset(const int id1, const int id2, const int iat1, const int iat2) const
+	{
+		const int R1x=this->ucell_index2x[id1];
+		const int R2x=this->ucell_index2x[id2];
+		const int dRx=R1x-R2x;
+		const int R1y=this->ucell_index2y[id1];
+		const int R2y=this->ucell_index2y[id2];
+		const int dRy=R1y-R2y;
+		const int R1z=this->ucell_index2z[id1];
+		const int R2z=this->ucell_index2z[id2];
+		const int dRz=R1z-R2z;
+
+		const int index=this->cal_RindexAtom(dRx, dRy, dRz, iat2);
+
+		const int offset = this->binary_search_find_R2_offset(index, iat1);
+
+		assert(offset < this->nad[iat1]);
+		return offset;
+	};
+
 #if ((defined __CUDA) /* || (defined __ROCM) */)
 
 void Grid_Technique::init_gpu_gint_variables(const UnitCell& ucell,

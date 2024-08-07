@@ -10,6 +10,7 @@
 #include "module_base/timer.h"
 // three global variables definition
 #include "module_base/global_variable.h"
+#include "module_parameter/parameter.h"
 
 // free function, compared with common radial function normalization, it does not multiply r to function
 // due to pswfc is already multiplied by r
@@ -119,15 +120,15 @@ void psi_initializer_atomic<T, Device>::tabulate()
 
         for (int ic = 0; ic < atom->ncpp.nchi ;ic++)
         {
-            int n_rgrid = (GlobalV::PSEUDO_MESH)?atom->ncpp.mesh:atom->ncpp.msh;
+            int n_rgrid = (PARAM.inp.pseudo_mesh)?atom->ncpp.mesh:atom->ncpp.msh;
             std::vector<double> pswfcr(n_rgrid);
             for (int ir=0; ir<n_rgrid; ir++) pswfcr[ir] = atom->ncpp.chi(ic, ir);
-            normalize(n_rgrid, pswfcr, atom->ncpp.rab);
+            normalize(n_rgrid, pswfcr, atom->ncpp.rab.data());
             if (atom->ncpp.oc[ic] >= 0.0) // reasonable occupation number, but is it always true?
             {
                 const int l = atom->ncpp.lchi[ic];
                 std::vector<double> ovlp_pswfcjlq_q(GlobalV::NQX);
-                this->sbt.direct(l, atom->ncpp.msh, atom->ncpp.r, pswfcr.data(), GlobalV::NQX, qgrid.data(), ovlp_pswfcjlq_q.data(), 1);
+                this->sbt.direct(l, atom->ncpp.msh, atom->ncpp.r.data(), pswfcr.data(), GlobalV::NQX, qgrid.data(), ovlp_pswfcjlq_q.data(), 1);
                 for (int iq = 0; iq < GlobalV::NQX; iq++)
                 {
                     this->ovlp_pswfcjlq_(it, ic, iq) = pref * ovlp_pswfcjlq_q[iq];

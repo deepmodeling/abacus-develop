@@ -16,6 +16,7 @@
 #include "module_base/parallel_common.h"
 #include "module_base/parallel_reduce.h"
 #endif
+#include "module_parameter/parameter.h"
 
 /*
 I don't know why some variables are distributed while others not... for example the orbital_files...
@@ -59,7 +60,7 @@ void psi_initializer_nao<T, Device>::read_external_orbs(std::string* orbital_fil
             std::vector<std::vector<double>> rvalue_it;
 
             std::ifstream ifs_it;
-            ifs_it.open(GlobalV::global_orbital_dir + this->orbital_files_[it]);
+            ifs_it.open(PARAM.inp.orbital_dir + this->orbital_files_[it]);
 
             if (!ifs_it)
             {
@@ -92,7 +93,7 @@ void psi_initializer_nao<T, Device>::read_external_orbs(std::string* orbital_fil
                                          << " angular momentum l = " << l << std::endl
                                          << " index of chi = " << ichi << std::endl;
 
-                    ifs_it.open(GlobalV::global_orbital_dir + this->orbital_files_[it]);
+                    ifs_it.open(PARAM.inp.orbital_dir + this->orbital_files_[it]);
                     double dr = 0.0;
                     char word[80];
 
@@ -193,7 +194,7 @@ void psi_initializer_nao<T, Device>::read_external_orbs(std::string* orbital_fil
         this->n_rgrid_.resize(this->p_ucell_->ntype);
     }
 
-    int nchi[this->p_ucell_->ntype];
+    std::vector<int> nchi(this->p_ucell_->ntype);
     if (rank == 0)
     {
         for (int it = 0; it < this->p_ucell_->ntype; it++)
@@ -203,7 +204,7 @@ void psi_initializer_nao<T, Device>::read_external_orbs(std::string* orbital_fil
     }
 
     // bcast
-    Parallel_Common::bcast_int(nchi, this->p_ucell_->ntype);
+    Parallel_Common::bcast_int(nchi.data(), this->p_ucell_->ntype);
     // resize
     if (rank != 0)
     {

@@ -47,9 +47,9 @@ void pseudopot_cell_vl::init_vloc(ModuleBase::matrix& vloc_in, const ModulePW::P
 		{
 			this->vloc_of_g(
 					atom->ncpp.msh, // after cutoff 
-					atom->ncpp.rab,
-		          	atom->ncpp.r, 
-					atom->ncpp.vloc_at, // local potential in real space radial form.  
+					atom->ncpp.rab.data(),
+		          	atom->ncpp.r.data(), 
+					atom->ncpp.vloc_at.data(), // local potential in real space radial form.  
 		          	this->zp[it],
 					vloc1d,
 					rho_basis);
@@ -253,7 +253,7 @@ void pseudopot_cell_vl::vloc_of_g(const int& msh,
 void pseudopot_cell_vl::print_vloc(const ModulePW::PW_Basis* rho_basis) const
 {
 	if(GlobalV::MY_RANK!=0) return; //mohan fix bug 2011-10-13
-	bool check_vl = GlobalV::out_element_info;
+	bool check_vl = PARAM.inp.out_element_info;
 	if(check_vl)
 	{
 		for(int it=0; it<GlobalC::ucell.ntype; it++)

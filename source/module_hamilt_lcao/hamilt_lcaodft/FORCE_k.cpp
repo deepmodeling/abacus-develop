@@ -335,8 +335,22 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
 
         GlobalC::ld.cal_gedm(ucell.nat);
 
-        GlobalC::ld
-            .cal_f_delta_k(dm_k, ucell, GlobalC::ORB, GlobalC::GridD, kv->get_nks(), kv->kvec_d, isstress, svnl_dalpha);
+	    DeePKS_domain::cal_f_delta_k(
+				dm_k, 
+				ucell, 
+				GlobalC::ORB, 
+				GlobalC::GridD, 
+                pv,
+                GlobalC::ld.lmaxd,
+				kv->get_nks(), 
+				kv->kvec_d, 
+                GlobalC::ld.nlm_save_k,
+                GlobalC::ld.gedm,
+                GlobalC::ld.inl_index,
+                GlobalC::ld.F_delta,
+				isstress, 
+				svnl_dalpha);
+
 #ifdef __MPI
         Parallel_Reduce::reduce_all(GlobalC::ld.F_delta.c, GlobalC::ld.F_delta.nr * GlobalC::ld.F_delta.nc);
         if (isstress)

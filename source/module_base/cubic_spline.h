@@ -81,6 +81,13 @@ namespace ModuleBase
  *      cubspl5.add(y4, {}, {CubicSpline::BoundaryType::second_deriv, 2.0});
  *      cubspl5.add(y5);
  *
+ *      // alternative, one may start with an empty object with knots only:
+ *      // CubicSpline cubspl5(n, x);
+ *      // cubspl5.reserve(5);
+ *      // cubspl5.add(y);
+ *      // cubspl5.add(y2);
+ *      // ...
+ *
  *      // evaluates the five interpolants simultaneously at a single place
  *      cubspl5.multi_eval(x_interp, y_interp)
  *
@@ -223,7 +230,35 @@ public:
 
 
     /**
-     * @brief Add an interpolant that shares the same knots.
+     * @brief Builds an empty object with specified knots only.
+     *
+     * An object of this class can hold multiple interpolants with the same knots.
+     * This constructor allows the user to initialize the object with knots only,
+     * so that interpolants can be added later.
+     * 
+     * @param[in]   n               number of knots
+     * @param[in]   x               x coordinates of data points
+     *                              ("knots", must be strictly increasing)
+     *
+     */
+    CubicSpline(int n, const double* x);
+
+    /**
+     * @brief Builds an empty object with specified knots only.
+     *
+     * An object of this class can hold multiple interpolants with the same knots.
+     * This constructor allows the user to initialize the object with knots only,
+     * so that interpolants can be added later.
+     *
+     * @param[in]   n               number of knots
+     * @param[in]   x0              x coordinate of the first data point (first knot)
+     * @param[in]   dx              spacing between knots (must be positive)
+     *
+     */
+    CubicSpline(int n, double x0, double dx);
+
+    /**
+     * @brief Adds an interpolant that shares the same knots.
      *
      * An object of this class can hold multiple interpolants with the same knots.
      * Once constructed, more interpolants sharing the same knots can be added by
@@ -335,6 +370,9 @@ public:
 
     /// last knot
     double xmax() const { return xmax_; }
+
+    /// number of interpolants held by this object
+    int n_spline() const { return n_spline_; }
 
 
 private:

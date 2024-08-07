@@ -42,8 +42,10 @@ has_cond=$(get_input_key_value "cal_cond" "INPUT")
 has_hs=$(get_input_key_value "out_mat_hs" "INPUT")
 has_hs2=$(get_input_key_value "out_mat_hs2" "INPUT")
 has_xc=$(get_input_key_value "out_mat_xc" "INPUT")
+has_eband_separate=$(get_input_key_value "out_eband_separate_term" "INPUT")
 has_r=$(get_input_key_value "out_mat_r" "INPUT")
 deepks_out_labels=$(get_input_key_value "deepks_out_labels" "INPUT")
+deepks_scf=$(get_input_key_value "deepks_scf" "INPUT")
 deepks_bandgap=$(get_input_key_value "deepks_bandgap" "INPUT")
 deepks_v_delta=$(get_input_key_value "deepks_v_delta" "INPUT")
 has_lowf=$(get_input_key_value "out_wfc_lcao" "INPUT")
@@ -238,11 +240,30 @@ if ! test -z "$has_xc"  && [  $has_xc == 1 ]; then
 			xccal=OUT.autotest/k-1-Vxc
 	fi
 	oeref=vxc_out.ref
-	oecal=OUT.autotest/vxc_out
+	oecal=OUT.autotest/vxc_out.dat
 	python3 ../tools/CompareFile.py $xcref $xccal 4
-	echo "CompareXC_pass $?" >>$1
+	echo "CompareVXC_pass $?" >>$1
 	python3 ../tools/CompareFile.py $oeref $oecal 5
-    echo "CompareOE_pass $?" >>$1
+    echo "CompareOrbXC_pass $?" >>$1
+fi
+
+if ! test -z "$has_eband_separate"  && [  $has_eband_separate == 1 ]; then
+	ekref=kinetic_out.ref
+	ekcal=OUT.autotest/kinetic_out.dat
+	python3 ../tools/CompareFile.py $ekref $ekcal 4
+	echo "CompareOrbKinetic_pass $?" >>$1
+	vlref=vpp_local_out.ref
+	vlcal=OUT.autotest/vpp_local_out.dat
+	python3 ../tools/CompareFile.py $vlref $vlcal 4
+	echo "CompareOrbVL_pass $?" >>$1
+	vnlref=vpp_nonlocal_out.ref
+	vnlcal=OUT.autotest/vpp_nonlocal_out.dat
+	python3 ../tools/CompareFile.py $vnlref $vnlcal 4
+	echo "CompareOrbVNL_pass $?" >>$1
+	vhref=vhartree_out.ref
+	vhcal=OUT.autotest/vhartree_out.dat
+	python3 ../tools/CompareFile.py $vhref $vhcal 4
+	echo "CompareOrbVHartree_pass $?" >>$1
 fi
 
 #echo $has_hs2
@@ -444,10 +465,22 @@ if ! test -z "$run_rpa" && [ $run_rpa == 1 ]; then
 fi
 
 if ! test -z "$deepks_out_labels" && [ $deepks_out_labels == 1 ]; then
-	sed '/n_des/d' descriptor.dat > des_tmp.txt
+	sed '/n_des/d' OUT.autotest/deepks_desc.dat > des_tmp.txt
 	total_des=`sum_file des_tmp.txt 5`
 	rm des_tmp.txt
 	echo "totaldes $total_des" >>$1
+	if ! test -z "$deepks_scf" && [ $deepks_scf == 1 ]; then
+		deepks_e_dm=`python3 get_dm_eig.py`
+	    echo "deepks_e_dm $deepks_e_dm" >>$1
+	fi
+	if ! test -z "$has_force" && [ $has_force == 1 ]; then
+	    deepks_f_label=`python3 get_grad_vx.py`
+		echo "deepks_f_label $deepks_f_label" >>$1
+	fi
+	if ! test -z "$has_stress" && [ $has_stress == 1 ]; then
+	    deepks_s_label=`python3 get_grad_vepsl.py`
+		echo "deepks_s_label $deepks_s_label" >>$1
+	fi
 fi
 
 if ! test -z "$deepks_bandgap" && [ $deepks_bandgap == 1 ]; then
@@ -458,7 +491,7 @@ if ! test -z "$deepks_bandgap" && [ $deepks_bandgap == 1 ]; then
 fi
 
 if ! test -z "$deepks_v_delta" && [ $deepks_v_delta == 1 ]; then
-	totalh=`python3 get_sum_numpy.py h_tot.npy `
+	totalh=`python3 get_sum_numpy.py OUT.autotest/deepks_htot.npy `
 	echo "totalh $totalh" >>$1
 	totalvdelta=`python3 get_v_delta.py`
 	echo "totalvdelta $totalvdelta" >>$1
@@ -467,7 +500,7 @@ if ! test -z "$deepks_v_delta" && [ $deepks_v_delta == 1 ]; then
 fi
 
 if ! test -z "$deepks_v_delta" && [ $deepks_v_delta == 2 ]; then
-	totalh=`python3 get_sum_numpy.py h_tot.npy `
+	totalh=`python3 get_sum_numpy.py OUT.autotest/deepks_htot.npy `
 	echo "totalh $totalh" >>$1
 	totalvdelta=`python3 get_v_delta.py`
 	echo "totalvdelta $totalvdelta" >>$1

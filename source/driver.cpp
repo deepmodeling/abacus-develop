@@ -6,7 +6,6 @@
 #include "module_esolver/esolver.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/cal_test.h"
-#include "module_io/input.h"
 #include "module_io/input_conv.h"
 #include "module_io/para_json.h"
 #include "module_io/print_info.h"
@@ -132,17 +131,16 @@ void Driver::reading()
     read_input.write_parameters(PARAM, ss1.str());
 
     // (*temp*) copy the variables from INPUT to each class
-    Input_Conv::tmp_convert();
     Input_Conv::Convert();
 
     // (4) define the 'DIAGONALIZATION' world in MPI
-    Parallel_Global::split_diag_world(GlobalV::DIAGO_PROC,
+    Parallel_Global::split_diag_world(PARAM.inp.diago_proc,
                                       GlobalV::NPROC,
                                       GlobalV::MY_RANK,
                                       GlobalV::DRANK,
                                       GlobalV::DSIZE,
                                       GlobalV::DCOLOR);
-    Parallel_Global::split_grid_world(GlobalV::DIAGO_PROC,
+    Parallel_Global::split_grid_world(PARAM.inp.diago_proc,
                                       GlobalV::NPROC,
                                       GlobalV::MY_RANK,
                                       GlobalV::GRANK,
@@ -169,7 +167,7 @@ void Driver::reading()
 #endif
 
     // (6) Read in parameters about wannier functions.
-    winput::Init(GlobalV::global_wannier_card);
+    winput::Init(PARAM.inp.wannier_card);
 
     ModuleBase::timer::tick("Driver", "reading");
 }

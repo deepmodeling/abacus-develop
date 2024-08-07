@@ -29,9 +29,7 @@ namespace hsolver
     template <typename T>
     HSolverLIP<T>::HSolverLIP(ModulePW::PW_Basis_K* wfc_basis_in)
     {
-        this->classname = "HSolverLIP";
         this->wfc_basis = wfc_basis_in;
-        this->diag_ethr = GlobalV::PW_DIAG_THR;
     }
 
 

@@ -7,6 +7,7 @@
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "unitcell.h"
+#include "module_parameter/parameter.h"
 
 #ifdef __LCAO
 #include "../module_basis/module_ao/ORB_read.h" // to use 'ORB' -- mohan 2021-01-30
@@ -27,8 +28,9 @@
 #endif
 
 UnitCell::UnitCell() {
-    if (GlobalV::test_unitcell)
+    if (GlobalV::test_unitcell) {
         ModuleBase::TITLE("unitcell", "Constructor");
+}
     Coordinate = "Direct";
     latName = "none";
     lat0 = 0.0;
@@ -86,8 +88,9 @@ UnitCell::~UnitCell() {
 #include "module_base/parallel_common.h"
 #ifdef __MPI
 void UnitCell::bcast_unitcell() {
-    if (GlobalV::test_unitcell)
+    if (GlobalV::test_unitcell) {
         ModuleBase::TITLE("UnitCell", "bcast_unitcell");
+}
     Parallel_Common::bcast_string(Coordinate);
     Parallel_Common::bcast_int(nat);
 
@@ -166,8 +169,9 @@ void UnitCell::bcast_unitcell2() {
 #endif
 
 void UnitCell::print_cell(std::ofstream& ofs) const {
-    if (GlobalV::test_unitcell)
+    if (GlobalV::test_unitcell) {
         ModuleBase::TITLE("UnitCell", "print_cell");
+}
 
     ModuleBase::GlobalFunc::OUT(ofs, "print_unitcell()");
 
@@ -379,18 +383,24 @@ void UnitCell::periodic_boundary_adjustment() {
         Atom* atom = &this->atoms[it];
         for (int ia = 0; ia < atom->na; ia++) {
             // mohan update 2011-03-21
-            if (atom->taud[ia].x < 0)
+            if (atom->taud[ia].x < 0) {
                 atom->taud[ia].x += 1.0;
-            if (atom->taud[ia].y < 0)
+}
+            if (atom->taud[ia].y < 0) {
                 atom->taud[ia].y += 1.0;
-            if (atom->taud[ia].z < 0)
+}
+            if (atom->taud[ia].z < 0) {
                 atom->taud[ia].z += 1.0;
-            if (atom->taud[ia].x >= 1.0)
+}
+            if (atom->taud[ia].x >= 1.0) {
                 atom->taud[ia].x -= 1.0;
-            if (atom->taud[ia].y >= 1.0)
+}
+            if (atom->taud[ia].y >= 1.0) {
                 atom->taud[ia].y -= 1.0;
-            if (atom->taud[ia].z >= 1.0)
+}
+            if (atom->taud[ia].z >= 1.0) {
                 atom->taud[ia].z -= 1.0;
+}
 
             if (atom->taud[ia].x < 0 || atom->taud[ia].y < 0
                 || atom->taud[ia].z < 0 || atom->taud[ia].x >= 1.0
@@ -444,8 +454,9 @@ void UnitCell::cal_ux() {
                 break;
             }
         }
-        if (magnet.lsign_)
+        if (magnet.lsign_) {
             break;
+}
     }
     // whether the initial magnetizations is parallel
     for (int it = starting_it; it < ntype; it++) {
@@ -730,7 +741,7 @@ void UnitCell::read_pseudo(std::ofstream& ofs) {
         << std::endl;
     ofs << "\n\n\n\n";
 
-    read_cell_pseudopots(GlobalV::global_pseudo_dir, ofs);
+    read_cell_pseudopots(PARAM.inp.pseudo_dir, ofs);
 
     if (GlobalV::MY_RANK == 0) {
         for (int it = 0; it < this->ntype; it++) {
@@ -740,7 +751,7 @@ void UnitCell::read_pseudo(std::ofstream& ofs) {
             }
         }
 
-        if (GlobalV::out_element_info) {
+        if (PARAM.inp.out_element_info) {
             for (int i = 0; i < this->ntype; i++) {
                 ModuleBase::Global_File::make_dir_atom(this->atoms[i].label);
             }
@@ -788,8 +799,9 @@ void UnitCell::read_pseudo(std::ofstream& ofs) {
                             break;
                         }
                     }
-                    if (cut_mesh % 2 == 0)
+                    if (cut_mesh % 2 == 0) {
                         ++cut_mesh;
+}
 
                     ofs << std::setw(10) << cut_mesh << "\t"
                         << "the number of mesh points." << std::endl;
@@ -1083,8 +1095,9 @@ void UnitCell::set_iat2iwt(const int& npol_in) {
 // Demand : atoms[].msh
 //======================
 void UnitCell::cal_meshx() {
-    if (GlobalV::test_pseudo_cell)
+    if (GlobalV::test_pseudo_cell) {
         ModuleBase::TITLE("UnitCell", "cal_meshx");
+}
     this->meshx = 0;
     for (int it = 0; it < this->ntype; it++) {
         const int mesh = this->atoms[it].ncpp.msh;
@@ -1103,8 +1116,9 @@ void UnitCell::cal_meshx() {
 // 			atoms[].na
 //=========================
 void UnitCell::cal_natomwfc(std::ofstream& log) {
-    if (GlobalV::test_pseudo_cell)
+    if (GlobalV::test_pseudo_cell) {
         ModuleBase::TITLE("UnitCell", "cal_natomwfc");
+}
 
     this->natomwfc = 0;
     for (int it = 0; it < ntype; it++) {
@@ -1119,13 +1133,15 @@ void UnitCell::cal_natomwfc(std::ofstream& log) {
                         tmp += 2 * atoms[it].ncpp.lchi[l];
                         if (fabs(atoms[it].ncpp.jchi[l] - atoms[it].ncpp.lchi[l]
                                  - 0.5)
-                            < 1e-6)
+                            < 1e-6) {
                             tmp += 2;
+}
                     } else {
                         tmp += 2 * (2 * atoms[it].ncpp.lchi[l] + 1);
                     }
-                } else
+                } else {
                     tmp += 2 * atoms[it].ncpp.lchi[l] + 1;
+}
             }
         }
         natomwfc += tmp * atoms[it].na;
@@ -1207,8 +1223,9 @@ bool UnitCell::if_atoms_can_move() const {
     for (int it = 0; it < this->ntype; it++) {
         Atom* atom = &atoms[it];
         for (int ia = 0; ia < atom->na; ia++) {
-            if (atom->mbl[ia].x || atom->mbl[ia].y || atom->mbl[ia].z)
+            if (atom->mbl[ia].x || atom->mbl[ia].y || atom->mbl[ia].z) {
                 return true;
+}
         }
     }
     return false;
@@ -1598,7 +1615,7 @@ void UnitCell::cal_nelec(double& nelec) {
             for (int it = 0; it < this->ntype; it++) {
                 std::stringstream ss1, ss2;
                 ss1 << "electron number of element " << this->atoms[it].label;
-                const int nelec_it
+                const double nelec_it
                     = this->atoms[it].ncpp.zv * this->atoms[it].na;
                 nelec += nelec_it;
                 ss2 << "total electron number of element "
@@ -1616,13 +1633,13 @@ void UnitCell::cal_nelec(double& nelec) {
                                         nelec);
         }
     }
-    if (GlobalV::nelec_delta != 0) {
+    if (PARAM.inp.nelec_delta != 0) {
         ModuleBase::GlobalFunc::OUT(
             GlobalV::ofs_running,
             "nelec_delta is NOT zero, please make sure you know what you are "
             "doing! nelec_delta: ",
-            GlobalV::nelec_delta);
-        nelec += GlobalV::nelec_delta;
+            PARAM.inp.nelec_delta);
+        nelec += PARAM.inp.nelec_delta;
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "nelec now: ", nelec);
     }
     return;

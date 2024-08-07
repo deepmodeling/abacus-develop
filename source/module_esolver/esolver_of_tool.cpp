@@ -32,11 +32,11 @@ void ESolver_OF::init_elecstate(UnitCell& ucell)
                                                 &(this->pelec->f_en.vtxc));
     // There is no Operator in ESolver_OF, register Potentials here!
     std::vector<std::string> pot_register_in;
-    if (GlobalV::VION_IN_H)
+    if (PARAM.inp.vion_in_h)
     {
         pot_register_in.push_back("local");
     }
-    if (GlobalV::VH_IN_H)
+    if (PARAM.inp.vh_in_h)
     {
         pot_register_in.push_back("hartree");
     }
@@ -83,7 +83,6 @@ void ESolver_OF::allocate_array()
     this->ptemp_rho_->set_rhopw(this->pw_rho);
     this->ptemp_rho_->allocate(GlobalV::NSPIN);
 
-    this->mu_ = new double[GlobalV::NSPIN];
     this->theta_ = new double[GlobalV::NSPIN];
     this->pdLdphi_ = new double*[GlobalV::NSPIN];
     this->pdEdphi_ = new double*[GlobalV::NSPIN];
@@ -132,8 +131,10 @@ void ESolver_OF::cal_potential(double* ptemp_phi, double* rdLdphi)
         }
     }
 
-    if (GlobalV::NSPIN == 4)
+    if (GlobalV::NSPIN == 4) 
+    {
         GlobalC::ucell.cal_ux();
+    }
     this->pelec->pot->update_from_charge(this->ptemp_rho_, &GlobalC::ucell);
     ModuleBase::matrix& vr_eff = this->pelec->pot->get_effective_v();
 
@@ -170,8 +171,9 @@ void ESolver_OF::cal_dEdtheta(double** ptemp_phi, Charge* temp_rho, UnitCell& uc
 {
     double* dphi_dtheta = new double[this->pw_rho->nrxx];
 
-    if (GlobalV::NSPIN == 4)
+    if (GlobalV::NSPIN == 4) {
         ucell.cal_ux();
+}
     this->pelec->pot->update_from_charge(temp_rho, &ucell);
     ModuleBase::matrix& vr_eff = this->pelec->pot->get_effective_v();
 
@@ -370,8 +372,9 @@ void ESolver_OF::test_direction(double* dEdtheta, double** ptemp_phi, UnitCell& 
             Parallel_Reduce::reduce_all(pseudopot_energy);
             temp_energy += kinetic_energy + pseudopot_energy;
             GlobalV::ofs_warning << i << "    " << dEdtheta[0] << "    " << temp_energy << std::endl;
-            if (this->theta_[0] == 0)
+            if (this->theta_[0] == 0) {
                 std::cout << "dEdtheta    " << dEdtheta[0] << std::endl;
+}
         }
         exit(0);
     }
@@ -410,7 +413,7 @@ void ESolver_OF::print_info()
     //     maxPot = this->pdEdphi_[0][i];
     // }
     std::cout << std::setw(6) << this->iter_ << std::setw(22) << std::scientific << std::setprecision(12)
-              << this->energy_current_ / 2. << std::setw(12) << std::setprecision(3) << this->mu_[0] / 2.
+              << this->energy_current_ / 2. << std::setw(12) << std::setprecision(3) << this->pelec->eferm.get_efval(0) / 2.
               << std::setw(12) << this->theta_[0] << std::setw(12) << this->normdLdphi_ << std::setw(12)
               << (this->energy_current_ - this->energy_last_) / 2. << std::endl;
     // ============ used to compare with PROFESS3.0 ================
@@ -499,14 +502,14 @@ void ESolver_OF::print_info()
     if (GlobalV::TWO_EFERMI)
     {
         titles.push_back("E_Fermi_up");
-        energies_Ry.push_back(this->mu_[0]);
+        energies_Ry.push_back(this->pelec->eferm.get_efval(0));
         titles.push_back("E_Fermi_dw");
-        energies_Ry.push_back(this->mu_[1]);
+        energies_Ry.push_back(this->pelec->eferm.get_efval(1));
     }
     else
     {
         titles.push_back("E_Fermi");
-        energies_Ry.push_back(this->mu_[0]);
+        energies_Ry.push_back(this->pelec->eferm.get_efval(0));
     }
     energies_eV.resize(energies_Ry.size());
     std::transform(energies_Ry.begin(), energies_Ry.end(), energies_eV.begin(), [](double energy) {

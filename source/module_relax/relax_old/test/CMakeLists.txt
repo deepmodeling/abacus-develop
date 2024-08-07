@@ -3,25 +3,25 @@ remove_definitions(-D__LCAO)
 
 AddTest(
   TARGET lattice_change_methods_test
-  LIBS ${math_libs} base device
+  LIBS ${math_libs} base device parameter
   SOURCES lattice_change_methods_test.cpp ../lattice_change_methods.cpp ../lattice_change_basic.cpp
 )
 
 AddTest(
   TARGET lattice_change_basic_test
-  LIBS ${math_libs} base device
+  LIBS ${math_libs} base device parameter
   SOURCES lattice_change_basic_test.cpp ../lattice_change_basic.cpp
 )
 
 AddTest(
   TARGET lattice_change_cg_test
-  LIBS ${math_libs} base device
+  LIBS ${math_libs} base device parameter
   SOURCES lattice_change_cg_test.cpp ../lattice_change_cg.cpp ../lattice_change_basic.cpp
 )
 
 AddTest(
   TARGET bfgs_basic_test
-  LIBS ${math_libs} base device
+  LIBS ${math_libs} base device parameter
   SOURCES bfgs_basic_test.cpp ../bfgs_basic.cpp
 )
 

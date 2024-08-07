@@ -160,63 +160,63 @@ inline double pow_int(const double base, const int exp)
     }
 }
 // vindex[pw.bxyz]
-int* get_vindex(const int bxyz,
-                const int bx,
-                const int by,
-                const int bz,
-                const int nplane,
-                const int ncyz,
-                const int ibx,
-                const int jby,
-                const int kbz);
 
-int* get_vindex(const int bxyz,
-                const int bx,
-                const int by,
-                const int bz,
-                const int nplane,
-                const int start_ind,
-                const int ncyz);
+/**
+ * @brief Get the vindex form the grid index
+ * @param bxyz number of big grids
+ * @param bx number of big grids in x direction
+ * @param by number of big grids in y direction
+ * @param bz number of big grids in z direction
+ * @param nplane Currently using Z-axis 1D division, 
+ * recording the number of the Z-axis process
+ * (nbz in the current process).
+ * @param start_ind start index of the grid in the 1D FFT grid
+ * @param ncyz number of grids in yz plane
+ * @param vindex the index of the grid 
+*/
+void get_vindex(const int bxyz, const int bx, const int by,
+                    const int bz, const int nplane, 
+                    const int start_ind,const int ncyz,int* vindex);
 
-// extract the local potentials.
-// vldr3[bxyz]
-double* get_vldr3(const double* const vlocal,
-                  const int bxyz,
-                  const int bx,
-                  const int by,
-                  const int bz,
-                  const int nplane,
-                  const int ncyz,
-                  const int ibx,
-                  const int jby,
-                  const int kbz,
-                  const double dv);
-
-double* get_vldr3(const double* const vlocal,
-                  const int bxyz,
-                  const int bx,
-                  const int by,
-                  const int bz,
-                  const int nplane,
-                  const int start_ind,
-                  const int ncyz,
-                  const double dv);
-
-//------------------------------------------------------
-// na_grid : #. atoms for this group of grids
-// block_iw : size na_grid, index of the first orbital on this atom
-// block_size : size na_grid, number of orbitals on this atom
-// block_index : size na_grid+1, start from 0, accumulates block_size
-// cal_flag : whether the atom-grid distance is larger than cutoff
-//------------------------------------------------------
-void get_block_info(const Grid_Technique& gt,
+/**
+ * @brief Get the vldr3 form the grid index
+ * @param vldr3 the local potential multiplied by the grid volume
+ * @param vlocal the local potential
+ * @param bxyz number of grids
+ * @param bx number of grids in x direction
+ * @param by number of grids in y direction
+ * @param bz number of grids in z direction
+ * @param nplane Currently using Z-axis 1D division, 
+ * recording the number of the Z-axis process
+ * (nbz in the current process).
+ * @param start_ind start index of the grid in the 1D FFT grid
+ * @param ncyz number of grids in yz plane
+ * @param dv the volume of the grid
+*/
+void get_gint_vldr3(double* vldr3,
+                    const double* const vlocal,
                     const int bxyz,
-                    const int na_grid,
-                    const int grid_index,
-                    int*& block_iw,
-                    int*& block_index,
-                    int*& block_size,
-                    bool**& cal_flag);
+                    const int bx,
+                    const int by,
+                    const int bz,
+                    const int nplane,
+                    const int start_ind,
+                    const int ncyz,
+                    const double dv);
+
+/**
+ * @brief Get the information of a big grid index
+ * @param gt the grid technique, which contains the tools of the grid intergration
+ * @param bxyz number of grids
+ * @param na_grid number of atoms on this grid
+ * @param grid_index 1d index of FFT index (i,j,k)
+ * @param block_iw track the atom orbitals in all atoms
+ * @param block_index count total number of atomis orbitals
+ * @param block_size count the number of atomis orbitals in each atom
+ * @param cal_flag whether the atom-grid distance is larger than cutoff
+*/                    
+void get_block_info(const Grid_Technique& gt, const int bxyz, const int na_grid, const int grid_index,
+                    int* block_iw, int* block_index, int* block_size, bool** cal_flag);
 
 void init_orb(double& dr_uniform,
               std::vector<double>& rcuts,
@@ -253,22 +253,14 @@ void cal_dpsir_ylm(
 
 // dpsir_ylm * (r-R), R is the atomic position
 void cal_dpsirr_ylm(
-    const Grid_Technique& gt,
-    const int bxyz,
+    const Grid_Technique& gt, const int bxyz,
     const int na_grid,                 // number of atoms on this grid
     const int grid_index,              // 1d index of FFT index (i,j,k)
     const int* const block_index,      // block_index[na_grid+1], count total number of atomis orbitals
     const int* const block_size,       // block_size[na_grid],	number of columns of a band
     const bool* const* const cal_flag, // cal_flag[bxyz][na_grid],	whether the atom-grid distance is larger than cutoff
-    double* const* const dpsir_ylm_x,
-    double* const* const dpsir_ylm_y,
-    double* const* const dpsir_ylm_z,
-    double* const* const dpsir_ylm_xx,
-    double* const* const dpsir_ylm_xy,
-    double* const* const dpsir_ylm_xz,
-    double* const* const dpsir_ylm_yy,
-    double* const* const dpsir_ylm_yz,
-    double* const* const dpsir_ylm_zz);
+    double* const* const dpsir_ylm_x, double* const* const dpsir_ylm_y, double* const* const dpsir_ylm_z,
+    double* const* const dpsir_ylm);
 
 void cal_ddpsir_ylm(
     const Grid_Technique& gt,
@@ -314,6 +306,7 @@ void mult_psi_DM(
 // sum_nu,R rho_mu,nu(R) psi_nu, for multi-k
 void mult_psi_DMR(const Grid_Technique& gt,
                   const int bxyz,
+                  const int LD_pool,
                   const int& grid_index,
                   const int& na_grid,
                   const int* const block_index,

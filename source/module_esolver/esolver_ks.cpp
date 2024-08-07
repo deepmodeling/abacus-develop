@@ -9,7 +9,6 @@
 #include <iostream>
 
 #include "module_base/timer.h"
-#include "module_io/input.h"
 #include "module_io/json_output/init_info.h"
 #include "module_io/print_info.h"
 #include "module_parameter/parameter.h"
@@ -23,6 +22,8 @@
 #include "module_cell/module_paw/paw_cell.h"
 #endif
 #include "module_io/json_output/output_info.h"
+
+#include "print_funcs.h" // mohan add 2024-07-27
 
 namespace ModuleESolver
 {
@@ -40,7 +41,7 @@ ESolver_KS<T, Device>::ESolver_KS()
     basisname = "PLEASE ADD BASISNAME FOR CURRENT ESOLVER.";
 
     // should not use GlobalV here, mohan 2024-05-12
-    scf_thr = GlobalV::SCF_THR;
+    scf_thr = PARAM.inp.scf_thr;
     drho = 0.0;
 
     // should not use GlobalV here, mohan 2024-05-12
@@ -48,7 +49,7 @@ ESolver_KS<T, Device>::ESolver_KS()
     niter = maxniter;
 
     // should not use GlobalV here, mohan 2024-05-12
-    out_freq_elec = GlobalV::OUT_FREQ_ELEC;
+    out_freq_elec = PARAM.inp.out_freq_elec;
 
     // pw_rho = new ModuleBase::PW_Basis();
     // temporary, it will be removed
@@ -258,7 +259,7 @@ void ESolver_KS<T, Device>::before_all_runners(const Input_para& inp, UnitCell& 
 
     this->pw_wfc->collect_local_pw(inp.erf_ecut, inp.erf_height, inp.erf_sigma);
 
-    this->print_wfcfft(inp, GlobalV::ofs_running);
+    Print_functions::print_wfcfft(inp, *this->pw_wfc, GlobalV::ofs_running);
 
     //! 10) initialize the real-space uniform grid for FFT and parallel
     //! distribution of plane waves
@@ -272,9 +273,6 @@ void ESolver_KS<T, Device>::before_all_runners(const Input_para& inp, UnitCell& 
 
     //! 11) calculate the structure factor
     this->sf.setup_structure_factor(&ucell, this->pw_rhod);
-
-    //! 12) initialize the charge extrapolation method if necessary
-    CE.Init_CE(ucell.nat);
 
 #ifdef USE_PAW
     if (GlobalV::use_paw)
@@ -350,7 +348,7 @@ void ESolver_KS<T, Device>::init_after_vc(const Input_para& inp, UnitCell& ucell
 
     ESolver_FP::init_after_vc(inp, ucell);
 
-    if (GlobalV::md_prec_level == 2)
+    if (inp.mdp.md_prec_level == 2)
     {
         // initialize the real-space uniform grid for FFT and parallel
         // distribution of plane waves
@@ -381,79 +379,6 @@ void ESolver_KS<T, Device>::hamilt2density(const int istep, const int iter, cons
     // hamilt2density() and use:
     // this->phsol->solve(this->phamilt, this->pes, this->wf, ETHR);
     ModuleBase::timer::tick(this->classname, "hamilt2density");
-}
-
-//------------------------------------------------------------------------------
-//! the 6th function of ESolver_KS: print_wfcfft
-//! mohan add 2024-05-11
-//------------------------------------------------------------------------------
-template <typename T, typename Device>
-void ESolver_KS<T, Device>::print_wfcfft(const Input_para& inp, std::ofstream& ofs)
-{
-    ofs << "\n\n\n\n";
-    ofs << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-           ">>>>"
-        << std::endl;
-    ofs << " |                                                                 "
-           "   |"
-        << std::endl;
-    ofs << " | Setup plane waves of wave functions:                            "
-           "   |"
-        << std::endl;
-    ofs << " | Use the energy cutoff and the lattice vectors to generate the   "
-           "   |"
-        << std::endl;
-    ofs << " | dimensions of FFT grid. The number of FFT grid on each "
-           "processor   |"
-        << std::endl;
-    ofs << " | is 'nrxx'. The number of plane wave basis in reciprocal space "
-           "is   |"
-        << std::endl;
-    ofs << " | different for charege/potential and wave functions. We also set "
-           "   |"
-        << std::endl;
-    ofs << " | the 'sticks' for the parallel of FFT. The number of plane wave "
-           "of  |"
-        << std::endl;
-    ofs << " | each k-point is 'npwk[ik]' in each processor                    "
-           "   |"
-        << std::endl;
-    ofs << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
-           "<<<<"
-        << std::endl;
-    ofs << "\n\n\n\n";
-    ofs << "\n SETUP PLANE WAVES FOR WAVE FUNCTIONS" << std::endl;
-
-    double ecut = inp.ecutwfc;
-    if (std::abs(ecut - this->pw_wfc->gk_ecut * this->pw_wfc->tpiba2) > 1e-6)
-    {
-        ecut = this->pw_wfc->gk_ecut * this->pw_wfc->tpiba2;
-        ofs << "Energy cutoff for wavefunc is incompatible with nx, ny, nz and "
-               "it will be reduced!"
-            << std::endl;
-    }
-    ModuleBase::GlobalFunc::OUT(ofs, "energy cutoff for wavefunc (unit:Ry)", ecut);
-    ModuleBase::GlobalFunc::OUT(ofs,
-                                "fft grid for wave functions",
-                                this->pw_wfc->nx,
-                                this->pw_wfc->ny,
-                                this->pw_wfc->nz);
-    ModuleBase::GlobalFunc::OUT(ofs, "number of plane waves", this->pw_wfc->npwtot);
-    ModuleBase::GlobalFunc::OUT(ofs, "number of sticks", this->pw_wfc->nstot);
-
-    ofs << "\n PARALLEL PW FOR WAVE FUNCTIONS" << std::endl;
-    ofs << " " << std::setw(8) << "PROC" << std::setw(15) << "COLUMNS(POT)" << std::setw(15) << "PW" << std::endl;
-
-    for (int i = 0; i < GlobalV::NPROC_IN_POOL; ++i)
-    {
-        ofs << " " << std::setw(8) << i + 1 << std::setw(15) << this->pw_wfc->nst_per[i] << std::setw(15)
-            << this->pw_wfc->npw_per[i] << std::endl;
-    }
-
-    ofs << " --------------- sum -------------------" << std::endl;
-    ofs << " " << std::setw(8) << GlobalV::NPROC_IN_POOL << std::setw(15) << this->pw_wfc->nstot << std::setw(15)
-        << this->pw_wfc->npwtot << std::endl;
-    ModuleBase::GlobalFunc::DONE(ofs, "INIT PLANEWAVE");
 }
 
 //------------------------------------------------------------------------------
@@ -499,6 +424,8 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
     this->niter = this->maxniter;
 
     // 4) SCF iterations
+    double diag_ethr = GlobalV::PW_DIAG_THR;
+
     std::cout << " * * * * * *\n << Start SCF iteration." << std::endl;
     for (int iter = 1; iter <= this->maxniter; ++iter)
     {
@@ -510,7 +437,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
 #else
         auto iterstart = std::chrono::system_clock::now();
 #endif
-        double diag_ethr = this->phsol->set_diagethr(istep, iter, drho);
+        diag_ethr = this->phsol->set_diagethr(diag_ethr, istep, iter, drho);
 
         // 6) initialization of SCF iterations
         this->iter_init(istep, iter);
@@ -538,15 +465,15 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
             if (firstscf)
             {
                 firstscf = false;
-                hsolver_error = this->phsol->cal_hsolerror();
+                hsolver_error = this->phsol->cal_hsolerror(diag_ethr);
                 // The error of HSolver is larger than drho,
                 // so a more precise HSolver should be excuconv_elected.
                 if (hsolver_error > drho)
                 {
-                    diag_ethr = this->phsol->reset_diagethr(GlobalV::ofs_running, hsolver_error, drho);
+                    diag_ethr = this->phsol->reset_diagethr(GlobalV::ofs_running, hsolver_error, drho, diag_ethr);
                     this->hamilt2density(istep, iter, diag_ethr);
                     drho = p_chgmix->get_drho(pelec->charge, GlobalV::nelec);
-                    hsolver_error = this->phsol->cal_hsolerror();
+                    hsolver_error = this->phsol->cal_hsolerror(diag_ethr);
                 }
             }
             // mixing will restart at this->p_chgmix->mixing_restart steps
@@ -760,91 +687,6 @@ template <typename T, typename Device>
 bool ESolver_KS<T, Device>::get_conv_elec()
 {
     return this->conv_elec;
-}
-
-//------------------------------------------------------------------------------
-//! the 13th function of ESolver_KS: create_Output_Rho
-//! mohan add 2024-05-12
-//------------------------------------------------------------------------------
-template <typename T, typename Device>
-ModuleIO::Output_Rho ESolver_KS<T, Device>::create_Output_Rho(int is, int iter, const std::string& prefix)
-{
-    const int precision = 3;
-    std::string tag = "CHG";
-    if (PARAM.inp.dm_to_rho)
-    {
-        return ModuleIO::Output_Rho(this->pw_big,
-                                    this->pw_rhod,
-                                    is,
-                                    GlobalV::NSPIN,
-                                    pelec->charge->rho[is],
-                                    iter,
-                                    this->pelec->eferm.get_efval(is),
-                                    &(GlobalC::ucell),
-                                    GlobalV::global_out_dir,
-                                    precision,
-                                    tag,
-                                    prefix);
-    }
-    return ModuleIO::Output_Rho(this->pw_big,
-                                this->pw_rhod,
-                                is,
-                                GlobalV::NSPIN,
-                                pelec->charge->rho_save[is],
-                                iter,
-                                this->pelec->eferm.get_efval(is),
-                                &(GlobalC::ucell),
-                                GlobalV::global_out_dir,
-                                precision,
-                                tag,
-                                prefix);
-}
-
-//------------------------------------------------------------------------------
-//! the 14th function of ESolver_KS: create_Output_Kin
-//! mohan add 2024-05-12
-//------------------------------------------------------------------------------
-template <typename T, typename Device>
-ModuleIO::Output_Rho ESolver_KS<T, Device>::create_Output_Kin(int is, int iter, const std::string& prefix)
-{
-    const int precision = 11;
-    std::string tag = "TAU";
-    return ModuleIO::Output_Rho(this->pw_big,
-                                this->pw_rhod,
-                                is,
-                                GlobalV::NSPIN,
-                                pelec->charge->kin_r_save[is],
-                                iter,
-                                this->pelec->eferm.get_efval(is),
-                                &(GlobalC::ucell),
-                                GlobalV::global_out_dir,
-                                precision,
-                                tag,
-                                prefix);
-}
-
-//------------------------------------------------------------------------------
-//! the 15th function of ESolver_KS: create_Output_Potential
-//! mohan add 2024-05-12
-//------------------------------------------------------------------------------
-template <typename T, typename Device>
-ModuleIO::Output_Potential ESolver_KS<T, Device>::create_Output_Potential(int iter, const std::string& prefix)
-{
-    const int precision = 3;
-    std::string tag = "POT";
-    return ModuleIO::Output_Potential(this->pw_big,
-                                      this->pw_rhod,
-                                      GlobalV::NSPIN,
-                                      iter,
-                                      GlobalV::out_pot,
-                                      this->pelec->pot->get_effective_v(),
-                                      this->pelec->pot->get_fixed_v(),
-                                      &(GlobalC::ucell),
-                                      pelec->charge,
-                                      precision,
-                                      GlobalV::global_out_dir,
-                                      tag,
-                                      prefix);
 }
 
 //------------------------------------------------------------------------------

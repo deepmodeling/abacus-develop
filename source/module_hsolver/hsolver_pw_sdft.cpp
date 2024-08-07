@@ -16,16 +16,28 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
                            const int istep,
                            const int iter,
                            const std::string method_in,
-                           const bool skip_charge) {
-    ModuleBase::TITLE(this->classname, "solve");
-    ModuleBase::timer::tick(this->classname, "solve");
+
+                           const int scf_iter_in,
+                           const bool need_subspace_in,
+                           const int diag_iter_max_in,
+                           const double iter_diag_thr_in,
+
+                           const bool skip_charge)
+{
+    ModuleBase::TITLE("HSolverPW_SDFT", "solve");
+    ModuleBase::timer::tick("HSolverPW_SDFT", "solve");
+
     const int npwx = psi.get_nbasis();
     const int nbands = psi.get_nbands();
     const int nks = psi.get_nk();
 
-    this->hamilt_ = pHamilt;
+    this->scf_iter = scf_iter_in;
+    this->need_subspace = need_subspace_in;
+    this->diag_iter_max = diag_iter_max_in;
+    this->iter_diag_thr = iter_diag_thr_in;
+
     // prepare for the precondition of diagonalization
-    this->precondition.resize(psi.get_nbasis());
+    std::vector<double> precondition(psi.get_nbasis(), 0.0);
 
     // select the method of diagonalization
     this->method = method_in;
@@ -47,7 +59,7 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
             update_precondition(precondition, ik, this->wfc_basis->npwk[ik]);
             /// solve eigenvector and eigenvalue for H(k)
             double* p_eigenvalues = &(pes->ekb(ik, 0));
-            this->hamiltSolvePsiK(pHamilt, psi, p_eigenvalues);
+            this->hamiltSolvePsiK(pHamilt, psi, precondition, p_eigenvalues);
         }
 
         stoiter.stohchi.current_ik = ik;
@@ -66,12 +78,19 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
         stoiter.checkemm(ik, istep, iter, stowf); // check and reset emax & emin
     }
 
-    this->endDiagh();
+    this->output_iterInfo();
+
+    // psi only should be initialed once for PW
+    if (!this->initialed_psi)
+    {
+        this->initialed_psi = true;
+    }
 
     for (int ik = 0; ik < nks; ik++) {
         // init k
-        if (nks > 1)
+        if (nks > 1) {
             pHamilt->updateHk(ik);
+}
         stoiter.stohchi.current_ik = ik;
         stoiter.calPn(ik, stowf);
     }
@@ -79,7 +98,7 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
     stoiter.itermu(iter, pes);
     stoiter.calHsqrtchi(stowf);
     if (skip_charge) {
-        ModuleBase::timer::tick(this->classname, "solve");
+        ModuleBase::timer::tick("HSolverPW_SDFT", "solve");
         return;
     }
     //(5) calculate new charge density
@@ -99,29 +118,33 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
     stoiter.sum_stoband(stowf, pes, pHamilt, wfc_basis);
 
     // will do rho symmetry and energy calculation in esolver
-    ModuleBase::timer::tick(this->classname, "solve");
+    ModuleBase::timer::tick("HSolverPW_SDFT", "solve");
     return;
 }
 
-double HSolverPW_SDFT::set_diagethr(const int istep,
+double HSolverPW_SDFT::set_diagethr(double diag_ethr_in,
+                                    const int istep,
                                     const int iter,
                                     const double drho) {
     if (iter == 1) {
         if (istep == 0) {
             if (GlobalV::init_chg == "file") {
-                this->diag_ethr = 1.0e-5;
+                diag_ethr_in = 1.0e-5;
             }
-            this->diag_ethr = std::max(this->diag_ethr, GlobalV::PW_DIAG_THR);
-        } else
-            this->diag_ethr = std::max(this->diag_ethr, 1.0e-5);
+            diag_ethr_in = std::max(diag_ethr_in, GlobalV::PW_DIAG_THR);
+        } else {
+            diag_ethr_in = std::max(diag_ethr_in, 1.0e-5);
+}
     } else {
-        if (GlobalV::NBANDS > 0 && this->stoiter.KS_ne > 1e-6)
-            this->diag_ethr
-                = std::min(this->diag_ethr,
+        if (GlobalV::NBANDS > 0 && this->stoiter.KS_ne > 1e-6) {
+            diag_ethr_in
+                = std::min(diag_ethr_in,
                            0.1 * drho / std::max(1.0, this->stoiter.KS_ne));
-        else
-            this->diag_ethr = 0.0;
+        } else {
+            diag_ethr_in = 0.0;
+}
     }
-    return this->diag_ethr;
+
+    return diag_ethr_in;
 }
 } // namespace hsolver

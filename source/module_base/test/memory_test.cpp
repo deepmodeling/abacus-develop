@@ -27,6 +27,7 @@ namespace GlobalV
 
 #define private public
 #include "../memory.h"
+#undef private
 
 class MemoryTest : public testing::Test
 {
@@ -151,4 +152,3 @@ TEST_F(MemoryTest, finish)
 	ofs.close();
 	EXPECT_FALSE(ModuleBase::Memory::init_flag);
 }
-#undef private

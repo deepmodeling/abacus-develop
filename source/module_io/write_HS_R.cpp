@@ -53,7 +53,7 @@ void ModuleIO::output_HSR(const int& istep,
         );
 
         // cal HR of the spin up
-        if (GlobalV::VL_IN_H) {
+        if (PARAM.inp.vl_in_h) {
             const int ik = 0;
             p_ham->refresh();
             p_ham->updateHk(ik);
@@ -118,7 +118,7 @@ void ModuleIO::output_dHR(const int& istep,
                 = v_eff.nc * v_eff.nr > 0 ? &(v_eff(cspin, 0)) : nullptr;
 
             if (!GlobalV::GAMMA_ONLY_LOCAL) {
-                if (GlobalV::VL_IN_H) {
+                if (PARAM.inp.vl_in_h) {
                     Gint_inout inout(vr_eff1,
                                      cspin,
                                      Gint_Tools::job_type::dvlocal);

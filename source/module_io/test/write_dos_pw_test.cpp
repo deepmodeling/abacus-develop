@@ -22,7 +22,6 @@
  *     - density of states in pw basis calculation
  */
 
-Parameter PARAM;
 
 class DosPWTest : public ::testing::Test
 {

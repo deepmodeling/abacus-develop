@@ -38,7 +38,7 @@ Stochastic_Iter::~Stochastic_Iter()
 
 void Stochastic_Iter::init(const int method_in, K_Vectors* pkv_in, ModulePW::PW_Basis_K* wfc_basis, Stochastic_WF& stowf)
 {
-    p_che = new ModuleBase::Chebyshev<double>(INPUT.nche_sto);
+    p_che = new ModuleBase::Chebyshev<double>(PARAM.inp.nche_sto);
     nchip = stowf.nchip;
     targetne = GlobalV::nelec;
     this->pkv = pkv_in;
@@ -219,13 +219,13 @@ void Stochastic_Iter::itermu(const int iter, elecstate::ElecState* pes)
     if (iter == 1)
     {
         dmu = 2;
-        th_ne = 0.1 * GlobalV::SCF_THR * GlobalV::nelec;
+        th_ne = 0.1 *PARAM.inp.scf_thr * GlobalV::nelec;
         // std::cout<<"th_ne "<<th_ne<<std::endl;
     }
     else
     {
         dmu = 0.1;
-        th_ne = 1e-2 * GlobalV::SCF_THR * GlobalV::nelec;
+        th_ne = 1e-2 *PARAM.inp.scf_thr * GlobalV::nelec;
         th_ne = std::min(th_ne, 1e-5);
     }
     this->stofunc.mu = mu0 - dmu;
@@ -286,7 +286,7 @@ void Stochastic_Iter::itermu(const int iter, elecstate::ElecState* pes)
     }
     pes->eferm.ef = this->stofunc.mu = mu0 = mu3;
     GlobalV::ofs_running<<"Converge fermi energy = "<<mu3<<" Ry in "<<count<<" steps."<<std::endl;
-    this->check_precision(targetne,10*GlobalV::SCF_THR,"Ne");
+    this->check_precision(targetne,10*PARAM.inp.scf_thr,"Ne");
     
     //Set wf.wg 
     if(GlobalV::NBANDS > 0)

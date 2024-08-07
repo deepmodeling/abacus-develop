@@ -68,7 +68,7 @@ class ESolver_KS_LCAO : public ESolver_KS<TK> {
     Record_adj RA;
 
     // 2d block-cyclic distribution info
-    Parallel_Orbitals ParaV;
+    Parallel_Orbitals pv;
 
     // used for k-dependent grid integration.
     Gint_k GK;
@@ -86,8 +86,6 @@ class ESolver_KS_LCAO : public ESolver_KS<TK> {
     // Are there any better way to solve this problem ?
     ModuleBase::matrix scs;
     bool have_force = false;
-
-    void init_basis_lcao(const Input_para& inp, UnitCell& ucell);
 
     //--------------common for all calculation, not only scf-------------
     // set matrix and grid integral

@@ -19,6 +19,17 @@ add_test(NAME io_input_test_para_4
 )
 
 AddTest(
+  TARGET read_exit_file_test
+  LIBS ${math_libs} base device parameter
+  SOURCES read_exit_file_test.cpp ../read_exit_file.cpp
+)
+
+add_test(NAME read_exit_file_test_para_4
+      COMMAND mpirun -np 4 ./read_exit_file_test
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+AddTest(
   TARGET io_winput_test
   LIBS ${math_libs} base device
   SOURCES winput_test.cpp ../winput.cpp
@@ -49,14 +60,14 @@ AddTest(
 
 AddTest(
   TARGET io_write_dos_pw
-  LIBS ${math_libs} base device symmetry
+  LIBS ${math_libs} base device symmetry parameter
   SOURCES write_dos_pw_test.cpp ../cal_dos.cpp ../write_dos_pw.cpp ../output.cpp ../../module_cell/parallel_kpoints.cpp ../../module_cell/klist.cpp
 )
 
 AddTest(
   TARGET io_print_info
-  LIBS ${math_libs} base device symmetry cell_info
-  SOURCES print_info_test.cpp ../print_info.cpp ../input.cpp ../output.cpp ../../module_cell/klist.cpp ../../module_cell/parallel_kpoints.cpp
+  LIBS ${math_libs} base device symmetry cell_info parameter
+  SOURCES print_info_test.cpp ../print_info.cpp ../output.cpp ../../module_cell/klist.cpp ../../module_cell/parallel_kpoints.cpp
 )
 
 AddTest(
@@ -67,6 +78,7 @@ AddTest(
 	../../module_base/parallel_reduce.cpp
 	../../module_base/parallel_common.cpp
 	../../module_base/parallel_global.cpp
+  ../../module_base/parallel_comm.cpp
 )
 
 AddTest(
@@ -84,7 +96,7 @@ add_test(NAME io_write_wfc_nao_para
 
 AddTest(
   TARGET io_write_orb_info
-  LIBS ${math_libs} base device cell_info
+  LIBS ${math_libs} base device cell_info parameter
   SOURCES write_orb_info_test.cpp ../write_orb_info.cpp ../output.cpp
 )
 
@@ -102,7 +114,7 @@ AddTest(
 AddTest(
   TARGET io_output_log_test
   LIBS base ${math_libs} device
-  SOURCES ../output_log.cpp outputlog_test.cpp
+  SOURCES ../output_log.cpp outputlog_test.cpp ../../module_basis/module_pw/test/test_tool.cpp
 )
 
 AddTest(
@@ -132,7 +144,7 @@ AddTest(
 if(ENABLE_LCAO)
 AddTest(
   TARGET to_qo_test
-  LIBS base ${math_libs} device numerical_atomic_orbitals container orb
+  LIBS base ${math_libs} device numerical_atomic_orbitals container orb parameter
   SOURCES 
   to_qo_test.cpp
   ../to_qo_kernel.cpp
@@ -158,7 +170,7 @@ add_test(NAME read_wfc_pw_test_parallel
 
 AddTest(
   TARGET numerical_basis_test
-  LIBS base ${math_libs} device numerical_atomic_orbitals container orb
+  LIBS base ${math_libs} device numerical_atomic_orbitals container orb parameter
   SOURCES numerical_basis_test.cpp ../numerical_basis_jyjy.cpp ../../module_hamilt_lcao/hamilt_lcaodft/center2_orb.cpp
 )
 

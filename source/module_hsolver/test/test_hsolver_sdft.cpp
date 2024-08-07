@@ -4,13 +4,13 @@
 
 #define private public
 #define protected public
-
 #include "module_hsolver/hsolver_pw.h"
 #include "hsolver_supplementary_mock.h"
 #include "hsolver_pw_sup.h"
 #include "module_hsolver/hsolver_pw_sdft.h"
-
 #include "module_base/global_variable.h"
+#undef private
+#undef protected
 
 //mock for module_sdft
 template<typename REAL>
@@ -155,22 +155,23 @@ TEST_F(TestHSolverPW_SDFT, solve)
     GlobalV::MY_STOGROUP = 0.0;
     int istep = 0;
     int iter = 0;
-	//check constructor
-	EXPECT_EQ(this->hs_d.classname, "HSolverPW_SDFT");
-	EXPECT_NEAR(this->hs_d.diag_ethr, 0.01, 1.0e-7);
+
 	//check solve()
 	EXPECT_EQ(this->hs_d.initialed_psi, false);
 
-	this->hs_d.solve(
-        &hamilt_test_d, 
-        psi_test_cd, 
-        &elecstate_test,
-        &pwbk, 
-        stowf, 
-        istep, 
-        iter, 
-        method_test, 
-        false
+    this->hs_d.solve(&hamilt_test_d,
+                     psi_test_cd,
+                     &elecstate_test,
+                     &pwbk,
+                     stowf,
+                     istep,
+                     iter,
+                     method_test,
+                     hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER,
+                     hsolver::DiagoIterAssist<std::complex<double>>::need_subspace,
+                     hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX,
+                     hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR,
+                     false
     );
 	EXPECT_EQ(this->hs_d.initialed_psi, true);
 	EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<double>>::avg_iter, 0.0);
@@ -191,30 +192,6 @@ TEST_F(TestHSolverPW_SDFT, solve)
     std::cout<<__FILE__<<__LINE__<<" "<<stowf.nchi<<std::endl;
     std::cout<<__FILE__<<__LINE__<<" "<<stowf.nchip_max<<std::endl;
     std::cout<<__FILE__<<__LINE__<<" "<<elecstate_test.f_en.eband<<std::endl;*/
-
-    //check diago_ethr
-	GlobalV::init_chg = "atomic";
-	GlobalV::PW_DIAG_THR = 1e-7;
-	GlobalV::CALCULATION = "scf";
-	double test_diagethr_d = hs_d.set_diagethr(0, 1, 1.0);
-	//std::cout<<__FILE__<<__LINE__<<" "<<test_diagethr_d<<std::endl;
-	EXPECT_EQ(hs_d.diag_ethr, 0.01);
-	EXPECT_EQ(test_diagethr_d, 0.01);
-	GlobalV::CALCULATION = "md";
-	GlobalV::init_chg = "file";
-	test_diagethr_d = hs_d.set_diagethr(0, 1, 1.0);
-	//std::cout<<__FILE__<<__LINE__<<" "<<test_diagethr_d<<std::endl;
-    EXPECT_EQ(test_diagethr_d, 1e-5);
-	test_diagethr_d = hs_d.set_diagethr(0, 2, 1.0);
-	//std::cout<<__FILE__<<__LINE__<<" "<<test_diagethr_d<<std::endl;
-	EXPECT_EQ(test_diagethr_d, 0);
-	test_diagethr_d = hs_d.set_diagethr(0, 3, 1.0e-3);
-	//std::cout<<__FILE__<<__LINE__<<" "<<test_diagethr_d<<std::endl;
-	EXPECT_EQ(test_diagethr_d, 0);
-    test_diagethr_d = hs_d.cal_hsolerror();
-	EXPECT_EQ(test_diagethr_d, 0.0);
-
-
 }
 
 TEST_F(TestHSolverPW_SDFT, solve_noband_skipcharge)
@@ -238,22 +215,23 @@ TEST_F(TestHSolverPW_SDFT, solve_noband_skipcharge)
     elecstate_test.charge->nrxx = 10;
     int istep = 0;
     int iter = 0;
-	//check constructor
-	EXPECT_EQ(this->hs_d.classname, "HSolverPW_SDFT");
-	EXPECT_NEAR(this->hs_d.diag_ethr, 1e-7, 1.0e-10);
+    
 	//check solve()
     hs_d.initialed_psi = true;
 
-	this->hs_d.solve(
-        &hamilt_test_d, 
-        psi_test_no, 
-        &elecstate_test, 
-        &pwbk,
-        stowf, 
-        istep, 
-        iter, 
-        method_test, 
-        false
+    this->hs_d.solve(&hamilt_test_d,
+                     psi_test_no,
+                     &elecstate_test,
+                     &pwbk,
+                     stowf,
+                     istep,
+                     iter,
+                     method_test,
+                     hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER,
+                     hsolver::DiagoIterAssist<std::complex<double>>::need_subspace,
+                     hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX,
+                     hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR,
+                     false
     );
 	EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<double>>::avg_iter, 0.0);
     EXPECT_EQ(stowf.nbands_diag, 2);
@@ -268,16 +246,19 @@ TEST_F(TestHSolverPW_SDFT, solve_noband_skipcharge)
     std::cout<<__FILE__<<__LINE__<<" "<<elecstate_test.f_en.eband<<std::endl;*/
 
     //test for skip charge
-    this->hs_d.solve(
-        &hamilt_test_d, 
-        psi_test_no, 
-        &elecstate_test, 
-        &pwbk,
-        stowf, 
-        istep, 
-        iter, 
-        method_test, 
-        true
+    this->hs_d.solve(&hamilt_test_d,
+                     psi_test_no,
+                     &elecstate_test,
+                     &pwbk,
+                     stowf,
+                     istep,
+                     iter,
+                     method_test,
+                     hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER,
+                     hsolver::DiagoIterAssist<std::complex<double>>::need_subspace,
+                     hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX,
+                     hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR,
+                     true
     );
     EXPECT_EQ(stowf.nbands_diag, 4);
     EXPECT_EQ(stowf.nbands_total, 1);

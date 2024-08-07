@@ -24,7 +24,7 @@ void Relax::init_relax(const int nat_in)
     etot_p = 0;
 
     force_thr_eva = GlobalV::FORCE_THR * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A; //convert to eV/A
-    fac_force  = GlobalV::relax_scale_force * 0.1;
+    fac_force  = PARAM.inp.relax_scale_force * 0.1;
     fac_stress = fac_force / nat;
 
     //allocate some data structures
@@ -208,13 +208,13 @@ bool Relax::setup_gradient(const ModuleBase::matrix& force, const ModuleBase::ma
         double unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
         largest_grad = largest_grad * unit_transform;
 
-        if (largest_grad > GlobalV::STRESS_THR)
+        if (largest_grad > PARAM.inp.stress_thr)
         {
             force_converged = false;
         }
 
         GlobalV::ofs_running << "\n Largest gradient in stress is " << largest_grad << std::endl;
-        GlobalV::ofs_running << "\n Threshold is = " << GlobalV::STRESS_THR << std::endl;
+        GlobalV::ofs_running << "\n Threshold is = " << PARAM.inp.stress_thr << std::endl;
     }
 
 	if(force_converged)

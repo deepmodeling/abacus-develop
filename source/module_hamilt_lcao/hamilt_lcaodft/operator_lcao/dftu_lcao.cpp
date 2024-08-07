@@ -5,6 +5,7 @@
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
+#include "module_parameter/parameter.h"
 #ifdef _OPENMP
 #include <unordered_set>
 #endif
@@ -75,7 +76,7 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(Grid_Driver* Grid
             // When equal, the theoretical value of matrix element is zero,
             // but the calculated value is not zero due to the numerical error, which would lead to result changes.
             if (this->ucell->cal_dtau(iat0, iat1, R_index1).norm() * this->ucell->lat0
-                < orb.Phi[T1].getRcut() + GlobalV::onsite_radius)
+                < orb.Phi[T1].getRcut() + PARAM.inp.onsite_radius)
             {
                 is_adj[ad1] = true;
             }

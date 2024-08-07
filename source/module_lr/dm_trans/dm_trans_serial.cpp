@@ -15,8 +15,7 @@ namespace LR
     {
         // cxc_out_test(X_istate, c);
         ModuleBase::TITLE("hamilt_lrtd", "cal_dm_trans_forloop");
-        int nks = c.get_nk();
-        assert(nks == X_istate.get_nk());
+        const int nks = X_istate.get_nk();
         assert(nocc * nvirt == X_istate.get_nbasis());
         int naos = c.get_nbasis();
         std::vector<container::Tensor> dm_trans(nks, container::Tensor(DAT::DT_DOUBLE, DEV::CpuDevice, { naos, naos }));
@@ -52,8 +51,7 @@ namespace LR
     {
         // cxc_out_test(X_istate, c);
         ModuleBase::TITLE("hamilt_lrtd", "cal_dm_trans_forloop");
-        int nks = c.get_nk();
-        assert(nks == X_istate.get_nk());
+        const int nks = X_istate.get_nk();
         assert(nocc * nvirt == X_istate.get_nbasis());
         int naos = c.get_nbasis();
         std::vector<container::Tensor> dm_trans(nks, container::Tensor(DAT::DT_COMPLEX_DOUBLE, DEV::CpuDevice, { naos, naos }));
@@ -90,8 +88,7 @@ namespace LR
         const int nspin)
     {
         ModuleBase::TITLE("hamilt_lrtd", "cal_dm_trans_blas");
-        int nks = c.get_nk();
-        assert(nks == X_istate.get_nk());
+        const int nks = X_istate.get_nk();
         assert(nocc * nvirt == X_istate.get_nbasis());
         int naos = c.get_nbasis();
         std::vector<container::Tensor> dm_trans(nks, container::Tensor(DAT::DT_DOUBLE, DEV::CpuDevice, { naos, naos }));
@@ -126,8 +123,7 @@ namespace LR
         const int nspin)
     {
         ModuleBase::TITLE("hamilt_lrtd", "cal_dm_trans_blas");
-        int nks = c.get_nk();
-        assert(nks == X_istate.get_nk());
+        const int nks = X_istate.get_nk();
         assert(nocc * nvirt == X_istate.get_nbasis());
         int naos = c.get_nbasis();
         std::vector<container::Tensor> dm_trans(nks, container::Tensor(DAT::DT_COMPLEX_DOUBLE, DEV::CpuDevice, { naos, naos }));

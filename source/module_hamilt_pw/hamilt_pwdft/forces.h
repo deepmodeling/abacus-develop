@@ -49,7 +49,6 @@ class Forces
     void cal_force_loc(ModuleBase::matrix& forcelc, ModulePW::PW_Basis* rho_basis, const Charge* const chr);
     void cal_force_ew(ModuleBase::matrix& forceion, ModulePW::PW_Basis* rho_basis, const Structure_Factor* p_sf);
     void cal_force_cc(ModuleBase::matrix& forcecc, ModulePW::PW_Basis* rho_basis, const Charge* const chr);
-
     /**
      * @brief This routine computes the atomic force of non-local pseudopotential
      *    F^{NL}_i = \sum_{n,k}f_{nk}\sum_I \sum_{lm,l'm'}D_{l,l'}^{I} [
@@ -72,14 +71,30 @@ class Forces
     void cal_force_scc(ModuleBase::matrix& forcescc,
                        ModulePW::PW_Basis* rho_basis,
                        const ModuleBase::matrix& v_current,
-                       const bool vnew_exist);
+                       const bool vnew_exist,
+                       const UnitCell& ucell_in);
     void cal_force_us(ModuleBase::matrix& forcenl,
                       ModulePW::PW_Basis* rho_basis,
                       pseudopot_cell_vnl* ppcell_in,
                       const elecstate::ElecState& elec,
                       const UnitCell& ucell);
     void cal_ylm(int lmax, int npw, const FPTYPE* gk_in, FPTYPE* ylm);
-
+    void deriv_drhoc(const bool& numeric,
+                     const int mesh,
+                     const FPTYPE* r,
+                     const FPTYPE* rab,
+                     const FPTYPE* rhoc,
+                     FPTYPE* drhocg,
+                     ModulePW::PW_Basis* rho_basis,
+                     int type); // used in nonlinear core correction stress
+    void deriv_drhoc_scc(const bool& numeric,
+                     const int mesh,
+                     const FPTYPE* r,
+                     const FPTYPE* rab,
+                     const FPTYPE* rhoc,
+                     FPTYPE* drhocg,
+                     ModulePW::PW_Basis* rho_basis,
+                     const UnitCell& ucell_in); // used in nonlinear core correction stress
   private:
     Device* ctx = {};
     base_device::DEVICE_CPU* cpu_ctx = {};

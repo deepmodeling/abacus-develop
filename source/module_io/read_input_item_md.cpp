@@ -58,6 +58,12 @@ void ReadInput::item_md()
     {
         Input_Item item("md_tlast");
         item.annotation = "temperature last";
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.mdp.md_tlast < 0)
+            {
+                para.input.mdp.md_tlast = para.mdp.md_tfirst;
+            }
+        };
         read_sync_double(input.mdp.md_tlast);
         this->add_item(item);
     }
@@ -296,6 +302,12 @@ void ReadInput::item_md()
     {
         Input_Item item("md_pcouple");
         item.annotation = "whether couple different components: xyz, xy, yz, xz, none";
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.mdp.md_pmode == "iso")
+            {
+                para.input.mdp.md_pcouple = "xyz";
+            }
+        };
         read_sync_string(input.mdp.md_pcouple);
         this->add_item(item);
     }

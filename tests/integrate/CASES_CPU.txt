@@ -19,6 +19,7 @@
 101_PW_upf201_uspp_NaCl
 101_PW_VW_pseudopots
 101_PW_Coulomb
+101_PW_GTH_CF_CS_Si
 102_PW_DA_davidson
 102_PW_BPCG
 102_PW_CG
@@ -127,11 +128,13 @@
 186_PW_SNLKG_10D10S
 201_NO_15_f_pseudopots
 201_NO_15_pseudopots
+201_NO_15_pseudopots_kpar
 201_NO_KP_15_CF_CS_Si
 201_NO_KP_DJ_CF_CS_GaAs
 201_NO_KP_DJ_Si
 201_NO_OU_pseudopots
 201_NO_upf201_pseudopots
+201_NO_GTH_CF_CS_Si
 #202_NO_KP_HP_hpseps
 203_NO_bspline
 203_NO_CF_CS_S1_smallg
@@ -276,6 +279,7 @@
 703_LJ_RE_rule1
 704_LJ_CR_multi_ele
 705_LJ_single_rule2
+706_LJ_RE_stop
 801_PW_LT_sc
 802_PW_LT_fcc
 803_PW_LT_bcc

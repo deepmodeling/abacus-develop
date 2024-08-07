@@ -2,6 +2,7 @@
 
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
+#include "module_parameter/parameter.h"
 
 void Relax_old::init_relax(const int& natom)
 {
@@ -36,17 +37,18 @@ bool Relax_old::relax_step(const int& istep,
     ucell.cell_parameter_updated = false;
 
     // stop in last step
-    if (istep == GlobalV::RELAX_NMAX)
+    if (istep == PARAM.inp.relax_nmax)
     {
-        return 1;
+        return true;
     }
     // choose what to do next
-    if (GlobalV::CALCULATION != "cell-relax")
+    if (GlobalV::CALCULATION != "cell-relax") {
         force_step = istep;
+}
     if (this->if_do_relax(ucell))
     {
         // do relax calculation and generate next structure
-        bool converged = 0;
+        bool converged = false;
         converged = this->do_relax(istep, force, energy, ucell, force_step);
         if (!converged)
         {
@@ -61,7 +63,7 @@ bool Relax_old::relax_step(const int& istep,
     if (this->if_do_cellrelax(ucell))
     {
         // do cell relax calculation and generate next structure
-        bool converged = 0;
+        bool converged = false;
         converged = this->do_cellrelax(istep, stress_step, stress, energy, ucell);
         if (!converged)
         {
@@ -74,7 +76,7 @@ bool Relax_old::relax_step(const int& istep,
         return converged;
     }
 
-    return 1;
+    return true;
 }
 
 bool Relax_old::if_do_relax(const UnitCell& ucell)
@@ -85,17 +87,18 @@ bool Relax_old::if_do_relax(const UnitCell& ucell)
         if (!ucell.if_atoms_can_move())
         {
             ModuleBase::WARNING("Ions", "No atom is allowed to move!");
-            return 0;
+            return false;
         }
         //		if(!IMM.get_converged()) return 1;
         else
         {
             assert(GlobalV::CAL_FORCE == 1);
-            return 1;
+            return true;
         }
     }
-    else
-        return 0;
+    else {
+        return false;
+}
 }
 bool Relax_old::if_do_cellrelax(const UnitCell& ucell)
 {
@@ -105,21 +108,22 @@ bool Relax_old::if_do_cellrelax(const UnitCell& ucell)
         if (!ucell.if_cell_can_change())
         {
             ModuleBase::WARNING("Ions", "Lattice vectors are not allowed to change!");
-            return 0;
+            return false;
         }
         else if (ucell.if_atoms_can_move() && !IMM.get_converged())
         {
             GlobalV::ofs_running << "Note: Need to wait for atomic relaxation first!";
-            return 0;
+            return false;
         }
         else
         {
             assert(GlobalV::CAL_STRESS == 1);
-            return 1;
+            return true;
         }
     }
-    else
-        return 0;
+    else {
+        return false;
+}
 }
 bool Relax_old::do_relax(const int& istep,
                          const ModuleBase::matrix& ionic_force,

@@ -1,14 +1,14 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #define private public
-#include "module_io/print_info.h"
-#include "module_io/input.h"
-#include "prepare_unitcell.h"
-#include "module_cell/unitcell.h"
 #include "module_cell/klist.h"
 #include "module_cell/parallel_kpoints.h"
+#include "module_cell/unitcell.h"
 #include "module_io/berryphase.h"
-
+#include "module_io/print_info.h"
+#include "module_parameter/parameter.h"
+#include "prepare_unitcell.h"
+#undef private
 #ifdef __LCAO
 InfoNonlocal::InfoNonlocal(){}
 InfoNonlocal::~InfoNonlocal(){}
@@ -24,7 +24,7 @@ void LCAO_Orbitals::bcast_files(
 Magnetism::Magnetism(){}
 Magnetism::~Magnetism(){}
 
-bool berryphase::berry_phase_flag=0;
+bool berryphase::berry_phase_flag=false;
 
 namespace GlobalC
 {
@@ -106,32 +106,32 @@ TEST_F(PrintInfoTest, SetupParameters)
 			GlobalV::CALCULATION = cal_type[i];
 			for(int j=0; j<md_types.size(); ++j)
 			{
-				INPUT.mdp.md_type = md_types[j];
+                PARAM.input.mdp.md_type = md_types[j];
                 testing::internal::CaptureStdout();
                 EXPECT_NO_THROW(Print_Info::setup_parameters(*ucell,*kv));
                 output = testing::internal::GetCapturedStdout();
                 EXPECT_THAT(output,testing::HasSubstr("Molecular Dynamics simulations"));
-                if(INPUT.mdp.md_type == "fire")
+                if (PARAM.mdp.md_type == "fire")
                 {
                     EXPECT_THAT(output,testing::HasSubstr("FIRE"));
                 }
-                else if(INPUT.mdp.md_type == "nve")
+                else if (PARAM.mdp.md_type == "nve")
                 {
                     EXPECT_THAT(output,testing::HasSubstr("NVE"));
                 }
-                else if(INPUT.mdp.md_type == "nvt")
+                else if (PARAM.mdp.md_type == "nvt")
                 {
                     EXPECT_THAT(output,testing::HasSubstr("NVT"));
                 }
-                else if(INPUT.mdp.md_type == "npt")
+                else if (PARAM.mdp.md_type == "npt")
                 {
                     EXPECT_THAT(output,testing::HasSubstr("NPT"));
                 }
-                else if(INPUT.mdp.md_type == "langevin")
+                else if (PARAM.mdp.md_type == "langevin")
                 {
                     EXPECT_THAT(output,testing::HasSubstr("Langevin"));
                 }
-                else if(INPUT.mdp.md_type == "msst")
+                else if (PARAM.mdp.md_type == "msst")
                 {
                     EXPECT_THAT(output,testing::HasSubstr("MSST"));
                 }
@@ -219,8 +219,8 @@ TEST_F(PrintInfoTest, PrintScreen)
 
 TEST_F(PrintInfoTest, PrintTime)
 {
-	time_t time_start = std::time(NULL);
-	time_t time_finish = std::time(NULL);
+	time_t time_start = std::time(nullptr);
+	time_t time_finish = std::time(nullptr);
 	testing::internal::CaptureStdout();
 	EXPECT_NO_THROW(Print_Info::print_time(time_start,time_finish));
 	output = testing::internal::GetCapturedStdout();
@@ -228,4 +228,3 @@ TEST_F(PrintInfoTest, PrintTime)
 	EXPECT_THAT(output,testing::HasSubstr("FINISH Time"));
 	EXPECT_THAT(output,testing::HasSubstr("TOTAL  Time"));
 }
-#undef private

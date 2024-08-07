@@ -9,6 +9,7 @@
 #define DOUBLETHRESHOLD 1e-8
 double ext_inner_product_mock(double* x1, double* x2)
 {
+    return 0.0;
 }
 class Mixing_Test : public testing::Test
 {

@@ -2,7 +2,6 @@
 
 #include "../para_json.h"
 #include "abacusjson.h"
-#include "module_io/input.h"
 
 // Add json objects to init
 namespace Json
@@ -32,7 +31,7 @@ void gen_init(UnitCell* ucell)
     {
         std::string label = ucell->atoms[it].label;
         int atom_number = ucell->atoms[it].na;
-        int number = ucell->atoms[it].ncpp.zv;
+        double number = ucell->atoms[it].ncpp.zv;
 
         nelec_total += ucell->atoms[it].ncpp.zv * ucell->atoms[it].na;
         AbacusJson::add_json({"init", "natom_each_type", label}, atom_number, false);
@@ -77,7 +76,7 @@ void gen_stru(UnitCell* ucell)
 
         Json::AbacusJson::add_json({"init", "element", atom_label}, atom_element, false);
 
-        std::string orbital_str = GlobalV::global_orbital_dir + orbital_fn[i];
+        std::string orbital_str = PARAM.inp.orbital_dir + orbital_fn[i];
         if (!orbital_str.compare(""))
         {
             Json::jsonValue nullValue;

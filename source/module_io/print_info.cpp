@@ -1,7 +1,7 @@
 #include "print_info.h"
-#include "module_io/input.h"
-#include "../module_base/global_variable.h"
-//#include "../module_cell/klist.h"
+
+#include "module_base/global_variable.h"
+#include "module_parameter/parameter.h"
 
 Print_Info::Print_Info(){}
 
@@ -38,32 +38,34 @@ void Print_Info::setup_parameters(UnitCell &ucell, K_Vectors &kv)
 
 			std::cout << " ---------------------------------------------------------" << std::endl;
 
-            if(INPUT.mdp.md_type == "fire")
+            if (PARAM.mdp.md_type == "fire")
             {
                 std::cout << " ENSEMBLE                 : " << "FIRE" << std::endl;
             }
-            else if(INPUT.mdp.md_type == "nve")
+            else if (PARAM.mdp.md_type == "nve")
             {
                 std::cout << " ENSEMBLE                 : " << "NVE" << std::endl;
             }
-            else if(INPUT.mdp.md_type == "nvt")
+            else if (PARAM.mdp.md_type == "nvt")
             {
-                std::cout << " ENSEMBLE                 : " << "NVT    mode: " << INPUT.mdp.md_thermostat << std::endl;
+                std::cout << " ENSEMBLE                 : "
+                          << "NVT    mode: " << PARAM.mdp.md_thermostat << std::endl;
             }
-            else if(INPUT.mdp.md_type == "npt")
+            else if (PARAM.mdp.md_type == "npt")
             {
-                std::cout << " ENSEMBLE                 : " << "NPT    mode: " << INPUT.mdp.md_pmode << std::endl;
+                std::cout << " ENSEMBLE                 : "
+                          << "NPT    mode: " << PARAM.mdp.md_pmode << std::endl;
             }
-            else if(INPUT.mdp.md_type == "langevin")
+            else if (PARAM.mdp.md_type == "langevin")
             {
                 std::cout << " ENSEMBLE                 : " << "Langevin" << std::endl;
             }
-            else if(INPUT.mdp.md_type == "msst")
+            else if (PARAM.mdp.md_type == "msst")
             {
                 std::cout << " ENSEMBLE                 : " << "MSST" << std::endl;
             }
 
-            std::cout << " Time interval(fs)        : " << INPUT.mdp.md_dt << std::endl;
+            std::cout << " Time interval(fs)        : " << PARAM.mdp.md_dt << std::endl;
         }
         std::cout << " ---------------------------------------------------------" << std::endl;
 

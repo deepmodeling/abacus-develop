@@ -93,7 +93,8 @@ class Stress_Func
                     const FPTYPE* vloc_at,
                     const FPTYPE& zp,
                     FPTYPE* dvloc,
-                    ModulePW::PW_Basis* rho_basis); // used in local pseudopotential stress
+                    ModulePW::PW_Basis* rho_basis,
+                    const UnitCell& ucell_in); // used in local pseudopotential stress
 
     /**
      * @brief compute the derivative of the coulomb potential in reciprocal space
@@ -117,8 +118,9 @@ class Stress_Func
                      const FPTYPE* rab,
                      const FPTYPE* rhoc,
                      FPTYPE* drhocg,
-                     ModulePW::PW_Basis* rho_basis); // used in nonlinear core correction stress
-
+                     ModulePW::PW_Basis* rho_basis,
+                     int type); // used in nonlinear core correction stress
+                     
     // 6) the stress from the exchange-correlation functional term
     void stress_gga(ModuleBase::matrix& sigma,
                     ModulePW::PW_Basis* rho_basis,

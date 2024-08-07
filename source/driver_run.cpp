@@ -2,7 +2,6 @@
 #include "module_cell/check_atomic_stru.h"
 #include "module_cell/module_neighbor/sltk_atom_arrange.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_io/input.h"
 #include "module_parameter/parameter.h"
 #include "module_io/para_json.h"
 #include "module_io/print_info.h"
@@ -43,7 +42,7 @@ void Driver::driver_run() {
     // delete ucell as a GlobalC in near future
     GlobalC::ucell.setup_cell(GlobalV::stru_file, GlobalV::ofs_running);
     Check_Atomic_Stru::check_atomic_stru(GlobalC::ucell,
-                                         GlobalV::MIN_DIST_COEF);
+                                         PARAM.inp.min_dist_coef);
 
     //! 2: initialize the ESolver (depends on a set-up ucell after `setup_cell`)
     ModuleESolver::ESolver* p_esolver = ModuleESolver::init_esolver(PARAM.inp, GlobalC::ucell);
@@ -59,13 +58,17 @@ void Driver::driver_run() {
     const std::string cal_type = GlobalV::CALCULATION;
 
     //! 4: different types of calculations
-    if (cal_type == "md") {
-        Run_MD::md_line(GlobalC::ucell, p_esolver, INPUT.mdp);
-    } else if (cal_type == "scf" || cal_type == "relax"
-               || cal_type == "cell-relax") {
+    if (cal_type == "md")
+    {
+        Run_MD::md_line(GlobalC::ucell, p_esolver, PARAM);
+    }
+    else if (cal_type == "scf" || cal_type == "relax" || cal_type == "cell-relax")
+    {
         Relax_Driver rl_driver;
         rl_driver.relax_driver(p_esolver);
-    } else {
+    }
+    else
+    {
         //! supported "other" functions:
         //! nscf(PW,LCAO),
         //! get_pchg(LCAO),

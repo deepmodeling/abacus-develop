@@ -40,7 +40,7 @@ void Sto_Forces::cal_stoforce(ModuleBase::matrix& force,
     this->cal_force_ew(forceion, rho_basis, p_sf);
     this->cal_sto_force_nl(forcenl, wg, pkv, wfc_basis, psi_in, stowf);
     this->cal_force_cc(forcecc, rho_basis, chr);
-    this->cal_force_scc(forcescc, rho_basis, elec.vnew, elec.vnew_exist);
+    this->cal_force_scc(forcescc, rho_basis, elec.vnew, elec.vnew_exist,GlobalC::ucell);
 
     //impose total force = 0
     int iat = 0;
@@ -139,10 +139,12 @@ void Sto_Forces::cal_stoforce(ModuleBase::matrix& force,
         ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "NLCC     FORCE (Ry/Bohr)", forcecc);
         ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "ION      FORCE (Ry/Bohr)", forceion);
         ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "SCC      FORCE (Ry/Bohr)", forcescc);
-        if (GlobalV::EFIELD_FLAG)
+        if (GlobalV::EFIELD_FLAG) {
             ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "EFIELD   FORCE (Ry/Bohr)", force_e);
-        if (GlobalV::GATE_FLAG)
+}
+        if (GlobalV::GATE_FLAG) {
             ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "GATEFIELD   FORCE (Ry/Bohr)", force_gate);
+}
     }
 
     // output force in unit eV/Angstrom
@@ -150,21 +152,23 @@ void Sto_Forces::cal_stoforce(ModuleBase::matrix& force,
     
 	if(GlobalV::TEST_FORCE)
 	{
-        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "LOCAL    FORCE (eV/Angstrom)", forcelc, 0);
-        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "NONLOCAL FORCE (eV/Angstrom)", forcenl, 0);
-        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "NLCC     FORCE (eV/Angstrom)", forcecc, 0);
-        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "ION      FORCE (eV/Angstrom)", forceion, 0);
-        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "SCC      FORCE (eV/Angstrom)", forcescc, 0);
-        if (GlobalV::EFIELD_FLAG)
-            ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "EFIELD   FORCE (eV/Angstrom)", force_e, 0);
-        if (GlobalV::GATE_FLAG)
+        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "LOCAL    FORCE (eV/Angstrom)", forcelc, false);
+        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "NONLOCAL FORCE (eV/Angstrom)", forcenl, false);
+        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "NLCC     FORCE (eV/Angstrom)", forcecc, false);
+        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "ION      FORCE (eV/Angstrom)", forceion, false);
+        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "SCC      FORCE (eV/Angstrom)", forcescc, false);
+        if (GlobalV::EFIELD_FLAG) {
+            ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "EFIELD   FORCE (eV/Angstrom)", force_e, false);
+}
+        if (GlobalV::GATE_FLAG) {
             ModuleIO::print_force(GlobalV::ofs_running,
                                   GlobalC::ucell,
                                   "GATEFIELD   FORCE (eV/Angstrom)",
                                   force_gate,
-                                  0);
+                                  false);
+}
     }
-    ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "TOTAL-FORCE (eV/Angstrom)", force, 0);
+    ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "TOTAL-FORCE (eV/Angstrom)", force, false);
     ModuleBase::timer::tick("Sto_Force", "cal_force");
     return;
 }
@@ -181,13 +185,15 @@ void Sto_Forces::cal_sto_force_nl(ModuleBase::matrix& forcenl,
 
     const int nkb = GlobalC::ppcell.nkb;
     int* nchip = stowf.nchip;
-	if(nkb == 0) return; // mohan add 2010-07-25
+	if(nkb == 0) { return; // mohan add 2010-07-25
+}
 	
 	const int npwx = wfc_basis->npwk_max;
 	// vkb1: |Beta(nkb,npw)><Beta(nkb,npw)|psi(nbnd,npw)>
 	ModuleBase::ComplexMatrix vkb1( nkb, npwx );
 	int nksbands = psi_in->get_nbands();
-	if(GlobalV::MY_STOGROUP != 0) nksbands = 0;
+	if(GlobalV::MY_STOGROUP != 0) { nksbands = 0;
+}
     
 
     for (int ik = 0;ik < wfc_basis->nks;ik++)
@@ -243,18 +249,21 @@ void Sto_Forces::cal_sto_force_nl(ModuleBase::matrix& forcenl,
                 std::complex<double>* pvkb = &GlobalC::ppcell.vkb(i,0);
 				if (ipol==0)
 				{
-					for (int ig=0; ig<npw; ig++)
+					for (int ig=0; ig<npw; ig++) {
                         pvkb1[ig] = pvkb[ig] * ModuleBase::NEG_IMAG_UNIT * wfc_basis->getgcar(ik, ig)[0];
+}
                 }
 				if (ipol==1)
 				{
-					for (int ig=0; ig<npw; ig++)
+					for (int ig=0; ig<npw; ig++) {
                         pvkb1[ig] = pvkb[ig] * ModuleBase::NEG_IMAG_UNIT * wfc_basis->getgcar(ik,ig)[1];
+}
                 }
 				if (ipol==2)
 				{
-					for (int ig=0; ig<npw; ig++)
+					for (int ig=0; ig<npw; ig++) {
                         pvkb1[ig] = pvkb[ig] * ModuleBase::NEG_IMAG_UNIT * wfc_basis->getgcar(ik,ig)[2];
+}
                 }
 			}
             //KS orbitals
@@ -278,10 +287,11 @@ void Sto_Forces::cal_sto_force_nl(ModuleBase::matrix& forcenl,
 		for (int ib=0; ib<nbandstot; ib++)
 		{
 			double fac;
-			if(ib < nksbands)
+			if(ib < nksbands) {
 				fac = wg(ik, ib) * 2.0 * GlobalC::ucell.tpiba;
-			else
+			} else {
                 fac = p_kv->wk[ik] * 2.0 * GlobalC::ucell.tpiba;
+}
             int iat = 0;
         	int sum = 0;
 			for (int it=0; it< GlobalC::ucell.ntype; it++)

@@ -31,6 +31,8 @@ basis_type    lcao
 gamma_only    0
 noncolin    1
 lspinorb    1
+cal_force   1
+cal_stress  1
 
 #Parameter DFT+U
 dft_plus_u    1

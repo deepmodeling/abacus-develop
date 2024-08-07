@@ -50,6 +50,7 @@ OBJS_CELL=pseudo.o\
 atom_spec.o\
 atom_pseudo.o\
 read_pp.o\
+read_pp_complete.o\
 read_pp_upf100.o\
 read_pp_upf201.o\
 read_pp_vwr.o\
