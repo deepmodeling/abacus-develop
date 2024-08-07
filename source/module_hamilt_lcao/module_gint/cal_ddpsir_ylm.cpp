@@ -36,12 +36,7 @@ void cal_ddpsir_ylm(
     double rly[36];
     ModuleBase::Array_Pool<double> grly(36, 3);
     ModuleBase::Array_Pool<std::array<double,3>> dpsi(gt.nwmax,6);
-    // for (int i=0; i<dpsi.get_nc()*dpsi.get_nr(); i++)
-    // {
-    //     dpsi.get_ptr_1D()[i] = new double[3];
-    // }
-
-    std::vector<std::vector<double>> displ(6, std::vector<double>(3, 0.0));
+    ModuleBase::Array_Pool<double> displ(6,3);
     displ[0][0] = 0.0001; 
     displ[1][0] = -0.0001; // in x direction
     displ[2][1] = 0.0001; 
@@ -92,7 +87,7 @@ void cal_ddpsir_ylm(
                         cal_grid_atom_distance(distance1,
                                                 dr1,
                                                 dr,
-                                                displ[i].data());
+                                                displ.get_ptr_2D()[i]);
 
                         ModuleBase::Ylm::grad_rl_sph_harm(atom->nwl, 
                                                           dr1[0],
@@ -235,10 +230,6 @@ void cal_ddpsir_ylm(
         }             // end ib
 
     }                 // end id(atom)
-    // for (int i=0; i<dpsi.get_nc()*dpsi.get_nr(); i++)
-    // {
-    //     delete[] dpsi.get_ptr_1D()[i];
-    // }
     ModuleBase::timer::tick("Gint_Tools", "cal_ddpsir_ylm");
     return;
 }
