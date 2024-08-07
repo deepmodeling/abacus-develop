@@ -77,8 +77,9 @@ void Forces<FPTYPE, Device>::cal_force_scc(ModuleBase::matrix& forcescc,
 
     int igg0 = 0;
     const int ig0 = rho_basis->ig_gge0;
-    if (rho_basis->gg_uniq[0] < 1.0e-8)
+    if (rho_basis->gg_uniq[0] < 1.0e-8) {
         igg0 = 1;
+}
 
     double fact = 2.0;
     for (int nt = 0; nt < ucell_in.ntype; nt++) {
@@ -86,9 +87,9 @@ void Forces<FPTYPE, Device>::cal_force_scc(ModuleBase::matrix& forcescc,
         const int mesh = ucell_in.atoms[nt].ncpp.msh;
         this->deriv_drhoc_scc(GlobalC::ppcell.numeric,
                             mesh,
-                            ucell_in.atoms[nt].ncpp.r,
-                            ucell_in.atoms[nt].ncpp.rab,
-                            ucell_in.atoms[nt].ncpp.rho_at,
+                            ucell_in.atoms[nt].ncpp.r.data(),
+                            ucell_in.atoms[nt].ncpp.rab.data(),
+                            ucell_in.atoms[nt].ncpp.rho_at.data(),
                             rhocgnt.data(),
                             rho_basis,
                             ucell_in);        
@@ -105,8 +106,9 @@ void Forces<FPTYPE, Device>::cal_force_scc(ModuleBase::matrix& forcescc,
 #pragma omp parallel for reduction(+ : force0) reduction(+ : force1) reduction(+ : force2)
 #endif
                     for (int ig = 0; ig < rho_basis->npw; ++ig) {
-                        if (ig == ig0)
+                        if (ig == ig0) {
                             continue;
+}
                         const ModuleBase::Vector3<double> gv
                             = rho_basis->gcar[ig];
                         const double rhocgntigg

@@ -20,12 +20,12 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
                            const int scf_iter_in,
                            const bool need_subspace_in,
                            const int diag_iter_max_in,
-                           const double pw_diag_thr_in,
+                           const double iter_diag_thr_in,
 
                            const bool skip_charge)
 {
-    ModuleBase::TITLE(this->classname, "solve");
-    ModuleBase::timer::tick(this->classname, "solve");
+    ModuleBase::TITLE("HSolverPW_SDFT", "solve");
+    ModuleBase::timer::tick("HSolverPW_SDFT", "solve");
 
     const int npwx = psi.get_nbasis();
     const int nbands = psi.get_nbands();
@@ -34,7 +34,7 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
     this->scf_iter = scf_iter_in;
     this->need_subspace = need_subspace_in;
     this->diag_iter_max = diag_iter_max_in;
-    this->pw_diag_thr = pw_diag_thr_in;
+    this->iter_diag_thr = iter_diag_thr_in;
 
     // prepare for the precondition of diagonalization
     std::vector<double> precondition(psi.get_nbasis(), 0.0);
@@ -98,7 +98,7 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
     stoiter.itermu(iter, pes);
     stoiter.calHsqrtchi(stowf);
     if (skip_charge) {
-        ModuleBase::timer::tick(this->classname, "solve");
+        ModuleBase::timer::tick("HSolverPW_SDFT", "solve");
         return;
     }
     //(5) calculate new charge density
@@ -118,7 +118,7 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
     stoiter.sum_stoband(stowf, pes, pHamilt, wfc_basis);
 
     // will do rho symmetry and energy calculation in esolver
-    ModuleBase::timer::tick(this->classname, "solve");
+    ModuleBase::timer::tick("HSolverPW_SDFT", "solve");
     return;
 }
 
@@ -144,9 +144,6 @@ double HSolverPW_SDFT::set_diagethr(double diag_ethr_in,
             diag_ethr_in = 0.0;
 }
     }
-    
-    // Temporarily added to ensure correctness
-    this->diag_ethr = diag_ethr_in;
 
     return diag_ethr_in;
 }

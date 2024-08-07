@@ -18,7 +18,7 @@ namespace ModuleESolver
     public:
         ESolver_KS_LIP();
 
-        ~ESolver_KS_LIP() = default;
+        ~ESolver_KS_LIP();
 
         /// All the other interfaces except this one are the same as ESolver_KS_PW.
         virtual void hamilt2density(const int istep, const int iter, const double ethr) override;
@@ -32,6 +32,7 @@ namespace ModuleESolver
         virtual void allocate_hsolver() override;
         virtual void deallocate_hsolver() override;
         virtual void allocate_hamilt() override;
+        virtual void deallocate_hamilt() override;
 
 #ifdef __EXX
         std::unique_ptr<Exx_Lip<T>> exx_lip;

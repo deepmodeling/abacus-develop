@@ -306,7 +306,29 @@ struct cal_vq_deri_op<FPTYPE, base_device::DEVICE_GPU>
 };
 
 
-
+/**
+ * The operator is used to compute the auxiliary amount of stress /force 
+ * in parallel on the GPU. They identify type with the type provided and 
+ * select different calculation methods,
+ *
+ * The function is called by the module as follows
+ *      Type = 0 -> stress_cc
+ *      Type = 1 -> stress_cc, force_cc
+ *      Type = 2 -> force_scc
+ *      Type = 3 -> stress_loc
+ *
+ *  Int the function aux is obtained by traversing the `ngg` and `mesh` firstly,
+ *  and then aux is processed by Simpson integral method to obtain auxiliary 
+ *  quantities drhocg.
+ *
+ * In the GPU operator, temporary array space of mesh size is required in order 
+ * not to apply Simpson interpolation (which causes GPU memory overflow). 
+ * The Simpson integral is then reconstructed in the loop body of the mesh, 
+ * using the Simpson integral computed in the loop, rather than executed once 
+ * after the loop. After that, in order to reduce the if condition judgment brought 
+ * by Simpson interpolation in the loop body, lambda expression is used to shift the 
+ * boundary condition out.
+ */
 template <typename FPTYPE>
 struct cal_stress_drhoc_aux_op<FPTYPE, base_device::DEVICE_GPU>{
     void operator()(
