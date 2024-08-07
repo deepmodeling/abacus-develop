@@ -254,7 +254,7 @@ void ElecState::print_band(const int& ik, const int& printe, const int& iter)
     }
     if (wrong)
     {
-        ModuleBase::WARNING_QUIT("print_band", "Eigenvalues are too large!");
+        ModuleBase::WARNING_QUIT("print_eigenvalue", "Eigenvalues are too large!");
     }
 
     if (GlobalV::MY_RANK == 0)
