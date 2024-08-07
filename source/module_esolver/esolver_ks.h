@@ -11,7 +11,7 @@
 #include "module_psi/psi.h"
 
 #include <fstream>
-#include <string.h>
+#include <cstring>
 namespace ModuleESolver
 {
 
