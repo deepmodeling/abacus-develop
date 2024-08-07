@@ -62,37 +62,27 @@ namespace Gint_Tools{
 	void get_block_info(const Grid_Technique& gt, const int bxyz, const int na_grid, const int grid_index, int* block_iw,
 						int* block_index, int* block_size, bool** cal_flag)
 	{
-		const UnitCell& ucell = *gt.ucell;
-		block_index[0] = 0;
+		
 		int it = 0;
 		int iat = 0;
+		double distance = 0.0;
 		std::array<double, 3> mt{0.0, 0.0, 0.0};
+		std::array<double, 3> dr{0.0, 0.0, 0.0};
+		const UnitCell& ucell = *gt.ucell;
 		const int bcell_start = gt.bcell_start[grid_index];
 		for (int id = 0; id < na_grid; id++)
 		{
 			const int mcell_index = bcell_start + id;
 			get_grid_bigcell_distance(gt, mcell_index ,it,iat, mt);
-			const int iat = gt.which_atom[mcell_index];    // index of atom
-			const int it = ucell.iat2it[iat];              // index of atom type
 			const int ia = ucell.iat2ia[iat];              // index of atoms within each type
-			const int start = ucell.itiaiw2iwt(it, ia, 0); // the index of the first wave function for atom (it,ia)
+			const int start = gt.ucell->itiaiw2iwt(it, ia, 0); // the index of the first wave function for atom (it,ia)
 			block_iw[id] = gt.trace_lo[start];
 			block_index[id + 1] = block_index[id] + ucell.atoms[it].nw;
 			block_size[id] = ucell.atoms[it].nw;
-			const int imcell=gt.which_bigcell[mcell_index];
-			const double mt[3] = {
-				gt.meshball_positions[imcell][0] - gt.tau_in_bigcell[iat][0],
-				gt.meshball_positions[imcell][1] - gt.tau_in_bigcell[iat][1],
-				gt.meshball_positions[imcell][2] - gt.tau_in_bigcell[iat][2]};
-
 			for(int ib=0; ib<bxyz; ib++)
 			{
 				// meshcell_pos: z is the fastest
-				const double dr[3] = {
-					gt.meshcell_pos[ib][0] + mt[0],
-					gt.meshcell_pos[ib][1] + mt[1],
-					gt.meshcell_pos[ib][2] + mt[2]};
-				const double distance = std::sqrt(dr[0]*dr[0] + dr[1]*dr[1] + dr[2]*dr[2]);	// distance between atom and grid
+				cal_grid_atom_distance(distance,dr,mt,gt.meshcell_pos[ib].data());// distance between atom and grid
 
 			if (distance > gt.rcuts[it] - 1.0e-10) {
 				cal_flag[ib][id] = false;
