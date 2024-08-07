@@ -307,8 +307,9 @@ void ElecState::print_etot(const bool converged,
 
     GlobalV::ofs_running << "\n Density error is " << scf_thr << std::endl;
 
-    if (GlobalV::BASIS_TYPE == "pw")
+    if (GlobalV::BASIS_TYPE == "pw") {
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Error Threshold", pw_diag_thr); // xiaohui add 2013-09-02
+}
 
     std::vector<std::string> titles;
     std::vector<double> energies_Ry;
