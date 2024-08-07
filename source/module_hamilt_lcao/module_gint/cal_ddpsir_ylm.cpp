@@ -33,7 +33,7 @@ void cal_ddpsir_ylm(
 
     // array to store spherical harmonics and its derivatives
     // the first dimension equals 36 because the maximum nwl is 5.
-    double rly[36];
+    double rly[36]={0.0};
     ModuleBase::Array_Pool<double> grly(36, 3);
     ModuleBase::Array_Pool<std::array<double,3>> dpsi(gt.nwmax,6);
     ModuleBase::Array_Pool<double> displ(6,3);

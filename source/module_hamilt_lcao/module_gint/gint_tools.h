@@ -142,7 +142,7 @@ void get_psi_dpsi(const Grid_Technique& gt,
 void get_grid_bigcell_distance(const Grid_Technique& gt,
                                 const int bcell_start,
 								int& it,
-								double* mt);
+								std::array<double,3>& mt);
 /**
  * @brief Calculate the distance between the meshcell and the atoms.
  * 

@@ -98,9 +98,9 @@ void get_vindex(const int bxyz, const int bx, const int by, const int bz,
 	}
 
 void get_grid_bigcell_distance(const Grid_Technique& gt,
-                                const int mcell_index,
+								const int mcell_index,
 								int& it,
-								double* mt)
+								std::array<double, 3>& mt)
 {
 	const int iat = gt.which_atom[mcell_index]; 
 	const int imcell = gt.which_bigcell[mcell_index];
