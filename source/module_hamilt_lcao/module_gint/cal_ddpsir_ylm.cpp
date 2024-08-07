@@ -39,7 +39,7 @@ void cal_ddpsir_ylm(
     std::array<double, 36> rly;
     ModuleBase::Array_Pool<double> grly(36, 3);
     ModuleBase::Array_Pool<std::array<double,3>> dpsi(gt.nwmax,6);
-    ModuleBase::Array_Pool<double> displ(6,3);
+    std::array<std::array<double,6>,3> displ={{0.0}};
     displ[0][0] = 0.0001; 
     displ[1][0] = -0.0001; // in x direction
     displ[2][1] = 0.0001; 
@@ -89,7 +89,7 @@ void cal_ddpsir_ylm(
                         cal_grid_atom_distance(distance1,
                                                 dr1,
                                                 dr,
-                                                displ.get_ptr_2D()[i]);
+                                                displ[i].data());
 
                         ModuleBase::Ylm::grad_rl_sph_harm(atom->nwl, 
                                                           dr1[0],
