@@ -87,6 +87,7 @@
     - [printe](#printe)
     - [scf\_nmax](#scf_nmax)
     - [scf\_thr](#scf_thr)
+    - [scf\_ene\_thr](#scf_ene_thr)
     - [scf\_thr\_type](#scf_thr_type)
     - [chg\_extrap](#chg_extrap)
     - [lspinorb](#lspinorb)
@@ -1171,8 +1172,15 @@ Note: In new angle mixing, you should set `mixing_beta_mag >> mixing_beta`. The 
 ### scf_thr
 
 - **Type**: Real
-- **Description**: It's the threshold for electronic iteration. It represents the charge density error between two sequential densities from electronic iterations. Usually for local orbitals, usually 1e-6 may be accurate enough.
+- **Description**: It's the density threshold for electronic iteration. It represents the charge density error between two sequential densities from electronic iterations. Usually for local orbitals, usually 1e-6 may be accurate enough.
 - **Default**: 1.0e-9 (plane-wave basis), or 1.0e-7 (localized atomic orbital basis).
+
+### scf_ene_thr
+
+- **Type**: Real
+- **Description**: It's the energy threshold for electronic iteration. It represents the total energy error between two sequential densities from electronic iterations.
+- **Default**: -1.0. If the user does not set this parameter, it will not take effect.
+- **Unit**: eV
 
 ### scf_thr_type
 

@@ -42,6 +42,7 @@ ESolver_KS<T, Device>::ESolver_KS()
 
     // should not use GlobalV here, mohan 2024-05-12
     scf_thr = PARAM.inp.scf_thr;
+    scf_ene_thr = PARAM.inp.scf_ene_thr;
     drho = 0.0;
 
     // should not use GlobalV here, mohan 2024-05-12
@@ -560,6 +561,12 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
             dkin = p_chgmix->get_dkin(pelec->charge, GlobalV::nelec);
         }
         this->print_iter(iter, drho, dkin, duration, diag_ethr);
+
+        // add a energy threshold for SCF convergence
+        if (this->conv_elec == 0) // only check when density is not converged
+        {
+            this->conv_elec = ( iter != 1 && std::abs(this->pelec->f_en.etot_delta * ModuleBase::Ry_to_eV) < this->scf_ene_thr );
+        }
 
         // 12) Json, need to be moved to somewhere else
 #ifdef __RAPIDJSON

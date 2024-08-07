@@ -26,7 +26,9 @@ class ESolver_KS : public ESolver_FP
         //! Deconstructor
 		virtual ~ESolver_KS();
 
-		double scf_thr;   // scf threshold
+		double scf_thr;   // scf density threshold
+
+		double scf_ene_thr; // scf energy threshold
 
 		double drho;      // the difference between rho_in (before HSolver) and rho_out (After HSolver)
 
