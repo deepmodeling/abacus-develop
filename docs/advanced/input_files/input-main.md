@@ -1518,6 +1518,8 @@ These variables are used to control the output of properties.
   The circle order of the charge density on real space grids is: x is the outer loop, then y and finally z (z is moving fastest).
 
   If EXX(exact exchange) is calculated, (i.e. *[dft_fuctional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)==True*), the Hexx(R) files will be output in the folder `OUT.${suffix}` too, which can be read in NSCF calculation.
+
+  In molecular dynamics calculations, the output frequency is controlled by [out_interval](#out_interval).
 - **Default**: 0
 
 ### out_pot
@@ -1535,6 +1537,8 @@ These variables are used to control the output of properties.
     - nspin = 1: SPIN1_POT_INI.cube;
     - nspin = 2: SPIN1_POT_INI.cube, and SPIN2_POT_INI.cube;
     - nspin = 4: SPIN1_POT_INI.cube, SPIN2_POT_INI.cube, SPIN3_POT_INI.cube, and SPIN4_POT_INI.cube.
+
+  In molecular dynamics calculations, the output frequency is controlled by [out_interval](#out_interval).
 - **Default**: 0
 
 ### out_dm
@@ -1724,8 +1728,7 @@ The band (KS orbital) energy for each (k-point, spin, band) will be printed in t
 ### out_interval
 
 - **Type**: Integer
-- **Availability**: Numerical atomic orbital basis
-- **Description**: Control the interval for printing Mulliken population analysis, $r(R)$, $H(R)$, $S(R)$, $T(R)$, $dH(R)$, $H(k)$, $S(k)$ and $wfc(k)$ matrices during molecular dynamics calculations. Check input parameters [out_mul](#out_mul), [out_mat_r](#out_mat_r), [out_mat_hs2](#out_mat_hs2), [out_mat_t](#out_mat_t), [out_mat_dh](#out_mat_dh), [out_mat_hs](#out_mat_hs) and [out_wfc_lcao](#out_wfc_lcao) for more information, respectively.
+- **Description**: Control the interval for printing charge density, local potential, electrostatic potential, Mulliken population analysis, $r(R)$, $H(R)$, $S(R)$, $T(R)$, $dH(R)$, $H(k)$, $S(k)$ and $\psi(k)$ matrices during molecular dynamics calculations. Check input parameters [out_chg](#out_chg), [out_pot](#out_pot), [out_mul](#out_mul), [out_mat_r](#out_mat_r), [out_mat_hs2](#out_mat_hs2), [out_mat_t](#out_mat_t), [out_mat_dh](#out_mat_dh), [out_mat_hs](#out_mat_hs) and [out_wfc_lcao](#out_wfc_lcao) for more information, respectively.
 - **Default**: 1
 
 ### out_element_info

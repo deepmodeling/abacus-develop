@@ -614,7 +614,10 @@ void ESolver_KS<T, Device>::after_scf(const int istep)
     ESolver_FP::after_scf(istep);
 
     // 2) write eigenvalues
-    ModuleIO::write_istate_info(this->pelec->ekb, this->pelec->wg, this->kv, &(GlobalC::Pkpoints));
+    if (istep % PARAM.inp.out_interval == 0)
+    {
+        this->pelec->print_eigenvalue(GlobalV::ofs_running);
+    }
 }
 
 //------------------------------------------------------------------------------
