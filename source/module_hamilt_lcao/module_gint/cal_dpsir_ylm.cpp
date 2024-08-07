@@ -30,7 +30,7 @@ void cal_dpsir_ylm(
     std::vector<const double*> it_dpsi_uniform(gt.nwmax);;
     // array to store spherical harmonics and its derivatives
     // the first dimension equals 36 because the maximum nwl is 5.
-    double rly[36];
+    std::array<double, 36> rly;
     ModuleBase::Array_Pool<double> grly(36, 3);
     const int bcell_start = gt.bcell_start[grid_index];
     for (int id = 0; id < na_grid; id++)
@@ -71,14 +71,14 @@ void cal_dpsir_ylm(
                                                   dr[0], 
                                                   dr[1], 
                                                   dr[2], 
-                                                  rly, 
+                                                  rly.data(), 
                                                   grly.get_ptr_2D());
 
                 dpsi_spl_intrp(distance,
                                 dr,
                                 delta_r,
                                 atom,
-                                rly,
+                                rly.data(),
                                 grly.get_ptr_2D(),
                                 it_psi_uniform,
                                 it_dpsi_uniform,

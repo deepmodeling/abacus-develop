@@ -36,7 +36,7 @@ void cal_ddpsir_ylm(
 
     // array to store spherical harmonics and its derivatives
     // the first dimension equals 36 because the maximum nwl is 5.
-    double rly[36]={0.0};
+    std::array<double, 36> rly;
     ModuleBase::Array_Pool<double> grly(36, 3);
     ModuleBase::Array_Pool<std::array<double,3>> dpsi(gt.nwmax,6);
     ModuleBase::Array_Pool<double> displ(6,3);
@@ -93,7 +93,7 @@ void cal_ddpsir_ylm(
                                                           dr1[0],
                                                           dr1[1], 
                                                           dr1[2],
-                                                          rly, 
+                                                          rly.data(), 
                                                           grly.get_ptr_2D());
 
                         dpsi_spl_intrp(distance1,
@@ -101,7 +101,7 @@ void cal_ddpsir_ylm(
                                         delta_r,
                                         i,
                                         atom,
-                                        rly,
+                                        rly.data(),
                                         grly.get_ptr_2D(),
                                         it_psi_uniform,
                                         it_dpsi_uniform,
@@ -137,7 +137,7 @@ void cal_ddpsir_ylm(
                     // End of code addition section.
 
                     std::vector<std::vector<double>> hrly;
-                    ModuleBase::Ylm::grad_rl_sph_harm(ucell.atoms[it].nwl, dr[0], dr[1], dr[2], rly, grly.get_ptr_2D());
+                    ModuleBase::Ylm::grad_rl_sph_harm(ucell.atoms[it].nwl, dr[0], dr[1], dr[2], rly.data(), grly.get_ptr_2D());
                     ModuleBase::Ylm::hes_rl_sph_harm(ucell.atoms[it].nwl, dr[0], dr[1], dr[2], hrly);
                     const double position = distance / delta_r;
 
