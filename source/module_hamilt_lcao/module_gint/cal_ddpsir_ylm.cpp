@@ -21,10 +21,10 @@ void cal_ddpsir_ylm(
 {
     ModuleBase::timer::tick("Gint_Tools", "cal_ddpsir_ylm");
 
-    int it;
-    double distance;
-    double dr[3];
-    double mt[3];
+    int it=0;
+    double distance=0;
+    double dr[3]={0.0};
+    double mt[3]={0.0};
     Atom* atom;
     const UnitCell& ucell = *gt.ucell;
     std::vector<const double*> it_psi_uniform(gt.nwmax);
@@ -35,11 +35,11 @@ void cal_ddpsir_ylm(
     // the first dimension equals 36 because the maximum nwl is 5.
     double rly[36];
     ModuleBase::Array_Pool<double> grly(36, 3);
-    ModuleBase::Array_Pool<double*> dpsi(gt.nwmax,6);
-    for (int i=0; i<dpsi.get_nc()*dpsi.get_nr(); i++)
-    {
-        dpsi.get_ptr_1D()[i] = new double[3];
-    }
+    ModuleBase::Array_Pool<std::array<double,3>> dpsi(gt.nwmax,6);
+    // for (int i=0; i<dpsi.get_nc()*dpsi.get_nr(); i++)
+    // {
+    //     dpsi.get_ptr_1D()[i] = new double[3];
+    // }
 
     std::vector<std::vector<double>> displ(6, std::vector<double>(3, 0.0));
     displ[0][0] = 0.0001; 
@@ -110,7 +110,7 @@ void cal_ddpsir_ylm(
                                         grly.get_ptr_2D(),
                                         it_psi_uniform,
                                         it_dpsi_uniform,
-                                        dpsi.get_ptr_2D());
+                                        dpsi);
                     }
 
                     for (int iw = 0; iw < atom->nw; iw++)
@@ -235,10 +235,10 @@ void cal_ddpsir_ylm(
         }             // end ib
 
     }                 // end id(atom)
-    for (int i=0; i<dpsi.get_nc()*dpsi.get_nr(); i++)
-    {
-        delete[] dpsi.get_ptr_1D()[i];
-    }
+    // for (int i=0; i<dpsi.get_nc()*dpsi.get_nr(); i++)
+    // {
+    //     delete[] dpsi.get_ptr_1D()[i];
+    // }
     ModuleBase::timer::tick("Gint_Tools", "cal_ddpsir_ylm");
     return;
 }

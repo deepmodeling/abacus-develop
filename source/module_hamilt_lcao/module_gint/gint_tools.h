@@ -230,7 +230,7 @@ void dpsi_spl_intrp(const double distance1,
 								double** grly,
                                 std::vector<const double*>& it_psi_uniform,
                                 std::vector<const double*>& it_dpsi_uniform,
-                                double ***dpsi);
+                                ModuleBase::Array_Pool<std::array<double,3>>& dpsi);
 // psir_ylm[pw.bxyz][LD_pool]
 void cal_psir_ylm(const Grid_Technique& gt,
                   const int bxyz,

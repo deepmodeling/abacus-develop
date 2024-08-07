@@ -231,7 +231,7 @@ void dpsi_spl_intrp(const double distance1,
 								double** grly,
                                 std::vector<const double*>& it_psi_uniform,
                                 std::vector<const double*>& it_dpsi_uniform,
-                                double ***dpsi)
+                                ModuleBase::Array_Pool<std::array<double,3>>& dpsi)
 {
 	const double position = distance1 / delta_r;
 
