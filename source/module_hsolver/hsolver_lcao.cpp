@@ -129,7 +129,7 @@ void HSolverLCAO<T, Device>::solve(hamilt::Hamilt<T>* pHamilt,
 #ifdef __PEXSI
     if (this->method == "pexsi")
     {
-        DiagoPexsi<T> tem = dynamic_cast<DiagoPexsi<T>*>(this->pdiagh);
+        auto tem = dynamic_cast<DiagoPexsi<T>*>(this->pdiagh);
         if (tem == nullptr)
             ModuleBase::WARNING_QUIT("HSolverLCAO", "pexsi need debug!");
         elecstate::ElecStateLCAO<T>* _pes
@@ -189,13 +189,13 @@ void HSolverLCAO<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>&
 #else
         ModuleBase::WARNING_QUIT("HSolverLCAO::solve", "This method of DiagH is not supported!");
 #endif
+    }
 #ifdef __PEXSI
     else if (this->method == "pexsi")
     {
         this->pdiagh->diag(hm, psi, eigenvalue);
     }
 #endif
-    }
     else
     {
 
