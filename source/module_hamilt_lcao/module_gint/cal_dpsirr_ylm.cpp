@@ -48,12 +48,13 @@ void cal_dpsirr_ylm(
 
 				for (int iw=0; iw< atom->nw; ++iw)
 				{
-					p_dpsirr[iw * 6] = p_dpsi_x[iw]*dr[0];
-					p_dpsirr[iw * 6 + 1] = p_dpsi_x[iw]*dr[1];
-					p_dpsirr[iw * 6 + 2] = p_dpsi_x[iw]*dr[2];
-					p_dpsirr[iw * 6 + 3] = p_dpsi_y[iw]*dr[1];
-					p_dpsirr[iw * 6 + 4] = p_dpsi_y[iw]*dr[2];
-					p_dpsirr[iw * 6 + 5] = p_dpsi_z[iw]*dr[2];
+					const int iwbase = iw * 6;
+					p_dpsirr[iwbase] = p_dpsi_x[iw]*dr[0];
+					p_dpsirr[iwbase + 1] = p_dpsi_x[iw]*dr[1];
+					p_dpsirr[iwbase + 2] = p_dpsi_x[iw]*dr[2];
+					p_dpsirr[iwbase + 3] = p_dpsi_y[iw]*dr[1];
+					p_dpsirr[iwbase + 4] = p_dpsi_y[iw]*dr[2];
+					p_dpsirr[iwbase + 5] = p_dpsi_z[iw]*dr[2];
 				}//iw
 			}//else
 		}
