@@ -46,6 +46,12 @@ class HSolverPW : public HSolver<T, Device>
               scf_iter(scf_iter_in), need_subspace(need_subspace_in),
               diag_iter_max(diag_iter_max_in), iter_diag_thr(iter_diag_thr_in) {};
 
+    // for sdft
+    HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in,
+              wavefunc* pwf_in,
+              const bool initialed_psi_in) :
+              wfc_basis(wfc_basis_in), pwf(pwf_in), initialed_psi(initialed_psi_in) {};
+
     /// @brief solve function for pw
     void solve(hamilt::Hamilt<T, Device>* pHamilt,
                psi::Psi<T, Device>& psi,
