@@ -70,6 +70,7 @@ class DiagoPrepare
         if (ks_solver == "scalapack_gvx")
             std::cout << " Use scalapack solver." << std::endl;
             // Dont need to use dh pointer here after refactor
+            // dh = new hsolver::DiagoScalapack<T>;
 #ifdef __ELPA
         else if (ks_solver == "genelpa")
             dh = new hsolver::DiagoElpa<T>;
@@ -320,6 +321,7 @@ TEST_P(DiagoKPointsTest, LCAO)
     std::stringstream out_info;
     std::cout << "DIAGOKTEST START" << std::endl;
     DiagoPrepare<std::complex<double>> dp = GetParam();
+    std::cout << dp.hfname << std::endl;
     ASSERT_TRUE(dp.produce_HS());
     dp.diago();
 
@@ -340,8 +342,8 @@ INSTANTIATE_TEST_SUITE_P(
         DiagoPrepare<std::complex<double>>(0, 0, 1, 0, "genelpa", "H-KPoints-Si2.dat", "S-KPoints-Si2.dat"),
 #endif
         // DiagoPrepare<std::complex<double>>(0, 0, 32, 0, "genelpa", "H-KPoints-Si64.dat", "S-KPoints-Si64.dat"),
-        DiagoPrepare<std::complex<double>>(0, 0, 1, 0, "scalapack_gvx", "H-KPoints-Si2.dat", "S-KPoints-Si2.dat")
-        //DiagoPrepare<std::complex<double>>(0, 0, 32, 0, "scalapack_gvx", "H-KPoints-Si64.dat", "S-KPoints-Si64.dat") This case will result in memory leak. Need repair
+        DiagoPrepare<std::complex<double>>(0, 0, 1, 0, "scalapack_gvx", "H-KPoints-Si2.dat", "S-KPoints-Si2.dat"),
+        DiagoPrepare<std::complex<double>>(0, 0, 32, 0, "scalapack_gvx", "H-KPoints-Si64.dat", "S-KPoints-Si64.dat")// This case will result in memory leak. Need repair
         ));
 
 int main(int argc, char** argv)
