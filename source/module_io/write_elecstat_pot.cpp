@@ -16,6 +16,7 @@ void write_elecstat_pot(
     const int& nbz,
 #endif
     const std::string& fn,
+    const int& istep,
     ModulePW::PW_Basis* rho_basis,
     const Charge* const chr,
     const UnitCell* ucell,
@@ -101,7 +102,7 @@ void write_elecstat_pot(
         v_elecstat.data(),
         is,
         nspin,
-        0,
+        istep,
         fn,
         rho_basis->nx,
         rho_basis->ny,

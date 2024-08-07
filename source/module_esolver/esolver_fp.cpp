@@ -228,6 +228,7 @@ void ESolver_FP::after_scf(const int istep)
                 this->pw_big->nbz,
 #endif
                 fn,
+                istep,
                 this->pw_rhod,
                 this->pelec->charge,
                 &(GlobalC::ucell),

@@ -211,7 +211,7 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
                 this->pelec->pot->get_effective_v(is),
                 is,
                 GlobalV::NSPIN,
-                istep,
+                0,
                 fn,
                 this->pw_rhod->nx,
                 this->pw_rhod->ny,
@@ -231,6 +231,7 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
             this->pw_big->nbz,
 #endif
             fn,
+            0, // istep
             this->pw_rhod,
             this->pelec->charge,
             &(GlobalC::ucell),
