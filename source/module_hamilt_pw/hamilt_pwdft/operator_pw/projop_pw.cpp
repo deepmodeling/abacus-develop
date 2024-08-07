@@ -15,6 +15,9 @@
 #include "module_basis/module_pw/pw_basis_k.h"
 #include "module_cell/unitcell.h"
 #include "module_base/blas_connector.h"
+#ifdef __MPI
+#include "module_base/parallel_reduce.h"
+#endif
 
 /**
  * ===============================================================================================
@@ -89,7 +92,7 @@
  * @brief initialize the radial projector for real-space projection involving operators
  * 
  * @param orbital_dir You know what it is
- * @param ucell You know what it is
+ * @param orb_files You know what it is
  * @param nproj # of projectors for each type defined in UnitCell, can be zero
  * @param lproj angular momentum for each projector
  * @param iproj index of zeta function that each projector generated from
@@ -99,7 +102,7 @@
  * @param it2iproj [out] for each type, the projector index (across all types)
  */
 void init_proj(const std::string& orbital_dir,
-               const UnitCell& ucell,
+               const std::vector<std::string>& orb_files,
                const std::vector<int>& nproj,           // for each type, the number of projectors
                const std::vector<int>& lproj,           // angular momentum of projectors within the type (l of zeta function)
                const std::vector<int>& iproj,           // index of projectors within the type (izeta)
@@ -110,7 +113,7 @@ void init_proj(const std::string& orbital_dir,
 {
     // extract the information from ucell
     const int ntype = nproj.size();
-    assert(ucell.ntype == ntype); // nproj can have 0 for some types
+    assert(ntype == orb_files.size());
     int nproj_tot = 0;
     std::accumulate(nproj.begin(), nproj.end(), nproj_tot);
     assert(nproj_tot == lproj.size());
@@ -125,7 +128,8 @@ void init_proj(const std::string& orbital_dir,
     {
         const int nproj_it = nproj[it];
         it2iproj[it].resize(nproj_it);
-        std::ifstream ifs(orbital_dir + "/" + ucell.orbital_fn[it]);
+        if(nproj_it == 0) { continue; }
+        std::ifstream ifs(orbital_dir + "/" + orb_files[it]);
         std::string elem = "";
         double ecut = -1.0;
         int nr_ = -1;
@@ -222,8 +226,7 @@ void cal_becp(const std::vector<std::vector<int>>& it2ia,       // level0: for g
         na[it] = it2ia[it].size();
     }
     const int nrow_out = itiaiprojm2irow.size();
-    std::vector<std::complex<double>> tab_atomic_(nrow_out*npw);
-    tab_atomic_.resize(nrow_out*npw);
+    std::vector<std::complex<double>> tab_atomic_(nrow_out*npw); // memory usage peak HERE
     for(int irow = 0; irow < nrow; ++irow)
     {
         const int it = irow2it[irow];
@@ -238,6 +241,7 @@ void cal_becp(const std::vector<std::vector<int>>& it2ia,       // level0: for g
             {
                 tab_atomic_[irow_out*npw + ig] = sk[ig]*tab_[irow*npw + ig];
             }
+            delete[] sk;
         }
     }
     tab_.clear();
@@ -272,6 +276,9 @@ void cal_becp(const std::vector<std::vector<int>>& it2ia,       // level0: for g
                         beta,                   // const std::complex<double> beta
                         becp.data(),            // std::complex<double>* c
                         ldc);                   // const int ldc
+#ifdef __MPI
+    Parallel_Reduce::reduce_pool(becp.data(), becp.size());
+#endif
     tab_atomic_.clear();
     tab_atomic_.shrink_to_fit(); // release memory
 }
