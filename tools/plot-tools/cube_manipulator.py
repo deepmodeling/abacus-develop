@@ -134,11 +134,11 @@ def profile1d(data: dict, axis: str):
     
     mat3d = data["data"].reshape(int(data["nx"]), int(data["ny"]), int(data["nz"]))
     if axis == "x":
-        val = np.sum(mat3d, axis=0).sum(axis=0)
+        val = np.sum(mat3d, axis=2).sum(axis=1)
     elif axis == "y":
-        val = np.sum(mat3d, axis=1).sum(axis=0)
+        val = np.sum(mat3d, axis=0).sum(axis=1)
     elif axis == "z":
-        val = np.sum(mat3d, axis=1).sum(axis=1)
+        val = np.sum(mat3d, axis=0).sum(axis=0)
     # remember to write the axis data
     ngrid = data["nx"] if axis == "x" else data["ny"] if axis == "y" else data["nz"]
     var = np.linspace(0, 1, int(ngrid))
