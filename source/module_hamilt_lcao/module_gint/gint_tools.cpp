@@ -12,12 +12,15 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 namespace Gint_Tools{
-void get_vindex(const int bxyz, const int bx, const int by, const int bz, 
-				const int nplane, const int start_ind,
-				const int ncyz,int* vindex)
-{
-    int bindex = 0;
-
+	void get_vindex(const int bxyz, 
+					const int bx, 
+					const int by, 
+					const int bz, 
+					const int nplane, 
+					const int start_ind,
+					const int ncyz,
+					int* vindex)
+	{
 		for(int ii=0; ii<bx; ii++)
 		{
 			const int ipart = ii*ncyz;
@@ -26,8 +29,7 @@ void get_vindex(const int bxyz, const int bx, const int by, const int bz,
 				const int jpart = jj*nplane + ipart;
 				for(int kk=0; kk<bz; kk++)
 				{
-					vindex[bindex] = start_ind + kk + jpart;
-					++bindex;
+					*vindex++ = start_ind + kk + jpart;
 				}
 			}
 		}
@@ -62,9 +64,14 @@ void get_vindex(const int bxyz, const int bx, const int by, const int bz,
 	{
 		const UnitCell& ucell = *gt.ucell;
 		block_index[0] = 0;
+		int it = 0;
+		int iat = 0;
+		std::array<double, 3> mt{0.0, 0.0, 0.0};
+		const int bcell_start = gt.bcell_start[grid_index];
 		for (int id = 0; id < na_grid; id++)
 		{
-			const int mcell_index = gt.bcell_start[grid_index] + id;
+			const int mcell_index = bcell_start + id;
+			get_grid_bigcell_distance(gt, mcell_index ,it,iat, mt);
 			const int iat = gt.which_atom[mcell_index];    // index of atom
 			const int it = ucell.iat2it[iat];              // index of atom type
 			const int ia = ucell.iat2ia[iat];              // index of atoms within each type
@@ -72,7 +79,6 @@ void get_vindex(const int bxyz, const int bx, const int by, const int bz,
 			block_iw[id] = gt.trace_lo[start];
 			block_index[id + 1] = block_index[id] + ucell.atoms[it].nw;
 			block_size[id] = ucell.atoms[it].nw;
-
 			const int imcell=gt.which_bigcell[mcell_index];
 			const double mt[3] = {
 				gt.meshball_positions[imcell][0] - gt.tau_in_bigcell[iat][0],
@@ -100,10 +106,12 @@ void get_vindex(const int bxyz, const int bx, const int by, const int bz,
 void get_grid_bigcell_distance(const Grid_Technique& gt,
 								const int mcell_index,
 								int& it,
+								int& iat,
 								std::array<double, 3>& mt)
 {
-	const int iat = gt.which_atom[mcell_index]; 
+	
 	const int imcell = gt.which_bigcell[mcell_index];
+	iat = gt.which_atom[mcell_index]; 
 	it = gt.ucell->iat2it[iat];  
 	mt[0] = gt.meshball_positions[imcell][0] - gt.tau_in_bigcell[iat][0];
 	mt[1] =	gt.meshball_positions[imcell][1] - gt.tau_in_bigcell[iat][1];

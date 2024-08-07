@@ -16,6 +16,7 @@ void cal_psir_ylm(
     ModuleBase::timer::tick("Gint_Tools", "cal_psir_ylm");
 
     int it=0;
+    int iat=0;
     double distance=0.0;
     std::array<double, 3> dr{0.0, 0.0, 0.0};
     std::array<double, 3> mt{0.0, 0.0, 0.0};
@@ -42,6 +43,7 @@ void cal_psir_ylm(
         get_grid_bigcell_distance(gt,
                                  mcell_index ,
                                  it, 
+                                 iat,
                                  mt);
 
         atom = &ucell.atoms[it];

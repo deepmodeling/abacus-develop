@@ -20,8 +20,8 @@ void cal_ddpsir_ylm(
     double* const* const ddpsir_ylm_zz)
 {
     ModuleBase::timer::tick("Gint_Tools", "cal_ddpsir_ylm");
-
     int it=0;
+    int iat=0;
     double distance1=0.0;
     double distance=0.0;
     std::array<double,3> dr={0.0,0.0,0.0};
@@ -51,7 +51,9 @@ void cal_ddpsir_ylm(
     for (int id = 0; id < na_grid; id++)
     {
         const int mcell_index = bcell_start + id;
-        get_grid_bigcell_distance(gt, mcell_index ,it, mt);
+        get_grid_bigcell_distance(gt, mcell_index ,it,iat, mt);
+        
+        const int it=ucell.iat2it[iat];
         Atom* atom = &ucell.atoms[it];
         get_psi_dpsi(gt, it, atom, it_psi_uniform, it_dpsi_uniform);
                 
