@@ -17,8 +17,8 @@ void cal_dpsirr_ylm(
     double* const* const dpsirr_ylm)
 {
     ModuleBase::timer::tick("Gint_Tools", "cal_dpsirr_ylm");
-	int it;
-    double distance;
+	int it=0;
+    double distance=0.0;
     std::array<double, 3> dr{0.0, 0.0, 0.0};
     std::array<double, 3> mt{0.0, 0.0, 0.0};
 

@@ -158,17 +158,17 @@ void spl_intrp(const double distance,
 }
 
 void dpsi_spl_intrp(const double distance,
-								const double* dr,
-								const double delta_r,
-								Atom*& atom,
-                                double* rly,
-								double** grly,
-                                std::vector<const double*>& it_psi_uniform,
-                                std::vector<const double*>& it_dpsi_uniform,
-                                double *p_psi,
-								double *p_dpsi_x,
-								double *p_dpsi_y,
-								double *p_dpsi_z)
+					std::array<double,3>& dr,
+					const double delta_r,
+					Atom*& atom,
+					double* rly,
+					double** grly,
+					std::vector<const double*>& it_psi_uniform,
+					std::vector<const double*>& it_dpsi_uniform,
+					double *p_psi,
+					double *p_dpsi_x,
+					double *p_dpsi_y,
+					double *p_dpsi_z)
 {
 	const double position = distance / delta_r;
 
@@ -223,15 +223,15 @@ void dpsi_spl_intrp(const double distance,
 }
 
 void dpsi_spl_intrp(const double distance1,
-								const double* dr1,
-								const double delta_r,
-								const int i,
-								Atom*& atom,
-                                double* rly,
-								double** grly,
-                                std::vector<const double*>& it_psi_uniform,
-                                std::vector<const double*>& it_dpsi_uniform,
-                                ModuleBase::Array_Pool<std::array<double,3>>& dpsi)
+					std::array<double,3>& dr1,
+					const double delta_r,
+					const int i,
+					Atom*& atom,
+					double* rly,
+					double** grly,
+					std::vector<const double*>& it_psi_uniform,
+					std::vector<const double*>& it_dpsi_uniform,
+					ModuleBase::Array_Pool<std::array<double,3>>& dpsi)
 {
 	const double position = distance1 / delta_r;
 

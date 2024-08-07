@@ -15,8 +15,8 @@ void cal_psir_ylm(
 {
     ModuleBase::timer::tick("Gint_Tools", "cal_psir_ylm");
 
-    int it;
-    double distance;
+    int it=0;
+    double distance=0.0;
     std::array<double, 3> dr{0.0, 0.0, 0.0};
     std::array<double, 3> mt{0.0, 0.0, 0.0};
 

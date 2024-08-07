@@ -194,7 +194,7 @@ void spl_intrp(const double distance,
  * @param p_dpsi_z gradient psi_z of the grid point
 */
 void dpsi_spl_intrp(const double distance,
-                    const double* dr,
+                    std::array<double,3>& dr,
                     const double delta_r,
                     Atom*& atom,
                     double* rly,
@@ -222,15 +222,15 @@ void dpsi_spl_intrp(const double distance,
  * between the meshcell and the it type atom.
 */
 void dpsi_spl_intrp(const double distance1,
-								const double* dr1,
-								const double delta_r,
-								const int i,
-								Atom*& atom,
-                                double* rly,
-								double** grly,
-                                std::vector<const double*>& it_psi_uniform,
-                                std::vector<const double*>& it_dpsi_uniform,
-                                ModuleBase::Array_Pool<std::array<double,3>>& dpsi);
+                    std::array<double,3>& dr1,
+                    const double delta_r,
+                    const int i,
+                    Atom*& atom,
+                    double* rly,
+                    double** grly,
+                    std::vector<const double*>& it_psi_uniform,
+                    std::vector<const double*>& it_dpsi_uniform,
+                    ModuleBase::Array_Pool<std::array<double,3>>& dpsi);
 // psir_ylm[pw.bxyz][LD_pool]
 void cal_psir_ylm(const Grid_Technique& gt,
                   const int bxyz,

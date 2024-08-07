@@ -22,9 +22,12 @@ void cal_ddpsir_ylm(
     ModuleBase::timer::tick("Gint_Tools", "cal_ddpsir_ylm");
 
     int it=0;
-    double distance=0;
+    double distance1=0.0;
+    double distance=0.0;
     std::array<double,3> dr={0.0,0.0,0.0};
     std::array<double,3> mt={0.0,0.0,0.0};
+    std::array<double,3> dr1={0.0,0.0,0.0};
+                    
     Atom* atom;
     const UnitCell& ucell = *gt.ucell;
     std::vector<const double*> it_psi_uniform(gt.nwmax);
@@ -79,9 +82,6 @@ void cal_ddpsir_ylm(
                 // the second derivatives of the orbitals
                 if (true)
                 {
-
-                    double dr1[3];
-                    double distance1;
                     for (int i = 0; i < 6; i++)
                     {
                         cal_grid_atom_distance(distance1,

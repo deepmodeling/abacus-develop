@@ -19,8 +19,8 @@ void cal_dpsir_ylm(
     double* const* const dpsir_ylm_z)
 {
     ModuleBase::timer::tick("Gint_Tools", "cal_dpsir_ylm");
-    int it;
-    double distance;
+    int it=0;
+    double distance=0.0;
     std::array<double, 3> dr{0.0, 0.0, 0.0};
     std::array<double, 3> mt{0.0, 0.0, 0.0};
 
@@ -47,8 +47,6 @@ void cal_dpsir_ylm(
                      it_psi_uniform, 
                      it_dpsi_uniform);
 
-        double distance;
-        double dr[3];
         for (int ib = 0; ib < bxyz; ib++)
         {
             double* const p_psi = &psir_ylm[ib][block_index[id]];
