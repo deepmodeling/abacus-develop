@@ -132,16 +132,15 @@ void spl_intrp(const double distance,
 							std::vector<const double*>& it_dpsi_uniform,
 							double *p)
 {
-	double coeffs[4] = {0.0};
 	const double position = distance / delta_r;
 	int ip = static_cast<int>(position);
 	const double dx = position - ip;
 	const double dx2 = dx * dx;
 	const double dx3 = dx2 * dx;
-	coeffs[2] = 3.0 * dx2 - 2.0 * dx3;
-	coeffs[0] = 1.0 - coeffs[2];
-	coeffs[1] = (dx - 2.0 * dx2 + dx3) * delta_r;
-	coeffs[3] = (dx3 - dx2) * delta_r;
+	const double c3 = 3.0 * dx2 - 2.0 * dx3;
+	const double c1 = 1.0 - c3;
+	const double c2 = (dx - 2.0 * dx2 + dx3) * delta_r;
+	const double c4 = (dx3 - dx2) * delta_r;
 
 	double phi = 0;
 	for (int iw = 0; iw < atom->nw; ++iw)
@@ -150,8 +149,8 @@ void spl_intrp(const double distance,
 		{
 			auto psi_uniform = it_psi_uniform[iw];
 			auto dpsi_uniform = it_dpsi_uniform[iw];
-			phi = coeffs[0] * psi_uniform[ip] + coeffs[1] * dpsi_uniform[ip] // radial wave functions
-					+ coeffs[2] * psi_uniform[ip + 1] + coeffs[3] * dpsi_uniform[ip + 1];
+			phi = c1 * psi_uniform[ip] + c2 * dpsi_uniform[ip] // radial wave functions
+					+ c3 * psi_uniform[ip + 1] + c4 * dpsi_uniform[ip + 1];
 		}
 		p[iw] = phi * ylma[atom->iw2_ylm[iw]];
 	} // end iw
@@ -171,7 +170,6 @@ void dpsi_spl_intrp(const double distance,
 					double *p_dpsi_z)
 {
 	const double position = distance / delta_r;
-
 	const double iq = static_cast<int>(position);
 	const int ip = static_cast<int>(position);
 	const double x0 = position - iq;
@@ -181,7 +179,8 @@ void dpsi_spl_intrp(const double distance,
 	const double x12 = x1 * x2 / 6;
 	const double x03 = x0 * x3 / 2;
 
-	double tmp, dtmp;
+	double tmp=0.0;
+	double dtmp=0.0;
 
 	for (int iw = 0; iw < atom->nw; ++iw)
 	{
@@ -244,7 +243,8 @@ void dpsi_spl_intrp(const double distance1,
 	const double x12 = x1 * x2 / 6;
 	const double x03 = x0 * x3 / 2;
 
-	double tmp, dtmp;
+	double tmp=0.0;
+	double dtmp=0.0;
 
 		for (int iw = 0; iw < atom->nw; ++iw)
 		{
