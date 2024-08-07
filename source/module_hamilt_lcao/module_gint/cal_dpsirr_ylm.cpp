@@ -19,8 +19,8 @@ void cal_dpsirr_ylm(
     ModuleBase::timer::tick("Gint_Tools", "cal_dpsirr_ylm");
 	int it;
     double distance;
-    double dr[3];
-    double mt[3];
+    std::array<double, 3> dr{0.0, 0.0, 0.0};
+    std::array<double, 3> mt{0.0, 0.0, 0.0};
 
     Atom* atom;
     const UnitCell& ucell = *gt.ucell;

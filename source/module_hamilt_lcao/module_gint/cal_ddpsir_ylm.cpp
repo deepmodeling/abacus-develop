@@ -23,8 +23,8 @@ void cal_ddpsir_ylm(
 
     int it=0;
     double distance=0;
-    double dr[3]={0.0};
-    double mt[3]={0.0};
+    std::array<double,3> dr={0.0};
+    std::array<double,3> mt={0.0};
     Atom* atom;
     const UnitCell& ucell = *gt.ucell;
     std::vector<const double*> it_psi_uniform(gt.nwmax);

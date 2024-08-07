@@ -154,8 +154,8 @@ void get_grid_bigcell_distance(const Grid_Technique& gt,
  * of the small grid point and the large grid point.
 */
 void cal_grid_atom_distance(double &distance,
-                            double* dr,
-                            const double* mt,
+                            std::array<double,3>& dr,
+                            std::array<double,3>& mt,
                             const double* meshcell_pos);
 
 /**

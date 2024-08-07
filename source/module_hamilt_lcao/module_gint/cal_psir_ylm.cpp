@@ -17,8 +17,8 @@ void cal_psir_ylm(
 
     int it;
     double distance;
-    double dr[3];
-    double mt[3];
+    std::array<double, 3> dr{0.0, 0.0, 0.0};
+    std::array<double, 3> mt{0.0, 0.0, 0.0};
 
     Atom* atom;
     std::vector<double> ylma;

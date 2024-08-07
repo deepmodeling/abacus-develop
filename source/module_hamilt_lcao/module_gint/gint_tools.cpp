@@ -111,8 +111,8 @@ void get_grid_bigcell_distance(const Grid_Technique& gt,
 }
 
 void cal_grid_atom_distance(double &distance,
-                            double* dr,
-                            const double* mt,
+                            std::array<double, 3>& dr,
+                            std::array<double, 3>& mt,
                             const double* meshcell_pos)
 {
 	dr[0] = meshcell_pos[0] + mt[0];
