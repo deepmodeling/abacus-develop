@@ -20,6 +20,10 @@
 #include <utility>
 #include <algorithm>
 
+#include "module_cell/unitcell.h"
+#include "module_psi/psi.h"
+#include "module_basis/module_pw/pw_basis_k.h"
+
 namespace RadialProjection
 {
     /**
@@ -54,17 +58,71 @@ namespace RadialProjection
      * // to convert between 1D index and [irad][m] (instead of im!).
      * std::vector<std::vector<int>> map_;
      * rp._build_sbtft_map(l, map_);
-     * int irad, m;
-     * int idx;
-     * rp._irad_m_to_idx(irad, m, map_, idx); // you can get the 1D index
-     * rp._idx_to_irad_m(idx, map_, irad, m); // you can get the irad and m,
-     * // the latter ranges from -l to l.
      * ```
      * 
      * 2. SBFFT: small box fast-fourier-transform (not implemented yet)
      */
     class RadialProjector
     {
+        public:
+            /**
+             * Notation of following two functions:
+             * 
+             * Given all the projectors are listed in a series, so the `iproj` is the index goes across
+             * all atomtypes, which means if for the first type, the iproj goes from 0 to 4, then the
+             * second atomtypes the iproj will start from 5, and so on...
+             * However, there is also another convention, like numerical atomic orbitals, developer always
+             * use "l" to index orbitals, here, in all output map, the `iproj` will start from 0, which
+             * means in output the `iproj` is local index.
+             * -----------------------------------------------------------------------------------------
+             * First, the following lists should be prepared as early as possible,
+             * 
+             * it2iproj: for given it, the index of atom type, return the list of index of projectors.
+             * 
+             * iproj2l: for given iproj, the index of projectors, return the l of this projector. More
+             * simply explaning, it is just the list of angular momentum of projectors.
+             * 
+             * it2ia: just a list that stolen information from UnitCell, for given it, the index of atom
+             * within the range of it. So this list is different from the it2iproj, iproj is the index
+             * across type but ia is the index within the type. So for each it2ia[it], the ia, in principle
+             * , always/can start from 0.
+             * 
+             * One may question that does the indexing support one atom type with multiple projectors? The
+             * answer is YES. Combining the it2iproj and it2ia, one can even support PART of atoms of one
+             * type has multiple projectors.
+             * -----------------------------------------------------------------------------------------
+             * Then the returned lists,
+             * 
+             * irow2it: for given `irow`, the index of row, return the `it`: the index of atom type. 
+             * 
+             * irow2ia: for given `irow`, the index of row, return the `ia`: the index of atom within the range
+             * of `it`.
+             * 
+             * irow2iproj: for given `irow`, the index of row, return the `iproj`, the index of projectors,
+             * note that this `iproj` is the local index.
+             * 
+             * irow2m: for given irow, the index of row, return the m, the magnetic quantum number of this
+             * projector. 
+             * 
+             * One may complain that cannot get `l` from the `irow`, but the truth is, not exactly. One can
+             * get the `l` starting from `irow` by:
+             * ```c++   
+             * const int iproj = irow2iproj[irow];   
+             * const int it = irow2it[irow];   
+             * const int iproj_g = it2iproj[it][iproj];   
+             * const int l = iproj2l[iproj_g];   
+             * ```   
+             */
+            
+            static void _build_backward_map(const std::vector<std::vector<int>>& it2iproj,
+                                            const std::vector<int>& iproj2l,
+                                            std::vector<int>& irow2it,
+                                            std::vector<int>& irow2iproj,
+                                            std::vector<int>& irow2m);
+            static void _build_forward_map(const std::vector<std::vector<int>>& it2ia,
+                                           const std::vector<std::vector<int>>& it2iproj,
+                                           const std::vector<int>& iproj2l,
+                                           std::map<std::tuple<int, int, int, int>, int>& itiaiprojm2irow);
         public:
             /**
              * @brief Construct a new Radial Projector object
@@ -122,21 +180,8 @@ namespace RadialProjection
                        const double& omega = 1.0,
                        const double& tpiba = 1.0); // 'r' for ket |>, 'l' for bra <|
             
-            // a tool function for mapping [irad][m] to 1D index
-            static void _build_sbtft_map(const std::vector<int>& l,
-                                         std::vector<std::vector<int>>& map_);
-            // convert the irad and m to 1D index
-            static void _irad_m_to_idx(const int irad,
-                                       const int m,
-                                       const std::vector<std::vector<int>>& map_,
-                                       int& idx);
-            // convert the 1D index to irad and m
-            static void _idx_to_irad_m(const int idx,
-                                       const std::vector<std::vector<int>>& map_,
-                                       int& irad,
-                                       int& m);
-
             void sbfft(); // interface for SBFFT
+
 
         private:
             std::unique_ptr<ModuleBase::CubicSpline> cubspl_;

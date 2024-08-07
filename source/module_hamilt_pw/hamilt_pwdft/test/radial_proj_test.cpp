@@ -6,123 +6,115 @@
 #include <random>
 
 #define DOUBLETHRESHOLD 1e-15
-TEST(RadialProjectionTest, BuildSbtftMapTest)
+
+TEST(RadialProjectionTest, BuildBackwardMapTest)
 {
-    std::vector<std::vector<int>> index;
-    std::vector<int> l(4);
-    std::iota(l.begin(), l.end(), 0); // 0, 1, 2, 3
-    RadialProjection::RadialProjector::_build_sbtft_map(l, index);
-    EXPECT_EQ(index.size(), 4); // total_lm = 1 + 3 + 5 + 7 = 16
-    // check if the indexing is correct
-    EXPECT_EQ(index[0][0], 0); // l = 0, m = 0
-    EXPECT_EQ(index[1][0], 1); // l = 1, m = -1
-    EXPECT_EQ(index[1][1], 2); // l = 1, m = 0
-    EXPECT_EQ(index[1][2], 3); // l = 1, m = 1
-    EXPECT_EQ(index[2][0], 4); // l = 2, m = -2
-    EXPECT_EQ(index[2][1], 5); // l = 2, m = -1
-    EXPECT_EQ(index[2][2], 6); // l = 2, m = 0
-    EXPECT_EQ(index[2][3], 7); // l = 2, m = 1
-    EXPECT_EQ(index[2][4], 8); // l = 2, m = 2
-    EXPECT_EQ(index[3][0], 9); // l = 3, m = -3
-    EXPECT_EQ(index[3][1], 10); // l = 3, m = -2
-    EXPECT_EQ(index[3][2], 11); // l = 3, m = -1
-    EXPECT_EQ(index[3][3], 12); // l = 3, m = 0
-    EXPECT_EQ(index[3][4], 13); // l = 3, m = 1
-    EXPECT_EQ(index[3][5], 14); // l = 3, m = 2
-    EXPECT_EQ(index[3][6], 15); // l = 3, m = 3
+    const std::vector<std::vector<int>> it2iproj = {
+        {0, 1},
+        {2, 3, 4, 5},
+        {6, 7, 8}
+    };
+    const std::vector<int> iproj2l = {0, 1, 0, 1, 2, 3, 0, 1, 2};
+    /**
+     * a backward map will index irow to (it, iproj, m). For the above example,
+     * it is actually the first atom type has two projectors, the first projector
+     * has l = 0, the second has l = 1. The former will have only one channel, 
+     * the second will have 3. The second atom type has 4 projectors...
+     * 
+     * Therefore, it is expected there are 1+3+1+3+5+7+1+3+5 = 29 rows in total.
+     */
+    std::vector<int> itref(4, 0); // four 0, sixteen 1, nine 2
+    itref.insert(itref.end(), 16, 1);
+    itref.insert(itref.end(), 9, 2);
+    std::vector<int> iprojref(1, 0);
+    iprojref.insert(iprojref.end(), 3, 1);
+    iprojref.insert(iprojref.end(), 1, 0);
+    iprojref.insert(iprojref.end(), 3, 1);
+    iprojref.insert(iprojref.end(), 5, 2);
+    iprojref.insert(iprojref.end(), 7, 3);
+    iprojref.insert(iprojref.end(), 1, 0);
+    iprojref.insert(iprojref.end(), 3, 1);
+    iprojref.insert(iprojref.end(), 5, 2);
+    std::vector<int> mref(1, 0);
+    mref.insert(mref.end(), {-1, 0, 1});
+    mref.insert(mref.end(), {0});
+    mref.insert(mref.end(), {-1, 0, 1});
+    mref.insert(mref.end(), {-2, -1, 0, 1, 2});
+    mref.insert(mref.end(), {-3, -2, -1, 0, 1, 2, 3});
+    mref.insert(mref.end(), {0});
+    mref.insert(mref.end(), {-1, 0, 1});
+    mref.insert(mref.end(), {-2, -1, 0, 1, 2});
+
+    std::vector<int> irow2it, irow2iproj, irow2m;
+    RadialProjection::RadialProjector::_build_backward_map(it2iproj, iproj2l, irow2it, irow2iproj, irow2m);
+    for(int i = 0; i < 29; ++i)
+    {
+        EXPECT_EQ(irow2it[i], itref[i]);
+        EXPECT_EQ(irow2iproj[i], iprojref[i]);
+        EXPECT_EQ(irow2m[i], mref[i]);
+    }
 }
 
-TEST(RadialProjectionTest, IradM2IdxTest)
+TEST(RadialProjectionTest, BuildForwardMapTest)
 {
-    std::vector<std::vector<int>> index;
-    std::vector<int> l(4);
-    std::iota(l.begin(), l.end(), 0); // 0, 1, 2, 3
-    RadialProjection::RadialProjector::_build_sbtft_map(l, index);
-    int out;
-    int ref = 0;
-    for(int i = 0; i < l.size(); i++)
-    {
-        int l_ = l[i];
-        for(int j = 0; j <= l_; j++)
-        {
-            if(j == 0)
-            {
-                RadialProjection::RadialProjector::_irad_m_to_idx(i, j, index, out);
-                EXPECT_EQ(out, ref++);
-            }
-            else
-            {
-                RadialProjection::RadialProjector::_irad_m_to_idx(i, j, index, out);
-                EXPECT_EQ(out, ref++);
-                RadialProjection::RadialProjector::_irad_m_to_idx(i, -j, index, out);
-                EXPECT_EQ(out, ref++);
-            }
-        }
-    }
-    EXPECT_EQ(ref, 16);
-    // use random l
-    std::mt19937 gen(1);
-    std::uniform_int_distribution<int> dis(0, 4);
-    l.resize(10);
-    std::for_each(l.begin(), l.end(), [&dis, &gen](int& x){x = dis(gen);});
-    RadialProjection::RadialProjector::_build_sbtft_map(l, index);
-    ref = 0;
-    for(int i = 0; i < l.size(); i++)
-    {
-        int l_ = l[i];
-        for(int j = 0; j <= l_; j++)
-        {
-            if(j == 0)
-            {
-                RadialProjection::RadialProjector::_irad_m_to_idx(i, j, index, out);
-                EXPECT_EQ(out, ref++);
-            }
-            else
-            {
-                RadialProjection::RadialProjector::_irad_m_to_idx(i, j, index, out);
-                EXPECT_EQ(out, ref++);
-                RadialProjection::RadialProjector::_irad_m_to_idx(i, -j, index, out);
-                EXPECT_EQ(out, ref++);
-            }
-        }
-    }
-    int refref = 0;
-    for(auto& l_: l)
-    {
-        refref += 2*l_ + 1;
-    }
-    EXPECT_EQ(ref, refref);
-}
-
-TEST(RadialProjectionTest, Idx2IradMTest)
-{
-    std::vector<std::vector<int>> index;
-    int nproj = 0;
-    std::vector<int> l(4);
-    std::iota(l.begin(), l.end(), 0); // 0, 1, 2, 3
-    std::accumulate(l.begin(), l.end(), nproj, [](int acc, int x){return acc + 2*x + 1;});
-    RadialProjection::RadialProjector::_build_sbtft_map(l, index);
-    int irad, m, ref;
-    for(int i = 0; i < nproj; i++)
-    {
-        RadialProjection::RadialProjector::_idx_to_irad_m(i, index, irad, m);
-        RadialProjection::RadialProjector::_irad_m_to_idx(irad, m, index, ref);
-        EXPECT_EQ(ref, i);
-    }
-    // use random l
-    std::mt19937 gen(1);
-    std::uniform_int_distribution<int> dis(0, 4);
-    l.resize(10);
-    std::for_each(l.begin(), l.end(), [&dis, &gen](int& x){x = dis(gen);});
-    nproj = 0;
-    std::accumulate(l.begin(), l.end(), nproj, [](int acc, int x){return acc + 2*x + 1;});
-    RadialProjection::RadialProjector::_build_sbtft_map(l, index);
-    for(int i = 0; i < nproj; i++)
-    {
-        RadialProjection::RadialProjector::_idx_to_irad_m(i, index, irad, m);
-        RadialProjection::RadialProjector::_irad_m_to_idx(irad, m, index, ref);
-        EXPECT_EQ(ref, i);
-    }
+    // forward means from (it, ia, iproj, m) to irow
+    const std::vector<std::vector<int>> it2ia = {
+        {0, 1},
+        {0, 1, 3},
+        {12}
+    };
+    const std::vector<std::vector<int>> it2iproj = {
+        {0, 1},
+        {2, 3, 4, 5},
+        {6, 7, 8}
+    };
+    const std::vector<int> iproj2l = {0, 1, 0, 1, 2, 3, 0, 1, 2};
+    std::map<std::tuple<int, int, int, int>, int> forward_map;
+    RadialProjection::RadialProjector::_build_forward_map(it2ia, it2iproj, iproj2l, forward_map);
+    // this is a terribly large map, for type 0, there are 2 atoms, each atom has two projectors
+    // with angular momentum as 0 and 1, respectively. For type 1, there are 3 atoms, each has
+    // 4 projectors with angular momentum from 0 to 3...
+    const int nrow = 2*4 + 3*16 + 1*9;
+    EXPECT_EQ(forward_map.size(), nrow);
+    //                                  it  ia iproj m
+    // it = 0
+    // ia = 0
+    // iproj = 0: l = 0
+    EXPECT_EQ(forward_map[std::make_tuple(0, 0, 0, 0)], 0);
+    // iproj = 1: l = 1: m = -1, 0, 1
+    EXPECT_EQ(forward_map[std::make_tuple(0, 0, 1, -1)], 1);
+    EXPECT_EQ(forward_map[std::make_tuple(0, 0, 1, 0)], 2);
+    EXPECT_EQ(forward_map[std::make_tuple(0, 0, 1, 1)], 3);
+    // ia = 1
+    // iproj = 0: l = 0
+    EXPECT_EQ(forward_map[std::make_tuple(0, 1, 0, 0)], 4);
+    // iproj = 1: l = 1: m = -1, 0, 1
+    EXPECT_EQ(forward_map[std::make_tuple(0, 1, 1, -1)], 5);
+    EXPECT_EQ(forward_map[std::make_tuple(0, 1, 1, 0)], 6);
+    EXPECT_EQ(forward_map[std::make_tuple(0, 1, 1, 1)], 7);
+    // it = 1
+    // ia = 0
+    // iproj = 0: l = 0
+    EXPECT_EQ(forward_map[std::make_tuple(1, 0, 0, 0)], 8);
+    // iproj = 1: l = 1: m = -1, 0, 1
+    EXPECT_EQ(forward_map[std::make_tuple(1, 0, 1, -1)], 9);
+    EXPECT_EQ(forward_map[std::make_tuple(1, 0, 1, 0)], 10);
+    EXPECT_EQ(forward_map[std::make_tuple(1, 0, 1, 1)], 11);
+    // iproj = 2: l = 2: m = -2, -1, 0, 1, 2
+    EXPECT_EQ(forward_map[std::make_tuple(1, 0, 2, -2)], 12);
+    EXPECT_EQ(forward_map[std::make_tuple(1, 0, 2, -1)], 13);
+    EXPECT_EQ(forward_map[std::make_tuple(1, 0, 2, 0)], 14);
+    EXPECT_EQ(forward_map[std::make_tuple(1, 0, 2, 1)], 15);
+    EXPECT_EQ(forward_map[std::make_tuple(1, 0, 2, 2)], 16);
+    // iproj = 3: l = 3: m = -3, -2, -1, 0, 1, 2, 3
+    EXPECT_EQ(forward_map[std::make_tuple(1, 0, 3, -3)], 17);
+    EXPECT_EQ(forward_map[std::make_tuple(1, 0, 3, -2)], 18);
+    EXPECT_EQ(forward_map[std::make_tuple(1, 0, 3, -1)], 19);
+    EXPECT_EQ(forward_map[std::make_tuple(1, 0, 3, 0)], 20);
+    EXPECT_EQ(forward_map[std::make_tuple(1, 0, 3, 1)], 21);
+    EXPECT_EQ(forward_map[std::make_tuple(1, 0, 3, 2)], 22);
+    EXPECT_EQ(forward_map[std::make_tuple(1, 0, 3, 3)], 23);
+    // ia = 1...
 }
 
 TEST(RadialProjectionTest, MaskfunctionGenerationTest)
