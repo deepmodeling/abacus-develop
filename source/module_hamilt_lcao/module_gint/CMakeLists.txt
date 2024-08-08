@@ -28,7 +28,6 @@ list(APPEND objects
     mult_psi_dm_new.cpp
     mult_psi_dmr.cpp
     init_orb.cpp
-    cal_nnrg.cpp
 )
 
 if(USE_CUDA)

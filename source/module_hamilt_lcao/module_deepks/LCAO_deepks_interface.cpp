@@ -146,6 +146,7 @@ void LCAO_Deepks_Interface::out_deepks_labels(const double& etot,
                       nlocal,
                       ld->des_per_atom,
                       ld->v_delta_precalc_tensor,
+                      GlobalV::global_out_dir,
                       my_rank);
                 }
                 else if(deepks_v_delta==2)//v_delta_precalc storage method 2
@@ -163,6 +164,7 @@ void LCAO_Deepks_Interface::out_deepks_labels(const double& etot,
                                 ld->inlmax,
                                 ld->lmaxd,
                                 ld->psialpha_tensor,
+                                GlobalV::global_out_dir,
                                 my_rank);
 
                     ld->prepare_gevdm(
@@ -173,6 +175,7 @@ void LCAO_Deepks_Interface::out_deepks_labels(const double& etot,
                       ld->inlmax,
                       ld->lmaxd,
                       ld->gevdm_tensor,
+                      GlobalV::global_out_dir,
                       my_rank);
                 }
             }
@@ -211,6 +214,7 @@ void LCAO_Deepks_Interface::out_deepks_labels(const double& etot,
                     ld->inl_l,
 					GlobalV::deepks_equiv, 
 					ld->d_tensor, 
+                    GlobalV::global_out_dir,
 					my_rank); // libnpy needed
 		}
     }
@@ -358,6 +362,7 @@ void LCAO_Deepks_Interface::out_deepks_labels(const double& etot,
 									   ld->inl_l,
 									   GlobalV::deepks_equiv, 
                                        ld->d_tensor, 
+                                       GlobalV::global_out_dir,
                                        GlobalV::MY_RANK); // libnpy needed
         }
     }

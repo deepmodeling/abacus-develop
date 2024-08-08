@@ -916,12 +916,14 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
 //! 3) output exx matrix
 //! 4) output charge density and density matrix
 //! 5) cal_MW? (why put it here?)
-//! 6) calculate the total energy?
 //------------------------------------------------------------------------------
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::iter_finish(int iter)
+void ESolver_KS_LCAO<TK, TR>::iter_finish(int& iter)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "iter_finish");
+
+    // call iter_finish() of ESolver_KS
+    ESolver_KS<TK>::iter_finish(iter);
 
     // 1) mix density matrix if mixing_restart + mixing_dmr + not first
     // mixing_restart at every iter
@@ -980,16 +982,30 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int iter)
             GlobalC::restart.save_disk("Eexx", 0, 1, &this->pelec->f_en.exx);
         }
     }
+
+    if (GlobalC::exx_info.info_global.cal_exx && this->conv_elec)
+    {
+        if (GlobalC::exx_info.info_ri.real_number)
+        {
+            this->conv_elec = this->exd->exx_after_converge(
+                *this->p_hamilt,
+                *dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(),
+                this->kv,
+                iter);
+        }
+        else
+        {
+            this->conv_elec = this->exc->exx_after_converge(
+                *this->p_hamilt,
+                *dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(),
+                this->kv,
+                iter);
+        }
+    }
 #endif
 
     // 4) output charge density and density matrix
-    bool print = false;
     if (this->out_freq_elec && iter % this->out_freq_elec == 0)
-    {
-        print = true;
-    }
-
-    if (print)
     {
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
@@ -1055,8 +1071,11 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int iter)
         sc.cal_MW(iter, this->p_hamilt);
     }
 
-    // 6) calculate the total energy.
-    this->pelec->cal_energies(2);
+    // 6) use the converged occupation matrix for next MD/Relax SCF calculation
+    if (GlobalV::dft_plus_u && this->conv_elec)
+    {
+        GlobalC::dftu.initialed_locale = true;
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -1233,48 +1252,6 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
                        GlobalV::NPROC);
         tqo.calculate();
     }
-}
-
-//------------------------------------------------------------------------------
-//! the 15th function of ESolver_KS_LCAO: do_after_converge
-//! mohan add 2024-05-11
-//------------------------------------------------------------------------------
-template <typename TK, typename TR>
-bool ESolver_KS_LCAO<TK, TR>::do_after_converge(int& iter)
-{
-    ModuleBase::TITLE("ESolver_KS_LCAO", "do_after_converge");
-
-    if (GlobalV::dft_plus_u)
-    {
-        // use the converged occupation matrix for next MD/Relax SCF calculation
-        GlobalC::dftu.initialed_locale = true;
-    }
-    // FIXME: for developer who want to test restarting DeePKS with same Descriptor/PDM in last MD step
-    // RUN: " GlobalC::ld.set_init_pdm(true); " can skip the calculation of PDM in the next iter_init
-
-#ifdef __EXX
-    if (GlobalC::exx_info.info_global.cal_exx)
-    {
-        if (GlobalC::exx_info.info_ri.real_number) {
-            return this->exd->exx_after_converge(
-                *this->p_hamilt,
-                *dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)
-                ->get_DM(),
-                this->kv,
-                iter);
-        }
-        else {
-            return this->exc->exx_after_converge(
-                *this->p_hamilt,
-                *dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)
-                ->get_DM(),
-                this->kv,
-                iter);
-        }
-    }
-#endif // __EXX
-
-    return true;
 }
 
 //------------------------------------------------------------------------------

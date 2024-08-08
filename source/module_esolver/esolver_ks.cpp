@@ -563,12 +563,6 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
         }
         this->print_iter(iter, drho, dkin, duration, diag_ethr);
 
-        // add a energy threshold for SCF convergence
-        if (this->conv_elec == 0) // only check when density is not converged
-        {
-            this->conv_elec = ( iter != 1 && std::abs(this->pelec->f_en.etot_delta * ModuleBase::Ry_to_eV) < this->scf_ene_thr );
-        }
-
         // 12) Json, need to be moved to somewhere else
 #ifdef __RAPIDJSON
         // add Json of scf mag
@@ -584,11 +578,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
         if (this->conv_elec)
         {
             this->niter = iter;
-            bool stop = this->do_after_converge(iter);
-            if (stop)
-            {
-                break;
-            }
+            break;
         }
 
         // notice for restart
@@ -614,6 +604,28 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
 #endif //__RAPIDJSON
     return;
 };
+
+template <typename T, typename Device>
+void ESolver_KS<T, Device>::iter_finish(int& iter)
+{
+    // 1 means Harris-Foulkes functional
+    // 2 means Kohn-Sham functional
+    this->pelec->cal_energies(2);
+
+    if (iter == 1)
+    {
+        this->pelec->f_en.etot_old = this->pelec->f_en.etot;
+    }
+    this->pelec->f_en.etot_delta = this->pelec->f_en.etot - this->pelec->f_en.etot_old;
+    this->pelec->f_en.etot_old = this->pelec->f_en.etot;
+
+    // add a energy threshold for SCF convergence
+    if (this->conv_elec == 0) // only check when density is not converged
+    {
+        this->conv_elec
+            = (iter != 1 && std::abs(this->pelec->f_en.etot_delta * ModuleBase::Ry_to_eV) < this->scf_ene_thr);
+    }
+}
 
 //! Something to do after SCF iterations when SCF is converged or comes to the max iter step.
 template <typename T, typename Device>

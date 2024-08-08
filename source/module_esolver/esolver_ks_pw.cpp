@@ -453,8 +453,11 @@ void ESolver_KS_PW<T, Device>::update_pot(const int istep, const int iter)
 }
 
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::iter_finish(const int iter)
+void ESolver_KS_PW<T, Device>::iter_finish(int& iter)
 {
+    // call iter_finish() of ESolver_KS
+    ESolver_KS<T, Device>::iter_finish(iter);
+
     // liuyu 2023-10-24
     // D in uspp need vloc, thus needs update when veff updated
     // calculate the effective coefficient matrix for non-local pseudopotential
@@ -465,18 +468,7 @@ void ESolver_KS_PW<T, Device>::iter_finish(const int iter)
         GlobalC::ppcell.cal_effective_D(veff, this->pw_rhod, GlobalC::ucell);
     }
 
-    // 1 means Harris-Foulkes functional
-    // 2 means Kohn-Sham functional
-    const int energy_type = 2;
-    this->pelec->cal_energies(2);
-
-    bool print = false;
     if (this->out_freq_elec && iter % this->out_freq_elec == 0)
-    {
-        print = true;
-    }
-
-    if (print == true)
     {
         if (PARAM.inp.out_chg > 0)
         {

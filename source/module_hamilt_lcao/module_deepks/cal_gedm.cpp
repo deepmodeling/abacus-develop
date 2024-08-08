@@ -15,7 +15,7 @@
 #include "module_parameter/parameter.h"
 
 
-inline void generate_py_files(const int lmaxd, const int nmaxd) {
+inline void generate_py_files(const int lmaxd, const int nmaxd, const std::string &out_dir) {
 
 	if (GlobalV::MY_RANK != 0) 
 	{
@@ -33,7 +33,7 @@ inline void generate_py_files(const int lmaxd, const int nmaxd) {
 
     ofs << "basis = load_yaml('basis.yaml')['proj_basis']" << std::endl;
     ofs << "model = torch.jit.load(sys.argv[1])" << std::endl;
-    ofs << "dm_eig = np.expand_dims(np.load('dm_eig.npy'),0)" << std::endl;
+    ofs << "dm_eig = np.expand_dims(np.load('" << out_dir << "dm_eig.npy'),0)" << std::endl;
     ofs << "dm_eig = torch.tensor(dm_eig, "
            "dtype=torch.float64,requires_grad=True)"
         << std::endl
@@ -75,9 +75,10 @@ void LCAO_Deepks::cal_gedm_equiv(const int nat) {
 			this->inl_l,
 			GlobalV::deepks_equiv, 
 			this->d_tensor, 
+            GlobalV::global_out_dir,
 			GlobalV::MY_RANK); // libnpy needed
 
-    generate_py_files(this->lmaxd, this->nmaxd);
+    generate_py_files(this->lmaxd, this->nmaxd, GlobalV::global_out_dir);
 
     if (GlobalV::MY_RANK == 0) {
         std::string cmd = "python cal_gedm.py " + PARAM.inp.deepks_model;
@@ -94,7 +95,7 @@ void LCAO_Deepks::cal_gedm_equiv(const int nat) {
 			this->E_delta,
 			GlobalV::MY_RANK);
 
-    std::string cmd = "rm -f cal_gedm.py basis.yaml";
+    std::string cmd = "rm -f cal_gedm.py basis.yaml ec.npy gedm.npy";
     std::system(cmd.c_str());
 }
 

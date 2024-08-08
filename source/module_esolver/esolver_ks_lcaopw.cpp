@@ -211,11 +211,13 @@ namespace ModuleESolver
         ModuleBase::timer::tick("ESolver_KS_LIP", "hamilt2density");
     }
 
-#ifdef __EXX
     template <typename T>
-    bool ESolver_KS_LIP<T>::do_after_converge(int& iter)
+    void ESolver_KS_LIP<T>::iter_finish(int& iter)
     {
-        if (GlobalC::exx_info.info_global.cal_exx)
+        ESolver_KS_PW<T>::iter_finish(iter);
+
+#ifdef __EXX
+        if (GlobalC::exx_info.info_global.cal_exx && this->conv_elec)
         {
             // no separate_loop case
             if (!GlobalC::exx_info.info_global.separate_loop)
@@ -226,24 +228,24 @@ namespace ModuleESolver
                 // in first scf loop, exx updated once in beginning,
                 // in second scf loop, exx updated every iter
 
-                if (this->two_level_step) {
-                    return true;
-                } else
+                if (!this->two_level_step)
                 {
                     // update exx and redo scf
                     XC_Functional::set_xc_type(GlobalC::ucell.atoms[0].ncpp.xc_func);
                     iter = 0;
                     std::cout << " Entering 2nd SCF, where EXX is updated" << std::endl;
                     this->two_level_step++;
-                    return false;
+                    this->conv_elec = false;
                 }
             }
             // has separate_loop case
             // exx converged or get max exx steps
             else if (this->two_level_step == GlobalC::exx_info.info_global.hybrid_step
-                || (iter == 1 && this->two_level_step != 0)) {
-                return true;
-            } else
+                     || (iter == 1 && this->two_level_step != 0))
+            {
+                this->conv_elec = true;
+            }
+            else
             {
                 // update exx and redo scf
                 if (this->two_level_step == 0)
@@ -252,23 +254,24 @@ namespace ModuleESolver
                 }
 
                 std::cout << " Updating EXX " << std::flush;
-                timeval t_start;       gettimeofday(&t_start, nullptr);
+                timeval t_start;
+                gettimeofday(&t_start, nullptr);
 
                 this->exx_lip->cal_exx();
                 iter = 0;
                 this->two_level_step++;
 
-                timeval t_end;       gettimeofday(&t_end, nullptr);
-                std::cout << "and rerun SCF\t"
-                    << std::setprecision(3) << std::setiosflags(std::ios::scientific)
-                    << (double)(t_end.tv_sec - t_start.tv_sec) + (double)(t_end.tv_usec - t_start.tv_usec) / 1000000.0
-                    << std::defaultfloat << " (s)" << std::endl;
-                return false;
+                timeval t_end;
+                gettimeofday(&t_end, nullptr);
+                std::cout << "and rerun SCF\t" << std::setprecision(3) << std::setiosflags(std::ios::scientific)
+                          << (double)(t_end.tv_sec - t_start.tv_sec)
+                                 + (double)(t_end.tv_usec - t_start.tv_usec) / 1000000.0
+                          << std::defaultfloat << " (s)" << std::endl;
+                this->conv_elec = false;
             }
         }
-        else { return true; }
-    }
 #endif
+    }
 
     template <typename T>
     void ESolver_KS_LIP<T>::after_all_runners()

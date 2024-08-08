@@ -26,7 +26,7 @@ class Grid_MeshBall : public Grid_BigCell
 		// init the meshball radius.
 		double meshball_radius=0.0;
 		// Handle as a truncation function.
-		double atom_spillage(const double* pos);
+		double deal_with_atom_spillage(const double* pos);
 	
 };
 #endif

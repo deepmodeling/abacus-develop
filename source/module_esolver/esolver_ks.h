@@ -67,18 +67,15 @@ class ESolver_KS : public ESolver_FP
 		virtual void iter_init(const int istep, const int iter) {};
 
 		//! Something to do after hamilt2density function in each iter loop.
-		virtual void iter_finish(const int iter) {};
+        virtual void iter_finish(int& iter);
 
-		//! Something to do after SCF iterations when SCF is converged or comes to the max iter step.
+        //! Something to do after SCF iterations when SCF is converged or comes to the max iter step.
         virtual void after_scf(const int istep);
 
         //! <Temporary> It should be replaced by a function in Hamilt Class
 		virtual void update_pot(const int istep, const int iter) {};
 
-		//! choose strategy when charge density convergence achieved
-		virtual bool do_after_converge(int& iter){return true;}
-
-	protected:
+    protected:
 
 		// Print the headline on the screen:
 		// ITER   ETOT(eV)       EDIFF(eV)      DRHO    TIME(s) 

@@ -115,7 +115,7 @@ void Veff<OperatorLCAO<TK, TR>>::contributeHR()
             }
         }
     }
-    this->GK->transfer_pvpR(this->hR,this->ucell);
+    this->GK->transfer_pvpR(this->hR,this->ucell,this->gd);
 
     if(this->nspin == 2) { this->current_spin = 1 - this->current_spin;
 }

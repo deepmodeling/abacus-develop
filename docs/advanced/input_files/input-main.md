@@ -1880,7 +1880,7 @@ Warning: this function is not robust enough for the current version. Please try 
 
 - **Type**: Boolean
 - **Availability**: numerical atomic orbital basis
-- **Description**: print energy and force labels and descriptors for DeePKS training
+- **Description**: Print labels and descriptors for DeePKS training in OUT.${suffix}. The names of these files start with "deepks".
 - **Note**: In `LCAO` calculation, the path of a numerical descriptor (an `orb` file) is needed to be specified under the `NUMERICAL_DESCRIPTOR` tag in the `STRU` file. For example:
 
   ```text
