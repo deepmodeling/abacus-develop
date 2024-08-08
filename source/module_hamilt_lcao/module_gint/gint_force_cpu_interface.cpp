@@ -2,7 +2,7 @@
 #include "module_base/memory.h"
 #include "module_base/timer.h"
 
-void Gint::cpu_force(Gint_inout* inout) {
+void Gint::gint_kernel_force(Gint_inout* inout) {
     ModuleBase::TITLE("Gint_interface", "cal_gint_force");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_force");
     const UnitCell& ucell = *this->ucell;
@@ -137,7 +137,7 @@ void Gint::cpu_force(Gint_inout* inout) {
     ModuleBase::timer::tick("Gint_interface", "cal_gint_force");
 }
 
-void Gint::cpu_force_meta(Gint_inout* inout) {
+void Gint::gint_kernel_force_meta(Gint_inout* inout) {
     ModuleBase::TITLE("Gint_interface", "cal_gint_force_meta");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_force_meta");
     const UnitCell& ucell = *this->ucell;

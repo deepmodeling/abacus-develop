@@ -69,13 +69,34 @@ void Grid_BigCell::init_big_latvec(const UnitCell& ucell)
 	// (x,y,z) * bigcell_latvec0^(-1) = (i,j,k)
 	this->bigcell_GT = this->bigcell_latvec0.Inverse();
 
+	if(GlobalV::test_gridt)
+	{
+		GlobalV::ofs_running << " the VECTORS of BIGCELL are (Bohr): " << std::endl;
+		GlobalV::ofs_running << " vec1( " 
+			<< std::setw(15) << bigcell_vec1[0]
+			<< std::setw(15) << bigcell_vec1[1]
+			<< std::setw(15) << bigcell_vec1[2] 
+			<< ")" << std::endl;
+
+		GlobalV::ofs_running << " vec2( " 
+			<< std::setw(15) << bigcell_vec2[0]
+			<< std::setw(15) << bigcell_vec2[1]
+			<< std::setw(15) << bigcell_vec2[2]
+			<< ")" << std::endl;
+
+		GlobalV::ofs_running << " vec3( " 
+			<< std::setw(15) << bigcell_vec3[0]
+			<< std::setw(15) << bigcell_vec3[1]
+			<< std::setw(15) << bigcell_vec3[2]
+			<< ")" << std::endl;
+	}
 	return;
 }
 
 
-void Grid_BigCell::grid_expansion(const UnitCell& ucell,double* rcut)
+void Grid_BigCell::init_grid_expansion(const UnitCell& ucell,double* rcut)
 {
-	ModuleBase::TITLE("Grid_BigCell","grid_expansion");
+	ModuleBase::TITLE("Grid_BigCell","init_grid_expansion");
 
 	// calculate the max cutoff radius among all orbitals.
 	// then we will use this parameter to generate grid expansion.
@@ -84,20 +105,24 @@ void Grid_BigCell::grid_expansion(const UnitCell& ucell,double* rcut)
 	{
 		this->orbital_rmax = std::max( rcut[T], this->orbital_rmax);
 	}
+	if(GlobalV::test_gridt)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"rmax of periodic grid (bohr)",orbital_rmax);
 
 	// mohan fixed serious bug 2010-03-06
 	// G = GT^T
 	// g1 = the norm of first std::vector of G 
 	// g2 = the norm of second std::vector of G 
 	// g3 = the norm of third std::vector of G 
-	double g1 = sqrt(bigcell_GT.e11 * bigcell_GT.e11 + bigcell_GT.e21 * bigcell_GT.e21 
-					+ bigcell_GT.e31 * bigcell_GT.e31);
+	double g1 = sqrt(bigcell_GT.e11 * bigcell_GT.e11 
+	+ bigcell_GT.e21 * bigcell_GT.e21 
+	+ bigcell_GT.e31 * bigcell_GT.e31);
 	
-	double g2 = sqrt(bigcell_GT.e12 * bigcell_GT.e12 + bigcell_GT.e22 * bigcell_GT.e22 
-					+ bigcell_GT.e32 * bigcell_GT.e32);
+	double g2 = sqrt(bigcell_GT.e12 * bigcell_GT.e12 
+	+ bigcell_GT.e22 * bigcell_GT.e22 
+	+ bigcell_GT.e32 * bigcell_GT.e32);
 	
-	double g3 = sqrt(bigcell_GT.e13 * bigcell_GT.e13 + bigcell_GT.e23 * bigcell_GT.e23 
-					+ bigcell_GT.e33 * bigcell_GT.e33);
+	double g3 = sqrt(bigcell_GT.e13 * bigcell_GT.e13 
+	+ bigcell_GT.e23 * bigcell_GT.e23 
+	+ bigcell_GT.e33 * bigcell_GT.e33);
 
 	// we assume the added bigcell can present even the atom
 	// is at the edge of the origin grid.
@@ -125,16 +150,18 @@ void Grid_BigCell::grid_expansion(const UnitCell& ucell,double* rcut)
 }
 
 
-void Grid_BigCell::cal_bigcell_tau(const UnitCell& ucell)
+void Grid_BigCell::init_tau_in_bigcell(const UnitCell& ucell)
 {
-	ModuleBase::TITLE("Grid_BigCell","cal_bigcell_tau");
+	ModuleBase::TITLE("Grid_BigCell","init_tau_in_bigcell");
 	
 	// allcoate space for atom positions relative
 	// to meshcell.
 	this->tau_in_bigcell = std::vector<std::vector<double>>(ucell.nat,std::vector<double>(3,0.0));
+	ModuleBase::Memory::record("tau_in_bigcell", sizeof(double) * ucell.nat*3);
 	// allocate space, these arrays record which meshcell
 	// the atom is in.
 	this->index_atom = std::vector<int>(ucell.nat, 0);
+	ModuleBase::Memory::record("index_atom", sizeof(double) * ucell.nat);
 	
 	// get the fraction number of (i,j,k)
 	ModuleBase::Vector3<double> fraction;
@@ -182,7 +209,7 @@ void Grid_BigCell::cal_bigcell_tau(const UnitCell& ucell)
 				std::cout << fraction.y << " ";
 				std::cout << fraction.z << " ";
 				std::cout << std::endl;
-				ModuleBase::WARNING_QUIT("Grid_BigCell::cal_bigcell_tau","fraction.x<0 || fraction.y<0 || fraction.z<0");
+				ModuleBase::WARNING_QUIT("Grid_BigCell::init_tau_in_bigcell","fraction.x<0 || fraction.y<0 || fraction.z<0");
 			}
 
 			assert(fraction.x >= 0.0);
@@ -245,10 +272,10 @@ void Grid_BigCell::cal_bigcell_tau(const UnitCell& ucell)
 // (3)
 // if f2normal == true, calculate the index2normal.
 // if f2normal == false, calculate the index2cell. 
-void Grid_BigCell::cal_grid_index(bool f2normal, int *target)const
+void Grid_BigCell::grid_expansion_index(bool f2normal, int *target)const
 {
-	ModuleBase::TITLE("Grid_BigCell","cal_grid_index");
-	ModuleBase::timer::tick("Grid_BigCell","cal_grid_index");
+	ModuleBase::TITLE("Grid_BigCell","grid_expansion_index");
+	ModuleBase::timer::tick("Grid_BigCell","grid_expansion_index");
 	
 	int ii,jj,kk,in_ext,in_normal;
 	for(int i=0; i<this->nxe; i++)
@@ -331,6 +358,6 @@ void Grid_BigCell::cal_grid_index(bool f2normal, int *target)const
 			}// k
 		}// j
 	}// i
-	ModuleBase::timer::tick("Grid_BigCell","cal_grid_index");
+	ModuleBase::timer::tick("Grid_BigCell","grid_expansion_index");
 	return;
 }

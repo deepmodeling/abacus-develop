@@ -72,7 +72,7 @@ void sparse_format::cal_dH(const Parallel_Orbitals& pv,
     delete[] fsr_dh.DHloc_fixedR_z;
 
     gint_k
-        .dvlocal_R_smat(current_spin, sparse_thr, HS_Arrays, &pv, GlobalC::ucell);
+        .cal_dvlocal_R_sparseMatrix(current_spin, sparse_thr, HS_Arrays, &pv, GlobalC::ucell, GlobalC::GridD);
 
     return;
 }

@@ -111,6 +111,27 @@ void Grid_MeshCell::init_latvec(const UnitCell &ucell)
 	// (x,y,z) * meshcell_latvec0^(-1) = (i,j,k)
 	this->meshcell_GT = this->meshcell_latvec0.Inverse();
 
+	if(GlobalV::test_gridt)
+	{
+		GlobalV::ofs_running << " the VECTORS of MESHCELL are (Bohr): " << std::endl;
+		GlobalV::ofs_running << " vec1( " 
+			<< std::setw(15) << meshcell_vec1[0]
+			<< std::setw(15) << meshcell_vec1[1]
+			<< std::setw(15) << meshcell_vec1[2] 
+			<< ")" << std::endl;
+
+		GlobalV::ofs_running << " vec2( " 
+			<< std::setw(15) << meshcell_vec2[0]
+			<< std::setw(15) << meshcell_vec2[1]
+			<< std::setw(15) << meshcell_vec2[2]
+			<< ")" << std::endl;
+
+		GlobalV::ofs_running << " vec3( " 
+			<< std::setw(15) << meshcell_vec3[0]
+			<< std::setw(15) << meshcell_vec3[1]
+			<< std::setw(15) << meshcell_vec3[2]
+			<< ")" << std::endl;
+	}
 	
 	return;
 }
@@ -123,6 +144,7 @@ void Grid_MeshCell::init_meshcell_pos(void)
 	assert(bxyz>0);
 
 	meshcell_pos = std::vector<std::vector<double>>(bxyz,std::vector<double>(3,0.0));
+	ModuleBase::Memory::record("meshcell_pos", sizeof(double) * bxyz*3);
 
 	int index=0;
 	for(int i=0; i<bx; i++)

@@ -17,6 +17,7 @@ void init_orb(double& dr_uniform,
     const int ntype=ucell.ntype;
     
     rcuts=std::vector<double>(ntype);
+    ModuleBase::Memory::record("rcuts", sizeof(double)*ntype*3);
     for(int T=0; T<ntype; T++)
 	{
 		rcuts[T]=GlobalC::ORB.Phi[T].getRcut();

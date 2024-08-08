@@ -322,7 +322,6 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
         this->pw_rho->nplane,
         this->pw_rho->startz_current,
         GlobalC::ucell,
-        GlobalC::GridD,
         dr_uniform,
         rcuts,
         psi_u,
@@ -357,7 +356,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
         this->pw_rho->startz_current,
         &ucell,
         &GlobalC::ORB);
-    this->gint_->initialize_pvpR(ucell);
+    this->gint_->initialize_pvpR(ucell, &GlobalC::GridD);
 
     // if EXX from scratch, init 2-center integral and calculate Cs, Vs 
 #ifdef __EXX

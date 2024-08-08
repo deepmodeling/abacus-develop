@@ -100,7 +100,7 @@ namespace LR
         double** rho_trans;
         const int& nrxx = this->pot.lock()->nrxx;
         // LR_Util::new_p2(rho_trans, nspin_solve, nrxx);
-        LR_Util::new_p2(rho_trans, nspin, nrxx); // currently gint_rho uses GlobalV::NSPIN, it needs refactor
+        LR_Util::new_p2(rho_trans, nspin, nrxx); // currently gint_kernel_rho uses GlobalV::NSPIN, it needs refactor
         for (int is = 0;is < nspin_solve;++is)ModuleBase::GlobalFunc::ZEROS(rho_trans[is], nrxx);
         Gint_inout inout_rho(rho_trans, Gint_Tools::job_type::rho, false);
         this->gint->cal_gint(&inout_rho);
@@ -147,7 +147,7 @@ namespace LR
                 double** rho_trans;
                 const int& nrxx = this->pot.lock()->nrxx;
                 // LR_Util::new_p2(rho_trans, nspin_solve, nrxx);
-                LR_Util::new_p2(rho_trans, nspin, nrxx); // currently cpu_rho uses GlobalV::NSPIN, it needs refactor
+                LR_Util::new_p2(rho_trans, nspin, nrxx); // currently gint_kernel_rho uses GlobalV::NSPIN, it needs refactor
                 for (int is = 0;is < nspin_solve;++is)ModuleBase::GlobalFunc::ZEROS(rho_trans[is], nrxx);
                 Gint_inout inout_rho(rho_trans, Gint_Tools::job_type::rho, false);
                 this->gint->cal_gint(&inout_rho);
@@ -170,7 +170,7 @@ namespace LR
                 }
                 // LR_Util::print_HR(*this->gint->get_hRGint(), this->ucell.nat, "VR(grid)");
                 HR_real_imag.set_zero();
-                this->gint->transfer_pvpR(&HR_real_imag, &GlobalC::ucell);
+                this->gint->transfer_pvpR(&HR_real_imag, &GlobalC::ucell, &GlobalC::GridD);
                 // LR_Util::print_HR(HR_real_imag, this->ucell.nat, "VR(real, 2d)");
                 LR_Util::set_HR_real_imag_part(HR_real_imag, *this->hR, GlobalC::ucell.nat, type);
             };

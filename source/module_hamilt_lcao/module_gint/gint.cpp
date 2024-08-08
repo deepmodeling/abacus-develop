@@ -46,11 +46,11 @@ void Gint::cal_gint(Gint_inout* inout) {
                 || inout->job == Gint_Tools::job_type::rho
                 || inout->job == Gint_Tools::job_type::force)) {
             if (inout->job == Gint_Tools::job_type::vlocal) {
-                gpu_vlocal(inout);
+                gpu_vlocal_interface(inout);
             } else if (inout->job == Gint_Tools::job_type::rho) {
-                gpu_rho(inout);
+                gpu_rho_interface(inout);
             } else if (inout->job == Gint_Tools::job_type::force) {
-                gpu_force(inout);
+                gpu_force_interface(inout);
             }
         } else
 #endif
@@ -61,19 +61,19 @@ void Gint::cal_gint(Gint_inout* inout) {
 #endif
             {
                 if (inout->job == Gint_Tools::job_type::vlocal) {
-                    cpu_vlocal(inout);
+                    gint_kernel_vlocal(inout);
                 } else if (inout->job == Gint_Tools::job_type::dvlocal) {
-                    cpu_dvlocal(inout);
+                    gint_kernel_dvlocal(inout);
                 } else if (inout->job == Gint_Tools::job_type::vlocal_meta) {
-                    cpu_vlocal_meta(inout);
+                    gint_kernel_vlocal_meta(inout);
                 } else if (inout->job == Gint_Tools::job_type::rho) {
-                    cpu_rho(inout);
+                    gint_kernel_rho(inout);
                 } else if (inout->job == Gint_Tools::job_type::tau) {
-                    cpu_tau(inout);
+                    gint_kernel_tau(inout);
                 } else if (inout->job == Gint_Tools::job_type::force) {
-                    cpu_force(inout);
+                    gint_kernel_force(inout);
                 } else if (inout->job == Gint_Tools::job_type::force_meta) {
-                    cpu_force_meta(inout);
+                    gint_kernel_force_meta(inout);
                 }
             }
         }
@@ -131,7 +131,7 @@ void Gint::prep_grid(const Grid_Technique& gt,
     return;
 }
 
-void Gint::initialize_pvpR(const UnitCell& ucell_in) {
+void Gint::initialize_pvpR(const UnitCell& ucell_in, Grid_Driver* gd) {
     ModuleBase::TITLE("Gint", "initialize_pvpR");
 
     int npol = 1;
@@ -192,7 +192,7 @@ void Gint::initialize_pvpR(const UnitCell& ucell_in) {
         for (int I1 = 0; I1 < atom1->na; ++I1) {
             auto& tau1 = atom1->tau[I1];
 
-            gridt->gd->Find_atom(ucell_in, tau1, T1, I1);
+            gd->Find_atom(ucell_in, tau1, T1, I1);
 
             const int iat1 = ucell_in.itia2iat(T1, I1);
 
@@ -201,9 +201,9 @@ void Gint::initialize_pvpR(const UnitCell& ucell_in) {
 
             // whether this atom is in this processor.
             if (this->gridt->in_this_processor[iat1]) {
-                for (int ad = 0; ad < gridt->gd->getAdjacentNum() + 1; ++ad) {
-                    const int T2 = gridt->gd->getType(ad);
-                    const int I2 = gridt->gd->getNatom(ad);
+                for (int ad = 0; ad < gd->getAdjacentNum() + 1; ++ad) {
+                    const int T2 = gd->getType(ad);
+                    const int I2 = gd->getNatom(ad);
                     const int iat2 = ucell_in.itia2iat(T2, I2);
                     const Atom* atom2 = &(ucell_in.atoms[T2]);
 
@@ -213,7 +213,7 @@ void Gint::initialize_pvpR(const UnitCell& ucell_in) {
                     // is in this processor.
                     if (this->gridt->in_this_processor[iat2]) {
                         ModuleBase::Vector3<double> dtau
-                            = gridt->gd->getAdjacentTau(ad) - tau1;
+                            = gd->getAdjacentTau(ad) - tau1;
                         double distance = dtau.norm() * ucell_in.lat0;
                         double rcut
                             = this->gridt->rcuts[T1] + this->gridt->rcuts[T2];
@@ -228,7 +228,7 @@ void Gint::initialize_pvpR(const UnitCell& ucell_in) {
                         //  rcuts[it] = 7.0000000000000008
                         if (distance < rcut - 1.0e-15) {
                             // calculate R index
-                            auto& R_index = gridt->gd->getBox(ad);
+                            auto& R_index = gd->getBox(ad);
                             // insert this atom-pair into this->hRGint
                             if (npol == 1) {
                                 hamilt::AtomPair<double> tmp_atom_pair(

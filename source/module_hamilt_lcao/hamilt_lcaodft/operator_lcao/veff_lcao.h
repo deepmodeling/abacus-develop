@@ -47,7 +47,7 @@ class Veff<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
         this->cal_type = calculation_type::lcao_gint;
 
         this->initialize_HR(ucell_in, GridD_in);
-        GK_in->initialize_pvpR(*ucell_in);
+        GK_in->initialize_pvpR(*ucell_in, GridD_in);
     }
     /**
      * @brief Construct a new Veff object for Gamma-only calculation
@@ -65,7 +65,7 @@ class Veff<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
         this->cal_type = calculation_type::lcao_gint;
         this->initialize_HR(ucell_in, GridD_in);
 
-        GG_in->initialize_pvpR(*ucell_in);
+        GG_in->initialize_pvpR(*ucell_in, GridD_in);
     }
 
     ~Veff<OperatorLCAO<TK, TR>>(){};

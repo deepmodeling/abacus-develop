@@ -5,7 +5,7 @@
 #include "module_base/memory.h"
 #include "module_base/timer.h"
 
-void Gint::gpu_vlocal(Gint_inout* inout) {
+void Gint::gpu_vlocal_interface(Gint_inout* inout) {
     ModuleBase::TITLE("Gint_interface", "cal_gint_vlocal");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal");
 
@@ -32,7 +32,7 @@ void Gint::gpu_vlocal(Gint_inout* inout) {
     ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal");
 }
 
-void Gint::gpu_rho(Gint_inout* inout) {
+void Gint::gpu_rho_interface(Gint_inout* inout) {
     ModuleBase::TITLE("Gint_interface", "cal_gint_rho");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_rho");
 
@@ -58,7 +58,7 @@ void Gint::gpu_rho(Gint_inout* inout) {
     ModuleBase::timer::tick("Gint_interface", "cal_gint_rho");
 }
 
-void Gint::gpu_force(Gint_inout* inout) {
+void Gint::gpu_force_interface(Gint_inout* inout) {
     ModuleBase::TITLE("Gint_interface", "cal_gint_force");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_force");
 

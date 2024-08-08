@@ -63,9 +63,11 @@ class Gint_k : public Gint {
      * then pass this->hRGint to Veff<OperatorLCAO>::hR
      */
     void transfer_pvpR(hamilt::HContainer<double>* hR,
-                       const UnitCell* ucell_in);
+                       const UnitCell* ucell_in,
+                       Grid_Driver* gd);
     void transfer_pvpR(hamilt::HContainer<std::complex<double>>* hR,
-                       const UnitCell* ucell_in);
+                       const UnitCell* ucell_in,
+                       Grid_Driver* gd);
 
     //------------------------------------------------------
     // in gint_k_env.cpp
@@ -82,8 +84,7 @@ class Gint_k : public Gint {
     // in gint_k_sparse1.cpp
     //------------------------------------------------------
     // similar to the above 3, just for the derivative
-    // distribute_cpvdpR_sparseMatrix
-    void pvdpR_smatrix(
+    void distribute_pvdpR_sparseMatrix(
         const int current_spin,
         const int dim,
         const double& sparse_threshold,
@@ -93,8 +94,7 @@ class Gint_k : public Gint {
         LCAO_HS_Arrays& HS_Arrays,
         const Parallel_Orbitals* pv);
 
-    // distribute_pvdpR_soc_sparseMatrix
-    void pvdpR_soc_smat(
+    void distribute_pvdpR_soc_sparseMatrix(
         const int dim,
         const double& sparse_threshold,
         const std::map<
@@ -104,12 +104,12 @@ class Gint_k : public Gint {
         LCAO_HS_Arrays& HS_Arrays,
         const Parallel_Orbitals* pv);
 
-    // cal_dvlocal_R_sparseMatrix
-    void dvlocal_R_smat(const int& current_spin,
+    void cal_dvlocal_R_sparseMatrix(const int& current_spin,
                                     const double& sparse_threshold,
                                     LCAO_HS_Arrays& HS_Arrays,
                                     const Parallel_Orbitals* pv,
-                                    UnitCell& ucell);
+                                    UnitCell& ucell,
+                                    Grid_Driver& gdriver);
 
   private:
     //----------------------------
