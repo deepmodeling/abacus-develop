@@ -421,11 +421,6 @@ void ElecState::print_etot(const bool converged,
                    {FmtTable::Align::LEFT, FmtTable::Align::CENTER});
     table << titles << energies_Ry << energies_eV;
     GlobalV::ofs_running << table.str() << std::endl;
-    if (iter_in == 1) // pengfei Li added 2015-1-31
-    {
-        this->f_en.etot_old = this->f_en.etot;
-    }
-    this->f_en.etot_delta = this->f_en.etot - this->f_en.etot_old;
     if (GlobalV::OUT_LEVEL == "ie" || GlobalV::OUT_LEVEL == "m") // xiaohui add 'm' option, 2015-09-16
     {
         std::vector<double> mag;
@@ -462,7 +457,6 @@ void ElecState::print_etot(const bool converged,
                                       duration,
                                       6);
     }
-    this->f_en.etot_old = this->f_en.etot;
     return;
 }
 

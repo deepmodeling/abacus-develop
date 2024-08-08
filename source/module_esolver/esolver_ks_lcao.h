@@ -60,8 +60,6 @@ class ESolver_KS_LCAO : public ESolver_KS<TK> {
 
     virtual void after_scf(const int istep) override;
 
-    virtual bool do_after_converge(int& iter) override;
-
     virtual void others(const int istep) override;
 
     // we will get rid of this class soon, don't use it, mohan 2024-03-28
