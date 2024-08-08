@@ -14,6 +14,9 @@ typedef hamilt::MatrixBlock<std::complex<double>> matcd;
 namespace hsolver
 {
 template <typename T>
+std::vector<double> DiagoPexsi<T>::mu_buffer;
+
+template <typename T>
 DiagoPexsi<T>::DiagoPexsi(const Parallel_Orbitals* ParaV_in)
 {
     int nspin = GlobalV::NSPIN;
@@ -76,7 +79,7 @@ void DiagoPexsi<double>::diag(hamilt::Hamilt<double>* phm_in, psi::Psi<double>& 
     this->totalFreeEnergy = this->ps->get_totalFreeEnergy();
     this->totalEnergyH = this->ps->get_totalEnergyH();
     this->totalEnergyS = this->ps->get_totalEnergyS();
-    this->mu_buffer[ik] = this->ps->get_mu();
+    mu_buffer[ik] = this->ps->get_mu();
 }
 
 template <>

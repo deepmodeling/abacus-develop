@@ -59,6 +59,7 @@ void HSolverLCAO<T, Device>::solve(hamilt::Hamilt<T>* pHamilt,
         for (int ik = 0; ik < psi.get_nk(); ++ik) {
             /// update H(k) for each k point
             pHamilt->updateHk(ik);
+            psi.fix_k(ik);
             // solve eigenvector and eigenvalue for H(k)
             pe.diag(pHamilt, psi, nullptr);
         }
@@ -98,6 +99,7 @@ void HSolverLCAO<T, Device>::solve(hamilt::Hamilt<T>* pHamilt,
             pHamilt->updateHk(ik);
 
             psi.fix_k(ik);
+            std::cout << pes->nelec_spin[0] << " " << pes->nelec_spin[1] << std::endl;
 
             // solve eigenvector and eigenvalue for H(k)
             this->hamiltSolvePsiK(pHamilt, psi, &(pes->ekb(ik, 0)));

@@ -16,7 +16,7 @@ class DiagoPexsi : public DiagH<T>
 {
   private:
     using Real = typename GetTypeReal<T>::type;
-    std::vector<double> mu_buffer;
+    static std::vector<double> mu_buffer;
 
   public:
     DiagoPexsi(const Parallel_Orbitals* ParaV_in);
