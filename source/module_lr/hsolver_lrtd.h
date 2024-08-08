@@ -5,7 +5,7 @@
 namespace LR
 {
     template<typename T, typename Device = base_device::DEVICE_CPU>
-    class HSolverLR : public hsolver::HSolver<T, Device>
+    class HSolverLR
     {
         using Real = typename GetTypeReal<T>::type;
         const int& nk;
@@ -15,16 +15,16 @@ namespace LR
     public:
         HSolverLR(const int& nk_in, const int& npairs_in, const int& ispin_solve_in = 0, const bool& out_wfc_lr_in = false)
             :nk(nk_in), npairs(npairs_in), out_wfc_lr(out_wfc_lr_in), ispin_solve(ispin_solve_in) {};
-        virtual Real set_diagethr(Real diag_ethr_in, const int istep, const int iter, const Real ethr) override
+        Real set_diagethr(Real diag_ethr_in, const int istep, const int iter, const Real ethr)
         {
             this->diag_ethr = ethr;
             return ethr;
         }
-        virtual void solve(hamilt::Hamilt<T, Device>* pHamilt,
-                           psi::Psi<T, Device>& psi,
-                           elecstate::ElecState* pes,
-                           const std::string method_in,
-                           const bool skip_charge = false) override;
+        void solve(hamilt::Hamilt<T, Device>* pHamilt,
+            psi::Psi<T, Device>& psi,
+            elecstate::ElecState* pes,
+            const std::string method_in,
+            const bool skip_charge = false);
 
         Real diag_ethr = 0.0; // threshold for diagonalization
 
