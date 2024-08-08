@@ -10,7 +10,7 @@
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
-void Gint_k::distribute_pvdpR_sparseMatrix(
+void Gint_k::pvdpR_smatrix(
     const int current_spin,
     const int dim,
     const double& sparse_threshold,
@@ -18,7 +18,7 @@ void Gint_k::distribute_pvdpR_sparseMatrix(
     LCAO_HS_Arrays& HS_Arrays,
     const Parallel_Orbitals* pv)
 {
-    ModuleBase::TITLE("Gint_k", "distribute_pvdpR_sparseMatrix");
+    ModuleBase::TITLE("Gint_k", "pvdpR_smatrix");
 
     int total_R_num = HS_Arrays.all_R_coor.size();
     int* nonzero_num = new int[total_R_num];
@@ -164,7 +164,7 @@ void Gint_k::distribute_pvdpR_sparseMatrix(
     return;
 }
 
-void Gint_k::distribute_pvdpR_soc_sparseMatrix(
+void Gint_k::pvdpR_soc_smat(
     const int dim,
     const double& sparse_threshold,
     const std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>&
@@ -172,7 +172,7 @@ void Gint_k::distribute_pvdpR_soc_sparseMatrix(
     LCAO_HS_Arrays& HS_Arrays,
     const Parallel_Orbitals* pv)
 {
-    ModuleBase::TITLE("Gint_k", "distribute_pvdpR_soc_sparseMatrix");
+    ModuleBase::TITLE("Gint_k", "pvdpR_soc_smat");
 
     int total_R_num = HS_Arrays.all_R_coor.size();
     int* nonzero_num = new int[total_R_num];
@@ -317,14 +317,13 @@ void Gint_k::distribute_pvdpR_soc_sparseMatrix(
     return;
 }
 
-void Gint_k::cal_dvlocal_R_sparseMatrix(const int& current_spin,
+void Gint_k::dvlocal_R_smat(const int& current_spin,
                                         const double& sparse_threshold,
                                         LCAO_HS_Arrays& HS_Arrays,
                                         const Parallel_Orbitals* pv,
-                                        UnitCell& ucell,
-                                        Grid_Driver& gdriver)
+                                        UnitCell& ucell)
 {
-    ModuleBase::TITLE("Gint_k", "cal_dvlocal_R_sparseMatrix");
+    ModuleBase::TITLE("Gint_k", "dvlocal_R_smat");
 
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> pvdpRx_sparseMatrix;
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> pvdpRy_sparseMatrix;
@@ -353,28 +352,28 @@ void Gint_k::cal_dvlocal_R_sparseMatrix(const int& current_spin,
 
                 const int DM_start = this->gridt->nlocstartg[iat];
                 tau1 = ucell.atoms[T1].tau[I1];
-                gdriver.Find_atom(ucell, tau1, T1, I1);
+                gridt->gd->Find_atom(ucell, tau1, T1, I1);
                 int nad2 = 0;
 
-                for (int ad = 0; ad < gdriver.getAdjacentNum() + 1; ad++)
+                for (int ad = 0; ad < gridt->gd->getAdjacentNum() + 1; ad++)
                 {
-                    const int T2 = gdriver.getType(ad);
-                    const int I2 = gdriver.getNatom(ad);
+                    const int T2 = gridt->gd->getType(ad);
+                    const int I2 = gridt->gd->getNatom(ad);
                     const int iat2 = ucell.itia2iat(T2, I2);
 
                     if (this->gridt->in_this_processor[iat2])
                     {
                         Atom* atom2 = &ucell.atoms[T2];
-                        dtau = gdriver.getAdjacentTau(ad) - tau1;
+                        dtau = gridt->gd->getAdjacentTau(ad) - tau1;
                         double distance = dtau.norm() * ucell.lat0;
                         double rcut = this->gridt->rcuts[T1] + this->gridt->rcuts[T2];
 
                         if (distance < rcut)
                         {
                             const int start2 = ucell.itiaiw2iwt(T2, I2, 0);
-                            Abfs::Vector3_Order<int> dR(gdriver.getBox(ad).x,
-                                                        gdriver.getBox(ad).y,
-                                                        gdriver.getBox(ad).z);
+                            Abfs::Vector3_Order<int> dR(gridt->gd->getBox(ad).x,
+                                                        gridt->gd->getBox(ad).y,
+                                                        gridt->gd->getBox(ad).z);
 
                             int ixxx = DM_start + this->gridt->find_R2st[iat][nad2];
 
@@ -558,15 +557,15 @@ void Gint_k::cal_dvlocal_R_sparseMatrix(const int& current_spin,
 
     if (GlobalV::NSPIN != 4)
     {
-        distribute_pvdpR_sparseMatrix(current_spin, 0, sparse_threshold, pvdpRx_sparseMatrix, HS_Arrays, pv);
-        distribute_pvdpR_sparseMatrix(current_spin, 1, sparse_threshold, pvdpRy_sparseMatrix, HS_Arrays, pv);
-        distribute_pvdpR_sparseMatrix(current_spin, 2, sparse_threshold, pvdpRz_sparseMatrix, HS_Arrays, pv);
+        pvdpR_smatrix(current_spin, 0, sparse_threshold, pvdpRx_sparseMatrix, HS_Arrays, pv);
+        pvdpR_smatrix(current_spin, 1, sparse_threshold, pvdpRy_sparseMatrix, HS_Arrays, pv);
+        pvdpR_smatrix(current_spin, 2, sparse_threshold, pvdpRz_sparseMatrix, HS_Arrays, pv);
     }
     else
     {
-        distribute_pvdpR_soc_sparseMatrix(0, sparse_threshold, pvdpRx_soc_sparseMatrix, HS_Arrays, pv);
-        distribute_pvdpR_soc_sparseMatrix(1, sparse_threshold, pvdpRy_soc_sparseMatrix, HS_Arrays, pv);
-        distribute_pvdpR_soc_sparseMatrix(2, sparse_threshold, pvdpRz_soc_sparseMatrix, HS_Arrays, pv);
+        pvdpR_soc_smat(0, sparse_threshold, pvdpRx_soc_sparseMatrix, HS_Arrays, pv);
+        pvdpR_soc_smat(1, sparse_threshold, pvdpRy_soc_sparseMatrix, HS_Arrays, pv);
+        pvdpR_soc_smat(2, sparse_threshold, pvdpRz_soc_sparseMatrix, HS_Arrays, pv);
     }
 
     return;

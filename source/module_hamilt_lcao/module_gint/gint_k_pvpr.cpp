@@ -59,7 +59,7 @@ void Gint_k::destroy_pvpR(void)
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
 
 // transfer_pvpR, NSPIN = 1 or 2
-void Gint_k::transfer_pvpR(hamilt::HContainer<double>* hR, const UnitCell* ucell_in, Grid_Driver* gd)
+void Gint_k::transfer_pvpR(hamilt::HContainer<double>* hR, const UnitCell* ucell_in)
 {
     ModuleBase::TITLE("Gint_k", "transfer_pvpR");
     ModuleBase::timer::tick("Gint_k", "transfer_pvpR");
@@ -87,9 +87,9 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<double>* hR, const UnitCell* ucell
 
                 // get the coordinates of adjacent atoms.
                 auto& tau1 = ucell.atoms[T1].tau[I1];
-                // gd.Find_atom(tau1);
+                // gridt->gd.Find_atom(tau1);
                 AdjacentAtomInfo adjs;
-                gd->Find_atom(ucell, tau1, T1, I1, &adjs);
+                gridt->gd->Find_atom(ucell, tau1, T1, I1, &adjs);
                 // search for the adjacent atoms.
                 int nad = 0;
 
@@ -116,7 +116,7 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<double>* hR, const UnitCell* ucell
                                 continue;
                             }
                             // calculate the distance between iat1 and iat2.
-                            // ModuleBase::Vector3<double> dR = gd.getAdjacentTau(ad) - tau1;
+                            // ModuleBase::Vector3<double> dR = gridt->gd.getAdjacentTau(ad) - tau1;
                             auto& dR = adjs.box[ad];
                             // dR.x = adjs.box[ad].x;
                             // dR.y = adjs.box[ad].y;
@@ -184,7 +184,7 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<double>* hR, const UnitCell* ucell
 }
 
 // transfer_pvpR, NSPIN = 4
-void Gint_k::transfer_pvpR(hamilt::HContainer<std::complex<double>>* hR, const UnitCell* ucell_in, Grid_Driver* gd)
+void Gint_k::transfer_pvpR(hamilt::HContainer<std::complex<double>>* hR, const UnitCell* ucell_in)
 {
     ModuleBase::TITLE("Gint_k", "transfer_pvpR");
     ModuleBase::timer::tick("Gint_k", "transfer_pvpR");
@@ -212,9 +212,9 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<std::complex<double>>* hR, const U
 
                 // get the coordinates of adjacent atoms.
                 auto& tau1 = ucell.atoms[T1].tau[I1];
-                // gd.Find_atom(tau1);
+                // gridt->gd.Find_atom(tau1);
                 AdjacentAtomInfo adjs;
-                gd->Find_atom(ucell, tau1, T1, I1, &adjs);
+                gridt->gd->Find_atom(ucell, tau1, T1, I1, &adjs);
                 // search for the adjacent atoms.
                 int nad = 0;
 
@@ -241,7 +241,7 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<std::complex<double>>* hR, const U
                                 continue;
                             }
                             // calculate the distance between iat1 and iat2.
-                            // ModuleBase::Vector3<double> dR = gd.getAdjacentTau(ad) - tau1;
+                            // ModuleBase::Vector3<double> dR = gridt->gd.getAdjacentTau(ad) - tau1;
                             auto& dR = adjs.box[ad];
                             // dR.x = adjs.box[ad].x;
                             // dR.y = adjs.box[ad].y;
