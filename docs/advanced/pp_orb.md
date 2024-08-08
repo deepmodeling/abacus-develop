@@ -8,13 +8,13 @@ The default value of basis_type is pw. The size of pw basis set is controlled by
 
 When choosing lcao basis set, users need to prepare a set of atomic orbitals. Such files may be downloaded from the [official website](http://abacus.ustc.edu.cn/pseudo/list.htm). For more information, also check the `NUMERICAL_ORBITAL` section in the specification of the [STRU file](./input_files/stru.md).
 
-The angular part of orbitals are real spherical harmonics defined (in terms of conventional spherical harmonics) as
+The angular part of orbitals are real spherical harmonics defined (in terms of conventional spherical harmonics in quantum mechanical literature) as
 
 $$Y_{lm} = \left\{\begin{matrix}\sqrt{2}~\text{Im} Y_l^{|m|} & m \lt 0 \\[6pt] Y_l^0 & m = 0 \\[6pt] \sqrt{2}~\text{Re}Y_{l}^{|m|} & m \gt 0\end{matrix}\right. $$
 
 Note that real spherical harmonics adopted by ABACUS differ from some other definition, e.g. [Table of spherical harmonics - Wikipedia](https://en.wikipedia.org/wiki/Table_of_spherical_harmonics#Real_spherical_harmonics), by a factor of $(-1)^m$.
 
-Inside ABACUS, orbitals in LCAO basis are arranged lexicographically in terms of species-position-l-zeta-m **except for the intra-m ordering**. Specifically, orbitals are first ordered by their atomic species in accordance with the `ATOMIC_SPECIES` section of the STRU file. For orbitals of the same species, orbitals belonging to each atom are put together, with their overall order following the `ATOMIC_POSITIONS` section of the STRU file. Orbitals on each atom are further ascendingly ordered by their angular momentum (s,p,d,f,...), followed by an order based on their their zeta number. Finally, m is ordered as 0, 1, -1, 2, 2, $\ldots$, l, -l, which is the only exception of the lexicographic order.
+Inside ABACUS, orbitals in LCAO basis are arranged lexicographically by species-position-l-zeta-m **except for the intra-m ordering**. Specifically, orbitals are first ordered by their atomic species in accordance with the `ATOMIC_SPECIES` section of the STRU file. For orbitals of the same species, orbitals belonging to each atom are put together, with their overall order following the `ATOMIC_POSITIONS` section of the STRU file. Orbitals on each atom are further ascendingly ordered by their angular momentum (s,p,d,f,...), followed by an order based on their their zeta number. Finally, m is ordered as 0, 1, -1, 2, 2, $\ldots$, l, -l, which is the only exception of the lexicographic order.
 
 
 ## Generating atomic orbital bases
