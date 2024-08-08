@@ -4,7 +4,7 @@
 /// 1. starting row and column index (mu, nu)
 /// 2. R distance from atom 1 and atom2 (dR)
 /// 3. number of orbitals for atom1 and atom2 (nw1, nw2)
-namespace gridIntegral
+namespace grid_integral
 {
 
 struct gridIndex

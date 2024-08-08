@@ -6,12 +6,13 @@
 #else
 #include <chrono>
 #endif
-#include <iostream>
-
 #include "module_base/timer.h"
 #include "module_io/json_output/init_info.h"
 #include "module_io/print_info.h"
+#include "module_io/write_istate_info.h"
 #include "module_parameter/parameter.h"
+
+#include <iostream>
 //--------------Temporary----------------
 #include "module_base/global_variable.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
@@ -42,6 +43,7 @@ ESolver_KS<T, Device>::ESolver_KS()
 
     // should not use GlobalV here, mohan 2024-05-12
     scf_thr = PARAM.inp.scf_thr;
+    scf_ene_thr = PARAM.inp.scf_ene_thr;
     drho = 0.0;
 
     // should not use GlobalV here, mohan 2024-05-12
@@ -561,6 +563,12 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
         }
         this->print_iter(iter, drho, dkin, duration, diag_ethr);
 
+        // add a energy threshold for SCF convergence
+        if (this->conv_elec == 0) // only check when density is not converged
+        {
+            this->conv_elec = ( iter != 1 && std::abs(this->pelec->f_en.etot_delta * ModuleBase::Ry_to_eV) < this->scf_ene_thr );
+        }
+
         // 12) Json, need to be moved to somewhere else
 #ifdef __RAPIDJSON
         // add Json of scf mag
@@ -606,6 +614,20 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
 #endif //__RAPIDJSON
     return;
 };
+
+//! Something to do after SCF iterations when SCF is converged or comes to the max iter step.
+template <typename T, typename Device>
+void ESolver_KS<T, Device>::after_scf(const int istep)
+{
+    // 1) call after_scf() of ESolver_FP
+    ESolver_FP::after_scf(istep);
+
+    // 2) write eigenvalues
+    if (istep % PARAM.inp.out_interval == 0)
+    {
+        this->pelec->print_eigenvalue(GlobalV::ofs_running);
+    }
+}
 
 //------------------------------------------------------------------------------
 //! the 8th function of ESolver_KS: print_head

@@ -49,7 +49,7 @@ class Gint {
      * @brief calculate the neighbor atoms of each atom in this processor
      * size of BaseMatrix with be the non-parallel version
      */
-    void initialize_pvpR(const UnitCell& unitcell, Grid_Driver* gd);
+    void initialize_pvpR(const UnitCell& unitcell);
 
     /**
      * @brief transfer DMR (2D para) to DMR (Grid para) in elecstate_lcao.cpp
@@ -71,27 +71,27 @@ class Gint {
     int ny, nplane, startz_current; // from rhopw
 
     // in cal_gint_gpu.cpp
-    void gpu_vlocal_interface(Gint_inout* inout);
+    void gpu_vlocal(Gint_inout* inout);
 
-    void gpu_rho_interface(Gint_inout* inout);
+    void gpu_rho(Gint_inout* inout);
 
-    void gpu_force_interface(Gint_inout* inout);
+    void gpu_force(Gint_inout* inout);
 
     // in cal_gint_cpu.cpp
 
-    void gint_kernel_vlocal(Gint_inout* inout);
+    void cpu_vlocal(Gint_inout* inout);
 
-    void gint_kernel_dvlocal(Gint_inout* inout);
+    void cpu_dvlocal(Gint_inout* inout);
 
-    void gint_kernel_vlocal_meta(Gint_inout* inout);
+    void cpu_vlocal_meta(Gint_inout* inout);
 
-    void gint_kernel_rho(Gint_inout* inout);
+    void cpu_rho(Gint_inout* inout);
 
-    void gint_kernel_tau(Gint_inout* inout);
+    void cpu_tau(Gint_inout* inout);
 
-    void gint_kernel_force(Gint_inout* inout);
+    void cpu_force(Gint_inout* inout);
 
-    void gint_kernel_force_meta(Gint_inout* inout);
+    void cpu_force_meta(Gint_inout* inout);
 
     //------------------------------------------------------
     // in gint_vl.cpp
@@ -99,7 +99,7 @@ class Gint {
     // calculate the matrix elements of Hamiltonian matrix,
     // < phi_0 | Vl + Vh + Vxc | phi_R> or if the Vna is used,
     // < phi_0 | delta_Vh + Vxc | phi_R>.
-    // void gint_kernel_vlocal(const int na_grid,
+    // void cpu_vlocal(const int na_grid,
     //                         const int grid_index,
     //                         const double delta_r,
     //                         double* vldr3,
@@ -109,26 +109,7 @@ class Gint {
     //                         hamilt::HContainer<double>* hR = nullptr);
 
     // calculate < phi_0 | vlocal | dphi_R >
-    void gint_kernel_dvlocal(const int na_grid,
-                             const int grid_index,
-                             const double delta_r,
-                             double* vldr3,
-                             const int LD_pool,
-                             double* pvdpRx_reduced,
-                             double* pvdpRy_reduced,
-                             double* pvdpRz_reduced,
-                             const UnitCell& ucell);
-
-    void gint_kernel_vlocal_meta(const int na_grid,
-                                 const int grid_index,
-                                 const double delta_r,
-                                 double* vldr3,
-                                 double* vkdr3,
-                                 const int LD_pool,
-                                 double* pvpR_reduced,
-                                 const UnitCell& ucell,
-                                 hamilt::HContainer<double>* hR = nullptr);
-
+  
     void cal_meshball_vlocal_gamma(
         const int na_grid, // how many atoms on this (i,j,k) grid
         const int LD_pool,
@@ -163,28 +144,6 @@ class Gint {
     // in gint_fvl.cpp
     //------------------------------------------------------
     // calculate vl contributuion to force & stress via grid integrals
-    void gint_kernel_force(const int na_grid,
-                           const int grid_index,
-                           const double delta_r,
-                           double* vldr3,
-                           const int is,
-                           const bool isforce,
-                           const bool isstress,
-                           ModuleBase::matrix* fvl_dphi,
-                           ModuleBase::matrix* svl_dphi,
-                           const UnitCell& ucell);
-
-    void gint_kernel_force_meta(const int na_grid,
-                                const int grid_index,
-                                const double delta_r,
-                                double* vldr3,
-                                double* vkdr3,
-                                const int is,
-                                const bool isforce,
-                                const bool isstress,
-                                ModuleBase::matrix* fvl_dphi,
-                                ModuleBase::matrix* svl_dphi,
-                                const UnitCell& ucell);
 
     void cal_meshball_force(
         const int grid_index,
@@ -211,13 +170,6 @@ class Gint {
     //------------------------------------------------------
     // calculate the charge density & kinetic energy density (tau) via grid
     // integrals
-    void gint_kernel_rho(const int na_grid,
-                         const int grid_index,
-                         const double delta_r,
-                         int* vindex,
-                         const int LD_pool,
-                         const UnitCell& ucell,
-                         Gint_inout* inout);
 
     void cal_meshball_rho(const int na_grid,
                           int* block_index,
@@ -226,13 +178,6 @@ class Gint {
                           double** psir_DMR,
                           double* rho);
 
-    void gint_kernel_tau(const int na_grid,
-                         const int grid_index,
-                         const double delta_r,
-                         int* vindex,
-                         const int LD_pool,
-                         Gint_inout* inout,
-                         const UnitCell& ucell);
 
     void cal_meshball_tau(const int na_grid,
                           int* block_index,

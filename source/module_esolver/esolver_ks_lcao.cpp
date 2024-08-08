@@ -1013,7 +1013,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int iter)
                 data,
                 is,
                 GlobalV::NSPIN,
-                iter,
+                0,
                 fn,
                 this->pw_rhod->nx,
                 this->pw_rhod->ny,
@@ -1035,7 +1035,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int iter)
                     this->pelec->charge->kin_r_save[is],
                     is,
                     GlobalV::NSPIN,
-                    iter,
+                    0,
                     fn,
                     this->pw_rhod->nx,
                     this->pw_rhod->ny,
@@ -1062,16 +1062,10 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int iter)
 //------------------------------------------------------------------------------
 //! the 14th function of ESolver_KS_LCAO: after_scf
 //! mohan add 2024-05-11
-//! 1) write charge difference into files for charge extrapolation
+//! 1) call after_scf() of ESolver_KS
 //! 2) write density matrix for sparse matrix
-//! 3) write charge density
 //! 4) write density matrix
-//! 5) write Vxc
 //! 6) write Exx matrix
-//! 7) write potential
-//! 8) write convergence
-//! 9) write fermi energy
-//! 10) write eigenvalues
 //! 11) write deepks information
 //! 12) write rpa information
 //! 13) write HR in npz format
@@ -1086,8 +1080,8 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "after_scf");
 
-    // 1) call after_scf() of ESolver_FP
-    ESolver_FP::after_scf(istep);
+    // 1) call after_scf() of ESolver_KS
+    ESolver_KS<TK>::after_scf(istep);
 
     // 2) write density matrix for sparse matrix
     ModuleIO::write_dmr(dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->get_DMR_vector(),
@@ -1097,65 +1091,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
                         GlobalV::out_app_flag,
                         istep);
 
-    // 3) write charge density
-    if (PARAM.inp.out_chg)
-    {
-        for (int is = 0; is < GlobalV::NSPIN; is++)
-        {
-            double* data = nullptr;
-            if (PARAM.inp.dm_to_rho)
-            {
-                data = this->pelec->charge->rho[is];
-            }
-            else
-            {
-                data = this->pelec->charge->rho_save[is];
-            }
-            std::string fn = GlobalV::global_out_dir + "/SPIN" + std::to_string(is + 1) + "_CHG.cube";
-            ModuleIO::write_cube(
-#ifdef __MPI
-                this->pw_big->bz,
-                this->pw_big->nbz,
-                this->pw_rhod->nplane,
-                this->pw_rhod->startz_current,
-#endif
-                data,
-                is,
-                GlobalV::NSPIN,
-                istep,
-                fn,
-                this->pw_rhod->nx,
-                this->pw_rhod->ny,
-                this->pw_rhod->nz,
-                this->pelec->eferm.get_efval(is),
-                &(GlobalC::ucell),
-                3,
-                1);
-            if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
-            {
-                fn = GlobalV::global_out_dir + "/SPIN" + std::to_string(is + 1) + "_TAU.cube";
-                ModuleIO::write_cube(
-#ifdef __MPI
-                    this->pw_big->bz,
-                    this->pw_big->nbz,
-                    this->pw_rhod->nplane,
-                    this->pw_rhod->startz_current,
-#endif
-                    this->pelec->charge->kin_r_save[is],
-                    is,
-                    GlobalV::NSPIN,
-                    istep,
-                    fn,
-                    this->pw_rhod->nx,
-                    this->pw_rhod->ny,
-                    this->pw_rhod->nz,
-                    this->pelec->eferm.get_efval(is),
-                    &(GlobalC::ucell));
-            }
-        }
-    }
-
-    // 4) write density matrix
+    // 3) write density matrix
     if (PARAM.inp.out_dm)
     {
         std::vector<double> efermis(GlobalV::NSPIN == 2 ? 2 : 1);
@@ -1172,7 +1108,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
     }
 
 #ifdef __EXX
-    // 5) write Exx matrix
+    // 4) write Exx matrix
     if (GlobalC::exx_info.info_global.cal_exx) // Peize Lin add if 2022.11.14
     {
         const std::string file_name_exx = GlobalV::global_out_dir + "HexxR"
@@ -1184,61 +1120,6 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
         }
     }
 #endif
-
-    // 6) write potential
-    if (PARAM.inp.out_pot == 1 || PARAM.inp.out_pot == 3)
-    {
-        for (int is = 0; is < GlobalV::NSPIN; is++)
-        {
-            std::string fn = GlobalV::global_out_dir + "/SPIN" + std::to_string(is + 1) + "_POT.cube";
-
-            ModuleIO::write_cube(
-#ifdef __MPI
-                this->pw_big->bz,
-                this->pw_big->nbz,
-                this->pw_rhod->nplane,
-                this->pw_rhod->startz_current,
-#endif
-                this->pelec->pot->get_effective_v(is),
-                is,
-                GlobalV::NSPIN,
-                istep,
-                fn,
-                this->pw_rhod->nx,
-                this->pw_rhod->ny,
-                this->pw_rhod->nz,
-                0.0, // efermi
-                &(GlobalC::ucell),
-                3,  // precision
-                0); // out_fermi
-        }
-    }
-    else if (PARAM.inp.out_pot == 2)
-    {
-        std::string fn = GlobalV::global_out_dir + "/ElecStaticPot.cube";
-        ModuleIO::write_elecstat_pot(
-#ifdef __MPI
-            this->pw_big->bz,
-            this->pw_big->nbz,
-#endif
-            fn,
-            this->pw_rhod,
-            this->pelec->charge,
-            &(GlobalC::ucell),
-            this->pelec->pot->get_fixed_v());
-    }
-
-    // 7) write convergence
-    ModuleIO::output_convergence_after_scf(this->conv_elec, this->pelec->f_en.etot);
-
-    // 8) write fermi energy
-    ModuleIO::output_efermi(this->conv_elec, this->pelec->eferm.ef);
-
-    // 9) write eigenvalues
-    if (GlobalV::OUT_LEVEL != "m")
-    {
-        this->pelec->print_eigenvalue(GlobalV::ofs_running);
-    }
 
     // 10) write deepks information
 #ifdef __DEEPKS

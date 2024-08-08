@@ -1,6 +1,7 @@
+#include "grid_technique.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
-#include "record_adj.h" //mohan add 2012-07-06
+#include "../hamilt_lcaodft/record_adj.h" //mohan add 2012-07-06
 #include "module_base/timer.h"
 #include "module_base/tool_threading.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
@@ -15,7 +16,7 @@ void Grid_Technique::cal_nnrg(Parallel_Orbitals* pv)
 {
 	ModuleBase::TITLE("LCAO_nnr","cal_nnrg");
 
-	this->cal_max_box_index();
+	this->max_box_index();
 
 	this->nnrg = 0;
 
@@ -24,22 +25,22 @@ void Grid_Technique::cal_nnrg(Parallel_Orbitals* pv)
 	nad.clear();
 	this->nnrg_index.resize(0);
 	
-	this->nad = std::vector<int>(GlobalC::ucell.nat, 0);
-	this->nlocdimg = std::vector<int>(GlobalC::ucell.nat, 0);
-	this->nlocstartg =std::vector<int>(GlobalC::ucell.nat, 0);
+	this->nad = std::vector<int>(ucell->nat, 0);
+	this->nlocdimg = std::vector<int>(ucell->nat, 0);
+	this->nlocstartg =std::vector<int>(ucell->nat, 0);
 
 	ModuleBase::Vector3<double> tau1, tau2, dtau;
 	ModuleBase::Vector3<double> dtau1, dtau2, tau0;
-	for (int T1 = 0; T1 < GlobalC::ucell.ntype; ++T1)
+	for (int T1 = 0; T1 < ucell->ntype; ++T1)
 	{
-		Atom* atom1 = &GlobalC::ucell.atoms[T1];
+		Atom* atom1 = &ucell->atoms[T1];
 		for (int I1 = 0; I1 < atom1->na; ++I1)
 		{
 			tau1 = atom1->tau[I1];
 
-			GlobalC::GridD.Find_atom(GlobalC::ucell, tau1, T1, I1);
+			gd->Find_atom(*ucell, tau1, T1, I1);
 
-			const int iat = GlobalC::ucell.itia2iat(T1,I1);
+			const int iat = ucell->itia2iat(T1,I1);
 
 			// for grid integration (on FFT box),
 			// we only need to consider <phi_i | phi_j>,
@@ -56,35 +57,35 @@ void Grid_Technique::cal_nnrg(Parallel_Orbitals* pv)
 				this->nad[iat] = 0;
 
 				int count = 0;
-				for (int ad = 0; ad < GlobalC::GridD.getAdjacentNum()+1; ++ad)
+				for (int ad = 0; ad < gd->getAdjacentNum()+1; ++ad)
 				{
-					const int T2 = GlobalC::GridD.getType(ad);
-					const int I2 = GlobalC::GridD.getNatom(ad);
-					const int iat2 = GlobalC::ucell.itia2iat(T2, I2);
-					Atom* atom2 = &GlobalC::ucell.atoms[T2]; 
+					const int T2 = gd->getType(ad);
+					const int I2 = gd->getNatom(ad);
+					const int iat2 = ucell->itia2iat(T2, I2);
+					Atom* atom2 = &ucell->atoms[T2]; 
 
 					// if the adjacent atom is in this processor.
 					if(this->in_this_processor[iat2])
 					{
-						tau2 = GlobalC::GridD.getAdjacentTau(ad);
-						dtau = GlobalC::GridD.getAdjacentTau(ad) - tau1;
-						double distance = dtau.norm() * GlobalC::ucell.lat0;
-						double rcut = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ORB.Phi[T2].getRcut();
+						tau2 = gd->getAdjacentTau(ad);
+						dtau = gd->getAdjacentTau(ad) - tau1;
+						double distance = dtau.norm() * ucell->lat0;
+						double rcut = rcuts[T1] + rcuts[T2];
 
 
 						//if(distance < rcut)
 						// mohan reset this 2013-07-02 in Princeton
-						// we should make absolutely sure that the distance is smaller than GlobalC::ORB.Phi[it].getRcut
+						// we should make absolutely sure that the distance is smaller than rcut[it]
 						// this should be consistant with LCAO_nnr::cal_nnrg function 
 						// typical example : 7 Bohr cutoff Si orbital in 14 Bohr length of cell.
 						// distance = 7.0000000000000000
-						// GlobalC::ORB.Phi[it].getRcut = 7.0000000000000008
+						// rcut[it] = 7.0000000000000008
 						if(distance < rcut - 1.0e-15)
 						{
 							//storing the indexed for nnrg
 							const int mu = pv->global2local_row(iat);
 							const int nu = pv->global2local_col(iat2);
-							this->nnrg_index.push_back(gridIntegral::gridIndex{this->nnrg, mu, nu, GlobalC::GridD.getBox(ad), atom1->nw, atom2->nw});
+							this->nnrg_index.push_back(grid_integral::gridIndex{this->nnrg, mu, nu, gd->getBox(ad), atom1->nw, atom2->nw});
 							
 							const int nelement = atom1->nw * atom2->nw;
 							this->nnrg += nelement;
@@ -116,10 +117,10 @@ void Grid_Technique::cal_nnrg(Parallel_Orbitals* pv)
 		find_R2_sorted_index.clear();
 		allocate_find_R2 = false;
 	}
-	this->find_R2.resize(GlobalC::ucell.nat);
-	this->find_R2st.resize(GlobalC::ucell.nat);
-	this->find_R2_sorted_index.resize(GlobalC::ucell.nat);
-	for (int iat = 0; iat < GlobalC::ucell.nat; iat++)
+	this->find_R2.resize(ucell->nat);
+	this->find_R2st.resize(ucell->nat);
+	this->find_R2_sorted_index.resize(ucell->nat);
+	for (int iat = 0; iat < ucell->nat; iat++)
 	{
 		this->find_R2_sorted_index[iat].resize(nad[iat]);
 		std::fill(this->find_R2_sorted_index[iat].begin(), this->find_R2_sorted_index[iat].end(), 0);
@@ -131,47 +132,47 @@ void Grid_Technique::cal_nnrg(Parallel_Orbitals* pv)
 
 	allocate_find_R2 = true;
 
-	for (int T1 = 0; T1 < GlobalC::ucell.ntype; T1++)
+	for (int T1 = 0; T1 < ucell->ntype; T1++)
 	{
-		for (int I1 = 0; I1 < GlobalC::ucell.atoms[T1].na; I1++)
+		for (int I1 = 0; I1 < ucell->atoms[T1].na; I1++)
 		{
 //			std::cout << " T1=" << T1 << " I1=" << I1 << std::endl; 
-			tau1 = GlobalC::ucell.atoms[T1].tau[I1];
-			GlobalC::GridD.Find_atom(GlobalC::ucell, tau1, T1, I1);
-			const int iat = GlobalC::ucell.itia2iat(T1,I1);
+			tau1 = ucell->atoms[T1].tau[I1];
+			gd->Find_atom(*ucell, tau1, T1, I1);
+			const int iat = ucell->itia2iat(T1,I1);
 
-//			std::cout << " Number of adjacent = " << GlobalC::GridD.getAdjacentNum()+1 << std::endl;
+//			std::cout << " Number of adjacent = " << gd->getAdjacentNum()+1 << std::endl;
 			
 			int count=0;
-			for (int ad = 0; ad < GlobalC::GridD.getAdjacentNum()+1; ad++)
+			for (int ad = 0; ad < gd->getAdjacentNum()+1; ad++)
 			{
 		//		std::cout << " ad=" << ad << std::endl;
-				const int T2 = GlobalC::GridD.getType(ad);
-				const int I2 = GlobalC::GridD.getNatom(ad);
-				const int iat2 = GlobalC::ucell.itia2iat(T2,I2);
+				const int T2 = gd->getType(ad);
+				const int I2 = gd->getNatom(ad);
+				const int iat2 = ucell->itia2iat(T2,I2);
 
 				// if this atom is in this processor.
 				if(this->in_this_processor[iat])
 				{
 					if(this->in_this_processor[iat2])
 					{
-						dtau = GlobalC::GridD.getAdjacentTau(ad) - tau1;
-                        double distance = dtau.norm() * GlobalC::ucell.lat0;
-                        double rcut = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ORB.Phi[T2].getRcut();
+						dtau = gd->getAdjacentTau(ad) - tau1;
+                        double distance = dtau.norm() * ucell->lat0;
+                        double rcut = rcuts[T1] + rcuts[T2];
 
-						const int b1 = GlobalC::GridD.getBox(ad).x;
-						const int b2 = GlobalC::GridD.getBox(ad).y;
-						const int b3 = GlobalC::GridD.getBox(ad).z;
+						const int b1 = gd->getBox(ad).x;
+						const int b2 = gd->getBox(ad).y;
+						const int b3 = gd->getBox(ad).z;
 					
 						// mohan fix bug 2011-06-26, should be '<', not '<='	
 						//			if(distance < rcut)
 
 						// mohan reset this 2013-07-02 in Princeton
-						// we should make absolutely sure that the distance is smaller than GlobalC::ORB.Phi[it].getRcut
+						// we should make absolutely sure that the distance is smaller than rcut[it]
 						// this should be consistant with LCAO_nnr::cal_nnrg function 
 						// typical example : 7 Bohr cutoff Si orbital in 14 Bohr length of cell.
 						// distance = 7.0000000000000000
-						// GlobalC::ORB.Phi[it].getRcut = 7.0000000000000008
+						// rcut[it] = 7.0000000000000008
 						if(distance < rcut - 1.0e-15)
 						{
 						//	assert( count < nad[iat] );
@@ -189,7 +190,7 @@ void Grid_Technique::cal_nnrg(Parallel_Orbitals* pv)
 							if( count + 1 < nad[iat] )
 							{
 								find_R2st[iat][count+1] = find_R2st[iat][count] 
-								+ GlobalC::ucell.atoms[T1].nw * GlobalC::ucell.atoms[T2].nw; //modified by zhengdy-soc
+								+ ucell->atoms[T1].nw * ucell->atoms[T2].nw; //modified by zhengdy-soc
 							}
 							++count;
 						}
@@ -206,27 +207,27 @@ void Grid_Technique::cal_nnrg(Parallel_Orbitals* pv)
 	return;
 }
 
-void Grid_Technique::cal_max_box_index(void)
+void Grid_Technique::max_box_index(void)
 {
-	ModuleBase::TITLE("LCAO_nnr","cal_max_box_index");
+	ModuleBase::TITLE("LCAO_nnr","max_box_index");
 	this->maxB1 = this->maxB2 = this->maxB3 = -10000;
 	this->minB1 = this->minB2 = this->minB3 = 10000;
-	for (int T1 = 0; T1 < GlobalC::ucell.ntype; T1++)
+	for (int T1 = 0; T1 < ucell->ntype; T1++)
 	{
-		for (int I1 = 0; I1 < GlobalC::ucell.atoms[T1].na; I1++)
+		for (int I1 = 0; I1 < ucell->atoms[T1].na; I1++)
 		{
-			ModuleBase::Vector3<double> tau1 = GlobalC::ucell.atoms[T1].tau[I1];
-			//GlobalC::GridD.Find_atom(tau1);
-			GlobalC::GridD.Find_atom(GlobalC::ucell, tau1, T1, I1);
-			for (int ad = 0; ad < GlobalC::GridD.getAdjacentNum()+1; ad++)
+			ModuleBase::Vector3<double> tau1 = ucell->atoms[T1].tau[I1];
+			//gd->Find_atom(tau1);
+			gd->Find_atom(*ucell, tau1, T1, I1);
+			for (int ad = 0; ad < gd->getAdjacentNum()+1; ad++)
 			{
-				this->maxB1 = std::max( GlobalC::GridD.getBox(ad).x, maxB1 ); 
-				this->maxB2 = std::max( GlobalC::GridD.getBox(ad).y, maxB2 ); 
-				this->maxB3 = std::max( GlobalC::GridD.getBox(ad).z, maxB3 ); 
+				this->maxB1 = std::max( gd->getBox(ad).x, maxB1 ); 
+				this->maxB2 = std::max( gd->getBox(ad).y, maxB2 ); 
+				this->maxB3 = std::max( gd->getBox(ad).z, maxB3 ); 
 
-				this->minB1 = std::min( GlobalC::GridD.getBox(ad).x, minB1 ); 
-				this->minB2 = std::min( GlobalC::GridD.getBox(ad).y, minB2 ); 
-				this->minB3 = std::min( GlobalC::GridD.getBox(ad).z, minB3 ); 
+				this->minB1 = std::min( gd->getBox(ad).x, minB1 ); 
+				this->minB2 = std::min( gd->getBox(ad).y, minB2 ); 
+				this->minB3 = std::min( gd->getBox(ad).z, minB3 ); 
 			}
 		}
 	}
@@ -260,10 +261,10 @@ int Grid_Technique::cal_RindexAtom(const int &u1, const int &u2, const int &u3, 
 	assert(x2>=0);
 	assert(x3>=0);
 
-	return (iat2 + (x3 + x2 * this->nB3 + x1 * this->nB2 * this->nB3) * GlobalC::ucell.nat);
+	return (iat2 + (x3 + x2 * this->nB3 + x1 * this->nB2 * this->nB3) * ucell->nat);
 }
 
-int Grid_Technique::binary_search_find_R2_offset(int val, int iat) const
+int Grid_Technique::bsf_R2_offset(int val, int iat) const
 {
     auto findR2 = this->find_R2[iat];
 	auto findR2_index = this->find_R2_sorted_index[iat];

@@ -88,7 +88,7 @@ void ESolver_OF::before_all_runners(const Input_para& inp, UnitCell& ucell)
 
     // Setup the k points according to symmetry.
     kv.set(ucell.symm, GlobalV::global_kpoint_card, GlobalV::NSPIN, ucell.G, ucell.latvec, GlobalV::ofs_running);
-    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"INIT K-POINTS");
+    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
 
     // print information
     // mohan add 2021-01-30
@@ -231,10 +231,10 @@ void ESolver_OF::runner(int istep, UnitCell& ucell)
         this->energy_current_ = this->cal_energy();
 
         // check if the job is done
-		if (this->check_exit())
-		{
-			break;
-		}
+        if (this->check_exit())
+        {
+            break;
+        }
 
         // find the optimization direction and step lenghth theta according to the potential
         this->optimize(ucell);
@@ -351,7 +351,8 @@ void ESolver_OF::update_potential(UnitCell& ucell)
 
         for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
         {
-            this->pdLdphi_[is][ir] = this->pdEdphi_[is][ir] - 2. * this->pelec->eferm.get_efval(is) * this->pphi_[is][ir];
+            this->pdLdphi_[is][ir]
+                = this->pdEdphi_[is][ir] - 2. * this->pelec->eferm.get_efval(is) * this->pphi_[is][ir];
         }
     }
 
@@ -452,30 +453,33 @@ void ESolver_OF::update_rho()
  */
 bool ESolver_OF::check_exit()
 {
-    this->conv_ = false;
+    this->conv_elec = false;
     bool potConv = false;
     bool potHold = false; // if normdLdphi nearly remains unchanged
     bool energyConv = false;
 
-    if (this->normdLdphi_ < this->of_tolp_) {
+    if (this->normdLdphi_ < this->of_tolp_)
+    {
         potConv = true;
-}
+    }
     if (this->iter_ >= 3 && std::abs(this->normdLdphi_ - this->normdLdphi_last_) < 1e-10
-        && std::abs(this->normdLdphi_ - this->normdLdphi_llast_) < 1e-10) {
+        && std::abs(this->normdLdphi_ - this->normdLdphi_llast_) < 1e-10)
+    {
         potHold = true;
-}
+    }
 
     if (this->iter_ >= 3 && std::abs(this->energy_current_ - this->energy_last_) < this->of_tole_
-        && std::abs(this->energy_current_ - this->energy_llast_) < this->of_tole_) {
+        && std::abs(this->energy_current_ - this->energy_llast_) < this->of_tole_)
+    {
         energyConv = true;
-}
+    }
 
-    this->conv_ = (this->of_conv_ == "energy" && energyConv) || (this->of_conv_ == "potential" && potConv)
-                  || (this->of_conv_ == "both" && potConv && energyConv);
+    this->conv_elec = (this->of_conv_ == "energy" && energyConv) || (this->of_conv_ == "potential" && potConv)
+                      || (this->of_conv_ == "both" && potConv && energyConv);
 
     this->print_info();
 
-    if (this->conv_ || this->iter_ >= this->max_iter_)
+    if (this->conv_elec || this->iter_ >= this->max_iter_)
     {
         return true;
     }
@@ -503,79 +507,8 @@ bool ESolver_OF::check_exit()
  */
 void ESolver_OF::after_opt(const int istep, UnitCell& ucell)
 {
-    ModuleIO::output_convergence_after_scf(this->conv_, this->pelec->f_en.etot);
-
     // 1) call after_scf() of ESolver_FP
     ESolver_FP::after_scf(istep);
-
-    for (int is = 0; is < GlobalV::NSPIN; is++)
-    {
-        if (PARAM.inp.out_chg == 1)
-        {
-            std::stringstream ssc;
-            ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG.cube";
-            ModuleIO::write_cube(
-#ifdef __MPI
-                this->pw_big->bz,
-                this->pw_big->nbz,
-                this->pw_rhod->nplane,
-                this->pw_rhod->startz_current,
-#endif
-                this->pelec->charge->rho[is],
-                is,
-                GlobalV::NSPIN,
-                istep,
-                ssc.str(),
-                this->pw_rhod->nx,
-                this->pw_rhod->ny,
-                this->pw_rhod->nz,
-                this->pelec->eferm.get_efval(is),
-                &(ucell),
-                3,
-                1);
-        }
-
-        if (PARAM.inp.out_pot == 1 || PARAM.inp.out_pot == 3) // output the effective potential, sunliang 2023-03-16
-        {
-            std::string fn = GlobalV::global_out_dir + "/SPIN" + std::to_string(is + 1) + "_POT.cube";
-
-            ModuleIO::write_cube(
-#ifdef __MPI
-                this->pw_big->bz,
-                this->pw_big->nbz,
-                this->pw_rhod->nplane,
-                this->pw_rhod->startz_current,
-#endif
-                this->pelec->pot->get_effective_v(is),
-                is,
-                GlobalV::NSPIN,
-                istep,
-                fn,
-                this->pw_rhod->nx,
-                this->pw_rhod->ny,
-                this->pw_rhod->nz,
-                0.0, // efermi
-                &(ucell),
-                3,  // precision
-                0); // out_fermi
-        }
-    }
-    if (PARAM.inp.out_pot == 2) // output the static electronic potential, sunliang 2023-08-11
-    {
-        int precision = 3;
-        std::stringstream ssp;
-        ssp << GlobalV::global_out_dir << "/ElecStaticPot.cube";
-        ModuleIO::write_elecstat_pot(
-#ifdef __MPI
-            this->pw_big->bz,
-            this->pw_big->nbz,
-#endif
-            ssp.str(),
-            this->pw_rhod,
-            this->pelec->charge,
-            &(ucell),
-            this->pelec->pot->get_fixed_v());
-    }
 }
 
 /**

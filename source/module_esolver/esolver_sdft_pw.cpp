@@ -139,43 +139,13 @@ void ESolver_SDFT_PW::before_scf(const int istep)
 
 void ESolver_SDFT_PW::iter_finish(int iter)
 {
-    // this->pelec->print_eigenvalue(GlobalV::ofs_running);
     this->pelec->cal_energies(2);
 }
 
 void ESolver_SDFT_PW::after_scf(const int istep)
 {
-    // 1) call after_scf() of ESolver_FP
-    ESolver_FP::after_scf(istep);
-
-    if (PARAM.inp.out_chg > 0)
-    {
-        for (int is = 0; is < GlobalV::NSPIN; is++)
-        {
-            std::stringstream ssc;
-            ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG.cube";
-            const double ef_tmp = this->pelec->eferm.get_efval(is);
-            ModuleIO::write_cube(
-#ifdef __MPI
-                pw_big->bz,
-                pw_big->nbz,
-                pw_rhod->nplane,
-                pw_rhod->startz_current,
-#endif
-                pelec->charge->rho_save[is],
-                is,
-                GlobalV::NSPIN,
-                0,
-                ssc.str(),
-                pw_rhod->nx,
-                pw_rhod->ny,
-                pw_rhod->nz,
-                ef_tmp,
-                &(GlobalC::ucell));
-        }
-    }
-
-    ModuleIO::output_convergence_after_scf(this->conv_elec, this->pelec->f_en.etot);
+    // 1) call after_scf() of ESolver_KS_PW
+    ESolver_KS_PW<std::complex<double>>::after_scf(istep);
 }
 
 void ESolver_SDFT_PW::hamilt2density(int istep, int iter, double ethr)

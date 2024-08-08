@@ -23,10 +23,6 @@ int Grid_MeshK::cal_Rindex(const int &u1, const int &u2, const int &u3)const
 		ModuleBase::WARNING_QUIT("Grid_MeshK::cal_Rindex","x1<0 || x2<0 || x3<0 !");
 	}
 
-	assert(x1>=0);
-	assert(x2>=0);
-	assert(x3>=0);
-
 	return (x3 + x2 * this->nu3 + x1 * this->nu2 * this->nu3);
 }
 
@@ -65,9 +61,6 @@ void Grid_MeshK::cal_extended_cell(const int &dxe, const int &dye, const int &dz
 	this->minu2 = (-dye+1) / nby - 1; 
 	this->minu3 = (-dze+1) / nbz - 1; 
 
-	if(GlobalV::test_gridt)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"MaxUnitcell",maxu1,maxu2,maxu3);
-	if(GlobalV::test_gridt)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"MinUnitcell",minu1,minu2,minu3);
-
 	//--------------------------------------
 	// number of unitcell in each direction.
 	//--------------------------------------
@@ -77,10 +70,6 @@ void Grid_MeshK::cal_extended_cell(const int &dxe, const int &dye, const int &dz
 	this->nutot = nu1 * nu2 * nu3;
 
 	init_ucell_para();
-	if(GlobalV::test_gridt)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"UnitCellNumber",nu1,nu2,nu3);
-	//xiaohui add 'GlobalV::OUT_LEVEL' line, 2015-09-16
-	if(GlobalV::OUT_LEVEL != "m") ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"UnitCellTotal",nutot);
-
 
     this->ucell_index2x = std::vector<int>(nutot, 0);
     this->ucell_index2y = std::vector<int>(nutot, 0);

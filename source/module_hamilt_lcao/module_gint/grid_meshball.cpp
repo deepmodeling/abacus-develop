@@ -9,7 +9,7 @@ Grid_MeshBall::~Grid_MeshBall()
 {
 }
 
-void Grid_MeshBall::init_meshball(void)
+void Grid_MeshBall::init_meshball()
 {	
 	ModuleBase::TITLE("Grid_MeshBall","init_meshball");
 
@@ -53,7 +53,7 @@ void Grid_MeshBall::init_meshball(void)
 				{
 					pos[ip] = i*bigcell_vec1[ip]+j*bigcell_vec2[ip]+k*bigcell_vec3[ip];
 				}
-				r2 = this->deal_with_atom_spillage( pos );
+				r2 = this->atom_spillage( pos );
 				//r2 = pos[0]*pos[0]+pos[1]*pos[1]+pos[2]*pos[2];
 	
 				// calculate the distance.
@@ -64,13 +64,9 @@ void Grid_MeshBall::init_meshball(void)
 			}
 		}
 	}
-	if(GlobalV::test_gridt)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "how many cells in meshball",this->meshball_ncells);
-
 	// prepare for the second calculation.
 	this->meshball_positions = std::vector<std::vector<double>>(meshball_ncells, std::vector<double>(3, 0.0));
-	ModuleBase::Memory::record("meshball_pos", sizeof(double) * meshball_ncells*3);
     this->index_ball = std::vector<int>(meshball_ncells);
-	ModuleBase::Memory::record("index_ball", sizeof(int) * meshball_ncells);
 
 	// second time.
 	int count = 0;
@@ -86,7 +82,7 @@ void Grid_MeshBall::init_meshball(void)
 				{
 					pos[ip] = i*bigcell_vec1[ip]+j*bigcell_vec2[ip]+k*bigcell_vec3[ip];
 				}
-				r2 = this->deal_with_atom_spillage( pos );
+				r2 = this->atom_spillage( pos );
 
 				// calculate the distance.
 				if( r2 < rcut2 )
@@ -108,7 +104,7 @@ void Grid_MeshBall::init_meshball(void)
 	return;
 }
 
-double Grid_MeshBall::deal_with_atom_spillage(const double *pos)
+double Grid_MeshBall::atom_spillage(const double *pos)
 {
 	double dx;
 	double r2 = 100000;

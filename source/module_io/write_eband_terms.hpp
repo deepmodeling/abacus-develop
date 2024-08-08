@@ -118,7 +118,7 @@ namespace ModuleIO
             }
             write_orb_energy(kv, nspin0, nbands, e_orb_pp_nonlocal, "vpp_nonlocal", "");
             // ======test=======
-            std::cout << "e_pp_nonlocal:" << all_k_all_band_energy(e_orb_pp_nonlocal) << std::endl;
+            // std::cout << "e_pp_nonlocal:" << all_k_all_band_energy(e_orb_pp_nonlocal) << std::endl;
             // ======test=======
         }
 

@@ -196,6 +196,7 @@ void ESolver_KS_PW<T, Device>::nscf() {
             this->pw_big->nbz,
 #endif
             fn,
+            0, // istep
             this->pw_rhod,
             this->pelec->charge,
             &(GlobalC::ucell),

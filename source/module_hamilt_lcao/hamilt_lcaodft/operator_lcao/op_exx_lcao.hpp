@@ -34,7 +34,8 @@ namespace hamilt
                 }
             }
         }
-        if (need_allocate) hR->allocate(nullptr, true);
+        if (need_allocate) { hR->allocate(nullptr, true);
+}
     }
     /// allocate according to BvK cells, used in scf
     template <typename TR>
@@ -64,7 +65,8 @@ namespace hamilt
                 }
             }
         }
-        if (need_allocate) hR->allocate(nullptr, true);
+        if (need_allocate) { hR->allocate(nullptr, true);
+}
     }
 
 template <typename TK, typename TR>
@@ -88,7 +90,7 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
     this->cal_type = calculation_type::lcao_exx;
     const Parallel_Orbitals* const pv = hR_in->get_paraV();
 
-    if (GlobalV::CALCULATION == "nscf")
+    if (GlobalV::CALCULATION == "nscf" && GlobalC::exx_info.info_global.cal_exx)
     {    // if nscf, read HexxR first and reallocate hR according to the read-in HexxR
         const std::string file_name_exx = GlobalV::global_out_dir + "HexxR" + std::to_string(GlobalV::MY_RANK);
         if (GlobalC::exx_info.info_ri.real_number)
@@ -148,7 +150,8 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
                         this->restart = GlobalC::restart.load_disk(
                             "Hexx", ik,
                             pv->get_local_size(), this->Hexxd_k_load[ik].data(), false);
-                        if (!this->restart) break;
+                        if (!this->restart) { break;
+}
                     }
                 }
                 else
@@ -160,7 +163,8 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
                         this->restart = GlobalC::restart.load_disk(
                             "Hexx", ik,
                             pv->get_local_size(), this->Hexxc_k_load[ik].data(), false);
-                        if (!this->restart) break;
+                        if (!this->restart) { break;
+}
                     }
                 }
             }
@@ -176,9 +180,10 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
                 }
             }
 
-            if (!this->restart)
+            if (!this->restart) {
                 std::cout << "WARNING: Hexx not found, restart from the non-exx loop." << std::endl
                 << "If the loaded charge density is EXX-solved, this may lead to poor convergence." << std::endl;
+}
             GlobalC::restart.info_load.load_H_finish = this->restart;
         }
     }
@@ -189,11 +194,12 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHR()
 {
     ModuleBase::TITLE("OperatorEXX", "contributeHR");
     // Peize Lin add 2016-12-03
-    if (GlobalV::CALCULATION != "nscf" && this->two_level_step != nullptr && *this->two_level_step == 0 && !this->restart) return;  //in the non-exx loop, do nothing 
+    if (GlobalV::CALCULATION != "nscf" && this->two_level_step != nullptr && *this->two_level_step == 0 && !this->restart) { return;  //in the non-exx loop, do nothing 
+}
     if (XC_Functional::get_func_type() == 4 || XC_Functional::get_func_type() == 5)
     {
         // add H(R) normally
-        if (GlobalC::exx_info.info_ri.real_number)
+        if (GlobalC::exx_info.info_ri.real_number) {
             RI_2D_Comm::add_HexxR(
                 this->current_spin,
                 GlobalC::exx_info.info_global.hybrid_alpha,
@@ -202,7 +208,7 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHR()
                 GlobalV::NPOL,
                 *this->hR,
                 this->use_cell_nearest ? &this->cell_nearest : nullptr);
-        else
+        } else {
             RI_2D_Comm::add_HexxR(
                 this->current_spin,
                 GlobalC::exx_info.info_global.hybrid_alpha,
@@ -211,8 +217,10 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHR()
                 GlobalV::NPOL,
                 *this->hR,
                 this->use_cell_nearest ? &this->cell_nearest : nullptr);
+}
     }
-    if (GlobalV::NSPIN == 2) this->current_spin = 1 - this->current_spin;
+    if (GlobalV::NSPIN == 2) { this->current_spin = 1 - this->current_spin;
+}
 }
 
 template<typename TK, typename TR>
@@ -220,7 +228,8 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHk(int ik)
 {
     ModuleBase::TITLE("OperatorEXX", "constributeHR");
     // Peize Lin add 2016-12-03
-    if (GlobalV::CALCULATION != "nscf" && this->two_level_step != nullptr && *this->two_level_step == 0 && !this->restart) return;  //in the non-exx loop, do nothing 
+    if (GlobalV::CALCULATION != "nscf" && this->two_level_step != nullptr && *this->two_level_step == 0 && !this->restart) { return;  //in the non-exx loop, do nothing 
+}
     if (XC_Functional::get_func_type() == 4 || XC_Functional::get_func_type() == 5)
     {
         if (this->restart && this->two_level_step != nullptr)
@@ -246,7 +255,7 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHk(int ik)
         }
         // cal H(k) from H(R) normally
 
-        if (GlobalC::exx_info.info_ri.real_number)
+        if (GlobalC::exx_info.info_ri.real_number) {
             RI_2D_Comm::add_Hexx(
                 this->kv,
                 ik,
@@ -254,7 +263,7 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHk(int ik)
                 *this->Hexxd,
                 *this->hR->get_paraV(),
                 this->hsk->get_hk());
-        else
+        } else {
             RI_2D_Comm::add_Hexx(
                 this->kv,
                 ik,
@@ -262,6 +271,7 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHk(int ik)
                 *this->Hexxc,
                 *this->hR->get_paraV(),
                 this->hsk->get_hk());
+}
     }
 }
 

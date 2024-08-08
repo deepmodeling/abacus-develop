@@ -244,7 +244,7 @@ void ESolver_KS_PW<T, Device>::before_scf(const int istep)
                 this->pelec->charge->rho[is],
                 is,
                 GlobalV::NSPIN,
-                0,
+                istep,
                 ss.str(),
                 this->pw_rhod->nx,
                 this->pw_rhod->ny,
@@ -271,7 +271,7 @@ void ESolver_KS_PW<T, Device>::before_scf(const int istep)
                 this->pelec->pot->get_effective_v(is),
                 is,
                 GlobalV::NSPIN,
-                0, // iter
+                istep,
                 ss.str(),
                 this->pw_rhod->nx,
                 this->pw_rhod->ny,
@@ -502,7 +502,7 @@ void ESolver_KS_PW<T, Device>::iter_finish(const int iter)
                     data,
                     is,
                     GlobalV::NSPIN,
-                    iter,
+                    0,
                     fn,
                     this->pw_rhod->nx,
                     this->pw_rhod->ny,
@@ -524,7 +524,7 @@ void ESolver_KS_PW<T, Device>::iter_finish(const int iter)
                         this->pelec->charge->kin_r_save[is],
                         is,
                         GlobalV::NSPIN,
-                        iter,
+                        0,
                         fn,
                         this->pw_rhod->nx,
                         this->pw_rhod->ny,
@@ -551,122 +551,15 @@ void ESolver_KS_PW<T, Device>::iter_finish(const int iter)
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::after_scf(const int istep)
 {
-    // 1) call after_scf() of ESolver_FP
-    ESolver_FP::after_scf(istep);
+    // 1) call after_scf() of ESolver_KS
+    ESolver_KS<T, Device>::after_scf(istep);
 
-    if (PARAM.inp.out_pot == 1 || PARAM.inp.out_pot == 3)
-    {
-        for (int is = 0; is < GlobalV::NSPIN; is++)
-        {
-            std::string fn = GlobalV::global_out_dir + "/SPIN" + std::to_string(is + 1) + "_POT.cube";
-
-            ModuleIO::write_cube(
-#ifdef __MPI
-                this->pw_big->bz,
-                this->pw_big->nbz,
-                this->pw_rhod->nplane,
-                this->pw_rhod->startz_current,
-#endif
-                this->pelec->pot->get_effective_v(is),
-                is,
-                GlobalV::NSPIN,
-                istep,
-                fn,
-                this->pw_rhod->nx,
-                this->pw_rhod->ny,
-                this->pw_rhod->nz,
-                0.0, // efermi
-                &(GlobalC::ucell),
-                3,  // precision
-                0); // out_fermi
-        }
-    }
-    else if (PARAM.inp.out_pot == 2)
-    {
-        std::string fn = GlobalV::global_out_dir + "/ElecStaticPot.cube";
-        ModuleIO::write_elecstat_pot(
-#ifdef __MPI
-            this->pw_big->bz,
-            this->pw_big->nbz,
-#endif
-            fn,
-            this->pw_rhod,
-            this->pelec->charge,
-            &(GlobalC::ucell),
-            this->pelec->pot->get_fixed_v());
-    }
-
-    if (PARAM.inp.out_chg)
-    {
-        for (int is = 0; is < GlobalV::NSPIN; is++)
-        {
-            double* data = nullptr;
-            if (PARAM.inp.dm_to_rho)
-            {
-                data = this->pelec->charge->rho[is];
-            }
-            else
-            {
-                data = this->pelec->charge->rho_save[is];
-            }
-            std::string fn = GlobalV::global_out_dir + "/SPIN" + std::to_string(is + 1) + "_CHG.cube";
-            ModuleIO::write_cube(
-#ifdef __MPI
-                this->pw_big->bz,
-                this->pw_big->nbz,
-                this->pw_rhod->nplane,
-                this->pw_rhod->startz_current,
-#endif
-                data,
-                is,
-                GlobalV::NSPIN,
-                istep,
-                fn,
-                this->pw_rhod->nx,
-                this->pw_rhod->ny,
-                this->pw_rhod->nz,
-                this->pelec->eferm.get_efval(is),
-                &(GlobalC::ucell),
-                3,
-                1);
-            if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
-            {
-                fn = GlobalV::global_out_dir + "/SPIN" + std::to_string(is + 1) + "_TAU.cube";
-                ModuleIO::write_cube(
-#ifdef __MPI
-                    this->pw_big->bz,
-                    this->pw_big->nbz,
-                    this->pw_rhod->nplane,
-                    this->pw_rhod->startz_current,
-#endif
-                    this->pelec->charge->kin_r_save[is],
-                    is,
-                    GlobalV::NSPIN,
-                    istep,
-                    fn,
-                    this->pw_rhod->nx,
-                    this->pw_rhod->ny,
-                    this->pw_rhod->nz,
-                    this->pelec->eferm.get_efval(is),
-                    &(GlobalC::ucell));
-            }
-        }
-    }
-
+    // 2) output wavefunctions
     if (this->wf.out_wfc_pw == 1 || this->wf.out_wfc_pw == 2)
     {
         std::stringstream ssw;
         ssw << GlobalV::global_out_dir << "WAVEFUNC";
         ModuleIO::write_wfc_pw(ssw.str(), this->psi[0], this->kv, this->pw_wfc);
-    }
-
-    ModuleIO::output_convergence_after_scf(this->conv_elec, this->pelec->f_en.etot);
-
-    ModuleIO::output_efermi(this->conv_elec, this->pelec->eferm.ef);
-
-    if (GlobalV::OUT_LEVEL != "m")
-    {
-        this->pelec->print_eigenvalue(GlobalV::ofs_running);
     }
 
     if (this->device == base_device::GpuDevice)

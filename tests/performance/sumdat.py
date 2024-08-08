@@ -102,7 +102,7 @@ for case in allcase:
                         key = lines[j][23:44]
                     elif lines[j][23:43] == 'cal_fvnl_dbeta_k_new': 
                         key = lines[j][23:43]
-                    elif lines[j][23:43] == 'grid_expansion_index': 
+                    elif lines[j][23:43] == 'cal_grid_index': 
                         key = lines[j][23:43]
                     elif lines[j][23:46] == 'build_Nonlocal_beta_new': 
                         key = lines[j][23:46]
