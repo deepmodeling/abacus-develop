@@ -37,9 +37,12 @@ void cal_ddpsir_ylm(
     // array to store spherical harmonics and its derivatives
     // the first dimension equals 36 because the maximum nwl is 5.
     std::array<double, 36> rly;
-    ModuleBase::Array_Pool<double> grly(36, 3);
     ModuleBase::Array_Pool<std::array<double,3>> dpsi(gt.nwmax,6);
-    std::array<std::array<double,6>,3> displ={{0.0}};
+    // ModuleBase::GlobalFunc::ZEROS(dpsi.get_ptr_1D(),
+    ModuleBase::Array_Pool<double> grly(36, 3);
+    ModuleBase::GlobalFunc::ZEROS(grly.get_ptr_1D(), 108);
+    ModuleBase::Array_Pool<double> displ(6, 3);
+    ModuleBase::GlobalFunc::ZEROS(displ.get_ptr_1D(), 18);
     displ[0][0] = 0.0001; 
     displ[1][0] = -0.0001; // in x direction
     displ[2][1] = 0.0001; 
@@ -89,7 +92,7 @@ void cal_ddpsir_ylm(
                         cal_grid_atom_distance(distance1,
                                                 dr1,
                                                 dr,
-                                                displ[i].data());
+                                                displ.get_ptr_2D()[i]);
 
                         ModuleBase::Ylm::grad_rl_sph_harm(atom->nwl, 
                                                           dr1[0],
