@@ -212,7 +212,7 @@ namespace ModuleESolver
     }
 
     template <typename T>
-    void ESolver_KS_LIP<T>::iter_finish(const int iter)
+    void ESolver_KS_LIP<T>::iter_finish(int& iter)
     {
         ESolver_KS_PW<T>::iter_finish(iter);
 

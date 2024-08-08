@@ -918,7 +918,7 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
 //! 5) cal_MW? (why put it here?)
 //------------------------------------------------------------------------------
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::iter_finish(int iter)
+void ESolver_KS_LCAO<TK, TR>::iter_finish(int& iter)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "iter_finish");
 

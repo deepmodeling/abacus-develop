@@ -28,7 +28,7 @@ namespace ModuleESolver
 
     protected:
       virtual void iter_init(const int istep, const int iter) override;
-      virtual void iter_finish(const int iter) override;
+      virtual void iter_finish(int& iter) override;
       virtual void allocate_hsolver() override;
       virtual void deallocate_hsolver() override;
       virtual void allocate_hamilt() override;

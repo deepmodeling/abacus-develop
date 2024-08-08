@@ -606,7 +606,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
 };
 
 template <typename T, typename Device>
-void ESolver_KS<T, Device>::iter_finish(const int iter)
+void ESolver_KS<T, Device>::iter_finish(int& iter)
 {
     // 1 means Harris-Foulkes functional
     // 2 means Kohn-Sham functional

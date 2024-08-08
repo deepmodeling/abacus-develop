@@ -137,7 +137,7 @@ void ESolver_SDFT_PW::before_scf(const int istep)
     }
 }
 
-void ESolver_SDFT_PW::iter_finish(int iter)
+void ESolver_SDFT_PW::iter_finish(int& iter)
 {
     // call iter_finish() of ESolver_KS
     ESolver_KS<std::complex<double>>::iter_finish(iter);

@@ -453,7 +453,7 @@ void ESolver_KS_PW<T, Device>::update_pot(const int istep, const int iter)
 }
 
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::iter_finish(const int iter)
+void ESolver_KS_PW<T, Device>::iter_finish(int& iter)
 {
     // call iter_finish() of ESolver_KS
     ESolver_KS<T, Device>::iter_finish(iter);
