@@ -55,20 +55,9 @@ class HSolver
     {
         return 0.0;
     }
-
-    // reset diagethr according to drho and hsolver_error
-    virtual Real reset_diagethr(std::ofstream& ofs_running, const Real hsover_error, const Real drho, Real diag_ethr_in)
-    {
-        return 0.0;
-    }
-
-    // calculate hsolver_error (for sdft, lcao and lcao-in-pw, we suppose the error is zero)
-    virtual Real cal_hsolerror(const Real diag_ethr_in)
-    {
-        return 0.0;
-    };
 };
 
+// reset diagethr according to drho and hsolver_error
 double reset_diag_ethr(std::ofstream& ofs_running,
                        const double hsover_error,
                        const double drho,
@@ -76,6 +65,7 @@ double reset_diag_ethr(std::ofstream& ofs_running,
                        std::string basis_type,
                        std::string esolver_type);
 
+// calculate hsolver_error (for sdft, lcao and lcao-in-pw, we suppose the error is zero)
 double cal_hsolve_error(const double diag_ethr_in, std::string basis_type, std::string esolver_type);
 
 } // namespace hsolver

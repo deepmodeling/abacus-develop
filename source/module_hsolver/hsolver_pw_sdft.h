@@ -33,11 +33,6 @@ class HSolverPW_SDFT : public HSolverPW<std::complex<double>>
 
     virtual double set_diagethr(double diag_ethr_in, const int istep, const int iter, const double drho) override;
 
-    virtual double cal_hsolerror(const double diag_ethr_in) override
-    {
-        return 0.0;
-    }
-
     Stochastic_Iter stoiter;
 };
 } // namespace hsolver
