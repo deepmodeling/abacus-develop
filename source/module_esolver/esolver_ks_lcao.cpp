@@ -709,7 +709,7 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2density(int istep, int iter, double ethr)
 
         // this->phsol->solve(this->p_hamilt, this->psi[0], this->pelec, GlobalV::KS_SOLVER);
         hsolver::HSolverLCAO<TK> hsolver_lcao_obj(&(this->pv), GlobalV::KS_SOLVER);
-        hsolver_lcao_obj.solve(this->p_hamilt, this->psi[0], this->pelec, GlobalV::KS_SOLVER);
+        hsolver_lcao_obj.solve(this->p_hamilt, this->psi[0], this->pelec, GlobalV::KS_SOLVER, false);
 
 
         if (PARAM.inp.out_bandgap)
