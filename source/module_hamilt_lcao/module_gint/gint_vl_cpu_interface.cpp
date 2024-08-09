@@ -241,6 +241,15 @@ void Gint::gint_kernel_vlocal_meta(Gint_inout* inout) {
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
 
+    if (!GlobalV::GAMMA_ONLY_LOCAL) {
+        if (!pvpR_alloc_flag) {
+            ModuleBase::WARNING_QUIT("Gint_interface::cal_gint",
+                                     "pvpR has not been allocated yet!");
+        } else {
+            ModuleBase::GlobalFunc::ZEROS(this->pvpR_reduced[inout->ispin], nnrg);
+        }
+    }
+    
 #pragma omp parallel
 {
     // define HContainer here to reference.
