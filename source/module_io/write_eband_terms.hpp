@@ -39,6 +39,7 @@ namespace ModuleIO
         set_para2d_MO(*pv, nbands, p2d);
         typename TGint<TK>::type* gint = nullptr;
         set_gint_pointer<TK>(gint_gamma, gint_k, gint);
+        auto if_gamma_fix = [](hamilt::HContainer<TR>& hR) {if (std::is_same<TK, double>::value) { hR.fix_gamma(); }};
         auto all_band_energy = [&wg](const int ik, const std::vector<double>& e_orb)->double
             {
                 double e = 0;
@@ -57,7 +58,7 @@ namespace ModuleIO
         {
             hamilt::HS_Matrix_K<TK> kinetic_k_ao(pv, 1);
             hamilt::HContainer<TR> kinetic_R_ao(pv);
-            if (std::is_same<TK, double>::value) { kinetic_R_ao.fix_gamma(); }
+            if_gamma_fix(kinetic_R_ao);
             hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>> kinetic_op(&kinetic_k_ao, kv.kvec_d,
                 &kinetic_R_ao, &ucell, &gd, two_center_bundle.kinetic_orb.get());
             kinetic_op.contributeHR();
@@ -83,6 +84,7 @@ namespace ModuleIO
             pot_local.update_from_charge(&chg, &ucell);
             hamilt::HS_Matrix_K<TK> v_pp_local_k_ao(pv, 1);
             hamilt::HContainer<TR> v_pp_local_R_ao(pv);
+            if_gamma_fix(v_pp_local_R_ao);
             std::vector<std::vector<double>> e_orb_pp_local;
             hamilt::Veff<hamilt::OperatorLCAO<TK, TR>> v_pp_local_op(gint, &v_pp_local_k_ao, kv.kvec_d, &pot_local, &v_pp_local_R_ao, &ucell, &gd);
             v_pp_local_op.contributeHR();
@@ -104,7 +106,7 @@ namespace ModuleIO
         {
             hamilt::HS_Matrix_K<TK> v_pp_nonlocal_k_ao(pv, 1);
             hamilt::HContainer<TR> v_pp_nonlocal_R_ao(pv);
-            if (std::is_same<TK, double>::value) { v_pp_nonlocal_R_ao.fix_gamma(); }
+            if_gamma_fix(v_pp_nonlocal_R_ao);
             std::vector<std::vector<double>> e_orb_pp_nonlocal;
             hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>> v_pp_nonlocal_op(&v_pp_nonlocal_k_ao, kv.kvec_d,
                 &v_pp_nonlocal_R_ao, &ucell, &gd, two_center_bundle.overlap_orb_beta.get());
@@ -129,7 +131,11 @@ namespace ModuleIO
             pot_hartree.pot_register({ "hartree" });
             pot_hartree.update_from_charge(&chg, &ucell);
             std::vector<hamilt::HContainer<TR>> v_hartree_R_ao(nspin0, hamilt::HContainer<TR>(pv));
-            for (int is = 0; is < nspin0; ++is) { v_hartree_R_ao[is].set_zero(); }
+            for (int is = 0; is < nspin0; ++is)
+            {
+                v_hartree_R_ao[is].set_zero();
+                if_gamma_fix(v_hartree_R_ao[is]);
+            }
             hamilt::HS_Matrix_K<TK> v_hartree_k_ao(pv, 1);
             std::vector<hamilt::Veff<hamilt::OperatorLCAO<TK, TR>>*> v_hartree_op(nspin0);
             for (int is = 0; is < nspin0; ++is)
