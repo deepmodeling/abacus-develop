@@ -45,7 +45,7 @@ class HSolverPW : public HSolver<T, Device>
                const bool need_subspace_in,
                const int diag_iter_max_in,
                const double iter_diag_thr_in,
-               const bool skip_charge) override;
+               const bool skip_charge);
 
     virtual Real cal_hsolerror(const Real diag_ethr_in) override;
 
