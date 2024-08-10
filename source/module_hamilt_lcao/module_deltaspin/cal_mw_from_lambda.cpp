@@ -14,7 +14,7 @@ void SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>::cal_mw_from_l
     // this->phsol->solve(this->p_hamilt, this->psi[0], this->pelec, this->KS_SOLVER, true);
 
     // diagonalization without update charge
-    hsolver::HSolverLCAO<std::complex<double>> hsolver_lcao_obj(&(this->pv), this->KS_SOLVER);
+    hsolver::HSolverLCAO<std::complex<double>> hsolver_lcao_obj(this->ParaV, this->KS_SOLVER);
     hsolver_lcao_obj.solve(this->p_hamilt, this->psi[0], this->pelec, this->KS_SOLVER, true);
 
     elecstate::ElecStateLCAO<std::complex<double>>* pelec_lcao
