@@ -11,10 +11,11 @@ class HSolverPW_SDFT : public HSolverPW<std::complex<double>>
                    ModulePW::PW_Basis_K* wfc_basis_in,
                    wavefunc* pwf_in,
                    Stochastic_WF& stowf,
-                   const int method_sto)
+                   const int method_sto,
+                   StoChe<double>& stoche)
         : HSolverPW(wfc_basis_in, pwf_in, false)
     {
-        stoiter.init(method_sto, pkv, wfc_basis_in, stowf);
+        stoiter.init(method_sto, pkv, wfc_basis_in, stowf, stoche);
     }
 
     virtual void solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
