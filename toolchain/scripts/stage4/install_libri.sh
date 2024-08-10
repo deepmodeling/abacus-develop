@@ -11,7 +11,7 @@
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 
-libri_ver="0.1.1"
+libri_ver="0.1.1" # libri 0.2 is not ready ？
 libri_sha256="51deb08aa373e54d2c123b57bfd4b3507accac0d496a94b766eaeadccd9e4bd0"
 source "${SCRIPT_DIR}"/common_vars.sh
 source "${SCRIPT_DIR}"/tool_kit.sh

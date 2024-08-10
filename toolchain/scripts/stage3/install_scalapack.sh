@@ -52,13 +52,16 @@ case "$with_scalapack" in
       if ("${FC}" --version | grep -q 'GNU'); then
         flags=$(allowed_gfortran_flags "-fallow-argument-mismatch")
       fi
+      # modified by @YuugataShinonome for GCC 14
       FFLAGS=$flags cmake -DCMAKE_FIND_ROOT_PATH="$ROOTDIR" \
         -DCMAKE_INSTALL_PREFIX="${pkg_install_dir}" \
         -DCMAKE_INSTALL_LIBDIR="lib" \
+        -DCMAKE_VERBOSE_MAKEFILE=ON \
         -DBUILD_SHARED_LIBS=YES \
         -DCMAKE_BUILD_TYPE=Release .. \
         -DBUILD_TESTING=NO \
         -DSCALAPACK_BUILD_TESTS=NO \
+        -D
         > configure.log 2>&1 || tail -n ${LOG_LINES} configure.log
       make -j $(get_nprocs) > make.log 2>&1 || tail -n ${LOG_LINES} make.log
       make install >> make.log 2>&1 || tail -n ${LOG_LINES} make.log
