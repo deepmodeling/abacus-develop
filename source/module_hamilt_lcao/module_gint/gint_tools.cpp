@@ -4,6 +4,7 @@
 #include "gint_tools.h"
 
 #include <cmath>
+#include <utility> // for std::pair
 
 #include "module_base/timer.h"
 #include "module_base/ylm.h"
@@ -12,10 +13,10 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 namespace Gint_Tools{
-int* get_vindex(const int bxyz, const int bx, const int by, const int bz, const int nplane, const int start_ind,
-                const int ncyz)
+void get_vindex(const int bxyz, const int bx, const int by, const int bz, 
+				const int nplane, const int start_ind,
+				const int ncyz,int* vindex)
 {
-    int* vindex = new int[bxyz];
     int bindex = 0;
 
 		for(int ii=0; ii<bx; ii++)
@@ -31,68 +32,13 @@ int* get_vindex(const int bxyz, const int bx, const int by, const int bz, const 
 				}
 			}
 		}
-		return vindex;
 	}
 
 	// here vindex refers to local potentials
-    int* get_vindex(
-        const int bxyz,
-        const int bx,
-        const int by,
-        const int bz,
-        const int nplane,
-        const int ncyz,
-		const int ibx,
-		const int jby,
-		const int kbz)
-	{
-		int *vindex = new int[bxyz];
-		int bindex=0;
-		// z is the fastest,
-		// ipart can be obtained by using a previously stored array
-		for(int ii=0; ii<bx; ii++)
-		{
-			const int ipart = (ibx+ii)*ncyz;
-			for(int jj=0; jj<by; jj++)
-			{
-				// jpart can be obtained by using a previously stored array
-				const int jpart = (jby+jj)*nplane + ipart;
-				for(int kk=0; kk<bz; kk++)
-				{
-					vindex[bindex] = kbz+kk + jpart;
-					++bindex;
-				}
-			}
-		}
-		return vindex;
-	}
 
 	// extract the local potentials.
-	double* get_vldr3(
-        const double* const vlocal,		// vlocal[ir]
-        const int bxyz,
-        const int bx,
-        const int by,
-        const int bz,
-        const int nplane,
-        const int ncyz,
-		const int ibx,
-		const int jby,
-		const int kbz,
-		const double dv)
-	{
-		// set the index for obtaining local potentials
-		int* vindex = Gint_Tools::get_vindex(bxyz, bx, by, bz, nplane, ncyz, ibx, jby, kbz);
-		double *vldr3 = new double[bxyz];
-		for(int ib=0; ib<bxyz; ib++)
-		{
-			vldr3[ib]=vlocal[vindex[ib]] * dv;
-		}
-		delete[] vindex;
-		return vldr3;
-	}
-
-	double* get_vldr3(
+	void get_gint_vldr3(
+		double* vldr3,
         const double* const vlocal,		// vlocal[ir]
         const int bxyz,
         const int bx,
@@ -104,39 +50,29 @@ int* get_vindex(const int bxyz, const int bx, const int by, const int bz, const 
 		const double dv)
 	{
 		// set the index for obtaining local potentials
-		int* vindex = Gint_Tools::get_vindex(bxyz, bx, by, bz, nplane, start_ind, ncyz);
-		double *vldr3 = new double[bxyz];
+		std::vector<int> vindex(bxyz,0);
+		Gint_Tools::get_vindex(bxyz, bx, by, bz, nplane, start_ind, ncyz,vindex.data());
 		for(int ib=0; ib<bxyz; ib++)
 		{
 			vldr3[ib]=vlocal[vindex[ib]] * dv;
 		}
-		delete[] vindex;
-		return vldr3;
 	}
 
-void get_block_info(const Grid_Technique& gt, const int bxyz, const int na_grid, const int grid_index, int*& block_iw,
-                    int*& block_index, int*& block_size, bool**& cal_flag)
-{
-    block_iw = new int[na_grid];
-    block_index = new int[na_grid + 1];
-    block_size = new int[na_grid];
-    cal_flag = new bool*[bxyz];
-    for (int ib = 0; ib < bxyz; ib++)
-    {
-        cal_flag[ib] = new bool[na_grid];
-    }
-    const UnitCell& ucell = *gt.ucell;
-    block_index[0] = 0;
-    for (int id = 0; id < na_grid; id++)
-    {
-        const int mcell_index = gt.bcell_start[grid_index] + id;
-        const int iat = gt.which_atom[mcell_index];    // index of atom
-        const int it = ucell.iat2it[iat];              // index of atom type
-        const int ia = ucell.iat2ia[iat];              // index of atoms within each type
-        const int start = ucell.itiaiw2iwt(it, ia, 0); // the index of the first wave function for atom (it,ia)
-        block_iw[id] = gt.trace_lo[start];
-        block_index[id + 1] = block_index[id] + ucell.atoms[it].nw;
-        block_size[id] = ucell.atoms[it].nw;
+	void get_block_info(const Grid_Technique& gt, const int bxyz, const int na_grid, const int grid_index, int* block_iw,
+						int* block_index, int* block_size, bool** cal_flag)
+	{
+		const UnitCell& ucell = *gt.ucell;
+		block_index[0] = 0;
+		for (int id = 0; id < na_grid; id++)
+		{
+			const int mcell_index = gt.bcell_start[grid_index] + id;
+			const int iat = gt.which_atom[mcell_index];    // index of atom
+			const int it = ucell.iat2it[iat];              // index of atom type
+			const int ia = ucell.iat2ia[iat];              // index of atoms within each type
+			const int start = ucell.itiaiw2iwt(it, ia, 0); // the index of the first wave function for atom (it,ia)
+			block_iw[id] = gt.trace_lo[start];
+			block_index[id + 1] = block_index[id] + ucell.atoms[it].nw;
+			block_size[id] = ucell.atoms[it].nw;
 
 			const int imcell=gt.which_bigcell[mcell_index];
 			const double mt[3] = {
@@ -153,14 +89,15 @@ void get_block_info(const Grid_Technique& gt, const int bxyz, const int na_grid,
 					gt.meshcell_pos[ib][2] + mt[2]};
 				const double distance = std::sqrt(dr[0]*dr[0] + dr[1]*dr[1] + dr[2]*dr[2]);	// distance between atom and grid
 
-            if (distance > gt.rcuts[it] - 1.0e-10) {
-                cal_flag[ib][id] = false;
-            } else {
-                cal_flag[ib][id] = true;
-}
-        } // end ib
-    }
-}
+			if (distance > gt.rcuts[it] - 1.0e-10) {
+				cal_flag[ib][id] = false;
+			} else {
+				cal_flag[ib][id] = true;
+			}
+			} // end ib
+		}
+	}
+
 
 void cal_dpsirr_ylm(
     const Grid_Technique& gt, const int bxyz,
@@ -256,11 +193,41 @@ void cal_dpsirr_ylm(
 		return psir_vlbr3;
 	}
 
+std::pair<int, int> cal_info(const int bxyz, 
+			                 const int ia1,
+			                 const int ia2,
+			                 const bool* const* const cal_flag)
+{
+	int ib_start = bxyz;
+	int ib_end = 0;
+	int ib_length = 0;
+	for(int ib=0; ib<bxyz; ++ib)
+	{
+		if(cal_flag[ib][ia1] && cal_flag[ib][ia2])
+		{
+		    ib_start = ib;
+			break;
+		}
+	}
 
-// calculating (psi_DMR)_mu = sum_nu DMR_mu,nu psi_nu
-// note : there is a difference between rho and force
-// in calculating rho, due to symmetry, the summation over mu,nu
-// can be done as sum_mu,mu + 2 sum_mu<nu, saving some time
-// but for force, we cannot exchange the index
+	if(ib_start == bxyz)
+	{
+		return std::make_pair(bxyz, 0);
+	}
+	else
+	{
+		for(int ib=bxyz-1; ib>=0; --ib)
+		{
+			if(cal_flag[ib][ia1] && cal_flag[ib][ia2])
+			{
+				ib_end = ib;
+				break;
+			}
+		}
+	}
+
+	ib_length = ib_end - ib_start + 1;
+	return std::make_pair(ib_start, ib_length);
+}
 
 } // namespace Gint_Tools

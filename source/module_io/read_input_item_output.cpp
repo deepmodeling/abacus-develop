@@ -309,6 +309,12 @@ void ReadInput::item_output()
         Input_Item item("out_interval");
         item.annotation = "interval for printing H(R) and S(R) matrix during MD";
         read_sync_int(input.out_interval);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_interval <= 0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_interval should be larger than 0");
+            }
+        };
         this->add_item(item);
     }
     {

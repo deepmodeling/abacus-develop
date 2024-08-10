@@ -285,8 +285,6 @@ OBJS_GINT=gint.o\
       cal_psir_ylm.o\
       cal_dpsir_ylm.o\
       cal_ddpsir_ylm.o\
-      mult_psi_dm.o\
-      mult_psi_dm_new.o\
       mult_psi_dmr.o\
       init_orb.o\
 
@@ -302,6 +300,7 @@ OBJS_HAMILT=hamilt_pw.o\
     meta_pw.o\
     meta_op.o\
     velocity_pw.o\
+    radial_proj.o\
 
 OBJS_HAMILT_OF=kedf_tf.o\
     kedf_vw.o\

@@ -39,7 +39,7 @@ void pseudopot_cell_vnl::initgradq_vnl(const UnitCell &cell)
 			for (int iq=0; iq<GlobalV::NQX; iq++)  
 			{
 				const double q = iq * GlobalV::DQ;
-				ModuleBase::Sphbes::dSpherical_Bessel_dx(kkbeta, cell.atoms[it].ncpp.r, q, l, djl);
+				ModuleBase::Sphbes::dSpherical_Bessel_dx(kkbeta, cell.atoms[it].ncpp.r.data(), q, l, djl);
 
 				for (int ir = 0;ir < kkbeta;ir++)
 				{
@@ -47,7 +47,7 @@ void pseudopot_cell_vnl::initgradq_vnl(const UnitCell &cell)
 					          djl[ir] * pow(cell.atoms[it].ncpp.r[ir],2);
 				} 
 				double vqint;
-				ModuleBase::Integral::Simpson_Integral(kkbeta, aux, cell.atoms[it].ncpp.rab, vqint);
+				ModuleBase::Integral::Simpson_Integral(kkbeta, aux, cell.atoms[it].ncpp.rab.data(), vqint);
 				this->tab_dq(it, ib, iq) = vqint * pref;
 			} 
 		} 

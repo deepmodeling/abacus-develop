@@ -99,7 +99,8 @@ void Grid_Technique::cal_nnrg(Parallel_Orbitals* pv)
 		}// end I1
 	}// end T1
 
-	if(GlobalV::OUT_LEVEL != "m") ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"nnrg",this->nnrg);
+	if(GlobalV::OUT_LEVEL != "m") { ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"nnrg",this->nnrg);
+}
 
 	//--------------------------------------------------
 	// search again, to order each (iat2, b1, b2, b3)
@@ -206,7 +207,7 @@ void Grid_Technique::cal_nnrg(Parallel_Orbitals* pv)
 	return;
 }
 
-void Grid_Technique::cal_max_box_index(void)
+void Grid_Technique::cal_max_box_index()
 {
 	ModuleBase::TITLE("LCAO_nnr","cal_max_box_index");
 	this->maxB1 = this->maxB2 = this->maxB3 = -10000;

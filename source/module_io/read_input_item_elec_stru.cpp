@@ -522,6 +522,12 @@ void ReadInput::item_elec_stru()
         this->add_item(item);
     }
     {
+        Input_Item item("scf_ene_thr");
+        item.annotation = "total energy error threshold";
+        read_sync_double(input.scf_ene_thr);
+        this->add_item(item);
+    }
+    {
         Input_Item item("scf_thr_type");
         item.annotation = "type of the criterion of scf_thr, 1: reci drho for "
                           "pw, 2: real drho for lcao";

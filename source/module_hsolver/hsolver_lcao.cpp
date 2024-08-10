@@ -52,24 +52,23 @@ void HSolverLCAO<T, Device>::solve(hamilt::Hamilt<T>* pHamilt,
     // select the method of diagonalization
     this->method = method_in;
 
-#ifdef __PEXSI
+#ifdef __PEXSI // other purification methods should follow this routine
     if (this->method == "pexsi")
     {
-        if (this->pdiagh != nullptr)
-        {
-            if (this->pdiagh->method != this->method)
-            {
-                delete[] this->pdiagh;
-                this->pdiagh = nullptr;
-            }
-            auto tem = dynamic_cast<DiagoPexsi<T>*>(this->pdiagh);
+        DiagoPexsi<T> pe(ParaV);
+        for (int ik = 0; ik < psi.get_nk(); ++ik) {
+            /// update H(k) for each k point
+            pHamilt->updateHk(ik);
+            psi.fix_k(ik);
+            // solve eigenvector and eigenvalue for H(k)
+            pe.diag(pHamilt, psi, nullptr);
         }
-        if (this->pdiagh == nullptr) {
-            DiagoPexsi<T>* tem = new DiagoPexsi<T>(this->ParaV);
-            this->pdiagh = tem;
-            // this->pdiagh = dynamic_cast<DiagoPexsi<T>*>(tem);
-            this->pdiagh->method = this->method;
-        }
+        auto _pes = dynamic_cast<elecstate::ElecStateLCAO<T>*>(pes);
+        pes->f_en.eband = pe.totalFreeEnergy;
+        // maybe eferm could be dealt with in the future
+        _pes->dmToRho(pe.DM, pe.EDM);
+        ModuleBase::timer::tick("HSolverLCAO", "solve");
+        return;
     }
 #endif
 
@@ -126,22 +125,7 @@ void HSolverLCAO<T, Device>::solve(hamilt::Hamilt<T>* pHamilt,
 
     // calculate charge by psi
     // called in scf calculation
-#ifdef __PEXSI
-    if (this->method == "pexsi")
-    {
-        DiagoPexsi<T> tem = dynamic_cast<DiagoPexsi<T>*>(this->pdiagh);
-        if (tem == nullptr)
-            ModuleBase::WARNING_QUIT("HSolverLCAO", "pexsi need debug!");
-        elecstate::ElecStateLCAO<T>* _pes
-            = dynamic_cast<elecstate::ElecStateLCAO<T>*>(pes);
-        pes->f_en.eband = tem->totalFreeEnergy;
-        // maybe eferm could be dealt with in the future
-        _pes->dmToRho(tem->DM, tem->EDM);
-    } else
-#endif
-    {
-        pes->psiToRho(psi);
-    }
+    pes->psiToRho(psi);
     ModuleBase::timer::tick("HSolverLCAO", "solve");
 }
 
@@ -188,12 +172,6 @@ void HSolverLCAO<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>&
         la.diag(hm, psi, eigenvalue);
 #else
         ModuleBase::WARNING_QUIT("HSolverLCAO::solve", "This method of DiagH is not supported!");
-#endif
-#ifdef __PEXSI
-    else if (this->method == "pexsi")
-    {
-        this->pdiagh->diag(hm, psi, eigenvalue);
-    }
 #endif
     }
     else

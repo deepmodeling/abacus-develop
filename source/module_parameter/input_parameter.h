@@ -56,8 +56,8 @@ struct Input_para
     std::string stru_file = "STRU";     ///< file contains atomic positions --
                                         ///< xiaohui modify 2015-02-01
     std::string kpoint_file = "KPT";    ///< file contains k-points -- xiaohui modify 2015-02-01
-    std::string pseudo_dir = "./";      ///< directory of pseudopotential
-    std::string orbital_dir = "./";     ///< directory of orbital file
+    std::string pseudo_dir = "auto";      ///< directory of pseudopotential
+    std::string orbital_dir = "auto";     ///< directory of orbital file
     std::string read_file_dir = "auto"; ///< directory of files for reading
     bool restart_load = false;
     std::string wannier_card = "none";              ///< input card for wannier functions.
@@ -112,6 +112,7 @@ struct Input_para
     bool gamma_only = false; ///< for plane wave.
     int scf_nmax = 100;      ///< number of max elec iter
     double scf_thr = -1.0;   ///< \sum |rhog_out - rhog_in |^2
+    double scf_ene_thr = -1.0; ///< energy threshold for scf convergence, in eV
     int scf_thr_type = -1;   ///< type of the criterion of scf_thr, 1: reci drho, 2: real drho
 
     bool lspinorb = false;   ///< consider the spin-orbit interaction

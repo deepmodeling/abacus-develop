@@ -6,12 +6,13 @@
 #else
 #include <chrono>
 #endif
-#include <iostream>
-
 #include "module_base/timer.h"
 #include "module_io/json_output/init_info.h"
 #include "module_io/print_info.h"
+#include "module_io/write_istate_info.h"
 #include "module_parameter/parameter.h"
+
+#include <iostream>
 //--------------Temporary----------------
 #include "module_base/global_variable.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
@@ -42,6 +43,7 @@ ESolver_KS<T, Device>::ESolver_KS()
 
     // should not use GlobalV here, mohan 2024-05-12
     scf_thr = PARAM.inp.scf_thr;
+    scf_ene_thr = PARAM.inp.scf_ene_thr;
     drho = 0.0;
 
     // should not use GlobalV here, mohan 2024-05-12
@@ -424,6 +426,8 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
     this->niter = this->maxniter;
 
     // 4) SCF iterations
+    double diag_ethr = GlobalV::PW_DIAG_THR;
+
     std::cout << " * * * * * *\n << Start SCF iteration." << std::endl;
     for (int iter = 1; iter <= this->maxniter; ++iter)
     {
@@ -435,7 +439,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
 #else
         auto iterstart = std::chrono::system_clock::now();
 #endif
-        double diag_ethr = this->phsol->set_diagethr(this->phsol->diag_ethr, istep, iter, drho);
+        diag_ethr = this->phsol->set_diagethr(diag_ethr, istep, iter, drho);
 
         // 6) initialization of SCF iterations
         this->iter_init(istep, iter);
@@ -574,11 +578,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
         if (this->conv_elec)
         {
             this->niter = iter;
-            bool stop = this->do_after_converge(iter);
-            if (stop)
-            {
-                break;
-            }
+            break;
         }
 
         // notice for restart
@@ -604,6 +604,42 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
 #endif //__RAPIDJSON
     return;
 };
+
+template <typename T, typename Device>
+void ESolver_KS<T, Device>::iter_finish(int& iter)
+{
+    // 1 means Harris-Foulkes functional
+    // 2 means Kohn-Sham functional
+    this->pelec->cal_energies(2);
+
+    if (iter == 1)
+    {
+        this->pelec->f_en.etot_old = this->pelec->f_en.etot;
+    }
+    this->pelec->f_en.etot_delta = this->pelec->f_en.etot - this->pelec->f_en.etot_old;
+    this->pelec->f_en.etot_old = this->pelec->f_en.etot;
+
+    // add a energy threshold for SCF convergence
+    if (this->conv_elec == 0) // only check when density is not converged
+    {
+        this->conv_elec
+            = (iter != 1 && std::abs(this->pelec->f_en.etot_delta * ModuleBase::Ry_to_eV) < this->scf_ene_thr);
+    }
+}
+
+//! Something to do after SCF iterations when SCF is converged or comes to the max iter step.
+template <typename T, typename Device>
+void ESolver_KS<T, Device>::after_scf(const int istep)
+{
+    // 1) call after_scf() of ESolver_FP
+    ESolver_FP::after_scf(istep);
+
+    // 2) write eigenvalues
+    if (istep % PARAM.inp.out_interval == 0)
+    {
+        this->pelec->print_eigenvalue(GlobalV::ofs_running);
+    }
+}
 
 //------------------------------------------------------------------------------
 //! the 8th function of ESolver_KS: print_head

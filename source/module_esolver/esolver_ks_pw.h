@@ -46,7 +46,7 @@ class ESolver_KS_PW : public ESolver_KS<T, Device>
 
     virtual void update_pot(const int istep, const int iter) override;
 
-    virtual void iter_finish(const int iter) override;
+    virtual void iter_finish(int& iter) override;
 
     virtual void after_scf(const int istep) override;
 
@@ -79,6 +79,7 @@ class ESolver_KS_PW : public ESolver_KS<T, Device>
 
     using castmem_2d_d2h_op
         = base_device::memory::cast_memory_op<std::complex<double>, T, base_device::DEVICE_CPU, Device>;
+
 };
 } // namespace ModuleESolver
 #endif

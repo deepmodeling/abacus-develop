@@ -149,8 +149,7 @@ int set_device_by_rank(const MPI_Comm mpi_comm) {
 
 std::string get_device_flag(const std::string &device,
                             const std::string &ks_solver,
-                            const std::string &basis_type,
-                            const bool &gamma_only) {
+                            const std::string &basis_type) {
 if (device == "cpu") {
   return "cpu"; // no extra checks required
 }
@@ -180,10 +179,6 @@ error_message += "ABACUS is built with CPU support only. Please rebuild with GPU
 if (basis_type == "lcao_in_pw") {
   error_message +=
       "The GPU currently does not support the basis type \"lcao_in_pw\"!";
-}
-if (basis_type == "lcao" && gamma_only == false) {
-  error_message += "The GPU currently does not support the basis type "
-                    "\"lcao\" with \"gamma_only\" set to \"0\"!";
 }
 if(error_message.empty())
 {

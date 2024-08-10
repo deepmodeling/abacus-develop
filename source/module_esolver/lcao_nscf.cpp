@@ -54,7 +54,10 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
     int istep = 0;
     if (this->phsol != nullptr)
     {
-        this->phsol->solve(this->p_hamilt, this->psi[0], this->pelec, GlobalV::KS_SOLVER, true);
+        // this->phsol->solve(this->p_hamilt, this->psi[0], this->pelec, GlobalV::KS_SOLVER, true);
+
+        hsolver::HSolverLCAO<TK> hsolver_lcao_obj(&(this->pv), GlobalV::KS_SOLVER);
+        hsolver_lcao_obj.solve(this->p_hamilt, this->psi[0], this->pelec, GlobalV::KS_SOLVER, true);
     }
     else
     {
@@ -211,7 +214,7 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
                 this->pelec->pot->get_effective_v(is),
                 is,
                 GlobalV::NSPIN,
-                istep,
+                0,
                 fn,
                 this->pw_rhod->nx,
                 this->pw_rhod->ny,
@@ -231,6 +234,7 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
             this->pw_big->nbz,
 #endif
             fn,
+            0, // istep
             this->pw_rhod,
             this->pelec->charge,
             &(GlobalC::ucell),

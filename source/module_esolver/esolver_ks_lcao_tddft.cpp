@@ -104,8 +104,7 @@ void ESolver_KS_LCAO_TDDFT::before_all_runners(const Input_para& inp, UnitCell& 
     // 7) initialize Hsolver
     if (this->phsol == nullptr)
     {
-        this->phsol = new hsolver::HSolverLCAO<std::complex<double>>(&this->pv);
-        this->phsol->method = GlobalV::KS_SOLVER;
+        this->phsol = new hsolver::HSolverLCAO<std::complex<double>>(&this->pv, GlobalV::KS_SOLVER);
     }
 
     // 8) initialize the charge density
@@ -174,7 +173,10 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(const int istep, const int iter, cons
         this->pelec->f_en.demet = 0.0;
         if (this->psi != nullptr)
         {
-            this->phsol->solve(this->p_hamilt, this->psi[0], this->pelec_td, GlobalV::KS_SOLVER);
+            // this->phsol->solve(this->p_hamilt, this->psi[0], this->pelec_td, GlobalV::KS_SOLVER);
+
+            hsolver::HSolverLCAO<std::complex<double>> hsolver_lcao_obj(&this->pv, GlobalV::KS_SOLVER);
+            hsolver_lcao_obj.solve(this->p_hamilt, this->psi[0], this->pelec_td, GlobalV::KS_SOLVER, false);
         }
     }
     else

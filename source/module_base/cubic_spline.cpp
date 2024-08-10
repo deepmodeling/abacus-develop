@@ -56,6 +56,18 @@ CubicSpline::CubicSpline(
 }
 
 
+CubicSpline::CubicSpline(int n, const double* x)
+    : n_spline_(0), n_(n), xmin_(x[0]), xmax_(x[n - 1]), x_(x, x + n)
+{
+}
+
+
+CubicSpline::CubicSpline(int n, double x0, double dx)
+    : n_spline_(0), n_(n), xmin_(x0), xmax_(x0 + (n - 1) * dx), dx_(dx)
+{
+}
+
+
 void CubicSpline::add(
     const double* y,
     const BoundaryCondition& bc_start,

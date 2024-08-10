@@ -234,6 +234,14 @@ class HContainer
     const BaseMatrix<T>* find_matrix(int i, int j, const ModuleBase::Vector3<int>& R_index) const;
 
     /**
+     * @brief find the offset of BaseMatrix with atom index atom_i and atom_j and R index (rx, ry, rz)
+     * if found, return this->find_matrix(i, j, rx, ry, rz)->get_pointer() - this->get_wrapper();
+     * if not found, return -1
+     */
+    int find_matrix_offset(int i, int j, int rx, int ry, int rz) const;
+    int find_matrix_offset(int i, int j, const ModuleBase::Vector3<int>& R_index) const;
+
+    /**
      * @brief return a reference of AtomPair with index of atom I and J in atom_pairs
      *
      * @param i index of atom i
