@@ -1334,6 +1334,7 @@ if __name__ == "__main__":
     #unittest.main(exit=False)
     args = _argparse()
     moldengen(args.folder, args.ndigits, args.ngto, args.output)
+    print(" ".join("*"*10).center(80, " "))
     print(f"MOLDEN: Generated Molden file {args.output} from ABACUS calculation in folder {args.folder}")
     citation = """If you use this script in your research, please cite the following paper:\n
 ABACUS:
