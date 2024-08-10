@@ -35,11 +35,7 @@ class Stochastic_Iter
      * @param stoche Chebyshev expansion for sDFT
      *
      */
-    void init(const int method_in,
-              K_Vectors* pkv_in,
-              ModulePW::PW_Basis_K* wfc_basis,
-              Stochastic_WF& stowf,
-              StoChe<double>& stoche);
+    void init(K_Vectors* pkv_in, ModulePW::PW_Basis_K* wfc_basis, Stochastic_WF& stowf, StoChe<double>& stoche);
 
     void sum_stoband(Stochastic_WF& stowf,
                      elecstate::ElecState* pes,
@@ -80,8 +76,6 @@ class Stochastic_Iter
     void calPn(const int& ik, Stochastic_WF& stowf);
     // cal Tnchi = \sum_n C_n*T_n(\hat{h})|\chi>
     void calTnchi_ik(const int& ik, Stochastic_WF& stowf);
-    // cal v^T*M*v
-    double vTMv(const double* v, const double* M, const int n);
 
   private:
     K_Vectors* pkv;

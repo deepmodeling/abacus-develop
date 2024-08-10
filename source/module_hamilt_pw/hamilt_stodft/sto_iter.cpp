@@ -1,25 +1,11 @@
 #include "sto_iter.h"
 
-#include "module_base/blas_connector.h"
 #include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
 #include "module_base/tool_quit.h"
 #include "module_base/tool_title.h"
 #include "module_elecstate/occupy.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-
-double Stochastic_Iter::vTMv(const double* v, const double* M, const int n)
-{
-    const char normal = 'N';
-    const double one = 1;
-    const int inc = 1;
-    const double zero = 0;
-    double* y = new double[n];
-    dgemv_(&normal, &n, &n, &one, M, &n, v, &inc, &zero, y, &inc);
-    double result = BlasConnector::dot(n, y, 1, v, 1);
-    delete[] y;
-    return result;
-}
 
 Stochastic_Iter::Stochastic_Iter()
 {
@@ -32,8 +18,7 @@ Stochastic_Iter::~Stochastic_Iter()
 {
 }
 
-void Stochastic_Iter::init(const int method_in,
-                           K_Vectors* pkv_in,
+void Stochastic_Iter::init(K_Vectors* pkv_in,
                            ModulePW::PW_Basis_K* wfc_basis,
                            Stochastic_WF& stowf,
                            StoChe<double>& stoche)
@@ -43,13 +28,10 @@ void Stochastic_Iter::init(const int method_in,
     nchip = stowf.nchip;
     targetne = GlobalV::nelec;
     this->pkv = pkv_in;
-    stohchi.init(wfc_basis, pkv);
+    this->method = stoche.method_sto;
 
-    this->method = method_in;
-
-    stofunc.Emin = PARAM.inp.emin_sto;
-    stofunc.Emax = PARAM.inp.emax_sto;
-    const int nks = wfc_basis->nks;
+    this->stohchi.init(wfc_basis, pkv, &stoche.emin_sto, &stoche.emax_sto);
+    this->stofunc.set_E_range(&stoche.emin_sto, &stoche.emax_sto);
 }
 
 void Stochastic_Iter::orthog(const int& ik, psi::Psi<std::complex<double>>& psi, Stochastic_WF& stowf)
@@ -156,8 +138,8 @@ void Stochastic_Iter::checkemm(const int& ik, const int istep, const int iter, S
                                             &Stochastic_hchi::hchi_norm,
                                             pchi,
                                             npw,
-                                            stohchi.Emax,
-                                            stohchi.Emin,
+                                            *stohchi.Emax,
+                                            *stohchi.Emin,
                                             5.0);
 
             if (!converge)
@@ -173,15 +155,13 @@ void Stochastic_Iter::checkemm(const int& ik, const int istep, const int iter, S
     if (ik == nks - 1)
     {
 #ifdef __MPI
-        MPI_Allreduce(MPI_IN_PLACE, &stohchi.Emax, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-        MPI_Allreduce(MPI_IN_PLACE, &stohchi.Emin, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
+        MPI_Allreduce(MPI_IN_PLACE, stohchi.Emax, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+        MPI_Allreduce(MPI_IN_PLACE, stohchi.Emin, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
         MPI_Allreduce(MPI_IN_PLACE, &change, 1, MPI_CHAR, MPI_LOR, MPI_COMM_WORLD);
 #endif
-        stofunc.Emax = stohchi.Emax;
-        stofunc.Emin = stohchi.Emin;
         if (change)
         {
-            GlobalV::ofs_running << "New Emax Ry" << stohchi.Emax << " ; new Emin " << stohchi.Emin << " Ry"
+            GlobalV::ofs_running << "New Emax Ry" << *stohchi.Emax << " ; new Emin " << *stohchi.Emin << " Ry"
                                  << std::endl;
         }
         change = false;
