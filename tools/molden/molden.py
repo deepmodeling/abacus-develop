@@ -208,7 +208,7 @@ class GTORadials:
         import numpy as np
         g = c * np.exp(-a * r**2) * r**l
         if normalize:
-            g /= np.sqrt(np.trapz(g**2, r))
+            g /= np.sqrt(np.trapz(g**2 * r**2, r))
         return g
     
     def __str__(self) -> str:
@@ -303,14 +303,15 @@ def fit_radial_with_gto(nao, ngto, l, r):
     #res = minimize(f, init, bounds=bounds, method="L-BFGS-B", options={"maxiter": 1000, "disp": True, "ftol": 1e-10})
     a, c = res.x[:ngto], res.x[ngto:]
     err = res.fun
-    # renormailize the coefficients
-    gto_obj = GTORadials()
-    gto_obj.register_cgto(a, c, l, 'w')
-    out = gto_obj.build(r)[0][l][0]
-    norm_gto = np.sqrt(simps(out**2*r**2, r))
-    norm_nao = np.sqrt(simps(nao**2*r**2, r))
-    print(f"norm loss ratio: {norm_gto/norm_nao:>.4f}, renormalize.")
-    c /= norm_gto / norm_nao
+    # renormailize the coefficients? Because the NAO and GTO spread in different manners, the norm difference
+    # mainly comes from the spreading of GTO, where NAO has been cutoff to zero.
+    # gto_obj = GTORadials()
+    # gto_obj.register_cgto(a, c, l, 'w')
+    # out = gto_obj.build(r)[0][l][0] # build the cgto in which all primitive gtos are g(r) = r^l * exp(-a*r^2)
+    # norm_gto = np.sqrt(simps(out**2*r**2, r))
+    # norm_nao = np.sqrt(simps(nao**2*r**2, r))
+    # print(f"norm loss ratio: {norm_gto/norm_nao:>.4f}, renormalize.")
+    # c /= norm_gto / norm_nao
 
     print(f"""NAO2GTO: Angular momentum {l}, with {ngto} superposition to fit numerical atomic orbitals on given grid, 
 this method refers to H. Shang et al. Summary:\nNonlinear fitting error: {err}\nCoefficients and exponents of primitive
@@ -379,6 +380,7 @@ def convert_nao_to_gto(fnao, fgto = None, ngto: int = 7):
     coefficients of CGTO will be optimized."""
     import matplotlib.pyplot as plt
     import numpy as np
+    import os
 
     gto = GTORadials()
     # read the numerical atomic orbitals
@@ -400,10 +402,12 @@ def convert_nao_to_gto(fnao, fgto = None, ngto: int = 7):
             for ic in range(len(out[it][l])):
                 plt.plot(rgrid, out[it][l][ic], label=f"element {symbol}, l={l}, ic={ic}")
     plt.legend()
-    plt.savefig(fnao.replace(".orb", ".gto.png"))
+    
+    fgto = os.path.basename(fnao).replace(".orb", "") + ".gto" if fgto is None else fgto
+    fgto = fnao.replace(os.path.basename(fnao), fgto) # make sure that only the file name is changed
+    plt.savefig(fgto + ".png")
     plt.close()
 
-    fgto = fnao.replace(".orb", ".gto") if fgto is None else fgto
     with open(fgto, "w") as f:
         f.write(str(gto))
 
@@ -681,10 +685,22 @@ def read_stru(fpath):
     return stru
 
 def write_molden_cell(const, vec):
-    """The Molden requires the cell information in Angstrom, while ABACUS uses Bohr."""
+    """The Molden requires the cell information in Angstrom, while ABACUS uses Bohr.
+    
+    Args:
+        const (float): the `LATTICE_CONSTANT` set in ABACUS STRU file, always used for 
+            scaling the cell vectors and atomic positions if not set `*_Angstrom` explicitly.
+            This quantity actually have unit as Bohr.
+        vec (list): the cell vectors, dimensionless, 3 x 3 matrix
+    
+    Returns:
+        str: the string formatted in Molden format
+    """
     out = "[Cell]\n"
     assert len(vec) == 3
     assert all(len(v) == 3 for v in vec)
+    # convert the const unit from Bohr to Angstrom, because Multiwfn requires the unit as Angstrom
+    const *= 0.529177210903
     for i in range(3):
         out += f"{vec[i][0]*const:>15.10f}{vec[i][1]*const:>15.10f}{vec[i][2]*const:>15.10f}\n"
     return out
@@ -777,6 +793,33 @@ def read_abacus_input(finput):
             kv[m.group(1)] = m.group(2)
     return kv
 
+def read_abacus_kpt(fkpt):
+    """the way to organize information of KPT file of ABACUS still has some degree of freedom.
+    However, the only one wanted should have content like the following:
+    K_POINTS
+    0
+    Gamma
+    1 1 1 0 0 0
+
+    in which the "Gamma" can be replaced by "MP" but the number of kpoints should be 1.
+    In the future the multiple kpoints is planned to be supported in a relatively naive way that
+    simply combining all MOs at different kpoints together but not for now. The occupation of MO
+    at different kpoints is already multiplied by the weight of kpoints, is it expected?
+
+    This function is not really read kpoints and return something, instead, it is for assert
+    the number of kpoints is 1.
+    """
+    with open(fkpt, 'r') as file:
+        lines = file.readlines()
+    lines = [line.strip() for line in lines]
+    if lines[0] == "K_POINTS":
+        if lines[1] == "0":
+            if lines[2] in ["Gamma", "MP"]:
+                if lines[3] == "1 1 1 0 0 0":
+                    return
+    raise ValueError(f"Invalid KPT file {fkpt}. Presently only 1 kpoint calculation \
+(implicit or explicit) Gamma-only calculation is supported.")
+
 def CondonShortleyPhase(index):
     """Imposing the Condon-Shortley phase on the MO index. 
     Molden requires the magnetic quantum number to be arranged like 0, +1, -1, +2, -2, ... 
@@ -824,7 +867,17 @@ def indexing_mo(total_gto: GTORadials, labels: list):
     return out
 
 def moldengen(folder: str, ndigits=3, ngto=7, fmolden="ABACUS.molden"):
-    """generate molden file by reading the outdir of ABACUS, for only LCAO calculation!"""
+    """Entrance function: generate molden file by reading the outdir of ABACUS, for only LCAO 
+    calculation.
+    
+    Args:
+        folder (str): the folder containing the ABACUS input and output files
+        ndigits (int): the number of digits to be printed for the coefficients
+        ngto (int): the number of GTOs to be fitted to the numerical atomic orbitals
+        fmolden (str): the file name of the molden file
+    
+    Returns:
+        str: the content of the molden file"""
     import os
     import numpy as np
 
@@ -841,8 +894,8 @@ def moldengen(folder: str, ndigits=3, ngto=7, fmolden="ABACUS.molden"):
     # write the cell   #
     ####################
     kv = read_abacus_input("INPUT")
-    _temp = kv.get("stru_file", "STRU")
-    stru = read_abacus_stru(_temp)
+    _ = read_abacus_kpt(kv.get("kpoint_file", "KPT"))
+    stru = read_abacus_stru(kv.get("stru_file", "STRU"))
     out += write_molden_cell(stru['lat']['const'], stru['lat']['vec'])
     
     ####################
@@ -1260,4 +1313,13 @@ if __name__ == "__main__":
     args = _argparse()
     moldengen(args.folder, args.ndigits, args.ngto, args.output)
     print(f"Generated Molden file {args.output} from ABACUS calculation in folder {args.folder}")
+    citation = """If you use this script in your research, please cite the following paper:\n
+ABACUS:
+Li P, Liu X, Chen M, et al. Large-scale ab initio simulations based on systematically improvable atomic basis[J]. 
+Computational Materials Science, 2016, 112: 503-517.
 
+NAO2GTO method:
+Qin X, Shang H, Xiang H, et al. HONPAS: A linear scaling open-source solution for large system simulations[J].
+International Journal of Quantum Chemistry, 2015, 115(10): 647-655.
+"""
+    print(citation, flush=True)
