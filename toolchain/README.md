@@ -19,7 +19,7 @@ and give setup files that you can use to compile ABACUS.
 ## Todo
 
 - [x] `gnu-openblas` toolchain support for `openmpi` and `mpich`.
-- [x] `intel-mkl-mpi` toolchain support using `icc` or `icx`. (`icx` version of ABACUS have some problem now, please be cautious)
+- [x] `intel-mkl-mpi` toolchain support using `icc`/`icpc`/`ifort` or `icx`/`icpx`/`ifort`. (`icx` as default, but will have problem for ELPA in AMD machine, one can specify `--with-intel-classic=yes` to use `icc`), 
 - [x] `intel-mkl-mpich` toolchain support.
 - [x] Automatic installation of [CEREAL](https://github.com/USCiLab/cereal) and [LIBNPY](https://github.com/llohse/libnpy) (by github.com)
 - [x] Support for [LibRI](https://github.com/abacusmodeling/LibRI) by submodule or automatic installation from github.com (but installed LibRI via `wget` seems to have some problem, please be cautious)
@@ -82,7 +82,7 @@ wget https://bohrium-api.dp.tech/ds-dl/abacus-deps-93wi-v2 -O abacus-deps-v2.zip
 If one want to install ABACUS by toolchain OFFLINE, 
 one can manually download all the packages from [cp2k-static/download](https://www.cp2k.org/static/downloads) or official website
 and put them in *build* directory by formatted name
-like *fftw-3.3.10.tar.gz*, or *openmpi-4.1.5.tar.gz*, 
+like *fftw-3.3.10.tar.gz*, or *openmpi-5.0.3.tar.gz*, 
 then run this toolchain. 
 All package will be detected and installed automatically. 
 Also, one can install parts of packages OFFLINE and parts of packages ONLINE
@@ -97,14 +97,14 @@ just by using this toolchain
 
 The needed dependencies version default:
 - `cmake` 3.28.1
-- `gcc` 13.2.0 (which will always NOT be installed, But use system)
-- `OpenMPI` 5.0.0
+- `gcc` 14.1.0 (which will always NOT be installed, But use system)
+- `OpenMPI` 5.0.3
 - `MPICH` 4.1.2
-- `OpenBLAS` 0.3.25 (Intel toolchain need `get_vars.sh` tool from it)
+- `OpenBLAS` 0.3.27 (Intel toolchain need `get_vars.sh` tool from it)
 - `ScaLAPACK` 2.2.1
 - `FFTW` 3.3.10
 - `LibXC` 6.2.2
-- `ELPA` 2023.05.001
+- `ELPA` 2024.03.001
 - `CEREAL` 1.3.2
 - `RapidJSON` 1.1.0
 And Intel-oneAPI need user or server manager to manually install from Intel.
