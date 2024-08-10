@@ -1,5 +1,5 @@
 # The ABACUS Toolchain
-Version 2024.1
+Version 2024.2
 
 ## Author
 [QuantumMisaka](https://github.com/QuantumMisaka) 
