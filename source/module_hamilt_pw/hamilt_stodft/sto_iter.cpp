@@ -39,6 +39,7 @@ void Stochastic_Iter::init(const int method_in,
                            StoChe<double>& stoche)
 {
     p_che = stoche.p_che;
+    spolyv = stoche.spolyv;
     nchip = stowf.nchip;
     targetne = GlobalV::nelec;
     this->pkv = pkv_in;
