@@ -7,6 +7,7 @@ namespace hsolver
 class HSolverPW_SDFT : public HSolverPW<std::complex<double>>
 {
   public:
+    HSolverPW_SDFT(ModulePW::PW_Basis_K* wfc_basis_in, wavefunc* pwf_in) : HSolverPW(wfc_basis_in, pwf_in, false){};
     HSolverPW_SDFT(K_Vectors* pkv,
                    ModulePW::PW_Basis_K* wfc_basis_in,
                    wavefunc* pwf_in,
@@ -36,6 +37,11 @@ class HSolverPW_SDFT : public HSolverPW<std::complex<double>>
     virtual double cal_hsolerror(const double diag_ethr_in) override
     {
         return 0.0;
+    }
+
+    void set_KS_ne(const double& KS_ne_in)
+    {
+        stoiter.KS_ne = KS_ne_in;
     }
 
     Stochastic_Iter stoiter;

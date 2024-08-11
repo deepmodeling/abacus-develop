@@ -128,7 +128,7 @@ void ESolver_SDFT_PW::before_all_runners(const Input_para& inp, UnitCell& ucell)
 
     // 9) initialize the hsolver
     // It should be removed after esolver_ks does not use phsol.
-    this->phsol = new hsolver::HSolverPW_SDFT(&kv, pw_wfc, &wf, this->stowf, this->stoche);
+    this->phsol = new hsolver::HSolverPW_SDFT(pw_wfc, &wf);
 
     return;
 }
@@ -192,8 +192,7 @@ void ESolver_SDFT_PW::hamilt2density(int istep, int iter, double ethr)
                               false);
     // temporary 
     // set_diagethr need it
-    hsolver::HSolverPW_SDFT* tmp_hsol = (hsolver::HSolverPW_SDFT*)phsol;
-    tmp_hsol->stoiter.KS_ne = hsolver_pw_sdft_obj.stoiter.KS_ne;
+    ((hsolver::HSolverPW_SDFT*)phsol)->set_KS_ne(hsolver_pw_sdft_obj.stoiter.KS_ne);
 
     if (GlobalV::MY_STOGROUP == 0)
     {
