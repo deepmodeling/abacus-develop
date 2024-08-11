@@ -190,6 +190,10 @@ void ESolver_SDFT_PW::hamilt2density(int istep, int iter, double ethr)
                               hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX,
                               hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR,
                               false);
+    // temporary 
+    // set_diagethr need it
+    hsolver::HSolverPW_SDFT* tmp_hsol = (hsolver::HSolverPW_SDFT*)phsol;
+    tmp_hsol->stoiter.KS_ne = hsolver_pw_sdft_obj.stoiter.KS_ne;
 
     if (GlobalV::MY_STOGROUP == 0)
     {
