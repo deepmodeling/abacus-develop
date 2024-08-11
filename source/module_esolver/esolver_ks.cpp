@@ -467,24 +467,32 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
             if (firstscf)
             {
                 firstscf = false;
-                hsolver_error = hsolver::cal_hsolve_error(diag_ethr, PARAM.inp.basis_type, PARAM.inp.esolver_type);
+                hsolver_error = hsolver::cal_hsolve_error(PARAM.inp.basis_type,
+                                                          PARAM.inp.esolver_type,
+                                                          diag_ethr,
+                                                          PARAM.inp.nelec);
                 
                 // The error of HSolver is larger than drho,
                 // so a more precise HSolver should be excuconv_elected.
                 if (hsolver_error > drho)
                 {
-                    diag_ethr = hsolver::reset_diag_ethr(GlobalV::ofs_running, 
-                                                        hsolver_error, 
-                                                        drho, 
-                                                        diag_ethr, 
-                                                        PARAM.inp.basis_type, 
-                                                        PARAM.inp.esolver_type);
+                    diag_ethr = hsolver::reset_diag_ethr(GlobalV::ofs_running,
+                                                         PARAM.inp.basis_type,
+                                                         PARAM.inp.esolver_type,
+                                                         GlobalV::precision_flag,
+                                                         hsolver_error,
+                                                         drho,
+                                                         diag_ethr,
+                                                         PARAM.inp.nelec);
 
                     this->hamilt2density(istep, iter, diag_ethr);
 
                     drho = p_chgmix->get_drho(pelec->charge, GlobalV::nelec);
-                    
-                    hsolver_error = hsolver::cal_hsolve_error(diag_ethr, PARAM.inp.basis_type, PARAM.inp.esolver_type);
+
+                    hsolver_error = hsolver::cal_hsolve_error(PARAM.inp.basis_type,
+                                                              PARAM.inp.esolver_type,
+                                                              diag_ethr,
+                                                              PARAM.inp.nelec);
                 }
             }
             // mixing will restart at this->p_chgmix->mixing_restart steps

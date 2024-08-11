@@ -59,14 +59,19 @@ class HSolver
 
 // reset diagethr according to drho and hsolver_error
 double reset_diag_ethr(std::ofstream& ofs_running,
+                       const std::string basis_type,
+                       const std::string esolver_type,
+                       const std::string precision_flag_in,
                        const double hsover_error,
-                       const double drho,
-                       double diag_ethr_in,
-                       std::string basis_type,
-                       std::string esolver_type);
+                       const double drho_in,
+                       const double diag_ethr_in,
+                       const double nelec_in);
 
 // calculate hsolver_error (for sdft, lcao and lcao-in-pw, we suppose the error is zero)
-double cal_hsolve_error(const double diag_ethr_in, std::string basis_type, std::string esolver_type);
+double cal_hsolve_error(const std::string basis_type,
+                        const std::string esolver_type,
+                        const double diag_ethr_in,
+                        const double nelec_in);
 
 } // namespace hsolver
 #endif

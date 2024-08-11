@@ -4,46 +4,53 @@ namespace hsolver
 {
 
 double reset_diag_ethr(std::ofstream& ofs_running,
+                       const std::string basis_type,
+                       const std::string esolver_type,
+                       const std::string precision_flag_in,
                        const double hsover_error,
-                       const double drho,
-                       double diag_ethr_in,
-                       std::string basis_type,
-                       std::string esolver_type)
+                       const double drho_in,
+                       const double diag_ethr_in,
+                       const double nelec_in)
 {
 
+    double new_diag_ethr = 0.0;
+    
     if (basis_type == "pw" && esolver_type == "ksdft")
     {
         ofs_running << " Notice: Threshold on eigenvalues was too large.\n";
 
         ModuleBase::WARNING("scf", "Threshold on eigenvalues was too large.");
 
-        ofs_running << " hsover_error=" << hsover_error << " > DRHO=" << drho << std::endl;
+        ofs_running << " hsover_error=" << hsover_error << " > DRHO=" << drho_in << std::endl;
         ofs_running << " Origin diag ethr = " << diag_ethr_in << std::endl;
 
-        diag_ethr_in = 0.1 * drho / GlobalV::nelec;
+        new_diag_ethr = 0.1 * drho_in / nelec_in;
 
         // It is essential for single precision implementation to keep the diag ethr
         // value less or equal to the single-precision limit of convergence(0.5e-4).
         // modified by denghuilu at 2023-05-15
-        if (GlobalV::precision_flag == "single")
+        if (precision_flag_in == "single")
         {
-            diag_ethr_in = std::max(diag_ethr_in, static_cast<double>(0.5e-4));
+            new_diag_ethr = std::max(new_diag_ethr, static_cast<double>(0.5e-4));
         }
-        ofs_running << " New diag ethr = " << diag_ethr_in << std::endl;
+        ofs_running << " New diag ethr = " << new_diag_ethr << std::endl;
     }
     else
     {
-        diag_ethr_in = 0.0;
+        new_diag_ethr = 0.0;
     }
 
-    return diag_ethr_in;
+    return new_diag_ethr;
 };
 
-double cal_hsolve_error(const double diag_ethr_in, std::string basis_type, std::string esolver_type)
+double cal_hsolve_error(const std::string basis_type,
+                        const std::string esolver_type,
+                        const double diag_ethr_in,
+                        const double nelec_in)
 {
     if (basis_type == "pw" && esolver_type == "ksdft")
     {
-        return diag_ethr_in * static_cast<double>(std::max(1.0, GlobalV::nelec));
+        return diag_ethr_in * static_cast<double>(std::max(1.0, nelec_in));
     }
     else
     {
