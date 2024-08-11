@@ -243,8 +243,9 @@ void Sto_DOS::caldos(const double sigmain, const double de, const int npart)
         for (int ie = 0; ie < ndos; ++ie)
         {
             double tmperror = 2.0 * std::abs(error[ie]);
-            if (maxerror < tmperror)
+            if (maxerror < tmperror) {
                 maxerror = tmperror;
+}
             double dos = 2.0 * (ks_dos[ie] + sto_dos[ie]) / ModuleBase::Ry_to_eV;
             sum += dos;
             ofsdos << std::setw(8) << emin + ie * de << std::setw(20) << dos << std::setw(20) << sum * de
