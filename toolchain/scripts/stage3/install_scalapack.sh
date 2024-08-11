@@ -59,9 +59,9 @@ case "$with_scalapack" in
         -DCMAKE_VERBOSE_MAKEFILE=ON \
         -DBUILD_SHARED_LIBS=YES \
         -DCMAKE_BUILD_TYPE=Release .. \
+        -DCMAKE_C_FLAGS:STRING="$CFLAGS -Wno-implicit-function-declaration"
         -DBUILD_TESTING=NO \
         -DSCALAPACK_BUILD_TESTS=NO \
-        -D
         > configure.log 2>&1 || tail -n ${LOG_LINES} configure.log
       make -j $(get_nprocs) > make.log 2>&1 || tail -n ${LOG_LINES} make.log
       make install >> make.log 2>&1 || tail -n ${LOG_LINES} make.log
