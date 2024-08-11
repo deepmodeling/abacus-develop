@@ -56,8 +56,8 @@ struct Input_para
     std::string stru_file = "STRU";     ///< file contains atomic positions --
                                         ///< xiaohui modify 2015-02-01
     std::string kpoint_file = "KPT";    ///< file contains k-points -- xiaohui modify 2015-02-01
-    std::string pseudo_dir = "auto";      ///< directory of pseudopotential
-    std::string orbital_dir = "auto";     ///< directory of orbital file
+    std::string pseudo_dir = "";      ///< directory of pseudopotential
+    std::string orbital_dir = "";     ///< directory of orbital file
     std::string read_file_dir = "auto"; ///< directory of files for reading
     bool restart_load = false;
     std::string wannier_card = "none";              ///< input card for wannier functions.

@@ -19,15 +19,16 @@ Sto_EleCond::Sto_EleCond(UnitCell* p_ucell_in,
                          psi::Psi<std::complex<double>>* p_psi_in,
                          pseudopot_cell_vnl* p_ppcell_in,
                          hamilt::Hamilt<std::complex<double>>* p_hamilt_in,
-                         hsolver::HSolverPW_SDFT* p_hsol_in,
+                         StoChe<double>& stoche,
                          Stochastic_WF* p_stowf_in)
     : EleCond(p_ucell_in, p_kv_in, p_elec_in, p_wfcpw_in, p_psi_in, p_ppcell_in)
 {
     this->p_hamilt = p_hamilt_in;
-    this->p_hsol = p_hsol_in;
     this->p_stowf = p_stowf_in;
     this->nbands_ks = p_psi_in->get_nbands();
     this->nbands_sto = p_stowf_in->nchi;
+    this->stohchi.init(p_wfcpw_in, p_kv_in, &stoche.emin_sto, &stoche.emax_sto);
+    this->stofunc.set_E_range(&stoche.emin_sto, &stoche.emax_sto);
 }
 
 void Sto_EleCond::decide_nche(const double dt,
@@ -38,9 +39,8 @@ void Sto_EleCond::decide_nche(const double dt,
 {
     int nche_guess = 1000;
     ModuleBase::Chebyshev<double> chet(nche_guess);
-    Stochastic_Iter& stoiter = p_hsol->stoiter;
     const double mu = this->p_elec->eferm.ef;
-    stoiter.stofunc.mu = mu;
+    this->stofunc.mu = mu;
     int& nbatch = this->cond_dtbatch;
     // try to find nbatch
     if (nbatch == 0)
@@ -48,8 +48,8 @@ void Sto_EleCond::decide_nche(const double dt,
         for (int test_nbatch = 128; test_nbatch >= 1; test_nbatch /= 2)
         {
             nbatch = test_nbatch;
-            stoiter.stofunc.t = 0.5 * dt * nbatch;
-            chet.calcoef_pair(&stoiter.stofunc, &Sto_Func<double>::ncos, &Sto_Func<double>::n_sin);
+            this->stofunc.t = 0.5 * dt * nbatch;
+            chet.calcoef_pair(&this->stofunc, &Sto_Func<double>::ncos, &Sto_Func<double>::n_sin);
             double minerror = std::abs(chet.coef_complex[nche_guess - 1] / chet.coef_complex[0]);
             if (minerror < cond_thr)
             {
@@ -70,9 +70,9 @@ void Sto_EleCond::decide_nche(const double dt,
     }
 
     // first try to find nche
-    stoiter.stofunc.t = 0.5 * dt * nbatch;
+    this->stofunc.t = 0.5 * dt * nbatch;
     auto getnche = [&](int& nche) {
-        chet.calcoef_pair(&stoiter.stofunc, &Sto_Func<double>::ncos, &Sto_Func<double>::n_sin);
+        chet.calcoef_pair(&this->stofunc, &Sto_Func<double>::ncos, &Sto_Func<double>::n_sin);
         for (int i = 1; i < nche_guess; ++i)
         {
             double error = std::abs(chet.coef_complex[i] / chet.coef_complex[0]);
@@ -96,7 +96,7 @@ loop:
               this->p_kv,
               this->p_stowf,
               this->p_hamilt,
-              this->p_hsol);
+              this->stohchi);
 
     // second try to find nche with new Emin & Emax
     getnche(nche_new);
@@ -104,8 +104,8 @@ loop:
     if (nche_new > nche_old * 2)
     {
         nche_old = nche_new;
-        try_emin = stoiter.stohchi.Emin;
-        try_emax = stoiter.stohchi.Emax;
+        try_emin = *stohchi.Emin;
+        try_emax = *stohchi.Emax;
         goto loop;
     }
 
@@ -169,14 +169,13 @@ void Sto_EleCond::cal_jmatrix(const psi::Psi<std::complex<float>>& kspsi_all,
     const int allbands_sto = bandinfo[4];
     const int allbands = bandinfo[5];
     const int dim_jmatrix = perbands_ks * allbands_sto + perbands_sto * allbands;
-    Stochastic_Iter& stoiter = p_hsol->stoiter;
 
     psi::Psi<std::complex<double>> right_hchi(1, perbands_sto, npwx, p_kv->ngk.data());
     psi::Psi<std::complex<float>> f_rightchi(1, perbands_sto, npwx, p_kv->ngk.data());
     psi::Psi<std::complex<float>> f_right_hchi(1, perbands_sto, npwx, p_kv->ngk.data());
 
-    stoiter.stohchi.hchi(leftchi.get_pointer(), left_hchi.get_pointer(), perbands_sto);
-    stoiter.stohchi.hchi(rightchi.get_pointer(), right_hchi.get_pointer(), perbands_sto);
+    this->stohchi.hchi(leftchi.get_pointer(), left_hchi.get_pointer(), perbands_sto);
+    this->stohchi.hchi(rightchi.get_pointer(), right_hchi.get_pointer(), perbands_sto);
     convert_psi(rightchi, f_rightchi);
     convert_psi(right_hchi, f_right_hchi);
     right_hchi.resize(1, 1, 1);
@@ -533,8 +532,6 @@ void Sto_EleCond::sKG(const int& smear_type,
     ModuleBase::Chebyshev<double> che(fd_nche);
     ModuleBase::Chebyshev<double> chet(cond_nche);
     ModuleBase::Chebyshev<double> chemt(cond_nche);
-    Stochastic_Iter& stoiter = p_hsol->stoiter;
-    Stochastic_hchi& stohchi = stoiter.stohchi;
 
     //------------------------------------------------------------------
     //                    Calculate
@@ -542,10 +539,10 @@ void Sto_EleCond::sKG(const int& smear_type,
 
     // Prepare Chebyshev coefficients for exp(-i H/\hbar t)
     const double mu = this->p_elec->eferm.ef;
-    stoiter.stofunc.mu = mu;
-    stoiter.stofunc.t = 0.5 * dt * nbatch;
-    chet.calcoef_pair(&stoiter.stofunc, &Sto_Func<double>::ncos, &Sto_Func<double>::nsin);
-    chemt.calcoef_pair(&stoiter.stofunc, &Sto_Func<double>::ncos, &Sto_Func<double>::n_sin);
+    this->stofunc.mu = mu;
+    this->stofunc.t = 0.5 * dt * nbatch;
+    chet.calcoef_pair(&this->stofunc, &Sto_Func<double>::ncos, &Sto_Func<double>::nsin);
+    chemt.calcoef_pair(&this->stofunc, &Sto_Func<double>::ncos, &Sto_Func<double>::n_sin);
     std::vector<std::complex<double>> batchcoef, batchmcoef;
     if (nbatch > 1)
     {
@@ -562,16 +559,16 @@ void Sto_EleCond::sKG(const int& smear_type,
         {
             tmpcoef = batchcoef.data() + ib * cond_nche;
             tmpmcoef = batchmcoef.data() + ib * cond_nche;
-            stoiter.stofunc.t = 0.5 * dt * (ib + 1);
-            chet.calcoef_pair(&stoiter.stofunc, &Sto_Func<double>::ncos, &Sto_Func<double>::nsin);
-            chemt.calcoef_pair(&stoiter.stofunc, &Sto_Func<double>::ncos, &Sto_Func<double>::n_sin);
+            this->stofunc.t = 0.5 * dt * (ib + 1);
+            chet.calcoef_pair(&this->stofunc, &Sto_Func<double>::ncos, &Sto_Func<double>::nsin);
+            chemt.calcoef_pair(&this->stofunc, &Sto_Func<double>::ncos, &Sto_Func<double>::n_sin);
             for (int i = 0; i < cond_nche; ++i)
             {
                 tmpcoef[i] = chet.coef_complex[i];
                 tmpmcoef[i] = chemt.coef_complex[i];
             }
         }
-        stoiter.stofunc.t = 0.5 * dt * nbatch;
+        this->stofunc.t = 0.5 * dt * nbatch;
     }
 
     // ik loop
@@ -586,14 +583,14 @@ void Sto_EleCond::sKG(const int& smear_type,
         {
             this->p_hamilt->updateHk(ik);
         }
-        stoiter.stohchi.current_ik = ik;
+        this->stohchi.current_ik = ik;
         const int npw = p_kv->ngk[ik];
 
         // get allbands_ks
         int cutib0 = 0;
         if (this->nbands_ks > 0)
         {
-            double Emax_KS = std::max(stoiter.stofunc.Emin, this->p_elec->ekb(ik, this->nbands_ks - 1));
+            double Emax_KS = std::max(*this->stofunc.Emin, this->p_elec->ekb(ik, this->nbands_ks - 1));
             for (cutib0 = this->nbands_ks - 1; cutib0 >= 0; --cutib0)
             {
                 if (Emax_KS - this->p_elec->ekb(ik, cutib0) > dEcut)
@@ -602,17 +599,17 @@ void Sto_EleCond::sKG(const int& smear_type,
                 }
             }
             ++cutib0;
-            double Emin_KS = (cutib0 < this->nbands_ks) ? this->p_elec->ekb(ik, cutib0) : stoiter.stofunc.Emin;
-            double dE = stoiter.stofunc.Emax - Emin_KS + wcut / ModuleBase::Ry_to_eV;
+            double Emin_KS = (cutib0 < this->nbands_ks) ? this->p_elec->ekb(ik, cutib0) : *this->stofunc.Emin;
+            double dE = *this->stofunc.Emax - Emin_KS + wcut / ModuleBase::Ry_to_eV;
             std::cout << "Emin_KS(" << cutib0 + 1 << "): " << Emin_KS * ModuleBase::Ry_to_eV
-                      << " eV; Emax: " << stoiter.stofunc.Emax * ModuleBase::Ry_to_eV
+                      << " eV; Emax: " << *this->stofunc.Emax * ModuleBase::Ry_to_eV
                       << " eV; Recommended max dt: " << 2 * M_PI / dE << " a.u." << std::endl;
         }
         else
         {
-            double dE = stoiter.stofunc.Emax - stoiter.stofunc.Emin + wcut / ModuleBase::Ry_to_eV;
-            std::cout << "Emin: " << stoiter.stofunc.Emin * ModuleBase::Ry_to_eV
-                      << " eV; Emax: " << stoiter.stofunc.Emax * ModuleBase::Ry_to_eV
+            double dE = *this->stofunc.Emax - *this->stofunc.Emin + wcut / ModuleBase::Ry_to_eV;
+            std::cout << "Emin: " << *this->stofunc.Emin * ModuleBase::Ry_to_eV
+                      << " eV; Emax: " << *this->stofunc.Emax * ModuleBase::Ry_to_eV
                       << " eV; Recommended max dt: " << 2 * M_PI / dE << " a.u." << std::endl;
         }
         // Parallel for bands
@@ -712,7 +709,7 @@ void Sto_EleCond::sKG(const int& smear_type,
                 {
                     kspsi(0, ib, ig) = p_psi[0](ib0_ks + ib, ig);
                 }
-                double fi = stoiter.stofunc.fd(en[ib]);
+                double fi = this->stofunc.fd(en[ib]);
                 expmtmf_fact[ib] = 1 - fi;
                 expmtf_fact[ib] = fi;
             }
@@ -728,7 +725,7 @@ void Sto_EleCond::sKG(const int& smear_type,
             vkspsi.resize(1, 1, 1);
         }
 
-        che.calcoef_real(&stoiter.stofunc, &Sto_Func<double>::nroot_fd);
+        che.calcoef_real(&this->stofunc, &Sto_Func<double>::nroot_fd);
         che.calfinalvec_real(&stohchi,
                              &Stochastic_hchi::hchi_norm,
                              stopsi->get_pointer(),
@@ -737,7 +734,7 @@ void Sto_EleCond::sKG(const int& smear_type,
                              npwx,
                              perbands_sto);
 
-        che.calcoef_real(&stoiter.stofunc, &Sto_Func<double>::nroot_mfd);
+        che.calcoef_real(&this->stofunc, &Sto_Func<double>::nroot_mfd);
 
         che.calfinalvec_real(&stohchi,
                              &Stochastic_hchi::hchi_norm,
