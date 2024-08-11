@@ -7,9 +7,12 @@
 
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
-
-gcc_ver="14.1.0"
-gcc_sha256="a0be066c02775002a0fa65ad3c65fb56a8bfd923d072a26ed148c0439ecdb68f"
+# gcc 13 is good
+gcc_ver="13.2.0"
+gcc_sha256="8cb4be3796651976f94b9356fa08d833524f62420d6292c5033a9a26af315078"
+# use gcc 14 with caution
+#gcc_ver="14.1.0"
+#gcc_sha256="a0be066c02775002a0fa65ad3c65fb56a8bfd923d072a26ed148c0439ecdb68f"
 
 source "${SCRIPT_DIR}"/common_vars.sh
 source "${SCRIPT_DIR}"/tool_kit.sh
