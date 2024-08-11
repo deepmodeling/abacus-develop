@@ -128,7 +128,7 @@ void ESolver_SDFT_PW::before_all_runners(const Input_para& inp, UnitCell& ucell)
 
     // 9) initialize the hsolver
     // It should be removed after esolver_ks does not use phsol.
-    this->phsol = new hsolver::HSolverPW_SDFT(pw_wfc, &wf);
+    this->phsol = new hsolver::HSolverPW_SDFT(&this->kv, this->pw_wfc, &this->wf, this->stowf, this->stoche, this->init_psi);
 
     return;
 }
@@ -175,7 +175,7 @@ void ESolver_SDFT_PW::hamilt2density(int istep, int iter, double ethr)
     hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX = GlobalV::PW_DIAG_NMAX;
 
     // hsolver only exists in this function
-    hsolver::HSolverPW_SDFT hsolver_pw_sdft_obj(&this->kv, this->pw_wfc, &this->wf, this->stowf, this->stoche);
+    hsolver::HSolverPW_SDFT hsolver_pw_sdft_obj(&this->kv, this->pw_wfc, &this->wf, this->stowf, this->stoche, this->init_psi);
 
     hsolver_pw_sdft_obj.solve(this->p_hamilt,
                               this->psi[0],
@@ -190,6 +190,8 @@ void ESolver_SDFT_PW::hamilt2density(int istep, int iter, double ethr)
                               hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX,
                               hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR,
                               false);
+    this->init_psi = true;
+
     // temporary 
     // set_diagethr need it
     ((hsolver::HSolverPW_SDFT*)phsol)->set_KS_ne(hsolver_pw_sdft_obj.stoiter.KS_ne);
