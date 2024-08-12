@@ -117,7 +117,10 @@ class GTORadials:
                     cgto = np.zeros_like(rgrid)
                     # print(self.NumericalRadials[it][l][i])
                     for a, c in self.NumericalRadials[it][l][i]: # for each primitive GTO
-                        cgto += GTORadials._build_gto(a, c, l, rgrid, normalize)
+                        cgto += GTORadials._build_gto(a, c, l, rgrid)
+                    if normalize:
+                        norm = np.sqrt(np.sum(cgto**2 * rgrid**2))
+                        cgto /= norm
                     out[it][l].append(cgto)
         return out
 
@@ -202,13 +205,11 @@ class GTORadials:
 
         return elems, out
 
-    def _build_gto(a, c, l, r, normalize):
+    def _build_gto(a, c, l, r):
         """build one GTO defined by coefficients c, exponents a, angular momentum l and map on
          radial grid r"""
         import numpy as np
         g = c * np.exp(-a * r**2) * r**l
-        if normalize:
-            g /= np.sqrt(np.trapz(g**2, r))
         return g
     
     def __str__(self) -> str:
@@ -264,7 +265,7 @@ class GTORadials:
         out += "\n"
         return out
 
-def fit_radial_with_gto(nao, ngto, l, r):
+def fit_radial_with_gto(nao, ngto, l, r, rel_r=2):
     """fit one radial function mapped on grid with GTOs
     
     Args:
@@ -273,8 +274,8 @@ def fit_radial_with_gto(nao, ngto, l, r):
         l: int, the angular momentum.
         r: numpy array, the grid points.
     """
-    from scipy.optimize import basinhopping
-    from scipy.integrate import simps
+    from scipy.optimize import minimize
+    from scipy.integrate import simpson
     import numpy as np
     def f(a_and_c, nao=nao, ngto=ngto, l=l, r=r):
         """calculate the distance between the nao and superposition of GTOs of given
@@ -283,7 +284,7 @@ def fit_radial_with_gto(nao, ngto, l, r):
         assert len(c) == len(a), f"Invalid basis: {c}, {a}"
         gto = np.zeros_like(r)
         for i in range(len(c)):
-            gto += GTORadials._build_gto(a[i], c[i], l, r, False)
+            gto += GTORadials._build_gto(a[i], c[i], l, r)
         dorb = gto - nao
         if l == 0:
             return np.sum(dorb**2)
@@ -294,29 +295,55 @@ def fit_radial_with_gto(nao, ngto, l, r):
                 dorb = dorb[1:]
             return np.sum((dorb/r**l)**2)
     
-    init = np.random.rand(ngto + ngto)
-    # find optimal c and a values
+    def gto_guess(nao, ngto, l, r, rel_r=2):
+        """generate the initial guess for the coefficients and exponents of GTOs.
+        The GTO has form like c * exp(-a * r^2) * r^l, where c is the coefficient,
+        the l will push the maxima from r = 0 to positive value. On the other hand
+        the standard Gaussian function is 1/sqrt(2*simga^2) * exp(-r^2/(2*sigma^2)),
+        , where the mu as taken to be zero. 
+        Therefore a = 1/(2*sigma^2), sigma = 1/sqrt(2*a). We set 3sigma = rmax, then
+        the smallest a is guessed to be 9/(2*rmax^2), then the second smallest to be
+        a*rel_r, which means the sigma will be shrink by factor sqrt(rel_r), and so 
+        on. c is set as the generalized cosine value between function to fit and the 
+        GTO with c = 1 and a setted.
+        """
+        amin = 3**2 / (2 * r[-1]**2)
+        a_init = np.zeros(ngto)
+        for i in range(ngto):
+            a_init[i] = amin * rel_r**(i + 1)
+        c_init = np.zeros(ngto)
+        for i in range(ngto):
+            model = GTORadials._build_gto(a_init[i], 1, l, r)
+            c_init[i] = simpson(nao * model * r**2, x=r)
+            c_init[i] /= np.sqrt(simpson(model**2 * r**2, x=r))
+        return np.concatenate((a_init, c_init))
+
+    init = gto_guess(nao, ngto, l, r, rel_r)
     
     # bounds for c and a
-    bounds = [(0, 5) for i in range(ngto)] + [(-np.inf, np.inf) for i in range(ngto)]
-    res = basinhopping(f, init, niter=100, minimizer_kwargs={"method": "L-BFGS-B", "bounds": bounds}, disp=True)
-    #res = minimize(f, init, bounds=bounds, method="L-BFGS-B", options={"maxiter": 1000, "disp": True, "ftol": 1e-10})
+    bounds = [(0, np.inf) for i in range(ngto)] + [(-np.inf, np.inf) for i in range(ngto)]
+    #res = basinhopping(f, init, niter=100, minimizer_kwargs={"method": "L-BFGS-B", "bounds": bounds}, disp=True)
+    res = minimize(f, init, bounds=bounds, method="L-BFGS-B", 
+                   options={"maxiter": 5000, "disp": False, "ftol": 1e-10, "gtol": 1e-10})
     a, c = res.x[:ngto], res.x[ngto:]
     err = res.fun
-    # renormailize the coefficients
-    gto_obj = GTORadials()
-    gto_obj.register_cgto(a, c, l, 'w')
-    out = gto_obj.build(r)[0][l][0]
-    norm_gto = np.sqrt(simps(out**2*r**2, r))
-    norm_nao = np.sqrt(simps(nao**2*r**2, r))
-    print(f"norm loss ratio: {norm_gto/norm_nao:>.4f}, renormalize.")
-    c /= norm_gto / norm_nao
+
+    cgto = GTORadials()
+    cgto.register_cgto(a, c, l, 'w')
+    out = cgto.build(r, False)
+    norm_nao = simpson(nao**2 * r**2, x=r)
+    norm_gto = simpson(out[0][l][0]**2 * r**2, x=r)
+    factor = np.sqrt(norm_nao / norm_gto)
+    print(f"NAO2GTO: Renormalize the CGTO from NAO2GTO method with factor {factor:.4f}")
+    c *= factor # renormalize the coefficients to make the norm of GTO equals to that of NAO
 
     print(f"""NAO2GTO: Angular momentum {l}, with {ngto} superposition to fit numerical atomic orbitals on given grid, 
-this method refers to H. Shang et al. Summary:\nNonlinear fitting error: {err}\nCoefficients and exponents of primitive
-Gaussian Type Orbitals (GTOs):\n{"a":>10} {"c":>10}\n---------------------""")
+         Nonlinear fitting error: {err:.4e}
+         Exponential and contraction coefficients of primitive GTOs in a.u.:
+{"a":>10} {"c":>10}\n---------------------""")
     for i in range(ngto):
         print(f"{a[i]:10.6f} {c[i]:10.6f}")
+    print(f"\nNAO2GTO: The fitted GTOs are saved in the CGTO instance.")
     return a, c
 
 def read_nao(fpath):
@@ -372,13 +399,14 @@ def read_nao(fpath):
 
     return {'elem': elem, 'ecut': ecut, 'rcut': rcut, 'nr': nr, 'dr': dr, 'chi': chi}
 
-def convert_nao_to_gto(fnao, fgto = None, ngto: int = 7):
+def convert_nao_to_gto(fnao, fgto = None, ngto: int = 7, rel_r: float = 2):
     """convert the numerical atomic orbitals to GTOs. Each chi (or say the zeta function)
     corresponds to a CGTO (contracted GTO), and the GTOs are fitted to the radial functions.
     Which also means during the SCF, the coefficient inside each CGTO is unchanged, while the
     coefficients of CGTO will be optimized."""
     import matplotlib.pyplot as plt
     import numpy as np
+    import os
 
     gto = GTORadials()
     # read the numerical atomic orbitals
@@ -390,7 +418,7 @@ def convert_nao_to_gto(fnao, fgto = None, ngto: int = 7):
     for l in range(lmax+1):
         nchi = len(nao["chi"][l])
         for i in range(nchi):
-            a, c = fit_radial_with_gto(nao["chi"][l][i], ngto, l, rgrid)
+            a, c = fit_radial_with_gto(nao["chi"][l][i], ngto, l, rgrid, rel_r)
             gto.register_cgto(a, c, l, symbol, 'a')
     
     # draw the fitted GTOs
@@ -400,10 +428,12 @@ def convert_nao_to_gto(fnao, fgto = None, ngto: int = 7):
             for ic in range(len(out[it][l])):
                 plt.plot(rgrid, out[it][l][ic], label=f"element {symbol}, l={l}, ic={ic}")
     plt.legend()
-    plt.savefig(fnao.replace(".orb", ".gto.png"))
+    
+    fgto = os.path.basename(fnao).replace(".orb", "") + ".gto" if fgto is None else fgto
+    fgto = fnao.replace(os.path.basename(fnao), fgto) # make sure that only the file name is changed
+    plt.savefig(fgto + ".png")
     plt.close()
 
-    fgto = fnao.replace(".orb", ".gto") if fgto is None else fgto
     with open(fgto, "w") as f:
         f.write(str(gto))
 
@@ -452,10 +482,7 @@ def read_abacus_lowf(flowf, pat=r'^WFC_NAO_(K\d+|GAMMA(1|2)).txt$'):
         # discard the first two lines
         lines = lines[2:]
     # initialize lists
-    occ = []
-    band = []
-    ener = []
-    data = []
+    occ, band, ener, data = [], [], [], []
 
     # read nbands and nlocal
     i = 0
@@ -483,8 +510,8 @@ def read_abacus_lowf(flowf, pat=r'^WFC_NAO_(K\d+|GAMMA(1|2)).txt$'):
         data = [d.real for d in data]
     data = np.array(data).reshape(nbands, nlocal)
     if data.shape != (nbands, nlocal):
-        print(f"nbands = {nbands}, nlocal = {nlocal}")
-        print(f"data.shape = {data.shape}")
+        print(f"ERROR: nbands = {nbands}, nlocal = {nlocal}")
+        print(f"ERROR: data.shape = {data.shape}")
         raise ValueError("Data read from file is not consistent with expected size.")
 
     return nbands, nlocal, occ, band, ener, data
@@ -681,10 +708,22 @@ def read_stru(fpath):
     return stru
 
 def write_molden_cell(const, vec):
-    """The Molden requires the cell information in Angstrom, while ABACUS uses Bohr."""
+    """The Molden requires the cell information in Angstrom, while ABACUS uses Bohr.
+    
+    Args:
+        const (float): the `LATTICE_CONSTANT` set in ABACUS STRU file, always used for 
+            scaling the cell vectors and atomic positions if not set `*_Angstrom` explicitly.
+            This quantity actually have unit as Bohr.
+        vec (list): the cell vectors, dimensionless, 3 x 3 matrix
+    
+    Returns:
+        str: the string formatted in Molden format
+    """
     out = "[Cell]\n"
     assert len(vec) == 3
     assert all(len(v) == 3 for v in vec)
+    # convert the const unit from Bohr to Angstrom, because Multiwfn requires the unit as Angstrom
+    const *= 0.529177210903
     for i in range(3):
         out += f"{vec[i][0]*const:>15.10f}{vec[i][1]*const:>15.10f}{vec[i][2]*const:>15.10f}\n"
     return out
@@ -777,6 +816,33 @@ def read_abacus_input(finput):
             kv[m.group(1)] = m.group(2)
     return kv
 
+def read_abacus_kpt(fkpt):
+    """the way to organize information of KPT file of ABACUS still has some degree of freedom.
+    However, the only one wanted should have content like the following:
+    K_POINTS
+    0
+    Gamma
+    1 1 1 0 0 0
+
+    in which the "Gamma" can be replaced by "MP" but the number of kpoints should be 1.
+    In the future the multiple kpoints is planned to be supported in a relatively naive way that
+    simply combining all MOs at different kpoints together but not for now. The occupation of MO
+    at different kpoints is already multiplied by the weight of kpoints, is it expected?
+
+    This function is not really read kpoints and return something, instead, it is for assert
+    the number of kpoints is 1.
+    """
+    with open(fkpt, 'r') as file:
+        lines = file.readlines()
+    lines = [line.strip() for line in lines]
+    if lines[0] == "K_POINTS":
+        if lines[1] == "0":
+            if lines[2] in ["Gamma", "MP"]:
+                if lines[3] == "1 1 1 0 0 0":
+                    return
+    raise ValueError(f"Invalid KPT file {fkpt}. Presently only 1 kpoint calculation \
+(implicit or explicit) Gamma-only calculation is supported.")
+
 def CondonShortleyPhase(index):
     """Imposing the Condon-Shortley phase on the MO index. 
     Molden requires the magnetic quantum number to be arranged like 0, +1, -1, +2, -2, ... 
@@ -823,8 +889,18 @@ def indexing_mo(total_gto: GTORadials, labels: list):
                 i += 2*l+1
     return out
 
-def moldengen(folder: str, ndigits=3, ngto=7, fmolden="ABACUS.molden"):
-    """generate molden file by reading the outdir of ABACUS, for only LCAO calculation!"""
+def moldengen(folder: str, ndigits=3, ngto=7, rel_r=2, fmolden="ABACUS.molden"):
+    """Entrance function: generate molden file by reading the outdir of ABACUS, for only LCAO 
+    calculation.
+    
+    Args:
+        folder (str): the folder containing the ABACUS input and output files
+        ndigits (int): the number of digits to be printed for the coefficients
+        ngto (int): the number of GTOs to be fitted to the numerical atomic orbitals
+        fmolden (str): the file name of the molden file
+    
+    Returns:
+        str: the content of the molden file"""
     import os
     import numpy as np
 
@@ -841,8 +917,8 @@ def moldengen(folder: str, ndigits=3, ngto=7, fmolden="ABACUS.molden"):
     # write the cell   #
     ####################
     kv = read_abacus_input("INPUT")
-    _temp = kv.get("stru_file", "STRU")
-    stru = read_abacus_stru(_temp)
+    _ = read_abacus_kpt(kv.get("kpoint_file", "KPT"))
+    stru = read_abacus_stru(kv.get("stru_file", "STRU"))
     out += write_molden_cell(stru['lat']['const'], stru['lat']['vec'])
     
     ####################
@@ -877,7 +953,7 @@ def moldengen(folder: str, ndigits=3, ngto=7, fmolden="ABACUS.molden"):
     
     total_gto = GTORadials()
     for forb in forbs:
-        gto = convert_nao_to_gto(forb, None, ngto)
+        gto = convert_nao_to_gto(forb, None, ngto, rel_r)
         total_gto.NumericalRadials.append(gto.NumericalRadials[0])
         total_gto.symbols.append(gto.symbols[0])
     out += write_molden_gto(total_gto, labels_kinds_map)
@@ -1153,7 +1229,6 @@ SP   1   1.00
         print(out)
 
     def est_fit_radial_with_gto(self):
-        from SIAB.spillage.orbio import read_nao
         import numpy as np
 
         # read the numerical atomic orbitals
@@ -1167,7 +1242,7 @@ SP   1   1.00
         # the fitted GTOs
         gto = np.zeros_like(rgrid)
         for a_, c_ in zip(a, c):
-            gto += GTORadials._build_gto(a_, c_, l, rgrid, False)
+            gto += GTORadials._build_gto(a_, c_, l, rgrid)
         
         import matplotlib.pyplot as plt
         plt.plot(rgrid, chi, label="NAO")
@@ -1240,17 +1315,20 @@ def _argparse():
     -f, --folder: the folder of the ABACUS calculation, in which the STRU, INPUT, KPT, and OUT* folders are located.
     -n, --ndigits: the number of digits for the MO coefficients. For MO coefficients smaller than 10^-n, they will be set to 0.
     -g, --ngto: the number of GTOs to fit ABACUS NAOs. The default is 7.
+    -r, --rel_r: the relative cutoff radius for the GTOs. The default is 2.
     -o, --output: the output Molden file name. The default is ABACUS.molden.
     """
     import argparse
-    parser = argparse.ArgumentParser(description="Generate Molden file from ABACUS LCAO calculation")
-    welcome = """Once meet any problem, please submit an issue at:\n
-https://github.com/deepmodeling/abacus-develop/issues\n
+    parser = argparse.ArgumentParser(description="Generate Molden file from ABACUS LCAO calculation via NAO2GTO method")
+    welcome = """WARNING: use at your own risk because the NAO2GTO will not always conserve the shape of radial function, therefore
+the total number of electrons may not be conserved. Always use after a re-normalization operation.
+Once meet any problem, please submit an issue at: https://github.com/deepmodeling/abacus-develop/issues
     """
     parser.epilog = welcome
     parser.add_argument("-f", "--folder", type=str, help="the folder of the ABACUS calculation")
     parser.add_argument("-n", "--ndigits", type=int, default=3, help="the number of digits for the MO coefficients")
     parser.add_argument("-g", "--ngto", type=int, default=7, help="the number of GTOs to fit ABACUS NAOs")
+    parser.add_argument("-r", "--rel_r", type=int, default=2, help="the relative cutoff radius for the GTOs")
     parser.add_argument("-o", "--output", type=str, default="ABACUS.molden", help="the output Molden file name")
     args = parser.parse_args()
     return args
@@ -1258,6 +1336,18 @@ https://github.com/deepmodeling/abacus-develop/issues\n
 if __name__ == "__main__":
     #unittest.main(exit=False)
     args = _argparse()
-    moldengen(args.folder, args.ndigits, args.ngto, args.output)
-    print(f"Generated Molden file {args.output} from ABACUS calculation in folder {args.folder}")
+    moldengen(args.folder, args.ndigits, args.ngto, args.rel_r, args.output)
+    print(" ".join("*"*10).center(80, " "))
+    print(f"""MOLDEN: Generated Molden file {args.output} from ABACUS calculation in folder {args.folder}.
+WARNING: use at your own risk because the NAO2GTO will not always conserve the shape of radial function, therefore
+the total number of electrons may not be conserved. Always use after a re-normalization operation.""")
+    citation = """If you use this script in your research, please cite the following paper:\n
+ABACUS:
+Li P, Liu X, Chen M, et al. Large-scale ab initio simulations based on systematically improvable atomic basis[J]. 
+Computational Materials Science, 2016, 112: 503-517.
 
+NAO2GTO method:
+Qin X, Shang H, Xiang H, et al. HONPAS: A linear scaling open-source solution for large system simulations[J].
+International Journal of Quantum Chemistry, 2015, 115(10): 647-655.
+"""
+    print(citation, flush=True)
