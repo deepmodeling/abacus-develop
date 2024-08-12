@@ -470,7 +470,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
                 hsolver_error = hsolver::cal_hsolve_error(PARAM.inp.basis_type,
                                                           PARAM.inp.esolver_type,
                                                           diag_ethr,
-                                                          PARAM.inp.nelec);
+                                                          GlobalV::nelec);
                 
                 // The error of HSolver is larger than drho,
                 // so a more precise HSolver should be excuconv_elected.
@@ -483,7 +483,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
                                                          hsolver_error,
                                                          drho,
                                                          diag_ethr,
-                                                         PARAM.inp.nelec);
+                                                         GlobalV::nelec);
 
                     this->hamilt2density(istep, iter, diag_ethr);
 
@@ -492,7 +492,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
                     hsolver_error = hsolver::cal_hsolve_error(PARAM.inp.basis_type,
                                                               PARAM.inp.esolver_type,
                                                               diag_ethr,
-                                                              PARAM.inp.nelec);
+                                                              GlobalV::nelec);
                 }
             }
             // mixing will restart at this->p_chgmix->mixing_restart steps
