@@ -96,8 +96,8 @@ just by using this toolchain
 ```
 
 The needed dependencies version default:
-- `cmake` 3.28.1
-- `gcc` 14.1.0 (which will always NOT be installed, But use system)
+- `cmake` 3.30.0
+- `gcc` 13.2.0 (which will always NOT be installed, But use system)
 - `OpenMPI` 5.0.3
 - `MPICH` 4.1.2
 - `OpenBLAS` 0.3.27 (Intel toolchain need `get_vars.sh` tool from it)
@@ -111,7 +111,7 @@ And Intel-oneAPI need user or server manager to manually install from Intel.
 [Intel-oneAPI](https://www.intel.cn/content/www/cn/zh/developer/tools/oneapi/toolkits.html)
 
 Dependencies below are optional， which is NOT installed by default:
-- `LibTorch` 2.0.1
+- `LibTorch` 2.1.2
 - `Libnpy` 1.0.1
 - `LibRI` 0.1.1
 - `LibComm` 0.1.0
