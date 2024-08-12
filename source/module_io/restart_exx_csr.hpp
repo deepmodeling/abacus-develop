@@ -29,22 +29,22 @@ namespace ModuleIO
                         TC dR({ R[0], R[1], R[2] });
                         Hexxs[is][iat1][{iat2, dR}] = RI::Tensor<Tdata>({ static_cast<size_t>(ucell.atoms[ucell.iat2it[iat1]].nw), static_cast<size_t>(ucell.atoms[ucell.iat2it[iat2]].nw) });
                     }
-}
-}
-            // read Hexxs[is]
-            for (int i = 0;i < nbasis;++i) {
-                for (int j = 0;j < nbasis;++j) {
-                    for (int iR = 0;iR < nR;++iR)
-                    {
-                        int iat1 = ucell.iwt2iat[i];
-                        int iat2 = ucell.iwt2iat[j];
-                        const std::vector<int>& R = csr.getRCoordinate(iR);
-                        const auto& matrix = csr.getMatrix(iR);
-                        TC dR({ R[0], R[1], R[2] });
-                        Hexxs.at(is).at(iat1).at({ iat2, dR })(ucell.iwt2iw[i], ucell.iwt2iw[j]) = matrix(i, j);
-                    }
-}
-}
+                }
+            }
+#ifdef _OPENMP
+#pragma omp for schedule(dynamic)
+#endif
+            for (int iR = 0;iR < nR;++iR)
+            {
+                const std::vector<int>& R = csr.getRCoordinate(iR);
+                const SparseMatrix<Tdata>& matrix = csr.getMatrix(iR);
+                for (auto& ijv : matrix.getElements())
+                {
+                    const int& i = ijv.first.first;
+                    const int& j = ijv.first.second;
+                    Hexxs.at(is).at(ucell.iwt2iat[i]).at({ ucell.iwt2iat[j], { R[0], R[1], R[2] } })(ucell.iwt2iw[i], ucell.iwt2iw[j]) = ijv.second;
+                }
+            }
         }
     }
 
