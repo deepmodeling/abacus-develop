@@ -30,7 +30,7 @@ CEREAL=$INSTALL_DIR/cereal-1.3.2/include/cereal
 LIBXC=$INSTALL_DIR/libxc-6.2.2
 # LIBRI=$INSTALL_DIR/LibRI-0.1.1
 # LIBCOMM=$INSTALL_DIR/LibComm-0.1.0
-# LIBTORCH=$INSTALL_DIR/libtorch-2.0.1/share/cmake/Torch
+# LIBTORCH=$INSTALL_DIR/libtorch-2.1.2/share/cmake/Torch
 # LIBNPY=$INSTALL_DIR/libnpy-1.0.1/include
 # DEEPMD=$HOME/apps/anaconda3/envs/deepmd
 
