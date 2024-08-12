@@ -162,7 +162,7 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
         }
     }
 
-    ModuleBase::timer::tick("Force_LCAO_k", "allocate_k");
+    ModuleBase::timer::tick("Force_LCAO", "allocate");
     return;
 }
 

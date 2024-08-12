@@ -306,7 +306,7 @@ void Force_LCAO<double>::ftable(const bool isforce,
     // delete DHloc_fixed_x, DHloc_fixed_y, DHloc_fixed_z
     this->finish_ftable(fsr);
 
-    ModuleBase::timer::tick("Force_LCAO_gamma", "ftable_gamma");
+    ModuleBase::timer::tick("Force_LCAO", "ftable");
     return;
 }
 

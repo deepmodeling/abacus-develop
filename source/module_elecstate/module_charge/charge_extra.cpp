@@ -2,6 +2,7 @@
 
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
+#include "module_base/timer.h"
 #include "module_base/tool_threading.h"
 #include "module_io/cube_io.h"
 
@@ -11,6 +12,16 @@ Charge_Extra::Charge_Extra()
 
 Charge_Extra::~Charge_Extra()
 {
+    if (pot_order > 1)
+    {
+        for (int is = 0; is < GlobalV::NSPIN; is++)
+        {
+            delete[] delta_rho1[is];
+            delete[] delta_rho2[is];
+        }
+        delete[] delta_rho1;
+        delete[] delta_rho2;
+    }
     if(pot_order == 3)
     {
         delete[] dis_old1;
@@ -19,7 +30,7 @@ Charge_Extra::~Charge_Extra()
     }
 }
 
-void Charge_Extra::Init_CE(const int& natom)
+void Charge_Extra::Init_CE(const int& natom, const double& volume, const int& nrxx)
 {
     if(GlobalV::chg_extrap == "none")
     {
@@ -42,6 +53,22 @@ void Charge_Extra::Init_CE(const int& natom)
         ModuleBase::WARNING_QUIT("Charge_Extra","charge extrapolation method is not available !");
     }
 
+    if (pot_order > 1)
+    {
+        delta_rho1 = new double*[GlobalV::NSPIN];
+        delta_rho2 = new double*[GlobalV::NSPIN];
+        for (int is = 0; is < GlobalV::NSPIN; is++)
+        {
+            delta_rho1[is] = new double[nrxx];
+            delta_rho2[is] = new double[nrxx];
+            ModuleBase::GlobalFunc::ZEROS(delta_rho1[is], nrxx);
+            ModuleBase::GlobalFunc::ZEROS(delta_rho2[is], nrxx);
+        }
+    }
+
+    this->natom = natom;
+    this->omega_old = volume;
+
     if(pot_order == 3)
     {
         dis_old1 = new ModuleBase::Vector3<double>[natom];
@@ -62,6 +89,7 @@ void Charge_Extra::extrapolate_charge(
     Structure_Factor* sf)
 {
     ModuleBase::TITLE("Charge_Extra","extrapolate_charge");
+    ModuleBase::timer::tick("Charge_Extra", "extrapolate_charge");
     //-------------------------------------------------------
     // Charge density extrapolation:
     //
@@ -93,60 +121,60 @@ void Charge_Extra::extrapolate_charge(
 
     // if(lsda || noncolin) rho2zeta();
 
-    // read charge difference into chr->rho
-    read_files(
-#ifdef __MPI
-        Pgrid,
+    double** rho_atom = new double*[GlobalV::NSPIN];
+    for (int is = 0; is < GlobalV::NSPIN; is++)
+    {
+        rho_atom[is] = new double[chr->rhopw->nrxx];
+        ModuleBase::GlobalFunc::ZEROS(rho_atom[is], chr->rhopw->nrxx);
+    }
+    chr->atomic_rho(GlobalV::NSPIN, omega_old, rho_atom, sf->strucFac, ucell);
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2) schedule(static, 512)
 #endif
-        chr->rhopw->nx,
-        chr->rhopw->ny,
-        chr->rhopw->nz,
-        &ucell,
-        "NOW",
-        chr->rho);
+    for (int is = 0; is < GlobalV::NSPIN; is++)
+    {
+        for (int ir = 0; ir < chr->rhopw->nrxx; ir++)
+        {
+            chr->rho[is][ir] -= rho_atom[is][ir];
+            chr->rho[is][ir] *= omega_old;
+        }
+    }
 
     if(rho_extr == 1)
     {
         GlobalV::ofs_running << " NEW-OLD atomic charge density approx. for the potential !" << std::endl;
+
+        if (pot_order > 1)
+        {
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2) schedule(static, 512)
+#endif
+            for (int is = 0; is < GlobalV::NSPIN; is++)
+            {
+                for (int ir = 0; ir < chr->rhopw->nrxx; ir++)
+                {
+                    delta_rho1[is][ir] = chr->rho[is][ir];
+                }
+            }
+        }
     }
     // first order extrapolation
     else if(rho_extr ==2)
     {
         GlobalV::ofs_running << " first order charge density extrapolation !" << std::endl;
 
-        // read charge difference into delta_rho1
-        double** delta_rho1 = new double*[GlobalV::NSPIN];
-        for (int is = 0; is < GlobalV::NSPIN; is++)
-        {
-            delta_rho1[is] = new double[chr->rhopw->nrxx];
-        }
-        read_files(
-#ifdef __MPI
-            Pgrid,
-#endif
-            chr->rhopw->nx,
-            chr->rhopw->ny,
-            chr->rhopw->nz,
-            &ucell,
-            "OLD1",
-            delta_rho1);
-
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static, 128)
 #endif
-        for(int is=0; is<GlobalV::NSPIN; is++)
-        {
-            for(int ir=0; ir<chr->rhopw->nrxx; ir++)
-            {
-                chr->rho[is][ir] = 2 * chr->rho[is][ir] - delta_rho1[is][ir];
-            }
-        }
-
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
-            delete[] delta_rho1[is];
+            for (int ir = 0; ir < chr->rhopw->nrxx; ir++)
+            {
+                delta_rho2[is][ir] = delta_rho1[is][ir];
+                delta_rho1[is][ir] = chr->rho[is][ir];
+                chr->rho[is][ir] = 2 * delta_rho1[is][ir] - delta_rho2[is][ir];
+            }
         }
-        delete[] delta_rho1;
     }
     // second order extrapolation
     else
@@ -155,62 +183,45 @@ void Charge_Extra::extrapolate_charge(
 
         find_alpha_and_beta(ucell.nat);
 
-        // read charge difference into delta_rho1 and delta_rho2
-        double** delta_rho1 = new double*[GlobalV::NSPIN];
-        double** delta_rho2 = new double*[GlobalV::NSPIN];
+        const int one_add_alpha = 1 + alpha;
+        const int beta_alpha = beta - alpha;
+
+        double** delta_rho3 = new double*[GlobalV::NSPIN];
         for(int is=0; is<GlobalV::NSPIN; is++)
         {
-            delta_rho1[is] = new double[chr->rhopw->nrxx];
-            delta_rho2[is] = new double[chr->rhopw->nrxx];
+            delta_rho3[is] = new double[chr->rhopw->nrxx];
         }
-        read_files(
-#ifdef __MPI
-            Pgrid,
-#endif
-            chr->rhopw->nx,
-            chr->rhopw->ny,
-            chr->rhopw->nz,
-            &ucell,
-            "OLD1",
-            delta_rho1);
-        read_files(
-#ifdef __MPI
-            Pgrid,
-#endif
-            chr->rhopw->nx,
-            chr->rhopw->ny,
-            chr->rhopw->nz,
-            &ucell,
-            "OLD2",
-            delta_rho2);
-
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static, 64)
 #endif
-        for(int is=0; is<GlobalV::NSPIN; is++)
+        for (int is = 0; is < GlobalV::NSPIN; is++)
         {
-            for(int ir=0; ir<chr->rhopw->nrxx; ir++)
+            for (int ir = 0; ir < chr->rhopw->nrxx; ir++)
             {
-                chr->rho[is][ir] = chr->rho[is][ir] + alpha * (chr->rho[is][ir] - delta_rho1[is][ir])
-                                   + beta * (delta_rho1[is][ir] - delta_rho2[is][ir]);
+                delta_rho3[is][ir] = delta_rho2[is][ir];
+                delta_rho2[is][ir] = delta_rho1[is][ir];
+                delta_rho1[is][ir] = chr->rho[is][ir];
+                chr->rho[is][ir]
+                    = one_add_alpha * delta_rho1[is][ir] + beta_alpha * delta_rho2[is][ir] - beta * delta_rho3[is][ir];
             }
         }
 
         for(int is=0; is<GlobalV::NSPIN; is++)
         {
-            delete[] delta_rho1[is];
-            delete[] delta_rho2[is];
+            delete[] delta_rho3[is];
         }
-        delete[] delta_rho1;
-        delete[] delta_rho2;
+        delete[] delta_rho3;
     }
 
     sf->setup_structure_factor(&ucell, chr->rhopw);
-    double** rho_atom = new double*[GlobalV::NSPIN];
-    for (int is = 0; is < GlobalV::NSPIN; is++)
-    {
-        rho_atom[is] = new double[chr->rhopw->nrxx];
-    }
+    ModuleBase::OMP_PARALLEL([&](int num_threads, int thread_id) {
+        int irbeg, irlen;
+        ModuleBase::BLOCK_TASK_DIST_1D(num_threads, thread_id, chr->rhopw->nrxx, 512, irbeg, irlen);
+        for (int is = 0; is < GlobalV::NSPIN; is++)
+        {
+            ModuleBase::GlobalFunc::ZEROS(rho_atom[is] + irbeg, irlen);
+        }
+    });
     chr->atomic_rho(GlobalV::NSPIN, ucell.omega, rho_atom, sf->strucFac, ucell);
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static, 512)
@@ -224,13 +235,15 @@ void Charge_Extra::extrapolate_charge(
         }
     }
 
+    omega_old = ucell.omega;
+
     for(int is=0; is<GlobalV::NSPIN; is++)
     {
         delete[] rho_atom[is];
     }
     delete[] rho_atom;
+    ModuleBase::timer::tick("Charge_Extra", "extrapolate_charge");
     return;
-
 }
 
 void Charge_Extra::find_alpha_and_beta(const int& natom)
