@@ -77,36 +77,18 @@ class Charge_Extra
      */
     void update_all_dis(const UnitCell& ucell);
 
-    /**
-     * @brief save the difference of the convergent charge density and the initial atomic charge density
-     *
-     * @param istep the current step
-     * @param ucell the cell information
-     * @param pw_big big PW basis
-     * @param chr the charge density
-     * @param sf the structure factor
-     */
-    void save_files(const int& istep,
-                    const UnitCell& ucell,
-#ifdef __MPI
-                    const ModulePW::PW_Basis_Big* pw_big,
-#endif
-                    const Charge* chr,
-                    const Structure_Factor* sf) const;
-
   private:
     int istep = 0; ///< the current step
     int pot_order; ///< the specified charge extrapolation method
     int rho_extr;  ///< the actually used method
     double omega_old; ///< the old volume of the last step
-    int natom;        ///< the number of atoms
 
     ModuleBase::Vector3<double>* dis_old1 = nullptr; ///< dis_old2 = pos_old1 - pos_old2
     ModuleBase::Vector3<double>* dis_old2 = nullptr; ///< dis_old1 = pos_now - pos_old1
     ModuleBase::Vector3<double>* dis_now = nullptr;  ///< dis_now = pos_next - pos_now
 
-    double** delta_rho1 = nullptr; ///< the last step difference of rho and atomic_rho
-    double** delta_rho2 = nullptr; ///< the second last step difference of rho and atomic_rho
+    std::vector<std::vector<double>> delta_rho1; ///< the last step difference of rho and atomic_rho
+    std::vector<std::vector<double>> delta_rho2; ///< the second last step difference of rho and atomic_rho
 
     double alpha; ///< parameter used in the second order extrapolation
     double beta;  ///< parameter used in the second order extrapolation
@@ -117,28 +99,6 @@ class Charge_Extra
      * @param natom the number of atoms
      */
     void find_alpha_and_beta(const int& natom);
-
-    /**
-     * @brief read cube files containing the charge difference of previous steps
-     *
-     * @param Pgrid parallel grids
-     * @param nx number of grids along x
-     * @param ny number of grids along y
-     * @param nz number of grids along z
-     * @param ucell the cell information
-     * @param tag determine the index of files
-     * @param data the data read from files
-     */
-    void read_files(
-#ifdef __MPI
-        Parallel_Grid* Pgrid,
-#endif
-        const int& nx,
-        const int& ny,
-        const int& nz,
-        const UnitCell* ucell,
-        const std::string& tag,
-        double** data);
 };
 
 #endif

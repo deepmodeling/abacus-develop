@@ -12,16 +12,6 @@ Charge_Extra::Charge_Extra()
 
 Charge_Extra::~Charge_Extra()
 {
-    if (pot_order > 1)
-    {
-        for (int is = 0; is < GlobalV::NSPIN; is++)
-        {
-            delete[] delta_rho1[is];
-            delete[] delta_rho2[is];
-        }
-        delete[] delta_rho1;
-        delete[] delta_rho2;
-    }
     if(pot_order == 3)
     {
         delete[] dis_old1;
@@ -55,18 +45,10 @@ void Charge_Extra::Init_CE(const int& natom, const double& volume, const int& nr
 
     if (pot_order > 1)
     {
-        delta_rho1 = new double*[GlobalV::NSPIN];
-        delta_rho2 = new double*[GlobalV::NSPIN];
-        for (int is = 0; is < GlobalV::NSPIN; is++)
-        {
-            delta_rho1[is] = new double[nrxx];
-            delta_rho2[is] = new double[nrxx];
-            ModuleBase::GlobalFunc::ZEROS(delta_rho1[is], nrxx);
-            ModuleBase::GlobalFunc::ZEROS(delta_rho2[is], nrxx);
-        }
+        delta_rho1.resize(GlobalV::NSPIN, std::vector<double>(nrxx, 0.0));
+        delta_rho2.resize(GlobalV::NSPIN, std::vector<double>(nrxx, 0.0));
     }
 
-    this->natom = natom;
     this->omega_old = volume;
 
     if(pot_order == 3)
@@ -125,7 +107,6 @@ void Charge_Extra::extrapolate_charge(
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
         rho_atom[is] = new double[chr->rhopw->nrxx];
-        ModuleBase::GlobalFunc::ZEROS(rho_atom[is], chr->rhopw->nrxx);
     }
     chr->atomic_rho(GlobalV::NSPIN, omega_old, rho_atom, sf->strucFac, ucell);
 #ifdef _OPENMP
@@ -186,11 +167,7 @@ void Charge_Extra::extrapolate_charge(
         const double one_add_alpha = 1 + alpha;
         const double beta_alpha = beta - alpha;
 
-        double** delta_rho3 = new double*[GlobalV::NSPIN];
-        for(int is=0; is<GlobalV::NSPIN; is++)
-        {
-            delta_rho3[is] = new double[chr->rhopw->nrxx];
-        }
+        std::vector<std::vector<double>> delta_rho3(GlobalV::NSPIN, std::vector<double>(chr->rhopw->nrxx, 0.0));
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static, 64)
 #endif
@@ -205,23 +182,17 @@ void Charge_Extra::extrapolate_charge(
                     = one_add_alpha * delta_rho1[is][ir] + beta_alpha * delta_rho2[is][ir] - beta * delta_rho3[is][ir];
             }
         }
-
-        for(int is=0; is<GlobalV::NSPIN; is++)
-        {
-            delete[] delta_rho3[is];
-        }
-        delete[] delta_rho3;
     }
 
     sf->setup_structure_factor(&ucell, chr->rhopw);
-    ModuleBase::OMP_PARALLEL([&](int num_threads, int thread_id) {
-        int irbeg, irlen;
-        ModuleBase::BLOCK_TASK_DIST_1D(num_threads, thread_id, chr->rhopw->nrxx, 512, irbeg, irlen);
-        for (int is = 0; is < GlobalV::NSPIN; is++)
-        {
-            ModuleBase::GlobalFunc::ZEROS(rho_atom[is] + irbeg, irlen);
-        }
-    });
+    // ModuleBase::OMP_PARALLEL([&](int num_threads, int thread_id) {
+    //     int irbeg, irlen;
+    //     ModuleBase::BLOCK_TASK_DIST_1D(num_threads, thread_id, chr->rhopw->nrxx, 512, irbeg, irlen);
+    //     for (int is = 0; is < GlobalV::NSPIN; is++)
+    //     {
+    //         ModuleBase::GlobalFunc::ZEROS(rho_atom[is] + irbeg, irlen);
+    //     }
+    // });
     chr->atomic_rho(GlobalV::NSPIN, ucell.omega, rho_atom, sf->strucFac, ucell);
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static, 512)
@@ -326,136 +297,4 @@ void Charge_Extra::update_all_dis(const UnitCell& ucell)
         assert(iat == ucell.nat);
     }
     return;
-}
-
-void Charge_Extra::save_files(const int& istep,
-                              const UnitCell& ucell,
-#ifdef __MPI
-                              const ModulePW::PW_Basis_Big* pw_big,
-#endif
-                              const Charge* chr,
-                              const Structure_Factor* sf) const
-{
-    // rename OLD1_SPIN*_CHG.cube to OLD2_SPIN*_CHG.cube
-    if (istep > 1 && pot_order == 3 && GlobalV::MY_RANK == 0)
-    {
-        for (int is = 0; is < GlobalV::NSPIN; ++is)
-        {
-            std::string old_name = GlobalV::global_out_dir + "OLD1_SPIN" + std::to_string(is + 1) + "_CHG.cube";
-            std::string new_name = GlobalV::global_out_dir + "OLD2_SPIN" + std::to_string(is + 1) + "_CHG.cube";
-            if (std::rename(old_name.c_str(), new_name.c_str()) == -1)
-            {
-                std::cout << "old file: " << old_name << std::endl;
-                std::cout << "new file: " << new_name << std::endl;
-                std::cout << "std::rename error: " << strerror(errno) << std::endl;
-            }
-        }
-    }
-
-    // rename NOW_SPIN*_CHG.cube to OLD1_SPIN*_CHG.cube
-    if (istep > 0 && pot_order > 1 && GlobalV::MY_RANK == 0)
-    {
-        for (int is = 0; is < GlobalV::NSPIN; ++is)
-        {
-            std::string old_name = GlobalV::global_out_dir + "NOW_SPIN" + std::to_string(is + 1) + "_CHG.cube";
-            std::string new_name = GlobalV::global_out_dir + "OLD1_SPIN" + std::to_string(is + 1) + "_CHG.cube";
-            if (std::rename(old_name.c_str(), new_name.c_str()) == -1)
-            {
-                std::cout << "old file: " << old_name << std::endl;
-                std::cout << "new file: " << new_name << std::endl;
-                std::cout << "std::rename error: " << strerror(errno) << std::endl;
-            }
-        }
-    }
-
-    // obtain the difference between chr->rho and atomic_rho
-    double** rho_atom = new double*[GlobalV::NSPIN];
-    for (int is = 0; is < GlobalV::NSPIN; is++)
-    {
-        rho_atom[is] = new double[chr->rhopw->nrxx];
-
-        ModuleBase::GlobalFunc::ZEROS(rho_atom[is], chr->rhopw->nrxx);
-    }
-    chr->atomic_rho(GlobalV::NSPIN, ucell.omega, rho_atom, sf->strucFac, ucell);
-
-#ifdef _OPENMP
-#pragma omp parallel for collapse(2) schedule(static, 512)
-#endif
-    for (int is = 0; is < GlobalV::NSPIN; is++)
-    {
-        for (int ir = 0; ir < chr->rhopw->nrxx; ir++)
-        {
-            rho_atom[is][ir] = chr->rho[is][ir] - rho_atom[is][ir];
-            rho_atom[is][ir] *= ucell.omega;
-        }
-    }
-
-    // save NOW_SPIN*_CHG.cube
-    for (int is = 0; is < GlobalV::NSPIN; ++is)
-    {
-        std::string filename = GlobalV::global_out_dir + "NOW_SPIN" + std::to_string(is + 1) + "_CHG.cube";
-        ModuleIO::write_cube(
-#ifdef __MPI
-            pw_big->bz,
-            pw_big->nbz,
-            chr->rhopw->nplane,
-            chr->rhopw->startz_current,
-#endif
-            rho_atom[is],
-            is,
-            GlobalV::NSPIN,
-            0,
-            filename,
-            chr->rhopw->nx,
-            chr->rhopw->ny,
-            chr->rhopw->nz,
-            0.0,
-            &ucell,
-            12);
-    }
-
-    for (int is = 0; is < GlobalV::NSPIN; is++)
-    {
-        delete[] rho_atom[is];
-    }
-    delete[] rho_atom;
-}
-
-void Charge_Extra::read_files(
-#ifdef __MPI
-    Parallel_Grid* Pgrid,
-#endif
-    const int& nx,
-    const int& ny,
-    const int& nz,
-    const UnitCell* ucell,
-    const std::string& tag,
-    double** data)
-{
-    double ef = 0.0;
-    int prenspin = 1;
-
-    for (int is = 0; is < GlobalV::NSPIN; ++is)
-    {
-        std::string filename = GlobalV::global_out_dir + tag + "_SPIN" + std::to_string(is + 1) + "_CHG.cube";
-        ModuleIO::read_cube(
-#ifdef __MPI
-            Pgrid,
-#endif
-            GlobalV::MY_RANK,
-            GlobalV::ESOLVER_TYPE,
-            GlobalV::RANK_IN_STOGROUP,
-            is,
-            GlobalV::ofs_running,
-            GlobalV::NSPIN,
-            filename,
-            data[is],
-            nx,
-            ny,
-            nz,
-            ef,
-            ucell,
-            prenspin,
-            false);
-    }
 }
