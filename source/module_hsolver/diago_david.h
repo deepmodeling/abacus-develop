@@ -196,7 +196,8 @@ class DiagoDavid : public DiagH<T, Device>
 
     using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
 
-    const T* one = nullptr, * zero = nullptr, * neg_one = nullptr;
+    const T *one = nullptr, *zero = nullptr, *neg_one = nullptr;
+    const T one_ = static_cast<T>(1.0), zero_ = static_cast<T>(0.0), neg_one_ = static_cast<T>(-1.0);
 };
 } // namespace hsolver
 

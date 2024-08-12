@@ -42,9 +42,9 @@ DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in,
     this->device = base_device::get_device_type<Device>(this->ctx);
     this->precondition = precondition_in;
 
-    this->one = new T(static_cast<T>(1.0));
-    this->zero = new T(static_cast<T>(0.0));
-    this->neg_one = new T(static_cast<T>(-1.0));
+    this->one = &one_;
+    this->zero = &zero_;
+    this->neg_one = &neg_one_;
 
     test_david = 2;
     // 1: check which function is called and which step is executed
@@ -130,9 +130,6 @@ DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in,
 template <typename T, typename Device>
 DiagoDavid<T, Device>::~DiagoDavid()
 {
-    delete this->one;
-    delete this->zero;
-    delete this->neg_one;
     delmem_complex_op()(this->ctx, this->basis);
     delmem_complex_op()(this->ctx, this->hpsi);
     delmem_complex_op()(this->ctx, this->spsi);
