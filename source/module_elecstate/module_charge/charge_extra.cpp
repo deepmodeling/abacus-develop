@@ -183,8 +183,8 @@ void Charge_Extra::extrapolate_charge(
 
         find_alpha_and_beta(ucell.nat);
 
-        const int one_add_alpha = 1 + alpha;
-        const int beta_alpha = beta - alpha;
+        const double one_add_alpha = 1 + alpha;
+        const double beta_alpha = beta - alpha;
 
         double** delta_rho3 = new double*[GlobalV::NSPIN];
         for(int is=0; is<GlobalV::NSPIN; is++)
