@@ -75,7 +75,7 @@ Notice: These packages will be downloaded by `wget` from `github.com`, which is 
 
 Instead of github.com, we offer other package station, you can use it by:
 ```shell
-wget https://bohrium-api.dp.tech/ds-dl/abacus-deps-93wi-v2 -O abacus-deps-v3.zip
+wget https://bohrium-api.dp.tech/ds-dl/abacus-deps-93wi-v3 -O abacus-deps-v3.zip
 ```
 `unzip` it ,and you can do offline installation of these packages above after rename. The above station will be updated handly but one should notice that the version will always lower than github repo.
 
