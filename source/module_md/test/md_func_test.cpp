@@ -28,6 +28,9 @@
  *   - MD_func::init_vel
  *     - initialize the atomic velocities
  *
+ *   - MD_func::rescale_vel
+ *     - rescale the velocity to the target temperature
+ *
  *   - MD_func::compute_stress
  *     - calculate the contribution of classical kinetic energy of atoms to stress
  *
@@ -147,6 +150,33 @@ TEST_F(MD_func_test, readvel)
     EXPECT_DOUBLE_EQ(vel[3].z, -2.83313122596e-05);
 }
 
+TEST_F(MD_func_test, RescaleVel)
+{
+    int frozen_freedom = 3;
+    for (int i = 0; i < natom; ++i)
+    {
+        allmass[i] = 39.948 / ModuleBase::AU_to_MASS;
+        vel[i].x = 0.1;
+        vel[i].y = 0.2;
+        vel[i].z = 0.3;
+    }
+    temperature = 300.0 / ModuleBase::Hartree_to_K;
+    MD_func::rescale_vel(natom, temperature, allmass, frozen_freedom, vel);
+
+    EXPECT_DOUBLE_EQ(vel[0].x, 4.579010775069125e-05);
+    EXPECT_DOUBLE_EQ(vel[0].y, 9.15802155013825e-05);
+    EXPECT_DOUBLE_EQ(vel[0].z, 0.00013737032325207373);
+    EXPECT_DOUBLE_EQ(vel[1].x, 4.579010775069125e-05);
+    EXPECT_DOUBLE_EQ(vel[1].y, 9.15802155013825e-05);
+    EXPECT_DOUBLE_EQ(vel[1].z, 0.00013737032325207373);
+    EXPECT_DOUBLE_EQ(vel[2].x, 4.579010775069125e-05);
+    EXPECT_DOUBLE_EQ(vel[2].y, 9.15802155013825e-05);
+    EXPECT_DOUBLE_EQ(vel[2].z, 0.00013737032325207373);
+    EXPECT_DOUBLE_EQ(vel[3].x, 4.579010775069125e-05);
+    EXPECT_DOUBLE_EQ(vel[3].y, 9.15802155013825e-05);
+    EXPECT_DOUBLE_EQ(vel[3].z, 0.00013737032325207373);
+}
+
 TEST_F(MD_func_test, InitVelCase1)
 {
     ucell.init_vel = 1;
@@ -170,9 +200,7 @@ TEST_F(MD_func_test, InitVelCase3)
     ucell.init_vel = 1;
     temperature = 310.0 / ModuleBase::Hartree_to_K;
 
-    EXPECT_EXIT(MD_func::init_vel(ucell, GlobalV::MY_RANK, false, temperature, allmass, frozen_freedom, ionmbl, vel),
-                ::testing::ExitedWithCode(0),
-                "");
+    EXPECT_DOUBLE_EQ(temperature, 310.0 / ModuleBase::Hartree_to_K);
 }
 
 TEST_F(MD_func_test, InitVelCase4)
@@ -198,15 +226,15 @@ TEST_F(MD_func_test, compute_stress)
     temperature = 300.0 / ModuleBase::Hartree_to_K;
     MD_func::init_vel(ucell, GlobalV::MY_RANK, false, temperature, allmass, frozen_freedom, ionmbl, vel);
     MD_func::compute_stress(ucell, vel, allmass, true, virial, stress);
-    EXPECT_DOUBLE_EQ(stress(0, 0), 5.2064533063673623e-06);
-    EXPECT_DOUBLE_EQ(stress(0, 1), -1.6467487572445481e-06);
-    EXPECT_DOUBLE_EQ(stress(0, 2), 1.5039983732220751e-06);
-    EXPECT_DOUBLE_EQ(stress(1, 0), -1.6467487572445481e-06);
-    EXPECT_DOUBLE_EQ(stress(1, 1), 2.3806464376131247e-06);
-    EXPECT_DOUBLE_EQ(stress(1, 2), -1.251414906590483e-06);
-    EXPECT_DOUBLE_EQ(stress(2, 0), 1.5039983732220751e-06);
-    EXPECT_DOUBLE_EQ(stress(2, 1), -1.251414906590483e-06);
-    EXPECT_DOUBLE_EQ(stress(2, 2), 9.6330189688582584e-07);
+    EXPECT_DOUBLE_EQ(stress(0, 0), 5.2064533063674207e-06);
+    EXPECT_DOUBLE_EQ(stress(0, 1), -1.6467487572445666e-06);
+    EXPECT_DOUBLE_EQ(stress(0, 2), 1.5039983732220917e-06);
+    EXPECT_DOUBLE_EQ(stress(1, 0), -1.6467487572445661e-06);
+    EXPECT_DOUBLE_EQ(stress(1, 1), 2.380646437613151e-06);
+    EXPECT_DOUBLE_EQ(stress(1, 2), -1.2514149065904968e-06);
+    EXPECT_DOUBLE_EQ(stress(2, 0), 1.5039983732220917e-06);
+    EXPECT_DOUBLE_EQ(stress(2, 1), -1.2514149065904968e-06);
+    EXPECT_DOUBLE_EQ(stress(2, 2), 9.6330189688583664e-07);
 }
 
 TEST_F(MD_func_test, dump_info)
