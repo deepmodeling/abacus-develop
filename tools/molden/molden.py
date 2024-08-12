@@ -265,7 +265,7 @@ class GTORadials:
         out += "\n"
         return out
 
-def fit_radial_with_gto(nao, ngto, l, r):
+def fit_radial_with_gto(nao, ngto, l, r, rel_r=2):
     """fit one radial function mapped on grid with GTOs
     
     Args:
@@ -295,7 +295,7 @@ def fit_radial_with_gto(nao, ngto, l, r):
                 dorb = dorb[1:]
             return np.sum((dorb/r**l)**2)
     
-    def gto_guess(nao, ngto, l, r):
+    def gto_guess(nao, ngto, l, r, rel_r=2):
         """generate the initial guess for the coefficients and exponents of GTOs.
         The GTO has form like c * exp(-a * r^2) * r^l, where c is the coefficient,
         the l will push the maxima from r = 0 to positive value. On the other hand
@@ -303,13 +303,14 @@ def fit_radial_with_gto(nao, ngto, l, r):
         , where the mu as taken to be zero. 
         Therefore a = 1/(2*sigma^2), sigma = 1/sqrt(2*a). We set 3sigma = rmax, then
         the smallest a is guessed to be 9/(2*rmax^2), then the second smallest to be
-        a*2, and so on. c is set as the generalized cosine value between function to
-        fit and the GTO with c = 1 and a setted.
+        a*rel_r, which means the sigma will be shrink by factor sqrt(rel_r), and so 
+        on. c is set as the generalized cosine value between function to fit and the 
+        GTO with c = 1 and a setted.
         """
         amin = 3**2 / (2 * r[-1]**2)
         a_init = np.zeros(ngto)
         for i in range(ngto):
-            a_init[i] = amin * 2**(i + 1)
+            a_init[i] = amin * rel_r**(i + 1)
         c_init = np.zeros(ngto)
         for i in range(ngto):
             model = GTORadials._build_gto(a_init[i], 1, l, r)
@@ -317,7 +318,7 @@ def fit_radial_with_gto(nao, ngto, l, r):
             c_init[i] /= np.sqrt(simpson(model**2 * r**2, x=r))
         return np.concatenate((a_init, c_init))
 
-    init = gto_guess(nao, ngto, l, r)
+    init = gto_guess(nao, ngto, l, r, rel_r)
     
     # bounds for c and a
     bounds = [(0, np.inf) for i in range(ngto)] + [(-np.inf, np.inf) for i in range(ngto)]
@@ -398,7 +399,7 @@ def read_nao(fpath):
 
     return {'elem': elem, 'ecut': ecut, 'rcut': rcut, 'nr': nr, 'dr': dr, 'chi': chi}
 
-def convert_nao_to_gto(fnao, fgto = None, ngto: int = 7):
+def convert_nao_to_gto(fnao, fgto = None, ngto: int = 7, rel_r: float = 2):
     """convert the numerical atomic orbitals to GTOs. Each chi (or say the zeta function)
     corresponds to a CGTO (contracted GTO), and the GTOs are fitted to the radial functions.
     Which also means during the SCF, the coefficient inside each CGTO is unchanged, while the
@@ -417,7 +418,7 @@ def convert_nao_to_gto(fnao, fgto = None, ngto: int = 7):
     for l in range(lmax+1):
         nchi = len(nao["chi"][l])
         for i in range(nchi):
-            a, c = fit_radial_with_gto(nao["chi"][l][i], ngto, l, rgrid)
+            a, c = fit_radial_with_gto(nao["chi"][l][i], ngto, l, rgrid, rel_r)
             gto.register_cgto(a, c, l, symbol, 'a')
     
     # draw the fitted GTOs
@@ -888,7 +889,7 @@ def indexing_mo(total_gto: GTORadials, labels: list):
                 i += 2*l+1
     return out
 
-def moldengen(folder: str, ndigits=3, ngto=7, fmolden="ABACUS.molden"):
+def moldengen(folder: str, ndigits=3, ngto=7, rel_r=2, fmolden="ABACUS.molden"):
     """Entrance function: generate molden file by reading the outdir of ABACUS, for only LCAO 
     calculation.
     
@@ -952,7 +953,7 @@ def moldengen(folder: str, ndigits=3, ngto=7, fmolden="ABACUS.molden"):
     
     total_gto = GTORadials()
     for forb in forbs:
-        gto = convert_nao_to_gto(forb, None, ngto)
+        gto = convert_nao_to_gto(forb, None, ngto, rel_r)
         total_gto.NumericalRadials.append(gto.NumericalRadials[0])
         total_gto.symbols.append(gto.symbols[0])
     out += write_molden_gto(total_gto, labels_kinds_map)
@@ -1228,7 +1229,6 @@ SP   1   1.00
         print(out)
 
     def est_fit_radial_with_gto(self):
-        from SIAB.spillage.orbio import read_nao
         import numpy as np
 
         # read the numerical atomic orbitals
@@ -1315,17 +1315,20 @@ def _argparse():
     -f, --folder: the folder of the ABACUS calculation, in which the STRU, INPUT, KPT, and OUT* folders are located.
     -n, --ndigits: the number of digits for the MO coefficients. For MO coefficients smaller than 10^-n, they will be set to 0.
     -g, --ngto: the number of GTOs to fit ABACUS NAOs. The default is 7.
+    -r, --rel_r: the relative cutoff radius for the GTOs. The default is 2.
     -o, --output: the output Molden file name. The default is ABACUS.molden.
     """
     import argparse
-    parser = argparse.ArgumentParser(description="Generate Molden file from ABACUS LCAO calculation")
-    welcome = """Once meet any problem, please submit an issue at:\n
-https://github.com/deepmodeling/abacus-develop/issues\n
+    parser = argparse.ArgumentParser(description="Generate Molden file from ABACUS LCAO calculation via NAO2GTO method")
+    welcome = """WARNING: use at your own risk because the NAO2GTO will not always conserve the shape of radial function, therefore
+the total number of electrons may not be conserved. Always use after a re-normalization operation.
+Once meet any problem, please submit an issue at: https://github.com/deepmodeling/abacus-develop/issues
     """
     parser.epilog = welcome
     parser.add_argument("-f", "--folder", type=str, help="the folder of the ABACUS calculation")
     parser.add_argument("-n", "--ndigits", type=int, default=3, help="the number of digits for the MO coefficients")
     parser.add_argument("-g", "--ngto", type=int, default=7, help="the number of GTOs to fit ABACUS NAOs")
+    parser.add_argument("-r", "--rel_r", type=int, default=2, help="the relative cutoff radius for the GTOs")
     parser.add_argument("-o", "--output", type=str, default="ABACUS.molden", help="the output Molden file name")
     args = parser.parse_args()
     return args
@@ -1333,9 +1336,11 @@ https://github.com/deepmodeling/abacus-develop/issues\n
 if __name__ == "__main__":
     #unittest.main(exit=False)
     args = _argparse()
-    moldengen(args.folder, args.ndigits, args.ngto, args.output)
+    moldengen(args.folder, args.ndigits, args.ngto, args.rel_r, args.output)
     print(" ".join("*"*10).center(80, " "))
-    print(f"MOLDEN: Generated Molden file {args.output} from ABACUS calculation in folder {args.folder}")
+    print(f"""MOLDEN: Generated Molden file {args.output} from ABACUS calculation in folder {args.folder}.
+WARNING: use at your own risk because the NAO2GTO will not always conserve the shape of radial function, therefore
+the total number of electrons may not be conserved. Always use after a re-normalization operation.""")
     citation = """If you use this script in your research, please cite the following paper:\n
 ABACUS:
 Li P, Liu X, Chen M, et al. Large-scale ab initio simulations based on systematically improvable atomic basis[J]. 
