@@ -18,6 +18,16 @@ Sto_Func<REAL>::Sto_Func(){}
 
 template class Sto_Func<double>;
 
+template<typename REAL>
+StoChe<REAL>::StoChe(const int& nche, const int& method, const REAL& emax_sto, const REAL& emin_sto)
+{
+    this->nche = nche;
+}
+template<typename REAL>
+StoChe<REAL>::~StoChe(){}
+
+template class StoChe<double>;
+
 Stochastic_hchi::Stochastic_hchi(){};
 Stochastic_hchi::~Stochastic_hchi(){};
 
@@ -28,18 +38,13 @@ Stochastic_Iter::Stochastic_Iter()
     method = 2;
 }
 
-Stochastic_Iter::~Stochastic_Iter()
-{
-    delete p_che;
-    delete[] spolyv;
-    delete[] chiallorder;
-}
+Stochastic_Iter::~Stochastic_Iter(){};
 
-void Stochastic_Iter::init(const int method_in, K_Vectors* pkv, ModulePW::PW_Basis_K *wfc_basis, Stochastic_WF &stowf)
+void Stochastic_Iter::init(K_Vectors* pkv, ModulePW::PW_Basis_K *wfc_basis, Stochastic_WF &stowf, StoChe<double> &stoche)
 {
     this->nchip = stowf.nchip;;
     this->targetne = 1;
-    this->method = method_in;
+    this->method = stoche.method_sto;
 }
 
 void Stochastic_Iter::orthog(const int& ik,
@@ -123,11 +128,13 @@ Charge::~Charge(){};
 class TestHSolverPW_SDFT : public ::testing::Test
 {
 	public:
+    TestHSolverPW_SDFT():stoche(8,1,0,0){}
     ModulePW::PW_Basis_K pwbk;
     Stochastic_WF stowf;
     K_Vectors kv;
     wavefunc wf;
-    hsolver::HSolverPW_SDFT hs_d = hsolver::HSolverPW_SDFT(&kv, &pwbk, &wf, stowf, 0);
+    StoChe<double> stoche;
+    hsolver::HSolverPW_SDFT hs_d = hsolver::HSolverPW_SDFT(&kv, &pwbk, &wf, stowf, stoche, false);
 
     hamilt::Hamilt<std::complex<double>> hamilt_test_d;
 

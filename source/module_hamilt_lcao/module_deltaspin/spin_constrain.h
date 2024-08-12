@@ -12,6 +12,7 @@
 #include "module_cell/klist.h"
 #include "module_cell/unitcell.h"
 #include "module_hsolver/hsolver.h"
+#include "module_hsolver/hsolver_lcao.h"
 
 struct ScAtomData;
 

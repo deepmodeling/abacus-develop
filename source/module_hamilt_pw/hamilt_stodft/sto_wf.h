@@ -2,9 +2,9 @@
 #define STOCHASTIC_WF_H
 
 #include "module_base/complexmatrix.h"
+#include "module_basis/module_pw/pw_basis_k.h"
 #include "module_cell/klist.h"
 #include "module_psi/psi.h"
-#include "module_basis/module_pw/pw_basis_k.h"
 
 //----------------------------------------------
 // Generate stochastic wave functions
@@ -32,6 +32,13 @@ class Stochastic_WF
     int npwx = 0;         ///< max ngk[ik] in all processors
     int nbands_diag = 0;  ///< number of bands obtained from diagonalization
     int nbands_total = 0; ///< number of bands in total, nbands_total=nchi+nbands_diag;
+  public:
+    // Tn(H)|chi>
+    ModuleBase::ComplexMatrix* chiallorder = nullptr;
+    // allocate chiallorder
+    void allocate_chiallorder(const int& norder);
+    // chiallorder cost too much memories and should be cleaned after scf.
+    void clean_chiallorder();
 };
 // init stochastic orbitals
 void Init_Sto_Orbitals(Stochastic_WF& stowf, const int seed_in);

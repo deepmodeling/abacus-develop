@@ -638,6 +638,7 @@ OBJS_SRCPW=H_Ewald_pw.o\
     soc.o\
     sto_iter.o\
     sto_hchi.o\
+    sto_che.o\
     sto_wf.o\
     sto_func.o\
     sto_forces.o\
