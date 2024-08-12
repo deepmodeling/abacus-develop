@@ -157,11 +157,19 @@ namespace ModuleESolver
                 ModuleBase::WARNING_QUIT("ESolver_KS_PW::hamilt2density", "psig lifetime is expired");
             }
 
-            // from HSolverLIP
-            this->phsol->solve(this->p_hamilt,        // hamilt::Hamilt<T>* pHamilt,
-                this->kspw_psi[0],     // psi::Psi<T>& psi,
-                this->pelec,           // elecstate::ElecState<T>* pelec,
-                psig.lock().get()[0]); // psi::Psi<T>& transform,
+            // // from HSolverLIP
+            // this->phsol->solve(this->p_hamilt,        // hamilt::Hamilt<T>* pHamilt,
+            //     this->kspw_psi[0],     // psi::Psi<T>& psi,
+            //     this->pelec,           // elecstate::ElecState<T>* pelec,
+            //     psig.lock().get()[0]); // psi::Psi<T>& transform,
+
+
+            hsolver::HSolverLIP<T> hsolver_lip_obj(this->pw_wfc);
+            hsolver_lip_obj.solve(this->p_hamilt, 
+                                  this->kspw_psi[0], 
+                                  this->pelec, 
+                                  psig.lock().get()[0], 
+                                  false);
 
             if (PARAM.inp.out_bandgap)
             {
