@@ -47,14 +47,14 @@ void Charge_Extra::Init_CE(const int& nspin,
         ModuleBase::WARNING_QUIT("Charge_Extra","charge extrapolation method is not available !");
     }
 
+    this->omega_old = volume;
+    this->nspin = nspin;
+
     if (pot_order > 1)
     {
         delta_rho1.resize(this->nspin, std::vector<double>(nrxx, 0.0));
         delta_rho2.resize(this->nspin, std::vector<double>(nrxx, 0.0));
     }
-
-    this->omega_old = volume;
-    this->nspin = nspin;
 
     if(pot_order == 3)
     {
