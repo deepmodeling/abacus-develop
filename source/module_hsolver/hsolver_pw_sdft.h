@@ -33,12 +33,7 @@ class HSolverPW_SDFT : public HSolverPW<std::complex<double>>
                        const bool skip_charge) override;
 
     virtual double set_diagethr(double diag_ethr_in, const int istep, const int iter, const double drho) override;
-
-    virtual double cal_hsolerror(const double diag_ethr_in) override
-    {
-        return 0.0;
-    }
-
+    
     void set_KS_ne(const double& KS_ne_in)
     {
         stoiter.KS_ne = KS_ne_in;

@@ -1,0 +1,11 @@
+INPUT_PARAMETERS
+basis_type lcao
+calculation scf
+pseudo_dir ../../../tests/PP_ORB
+orbital_dir ../../../tests/PP_ORB
+nspin 1
+scf_thr 1e-7
+out_wfc_lcao 1
+gamma_only 1
+ks_solver genelpa
+ecutwfc 100

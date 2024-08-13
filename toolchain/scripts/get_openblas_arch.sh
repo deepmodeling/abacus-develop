@@ -3,13 +3,13 @@
 # TODO: Review and if possible fix shellcheck errors.
 # shellcheck disable=all
 
-# Last Update in 2024-0219
+# Last Update in 2024-0811
 
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")" && pwd -P)"
 
-openblas_ver="0.3.25" # Keep in sync with install_openblas.sh
-openblas_sha256="4c25cb30c4bb23eddca05d7d0a85997b8db6144f5464ba7f8c09ce91e2f35543"
+openblas_ver="0.3.27" # Keep in sync with install_openblas.sh
+openblas_sha256="aa2d68b1564fe2b13bc292672608e9cdeeeb6dc34995512e65c3b10f4599e897"
 openblas_pkg="OpenBLAS-${openblas_ver}.tar.gz"
 
 source "${SCRIPT_DIR}"/common_vars.sh

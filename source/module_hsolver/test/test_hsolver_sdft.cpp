@@ -123,7 +123,6 @@ Charge::~Charge(){};
  *      - skip charge;
  *  - 2. hsolver::HSolverPW_SDFT::diagethr (for cases below)
  * 		- set_diagethr, for setting diagethr;
- * 		- cal_hsolerror, for calculate actually diagethr;
  */
 class TestHSolverPW_SDFT : public ::testing::Test
 {

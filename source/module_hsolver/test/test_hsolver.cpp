@@ -24,8 +24,6 @@ template class hsolver::HSolver<std::complex<double>, base_device::DEVICE_CPU>;
  * 		- stodft case;
  *  - hsolver::HSolver::diagethr (for cases below)
  * 		- set_diagethr, for setting diagethr;
- *  	- reset_diagethr, for updating diagethr;
- * 		- cal_hsolerror, for calculate actually diagethr;
  *  - hsolver::DiagH (for cases below)
  *      - diag() for Psi(FPTYPE) case
  *      - destructor of DiagH and HSolver
@@ -83,19 +81,7 @@ TEST_F(TestHSolver, diagethr)
     float test_diagethr = hs_f.set_diagethr(0.0, 0, 0, 0.0);
 	EXPECT_EQ(test_diagethr, 0.0);
 
-    test_diagethr = hs_f.reset_diagethr(temp_ofs, 0.0, 0.0, 0.0);
-	EXPECT_EQ(test_diagethr, 0.0);
-
-    test_diagethr = hs_f.cal_hsolerror(0.0);
-	EXPECT_EQ(test_diagethr, 0.0);
-
 	double test_diagethr_d = hs_d.set_diagethr(0.0, 0, 0, 0.0);
-	EXPECT_EQ(test_diagethr_d, 0.0);
-
-    test_diagethr_d = hs_d.reset_diagethr(temp_ofs, 0.0, 0.0, 0.0);
-	EXPECT_EQ(test_diagethr_d, 0.0);
-
-    test_diagethr_d = hs_d.cal_hsolerror(0.0);
 	EXPECT_EQ(test_diagethr_d, 0.0);
 }
 namespace hsolver

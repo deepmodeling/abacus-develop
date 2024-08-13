@@ -3,14 +3,14 @@
 # TODO: Review and if possible fix shellcheck errors.
 # shellcheck disable=all
 
-# Last Update in 2024-0219
+# Last Update in 2024-0811
 
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 
 # From https://elpa.mpcdf.mpg.de/software/tarball-archive/ELPA_TARBALL_ARCHIVE.html
-elpa_ver="2023.05.001"
-elpa_sha256="ec64be5d6522810d601a3b8e6a31720e3c3eb4af33a434d8a64570d76e6462b6"
+elpa_ver="2024.03.001"
+elpa_sha256="41c6cbf56d2dac26443faaba8a77307d261bf511682a64b96e24def77c813622"
 
 
 source "${SCRIPT_DIR}"/common_vars.sh
@@ -52,7 +52,7 @@ case "$with_elpa" in
         # extra LDFLAGS needed
         cray_ldflags="-dynamic"
       fi
-      enable_openmp="no"
+      # enable_openmp="no"
     fi
 
     if verify_checksums "${install_lock_file}"; then
@@ -76,7 +76,7 @@ case "$with_elpa" in
       AVX512_flags=""
       FMA_flag=""
       SSE4_flag=""
-      config_flags="--disable-avx --disable-avx2 --disable-avx512 --disable-sse --disable-sse-assembly"
+      config_flags="--disable-avx-kernels --disable-avx2-kernels --disable-avx512-kernels --disable-sse-kernels --disable-sse-assembly-kernels"
       if [ "${TARGET_CPU}" = "native" ]; then
         if [ -f /proc/cpuinfo ] && [ "${OPENBLAS_ARCH}" = "x86_64" ]; then
           has_AVX=$(grep '\bavx\b' /proc/cpuinfo 1> /dev/null && echo 'yes' || echo 'no')
@@ -91,7 +91,7 @@ case "$with_elpa" in
           grep '\bavx512cd\b' /proc/cpuinfo 1> /dev/null && AVX512_flags+=" -mavx512cd"
           grep '\bavx512bw\b' /proc/cpuinfo 1> /dev/null && AVX512_flags+=" -mavx512bw"
           grep '\bavx512vl\b' /proc/cpuinfo 1> /dev/null && AVX512_flags+=" -mavx512vl"
-          config_flags="--enable-avx=${has_AVX} --enable-avx2=${has_AVX2} --enable-avx512=${has_AVX512}"
+          config_flags="--enable-avx-kernels=${has_AVX} --enable-avx2-kernels=${has_AVX2} --enable-avx512-kernels=${has_AVX512}"
         fi
       fi
       for TARGET in "cpu" "nvidia"; do

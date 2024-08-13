@@ -1,5 +1,5 @@
 # The ABACUS Toolchain
-Version 2024.1
+Version 2024.2
 
 ## Author
 [QuantumMisaka](https://github.com/QuantumMisaka) 
@@ -19,7 +19,7 @@ and give setup files that you can use to compile ABACUS.
 ## Todo
 
 - [x] `gnu-openblas` toolchain support for `openmpi` and `mpich`.
-- [x] `intel-mkl-mpi` toolchain support using `icc` or `icx`. (`icx` version of ABACUS have some problem now, please be cautious)
+- [x] `intel-mkl-mpi` toolchain support using `icc`/`icpc`/`ifort` or `icx`/`icpx`/`ifort`. (`icx` as default, but will have problem for ELPA in AMD machine, one can specify `--with-intel-classic=yes` to use `icc`), 
 - [x] `intel-mkl-mpich` toolchain support.
 - [x] Automatic installation of [CEREAL](https://github.com/USCiLab/cereal) and [LIBNPY](https://github.com/llohse/libnpy) (by github.com)
 - [x] Support for [LibRI](https://github.com/abacusmodeling/LibRI) by submodule or automatic installation from github.com (but installed LibRI via `wget` seems to have some problem, please be cautious)
@@ -75,14 +75,14 @@ Notice: These packages will be downloaded by `wget` from `github.com`, which is 
 
 Instead of github.com, we offer other package station, you can use it by:
 ```shell
-wget https://bohrium-api.dp.tech/ds-dl/abacus-deps-93wi-v2 -O abacus-deps-v2.zip
+wget https://bohrium-api.dp.tech/ds-dl/abacus-deps-93wi-v3 -O abacus-deps-v3.zip
 ```
 `unzip` it ,and you can do offline installation of these packages above after rename. The above station will be updated handly but one should notice that the version will always lower than github repo.
 
 If one want to install ABACUS by toolchain OFFLINE, 
 one can manually download all the packages from [cp2k-static/download](https://www.cp2k.org/static/downloads) or official website
 and put them in *build* directory by formatted name
-like *fftw-3.3.10.tar.gz*, or *openmpi-4.1.5.tar.gz*, 
+like *fftw-3.3.10.tar.gz*, or *openmpi-5.0.3.tar.gz*, 
 then run this toolchain. 
 All package will be detected and installed automatically. 
 Also, one can install parts of packages OFFLINE and parts of packages ONLINE
@@ -96,22 +96,22 @@ just by using this toolchain
 ```
 
 The needed dependencies version default:
-- `cmake` 3.28.1
+- `cmake` 3.30.0
 - `gcc` 13.2.0 (which will always NOT be installed, But use system)
-- `OpenMPI` 5.0.0
+- `OpenMPI` 5.0.3
 - `MPICH` 4.1.2
-- `OpenBLAS` 0.3.25 (Intel toolchain need `get_vars.sh` tool from it)
+- `OpenBLAS` 0.3.27 (Intel toolchain need `get_vars.sh` tool from it)
 - `ScaLAPACK` 2.2.1
 - `FFTW` 3.3.10
 - `LibXC` 6.2.2
-- `ELPA` 2023.05.001
+- `ELPA` 2024.03.001
 - `CEREAL` 1.3.2
 - `RapidJSON` 1.1.0
 And Intel-oneAPI need user or server manager to manually install from Intel.
 [Intel-oneAPI](https://www.intel.cn/content/www/cn/zh/developer/tools/oneapi/toolkits.html)
 
 Dependencies below are optional， which is NOT installed by default:
-- `LibTorch` 2.0.1
+- `LibTorch` 2.1.2
 - `Libnpy` 1.0.1
 - `LibRI` 0.1.1
 - `LibComm` 0.1.0
