@@ -185,14 +185,6 @@ void Charge_Extra::extrapolate_charge(
     }
 
     sf->setup_structure_factor(&ucell, chr->rhopw);
-    // ModuleBase::OMP_PARALLEL([&](int num_threads, int thread_id) {
-    //     int irbeg, irlen;
-    //     ModuleBase::BLOCK_TASK_DIST_1D(num_threads, thread_id, chr->rhopw->nrxx, 512, irbeg, irlen);
-    //     for (int is = 0; is < GlobalV::NSPIN; is++)
-    //     {
-    //         ModuleBase::GlobalFunc::ZEROS(rho_atom[is] + irbeg, irlen);
-    //     }
-    // });
     chr->atomic_rho(GlobalV::NSPIN, ucell.omega, rho_atom, sf->strucFac, ucell);
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static, 512)
