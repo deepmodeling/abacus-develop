@@ -235,7 +235,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
                 this->pelec->charge->rho[is],
                 is,
                 GlobalV::NSPIN,
-                0,
+                istep,
                 ss.str(),
                 this->pw_rhod->nx,
                 this->pw_rhod->ny,
@@ -262,7 +262,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
                 this->pelec->pot->get_effective_v(is),
                 is,
                 GlobalV::NSPIN,
-                0, // iter
+                istep,
                 ss.str(),
                 this->pw_rhod->nx,
                 this->pw_rhod->ny,

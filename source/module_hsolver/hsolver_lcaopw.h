@@ -30,7 +30,7 @@ namespace hsolver {
             psi::Psi<T>& psi,
             elecstate::ElecState* pes,
             psi::Psi<T>& transform,
-            const bool skip_charge) override;
+            const bool skip_charge);
 
     protected:
 

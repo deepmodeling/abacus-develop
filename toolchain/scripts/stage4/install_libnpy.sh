@@ -47,8 +47,8 @@ case "$with_libnpy" in
             report_error "failed to download $url"
             recommend_offline_installation $filename $url
             fi
-        # checksum
-        checksum "$filename" "$libnpy_sha256"
+            # checksum
+            checksum "$filename" "$libnpy_sha256"
         fi
         echo "Installing from scratch into ${pkg_install_dir}"
         [ -d $dirname ] && rm -rf $dirname

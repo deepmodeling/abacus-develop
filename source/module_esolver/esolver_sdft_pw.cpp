@@ -29,6 +29,7 @@ namespace ModuleESolver
 {
 
 ESolver_SDFT_PW::ESolver_SDFT_PW()
+    : stoche(PARAM.inp.nche_sto, PARAM.inp.method_sto, PARAM.inp.emax_sto, PARAM.inp.emin_sto)
 {
     classname = "ESolver_SDFT_PW";
     basisname = "PW";
@@ -92,7 +93,6 @@ void ESolver_SDFT_PW::before_all_runners(const Input_para& inp, UnitCell& ucell)
 
     // 9) initialize the stochastic wave functions
     stowf.init(&kv, pw_wfc->npwk_max);
-
     if (inp.nbands_sto != 0)
     {
         if (inp.initsto_ecut < inp.ecutwfc)
@@ -107,6 +107,10 @@ void ESolver_SDFT_PW::before_all_runners(const Input_para& inp, UnitCell& ucell)
     else
     {
         Init_Com_Orbitals(this->stowf);
+    }
+    if (this->method_sto == 2)
+    {
+        stowf.allocate_chiallorder(this->nche_sto);
     }
 
     size_t size = stowf.chi0->size();
@@ -123,7 +127,8 @@ void ESolver_SDFT_PW::before_all_runners(const Input_para& inp, UnitCell& ucell)
     }
 
     // 9) initialize the hsolver
-    this->phsol = new hsolver::HSolverPW_SDFT(&kv, pw_wfc, &wf, this->stowf, inp.method_sto);
+    // It should be removed after esolver_ks does not use phsol.
+    this->phsol = new hsolver::HSolverPW_SDFT(&this->kv, this->pw_wfc, &this->wf, this->stowf, this->stoche, this->init_psi);
 
     return;
 }
@@ -137,45 +142,16 @@ void ESolver_SDFT_PW::before_scf(const int istep)
     }
 }
 
-void ESolver_SDFT_PW::iter_finish(int iter)
+void ESolver_SDFT_PW::iter_finish(int& iter)
 {
-    // this->pelec->print_eigenvalue(GlobalV::ofs_running);
-    this->pelec->cal_energies(2);
+    // call iter_finish() of ESolver_KS
+    ESolver_KS<std::complex<double>>::iter_finish(iter);
 }
 
 void ESolver_SDFT_PW::after_scf(const int istep)
 {
-    // 1) call after_scf() of ESolver_FP
-    ESolver_FP::after_scf(istep);
-
-    if (PARAM.inp.out_chg > 0)
-    {
-        for (int is = 0; is < GlobalV::NSPIN; is++)
-        {
-            std::stringstream ssc;
-            ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG.cube";
-            const double ef_tmp = this->pelec->eferm.get_efval(is);
-            ModuleIO::write_cube(
-#ifdef __MPI
-                pw_big->bz,
-                pw_big->nbz,
-                pw_rhod->nplane,
-                pw_rhod->startz_current,
-#endif
-                pelec->charge->rho_save[is],
-                is,
-                GlobalV::NSPIN,
-                0,
-                ssc.str(),
-                pw_rhod->nx,
-                pw_rhod->ny,
-                pw_rhod->nz,
-                ef_tmp,
-                &(GlobalC::ucell));
-        }
-    }
-
-    ModuleIO::output_convergence_after_scf(this->conv_elec, this->pelec->f_en.etot);
+    // 1) call after_scf() of ESolver_KS_PW
+    ESolver_KS_PW<std::complex<double>>::after_scf(istep);
 }
 
 void ESolver_SDFT_PW::hamilt2density(int istep, int iter, double ethr)
@@ -198,21 +174,27 @@ void ESolver_SDFT_PW::hamilt2density(int istep, int iter, double ethr)
 
     hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX = GlobalV::PW_DIAG_NMAX;
 
-    this->phsol->solve(this->p_hamilt,
-                       this->psi[0],
-                       this->pelec,
-                       pw_wfc,
-                       this->stowf,
-                       istep,
-                       iter,
-                       GlobalV::KS_SOLVER,
+    // hsolver only exists in this function
+    hsolver::HSolverPW_SDFT hsolver_pw_sdft_obj(&this->kv, this->pw_wfc, &this->wf, this->stowf, this->stoche, this->init_psi);
 
-                       hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER,
-                       hsolver::DiagoIterAssist<std::complex<double>>::need_subspace,
-                       hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX,
-                       hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR,
+    hsolver_pw_sdft_obj.solve(this->p_hamilt,
+                              this->psi[0],
+                              this->pelec,
+                              pw_wfc,
+                              this->stowf,
+                              istep,
+                              iter,
+                              GlobalV::KS_SOLVER,
+                              hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER,
+                              hsolver::DiagoIterAssist<std::complex<double>>::need_subspace,
+                              hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX,
+                              hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR,
+                              false);
+    this->init_psi = true;
 
-                       false);
+    // temporary 
+    // set_diagethr need it
+    ((hsolver::HSolverPW_SDFT*)phsol)->set_KS_ne(hsolver_pw_sdft_obj.stoiter.KS_ne);
 
     if (GlobalV::MY_STOGROUP == 0)
     {
@@ -272,8 +254,10 @@ void ESolver_SDFT_PW::after_all_runners()
     GlobalV::ofs_running << " --------------------------------------------\n\n" << std::endl;
     ModuleIO::write_istate_info(this->pelec->ekb, this->pelec->wg, kv, &(GlobalC::Pkpoints));
 
-    ((hsolver::HSolverPW_SDFT*)phsol)->stoiter.cleanchiallorder(); // release lots of memories
-
+    if (this->method_sto == 2)
+    {
+        stowf.clean_chiallorder(); // release lots of memories
+    }
     if (PARAM.inp.out_dos)
     {
         Sto_DOS sto_dos(this->pw_wfc,
@@ -281,7 +265,7 @@ void ESolver_SDFT_PW::after_all_runners()
                         this->pelec,
                         this->psi,
                         this->p_hamilt,
-                        (hsolver::HSolverPW_SDFT*)phsol,
+                        this->stoche,
                         &stowf);
         sto_dos.decide_param(PARAM.inp.dos_nche,
                              PARAM.inp.emin_sto,
@@ -304,7 +288,7 @@ void ESolver_SDFT_PW::after_all_runners()
                                 this->psi,
                                 &GlobalC::ppcell,
                                 this->p_hamilt,
-                                (hsolver::HSolverPW_SDFT*)phsol,
+                                this->stoche,
                                 &stowf);
         sto_elecond.decide_nche(PARAM.inp.cond_dt, 1e-8, this->nche_sto, PARAM.inp.emin_sto, PARAM.inp.emax_sto);
         sto_elecond.sKG(PARAM.inp.cond_smear,

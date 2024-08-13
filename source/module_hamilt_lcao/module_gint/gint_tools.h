@@ -9,6 +9,7 @@
 #include "module_base/array_pool.h"
 
 #include <cstdlib>
+#include <utility> // for std::pair
 
 namespace Gint_Tools
 {
@@ -288,22 +289,7 @@ ModuleBase::Array_Pool<double> get_psir_vlbr3(
     const double* const vldr3,         // vldr3[bxyz]
     const double* const* const psir_ylm); // psir_ylm[bxyz][LD_pool]
 
-// sum_nu rho_mu,nu psi_nu, for gamma point
-void mult_psi_DM(
-    const Grid_Technique& gt,
-    const int bxyz,
-    const int na_grid, // how many atoms on this (i,j,k) grid
-    const int LD_pool,
-    const int* const block_iw,         // block_iw[na_grid],	index of wave functions for each block
-    const int* const block_size,       // block_size[na_grid],	number of columns of a band
-    const int* const block_index,      // block_index[na_grid+1], count total number of atomis orbitals
-    const bool* const* const cal_flag, // cal_flag[bxyz][na_grid],	whether the atom-grid distance is larger than cutoff
-    const double* const* const psi,    // psir_vlbr3[bxyz][LD_pool]
-    double** psi_DM,
-    const double* const* const DM,
-    const bool if_symm);
-
-// sum_nu,R rho_mu,nu(R) psi_nu, for multi-k
+// sum_nu,R rho_mu,nu(R) psi_nu, for multi-k and gamma point
 void mult_psi_DMR(const Grid_Technique& gt,
                   const int bxyz,
                   const int LD_pool,
@@ -317,21 +303,14 @@ void mult_psi_DMR(const Grid_Technique& gt,
                   const hamilt::HContainer<double>* DM,
                   const bool if_symm);
 
-// sum_nu rho_mu,nu psi_nu, for gamma point
-void mult_psi_DM_new(
-    const Grid_Technique& gt,
-    const int bxyz,
-    const int& grid_index,
-    const int na_grid, // how many atoms on this (i,j,k) grid
-    const int LD_pool,
-    const int* const block_iw,         // block_iw[na_grid],	index of wave functions for each block
-    const int* const block_size,       // block_size[na_grid],	number of columns of a band
-    const int* const block_index,      // block_index[na_grid+1], count total number of atomis orbitals
-    const bool* const* const cal_flag, // cal_flag[bxyz][na_grid],	whether the atom-grid distance is larger than cutoff
-    const double* const* const psi,    // psir_vlbr3[bxyz][LD_pool]
-    double** psi_DM,
-    const hamilt::HContainer<double>* DM,
-    const bool if_symm);
 
+// pair.first is the first index of the meshcell which is inside atoms ia1 and ia2.
+// pair.second is the number of meshcells which should be calculated in the following gemm.
+// If no meshcell is inside both ia1 and ia2, return [bxyz, 0].
+std::pair<int, int> cal_info(const int bxyz, 
+			                 const int ia1,
+			                 const int ia2,
+			                 const bool* const* const cal_flag);
+            
 } // namespace Gint_Tools
 #endif

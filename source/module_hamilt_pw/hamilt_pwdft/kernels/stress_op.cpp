@@ -352,7 +352,6 @@ struct cal_stress_drhoc_aux_op<FPTYPE, base_device::DEVICE_CPU> {
                     const double omega,
                     int type) {
     const double FOUR_PI = 4.0 * 3.14159265358979323846;
-    FPTYPE rhocg1 = 0;
     // printf("%d,%d,%lf\n",ngg,mesh,omega);
 
 #ifdef _OPENMP
@@ -365,6 +364,7 @@ struct cal_stress_drhoc_aux_op<FPTYPE, base_device::DEVICE_CPU> {
 #endif
         for(int igl = 0;igl< ngg;igl++)
         {
+            FPTYPE rhocg1 = 0;
             //FPTYPE *aux = new FPTYPE[mesh];
             std::vector<FPTYPE> aux(mesh);
             for( int ir = 0;ir< mesh; ir++)

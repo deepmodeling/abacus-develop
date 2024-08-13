@@ -4,6 +4,7 @@
 #include "gint_tools.h"
 
 #include <cmath>
+#include <utility> // for std::pair
 
 #include "module_base/timer.h"
 #include "module_base/ylm.h"
@@ -191,5 +192,42 @@ void cal_dpsirr_ylm(
 		}
 		return psir_vlbr3;
 	}
+
+std::pair<int, int> cal_info(const int bxyz, 
+			                 const int ia1,
+			                 const int ia2,
+			                 const bool* const* const cal_flag)
+{
+	int ib_start = bxyz;
+	int ib_end = 0;
+	int ib_length = 0;
+	for(int ib=0; ib<bxyz; ++ib)
+	{
+		if(cal_flag[ib][ia1] && cal_flag[ib][ia2])
+		{
+		    ib_start = ib;
+			break;
+		}
+	}
+
+	if(ib_start == bxyz)
+	{
+		return std::make_pair(bxyz, 0);
+	}
+	else
+	{
+		for(int ib=bxyz-1; ib>=0; --ib)
+		{
+			if(cal_flag[ib][ia1] && cal_flag[ib][ia2])
+			{
+				ib_end = ib;
+				break;
+			}
+		}
+	}
+
+	ib_length = ib_end - ib_start + 1;
+	return std::make_pair(ib_start, ib_length);
+}
 
 } // namespace Gint_Tools

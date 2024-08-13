@@ -24,20 +24,19 @@ namespace ModuleESolver
         virtual void hamilt2density(const int istep, const int iter, const double ethr) override;
 
         void before_all_runners(const Input_para& inp, UnitCell& cell) override;
-        void iter_init(const int istep, const int iter) override;
         void after_all_runners()override;
 
     protected:
-
-        virtual void allocate_hsolver() override;
-        virtual void deallocate_hsolver() override;
-        virtual void allocate_hamilt() override;
-        virtual void deallocate_hamilt() override;
+      virtual void iter_init(const int istep, const int iter) override;
+      virtual void iter_finish(int& iter) override;
+      virtual void allocate_hsolver() override;
+      virtual void deallocate_hsolver() override;
+      virtual void allocate_hamilt() override;
+      virtual void deallocate_hamilt() override;
 
 #ifdef __EXX
         std::unique_ptr<Exx_Lip<T>> exx_lip;
         int two_level_step = 0;
-        virtual bool do_after_converge(int& iter) override;
 #endif
 
     };

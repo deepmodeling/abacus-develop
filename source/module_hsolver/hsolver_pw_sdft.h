@@ -11,10 +11,11 @@ class HSolverPW_SDFT : public HSolverPW<std::complex<double>>
                    ModulePW::PW_Basis_K* wfc_basis_in,
                    wavefunc* pwf_in,
                    Stochastic_WF& stowf,
-                   const int method_sto)
-        : HSolverPW(wfc_basis_in, pwf_in, false)
+                   StoChe<double>& stoche,
+                   const bool initialed_psi_in)
+        : HSolverPW(wfc_basis_in, pwf_in, initialed_psi_in)
     {
-        stoiter.init(method_sto, pkv, wfc_basis_in, stowf);
+        stoiter.init(pkv, wfc_basis_in, stowf, stoche);
     }
 
     virtual void solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
@@ -32,10 +33,10 @@ class HSolverPW_SDFT : public HSolverPW<std::complex<double>>
                        const bool skip_charge) override;
 
     virtual double set_diagethr(double diag_ethr_in, const int istep, const int iter, const double drho) override;
-
-    virtual double cal_hsolerror(const double diag_ethr_in) override
+    
+    void set_KS_ne(const double& KS_ne_in)
     {
-        return 0.0;
+        stoiter.KS_ne = KS_ne_in;
     }
 
     Stochastic_Iter stoiter;

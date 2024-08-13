@@ -123,6 +123,7 @@ void LCAO_deepks_io::save_npy_d(const int nat,
                                 const int *inl_l,
                                 const bool deepks_equiv,
                                 const std::vector<torch::Tensor> &d_tensor,
+                                const std::string& out_dir,
                                 const int rank)
 {
     ModuleBase::TITLE("LCAO_deepks_io", "save_npy_d");
@@ -148,8 +149,8 @@ void LCAO_deepks_io::save_npy_d(const int nat,
         const long unsigned dshape[] = {static_cast<unsigned long>(nat), static_cast<unsigned long>(des_per_atom)};
         if (rank == 0)
         {
-            //std::string file_dm_eig = GlobalV::global_out_dir + "dm_eig.npy";
-            std::string file_dm_eig = "dm_eig.npy";
+            std::string file_dm_eig = out_dir + "deepks_dm_eig.npy";
+            //std::string file_dm_eig = "dm_eig.npy";
             npy::SaveArrayAsNumpy(file_dm_eig, false, 2, dshape, npy_des);
         }
     }
@@ -167,8 +168,8 @@ void LCAO_deepks_io::save_npy_d(const int nat,
         const long unsigned dshape[] = {static_cast<unsigned long>(nat), static_cast<unsigned long>(des_per_atom)};
         if (rank == 0)
         {
-            //std::string file_dm_eig = GlobalV::global_out_dir + "dm_eig.npy";
-            std::string file_dm_eig = "dm_eig.npy";
+            std::string file_dm_eig = out_dir + "deepks_dm_eig.npy";
+            //std::string file_dm_eig = "dm_eig.npy";
             npy::SaveArrayAsNumpy(file_dm_eig, false, 2, dshape, npy_des);
         }        
     }
@@ -448,6 +449,7 @@ void LCAO_deepks_io::save_npy_v_delta_precalc(const int nat,
                                               const int nlocal, 
                                               const int des_per_atom,
                                               const torch::Tensor& v_delta_precalc_tensor,
+                                              const std::string& out_dir,
                                               const int rank)
 {
     ModuleBase::TITLE("LCAO_deepks_io", "save_npy_v_delta_precalc");
@@ -484,7 +486,8 @@ void LCAO_deepks_io::save_npy_v_delta_precalc(const int nat,
             }
         }
     }
-    npy::SaveArrayAsNumpy("v_delta_precalc.npy", false, 5, gshape, npy_v_delta_precalc);
+    const std::string file_vdpre = out_dir + "deepks_vdpre.npy";
+    npy::SaveArrayAsNumpy(file_vdpre, false, 5, gshape, npy_v_delta_precalc);
     return;
 }
 
@@ -495,6 +498,7 @@ void LCAO_deepks_io::save_npy_psialpha(const int nat,
                                        const int inlmax,
                                        const int lmaxd,
                                        const torch::Tensor &psialpha_tensor,
+                                       const std::string& out_dir,
                                        const int rank)
 {
     ModuleBase::TITLE("LCAO_deepks_io", "save_npy_psialpha");
@@ -529,7 +533,8 @@ void LCAO_deepks_io::save_npy_psialpha(const int nat,
             }
         }
     }
-    npy::SaveArrayAsNumpy("psialpha.npy", false, 5, gshape, npy_psialpha);
+    const std::string file_psialpha = out_dir + "deepks_psialpha.npy";
+    npy::SaveArrayAsNumpy(file_psialpha, false, 5, gshape, npy_psialpha);
     return;
 }
 
@@ -538,6 +543,7 @@ void LCAO_deepks_io::save_npy_gevdm(const int nat,
                                     const int inlmax,
                                     const int lmaxd,
                                     const torch::Tensor& gevdm_tensor,
+                                    const std::string& out_dir,
                                     const int rank)
 {
     ModuleBase::TITLE("LCAO_deepks_io", "save_npy_gevdm");
@@ -574,7 +580,8 @@ void LCAO_deepks_io::save_npy_gevdm(const int nat,
             }                
         }
     }
-    npy::SaveArrayAsNumpy("grad_evdm.npy", false, 5, gshape, npy_gevdm);
+    const std::string file_gevdm = out_dir + "deepks_gevdm.npy";
+    npy::SaveArrayAsNumpy(file_gevdm, false, 5, gshape, npy_gevdm);
     return;
 }
 

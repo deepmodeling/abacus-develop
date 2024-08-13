@@ -2,70 +2,76 @@
 #include <cassert>
 #include <cmath>
 #include <numeric>
+#include <map>
 #include "module_hamilt_pw/hamilt_pwdft/radial_proj.h"
 #include "module_base/constants.h"
 #include "module_base/matrix.h"
 #include "module_base/math_ylmreal.h"
 #include "module_base/spherical_bessel_transformer.h"
 
-void RadialProjection::RadialProjector::_build_sbtft_map(const std::vector<int>& l,
-                                                         std::vector<std::vector<int>>& map_)
+void RadialProjection::RadialProjector::_build_backward_map(const std::vector<std::vector<int>>& it2iproj,
+                                                            const std::vector<int>& iproj2l,
+                                                            std::vector<int>& irow2it,
+                                                            std::vector<int>& irow2iproj,
+                                                            std::vector<int>& irow2m)
 {
-    const int nrad = l.size();
-    int nchannel = 0;
-    for(auto l: l) { nchannel += 2*l+1; }
-    map_.resize(nrad);
-    int iproj = 0;
-    // m in sequence 0, 1, -1, 2, -2, ...
-    for(int i = 0; i < nrad; i++)
-    {
-        const int l_ = l[i];
-        map_[i].resize(2*l_+1);
-        std::iota(map_[i].begin(), map_[i].end(), iproj);
-        iproj += 2*l_+1;
-    }
-}
+    const int ntype = it2iproj.size(); // the ntype here only count the valid, that is, with the projector.
 
-void RadialProjection::RadialProjector::_irad_m_to_idx(const int irad,
-                                                       const int m,
-                                                       const std::vector<std::vector<int>>& map_,
-                                                       int& idx)
-{
-    idx = 0;
-    for(int i = 0; i < irad; i++)
+    int nproj_tot = 0; // count the total number of projectors (atom-position-irrelevant)
+    for(int it = 0; it < ntype; it++) // for all types with projector...
     {
-        idx += map_[i].size();
-    }
-    const int l = (map_[irad].size() - 1)/2;
-    assert(m <= l && m >= -l);
-    // the m is arranged in sequence 0, 1, -1, 2, -2, ...
-    // therefore
-    // 0 -1 -2 -3
-    // 0  2  4  6
-    //   +1 +2 +3
-    //    1  3  5
-    idx += (m > 0)? 2*m-1: -m*2;
-}
-
-void RadialProjection::RadialProjector::_idx_to_irad_m(const int idx,
-                                                       const std::vector<std::vector<int>>& map_,
-                                                       int& irad,
-                                                       int& m)
-{
-    const int nrad = map_.size();
-    int iproj = 0;
-    for(int i = 0; i < nrad; i++)
-    {
-        const int l = map_[i].size();
-        if(iproj <= idx && idx < iproj + 2*l+1)
+        for(auto& iproj: it2iproj[it]) // for each projector, the projector is indexed with global iproj
         {
-            irad = i;
-            m = (idx - iproj)/2;
-            return;
+            const int l = iproj2l[iproj]; // easily get the angular momentum of this projector
+            nproj_tot += (2*l + 1); // add 2l+1 to the total number of projectors
         }
-        iproj += 2*l+1;
     }
-    assert(false); // should not reach here
+    // resize/allcoate the memory for the output
+    irow2it.resize(nproj_tot);
+    irow2iproj.resize(nproj_tot);
+    irow2m.resize(nproj_tot);
+
+    int irow = 0;
+    for(int it = 0; it < ntype; it++)
+    {
+        const int nproj = it2iproj[it].size();
+        for(int iproj = 0; iproj < nproj; iproj++)
+        {
+            const int l = iproj2l[it2iproj[it][iproj]];
+            for(int m = -l; m <= l; m++)
+            {
+                irow2it[irow] = it;
+                irow2iproj[irow] = iproj;
+                irow2m[irow] = m;
+                irow++;
+            }
+        }
+    }
+}
+
+void RadialProjection::RadialProjector::_build_forward_map(const std::vector<std::vector<int>>& it2ia,
+                                                           const std::vector<std::vector<int>>& it2iproj,
+                                                           const std::vector<int>& iproj2l,
+                                                           std::map<std::tuple<int, int, int, int>, int>& itiaiprojm2irow)
+{
+    const int ntype = it2ia.size();
+    int irow = 0;
+    for(int it = 0; it < ntype; it++)
+    {
+        const int nproj = it2iproj[it].size();
+        for(auto& ia: it2ia[it]) // the index is from UnitCell, so it allows the case ia is not continuous
+        {
+            for(int iproj = 0; iproj < nproj; iproj++)
+            {
+                const int l = iproj2l[it2iproj[it][iproj]]; // what is the iproj of the i-th projector of it atomtype?
+                for(int m = -l; m <= l; m++)
+                {
+                    itiaiprojm2irow[std::make_tuple(it, ia, iproj, m)] = irow;
+                    irow++;
+                }
+            }
+        }
+    }
 }
 
 void RadialProjection::RadialProjector::_build_sbt_tab(const int nr,
@@ -226,3 +232,100 @@ void RadialProjection::_do_mask_on_radial(const int nr1,
 {
     /* the key here is to avoid any float-point overflow */
 }
+
+/**
+ * Additional-bidirectional mapping for the projector. 
+ * 
+ * These two methods are commented out because of minimal-implementation consideration.
+ */
+
+// void build_itiprojm_map(const std::vector<std::vector<int>>& it2iproj,
+//                         const std::vector<int>& iproj2l,
+//                         std::vector<int>& irow2it,
+//                         std::vector<int>& irow2iproj,
+//                         std::vector<int>& irow2m,
+//                         std::map<std::tuple<int, int, int>, int>& itiprojm2irow)
+// {
+//     const int ntype = it2iproj.size();
+
+//     int nproj_tot = 0;
+//     for(int it = 0; it < ntype; it++)
+//     {
+//         for(auto& iproj: it2iproj[it])
+//         {
+//             const int l = iproj2l[iproj];
+//             nproj_tot += (2*l + 1);
+//         }
+//     }
+//     irow2it.resize(nproj_tot);
+//     irow2iproj.resize(nproj_tot);
+//     irow2m.resize(nproj_tot);
+
+//     int irow = 0;
+//     for(int it = 0; it < ntype; it++)
+//     {
+//         const int nproj = it2iproj[it].size();
+//         for(int iproj = 0; iproj < nproj; iproj++)
+//         {
+//             const int l = iproj2l[it2iproj[it][iproj]];
+//             for(int m = -l; m <= l; m++)
+//             {
+//                 irow2it[irow] = it;
+//                 irow2iproj[irow] = iproj;
+//                 irow2m[irow] = m;
+//                 itiprojm2irow[std::make_tuple(it, iproj, m)] = irow;
+//                 irow++;
+//             }
+//         }
+//     }
+// }
+
+// void build_itiaiprojm_map(const std::vector<std::vector<int>>& it2ia,
+//                           const std::vector<std::vector<int>>& it2iproj,
+//                           const std::vector<int>& iproj2l,
+//                           std::vector<int>& irow2it,
+//                           std::vector<int>& irow2ia,
+//                           std::vector<int>& irow2iproj,
+//                           std::vector<int>& irow2m,
+//                           std::map<std::tuple<int, int, int, int>, int>& itiaiprojm2irow)
+// {
+//     const int ntype = it2ia.size();
+//     int nproj_tot = 0;
+//     for(int it = 0; it < ntype; it++)
+//     {
+//         for(auto& ia: it2ia[it])
+//         {
+//             for(auto& iproj: it2iproj[it])
+//             {
+//                 const int l = iproj2l[iproj];
+//                 nproj_tot += (2*l + 1);
+//             }
+//         }
+//     }
+//     irow2it.resize(nproj_tot);
+//     irow2ia.resize(nproj_tot);
+//     irow2iproj.resize(nproj_tot);
+//     irow2m.resize(nproj_tot);
+
+//     int irow = 0;
+//     for(int it = 0; it < ntype; it++)
+//     {
+//         const int nproj = it2iproj[it].size();
+//         for(auto& ia: it2ia[it])
+//         {
+//             for(int iproj = 0; iproj < nproj; iproj++)
+//             {
+//                 const int l = iproj2l[it2iproj[it][iproj]];
+//                 for(int m = -l; m <= l; m++)
+//                 {
+//                     irow2it[irow] = it;
+//                     irow2ia[irow] = ia;
+//                     irow2iproj[irow] = iproj;
+//                     irow2m[irow] = m;
+//                     itiaiprojm2irow[std::make_tuple(it, ia, iproj, m)] = irow;
+//                     irow++;
+//                 }
+//             }
+//         }
+//     }
+// }

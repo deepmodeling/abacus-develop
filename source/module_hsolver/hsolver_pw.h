@@ -45,13 +45,9 @@ class HSolverPW : public HSolver<T, Device>
                const bool need_subspace_in,
                const int diag_iter_max_in,
                const double iter_diag_thr_in,
-               const bool skip_charge) override;
-
-    virtual Real cal_hsolerror(const Real diag_ethr_in) override;
+               const bool skip_charge);
 
     virtual Real set_diagethr(Real diag_ethr_in, const int istep, const int iter, const Real drho) override;
-
-    virtual Real reset_diagethr(std::ofstream& ofs_running, const Real hsover_error, const Real drho, Real diag_ethr_in) override;
     
   protected:
     // diago caller

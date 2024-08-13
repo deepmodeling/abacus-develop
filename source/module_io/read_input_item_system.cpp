@@ -605,58 +605,32 @@ void ReadInput::item_system()
         Input_Item item("pseudo_dir");
         item.annotation = "the directory containing pseudo files";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            para.input.pseudo_dir = strvalue;
-        };
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if(para.input.pseudo_dir == "auto")
+            if(item.get_size() == 0)
             {
                 para.input.pseudo_dir = "";
             }
             else
             {
-                para.input.pseudo_dir = to_dir(para.input.pseudo_dir);
+                para.input.pseudo_dir = to_dir(strvalue);
             }
         };
-        item.get_final_value = [](Input_Item& item, const Parameter& para) {
-            if (para.input.pseudo_dir == "")
-            {
-                item.final_value << "auto";
-            }
-            else
-            {
-                item.final_value << para.input.pseudo_dir;
-            }
-        };
-        add_string_bcast(input.pseudo_dir);
+        sync_string(input.pseudo_dir);
         this->add_item(item);
     }
     {
         Input_Item item("orbital_dir");
         item.annotation = "the directory containing orbital files";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            para.input.orbital_dir = strvalue;
-        };
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if(para.input.orbital_dir == "auto")
+            if(item.get_size() == 0)
             {
                 para.input.orbital_dir = "";
             }
             else
             {
-                para.input.orbital_dir = to_dir(para.input.orbital_dir);
+                para.input.orbital_dir = to_dir(strvalue);
             }
         };
-        item.get_final_value = [](Input_Item& item, const Parameter& para) {
-            if (para.input.orbital_dir == "")
-            {
-                item.final_value << "auto";
-            }
-            else
-            {
-                item.final_value << para.input.orbital_dir;
-            }
-        };
-        add_string_bcast(input.orbital_dir);
+        sync_string(input.orbital_dir);
         this->add_item(item);
     }
     {

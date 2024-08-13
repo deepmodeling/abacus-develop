@@ -42,9 +42,9 @@ DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in,
     this->device = base_device::get_device_type<Device>(this->ctx);
     this->precondition = precondition_in;
 
-    this->one = &this->cs.one;
-    this->zero = &this->cs.zero;
-    this->neg_one = &this->cs.neg_one;
+    this->one = &one_;
+    this->zero = &zero_;
+    this->neg_one = &neg_one_;
 
     test_david = 2;
     // 1: check which function is called and which step is executed

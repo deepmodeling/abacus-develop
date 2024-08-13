@@ -89,8 +89,7 @@ void Force_LCAO<std::complex<double>>::cal_fedm(
     edm.init_DMR(*ra, &ucell);
     edm.cal_DMR();
     edm.sum_DMR_spin();
-    //
-    ModuleBase::timer::tick("Force_LCAO_k", "cal_edm_2d");
+
     //--------------------------------------------
     // summation \sum_{i,j} E(i,j)*dS(i,j)
     // BEGIN CALCULATION OF FORCE OF EACH ATOM

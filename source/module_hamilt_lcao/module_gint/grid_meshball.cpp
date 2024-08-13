@@ -9,7 +9,7 @@ Grid_MeshBall::~Grid_MeshBall()
 {
 }
 
-void Grid_MeshBall::init_meshball(void)
+void Grid_MeshBall::init_meshball()
 {	
 	ModuleBase::TITLE("Grid_MeshBall","init_meshball");
 
@@ -64,7 +64,8 @@ void Grid_MeshBall::init_meshball(void)
 			}
 		}
 	}
-	if(GlobalV::test_gridt)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "how many cells in meshball",this->meshball_ncells);
+	if(GlobalV::test_gridt) {ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "how many cells in meshball",this->meshball_ncells);
+}
 
 	// prepare for the second calculation.
 	this->meshball_positions = std::vector<std::vector<double>>(meshball_ncells, std::vector<double>(3, 0.0));
