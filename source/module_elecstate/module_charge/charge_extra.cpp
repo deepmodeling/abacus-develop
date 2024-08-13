@@ -20,21 +20,25 @@ Charge_Extra::~Charge_Extra()
     }
 }
 
-void Charge_Extra::Init_CE(const int& natom, const double& volume, const int& nrxx)
+void Charge_Extra::Init_CE(const int& nspin,
+                           const int& natom,
+                           const double& volume,
+                           const int& nrxx,
+                           const std::string chg_extrap)
 {
-    if(GlobalV::chg_extrap == "none")
+    if (chg_extrap == "none")
     {
         pot_order = 0;
     }
-    else if(GlobalV::chg_extrap == "atomic")
+    else if (chg_extrap == "atomic")
     {
         pot_order = 1;
     }
-    else if(GlobalV::chg_extrap == "first-order")
+    else if (chg_extrap == "first-order")
     {
         pot_order = 2;
     }
-    else if(GlobalV::chg_extrap == "second-order")
+    else if (chg_extrap == "second-order")
     {
         pot_order = 3;
     }
@@ -45,11 +49,12 @@ void Charge_Extra::Init_CE(const int& natom, const double& volume, const int& nr
 
     if (pot_order > 1)
     {
-        delta_rho1.resize(GlobalV::NSPIN, std::vector<double>(nrxx, 0.0));
-        delta_rho2.resize(GlobalV::NSPIN, std::vector<double>(nrxx, 0.0));
+        delta_rho1.resize(this->nspin, std::vector<double>(nrxx, 0.0));
+        delta_rho2.resize(this->nspin, std::vector<double>(nrxx, 0.0));
     }
 
     this->omega_old = volume;
+    this->nspin = nspin;
 
     if(pot_order == 3)
     {
@@ -68,7 +73,9 @@ void Charge_Extra::extrapolate_charge(
 #endif
     UnitCell& ucell,
     Charge* chr,
-    Structure_Factor* sf)
+    Structure_Factor* sf,
+    std::ofstream& ofs_running,
+    std::ofstream& ofs_warning)
 {
     ModuleBase::TITLE("Charge_Extra","extrapolate_charge");
     ModuleBase::timer::tick("Charge_Extra", "extrapolate_charge");
@@ -96,23 +103,23 @@ void Charge_Extra::extrapolate_charge(
     if(rho_extr == 0)
     {
         sf->setup_structure_factor(&ucell, chr->rhopw);
-        GlobalV::ofs_running << " charge density from previous step !" << std::endl;
+        ofs_running << " charge density from previous step !" << std::endl;
         return;
     }
 
 
     // if(lsda || noncolin) rho2zeta();
 
-    double** rho_atom = new double*[GlobalV::NSPIN];
-    for (int is = 0; is < GlobalV::NSPIN; is++)
+    double** rho_atom = new double*[this->nspin];
+    for (int is = 0; is < this->nspin; is++)
     {
         rho_atom[is] = new double[chr->rhopw->nrxx];
     }
-    chr->atomic_rho(GlobalV::NSPIN, omega_old, rho_atom, sf->strucFac, ucell);
+    chr->atomic_rho(this->nspin, omega_old, rho_atom, sf->strucFac, ucell);
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static, 512)
 #endif
-    for (int is = 0; is < GlobalV::NSPIN; is++)
+    for (int is = 0; is < this->nspin; is++)
     {
         for (int ir = 0; ir < chr->rhopw->nrxx; ir++)
         {
@@ -123,14 +130,14 @@ void Charge_Extra::extrapolate_charge(
 
     if(rho_extr == 1)
     {
-        GlobalV::ofs_running << " NEW-OLD atomic charge density approx. for the potential !" << std::endl;
+        ofs_running << " NEW-OLD atomic charge density approx. for the potential !" << std::endl;
 
         if (pot_order > 1)
         {
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static, 512)
 #endif
-            for (int is = 0; is < GlobalV::NSPIN; is++)
+            for (int is = 0; is < this->nspin; is++)
             {
                 for (int ir = 0; ir < chr->rhopw->nrxx; ir++)
                 {
@@ -142,12 +149,12 @@ void Charge_Extra::extrapolate_charge(
     // first order extrapolation
     else if(rho_extr ==2)
     {
-        GlobalV::ofs_running << " first order charge density extrapolation !" << std::endl;
+        ofs_running << " first order charge density extrapolation !" << std::endl;
 
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static, 128)
 #endif
-        for (int is = 0; is < GlobalV::NSPIN; is++)
+        for (int is = 0; is < this->nspin; is++)
         {
             for (int ir = 0; ir < chr->rhopw->nrxx; ir++)
             {
@@ -160,18 +167,18 @@ void Charge_Extra::extrapolate_charge(
     // second order extrapolation
     else
     {
-        GlobalV::ofs_running << " second order charge density extrapolation !" << std::endl;
+        ofs_running << " second order charge density extrapolation !" << std::endl;
 
-        find_alpha_and_beta(ucell.nat);
+        find_alpha_and_beta(ucell.nat, ofs_running, ofs_warning);
 
         const double one_add_alpha = 1 + alpha;
         const double beta_alpha = beta - alpha;
 
-        std::vector<std::vector<double>> delta_rho3(GlobalV::NSPIN, std::vector<double>(chr->rhopw->nrxx, 0.0));
+        std::vector<std::vector<double>> delta_rho3(this->nspin, std::vector<double>(chr->rhopw->nrxx, 0.0));
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static, 64)
 #endif
-        for (int is = 0; is < GlobalV::NSPIN; is++)
+        for (int is = 0; is < this->nspin; is++)
         {
             for (int ir = 0; ir < chr->rhopw->nrxx; ir++)
             {
@@ -185,11 +192,11 @@ void Charge_Extra::extrapolate_charge(
     }
 
     sf->setup_structure_factor(&ucell, chr->rhopw);
-    chr->atomic_rho(GlobalV::NSPIN, ucell.omega, rho_atom, sf->strucFac, ucell);
+    chr->atomic_rho(this->nspin, ucell.omega, rho_atom, sf->strucFac, ucell);
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static, 512)
 #endif
-    for(int is=0; is<GlobalV::NSPIN; is++)
+    for (int is = 0; is < this->nspin; is++)
     {
         for(int ir=0; ir<chr->rhopw->nrxx; ir++)
         {
@@ -200,7 +207,7 @@ void Charge_Extra::extrapolate_charge(
 
     omega_old = ucell.omega;
 
-    for(int is=0; is<GlobalV::NSPIN; is++)
+    for (int is = 0; is < this->nspin; is++)
     {
         delete[] rho_atom[is];
     }
@@ -209,7 +216,7 @@ void Charge_Extra::extrapolate_charge(
     return;
 }
 
-void Charge_Extra::find_alpha_and_beta(const int& natom)
+void Charge_Extra::find_alpha_and_beta(const int& natom, std::ofstream& ofs_running, std::ofstream& ofs_warning)
 {
     if(istep < 3) return;
 
@@ -244,7 +251,7 @@ void Charge_Extra::find_alpha_and_beta(const int& natom)
         alpha = 0.0;
         beta = 0.0;
 
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning,"in find_alpha_and beta()  det = ", det);
+        ModuleBase::GlobalFunc::OUT(ofs_warning, "in find_alpha_and beta()  det = ", det);
     }
 
     if(det > 1e-20)
@@ -263,8 +270,8 @@ void Charge_Extra::find_alpha_and_beta(const int& natom)
         }
     }
 
-    GlobalV::ofs_running << " alpha = " << alpha << std::endl;
-    GlobalV::ofs_running << " beta = " << beta << std::endl;
+    ofs_running << " alpha = " << alpha << std::endl;
+    ofs_running << " beta = " << beta << std::endl;
 
     return;
 }

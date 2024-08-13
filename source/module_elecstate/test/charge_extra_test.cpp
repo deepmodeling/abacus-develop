@@ -136,7 +136,9 @@ TEST_F(ChargeExtraTest, InitCEWarningQuit)
 {
     GlobalV::chg_extrap = "wwww";
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(CE.Init_CE(ucell->nat, ucell->omega, charge.rhopw->nrxx), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(CE.Init_CE(GlobalV::NSPIN, ucell->nat, ucell->omega, charge.rhopw->nrxx, GlobalV::chg_extrap),
+                ::testing::ExitedWithCode(0),
+                "");
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("charge extrapolation method is not available"));
 }
@@ -144,21 +146,21 @@ TEST_F(ChargeExtraTest, InitCEWarningQuit)
 TEST_F(ChargeExtraTest, InitCECase1)
 {
     GlobalV::chg_extrap = "none";
-    CE.Init_CE(ucell->nat, ucell->omega, charge.rhopw->nrxx);
+    CE.Init_CE(GlobalV::NSPIN, ucell->nat, ucell->omega, charge.rhopw->nrxx, GlobalV::chg_extrap);
     EXPECT_EQ(CE.pot_order, 0);
 }
 
 TEST_F(ChargeExtraTest, InitCECase2)
 {
     GlobalV::chg_extrap = "atomic";
-    CE.Init_CE(ucell->nat, ucell->omega, charge.rhopw->nrxx);
+    CE.Init_CE(GlobalV::NSPIN, ucell->nat, ucell->omega, charge.rhopw->nrxx, GlobalV::chg_extrap);
     EXPECT_EQ(CE.pot_order, 1);
 }
 
 TEST_F(ChargeExtraTest, InitCECase3)
 {
     GlobalV::chg_extrap = "first-order";
-    CE.Init_CE(ucell->nat, ucell->omega, charge.rhopw->nrxx);
+    CE.Init_CE(GlobalV::NSPIN, ucell->nat, ucell->omega, charge.rhopw->nrxx, GlobalV::chg_extrap);
     EXPECT_EQ(CE.pot_order, 2);
     EXPECT_NE(CE.delta_rho1.size(), 0);
     EXPECT_NE(CE.delta_rho2.size(), 0);
@@ -167,7 +169,7 @@ TEST_F(ChargeExtraTest, InitCECase3)
 TEST_F(ChargeExtraTest, InitCECase4)
 {
     GlobalV::chg_extrap = "second-order";
-    CE.Init_CE(ucell->nat, ucell->omega, charge.rhopw->nrxx);
+    CE.Init_CE(GlobalV::NSPIN, ucell->nat, ucell->omega, charge.rhopw->nrxx, GlobalV::chg_extrap);
     EXPECT_EQ(CE.pot_order, 3);
     EXPECT_DOUBLE_EQ(CE.alpha, 1.0);
     EXPECT_DOUBLE_EQ(CE.beta, 0.0);
@@ -181,12 +183,12 @@ TEST_F(ChargeExtraTest, InitCECase4)
 TEST_F(ChargeExtraTest, ExtrapolateChargeCase1)
 {
     GlobalV::chg_extrap = "second-order";
-    CE.Init_CE(ucell->nat, ucell->omega, charge.rhopw->nrxx);
+    CE.Init_CE(GlobalV::NSPIN, ucell->nat, ucell->omega, charge.rhopw->nrxx, GlobalV::chg_extrap);
     CE.istep = 0;
     CE.pot_order = 3;
 
     GlobalV::ofs_running.open("log");
-    CE.extrapolate_charge(*ucell.get(), &charge, &sf);
+    CE.extrapolate_charge(*ucell.get(), &charge, &sf, GlobalV::ofs_running, GlobalV::ofs_warning);
     GlobalV::ofs_running.close();
 
     // Check the results
@@ -203,12 +205,12 @@ TEST_F(ChargeExtraTest, ExtrapolateChargeCase1)
 TEST_F(ChargeExtraTest, ExtrapolateChargeCase2)
 {
     GlobalV::chg_extrap = "second-order";
-    CE.Init_CE(ucell->nat, ucell->omega, charge.rhopw->nrxx);
+    CE.Init_CE(GlobalV::NSPIN, ucell->nat, ucell->omega, charge.rhopw->nrxx, GlobalV::chg_extrap);
     CE.istep = 1;
     CE.pot_order = 3;
 
     GlobalV::ofs_running.open("log");
-    CE.extrapolate_charge(*ucell.get(), &charge, &sf);
+    CE.extrapolate_charge(*ucell.get(), &charge, &sf, GlobalV::ofs_running, GlobalV::ofs_warning);
     GlobalV::ofs_running.close();
 
     // Check the results
@@ -225,12 +227,12 @@ TEST_F(ChargeExtraTest, ExtrapolateChargeCase2)
 TEST_F(ChargeExtraTest, ExtrapolateChargeCase3)
 {
     GlobalV::chg_extrap = "second-order";
-    CE.Init_CE(ucell->nat, ucell->omega, charge.rhopw->nrxx);
+    CE.Init_CE(GlobalV::NSPIN, ucell->nat, ucell->omega, charge.rhopw->nrxx, GlobalV::chg_extrap);
     CE.istep = 2;
     CE.pot_order = 3;
 
     GlobalV::ofs_running.open("log");
-    CE.extrapolate_charge(*ucell.get(), &charge, &sf);
+    CE.extrapolate_charge(*ucell.get(), &charge, &sf, GlobalV::ofs_running, GlobalV::ofs_warning);
     GlobalV::ofs_running.close();
 
     // Check the results
@@ -247,11 +249,11 @@ TEST_F(ChargeExtraTest, ExtrapolateChargeCase3)
 TEST_F(ChargeExtraTest, ExtrapolateChargeCase4)
 {
     GlobalV::chg_extrap = "second-order";
-    CE.Init_CE(ucell->nat, ucell->omega, charge.rhopw->nrxx);
+    CE.Init_CE(GlobalV::NSPIN, ucell->nat, ucell->omega, charge.rhopw->nrxx, GlobalV::chg_extrap);
     CE.istep = 3;
 
     GlobalV::ofs_running.open("log");
-    CE.extrapolate_charge(*ucell.get(), &charge, &sf);
+    CE.extrapolate_charge(*ucell.get(), &charge, &sf, GlobalV::ofs_running, GlobalV::ofs_warning);
     GlobalV::ofs_running.close();
 
     // Check the results
@@ -269,7 +271,7 @@ TEST_F(ChargeExtraTest, ExtrapolateChargeCase4)
 TEST_F(ChargeExtraTest, UpdateAllDis)
 {
     GlobalV::chg_extrap = "second-order";
-    CE.Init_CE(ucell->nat, ucell->omega, charge.rhopw->nrxx);
+    CE.Init_CE(GlobalV::NSPIN, ucell->nat, ucell->omega, charge.rhopw->nrxx, GlobalV::chg_extrap);
     CE.istep = 3;
     for (int i = 0; i < ucell->nat; ++i)
     {
@@ -291,7 +293,7 @@ TEST_F(ChargeExtraTest, UpdateAllDis)
 TEST_F(ChargeExtraTest, FindAlphaAndBeta)
 {
     GlobalV::chg_extrap = "second-order";
-    CE.Init_CE(ucell->nat, ucell->omega, charge.rhopw->nrxx);
+    CE.Init_CE(GlobalV::NSPIN, ucell->nat, ucell->omega, charge.rhopw->nrxx, GlobalV::chg_extrap);
     CE.istep = 3;
     for (int i = 0; i < ucell->nat; ++i)
     {
@@ -302,7 +304,7 @@ TEST_F(ChargeExtraTest, FindAlphaAndBeta)
         }
     }
 
-    CE.find_alpha_and_beta(ucell->nat);
+    CE.find_alpha_and_beta(ucell->nat, GlobalV::ofs_running, GlobalV::ofs_warning);
 
     EXPECT_DOUBLE_EQ(CE.alpha, 1.0);
     EXPECT_DOUBLE_EQ(CE.beta, 0.0);

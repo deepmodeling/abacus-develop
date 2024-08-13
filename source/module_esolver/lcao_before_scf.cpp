@@ -189,7 +189,9 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
 #endif
             GlobalC::ucell,
             this->pelec->charge,
-            &(this->sf));
+            &(this->sf),
+            GlobalV::ofs_running,
+            GlobalV::ofs_warning);
     }
 
     //----------------------------------------------------------
