@@ -134,7 +134,7 @@ public:
                 nbasis_in, band_index2 - band_index1 + 1, nbasis_in, 
                 &one, h_mat_ptr, nbasis_in, 
                 psi_in + band_index1 * nbasis_in, nbasis_in,
-                &zero, hpsi_out + band_index1 * nbasis_in, nbasis_in);
+                &zero, hpsi_out, nbasis_in);
         };
 
         obj = std::make_unique<hsolver::Diago_DavSubspace<std::complex<double>, base_device::DEVICE_CPU>>(

@@ -67,14 +67,23 @@ def dav_subspace(
     v : NDArray[np.complex128]
         The eigenvectors corresponding to the eigenvalues.
     """
+     
     if is_occupied is None:
         is_occupied = [True] * nband
+    
+    if h_mat.ndim != 1 or h_mat.dtype != np.complex128:
+        h_mat = h_mat.flatten().astype(np.complex128, order='C')
+    if init_v.ndim != 1 or init_v.dtype != np.complex128:
+        init_v = init_v.flatten().astype(np.complex128, order='C')
     
     _diago_obj_dav_subspace = hsolver.diago_dav_subspace(nbasis, nband)
     _diago_obj_dav_subspace.set_psi(init_v)
     _diago_obj_dav_subspace.init_eigenvalue()
     
     comm_info = hsolver.diag_comm_info(0, 1)
+    assert dav_ndim > 1, "dav_ndim must be greater than 1."
+    assert dav_ndim * nband < nbasis * comm_info.nproc, "dav_ndim * nband must be less than nbasis * comm_info.nproc."
+   
     res = _diago_obj_dav_subspace.diag(
         h_mat,
         pre_condition,
