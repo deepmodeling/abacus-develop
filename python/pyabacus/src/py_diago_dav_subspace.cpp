@@ -32,11 +32,12 @@ void bind_diago_dav_subspace(py::module& m)
             for invoking this class is a function defined in _hsolver.py, 
             which uses this class to perform the calculations.
 
-            Args:
-                nbasis : int 
-                    The number of basis functions.
-                nband : int 
-                    The number of bands to be calculated.
+            Parameters
+            ----------
+            nbasis : int 
+                The number of basis functions.
+            nband : int 
+                The number of bands to be calculated.
         )pbdoc", "nbasis"_a, "nband"_a)
         .def("diag", &py_hsolver::PyDiagoDavSubspace::diag, R"pbdoc(
             Diagonalize the linear operator using the Davidson-Subspace Method.
