@@ -6,7 +6,7 @@ h_sparse = scipy.io.loadmat('./Si2.mat')['Problem']['A'][0, 0]
 h_mat = h_sparse.toarray()
 
 nbasis = h_mat.shape[0]
-nband = 16
+nband = 8
 
 v0 = np.random.rand(nbasis, nband)
 
@@ -28,7 +28,7 @@ e, v = hsolver.dav_subspace(
 
 print(e)
 
-e_scipy, v_scipy = scipy.sparse.linalg.eigsh(h_sparse, k=nband, which='SM', maxiter=1000)
+e_scipy, v_scipy = scipy.sparse.linalg.eigsh(h_sparse, k=nband, which='SA', maxiter=1000)
 e_scipy = np.sort(e_scipy)
 print(e_scipy)
 
