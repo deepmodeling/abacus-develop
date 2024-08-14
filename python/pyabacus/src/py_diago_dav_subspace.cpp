@@ -44,8 +44,9 @@ void bind_diago_dav_subspace(py::module& m)
 
             Parameters
             ----------
-            h_mat : np.ndarray 
-                The Hamiltonian matrix.
+            mv_op : Callable[[NDArray[np.complex128]], NDArray[np.complex128]],
+                The operator to be diagonalized, which is a function that takes a vector as input
+                and returns a vector mv_op(v) = H * v as output.
             precond_vec : np.ndarray
                 The preconditioner vector.
             dav_ndim : int
@@ -68,7 +69,7 @@ void bind_diago_dav_subspace(py::module& m)
                 If false, it indicates a non-self-consistent field (non-SCF) calculation,
                 where high precision in eigenvalue calculation is required from the start.
         )pbdoc", 
-        "h_mat"_a, 
+        "mv_op"_a, 
         "precond_vec"_a, 
         "dav_ndim"_a, 
         "tol"_a, 

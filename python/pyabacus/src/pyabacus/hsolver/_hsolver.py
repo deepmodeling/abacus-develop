@@ -2,7 +2,7 @@
 
 import numpy as np
 from numpy.typing import NDArray
-from typing import Tuple, List, Union
+from typing import Tuple, List, Union, Callable
 
 from .._core import hsolver
 
@@ -16,7 +16,7 @@ class diag_comm_info:
     def nproc(self) -> int: ...
     
 def dav_subspace(
-    h_mat: NDArray[np.complex128],
+    mv_op: Callable[[NDArray[np.complex128]], NDArray[np.complex128]],
     init_v: NDArray[np.complex128],
     nbasis: int,
     nband: int,
@@ -32,8 +32,9 @@ def dav_subspace(
 
     Parameters
     ----------
-    h_mat : NDArray[np.complex128]
-        The matrix to diagonalize.
+    mv_op : Callable[[NDArray[np.complex128]], NDArray[np.complex128]],
+        The operator to be diagonalized, which is a function that takes a vector as input
+        and returns a vector mv_op(v) = H * v as output.
     init_v : NDArray[np.complex128]
         The initial guess for the eigenvectors.
     nbasis : int
@@ -67,12 +68,12 @@ def dav_subspace(
     v : NDArray[np.complex128]
         The eigenvectors corresponding to the eigenvalues.
     """
-     
+    if not callable(mv_op):
+        raise TypeError("mv_op must be a callable object.")
+    
     if is_occupied is None:
         is_occupied = [True] * nband
     
-    if h_mat.ndim != 1 or h_mat.dtype != np.complex128:
-        h_mat = h_mat.flatten().astype(np.complex128, order='C')
     if init_v.ndim != 1 or init_v.dtype != np.complex128:
         init_v = init_v.flatten().astype(np.complex128, order='C')
     
@@ -85,7 +86,7 @@ def dav_subspace(
     assert dav_ndim * nband < nbasis * comm_info.nproc, "dav_ndim * nband must be less than nbasis * comm_info.nproc."
    
     res = _diago_obj_dav_subspace.diag(
-        h_mat,
+        mv_op,
         pre_condition,
         dav_ndim,
         tol,

@@ -2,9 +2,11 @@
 #define PYTHON_PYABACUS_SRC_PY_DIAGO_DAV_SUBSPACE_HPP
 
 #include <complex>
+#include <functional>
 
 #include <pybind11/pybind11.h>
 #include <pybind11/complex.h>
+#include <pybind11/functional.h>
 #include <pybind11/numpy.h>
 #include <pybind11/stl.h>
 
@@ -98,7 +100,7 @@ public:
     }
 
     int diag(
-        py::array_t<std::complex<double>> h_mat,
+        std::function<py::array_t<std::complex<double>>(py::array_t<std::complex<double>>)> mv_op,
         std::vector<double> precond_vec,
         int dav_ndim,
         double tol,
@@ -108,33 +110,29 @@ public:
         bool scf_type,
         hsolver::diag_comm_info comm_info
     ) {
-        py::buffer_info h_mat_buf = h_mat.request();
-
-        if (h_mat_buf.ndim != 1)
-        {
-            throw std::runtime_error("h_mat must be a 1D array representing a 2D matrix");
-        }
-
-        std::complex<double>* h_mat_ptr = static_cast<std::complex<double>*>(h_mat_buf.ptr);
-
-        // TODO: Wrap std::function<void(T*, T*, const int, const int, const int, const int)>
-        //       to a python callable type
-        auto hpsi_func = [h_mat_ptr] (std::complex<double> *hpsi_out,
+        auto hpsi_func = [mv_op] (std::complex<double> *hpsi_out,
                     std::complex<double> *psi_in, const int nband_in,
                     const int nbasis_in, const int band_index1,
                     const int band_index2) 
         {
-            const std::complex<double> one(1.0, 0.0);
-            const std::complex<double> zero(0.0, 0.0);
+            for (size_t i = 0; i < band_index2 - band_index1 + 1; ++i)
+            {
+                py::array_t<std::complex<double>> psi(nbasis_in);
+                py::buffer_info psi_buf = psi.request();
+                std::complex<double>* psi_ptr = static_cast<std::complex<double>*>(psi_buf.ptr);
 
-            base_device::DEVICE_CPU *ctx = {};
+                for (size_t j = 0; j < nbasis_in; ++j)
+                {
+                    psi_ptr[j] = psi_in[(i + band_index1) * nbasis_in + j];
+                }
 
-            hsolver::gemm_op<std::complex<double>, base_device::DEVICE_CPU>()(
-                ctx, 'N', 'N', 
-                nbasis_in, band_index2 - band_index1 + 1, nbasis_in, 
-                &one, h_mat_ptr, nbasis_in, 
-                psi_in + band_index1 * nbasis_in, nbasis_in,
-                &zero, hpsi_out, nbasis_in);
+                py::array_t<std::complex<double>> hpsi = mv_op(psi);
+
+                for (size_t j = 0; j < nbasis_in; ++j)
+                {
+                    hpsi_out[i * nbasis_in + j] = hpsi.at(j);
+                }
+            }
         };
 
         obj = std::make_unique<hsolver::Diago_DavSubspace<std::complex<double>, base_device::DEVICE_CPU>>(
