@@ -120,18 +120,15 @@ public:
                 py::array_t<std::complex<double>> psi(nbasis_in);
                 py::buffer_info psi_buf = psi.request();
                 std::complex<double>* psi_ptr = static_cast<std::complex<double>*>(psi_buf.ptr);
-
-                for (size_t j = 0; j < nbasis_in; ++j)
-                {
-                    psi_ptr[j] = psi_in[(i + band_index1) * nbasis_in + j];
-                }
+                std::copy(psi_in + (i + band_index1) * nbasis_in, 
+                        psi_in + (i + band_index1 + 1) * nbasis_in, 
+                        psi_ptr);
 
                 py::array_t<std::complex<double>> hpsi = mv_op(psi);
+                py::buffer_info hpsi_buf = hpsi.request();
+                std::complex<double>* hpsi_ptr = static_cast<std::complex<double>*>(hpsi_buf.ptr);
 
-                for (size_t j = 0; j < nbasis_in; ++j)
-                {
-                    hpsi_out[i * nbasis_in + j] = hpsi.at(j);
-                }
+                std::copy(hpsi_ptr, hpsi_ptr + nbasis_in, hpsi_out + i * nbasis_in);
             }
         };
 
