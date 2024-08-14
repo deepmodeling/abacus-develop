@@ -1,52 +1,55 @@
 from pyabacus import hsolver
 import numpy as np
+import scipy
 
-h_mat = np.array(
-    [
-        4.0+0.0j, 2.0+0.0j, 2.0+0.0j,
-        2.0+0.0j, 4.0+0.0j, 2.0+0.0j,
-        2.0+0.0j, 2.0+0.0j, 4.0+0.0j
-    ], 
-dtype=np.complex128, order='C')
-# h_mat = np.array(
-#     [
-#         1.0+0.0j, 0.0+0.0j, 0.0+0.0j,
-#         0.0+0.0j, 1.0+0.0j, 0.0+0.0j,
-#         0.0+0.0j, 0.0+0.0j, 1.0+0.0j
-#     ],
-# dtype=np.complex128, order='C')
-pre_condition = np.ones(3, dtype=np.float64, order='C')
-nband = 1
-nbasis = 3
-dav_ndim = 2
-diag_thr = 1e-2
-diag_nmax = 1000
-need_subspace = False
-comm_info = hsolver.diag_comm_info(0, 1)
+from pyscf.lib import linalg_helper
 
-psi = np.ones(nbasis * nband, dtype=np.complex128, order='C')
-eigenvalues = np.zeros(nband, dtype=np.float64, order='C')
-is_occupied = [True] * nband
+nband = 25
+nbasis = 25
 
-diago_dav_subspace = hsolver.Diago_DavSubspace(
-    pre_condition,
-    nband,
-    nbasis,
-    dav_ndim,
-    diag_thr,
-    diag_nmax,
-    need_subspace,
-    comm_info
-)
+pre_condition = np.ones(nbasis, dtype=np.float64, order='C')
 
-res = diago_dav_subspace.diag(
+psi = np.random.rand(nbasis * nband) + 1j * np.random.rand(nbasis * nband)
+psi = psi.astype(np.complex128, order='C')
+
+h_mat = np.zeros(nbasis * nbasis, dtype=np.complex128, order='C')
+
+for i in range(nbasis):
+    h_mat[i * nbasis + i] = np.random.rand() * 1000 + 0.0j
+
+for i in range(1, nbasis):
+    for k in range(i):
+        value = np.random.rand() + np.random.rand() * 1.0j
+        h_mat[i * nbasis + k] = value
+        h_mat[k * nbasis + i] = np.conj(value)
+
+# for i in range(nbasis):
+#     h_mat[i * nbasis + i] = 1.0
+    
+# for i in range(1, nbasis):
+#     for k in range(i):
+#         value = i + k * 1.0j
+#         h_mat[i * nbasis + k] = value
+#         h_mat[k * nbasis + i] = np.conj(value)
+
+e, v = hsolver.dav_subspace(
     h_mat,
-    psi,
+    h_mat[:nbasis*nband],
     nbasis,
-    eigenvalues,
-    is_occupied,
-    False
+    nband,
+    pre_condition,
+    dav_ndim=4,
+    tol=1e-2,
+    max_iter=100000,
+    scf_type=True
 )
 
-print(f'res: {res}')
-print(f'eigenvalues: {eigenvalues}')
+
+
+print(e / (nband*nbasis))
+# print(v[-nbasis:])
+
+a = h_mat.reshape(nbasis, nbasis)
+
+e_scipy, v_scipy = scipy.linalg.eigh(a)
+print(e_scipy)

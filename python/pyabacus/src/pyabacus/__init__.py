@@ -12,5 +12,5 @@ def __getattr__(attr):
         from ._core import ModuleNAO
         return ModuleNAO
     elif attr == "hsolver":
-        from ._core import hsolver
+        import pyabacus.hsolver as hsolver
         return hsolver
