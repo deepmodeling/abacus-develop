@@ -310,7 +310,7 @@ struct Input_para
                                           ///< 0: output only when converged
     int out_freq_ion = 0;                 ///< the frequency ( >= 0 ) of ionic step to output charge density;
                                           ///< 0: output only when ion steps are finished
-    std::vector<int> out_chg = {};        ///< output charge density. 0: no; 1: yes
+    std::vector<int> out_chg = {0, 3};    ///< output charge density. 0: no; 1: yes
     int out_pot = 0;                      ///< yes or no
     int out_wfc_pw = 0;                   ///< 0: no; 1: txt; 2: dat
     bool out_wfc_r = false;               ///< 0: no; 1: yes
