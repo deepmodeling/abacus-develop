@@ -179,6 +179,8 @@ class DensityMatrix
      */
     void cal_DMR();
 
+    void cal_DMR_full(hamilt::HContainer<std::complex<double>>* dmR_out) const;
+
     /**
      * @brief calculate density matrix DMR from dm(k) using blas::axpy for multi-k calculation, without summing over k-points
      */

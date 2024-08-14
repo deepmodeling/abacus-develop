@@ -589,6 +589,82 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR()
     ModuleBase::timer::tick("DensityMatrix", "cal_DMR");
 }
 
+// calculate DMR from DMK using blas for multi-k calculation
+template <>
+void DensityMatrix<double, double>::cal_DMR_full(hamilt::HContainer<std::complex<double>>* dmR_out)const{}
+template <>
+void DensityMatrix<std::complex<double>, double>::cal_DMR_full(hamilt::HContainer<std::complex<double>>* dmR_out)const
+{
+    ModuleBase::TITLE("DensityMatrix", "cal_DMR_full");
+
+    ModuleBase::timer::tick("DensityMatrix", "cal_DMR_full");
+    int ld_hk = this->_paraV->nrow;
+    int ld_hk2 = 2 * ld_hk;
+    hamilt::HContainer<std::complex<double>>* tmp_DMR = dmR_out;
+    // set zero since this function is called in every scf step
+    tmp_DMR->set_zero();
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+    for (int i = 0; i < tmp_DMR->size_atom_pairs(); ++i)
+    {
+        auto& tmp_ap = tmp_DMR->get_atom_pair(i);
+        int iat1 = tmp_ap.get_atom_i();
+        int iat2 = tmp_ap.get_atom_j();
+        // get global indexes of whole matrix for each atom in this process
+        int row_ap = this->_paraV->atom_begin_row[iat1];
+        int col_ap = this->_paraV->atom_begin_col[iat2];
+        if (row_ap == -1 || col_ap == -1)
+        {
+            throw std::string("Atom-pair not belong this process");
+        }
+        for (int ir = 0; ir < tmp_ap.get_R_size(); ++ir)
+        {
+            const ModuleBase::Vector3<int> r_index = tmp_ap.get_R_index(ir);
+            auto* tmp_matrix = tmp_ap.find_matrix(r_index);
+#ifdef __DEBUG
+            if (tmp_matrix == nullptr)
+            {
+                std::cout << "tmp_matrix is nullptr" << std::endl;
+                continue;
+            }
+#endif
+            // loop over k-points
+            // calculate full matrix for complex density matrix
+            for (int ik = 0; ik < this->_nks; ++ik)
+            {
+                // cal k_phase
+                // if TK==std::complex<double>, kphase is e^{ikR}
+                const ModuleBase::Vector3<double> dR(r_index[0], r_index[1], r_index[2]);
+                const double arg = (this->_kv->kvec_d[ik] * dR) * ModuleBase::TWO_PI;
+                double sinp, cosp;
+                ModuleBase::libm::sincos(arg, &sinp, &cosp);
+                std::complex<double> kphase = std::complex<double>(cosp, sinp);
+                // set DMR element
+                std::complex<double>* tmp_DMR_pointer = tmp_matrix->get_pointer();
+                const std::complex<double>* tmp_DMK_pointer = this->_DMK[ik].data();
+                double* DMK_real_pointer = nullptr;
+                double* DMK_imag_pointer = nullptr;
+                // jump DMK to fill DMR
+                // DMR is row-major, DMK is column-major
+                tmp_DMK_pointer += col_ap * this->_paraV->nrow + row_ap;
+                for (int mu = 0; mu < this->_paraV->get_row_size(iat1); ++mu)
+                {
+                    BlasConnector::axpy(this->_paraV->get_col_size(iat2),
+                                        kphase,
+                                        tmp_DMK_pointer,
+                                        ld_hk,
+                                        tmp_DMR_pointer,
+                                        1);
+                    tmp_DMK_pointer += 1;
+                    tmp_DMR_pointer += this->_paraV->get_col_size(iat2);
+                }
+            }
+        }
+    }
+    ModuleBase::timer::tick("DensityMatrix", "cal_DMR_full");
+}
+
 // calculate DMR from DMK using blas for multi-k calculation, without summing over k-points
 template <>
 void DensityMatrix<std::complex<double>, double>::cal_DMR(const int ik)
