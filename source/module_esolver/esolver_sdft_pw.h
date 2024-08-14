@@ -5,6 +5,7 @@
 #include "module_hamilt_pw/hamilt_stodft/sto_hchi.h"
 #include "module_hamilt_pw/hamilt_stodft/sto_iter.h"
 #include "module_hamilt_pw/hamilt_stodft/sto_wf.h"
+#include "module_hamilt_pw/hamilt_stodft/sto_che.h"
 
 namespace ModuleESolver
 {
@@ -25,6 +26,7 @@ class ESolver_SDFT_PW : public ESolver_KS_PW<std::complex<double>>
 
   public:
     Stochastic_WF stowf;
+    StoChe<double> stoche;
 
   protected:
     virtual void before_scf(const int istep) override;

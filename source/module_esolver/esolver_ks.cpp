@@ -406,11 +406,12 @@ template <typename T, typename Device>
 void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
 {
     ModuleBase::TITLE("ESolver_KS", "runner");
-
     ModuleBase::timer::tick(this->classname, "runner");
 
     // 2) before_scf (electronic iteration loops)
+    ModuleBase::timer::tick(this->classname, "before_scf");
     this->before_scf(istep);
+    ModuleBase::timer::tick(this->classname, "before_scf");
 
     // 3) write charge density
     if (PARAM.inp.dm_to_rho)
@@ -467,15 +468,32 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
             if (firstscf)
             {
                 firstscf = false;
-                hsolver_error = this->phsol->cal_hsolerror(diag_ethr);
+                hsolver_error = hsolver::cal_hsolve_error(PARAM.inp.basis_type,
+                                                          PARAM.inp.esolver_type,
+                                                          diag_ethr,
+                                                          GlobalV::nelec);
+                
                 // The error of HSolver is larger than drho,
                 // so a more precise HSolver should be excuconv_elected.
                 if (hsolver_error > drho)
                 {
-                    diag_ethr = this->phsol->reset_diagethr(GlobalV::ofs_running, hsolver_error, drho, diag_ethr);
+                    diag_ethr = hsolver::reset_diag_ethr(GlobalV::ofs_running,
+                                                         PARAM.inp.basis_type,
+                                                         PARAM.inp.esolver_type,
+                                                         GlobalV::precision_flag,
+                                                         hsolver_error,
+                                                         drho,
+                                                         diag_ethr,
+                                                         GlobalV::nelec);
+
                     this->hamilt2density(istep, iter, diag_ethr);
+
                     drho = p_chgmix->get_drho(pelec->charge, GlobalV::nelec);
-                    hsolver_error = this->phsol->cal_hsolerror(diag_ethr);
+
+                    hsolver_error = hsolver::cal_hsolve_error(PARAM.inp.basis_type,
+                                                              PARAM.inp.esolver_type,
+                                                              diag_ethr,
+                                                              GlobalV::nelec);
                 }
             }
             // mixing will restart at this->p_chgmix->mixing_restart steps
@@ -592,9 +610,11 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
     // 14) add Json of efermi energy converge
     Json::add_output_efermi_converge(this->pelec->eferm.ef * ModuleBase::Ry_to_eV, this->conv_elec);
 #endif //__RAPIDJSON
+
     // 15) after scf
+    ModuleBase::timer::tick(this->classname, "after_scf");
     this->after_scf(istep);
-    ModuleBase::timer::tick(this->classname, "runner");
+    ModuleBase::timer::tick(this->classname, "after_scf");
 
     // 16) Json again
 #ifdef __RAPIDJSON
@@ -602,6 +622,8 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
     int Jnkstot = this->pelec->klist->get_nkstot();
     Json::add_nkstot(Jnkstot);
 #endif //__RAPIDJSON
+
+    ModuleBase::timer::tick(this->classname, "runner");
     return;
 };
 

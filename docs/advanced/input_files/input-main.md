@@ -259,7 +259,6 @@
     - [md\_tfreq](#md_tfreq)
     - [md\_tchain](#md_tchain)
     - [md\_pmode](#md_pmode)
-    - [md\_prec\_level](#md_prec_level)
     - [ref\_cell\_factor](#ref_cell_factor)
     - [md\_pcouple](#md_pcouple)
     - [md\_pfirst, md\_plast](#md_pfirst-md_plast)
@@ -2544,14 +2543,14 @@ These variables are used to control molecular dynamics calculations. For more in
 - **Default**: iso
 - **Relavent**: [md_tfreq](#md_tfreq), [md_tchain](#md_tchain), [md_pcouple](#md_pcouple), [md_pfreq](#md_pfreq), and [md_pchain](#md_pchain).
 
-### md_prec_level
+<!-- ### md_prec_level
 
 - **Type**: Integer
 - **Description**: Determine the precision level of variable-cell molecular dynamics calculations.
   - 0: FFT grids do not change, only G vectors and K vectors are changed due to the change of lattice vector. This level is suitable for cases where the variation of the volume and shape is not large, and the efficiency is relatively higher.
   - 2: FFT grids change per step. This level is suitable for cases where the variation of the volume and shape is large, such as the MSST method. However, accuracy comes at the cost of efficiency.
 
-- **Default**: 0
+- **Default**: 0 -->
 
 ### ref_cell_factor
 

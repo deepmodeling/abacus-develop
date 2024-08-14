@@ -273,7 +273,9 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
 #endif
             ucell,
             pelec->charge,
-            &(sf));
+            &(sf),
+            GlobalV::ofs_running,
+            GlobalV::ofs_warning);
     }
 
     this->pelec->init_scf(istep, sf.strucFac);

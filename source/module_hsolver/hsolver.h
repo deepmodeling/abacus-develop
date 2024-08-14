@@ -28,43 +28,7 @@ class HSolver
                        psi::Psi<T, Device>& ppsi,
                        elecstate::ElecState* pes,
                        const std::string method,
-                       const bool skip_charge = false)
-    {
-        return;
-    }
-
-    // virtual void solve(hamilt::Hamilt<T, Device>* phm,
-    //                    psi::Psi<T, Device>& ppsi,
-    //                    elecstate::ElecState* pes,
-    //                    double* out_eigenvalues,
-    //                    const std::vector<bool>& is_occupied_in,
-    //                    const std::string method,
-    //                    const std::string calculation_type_in,
-    //                    const std::string basis_type_in,
-    //                    const bool use_paw_in,
-    //                    const bool use_uspp_in,
-    //                    const int rank_in_pool_in,
-    //                    const int nproc_in_pool_in,
-    //                    const int scf_iter_in,
-    //                    const bool need_subspace_in,
-    //                    const int diag_iter_max_in,
-    //                    const double pw_diag_thr_in,
-    //                    const bool skip_charge)
-    // {
-    //     return;
-    // }
-
-    /// @brief solve function for lcao_in_pw
-    /// @param phm interface to hamilt
-    /// @param ppsi reference to psi
-    /// @param pes interface to elecstate
-    /// @param transform transformation matrix between lcao and pw
-    /// @param skip_charge
-    virtual void solve(hamilt::Hamilt<T, Device>* phm,
-                       psi::Psi<T, Device>& ppsi,
-                       elecstate::ElecState* pes,
-                       psi::Psi<T, Device>& transform,
-                       const bool skip_charge = false)
+                       const bool skip_charge)
     {
         return;
     }
@@ -80,7 +44,7 @@ class HSolver
                        const int scf_iter_in,
                        const bool need_subspace_in,
                        const int diag_iter_max_in,
-                       const double pw_diag_thr_in,   
+                       const double pw_diag_thr_in,
                        const bool skip_charge)
     {
         return;
@@ -91,20 +55,23 @@ class HSolver
     {
         return 0.0;
     }
-
-    // reset diagethr according to drho and hsolver_error
-    virtual Real reset_diagethr(std::ofstream& ofs_running, const Real hsover_error, const Real drho, Real diag_ethr_in)
-    {
-        return 0.0;
-    }
-
-    // calculate hsolver_error (for sdft, lcao and lcao-in-pw, we suppose the error is zero)
-    virtual Real cal_hsolerror(const Real diag_ethr_in)
-    {
-        return 0.0;
-    };
-    
 };
+
+// reset diagethr according to drho and hsolver_error
+double reset_diag_ethr(std::ofstream& ofs_running,
+                       const std::string basis_type,
+                       const std::string esolver_type,
+                       const std::string precision_flag_in,
+                       const double hsover_error,
+                       const double drho_in,
+                       const double diag_ethr_in,
+                       const double nelec_in);
+
+// calculate hsolver_error (for sdft, lcao and lcao-in-pw, we suppose the error is zero)
+double cal_hsolve_error(const std::string basis_type,
+                        const std::string esolver_type,
+                        const double diag_ethr_in,
+                        const double nelec_in);
 
 } // namespace hsolver
 #endif

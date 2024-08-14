@@ -30,8 +30,6 @@
  *  - 6. update_precondition()
  *  - 7. hsolver::HSolver::diagethr (for cases below)
  * 		- set_diagethr, for setting diagethr;
- *  	- reset_diagethr, for updating diagethr;
- * 		- cal_hsolerror, for calculate actually diagethr;
  *  - 8. solve()
  *      - lcao_in_pw specific implementation
  */
@@ -209,12 +207,6 @@ TEST_F(TestHSolverPW, solve) {
     // EXPECT_NEAR(test_diagethr, 0.01, 1.0e-7);
     // test_diagethr = hs_f.set_diagethr(hs_f.diag_ethr, 0, 3, 1.0e-3);
     // EXPECT_NEAR(test_diagethr, 0.0001, 1.0e-7);
-    // test_diagethr = hs_f.reset_diagethr(temp_ofs, 2.0, 1.0, hs_f.diag_ethr);
-    // EXPECT_NEAR(test_diagethr, 0.1, 1.0e-7);
-    // test_diagethr = hs_f.reset_diagethr(temp_ofs, 0.5, 1.0, hs_f.diag_ethr);
-    // EXPECT_NEAR(test_diagethr, 0.1, 1.0e-7);
-    // test_diagethr = hs_f.cal_hsolerror(hs_f.diag_ethr);
-    // EXPECT_NEAR(test_diagethr, 0.1, 1.0e-7);
 
     // GlobalV::init_chg = "atomic";
     // GlobalV::PW_DIAG_THR = 1e-7;
@@ -230,12 +222,6 @@ TEST_F(TestHSolverPW, solve) {
     // EXPECT_EQ(test_diagethr_d, 0.01);
     // test_diagethr_d = hs_d.set_diagethr(hs_d.diag_ethr, 0, 3, 1.0e-3);
     // EXPECT_EQ(test_diagethr_d, 0.0001);
-    // test_diagethr_d = hs_d.reset_diagethr(temp_ofs, 2.0, 1.0, hs_d.diag_ethr);
-    // EXPECT_EQ(test_diagethr_d, 0.1);
-    // test_diagethr_d = hs_d.reset_diagethr(temp_ofs, 0.5, 1.0, hs_d.diag_ethr);
-    // EXPECT_EQ(test_diagethr_d, 0.1);
-    // test_diagethr_d = hs_d.cal_hsolerror(hs_d.diag_ethr);
-    // EXPECT_EQ(test_diagethr_d, 0.1);
 }
 
 TEST_F(TestHSolverPW, SolveLcaoInPW) {

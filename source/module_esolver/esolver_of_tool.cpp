@@ -16,10 +16,11 @@ namespace ModuleESolver
  */
 void ESolver_OF::init_elecstate(UnitCell& ucell)
 {
-    delete this->pelec;
-    this->pelec = new elecstate::ElecState((Charge*)(&chr), this->pw_rho, pw_big);
-
-    this->pelec->charge->allocate(GlobalV::NSPIN);
+    if (this->pelec == nullptr)
+    {
+        this->pelec = new elecstate::ElecState((Charge*)(&chr), this->pw_rho, pw_big);
+        this->pelec->charge->allocate(GlobalV::NSPIN);
+    }
     this->pelec->omega = ucell.omega;
 
     delete this->pelec->pot;

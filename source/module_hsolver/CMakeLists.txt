@@ -8,7 +8,7 @@ list(APPEND objects
     hsolver_lcaopw.cpp
     hsolver_pw_sdft.cpp
     diago_iter_assist.cpp
-    
+    hsolver.cpp
 )
 
 if(ENABLE_LCAO)

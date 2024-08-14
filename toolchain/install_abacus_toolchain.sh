@@ -171,8 +171,6 @@ The --with-PKG options follow the rules:
                           Default = install
   --with-fftw             FFTW3, library for fast fourier transform
                           Default = install
-  --with-acml             AMD core maths library, which provides LAPACK and BLAS
-                          Default = system
   --with-mkl              Intel Math Kernel Library, which provides LAPACK, and BLAS.
                           If MKL's FFTW3 interface is suitable (no FFTW-MPI support),
                           it replaces the FFTW library. If the ScaLAPACK component is

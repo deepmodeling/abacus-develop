@@ -21,6 +21,7 @@ Stochastic_WF::~Stochastic_WF()
     delete shchi;
     delete chiortho;
     delete[] nchip;
+    delete[] chiallorder;
 }
 
 void Stochastic_WF::init(K_Vectors* p_kv, const int npwx_in)
@@ -34,6 +35,21 @@ void Stochastic_WF::init(K_Vectors* p_kv, const int npwx_in)
     {
         ModuleBase::WARNING_QUIT("Stochastic_WF", "nks <=0!");
     }
+}
+
+void Stochastic_WF::allocate_chiallorder(const int& norder)
+{
+    this->chiallorder = new ModuleBase::ComplexMatrix[this->nks];
+    for (int ik = 0; ik < this->nks; ++ik)
+    {
+        chiallorder[ik].create(this->nchip[ik] * this->npwx, norder,true);
+    }
+}
+
+void Stochastic_WF::clean_chiallorder()
+{
+    delete[] chiallorder;
+    chiallorder = nullptr;
 }
 
 void Init_Sto_Orbitals(Stochastic_WF& stowf, const int seed_in)

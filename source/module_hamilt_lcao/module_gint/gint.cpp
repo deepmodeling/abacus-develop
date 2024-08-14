@@ -32,6 +32,7 @@ Gint::~Gint() {
 }
 
 void Gint::cal_gint(Gint_inout* inout) {
+    ModuleBase::TITLE("Gint_interface", "cal_gint");
     ModuleBase::timer::tick("Gint_interface", "cal_gint");
     // In multi-process environments,
     // some processes may not be allocated any data.
@@ -77,9 +78,9 @@ void Gint::cal_gint(Gint_inout* inout) {
                 }
             }
         }
-        ModuleBase::timer::tick("Gint_interface", "cal_gint");
-        return;
     }
+    ModuleBase::timer::tick("Gint_interface", "cal_gint");
+    return;
 }
 void Gint::prep_grid(const Grid_Technique& gt,
                      const int& nbx_in,

@@ -69,6 +69,21 @@ void rand_vel(const int& natom,
               ModuleBase::Vector3<double>* vel);
 
 /**
+ * @brief rescale the velocity to the target temperature
+ *
+ * @param natom the number of atoms
+ * @param temperature ion temperature
+ * @param allmass atomic mass
+ * @param frozen_freedom the fixed freedom
+ * @param vel the genarated atomic velocities
+ */
+void rescale_vel(const int& natom,
+                 const double& temperature,
+                 const double* allmass,
+                 const int& frozen_freedom,
+                 ModuleBase::Vector3<double>* vel);
+
+/**
  * @brief calculate energy, forces and virial tensor
  *
  * @param p_esolver enrergy solver

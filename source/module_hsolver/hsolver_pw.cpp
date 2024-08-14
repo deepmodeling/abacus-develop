@@ -638,13 +638,6 @@ void HSolverPW<T, Device>::output_iterInfo()
         DiagoIterAssist<T, Device>::avg_iter = 0.0;
     }
 }
-
-template <typename T, typename Device>
-typename HSolverPW<T, Device>::Real HSolverPW<T, Device>::cal_hsolerror(const Real diag_ethr_in)
-{
-    return diag_ethr_in * static_cast<Real>(std::max(1.0, GlobalV::nelec));
-}
-
 template <typename T, typename Device>
 typename HSolverPW<T, Device>::Real HSolverPW<T, Device>::set_diagethr(Real diag_ethr_in,
                                                                        const int istep, 
@@ -699,33 +692,6 @@ typename HSolverPW<T, Device>::Real HSolverPW<T, Device>::set_diagethr(Real diag
         diag_ethr_in = std::max(diag_ethr_in, static_cast<Real>(0.5e-4));
     }
 
-    return diag_ethr_in;
-}
-
-template <typename T, typename Device>
-typename HSolverPW<T, Device>::Real HSolverPW<T, Device>::reset_diagethr(std::ofstream& ofs_running,
-                                                                         const Real hsover_error,
-                                                                         const Real drho,
-                                                                         Real diag_ethr_in)
-{
-    ofs_running << " Notice: Threshold on eigenvalues was too large.\n";
-    
-    ModuleBase::WARNING("scf", "Threshold on eigenvalues was too large.");
-
-    ofs_running << " hsover_error=" << hsover_error << " > DRHO=" << drho << std::endl;
-    ofs_running << " Origin diag ethr = " << diag_ethr_in << std::endl;
-    
-    diag_ethr_in = 0.1 * drho / GlobalV::nelec;
-
-    // It is essential for single precision implementation to keep the diag ethr
-    // value less or equal to the single-precision limit of convergence(0.5e-4).
-    // modified by denghuilu at 2023-05-15
-    if (GlobalV::precision_flag == "single")
-    {
-        diag_ethr_in = std::max(diag_ethr_in, static_cast<Real>(0.5e-4));
-    }
-    ofs_running << " New diag ethr = " << diag_ethr_in << std::endl;
-    
     return diag_ethr_in;
 }
 

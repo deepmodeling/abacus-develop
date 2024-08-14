@@ -55,12 +55,6 @@ FFT::~FFT() {}
 #include "module_hsolver/diago_david.h"
 #include "module_hsolver/diago_iter_assist.h"
 
-template <typename T>
-const_nums<T>::const_nums()
-{
-}
-template class const_nums<std::complex<float>>;
-template class const_nums<std::complex<double>>;
 
 namespace hsolver {
 
@@ -137,10 +131,6 @@ DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in,
     : nband(nband_in), dim(dim_in), nbase_x(david_ndim_in * nband_in), david_ndim(david_ndim_in), use_paw(use_paw_in), diag_comm(diag_comm_in) {
     this->device = base_device::get_device_type<Device>(this->ctx);
     this->precondition = precondition_in;
-
-    this->one = &this->cs.one;
-    this->zero = &this->cs.zero;
-    this->neg_one = &this->cs.neg_one;
 
     test_david = 2;
     // 1: check which function is called and which step is executed
