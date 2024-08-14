@@ -37,14 +37,31 @@ void ReadInput::item_output()
     }
     {
         Input_Item item("out_chg");
-        item.annotation = ">0 output charge density for selected electron steps";
+        item.annotation = ">0 output charge density for selected electron steps"
+                          ", second parameter controls the precision, default is 3.";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            size_t count = item.get_size();
+            std::vector<int> out_chg = {0, 3};
+            for(int i = 0; i < count; i++)
+            {
+                para.input.out_chg.push_back(std::stoi(item.str_values[i]));
+            }
+            para.input.out_chg.resize(2, -1);
+            for(int i = 0; i < 2; i++)
+            {
+                if(para.input.out_chg[i] == -1)
+                {
+                    para.input.out_chg[i] = out_chg[i];
+                }
+            }
+        };
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
             {
-                para.input.out_chg = 1;
+                para.input.out_chg[0] = 1;
             }
         };
-        read_sync_int(input.out_chg);
+        sync_intvec(input.out_chg, 2, 0);
         this->add_item(item);
     }
     {
