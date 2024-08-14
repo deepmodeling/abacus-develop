@@ -24,10 +24,68 @@ void bind_diago_dav_subspace(py::module& m)
         .def_readonly("nproc", &hsolver::diag_comm_info::nproc);
 
     py::class_<py_hsolver::PyDiagoDavSubspace>(hsolver, "diago_dav_subspace")
-        .def(py::init<int, int>())
-        .def("diag", &py_hsolver::PyDiagoDavSubspace::diag)
-        .def("set_psi", &py_hsolver::PyDiagoDavSubspace::set_psi)
-        .def("get_psi", &py_hsolver::PyDiagoDavSubspace::get_psi)
-        .def("init_eigenvalue", &py_hsolver::PyDiagoDavSubspace::init_eigenvalue)
-        .def("get_eigenvalue", &py_hsolver::PyDiagoDavSubspace::get_eigenvalue);
+        .def(py::init<int, int>(), R"pbdoc(
+            Constructor of diago_dav_subspace, a class for diagonalizing 
+            a linear operator using the Davidson-Subspace Method.
+
+            This class serves as a backend computation class. The interface 
+            for invoking this class is a function defined in _hsolver.py, 
+            which uses this class to perform the calculations.
+
+            Args:
+                nbasis : int 
+                    The number of basis functions.
+                nband : int 
+                    The number of bands to be calculated.
+        )pbdoc", "nbasis"_a, "nband"_a)
+        .def("diag", &py_hsolver::PyDiagoDavSubspace::diag, R"pbdoc(
+            Diagonalize the linear operator using the Davidson-Subspace Method.
+
+            Parameters
+            ----------
+            h_mat : np.ndarray 
+                The Hamiltonian matrix.
+            precond_vec : np.ndarray
+                The preconditioner vector.
+            dav_ndim : int
+                The number of vectors, which is a multiple of the number of 
+                eigenvectors to be calculated.
+            tol : double
+                The tolerance for the convergence.
+            max_iter : int
+                The maximum number of iterations.
+            need_subspace : bool
+                Whether to use the subspace function.
+            is_occupied : list[bool]
+                A list of boolean values indicating whether the band is occupied,
+                meaning that the corresponding eigenvalue is to be calculated.
+            scf_type : bool
+                Whether to use the SCF type, which is used to determine the
+                convergence criterion.
+                If true, it indicates a self-consistent field (SCF) calculation,
+                where the initial precision of eigenvalue calculation can be coarse.
+                If false, it indicates a non-self-consistent field (non-SCF) calculation,
+                where high precision in eigenvalue calculation is required from the start.
+        )pbdoc", 
+        "h_mat"_a, 
+        "precond_vec"_a, 
+        "dav_ndim"_a, 
+        "tol"_a, 
+        "max_iter"_a, 
+        "need_subspace"_a, 
+        "is_occupied"_a, 
+        "scf_type"_a, 
+        "comm_info"_a)
+        .def("set_psi", &py_hsolver::PyDiagoDavSubspace::set_psi, R"pbdoc(
+            Set the initial guess of the eigenvectors, i.e. the wave functions.
+        )pbdoc", "psi_in"_a)
+        .def("get_psi", &py_hsolver::PyDiagoDavSubspace::get_psi, R"pbdoc(
+            Get the eigenvectors.
+        )pbdoc")
+        .def("init_eigenvalue", &py_hsolver::PyDiagoDavSubspace::init_eigenvalue, R"pbdoc(
+            Initialize the eigenvalues as zero.
+        )pbdoc")
+        .def("get_eigenvalue", &py_hsolver::PyDiagoDavSubspace::get_eigenvalue, R"pbdoc(
+            Get the eigenvalues.        
+        )pbdoc");
 }

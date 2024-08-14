@@ -2,12 +2,8 @@ from pyabacus import hsolver
 import numpy as np
 import scipy
 
-from pyscf.lib import linalg_helper
-
 nband = 25
 nbasis = 25
-
-pre_condition = np.ones(nbasis, dtype=np.float64, order='C')
 
 psi = np.random.rand(nbasis * nband) + 1j * np.random.rand(nbasis * nband)
 psi = psi.astype(np.complex128, order='C')
@@ -32,21 +28,23 @@ for i in range(1, nbasis):
 #         h_mat[i * nbasis + k] = value
 #         h_mat[k * nbasis + i] = np.conj(value)
 
+diag_elem = np.diag(h_mat.reshape(nbasis, nbasis))
+diag_elem = np.where(np.abs(diag_elem) < 1e-5, 1e-5, diag_elem)
+precond = 1.0 / np.abs(diag_elem)
+
 e, v = hsolver.dav_subspace(
     h_mat,
     h_mat[:nbasis*nband],
     nbasis,
     nband,
-    pre_condition,
+    precond,
     dav_ndim=4,
     tol=1e-2,
     max_iter=100000,
     scf_type=True
 )
 
-
-
-print(e / (nband*nbasis))
+print(e)
 # print(v[-nbasis:])
 
 a = h_mat.reshape(nbasis, nbasis)
