@@ -69,9 +69,9 @@ Diago_DavSubspace<T, Device>::~Diago_DavSubspace()
 {
     delmem_complex_op()(this->ctx, this->psi_in_iter);
 
-    // delmem_complex_op()(this->ctx, this->hphi);
-    // delmem_complex_op()(this->ctx, this->hcc);
-    // delmem_complex_op()(this->ctx, this->scc);
+    delmem_complex_op()(this->ctx, this->hphi);
+    delmem_complex_op()(this->ctx, this->hcc);
+    delmem_complex_op()(this->ctx, this->scc);
     delmem_complex_op()(this->ctx, this->vcc);
 
 #if defined(__CUDA) || defined(__ROCM)
