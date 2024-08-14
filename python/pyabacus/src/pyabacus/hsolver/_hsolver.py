@@ -2,7 +2,7 @@
 
 import numpy as np
 from numpy.typing import NDArray
-from typing import Tuple, List
+from typing import Tuple, List, Union
 
 from .._core import hsolver
 
@@ -25,7 +25,7 @@ def dav_subspace(
     tol: float = 1e-2,
     max_iter: int = 1000,
     need_subspace: bool = False,
-    is_occupied: List[bool] | None = None,
+    is_occupied: Union[List[bool], None] = None,
     scf_type: bool = False
 ) -> Tuple[NDArray[np.float64], NDArray[np.complex128]]:
     """ A function to diagonalize a matrix using the Davidson-Subspace method.
