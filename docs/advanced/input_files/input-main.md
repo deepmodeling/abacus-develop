@@ -422,7 +422,7 @@
     - [lr\_nstates](#lr_nstates)
     - [abs\_wavelen\_range](#abs_wavelen_range)
     - [out\_wfc\_lr](#out_wfc_lr)
-[back to top](#full-list-of-input-keywords)
+    - [abs\_broadening](#abs_broadening)
 
 ## System variables
 
@@ -1511,8 +1511,10 @@ These variables are used to control the output of properties.
 
 ### out_chg
 
-- **Type**: Integer
+- **Type**: Integer \[Integer\](optional)
 - **Description**: 
+  
+  The first integer controls whether to output the charge density on real space grids:
   - 1. Output the charge density (in Bohr^-3) on real space grids into the density files in the folder `OUT.${suffix}`. The files are named as:
     - nspin = 1: SPIN1_CHG.cube;
     - nspin = 2: SPIN1_CHG.cube, and SPIN2_CHG.cube;
@@ -1521,13 +1523,16 @@ These variables are used to control the output of properties.
     - nspin = 1: SPIN1_CHG_INI.cube
     - nspin = 2: SPIN1_CHG_INI.cube, and SPIN2_CHG_INI.cube;
     - nspin = 4: SPIN1_CHG_INI.cube, SPIN2_CHG_INI.cube, SPIN3_CHG_INI.cube, and SPIN4_CHG_INI.cube.
+  
+  The second integer controls the precision of the charge density output, if not given, will use `3` as default. For purpose restarting from this file and other high-precision involved calculation, recommend to use `10`.
 
+  ---
   The circle order of the charge density on real space grids is: x is the outer loop, then y and finally z (z is moving fastest).
 
   If EXX(exact exchange) is calculated, (i.e. *[dft_fuctional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)==True*), the Hexx(R) files will be output in the folder `OUT.${suffix}` too, which can be read in NSCF calculation.
 
   In molecular dynamics calculations, the output frequency is controlled by [out_interval](#out_interval).
-- **Default**: 0
+- **Default**: 0 3
 
 ### out_pot
 
@@ -1612,7 +1617,7 @@ These variables are used to control the output of properties.
 
 ### out_band
 
-- **Type**: Boolean Integer(optional)
+- **Type**: Boolean \[Integer\](optional)
 - **Description**: Whether to output the band structure (in eV), optionally output precision can be set by a second parameter, default is 8. For more information, refer to the [band.md](../elec_properties/band.md)
 - **Default**: False
 
@@ -1656,7 +1661,7 @@ These variables are used to control the output of properties.
 
 ### out_mat_hs
 
-- **Type**: Boolean Integer(optional)
+- **Type**: Boolean \[Integer\](optional)
 - **Availability**: Numerical atomic orbital basis
 - **Description**: Whether to print the upper triangular part of the Hamiltonian matrices (in Ry) and overlap matrices for each k point into files in the directory `OUT.${suffix}`. The second number controls precision. For more information, please refer to [hs_matrix.md](../elec_properties/hs_matrix.md#out_mat_hs). Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag).
 - **Default**: False 8
