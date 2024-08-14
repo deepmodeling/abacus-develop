@@ -105,7 +105,7 @@ void ESolver_FP::before_all_runners(const Input_para& inp, UnitCell& cell)
     this->print_rhofft(inp, GlobalV::ofs_running);
 
     //! 5) initialize the charge extrapolation method if necessary
-    this->CE.Init_CE(GlobalC::ucell.nat);
+    this->CE.Init_CE(GlobalV::NSPIN, GlobalC::ucell.nat, GlobalC::ucell.omega, this->pw_rhod->nrxx, inp.chg_extrap);
 
     return;
 }
@@ -118,18 +118,6 @@ void ESolver_FP::after_scf(const int istep)
 
     // 1) write fermi energy
     ModuleIO::output_efermi(this->conv_elec, this->pelec->eferm.ef);
-
-    // 2) write charge difference into files for charge extrapolation
-    if (PARAM.inp.calculation != "scf")
-    {
-        this->CE.save_files(istep,
-                            GlobalC::ucell,
-#ifdef __MPI
-                            this->pw_big,
-#endif
-                            this->pelec->charge,
-                            &this->sf);
-    }
 
     if (istep % PARAM.inp.out_interval == 0)
     {

@@ -191,7 +191,9 @@ void ESolver_KS_PW<T, Device>::before_scf(const int istep)
 #endif
             GlobalC::ucell,
             this->pelec->charge,
-            &this->sf);
+            &this->sf,
+            GlobalV::ofs_running,
+            GlobalV::ofs_warning);
     }
 
     // init Hamilt, this should be allocated before each scf loop

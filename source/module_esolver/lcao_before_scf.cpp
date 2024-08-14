@@ -175,7 +175,6 @@ template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "before_scf");
-    ModuleBase::timer::tick("ESolver_KS_LCAO", "before_scf");
 
     if (GlobalC::ucell.cell_parameter_updated)
     {
@@ -190,7 +189,9 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
 #endif
             GlobalC::ucell,
             this->pelec->charge,
-            &(this->sf));
+            &(this->sf),
+            GlobalV::ofs_running,
+            GlobalV::ofs_warning);
     }
 
     //----------------------------------------------------------
@@ -347,8 +348,6 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
     }
 
     this->p_hamilt->non_first_scf = istep;
-
-    ModuleBase::timer::tick("ESolver_KS_LCAO", "before_scf");
     return;
 }
 

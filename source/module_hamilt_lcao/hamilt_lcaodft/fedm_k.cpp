@@ -1,18 +1,17 @@
 #include "FORCE.h"
-
-#include <map>
-#include <unordered_map>
-
 #include "module_base/memory.h"
 #include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
 #include "module_base/tool_threading.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_elecstate/cal_dm.h"
-#include "module_elecstate/module_dm/cal_dm_psi.h"
 #include "module_elecstate/elecstate_lcao.h"
+#include "module_elecstate/module_dm/cal_dm_psi.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/write_HS.h"
+
+#include <map>
+#include <unordered_map>
 
 #ifdef __DEEPKS
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
@@ -24,30 +23,29 @@
 
 #include "module_hamilt_lcao/hamilt_lcaodft/record_adj.h"
 
-template<>
-void Force_LCAO<std::complex<double>>::cal_fedm(
-    const bool isforce,
-    const bool isstress,
-    ForceStressArrays &fsr,
-    const UnitCell& ucell,
-    const elecstate::DensityMatrix<std::complex<double>, double>* dm,
-    const psi::Psi<std::complex<double>>* psi,
-    const Parallel_Orbitals& pv,
-    const elecstate::ElecState* pelec,
-    ModuleBase::matrix& foverlap,
-    ModuleBase::matrix& soverlap,
-    const K_Vectors* kv,
-    Record_adj* ra)
+template <>
+void Force_LCAO<std::complex<double>>::cal_fedm(const bool isforce,
+                                                const bool isstress,
+                                                ForceStressArrays& fsr,
+                                                const UnitCell& ucell,
+                                                const elecstate::DensityMatrix<std::complex<double>, double>* dm,
+                                                const psi::Psi<std::complex<double>>* psi,
+                                                const Parallel_Orbitals& pv,
+                                                const elecstate::ElecState* pelec,
+                                                ModuleBase::matrix& foverlap,
+                                                ModuleBase::matrix& soverlap,
+                                                const K_Vectors* kv,
+                                                Record_adj* ra)
 {
-    ModuleBase::TITLE("Force_LCAO","cal_fedm");
-    ModuleBase::timer::tick("Force_LCAO","cal_fedm");
+    ModuleBase::TITLE("Force_LCAO", "cal_fedm");
+    ModuleBase::timer::tick("Force_LCAO", "cal_fedm");
 
     const int nspin = GlobalV::NSPIN;
     const int nbands = GlobalV::NBANDS;
 
     // construct a DensityMatrix object
     elecstate::DensityMatrix<std::complex<double>, double> edm(kv, &pv, nspin);
-    
+
     //--------------------------------------------
     // calculate the energy density matrix here.
     //--------------------------------------------
@@ -75,7 +73,7 @@ void Force_LCAO<std::complex<double>>::cal_fedm(
 #endif
         for (int ik = 0; ik < kv->get_nks(); ++ik)
         {
-            edm.set_DMK_pointer(ik,dm->EDMK[ik].c);
+            edm.set_DMK_pointer(ik, dm->EDMK[ik].c);
         }
     }
     else
@@ -83,13 +81,11 @@ void Force_LCAO<std::complex<double>>::cal_fedm(
         // cal_dm_psi
         elecstate::cal_dm_psi(edm.get_paraV_pointer(), wg_ekb, psi[0], edm);
     }
-    
 
     // cal_dm_2d
     edm.init_DMR(*ra, &ucell);
     edm.cal_DMR();
     edm.sum_DMR_spin();
-
     //--------------------------------------------
     // summation \sum_{i,j} E(i,j)*dS(i,j)
     // BEGIN CALCULATION OF FORCE OF EACH ATOM
@@ -97,16 +93,16 @@ void Force_LCAO<std::complex<double>>::cal_fedm(
     int total_irr = 0;
 #ifdef _OPENMP
 #pragma omp parallel
-	{
-		int num_threads = omp_get_num_threads();
-		ModuleBase::matrix local_soverlap(3, 3);
-		int local_total_irr = 0;
+    {
+        int num_threads = omp_get_num_threads();
+        ModuleBase::matrix local_soverlap(3, 3);
+        int local_total_irr = 0;
 #else
-		ModuleBase::matrix& local_soverlap = soverlap;
-		int& local_total_irr = total_irr;
+    ModuleBase::matrix& local_soverlap = soverlap;
+    int& local_total_irr = total_irr;
 #endif
 
-		ModuleBase::Vector3<double> tau1, dtau, tau2;
+        ModuleBase::Vector3<double> tau1, dtau, tau2;
 
 #ifdef _OPENMP
 #pragma omp for schedule(dynamic)
@@ -119,10 +115,10 @@ void Force_LCAO<std::complex<double>>::cal_fedm(
             // get iat1
             int iat1 = ucell.itia2iat(T1, I1);
             double* foverlap_iat;
-			if (isforce)
-			{
-				foverlap_iat = &foverlap(iat, 0);
-			}
+            if (isforce)
+            {
+                foverlap_iat = &foverlap(iat, 0);
+            }
 
 #ifdef _OPENMP
             // using local stack to avoid false sharing in multi-threaded case
@@ -150,10 +146,10 @@ void Force_LCAO<std::complex<double>>::cal_fedm(
                 double Rz = ra->info[iat][cb][2];
                 // get BaseMatrix
                 hamilt::BaseMatrix<double>* tmp_matrix = edm.get_DMR_pointer(1)->find_matrix(iat1, iat2, Rx, Ry, Rz);
-				if(tmp_matrix == nullptr) 
-				{
-					continue;
-				}
+                if (tmp_matrix == nullptr)
+                {
+                    continue;
+                }
                 int row_ap = pv.atom_begin_row[iat1];
                 int col_ap = pv.atom_begin_col[iat2];
                 // get DMR
@@ -162,7 +158,7 @@ void Force_LCAO<std::complex<double>>::cal_fedm(
                     for (int nu = 0; nu < pv.get_col_size(iat2); ++nu)
                     {
                         // here do not sum over spin due to edm.sum_DMR_spin();
-                        double edm2d1 = tmp_matrix->get_value(mu,nu);
+                        double edm2d1 = tmp_matrix->get_value(mu, nu);
                         double edm2d2 = 2.0 * edm2d1;
 
                         if (isforce)
@@ -175,20 +171,17 @@ void Force_LCAO<std::complex<double>>::cal_fedm(
                         {
                             for (int ipol = 0; ipol < 3; ipol++)
                             {
-                                local_soverlap(0, ipol) += edm2d1 * fsr.DSloc_Rx[irr]
-                                                            * fsr.DH_r[irr * 3 + ipol];
+                                local_soverlap(0, ipol) += edm2d1 * fsr.DSloc_Rx[irr] * fsr.DH_r[irr * 3 + ipol];
                                 if (ipol < 1)
-								{
-									continue;
-								}
-                                local_soverlap(1, ipol) += edm2d1 * fsr.DSloc_Ry[irr]
-                                                            * fsr.DH_r[irr * 3 + ipol];
-								if (ipol < 2)
-								{
-									continue;
-								}
-                                local_soverlap(2, ipol) += edm2d1 * fsr.DSloc_Rz[irr]
-                                                            * fsr.DH_r[irr * 3 + ipol];
+                                {
+                                    continue;
+                                }
+                                local_soverlap(1, ipol) += edm2d1 * fsr.DSloc_Ry[irr] * fsr.DH_r[irr * 3 + ipol];
+                                if (ipol < 2)
+                                {
+                                    continue;
+                                }
+                                local_soverlap(2, ipol) += edm2d1 * fsr.DSloc_Rz[irr] * fsr.DH_r[irr * 3 + ipol];
                             }
                         }
                         //}
@@ -215,16 +208,16 @@ void Force_LCAO<std::complex<double>>::cal_fedm(
                 for (int ipol = 0; ipol < 3; ipol++)
                 {
                     soverlap(0, ipol) += local_soverlap(0, ipol);
-					if (ipol < 1)
-					{
-						continue;
-					}
-					soverlap(1, ipol) += local_soverlap(1, ipol);
-					if (ipol < 2)
-					{
-						continue;
-					}
-					soverlap(2, ipol) += local_soverlap(2, ipol);
+                    if (ipol < 1)
+                    {
+                        continue;
+                    }
+                    soverlap(1, ipol) += local_soverlap(1, ipol);
+                    if (ipol < 2)
+                    {
+                        continue;
+                    }
+                    soverlap(2, ipol) += local_soverlap(2, ipol);
                 }
             }
         }
@@ -243,6 +236,6 @@ void Force_LCAO<std::complex<double>>::cal_fedm(
         ModuleBase::WARNING_QUIT("Force_LCAO::fedm_k", "irr!=pv.nnr");
     }
 
-    ModuleBase::timer::tick("Force_LCAO","cal_fedm");
+    ModuleBase::timer::tick("Force_LCAO", "cal_fedm");
     return;
 }
