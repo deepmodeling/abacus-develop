@@ -6,11 +6,11 @@
 # Only problem is the installation from github.com
 # LibRI is under highly-active development, the git submodule installation is more recommended
 
-# Last Update in 2023-1124
+# Last Update in 2024-0815
 
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
-
+# libri 0.2.0 need to be used in newer ABACUS
 libri_ver="0.2.0"
 libri_sha256="ad79dfbc3ed8ff066c85549a2737d29205dbf755b38ea216ab2ab42754f80389"
 source "${SCRIPT_DIR}"/common_vars.sh
