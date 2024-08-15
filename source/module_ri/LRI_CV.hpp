@@ -8,10 +8,11 @@
 
 #include "LRI_CV.h"
 #include "LRI_CV_Tools.h"
-#include "module_ri/exx_abfs-abfs_index.h"
+#include "exx_abfs-abfs_index.h"
 #include "RI_Util.h"
-#include "module_base/tool_title.h"
-#include "module_base/timer.h"
+#include "../module_base/tool_title.h"
+#include "../module_base/timer.h"
+#include "../module_hamilt_pw/hamilt_pwdft/global.h"
 #include <RI/global/Global_Func-1.h>
 #include <omp.h>
 

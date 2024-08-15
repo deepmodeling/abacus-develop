@@ -6,11 +6,14 @@
 #ifndef LRI_CV_TOOLS_H
 #define LRI_CV_TOOLS_H
 
+#include "module_base/abfs-vector3_order.h"
+
 #include <RI/global/Tensor.h>
 
 #include <cstddef>
 #include <array>
 #include <vector>
+#include <map>
 
 namespace LRI_CV_Tools
 {
@@ -84,7 +87,12 @@ namespace LRI_CV_Tools
 	template<typename TA, typename Tcell, typename Tdata>
 	extern std::map<int,std::map<int,std::map<Abfs::Vector3_Order<double>,std::array<RI::Tensor<Tdata>,3>>>>
 	get_dCVws(
-		const std::array<std::map<TA,std::map<std::pair<TA,std::array<Tcell,3>>,RI::Tensor<Tdata>>>,3> &dCVs);	
+		const std::array<std::map<TA,std::map<std::pair<TA,std::array<Tcell,3>>,RI::Tensor<Tdata>>>,3> &dCVs);
+
+	template<typename TA, typename TC, typename Tdata>
+	extern std::array<std::array<std::map<TA,std::map<std::pair<TA,TC>,RI::Tensor<Tdata>>>,3>,3>
+	cal_dMRs(
+		const std::array<std::map<TA,std::map<std::pair<TA,TC>,RI::Tensor<Tdata>>>,3> &dMs);
 }
 
 #include "LRI_CV_Tools.hpp"

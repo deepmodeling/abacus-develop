@@ -140,6 +140,11 @@ void Exx_LRI<Tdata>::cal_exx_ions()
 				{{"writable_dVws",true}});
 		this->cv.dVws = LRI_CV_Tools::get_dCVws(dVs);
 		this->exx_lri.set_dVs(std::move(dVs), this->info.V_grad_threshold);
+		if(GlobalV::CAL_STRESS)
+		{
+			std::array<std::array<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,3>,3> dVRs = LRI_CV_Tools::cal_dMRs(dVs);
+			this->exx_lri.set_dVRs(std::move(dVRs), this->info.V_grad_R_threshold);
+		}
 	}
 
 	const std::array<Tcell,Ndim> period_Cs = LRI_CV_Tools::cal_latvec_range<Tcell>(2);
@@ -160,6 +165,11 @@ void Exx_LRI<Tdata>::cal_exx_ions()
 		std::array<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,3> &dCs = std::get<1>(Cs_dCs);
 		this->cv.dCws = LRI_CV_Tools::get_dCVws(dCs);
 		this->exx_lri.set_dCs(std::move(dCs), this->info.C_grad_threshold);
+		if(GlobalV::CAL_STRESS)
+		{
+			std::array<std::array<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,3>,3> dCRs = LRI_CV_Tools::cal_dMRs(dCs);
+			this->exx_lri.set_dCRs(std::move(dCRs), this->info.C_grad_R_threshold);
+		}
 	}
 	ModuleBase::timer::tick("Exx_LRI", "cal_exx_ions");
 }
@@ -171,8 +181,6 @@ void Exx_LRI<Tdata>::cal_exx_elec(const std::vector<std::map<TA,std::map<TAC,RI:
 	ModuleBase::timer::tick("Exx_LRI", "cal_exx_elec");
 
 	const std::vector<std::tuple<std::set<TA>, std::set<TA>>> judge = RI_2D_Comm::get_2D_judge(pv);
-
-	this->exx_lri.set_csm_threshold(this->info.cauchy_threshold);
 
 	this->Hexxs.resize(GlobalV::NSPIN);
 	this->Eexx = 0;
@@ -239,8 +247,6 @@ void Exx_LRI<Tdata>::cal_exx_force()
 {
 	ModuleBase::TITLE("Exx_LRI","cal_exx_force");
 	ModuleBase::timer::tick("Exx_LRI", "cal_exx_force");
-		
-	this->exx_lri.set_csm_threshold(this->info.cauchy_force_threshold);
 
 	this->force_exx.create(GlobalC::ucell.nat, Ndim);
 	for(int is=0; is<GlobalV::NSPIN; ++is)
@@ -263,8 +269,6 @@ void Exx_LRI<Tdata>::cal_exx_stress()
 {
 	ModuleBase::TITLE("Exx_LRI","cal_exx_stress");
 	ModuleBase::timer::tick("Exx_LRI", "cal_exx_stress");
-		
-	this->exx_lri.set_csm_threshold(this->info.cauchy_stress_threshold);
 
 	this->stress_exx.create(Ndim, Ndim);
 	for(int is=0; is<GlobalV::NSPIN; ++is)
