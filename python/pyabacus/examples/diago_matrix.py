@@ -10,7 +10,7 @@ nband = 8
 v0 = np.random.rand(nbasis, nband)
 
 diag_elem = h_mat.diagonal()
-diag_elem = np.where(np.abs(diag_elem) < 1e-5, 1e-5, diag_elem)
+diag_elem = np.where(np.abs(diag_elem) < 1e-8, 1e-8, diag_elem)
 precond = 1.0 / np.abs(diag_elem)
 
 
@@ -24,7 +24,7 @@ e, v = hsolver.dav_subspace(
     nband,
     precond,
     dav_ndim=8,
-    tol=1e-4,
+    tol=1e-7,
     max_iter=1000,
     scf_type=False
 )
