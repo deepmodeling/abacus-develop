@@ -14,11 +14,11 @@ diag_elem = np.where(np.abs(diag_elem) < 1e-5, 1e-5, diag_elem)
 precond = 1.0 / np.abs(diag_elem)
 
 
-def mv_op(x):
+def mm_op(x):
     return h_mat.dot(x)
 
 e, v = hsolver.dav_subspace(
-    mv_op,
+    mm_op,
     v0,
     nbasis,
     nband,

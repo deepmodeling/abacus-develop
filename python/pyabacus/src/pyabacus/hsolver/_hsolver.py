@@ -16,10 +16,10 @@ class diag_comm_info:
     def nproc(self) -> int: ...
     
 def dav_subspace(
-    mv_op: Callable[[NDArray[np.complex128]], NDArray[np.complex128]],
+    mm_op: Callable[[NDArray[np.complex128]], NDArray[np.complex128]],
     init_v: NDArray[np.complex128],
-    nbasis: int,
-    nband: int,
+    dim: int,
+    num_eigs: int,
     pre_condition: NDArray[np.float64],
     dav_ndim: int = 2,
     tol: float = 1e-2,
@@ -32,14 +32,14 @@ def dav_subspace(
 
     Parameters
     ----------
-    mv_op : Callable[[NDArray[np.complex128]], NDArray[np.complex128]],
-        The operator to be diagonalized, which is a function that takes a vector as input
-        and returns a vector mv_op(v) = H * v as output.
+    mm_op : Callable[[NDArray[np.complex128]], NDArray[np.complex128]],
+        The operator to be diagonalized, which is a function that takes a matrix as input
+        and returns a matrix mv_op(X) = H * X as output.
     init_v : NDArray[np.complex128]
         The initial guess for the eigenvectors.
-    nbasis : int
+    dim : int
         The number of basis, i.e. the number of rows/columns in the matrix.
-    nband : int
+    num_eigs : int
         The number of bands to calculate, i.e. the number of eigenvalues to calculate.
     pre_condition : NDArray[np.float64]
         The preconditioner.
@@ -68,25 +68,25 @@ def dav_subspace(
     v : NDArray[np.complex128]
         The eigenvectors corresponding to the eigenvalues.
     """
-    if not callable(mv_op):
-        raise TypeError("mv_op must be a callable object.")
+    if not callable(mm_op):
+        raise TypeError("mm_op must be a callable object.")
     
     if is_occupied is None:
-        is_occupied = [True] * nband
+        is_occupied = [True] * num_eigs
     
     if init_v.ndim != 1 or init_v.dtype != np.complex128:
         init_v = init_v.flatten().astype(np.complex128, order='C')
     
-    _diago_obj_dav_subspace = hsolver.diago_dav_subspace(nbasis, nband)
+    _diago_obj_dav_subspace = hsolver.diago_dav_subspace(dim, num_eigs)
     _diago_obj_dav_subspace.set_psi(init_v)
     _diago_obj_dav_subspace.init_eigenvalue()
     
     comm_info = hsolver.diag_comm_info(0, 1)
     assert dav_ndim > 1, "dav_ndim must be greater than 1."
-    assert dav_ndim * nband < nbasis * comm_info.nproc, "dav_ndim * nband must be less than nbasis * comm_info.nproc."
+    assert dav_ndim * num_eigs < dim * comm_info.nproc, "dav_ndim * num_eigs must be less than dim * comm_info.nproc."
    
-    res = _diago_obj_dav_subspace.diag(
-        mv_op,
+    _ = _diago_obj_dav_subspace.diag(
+        mm_op,
         pre_condition,
         dav_ndim,
         tol,

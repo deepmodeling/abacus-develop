@@ -6,7 +6,7 @@ import numpy as np
 import scipy
 
 def diag_pyabacus(h_sparse, nband):
-    def mv_op(x):
+    def mm_op(x):
         return h_sparse.dot(x)
 
     nbasis = h_sparse.shape[0]
@@ -18,7 +18,7 @@ def diag_pyabacus(h_sparse, nband):
     precond = 1.0 / np.abs(diag_elem)
 
     e, _ = hsolver.dav_subspace(
-        mv_op,
+        mm_op,
         v0,
         nbasis,
         nband,
