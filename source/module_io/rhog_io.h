@@ -19,7 +19,10 @@ namespace ModuleIO
  */
 bool read_rhog(const std::string& filename, const ModulePW::PW_Basis* pw_rhod, std::complex<double>** rhog);
 
-void write_rhog();
+void write_rhog(const std::string& fchg,
+                const int nspin,
+                const ModulePW::PW_Basis* pw_rhod, 
+                const std::complex<double>** rhog);
 
 } // namespace ModuleIO
 
