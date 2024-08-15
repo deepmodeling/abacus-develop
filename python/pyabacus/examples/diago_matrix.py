@@ -24,7 +24,7 @@ e, v = hsolver.dav_subspace(
     nband,
     precond,
     dav_ndim=8,
-    tol=1e-7,
+    tol=1e-8,
     max_iter=1000,
     scf_type=False
 )
