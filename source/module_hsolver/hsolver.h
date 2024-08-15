@@ -23,33 +23,6 @@ class HSolver
   public:
     HSolver() {};
 
-    // solve Hamiltonian to electronic density in ElecState
-    virtual void solve(hamilt::Hamilt<T, Device>* phm,
-                       psi::Psi<T, Device>& ppsi,
-                       elecstate::ElecState* pes,
-                       const std::string method,
-                       const bool skip_charge)
-    {
-        return;
-    }
-
-    virtual void solve(hamilt::Hamilt<T, Device>* phm,
-                       psi::Psi<T, Device>& ppsi,
-                       elecstate::ElecState* pes,
-                       ModulePW::PW_Basis_K* wfc_basis,
-                       Stochastic_WF& stowf,
-                       const int istep,
-                       const int iter,
-                       const std::string method,
-                       const int scf_iter_in,
-                       const bool need_subspace_in,
-                       const int diag_iter_max_in,
-                       const double pw_diag_thr_in,
-                       const bool skip_charge)
-    {
-        return;
-    }
-
     // set diagethr according to drho (for lcao and lcao-in-pw, we suppose the error is zero and we set diagethr to 0)
     virtual Real set_diagethr(Real diag_ethr_in, const int istep, const int iter, const Real drho)
     {

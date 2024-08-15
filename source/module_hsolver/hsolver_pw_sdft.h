@@ -30,7 +30,7 @@ class HSolverPW_SDFT : public HSolverPW<std::complex<double>>
                        const bool need_subspace_in,
                        const int diag_iter_max_in,
                        const double pw_diag_thr_in,
-                       const bool skip_charge) override;
+                       const bool skip_charge);
 
     virtual double set_diagethr(double diag_ethr_in, const int istep, const int iter, const double drho) override;
     
