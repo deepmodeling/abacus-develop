@@ -185,7 +185,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
         const auto* dm_p = dynamic_cast<const elecstate::ElecStateLCAO<T>*>(pelec)->get_DM();
         if(GlobalV::NSPIN==2)
         {
-            const_cast<elecstate::DensityMatrix<T, double>*>(dm_p)->switch_dmr(2);
+            const_cast<elecstate::DensityMatrix<T, double>*>(dm_p)->switch_dmr(1);
         }
         const hamilt::HContainer<double>* dmr = dm_p->get_DMR_pointer(1);
         tmp_nonlocal.cal_force_stress(isforce, isstress, dmr, fvnl_dbeta, svnl_dbeta);

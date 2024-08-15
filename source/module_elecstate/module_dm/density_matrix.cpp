@@ -614,10 +614,6 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR_full(hamilt::HContaine
         // get global indexes of whole matrix for each atom in this process
         int row_ap = this->_paraV->atom_begin_row[iat1];
         int col_ap = this->_paraV->atom_begin_col[iat2];
-        if (row_ap == -1 || col_ap == -1)
-        {
-            throw std::string("Atom-pair not belong this process");
-        }
         for (int ir = 0; ir < tmp_ap.get_R_size(); ++ir)
         {
             const ModuleBase::Vector3<int> r_index = tmp_ap.get_R_index(ir);
