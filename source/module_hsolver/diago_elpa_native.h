@@ -14,7 +14,6 @@ class DiagoElpaNative : public DiagH<T>
     using Real = typename GetTypeReal<T>::type;
 
   public:
-    DiagoElpaNative();
     void diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* eigenvalue_in) override;
 #ifdef __MPI
     // diagnolization used in parallel-k case
