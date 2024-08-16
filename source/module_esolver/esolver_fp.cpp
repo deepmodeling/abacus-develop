@@ -6,6 +6,7 @@
 #include "module_io/output_log.h"
 #include "module_io/write_elecstat_pot.h"
 #include "module_parameter/parameter.h"
+#include "module_io/rhog_io.h"
 namespace ModuleESolver
 {
 
@@ -124,16 +125,19 @@ void ESolver_FP::after_scf(const int istep)
         // 3) write charge density
         if (PARAM.inp.out_chg)
         {
+            std::complex<double>** rhog_tot = (PARAM.inp.dm_to_rho)? this->pelec->charge->rhog : this->pelec->charge->rhog_save;
             for (int is = 0; is < GlobalV::NSPIN; is++)
             {
                 double* data = nullptr;
                 if (PARAM.inp.dm_to_rho)
                 {
                     data = this->pelec->charge->rho[is];
+                    this->pw_rho->real2recip(this->pelec->charge->rho[is], this->pelec->charge->rhog[is]);
                 }
                 else
                 {
                     data = this->pelec->charge->rho_save[is];
+                    this->pw_rho->real2recip(this->pelec->charge->rho_save[is], this->pelec->charge->rhog_save[is]);
                 }
                 std::string fn = GlobalV::global_out_dir + "/SPIN" + std::to_string(is + 1) + "_CHG.cube";
                 ModuleIO::write_cube(
@@ -176,6 +180,14 @@ void ESolver_FP::after_scf(const int istep)
                         this->pelec->eferm.get_efval(is),
                         &(GlobalC::ucell));
                 }
+            
+            ModuleIO::write_rhog(GlobalV::global_out_dir + "charge-density.dat",
+                                 GlobalV::GAMMA_ONLY_PW || GlobalV::GAMMA_ONLY_PW,
+                                 this->pw_rho,
+                                 GlobalV::NSPIN,
+                                 GlobalC::ucell.GT,
+                                 GlobalC::ucell.tpiba,
+                                 rhog_tot);
             }
         }
 

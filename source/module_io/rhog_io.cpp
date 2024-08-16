@@ -190,3 +190,76 @@ bool ModuleIO::read_rhog(const std::string& filename, const ModulePW::PW_Basis* 
     ModuleBase::timer::tick("ModuleIO", "read_rhog");
     return true;
 }
+
+bool ModuleIO::write_rhog(const std::string& fchg,
+                          const bool gamma_only, // from INPUT
+                          const ModulePW::PW_Basis* pw_rho, // pw_rho in runtime
+                          const int nspin, // GlobalV
+                          const ModuleBase::Matrix3& GT, // from UnitCell, useful for calculating the miller
+                          const double& tpiba,
+                          std::complex<double>** rhog)
+{
+    std::ofstream ofs;
+    ofs.open(fchg, std::ios::binary);
+    if (!ofs)
+    {
+        ModuleBase::WARNING_QUIT("ModuleIO::write_rhog", "File I/O failure: cannot open file " + fchg);
+        return false;
+    }
+
+    // write the header: gamma_only, ngm_g, nspin
+    int size = 3;
+    // because "reinterpret_cast" cannot drop the "const", so use intermediate variable
+    int ngm_g = pw_rho->npwtot;
+    int gam = gamma_only; // IMPLICIT DATA TYPE CONVERSION
+    int nsp = nspin;
+    ofs.write(reinterpret_cast<char*>(&size), sizeof(size));
+    ofs.write(reinterpret_cast<char*>(&gam), sizeof(gam));
+    ofs.write(reinterpret_cast<char*>(&ngm_g), sizeof(ngm_g));
+    ofs.write(reinterpret_cast<char*>(&nsp), sizeof(nsp));
+    ofs.write(reinterpret_cast<char*>(&size), sizeof(size));
+    // write the lattice vectors, GT is the reciprocal lattice vectors, need 2pi?
+    std::vector<double> b = {GT.e11, GT.e12, GT.e13, GT.e21, GT.e22, GT.e23, GT.e31, GT.e32, GT.e33};
+    size = 9;
+    ofs.write(reinterpret_cast<char*>(&size), sizeof(size));
+    for (int i = 0; i < 9; ++i)
+    {
+        ofs.write(reinterpret_cast<char*>(&b[i]), sizeof(b[i]));
+    }
+    ofs.write(reinterpret_cast<char*>(&size), sizeof(size));
+
+    // write the G-vectors in Miller indices, the Miller indices can be calculated by
+    // the dot product of the G-vectors and the reciprocal lattice vectors
+    // parallelization needed considered here. Because the sequence of the G-vectors
+    // is not important, we can write the G-vectors processer by processer
+    size = 3*ngm_g;
+    ofs.write(reinterpret_cast<char*>(&size), sizeof(size));
+    for(int ig = 0; ig < pw_rho->npw; ++ig)
+    {
+        const ModuleBase::Vector3<double> g = pw_rho->gdirect[ig]; // g direct is (ix, iy, iz), miller index (integer), centered at (0, 0, 0)
+        std::vector<int> miller = {int(g.x), int(g.y), int(g.z)};
+        ofs.write(reinterpret_cast<char*>(&miller[0]), sizeof(miller[0]));
+        ofs.write(reinterpret_cast<char*>(&miller[1]), sizeof(miller[1]));
+        ofs.write(reinterpret_cast<char*>(&miller[2]), sizeof(miller[2]));
+    }
+    ofs.write(reinterpret_cast<char*>(&size), sizeof(size));
+
+    // write the rho(G) values
+    std::complex<double> sum_check;
+    size = ngm_g;
+    for(int ispin = 0; ispin < nspin; ++ispin)
+    {
+        ofs.write(reinterpret_cast<char*>(&size), sizeof(size));
+        sum_check = 0.0;
+        for(int ig = 0; ig < pw_rho->npw; ++ig)
+        {
+            sum_check += rhog[ispin][ig];
+            ofs.write(reinterpret_cast<char*>(&rhog[ispin][ig]), sizeof(rhog[ispin][ig]));
+        }
+        assert(std::abs(sum_check) > 1.0e-10); // check if the sum of rho(G) is valid
+        ofs.write(reinterpret_cast<char*>(&size), sizeof(size));
+    }
+    
+    ofs.close();
+    return true;
+}
