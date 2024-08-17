@@ -1,7 +1,7 @@
 #include "sto_tool.h"
 
-#include "module_base/timer.h"
 #include "module_base/math_chebyshev.h"
+#include "module_base/timer.h"
 #ifdef __MPI
 #include "mpi.h"
 #endif
@@ -70,13 +70,12 @@ void check_che(const int& nche_in,
             while (1)
             {
                 bool converge;
-                converge = chetest.checkconverge(&stohchi,
-                                                 &Stochastic_hchi::hchi_norm,
-                                                 pchi,
-                                                 npw,
-                                                 *stohchi.Emax,
-                                                 *stohchi.Emin,
-                                                 2.0);
+                auto hchi_norm = std::bind(&Stochastic_hchi::hchi_norm,
+                                           &stohchi,
+                                           std::placeholders::_1,
+                                           std::placeholders::_2,
+                                           std::placeholders::_3);
+                converge = chetest.checkconverge(hchi_norm, pchi, npw, *stohchi.Emax, *stohchi.Emin, 2.0);
 
                 if (!converge)
                 {
