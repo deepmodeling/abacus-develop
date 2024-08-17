@@ -67,7 +67,7 @@ void check_che(const int& nche_in,
             {
                 pchi = &p_stowf->chi0[0](ik, i, 0);
             }
-            while (1)
+            while (true)
             {
                 bool converge;
                 auto hchi_norm = std::bind(&Stochastic_hchi::hchi_norm,

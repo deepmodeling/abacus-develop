@@ -5,7 +5,7 @@
 #include "global_function.h"
 #include "tool_quit.h"
 
-#include <assert.h>
+#include <cassert>
 
 namespace ModuleBase
 {
@@ -361,18 +361,20 @@ void Chebyshev<REAL>::calfinalvec_real(std::function<void(std::complex<REAL>*, s
                                        const int LDA,
                                        const int m)
 {
-    if (!getcoef_real)
+    if (!getcoef_real) {
         ModuleBase::WARNING_QUIT("Chebyshev<REAL>", "Please calculate coef_real first!");
+}
 
     std::complex<REAL>* arraynp1;
     std::complex<REAL>* arrayn;
     std::complex<REAL>* arrayn_1;
     assert(N >= 0 && LDA >= N);
     int ndmxt;
-    if (m == 1)
+    if (m == 1) {
         ndmxt = N * m;
-    else
+    } else {
         ndmxt = LDA * m;
+}
 
     arraynp1 = new std::complex<REAL>[ndmxt];
     arrayn = new std::complex<REAL>[ndmxt];
@@ -415,18 +417,20 @@ void Chebyshev<REAL>::calfinalvec_complex(std::function<void(std::complex<REAL>*
                                           const int LDA,
                                           const int m)
 {
-    if (!getcoef_complex)
+    if (!getcoef_complex) {
         ModuleBase::WARNING_QUIT("Stochastic_Chebychev", "Please calculate coef_complex first!");
+}
 
     std::complex<REAL>* arraynp1;
     std::complex<REAL>* arrayn;
     std::complex<REAL>* arrayn_1;
     assert(N >= 0 && LDA >= N);
     int ndmxt;
-    if (m == 1)
+    if (m == 1) {
         ndmxt = N * m;
-    else
+    } else {
         ndmxt = LDA * m;
+}
 
     arraynp1 = new std::complex<REAL>[ndmxt];
     arrayn = new std::complex<REAL>[ndmxt];
@@ -512,10 +516,11 @@ void Chebyshev<REAL>::tracepolyA(std::function<void(std::complex<REAL>* in, std:
     std::complex<REAL>* arrayn_1;
     assert(N >= 0 && LDA >= N);
     int ndmxt;
-    if (m == 1)
+    if (m == 1) {
         ndmxt = N * m;
-    else
+    } else {
         ndmxt = LDA * m;
+}
 
     arraynp1 = new std::complex<REAL>[ndmxt];
     arrayn = new std::complex<REAL>[ndmxt];
