@@ -7,6 +7,7 @@ int Pseudopot_upf::read_pseudo_upf(std::ifstream &ifs, Atom_pseudo& pp)
     std::string dummy;
     pp.has_so = false;
     this->q_with_l = false;
+    this->mesh_changed = false;
 
     // addinfo_loop
     ifs.rdstate();
@@ -196,6 +197,7 @@ void Pseudopot_upf::read_pseudo_header(std::ifstream &ifs, Atom_pseudo& pp)
     if (pp.mesh%2 == 0)
 	{
 		pp.mesh -= 1;
+        this->mesh_changed = true;
 	}
 
 	ifs >> pp.nchi >> pp.nbeta ;
@@ -439,6 +441,11 @@ void Pseudopot_upf::read_pseudo_pswfc(std::ifstream &ifs, Atom_pseudo& pp)
 		{
 			ifs >> pp.chi(i, ir);
 		}
+        if (this->mesh_changed)
+        {
+            double temp = 0.0;
+            ifs >> temp;
+        }
 	}
 	return;
 }

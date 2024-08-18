@@ -33,9 +33,11 @@ int Pseudopot_upf::read_pseudo_vwr(std::ifstream &ifs, Atom_pseudo& pp)
 	ifs >> value; length = value.find(","); value.erase(length,1);
 	pp.mesh = std::atoi( value.c_str() );
 	//the mesh should be odd, which is forced in Simpson integration
+	this->mesh_changed = false;
 	if(pp.mesh%2==0) 
 	{
 		pp.mesh=pp.mesh-1;
+		this->mesh_changed = true;
 		GlobalV::ofs_running << " Mesh number - 1, we need odd number, \n this may affect some polar atomic orbitals." << std::endl;
 	}
 	GlobalV::ofs_running << std::setw(15) << "MESH" << std::setw(15) << pp.mesh << std::endl;
