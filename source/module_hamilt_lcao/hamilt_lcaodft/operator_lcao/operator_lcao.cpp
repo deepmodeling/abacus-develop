@@ -7,6 +7,7 @@
 
 #ifdef __ELPA
 #include "module_hsolver/diago_elpa.h"
+#include "module_hsolver/diago_elpa_native.h"
 #endif
 
 namespace hamilt {
