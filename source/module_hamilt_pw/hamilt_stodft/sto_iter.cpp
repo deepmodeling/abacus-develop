@@ -134,13 +134,12 @@ void Stochastic_Iter::checkemm(const int& ik, const int istep, const int iter, S
         while (true)
         {
             bool converge;
-            converge = p_che->checkconverge(&stohchi,
-                                            &Stochastic_hchi::hchi_norm,
-                                            pchi,
-                                            npw,
-                                            *stohchi.Emax,
-                                            *stohchi.Emin,
-                                            5.0);
+            auto hchi_norm = std::bind(&Stochastic_hchi::hchi_norm,
+                                       &stohchi,
+                                       std::placeholders::_1,
+                                       std::placeholders::_2,
+                                       std::placeholders::_3);
+            converge = p_che->checkconverge(hchi_norm, pchi, npw, *stohchi.Emax, *stohchi.Emin, 5.0);
 
             if (!converge)
             {
@@ -336,9 +335,14 @@ void Stochastic_Iter::calPn(const int& ik, Stochastic_WF& stowf)
         pchi = stowf.chi0->get_pointer();
     }
 
+    auto hchi_norm = std::bind(&Stochastic_hchi::hchi_norm,
+                               &stohchi,
+                               std::placeholders::_1,
+                               std::placeholders::_2,
+                               std::placeholders::_3);
     if (this->method == 1)
     {
-        p_che->tracepolyA(&stohchi, &Stochastic_hchi::hchi_norm, pchi, npw, npwx, nchip_ik);
+        p_che->tracepolyA(hchi_norm, pchi, npw, npwx, nchip_ik);
         for (int i = 0; i < norder; ++i)
         {
             spolyv[i] += p_che->polytrace[i] * this->pkv->wk[ik];
@@ -346,13 +350,7 @@ void Stochastic_Iter::calPn(const int& ik, Stochastic_WF& stowf)
     }
     else
     {
-        p_che->calpolyvec_complex(&stohchi,
-                                  &Stochastic_hchi::hchi_norm,
-                                  pchi,
-                                  stowf.chiallorder[ik].c,
-                                  npw,
-                                  npwx,
-                                  nchip_ik);
+        p_che->calpolyvec_complex(hchi_norm, pchi, stowf.chiallorder[ik].c, npw, npwx, nchip_ik);
         double* vec_all = (double*)stowf.chiallorder[ik].c;
         char trans = 'T';
         char normal = 'N';
@@ -377,12 +375,14 @@ double Stochastic_Iter::calne(elecstate::ElecState* pes)
     if (this->method == 1)
     {
         // Note: spolyv contains kv.wk[ik]
-        p_che->calcoef_real(&stofunc, &Sto_Func<double>::nfd);
+        auto nfd = std::bind(&Sto_Func<double>::nfd, &this->stofunc, std::placeholders::_1);
+        p_che->calcoef_real(nfd);
         sto_ne = BlasConnector::dot(norder, p_che->coef_real, 1, spolyv, 1);
     }
     else
     {
-        p_che->calcoef_real(&stofunc, &Sto_Func<double>::nroot_fd);
+        auto nroot_fd = std::bind(&Sto_Func<double>::nroot_fd, &this->stofunc, std::placeholders::_1);
+        p_che->calcoef_real(nroot_fd);
         sto_ne = vTMv(p_che->coef_real, spolyv, norder);
     }
     if (GlobalV::NBANDS > 0)
@@ -409,7 +409,8 @@ double Stochastic_Iter::calne(elecstate::ElecState* pes)
 
 void Stochastic_Iter::calHsqrtchi(Stochastic_WF& stowf)
 {
-    p_che->calcoef_real(&stofunc, &Sto_Func<double>::nroot_fd);
+    auto nroot_fd = std::bind(&Sto_Func<double>::nroot_fd, &this->stofunc, std::placeholders::_1);
+    p_che->calcoef_real(nroot_fd);
     for (int ik = 0; ik < this->pkv->get_nks(); ++ik)
     {
         // init k
@@ -446,12 +447,14 @@ void Stochastic_Iter::sum_stoband(Stochastic_WF& stowf,
     double stodemet;
     if (this->method == 1)
     {
-        p_che->calcoef_real(&stofunc, &Sto_Func<double>::nfdlnfd);
+        auto nfdlnfd = std::bind(&Sto_Func<double>::nfdlnfd, &this->stofunc, std::placeholders::_1);
+        p_che->calcoef_real(nfdlnfd);
         stodemet = BlasConnector::dot(norder, p_che->coef_real, 1, spolyv, 1);
     }
     else
     {
-        p_che->calcoef_real(&stofunc, &Sto_Func<double>::n_root_fdlnfd);
+        auto nroot_fdlnfd = std::bind(&Sto_Func<double>::n_root_fdlnfd, &this->stofunc, std::placeholders::_1);
+        p_che->calcoef_real(nroot_fdlnfd);
         stodemet = -vTMv(p_che->coef_real, spolyv, norder);
     }
 
@@ -480,7 +483,8 @@ void Stochastic_Iter::sum_stoband(Stochastic_WF& stowf,
     double sto_eband = 0;
     if (this->method == 1)
     {
-        p_che->calcoef_real(&stofunc, &Sto_Func<double>::nxfd);
+        auto nxfd = std::bind(&Sto_Func<double>::nxfd, &this->stofunc, std::placeholders::_1);
+        p_che->calcoef_real(nxfd);
         sto_eband = BlasConnector::dot(norder, p_che->coef_real, 1, spolyv, 1);
     }
     else
@@ -642,6 +646,11 @@ void Stochastic_Iter::calTnchi_ik(const int& ik, Stochastic_WF& stowf)
     }
     else
     {
-        p_che->calfinalvec_real(&stohchi, &Stochastic_hchi::hchi_norm, pchi, out, npw, npwx, nchip[ik]);
+        auto hchi_norm = std::bind(&Stochastic_hchi::hchi_norm,
+                                   &stohchi,
+                                   std::placeholders::_1,
+                                   std::placeholders::_2,
+                                   std::placeholders::_3);
+        p_che->calfinalvec_real(hchi_norm, pchi, out, npw, npwx, nchip[ik]);
     }
 }

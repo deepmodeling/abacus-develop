@@ -42,6 +42,8 @@ void Sto_EleCond::decide_nche(const double dt,
     const double mu = this->p_elec->eferm.ef;
     this->stofunc.mu = mu;
     int& nbatch = this->cond_dtbatch;
+    auto ncos = std::bind(&Sto_Func<double>::ncos, &this->stofunc, std::placeholders::_1);
+    auto n_sin = std::bind(&Sto_Func<double>::n_sin, &this->stofunc, std::placeholders::_1);
     // try to find nbatch
     if (nbatch == 0)
     {
@@ -49,7 +51,7 @@ void Sto_EleCond::decide_nche(const double dt,
         {
             nbatch = test_nbatch;
             this->stofunc.t = 0.5 * dt * nbatch;
-            chet.calcoef_pair(&this->stofunc, &Sto_Func<double>::ncos, &Sto_Func<double>::n_sin);
+            chet.calcoef_pair(ncos, n_sin);
             double minerror = std::abs(chet.coef_complex[nche_guess - 1] / chet.coef_complex[0]);
             if (minerror < cond_thr)
             {
@@ -72,7 +74,7 @@ void Sto_EleCond::decide_nche(const double dt,
     // first try to find nche
     this->stofunc.t = 0.5 * dt * nbatch;
     auto getnche = [&](int& nche) {
-        chet.calcoef_pair(&this->stofunc, &Sto_Func<double>::ncos, &Sto_Func<double>::n_sin);
+        chet.calcoef_pair(ncos, n_sin);
         for (int i = 1; i < nche_guess; ++i)
         {
             double error = std::abs(chet.coef_complex[i] / chet.coef_complex[0]);
@@ -541,8 +543,11 @@ void Sto_EleCond::sKG(const int& smear_type,
     const double mu = this->p_elec->eferm.ef;
     this->stofunc.mu = mu;
     this->stofunc.t = 0.5 * dt * nbatch;
-    chet.calcoef_pair(&this->stofunc, &Sto_Func<double>::ncos, &Sto_Func<double>::nsin);
-    chemt.calcoef_pair(&this->stofunc, &Sto_Func<double>::ncos, &Sto_Func<double>::n_sin);
+    auto ncos = std::bind(&Sto_Func<double>::ncos, &this->stofunc, std::placeholders::_1);
+    auto nsin = std::bind(&Sto_Func<double>::nsin, &this->stofunc, std::placeholders::_1);
+    auto n_sin = std::bind(&Sto_Func<double>::n_sin, &this->stofunc, std::placeholders::_1);
+    chet.calcoef_pair(ncos, nsin);
+    chemt.calcoef_pair(ncos, n_sin);
     std::vector<std::complex<double>> batchcoef, batchmcoef;
     if (nbatch > 1)
     {
@@ -560,8 +565,8 @@ void Sto_EleCond::sKG(const int& smear_type,
             tmpcoef = batchcoef.data() + ib * cond_nche;
             tmpmcoef = batchmcoef.data() + ib * cond_nche;
             this->stofunc.t = 0.5 * dt * (ib + 1);
-            chet.calcoef_pair(&this->stofunc, &Sto_Func<double>::ncos, &Sto_Func<double>::nsin);
-            chemt.calcoef_pair(&this->stofunc, &Sto_Func<double>::ncos, &Sto_Func<double>::n_sin);
+            chet.calcoef_pair(ncos, nsin);
+            chemt.calcoef_pair(ncos, n_sin);
             for (int i = 0; i < cond_nche; ++i)
             {
                 tmpcoef[i] = chet.coef_complex[i];
@@ -725,24 +730,19 @@ void Sto_EleCond::sKG(const int& smear_type,
             vkspsi.resize(1, 1, 1);
         }
 
-        che.calcoef_real(&this->stofunc, &Sto_Func<double>::nroot_fd);
-        che.calfinalvec_real(&stohchi,
-                             &Stochastic_hchi::hchi_norm,
-                             stopsi->get_pointer(),
-                             sfchi.get_pointer(),
-                             npw,
-                             npwx,
-                             perbands_sto);
+        auto nroot_fd = std::bind(&Sto_Func<double>::nroot_fd, &this->stofunc, std::placeholders::_1);
+        che.calcoef_real(nroot_fd);
+        auto hchi_norm = std::bind(&Stochastic_hchi::hchi_norm,
+                                   &stohchi,
+                                   std::placeholders::_1,
+                                   std::placeholders::_2,
+                                   std::placeholders::_3);
+        che.calfinalvec_real(hchi_norm, stopsi->get_pointer(), sfchi.get_pointer(), npw, npwx, perbands_sto);
 
-        che.calcoef_real(&this->stofunc, &Sto_Func<double>::nroot_mfd);
+        auto nroot_mfd = std::bind(&Sto_Func<double>::nroot_mfd, &this->stofunc, std::placeholders::_1);
+        che.calcoef_real(nroot_mfd);
 
-        che.calfinalvec_real(&stohchi,
-                             &Stochastic_hchi::hchi_norm,
-                             stopsi->get_pointer(),
-                             smfchi.get_pointer(),
-                             npw,
-                             npwx,
-                             perbands_sto);
+        che.calfinalvec_real(hchi_norm, stopsi->get_pointer(), smfchi.get_pointer(), npw, npwx, perbands_sto);
 
         //------------------------  allocate ------------------------
         psi::Psi<std::complex<double>>& expmtsfchi = sfchi;
@@ -821,29 +821,25 @@ void Sto_EleCond::sKG(const int& smear_type,
             // Sto
             if (nbatch == 1)
             {
-                chemt.calfinalvec_complex(&stohchi,
-                                          &Stochastic_hchi::hchi_norm,
+                chemt.calfinalvec_complex(hchi_norm,
                                           expmtsfchi.get_pointer(),
                                           expmtsfchi.get_pointer(),
                                           npw,
                                           npwx,
                                           perbands_sto);
-                chemt.calfinalvec_complex(&stohchi,
-                                          &Stochastic_hchi::hchi_norm,
+                chemt.calfinalvec_complex(hchi_norm,
                                           expmtsmfchi.get_pointer(),
                                           expmtsmfchi.get_pointer(),
                                           npw,
                                           npwx,
                                           perbands_sto);
-                chet.calfinalvec_complex(&stohchi,
-                                         &Stochastic_hchi::hchi_norm,
+                chet.calfinalvec_complex(hchi_norm,
                                          exptsfchi.get_pointer(),
                                          exptsfchi.get_pointer(),
                                          npw,
                                          npwx,
                                          perbands_sto);
-                chet.calfinalvec_complex(&stohchi,
-                                         &Stochastic_hchi::hchi_norm,
+                chet.calfinalvec_complex(hchi_norm,
                                          exptsmfchi.get_pointer(),
                                          exptsmfchi.get_pointer(),
                                          npw,
@@ -862,34 +858,10 @@ void Sto_EleCond::sKG(const int& smear_type,
                 std::complex<double>* stoexptsmfchi = exptsmfchi.get_pointer();
                 if ((it - 1) % nbatch == 0)
                 {
-                    chet.calpolyvec_complex(&stohchi,
-                                            &Stochastic_hchi::hchi_norm,
-                                            stoexptsfchi,
-                                            tmppolyexptsfchi,
-                                            npw,
-                                            npwx,
-                                            perbands_sto);
-                    chet.calpolyvec_complex(&stohchi,
-                                            &Stochastic_hchi::hchi_norm,
-                                            stoexptsmfchi,
-                                            tmppolyexptsmfchi,
-                                            npw,
-                                            npwx,
-                                            perbands_sto);
-                    chemt.calpolyvec_complex(&stohchi,
-                                             &Stochastic_hchi::hchi_norm,
-                                             stoexpmtsfchi,
-                                             tmppolyexpmtsfchi,
-                                             npw,
-                                             npwx,
-                                             perbands_sto);
-                    chemt.calpolyvec_complex(&stohchi,
-                                             &Stochastic_hchi::hchi_norm,
-                                             stoexpmtsmfchi,
-                                             tmppolyexpmtsmfchi,
-                                             npw,
-                                             npwx,
-                                             perbands_sto);
+                    chet.calpolyvec_complex(hchi_norm, stoexptsfchi, tmppolyexptsfchi, npw, npwx, perbands_sto);
+                    chet.calpolyvec_complex(hchi_norm, stoexptsmfchi, tmppolyexptsmfchi, npw, npwx, perbands_sto);
+                    chemt.calpolyvec_complex(hchi_norm, stoexpmtsfchi, tmppolyexpmtsfchi, npw, npwx, perbands_sto);
+                    chemt.calpolyvec_complex(hchi_norm, stoexpmtsmfchi, tmppolyexpmtsmfchi, npw, npwx, perbands_sto);
                 }
 
                 std::complex<double>* tmpcoef = batchcoef.data() + (it - 1) % nbatch * cond_nche;

@@ -33,9 +33,11 @@ int Pseudopot_upf::read_pseudo_vwr(std::ifstream &ifs, Atom_pseudo& pp)
 	ifs >> value; length = value.find(","); value.erase(length,1);
 	pp.mesh = std::atoi( value.c_str() );
 	//the mesh should be odd, which is forced in Simpson integration
+	this->mesh_changed = false;
 	if(pp.mesh%2==0) 
 	{
 		pp.mesh=pp.mesh-1;
+		this->mesh_changed = true;
 		GlobalV::ofs_running << " Mesh number - 1, we need odd number, \n this may affect some polar atomic orbitals." << std::endl;
 	}
 	GlobalV::ofs_running << std::setw(15) << "MESH" << std::setw(15) << pp.mesh << std::endl;
@@ -75,9 +77,10 @@ int Pseudopot_upf::read_pseudo_vwr(std::ifstream &ifs, Atom_pseudo& pp)
 	ifs >> iref_s >> iref_p >> iref_d;
 	GlobalV::ofs_running << std::setw(15) << "Vnl_USED" << std::setw(15) << iref_s 
 	<< std::setw(15) << iref_p << std::setw(15) << iref_d << std::endl;
-	if(spd_loc==1) iref_s=0;
-	else if(spd_loc==2) iref_p=0;
-	else if(spd_loc==3) iref_d=0;
+	if(spd_loc==1) { iref_s=0;
+	} else if(spd_loc==2) { iref_p=0;
+	} else if(spd_loc==3) { iref_d=0;
+}
 	ifs >> iTB_s >> iTB_p >> iTB_d;
 	GlobalV::ofs_running << std::setw(15) << "Orb_USED" << std::setw(15) << iTB_s 
 	<< std::setw(15) << iTB_p << std::setw(15) << iTB_d << std::endl;
@@ -85,9 +88,12 @@ int Pseudopot_upf::read_pseudo_vwr(std::ifstream &ifs, Atom_pseudo& pp)
 	
 	// calculate the number of wave functions
 	pp.nchi = 0;
-	if(iTB_s) ++pp.nchi;
-	if(iTB_p) ++pp.nchi;
-	if(iTB_d) ++pp.nchi;
+	if(iTB_s) { ++pp.nchi;
+}
+	if(iTB_p) { ++pp.nchi;
+}
+	if(iTB_d) { ++pp.nchi;
+}
 	GlobalV::ofs_running << std::setw(15) << "NWFC" << std::setw(15) << pp.nchi << std::endl;
 	// allocate occupation number array for wave functions
 	pp.oc = std::vector<double>(pp.nchi, 0.0);
@@ -223,26 +229,33 @@ int Pseudopot_upf::read_pseudo_vwr(std::ifstream &ifs, Atom_pseudo& pp)
 	// --------------------------------------
 	// (4) local pseudopotential 
 	// --------------------------------------
-	if(spd_loc==0) for(int ir=0; ir<pp.mesh; ++ir)
+	if(spd_loc==0) { for(int ir=0; ir<pp.mesh; ++ir)
 	{
 			// do nothing	
 	}
-	else if(spd_loc==1) for(int ir=0; ir<pp.mesh; ++ir) pp.vloc_at[ir] = vs[ir]; 
-	else if(spd_loc==2) for(int ir=0; ir<pp.mesh; ++ir) pp.vloc_at[ir] = vp[ir];
-	else if(spd_loc==3) for(int ir=0; ir<pp.mesh; ++ir) pp.vloc_at[ir] = vd[ir];
-	else if(spd_loc==12) for(int ir=0; ir<pp.mesh; ++ir) pp.vloc_at[ir] = (vs[ir]+vp[ir])/2.0;
-	else if(spd_loc==13) for(int ir=0; ir<pp.mesh; ++ir) pp.vloc_at[ir] = (vs[ir]+vd[ir])/2.0;
-	else if(spd_loc==23) for(int ir=0; ir<pp.mesh; ++ir) pp.vloc_at[ir] = (vp[ir]+vd[ir])/2.0;
+	} else if(spd_loc==1) { for(int ir=0; ir<pp.mesh; ++ir) { pp.vloc_at[ir] = vs[ir]; 
+}
+	} else if(spd_loc==2) { for(int ir=0; ir<pp.mesh; ++ir) { pp.vloc_at[ir] = vp[ir];
+}
+	} else if(spd_loc==3) { for(int ir=0; ir<pp.mesh; ++ir) { pp.vloc_at[ir] = vd[ir];
+}
+	} else if(spd_loc==12) { for(int ir=0; ir<pp.mesh; ++ir) { pp.vloc_at[ir] = (vs[ir]+vp[ir])/2.0;
+}
+	} else if(spd_loc==13) { for(int ir=0; ir<pp.mesh; ++ir) { pp.vloc_at[ir] = (vs[ir]+vd[ir])/2.0;
+}
+	} else if(spd_loc==23) { for(int ir=0; ir<pp.mesh; ++ir) { pp.vloc_at[ir] = (vp[ir]+vd[ir])/2.0;
+}
+}
 
 
 	// --------------------------------------
 	// (5) setup nonlocal pseudopotentials
 	// --------------------------------------
 	// for non-local pseudopotentials.
-	if(iref_d==1) pp.lmax=2;
-	else if(iref_p==1) pp.lmax=1;
-	else if(iref_s==1) pp.lmax=0;
-	else
+	if(iref_d==1) { pp.lmax=2;
+	} else if(iref_p==1) { pp.lmax=1;
+	} else if(iref_s==1) { pp.lmax=0;
+	} else
 	{
 		std::cout << "\n !!! READ THIS FIRST !!!" << std::endl;
 		std::cout << " Could not decide which is the max angular momentum from .vwr pseudopotential file." << std::endl;
@@ -253,9 +266,12 @@ int Pseudopot_upf::read_pseudo_vwr(std::ifstream &ifs, Atom_pseudo& pp)
 	}
 	// no projectors now
 	pp.nbeta = 0;
-	if(iref_s==1) ++pp.nbeta; // add one s projector
-	if(iref_p==1) ++pp.nbeta; // add one p projector
-	if(iref_d==1) ++pp.nbeta; // add one p projector
+	if(iref_s==1) { ++pp.nbeta; // add one s projector
+}
+	if(iref_p==1) { ++pp.nbeta; // add one p projector
+}
+	if(iref_d==1) { ++pp.nbeta; // add one p projector
+}
 	GlobalV::ofs_running << std::setw(15) << "NPROJ" << std::setw(15) << pp.nbeta << std::endl;
 	this->nd = pp.nbeta;
 	GlobalV::ofs_running << std::setw(15) << "N-Dij" << std::setw(15) << nd << std::endl;
@@ -298,9 +314,10 @@ int Pseudopot_upf::read_pseudo_vwr(std::ifstream &ifs, Atom_pseudo& pp)
 	{
 		double coef = 0.0;
 		const int lnow = pp.lll[ib];
-		if(lnow==0) for(int ir=0; ir<pp.mesh; ++ir){vl[ir]=vs[ir]; wlr[ir]=ws[ir]*pp.r[ir];}
-		else if(lnow==1) for(int ir=0; ir<pp.mesh; ++ir){vl[ir]=vp[ir]; wlr[ir]=wp[ir]*pp.r[ir];}
-		else if(lnow==2) for(int ir=0; ir<pp.mesh; ++ir){vl[ir]=vd[ir]; wlr[ir]=wd[ir]*pp.r[ir];}
+		if(lnow==0) { for(int ir=0; ir<pp.mesh; ++ir){vl[ir]=vs[ir]; wlr[ir]=ws[ir]*pp.r[ir];}
+		} else if(lnow==1) { for(int ir=0; ir<pp.mesh; ++ir){vl[ir]=vp[ir]; wlr[ir]=wp[ir]*pp.r[ir];}
+		} else if(lnow==2) { for(int ir=0; ir<pp.mesh; ++ir){vl[ir]=vd[ir]; wlr[ir]=wd[ir]*pp.r[ir];}
+}
 		// for non-local projectors
 		// note that < phi | dV | phi > integration must have 4pi,
 		// this 4pi is also needed in < phi | phi > = 1 integration.
@@ -321,8 +338,10 @@ int Pseudopot_upf::read_pseudo_vwr(std::ifstream &ifs, Atom_pseudo& pp)
 // In pw they did this:
 //		pp.dion(ib,ib)=1.0/coef;
 
-        if(coef<0.0) pp.dion(ib,ib) = -1.0;
-        if(coef>=0.0) pp.dion(ib,ib) = 1.0;
+        if(coef<0.0) { pp.dion(ib,ib) = -1.0;
+}
+        if(coef>=0.0) { pp.dion(ib,ib) = 1.0;
+}
 		//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		// suppose wave function have sqrt(4pi) already
 		//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
