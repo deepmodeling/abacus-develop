@@ -22,22 +22,6 @@ class HSolver
 
   public:
     HSolver() {};
-
-    // set diagethr according to drho (for lcao and lcao-in-pw, we suppose the error is zero and we set diagethr to 0)
-    virtual Real set_diagethr(Real diag_ethr_in,
-                              const int istep,
-                              const int iter,
-                              const Real drho,
-
-                              const std::string init_chg_in,
-                              const std::string calculation_in,
-                              const std::string precision_flag_in,
-                              const double pw_diag_thr_init,
-                              const double nelec_in
-                                  )
-    {
-        return 0.0;
-    }
 };
 
 

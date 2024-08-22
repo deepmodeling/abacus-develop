@@ -46,19 +46,6 @@ class HSolverPW : public HSolver<T, Device>
                const int diag_iter_max_in,
                const double iter_diag_thr_in,
                const bool skip_charge);
-
-    virtual Real set_diagethr(Real diag_ethr_in,
-                              const int istep,
-                              const int iter,
-                              const Real drho,
-
-                              const std::string init_chg_in,
-                              const std::string calculation_in,
-                              const std::string precision_flag_in,
-                              const double pw_diag_thr_init,
-                              const double nelec_in
-                                  
-                              ) override;
     
   protected:
     // diago caller
