@@ -125,24 +125,39 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
 double HSolverPW_SDFT::set_diagethr(double diag_ethr_in,
                                     const int istep,
                                     const int iter,
-                                    const double drho) {
-    if (iter == 1) {
-        if (istep == 0) {
-            if (GlobalV::init_chg == "file") {
+                                    const double drho,
+
+                                    const std::string init_chg_in,
+                                    const std::string calculation_in,
+                                    const std::string precision_flag_in,
+                                    const double pw_diag_thr_init,
+                                    const double nelec_in)
+{
+    if (iter == 1)
+    {
+        if (istep == 0)
+        {
+            if (init_chg_in == "file")
+            {
                 diag_ethr_in = 1.0e-5;
             }
-            diag_ethr_in = std::max(diag_ethr_in, GlobalV::PW_DIAG_THR);
-        } else {
+            diag_ethr_in = std::max(diag_ethr_in, pw_diag_thr_init);
+        }
+        else
+        {
             diag_ethr_in = std::max(diag_ethr_in, 1.0e-5);
-}
-    } else {
-        if (GlobalV::NBANDS > 0 && this->stoiter.KS_ne > 1e-6) {
-            diag_ethr_in
-                = std::min(diag_ethr_in,
-                           0.1 * drho / std::max(1.0, this->stoiter.KS_ne));
-        } else {
+        }
+    }
+    else
+    {
+        if (GlobalV::NBANDS > 0 && this->stoiter.KS_ne > 1e-6)
+        {
+            diag_ethr_in = std::min(diag_ethr_in, 0.1 * drho / std::max(1.0, this->stoiter.KS_ne));
+        }
+        else
+        {
             diag_ethr_in = 0.0;
-}
+        }
     }
 
     return diag_ethr_in;

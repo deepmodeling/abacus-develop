@@ -638,18 +638,26 @@ void HSolverPW<T, Device>::output_iterInfo()
         DiagoIterAssist<T, Device>::avg_iter = 0.0;
     }
 }
+
 template <typename T, typename Device>
 typename HSolverPW<T, Device>::Real HSolverPW<T, Device>::set_diagethr(Real diag_ethr_in,
-                                                                       const int istep, 
-                                                                       const int iter, 
-                                                                       const Real drho)
+                                                                       const int istep,
+                                                                       const int iter,
+                                                                       const Real drho,
+
+                                                                       const std::string init_chg_in,
+                                                                       const std::string calculation_in,
+                                                                       const std::string precision_flag_in,
+                                                                       const double pw_diag_thr_init,
+                                                                       const double nelec_in
+                                                                       )
 {
     // It is too complex now and should be modified.
     if (iter == 1)
     {
         if (std::abs(diag_ethr_in - 1.0e-2) < 1.0e-6)
         {
-            if (GlobalV::init_chg == "file")
+            if (init_chg_in == "file")
             {
                 //======================================================
                 // if you think that the starting potential is good
@@ -669,9 +677,9 @@ typename HSolverPW<T, Device>::Real HSolverPW<T, Device>::set_diagethr(Real diag
             }
         }
 
-        if (GlobalV::CALCULATION == "md" || GlobalV::CALCULATION == "relax" || GlobalV::CALCULATION == "cell-relax")
+        if (calculation_in == "md" || calculation_in == "relax" || calculation_in == "cell-relax")
         {
-            diag_ethr_in = std::max(diag_ethr_in, static_cast<Real>(GlobalV::PW_DIAG_THR));
+            diag_ethr_in = std::max(diag_ethr_in, static_cast<Real>(pw_diag_thr_init));
         }
     }
     else
@@ -682,12 +690,12 @@ typename HSolverPW<T, Device>::Real HSolverPW<T, Device>::set_diagethr(Real diag
         }
         diag_ethr_in = std::min(diag_ethr_in,
                                    static_cast<Real>(0.1) * drho
-                                       / std::max(static_cast<Real>(1.0), static_cast<Real>(GlobalV::nelec)));
+                                       / std::max(static_cast<Real>(1.0), static_cast<Real>(nelec_in)));
     }
     // It is essential for single precision implementation to keep the diag ethr
     // value less or equal to the single-precision limit of convergence(0.5e-4).
     // modified by denghuilu at 2023-05-15
-    if (GlobalV::precision_flag == "single")
+    if (precision_flag_in == "single")
     {
         diag_ethr_in = std::max(diag_ethr_in, static_cast<Real>(0.5e-4));
     }

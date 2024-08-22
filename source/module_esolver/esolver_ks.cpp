@@ -440,7 +440,45 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
 #else
         auto iterstart = std::chrono::system_clock::now();
 #endif
-        diag_ethr = this->phsol->set_diagethr(diag_ethr, istep, iter, drho);
+        
+        // diag_ethr = this->phsol->set_diagethr(diag_ethr,
+        //                                       istep,
+        //                                       iter,
+        //                                       drho,
+        //                                       PARAM.inp.init_chg,
+        //                                       PARAM.inp.calculation,
+        //                                       GlobalV::precision_flag,
+        //                                       GlobalV::PW_DIAG_THR,
+        //                                       GlobalV::nelec);
+
+        if (PARAM.inp.esolver_type == "ksdft")
+        {
+            diag_ethr = hsolver::set_diagethr_ks(PARAM.inp.basis_type,
+                                                 PARAM.inp.esolver_type,
+                                                 PARAM.inp.calculation,
+                                                 PARAM.inp.init_chg,
+                                                 GlobalV::precision_flag,
+                                                 istep,
+                                                 iter,
+                                                 drho,
+                                                 GlobalV::PW_DIAG_THR,
+                                                 diag_ethr,
+                                                 GlobalV::nelec);
+        }
+        else if (PARAM.inp.esolver_type == "sdft")
+        {
+            diag_ethr = hsolver::set_diagethr_sdft(PARAM.inp.basis_type,
+                                                   PARAM.inp.esolver_type,
+                                                   PARAM.inp.calculation,
+                                                   PARAM.inp.init_chg,
+                                                   istep,
+                                                   iter,
+                                                   drho,
+                                                   GlobalV::PW_DIAG_THR,
+                                                   diag_ethr,
+                                                   GlobalV::NBANDS,
+                                                   esolver_KS_ne);
+        }
 
         // 6) initialization of SCF iterations
         this->iter_init(istep, iter);
