@@ -5,6 +5,7 @@
 #include "module_base/timer.h"
 #include "module_base/vector3.h"
 #include "rhog_io.h"
+#include <numeric>
 
 bool ModuleIO::read_rhog(const std::string& filename, const ModulePW::PW_Basis* pw_rhod, std::complex<double>** rhog)
 {
@@ -196,18 +197,37 @@ bool ModuleIO::write_rhog(const std::string& fchg,
                           const ModulePW::PW_Basis* pw_rho, // pw_rho in runtime
                           const int nspin, // GlobalV
                           const ModuleBase::Matrix3& GT, // from UnitCell, useful for calculating the miller
-                          const double& tpiba,
-                          std::complex<double>** rhog)
+                          std::complex<double>** rhog,
+                          const int irank,
+                          const int nrank)
 {
+    ModuleBase::TITLE("ModuleIO", "write_rhog");
+    ModuleBase::timer::tick("ModuleIO", "write_rhog");
+    // for large-scale data, it is not wise to collect all distributed components to the
+    // master process and then write the data to the file. Instead, we can write the data
+    // processer by processer.
+
+    // Quantum ESPRESSO requires the G-vectors collected should be in the order like as if
+    // there is only 1 process, this order is recorded in
+
+    // fftixy2ip will be useful for the order of the G-vectors
+    // each time we iterate on ig, then find the rho_g over all the processes
+    // for ig in npwtot, then find the local index of ig on processor, ig -> fftixy2ip -> igl
     std::ofstream ofs;
-    ofs.open(fchg, std::ios::binary);
+    ofs.open(fchg, std::ios::binary); // open the file by all processors
     if (!ofs)
     {
         ModuleBase::WARNING_QUIT("ModuleIO::write_rhog", "File I/O failure: cannot open file " + fchg);
         return false;
     }
-
-    // write the header: gamma_only, ngm_g, nspin
+#ifdef __MPI
+    MPI_Barrier(POOL_WORLD); 
+    // this is still a global variable... should be moved into param
+    // list as `const MPI_Comm& comm`
+    if (irank == 0)
+    {
+#endif
+    // write the header (by rank 0): gamma_only, ngm_g, nspin
     int size = 3;
     // because "reinterpret_cast" cannot drop the "const", so use intermediate variable
     int ngm_g = pw_rho->npwtot;
@@ -227,7 +247,9 @@ bool ModuleIO::write_rhog(const std::string& fchg,
         ofs.write(reinterpret_cast<char*>(&b[i]), sizeof(b[i]));
     }
     ofs.write(reinterpret_cast<char*>(&size), sizeof(size));
-
+#ifdef __MPI
+    }
+#endif
     // write the G-vectors in Miller indices, the Miller indices can be calculated by
     // the dot product of the G-vectors and the reciprocal lattice vectors
     // parallelization needed considered here. Because the sequence of the G-vectors
@@ -261,5 +283,7 @@ bool ModuleIO::write_rhog(const std::string& fchg,
     }
     
     ofs.close();
+
+    ModuleBase::timer::tick("ModuleIO", "write_rhog");
     return true;
 }

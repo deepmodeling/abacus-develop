@@ -278,11 +278,6 @@ public:
     //get fftixy2is;
     void getfftixy2is(int * fftixy2is) const;
 
-    template <typename T>
-    static void collect(const ModulePW::PW_Basis* pw_rho, T* in, T* out, const int irank);
-    template <typename T>
-    static void collect(const ModulePW::PW_Basis* pw_rho, std::complex<T>* in, std::complex<T>* out, const int irank);
-    
     using resmem_int_op = base_device::memory::resize_memory_op<int, base_device::DEVICE_GPU>;
     using delmem_int_op = base_device::memory::delete_memory_op<int, base_device::DEVICE_GPU>;
     using syncmem_int_h2d_op

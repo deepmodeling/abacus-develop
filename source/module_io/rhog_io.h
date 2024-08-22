@@ -46,12 +46,13 @@ namespace ModuleIO
 bool read_rhog(const std::string& filename, const ModulePW::PW_Basis* pw_rhod, std::complex<double>** rhog);
 
 bool write_rhog(const std::string& fchg,
-                const bool gamma_only, // from INPUT
+                const bool gamma_only,            // from INPUT
                 const ModulePW::PW_Basis* pw_rho, // pw_rho in runtime
-                const int nspin, // GlobalV
-                const ModuleBase::Matrix3& GT, // from UnitCell, useful for calculating the miller
-                const double& tpiba,
-                std::complex<double>** rhog);
+                const int nspin,                  // GlobalV
+                const ModuleBase::Matrix3& GT,    // from UnitCell, useful for calculating the miller
+                std::complex<double>** rhog,
+                const int irank,
+                const int nrank);
 
 } // namespace ModuleIO
 
