@@ -42,9 +42,11 @@ int Pseudopot_upf::read_pseudo_blps(std::ifstream &ifs, Atom_pseudo& pp)
 
     int pspcod, pspxc, lloc, r2well;
     ifs >> pspcod >> pspxc >> pp.lmax >> lloc >> pp.mesh >> r2well;
+    this->mesh_changed = false;
     if (pp.mesh%2 == 0)
 	{
 		pp.mesh -= 1;
+        this->mesh_changed = true;
 	}
 
     if (pspxc == 2)
