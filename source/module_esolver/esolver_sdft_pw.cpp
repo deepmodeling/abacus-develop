@@ -128,7 +128,7 @@ void ESolver_SDFT_PW::before_all_runners(const Input_para& inp, UnitCell& ucell)
 
     // 9) initialize the hsolver
     // It should be removed after esolver_ks does not use phsol.
-    this->phsol = new hsolver::HSolverPW_SDFT(&this->kv, this->pw_wfc, &this->wf, this->stowf, this->stoche, this->init_psi);
+    this->phsol = new hsolver::HSolver<std::complex<double>>();
 
     return;
 }

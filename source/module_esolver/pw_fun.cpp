@@ -52,14 +52,14 @@ namespace ModuleESolver {
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::allocate_hsolver()
 {
-    this->phsol = new hsolver::HSolverPW<T, Device>(this->pw_wfc, &this->wf, false);
+    this->phsol = new hsolver::HSolver<T, Device>();
 }
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::deallocate_hsolver()
 {
     if (this->phsol != nullptr)
     {
-        delete reinterpret_cast<hsolver::HSolverPW<T, Device>*>(this->phsol);
+        delete this->phsol;
         this->phsol = nullptr;
     }
 }
