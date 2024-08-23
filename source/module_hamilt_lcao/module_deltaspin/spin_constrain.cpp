@@ -506,14 +506,12 @@ bool SpinConstrain<FPTYPE, Device>::get_decay_grad_switch()
 
 template <typename FPTYPE, typename Device>
 void SpinConstrain<FPTYPE, Device>::set_solver_parameters(K_Vectors& kv_in,
-                                                          hsolver::HSolver<FPTYPE, Device>* phsol_in,
                                                           hamilt::Hamilt<FPTYPE, Device>* p_hamilt_in,
                                                           psi::Psi<FPTYPE>* psi_in,
                                                           elecstate::ElecState* pelec_in,
                                                           std::string KS_SOLVER_in)
 {
     this->kv_ = kv_in;
-    this->phsol = phsol_in;
     this->p_hamilt = p_hamilt_in;
     this->psi = psi_in;
     this->pelec = pelec_in;
