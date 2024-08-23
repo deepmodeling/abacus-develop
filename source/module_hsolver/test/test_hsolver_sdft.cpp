@@ -133,7 +133,18 @@ class TestHSolverPW_SDFT : public ::testing::Test
     K_Vectors kv;
     wavefunc wf;
     StoChe<double> stoche;
-    hsolver::HSolverPW_SDFT hs_d = hsolver::HSolverPW_SDFT(&kv, &pwbk, &wf, stowf, stoche, false);
+    hsolver::HSolverPW_SDFT hs_d = hsolver::HSolverPW_SDFT(&kv,
+                                                           &pwbk,
+                                                           &wf,
+                                                           stowf,
+                                                           stoche,
+                                                           false,
+                                                           1,
+                                                           false,
+                                                           false,
+                                                           "scf",
+                                                           "pw",
+                                                           "cg");
 
     hamilt::Hamilt<std::complex<double>> hamilt_test_d;
 

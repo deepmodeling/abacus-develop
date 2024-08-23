@@ -171,7 +171,18 @@ void ESolver_SDFT_PW::hamilt2density(int istep, int iter, double ethr)
     hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX = GlobalV::PW_DIAG_NMAX;
 
     // hsolver only exists in this function
-    hsolver::HSolverPW_SDFT hsolver_pw_sdft_obj(&this->kv, this->pw_wfc, &this->wf, this->stowf, this->stoche, this->init_psi);
+    hsolver::HSolverPW_SDFT hsolver_pw_sdft_obj(&this->kv,
+                                                this->pw_wfc,
+                                                &this->wf,
+                                                this->stowf,
+                                                this->stoche,
+                                                this->init_psi,
+                                                GlobalV::NSPIN,
+                                                PARAM.inp.use_paw,
+                                                GlobalV::use_uspp,
+                                                PARAM.inp.calculation,
+                                                PARAM.inp.basis_type,
+                                                PARAM.inp.ks_solver);
 
     hsolver_pw_sdft_obj.solve(this->p_hamilt,
                               this->psi[0],
@@ -190,7 +201,6 @@ void ESolver_SDFT_PW::hamilt2density(int istep, int iter, double ethr)
 
     // temporary
     // set_diagethr need it
-    // ((hsolver::HSolverPW_SDFT*)phsol)->set_KS_ne(hsolver_pw_sdft_obj.stoiter.KS_ne);
     this->esolver_KS_ne = hsolver_pw_sdft_obj.stoiter.KS_ne;
 
     if (GlobalV::MY_STOGROUP == 0)

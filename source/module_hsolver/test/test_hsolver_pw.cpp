@@ -36,14 +36,29 @@
 class TestHSolverPW : public ::testing::Test {
   public:
     ModulePW::PW_Basis_K pwbk;
+
+    std::string method_test = "cg";
+
     hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_CPU> hs_f
         = hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_CPU>(&pwbk,
                                                                            nullptr,
-                                                                           false);
+                                                                           false,
+                                                                           1,
+                                                                           false,
+                                                                           GlobalV::use_uspp,
+                                                                           "scf",
+                                                                           "pw",
+                                                                           method_test);
     hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU> hs_d
         = hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU>(&pwbk,
                                                                             nullptr,
-                                                                            false);
+                                                                            false,
+                                                                            1,
+                                                                            false,
+                                                                            GlobalV::use_uspp,
+                                                                            "scf",
+                                                                            "pw",
+                                                                            method_test);
 
     hamilt::Hamilt<std::complex<double>> hamilt_test_d;
     hamilt::Hamilt<std::complex<float>> hamilt_test_f;
@@ -52,8 +67,6 @@ class TestHSolverPW : public ::testing::Test {
     psi::Psi<std::complex<float>> psi_test_cf;
 
     elecstate::ElecState elecstate_test;
-
-    std::string method_test = "cg";
 
     std::vector<float> ekb_f;
 
