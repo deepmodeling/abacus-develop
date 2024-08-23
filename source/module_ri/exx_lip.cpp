@@ -29,16 +29,21 @@ void Exx_Lip<T, Device>::cal_exx()
         //t_phi_cal += my_time(t);
 
         judge_singularity(ik);
-        for (int iw_l = 0; iw_l < GlobalV::NLOCAL; ++iw_l)
-            for (int iw_r = 0; iw_r < GlobalV::NLOCAL; ++iw_r)
+        for (int iw_l = 0; iw_l < GlobalV::NLOCAL; ++iw_l) {
+            for (int iw_r = 0; iw_r < GlobalV::NLOCAL; ++iw_r) {
                 sum1[iw_l * GlobalV::NLOCAL + iw_r] = T(0.0, 0.0);
+}
+}
         if (Conv_Coulomb_Pot_K::Ccp_Type::Ccp == info.ccp_type || Conv_Coulomb_Pot_K::Ccp_Type::Hf == info.ccp_type)
         {
             sum2_factor = 0.0;
-            if (gzero_rank_in_pool == GlobalV::RANK_IN_POOL)
-                for (int iw_l = 0; iw_l < GlobalV::NLOCAL; ++iw_l)
-                    for (int iw_r = 0; iw_r < GlobalV::NLOCAL; ++iw_r)
+            if (gzero_rank_in_pool == GlobalV::RANK_IN_POOL) {
+                for (int iw_l = 0; iw_l < GlobalV::NLOCAL; ++iw_l) {
+                    for (int iw_r = 0; iw_r < GlobalV::NLOCAL; ++iw_r) {
                         sum3[iw_l][iw_r] = T(0.0, 0.0);
+}
+}
+}
         }
 
         for (int iq_tmp = iq_vecik; iq_tmp < iq_vecik + q_pack->kv_ptr->get_nks() / GlobalV::NSPIN; ++iq_tmp)					// !!! k_point
@@ -52,9 +57,11 @@ void Exx_Lip<T, Device>::cal_exx()
             {
                 b_cal(ik, iq, ib);
                 //t_b_cal += my_time(t);
-                if (Conv_Coulomb_Pot_K::Ccp_Type::Ccp == info.ccp_type || Conv_Coulomb_Pot_K::Ccp_Type::Hf == info.ccp_type)
-                    if (iq == iq_vecik)
+                if (Conv_Coulomb_Pot_K::Ccp_Type::Ccp == info.ccp_type || Conv_Coulomb_Pot_K::Ccp_Type::Hf == info.ccp_type) {
+                    if (iq == iq_vecik) {
                         sum3_cal(iq, ib);
+}
+}
                 //t_sum3_cal += my_time(t);
                 b_sum(iq, ib);
                 //t_b_sum += my_time(t);
@@ -74,8 +81,9 @@ void Exx_Lip<T, Device>::cal_exx()
                     ofs("Hexxk_" + ModuleBase::GlobalFunc::TO_STRING(istep++) + "_" + ModuleBase::GlobalFunc::TO_STRING(ik) + "_" + ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK));
                 for (int i = 0; i != GlobalV::NLOCAL; ++i)
                 {
-                    for (int j = 0; j != GlobalV::NLOCAL; ++j)
+                    for (int j = 0; j != GlobalV::NLOCAL; ++j) {
                         ofs << exx_matrix[ik][i][j] << "\t";
+}
                     ofs << std::endl;
                 }
             };
@@ -191,13 +199,14 @@ Exx_Lip<T, Device>::Exx_Lip(
 
         sum1.resize(GlobalV::NLOCAL * GlobalV::NLOCAL);
 
-        if (Conv_Coulomb_Pot_K::Ccp_Type::Ccp == info.ccp_type || Conv_Coulomb_Pot_K::Ccp_Type::Hf == info.ccp_type)
+        if (Conv_Coulomb_Pot_K::Ccp_Type::Ccp == info.ccp_type || Conv_Coulomb_Pot_K::Ccp_Type::Hf == info.ccp_type) {
             if (gzero_rank_in_pool == GlobalV::RANK_IN_POOL)
             {
                 b0.resize(GlobalV::NLOCAL);
                 sum3.resize(GlobalV::NLOCAL);
                 for (int iw_l = 0; iw_l < GlobalV::NLOCAL; ++iw_l) { sum3[iw_l].resize(GlobalV::NLOCAL); }
             }
+}
 
         exx_matrix.resize(k_pack->kv_ptr->get_nks());
         for (int ik = 0; ik < k_pack->kv_ptr->get_nks(); ++ik)
@@ -215,19 +224,20 @@ Exx_Lip<T, Device>::Exx_Lip(
 template <typename T, typename Device>
 Exx_Lip<T, Device>::~Exx_Lip()
 {
-    if (k_pack)delete k_pack->hvec_array;
+    if (k_pack) {delete k_pack->hvec_array;
+}
     delete k_pack;
 
     if (GlobalV::init_chg == "atomic")
     {
-        q_pack = NULL;
+        q_pack = nullptr;
     }
     else if (GlobalV::init_chg == "file")
     {
-        delete q_pack->kv_ptr;	q_pack->kv_ptr = NULL;
-        delete q_pack->wf_ptr;	q_pack->wf_ptr = NULL;
+        delete q_pack->kv_ptr;	q_pack->kv_ptr = nullptr;
+        delete q_pack->wf_ptr;	q_pack->wf_ptr = nullptr;
         // delete[] q_pack->hvec_array;	q_pack->hvec_array=NULL;
-        delete q_pack;	q_pack = NULL;
+        delete q_pack;	q_pack = nullptr;
     }
 }
 
@@ -235,14 +245,19 @@ template <typename T, typename Device>
 void Exx_Lip<T, Device>::wf_wg_cal()
 {
     ModuleBase::TITLE("Exx_Lip", "wf_wg_cal");
-    if (GlobalV::NSPIN == 1)
-        for (int ik = 0; ik < k_pack->kv_ptr->get_nks(); ++ik)
-            for (int ib = 0; ib < GlobalV::NBANDS; ++ib)
+    if (GlobalV::NSPIN == 1) {
+        for (int ik = 0; ik < k_pack->kv_ptr->get_nks(); ++ik) {
+            for (int ib = 0; ib < GlobalV::NBANDS; ++ib) {
                 k_pack->wf_wg(ik, ib) = k_pack->pelec->wg(ik, ib) / 2;
-    else if (GlobalV::NSPIN == 2)
-        for (int ik = 0; ik < k_pack->kv_ptr->get_nks(); ++ik)
-            for (int ib = 0; ib < GlobalV::NBANDS; ++ib)
+}
+}
+    } else if (GlobalV::NSPIN == 2) {
+        for (int ik = 0; ik < k_pack->kv_ptr->get_nks(); ++ik) {
+            for (int ib = 0; ib < GlobalV::NBANDS; ++ib) {
                 k_pack->wf_wg(ik, ib) = k_pack->pelec->wg(ik, ib);
+}
+}
+}
 }
 
 template <typename T, typename Device>
@@ -358,19 +373,21 @@ void Exx_Lip<T, Device>::qkg2_exp(int ik, int iq)
         const Real qkg2 = ((q_pack->kv_ptr->kvec_c[iq] - k_pack->kv_ptr->kvec_c[ik] + rho_basis->gcar[ig]) * (ModuleBase::TWO_PI / ucell_ptr->lat0)).norm2();
         if (Conv_Coulomb_Pot_K::Ccp_Type::Ccp == info.ccp_type || Conv_Coulomb_Pot_K::Ccp_Type::Hf == info.ccp_type)
 		{
-            if (std::abs(qkg2) < 1e-10)
+            if (std::abs(qkg2) < 1e-10) {
                 recip_qkg2[ig] = 0.0;												// 0 to ignore bb/qkg2 when qkg2==0
-            else
+            } else {
                 recip_qkg2[ig] = 1.0 / qkg2;
+}
             sum2_factor += recip_qkg2[ig] * exp(-info.lambda * qkg2);
 			recip_qkg2[ig] = sqrt(recip_qkg2[ig]);
 		}
         else if (Conv_Coulomb_Pot_K::Ccp_Type::Hse == info.ccp_type)
 		{
-            if (std::abs(qkg2) < 1e-10)
+            if (std::abs(qkg2) < 1e-10) {
                 recip_qkg2[ig] = 1.0 / (2 * info.hse_omega);
-            else
+            } else {
                 recip_qkg2[ig] = sqrt((1 - exp(-qkg2 / (4 * info.hse_omega * info.hse_omega))) / qkg2);
+}
         }
 	}
 }
@@ -408,12 +425,15 @@ void Exx_Lip<T, Device>::b_cal(int ik, int iq, int ib)
 		}
         T* const b_w = &b[iw * rho_basis->npw];
 		rho_basis->real2recip( porter, b_w);
-        if (Conv_Coulomb_Pot_K::Ccp_Type::Ccp == info.ccp_type || Conv_Coulomb_Pot_K::Ccp_Type::Hf == info.ccp_type)
-            if ((iq == iq_vecik) && (gzero_rank_in_pool == GlobalV::RANK_IN_POOL))							/// need to check while use k_point parallel
+        if (Conv_Coulomb_Pot_K::Ccp_Type::Ccp == info.ccp_type || Conv_Coulomb_Pot_K::Ccp_Type::Hf == info.ccp_type) {
+            if ((iq == iq_vecik) && (gzero_rank_in_pool == GlobalV::RANK_IN_POOL)) {							/// need to check while use k_point parallel
                 b0[iw] = b_w[rho_basis->ig_gge0];
+}
+}
 
-        for (size_t ig = 0; ig < rho_basis->npw; ++ig)
+        for (size_t ig = 0; ig < rho_basis->npw; ++ig) {
             b_w[ig] *= recip_qkg2[ig];
+}
     }
 	delete [] porter;
 }
@@ -421,10 +441,13 @@ void Exx_Lip<T, Device>::b_cal(int ik, int iq, int ib)
 template <typename T, typename Device>
 void  Exx_Lip<T, Device>::sum3_cal(int iq, int ib)
 {
-    if (gzero_rank_in_pool == GlobalV::RANK_IN_POOL)
-        for (int iw_l = 0; iw_l < GlobalV::NLOCAL; ++iw_l)
-            for (int iw_r = 0; iw_r < GlobalV::NLOCAL; ++iw_r)
+    if (gzero_rank_in_pool == GlobalV::RANK_IN_POOL) {
+        for (int iw_l = 0; iw_l < GlobalV::NLOCAL; ++iw_l) {
+            for (int iw_r = 0; iw_r < GlobalV::NLOCAL; ++iw_r) {
                 sum3[iw_l][iw_r] += b0[iw_l] * conj(b0[iw_r]) * (Real)q_pack->wf_wg(iq, ib);
+}
+}
+}
 }
 
 template <typename T, typename Device>
@@ -449,24 +472,28 @@ void Exx_Lip<T, Device>::sum_all(int ik)
     Real fourpi_div_omega = 4 * (Real)(ModuleBase::PI / ucell_ptr->omega);
     Real spin_fac = 2.0;
 #ifdef __MPI
-    if (Conv_Coulomb_Pot_K::Ccp_Type::Ccp == info.ccp_type || Conv_Coulomb_Pot_K::Ccp_Type::Hf == info.ccp_type)
+    if (Conv_Coulomb_Pot_K::Ccp_Type::Ccp == info.ccp_type || Conv_Coulomb_Pot_K::Ccp_Type::Hf == info.ccp_type) {
         MPI_Reduce(&sum2_factor, &sum2_factor_g, 1, MPI_DOUBLE, MPI_SUM, gzero_rank_in_pool, POOL_WORLD);
+}
 #endif
-    for (size_t iw_l = 1; iw_l < GlobalV::NLOCAL; ++iw_l)
-        for (size_t iw_r = 0; iw_r < iw_l; ++iw_r)
+    for (size_t iw_l = 1; iw_l < GlobalV::NLOCAL; ++iw_l) {
+        for (size_t iw_r = 0; iw_r < iw_l; ++iw_r) {
             sum1[iw_l * GlobalV::NLOCAL + iw_r] = conj(sum1[iw_r * GlobalV::NLOCAL + iw_l]);		// Peize Lin add conj 2019-04-14
+}
+}
 
     for (int iw_l = 0; iw_l < GlobalV::NLOCAL; ++iw_l)
 	{
 		for( int iw_r=0; iw_r<GlobalV::NLOCAL; ++iw_r)
 		{
             exx_matrix[ik][iw_l][iw_r] = -fourpi_div_omega * sum1[iw_l * GlobalV::NLOCAL + iw_r] * spin_fac;
-            if (Conv_Coulomb_Pot_K::Ccp_Type::Ccp == info.ccp_type || Conv_Coulomb_Pot_K::Ccp_Type::Hf == info.ccp_type)
+            if (Conv_Coulomb_Pot_K::Ccp_Type::Ccp == info.ccp_type || Conv_Coulomb_Pot_K::Ccp_Type::Hf == info.ccp_type) {
                 if (gzero_rank_in_pool == GlobalV::RANK_IN_POOL)
 				{
                     exx_matrix[ik][iw_l][iw_r] += spin_fac * (fourpi_div_omega * sum3[iw_l][iw_r] * sum2_factor_g);
                     exx_matrix[ik][iw_l][iw_r] += spin_fac * (-1 / (Real)sqrt(info.lambda * ModuleBase::PI) * (Real)(q_pack->kv_ptr->get_nks() / GlobalV::NSPIN) * sum3[iw_l][iw_r]);
                 }
+}
         }
 	}
 }
@@ -549,8 +576,9 @@ void Exx_Lip<T, Device>::exx_energy_cal()
 template <typename T, typename Device>
 void Exx_Lip<T, Device>::write_q_pack() const
 {
-    if (PARAM.inp.out_chg == 0)
+    if (PARAM.inp.out_chg[0] == 0) {
         return;
+}
 
     if (!GlobalV::RANK_IN_POOL)
 	{

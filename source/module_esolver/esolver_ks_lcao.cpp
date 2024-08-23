@@ -219,7 +219,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
     // 10) initialize the HSolver
     if (this->phsol == nullptr)
     {
-        this->phsol = new hsolver::HSolverLCAO<TK>(&(this->pv), GlobalV::KS_SOLVER);
+        this->phsol = new hsolver::HSolver<TK>();
     }
 
     // 11) inititlize the charge density

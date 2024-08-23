@@ -310,7 +310,7 @@ struct Input_para
                                           ///< 0: output only when converged
     int out_freq_ion = 0;                 ///< the frequency ( >= 0 ) of ionic step to output charge density;
                                           ///< 0: output only when ion steps are finished
-    int out_chg = 0;                      ///< output charge density. 0: no; 1: yes
+    std::vector<int> out_chg = {0, 3};    ///< output charge density. 0: no; 1: yes
     int out_pot = 0;                      ///< yes or no
     int out_wfc_pw = 0;                   ///< 0: no; 1: txt; 2: dat
     bool out_wfc_r = false;               ///< 0: no; 1: yes
@@ -471,6 +471,8 @@ struct Input_para
     double exx_cauchy_threshold = 1e-07;        ///< threshold to screen exx using Cauchy-Schwartz inequality
     double exx_c_grad_threshold = 0.0001;       ///< threshold to screen nabla C matrix in exx
     double exx_v_grad_threshold = 0.1;          ///< threshold to screen nabla V matrix in exx
+    double exx_c_grad_r_threshold = 0.0001;     ///< threshold to screen nabla C matrix in exx
+    double exx_v_grad_r_threshold = 0.1;        ///< threshold to screen nabla V matrix in exx
     double exx_cauchy_force_threshold = 1e-07;  ///< threshold to screen exx force using Cauchy-Schwartz
                                                 ///< inequality
     double exx_cauchy_stress_threshold = 1e-07; ///< threshold to screen exx stress using Cauchy-Schwartz

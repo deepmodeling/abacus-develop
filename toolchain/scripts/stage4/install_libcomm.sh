@@ -6,13 +6,13 @@
 # Only problem is the installation from github.com
 # LibComm is under highly-active development, the git submodule installation is more recommended
 
-# Last Update in 2023-1124
+# Last Update in 2024-0815
 
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 
-libcomm_ver="0.1.0"
-libcomm_sha256="48899b9877bcddf3cc03e4e7323e38cfd802d756b7bafba58f151f81a3fa6ed4"
+libcomm_ver="0.1.1"
+libcomm_sha256="3764c934c895bfd9d8fd766d46e6e3d03230f8076e3edbcc31e10ff8f30075a4"
 source "${SCRIPT_DIR}"/common_vars.sh
 source "${SCRIPT_DIR}"/tool_kit.sh
 source "${SCRIPT_DIR}"/signal_trap.sh

@@ -123,7 +123,7 @@ void ESolver_FP::after_scf(const int istep)
     if (istep % PARAM.inp.out_interval == 0)
     {
         // 3) write charge density
-        if (PARAM.inp.out_chg == 1)
+        if (PARAM.inp.out_chg[0] > 0)
         {
             for (int is = 0; is < GlobalV::NSPIN; is++)
             {
@@ -156,7 +156,7 @@ void ESolver_FP::after_scf(const int istep)
                     this->pw_rhod->nz,
                     this->pelec->eferm.get_efval(is),
                     &(GlobalC::ucell),
-                    3,
+                    PARAM.inp.out_chg[1],
                     1);
                 if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
                 {
@@ -181,7 +181,7 @@ void ESolver_FP::after_scf(const int istep)
                 }
             }
         }
-        if (PARAM.inp.out_chg != -1)
+        if (PARAM.inp.out_chg[0] != -1)
         {
             std::complex<double>** rhog_tot = (PARAM.inp.dm_to_rho)? this->pelec->charge->rhog : this->pelec->charge->rhog_save;
             double** rhor_tot = (PARAM.inp.dm_to_rho)? this->pelec->charge->rho : this->pelec->charge->rho_save;

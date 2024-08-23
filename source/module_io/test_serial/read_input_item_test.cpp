@@ -347,9 +347,9 @@ TEST_F(InputTest, Item_test)
     { // out_chg
         auto it = find_label("out_chg", readinput.input_lists);
         param.input.calculation = "get_wf";
-        param.input.out_chg = 0;
+        param.input.out_chg = {0};
         it->second.reset_value(it->second, param);
-        EXPECT_EQ(param.input.out_chg, 1);
+        EXPECT_EQ(param.input.out_chg[0], 1);
     }
     { // out_pot
         auto it = find_label("out_pot", readinput.input_lists);

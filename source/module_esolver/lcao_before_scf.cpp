@@ -220,7 +220,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
     this->pelec->init_scf(istep, this->sf.strucFac);
 
     //! output the initial charge density
-    if (PARAM.inp.out_chg == 2)
+    if (PARAM.inp.out_chg[0] == 2)
     {
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {

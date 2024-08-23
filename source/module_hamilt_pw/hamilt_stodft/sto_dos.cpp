@@ -117,9 +117,14 @@ void Sto_DOS::caldos(const double sigmain, const double de, const int npart)
             p_stowf->chi0->fix_k(ik);
             pchi = p_stowf->chi0->get_pointer();
         }
+        auto hchi_norm = std::bind(&Stochastic_hchi::hchi_norm,
+                                       &stohchi,
+                                       std::placeholders::_1,
+                                       std::placeholders::_2,
+                                       std::placeholders::_3);
         if (this->method_sto == 1)
         {
-            che.tracepolyA(&stohchi, &Stochastic_hchi::hchi_norm, pchi, npw, npwx, nchipk);
+            che.tracepolyA(hchi_norm, pchi, npw, npwx, nchipk);
             for (int i = 0; i < dos_nche; ++i)
             {
                 spolyv[i] += che.polytrace[i] * p_kv->wk[ik] / 2;
@@ -143,8 +148,7 @@ void Sto_DOS::caldos(const double sigmain, const double de, const int npart)
                 }
                 ModuleBase::GlobalFunc::ZEROS(allorderchi.data(), nchipk_new * npwx * dos_nche);
                 std::complex<double>* tmpchi = pchi + start_nchipk * npwx;
-                che.calpolyvec_complex(&stohchi,
-                                       &Stochastic_hchi::hchi_norm,
+                che.calpolyvec_complex(hchi_norm,
                                        tmpchi,
                                        allorderchi.data(),
                                        npw,
@@ -180,12 +184,14 @@ void Sto_DOS::caldos(const double sigmain, const double de, const int npart)
         this->stofunc.targ_e = (emin + ie * de) / ModuleBase::Ry_to_eV;
         if (this->method_sto == 1)
         {
-            che.calcoef_real(&this->stofunc, &Sto_Func<double>::ngauss);
+            auto ngauss = std::bind(&Sto_Func<double>::ngauss, &this->stofunc, std::placeholders::_1);
+            che.calcoef_real(ngauss);
             tmpsto = BlasConnector::dot(dos_nche, che.coef_real, 1, spolyv.data(), 1);
         }
         else
         {
-            che.calcoef_real(&this->stofunc, &Sto_Func<double>::nroot_gauss);
+            auto nroot_gauss = std::bind(&Sto_Func<double>::nroot_gauss, &this->stofunc, std::placeholders::_1);
+            che.calcoef_real(nroot_gauss);
             tmpsto = vTMv(che.coef_real, spolyv.data(), dos_nche);
         }
         if (GlobalV::NBANDS > 0)
@@ -243,9 +249,10 @@ void Sto_DOS::caldos(const double sigmain, const double de, const int npart)
         for (int ie = 0; ie < ndos; ++ie)
         {
             double tmperror = 2.0 * std::abs(error[ie]);
-            if (maxerror < tmperror) {
+            if (maxerror < tmperror)
+            {
                 maxerror = tmperror;
-}
+            }
             double dos = 2.0 * (ks_dos[ie] + sto_dos[ie]) / ModuleBase::Ry_to_eV;
             sum += dos;
             ofsdos << std::setw(8) << emin + ie * de << std::setw(20) << dos << std::setw(20) << sum * de

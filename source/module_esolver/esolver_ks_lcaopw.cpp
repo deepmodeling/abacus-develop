@@ -67,15 +67,14 @@ namespace ModuleESolver
     template <typename T>
     void ESolver_KS_LIP<T>::allocate_hsolver()
     {
-        this->phsol = new hsolver::HSolverLIP<T>(this->pw_wfc);
+        this->phsol = new hsolver::HSolver<T>();
     }
     template <typename T>
     void ESolver_KS_LIP<T>::deallocate_hsolver()
     {
         if (this->phsol != nullptr)
         {
-            std::cout << "test" << std::endl;
-            delete reinterpret_cast<hsolver::HSolverLIP<T>*>(this->phsol);
+            delete (this->phsol);
             this->phsol = nullptr;
         }
     }

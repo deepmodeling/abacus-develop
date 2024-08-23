@@ -113,8 +113,8 @@ And Intel-oneAPI need user or server manager to manually install from Intel.
 Dependencies below are optional， which is NOT installed by default:
 - `LibTorch` 2.1.2
 - `Libnpy` 1.0.1
-- `LibRI` 0.1.1
-- `LibComm` 0.1.0
+- `LibRI` 0.2.0
+- `LibComm` 0.1.1
 Users can install them by using `--with-*=install` in toolchain*.sh, which is `no` in default.
 > Notice: LibRI, LibComm and Libnpy is on actively development, you should check-out the package version when using this toolchain. Also, LibRI and LibComm can be installed by github submodule, which is also work for libnpy, which is more recommended.
 

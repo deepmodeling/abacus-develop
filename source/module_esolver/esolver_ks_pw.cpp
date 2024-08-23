@@ -230,7 +230,7 @@ void ESolver_KS_PW<T, Device>::before_scf(const int istep)
     this->pelec->init_scf(istep, this->sf.strucFac);
 
     //! output the initial charge density
-    if (PARAM.inp.out_chg == 2)
+    if (PARAM.inp.out_chg[0] == 2)
     {
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
@@ -472,7 +472,7 @@ void ESolver_KS_PW<T, Device>::iter_finish(int& iter)
 
     if (this->out_freq_elec && iter % this->out_freq_elec == 0)
     {
-        if (PARAM.inp.out_chg > 0)
+        if (PARAM.inp.out_chg[0] > 0)
         {
             for (int is = 0; is < GlobalV::NSPIN; is++)
             {
