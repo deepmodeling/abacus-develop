@@ -1130,11 +1130,10 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
     }
 
 #ifdef __EXX
-    // 4) write Exx matrix
-    if (GlobalC::exx_info.info_global.cal_exx) // Peize Lin add if 2022.11.14
+    // 4) write Hexx matrix for NSCF (see `out_chg` in docs/advanced/input_files/input-main.md)
+    if (GlobalC::exx_info.info_global.cal_exx && PARAM.inp.out_chg[0] && istep % PARAM.inp.out_interval == 0) // Peize Lin add if 2022.11.14
     {
-        const std::string file_name_exx = GlobalV::global_out_dir + "HexxR"
-                                          + std::to_string(GlobalV::MY_RANK);
+        const std::string file_name_exx = GlobalV::global_out_dir + "HexxR" + std::to_string(GlobalV::MY_RANK);
         if (GlobalC::exx_info.info_ri.real_number) {
             ModuleIO::write_Hexxs_csr(file_name_exx, GlobalC::ucell, this->exd->get_Hexxs());
         } else {
