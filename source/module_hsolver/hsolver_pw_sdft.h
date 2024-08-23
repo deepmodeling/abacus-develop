@@ -30,7 +30,7 @@ class HSolverPW_SDFT : public HSolverPW<std::complex<double>>
                        const bool need_subspace_in,
                        const int diag_iter_max_in,
                        const double pw_diag_thr_in,
-                       const bool skip_charge); 
+                       const bool skip_charge);
 
     Stochastic_Iter stoiter;
 };
