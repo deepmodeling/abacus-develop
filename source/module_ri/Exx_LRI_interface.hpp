@@ -127,6 +127,7 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
     hamilt::Hamilt<T>& hamilt,
     const elecstate::DensityMatrix<T, double>& dm,
     const K_Vectors& kv,
+    const int& nspin,
     int& iter,
     const double& etot,
     const double& scf_ene_thr)
@@ -163,7 +164,7 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
         }
         else
         { // has separate_loop case
-            double ediff = std::abs(etot - etot_last_outer_loop) * ModuleBase::Ry_to_eV;
+            const double ediff = std::abs(etot - etot_last_outer_loop) * ModuleBase::Ry_to_eV;
             if (two_level_step) { std::cout << FmtCore::format("EDIFF/eV (outer loop): %.8e \n", ediff); }
             // exx converged or get max exx steps
             if (this->two_level_step == GlobalC::exx_info.info_global.hybrid_step
@@ -190,9 +191,9 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
 
                 // GlobalC::exx_lcao.cal_exx_elec(p_esolver->LOC, p_esolver->LOWF.wfc_k_grid);
                 const std::vector<std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>>>
-                    Ds = GlobalV::GAMMA_ONLY_LOCAL
-                    ? RI_2D_Comm::split_m2D_ktoR<Tdata>(*this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_gamma_out(), *dm.get_paraV_pointer(), GlobalV::NSPIN)
-                    : RI_2D_Comm::split_m2D_ktoR<Tdata>(*this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_k_out(), *dm.get_paraV_pointer(), GlobalV::NSPIN);
+                    Ds = std::is_same<T, double>::value //gamma_only_local
+                    ? RI_2D_Comm::split_m2D_ktoR<Tdata>(*this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_gamma_out(), *dm.get_paraV_pointer(), nspin)
+                    : RI_2D_Comm::split_m2D_ktoR<Tdata>(*this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_k_out(), *dm.get_paraV_pointer(), nspin);
                 this->exx_ptr->cal_exx_elec(Ds, *dm.get_paraV_pointer());
                 iter = 0;
                 this->two_level_step++;

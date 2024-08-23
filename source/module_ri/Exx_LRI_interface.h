@@ -50,6 +50,7 @@ public:
         hamilt::Hamilt<T>& hamilt,
         const elecstate::DensityMatrix<T, double>& dm/**< double should be Tdata if complex-PBE-DM is supported*/,
         const K_Vectors& kv,
+        const int& nspin,
         int& iter,
         const double& etot,
         const double& scf_ene_thr);

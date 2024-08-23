@@ -994,6 +994,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int& iter)
                 *this->p_hamilt,
                 *dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(),
                 this->kv,
+                PARAM.inp.nspin,
                 iter,
                 this->pelec->f_en.etot,
                 this->scf_ene_thr);
@@ -1004,6 +1005,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int& iter)
                 *this->p_hamilt,
                 *dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(),
                 this->kv,
+                PARAM.inp.nspin,
                 iter,
                 this->pelec->f_en.etot,
                 this->scf_ene_thr);
