@@ -39,3 +39,4 @@ exx_cauchy_threshold            1E-3
 exx_ccp_rmesh_times                     1
 exx_separate_loop                       1
 exx_hybrid_step                         1
+out_chg       -1

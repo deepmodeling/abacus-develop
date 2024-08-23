@@ -28,3 +28,5 @@ mixing_ndim      15
 mixing_gg0       1.0
 
 cal_force 1
+
+out_chg       -1

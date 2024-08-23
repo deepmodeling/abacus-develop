@@ -10,3 +10,5 @@ basis_type          lcao
 dft_functional      pbe
 ecutwfc			    10
 scf_nmax            10
+
+out_chg       -1

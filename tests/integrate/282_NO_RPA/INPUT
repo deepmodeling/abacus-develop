@@ -22,3 +22,5 @@ exx_dm_threshold	1E-3
 exx_schwarz_threshold	1E-4	
 exx_cauchy_threshold	1E-6
 rpa   			1
+
+out_chg       -1

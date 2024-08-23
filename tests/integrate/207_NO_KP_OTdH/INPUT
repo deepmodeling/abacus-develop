@@ -25,3 +25,5 @@ mixing_beta		0.7
 
 out_mat_dh	1
 out_mat_t	1
+
+out_chg       -1

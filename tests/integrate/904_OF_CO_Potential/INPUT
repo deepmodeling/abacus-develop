@@ -22,3 +22,5 @@ of_tolp 	1e-7
 #Parameters (3.Basis)
 basis_type	pw
 
+
+out_chg       -1

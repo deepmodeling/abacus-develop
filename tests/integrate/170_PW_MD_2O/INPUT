@@ -27,3 +27,5 @@ md_tfirst       10
 md_tfreq        0.1
 init_vel        1
 pseudo_dir	../../PP_ORB
+
+out_chg       -1

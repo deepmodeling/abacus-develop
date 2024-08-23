@@ -29,3 +29,5 @@ mixing_beta		0.7
 mixing_gg0      0.0
 
 cal_force 1
+
+out_chg       -1

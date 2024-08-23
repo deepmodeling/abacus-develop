@@ -27,3 +27,5 @@ of_wt_rho0	1
 #Parameters (3.Basis)
 basis_type	pw
 
+
+out_chg       -1

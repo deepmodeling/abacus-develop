@@ -43,3 +43,5 @@ td_trigo_freq2		0.029116
 td_trigo_phase1		0.0
 td_trigo_phase2		0.0
 td_trigo_amp		1.50
+
+out_chg       -1

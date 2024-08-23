@@ -32,3 +32,5 @@ nz                      3
 pw_seed                 1
 
 test_skip_ewald         1
+
+out_chg       -1

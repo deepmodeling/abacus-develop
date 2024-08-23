@@ -31,3 +31,5 @@ nupdown         1.0
 
 cal_force           1
 cal_stress          1
+
+out_chg       -1

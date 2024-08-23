@@ -25,3 +25,4 @@ smearing_sigma			0.002
 mixing_type	    broyden
 mixing_beta		0.6
 mixing_gg0      2
+out_chg       -1

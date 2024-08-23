@@ -28,3 +28,5 @@ init_vel         1
 
 msst_qmass       1
 msst_vel         10
+
+out_chg       -1

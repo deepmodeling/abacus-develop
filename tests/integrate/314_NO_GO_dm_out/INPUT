@@ -17,3 +17,5 @@ scf_thr			1e-10
 calculation     	scf
 gamma_only		1
 out_dm			1
+
+out_chg       -1

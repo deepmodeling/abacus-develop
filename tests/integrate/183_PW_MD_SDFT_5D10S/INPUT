@@ -39,3 +39,5 @@ md_tfirst      10
 md_tfreq       0.1
 md_nstep       3
 init_vel       1
+
+out_chg       -1

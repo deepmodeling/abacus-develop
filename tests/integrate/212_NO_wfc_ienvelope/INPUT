@@ -21,3 +21,5 @@ read_file_dir		./
 bx 2
 by 2
 bz 2
+
+out_chg       -1

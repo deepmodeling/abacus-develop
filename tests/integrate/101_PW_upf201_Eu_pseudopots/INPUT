@@ -16,3 +16,5 @@ smearing_sigma               0.002
 
 mixing_type         broyden       // about charge mixing
 mixing_beta         0.7
+
+out_chg       -1

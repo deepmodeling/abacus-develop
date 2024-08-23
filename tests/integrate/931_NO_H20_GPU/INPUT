@@ -27,3 +27,5 @@ cal_stress       1
 ks_solver        cusolver
 device           gpu
 gamma_only       1
+
+out_chg       -1

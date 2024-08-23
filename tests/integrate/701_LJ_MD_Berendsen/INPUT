@@ -25,3 +25,5 @@ init_vel            1
 #Parameters (thermostat)
 md_thermostat       berendsen
 md_nraise           40
+
+out_chg       -1

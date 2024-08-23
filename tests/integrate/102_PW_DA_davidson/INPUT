@@ -25,3 +25,5 @@ mixing_type		plain
 mixing_beta		0.5
 
 ks_solver      dav
+
+out_chg       -1

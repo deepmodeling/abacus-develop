@@ -17,3 +17,5 @@ scf_thr			1e-10
 calculation     	get_pchg
 gamma_only		1
 read_file_dir 		./
+
+out_chg       -1

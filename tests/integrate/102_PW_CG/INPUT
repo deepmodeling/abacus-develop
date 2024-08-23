@@ -26,3 +26,5 @@ mixing_beta		0.5
 
 ks_solver      cg
 device         cpu
+
+out_chg       -1

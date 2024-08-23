@@ -20,3 +20,5 @@ mixing_gg0      1.5
 pseudo_dir	../../PP_ORB
 orbital_dir	../../PP_ORB
 
+
+out_chg       -1

@@ -17,3 +17,5 @@ relax_nmax          5
 force_thr_ev        0.01
 cal_force           1
 cal_stress          1
+
+out_chg       -1

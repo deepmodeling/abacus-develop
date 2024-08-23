@@ -22,3 +22,5 @@ of_full_pw_dim  1
 #Parameters (3.Basis)
 basis_type	pw
 
+
+out_chg       -1

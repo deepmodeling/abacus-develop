@@ -25,3 +25,5 @@ mixing_type		broyden
 mixing_beta		0.7
 
 init_chg auto
+
+out_chg       -1

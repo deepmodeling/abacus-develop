@@ -32,3 +32,5 @@ mixing_type         broyden
 mixing_beta         0.4
 mixing_ndim         5
 
+
+out_chg       -1

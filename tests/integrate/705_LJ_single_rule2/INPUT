@@ -13,3 +13,5 @@ lj_sigma            3.4  3.5
 
 cal_force           1
 cal_stress          1
+
+out_chg       -1

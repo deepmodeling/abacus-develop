@@ -25,3 +25,5 @@ cal_stress               1
 mixing_type         broyden
 mixing_beta         0.4
 nbspline            10
+
+out_chg       -1

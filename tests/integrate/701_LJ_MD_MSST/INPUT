@@ -26,3 +26,5 @@ init_vel            1
 msst_qmass          200
 msst_vel            0.028
 msst_vis            0.3
+
+out_chg       -1

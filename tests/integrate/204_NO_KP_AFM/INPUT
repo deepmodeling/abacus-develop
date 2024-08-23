@@ -33,3 +33,5 @@ bz 3
 
 cal_force      1
 cal_stress     1
+
+out_chg       -1

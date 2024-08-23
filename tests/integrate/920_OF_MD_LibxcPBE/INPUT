@@ -33,3 +33,5 @@ md_tchain		1
 nbspline    10 # be sure fft dimension is odd
 
 dft_functional  XC_GGA_X_PBE+XC_GGA_C_PBE
+
+out_chg       -1

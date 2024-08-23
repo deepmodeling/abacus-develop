@@ -34,3 +34,5 @@ init_vel         1
 
 gamma_only 1
 
+
+out_chg       -1

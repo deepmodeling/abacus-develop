@@ -30,3 +30,5 @@ cal_force           1
 cal_stress          1
 
 gamma_only	1
+
+out_chg       -1

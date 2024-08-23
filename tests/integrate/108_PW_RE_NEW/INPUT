@@ -22,3 +22,5 @@ cal_stress          1
 chg_extrap          second-order #atomic; first-order; second-order; dm:coefficients of SIA
 pseudo_dir	    ../../../tests/PP_ORB
 
+
+out_chg       -1

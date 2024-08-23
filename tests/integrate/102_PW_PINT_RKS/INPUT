@@ -20,3 +20,5 @@ smearing_sigma			0.01
 calculation		relax
 relax_nmax			50
 force_thr_ev		1.0e-3
+
+out_chg       -1

@@ -32,3 +32,5 @@ smearing_sigma		0.6
 #Parameters (5.Mixing)
 mixing_type		plain
 mixing_beta		0.7
+
+out_chg       -1

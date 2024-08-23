@@ -32,3 +32,5 @@ dft_functional		hse
 exx_pca_threshold	1E-1
 exx_ccp_rmesh_times	1
 exx_separate_loop	0
+
+out_chg       -1

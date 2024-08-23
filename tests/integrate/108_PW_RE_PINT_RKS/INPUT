@@ -24,3 +24,5 @@ pseudo_dir	    ../../../tests/PP_ORB
 orbital_dir	    ../../../tests/PP_ORB
 psi_initializer 1
 init_wfc nao
+
+out_chg       -1

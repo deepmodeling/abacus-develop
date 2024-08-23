@@ -25,3 +25,5 @@ init_vel            1
 #Parameters (thermostat)
 md_thermostat       rescaling
 md_tolerance        0
+
+out_chg       -1

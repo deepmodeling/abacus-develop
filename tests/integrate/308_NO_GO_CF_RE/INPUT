@@ -34,3 +34,5 @@ mixing_beta		0.5
 gamma_only		1
 
 relax_new 0
+
+out_chg       -1

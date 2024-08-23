@@ -18,3 +18,5 @@ calculation     	scf
 out_mul			1
 cal_force               1
 cal_stress              1
+
+out_chg       -1

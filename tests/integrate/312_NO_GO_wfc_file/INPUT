@@ -18,3 +18,5 @@ calculation     	scf
 gamma_only		1
 read_file_dir 		.
 init_wfc		file
+
+out_chg       -1

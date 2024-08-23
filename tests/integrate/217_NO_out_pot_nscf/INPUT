@@ -27,3 +27,5 @@ mixing_type		broyden
 mixing_beta		0.3
 
 read_file_dir ./
+
+out_chg       -1
