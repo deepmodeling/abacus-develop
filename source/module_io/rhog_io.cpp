@@ -6,6 +6,7 @@
 #include "module_base/vector3.h"
 #include "rhog_io.h"
 #include <numeric>
+#include <unistd.h>
 
 bool ModuleIO::read_rhog(const std::string& filename, const ModulePW::PW_Basis* pw_rhod, std::complex<double>** rhog)
 {
@@ -220,19 +221,21 @@ bool ModuleIO::write_rhog(const std::string& fchg,
         ModuleBase::WARNING_QUIT("ModuleIO::write_rhog", "File I/O failure: cannot open file " + fchg);
         return false;
     }
+
+    // write the header (by rank 0): gamma_only, ngm_g, nspin
+    int size = 3;
+    // because "reinterpret_cast" cannot drop the "const", so use intermediate variable
+    int ngm_g = pw_rho->npwtot;
+    int gam = gamma_only; // IMPLICIT DATA TYPE CONVERSION!
+    int nsp = nspin;
 #ifdef __MPI
     MPI_Barrier(POOL_WORLD); 
     // this is still a global variable... should be moved into param
     // list as `const MPI_Comm& comm`
     if (irank == 0)
     {
+        printf(" CHGDEN >>> Writing header by rank %d...\n", irank);
 #endif
-    // write the header (by rank 0): gamma_only, ngm_g, nspin
-    int size = 3;
-    // because "reinterpret_cast" cannot drop the "const", so use intermediate variable
-    int ngm_g = pw_rho->npwtot;
-    int gam = gamma_only; // IMPLICIT DATA TYPE CONVERSION
-    int nsp = nspin;
     ofs.write(reinterpret_cast<char*>(&size), sizeof(size));
     ofs.write(reinterpret_cast<char*>(&gam), sizeof(gam));
     ofs.write(reinterpret_cast<char*>(&ngm_g), sizeof(ngm_g));
@@ -248,40 +251,108 @@ bool ModuleIO::write_rhog(const std::string& fchg,
     }
     ofs.write(reinterpret_cast<char*>(&size), sizeof(size));
 #ifdef __MPI
+    printf(" CHGDEN >>> Complete header writting by rank %d\n", irank);
     }
+    MPI_Barrier(POOL_WORLD); // wait for rank 0 to finish writing the header
 #endif
+
     // write the G-vectors in Miller indices, the Miller indices can be calculated by
     // the dot product of the G-vectors and the reciprocal lattice vectors
     // parallelization needed considered here. Because the sequence of the G-vectors
     // is not important, we can write the G-vectors processer by processer
     size = 3*ngm_g;
-    ofs.write(reinterpret_cast<char*>(&size), sizeof(size));
-    for(int ig = 0; ig < pw_rho->npw; ++ig)
+#ifdef __MPI
+    if(irank == 0)
     {
-        const ModuleBase::Vector3<double> g = pw_rho->gdirect[ig]; // g direct is (ix, iy, iz), miller index (integer), centered at (0, 0, 0)
-        std::vector<int> miller = {int(g.x), int(g.y), int(g.z)};
-        ofs.write(reinterpret_cast<char*>(&miller[0]), sizeof(miller[0]));
-        ofs.write(reinterpret_cast<char*>(&miller[1]), sizeof(miller[1]));
-        ofs.write(reinterpret_cast<char*>(&miller[2]), sizeof(miller[2]));
+        printf(" CHGDEN >>> Writing header of Miller indices by rank %d...\n", irank);
+#endif
+        ofs.write(reinterpret_cast<char*>(&size), sizeof(size));
+#ifdef __MPI
+        printf(" CHGDEN >>> Complete header of Miller indices writting by rank %d\n", irank);
     }
-    ofs.write(reinterpret_cast<char*>(&size), sizeof(size));
+    MPI_Barrier(POOL_WORLD); // wait for rank 0 to finish writing the header of miller indices
+#endif
+#ifdef __MPI
+    for(int i = 0; i < nrank; ++i) // write the miller indices processer by processer
+    {
+        if(i == irank)
+        {
+            printf(" CHGDEN >>> Writing Miller indices by rank %d...\n", irank);
+#endif
+            for(int ig = 0; ig < pw_rho->npw; ++ig)
+            {
+                const ModuleBase::Vector3<double> g = pw_rho->gdirect[ig]; // g direct is (ix, iy, iz), miller index (integer), centered at (0, 0, 0)
+                std::vector<int> miller = {int(g.x), int(g.y), int(g.z)};
+                ofs.write(reinterpret_cast<char*>(&miller[0]), sizeof(miller[0]));
+                ofs.write(reinterpret_cast<char*>(&miller[1]), sizeof(miller[1]));
+                ofs.write(reinterpret_cast<char*>(&miller[2]), sizeof(miller[2]));
+            }
+#ifdef __MPI
+            printf(" CHGDEN >>> Complete Miller indices writting by rank %d\n", irank);
+            usleep(1000); // sleep for 1ms to avoid the conflict of writing
+        }
+        MPI_Barrier(POOL_WORLD); // wait for the current rank to finish writing the miller indices
+    }
+#endif
+#ifdef __MPI
+    if(irank == 0)
+    {
+#endif
+        ofs.write(reinterpret_cast<char*>(&size), sizeof(size));
+#ifdef __MPI
+    }
+    MPI_Barrier(POOL_WORLD); // wait for rank 0 to finish writing the miller indices
+#endif
 
     // write the rho(G) values
     std::complex<double> sum_check;
     size = ngm_g;
     for(int ispin = 0; ispin < nspin; ++ispin)
     {
-        ofs.write(reinterpret_cast<char*>(&size), sizeof(size));
-        sum_check = 0.0;
-        for(int ig = 0; ig < pw_rho->npw; ++ig)
+#ifdef __MPI
+        if(irank == 0)
         {
-            sum_check += rhog[ispin][ig];
-            ofs.write(reinterpret_cast<char*>(&rhog[ispin][ig]), sizeof(rhog[ispin][ig]));
+            printf(" CHGDEN >>> Writing header of rho(G) values by rank %d...\n", irank);
+#endif
+            ofs.write(reinterpret_cast<char*>(&size), sizeof(size));
+#ifdef __MPI
+            printf(" CHGDEN >>> Complete header of rho(G) values writting by rank %d\n", irank);
         }
-        assert(std::abs(sum_check) > 1.0e-10); // check if the sum of rho(G) is valid
-        ofs.write(reinterpret_cast<char*>(&size), sizeof(size));
+        MPI_Barrier(POOL_WORLD); // wait for rank 0 to finish writing the header of rho(G)
+#endif
+#ifdef __MPI
+        for(int i = 0; i < nrank; ++i) // write the rho(G) values processer by processer
+        {
+            if(i == irank)
+            {
+                printf(" CHGDEN >>> Writing rho(G) values by rank %d...\n", irank);
+#endif
+                sum_check = 0.0;
+                for(int ig = 0; ig < pw_rho->npw; ++ig)
+                {
+                    sum_check += rhog[ispin][ig];
+                    ofs.write(reinterpret_cast<char*>(&rhog[ispin][ig]), sizeof(rhog[ispin][ig]));
+                }
+                assert(std::abs(sum_check) > 1.0e-10); // check if the sum of rho(G) is valid
+#ifdef __MPI
+                printf(" CHGDEN >>> Complete rho(G) values writting by rank %d\n", irank);
+            }
+            usleep(1000); // sleep for 1ms to avoid the conflict of writing
+            MPI_Barrier(POOL_WORLD); // wait for the current rank to finish writing the rho(G) values
+        }
+#endif
+
+#ifdef __MPI
+        if(irank == 0)
+        {
+#endif
+            ofs.write(reinterpret_cast<char*>(&size), sizeof(size));
+#ifdef __MPI
+        }
+        MPI_Barrier(POOL_WORLD); // wait for rank 0 to finish writing the rho(G) values
+#endif
     }
-    
+
     ofs.close();
 
     ModuleBase::timer::tick("ModuleIO", "write_rhog");
