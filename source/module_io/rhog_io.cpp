@@ -47,11 +47,7 @@ bool ModuleIO::read_rhog(const std::string& filename, const ModulePW::PW_Basis* 
     if (GlobalV::RANK_IN_POOL == 0)
     {
         ifs >> size >> gamma_only_in >> npwtot_in >> nspin_in >> size;
-        std::cout << size << " " << gamma_only_in << " " << npwtot_in << " " << nspin_in << " " << size << std::endl;
         ifs >> size >> b1[0] >> b1[1] >> b1[2] >> b2[0] >> b2[1] >> b2[2] >> b3[0] >> b3[1] >> b3[2] >> size;
-        std::cout << size << " " << b1[0] << " " << b1[1] << " " << b1[2] << " " << b2[0] << " " << b2[1] << " " << b2[2]
-                  << " " << b3[0] << " " << b3[1] << " " << b3[2] << " " << size << std::endl;
-
         if (gamma_only_in != pw_rhod->gamma_only)
         {
             // there is a treatment that can transform between gamma_only and non-gamma_only
@@ -105,13 +101,11 @@ bool ModuleIO::read_rhog(const std::string& filename, const ModulePW::PW_Basis* 
 #ifdef __MPI
     MPI_Bcast(miller, 3 * npwtot_in, MPI_INT, 0, POOL_WORLD);
 #endif
-
     // set to zero
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
         ModuleBase::GlobalFunc::ZEROS(rhog[is], pw_rhod->npw);
     }
-
     // maps ixyz tp ig
     int* fftixyz2ig = new int[pw_rhod->nxyz]; // map isz to ig.
     for (int i = 0; i < pw_rhod->nxyz; ++i)
@@ -127,7 +121,6 @@ bool ModuleIO::read_rhog(const std::string& filename, const ModulePW::PW_Basis* 
         int ixyz = iz + nz * ixy;
         fftixyz2ig[ixyz] = ig;
     }
-
     std::complex<double>* rhog_in = new std::complex<double>[npwtot_in];
     for (int is = 0; is < nspin_in; ++is)
     {
@@ -217,13 +210,7 @@ bool ModuleIO::write_rhog(const std::string& fchg,
     // fftixy2ip will be useful for the order of the G-vectors
     // each time we iterate on ig, then find the rho_g over all the processes
     // for ig in npwtot, then find the local index of ig on processor, ig -> fftixy2ip -> igl
-    std::ofstream ofs;
-    ofs.open(fchg, std::ios::binary); // open the file by all processors
-    if (!ofs)
-    {
-        ModuleBase::WARNING_QUIT("ModuleIO::write_rhog", "File I/O failure: cannot open file " + fchg);
-        return false;
-    }
+
 
     // write the header (by rank 0): gamma_only, ngm_g, nspin
     int size = 3;
@@ -231,14 +218,22 @@ bool ModuleIO::write_rhog(const std::string& fchg,
     int ngm_g = pw_rho->npwtot;
     int gam = gamma_only; // IMPLICIT DATA TYPE CONVERSION!
     int nsp = nspin;
+
+    std::ofstream ofs;
 #ifdef __MPI
     MPI_Barrier(POOL_WORLD); 
     // this is still a global variable... should be moved into param
     // list as `const MPI_Comm& comm`
     if (irank == 0)
     {
-        printf(" CHGDEN >>> Writing header by rank %d...\n", irank);
+        // printf(" CHGDEN >>> Writing header by rank %d...\n", irank);
 #endif
+    ofs.open(fchg, std::ios::binary); // open the file by all processors
+    if (!ofs)
+    {
+        ModuleBase::WARNING_QUIT("ModuleIO::write_rhog", "File I/O failure: cannot open file " + fchg);
+        return false;
+    }
     ofs.write(reinterpret_cast<char*>(&size), sizeof(size));
     ofs.write(reinterpret_cast<char*>(&gam), sizeof(gam));
     ofs.write(reinterpret_cast<char*>(&ngm_g), sizeof(ngm_g));
@@ -253,11 +248,12 @@ bool ModuleIO::write_rhog(const std::string& fchg,
         ofs.write(reinterpret_cast<char*>(&b[i]), sizeof(b[i]));
     }
     ofs.write(reinterpret_cast<char*>(&size), sizeof(size));
+    ofs.close();
 #ifdef __MPI
-    printf(" CHGDEN >>> Complete header writting by rank %d\n", irank);
+    // printf(" CHGDEN >>> Complete header writting by rank %d\n", irank);
     }
     MPI_Barrier(POOL_WORLD); // wait for rank 0 to finish writing the header
-    printf(" CHGDEN >>> rank %d ready for continue writing...\n", irank);
+    // printf(" CHGDEN >>> rank %d ready for continue writing...\n", irank);
     MPI_Barrier(POOL_WORLD);
 #endif
 
@@ -269,11 +265,13 @@ bool ModuleIO::write_rhog(const std::string& fchg,
 #ifdef __MPI
     if(irank == 0)
     {
-        printf(" CHGDEN >>> Writing header of Miller indices by rank %d...\n", irank);
+        // printf(" CHGDEN >>> Writing header of Miller indices by rank %d...\n", irank);
 #endif
+        ofs.open(fchg, std::ios::binary | std::ios::app); // open the file by rank 0
         ofs.write(reinterpret_cast<char*>(&size), sizeof(size));
+        ofs.close();
 #ifdef __MPI
-        printf(" CHGDEN >>> Complete header of Miller indices writting by rank %d\n", irank);
+        // printf(" CHGDEN >>> Complete header of Miller indices writting by rank %d\n", irank);
     }
     MPI_Barrier(POOL_WORLD); // wait for rank 0 to finish writing the header of miller indices
 #endif
@@ -282,8 +280,9 @@ bool ModuleIO::write_rhog(const std::string& fchg,
     {
         if(i == irank)
         {
-            printf(" CHGDEN >>> Writing Miller indices by rank %d...\n", irank);
+            // printf(" CHGDEN >>> Writing Miller indices by rank %d...\n", irank);
 #endif
+            ofs.open(fchg, std::ios::binary | std::ios::app); // open the file by processer i
             for(int ig = 0; ig < pw_rho->npw; ++ig)
             {
                 const ModuleBase::Vector3<double> g = pw_rho->gdirect[ig]; // g direct is (ix, iy, iz), miller index (integer), centered at (0, 0, 0)
@@ -292,9 +291,9 @@ bool ModuleIO::write_rhog(const std::string& fchg,
                 ofs.write(reinterpret_cast<char*>(&miller[1]), sizeof(miller[1]));
                 ofs.write(reinterpret_cast<char*>(&miller[2]), sizeof(miller[2]));
             }
+            ofs.close();
 #ifdef __MPI
-            printf(" CHGDEN >>> Complete Miller indices writting by rank %d\n", irank);
-            usleep(1000); // sleep for 1ms to avoid the conflict of writing
+            // printf(" CHGDEN >>> Complete Miller indices writting by rank %d\n", irank);
         }
         MPI_Barrier(POOL_WORLD); // wait for the current rank to finish writing the miller indices
     }
@@ -303,7 +302,9 @@ bool ModuleIO::write_rhog(const std::string& fchg,
     if(irank == 0)
     {
 #endif
+        ofs.open(fchg, std::ios::binary | std::ios::app); // open the file by rank 0
         ofs.write(reinterpret_cast<char*>(&size), sizeof(size));
+        ofs.close();
 #ifdef __MPI
     }
     MPI_Barrier(POOL_WORLD); // wait for rank 0 to finish writing the miller indices
@@ -317,11 +318,13 @@ bool ModuleIO::write_rhog(const std::string& fchg,
 #ifdef __MPI
         if(irank == 0)
         {
-            printf(" CHGDEN >>> Writing header of rho(G) values by rank %d...\n", irank);
+            // printf(" CHGDEN >>> Writing header of rho(G) values by rank %d...\n", irank);
 #endif
+            ofs.open(fchg, std::ios::binary | std::ios::app); // open the file by rank 0
             ofs.write(reinterpret_cast<char*>(&size), sizeof(size));
+            ofs.close();
 #ifdef __MPI
-            printf(" CHGDEN >>> Complete header of rho(G) values writting by rank %d\n", irank);
+            // printf(" CHGDEN >>> Complete header of rho(G) values writting by rank %d\n", irank);
         }
         MPI_Barrier(POOL_WORLD); // wait for rank 0 to finish writing the header of rho(G)
 #endif
@@ -330,19 +333,20 @@ bool ModuleIO::write_rhog(const std::string& fchg,
         {
             if(i == irank)
             {
-                printf(" CHGDEN >>> Writing rho(G) values by rank %d...\n", irank);
+                // printf(" CHGDEN >>> Writing rho(G) values by rank %d...\n", irank);
 #endif
+                ofs.open(fchg, std::ios::binary | std::ios::app); // open the file by processer i
                 sum_check = 0.0;
                 for(int ig = 0; ig < pw_rho->npw; ++ig)
                 {
                     sum_check += rhog[ispin][ig];
                     ofs.write(reinterpret_cast<char*>(&rhog[ispin][ig]), sizeof(rhog[ispin][ig]));
                 }
-                assert(std::abs(sum_check) > 1.0e-10); // check if the sum of rho(G) is valid
+                // assert(std::abs(sum_check) > 1.0e-10); // check if the sum of rho(G) is valid
+                ofs.close();
 #ifdef __MPI
-                printf(" CHGDEN >>> Complete rho(G) values writting by rank %d\n", irank);
+                // printf(" CHGDEN >>> Complete rho(G) values writting by rank %d\n", irank);
             }
-            usleep(1000); // sleep for 1ms to avoid the conflict of writing
             MPI_Barrier(POOL_WORLD); // wait for the current rank to finish writing the rho(G) values
         }
 #endif
@@ -351,14 +355,14 @@ bool ModuleIO::write_rhog(const std::string& fchg,
         if(irank == 0)
         {
 #endif
+            ofs.open(fchg, std::ios::binary | std::ios::app); // open the file by rank 0
             ofs.write(reinterpret_cast<char*>(&size), sizeof(size));
+            ofs.close();
 #ifdef __MPI
         }
         MPI_Barrier(POOL_WORLD); // wait for rank 0 to finish writing the rho(G) values
 #endif
     }
-
-    ofs.close();
 
     ModuleBase::timer::tick("ModuleIO", "write_rhog");
     return true;

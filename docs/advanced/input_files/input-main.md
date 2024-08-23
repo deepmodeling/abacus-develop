@@ -422,7 +422,7 @@
     - [lr\_nstates](#lr_nstates)
     - [abs\_wavelen\_range](#abs_wavelen_range)
     - [out\_wfc\_lr](#out_wfc_lr)
-[back to top](#full-list-of-input-keywords)
+    - [abs\_broadening](#abs_broadening)
 
 ## System variables
 
@@ -1513,15 +1513,16 @@ These variables are used to control the output of properties.
 
 - **Type**: Integer
 - **Description**: 
-  - 1. Output the charge density (in Bohr^-3) on real space grids into the density files in the folder `OUT.${suffix}`. The files are named as:
+  - 1: Output the charge density (in Bohr^-3) on real space grids into the density files in the folder `OUT.${suffix}`. The files are named as:
     - nspin = 1: SPIN1_CHG.cube;
     - nspin = 2: SPIN1_CHG.cube, and SPIN2_CHG.cube;
     - nspin = 4: SPIN1_CHG.cube, SPIN2_CHG.cube, SPIN3_CHG.cube, and SPIN4_CHG.cube.
-  - 2. On top of 1, also output the initial charge density. The files are named as:
+  - 2: On top of 1, also output the initial charge density. The files are named as:
     - nspin = 1: SPIN1_CHG_INI.cube
     - nspin = 2: SPIN1_CHG_INI.cube, and SPIN2_CHG_INI.cube;
     - nspin = 4: SPIN1_CHG_INI.cube, SPIN2_CHG_INI.cube, SPIN3_CHG_INI.cube, and SPIN4_CHG_INI.cube.
-
+  - -1: disable the charge density auto-back-up file `{suffix}-CHARGE-DENSITY.restart`, useful for large systems.
+  
   The circle order of the charge density on real space grids is: x is the outer loop, then y and finally z (z is moving fastest).
 
   If EXX(exact exchange) is calculated, (i.e. *[dft_fuctional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)==True*), the Hexx(R) files will be output in the folder `OUT.${suffix}` too, which can be read in NSCF calculation.

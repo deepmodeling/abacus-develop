@@ -123,9 +123,8 @@ void ESolver_FP::after_scf(const int istep)
     if (istep % PARAM.inp.out_interval == 0)
     {
         // 3) write charge density
-        if (PARAM.inp.out_chg)
+        if (PARAM.inp.out_chg == 1)
         {
-            std::complex<double>** rhog_tot = (PARAM.inp.dm_to_rho)? this->pelec->charge->rhog : this->pelec->charge->rhog_save;
             for (int is = 0; is < GlobalV::NSPIN; is++)
             {
                 double* data = nullptr;
@@ -180,8 +179,17 @@ void ESolver_FP::after_scf(const int istep)
                         this->pelec->eferm.get_efval(is),
                         &(GlobalC::ucell));
                 }
-            
-            ModuleIO::write_rhog(GlobalV::global_out_dir + "charge-density.dat",
+            }
+        }
+        if (PARAM.inp.out_chg != -1)
+        {
+            std::complex<double>** rhog_tot = (PARAM.inp.dm_to_rho)? this->pelec->charge->rhog : this->pelec->charge->rhog_save;
+            double** rhor_tot = (PARAM.inp.dm_to_rho)? this->pelec->charge->rho : this->pelec->charge->rho_save;
+            for (int is = 0; is < GlobalV::NSPIN; is++)
+            {
+                this->pw_rho->real2recip(rhor_tot[is], rhog_tot[is]);
+            }
+            ModuleIO::write_rhog(GlobalV::global_out_dir + PARAM.inp.suffix + "-CHARGE-DENSITY.restart",
                                  GlobalV::GAMMA_ONLY_PW || GlobalV::GAMMA_ONLY_LOCAL,
                                  this->pw_rho,
                                  GlobalV::NSPIN,
@@ -189,7 +197,6 @@ void ESolver_FP::after_scf(const int istep)
                                  rhog_tot,
                                  GlobalV::RANK_IN_POOL,
                                  GlobalV::NPROC_IN_POOL);
-            }
         }
 
         // 4) write potential
