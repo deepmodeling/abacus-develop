@@ -182,12 +182,13 @@ void ESolver_FP::after_scf(const int istep)
                 }
             
             ModuleIO::write_rhog(GlobalV::global_out_dir + "charge-density.dat",
-                                 GlobalV::GAMMA_ONLY_PW || GlobalV::GAMMA_ONLY_PW,
+                                 GlobalV::GAMMA_ONLY_PW || GlobalV::GAMMA_ONLY_LOCAL,
                                  this->pw_rho,
                                  GlobalV::NSPIN,
                                  GlobalC::ucell.GT,
-                                 GlobalC::ucell.tpiba,
-                                 rhog_tot);
+                                 rhog_tot,
+                                 GlobalV::RANK_IN_POOL,
+                                 GlobalV::NPROC_IN_POOL);
             }
         }
 
