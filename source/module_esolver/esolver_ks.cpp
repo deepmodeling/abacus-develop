@@ -86,7 +86,6 @@ ESolver_KS<T, Device>::~ESolver_KS()
     delete this->psi;
     delete this->pw_wfc;
     delete this->p_hamilt;
-    // delete this->phsol;
     delete this->p_chgmix;
 }
 

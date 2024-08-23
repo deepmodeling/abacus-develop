@@ -126,10 +126,6 @@ void ESolver_SDFT_PW::before_all_runners(const Input_para& inp, UnitCell& ucell)
         ModuleBase::Memory::record("SDFT::chiortho", size * sizeof(std::complex<double>));
     }
 
-    // // 9) initialize the hsolver
-    // // It should be removed after esolver_ks does not use phsol.
-    // this->phsol = new hsolver::HSolver<std::complex<double>>();
-
     return;
 }
 

@@ -98,14 +98,7 @@ void ESolver_KS_LCAO_TDDFT::before_all_runners(const Input_para& inp, UnitCell& 
     LCAO_domain::divide_HS_in_frag(GlobalV::GAMMA_ONLY_LOCAL, this->pv, kv.get_nks());
 
     // 6) initialize Density Matrix
-    dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)
-        ->init_DM(&kv, &this->pv, GlobalV::NSPIN);
-
-    // // 7) initialize Hsolver
-    // if (this->phsol == nullptr)
-    // {
-    //     this->phsol = new hsolver::HSolver<std::complex<double>>();
-    // }
+    dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)->init_DM(&kv, &this->pv, GlobalV::NSPIN);
 
     // 8) initialize the charge density
     this->pelec->charge->allocate(GlobalV::NSPIN);
