@@ -47,7 +47,10 @@ bool ModuleIO::read_rhog(const std::string& filename, const ModulePW::PW_Basis* 
     if (GlobalV::RANK_IN_POOL == 0)
     {
         ifs >> size >> gamma_only_in >> npwtot_in >> nspin_in >> size;
+        std::cout << size << " " << gamma_only_in << " " << npwtot_in << " " << nspin_in << " " << size << std::endl;
         ifs >> size >> b1[0] >> b1[1] >> b1[2] >> b2[0] >> b2[1] >> b2[2] >> b3[0] >> b3[1] >> b3[2] >> size;
+        std::cout << size << " " << b1[0] << " " << b1[1] << " " << b1[2] << " " << b2[0] << " " << b2[1] << " " << b2[2]
+                  << " " << b3[0] << " " << b3[1] << " " << b3[2] << " " << size << std::endl;
 
         if (gamma_only_in != pw_rhod->gamma_only)
         {
@@ -254,6 +257,8 @@ bool ModuleIO::write_rhog(const std::string& fchg,
     printf(" CHGDEN >>> Complete header writting by rank %d\n", irank);
     }
     MPI_Barrier(POOL_WORLD); // wait for rank 0 to finish writing the header
+    printf(" CHGDEN >>> rank %d ready for continue writing...\n", irank);
+    MPI_Barrier(POOL_WORLD);
 #endif
 
     // write the G-vectors in Miller indices, the Miller indices can be calculated by
