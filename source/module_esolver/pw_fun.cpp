@@ -52,16 +52,16 @@ namespace ModuleESolver {
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::allocate_hsolver()
 {
-    this->phsol = new hsolver::HSolver<T, Device>();
+    // this->phsol = new hsolver::HSolver<T, Device>();
 }
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::deallocate_hsolver()
 {
-    if (this->phsol != nullptr)
-    {
-        delete this->phsol;
-        this->phsol = nullptr;
-    }
+    // if (this->phsol != nullptr)
+    // {
+    //     delete this->phsol;
+    //     this->phsol = nullptr;
+    // }
 }
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::allocate_hamilt()
@@ -81,7 +81,7 @@ void ESolver_KS_PW<T, Device>::deallocate_hamilt()
 
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::hamilt2estates(const double ethr) {
-    if (this->phsol != nullptr) {
+    // if (this->phsol != nullptr) {
         hsolver::DiagoIterAssist<T, Device>::need_subspace = false;
         hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR = ethr;
 
@@ -116,10 +116,10 @@ void ESolver_KS_PW<T, Device>::hamilt2estates(const double ethr) {
 
         this->init_psi = true;
         
-    } else {
-        ModuleBase::WARNING_QUIT("ESolver_KS_PW",
-                                 "HSolver has not been initialed!");
-    }
+    // } else {
+    //     ModuleBase::WARNING_QUIT("ESolver_KS_PW",
+    //                              "HSolver has not been initialed!");
+    // }
 }
 
 template class ESolver_KS_PW<std::complex<float>, base_device::DEVICE_CPU>;

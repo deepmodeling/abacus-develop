@@ -86,7 +86,7 @@ ESolver_KS<T, Device>::~ESolver_KS()
     delete this->psi;
     delete this->pw_wfc;
     delete this->p_hamilt;
-    delete this->phsol;
+    // delete this->phsol;
     delete this->p_chgmix;
 }
 
@@ -379,7 +379,6 @@ void ESolver_KS<T, Device>::hamilt2density(const int istep, const int iter, cons
     // LCAO, PW, SDFT and TDDFT.
     // After HSolver is constructed, LCAO, PW, SDFT should delete their own
     // hamilt2density() and use:
-    // this->phsol->solve(this->phamilt, this->pes, this->wf, ETHR);
     ModuleBase::timer::tick(this->classname, "hamilt2density");
 }
 
@@ -440,16 +439,6 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
 #else
         auto iterstart = std::chrono::system_clock::now();
 #endif
-        
-        // diag_ethr = this->phsol->set_diagethr(diag_ethr,
-        //                                       istep,
-        //                                       iter,
-        //                                       drho,
-        //                                       PARAM.inp.init_chg,
-        //                                       PARAM.inp.calculation,
-        //                                       GlobalV::precision_flag,
-        //                                       GlobalV::PW_DIAG_THR,
-        //                                       GlobalV::nelec);
 
         if (PARAM.inp.esolver_type == "ksdft")
         {
