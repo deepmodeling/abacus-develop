@@ -24,5 +24,3 @@ mixing_beta         0.7
 mixing_gg0          1.5
 
 fixed_axes          abc
-
-out_chg       -1

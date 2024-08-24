@@ -43,5 +43,3 @@ td_gauss_amp		2.0 5.0
 td_gauss_phase		2*0.0
 td_gauss_t0		2*0
 td_gauss_sigma		2*30
-
-out_chg       -1

@@ -24,5 +24,3 @@ init_vel            1
 
 #Parameters (Langevin)
 md_damp             10
-
-out_chg       -1

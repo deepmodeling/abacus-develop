@@ -23,4 +23,3 @@ of_tole 	2e-6
 basis_type	pw
 
 dft_functional  XC_GGA_X_PBE+XC_GGA_C_PBE
-out_chg       -1

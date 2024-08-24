@@ -22,5 +22,3 @@ msst_vel            0.028
 msst_vis            0.3
 
 init_vel            1
-
-out_chg       -1

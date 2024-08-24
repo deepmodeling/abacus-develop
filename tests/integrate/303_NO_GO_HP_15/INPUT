@@ -28,5 +28,3 @@ mixing_beta		0.7
 mixing_gg0      1.5
 
 ks_solver       hpseps
-
-out_chg       -1

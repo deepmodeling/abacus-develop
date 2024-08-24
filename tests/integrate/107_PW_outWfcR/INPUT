@@ -16,5 +16,3 @@ scf_nmax			100
 basis_type		pw
 
 out_wfc_r 1
-
-out_chg       -1

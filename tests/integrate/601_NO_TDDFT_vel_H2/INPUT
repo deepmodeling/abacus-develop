@@ -43,5 +43,3 @@ td_gauss_t0		0
 td_gauss_amp	0.1
 
 out_current 1
-
-out_chg       -1

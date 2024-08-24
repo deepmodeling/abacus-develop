@@ -26,5 +26,3 @@ mixing_type		broyden
 mixing_beta		0.4
 
 ks_solver       hpseps
-
-out_chg       -1

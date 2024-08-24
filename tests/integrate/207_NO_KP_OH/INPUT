@@ -28,4 +28,3 @@ mixing_beta		0.7
 out_mat_hs  1 5
 ks_solver       scalapack_gvx
 out_ndigits 5
-out_chg       -1

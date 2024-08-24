@@ -31,5 +31,3 @@ ks_solver       scalapack_gvx
 
 cal_force 1
 cal_stress 1
-
-out_chg       -1

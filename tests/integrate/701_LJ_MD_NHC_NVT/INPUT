@@ -24,5 +24,3 @@ md_tchain           3
 md_tfreq            0.01
 
 init_vel            1
-
-out_chg       -1

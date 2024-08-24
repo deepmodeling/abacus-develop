@@ -8,5 +8,3 @@ ecutwfc 		10
 scf_thr 		1e-6 
 basis_type 		lcao
 calculation 		get_S 
-
-out_chg       -1

@@ -26,5 +26,3 @@ gamma_only       0
 ks_solver        cusolver
 device           gpu
 nspin            2
-
-out_chg       -1

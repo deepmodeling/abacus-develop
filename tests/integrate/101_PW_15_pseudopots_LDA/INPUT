@@ -25,5 +25,3 @@ mixing_type		broyden
 mixing_beta		0.7
 
 dft_functional pz
-
-out_chg       -1

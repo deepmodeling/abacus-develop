@@ -31,5 +31,3 @@ md_dumpfreq	10
 md_tfreq	1.08
 md_tchain		1
 nbspline    10 # be sure fft dimension is odd
-
-out_chg       -1

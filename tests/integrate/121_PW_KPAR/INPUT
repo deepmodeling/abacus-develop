@@ -20,5 +20,3 @@ smearing_method		gauss
 smearing_sigma			0.002
 
 kpar 2
-
-out_chg       -1

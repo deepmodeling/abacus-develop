@@ -36,4 +36,3 @@ esolver_type ks-lr
 nvirt 2
 abs_wavelen_range  40 180
 abs_broadening 0.01
-out_chg       -1

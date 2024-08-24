@@ -25,5 +25,3 @@ dft_functional  XC_GGA_X_PBE+XC_GGA_C_PBE
 
 cal_force 1
 cal_stress 1
-
-out_chg       -1

@@ -24,5 +24,3 @@ mixing_type		broyden
 mixing_beta		0.7
 pseudo_dir	../../PP_ORB
 orbital_dir	../../PP_ORB
-
-out_chg       -1

@@ -21,5 +21,3 @@ of_full_pw_dim	1
 basis_type  pw
 
 relax_nmax  5
-
-out_chg       -1

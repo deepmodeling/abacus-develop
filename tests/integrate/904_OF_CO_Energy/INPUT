@@ -26,5 +26,3 @@ of_tole 	2e-8
 #Parameters (3.Basis)
 basis_type	pw
 
-
-out_chg       -1

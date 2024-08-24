@@ -36,4 +36,3 @@ stress_thr              2
 relax_nmax              32
 out_stru                1
 symmetry_prec 1e-5
-out_chg       -1

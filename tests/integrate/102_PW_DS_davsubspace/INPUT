@@ -26,5 +26,3 @@ mixing_beta		0.5
 
 ks_solver       dav_subspace
 diago_full_acc  1
-
-out_chg       -1

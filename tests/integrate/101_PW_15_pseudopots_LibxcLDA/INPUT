@@ -28,5 +28,3 @@ dft_functional XC_LDA_X+XC_LDA_C_PZ
 
 cal_force 1
 cal_stress 1
-
-out_chg       -1

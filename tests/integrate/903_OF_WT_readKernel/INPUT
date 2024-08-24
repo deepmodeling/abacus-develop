@@ -24,5 +24,3 @@ of_kernel_file  kernel.txt
 #Parameters (3.Basis)
 basis_type	pw
 
-
-out_chg       -1

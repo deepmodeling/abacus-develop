@@ -31,5 +31,3 @@ cal_stress             1
 
 init_chg               auto
 read_file_dir          .
-
-out_chg       -1

@@ -29,5 +29,3 @@ gamma_only       1
 ks_solver        genelpa
 device           cpu
 nspin            2
-
-out_chg       -1

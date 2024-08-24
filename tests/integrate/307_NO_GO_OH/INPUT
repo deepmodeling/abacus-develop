@@ -34,5 +34,3 @@ ks_solver       scalapack_gvx
 bx 2
 by 2
 bz 2
-
-out_chg       -1

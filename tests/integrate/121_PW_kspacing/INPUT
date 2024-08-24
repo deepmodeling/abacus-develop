@@ -17,5 +17,3 @@ smearing_sigma          0.020000
 
 kspacing                0.6
 pseudo_dir	../../PP_ORB
-
-out_chg       -1

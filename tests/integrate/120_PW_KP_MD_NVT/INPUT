@@ -30,5 +30,3 @@ md_tfirst        10
 md_dt            1
 md_restart       1
 init_vel         1
-
-out_chg       -1

@@ -22,5 +22,3 @@ force_thr_ev            1.0e-1
 mixing_type         broyden
 mixing_beta         0.7
 mixing_gg0          1.5
-
-out_chg       -1

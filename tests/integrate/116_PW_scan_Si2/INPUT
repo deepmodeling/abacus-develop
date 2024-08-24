@@ -28,5 +28,3 @@ cal_force 1
 cal_stress 1
 
 mixing_tau 1
-
-out_chg       -1

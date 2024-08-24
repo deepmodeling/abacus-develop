@@ -30,5 +30,3 @@ chg_extrap  first-order
 read_file_dir   ./
 pseudo_dir	../../PP_ORB
 orbital_dir	../../PP_ORB
-
-out_chg       -1

@@ -35,5 +35,3 @@ cond_dw          0.02
 cond_dt          0.237464
 cond_dtbatch     1
 cond_nonlocal    0
-
-out_chg       -1
