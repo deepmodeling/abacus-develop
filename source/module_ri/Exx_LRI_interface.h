@@ -50,8 +50,12 @@ public:
         hamilt::Hamilt<T>& hamilt,
         const elecstate::DensityMatrix<T, double>& dm/**< double should be Tdata if complex-PBE-DM is supported*/,
         const K_Vectors& kv,
-        int& iter);
+        const int& nspin,
+        int& iter,
+        const double& etot,
+        const double& scf_ene_thr);
     int two_level_step = 0;
+    double etot_last_outer_loop = 0.0;
 private:
     std::shared_ptr<Exx_LRI<Tdata>> exx_ptr;
     Mix_DMk_2D mix_DMk_2D;

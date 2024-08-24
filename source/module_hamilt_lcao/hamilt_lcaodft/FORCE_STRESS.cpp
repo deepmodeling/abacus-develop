@@ -760,7 +760,7 @@ void Force_Stress_LCAO<T>::calForcePwPart(ModuleBase::matrix& fvl_dvl,
     //--------------------------------------------------------
     // force due to core correlation.
     //--------------------------------------------------------
-    f_pw.cal_force_cc(fcc, rhopw, chr);
+    f_pw.cal_force_cc(fcc, rhopw, chr,GlobalC::ucell);
     //--------------------------------------------------------
     // force due to self-consistent charge.
     //--------------------------------------------------------

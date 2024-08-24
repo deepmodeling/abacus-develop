@@ -26,6 +26,7 @@
 #include "module_elecstate/module_charge/symmetry_rho.h"
 #include "module_elecstate/occupy.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h" // need divide_HS_in_frag
+#include "module_hamilt_lcao/hamilt_lcaodft/hs_matrix_k.hpp"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/print_info.h"
@@ -994,7 +995,10 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int& iter)
                 *this->p_hamilt,
                 *dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(),
                 this->kv,
-                iter);
+                PARAM.inp.nspin,
+                iter,
+                this->pelec->f_en.etot,
+                this->scf_ene_thr);
         }
         else
         {
@@ -1002,7 +1006,10 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int& iter)
                 *this->p_hamilt,
                 *dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(),
                 this->kv,
-                iter);
+                PARAM.inp.nspin,
+                iter,
+                this->pelec->f_en.etot,
+                this->scf_ene_thr);
         }
     }
 #endif
@@ -1130,11 +1137,10 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
     }
 
 #ifdef __EXX
-    // 4) write Exx matrix
-    if (GlobalC::exx_info.info_global.cal_exx) // Peize Lin add if 2022.11.14
+    // 4) write Hexx matrix for NSCF (see `out_chg` in docs/advanced/input_files/input-main.md)
+    if (GlobalC::exx_info.info_global.cal_exx && PARAM.inp.out_chg[0] && istep % PARAM.inp.out_interval == 0) // Peize Lin add if 2022.11.14
     {
-        const std::string file_name_exx = GlobalV::global_out_dir + "HexxR"
-                                          + std::to_string(GlobalV::MY_RANK);
+        const std::string file_name_exx = GlobalV::global_out_dir + "HexxR" + std::to_string(GlobalV::MY_RANK);
         if (GlobalC::exx_info.info_ri.real_number) {
             ModuleIO::write_Hexxs_csr(file_name_exx, GlobalC::ucell, this->exd->get_Hexxs());
         } else {
@@ -1254,6 +1260,38 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
                        GlobalV::MY_RANK,
                        GlobalV::NPROC);
         tqo.calculate();
+    }
+
+    if (PARAM.inp.out_mat_tk[0])
+    {
+        hamilt::HS_Matrix_K<TK> hsk(&pv, true);
+        hamilt::HContainer<TR> hR(&pv);
+        hamilt::Operator<TK>* ekinetic = 
+            new hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>(&hsk,
+                                                                  this->kv.kvec_d,
+                                                                  &hR,
+                                                                  &GlobalC::ucell,
+                                                                  &GlobalC::GridD,
+                                                                  two_center_bundle_.kinetic_orb.get());
+
+        const int nspin_k = (GlobalV::NSPIN == 2 ? 2 : 1);
+        for (int ik = 0; ik < this->kv.get_nks() / nspin_k; ++ik)
+        {
+            ekinetic->init(ik);
+            ModuleIO::save_mat(0,
+                               hsk.get_hk(),
+                               GlobalV::NLOCAL,
+                               false,
+                               PARAM.inp.out_mat_tk[1],
+                               1,
+                               GlobalV::out_app_flag,
+                               "T",
+                               "data-" + std::to_string(ik),
+                               this->pv,
+                               GlobalV::DRANK);
+        }
+
+        delete ekinetic;
     }
 }
 
