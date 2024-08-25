@@ -131,12 +131,12 @@ void ESolver_FP::after_scf(const int istep)
                 if (PARAM.inp.dm_to_rho)
                 {
                     data = this->pelec->charge->rho[is];
-                    this->pw_rho->real2recip(this->pelec->charge->rho[is], this->pelec->charge->rhog[is]);
+                    this->pw_rhod->real2recip(this->pelec->charge->rho[is], this->pelec->charge->rhog[is]);
                 }
                 else
                 {
                     data = this->pelec->charge->rho_save[is];
-                    this->pw_rho->real2recip(this->pelec->charge->rho_save[is], this->pelec->charge->rhog_save[is]);
+                    this->pw_rhod->real2recip(this->pelec->charge->rho_save[is], this->pelec->charge->rhog_save[is]);
                 }
                 std::string fn = GlobalV::global_out_dir + "/SPIN" + std::to_string(is + 1) + "_CHG.cube";
                 ModuleIO::write_cube(
@@ -187,11 +187,11 @@ void ESolver_FP::after_scf(const int istep)
             double** rhor_tot = (PARAM.inp.dm_to_rho)? this->pelec->charge->rho : this->pelec->charge->rho_save;
             for (int is = 0; is < GlobalV::NSPIN; is++)
             {
-                this->pw_rho->real2recip(rhor_tot[is], rhog_tot[is]);
+                this->pw_rhod->real2recip(rhor_tot[is], rhog_tot[is]);
             }
             ModuleIO::write_rhog(GlobalV::global_out_dir + PARAM.inp.suffix + "-CHARGE-DENSITY.restart",
                                  GlobalV::GAMMA_ONLY_PW || GlobalV::GAMMA_ONLY_LOCAL,
-                                 this->pw_rho,
+                                 this->pw_rhod,
                                  GlobalV::NSPIN,
                                  GlobalC::ucell.GT,
                                  rhog_tot,
