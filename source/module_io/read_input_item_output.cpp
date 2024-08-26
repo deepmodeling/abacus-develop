@@ -255,6 +255,29 @@ void ReadInput::item_output()
         this->add_item(item);
     }
     {
+        Input_Item item("out_mat_tk");
+        item.annotation = "output T(k)";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            size_t count = item.get_size();
+            if (count == 1)
+            {
+                para.input.out_mat_tk[0] = std::stoi(item.str_values[0]);
+                para.input.out_mat_tk[1] = 8;
+            }
+            else if (count == 2)
+            {
+                para.input.out_mat_tk[0] = std::stoi(item.str_values[0]);
+                para.input.out_mat_tk[1] = std::stoi(item.str_values[1]);
+            }
+            else
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_tk should have 1 or 2 values");
+            }
+        };
+        sync_intvec(input.out_mat_tk, 2, 0);
+        this->add_item(item);
+    }
+    {
         Input_Item item("out_mat_hs2");
         item.annotation = "output H(R) and S(R) matrix";
         read_sync_bool(input.out_mat_hs2);

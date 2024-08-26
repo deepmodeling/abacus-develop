@@ -39,8 +39,8 @@ void Sto_Forces::cal_stoforce(ModuleBase::matrix& force,
     this->cal_force_loc(forcelc, rho_basis, chr);
     this->cal_force_ew(forceion, rho_basis, p_sf);
     this->cal_sto_force_nl(forcenl, wg, pkv, wfc_basis, psi_in, stowf);
-    this->cal_force_cc(forcecc, rho_basis, chr);
-    this->cal_force_scc(forcescc, rho_basis, elec.vnew, elec.vnew_exist,GlobalC::ucell);
+    this->cal_force_cc(forcecc, rho_basis, chr, GlobalC::ucell);
+    this->cal_force_scc(forcescc, rho_basis, elec.vnew, elec.vnew_exist, GlobalC::ucell);
 
     //impose total force = 0
     int iat = 0;
