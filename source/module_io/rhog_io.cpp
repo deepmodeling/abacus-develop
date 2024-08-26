@@ -87,8 +87,7 @@ bool ModuleIO::read_rhog(const std::string& filename, const ModulePW::PW_Basis* 
     MPI_Bcast(b2, 3, MPI_DOUBLE, 0, POOL_WORLD);
     MPI_Bcast(b3, 3, MPI_DOUBLE, 0, POOL_WORLD);
 #endif
-
-    ModuleBase::Vector3<int>* miller = new ModuleBase::Vector3<int>[npwtot_in];
+    std::vector<ModuleBase::Vector3<int>> miller(npwtot_in);
     if (GlobalV::RANK_IN_POOL == 0)
     {
         ifs >> size;
@@ -107,11 +106,7 @@ bool ModuleIO::read_rhog(const std::string& filename, const ModulePW::PW_Basis* 
         ModuleBase::GlobalFunc::ZEROS(rhog[is], pw_rhod->npw);
     }
     // maps ixyz tp ig
-    int* fftixyz2ig = new int[pw_rhod->nxyz]; // map isz to ig.
-    for (int i = 0; i < pw_rhod->nxyz; ++i)
-    {
-        fftixyz2ig[i] = -1;
-    }
+    std::vector<int> fftixyz2ig(pw_rhod->nxyz, -1); // map isz to ig.
     for (int ig = 0; ig < pw_rhod->npw; ++ig)
     {
         int isz = pw_rhod->ig2isz[ig];
@@ -121,7 +116,7 @@ bool ModuleIO::read_rhog(const std::string& filename, const ModulePW::PW_Basis* 
         int ixyz = iz + nz * ixy;
         fftixyz2ig[ixyz] = ig;
     }
-    std::complex<double>* rhog_in = new std::complex<double>[npwtot_in];
+    std::vector<std::complex<double>> rhog_in(npwtot_in);
     for (int is = 0; is < nspin_in; ++is)
     {
         if (GlobalV::RANK_IN_POOL == 0)
@@ -175,10 +170,6 @@ bool ModuleIO::read_rhog(const std::string& filename, const ModulePW::PW_Basis* 
             ModuleBase::GlobalFunc::ZEROS(rhog[2], pw_rhod->npw);
         }
     }
-
-    delete[] fftixyz2ig;
-    delete[] miller;
-    delete[] rhog_in;
 
     if (GlobalV::RANK_IN_POOL == 0)
     {
