@@ -87,18 +87,22 @@ bool ModuleIO::read_rhog(const std::string& filename, const ModulePW::PW_Basis* 
     MPI_Bcast(b2, 3, MPI_DOUBLE, 0, POOL_WORLD);
     MPI_Bcast(b3, 3, MPI_DOUBLE, 0, POOL_WORLD);
 #endif
-    std::vector<ModuleBase::Vector3<int>> miller(npwtot_in);
+    std::vector<int> miller(npwtot_in * 3); 
+    // once use ModuleBase::Vector3, it is highly bug-prone to assume the memory layout of the class. 
+    // The x, y and z of Vector3 will not always to be contiguous.
+    // Instead, a relatively safe choice is to use std::vector, the memory layout is assumed
+    // to be npwtot_in rows and 3 columns.
     if (GlobalV::RANK_IN_POOL == 0)
     {
         ifs >> size;
-        for (int i = 0; i < npwtot_in; ++i)
+        for (int i = 0; i < npwtot_in; ++i) // loop over rows...
         {
-            ifs >> miller[i].x >> miller[i].y >> miller[i].z;
+            ifs >> miller[i*3] >> miller[i*3+1] >> miller[i*3+2];
         }
         ifs >> size;
     }
 #ifdef __MPI
-    MPI_Bcast(miller, 3 * npwtot_in, MPI_INT, 0, POOL_WORLD);
+    MPI_Bcast(miller.data(), miller.size(), MPI_INT, 0, POOL_WORLD);
 #endif
     // set to zero
     for (int is = 0; is < GlobalV::NSPIN; ++is)
@@ -129,14 +133,14 @@ bool ModuleIO::read_rhog(const std::string& filename, const ModulePW::PW_Basis* 
             ifs >> size;
         }
 #ifdef __MPI
-        MPI_Bcast(rhog_in, npwtot_in, MPI_DOUBLE_COMPLEX, 0, POOL_WORLD);
+        MPI_Bcast(rhog_in.data(), rhog_in.size(), MPI_DOUBLE_COMPLEX, 0, POOL_WORLD);
 #endif
 
         for (int i = 0; i < npwtot_in; ++i)
         {
-            int ix = miller[i].x;
-            int iy = miller[i].y;
-            int iz = miller[i].z;
+            int ix = miller[i * 3];
+            int iy = miller[i * 3 + 1];
+            int iz = miller[i * 3 + 2];
 
             if (ix <= -int((nx + 1) / 2) || ix >= int(nx / 2) + 1 || iy <= -int((ny + 1) / 2) || iy >= int(ny / 2) + 1
                 || iz <= -int((nz + 1) / 2) || iz >= int(nz / 2) + 1)
