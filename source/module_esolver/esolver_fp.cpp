@@ -105,7 +105,7 @@ void ESolver_FP::before_all_runners(const Input_para& inp, UnitCell& cell)
     this->print_rhofft(inp, GlobalV::ofs_running);
 
     //! 5) initialize the charge extrapolation method if necessary
-    this->CE.Init_CE(GlobalV::NSPIN, GlobalC::ucell.nat, GlobalC::ucell.omega, this->pw_rhod->nrxx, inp.chg_extrap);
+    this->CE.Init_CE(GlobalV::NSPIN, GlobalC::ucell.nat, this->pw_rhod->nrxx, inp.chg_extrap);
 
     return;
 }
@@ -118,6 +118,9 @@ void ESolver_FP::after_scf(const int istep)
 
     // 1) write fermi energy
     ModuleIO::output_efermi(this->conv_elec, this->pelec->eferm.ef);
+
+    // 2) update delta rho for charge extrapolation
+    CE.update_delta_rho(GlobalC::ucell, &(this->chr), &(this->sf));
 
     if (istep % PARAM.inp.out_interval == 0)
     {

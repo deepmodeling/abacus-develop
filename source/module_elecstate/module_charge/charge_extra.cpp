@@ -20,11 +20,7 @@ Charge_Extra::~Charge_Extra()
     }
 }
 
-void Charge_Extra::Init_CE(const int& nspin,
-                           const int& natom,
-                           const double& volume,
-                           const int& nrxx,
-                           const std::string chg_extrap)
+void Charge_Extra::Init_CE(const int& nspin, const int& natom, const int& nrxx, const std::string chg_extrap)
 {
     if (chg_extrap == "none")
     {
@@ -47,13 +43,13 @@ void Charge_Extra::Init_CE(const int& nspin,
         ModuleBase::WARNING_QUIT("Charge_Extra","charge extrapolation method is not available !");
     }
 
-    this->omega_old = volume;
     this->nspin = nspin;
 
-    if (pot_order > 1)
+    if (pot_order > 0)
     {
         delta_rho1.resize(this->nspin, std::vector<double>(nrxx, 0.0));
         delta_rho2.resize(this->nspin, std::vector<double>(nrxx, 0.0));
+        delta_rho3.resize(this->nspin, std::vector<double>(nrxx, 0.0));
     }
 
     if(pot_order == 3)
@@ -110,39 +106,18 @@ void Charge_Extra::extrapolate_charge(
 
     // if(lsda || noncolin) rho2zeta();
 
-    double** rho_atom = new double*[this->nspin];
-    for (int is = 0; is < this->nspin; is++)
-    {
-        rho_atom[is] = new double[chr->rhopw->nrxx];
-    }
-    chr->atomic_rho(this->nspin, omega_old, rho_atom, sf->strucFac, ucell);
-#ifdef _OPENMP
-#pragma omp parallel for collapse(2) schedule(static, 512)
-#endif
-    for (int is = 0; is < this->nspin; is++)
-    {
-        for (int ir = 0; ir < chr->rhopw->nrxx; ir++)
-        {
-            chr->rho[is][ir] -= rho_atom[is][ir];
-            chr->rho[is][ir] *= omega_old;
-        }
-    }
-
     if(rho_extr == 1)
     {
         ofs_running << " NEW-OLD atomic charge density approx. for the potential !" << std::endl;
 
-        if (pot_order > 1)
-        {
 #ifdef _OPENMP
-#pragma omp parallel for collapse(2) schedule(static, 512)
+#pragma omp parallel for collapse(2) schedule(static, 128)
 #endif
-            for (int is = 0; is < this->nspin; is++)
+        for (int is = 0; is < this->nspin; is++)
+        {
+            for (int ir = 0; ir < chr->rhopw->nrxx; ir++)
             {
-                for (int ir = 0; ir < chr->rhopw->nrxx; ir++)
-                {
-                    delta_rho1[is][ir] = chr->rho[is][ir];
-                }
+                chr->rho[is][ir] = delta_rho1[is][ir];
             }
         }
     }
@@ -158,8 +133,6 @@ void Charge_Extra::extrapolate_charge(
         {
             for (int ir = 0; ir < chr->rhopw->nrxx; ir++)
             {
-                delta_rho2[is][ir] = delta_rho1[is][ir];
-                delta_rho1[is][ir] = chr->rho[is][ir];
                 chr->rho[is][ir] = 2 * delta_rho1[is][ir] - delta_rho2[is][ir];
             }
         }
@@ -174,7 +147,6 @@ void Charge_Extra::extrapolate_charge(
         const double one_add_alpha = 1 + alpha;
         const double beta_alpha = beta - alpha;
 
-        std::vector<std::vector<double>> delta_rho3(this->nspin, std::vector<double>(chr->rhopw->nrxx, 0.0));
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static, 64)
 #endif
@@ -182,9 +154,6 @@ void Charge_Extra::extrapolate_charge(
         {
             for (int ir = 0; ir < chr->rhopw->nrxx; ir++)
             {
-                delta_rho3[is][ir] = delta_rho2[is][ir];
-                delta_rho2[is][ir] = delta_rho1[is][ir];
-                delta_rho1[is][ir] = chr->rho[is][ir];
                 chr->rho[is][ir]
                     = one_add_alpha * delta_rho1[is][ir] + beta_alpha * delta_rho2[is][ir] - beta * delta_rho3[is][ir];
             }
@@ -192,6 +161,11 @@ void Charge_Extra::extrapolate_charge(
     }
 
     sf->setup_structure_factor(&ucell, chr->rhopw);
+    double** rho_atom = new double*[this->nspin];
+    for (int is = 0; is < this->nspin; is++)
+    {
+        rho_atom[is] = new double[chr->rhopw->nrxx];
+    }
     chr->atomic_rho(this->nspin, ucell.omega, rho_atom, sf->strucFac, ucell);
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static, 512)
@@ -204,8 +178,6 @@ void Charge_Extra::extrapolate_charge(
             chr->rho[is][ir] += rho_atom[is][ir];
         }
     }
-
-    omega_old = ucell.omega;
 
     for (int is = 0; is < this->nspin; is++)
     {
@@ -295,5 +267,42 @@ void Charge_Extra::update_all_dis(const UnitCell& ucell)
         }
         assert(iat == ucell.nat);
     }
+    return;
+}
+
+void Charge_Extra::update_delta_rho(const UnitCell& ucell, const Charge* chr, const Structure_Factor* sf)
+{
+    if (pot_order == 0)
+    {
+        return;
+    }
+
+    // obtain the difference between chr->rho and atomic_rho
+    double** rho_atom = new double*[this->nspin];
+    for (int is = 0; is < this->nspin; is++)
+    {
+        rho_atom[is] = new double[chr->rhopw->nrxx];
+    }
+    chr->atomic_rho(this->nspin, ucell.omega, rho_atom, sf->strucFac, ucell);
+
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2) schedule(static, 512)
+#endif
+    for (int is = 0; is < this->nspin; is++)
+    {
+        for (int ir = 0; ir < chr->rhopw->nrxx; ir++)
+        {
+            delta_rho3[is][ir] = delta_rho2[is][ir];
+            delta_rho2[is][ir] = delta_rho1[is][ir];
+            delta_rho1[is][ir] = chr->rho[is][ir] - rho_atom[is][ir];
+            delta_rho1[is][ir] *= ucell.omega;
+        }
+    }
+
+    for (int is = 0; is < this->nspin; is++)
+    {
+        delete[] rho_atom[is];
+    }
+    delete[] rho_atom;
     return;
 }
