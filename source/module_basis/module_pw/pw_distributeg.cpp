@@ -199,4 +199,4 @@ void PW_Basis::get_ig2isz_is2fftixy(
 #endif
     return;
 }
-}
+} // namespace ModulePW

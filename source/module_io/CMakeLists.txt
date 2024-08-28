@@ -13,7 +13,7 @@ list(APPEND objects
     print_info.cpp
     read_cube.cpp
     read_rho.cpp
-    read_rhog.cpp
+    rhog_io.cpp
     read_exit_file.cpp
     read_wfc_pw.cpp
     restart.cpp

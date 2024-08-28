@@ -157,7 +157,7 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
     // not relevant for PAW
     if (!GlobalV::use_paw)
     {
-        Forces::cal_force_cc(forcecc, rho_basis, chr);
+        Forces::cal_force_cc(forcecc, rho_basis, chr,GlobalC::ucell);
     }
     else
     {
