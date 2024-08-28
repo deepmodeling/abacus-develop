@@ -47,15 +47,10 @@ class Charge_Extra
      *
      * @param nspin the number of spins
      * @param natom the number of atoms
-     * @param volume the volume of the cell
      * @param nrxx the number of grids
      * @param chg_extrap the charge extrapolation method
      */
-    void Init_CE(const int& nspin,
-                 const int& natom,
-                 const double& volume,
-                 const int& nrxx,
-                 const std::string chg_extrap);
+    void Init_CE(const int& nspin, const int& natom, const int& nrxx, const std::string chg_extrap);
 
     /**
      * @brief charge extrapolation method
@@ -87,11 +82,19 @@ class Charge_Extra
      */
     void update_all_dis(const UnitCell& ucell);
 
+    /**
+     * @brief update the difference of charge density
+     *
+     * @param ucell the cell information
+     * @param chr the charge density
+     * @param sf the structure factor
+     */
+    void update_delta_rho(const UnitCell& ucell, const Charge* chr, const Structure_Factor* sf);
+
   private:
     int istep = 0; ///< the current step
     int pot_order; ///< the specified charge extrapolation method
     int rho_extr;  ///< the actually used method
-    double omega_old; ///< the old volume of the last step
     int nspin;        ///< the number of spins
 
     ModuleBase::Vector3<double>* dis_old1 = nullptr; ///< dis_old2 = pos_old1 - pos_old2
@@ -100,6 +103,7 @@ class Charge_Extra
 
     std::vector<std::vector<double>> delta_rho1; ///< the last step difference of rho and atomic_rho
     std::vector<std::vector<double>> delta_rho2; ///< the second last step difference of rho and atomic_rho
+    std::vector<std::vector<double>> delta_rho3; ///< the third last step difference of rho and atomic_rho
 
     double alpha; ///< parameter used in the second order extrapolation
     double beta;  ///< parameter used in the second order extrapolation
