@@ -311,7 +311,7 @@ template <typename T, typename Device>
 void HSolverPW<T, Device>::updatePsiK(hamilt::Hamilt<T, Device>* pHamilt, psi::Psi<T, Device>& psi, const int ik)
 {
     psi.fix_k(ik);
-    if (!PARAM.inp.psi_initializer && !this->initialed_psi && this->basis_type == "pw")
+    if (!GlobalV::psi_initializer && !this->initialed_psi && this->basis_type == "pw")
     {
         hamilt::diago_PAO_in_pw_k2(this->ctx, ik, psi, this->wfc_basis, this->pwf, pHamilt);
     }
@@ -469,7 +469,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
                                                   psi.get_nbands(),
                                                   psi.get_k_first() ? psi.get_current_nbas()
                                                                     : psi.get_nk() * psi.get_nbasis(),
-                                                  PARAM.inp.pw_diag_ndim,
+                                                  GlobalV::PW_DIAG_NDIM,
                                                   this->iter_diag_thr,
                                                   this->diag_iter_max,
                                                   this->need_subspace,
@@ -538,7 +538,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         DiagoDavid<T, Device> david(pre_condition.data(),
                                     nband,
                                     dim,
-                                    PARAM.inp.pw_diag_ndim,
+                                    GlobalV::PW_DIAG_NDIM,
                                     this->use_paw,
                                     comm_info);
         // do diag and add davidson iteration counts up to avg_iter
