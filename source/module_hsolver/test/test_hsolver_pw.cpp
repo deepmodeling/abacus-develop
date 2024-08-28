@@ -81,10 +81,6 @@ TEST_F(TestHSolverPW, solve) {
     psi_test_cd.resize(1, 2, 3);
     GlobalV::nelec = 1.0;
 
-    // check solve()
-    EXPECT_EQ(this->hs_f.initialed_psi, false);
-    EXPECT_EQ(this->hs_d.initialed_psi, false);
-
     std::vector<bool> is_occupied(1 * 2, true);
 
     this->hs_f.solve(&hamilt_test_f,

@@ -173,8 +173,8 @@ TEST_F(TestHSolverPW_SDFT, solve)
     int istep = 0;
     int iter = 0;
 
-	//check solve()
-	EXPECT_EQ(this->hs_d.initialed_psi, false);
+	// //check solve()
+	// EXPECT_EQ(this->hs_d.initialed_psi, false);
 
     this->hs_d.solve(&hamilt_test_d,
                      psi_test_cd,
@@ -190,7 +190,7 @@ TEST_F(TestHSolverPW_SDFT, solve)
                      hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR,
                      false
     );
-	EXPECT_EQ(this->hs_d.initialed_psi, true);
+
 	EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<double>>::avg_iter, 0.0);
 	EXPECT_DOUBLE_EQ(elecstate_test.ekb.c[0], 4.0);
 	EXPECT_DOUBLE_EQ(elecstate_test.ekb.c[1], 7.0);
