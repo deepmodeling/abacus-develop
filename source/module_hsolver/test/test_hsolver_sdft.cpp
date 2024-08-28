@@ -232,9 +232,6 @@ TEST_F(TestHSolverPW_SDFT, solve_noband_skipcharge)
     elecstate_test.charge->nrxx = 10;
     int istep = 0;
     int iter = 0;
-    
-	//check solve()
-    hs_d.initialed_psi = true;
 
     this->hs_d.solve(&hamilt_test_d,
                      psi_test_no,
