@@ -5,8 +5,6 @@
 #include "module_base/tool_title.h"
 #include "module_elecstate/module_charge/symmetry_rho.h"
 
-#include "module_parameter/parameter.h"
-
 #include <algorithm>
 
 namespace hsolver

@@ -15,8 +15,6 @@
 #include "module_hsolver/diago_david.h"
 #include "module_hsolver/diago_iter_assist.h"
 
-#include "module_parameter/parameter.h"
-
 #include <algorithm>
 #include <vector>
 
