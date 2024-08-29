@@ -190,6 +190,19 @@ struct cal_stress_drhoc_aux_op{
     );
 };
 
+template <typename FPTYPE, typename Device>
+struct cal_force_npw_op{
+    void operator()(const std::complex<FPTYPE> *psiv,
+                    const FPTYPE* gv_x, const FPTYPE* gv_y, const FPTYPE* gv_z,
+                    const FPTYPE* rhocgigg_vec,
+                    FPTYPE* force,
+                    const FPTYPE pos_x, const FPTYPE pos_y, const FPTYPE pos_xz,
+                    const int npw,
+                    const FPTYPE omega, const FPTYPE tpiba
+    );
+};
+
+
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 template <typename FPTYPE>
 struct cal_dbecp_noevc_nl_op<FPTYPE, base_device::DEVICE_GPU>
@@ -339,6 +352,27 @@ struct cal_stress_drhoc_aux_op<FPTYPE, base_device::DEVICE_GPU>{
     );
 };
 
+
+/**
+ * This operator is used to compute the force force in three directions for each atom in force_cc 
+ * in parallel on GPU [0~3], which is:
+ * Force_p =    (2* pi * tpiba * omega * rhocg[ig] * gv_p[ig] 
+ *              * (gv_x[ig] * pos_x + gv_y[ig] * pos_y + gv_z[ig] * pos_z)
+ *              * complex(sinp, cosp) * psiv[ig]).real()
+ *
+ * The operator splits NPW into blocks on the GPU in parallel, and the block size is t_size = 1024.
+ */
+template <typename FPTYPE>
+struct cal_force_npw_op<FPTYPE, base_device::DEVICE_GPU>{
+    void operator()(const std::complex<FPTYPE> *psiv,
+                    const FPTYPE* gv_x, const FPTYPE* gv_y, const FPTYPE* gv_z,
+                    const FPTYPE* rhocgigg_vec,
+                    FPTYPE* force,
+                    const FPTYPE pos_x, const FPTYPE pos_y, const FPTYPE pos_xz,
+                    const int npw,
+                    const FPTYPE omega, const FPTYPE tpiba
+    );
+};
 
 
 

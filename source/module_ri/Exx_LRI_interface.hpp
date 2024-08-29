@@ -7,6 +7,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
 #include "module_base/parallel_common.h"
+#include "module_base/formatter.h"
 
 #include <sys/time.h>
 #include "module_io/csr_reader.h"
@@ -126,7 +127,10 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
     hamilt::Hamilt<T>& hamilt,
     const elecstate::DensityMatrix<T, double>& dm,
     const K_Vectors& kv,
-    int& iter)
+    const int& nspin,
+    int& iter,
+    const double& etot,
+    const double& scf_ene_thr)
 {   // only called if (GlobalC::exx_info.info_global.cal_exx)
     auto restart_reset = [this]()
         { // avoid calling restart related procedure in the subsequent ion steps
@@ -158,45 +162,50 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
                 return false;
             }
         }
-        // has separate_loop case
-        // exx converged or get max exx steps
-        else if (this->two_level_step == GlobalC::exx_info.info_global.hybrid_step
-            || (iter == 1 && this->two_level_step != 0))
-        {
-            restart_reset();
-            return true;
-        }
         else
-        {
-            // update exx and redo scf
-            if (this->two_level_step == 0)
+        { // has separate_loop case
+            const double ediff = std::abs(etot - etot_last_outer_loop) * ModuleBase::Ry_to_eV;
+            if (two_level_step) { std::cout << FmtCore::format("EDIFF/eV (outer loop): %.8e \n", ediff); }
+            // exx converged or get max exx steps
+            if (this->two_level_step == GlobalC::exx_info.info_global.hybrid_step
+                || (iter == 1 && this->two_level_step != 0) // density convergence of outer loop
+                || (ediff < scf_ene_thr && this->two_level_step != 0))   //energy convergence of outer loop
             {
-                XC_Functional::set_xc_type(GlobalC::ucell.atoms[0].ncpp.xc_func);
+                restart_reset();
+                return true;
             }
+            else
+            {
+                this->etot_last_outer_loop = etot;
+                // update exx and redo scf
+                if (this->two_level_step == 0)
+                {
+                    XC_Functional::set_xc_type(GlobalC::ucell.atoms[0].ncpp.xc_func);
+                }
 
-            std::cout << " Updating EXX " << std::flush;
-            timeval t_start;       gettimeofday(&t_start, nullptr);
+                std::cout << " Updating EXX " << std::flush;
+                timeval t_start;       gettimeofday(&t_start, nullptr);
 
-            const bool flag_restart = (this->two_level_step == 0) ? true : false;
-            this->mix_DMk_2D.mix(dm.get_DMK_vector(), flag_restart);
+                const bool flag_restart = (this->two_level_step == 0) ? true : false;
+                this->mix_DMk_2D.mix(dm.get_DMK_vector(), flag_restart);
 
-            // GlobalC::exx_lcao.cal_exx_elec(p_esolver->LOC, p_esolver->LOWF.wfc_k_grid);
-			const std::vector<std::map<int,std::map<std::pair<int, std::array<int, 3>>,RI::Tensor<Tdata>>>>
-				Ds = GlobalV::GAMMA_ONLY_LOCAL
-                ? RI_2D_Comm::split_m2D_ktoR<Tdata>(*this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_gamma_out(), *dm.get_paraV_pointer(), GlobalV::NSPIN)
-                : RI_2D_Comm::split_m2D_ktoR<Tdata>(*this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_k_out(), *dm.get_paraV_pointer(), GlobalV::NSPIN);
-            this->exx_ptr->cal_exx_elec(Ds, *dm.get_paraV_pointer());
-            iter = 0;
-            this->two_level_step++;
-            
-            timeval t_end;       gettimeofday(&t_end, nullptr);
-            std::cout << "and rerun SCF\t"
-                << std::setprecision(3) << std::setiosflags(std::ios::scientific)
-                << (double)(t_end.tv_sec-t_start.tv_sec) + (double)(t_end.tv_usec-t_start.tv_usec)/1000000.0 
-                << std::defaultfloat << " (s)" << std::endl;
-            return false;
+                // GlobalC::exx_lcao.cal_exx_elec(p_esolver->LOC, p_esolver->LOWF.wfc_k_grid);
+                const std::vector<std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>>>
+                    Ds = std::is_same<T, double>::value //gamma_only_local
+                    ? RI_2D_Comm::split_m2D_ktoR<Tdata>(*this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_gamma_out(), *dm.get_paraV_pointer(), nspin)
+                    : RI_2D_Comm::split_m2D_ktoR<Tdata>(*this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_k_out(), *dm.get_paraV_pointer(), nspin);
+                this->exx_ptr->cal_exx_elec(Ds, *dm.get_paraV_pointer());
+                iter = 0;
+                this->two_level_step++;
+
+                timeval t_end;       gettimeofday(&t_end, nullptr);
+                std::cout << "and rerun SCF\t"
+                    << std::setprecision(3) << std::setiosflags(std::ios::scientific)
+                    << (double)(t_end.tv_sec - t_start.tv_sec) + (double)(t_end.tv_usec - t_start.tv_usec) / 1000000.0
+                    << std::defaultfloat << " (s)" << std::endl;
+                return false;
+            }
         }
-
     restart_reset();
     return true;
 }
