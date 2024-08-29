@@ -258,7 +258,7 @@ void ModuleBase::Global_File::close_all_log(const int rank, const bool out_alllo
     std::stringstream ss;
 	if(out_alllog)
 	{
-    	ss << "running_" << GlobalV::CALCULATION << "_cpu" << rank << ".log";
+    	ss << "running_" << PARAM.inp.calculation << "_cpu" << rank << ".log";
     	close_log(GlobalV::ofs_running,ss.str());
         #if defined(__CUDA) || defined(__ROCM)
         close_log(GlobalV::ofs_device, "device" + std::to_string(rank));
@@ -268,7 +268,7 @@ void ModuleBase::Global_File::close_all_log(const int rank, const bool out_alllo
 	{
 		if(rank==0)
 		{
-    		ss << "running_" << GlobalV::CALCULATION << ".log";
+    		ss << "running_" << PARAM.inp.calculation << ".log";
     		close_log(GlobalV::ofs_running,ss.str());
             #if defined(__CUDA) || defined(__ROCM)
             close_log(GlobalV::ofs_device, "device");
