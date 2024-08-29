@@ -9,7 +9,7 @@ install(FILES INPUTs DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 AddTest(
   TARGET io_input_test_para
-  LIBS ${math_libs} base device io_input parameter
+  LIBS ${math_libs} base device io_input 
   SOURCES read_input_ptest.cpp
 )
 
@@ -20,7 +20,7 @@ add_test(NAME io_input_test_para_4
 
 AddTest(
   TARGET read_exit_file_test
-  LIBS ${math_libs} base device parameter
+  LIBS ${math_libs} base device 
   SOURCES read_exit_file_test.cpp ../read_exit_file.cpp
 )
 
@@ -60,13 +60,13 @@ AddTest(
 
 AddTest(
   TARGET io_write_dos_pw
-  LIBS ${math_libs} base device symmetry parameter
+  LIBS ${math_libs} base device symmetry 
   SOURCES write_dos_pw_test.cpp ../cal_dos.cpp ../write_dos_pw.cpp ../output.cpp ../../module_cell/parallel_kpoints.cpp ../../module_cell/klist.cpp
 )
 
 AddTest(
   TARGET io_print_info
-  LIBS ${math_libs} base device symmetry cell_info parameter
+  LIBS ${math_libs} base device symmetry cell_info 
   SOURCES print_info_test.cpp ../print_info.cpp ../output.cpp ../../module_cell/klist.cpp ../../module_cell/parallel_kpoints.cpp
 )
 
@@ -96,7 +96,7 @@ add_test(NAME io_write_wfc_nao_para
 
 AddTest(
   TARGET io_write_orb_info
-  LIBS ${math_libs} base device cell_info parameter
+  LIBS ${math_libs} base device cell_info 
   SOURCES write_orb_info_test.cpp ../write_orb_info.cpp ../output.cpp
 )
 
@@ -144,7 +144,7 @@ AddTest(
 if(ENABLE_LCAO)
 AddTest(
   TARGET to_qo_test
-  LIBS base ${math_libs} device numerical_atomic_orbitals container orb parameter
+  LIBS base ${math_libs} device numerical_atomic_orbitals container orb 
   SOURCES 
   to_qo_test.cpp
   ../to_qo_kernel.cpp
@@ -170,7 +170,7 @@ add_test(NAME read_wfc_pw_test_parallel
 
 AddTest(
   TARGET numerical_basis_test
-  LIBS base ${math_libs} device numerical_atomic_orbitals container orb parameter
+  LIBS base ${math_libs} device numerical_atomic_orbitals container orb 
   SOURCES numerical_basis_test.cpp ../numerical_basis_jyjy.cpp ../../module_hamilt_lcao/hamilt_lcaodft/center2_orb.cpp
 )
 
