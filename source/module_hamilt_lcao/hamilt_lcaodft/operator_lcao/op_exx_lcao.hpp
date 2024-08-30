@@ -92,7 +92,7 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
 
     if (GlobalV::CALCULATION == "nscf" && GlobalC::exx_info.info_global.cal_exx)
     {    // if nscf, read HexxR first and reallocate hR according to the read-in HexxR
-        const std::string file_name_exx = GlobalV::global_out_dir + "HexxR" + std::to_string(GlobalV::MY_RANK);
+        const std::string file_name_exx = GlobalV::global_readin_dir + "HexxR" + std::to_string(GlobalV::MY_RANK);
         if (GlobalC::exx_info.info_ri.real_number)
         {
             ModuleIO::read_Hexxs_csr(file_name_exx, GlobalC::ucell, GlobalV::NSPIN, GlobalV::NLOCAL, *Hexxd);
