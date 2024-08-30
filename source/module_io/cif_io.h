@@ -43,6 +43,18 @@
  *   C  C2  1  0.33333300  0.66666700  0.75000000  1
  *   C  C3  1  0.66666700  0.33333300  0.25000000  1
  *
+ * For cif file from COD, which always contains experiments information and even SHELX
+ * single-crystal refinement information, the CIF file is much more complicated.
+ * see https://www.crystallography.net/cod/ for more information.
+ * 
+ * Design of this "class"
+ * According to the CifParser implemented in pymatgen package.
+ * 
+ * Usage of this "class"
+ * The usage of this class is simple, just call the static methods to_cif and from_cif.
+ * There are also other utils such as vec_to_abc_angles, abc_angles_to_vec, etc.
+ * A call similar with pymatgen implementation is also supported, in that case, a instance
+ * of CifParser is bind with a CIF file, and the data can be accessed by the get() function.
  */
 namespace ModuleIO
 {
@@ -79,6 +91,9 @@ namespace ModuleIO
                                const std::string& data_tag = "data_?");
             static void from_cif(const std::string& fcif,
                                  std::map<std::string, std::vector<std::string>>& out);
+
+            // not static :(
+            std::vector<std::string> get(const std::string& key);
         // private:
             // not needed to be exposed
             static void _build_chem_formula(const int natom,
