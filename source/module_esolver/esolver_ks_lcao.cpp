@@ -120,7 +120,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
     ModuleBase::timer::tick("ESolver_KS_LCAO", "before_all_runners");
 
     // 1) calculate overlap matrix S
-    if (GlobalV::CALCULATION == "get_S")
+    if (PARAM.inp.calculation == "get_S")
     {
         // 1.1) read pseudopotentials
         ucell.read_pseudo(GlobalV::ofs_running);
@@ -181,7 +181,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
         ->init_DM(&this->kv, &(this->pv), GlobalV::NSPIN);
 
     // this function should be removed outside of the function
-    if (GlobalV::CALCULATION == "get_S")
+    if (PARAM.inp.calculation == "get_S")
     {
         ModuleBase::timer::tick("ESolver_KS_LCAO", "init");
         return;
@@ -195,9 +195,9 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
 #ifdef __EXX
     // 7) initialize exx
     // PLEASE simplify the Exx_Global interface
-    if (GlobalV::CALCULATION == "scf" || GlobalV::CALCULATION == "relax"
-        || GlobalV::CALCULATION == "cell-relax"
-        || GlobalV::CALCULATION == "md")
+    if (PARAM.inp.calculation == "scf" || PARAM.inp.calculation == "relax"
+        || PARAM.inp.calculation == "cell-relax"
+        || PARAM.inp.calculation == "md")
     {
         if (GlobalC::exx_info.info_global.cal_exx)
         {
@@ -404,7 +404,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners()
         GlobalV::ofs_running << "\n\n\n\n";
     }
     // qianrui modify 2020-10-18
-    if (GlobalV::CALCULATION == "scf" || GlobalV::CALCULATION == "md" || GlobalV::CALCULATION == "relax")
+    if (PARAM.inp.calculation == "scf" || PARAM.inp.calculation == "md" || PARAM.inp.calculation == "relax")
     {
         ModuleIO::write_istate_info(this->pelec->ekb, this->pelec->wg, this->kv, &(GlobalC::Pkpoints));
     }
@@ -1222,7 +1222,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
     }
 
     // 14) write md related
-    if (!md_skip_out(GlobalV::CALCULATION, istep, PARAM.inp.out_interval))
+    if (!md_skip_out(PARAM.inp.calculation, istep, PARAM.inp.out_interval))
     {
         this->create_Output_Mat_Sparse(istep).write();
         // mulliken charge analysis

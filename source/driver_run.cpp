@@ -55,7 +55,7 @@ void Driver::driver_run() {
     Json::gen_stru_wrapper(&GlobalC::ucell);
 #endif
 
-    const std::string cal_type = GlobalV::CALCULATION;
+    const std::string cal_type = PARAM.inp.calculation;
 
     //! 4: different types of calculations
     if (cal_type == "md")
