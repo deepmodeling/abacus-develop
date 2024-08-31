@@ -6,10 +6,13 @@
 #include "module_io/cif_io.h"
 #include <cassert>
 
-void ModuleIO::CifParser::_build_chem_formula(const int natom, 
-                                              const std::string* atom_site_labels,
-                                              std::string& sum,
-                                              std::string& structural)
+double deg2rad(double deg) { return deg * M_PI / 180.0; }
+double rad2deg(double rad) { return rad * 180.0 / M_PI; }
+
+void _build_chem_formula(const int natom, 
+                         const std::string* atom_site_labels,
+                         std::string& sum,
+                         std::string& structural)
 {
     sum.clear();
     structural.clear();
@@ -38,7 +41,7 @@ void ModuleIO::CifParser::_build_chem_formula(const int natom,
     }
 }
 
-void ModuleIO::CifParser::vec_to_abc_angles(const double* vec, double* abc_angles)
+void vec_to_abc_angles(const double* vec, double* abc_angles)
 {
     const std::vector<double> a = {vec[0], vec[1], vec[2]};
     const std::vector<double> b = {vec[3], vec[4], vec[5]};
@@ -56,7 +59,7 @@ void ModuleIO::CifParser::vec_to_abc_angles(const double* vec, double* abc_angle
     abc_angles[4] = rad2deg(beta);
     abc_angles[5] = rad2deg(gamma);
 }
-void ModuleIO::CifParser::abc_angles_to_vec(const double* abc_angles, double* vec)
+void abc_angles_to_vec(const double* abc_angles, double* vec)
 {
     const double a = abc_angles[0];
     const double b = abc_angles[1];
@@ -74,25 +77,165 @@ void ModuleIO::CifParser::abc_angles_to_vec(const double* abc_angles, double* ve
     vec[7] = c * (std::cos(deg2rad(alpha)) - std::cos(deg2rad(beta)) * std::cos(deg2rad(gamma))) / std::sin(deg2rad(gamma));
     vec[8] = std::sqrt(c * c - vec[6] * vec[6] - vec[7] * vec[7]);
 }
-double ModuleIO::CifParser::vec_to_volume(const double* vec)
+double vec_to_volume(const double* vec)
 {
     // vector's mixed product
     return vec[0] * (vec[4] * vec[8] - vec[5] * vec[7]) - vec[1] * (vec[3] * vec[8] - vec[5] * vec[6]) + vec[2] * (vec[3] * vec[7] - vec[4] * vec[6]);
 }
-double ModuleIO::CifParser::abc_angles_to_volume(const double* abc_angles)
+double abc_angles_to_volume(const double* abc_angles)
 {
     std::vector<double> vec(9);
     abc_angles_to_vec(abc_angles, vec.data());
     return vec_to_volume(vec.data());
 }
+std::vector<std::string> _split_outside_enclose(const std::string& in, 
+                                                const std::string& delim,
+                                                const std::vector<std::string>& enclose)
+{
+    // a very naive impl. for only CIF possible cases
+    assert(enclose.size() == 2); // other complicated case not implemented yet
+    // first split with delim. then scan all fragments, if there are enclose symbol, then will first meet
+    // a fragment startswith the opening, then after fragments, there will be a one ends with closing.
+    // between them, fragments will be concatenated with delim.
+    std::vector<std::string> out;
+    std::string cache;
+    std::vector<std::string> words = FmtCore::split(in, delim);
+    bool in_enclose = false;
+    for (auto& word: words)
+    {
+        if (FmtCore::startswith(word, enclose[0]))
+        {
+            in_enclose = true;
+            cache += word + delim;
+        }
+        else if (FmtCore::endswith(word, enclose[1]))
+        {
+            in_enclose = false;
+            cache += word;
+            out.push_back(cache);
+            cache.clear();
+        }
+        else
+        {
+            if (in_enclose)
+            {
+                cache += word + delim;
+            }
+            else
+            {
+                out.push_back(word);
+            }
+        }
+    }
+    return out;
+}
+
+// the second step, for each block, split with words starting with "_"
+std::vector<std::string> _split_loop_block(const std::string& block)
+{
+    std::vector<std::string> out;
+    std::string word, cache;
+    std::stringstream ss(FmtCore::strip(FmtCore::strip(block, "\n")));
+    while (ss.good())
+    {
+        ss >> word;
+        if (FmtCore::startswith(word, "_"))
+        {
+            if (!cache.empty())
+            {
+                out.push_back(FmtCore::strip(cache));
+                cache.clear();
+            }
+            out.push_back(FmtCore::strip(word));
+        }
+        else
+        {
+            cache += word + " ";
+        }
+    }
+    // the last word
+    if (!cache.empty())
+    {
+        out.push_back(FmtCore::strip(cache));
+    }
+    return out;
+}
+
+std::map<std::string, std::vector<std::string>> _build_table(const std::vector<std::string>& keys,
+                                                             const std::vector<std::string>& values)
+{
+    std::map<std::string, std::vector<std::string>> out;
+    const size_t ncols = keys.size();
+    assert(values.size() % ncols == 0);
+    const size_t nrows = values.size() / ncols;
+    for (size_t i = 0; i < ncols; i++)
+    {
+        std::vector<std::string> col(nrows);
+        for (size_t j = 0; j < nrows; j++)
+        {
+            col[j] = values[j * ncols + i];
+        }
+        out[keys[i]] = col;
+    }
+    return out;
+}
+
+std::map<std::string, std::vector<std::string>> _build_block_data(const std::vector<std::string>& block)
+{
+    // after calling the _split_loop_block, the data now composed of elements that either startswith "_"
+    // or not. Between elements startswith "_", there is at most one element that does not startswith "_".
+    // a scan can be performed to group those keys.
+    std::vector<std::vector<std::string>> keys;
+    std::vector<std::string> kcache;
+    std::vector<std::string> values;
+    // first drop all elements that does not startswith "_" before the first element that startswith "_"
+    std::vector<std::string> block_ = block;
+    auto it = std::find_if(block.begin(), block.end(), [](const std::string& s) { return FmtCore::startswith(s, "_"); });
+    if (it != block.begin())
+    {
+        block_.erase(block_.begin(), it);
+    }
+    for (auto& elem: block_)
+    {
+        if (FmtCore::startswith(elem, "_"))
+        {
+            kcache.push_back(elem);
+        }
+        else
+        {
+            keys.push_back(kcache);
+            values.push_back(elem);
+            kcache.clear();
+        }
+    }
+    assert(keys.size() == values.size()); // ensure the number of keys and values are the same
+    // then for each elem in keys, if there are more than one element, then it is a table. Make it a table
+    // , otherwise it is a simple key-value pair, directly add it to the output.
+    std::map<std::string, std::vector<std::string>> out;
+    for (size_t i = 0; i < keys.size(); i++)
+    {
+        if (keys[i].size() > 1)
+        {
+            const std::vector<std::string> words = _split_outside_enclose(values[i], " ", {"'", "'"});
+            std::map<std::string, std::vector<std::string>> table = _build_table(keys[i], words);
+            out.insert(table.begin(), table.end());
+        }
+        else
+        {
+            out[keys[i][0]] = {values[i]};
+        }
+    }
+    
+    return out;
+}
 
 void ModuleIO::CifParser::_unpack_ucell(const UnitCell& ucell,
-                                       std::vector<double>& veca,
-                                       std::vector<double>& vecb,
-                                       std::vector<double>& vecc,
-                                       int& natom,
-                                       std::vector<std::string>& atom_site_labels,
-                                       std::vector<double>& atom_site_fract_coords)
+                                        std::vector<double>& veca,
+                                        std::vector<double>& vecb,
+                                        std::vector<double>& vecc,
+                                        int& natom,
+                                        std::vector<std::string>& atom_site_labels,
+                                        std::vector<double>& atom_site_fract_coords)
 {
     const double bohr2angstrom = 0.52917721067;
     const double lat0 = ucell.lat.lat0;
@@ -263,146 +406,6 @@ void ModuleIO::CifParser::from_cif(const std::string& fcif,
     }
 }
 
-std::vector<std::string> ModuleIO::CifParser::_split_outside_enclose(const std::string& in, 
-                                                                     const std::string& delim,
-                                                                     const std::vector<std::string>& enclose)
-{
-    // a very naive impl. for only CIF possible cases
-    assert(enclose.size() == 2); // other complicated case not implemented yet
-    // first split with delim. then scan all fragments, if there are enclose symbol, then will first meet
-    // a fragment startswith the opening, then after fragments, there will be a one ends with closing.
-    // between them, fragments will be concatenated with delim.
-    std::vector<std::string> out;
-    std::string cache;
-    std::vector<std::string> words = FmtCore::split(in, delim);
-    bool in_enclose = false;
-    for (auto& word: words)
-    {
-        if (FmtCore::startswith(word, enclose[0]))
-        {
-            in_enclose = true;
-            cache += word + delim;
-        }
-        else if (FmtCore::endswith(word, enclose[1]))
-        {
-            in_enclose = false;
-            cache += word;
-            out.push_back(cache);
-            cache.clear();
-        }
-        else
-        {
-            if (in_enclose)
-            {
-                cache += word + delim;
-            }
-            else
-            {
-                out.push_back(word);
-            }
-        }
-    }
-    return out;
-}
-
-// the second step, for each block, split with words starting with "_"
-std::vector<std::string> ModuleIO::CifParser::_split_loop_block(const std::string& block)
-{
-    std::vector<std::string> out;
-    std::string word, cache;
-    std::stringstream ss(FmtCore::strip(FmtCore::strip(block, "\n")));
-    while (ss.good())
-    {
-        ss >> word;
-        if (FmtCore::startswith(word, "_"))
-        {
-            if (!cache.empty())
-            {
-                out.push_back(FmtCore::strip(cache));
-                cache.clear();
-            }
-            out.push_back(FmtCore::strip(word));
-        }
-        else
-        {
-            cache += word + " ";
-        }
-    }
-    // the last word
-    if (!cache.empty())
-    {
-        out.push_back(FmtCore::strip(cache));
-    }
-    return out;
-}
-
-std::map<std::string, std::vector<std::string>> ModuleIO::CifParser::_build_table(const std::vector<std::string>& keys,
-                                                                                  const std::vector<std::string>& values)
-{
-    std::map<std::string, std::vector<std::string>> out;
-    const size_t ncols = keys.size();
-    assert(values.size() % ncols == 0);
-    const size_t nrows = values.size() / ncols;
-    for (size_t i = 0; i < ncols; i++)
-    {
-        std::vector<std::string> col(nrows);
-        for (size_t j = 0; j < nrows; j++)
-        {
-            col[j] = values[j * ncols + i];
-        }
-        out[keys[i]] = col;
-    }
-    return out;
-}
-
-std::map<std::string, std::vector<std::string>> ModuleIO::CifParser::_build_block_data(const std::vector<std::string>& block)
-{
-    // after calling the _split_loop_block, the data now composed of elements that either startswith "_"
-    // or not. Between elements startswith "_", there is at most one element that does not startswith "_".
-    // a scan can be performed to group those keys.
-    std::vector<std::vector<std::string>> keys;
-    std::vector<std::string> kcache;
-    std::vector<std::string> values;
-    // first drop all elements that does not startswith "_" before the first element that startswith "_"
-    std::vector<std::string> block_ = block;
-    auto it = std::find_if(block.begin(), block.end(), [](const std::string& s) { return FmtCore::startswith(s, "_"); });
-    if (it != block.begin())
-    {
-        block_.erase(block_.begin(), it);
-    }
-    for (auto& elem: block_)
-    {
-        if (FmtCore::startswith(elem, "_"))
-        {
-            kcache.push_back(elem);
-        }
-        else
-        {
-            keys.push_back(kcache);
-            values.push_back(elem);
-            kcache.clear();
-        }
-    }
-    assert(keys.size() == values.size()); // ensure the number of keys and values are the same
-    // then for each elem in keys, if there are more than one element, then it is a table. Make it a table
-    // , otherwise it is a simple key-value pair, directly add it to the output.
-    std::map<std::string, std::vector<std::string>> out;
-    for (size_t i = 0; i < keys.size(); i++)
-    {
-        if (keys[i].size() > 1)
-        {
-            const std::vector<std::string> words = _split_outside_enclose(values[i], " ", {"'", "'"});
-            std::map<std::string, std::vector<std::string>> table = _build_table(keys[i], words);
-            out.insert(table.begin(), table.end());
-        }
-        else
-        {
-            out[keys[i][0]] = {values[i]};
-        }
-    }
-    
-    return out;
-}
 
 ModuleIO::CifParser::CifParser(const std::string& fcif)
 {

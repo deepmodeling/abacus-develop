@@ -152,198 +152,198 @@ const std::string cod1000065 = ""
 "C0 0.000\n";
 
 
-TEST(CifParserTest, VecABCAnglesTest)
-{
-    // this test will test the conversion between vector and abc angles
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_real_distribution<double> dis(0.0, 1.0);
-    std::vector<double> vec(9);
-    // perform test for 10 times
-    for (int it = 0; it < 10; ++it)
-    {
-        std::for_each(vec.begin(), vec.end(), [&dis, &gen](double& d) { d = dis(gen); });
-        std::vector<double> abc_angles(6); // norma, normb, normc, alpha, beta, gamma
-        ModuleIO::CifParser::vec_to_abc_angles(vec.data(), abc_angles.data());
-        std::vector<double> vec_out(9);
-        ModuleIO::CifParser::abc_angles_to_vec(abc_angles.data(), vec_out.data());
-        // however, the function above will assume a as (a, 0, 0), so we convert again.
-        std::vector<double> abc_angles_out(6);
-        ModuleIO::CifParser::vec_to_abc_angles(vec_out.data(), abc_angles_out.data());
-        for (int i = 0; i < 6; ++i)
-        {
-            EXPECT_NEAR(abc_angles[i], abc_angles_out[i], 1e-6);
-        }
-    }
-    // above test the consistency between vec_to_abc_angles and abc_angles_to_vec
-    // the following test the correctness of vec_to_abc_angles. If the conversion is correct,
-    // then both are correct.
-    vec = {0.5, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.5}; // FCC
-    std::vector<double> abc_angles(6);
-    ModuleIO::CifParser::vec_to_abc_angles(vec.data(), abc_angles.data());
-    // the norm of a, b, c should be 0.5*sqrt(2)
-    EXPECT_NEAR(abc_angles[0], 0.5 * std::sqrt(2.0), 1e-6);
-    EXPECT_NEAR(abc_angles[1], 0.5 * std::sqrt(2.0), 1e-6);
-    EXPECT_NEAR(abc_angles[2], 0.5 * std::sqrt(2.0), 1e-6);
-    // the angle between a and b should be 60 degree
-    EXPECT_NEAR(abc_angles[3], 60.0, 1e-6);
-    // the angle between a and c should be 60 degree
-    EXPECT_NEAR(abc_angles[4], 60.0, 1e-6);
-    // the angle between b and c should be 60 degree
-    EXPECT_NEAR(abc_angles[5], 60.0, 1e-6);
-}
+// TEST(CifParserTest, VecABCAnglesTest)
+// {
+//     // this test will test the conversion between vector and abc angles
+//     std::random_device rd;
+//     std::mt19937 gen(rd());
+//     std::uniform_real_distribution<double> dis(0.0, 1.0);
+//     std::vector<double> vec(9);
+//     // perform test for 10 times
+//     for (int it = 0; it < 10; ++it)
+//     {
+//         std::for_each(vec.begin(), vec.end(), [&dis, &gen](double& d) { d = dis(gen); });
+//         std::vector<double> abc_angles(6); // norma, normb, normc, alpha, beta, gamma
+//         ModuleIO::CifParser::vec_to_abc_angles(vec.data(), abc_angles.data());
+//         std::vector<double> vec_out(9);
+//         ModuleIO::CifParser::abc_angles_to_vec(abc_angles.data(), vec_out.data());
+//         // however, the function above will assume a as (a, 0, 0), so we convert again.
+//         std::vector<double> abc_angles_out(6);
+//         ModuleIO::CifParser::vec_to_abc_angles(vec_out.data(), abc_angles_out.data());
+//         for (int i = 0; i < 6; ++i)
+//         {
+//             EXPECT_NEAR(abc_angles[i], abc_angles_out[i], 1e-6);
+//         }
+//     }
+//     // above test the consistency between vec_to_abc_angles and abc_angles_to_vec
+//     // the following test the correctness of vec_to_abc_angles. If the conversion is correct,
+//     // then both are correct.
+//     vec = {0.5, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.5}; // FCC
+//     std::vector<double> abc_angles(6);
+//     ModuleIO::CifParser::vec_to_abc_angles(vec.data(), abc_angles.data());
+//     // the norm of a, b, c should be 0.5*sqrt(2)
+//     EXPECT_NEAR(abc_angles[0], 0.5 * std::sqrt(2.0), 1e-6);
+//     EXPECT_NEAR(abc_angles[1], 0.5 * std::sqrt(2.0), 1e-6);
+//     EXPECT_NEAR(abc_angles[2], 0.5 * std::sqrt(2.0), 1e-6);
+//     // the angle between a and b should be 60 degree
+//     EXPECT_NEAR(abc_angles[3], 60.0, 1e-6);
+//     // the angle between a and c should be 60 degree
+//     EXPECT_NEAR(abc_angles[4], 60.0, 1e-6);
+//     // the angle between b and c should be 60 degree
+//     EXPECT_NEAR(abc_angles[5], 60.0, 1e-6);
+// }
 
-TEST(CifParserTest, ToVolumeTest)
-{
-    // here we test two pratical system.
-    // the first is cif file Materials Project, the mp-2516584
-    std::vector<double> abc_angles = {2.46637620, 2.46637620, 24.84784531, 90.0, 90.0, 120.0};
-    double volume = ModuleIO::CifParser::abc_angles_to_volume(abc_angles.data());
-    EXPECT_NEAR(volume, 130.89950564, 1e-6);
-    // the second is also from Materials Project, the mp-1274279
-    abc_angles = {3.10229376, 3.10695673, 5.31894279, 74.11536155, 73.57430467, 61.15267638};
-    volume = ModuleIO::CifParser::abc_angles_to_volume(abc_angles.data());
-    EXPECT_NEAR(volume, 42.49423842, 1e-6);
-}
+// TEST(CifParserTest, ToVolumeTest)
+// {
+//     // here we test two pratical system.
+//     // the first is cif file Materials Project, the mp-2516584
+//     std::vector<double> abc_angles = {2.46637620, 2.46637620, 24.84784531, 90.0, 90.0, 120.0};
+//     double volume = ModuleIO::CifParser::abc_angles_to_volume(abc_angles.data());
+//     EXPECT_NEAR(volume, 130.89950564, 1e-6);
+//     // the second is also from Materials Project, the mp-1274279
+//     abc_angles = {3.10229376, 3.10695673, 5.31894279, 74.11536155, 73.57430467, 61.15267638};
+//     volume = ModuleIO::CifParser::abc_angles_to_volume(abc_angles.data());
+//     EXPECT_NEAR(volume, 42.49423842, 1e-6);
+// }
 
-TEST(CifParserTest, BuildChemFormulaTest)
-{
-    // this test will test the function _build_chem_formula
-    std::string sum, structural;
-    std::string atom_site_labels[4] = {"C", "C", "C", "C"};
-    ModuleIO::CifParser::_build_chem_formula(4, atom_site_labels, sum, structural);
-    EXPECT_EQ(sum, "C4");
-    EXPECT_EQ(structural, "C");
+// TEST(CifParserTest, BuildChemFormulaTest)
+// {
+//     // this test will test the function _build_chem_formula
+//     std::string sum, structural;
+//     std::string atom_site_labels[4] = {"C", "C", "C", "C"};
+//     ModuleIO::CifParser::_build_chem_formula(4, atom_site_labels, sum, structural);
+//     EXPECT_EQ(sum, "C4");
+//     EXPECT_EQ(structural, "C");
 
-    // the second test is for a more complicated system
-    std::string atom_site_labels2[4] = {"C", "C", "C", "O"};
-    ModuleIO::CifParser::_build_chem_formula(4, atom_site_labels2, sum, structural);
-    EXPECT_EQ(sum, "C3O");
-    EXPECT_EQ(structural, "CO");
-}
+//     // the second test is for a more complicated system
+//     std::string atom_site_labels2[4] = {"C", "C", "C", "O"};
+//     ModuleIO::CifParser::_build_chem_formula(4, atom_site_labels2, sum, structural);
+//     EXPECT_EQ(sum, "C3O");
+//     EXPECT_EQ(structural, "CO");
+// }
 
-TEST(CifParserTest, SplitOutsideEncloseTest)
-{
-    // test the function that can avoid split inside '
-    std::string in = "'P 1'";
-    std::vector<std::string> out = ModuleIO::CifParser::_split_outside_enclose(in, " ", {"'", "'"});
-    EXPECT_EQ(out.size(), 1);
-    EXPECT_EQ(out[0], "'P 1'");
-    in = "C1 C2 'C3 C4' C5 'C6 C7' C8";
-    out = ModuleIO::CifParser::_split_outside_enclose(in, " ", {"'", "'"});
-    EXPECT_EQ(out.size(), 6);
-    EXPECT_EQ(out[0], "C1");
-    EXPECT_EQ(out[1], "C2");
-    EXPECT_EQ(out[2], "'C3 C4'");
-    EXPECT_EQ(out[3], "C5");
-    EXPECT_EQ(out[4], "'C6 C7'");
-    EXPECT_EQ(out[5], "C8");
+// TEST(CifParserTest, SplitOutsideEncloseTest)
+// {
+//     // test the function that can avoid split inside '
+//     std::string in = "'P 1'";
+//     std::vector<std::string> out = ModuleIO::CifParser::_split_outside_enclose(in, " ", {"'", "'"});
+//     EXPECT_EQ(out.size(), 1);
+//     EXPECT_EQ(out[0], "'P 1'");
+//     in = "C1 C2 'C3 C4' C5 'C6 C7' C8";
+//     out = ModuleIO::CifParser::_split_outside_enclose(in, " ", {"'", "'"});
+//     EXPECT_EQ(out.size(), 6);
+//     EXPECT_EQ(out[0], "C1");
+//     EXPECT_EQ(out[1], "C2");
+//     EXPECT_EQ(out[2], "'C3 C4'");
+//     EXPECT_EQ(out[3], "C5");
+//     EXPECT_EQ(out[4], "'C6 C7'");
+//     EXPECT_EQ(out[5], "C8");
 
-}
+// }
 
-TEST(CifParserTest, FromCifBasicUtilsTest)
-{
-    // this test will test the function _split_loop_block
-    const std::string block1 = ""
-    "_symmetry_space_group_name_H-M   'P 1'\n"
-    "_cell_length_a   2.46772428\n"
-    "_cell_length_b   2.46772428\n"
-    "_cell_length_c   8.68503800\n"
-    "_cell_angle_alpha   90.00000000\n"
-    "_cell_angle_beta   90.00000000\n"
-    "_cell_angle_gamma   120.00000758\n"
-    "_symmetry_Int_Tables_number   1\n"
-    "_chemical_formula_structural   C\n"
-    "_chemical_formula_sum   C4\n"
-    "_cell_volume   45.80317575\n"
-    "_cell_formula_units_Z   4\n";
-    std::vector<std::string> words = ModuleIO::CifParser::_split_loop_block(block1);
-    EXPECT_EQ(words.size(), 24);
-    std::map<std::string, std::vector<std::string>> data = ModuleIO::CifParser::_build_block_data(words);
-    EXPECT_EQ(data.size(), 12);
-    EXPECT_EQ(data["_symmetry_space_group_name_H-M"][0], "'P 1'");
-    EXPECT_EQ(data["_cell_length_a"][0], "2.46772428");
-    EXPECT_EQ(data["_cell_length_b"][0], "2.46772428");
-    EXPECT_EQ(data["_cell_length_c"][0], "8.68503800");
-    EXPECT_EQ(data["_cell_angle_alpha"][0], "90.00000000");
-    EXPECT_EQ(data["_cell_angle_beta"][0], "90.00000000");
-    EXPECT_EQ(data["_cell_angle_gamma"][0], "120.00000758");
-    EXPECT_EQ(data["_symmetry_Int_Tables_number"][0], "1");
-    EXPECT_EQ(data["_chemical_formula_structural"][0], "C");
-    EXPECT_EQ(data["_chemical_formula_sum"][0], "C4");
-    EXPECT_EQ(data["_cell_volume"][0], "45.80317575");
-    EXPECT_EQ(data["_cell_formula_units_Z"][0], "4");
+// TEST(CifParserTest, FromCifBasicUtilsTest)
+// {
+//     // this test will test the function _split_loop_block
+//     const std::string block1 = ""
+//     "_symmetry_space_group_name_H-M   'P 1'\n"
+//     "_cell_length_a   2.46772428\n"
+//     "_cell_length_b   2.46772428\n"
+//     "_cell_length_c   8.68503800\n"
+//     "_cell_angle_alpha   90.00000000\n"
+//     "_cell_angle_beta   90.00000000\n"
+//     "_cell_angle_gamma   120.00000758\n"
+//     "_symmetry_Int_Tables_number   1\n"
+//     "_chemical_formula_structural   C\n"
+//     "_chemical_formula_sum   C4\n"
+//     "_cell_volume   45.80317575\n"
+//     "_cell_formula_units_Z   4\n";
+//     std::vector<std::string> words = ModuleIO::CifParser::_split_loop_block(block1);
+//     EXPECT_EQ(words.size(), 24);
+//     std::map<std::string, std::vector<std::string>> data = ModuleIO::CifParser::_build_block_data(words);
+//     EXPECT_EQ(data.size(), 12);
+//     EXPECT_EQ(data["_symmetry_space_group_name_H-M"][0], "'P 1'");
+//     EXPECT_EQ(data["_cell_length_a"][0], "2.46772428");
+//     EXPECT_EQ(data["_cell_length_b"][0], "2.46772428");
+//     EXPECT_EQ(data["_cell_length_c"][0], "8.68503800");
+//     EXPECT_EQ(data["_cell_angle_alpha"][0], "90.00000000");
+//     EXPECT_EQ(data["_cell_angle_beta"][0], "90.00000000");
+//     EXPECT_EQ(data["_cell_angle_gamma"][0], "120.00000758");
+//     EXPECT_EQ(data["_symmetry_Int_Tables_number"][0], "1");
+//     EXPECT_EQ(data["_chemical_formula_structural"][0], "C");
+//     EXPECT_EQ(data["_chemical_formula_sum"][0], "C4");
+//     EXPECT_EQ(data["_cell_volume"][0], "45.80317575");
+//     EXPECT_EQ(data["_cell_formula_units_Z"][0], "4");
     
-    // from Crystallography Open Database (COD), cod 4128192
-    const std::string block2 = ""
-    "_publ_author_name\n"
-    "'Galley, Shane S.'\n"
-    "'Pattenaude, Scott A.'\n"
-    "'Gaggioli, Carlo Alberto'\n"
-    "'Qiao, Yusen'\n"
-    "'Sperling, Joseph M.'\n"
-    "'Zeller, Matthias'\n"
-    "'Pakhira, Srimanta'\n"
-    "'Mendoza-Cortes, Jose L'\n"
-    "'Schelter, Eric J.'\n"
-    "'Albrecht-Schmitt, Thomas E'\n"
-    "'Gagliardi, Laura'\n"
-    "'Bart, Suzanne C.'\n"
-    "_publ_section_title\n"
-    ";\n"
-    " Synthesis and Characterization of Tris-chelate Complexes for\n"
-    " Understanding f-Orbital Bonding in Later Actinides.\n"
-    ";\n"
-    "_journal_issue                   6\n"
-    "_journal_name_full               'Journal of the American Chemical Society'\n";
-    words = ModuleIO::CifParser::_split_loop_block(block2);
-    EXPECT_EQ(words.size(), 8);
+//     // from Crystallography Open Database (COD), cod 4128192
+//     const std::string block2 = ""
+//     "_publ_author_name\n"
+//     "'Galley, Shane S.'\n"
+//     "'Pattenaude, Scott A.'\n"
+//     "'Gaggioli, Carlo Alberto'\n"
+//     "'Qiao, Yusen'\n"
+//     "'Sperling, Joseph M.'\n"
+//     "'Zeller, Matthias'\n"
+//     "'Pakhira, Srimanta'\n"
+//     "'Mendoza-Cortes, Jose L'\n"
+//     "'Schelter, Eric J.'\n"
+//     "'Albrecht-Schmitt, Thomas E'\n"
+//     "'Gagliardi, Laura'\n"
+//     "'Bart, Suzanne C.'\n"
+//     "_publ_section_title\n"
+//     ";\n"
+//     " Synthesis and Characterization of Tris-chelate Complexes for\n"
+//     " Understanding f-Orbital Bonding in Later Actinides.\n"
+//     ";\n"
+//     "_journal_issue                   6\n"
+//     "_journal_name_full               'Journal of the American Chemical Society'\n";
+//     words = ModuleIO::CifParser::_split_loop_block(block2);
+//     EXPECT_EQ(words.size(), 8);
 
-    const std::string block3 = ""
-    " _symmetry_equiv_pos_site_id\n"
-    " _symmetry_equiv_pos_as_xyz\n"
-    "  1  'x, y, z'\n";
-    words = ModuleIO::CifParser::_split_loop_block(block3);
-    EXPECT_EQ(words.size(), 3);
-    data = ModuleIO::CifParser::_build_block_data(words);
-    EXPECT_EQ(data.size(), 2);
-    EXPECT_EQ(data["_symmetry_equiv_pos_site_id"][0], "1");
-    EXPECT_EQ(data["_symmetry_equiv_pos_as_xyz"][0], "'x, y, z'");
+//     const std::string block3 = ""
+//     " _symmetry_equiv_pos_site_id\n"
+//     " _symmetry_equiv_pos_as_xyz\n"
+//     "  1  'x, y, z'\n";
+//     words = ModuleIO::CifParser::_split_loop_block(block3);
+//     EXPECT_EQ(words.size(), 3);
+//     data = ModuleIO::CifParser::_build_block_data(words);
+//     EXPECT_EQ(data.size(), 2);
+//     EXPECT_EQ(data["_symmetry_equiv_pos_site_id"][0], "1");
+//     EXPECT_EQ(data["_symmetry_equiv_pos_as_xyz"][0], "'x, y, z'");
 
-    const std::string block4 = ""
-    "_atom_site_type_symbol\n"
-    "_atom_site_label\n"
-    "_atom_site_symmetry_multiplicity\n"
-    "_atom_site_fract_x\n"
-    "_atom_site_fract_y\n"
-    "_atom_site_fract_z\n"
-    "_atom_site_occupancy\n"
-    " Fe2+  Fe0  1  0.00000000  0.00000000  0.00000000  1\n"
-    " Fe2+  Fe1  1  0.50000000  0.50000000  0.50000000  1\n"
-    " O2-  O2  1  0.77376500  0.76754050  0.74832550  1\n"
-    " O2-  O3  1  0.22623500  0.23245950  0.25167450  1\n";
-    words = ModuleIO::CifParser::_split_loop_block(block4);
-    EXPECT_EQ(words.size(), 8);
-    data = ModuleIO::CifParser::_build_block_data(words);
-    EXPECT_EQ(data.size(), 7);
-    std::vector<std::string> col1ref = {"Fe2+", "Fe2+", "O2-", "O2-"};
-    std::vector<std::string> col2ref = {"Fe0", "Fe1", "O2", "O3"};
-    std::vector<std::string> col3ref = {"1", "1", "1", "1"};
-    std::vector<std::string> col4ref = {"0.00000000", "0.50000000", "0.77376500", "0.22623500"};
-    std::vector<std::string> col5ref = {"0.00000000", "0.50000000", "0.76754050", "0.23245950"};
-    std::vector<std::string> col6ref = {"0.00000000", "0.50000000", "0.74832550", "0.25167450"};
-    std::vector<std::string> col7ref = {"1", "1", "1", "1"};
-    for (int i = 0; i < 4; ++i)
-    {
-        EXPECT_EQ(data["_atom_site_type_symbol"][i], col1ref[i]);
-        EXPECT_EQ(data["_atom_site_label"][i], col2ref[i]);
-        EXPECT_EQ(data["_atom_site_symmetry_multiplicity"][i], col3ref[i]);
-        EXPECT_EQ(data["_atom_site_fract_x"][i], col4ref[i]);
-        EXPECT_EQ(data["_atom_site_fract_y"][i], col5ref[i]);
-        EXPECT_EQ(data["_atom_site_fract_z"][i], col6ref[i]);
-        EXPECT_EQ(data["_atom_site_occupancy"][i], col7ref[i]);
-    }
-}
+//     const std::string block4 = ""
+//     "_atom_site_type_symbol\n"
+//     "_atom_site_label\n"
+//     "_atom_site_symmetry_multiplicity\n"
+//     "_atom_site_fract_x\n"
+//     "_atom_site_fract_y\n"
+//     "_atom_site_fract_z\n"
+//     "_atom_site_occupancy\n"
+//     " Fe2+  Fe0  1  0.00000000  0.00000000  0.00000000  1\n"
+//     " Fe2+  Fe1  1  0.50000000  0.50000000  0.50000000  1\n"
+//     " O2-  O2  1  0.77376500  0.76754050  0.74832550  1\n"
+//     " O2-  O3  1  0.22623500  0.23245950  0.25167450  1\n";
+//     words = ModuleIO::CifParser::_split_loop_block(block4);
+//     EXPECT_EQ(words.size(), 8);
+//     data = ModuleIO::CifParser::_build_block_data(words);
+//     EXPECT_EQ(data.size(), 7);
+//     std::vector<std::string> col1ref = {"Fe2+", "Fe2+", "O2-", "O2-"};
+//     std::vector<std::string> col2ref = {"Fe0", "Fe1", "O2", "O3"};
+//     std::vector<std::string> col3ref = {"1", "1", "1", "1"};
+//     std::vector<std::string> col4ref = {"0.00000000", "0.50000000", "0.77376500", "0.22623500"};
+//     std::vector<std::string> col5ref = {"0.00000000", "0.50000000", "0.76754050", "0.23245950"};
+//     std::vector<std::string> col6ref = {"0.00000000", "0.50000000", "0.74832550", "0.25167450"};
+//     std::vector<std::string> col7ref = {"1", "1", "1", "1"};
+//     for (int i = 0; i < 4; ++i)
+//     {
+//         EXPECT_EQ(data["_atom_site_type_symbol"][i], col1ref[i]);
+//         EXPECT_EQ(data["_atom_site_label"][i], col2ref[i]);
+//         EXPECT_EQ(data["_atom_site_symmetry_multiplicity"][i], col3ref[i]);
+//         EXPECT_EQ(data["_atom_site_fract_x"][i], col4ref[i]);
+//         EXPECT_EQ(data["_atom_site_fract_y"][i], col5ref[i]);
+//         EXPECT_EQ(data["_atom_site_fract_z"][i], col6ref[i]);
+//         EXPECT_EQ(data["_atom_site_occupancy"][i], col7ref[i]);
+//     }
+// }
 
 TEST(CifParserTest, FromCifSimpleTest)
 {

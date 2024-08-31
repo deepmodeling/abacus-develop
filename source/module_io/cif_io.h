@@ -12,7 +12,7 @@ namespace ModuleIO
  * @brief This file contains the implementation of the functions for reading and writing CIF files.
  * 
  * Due to the space group and point group symmetry information are not always present, 
- * here will assume only P1 and C1 symmetry are present in the CIF file.
+ * here will assume system only has P1 and C1 symmetry.
  * 
  * A typical CIF file with no symmetry (P1 and C1) is presented below, downloaded from
  * materials project: https://materialsproject.org/
@@ -48,57 +48,32 @@ namespace ModuleIO
  *   C  C2  1  0.33333300  0.66666700  0.75000000  1
  *   C  C3  1  0.66666700  0.33333300  0.25000000  1
  *
- * For cif file from COD, which always contains experiments information and even SHELX
- * single-crystal refinement information, the CIF file is much more complicated.
+ * For cif file from COD, which always contains experimental information and even SHELX
+ * single-crystal refinement information, is much more complicated.
  * see https://www.crystallography.net/cod/ for more information.
  * 
  * Design of this "class"
- * According to the CifParser implemented in pymatgen package.
+ * see implementation of CifParser in pymatgen package.
  * 
  * Usage of this "class"
- * The usage of this class is simple, just call the static methods to_cif and from_cif.
- * There are also other utils such as vec_to_abc_angles, abc_angles_to_vec, etc.
- * A call similar with pymatgen implementation is also supported, in that case, a instance
- * of CifParser is bind with a CIF file, and the data can be accessed by the get() function.
+ * 1. Read CIF file and store the information in a map.
+ * std::map<std::string, std::vector<std::string>> cif_info;
+ * ModuleIO::CifParser::from_cif("test.cif", cif_info);
+ * 
+ * 2. Write CIF file with the given information.
+ * ModuleIO::CifParser::to_cif("test.cif", ...);
+ * For detailed usage, see the static methods in the class. A to-be-deprecated usage is
+ * simple as:
+ * ModuleIO::CifParser cif("test.cif", ucell);
+ * , where ucell is an instance of UnitCell. This usage is not encouraged.
  */
     class CifParser
     {
         public:
-            CifParser() = delete; // I cannot understand why there should be a default constructor
-            CifParser(const std::string& fcif);
-            ~CifParser() {} // actually do not need to do anything...
-            // some utils
-            // general
-            /**
-             * @brief Convert the vector representation of lattice vectors to the cell A B C angles.
-             * 
-             * @param vec lattice vectors in the form of [a1, a2, a3, b1, b2, b3, c1, c2, c3]
-             * @param abc_angles the output angles in the form of [a, b, c, alpha, beta, gamma]
-             */
-            static void vec_to_abc_angles(const double* vec, double* abc_angles);
-            /**
-             * @brief Convert the cell A B C angles to the vector representation of lattice vectors.
-             * 
-             * @param abc_angles the input angles in the form of [a, b, c, alpha, beta, gamma]
-             * @param vec the output lattice vectors in the form of [a1, a2, a3, b1, b2, b3, c1, c2, c3]
-             */
-            static void abc_angles_to_vec(const double* abc_angles, double* vec);
-            /**
-             * @brief Convert the lattice vectors to the volume of the cell.
-             * 
-             * @param vec the input lattice vectors in the form of [a1, a2, a3, b1, b2, b3, c1, c2, c3]
-             * @return double the volume of the cell
-             */
-            static double vec_to_volume(const double* vec);
-            /**
-             * @brief Convert the cell A B C angles to the volume of the cell.
-             * 
-             * @param abc_angles the input angles in the form of [a, b, c, alpha, beta, gamma]
-             * @return double the volume of the cell
-             */
-            static double abc_angles_to_volume(const double* abc_angles);
-            static double deg2rad(double deg) { return deg * M_PI / 180.0; }
-            static double rad2deg(double rad) { return rad * 180.0 / M_PI; }
+            CifParser() = delete; // I cannot see any necessity to have a default constructor
+            CifParser(const std::string& fcif); // read the cif file and store the information
+            ~CifParser() {} // actually do not need to do anything explicitly
+
             /**
              * @brief Print the CIF file from the given information.
              * 
@@ -145,6 +120,7 @@ namespace ModuleIO
             // not for now, because it is too complicated. However it is a walk-around
             // way to fix issue #4998
             // static void to_cif();
+
             /**
              * @brief Write CIF file with the whole UnitCell instance
              * 
@@ -166,14 +142,21 @@ namespace ModuleIO
             static void from_cif(const std::string& fcif,
                                  std::map<std::string, std::vector<std::string>>& out);
 
-            // not static :(
+            /**
+             * @brief get information by key from the stored information of cif file. However, due to
+             * the keys vary from different cif files, there are uncertainties in the return value.
+             * In principle, however, there are still some common keys, such as "data_tag", "title", 
+             * "_cell_length_a", "_cell_length_b", "_cell_length_c", "_cell_angle_alpha", "_cell_angle_beta",
+             * "_cell_angle_gamma", "_cell_volume", and the atom site information, which can be accessed
+             * with the key "atom_site_label", "atom_site_fract_x", "atom_site_fract_y", "atom_site_fract_z",
+             * "atom_site_occupancy".
+             * 
+             * @param key the key to search
+             * @return std::vector<std::string>, if the key is not found, an empty vector will be returned 
+             */
             std::vector<std::string> get(const std::string& key);
-        // private:
-            // not needed to be exposed
-            static void _build_chem_formula(const int natom,
-                                            const std::string* atom_site_labels,
-                                            std::string& sum,
-                                            std::string& structural);
+
+        private:
             // interface to ABACUS UnitCell impl.
             static void _unpack_ucell(const UnitCell& ucell,    // because ucell is too heavy...
                                       std::vector<double>& veca,
@@ -182,16 +165,8 @@ namespace ModuleIO
                                       int& natom,
                                       std::vector<std::string>& atom_site_labels,
                                       std::vector<double>& atom_site_fract_coords);
-            // split only those words out of specified enclose
-            static std::vector<std::string> _split_outside_enclose(const std::string& in, 
-                                                                   const std::string& delim,
-                                                                   const std::vector<std::string>& enclose);
-            static std::vector<std::string> _split_loop_block(const std::string& block);
-            static std::map<std::string, std::vector<std::string>> _build_table(const std::vector<std::string>& keys,
-                                                                                const std::vector<std::string>& values);
-            static std::map<std::string, std::vector<std::string>> _build_block_data(const std::vector<std::string>& block);
-        
-        private:
+
+            // stores the information of the cif file
             std::map<std::string, std::vector<std::string>> raw_;
     };
 } // namespace ModuleIO
