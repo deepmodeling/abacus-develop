@@ -50,6 +50,7 @@ AddTest(
   TARGET io_write_istate_info_test
   LIBS ${math_libs} base device symmetry
   SOURCES write_istate_info_test.cpp ../write_istate_info.cpp ../output.cpp ../../module_cell/parallel_kpoints.cpp ../../module_cell/klist.cpp
+  ../cif_io.cpp
 )
 
 AddTest(
