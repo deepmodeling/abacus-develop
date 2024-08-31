@@ -1,3 +1,5 @@
+#ifndef MODULE_IO_CIF_IO_H
+#define MODULE_IO_CIF_IO_H
 #include "module_cell/unitcell.h"
 #include <string>
 #include <vector>
@@ -173,3 +175,4 @@ namespace ModuleIO
             std::map<std::string, std::vector<std::string>> raw_;
     };
 } // namespace ModuleIO
+#endif // MODULE_IO_CIF_IO_H
