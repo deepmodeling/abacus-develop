@@ -65,7 +65,7 @@ namespace ModuleIO
     {
         public:
             CifParser() = delete; // I cannot understand why there should be a default constructor
-            CifParser(const std::string& fcif) {}
+            CifParser(const std::string& fcif);
             ~CifParser() {} // actually do not need to do anything...
             // some utils
             // general
