@@ -10,7 +10,6 @@
 #include "module_io/json_output/init_info.h"
 #include "module_io/print_info.h"
 #include "module_io/write_istate_info.h"
-#include "module_io/cif_io.h"
 #include "module_parameter/parameter.h"
 
 #include <iostream>
@@ -216,9 +215,6 @@ void ESolver_KS<T, Device>::before_all_runners(const Input_para& inp, UnitCell& 
         ucell.symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
     }
-
-    // ucell.print_cell_cif("STRU.cif");
-    ModuleIO::CifParser::to_cif(GlobalV::global_out_dir + "STRU.cif", ucell);
 
     //! 6) Setup the k points according to symmetry.
     this->kv.set(ucell.symm, GlobalV::global_kpoint_card, GlobalV::NSPIN, ucell.G, ucell.latvec, GlobalV::ofs_running);

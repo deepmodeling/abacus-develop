@@ -191,6 +191,19 @@ void ModuleIO::CifParser::to_cif(const std::string& fcif,
 }
 
 void ModuleIO::CifParser::to_cif(const std::string& fcif,
+                                 const std::vector<double>& abc_angles,
+                                 const std::vector<std::string>& atom_site_labels,
+                                 const std::vector<double>& atom_site_fract_coords,
+                                 const std::string& title,
+                                 const std::string& data_tag,
+                                 const std::vector<double>& atom_site_occups,
+                                 const std::string& cell_formula_units_z)
+{
+    const double* occups = atom_site_occups.empty() ? nullptr : atom_site_occups.data();
+    to_cif(fcif.c_str(), abc_angles.data(), atom_site_labels.size(), atom_site_labels.data(), atom_site_fract_coords.data(), title, data_tag, atom_site_occups.data(), cell_formula_units_z);
+}
+
+void ModuleIO::CifParser::to_cif(const std::string& fcif,
                                  const UnitCell& ucell,
                                  const std::string& title,
                                  const std::string& data_tag)

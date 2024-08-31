@@ -21,6 +21,7 @@
 #include "module_base/parallel_common.h"
 #include "module_base/timer.h"
 #include "module_io/output_log.h"
+#include "module_io/cif_io.h"
 
 namespace ModuleESolver
 {
@@ -31,6 +32,9 @@ void ESolver_DP::before_all_runners(const Input_para& inp, UnitCell& ucell)
     dp_potential = 0;
     dp_force.create(ucell.nat, 3);
     dp_virial.create(3, 3);
+
+    // ucell.print_cell_cif("STRU.cif");
+    ModuleIO::CifParser::to_cif(GlobalV::global_out_dir + "STRU.cif", ucell);
 
     cell.resize(9);
     atype.resize(ucell.nat);
