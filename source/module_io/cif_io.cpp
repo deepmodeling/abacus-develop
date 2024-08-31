@@ -391,6 +391,11 @@ std::map<std::string, std::vector<std::string>> ModuleIO::CifParser::_build_bloc
     return out;
 }
 
+ModuleIO::CifParser::CifParser(const std::string& fcif)
+{
+    from_cif(fcif, raw_);
+}
+
 std::vector<std::string> ModuleIO::CifParser::get(const std::string& key)
 {
     if (raw_.find(key) != raw_.end())
