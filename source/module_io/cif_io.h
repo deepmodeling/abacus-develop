@@ -108,8 +108,13 @@ namespace ModuleIO
                                       int& natom,
                                       std::vector<std::string>& atom_site_labels,
                                       std::vector<double>& atom_site_fract_coords);
-
+            // split only those words out of specified enclose
+            static std::vector<std::string> _split_outside_enclose(const std::string& in, 
+                                                                   const std::string& delim,
+                                                                   const std::vector<std::string>& enclose);
             static std::vector<std::string> _split_loop_block(const std::string& block);
+            static std::map<std::string, std::vector<std::string>> _build_table(const std::vector<std::string>& keys,
+                                                                                const std::vector<std::string>& values);
             static std::map<std::string, std::vector<std::string>> _build_block_data(const std::vector<std::string>& block);
         
         private:

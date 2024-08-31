@@ -4,15 +4,15 @@
 #include <algorithm>
 #include "module_base/formatter.h"
 #include "module_io/cif_io.h"
-#include <regex>
-#include <queue> // first push, first pop
 #include <cassert>
 
 void ModuleIO::CifParser::_build_chem_formula(const int natom, 
-                  const std::string* atom_site_labels,
-                  std::string& sum,
-                  std::string& structural)
+                                              const std::string* atom_site_labels,
+                                              std::string& sum,
+                                              std::string& structural)
 {
+    sum.clear();
+    structural.clear();
     std::vector<std::string> kinds;
     std::vector<std::string> labels(natom);
     std::copy(atom_site_labels, atom_site_labels + natom, labels.begin());
@@ -142,18 +142,18 @@ void ModuleIO::CifParser::to_cif(const std::string& fcif,
     ofs << title << std::endl;
     ofs << data_tag << std::endl;
     ofs << "_symmetry_space_group_name_H-M   'P 1'" << std::endl;
-    ofs << "_cell_length_a   " << abc_angles[0] << std::endl;
-    ofs << "_cell_length_b   " << abc_angles[1] << std::endl;
-    ofs << "_cell_length_c   " << abc_angles[2] << std::endl;
-    ofs << "_cell_angle_alpha   " << abc_angles[3] << std::endl;
-    ofs << "_cell_angle_beta   " << abc_angles[4] << std::endl;
-    ofs << "_cell_angle_gamma   " << abc_angles[5] << std::endl;
+    ofs << "_cell_length_a " << FmtCore::format("%12.8f", abc_angles[0]) << std::endl;
+    ofs << "_cell_length_b " << FmtCore::format("%12.8f", abc_angles[1]) << std::endl;
+    ofs << "_cell_length_c " << FmtCore::format("%12.8f", abc_angles[2]) << std::endl;
+    ofs << "_cell_angle_alpha " << FmtCore::format("%12.8f", abc_angles[3]) << std::endl;
+    ofs << "_cell_angle_beta " << FmtCore::format("%12.8f", abc_angles[4]) << std::endl;
+    ofs << "_cell_angle_gamma " << FmtCore::format("%12.8f", abc_angles[5]) << std::endl;
     ofs << "_symmetry_Int_Tables_number   1" << std::endl;
     std::string chem_sum, chem_structural;
     _build_chem_formula(natom, atom_site_labels, chem_sum, chem_structural);
     ofs << "_chemical_formula_structural   " << chem_structural << std::endl;
     ofs << "_chemical_formula_sum   " << chem_sum << std::endl;
-    ofs << "_cell_volume   " << abc_angles_to_volume(abc_angles) << std::endl;
+    ofs << "_cell_volume " << FmtCore::format("%14.8f", abc_angles_to_volume(abc_angles)) << std::endl;
     ofs << "_cell_formula_units_Z   " << cell_formula_units_z << std::endl;
     ofs << "loop_" << std::endl;
     ofs << " _symmetry_equiv_pos_site_id" << std::endl;
@@ -173,7 +173,7 @@ void ModuleIO::CifParser::to_cif(const std::string& fcif,
         std::copy(atom_site_occups, atom_site_occups + natom, occups.begin());
     }
     // then output atomic information with format: %3s%4s%3d%12.8f%12.8f%12.8f%3d
-    FmtCore fmt("%3s%4s%3d%12.8f%12.8f%12.8f%3d");
+    FmtCore fmt("%3s %4s %3d %12.8f %12.8f %12.8f %2.1f");
     int j = 0;
     std::string numbered_label;
     std::string cache;
@@ -181,7 +181,7 @@ void ModuleIO::CifParser::to_cif(const std::string& fcif,
     {
         const std::string label = atom_site_labels[i];
         numbered_label = label + std::to_string(i);
-        cache = fmt.format(label.c_str(), numbered_label.c_str(), 1, 
+        cache = fmt.format(label, numbered_label, 1, 
         atom_site_fract_coords[j], atom_site_fract_coords[j + 1], atom_site_fract_coords[j + 2], occups[i]);
         ofs << cache << std::endl;
         j += 3;
@@ -219,31 +219,77 @@ void ModuleIO::CifParser::to_cif(const std::string& fcif,
 void ModuleIO::CifParser::from_cif(const std::string& fcif,
                                    std::map<std::string, std::vector<std::string>>& out)
 {
+    out.clear();
     std::ifstream ifs(fcif);
     std::string cache; // first read all lines into cache
     while (ifs.good())
     {
         std::string line;
         std::getline(ifs, line);
-        cache += line + " ";
+        if (FmtCore::startswith(FmtCore::strip(line), "#"))
+        {
+            out["comment"].push_back(line);
+        }
+        else if (FmtCore::startswith(FmtCore::strip(line), "data_"))
+        {
+            out["data_tag"].push_back(line);
+        }
+        else
+        {
+            cache += line + " ";
+        }
     }
-    std::vector<std::string> blocks = FmtCore::split(cache, "loop_");
+    std::vector<std::string> blocks = FmtCore::split(FmtCore::strip(cache), "loop_");
+    blocks.erase(std::remove_if(blocks.begin(), blocks.end(), [](const std::string& s) { return s.empty(); }), blocks.end());
+    
     for (auto& block: blocks)
     {
         std::vector<std::string> words = _split_loop_block(block);
         std::map<std::string, std::vector<std::string>> data = _build_block_data(words);
         out.insert(data.begin(), data.end());
     }
-    // then print
-    for (auto& kv: out)
+}
+
+std::vector<std::string> ModuleIO::CifParser::_split_outside_enclose(const std::string& in, 
+                                                                     const std::string& delim,
+                                                                     const std::vector<std::string>& enclose)
+{
+    // a very naive impl. for only CIF possible cases
+    assert(enclose.size() == 2); // other complicated case not implemented yet
+    // first split with delim. then scan all fragments, if there are enclose symbol, then will first meet
+    // a fragment startswith the opening, then after fragments, there will be a one ends with closing.
+    // between them, fragments will be concatenated with delim.
+    std::vector<std::string> out;
+    std::string cache;
+    std::vector<std::string> words = FmtCore::split(in, delim);
+    bool in_enclose = false;
+    for (auto& word: words)
     {
-        std::cout << kv.first << ": ";
-        for (auto& s: kv.second)
+        if (FmtCore::startswith(word, enclose[0]))
         {
-            std::cout << s << " ";
+            in_enclose = true;
+            cache += word + delim;
         }
-        std::cout << std::endl;
+        else if (FmtCore::endswith(word, enclose[1]))
+        {
+            in_enclose = false;
+            cache += word;
+            out.push_back(cache);
+            cache.clear();
+        }
+        else
+        {
+            if (in_enclose)
+            {
+                cache += word + delim;
+            }
+            else
+            {
+                out.push_back(word);
+            }
+        }
     }
+    return out;
 }
 
 // the second step, for each block, split with words starting with "_"
@@ -251,7 +297,7 @@ std::vector<std::string> ModuleIO::CifParser::_split_loop_block(const std::strin
 {
     std::vector<std::string> out;
     std::string word, cache;
-    std::stringstream ss(block);
+    std::stringstream ss(FmtCore::strip(FmtCore::strip(block, "\n")));
     while (ss.good())
     {
         ss >> word;
@@ -259,66 +305,89 @@ std::vector<std::string> ModuleIO::CifParser::_split_loop_block(const std::strin
         {
             if (!cache.empty())
             {
-                out.push_back(cache);
+                out.push_back(FmtCore::strip(cache));
                 cache.clear();
             }
-            out.push_back(word);
+            out.push_back(FmtCore::strip(word));
         }
         else
         {
             cache += word + " ";
         }
     }
+    // the last word
+    if (!cache.empty())
+    {
+        out.push_back(FmtCore::strip(cache));
+    }
+    return out;
+}
+
+std::map<std::string, std::vector<std::string>> ModuleIO::CifParser::_build_table(const std::vector<std::string>& keys,
+                                                                                  const std::vector<std::string>& values)
+{
+    std::map<std::string, std::vector<std::string>> out;
+    const size_t ncols = keys.size();
+    assert(values.size() % ncols == 0);
+    const size_t nrows = values.size() / ncols;
+    for (size_t i = 0; i < ncols; i++)
+    {
+        std::vector<std::string> col(nrows);
+        for (size_t j = 0; j < nrows; j++)
+        {
+            col[j] = values[j * ncols + i];
+        }
+        out[keys[i]] = col;
+    }
     return out;
 }
 
 std::map<std::string, std::vector<std::string>> ModuleIO::CifParser::_build_block_data(const std::vector<std::string>& block)
 {
-    // the strategy is, read key(s) and cache, then read value(s) and cache, till meet the next key(s).
-    // If there are only one key is stored in cache, then the number of values should also be 1.
-    // , if there are more than only key, then a table must be made, and the number of columns,
-    // say the number of keys should be provided.
-    std::map<std::string, std::vector<std::string>> out;
+    // after calling the _split_loop_block, the data now composed of elements that either startswith "_"
+    // or not. Between elements startswith "_", there is at most one element that does not startswith "_".
+    // a scan can be performed to group those keys.
+    std::vector<std::vector<std::string>> keys;
     std::vector<std::string> kcache;
-    std::vector<std::string> vcache; // actually it should be only one value
-    for (auto& str: block)
+    std::vector<std::string> values;
+    // first drop all elements that does not startswith "_" before the first element that startswith "_"
+    std::vector<std::string> block_ = block;
+    auto it = std::find_if(block.begin(), block.end(), [](const std::string& s) { return FmtCore::startswith(s, "_"); });
+    if (it != block.begin())
     {
-        if (FmtCore::startswith(str, "_")) // it is a new key read
+        block_.erase(block_.begin(), it);
+    }
+    for (auto& elem: block_)
+    {
+        if (FmtCore::startswith(elem, "_"))
         {
-            if (!kcache.empty()) // there are data should be stored into "out"
-            {
-                if (kcache.size() == 1) // only one key, then only one value
-                {
-                    out[kcache[0]] = vcache; // store
-                }
-                else // a more complicated case, a table should be made.
-                {
-                    // split the value with white space
-                    assert(vcache.size() == 1);
-                    std::vector<std::string> words = FmtCore::split(vcache[0], " ");
-                    const size_t ncols = kcache.size();
-                    assert(words.size() % ncols == 0);
-                    const size_t nrows = words.size() / ncols;
-                    for (size_t i = 0; i < ncols; i++)
-                    {
-                        std::vector<std::string> col(nrows);
-                        for (size_t j = 0; j < nrows; j++)
-                        {
-                            col[j] = words[j * ncols + i];
-                        }
-                        out[kcache[i]] = col;
-                    }
-                }
-                kcache.clear();
-                vcache.clear();
-            }
-            kcache.push_back(str);
+            kcache.push_back(elem);
         }
         else
         {
-            vcache.push_back(str);
+            keys.push_back(kcache);
+            values.push_back(elem);
+            kcache.clear();
         }
     }
+    assert(keys.size() == values.size()); // ensure the number of keys and values are the same
+    // then for each elem in keys, if there are more than one element, then it is a table. Make it a table
+    // , otherwise it is a simple key-value pair, directly add it to the output.
+    std::map<std::string, std::vector<std::string>> out;
+    for (size_t i = 0; i < keys.size(); i++)
+    {
+        if (keys[i].size() > 1)
+        {
+            const std::vector<std::string> words = _split_outside_enclose(values[i], " ", {"'", "'"});
+            std::map<std::string, std::vector<std::string>> table = _build_table(keys[i], words);
+            out.insert(table.begin(), table.end());
+        }
+        else
+        {
+            out[keys[i][0]] = {values[i]};
+        }
+    }
+    
     return out;
 }
 

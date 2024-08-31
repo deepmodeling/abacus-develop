@@ -197,3 +197,9 @@ add_test(NAME read_wfc_lcao_test_parallel
 )
 
 endif()
+
+AddTest(
+  TARGET cif_io_test
+  LIBS base ${math_libs} device
+  SOURCES cif_io_test.cpp ../cif_io.cpp
+)
