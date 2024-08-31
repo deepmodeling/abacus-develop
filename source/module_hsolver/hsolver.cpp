@@ -93,7 +93,7 @@ double cal_hsolve_error(const std::string basis_type,
 //                 }
 //             }
 
-//             if (GlobalV::CALCULATION == "md" || GlobalV::CALCULATION == "relax" || GlobalV::CALCULATION == "cell-relax")
+//             if (PARAM.inp.calculation == "md" || PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax")
 //             {
 //                 diag_ethr_in = std::max(diag_ethr_in, static_cast<double>(GlobalV::PW_DIAG_THR));
 //             }

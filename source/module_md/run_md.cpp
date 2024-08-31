@@ -110,7 +110,7 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, const Paramet
             unit_in.print_stru_file(file.str(), 
                                     GlobalV::NSPIN, 
                                     false, // Cartesian coordinates
-                                    GlobalV::CALCULATION == "md", 
+                                    PARAM.inp.calculation == "md", 
                                     PARAM.inp.out_mul,
                                     need_orb,
                                     GlobalV::deepks_setorb,

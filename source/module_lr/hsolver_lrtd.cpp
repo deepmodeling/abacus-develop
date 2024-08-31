@@ -4,7 +4,7 @@
 #include "module_hsolver/diago_cg.h"
 #include "module_lr/utils/lr_util.h"
 #include "module_lr/utils/lr_util_print.h"
-
+#include "module_parameter/parameter.h"
 namespace LR
 {
     inline double square(double x) { return x * x; };
@@ -61,7 +61,7 @@ namespace LR
                 const int ntry_max = 5;
                 // In non-self consistent calculation, do until totally converged. Else allow 5 eigenvecs to be NOT
                 // converged.
-                const int notconv_max = ("nscf" == GlobalV::CALCULATION) ? 0 : 5;
+                const int notconv_max = ("nscf" == PARAM.inp.calculation) ? 0 : 5;
                 // do diag and add davidson iteration counts up to avg_iter
 
                 auto hpsi_func = [pHamilt](

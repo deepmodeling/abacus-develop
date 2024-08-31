@@ -187,7 +187,7 @@ void HSolverLCAO<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>&
             };
 
         DiagoCG<T, Device> cg(GlobalV::BASIS_TYPE,
-                              GlobalV::CALCULATION,
+                              PARAM.inp.calculation,
                               DiagoIterAssist<T, Device>::need_subspace,
                               subspace_func,
                               DiagoIterAssist<T, Device>::PW_DIAG_THR,

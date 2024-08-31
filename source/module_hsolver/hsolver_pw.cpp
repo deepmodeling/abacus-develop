@@ -1,6 +1,7 @@
 #include "hsolver_pw.h"
 
 #include "module_base/global_variable.h"
+#include "module_parameter/parameter.h"
 #include "module_base/timer.h"
 #include "module_base/tool_quit.h"
 #include "module_elecstate/elecstate_pw.h"
@@ -578,7 +579,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
     return;
 }
 
-template <typename T, typename Device>
+template <typename T, typename Device> 
 void HSolverPW<T, Device>::update_precondition(std::vector<Real>& h_diag, const int ik, const int npw)
 {
     h_diag.assign(h_diag.size(), 1.0);
@@ -669,7 +670,7 @@ typename HSolverPW<T, Device>::Real HSolverPW<T, Device>::set_diagethr(Real diag
             }
         }
 
-        if (GlobalV::CALCULATION == "md" || GlobalV::CALCULATION == "relax" || GlobalV::CALCULATION == "cell-relax")
+        if (PARAM.inp.calculation == "md" || PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax")
         {
             diag_ethr_in = std::max(diag_ethr_in, static_cast<Real>(GlobalV::PW_DIAG_THR));
         }

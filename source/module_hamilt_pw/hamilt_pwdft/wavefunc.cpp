@@ -51,7 +51,7 @@ psi::Psi<std::complex<double>>* wavefunc::allocate(const int nkstot, const int n
     const int nks2 = nks;
 
 	psi::Psi<std::complex<double>>* psi_out = nullptr;
-    if (GlobalV::CALCULATION == "nscf" && this->mem_saver == 1)
+    if (PARAM.inp.calculation == "nscf" && this->mem_saver == 1)
     {
 		//initial psi rather than evc
 		psi_out = new psi::Psi<std::complex<double>>(1, GlobalV::NBANDS, npwx * GlobalV::NPOL, ngk);
@@ -239,7 +239,7 @@ void diago_PAO_in_pw_k2(const int &ik,
 
     //special case here! use Psi(k-1) for the initialization of Psi(k)
     //this method should be tested.
-    /*if(GlobalV::CALCULATION == "nscf" && GlobalC::ucell.natomwfc == 0 && ik>0)
+    /*if(PARAM.inp.calculation == "nscf" && GlobalC::ucell.natomwfc == 0 && ik>0)
     {
         //this is memsaver case
         if(wvf.get_nk() == 1)
@@ -391,7 +391,7 @@ void diago_PAO_in_pw_k2(const int &ik,
 
     // special case here! use Psi(k-1) for the initialization of Psi(k)
     // this method should be tested.
-    /*if(GlobalV::CALCULATION == "nscf" && GlobalC::ucell.natomwfc == 0 && ik>0)
+    /*if(PARAM.inp.calculation == "nscf" && GlobalC::ucell.natomwfc == 0 && ik>0)
     {
         //this is memsaver case
         if(wvf.get_nk() == 1)

@@ -45,7 +45,7 @@ void Relax::init_relax(const int nat_in)
 
     //set if we are allowing lattice vectors to move
     if_cell_moves = false;
-    if(GlobalV::CALCULATION == "cell-relax") if_cell_moves = true;
+    if(PARAM.inp.calculation == "cell-relax") if_cell_moves = true;
 }
 
 bool Relax::relax_step(const ModuleBase::matrix& force, const ModuleBase::matrix &stress, const double etot_in)
@@ -84,7 +84,7 @@ bool Relax::setup_gradient(const ModuleBase::matrix& force, const ModuleBase::ma
     ModuleBase::TITLE("Relax","setup_gradient");
 
     //if not relax, then return converged
-    if( !( GlobalV::CALCULATION == "relax" || GlobalV::CALCULATION == "cell-relax" ) ) return true;
+    if( !( PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax" ) ) return true;
 
     //indicating whether force & stress are converged
     bool force_converged = true;
