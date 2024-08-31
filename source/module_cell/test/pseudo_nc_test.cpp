@@ -21,6 +21,7 @@
  */
 
 #define private public
+#include "module_parameter/parameter.h"
 #include "module_cell/read_pp.h"
 #include "module_cell/atom_pseudo.h"
 #undef private
