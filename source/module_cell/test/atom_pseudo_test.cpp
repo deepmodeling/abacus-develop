@@ -41,7 +41,7 @@ TEST_F(AtomPseudoTest, SetDSo)
 #endif
 	std::ifstream ifs;
 	ifs.open("./support/C.upf");
-	GlobalV::PSEUDORCUT = 15.0;
+	PARAM.input.pseudo_rcut = 15.0;
 	upf->read_pseudo_upf201(ifs, *atom_pseudo);
 	upf->complete_default(*atom_pseudo);
 	ifs.close();
@@ -71,7 +71,7 @@ TEST_F(AtomPseudoTest, BcastAtomPseudo)
 	{
 		std::ifstream ifs;
 		ifs.open("./support/C.upf");
-		GlobalV::PSEUDORCUT = 15.0;
+		PARAM.input.pseudo_rcut = 15.0;
 		upf->read_pseudo_upf201(ifs, *atom_pseudo);
 		upf->complete_default(*atom_pseudo);;
 		ifs.close();

@@ -76,7 +76,7 @@ class UcellTest : public ::testing::Test
         ucell = utp.SetUcellInfo();
         GlobalV::LSPINORB = false;
         pp_dir = "./support/";
-        GlobalV::PSEUDORCUT = 15.0;
+        PARAM.input.pseudo_rcut = 15.0;
         GlobalV::DFT_FUNCTIONAL = "default";
         GlobalV::test_unitcell = 1;
         GlobalV::test_pseudo_cell = 1;

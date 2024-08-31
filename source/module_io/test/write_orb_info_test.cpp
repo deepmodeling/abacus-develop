@@ -41,7 +41,7 @@ TEST(OrbInfo,WriteOrbInfo)
     std::ofstream ofs;
     ofs.open("running.log");
     GlobalV::global_out_dir = "./";
-	GlobalV::PSEUDORCUT = 15.0;
+	PARAM.input.pseudo_rcut = 15.0;
     GlobalV::LSPINORB = false;
 	GlobalV::NSPIN = 1;
     GlobalV::BASIS_TYPE = "pw";
