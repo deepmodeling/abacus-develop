@@ -8,6 +8,7 @@
 
 #else
 #include "global_variable.h"
+#include "module_parameter/parameter.h"
 #include "global_file.h"
 #include "timer.h"
 #include "memory.h"
@@ -151,7 +152,7 @@ void CHECK_WARNING_QUIT(const bool error_in, const std::string &file,const std::
 		std::cout.clear();
 		if(!GlobalV::ofs_running.is_open())
 		{
-			std::string logfile = GlobalV::global_out_dir + "running_" + GlobalV::CALCULATION + ".log";
+			std::string logfile = GlobalV::global_out_dir + "running_" + PARAM.inp.calculation + ".log";
 			GlobalV::ofs_running.open( logfile.c_str(), std::ios::app );
 		}
 		if(!GlobalV::ofs_warning.is_open())
