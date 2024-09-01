@@ -103,7 +103,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
         {
             pot_register_in.push_back("efield");
         }
-        if (GlobalV::GATE_FLAG)
+        if (PARAM.inp.gate_flag)
         {
             pot_register_in.push_back("gatefield");
         }
