@@ -2,6 +2,7 @@
 #include "gtest/gtest.h"
 #include "module_base/module_mixing/broyden_mixing.h"
 #define private public
+#include "module_parameter/parameter.h"
 #include "../module_charge/charge_mixing.h"
 #include "module_basis/module_pw/pw_basis.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
@@ -743,7 +744,7 @@ TEST_F(ChargeMixingTest, KerkerScreenRealTest)
 
 TEST_F(ChargeMixingTest, MixRhoTest)
 {
-    GlobalV::double_grid = false;
+    PARAM.sys.double_grid = false;
     charge.set_rhopw(&pw_basis);
     const int nspin = GlobalV::NSPIN = 1;
     GlobalV::DOMAG_Z = false;
@@ -877,7 +878,7 @@ TEST_F(ChargeMixingTest, MixRhoTest)
 
 TEST_F(ChargeMixingTest, MixDoubleGridRhoTest)
 {
-    GlobalV::double_grid = true;
+    PARAM.sys.double_grid = true;
     charge.set_rhopw(&pw_dbasis);
     const int nspin = GlobalV::NSPIN = 1;
     GlobalV::DOMAG_Z = false;

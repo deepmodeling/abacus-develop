@@ -314,7 +314,7 @@ void Potential::interpolate_vrs()
     ModuleBase::TITLE("Potential", "interpolate_vrs");
     ModuleBase::timer::tick("Potential", "interpolate_vrs");
 
-    if (GlobalV::double_grid)
+    if (PARAM.globalv.double_grid)
     {
         if (rho_basis_->gamma_only != rho_basis_smooth_->gamma_only)
         {
