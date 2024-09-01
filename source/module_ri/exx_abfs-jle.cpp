@@ -51,7 +51,7 @@ void Exx_Abfs::Jle::init_jle( const double kmesh_times )
 					GlobalC::ORB.Phi[T].PhiLN(0,0).getDk(),
 					GlobalC::ORB.Phi[T].PhiLN(0,0).getDruniform(),
 					false,
-					true, GlobalV::CAL_FORCE);
+					true, PARAM.inp.cal_force);
 			}
 		}
 	}

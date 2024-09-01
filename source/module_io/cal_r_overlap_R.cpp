@@ -89,7 +89,7 @@ void cal_r_overlap_R::construct_orbs_and_orb_r()
                                                orb_origin.getDruniform(),
                                                false,
                                                true,
-                                               GlobalV::CAL_FORCE);
+                                               PARAM.inp.cal_force);
             }
         }
     }
@@ -108,7 +108,7 @@ void cal_r_overlap_R::construct_orbs_and_orb_r()
                            orbs[orb_r_ntype][0][0].getDruniform(),
                            false,
                            true,
-                           GlobalV::CAL_FORCE);
+                           PARAM.inp.cal_force);
 
     for (int TA = 0; TA < GlobalC::ORB.get_ntype(); ++TA)
     {

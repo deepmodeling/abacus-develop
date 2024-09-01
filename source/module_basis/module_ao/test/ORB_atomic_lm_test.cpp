@@ -145,7 +145,7 @@ void NumericalOrbitalLmTest::SetUp() {
     // in agreement with the current code
     flag_sbpool_ = true;
 
-    // GlobalV::CAL_FORCE
+    // PARAM.input.cal_force
     // if true, extra_uniform will compute zty
     force_flag_ = true;
 

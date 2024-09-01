@@ -63,7 +63,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver)
             this->etot = p_esolver->cal_energy();
 
             // calculate and gather all parts of total ionic forces
-            if (GlobalV::CAL_FORCE)
+            if (PARAM.inp.cal_force)
             {
                 p_esolver->cal_force(force);
             }

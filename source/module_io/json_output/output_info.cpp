@@ -47,7 +47,7 @@ namespace Json
         int iat = 0;
         const double output_acc = 1.0e-8;
 
-        if (GlobalV::CAL_FORCE){
+        if (PARAM.inp.cal_force){
             //add force
             Json::jsonValue force_array(JarrayType);
             for (int it = 0; it < ucell->ntype; it++)

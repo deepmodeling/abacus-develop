@@ -90,7 +90,7 @@ namespace Conv_Coulomb_Pot_K
 			orbs.getDk(),
 			orbs.getDruniform(),
 			false,
-			true, GlobalV::CAL_FORCE);
+			true, PARAM.inp.cal_force);
 		return orbs_ccp;
 	}
 

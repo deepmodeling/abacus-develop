@@ -39,7 +39,7 @@ std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> Exx_Abfs::Construct_
 //					orb_origin.getDk() / kmesh_times,
 					orb_origin.getDruniform(),
 					false,
-					true, GlobalV::CAL_FORCE);
+					true, PARAM.inp.cal_force);
 			}
 		}
 	}
@@ -416,7 +416,7 @@ std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> Exx_Abfs::Construct_
 //					orb_info.getDk() / kmesh_times,
 					orb_info.getDruniform(),
 					false,
-					true, GlobalV::CAL_FORCE);
+					true, PARAM.inp.cal_force);
 			}
 		}
 	}

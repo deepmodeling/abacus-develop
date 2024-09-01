@@ -4,7 +4,7 @@
 //=========================================================
 
 #include "center2_orb-orb22.h"
-
+#include "module_parameter/parameter.h"
 Center2_Orb::Orb22::Orb22(const Numerical_Orbital_Lm& nA1_in,
                           const Numerical_Orbital_Lm& nA2_in,
                           const Numerical_Orbital_Lm& nB1_in,
@@ -46,7 +46,7 @@ void Center2_Orb::Orb22::init_radial_table()
                                       nB_short.getDruniform(),
                                       false,
                                       true,
-                                      GlobalV::CAL_FORCE); // mohan add 2021-05-07
+                                      PARAM.inp.cal_force); // mohan add 2021-05-07
 
         this->orb21s.insert(std::make_pair(LB, Center2_Orb::Orb21(nA1, nA2, this->nB[LB], psb_, this->MGT)));
 
@@ -85,7 +85,7 @@ void Center2_Orb::Orb22::init_radial_table(const std::set<size_t>& radials)
                                       nB_short.getDruniform(),
                                       false,
                                       true,
-                                      GlobalV::CAL_FORCE);
+                                      PARAM.inp.cal_force);
 
         this->orb21s.insert(std::make_pair(LB, Center2_Orb::Orb21(nA1, nA2, this->nB[LB], psb_, this->MGT)));
 

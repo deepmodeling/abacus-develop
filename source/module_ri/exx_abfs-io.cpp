@@ -247,7 +247,7 @@ std::vector<std::vector<Numerical_Orbital_Lm>> Exx_Abfs::IO::construct_abfs_T(
 				dk,
 				dr_uniform,
 				false,
-				true, GlobalV::CAL_FORCE);		
+				true, PARAM.inp.cal_force);		
 		}
 	}
 	

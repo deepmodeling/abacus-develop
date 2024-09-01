@@ -26,7 +26,7 @@ void test_deepks::set_parameters()
     GlobalV::ofs_warning.open("warning.log");
     GlobalV::ofs_running.open("running.log");
     GlobalV::deepks_setorb = true;
-    GlobalV::CAL_FORCE = 1;
+    PARAM.input.cal_force = 1;
 
     std::ifstream ifs("INPUT");
     char word[80];
@@ -161,7 +161,7 @@ void test_deepks::set_orbs(const double& lat0_in)
                            lcao_rmax,
                            GlobalV::deepks_setorb,
                            out_mat_r,
-                           GlobalV::CAL_FORCE,
+                           PARAM.input.cal_force,
                            my_rank);
 
         ucell.infoNL.setupNonlocal(ucell.ntype, ucell.atoms, GlobalV::ofs_running, ORB);

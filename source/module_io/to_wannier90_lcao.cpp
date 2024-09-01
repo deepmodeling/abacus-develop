@@ -540,7 +540,7 @@ void toWannier90_LCAO::produce_basis_orb()
                                                orb_origin.getDruniform(),
                                                false,
                                                true,
-                                               GlobalV::CAL_FORCE);
+                                               PARAM.inp.cal_force);
             }
         }
     }
@@ -632,7 +632,7 @@ void toWannier90_LCAO::produce_trial_in_lcao()
                                           orb_origin.getDruniform(),
                                           false,
                                           true,
-                                          GlobalV::CAL_FORCE);
+                                          PARAM.inp.cal_force);
         }
         else
         {
@@ -662,7 +662,7 @@ void toWannier90_LCAO::produce_trial_in_lcao()
                                                   orb_origin.getDruniform(),
                                                   false,
                                                   true,
-                                                  GlobalV::CAL_FORCE);
+                                                  PARAM.inp.cal_force);
             }
         }
     }

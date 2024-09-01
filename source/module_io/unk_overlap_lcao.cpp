@@ -80,7 +80,7 @@ void unkOverlap_lcao::init(const Grid_Technique& gt, const int nkstot)
                            GlobalC::ORB.Phi[T].PhiLN(0, 0).getDruniform(),
                            false,
                            true,
-                           GlobalV::CAL_FORCE);
+                           PARAM.inp.cal_force);
 
     // array initialization
     allocate_flag = true;

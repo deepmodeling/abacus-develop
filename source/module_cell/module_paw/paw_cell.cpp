@@ -214,7 +214,7 @@ void Paw_Cell::set_paw_k(
 
     std::complex<double> i_cplx(0.0,1.0);
     // ig : i(G)
-    if(GlobalV::CAL_FORCE || GlobalV::CAL_STRESS)
+    if(PARAM.inp.cal_force || GlobalV::CAL_STRESS)
     {
         ig.resize(npw);
         for(int ipw = 0; ipw < npw; ipw ++)
