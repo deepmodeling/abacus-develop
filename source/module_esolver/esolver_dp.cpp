@@ -34,7 +34,7 @@ void ESolver_DP::before_all_runners(const Input_para& inp, UnitCell& ucell)
     dp_virial.create(3, 3);
 
     // ucell.print_cell_cif("STRU.cif");
-    ModuleIO::CifParser::to_cif(GlobalV::global_out_dir + "STRU.cif", ucell);
+    // ModuleIO::CifParser::to_cif(GlobalV::global_out_dir + "STRU.cif", ucell);
 
     cell.resize(9);
     atype.resize(ucell.nat);

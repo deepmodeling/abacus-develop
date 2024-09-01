@@ -41,10 +41,6 @@ class ESolverDPTest : public ::testing::Test
     {
         // Initialize variables before each test
         esolver = new ModuleESolver::ESolver_DP("./support/case_1.pb");
-        ucell.a1 = {1.0, 0.0, 0.0};
-        ucell.a2 = {0.0, 1.0, 0.0};
-        ucell.a3 = {0.0, 0.0, 1.0};
-        ucell.nat = 0;
         esolver->before_all_runners(inp, ucell);
     }
 
