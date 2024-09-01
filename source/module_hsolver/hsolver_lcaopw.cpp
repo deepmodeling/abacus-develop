@@ -51,7 +51,7 @@ namespace hsolver
             /// update H(k) for each k point
             pHamilt->updateHk(ik);
 #ifdef USE_PAW
-            if (GlobalV::use_paw)
+            if (PARAM.inp.use_paw)
             {
                 const int npw = this->wfc_basis->npwk[ik];
                 ModuleBase::Vector3<double>* _gk = new ModuleBase::Vector3<double>[npw];
@@ -170,7 +170,7 @@ namespace hsolver
         reinterpret_cast<elecstate::ElecStatePW<T>*>(pes)->psiToRho(psi);
 
 #ifdef USE_PAW
-        if (GlobalV::use_paw)
+        if (PARAM.inp.use_paw)
         {
             if (typeid(Real) != typeid(double))
             {

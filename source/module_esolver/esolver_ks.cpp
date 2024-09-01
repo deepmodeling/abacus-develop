@@ -116,7 +116,7 @@ void ESolver_KS<T, Device>::before_all_runners(const Input_para& inp, UnitCell& 
 
     /// PAW Section
 #ifdef USE_PAW
-    if (GlobalV::use_paw)
+    if (PARAM.inp.use_paw)
     {
         int* atom_type = nullptr;
         double** atom_coord = nullptr;
@@ -198,7 +198,7 @@ void ESolver_KS<T, Device>::before_all_runners(const Input_para& inp, UnitCell& 
     //! 4) it has been established that
     // xc_func is same for all elements, therefore
     // only the first one if used
-    if (GlobalV::use_paw)
+    if (PARAM.inp.use_paw)
     {
         XC_Functional::set_xc_type(PARAM.inp.dft_functional);
     }
@@ -277,7 +277,7 @@ void ESolver_KS<T, Device>::before_all_runners(const Input_para& inp, UnitCell& 
     this->sf.setup_structure_factor(&ucell, this->pw_rhod);
 
 #ifdef USE_PAW
-    if (GlobalV::use_paw)
+    if (PARAM.inp.use_paw)
     {
         GlobalC::paw_cell.set_libpaw_ecut(inp.ecutwfc / 2.0,
                                           inp.ecutwfc / 2.0); // in Hartree

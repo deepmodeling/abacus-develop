@@ -20,7 +20,7 @@ pseudopot_cell_vnl::pseudopot_cell_vnl()
 
 pseudopot_cell_vnl::~pseudopot_cell_vnl()
 {
-    if (GlobalV::use_paw) {
+    if (PARAM.inp.use_paw) {
         return;
 }
     delete[] indv_ijkb0;
@@ -86,7 +86,7 @@ void pseudopot_cell_vnl::init(const int ntype,
                               const ModulePW::PW_Basis_K* wfc_basis,
                               const bool allocate_vkb)
 {
-    if (GlobalV::use_paw) {
+    if (PARAM.inp.use_paw) {
         return;
 }
 
@@ -303,7 +303,7 @@ void pseudopot_cell_vnl::init(const int ntype,
 //----------------------------------------------------------
 void pseudopot_cell_vnl::getvnl(const int& ik, ModuleBase::ComplexMatrix& vkb_in) const
 {
-    if (GlobalV::use_paw) {
+    if (PARAM.inp.use_paw) {
         return;
 }
     if (GlobalV::test_pp) {
@@ -413,7 +413,7 @@ void pseudopot_cell_vnl::getvnl(const int& ik, ModuleBase::ComplexMatrix& vkb_in
 template <typename FPTYPE, typename Device>
 void pseudopot_cell_vnl::getvnl(Device* ctx, const int& ik, std::complex<FPTYPE>* vkb_in) const
 {
-    if (GlobalV::use_paw) {
+    if (PARAM.inp.use_paw) {
         return;
 }
     if (GlobalV::test_pp) {
@@ -541,7 +541,7 @@ void pseudopot_cell_vnl::getvnl(Device* ctx, const int& ik, std::complex<FPTYPE>
 
 void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_basis)
 {
-    if (GlobalV::use_paw) {
+    if (PARAM.inp.use_paw) {
         return;
 }
     ModuleBase::TITLE("pseudopot_cell_vnl", "init_vnl");
@@ -1376,7 +1376,7 @@ void pseudopot_cell_vnl::cal_effective_D(const ModuleBase::matrix& veff,
                                          const ModulePW::PW_Basis* rho_basis,
                                          UnitCell& cell)
 {
-    if (GlobalV::use_paw) {
+    if (PARAM.inp.use_paw) {
         return;
 }
     ModuleBase::TITLE("pseudopot_cell_vnl", "cal_effective_D");
