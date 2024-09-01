@@ -308,12 +308,15 @@ TYPED_TEST(SpinConstrainTest, SetTargetMagType1)
             double mag_y = sc_data.target_mag_val * std::sin(sc_data.target_mag_angle1 * M_PI / 180)
                            * std::sin(sc_data.target_mag_angle2 * M_PI / 180);
             double mag_z = sc_data.target_mag_val * std::cos(sc_data.target_mag_angle1 * M_PI / 180);
-            if (std::abs(mag_x) < 1e-14)
+            if (std::abs(mag_x) < 1e-14) {
                 mag_x = 0.0;
-            if (std::abs(mag_y) < 1e-14)
+}
+            if (std::abs(mag_y) < 1e-14) {
                 mag_y = 0.0;
-            if (std::abs(mag_z) < 1e-14)
+}
+            if (std::abs(mag_z) < 1e-14) {
                 mag_z = 0.0;
+}
             EXPECT_DOUBLE_EQ(mag_x, target_mag[iat].x);
             EXPECT_DOUBLE_EQ(mag_y, target_mag[iat].y);
             EXPECT_DOUBLE_EQ(mag_z, target_mag[iat].z);
@@ -349,7 +352,7 @@ TYPED_TEST(SpinConstrainTest, SetInputParameters)
     int nsc_min = 2;
     double alpha_trial = 0.01;
     double sccut = 3.0;
-    bool decay_grad_switch = 1;
+    bool decay_grad_switch = true;
     this->sc.set_input_parameters(sc_thr, nsc, nsc_min, alpha_trial, sccut, decay_grad_switch);
     EXPECT_DOUBLE_EQ(this->sc.get_sc_thr(), sc_thr);
     EXPECT_EQ(this->sc.get_nsc(), nsc);
@@ -363,7 +366,7 @@ TYPED_TEST(SpinConstrainTest, SetSolverParameters)
 {
     K_Vectors kv;
     this->sc.set_nspin(4);
-    this->sc.set_solver_parameters(kv, nullptr, nullptr, nullptr, nullptr, "genelpa");
+    this->sc.set_solver_parameters(kv, nullptr, nullptr, nullptr, "genelpa");
     EXPECT_EQ(this->sc.get_nspin(), 4);
     EXPECT_EQ(this->sc.phsol, nullptr);
     EXPECT_EQ(this->sc.p_hamilt, nullptr);

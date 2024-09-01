@@ -11,8 +11,6 @@ void SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>::cal_mw_from_l
     ModuleBase::TITLE("SpinConstrain","cal_mw_from_lambda");
     ModuleBase::timer::tick("SpinConstrain", "cal_mw_from_lambda");
 
-    // this->phsol->solve(this->p_hamilt, this->psi[0], this->pelec, this->KS_SOLVER, true);
-
     // diagonalization without update charge
     hsolver::HSolverLCAO<std::complex<double>> hsolver_lcao_obj(this->ParaV, this->KS_SOLVER);
     hsolver_lcao_obj.solve(this->p_hamilt, this->psi[0], this->pelec, this->KS_SOLVER, true);

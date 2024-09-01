@@ -217,12 +217,6 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
     // 9) initialize ppcell
     GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, this->pw_rho);
 
-    // 10) initialize the HSolver
-    if (this->phsol == nullptr)
-    {
-        this->phsol = new hsolver::HSolver<TK>();
-    }
-
     // 11) inititlize the charge density
     this->pelec->charge->allocate(GlobalV::NSPIN);
     this->pelec->omega = GlobalC::ucell.omega;
@@ -702,13 +696,11 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2density(int istep, int iter, double ethr)
     }
 
     // 3) solve the Hamiltonian and output band gap
-    if (this->phsol != nullptr)
     {
         // reset energy
         this->pelec->f_en.eband = 0.0;
         this->pelec->f_en.demet = 0.0;
 
-        // this->phsol->solve(this->p_hamilt, this->psi[0], this->pelec, GlobalV::KS_SOLVER);
         hsolver::HSolverLCAO<TK> hsolver_lcao_obj(&(this->pv), GlobalV::KS_SOLVER);
         hsolver_lcao_obj.solve(this->p_hamilt, this->psi[0], this->pelec, GlobalV::KS_SOLVER, false);
 
@@ -724,10 +716,6 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2density(int istep, int iter, double ethr)
                 this->pelec->cal_bandgap_updw();
             }
         }
-    }
-    else
-    {
-        ModuleBase::WARNING_QUIT("ESolver_KS_PW", "HSolver has not been initialed!");
     }
 
     // 4) print bands for each k-point and each band

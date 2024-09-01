@@ -76,14 +76,14 @@ public:
 // 	EXPECT_EQ(hs_d.method, "none");
 // }
 
-TEST_F(TestHSolver, diagethr)
-{
-    float test_diagethr = hs_f.set_diagethr(0.0, 0, 0, 0.0);
-	EXPECT_EQ(test_diagethr, 0.0);
+// TEST_F(TestHSolver, diagethr)
+// {
+//     float test_diagethr = hs_f.set_diagethr(0.0, 0, 0, 0.0);
+// 	EXPECT_EQ(test_diagethr, 0.0);
 
-	double test_diagethr_d = hs_d.set_diagethr(0.0, 0, 0, 0.0);
-	EXPECT_EQ(test_diagethr_d, 0.0);
-}
+// 	double test_diagethr_d = hs_d.set_diagethr(0.0, 0, 0, 0.0);
+// 	EXPECT_EQ(test_diagethr_d, 0.0);
+// }
 namespace hsolver
 {
 template <typename T, typename Device = base_device::DEVICE_CPU>

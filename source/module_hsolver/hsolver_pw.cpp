@@ -638,62 +638,6 @@ void HSolverPW<T, Device>::output_iterInfo()
         DiagoIterAssist<T, Device>::avg_iter = 0.0;
     }
 }
-template <typename T, typename Device>
-typename HSolverPW<T, Device>::Real HSolverPW<T, Device>::set_diagethr(Real diag_ethr_in,
-                                                                       const int istep, 
-                                                                       const int iter, 
-                                                                       const Real drho)
-{
-    // It is too complex now and should be modified.
-    if (iter == 1)
-    {
-        if (std::abs(diag_ethr_in - 1.0e-2) < 1.0e-6)
-        {
-            if (GlobalV::init_chg == "file")
-            {
-                //======================================================
-                // if you think that the starting potential is good
-                // do not spoil it with a louly first diagonalization:
-                // set a strict diag ethr in the input file
-                // ()diago_the_init
-                //======================================================
-                diag_ethr_in = 1.0e-5;
-            }
-            else
-            {
-                //=======================================================
-                // starting atomic potential is probably far from scf
-                // don't waste iterations in the first diagonalization
-                //=======================================================
-                diag_ethr_in = 1.0e-2;
-            }
-        }
-
-        if (GlobalV::CALCULATION == "md" || GlobalV::CALCULATION == "relax" || GlobalV::CALCULATION == "cell-relax")
-        {
-            diag_ethr_in = std::max(diag_ethr_in, static_cast<Real>(GlobalV::PW_DIAG_THR));
-        }
-    }
-    else
-    {
-        if (iter == 2)
-        {
-            diag_ethr_in = 1.e-2;
-        }
-        diag_ethr_in = std::min(diag_ethr_in,
-                                   static_cast<Real>(0.1) * drho
-                                       / std::max(static_cast<Real>(1.0), static_cast<Real>(GlobalV::nelec)));
-    }
-    // It is essential for single precision implementation to keep the diag ethr
-    // value less or equal to the single-precision limit of convergence(0.5e-4).
-    // modified by denghuilu at 2023-05-15
-    if (GlobalV::precision_flag == "single")
-    {
-        diag_ethr_in = std::max(diag_ethr_in, static_cast<Real>(0.5e-4));
-    }
-
-    return diag_ethr_in;
-}
 
 template class HSolverPW<std::complex<float>, base_device::DEVICE_CPU>;
 template class HSolverPW<std::complex<double>, base_device::DEVICE_CPU>;
