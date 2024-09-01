@@ -55,7 +55,7 @@ psi::Psi<std::complex<double>>* wavefunc::allocate(const int nkstot, const int n
     {
 		//initial psi rather than evc
 		psi_out = new psi::Psi<std::complex<double>>(1, GlobalV::NBANDS, npwx * GlobalV::NPOL, ngk);
-		if(GlobalV::BASIS_TYPE=="lcao_in_pw")
+		if(PARAM.inp.basis_type=="lcao_in_pw")
 		{
 			wanf2[0].create(GlobalV::NLOCAL, npwx * GlobalV::NPOL);
 			const size_t memory_cost = GlobalV::NLOCAL*(GlobalV::NPOL*npwx) * sizeof(std::complex<double>);
@@ -66,9 +66,9 @@ psi::Psi<std::complex<double>>* wavefunc::allocate(const int nkstot, const int n
 		std::cout << " MEMORY FOR PSI (MB)  : " << double(memory_cost)/1024.0/1024.0 << std::endl;
 		ModuleBase::Memory::record("Psi_PW", memory_cost);
 	}
-	else if(GlobalV::BASIS_TYPE!="pw")
+	else if(PARAM.inp.basis_type!="pw")
     {
-        if ((GlobalV::BASIS_TYPE == "lcao" || GlobalV::BASIS_TYPE == "lcao_in_pw") || winput::out_spillage == 2)
+        if ((PARAM.inp.basis_type == "lcao" || PARAM.inp.basis_type == "lcao_in_pw") || winput::out_spillage == 2)
         { // for lcao_in_pw
 			if(this->wanf2 != nullptr) 
 			{
@@ -107,7 +107,7 @@ void wavefunc::wfcinit(psi::Psi<std::complex<double>> *psi_in, ModulePW::PW_Basi
 {
     ModuleBase::TITLE("wavefunc","wfcinit");
     ModuleBase::timer::tick("wavefunc", "wfcinit");
-    if (GlobalV::BASIS_TYPE == "pw")
+    if (PARAM.inp.basis_type == "pw")
     {
 		if (this->irindex != nullptr)
 		{
@@ -753,7 +753,7 @@ void wavefunc::init_after_vc(const int nks)
     const int nks2 = nks;
 	const int nbasis = this->npwx * GlobalV::NPOL;
 
-	if((GlobalV::BASIS_TYPE=="lcao" || GlobalV::BASIS_TYPE=="lcao_in_pw") || winput::out_spillage==2)
+	if((PARAM.inp.basis_type=="lcao" || PARAM.inp.basis_type=="lcao_in_pw") || winput::out_spillage==2)
 	{
 		if(wanf2 != nullptr)delete[] wanf2;
 		this->wanf2 = new ModuleBase::ComplexMatrix [nks2];
@@ -766,7 +766,7 @@ void wavefunc::init_after_vc(const int nks)
     if(GlobalV::test_wf)
     {
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"psi allocation","Done");
-        if(GlobalV::BASIS_TYPE=="lcao" || GlobalV::BASIS_TYPE=="lcao_in_pw")
+        if(PARAM.inp.basis_type=="lcao" || PARAM.inp.basis_type=="lcao_in_pw")
         {
             ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"wanf2 allocation","Done");
         }

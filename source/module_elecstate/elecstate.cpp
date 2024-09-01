@@ -283,7 +283,7 @@ void ElecState::cal_nbands()
             const int nbands1 = static_cast<int>(occupied_bands) + 10;
             const int nbands2 = static_cast<int>(1.2 * occupied_bands) + 1;
             GlobalV::NBANDS = std::max(nbands1, nbands2);
-            if (GlobalV::BASIS_TYPE != "pw") {
+            if (PARAM.inp.basis_type != "pw") {
                 GlobalV::NBANDS = std::min(GlobalV::NBANDS, GlobalV::NLOCAL);
             }
         }
@@ -292,7 +292,7 @@ void ElecState::cal_nbands()
             const int nbands3 = GlobalV::nelec + 20;
             const int nbands4 = static_cast<int>(1.2 * GlobalV::nelec) + 1;
             GlobalV::NBANDS = std::max(nbands3, nbands4);
-            if (GlobalV::BASIS_TYPE != "pw") {
+            if (PARAM.inp.basis_type != "pw") {
                 GlobalV::NBANDS = std::min(GlobalV::NBANDS, GlobalV::NLOCAL);
             }
         }
@@ -302,7 +302,7 @@ void ElecState::cal_nbands()
             const int nbands3 = static_cast<int>(max_occ) + 11;
             const int nbands4 = static_cast<int>(1.2 * max_occ) + 1;
             GlobalV::NBANDS = std::max(nbands3, nbands4);
-            if (GlobalV::BASIS_TYPE != "pw") {
+            if (PARAM.inp.basis_type != "pw") {
                 GlobalV::NBANDS = std::min(GlobalV::NBANDS, GlobalV::NLOCAL);
             }
         }
@@ -342,7 +342,7 @@ void ElecState::cal_nbands()
 
     // mohan update 2021-02-19
     // mohan add 2011-01-5
-    if (GlobalV::BASIS_TYPE == "lcao" || GlobalV::BASIS_TYPE == "lcao_in_pw")
+    if (PARAM.inp.basis_type == "lcao" || PARAM.inp.basis_type == "lcao_in_pw")
     {
         if (GlobalV::NBANDS > GlobalV::NLOCAL)
         {

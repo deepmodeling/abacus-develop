@@ -307,7 +307,7 @@ void ElecState::print_etot(const bool converged,
 
     GlobalV::ofs_running << "\n Density error is " << scf_thr << std::endl;
 
-    if (GlobalV::BASIS_TYPE == "pw") {
+    if (PARAM.inp.basis_type == "pw") {
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Error Threshold", pw_diag_thr); // xiaohui add 2013-09-02
 }
 

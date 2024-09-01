@@ -1049,8 +1049,8 @@ void UnitCell::cal_nwfc(std::ofstream& log) {
     //=====================
     // Use localized basis
     //=====================
-    if ((GlobalV::BASIS_TYPE == "lcao") || (GlobalV::BASIS_TYPE == "lcao_in_pw")
-        || ((GlobalV::BASIS_TYPE == "pw") && (GlobalV::psi_initializer)
+    if ((PARAM.inp.basis_type == "lcao") || (PARAM.inp.basis_type == "lcao_in_pw")
+        || ((PARAM.inp.basis_type == "pw") && (GlobalV::psi_initializer)
             && (GlobalV::init_wfc.substr(0, 3) == "nao")
             && (PARAM.inp.esolver_type== "ksdft"))) // xiaohui add 2013-09-02
     {

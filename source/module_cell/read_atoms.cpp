@@ -94,10 +94,10 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
     }
 
     if(
-        (GlobalV::BASIS_TYPE == "lcao")
-      ||(GlobalV::BASIS_TYPE == "lcao_in_pw")
+        (PARAM.inp.basis_type == "lcao")
+      ||(PARAM.inp.basis_type == "lcao_in_pw")
       ||(
-          (GlobalV::BASIS_TYPE == "pw")
+          (PARAM.inp.basis_type == "pw")
         &&(GlobalV::psi_initializer)
         &&(GlobalV::init_wfc.substr(0, 3) == "nao")
         )
@@ -458,12 +458,12 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
             // int* atoms[it].l_nchi;
             //===========================================
 
-            if ((GlobalV::BASIS_TYPE == "lcao")||(GlobalV::BASIS_TYPE == "lcao_in_pw"))
+            if ((PARAM.inp.basis_type == "lcao")||(PARAM.inp.basis_type == "lcao_in_pw"))
             {
                 std::string orbital_file = PARAM.inp.orbital_dir + orbital_fn[it];
                 this->read_orb_file(it, orbital_file, ofs_running, &(atoms[it]));
             }
-            else if(GlobalV::BASIS_TYPE == "pw")
+            else if(PARAM.inp.basis_type == "pw")
             {
                 if ((GlobalV::psi_initializer)&&(GlobalV::init_wfc.substr(0, 3) == "nao"))
                 {

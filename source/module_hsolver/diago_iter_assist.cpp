@@ -301,12 +301,12 @@ void DiagoIterAssist<T, Device>::diagH_subspace_init(hamilt::Hamilt<T, Device>* 
     //=======================
     // diagonize the H-matrix
     //=======================
-    if ((GlobalV::BASIS_TYPE == "lcao" || GlobalV::BASIS_TYPE == "lcao_in_pw") && PARAM.inp.calculation == "nscf")
+    if ((PARAM.inp.basis_type == "lcao" || PARAM.inp.basis_type == "lcao_in_pw") && PARAM.inp.calculation == "nscf")
     {
         GlobalV::ofs_running << " Not do zgemm to get evc." << std::endl;
     }
-    else if ((GlobalV::BASIS_TYPE == "lcao" || GlobalV::BASIS_TYPE == "lcao_in_pw"
-              || (GlobalV::BASIS_TYPE == "pw" && GlobalV::psi_initializer))
+    else if ((PARAM.inp.basis_type == "lcao" || PARAM.inp.basis_type == "lcao_in_pw"
+              || (PARAM.inp.basis_type == "pw" && GlobalV::psi_initializer))
              && (PARAM.inp.calculation == "scf" || PARAM.inp.calculation == "md"
                  || PARAM.inp.calculation == "relax")) // pengfei 2014-10-13
     {
