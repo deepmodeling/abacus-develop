@@ -50,7 +50,7 @@ PotBase* Potential::get_pot_type(const std::string& pot_type)
     }
     else if (pot_type == "efield")
     {
-        return new PotEfield(this->rho_basis_, this->ucell_, GlobalV::DIP_COR_FLAG);
+        return new PotEfield(this->rho_basis_, this->ucell_, PARAM.inp.dip_cor_flag);
     }
     else if (pot_type == "gatefield")
     {

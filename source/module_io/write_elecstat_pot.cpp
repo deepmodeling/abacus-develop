@@ -29,7 +29,7 @@ void write_elecstat_pot(
 
     const int nspin = GlobalV::NSPIN;
     const int efield = GlobalV::EFIELD_FLAG;
-    const int dip_corr = GlobalV::DIP_COR_FLAG;
+    const int dip_corr = PARAM.inp.dip_cor_flag;
     const bool imp_sol = GlobalV::imp_sol;
 
     //==========================================

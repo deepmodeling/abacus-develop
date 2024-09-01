@@ -66,7 +66,7 @@ void Gatefield::add_gatefield(double *vltot,
     }
     if (block)
     {
-        if (GlobalV::DIP_COR_FLAG)
+        if (PARAM.inp.dip_cor_flag)
         {
             GlobalV::ofs_running << "Adding potential to prevent charge spilling into region of the gate" << std::endl;
         }
@@ -96,7 +96,7 @@ void Gatefield::add_gatefield(double *vltot,
         {
             value += rho_surface * ModuleBase::e2 * (mopopla(zgate, gatepos, true) + 1.0 / 6.0) * cell.lat0
                      / Efield::bmod;
-            if (block && gatepos >= block_down && gatepos <= block_up && !GlobalV::DIP_COR_FLAG)
+            if (block && gatepos >= block_down && gatepos <= block_up && !PARAM.inp.dip_cor_flag)
             {
                 if (gatepos - zgate <= -block_size / 2.0 * 0.9) // smooth increase within the first 10%
                 {
@@ -111,7 +111,7 @@ void Gatefield::add_gatefield(double *vltot,
                     value += block_height;
                 }
             }
-            else if (block && gatepos >= block_down && gatepos <= block_up && GlobalV::DIP_COR_FLAG)
+            else if (block && gatepos >= block_down && gatepos <= block_up && PARAM.inp.dip_cor_flag)
             {
                 if (gatepos <= block_down + Efield::efield_pos_dec)
                 {
