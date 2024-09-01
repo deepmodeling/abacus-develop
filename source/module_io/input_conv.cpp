@@ -162,7 +162,7 @@ void Input_Conv::Convert()
 {
     ModuleBase::TITLE("Input_Conv", "Convert");
     ModuleBase::timer::tick("Input_Conv", "Convert");
-    GlobalV::CALCULATION = PARAM.globalv.global_calculation;
+    // GlobalV::CALCULATION = PARAM.globalv.global_calculation;
     GlobalV::double_grid = PARAM.globalv.double_grid;
     //-----------------------------------------------
     // set read_file_dir
