@@ -59,6 +59,17 @@ namespace ModuleIO
  * 1. Read CIF file and store the information in a map.
  * std::map<std::string, std::vector<std::string>> cif_info;
  * ModuleIO::CifParser::from_cif("test.cif", cif_info);
+ * Information of the cif file can be accessed by the key, for example:
+ * get all the atom coordinates by:
+ * std::vector<std::string> atom_site_fract_coords = cif_info["_atom_site_fract_x"];
+ * ... and so for y and z components.
+ * One should note that for some cif files, the number will be in the format like
+ * "0.00000000(1)", which means the uncertainty of the number is 1 in the last digit.
+ * In this case, user should be careful to convert the string to double by its own.
+ * 
+ * However, the formal structure read-in from cif to assign values to the UnitCell instance
+ * is not implemented yet. This is because the cif file does not have pseudopotential and
+ * numerical orbital information, this needs further careful design.
  * 
  * 2. Write CIF file with the given information.
  * ModuleIO::CifParser::to_cif("test.cif", ...);
@@ -66,6 +77,13 @@ namespace ModuleIO
  * simple as:
  * ModuleIO::CifParser cif("test.cif", ucell);
  * , where ucell is an instance of UnitCell. This usage is not encouraged.
+ * 
+ * Pythonization information:
+ * 1. function to_cif
+ * it is recommended to pythonize the 2nd overload of this function, the 3rd one will be
+ * deprecated in the future.
+ * 2. function from_cif
+ * this function can be directly pythonized.
  */
     class CifParser
     {
