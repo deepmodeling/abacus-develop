@@ -356,9 +356,13 @@ void ModuleIO::CifParser::to_cif(const std::string& fcif,
     std::vector<std::string> atom_site_labels;
     std::vector<double> atom_site_fract_coords;
     _unpack_ucell(ucell, veca, vecb, vecc, natom, atom_site_labels, atom_site_fract_coords);
-    double abc_angles[6];
-    vec_to_abc_angles(veca.data(), abc_angles);
-    to_cif(fcif.c_str(), abc_angles, natom, atom_site_labels.data(), atom_site_fract_coords.data(), title, data_tag);
+    std::vector<double> vec(9);
+    std::copy(veca.begin(), veca.end(), vec.begin());
+    std::copy(vecb.begin(), vecb.end(), vec.begin() + 3);
+    std::copy(vecc.begin(), vecc.end(), vec.begin() + 6);
+    std::vector<double> abc_angles(6);
+    vec_to_abc_angles(vec.data(), abc_angles.data());
+    to_cif(fcif.c_str(), abc_angles.data(), natom, atom_site_labels.data(), atom_site_fract_coords.data(), title, data_tag);
 }
 
 // reading cif is another hard (physically) and laborious work. The cif sometimes can be easily read line by line,
