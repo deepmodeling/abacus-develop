@@ -21,7 +21,7 @@ void test_deepks::preparation()
 
 void test_deepks::set_parameters()
 {
-    GlobalV::BASIS_TYPE = "lcao";
+    PARAM.input.basis_type = "lcao";
     // GlobalV::global_pseudo_type= "auto";
     PARAM.input.pseudo_rcut = 15.0;
     GlobalV::global_out_dir = "./";

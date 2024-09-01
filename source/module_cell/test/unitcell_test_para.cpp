@@ -81,7 +81,7 @@ class UcellTest : public ::testing::Test
         GlobalV::test_unitcell = 1;
         GlobalV::test_pseudo_cell = 1;
         GlobalV::NSPIN = 1;
-        GlobalV::BASIS_TYPE = "pw";
+        PARAM.input.basis_type = "pw";
     }
     void TearDown()
     {

@@ -146,7 +146,7 @@ class DiagoCGPrepare
         // warp the subspace_func into a lambda function
         auto subspace_func = [ha](const ct::Tensor& psi_in, ct::Tensor& psi_out) { /*do nothing*/ };
         hsolver::DiagoCG<std::complex<float>> cg(
-            GlobalV::BASIS_TYPE,
+            PARAM.input.basis_type,
             PARAM.input.calculation,
             hsolver::DiagoIterAssist<std::complex<float>>::need_subspace,
             subspace_func,

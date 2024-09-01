@@ -1116,7 +1116,7 @@ TEST_F(UcellTest, ReadAtomSpecies)
     ucell->atoms = new Atom[ucell->ntype];
     ucell->set_atom_flag = true;
     GlobalV::test_pseudo_cell = 2;
-    GlobalV::BASIS_TYPE = "lcao";
+    PARAM.input.basis_type = "lcao";
     GlobalV::deepks_setorb = true;
     EXPECT_NO_THROW(ucell->read_atom_species(ifa, ofs_running));
     EXPECT_DOUBLE_EQ(ucell->latvec.e11, 4.27957);
@@ -1273,7 +1273,7 @@ TEST_F(UcellTest, ReadAtomPositionsS1)
     ucell->atoms = new Atom[ucell->ntype];
     ucell->set_atom_flag = true;
     GlobalV::test_pseudo_cell = 2;
-    GlobalV::BASIS_TYPE = "lcao";
+    PARAM.input.basis_type = "lcao";
     GlobalV::deepks_setorb = true;
     GlobalV::NSPIN = 1;
     EXPECT_NO_THROW(ucell->read_atom_species(ifa, ofs_running));
@@ -1304,7 +1304,7 @@ TEST_F(UcellTest, ReadAtomPositionsS2)
     ucell->atoms = new Atom[ucell->ntype];
     ucell->set_atom_flag = true;
     GlobalV::test_pseudo_cell = 2;
-    GlobalV::BASIS_TYPE = "lcao";
+    PARAM.input.basis_type = "lcao";
     GlobalV::deepks_setorb = true;
     GlobalV::NSPIN = 2;
     EXPECT_NO_THROW(ucell->read_atom_species(ifa, ofs_running));
@@ -1335,7 +1335,7 @@ TEST_F(UcellTest, ReadAtomPositionsS4Noncolin)
     ucell->atoms = new Atom[ucell->ntype];
     ucell->set_atom_flag = true;
     GlobalV::test_pseudo_cell = 2;
-    GlobalV::BASIS_TYPE = "lcao";
+    PARAM.input.basis_type = "lcao";
     GlobalV::deepks_setorb = true;
     GlobalV::NSPIN = 4;
     GlobalV::NONCOLIN = true;
@@ -1367,7 +1367,7 @@ TEST_F(UcellTest, ReadAtomPositionsS4Colin)
     ucell->atoms = new Atom[ucell->ntype];
     ucell->set_atom_flag = true;
     GlobalV::test_pseudo_cell = 2;
-    GlobalV::BASIS_TYPE = "lcao";
+    PARAM.input.basis_type = "lcao";
     GlobalV::deepks_setorb = true;
     GlobalV::NSPIN = 4;
     GlobalV::NONCOLIN = false;
@@ -1399,7 +1399,7 @@ TEST_F(UcellTest, ReadAtomPositionsC)
     ucell->atoms = new Atom[ucell->ntype];
     ucell->set_atom_flag = true;
     GlobalV::test_pseudo_cell = 2;
-    GlobalV::BASIS_TYPE = "lcao";
+    PARAM.input.basis_type = "lcao";
     GlobalV::deepks_setorb = true;
     GlobalV::NSPIN = 1;
     EXPECT_NO_THROW(ucell->read_atom_species(ifa, ofs_running));
@@ -1430,7 +1430,7 @@ TEST_F(UcellTest, ReadAtomPositionsCA)
     ucell->atoms = new Atom[ucell->ntype];
     ucell->set_atom_flag = true;
     GlobalV::test_pseudo_cell = 2;
-    GlobalV::BASIS_TYPE = "lcao";
+    PARAM.input.basis_type = "lcao";
     GlobalV::deepks_setorb = true;
     GlobalV::NSPIN = 1;
     EXPECT_NO_THROW(ucell->read_atom_species(ifa, ofs_running));
@@ -1461,7 +1461,7 @@ TEST_F(UcellTest, ReadAtomPositionsCACXY)
     ucell->atoms = new Atom[ucell->ntype];
     ucell->set_atom_flag = true;
     GlobalV::test_pseudo_cell = 2;
-    GlobalV::BASIS_TYPE = "lcao";
+    PARAM.input.basis_type = "lcao";
     GlobalV::deepks_setorb = true;
     GlobalV::NSPIN = 1;
     EXPECT_NO_THROW(ucell->read_atom_species(ifa, ofs_running));
@@ -1492,7 +1492,7 @@ TEST_F(UcellTest, ReadAtomPositionsCACXZ)
     ucell->atoms = new Atom[ucell->ntype];
     ucell->set_atom_flag = true;
     GlobalV::test_pseudo_cell = 2;
-    GlobalV::BASIS_TYPE = "lcao";
+    PARAM.input.basis_type = "lcao";
     GlobalV::deepks_setorb = true;
     GlobalV::NSPIN = 1;
     EXPECT_NO_THROW(ucell->read_atom_species(ifa, ofs_running));
@@ -1523,7 +1523,7 @@ TEST_F(UcellTest, ReadAtomPositionsCACYZ)
     ucell->atoms = new Atom[ucell->ntype];
     ucell->set_atom_flag = true;
     GlobalV::test_pseudo_cell = 2;
-    GlobalV::BASIS_TYPE = "lcao";
+    PARAM.input.basis_type = "lcao";
     GlobalV::deepks_setorb = true;
     GlobalV::NSPIN = 1;
     EXPECT_NO_THROW(ucell->read_atom_species(ifa, ofs_running));
@@ -1554,7 +1554,7 @@ TEST_F(UcellTest, ReadAtomPositionsCACXYZ)
     ucell->atoms = new Atom[ucell->ntype];
     ucell->set_atom_flag = true;
     GlobalV::test_pseudo_cell = 2;
-    GlobalV::BASIS_TYPE = "lcao";
+    PARAM.input.basis_type = "lcao";
     GlobalV::deepks_setorb = true;
     GlobalV::NSPIN = 1;
     EXPECT_NO_THROW(ucell->read_atom_species(ifa, ofs_running));
@@ -1585,7 +1585,7 @@ TEST_F(UcellTest, ReadAtomPositionsCAU)
     ucell->atoms = new Atom[ucell->ntype];
     ucell->set_atom_flag = true;
     GlobalV::test_pseudo_cell = 2;
-    GlobalV::BASIS_TYPE = "lcao";
+    PARAM.input.basis_type = "lcao";
     GlobalV::deepks_setorb = true;
     GlobalV::NSPIN = 1;
     PARAM.input.fixed_atoms = true;
@@ -1617,7 +1617,7 @@ TEST_F(UcellTest, ReadAtomPositionsAutosetMag)
     ucell->atoms = new Atom[ucell->ntype];
     ucell->set_atom_flag = true;
     GlobalV::test_pseudo_cell = 2;
-    GlobalV::BASIS_TYPE = "lcao";
+    PARAM.input.basis_type = "lcao";
     GlobalV::deepks_setorb = true;
     GlobalV::NSPIN = 2;
     EXPECT_NO_THROW(ucell->read_atom_species(ifa, ofs_running));
@@ -1671,7 +1671,7 @@ TEST_F(UcellTest, ReadAtomPositionsWarning1)
     ucell->atoms = new Atom[ucell->ntype];
     ucell->set_atom_flag = true;
     GlobalV::test_pseudo_cell = 2;
-    GlobalV::BASIS_TYPE = "lcao";
+    PARAM.input.basis_type = "lcao";
     GlobalV::deepks_setorb = true;
     EXPECT_NO_THROW(ucell->read_atom_species(ifa, ofs_running));
     EXPECT_DOUBLE_EQ(ucell->latvec.e11, 4.27957);
@@ -1714,7 +1714,7 @@ TEST_F(UcellTest, ReadAtomPositionsWarning2)
     ucell->atoms = new Atom[ucell->ntype];
     ucell->set_atom_flag = true;
     GlobalV::test_pseudo_cell = 2;
-    GlobalV::BASIS_TYPE = "lcao";
+    PARAM.input.basis_type = "lcao";
     GlobalV::deepks_setorb = true;
     EXPECT_NO_THROW(ucell->read_atom_species(ifa, ofs_running));
     EXPECT_DOUBLE_EQ(ucell->latvec.e11, 4.27957);
@@ -1750,7 +1750,7 @@ TEST_F(UcellTest, ReadAtomPositionsWarning3)
     ucell->atoms = new Atom[ucell->ntype];
     ucell->set_atom_flag = true;
     GlobalV::test_pseudo_cell = 2;
-    GlobalV::BASIS_TYPE = "lcao";
+    PARAM.input.basis_type = "lcao";
     GlobalV::deepks_setorb = true;
     EXPECT_NO_THROW(ucell->read_atom_species(ifa, ofs_running));
     EXPECT_DOUBLE_EQ(ucell->latvec.e11, 4.27957);
@@ -1786,7 +1786,7 @@ TEST_F(UcellDeathTest, ReadAtomPositionsWarning4)
     ucell->atoms = new Atom[ucell->ntype];
     ucell->set_atom_flag = true;
     GlobalV::test_pseudo_cell = 2;
-    GlobalV::BASIS_TYPE = "lcao";
+    PARAM.input.basis_type = "lcao";
     GlobalV::deepks_setorb = true;
     EXPECT_NO_THROW(ucell->read_atom_species(ifa, ofs_running));
     EXPECT_DOUBLE_EQ(ucell->latvec.e11, 4.27957);
@@ -1818,7 +1818,7 @@ TEST_F(UcellTest, ReadAtomPositionsWarning5)
     ucell->atoms = new Atom[ucell->ntype];
     ucell->set_atom_flag = true;
     GlobalV::test_pseudo_cell = 2;
-    GlobalV::BASIS_TYPE = "lcao";
+    PARAM.input.basis_type = "lcao";
     GlobalV::deepks_setorb = true;
     PARAM.input.calculation = "md";
     PARAM.input.esolver_type= "arbitrary";

@@ -84,7 +84,7 @@ class MockElecState : public ElecState
         GlobalV::NLOCAL = 6;
         PARAM.input.esolver_type= "ksdft";
         GlobalV::LSPINORB = false;
-        GlobalV::BASIS_TYPE = "pw";
+        PARAM.input.basis_type = "pw";
         GlobalV::KPAR = 1;
         GlobalV::NPROC_IN_POOL = 1;
         PARAM.input.sc_mag_switch = 1;

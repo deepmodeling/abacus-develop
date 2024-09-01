@@ -246,7 +246,7 @@ TEST_F(ElecStatePrintTest, PrintEtot)
     PARAM.input.out_bandgap = true;
     GlobalV::COLOUR = false;
     GlobalV::MY_RANK = 0;
-    GlobalV::BASIS_TYPE = "pw";
+    PARAM.input.basis_type = "pw";
     GlobalV::NSPIN = 2;
     // iteration of different vdw_method
     std::vector<std::string> vdw_methods = {"d2", "d3_0", "d3_bj"};
@@ -327,7 +327,7 @@ TEST_F(ElecStatePrintTest, PrintEtot2)
     PARAM.input.out_bandgap = true;
     GlobalV::COLOUR = false;
     GlobalV::MY_RANK = 0;
-    GlobalV::BASIS_TYPE = "pw";
+    PARAM.input.basis_type = "pw";
     PARAM.input.scf_nmax = 100;
     elecstate.print_etot(converged, iter, scf_thr, scf_thr_kin, duration, printe, pw_diag_thr, avg_iter, print);
     GlobalV::ofs_running.close();
@@ -417,7 +417,7 @@ TEST_F(ElecStatePrintTest, PrintEtotColorS4)
 //     PARAM.input.out_bandgap = true;
 //     GlobalV::COLOUR = false;
 //     GlobalV::MY_RANK = 0;
-//     GlobalV::BASIS_TYPE = "pw";
+//     PARAM.input.basis_type = "pw";
 //     PARAM.input.scf_nmax = 100;
 //     elecstate::tmp_ks_solver = "unknown";
 //     testing::internal::CaptureStdout();

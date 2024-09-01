@@ -130,7 +130,7 @@ class MockElecState : public ElecState
         GlobalV::NLOCAL = 6;
         PARAM.input.esolver_type= "ksdft";
         GlobalV::LSPINORB = false;
-        GlobalV::BASIS_TYPE = "pw";
+        PARAM.input.basis_type = "pw";
         GlobalV::KPAR = 1;
         GlobalV::NPROC_IN_POOL = 1;
     }
@@ -207,13 +207,13 @@ TEST_F(ElecStateTest, CalNbandsSDFT)
 
 TEST_F(ElecStateTest, CalNbandsLCAO)
 {
-    GlobalV::BASIS_TYPE = "lcao";
+    PARAM.input.basis_type = "lcao";
     EXPECT_NO_THROW(elecstate->cal_nbands());
 }
 
 TEST_F(ElecStateDeathTest, CalNbandsLCAOINPW)
 {
-    GlobalV::BASIS_TYPE = "lcao_in_pw";
+    PARAM.input.basis_type = "lcao_in_pw";
     GlobalV::NLOCAL = GlobalV::NBANDS - 1;
     testing::internal::CaptureStdout();
     EXPECT_EXIT(elecstate->cal_nbands(), ::testing::ExitedWithCode(0), "");
@@ -264,7 +264,7 @@ TEST_F(ElecStateTest, CalNbandsSpin1LCAO)
 {
     GlobalV::NSPIN = 1;
     GlobalV::NBANDS = 0;
-    GlobalV::BASIS_TYPE = "lcao";
+    PARAM.input.basis_type = "lcao";
     elecstate->cal_nbands();
     EXPECT_EQ(GlobalV::NBANDS, 6);
 }
@@ -281,7 +281,7 @@ TEST_F(ElecStateTest, CalNbandsSpin4LCAO)
 {
     GlobalV::NSPIN = 4;
     GlobalV::NBANDS = 0;
-    GlobalV::BASIS_TYPE = "lcao";
+    PARAM.input.basis_type = "lcao";
     elecstate->cal_nbands();
     EXPECT_EQ(GlobalV::NBANDS, 6);
 }
@@ -299,7 +299,7 @@ TEST_F(ElecStateTest, CalNbandsSpin2LCAO)
 {
     GlobalV::NSPIN = 2;
     GlobalV::NBANDS = 0;
-    GlobalV::BASIS_TYPE = "lcao";
+    PARAM.input.basis_type = "lcao";
     elecstate->init_nelec_spin();
     elecstate->cal_nbands();
     EXPECT_EQ(GlobalV::NBANDS, 6);

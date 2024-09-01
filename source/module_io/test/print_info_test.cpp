@@ -141,19 +141,19 @@ TEST_F(PrintInfoTest, SetupParameters)
 	std::vector<std::string> basis_type = {"lcao","pw","lcao_in_pw"};
 	for(int i=0; i<basis_type.size(); ++i)
 	{
-		GlobalV::BASIS_TYPE = basis_type[i];
+		PARAM.input.basis_type = basis_type[i];
 		testing::internal::CaptureStdout();
 		EXPECT_NO_THROW(Print_Info::setup_parameters(*ucell,*kv));
 		output = testing::internal::GetCapturedStdout();
-		if(GlobalV::BASIS_TYPE == "lcao")
+		if(PARAM.input.basis_type == "lcao")
 		{
 			EXPECT_THAT(output,testing::HasSubstr("Use Systematically Improvable Atomic bases"));
 		}
-		else if(GlobalV::BASIS_TYPE == "lcao_in_pw")
+		else if(PARAM.input.basis_type == "lcao_in_pw")
 		{
 			EXPECT_THAT(output,testing::HasSubstr("Expand Atomic bases into plane waves"));
 		}
-		else if(GlobalV::BASIS_TYPE == "pw")
+		else if(PARAM.input.basis_type == "pw")
 		{
 			EXPECT_THAT(output,testing::HasSubstr("Use plane wave basis"));
 		}

@@ -115,7 +115,7 @@ class UcellTest : public ::testing::Test {
         GlobalV::test_unitcell = 1;
         GlobalV::test_pseudo_cell = 1;
         GlobalV::NSPIN = 1;
-        GlobalV::BASIS_TYPE = "pw";
+        PARAM.input.basis_type = "pw";
     }
     void TearDown() { ofs.close(); }
 };
@@ -317,7 +317,7 @@ TEST_F(UcellTest, CalNwfc1) {
 
 TEST_F(UcellTest, CalNwfc2) {
     GlobalV::NSPIN = 4;
-    GlobalV::BASIS_TYPE = "lcao";
+    PARAM.input.basis_type = "lcao";
     ucell->read_cell_pseudopots(pp_dir, ofs);
     EXPECT_FALSE(ucell->atoms[0].ncpp.has_so);
     EXPECT_FALSE(ucell->atoms[1].ncpp.has_so);

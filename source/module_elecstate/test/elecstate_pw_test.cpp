@@ -174,7 +174,7 @@ void Set_GlobalV_Default()
     GlobalV::NLOCAL = 6;
     PARAM.input.esolver_type= "ksdft";
     GlobalV::LSPINORB = false;
-    GlobalV::BASIS_TYPE = "pw";
+    PARAM.input.basis_type = "pw";
     GlobalV::KPAR = 1;
     GlobalV::NPROC_IN_POOL = 1;
     GlobalV::use_uspp = false;
