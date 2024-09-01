@@ -1,6 +1,7 @@
 #include "charge.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
+#include "module_parameter/parameter.h"
 #include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
 #include "module_elecstate/elecstate_getters.h"
@@ -97,7 +98,7 @@ void Charge::reduce_diff_pools(double* array_rho) const
         //==================================
         // Reduce all the rho in each cpu
         //==================================
-        if (GlobalV::ESOLVER_TYPE == "sdft") // qinarui add it temporarily.
+        if (PARAM.inp.esolver_type== "sdft") // qinarui add it temporarily.
             MPI_Allreduce(array_tot_aux, array_tot, this->rhopw->nxyz, MPI_DOUBLE, MPI_SUM, STO_WORLD);
         else
             MPI_Allreduce(array_tot_aux, array_tot, this->rhopw->nxyz, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);

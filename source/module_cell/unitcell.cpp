@@ -1052,7 +1052,7 @@ void UnitCell::cal_nwfc(std::ofstream& log) {
     if ((GlobalV::BASIS_TYPE == "lcao") || (GlobalV::BASIS_TYPE == "lcao_in_pw")
         || ((GlobalV::BASIS_TYPE == "pw") && (GlobalV::psi_initializer)
             && (GlobalV::init_wfc.substr(0, 3) == "nao")
-            && (GlobalV::ESOLVER_TYPE == "ksdft"))) // xiaohui add 2013-09-02
+            && (PARAM.inp.esolver_type== "ksdft"))) // xiaohui add 2013-09-02
     {
         ModuleBase::GlobalFunc::AUTO_SET("NBANDS", GlobalV::NBANDS);
     } else // plane wave basis

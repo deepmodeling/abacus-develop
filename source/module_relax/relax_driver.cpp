@@ -36,7 +36,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver)
         if (GlobalV::OUT_LEVEL == "ie"
             && (PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax" || PARAM.inp.calculation == "scf"
                 || PARAM.inp.calculation == "nscf")
-            && (GlobalV::ESOLVER_TYPE != "lr"))
+            && (PARAM.inp.esolver_type!= "lr"))
         {
             Print_Info::print_screen(stress_step, force_step, istep);
         }
