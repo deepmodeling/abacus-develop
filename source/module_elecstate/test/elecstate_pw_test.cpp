@@ -2,9 +2,12 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-
+#define private public
 #define protected public
+#include "module_parameter/parameter.h"
 #include "module_elecstate/elecstate_pw.h"
+#undef protected
+#undef private
 
 // mock functions for testing
 namespace elecstate
@@ -169,7 +172,7 @@ void Set_GlobalV_Default()
     GlobalV::TWO_EFERMI = false;
     GlobalV::NBANDS = 6;
     GlobalV::NLOCAL = 6;
-    GlobalV::ESOLVER_TYPE = "ksdft";
+    PARAM.input.esolver_type= "ksdft";
     GlobalV::LSPINORB = false;
     GlobalV::BASIS_TYPE = "pw";
     GlobalV::KPAR = 1;

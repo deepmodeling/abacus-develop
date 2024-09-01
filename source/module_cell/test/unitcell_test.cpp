@@ -1821,7 +1821,7 @@ TEST_F(UcellTest, ReadAtomPositionsWarning5)
     GlobalV::BASIS_TYPE = "lcao";
     GlobalV::deepks_setorb = true;
     PARAM.input.calculation = "md";
-    GlobalV::ESOLVER_TYPE = "arbitrary";
+    PARAM.input.esolver_type= "arbitrary";
     EXPECT_NO_THROW(ucell->read_atom_species(ifa, ofs_running));
     EXPECT_DOUBLE_EQ(ucell->latvec.e11, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e22, 4.27957);

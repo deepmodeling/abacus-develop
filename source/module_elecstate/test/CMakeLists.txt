@@ -68,6 +68,7 @@ AddTest(
 
 AddTest(
   TARGET potentials_base
+  LIBS parameter
   SOURCES potentials_base_test.cpp
 )
 

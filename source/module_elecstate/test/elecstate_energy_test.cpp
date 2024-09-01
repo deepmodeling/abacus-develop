@@ -82,7 +82,7 @@ class MockElecState : public ElecState
         GlobalV::TWO_EFERMI = false;
         GlobalV::NBANDS = 6;
         GlobalV::NLOCAL = 6;
-        GlobalV::ESOLVER_TYPE = "ksdft";
+        PARAM.input.esolver_type= "ksdft";
         GlobalV::LSPINORB = false;
         GlobalV::BASIS_TYPE = "pw";
         GlobalV::KPAR = 1;

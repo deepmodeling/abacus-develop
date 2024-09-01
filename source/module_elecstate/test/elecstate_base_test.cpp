@@ -3,12 +3,12 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #define private public
+#include "module_parameter/parameter.h"
+#undef private
 #define protected public
 #include "module_elecstate/elecstate.h"
 #include "module_elecstate/occupy.h"
 #undef protected
-#undef private
-
 // Mock functions for testing elecstate.cpp
 namespace elecstate
 {
@@ -128,7 +128,7 @@ class MockElecState : public ElecState
         GlobalV::TWO_EFERMI = false;
         GlobalV::NBANDS = 6;
         GlobalV::NLOCAL = 6;
-        GlobalV::ESOLVER_TYPE = "ksdft";
+        PARAM.input.esolver_type= "ksdft";
         GlobalV::LSPINORB = false;
         GlobalV::BASIS_TYPE = "pw";
         GlobalV::KPAR = 1;
@@ -201,7 +201,7 @@ TEST_F(ElecStateTest, CalNbandsSOC)
 
 TEST_F(ElecStateTest, CalNbandsSDFT)
 {
-    GlobalV::ESOLVER_TYPE = "sdft";
+    PARAM.input.esolver_type= "sdft";
     EXPECT_NO_THROW(elecstate->cal_nbands());
 }
 
