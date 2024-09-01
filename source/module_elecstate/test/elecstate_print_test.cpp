@@ -240,7 +240,7 @@ TEST_F(ElecStatePrintTest, PrintEtot)
     elecstate.charge->nrxx = 100;
     elecstate.charge->nxyz = 1000;
     GlobalV::imp_sol = true;
-    GlobalV::EFIELD_FLAG = true;
+    PARAM.input.efield_flag= true;
     GlobalV::GATE_FLAG = true;
     GlobalV::TWO_EFERMI = true;
     PARAM.input.out_bandgap = true;
@@ -321,7 +321,7 @@ TEST_F(ElecStatePrintTest, PrintEtot2)
     elecstate.charge->nrxx = 100;
     elecstate.charge->nxyz = 1000;
     GlobalV::imp_sol = true;
-    GlobalV::EFIELD_FLAG = true;
+    PARAM.input.efield_flag= true;
     GlobalV::GATE_FLAG = true;
     GlobalV::TWO_EFERMI = false;
     PARAM.input.out_bandgap = true;
@@ -359,7 +359,7 @@ TEST_F(ElecStatePrintTest, PrintEtotColorS2)
     elecstate.charge->nrxx = 100;
     elecstate.charge->nxyz = 1000;
     GlobalV::imp_sol = true;
-    GlobalV::EFIELD_FLAG = true;
+    PARAM.input.efield_flag= true;
     GlobalV::GATE_FLAG = true;
     GlobalV::TWO_EFERMI = true;
     PARAM.input.out_bandgap = true;
@@ -384,7 +384,7 @@ TEST_F(ElecStatePrintTest, PrintEtotColorS4)
     elecstate.charge->nrxx = 100;
     elecstate.charge->nxyz = 1000;
     GlobalV::imp_sol = true;
-    GlobalV::EFIELD_FLAG = true;
+    PARAM.input.efield_flag= true;
     GlobalV::GATE_FLAG = true;
     GlobalV::TWO_EFERMI = true;
     PARAM.input.out_bandgap = true;
@@ -411,7 +411,7 @@ TEST_F(ElecStatePrintTest, PrintEtotColorS4)
 //     elecstate.charge->nrxx = 100;
 //     elecstate.charge->nxyz = 1000;
 //     GlobalV::imp_sol = true;
-//     GlobalV::EFIELD_FLAG = true;
+//     PARAM.input.efield_flag= true;
 //     GlobalV::GATE_FLAG = true;
 //     GlobalV::TWO_EFERMI = false;
 //     PARAM.input.out_bandgap = true;

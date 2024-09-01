@@ -192,7 +192,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
 
     //! forces from E-field
     ModuleBase::matrix fefield;
-    if (GlobalV::EFIELD_FLAG && isforce)
+    if (PARAM.inp.efield_flag && isforce)
     {
         fefield.create(nat, 3);
         elecstate::Efield::compute_force(GlobalC::ucell, fefield);
