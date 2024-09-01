@@ -1,5 +1,7 @@
 #include "module_relax/relax_old/ions_move_basic.h"
-
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include "for_test.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -149,7 +151,7 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase2)
     Ions_Move_Basic::ediff = 0.0;
     GlobalV::test_relax_method = 1;
     GlobalV::OUT_LEVEL = "ie";
-    GlobalV::FORCE_THR = 1.0;
+    PARAM.input.force_thr = 1.0;
     grad[0] = 1.0;
 
     // Call the function being tested
@@ -187,7 +189,7 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase3)
     Ions_Move_Basic::ediff = 1.0;
     GlobalV::test_relax_method = 1;
     GlobalV::OUT_LEVEL = "ie";
-    GlobalV::FORCE_THR = 1.0;
+    PARAM.input.force_thr = 1.0;
     grad[0] = 1.0;
 
     // Call the function being tested

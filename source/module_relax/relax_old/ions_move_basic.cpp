@@ -2,6 +2,7 @@
 
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
+#include "module_parameter/parameter.h"
 
 int Ions_Move_Basic::dim = 0;
 bool Ions_Move_Basic::converged = false;
@@ -159,7 +160,7 @@ void Ions_Move_Basic::check_converged(const UnitCell &ucell, const double *grad)
         Ions_Move_Basic::converged = true;
     }
     // mohan update 2011-04-21
-    else if (etot_diff < etot_thr && Ions_Move_Basic::largest_grad < GlobalV::FORCE_THR)
+    else if (etot_diff < etot_thr && Ions_Move_Basic::largest_grad < PARAM.inp.force_thr)
     {
         GlobalV::ofs_running << "\n Ion relaxation is converged!" << std::endl;
         GlobalV::ofs_running << "\n Energy difference (Ry) = " << etot_diff << std::endl;
@@ -172,9 +173,9 @@ void Ions_Move_Basic::check_converged(const UnitCell &ucell, const double *grad)
     else
     {
         GlobalV::ofs_running << "\n Ion relaxation is not converged yet (threshold is "
-                             << GlobalV::FORCE_THR * ModuleBase::Ry_to_eV / 0.529177 << ")" << std::endl;
+                             << PARAM.inp.force_thr * ModuleBase::Ry_to_eV / 0.529177 << ")" << std::endl;
         // std::cout << "\n etot_diff=" << etot_diff << " etot_thr=" << etot_thr
-        //<< " largest_grad=" << largest_grad << " force_thr=" << GlobalV::FORCE_THR << std::endl;
+        //<< " largest_grad=" << largest_grad << " force_thr=" << PARAM.inp.force_thr << std::endl;
         Ions_Move_Basic::converged = false;
     }
 
