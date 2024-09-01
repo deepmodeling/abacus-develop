@@ -14,7 +14,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver)
 
     if (PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax")
     {
-        if (!GlobalV::relax_new)
+        if (!PARAM.inp.relax_new)
         {
             rl_old.init_relax(GlobalC::ucell.nat);
         }
@@ -33,7 +33,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver)
     {
         time_t estart = time(nullptr);
 
-        if (GlobalV::OUT_LEVEL == "ie"
+        if (PARAM.inp.out_level == "ie"
             && (PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax" || PARAM.inp.calculation == "scf"
                 || PARAM.inp.calculation == "nscf")
             && (PARAM.inp.esolver_type!= "lr"))
@@ -75,7 +75,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver)
 
             if (PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax")
             {
-                if (GlobalV::relax_new)
+                if (PARAM.inp.relax_new)
                 {
                     stop = rl.relax_step(force, stress, this->etot);
                 }
@@ -180,7 +180,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver)
         ++istep;
     }
 
-    if (GlobalV::OUT_LEVEL == "i")
+    if (PARAM.inp.out_level == "i")
     {
         std::cout << " ION DYNAMICS FINISHED :)" << std::endl;
     }

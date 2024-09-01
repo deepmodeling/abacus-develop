@@ -141,7 +141,7 @@ void Ions_Move_Basic::check_converged(const UnitCell &ucell, const double *grad)
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "largest gradient (ry/bohr)", Ions_Move_Basic::largest_grad);
     }
 
-    if (GlobalV::OUT_LEVEL == "ie")
+    if (PARAM.inp.out_level == "ie")
     {
         std::cout << " ETOT DIFF (eV)       : " << Ions_Move_Basic::ediff * ModuleBase::Ry_to_eV << std::endl;
         std::cout << " LARGEST GRAD (eV/A)  : " << Ions_Move_Basic::largest_grad * ModuleBase::Ry_to_eV / 0.529177

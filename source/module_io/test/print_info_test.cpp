@@ -192,7 +192,7 @@ TEST_F(PrintInfoTest, PrintScreen)
 		}
 		else
 		{
-			GlobalV::relax_new = false;
+			PARAM.input.relax_new = false;
 			if(PARAM.input.calculation=="relax")
 			{
 				testing::internal::CaptureStdout();
@@ -208,7 +208,7 @@ TEST_F(PrintInfoTest, PrintScreen)
 				EXPECT_THAT(output,testing::HasSubstr("RELAX CELL"));
 				EXPECT_THAT(output,testing::HasSubstr("RELAX IONS"));
 			}
-			GlobalV::relax_new = true;
+			PARAM.input.relax_new = true;
 			testing::internal::CaptureStdout();
 			Print_Info::print_screen(stress_step,force_step,istep);
 			output = testing::internal::GetCapturedStdout();

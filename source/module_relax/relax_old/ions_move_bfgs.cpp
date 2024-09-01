@@ -3,6 +3,7 @@
 #include "ions_move_basic.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
+#include "module_parameter/parameter.h"
 
 //============= MAP OF BFGS ===========================
 // (1) start() -> BFGS_Basic::check_converged()
@@ -291,7 +292,7 @@ void Ions_Move_BFGS::bfgs_routine(const double& lat0)
         this->new_step(lat0);
     }
 
-    if (GlobalV::OUT_LEVEL == "ie")
+    if (PARAM.inp.out_level == "ie")
     {
         std::cout << " BFGS TRUST (Bohr)    : " << trust_radius << std::endl;
     }

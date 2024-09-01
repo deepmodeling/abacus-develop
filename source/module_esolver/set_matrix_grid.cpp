@@ -28,7 +28,7 @@ void ESolver_KS_LCAO<TK, TR>::set_matrix_grid(Record_adj& ra)
 
     // (1) Find adjacent atoms for each atom.
     GlobalV::SEARCH_RADIUS = atom_arrange::set_sr_NL(GlobalV::ofs_running,
-                                                     GlobalV::OUT_LEVEL,
+                                                     PARAM.inp.out_level,
                                                      GlobalC::ORB.get_rcutmax_Phi(),
                                                      GlobalC::ucell.infoNL.get_rcutmax_Beta(),
                                                      GlobalV::GAMMA_ONLY_LOCAL);

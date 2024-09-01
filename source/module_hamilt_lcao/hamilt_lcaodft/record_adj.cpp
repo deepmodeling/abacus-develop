@@ -148,7 +148,7 @@ void Record_adj::for_2d(Parallel_Orbitals &pv, bool gamma_only)
 	}//end T1
 }
     //xiaohui add "OUT_LEVEL", 2015-09-16
-    if (GlobalV::OUT_LEVEL != "m" && !gamma_only) ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "ParaV.nnr", pv.nnr);
+    if (PARAM.inp.out_level != "m" && !gamma_only) ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "ParaV.nnr", pv.nnr);
 
 	//------------------------------------------------
 	// info will identify each atom in each unitcell.

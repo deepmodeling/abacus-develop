@@ -3,7 +3,7 @@
 #include "module_base/constants.h"
 #include "module_base/formatter.h"
 #include "module_base/global_variable.h"
-
+#include "module_parameter/parameter.h"
 namespace ModuleIO
 {
 void output_convergence_after_scf(bool& convergence, double& energy, std::ofstream& ofs_running)
@@ -22,7 +22,7 @@ void output_convergence_after_scf(bool& convergence, double& energy, std::ofstre
 
 void output_efermi(bool& convergence, double& efermi, std::ofstream& ofs_running)
 {
-    if (convergence && GlobalV::OUT_LEVEL != "m")
+    if (convergence && PARAM.inp.out_level != "m")
     {
         ofs_running << std::setprecision(16);
         ofs_running << " EFERMI = " << std::setprecision(11) << efermi * ModuleBase::Ry_to_eV << " eV" << std::endl;

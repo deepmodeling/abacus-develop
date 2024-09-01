@@ -375,7 +375,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
             }
 
             // xiaohui add "OUT_LEVEL", 2015-09-16
-            if (GlobalV::OUT_LEVEL != "m")
+            if (PARAM.inp.out_level != "m")
             {
                 GlobalV::ofs_running << " correction force for each atom along direction " << i + 1 << " is "
                                      << sum / nat << std::endl;

@@ -125,7 +125,7 @@ bool Relax::setup_gradient(const ModuleBase::matrix& force, const ModuleBase::ma
     assert(iat==nat);
 
     if(max_grad > force_thr_eva) force_converged = false;
-	if(GlobalV::OUT_LEVEL=="ie")
+	if(PARAM.inp.out_level=="ie")
 	{
         std::cout << " ETOT DIFF (eV)       : " << etot - etot_p << std::endl;
 		std::cout << " LARGEST GRAD (eV/A)  : " << max_grad << std::endl;
