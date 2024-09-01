@@ -1,6 +1,8 @@
 #include "LCAO_deepks_test.h"
 #include "module_base/global_variable.h"
-
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 void test_deepks::preparation()
 {
     this->count_ntype();
@@ -132,7 +134,7 @@ void test_deepks::setup_cell()
 void test_deepks::prep_neighbour()
 {
     double search_radius = atom_arrange::set_sr_NL(GlobalV::ofs_running,
-                                                   GlobalV::OUT_LEVEL,
+                                                   PARAM.input.out_level,
                                                    ORB.get_rcutmax_Phi(),
                                                    ucell.infoNL.get_rcutmax_Beta(),
                                                    GlobalV::GAMMA_ONLY_LOCAL);

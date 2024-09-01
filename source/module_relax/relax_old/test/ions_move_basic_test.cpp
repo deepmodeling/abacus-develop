@@ -110,7 +110,7 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase1)
     Ions_Move_Basic::dim = 6;
     Ions_Move_Basic::update_iter = 1;
     GlobalV::test_relax_method = 1;
-    GlobalV::OUT_LEVEL = "ie";
+    PARAM.input.out_level = "ie";
     for (int i = 0; i < Ions_Move_Basic::dim; ++i)
     {
         grad[i] = 0.0;
@@ -150,7 +150,7 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase2)
     Ions_Move_Basic::update_iter = 1;
     Ions_Move_Basic::ediff = 0.0;
     GlobalV::test_relax_method = 1;
-    GlobalV::OUT_LEVEL = "ie";
+    PARAM.input.out_level = "ie";
     PARAM.input.force_thr = 1.0;
     grad[0] = 1.0;
 
@@ -188,7 +188,7 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase3)
     Ions_Move_Basic::update_iter = 1;
     Ions_Move_Basic::ediff = 1.0;
     GlobalV::test_relax_method = 1;
-    GlobalV::OUT_LEVEL = "ie";
+    PARAM.input.out_level = "ie";
     PARAM.input.force_thr = 1.0;
     grad[0] = 1.0;
 
