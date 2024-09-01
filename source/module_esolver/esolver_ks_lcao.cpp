@@ -848,7 +848,7 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
                                        bit,
                                        hsolver::HSolverLCAO<TK>::out_mat_hs[1],
                                        1,
-                                       GlobalV::out_app_flag,
+                                       PARAM.inp.out_app_flag,
                                        "H",
                                        "data-" + std::to_string(ik),
                                        this->pv,
@@ -859,7 +859,7 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
                                        bit,
                                        hsolver::HSolverLCAO<TK>::out_mat_hs[1],
                                        1,
-                                       GlobalV::out_app_flag,
+                                       PARAM.inp.out_app_flag,
                                        "S",
                                        "data-" + std::to_string(ik),
                                        this->pv,
@@ -1117,7 +1117,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
                         this->pv,
                         PARAM.inp.out_dm1,
                         false,
-                        GlobalV::out_app_flag,
+                        PARAM.inp.out_app_flag,
                         istep);
 
     // 3) write density matrix
@@ -1284,7 +1284,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
                                false,
                                PARAM.inp.out_mat_tk[1],
                                1,
-                               GlobalV::out_app_flag,
+                               PARAM.inp.out_app_flag,
                                "T",
                                "data-" + std::to_string(ik),
                                this->pv,
