@@ -5,6 +5,11 @@
 #include "module_base/formatter.h"
 #include "module_io/cif_io.h"
 #include <cassert>
+#include "module_base/tool_quit.h"
+#ifdef __MPI
+#include "module_base/parallel_common.h"
+#endif
+
 
 double deg2rad(double deg) { return deg * M_PI / 180.0; }
 double rad2deg(double rad) { return rad * 180.0 / M_PI; }
@@ -229,6 +234,45 @@ std::map<std::string, std::vector<std::string>> _build_block_data(const std::vec
     return out;
 }
 
+void bcast_cifmap(std::map<std::string, std::vector<std::string>>& map, // the map to be broadcasted 
+                  const int rank = 0)   // my rank
+{
+#ifdef __MPI
+    // use Parallel_Common namespace bcast_int and bcast_string to broadcast the size of map and key, value pairs
+    int size = map.size();
+    Parallel_Common::bcast_int(size); // seems it can only broadcast from rank 0, so presently no need to specify
+                                      // the rank to broadcast
+    std::vector<std::string> keys(size);
+    std::vector<std::vector<std::string>> values(size);
+    int i = 0;
+    if (rank == 0)
+    {
+        for (auto& elem: map)
+        {
+            keys[i] = elem.first;
+            values[i] = elem.second;
+            i++;
+        }
+    }
+    for (int i = 0; i < size; i++)
+    {
+        Parallel_Common::bcast_string(keys[i]);
+        int valsize = values[i].size();
+        Parallel_Common::bcast_int(valsize);
+        values[i].resize(valsize);
+        Parallel_Common::bcast_string(values[i].data(), valsize);
+    }
+    if (rank != 0)
+    {
+        map.clear();
+        for (int i = 0; i < size; i++)
+        {
+            map[keys[i]] = values[i];
+        }
+    }
+#endif
+}
+
 void ModuleIO::CifParser::_unpack_ucell(const UnitCell& ucell,
                                         std::vector<double>& veca,
                                         std::vector<double>& vecb,
@@ -273,14 +317,20 @@ void ModuleIO::CifParser::to_cif(const std::string& fcif,
                                  const double* atom_site_fract_coords,
                                  const std::string& title,
                                  const std::string& data_tag,
+                                 const int rank,
                                  const double* atom_site_occups,
                                  const std::string& cell_formula_units_z)
 {
+#ifdef __MPI // well...very simple...
+    if (rank != 0)
+    {
+        return;
+    }
+#endif
     std::ofstream ofs(fcif);
     if (!ofs)
     {
-        std::cerr << "Error: failed to open file " << fcif << std::endl;
-        return;
+        ModuleBase::WARNING_QUIT("ModuleIO::CifParser::to_cif", "Cannot open file " + fcif);
     }
     ofs << title << std::endl;
     ofs << data_tag << std::endl;
@@ -339,18 +389,41 @@ void ModuleIO::CifParser::to_cif(const std::string& fcif,
                                  const std::vector<double>& atom_site_fract_coords,
                                  const std::string& title,
                                  const std::string& data_tag,
+                                 const int rank,
                                  const std::vector<double>& atom_site_occups,
                                  const std::string& cell_formula_units_z)
 {
+#ifdef __MPI
+    if (rank != 0)
+    {
+        return;
+    }
+#endif
     const double* occups = atom_site_occups.empty() ? nullptr : atom_site_occups.data();
-    to_cif(fcif.c_str(), abc_angles.data(), atom_site_labels.size(), atom_site_labels.data(), atom_site_fract_coords.data(), title, data_tag, atom_site_occups.data(), cell_formula_units_z);
+    to_cif(fcif.c_str(), 
+           abc_angles.data(), 
+           atom_site_labels.size(), 
+           atom_site_labels.data(), 
+           atom_site_fract_coords.data(), 
+           title, 
+           data_tag, 
+           rank,
+           atom_site_occups.data(), 
+           cell_formula_units_z);
 }
 
 void ModuleIO::CifParser::to_cif(const std::string& fcif,
                                  const UnitCell& ucell,
                                  const std::string& title,
-                                 const std::string& data_tag)
+                                 const std::string& data_tag,
+                                 const int rank)
 {
+#ifdef __MPI
+    if (rank != 0)
+    {
+        return;
+    }
+#endif
     std::vector<double> veca, vecb, vecc;
     int natom;
     std::vector<std::string> atom_site_labels;
@@ -377,10 +450,20 @@ void ModuleIO::CifParser::to_cif(const std::string& fcif,
 // 3. scan the splited words
 
 void ModuleIO::CifParser::from_cif(const std::string& fcif,
-                                   std::map<std::string, std::vector<std::string>>& out)
+                                   std::map<std::string, std::vector<std::string>>& out,
+                                   const int rank)
 {
+    // okey for read, cannot just use if rank != 0 then return, because need to broadcast the map
     out.clear();
+#ifdef __MPI
+    if (rank == 0)
+    {
+#endif
     std::ifstream ifs(fcif);
+    if (!ifs)
+    {
+        ModuleBase::WARNING_QUIT("ModuleIO::CifParser::from_cif", "Cannot open file " + fcif);
+    }
     std::string cache; // first read all lines into cache
     while (ifs.good())
     {
@@ -408,8 +491,11 @@ void ModuleIO::CifParser::from_cif(const std::string& fcif,
         std::map<std::string, std::vector<std::string>> data = _build_block_data(words);
         out.insert(data.begin(), data.end());
     }
+#ifdef __MPI
+    }
+    bcast_cifmap(out, rank);
+#endif
 }
-
 
 ModuleIO::CifParser::CifParser(const std::string& fcif)
 {

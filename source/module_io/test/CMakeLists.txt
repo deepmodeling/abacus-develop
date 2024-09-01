@@ -204,3 +204,8 @@ AddTest(
   LIBS base ${math_libs} device
   SOURCES cif_io_test.cpp ../cif_io.cpp
 )
+
+add_test(NAME cif_io_test_parallel
+      COMMAND mpirun -np 4 ./cif_io_test
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)

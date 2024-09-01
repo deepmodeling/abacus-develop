@@ -347,13 +347,32 @@ const std::string cod1000065 = ""
 
 TEST(CifParserTest, FromCifSimpleTest)
 {
+    int rank = 0;
+#ifdef __MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+#endif
+
+#ifdef __MPI
+    if (rank == 0)
+    {
+#endif
     std::ofstream ofs("mp-2516584.cif");
     ofs << mp2516584;
     ofs.close();
+#ifdef __MPI
+    }
+#endif
     std::map<std::string, std::vector<std::string>> data;
-    ModuleIO::CifParser::from_cif("mp-2516584.cif", data);
+    ModuleIO::CifParser::from_cif("mp-2516584.cif", data, rank);
     // delete the file
+#ifdef __MPI
+    if (rank == 0)
+    {
+#endif
     std::remove("mp-2516584.cif");
+#ifdef __MPI
+    }
+#endif
 
     EXPECT_EQ(data.size(), 23);
     EXPECT_EQ(data["_symmetry_space_group_name_H-M"][0], "'P 1'");
@@ -402,13 +421,32 @@ TEST(CifParserTest, FromCifSimpleTest)
 
 TEST(CifParserTest, FromCifMediumTest)
 {
+    int rank = 0;
+#ifdef __MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+#endif
+
+#ifdef __MPI
+    if (rank == 0)
+    {
+#endif
     std::ofstream ofs("cod-1000065.cif");
     ofs << cod1000065;
     ofs.close();
+#ifdef __MPI
+    }
+#endif
     std::map<std::string, std::vector<std::string>> data;
-    ModuleIO::CifParser::from_cif("cod-1000065.cif", data);
+    ModuleIO::CifParser::from_cif("cod-1000065.cif", data, rank);
     // delete the file
+#ifdef __MPI
+    if (rank == 0)
+    {
+#endif
     std::remove("cod-1000065.cif");
+#ifdef __MPI
+    }
+#endif
 
     EXPECT_EQ(data.size(), 43);
     EXPECT_EQ(data["_publ_author_name"][0], "'Nixon, D E' 'Parry, G S' 'Ubbelohde, A R'");
@@ -467,6 +505,10 @@ TEST(CifParserTest, FromCifMediumTest)
 // will be performed by write-read manner.
 TEST(CifParserTest, ToCifTest)
 {
+    int rank = 0;
+#ifdef __MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+#endif
     const std::string fcif = "test.cif";
     std::ofstream ofs(fcif);
     const std::vector<double> abc_angles = {2.46637620, 2.46637620, 24.84784531, 90.0, 90.0, 120.0};
@@ -476,10 +518,26 @@ TEST(CifParserTest, ToCifTest)
                                                  0.0, 0.0, 0.25, 
                                                  0.333333, 0.666667, 0.75, 
                                                  0.666667, 0.333333, 0.25};
-    ModuleIO::CifParser::to_cif(fcif, abc_angles.data(), natom, atom_site_labels.data(), atom_site_fract.data());
+    ModuleIO::CifParser::to_cif(fcif, 
+                                abc_angles.data(), 
+                                natom, 
+                                atom_site_labels.data(), 
+                                atom_site_fract.data(),
+                                "# Generated during unittest of function ModuleIO::CifParser::to_cif",
+                                "data_test",
+                                rank);
     std::map<std::string, std::vector<std::string>> data;
-    ModuleIO::CifParser::from_cif(fcif, data);
-    //std::remove(fcif.c_str());
+    ModuleIO::CifParser::from_cif(fcif, data, rank);
+    // delete the file
+#ifdef __MPI
+    if (rank == 0)
+    {
+#endif
+    std::remove(fcif.c_str());
+#ifdef __MPI
+    }
+#endif
+
     EXPECT_EQ(data.size(), 23);
     EXPECT_EQ(data["_symmetry_space_group_name_H-M"][0], "'P 1'");
     EXPECT_EQ(data["_cell_length_a"][0], "2.46637620");
@@ -528,6 +586,13 @@ TEST(CifParserTest, ToCifTest)
 
 int main(int argc, char** argv)
 {
+#ifdef __MPI
+    MPI_Init(&argc, &argv);
+#endif
     ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
+    int ret = RUN_ALL_TESTS();
+#ifdef __MPI
+    MPI_Finalize();
+#endif
+    return ret;
 }
