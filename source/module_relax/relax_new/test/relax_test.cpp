@@ -17,7 +17,7 @@ class Test_SETGRAD : public testing::Test
         void SetUp()
         {
             GlobalV::FORCE_THR = 0.001;
-            GlobalV::CALCULATION = "cell-relax";
+            PARAM.input.calculation = "cell-relax";
 
             ModuleBase::matrix force_in, stress_in;
             int nat = 3;

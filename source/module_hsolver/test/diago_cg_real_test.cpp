@@ -148,7 +148,7 @@ public:
         auto subspace_func = [ha](const ct::Tensor& psi_in, ct::Tensor& psi_out) { /*do nothing*/ };
         hsolver::DiagoCG<double> cg(
             GlobalV::BASIS_TYPE,
-            GlobalV::CALCULATION,
+            PARAM.input.calculation,
             hsolver::DiagoIterAssist<double>::need_subspace,
             subspace_func,
             hsolver::DiagoIterAssist<double>::PW_DIAG_THR,

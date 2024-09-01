@@ -119,7 +119,7 @@ class PsiIntializerUnitTest : public ::testing::Test {
             PARAM.input.orbital_dir = "./support/";
             PARAM.input.pseudo_dir = "./support/";
             GlobalV::NPOL = 1;
-            GlobalV::CALCULATION = "scf";
+            PARAM.input.calculation = "scf";
             GlobalV::init_wfc = "random";
             GlobalV::KS_SOLVER = "cg";
             GlobalV::DOMAG = false;
