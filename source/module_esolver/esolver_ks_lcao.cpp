@@ -1257,7 +1257,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
                        this->kv.kvec_d,
                        GlobalV::ofs_running,
                        GlobalV::MY_RANK,
-                       GlobalV::NPROC);
+                       PARAM.globalv.nproc);
         tqo.calculate();
     }
 

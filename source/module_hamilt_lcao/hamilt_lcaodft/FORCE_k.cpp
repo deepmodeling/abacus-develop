@@ -193,7 +193,7 @@ template <>
 void Force_LCAO<std::complex<double>>::test(Parallel_Orbitals& pv, double* mmm, const std::string& name)
 {
     // mohan remove 'const' for pv, 2024-03-31
-    if (GlobalV::NPROC != 1)
+    if (PARAM.globalv.nproc != 1)
     {
         return;
     }

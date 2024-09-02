@@ -71,7 +71,7 @@ int PEXSI_Solver::solve(double mu0)
     MPI_Comm_size(DIAG_WORLD, &grid_np);
     MPI_Comm_group(DIAG_WORLD, &world_group);
 
-    int grid_proc_range[3]={0, (GlobalV::NPROC/grid_np)*grid_np-1, GlobalV::NPROC/grid_np};
+    int grid_proc_range[3]={0, (PARAM.globalv.nproc/grid_np)*grid_np-1, PARAM.globalv.nproc/grid_np};
     MPI_Group_range_incl(world_group, 1, &grid_proc_range, &grid_group);
 
     simplePEXSI(DIAG_WORLD,

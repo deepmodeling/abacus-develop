@@ -456,13 +456,13 @@ void Grid_Technique::cal_grid_integration_index() {
     }
 
 #ifdef __MPI
-    int* all = new int[GlobalV::NPROC];
-    ModuleBase::GlobalFunc::ZEROS(all, GlobalV::NPROC);
+    int* all = new int[PARAM.globalv.nproc];
+    ModuleBase::GlobalFunc::ZEROS(all, PARAM.globalv.nproc);
     Parallel_Reduce::gather_int_all(max_atom, all);
     if (GlobalV::MY_RANK == 0) {
         GlobalV::ofs_warning << std::setw(15) << "Processor" << std::setw(15)
                              << "Atom" << std::endl;
-        for (int i = 0; i < GlobalV::NPROC; i++) {
+        for (int i = 0; i < PARAM.globalv.nproc; i++) {
             GlobalV::ofs_warning << std::setw(15) << i + 1 << std::setw(15)
                                  << all[i] << std::endl;
         }

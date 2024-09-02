@@ -85,7 +85,7 @@ void Parallel_Grid::init(
 	this->nproc_in_pool = new int[GlobalV::KPAR];
 	int nprocgroup;
 	if(PARAM.inp.esolver_type== "sdft")		nprocgroup = GlobalV::NPROC_IN_STOGROUP;
-	else											nprocgroup = GlobalV::NPROC;
+	else											nprocgroup = PARAM.globalv.nproc;
 
 	const int remain_pro = nprocgroup%GlobalV::KPAR;
 	for(int i=0; i<GlobalV::KPAR; i++)
@@ -429,10 +429,10 @@ const int &nrxx_in, const int &nbz_in, const int &bz_in)
 	assert(GlobalV::KPAR > 0);
 
 	this->nproc_in_pool = new int[GlobalV::KPAR];
-	const int remain_pro = GlobalV::NPROC%GlobalV::KPAR;
+	const int remain_pro = PARAM.globalv.nproc%GlobalV::KPAR;
 	for(int i=0; i<GlobalV::KPAR; i++)
 	{
-		nproc_in_pool[i] = GlobalV::NPROC/GlobalV::KPAR;
+		nproc_in_pool[i] = PARAM.globalv.nproc/GlobalV::KPAR;
 		if(i<remain_pro) this->nproc_in_pool[i]++;
 	}	
 

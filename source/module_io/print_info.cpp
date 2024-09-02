@@ -109,7 +109,7 @@ void Print_Info::setup_parameters(UnitCell &ucell, K_Vectors &kv)
 			}
 		}
 
-		std::cout << std::setw(12) << GlobalV::NPROC;
+		std::cout << std::setw(12) << PARAM.globalv.nproc;
 
 		if(PARAM.inp.basis_type=="lcao" || PARAM.inp.basis_type=="lcao_in_pw" || (PARAM.inp.basis_type=="pw" && GlobalV::init_wfc.substr(0, 3) == "nao"))
 		{

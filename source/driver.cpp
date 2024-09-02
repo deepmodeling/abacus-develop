@@ -135,13 +135,13 @@ void Driver::reading()
 
     // (4) define the 'DIAGONALIZATION' world in MPI
     Parallel_Global::split_diag_world(PARAM.inp.diago_proc,
-                                      GlobalV::NPROC,
+                                      PARAM.globalv.nproc,
                                       GlobalV::MY_RANK,
                                       GlobalV::DRANK,
                                       GlobalV::DSIZE,
                                       GlobalV::DCOLOR);
     Parallel_Global::split_grid_world(PARAM.inp.diago_proc,
-                                      GlobalV::NPROC,
+                                      PARAM.globalv.nproc,
                                       GlobalV::MY_RANK,
                                       GlobalV::GRANK,
                                       GlobalV::GSIZE);
@@ -152,9 +152,9 @@ void Driver::reading()
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "GSIZE", GlobalV::GSIZE);
 
 #ifdef __MPI
-    // (5)  divide the GlobalV::NPROC processors into GlobalV::KPAR for k-points
+    // (5)  divide the PARAM.globalv.nproc processors into GlobalV::KPAR for k-points
     // parallelization.
-    Parallel_Global::init_pools(GlobalV::NPROC,
+    Parallel_Global::init_pools(PARAM.globalv.nproc,
                                 GlobalV::MY_RANK,
                                 GlobalV::NSTOGROUP,
                                 GlobalV::KPAR,

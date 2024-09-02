@@ -58,7 +58,7 @@ void ModuleBase::Global_File::make_dir_out(
     std::string command0 =  "test -d " + GlobalV::global_out_dir + " || mkdir " + GlobalV::global_out_dir;
 
 	int times = 0;
-	while(times<GlobalV::NPROC)
+	while(times<PARAM.globalv.nproc)
 	{
 		if(rank==times)
 		{
@@ -95,7 +95,7 @@ void ModuleBase::Global_File::make_dir_out(
         std::string command1 =  "test -d " + GlobalV::global_stru_dir + " || mkdir " + GlobalV::global_stru_dir;
 
         times = 0;
-        while(times<GlobalV::NPROC)
+        while(times<PARAM.globalv.nproc)
         {
             if(rank==times)
             {
@@ -134,7 +134,7 @@ void ModuleBase::Global_File::make_dir_out(
         std::string command1 =  "test -d " + GlobalV::global_matrix_dir + " || mkdir " + GlobalV::global_matrix_dir;
 
         times = 0;
-        while(times<GlobalV::NPROC)
+        while(times<PARAM.globalv.nproc)
         {
             if(rank==times)
             {

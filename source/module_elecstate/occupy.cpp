@@ -178,7 +178,7 @@ void Occupy::iweights(
         }
     }
 #ifdef __MPI
-    Parallel_Reduce::gather_max_double_all(GlobalV::NPROC, ef);
+    Parallel_Reduce::gather_max_double_all(PARAM.globalv.nproc, ef);
 #endif
 
     return;
@@ -306,8 +306,8 @@ void Occupy::efermig(const ModuleBase::matrix& ekb,
 
 #ifdef __MPI
     // find min and max across pools
-    Parallel_Reduce::gather_max_double_all(GlobalV::NPROC, eup);
-    Parallel_Reduce::gather_min_double_all(GlobalV::NPROC, elw);
+    Parallel_Reduce::gather_max_double_all(PARAM.globalv.nproc, eup);
+    Parallel_Reduce::gather_min_double_all(PARAM.globalv.nproc, elw);
 
 #endif
     //=================

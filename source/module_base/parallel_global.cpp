@@ -274,14 +274,14 @@ void Parallel_Global::init_pools(const int& NPROC,
                  << std::setw(6) << "KPAR"
                  << std::setw(14) << "NPROC_IN_POOL" << std::endl;
         }
-        for (int i=0; i<GlobalV::NPROC; i++)
+        for (int i=0; i<PARAM.globalv.nproc; i++)
         {
             if (GlobalV::MY_RANK == i)
             {
                 std::cout << " I'm " << std::setw(8) << GlobalV::MY_RANK
                      << std::setw(8) << GlobalV::MY_POOL
                      << std::setw(13) << GlobalV::RANK_IN_POOL
-                     << std::setw(6) << GlobalV::NPROC
+                     << std::setw(6) << PARAM.globalv.nproc
                      << std::setw(6) << GlobalV::KPAR
                      << std::setw(14) << GlobalV::NPROC_IN_POOL << std::endl;
             }

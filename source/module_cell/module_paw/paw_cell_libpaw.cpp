@@ -160,9 +160,9 @@ void Paw_Cell::set_libpaw_fft(const int nx_in, const int ny_in, const int nz_in,
     nfft = ngfftdg[0]*ngfftdg[1]*ngfftdg[2];
 
 #ifdef __MPI
-    start_z.resize(GlobalV::NPROC);
-    num_z.resize(GlobalV::NPROC);
-    for(int iproc = 0; iproc < GlobalV::NPROC; iproc ++)
+    start_z.resize(PARAM.globalv.nproc);
+    num_z.resize(PARAM.globalv.nproc);
+    for(int iproc = 0; iproc < PARAM.globalv.nproc; iproc ++)
     {
         start_z[iproc] = start_z_in[iproc];
         num_z[iproc] = num_z_in[iproc];

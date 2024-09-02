@@ -316,7 +316,7 @@ void HSolverLCAO<T, Device>::parakSolve(hamilt::Hamilt<T>* pHamilt,
     k2d.set_para_env(psi.get_nk(),
                      nrow,
                      nb2d,
-                     GlobalV::NPROC,
+                     PARAM.globalv.nproc,
                      GlobalV::MY_RANK,
                      GlobalV::NSPIN);
     /// set psi_pool

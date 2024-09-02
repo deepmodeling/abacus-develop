@@ -152,7 +152,7 @@ void K_Vectors::set(const ModuleSymmetry::Symmetry& symm,
                             GlobalV::KPAR,
                             GlobalV::MY_POOL,
                             GlobalV::RANK_IN_POOL,
-                            GlobalV::NPROC,
+                            PARAM.globalv.nproc,
                             nspin_in); // assign k points to several process pools
 #ifdef __MPI
     // distribute K point data to the corresponding process
@@ -1138,7 +1138,7 @@ void K_Vectors::mpi_k()
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "k-point number in this process", nks);
     int nks_minimum = this->nks;
 
-    Parallel_Reduce::gather_min_int_all(GlobalV::NPROC, nks_minimum);
+    Parallel_Reduce::gather_min_int_all(PARAM.globalv.nproc, nks_minimum);
 
     if (nks_minimum == 0)
     {

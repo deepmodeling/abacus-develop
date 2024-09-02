@@ -246,9 +246,9 @@ void ReadInput::item_system()
             {
                 para.input.bndpar = 1;
             }
-            if (para.input.bndpar > GlobalV::NPROC)
+            if (para.input.bndpar > PARAM.globalv.nproc)
             {
-                para.input.bndpar = GlobalV::NPROC;
+                para.input.bndpar = PARAM.globalv.nproc;
             }
         };
         this->add_item(item);
@@ -534,7 +534,7 @@ void ReadInput::item_system()
         item.annotation = "reads dmr in npz format and calculates electron density";
         read_sync_bool(input.dm_to_rho);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.dm_to_rho && GlobalV::NPROC > 1)
+            if (para.input.dm_to_rho && PARAM.globalv.nproc > 1)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "dm_to_rho is not available for parallel calculations");
             }
@@ -685,9 +685,9 @@ void ReadInput::item_system()
         item.annotation = "the number of procs used to do diagonalization";
         read_sync_int(input.diago_proc);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.diago_proc > GlobalV::NPROC || para.input.diago_proc <= 0)
+            if (para.input.diago_proc > PARAM.globalv.nproc || para.input.diago_proc <= 0)
             {
-                para.input.diago_proc = GlobalV::NPROC;
+                para.input.diago_proc = PARAM.globalv.nproc;
             }
         };
         this->add_item(item);

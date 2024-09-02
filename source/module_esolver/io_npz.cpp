@@ -39,7 +39,7 @@ void ESolver_KS_LCAO<TK, TR>::read_mat_npz(std::string& zipname, hamilt::HContai
 
 #ifdef __MPI
 
-    if(GlobalV::NPROC!=1)
+    if(PARAM.globalv.nproc!=1)
     {
         std::cout << "read_mat_npz is not supported in NPI mode yet" << std::endl;
         return;

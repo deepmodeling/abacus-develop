@@ -589,7 +589,7 @@ void Input_Conv::Convert()
                 = false;
         }
     }
-    if (PARAM.inp.calculation == "test_neighbour" && GlobalV::NPROC > 1)
+    if (PARAM.inp.calculation == "test_neighbour" && PARAM.globalv.nproc > 1)
     {
         ModuleBase::WARNING_QUIT("Input_conv", "test_neighbour must be done with 1 processor");
     }
@@ -626,7 +626,7 @@ void Input_Conv::Convert()
     {
         GlobalV::deepks_out_labels = true;
         GlobalV::deepks_scf = true;
-        if (GlobalV::NPROC > 1)
+        if (PARAM.globalv.nproc > 1)
         {
             ModuleBase::WARNING_QUIT("Input_conv", "generate deepks unittest with only 1 processor");
         }
