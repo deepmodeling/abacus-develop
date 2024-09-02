@@ -1,5 +1,5 @@
 #include "winput.h"
-
+#include "module_parameter/parameter.h"
 #ifdef __MPI
 #include "mpi.h"
 #endif
