@@ -1,10 +1,10 @@
-#include "module_relax/relax_old/ions_move_basic.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #define private public
 #include "module_parameter/parameter.h"
 #undef private
 #include "for_test.h"
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
+#include "module_relax/relax_old/ions_move_basic.h"
 /************************************************
  *  unit tests of namespace Ions_Move_Basic
  ***********************************************/

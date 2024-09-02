@@ -1,7 +1,8 @@
-#include "module_base/inverse_matrix.h"
+#include "gtest/gtest.h"
 #define private public
 #include "module_parameter/parameter.h"
 #undef private
+#include "module_base/inverse_matrix.h"
 #include "module_base/lapack_connector.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 #include "module_psi/psi.h"
@@ -10,13 +11,13 @@
 #include "../diago_cg.h"
 #include "../diago_iter_assist.h"
 #include "diago_mock.h"
-#include "mpi.h"
+#include <mpi.h>
 #include "module_basis/module_pw/test/test_tool.h"
 #include <complex>
 
 #include <ATen/core/tensor_map.h>
 
-#include "gtest/gtest.h"
+
 #include <random>
 
 /************************************************

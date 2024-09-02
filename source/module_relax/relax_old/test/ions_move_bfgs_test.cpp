@@ -1,4 +1,3 @@
-#include "for_test.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #define private public
@@ -8,6 +7,7 @@
 #include "module_relax/relax_old/ions_move_bfgs.h"
 #undef private
 #undef protected
+#include "for_test.h"
 /************************************************
  *  unit tests of class Ions_Move_BFGS
  ***********************************************/

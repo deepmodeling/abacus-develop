@@ -1,10 +1,9 @@
-#include "module_relax/relax_old/lattice_change_basic.h"
-
-#include "for_test.h"
 #include "gtest/gtest.h"
 #define private public
 #include "module_parameter/parameter.h"
 #undef private
+#include "for_test.h"
+#include "module_relax/relax_old/lattice_change_basic.h"
 /************************************************
  *  unit tests of namespace Lattice_Change_Basic
  ***********************************************/
