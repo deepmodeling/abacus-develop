@@ -183,7 +183,6 @@ OBJS_CELL=atom_pseudo.o\
     klist.o\
     cell_index.o\
     check_atomic_stru.o\
-    print_cif.o\
 
 OBJS_DEEPKS=LCAO_deepks.o\
         deepks_fgamma.o\

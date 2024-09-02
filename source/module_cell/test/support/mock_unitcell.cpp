@@ -67,7 +67,6 @@ UnitCell::~UnitCell() {
 }
 void UnitCell::print_cell(std::ofstream& ofs) const {}
 void UnitCell::print_cell_xyz(const std::string& fn) const {}
-void UnitCell::print_cell_cif(const std::string& fn) const {}
 int UnitCell::read_atom_species(std::ifstream& ifa,
                                 std::ofstream& ofs_running) {
     return 0;
