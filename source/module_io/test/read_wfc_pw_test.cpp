@@ -1,7 +1,9 @@
-#include "module_io/read_wfc_pw.h"
-
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
+#include "module_io/read_wfc_pw.h"
 #ifdef __MPI
 #include "module_base/parallel_global.h"
 #include "module_basis/module_pw/test/test_tool.h"
@@ -305,8 +307,8 @@ TEST_F(ReadWfcPwTest, InconsistentG)
 int main(int argc, char** argv)
 {
 #ifdef __MPI
-    setupmpi(argc, argv, GlobalV::NPROC, GlobalV::MY_RANK);
-    divide_pools(GlobalV::NPROC,
+    setupmpi(argc, argv, PARAM.sys.nproc, GlobalV::MY_RANK);
+    divide_pools(PARAM.sys.nproc,
                  GlobalV::MY_RANK,
                  GlobalV::NPROC_IN_POOL,
                  GlobalV::KPAR,

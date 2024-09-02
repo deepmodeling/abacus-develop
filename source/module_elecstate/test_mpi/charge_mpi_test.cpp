@@ -1,9 +1,12 @@
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include "module_base/matrix3.h"
 #include "module_base/parallel_global.h"
 #include "module_elecstate/module_charge/charge.h"
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 Charge::Charge()
 {
 }
@@ -59,10 +62,10 @@ class ChargeMpiTest : public ::testing::Test
 
 TEST_F(ChargeMpiTest, reduce_diff_pools1)
 {
-    if (GlobalV::NPROC >= 2 && GlobalV::NPROC % 2 == 0)
+    if (PARAM.sys.nproc >= 2 && PARAM.sys.nproc % 2 == 0)
     {
         GlobalV::KPAR = 2;
-        Parallel_Global::divide_pools(GlobalV::NPROC,
+        Parallel_Global::divide_pools(PARAM.sys.nproc,
                                       GlobalV::MY_RANK,
                                       GlobalV::NSTOGROUP,
                                       GlobalV::KPAR,
@@ -105,10 +108,10 @@ TEST_F(ChargeMpiTest, reduce_diff_pools1)
 
 TEST_F(ChargeMpiTest, reduce_diff_pools2)
 {
-    if (GlobalV::NPROC >= 3)
+    if (PARAM.sys.nproc >= 3)
     {
         GlobalV::KPAR = 3;
-        Parallel_Global::divide_pools(GlobalV::NPROC,
+        Parallel_Global::divide_pools(PARAM.sys.nproc,
                                       GlobalV::MY_RANK,
                                       GlobalV::NSTOGROUP,
                                       GlobalV::KPAR,
@@ -160,10 +163,10 @@ TEST_F(ChargeMpiTest, reduce_diff_pools2)
 
 TEST_F(ChargeMpiTest, rho_mpi)
 {
-    if (GlobalV::NPROC >= 2)
+    if (PARAM.sys.nproc >= 2)
     {
         GlobalV::KPAR = 2;
-        Parallel_Global::divide_pools(GlobalV::NPROC,
+        Parallel_Global::divide_pools(PARAM.sys.nproc,
                                       GlobalV::MY_RANK,
                                       GlobalV::NSTOGROUP,
                                       GlobalV::KPAR,
@@ -207,7 +210,7 @@ TEST_F(ChargeMpiTest, rho_mpi)
 int main(int argc, char** argv)
 {
     MPI_Init(&argc, &argv);
-    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
+    MPI_Comm_size(MPI_COMM_WORLD, &PARAM.sys.nproc);
     MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
     int result = 0;
     testing::InitGoogleTest(&argc, argv);

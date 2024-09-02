@@ -175,7 +175,7 @@ TEST_F(InputTest, Item_test)
 
         param.input.esolver_type = "sdft";
         param.input.bndpar = 2;
-        GlobalV::NPROC = 1;
+        PARAM.sys.nproc = 1;
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.bndpar, 1);
     }
@@ -203,7 +203,7 @@ TEST_F(InputTest, Item_test)
     { // diag_proc
         auto it = find_label("diago_proc", readinput.input_lists);
         param.input.diago_proc = 0;
-        GlobalV::NPROC = 1;
+        PARAM.sys.nproc = 1;
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.diago_proc, 1);
     }
@@ -893,7 +893,7 @@ TEST_F(InputTest, Item_test)
     { // dm_to_rho
         auto it = find_label("dm_to_rho", readinput.input_lists);
         param.input.dm_to_rho = true;
-        GlobalV::NPROC = 2;
+        PARAM.sys.nproc = 2;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(0), "");
         output = testing::internal::GetCapturedStdout();
@@ -901,7 +901,7 @@ TEST_F(InputTest, Item_test)
 
 #ifndef __USECNPY
         param.input.dm_to_rho = true;
-        GlobalV::NPROC = 1;
+        PARAM.sys.nproc = 1;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(0), "");
         output = testing::internal::GetCapturedStdout();

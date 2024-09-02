@@ -72,7 +72,7 @@ int main(int argc, char **argv)
 
 
     MPI_Init(&argc, &argv);
-    MPI_Comm_size(MPI_COMM_WORLD,&GlobalV::NPROC);
+    MPI_Comm_size(MPI_COMM_WORLD,&PARAM.sys.nproc);
     MPI_Comm_rank(MPI_COMM_WORLD,&GlobalV::MY_RANK);
 
     testing::InitGoogleTest(&argc, argv);

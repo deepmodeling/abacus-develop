@@ -1,4 +1,7 @@
 #include <gtest/gtest.h>
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include "module_io/to_qo.h"
 
 Atom_pseudo::Atom_pseudo() {}
@@ -62,7 +65,7 @@ void define_fcc_cell(UnitCell& ucell)
     GlobalV::qo_thr = 1e-6;
     GlobalV::ofs_running = std::ofstream("unittest.log");
     GlobalV::MY_RANK = 0;
-    GlobalV::NPROC = 1;
+    PARAM.sys.nproc = 1;
 }
 
 void define_sc_cell(UnitCell& ucell)
@@ -99,7 +102,7 @@ void define_sc_cell(UnitCell& ucell)
     GlobalV::qo_thr = 1e-6;
     GlobalV::ofs_running = std::ofstream("unittest.log");
     GlobalV::MY_RANK = 0;
-    GlobalV::NPROC = 1;
+    PARAM.sys.nproc = 1;
 }
 
 class toQOTest : public testing::Test

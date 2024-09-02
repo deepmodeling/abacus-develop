@@ -295,8 +295,8 @@ TEST(PrintStress, PrintStress)
 int main(int argc, char** argv)
 {
 #ifdef __MPI
-    setupmpi(argc, argv, GlobalV::NPROC, GlobalV::MY_RANK);
-    divide_pools(GlobalV::NPROC,
+    setupmpi(argc, argv, PARAM.sys.nproc, GlobalV::MY_RANK);
+    divide_pools(PARAM.sys.nproc,
                  GlobalV::MY_RANK,
                  GlobalV::NPROC_IN_POOL,
                  GlobalV::KPAR,

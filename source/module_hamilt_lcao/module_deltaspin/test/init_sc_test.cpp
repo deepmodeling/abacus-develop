@@ -1,9 +1,13 @@
-#include "../spin_constrain.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "prepare_unitcell.h"
-
 #include "mpi.h"
+#define private public
+#include "../spin_constrain.h"
+#include "prepare_unitcell.h"
+#include "module_parameter/parameter.h"
+#undef private
+
+
 
 // mock functions
 #ifdef __LCAO
@@ -114,7 +118,7 @@ int main(int argc, char** argv)
     MPI_Init(&argc, &argv);
     testing::InitGoogleTest(&argc, argv);
 
-    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
+    MPI_Comm_size(MPI_COMM_WORLD, &PARAM.sys.nproc);
     MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
 
     int result = RUN_ALL_TESTS();

@@ -1,12 +1,9 @@
-#include "module_base/mathzone.h"
-#include "module_base/parallel_global.h"
-#include "module_cell/parallel_kpoints.h"
-
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include <iostream>
 #include <streambuf>
 #define private public
+#include "module_parameter/parameter.h"
 #include "../klist.h"
 #include "module_basis/module_ao/ORB_gaunt_table.h"
 #include "module_cell/atom_pseudo.h"
@@ -20,6 +17,10 @@
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 #include "module_io/berryphase.h"
 #undef private
+#include "module_base/mathzone.h"
+#include "module_base/parallel_global.h"
+#include "module_cell/parallel_kpoints.h"
+
 bool berryphase::berry_phase_flag = false;
 
 pseudo::pseudo()
@@ -222,11 +223,11 @@ TEST_F(KlistParaTest, Set)
     // set klist
     kv->nspin = 1;
     GlobalV::NSPIN = 1;
-    if (GlobalV::NPROC == 4)
+    if (PARAM.sys.nproc == 4)
     {
         GlobalV::KPAR = 2;
     }
-    Parallel_Global::init_pools(GlobalV::NPROC,
+    Parallel_Global::init_pools(PARAM.sys.nproc,
                                 GlobalV::MY_RANK,
                                 GlobalV::NSTOGROUP,
                                 GlobalV::KPAR,
@@ -241,7 +242,7 @@ TEST_F(KlistParaTest, Set)
     EXPECT_EQ(kv->get_nkstot(), 35);
     EXPECT_TRUE(kv->kc_done);
     EXPECT_TRUE(kv->kd_done);
-    if (GlobalV::NPROC == 4)
+    if (PARAM.sys.nproc == 4)
     {
         if (GlobalV::MY_RANK == 0) {
             EXPECT_EQ(kv->get_nks(), 18);
@@ -279,11 +280,11 @@ TEST_F(KlistParaTest, SetAfterVC)
     // set klist
     kv->nspin = 1;
     GlobalV::NSPIN = 1;
-    if (GlobalV::NPROC == 4)
+    if (PARAM.sys.nproc == 4)
     {
         GlobalV::KPAR = 1;
     }
-    Parallel_Global::init_pools(GlobalV::NPROC,
+    Parallel_Global::init_pools(PARAM.sys.nproc,
                                 GlobalV::MY_RANK,
                                 GlobalV::NSTOGROUP,
                                 GlobalV::KPAR,
@@ -298,7 +299,7 @@ TEST_F(KlistParaTest, SetAfterVC)
     EXPECT_EQ(kv->get_nkstot(), 35);
     EXPECT_TRUE(kv->kc_done);
     EXPECT_TRUE(kv->kd_done);
-    if (GlobalV::NPROC == 4)
+    if (PARAM.sys.nproc == 4)
     {
         if (GlobalV::MY_RANK == 0) {
             EXPECT_EQ(kv->get_nks(), 35);
@@ -332,7 +333,7 @@ int main(int argc, char** argv)
     MPI_Init(&argc, &argv);
     testing::InitGoogleTest(&argc, argv);
 
-    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
+    MPI_Comm_size(MPI_COMM_WORLD, &PARAM.sys.nproc);
     MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
     int result = RUN_ALL_TESTS();
 

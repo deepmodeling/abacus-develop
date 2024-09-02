@@ -1,5 +1,8 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include "module_io/rhog_io.h"
 #ifdef __MPI
 #include "module_basis/module_pw/test/test_tool.h"
@@ -134,8 +137,8 @@ TEST_F(ReadRhogTest, SomePWMissing)
 int main(int argc, char** argv)
 {
 #ifdef __MPI
-    setupmpi(argc, argv, GlobalV::NPROC, GlobalV::MY_RANK);
-    divide_pools(GlobalV::NPROC,
+    setupmpi(argc, argv, PARAM.sys.nproc, GlobalV::MY_RANK);
+    divide_pools(PARAM.sys.nproc,
                  GlobalV::MY_RANK,
                  GlobalV::NPROC_IN_POOL,
                  GlobalV::KPAR,

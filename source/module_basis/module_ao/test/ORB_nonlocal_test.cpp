@@ -1,10 +1,9 @@
 #include "gtest/gtest.h"
-#include "module_base/global_variable.h"
-
 #define private public
+#include "module_parameter/parameter.h"
 #include "module_basis/module_ao/ORB_nonlocal.h"
 #undef private
-
+#include "module_base/global_variable.h"
 #ifdef __MPI
 #include <mpi.h>
 #endif
@@ -97,7 +96,7 @@ int main(int argc, char **argv)
 
 #ifdef __MPI
     MPI_Init(&argc, &argv);
-    MPI_Comm_size(MPI_COMM_WORLD,&GlobalV::NPROC);
+    MPI_Comm_size(MPI_COMM_WORLD,&PARAM.sys.nproc);
     MPI_Comm_rank(MPI_COMM_WORLD,&GlobalV::MY_RANK);
 #endif
     testing::InitGoogleTest(&argc, argv);

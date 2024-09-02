@@ -1,5 +1,8 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include "module_io/cal_dos.h"
 #include "module_base/global_variable.h"
 #include <string>
@@ -198,7 +201,7 @@ int main(int argc, char **argv)
 	MPI_Init(&argc,&argv);
 
 	testing::InitGoogleTest(&argc,argv);
-	MPI_Comm_size(MPI_COMM_WORLD,&GlobalV::NPROC);
+	MPI_Comm_size(MPI_COMM_WORLD,&PARAM.sys.nproc);
 	MPI_Comm_rank(MPI_COMM_WORLD,&GlobalV::MY_RANK);
 	int result = RUN_ALL_TESTS();
 

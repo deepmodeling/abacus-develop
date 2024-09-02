@@ -185,7 +185,7 @@ class PexsiPrepare
         GlobalV::DSIZE = dsize;
         GlobalV::NSPIN = 1;
         DIAG_WORLD = MPI_COMM_WORLD;
-        GlobalV::NPROC = dsize;
+        PARAM.sys.nproc = dsize;
 
         psi.fix_k(0);
     }

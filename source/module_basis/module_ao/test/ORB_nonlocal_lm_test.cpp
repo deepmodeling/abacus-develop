@@ -1,14 +1,13 @@
 #include "gtest/gtest.h"
+#define private public
+#include "module_parameter/parameter.h"
+#include "module_basis/module_ao/ORB_nonlocal_lm.h"
+#undef private
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_base/math_integral.h"
 #include <fstream>
 #include <iomanip>
-
-#define private public
-#include "module_basis/module_ao/ORB_nonlocal_lm.h"
-#undef private
-
 
 #ifdef __MPI
 #include <mpi.h>
@@ -736,7 +735,7 @@ int main(int argc, char **argv)
 
 #ifdef __MPI
     MPI_Init(&argc, &argv);
-    MPI_Comm_size(MPI_COMM_WORLD,&GlobalV::NPROC);
+    MPI_Comm_size(MPI_COMM_WORLD,&PARAM.sys.nproc);
     MPI_Comm_rank(MPI_COMM_WORLD,&GlobalV::MY_RANK);
 #endif
     testing::InitGoogleTest(&argc, argv);

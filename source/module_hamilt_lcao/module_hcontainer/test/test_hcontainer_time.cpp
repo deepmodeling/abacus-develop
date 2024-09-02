@@ -1,4 +1,7 @@
 #include "gtest/gtest.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "time.h"
 
@@ -143,7 +146,7 @@ int main(int argc, char** argv)
 {
 #ifdef __MPI
     MPI_Init(&argc, &argv);
-    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
+    MPI_Comm_size(MPI_COMM_WORLD, &PARAM.sys.nproc);
     MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
 #endif
 

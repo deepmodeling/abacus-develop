@@ -1,10 +1,11 @@
-#include <algorithm>
-#include <string>
-
-#include "../spin_constrain.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
+#include <algorithm>
+#include <string>
+#include "../spin_constrain.h"
 #ifdef __MPI
 #include "mpi.h"
 #endif
@@ -77,7 +78,7 @@ int main(int argc, char** argv)
     MPI_Init(&argc, &argv);
     testing::InitGoogleTest(&argc, argv);
 
-    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
+    MPI_Comm_size(MPI_COMM_WORLD, &PARAM.sys.nproc);
     MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
 
     int result = RUN_ALL_TESTS();

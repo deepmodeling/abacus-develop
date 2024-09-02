@@ -287,7 +287,7 @@ int main(int argc, char **argv)
 	MPI_Init(&argc, &argv);
 	testing::InitGoogleTest(&argc, argv);
 
-	MPI_Comm_size(MPI_COMM_WORLD,&GlobalV::NPROC);
+	MPI_Comm_size(MPI_COMM_WORLD,&PARAM.sys.nproc);
 	MPI_Comm_rank(MPI_COMM_WORLD,&GlobalV::MY_RANK);
     MPI_Comm_split(MPI_COMM_WORLD, 0, 1, &PARAPW_WORLD);
 	int result = RUN_ALL_TESTS();

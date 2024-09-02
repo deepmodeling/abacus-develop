@@ -44,7 +44,7 @@ TEST_F(Test_Libpaw_Cell, test_paw)
     int ny = 30;
     int nz = 30;
 
-    GlobalV::NPROC = 1;
+    PARAM.sys.nproc = 1;
     std::vector<int> start_z = {0};
     std::vector<int> num_z = {nz};
     paw_cell.set_libpaw_fft(nx, ny, nz, nx, ny, nz, start_z.data(), num_z.data());

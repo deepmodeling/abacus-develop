@@ -1,8 +1,10 @@
 #include <cstdio>
 #include <fstream>
-
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include "module_base/tool_quit.h"
 #include "module_io/read_input.h"
 #include "module_parameter/parameter.h"
@@ -146,7 +148,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.ndx, 0);
     EXPECT_EQ(param.inp.ndy, 0);
     EXPECT_EQ(param.inp.ndz, 0);
-    EXPECT_EQ(param.inp.diago_proc, std::min(GlobalV::NPROC, 4));
+    EXPECT_EQ(param.inp.diago_proc, std::min(PARAM.sys.nproc, 4));
     EXPECT_EQ(param.inp.pw_diag_nmax, 50);
     EXPECT_EQ(param.inp.diago_cg_prec, 1);
     EXPECT_EQ(param.inp.pw_diag_ndim, 4);
@@ -444,7 +446,7 @@ int main(int argc, char** argv)
     MPI_Init(&argc, &argv);
     testing::InitGoogleTest(&argc, argv);
 
-    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
+    MPI_Comm_size(MPI_COMM_WORLD, &PARAM.sys.nproc);
     MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
 
     int result = RUN_ALL_TESTS();

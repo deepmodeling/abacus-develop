@@ -1,7 +1,9 @@
-#include "module_base/global_variable.h"
-
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
+#include "module_base/global_variable.h"
 #include <streambuf>
 #ifdef __MPI
 #include "module_base/parallel_global.h"
@@ -49,7 +51,7 @@ TEST_F(IstateInfoTest, OutIstateInfoS1)
     GlobalV::NSPIN = 1;
     GlobalV::global_out_dir = "./";
     // mpi setting
-    Parallel_Global::init_pools(GlobalV::NPROC,
+    Parallel_Global::init_pools(PARAM.sys.nproc,
                                 GlobalV::MY_RANK,
                                 GlobalV::NSTOGROUP,
                                 GlobalV::KPAR,
@@ -100,7 +102,7 @@ TEST_F(IstateInfoTest, OutIstateInfoS2)
     GlobalV::NSPIN = 2;
     GlobalV::global_out_dir = "./";
     // mpi setting
-    Parallel_Global::init_pools(GlobalV::NPROC,
+    Parallel_Global::init_pools(PARAM.sys.nproc,
                                 GlobalV::MY_RANK,
                                 GlobalV::NSTOGROUP,
                                 GlobalV::KPAR,
@@ -152,7 +154,7 @@ int main(int argc, char** argv)
     MPI_Init(&argc, &argv);
 
     testing::InitGoogleTest(&argc, argv);
-    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
+    MPI_Comm_size(MPI_COMM_WORLD, &PARAM.sys.nproc);
     MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
     int result = RUN_ALL_TESTS();
 
