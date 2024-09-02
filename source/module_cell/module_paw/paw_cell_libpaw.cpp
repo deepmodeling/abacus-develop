@@ -1,4 +1,5 @@
 #include "module_base/tool_quit.h"
+#include "module_parameter/parameter.h"
 #include "module_base/tool_title.h"
 #include "paw_cell.h"
 #include "module_base/global_variable.h"

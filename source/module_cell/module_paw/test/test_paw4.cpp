@@ -1,4 +1,7 @@
 #include "gtest/gtest.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include <fstream>
 #include <iostream>
 
