@@ -1,15 +1,14 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include "module_io/write_dos_pw.h"
 #ifdef __MPI
 #include "mpi.h"
 #endif
 #include "for_testing_klist.h"
 #include "dos_test.h"
-
-#define private public
-#include "module_parameter/parameter.h"
-#undef private
 
 /************************************************
  *  unit test of write_dos_pw

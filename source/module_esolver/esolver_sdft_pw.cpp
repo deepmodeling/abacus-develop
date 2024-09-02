@@ -77,7 +77,7 @@ void ESolver_SDFT_PW::before_all_runners(const Input_para& inp, UnitCell& ucell)
 
     // 6) prepare some parameters for electronic wave functions initilization
     this->p_wf_init = new psi::WFInit<std::complex<double>>(GlobalV::init_wfc,
-                                                            GlobalV::KS_SOLVER,
+                                                            PARAM.inp.ks_solver,
                                                             PARAM.inp.basis_type,
                                                             GlobalV::psi_initializer,
                                                             &this->wf,
@@ -184,7 +184,7 @@ void ESolver_SDFT_PW::hamilt2density(int istep, int iter, double ethr)
                               this->stowf,
                               istep,
                               iter,
-                              GlobalV::KS_SOLVER,
+                              PARAM.inp.ks_solver,
                               hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER,
                               hsolver::DiagoIterAssist<std::complex<double>>::need_subspace,
                               hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX,

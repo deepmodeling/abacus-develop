@@ -1,10 +1,13 @@
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
+#define private public 
+#include "module_parameter/parameter.h"
+#undef private
 #include "memory"
 #include "module_base/global_variable.h"
 #include "module_base/mathzone.h"
 #include "module_cell/unitcell.h"
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include <valarray>
 #include <vector>
 #ifdef __MPI

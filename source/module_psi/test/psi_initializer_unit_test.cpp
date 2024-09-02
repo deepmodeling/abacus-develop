@@ -1,13 +1,14 @@
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include "../psi_initializer.h"
 #include "../psi_initializer_random.h"
 #include "../psi_initializer_atomic.h"
 #include "../psi_initializer_nao.h"
 #include "../psi_initializer_atomic_random.h"
 #include "../psi_initializer_nao_random.h"
-#define private public
-#include "module_parameter/parameter.h"
-#undef private
+
 
 /*
 =========================

@@ -1,11 +1,12 @@
 #include "gtest/gtest.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include "../relax.h"
 #include "module_cell/unitcell.h"
 #include "relax_test.h"
 #include <fstream>
-#define private public
-#include "module_parameter/parameter.h"
-#undef private
+
 
 class Test_SETGRAD : public testing::Test
 {

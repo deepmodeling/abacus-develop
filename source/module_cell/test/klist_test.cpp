@@ -1,7 +1,3 @@
-#include "module_base/mathzone.h"
-#include "module_base/parallel_global.h"
-#include "module_cell/parallel_kpoints.h"
-
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include <iostream>
@@ -21,6 +17,9 @@
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 #include "module_io/berryphase.h"
 #undef private
+#include "module_base/mathzone.h"
+#include "module_base/parallel_global.h"
+#include "module_cell/parallel_kpoints.h"
 bool berryphase::berry_phase_flag = false;
 
 pseudo::pseudo()

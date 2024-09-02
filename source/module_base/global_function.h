@@ -4,6 +4,7 @@
 #include "blas_connector.h"
 #include "global_function-func_each_2.h" // Peize Lin add 2016-09-07
 #include "global_variable.h"
+#include "module_parameter/parameter.h"
 #include "tool_check.h" // mohan add 2021-05-08
 #include "tool_quit.h"  // mohan add 2021-05-07
 #include "tool_title.h" // mohan add 2021-05-05
@@ -357,8 +358,8 @@ T ddot_real(const int& dim, const std::complex<T>* psi_L, const std::complex<T>*
 //==========================================================
 static inline bool IS_COLUMN_MAJOR_KS_SOLVER()
 {
-    return GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "scalapack_gvx" || GlobalV::KS_SOLVER == "cusolver"
-           || GlobalV::KS_SOLVER == "cusolvermp" || GlobalV::KS_SOLVER == "cg_in_lcao" || GlobalV::KS_SOLVER == "pexsi" || GlobalV::KS_SOLVER == "lapack";
+    return PARAM.inp.ks_solver == "genelpa" || PARAM.inp.ks_solver == "scalapack_gvx" || PARAM.inp.ks_solver == "cusolver"
+           || PARAM.inp.ks_solver == "cusolvermp" || PARAM.inp.ks_solver == "cg_in_lcao" || PARAM.inp.ks_solver == "pexsi" || PARAM.inp.ks_solver == "lapack";
 }
 
 } // namespace GlobalFunc

@@ -1,12 +1,11 @@
 #include <string>
-
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "module_elecstate/elecstate.h"
-#include "module_elecstate/elecstate_getters.h"
 #define private public
 #include "module_parameter/parameter.h"
 #undef private
+#include "module_elecstate/elecstate.h"
+#include "module_elecstate/elecstate_getters.h"
 Parameter PARMA;
 
 // mock functions
