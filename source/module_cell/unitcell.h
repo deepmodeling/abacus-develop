@@ -202,14 +202,6 @@ class UnitCell {
     void print_cell(std::ofstream& ofs) const;
     void print_cell_xyz(const std::string& fn) const;
 
-    /**
-     * @brief print structure as cif file
-     * @note developer should write functions as static as possible, avoid unnecessary
-     * dependency on class instance
-     * @param fn 
-     */
-    void print_cell_cif(const std::string& fn) const;
-
     void update_pos_tau(const double* pos);
     void update_pos_taud(const ModuleBase::Vector3<double>* posd_in);
     void update_pos_taud(double* posd_in);
