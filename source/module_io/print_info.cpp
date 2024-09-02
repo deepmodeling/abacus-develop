@@ -84,7 +84,7 @@ void Print_Info::setup_parameters(UnitCell &ucell, K_Vectors &kv)
 
 		if(GlobalV::GAMMA_ONLY_LOCAL)
 		{
-			if(GlobalV::COLOUR && GlobalV::MY_RANK==0)
+			if(PARAM.inp.colour && GlobalV::MY_RANK==0)
 			{
 				// red
 				printf( "\e[31m%-16s\e[0m", "Gamma");
@@ -97,7 +97,7 @@ void Print_Info::setup_parameters(UnitCell &ucell, K_Vectors &kv)
 		}
 		else
 		{
-			if(GlobalV::COLOUR && GlobalV::MY_RANK==0)
+			if(PARAM.inp.colour && GlobalV::MY_RANK==0)
 			{
 				// zi
 				printf( "\e[35m%-16d\e[0m", kv.get_nkstot());
@@ -124,7 +124,7 @@ void Print_Info::setup_parameters(UnitCell &ucell, K_Vectors &kv)
 		std::cout << " ---------------------------------------------------------" << std::endl;
 		if(PARAM.inp.basis_type=="lcao")
 		{
-			if(GlobalV::COLOUR && GlobalV::MY_RANK==0)
+			if(PARAM.inp.colour && GlobalV::MY_RANK==0)
 			{
 				std::string a = "Use Systematically Improvable Atomic bases";
 				printf( " \e[36m%-45s\e[0m\n", a.c_str());
@@ -167,7 +167,7 @@ void Print_Info::setup_parameters(UnitCell &ucell, K_Vectors &kv)
 
 		for(int it=0; it<ucell.ntype; ++it)
 		{
-			if(GlobalV::COLOUR && GlobalV::MY_RANK==0)
+			if(PARAM.inp.colour && GlobalV::MY_RANK==0)
 			{
 				printf( "\e[36m%-8s\e[0m", ucell.atoms[it].label.c_str());
 			}
@@ -196,7 +196,7 @@ void Print_Info::setup_parameters(UnitCell &ucell, K_Vectors &kv)
 				}
 				orb << "-" << ucell.atoms[it].Rcut << "au";
 
-				if(GlobalV::COLOUR && GlobalV::MY_RANK==0)
+				if(PARAM.inp.colour && GlobalV::MY_RANK==0)
 				{
 					printf( "\e[36m%-16s\e[0m", orb.str().c_str());
 					printf( "\e[36m%-12d\e[0m", norb);
