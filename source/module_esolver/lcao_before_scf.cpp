@@ -58,15 +58,15 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
     {
         int nsk = 0;
         int ncol = 0;
-        if (PARAM.globalv.gamma_only_local)
+        if (GlobalV::GAMMA_ONLY_LOCAL)
         {
             nsk = GlobalV::NSPIN;
             ncol = this->pv.ncol_bands;
-            if (PARAM.inp.ks_solver == "genelpa"
-                || PARAM.inp.ks_solver == "lapack"
-                || PARAM.inp.ks_solver == "pexsi"
-                || PARAM.inp.ks_solver == "cusolver"
-                || PARAM.inp.ks_solver == "cusolvermp") {
+            if (GlobalV::KS_SOLVER == "genelpa"
+                || GlobalV::KS_SOLVER == "lapack"
+                || GlobalV::KS_SOLVER == "pexsi"
+                || GlobalV::KS_SOLVER == "cusolver"
+                || GlobalV::KS_SOLVER == "cusolvermp") {
                 ncol = this->pv.ncol;
             }
         }
@@ -105,8 +105,8 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
     {
         elecstate::DensityMatrix<TK, double>* DM = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
         this->p_hamilt = new hamilt::HamiltLCAO<TK, TR>(
-            PARAM.globalv.gamma_only_local ? &(this->GG) : nullptr,
-            PARAM.globalv.gamma_only_local ? nullptr : &(this->GK),
+            GlobalV::GAMMA_ONLY_LOCAL ? &(this->GG) : nullptr,
+            GlobalV::GAMMA_ONLY_LOCAL ? nullptr : &(this->GK),
             &this->pv,
             this->pelec->pot,
             this->kv,
@@ -127,7 +127,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
     {
         const Parallel_Orbitals* pv = &this->pv;
         // build and save <psi(0)|alpha(R)> at beginning
-        GlobalC::ld.build_psialpha(PARAM.inp.cal_force,
+        GlobalC::ld.build_psialpha(GlobalV::CAL_FORCE,
                                    GlobalC::ucell,
                                    GlobalC::ORB,
                                    GlobalC::GridD,
@@ -135,7 +135,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
 
         if (PARAM.inp.deepks_out_unittest)
         {
-            GlobalC::ld.check_psialpha(PARAM.inp.cal_force, GlobalC::ucell, GlobalC::ORB, GlobalC::GridD);
+            GlobalC::ld.check_psialpha(GlobalV::CAL_FORCE, GlobalC::ucell, GlobalC::ORB, GlobalC::GridD);
         }
     }
 #endif
@@ -154,8 +154,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
                    &(this->pv),
                    GlobalV::NSPIN,
                    this->kv,
-                   PARAM.inp.ks_solver,
-                   this->phsol,
+                   GlobalV::KS_SOLVER,
                    this->p_hamilt,
                    this->psi,
                    this->pelec);

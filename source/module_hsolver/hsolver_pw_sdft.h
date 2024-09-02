@@ -32,13 +32,6 @@ class HSolverPW_SDFT : public HSolverPW<std::complex<double>>
                        const double pw_diag_thr_in,
                        const bool skip_charge);
 
-    virtual double set_diagethr(double diag_ethr_in, const int istep, const int iter, const double drho) override;
-    
-    void set_KS_ne(const double& KS_ne_in)
-    {
-        stoiter.KS_ne = KS_ne_in;
-    }
-
     Stochastic_Iter stoiter;
 };
 } // namespace hsolver

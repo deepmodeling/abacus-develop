@@ -1515,17 +1515,17 @@ These variables are used to control the output of properties.
 
 - **Type**: Integer \[Integer\](optional)
 - **Description**: 
-  
   The first integer controls whether to output the charge density on real space grids:
   - 1. Output the charge density (in Bohr^-3) on real space grids into the density files in the folder `OUT.${suffix}`. The files are named as:
     - nspin = 1: SPIN1_CHG.cube;
     - nspin = 2: SPIN1_CHG.cube, and SPIN2_CHG.cube;
     - nspin = 4: SPIN1_CHG.cube, SPIN2_CHG.cube, SPIN3_CHG.cube, and SPIN4_CHG.cube.
-  - 2. On top of 1, also output the initial charge density. The files are named as:
+  - 2: On top of 1, also output the initial charge density. The files are named as:
     - nspin = 1: SPIN1_CHG_INI.cube
     - nspin = 2: SPIN1_CHG_INI.cube, and SPIN2_CHG_INI.cube;
     - nspin = 4: SPIN1_CHG_INI.cube, SPIN2_CHG_INI.cube, SPIN3_CHG_INI.cube, and SPIN4_CHG_INI.cube.
-  
+  - -1: disable the charge density auto-back-up file `{suffix}-CHARGE-DENSITY.restart`, useful for large systems.
+    
   The second integer controls the precision of the charge density output, if not given, will use `3` as default. For purpose restarting from this file and other high-precision involved calculation, recommend to use `10`.
 
   ---

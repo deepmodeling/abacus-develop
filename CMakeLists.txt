@@ -492,7 +492,10 @@ if (ENABLE_CNPY)
     include_directories(${cnpy_INCLUDE_DIR})
   endif()
   include_directories(${cnpy_SOURCE_DIR})
-  target_link_libraries(${ABACUS_BIN_NAME} cnpy)
+  
+  # find ZLIB and link
+  find_package(ZLIB REQUIRED)
+  target_link_libraries(${ABACUS_BIN_NAME} cnpy ZLIB::ZLIB)
   add_compile_definitions(__USECNPY)
 endif()
 

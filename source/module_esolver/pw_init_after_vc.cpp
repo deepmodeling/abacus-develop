@@ -90,10 +90,7 @@ void ESolver_KS_PW<T, Device>::init_after_vc(const Input_para& inp, UnitCell& uc
         this->pw_wfc->collect_local_pw(inp.erf_ecut,
                                        inp.erf_height,
                                        inp.erf_sigma);
-
-        delete this->phsol;
         this->init_psi = false;
-        this->allocate_hsolver();
 
         delete this->pelec;
         this->pelec

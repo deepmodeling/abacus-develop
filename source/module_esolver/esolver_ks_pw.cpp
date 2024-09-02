@@ -72,8 +72,6 @@ ESolver_KS_PW<T, Device>::ESolver_KS_PW()
 template <typename T, typename Device>
 ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
 {
-    // delete HSolver and ElecState
-    this->deallocate_hsolver();
 
     // delete Hamilt
     this->deallocate_hamilt();
@@ -109,12 +107,6 @@ void ESolver_KS_PW<T, Device>::before_all_runners(const Input_para& inp, UnitCel
 {
     // 1) call before_all_runners() of ESolver_KS
     ESolver_KS<T, Device>::before_all_runners(inp, ucell);
-
-    // 2) initialize HSolver
-    if (this->phsol == nullptr)
-    {
-        this->allocate_hsolver();
-    }
 
     // 3) initialize ElecState,
     if (this->pelec == nullptr)
@@ -348,7 +340,6 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, c
 {
     ModuleBase::timer::tick("ESolver_KS_PW", "hamilt2density");
 
-    if (this->phsol != nullptr)
     {
         // reset energy
         this->pelec->f_en.eband = 0.0;
@@ -404,10 +395,6 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, c
                 this->pelec->cal_bandgap_updw();
             }
         }
-    }
-    else
-    {
-        ModuleBase::WARNING_QUIT("ESolver_KS_PW", "HSolver has not been initialed!");
     }
 
     // calculate the delta_harris energy

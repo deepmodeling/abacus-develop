@@ -95,7 +95,7 @@ void ESolver_KS_LCAO_TDDFT::before_all_runners(const Input_para& inp, UnitCell& 
                                  two_center_bundle_);
 
     // 5) allocate H and S matrices according to computational resources
-    LCAO_domain::divide_HS_in_frag(PARAM.globalv.gamma_only_local, this->pv, kv.get_nks());
+    LCAO_domain::divide_HS_in_frag(GlobalV::GAMMA_ONLY_LOCAL, this->pv, kv.get_nks());
 
     // 6) initialize Density Matrix
     dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)
@@ -173,10 +173,8 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(const int istep, const int iter, cons
         this->pelec->f_en.demet = 0.0;
         if (this->psi != nullptr)
         {
-            // this->phsol->solve(this->p_hamilt, this->psi[0], this->pelec_td, PARAM.inp.ks_solver);
-
-            hsolver::HSolverLCAO<std::complex<double>> hsolver_lcao_obj(&this->pv, PARAM.inp.ks_solver);
-            hsolver_lcao_obj.solve(this->p_hamilt, this->psi[0], this->pelec_td, PARAM.inp.ks_solver, false);
+            hsolver::HSolverLCAO<std::complex<double>> hsolver_lcao_obj(&this->pv, GlobalV::KS_SOLVER);
+            hsolver_lcao_obj.solve(this->p_hamilt, this->psi[0], this->pelec_td, GlobalV::KS_SOLVER, false);
         }
     }
     else
@@ -242,7 +240,7 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
     // print Hamiltonian and Overlap matrix
     if (this->conv_elec)
     {
-        if (!PARAM.globalv.gamma_only_local)
+        if (!GlobalV::GAMMA_ONLY_LOCAL)
         {
             this->GK.renew(true);
         }
@@ -267,7 +265,7 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
                         bit,
                         hsolver::HSolverLCAO<std::complex<double>>::out_mat_hs[1],
                         1,
-                        PARAM.inp.out_app_flag,
+                        GlobalV::out_app_flag,
                         "H",
                         "data-" + std::to_string(ik),
                         this->pv,
@@ -279,7 +277,7 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
                         bit,
                         hsolver::HSolverLCAO<std::complex<double>>::out_mat_hs[1],
                         1,
-                        PARAM.inp.out_app_flag,
+                        GlobalV::out_app_flag,
                         "S",
                         "data-" + std::to_string(ik),
                         this->pv,
@@ -289,7 +287,7 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
         }
     }
 
-    if (elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_lcao && (this->conv_elec || iter == PARAM.inp.scf_nmax)
+    if (elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_lcao && (this->conv_elec || iter == GlobalV::SCF_NMAX)
         && (istep % PARAM.inp.out_interval == 0))
     {
         ModuleIO::write_wfc_nao(elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_lcao,

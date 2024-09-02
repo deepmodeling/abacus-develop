@@ -126,10 +126,6 @@ void ESolver_SDFT_PW::before_all_runners(const Input_para& inp, UnitCell& ucell)
         ModuleBase::Memory::record("SDFT::chiortho", size * sizeof(std::complex<double>));
     }
 
-    // 9) initialize the hsolver
-    // It should be removed after esolver_ks does not use phsol.
-    this->phsol = new hsolver::HSolverPW_SDFT(&this->kv, this->pw_wfc, &this->wf, this->stowf, this->stoche, this->init_psi);
-
     return;
 }
 
@@ -192,9 +188,10 @@ void ESolver_SDFT_PW::hamilt2density(int istep, int iter, double ethr)
                               false);
     this->init_psi = true;
 
-    // temporary 
+    // temporary
     // set_diagethr need it
-    ((hsolver::HSolverPW_SDFT*)phsol)->set_KS_ne(hsolver_pw_sdft_obj.stoiter.KS_ne);
+    // ((hsolver::HSolverPW_SDFT*)phsol)->set_KS_ne(hsolver_pw_sdft_obj.stoiter.KS_ne);
+    this->esolver_KS_ne = hsolver_pw_sdft_obj.stoiter.KS_ne;
 
     if (GlobalV::MY_STOGROUP == 0)
     {

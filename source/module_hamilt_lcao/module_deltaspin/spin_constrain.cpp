@@ -257,12 +257,15 @@ void SpinConstrain<FPTYPE, Device>::set_target_mag()
                 mag.x = element_data.target_mag_val * std::sin(radian_angle1) * std::cos(radian_angle2);
                 mag.y = element_data.target_mag_val * std::sin(radian_angle1) * std::sin(radian_angle2);
                 mag.z = element_data.target_mag_val * std::cos(radian_angle1);
-                if (std::abs(mag.x) < 1e-14)
+                if (std::abs(mag.x) < 1e-14) {
                     mag.x = 0.0;
-                if (std::abs(mag.y) < 1e-14)
+}
+                if (std::abs(mag.y) < 1e-14) {
                     mag.y = 0.0;
-                if (std::abs(mag.z) < 1e-14)
+}
+                if (std::abs(mag.z) < 1e-14) {
                     mag.z = 0.0;
+}
             }
             this->target_mag_[iat] = mag;
         }
@@ -506,14 +509,12 @@ bool SpinConstrain<FPTYPE, Device>::get_decay_grad_switch()
 
 template <typename FPTYPE, typename Device>
 void SpinConstrain<FPTYPE, Device>::set_solver_parameters(K_Vectors& kv_in,
-                                                          hsolver::HSolver<FPTYPE, Device>* phsol_in,
                                                           hamilt::Hamilt<FPTYPE, Device>* p_hamilt_in,
                                                           psi::Psi<FPTYPE>* psi_in,
                                                           elecstate::ElecState* pelec_in,
                                                           std::string KS_SOLVER_in)
 {
     this->kv_ = kv_in;
-    this->phsol = phsol_in;
     this->p_hamilt = p_hamilt_in;
     this->psi = psi_in;
     this->pelec = pelec_in;
