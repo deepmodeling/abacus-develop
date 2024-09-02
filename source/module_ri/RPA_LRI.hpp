@@ -73,11 +73,11 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>
                                         const K_Vectors& kv)
 {
     Mix_DMk_2D mix_DMk_2D;
-    mix_DMk_2D.set_nks(kv.get_nks(), GlobalV::GAMMA_ONLY_LOCAL);
+    mix_DMk_2D.set_nks(kv.get_nks(), PARAM.globalv.gamma_only_local);
     mix_DMk_2D.set_mixing(nullptr);
     mix_DMk_2D.mix(dm.get_DMK_vector(), true);
     const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> Ds
-        = GlobalV::GAMMA_ONLY_LOCAL
+        = PARAM.globalv.gamma_only_local
         ? RI_2D_Comm::split_m2D_ktoR<Tdata>(kv, mix_DMk_2D.get_DMk_gamma_out(), *dm.get_paraV_pointer(), GlobalV::NSPIN)
         : RI_2D_Comm::split_m2D_ktoR<Tdata>(kv, mix_DMk_2D.get_DMk_k_out(), *dm.get_paraV_pointer(), GlobalV::NSPIN);
 
