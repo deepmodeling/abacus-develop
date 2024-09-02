@@ -1,6 +1,8 @@
 #include <bits/stdc++.h>
 #include "../kernels/cuda/sph.cuh"
-
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include "float.h"
 #include "cuda_runtime.h"
 #include "device_functions.h"
