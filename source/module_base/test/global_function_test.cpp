@@ -1,3 +1,8 @@
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include "../global_function.h"
 #include "../global_variable.h"
 #include "../vector3.h"
@@ -7,9 +12,6 @@
 #include <cstring>
 #include <fstream>
 #include <streambuf>
-
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include <time.h>
 
 /************************************************
@@ -651,7 +653,7 @@ TEST_F(GlobalFunctionTest, COPYARRAY)
 
 TEST_F(GlobalFunctionTest,IsColumnMajor)
 {
-	GlobalV::KS_SOLVER = "genelpa";
+	PARAM.input.ks_solver = "genelpa";
 	EXPECT_TRUE(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER());
 }
 

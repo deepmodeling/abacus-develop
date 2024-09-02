@@ -122,7 +122,7 @@ class PsiIntializerUnitTest : public ::testing::Test {
             GlobalV::NPOL = 1;
             PARAM.input.calculation = "scf";
             GlobalV::init_wfc = "random";
-            GlobalV::KS_SOLVER = "cg";
+            PARAM.input.ks_solver = "cg";
             GlobalV::DOMAG = false;
             GlobalV::DOMAG_Z = false;
             // lattice
