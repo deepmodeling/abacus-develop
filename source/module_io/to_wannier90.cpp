@@ -33,7 +33,7 @@ toWannier90::toWannier90(const bool& out_wannier_mmn,
         ModuleBase::WARNING_QUIT("toWannier90", "The wannier90 interface does not currently support kpar groups");
     }
 
-    if (GlobalV::NSTOGROUP != 1)
+    if (PARAM.inp.bndpar != 1)
     {
         ModuleBase::WARNING_QUIT("toWannier90", "The wannier90 interface does not currently support bndpar groups");
     }

@@ -67,7 +67,7 @@ TEST_F(ChargeMpiTest, reduce_diff_pools1)
         GlobalV::KPAR = 2;
         Parallel_Global::divide_pools(PARAM.sys.nproc,
                                       GlobalV::MY_RANK,
-                                      GlobalV::NSTOGROUP,
+                                      PARAM.input.bndpar,
                                       GlobalV::KPAR,
                                       GlobalV::NPROC_IN_STOGROUP,
                                       GlobalV::RANK_IN_STOGROUP,
@@ -113,7 +113,7 @@ TEST_F(ChargeMpiTest, reduce_diff_pools2)
         GlobalV::KPAR = 3;
         Parallel_Global::divide_pools(PARAM.sys.nproc,
                                       GlobalV::MY_RANK,
-                                      GlobalV::NSTOGROUP,
+                                      PARAM.input.bndpar,
                                       GlobalV::KPAR,
                                       GlobalV::NPROC_IN_STOGROUP,
                                       GlobalV::RANK_IN_STOGROUP,
@@ -168,7 +168,7 @@ TEST_F(ChargeMpiTest, rho_mpi)
         GlobalV::KPAR = 2;
         Parallel_Global::divide_pools(PARAM.sys.nproc,
                                       GlobalV::MY_RANK,
-                                      GlobalV::NSTOGROUP,
+                                      PARAM.input.bndpar,
                                       GlobalV::KPAR,
                                       GlobalV::NPROC_IN_STOGROUP,
                                       GlobalV::RANK_IN_STOGROUP,

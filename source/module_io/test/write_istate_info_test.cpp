@@ -53,7 +53,7 @@ TEST_F(IstateInfoTest, OutIstateInfoS1)
     // mpi setting
     Parallel_Global::init_pools(PARAM.sys.nproc,
                                 GlobalV::MY_RANK,
-                                GlobalV::NSTOGROUP,
+                                PARAM.input.bndpar,
                                 GlobalV::KPAR,
                                 GlobalV::NPROC_IN_STOGROUP,
                                 GlobalV::RANK_IN_STOGROUP,
@@ -104,7 +104,7 @@ TEST_F(IstateInfoTest, OutIstateInfoS2)
     // mpi setting
     Parallel_Global::init_pools(PARAM.sys.nproc,
                                 GlobalV::MY_RANK,
-                                GlobalV::NSTOGROUP,
+                                PARAM.input.bndpar,
                                 GlobalV::KPAR,
                                 GlobalV::NPROC_IN_STOGROUP,
                                 GlobalV::RANK_IN_STOGROUP,
