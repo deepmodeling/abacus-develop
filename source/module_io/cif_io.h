@@ -8,77 +8,76 @@
 namespace ModuleIO
 {
 /**
- * @file cif_io.h
- * @brief This file contains the implementation of the functions for reading and writing CIF files.
+ * # CifParser
+ * ## INTRODUCTION
+ * ### In short
+ * Tools for CIF file I/O.
  * 
- * Due to the space group and point group symmetry information are not always present, 
- * here will assume system only has P1 and C1 symmetry.
+ * ### Supported structure of CIF
+ * A example (official template of CIF) is shown here (https://www.iucr.org/__data/iucr/ftp/pub/form.cif), 
+ * but present impl. is ONLY capable to parse a CIF with ONE structure. If there are multiple structures
+ * in the CIF file, unexpected behavior may occur.
  * 
- * A typical CIF file with no symmetry (P1 and C1) is presented below, downloaded from
- * materials project: https://materialsproject.org/
+ * A CIF file always contain two kinds of data structure, the first is simply the key-value pair, the second
+ * is table which is lead by a keyword "loop_".
  * 
- * # generated using pymatgen
- * data_C
- * _symmetry_space_group_name_H-M   'P 1'
- * _cell_length_a   2.46772428
- * _cell_length_b   2.46772428
- * _cell_length_c   8.68503800
- * _cell_angle_alpha   90.00000000
- * _cell_angle_beta   90.00000000
- * _cell_angle_gamma   120.00000758
- * _symmetry_Int_Tables_number   1
- * _chemical_formula_structural   C
- * _chemical_formula_sum   C4
- * _cell_volume   45.80317575
- * _cell_formula_units_Z   4
+ * #### Key-value pair
+ * key-value pair can have two types:
+ * 
+ * Type 1: the most general
+ * _KEY1 VALUE1
+ * _KEY2 VALUE2
+ * ...
+ * Type 2: text box
+ * _KEY1
+ * ;
+ * very long text
+ * VeRy LoNg TeXt
+ * ...
+ * ;
+ * 
+ * #### Table
+ * The table in CIF must be lead by a keyword "loop_", and all titles of the columns will be list first, 
+ * then all the rest are the values of the table. For example:
  * loop_
- *  _symmetry_equiv_pos_site_id
- *  _symmetry_equiv_pos_as_xyz
- *   1  'x, y, z'
- * loop_
- *  _atom_site_type_symbol
- *  _atom_site_label
- *  _atom_site_symmetry_multiplicity
- *  _atom_site_fract_x
- *  _atom_site_fract_y
- *  _atom_site_fract_z
- *  _atom_site_occupancy
- *   C  C0  1  0.00000000  0.00000000  0.75000000  1
- *   C  C1  1  0.00000000  0.00000000  0.25000000  1
- *   C  C2  1  0.33333300  0.66666700  0.75000000  1
- *   C  C3  1  0.66666700  0.33333300  0.25000000  1
- *
- * For cif file from COD, which always contains experimental information and even SHELX
- * single-crystal refinement information, is much more complicated.
- * see https://www.crystallography.net/cod/ for more information.
+ * _KEY1 
+ * _KEY2 
+ * _KEY3
+ * ...
+ * VALUE11 VALUE21 VALUE31
+ * VALUE12 VALUE22 VALUE32
+ * ...
+ * Once the number of values cannot be divided by the number of keys, will cause an assertion error.
  * 
- * Design of this "class"
- * see implementation of CifParser in pymatgen package.
  * 
- * Usage of this "class"
- * 1. Read CIF file and store the information in a map.
+ * ## Usage of this "class"
+ * ### Read CIF file and store the information in a map
+ * type the following line:
  * std::map<std::string, std::vector<std::string>> cif_info;
  * ModuleIO::CifParser::from_cif("test.cif", cif_info);
- * Information of the cif file can be accessed by the key, for example:
- * get all the atom coordinates by:
- * std::vector<std::string> atom_site_fract_coords = cif_info["_atom_site_fract_x"];
- * ... and so for y and z components.
- * One should note that for some cif files, the number will be in the format like
+ * 
+ * Information of the cif file will stored in key-value pair manner, like
+ * cif_info["_cell_length_a"] = {"2.46772428"};
+ * cif_info["_cell_length_b"] = {"2.46772428"};
+ * ...
+ * cif_info["_atom_site_label"] = {"C1", "C2", ...};
+ * cif_info["_atom_site_fract_x"] = {"0.00000000", "0.33333300", ...};
+ * ...
+ * NOTE1: only keys in table will have value with length larger than 1, otherwise all words will be
+ * saved in the only element in std::vector<std::string>. For example please see unittest of this
+ * class at source/module_io/test/cif_io_test.cpp.
+ * NOTE2: One should note that for some cif files, the number will be in the format like
  * "0.00000000(1)", which means the uncertainty of the number is 1 in the last digit.
  * In this case, user should be careful to convert the string to double by its own.
  * 
- * However, the formal structure read-in from cif to assign values to the UnitCell instance
- * is not implemented yet. This is because the cif file does not have pseudopotential and
- * numerical orbital information, this needs further careful design.
- * 
- * 2. Write CIF file with the given information.
+ * ### Write CIF file with the given information.
  * ModuleIO::CifParser::to_cif("test.cif", ...);
  * For detailed usage, see the static methods in the class. A to-be-deprecated usage is
  * simple as:
  * ModuleIO::CifParser cif("test.cif", ucell);
  * , where ucell is an instance of UnitCell. This usage is not encouraged.
  * 
- * Pythonization information:
+ * ## Pythonization information
  * 1. function to_cif
  * it is recommended to pythonize the 2nd overload of this function, the 3rd one will be
  * deprecated in the future.
@@ -169,16 +168,12 @@ namespace ModuleIO
                                  const int rank = 0);
 
             /**
-             * @brief get information by key from the stored information of cif file. However, due to
-             * the keys vary from different cif files, there are uncertainties in the return value.
-             * In principle, however, there are still some common keys, such as "data_tag", "title", 
-             * "_cell_length_a", "_cell_length_b", "_cell_length_c", "_cell_angle_alpha", "_cell_angle_beta",
-             * "_cell_angle_gamma", "_cell_volume", and the atom site information, which can be accessed
-             * with the key "atom_site_label", "atom_site_fract_x", "atom_site_fract_y", "atom_site_fract_z",
-             * "atom_site_occupancy".
+             * @brief get information by key from the stored information of cif file, if the key is not found, 
+             * an empty vector will be returned.
              * 
              * @param key the key to search
-             * @return std::vector<std::string>, if the key is not found, an empty vector will be returned 
+             * @return std::vector<std::string>. Only columns in table will have more than one element, otherwise
+             * all the information will be stored in the only element (the first).
              */
             std::vector<std::string> get(const std::string& key);
 
