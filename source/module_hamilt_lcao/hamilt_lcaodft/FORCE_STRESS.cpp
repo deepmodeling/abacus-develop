@@ -142,7 +142,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
     }
 
     //! atomic forces from integration (4 terms)
-    this->integral_part(GlobalV::GAMMA_ONLY_LOCAL,
+    this->integral_part(PARAM.globalv.gamma_only_local,
                         isforce,
                         isstress,
                         fsr,
@@ -259,7 +259,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
         }
     }
 
-    if (!GlobalV::GAMMA_ONLY_LOCAL)
+    if (!PARAM.globalv.gamma_only_local)
     {
         this->flk.finish_ftable(fsr);
     }
@@ -413,7 +413,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
 
                 if (!GlobalV::deepks_equiv) // training with force label not supported by equivariant version now
                 {
-                    if (GlobalV::GAMMA_ONLY_LOCAL)
+                    if (PARAM.globalv.gamma_only_local)
                     {
                         const std::vector<std::vector<double>>& dm_gamma
                             = dynamic_cast<const elecstate::ElecStateLCAO<double>*>(pelec)->get_DM()->get_DMK_vector();

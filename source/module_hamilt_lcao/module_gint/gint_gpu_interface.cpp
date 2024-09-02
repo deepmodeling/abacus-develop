@@ -17,7 +17,7 @@ void Gint::gpu_vlocal_interface(Gint_inout* inout) {
         ylmcoef[i] = ModuleBase::Ylm::ylmcoef[i];
     }
 
-    double* pvpR = GlobalV::GAMMA_ONLY_LOCAL ? nullptr : this->pvpR_reduced[inout->ispin];
+    double* pvpR = PARAM.globalv.gamma_only_local ? nullptr : this->pvpR_reduced[inout->ispin];
     GintKernel::gint_vl_gpu(this->hRGint,
                             inout->vl,
                             ylmcoef,
@@ -26,7 +26,7 @@ void Gint::gpu_vlocal_interface(Gint_inout* inout) {
                             *this->gridt,
                             ucell,
                             pvpR,
-                            GlobalV::GAMMA_ONLY_LOCAL);
+                            PARAM.globalv.gamma_only_local);
 
     ModuleBase::TITLE("Gint_interface", "cal_gint_vlocal");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal");

@@ -21,7 +21,7 @@ void grid_prepare(
     ModuleBase::timer::tick("LCAO_domain","grid_prepare");
 	const UnitCell* ucell = &GlobalC::ucell;
 	const LCAO_Orbitals* orb = &GlobalC::ORB;
-    if(GlobalV::GAMMA_ONLY_LOCAL)
+    if(PARAM.globalv.gamma_only_local)
     {
 		gint_gamma.prep_grid(
 				gt, 

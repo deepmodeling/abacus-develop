@@ -23,4 +23,8 @@ time.json
 __pycache__
 abacus.json
 *.npy
-
+abacus.txt
+gcc.sh
+modify_cmake.py
+replace.cpp
+show.txt

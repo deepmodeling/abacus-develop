@@ -98,7 +98,7 @@ UnitCell ucell;
  *   - K_Vectors()
  *     - basic parameters (nks,nkstot,nkstot_ibz) are set
  *   - read_kpoints()
- *     - ReadKpointsGammaOnlyLocal: GlobalV::GAMMA_ONLY_LOCAL = 1
+ *     - ReadKpointsGammaOnlyLocal: PARAM.sys.gamma_only_local = 1
  *     - ReadKpointsKspacing: generate KPT from kspacing parameter
  *     - ReadKpointsGamma: "Gamma" mode of `KPT` file
  *     - ReadKpointsMP: "MP" mode of `KPT` file
@@ -296,7 +296,7 @@ TEST_F(KlistTest, MP)
 
 TEST_F(KlistTest, ReadKpointsGammaOnlyLocal)
 {
-    GlobalV::GAMMA_ONLY_LOCAL = true;
+    PARAM.sys.gamma_only_local = true;
     std::string kfile = "KPT_GO";
     kv->nspin = 1;
     kv->read_kpoints(kfile);
@@ -305,7 +305,7 @@ TEST_F(KlistTest, ReadKpointsGammaOnlyLocal)
     EXPECT_THAT(str, testing::HasSubstr("Gamma"));
     EXPECT_THAT(str, testing::HasSubstr("1 1 1 0 0 0"));
     ifs.close();
-    GlobalV::GAMMA_ONLY_LOCAL = false; // this is important for the following tests because it is global
+    PARAM.sys.gamma_only_local = false; // this is important for the following tests because it is global
 }
 
 TEST_F(KlistTest, ReadKpointsKspacing)

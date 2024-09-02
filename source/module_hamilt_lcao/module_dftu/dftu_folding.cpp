@@ -280,7 +280,7 @@ void DFTU::folding_matrix_k_new(const int ik,
     }
 
     // get SR and fold to mat_k
-    if(GlobalV::GAMMA_ONLY_LOCAL)
+    if(PARAM.globalv.gamma_only_local)
     {
         dynamic_cast<hamilt::HamiltLCAO<double, double>*>(p_ham)->updateSk(ik, hk_type);
     }

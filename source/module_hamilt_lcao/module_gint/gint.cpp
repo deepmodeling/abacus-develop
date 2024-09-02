@@ -185,7 +185,7 @@ void Gint::initialize_pvpR(const UnitCell& ucell_in, Grid_Driver* gd) {
         }
     }
 
-    if (GlobalV::GAMMA_ONLY_LOCAL && GlobalV::NSPIN != 4) {
+    if (PARAM.globalv.gamma_only_local && GlobalV::NSPIN != 4) {
         this->hRGint->fix_gamma();
     }
     for (int T1 = 0; T1 < ucell_in.ntype; ++T1) {
