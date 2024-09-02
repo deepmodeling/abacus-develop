@@ -57,10 +57,11 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in, const K_Vectors &kv_in)
 
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>
 		abfs_same_atom = Exx_Abfs::Construct_Orbs::abfs_same_atom( this->lcaos, this->info.kmesh_times, this->info.pca_threshold );
-	if(this->info.files_abfs.empty())
+	if(this->info.files_abfs.empty()) {
 		this->abfs = abfs_same_atom;
-	else
+	} else {
 		this->abfs = Exx_Abfs::IO::construct_abfs( abfs_same_atom, GlobalC::ORB, this->info.files_abfs, this->info.kmesh_times );
+}
 	Exx_Abfs::Construct_Orbs::print_orbs_size(this->abfs, GlobalV::ofs_running);
 
 	auto get_ccp_parameter = [this]() -> std::map<std::string,double>
@@ -85,8 +86,9 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in, const K_Vectors &kv_in)
     this->abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp(this->abfs, this->info.ccp_type, get_ccp_parameter(), this->info.ccp_rmesh_times);
 
 
-	for( size_t T=0; T!=this->abfs.size(); ++T )
+	for( size_t T=0; T!=this->abfs.size(); ++T ) {
 		GlobalC::exx_info.info_ri.abfs_Lmax = std::max( GlobalC::exx_info.info_ri.abfs_Lmax, static_cast<int>(this->abfs[T].size())-1 );
+}
 
 	this->cv.set_orbitals(
 		this->lcaos, this->abfs, this->abfs_ccp,
@@ -107,11 +109,13 @@ void Exx_LRI<Tdata>::cal_exx_ions()
 //	this->m_abfslcaos_lcaos.init_radial_table(Rradial);
 
 	std::vector<TA> atoms(GlobalC::ucell.nat);
-	for(int iat=0; iat<GlobalC::ucell.nat; ++iat)
+	for(int iat=0; iat<GlobalC::ucell.nat; ++iat) {
 		atoms[iat] = iat;
+}
 	std::map<TA,TatomR> atoms_pos;
-	for(int iat=0; iat<GlobalC::ucell.nat; ++iat)
+	for(int iat=0; iat<GlobalC::ucell.nat; ++iat) {
 		atoms_pos[iat] = RI_Util::Vector3_to_array3( GlobalC::ucell.atoms[ GlobalC::ucell.iat2it[iat] ].tau[ GlobalC::ucell.iat2ia[iat] ] );
+}
 	const std::array<TatomR,Ndim> latvec
 		= {RI_Util::Vector3_to_array3(GlobalC::ucell.a1),
 		   RI_Util::Vector3_to_array3(GlobalC::ucell.a2),
@@ -252,9 +256,11 @@ void Exx_LRI<Tdata>::cal_exx_force()
 	for(int is=0; is<GlobalV::NSPIN; ++is)
 	{
 		this->exx_lri.cal_force({"","",std::to_string(is),"",""});
-		for(std::size_t idim=0; idim<Ndim; ++idim)
-			for(const auto &force_item : this->exx_lri.force[idim])
+		for(std::size_t idim=0; idim<Ndim; ++idim) {
+			for(const auto &force_item : this->exx_lri.force[idim]) {
 				this->force_exx(force_item.first, idim) += std::real(force_item.second);
+}
+}
 	}
 
 	const double SPIN_multiple = std::map<int,double>{{1,2}, {2,1}, {4,1}}.at(GlobalV::NSPIN);				// why?
@@ -274,9 +280,11 @@ void Exx_LRI<Tdata>::cal_exx_stress()
 	for(int is=0; is<GlobalV::NSPIN; ++is)
 	{
 		this->exx_lri.cal_stress({"","",std::to_string(is),"",""});
-		for(std::size_t idim0=0; idim0<Ndim; ++idim0)
-			for(std::size_t idim1=0; idim1<Ndim; ++idim1)
+		for(std::size_t idim0=0; idim0<Ndim; ++idim0) {
+			for(std::size_t idim1=0; idim1<Ndim; ++idim1) {
 				this->stress_exx(idim0,idim1) += std::real(this->exx_lri.stress(idim0,idim1));
+}
+}
 	}
 
 	const double SPIN_multiple = std::map<int,double>{{1,2}, {2,1}, {4,1}}.at(GlobalV::NSPIN);				// why?

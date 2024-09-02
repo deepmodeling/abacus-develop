@@ -28,12 +28,15 @@ class ReadRhogTest : public ::testing::Test
     }
     virtual void TearDown()
     {
-        if (rhopw != nullptr)
+        if (rhopw != nullptr) {
             delete rhopw;
-        if (rhog[0] != nullptr)
+}
+        if (rhog[0] != nullptr) {
             delete[] rhog[0];
-        if (rhog != nullptr)
+}
+        if (rhog != nullptr) {
             delete[] rhog;
+}
     }
 };
 

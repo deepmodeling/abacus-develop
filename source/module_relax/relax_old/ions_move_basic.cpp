@@ -28,8 +28,8 @@ void Ions_Move_Basic::setup_gradient(const UnitCell &ucell, const ModuleBase::ma
     ModuleBase::TITLE("Ions_Move_Basic", "setup_gradient");
 
     assert(ucell.ntype > 0);
-    assert(pos != NULL);
-    assert(grad != NULL);
+    assert(pos != nullptr);
+    assert(grad != nullptr);
     assert(dim == 3 * ucell.nat);
 
     ModuleBase::GlobalFunc::ZEROS(pos, dim);
@@ -64,8 +64,8 @@ void Ions_Move_Basic::move_atoms(UnitCell &ucell, double *move, double *pos)
 {
     ModuleBase::TITLE("Ions_Move_Basic", "move_atoms");
 
-    assert(move != NULL);
-    assert(pos != NULL);
+    assert(move != nullptr);
+    assert(pos != nullptr);
 
     //------------------------
     // for test only
@@ -94,8 +94,9 @@ void Ions_Move_Basic::move_atoms(UnitCell &ucell, double *move, double *pos)
     const double move_threshold = 1.0e-10;
     const int total_freedom = ucell.nat * 3;
 
-    if (ModuleSymmetry::Symmetry::symm_flag && ucell.symm.all_mbl && ucell.symm.nrotk > 0)
+    if (ModuleSymmetry::Symmetry::symm_flag && ucell.symm.all_mbl && ucell.symm.nrotk > 0) {
         ucell.symm.symmetrize_vec3_nat(move);
+}
 
     for (int i = 0; i < total_freedom; i++)
     {
