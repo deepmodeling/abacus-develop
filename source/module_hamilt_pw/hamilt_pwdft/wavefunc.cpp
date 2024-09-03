@@ -126,7 +126,7 @@ void wavefunc::wfcinit(psi::Psi<std::complex<double>> *psi_in, ModulePW::PW_Basi
     return;
 }
 
-int wavefunc::get_starting_nw(void)const
+int wavefunc::get_starting_nw()const
 {
     if (init_wfc == "file")
     {
@@ -274,7 +274,8 @@ void diago_PAO_in_pw_k2(const int &ik,
 	else if(p_wf->init_wfc.substr(0,6)=="atomic")
 	{
 		ModuleBase::ComplexMatrix wfcatom(starting_nw, nbasis);//added by zhengdy-soc
-		if(GlobalV::test_wf)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "starting_nw", starting_nw);
+		if(GlobalV::test_wf) {ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "starting_nw", starting_nw);
+}
 
 		p_wf->atomic_wfc(
 				ik, 
@@ -755,7 +756,8 @@ void wavefunc::init_after_vc(const int nks)
 
 	if((PARAM.inp.basis_type=="lcao" || PARAM.inp.basis_type=="lcao_in_pw") || winput::out_spillage==2)
 	{
-		if(wanf2 != nullptr)delete[] wanf2;
+		if(wanf2 != nullptr) {delete[] wanf2;
+}
 		this->wanf2 = new ModuleBase::ComplexMatrix [nks2];
 		for (int ik = 0; ik < nks2; ik++)
 		{
