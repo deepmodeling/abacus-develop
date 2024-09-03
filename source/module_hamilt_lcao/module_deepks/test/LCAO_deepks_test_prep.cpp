@@ -1,6 +1,8 @@
 #include "LCAO_deepks_test.h"
 #include "module_base/global_variable.h"
-
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 void test_deepks::preparation()
 {
     this->count_ntype();
@@ -19,7 +21,7 @@ void test_deepks::preparation()
 
 void test_deepks::set_parameters()
 {
-    GlobalV::BASIS_TYPE = "lcao";
+    PARAM.input.basis_type = "lcao";
     // GlobalV::global_pseudo_type= "auto";
     GlobalV::PSEUDORCUT = 15.0;
     GlobalV::global_out_dir = "./";
