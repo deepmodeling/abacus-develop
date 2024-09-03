@@ -56,7 +56,6 @@ extern bool fixed_atoms;
 
 extern int SCF_NMAX;      // 8.4
 
-extern std::string BASIS_TYPE; // xiaohui add 2013-09-01
 extern std::string KS_SOLVER;  // xiaohui add 2013-09-01
 extern double SEARCH_RADIUS;   // 11.1 // mohan add 2011-03-10
 
