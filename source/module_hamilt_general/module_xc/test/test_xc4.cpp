@@ -1,5 +1,6 @@
 #include "../xc_functional.h"
 #include "gtest/gtest.h"
+#include "xctest.h"
 #include "../exx_info.h"
 
 /************************************************
@@ -27,7 +28,7 @@ namespace GlobalC
 	Exx_Info exx_info;
 }
 
-class XCTest_SCAN : public testing::Test
+class XCTest_SCAN : public XCTest
 {
     protected:
         std::vector<double> e_,v1_,v2_,v3_;

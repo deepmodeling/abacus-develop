@@ -1,5 +1,6 @@
-#include "../xc_functional.h"
 #include "gtest/gtest.h"
+#include "xctest.h"
+#include "../xc_functional.h"
 #include "../exx_info.h"
 #include "xc3_mock.h"
 #include "module_base/matrix.h"
@@ -13,7 +14,9 @@
 // gradcorr, which calculates the gradient part of GGA functional
 // gradwfc, which is used to obtain the derivative of wavefunction
 
-class XCTest_GRADCORR : public testing::Test
+
+
+class XCTest_GRADCORR : public XCTest
 {
     protected:
 
@@ -142,7 +145,7 @@ TEST_F(XCTest_GRADCORR, set_xc_type)
     }
 }
 
-class XCTest_GRADWFC : public testing::Test
+class XCTest_GRADWFC : public XCTest
 {
     protected:
 
