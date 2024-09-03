@@ -1,3 +1,7 @@
+#include "gtest/gtest.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include "module_base/inverse_matrix.h"
 #include "module_base/lapack_connector.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
@@ -10,8 +14,6 @@
 #include "mpi.h"
 #include "module_basis/module_pw/test/test_tool.h"
 #include <complex>
-
-#include "gtest/gtest.h"
 #include <random>
 
 #include <ATen/core/tensor_map.h>
@@ -147,7 +149,7 @@ public:
         // warp the subspace_func into a lambda function
         auto subspace_func = [ha](const ct::Tensor& psi_in, ct::Tensor& psi_out) { /*do nothing*/ };
         hsolver::DiagoCG<double> cg(
-            GlobalV::BASIS_TYPE,
+            PARAM.input.basis_type,
             GlobalV::CALCULATION,
             hsolver::DiagoIterAssist<double>::need_subspace,
             subspace_func,
