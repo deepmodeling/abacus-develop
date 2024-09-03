@@ -47,7 +47,7 @@ void ESolver_OF::init_elecstate(UnitCell& ucell)
     {
         pot_register_in.push_back("surchem");
     }
-    if (GlobalV::EFIELD_FLAG)
+    if (PARAM.inp.efield_flag)
     {
         pot_register_in.push_back("efield");
     }
@@ -484,7 +484,7 @@ void ESolver_OF::print_info()
             titles.push_back("E_sol_cav");
             energies_Ry.push_back(this->pelec->f_en.esol_cav);
         }
-        if (GlobalV::EFIELD_FLAG)
+        if (PARAM.inp.efield_flag)
         {
             titles.push_back("E_efield");
             energies_Ry.push_back(elecstate::Efield::etotefield);

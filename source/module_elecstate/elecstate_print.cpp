@@ -357,7 +357,7 @@ void ElecState::print_etot(const bool converged,
             titles.push_back("E_sol_cav");
             energies_Ry.push_back(this->f_en.esol_cav);
         }
-        if (GlobalV::EFIELD_FLAG)
+        if (PARAM.inp.efield_flag)
         {
             titles.push_back("E_efield");
             energies_Ry.push_back(elecstate::Efield::etotefield);
