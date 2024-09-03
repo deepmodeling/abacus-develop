@@ -345,7 +345,7 @@ const std::string cod1000065 = ""
 //     }
 // }
 
-TEST(CifParserTest, FromCifSimpleTest)
+TEST(CifParserTest, ReadSimpleTest)
 {
     int rank = 0;
 #ifdef __MPI
@@ -363,7 +363,7 @@ TEST(CifParserTest, FromCifSimpleTest)
     }
 #endif
     std::map<std::string, std::vector<std::string>> data;
-    ModuleIO::CifParser::from_cif("mp-2516584.cif", data, rank);
+    ModuleIO::CifParser::read("mp-2516584.cif", data, rank);
     // delete the file
 #ifdef __MPI
     if (rank == 0)
@@ -419,7 +419,7 @@ TEST(CifParserTest, FromCifSimpleTest)
     EXPECT_EQ(data["_atom_site_occupancy"][3], "1");
 }
 
-TEST(CifParserTest, FromCifMediumTest)
+TEST(CifParserTest, ReadMediumTest)
 {
     int rank = 0;
 #ifdef __MPI
@@ -437,7 +437,7 @@ TEST(CifParserTest, FromCifMediumTest)
     }
 #endif
     std::map<std::string, std::vector<std::string>> data;
-    ModuleIO::CifParser::from_cif("cod-1000065.cif", data, rank);
+    ModuleIO::CifParser::read("cod-1000065.cif", data, rank);
     // delete the file
 #ifdef __MPI
     if (rank == 0)
@@ -503,7 +503,7 @@ TEST(CifParserTest, FromCifMediumTest)
 }
 // because it is relatively hard to define loop_ by ABACUS itself, here the cooperative test
 // will be performed by write-read manner.
-TEST(CifParserTest, ToCifTest)
+TEST(CifParserTest, WriteTest)
 {
     int rank = 0;
 #ifdef __MPI
@@ -518,16 +518,16 @@ TEST(CifParserTest, ToCifTest)
                                                  0.0, 0.0, 0.25, 
                                                  0.333333, 0.666667, 0.75, 
                                                  0.666667, 0.333333, 0.25};
-    ModuleIO::CifParser::to_cif(fcif, 
+    ModuleIO::CifParser::write(fcif, 
                                 abc_angles.data(), 
                                 natom, 
                                 atom_site_labels.data(), 
                                 atom_site_fract.data(),
-                                "# Generated during unittest of function ModuleIO::CifParser::to_cif",
+                                "# Generated during unittest of function ModuleIO::CifParser::write",
                                 "data_test",
                                 rank);
     std::map<std::string, std::vector<std::string>> data;
-    ModuleIO::CifParser::from_cif(fcif, data, rank);
+    ModuleIO::CifParser::read(fcif, data, rank);
     // delete the file
 #ifdef __MPI
     if (rank == 0)

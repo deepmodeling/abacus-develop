@@ -314,16 +314,16 @@ void ModuleIO::CifParser::_unpack_ucell(const UnitCell& ucell,
     }
 }
 
-void ModuleIO::CifParser::to_cif(const std::string& fcif,
-                                 const double* abc_angles,
-                                 const int natom,
-                                 const std::string* atom_site_labels,
-                                 const double* atom_site_fract_coords,
-                                 const std::string& title,
-                                 const std::string& data_tag,
-                                 const int rank,
-                                 const double* atom_site_occups,
-                                 const std::string& cell_formula_units_z)
+void ModuleIO::CifParser::write(const std::string& fcif,
+                                const double* abc_angles,
+                                const int natom,
+                                const std::string* atom_site_labels,
+                                const double* atom_site_fract_coords,
+                                const std::string& title,
+                                const std::string& data_tag,
+                                const int rank,
+                                const double* atom_site_occups,
+                                const std::string& cell_formula_units_z)
 {
 #ifdef __MPI // well...very simple...
     if (rank != 0)
@@ -334,7 +334,7 @@ void ModuleIO::CifParser::to_cif(const std::string& fcif,
     std::ofstream ofs(fcif);
     if (!ofs)
     {
-        ModuleBase::WARNING_QUIT("ModuleIO::CifParser::to_cif", "Cannot open file " + fcif);
+        ModuleBase::WARNING_QUIT("ModuleIO::CifParser::write", "Cannot open file " + fcif);
     }
     ofs << title << std::endl;
     ofs << data_tag << std::endl;
@@ -387,15 +387,15 @@ void ModuleIO::CifParser::to_cif(const std::string& fcif,
     ofs.close();
 }
 
-void ModuleIO::CifParser::to_cif(const std::string& fcif,
-                                 const std::vector<double>& abc_angles,
-                                 const std::vector<std::string>& atom_site_labels,
-                                 const std::vector<double>& atom_site_fract_coords,
-                                 const std::string& title,
-                                 const std::string& data_tag,
-                                 const int rank,
-                                 const std::vector<double>& atom_site_occups,
-                                 const std::string& cell_formula_units_z)
+void ModuleIO::CifParser::write(const std::string& fcif,
+                                const std::vector<double>& abc_angles,
+                                const std::vector<std::string>& atom_site_labels,
+                                const std::vector<double>& atom_site_fract_coords,
+                                const std::string& title,
+                                const std::string& data_tag,
+                                const int rank,
+                                const std::vector<double>& atom_site_occups,
+                                const std::string& cell_formula_units_z)
 {
 #ifdef __MPI
     if (rank != 0)
@@ -404,23 +404,23 @@ void ModuleIO::CifParser::to_cif(const std::string& fcif,
     }
 #endif
     const double* occups = atom_site_occups.empty() ? nullptr : atom_site_occups.data();
-    to_cif(fcif.c_str(), 
-           abc_angles.data(), 
-           atom_site_labels.size(), 
-           atom_site_labels.data(), 
-           atom_site_fract_coords.data(), 
-           title, 
-           data_tag, 
-           rank,
-           occups, 
-           cell_formula_units_z);
+    write(fcif.c_str(), 
+          abc_angles.data(), 
+          atom_site_labels.size(), 
+          atom_site_labels.data(), 
+          atom_site_fract_coords.data(), 
+          title, 
+          data_tag, 
+          rank,
+          occups, 
+          cell_formula_units_z);
 }
 
-void ModuleIO::CifParser::to_cif(const std::string& fcif,
-                                 const UnitCell& ucell,
-                                 const std::string& title,
-                                 const std::string& data_tag,
-                                 const int rank)
+void ModuleIO::CifParser::write(const std::string& fcif,
+                                const UnitCell& ucell,
+                                const std::string& title,
+                                const std::string& data_tag,
+                                const int rank)
 {
 #ifdef __MPI
     if (rank != 0)
@@ -439,7 +439,7 @@ void ModuleIO::CifParser::to_cif(const std::string& fcif,
     std::copy(vecc.begin(), vecc.end(), vec.begin() + 6);
     std::vector<double> abc_angles(6);
     vec_to_abc_angles(vec.data(), abc_angles.data());
-    to_cif(fcif.c_str(), abc_angles.data(), natom, atom_site_labels.data(), atom_site_fract_coords.data(), title, data_tag);
+    write(fcif.c_str(), abc_angles.data(), natom, atom_site_labels.data(), atom_site_fract_coords.data(), title, data_tag);
 }
 
 // reading cif is another hard (physically) and laborious work. The cif sometimes can be easily read line by line,
@@ -453,9 +453,9 @@ void ModuleIO::CifParser::to_cif(const std::string& fcif,
 // 2. in each block, split with words starting with "_"
 // 3. scan the splited words
 
-void ModuleIO::CifParser::from_cif(const std::string& fcif,
-                                   std::map<std::string, std::vector<std::string>>& out,
-                                   const int rank)
+void ModuleIO::CifParser::read(const std::string& fcif,
+                               std::map<std::string, std::vector<std::string>>& out,
+                               const int rank)
 {
     // okey for read, cannot just use if rank != 0 then return, because need to broadcast the map
     out.clear();
@@ -466,7 +466,7 @@ void ModuleIO::CifParser::from_cif(const std::string& fcif,
     std::ifstream ifs(fcif);
     if (!ifs)
     {
-        ModuleBase::WARNING_QUIT("ModuleIO::CifParser::from_cif", "Cannot open file " + fcif);
+        ModuleBase::WARNING_QUIT("ModuleIO::CifParser::read", "Cannot open file " + fcif);
     }
     std::string cache; // first read all lines into cache
     while (ifs.good())
@@ -503,7 +503,7 @@ void ModuleIO::CifParser::from_cif(const std::string& fcif,
 
 ModuleIO::CifParser::CifParser(const std::string& fcif)
 {
-    from_cif(fcif, raw_);
+    read(fcif, raw_);
 }
 
 std::vector<std::string> ModuleIO::CifParser::get(const std::string& key)
