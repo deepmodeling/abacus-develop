@@ -209,10 +209,7 @@ void Input_Conv::Convert()
         GlobalV::fixed_atoms = PARAM.inp.fixed_atoms;
     }
 
-    for (int i = 0; i < 3; i++)
-    {
-        GlobalV::KSPACING[i] = PARAM.inp.kspacing[i];
-    }
+
     GlobalV::NBANDS = PARAM.inp.nbands;
 
     GlobalV::device_flag = base_device::information::get_device_flag(PARAM.inp.device,
