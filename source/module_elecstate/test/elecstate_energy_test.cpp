@@ -1,12 +1,12 @@
-#include <string>
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "module_elecstate/elecstate.h"
-#include "module_elecstate/elecstate_getters.h"
 #define private public
 #include "module_parameter/parameter.h"
 #undef private
+#include "module_elecstate/elecstate.h"
+#include "module_elecstate/elecstate_getters.h"
+#include <string>
 Parameter PARMA;
 
 // mock functions
@@ -84,7 +84,7 @@ class MockElecState : public ElecState
         GlobalV::NLOCAL = 6;
         GlobalV::ESOLVER_TYPE = "ksdft";
         GlobalV::LSPINORB = false;
-        GlobalV::BASIS_TYPE = "pw";
+        PARAM.input.basis_type = "pw";
         GlobalV::KPAR = 1;
         GlobalV::NPROC_IN_POOL = 1;
         PARAM.input.sc_mag_switch = 1;
