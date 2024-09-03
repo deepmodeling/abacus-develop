@@ -150,8 +150,8 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase2)
     Ions_Move_Basic::update_iter = 1;
     Ions_Move_Basic::ediff = 0.0;
     GlobalV::test_relax_method = 1;
+    GlobalV::FORCE_THR = 1.0;
     PARAM.input.out_level = "ie";
-    PARAM.input.force_thr = 1.0;
     grad[0] = 1.0;
 
     // Call the function being tested
@@ -189,7 +189,7 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase3)
     Ions_Move_Basic::ediff = 1.0;
     GlobalV::test_relax_method = 1;
     PARAM.input.out_level = "ie";
-    PARAM.input.force_thr = 1.0;
+    GlobalV::FORCE_THR = 1.0;
     grad[0] = 1.0;
 
     // Call the function being tested
