@@ -423,7 +423,7 @@ void InfoNonlocal::setupNonlocal(const int& ntype, Atom* atoms, std::ofstream& l
     // from .UPF file directly.
     // mohan note 2011-03-04
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    if (GlobalV::BASIS_TYPE == "lcao" || GlobalV::BASIS_TYPE == "lcao_in_pw")
+    if (PARAM.inp.basis_type == "lcao" || PARAM.inp.basis_type == "lcao_in_pw")
     {
         delete[] this->Beta;
         this->Beta = new Numerical_Nonlocal[ntype];

@@ -186,7 +186,7 @@ void HSolverLCAO<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>&
                 REQUIRES_OK(ndim == 2, "dims of psi_in should be less than or equal to 2");
             };
 
-        DiagoCG<T, Device> cg(GlobalV::BASIS_TYPE,
+        DiagoCG<T, Device> cg(PARAM.inp.basis_type,
                               GlobalV::CALCULATION,
                               DiagoIterAssist<T, Device>::need_subspace,
                               subspace_func,

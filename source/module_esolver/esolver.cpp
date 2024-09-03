@@ -30,7 +30,7 @@ void ESolver::printname()
 std::string determine_type()
 {
     std::string esolver_type = "none";
-    if (GlobalV::BASIS_TYPE == "pw")
+    if (PARAM.inp.basis_type == "pw")
     {
         if (GlobalV::ESOLVER_TYPE == "sdft")
         {
@@ -45,7 +45,7 @@ std::string determine_type()
             esolver_type = "ksdft_pw";
         }
     }
-    else if (GlobalV::BASIS_TYPE == "lcao_in_pw")
+    else if (PARAM.inp.basis_type == "lcao_in_pw")
     {
 #ifdef __LCAO
 		if(GlobalV::ESOLVER_TYPE == "sdft")
@@ -60,7 +60,7 @@ std::string determine_type()
 		ModuleBase::WARNING_QUIT("ESolver", "Calculation involving numerical orbitals must be compiled with __LCAO");
 #endif
     }
-    else if (GlobalV::BASIS_TYPE == "lcao")
+    else if (PARAM.inp.basis_type == "lcao")
     {
 #ifdef __LCAO
         if (GlobalV::ESOLVER_TYPE == "tddft")

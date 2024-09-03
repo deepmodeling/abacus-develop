@@ -418,8 +418,8 @@ void Stochastic_Iter::calHsqrtchi(Stochastic_WF& stowf)
         {
 
             if (GlobalC::ppcell.nkb > 0
-                && (GlobalV::BASIS_TYPE == "pw"
-                    || GlobalV::BASIS_TYPE == "lcao_in_pw")) // xiaohui add 2013-09-02. Attention...
+                && (PARAM.inp.basis_type == "pw"
+                    || PARAM.inp.basis_type == "lcao_in_pw")) // xiaohui add 2013-09-02. Attention...
             {
                 GlobalC::ppcell.getvnl(ik, GlobalC::ppcell.vkb);
             }

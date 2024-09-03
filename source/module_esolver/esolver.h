@@ -69,7 +69,7 @@ class ESolver
 /**
  * @brief A subrutine called in init_esolver()
  *        This function returns type of ESolver
- *        Based on GlobalV::BASIS_TYPE and GlobalV::ESOLVER_TYPE
+ *        Based on PARAM.inp.basis_type and GlobalV::ESOLVER_TYPE
  * 
  * @return [out] std::string The type of ESolver
  */

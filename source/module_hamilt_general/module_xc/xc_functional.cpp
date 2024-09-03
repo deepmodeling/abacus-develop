@@ -210,7 +210,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
 		std::cerr << "\n OPTX untested please test,";
 	}
 
-    if((func_type == 4 || func_type == 5) && GlobalV::BASIS_TYPE == "pw")
+    if((func_type == 4 || func_type == 5) && PARAM.inp.basis_type == "pw")
     {
         ModuleBase::WARNING_QUIT("set_xc_type","hybrid functional not realized for planewave yet");
     }

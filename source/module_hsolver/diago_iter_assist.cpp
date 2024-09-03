@@ -1,5 +1,5 @@
 #include "diago_iter_assist.h"
-
+#include "module_parameter/parameter.h"
 #include "module_base/blas_connector.h"
 #include "module_base/complexmatrix.h"
 #include "module_base/constants.h"
@@ -300,12 +300,12 @@ void DiagoIterAssist<T, Device>::diagH_subspace_init(hamilt::Hamilt<T, Device>* 
     //=======================
     // diagonize the H-matrix
     //=======================
-    if ((GlobalV::BASIS_TYPE == "lcao" || GlobalV::BASIS_TYPE == "lcao_in_pw") && GlobalV::CALCULATION == "nscf")
+    if ((PARAM.inp.basis_type == "lcao" || PARAM.inp.basis_type == "lcao_in_pw") && GlobalV::CALCULATION == "nscf")
     {
         GlobalV::ofs_running << " Not do zgemm to get evc." << std::endl;
     }
-    else if ((GlobalV::BASIS_TYPE == "lcao" || GlobalV::BASIS_TYPE == "lcao_in_pw"
-              || (GlobalV::BASIS_TYPE == "pw" && GlobalV::psi_initializer))
+    else if ((PARAM.inp.basis_type == "lcao" || PARAM.inp.basis_type == "lcao_in_pw"
+              || (PARAM.inp.basis_type == "pw" && GlobalV::psi_initializer))
              && (GlobalV::CALCULATION == "scf" || GlobalV::CALCULATION == "md"
                  || GlobalV::CALCULATION == "relax")) // pengfei 2014-10-13
     {

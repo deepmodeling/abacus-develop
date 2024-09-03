@@ -142,7 +142,7 @@ void ESolver_KS_PW<T, Device>::before_all_runners(const Input_para& inp, UnitCel
     //! 7) prepare some parameters for electronic wave functions initilization
     this->p_wf_init = new psi::WFInit<T, Device>(GlobalV::init_wfc,
                                                  GlobalV::KS_SOLVER,
-                                                 GlobalV::BASIS_TYPE,
+                                                 PARAM.inp.basis_type,
                                                  GlobalV::psi_initializer,
                                                  &this->wf,
                                                  this->pw_wfc);
@@ -736,7 +736,7 @@ void ESolver_KS_PW<T, Device>::after_all_runners()
         }
     }
 
-    if (GlobalV::BASIS_TYPE == "pw" && winput::out_spillage) // xiaohui add 2013-09-01
+    if (PARAM.inp.basis_type == "pw" && winput::out_spillage) // xiaohui add 2013-09-01
     {
         //  calculate spillage value.
 
