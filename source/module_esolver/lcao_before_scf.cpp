@@ -156,7 +156,6 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
                    GlobalV::NSPIN,
                    this->kv,
                    GlobalV::KS_SOLVER,
-                   this->phsol,
                    this->p_hamilt,
                    this->psi,
                    this->pelec);

@@ -21,7 +21,6 @@ namespace GlobalV
 int NBANDS = 0;
 int NLOCAL = 0;        // total number of local basis.
 
-double KSPACING[3] = {0.0, 0.0, 0.0};
 
 double PSEUDORCUT = 0;
 

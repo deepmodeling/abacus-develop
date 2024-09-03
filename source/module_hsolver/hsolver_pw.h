@@ -10,7 +10,7 @@ namespace hsolver
 {
 
 template <typename T, typename Device = base_device::DEVICE_CPU>
-class HSolverPW : public HSolver<T, Device>
+class HSolverPW
 {
   private:
     // Note GetTypeReal<T>::type will
@@ -46,8 +46,6 @@ class HSolverPW : public HSolver<T, Device>
                const int diag_iter_max_in,
                const double iter_diag_thr_in,
                const bool skip_charge);
-
-    virtual Real set_diagethr(Real diag_ethr_in, const int istep, const int iter, const Real drho) override;
     
   protected:
     // diago caller
@@ -98,6 +96,7 @@ class HSolverPW : public HSolver<T, Device>
 
     void paw_func_after_kloop(psi::Psi<T, Device>& psi, elecstate::ElecState* pes);
 #endif
+    
 };
 
 
