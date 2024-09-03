@@ -8,6 +8,7 @@
 #include "module_cell/module_symmetry/symmetry.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/berryphase.h"
+#include "module_parameter/parameter.h"
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
 #endif
@@ -214,9 +215,9 @@ bool K_Vectors::read_kpoints(const std::string& fn)
         ofs << "1 1 1 0 0 0" << std::endl;
         ofs.close();
     }
-    else if (GlobalV::KSPACING[0] > 0.0)
+    else if (PARAM.inp.kspacing[0] > 0.0)
     {
-        if (GlobalV::KSPACING[1] <= 0 || GlobalV::KSPACING[2] <= 0)
+        if (PARAM.inp.kspacing[1] <= 0 || PARAM.inp.kspacing[2] <= 0)
         {
             ModuleBase::WARNING_QUIT("K_Vectors", "kspacing should > 0");
         };
@@ -226,11 +227,11 @@ bool K_Vectors::read_kpoints(const std::string& fn)
         double b2 = sqrt(btmp.e21 * btmp.e21 + btmp.e22 * btmp.e22 + btmp.e23 * btmp.e23);
         double b3 = sqrt(btmp.e31 * btmp.e31 + btmp.e32 * btmp.e32 + btmp.e33 * btmp.e33);
         int nk1
-            = std::max(1, static_cast<int>(b1 * ModuleBase::TWO_PI / GlobalV::KSPACING[0] / GlobalC::ucell.lat0 + 1));
+            = std::max(1, static_cast<int>(b1 * ModuleBase::TWO_PI / PARAM.inp.kspacing[0] / GlobalC::ucell.lat0 + 1));
         int nk2
-            = std::max(1, static_cast<int>(b2 * ModuleBase::TWO_PI / GlobalV::KSPACING[1] / GlobalC::ucell.lat0 + 1));
+            = std::max(1, static_cast<int>(b2 * ModuleBase::TWO_PI / PARAM.inp.kspacing[1] / GlobalC::ucell.lat0 + 1));
         int nk3
-            = std::max(1, static_cast<int>(b3 * ModuleBase::TWO_PI / GlobalV::KSPACING[2] / GlobalC::ucell.lat0 + 1));
+            = std::max(1, static_cast<int>(b3 * ModuleBase::TWO_PI / PARAM.inp.kspacing[2] / GlobalC::ucell.lat0 + 1));
 
         GlobalV::ofs_warning << " Generate k-points file according to KSPACING: " << fn << std::endl;
         std::ofstream ofs(fn.c_str());
