@@ -4,12 +4,12 @@
 #include <algorithm>
 #include "module_base/formatter.h"
 #include "module_io/cif_io.h"
+#include <regex>
 #include <cassert>
 #include "module_base/tool_quit.h"
 #ifdef __MPI
 #include "module_base/parallel_common.h"
 #endif
-
 
 double deg2rad(double deg) { return deg * M_PI / 180.0; }
 double rad2deg(double rad) { return rad * 180.0 / M_PI; }
@@ -299,11 +299,15 @@ void ModuleIO::CifParser::_unpack_ucell(const UnitCell& ucell,
     std::for_each(vecb.begin(), vecb.end(), [lat0, bohr2angstrom](double& x) { x *= lat0 * bohr2angstrom; });
     std::for_each(vecc.begin(), vecc.end(), [lat0, bohr2angstrom](double& x) { x *= lat0 * bohr2angstrom; });
     natom = ucell.nat;
+    assert(natom > 0); // ensure the number of atoms is positive
     atom_site_labels.resize(natom);
     atom_site_fract_coords.resize(3 * natom);
     for (int i = 0; i < natom; ++i)
     {
-        atom_site_labels[i] = ucell.atoms[ucell.iat2it[i]].ncpp.psd; // this is purely the element symbol
+        atom_site_labels[i] = ucell.atoms[ucell.iat2it[i]].ncpp.psd; // the most standard label
+        atom_site_labels[i] = atom_site_labels[i].empty() ? ucell.atom_label[ucell.iat2it[i]]: atom_site_labels[i];
+        atom_site_labels[i] = atom_site_labels[i].empty() ? ucell.atoms[ucell.iat2it[i]].label: atom_site_labels[i];
+        assert(!atom_site_labels[i].empty()); // ensure the label is not empty
         atom_site_fract_coords[3 * i] = ucell.atoms[ucell.iat2it[i]].taud[ucell.iat2ia[i]].x;
         atom_site_fract_coords[3 * i + 1] = ucell.atoms[ucell.iat2it[i]].taud[ucell.iat2ia[i]].y;
         atom_site_fract_coords[3 * i + 2] = ucell.atoms[ucell.iat2it[i]].taud[ucell.iat2ia[i]].z;
@@ -408,7 +412,7 @@ void ModuleIO::CifParser::to_cif(const std::string& fcif,
            title, 
            data_tag, 
            rank,
-           atom_site_occups.data(), 
+           occups, 
            cell_formula_units_z);
 }
 
