@@ -80,10 +80,8 @@ class ESolver_DP : public ESolver
      * @brief determine the type map of DP model
      *
      * @param ucell unitcell information
-     * @return true if find keyword "type_map" in DP model
-     * @return false if not find keyword "type_map" in DP model
      */
-    bool type_map(const UnitCell& ucell);
+    void type_map(const UnitCell& ucell);
 
     /**
      * @brief DeePMD related variables for ESolver_DP class
@@ -108,7 +106,6 @@ class ESolver_DP : public ESolver
      * the potential energy and forces.
      */
     std::string dp_file;          ///< the directory of DP model file
-    std::vector<int> dp_type;     ///< convert atom type to dp type if find type_map
     std::vector<double> cell;     ///< the lattice vectors
     std::vector<int> atype;       ///< the atom type corresponding to DP model
     std::vector<double> coord;    ///< the atomic positions
