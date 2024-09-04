@@ -247,7 +247,6 @@ void Input_Conv::Convert()
 
     GlobalV::NSPIN = PARAM.inp.nspin;
 
-    GlobalV::CAL_FORCE = PARAM.inp.cal_force;
     GlobalV::FORCE_THR = PARAM.inp.force_thr;
 
 #ifdef __LCAO

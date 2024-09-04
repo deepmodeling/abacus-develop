@@ -24,7 +24,6 @@ int NLOCAL = 0;        // total number of local basis.
 int NSPIN = 1;       // LDA
 bool TWO_EFERMI = false; // two fermi energy, exist only magnetization is fixed.
 double nupdown = 0.0;
-int CAL_FORCE = 0; // if cal_force >1, means do the grid integration 'cal_force' times.
 double FORCE_THR = 1.0e-3;
 bool CAL_STRESS = false;
 double PRESSURE = 0.0;
