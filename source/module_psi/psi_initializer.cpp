@@ -156,7 +156,8 @@ void psi_initializer<T, Device>::random_t(T* psi, const int iw_start, const int 
                     
                 for(int ir=0; ir < nxy; ir++)
                 {
-                    if(this->pw_wfc_->fftixy2ip[ir] < 0) continue;
+                    if(this->pw_wfc_->fftixy2ip[ir] < 0) { continue;
+}
                     if(GlobalV::RANK_IN_POOL==0)
                     {
                         for(int iz=0; iz<nz; iz++)

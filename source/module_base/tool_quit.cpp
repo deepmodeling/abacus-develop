@@ -38,7 +38,7 @@ void WARNING(const std::string &file,const std::string &description)
     return;
 }
 
-void QUIT(void)
+void QUIT()
 {
 	QUIT(0);
 }
