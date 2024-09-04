@@ -21,7 +21,6 @@ namespace GlobalV
 int NBANDS = 0;
 int NLOCAL = 0;        // total number of local basis.
 
-int DIP_COR_FLAG = 0;     // 7: add dipole field
 bool GATE_FLAG = false;   // add gate field
 bool out_app_flag = true; // whether output r(R), H(R), S(R), T(R), and dH(R) matrices in an
                           // append manner during MD  liuyu 2023-03-20
