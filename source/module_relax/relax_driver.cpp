@@ -12,7 +12,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver)
     ModuleBase::TITLE("Ions", "opt_ions");
     ModuleBase::timer::tick("Ions", "opt_ions");
 
-    if (GlobalV::CALCULATION == "relax" || GlobalV::CALCULATION == "cell-relax")
+    if (PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax")
     {
         if (!GlobalV::relax_new)
         {
@@ -34,8 +34,8 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver)
         time_t estart = time(nullptr);
 
         if (GlobalV::OUT_LEVEL == "ie"
-            && (GlobalV::CALCULATION == "relax" || GlobalV::CALCULATION == "cell-relax" || GlobalV::CALCULATION == "scf"
-                || GlobalV::CALCULATION == "nscf")
+            && (PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax" || PARAM.inp.calculation == "scf"
+                || PARAM.inp.calculation == "nscf")
             && (GlobalV::ESOLVER_TYPE != "lr"))
         {
             Print_Info::print_screen(stress_step, force_step, istep);
@@ -52,7 +52,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver)
         time_t fstart = time(nullptr);
         ModuleBase::matrix force;
         ModuleBase::matrix stress;
-        if (GlobalV::CALCULATION == "scf" || GlobalV::CALCULATION == "relax" || GlobalV::CALCULATION == "cell-relax")
+        if (PARAM.inp.calculation == "scf" || PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax")
         {
             // I'm considering putting force and stress
             // as part of ucell and use ucell to pass information
@@ -73,7 +73,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver)
                 p_esolver->cal_stress(stress);
             }
 
-            if (GlobalV::CALCULATION == "relax" || GlobalV::CALCULATION == "cell-relax")
+            if (PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax")
             {
                 if (GlobalV::relax_new)
                 {
@@ -103,7 +103,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver)
                 GlobalC::ucell.print_stru_file(ss.str(),
                                                GlobalV::NSPIN,
                                                true,
-                                               GlobalV::CALCULATION == "md",
+                                               PARAM.inp.calculation == "md",
                                                PARAM.inp.out_mul,
                                                need_orb,
                                                GlobalV::deepks_setorb,
@@ -116,7 +116,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver)
                     GlobalC::ucell.print_stru_file(ss1.str(),
                                                    GlobalV::NSPIN,
                                                    true,
-                                                   GlobalV::CALCULATION == "md",
+                                                   PARAM.inp.calculation == "md",
                                                    PARAM.inp.out_mul,
                                                    need_orb,
                                                    GlobalV::deepks_setorb,
@@ -185,7 +185,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver)
         std::cout << " ION DYNAMICS FINISHED :)" << std::endl;
     }
 
-    if (GlobalV::CALCULATION == "relax" || GlobalV::CALCULATION == "cell-relax")
+    if (PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax")
     {
         ModuleBase::Global_File::delete_tmp_files();
     }
