@@ -7,6 +7,7 @@
 
 #ifdef __ELPA
 #include "module_hsolver/diago_elpa.h"
+#include "module_hsolver/diago_elpa_native.h"
 #endif
 
 namespace hamilt {
@@ -26,6 +27,7 @@ void OperatorLCAO<double, double>::get_hs_pointers() {
         BlasConnector::copy(this->hsk->get_size(), this->hsk->get_sk(), inc, this->smatrix_k, inc);
 #ifdef __ELPA
         hsolver::DiagoElpa<double>::DecomposedState = 0;
+        hsolver::DiagoElpaNative<double>::DecomposedState = 0;
 #endif
         this->new_e_iteration = false;
     }

@@ -60,13 +60,13 @@ AddTest(
 
 AddTest(
   TARGET cell_klist_test
-  LIBS ${math_libs} base device symmetry
+  LIBS ${math_libs} base device symmetry parameter
   SOURCES klist_test.cpp ../klist.cpp ../parallel_kpoints.cpp ../../module_io/output.cpp
 )
 
 AddTest(
   TARGET cell_klist_test_para1
-  LIBS ${math_libs} base device symmetry
+  LIBS ${math_libs} base device symmetry parameter
   SOURCES klist_test_para.cpp ../klist.cpp ../parallel_kpoints.cpp ../../module_io/output.cpp
 )
 

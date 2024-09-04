@@ -20,7 +20,6 @@ namespace GlobalV
 extern int NBANDS;
 extern int NLOCAL;        // 1.1 // mohan add 2009-05-29
 
-extern double KSPACING[3];
 
 extern double PSEUDORCUT;
 

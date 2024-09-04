@@ -31,6 +31,7 @@
 #endif
 #ifdef __MPI
 #include "module_hsolver/diago_elpa.h"
+#include "module_hsolver/diago_elpa_native.h"
 #endif
 
 #include "module_base/module_device/device.h"
@@ -209,10 +210,7 @@ void Input_Conv::Convert()
         GlobalV::fixed_atoms = PARAM.inp.fixed_atoms;
     }
 
-    for (int i = 0; i < 3; i++)
-    {
-        GlobalV::KSPACING[i] = PARAM.inp.kspacing[i];
-    }
+
     GlobalV::NBANDS = PARAM.inp.nbands;
 
     GlobalV::device_flag = base_device::information::get_device_flag(PARAM.inp.device,
@@ -715,6 +713,10 @@ void Input_Conv::Convert()
     hsolver::DiagoElpa<std::complex<double>>::elpa_num_thread = PARAM.inp.elpa_num_thread;
     ;
     hsolver::DiagoElpa<double>::elpa_num_thread = PARAM.inp.elpa_num_thread;
+    ;
+    hsolver::DiagoElpaNative<std::complex<double>>::elpa_num_thread = PARAM.inp.elpa_num_thread;
+    ;
+    hsolver::DiagoElpaNative<double>::elpa_num_thread = PARAM.inp.elpa_num_thread;
     ;
 #endif
     ModuleBase::timer::tick("Input_Conv", "Convert");

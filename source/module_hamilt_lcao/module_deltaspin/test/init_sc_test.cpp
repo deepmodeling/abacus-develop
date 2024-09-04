@@ -88,7 +88,6 @@ TYPED_TEST(SpinConstrainTest, InitSc)
                      KS_SOLVER,
                      nullptr,
                      nullptr,
-                     nullptr,
                      nullptr);
     EXPECT_EQ(this->sc.get_nat(), 6);
     EXPECT_EQ(this->sc.get_ntype(), 2);

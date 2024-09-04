@@ -27,6 +27,7 @@ if(ENABLE_LCAO)
   if (USE_ELPA)
     list(APPEND objects
         diago_elpa.cpp
+        diago_elpa_native.cpp
     )
   endif ()
 

@@ -357,7 +357,7 @@ T ddot_real(const int& dim, const std::complex<T>* psi_L, const std::complex<T>*
 //==========================================================
 static inline bool IS_COLUMN_MAJOR_KS_SOLVER()
 {
-    return GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "scalapack_gvx" || GlobalV::KS_SOLVER == "cusolver"
+    return GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "elpa" || GlobalV::KS_SOLVER == "scalapack_gvx" || GlobalV::KS_SOLVER == "cusolver"
            || GlobalV::KS_SOLVER == "cusolvermp" || GlobalV::KS_SOLVER == "cg_in_lcao" || GlobalV::KS_SOLVER == "pexsi" || GlobalV::KS_SOLVER == "lapack";
 }
 

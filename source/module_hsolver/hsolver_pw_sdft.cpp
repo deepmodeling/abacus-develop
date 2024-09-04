@@ -7,7 +7,9 @@
 
 #include <algorithm>
 
-namespace hsolver {
+namespace hsolver
+{
+
 void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
                            psi::Psi<std::complex<double>>& psi,
                            elecstate::ElecState* pes,
@@ -42,18 +44,18 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
     // select the method of diagonalization
     this->method = method_in;
     // report if the specified diagonalization method is not supported
-    const std::initializer_list<std::string> _methods
-        = {"cg", "dav", "dav_subspace", "bpcg"};
-    if (std::find(std::begin(_methods), std::end(_methods), this->method)
-        == std::end(_methods)) {
-        ModuleBase::WARNING_QUIT("HSolverPW::solve",
-                                 "This method of DiagH is not supported!");
+    const std::initializer_list<std::string> _methods = {"cg", "dav", "dav_subspace", "bpcg"};
+    if (std::find(std::begin(_methods), std::end(_methods), this->method) == std::end(_methods))
+    {
+        ModuleBase::WARNING_QUIT("HSolverPW::solve", "This method of DiagH is not supported!");
     }
 
     // part of KSDFT to get KS orbitals
-    for (int ik = 0; ik < nks; ++ik) {
+    for (int ik = 0; ik < nks; ++ik)
+    {
         pHamilt->updateHk(ik);
-        if (nbands > 0 && GlobalV::MY_STOGROUP == 0) {
+        if (nbands > 0 && GlobalV::MY_STOGROUP == 0)
+        {
             this->updatePsiK(pHamilt, psi, ik);
             // template add precondition calculating here
             update_precondition(precondition, ik, this->wfc_basis->npwk[ik]);
@@ -65,12 +67,9 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
         stoiter.stohchi.current_ik = ik;
 
 #ifdef __MPI
-        if (nbands > 0) {
-            MPI_Bcast(&psi(ik, 0, 0),
-                      npwx * nbands,
-                      MPI_DOUBLE_COMPLEX,
-                      0,
-                      PARAPW_WORLD);
+        if (nbands > 0)
+        {
+            MPI_Bcast(&psi(ik, 0, 0), npwx * nbands, MPI_DOUBLE_COMPLEX, 0, PARAPW_WORLD);
             MPI_Bcast(&(pes->ekb(ik, 0)), nbands, MPI_DOUBLE, 0, PARAPW_WORLD);
         }
 #endif
@@ -86,32 +85,38 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
         this->initialed_psi = true;
     }
 
-    for (int ik = 0; ik < nks; ik++) {
+    for (int ik = 0; ik < nks; ik++)
+    {
         // init k
-        if (nks > 1) {
+        if (nks > 1)
+        {
             pHamilt->updateHk(ik);
-}
+        }
         stoiter.stohchi.current_ik = ik;
         stoiter.calPn(ik, stowf);
     }
 
     stoiter.itermu(iter, pes);
     stoiter.calHsqrtchi(stowf);
-    if (skip_charge) {
+    if (skip_charge)
+    {
         ModuleBase::timer::tick("HSolverPW_SDFT", "solve");
         return;
     }
     //(5) calculate new charge density
     // calculate KS rho.
-    if (nbands > 0) {
+    if (nbands > 0)
+    {
         pes->psiToRho(psi);
 #ifdef __MPI
         MPI_Bcast(&pes->f_en.eband, 1, MPI_DOUBLE, 0, PARAPW_WORLD);
 #endif
-    } else {
-        for (int is = 0; is < GlobalV::NSPIN; is++) {
-            ModuleBase::GlobalFunc::ZEROS(pes->charge->rho[is],
-                                          pes->charge->nrxx);
+    }
+    else
+    {
+        for (int is = 0; is < GlobalV::NSPIN; is++)
+        {
+            ModuleBase::GlobalFunc::ZEROS(pes->charge->rho[is], pes->charge->nrxx);
         }
     }
     // calculate stochastic rho
@@ -122,29 +127,4 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
     return;
 }
 
-double HSolverPW_SDFT::set_diagethr(double diag_ethr_in,
-                                    const int istep,
-                                    const int iter,
-                                    const double drho) {
-    if (iter == 1) {
-        if (istep == 0) {
-            if (GlobalV::init_chg == "file") {
-                diag_ethr_in = 1.0e-5;
-            }
-            diag_ethr_in = std::max(diag_ethr_in, GlobalV::PW_DIAG_THR);
-        } else {
-            diag_ethr_in = std::max(diag_ethr_in, 1.0e-5);
-}
-    } else {
-        if (GlobalV::NBANDS > 0 && this->stoiter.KS_ne > 1e-6) {
-            diag_ethr_in
-                = std::min(diag_ethr_in,
-                           0.1 * drho / std::max(1.0, this->stoiter.KS_ne));
-        } else {
-            diag_ethr_in = 0.0;
-}
-    }
-
-    return diag_ethr_in;
-}
 } // namespace hsolver
