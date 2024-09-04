@@ -424,7 +424,6 @@ void Stochastic_Iter::calHsqrtchi(Stochastic_WF& stowf)
                 GlobalC::ppcell.getvnl(ik, GlobalC::ppcell.vkb);
             }
 
-            GlobalV::CURRENT_K = ik;
         }
         stohchi.current_ik = ik;
 
