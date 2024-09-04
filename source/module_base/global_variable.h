@@ -24,7 +24,6 @@ extern int NLOCAL;        // 1.1 // mohan add 2009-05-29
 extern int NSPIN;       // 7
 extern bool TWO_EFERMI; // 7.5 two fermi energy, exist if nupdown isn't zero.
 extern double nupdown;
-extern int CURRENT_K; // 8
 
 extern int CAL_FORCE;    // 8.1
 extern double FORCE_THR; // 8.2
