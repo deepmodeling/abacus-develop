@@ -40,6 +40,9 @@ void ESolver_DP::before_all_runners(const Input_para& inp, UnitCell& ucell)
     atype.resize(ucell.nat);
     coord.resize(3 * ucell.nat);
 
+    fparam = inp.mdp.dp_fparam;
+    aparam = inp.mdp.dp_aparam;
+
     /// determine the type map from STRU to DP model
     type_map(ucell);
 }
@@ -78,7 +81,7 @@ void ESolver_DP::runner(const int istep, UnitCell& ucell)
     dp_force.zero_out();
     dp_virial.zero_out();
 
-    dp.compute(dp_potential, f, v, coord, atype, cell);
+    dp.compute(dp_potential, f, v, coord, atype, cell, fparam, aparam);
 
     dp_potential /= ModuleBase::Ry_to_eV;
     GlobalV::ofs_running << " final etot is " << std::setprecision(11) << dp_potential * ModuleBase::Ry_to_eV << " eV"

@@ -215,6 +215,34 @@ void ReadInput::item_md()
         this->add_item(item);
     }
     {
+        Input_Item item("dp_fparam");
+        item.annotation = "the frame parameter for dp potential";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            size_t count = item.get_size();
+            para.input.mdp.dp_fparam.resize(count);
+            std::transform(begin(item.str_values),
+                           end(item.str_values),
+                           begin(para.input.mdp.dp_fparam),
+                           [](std::string str) { return std::stod(str); });
+        };
+        sync_doublevec(input.mdp.dp_fparam, para.input.mdp.dp_fparam.size(), 0.0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("dp_aparam");
+        item.annotation = "the atomic parameter for dp potential";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            size_t count = item.get_size();
+            para.input.mdp.dp_aparam.resize(count);
+            std::transform(begin(item.str_values),
+                           end(item.str_values),
+                           begin(para.input.mdp.dp_aparam),
+                           [](std::string str) { return std::stod(str); });
+        };
+        sync_doublevec(input.mdp.dp_aparam, para.input.mdp.dp_aparam.size(), 0.0);
+        this->add_item(item);
+    }
+    {
         Input_Item item("msst_direction");
         item.annotation = "the direction of shock wave";
         read_sync_int(input.mdp.msst_direction);

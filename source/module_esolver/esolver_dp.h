@@ -104,15 +104,33 @@ class ESolver_DP : public ESolver
      *
      * These variables are used in the ESolver_DP class to store simulation data such as atomic positions, types, and
      * the potential energy and forces.
+     *
+     * @param dp_file the directory of DP model file
+     * @param cell the lattice vectors
+     * @param atype the atom type corresponding to DP model
+     * @param coord the atomic positions
+     * @param fparam The frame parameter for dp potential. The array can be of size :
+     * nframes x dim_fparam.
+     * dim_fparam. Then all frames are assumed to be provided with the same fparam.
+     * @param aparam The atomic parameterfor dp potential. The array can be of size :
+     * nframes x natoms x dim_aparam.
+     * natoms x dim_aparam. Then all frames are assumed to be provided with the same aparam.
+     * dim_aparam. Then all frames and atoms are assumed to be provided with the same aparam.
+     * @param dp_potential the computed potential energy
+     * @param dp_force the computed atomic forces
+     * @param dp_virial the computed lattice virials
+     * @param ucell_ pointer to the unitcell information
      */
-    std::string dp_file;          ///< the directory of DP model file
-    std::vector<double> cell;     ///< the lattice vectors
-    std::vector<int> atype;       ///< the atom type corresponding to DP model
-    std::vector<double> coord;    ///< the atomic positions
-    double dp_potential;          ///< the computed potential energy
-    ModuleBase::matrix dp_force;  ///< the computed atomic forces
-    ModuleBase::matrix dp_virial; ///< the computed lattice virials
-    UnitCell* ucell_;             ///< pointer to the unitcell information
+    std::string dp_file;
+    std::vector<double> cell;
+    std::vector<int> atype;
+    std::vector<double> coord;
+    std::vector<double> fparam;
+    std::vector<double> aparam;
+    double dp_potential;
+    ModuleBase::matrix dp_force;
+    ModuleBase::matrix dp_virial;
+    UnitCell* ucell_;
 };
 
 } // namespace ModuleESolver
