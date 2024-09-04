@@ -8,7 +8,6 @@
 
 #else
 #include "global_variable.h"
-#include "module_parameter/parameter.h"
 #include "global_file.h"
 #include "timer.h"
 #include "memory.h"

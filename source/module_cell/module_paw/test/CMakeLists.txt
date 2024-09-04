@@ -15,7 +15,7 @@ DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 AddTest(
   TARGET Test_Paw
-  LIBS ${math_libs} base device
+  LIBS ${math_libs} base device parameter
   SOURCES test_paw.cpp ../paw_element.cpp ../paw_sphbes.cpp ../paw_atom.cpp
 )
 
@@ -47,6 +47,6 @@ add_dependencies(Test_Paw4 libpaw_interface)
 
 AddTest(
   TARGET Test_Paw5
-  LIBS ${math_libs} base device
+  LIBS ${math_libs} base device parameter
   SOURCES test_paw5.cpp ../paw_element.cpp ../paw_sphbes.cpp ../paw_cell.cpp ../paw_atom.cpp
 )
