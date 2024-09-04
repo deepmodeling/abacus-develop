@@ -20,7 +20,6 @@ namespace GlobalV
 extern int NBANDS;
 extern int NLOCAL;        // 1.1 // mohan add 2009-05-29
 
-extern bool GATE_FLAG;    // add gate field
 extern bool out_app_flag; // whether output r(R), H(R), S(R), T(R), and dH(R) matrices
                           // in an append manner during MD liuyu 2023-03-20
 

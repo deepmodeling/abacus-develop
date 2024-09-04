@@ -362,7 +362,6 @@ void Input_Conv::Convert()
     //----------------------------------------------------------
     // Yu Liu add 2022-09-13
     //----------------------------------------------------------
-    GlobalV::GATE_FLAG = PARAM.inp.gate_flag;
     GlobalV::nelec = PARAM.inp.nelec;
     if (PARAM.globalv.two_fermi)
     {
