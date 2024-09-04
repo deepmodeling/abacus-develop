@@ -1,5 +1,8 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include<streambuf>
 #ifdef __MPI
 #include "mpi.h"
@@ -189,7 +192,7 @@ TEST_F(AtomSpecTest, BcastAtom2)
 	if(GlobalV::MY_RANK==0)
 	{
 		ifs.open("./support/C.upf");
-		GlobalV::PSEUDORCUT = 15.0;
+		PARAM.input.pseudo_rcut = 15.0;
 		upf.read_pseudo_upf201(ifs, atom.ncpp);
 		upf.complete_default(atom.ncpp);
 		ifs.close();

@@ -1,5 +1,8 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include<streambuf>
 
 /************************************************
@@ -36,7 +39,7 @@ TEST_F(NCPPTest, SetPseudoH)
 	std::ifstream ifs;
 	//set
 	ifs.open("./support/C.upf");
-	GlobalV::PSEUDORCUT = 15.0;
+	PARAM.input.pseudo_rcut = 15.0;
 	upf->read_pseudo_upf201(ifs, *ncpp);
 	//set_pseudo_h
 	upf->complete_default_h(*ncpp);
@@ -61,12 +64,12 @@ TEST_F(NCPPTest, SetPseudoAtom)
 	std::ifstream ifs;
 	//set
 	ifs.open("./support/C.upf");
-	GlobalV::PSEUDORCUT = 15.0;
+	PARAM.input.pseudo_rcut = 15.0;
 	upf->read_pseudo_upf201(ifs, *ncpp);
 	//set_pseudo_atom
 	upf->complete_default_h(*ncpp);
 	upf->complete_default_atom(*ncpp);
-	EXPECT_EQ(ncpp->rcut,GlobalV::PSEUDORCUT);
+	EXPECT_EQ(ncpp->rcut,PARAM.input.pseudo_rcut);
 
 	if(!ncpp->nlcc)
 	{
@@ -84,7 +87,7 @@ TEST_F(NCPPTest, SetPseudoNC)
 	std::ifstream ifs;
 	//set
 	ifs.open("./support/C.upf");
-	GlobalV::PSEUDORCUT = 15.0;
+	PARAM.input.pseudo_rcut = 15.0;
 	// set pseudo nbeta = 0
 	upf->read_pseudo_upf201(ifs, *ncpp);
 	ncpp->nbeta = 0;
@@ -104,7 +107,7 @@ TEST_F(NCPPTest, PrintNC)
 	std::ifstream ifs;
 	//set
 	ifs.open("./support/C.upf");
-	GlobalV::PSEUDORCUT = 15.0;
+	PARAM.input.pseudo_rcut = 15.0;
 	upf->read_pseudo_upf201(ifs, *ncpp);
     upf->complete_default(*ncpp);
     ifs.close();
