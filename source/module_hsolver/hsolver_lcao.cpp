@@ -23,6 +23,7 @@
 #endif // __CUSOLVERMP
 #ifdef __ELPA
 #include "diago_elpa.h"
+#include "diago_elpa_native.h"
 #endif
 #ifdef __CUDA
 #include "diago_cusolver.h"
@@ -86,7 +87,7 @@ void HSolverLCAO<T, Device>::solve(hamilt::Hamilt<T>* pHamilt,
 
 #ifdef __MPI
     if (GlobalV::KPAR_LCAO > 1 &&
-        (this->method == "genelpa" || this->method == "scalapack_gvx"))
+        (this->method == "genelpa" || this->method == "elpa" || this->method == "scalapack_gvx"))
     {
         this->parakSolve(pHamilt, psi, pes, GlobalV::KPAR_LCAO);
     }
@@ -109,7 +110,7 @@ void HSolverLCAO<T, Device>::solve(hamilt::Hamilt<T>* pHamilt,
         this->is_first_scf = false;
     }
 
-    if (this->method != "genelpa" && this->method != "scalapack_gvx" && this->method != "lapack"
+    if (this->method != "genelpa" && this->method != "elpa" && this->method != "scalapack_gvx" && this->method != "lapack"
         && this->method != "cusolver" && this->method != "cusolvermp" && this->method != "cg_in_lcao"
         && this->method != "pexsi")
     {
@@ -146,6 +147,11 @@ void HSolverLCAO<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>&
     else if (this->method == "genelpa")
     {
         DiagoElpa<T> el;
+        el.diag(hm, psi, eigenvalue);
+    }
+    else if (this->method == "elpa")
+    {
+        DiagoElpaNative<T> el;
         el.diag(hm, psi, eigenvalue);
     }
 #endif
@@ -365,6 +371,11 @@ void HSolverLCAO<T, Device>::parakSolve(hamilt::Hamilt<T>* pHamilt,
             else if (this->method == "genelpa")
             {
                 DiagoElpa<T> el;
+                el.diag_pool(hk_pool, sk_pool, psi_pool,&(pes->ekb(ik_global, 0)), k2d.POOL_WORLD_K2D);
+            }
+            else if (this->method == "elpa")
+            {
+                DiagoElpaNative<T> el;
                 el.diag_pool(hk_pool, sk_pool, psi_pool,&(pes->ekb(ik_global, 0)), k2d.POOL_WORLD_K2D);
             }
 #endif

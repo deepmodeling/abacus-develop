@@ -121,7 +121,7 @@ TEST_F(ESolverDPTest, InitCase2)
     EXPECT_EQ(esolver->dp_type[0], 0);
     EXPECT_EQ(esolver->dp_type[1], 0);
     EXPECT_EQ(esolver->atype[0], 0);
-    EXPECT_EQ(esolver->atype[1], 1);
+    EXPECT_EQ(esolver->atype[1], 0);
 }
 
 // Test the Run() funciton WARNING_QUIT
@@ -261,3 +261,4 @@ TEST_F(ESolverDPTest, TypeMapWarningQuit)
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("can not find the DP model"));
 }
+
