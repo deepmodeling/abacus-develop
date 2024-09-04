@@ -128,7 +128,7 @@ TEST_F(GlobalFile,closealllog)
 		}
 		GlobalV::ofs_running.open(f1.c_str());
 		GlobalV::ofs_warning.open("warning.log");
-		ModuleBase::Global_File::close_all_log(0,true);
+		ModuleBase::Global_File::close_all_log(0,true,PARAM.input.calculation);
 		EXPECT_FALSE(GlobalV::ofs_running.is_open());
 		if (GlobalV::ofs_running.is_open())
 		{
@@ -144,7 +144,7 @@ TEST_F(GlobalFile,closealllog)
 		/* Test out_alllog == false case */
 		GlobalV::ofs_running.open("running.log");
 		GlobalV::ofs_warning.open("warning.log");
-		ModuleBase::Global_File::close_all_log(0,false);
+		ModuleBase::Global_File::close_all_log(0,false,PARAM.input.calculation);
 		EXPECT_FALSE(GlobalV::ofs_running.is_open());
 		if (GlobalV::ofs_running.is_open())
 		{
