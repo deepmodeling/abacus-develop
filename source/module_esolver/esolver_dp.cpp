@@ -22,6 +22,10 @@
 #include "module_base/timer.h"
 #include "module_io/output_log.h"
 
+#include <iomanip>
+#include <sstream>
+#include <unordered_map>
+
 namespace ModuleESolver
 {
 
@@ -35,28 +39,14 @@ void ESolver_DP::before_all_runners(const Input_para& inp, UnitCell& ucell)
     cell.resize(9);
     atype.resize(ucell.nat);
     coord.resize(3 * ucell.nat);
-    dp_type.resize(ucell.ntype);
 
-    bool find_type = type_map(ucell);
+    fparam = inp.mdp.dp_fparam;
+    aparam = inp.mdp.dp_aparam;
 
+#ifdef __DPMD
     /// determine the type map from STRU to DP model
-    int iat = 0;
-    for (int it = 0; it < ucell.ntype; ++it)
-    {
-        for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
-        {
-            if (find_type)
-            {
-                atype[iat] = dp_type[it];
-            }
-            else
-            {
-                atype[iat] = it;
-            }
-            iat++;
-        }
-    }
-    assert(ucell.nat == iat);
+    type_map(ucell);
+#endif
 }
 
 void ESolver_DP::runner(const int istep, UnitCell& ucell)
@@ -93,7 +83,7 @@ void ESolver_DP::runner(const int istep, UnitCell& ucell)
     dp_force.zero_out();
     dp_virial.zero_out();
 
-    dp.compute(dp_potential, f, v, coord, atype, cell);
+    dp.compute(dp_potential, f, v, coord, atype, cell, fparam, aparam);
 
     dp_potential /= ModuleBase::Ry_to_eV;
     GlobalV::ofs_running << " final etot is " << std::setprecision(11) << dp_potential * ModuleBase::Ry_to_eV << " eV"
@@ -156,91 +146,54 @@ void ESolver_DP::after_all_runners()
     GlobalV::ofs_running << " --------------------------------------------\n\n" << std::endl;
 }
 
-bool ESolver_DP::type_map(const UnitCell& ucell)
+#ifdef __DPMD
+void ESolver_DP::type_map(const UnitCell& ucell)
 {
-    bool ok = false;
-    bool find_type = false;
-
-    if (GlobalV::MY_RANK == 0)
+    std::string type = "";
+    dp.get_type_map(type);
+    std::stringstream ss(type);
+    std::unordered_map<std::string, int> label;
+    std::string temp;
+    int index = 0;
+    while (ss >> temp)
     {
-        std::ifstream ifs(dp_file);
-        std::string word;
-        int ntype_dp = 0;
-        // std::string* label = nullptr;
-
-        if (ifs)
-        {
-            ok = true;
-        }
-
-        if (ok)
-        {
-            while (std::getline(ifs, word, '"'))
-            {
-                if (word == "type_map")
-                {
-                    find_type = true;
-                    break;
-                }
-            }
-
-            if (find_type)
-            {
-                std::getline(ifs, word, '"'); ///< the string is ":[", which is useless
-                std::stringstream ss;
-                while (word[0] != ']')
-                {
-                    std::getline(ifs, word, '"');
-                    ++ntype_dp;
-                    ss << word << "  ";
-                    std::getline(ifs, word, '"');
-                }
-
-                GlobalV::ofs_running << std::endl;
-                GlobalV::ofs_running << "Determine the type map from DP model" << std::endl;
-                GlobalV::ofs_running << "ntype read from DP model: " << ntype_dp << std::endl;
-
-                // label = new std::string[ntype_dp];
-                std::vector<std::string> label_vec(ntype_dp);
-                std::string* label = label_vec.data();
-                for (int it = 0; it < ntype_dp; ++it)
-                {
-                    ss >> label[it];
-                    GlobalV::ofs_running << "  " << label[it];
-                }
-                GlobalV::ofs_running << std::endl << std::endl;
-
-                for (int it = 0; it < ucell.ntype; ++it)
-                {
-                    bool consistent = false;
-                    for (int it2 = 0; it2 < ntype_dp; ++it2)
-                    {
-                        if (ucell.atom_label[it] == label[it2])
-                        {
-                            dp_type[it] = it2;
-                            consistent = true;
-                        }
-                    }
-                    if (!consistent)
-                    {
-                        ModuleBase::WARNING_QUIT("ESolver_DP", "Unsupported atom types for the DP model");
-                    }
-                }
-            }
-        }
-        ifs.close();
+        label[temp] = index;
+        index++;
     }
 
-#ifdef __MPI
-    Parallel_Common::bcast_bool(ok);
-    Parallel_Common::bcast_bool(find_type);
-    Parallel_Common::bcast_int(dp_type.data(), ucell.ntype);
-#endif
-
-    if (!ok)
+    std::cout << "\n type map of model file " << dp_file << " " << std::endl;
+    std::cout << " ----------------------------------------------------------------";
+    int count = 0;
+    for (auto it = label.begin(); it != label.end(); ++it)
     {
-        ModuleBase::WARNING_QUIT("ESolver_DP", "can not find the DP model");
+        if (count % 5 == 0)
+        {
+            std::cout << std::endl;
+            std::cout << "  ";
+        }
+        count++;
+        temp = it->first + ": " + std::to_string(it->second);
+        std::cout << std::left << std::setw(10) << temp;
     }
-    return find_type;
+    std::cout << "\n -----------------------------------------------------------------" << std::endl;
+
+    int iat = 0;
+    for (int it = 0; it < ucell.ntype; ++it)
+    {
+        for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
+        {
+            if (label.find(ucell.atoms[it].label) == label.end())
+            {
+                ModuleBase::WARNING_QUIT("ESolver_DP",
+                                         "The label " + ucell.atoms[it].label + " is not found in the type map.");
+            }
+            atype[iat] = label[ucell.atoms[it].label];
+            // if (ia == 0)
+            //     std::cout << "type: " << atype[iat] << std::endl;
+            iat++;
+        }
+    }
+    assert(ucell.nat == iat);
 }
+#endif
 } // namespace ModuleESolver

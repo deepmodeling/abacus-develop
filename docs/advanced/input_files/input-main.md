@@ -2658,6 +2658,18 @@ These variables are used to control molecular dynamics calculations. For more in
 - **Description**: The filename of DP potential files, see [md.md](../md.md#dpmd) in detail.
 - **Default**: graph.pb
 
+### dp_fparam
+
+- **Type**: Real
+- **Description**: The frame parameter for dp potential. The array size is dim_fparam, then all frames are assumed to be provided with the same fparam.
+- **Default**: {}
+
+### dp_aparam
+
+- **Type**: Real
+- **Description**: The atomic parameter for dp potential. The array size can be (1) natoms x dim_aparam, then all frames are assumed to be provided with the same aparam; (2) dim_aparam, then all frames and atoms are assumed to be provided with the same aparam.
+- **Default**: {}
+
 ### msst_direction
 
 - **Type**: Integer
