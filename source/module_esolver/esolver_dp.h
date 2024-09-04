@@ -120,9 +120,9 @@ class ESolver_DP : public ESolver
      * @param ucell_ pointer to the unitcell information
      */
     std::string dp_file;
-    std::vector<double> cell;
-    std::vector<int> atype;
-    std::vector<double> coord;
+    std::vector<double> cell = {};
+    std::vector<int> atype = {};
+    std::vector<double> coord = {};
     std::vector<double> fparam = {};
     std::vector<double> aparam = {};
     double dp_potential;
