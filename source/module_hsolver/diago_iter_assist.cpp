@@ -300,14 +300,14 @@ void DiagoIterAssist<T, Device>::diagH_subspace_init(hamilt::Hamilt<T, Device>* 
     //=======================
     // diagonize the H-matrix
     //=======================
-    if ((PARAM.inp.basis_type == "lcao" || PARAM.inp.basis_type == "lcao_in_pw") && GlobalV::CALCULATION == "nscf")
+    if ((PARAM.inp.basis_type == "lcao" || PARAM.inp.basis_type == "lcao_in_pw") && PARAM.inp.calculation == "nscf")
     {
         GlobalV::ofs_running << " Not do zgemm to get evc." << std::endl;
     }
     else if ((PARAM.inp.basis_type == "lcao" || PARAM.inp.basis_type == "lcao_in_pw"
               || (PARAM.inp.basis_type == "pw" && GlobalV::psi_initializer))
-             && (GlobalV::CALCULATION == "scf" || GlobalV::CALCULATION == "md"
-                 || GlobalV::CALCULATION == "relax")) // pengfei 2014-10-13
+             && (PARAM.inp.calculation == "scf" || PARAM.inp.calculation == "md"
+                 || PARAM.inp.calculation == "relax")) // pengfei 2014-10-13
     {
         // because psi and evc are different here,
         // I think if psi and evc are the same,
@@ -421,7 +421,7 @@ bool DiagoIterAssist<T, Device>::test_exit_cond(const int& ntry, const int& notc
     //================================================================
 
     bool scf = true;
-    if (GlobalV::CALCULATION == "nscf")
+    if (PARAM.inp.calculation == "nscf")
         scf = false;
 
     // If ntry <=5, try to do it better, if ntry > 5, exit.
