@@ -244,7 +244,6 @@ void Input_Conv::Convert()
             \n Please recompile with cmake flag \"-DENABLE_FLOAT_FFTW=ON\".\n");
 #endif // __ENABLE_FLOAT_FFTW
     }
-    GlobalV::CALCULATION = PARAM.inp.calculation;
     GlobalV::ESOLVER_TYPE = PARAM.inp.esolver_type;
 
     GlobalV::DFT_FUNCTIONAL = PARAM.inp.dft_functional;

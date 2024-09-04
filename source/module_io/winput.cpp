@@ -563,7 +563,7 @@ void winput::Check()
     if (GlobalV::MY_RANK != 0)
         return;
 
-    if (GlobalV::CALCULATION == "nscf")
+    if (PARAM.inp.calculation == "nscf")
     {
         if (out_chg)
         {
