@@ -308,7 +308,7 @@ void ElecState::cal_nbands()
         }
         ModuleBase::GlobalFunc::AUTO_SET("NBANDS", GlobalV::NBANDS);
     }
-    // else if ( GlobalV::CALCULATION=="scf" || GlobalV::CALCULATION=="md" || GlobalV::CALCULATION=="relax") //pengfei
+    // else if ( PARAM.inp.calculation=="scf" || PARAM.inp.calculation=="md" || PARAM.inp.calculation=="relax") //pengfei
     // 2014-10-13
     else
     {
