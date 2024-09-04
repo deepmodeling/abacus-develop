@@ -148,6 +148,7 @@ void ESolver_DP::after_all_runners()
     GlobalV::ofs_running << " --------------------------------------------\n\n" << std::endl;
 }
 
+#ifdef __DPMD
 void ESolver_DP::type_map(const UnitCell& ucell)
 {
     std::string type = "";
@@ -196,4 +197,5 @@ void ESolver_DP::type_map(const UnitCell& ucell)
     }
     assert(ucell.nat == iat);
 }
+#endif
 } // namespace ModuleESolver

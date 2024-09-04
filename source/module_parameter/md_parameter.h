@@ -31,11 +31,9 @@ struct MD_para
     std::string pot_file = "graph.pb";   ///< the filename of potential files for CMD such as DP
     std::vector<double> dp_fparam
         = {}; ///< The frame parameter for dp potential. The array can be of size :
-              ///< nframes x dim_fparam.
               ///< dim_fparam. Then all frames are assumed to be provided with the same fparam.
     std::vector<double> dp_aparam
         = {}; ///< The atomic parameter for dp potential. The array can be of size :
-              ///< nframes x natoms x dim_aparam.
               ///< natoms x dim_aparam. Then all frames are assumed to be provided with the same aparam.
               ///< dim_aparam. Then all frames and atoms are assumed to be provided with the same aparam.
 

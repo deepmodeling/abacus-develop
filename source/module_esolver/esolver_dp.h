@@ -109,13 +109,11 @@ class ESolver_DP : public ESolver
      * @param cell the lattice vectors
      * @param atype the atom type corresponding to DP model
      * @param coord the atomic positions
-     * @param fparam The frame parameter for dp potential. The array can be of size :
-     * nframes x dim_fparam.
-     * dim_fparam. Then all frames are assumed to be provided with the same fparam.
-     * @param aparam The atomic parameterfor dp potential. The array can be of size :
-     * nframes x natoms x dim_aparam.
-     * natoms x dim_aparam. Then all frames are assumed to be provided with the same aparam.
-     * dim_aparam. Then all frames and atoms are assumed to be provided with the same aparam.
+     * @param fparam The frame parameter for dp potential. The array can be of size:
+     *               dim_fparam. Then all frames are assumed to be provided with the same fparam.
+     * @param aparam The atomic parameterfor dp potential. The array can be of size:
+     *               natoms x dim_aparam. Then all frames are assumed to be provided with the same aparam.
+     *               dim_aparam. Then all frames and atoms are assumed to be provided with the same aparam.
      * @param dp_potential the computed potential energy
      * @param dp_force the computed atomic forces
      * @param dp_virial the computed lattice virials
@@ -125,8 +123,8 @@ class ESolver_DP : public ESolver
     std::vector<double> cell;
     std::vector<int> atype;
     std::vector<double> coord;
-    std::vector<double> fparam;
-    std::vector<double> aparam;
+    std::vector<double> fparam = {};
+    std::vector<double> aparam = {};
     double dp_potential;
     ModuleBase::matrix dp_force;
     ModuleBase::matrix dp_virial;
