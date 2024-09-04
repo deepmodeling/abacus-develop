@@ -144,8 +144,9 @@ void ReadInput::item_md()
                            [](std::string str) { return std::stod(str); });
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (!item.is_read())
+            if (!item.is_read()) {
                 return;
+}
             size_t n_ljrcut = para.input.mdp.lj_rcut.size();
             if (n_ljrcut != 1 && n_ljrcut != para.input.ntype * (para.input.ntype + 1) / 2)
             {
@@ -174,8 +175,9 @@ void ReadInput::item_md()
                            [](std::string str) { return std::stod(str); });
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (!item.is_read())
+            if (!item.is_read()) {
                 return;
+}
             size_t n_ljepsilon = para.input.mdp.lj_epsilon.size();
             if (n_ljepsilon != para.input.ntype && n_ljepsilon != para.input.ntype * (para.input.ntype + 1) / 2)
             {
@@ -197,8 +199,9 @@ void ReadInput::item_md()
                            [](std::string str) { return std::stod(str); });
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (!item.is_read())
+            if (!item.is_read()) {
                 return;
+}
             size_t n_ljsigma = para.input.mdp.lj_sigma.size();
             if (n_ljsigma != para.input.ntype && n_ljsigma != para.input.ntype * (para.input.ntype + 1) / 2)
             {
