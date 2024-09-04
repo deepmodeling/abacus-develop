@@ -23,7 +23,7 @@ void test_deepks::set_parameters()
 {
     PARAM.input.basis_type = "lcao";
     // GlobalV::global_pseudo_type= "auto";
-    GlobalV::PSEUDORCUT = 15.0;
+    PARAM.input.pseudo_rcut = 15.0;
     GlobalV::global_out_dir = "./";
     GlobalV::ofs_warning.open("warning.log");
     GlobalV::ofs_running.open("running.log");
