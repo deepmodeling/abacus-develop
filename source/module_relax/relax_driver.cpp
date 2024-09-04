@@ -6,7 +6,7 @@
 #include "module_io/print_info.h"
 #include "module_io/read_exit_file.h"
 #include "module_io/write_wfc_r.h"
-
+#include "module_parameter/parameter.h"
 void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver)
 {
     ModuleBase::TITLE("Ions", "opt_ions");
@@ -36,7 +36,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver)
         if (GlobalV::OUT_LEVEL == "ie"
             && (PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax" || PARAM.inp.calculation == "scf"
                 || PARAM.inp.calculation == "nscf")
-            && (GlobalV::ESOLVER_TYPE != "lr"))
+            && (PARAM.inp.esolver_type != "lr"))
         {
             Print_Info::print_screen(stress_step, force_step, istep);
         }

@@ -1,5 +1,5 @@
 #include "elecstate_pw.h"
-
+#include "module_parameter/parameter.h"
 #include "elecstate_getters.h"
 #include "module_base/constants.h"
 #include "module_base/libm/libm.h"
@@ -132,7 +132,7 @@ void ElecStatePW<T, Device>::parallelK()
 {
 #ifdef __MPI
     this->charge->rho_mpi();
-    if(GlobalV::ESOLVER_TYPE == "sdft") //qinarui add it 2021-7-21
+    if(PARAM.inp.esolver_type == "sdft") //qinarui add it 2021-7-21
 	{
         this->f_en.eband /= GlobalV::NPROC_IN_POOL;
         MPI_Allreduce(MPI_IN_PLACE, &this->f_en.eband, 1, MPI_DOUBLE, MPI_SUM, STO_WORLD);

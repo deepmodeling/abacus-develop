@@ -5,6 +5,7 @@
 #include "module_io/output_log.h"
 // new
 #include "module_base/timer.h"
+#include "module_parameter/parameter.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_elecstate/potentials/efield.h"           // liuyu add 2022-05-18
 #include "module_elecstate/potentials/gatefield.h"        // liuyu add 2022-09-13
@@ -200,7 +201,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
 
     //! atomic forces from E-field of rt-TDDFT
     ModuleBase::matrix fefield_tddft;
-    if (GlobalV::ESOLVER_TYPE == "TDDFT" && isforce)
+    if (PARAM.inp.esolver_type == "TDDFT" && isforce)
     {
         fefield_tddft.create(nat, 3);
         elecstate::Efield::compute_force(GlobalC::ucell, fefield_tddft);
@@ -341,7 +342,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
                     fcs(iat, i) += fefield(iat, i);
                 }
                 // E-field force of tddft
-                if (GlobalV::ESOLVER_TYPE == "TDDFT")
+                if (PARAM.inp.esolver_type == "TDDFT")
                 {
                     fcs(iat, i) += fefield_tddft(iat, i);
                 }
@@ -511,7 +512,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
                 ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "EFIELD     FORCE", fefield, false);
                 // this->print_force("EFIELD     FORCE",fefield,1,ry);
             }
-            if (GlobalV::ESOLVER_TYPE == "TDDFT")
+            if (PARAM.inp.esolver_type == "TDDFT")
             {
                 ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "EFIELD_TDDFT     FORCE", fefield_tddft, false);
                 // this->print_force("EFIELD_TDDFT     FORCE",fefield_tddft,1,ry);

@@ -1,4 +1,5 @@
 #include "unitcell.h"
+#include "module_parameter/parameter.h"
 #ifdef __LCAO
 #include "../module_basis/module_ao/ORB_read.h" // to use 'ORB' -- mohan 2021-01-30
 #endif
@@ -857,7 +858,7 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
     }   // end scan_begin
 
 //check if any atom can move in MD
-    if(!this->if_atoms_can_move() && PARAM.inp.calculation=="md" && GlobalV::ESOLVER_TYPE!="tddft")
+    if(!this->if_atoms_can_move() && PARAM.inp.calculation=="md" && PARAM.inp.esolver_type!="tddft")
     {
         ModuleBase::WARNING("read_atoms", "no atom can move in MD!");
         return false;

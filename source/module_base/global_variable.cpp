@@ -21,8 +21,6 @@ namespace GlobalV
 int NBANDS = 0;
 int NLOCAL = 0;        // total number of local basis.
 
-
-std::string CALCULATION = "scf";
 std::string ESOLVER_TYPE = "ksdft";
 int EFIELD_FLAG = 0;      // 5: add electric field
 int DIP_COR_FLAG = 0;     // 7: add dipole field

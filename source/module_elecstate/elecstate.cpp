@@ -1,5 +1,5 @@
 #include "elecstate.h"
-
+#include "module_parameter/parameter.h"
 #include "module_base/global_variable.h"
 #include "module_parameter/parameter.h"
 #include "module_base/memory.h"
@@ -193,7 +193,7 @@ void ElecState::calEBand()
         }
     }
     this->f_en.eband = eband;
-    if (GlobalV::KPAR != 1 && GlobalV::ESOLVER_TYPE != "sdft")
+    if (GlobalV::KPAR != 1 && PARAM.inp.esolver_type != "sdft")
     {
         //==================================
         // Reduce all the Energy in each cpu
@@ -257,7 +257,7 @@ void ElecState::init_ks(Charge* chg_in, // pointer for class Charge
 
 void ElecState::cal_nbands()
 {
-    if (GlobalV::ESOLVER_TYPE == "sdft") // qianrui 2021-2-20
+    if (PARAM.inp.esolver_type == "sdft") // qianrui 2021-2-20
     {
         return;
     }

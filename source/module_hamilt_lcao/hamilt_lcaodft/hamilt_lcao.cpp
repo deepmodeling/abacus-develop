@@ -1,6 +1,7 @@
 #include "hamilt_lcao.h"
 
 #include "module_base/global_variable.h"
+#include "module_parameter/parameter.h"
 #include "module_base/memory.h"
 #include "module_base/timer.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
@@ -107,7 +108,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
         {
             pot_register_in.push_back("gatefield");
         }
-        if (GlobalV::ESOLVER_TYPE == "tddft")
+        if (PARAM.inp.esolver_type == "tddft")
         {
             pot_register_in.push_back("tddft");
         }
@@ -289,7 +290,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
                                                                            two_center_bundle.overlap_orb_beta.get());
             // TDDFT velocity gague will calculate full non-local potential including the original one and the
             // correction on its own. So the original non-local potential term should be skipped
-            if (GlobalV::ESOLVER_TYPE != "tddft" || elecstate::H_TDDFT_pw::stype != 1)
+            if (PARAM.inp.esolver_type != "tddft" || elecstate::H_TDDFT_pw::stype != 1)
             {
                 this->getOperator()->add(nonlocal);
             }
