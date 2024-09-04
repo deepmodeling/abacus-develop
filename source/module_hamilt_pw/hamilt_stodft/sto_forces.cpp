@@ -1,5 +1,6 @@
 #include "sto_forces.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/mathzone.h"
 #include "module_cell/module_symmetry/symmetry.h"
 #include "module_elecstate/elecstate.h"
@@ -53,7 +54,7 @@ void Sto_Forces::cal_stoforce(ModuleBase::matrix& force,
 	}
 
     ModuleBase::matrix force_gate;
-    if(GlobalV::GATE_FLAG)
+    if(PARAM.inp.gate_flag)
     {
         force_gate.create( GlobalC::ucell.nat, 3);
         elecstate::Gatefield::compute_force(GlobalC::ucell, force_gate);
@@ -80,7 +81,7 @@ void Sto_Forces::cal_stoforce(ModuleBase::matrix& force,
 					force(iat,ipol) = force(iat, ipol) + force_e(iat, ipol);
 				}
 
-                if(GlobalV::GATE_FLAG)
+                if(PARAM.inp.gate_flag)
                 {
                     force(iat,ipol) = force(iat, ipol) + force_gate(iat, ipol);
                 }
@@ -91,7 +92,7 @@ void Sto_Forces::cal_stoforce(ModuleBase::matrix& force,
 			}
 		}
 
-        if(!(GlobalV::GATE_FLAG || PARAM.inp.efield_flag))
+        if(!(PARAM.inp.gate_flag || PARAM.inp.efield_flag))
         {
             double compen = sum / GlobalC::ucell.nat;
             for (int iat = 0; iat < GlobalC::ucell.nat; ++iat)
@@ -101,7 +102,7 @@ void Sto_Forces::cal_stoforce(ModuleBase::matrix& force,
         }
 	}
 
-    if(GlobalV::GATE_FLAG || PARAM.inp.efield_flag)
+    if(PARAM.inp.gate_flag || PARAM.inp.efield_flag)
     {
         GlobalV::ofs_running << "Atomic forces are not shifted if gate_flag or efield_flag == true!" << std::endl;
     }
@@ -142,7 +143,7 @@ void Sto_Forces::cal_stoforce(ModuleBase::matrix& force,
         if (PARAM.inp.efield_flag) {
             ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "EFIELD   FORCE (Ry/Bohr)", force_e);
 }
-        if (GlobalV::GATE_FLAG) {
+        if (PARAM.inp.gate_flag) {
             ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "GATEFIELD   FORCE (Ry/Bohr)", force_gate);
 }
     }
@@ -160,7 +161,7 @@ void Sto_Forces::cal_stoforce(ModuleBase::matrix& force,
         if (PARAM.inp.efield_flag) {
             ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "EFIELD   FORCE (eV/Angstrom)", force_e, false);
 }
-        if (GlobalV::GATE_FLAG) {
+        if (PARAM.inp.gate_flag) {
             ModuleIO::print_force(GlobalV::ofs_running,
                                   GlobalC::ucell,
                                   "GATEFIELD   FORCE (eV/Angstrom)",

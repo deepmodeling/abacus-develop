@@ -1,5 +1,6 @@
 #include "forces.h"
 
+#include "module_parameter/parameter.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/output_log.h"
 // new
@@ -206,7 +207,7 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
     }
 
     ModuleBase::matrix force_gate;
-    if (GlobalV::GATE_FLAG)
+    if (PARAM.inp.gate_flag)
     {
         force_gate.create(this->nat, 3);
         elecstate::Gatefield::compute_force(GlobalC::ucell, force_gate);
@@ -302,7 +303,7 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
                     force(iat, ipol) = force(iat, ipol) + force_e(iat, ipol);
                 }
 
-                if (GlobalV::GATE_FLAG)
+                if (PARAM.inp.gate_flag)
                 {
                     force(iat, ipol) = force(iat, ipol) + force_gate(iat, ipol);
                 }
@@ -318,7 +319,7 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
             }
         }
 
-        if (!(GlobalV::GATE_FLAG || PARAM.inp.efield_flag))
+        if (!(PARAM.inp.gate_flag || PARAM.inp.efield_flag))
         {
             double compen = sum / this->nat;
             for (int iat = 0; iat < this->nat; ++iat)
@@ -328,7 +329,7 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
         }
     }
 
-    if (GlobalV::GATE_FLAG || PARAM.inp.efield_flag)
+    if (PARAM.inp.gate_flag || PARAM.inp.efield_flag)
     {
         GlobalV::ofs_running << "Atomic forces are not shifted if gate_flag or efield_flag == true!" << std::endl;
     }
@@ -436,7 +437,7 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
         {
             ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "EFIELD   FORCE (eV/Angstrom)", force_e, false);
         }
-        if (GlobalV::GATE_FLAG)
+        if (PARAM.inp.gate_flag)
         {
             ModuleIO::print_force(GlobalV::ofs_running,
                                   GlobalC::ucell,

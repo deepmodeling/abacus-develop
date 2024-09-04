@@ -152,7 +152,7 @@ double Efield::cal_ion_dipole(const UnitCell &cell, const double &bmod)
         ion_dipole += sum * cell.atoms[it].ncpp.zv;
     }
 
-    if (GlobalV::GATE_FLAG && PARAM.inp.dip_cor_flag)
+    if (PARAM.inp.gate_flag && PARAM.inp.dip_cor_flag)
     {
         double ion_charge = 0;
         for (int it = 0; it < cell.ntype; ++it)

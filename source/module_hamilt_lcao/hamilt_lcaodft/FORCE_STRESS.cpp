@@ -209,7 +209,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
 
     //! atomic forces from gate field
     ModuleBase::matrix fgate;
-    if (GlobalV::GATE_FLAG && isforce)
+    if (PARAM.inp.gate_flag && isforce)
     {
         fgate.create(nat, 3);
         elecstate::Gatefield::compute_force(GlobalC::ucell, fgate);
@@ -347,7 +347,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
                     fcs(iat, i) += fefield_tddft(iat, i);
                 }
                 // Gate field force
-                if (GlobalV::GATE_FLAG)
+                if (PARAM.inp.gate_flag)
                 {
                     fcs(iat, i) += fgate(iat, i);
                 }
@@ -367,7 +367,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
                 sum += fcs(iat, i);
             }
 
-            if (!(GlobalV::GATE_FLAG || PARAM.inp.efield_flag))
+            if (!(PARAM.inp.gate_flag || PARAM.inp.efield_flag))
             {
                 for (int iat = 0; iat < nat; ++iat)
                 {
@@ -383,7 +383,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
             }
         }
 
-        if (GlobalV::GATE_FLAG || PARAM.inp.efield_flag)
+        if (PARAM.inp.gate_flag || PARAM.inp.efield_flag)
         {
             GlobalV::ofs_running << "Atomic forces are not shifted if gate_flag or efield_flag == true!" << std::endl;
         }
@@ -517,7 +517,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
                 ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "EFIELD_TDDFT     FORCE", fefield_tddft, false);
                 // this->print_force("EFIELD_TDDFT     FORCE",fefield_tddft,1,ry);
             }
-            if (GlobalV::GATE_FLAG)
+            if (PARAM.inp.gate_flag)
             {
                 ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "GATEFIELD     FORCE", fgate, false);
                 // this->print_force("GATEFIELD     FORCE",fgate,1,ry);

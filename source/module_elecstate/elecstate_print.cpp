@@ -1,5 +1,6 @@
 #include "elecstate.h"
 #include "elecstate_getters.h"
+#include "module_parameter/parameter.h"
 #include "module_base/formatter.h"
 #include "module_base/global_variable.h"
 #include "module_elecstate/potentials/H_Hartree_pw.h"
@@ -363,7 +364,7 @@ void ElecState::print_etot(const bool converged,
             titles.push_back("E_efield");
             energies_Ry.push_back(elecstate::Efield::etotefield);
         }
-        if (GlobalV::GATE_FLAG)
+        if (PARAM.inp.gate_flag)
         {
             titles.push_back("E_gatefield");
             energies_Ry.push_back(elecstate::Gatefield::etotgatefield);

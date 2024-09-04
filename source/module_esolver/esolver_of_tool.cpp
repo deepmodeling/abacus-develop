@@ -51,7 +51,7 @@ void ESolver_OF::init_elecstate(UnitCell& ucell)
     {
         pot_register_in.push_back("efield");
     }
-    if (GlobalV::GATE_FLAG)
+    if (PARAM.inp.gate_flag)
     {
         pot_register_in.push_back("gatefield");
     }
@@ -489,7 +489,7 @@ void ESolver_OF::print_info()
             titles.push_back("E_efield");
             energies_Ry.push_back(elecstate::Efield::etotefield);
         }
-        if (GlobalV::GATE_FLAG)
+        if (PARAM.inp.gate_flag)
         {
             titles.push_back("E_gatefield");
             energies_Ry.push_back(elecstate::Gatefield::etotgatefield);
