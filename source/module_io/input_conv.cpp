@@ -354,7 +354,6 @@ void Input_Conv::Convert()
     //----------------------------------------------------------
     // Yu Liu add 2022-05-18
     //----------------------------------------------------------
-    GlobalV::EFIELD_FLAG = PARAM.inp.efield_flag;
     GlobalV::DIP_COR_FLAG = PARAM.inp.dip_cor_flag;
     elecstate::Efield::efield_dir = PARAM.inp.efield_dir;
     elecstate::Efield::efield_pos_max = PARAM.inp.efield_pos_max;
