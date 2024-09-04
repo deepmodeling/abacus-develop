@@ -10,6 +10,7 @@ class XCTest: public testing::Test
         XCTest()
         {
             PARAM.input.basis_type = "";
+            PARAM.input.cal_force = 1;
         }
 };
 #endif

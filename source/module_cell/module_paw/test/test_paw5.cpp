@@ -1,5 +1,8 @@
 #include "gtest/gtest.h"
 #include <fstream>
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include <iostream>
 
 #include "../paw_cell.h"
@@ -14,7 +17,7 @@ class Test_PAW_Cell_k : public testing::Test
 TEST_F(Test_PAW_Cell_k, test_paw)
 {
 
-    GlobalV::CAL_FORCE = 1;
+    PARAM.input.cal_force = 1;
 
     int natom = 5;
     int ntypat = 2;
