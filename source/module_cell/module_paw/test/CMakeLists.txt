@@ -21,26 +21,26 @@ AddTest(
 
 AddTest(
   TARGET Test_Paw1
-  LIBS ${math_libs} base device
+  LIBS ${math_libs} base device parameter
   SOURCES test_paw1.cpp ../paw_element.cpp ../paw_sphbes.cpp ../paw_cell.cpp ../paw_atom.cpp
 )
 
 AddTest(
   TARGET Test_Paw2
-  LIBS ${math_libs} base device
+  LIBS ${math_libs} base device parameter
   SOURCES test_paw2.cpp ../paw_atom.cpp
 )
 
 AddTest(
   TARGET Test_Paw3
-  LIBS ${math_libs} base device libpaw_interface
+  LIBS ${math_libs} base device libpaw_interface parameter
   SOURCES test_paw3.cpp ../paw_atom.cpp ../paw_cell_libpaw.cpp
 )
 add_dependencies(Test_Paw3 libpaw_interface)
 
 AddTest(
   TARGET Test_Paw4
-  LIBS ${math_libs} base device libpaw_interface
+  LIBS ${math_libs} base device libpaw_interface parameter
   SOURCES test_paw4.cpp ../paw_atom.cpp ../paw_cell_libpaw.cpp
 )
 add_dependencies(Test_Paw4 libpaw_interface)
