@@ -10,7 +10,7 @@ endif()
 
 AddTest(
   TARGET dm_io_test_serial
-  LIBS parameter ${math_libs} base device cell_info 
+  LIBS ${math_libs} base device cell_info parameter
   SOURCES test_dm_io.cpp ../density_matrix.cpp
   ${ABACUS_SOURCE_DIR}/module_hamilt_lcao/module_hcontainer/base_matrix.cpp
   ${ABACUS_SOURCE_DIR}/module_hamilt_lcao/module_hcontainer/hcontainer.cpp
@@ -22,7 +22,7 @@ AddTest(
 
 AddTest(
   TARGET dm_constructor_test
-  LIBS parameter ${math_libs} base device
+  LIBS ${math_libs} base device
   SOURCES test_dm_constructor.cpp ../density_matrix.cpp tmp_mocks.cpp
   ${ABACUS_SOURCE_DIR}/module_hamilt_lcao/module_hcontainer/base_matrix.cpp
   ${ABACUS_SOURCE_DIR}/module_hamilt_lcao/module_hcontainer/hcontainer.cpp
@@ -33,7 +33,7 @@ AddTest(
 
 AddTest(
   TARGET dm_init_test
-  LIBS parameter ${math_libs} base device
+  LIBS ${math_libs} base device
   SOURCES test_dm_R_init.cpp ../density_matrix.cpp tmp_mocks.cpp
   ${ABACUS_SOURCE_DIR}/module_hamilt_lcao/module_hcontainer/base_matrix.cpp
   ${ABACUS_SOURCE_DIR}/module_hamilt_lcao/module_hcontainer/hcontainer.cpp
@@ -44,7 +44,7 @@ AddTest(
 
 AddTest(
   TARGET dm_cal_DMR_test
-  LIBS parameter ${math_libs} base device
+  LIBS ${math_libs} base device
   SOURCES test_cal_dm_R.cpp ../density_matrix.cpp tmp_mocks.cpp
   ${ABACUS_SOURCE_DIR}/module_hamilt_lcao/module_hcontainer/base_matrix.cpp
   ${ABACUS_SOURCE_DIR}/module_hamilt_lcao/module_hcontainer/hcontainer.cpp

@@ -4,7 +4,7 @@ AddTest(
     numerical_radial_test.cpp
     ../numerical_radial.cpp
     ../../module_ao/ORB_atomic_lm.cpp
-  LIBS parameter ${math_libs} device base 
+  LIBS ${math_libs} device base parameter
 )
 
 AddTest(
@@ -17,7 +17,7 @@ AddTest(
     ../projgen.cpp
     ../../module_ao/ORB_atomic_lm.cpp
     ../../module_ao/ORB_atomic.cpp
-  LIBS parameter ${math_libs} device base 
+  LIBS ${math_libs} device base parameter
 )
 
 AddTest(
@@ -29,7 +29,7 @@ AddTest(
     ../numerical_radial.cpp
     ../../module_ao/ORB_atomic_lm.cpp
     ../../module_ao/ORB_atomic.cpp
-  LIBS parameter ${math_libs} device base 
+  LIBS ${math_libs} device base parameter
 )
 
 AddTest(
@@ -41,7 +41,7 @@ AddTest(
     ../numerical_radial.cpp
     ../../module_ao/ORB_atomic_lm.cpp
     ../../module_ao/ORB_atomic.cpp
-  LIBS parameter ${math_libs} device base 
+  LIBS ${math_libs} device base parameter
 )
 
 AddTest(
@@ -53,7 +53,7 @@ AddTest(
     ../numerical_radial.cpp
     ../../module_ao/ORB_atomic_lm.cpp
     ../../module_ao/ORB_atomic.cpp
-  LIBS parameter ${math_libs} device base 
+  LIBS ${math_libs} device base parameter
 )
 
 AddTest(
@@ -65,7 +65,7 @@ AddTest(
     ../numerical_radial.cpp
     ../../module_ao/ORB_atomic_lm.cpp
     ../../module_ao/ORB_atomic.cpp
- LIBS parameter ${math_libs} device base 
+ LIBS ${math_libs} device base parameter
 )
 
 AddTest(
@@ -83,7 +83,7 @@ AddTest(
     ../sphbes_radials.cpp
     ../../module_ao/ORB_atomic_lm.cpp
     ../../module_ao/ORB_atomic.cpp
-  LIBS parameter ${math_libs} device base 
+  LIBS ${math_libs} device base parameter
 )
 
 AddTest(
@@ -103,7 +103,7 @@ AddTest(
     ../two_center_bundle.cpp
     ../two_center_integrator.cpp
     ../real_gaunt_table.cpp
-  LIBS parameter ${math_libs} device base container orb 
+  LIBS ${math_libs} device base container orb parameter
 )
 
 AddTest(
@@ -112,7 +112,7 @@ AddTest(
     real_gaunt_table_test.cpp
     ../real_gaunt_table.cpp
     ../../module_ao/ORB_gaunt_table.cpp
-  LIBS parameter ${math_libs} device base container
+  LIBS ${math_libs} device base container
 )
 
 AddTest(
@@ -132,7 +132,7 @@ AddTest(
     ../radial_set.cpp
     ../numerical_radial.cpp
     ../two_center_bundle.cpp
-  LIBS parameter ${math_libs} device base container orb 
+  LIBS ${math_libs} device base container orb parameter
 )
 
 AddTest(
@@ -152,7 +152,7 @@ AddTest(
     ../radial_set.cpp
     ../projgen.cpp
     ../numerical_radial.cpp
-  LIBS parameter ${math_libs} device base container orb 
+  LIBS ${math_libs} device base container orb parameter
 )
 
 AddTest(
@@ -172,6 +172,6 @@ AddTest(
     ../radial_set.cpp
     ../projgen.cpp
     ../numerical_radial.cpp
-  LIBS parameter ${math_libs} device base container orb 
+  LIBS ${math_libs} device base container orb parameter
 )
 

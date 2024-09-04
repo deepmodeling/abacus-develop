@@ -1,18 +1,18 @@
 AddTest(
   TARGET base_ParaCommon
-  LIBS parameter MPI::MPI_CXX
+  LIBS MPI::MPI_CXX
   SOURCES parallel_common_test.cpp ../global_variable.cpp ../parallel_common.cpp
 )
 
 AddTest(
   TARGET base_ParaGlobal
-  LIBS parameter MPI::MPI_CXX
+  LIBS MPI::MPI_CXX
   SOURCES parallel_global_test.cpp ../global_variable.cpp ../parallel_global.cpp ../parallel_comm.cpp
 )
 
 AddTest(
   TARGET base_ParaReduce
-  LIBS parameter MPI::MPI_CXX
+  LIBS MPI::MPI_CXX
   SOURCES parallel_reduce_test.cpp ../global_variable.cpp ../parallel_global.cpp ../parallel_comm.cpp ../parallel_common.cpp ../parallel_reduce.cpp
 )
 
@@ -44,7 +44,7 @@ if(ENABLE_LCAO)
 
   AddTest(
     TARGET blacs_connector
-    LIBS parameter MPI::MPI_CXX ${BLACS_LIB}
+    LIBS MPI::MPI_CXX ${BLACS_LIB}
     SOURCES blacs_connector_test.cpp
   )
   install(FILES blacs_connector_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
