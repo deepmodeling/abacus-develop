@@ -245,7 +245,6 @@ void Input_Conv::Convert()
 #endif // __ENABLE_FLOAT_FFTW
     }
 
-    GlobalV::DFT_FUNCTIONAL = PARAM.inp.dft_functional;
     GlobalV::NSPIN = PARAM.inp.nspin;
 
     GlobalV::CAL_FORCE = PARAM.inp.cal_force;

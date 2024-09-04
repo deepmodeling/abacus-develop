@@ -21,7 +21,6 @@ namespace GlobalV
 int NBANDS = 0;
 int NLOCAL = 0;        // total number of local basis.
 
-std::string DFT_FUNCTIONAL = "default";
 int NSPIN = 1;       // LDA
 bool TWO_EFERMI = false; // two fermi energy, exist only magnetization is fixed.
 double nupdown = 0.0;

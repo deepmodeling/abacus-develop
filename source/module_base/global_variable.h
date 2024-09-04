@@ -20,7 +20,6 @@ namespace GlobalV
 extern int NBANDS;
 extern int NLOCAL;        // 1.1 // mohan add 2009-05-29
 
-extern std::string DFT_FUNCTIONAL; // 6.5 change the DFT functional from input file.
 
 extern int NSPIN;       // 7
 extern bool TWO_EFERMI; // 7.5 two fermi energy, exist if nupdown isn't zero.
