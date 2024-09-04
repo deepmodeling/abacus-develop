@@ -1,7 +1,7 @@
 if(ENABLE_LCAO AND USE_CUDA)
   AddTest(
   TARGET gint_gpu_test
-  LIBS ${math_libs} psi base device
+  LIBS parameter ${math_libs} psi base device
   SOURCES test_sph.cu test_sph.cpp
 )
 endif()

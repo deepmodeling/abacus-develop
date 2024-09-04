@@ -1,7 +1,7 @@
 remove_definitions(-DUSE_LIBXC)
 AddTest(
   TARGET dm_trans_test
-  LIBS psi base ${math_libs} device container
+  LIBS parameter psi base ${math_libs} device container
   SOURCES dm_trans_test.cpp ../../utils/lr_util.cpp ../dm_trans_parallel.cpp ../dm_trans_serial.cpp
   ../../../module_basis/module_ao/parallel_2d.cpp
   # ../../../module_base/module_container/ATen/core/tensor.cpp
