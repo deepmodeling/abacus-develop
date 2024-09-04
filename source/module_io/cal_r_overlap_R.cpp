@@ -1,5 +1,6 @@
 #include "cal_r_overlap_R.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
@@ -446,7 +447,7 @@ void cal_r_overlap_R::out_rR(const int& istep)
     {
         std::ofstream out_r;
         std::stringstream ssr;
-        if (PARAM.inp.calculation == "md" && !GlobalV::out_app_flag)
+        if (PARAM.inp.calculation == "md" && !PARAM.inp.out_app_flag)
         {
             ssr << GlobalV::global_matrix_dir << step << "_"
                 << "data-rR-sparse.csr";
@@ -459,7 +460,7 @@ void cal_r_overlap_R::out_rR(const int& istep)
         if (binary)
         {
             ofs_tem1.close();
-            if (PARAM.inp.calculation == "md" && GlobalV::out_app_flag && step)
+            if (PARAM.inp.calculation == "md" && PARAM.inp.out_app_flag && step)
             {
                 out_r.open(ssr.str().c_str(), std::ios::binary | std::ios::app);
             }
@@ -479,7 +480,7 @@ void cal_r_overlap_R::out_rR(const int& istep)
         else
         {
             ofs_tem1.close();
-            if (PARAM.inp.calculation == "md" && GlobalV::out_app_flag && step)
+            if (PARAM.inp.calculation == "md" && PARAM.inp.out_app_flag && step)
             {
                 out_r.open(ssr.str().c_str(), std::ios::app);
             }
@@ -518,7 +519,7 @@ void cal_r_overlap_R::out_rR_other(const int& istep, const std::set<Abfs::Vector
 
     std::ofstream out_r;
     std::stringstream ssr;
-    if (PARAM.inp.calculation == "md" && !GlobalV::out_app_flag)
+    if (PARAM.inp.calculation == "md" && !PARAM.inp.out_app_flag)
     {
         ssr << GlobalV::global_matrix_dir << step << "_"
             << "data-rR-sparse.csr";
@@ -532,7 +533,7 @@ void cal_r_overlap_R::out_rR_other(const int& istep, const std::set<Abfs::Vector
     {
         if (binary)
         {
-            if (PARAM.inp.calculation == "md" && GlobalV::out_app_flag && step)
+            if (PARAM.inp.calculation == "md" && PARAM.inp.out_app_flag && step)
             {
                 out_r.open(ssr.str().c_str(), std::ios::binary | std::ios::app);
             }
@@ -546,7 +547,7 @@ void cal_r_overlap_R::out_rR_other(const int& istep, const std::set<Abfs::Vector
         }
         else
         {
-            if (PARAM.inp.calculation == "md" && GlobalV::out_app_flag && step)
+            if (PARAM.inp.calculation == "md" && PARAM.inp.out_app_flag && step)
             {
                 out_r.open(ssr.str().c_str(), std::ios::app);
             }

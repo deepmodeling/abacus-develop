@@ -1,5 +1,6 @@
 #include "write_wfc_nao.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/memory.h"
 #include "module_base/timer.h"
 #include "module_base/tool_title.h"
@@ -81,7 +82,7 @@ void wfc_nao_write2file(const std::string &name, const double* ctot, const int n
         else
         {
             std::ofstream ofs;
-            // if (GlobalV::out_app_flag)
+            // if (PARAM.inp.out_app_flag)
             // {
             //     ofs.open(name.c_str(), std::ofstream::app);
             // }
@@ -160,7 +161,7 @@ void wfc_nao_write2file_complex(const std::string &name, const std::complex<doub
         else
         {
             std::ofstream ofs;
-            // if (GlobalV::out_app_flag)
+            // if (PARAM.inp.out_app_flag)
             // {
             //     ofs.open(name.c_str(), std::ofstream::app);
             // }
@@ -265,7 +266,7 @@ void write_wfc_nao(const int out_type,
 
         if (myid == 0)
         {
-            std::string fn = GlobalV::global_out_dir + wfc_nao_gen_fname(out_type, gamma_only, GlobalV::out_app_flag, ik, istep);
+            std::string fn = GlobalV::global_out_dir + wfc_nao_gen_fname(out_type, gamma_only, PARAM.inp.out_app_flag, ik, istep);
             if (std::is_same<double, T>::value)
             {
                 wfc_nao_write2file(fn, reinterpret_cast<double*>(ctot.data()), nlocal, ik, ekb, wg, writeBinary);
