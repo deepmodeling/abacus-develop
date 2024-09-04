@@ -97,10 +97,11 @@ void Charge::reduce_diff_pools(double* array_rho) const
         //==================================
         // Reduce all the rho in each cpu
         //==================================
-        if (PARAM.inp.esolver_type == "sdft") // qinarui add it temporarily.
+        if (PARAM.inp.esolver_type == "sdft") { // qinarui add it temporarily.
             MPI_Allreduce(array_tot_aux, array_tot, this->rhopw->nxyz, MPI_DOUBLE, MPI_SUM, STO_WORLD);
-        else
+        } else {
             MPI_Allreduce(array_tot_aux, array_tot, this->rhopw->nxyz, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+}
 
         //=====================================
         // Change the order of rho in each cpu
@@ -123,8 +124,9 @@ void Charge::reduce_diff_pools(double* array_rho) const
 void Charge::rho_mpi()
 {
     ModuleBase::TITLE("Charge", "rho_mpi");
-    if (GlobalV::KPAR <= 1)
+    if (GlobalV::KPAR <= 1) {
         return;
+}
     ModuleBase::timer::tick("Charge", "rho_mpi");
 
     for (int is = 0; is < GlobalV::NSPIN; ++is)
