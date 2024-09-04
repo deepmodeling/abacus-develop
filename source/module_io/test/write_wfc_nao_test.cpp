@@ -1,5 +1,8 @@
 #include "../write_wfc_nao.h"
 
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include "../binstream.h"
 #include "module_base/global_variable.h"
 #include "module_base/scalapack_connector.h"
@@ -102,7 +105,7 @@ class WriteWfcLcaoTest : public testing::Test
 
     void SetUp() override
     {
-        GlobalV::out_app_flag = true;
+        PARAM.input.out_app_flag = true;
         ekb.create(nk, nbands); // in this test the value of ekb and wg is not important and not used.
         wg.create(nk, nbands);
         kvec_c.resize(nk, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
@@ -173,7 +176,7 @@ TEST_F(WriteWfcLcaoTest, WriteWfcLcao)
     {
         for (int ik = 0; ik < nk; ik++)
         {
-            std::string fname = ModuleIO::wfc_nao_gen_fname(2, true, GlobalV::out_app_flag, ik, -1);
+            std::string fname = ModuleIO::wfc_nao_gen_fname(2, true, PARAM.input.out_app_flag, ik, -1);
             std::ifstream file1(fname);
             EXPECT_TRUE(file1.good());
             std::vector<double> data;
@@ -202,7 +205,7 @@ TEST_F(WriteWfcLcaoTest, WriteWfcLcaoComplex)
     {
         for (int ik = 0; ik < nk; ik++)
         {
-            std::string fname = ModuleIO::wfc_nao_gen_fname(2, false, GlobalV::out_app_flag, ik, -1);
+            std::string fname = ModuleIO::wfc_nao_gen_fname(2, false, PARAM.input.out_app_flag, ik, -1);
             std::ifstream file1(fname);
             EXPECT_TRUE(file1.good());
             std::vector<std::complex<double>> data;
@@ -228,7 +231,7 @@ TEST(ModuleIOTest, WriteWfcNao)
         GlobalV::DRANK = 0;
         GlobalV::NBANDS = 2;
         GlobalV::NLOCAL = 2;
-        GlobalV::out_app_flag = true;
+        PARAM.input.out_app_flag = true;
 
         // Set up test data
         std::string filename = "test_wfc_nao.txt";
@@ -275,7 +278,7 @@ TEST(ModuleIOTest, WriteWfcNaoBinary)
         GlobalV::DRANK = 0;
         GlobalV::NBANDS = 2;
         GlobalV::NLOCAL = 2;
-        GlobalV::out_app_flag = true;
+        PARAM.input.out_app_flag = true;
 
         // Set up test data
         std::string filename = "test_wfc_nao.dat";
@@ -332,7 +335,7 @@ TEST(ModuleIOTest, WriteWfcNaoComplex)
         // Set up GlobalV
         GlobalV::NBANDS = 2;
         GlobalV::NLOCAL = 3;
-        GlobalV::out_app_flag = true;
+        PARAM.input.out_app_flag = true;
         // set up test data
         std::string name = "test_wfc_nao_complex.txt";
         int ik = 0;
@@ -376,7 +379,7 @@ TEST(ModuleIOTest, WriteWfcNaoComplexBinary)
         // Set up GlobalV
         GlobalV::NBANDS = 2;
         GlobalV::NLOCAL = 3;
-        GlobalV::out_app_flag = true;
+        PARAM.input.out_app_flag = true;
         // set up test data
         std::string name = "test_wfc_nao_complex.dat";
         int ik = 0;
