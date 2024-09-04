@@ -100,9 +100,6 @@ class ESolver_KS : public ESolver_FP
 				const int istep, 
 				const int iter);
 
-        //! Solve Hamitonian
-		hsolver::HSolver<T, Device>* phsol = nullptr;
-
         //! Hamiltonian
 		hamilt::Hamilt<T, Device>* p_hamilt = nullptr;
 
