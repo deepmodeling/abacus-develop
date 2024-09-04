@@ -1,7 +1,5 @@
 #include "gtest/gtest.h"
-#define private public
-#include "module_parameter/parameter.h"
-#undef private
+#include "xctest.h"
 #include "../xc_functional.h"
 #include "../exx_info.h"
 /************************************************
@@ -28,14 +26,6 @@ namespace GlobalC
 {
 	Exx_Info exx_info;
 }
-class XCTest: public testing::Test
-{
-    public:
-        XCTest()
-        {
-            PARAM.input.basis_type = "pw";
-        }
-};
 
 class XCTest_PBE_SPN : public XCTest
 {
