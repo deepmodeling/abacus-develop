@@ -4,6 +4,7 @@
 
 #define private public
 #define protected public
+#include "module_parameter/parameter.h"
 #include "module_hsolver/hsolver_pw.h"
 #include "module_hsolver/hsolver_lcaopw.h"
 #include "hsolver_supplementary_mock.h"
@@ -13,8 +14,6 @@
 #include "module_hsolver/hsolver_pw.h"
 #undef private
 #undef protected
-
-#include "module_parameter/parameter.h"
 /************************************************
  *  unit test of HSolverPW class
  ***********************************************/
@@ -195,11 +194,11 @@ TEST_F(TestHSolverPW, solve) {
     // // check diago_ethr
     // GlobalV::init_chg = "atomic";
     // GlobalV::PW_DIAG_THR = 1e-7;
-    // GlobalV::CALCULATION = "scf";
+    // PARAM.input.calculation = "scf";
     // float test_diagethr = hs_f.set_diagethr(hs_f.diag_ethr, 0, 1, 1.0);
     // EXPECT_NEAR(hs_f.diag_ethr, 0.01, 1.0e-7);
     // EXPECT_NEAR(test_diagethr, 0.01, 1.0e-7);
-    // GlobalV::CALCULATION = "md";
+    // PARAM.input.calculation = "md";
     // GlobalV::init_chg = "file";
     // test_diagethr = hs_f.set_diagethr(hs_f.diag_ethr, 0, 1, 1.0);
     // EXPECT_NEAR(test_diagethr, 1e-5, 1.0e-7);
@@ -210,11 +209,11 @@ TEST_F(TestHSolverPW, solve) {
 
     // GlobalV::init_chg = "atomic";
     // GlobalV::PW_DIAG_THR = 1e-7;
-    // GlobalV::CALCULATION = "scf";
+    // PARAM.input.calculation = "scf";
     // double test_diagethr_d = hs_d.set_diagethr(hs_d.diag_ethr, 0, 1, 1.0);
     // EXPECT_EQ(hs_d.diag_ethr, 0.01);
     // EXPECT_EQ(test_diagethr_d, 0.01);
-    // GlobalV::CALCULATION = "md";
+    // PARAM.input.calculation = "md";
     // GlobalV::init_chg = "file";
     // test_diagethr_d = hs_d.set_diagethr(hs_d.diag_ethr, 0, 1, 1.0);
     // EXPECT_EQ(test_diagethr_d, 1e-5);

@@ -1,7 +1,10 @@
-#include "../global_file.h"
-#include "../global_variable.h"
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
+#include "../global_file.h"
+#include "../global_variable.h"
 #include <fstream>
 #include <unistd.h>
 
@@ -113,7 +116,7 @@ TEST_F(GlobalFile,closealllog)
 		std::string header = "running_";
 		std::string tailCpuRank0 = "_cpu0.log";
 		std::string tail = ".log";
-		std::string f1 = header + GlobalV::CALCULATION + tailCpuRank0;
+		std::string f1 = header + PARAM.input.calculation + tailCpuRank0;
 		
 		if (GlobalV::ofs_running.is_open())
 		{

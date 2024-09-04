@@ -147,7 +147,7 @@ class DiagoCGPrepare
         auto subspace_func = [ha](const ct::Tensor& psi_in, ct::Tensor& psi_out) { /*do nothing*/ };
         hsolver::DiagoCG<std::complex<float>> cg(
             PARAM.input.basis_type,
-            GlobalV::CALCULATION,
+            PARAM.input.calculation,
             hsolver::DiagoIterAssist<std::complex<float>>::need_subspace,
             subspace_func,
             hsolver::DiagoIterAssist<std::complex<float>>::PW_DIAG_THR,

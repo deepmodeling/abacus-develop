@@ -877,7 +877,7 @@ TEST_F(UcellTest, PrintSTRU)
     ucell = utp.SetUcellInfo();
     // Cartesian type of coordinates
     std::string fn = "C1H2_STRU";
-    GlobalV::CALCULATION = "md"; // print velocity in STRU, not needed anymore after refactor of this function
+    PARAM.input.calculation = "md"; // print velocity in STRU, not needed anymore after refactor of this function
 
     /**
      * CASE: nspin1|Cartesian|no vel|no mag|no orb|no dpks_desc|rank0
@@ -1822,7 +1822,7 @@ TEST_F(UcellTest, ReadAtomPositionsWarning5)
     GlobalV::test_pseudo_cell = 2;
     PARAM.input.basis_type = "lcao";
     GlobalV::deepks_setorb = true;
-    GlobalV::CALCULATION = "md";
+    PARAM.input.calculation = "md";
     GlobalV::ESOLVER_TYPE = "arbitrary";
     EXPECT_NO_THROW(ucell->read_atom_species(ifa, ofs_running));
     EXPECT_DOUBLE_EQ(ucell->latvec.e11, 4.27957);
