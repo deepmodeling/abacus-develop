@@ -5,7 +5,7 @@
 #include "module_base/constants.h"
 #include "module_base/memory.h"
 #include "module_base/timer.h"
-
+#include "module_parameter/parameter.h"
 namespace ModulePW
 {
 
@@ -132,7 +132,7 @@ void PW_Basis_K::setupIndGk()
             }
         }
         this->npwk[ik] = ng;
-        ModuleBase::CHECK_WARNING_QUIT((ng == 0), "pw_basis_k.cpp", "Current core has no plane waves! Please reduce the cores.");
+        ModuleBase::CHECK_WARNING_QUIT((ng == 0), "pw_basis_k.cpp", PARAM.inp.calculation,"Current core has no plane waves! Please reduce the cores.");
         if ( this->npwk_max < ng)
         {
             this->npwk_max = ng;
