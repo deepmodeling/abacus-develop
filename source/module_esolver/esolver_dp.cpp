@@ -40,6 +40,7 @@ void ESolver_DP::before_all_runners(const Input_para& inp, UnitCell& ucell)
     atype.resize(ucell.nat);
     coord.resize(3 * ucell.nat);
 
+    rescaling = inp.mdp.dp_rescaling;
     fparam = inp.mdp.dp_fparam;
     aparam = inp.mdp.dp_aparam;
 
@@ -89,21 +90,25 @@ void ESolver_DP::runner(const int istep, UnitCell& ucell)
     GlobalV::ofs_running << " final etot is " << std::setprecision(11) << dp_potential * ModuleBase::Ry_to_eV << " eV"
                          << std::endl;
 
-    const double fact_f = ModuleBase::Ry_to_eV * ModuleBase::ANGSTROM_AU;
-    const double fact_v = ucell.omega * ModuleBase::Ry_to_eV;
+    // rescale the energy, force, and stress
+    const double fact_e = rescaling / ModuleBase::Ry_to_eV;
+    const double fact_f = rescaling / (ModuleBase::Ry_to_eV * ModuleBase::ANGSTROM_AU);
+    const double fact_v = rescaling / (ucell.omega * ModuleBase::Ry_to_eV);
+
+    dp_potential *= fact_e;
 
     for (int i = 0; i < ucell.nat; ++i)
     {
-        dp_force(i, 0) = f[3 * i] / fact_f;
-        dp_force(i, 1) = f[3 * i + 1] / fact_f;
-        dp_force(i, 2) = f[3 * i + 2] / fact_f;
+        dp_force(i, 0) = f[3 * i] * fact_f;
+        dp_force(i, 1) = f[3 * i + 1] * fact_f;
+        dp_force(i, 2) = f[3 * i + 2] * fact_f;
     }
 
     for (int i = 0; i < 3; ++i)
     {
         for (int j = 0; j < 3; ++j)
         {
-            dp_virial(i, j) = v[3 * i + j] / fact_v;
+            dp_virial(i, j) = v[3 * i + j] * fact_v;
         }
     }
 #else
