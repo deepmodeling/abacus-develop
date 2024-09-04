@@ -247,8 +247,6 @@ void Input_Conv::Convert()
     GlobalV::CALCULATION = PARAM.inp.calculation;
     GlobalV::ESOLVER_TYPE = PARAM.inp.esolver_type;
 
-    GlobalV::PSEUDORCUT = PARAM.inp.pseudo_rcut;
-
     GlobalV::DFT_FUNCTIONAL = PARAM.inp.dft_functional;
     GlobalV::NSPIN = PARAM.inp.nspin;
 

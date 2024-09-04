@@ -21,7 +21,6 @@ extern int NBANDS;
 extern int NLOCAL;        // 1.1 // mohan add 2009-05-29
 
 
-extern double PSEUDORCUT;
 
 extern std::string CALCULATION; // 2 "scf";"nscf" ;"symmetry"
 extern std::string ESOLVER_TYPE;
