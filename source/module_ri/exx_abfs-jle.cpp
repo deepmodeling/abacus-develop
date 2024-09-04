@@ -1,5 +1,6 @@
 #include "exx_abfs-jle.h"
 
+#include "module_parameter/parameter.h"
 #include "../module_hamilt_pw/hamilt_pwdft/global.h"
 #include "../module_basis/module_ao/ORB_read.h"
 #include "../module_base/global_function.h"
@@ -51,7 +52,7 @@ void Exx_Abfs::Jle::init_jle( const double kmesh_times )
 					GlobalC::ORB.Phi[T].PhiLN(0,0).getDk(),
 					GlobalC::ORB.Phi[T].PhiLN(0,0).getDruniform(),
 					false,
-					true, GlobalV::CAL_FORCE);
+					true, PARAM.inp.cal_force);
 			}
 		}
 	}

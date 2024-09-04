@@ -23,4 +23,8 @@ time.json
 __pycache__
 abacus.json
 *.npy
+*.py
+*.txt
+*.sh
+
 

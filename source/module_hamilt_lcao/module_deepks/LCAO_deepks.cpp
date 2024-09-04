@@ -1,5 +1,6 @@
 //wenfei 2022-1-5
 //This file contains constructor and destructor of the class LCAO_deepks, 
+#include "module_parameter/parameter.h"
 //as well as subroutines for initializing and releasing relevant data structures 
 
 //Other than the constructor and the destructor, it contains 3 types of subroutines:
@@ -354,7 +355,7 @@ void LCAO_Deepks::allocate_V_delta(const int nat, const int nks)
         this->gedm[inl] = new double[pdm_size];
         ModuleBase::GlobalFunc::ZEROS(this->gedm[inl], pdm_size);
     }
-    if (GlobalV::CAL_FORCE)
+    if (PARAM.inp.cal_force)
     {
         //init F_delta
         F_delta.create(nat, 3);

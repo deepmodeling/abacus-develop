@@ -92,7 +92,7 @@ bool Relax_old::if_do_relax(const UnitCell& ucell)
         //		if(!IMM.get_converged()) return 1;
         else
         {
-            assert(GlobalV::CAL_FORCE == 1);
+            assert(PARAM.inp.cal_force == 1);
             return true;
         }
     }

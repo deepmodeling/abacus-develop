@@ -299,7 +299,7 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(ModuleBase::matrix& force)
 
     Force_Stress_LCAO<TK> fsl(this->RA, GlobalC::ucell.nat);
 
-    fsl.getForceStress(GlobalV::CAL_FORCE,
+    fsl.getForceStress(PARAM.inp.cal_force,
                        GlobalV::CAL_STRESS,
                        GlobalV::TEST_FORCE,
                        GlobalV::TEST_STRESS,
@@ -1230,7 +1230,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
     }
 
     // 16) delete grid
-    if (!GlobalV::CAL_FORCE && !GlobalV::CAL_STRESS)
+    if (!PARAM.inp.cal_force && !GlobalV::CAL_STRESS)
     {
         RA.delete_grid();
     }

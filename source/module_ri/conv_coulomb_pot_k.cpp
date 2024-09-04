@@ -1,5 +1,6 @@
 #include "conv_coulomb_pot_k.h"
 #include "../module_base/constants.h"
+#include "module_parameter/parameter.h"
 #include "../module_basis/module_ao/ORB_atomic_lm.h"
 #include "../module_hamilt_pw/hamilt_pwdft/global.h"
 
@@ -90,7 +91,7 @@ namespace Conv_Coulomb_Pot_K
 			orbs.getDk(),
 			orbs.getDruniform(),
 			false,
-			true, GlobalV::CAL_FORCE);
+			true, PARAM.inp.cal_force);
 		return orbs_ccp;
 	}
 

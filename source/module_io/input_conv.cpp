@@ -616,7 +616,7 @@ void Input_Conv::Convert()
         {
             ModuleBase::WARNING_QUIT("Input_conv", "generate deepks unittest with only 1 processor");
         }
-        if (GlobalV::CAL_FORCE != 1)
+        if (PARAM.inp.cal_force != 1)
         {
             ModuleBase::WARNING_QUIT("Input_conv", "force is required in generating deepks unittest");
         }

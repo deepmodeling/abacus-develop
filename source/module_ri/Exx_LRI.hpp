@@ -1,5 +1,6 @@
 //=======================
 // AUTHOR : Peize Lin
+#include "module_parameter/parameter.h"
 // DATE :   2022-08-17
 //=======================
 
@@ -132,7 +133,7 @@ void Exx_LRI<Tdata>::cal_exx_ions()
 	this->cv.Vws = LRI_CV_Tools::get_CVws(Vs);
 	this->exx_lri.set_Vs(std::move(Vs), this->info.V_threshold);
 
-	if(GlobalV::CAL_FORCE || GlobalV::CAL_STRESS)
+	if(PARAM.inp.cal_force || GlobalV::CAL_STRESS)
 	{
 		std::array<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,3>
 			dVs = this->cv.cal_dVs(
@@ -154,13 +155,13 @@ void Exx_LRI<Tdata>::cal_exx_ions()
 	std::pair<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>, std::array<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,3>>
 		Cs_dCs = this->cv.cal_Cs_dCs(
 			list_As_Cs.first, list_As_Cs.second[0],
-			{{"cal_dC",GlobalV::CAL_FORCE||GlobalV::CAL_STRESS},
+			{{"cal_dC",PARAM.inp.cal_force||GlobalV::CAL_STRESS},
 			 {"writable_Cws",true}, {"writable_dCws",true}, {"writable_Vws",false}, {"writable_dVws",false}});
 	std::map<TA,std::map<TAC,RI::Tensor<Tdata>>> &Cs = std::get<0>(Cs_dCs);
 	this->cv.Cws = LRI_CV_Tools::get_CVws(Cs);
 	this->exx_lri.set_Cs(std::move(Cs), this->info.C_threshold);
 
-	if(GlobalV::CAL_FORCE || GlobalV::CAL_STRESS)
+	if(PARAM.inp.cal_force || GlobalV::CAL_STRESS)
 	{
 		std::array<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,3> &dCs = std::get<1>(Cs_dCs);
 		this->cv.dCws = LRI_CV_Tools::get_dCVws(dCs);
@@ -186,7 +187,7 @@ void Exx_LRI<Tdata>::cal_exx_elec(const std::vector<std::map<TA,std::map<TAC,RI:
 	this->Eexx = 0;
 	for(int is=0; is<GlobalV::NSPIN; ++is)
 	{
-		if(!(GlobalV::CAL_FORCE || GlobalV::CAL_STRESS))
+		if(!(PARAM.inp.cal_force || GlobalV::CAL_STRESS))
 		{
 			this->exx_lri.set_Ds(Ds[is], this->info.dm_threshold);
 			this->exx_lri.cal_Hs();
