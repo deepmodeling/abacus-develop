@@ -113,7 +113,7 @@ class UcellTest : public ::testing::Test {
         GlobalV::LSPINORB = false;
         pp_dir = "./support/";
         PARAM.input.pseudo_rcut = 15.0;
-        GlobalV::DFT_FUNCTIONAL = "default";
+        PARAM.input.dft_functional = "default";
         GlobalV::test_unitcell = 1;
         GlobalV::test_pseudo_cell = 1;
         GlobalV::NSPIN = 1;
@@ -159,7 +159,7 @@ TEST_F(UcellDeathTest, ReadCellPPWarning3) {
 }
 
 TEST_F(UcellDeathTest, ReadCellPPWarning4) {
-    GlobalV::DFT_FUNCTIONAL = "LDA";
+    PARAM.input.dft_functional = "LDA";
     testing::internal::CaptureStdout();
     EXPECT_NO_THROW(ucell->read_cell_pseudopots(pp_dir, ofs));
     output = testing::internal::GetCapturedStdout();
