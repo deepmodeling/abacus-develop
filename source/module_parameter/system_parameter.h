@@ -32,6 +32,5 @@ struct System_para
     bool double_grid = false;               ///< true if "ndx,ndy,ndz" is larger than "nx,ny,nz"
     double uramping = -10.0 / 13.6;         /// U-Ramping method (Ry)
     std::vector<double> hubbard_u = {};     ///< Hubbard Coulomb interaction parameter U (Ry)
-    std::string global_calculation = "scf"; ///< global calculation type decided by "calculation"
 };
 #endif
