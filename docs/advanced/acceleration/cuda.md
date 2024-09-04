@@ -29,11 +29,13 @@ To compile and use ABACUS in CUDA mode, you currently need to have an NVIDIA GPU
 
 Check the [Advanced Installation Options](https://abacus-rtd.readthedocs.io/en/latest/advanced/install.html#build-with-cuda-support) for the installation of CUDA version support.
 
+When the compilation parameter USE_ELPA is ON (which is the default value) and USE_CUDA is also set to ON, the ELPA library needs to [enable GPU support](https://github.com/marekandreas/elpa/blob/master/documentation/INSTALL.md) at compile time.
+
 ## Run with the GPU support by editing the INPUT script:
 
 In `INPUT` file we need to set the input parameter [device](../input_files/input-main.md#device) to `gpu`. If this parameter is not set, ABACUS will try to determine if there are available GPUs.
-- Set `ks_solver`: For the PW basis, CG, BPCG and Davidson methods are supported on GPU; set the input parameter [ks_solver](../input_files/input-main.md#ks_solver) to `cg`, `bpcg` or `dav`. For the LCAO basis, `cusolver` is supported on GPU.
-- **multi-card**: ABACUS allows for multi-GPU acceleration. If you have multiple GPU cards, you can run ABACUS with several MPI processes, and each process will utilize one GPU card. For example, the command `mpirun -n 2 abacus` will by default launch two GPUs for computation. If you only have one card, this command will only start one GPU.
+- Set `ks_solver`: For the PW basis, CG, BPCG and Davidson methods are supported on GPU; set the input parameter [ks_solver](../input_files/input-main.md#ks_solver) to `cg`, `bpcg` or `dav`. For the LCAO basis, `cusolver` and `elpa` is supported on GPU.
+- **multi-card**: ABACUS allows for multi-GPU acceleration. If you have multiple GPU cards, you can run ABACUS with several MPI processes, and each process will utilize one GPU card. For example, the command `mpirun -n 2 abacus` will by default launch two GPUs for computation. If you only have one card, this command will only start one GPU. 
 
 ## Examples
 We provides [examples](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/gpu) of gpu calculations.
@@ -42,3 +44,6 @@ We provides [examples](https://github.com/deepmodeling/abacus-develop/tree/devel
 PW basis:
 - Only k point parallelization is supported, so the input keyword `kpar` will be set to match the number of MPI tasks automatically.
 - By default, CUDA architectures 60, 70, 75, 80, 86, and 89 are compiled (if supported). It can be overriden using the CMake variable [`CMAKE_CUDA_ARCHITECTURES`](https://cmake.org/cmake/help/latest/variable/CMAKE_CUDA_ARCHITECTURES.html) or the environmental variable [`CUDAARCHS`](https://cmake.org/cmake/help/latest/envvar/CUDAARCHS.html).
+LCAO basis:
+- Unless there is a specific reason, avoid using multiple GPUs, as it can be slower than using a single GPU. This is because the generalized eigenvalue solution of the LCAO basis set will incur additional communication overhead when calculated on multiple cards. When the memory limit of a GPU card makes it insufficient to complete the task, it is recommended to use multiple cards for calculation.
+- When using elpa on GPUs, some ELPA internal logs will be output.

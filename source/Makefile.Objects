@@ -347,6 +347,7 @@ OBJS_HSOLVER_LCAO=hsolver_lcao.o\
       diago_scalapack.o\
       diago_lapack.o\
       diago_elpa.o\
+      diago_elpa_native.o\
       elpa_new.o\
       elpa_new_real.o\
       elpa_new_complex.o\

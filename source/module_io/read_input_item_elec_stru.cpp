@@ -10,7 +10,7 @@ void ReadInput::item_elec_stru()
     // Electronic Structure
     {
         Input_Item item("ks_solver");
-        item.annotation = "cg; dav; lapack; genelpa; scalapack_gvx; cusolver";
+        item.annotation = "cg; dav; lapack; genelpa; elpa; scalapack_gvx; cusolver";
         read_sync_string(input.ks_solver);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.ks_solver == "default")
@@ -65,6 +65,7 @@ void ReadInput::item_elec_stru()
             const std::vector<std::string> pw_solvers = {"cg", "dav", "bpcg", "dav_subspace"};
             const std::vector<std::string> lcao_solvers = {
                 "genelpa",
+                "elpa",
                 "lapack",
                 "scalapack_gvx",
                 "cusolver",
@@ -103,6 +104,16 @@ void ReadInput::item_elec_stru()
                                              "ks_solver to scalapack_gvx.");
 #endif
                 }
+                else if (ks_solver == "elpa")
+                {
+#ifndef __ELPA
+                    ModuleBase::WARNING_QUIT("Input",
+                                             "Can not use elpa if abacus is not compiled with "
+                                             "ELPA. Please change "
+                                             "ks_solver to scalapack_gvx.");
+#endif
+                }
+
                 else if (ks_solver == "scalapack_gvx")
                 {
 #ifdef __MPI
