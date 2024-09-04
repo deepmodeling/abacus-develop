@@ -8,9 +8,6 @@
 
 #include <module_base/macros.h>
 
-template class hsolver::HSolver<std::complex<float>, base_device::DEVICE_CPU>;
-template class hsolver::HSolver<std::complex<double>, base_device::DEVICE_CPU>;
-
 /************************************************
  *  unit test of HSolver base class
  ***********************************************/
@@ -34,10 +31,10 @@ template class hsolver::HSolver<std::complex<double>, base_device::DEVICE_CPU>;
 class TestHSolver : public ::testing::Test
 {
 public:
-  hsolver::HSolver<std::complex<float>, base_device::DEVICE_CPU> hs_cf;
-  hsolver::HSolver<std::complex<double>, base_device::DEVICE_CPU> hs_cd;
-  hsolver::HSolver<float, base_device::DEVICE_CPU> hs_f;
-  hsolver::HSolver<double, base_device::DEVICE_CPU> hs_d;
+  // hsolver::HSolver<std::complex<float>, base_device::DEVICE_CPU> hs_cf;
+  // hsolver::HSolver<std::complex<double>, base_device::DEVICE_CPU> hs_cd;
+  // hsolver::HSolver<float, base_device::DEVICE_CPU> hs_f;
+  // hsolver::HSolver<double, base_device::DEVICE_CPU> hs_d;
 
   hamilt::Hamilt<std::complex<double>> hamilt_test_cd;
   hamilt::Hamilt<std::complex<float>> hamilt_test_cf;
@@ -84,6 +81,7 @@ public:
 // 	double test_diagethr_d = hs_d.set_diagethr(0.0, 0, 0, 0.0);
 // 	EXPECT_EQ(test_diagethr_d, 0.0);
 // }
+
 namespace hsolver
 {
 template <typename T, typename Device = base_device::DEVICE_CPU>
