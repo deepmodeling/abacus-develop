@@ -129,7 +129,7 @@ class MockElecState : public ElecState
         GlobalV::TWO_EFERMI = false;
         GlobalV::NBANDS = 6;
         GlobalV::NLOCAL = 6;
-        GlobalV::ESOLVER_TYPE = "ksdft";
+        PARAM.input.esolver_type = "ksdft";
         GlobalV::LSPINORB = false;
         PARAM.input.basis_type = "pw";
         GlobalV::KPAR = 1;
@@ -202,7 +202,7 @@ TEST_F(ElecStateTest, CalNbandsSOC)
 
 TEST_F(ElecStateTest, CalNbandsSDFT)
 {
-    GlobalV::ESOLVER_TYPE = "sdft";
+    PARAM.input.esolver_type = "sdft";
     EXPECT_NO_THROW(elecstate->cal_nbands());
 }
 

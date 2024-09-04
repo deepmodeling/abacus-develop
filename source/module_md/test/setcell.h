@@ -140,7 +140,7 @@ class Setcell
         input.mdp.md_dt = 1;
         input.mdp.md_tfirst = input.mdp.md_tlast = 300;
 
-        GlobalV::ESOLVER_TYPE = "lj";
+        PARAM.input.esolver_type = "lj";
         input.mdp.lj_rcut = {8.5};
         input.mdp.lj_epsilon = {0.01032};
         input.mdp.lj_sigma = {3.405};
