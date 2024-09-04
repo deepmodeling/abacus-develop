@@ -43,8 +43,12 @@ void ESolver_DP::before_all_runners(const Input_para& inp, UnitCell& ucell)
     fparam = inp.mdp.dp_fparam;
     aparam = inp.mdp.dp_aparam;
 
+#ifdef __DPMD
     /// determine the type map from STRU to DP model
     type_map(ucell);
+#else
+    ModuleBase::WARNING_QUIT("ESolver_DP", "Please recompile with -D__DPMD");
+#endif
 }
 
 void ESolver_DP::runner(const int istep, UnitCell& ucell)
