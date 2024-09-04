@@ -235,9 +235,11 @@ std::map<std::string, std::vector<std::string>> _build_block_data(const std::vec
 }
 
 void bcast_cifmap(std::map<std::string, std::vector<std::string>>& map, // the map to be broadcasted 
-                  const int rank = 0)   // my rank
+                  const int rank = 0)   // source rank: from which rank to broadcast
 {
 #ifdef __MPI
+    int myrank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
     // use Parallel_Common namespace bcast_int and bcast_string to broadcast the size of map and key, value pairs
     int size = map.size();
     Parallel_Common::bcast_int(size); // seems it can only broadcast from rank 0, so presently no need to specify
@@ -245,7 +247,7 @@ void bcast_cifmap(std::map<std::string, std::vector<std::string>>& map, // the m
     std::vector<std::string> keys(size);
     std::vector<std::vector<std::string>> values(size);
     int i = 0;
-    if (rank == 0)
+    if (myrank == rank) // if the rank is the source rank, then pack the map to keys and values
     {
         for (auto& elem: map)
         {
@@ -262,7 +264,7 @@ void bcast_cifmap(std::map<std::string, std::vector<std::string>>& map, // the m
         values[i].resize(valsize);
         Parallel_Common::bcast_string(values[i].data(), valsize);
     }
-    if (rank != 0)
+    if (myrank != rank) // if the rank is not the source rank, then unpack the keys and values to map
     {
         map.clear();
         for (int i = 0; i < size; i++)
@@ -326,7 +328,9 @@ void ModuleIO::CifParser::write(const std::string& fcif,
                                 const std::string& cell_formula_units_z)
 {
 #ifdef __MPI // well...very simple...
-    if (rank != 0)
+    int myrank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+    if (myrank != rank) // if present rank is not the rank assigned to write the cif file, then return
     {
         return;
     }
@@ -398,7 +402,9 @@ void ModuleIO::CifParser::write(const std::string& fcif,
                                 const std::string& cell_formula_units_z)
 {
 #ifdef __MPI
-    if (rank != 0)
+    int myrank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+    if (myrank != rank) // if present rank is not the rank assigned to write the cif file, then return
     {
         return;
     }
@@ -423,7 +429,9 @@ void ModuleIO::CifParser::write(const std::string& fcif,
                                 const int rank)
 {
 #ifdef __MPI
-    if (rank != 0)
+    int myrank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+    if (myrank != rank)  // if present rank is not the rank assigned to write the cif file, then return
     {
         return;
     }
@@ -460,7 +468,9 @@ void ModuleIO::CifParser::read(const std::string& fcif,
     // okey for read, cannot just use if rank != 0 then return, because need to broadcast the map
     out.clear();
 #ifdef __MPI
-    if (rank == 0)
+    int myrank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+    if (myrank == rank) // only the rank assigned to read the cif file will read the file
     {
 #endif
     std::ifstream ifs(fcif);

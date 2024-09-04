@@ -363,7 +363,7 @@ TEST(CifParserTest, ReadSimpleTest)
     }
 #endif
     std::map<std::string, std::vector<std::string>> data;
-    ModuleIO::CifParser::read("mp-2516584.cif", data, rank);
+    ModuleIO::CifParser::read("mp-2516584.cif", data);
     // delete the file
 #ifdef __MPI
     if (rank == 0)
@@ -437,7 +437,7 @@ TEST(CifParserTest, ReadMediumTest)
     }
 #endif
     std::map<std::string, std::vector<std::string>> data;
-    ModuleIO::CifParser::read("cod-1000065.cif", data, rank);
+    ModuleIO::CifParser::read("cod-1000065.cif", data);
     // delete the file
 #ifdef __MPI
     if (rank == 0)
@@ -524,10 +524,9 @@ TEST(CifParserTest, WriteTest)
                                 atom_site_labels.data(), 
                                 atom_site_fract.data(),
                                 "# Generated during unittest of function ModuleIO::CifParser::write",
-                                "data_test",
-                                rank);
+                                "data_test");
     std::map<std::string, std::vector<std::string>> data;
-    ModuleIO::CifParser::read(fcif, data, rank);
+    ModuleIO::CifParser::read(fcif, data);
     // delete the file
 #ifdef __MPI
     if (rank == 0)
