@@ -304,6 +304,11 @@ void Pseudopot_upf::read_pseudo_nl(std::ifstream &ifs, Atom_pseudo& pp)
             ifs >> idum;
             ModuleBase::GlobalFunc::READ_VALUE(ifs, pp.lll[i]);// nl_1
             ModuleBase::GlobalFunc::READ_VALUE(ifs, this->kbeta[i]); // nl_2
+            if (this->kbeta[i] % 2 == 0)
+            {
+                this->kbeta[i] = this->kbeta[i] - 1;
+                assert(this->kbeta[i] == pp.mesh);
+            }
             // number of mesh points for projectors
 
             for (ir = 0; ir < this->kbeta[i]; ir++)
