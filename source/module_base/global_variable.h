@@ -20,9 +20,6 @@ namespace GlobalV
 extern int NBANDS;
 extern int NLOCAL;        // 1.1 // mohan add 2009-05-29
 
-extern bool out_app_flag; // whether output r(R), H(R), S(R), T(R), and dH(R) matrices
-                          // in an append manner during MD liuyu 2023-03-20
-
 extern std::string DFT_FUNCTIONAL; // 6.5 change the DFT functional from input file.
 
 extern int NSPIN;       // 7

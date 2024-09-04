@@ -549,7 +549,6 @@ void Input_Conv::Convert()
     GlobalV::chg_extrap = PARAM.inp.chg_extrap; // xiaohui modify 2015-02-01
     GlobalV::nelec = PARAM.inp.nelec;
     GlobalV::out_pot = PARAM.inp.out_pot;
-    GlobalV::out_app_flag = PARAM.inp.out_app_flag;
 
 #ifdef __LCAO
     hsolver::HSolverLCAO<double>::out_mat_hs = PARAM.inp.out_mat_hs;
