@@ -195,7 +195,7 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
     }
 
     ModuleBase::matrix force_e;
-    if (GlobalV::EFIELD_FLAG)
+    if (PARAM.inp.efield_flag)
     {
         force_e.create(this->nat, 3);
         elecstate::Efield::compute_force(GlobalC::ucell, force_e);
@@ -297,7 +297,7 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
                     force(iat, ipol) += force_vdw(iat, ipol);
                 }
 
-                if (GlobalV::EFIELD_FLAG)
+                if (PARAM.inp.efield_flag)
                 {
                     force(iat, ipol) = force(iat, ipol) + force_e(iat, ipol);
                 }
@@ -318,7 +318,7 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
             }
         }
 
-        if (!(GlobalV::GATE_FLAG || GlobalV::EFIELD_FLAG))
+        if (!(GlobalV::GATE_FLAG || PARAM.inp.efield_flag))
         {
             double compen = sum / this->nat;
             for (int iat = 0; iat < this->nat; ++iat)
@@ -328,7 +328,7 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
         }
     }
 
-    if (GlobalV::GATE_FLAG || GlobalV::EFIELD_FLAG)
+    if (GlobalV::GATE_FLAG || PARAM.inp.efield_flag)
     {
         GlobalV::ofs_running << "Atomic forces are not shifted if gate_flag or efield_flag == true!" << std::endl;
     }
@@ -432,7 +432,7 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
                                   forcepaw,
                                   false);
         }
-        if (GlobalV::EFIELD_FLAG)
+        if (PARAM.inp.efield_flag)
         {
             ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "EFIELD   FORCE (eV/Angstrom)", force_e, false);
         }

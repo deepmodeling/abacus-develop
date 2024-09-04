@@ -28,7 +28,7 @@ void write_elecstat_pot(
     std::vector<double> v_elecstat(rho_basis->nrxx, 0.0);
 
     const int nspin = GlobalV::NSPIN;
-    const int efield = GlobalV::EFIELD_FLAG;
+    const int efield = PARAM.inp.efield_flag;
     const int dip_corr = GlobalV::DIP_COR_FLAG;
     const bool imp_sol = GlobalV::imp_sol;
 

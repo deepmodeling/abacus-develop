@@ -61,7 +61,7 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K
         {
             pot_register_in.push_back("surchem");
         }
-        if (GlobalV::EFIELD_FLAG)
+        if (PARAM.inp.efield_flag)
         {
             pot_register_in.push_back("efield");
         }

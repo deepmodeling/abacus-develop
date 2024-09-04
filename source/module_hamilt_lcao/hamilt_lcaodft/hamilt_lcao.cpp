@@ -100,7 +100,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
         {
             pot_register_in.push_back("surchem");
         }
-        if (GlobalV::EFIELD_FLAG)
+        if (PARAM.inp.efield_flag)
         {
             pot_register_in.push_back("efield");
         }
