@@ -17,6 +17,7 @@ namespace hamilt
     inline void reallocate_hcontainer(const std::vector<std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& Hexxs,
         HContainer<TR>* hR)
     {
+        auto* pv = hR->get_paraV();
         bool need_allocate = false;
         for (auto& Htmp1 : Hexxs[0])
         {
@@ -24,18 +25,20 @@ namespace hamilt
             for (auto& Htmp2 : Htmp1.second)
             {
                 const int& iat1 = Htmp2.first.first;
-                const Abfs::Vector3_Order<int>& R = RI_Util::array3_to_Vector3(Htmp2.first.second);
-                BaseMatrix<TR>* HlocR = hR->find_matrix(iat0, iat1, R.x, R.y, R.z);
-                if (HlocR == nullptr)
-                { // add R to HContainer
-                    need_allocate = true;
-                    AtomPair<TR> tmp(iat0, iat1, R.x, R.y, R.z, hR->find_pair(0, 0)->get_paraV());
-                    hR->insert_pair(tmp);
+                if (pv->get_row_size(iat0) > 0 && pv->get_col_size(iat1) > 0)
+                {
+                    const Abfs::Vector3_Order<int>& R = RI_Util::array3_to_Vector3(Htmp2.first.second);
+                    BaseMatrix<TR>* HlocR = hR->find_matrix(iat0, iat1, R.x, R.y, R.z);
+                    if (HlocR == nullptr)
+                    { // add R to HContainer
+                        need_allocate = true;
+                        AtomPair<TR> tmp(iat0, iat1, R.x, R.y, R.z, pv);
+                        hR->insert_pair(tmp);
+                    }
                 }
             }
         }
-        if (need_allocate) { hR->allocate(nullptr, true);
-}
+        if (need_allocate) { hR->allocate(nullptr, true); }
     }
     /// allocate according to BvK cells, used in scf
     template <typename TR>
@@ -43,30 +46,36 @@ namespace hamilt
         const std::array<int, 3>& Rs_period,
         const RI::Cell_Nearest<int, int, 3, double, 3>* const cell_nearest = nullptr)
     {
+        auto* pv = hR->get_paraV();
         auto Rs = RI_Util::get_Born_von_Karmen_cells(Rs_period);
         bool need_allocate = false;
         for (int iat0 = 0;iat0 < GlobalC::ucell.nat;++iat0)
         {
             for (int iat1 = 0;iat1 < GlobalC::ucell.nat;++iat1)
             {
-                for (auto& cell : Rs)
+                // complete the atom pairs that has orbitals in this processor but not in hR due to the adj_list 
+                // but adj_list is not enought for EXX, which is more nonlocal than Nonlocal 
+                if(pv->get_row_size(iat0) > 0 && pv->get_col_size(iat1) > 0)
                 {
-                    const Abfs::Vector3_Order<int>& R = RI_Util::array3_to_Vector3(
-                        (cell_nearest ?
-                            cell_nearest->get_cell_nearest_discrete(iat0, iat1, cell)
-                            : cell));
-                    BaseMatrix<TR>* HlocR = hR->find_matrix(iat0, iat1, R.x, R.y, R.z);
-                    if (HlocR == nullptr)
-                    { // add R to HContainer
-                        need_allocate = true;
-                        AtomPair<TR> tmp(iat0, iat1, R.x, R.y, R.z, hR->find_pair(0, 0)->get_paraV());
-                        hR->insert_pair(tmp);
+                    for (auto& cell : Rs)
+                    {
+                        const Abfs::Vector3_Order<int>& R = RI_Util::array3_to_Vector3(
+                            (cell_nearest ?
+                                cell_nearest->get_cell_nearest_discrete(iat0, iat1, cell)
+                                : cell));
+                        BaseMatrix<TR>* HlocR = hR->find_matrix(iat0, iat1, R.x, R.y, R.z);
+
+                        if (HlocR == nullptr)
+                        { // add R to HContainer
+                            need_allocate = true;
+                            AtomPair<TR> tmp(iat0, iat1, R.x, R.y, R.z, pv);
+                            hR->insert_pair(tmp);
+                        }
                     }
                 }
             }
         }
-        if (need_allocate) { hR->allocate(nullptr, true);
-}
+        if (need_allocate) { hR->allocate(nullptr, true);}
     }
 
 template <typename TK, typename TR>
@@ -150,8 +159,7 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
                         this->restart = GlobalC::restart.load_disk(
                             "Hexx", ik,
                             pv->get_local_size(), this->Hexxd_k_load[ik].data(), false);
-                        if (!this->restart) { break;
-}
+                        if (!this->restart) { break; }
                     }
                 }
                 else
@@ -163,8 +171,7 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
                         this->restart = GlobalC::restart.load_disk(
                             "Hexx", ik,
                             pv->get_local_size(), this->Hexxc_k_load[ik].data(), false);
-                        if (!this->restart) { break;
-}
+                        if (!this->restart) { break; }
                     }
                 }
             }
@@ -182,8 +189,8 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
 
             if (!this->restart) {
                 std::cout << "WARNING: Hexx not found, restart from the non-exx loop." << std::endl
-                << "If the loaded charge density is EXX-solved, this may lead to poor convergence." << std::endl;
-}
+                    << "If the loaded charge density is EXX-solved, this may lead to poor convergence." << std::endl;
+            }
             GlobalC::restart.info_load.load_H_finish = this->restart;
         }
     }

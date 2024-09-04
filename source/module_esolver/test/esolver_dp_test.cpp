@@ -75,25 +75,8 @@ TEST_F(ESolverDPTest, InitCase1)
             EXPECT_DOUBLE_EQ(esolver->coord[3 * i + j], 0.0);
         }
     }
-    EXPECT_EQ(esolver->dp_type[0], 1);
-    EXPECT_EQ(esolver->dp_type[1], 0);
-    EXPECT_EQ(esolver->atype[0], 1);
-    EXPECT_EQ(esolver->atype[1], 0);
-}
-
-// Test the Init() funciton case 2
-TEST_F(ESolverDPTest, InitCase2)
-{
-    esolver->dp_type[0] = 0;
-    esolver->dp_type[1] = 0;
-    esolver->dp_file = "./support/case_2.pb";
-    esolver->before_all_runners(inp, ucell);
-
-    // Check the initialized variables
-    EXPECT_EQ(esolver->dp_type[0], 0);
-    EXPECT_EQ(esolver->dp_type[1], 0);
     EXPECT_EQ(esolver->atype[0], 0);
-    EXPECT_EQ(esolver->atype[1], 1);
+    EXPECT_EQ(esolver->atype[1], 0);
 }
 
 // Test the Run() funciton WARNING_QUIT
@@ -184,52 +167,4 @@ TEST_F(ESolverDPTest, Postprocess)
     std::remove("log");
 
     EXPECT_EQ(expected_output, output);
-}
-
-// Test the type_map() funciton when find type_map
-TEST_F(ESolverDPTest, TypeMapCase1)
-{
-    bool find = false;
-    esolver->dp_file = "./support/case_1.pb";
-    GlobalV::ofs_running.open("log");
-    find = esolver->type_map(ucell);
-    GlobalV::ofs_running.close();
-
-    std::string expected_output = "\nDetermine the type map from DP model\nntype read from DP model: 2\n  Cu  Al\n\n";
-    std::ifstream ifs("log");
-    std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-    ifs.close();
-    std::remove("log");
-
-    // Check the results
-    EXPECT_TRUE(find);
-    EXPECT_EQ(expected_output, output);
-    EXPECT_EQ(esolver->dp_type[0], 1);
-    EXPECT_EQ(esolver->dp_type[1], 0);
-}
-
-// Test the type_map() funciton when find not type_map
-TEST_F(ESolverDPTest, TypeMapCase2)
-{
-    bool find = false;
-    esolver->dp_type[0] = 0;
-    esolver->dp_type[1] = 0;
-    esolver->dp_file = "./support/case_2.pb";
-    find = esolver->type_map(ucell);
-
-    // Check the results
-    EXPECT_FALSE(find);
-    EXPECT_EQ(esolver->dp_type[0], 0);
-    EXPECT_EQ(esolver->dp_type[1], 0);
-}
-
-// Test the type_map() funciton WARNING_QUIT
-TEST_F(ESolverDPTest, TypeMapWarningQuit)
-{
-    esolver->dp_file = "./support/case_3.pb";
-
-    testing::internal::CaptureStdout();
-    EXPECT_EXIT(esolver->type_map(ucell), ::testing::ExitedWithCode(0), "");
-    std::string output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("can not find the DP model"));
 }

@@ -29,6 +29,13 @@ struct MD_para
     std::vector<double> lj_epsilon = {}; ///< the value of epsilon for LJ potential (eV)
     std::vector<double> lj_sigma = {};   ///< the value of sigma for LJ potential (\AA)
     std::string pot_file = "graph.pb";   ///< the filename of potential files for CMD such as DP
+    std::vector<double> dp_fparam
+        = {}; ///< The frame parameter for dp potential. The array can be of size :
+              ///< dim_fparam. Then all frames are assumed to be provided with the same fparam.
+    std::vector<double> dp_aparam
+        = {}; ///< The atomic parameter for dp potential. The array can be of size :
+              ///< natoms x dim_aparam. Then all frames are assumed to be provided with the same aparam.
+              ///< dim_aparam. Then all frames and atoms are assumed to be provided with the same aparam.
 
     int msst_direction = 2;    ///< shock direction: 0, 1, 2
     double msst_vel = 0.0;     ///< shock msst_vel (\AA/fs)
