@@ -302,7 +302,7 @@ void ESolver_SDFT_PW::others(const int istep)
 {
     ModuleBase::TITLE("ESolver_SDFT_PW", "others");
 
-    if (GlobalV::CALCULATION == "nscf")
+    if (PARAM.inp.calculation == "nscf")
     {
         this->nscf();
     }
