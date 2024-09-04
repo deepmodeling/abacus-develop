@@ -9,7 +9,7 @@ class XCTest: public testing::Test
     public:
         XCTest()
         {
-            PARAM.input.basis_type = "pw";
+            PARAM.input.basis_type = "";
         }
 };
 #endif
