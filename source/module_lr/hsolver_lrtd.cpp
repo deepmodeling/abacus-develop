@@ -87,7 +87,7 @@ namespace LR
 
                 const int& dim = psi_k1_dav.get_nbasis();   //equals to leading dimension here
                 const int& nband = psi_k1_dav.get_nbands();
-                hsolver::DiagoDavid<T, Device> david(precondition.data(), nband, dim, GlobalV::PW_DIAG_NDIM, GlobalV::use_paw, comm_info);
+                hsolver::DiagoDavid<T, Device> david(precondition.data(), nband, dim, GlobalV::PW_DIAG_NDIM, PARAM.inp.use_paw, comm_info);
                 hsolver::DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(david.diag(hpsi_func, spsi_func,
                     dim, psi_k1_dav.get_pointer(), eigenvalue.data(), this->diag_ethr, david_maxiter, ntry_max, 0));
             }

@@ -661,7 +661,7 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log) {
     this->set_iat2itia();
 
 #ifdef USE_PAW
-    if (GlobalV::use_paw) {
+    if (PARAM.inp.use_paw) {
         GlobalC::paw_cell.set_libpaw_cell(latvec, lat0);
 
         int* typat;
@@ -1591,7 +1591,7 @@ void UnitCell::cal_nelec(double& nelec) {
     GlobalV::ofs_running << "\n SETUP THE ELECTRONS NUMBER" << std::endl;
 
     if (nelec == 0) {
-        if (GlobalV::use_paw) {
+        if (PARAM.inp.use_paw) {
 #ifdef USE_PAW
             for (int it = 0; it < this->ntype; it++) {
                 std::stringstream ss1, ss2;

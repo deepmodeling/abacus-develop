@@ -45,7 +45,7 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
             pseudo_fn[i] = "auto";
             pseudo_type[i] = "auto";
 
-            if(!GlobalV::use_paw)
+            if(!PARAM.inp.use_paw)
             {
                 bool end = false;
                 if (ss >> one_string)

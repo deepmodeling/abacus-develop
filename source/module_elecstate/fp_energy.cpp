@@ -1,5 +1,6 @@
 #include "fp_energy.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/global_variable.h"
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
@@ -16,7 +17,7 @@ namespace elecstate
 /// @brief calculate etot
 double fenergy::calculate_etot()
 {
-    if (GlobalV::use_paw)
+    if (PARAM.inp.use_paw)
     {
         etot = eband + deband + etxc + ewald_energy - hartree_energy + demet + descf + exx + efield + gatefield + evdw
                + esol_el + esol_cav + edftu + edeepks_scf;
@@ -28,7 +29,7 @@ double fenergy::calculate_etot()
     }
 
 #ifdef USE_PAW
-    if (GlobalV::use_paw)
+    if (PARAM.inp.use_paw)
     {
         double ecore = GlobalC::paw_cell.calculate_ecore();
         double epawdc = GlobalC::paw_cell.get_epawdc();
@@ -41,7 +42,7 @@ double fenergy::calculate_etot()
 /// @brief calculate etot_harris
 double fenergy::calculate_harris()
 {
-    if (GlobalV::use_paw)
+    if (PARAM.inp.use_paw)
     {
         etot_harris = eband + deband_harris + etxc + ewald_energy - hartree_energy + demet + descf + exx + efield
                       + gatefield + evdw + esol_el + esol_cav + edftu + edeepks_scf;
@@ -52,7 +53,7 @@ double fenergy::calculate_harris()
                       + efield + gatefield + evdw + esol_el + esol_cav + edftu + edeepks_scf + escon;
     }
 #ifdef USE_PAW
-    if (GlobalV::use_paw)
+    if (PARAM.inp.use_paw)
     {
         double ecore = GlobalC::paw_cell.calculate_ecore();
         double epawdc = GlobalC::paw_cell.get_epawdc();

@@ -1,5 +1,6 @@
 #include "nonlocal_pw.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/blas_connector.h"
 #include "module_base/timer.h"
 #include "module_base/parallel_reduce.h"
@@ -216,7 +217,7 @@ void Nonlocal<OperatorPW<T, Device>>::act(
     const int ngk_ik)const
 {
     ModuleBase::timer::tick("Operator", "NonlocalPW");
-    if(!GlobalV::use_paw)
+    if(!PARAM.inp.use_paw)
     {
         this->npw = ngk_ik;
         this->max_npw = nbasis / npol;

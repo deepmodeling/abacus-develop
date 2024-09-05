@@ -1,5 +1,6 @@
 #include "charge_mixing.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/element_elec_config.h"
 #include "module_base/inverse_matrix.h"
 #include "module_base/module_mixing/broyden_mixing.h"
@@ -160,7 +161,7 @@ void Charge_Mixing::init_mixing()
 
     // initailize nhat_mdata
 #ifdef USE_PAW
-    if(GlobalV::use_paw) this->mixing->init_mixing_data(this->nhat_mdata, this->rhopw->nrxx * GlobalV::NSPIN, sizeof(double));
+    if(PARAM.inp.use_paw) this->mixing->init_mixing_data(this->nhat_mdata, this->rhopw->nrxx * GlobalV::NSPIN, sizeof(double));
 #endif
 
     ModuleBase::timer::tick("Charge_Mixing", "init_mixing");
@@ -592,7 +593,7 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
     }
 
 #ifdef USE_PAW
-    if(GlobalV::use_paw)
+    if(PARAM.inp.use_paw)
     {
         double *nhat_out, *nhat_in;
         nhat_in = chr->nhat_save[0];
@@ -1047,7 +1048,7 @@ void Charge_Mixing::mix_rho(Charge* chr)
     }
 #ifdef USE_PAW
     std::vector<double> nhat_r123;
-    if(GlobalV::use_paw)
+    if(PARAM.inp.use_paw)
     {
         nhat_r123.resize(GlobalV::NSPIN * nrxx);
 #ifdef _OPENMP
@@ -1106,7 +1107,7 @@ void Charge_Mixing::mix_rho(Charge* chr)
     }
 
 #ifdef USE_PAW
-    if(GlobalV::use_paw)
+    if(PARAM.inp.use_paw)
     {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 512)

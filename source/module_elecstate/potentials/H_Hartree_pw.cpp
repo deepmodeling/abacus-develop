@@ -1,5 +1,6 @@
 #include "H_Hartree_pw.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/constants.h"
 #include "module_base/timer.h"
 #include "module_base/parallel_reduce.h"
@@ -102,7 +103,7 @@ PotHartree::PotHartree(const ModulePW::PW_Basis* rho_basis_in)
 
 void PotHartree::cal_v_eff(const Charge*const chg, const UnitCell*const ucell, ModuleBase::matrix& v_eff)
 {
-    if(GlobalV::use_paw)
+    if(PARAM.inp.use_paw)
     {
         double ** rho_tmp;
         rho_tmp = new double*[chg->nspin];

@@ -49,7 +49,7 @@ void ESolver_FP::before_all_runners(const Input_para& inp, UnitCell& cell)
     ModuleBase::TITLE("ESolver_FP", "before_all_runners");
 
     //! 1) read pseudopotentials
-    if (!GlobalV::use_paw)
+    if (!PARAM.inp.use_paw)
     {
         cell.read_pseudo(GlobalV::ofs_running);
     }

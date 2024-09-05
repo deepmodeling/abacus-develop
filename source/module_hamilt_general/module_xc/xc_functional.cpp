@@ -1,5 +1,6 @@
 #include "xc_functional.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_parameter/parameter.h"
 #include "module_base/global_function.h"
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
@@ -60,7 +61,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         func_type = 1;
         use_libxc = false;
 #ifdef USE_PAW
-        if(GlobalV::use_paw)
+        if(PARAM.inp.use_paw)
         {
             if(GlobalV::NSPIN != 1)
             {
@@ -80,7 +81,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         func_type = 1;
         use_libxc = false;
 #ifdef USE_PAW
-        if(GlobalV::use_paw) { GlobalC::paw_cell.set_libpaw_xc(1,7);
+        if(PARAM.inp.use_paw) { GlobalC::paw_cell.set_libpaw_xc(1,7);
 }
 #endif
     }
@@ -91,7 +92,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         func_type = 2;
         use_libxc = false;
 #ifdef USE_PAW
-        if(GlobalV::use_paw) { GlobalC::paw_cell.set_libpaw_xc(2,11);
+        if(PARAM.inp.use_paw) { GlobalC::paw_cell.set_libpaw_xc(2,11);
 }
 #endif
 	}
@@ -109,7 +110,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         func_type = 2;
         use_libxc = false;
 #ifdef USE_PAW
-        if(GlobalV::use_paw) { GlobalC::paw_cell.set_libpaw_xc(2,14);
+        if(PARAM.inp.use_paw) { GlobalC::paw_cell.set_libpaw_xc(2,14);
 }
 #endif
 	}
