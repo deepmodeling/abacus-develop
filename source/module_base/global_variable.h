@@ -48,7 +48,6 @@ extern int PW_DIAG_NDIM;   // 14
 extern double PW_DIAG_THR; // 15 pw_diag_thr
 extern int NB2D;           // 16.5 dividsion of 2D_matrix.
 
-extern int SCF_THR_TYPE; // type of the criterion of scf_thr, 1: reci drho for
                          // pw, 2: real drho for lcao
 
 extern double DQ; // 19 mohan add 2009-09-10
