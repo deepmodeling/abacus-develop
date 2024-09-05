@@ -102,7 +102,7 @@ add_test(NAME cell_parallel_kpoints_test
 AddTest(
   TARGET cell_unitcell_test
   LIBS parameter ${math_libs} base device cell_info  symmetry
-  SOURCES unitcell_test.cpp ../../module_io/output.cpp ../print_cif.cpp
+  SOURCES unitcell_test.cpp ../../module_io/output.cpp 
 
 )
 
