@@ -25,7 +25,6 @@ extern int NSPIN;       // 7
 extern bool TWO_EFERMI; // 7.5 two fermi energy, exist if nupdown isn't zero.
 extern double nupdown;
 
-extern double FORCE_THR; // 8.2
 extern bool CAL_STRESS;  // 8.25 calcualte the stress
 
 extern double PRESSURE;

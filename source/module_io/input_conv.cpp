@@ -247,7 +247,6 @@ void Input_Conv::Convert()
 
     GlobalV::NSPIN = PARAM.inp.nspin;
 
-    GlobalV::FORCE_THR = PARAM.inp.force_thr;
 
 #ifdef __LCAO
     Force_Stress_LCAO<double>::force_invalid_threshold_ev = PARAM.inp.force_thr_ev2;

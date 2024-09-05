@@ -24,7 +24,6 @@ int NLOCAL = 0;        // total number of local basis.
 int NSPIN = 1;       // LDA
 bool TWO_EFERMI = false; // two fermi energy, exist only magnetization is fixed.
 double nupdown = 0.0;
-double FORCE_THR = 1.0e-3;
 bool CAL_STRESS = false;
 double PRESSURE = 0.0;
 std::string RELAX_METHOD = "bfgs";
