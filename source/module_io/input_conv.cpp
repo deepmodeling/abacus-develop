@@ -229,7 +229,6 @@ void Input_Conv::Convert()
     else
     {
         GlobalV::KPAR = PARAM.inp.kpar;
-        GlobalV::NSTOGROUP = PARAM.inp.bndpar;
     }
     GlobalV::precision_flag = PARAM.inp.precision;
     if (GlobalV::device_flag == "cpu" and GlobalV::precision_flag == "single")

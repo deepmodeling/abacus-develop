@@ -75,7 +75,6 @@ extern bool GAMMA_ONLY_PW;    // mohan add 2012-06-05
 //========================================================================
 extern int NPROC;
 extern int KPAR;
-extern int NSTOGROUP;
 extern int MY_RANK;
 extern int MY_POOL;
 extern int MY_STOGROUP;
