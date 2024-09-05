@@ -1,8 +1,7 @@
-#include "module_relax/relax_old/ions_move_basic.h"
-
 #define private public
 #include "module_parameter/parameter.h"
 #undef private
+#include "module_relax/relax_old/ions_move_basic.h"
 #include "for_test.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"

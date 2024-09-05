@@ -27,30 +27,30 @@ AddTest(
 
 AddTest(
   TARGET ions_move_methods_test
-  LIBS ${math_libs} base device
+  LIBS ${math_libs} base device parameter
   SOURCES ions_move_methods_test.cpp ../ions_move_methods.cpp ../ions_move_basic.cpp ../ions_move_bfgs.cpp ../ions_move_cg.cpp ../ions_move_sd.cpp ../bfgs_basic.cpp
 )
 
 AddTest(
   TARGET ions_move_basic_test
-  LIBS ${math_libs} base device
+  LIBS ${math_libs} base device parameter
   SOURCES ions_move_basic_test.cpp ../ions_move_basic.cpp
 )
 
 AddTest(
   TARGET ions_move_bfgs_test
-  LIBS ${math_libs} base device
+  LIBS ${math_libs} base device parameter
   SOURCES ions_move_bfgs_test.cpp ../ions_move_bfgs.cpp ../ions_move_basic.cpp ../bfgs_basic.cpp
 )
 
 AddTest(
   TARGET ions_move_cg_test
-  LIBS ${math_libs} base device
+  LIBS ${math_libs} base device parameter
   SOURCES ions_move_cg_test.cpp ../ions_move_cg.cpp ../ions_move_basic.cpp
 )
 
 AddTest(
   TARGET ions_move_sd_test
-  LIBS ${math_libs} base device
+  LIBS ${math_libs} base device parameter
   SOURCES ions_move_sd_test.cpp ../ions_move_sd.cpp ../ions_move_basic.cpp
 )
