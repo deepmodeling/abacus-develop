@@ -31,7 +31,6 @@ bool fixed_atoms = false;
 int SCF_NMAX = 100;
 
 bool use_uspp = false;
-bool double_grid = false;
 std::string KS_SOLVER = "cg";  // xiaohui add 2013-09-01
 double SEARCH_RADIUS = -1.0;
 

@@ -31,7 +31,6 @@ extern std::string RELAX_METHOD;
 
 
 extern bool use_uspp;
-extern bool double_grid;
 
 extern bool fixed_atoms;
 
