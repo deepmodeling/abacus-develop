@@ -28,7 +28,6 @@ extern double nupdown;
 extern bool CAL_STRESS;  // 8.25 calcualte the stress
 
 extern std::string RELAX_METHOD;
-extern std::string OUT_LEVEL;
 
 extern bool relax_new;
 

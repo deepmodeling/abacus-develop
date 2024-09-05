@@ -270,7 +270,6 @@ void Input_Conv::Convert()
 
     GlobalV::use_paw = PARAM.inp.use_paw;
 
-    GlobalV::OUT_LEVEL = PARAM.inp.out_level;
     Ions_Move_CG::RELAX_CG_THR = PARAM.inp.relax_cg_thr; // pengfei add 2013-09-09
 
     ModuleSymmetry::Symmetry::symm_flag = std::stoi(PARAM.inp.symmetry);

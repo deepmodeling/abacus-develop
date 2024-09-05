@@ -26,7 +26,7 @@ bool TWO_EFERMI = false; // two fermi energy, exist only magnetization is fixed.
 double nupdown = 0.0;
 bool CAL_STRESS = false;
 std::string RELAX_METHOD = "bfgs";
-std::string OUT_LEVEL = "ie";
+
 bool relax_new = true;
 bool fixed_atoms = false;
 int SCF_NMAX = 100;
