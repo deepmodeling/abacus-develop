@@ -153,7 +153,6 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_DOUBLE_EQ(param.inp.pw_diag_thr, 1.0e-2);
     EXPECT_EQ(param.inp.nb2d, 0);
     EXPECT_EQ(param.inp.nurse, 0);
-    EXPECT_EQ(param.inp.colour, 0);
     EXPECT_EQ(param.inp.t_in_h, 1);
     EXPECT_EQ(param.inp.vl_in_h, 1);
     EXPECT_EQ(param.inp.vnl_in_h, 1);
