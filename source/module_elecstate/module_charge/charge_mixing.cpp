@@ -107,7 +107,7 @@ void Charge_Mixing::init_mixing()
         ModuleBase::WARNING_QUIT("Charge_Mixing", "This Mixing mode is not implemended yet,coming soon.");
     }
 
-    if (GlobalV::double_grid)
+    if ( PARAM.globalv.double_grid)
     {
         // ONLY smooth part of charge density is mixed by specific mixing method
         // The high_frequency part is mixed by plain mixing method.
@@ -314,7 +314,7 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
     std::complex<double>* rhoghf_in = nullptr;
     std::complex<double>* rhoghf_out = nullptr;
 
-    if (GlobalV::double_grid)
+    if ( PARAM.globalv.double_grid)
     {
         // divide into smooth part and high_frequency part
         divide_data(chr->rhog_save[0], rhogs_in, rhoghf_in);
@@ -397,7 +397,7 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
         delete[] rhog_mag;
         delete[] rhog_mag_save;
         // get rhogs_out for combine_data()
-        if (GlobalV::double_grid)
+        if ( PARAM.globalv.double_grid)
         {
             for (int ig = 0; ig < npw; ig++)
             {
@@ -440,7 +440,7 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
         // special broyden mixing for {rho, |m|} proposed by J. Phys. Soc. Jpn. 82 (2013) 114706
         // here only consider the case of mixing_angle = 1, which mean only change |m| and keep angle fixed
         // old support see mix_rho_recip()
-        if (GlobalV::double_grid)
+        if ( PARAM.globalv.double_grid)
         {
             ModuleBase::WARNING_QUIT("Charge_Mixing", "double_grid is not supported for new mixing method yet.");
         }
@@ -518,7 +518,7 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
         delete[] rho_magabs_save;
     }
 
-    if (GlobalV::double_grid)
+    if ( PARAM.globalv.double_grid)
     {
         // plain mixing for high_frequencies
         const int ndimhf = (this->rhodpw->npw - this->rhopw->npw) * GlobalV::NSPIN;
@@ -541,7 +541,7 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
             // use rhodpw for double_grid
-            // rhodpw is the same as rhopw for !GlobalV::double_grid
+            // rhodpw is the same as rhopw for ! PARAM.globalv.double_grid
             this->rhodpw->recip2real(chr->rhog[is], chr->rho[is]);
         }
     }
@@ -557,11 +557,11 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
             rhodpw->real2recip(chr->kin_r[is], &kin_g[is * rhodpw->npw]);
             rhodpw->real2recip(chr->kin_r_save[is], &kin_g_save[is * rhodpw->npw]);
         }
-        // for smooth part, for !GlobalV::double_grid only have this part
+        // for smooth part, for ! PARAM.globalv.double_grid only have this part
         std::complex<double>*taugs_in = kin_g_save.data(), *taugs_out = kin_g.data();
         // for high frequency part
         std::complex<double>*taughf_in = nullptr, *taughf_out = nullptr;
-        if (GlobalV::double_grid)
+        if ( PARAM.globalv.double_grid)
         {
             // divide into smooth part and high_frequency part
             divide_data(kin_g_save.data(), taugs_in, taughf_in);
@@ -574,7 +574,7 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
 
         this->mixing->mix_data(this->tau_mdata, taugs_out);
 
-        if (GlobalV::double_grid)
+        if ( PARAM.globalv.double_grid)
         {
             // simple mixing for high_frequencies
             const int ndimhf = (this->rhodpw->npw - this->rhopw->npw) * GlobalV::NSPIN;
