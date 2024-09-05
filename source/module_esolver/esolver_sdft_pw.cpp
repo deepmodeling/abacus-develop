@@ -188,7 +188,9 @@ void ESolver_SDFT_PW::hamilt2density(int istep, int iter, double ethr)
                               false);
     this->init_psi = true;
 
+    // temporary
     // set_diagethr need it
+    // ((hsolver::HSolverPW_SDFT*)phsol)->set_KS_ne(hsolver_pw_sdft_obj.stoiter.KS_ne);
     this->esolver_KS_ne = hsolver_pw_sdft_obj.stoiter.KS_ne;
 
     if (GlobalV::MY_STOGROUP == 0)

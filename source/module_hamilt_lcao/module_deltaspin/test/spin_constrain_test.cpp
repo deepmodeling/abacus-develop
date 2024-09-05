@@ -368,6 +368,7 @@ TYPED_TEST(SpinConstrainTest, SetSolverParameters)
     this->sc.set_nspin(4);
     this->sc.set_solver_parameters(kv, nullptr, nullptr, nullptr, "genelpa");
     EXPECT_EQ(this->sc.get_nspin(), 4);
+    EXPECT_EQ(this->sc.phsol, nullptr);
     EXPECT_EQ(this->sc.p_hamilt, nullptr);
     EXPECT_EQ(this->sc.psi, nullptr);
     EXPECT_EQ(this->sc.pelec, nullptr);

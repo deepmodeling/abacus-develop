@@ -96,6 +96,7 @@ public:
      * important outter class pointers used in spin-constrained DFT
     */
     Parallel_Orbitals *ParaV = nullptr;
+    hsolver::HSolver<FPTYPE, Device>* phsol = nullptr;
     hamilt::Hamilt<FPTYPE, Device>* p_hamilt = nullptr;
     psi::Psi<FPTYPE>* psi = nullptr;
     elecstate::ElecState* pelec = nullptr;
