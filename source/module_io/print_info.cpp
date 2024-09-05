@@ -84,29 +84,11 @@ void Print_Info::setup_parameters(UnitCell &ucell, K_Vectors &kv)
 
 		if(GlobalV::GAMMA_ONLY_LOCAL)
 		{
-			if(PARAM.inp.colour && GlobalV::MY_RANK==0)
-			{
-				// red
-				printf( "\e[31m%-16s\e[0m", "Gamma");
-				//printf( "[31m%-16s[0m", "Gamma");
-			}
-			else
-			{
-				std::cout << std::setw(16) << "Gamma";
-			}
+			std::cout << std::setw(16) << "Gamma";
 		}
 		else
 		{
-			if(PARAM.inp.colour && GlobalV::MY_RANK==0)
-			{
-				// zi
-				printf( "\e[35m%-16d\e[0m", kv.get_nkstot());
-				//printf( "[35m%-16d[0m", kv.get_nkstot());
-			}
-			else
-			{
-				std::cout << std::setw(16) << kv.get_nkstot();
-			}
+			std::cout << std::setw(16) << kv.get_nkstot();
 		}
 
 		std::cout << std::setw(12) << GlobalV::NPROC;
@@ -124,16 +106,7 @@ void Print_Info::setup_parameters(UnitCell &ucell, K_Vectors &kv)
 		std::cout << " ---------------------------------------------------------" << std::endl;
 		if(PARAM.inp.basis_type=="lcao")
 		{
-			if(PARAM.inp.colour && GlobalV::MY_RANK==0)
-			{
-				std::string a = "Use Systematically Improvable Atomic bases";
-				printf( " \e[36m%-45s\e[0m\n", a.c_str());
-				//printf( " [36m%-45s[0m\n", a.c_str());
-			}
-			else
-			{
-				std::cout << " Use Systematically Improvable Atomic bases" << std::endl;
-			}
+			std::cout << " Use Systematically Improvable Atomic bases" << std::endl;
 		}
 		else if(PARAM.inp.basis_type=="lcao_in_pw")
 		{
@@ -167,14 +140,7 @@ void Print_Info::setup_parameters(UnitCell &ucell, K_Vectors &kv)
 
 		for(int it=0; it<ucell.ntype; ++it)
 		{
-			if(PARAM.inp.colour && GlobalV::MY_RANK==0)
-			{
-				printf( "\e[36m%-8s\e[0m", ucell.atoms[it].label.c_str());
-			}
-			else
-			{
-				std::cout << " " << std::setw(8) << ucell.atoms[it].label;
-			}
+			std::cout << " " << std::setw(8) << ucell.atoms[it].label;
 
 			if(PARAM.inp.basis_type=="lcao" || PARAM.inp.basis_type=="lcao_in_pw" || (PARAM.inp.basis_type=="pw" && GlobalV::init_wfc.substr(0, 3) == "nao"))
 			{
@@ -195,19 +161,9 @@ void Print_Info::setup_parameters(UnitCell &ucell, K_Vectors &kv)
 					else if(L==6) orb << "i";
 				}
 				orb << "-" << ucell.atoms[it].Rcut << "au";
-
-				if(PARAM.inp.colour && GlobalV::MY_RANK==0)
-				{
-					printf( "\e[36m%-16s\e[0m", orb.str().c_str());
-					printf( "\e[36m%-12d\e[0m", norb);
-					//printf( "[36m%-16s[0m", orb.str().c_str());
-					//printf( "[36m%-12d[0m", norb);
-				}
-				else
-				{
-					std::cout << std::setw(16) << orb.str();
-					std::cout << std::setw(12) << norb;
-				}
+				
+				std::cout << std::setw(16) << orb.str();
+				std::cout << std::setw(12) << norb;
 			}
 
 

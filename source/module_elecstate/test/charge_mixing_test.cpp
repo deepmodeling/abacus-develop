@@ -230,11 +230,11 @@ TEST_F(ChargeMixingTest, InitMixingTest)
                     GlobalV::MIXING_ANGLE,
                     GlobalV::MIXING_DMR);
     
-    GlobalV::SCF_THR_TYPE = 1;
+    PARAM.input.scf_thr_type= 1;
     CMtest.init_mixing();
     EXPECT_EQ(CMtest.rho_mdata.length, pw_basis.npw);
     
-    GlobalV::SCF_THR_TYPE = 2;
+    PARAM.input.scf_thr_type= 2;
     CMtest.init_mixing();
     EXPECT_EQ(CMtest.rho_mdata.length, pw_basis.nrxx);
 
@@ -797,7 +797,7 @@ TEST_F(ChargeMixingTest, MixRhoTest)
     // RECIPROCAL
     Charge_Mixing CMtest_recip;
     CMtest_recip.set_rhopw(&pw_basis, &pw_basis);
-    GlobalV::SCF_THR_TYPE = 1;
+    PARAM.input.scf_thr_type= 1;
     CMtest_recip.set_mixing(GlobalV::MIXING_MODE,
                             GlobalV::MIXING_BETA,
                             GlobalV::MIXING_NDIM,
@@ -835,7 +835,7 @@ TEST_F(ChargeMixingTest, MixRhoTest)
 
     // REAL
     Charge_Mixing CMtest_real;
-    GlobalV::SCF_THR_TYPE = 2;
+    PARAM.input.scf_thr_type= 2;
     CMtest_real.set_rhopw(&pw_basis, &pw_basis);
     CMtest_real.set_mixing(GlobalV::MIXING_MODE,
                         GlobalV::MIXING_BETA,
@@ -931,7 +931,7 @@ TEST_F(ChargeMixingTest, MixDoubleGridRhoTest)
     // RECIPROCAL
     Charge_Mixing CMtest_recip;
     CMtest_recip.set_rhopw(&pw_basis, &pw_dbasis);
-    GlobalV::SCF_THR_TYPE = 1;
+    PARAM.input.scf_thr_type= 1;
     CMtest_recip.set_mixing(GlobalV::MIXING_MODE,
                             GlobalV::MIXING_BETA,
                             GlobalV::MIXING_NDIM,

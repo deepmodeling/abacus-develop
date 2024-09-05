@@ -80,7 +80,6 @@ TEST_F(PrintInfoTest, SetupParameters)
 	{
 		if(cal_type[i] != "md")
 		{
-			PARAM.input.colour = false;
 			GlobalV::GAMMA_ONLY_LOCAL = false;
 			PARAM.input.calculation = cal_type[i];
 			testing::internal::CaptureStdout();
@@ -101,7 +100,6 @@ TEST_F(PrintInfoTest, SetupParameters)
 		}
 		else
 		{
-			PARAM.input.colour = true;
 			GlobalV::GAMMA_ONLY_LOCAL = true;
 			PARAM.input.calculation = cal_type[i];
 			for(int j=0; j<md_types.size(); ++j)
