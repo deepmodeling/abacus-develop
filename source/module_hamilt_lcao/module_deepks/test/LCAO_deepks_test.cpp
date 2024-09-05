@@ -106,7 +106,7 @@ void test_deepks::set_dm_k_new(void)
 
 void test_deepks::check_pdm(void)
 {
-    if (GlobalV::GAMMA_ONLY_LOCAL)
+    if (PARAM.sys.gamma_only_local)
     {
         this->read_dm();
         this->set_dm_new();
@@ -125,7 +125,7 @@ void test_deepks::check_pdm(void)
 void test_deepks::check_gdmx(void)
 {
     this->ld.init_gdmx(ucell.nat);
-    if (GlobalV::GAMMA_ONLY_LOCAL)
+    if (PARAM.sys.gamma_only_local)
     {
         this->ld.cal_gdmx(dm_new[0], ucell, ORB, Test_Deepks::GridD, 0);
     }
@@ -199,7 +199,7 @@ void test_deepks::check_gvx(void)
 void test_deepks::check_edelta(void)
 {
     this->ld.load_model("model.ptg");
-    if (GlobalV::GAMMA_ONLY_LOCAL)
+    if (PARAM.sys.gamma_only_local)
     {
         this->ld.allocate_V_delta(ucell.nat);
     }
@@ -220,7 +220,7 @@ void test_deepks::check_edelta(void)
 
 void test_deepks::check_e_deltabands(void)
 {
-    if (GlobalV::GAMMA_ONLY_LOCAL)
+    if (PARAM.sys.gamma_only_local)
     {
         this->ld.cal_e_delta_band(dm_new);
     }
@@ -240,7 +240,7 @@ void test_deepks::check_f_delta()
 {
     ModuleBase::matrix svnl_dalpha;
     svnl_dalpha.create(3, 3);
-    if (GlobalV::GAMMA_ONLY_LOCAL)
+    if (PARAM.sys.gamma_only_local)
     {
         ld.cal_f_delta_gamma(dm_new, ucell, ORB, Test_Deepks::GridD, 1, svnl_dalpha);
     }
