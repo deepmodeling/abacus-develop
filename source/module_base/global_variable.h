@@ -30,7 +30,6 @@ extern bool CAL_STRESS;  // 8.25 calcualte the stress
 extern std::string RELAX_METHOD;
 
 
-extern bool use_paw;
 extern bool use_uspp;
 extern bool double_grid;
 

@@ -267,7 +267,6 @@ void Input_Conv::Convert()
 
     GlobalV::RELAX_METHOD = PARAM.inp.relax_method;
 
-    GlobalV::use_paw = PARAM.inp.use_paw;
 
     Ions_Move_CG::RELAX_CG_THR = PARAM.inp.relax_cg_thr; // pengfei add 2013-09-09
 
