@@ -205,7 +205,6 @@ void Input_Conv::Convert()
 
     if (PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax")
     {
-        GlobalV::fixed_atoms = PARAM.inp.fixed_atoms;
     }
 
 

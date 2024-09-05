@@ -32,7 +32,6 @@ extern std::string RELAX_METHOD;
 
 extern bool use_uspp;
 
-extern bool fixed_atoms;
 
 extern int SCF_NMAX;      // 8.4
 
