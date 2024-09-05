@@ -22,7 +22,8 @@ void Stress_Func<FPTYPE, Device>::stress_loc(ModuleBase::matrix& sigma,
 
 	const int nspin_rho = (GlobalV::NSPIN == 2) ? 2 : 1;
 
-	if (PARAM.inp.gamma_only_pw && is_pw) fact=2.0;
+	if (PARAM.inp.gamma_only_pw && is_pw) { fact=2.0;
+}
 
     
 
@@ -70,12 +71,13 @@ void Stress_Func<FPTYPE, Device>::stress_loc(ModuleBase::matrix& sigma,
 		{
 			for (int ig=0; ig<rho_basis->npw; ig++)
 			{
-                if (rho_basis->ig_gge0 == ig)
+                if (rho_basis->ig_gge0 == ig) {
                     evloc += GlobalC::ppcell.vloc(it, rho_basis->ig2igg[ig])
                              * (p_sf->strucFac(it, ig) * conj(aux[ig])).real();
-                else
+                } else {
                     evloc += GlobalC::ppcell.vloc(it, rho_basis->ig2igg[ig])
                              * (p_sf->strucFac(it, ig) * conj(aux[ig]) * fact).real();
+}
             }
 		}
     }
