@@ -33,6 +33,8 @@ class unkOverlap_lcao
 
     int kpoints_number;
 
+    std::vector<double> rcut_orb_; // real space cutoffs of LCAO orbitals' radial functions
+
     std::map<
         size_t,
         std::map<size_t, std::map<size_t, std::map<size_t, std::map<size_t, std::map<size_t, Center2_Orb::Orb11>>>>>>
@@ -46,7 +48,7 @@ class unkOverlap_lcao
     unkOverlap_lcao();
     ~unkOverlap_lcao();
 
-    void init(const Grid_Technique& gt, const int nkstot);
+    void init(const Grid_Technique& gt, const int nkstot, const LCAO_Orbitals& orb);
     int iw2it(int iw);
     int iw2ia(int iw);
     int iw2iL(int iw);

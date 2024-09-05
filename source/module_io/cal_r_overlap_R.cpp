@@ -13,7 +13,7 @@ cal_r_overlap_R::~cal_r_overlap_R()
 {
 }
 
-void cal_r_overlap_R::initialize_orb_table()
+void cal_r_overlap_R::initialize_orb_table(const LCAO_Orbitals& orb)
 {
     int Lmax_used = 0;
     int Lmax = 0;
@@ -22,17 +22,17 @@ void cal_r_overlap_R::initialize_orb_table()
     exx_lmax = GlobalC::exx_info.info_ri.abfs_Lmax;
 #endif
 
-    const int ntype = GlobalC::ORB.get_ntype();
+    const int ntype = orb.get_ntype();
     int lmax_orb = -1, lmax_beta = -1;
     for (int it = 0; it < ntype; it++)
     {
-        lmax_orb = std::max(lmax_orb, GlobalC::ORB.Phi[it].getLmax());
+        lmax_orb = std::max(lmax_orb, orb.Phi[it].getLmax());
         lmax_beta = std::max(lmax_beta, GlobalC::ucell.infoNL.Beta[it].getLmax());
     }
-    const double dr = GlobalC::ORB.get_dR();
-    const double dk = GlobalC::ORB.get_dk();
-    const int kmesh = GlobalC::ORB.get_kmesh() * 4 + 1;
-    int Rmesh = static_cast<int>(GlobalC::ORB.get_Rmax() / dr) + 4;
+    const double dr = orb.get_dR();
+    const double dk = orb.get_dk();
+    const int kmesh = orb.get_kmesh() * 4 + 1;
+    int Rmesh = static_cast<int>(orb.get_Rmax() / dr) + 4;
     Rmesh += 1 - Rmesh % 2;
 
     Center2_Orb::init_Table_Spherical_Bessel(2,
@@ -52,29 +52,29 @@ void cal_r_overlap_R::initialize_orb_table()
     MGT.init_Gaunt(Lmax);
 }
 
-void cal_r_overlap_R::construct_orbs_and_orb_r()
+void cal_r_overlap_R::construct_orbs_and_orb_r(const LCAO_Orbitals& orb)
 {
     int orb_r_ntype = 0;
-    int mat_Nr = GlobalC::ORB.Phi[0].PhiLN(0, 0).getNr();
+    int mat_Nr = orb.Phi[0].PhiLN(0, 0).getNr();
     int count_Nr = 0;
 
-    orbs.resize(GlobalC::ORB.get_ntype());
-    for (int T = 0; T < GlobalC::ORB.get_ntype(); ++T)
+    orbs.resize(orb.get_ntype());
+    for (int T = 0; T < orb.get_ntype(); ++T)
     {
-        count_Nr = GlobalC::ORB.Phi[T].PhiLN(0, 0).getNr();
+        count_Nr = orb.Phi[T].PhiLN(0, 0).getNr();
         if (count_Nr > mat_Nr)
         {
             mat_Nr = count_Nr;
             orb_r_ntype = T;
         }
 
-        orbs[T].resize(GlobalC::ORB.Phi[T].getLmax() + 1);
-        for (int L = 0; L <= GlobalC::ORB.Phi[T].getLmax(); ++L)
+        orbs[T].resize(orb.Phi[T].getLmax() + 1);
+        for (int L = 0; L <= orb.Phi[T].getLmax(); ++L)
         {
-            orbs[T][L].resize(GlobalC::ORB.Phi[T].getNchi(L));
-            for (int N = 0; N < GlobalC::ORB.Phi[T].getNchi(L); ++N)
+            orbs[T][L].resize(orb.Phi[T].getNchi(L));
+            for (int N = 0; N < orb.Phi[T].getNchi(L); ++N)
             {
-                const auto& orb_origin = GlobalC::ORB.Phi[T].PhiLN(L, N);
+                const auto& orb_origin = orb.Phi[T].PhiLN(L, N);
                 orbs[T][L][N].set_orbital_info(orb_origin.getLabel(),
                                                orb_origin.getType(),
                                                orb_origin.getL(),
@@ -110,17 +110,17 @@ void cal_r_overlap_R::construct_orbs_and_orb_r()
                            true,
                            GlobalV::CAL_FORCE);
 
-    for (int TA = 0; TA < GlobalC::ORB.get_ntype(); ++TA)
+    for (int TA = 0; TA < orb.get_ntype(); ++TA)
     {
-        for (int TB = 0; TB < GlobalC::ORB.get_ntype(); ++TB)
+        for (int TB = 0; TB < orb.get_ntype(); ++TB)
         {
-            for (int LA = 0; LA <= GlobalC::ORB.Phi[TA].getLmax(); ++LA)
+            for (int LA = 0; LA <= orb.Phi[TA].getLmax(); ++LA)
             {
-                for (int NA = 0; NA < GlobalC::ORB.Phi[TA].getNchi(LA); ++NA)
+                for (int NA = 0; NA < orb.Phi[TA].getNchi(LA); ++NA)
                 {
-                    for (int LB = 0; LB <= GlobalC::ORB.Phi[TB].getLmax(); ++LB)
+                    for (int LB = 0; LB <= orb.Phi[TB].getLmax(); ++LB)
                     {
-                        for (int NB = 0; NB < GlobalC::ORB.Phi[TB].getNchi(LB); ++NB)
+                        for (int NB = 0; NB < orb.Phi[TB].getNchi(LB); ++NB)
                         {
                             center2_orb11[TA][TB][LA][NA][LB].insert(
                                 std::make_pair(NB, Center2_Orb::Orb11(orbs[TA][LA][NA], orbs[TB][LB][NB], psb_, MGT)));
@@ -131,17 +131,17 @@ void cal_r_overlap_R::construct_orbs_and_orb_r()
         }
     }
 
-    for (int TA = 0; TA < GlobalC::ORB.get_ntype(); ++TA)
+    for (int TA = 0; TA < orb.get_ntype(); ++TA)
     {
-        for (int TB = 0; TB < GlobalC::ORB.get_ntype(); ++TB)
+        for (int TB = 0; TB < orb.get_ntype(); ++TB)
         {
-            for (int LA = 0; LA <= GlobalC::ORB.Phi[TA].getLmax(); ++LA)
+            for (int LA = 0; LA <= orb.Phi[TA].getLmax(); ++LA)
             {
-                for (int NA = 0; NA < GlobalC::ORB.Phi[TA].getNchi(LA); ++NA)
+                for (int NA = 0; NA < orb.Phi[TA].getNchi(LA); ++NA)
                 {
-                    for (int LB = 0; LB <= GlobalC::ORB.Phi[TB].getLmax(); ++LB)
+                    for (int LB = 0; LB <= orb.Phi[TB].getLmax(); ++LB)
                     {
-                        for (int NB = 0; NB < GlobalC::ORB.Phi[TB].getNchi(LB); ++NB)
+                        for (int NB = 0; NB < orb.Phi[TB].getNchi(LB); ++NB)
                         {
                             center2_orb21_r[TA][TB][LA][NA][LB].insert(std::make_pair(
                                 NB,
@@ -223,14 +223,14 @@ void cal_r_overlap_R::construct_orbs_and_orb_r()
     }
 }
 
-void cal_r_overlap_R::init(const Parallel_Orbitals& pv)
+void cal_r_overlap_R::init(const Parallel_Orbitals& pv, const LCAO_Orbitals& orb)
 {
     ModuleBase::TITLE("cal_r_overlap_R", "init");
     ModuleBase::timer::tick("cal_r_overlap_R", "init");
     this->ParaV = &pv;
 
-    initialize_orb_table();
-    construct_orbs_and_orb_r();
+    initialize_orb_table(orb);
+    construct_orbs_and_orb_r(orb);
 
     ModuleBase::timer::tick("cal_r_overlap_R", "init");
     return;

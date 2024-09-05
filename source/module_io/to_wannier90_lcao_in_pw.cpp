@@ -118,7 +118,6 @@ psi::Psi<std::complex<double>>* toWannier90_LCAO_IN_PW::get_unk_from_lcao(
 
     // Orbital projection to plane wave
     ModuleBase::realArray table_local(GlobalC::ucell.ntype, GlobalC::ucell.nmax_total, GlobalV::NQX);
-    //Wavefunc_in_pw::make_table_q(GlobalC::ORB.orbital_file, table_local);
 
     for (int ik = 0; ik < num_kpts; ik++)
     {

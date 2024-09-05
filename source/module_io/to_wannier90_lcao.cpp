@@ -20,14 +20,16 @@ toWannier90_LCAO::toWannier90_LCAO(const bool& out_wannier_mmn,
                                    const bool& out_wannier_eig,
                                    const bool& out_wannier_wvfn_formatted,
                                    const std::string& nnkpfile,
-                                   const std::string& wannier_spin)
+                                   const std::string& wannier_spin,
+                                   const LCAO_Orbitals& orb)
     : toWannier90(out_wannier_mmn,
                   out_wannier_amn,
                   out_wannier_unk,
                   out_wannier_eig,
                   out_wannier_wvfn_formatted,
                   nnkpfile,
-                  wannier_spin)
+                  wannier_spin),
+    orb_(orb)
 {
 }
 
@@ -266,17 +268,17 @@ void toWannier90_LCAO::initialize_orb_table()
 #endif
 
 #ifdef __LCAO
-    const int ntype = GlobalC::ORB.get_ntype();
+    const int ntype = orb_.get_ntype();
     int lmax_orb = -1, lmax_beta = -1;
     for (int it = 0; it < ntype; it++)
     {
-        lmax_orb = std::max(lmax_orb, GlobalC::ORB.Phi[it].getLmax());
+        lmax_orb = std::max(lmax_orb, orb_.Phi[it].getLmax());
         lmax_beta = std::max(lmax_beta, GlobalC::ucell.infoNL.Beta[it].getLmax());
     }
-    const double dr = GlobalC::ORB.get_dR();
-    const double dk = GlobalC::ORB.get_dk();
-    const int kmesh = GlobalC::ORB.get_kmesh() * 4 + 1;
-    int Rmesh = static_cast<int>(GlobalC::ORB.get_Rmax() / dr) + 4;
+    const double dr = orb_.get_dR();
+    const double dk = orb_.get_dk();
+    const int kmesh = orb_.get_kmesh() * 4 + 1;
+    int Rmesh = static_cast<int>(orb_.get_Rmax() / dr) + 4;
     Rmesh += 1 - Rmesh % 2;
 
     Center2_Orb::init_Table_Spherical_Bessel(2,
@@ -506,26 +508,26 @@ void toWannier90_LCAO::unkdotkb(const K_Vectors& kv,
 
 void toWannier90_LCAO::produce_basis_orb()
 {
-    int mat_Nr = GlobalC::ORB.Phi[0].PhiLN(0, 0).getNr();
+    int mat_Nr = orb_.Phi[0].PhiLN(0, 0).getNr();
     int count_Nr = 0;
 
-    orbs.resize(GlobalC::ORB.get_ntype());
-    for (int T = 0; T < GlobalC::ORB.get_ntype(); ++T)
+    orbs.resize(orb_.get_ntype());
+    for (int T = 0; T < orb_.get_ntype(); ++T)
     {
-        count_Nr = GlobalC::ORB.Phi[T].PhiLN(0, 0).getNr();
+        count_Nr = orb_.Phi[T].PhiLN(0, 0).getNr();
         if (count_Nr > mat_Nr)
         {
             mat_Nr = count_Nr;
             orb_r_ntype = T;
         }
 
-        orbs[T].resize(GlobalC::ORB.Phi[T].getLmax() + 1);
-        for (int L = 0; L <= GlobalC::ORB.Phi[T].getLmax(); ++L)
+        orbs[T].resize(orb_.Phi[T].getLmax() + 1);
+        for (int L = 0; L <= orb_.Phi[T].getLmax(); ++L)
         {
-            orbs[T][L].resize(GlobalC::ORB.Phi[T].getNchi(L));
-            for (int N = 0; N < GlobalC::ORB.Phi[T].getNchi(L); ++N)
+            orbs[T][L].resize(orb_.Phi[T].getNchi(L));
+            for (int N = 0; N < orb_.Phi[T].getNchi(L); ++N)
             {
-                const auto& orb_origin = GlobalC::ORB.Phi[T].PhiLN(L, N);
+                const auto& orb_origin = orb_.Phi[T].PhiLN(L, N);
                 orbs[T][L][N].set_orbital_info(orb_origin.getLabel(),
                                                orb_origin.getType(),
                                                orb_origin.getL(),
@@ -559,7 +561,7 @@ void toWannier90_LCAO::produce_trial_in_lcao()
         r[ir] = ir * dr;
     }
 
-    const auto& orb_origin = GlobalC::ORB.Phi[orb_r_ntype].PhiLN(0, 0);
+    const auto& orb_origin = orb_.Phi[orb_r_ntype].PhiLN(0, 0);
 
     double* psi = new double[mesh_r];
     double* psir = new double[mesh_r];
