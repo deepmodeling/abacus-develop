@@ -266,7 +266,6 @@ void Input_Conv::Convert()
 
 
     GlobalV::RELAX_METHOD = PARAM.inp.relax_method;
-    GlobalV::relax_new = PARAM.inp.relax_new;
 
     GlobalV::use_paw = PARAM.inp.use_paw;
 
