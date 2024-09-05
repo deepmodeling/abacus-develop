@@ -977,6 +977,10 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int& iter)
 
     if (GlobalC::exx_info.info_global.cal_exx && this->conv_elec)
     {
+        // Kerker mixing does not work for the density matrix.
+        // In the separate loop case, it can still work in the subsequent inner loops where Hexx(DM) is fixed.
+        // In the non-separate loop case where Hexx(DM) is updated in every iteration of the 2nd loop, it should be closed.
+        if (!GlobalC::exx_info.info_global.separate_loop) { this->p_chgmix->close_kerker_gg0(); }
         if (GlobalC::exx_info.info_ri.real_number)
         {
             this->conv_elec = this->exd->exx_after_converge(

@@ -132,7 +132,11 @@ double PolyInt::Polynomial_Interpolation
 //	if(iq >= table_length-4)
 //		std::cout << "\n iq = " << iq << " table_length = " << table_length;
   
-   assert(iq < table_length-4);
+    if(iq > table_length-4)
+    {
+         return 0.0;
+    }
+//  assert(iq < table_length-4);
     const double x0 = position - static_cast<double>(iq);
     const double x1 = 1.0 - x0;
     const double x2 = 2.0 - x0;

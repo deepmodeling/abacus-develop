@@ -50,6 +50,7 @@ AddTest(
   TARGET io_write_istate_info_test
   LIBS ${math_libs} base device symmetry parameter
   SOURCES write_istate_info_test.cpp ../write_istate_info.cpp ../output.cpp ../../module_cell/parallel_kpoints.cpp ../../module_cell/klist.cpp
+  ../cif_io.cpp
 )
 
 AddTest(
@@ -197,3 +198,14 @@ add_test(NAME read_wfc_lcao_test_parallel
 )
 
 endif()
+
+AddTest(
+  TARGET cif_io_test
+  LIBS base ${math_libs} device
+  SOURCES cif_io_test.cpp ../cif_io.cpp
+)
+
+add_test(NAME cif_io_test_parallel
+      COMMAND mpirun -np 4 ./cif_io_test
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)

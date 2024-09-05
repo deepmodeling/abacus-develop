@@ -195,6 +195,9 @@ lj_rcut                        8.5 #cutoff radius of LJ potential
 lj_epsilon                     0.01032 #the value of epsilon for LJ potential
 lj_sigma                       3.405 #the value of sigma for LJ potential
 pot_file                       graph.pb #the filename of potential files for CMD such as DP
+dp_rescaling                   1.0 #rescaling factor for dp potential
+dp_fparam                      1.0 1.1 #the frame parameter for dp potential
+dp_aparam                      1.0 1.2 #the atomic parameter for dp potential
 msst_direction                 2 #the direction of shock wave
 msst_vel                       0 #the velocity of shock wave
 msst_vis                       0 #artificial viscosity

@@ -179,7 +179,20 @@ bool ModuleIO::read_rhog(const std::string& filename, const ModulePW::PW_Basis* 
     {
         ifs.close();
     }
-
+    // for debug, write the rhog to a file (not binary)
+    // if (GlobalV::RANK_IN_POOL == 0)
+    // {
+    //     std::ofstream ofs("rhog_read.txt");
+    //     for (int i = 0; i < nspin_in; ++i)
+    //     {
+    //         for (int ig = 0; ig < pw_rhod->npw; ++ig)
+    //         {
+    //             ofs << rhog[i][ig] << " ";
+    //         }
+    //         ofs << std::endl;
+    //     }
+    //     ofs.close();
+    // }
     ModuleBase::timer::tick("ModuleIO", "read_rhog");
     return true;
 }
@@ -358,7 +371,42 @@ bool ModuleIO::write_rhog(const std::string& fchg,
         MPI_Barrier(POOL_WORLD); // wait for rank 0 to finish writing the rho(G) values
 #endif
     }
-
+    // for debug, write the rhog to a file (not binary)
+    // if (irank == 0)
+    // {
+    //     std::ofstream ofs("rhog_write.txt");
+    //     for (int i = 0; i < nspin; ++i)
+    //     {
+    //         for (int ig = 0; ig < pw_rho->npw; ++ig)
+    //         {
+    //             ofs << rhog[i][ig] << " ";
+    //         }
+    //         ofs << std::endl;
+    //     }
+    //     ofs.close();
+    // }
     ModuleBase::timer::tick("ModuleIO", "write_rhog");
     return true;
 }
+
+// self-consistency test with the following python code
+// import numpy as np
+
+// with open("rhog_read.txt") as f:
+//     read = f.readlines()
+
+// with open("rhog_write.txt") as f:
+//     write = f.readlines()
+
+// # convert c++ stype complex number (a,b) to python complex
+// def to_complex(s):
+//     a, b = s.replace("(", "").replace(")", "").split(",")
+//     return complex(float(a), float(b))
+
+// read = [[to_complex(rhog) for rhog in spin.strip().split()] for spin in read]
+// write = [[to_complex(rhog) for rhog in spin.strip().split()] for spin in write]
+
+// diff = np.array(read) - np.array(write)
+// print(np.max(np.abs(diff)))
+// test system: integrated test 118_PW_CHG_BINARY
+// yielding error 5.290000000000175e-11

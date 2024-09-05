@@ -80,10 +80,8 @@ class ESolver_DP : public ESolver
      * @brief determine the type map of DP model
      *
      * @param ucell unitcell information
-     * @return true if find keyword "type_map" in DP model
-     * @return false if not find keyword "type_map" in DP model
      */
-    bool type_map(const UnitCell& ucell);
+    void type_map(const UnitCell& ucell);
 
     /**
      * @brief DeePMD related variables for ESolver_DP class
@@ -102,20 +100,24 @@ class ESolver_DP : public ESolver
 #endif
 
     /**
-     * @brief Variables for storing simulation data in ESolver_DP class
+     * Variables for storing simulation data in ESolver_DP class
      *
      * These variables are used in the ESolver_DP class to store simulation data such as atomic positions, types, and
      * the potential energy and forces.
+     *
      */
-    std::string dp_file;          ///< the directory of DP model file
-    std::vector<int> dp_type;     ///< convert atom type to dp type if find type_map
-    std::vector<double> cell;     ///< the lattice vectors
-    std::vector<int> atype;       ///< the atom type corresponding to DP model
-    std::vector<double> coord;    ///< the atomic positions
-    double dp_potential;          ///< the computed potential energy
-    ModuleBase::matrix dp_force;  ///< the computed atomic forces
-    ModuleBase::matrix dp_virial; ///< the computed lattice virials
-    UnitCell* ucell_;             ///< pointer to the unitcell information
+
+    std::string dp_file;             ///< directory of DP model file
+    std::vector<double> cell = {};   ///< lattice vectors
+    std::vector<int> atype = {};     ///< atom type corresponding to DP model
+    std::vector<double> coord = {};  ///< atomic positions
+    std::vector<double> fparam = {}; ///< frame parameter for dp potential: dim_fparam
+    std::vector<double> aparam = {}; ///< atomic parameter for dp potential: natoms x dim_aparam
+    double rescaling = 1.0;          ///< rescaling factor for DP model
+    double dp_potential = 0.0;       ///< computed potential energy
+    ModuleBase::matrix dp_force;     ///< computed atomic forces
+    ModuleBase::matrix dp_virial;    ///< computed lattice virials
+    UnitCell* ucell_;                ///< pointer to the unit cell object
 };
 
 } // namespace ModuleESolver

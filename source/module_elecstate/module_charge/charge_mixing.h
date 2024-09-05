@@ -48,6 +48,7 @@ class Charge_Mixing
                     const double& mixing_angle_in,
                     const bool& mixing_dmr_in);
 
+    void close_kerker_gg0() { mixing_gg0 = 0.0; mixing_gg0_mag = 0.0; }
     /**
      * @brief initialize mixing, including constructing mixing and allocating memory for mixing data
      * @brief this function should be called at eachiterinit()

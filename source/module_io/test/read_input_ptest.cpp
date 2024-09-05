@@ -393,6 +393,13 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_DOUBLE_EQ(param.inp.mdp.msst_vel, 0);
     EXPECT_DOUBLE_EQ(param.inp.mdp.msst_vis, 0);
     EXPECT_EQ(param.inp.mdp.pot_file, "graph.pb");
+    EXPECT_DOUBLE_EQ(param.inp.mdp.dp_rescaling, 1.0);
+    EXPECT_EQ(param.inp.mdp.dp_fparam.size(), 2);
+    EXPECT_EQ(param.inp.mdp.dp_aparam.size(), 2);
+    EXPECT_DOUBLE_EQ(param.inp.mdp.dp_fparam[0], 1.0);
+    EXPECT_DOUBLE_EQ(param.inp.mdp.dp_fparam[1], 1.1);
+    EXPECT_DOUBLE_EQ(param.inp.mdp.dp_aparam[0], 1.0);
+    EXPECT_DOUBLE_EQ(param.inp.mdp.dp_aparam[1], 1.2);
     EXPECT_FALSE(param.inp.mdp.dump_force);
     EXPECT_FALSE(param.inp.mdp.dump_vel);
     EXPECT_FALSE(param.inp.mdp.dump_virial);
