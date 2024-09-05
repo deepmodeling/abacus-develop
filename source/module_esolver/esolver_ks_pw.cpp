@@ -643,7 +643,6 @@ void ESolver_KS_PW<T, Device>::cal_stress(ModuleBase::matrix& stress)
     {
         stress(i, i) -= external_stress[i] / unit_transform;
     }
-    GlobalV::PRESSURE = (stress(0, 0) + stress(1, 1) + stress(2, 2)) / 3;
 }
 
 template <typename T, typename Device>
