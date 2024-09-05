@@ -1,5 +1,6 @@
 #include "grid_meshk.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_parameter/parameter.h"
 
 Grid_MeshK::Grid_MeshK()
 {
@@ -78,8 +79,8 @@ void Grid_MeshK::cal_extended_cell(const int &dxe, const int &dye, const int &dz
 
 	init_ucell_para();
 	if(GlobalV::test_gridt)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"UnitCellNumber",nu1,nu2,nu3);
-	//xiaohui add 'GlobalV::OUT_LEVEL' line, 2015-09-16
-	if(GlobalV::OUT_LEVEL != "m") ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"UnitCellTotal",nutot);
+	//xiaohui add 'PARAM.inp.out_level' line, 2015-09-16
+	if(PARAM.inp.out_level != "m") ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"UnitCellTotal",nutot);
 
 
     this->ucell_index2x = std::vector<int>(nutot, 0);

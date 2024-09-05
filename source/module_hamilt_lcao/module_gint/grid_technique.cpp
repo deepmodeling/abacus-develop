@@ -2,7 +2,7 @@
 #include <cuda_runtime.h>
 #endif
 #include "grid_technique.h"
-
+#include "module_parameter/parameter.h"
 #include "module_base/memory.h"
 #include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
@@ -57,7 +57,7 @@ void Grid_Technique::set_pbc_grid(
     ModuleBase::TITLE("Grid_Technique", "init");
     ModuleBase::timer::tick("Grid_Technique", "init");
 
-    if (GlobalV::OUT_LEVEL != "m") {
+    if (PARAM.inp.out_level != "m") {
         GlobalV::ofs_running
             << "\n SETUP EXTENDED REAL SPACE GRID FOR GRID INTEGRATION"
             << std::endl;
@@ -522,7 +522,7 @@ void Grid_Technique::cal_trace_lo(const UnitCell& ucell) {
         }
     }
 
-    if (GlobalV::OUT_LEVEL != "m") {
+    if (PARAM.inp.out_level != "m") {
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,
                                     "Atom number in sub-FFT-grid",
                                     lnat);

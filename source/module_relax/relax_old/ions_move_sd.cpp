@@ -1,5 +1,6 @@
 #include "ions_move_sd.h"
 
+#include "module_parameter/parameter.h"
 #include "ions_move_basic.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
@@ -118,7 +119,7 @@ void Ions_Move_SD::cal_tradius_sd(void) const
     {
         ModuleBase::WARNING_QUIT("Ions_Move_SD::cal_tradius_sd", "istep < 1!");
     }
-    if (GlobalV::OUT_LEVEL == "ie")
+    if (PARAM.inp.out_level == "ie")
     {
         std::cout << " SD RADIUS (Bohr)     : " << trust_radius << std::endl;
     }

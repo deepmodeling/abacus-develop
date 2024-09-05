@@ -34,7 +34,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver)
     {
         time_t estart = time(nullptr);
 
-        if (GlobalV::OUT_LEVEL == "ie"
+        if (PARAM.inp.out_level == "ie"
             && (PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax" || PARAM.inp.calculation == "scf"
                 || PARAM.inp.calculation == "nscf")
             && (PARAM.inp.esolver_type != "lr"))
@@ -183,7 +183,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver)
         ++istep;
     }
 
-    if (GlobalV::OUT_LEVEL == "i")
+    if (PARAM.inp.out_level == "i")
     {
         std::cout << " ION DYNAMICS FINISHED :)" << std::endl;
     }
