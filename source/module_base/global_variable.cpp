@@ -25,7 +25,6 @@ int NSPIN = 1;       // LDA
 bool TWO_EFERMI = false; // two fermi energy, exist only magnetization is fixed.
 double nupdown = 0.0;
 bool CAL_STRESS = false;
-double PRESSURE = 0.0;
 std::string RELAX_METHOD = "bfgs";
 std::string OUT_LEVEL = "ie";
 bool relax_new = true;
