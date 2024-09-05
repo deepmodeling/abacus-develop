@@ -41,12 +41,40 @@ class ESolverDPTest : public ::testing::Test
     {
         // Initialize variables before each test
         esolver = new ModuleESolver::ESolver_DP("./support/case_1.pb");
+        ucell.iat2it = new int[2];
+        ucell.iat2it[0] = 0;
+        ucell.iat2it[1] = 1;
+        ucell.iat2ia = new int[2];
+        ucell.iat2ia[0] = 0;
+        ucell.iat2ia[1] = 1;
+        ucell.nat = 2;
+        ucell.ntype = 2;
+        ucell.atoms = new Atom[2];
+        ucell.atoms[0].na = 1;
+        ucell.atoms[1].na = 1;
+        ucell.atoms[0].taud = new ModuleBase::Vector3<double>[1];
+        ucell.atoms[1].taud = new ModuleBase::Vector3<double>[1];
+        ucell.atoms[0].taud[0] = {0.0, 0.0, 0.0};
+        ucell.atoms[1].taud[0] = {0.0, 0.0, 0.0};
+
+        ucell.atom_label = new std::string[2];
+        ucell.atom_label[0] = "Cu";
+        ucell.atom_label[1] = "Al";
         esolver->before_all_runners(inp, ucell);
     }
 
     void TearDown() override
     {
         // Clean up after each test
+        delete esolver;
+        delete[] ucell.iat2it;
+        delete[] ucell.iat2ia;
+        for (int i = 0; i < 2; ++i)
+        {
+            delete[] ucell.atoms[i].taud;
+        }
+        delete[] ucell.atoms;
+        delete[] ucell.atom_label;
     }
 
     ModuleESolver::ESolver_DP* esolver;
