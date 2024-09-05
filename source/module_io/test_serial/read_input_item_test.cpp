@@ -129,12 +129,12 @@ TEST_F(InputTest, Item_test)
     { // symmetry
         auto it = find_label("symmetry", readinput.input_lists);
         param.input.symmetry = "default";
-        param.input.gamma_only = true;
+        param.input.gamma_only_pw = true;
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.symmetry, "0");
 
         param.input.symmetry = "default";
-        param.input.gamma_only = false;
+        param.input.gamma_only_pw = false;
         param.input.calculation = "none";
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.symmetry, "1");
@@ -803,14 +803,14 @@ TEST_F(InputTest, Item_test)
     { // gamma_only
         auto it = find_label("gamma_only", readinput.input_lists);
         param.input.basis_type = "pw";
-        param.input.gamma_only = true;
+        param.input.gamma_only_pw = true;
         testing::internal::CaptureStdout();
         it->second.reset_value(it->second, param);
         output = testing::internal::GetCapturedStdout();
-        EXPECT_EQ(param.input.gamma_only, false);
+        EXPECT_EQ(param.input.gamma_only_pw, false);
 
         param.input.basis_type = "lcao";
-        param.input.gamma_only = true;
+        param.input.gamma_only_pw = true;
         param.input.esolver_type = "tddft";
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.sys.gamma_only_local, false);
@@ -1202,12 +1202,12 @@ TEST_F(InputTest, Item_test)
     { // exx_real_number
         auto it = find_label("exx_real_number", readinput.input_lists);
         param.input.exx_real_number = "default";
-        param.input.gamma_only = true;
+        param.input.gamma_only_pw = true;
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.exx_real_number, "1");
 
         param.input.exx_real_number = "default";
-        param.input.gamma_only = false;
+        param.input.gamma_only_pw = false;
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.exx_real_number, "0");
     }

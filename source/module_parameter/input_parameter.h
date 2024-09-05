@@ -1,5 +1,6 @@
 #ifndef INPUT_PARAMETER_H
 #define INPUT_PARAMETER_H
+#include "module_parameter/parameter.h"
 #include "md_parameter.h"
 #include "module_base/vector3.h"
 
@@ -109,7 +110,7 @@ struct Input_para
     bool mixing_dftu = false; ///< whether to mix locale in DFT+U
     bool mixing_dmr = false;  ///< whether to mix real space density matrix
 
-    bool gamma_only = false; ///< for plane wave.
+    bool gamma_only_pw = false; ///< for plane wave.
     int scf_nmax = 100;      ///< number of max elec iter
     double scf_thr = -1.0;   ///< \sum |rhog_out - rhog_in |^2
     double scf_ene_thr = -1.0; ///< energy threshold for scf convergence, in eV
