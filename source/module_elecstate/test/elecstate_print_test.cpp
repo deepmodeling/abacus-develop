@@ -244,7 +244,7 @@ TEST_F(ElecStatePrintTest, PrintEtot)
     PARAM.input.gate_flag = true;
     GlobalV::TWO_EFERMI = true;
     PARAM.input.out_bandgap = true;
-    GlobalV::COLOUR = false;
+    PARAM.input.colour = false;
     GlobalV::MY_RANK = 0;
     PARAM.input.basis_type = "pw";
     GlobalV::NSPIN = 2;
@@ -325,7 +325,7 @@ TEST_F(ElecStatePrintTest, PrintEtot2)
     PARAM.input.gate_flag = true;
     GlobalV::TWO_EFERMI = false;
     PARAM.input.out_bandgap = true;
-    GlobalV::COLOUR = false;
+    PARAM.input.colour = false;
     GlobalV::MY_RANK = 0;
     PARAM.input.basis_type = "pw";
     PARAM.input.scf_nmax = 100;
@@ -363,7 +363,7 @@ TEST_F(ElecStatePrintTest, PrintEtotColorS2)
     PARAM.input.gate_flag = true;
     GlobalV::TWO_EFERMI = true;
     PARAM.input.out_bandgap = true;
-    GlobalV::COLOUR = true;
+    PARAM.input.colour = true;
     GlobalV::NSPIN = 2;
     GlobalV::MY_RANK = 0;
     elecstate.print_etot(converged, iter, scf_thr, scf_thr_kin, duration, printe, pw_diag_thr, avg_iter, print);
@@ -388,7 +388,7 @@ TEST_F(ElecStatePrintTest, PrintEtotColorS4)
     PARAM.input.gate_flag = true;
     GlobalV::TWO_EFERMI = true;
     PARAM.input.out_bandgap = true;
-    GlobalV::COLOUR = true;
+    PARAM.input.colour = true;
     GlobalV::NSPIN = 4;
     GlobalV::NONCOLIN = true;
     GlobalV::MY_RANK = 0;
@@ -415,7 +415,7 @@ TEST_F(ElecStatePrintTest, PrintEtotColorS4)
 //     PARAM.input.gate_flag = true;
 //     GlobalV::TWO_EFERMI = false;
 //     PARAM.input.out_bandgap = true;
-//     GlobalV::COLOUR = false;
+//     PARAM.input.colour = false;
 //     GlobalV::MY_RANK = 0;
 //     PARAM.input.basis_type = "pw";
 //     PARAM.input.scf_nmax = 100;
