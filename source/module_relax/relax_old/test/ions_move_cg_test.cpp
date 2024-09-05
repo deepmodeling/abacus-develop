@@ -1,6 +1,7 @@
 #include "for_test.h"
 #include "gtest/gtest.h"
 #define private public
+#include "module_parameter/parameter.h"
 #include "module_relax/relax_old/ions_move_basic.h"
 #include "module_relax/relax_old/ions_move_cg.h"
 #undef private
@@ -28,6 +29,7 @@ class IonsMoveCGTest : public ::testing::Test
         Ions_Move_Basic::dim = 6;
         Ions_Move_Basic::update_iter = 5;
         im_cg.allocate();
+        PARAM.input.force_thr = 0.001;
     }
 
     void TearDown() override
