@@ -27,7 +27,6 @@ double nupdown = 0.0;
 bool CAL_STRESS = false;
 std::string RELAX_METHOD = "bfgs";
 
-int SCF_NMAX = 100;
 
 bool use_uspp = false;
 std::string KS_SOLVER = "cg";  // xiaohui add 2013-09-01

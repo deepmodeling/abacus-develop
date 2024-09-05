@@ -33,7 +33,6 @@ extern std::string RELAX_METHOD;
 extern bool use_uspp;
 
 
-extern int SCF_NMAX;      // 8.4
 
 extern std::string KS_SOLVER;  // xiaohui add 2013-09-01
 extern double SEARCH_RADIUS;   // 11.1 // mohan add 2011-03-10
