@@ -152,7 +152,7 @@ TEST_F(IonsMoveSDTest, CalTradiusSdCase1)
 {
     // setup data
     Ions_Move_Basic::istep = 1;
-    GlobalV::OUT_LEVEL = "ie";
+    PARAM.input.out_level = "ie";
 
     // call function
     testing::internal::CaptureStdout();
@@ -171,7 +171,7 @@ TEST_F(IonsMoveSDTest, CalTradiusSdCase2)
     // setup data
     Ions_Move_Basic::istep = 2;
     Ions_Move_Basic::ediff = -1.0;
-    GlobalV::OUT_LEVEL = "m";
+    PARAM.input.out_level = "m";
 
     // call function
     im_sd.cal_tradius_sd();
@@ -186,7 +186,7 @@ TEST_F(IonsMoveSDTest, CalTradiusSdCase3)
     // setup data
     Ions_Move_Basic::istep = 2;
     Ions_Move_Basic::ediff = 1.0;
-    GlobalV::OUT_LEVEL = "m";
+    PARAM.input.out_level = "m";
 
     // call function
     im_sd.cal_tradius_sd();

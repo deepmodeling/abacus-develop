@@ -134,7 +134,7 @@ void test_deepks::setup_cell()
 void test_deepks::prep_neighbour()
 {
     double search_radius = atom_arrange::set_sr_NL(GlobalV::ofs_running,
-                                                   GlobalV::OUT_LEVEL,
+                                                   PARAM.input.out_level,
                                                    ORB.get_rcutmax_Phi(),
                                                    ucell.infoNL.get_rcutmax_Beta(),
                                                    GlobalV::GAMMA_ONLY_LOCAL);
