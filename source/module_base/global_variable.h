@@ -44,7 +44,6 @@ extern bool DOMAG;        // 1 : calculate the magnetism with x, y, z component
 extern bool DOMAG_Z;      // 1 : constrain the magnetism to z axis
 extern int NPOL;          // 1 : no soc; 2 : has soc
 
-extern int PW_DIAG_NMAX;   // 13
 extern int PW_DIAG_NDIM;   // 14
 extern double PW_DIAG_THR; // 15 pw_diag_thr
 extern int NB2D;           // 16.5 dividsion of 2D_matrix.

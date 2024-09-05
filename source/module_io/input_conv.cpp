@@ -281,7 +281,6 @@ void Input_Conv::Convert()
     //----------------------------------------------------------
     // diagonalization  (5/5)
     //----------------------------------------------------------
-    GlobalV::PW_DIAG_NMAX = PARAM.inp.pw_diag_nmax;
     GlobalV::PW_DIAG_NDIM = PARAM.inp.pw_diag_ndim;
 
     GlobalV::PW_DIAG_THR = PARAM.inp.pw_diag_thr;
