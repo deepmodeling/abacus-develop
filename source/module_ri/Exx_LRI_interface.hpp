@@ -1,5 +1,6 @@
 #ifndef EXX_LRI_INTERFACE_HPP
 #define EXX_LRI_INTERFACE_HPP
+#include "module_parameter/parameter.h"
 
 #include "Exx_LRI_interface.h"
 #include "module_ri/exx_abfs-jle.h"
@@ -68,7 +69,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const K_Vectors& kv, const Charg
 		// set initial parameter for mix_DMk_2D
 		if(GlobalC::exx_info.info_global.cal_exx)
 		{
-			this->mix_DMk_2D.set_nks(kv.get_nks(), GlobalV::GAMMA_ONLY_LOCAL);
+			this->mix_DMk_2D.set_nks(kv.get_nks(), PARAM.globalv.gamma_only_local);
 			if(GlobalC::exx_info.info_global.separate_loop) {
                 this->mix_DMk_2D.set_mixing(nullptr);
 			} else {
@@ -90,7 +91,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_eachiterinit(const elecstate::DensityMatri
 			const bool flag_restart = (iter==1) ? true : false;
             this->mix_DMk_2D.mix(dm.get_DMK_vector(), flag_restart);
 			const std::vector<std::map<int,std::map<std::pair<int, std::array<int, 3>>,RI::Tensor<Tdata>>>>
-				Ds = GlobalV::GAMMA_ONLY_LOCAL
+				Ds = PARAM.globalv.gamma_only_local
                 ? RI_2D_Comm::split_m2D_ktoR<Tdata>(*this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_gamma_out(), *dm.get_paraV_pointer(), GlobalV::NSPIN)
                 : RI_2D_Comm::split_m2D_ktoR<Tdata>(*this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_k_out(), *dm.get_paraV_pointer(), GlobalV::NSPIN);
             this->exx_ptr->cal_exx_elec(Ds, *dm.get_paraV_pointer());

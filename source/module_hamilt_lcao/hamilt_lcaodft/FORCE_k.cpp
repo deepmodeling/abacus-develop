@@ -1,5 +1,6 @@
 #include "FORCE.h"
 #include "module_base/memory.h"
+#include "module_parameter/parameter.h"
 #include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
 #include "module_base/tool_threading.h"
@@ -207,7 +208,7 @@ void Force_LCAO<std::complex<double>>::test(Parallel_Orbitals& pv, double* mmm, 
     Record_adj RA;
 
     // mohan update 2024-03-31
-    RA.for_2d(pv, GlobalV::GAMMA_ONLY_LOCAL);
+    RA.for_2d(pv, PARAM.globalv.gamma_only_local);
 
     double* test;
     test = new double[GlobalV::NLOCAL * GlobalV::NLOCAL];

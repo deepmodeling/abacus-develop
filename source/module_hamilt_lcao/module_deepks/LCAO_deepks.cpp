@@ -145,7 +145,7 @@ void LCAO_Deepks::init(
     if(GlobalV::deepks_v_delta)
     {
         //allocate and init h_mat
-        if(GlobalV::GAMMA_ONLY_LOCAL)
+        if(PARAM.globalv.gamma_only_local)
         {
             int nloc=this->pv->nloc;
             this->h_mat.resize(nloc,0.0);
@@ -211,7 +211,7 @@ void LCAO_Deepks::init_index(const int ntype, const int nat, std::vector<int> na
 
 void LCAO_Deepks::allocate_nlm(const int nat)
 {
-    if(GlobalV::GAMMA_ONLY_LOCAL)
+    if(PARAM.globalv.gamma_only_local)
     {
         this->nlm_save.resize(nat);
     }
@@ -323,7 +323,7 @@ void LCAO_Deepks::allocate_V_delta(const int nat, const int nks)
     nks_V_delta = nks;
 
     //initialize the H matrix H_V_delta
-    if(GlobalV::GAMMA_ONLY_LOCAL)
+    if(PARAM.globalv.gamma_only_local)
     {
         this->H_V_delta.resize(pv->nloc);
         ModuleBase::GlobalFunc::ZEROS(this->H_V_delta.data(), pv->nloc);

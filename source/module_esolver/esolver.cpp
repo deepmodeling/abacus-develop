@@ -167,7 +167,7 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
     }
     else if (esolver_type == "ksdft_lcao")
 	{
-		if (GlobalV::GAMMA_ONLY_LOCAL)
+		if (PARAM.globalv.gamma_only_local)
 		{
 			return new ESolver_KS_LCAO<double, double>();
 		}
@@ -187,7 +187,7 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
     else if (esolver_type == "lr_lcao")
     {
         // use constructor rather than Init function to initialize reference (instead of pointers) to ucell
-        if (GlobalV::GAMMA_ONLY_LOCAL)
+        if (PARAM.globalv.gamma_only_local)
             return new LR::ESolver_LR<double, double>(inp, ucell);
         else if (GlobalV::NSPIN < 2)
             return new LR::ESolver_LR<std::complex<double>, double>(inp, ucell);
@@ -198,7 +198,7 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
     {
         // initialize the 1st ESolver_KS
         ModuleESolver::ESolver* p_esolver = nullptr;
-        if (GlobalV::GAMMA_ONLY_LOCAL)
+        if (PARAM.globalv.gamma_only_local)
         {
             p_esolver = new ESolver_KS_LCAO<double, double>();
         }
@@ -219,7 +219,7 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
         std::cout << "Setting up the esolver for excited states..." << std::endl;
         // initialize the 2nd ESolver_LR at the temporary pointer
         ModuleESolver::ESolver* p_esolver_lr = nullptr;
-        if (GlobalV::GAMMA_ONLY_LOCAL)
+        if (PARAM.globalv.gamma_only_local)
             p_esolver_lr = new LR::ESolver_LR<double, double>(
                 std::move(*dynamic_cast<ModuleESolver::ESolver_KS_LCAO<double, double>*>(p_esolver)),
                 inp,

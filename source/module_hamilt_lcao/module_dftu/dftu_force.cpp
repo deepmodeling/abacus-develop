@@ -92,7 +92,7 @@ void DFTU::force_stress(const elecstate::ElecState* pelec,
         stress_dftu.zero_out();
     }
 
-    if (GlobalV::GAMMA_ONLY_LOCAL)
+    if (PARAM.globalv.gamma_only_local)
     {
         const char transN = 'N';
         const char transT = 'T';

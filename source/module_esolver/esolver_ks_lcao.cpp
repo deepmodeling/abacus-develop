@@ -190,7 +190,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
     // 6) initialize Hamilt in LCAO
     // * allocate H and S matrices according to computational resources
     // * set the 'trace' between local H/S and global H/S
-    LCAO_domain::divide_HS_in_frag(GlobalV::GAMMA_ONLY_LOCAL, pv, this->kv.get_nks());
+    LCAO_domain::divide_HS_in_frag(PARAM.globalv.gamma_only_local, pv, this->kv.get_nks());
 
 #ifdef __EXX
     // 7) initialize exx
@@ -647,7 +647,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
     if (PARAM.inp.vl_in_h)
     {
         // update Gint_K
-        if (!GlobalV::GAMMA_ONLY_LOCAL)
+        if (!PARAM.globalv.gamma_only_local)
         {
             this->GK.renew();
         }
@@ -808,7 +808,7 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
     // 1) print Hamiltonian and Overlap matrix
     if (this->conv_elec || iter == PARAM.inp.scf_nmax)
     {
-        if (!GlobalV::GAMMA_ONLY_LOCAL && (hsolver::HSolverLCAO<TK>::out_mat_hs[0] || GlobalV::deepks_v_delta))
+        if (!PARAM.globalv.gamma_only_local && (hsolver::HSolverLCAO<TK>::out_mat_hs[0] || GlobalV::deepks_v_delta))
         {
             this->GK.renew(true);
         }

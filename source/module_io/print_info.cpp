@@ -82,7 +82,7 @@ void Print_Info::setup_parameters(UnitCell &ucell, K_Vectors &kv)
 		std::cout << std::endl;
 		std::cout << " " << std::setw(8) << GlobalV::NSPIN;
 
-		if(GlobalV::GAMMA_ONLY_LOCAL)
+		if(PARAM.globalv.gamma_only_local)
 		{
 			std::cout << std::setw(16) << "Gamma";
 		}

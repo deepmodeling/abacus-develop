@@ -199,7 +199,7 @@ void ESolver_FP::after_scf(const int istep)
                 this->pw_rhod->real2recip(rhor_tot[is], rhog_tot[is]);
             }
             ModuleIO::write_rhog(GlobalV::global_out_dir + PARAM.inp.suffix + "-CHARGE-DENSITY.restart",
-                                 GlobalV::GAMMA_ONLY_PW || GlobalV::GAMMA_ONLY_LOCAL,
+                                 GlobalV::GAMMA_ONLY_PW || PARAM.globalv.gamma_only_local,
                                  this->pw_rhod,
                                  GlobalV::NSPIN,
                                  GlobalC::ucell.GT,

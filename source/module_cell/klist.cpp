@@ -205,7 +205,7 @@ bool K_Vectors::read_kpoints(const std::string& fn)
 
     // 1. Overwrite the KPT file and default K-point information if needed
     // mohan add 2010-09-04
-    if (GlobalV::GAMMA_ONLY_LOCAL)
+    if (PARAM.globalv.gamma_only_local)
     {
         GlobalV::ofs_warning << " Auto generating k-points file: " << fn << std::endl;
         std::ofstream ofs(fn.c_str());
