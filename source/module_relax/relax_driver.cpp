@@ -15,7 +15,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver)
 
     if (PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax")
     {
-        if (!GlobalV::relax_new)
+        if (!PARAM.inp.relax_new)
         {
             rl_old.init_relax(GlobalC::ucell.nat);
         }
@@ -76,7 +76,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver)
 
             if (PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax")
             {
-                if (GlobalV::relax_new)
+                if (PARAM.inp.relax_new)
                 {
                     stop = rl.relax_step(force, stress, this->etot);
                 }

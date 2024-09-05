@@ -297,7 +297,7 @@ void Print_Info::print_screen(const int &stress_step, const int &force_step, con
 	}
 	else
 	{
-		if(GlobalV::relax_new)
+		if(PARAM.inp.relax_new)
 		{
 			std::cout << " STEP OF RELAXATION : " << unsigned(istep) << std::endl;
 			GlobalV::ofs_running << " STEP OF RELAXATION : " << unsigned(istep) << std::endl;
