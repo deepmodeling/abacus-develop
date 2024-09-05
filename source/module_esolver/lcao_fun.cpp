@@ -53,7 +53,7 @@ template <typename TK, typename TR>
 ModuleIO::Output_Mat_Sparse<TK> ESolver_KS_LCAO<TK, TR>::create_Output_Mat_Sparse(int istep)
 {
     return ModuleIO::Output_Mat_Sparse<TK>(hsolver::HSolverLCAO<TK>::out_mat_hsR,
-        hsolver::HSolverLCAO<TK>::out_mat_dh,
+                                           PARAM.inp.out_mat_dh,                                
         hsolver::HSolverLCAO<TK>::out_mat_t,
         PARAM.inp.out_mat_r,
         istep,
