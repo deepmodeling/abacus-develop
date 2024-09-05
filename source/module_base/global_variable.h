@@ -54,7 +54,6 @@ extern double DQ; // 19 mohan add 2009-09-10
 extern int NQX;   // 20 mohan add 2009-09-10
 extern int NQXQ;  // liuyu add 2023-10-03
 
-extern bool COLOUR;           // mohan add 2011-04-26
 extern bool GAMMA_ONLY_LOCAL; // 22 : mohan add 2010-10-20
 extern bool GAMMA_ONLY_PW;    // mohan add 2012-06-05
 
