@@ -1,5 +1,6 @@
 #include "tool_quit.h"
 
+#include "module_parameter/parameter.h"
 #ifdef __MPI
 #include "mpi.h"
 #endif
@@ -88,7 +89,7 @@ void WARNING_QUIT(const std::string &file,const std::string &description,int ret
 	// 35: zi
 	// 36: qing
 	// 37: white
-	if(GlobalV::COLOUR)
+	if(PARAM.inp.colour)
 	{
 		//printf( "\e[32m%s\e[0m\n", " -------------- SOMETHING TO WARN YOU ! ------------");
 		//printf( " \e[32m%s\e[0m\n", description.c_str());
