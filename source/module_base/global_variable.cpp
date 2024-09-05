@@ -41,7 +41,6 @@ double DQ = 0.010; // space between Q points of the reciprocal radial tab
 int NQX = 10000;   // number of points describing reciprocal radial tab
 int NQXQ = 10000;  // number of points describing reciprocal radial tab for Q
 
-bool GAMMA_ONLY_LOCAL = false; // mohan add 2010-10-20
 bool GAMMA_ONLY_PW = false;    // mohan add 2012-06-05
 
 int ZEEMAN_IN_H = 1;
