@@ -47,7 +47,7 @@ ESolver_KS<T, Device>::ESolver_KS()
     drho = 0.0;
 
     // should not use GlobalV here, mohan 2024-05-12
-    maxniter = GlobalV::SCF_NMAX;
+    maxniter = PARAM.inp.scf_nmax;
     niter = maxniter;
 
     // should not use GlobalV here, mohan 2024-05-12
@@ -624,7 +624,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
         }
 
         // notice for restart
-        if (GlobalV::MIXING_RESTART > 0 && iter == this->p_chgmix->mixing_restart_step - 1 && iter != GlobalV::SCF_NMAX)
+        if (GlobalV::MIXING_RESTART > 0 && iter == this->p_chgmix->mixing_restart_step - 1 && iter != PARAM.inp.scf_nmax)
         {
             std::cout << " SCF restart after this step!" << std::endl;
         }

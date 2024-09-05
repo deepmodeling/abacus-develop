@@ -316,7 +316,7 @@ void ElecState::print_etot(const bool converged,
     std::vector<std::string> titles;
     std::vector<double> energies_Ry;
     std::vector<double> energies_eV;
-    if (printe > 0 && ((iter + 1) % printe == 0 || converged || iter == GlobalV::SCF_NMAX))
+    if (printe > 0 && ((iter + 1) % printe == 0 || converged || iter == PARAM.inp.scf_nmax))
     {
         int n_order = std::max(0, Occupy::gaussian_type);
         titles.push_back("E_KohnSham");
