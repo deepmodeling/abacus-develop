@@ -1,5 +1,8 @@
 #include "module_base/matrix3.h"
 #include "module_base/parallel_global.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include "module_elecstate/module_charge/charge.h"
 
 #include "gmock/gmock.h"
@@ -64,7 +67,7 @@ TEST_F(ChargeMpiTest, reduce_diff_pools1)
         GlobalV::KPAR = 2;
         Parallel_Global::divide_pools(GlobalV::NPROC,
                                       GlobalV::MY_RANK,
-                                      GlobalV::NSTOGROUP,
+                                      PARAM.input.bndpar,
                                       GlobalV::KPAR,
                                       GlobalV::NPROC_IN_STOGROUP,
                                       GlobalV::RANK_IN_STOGROUP,
@@ -110,7 +113,7 @@ TEST_F(ChargeMpiTest, reduce_diff_pools2)
         GlobalV::KPAR = 3;
         Parallel_Global::divide_pools(GlobalV::NPROC,
                                       GlobalV::MY_RANK,
-                                      GlobalV::NSTOGROUP,
+                                      PARAM.input.bndpar,
                                       GlobalV::KPAR,
                                       GlobalV::NPROC_IN_STOGROUP,
                                       GlobalV::RANK_IN_STOGROUP,
@@ -165,7 +168,7 @@ TEST_F(ChargeMpiTest, rho_mpi)
         GlobalV::KPAR = 2;
         Parallel_Global::divide_pools(GlobalV::NPROC,
                                       GlobalV::MY_RANK,
-                                      GlobalV::NSTOGROUP,
+                                      PARAM.input.bndpar,
                                       GlobalV::KPAR,
                                       GlobalV::NPROC_IN_STOGROUP,
                                       GlobalV::RANK_IN_STOGROUP,

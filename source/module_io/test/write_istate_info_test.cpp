@@ -1,5 +1,8 @@
 #include "module_base/global_variable.h"
 
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include <streambuf>
@@ -51,7 +54,7 @@ TEST_F(IstateInfoTest, OutIstateInfoS1)
     // mpi setting
     Parallel_Global::init_pools(GlobalV::NPROC,
                                 GlobalV::MY_RANK,
-                                GlobalV::NSTOGROUP,
+                                PARAM.input.bndpar,
                                 GlobalV::KPAR,
                                 GlobalV::NPROC_IN_STOGROUP,
                                 GlobalV::RANK_IN_STOGROUP,
@@ -102,7 +105,7 @@ TEST_F(IstateInfoTest, OutIstateInfoS2)
     // mpi setting
     Parallel_Global::init_pools(GlobalV::NPROC,
                                 GlobalV::MY_RANK,
-                                GlobalV::NSTOGROUP,
+                                PARAM.input.bndpar,
                                 GlobalV::KPAR,
                                 GlobalV::NPROC_IN_STOGROUP,
                                 GlobalV::RANK_IN_STOGROUP,
