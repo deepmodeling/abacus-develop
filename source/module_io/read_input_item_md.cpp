@@ -218,6 +218,12 @@ void ReadInput::item_md()
         this->add_item(item);
     }
     {
+        Input_Item item("dp_rescaling");
+        item.annotation = "rescaling factor for dp potential";
+        read_sync_double(input.mdp.dp_rescaling);
+        this->add_item(item);
+    }
+    {
         Input_Item item("dp_fparam");
         item.annotation = "the frame parameter for dp potential";
         item.read_value = [](const Input_Item& item, Parameter& para) {
