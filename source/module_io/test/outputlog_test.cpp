@@ -1,14 +1,13 @@
-#include <unistd.h>
-
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #define private public
 #include "module_parameter/parameter.h"
 #undef private
+#include <unistd.h>
 #include <cstdio>
 #include <iostream>
 #include <sstream>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "module_base/constants.h"
 #include "module_base/global_variable.h"
 #include "module_io/output_log.h"

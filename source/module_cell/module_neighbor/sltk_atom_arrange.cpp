@@ -18,7 +18,7 @@ atom_arrange::~atom_arrange()
 
 double atom_arrange::set_sr_NL(
 	std::ofstream &ofs_in,
-	std::string &output_level,
+	const std::string &output_level,
 	const double &rcutmax_Phi, 
 	const double &rcutmax_Beta, 
 	const bool gamma_only_local)
