@@ -117,7 +117,7 @@ void Charge_Mixing::init_mixing()
 
     // allocate memory for mixing data, if exists, free it first and then allocate new memory
     // initailize rho_mdata
-    if (GlobalV::SCF_THR_TYPE == 1)
+    if (PARAM.inp.scf_thr_type == 1)
     {  
         if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0 )
         {
@@ -147,7 +147,7 @@ void Charge_Mixing::init_mixing()
     // initailize tau_mdata
     if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
     {
-        if (GlobalV::SCF_THR_TYPE == 1)
+        if (PARAM.inp.scf_thr_type == 1)
         {
             this->mixing->init_mixing_data(this->tau_mdata,
                                            this->rhopw->npw * GlobalV::NSPIN,
@@ -179,11 +179,11 @@ void Charge_Mixing::allocate_mixing_dmr(int nnr)
     //
     const int dmr_nspin = (GlobalV::NSPIN == 2) ? 2 : 1;
     // allocate memory for dmr_mdata
-    if (GlobalV::SCF_THR_TYPE == 1)
+    if (PARAM.inp.scf_thr_type == 1)
     {
         ModuleBase::WARNING_QUIT("Charge_Mixing", "This Mixing of Density Matrix is not supported for PW basis yet");
     }
-    else if (GlobalV::SCF_THR_TYPE == 2)
+    else if (PARAM.inp.scf_thr_type == 2)
     {
         this->mixing->init_mixing_data(this->dmr_mdata, nnr * dmr_nspin, sizeof(double));
     }
@@ -206,7 +206,7 @@ double Charge_Mixing::get_drho(Charge* chr, const double nelec)
     ModuleBase::timer::tick("Charge_Mixing", "get_drho");
     double drho = 0.0;
 
-    if (GlobalV::SCF_THR_TYPE == 1)
+    if (PARAM.inp.scf_thr_type == 1)
     {
         for (int is = 0; is < GlobalV::NSPIN; ++is)
         {
@@ -1064,11 +1064,11 @@ void Charge_Mixing::mix_rho(Charge* chr)
     }        
 #endif
     // --------------------Mixing Body--------------------
-    if (GlobalV::SCF_THR_TYPE == 1)
+    if (PARAM.inp.scf_thr_type == 1)
     {
         mix_rho_recip(chr);
     }
-    else if (GlobalV::SCF_THR_TYPE == 2)
+    else if (PARAM.inp.scf_thr_type == 2)
     {
         mix_rho_real(chr);
     }

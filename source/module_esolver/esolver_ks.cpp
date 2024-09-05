@@ -567,7 +567,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
                 {
                     p_chgmix->mix_rho(pelec->charge); // update chr->rho by mixing
                 }
-                if (GlobalV::SCF_THR_TYPE == 2)
+                if (PARAM.inp.scf_thr_type == 2)
                 {
                     pelec->charge->renormalize_rho(); // renormalize rho in R-space would
                                                       // induce a error in K-space
