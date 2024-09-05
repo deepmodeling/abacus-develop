@@ -1,5 +1,6 @@
 #include "relax.h"
 
+#include "module_parameter/parameter.h"
 #include <cmath>
 
 #include "module_relax/relax_old/ions_move_basic.h"
@@ -23,7 +24,7 @@ void Relax::init_relax(const int nat_in)
     etot = 0;
     etot_p = 0;
 
-    force_thr_eva = GlobalV::PARAM.inp.force_thr * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A; //convert to eV/A
+    force_thr_eva = GlobalV::PARAM.inp.force_thr  * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A; //convert to eV/A
     fac_force  = PARAM.inp.relax_scale_force * 0.1;
     fac_stress = fac_force / nat;
 
