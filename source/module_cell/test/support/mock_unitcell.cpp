@@ -11,8 +11,9 @@ bool UnitCell::judge_parallel(double a[3], ModuleBase::Vector3<double> b) {
 }
 void UnitCell::set_iat2iwt(const int& npol_in) {}
 UnitCell::UnitCell() {
-    if (GlobalV::test_unitcell)
+    if (GlobalV::test_unitcell) {
         ModuleBase::TITLE("unitcell", "Constructor");
+}
     Coordinate = "Direct";
     latName = "none";
     lat0 = 0.0;
@@ -67,7 +68,6 @@ UnitCell::~UnitCell() {
 }
 void UnitCell::print_cell(std::ofstream& ofs) const {}
 void UnitCell::print_cell_xyz(const std::string& fn) const {}
-void UnitCell::print_cell_cif(const std::string& fn) const {}
 int UnitCell::read_atom_species(std::ifstream& ifa,
                                 std::ofstream& ofs_running) {
     return 0;

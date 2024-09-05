@@ -183,7 +183,6 @@ OBJS_CELL=atom_pseudo.o\
     klist.o\
     cell_index.o\
     check_atomic_stru.o\
-    print_cif.o\
 
 OBJS_DEEPKS=LCAO_deepks.o\
         deepks_fgamma.o\
@@ -469,6 +468,7 @@ OBJS_IO=input_conv.o\
     write_dos_pw.o\
     nscf_band.o\
     cal_dos.o\
+    cif_io.o\
     dos_nao.o\
     numerical_descriptor.o\
     numerical_basis.o\
