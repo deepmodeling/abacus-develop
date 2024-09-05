@@ -99,10 +99,12 @@ void Potential::allocate()
     ModuleBase::TITLE("Potential", "allocate");
     int nrxx = this->rho_basis_->nrxx;
     int nrxx_smooth = this->rho_basis_smooth_->nrxx;
-    if (nrxx == 0)
+    if (nrxx == 0) {
         return;
-    if (nrxx_smooth == 0)
+}
+    if (nrxx_smooth == 0) {
         return;
+}
 
     this->v_effective_fixed.resize(nrxx);
     ModuleBase::Memory::record("Pot::veff_fix", sizeof(double) * nrxx);
