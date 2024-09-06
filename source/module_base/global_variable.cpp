@@ -109,7 +109,6 @@ int test_grid = 0;        // 4 now
 //----------------------------------------------------------
 // src_pseudo
 //----------------------------------------------------------
-int test_pseudo_cell = 0; // 2 : output readin data
 int test_pp = 0;          // pp: pseudopotential
 int test_kmesh = 0;
 int test_relax_method = 0;
