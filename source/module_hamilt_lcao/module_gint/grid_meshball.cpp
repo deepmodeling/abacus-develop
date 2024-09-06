@@ -65,7 +65,7 @@ void Grid_MeshBall::init_meshball()
 			}
 		}
 	}
-	if(PARAM.input.test_gridt) {ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "how many cells in meshball",this->meshball_ncells);
+	if(PARAM.inp.test_gridt) {ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "how many cells in meshball",this->meshball_ncells);
 }
 
 	// prepare for the second calculation.

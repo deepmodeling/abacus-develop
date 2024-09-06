@@ -70,7 +70,7 @@ void Grid_BigCell::init_big_latvec(const UnitCell& ucell)
 	// (x,y,z) * bigcell_latvec0^(-1) = (i,j,k)
 	this->bigcell_GT = this->bigcell_latvec0.Inverse();
 
-	if(PARAM.input.test_gridt)
+	if(PARAM.inp.test_gridt)
 	{
 		GlobalV::ofs_running << " the VECTORS of BIGCELL are (Bohr): " << std::endl;
 		GlobalV::ofs_running << " vec1( " 
@@ -106,7 +106,7 @@ void Grid_BigCell::init_grid_expansion(const UnitCell& ucell,double* rcut)
 	{
 		this->orbital_rmax = std::max( rcut[T], this->orbital_rmax);
 	}
-	if(PARAM.input.test_gridt)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"rmax of periodic grid (bohr)",orbital_rmax);
+	if(PARAM.inp.test_gridt)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"rmax of periodic grid (bohr)",orbital_rmax);
 
 	// mohan fixed serious bug 2010-03-06
 	// G = GT^T

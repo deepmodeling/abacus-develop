@@ -106,7 +106,6 @@ std::ofstream ofs_device; // output device info
 // module_hamilt_lcao/hamilt_lcaodft
 //----------------------------------------------------------
 int test_grid = 0;        // 4 now
-int test_gridt = 0;  // mohan add 2011-03-17
 //----------------------------------------------------------
 // src_pseudo
 //----------------------------------------------------------
