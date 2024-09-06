@@ -159,7 +159,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.vnl_in_h, 1);
     EXPECT_EQ(param.inp.vh_in_h, 1);
     EXPECT_EQ(param.inp.vion_in_h, 1);
-    EXPECT_EQ(PARAM.input.test_force, 0);
+    EXPECT_EQ(PARAM.inp.test_force, 0);
     EXPECT_EQ(param.inp.test_stress, 0);
     EXPECT_NEAR(param.inp.scf_thr, 1.0e-8, 1.0e-15);
     EXPECT_NEAR(param.inp.scf_ene_thr, -1.0, 1.0e-15);

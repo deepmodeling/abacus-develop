@@ -124,7 +124,6 @@ int test_charge = 0;
 //----------------------------------------------------------
 int test_grid = 0;        // 4 now
 int test_grid_driver = 0; // 4 now
-int TEST_STRESS = 0; // zhengdy add 2018-05-16
 int test_gridt = 0;  // mohan add 2011-03-17
 //----------------------------------------------------------
 // src_pseudo

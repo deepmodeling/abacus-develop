@@ -114,7 +114,7 @@ AddTest(
 
 AddTest(
   TARGET io_output_log_test
-  LIBS base ${math_libs} device
+  LIBS base ${math_libs} device parameter
   SOURCES ../output_log.cpp outputlog_test.cpp ../../module_basis/module_pw/test/test_tool.cpp
 )
 
