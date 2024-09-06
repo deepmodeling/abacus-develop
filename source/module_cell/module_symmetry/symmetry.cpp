@@ -1,5 +1,6 @@
 #include <memory>
 #include <array>
+#include "module_parameter/parameter.h"
 #include "symmetry.h"
 #include "module_base/libm/libm.h"
 #include "module_base/mathzone.h"
@@ -1476,7 +1477,7 @@ void Symmetry::pricell(double* pos, const Atom* atoms)
 void Symmetry::rho_symmetry( double *rho,
                              const int &nr1, const int &nr2, const int &nr3)
 {
-//  if (GlobalV::test_symmetry)ModuleBase::TITLE("Symmetry","rho_symmetry");
+//  if (PARAM.input.test_symmetry)ModuleBase::TITLE("Symmetry","rho_symmetry");
     ModuleBase::timer::tick("Symmetry","rho_symmetry");
 
 	// allocate flag for each FFT grid.
@@ -1534,7 +1535,7 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
     int* ixyz2ipw, const int &nx, const int &ny, const int &nz, 
     const int &fftnx, const int &fftny, const int &fftnz)
 {
-//  if (GlobalV::test_symmetry)ModuleBase::TITLE("Symmetry","rho_symmetry");
+//  if (PARAM.input.test_symmetry)ModuleBase::TITLE("Symmetry","rho_symmetry");
     ModuleBase::timer::tick("Symmetry","rhog_symmetry");
 // ----------------------------------------------------------------------
 // the current way is to cluster the FFT grid points into groups in advance.

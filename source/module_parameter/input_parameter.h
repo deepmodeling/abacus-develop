@@ -572,5 +572,6 @@ struct Input_para
     bool test_atom = false;       ///< variables for test_atom only
     bool test_atom_input = false; ///< variables for test_atom_input only
     bool test_unitcell = false;  ///< variables for test_unit_cell only
+    bool test_symmetry = false;   ///< variables for test_lattice only
 };
 #endif

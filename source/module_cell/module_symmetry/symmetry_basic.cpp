@@ -1,5 +1,6 @@
 //==========================================================
 // AUTHOR : Zhengpan , mohan , spshu
+#include "module_parameter/parameter.h"
 // DATE : 2007-9
 //==========================================================
 #include "symmetry.h"
@@ -519,7 +520,7 @@ void Symmetry_Basic::matrigen(ModuleBase::Matrix3 *symgen, const int ngen, Modul
 //--------------------------------------------------------------
 void Symmetry_Basic::setgroup(ModuleBase::Matrix3* symop, int &nop, const int &ibrav) const
 {
-	if(GlobalV::test_symmetry) ModuleBase::TITLE("Symmetry_Basic","setgroup");
+	if(PARAM.inp.test_symmetry) ModuleBase::TITLE("Symmetry_Basic","setgroup");
 
 	ModuleBase::Matrix3 symgen[3];
 
@@ -629,7 +630,7 @@ void Symmetry_Basic::setgroup(ModuleBase::Matrix3* symop, int &nop, const int &i
 		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"ROTATION MATRICES",nop);
 	}
 
-	if(GlobalV::test_symmetry > 1)
+	if(PARAM.inp.test_symmetry > 1)
 	{
 		GlobalV::ofs_running<<" THERE ARE " << nop << " ROTATION MATRICES FOR THE PURE BRAVAIS LATTICE"<<std::endl;
 		GlobalV::ofs_running<<"    E11 E12 E13 E21 E22 E23 E31 E32 E33"<<std::endl;
@@ -748,7 +749,7 @@ void Symmetry_Basic::pointgroup(const int& nrot, int& pgnumber, std::string& pgn
 
 	//there are four trivial cases which could be easily determined
 	//because the number of their elements are exclusive
-    if (GlobalV::test_symmetry) ModuleBase::TITLE("Symmetry_Basic", "pointgroup");
+    if (PARAM.inp.test_symmetry) ModuleBase::TITLE("Symmetry_Basic", "pointgroup");
 
     std::vector<std::string> pgdict = { "none", "C_1", "S_2", "C_2", "C_1h", "C_2h", "D_2", "C_2v", "D_2h", "C_3", "S_6", "D_3", "C_3v", "D_3d", "C_4", "S_4", "C_4h", "D_4", "C_4v", "D_2d", "D_4h",
     "C_6", "C_3h", "C_6h", "D_6", "C_6v", "D_3h", "D_6h", "T", "T_h", "O", "T_d", "O_h" };
