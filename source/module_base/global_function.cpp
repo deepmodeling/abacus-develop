@@ -127,8 +127,6 @@ void TEST_LEVEL(const std::string &name, bool disable=true)
     }
     else if (name == "init_read")
     {
-        GlobalV::test_atom = 1;
-        GlobalV::test_unitcell = 1;
 #ifndef __EPM
         GlobalV::test_pseudo_cell = 1;
 #else

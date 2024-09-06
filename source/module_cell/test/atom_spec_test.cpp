@@ -1,5 +1,8 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
+#define private public
+#include "mdoule_parameter/parameter.h"
+#undef private
 #include<streambuf>
 #ifdef __MPI
 #include "mpi.h"
@@ -128,7 +131,7 @@ TEST_F(AtomSpecTest, SetIndex)
 #ifdef __MPI
 TEST_F(AtomSpecTest, BcastAtom)
 {
-	GlobalV::test_atom = 1;
+	PARAM.input.test_atom = 1;
 	if(GlobalV::MY_RANK==0)
 	{
 		atom.label = "C";
