@@ -59,7 +59,7 @@ void pseudopot_cell_vnl::initgradq_vnl(const UnitCell &cell)
 
 void pseudopot_cell_vnl::getgradq_vnl(const int ik)
 {
-    if(GlobalV::test_pp) ModuleBase::TITLE("pseudopot_cell_vnl","getvnl");
+    if(PARAM.inp.test_pp) ModuleBase::TITLE("pseudopot_cell_vnl","getvnl");
 	ModuleBase::timer::tick("pp_cell_vnl","getvnl");
 
 	if(lmaxkb < 0) 

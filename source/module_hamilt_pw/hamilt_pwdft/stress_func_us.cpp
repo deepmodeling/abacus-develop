@@ -201,7 +201,7 @@ void Stress_Func<FPTYPE, Device>::dqvan2(const pseudopot_cell_vnl* ppcell_in,
                                          const ModuleBase::matrix& dylmk0,
                                          std::complex<FPTYPE>* dqg)
 {
-    if (GlobalV::test_pp)
+    if (PARAM.inp.test_pp)
         ModuleBase::TITLE("Stress", "dqvan2");
 
     // computes the indices which correspond to ih,jh

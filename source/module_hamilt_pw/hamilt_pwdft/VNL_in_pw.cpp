@@ -306,7 +306,7 @@ void pseudopot_cell_vnl::getvnl(const int& ik, ModuleBase::ComplexMatrix& vkb_in
     if (GlobalV::use_paw) {
         return;
 }
-    if (GlobalV::test_pp) {
+    if (PARAM.inp.test_pp) {
         ModuleBase::TITLE("pseudopot_cell_vnl", "getvnl");
 }
     ModuleBase::timer::tick("pp_cell_vnl", "getvnl");
@@ -349,13 +349,13 @@ void pseudopot_cell_vnl::getvnl(const int& ik, ModuleBase::ComplexMatrix& vkb_in
         const int nbeta = GlobalC::ucell.atoms[it].ncpp.nbeta;
         const int nh = GlobalC::ucell.atoms[it].ncpp.nh;
 
-        if (GlobalV::test_pp > 1) {
+        if (PARAM.inp.test_pp > 1) {
             ModuleBase::GlobalFunc::OUT("nbeta", nbeta);
 }
 
         for (int nb = 0; nb < nbeta; nb++)
         {
-            if (GlobalV::test_pp > 1) {
+            if (PARAM.inp.test_pp > 1) {
                 ModuleBase::GlobalFunc::OUT("ib", nb);
 }
             for (int ig = 0; ig < npw; ig++)
@@ -416,7 +416,7 @@ void pseudopot_cell_vnl::getvnl(Device* ctx, const int& ik, std::complex<FPTYPE>
     if (GlobalV::use_paw) {
         return;
 }
-    if (GlobalV::test_pp) {
+    if (PARAM.inp.test_pp) {
         ModuleBase::TITLE("pseudopot_cell_vnl", "getvnl");
 }
     ModuleBase::timer::tick("pp_cell_vnl", "getvnl");
@@ -1173,7 +1173,7 @@ double pseudopot_cell_vnl::CG(int l1, int m1, int l2, int m2, int L, int M) // p
 
 // void pseudopot_cell_vnl::getvnl_alpha(const int &ik)           // pengfei Li  2018-3-23
 // {
-// 	if(GlobalV::test_pp) ModuleBase::TITLE("pseudopot_cell_vnl","getvnl_alpha");
+// 	if(PARAM.inp.test_pp) ModuleBase::TITLE("pseudopot_cell_vnl","getvnl_alpha");
 // 	ModuleBase::timer::tick("pp_cell_vnl","getvnl_alpha");
 
 // 	if(lmaxkb < 0)
@@ -1222,12 +1222,12 @@ double pseudopot_cell_vnl::CG(int l1, int m1, int l2, int m2, int L, int M) // p
 // 	int jkb = 0;
 // 	for(int it = 0;it < GlobalC::ucell.ntype;it++)
 // 	{
-// 		if(GlobalV::test_pp>1) ModuleBase::GlobalFunc::OUT("it",it);
+// 		if(PARAM.inp.test_pp>1) ModuleBase::GlobalFunc::OUT("it",it);
 // 		// calculate beta in G-space using an interpolation table
 // 		const int nbeta = GlobalC::ucell.atoms[it].ncpp.nbeta;
 // 		const int nh = GlobalC::ucell.atoms[it].ncpp.nh;
 
-// 		if(GlobalV::test_pp>1) ModuleBase::GlobalFunc::OUT("nbeta",nbeta);
+// 		if(PARAM.inp.test_pp>1) ModuleBase::GlobalFunc::OUT("nbeta",nbeta);
 
 // 		for(int i=0; i<3; i++)
 // 			for(int j=0; j<nhm; j++)
@@ -1294,7 +1294,7 @@ double pseudopot_cell_vnl::CG(int l1, int m1, int l2, int m2, int L, int M) // p
 
 void pseudopot_cell_vnl::init_vnl_alpha() // pengfei Li 2018-3-23
 {
-    if (GlobalV::test_pp) {
+    if (PARAM.inp.test_pp) {
         ModuleBase::TITLE("pseudopot_cell_vnl", "init_vnl_alpha");
 }
     ModuleBase::timer::tick("ppcell_vnl", "init_vnl_alpha");

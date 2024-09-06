@@ -574,5 +574,6 @@ struct Input_para
     bool test_energy = false; ///< variables for test_energy only
     bool test_gridt = false;  ///< variables for test_gridt only
     bool test_pseudo_cell = false; ///< variables for test_pseudo_cell only
+    int test_pp = 0;          ///< variables for test_pp only
 };
 #endif
