@@ -1,10 +1,10 @@
 //==========================================================
 // AUTHOR : Zhengpan , mohan , spshu
-#include "module_parameter/parameter.h"
 // DATE : 2007-9
 //==========================================================
 #include "symmetry.h"
 #include "module_base/mymath.h"
+#include "module_parameter/parameter.h"
 bool ModuleSymmetry::test_brav = 0;
 
 namespace ModuleSymmetry

@@ -133,11 +133,6 @@ void TEST_LEVEL(const std::string &name, bool disable=true)
         test_epm_unitcell = 1;
 #endif
     }
-    else if (name == "pw_init")
-    {
-        GlobalV::test_pw = 1;
-    }
-
     return;
 }
 

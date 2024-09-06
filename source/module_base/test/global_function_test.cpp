@@ -707,8 +707,6 @@ TEST_F(GlobalFunctionTest,TEST_LEVEL)
         EXPECT_EQ(test_epm_unitcell,1);
 #endif
     name="pw_init";
-    ModuleBase::GlobalFunc::TEST_LEVEL(name,test_bool);
-    EXPECT_EQ(GlobalV::test_pw,1);
 }
 
 TEST_F(GlobalFunctionTest,BlockHere)

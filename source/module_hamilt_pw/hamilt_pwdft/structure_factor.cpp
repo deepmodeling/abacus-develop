@@ -108,7 +108,7 @@ void Structure_Factor::setup_structure_factor(UnitCell* Ucell, const ModulePW::P
     int inat = 0;
     for (i = 0; i < Ucell->ntype; i++)
     {
-        if (GlobalV::test_pw > 1)
+        if (PARAM.inp.test_pw)
         {
             ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"eigts",i);
         }

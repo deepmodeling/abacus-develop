@@ -4,11 +4,11 @@ remove_definitions(-D__CUDA)
 remove_definitions(-D__ROCM)
 AddTest(
   TARGET symmetry_analysis
-  LIBS base ${math_libs} device symmetry
+  LIBS base ${math_libs} device symmetry parameter
   SOURCES symmetry_test.cpp symmetry_test_analysis.cpp
 )
 AddTest(
   TARGET symmetry_symtrz
-  LIBS base ${math_libs} device symmetry
+  LIBS base ${math_libs} device symmetry parameter
   SOURCES symmetry_test.cpp symmetry_test_symtrz.cpp
 )
