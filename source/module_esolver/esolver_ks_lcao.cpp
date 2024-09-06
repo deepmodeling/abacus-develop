@@ -302,7 +302,7 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(ModuleBase::matrix& force)
     fsl.getForceStress(GlobalV::CAL_FORCE,
                        GlobalV::CAL_STRESS,
                        PARAM.inp.test_force,
-                       GlobalV::TEST_STRESS,
+                       PARAM.inp.test_stress,
                        this->pv,
                        this->pelec,
                        this->psi,
