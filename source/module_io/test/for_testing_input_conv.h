@@ -180,7 +180,7 @@ wavefunc::~wavefunc()
 }
 UnitCell::UnitCell()
 {
-    if (GlobalV::test_unitcell) {
+    if (PARAM.input.test_unitcell) {
         ModuleBase::TITLE("unitcell", "Constructor");
 }
     Coordinate = "Direct";

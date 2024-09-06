@@ -571,5 +571,6 @@ struct Input_para
     bool test_kpoint = false;     ///< variables for test_kpoint only
     bool test_atom = false;       ///< variables for test_atom only
     bool test_atom_input = false; ///< variables for test_atom_input only
+    bool test_unitcell = false;  ///< variables for test_unit_cell only
 };
 #endif

@@ -701,7 +701,6 @@ TEST_F(GlobalFunctionTest,TEST_LEVEL)
     EXPECT_EQ(GlobalV::test_charge,1);
     name="init_read";
     ModuleBase::GlobalFunc::TEST_LEVEL(name,test_bool);
-    EXPECT_EQ(GlobalV::test_unitcell,1);
 #ifndef __EPM
         EXPECT_EQ(GlobalV::test_pseudo_cell,1);
 #else

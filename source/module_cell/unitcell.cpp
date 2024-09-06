@@ -28,7 +28,7 @@
 #endif
 
 UnitCell::UnitCell() {
-    if (GlobalV::test_unitcell) {
+    if (PARAM.inp.test_unitcell) {
         ModuleBase::TITLE("unitcell", "Constructor");
 }
     Coordinate = "Direct";
@@ -88,7 +88,7 @@ UnitCell::~UnitCell() {
 #include "module_base/parallel_common.h"
 #ifdef __MPI
 void UnitCell::bcast_unitcell() {
-    if (GlobalV::test_unitcell) {
+    if (PARAM.inp.test_unitcell) {
         ModuleBase::TITLE("UnitCell", "bcast_unitcell");
 }
     Parallel_Common::bcast_string(Coordinate);
@@ -169,7 +169,7 @@ void UnitCell::bcast_unitcell2() {
 #endif
 
 void UnitCell::print_cell(std::ofstream& ofs) const {
-    if (GlobalV::test_unitcell) {
+    if (PARAM.inp.test_unitcell) {
         ModuleBase::TITLE("UnitCell", "print_cell");
 }
 
@@ -195,7 +195,7 @@ void UnitCell::print_cell(std::ofstream& ofs) const {
 /*
 void UnitCell::print_cell_xyz(const std::string& fn) const
 {
-    if (GlobalV::test_unitcell)
+    if (PARAM.inp.test_unitcell)
         ModuleBase::TITLE("UnitCell", "print_cell_xyz");
 
     if (GlobalV::MY_RANK != 0)
