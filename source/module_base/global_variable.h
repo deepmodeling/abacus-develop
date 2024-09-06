@@ -126,7 +126,6 @@ extern int KPAR_LCAO;
 //==========================================================
 // EXPLAIN : readin file dir, output file std::ofstream
 // GLOBAL VARIABLES :
-// NAME : global_in_card
 // NAME : stru_file
 // NAME : global_kpoint_card
 // NAME : global_wannier_card
@@ -136,7 +135,6 @@ extern int KPAR_LCAO;
 // NAME : ofs_running( contain information during runnnig)
 // NAME : ofs_warning( contain warning information, including error)
 //==========================================================
-extern std::string global_in_card;
 extern std::string stru_file;
 extern std::string global_kpoint_card;
 
