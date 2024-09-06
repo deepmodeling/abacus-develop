@@ -145,10 +145,8 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& Pa
     HK_local.resize( ParaV->get_row_size()*ParaV->get_col_size() );
 
     HK_dft_XC.resize( ParaV->get_row_size()*ParaV->get_col_size() );
-    // HK_RDMFT_pass.resize(nk_total, ParaV->get_col_size(), ParaV->get_row_size());
-    // HK_XC_pass.resize(nk_total, ParaV->get_col_size(), ParaV->get_row_size());
-    HK_RDMFT_pass.resize(nk_total, ParaV->get_row_size(), ParaV->get_col_size());
-    HK_XC_pass.resize(nk_total, ParaV->get_row_size(), ParaV->get_col_size());
+    // HK_RDMFT_pass.resize(nk_total, ParaV->get_row_size(), ParaV->get_col_size());
+    // HK_XC_pass.resize(nk_total, ParaV->get_row_size(), ParaV->get_col_size());
 
     Eij_TV.resize( para_Eij.get_row_size()*para_Eij.get_col_size() );
     Eij_hartree.resize( para_Eij.get_row_size()*para_Eij.get_col_size() );
@@ -681,7 +679,7 @@ template <typename TK, typename TR>
 void RDMFT<TK, TR>::cal_Hk_Hpsi()
 {
     /****** get occNum_wfcHamiltWfc, occNum_HamiltWfc ******/
-    HK_RDMFT_pass.reset();
+    // HK_RDMFT_pass.reset();
 
     // double XC_minus_XC = 0.0;
     // std::cout << "\n\ntest V_exx_XC in rdmft.cpp: " << std::endl;
@@ -723,17 +721,17 @@ void RDMFT<TK, TR>::cal_Hk_Hpsi()
         }
         // elseif()
 
-        // store HK_RDMFT
-        for(int ir=0; ir<HK_RDMFT_pass.nr; ++ir)
-        {
-            for(int ic=0; ic<HK_RDMFT_pass.nc; ++ic)
-            {
-                HK_RDMFT_pass[ik](ir, ic) = HK_TV[ic * ParaV->get_col_size() + ir]
-                                        + HK_hartree[ic * ParaV->get_col_size() + ir]
-                                        + HK_XC[ic * ParaV->get_col_size() + ir];
-                // HK_XC_pass[ik](ir, ic) = HK_XC[ic * ParaV->get_col_size() + ir];
-            }
-        }
+        // // store HK_RDMFT
+        // for(int ir=0; ir<HK_RDMFT_pass.nr; ++ir)
+        // {
+        //     for(int ic=0; ic<HK_RDMFT_pass.nc; ++ic)
+        //     {
+        //         HK_RDMFT_pass[ik](ir, ic) = HK_TV[ic * ParaV->get_col_size() + ir]
+        //                                 + HK_hartree[ic * ParaV->get_col_size() + ir]
+        //                                 + HK_XC[ic * ParaV->get_col_size() + ir];
+        //         // HK_XC_pass[ik](ir, ic) = HK_XC[ic * ParaV->get_col_size() + ir];
+        //     }
+        // }
 
 
         // using them to the gradient of Etotal is not correct when do hybrid calculation, it's correct just for exx-type functional

@@ -515,8 +515,9 @@ namespace ModuleESolver
 
                     // add by jghan 2024-04-08
                     // to get the initial values of wfc and occ_numbers
-                    if( GlobalV::dm_obj_type == "rdmft" || 1)
+                    // if( GlobalV::dm_obj_type == "rdmft" || 1)
                     // if( GlobalV::dm_obj_type == "rdmft" || (GlobalV::ESOLVER_TYPE == "dm" && GlobalV::DFT_FUNCTIONAL == "hf") || (GlobalV::ESOLVER_TYPE == "dm" && GlobalV::DFT_FUNCTIONAL == "pbe0") )
+                    if( 1 )
                     {
                         ModuleBase::matrix occ_number_ks(this->pelec->wg);
                         for(int ik=0; ik < occ_number_ks.nr; ++ik)

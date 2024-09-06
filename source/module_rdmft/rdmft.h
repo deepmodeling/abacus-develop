@@ -31,7 +31,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/nonlocal_new.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/veff_lcao.h"
 
-#include "module_directmin/manifold/stiefel.h"
+// #include "module_directmin/manifold/stiefel.h"
 
 // used by Exx&LRI
 #include "module_ri/RI_2D_Comm.h"
@@ -129,8 +129,8 @@ class RDMFT
     std::vector<TK> HK_local;
 
     std::vector< std::vector<TK> > DM_XC_pass;
-    ModuleDirectMin::ProdStiefelVariable HK_RDMFT_pass;
-    ModuleDirectMin::ProdStiefelVariable HK_XC_pass;
+    // ModuleDirectMin::ProdStiefelVariable HK_RDMFT_pass;
+    // ModuleDirectMin::ProdStiefelVariable HK_XC_pass;
 
     ModuleBase::matrix Etotal_n_k;
     ModuleBase::matrix wfcHwfc_TV;

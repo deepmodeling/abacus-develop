@@ -298,8 +298,12 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc_libxc(		// Peiz
         }
     } // end if(is_gga)
 
+    int xc_order = 0;       // added by jghan, 2024-07-07, used for scaling_factor_xc
+
     for( xc_func_type &func : funcs )
     {
+        if(GlobalV::DFT_FUNCTIONAL != "cwp22") scaling_factor_xc.push_back(1.0);
+
         // jiyy add for threshold
         constexpr double rho_threshold = 1E-6;
         constexpr double grho_threshold = 1E-10;
@@ -351,7 +355,7 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc_libxc(		// Peiz
         #endif
         for( int is=0; is<nspin; ++is )
             for( int ir=0; ir< nrxx; ++ir )
-                etxc += ModuleBase::e2 * exc[ir] * rho[ir*nspin+is] * sgn[ir*nspin+is];
+                etxc += ModuleBase::e2 * exc[ir] * rho[ir*nspin+is] * sgn[ir*nspin+is] * scaling_factor_xc[xc_order]; // "*scaling" is added by jghan, 2024-07-07
 
         #ifdef _OPENMP
         #pragma omp parallel for collapse(2) reduction(+:vtxc) schedule(static, 256)
@@ -361,8 +365,8 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc_libxc(		// Peiz
             for( int ir=0; ir< nrxx; ++ir )
             {
                 const double v_tmp = ModuleBase::e2 * vrho[ir*nspin+is] * sgn[ir*nspin+is];
-                v(is,ir) += v_tmp;
-                vtxc += v_tmp * rho[ir*nspin+is];
+                v(is,ir) += v_tmp * scaling_factor_xc[xc_order]; // "*scaling" is added by jghan, 2024-07-07
+                vtxc += v_tmp * rho[ir*nspin+is] * scaling_factor_xc[xc_order]; // "*scaling" is added by jghan, 2024-07-07
             }
         }
 
@@ -406,12 +410,13 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc_libxc(		// Peiz
                 for( int ir=0; ir< nrxx; ++ir )
                 {
                     rvtxc += dh[is][ir] * rho[ir*nspin+is];
-                    v(is,ir) -= dh[is][ir];
+                    v(is,ir) -= dh[is][ir] * scaling_factor_xc[xc_order]; // "*scaling" is added by jghan, 2024-07-07
                 }
             }
 
-            vtxc -= rvtxc;
+            vtxc -= rvtxc * scaling_factor_xc[xc_order]; // "*scaling" is added by jghan, 2024-07-07
         } // end if(func.info->family == XC_FAMILY_GGA || func.info->family == XC_FAMILY_HYB_GGA))
+        ++xc_order;
     } // end for( xc_func_type &func : funcs )
 
     //-------------------------------------------------

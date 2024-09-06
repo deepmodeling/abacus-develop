@@ -97,6 +97,10 @@ class XC_Functional
 	//exx_hybrid_alpha for mixing exx in hybrid functional:
 	static double hybrid_alpha;
 
+	// added by jghan, 2024-07-07
+	// as a scaling factor for different xc-functionals
+	static std::vector<double> scaling_factor_xc;
+
 //-------------------
 //  xc_functional_wrapper_xc.cpp
 //-------------------

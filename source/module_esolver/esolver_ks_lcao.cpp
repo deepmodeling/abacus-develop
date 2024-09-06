@@ -227,8 +227,10 @@ namespace ModuleESolver
     // add by jghan for rdmft calculation
     if( GlobalV::CALCULATION == "rdmft" || true )
     {
+        // rdmft_solver.init( this->UHM.GG, this->UHM.GK, this->orb_con.ParaV, ucell, this->kv, *(this->pelec),
+        //                         GlobalV::DFT_FUNCTIONAL, GlobalV::rdmft_power_alpha);
         rdmft_solver.init( this->UHM.GG, this->UHM.GK, this->orb_con.ParaV, ucell, this->kv, *(this->pelec),
-                                GlobalV::DFT_FUNCTIONAL, GlobalV::rdmft_power_alpha);
+                                GlobalV::DFT_FUNCTIONAL, 1.0);
 
         // the initialization and necessary calculations of these quantities have been completed in init()
         // rdmft_solver.update_ion(ucell, LM, *(this->pw_rho), GlobalC::ppcell.vloc, this->sf.strucFac, this->LOC);
