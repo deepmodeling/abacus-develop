@@ -112,7 +112,6 @@ class UcellTest : public ::testing::Test {
         pp_dir = "./support/";
         GlobalV::PSEUDORCUT = 15.0;
         GlobalV::DFT_FUNCTIONAL = "default";
-        PARAM.input.test_unitcell = 1;
         GlobalV::test_pseudo_cell = 1;
         GlobalV::NSPIN = 1;
         GlobalV::BASIS_TYPE = "pw";

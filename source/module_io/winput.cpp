@@ -79,8 +79,6 @@ winput::~winput()
 void winput::Init(const std::string& fn)
 {
     Default();
-    if (PARAM.inp.test_winput)
-        ModuleBase::TITLE("winput", "Init");
     //==========================================
     // First readin and check value in root cpu
     // and then bcast value
@@ -448,8 +446,6 @@ void winput::Read(const std::string& fn)
 
 void winput::Default()
 {
-    if (PARAM.inp.test_winput)
-        ModuleBase::TITLE("winput", "Default");
     //========================
     //	part1 : control
     //========================
@@ -557,9 +553,6 @@ void winput::Default()
 
 void winput::Check()
 {
-    if (PARAM.inp.test_winput)
-        ModuleBase::TITLE("winput", "Check");
-
     if (GlobalV::MY_RANK != 0)
         return;
 
@@ -741,9 +734,6 @@ void winput::Check()
 
 void winput::Print(const std::string& fn)
 {
-    if (PARAM.inp.test_winput)
-        ModuleBase::TITLE("winput", "Print");
-
     if (GlobalV::MY_RANK != 0)
         return;
 
@@ -841,9 +831,6 @@ void winput::Print(const std::string& fn)
 #ifdef __MPI
 void winput::Bcast()
 {
-    if (PARAM.inp.test_winput)
-        ModuleBase::TITLE("winput", "Bcast");
-
     Parallel_Common::bcast_string(target);
     Parallel_Common::bcast_bool(before_iter);
     Parallel_Common::bcast_bool(after_iter);

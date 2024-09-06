@@ -166,7 +166,6 @@ using UcellDeathTest = UcellTest;
 
 TEST_F(UcellTest, Constructor)
 {
-    PARAM.input.test_unitcell = 1;
     EXPECT_EQ(ucell->Coordinate, "Direct");
     EXPECT_EQ(ucell->latName, "none");
     EXPECT_DOUBLE_EQ(ucell->lat0, 0.0);

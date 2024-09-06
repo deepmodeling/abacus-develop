@@ -121,9 +121,6 @@ void Atom::print_Atom(std::ofstream& ofs)
 #ifdef __MPI
 void Atom::bcast_atom(void)
 {
-    if (PARAM.inp.test_atom)
-        ModuleBase::TITLE("Atom", "bcast_atom");
-
     Parallel_Common::bcast_int(type);
     Parallel_Common::bcast_int(na);
     Parallel_Common::bcast_int(nwl);

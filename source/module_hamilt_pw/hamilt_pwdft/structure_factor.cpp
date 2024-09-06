@@ -108,10 +108,6 @@ void Structure_Factor::setup_structure_factor(UnitCell* Ucell, const ModulePW::P
     int inat = 0;
     for (i = 0; i < Ucell->ntype; i++)
     {
-        if (PARAM.inp.test_pw)
-        {
-            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"eigts",i);
-        }
         for (j = 0; j < Ucell->atoms[i].na;j++)
         {
             gtau = Ucell->G * Ucell->atoms[i].tau[j];  //HLX: fixed on 10/13/2006

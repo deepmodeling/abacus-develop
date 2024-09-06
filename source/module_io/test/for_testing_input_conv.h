@@ -180,9 +180,6 @@ wavefunc::~wavefunc()
 }
 UnitCell::UnitCell()
 {
-    if (PARAM.input.test_unitcell) {
-        ModuleBase::TITLE("unitcell", "Constructor");
-}
     Coordinate = "Direct";
     latName = "none";
     lat0 = 0.0;

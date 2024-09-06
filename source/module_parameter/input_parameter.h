@@ -567,16 +567,10 @@ struct Input_para
     bool test_force = false;      ///< test the force.
     bool test_stress = false;     ///< test the stress.
     bool test_skip_ewald = false; ///< variables for test only
-    bool test_winput = false;     ///< variables for test_winput only
-    bool test_kpoint = false;     ///< variables for test_kpoint only
-    bool test_atom = false;       ///< variables for test_atom only
     bool test_atom_input = false; ///< variables for test_atom_input only
-    bool test_unitcell = false;  ///< variables for test_unit_cell only
     bool test_symmetry = false;   ///< variables for test_lattice only
-    bool test_pw = false;         ///< variables for test_pw only
     int test_wf = 0;         ///< variables for test_wf only
     bool test_charge = false; ///< variables for test_vloc only
     bool test_energy = false; ///< variables for test_energy only
-    bool test_grid_driver = false; ///< variables for test_grid_driver only
 };
 #endif

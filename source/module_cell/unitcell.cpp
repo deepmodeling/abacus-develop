@@ -29,8 +29,7 @@
 
 UnitCell::UnitCell() {
     std::cout<<&PARAM<<std::endl;
-    std::cout<<PARAM.inp.test_unitcell<<std::endl;
-    if (PARAM.inp.test_unitcell) {
+    if (test_unitcell) {
         ModuleBase::TITLE("unitcell", "Constructor");
 }
     Coordinate = "Direct";
@@ -171,7 +170,7 @@ void UnitCell::bcast_unitcell2() {
 #endif
 
 void UnitCell::print_cell(std::ofstream& ofs) const {
-    if (PARAM.inp.test_unitcell) {
+    if (test_unitcell) {
         ModuleBase::TITLE("UnitCell", "print_cell");
 }
 

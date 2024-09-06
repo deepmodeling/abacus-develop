@@ -14,9 +14,6 @@ bool UnitCell::judge_parallel(double a[3], ModuleBase::Vector3<double> b) {
 }
 void UnitCell::set_iat2iwt(const int& npol_in) {}
 UnitCell::UnitCell() {
-    if (PARAM.input.test_unitcell) {
-        ModuleBase::TITLE("unitcell", "Constructor");
-}
     Coordinate = "Direct";
     latName = "none";
     lat0 = 0.0;
