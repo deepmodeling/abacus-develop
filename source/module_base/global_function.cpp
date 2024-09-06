@@ -127,7 +127,6 @@ void TEST_LEVEL(const std::string &name, bool disable=true)
     }
     else if (name == "init_read")
     {
-        GlobalV::test_input = 1;
         GlobalV::test_winput = 1;
         GlobalV::test_kpoint = 1;
         GlobalV::test_atom = 1;

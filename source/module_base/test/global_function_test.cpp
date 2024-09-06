@@ -701,7 +701,6 @@ TEST_F(GlobalFunctionTest,TEST_LEVEL)
     EXPECT_EQ(GlobalV::test_charge,1);
     name="init_read";
     ModuleBase::GlobalFunc::TEST_LEVEL(name,test_bool);
-    EXPECT_EQ(GlobalV::test_input,1);
     EXPECT_EQ(GlobalV::test_winput,1);
     EXPECT_EQ(GlobalV::test_kpoint,1);
     EXPECT_EQ(GlobalV::test_atom,1);
