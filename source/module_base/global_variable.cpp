@@ -116,7 +116,6 @@ std::ofstream ofs_device; // output device info
 //----------------------------------------------------------
 // EXPLAIN : test level for each class
 //----------------------------------------------------------
-int test_input = 0;
 int test_winput = 0;
 int test_kpoint = 0;
 int test_atom = 0;

@@ -154,7 +154,6 @@ extern std::ofstream ofs_device;
 //==========================================================
 // EXPLAIN : test level for each class
 //==========================================================
-extern int test_input;
 extern int test_winput;
 extern int test_kpoint;
 extern int test_atom;
