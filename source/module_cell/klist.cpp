@@ -484,7 +484,7 @@ double K_Vectors::Monkhorst_Pack_formula(const int& k_type, const double& offset
 // add by dwan
 void K_Vectors::Monkhorst_Pack(const int* nmp_in, const double* koffset_in, const int k_type)
 {
-    if (GlobalV::test_kpoint) {
+    if (PARAM.inp.test_kpoint) {
         ModuleBase::TITLE("K_Vectors", "Monkhorst_Pack");
     }
     const int mpnx = nmp_in[0];

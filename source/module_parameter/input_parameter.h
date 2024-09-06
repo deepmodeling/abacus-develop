@@ -568,5 +568,6 @@ struct Input_para
     bool test_stress = false;     ///< test the stress.
     bool test_skip_ewald = false; ///< variables for test only
     bool test_winput = false;     ///< variables for test_winput only
+    bool test_kpoint = false;     ///< variables for test_kpoint only
 };
 #endif
