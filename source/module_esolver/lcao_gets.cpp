@@ -55,7 +55,7 @@ void ESolver_KS_LCAO<std::complex<double>, double>::get_S(void)
                          GlobalC::GridD,
                          GlobalC::ucell,
                          GlobalV::SEARCH_RADIUS,
-                         GlobalV::test_atom_input);
+                         PARAM.inp.test_atom_input);
 
     this->RA.for_2d(this->pv, GlobalV::GAMMA_ONLY_LOCAL);
 
@@ -95,7 +95,7 @@ void ESolver_KS_LCAO<std::complex<double>, std::complex<double>>::get_S(void)
                          GlobalC::GridD,
                          GlobalC::ucell,
                          GlobalV::SEARCH_RADIUS,
-                         GlobalV::test_atom_input);
+                         PARAM.inp.test_atom_input);
 
     this->RA.for_2d(this->pv, GlobalV::GAMMA_ONLY_LOCAL);
     if (this->p_hamilt == nullptr) {

@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #define private public
-#include "mdoule_parameter/parameter.h"
+#include "module_parameter/parameter.h"
 #undef private
 #include<streambuf>
 #ifdef __MPI

@@ -38,7 +38,7 @@ void ESolver_KS_LCAO<TK, TR>::set_matrix_grid(Record_adj& ra)
                          GlobalC::GridD,
                          GlobalC::ucell,
                          GlobalV::SEARCH_RADIUS,
-                         GlobalV::test_atom_input);
+                         PARAM.inp.test_atom_input);
 
     // ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"SEARCH ADJACENT
     // ATOMS");

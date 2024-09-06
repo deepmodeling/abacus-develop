@@ -39,7 +39,7 @@ namespace ModuleESolver
             grid_neigh,
             ucell,
             GlobalV::SEARCH_RADIUS,
-            GlobalV::test_atom_input);
+            PARAM.inp.test_atom_input);
 
         double distance=0.0;
         int index = 0;
@@ -96,7 +96,7 @@ namespace ModuleESolver
             grid_neigh,
             ucell, 
             GlobalV::SEARCH_RADIUS,
-            GlobalV::test_atom_input);
+            PARAM.inp.test_atom_input);
 #endif
     }
 

@@ -81,7 +81,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                              GlobalC::GridD,
                              GlobalC::ucell,
                              GlobalV::SEARCH_RADIUS,
-                             GlobalV::test_atom_input,
+                             PARAM.inp.test_atom_input,
                              true);
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "testing neighbour");
         return;

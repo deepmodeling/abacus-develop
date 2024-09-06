@@ -294,7 +294,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
         GlobalC::GridD,
         this->ucell,
         GlobalV::SEARCH_RADIUS,
-        GlobalV::test_atom_input);
+        PARAM.inp.test_atom_input);
     this->set_gint();
     this->gint_->gridt = &this->gt_;
 
