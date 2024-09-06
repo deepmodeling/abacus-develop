@@ -118,13 +118,20 @@ void occNum_Mul_wfcHwfc(const ModuleBase::matrix& occ_number, const ModuleBase::
 
 
 // for the gradient of Etotal with respect to occupation numbers
-void add_occNum(const ModuleBase::matrix& occ_number, const ModuleBase::matrix& wfcHwfc_TV_in, const ModuleBase::matrix& wfcHwfc_hartree_in,
-                const ModuleBase::matrix& wfcHwfc_XC_in, ModuleBase::matrix& occNum_wfcHwfc, const std::string XC_func_rdmft, const double alpha)
+void add_occNum(const K_Vectors& kv, const ModuleBase::matrix& occ_number, const ModuleBase::matrix& wfcHwfc_TV_in, const ModuleBase::matrix& wfcHwfc_hartree_in,
+                const ModuleBase::matrix& wfcHwfc_dft_XC_in, const ModuleBase::matrix& wfcHwfc_exx_XC_in, ModuleBase::matrix& occNum_wfcHwfc, const std::string XC_func_rdmft, const double alpha)
 { 
     occNum_wfcHwfc.zero_out();
-    occNum_Mul_wfcHwfc(occ_number, wfcHwfc_XC_in, occNum_wfcHwfc, 4, XC_func_rdmft, alpha);
+    occNum_Mul_wfcHwfc(occ_number, wfcHwfc_exx_XC_in, occNum_wfcHwfc, 4, XC_func_rdmft, alpha);
     occNum_wfcHwfc+=(wfcHwfc_TV_in);
     occNum_wfcHwfc+=(wfcHwfc_hartree_in);
+    occNum_wfcHwfc+=(wfcHwfc_dft_XC_in);
+
+    // consider W_k for dE/d_occNum
+    for(int ik=0; ik<occ_number.nr; ++ik)
+    {
+        for(int inb=0; inb<occ_number.nc; ++inb) occNum_wfcHwfc(ik, inb) *= kv.wk[ik];
+    } 
 }
 
 
@@ -156,9 +163,13 @@ double getEnergy(const ModuleBase::matrix& occNum_wfcHwfc)
 // Default symbol=0, XC_func_rdmft="HF", alpha=0.656
 double occNum_func(double eta, int symbol, const std::string XC_func_rdmft, double alpha)
 {
-    if( XC_func_rdmft == "HF" ) alpha = 1.0;
-    else if( XC_func_rdmft == "Muller" ) alpha = 0.5;
-    else if( XC_func_rdmft == "power" ) ;
+    // if( XC_func_rdmft == "hf" || XC_func_rdmft == "default" || XC_func_rdmft == "pbe0" ) alpha = 1.0;
+    // else if( XC_func_rdmft == "muller" ) alpha = 0.5;
+    // else if( XC_func_rdmft == "power" || XC_func_rdmft == "wp22" || XC_func_rdmft == "cwp22" ) ;
+    // else alpha = 1.0;
+    if( XC_func_rdmft == "power" || XC_func_rdmft == "wp22" || XC_func_rdmft == "cwp22" ) ;
+    else if( XC_func_rdmft == "muller" ) alpha = 0.5;
+    else alpha = 1.0;
 
     if( symbol==0 ) return eta;
     else if ( symbol==1 ) return 0.5*eta;
@@ -284,12 +295,27 @@ void Veff_rdmft<TK, TR>::contributeHR()
         Gint_inout inout(vr_eff_rdmft, 0, Gint_Tools::job_type::vlocal);
         this->GK->cal_gint(&inout);
     }
-    // else if( potential_ == "XC" )
-    // {
-    //     elecstate::PotXC potXC();
-    //     potXC.cal_v_eff(charge_, ucell_, v_matrix);
-    //     ...
-    // }
+    else if( potential_ == "xc" )
+    {
+        // meta-gga type has not been considered yet !!!
+
+        ModuleBase::matrix vofk = *vloc_;
+        vofk.zero_out();
+        ModuleBase::matrix v_matrix_XC(GlobalV::NSPIN, charge_->nrxx);
+        elecstate::PotXC potXC(rho_basis_, etxc, vtxc, &vofk);
+        potXC.cal_v_eff(charge_, ucell_, v_matrix_XC);
+
+        // if need meta-GGA, go to study veff_lcao.cpp and modify the code
+        for(int is=0; is<GlobalV::NSPIN; ++is)
+        {
+            // use pointer to attach v(r) for current spin
+            vr_eff_rdmft = &v_matrix_XC(is, 0);
+
+            // do grid integral calculation to get HR
+            Gint_inout inout(vr_eff_rdmft, is, Gint_Tools::job_type::vlocal);
+            this->GK->cal_gint(&inout);
+        }
+    }
     else
     {
         std::cout << "\n\n!!!!!!\n there may be something wrong when use class Veff_rdmft\n\n!!!!!!\n";
@@ -345,14 +371,29 @@ void Veff_rdmft<double, double>::contributeHR()
 
         // because in gamma_only, cal_gint would not set hRGint zero first
         // so must use cal_vlocal(), and in rdmft_test.h, calculate V_hartree->contributeHR() first
-        this->GG->cal_vlocal(&inout, this->LM, false);
+
+        this->GG->cal_vlocal(&inout, this->LM, false);  // cal_gint ???
     }
-    // else if( potential_ == "XC" )
-    // {
-    //     elecstate::PotXC potXC();
-    //     potXC.cal_v_eff(charge_, ucell_, v_matrix);
-    //     ...
-    // }
+    else if( potential_ == "xc" )
+    {
+        // meta-gga type has not been considered yet !!!
+
+        ModuleBase::matrix vofk = *vloc_;
+        vofk.zero_out();
+        ModuleBase::matrix v_matrix_XC(GlobalV::NSPIN, charge_->nrxx);
+        elecstate::PotXC potXC(rho_basis_, etxc, vtxc, &vofk);
+        potXC.cal_v_eff(charge_, ucell_, v_matrix_XC);
+        
+        for(int is=0; is<GlobalV::NSPIN; ++is)
+        {
+            // use pointer to attach v(r) for current spin
+            vr_eff_rdmft = &v_matrix_XC(is, 0);
+
+            // do grid integral calculation to get HR
+            Gint_inout inout(vr_eff_rdmft, is, Gint_Tools::job_type::vlocal);
+            this->GG->cal_gint(&inout);
+        }
+    }
     else
     {
         std::cout << "\n\n!!!!!!\n there may be something wrong when use class Veff_rdmft\n\n!!!!!!\n";

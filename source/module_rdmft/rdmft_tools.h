@@ -36,21 +36,6 @@
 // there are some operator reload to print data in different formats
 #include "module_ri/test_code/test_function.h"
 
-// used by class Veff_rdmft
-// #include "module_base/timer.h"
-// #include "module_elecstate/potentials/potential_new.h"
-// #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
-// //#include "module_hamilt_lcao/module_gint/gint_gamma.h"
-// //#include "module_hamilt_lcao/module_gint/gint_k.h"
-// //#include "operator_lcao.h"
-// //#include "module_cell/module_neighbor/sltk_grid_driver.h"
-// //#include "module_cell/unitcell.h"
-// #include "module_elecstate/potentials/H_Hartree_pw.h"
-// #include "module_elecstate/potentials/pot_local.h"
-// #include "module_elecstate/potentials/pot_xc.h"
-// #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
-
-
 #include <iostream>
 #include <type_traits>
 #include <complex>
@@ -98,8 +83,9 @@ void printMatrix_vector(int M, int N, const std::vector<TK>& matrixA, std::strin
 }
 
 
-// now support XC_func_rdmft = "HF", "Muller", "power" 
-double occNum_func(double eta, int symbol = 0, const std::string XC_func_rdmft = "HF", const double alpha_power = 0.656);
+// now support XC_func_rdmft = "hf", "muller", "power", "pbe", "pbe0". "wp22" and "cwp22" is realizing.
+// for the dft-xc-functional part of xc-functional, just use the default is right! Or don't use the function
+double occNum_func(double eta, int symbol = 0, const std::string XC_func_rdmft = "hf", const double alpha_power = 1.0);
 
 
 template <typename TK>
@@ -167,7 +153,7 @@ void psiDotPsi(const Parallel_Orbitals* ParaV, const Parallel_2D& para_Eij_in, c
     const std::complex<double> one_complex = {1.0, 0.0};
     const std::complex<double> zero_complex = {0.0, 0.0};
     const char N_char = 'N';
-    const char C_char = 'C'; 
+    const char C_char = 'C';
 
     const int nbasis = ParaV->desc[2];
     const int nbands = ParaV->desc_wfc[3];
@@ -201,7 +187,7 @@ void psiDotPsi<double>(const Parallel_Orbitals* ParaV, const Parallel_2D& para_w
 // realize occNum_wfc = occNum * wfc. Calling this function and we can get wfc = occNum*wfc.
 template <typename TK>
 void occNum_MulPsi(const Parallel_Orbitals* ParaV, const ModuleBase::matrix& occ_number, psi::Psi<TK>& wfc, int symbol = 0,
-                const std::string XC_func_rdmft = "HF", const double alpha = 0.656)
+                const std::string XC_func_rdmft = "hf", const double alpha = 1.0)
 {
     const int nk_local = wfc.get_nk();
     const int nbands_local = wfc.get_nbands();
@@ -224,15 +210,16 @@ void occNum_MulPsi(const Parallel_Orbitals* ParaV, const ModuleBase::matrix& occ
 
 // add psi with eta and g(eta)
 template <typename TK>
-void add_psi(const Parallel_Orbitals* ParaV, const ModuleBase::matrix& occ_number, psi::Psi<TK>& psi_TV, psi::Psi<TK>& psi_hartree,
-                psi::Psi<TK>& psi_XC, psi::Psi<TK>& occNum_Hpsi, const std::string XC_func_rdmft = "HF", const double alpha = 0.656)
+void add_psi(const Parallel_Orbitals* ParaV, const K_Vectors* kv, const ModuleBase::matrix& occ_number, psi::Psi<TK>& psi_TV, psi::Psi<TK>& psi_hartree,
+                psi::Psi<TK>& psi_dft_XC, psi::Psi<TK>& psi_exx_XC, psi::Psi<TK>& occNum_Hpsi, const std::string XC_func_rdmft = "hf", const double alpha = 1.0)
 {
     const int nk = psi_TV.get_nk();
     const int nbn_local = psi_TV.get_nbands();
     const int nbs_local = psi_TV.get_nbasis();
     occNum_MulPsi(ParaV, occ_number, psi_TV);
     occNum_MulPsi(ParaV, occ_number, psi_hartree);
-    occNum_MulPsi(ParaV, occ_number, psi_XC, 2, XC_func_rdmft, alpha);
+    occNum_MulPsi(ParaV, occ_number, psi_dft_XC);
+    occNum_MulPsi(ParaV, occ_number, psi_exx_XC, 2, XC_func_rdmft, alpha);
 
     const int nbasis = ParaV->desc[2];
     const int nbands = ParaV->desc_wfc[3];
@@ -244,8 +231,11 @@ void add_psi(const Parallel_Orbitals* ParaV, const ModuleBase::matrix& occ_numbe
             TK* p_occNum_Hpsi = &( occNum_Hpsi(ik, inbn, 0) );
             for(int inbs=0; inbs<nbs_local; ++inbs)
             {
-                p_occNum_Hpsi[inbs] = psi_TV(ik, inbn, inbs) + psi_hartree(ik, inbn, inbs) + psi_XC(ik, inbn, inbs);
+                p_occNum_Hpsi[inbs] = psi_TV(ik, inbn, inbs) + psi_hartree(ik, inbn, inbs) + psi_dft_XC(ik, inbn, inbs) + psi_exx_XC(ik, inbn, inbs);
             }
+
+            // test, consider the wk into psi or dE/d(wfc)
+            BlasConnector::scal(nbs_local, kv->wk[ik], p_occNum_Hpsi, 1);
         }
     }
 
@@ -255,13 +245,13 @@ void add_psi(const Parallel_Orbitals* ParaV, const ModuleBase::matrix& occ_numbe
 // occNum_wfcHwfc = occNum*wfcHwfc + occNum_wfcHwfc
 // When symbol = 0, 1, 2, 3, 4, occNum = occNum, 0.5*occNum, g(occNum), 0.5*g(occNum), d_g(occNum)/d_occNum respectively. Default symbol=0.
 void occNum_Mul_wfcHwfc(const ModuleBase::matrix& occ_number, const ModuleBase::matrix& wfcHwfc, ModuleBase::matrix& occNum_wfcHwfc,
-                        int symbol = 0, const std::string XC_func_rdmft = "HF", const double alpha = 0.656);
+                        int symbol = 0, const std::string XC_func_rdmft = "hf", const double alpha = 1.0);
 
 
 // Default symbol = 0 for the gradient of Etotal with respect to occupancy
 // symbol = 1 for the relevant calculation of Etotal
-void add_occNum(const ModuleBase::matrix& occ_number, const ModuleBase::matrix& wfcHwfc_TV_in, const ModuleBase::matrix& wfcHwfc_hartree_in,
-            const ModuleBase::matrix& wfcHwfc_XC_in, ModuleBase::matrix& occNum_wfcHwfc, const std::string XC_func_rdmft = "HF", const double alpha = 0.656);
+void add_occNum(const K_Vectors& kv, const ModuleBase::matrix& occ_number, const ModuleBase::matrix& wfcHwfc_TV_in, const ModuleBase::matrix& wfcHwfc_hartree_in,
+            const ModuleBase::matrix& wfcHwfc_dft_XC_in, const ModuleBase::matrix& wfcHwfc_exx_XC_in, ModuleBase::matrix& occNum_wfcHwfc, const std::string XC_func_rdmft = "hf", const double alpha = 1.0);
 
 
 // // do wk*g(occNum)*wfcHwfc and add for TV, hartree, XC. This function just use once, so it can be replace and delete
@@ -310,7 +300,10 @@ class Veff_rdmft : public hamilt::OperatorLCAO<TK, TR>
                       const ModulePW::PW_Basis* rho_basis_in,
                       const ModuleBase::matrix* vloc_in,
                       const ModuleBase::ComplexMatrix* sf_in,
-                      const std::string potential_in)
+                      const std::string potential_in,
+                      double* etxc_in = nullptr,
+                      double* vtxc_in = nullptr
+                    )
         : GK(GK_in),
           charge_(charge_in),
           ucell_(ucell_in),
@@ -318,6 +311,8 @@ class Veff_rdmft : public hamilt::OperatorLCAO<TK, TR>
           vloc_(vloc_in),
           sf_(sf_in),
           potential_(potential_in),
+          etxc(etxc_in),
+          vtxc(vtxc_in),
           hamilt::OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in)
     {
         this->cal_type = hamilt::lcao_gint;
@@ -338,8 +333,10 @@ class Veff_rdmft : public hamilt::OperatorLCAO<TK, TR>
                           const ModulePW::PW_Basis* rho_basis_in,
                           const ModuleBase::matrix* vloc_in,
                           const ModuleBase::ComplexMatrix* sf_in,  
-                          const std::string potential_in
-                          )
+                          const std::string potential_in,
+                          double* etxc_in = nullptr,
+                          double* vtxc_in = nullptr
+                        )
         : GG(GG_in), 
           charge_(charge_in),
           ucell_(ucell_in),
@@ -347,6 +344,8 @@ class Veff_rdmft : public hamilt::OperatorLCAO<TK, TR>
           vloc_(vloc_in),
           sf_(sf_in),
           potential_(potential_in),
+          etxc(etxc_in),
+          vtxc(vtxc_in),
           hamilt::OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in)
     {
         this->cal_type = hamilt::lcao_gint;
@@ -385,9 +384,11 @@ class Veff_rdmft : public hamilt::OperatorLCAO<TK, TR>
 
     const ModuleBase::ComplexMatrix* sf_;
 
+    double* etxc;
+
+    double* vtxc;
+
 };
-
-
 
 
 

@@ -31,6 +31,8 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/nonlocal_new.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/veff_lcao.h"
 
+#include "module_directmin/manifold/stiefel.h"
+
 // used by Exx&LRI
 #include "module_ri/RI_2D_Comm.h"
 #include "module_ri/Exx_LRI.h"
@@ -74,7 +76,6 @@ class RDMFT
     
     
     /****** these parameters are passed in from outside, don't need delete ******/
-
     Parallel_Orbitals* ParaV = nullptr;
     Parallel_2D para_Eij;
     
@@ -82,6 +83,7 @@ class RDMFT
     Gint_k* GK = nullptr;
     Gint_Gamma* GG = nullptr;
     Charge* charge = nullptr;
+    elecstate::ElecState* pelec = nullptr;  // just to gain Ewald and this->pelec->pot
 
     // update after ion step
     UnitCell* ucell = nullptr;
@@ -91,9 +93,7 @@ class RDMFT
     ModuleBase::matrix* vloc = nullptr;
     ModuleBase::ComplexMatrix* sf = nullptr;
     Local_Orbital_Charge* loc = nullptr;  // would be delete in the future
-
     /****** these parameters are passed in from outside, don't need delete ******/
-
 
     int nk_total = 0;
     std::string XC_func_rdmft;
@@ -115,37 +115,62 @@ class RDMFT
 
     hamilt::HContainer<TR>* HR_TV = nullptr;
     hamilt::HContainer<TR>* HR_hartree = nullptr;
-    hamilt::HContainer<TR>* HR_XC = nullptr;
+    // hamilt::HContainer<TR>* HR_XC = nullptr;
+    hamilt::HContainer<TR>* HR_dft_XC = nullptr;
+    hamilt::HContainer<TR>* HR_exx_XC = nullptr;
+    // hamilt::HContainer<TR>* HR_local = nullptr;
 
     std::vector<TK> HK_TV;
     std::vector<TK> HK_hartree;
     std::vector<TK> HK_XC;
+    std::vector<TK> HK_exx_XC;
+    std::vector<TK> HK_dft_XC;
+
+    std::vector<TK> HK_local;
+
+    std::vector< std::vector<TK> > DM_XC_pass;
+    ModuleDirectMin::ProdStiefelVariable HK_RDMFT_pass;
+    ModuleDirectMin::ProdStiefelVariable HK_XC_pass;
 
     ModuleBase::matrix Etotal_n_k;
     ModuleBase::matrix wfcHwfc_TV;
     ModuleBase::matrix wfcHwfc_hartree;
     ModuleBase::matrix wfcHwfc_XC;
+    ModuleBase::matrix wfcHwfc_exx_XC;
+    ModuleBase::matrix wfcHwfc_dft_XC;
 
     psi::Psi<TK> H_wfc_TV;
     psi::Psi<TK> H_wfc_hartree;
     psi::Psi<TK> H_wfc_XC;
+    psi::Psi<TK> H_wfc_exx_XC;
+    psi::Psi<TK> H_wfc_dft_XC;
 
     // just for temperate. in the future when realize psiDotPsi() without pzgemm_/pdgemm_,we don't need it
     std::vector<TK> Eij_TV;
     std::vector<TK> Eij_hartree;
     std::vector<TK> Eij_XC;
+    std::vector<TK> Eij_exx_XC;
 
     hamilt::OperatorLCAO<TK, TR>* V_ekinetic_potential = nullptr;
     hamilt::OperatorLCAO<TK, TR>* V_nonlocal = nullptr;
     hamilt::OperatorLCAO<TK, TR>* V_local = nullptr;
     hamilt::OperatorLCAO<TK, TR>* V_hartree = nullptr;
-    hamilt::OperatorLCAO<TK, TR>* V_XC = nullptr;
+    // hamilt::OperatorLCAO<TK, TR>* V_XC = nullptr;
+    hamilt::OperatorLCAO<TK, TR>* V_exx_XC = nullptr;
+    hamilt::OperatorLCAO<TK, TR>* V_dft_XC = nullptr;
+    hamilt::OperatorLCAO<TK, TR>* V_hartree_XC = nullptr;
+    // bool get_V_local_temp = true;
 
     Exx_LRI<double>* Vxc_fromRI_d = nullptr;
     Exx_LRI<std::complex<double>>* Vxc_fromRI_c = nullptr;
 
+    double Etotal = 0.0;
+    double etxc = 0.0;
+    double vtxc = 0.0;
+    const int cal_E_type = 1;   // cal_type = 2 just support XC-functional without exx
+
     void init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& ParaV_in, UnitCell& ucell_in,
-                        K_Vectors& kv_in, Charge& charge_in, std::string XC_func_rdmft_in = "HF", double alpha_power_in = 0.656);
+                        K_Vectors& kv_in, elecstate::ElecState& pelec_in, std::string XC_func_rdmft_in, double alpha_power_in);
 
     // update in ion-step and get V_TV
     void update_ion(UnitCell& ucell_in, LCAO_Matrix& LM_in, ModulePW::PW_Basis& rho_basis_in,
@@ -153,7 +178,16 @@ class RDMFT
 
     // update in elec-step
     // Or we can use rdmft_solver.wfc/occ_number directly when optimizing, so that the update_elec() function does not require parameters.
-    void update_elec(const ModuleBase::matrix& occ_number_in, const psi::Psi<TK>& wfc_in);
+    void update_elec(const ModuleBase::matrix& occ_number_in, const psi::Psi<TK>& wfc_in, const Charge* charge_in = nullptr);
+
+    // update occ_number for optimization algorithms that depend on Hamilton
+    void update_occNumber(const ModuleBase::matrix& occ_number_in);
+
+    // // update occ_number for optimization algorithms that depend on Hamilton
+    // void update_wg(const ModuleBase::matrix& wg_in);
+
+    // get the total Hamilton in k-space
+    void cal_Hk_Hpsi();
 
     // do all calculation after update occNum&wfc, get Etotal and the gradient of energy with respect to the occNum&wfc
     double Run(ModuleBase::matrix& E_gradient_occNum, psi::Psi<TK>&E_gradient_wfc);
@@ -162,24 +196,25 @@ class RDMFT
 
   protected:
 
-    void get_V_TV();
+    void cal_V_TV();
 
-    void get_V_hartree();
+    void cal_V_hartree();
 
     // get the special density matrix DM_XC(nk*nbasis_local*nbasis_local)
     void get_DM_XC(std::vector< std::vector<TK> >& DM_XC);
 
     // construct V_XC based on different XC_functional( i.e. RDMFT class member XC_func_rdmft)
-    void get_V_XC();
+    void cal_V_XC();
 
-    double cal_rdmft();
+    double cal_E_gradient();
 
-    void cal_Energy();
+    void cal_Energy(const int cal_type = 1);
 
 
 
   private:
     
+    void update_charge();
 
 
 

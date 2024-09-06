@@ -442,6 +442,7 @@ template <typename TK, typename TR, typename T_Gint>
 double rdmft_cal(LCAO_Matrix* LM_in,
                         const Parallel_Orbitals* ParaV,
                         const ModuleBase::matrix& occ_number,
+                        const ModuleBase::matrix& wg_in,
                         const psi::Psi<TK>& wfc,
                         ModuleBase::matrix& occNum_wfcHamiltWfc,
                         psi::Psi<TK>& occNum_HamiltWfc,
@@ -516,7 +517,7 @@ double rdmft_cal(LCAO_Matrix* LM_in,
     }
 
     // use wg and wfc update charge
-    update_charge(kv_in, G_in, ParaV, wg, wfc, loc_in, charge_in);
+    // update_charge(kv_in, G_in, ParaV, wg_in, wfc, loc_in, charge_in);
 
     /****** get every Hamiltion matrix ******/
 
@@ -738,18 +739,19 @@ double rdmft_cal(LCAO_Matrix* LM_in,
 
     // for E_TV
     ModuleBase::matrix ETV_n_k(wg.nr, wg.nc, true);
-    occNum_Mul_wfcHwfc(wg, wfcHwfc_TV, ETV_n_k, 0);
+    occNum_Mul_wfcHwfc(wg_in, wfcHwfc_TV, ETV_n_k, 0);
     double ETV_RDMFT = sum_getEnergy(ETV_n_k);
 
     // for Ehartree
     ModuleBase::matrix Ehartree_n_k(wg.nr, wg.nc, true);
-    occNum_Mul_wfcHwfc(wg, wfcHwfc_hartree, Ehartree_n_k, 1);
+    occNum_Mul_wfcHwfc(wg_in, wfcHwfc_hartree, Ehartree_n_k, 1);
     double Ehartree_RDMFT = sum_getEnergy(Ehartree_n_k);
 
     // for Exc
     ModuleBase::matrix Exc_n_k(wg.nr, wg.nc, true);
     // because we have got wk_fun_occNum, we can use symbol=1 realize it
-    occNum_Mul_wfcHwfc(wk_fun_occNum, wfcHwfc_XC, Exc_n_k, 1);
+    // occNum_Mul_wfcHwfc(wk_fun_occNum, wfcHwfc_XC, Exc_n_k, 1);
+    occNum_Mul_wfcHwfc(wg_in, wfcHwfc_XC, Exc_n_k, 1);      // for HF, we can use wg_in
     double Exc_RDMFT = sum_getEnergy(Exc_n_k);
 
     // add up the results obtained by all processors, or we can do reduce_all(wfcHwfc_) before add_wg() used for Etotal to replace it
@@ -766,7 +768,6 @@ double rdmft_cal(LCAO_Matrix* LM_in,
     return Etotal_RDMFT;
 
 }
-
 
 
 

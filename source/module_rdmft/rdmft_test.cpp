@@ -407,8 +407,6 @@ double occNum_func(double eta, int symbol, const std::string XC_func_rdmft, doub
 
 
 
-
-
 }
 
 
