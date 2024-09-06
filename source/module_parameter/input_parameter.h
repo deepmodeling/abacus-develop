@@ -574,5 +574,6 @@ struct Input_para
     bool test_unitcell = false;  ///< variables for test_unit_cell only
     bool test_symmetry = false;   ///< variables for test_lattice only
     bool test_pw = false;         ///< variables for test_pw only
+    int test_wf = 0;         ///< variables for test_wf only
 };
 #endif

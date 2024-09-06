@@ -38,7 +38,7 @@ void WF_atomic::init_at_1(Structure_Factor *sf_in)
 {
     if(GlobalV::use_paw) { return;
 }
-    if (GlobalV::test_wf) { ModuleBase::TITLE("WF_atomic","init_at_1");
+    if (PARAM.inp.test_wf) { ModuleBase::TITLE("WF_atomic","init_at_1");
 }
     ModuleBase::timer::tick("WF_atomic","init_at_1");
     this->psf = sf_in;
@@ -259,7 +259,7 @@ void WF_atomic::atomic_wfc(const int ik,
                            const int& table_dimension,
                            const double& dq) const
 {
-    if (GlobalV::test_wf>3) { ModuleBase::TITLE("WF_atomic","atomic_wfc");
+    if (PARAM.inp.test_wf>3) { ModuleBase::TITLE("WF_atomic","atomic_wfc");
 }
     ModuleBase::timer::tick("WF_atomic","atomic_wfc");
     //=========================================================
@@ -491,7 +491,7 @@ void WF_atomic::atomic_wfc(const int ik,
         } //end ia //mohan modify 2007-11-7
     } // end nt
 
-	if(GlobalV::test_wf) {ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"wf_index",index);
+	if(PARAM.inp.test_wf) {ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"wf_index",index);
 }
 
     if (index != GlobalC::ucell.natomwfc)

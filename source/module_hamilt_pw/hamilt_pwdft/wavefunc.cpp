@@ -136,14 +136,14 @@ int wavefunc::get_starting_nw(void)const
     {
         if (GlobalC::ucell.natomwfc >= GlobalV::NBANDS)
         {
-			if(GlobalV::test_wf)
+			if(PARAM.inp.test_wf)
 			{
 				GlobalV::ofs_running << " Start wave functions are all pseudo atomic wave functions." << std::endl;
 			}
         }
         else
         {
-			if(GlobalV::test_wf)
+			if(PARAM.inp.test_wf)
 			{
 				GlobalV::ofs_running << " Start wave functions are atomic + "
 					<< GlobalV::NBANDS - GlobalC::ucell.natomwfc
@@ -154,7 +154,7 @@ int wavefunc::get_starting_nw(void)const
     }
     else if (init_wfc == "random")
     {
-		if(GlobalV::test_wf)
+		if(PARAM.inp.test_wf)
 		{
 			GlobalV::ofs_running << " Start wave functions are all random." << std::endl;
 		}
@@ -274,7 +274,7 @@ void diago_PAO_in_pw_k2(const int &ik,
 	else if(p_wf->init_wfc.substr(0,6)=="atomic")
 	{
 		ModuleBase::ComplexMatrix wfcatom(starting_nw, nbasis);//added by zhengdy-soc
-		if(GlobalV::test_wf)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "starting_nw", starting_nw);
+		if(PARAM.inp.test_wf)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "starting_nw", starting_nw);
 
 		p_wf->atomic_wfc(
 				ik, 
@@ -434,7 +434,7 @@ void diago_PAO_in_pw_k2(const int &ik,
     else if (p_wf->init_wfc.substr(0, 6) == "atomic")
     {
         ModuleBase::ComplexMatrix wfcatom(starting_nw, nbasis); // added by zhengdy-soc
-		if (GlobalV::test_wf)
+		if (PARAM.inp.test_wf)
 		{
 			ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "starting_nw", starting_nw);
 		}
@@ -551,7 +551,7 @@ void diago_PAO_in_pw_k2(const base_device::DEVICE_GPU* ctx,
             return;
         assert(starting_nw > 0);
         wfcatom.create(starting_nw, nbasis); // added by zhengdy-soc
-        if (GlobalV::test_wf)
+        if (PARAM.inp.test_wf)
             ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "starting_nw", starting_nw);
 
         if (p_wf->init_wfc.substr(0, 6) == "atomic")
@@ -660,7 +660,7 @@ void diago_PAO_in_pw_k2(const base_device::DEVICE_GPU* ctx,
             return;
         assert(starting_nw > 0);
         wfcatom.create(starting_nw, nbasis); // added by zhengdy-soc
-        if (GlobalV::test_wf)
+        if (PARAM.inp.test_wf)
             ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "starting_nw", starting_nw);
         if (p_wf->init_wfc.substr(0, 6) == "atomic")
         {
@@ -763,7 +763,7 @@ void wavefunc::init_after_vc(const int nks)
 		}
 	}
 
-    if(GlobalV::test_wf)
+    if(PARAM.inp.test_wf)
     {
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"psi allocation","Done");
         if(GlobalV::BASIS_TYPE=="lcao" || GlobalV::BASIS_TYPE=="lcao_in_pw")
