@@ -1,5 +1,6 @@
 #include "grid_meshcell.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/memory.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
@@ -111,7 +112,7 @@ void Grid_MeshCell::init_latvec(const UnitCell &ucell)
 	// (x,y,z) * meshcell_latvec0^(-1) = (i,j,k)
 	this->meshcell_GT = this->meshcell_latvec0.Inverse();
 
-	if(GlobalV::test_gridt)
+	if(PARAM.input.test_gridt)
 	{
 		GlobalV::ofs_running << " the VECTORS of MESHCELL are (Bohr): " << std::endl;
 		GlobalV::ofs_running << " vec1( " 

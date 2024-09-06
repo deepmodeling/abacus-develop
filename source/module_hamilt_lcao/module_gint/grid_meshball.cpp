@@ -1,5 +1,6 @@
 #include "grid_meshball.h"
 #include "module_base/memory.h"
+#include "module_parameter/parameter.h"
 
 Grid_MeshBall::Grid_MeshBall()
 {
@@ -64,7 +65,7 @@ void Grid_MeshBall::init_meshball()
 			}
 		}
 	}
-	if(GlobalV::test_gridt) {ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "how many cells in meshball",this->meshball_ncells);
+	if(PARAM.input.test_gridt) {ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "how many cells in meshball",this->meshball_ncells);
 }
 
 	// prepare for the second calculation.

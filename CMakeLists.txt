@@ -682,8 +682,8 @@ add_subdirectory(source)
 
 target_link_libraries(
   ${ABACUS_BIN_NAME}
-  parameter
   base
+  parameter
   cell
   symmetry
   md

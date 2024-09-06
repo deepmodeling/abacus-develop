@@ -572,5 +572,6 @@ struct Input_para
     int test_wf = 0;         ///< variables for test_wf only
     bool test_charge = false; ///< variables for test_vloc only
     bool test_energy = false; ///< variables for test_energy only
+    bool test_gridt = false;  ///< variables for test_gridt only
 };
 #endif

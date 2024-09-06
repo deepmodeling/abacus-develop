@@ -1,5 +1,6 @@
 #if ((defined __CUDA) /* || (defined __ROCM) */)
 #include <cuda_runtime.h>
+#include "module_parameter/parameter.h"
 #endif
 #include "grid_technique.h"
 
@@ -266,7 +267,7 @@ void Grid_Technique::init_atoms_on_grid(const int& ny,
         }
     }
 
-    if (GlobalV::test_gridt) {
+    if (PARAM.input.test_gridt) {
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,
                                     "Total_atoms_on_grid",
                                     total_atoms_on_grid);
@@ -470,7 +471,7 @@ void Grid_Technique::cal_grid_integration_index() {
     delete[] all;
 #endif
 
-    if (GlobalV::test_gridt) {
+    if (PARAM.input.test_gridt) {
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,
                                     "Max atom on bigcell",
                                     max_atom);
