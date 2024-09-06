@@ -61,6 +61,7 @@ ModuleIO::Output_Mat_Sparse<TK> ESolver_KS_LCAO<TK, TR>::create_Output_Mat_Spars
                                            this->pv,
                                            this->GK, // mohan add 2024-04-01
                                            two_center_bundle_,
+                                           orb_,
                                            GlobalC::GridD, // mohan add 2024-04-06
                                            this->kv,
                                            this->p_hamilt);

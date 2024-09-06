@@ -130,13 +130,13 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
         // build and save <psi(0)|alpha(R)> at beginning
         GlobalC::ld.build_psialpha(GlobalV::CAL_FORCE,
                                    GlobalC::ucell,
-                                   GlobalC::ORB,
+                                   orb_,
                                    GlobalC::GridD,
                                    *(two_center_bundle_.overlap_orb_alpha));
 
         if (PARAM.inp.deepks_out_unittest)
         {
-            GlobalC::ld.check_psialpha(GlobalV::CAL_FORCE, GlobalC::ucell, GlobalC::ORB, GlobalC::GridD);
+            GlobalC::ld.check_psialpha(GlobalV::CAL_FORCE, GlobalC::ucell, orb_, GlobalC::GridD);
         }
     }
 #endif

@@ -40,7 +40,7 @@ namespace ModuleESolver
     {
         GlobalC::ld.cal_projected_DM(dm,
             GlobalC::ucell,
-            GlobalC::ORB,
+            orb_,
             GlobalC::GridD);
     }
 
@@ -51,7 +51,7 @@ namespace ModuleESolver
     {
         GlobalC::ld.cal_projected_DM_k(dm,
             GlobalC::ucell,
-            GlobalC::ORB,
+            orb_,
             GlobalC::GridD);
     }
 
@@ -62,7 +62,7 @@ namespace ModuleESolver
     {
         GlobalC::ld.cal_projected_DM_k(dm,
             GlobalC::ucell,
-            GlobalC::ORB,
+            orb_,
             GlobalC::GridD);
     }
 #endif

@@ -30,13 +30,13 @@ class cal_r_overlap_R
     double sparse_threshold = 1e-10;
     bool binary = false;
 
-    void init(const Parallel_Orbitals& pv);
+    void init(const Parallel_Orbitals& pv, const LCAO_Orbitals& orb);
     void out_rR(const int& istep);
     void out_rR_other(const int& istep, const std::set<Abfs::Vector3_Order<int>>& output_R_coor);
 
   private:
-    void initialize_orb_table();
-    void construct_orbs_and_orb_r();
+    void initialize_orb_table(const LCAO_Orbitals& orb);
+    void construct_orbs_and_orb_r(const LCAO_Orbitals& orb);
 
     std::vector<int> iw2ia;
     std::vector<int> iw2iL;

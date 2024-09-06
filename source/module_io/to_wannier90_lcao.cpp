@@ -20,14 +20,16 @@ toWannier90_LCAO::toWannier90_LCAO(const bool& out_wannier_mmn,
                                    const bool& out_wannier_eig,
                                    const bool& out_wannier_wvfn_formatted,
                                    const std::string& nnkpfile,
-                                   const std::string& wannier_spin)
+                                   const std::string& wannier_spin,
+                                   const LCAO_Orbitals& orb)
     : toWannier90(out_wannier_mmn,
                   out_wannier_amn,
                   out_wannier_unk,
                   out_wannier_eig,
                   out_wannier_wvfn_formatted,
                   nnkpfile,
-                  wannier_spin)
+                  wannier_spin),
+    orb_(orb)
 {
 }
 
@@ -201,8 +203,9 @@ void toWannier90_LCAO::cal_Mmn(const K_Vectors& kv, const psi::Psi<std::complex<
         }
     }
 
-    if (GlobalV::MY_RANK == 0)
+    if (GlobalV::MY_RANK == 0) {
         mmn_file.close();
+}
 }
 
 void toWannier90_LCAO::cal_Amn(const K_Vectors& kv, const psi::Psi<std::complex<double>>& psi)
@@ -248,8 +251,9 @@ void toWannier90_LCAO::cal_Amn(const K_Vectors& kv, const psi::Psi<std::complex<
         }
     }
 
-    if (GlobalV::MY_RANK == 0)
+    if (GlobalV::MY_RANK == 0) {
         Amn_file.close();
+}
 }
 
 void toWannier90_LCAO::out_unk(const psi::Psi<std::complex<double>>& psi)
@@ -266,17 +270,17 @@ void toWannier90_LCAO::initialize_orb_table()
 #endif
 
 #ifdef __LCAO
-    const int ntype = GlobalC::ORB.get_ntype();
+    const int ntype = orb_.get_ntype();
     int lmax_orb = -1, lmax_beta = -1;
     for (int it = 0; it < ntype; it++)
     {
-        lmax_orb = std::max(lmax_orb, GlobalC::ORB.Phi[it].getLmax());
+        lmax_orb = std::max(lmax_orb, orb_.Phi[it].getLmax());
         lmax_beta = std::max(lmax_beta, GlobalC::ucell.infoNL.Beta[it].getLmax());
     }
-    const double dr = GlobalC::ORB.get_dR();
-    const double dk = GlobalC::ORB.get_dk();
-    const int kmesh = GlobalC::ORB.get_kmesh() * 4 + 1;
-    int Rmesh = static_cast<int>(GlobalC::ORB.get_Rmax() / dr) + 4;
+    const double dr = orb_.get_dR();
+    const double dk = orb_.get_dk();
+    const int kmesh = orb_.get_kmesh() * 4 + 1;
+    int Rmesh = static_cast<int>(orb_.get_Rmax() / dr) + 4;
     Rmesh += 1 - Rmesh % 2;
 
     Center2_Orb::init_Table_Spherical_Bessel(2,
@@ -471,8 +475,9 @@ void toWannier90_LCAO::unkdotkb(const K_Vectors& kv,
     int count_m = -1;
     for (int m = 0; m < GlobalV::NBANDS; m++)
     {
-        if (exclude_bands.count(m))
+        if (exclude_bands.count(m)) {
             continue;
+}
         count_m++;
 
         int ir = this->ParaV->global2local_row(m);
@@ -481,8 +486,9 @@ void toWannier90_LCAO::unkdotkb(const K_Vectors& kv,
             int count_n = -1;
             for (int n = 0; n < GlobalV::NBANDS; n++)
             {
-                if (exclude_bands.count(n))
+                if (exclude_bands.count(n)) {
                     continue;
+}
                 count_n++;
 
                 int ic = this->ParaV->global2local_col(n);
@@ -506,26 +512,26 @@ void toWannier90_LCAO::unkdotkb(const K_Vectors& kv,
 
 void toWannier90_LCAO::produce_basis_orb()
 {
-    int mat_Nr = GlobalC::ORB.Phi[0].PhiLN(0, 0).getNr();
+    int mat_Nr = orb_.Phi[0].PhiLN(0, 0).getNr();
     int count_Nr = 0;
 
-    orbs.resize(GlobalC::ORB.get_ntype());
-    for (int T = 0; T < GlobalC::ORB.get_ntype(); ++T)
+    orbs.resize(orb_.get_ntype());
+    for (int T = 0; T < orb_.get_ntype(); ++T)
     {
-        count_Nr = GlobalC::ORB.Phi[T].PhiLN(0, 0).getNr();
+        count_Nr = orb_.Phi[T].PhiLN(0, 0).getNr();
         if (count_Nr > mat_Nr)
         {
             mat_Nr = count_Nr;
             orb_r_ntype = T;
         }
 
-        orbs[T].resize(GlobalC::ORB.Phi[T].getLmax() + 1);
-        for (int L = 0; L <= GlobalC::ORB.Phi[T].getLmax(); ++L)
+        orbs[T].resize(orb_.Phi[T].getLmax() + 1);
+        for (int L = 0; L <= orb_.Phi[T].getLmax(); ++L)
         {
-            orbs[T][L].resize(GlobalC::ORB.Phi[T].getNchi(L));
-            for (int N = 0; N < GlobalC::ORB.Phi[T].getNchi(L); ++N)
+            orbs[T][L].resize(orb_.Phi[T].getNchi(L));
+            for (int N = 0; N < orb_.Phi[T].getNchi(L); ++N)
             {
-                const auto& orb_origin = GlobalC::ORB.Phi[T].PhiLN(L, N);
+                const auto& orb_origin = orb_.Phi[T].PhiLN(L, N);
                 orbs[T][L][N].set_orbital_info(orb_origin.getLabel(),
                                                orb_origin.getType(),
                                                orb_origin.getL(),
@@ -559,7 +565,7 @@ void toWannier90_LCAO::produce_trial_in_lcao()
         r[ir] = ir * dr;
     }
 
-    const auto& orb_origin = GlobalC::ORB.Phi[orb_r_ntype].PhiLN(0, 0);
+    const auto& orb_origin = orb_.Phi[orb_r_ntype].PhiLN(0, 0);
 
     double* psi = new double[mesh_r];
     double* psir = new double[mesh_r];
@@ -638,11 +644,13 @@ void toWannier90_LCAO::produce_trial_in_lcao()
         {
             int tmp_size = 0;
 
-            if (L[i] == -1 || L[i] == -2 || L[i] == -3)
+            if (L[i] == -1 || L[i] == -2 || L[i] == -3) {
                 tmp_size = 2;
+}
 
-            if (L[i] == -4 || L[i] == -5)
+            if (L[i] == -4 || L[i] == -5) {
                 tmp_size = 3;
+}
 
             A_orbs[i].resize(tmp_size);
 
@@ -699,11 +707,13 @@ void toWannier90_LCAO::construct_overlap_table_project()
             {
                 int tmp_size = 0;
 
-                if (L[wannier_index] == -1 || L[wannier_index] == -2 || L[wannier_index] == -3)
+                if (L[wannier_index] == -1 || L[wannier_index] == -2 || L[wannier_index] == -3) {
                     tmp_size = 2;
+}
 
-                if (L[wannier_index] == -4 || L[wannier_index] == -5)
+                if (L[wannier_index] == -4 || L[wannier_index] == -5) {
                     tmp_size = 3;
+}
 
                 for (int tmp_L = 0; tmp_L < tmp_size; tmp_L++)
                 {
@@ -786,10 +796,12 @@ void toWannier90_LCAO::cal_orbA_overlap_R()
                 if (L[wannier_index] == -1)
                 {
                     double tmp_bs2 = 0;
-                    if (m[wannier_index] == 0)
+                    if (m[wannier_index] == 0) {
                         tmp_bs2 = bs2;
-                    if (m[wannier_index] == -1)
+}
+                    if (m[wannier_index] == -1) {
                         tmp_bs2 = -bs2;
+}
 
                     for (int iR = 0; iR < R_num; iR++)
                     {
@@ -817,8 +829,9 @@ void toWannier90_LCAO::cal_orbA_overlap_R()
                     if (m[wannier_index] == 0 || m[wannier_index] == 1)
                     {
                         double tmp_bs2 = bs2;
-                        if (m[wannier_index] == -1)
+                        if (m[wannier_index] == -1) {
                             tmp_bs2 = -bs2;
+}
 
                         for (int iR = 0; iR < R_num; iR++)
                         {
@@ -925,8 +938,9 @@ void toWannier90_LCAO::cal_orbA_overlap_R()
                     if (m[wannier_index] == 0 || m[wannier_index] == 1)
                     {
                         double tmp_bs2 = bs2;
-                        if (m[wannier_index] == -1)
+                        if (m[wannier_index] == -1) {
                             tmp_bs2 = -bs2;
+}
 
                         for (int iR = 0; iR < R_num; iR++)
                         {
@@ -975,8 +989,9 @@ void toWannier90_LCAO::cal_orbA_overlap_R()
                     else if (m[wannier_index] == 3 || m[wannier_index] == 4)
                     {
                         double m_pz = 1.0;
-                        if (m[wannier_index] == 4)
+                        if (m[wannier_index] == 4) {
                             m_pz = -1.0;
+}
 
                         for (int iR = 0; iR < R_num; iR++)
                         {
@@ -1077,8 +1092,9 @@ void toWannier90_LCAO::cal_orbA_overlap_R()
                     {
                         double tmp_pz = -1.0;
 
-                        if (m[wannier_index] == 5)
+                        if (m[wannier_index] == 5) {
                             tmp_pz = 1.0;
+}
 
                         for (int iR = 0; iR < R_num; iR++)
                         {
@@ -1123,8 +1139,9 @@ void toWannier90_LCAO::unkdotA(const K_Vectors& kv,
     {
         for (int ib = 0; ib < GlobalV::NBANDS; ib++)
         {
-            if (exclude_bands.count(ib))
+            if (exclude_bands.count(ib)) {
                 continue;
+}
             index_band++;
 
             int ic = this->ParaV->global2local_col(ib);
@@ -1154,8 +1171,9 @@ void toWannier90_LCAO::unkdotA(const K_Vectors& kv,
     {
         for (int ib = 0; ib < GlobalV::NBANDS; ib++)
         {
-            if (exclude_bands.count(ib))
+            if (exclude_bands.count(ib)) {
                 continue;
+}
             index_band++;
 
             int ic = this->ParaV->global2local_col(ib);

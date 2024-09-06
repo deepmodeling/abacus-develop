@@ -136,7 +136,8 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
                                        PARAM.inp.out_wannier_eig,
                                        PARAM.inp.out_wannier_wvfn_formatted,
                                        PARAM.inp.nnkpfile,
-                                       PARAM.inp.wannier_spin);
+                                       PARAM.inp.wannier_spin,
+                                       orb_);
 
             myWannier.calculate(this->pelec->ekb, this->kv, *(this->psi), &(this->pv));
         }
@@ -150,7 +151,8 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "Berry phase calculation");
         berryphase bp(&(this->pv));
         bp.lcao_init(this->kv,
-                     this->GridT); // additional step before calling
+                     this->GridT,
+                     orb_); // additional step before calling
                                    // macroscopic_polarization (why capitalize
                                    // the function name?)
         bp.Macroscopic_polarization(this->pw_wfc->npwk_max,
