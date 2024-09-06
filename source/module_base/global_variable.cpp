@@ -118,7 +118,6 @@ std::ofstream ofs_device; // output device info
 //----------------------------------------------------------
 
 
-int test_wf = 0;
 int test_charge = 0;
 int test_potential = 0;
 int test_energy = 0;

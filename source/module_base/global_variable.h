@@ -156,7 +156,6 @@ extern std::ofstream ofs_device;
 //==========================================================
 
 
-extern int test_wf;
 extern int test_charge;
 extern int test_potential;
 extern int test_energy;
