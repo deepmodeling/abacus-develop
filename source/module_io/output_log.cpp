@@ -1,5 +1,6 @@
 #include "output_log.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/constants.h"
 #include "module_base/formatter.h"
 #include "module_base/global_variable.h"
@@ -223,7 +224,7 @@ void print_force(std::ofstream& ofs_running,
     fmt << atom_label << force_x << force_y << force_z;
     table = fmt.str();
     ofs_running << table << std::endl;
-    if (GlobalV::TEST_FORCE) std::cout << table << std::endl;
+    if (PARAM.inp.test_force) std::cout << table << std::endl;
 }
 
 void print_stress(const std::string& name, const ModuleBase::matrix& scs, const bool screen, const bool ry)

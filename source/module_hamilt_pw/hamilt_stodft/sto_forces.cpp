@@ -1,5 +1,6 @@
 #include "sto_forces.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/mathzone.h"
 #include "module_cell/module_symmetry/symmetry.h"
 #include "module_elecstate/elecstate.h"
@@ -132,7 +133,7 @@ void Sto_Forces::cal_stoforce(ModuleBase::matrix& force,
     }
 
  	GlobalV::ofs_running << setiosflags(std::ios::fixed) << std::setprecision(6) << std::endl;
-	if(GlobalV::TEST_FORCE)
+	if(PARAM.inp.test_force)
 	{
         ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "LOCAL    FORCE (Ry/Bohr)", forcelc);
         ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "NONLOCAL FORCE (Ry/Bohr)", forcenl);
@@ -150,7 +151,7 @@ void Sto_Forces::cal_stoforce(ModuleBase::matrix& force,
     // output force in unit eV/Angstrom
     GlobalV::ofs_running << std::endl;
     
-	if(GlobalV::TEST_FORCE)
+	if(PARAM.inp.test_force)
 	{
         ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "LOCAL    FORCE (eV/Angstrom)", forcelc, false);
         ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "NONLOCAL FORCE (eV/Angstrom)", forcenl, false);

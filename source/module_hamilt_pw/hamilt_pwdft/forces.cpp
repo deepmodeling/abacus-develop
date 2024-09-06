@@ -1,5 +1,6 @@
 #include "forces.h"
 
+#include "module_parameter/parameter.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/output_log.h"
 // new
@@ -188,7 +189,7 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
             force_vdw(iat, 1) = force_vdw_temp[iat].y;
             force_vdw(iat, 2) = force_vdw_temp[iat].z;
         }
-        if (GlobalV::TEST_FORCE)
+        if (PARAM.inp.test_force)
         {
             ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "VDW      FORCE (Ry/Bohr)", force_vdw);
         }
@@ -199,7 +200,7 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
     {
         force_e.create(this->nat, 3);
         elecstate::Efield::compute_force(GlobalC::ucell, force_e);
-        if (GlobalV::TEST_FORCE)
+        if (PARAM.inp.test_force)
         {
             ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "EFIELD      FORCE (Ry/Bohr)", force_e);
         }
@@ -210,7 +211,7 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
     {
         force_gate.create(this->nat, 3);
         elecstate::Gatefield::compute_force(GlobalC::ucell, force_gate);
-        if (GlobalV::TEST_FORCE)
+        if (PARAM.inp.test_force)
         {
             ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "GATEFIELD      FORCE (Ry/Bohr)", force_gate);
         }
@@ -221,7 +222,7 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
     {
         forcesol.create(this->nat, 3);
         GlobalC::solvent_model.cal_force_sol(GlobalC::ucell, rho_basis, forcesol);
-        if (GlobalV::TEST_FORCE)
+        if (PARAM.inp.test_force)
         {
             ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "IMP_SOL      FORCE (Ry/Bohr)", forcesol);
         }
@@ -383,7 +384,7 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
     }
 
     GlobalV::ofs_running << std::setiosflags(std::ios::fixed) << std::setprecision(6) << std::endl;
-    /*if(GlobalV::TEST_FORCE)
+    /*if(PARAM.inp.test_force)
     {
         ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell,"LOCAL    FORCE (Ry/Bohr)", forcelc);
         ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell,"NONLOCAL FORCE (Ry/Bohr)", forcenl);
@@ -417,7 +418,7 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
     // output force in unit eV/Angstrom
     GlobalV::ofs_running << std::endl;
 
-    if (GlobalV::TEST_FORCE)
+    if (PARAM.inp.test_force)
     {
         ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "LOCAL    FORCE (eV/Angstrom)", forcelc, false);
         ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "NONLOCAL FORCE (eV/Angstrom)", forcenl, false);

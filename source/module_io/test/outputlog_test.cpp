@@ -1,5 +1,8 @@
 #include <unistd.h>
 
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include <cstdio>
 #include <iostream>
 #include <sstream>
@@ -215,7 +218,7 @@ TEST(OutputVacuumLevelTest, OutputVacuumLevel)
 TEST(PrintForce, PrintForce)
 {
     UnitCell ucell;
-    GlobalV::TEST_FORCE = 1;
+    PARAM.inp.test_force = 1;
     std::string name = "test";
     ModuleBase::matrix force(2, 3);
     force(0, 0) = 1.0;
