@@ -111,7 +111,7 @@ void Charge::allocate(const int& nspin_in)
     //  mohan add 2021-02-20
     this->nspin = nspin_in;
 
-    if (GlobalV::test_charge > 1)
+    if (PARAM.inp.test_charge > 1)
     {
         std::cout << "\n spin_number = " << nspin << " real_point_number = " << nrxx << std::endl;
     }
@@ -413,7 +413,7 @@ void Charge::atomic_rho(const int spin_number_need,
                             ModuleBase::Integral::Simpson_Integral(mesh, rho1d.data(), atom->ncpp.rab.data(), rho_lgl[0]);
                             gstart = 1;
                         }
-                        if (GlobalV::test_charge > 0)
+                        if (PARAM.inp.test_charge > 0)
                             std::cout << "\n |G|=0 term done." << std::endl;
                             //----------------------------------------------------------
                             // Here we compute the G<>0 term
@@ -451,7 +451,7 @@ void Charge::atomic_rho(const int spin_number_need,
     #pragma omp single
     #endif
                             {
-                                if (GlobalV::test_charge > 0)
+                                if (PARAM.inp.test_charge > 0)
                                     std::cout << " |G|>0 term done." << std::endl;
                             }
                             //----------------------------------------------------------
@@ -756,7 +756,7 @@ void Charge::init_final_scf()
     ModuleBase::TITLE("Charge", "init_after_scf");
 
     assert(allocate_rho_final_scf == false);
-    if (GlobalV::test_charge > 1)
+    if (PARAM.inp.test_charge > 1)
     {
         std::cout << "\n spin_number = " << GlobalV::NSPIN << " real_point_number = " << this->rhopw->nrxx << std::endl;
     }

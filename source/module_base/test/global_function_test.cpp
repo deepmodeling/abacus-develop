@@ -692,11 +692,9 @@ TEST_F(GlobalFunctionTest,TEST_LEVEL)
     name="none";
     ModuleBase::GlobalFunc::TEST_LEVEL(name,test_bool);
     EXPECT_EQ(GlobalV::test_potential,0);
-    EXPECT_EQ(GlobalV::test_charge,0);
     name="init_potential";
     ModuleBase::GlobalFunc::TEST_LEVEL(name,test_bool);
     EXPECT_EQ(GlobalV::test_potential,1);
-    EXPECT_EQ(GlobalV::test_charge,1);
     name="init_read";
     ModuleBase::GlobalFunc::TEST_LEVEL(name,test_bool);
 #ifndef __EPM

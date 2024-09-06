@@ -575,5 +575,6 @@ struct Input_para
     bool test_symmetry = false;   ///< variables for test_lattice only
     bool test_pw = false;         ///< variables for test_pw only
     int test_wf = 0;         ///< variables for test_wf only
+    bool test_charge = false; ///< variables for test_vloc only
 };
 #endif

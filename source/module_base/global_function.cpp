@@ -116,12 +116,10 @@ void TEST_LEVEL(const std::string &name, bool disable=true)
     if (name == "none")
     {
         GlobalV::test_potential = 0;
-        GlobalV::test_charge = 0;
     }
     else if (name == "init_potential")
     {
         GlobalV::test_potential = 1;
-        GlobalV::test_charge = 1;
     }
     else if (name == "init_read")
     {
