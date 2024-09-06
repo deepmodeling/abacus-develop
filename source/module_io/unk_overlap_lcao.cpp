@@ -25,7 +25,7 @@ unkOverlap_lcao::~unkOverlap_lcao()
     // GlobalV::ofs_running << "this is ~unkOverlap_lcao()" << std::endl;
 }
 
-void unkOverlap_lcao::init(const Grid_Technique& gt, const int nkstot)
+void unkOverlap_lcao::init(const Grid_Technique& gt, const int nkstot, const LCAO_Orbitals& orb)
 {
     // std::cout << "unkOverlap_lcao::init start" << std::endl;
 
@@ -35,17 +35,17 @@ void unkOverlap_lcao::init(const Grid_Technique& gt, const int nkstot)
     exx_lmax = GlobalC::exx_info.info_ri.abfs_Lmax;
 #endif
 
-    const int ntype = GlobalC::ORB.get_ntype();
+    const int ntype = orb.get_ntype();
     int lmax_orb = -1, lmax_beta = -1;
     for (int it = 0; it < ntype; it++)
     {
-        lmax_orb = std::max(lmax_orb, GlobalC::ORB.Phi[it].getLmax());
+        lmax_orb = std::max(lmax_orb, orb.Phi[it].getLmax());
         lmax_beta = std::max(lmax_beta, GlobalC::ucell.infoNL.Beta[it].getLmax());
     }
-    const double dr = GlobalC::ORB.get_dR();
-    const double dk = GlobalC::ORB.get_dk();
-    const int kmesh = GlobalC::ORB.get_kmesh() * 4 + 1;
-    int Rmesh = static_cast<int>(GlobalC::ORB.get_Rmax() / dr) + 4;
+    const double dr = orb.get_dR();
+    const double dk = orb.get_dk();
+    const int kmesh = orb.get_kmesh() * 4 + 1;
+    int Rmesh = static_cast<int>(orb.get_Rmax() / dr) + 4;
     Rmesh += 1 - Rmesh % 2;
 
     Center2_Orb::init_Table_Spherical_Bessel(2,
@@ -67,18 +67,18 @@ void unkOverlap_lcao::init(const Grid_Technique& gt, const int nkstot)
     MGT.init_Gaunt(Lmax);
 
     const int T = 0;                                                    // any selected element type
-    orb_r.set_orbital_info(GlobalC::ORB.Phi[T].PhiLN(0, 0).getLabel(),  // atom label
+    orb_r.set_orbital_info(orb.Phi[T].PhiLN(0, 0).getLabel(),  // atom label
                            T,                                           // atom type
                            1,                                           // angular momentum L
                            1,                                           // number of orbitals of this L , just N
-                           GlobalC::ORB.Phi[T].PhiLN(0, 0).getNr(),     // number of radial mesh
-                           GlobalC::ORB.Phi[T].PhiLN(0, 0).getRab(),    // the mesh interval in radial mesh
-                           GlobalC::ORB.Phi[T].PhiLN(0, 0).getRadial(), // radial mesh value(a.u.)
+                           orb.Phi[T].PhiLN(0, 0).getNr(),     // number of radial mesh
+                           orb.Phi[T].PhiLN(0, 0).getRab(),    // the mesh interval in radial mesh
+                           orb.Phi[T].PhiLN(0, 0).getRadial(), // radial mesh value(a.u.)
                            Numerical_Orbital_Lm::Psi_Type::Psi,
-                           GlobalC::ORB.Phi[T].PhiLN(0, 0).getRadial(), // radial wave function
-                           GlobalC::ORB.Phi[T].PhiLN(0, 0).getNk(),
-                           GlobalC::ORB.Phi[T].PhiLN(0, 0).getDk(),
-                           GlobalC::ORB.Phi[T].PhiLN(0, 0).getDruniform(),
+                           orb.Phi[T].PhiLN(0, 0).getRadial(), // radial wave function
+                           orb.Phi[T].PhiLN(0, 0).getNk(),
+                           orb.Phi[T].PhiLN(0, 0).getDk(),
+                           orb.Phi[T].PhiLN(0, 0).getDruniform(),
                            false,
                            true,
                            PARAM.inp.cal_force);
@@ -144,18 +144,18 @@ void unkOverlap_lcao::init(const Grid_Technique& gt, const int nkstot)
     {
         for (int TB = 0; TB < GlobalC::ucell.ntype; TB++)
         {
-            for (int LA = 0; LA <= GlobalC::ORB.Phi[TA].getLmax(); LA++)
+            for (int LA = 0; LA <= orb.Phi[TA].getLmax(); LA++)
             {
-                for (int NA = 0; NA < GlobalC::ORB.Phi[TA].getNchi(LA); ++NA)
+                for (int NA = 0; NA < orb.Phi[TA].getNchi(LA); ++NA)
                 {
-                    for (int LB = 0; LB <= GlobalC::ORB.Phi[TB].getLmax(); ++LB)
+                    for (int LB = 0; LB <= orb.Phi[TB].getLmax(); ++LB)
                     {
-                        for (int NB = 0; NB < GlobalC::ORB.Phi[TB].getNchi(LB); ++NB)
+                        for (int NB = 0; NB < orb.Phi[TB].getNchi(LB); ++NB)
                         {
                             center2_orb11[TA][TB][LA][NA][LB].insert(
                                 std::make_pair(NB,
-                                               Center2_Orb::Orb11(GlobalC::ORB.Phi[TA].PhiLN(LA, NA),
-                                                                  GlobalC::ORB.Phi[TB].PhiLN(LB, NB),
+                                               Center2_Orb::Orb11(orb.Phi[TA].PhiLN(LA, NA),
+                                                                  orb.Phi[TB].PhiLN(LB, NB),
                                                                   psb_,
                                                                   MGT)));
                         }
@@ -169,19 +169,19 @@ void unkOverlap_lcao::init(const Grid_Technique& gt, const int nkstot)
     {
         for (int TB = 0; TB < GlobalC::ucell.ntype; TB++)
         {
-            for (int LA = 0; LA <= GlobalC::ORB.Phi[TA].getLmax(); LA++)
+            for (int LA = 0; LA <= orb.Phi[TA].getLmax(); LA++)
             {
-                for (int NA = 0; NA < GlobalC::ORB.Phi[TA].getNchi(LA); ++NA)
+                for (int NA = 0; NA < orb.Phi[TA].getNchi(LA); ++NA)
                 {
-                    for (int LB = 0; LB <= GlobalC::ORB.Phi[TB].getLmax(); ++LB)
+                    for (int LB = 0; LB <= orb.Phi[TB].getLmax(); ++LB)
                     {
-                        for (int NB = 0; NB < GlobalC::ORB.Phi[TB].getNchi(LB); ++NB)
+                        for (int NB = 0; NB < orb.Phi[TB].getNchi(LB); ++NB)
                         {
                             center2_orb21_r[TA][TB][LA][NA][LB].insert(
                                 std::make_pair(NB,
-                                               Center2_Orb::Orb21(GlobalC::ORB.Phi[TA].PhiLN(LA, NA),
+                                               Center2_Orb::Orb21(orb.Phi[TA].PhiLN(LA, NA),
                                                                   orb_r,
-                                                                  GlobalC::ORB.Phi[TB].PhiLN(LB, NB),
+                                                                  orb.Phi[TB].PhiLN(LB, NB),
                                                                   psb_,
                                                                   MGT)));
                         }
@@ -206,6 +206,11 @@ void unkOverlap_lcao::init(const Grid_Technique& gt, const int nkstot)
                     for (auto& co5: co4.second)
                         for (auto& co6: co5.second)
                             co6.second.init_radial_table();
+
+    rcut_orb_.resize(orb.get_ntype());
+    for (int it = 0; it < orb.get_ntype(); ++it) {
+        rcut_orb_[it] = orb.Phi[it].getRcut();
+    }
 
     // std::cout << "unkOverlap_lcao::init end" << std::endl;
     return;
@@ -383,7 +388,7 @@ void unkOverlap_lcao::cal_R_number()
                 tau2 = GlobalC::GridD.getAdjacentTau(ad);
                 dtau = tau2 - tau1;
                 double distance = dtau.norm() * GlobalC::ucell.lat0;
-                double rcut = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ORB.Phi[T2].getRcut();
+                double rcut = rcut_orb_[T1] + rcut_orb_[T2];
                 if (distance < rcut - 1.0e-15)
                 {
                     // translate: the unit of R_car is GlobalC::ucell.lat0

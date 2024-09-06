@@ -304,6 +304,10 @@ void Pseudopot_upf::read_pseudo_nl(std::ifstream &ifs, Atom_pseudo& pp)
             ifs >> idum;
             ModuleBase::GlobalFunc::READ_VALUE(ifs, pp.lll[i]);// nl_1
             ModuleBase::GlobalFunc::READ_VALUE(ifs, this->kbeta[i]); // nl_2
+            if (this->kbeta[i] > pp.mesh)
+            {
+                this->kbeta[i] = pp.mesh;
+            }
             // number of mesh points for projectors
 
             for (ir = 0; ir < this->kbeta[i]; ir++)
@@ -463,7 +467,8 @@ void Pseudopot_upf::read_pseudo_rhoatom(std::ifstream &ifs, Atom_pseudo& pp)
 void Pseudopot_upf::read_pseudo_so(std::ifstream &ifs, Atom_pseudo& pp)
 {
        //read soc info from upf, added by zhengdy-soc
-       if(!pp.has_so) return;
+       if(!pp.has_so) { return;
+}
        pp.nn = std::vector<int>(pp.nchi, 0);
        pp.jchi = std::vector<double>(pp.nchi, 0.0);
        pp.jjj = std::vector<double>(pp.nbeta, 0.0);
@@ -474,7 +479,7 @@ void Pseudopot_upf::read_pseudo_so(std::ifstream &ifs, Atom_pseudo& pp)
              if(pp.lchi[nw]-pp.jchi[nw]-0.5>1e-7 && pp.lchi[nw]-pp.jchi[nw]-0.5<1e-7)
              {
                   std::cout<<"Ignore ADDINFO section"<<std::endl;
-                  pp.has_so = 0;
+                  pp.has_so = false;
              }
        }
        //RELBETA
@@ -484,7 +489,7 @@ void Pseudopot_upf::read_pseudo_so(std::ifstream &ifs, Atom_pseudo& pp)
              if(pp.lll[nb]-pp.jjj[nb]-0.5>1e-7 && pp.lll[nb]-pp.jjj[nb]-0.5<1e-7)
              {
                   std::cout<<"Ignore ADDINFO section"<<std::endl;
-                  pp.has_so = 0;
+                  pp.has_so = false;
              }
        }
        return;

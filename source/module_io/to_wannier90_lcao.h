@@ -74,7 +74,9 @@ class toWannier90_LCAO : public toWannier90
                      const bool& out_wannier_eig,
                      const bool& out_wannier_wvfn_formatted,
                      const std::string& nnkpfile,
-                     const std::string& wannier_spin);
+                     const std::string& wannier_spin,
+                     const LCAO_Orbitals& orb
+                     );
     ~toWannier90_LCAO();
 
     void calculate(const ModuleBase::matrix& ekb,
@@ -99,6 +101,8 @@ class toWannier90_LCAO : public toWannier90
     const int mesh_r = 1001; // unit is a.u.
     const double dr = 0.01;
     std::vector<std::vector<Numerical_Orbital_Lm>> A_orbs;
+
+    const LCAO_Orbitals& orb_;
 
     // Use default element orbital information
     int orb_r_ntype = 0;

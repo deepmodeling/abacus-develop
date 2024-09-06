@@ -78,6 +78,9 @@ class ESolver_KS_LCAO : public ESolver_KS<TK> {
 
     TwoCenterBundle two_center_bundle_;
 
+    // temporary introduced during removing GlobalC::ORB
+    LCAO_Orbitals& orb_;
+
     // Temporarily store the stress to unify the interface with PW,
     // because it's hard to seperate force and stress calculation in LCAO.
     // The copy costs memory and time !

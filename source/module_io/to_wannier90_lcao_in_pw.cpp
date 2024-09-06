@@ -118,7 +118,6 @@ psi::Psi<std::complex<double>>* toWannier90_LCAO_IN_PW::get_unk_from_lcao(
 
     // Orbital projection to plane wave
     ModuleBase::realArray table_local(GlobalC::ucell.ntype, GlobalC::ucell.nmax_total, GlobalV::NQX);
-    //Wavefunc_in_pw::make_table_q(GlobalC::ORB.orbital_file, table_local);
 
     for (int ik = 0; ik < num_kpts; ik++)
     {
@@ -217,7 +216,8 @@ void toWannier90_LCAO_IN_PW::nao_G_expansion(
     int npwx = wfcpw->npwk_max;
     this->psi_init_->proj_ao_onkG(ik);
     std::weak_ptr<psi::Psi<std::complex<double>>> psig = this->psi_init_->share_psig();
-    if(psig.expired()) ModuleBase::WARNING_QUIT("toWannier90_LCAO_IN_PW::nao_G_expansion", "psig is expired");
+    if(psig.expired()) { ModuleBase::WARNING_QUIT("toWannier90_LCAO_IN_PW::nao_G_expansion", "psig is expired");
+}
     int nbands = GlobalV::NLOCAL;
     int nbasis = npwx*GlobalV::NPOL;
     for (int ib = 0; ib < nbands; ib++)
@@ -242,7 +242,8 @@ void toWannier90_LCAO_IN_PW::get_lcao_wfc_global_ik(
     int global_row_index = 0;
     for (int ib = 0; ib < GlobalV::NBANDS; ib++)
     {
-        if (exclude_bands.count(ib)) continue;
+        if (exclude_bands.count(ib)) { continue;
+}
         count_b++;
 
         int ic = this->ParaV->global2local_col(ib);
