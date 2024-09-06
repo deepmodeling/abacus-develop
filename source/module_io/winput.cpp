@@ -79,7 +79,7 @@ winput::~winput()
 void winput::Init(const std::string& fn)
 {
     Default();
-    if (GlobalV::test_winput)
+    if (PARAM.inp.test_winput)
         ModuleBase::TITLE("winput", "Init");
     //==========================================
     // First readin and check value in root cpu
@@ -448,7 +448,7 @@ void winput::Read(const std::string& fn)
 
 void winput::Default()
 {
-    if (GlobalV::test_winput)
+    if (PARAM.inp.test_winput)
         ModuleBase::TITLE("winput", "Default");
     //========================
     //	part1 : control
@@ -557,7 +557,7 @@ void winput::Default()
 
 void winput::Check()
 {
-    if (GlobalV::test_winput)
+    if (PARAM.inp.test_winput)
         ModuleBase::TITLE("winput", "Check");
 
     if (GlobalV::MY_RANK != 0)
@@ -741,7 +741,7 @@ void winput::Check()
 
 void winput::Print(const std::string& fn)
 {
-    if (GlobalV::test_winput)
+    if (PARAM.inp.test_winput)
         ModuleBase::TITLE("winput", "Print");
 
     if (GlobalV::MY_RANK != 0)
@@ -841,7 +841,7 @@ void winput::Print(const std::string& fn)
 #ifdef __MPI
 void winput::Bcast()
 {
-    if (GlobalV::test_winput)
+    if (PARAM.inp.test_winput)
         ModuleBase::TITLE("winput", "Bcast");
 
     Parallel_Common::bcast_string(target);

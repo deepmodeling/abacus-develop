@@ -567,5 +567,6 @@ struct Input_para
     bool test_force = false;      ///< test the force.
     bool test_stress = false;     ///< test the stress.
     bool test_skip_ewald = false; ///< variables for test only
+    bool test_winput = false;     ///< variables for test_winput only
 };
 #endif
