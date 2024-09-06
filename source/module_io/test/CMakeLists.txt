@@ -31,7 +31,7 @@ add_test(NAME read_exit_file_test_para_4
 
 AddTest(
   TARGET io_winput_test
-  LIBS ${math_libs} base device
+  LIBS ${math_libs} base device parameter
   SOURCES winput_test.cpp ../winput.cpp
 )
 
