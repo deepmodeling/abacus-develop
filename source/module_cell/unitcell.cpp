@@ -1096,7 +1096,7 @@ void UnitCell::set_iat2iwt(const int& npol_in) {
 // Demand : atoms[].msh
 //======================
 void UnitCell::cal_meshx() {
-    if (GlobalV::test_pseudo_cell) {
+    if (PARAM.inp.test_pseudo_cell) {
         ModuleBase::TITLE("UnitCell", "cal_meshx");
 }
     this->meshx = 0;
@@ -1117,7 +1117,7 @@ void UnitCell::cal_meshx() {
 // 			atoms[].na
 //=========================
 void UnitCell::cal_natomwfc(std::ofstream& log) {
-    if (GlobalV::test_pseudo_cell) {
+    if (PARAM.inp.test_pseudo_cell) {
         ModuleBase::TITLE("UnitCell", "cal_natomwfc");
 }
 

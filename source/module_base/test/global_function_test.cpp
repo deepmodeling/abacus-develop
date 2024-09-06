@@ -699,7 +699,7 @@ TEST_F(GlobalFunctionTest,TEST_LEVEL)
     name="init_read";
     ModuleBase::GlobalFunc::TEST_LEVEL(name,test_bool);
 #ifndef __EPM
-        EXPECT_EQ(GlobalV::test_pseudo_cell,1);
+        EXPECT_EQ(PARAM.input.test_pseudo_cell,1);
 #else
         EXPECT_EQ(test_epm_unitcell,1);
 #endif

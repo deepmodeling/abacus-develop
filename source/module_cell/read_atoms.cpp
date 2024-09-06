@@ -77,7 +77,7 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
                     }
                 }
 
-                if(GlobalV::test_pseudo_cell==2) 
+                if(PARAM.inp.test_pseudo_cell==2) 
                 {
                     ofs_running << "\n" << std::setw(6) << atom_label[i] 
                             << std::setw(12) << atom_mass[i] 
@@ -1052,7 +1052,7 @@ void UnitCell::print_tau() const {
 /*
 int UnitCell::find_type(const std::string &label)
 {
-    if(GlobalV::test_pseudo_cell) ModuleBase::TITLE("UnitCell","find_type");
+    if(PARAM.inp.test_pseudo_cell) ModuleBase::TITLE("UnitCell","find_type");
     assert(ntype>0);
     for(int it=0;it<ntype;it++)
     {

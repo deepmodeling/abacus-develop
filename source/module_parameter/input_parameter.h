@@ -573,5 +573,6 @@ struct Input_para
     bool test_charge = false; ///< variables for test_vloc only
     bool test_energy = false; ///< variables for test_energy only
     bool test_gridt = false;  ///< variables for test_gridt only
+    bool test_pseudo_cell = false; ///< variables for test_pseudo_cell only
 };
 #endif

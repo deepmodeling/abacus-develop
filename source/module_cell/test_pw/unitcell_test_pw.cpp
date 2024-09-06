@@ -59,7 +59,7 @@ if(GlobalV::MY_RANK==0)
 	ucell->ntype = 2;
 	ucell->atoms = new Atom[ucell->ntype];
 	ucell->set_atom_flag = true;
-	GlobalV::test_pseudo_cell = 2;
+	PARAM.input.test_pseudo_cell = 2;
 	EXPECT_NO_THROW(ucell->read_atom_species(ifa,ofs_running));
 	EXPECT_DOUBLE_EQ(ucell->latvec.e11,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e22,4.27957);
@@ -87,7 +87,7 @@ if(GlobalV::MY_RANK==0)
 	ucell->ntype = 2;
 	ucell->atoms = new Atom[ucell->ntype];
 	ucell->set_atom_flag = true;
-	GlobalV::test_pseudo_cell = 2;
+	PARAM.input.test_pseudo_cell = 2;
 	PARAM.input.basis_type = "pw";
 	//call read_atom_species
 	EXPECT_NO_THROW(ucell->read_atom_species(ifa,ofs_running));
