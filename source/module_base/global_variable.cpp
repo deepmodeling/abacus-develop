@@ -119,7 +119,6 @@ std::ofstream ofs_device; // output device info
 
 
 int test_charge = 0;
-int test_potential = 0;
 int test_energy = 0;
 //----------------------------------------------------------
 // module_hamilt_lcao/hamilt_lcaodft
