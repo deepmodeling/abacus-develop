@@ -163,7 +163,6 @@ extern int test_charge;
 // src_onscaling
 //==========================================================
 extern int test_grid;
-extern int test_grid_driver;
 extern int test_gridt;  // mohan add 2011-03-17
 //==========================================================
 // src_pseudo

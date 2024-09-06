@@ -682,6 +682,7 @@ add_subdirectory(source)
 
 target_link_libraries(
   ${ABACUS_BIN_NAME}
+  parameter
   base
   cell
   symmetry
@@ -705,7 +706,6 @@ target_link_libraries(
   psi_initializer
   esolver
   vdw
-  parameter
   device
   container)
 if(ENABLE_LCAO)

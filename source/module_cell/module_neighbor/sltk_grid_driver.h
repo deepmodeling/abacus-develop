@@ -41,7 +41,6 @@ public:
 	//==========================================================
 	Grid_Driver(
 		const int &test_d_in, 
-		const int &test_gd_in, 
 		const int &test_grid_in);
 
 	~Grid_Driver();
@@ -89,7 +88,6 @@ private:
 	mutable AdjacentAtomInfo adj_info;
 
 	const int test_deconstructor;//caoyu reconst 2021-05-24
-	const int test_grid_driver;	//caoyu reconst 2021-05-24
 
 	//==========================================================
 	// MEMBER FUNCTIONS :

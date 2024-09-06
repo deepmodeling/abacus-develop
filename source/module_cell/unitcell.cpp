@@ -28,6 +28,8 @@
 #endif
 
 UnitCell::UnitCell() {
+    std::cout<<&PARAM<<std::endl;
+    std::cout<<PARAM.inp.test_unitcell<<std::endl;
     if (PARAM.inp.test_unitcell) {
         ModuleBase::TITLE("unitcell", "Constructor");
 }
@@ -88,7 +90,7 @@ UnitCell::~UnitCell() {
 #include "module_base/parallel_common.h"
 #ifdef __MPI
 void UnitCell::bcast_unitcell() {
-    if (PARAM.inp.test_unitcell) {
+    if (test_unitcell) {
         ModuleBase::TITLE("UnitCell", "bcast_unitcell");
 }
     Parallel_Common::bcast_string(Coordinate);
@@ -195,7 +197,7 @@ void UnitCell::print_cell(std::ofstream& ofs) const {
 /*
 void UnitCell::print_cell_xyz(const std::string& fn) const
 {
-    if (PARAM.inp.test_unitcell)
+    if (test_unitcell)
         ModuleBase::TITLE("UnitCell", "print_cell_xyz");
 
     if (GlobalV::MY_RANK != 0)
