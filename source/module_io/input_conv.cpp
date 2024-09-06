@@ -561,16 +561,7 @@ void Input_Conv::Convert()
     GlobalV::out_app_flag = PARAM.inp.out_app_flag;
 
 #ifdef __LCAO
-    hsolver::HSolverLCAO<double>::out_mat_hs = PARAM.inp.out_mat_hs;
-    hsolver::HSolverLCAO<double>::out_mat_hsR = PARAM.inp.out_mat_hs2; // LiuXh add 2019-07-16
-    hsolver::HSolverLCAO<double>::out_mat_t = PARAM.inp.out_mat_t;
-    // hsolver::HSolverLCAO<double>::out_mat_dh = PARAM.inp.out_mat_dh;
 
-    hsolver::HSolverLCAO<std::complex<double>>::out_mat_hs = PARAM.inp.out_mat_hs;
-    hsolver::HSolverLCAO<std::complex<double>>::out_mat_hsR = PARAM.inp.out_mat_hs2; // LiuXh add 2019-07-16
-    hsolver::HSolverLCAO<std::complex<double>>::out_mat_t = PARAM.inp.out_mat_t;
-    
-    // hsolver::HSolverLCAO<std::complex<double>>::out_mat_dh = PARAM.inp.out_mat_dh;
     if (GlobalV::GAMMA_ONLY_LOCAL)
     {
         elecstate::ElecStateLCAO<double>::out_wfc_lcao = PARAM.inp.out_wfc_lcao;
