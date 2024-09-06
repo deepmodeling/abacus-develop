@@ -1,8 +1,10 @@
 #include "LCAO_deepks_test.h"
-
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 namespace Test_Deepks
 {
-Grid_Driver GridD(GlobalV::test_deconstructor, GlobalV::test_grid_driver, GlobalV::test_grid);
+Grid_Driver GridD(GlobalV::test_deconstructor, PARAM.input.test_grid_driver, GlobalV::test_grid);
 }
 
 test_deepks::test_deepks()

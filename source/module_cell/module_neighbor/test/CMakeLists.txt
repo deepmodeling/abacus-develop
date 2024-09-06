@@ -1,10 +1,12 @@
 remove_definitions(-D__DEEPKS)
 remove_definitions(-D__CUDA)
+#include "module_parameter/parameter.h"
 remove_definitions(-D__ROCM)
 remove_definitions(-D__EXX)
 
 AddTest(
   TARGET cell_neighbor_sltk_adjacent_set
+  LIBS parameter
   SOURCES sltk_adjacent_set_test.cpp ../sltk_adjacent_set.cpp
 )
 

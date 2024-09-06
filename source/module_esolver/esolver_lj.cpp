@@ -1,5 +1,5 @@
 #include "esolver_lj.h"
-
+#include "module_parameter/parameter.h"
 #include "module_cell/module_neighbor/sltk_atom_arrange.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_io/output_log.h"
@@ -32,7 +32,7 @@ namespace ModuleESolver
 
     void ESolver_LJ::runner(const int istep, UnitCell& ucell)
     {
-        Grid_Driver grid_neigh(GlobalV::test_deconstructor, GlobalV::test_grid_driver, GlobalV::test_grid);
+        Grid_Driver grid_neigh(GlobalV::test_deconstructor, PARAM.inp.test_grid_driver, GlobalV::test_grid);
         atom_arrange::search(
             PARAM.inp.search_pbc,
             GlobalV::ofs_running,

@@ -1,4 +1,5 @@
 #include "sltk_grid_driver.h"
+#include "module_parameter/parameter.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_base/timer.h"
@@ -9,7 +10,7 @@
 
 namespace GlobalC
 {
-Grid_Driver GridD(GlobalV::test_deconstructor, GlobalV::test_grid_driver, GlobalV::test_grid);
+Grid_Driver GridD(GlobalV::test_deconstructor, PARAM.inp.test_grid_driver, GlobalV::test_grid);
 }
 
 Grid_Driver::Grid_Driver(
