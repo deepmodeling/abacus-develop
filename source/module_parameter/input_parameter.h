@@ -576,5 +576,7 @@ struct Input_para
     bool test_pw = false;         ///< variables for test_pw only
     int test_wf = 0;         ///< variables for test_wf only
     bool test_charge = false; ///< variables for test_vloc only
+    bool test_energy = false; ///< variables for test_energy only
+    bool test_grid_driver = false; ///< variables for test_grid_driver only
 };
 #endif
