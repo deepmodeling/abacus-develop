@@ -227,7 +227,8 @@ namespace ModuleESolver
     // add by jghan for rdmft calculation
     if( GlobalV::CALCULATION == "rdmft" || true )
     {
-        rdmft_solver.init( this->UHM.GG, this->UHM.GK, this->orb_con.ParaV, ucell, this->kv, *(this->pelec->charge) );
+        rdmft_solver.init( this->UHM.GG, this->UHM.GK, this->orb_con.ParaV, ucell, this->kv, *(this->pelec),
+                                GlobalV::DFT_FUNCTIONAL, GlobalV::rdmft_power_alpha);
 
         // the initialization and necessary calculations of these quantities have been completed in init()
         // rdmft_solver.update_ion(ucell, LM, *(this->pw_rho), GlobalC::ppcell.vloc, this->sf.strucFac, this->LOC);
@@ -936,7 +937,7 @@ namespace ModuleESolver
     // GlobalC::ppcell.vloc(ModuleBase::matrix vloc), 
     // esolver_fp.h(Structure_Factor sf), structure_factor.h(ModuleBase::ComplexMatrix strucFac), this->sf.strucFac
     // elecstate::DensityMatrix<TK, double>&  *( dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM() )
-
+    // elecstate.h (Potential* pot, this->pelec->pot)
 
     //initialize the gradients of Etotal on wg and wfc, and set all elements to 0. 
     ModuleBase::matrix E_gradient_occNum(this->pelec->wg.nr, this->pelec->wg.nc, true);
@@ -975,6 +976,7 @@ namespace ModuleESolver
             &LM,
             LM.ParaV,
             occ_number,
+            this->pelec->wg,
             wfc_rdmft,
             E_gradient_occNum,
             E_gradient_wfc,
@@ -985,8 +987,8 @@ namespace ModuleESolver
             *(this->pw_rho),
             GlobalC::ppcell.vloc,
             this->sf.strucFac,
-            "power",
-            0.5
+            "HF",
+            1.0
         );
     }
     // multi-k calculation
@@ -996,6 +998,7 @@ namespace ModuleESolver
             &LM,
             LM.ParaV,
             occ_number,
+            this->pelec->wg,
             *(this->psi),
             E_gradient_occNum,
             E_gradient_wfc,
@@ -1006,20 +1009,61 @@ namespace ModuleESolver
             *(this->pw_rho),
             GlobalC::ppcell.vloc,
             this->sf.strucFac,
-            "power",
-            0.5
+            "HF",
+            1.0
         );
     }
 
-    // ModuleBase::TITLE("RDMFT", "E & Egradient");
-    // ModuleBase::timer::tick("RDMFT", "E & Egradient");
+        // GlobalV::ofs_running << "E_one_elec " 
+        //     << std::setw(10)  << pelec->f_en.deband + pelec->f_en.eband << std::endl;
+        // GlobalV::ofs_running << "E_Hartree " 
+        //     << std::setw(10) << pelec->f_en.hartree_energy << std::endl;
+        // GlobalV::ofs_running << "E_xc " 
+        //     << std::setw(10) << pelec->f_en.etxc - pelec->f_en.etxcc<< std::endl;
+
+    double E_xc_KS = this->pelec->f_en.etxc - this->pelec->f_en.etxcc;
+
+    double E_TV_Hartree_EXX = this->pelec->f_en.deband + this->pelec->f_en.eband 
+                                + this->pelec->f_en.hartree_energy + this->pelec->f_en.exx;
+    double E_TV_Hartree_XC = this->pelec->f_en.deband + this->pelec->f_en.eband 
+                                + this->pelec->f_en.hartree_energy + this->pelec->f_en.etxc - this->pelec->f_en.etxcc;
+    std::cout << std::fixed << std::setprecision(10) << "\n\n******\nE(one_elec + Hartree + EXX) by KS-DFT:  " << E_TV_Hartree_EXX
+                << "\n\nE(one_elec + Hartree + XC) by KS-DFT:  " << E_TV_Hartree_XC << "\nExc_KS:         " << E_xc_KS << "\n******\n\n" << std::endl;
+
+    ModuleBase::TITLE("RDMFT", "E & Egradient");
+    ModuleBase::timer::tick("RDMFT", "E & Egradient");
 
     // // test class rdmft
     // rdmft_solver.update_elec(occ_number, *(this->psi));
     // this->Run_rdmft(E_gradient_occNum, E_gradient_wfc);
     // std::cout << "\nrdmft_solver: " << "0.0000" << std::endl;
 
-    // ModuleBase::timer::tick("RDMFT", "E & Egradient");
+    // double minus = 0.0;
+
+    // // delete in the future
+    // std::cout << "\n\n occ_number(ik, inband): " << std::endl;
+    // for(int ik=0; ik < occ_number.nr; ++ik)
+    // {
+    //     for(int inb=0; inb < occ_number.nc; ++inb) std::cout << occ_number(ik, inb) << " ";
+    //     std::cout << "\n" << std::endl;
+    // }
+
+    // std::cout << "\n\n wg(ik, inband): " << std::endl;
+    // for(int ik=0; ik < occ_number.nr; ++ik)
+    // {
+    //     for(int inb=0; inb < occ_number.nc; ++inb)
+    //     {
+    //         std::cout << this->pelec->wg(ik, inb) << " ";
+    //         minus += this->pelec->wg(ik, inb) - occ_number(ik, inb)*this->kv.wk[ik];
+    //     }
+    //     std::cout << "\n" << std::endl;
+    // }
+
+    // if( std::abs(minus) < 1e-12 ) std::cout << "\n\nminus<1e-12, minus: " << minus << std::endl;
+    // else if( std::abs(minus) < 1e-16 ) std::cout << "\n\nminus<1e-16, minus: " << minus << std::endl;
+    // else {std::cout << "\n\nminus is big, minus: " << minus << std::endl;}
+
+    ModuleBase::timer::tick("RDMFT", "E & Egradient");
 
     /******** test RDMFT *********/
 

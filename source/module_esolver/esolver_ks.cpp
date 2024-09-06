@@ -23,6 +23,9 @@
 #include "module_base/parallel_common.h"
 #endif
 
+// test by jghan
+#include "module_rdmft/rdmft_tools.h"
+
 namespace ModuleESolver
 {
 
@@ -381,33 +384,34 @@ namespace ModuleESolver
                 auto iterstart = std::chrono::system_clock::now();
 #endif
                 
-                ModuleBase::TITLE("RDMFT", "E & Egradient");
-                ModuleBase::timer::tick("RDMFT", "E & Egradient");
-                if( iter==2 ) // ( iter>=2 && GlobalV::CALCULATION == "rdmft" && ModuleESolver::determine_type() == "ksdft_lcao" )
-                {
-                    if( iter==2 )
-                    {
-                        ModuleBase::matrix occ_number_ks(this->pelec->wg);
-                        for(int ik=0; ik < occ_number_ks.nr; ++ik)
-                        {
-                            for(int inb=0; inb < occ_number_ks.nc; ++inb) occ_number_ks(ik, inb) /= this->kv.wk[ik];
-                        }
-                        this->update_elec_rdmft(occ_number_ks, *(this->psi));
-                    }
-                    else
-                    {
-                        // this should update occ_number and wfc in another way when iter>2
-                        // this->update_elec_rdmft(occ_number, wfc);
-                    }
+                // ModuleBase::TITLE("RDMFT", "E & Egradient");
+                // ModuleBase::timer::tick("RDMFT", "E & Egradient");
+                // if( iter==2 ) // ( iter>=2 && GlobalV::CALCULATION == "rdmft" && ModuleESolver::determine_type() == "ksdft_lcao" )
+                // {
+                //     std::cout << "\n\n\n******\ndo rdmft_esolver.update_elec() successfully\n******\n\n\n" << std::endl;
+                //     if( iter==2 )
+                //     {
+                //         ModuleBase::matrix occ_number_ks(this->pelec->wg);
+                //         for(int ik=0; ik < occ_number_ks.nr; ++ik)
+                //         {
+                //             for(int inb=0; inb < occ_number_ks.nc; ++inb) occ_number_ks(ik, inb) /= this->kv.wk[ik];
+                //         }
+                //         this->update_elec_rdmft(occ_number_ks, *(this->psi));
+                //     }
+                //     else
+                //     {
+                //         // this should update occ_number and wfc in another way when iter>2
+                //         // this->update_elec_rdmft(occ_number, wfc);
+                //     }
 
-                    // do rdmft calculation
-                    ModuleBase::matrix E_gradient_occNum(this->pelec->wg.nr, this->pelec->wg.nc, true);
-                    psi::Psi<T> E_gradient_wfc(this->psi->get_nk(), this->psi->get_nbands(), this->psi->get_nbasis()); 
-                    double Etotal = this->Run_rdmft(E_gradient_occNum, E_gradient_wfc);   // add by jghan 2024-03-16
+                //     // do rdmft calculation
+                //     ModuleBase::matrix E_gradient_occNum(this->pelec->wg.nr, this->pelec->wg.nc, true);
+                //     psi::Psi<T> E_gradient_wfc(this->psi->get_nk(), this->psi->get_nbands(), this->psi->get_nbasis()); 
+                //     double Etotal = this->Run_rdmft(E_gradient_occNum, E_gradient_wfc);   // add by jghan 2024-03-16
     
-                    // continue;
-                }
-                ModuleBase::timer::tick("RDMFT", "E & Egradient");
+                //     // continue;
+                // }
+                // ModuleBase::timer::tick("RDMFT", "E & Egradient");
 
 
                 double diag_ethr = this->phsol->set_diagethr(istep, iter, drho);
@@ -491,10 +495,61 @@ namespace ModuleESolver
                     SCF print: G1    -3.435545e+03  0.000000e+00   3.607e-01  2.862e-01
                 */
                 printiter(iter, drho, duration, diag_ethr);
+
+                // // test by jghan for rdmft
+                // if(GlobalV::dm_obj_type == "rdmft" && iter==2 && !GlobalC::exx_info.info_global.cal_exx)
+                // {
+                //     this->conv_elec = true;
+                // }
+
                 if (this->conv_elec)
                 {
                     this->niter = iter;
                     bool stop = this->do_after_converge(iter);
+                    
+                    // bool stop = false;
+                    // if( GlobalV::dm_obj_type != "rdmft" || GlobalC::exx_info.info_global.cal_exx )
+                    // {
+                    //     bool stop = this->do_after_converge(iter);
+                    // }
+
+                    // add by jghan 2024-04-08
+                    // to get the initial values of wfc and occ_numbers
+                    if( GlobalV::dm_obj_type == "rdmft" || 1)
+                    // if( GlobalV::dm_obj_type == "rdmft" || (GlobalV::ESOLVER_TYPE == "dm" && GlobalV::DFT_FUNCTIONAL == "hf") || (GlobalV::ESOLVER_TYPE == "dm" && GlobalV::DFT_FUNCTIONAL == "pbe0") )
+                    {
+                        ModuleBase::matrix occ_number_ks(this->pelec->wg);
+                        for(int ik=0; ik < occ_number_ks.nr; ++ik)
+                        {
+                            for(int inb=0; inb < occ_number_ks.nc; ++inb) occ_number_ks(ik, inb) /= this->kv.wk[ik];
+                        }
+                        this->update_elec_rdmft(occ_number_ks, *(this->psi));
+
+                        std::cout << "\n\n\n******\nget the initial values of wfc and occ_numbers successfully\n******\n\n\n" << std::endl;
+
+                        // // just test
+                        // ModuleBase::matrix E_gradient_occNum(this->pelec->wg.nr, this->pelec->wg.nc, true);
+                        // psi::Psi<T> E_gradient_wfc(this->psi->get_nk(), this->psi->get_nbands(), this->psi->get_nbasis()); 
+                        // double E_RDMFT = this->Run_rdmft(E_gradient_occNum, E_gradient_wfc);
+
+                        // // delete in the future
+                        // std::cout << "\n\n occ_number(ik, inband): " << std::endl;
+                        // for(int ik=0; ik < occ_number_ks.nr; ++ik)
+                        // {
+                        //     for(int inb=0; inb < occ_number_ks.nc; ++inb) std::cout << occ_number_ks(ik, inb) << " ";
+                        //     std::cout << "\n" << std::endl;
+                        // }
+
+                        // std::cout << "\n\n wg(ik, inband): " << std::endl;
+                        // for(int ik=0; ik < occ_number_ks.nr; ++ik)
+                        // {
+                        //     for(int inb=0; inb < occ_number_ks.nc; ++inb) std::cout << this->pelec->wg(ik, inb) << " ";
+                        //     std::cout << "\n" << std::endl;
+                        // }
+
+                        break;
+                    }
+
                     if(stop) break;
                 }
             }

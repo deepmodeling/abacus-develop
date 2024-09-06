@@ -324,8 +324,11 @@ void ESolver_KS_LCAO<TK, TR>::beforescf(int istep)
     this->p_hamilt->non_first_scf = istep;
 
     // update in ion-step
-    // necessary operation of these parameters have be done with p_esolver->Init() in source/driver_run.cpp
-    rdmft_solver.update_ion(GlobalC::ucell, LM, *(this->pw_rho), GlobalC::ppcell.vloc, this->sf.strucFac, this->LOC);   // add by jghan, 2024-03-16
+    if( GlobalV::dm_obj_type == "rdmft" )
+    {
+        // necessary operation of these parameters have be done with p_esolver->Init() in source/driver_run.cpp
+        rdmft_solver.update_ion(GlobalC::ucell, LM, *(this->pw_rho), GlobalC::ppcell.vloc, this->sf.strucFac, this->LOC);   // add by jghan, 2024-03-16
+    }
 
     ModuleBase::timer::tick("ESolver_KS_LCAO", "beforescf");
     return;
