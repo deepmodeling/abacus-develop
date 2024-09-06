@@ -154,7 +154,6 @@ extern std::ofstream ofs_device;
 //==========================================================
 // EXPLAIN : test level for each class
 //==========================================================
-extern int test_atom;
 extern int test_unitcell;
 extern int test_symmetry;
 
@@ -167,7 +166,6 @@ extern int test_energy;
 //==========================================================
 // src_onscaling
 //==========================================================
-extern int test_atom_input;
 extern int test_grid;
 extern int test_grid_driver;
 extern int test_overlap;

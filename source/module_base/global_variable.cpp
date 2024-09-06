@@ -116,7 +116,6 @@ std::ofstream ofs_device; // output device info
 //----------------------------------------------------------
 // EXPLAIN : test level for each class
 //----------------------------------------------------------
-int test_atom = 0;
 int test_unitcell = 0;
 int test_symmetry = 0;
 
@@ -129,7 +128,6 @@ int test_energy = 0;
 //----------------------------------------------------------
 // module_hamilt_lcao/hamilt_lcaodft
 //----------------------------------------------------------
-int test_atom_input = 0;
 int test_grid = 0;        // 4 now
 int test_grid_driver = 0; // 4 now
 int test_overlap = 0;
