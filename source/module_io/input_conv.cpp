@@ -300,7 +300,6 @@ void Input_Conv::Convert()
 
     GlobalV::PW_DIAG_THR = PARAM.inp.pw_diag_thr;
     GlobalV::NB2D = PARAM.inp.nb2d;
-    GlobalV::TEST_FORCE = PARAM.inp.test_force;
     GlobalV::TEST_STRESS = PARAM.inp.test_stress;
 
     //----------------------------------------------------------
