@@ -22,6 +22,7 @@ class Output_Mat_Sparse
         const Parallel_Orbitals& pv,
         Gint_k& gint_k, // mohan add 2024-04-01
         const TwoCenterBundle& two_center_bundle,
+        const LCAO_Orbitals& orb,
         Grid_Driver& grid, // mohan add 2024-04-06
         const K_Vectors& kv,
         hamilt::Hamilt<T>* p_ham);
@@ -46,6 +47,8 @@ class Output_Mat_Sparse
     const ModuleBase::matrix& _v_eff;
 
     const Parallel_Orbitals& _pv;
+
+    const LCAO_Orbitals& orb_;
 
     Gint_k& _gint_k; // mohan add 2024-04-01
 

@@ -1,5 +1,8 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include "memory"
 #include "module_base/mathzone.h"
 #include "module_base/global_variable.h"
@@ -85,7 +88,7 @@ if(GlobalV::MY_RANK==0)
 	ucell->atoms = new Atom[ucell->ntype];
 	ucell->set_atom_flag = true;
 	GlobalV::test_pseudo_cell = 2;
-	GlobalV::BASIS_TYPE = "pw";
+	PARAM.input.basis_type = "pw";
 	//call read_atom_species
 	EXPECT_NO_THROW(ucell->read_atom_species(ifa,ofs_running));
 	EXPECT_DOUBLE_EQ(ucell->latvec.e11,4.27957);

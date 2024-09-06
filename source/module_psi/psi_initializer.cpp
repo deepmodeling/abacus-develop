@@ -5,7 +5,7 @@
 #include "module_base/timer.h"
 // three global variables definition
 #include "module_base/global_variable.h"
-
+#include "module_parameter/parameter.h"
 template<typename T, typename Device>
 psi::Psi<std::complex<double>>* psi_initializer<T, Device>::allocate(bool only_psig)
 {
@@ -83,7 +83,7 @@ psi::Psi<std::complex<double>>* psi_initializer<T, Device>::allocate(bool only_p
             }
         }
     }
-	int nkpts_actual = (GlobalV::CALCULATION == "nscf" && this->mem_saver_ == 1)? 1 : this->pw_wfc_->nks;
+	int nkpts_actual = (PARAM.inp.calculation == "nscf" && this->mem_saver_ == 1)? 1 : this->pw_wfc_->nks;
     int nbasis_actual = this->pw_wfc_->npwk_max * GlobalV::NPOL;
     psi::Psi<std::complex<double>>* psi_out = nullptr;
     if(!only_psig)
@@ -156,7 +156,8 @@ void psi_initializer<T, Device>::random_t(T* psi, const int iw_start, const int 
                     
                 for(int ir=0; ir < nxy; ir++)
                 {
-                    if(this->pw_wfc_->fftixy2ip[ir] < 0) continue;
+                    if(this->pw_wfc_->fftixy2ip[ir] < 0) { continue;
+}
                     if(GlobalV::RANK_IN_POOL==0)
                     {
                         for(int iz=0; iz<nz; iz++)

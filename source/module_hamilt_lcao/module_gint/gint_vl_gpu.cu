@@ -29,7 +29,11 @@ void gint_vl_gpu(hamilt::HContainer<double>* hRGint,
                  double* pvpR,
                  const bool is_gamma_only)
 {
-    int dev_id = base_device::information::set_device_by_rank();
+#ifdef __MPI
+    const int dev_id = base_device::information::set_device_by_rank();
+#else
+    const int dev_id = 0;
+#endif
     // checkCuda(cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync));
     const int nbzp = gridt.nbzp;
     const int num_streams = gridt.nstreams;

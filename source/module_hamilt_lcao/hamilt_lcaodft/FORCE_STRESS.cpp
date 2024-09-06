@@ -6,6 +6,7 @@
 #include "module_io/output_log.h"
 // new
 #include "module_base/timer.h"
+#include "module_parameter/parameter.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_elecstate/potentials/efield.h"           // liuyu add 2022-05-18
 #include "module_elecstate/potentials/gatefield.h"        // liuyu add 2022-09-13
@@ -193,7 +194,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
 
     //! forces from E-field
     ModuleBase::matrix fefield;
-    if (GlobalV::EFIELD_FLAG && isforce)
+    if (PARAM.inp.efield_flag && isforce)
     {
         fefield.create(nat, 3);
         elecstate::Efield::compute_force(GlobalC::ucell, fefield);
@@ -201,7 +202,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
 
     //! atomic forces from E-field of rt-TDDFT
     ModuleBase::matrix fefield_tddft;
-    if (GlobalV::ESOLVER_TYPE == "TDDFT" && isforce)
+    if (PARAM.inp.esolver_type == "TDDFT" && isforce)
     {
         fefield_tddft.create(nat, 3);
         elecstate::Efield::compute_force(GlobalC::ucell, fefield_tddft);
@@ -209,7 +210,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
 
     //! atomic forces from gate field
     ModuleBase::matrix fgate;
-    if (GlobalV::GATE_FLAG && isforce)
+    if (PARAM.inp.gate_flag && isforce)
     {
         fgate.create(nat, 3);
         elecstate::Gatefield::compute_force(GlobalC::ucell, fgate);
@@ -337,17 +338,17 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
                     fcs(iat, i) += force_vdw(iat, i);
                 }
                 // E-field force
-                if (GlobalV::EFIELD_FLAG)
+                if (PARAM.inp.efield_flag)
                 {
                     fcs(iat, i) += fefield(iat, i);
                 }
                 // E-field force of tddft
-                if (GlobalV::ESOLVER_TYPE == "TDDFT")
+                if (PARAM.inp.esolver_type == "TDDFT")
                 {
                     fcs(iat, i) += fefield_tddft(iat, i);
                 }
                 // Gate field force
-                if (GlobalV::GATE_FLAG)
+                if (PARAM.inp.gate_flag)
                 {
                     fcs(iat, i) += fgate(iat, i);
                 }
@@ -367,7 +368,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
                 sum += fcs(iat, i);
             }
 
-            if (!(GlobalV::GATE_FLAG || GlobalV::EFIELD_FLAG))
+            if (!(PARAM.inp.gate_flag || PARAM.inp.efield_flag))
             {
                 for (int iat = 0; iat < nat; ++iat)
                 {
@@ -383,7 +384,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
             }
         }
 
-        if (GlobalV::GATE_FLAG || GlobalV::EFIELD_FLAG)
+        if (PARAM.inp.gate_flag || PARAM.inp.efield_flag)
         {
             GlobalV::ofs_running << "Atomic forces are not shifted if gate_flag or efield_flag == true!" << std::endl;
         }
@@ -507,17 +508,17 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
             //-------------------------------
             // put extra force here for test!
             //-------------------------------
-            if (GlobalV::EFIELD_FLAG)
+            if (PARAM.inp.efield_flag)
             {
                 ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "EFIELD     FORCE", fefield, false);
                 // this->print_force("EFIELD     FORCE",fefield,1,ry);
             }
-            if (GlobalV::ESOLVER_TYPE == "TDDFT")
+            if (PARAM.inp.esolver_type == "TDDFT")
             {
                 ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "EFIELD_TDDFT     FORCE", fefield_tddft, false);
                 // this->print_force("EFIELD_TDDFT     FORCE",fefield_tddft,1,ry);
             }
-            if (GlobalV::GATE_FLAG)
+            if (PARAM.inp.gate_flag)
             {
                 ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "GATEFIELD     FORCE", fgate, false);
                 // this->print_force("GATEFIELD     FORCE",fgate,1,ry);

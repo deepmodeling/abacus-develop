@@ -1,5 +1,6 @@
 #include "exx_abfs-construct_orbs.h"
 
+#include "module_parameter/parameter.h"
 #include "ABFs_Construct-PCA.h"
 #include "module_base/gram_schmidt_orth-inl.h"
 #include "module_base/gram_schmidt_orth.h"
@@ -39,7 +40,7 @@ std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> Exx_Abfs::Construct_
 //					orb_origin.getDk() / kmesh_times,
 					orb_origin.getDruniform(),
 					false,
-					true, GlobalV::CAL_FORCE);
+					true, PARAM.inp.cal_force);
 			}
 		}
 	}
@@ -416,7 +417,7 @@ std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> Exx_Abfs::Construct_
 //					orb_info.getDk() / kmesh_times,
 					orb_info.getDruniform(),
 					false,
-					true, GlobalV::CAL_FORCE);
+					true, PARAM.inp.cal_force);
 			}
 		}
 	}

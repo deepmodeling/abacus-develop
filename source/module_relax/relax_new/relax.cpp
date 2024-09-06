@@ -45,7 +45,8 @@ void Relax::init_relax(const int nat_in)
 
     //set if we are allowing lattice vectors to move
     if_cell_moves = false;
-    if(GlobalV::CALCULATION == "cell-relax") if_cell_moves = true;
+    if(PARAM.inp.calculation == "cell-relax") { if_cell_moves = true;
+}
 }
 
 bool Relax::relax_step(const ModuleBase::matrix& force, const ModuleBase::matrix &stress, const double etot_in)
@@ -53,10 +54,12 @@ bool Relax::relax_step(const ModuleBase::matrix& force, const ModuleBase::matrix
     ModuleBase::TITLE("Relax","relax_step");
 
     etot = etot_in * ModuleBase::Ry_to_eV; //convert to eV
-    if( istep == 0 ) etot_p = etot;
+    if( istep == 0 ) { etot_p = etot;
+}
 
     bool relax_done = this->setup_gradient(force, stress);
-    if(relax_done) return relax_done;
+    if(relax_done) { return relax_done;
+}
 
     this->calculate_gamma();
 
@@ -84,7 +87,8 @@ bool Relax::setup_gradient(const ModuleBase::matrix& force, const ModuleBase::ma
     ModuleBase::TITLE("Relax","setup_gradient");
 
     //if not relax, then return converged
-    if( !( GlobalV::CALCULATION == "relax" || GlobalV::CALCULATION == "cell-relax" ) ) return true;
+    if( !( PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax" ) ) { return true;
+}
 
     //indicating whether force & stress are converged
     bool force_converged = true;
@@ -107,24 +111,28 @@ bool Relax::setup_gradient(const ModuleBase::matrix& force, const ModuleBase::ma
 			if(atom->mbl[ia].x == 1)
 			{
 				grad_ion(iat, 0) = force_eva(iat, 0);
-                if( std::abs(force_eva(iat,0)) > max_grad) max_grad = std::abs(force_eva(iat,0));
+                if( std::abs(force_eva(iat,0)) > max_grad) { max_grad = std::abs(force_eva(iat,0));
+}
 			}
 			if(atom->mbl[ia].y == 1)
 			{
 				grad_ion(iat, 1) = force_eva(iat, 1);
-                if( std::abs(force_eva(iat,1)) > max_grad) max_grad = std::abs(force_eva(iat,1));
+                if( std::abs(force_eva(iat,1)) > max_grad) { max_grad = std::abs(force_eva(iat,1));
+}
 			}
 			if(atom->mbl[ia].z == 1)
 			{
 				grad_ion(iat, 2) = force_eva(iat, 2);
-                if( std::abs(force_eva(iat,2)) > max_grad) max_grad = std::abs(force_eva(iat,2));
+                if( std::abs(force_eva(iat,2)) > max_grad) { max_grad = std::abs(force_eva(iat,2));
+}
 			}
 			++iat;
 		}
 	}
     assert(iat==nat);
 
-    if(max_grad > force_thr_eva) force_converged = false;
+    if(max_grad > force_thr_eva) { force_converged = false;
+}
 	if(GlobalV::OUT_LEVEL=="ie")
 	{
         std::cout << " ETOT DIFF (eV)       : " << etot - etot_p << std::endl;
@@ -201,7 +209,8 @@ bool Relax::setup_gradient(const ModuleBase::matrix& force, const ModuleBase::ma
             for (int j = 0; j < 3; j++)
             {
                 double grad = grad_cell(i,j) / (GlobalC::ucell.omega * ModuleBase::Ry_to_eV);
-                if ( largest_grad < std::abs(grad) ) largest_grad = std::abs(grad);
+                if ( largest_grad < std::abs(grad) ) { largest_grad = std::abs(grad);
+}
             }
         }
 
@@ -339,7 +348,8 @@ void Relax::perform_line_search()
 void Relax::new_direction()
 {
     ModuleBase::TITLE("Relax","new_direction");
-    if(cg_step != 0) step_size += 0.2 * step_size * (dmovel - 1.0);
+    if(cg_step != 0) { step_size += 0.2 * step_size * (dmovel - 1.0);
+}
 
     //set GAMMA to zero if line minimization was not sufficient
     if(5.0*std::abs(gr_sr)*gamma>std::abs(gr_gr))
@@ -430,7 +440,8 @@ void Relax::move_cell_ions(const bool is_new_dir)
     // I'm keeping this only because we have to
     // be compatible with old code
     GlobalC::ucell.ionic_position_updated = true;
-    if(if_cell_moves) GlobalC::ucell.cell_parameter_updated = true;
+    if(if_cell_moves) { GlobalC::ucell.cell_parameter_updated = true;
+}
 
     // Depending on whether this is a first step along CG new direction
     // or a line search step, the treatment is slightly different
@@ -490,7 +501,8 @@ void Relax::move_cell_ions(const bool is_new_dir)
         // different from when the current CG step starts;
         // as a result, we need to save latvec at the beginning of
         // each CG step
-        if(is_new_dir) latvec_save = GlobalC::ucell.latvec;
+        if(is_new_dir) { latvec_save = GlobalC::ucell.latvec;
+}
 
         ModuleBase::Matrix3 move_cell = latvec_save * sr_dr_cell;
 
@@ -559,8 +571,9 @@ void Relax::move_cell_ions(const bool is_new_dir)
         }
     }
 
-    if (ModuleSymmetry::Symmetry::symm_flag && GlobalC::ucell.symm.all_mbl && GlobalC::ucell.symm.nrotk > 0)
+    if (ModuleSymmetry::Symmetry::symm_flag && GlobalC::ucell.symm.all_mbl && GlobalC::ucell.symm.nrotk > 0) {
         GlobalC::ucell.symm.symmetrize_vec3_nat(move_ion);
+}
 
 	GlobalC::ucell.update_pos_taud(move_ion);
 

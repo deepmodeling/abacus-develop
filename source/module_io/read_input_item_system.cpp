@@ -65,12 +65,6 @@ void ReadInput::item_system()
         item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.calculation = strvalue;
             std::string& calculation = para.input.calculation;
-            para.sys.global_calculation = calculation;
-            if (calculation == "nscf" || calculation == "get_S")
-            {
-                // Maybe it should be modified.
-                para.sys.global_calculation = "nscf";
-            }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             const std::string& calculation = para.input.calculation;

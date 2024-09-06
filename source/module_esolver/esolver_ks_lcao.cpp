@@ -63,7 +63,7 @@ namespace ModuleESolver
 //! mohan add 2024-05-11
 //------------------------------------------------------------------------------
 template <typename TK, typename TR>
-ESolver_KS_LCAO<TK, TR>::ESolver_KS_LCAO()
+ESolver_KS_LCAO<TK, TR>::ESolver_KS_LCAO(): orb_(GlobalC::ORB)
 {
     this->classname = "ESolver_KS_LCAO";
     this->basisname = "LCAO";
@@ -120,7 +120,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
     ModuleBase::timer::tick("ESolver_KS_LCAO", "before_all_runners");
 
     // 1) calculate overlap matrix S
-    if (GlobalV::CALCULATION == "get_S")
+    if (PARAM.inp.calculation == "get_S")
     {
         // 1.1) read pseudopotentials
         ucell.read_pseudo(GlobalV::ofs_running);
@@ -181,7 +181,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
         ->init_DM(&this->kv, &(this->pv), GlobalV::NSPIN);
 
     // this function should be removed outside of the function
-    if (GlobalV::CALCULATION == "get_S")
+    if (PARAM.inp.calculation == "get_S")
     {
         ModuleBase::timer::tick("ESolver_KS_LCAO", "init");
         return;
@@ -195,9 +195,9 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
 #ifdef __EXX
     // 7) initialize exx
     // PLEASE simplify the Exx_Global interface
-    if (GlobalV::CALCULATION == "scf" || GlobalV::CALCULATION == "relax"
-        || GlobalV::CALCULATION == "cell-relax"
-        || GlobalV::CALCULATION == "md")
+    if (PARAM.inp.calculation == "scf" || PARAM.inp.calculation == "relax"
+        || PARAM.inp.calculation == "cell-relax"
+        || PARAM.inp.calculation == "md")
     {
         if (GlobalC::exx_info.info_global.cal_exx)
         {
@@ -240,7 +240,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
         // load the DeePKS model from deep neural network
         GlobalC::ld.load_model(PARAM.inp.deepks_model);
         // read pdm from file for NSCF or SCF-restart, do it only once in whole calculation
-        GlobalC::ld.read_projected_DM((GlobalV::init_chg == "file"), GlobalV::deepks_equiv, *GlobalC::ORB.Alpha);
+        GlobalC::ld.read_projected_DM((GlobalV::init_chg == "file"), GlobalV::deepks_equiv, *orb_.Alpha);
     }
 #endif
 
@@ -299,7 +299,7 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(ModuleBase::matrix& force)
 
     Force_Stress_LCAO<TK> fsl(this->RA, GlobalC::ucell.nat);
 
-    fsl.getForceStress(GlobalV::CAL_FORCE,
+    fsl.getForceStress(PARAM.inp.cal_force,
                        GlobalV::CAL_STRESS,
                        PARAM.inp.test_force,
                        PARAM.inp.test_stress,
@@ -398,7 +398,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners()
         GlobalV::ofs_running << "\n\n\n\n";
     }
     // qianrui modify 2020-10-18
-    if (GlobalV::CALCULATION == "scf" || GlobalV::CALCULATION == "md" || GlobalV::CALCULATION == "relax")
+    if (PARAM.inp.calculation == "scf" || PARAM.inp.calculation == "md" || PARAM.inp.calculation == "relax")
     {
         ModuleIO::write_istate_info(this->pelec->ekb, this->pelec->wg, this->kv, &(GlobalC::Pkpoints));
     }
@@ -808,13 +808,13 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
     // 1) print Hamiltonian and Overlap matrix
     if (this->conv_elec || iter == GlobalV::SCF_NMAX)
     {
-        if (!GlobalV::GAMMA_ONLY_LOCAL && (hsolver::HSolverLCAO<TK>::out_mat_hs[0] || GlobalV::deepks_v_delta))
+        if (!GlobalV::GAMMA_ONLY_LOCAL && (PARAM.inp.out_mat_hs[0] || GlobalV::deepks_v_delta))
         {
             this->GK.renew(true);
         }
         for (int ik = 0; ik < this->kv.get_nks(); ++ik)
         {
-            if (hsolver::HSolverLCAO<TK>::out_mat_hs[0]|| GlobalV::deepks_v_delta)
+            if (PARAM.inp.out_mat_hs[0]|| GlobalV::deepks_v_delta)
             {
                 this->p_hamilt->updateHk(ik);
             }
@@ -828,15 +828,15 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
 
                 this->p_hamilt->matrix(h_mat, s_mat);
 
-                if (hsolver::HSolverLCAO<TK>::out_mat_hs[0])
+                if (PARAM.inp.out_mat_hs[0])
                 {
                     ModuleIO::save_mat(istep,
                                        h_mat.p,
                                        GlobalV::NLOCAL,
                                        bit,
-                                       hsolver::HSolverLCAO<TK>::out_mat_hs[1],
+                                       PARAM.inp.out_mat_hs[1],
                                        1,
-                                       GlobalV::out_app_flag,
+                                       PARAM.inp.out_app_flag,
                                        "H",
                                        "data-" + std::to_string(ik),
                                        this->pv,
@@ -845,9 +845,9 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
                                        s_mat.p,
                                        GlobalV::NLOCAL,
                                        bit,
-                                       hsolver::HSolverLCAO<TK>::out_mat_hs[1],
+                                       PARAM.inp.out_mat_hs[1],
                                        1,
-                                       GlobalV::out_app_flag,
+                                       PARAM.inp.out_app_flag,
                                        "S",
                                        "data-" + std::to_string(ik),
                                        this->pv,
@@ -1109,7 +1109,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
                         this->pv,
                         PARAM.inp.out_dm1,
                         false,
-                        GlobalV::out_app_flag,
+                        PARAM.inp.out_app_flag,
                         istep);
 
     // 3) write density matrix
@@ -1153,7 +1153,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
                           this->pelec->ekb,
                           this->pelec->klist->kvec_d,
                           GlobalC::ucell,
-                          GlobalC::ORB,
+                          orb_,
                           GlobalC::GridD,
                           &(this->pv),
                           *(this->psi),
@@ -1214,7 +1214,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
     }
 
     // 14) write md related
-    if (!md_skip_out(GlobalV::CALCULATION, istep, PARAM.inp.out_interval))
+    if (!md_skip_out(PARAM.inp.calculation, istep, PARAM.inp.out_interval))
     {
         this->create_Output_Mat_Sparse(istep).write();
         // mulliken charge analysis
@@ -1234,7 +1234,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
     }
 
     // 16) delete grid
-    if (!GlobalV::CAL_FORCE && !GlobalV::CAL_STRESS)
+    if (!PARAM.inp.cal_force && !GlobalV::CAL_STRESS)
     {
         RA.delete_grid();
     }
@@ -1276,7 +1276,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
                                false,
                                PARAM.inp.out_mat_tk[1],
                                1,
-                               GlobalV::out_app_flag,
+                               PARAM.inp.out_app_flag,
                                "T",
                                "data-" + std::to_string(ik),
                                this->pv,

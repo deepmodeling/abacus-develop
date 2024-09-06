@@ -1,5 +1,6 @@
 #include "../xc_functional.h"
 #include "gtest/gtest.h"
+#include "xctest.h"
 #include "../exx_info.h"
 #include "xc3_mock.h"
 #include "module_base/matrix.h"
@@ -15,7 +16,7 @@
 // v_xc_libxc, called by v_xc, when we use functionals from LIBXC
 // v_xc_meta, unified interface of mGGA functionals
 
-class XCTest_VXC : public testing::Test
+class XCTest_VXC : public XCTest
 {
     protected:
     
@@ -113,7 +114,7 @@ TEST_F(XCTest_VXC, set_xc_type)
 
 }
 
-class XCTest_VXC_Libxc : public testing::Test
+class XCTest_VXC_Libxc : public XCTest
 {
     protected:
     
@@ -211,7 +212,7 @@ TEST_F(XCTest_VXC_Libxc, set_xc_type)
 
 }
 
-class XCTest_VXC_meta : public testing::Test
+class XCTest_VXC_meta : public XCTest
 {
     protected:
     

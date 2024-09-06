@@ -2,6 +2,7 @@
 #include <array>
 #include "module_parameter/parameter.h"
 #include "symmetry.h"
+#include "module_parameter/parameter.h"
 #include "module_base/libm/libm.h"
 #include "module_base/mathzone.h"
 #include "module_base/constants.h"
@@ -177,7 +178,7 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
     // 2. analyze the symmetry
     // --------------------------------
     // 2.1 skip the symmetry analysis if the symmetry has been analyzed
-    if (GlobalV::CALCULATION == "cell-relax" && nrotk > 0)
+    if (PARAM.inp.calculation == "cell-relax" && nrotk > 0)
     {
         std::ofstream no_out;   // to screen the output when trying new epsilon
 
@@ -328,7 +329,7 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
     this->set_atom_map(atoms); // find the atom mapping according to the symmetry operations
 
     // Do this here for debug
-    if (GlobalV::CALCULATION == "relax")
+    if (PARAM.inp.calculation == "relax")
     {
         this->all_mbl = this->is_all_movable(atoms, st);
         if (!this->all_mbl)

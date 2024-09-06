@@ -21,22 +21,9 @@ namespace GlobalV
 int NBANDS = 0;
 int NLOCAL = 0;        // total number of local basis.
 
-
-double PSEUDORCUT = 0;
-
-std::string CALCULATION = "scf";
-std::string ESOLVER_TYPE = "ksdft";
-int EFIELD_FLAG = 0;      // 5: add electric field
-int DIP_COR_FLAG = 0;     // 7: add dipole field
-bool GATE_FLAG = false;   // add gate field
-bool out_app_flag = true; // whether output r(R), H(R), S(R), T(R), and dH(R) matrices in an
-                          // append manner during MD  liuyu 2023-03-20
-std::string DFT_FUNCTIONAL = "default";
 int NSPIN = 1;       // LDA
 bool TWO_EFERMI = false; // two fermi energy, exist only magnetization is fixed.
 double nupdown = 0.0;
-int CURRENT_K = 0;
-int CAL_FORCE = 0; // if cal_force >1, means do the grid integration 'cal_force' times.
 double FORCE_THR = 1.0e-3;
 bool CAL_STRESS = false;
 double PRESSURE = 0.0;
@@ -49,8 +36,6 @@ int SCF_NMAX = 100;
 bool use_paw = false;
 bool use_uspp = false;
 bool double_grid = false;
-
-std::string BASIS_TYPE = "pw"; // xiaohui add 2013-09-01
 std::string KS_SOLVER = "cg";  // xiaohui add 2013-09-01
 double SEARCH_RADIUS = -1.0;
 

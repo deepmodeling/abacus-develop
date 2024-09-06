@@ -1,6 +1,8 @@
 #include "LCAO_deepks_test.h"
 #include "module_base/global_variable.h"
-
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 void test_deepks::preparation()
 {
     this->count_ntype();
@@ -19,14 +21,14 @@ void test_deepks::preparation()
 
 void test_deepks::set_parameters()
 {
-    GlobalV::BASIS_TYPE = "lcao";
+    PARAM.input.basis_type = "lcao";
     // GlobalV::global_pseudo_type= "auto";
-    GlobalV::PSEUDORCUT = 15.0;
+    PARAM.input.pseudo_rcut = 15.0;
     GlobalV::global_out_dir = "./";
     GlobalV::ofs_warning.open("warning.log");
     GlobalV::ofs_running.open("running.log");
     GlobalV::deepks_setorb = true;
-    GlobalV::CAL_FORCE = 1;
+    PARAM.input.cal_force = 1;
 
     std::ifstream ifs("INPUT");
     char word[80];
@@ -161,7 +163,7 @@ void test_deepks::set_orbs(const double& lat0_in)
                            lcao_rmax,
                            GlobalV::deepks_setorb,
                            out_mat_r,
-                           GlobalV::CAL_FORCE,
+                           PARAM.input.cal_force,
                            my_rank);
 
         ucell.infoNL.setupNonlocal(ucell.ntype, ucell.atoms, GlobalV::ofs_running, ORB);

@@ -1,4 +1,5 @@
 #include "hsolver_lrtd.h"
+#include "module_parameter/parameter.h"
 #include "module_hsolver/diago_david.h"
 #include "module_hsolver/diago_dav_subspace.h"
 #include "module_hsolver/diago_cg.h"
@@ -61,7 +62,7 @@ namespace LR
                 const int ntry_max = 5;
                 // In non-self consistent calculation, do until totally converged. Else allow 5 eigenvecs to be NOT
                 // converged.
-                const int notconv_max = ("nscf" == GlobalV::CALCULATION) ? 0 : 5;
+                const int notconv_max = ("nscf" == PARAM.inp.calculation) ? 0 : 5;
                 // do diag and add davidson iteration counts up to avg_iter
 
                 auto hpsi_func = [pHamilt](

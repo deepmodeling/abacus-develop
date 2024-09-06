@@ -1,5 +1,5 @@
 #include "read_pp.h"
-
+#include "module_parameter/parameter.h"
 
 void Pseudopot_upf::complete_default(Atom_pseudo& pp)
 {
@@ -93,7 +93,7 @@ void Pseudopot_upf::complete_default_atom(Atom_pseudo& pp)
 	// mohan 2009-12-15
 	// mohan update again 2011-05-23, 
 	// in order to calculate more accurate Vna.
-	pp.rcut = GlobalV::PSEUDORCUT;//(a.u.);
+	pp.rcut = PARAM.inp.pseudo_rcut;//(a.u.);
 	
 	// remember to update here if you need it.
 	//	rcut = 25.0; 

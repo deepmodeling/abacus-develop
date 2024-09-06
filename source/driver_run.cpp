@@ -32,7 +32,7 @@ void Driver::driver_run() {
 
     // this warning should not be here, mohan 2024-05-22
 #ifndef __LCAO
-    if (GlobalV::BASIS_TYPE == "lcao_in_pw" || GlobalV::BASIS_TYPE == "lcao") {
+    if (PARAM.inp.basis_type == "lcao_in_pw" || PARAM.inp.basis_type == "lcao") {
         ModuleBase::WARNING_QUIT("driver",
                                  "to use LCAO basis, compile with __LCAO");
     }
@@ -55,7 +55,7 @@ void Driver::driver_run() {
     Json::gen_stru_wrapper(&GlobalC::ucell);
 #endif
 
-    const std::string cal_type = GlobalV::CALCULATION;
+    const std::string cal_type = PARAM.inp.calculation;
 
     //! 4: different types of calculations
     if (cal_type == "md")

@@ -46,7 +46,7 @@ void ESolver_KS_LCAO<std::complex<double>, double>::get_S(void)
     // (1) Find adjacent atoms for each atom.
     GlobalV::SEARCH_RADIUS = atom_arrange::set_sr_NL(GlobalV::ofs_running,
                                                      GlobalV::OUT_LEVEL,
-                                                     GlobalC::ORB.get_rcutmax_Phi(),
+                                                     orb_.get_rcutmax_Phi(),
                                                      GlobalC::ucell.infoNL.get_rcutmax_Beta(),
                                                      GlobalV::GAMMA_ONLY_LOCAL);
 
@@ -86,7 +86,7 @@ void ESolver_KS_LCAO<std::complex<double>, std::complex<double>>::get_S(void)
     // (1) Find adjacent atoms for each atom.
     GlobalV::SEARCH_RADIUS = atom_arrange::set_sr_NL(GlobalV::ofs_running,
                                                      GlobalV::OUT_LEVEL,
-                                                     GlobalC::ORB.get_rcutmax_Phi(),
+                                                     orb_.get_rcutmax_Phi(),
                                                      GlobalC::ucell.infoNL.get_rcutmax_Beta(),
                                                      GlobalV::GAMMA_ONLY_LOCAL);
 

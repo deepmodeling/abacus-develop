@@ -239,7 +239,7 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
         }
         for (int ik = 0; ik < kv.get_nks(); ++ik)
         {
-            if (hsolver::HSolverLCAO<std::complex<double>>::out_mat_hs[0])
+            if (PARAM.inp.out_mat_hs[0])
             {
                 this->p_hamilt->updateHk(ik);
             }
@@ -250,15 +250,15 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
             {
                 hamilt::MatrixBlock<complex<double>> h_mat, s_mat;
                 this->p_hamilt->matrix(h_mat, s_mat);
-                if (hsolver::HSolverLCAO<std::complex<double>>::out_mat_hs[0])
+                if (PARAM.inp.out_mat_hs[0])
                 {
                     ModuleIO::save_mat(istep,
                         h_mat.p,
                         GlobalV::NLOCAL,
                         bit,
-                        hsolver::HSolverLCAO<std::complex<double>>::out_mat_hs[1],
+                        PARAM.inp.out_mat_hs[1],
                         1,
-                        GlobalV::out_app_flag,
+                        PARAM.inp.out_app_flag,
                         "H",
                         "data-" + std::to_string(ik),
                         this->pv,
@@ -268,9 +268,9 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
                         s_mat.p,
                         GlobalV::NLOCAL,
                         bit,
-                        hsolver::HSolverLCAO<std::complex<double>>::out_mat_hs[1],
+                        PARAM.inp.out_mat_hs[1],
                         1,
-                        GlobalV::out_app_flag,
+                        PARAM.inp.out_app_flag,
                         "S",
                         "data-" + std::to_string(ik),
                         this->pv,

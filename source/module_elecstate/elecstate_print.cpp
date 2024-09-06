@@ -1,5 +1,6 @@
 #include "elecstate.h"
 #include "elecstate_getters.h"
+#include "module_parameter/parameter.h"
 #include "module_base/formatter.h"
 #include "module_base/global_variable.h"
 #include "module_elecstate/potentials/H_Hartree_pw.h"
@@ -308,7 +309,7 @@ void ElecState::print_etot(const bool converged,
 
     GlobalV::ofs_running << "\n Density error is " << scf_thr << std::endl;
 
-    if (GlobalV::BASIS_TYPE == "pw") {
+    if (PARAM.inp.basis_type == "pw") {
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Error Threshold", pw_diag_thr); // xiaohui add 2013-09-02
 }
 
@@ -358,12 +359,12 @@ void ElecState::print_etot(const bool converged,
             titles.push_back("E_sol_cav");
             energies_Ry.push_back(this->f_en.esol_cav);
         }
-        if (GlobalV::EFIELD_FLAG)
+        if (PARAM.inp.efield_flag)
         {
             titles.push_back("E_efield");
             energies_Ry.push_back(elecstate::Efield::etotefield);
         }
-        if (GlobalV::GATE_FLAG)
+        if (PARAM.inp.gate_flag)
         {
             titles.push_back("E_gatefield");
             energies_Ry.push_back(elecstate::Gatefield::etotgatefield);

@@ -54,7 +54,7 @@ template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::others(const int istep) {
     ModuleBase::TITLE("ESolver_KS_PW", "others");
 
-    const std::string cal_type = GlobalV::CALCULATION;
+    const std::string cal_type = PARAM.inp.calculation;
 
     if (cal_type == "test_memory") {
         Cal_Test::test_memory(this->pw_rho,

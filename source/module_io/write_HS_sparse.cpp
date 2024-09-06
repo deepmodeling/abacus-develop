@@ -1,5 +1,6 @@
 #include "write_HS_sparse.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
 #include "module_hamilt_lcao/module_tddft/td_velocity.h"
@@ -117,7 +118,7 @@ void ModuleIO::save_HSR_sparse(const int& istep,
 
     std::stringstream ssh[2];
     std::stringstream sss;
-    if (GlobalV::CALCULATION == "md" && !GlobalV::out_app_flag) {
+    if (PARAM.inp.calculation == "md" && !PARAM.inp.out_app_flag) {
         ssh[0] << GlobalV::global_matrix_dir << step << "_" << HR_filename_up;
         ssh[1] << GlobalV::global_matrix_dir << step << "_" << HR_filename_down;
         sss << GlobalV::global_matrix_dir << step << "_" << SR_filename;
@@ -132,7 +133,7 @@ void ModuleIO::save_HSR_sparse(const int& istep,
     if (GlobalV::DRANK == 0) {
         if (binary) {
             for (int ispin = 0; ispin < spin_loop; ++ispin) {
-                if (GlobalV::CALCULATION == "md" && GlobalV::out_app_flag
+                if (PARAM.inp.calculation == "md" && PARAM.inp.out_app_flag
                     && step) {
                     g1[ispin].open(ssh[ispin].str().c_str(),
                                    std::ios::binary | std::ios::app);
@@ -146,7 +147,7 @@ void ModuleIO::save_HSR_sparse(const int& istep,
                                 sizeof(int));
             }
 
-            if (GlobalV::CALCULATION == "md" && GlobalV::out_app_flag && step) {
+            if (PARAM.inp.calculation == "md" && PARAM.inp.out_app_flag && step) {
                 g2.open(sss.str().c_str(), std::ios::binary | std::ios::app);
             } else {
                 g2.open(sss.str().c_str(), std::ios::binary);
@@ -156,7 +157,7 @@ void ModuleIO::save_HSR_sparse(const int& istep,
             g2.write(reinterpret_cast<char*>(&output_R_number), sizeof(int));
         } else {
             for (int ispin = 0; ispin < spin_loop; ++ispin) {
-                if (GlobalV::CALCULATION == "md" && GlobalV::out_app_flag
+                if (PARAM.inp.calculation == "md" && PARAM.inp.out_app_flag
                     && step) {
                     g1[ispin].open(ssh[ispin].str().c_str(), std::ios::app);
                 } else {
@@ -169,7 +170,7 @@ void ModuleIO::save_HSR_sparse(const int& istep,
                           << std::endl;
             }
 
-            if (GlobalV::CALCULATION == "md" && GlobalV::out_app_flag && step) {
+            if (PARAM.inp.calculation == "md" && PARAM.inp.out_app_flag && step) {
                 g2.open(sss.str().c_str(), std::ios::app);
             } else {
                 g2.open(sss.str().c_str());
@@ -425,7 +426,7 @@ void ModuleIO::save_dH_sparse(const int& istep,
     std::stringstream sshx[2];
     std::stringstream sshy[2];
     std::stringstream sshz[2];
-    if (GlobalV::CALCULATION == "md" && !GlobalV::out_app_flag) {
+    if (PARAM.inp.calculation == "md" && !PARAM.inp.out_app_flag) {
         sshx[0] << GlobalV::global_matrix_dir << step << "_"
                 << "data-dHRx-sparse_SPIN0.csr";
         sshx[1] << GlobalV::global_matrix_dir << step << "_"
@@ -453,7 +454,7 @@ void ModuleIO::save_dH_sparse(const int& istep,
     if (GlobalV::DRANK == 0) {
         if (binary) {
             for (int ispin = 0; ispin < spin_loop; ++ispin) {
-                if (GlobalV::CALCULATION == "md" && GlobalV::out_app_flag
+                if (PARAM.inp.calculation == "md" && PARAM.inp.out_app_flag
                     && step) {
                     g1x[ispin].open(sshx[ispin].str().c_str(),
                                     std::ios::binary | std::ios::app);
@@ -490,7 +491,7 @@ void ModuleIO::save_dH_sparse(const int& istep,
             }
         } else {
             for (int ispin = 0; ispin < spin_loop; ++ispin) {
-                if (GlobalV::CALCULATION == "md" && GlobalV::out_app_flag
+                if (PARAM.inp.calculation == "md" && PARAM.inp.out_app_flag
                     && step) {
                     g1x[ispin].open(sshx[ispin].str().c_str(), std::ios::app);
                     g1y[ispin].open(sshy[ispin].str().c_str(), std::ios::app);
@@ -713,7 +714,7 @@ void ModuleIO::save_sparse(
     std::ofstream ofs;
     if (!reduce || GlobalV::DRANK == 0) {
         if (binary) {
-            if (GlobalV::CALCULATION == "md" && GlobalV::out_app_flag
+            if (PARAM.inp.calculation == "md" && PARAM.inp.out_app_flag
                 && istep) {
                 ofs.open(sss.str().c_str(), std::ios::binary | std::ios::app);
             } else {
@@ -723,7 +724,7 @@ void ModuleIO::save_sparse(
             ofs.write(reinterpret_cast<char*>(&GlobalV::NLOCAL), sizeof(int));
             ofs.write(reinterpret_cast<char*>(&output_R_number), sizeof(int));
         } else {
-            if (GlobalV::CALCULATION == "md" && GlobalV::out_app_flag
+            if (PARAM.inp.calculation == "md" && PARAM.inp.out_app_flag
                 && istep) {
                 ofs.open(sss.str().c_str(), std::ios::app);
             } else {

@@ -39,10 +39,10 @@ void berryphase::get_occupation_bands()
 }
 
 #ifdef __LCAO
-void berryphase::lcao_init(const K_Vectors& kv, const Grid_Technique& grid_tech)
+void berryphase::lcao_init(const K_Vectors& kv, const Grid_Technique& grid_tech, const LCAO_Orbitals& orb)
 {
     ModuleBase::TITLE("berryphase", "lcao_init");
-    lcao_method.init(grid_tech, kv.get_nkstot());
+    lcao_method.init(grid_tech, kv.get_nkstot(), orb);
     lcao_method.cal_R_number();
     lcao_method.cal_orb_overlap();
     return;
@@ -252,7 +252,7 @@ double berryphase::stringPhase(int index_str,
         ik_1 = k_index[index_str][k_start];
         ik_2 = k_index[index_str][k_start + 1];
 
-        if (GlobalV::BASIS_TYPE == "pw")
+        if (PARAM.inp.basis_type == "pw")
         {
             for (int mb = 0; mb < nbands; mb++)
             {
@@ -341,7 +341,7 @@ double berryphase::stringPhase(int index_str,
             // delete[] ipiv;
         }
 #ifdef __LCAO
-        else if (GlobalV::BASIS_TYPE == "lcao")
+        else if (PARAM.inp.basis_type == "lcao")
         {
             if (GlobalV::NSPIN != 4)
             {

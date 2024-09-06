@@ -5,6 +5,8 @@
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
 #include "module_hsolver/hsolver_lcao.h"
 
+#include "module_parameter/parameter.h"
+
 #ifdef __ELPA
 #include "module_hsolver/diago_elpa.h"
 #include "module_hsolver/diago_elpa_native.h"
@@ -16,7 +18,7 @@ template <>
 void OperatorLCAO<double, double>::get_hs_pointers() {
     ModuleBase::timer::tick("OperatorLCAO", "get_hs_pointers");
     this->hmatrix_k = this->hsk->get_hk();
-    if ((this->new_e_iteration && ik == 0) || hsolver::HSolverLCAO<double>::out_mat_hs[0])
+    if ((this->new_e_iteration && ik == 0) || PARAM.inp.out_mat_hs[0])
     {
         if (this->smatrix_k == nullptr)
         {

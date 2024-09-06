@@ -8,7 +8,7 @@ remove_definitions(-D_OPENMP)
 
 AddTest(
   TARGET charge_mpi_test
-  LIBS ${math_libs} psi base device planewave
+  LIBS ${math_libs} psi base device planewave parameter
   SOURCES charge_mpi_test.cpp ../module_charge/charge_mpi.cpp
 )
 

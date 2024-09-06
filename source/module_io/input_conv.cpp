@@ -163,7 +163,6 @@ void Input_Conv::Convert()
 {
     ModuleBase::TITLE("Input_Conv", "Convert");
     ModuleBase::timer::tick("Input_Conv", "Convert");
-    GlobalV::CALCULATION = PARAM.globalv.global_calculation;
     GlobalV::double_grid = PARAM.globalv.double_grid;
     //-----------------------------------------------
     // set read_file_dir
@@ -245,15 +244,9 @@ void Input_Conv::Convert()
             \n Please recompile with cmake flag \"-DENABLE_FLOAT_FFTW=ON\".\n");
 #endif // __ENABLE_FLOAT_FFTW
     }
-    GlobalV::CALCULATION = PARAM.inp.calculation;
-    GlobalV::ESOLVER_TYPE = PARAM.inp.esolver_type;
 
-    GlobalV::PSEUDORCUT = PARAM.inp.pseudo_rcut;
-
-    GlobalV::DFT_FUNCTIONAL = PARAM.inp.dft_functional;
     GlobalV::NSPIN = PARAM.inp.nspin;
 
-    GlobalV::CAL_FORCE = PARAM.inp.cal_force;
     GlobalV::FORCE_THR = PARAM.inp.force_thr;
 
 #ifdef __LCAO
@@ -283,7 +276,6 @@ void Input_Conv::Convert()
 
     ModuleSymmetry::Symmetry::symm_flag = std::stoi(PARAM.inp.symmetry);
     ModuleSymmetry::Symmetry::symm_autoclose = PARAM.inp.symmetry_autoclose;
-    GlobalV::BASIS_TYPE = PARAM.inp.basis_type;
     GlobalV::KS_SOLVER = PARAM.inp.ks_solver;
     GlobalV::SEARCH_RADIUS = PARAM.inp.search_radius;
 
@@ -358,8 +350,6 @@ void Input_Conv::Convert()
     //----------------------------------------------------------
     // Yu Liu add 2022-05-18
     //----------------------------------------------------------
-    GlobalV::EFIELD_FLAG = PARAM.inp.efield_flag;
-    GlobalV::DIP_COR_FLAG = PARAM.inp.dip_cor_flag;
     elecstate::Efield::efield_dir = PARAM.inp.efield_dir;
     elecstate::Efield::efield_pos_max = PARAM.inp.efield_pos_max;
     elecstate::Efield::efield_pos_dec = PARAM.inp.efield_pos_dec;
@@ -368,7 +358,6 @@ void Input_Conv::Convert()
     //----------------------------------------------------------
     // Yu Liu add 2022-09-13
     //----------------------------------------------------------
-    GlobalV::GATE_FLAG = PARAM.inp.gate_flag;
     GlobalV::nelec = PARAM.inp.nelec;
     if (PARAM.globalv.two_fermi)
     {
@@ -556,17 +545,9 @@ void Input_Conv::Convert()
     GlobalV::chg_extrap = PARAM.inp.chg_extrap; // xiaohui modify 2015-02-01
     GlobalV::nelec = PARAM.inp.nelec;
     GlobalV::out_pot = PARAM.inp.out_pot;
-    GlobalV::out_app_flag = PARAM.inp.out_app_flag;
 
 #ifdef __LCAO
-    hsolver::HSolverLCAO<double>::out_mat_hs = PARAM.inp.out_mat_hs;
-    hsolver::HSolverLCAO<double>::out_mat_hsR = PARAM.inp.out_mat_hs2; // LiuXh add 2019-07-16
-    hsolver::HSolverLCAO<double>::out_mat_t = PARAM.inp.out_mat_t;
-    hsolver::HSolverLCAO<double>::out_mat_dh = PARAM.inp.out_mat_dh;
-    hsolver::HSolverLCAO<std::complex<double>>::out_mat_hs = PARAM.inp.out_mat_hs;
-    hsolver::HSolverLCAO<std::complex<double>>::out_mat_hsR = PARAM.inp.out_mat_hs2; // LiuXh add 2019-07-16
-    hsolver::HSolverLCAO<std::complex<double>>::out_mat_t = PARAM.inp.out_mat_t;
-    hsolver::HSolverLCAO<std::complex<double>>::out_mat_dh = PARAM.inp.out_mat_dh;
+
     if (GlobalV::GAMMA_ONLY_LOCAL)
     {
         elecstate::ElecStateLCAO<double>::out_wfc_lcao = PARAM.inp.out_wfc_lcao;
@@ -626,7 +607,7 @@ void Input_Conv::Convert()
         {
             ModuleBase::WARNING_QUIT("Input_conv", "generate deepks unittest with only 1 processor");
         }
-        if (GlobalV::CAL_FORCE != 1)
+        if (PARAM.inp.cal_force != 1)
         {
             ModuleBase::WARNING_QUIT("Input_conv", "force is required in generating deepks unittest");
         }

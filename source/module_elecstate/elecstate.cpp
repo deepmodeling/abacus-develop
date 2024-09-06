@@ -1,6 +1,7 @@
 #include "elecstate.h"
-
+#include "module_parameter/parameter.h"
 #include "module_base/global_variable.h"
+#include "module_parameter/parameter.h"
 #include "module_base/memory.h"
 #include "module_base/parallel_reduce.h"
 #include "module_base/tool_title.h"
@@ -192,7 +193,7 @@ void ElecState::calEBand()
         }
     }
     this->f_en.eband = eband;
-    if (GlobalV::KPAR != 1 && GlobalV::ESOLVER_TYPE != "sdft")
+    if (GlobalV::KPAR != 1 && PARAM.inp.esolver_type != "sdft")
     {
         //==================================
         // Reduce all the Energy in each cpu
@@ -256,7 +257,7 @@ void ElecState::init_ks(Charge* chg_in, // pointer for class Charge
 
 void ElecState::cal_nbands()
 {
-    if (GlobalV::ESOLVER_TYPE == "sdft") // qianrui 2021-2-20
+    if (PARAM.inp.esolver_type == "sdft") // qianrui 2021-2-20
     {
         return;
     }
@@ -282,7 +283,7 @@ void ElecState::cal_nbands()
             const int nbands1 = static_cast<int>(occupied_bands) + 10;
             const int nbands2 = static_cast<int>(1.2 * occupied_bands) + 1;
             GlobalV::NBANDS = std::max(nbands1, nbands2);
-            if (GlobalV::BASIS_TYPE != "pw") {
+            if (PARAM.inp.basis_type != "pw") {
                 GlobalV::NBANDS = std::min(GlobalV::NBANDS, GlobalV::NLOCAL);
             }
         }
@@ -291,7 +292,7 @@ void ElecState::cal_nbands()
             const int nbands3 = GlobalV::nelec + 20;
             const int nbands4 = static_cast<int>(1.2 * GlobalV::nelec) + 1;
             GlobalV::NBANDS = std::max(nbands3, nbands4);
-            if (GlobalV::BASIS_TYPE != "pw") {
+            if (PARAM.inp.basis_type != "pw") {
                 GlobalV::NBANDS = std::min(GlobalV::NBANDS, GlobalV::NLOCAL);
             }
         }
@@ -301,13 +302,13 @@ void ElecState::cal_nbands()
             const int nbands3 = static_cast<int>(max_occ) + 11;
             const int nbands4 = static_cast<int>(1.2 * max_occ) + 1;
             GlobalV::NBANDS = std::max(nbands3, nbands4);
-            if (GlobalV::BASIS_TYPE != "pw") {
+            if (PARAM.inp.basis_type != "pw") {
                 GlobalV::NBANDS = std::min(GlobalV::NBANDS, GlobalV::NLOCAL);
             }
         }
         ModuleBase::GlobalFunc::AUTO_SET("NBANDS", GlobalV::NBANDS);
     }
-    // else if ( GlobalV::CALCULATION=="scf" || GlobalV::CALCULATION=="md" || GlobalV::CALCULATION=="relax") //pengfei
+    // else if ( PARAM.inp.calculation=="scf" || PARAM.inp.calculation=="md" || PARAM.inp.calculation=="relax") //pengfei
     // 2014-10-13
     else
     {
@@ -341,7 +342,7 @@ void ElecState::cal_nbands()
 
     // mohan update 2021-02-19
     // mohan add 2011-01-5
-    if (GlobalV::BASIS_TYPE == "lcao" || GlobalV::BASIS_TYPE == "lcao_in_pw")
+    if (PARAM.inp.basis_type == "lcao" || PARAM.inp.basis_type == "lcao_in_pw")
     {
         if (GlobalV::NBANDS > GlobalV::NLOCAL)
         {

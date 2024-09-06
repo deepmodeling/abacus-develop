@@ -1,5 +1,6 @@
 //==========================================================
 // Author:Xin Qu
+#include "module_parameter/parameter.h"
 // DATE : 2019-12-10
 //==========================================================
 #include "dftu.h"
@@ -82,7 +83,7 @@ void DFTU::force_stress(const elecstate::ElecState* pelec,
 
     const int nlocal = GlobalV::NLOCAL;
 
-    if (GlobalV::CAL_FORCE)
+    if (PARAM.inp.cal_force)
     {
         force_dftu.zero_out();
     }
@@ -137,7 +138,7 @@ void DFTU::force_stress(const elecstate::ElecState* pelec,
 
             delete[] VU;
 
-            if (GlobalV::CAL_FORCE)
+            if (PARAM.inp.cal_force)
             {
                 this->cal_force_gamma(&rho_VU[0], pv, fsr.DSloc_x, fsr.DSloc_y, fsr.DSloc_z, force_dftu);
             }
@@ -203,7 +204,7 @@ void DFTU::force_stress(const elecstate::ElecState* pelec,
 
             delete[] VU;
 
-            if (GlobalV::CAL_FORCE)
+            if (PARAM.inp.cal_force)
             {
                 cal_force_k(fsr, pv, ik, &rho_VU[0], force_dftu, kv.kvec_d);
             }
@@ -214,7 +215,7 @@ void DFTU::force_stress(const elecstate::ElecState* pelec,
         } // ik
     }
 
-    if (GlobalV::CAL_FORCE)
+    if (PARAM.inp.cal_force)
     {
         Parallel_Reduce::reduce_pool(force_dftu.c, force_dftu.nr * force_dftu.nc);
     }

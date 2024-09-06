@@ -1,5 +1,8 @@
 #include "gtest/gtest.h"
 #include "module_base/math_integral.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include <algorithm>
 #include <string>
 #include <vector>
@@ -145,7 +148,7 @@ void NumericalOrbitalLmTest::SetUp() {
     // in agreement with the current code
     flag_sbpool_ = true;
 
-    // GlobalV::CAL_FORCE
+    // PARAM.input.cal_force
     // if true, extra_uniform will compute zty
     force_flag_ = true;
 

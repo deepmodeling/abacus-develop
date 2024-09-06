@@ -3,6 +3,7 @@
 #include "esolver_ks_pw.h"
 #include "esolver_sdft_pw.h"
 #include "module_base/module_device/device.h"
+#include "module_parameter/parameter.h"
 #ifdef __LCAO
 #include "esolver_ks_lcaopw.h"
 #include "esolver_ks_lcao.h"
@@ -30,29 +31,29 @@ void ESolver::printname()
 std::string determine_type()
 {
     std::string esolver_type = "none";
-    if (GlobalV::BASIS_TYPE == "pw")
+    if (PARAM.inp.basis_type == "pw")
     {
-        if (GlobalV::ESOLVER_TYPE == "sdft")
+        if (PARAM.inp.esolver_type == "sdft")
         {
             esolver_type = "sdft_pw";
         }
-        else if (GlobalV::ESOLVER_TYPE == "ofdft")
+        else if (PARAM.inp.esolver_type == "ofdft")
         {
             esolver_type = "ofdft";
         }
-        else if (GlobalV::ESOLVER_TYPE == "ksdft")
+        else if (PARAM.inp.esolver_type == "ksdft")
         {
             esolver_type = "ksdft_pw";
         }
     }
-    else if (GlobalV::BASIS_TYPE == "lcao_in_pw")
+    else if (PARAM.inp.basis_type == "lcao_in_pw")
     {
 #ifdef __LCAO
-		if(GlobalV::ESOLVER_TYPE == "sdft")
+		if(PARAM.inp.esolver_type == "sdft")
 		{
 			esolver_type = "sdft_pw";
 		}
-		else if(GlobalV::ESOLVER_TYPE == "ksdft")
+		else if(PARAM.inp.esolver_type == "ksdft")
 		{
             esolver_type = "ksdft_lip";
 		}
@@ -60,22 +61,22 @@ std::string determine_type()
 		ModuleBase::WARNING_QUIT("ESolver", "Calculation involving numerical orbitals must be compiled with __LCAO");
 #endif
     }
-    else if (GlobalV::BASIS_TYPE == "lcao")
+    else if (PARAM.inp.basis_type == "lcao")
     {
 #ifdef __LCAO
-        if (GlobalV::ESOLVER_TYPE == "tddft")
+        if (PARAM.inp.esolver_type == "tddft")
         {
             esolver_type = "ksdft_lcao_tddft";
         }
-        else if (GlobalV::ESOLVER_TYPE == "ksdft")
+        else if (PARAM.inp.esolver_type == "ksdft")
         {
             esolver_type = "ksdft_lcao";
 		}
-        else if (GlobalV::ESOLVER_TYPE == "ks-lr")
+        else if (PARAM.inp.esolver_type == "ks-lr")
         {
             esolver_type = "ksdft_lr_lcao";
         }
-        else if (GlobalV::ESOLVER_TYPE == "lr")
+        else if (PARAM.inp.esolver_type == "lr")
         {
             esolver_type = "lr_lcao";
         }
@@ -84,11 +85,11 @@ std::string determine_type()
 #endif
     }
 
-    if (GlobalV::ESOLVER_TYPE == "lj")
+    if (PARAM.inp.esolver_type == "lj")
     {
         esolver_type = "lj_pot";
     }
-    else if (GlobalV::ESOLVER_TYPE == "dp")
+    else if (PARAM.inp.esolver_type == "dp")
     {
         esolver_type = "dp_pot";
     }

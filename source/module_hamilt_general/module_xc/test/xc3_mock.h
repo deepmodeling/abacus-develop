@@ -1,6 +1,7 @@
 // I'm mocking FFT here because it is not possible to write
 // unit tests with FFT
 #include <fstream>
+
 namespace ModulePW
 {
     PW_Basis::PW_Basis(){};

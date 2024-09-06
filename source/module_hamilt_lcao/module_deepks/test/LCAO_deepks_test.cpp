@@ -31,9 +31,9 @@ void test_deepks::check_psialpha(void)
     }
     ld.init(ORB, ucell.nat, ucell.ntype, ParaO, na);
 
-    ld.build_psialpha(GlobalV::CAL_FORCE, ucell, ORB, Test_Deepks::GridD, overlap_orb_alpha_);
+    ld.build_psialpha(PARAM.input.cal_force, ucell, ORB, Test_Deepks::GridD, overlap_orb_alpha_);
 
-    ld.check_psialpha(GlobalV::CAL_FORCE, ucell, ORB, Test_Deepks::GridD);
+    ld.check_psialpha(PARAM.input.cal_force, ucell, ORB, Test_Deepks::GridD);
 
     this->compare_with_ref("psialpha.dat", "psialpha_ref.dat");
     this->compare_with_ref("dpsialpha_x.dat", "dpsialpha_x_ref.dat");

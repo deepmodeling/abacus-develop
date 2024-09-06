@@ -154,6 +154,7 @@ AddTest(
 
 AddTest(
   TARGET base_global_file
+  LIBS parameter
   SOURCES global_file_test.cpp ../global_file.cpp ../global_function.cpp ../tool_quit.cpp ../global_variable.cpp ../memory.cpp ../timer.cpp 
 )
 

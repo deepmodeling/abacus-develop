@@ -3,6 +3,7 @@
 #include "charge.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
+#include "module_parameter/parameter.h"
 #include "module_base/libm/libm.h"
 #include "module_base/math_integral.h"
 #include "module_base/math_sphbes.h"
@@ -53,7 +54,7 @@ void Charge::init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMa
                         &(GlobalC::Pgrid),
 #endif
                         GlobalV::MY_RANK,
-                        GlobalV::ESOLVER_TYPE,
+                        PARAM.inp.esolver_type,
                         GlobalV::RANK_IN_STOGROUP,
                         is,
                         GlobalV::ofs_running,
@@ -128,7 +129,7 @@ void Charge::init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMa
                             &(GlobalC::Pgrid),
 #endif
                             GlobalV::MY_RANK,
-                            GlobalV::ESOLVER_TYPE,
+                            PARAM.inp.esolver_type,
                             GlobalV::RANK_IN_STOGROUP,
                             is,
                             GlobalV::ofs_running,

@@ -1,10 +1,12 @@
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include "memory"
 #include "module_base/global_variable.h"
 #include "module_base/mathzone.h"
 #include "module_cell/unitcell.h"
-
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include <valarray>
 #include <vector>
 #ifdef __MPI
@@ -76,11 +78,11 @@ class UcellTest : public ::testing::Test
         ucell = utp.SetUcellInfo();
         GlobalV::LSPINORB = false;
         pp_dir = "./support/";
-        GlobalV::PSEUDORCUT = 15.0;
-        GlobalV::DFT_FUNCTIONAL = "default";
+        PARAM.input.pseudo_rcut = 15.0;
+        PARAM.input.dft_functional = "default";
         GlobalV::test_pseudo_cell = 1;
         GlobalV::NSPIN = 1;
-        GlobalV::BASIS_TYPE = "pw";
+        PARAM.input.basis_type = "pw";
     }
     void TearDown()
     {
