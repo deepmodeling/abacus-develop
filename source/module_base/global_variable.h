@@ -157,7 +157,6 @@ extern std::ofstream ofs_device;
 
 
 extern int test_charge;
-extern int test_energy;
 //==========================================================
 // src_onscaling
 //==========================================================
