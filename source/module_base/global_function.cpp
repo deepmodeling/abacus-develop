@@ -113,15 +113,7 @@ void TEST_LEVEL(const std::string &name, bool disable=true)
 {
     if (disable) return;
 
-    if (name == "none")
-    {
-        GlobalV::test_potential = 0;
-    }
-    else if (name == "init_potential")
-    {
-        GlobalV::test_potential = 1;
-    }
-    else if (name == "init_read")
+    if (name == "init_read")
     {
 #ifndef __EPM
         GlobalV::test_pseudo_cell = 1;
