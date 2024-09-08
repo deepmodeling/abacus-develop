@@ -10,7 +10,7 @@
 
 namespace GlobalC
 {
-Grid_Driver GridD(PARAM.inp.test_deconstructor, GlobalV::test_grid);
+Grid_Driver GridD(PARAM.inp.test_deconstructor, PARAM.inp.test_grid);
 }
 
 Grid_Driver::Grid_Driver(

@@ -1,5 +1,8 @@
 #include "../sltk_atom_input.h"
 
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include <string>
 
 #include "gmock/gmock.h"
@@ -67,7 +70,7 @@ Magnetism::~Magnetism()
 
 void SetGlobalV()
 {
-    GlobalV::test_grid = 0;
+    PARAM.input.test_grid = 0;
 }
 
 class SltkAtomInputTest : public ::testing::Test
@@ -99,7 +102,7 @@ TEST_F(SltkAtomInputTest, Constructor)
     ofs.open("test.out");
     ucell->check_dtau();
     test_atom_in = 2;
-    GlobalV::test_grid = 1;
+    PARAM.input.test_grid = 1;
     Atom_input Atom_inp(ofs, *ucell, ucell->nat, ucell->ntype, pbc, radius, test_atom_in);
     ofs.close();
     ifs.open("test.out");
@@ -220,7 +223,7 @@ TEST_F(SltkAtomInputTest, ConstructorNoExpand)
     ofs.open("test.out");
     ucell->check_dtau();
     test_atom_in = 1;
-    GlobalV::test_grid = 1;
+    PARAM.input.test_grid = 1;
     // this is a bug if radius is too small
     // because the expand_flag will be false!
     radius = 0;
@@ -250,7 +253,7 @@ TEST_F(SltkAtomInputTest, ConstructorSmallSearchRadius)
     ofs.open("test.out");
     ucell->check_dtau();
     test_atom_in = 1;
-    GlobalV::test_grid = 1;
+    PARAM.input.test_grid = 1;
     radius = 0.5;
     Atom_input Atom_inp(ofs, *ucell, ucell->nat, ucell->ntype, pbc, radius, test_atom_in);
     EXPECT_TRUE(Atom_inp.getExpandFlag());

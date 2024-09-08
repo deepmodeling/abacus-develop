@@ -32,7 +32,7 @@ namespace ModuleESolver
 
     void ESolver_LJ::runner(const int istep, UnitCell& ucell)
     {
-        Grid_Driver grid_neigh(PARAM.inp.test_deconstructor, GlobalV::test_grid);
+        Grid_Driver grid_neigh(PARAM.inp.test_deconstructor, PARAM.inp.test_grid);
         atom_arrange::search(
             PARAM.inp.search_pbc,
             GlobalV::ofs_running,
