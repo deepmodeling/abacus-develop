@@ -576,5 +576,6 @@ struct Input_para
     bool test_pseudo_cell = false; ///< variables for test_pseudo_cell only
     int test_pp = 0;          ///< variables for test_pp only
     bool test_relax_method = false; ///< variables for test_relax_method only
+    bool test_deconstructor = false; ///< variables for test_deconstructor only
 };
 #endif

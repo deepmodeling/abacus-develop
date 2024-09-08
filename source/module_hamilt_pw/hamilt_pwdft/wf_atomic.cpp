@@ -1,5 +1,6 @@
 #include "wf_atomic.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_parameter/parameter.h"
 #include "module_base/math_integral.h"
 #include "module_base/math_sphbes.h"
 #include "module_base/math_polyint.h"
@@ -15,7 +16,7 @@ WF_atomic::WF_atomic()
 
 WF_atomic::~WF_atomic()
 {
-	if(GlobalV::test_deconstructor)
+	if(PARAM.inp.test_deconstructor)
 	{
 		std::cout << " ~WF_atomic()" << std::endl;
 	}

@@ -1,5 +1,6 @@
 #include "wavefunc.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/memory.h"
 #include "module_base/timer.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/wavefunc_in_pw.h"
@@ -17,7 +18,7 @@ wavefunc::wavefunc()
 
 wavefunc::~wavefunc()
 {
-	if(GlobalV::test_deconstructor)
+	if(PARAM.inp.test_deconstructor)
 	{
 		std::cout << " ~wavefunc()" << std::endl;
 	}
