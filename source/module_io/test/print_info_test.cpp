@@ -101,7 +101,7 @@ TEST_F(PrintInfoTest, SetupParameters)
 		else
 		{
 			PARAM.sys.gamma_only_local = true;
-			PARAM.input.calculation = cal_type[i];
+      PARAM.input.calculation = cal_type[i];
 			for(int j=0; j<md_types.size(); ++j)
 			{
                 PARAM.input.mdp.md_type = md_types[j];

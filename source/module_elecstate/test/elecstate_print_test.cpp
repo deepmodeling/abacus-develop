@@ -327,6 +327,7 @@ TEST_F(ElecStatePrintTest, PrintEtot2)
     GlobalV::MY_RANK = 0;
     PARAM.input.basis_type = "pw";
     PARAM.input.scf_nmax = 100;
+
     elecstate.print_etot(converged, iter, scf_thr, scf_thr_kin, duration, printe, pw_diag_thr, avg_iter, print);
     GlobalV::ofs_running.close();
     ifs.open("test.dat", std::ios::in);

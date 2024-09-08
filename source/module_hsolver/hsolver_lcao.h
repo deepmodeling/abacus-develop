@@ -19,11 +19,6 @@ class HSolverLCAO
                const std::string method_in,
                const bool skip_charge);
 
-    static std::vector<int> out_mat_hs; // mohan add 2010-09-02
-    static int out_mat_hsR;             // LiuXh add 2019-07-16
-    static int out_mat_t;
-    static int out_mat_dh;
-
   private:
     void hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>& psi, double* eigenvalue);
 
@@ -40,15 +35,6 @@ class HSolverLCAO
 
     std::string method = "none";
 };
-
-template <typename T, typename Device>
-std::vector<int> HSolverLCAO<T, Device>::out_mat_hs = {0, 8};
-template <typename T, typename Device>
-int HSolverLCAO<T, Device>::out_mat_hsR = 0;
-template <typename T, typename Device>
-int HSolverLCAO<T, Device>::out_mat_t = 0;
-template <typename T, typename Device>
-int HSolverLCAO<T, Device>::out_mat_dh = 0;
 
 template <typename T>
 inline T my_conj(T value)

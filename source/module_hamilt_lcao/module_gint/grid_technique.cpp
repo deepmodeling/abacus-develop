@@ -560,8 +560,6 @@ int Grid_Technique::find_offset(const int id1, const int id2, const int iat1, co
 
 void Grid_Technique::init_gpu_gint_variables(const UnitCell& ucell,
                                              const int num_stream) {
-
-    int dev_id = base_device::information::set_device_by_rank();
     if (is_malloced) {
         free_gpu_gint_variables(this->nat);
     }

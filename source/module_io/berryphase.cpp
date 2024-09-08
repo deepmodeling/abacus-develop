@@ -39,10 +39,10 @@ void berryphase::get_occupation_bands()
 }
 
 #ifdef __LCAO
-void berryphase::lcao_init(const K_Vectors& kv, const Grid_Technique& grid_tech)
+void berryphase::lcao_init(const K_Vectors& kv, const Grid_Technique& grid_tech, const LCAO_Orbitals& orb)
 {
     ModuleBase::TITLE("berryphase", "lcao_init");
-    lcao_method.init(grid_tech, kv.get_nkstot());
+    lcao_method.init(grid_tech, kv.get_nkstot(), orb);
     lcao_method.cal_R_number();
     lcao_method.cal_orb_overlap();
     return;

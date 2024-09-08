@@ -52,18 +52,19 @@ namespace ModuleESolver
 template <typename TK, typename TR>
 ModuleIO::Output_Mat_Sparse<TK> ESolver_KS_LCAO<TK, TR>::create_Output_Mat_Sparse(int istep)
 {
-    return ModuleIO::Output_Mat_Sparse<TK>(hsolver::HSolverLCAO<TK>::out_mat_hsR,
-        hsolver::HSolverLCAO<TK>::out_mat_dh,
-        hsolver::HSolverLCAO<TK>::out_mat_t,
-        PARAM.inp.out_mat_r,
-        istep,
-        this->pelec->pot->get_effective_v(),
-        this->pv,
-        this->GK, // mohan add 2024-04-01
-        two_center_bundle_,
-        GlobalC::GridD, // mohan add 2024-04-06
-        this->kv,
-        this->p_hamilt);
+    return ModuleIO::Output_Mat_Sparse<TK>(PARAM.inp.out_mat_hs2,
+                                           PARAM.inp.out_mat_dh,
+                                           PARAM.inp.out_mat_t,
+                                           PARAM.inp.out_mat_r,
+                                           istep,
+                                           this->pelec->pot->get_effective_v(),
+                                           this->pv,
+                                           this->GK, // mohan add 2024-04-01
+                                           two_center_bundle_,
+                                           orb_,
+                                           GlobalC::GridD, // mohan add 2024-04-06
+                                           this->kv,
+                                           this->p_hamilt);
 }
 
 //------------------------------------------------------------------------------

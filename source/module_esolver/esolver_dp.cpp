@@ -92,16 +92,14 @@ void ESolver_DP::runner(const int istep, UnitCell& ucell)
 
     dp.compute(dp_potential, f, v, coord, atype, cell, fparam, aparam);
 
-    dp_potential /= ModuleBase::Ry_to_eV;
-    GlobalV::ofs_running << " final etot is " << std::setprecision(11) << dp_potential * ModuleBase::Ry_to_eV << " eV"
-                         << std::endl;
-
     // rescale the energy, force, and stress
     const double fact_e = rescaling / ModuleBase::Ry_to_eV;
     const double fact_f = rescaling / (ModuleBase::Ry_to_eV * ModuleBase::ANGSTROM_AU);
     const double fact_v = rescaling / (ucell.omega * ModuleBase::Ry_to_eV);
 
     dp_potential *= fact_e;
+    GlobalV::ofs_running << " final etot is " << std::setprecision(11) << dp_potential * ModuleBase::Ry_to_eV << " eV"
+                         << std::endl;
 
     for (int i = 0; i < ucell.nat; ++i)
     {

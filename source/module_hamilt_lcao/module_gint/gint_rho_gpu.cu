@@ -17,7 +17,11 @@ void gint_rho_gpu(const hamilt::HContainer<double>* dm,
                         const UnitCell& ucell,
                         double* rho)
 {
-    int dev_id = base_device::information::set_device_by_rank();
+#ifdef __MPI
+    const int dev_id = base_device::information::set_device_by_rank();
+#else
+    const int dev_id = 0;
+#endif
     // checkCuda(cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync));
 
     const int nbzp = gridt.nbzp;

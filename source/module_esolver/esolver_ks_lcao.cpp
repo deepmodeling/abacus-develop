@@ -63,7 +63,7 @@ namespace ModuleESolver
 //! mohan add 2024-05-11
 //------------------------------------------------------------------------------
 template <typename TK, typename TR>
-ESolver_KS_LCAO<TK, TR>::ESolver_KS_LCAO()
+ESolver_KS_LCAO<TK, TR>::ESolver_KS_LCAO(): orb_(GlobalC::ORB)
 {
     this->classname = "ESolver_KS_LCAO";
     this->basisname = "LCAO";
@@ -240,7 +240,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
         // load the DeePKS model from deep neural network
         GlobalC::ld.load_model(PARAM.inp.deepks_model);
         // read pdm from file for NSCF or SCF-restart, do it only once in whole calculation
-        GlobalC::ld.read_projected_DM((GlobalV::init_chg == "file"), GlobalV::deepks_equiv, *GlobalC::ORB.Alpha);
+        GlobalC::ld.read_projected_DM((GlobalV::init_chg == "file"), GlobalV::deepks_equiv, *orb_.Alpha);
     }
 #endif
 
@@ -808,13 +808,13 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
     // 1) print Hamiltonian and Overlap matrix
     if (this->conv_elec || iter == PARAM.inp.scf_nmax)
     {
-        if (!PARAM.globalv.gamma_only_local && (hsolver::HSolverLCAO<TK>::out_mat_hs[0] || GlobalV::deepks_v_delta))
+        if (!PARAM.globalv.gamma_only_loca && (PARAM.inp.out_mat_hs[0] || GlobalV::deepks_v_delta))
         {
             this->GK.renew(true);
         }
         for (int ik = 0; ik < this->kv.get_nks(); ++ik)
         {
-            if (hsolver::HSolverLCAO<TK>::out_mat_hs[0]|| GlobalV::deepks_v_delta)
+            if (PARAM.inp.out_mat_hs[0]|| GlobalV::deepks_v_delta)
             {
                 this->p_hamilt->updateHk(ik);
             }
@@ -828,13 +828,13 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
 
                 this->p_hamilt->matrix(h_mat, s_mat);
 
-                if (hsolver::HSolverLCAO<TK>::out_mat_hs[0])
+                if (PARAM.inp.out_mat_hs[0])
                 {
                     ModuleIO::save_mat(istep,
                                        h_mat.p,
                                        GlobalV::NLOCAL,
                                        bit,
-                                       hsolver::HSolverLCAO<TK>::out_mat_hs[1],
+                                       PARAM.inp.out_mat_hs[1],
                                        1,
                                        PARAM.inp.out_app_flag,
                                        "H",
@@ -845,7 +845,7 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
                                        s_mat.p,
                                        GlobalV::NLOCAL,
                                        bit,
-                                       hsolver::HSolverLCAO<TK>::out_mat_hs[1],
+                                       PARAM.inp.out_mat_hs[1],
                                        1,
                                        PARAM.inp.out_app_flag,
                                        "S",
@@ -1153,7 +1153,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
                           this->pelec->ekb,
                           this->pelec->klist->kvec_d,
                           GlobalC::ucell,
-                          GlobalC::ORB,
+                          orb_,
                           GlobalC::GridD,
                           &(this->pv),
                           *(this->psi),
