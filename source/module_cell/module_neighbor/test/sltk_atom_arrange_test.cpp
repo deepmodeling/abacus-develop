@@ -51,8 +51,8 @@ Magnetism::~Magnetism()
 
 void SetGlobalV()
 {
-    PARAM.input.test_grid = 0;
-    PARAM.input.test_deconstructor = 0;
+    PARAM.input.test_grid = false;
+    PARAM.input.test_deconstructor = false;
 }
 
 class SltkAtomArrangeTest : public testing::Test
