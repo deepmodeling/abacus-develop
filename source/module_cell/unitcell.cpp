@@ -28,7 +28,6 @@
 #endif
 
 UnitCell::UnitCell() {
-    std::cout<<&PARAM<<std::endl;
     if (test_unitcell) {
         ModuleBase::TITLE("unitcell", "Constructor");
 }

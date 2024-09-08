@@ -1,4 +1,5 @@
 #include "module_base/math_polyint.h"
+#include "module_parameter/parameter.h"
 #include "module_base/math_ylmreal.h"
 #include "module_base/memory.h"
 #include "module_base/module_device/device.h"
