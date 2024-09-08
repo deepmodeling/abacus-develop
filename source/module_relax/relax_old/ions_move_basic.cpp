@@ -1,5 +1,6 @@
 #include "ions_move_basic.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 
@@ -69,7 +70,7 @@ void Ions_Move_Basic::move_atoms(UnitCell &ucell, double *move, double *pos)
     //------------------------
     // for test only
     //------------------------
-    if (GlobalV::test_relax_method)
+    if (PARAM.inp.test_relax_method)
     {
         int iat = 0;
         GlobalV::ofs_running << "\n movement of ions (unit is Bohr) : " << std::endl;
@@ -132,7 +133,7 @@ void Ions_Move_Basic::check_converged(const UnitCell &ucell, const double *grad)
     // mohan add 2010-08-06
     Ions_Move_Basic::largest_grad /= ucell.lat0;
 
-    if (GlobalV::test_relax_method)
+    if (PARAM.inp.test_relax_method)
     {
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "old total energy (ry)", etot_p);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "new total energy (ry)", etot);

@@ -1,5 +1,6 @@
 #include "bfgs_basic.h"
 
+#include "module_parameter/parameter.h"
 #include "ions_move_basic.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
@@ -144,7 +145,7 @@ void BFGS_Basic::check_wolfe_conditions(void)
     // enlarge trst radius is not good.
     bool wolfe2 = std::abs(dot) > -this->relax_bfgs_w2 * dot_p;
 
-    if (GlobalV::test_relax_method)
+    if (PARAM.inp.test_relax_method)
     {
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "etot - etot_p", etot - etot_p);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "relax_bfgs_w1 * dot_p", relax_bfgs_w1 * dot_p);
@@ -353,7 +354,7 @@ void BFGS_Basic::compute_trust_radius(void)
         trust_radius = std::min(trust_radius, norm_move);
     }
 
-    if (GlobalV::test_relax_method)
+    if (PARAM.inp.test_relax_method)
     {
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "wolfe_flag", wolfe_flag);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "trust_radius_old", trust_radius_old);
