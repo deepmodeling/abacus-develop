@@ -808,7 +808,7 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
     // 1) print Hamiltonian and Overlap matrix
     if (this->conv_elec || iter == PARAM.inp.scf_nmax)
     {
-        if (!PARAM.globalv.gamma_only_loca && (PARAM.inp.out_mat_hs[0] || GlobalV::deepks_v_delta))
+        if (!PARAM.globalv.gamma_only_local && (PARAM.inp.out_mat_hs[0] || GlobalV::deepks_v_delta))
         {
             this->GK.renew(true);
         }
