@@ -26,8 +26,9 @@ int get_xc_func_type()
 
 auto sum_array = [](const double* v, const int& nv) {
     double sum = 0;
-    for (int i = 0; i < nv; ++i)
+    for (int i = 0; i < nv; ++i) {
         sum += v[i];
+}
     return sum;
 };
 /************************************************
