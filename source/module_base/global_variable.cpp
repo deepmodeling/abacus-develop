@@ -112,7 +112,6 @@ int test_grid = 0;        // 4 now
 //----------------------------------------------------------
 // src_tools
 //----------------------------------------------------------
-int test_deconstructor = 0;
 
 // added by zhengdy-soc
 bool NONCOLIN = false;

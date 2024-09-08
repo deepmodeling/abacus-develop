@@ -152,7 +152,6 @@ extern int test_grid;
 //==========================================================
 // src_tools
 //==========================================================
-extern int test_deconstructor;
 
 extern bool FINAL_SCF; // LiuXh add 20180619
 
