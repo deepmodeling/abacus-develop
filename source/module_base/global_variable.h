@@ -224,6 +224,5 @@ extern double nelec;
 // Quasiatomic orbital related
 
 // radius of on-site orbitals
-extern double onsite_radius;
 } // namespace GlobalV
 #endif

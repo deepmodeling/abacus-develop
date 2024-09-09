@@ -205,5 +205,4 @@ double nelec = 0;
 //==========================================================
 
 // on-site orbitals
-double onsite_radius = 0.0;
 } // namespace GlobalV
