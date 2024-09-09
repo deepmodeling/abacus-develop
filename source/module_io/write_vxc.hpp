@@ -1,5 +1,6 @@
 #ifndef __WRITE_VXC_H_
 #define __WRITE_VXC_H_
+#include "module_parameter/parameter.h"
 #include "module_base/parallel_reduce.h"
 #include "module_base/module_container/base/third_party/blas.h"
 #include "module_base/scalapack_connector.h"
@@ -286,7 +287,7 @@ void write_Vxc(const int nspin,
         // exx_energy += all_band_energy(ik, vexx_k_mo, p2d, wg);
         // ======test=======
 #endif
-        if (GlobalV::dft_plus_u)
+        if (PARAM.inp.dft_plus_u)
         {
             vdftu_op_ao.contributeHk(ik);
         }

@@ -294,7 +294,7 @@ void ElecState::cal_energies(const int type)
     }
 
      // energy from DFT+U
-    if (GlobalV::dft_plus_u)
+    if (PARAM.inp.dft_plus_u)
     {
         this->f_en.edftu = get_dftu_energy();
     }

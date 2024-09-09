@@ -227,7 +227,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
     ModuleBase::matrix force_dftu;
     ModuleBase::matrix stress_dftu;
 
-    if (GlobalV::dft_plus_u) // Quxin add for DFT+U on 20201029
+    if (PARAM.inp.dft_plus_u) // Quxin add for DFT+U on 20201029
     {
         if (isforce)
         {
@@ -237,7 +237,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
         {
             stress_dftu.create(3, 3);
         }
-        if (GlobalV::dft_plus_u == 2)
+        if (PARAM.inp.dft_plus_u == 2)
         {
             GlobalC::dftu.force_stress(pelec,
                                        pv,
@@ -320,7 +320,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
                                + fscc(iat, i);   // self consistent corretion force (pw)
 
                 // Force contribution from DFT+U, Quxin add on 20201029
-                if (GlobalV::dft_plus_u)
+                if (PARAM.inp.dft_plus_u)
                 {
                     fcs(iat, i) += force_dftu(iat, i);
                 }
@@ -532,7 +532,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
                 ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "VDW        FORCE", force_vdw, false);
                 // this->print_force("VDW        FORCE",force_vdw,1,ry);
             }
-            if (GlobalV::dft_plus_u)
+            if (PARAM.inp.dft_plus_u)
             {
                 ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "DFT+U      FORCE", force_dftu, false);
             }
@@ -597,7 +597,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
                     scs(i, j) += stress_vdw(i, j);
                 }
                 // DFT plus U stress from qux
-                if (GlobalV::dft_plus_u)
+                if (PARAM.inp.dft_plus_u)
                 {
                     scs(i, j) += stress_dftu(i, j);
                 }
@@ -708,7 +708,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
             {
                 ModuleIO::print_stress("VDW      STRESS", sigmaxc, GlobalV::TEST_STRESS, ry);
             }
-            if (GlobalV::dft_plus_u)
+            if (PARAM.inp.dft_plus_u)
             {
                 ModuleIO::print_stress("DFTU     STRESS", stress_dftu, GlobalV::TEST_STRESS, ry);
             }

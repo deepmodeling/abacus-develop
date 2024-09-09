@@ -210,7 +210,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
 #endif
 
     // 8) initialize DFT+U
-    if (GlobalV::dft_plus_u) {
+    if (PARAM.inp.dft_plus_u) {
         GlobalC::dftu.init(ucell, &this->pv, this->kv.get_nks());
     }
 
@@ -530,7 +530,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
     {
         this->p_chgmix->init_mixing();
         this->p_chgmix->mixing_restart_count++;
-        if (GlobalV::dft_plus_u)
+        if (PARAM.inp.dft_plus_u)
         {
             GlobalC::dftu.uramping_update(); // update U by uramping if uramping > 0.01
             if (GlobalC::dftu.uramping > 0.01)
@@ -623,7 +623,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
     }
 #endif
 
-    if (GlobalV::dft_plus_u)
+    if (PARAM.inp.dft_plus_u)
     {
         if (istep != 0 || iter != 1)
         {
@@ -738,11 +738,11 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2density(int istep, int iter, double ethr)
 
     // 6) calculate the local occupation number matrix and energy correction in
     // DFT+U
-    if (GlobalV::dft_plus_u)
+    if (PARAM.inp.dft_plus_u)
     {
         // only old DFT+U method should calculated energy correction in esolver,
         // new DFT+U method will calculate energy in calculating Hamiltonian
-        if (GlobalV::dft_plus_u == 2)
+        if (PARAM.inp.dft_plus_u == 2)
         {
             if (GlobalC::dftu.omc != 2)
             {
@@ -1074,7 +1074,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int& iter)
     }
 
     // 6) use the converged occupation matrix for next MD/Relax SCF calculation
-    if (GlobalV::dft_plus_u && this->conv_elec)
+    if (PARAM.inp.dft_plus_u && this->conv_elec)
     {
         GlobalC::dftu.initialed_locale = true;
     }

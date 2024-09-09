@@ -534,7 +534,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
             bool is_U_converged = true;
             // to avoid unnecessary dependence on dft+u, refactor is needed
 #ifdef __LCAO
-            if (GlobalV::dft_plus_u)
+            if (PARAM.inp.dft_plus_u)
             {
                 is_U_converged = GlobalC::dftu.u_converged();
             }

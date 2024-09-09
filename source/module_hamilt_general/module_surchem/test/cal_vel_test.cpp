@@ -1,5 +1,8 @@
 #ifdef __MPI
 #include "../../../module_base/parallel_global.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include "mpi.h"
 #endif
 #include "../../module_xc/xc_functional.h"
@@ -133,7 +136,7 @@ TEST_F(cal_vel_test, eps_pot)
 
     for (int ir = 0; ir < nrxx; ir++)
     {
-        eprime[ir] = eprime[ir] * (GlobalV::eb_k - 1);
+        eprime[ir] = eprime[ir] * (PARAM.input.eb_k - 1);
     }
 
     ModuleBase::Vector3<double>* nabla_phi = new ModuleBase::Vector3<double>[nrxx];
