@@ -27,7 +27,7 @@ AddTest(
 )
 ADDTest(
   TARGET base_global_function
-  LIBS ${math_libs}
+  LIBS ${math_libs} parameter
   SOURCES global_function_test.cpp ../global_function.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../memory.cpp ../timer.cpp 
 )
 AddTest(
