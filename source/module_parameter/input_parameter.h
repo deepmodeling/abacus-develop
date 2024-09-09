@@ -1,6 +1,5 @@
 #ifndef INPUT_PARAMETER_H
 #define INPUT_PARAMETER_H
-#include "module_parameter/parameter.h"
 #include "md_parameter.h"
 #include "module_base/vector3.h"
 
