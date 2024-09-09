@@ -198,7 +198,6 @@ extern bool deepks_setorb;
 extern std::vector<std::string> rpa_orbitals;
 
 // mixing parameters
-extern double MIXING_GG0;
 
 //==========================================================
 // device flags added by denghui

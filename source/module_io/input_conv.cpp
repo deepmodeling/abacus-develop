@@ -631,7 +631,6 @@ void Input_Conv::Convert()
     //-----------------------------------------------
 
     // mixing parameters
-    GlobalV::MIXING_GG0 = PARAM.inp.mixing_gg0;
 
     //-----------------------------------------------
     // Quasiatomic Orbital analysis
