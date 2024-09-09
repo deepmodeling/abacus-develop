@@ -214,7 +214,6 @@ extern int out_pot;
                              //  "out_chg" elec step.
 /// @brief method to initialize wavefunction
 /// @author kirk0830, 20230920
-extern std::string init_wfc;
 /// @brief whether use the new psi initializer to initialize psi
 /// @author ykhuang, 20230920
 extern bool psi_initializer;

@@ -193,7 +193,6 @@ std::string device_flag = "unknown";
 int out_pot = 0;
 
 
-std::string init_wfc = "atomic";
 bool psi_initializer = false;
 
 double nelec = 0;
