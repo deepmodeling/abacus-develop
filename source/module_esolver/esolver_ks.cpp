@@ -111,7 +111,7 @@ void ESolver_KS<T, Device>::before_all_runners(const Input_para& inp, UnitCell& 
                          GlobalV::MIXING_GG0_MAG,
                          PARAM.inp.mixing_gg0_min,
                          PARAM.inp.mixing_angle,
-                         GlobalV::MIXING_DMR);
+                         PARAM.inp.mixing_dmr);
 
     /// PAW Section
 #ifdef USE_PAW
