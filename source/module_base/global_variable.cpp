@@ -179,7 +179,6 @@ bool of_read_kernel = false;
 std::string of_kernel_file = "WTkernel.txt";
 
 // mixing parameters
-int MIXING_NDIM = 8;
 double MIXING_RESTART = 0.0;
 double MIXING_GG0 = 1.00;
 double MIXING_GG0_MAG = 1.00;
