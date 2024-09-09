@@ -217,7 +217,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
 
     //! atomic forces from implicit solvation model
     ModuleBase::matrix fsol;
-    if (GlobalV::imp_sol && isforce)
+    if (PARAM.inp.imp_sol && isforce)
     {
         fsol.create(nat, 3);
         GlobalC::solvent_model.cal_force_sol(GlobalC::ucell, rhopw, fsol);
@@ -352,7 +352,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
                     fcs(iat, i) += fgate(iat, i);
                 }
                 // implicit solvation model
-                if (GlobalV::imp_sol)
+                if (PARAM.inp.imp_sol)
                 {
                     fcs(iat, i) += fsol(iat, i);
                 }
@@ -522,7 +522,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
                 ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "GATEFIELD     FORCE", fgate, false);
                 // this->print_force("GATEFIELD     FORCE",fgate,1,ry);
             }
-            if (GlobalV::imp_sol)
+            if (PARAM.inp.imp_sol)
             {
                 ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "IMP_SOL     FORCE", fsol, false);
                 // this->print_force("IMP_SOL     FORCE",fsol,1,ry);

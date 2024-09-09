@@ -96,7 +96,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
             pot_register_in.push_back("hartree");
         }
         pot_register_in.push_back("xc");
-        if (GlobalV::imp_sol)
+        if (PARAM.inp.imp_sol)
         {
             pot_register_in.push_back("surchem");
         }
