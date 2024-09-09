@@ -176,7 +176,6 @@ extern int test_relax_method;
 //==========================================================
 extern int test_deconstructor;
 
-extern bool FINAL_SCF; // LiuXh add 20180619
 
 extern bool deepks_out_labels; // (need libnpy) prints energy and force labels
                                // and descriptors for training, wenfei 2022-1-12

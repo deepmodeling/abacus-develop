@@ -145,7 +145,6 @@ bool DOMAG = false;
 bool DOMAG_Z = false;
 int NPOL = 1;
 
-bool FINAL_SCF = false; // LiuXh add 20180619
 
 bool deepks_out_labels = false; // caoyu add 2021-10-16 for DeePKS, wenfei 2022-1-16
 bool deepks_scf = false; // caoyu add 2021-10-16 for DeePKS, wenfei 2022-1-16
