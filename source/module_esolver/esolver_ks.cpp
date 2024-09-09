@@ -105,7 +105,7 @@ void ESolver_KS<T, Device>::before_all_runners(const Input_para& inp, UnitCell& 
     p_chgmix->set_mixing(PARAM.inp.mixing_mode,
                          PARAM.inp.mixing_beta,
                          PARAM.inp.mixing_ndim,
-                         GlobalV::MIXING_GG0,
+                         PARAM.inp.mixing_gg0,
                          PARAM.inp.mixing_tau,
                          PARAM.inp.mixing_beta_mag,
                          PARAM.inp.mixing_gg0_mag,
