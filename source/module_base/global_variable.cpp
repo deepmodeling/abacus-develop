@@ -195,7 +195,6 @@ int out_pot = 0;
 
 
 double nelec = 0;
-bool out_bandgap = false; // QO added for bandgap printing
 
 //==========================================================
 // Deltaspin related

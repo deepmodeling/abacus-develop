@@ -218,7 +218,6 @@ extern int out_pot;
 /// @author ykhuang, 20230920
 
 extern double nelec;
-extern bool out_bandgap;
 
 // Deltaspin related
 extern double sc_thr;
