@@ -201,7 +201,6 @@ extern std::vector<std::string> rpa_orbitals;
 extern double MIXING_GG0;
 extern bool MIXING_TAU;
 extern double MIXING_GG0_MAG;
-extern double MIXING_GG0_MIN;
 extern double MIXING_ANGLE;
 extern bool MIXING_DMR;
 
