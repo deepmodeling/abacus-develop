@@ -74,7 +74,7 @@ class MockElecState : public ElecState
     void Set_GlobalV_Default()
     {
         PARAM.input.imp_sol = false;
-        PARAM.input.dft_plue_u = 0;
+        PARAM.input.dft_plus_u = 0;
         // base class
         GlobalV::NSPIN = 1;
         GlobalV::nelec = 10.0;
@@ -135,7 +135,7 @@ TEST_F(ElecStateEnergyTest, CalEnergiesHarrisImpSol)
 TEST_F(ElecStateEnergyTest, CalEnergiesHarrisDFTU)
 {
     elecstate->f_en.deband_harris = 0.1;
-    PARAM.input.dft_plue_u = 1;
+    PARAM.input.dft_plus_u = 1;
     elecstate->cal_energies(1);
     // deband_harris + hatree + efiled + gatefield + edftu + escon
 #ifdef __LCAO
@@ -165,7 +165,7 @@ TEST_F(ElecStateEnergyTest, CalEnergiesEtotImpSol)
 TEST_F(ElecStateEnergyTest, CalEnergiesEtotDFTU)
 {
     elecstate->f_en.deband = 0.1;
-    PARAM.input.dft_plue_u = 1;
+    PARAM.input.dft_plus_u = 1;
     elecstate->cal_energies(2);
     // deband + hatree + efiled + gatefield + edftu + escon
 #ifdef __LCAO

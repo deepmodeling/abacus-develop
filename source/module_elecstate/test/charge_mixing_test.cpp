@@ -2,6 +2,7 @@
 #include "gtest/gtest.h"
 #include "module_base/module_mixing/broyden_mixing.h"
 #define private public
+#include "module_parameter/parameter.h"
 #include "../module_charge/charge_mixing.h"
 #include "module_basis/module_pw/pw_basis.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
@@ -94,7 +95,7 @@ class ChargeMixingTest : public ::testing::Test
         pw_dbasis.setuptransform(&pw_basis);
         pw_dbasis.collect_local_pw();
         // default mixing parameters
-        GlobalV::MIXING_MODE = "broyden";
+        PARAM.input.mixing_mode = "broyden";
         GlobalV::MIXING_BETA = 0.8;
         GlobalV::MIXING_NDIM = 8;
         GlobalV::MIXING_GG0  = 1.0;
@@ -120,7 +121,7 @@ TEST_F(ChargeMixingTest, SetMixingTest)
     GlobalV::MIXING_NDIM = 1;
     GlobalV::MIXING_GG0 = 1.0;
 
-    CMtest.set_mixing(GlobalV::MIXING_MODE,
+    CMtest.set_mixing(PARAM.input.mixing_mode,
                     GlobalV::MIXING_BETA,
                     GlobalV::MIXING_NDIM,
                     GlobalV::MIXING_GG0,
@@ -142,8 +143,8 @@ TEST_F(ChargeMixingTest, SetMixingTest)
     EXPECT_EQ(CMtest.mixing_dmr, false);
 
     GlobalV::MIXING_TAU = true;
-    GlobalV::MIXING_MODE = "plain";
-    CMtest.set_mixing(GlobalV::MIXING_MODE,
+    PARAM.input.mixing_mode = "plain";
+    CMtest.set_mixing(PARAM.input.mixing_mode,
                     GlobalV::MIXING_BETA,
                     GlobalV::MIXING_NDIM,
                     GlobalV::MIXING_GG0,
@@ -159,7 +160,7 @@ TEST_F(ChargeMixingTest, SetMixingTest)
     GlobalV::MIXING_BETA = 1.1;
     std::string output;
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(CMtest.set_mixing(GlobalV::MIXING_MODE,
+    EXPECT_EXIT(CMtest.set_mixing(PARAM.input.mixing_mode,
                                 GlobalV::MIXING_BETA,
                                 GlobalV::MIXING_NDIM,
                                 GlobalV::MIXING_GG0,
@@ -176,7 +177,7 @@ TEST_F(ChargeMixingTest, SetMixingTest)
     GlobalV::MIXING_BETA_MAG = -0.1;
     GlobalV::NSPIN = 2;
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(CMtest.set_mixing(GlobalV::MIXING_MODE,
+    EXPECT_EXIT(CMtest.set_mixing(PARAM.input.mixing_mode,
                                 GlobalV::MIXING_BETA,
                                 GlobalV::MIXING_NDIM,
                                 GlobalV::MIXING_GG0,
@@ -192,9 +193,9 @@ TEST_F(ChargeMixingTest, SetMixingTest)
     GlobalV::NSPIN = 1;
     GlobalV::MIXING_BETA = 0.7;
     GlobalV::MIXING_BETA_MAG = 1.6;
-    GlobalV::MIXING_MODE = "nothing";
+    PARAM.input.mixing_mode = "nothing";
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(CMtest.set_mixing(GlobalV::MIXING_MODE,
+    EXPECT_EXIT(CMtest.set_mixing(PARAM.input.mixing_mode,
                                 GlobalV::MIXING_BETA,
                                 GlobalV::MIXING_NDIM,
                                 GlobalV::MIXING_GG0,
@@ -216,7 +217,7 @@ TEST_F(ChargeMixingTest, InitMixingTest)
     Charge_Mixing CMtest;
     CMtest.set_rhopw(&pw_basis, &pw_basis);
 
-    CMtest.set_mixing(GlobalV::MIXING_MODE,
+    CMtest.set_mixing(PARAM.input.mixing_mode,
                     GlobalV::MIXING_BETA,
                     GlobalV::MIXING_NDIM,
                     GlobalV::MIXING_GG0,
@@ -241,7 +242,7 @@ TEST_F(ChargeMixingTest, InitMixingTest)
 
     GlobalV::NSPIN = 1;
     GlobalV::MIXING_TAU = true;
-    CMtest.set_mixing(GlobalV::MIXING_MODE,
+    CMtest.set_mixing(PARAM.input.mixing_mode,
                     GlobalV::MIXING_BETA,
                     GlobalV::MIXING_NDIM,
                     GlobalV::MIXING_GG0,
@@ -257,7 +258,7 @@ TEST_F(ChargeMixingTest, InitMixingTest)
 
     GlobalV::NSPIN = 4;
     GlobalV::MIXING_ANGLE = 1.0;
-    CMtest.set_mixing(GlobalV::MIXING_MODE,
+    CMtest.set_mixing(PARAM.input.mixing_mode,
                     GlobalV::MIXING_BETA,
                     GlobalV::MIXING_NDIM,
                     GlobalV::MIXING_GG0,
@@ -275,7 +276,7 @@ TEST_F(ChargeMixingTest, InnerDotRealTest)
 {
     Charge_Mixing CMtest;
     // non mixing angle case
-    CMtest.set_mixing(GlobalV::MIXING_MODE,
+    CMtest.set_mixing(PARAM.input.mixing_mode,
                     GlobalV::MIXING_BETA,
                     GlobalV::MIXING_NDIM,
                     GlobalV::MIXING_GG0,
@@ -301,7 +302,7 @@ TEST_F(ChargeMixingTest, InnerDotRealTest)
 
     // mixing angle case
     GlobalV::MIXING_ANGLE = 1.0;
-    CMtest.set_mixing(GlobalV::MIXING_MODE,
+    CMtest.set_mixing(PARAM.input.mixing_mode,
                     GlobalV::MIXING_BETA,
                     GlobalV::MIXING_NDIM,
                     GlobalV::MIXING_GG0,
@@ -329,7 +330,7 @@ TEST_F(ChargeMixingTest, InnerDotRecipSimpleTest)
 {
     Charge_Mixing CMtest;
     // non mixing angle case
-    CMtest.set_mixing(GlobalV::MIXING_MODE,
+    CMtest.set_mixing(PARAM.input.mixing_mode,
                     GlobalV::MIXING_BETA,
                     GlobalV::MIXING_NDIM,
                     GlobalV::MIXING_GG0,
@@ -439,7 +440,7 @@ TEST_F(ChargeMixingTest, InnerDotRecipHartreeTest)
     // RECIPROCAL NSPIN=4 with mixing_angle
     GlobalV::NSPIN = 4;
     GlobalV::MIXING_ANGLE = 1.0;
-    CMtest.set_mixing(GlobalV::MIXING_MODE,
+    CMtest.set_mixing(PARAM.input.mixing_mode,
                     GlobalV::MIXING_BETA,
                     GlobalV::MIXING_NDIM,
                     GlobalV::MIXING_GG0,
@@ -752,7 +753,7 @@ TEST_F(ChargeMixingTest, MixRhoTest)
     GlobalV::MIXING_NDIM = 1;
     GlobalV::MIXING_GG0 = 0.0;
     GlobalV::MIXING_TAU = true;
-    GlobalV::MIXING_MODE = "plain";
+    PARAM.input.mixing_mode = "plain";
     const int nrxx = pw_basis.nrxx;
     const int npw = pw_basis.npw;
     charge._space_rho = new double[nspin * nrxx];
@@ -795,7 +796,7 @@ TEST_F(ChargeMixingTest, MixRhoTest)
     Charge_Mixing CMtest_recip;
     CMtest_recip.set_rhopw(&pw_basis, &pw_basis);
     GlobalV::SCF_THR_TYPE = 1;
-    CMtest_recip.set_mixing(GlobalV::MIXING_MODE,
+    CMtest_recip.set_mixing(PARAM.input.mixing_mode,
                             GlobalV::MIXING_BETA,
                             GlobalV::MIXING_NDIM,
                             GlobalV::MIXING_GG0,
@@ -834,7 +835,7 @@ TEST_F(ChargeMixingTest, MixRhoTest)
     Charge_Mixing CMtest_real;
     GlobalV::SCF_THR_TYPE = 2;
     CMtest_real.set_rhopw(&pw_basis, &pw_basis);
-    CMtest_real.set_mixing(GlobalV::MIXING_MODE,
+    CMtest_real.set_mixing(PARAM.input.mixing_mode,
                         GlobalV::MIXING_BETA,
                         GlobalV::MIXING_NDIM,
                         GlobalV::MIXING_GG0,
@@ -886,7 +887,7 @@ TEST_F(ChargeMixingTest, MixDoubleGridRhoTest)
     GlobalV::MIXING_NDIM = 1;
     GlobalV::MIXING_GG0 = 0.0;
     GlobalV::MIXING_TAU = true;
-    GlobalV::MIXING_MODE = "plain";
+    PARAM.input.mixing_mode = "plain";
     const int nrxx = pw_dbasis.nrxx;
     const int npw = pw_dbasis.npw;
     charge._space_rho = new double[nspin * nrxx];
@@ -929,7 +930,7 @@ TEST_F(ChargeMixingTest, MixDoubleGridRhoTest)
     Charge_Mixing CMtest_recip;
     CMtest_recip.set_rhopw(&pw_basis, &pw_dbasis);
     GlobalV::SCF_THR_TYPE = 1;
-    CMtest_recip.set_mixing(GlobalV::MIXING_MODE,
+    CMtest_recip.set_mixing(PARAM.input.mixing_mode,
                             GlobalV::MIXING_BETA,
                             GlobalV::MIXING_NDIM,
                             GlobalV::MIXING_GG0,
