@@ -1,5 +1,8 @@
 #include <vector>
 
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include "gtest/gtest.h"
 
 #define private public
@@ -56,7 +59,7 @@ void Set_GlobalV_Default()
 {
     GlobalV::NSPIN = 1;
     GlobalV::device_flag = "cpu";
-    GlobalV::precision_flag = "double";
+    PARAM.input.precision = "double";
 }
 } // namespace elecstate
 
@@ -150,7 +153,7 @@ TEST_F(PotentialNewTest, ConstructorCPUDouble)
 TEST_F(PotentialNewTest, ConstructorCPUSingle)
 {
     rhopw->nrxx = 100;
-    GlobalV::precision_flag = "single";
+    PARAM.input.precision = "single";
     pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, etxc, vtxc);
     EXPECT_TRUE(pot->fixed_mode);
     EXPECT_TRUE(pot->dynamic_mode);
@@ -199,7 +202,7 @@ TEST_F(PotentialNewTest, ConstructorGPUSingle)
     // this is just a trivial call to the GPU code
     rhopw->nrxx = 100;
     GlobalV::device_flag = "gpu";
-    GlobalV::precision_flag = "single";
+    PARAM.input.precision = "single";
     pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, etxc, vtxc);
     EXPECT_TRUE(pot->fixed_mode);
     EXPECT_TRUE(pot->dynamic_mode);
