@@ -97,7 +97,7 @@ class ChargeMixingTest : public ::testing::Test
         // default mixing parameters
         PARAM.input.mixing_mode = "broyden";
         PARAM.input.mixing_beta = 0.8;
-        GlobalV::MIXING_NDIM = 8;
+        PARAM.input.mixing_ndim = 8;
         GlobalV::MIXING_GG0  = 1.0;
         GlobalV::MIXING_TAU  = false;
         PARAM.input.mixing_beta_mag = 1.6;
@@ -118,12 +118,12 @@ TEST_F(ChargeMixingTest, SetMixingTest)
     Charge_Mixing CMtest;
     CMtest.set_rhopw(&pw_basis, &pw_basis);
     PARAM.input.mixing_beta = 1.0;
-    GlobalV::MIXING_NDIM = 1;
+    PARAM.input.mixing_ndim = 1;
     GlobalV::MIXING_GG0 = 1.0;
 
     CMtest.set_mixing(PARAM.input.mixing_mode,
                     PARAM.input.mixing_beta,
-                    GlobalV::MIXING_NDIM,
+                    PARAM.input.mixing_ndim,
                     GlobalV::MIXING_GG0,
                     GlobalV::MIXING_TAU,
                     PARAM.input.mixing_beta_mag,
@@ -146,7 +146,7 @@ TEST_F(ChargeMixingTest, SetMixingTest)
     PARAM.input.mixing_mode = "plain";
     CMtest.set_mixing(PARAM.input.mixing_mode,
                     PARAM.input.mixing_beta,
-                    GlobalV::MIXING_NDIM,
+                    PARAM.input.mixing_ndim,
                     GlobalV::MIXING_GG0,
                     GlobalV::MIXING_TAU,
                     PARAM.input.mixing_beta_mag,
@@ -162,7 +162,7 @@ TEST_F(ChargeMixingTest, SetMixingTest)
     testing::internal::CaptureStdout();
     EXPECT_EXIT(CMtest.set_mixing(PARAM.input.mixing_mode,
                                 PARAM.input.mixing_beta,
-                                GlobalV::MIXING_NDIM,
+                                PARAM.input.mixing_ndim,
                                 GlobalV::MIXING_GG0,
                                 GlobalV::MIXING_TAU,
                                 PARAM.input.mixing_beta_mag,
@@ -179,7 +179,7 @@ TEST_F(ChargeMixingTest, SetMixingTest)
     testing::internal::CaptureStdout();
     EXPECT_EXIT(CMtest.set_mixing(PARAM.input.mixing_mode,
                                 PARAM.input.mixing_beta,
-                                GlobalV::MIXING_NDIM,
+                                PARAM.input.mixing_ndim,
                                 GlobalV::MIXING_GG0,
                                 GlobalV::MIXING_TAU,
                                 PARAM.input.mixing_beta_mag,
@@ -197,7 +197,7 @@ TEST_F(ChargeMixingTest, SetMixingTest)
     testing::internal::CaptureStdout();
     EXPECT_EXIT(CMtest.set_mixing(PARAM.input.mixing_mode,
                                 PARAM.input.mixing_beta,
-                                GlobalV::MIXING_NDIM,
+                                PARAM.input.mixing_ndim,
                                 GlobalV::MIXING_GG0,
                                 GlobalV::MIXING_TAU,
                                 PARAM.input.mixing_beta_mag,
@@ -219,7 +219,7 @@ TEST_F(ChargeMixingTest, InitMixingTest)
 
     CMtest.set_mixing(PARAM.input.mixing_mode,
                     PARAM.input.mixing_beta,
-                    GlobalV::MIXING_NDIM,
+                    PARAM.input.mixing_ndim,
                     GlobalV::MIXING_GG0,
                     GlobalV::MIXING_TAU,
                     PARAM.input.mixing_beta_mag,
@@ -244,7 +244,7 @@ TEST_F(ChargeMixingTest, InitMixingTest)
     GlobalV::MIXING_TAU = true;
     CMtest.set_mixing(PARAM.input.mixing_mode,
                     PARAM.input.mixing_beta,
-                    GlobalV::MIXING_NDIM,
+                    PARAM.input.mixing_ndim,
                     GlobalV::MIXING_GG0,
                     GlobalV::MIXING_TAU,
                     PARAM.input.mixing_beta_mag,
@@ -260,7 +260,7 @@ TEST_F(ChargeMixingTest, InitMixingTest)
     GlobalV::MIXING_ANGLE = 1.0;
     CMtest.set_mixing(PARAM.input.mixing_mode,
                     PARAM.input.mixing_beta,
-                    GlobalV::MIXING_NDIM,
+                    PARAM.input.mixing_ndim,
                     GlobalV::MIXING_GG0,
                     GlobalV::MIXING_TAU,
                     PARAM.input.mixing_beta_mag,
@@ -278,7 +278,7 @@ TEST_F(ChargeMixingTest, InnerDotRealTest)
     // non mixing angle case
     CMtest.set_mixing(PARAM.input.mixing_mode,
                     PARAM.input.mixing_beta,
-                    GlobalV::MIXING_NDIM,
+                    PARAM.input.mixing_ndim,
                     GlobalV::MIXING_GG0,
                     GlobalV::MIXING_TAU,
                     PARAM.input.mixing_beta_mag,
@@ -304,7 +304,7 @@ TEST_F(ChargeMixingTest, InnerDotRealTest)
     GlobalV::MIXING_ANGLE = 1.0;
     CMtest.set_mixing(PARAM.input.mixing_mode,
                     PARAM.input.mixing_beta,
-                    GlobalV::MIXING_NDIM,
+                    PARAM.input.mixing_ndim,
                     GlobalV::MIXING_GG0,
                     GlobalV::MIXING_TAU,
                     PARAM.input.mixing_beta_mag,
@@ -332,7 +332,7 @@ TEST_F(ChargeMixingTest, InnerDotRecipSimpleTest)
     // non mixing angle case
     CMtest.set_mixing(PARAM.input.mixing_mode,
                     PARAM.input.mixing_beta,
-                    GlobalV::MIXING_NDIM,
+                    PARAM.input.mixing_ndim,
                     GlobalV::MIXING_GG0,
                     GlobalV::MIXING_TAU,
                     PARAM.input.mixing_beta_mag,
@@ -442,7 +442,7 @@ TEST_F(ChargeMixingTest, InnerDotRecipHartreeTest)
     GlobalV::MIXING_ANGLE = 1.0;
     CMtest.set_mixing(PARAM.input.mixing_mode,
                     PARAM.input.mixing_beta,
-                    GlobalV::MIXING_NDIM,
+                    PARAM.input.mixing_ndim,
                     GlobalV::MIXING_GG0,
                     GlobalV::MIXING_TAU,
                     PARAM.input.mixing_beta_mag,
@@ -750,7 +750,7 @@ TEST_F(ChargeMixingTest, MixRhoTest)
     GlobalV::DOMAG_Z = false;
     FUNC_TYPE = 3;
     PARAM.input.mixing_beta = 0.7;
-    GlobalV::MIXING_NDIM = 1;
+    PARAM.input.mixing_ndim = 1;
     GlobalV::MIXING_GG0 = 0.0;
     GlobalV::MIXING_TAU = true;
     PARAM.input.mixing_mode = "plain";
@@ -798,7 +798,7 @@ TEST_F(ChargeMixingTest, MixRhoTest)
     GlobalV::SCF_THR_TYPE = 1;
     CMtest_recip.set_mixing(PARAM.input.mixing_mode,
                             PARAM.input.mixing_beta,
-                            GlobalV::MIXING_NDIM,
+                            PARAM.input.mixing_ndim,
                             GlobalV::MIXING_GG0,
                             GlobalV::MIXING_TAU,
                             PARAM.input.mixing_beta_mag,
@@ -837,7 +837,7 @@ TEST_F(ChargeMixingTest, MixRhoTest)
     CMtest_real.set_rhopw(&pw_basis, &pw_basis);
     CMtest_real.set_mixing(PARAM.input.mixing_mode,
                         PARAM.input.mixing_beta,
-                        GlobalV::MIXING_NDIM,
+                        PARAM.input.mixing_ndim,
                         GlobalV::MIXING_GG0,
                         GlobalV::MIXING_TAU,
                         PARAM.input.mixing_beta_mag,
@@ -884,7 +884,7 @@ TEST_F(ChargeMixingTest, MixDoubleGridRhoTest)
     GlobalV::DOMAG_Z = false;
     FUNC_TYPE = 3;
     PARAM.input.mixing_beta = 0.7;
-    GlobalV::MIXING_NDIM = 1;
+    PARAM.input.mixing_ndim = 1;
     GlobalV::MIXING_GG0 = 0.0;
     GlobalV::MIXING_TAU = true;
     PARAM.input.mixing_mode = "plain";
@@ -932,7 +932,7 @@ TEST_F(ChargeMixingTest, MixDoubleGridRhoTest)
     GlobalV::SCF_THR_TYPE = 1;
     CMtest_recip.set_mixing(PARAM.input.mixing_mode,
                             PARAM.input.mixing_beta,
-                            GlobalV::MIXING_NDIM,
+                            PARAM.input.mixing_ndim,
                             GlobalV::MIXING_GG0,
                             GlobalV::MIXING_TAU,
                             PARAM.input.mixing_beta_mag,

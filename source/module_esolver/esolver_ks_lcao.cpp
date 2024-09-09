@@ -526,7 +526,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
         }
     }
     // for mixing restart
-    if (iter == this->p_chgmix->mixing_restart_step && GlobalV::MIXING_RESTART > 0.0)
+    if (iter == this->p_chgmix->mixing_restart_step && PARAM.input.mixing_restart > 0.0)
     {
         this->p_chgmix->init_mixing();
         this->p_chgmix->mixing_restart_count++;
@@ -689,7 +689,7 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2density(int istep, int iter, double ethr)
     this->pelec->charge->save_rho_before_sum_band();
 
     // 2) save density matrix DMR for mixing
-    if (GlobalV::MIXING_RESTART > 0 && GlobalV::MIXING_DMR && this->p_chgmix->mixing_restart_count > 0)
+    if (PARAM.input.mixing_restart > 0 && GlobalV::MIXING_DMR && this->p_chgmix->mixing_restart_count > 0)
     {
         elecstate::DensityMatrix<TK, double>* dm = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
         dm->save_DMR();
@@ -919,7 +919,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int& iter)
 
     // 1) mix density matrix if mixing_restart + mixing_dmr + not first
     // mixing_restart at every iter
-    if (GlobalV::MIXING_RESTART > 0 && this->p_chgmix->mixing_restart_count > 0 && GlobalV::MIXING_DMR)
+    if (PARAM.input.mixing_restart > 0 && this->p_chgmix->mixing_restart_count > 0 && GlobalV::MIXING_DMR)
     {
         elecstate::DensityMatrix<TK, double>* dm = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
         this->p_chgmix->mix_dmr(dm);

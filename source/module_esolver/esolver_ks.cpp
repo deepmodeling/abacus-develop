@@ -104,7 +104,7 @@ void ESolver_KS<T, Device>::before_all_runners(const Input_para& inp, UnitCell& 
     //! 2) setup the charge mixing parameters
     p_chgmix->set_mixing(PARAM.inp.mixing_mode,
                          PARAM.inp.mixing_beta,
-                         GlobalV::MIXING_NDIM,
+                         PARAM.inp.mixing_ndim,
                          GlobalV::MIXING_GG0,
                          GlobalV::MIXING_TAU,
                          PARAM.inp.mixing_beta_mag,
@@ -521,7 +521,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
                 }
             }
             // mixing will restart at this->p_chgmix->mixing_restart steps
-            if (drho <= GlobalV::MIXING_RESTART && GlobalV::MIXING_RESTART > 0.0
+            if (drho <= PARAM.input.mixing_restart && PARAM.input.mixing_restart > 0.0
                 && this->p_chgmix->mixing_restart_step > iter)
             {
                 this->p_chgmix->mixing_restart_step = iter + 1;
@@ -529,7 +529,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
 
             // drho will be 0 at this->p_chgmix->mixing_restart step, which is
             // not ground state
-            bool not_restart_step = !(iter == this->p_chgmix->mixing_restart_step && GlobalV::MIXING_RESTART > 0.0);
+            bool not_restart_step = !(iter == this->p_chgmix->mixing_restart_step && PARAM.input.mixing_restart > 0.0);
             // SCF will continue if U is not converged for uramping calculation
             bool is_U_converged = true;
             // to avoid unnecessary dependence on dft+u, refactor is needed
@@ -558,8 +558,8 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
                 //----------charge mixing---------------
                 // mixing will restart after this->p_chgmix->mixing_restart
                 // steps
-                if (GlobalV::MIXING_RESTART > 0 && iter == this->p_chgmix->mixing_restart_step - 1
-                    && drho <= GlobalV::MIXING_RESTART)
+                if (PARAM.input.mixing_restart > 0 && iter == this->p_chgmix->mixing_restart_step - 1
+                    && drho <= PARAM.input.mixing_restart)
                 {
                     // do not mix charge density
                 }
@@ -624,7 +624,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
         }
 
         // notice for restart
-        if (GlobalV::MIXING_RESTART > 0 && iter == this->p_chgmix->mixing_restart_step - 1 && iter != GlobalV::SCF_NMAX)
+        if (PARAM.input.mixing_restart > 0 && iter == this->p_chgmix->mixing_restart_step - 1 && iter != GlobalV::SCF_NMAX)
         {
             std::cout << " SCF restart after this step!" << std::endl;
         }
