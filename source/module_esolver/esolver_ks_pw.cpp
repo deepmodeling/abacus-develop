@@ -318,7 +318,7 @@ void ESolver_KS_PW<T, Device>::iter_init(const int istep, const int iter)
         this->p_chgmix->mixing_restart_step = GlobalV::SCF_NMAX + 1;
     }
     // for mixing restart
-    if (iter == this->p_chgmix->mixing_restart_step && PARAM.input.mixing_restart > 0.0)
+    if (iter == this->p_chgmix->mixing_restart_step && PARAM.inp.mixing_restart > 0.0)
     {
         this->p_chgmix->init_mixing();
     }

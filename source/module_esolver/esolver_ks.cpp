@@ -521,7 +521,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
                 }
             }
             // mixing will restart at this->p_chgmix->mixing_restart steps
-            if (drho <= PARAM.input.mixing_restart && PARAM.input.mixing_restart > 0.0
+            if (drho <= PARAM.inp.mixing_restart && PARAM.inp.mixing_restart > 0.0
                 && this->p_chgmix->mixing_restart_step > iter)
             {
                 this->p_chgmix->mixing_restart_step = iter + 1;
@@ -529,7 +529,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
 
             // drho will be 0 at this->p_chgmix->mixing_restart step, which is
             // not ground state
-            bool not_restart_step = !(iter == this->p_chgmix->mixing_restart_step && PARAM.input.mixing_restart > 0.0);
+            bool not_restart_step = !(iter == this->p_chgmix->mixing_restart_step && PARAM.inp.mixing_restart > 0.0);
             // SCF will continue if U is not converged for uramping calculation
             bool is_U_converged = true;
             // to avoid unnecessary dependence on dft+u, refactor is needed
@@ -558,8 +558,8 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
                 //----------charge mixing---------------
                 // mixing will restart after this->p_chgmix->mixing_restart
                 // steps
-                if (PARAM.input.mixing_restart > 0 && iter == this->p_chgmix->mixing_restart_step - 1
-                    && drho <= PARAM.input.mixing_restart)
+                if (PARAM.inp.mixing_restart > 0 && iter == this->p_chgmix->mixing_restart_step - 1
+                    && drho <= PARAM.inp.mixing_restart)
                 {
                     // do not mix charge density
                 }
@@ -624,7 +624,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
         }
 
         // notice for restart
-        if (PARAM.input.mixing_restart > 0 && iter == this->p_chgmix->mixing_restart_step - 1 && iter != GlobalV::SCF_NMAX)
+        if (PARAM.inp.mixing_restart > 0 && iter == this->p_chgmix->mixing_restart_step - 1 && iter != GlobalV::SCF_NMAX)
         {
             std::cout << " SCF restart after this step!" << std::endl;
         }
