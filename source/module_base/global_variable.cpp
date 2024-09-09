@@ -193,7 +193,6 @@ std::string device_flag = "unknown";
 int out_pot = 0;
 
 
-bool psi_initializer = false;
 
 double nelec = 0;
 bool out_bandgap = false; // QO added for bandgap printing

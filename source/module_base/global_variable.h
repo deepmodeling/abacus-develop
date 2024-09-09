@@ -216,7 +216,6 @@ extern int out_pot;
 /// @author kirk0830, 20230920
 /// @brief whether use the new psi initializer to initialize psi
 /// @author ykhuang, 20230920
-extern bool psi_initializer;
 
 extern double nelec;
 extern bool out_bandgap;
