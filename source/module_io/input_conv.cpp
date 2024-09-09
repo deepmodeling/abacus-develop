@@ -641,7 +641,6 @@ void Input_Conv::Convert()
     GlobalV::MIXING_NDIM = PARAM.inp.mixing_ndim;
     GlobalV::MIXING_RESTART = PARAM.inp.mixing_restart;
     GlobalV::MIXING_GG0 = PARAM.inp.mixing_gg0;
-    GlobalV::MIXING_BETA_MAG = PARAM.inp.mixing_beta_mag;
     GlobalV::MIXING_GG0_MAG = PARAM.inp.mixing_gg0_mag;
     GlobalV::MIXING_GG0_MIN = PARAM.inp.mixing_gg0_min;
     GlobalV::MIXING_ANGLE = PARAM.inp.mixing_angle;
