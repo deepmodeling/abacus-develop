@@ -198,7 +198,6 @@ extern bool deepks_setorb;
 extern std::vector<std::string> rpa_orbitals;
 
 // mixing parameters
-extern double MIXING_BETA;
 extern int MIXING_NDIM;
 extern double MIXING_RESTART;
 extern double MIXING_GG0;
