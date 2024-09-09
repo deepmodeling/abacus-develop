@@ -209,7 +209,6 @@ extern std::string device_flag;
 // precision flags added by denghui
 //==========================================================
 
-extern std::string chg_extrap;
 extern int out_pot;
 
 extern std::string init_chg; //  output charge if out_chg > 0, and output every

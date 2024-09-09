@@ -542,7 +542,6 @@ void Input_Conv::Convert()
     GlobalV::init_chg = PARAM.inp.init_chg;
     GlobalV::init_wfc = PARAM.inp.init_wfc;
     GlobalV::psi_initializer = PARAM.inp.psi_initializer;
-    GlobalV::chg_extrap = PARAM.inp.chg_extrap; // xiaohui modify 2015-02-01
     GlobalV::nelec = PARAM.inp.nelec;
     GlobalV::out_pot = PARAM.inp.out_pot;
 

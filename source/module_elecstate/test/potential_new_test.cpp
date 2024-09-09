@@ -1,11 +1,7 @@
 #include <vector>
-
+#include "gtest/gtest.h"
 #define private public
 #include "module_parameter/parameter.h"
-#undef private
-#include "gtest/gtest.h"
-
-#define private public
 #include "module_elecstate/potentials/potential_new.h"
 #undef private
 // mock functions
