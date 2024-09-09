@@ -211,7 +211,6 @@ extern std::string device_flag;
 
 extern int out_pot;
 
-extern std::string init_chg; //  output charge if out_chg > 0, and output every
                              //  "out_chg" elec step.
 /// @brief method to initialize wavefunction
 /// @author kirk0830, 20230920

@@ -539,7 +539,6 @@ void Input_Conv::Convert()
     //----------------------------------------------------------
     // wavefunction / charge / potential / (2/4)
     //----------------------------------------------------------
-    GlobalV::init_chg = PARAM.inp.init_chg;
     GlobalV::init_wfc = PARAM.inp.init_wfc;
     GlobalV::psi_initializer = PARAM.inp.psi_initializer;
     GlobalV::nelec = PARAM.inp.nelec;
