@@ -67,7 +67,7 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
     if (GlobalV::NSPIN==2 || GlobalV::NSPIN==4)
     {
         GlobalV::ofs_running<<"mixing_beta_mag: "<< this->mixing_beta_mag <<std::endl;
-        GlobalV::ofs_running<<"mixing_gg0_mag: "<< GlobalV::MIXING_GG0_MAG <<std::endl;
+        GlobalV::ofs_running<<"mixing_gg0_mag: "<< PARAM.inp.mixing_gg0_mag <<std::endl;
     }
     if (PARAM.inp.mixing_angle > 0)
     {
