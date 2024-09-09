@@ -182,7 +182,6 @@ std::string of_kernel_file = "WTkernel.txt";
 double MIXING_GG0 = 1.00;
 double MIXING_GG0_MAG = 1.00;
 double MIXING_ANGLE = 0.0;
-bool MIXING_TAU = false;
 bool MIXING_DMR = false;
 
 //==========================================================
