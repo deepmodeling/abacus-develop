@@ -44,7 +44,7 @@ void Driver::init()
     Print_Info::print_time(time_start, time_finish);
 
     // (4) close all of the running logs
-    ModuleBase::Global_File::close_all_log(GlobalV::MY_RANK, PARAM.inp.out_alllog);
+    ModuleBase::Global_File::close_all_log(GlobalV::MY_RANK, PARAM.inp.out_alllog,PARAM.inp.calculation);
 
     // (5) output the json file
     // Json::create_Json(&GlobalC::ucell.symm,GlobalC::ucell.atoms,&INPUT);

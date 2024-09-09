@@ -43,7 +43,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
     ModuleBase::TITLE("ESolver_KS_LCAO", "others");
     ModuleBase::timer::tick("ESolver_KS_LCAO", "others");
 
-    const std::string cal_type = GlobalV::CALCULATION;
+    const std::string cal_type = PARAM.inp.calculation;
 
     if (cal_type == "get_S")
     {
@@ -91,7 +91,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
     // pelec should be initialized before these calculations
     this->pelec->init_scf(istep, this->sf.strucFac);
     // self consistent calculations for electronic ground state
-    if (GlobalV::CALCULATION == "nscf")
+    if (PARAM.inp.calculation == "nscf")
     {
         this->nscf();
     }

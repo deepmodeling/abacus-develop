@@ -107,7 +107,7 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
     }
 
     // add by jingan in 2018.11.7
-    if (GlobalV::CALCULATION == "nscf" && PARAM.inp.towannier90)
+    if (PARAM.inp.calculation == "nscf" && PARAM.inp.towannier90)
     {
 #ifdef __LCAO
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "Wave function to Wannier90");

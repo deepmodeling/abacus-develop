@@ -1,5 +1,6 @@
 #include "unk_overlap_lcao.h"
 
+#include "module_parameter/parameter.h"
 #include "ctime"
 #include "module_base/scalapack_connector.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
@@ -80,7 +81,7 @@ void unkOverlap_lcao::init(const Grid_Technique& gt, const int nkstot, const LCA
                            orb.Phi[T].PhiLN(0, 0).getDruniform(),
                            false,
                            true,
-                           GlobalV::CAL_FORCE);
+                           PARAM.inp.cal_force);
 
     // array initialization
     allocate_flag = true;

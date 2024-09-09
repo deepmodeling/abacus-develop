@@ -1,5 +1,8 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include "module_io/write_orb_info.h"
 #include "module_cell/unitcell.h"
 #include "prepare_unitcell.h"
@@ -41,11 +44,11 @@ TEST(OrbInfo,WriteOrbInfo)
     std::ofstream ofs;
     ofs.open("running.log");
     GlobalV::global_out_dir = "./";
-	GlobalV::PSEUDORCUT = 15.0;
+	PARAM.input.pseudo_rcut = 15.0;
     GlobalV::LSPINORB = false;
 	GlobalV::NSPIN = 1;
-    GlobalV::BASIS_TYPE = "pw";
-    GlobalV::DFT_FUNCTIONAL = "default";
+    PARAM.input.basis_type = "pw";
+    PARAM.input.dft_functional = "default";
     ucell->read_cell_pseudopots(pp_dir,ofs);
     ucell->cal_nwfc(ofs);
     ModuleIO::write_orb_info(ucell);

@@ -23,7 +23,7 @@ AddTest(
 
 AddTest(
   TARGET surchem_cal_totn
-  LIBS ${math_libs} planewave device base
+  LIBS ${math_libs} planewave device base parameter
   SOURCES cal_totn_test.cpp  ../cal_totn.cpp ../surchem.cpp ../../../module_hamilt_pw/hamilt_pwdft/parallel_grid.cpp 
 )
 

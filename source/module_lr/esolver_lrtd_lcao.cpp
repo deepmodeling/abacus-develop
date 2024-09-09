@@ -13,7 +13,7 @@
 #include "module_cell/module_neighbor/sltk_atom_arrange.h"
 #include "module_lr/utils/lr_util_print.h"
 #include "module_base/scalapack_connector.h"
-
+#include "module_parameter/parameter.h"
 #ifdef __EXX
 template<>
 void LR::ESolver_LR<double>::move_exx_lri(std::shared_ptr<Exx_LRI<double>>& exx_ks)
@@ -565,7 +565,7 @@ void LR::ESolver_LR<T, TR>::read_ks_chg(Charge& chg_gs)
             & (GlobalC::Pgrid),
 #endif
             GlobalV::MY_RANK,
-            GlobalV::ESOLVER_TYPE,
+            PARAM.inp.esolver_type,
             GlobalV::RANK_IN_STOGROUP,
             is,
             GlobalV::ofs_running,

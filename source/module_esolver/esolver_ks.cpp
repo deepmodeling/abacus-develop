@@ -199,7 +199,7 @@ void ESolver_KS<T, Device>::before_all_runners(const Input_para& inp, UnitCell& 
     // only the first one if used
     if (GlobalV::use_paw)
     {
-        XC_Functional::set_xc_type(GlobalV::DFT_FUNCTIONAL);
+        XC_Functional::set_xc_type(PARAM.inp.dft_functional);
     }
     else
     {

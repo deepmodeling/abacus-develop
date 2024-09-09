@@ -37,7 +37,7 @@ void WARNING(const std::string &file,const std::string &description)
     return;
 }
 
-void QUIT(void)
+void QUIT()
 {
 	QUIT(0);
 }
@@ -140,7 +140,7 @@ void WARNING_QUIT(const std::string &file,const std::string &description,int ret
 
 //Check and print warning information for all cores.
 //Maybe in the future warning.log should be replaced by error.log.
-void CHECK_WARNING_QUIT(const bool error_in, const std::string &file,const std::string &description)
+void CHECK_WARNING_QUIT(const bool error_in, const std::string &file,const std::string &calculation,const std::string &description)
 {
 #ifdef __NORMAL
 // only for UT, do nothing here
@@ -151,7 +151,7 @@ void CHECK_WARNING_QUIT(const bool error_in, const std::string &file,const std::
 		std::cout.clear();
 		if(!GlobalV::ofs_running.is_open())
 		{
-			std::string logfile = GlobalV::global_out_dir + "running_" + GlobalV::CALCULATION + ".log";
+			std::string logfile = GlobalV::global_out_dir + "running_" + calculation + ".log";
 			GlobalV::ofs_running.open( logfile.c_str(), std::ios::app );
 		}
 		if(!GlobalV::ofs_warning.is_open())

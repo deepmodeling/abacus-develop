@@ -102,15 +102,15 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, const Paramet
             // changelog 20240509
             // because I move out the dependence on GlobalV from UnitCell::print_stru_file
             // so its parameter is calculated here
-            bool need_orb = GlobalV::BASIS_TYPE=="pw";
+            bool need_orb = PARAM.inp.basis_type=="pw";
             need_orb = need_orb && GlobalV::psi_initializer;
             need_orb = need_orb && GlobalV::init_wfc.substr(0, 3)=="nao";
-            need_orb = need_orb || GlobalV::BASIS_TYPE=="lcao";
-            need_orb = need_orb || GlobalV::BASIS_TYPE=="lcao_in_pw";
+            need_orb = need_orb || PARAM.inp.basis_type=="lcao";
+            need_orb = need_orb || PARAM.inp.basis_type=="lcao_in_pw";
             unit_in.print_stru_file(file.str(), 
                                     GlobalV::NSPIN, 
                                     false, // Cartesian coordinates
-                                    GlobalV::CALCULATION == "md", 
+                                    PARAM.inp.calculation == "md", 
                                     PARAM.inp.out_mul,
                                     need_orb,
                                     GlobalV::deepks_setorb,

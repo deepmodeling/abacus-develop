@@ -99,7 +99,7 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
     this->cal_type = calculation_type::lcao_exx;
     const Parallel_Orbitals* const pv = hR_in->get_paraV();
 
-    if (GlobalV::CALCULATION == "nscf" && GlobalC::exx_info.info_global.cal_exx)
+    if (PARAM.inp.calculation == "nscf" && GlobalC::exx_info.info_global.cal_exx)
     {    // if nscf, read HexxR first and reallocate hR according to the read-in HexxR
         const std::string file_name_exx = GlobalV::global_readin_dir + "HexxR" + std::to_string(GlobalV::MY_RANK);
         if (GlobalC::exx_info.info_ri.real_number)
@@ -201,7 +201,7 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHR()
 {
     ModuleBase::TITLE("OperatorEXX", "contributeHR");
     // Peize Lin add 2016-12-03
-    if (GlobalV::CALCULATION != "nscf" && this->two_level_step != nullptr && *this->two_level_step == 0 && !this->restart) { return;  //in the non-exx loop, do nothing 
+    if (PARAM.inp.calculation != "nscf" && this->two_level_step != nullptr && *this->two_level_step == 0 && !this->restart) { return;  //in the non-exx loop, do nothing 
 }
     if (XC_Functional::get_func_type() == 4 || XC_Functional::get_func_type() == 5)
     {
@@ -235,7 +235,7 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHk(int ik)
 {
     ModuleBase::TITLE("OperatorEXX", "constributeHR");
     // Peize Lin add 2016-12-03
-    if (GlobalV::CALCULATION != "nscf" && this->two_level_step != nullptr && *this->two_level_step == 0 && !this->restart) { return;  //in the non-exx loop, do nothing 
+    if (PARAM.inp.calculation != "nscf" && this->two_level_step != nullptr && *this->two_level_step == 0 && !this->restart) { return;  //in the non-exx loop, do nothing 
 }
     if (XC_Functional::get_func_type() == 4 || XC_Functional::get_func_type() == 5)
     {

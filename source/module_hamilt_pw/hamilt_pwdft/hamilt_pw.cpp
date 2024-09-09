@@ -1,5 +1,6 @@
 #include "hamilt_pw.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/blas_connector.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
@@ -61,11 +62,11 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K
         {
             pot_register_in.push_back("surchem");
         }
-        if (GlobalV::EFIELD_FLAG)
+        if (PARAM.inp.efield_flag)
         {
             pot_register_in.push_back("efield");
         }
-        if (GlobalV::GATE_FLAG)
+        if (PARAM.inp.gate_flag)
         {
             pot_register_in.push_back("gatefield");
         }

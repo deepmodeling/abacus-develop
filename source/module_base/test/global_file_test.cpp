@@ -1,7 +1,10 @@
-#include "../global_file.h"
-#include "../global_variable.h"
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
+#include "../global_file.h"
+#include "../global_variable.h"
 #include <fstream>
 #include <unistd.h>
 
@@ -113,7 +116,7 @@ TEST_F(GlobalFile,closealllog)
 		std::string header = "running_";
 		std::string tailCpuRank0 = "_cpu0.log";
 		std::string tail = ".log";
-		std::string f1 = header + GlobalV::CALCULATION + tailCpuRank0;
+		std::string f1 = header + PARAM.input.calculation + tailCpuRank0;
 		
 		if (GlobalV::ofs_running.is_open())
 		{
@@ -125,7 +128,7 @@ TEST_F(GlobalFile,closealllog)
 		}
 		GlobalV::ofs_running.open(f1.c_str());
 		GlobalV::ofs_warning.open("warning.log");
-		ModuleBase::Global_File::close_all_log(0,true);
+		ModuleBase::Global_File::close_all_log(0,true,PARAM.input.calculation);
 		EXPECT_FALSE(GlobalV::ofs_running.is_open());
 		if (GlobalV::ofs_running.is_open())
 		{
@@ -141,7 +144,7 @@ TEST_F(GlobalFile,closealllog)
 		/* Test out_alllog == false case */
 		GlobalV::ofs_running.open("running.log");
 		GlobalV::ofs_warning.open("warning.log");
-		ModuleBase::Global_File::close_all_log(0,false);
+		ModuleBase::Global_File::close_all_log(0,false,PARAM.input.calculation);
 		EXPECT_FALSE(GlobalV::ofs_running.is_open());
 		if (GlobalV::ofs_running.is_open())
 		{

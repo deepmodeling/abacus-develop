@@ -1,11 +1,13 @@
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include "memory"
 #include "module_base/global_variable.h"
 #include "module_base/mathzone.h"
 #include "module_cell/check_atomic_stru.h"
 #include "module_cell/unitcell.h"
-
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include <valarray>
 #include <vector>
 #ifdef __MPI
@@ -110,12 +112,12 @@ class UcellTest : public ::testing::Test {
         ucell = utp.SetUcellInfo();
         GlobalV::LSPINORB = false;
         pp_dir = "./support/";
-        GlobalV::PSEUDORCUT = 15.0;
-        GlobalV::DFT_FUNCTIONAL = "default";
+        PARAM.input.pseudo_rcut = 15.0;
+        PARAM.input.dft_functional = "default";
         GlobalV::test_unitcell = 1;
         GlobalV::test_pseudo_cell = 1;
         GlobalV::NSPIN = 1;
-        GlobalV::BASIS_TYPE = "pw";
+        PARAM.input.basis_type = "pw";
     }
     void TearDown() { ofs.close(); }
 };
@@ -157,7 +159,7 @@ TEST_F(UcellDeathTest, ReadCellPPWarning3) {
 }
 
 TEST_F(UcellDeathTest, ReadCellPPWarning4) {
-    GlobalV::DFT_FUNCTIONAL = "LDA";
+    PARAM.input.dft_functional = "LDA";
     testing::internal::CaptureStdout();
     EXPECT_NO_THROW(ucell->read_cell_pseudopots(pp_dir, ofs));
     output = testing::internal::GetCapturedStdout();
@@ -317,7 +319,7 @@ TEST_F(UcellTest, CalNwfc1) {
 
 TEST_F(UcellTest, CalNwfc2) {
     GlobalV::NSPIN = 4;
-    GlobalV::BASIS_TYPE = "lcao";
+    PARAM.input.basis_type = "lcao";
     ucell->read_cell_pseudopots(pp_dir, ofs);
     EXPECT_FALSE(ucell->atoms[0].ncpp.has_so);
     EXPECT_FALSE(ucell->atoms[1].ncpp.has_so);

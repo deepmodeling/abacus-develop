@@ -1,13 +1,14 @@
 #include <gtest/gtest.h>
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include "../psi_initializer.h"
 #include "../psi_initializer_random.h"
 #include "../psi_initializer_atomic.h"
 #include "../psi_initializer_nao.h"
 #include "../psi_initializer_atomic_random.h"
 #include "../psi_initializer_nao_random.h"
-#define private public
-#include "module_parameter/parameter.h"
-#undef private
+
 
 /*
 =========================
@@ -119,7 +120,7 @@ class PsiIntializerUnitTest : public ::testing::Test {
             PARAM.input.orbital_dir = "./support/";
             PARAM.input.pseudo_dir = "./support/";
             GlobalV::NPOL = 1;
-            GlobalV::CALCULATION = "scf";
+            PARAM.input.calculation = "scf";
             GlobalV::init_wfc = "random";
             GlobalV::KS_SOLVER = "cg";
             GlobalV::DOMAG = false;

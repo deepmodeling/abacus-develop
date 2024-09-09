@@ -78,7 +78,7 @@ void ESolver_SDFT_PW::before_all_runners(const Input_para& inp, UnitCell& ucell)
     // 6) prepare some parameters for electronic wave functions initilization
     this->p_wf_init = new psi::WFInit<std::complex<double>>(GlobalV::init_wfc,
                                                             GlobalV::KS_SOLVER,
-                                                            GlobalV::BASIS_TYPE,
+                                                            PARAM.inp.basis_type,
                                                             GlobalV::psi_initializer,
                                                             &this->wf,
                                                             this->pw_wfc);
@@ -300,7 +300,7 @@ void ESolver_SDFT_PW::others(const int istep)
 {
     ModuleBase::TITLE("ESolver_SDFT_PW", "others");
 
-    if (GlobalV::CALCULATION == "nscf")
+    if (PARAM.inp.calculation == "nscf")
     {
         this->nscf();
     }

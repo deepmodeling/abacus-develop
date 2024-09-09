@@ -51,11 +51,11 @@ psi::Psi<std::complex<double>>* wavefunc::allocate(const int nkstot, const int n
     const int nks2 = nks;
 
 	psi::Psi<std::complex<double>>* psi_out = nullptr;
-    if (GlobalV::CALCULATION == "nscf" && this->mem_saver == 1)
+    if (PARAM.inp.calculation == "nscf" && this->mem_saver == 1)
     {
 		//initial psi rather than evc
 		psi_out = new psi::Psi<std::complex<double>>(1, GlobalV::NBANDS, npwx * GlobalV::NPOL, ngk);
-		if(GlobalV::BASIS_TYPE=="lcao_in_pw")
+		if(PARAM.inp.basis_type=="lcao_in_pw")
 		{
 			wanf2[0].create(GlobalV::NLOCAL, npwx * GlobalV::NPOL);
 			const size_t memory_cost = GlobalV::NLOCAL*(GlobalV::NPOL*npwx) * sizeof(std::complex<double>);
@@ -66,9 +66,9 @@ psi::Psi<std::complex<double>>* wavefunc::allocate(const int nkstot, const int n
 		std::cout << " MEMORY FOR PSI (MB)  : " << double(memory_cost)/1024.0/1024.0 << std::endl;
 		ModuleBase::Memory::record("Psi_PW", memory_cost);
 	}
-	else if(GlobalV::BASIS_TYPE!="pw")
+	else if(PARAM.inp.basis_type!="pw")
     {
-        if ((GlobalV::BASIS_TYPE == "lcao" || GlobalV::BASIS_TYPE == "lcao_in_pw") || winput::out_spillage == 2)
+        if ((PARAM.inp.basis_type == "lcao" || PARAM.inp.basis_type == "lcao_in_pw") || winput::out_spillage == 2)
         { // for lcao_in_pw
 			if(this->wanf2 != nullptr) 
 			{
@@ -107,7 +107,7 @@ void wavefunc::wfcinit(psi::Psi<std::complex<double>> *psi_in, ModulePW::PW_Basi
 {
     ModuleBase::TITLE("wavefunc","wfcinit");
     ModuleBase::timer::tick("wavefunc", "wfcinit");
-    if (GlobalV::BASIS_TYPE == "pw")
+    if (PARAM.inp.basis_type == "pw")
     {
 		if (this->irindex != nullptr)
 		{
@@ -126,7 +126,7 @@ void wavefunc::wfcinit(psi::Psi<std::complex<double>> *psi_in, ModulePW::PW_Basi
     return;
 }
 
-int wavefunc::get_starting_nw(void)const
+int wavefunc::get_starting_nw()const
 {
     if (init_wfc == "file")
     {
@@ -239,7 +239,7 @@ void diago_PAO_in_pw_k2(const int &ik,
 
     //special case here! use Psi(k-1) for the initialization of Psi(k)
     //this method should be tested.
-    /*if(GlobalV::CALCULATION == "nscf" && GlobalC::ucell.natomwfc == 0 && ik>0)
+    /*if(PARAM.inp.calculation == "nscf" && GlobalC::ucell.natomwfc == 0 && ik>0)
     {
         //this is memsaver case
         if(wvf.get_nk() == 1)
@@ -274,7 +274,8 @@ void diago_PAO_in_pw_k2(const int &ik,
 	else if(p_wf->init_wfc.substr(0,6)=="atomic")
 	{
 		ModuleBase::ComplexMatrix wfcatom(starting_nw, nbasis);//added by zhengdy-soc
-		if(GlobalV::test_wf)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "starting_nw", starting_nw);
+		if(GlobalV::test_wf) {ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "starting_nw", starting_nw);
+}
 
 		p_wf->atomic_wfc(
 				ik, 
@@ -391,7 +392,7 @@ void diago_PAO_in_pw_k2(const int &ik,
 
     // special case here! use Psi(k-1) for the initialization of Psi(k)
     // this method should be tested.
-    /*if(GlobalV::CALCULATION == "nscf" && GlobalC::ucell.natomwfc == 0 && ik>0)
+    /*if(PARAM.inp.calculation == "nscf" && GlobalC::ucell.natomwfc == 0 && ik>0)
     {
         //this is memsaver case
         if(wvf.get_nk() == 1)
@@ -753,9 +754,10 @@ void wavefunc::init_after_vc(const int nks)
     const int nks2 = nks;
 	const int nbasis = this->npwx * GlobalV::NPOL;
 
-	if((GlobalV::BASIS_TYPE=="lcao" || GlobalV::BASIS_TYPE=="lcao_in_pw") || winput::out_spillage==2)
+	if((PARAM.inp.basis_type=="lcao" || PARAM.inp.basis_type=="lcao_in_pw") || winput::out_spillage==2)
 	{
-		if(wanf2 != nullptr)delete[] wanf2;
+		if(wanf2 != nullptr) {delete[] wanf2;
+}
 		this->wanf2 = new ModuleBase::ComplexMatrix [nks2];
 		for (int ik = 0; ik < nks2; ik++)
 		{
@@ -766,7 +768,7 @@ void wavefunc::init_after_vc(const int nks)
     if(GlobalV::test_wf)
     {
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"psi allocation","Done");
-        if(GlobalV::BASIS_TYPE=="lcao" || GlobalV::BASIS_TYPE=="lcao_in_pw")
+        if(PARAM.inp.basis_type=="lcao" || PARAM.inp.basis_type=="lcao_in_pw")
         {
             ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"wanf2 allocation","Done");
         }

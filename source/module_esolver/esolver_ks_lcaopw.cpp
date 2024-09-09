@@ -86,9 +86,9 @@ namespace ModuleESolver
     {
         ESolver_KS_PW<T>::before_all_runners(inp, cell);
 #ifdef __EXX
-        if (GlobalV::CALCULATION == "scf" || GlobalV::CALCULATION == "relax"
-            || GlobalV::CALCULATION == "cell-relax"
-            || GlobalV::CALCULATION == "md") {
+        if (PARAM.inp.calculation == "scf" || PARAM.inp.calculation == "relax"
+            || PARAM.inp.calculation == "cell-relax"
+            || PARAM.inp.calculation == "md") {
             if (GlobalC::exx_info.info_global.cal_exx)
             {
                 XC_Functional::set_xc_first_loop(cell);

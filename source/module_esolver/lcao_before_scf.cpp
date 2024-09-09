@@ -129,7 +129,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
     {
         const Parallel_Orbitals* pv = &this->pv;
         // build and save <psi(0)|alpha(R)> at beginning
-        GlobalC::ld.build_psialpha(GlobalV::CAL_FORCE,
+        GlobalC::ld.build_psialpha(PARAM.inp.cal_force,
                                    GlobalC::ucell,
                                    orb_,
                                    GlobalC::GridD,
@@ -137,7 +137,8 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
 
         if (PARAM.inp.deepks_out_unittest)
         {
-            GlobalC::ld.check_psialpha(GlobalV::CAL_FORCE, GlobalC::ucell, orb_, GlobalC::GridD);
+
+            GlobalC::ld.check_psialpha(PARAM.inp.cal_force, GlobalC::ucell, orb_, GlobalC::GridD);
         }
     }
 #endif

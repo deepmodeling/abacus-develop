@@ -1,5 +1,6 @@
 #include "write_HS_R.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/timer.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_HS_arrays.hpp"
 #include "module_hamilt_lcao/hamilt_lcaodft/spar_dh.h"
@@ -199,7 +200,7 @@ void ModuleIO::output_TR(const int istep,
     ModuleBase::timer::tick("ModuleIO", "output_TR");
 
     std::stringstream sst;
-    if (GlobalV::CALCULATION == "md" && !GlobalV::out_app_flag) {
+    if (PARAM.inp.calculation == "md" && !PARAM.inp.out_app_flag) {
         sst << GlobalV::global_matrix_dir << istep << "_" << TR_filename;
     } else {
         sst << GlobalV::global_out_dir << TR_filename;

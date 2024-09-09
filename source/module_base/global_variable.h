@@ -21,24 +21,10 @@ extern int NBANDS;
 extern int NLOCAL;        // 1.1 // mohan add 2009-05-29
 
 
-extern double PSEUDORCUT;
-
-extern std::string CALCULATION; // 2 "scf";"nscf" ;"symmetry"
-extern std::string ESOLVER_TYPE;
-extern int EFIELD_FLAG;   // 5 add electric field
-extern int DIP_COR_FLAG;  // 7 add dipole correction
-extern bool GATE_FLAG;    // add gate field
-extern bool out_app_flag; // whether output r(R), H(R), S(R), T(R), and dH(R) matrices
-                          // in an append manner during MD liuyu 2023-03-20
-
-extern std::string DFT_FUNCTIONAL; // 6.5 change the DFT functional from input file.
-
 extern int NSPIN;       // 7
 extern bool TWO_EFERMI; // 7.5 two fermi energy, exist if nupdown isn't zero.
 extern double nupdown;
-extern int CURRENT_K; // 8
 
-extern int CAL_FORCE;    // 8.1
 extern double FORCE_THR; // 8.2
 extern bool CAL_STRESS;  // 8.25 calcualte the stress
 
@@ -56,7 +42,6 @@ extern bool fixed_atoms;
 
 extern int SCF_NMAX;      // 8.4
 
-extern std::string BASIS_TYPE; // xiaohui add 2013-09-01
 extern std::string KS_SOLVER;  // xiaohui add 2013-09-01
 extern double SEARCH_RADIUS;   // 11.1 // mohan add 2011-03-10
 
