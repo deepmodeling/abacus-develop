@@ -1,5 +1,6 @@
 #include "run_md.h"
 
+#include "module_parameter/parameter.h"
 #include "fire.h"
 #include "langevin.h"
 #include "md_func.h"
@@ -104,7 +105,7 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, const Paramet
             // so its parameter is calculated here
             bool need_orb = PARAM.inp.basis_type=="pw";
             need_orb = need_orb && GlobalV::psi_initializer;
-            need_orb = need_orb && GlobalV::init_wfc.substr(0, 3)=="nao";
+            need_orb = need_orb && PARAM.inp.init_wfc.substr(0, 3)=="nao";
             need_orb = need_orb || PARAM.inp.basis_type=="lcao";
             need_orb = need_orb || PARAM.inp.basis_type=="lcao_in_pw";
             unit_in.print_stru_file(file.str(), 

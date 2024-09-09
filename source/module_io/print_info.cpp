@@ -74,7 +74,7 @@ void Print_Info::setup_parameters(UnitCell &ucell, K_Vectors &kv)
 		     << std::setw(16) << "KPOINTS"
 		     << std::setw(12) << "PROCESSORS";
 
-		if(PARAM.inp.basis_type=="lcao" || PARAM.inp.basis_type=="lcao_in_pw" || (PARAM.inp.basis_type=="pw" && GlobalV::init_wfc.substr(0, 3) == "nao"))
+		if(PARAM.inp.basis_type=="lcao" || PARAM.inp.basis_type=="lcao_in_pw" || (PARAM.inp.basis_type=="pw" && PARAM.inp.init_wfc.substr(0, 3) == "nao"))
 		{
 			std::cout << std::setw(12) << "NBASE";
 		}
@@ -111,7 +111,7 @@ void Print_Info::setup_parameters(UnitCell &ucell, K_Vectors &kv)
 
 		std::cout << std::setw(12) << GlobalV::NPROC;
 
-		if(PARAM.inp.basis_type=="lcao" || PARAM.inp.basis_type=="lcao_in_pw" || (PARAM.inp.basis_type=="pw" && GlobalV::init_wfc.substr(0, 3) == "nao"))
+		if(PARAM.inp.basis_type=="lcao" || PARAM.inp.basis_type=="lcao_in_pw" || (PARAM.inp.basis_type=="pw" && PARAM.inp.init_wfc.substr(0, 3) == "nao"))
 		{
 			std::cout << std::setw(12) << GlobalV::NLOCAL;
 		}
@@ -176,7 +176,7 @@ void Print_Info::setup_parameters(UnitCell &ucell, K_Vectors &kv)
 				std::cout << " " << std::setw(8) << ucell.atoms[it].label;
 			}
 
-			if(PARAM.inp.basis_type=="lcao" || PARAM.inp.basis_type=="lcao_in_pw" || (PARAM.inp.basis_type=="pw" && GlobalV::init_wfc.substr(0, 3) == "nao"))
+			if(PARAM.inp.basis_type=="lcao" || PARAM.inp.basis_type=="lcao_in_pw" || (PARAM.inp.basis_type=="pw" && PARAM.inp.init_wfc.substr(0, 3) == "nao"))
 			{
 				std::stringstream orb;
 

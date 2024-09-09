@@ -140,7 +140,7 @@ void ESolver_KS_PW<T, Device>::before_all_runners(const Input_para& inp, UnitCel
     }
 
     //! 7) prepare some parameters for electronic wave functions initilization
-    this->p_wf_init = new psi::WFInit<T, Device>(GlobalV::init_wfc,
+    this->p_wf_init = new psi::WFInit<T, Device>(PARAM.inp.init_wfc,
                                                  GlobalV::KS_SOLVER,
                                                  PARAM.inp.basis_type,
                                                  GlobalV::psi_initializer,
@@ -303,7 +303,7 @@ void ESolver_KS_PW<T, Device>::before_scf(const int istep)
     // time before scf. But for random wavefunction, we dont, because random
     // wavefunction is not related to atomic coordinates. What the old strategy
     // does is only to initialize for once...
-    if (((GlobalV::init_wfc == "random") && (istep == 0)) || (GlobalV::init_wfc != "random"))
+    if (((PARAM.inp.init_wfc == "random") && (istep == 0)) || (PARAM.inp.init_wfc != "random"))
     {
         this->p_wf_init->initialize_psi(this->psi, this->kspw_psi, this->p_hamilt, GlobalV::ofs_running);
     }

@@ -1,5 +1,6 @@
 #include "esolver_sdft_pw.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/memory.h"
 #include "module_base/timer.h"
 #include "module_elecstate/elecstate_pw_sdft.h"
@@ -76,7 +77,7 @@ void ESolver_SDFT_PW::before_all_runners(const Input_para& inp, UnitCell& ucell)
     }
 
     // 6) prepare some parameters for electronic wave functions initilization
-    this->p_wf_init = new psi::WFInit<std::complex<double>>(GlobalV::init_wfc,
+    this->p_wf_init = new psi::WFInit<std::complex<double>>(PARAM.inp.init_wfc,
                                                             GlobalV::KS_SOLVER,
                                                             PARAM.inp.basis_type,
                                                             GlobalV::psi_initializer,
