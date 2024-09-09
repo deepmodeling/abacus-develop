@@ -15,11 +15,11 @@ namespace ModuleESolver
 ESolver_FP::ESolver_FP()
 {
     // pw_rho = new ModuleBase::PW_Basis();
-    pw_rho = new ModulePW::PW_Basis_Big(GlobalV::device_flag, GlobalV::precision_flag);
+    pw_rho = new ModulePW::PW_Basis_Big(GlobalV::device_flag, PARAM.inp.precision);
 
     if (GlobalV::double_grid)
     {
-        pw_rhod = new ModulePW::PW_Basis_Big(GlobalV::device_flag, GlobalV::precision_flag);
+        pw_rhod = new ModulePW::PW_Basis_Big(GlobalV::device_flag, PARAM.inp.precision);
     }
     else
     {

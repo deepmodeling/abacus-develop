@@ -55,7 +55,7 @@ ESolver_KS<T, Device>::ESolver_KS()
 
     // pw_rho = new ModuleBase::PW_Basis();
     // temporary, it will be removed
-    pw_wfc = new ModulePW::PW_Basis_K_Big(GlobalV::device_flag, GlobalV::precision_flag);
+    pw_wfc = new ModulePW::PW_Basis_K_Big(GlobalV::device_flag, PARAM.inp.precision);
     ModulePW::PW_Basis_K_Big* tmp = static_cast<ModulePW::PW_Basis_K_Big*>(pw_wfc);
 
     // should not use INPUT here, mohan 2024-05-12
@@ -443,7 +443,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
                                                  PARAM.inp.esolver_type,
                                                  PARAM.inp.calculation,
                                                  PARAM.inp.init_chg,
-                                                 GlobalV::precision_flag,
+                                                 PARAM.inp.precision,
                                                  istep,
                                                  iter,
                                                  drho,
@@ -504,7 +504,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
                     diag_ethr = hsolver::reset_diag_ethr(GlobalV::ofs_running,
                                                          PARAM.inp.basis_type,
                                                          PARAM.inp.esolver_type,
-                                                         GlobalV::precision_flag,
+                                                         PARAM.inp.precision,
                                                          hsolver_error,
                                                          drho,
                                                          diag_ethr,

@@ -47,7 +47,7 @@ ElecStatePW<T, Device>::~ElecStatePW()
 template<typename T, typename Device>
 void ElecStatePW<T, Device>::init_rho_data() 
 {
-    if (GlobalV::device_flag == "gpu" || GlobalV::precision_flag == "single") {
+    if (GlobalV::device_flag == "gpu" || PARAM.inp.precision == "single") {
         this->rho = new Real*[this->charge->nspin];
         resmem_var_op()(this->ctx, this->rho_data, this->charge->nspin * this->charge->nrxx);
         for (int ii = 0; ii < this->charge->nspin; ii++) {
@@ -108,7 +108,7 @@ void ElecStatePW<T, Device>::psiToRho(const psi::Psi<T, Device>& psi)
     {
         this->add_usrho(psi);
     }
-    if (GlobalV::device_flag == "gpu" || GlobalV::precision_flag == "single") {
+    if (GlobalV::device_flag == "gpu" || PARAM.inp.precision == "single") {
         for (int ii = 0; ii < GlobalV::NSPIN; ii++) {
             castmem_var_d2h_op()(cpu_ctx, this->ctx, this->charge->rho[ii], this->rho[ii], this->charge->nrxx);
             if (get_xc_func_type() == 3)

@@ -134,7 +134,7 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
 #if ((defined __CUDA) || (defined __ROCM))
 		if (GlobalV::device_flag == "gpu")
 		{
-			if (GlobalV::precision_flag == "single")
+			if (PARAM.inp.precision == "single")
 			{
 				return new ESolver_KS_PW<std::complex<float>, base_device::DEVICE_GPU>();
 			}
@@ -144,7 +144,7 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
 			}
 		}
 #endif
-		if (GlobalV::precision_flag == "single")
+		if (PARAM.inp.precision == "single")
 		{
 			return new ESolver_KS_PW<std::complex<float>, base_device::DEVICE_CPU>();
 		}
@@ -156,7 +156,7 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
 #ifdef __LCAO
     else if (esolver_type == "ksdft_lip")
     {
-        if (GlobalV::precision_flag == "single")
+        if (PARAM.inp.precision == "single")
         {
             return new ESolver_KS_LIP<std::complex<float>>();
         }

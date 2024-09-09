@@ -233,8 +233,7 @@ void Input_Conv::Convert()
         GlobalV::KPAR = PARAM.inp.kpar;
         GlobalV::NSTOGROUP = PARAM.inp.bndpar;
     }
-    GlobalV::precision_flag = PARAM.inp.precision;
-    if (GlobalV::device_flag == "cpu" and GlobalV::precision_flag == "single")
+    if (GlobalV::device_flag == "cpu" and PARAM.inp.precision == "single")
     {
 // cpu single precision is not supported while float_fftw lib is not available
 #ifndef __ENABLE_FLOAT_FFTW

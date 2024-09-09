@@ -93,7 +93,7 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
         delete reinterpret_cast<psi::Psi<T, Device>*>(this->kspw_psi);
     }
     
-    if (GlobalV::precision_flag == "single")
+    if (PARAM.inp.precision == "single")
     {
         delete reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->__kspw_psi);
     }
@@ -590,13 +590,13 @@ template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::cal_force(ModuleBase::matrix& force)
 {
     Forces<double, Device> ff(GlobalC::ucell.nat);
-    if (this->__kspw_psi != nullptr && GlobalV::precision_flag == "single")
+    if (this->__kspw_psi != nullptr && PARAM.inp.precision == "single")
     {
         delete reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->__kspw_psi);
     }
 
     // Refresh __kspw_psi
-    this->__kspw_psi = GlobalV::precision_flag == "single"
+    this->__kspw_psi = PARAM.inp.precision == "single"
                            ? new psi::Psi<std::complex<double>, Device>(this->kspw_psi[0])
                            : reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->kspw_psi);
 
@@ -615,13 +615,13 @@ template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::cal_stress(ModuleBase::matrix& stress)
 {
     Stress_PW<double, Device> ss(this->pelec);
-    if (this->__kspw_psi != nullptr && GlobalV::precision_flag == "single")
+    if (this->__kspw_psi != nullptr && PARAM.inp.precision == "single")
     {
         delete reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->__kspw_psi);
     }
 
     // Refresh __kspw_psi
-    this->__kspw_psi = GlobalV::precision_flag == "single"
+    this->__kspw_psi = PARAM.inp.precision == "single"
                            ? new psi::Psi<std::complex<double>, Device>(this->kspw_psi[0])
                            : reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->kspw_psi);
     ss.cal_stress(stress,
