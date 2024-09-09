@@ -57,7 +57,7 @@ void ESolver_KS_LCAO<std::complex<double>, double>::get_S(void)
                          GlobalV::SEARCH_RADIUS,
                          GlobalV::test_atom_input);
 
-    this->RA.for_2d(this->pv, GlobalV::GAMMA_ONLY_LOCAL);
+    this->RA.for_2d(this->pv, GlobalV::GAMMA_ONLY_LOCAL, orb_.cutoffs());
 
     if (this->p_hamilt == nullptr) {
         this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, double>(
@@ -97,7 +97,7 @@ void ESolver_KS_LCAO<std::complex<double>, std::complex<double>>::get_S(void)
                          GlobalV::SEARCH_RADIUS,
                          GlobalV::test_atom_input);
 
-    this->RA.for_2d(this->pv, GlobalV::GAMMA_ONLY_LOCAL);
+    this->RA.for_2d(this->pv, GlobalV::GAMMA_ONLY_LOCAL, orb_.cutoffs());
     if (this->p_hamilt == nullptr) {
         this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>,
                                                 std::complex<double>>(

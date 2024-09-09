@@ -67,6 +67,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
     elecstate::Potential* pot_in,
     const K_Vectors& kv_in,
     const TwoCenterBundle& two_center_bundle,
+    const LCAO_Orbitals& orb,
     elecstate::DensityMatrix<TK, double>* DM_in
 #ifdef __EXX
     , int* exx_two_level_step
@@ -187,6 +188,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
                                                                     &GlobalC::ucell,
                                                                     &GlobalC::GridD,
                                                                     two_center_bundle.overlap_orb_alpha.get(),
+                                                                    &orb,
                                                                     this->kv->get_nks(),
                                                                     DM_in);
             this->getOperator()->add(deepks);
@@ -308,6 +310,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
                                                                     &GlobalC::ucell,
                                                                     &GlobalC::GridD,
                                                                     two_center_bundle.overlap_orb_alpha.get(),
+                                                                    &orb,
                                                                     this->kv->get_nks(),
                                                                     DM_in);
             this->getOperator()->add(deepks);

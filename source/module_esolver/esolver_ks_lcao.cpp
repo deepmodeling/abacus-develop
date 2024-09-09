@@ -171,7 +171,8 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
 								 inp.lcao_dr,
 								 inp.lcao_rmax,
                                  ucell, 
-                                 two_center_bundle_);
+                                 two_center_bundle_,
+                                 orb_);
     //------------------init Basis_lcao----------------------
 
     // 5) initialize density matrix
@@ -190,7 +191,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
     // 6) initialize Hamilt in LCAO
     // * allocate H and S matrices according to computational resources
     // * set the 'trace' between local H/S and global H/S
-    LCAO_domain::divide_HS_in_frag(GlobalV::GAMMA_ONLY_LOCAL, pv, this->kv.get_nks());
+    LCAO_domain::divide_HS_in_frag(GlobalV::GAMMA_ONLY_LOCAL, pv, this->kv.get_nks(), orb_);
 
 #ifdef __EXX
     // 7) initialize exx
@@ -211,7 +212,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
 
     // 8) initialize DFT+U
     if (GlobalV::dft_plus_u) {
-        GlobalC::dftu.init(ucell, &this->pv, this->kv.get_nks());
+        GlobalC::dftu.init(ucell, &this->pv, this->kv.get_nks(), orb_);
     }
 
     // 9) initialize ppcell
@@ -309,6 +310,7 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(ModuleBase::matrix& force)
                        this->GG, // mohan add 2024-04-01
                        this->GK, // mohan add 2024-04-01
                        two_center_bundle_,
+                       orb_,
                        force,
                        this->scs,
                        this->sf,

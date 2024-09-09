@@ -136,7 +136,7 @@ void toWannier90_LCAO::calculate(const ModuleBase::matrix& ekb,
                 return exp_idkr;
             };
 
-            FR[i].set_parameters(fr_ptr[i], &GlobalC::ucell, &GlobalC::GridD, ParaV, 140, 110);
+            FR[i].set_parameters(fr_ptr[i], &GlobalC::ucell, &orb_, &GlobalC::GridD, ParaV, 140, 110);
             FR[i].calculate_FR();
         }
 

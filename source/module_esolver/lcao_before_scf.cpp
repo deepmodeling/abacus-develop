@@ -94,7 +94,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
     }
 
     // prepare grid in Gint
-    LCAO_domain::grid_prepare(this->GridT, this->GG, this->GK, *this->pw_rho, *this->pw_big);
+    LCAO_domain::grid_prepare(this->GridT, this->GG, this->GK, orb_, *this->pw_rho, *this->pw_big);
 
     // init Hamiltonian
     if (this->p_hamilt != nullptr)
@@ -112,6 +112,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
             this->pelec->pot,
             this->kv,
             two_center_bundle_,
+            orb_,
             DM
 #ifdef __EXX
             , GlobalC::exx_info.info_ri.real_number ? &this->exd->two_level_step : &this->exc->two_level_step
