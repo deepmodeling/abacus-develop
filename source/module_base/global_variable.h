@@ -192,7 +192,6 @@ extern bool deepks_setorb;
 
 
 // implicit solvation
-extern bool imp_sol; // sunml added 2022-04-04
 extern double eb_k;
 
 // DFTU control
