@@ -629,7 +629,6 @@ void Input_Conv::Convert()
     //-----------------------------------------------
     // Deltaspin related parameters
     //-----------------------------------------------
-    GlobalV::sc_thr = PARAM.inp.sc_thr;
 
     // mixing parameters
     GlobalV::MIXING_GG0 = PARAM.inp.mixing_gg0;

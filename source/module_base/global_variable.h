@@ -220,7 +220,6 @@ extern int out_pot;
 extern double nelec;
 
 // Deltaspin related
-extern double sc_thr;
 
 // Quasiatomic orbital related
 extern double qo_thr;
