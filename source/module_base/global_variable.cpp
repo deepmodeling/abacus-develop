@@ -161,22 +161,6 @@ bool deepks_setorb = false;
 // Xinyang Dong added for rpa
 std::vector<std::string> rpa_orbitals;
 
-std::string of_kinetic = "wt";
-std::string of_method = "tn";
-std::string of_conv = "energy";
-double of_tole = 2e-6;
-double of_tolp = 1e-5;
-double of_tf_weight = 1.;
-double of_vw_weight = 1.;
-double of_wt_alpha = 5. / 6.;
-double of_wt_beta = 5. / 6.;
-double of_wt_rho0 = 0.;
-bool of_hold_rho0 = false;
-double of_lkt_a = 1.3;
-bool of_full_pw = true;
-int of_full_pw_dim = 0;
-bool of_read_kernel = false;
-std::string of_kernel_file = "WTkernel.txt";
 
 // mixing parameters
 
