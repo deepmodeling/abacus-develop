@@ -222,7 +222,6 @@ extern double nelec;
 // Deltaspin related
 
 // Quasiatomic orbital related
-extern std::vector<double> qo_screening_coeff;
 
 // radius of on-site orbitals
 extern double onsite_radius;

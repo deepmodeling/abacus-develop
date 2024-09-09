@@ -203,7 +203,6 @@ double nelec = 0;
 //==========================================================
 // Quasiatomic orbital related
 //==========================================================
-std::vector<double> qo_screening_coeff = {};
 
 // on-site orbitals
 double onsite_radius = 0.0;
