@@ -192,14 +192,14 @@ TEST_F(TestHSolverPW, solve) {
     // EXPECT_NEAR(this->hs_d.precondition[2], 6.236067977, 1e-8);
 
     // // check diago_ethr
-    // GlobalV::init_chg = "atomic";
+    // PARAM.input.init_chg = "atomic";
     // GlobalV::PW_DIAG_THR = 1e-7;
     // PARAM.input.calculation = "scf";
     // float test_diagethr = hs_f.set_diagethr(hs_f.diag_ethr, 0, 1, 1.0);
     // EXPECT_NEAR(hs_f.diag_ethr, 0.01, 1.0e-7);
     // EXPECT_NEAR(test_diagethr, 0.01, 1.0e-7);
     // PARAM.input.calculation = "md";
-    // GlobalV::init_chg = "file";
+    // PARAM.input.init_chg = "file";
     // test_diagethr = hs_f.set_diagethr(hs_f.diag_ethr, 0, 1, 1.0);
     // EXPECT_NEAR(test_diagethr, 1e-5, 1.0e-7);
     // test_diagethr = hs_f.set_diagethr(hs_f.diag_ethr, 0, 2, 1.0);
@@ -207,14 +207,14 @@ TEST_F(TestHSolverPW, solve) {
     // test_diagethr = hs_f.set_diagethr(hs_f.diag_ethr, 0, 3, 1.0e-3);
     // EXPECT_NEAR(test_diagethr, 0.0001, 1.0e-7);
 
-    // GlobalV::init_chg = "atomic";
+    // PARAM.input.init_chg = "atomic";
     // GlobalV::PW_DIAG_THR = 1e-7;
     // PARAM.input.calculation = "scf";
     // double test_diagethr_d = hs_d.set_diagethr(hs_d.diag_ethr, 0, 1, 1.0);
     // EXPECT_EQ(hs_d.diag_ethr, 0.01);
     // EXPECT_EQ(test_diagethr_d, 0.01);
     // PARAM.input.calculation = "md";
-    // GlobalV::init_chg = "file";
+    // PARAM.input.init_chg = "file";
     // test_diagethr_d = hs_d.set_diagethr(hs_d.diag_ethr, 0, 1, 1.0);
     // EXPECT_EQ(test_diagethr_d, 1e-5);
     // test_diagethr_d = hs_d.set_diagethr(hs_d.diag_ethr, 0, 2, 1.0);
