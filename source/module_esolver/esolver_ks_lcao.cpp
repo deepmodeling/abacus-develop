@@ -1242,7 +1242,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
     // 17) write quasi-orbitals, added by Yike Huang.
     if (PARAM.inp.qo_switch)
     {
-        toQO tqo(PARAM.inp.qo_basis, PARAM.inp.qo_strategy, GlobalV::qo_thr, GlobalV::qo_screening_coeff);
+        toQO tqo(PARAM.inp.qo_basis, PARAM.inp.qo_strategy, PARAM.inp.qo_thr, GlobalV::qo_screening_coeff);
         tqo.initialize(GlobalV::global_out_dir,
                        PARAM.inp.pseudo_dir,
                        PARAM.inp.orbital_dir,
