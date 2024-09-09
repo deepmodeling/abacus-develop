@@ -303,7 +303,6 @@ void Input_Conv::Convert()
 #ifdef __LCAO
     if (PARAM.inp.dft_plus_u)
     {
-        GlobalV::dft_plus_u = PARAM.inp.dft_plus_u;
         GlobalC::dftu.Yukawa = PARAM.inp.yukawa_potential;
         GlobalC::dftu.omc = PARAM.inp.omc;
         GlobalC::dftu.orbital_corr = PARAM.inp.orbital_corr;

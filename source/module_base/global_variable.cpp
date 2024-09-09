@@ -157,7 +157,6 @@ bool deepks_setorb = false;
 
 
 
-int dft_plus_u = 0; // DFTU control
 
 // Xinyang Dong added for rpa
 bool rpa_setorb = false;

@@ -194,7 +194,6 @@ extern bool deepks_setorb;
 // implicit solvation
 
 // DFTU control
-extern int dft_plus_u;
 // rpa related
 extern bool rpa_setorb;
 extern std::vector<std::string> rpa_orbitals;
