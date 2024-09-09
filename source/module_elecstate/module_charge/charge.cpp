@@ -196,7 +196,7 @@ void Charge::allocate(const int& nspin_in)
     return;
 }
 
-double Charge::sum_rho(void) const
+double Charge::sum_rho() const
 {
     ModuleBase::TITLE("Charge", "sum_rho");
 
@@ -236,7 +236,7 @@ double Charge::sum_rho(void) const
     return sum_rho;
 }
 
-void Charge::renormalize_rho(void)
+void Charge::renormalize_rho()
 {
     ModuleBase::TITLE("Charge", "renormalize_rho");
 
@@ -282,7 +282,8 @@ void Charge::atomic_rho(const int spin_number_need,
         double ne_tot = 0.0;
         std::vector<double> ne(spin_number_need);
         int spin0 = 1;
-        if (spin_number_need == 2) spin0 = spin_number_need;
+        if (spin_number_need == 2) { spin0 = spin_number_need;
+}
 
         for (int is = 0; is < spin0; ++is)
         {
@@ -300,16 +301,20 @@ void Charge::atomic_rho(const int spin_number_need,
         }
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning, "total electron number from rho", ne_tot);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning, "should be", GlobalV::nelec);
-        for (int is = 0; is < spin_number_need; ++is)
-            for (int ir = 0; ir < this->rhopw->nrxx; ++ir)
+        for (int is = 0; is < spin_number_need; ++is) {
+            for (int ir = 0; ir < this->rhopw->nrxx; ++ir) {
                 rho_in[is][ir] = rho_in[is][ir] / ne_tot * GlobalV::nelec;
+}
+}
         
         double* nhatgr;
         GlobalC::paw_cell.get_nhat(nhat,nhatgr);
 
-        for (int is = 0; is < spin_number_need; ++is)
-            for (int ir = 0; ir < this->rhopw->nrxx; ++ir)
+        for (int is = 0; is < spin_number_need; ++is) {
+            for (int ir = 0; ir < this->rhopw->nrxx; ++ir) {
                 rho_in[is][ir] -= nhat[is][ir];
+}
+}
 #endif
     }
     else
@@ -322,8 +327,9 @@ void Charge::atomic_rho(const int spin_number_need,
             {
                 // check the start magnetization
                 const int startmag_type = [&]() -> int {
-                    if (ucell.magnet.start_magnetization[it] != 0.0)
+                    if (ucell.magnet.start_magnetization[it] != 0.0) {
                         return 1;
+}
                     return 2;
                 }();
                 ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning, "startmag_type", startmag_type);
@@ -625,8 +631,9 @@ void Charge::atomic_rho(const int spin_number_need,
         {
             this->rhopw->recip2real(&rho_g3d(is, 0), rho_in[is]);
 
-            for (int ir = 0; ir < this->rhopw->nrxx; ++ir)
+            for (int ir = 0; ir < this->rhopw->nrxx; ++ir) {
                 ne[is] += rho_in[is][ir];
+}
             ne[is] *= omega / (double)this->rhopw->nxyz;
     #ifdef __MPI
             Parallel_Reduce::reduce_pool(ne[is]);
@@ -667,8 +674,9 @@ void Charge::atomic_rho(const int spin_number_need,
 
         double ne_tot = 0.0;
         int spin0 = 1;
-        if (spin_number_need == 2)
+        if (spin_number_need == 2) {
             spin0 = spin_number_need;
+}
         for (int is = 0; is < spin0; ++is)
         {
             GlobalV::ofs_warning << "\n SETUP ATOMIC RHO FOR SPIN " << is + 1 << std::endl;
@@ -677,25 +685,29 @@ void Charge::atomic_rho(const int spin_number_need,
         }
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning, "total electron number from rho", ne_tot);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning, "should be", GlobalV::nelec);
-        for (int is = 0; is < spin_number_need; ++is)
-            for (int ir = 0; ir < this->rhopw->nrxx; ++ir)
+        for (int is = 0; is < spin_number_need; ++is) {
+            for (int ir = 0; ir < this->rhopw->nrxx; ++ir) {
                 rho_in[is][ir] = rho_in[is][ir] / ne_tot * GlobalV::nelec;
+}
+}
     }
 
     ModuleBase::timer::tick("Charge", "atomic_rho");
     return;
 }
 
-void Charge::save_rho_before_sum_band(void)
+void Charge::save_rho_before_sum_band()
 {
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
         ModuleBase::GlobalFunc::DCOPY(rho[is], rho_save[is], this->rhopw->nrxx);
-        if (elecstate::get_xc_func_type() == 3 || elecstate::get_xc_func_type() == 5)
+        if (elecstate::get_xc_func_type() == 3 || elecstate::get_xc_func_type() == 5) {
             ModuleBase::GlobalFunc::DCOPY(kin_r[is], kin_r_save[is], this->rhopw->nrxx);
+}
 #ifdef USE_PAW
-        if(GlobalV::use_paw)
+        if(GlobalV::use_paw) {
             ModuleBase::GlobalFunc::DCOPY(nhat[is], nhat_save[is], this->rhopw->nrxx);
+}
 #endif
     }
     return;
