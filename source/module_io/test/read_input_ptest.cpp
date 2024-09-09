@@ -126,7 +126,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_DOUBLE_EQ(param.inp.relax_bfgs_init, 0.5);
     EXPECT_DOUBLE_EQ(param.inp.relax_scale_force, 0.5);
     EXPECT_EQ(param.inp.nbspline, -1);
-    EXPECT_TRUE(param.inp.gamma_only_pw);
+    EXPECT_TRUE(param.inp.gamma_only);
     EXPECT_TRUE(param.globalv.gamma_only_local);
     EXPECT_DOUBLE_EQ(param.inp.ecutwfc, 20.0);
     EXPECT_DOUBLE_EQ(param.inp.erf_ecut, 20.0);

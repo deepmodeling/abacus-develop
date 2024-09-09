@@ -1309,7 +1309,7 @@ double Charge_Mixing::inner_product_recip_rho(std::complex<double>* rho1, std::c
         }
         sum *= fac;
 
-        if (PARAM.inp.gamma_only_pw)
+        if (PARAM.inp.gamma_only)
         {
             sum *= 2.0;
         }
@@ -1330,8 +1330,8 @@ double Charge_Mixing::inner_product_recip_rho(std::complex<double>* rho1, std::c
         }
         mag *= fac2;
 
-        // if(PARAM.inp.gamma_only_pw);
-        if (PARAM.inp.gamma_only_pw) // Peize Lin delete ; 2020.01.31
+        // if(PARAM.inp.gamma_only);
+        if (PARAM.inp.gamma_only) // Peize Lin delete ; 2020.01.31
         {
             mag *= 2.0;
         }
@@ -1366,7 +1366,7 @@ double Charge_Mixing::inner_product_recip_rho(std::complex<double>* rho1, std::c
                           + (conj(rhog1[3][ig0]) * rhog2[3][ig0]).real());
             }
             double fac3 = fac2;
-            if (PARAM.inp.gamma_only_pw)
+            if (PARAM.inp.gamma_only)
             {
                 fac3 *= 2.0;
             }
@@ -1469,7 +1469,7 @@ double Charge_Mixing::inner_product_recip_hartree(std::complex<double>* rhog1, s
         }
         sum *= fac;
 
-        if (PARAM.inp.gamma_only_pw)
+        if (PARAM.inp.gamma_only)
         {
             sum *= 2.0;
         }
@@ -1490,7 +1490,7 @@ double Charge_Mixing::inner_product_recip_hartree(std::complex<double>* rhog1, s
         }
         mag *= fac2;
 
-        if (PARAM.inp.gamma_only_pw)
+        if (PARAM.inp.gamma_only)
         {
             mag *= 2.0;
         }
@@ -1525,7 +1525,7 @@ double Charge_Mixing::inner_product_recip_hartree(std::complex<double>* rhog1, s
                           + (conj(rhog1[ig0 + 3*npw]) * rhog2[ig0 + 3*npw]).real());
             }
             double fac3 = fac2;
-            if (PARAM.inp.gamma_only_pw)
+            if (PARAM.inp.gamma_only)
             {
                 fac3 *= 2.0;
             }
@@ -1561,7 +1561,7 @@ double Charge_Mixing::inner_product_recip_hartree(std::complex<double>* rhog1, s
                        * ((conj(rhog1[ig0 + this->rhopw->npw]) * rhog2[ig0 + this->rhopw->npw]).real());
             }
             double fac3 = fac2;
-            if (PARAM.inp.gamma_only_pw)
+            if (PARAM.inp.gamma_only)
             {
                 fac3 *= 2.0;
             }

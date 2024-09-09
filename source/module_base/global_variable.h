@@ -54,8 +54,6 @@ extern double DQ; // 19 mohan add 2009-09-10
 extern int NQX;   // 20 mohan add 2009-09-10
 extern int NQXQ;  // liuyu add 2023-10-03
 
-extern bool GAMMA_ONLY_PW;    // mohan add 2012-06-05
-
 
 //========================================================================
 // EXPLAIN : Parallel information
