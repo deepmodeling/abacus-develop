@@ -633,7 +633,8 @@ TEST_F(toQOTest, CalculateOvlpR)
     {
         for(int j = 0; j < ncols; j++)
         {
-            if(tqo.ovlpR(i, j) != 0.0) all_zero = false;
+            if(tqo.ovlpR(i, j) != 0.0) { all_zero = false;
+}
         }
     }
     EXPECT_EQ(all_zero, false);
@@ -969,8 +970,9 @@ TEST_F(toQOTest, OrbitalFilterOut)
         {
             for(int z = 0; z < 100; z++)
             {
-                if(l == 0) EXPECT_FALSE(tqo2.orbital_filter_out(it, l, z));
-                else EXPECT_TRUE(tqo2.orbital_filter_out(it, l, z));
+                if(l == 0) { EXPECT_FALSE(tqo2.orbital_filter_out(it, l, z));
+                } else { EXPECT_TRUE(tqo2.orbital_filter_out(it, l, z));
+}
             }
         }
     }
@@ -1007,8 +1009,9 @@ TEST_F(toQOTest, OrbitalFilterOut)
     {
         for(int z = 0; z < 100; z++)
         {
-            if(l == 1) EXPECT_FALSE(tqo4.orbital_filter_out(1, l, z));
-            else EXPECT_TRUE(tqo4.orbital_filter_out(1, l, z));
+            if(l == 1) { EXPECT_FALSE(tqo4.orbital_filter_out(1, l, z));
+            } else { EXPECT_TRUE(tqo4.orbital_filter_out(1, l, z));
+}
             EXPECT_FALSE(tqo4.orbital_filter_out(0, l, z)); // do not filter out anything
         }
     }

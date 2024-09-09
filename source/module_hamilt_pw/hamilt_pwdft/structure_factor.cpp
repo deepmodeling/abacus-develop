@@ -65,8 +65,9 @@ void Structure_Factor::setup_structure_factor(UnitCell* Ucell, const ModulePW::P
 //	outstr = GlobalV::global_out_dir + "strucFac.dat"; 
 //	std::ofstream ofs( outstr.c_str() ) ;
     bool usebspline;
-    if(nbspline > 0)   usebspline = true;
-    else    usebspline = false;
+    if(nbspline > 0) {   usebspline = true;
+    } else {    usebspline = false;
+}
     
     if(usebspline)
     {

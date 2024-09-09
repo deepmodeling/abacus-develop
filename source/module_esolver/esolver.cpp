@@ -187,12 +187,13 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
     else if (esolver_type == "lr_lcao")
     {
         // use constructor rather than Init function to initialize reference (instead of pointers) to ucell
-        if (GlobalV::GAMMA_ONLY_LOCAL)
+        if (GlobalV::GAMMA_ONLY_LOCAL) {
             return new LR::ESolver_LR<double, double>(inp, ucell);
-        else if (GlobalV::NSPIN < 2)
+        } else if (GlobalV::NSPIN < 2) {
             return new LR::ESolver_LR<std::complex<double>, double>(inp, ucell);
-        else
+        } else {
             throw std::runtime_error("LR-TDDFT is not implemented for spin polarized case");
+}
     }
     else if (esolver_type == "ksdft_lr_lcao")
     {
@@ -262,8 +263,9 @@ void clean_esolver(ESolver * &pesolver, const bool lcao_cblacs_exit)
 #ifdef __MPI
 	delete pesolver;
 #ifdef __LCAO
-    if (lcao_cblacs_exit)
+    if (lcao_cblacs_exit) {
         Cblacs_exit(1);
+}
 #endif
 #endif
 }
