@@ -631,7 +631,6 @@ void Input_Conv::Convert()
     //-----------------------------------------------
     // sunml add for implicit solvation model
     //-----------------------------------------------
-    GlobalV::eb_k = PARAM.inp.eb_k;
 
     //-----------------------------------------------
     // Deltaspin related parameters

@@ -156,7 +156,6 @@ bool deepks_equiv = false;
 bool deepks_setorb = false;
 
 
-double eb_k = 80.0;
 
 int dft_plus_u = 0; // DFTU control
 

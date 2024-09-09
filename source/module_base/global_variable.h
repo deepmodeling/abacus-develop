@@ -192,7 +192,6 @@ extern bool deepks_setorb;
 
 
 // implicit solvation
-extern double eb_k;
 
 // DFTU control
 extern int dft_plus_u;
