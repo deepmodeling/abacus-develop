@@ -200,7 +200,6 @@ extern std::vector<std::string> rpa_orbitals;
 // mixing parameters
 extern double MIXING_GG0;
 extern double MIXING_GG0_MAG;
-extern bool MIXING_DMR;
 
 //==========================================================
 // device flags added by denghui
