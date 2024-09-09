@@ -22,11 +22,11 @@
 
 void Charge::init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMatrix& strucFac, const int& nbz, const int& bz)
 {
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "init_chg", GlobalV::init_chg);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "init_chg", PARAM.inp.init_chg);
 
-    std::cout << " START CHARGE      : " << GlobalV::init_chg << std::endl;
+    std::cout << " START CHARGE      : " << PARAM.inp.init_chg << std::endl;
     bool read_error = false;
-    if (GlobalV::init_chg == "file" || GlobalV::init_chg == "auto")
+    if (PARAM.inp.init_chg == "file" || PARAM.inp.init_chg == "auto")
     {
         GlobalV::ofs_running << " try to read charge from file : " << std::endl;
 
@@ -154,18 +154,18 @@ void Charge::init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMa
         const std::string warn_msg = " WARNING: \"init_chg\" is enabled but ABACUS failed to read charge density from file.\n"
                                      " Please check if there is SPINX_CHG.cube (X=1,...) or {suffix}-CHARGE-DENSITY.restart in the directory.\n";
         std::cout << std::endl << warn_msg;
-        if (GlobalV::init_chg == "auto")
+        if (PARAM.inp.init_chg == "auto")
         {
             std::cout << " Charge::init_rho: use atomic initialization instead." << std::endl << std::endl;
         }
-        else if (GlobalV::init_chg == "file")
+        else if (PARAM.inp.init_chg == "file")
         {
             ModuleBase::WARNING_QUIT("Charge::init_rho", "Failed to read in charge density from file.\nIf you want to use atomic charge initialization, \nplease set init_chg to atomic in INPUT.");
         }
     }
 
-    if (GlobalV::init_chg == "atomic" || 
-        (GlobalV::init_chg == "auto" && read_error)) // mohan add 2007-10-17
+    if (PARAM.inp.init_chg == "atomic" || 
+        (PARAM.inp.init_chg == "auto" && read_error)) // mohan add 2007-10-17
     {
         this->atomic_rho(GlobalV::NSPIN, GlobalC::ucell.omega, rho, strucFac, GlobalC::ucell);
 

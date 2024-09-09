@@ -1,5 +1,6 @@
 #include "esolver_of.h"
 
+#include "module_parameter/parameter.h"
 #include "module_io/cube_io.h"
 #include "module_io/output_log.h"
 #include "module_io/write_elecstat_pot.h"
@@ -291,7 +292,7 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
 
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
-        if (GlobalV::init_chg != "file")
+        if (PARAM.inp.init_chg != "file")
         {
             for (int ibs = 0; ibs < this->pw_rho->nrxx; ++ibs)
             {
