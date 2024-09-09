@@ -637,7 +637,6 @@ void Input_Conv::Convert()
     GlobalV::sc_thr = PARAM.inp.sc_thr;
 
     // mixing parameters
-    GlobalV::MIXING_MODE = PARAM.inp.mixing_mode;
     GlobalV::MIXING_BETA = PARAM.inp.mixing_beta;
     GlobalV::MIXING_NDIM = PARAM.inp.mixing_ndim;
     GlobalV::MIXING_RESTART = PARAM.inp.mixing_restart;
