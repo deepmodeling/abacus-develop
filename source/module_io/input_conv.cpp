@@ -637,7 +637,6 @@ void Input_Conv::Convert()
     //-----------------------------------------------
     // Quasiatomic Orbital analysis
     //-----------------------------------------------
-    GlobalV::qo_thr = PARAM.inp.qo_thr;
     GlobalV::qo_screening_coeff = PARAM.inp.qo_screening_coeff;
 
     //-----------------------------------------------

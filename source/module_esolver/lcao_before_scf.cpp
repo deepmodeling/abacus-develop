@@ -144,7 +144,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
     if (PARAM.inp.sc_mag_switch)
     {
         SpinConstrain<TK, base_device::DEVICE_CPU>& sc = SpinConstrain<TK, base_device::DEVICE_CPU>::getScInstance();
-        sc.init_sc(GlobalV::sc_thr,
+        sc.init_sc(PARAM.inp.sc_thr,
                    PARAM.inp.nsc,
                    PARAM.inp.nsc_min,
                    PARAM.inp.alpha_trial,
