@@ -189,7 +189,6 @@ std::string device_flag = "unknown";
 //==========================================================
 // precision flags added by denghui
 //==========================================================
-std::string precision_flag = "unknown";
 
 std::string chg_extrap = "";
 int out_pot = 0;

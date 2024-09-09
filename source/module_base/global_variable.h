@@ -208,7 +208,6 @@ extern std::string device_flag;
 //==========================================================
 // precision flags added by denghui
 //==========================================================
-extern std::string precision_flag;
 
 extern std::string chg_extrap;
 extern int out_pot;
