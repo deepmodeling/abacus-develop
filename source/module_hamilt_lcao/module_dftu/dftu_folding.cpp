@@ -139,9 +139,10 @@ void DFTU::folding_matrix_k(
     ModuleBase::GlobalFunc::ZEROS(mat_k, pv.nloc);
 
     double* mat_ptr;
-    if      (dim1 == 1 || dim1 == 4) mat_ptr = fsr.DSloc_Rx;
-    else if (dim1 == 2 || dim1 == 5) mat_ptr = fsr.DSloc_Ry;
-    else if (dim1 == 3 || dim1 == 6) mat_ptr = fsr.DSloc_Rz;
+    if      (dim1 == 1 || dim1 == 4) { mat_ptr = fsr.DSloc_Rx;
+    } else if (dim1 == 2 || dim1 == 5) { mat_ptr = fsr.DSloc_Ry;
+    } else if (dim1 == 3 || dim1 == 6) { mat_ptr = fsr.DSloc_Rz;
+}
 
     int nnr = 0;
     ModuleBase::Vector3<double> dtau;
@@ -228,13 +229,15 @@ void DFTU::folding_matrix_k(
                         // the index of orbitals in this processor
                         const int iw1_all = start1 + ii;
                         const int mu = pv.global2local_row(iw1_all);
-                        if (mu < 0) continue;
+                        if (mu < 0) { continue;
+}
 
                         for (int jj = 0; jj < atom2->nw * GlobalV::NPOL; jj++)
                         {
                             int iw2_all = start2 + jj;
                             const int nu = pv.global2local_col(iw2_all);
-                            if (nu < 0) continue;
+                            if (nu < 0) { continue;
+}
 
                             int iic;
                             if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
