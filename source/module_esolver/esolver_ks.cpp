@@ -106,7 +106,7 @@ void ESolver_KS<T, Device>::before_all_runners(const Input_para& inp, UnitCell& 
                          PARAM.inp.mixing_beta,
                          PARAM.inp.mixing_ndim,
                          GlobalV::MIXING_GG0,
-                         GlobalV::MIXING_TAU,
+                         PARAM.inp.mixing_tau,
                          PARAM.inp.mixing_beta_mag,
                          GlobalV::MIXING_GG0_MAG,
                          PARAM.inp.mixing_gg0_min,
