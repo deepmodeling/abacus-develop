@@ -102,7 +102,7 @@ void ESolver_KS<T, Device>::before_all_runners(const Input_para& inp, UnitCell& 
     ESolver_FP::before_all_runners(inp, ucell);
 
     //! 2) setup the charge mixing parameters
-    p_chgmix->set_mixing(GlobalV::MIXING_MODE,
+    p_chgmix->set_mixing(PARAM.inp.mixing_mode,
                          GlobalV::MIXING_BETA,
                          GlobalV::MIXING_NDIM,
                          GlobalV::MIXING_GG0,
