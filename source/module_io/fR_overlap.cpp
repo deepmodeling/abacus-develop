@@ -232,7 +232,8 @@ void FR_overlap<T>::cal_FR_IJR(const int& iat1, const int& iat2, const Parallel_
                 tmp_r_unit = tmp_r_coor / tmp_r_coor_norm;
             }
 
-            if (tmp_r_coor_norm > Rcut2) continue;
+            if (tmp_r_coor_norm > Rcut2) { continue;
+}
 
             std::map<std::pair<int, int>, double> psi_value2 = psi_inter(T2, LN_pair2, tmp_r_coor_norm);
 

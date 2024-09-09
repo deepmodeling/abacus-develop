@@ -290,8 +290,9 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::pre_calculate_nlm(
             ModuleBase::Vector3<double> dtau = tau0 - tau1;
             intor_orb_alpha_->snap(T1, L1, N1, M1, 0, dtau * ucell->lat0, false /*calc_deri*/, nlm);
             nlm_in[ad].insert({all_indexes[iw1l], nlm[0]});
-            if (npol == 2)
+            if (npol == 2) {
                 nlm_in[ad].insert({all_indexes[iw1l + 1], nlm[0]});
+}
         }
     }
 }
@@ -387,8 +388,9 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
             ModuleBase::Vector3<int>& R_index1 = adjs.box[ad1];
             auto row_indexes = paraV->get_indexes_row(iat1);
             const int row_size = row_indexes.size();
-            if (row_size == 0)
+            if (row_size == 0) {
                 continue;
+}
 
             std::vector<double> s_1t(trace_alpha_size * row_size);
             for (int irow = 0; irow < row_size; irow++)
@@ -412,8 +414,9 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                 hamilt::BaseMatrix<TR>* tmp
                     = this->H_V_delta->find_matrix(iat1, iat2, R_vector[0], R_vector[1], R_vector[2]);
                 // if not found , skip this pair of atoms
-                if (tmp == nullptr)
+                if (tmp == nullptr) {
                     continue;
+}
                 auto col_indexes = paraV->get_indexes_col(iat2);
                 const int col_size = col_indexes.size();
                 std::vector<double> hr_current(row_size * col_size, 0);
