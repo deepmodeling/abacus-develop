@@ -1,5 +1,6 @@
 #include "charge_mixing.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/element_elec_config.h"
 #include "module_base/inverse_matrix.h"
 #include "module_base/module_mixing/broyden_mixing.h"
@@ -62,7 +63,7 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
     GlobalV::ofs_running<<"mixing_type: "<< this->mixing_mode <<std::endl;
     GlobalV::ofs_running<<"mixing_beta: "<< this->mixing_beta <<std::endl;
     GlobalV::ofs_running<<"mixing_gg0: "<< this->mixing_gg0 <<std::endl;
-    GlobalV::ofs_running<<"mixing_gg0_min: "<< GlobalV::MIXING_GG0_MIN <<std::endl;
+    GlobalV::ofs_running<<"mixing_gg0_min: "<< PARAM.inp.mixing_gg0_min <<std::endl;
     if (GlobalV::NSPIN==2 || GlobalV::NSPIN==4)
     {
         GlobalV::ofs_running<<"mixing_beta_mag: "<< this->mixing_beta_mag <<std::endl;
