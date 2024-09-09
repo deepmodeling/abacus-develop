@@ -639,7 +639,6 @@ void Input_Conv::Convert()
     // mixing parameters
     GlobalV::MIXING_GG0 = PARAM.inp.mixing_gg0;
     GlobalV::MIXING_GG0_MAG = PARAM.inp.mixing_gg0_mag;
-    GlobalV::MIXING_ANGLE = PARAM.inp.mixing_angle;
     GlobalV::MIXING_DMR = PARAM.inp.mixing_dmr;
 
     //-----------------------------------------------
