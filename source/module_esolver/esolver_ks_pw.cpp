@@ -143,7 +143,7 @@ void ESolver_KS_PW<T, Device>::before_all_runners(const Input_para& inp, UnitCel
     this->p_wf_init = new psi::WFInit<T, Device>(PARAM.inp.init_wfc,
                                                  GlobalV::KS_SOLVER,
                                                  PARAM.inp.basis_type,
-                                                 GlobalV::psi_initializer,
+                                                 PARAM.inp.psi_initializer,
                                                  &this->wf,
                                                  this->pw_wfc);
     this->p_wf_init->prepare_init(&(this->sf),

@@ -80,7 +80,7 @@ void ESolver_SDFT_PW::before_all_runners(const Input_para& inp, UnitCell& ucell)
     this->p_wf_init = new psi::WFInit<std::complex<double>>(PARAM.inp.init_wfc,
                                                             GlobalV::KS_SOLVER,
                                                             PARAM.inp.basis_type,
-                                                            GlobalV::psi_initializer,
+                                                            PARAM.inp.psi_initializer,
                                                             &this->wf,
                                                             this->pw_wfc);
     // 7) set occupatio, redundant?

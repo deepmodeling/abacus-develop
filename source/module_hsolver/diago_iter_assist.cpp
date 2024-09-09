@@ -305,7 +305,7 @@ void DiagoIterAssist<T, Device>::diagH_subspace_init(hamilt::Hamilt<T, Device>* 
         GlobalV::ofs_running << " Not do zgemm to get evc." << std::endl;
     }
     else if ((PARAM.inp.basis_type == "lcao" || PARAM.inp.basis_type == "lcao_in_pw"
-              || (PARAM.inp.basis_type == "pw" && GlobalV::psi_initializer))
+              || (PARAM.inp.basis_type == "pw" && PARAM.inp.psi_initializer))
              && (PARAM.inp.calculation == "scf" || PARAM.inp.calculation == "md"
                  || PARAM.inp.calculation == "relax")) // pengfei 2014-10-13
     {
