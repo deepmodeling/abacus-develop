@@ -69,9 +69,9 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
         GlobalV::ofs_running<<"mixing_beta_mag: "<< this->mixing_beta_mag <<std::endl;
         GlobalV::ofs_running<<"mixing_gg0_mag: "<< GlobalV::MIXING_GG0_MAG <<std::endl;
     }
-    if (GlobalV::MIXING_ANGLE > 0)
+    if (PARAM.inp.mixing_angle > 0)
     {
-        GlobalV::ofs_running<<"mixing_angle: "<< GlobalV::MIXING_ANGLE <<std::endl;
+        GlobalV::ofs_running<<"mixing_angle: "<< PARAM.inp.mixing_angle <<std::endl;
     }
     GlobalV::ofs_running<<"mixing_ndim: "<< this->mixing_ndim <<std::endl;
     GlobalV::ofs_running<<"----------- Double Check Mixing Parameters End ------------"<<std::endl;
@@ -119,7 +119,7 @@ void Charge_Mixing::init_mixing()
     // initailize rho_mdata
     if (GlobalV::SCF_THR_TYPE == 1)
     {  
-        if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0 )
+        if (GlobalV::NSPIN == 4 && PARAM.inp.mixing_angle > 0 )
         {
             this->mixing->init_mixing_data(this->rho_mdata,
                                         this->rhopw->npw * 2,
@@ -134,7 +134,7 @@ void Charge_Mixing::init_mixing()
     }
     else
     {
-        if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0 )
+        if (GlobalV::NSPIN == 4 && PARAM.inp.mixing_angle > 0 )
         {
             this->mixing->init_mixing_data(this->rho_mdata, this->rhopw->nrxx * 2, sizeof(double));
         }
@@ -406,7 +406,7 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
             }
         }
     }
-    else if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE <= 0)
+    else if (GlobalV::NSPIN == 4 && PARAM.inp.mixing_angle <= 0)
     {
         // normal broyden mixing for {rho, mx, my, mz}
         rhog_in = rhogs_in;
@@ -435,7 +435,7 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
         this->mixing->cal_coef(this->rho_mdata, inner_product);
         this->mixing->mix_data(this->rho_mdata, rhog_out);
     }
-    else if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0)
+    else if (GlobalV::NSPIN == 4 && PARAM.inp.mixing_angle > 0)
     {
         // special broyden mixing for {rho, |m|} proposed by J. Phys. Soc. Jpn. 82 (2013) 114706
         // here only consider the case of mixing_angle = 1, which mean only change |m| and keep angle fixed
@@ -530,7 +530,7 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
     }
 
     // rhog to rho
-    if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0)
+    if (GlobalV::NSPIN == 4 && PARAM.inp.mixing_angle > 0)
     {
         // only tranfer rhog[0]
         // do not support double_grid, use rhopw directly
@@ -688,7 +688,7 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
         delete[] rho_mag;
         delete[] rho_mag_save;
     }
-    else if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE <= 0)
+    else if (GlobalV::NSPIN == 4 && PARAM.inp.mixing_angle <= 0)
     {
         // normal broyden mixing for {rho, mx, my, mz}
         rhor_in = chr->rho_save[0];
@@ -719,7 +719,7 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
         this->mixing->cal_coef(this->rho_mdata, inner_product);
         this->mixing->mix_data(this->rho_mdata, rhor_out);
     }
-    else if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0)
+    else if (GlobalV::NSPIN == 4 && PARAM.inp.mixing_angle > 0)
     {
         // special broyden mixing for {rho, |m|} proposed by J. Phys. Soc. Jpn. 82 (2013) 114706
         // here only consider the case of mixing_angle = 1, which mean only change |m| and keep angle fixed
