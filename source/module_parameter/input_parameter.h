@@ -570,13 +570,13 @@ struct Input_para
     bool test_atom_input = false; ///< variables for test_atom_input only
     bool test_symmetry = false;   ///< variables for test_lattice only
     int test_wf = 0;         ///< variables for test_wf only
-    bool test_grid = false;  ///< variables for test_grid only
+    int test_grid = false;  ///< variables for test_grid only
     bool test_charge = false; ///< variables for test_vloc only
     bool test_energy = false; ///< variables for test_energy only
     bool test_gridt = false;  ///< variables for test_gridt only
     bool test_pseudo_cell = false; ///< variables for test_pseudo_cell only
     int test_pp = 0;          ///< variables for test_pp only
     bool test_relax_method = false; ///< variables for test_relax_method only
-    bool test_deconstructor = false; ///< variables for test_deconstructor only
+    int test_deconstructor = false; ///< variables for test_deconstructor only
 };
 #endif

@@ -39,6 +39,7 @@ public:
 	//		adjacent of this atom,and store the information
 	//		in 'adj_num','ntype','natom'
 	//==========================================================
+	Grid_Driver():test_deconstructor(0){};
 	Grid_Driver(
 		const int &test_d_in, 
 		const int &test_grid_in);

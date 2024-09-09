@@ -688,23 +688,6 @@ TEST_F(GlobalFunctionTest,MemAvailable)
     }
 }
 
-TEST_F(GlobalFunctionTest,TEST_LEVEL)
-{
-    std::string name;
-    bool test_bool=false;
-    name="none";
-    ModuleBase::GlobalFunc::TEST_LEVEL(name,test_bool);
-    name="init_potential";
-    ModuleBase::GlobalFunc::TEST_LEVEL(name,test_bool);
-    name="init_read";
-    ModuleBase::GlobalFunc::TEST_LEVEL(name,test_bool);
-#ifndef __EPM
-        EXPECT_EQ(PARAM.input.test_pseudo_cell,1);
-#else
-        EXPECT_EQ(test_epm_unitcell,1);
-#endif
-    name="pw_init";
-}
 
 TEST_F(GlobalFunctionTest,BlockHere)
 {

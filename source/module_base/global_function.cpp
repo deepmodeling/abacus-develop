@@ -104,18 +104,6 @@ void DONE(std::ofstream &ofs, const std::string &description, const bool only_ra
     return;
 }
 
-//==========================================================
-// GLOBAL FUNCTION :
-// NAME : TEST_LEVEL
-// control the test_level
-//==========================================================
-void TEST_LEVEL(const std::string &name, bool disable=true)
-{
-    if (disable) return;
-
-    return;
-}
-
 bool SCAN_BEGIN(std::ifstream &ifs, const std::string &TargetName, const bool restart, const bool ifwarn)
 {
     std::string SearchName;
