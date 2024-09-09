@@ -159,7 +159,6 @@ bool deepks_setorb = false;
 
 
 // Xinyang Dong added for rpa
-bool rpa_setorb = false;
 std::vector<std::string> rpa_orbitals;
 
 std::string of_kinetic = "wt";

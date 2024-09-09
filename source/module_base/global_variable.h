@@ -195,7 +195,6 @@ extern bool deepks_setorb;
 
 // DFTU control
 // rpa related
-extern bool rpa_setorb;
 extern std::vector<std::string> rpa_orbitals;
 
 // mixing parameters
