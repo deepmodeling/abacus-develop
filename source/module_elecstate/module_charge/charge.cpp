@@ -17,9 +17,8 @@
 // even in a LSDA calculation.
 //----------------------------------------------------------
 #include "charge.h"
-
 #include <vector>
-
+#include "module_parameter/parameter.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_parameter/parameter.h"
@@ -63,7 +62,7 @@ void Charge::destroy()
     {
         for (int i = 0; i < GlobalV::NSPIN; i++)
         {
-            if(GlobalV::use_paw)
+            if(PARAM.inp.use_paw)
             {
                 delete[] nhat[i];
                 delete[] nhat_save[i];
@@ -86,7 +85,7 @@ void Charge::destroy()
             delete[] kin_r;
             delete[] kin_r_save;
         }
-        if(GlobalV::use_paw)
+        if(PARAM.inp.use_paw)
         {
             delete[] nhat;
             delete[] nhat_save;
@@ -136,7 +135,7 @@ void Charge::allocate(const int& nspin_in)
         kin_r = new double*[nspin];
         kin_r_save = new double*[nspin];
     }
-    if(GlobalV::use_paw)
+    if(PARAM.inp.use_paw)
     {
         nhat = new double*[nspin];
         nhat_save = new double*[nspin];
@@ -159,7 +158,7 @@ void Charge::allocate(const int& nspin_in)
             kin_r_save[is] = _space_kin_r_save + is * nrxx;
             ModuleBase::GlobalFunc::ZEROS(kin_r_save[is], nrxx);
         }
-        if(GlobalV::use_paw)
+        if(PARAM.inp.use_paw)
         {
             nhat[is] = new double[nrxx];
             ModuleBase::GlobalFunc::ZEROS(nhat[is], nrxx);
@@ -177,7 +176,7 @@ void Charge::allocate(const int& nspin_in)
         ModuleBase::Memory::record("Chg::kin_r", sizeof(double) * nspin * ngmc);
         ModuleBase::Memory::record("Chg::kin_r_save", sizeof(double) * nspin * ngmc);
     }
-    if(GlobalV::use_paw)
+    if(PARAM.inp.use_paw)
     {
         ModuleBase::Memory::record("Chg::nhat", sizeof(double) * nspin * ngmc);
         ModuleBase::Memory::record("Chg::nhat_save", sizeof(double) * nspin * ngmc);
@@ -207,7 +206,7 @@ double Charge::sum_rho() const
     {
         for (int ir = 0; ir < nrxx; ir++)
         {
-            if(GlobalV::use_paw)
+            if(PARAM.inp.use_paw)
             {
                 sum_rho += this->rho[is][ir] + this->nhat[is][ir];
             }
@@ -273,7 +272,7 @@ void Charge::atomic_rho(const int spin_number_need,
     ModuleBase::TITLE("Charge", "atomic_rho");
     ModuleBase::timer::tick("Charge", "atomic_rho");
 
-    if(GlobalV::use_paw)
+    if(PARAM.inp.use_paw)
     {
     // In ABINIT, the initial charge density is calculated using some Gaussian functions
     // centered at the nuclei
@@ -705,7 +704,7 @@ void Charge::save_rho_before_sum_band()
             ModuleBase::GlobalFunc::DCOPY(kin_r[is], kin_r_save[is], this->rhopw->nrxx);
 }
 #ifdef USE_PAW
-        if(GlobalV::use_paw) {
+        if(PARAM.inp.use_paw) {
             ModuleBase::GlobalFunc::DCOPY(nhat[is], nhat_save[is], this->rhopw->nrxx);
 }
 #endif

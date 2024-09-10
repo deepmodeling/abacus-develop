@@ -204,7 +204,7 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineCase1)
     bfgs.allocate();
     bfgs.tr_min_hit = false;
     PARAM.input.test_relax_method = 1;
-    GlobalV::OUT_LEVEL = "ie";
+    PARAM.input.out_level = "ie";
     double lat0 = 1.0;
     Ions_Move_Basic::etot = 1.0;
     Ions_Move_Basic::etot_p = 0.9;
@@ -270,7 +270,7 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineCase2)
     bfgs.allocate();
     bfgs.tr_min_hit = false;
     PARAM.input.test_relax_method = 0;
-    GlobalV::OUT_LEVEL = "none";
+    PARAM.input.out_level = "none";
     double lat0 = 1.0;
     Ions_Move_Basic::etot = 1.0;
     Ions_Move_Basic::etot_p = 0.9;
@@ -389,7 +389,7 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineWarningQuit1)
     bfgs.allocate();
     bfgs.tr_min_hit = true;
     PARAM.input.test_relax_method = 1;
-    GlobalV::OUT_LEVEL = "ie";
+    PARAM.input.out_level = "ie";
     double lat0 = 1.0;
     Ions_Move_Basic::etot = 1.0;
     Ions_Move_Basic::etot_p = 0.9;
@@ -416,7 +416,7 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineWarningQuit2)
     bfgs.allocate();
     bfgs.tr_min_hit = false;
     PARAM.input.test_relax_method = 1;
-    GlobalV::OUT_LEVEL = "ie";
+    PARAM.input.out_level = "ie";
     double lat0 = 1.0;
     Ions_Move_Basic::etot = 1.0;
     Ions_Move_Basic::etot_p = 0.9;

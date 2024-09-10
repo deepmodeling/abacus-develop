@@ -24,34 +24,22 @@ int NLOCAL = 0;        // total number of local basis.
 int NSPIN = 1;       // LDA
 bool TWO_EFERMI = false; // two fermi energy, exist only magnetization is fixed.
 double nupdown = 0.0;
-double FORCE_THR = 1.0e-3;
 bool CAL_STRESS = false;
-double PRESSURE = 0.0;
 std::string RELAX_METHOD = "bfgs";
-std::string OUT_LEVEL = "ie";
-bool relax_new = true;
-bool fixed_atoms = false;
-int SCF_NMAX = 100;
 
-bool use_paw = false;
 bool use_uspp = false;
-bool double_grid = false;
 std::string KS_SOLVER = "cg";  // xiaohui add 2013-09-01
 double SEARCH_RADIUS = -1.0;
 
-int PW_DIAG_NMAX = 30;
 int PW_DIAG_NDIM = 4;
 double PW_DIAG_THR = 1.0e-2;
 int NB2D = 1;
 
-int SCF_THR_TYPE = 1;
 
 double DQ = 0.010; // space between Q points of the reciprocal radial tab
 int NQX = 10000;   // number of points describing reciprocal radial tab
 int NQXQ = 10000;  // number of points describing reciprocal radial tab for Q
 
-bool COLOUR = false;
-bool GAMMA_ONLY_LOCAL = false; // mohan add 2010-10-20
 bool GAMMA_ONLY_PW = false;    // mohan add 2012-06-05
 
 int ZEEMAN_IN_H = 1;
@@ -65,7 +53,6 @@ bool out_mul = false; // qifeng add 2019/9/10
 int NPROC = 1; ///< global number of process
 int KPAR = 1;  ///< global number of pools
 int KPAR_LCAO = 1; ///< global number of pools for LCAO diagonalization only
-int NSTOGROUP = 1;
 int MY_RANK = 0; ///< global index of process
 int MY_POOL = 0; ///< global index of pool (count in pool)
 int MY_STOGROUP = 0;

@@ -293,7 +293,7 @@ void Ions_Move_BFGS::bfgs_routine(const double& lat0)
         this->new_step(lat0);
     }
 
-    if (GlobalV::OUT_LEVEL == "ie")
+    if (PARAM.inp.out_level == "ie")
     {
         std::cout << " BFGS TRUST (Bohr)    : " << trust_radius << std::endl;
     }

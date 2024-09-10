@@ -44,18 +44,18 @@ void Grid_MeshCell::set_grid_dim(
     this->nbzp = nbzp_in;
 
 
-	//xiaohui add 'GlobalV::OUT_LEVEL' line, 2015-09-16
-	if(GlobalV::OUT_LEVEL != "m") 
+	//xiaohui add 'PARAM.inp.out_level' line, 2015-09-16
+	if(PARAM.inp.out_level != "m") 
 	{
 		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"real space grid",ncx,ncy,ncz); // real space uniform grid
 	}
 
-	if(GlobalV::OUT_LEVEL != "m") 
+	if(PARAM.inp.out_level != "m") 
 	{
 		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"big cell numbers in grid",nbx,nby,nbz); // reduced by BIG_CELL
 	}
 
-	if(GlobalV::OUT_LEVEL != "m") 
+	if(PARAM.inp.out_level != "m") 
 	{
 		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"meshcell numbers in big cell",bx,by,bz); // is small integer, typical number 2*2*2
 	}

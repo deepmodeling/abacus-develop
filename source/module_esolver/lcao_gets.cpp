@@ -45,10 +45,10 @@ void ESolver_KS_LCAO<std::complex<double>, double>::get_S(void)
     ModuleBase::TITLE("ESolver_KS_LCAO", "get_S");
     // (1) Find adjacent atoms for each atom.
     GlobalV::SEARCH_RADIUS = atom_arrange::set_sr_NL(GlobalV::ofs_running,
-                                                     GlobalV::OUT_LEVEL,
+                                                     PARAM.inp.out_level,
                                                      orb_.get_rcutmax_Phi(),
                                                      GlobalC::ucell.infoNL.get_rcutmax_Beta(),
-                                                     GlobalV::GAMMA_ONLY_LOCAL);
+                                                     PARAM.globalv.gamma_only_local);
 
     atom_arrange::search(PARAM.inp.search_pbc,
                          GlobalV::ofs_running,
@@ -57,7 +57,7 @@ void ESolver_KS_LCAO<std::complex<double>, double>::get_S(void)
                          GlobalV::SEARCH_RADIUS,
                          PARAM.inp.test_atom_input);
 
-    this->RA.for_2d(this->pv, GlobalV::GAMMA_ONLY_LOCAL);
+    this->RA.for_2d(this->pv, PARAM.globalv.gamma_only_local);
 
     if (this->p_hamilt == nullptr) {
         this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, double>(
@@ -85,10 +85,10 @@ void ESolver_KS_LCAO<std::complex<double>, std::complex<double>>::get_S(void)
     ModuleBase::TITLE("ESolver_KS_LCAO", "get_S");
     // (1) Find adjacent atoms for each atom.
     GlobalV::SEARCH_RADIUS = atom_arrange::set_sr_NL(GlobalV::ofs_running,
-                                                     GlobalV::OUT_LEVEL,
+                                                     PARAM.inp.out_level,
                                                      orb_.get_rcutmax_Phi(),
                                                      GlobalC::ucell.infoNL.get_rcutmax_Beta(),
-                                                     GlobalV::GAMMA_ONLY_LOCAL);
+                                                     PARAM.globalv.gamma_only_local);
 
     atom_arrange::search(PARAM.inp.search_pbc,
                          GlobalV::ofs_running,
@@ -97,7 +97,7 @@ void ESolver_KS_LCAO<std::complex<double>, std::complex<double>>::get_S(void)
                          GlobalV::SEARCH_RADIUS,
                          PARAM.inp.test_atom_input);
 
-    this->RA.for_2d(this->pv, GlobalV::GAMMA_ONLY_LOCAL);
+    this->RA.for_2d(this->pv, PARAM.globalv.gamma_only_local);
     if (this->p_hamilt == nullptr) {
         this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>,
                                                 std::complex<double>>(

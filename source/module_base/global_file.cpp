@@ -75,7 +75,8 @@ void ModuleBase::Global_File::make_dir_out(
 #ifdef __MPI
         Parallel_Reduce::reduce_all(make_dir);
 #endif
-		if(make_dir>0)break;
+		if(make_dir>0) {break;
+}
 		++times;
 	}
 
@@ -112,7 +113,8 @@ void ModuleBase::Global_File::make_dir_out(
 #ifdef __MPI
             Parallel_Reduce::reduce_all(make_dir_stru);
 #endif
-            if(make_dir_stru>0) break;
+            if(make_dir_stru>0) { break;
+}
             ++times;
         }
 
@@ -151,7 +153,8 @@ void ModuleBase::Global_File::make_dir_out(
 #ifdef __MPI
             Parallel_Reduce::reduce_all(make_dir_matrix);
 #endif
-            if(make_dir_matrix>0) break;
+            if(make_dir_matrix>0) { break;
+}
             ++times;
         }
 

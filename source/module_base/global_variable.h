@@ -25,22 +25,14 @@ extern int NSPIN;       // 7
 extern bool TWO_EFERMI; // 7.5 two fermi energy, exist if nupdown isn't zero.
 extern double nupdown;
 
-extern double FORCE_THR; // 8.2
 extern bool CAL_STRESS;  // 8.25 calcualte the stress
 
-extern double PRESSURE;
 extern std::string RELAX_METHOD;
-extern std::string OUT_LEVEL;
 
-extern bool relax_new;
 
-extern bool use_paw;
 extern bool use_uspp;
-extern bool double_grid;
 
-extern bool fixed_atoms;
 
-extern int SCF_NMAX;      // 8.4
 
 extern std::string KS_SOLVER;  // xiaohui add 2013-09-01
 extern double SEARCH_RADIUS;   // 11.1 // mohan add 2011-03-10
@@ -52,20 +44,16 @@ extern bool DOMAG;        // 1 : calculate the magnetism with x, y, z component
 extern bool DOMAG_Z;      // 1 : constrain the magnetism to z axis
 extern int NPOL;          // 1 : no soc; 2 : has soc
 
-extern int PW_DIAG_NMAX;   // 13
 extern int PW_DIAG_NDIM;   // 14
 extern double PW_DIAG_THR; // 15 pw_diag_thr
 extern int NB2D;           // 16.5 dividsion of 2D_matrix.
 
-extern int SCF_THR_TYPE; // type of the criterion of scf_thr, 1: reci drho for
                          // pw, 2: real drho for lcao
 
 extern double DQ; // 19 mohan add 2009-09-10
 extern int NQX;   // 20 mohan add 2009-09-10
 extern int NQXQ;  // liuyu add 2023-10-03
 
-extern bool COLOUR;           // mohan add 2011-04-26
-extern bool GAMMA_ONLY_LOCAL; // 22 : mohan add 2010-10-20
 extern bool GAMMA_ONLY_PW;    // mohan add 2012-06-05
 
 
@@ -87,7 +75,6 @@ extern bool GAMMA_ONLY_PW;    // mohan add 2012-06-05
 //========================================================================
 extern int NPROC;
 extern int KPAR;
-extern int NSTOGROUP;
 extern int MY_RANK;
 extern int MY_POOL;
 extern int MY_STOGROUP;

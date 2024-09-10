@@ -118,7 +118,7 @@ void ModuleIO::output_dHR(const int& istep,
             const double* vr_eff1
                 = v_eff.nc * v_eff.nr > 0 ? &(v_eff(cspin, 0)) : nullptr;
 
-            if (!GlobalV::GAMMA_ONLY_LOCAL) {
+            if (!PARAM.globalv.gamma_only_local) {
                 if (PARAM.inp.vl_in_h) {
                     Gint_inout inout(vr_eff1,
                                      cspin,

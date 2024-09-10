@@ -190,7 +190,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
     // 6) initialize Hamilt in LCAO
     // * allocate H and S matrices according to computational resources
     // * set the 'trace' between local H/S and global H/S
-    LCAO_domain::divide_HS_in_frag(GlobalV::GAMMA_ONLY_LOCAL, pv, this->kv.get_nks());
+    LCAO_domain::divide_HS_in_frag(PARAM.globalv.gamma_only_local, pv, this->kv.get_nks());
 
 #ifdef __EXX
     // 7) initialize exx
@@ -512,7 +512,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
     if (iter == 1)
     {
         this->p_chgmix->init_mixing(); // init mixing
-        this->p_chgmix->mixing_restart_step = GlobalV::SCF_NMAX + 1;
+        this->p_chgmix->mixing_restart_step = PARAM.inp.scf_nmax + 1;
         this->p_chgmix->mixing_restart_count = 0;
         // this output will be removed once the feeature is stable
         if (GlobalC::dftu.uramping > 0.01)
@@ -544,7 +544,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
             }
             if (GlobalC::dftu.uramping > 0.01 && !GlobalC::dftu.u_converged())
             {
-                this->p_chgmix->mixing_restart_step = GlobalV::SCF_NMAX + 1;
+                this->p_chgmix->mixing_restart_step = PARAM.inp.scf_nmax + 1;
             }
         }
         if (GlobalV::MIXING_DMR) // for mixing_dmr
@@ -647,7 +647,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
     if (PARAM.inp.vl_in_h)
     {
         // update Gint_K
-        if (!GlobalV::GAMMA_ONLY_LOCAL)
+        if (!PARAM.globalv.gamma_only_local)
         {
             this->GK.renew();
         }
@@ -806,9 +806,9 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
     ModuleBase::TITLE("ESolver_KS_LCAO", "update_pot");
 
     // 1) print Hamiltonian and Overlap matrix
-    if (this->conv_elec || iter == GlobalV::SCF_NMAX)
+    if (this->conv_elec || iter == PARAM.inp.scf_nmax)
     {
-        if (!GlobalV::GAMMA_ONLY_LOCAL && (PARAM.inp.out_mat_hs[0] || GlobalV::deepks_v_delta))
+        if (!PARAM.globalv.gamma_only_local && (PARAM.inp.out_mat_hs[0] || GlobalV::deepks_v_delta))
         {
             this->GK.renew(true);
         }
@@ -864,7 +864,7 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
     }
 
     // 2) print wavefunctions
-    if (elecstate::ElecStateLCAO<TK>::out_wfc_lcao && (this->conv_elec || iter == GlobalV::SCF_NMAX)
+    if (elecstate::ElecStateLCAO<TK>::out_wfc_lcao && (this->conv_elec || iter == PARAM.inp.scf_nmax)
         && (istep % PARAM.inp.out_interval == 0))
     {
         ModuleIO::write_wfc_nao(elecstate::ElecStateLCAO<TK>::out_wfc_lcao,
@@ -877,7 +877,7 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
     }
 
     // 3) print potential
-    if (this->conv_elec || iter == GlobalV::SCF_NMAX)
+    if (this->conv_elec || iter == PARAM.inp.scf_nmax)
     {
         if (GlobalV::out_pot < 0) // mohan add 2011-10-10
         {

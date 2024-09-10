@@ -1,5 +1,6 @@
 #include "sto_elecond.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/complexmatrix.h"
 #include "module_base/constants.h"
 #include "module_base/memory.h"
@@ -191,7 +192,7 @@ void Sto_EleCond::cal_jmatrix(const psi::Psi<std::complex<float>>& kspsi_all,
     info_gatherv* sto_npwx = static_cast<info_gatherv*>(gatherinfo_sto);
     rightchi_all = gatherchi(f_rightchi, chi_all, npwx, sto_npwx->nrecv, sto_npwx->displs, perbands_sto);
     righthchi_all = gatherchi(f_right_hchi, hchi_all, npwx, sto_npwx->nrecv, sto_npwx->displs, perbands_sto);
-    if (GlobalV::NSTOGROUP > 1 && rightfact != nullptr)
+    if (PARAM.inp.bndpar > 1 && rightfact != nullptr)
     {
         vec_rightf_all.resize(allbands_ks);
         rightf_all = vec_rightf_all.data();
@@ -473,7 +474,7 @@ void Sto_EleCond::sKG(const int& smear_type,
     ModuleBase::TITLE("Sto_EleCond", "sKG");
     ModuleBase::timer::tick("Sto_EleCond", "sKG");
     std::cout << "Calculating conductivity...." << std::endl;
-    // if (GlobalV::NSTOGROUP > 1)
+    // if (PARAM.inp.bndpar > 1)
     // {
     //     ModuleBase::WARNING_QUIT("ESolver_SDFT_PW", "sKG is not supported in parallel!");
     // }
@@ -619,7 +620,7 @@ void Sto_EleCond::sKG(const int& smear_type,
         }
         // Parallel for bands
         int allbands_ks = this->nbands_ks - cutib0;
-        parallel_distribution paraks(allbands_ks, GlobalV::NSTOGROUP, GlobalV::MY_STOGROUP);
+        parallel_distribution paraks(allbands_ks, PARAM.inp.bndpar, GlobalV::MY_STOGROUP);
         int perbands_ks = paraks.num_per;
         int ib0_ks = paraks.start;
         ib0_ks += this->nbands_ks - allbands_ks;
@@ -630,8 +631,8 @@ void Sto_EleCond::sKG(const int& smear_type,
 #ifdef __MPI
         MPI_Allreduce(&perbands, &allbands, 1, MPI_INT, MPI_SUM, PARAPW_WORLD);
         allbands_sto = allbands - allbands_ks;
-        info_gatherv ks_fact(perbands_ks, GlobalV::NSTOGROUP, 1, PARAPW_WORLD);
-        info_gatherv sto_npwx(perbands_sto, GlobalV::NSTOGROUP, npwx, PARAPW_WORLD);
+        info_gatherv ks_fact(perbands_ks, PARAM.inp.bndpar, 1, PARAPW_WORLD);
+        info_gatherv sto_npwx(perbands_sto, PARAM.inp.bndpar, npwx, PARAPW_WORLD);
 #endif
         const int bandsinfo[6]{perbands_ks, perbands_sto, perbands, allbands_ks, allbands_sto, allbands};
         double* en_all = nullptr;
@@ -678,7 +679,7 @@ void Sto_EleCond::sKG(const int& smear_type,
         ModuleBase::Memory::record("SDFT::smfchi", sto_memory_cost);
 #ifdef __MPI
         psi::Psi<std::complex<float>> chi_all, hchi_all, psi_all;
-        if (GlobalV::NSTOGROUP > 1)
+        if (PARAM.inp.bndpar > 1)
         {
             chi_all.resize(1, allbands_sto, npwx);
             hchi_all.resize(1, allbands_sto, npwx);
@@ -721,7 +722,7 @@ void Sto_EleCond::sKG(const int& smear_type,
             // v|\psi>
             velop.act(&kspsi, perbands_ks, kspsi.get_pointer(), vkspsi.get_pointer());
             // convert to complex<float>
-            if (GlobalV::NSTOGROUP == 1)
+            if (PARAM.inp.bndpar == 1)
             {
                 convert_psi(kspsi, f_kspsi);
             }

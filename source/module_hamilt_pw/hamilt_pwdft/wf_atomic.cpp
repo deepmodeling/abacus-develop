@@ -37,7 +37,7 @@ WF_atomic::~WF_atomic()
 //==========================================================
 void WF_atomic::init_at_1(Structure_Factor *sf_in)
 {
-    if(GlobalV::use_paw) { return;
+    if(PARAM.inp.use_paw) { return;
 }
     if (PARAM.inp.test_wf) { ModuleBase::TITLE("WF_atomic","init_at_1");
 }

@@ -80,8 +80,7 @@ TEST_F(PrintInfoTest, SetupParameters)
 	{
 		if(cal_type[i] != "md")
 		{
-			GlobalV::COLOUR = false;
-			GlobalV::GAMMA_ONLY_LOCAL = false;
+			PARAM.sys.gamma_only_local = false;
 			PARAM.input.calculation = cal_type[i];
 			testing::internal::CaptureStdout();
 			EXPECT_NO_THROW(Print_Info::setup_parameters(*ucell,*kv));
@@ -101,9 +100,8 @@ TEST_F(PrintInfoTest, SetupParameters)
 		}
 		else
 		{
-			GlobalV::COLOUR = true;
-			GlobalV::GAMMA_ONLY_LOCAL = true;
-			PARAM.input.calculation = cal_type[i];
+			PARAM.sys.gamma_only_local = true;
+      PARAM.input.calculation = cal_type[i];
 			for(int j=0; j<md_types.size(); ++j)
 			{
                 PARAM.input.mdp.md_type = md_types[j];
@@ -192,7 +190,7 @@ TEST_F(PrintInfoTest, PrintScreen)
 		}
 		else
 		{
-			GlobalV::relax_new = false;
+			PARAM.input.relax_new = false;
 			if(PARAM.input.calculation=="relax")
 			{
 				testing::internal::CaptureStdout();
@@ -208,7 +206,7 @@ TEST_F(PrintInfoTest, PrintScreen)
 				EXPECT_THAT(output,testing::HasSubstr("RELAX CELL"));
 				EXPECT_THAT(output,testing::HasSubstr("RELAX IONS"));
 			}
-			GlobalV::relax_new = true;
+			PARAM.input.relax_new = true;
 			testing::internal::CaptureStdout();
 			Print_Info::print_screen(stress_step,force_step,istep);
 			output = testing::internal::GetCapturedStdout();

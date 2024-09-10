@@ -47,7 +47,7 @@ ESolver_KS<T, Device>::ESolver_KS()
     drho = 0.0;
 
     // should not use GlobalV here, mohan 2024-05-12
-    maxniter = GlobalV::SCF_NMAX;
+    maxniter = PARAM.inp.scf_nmax;
     niter = maxniter;
 
     // should not use GlobalV here, mohan 2024-05-12
@@ -115,7 +115,7 @@ void ESolver_KS<T, Device>::before_all_runners(const Input_para& inp, UnitCell& 
 
     /// PAW Section
 #ifdef USE_PAW
-    if (GlobalV::use_paw)
+    if (PARAM.inp.use_paw)
     {
         int* atom_type = nullptr;
         double** atom_coord = nullptr;
@@ -197,7 +197,7 @@ void ESolver_KS<T, Device>::before_all_runners(const Input_para& inp, UnitCell& 
     //! 4) it has been established that
     // xc_func is same for all elements, therefore
     // only the first one if used
-    if (GlobalV::use_paw)
+    if (PARAM.inp.use_paw)
     {
         XC_Functional::set_xc_type(PARAM.inp.dft_functional);
     }
@@ -274,7 +274,7 @@ void ESolver_KS<T, Device>::before_all_runners(const Input_para& inp, UnitCell& 
     this->sf.setup_structure_factor(&ucell, this->pw_rhod);
 
 #ifdef USE_PAW
-    if (GlobalV::use_paw)
+    if (PARAM.inp.use_paw)
     {
         GlobalC::paw_cell.set_libpaw_ecut(inp.ecutwfc / 2.0,
                                           inp.ecutwfc / 2.0); // in Hartree
@@ -567,7 +567,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
                 {
                     p_chgmix->mix_rho(pelec->charge); // update chr->rho by mixing
                 }
-                if (GlobalV::SCF_THR_TYPE == 2)
+                if (PARAM.inp.scf_thr_type == 2)
                 {
                     pelec->charge->renormalize_rho(); // renormalize rho in R-space would
                                                       // induce a error in K-space
@@ -624,7 +624,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
         }
 
         // notice for restart
-        if (GlobalV::MIXING_RESTART > 0 && iter == this->p_chgmix->mixing_restart_step - 1 && iter != GlobalV::SCF_NMAX)
+        if (GlobalV::MIXING_RESTART > 0 && iter == this->p_chgmix->mixing_restart_step - 1 && iter != PARAM.inp.scf_nmax)
         {
             std::cout << " SCF restart after this step!" << std::endl;
         }

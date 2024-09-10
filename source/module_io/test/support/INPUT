@@ -239,7 +239,6 @@ block_height                   0.1 #height of the block
 #Parameters (12.Test)
 out_alllog                     F #output information for each processor, when parallel
 nurse                          0 #for coders
-colour                         0 #for coders, make their live colourful
 t_in_h                         1 #calculate the kinetic energy or not
 vl_in_h                        1 #calculate the local potential or not
 vnl_in_h                       1 #calculate the nonlocal potential or not

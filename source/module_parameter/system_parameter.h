@@ -27,6 +27,8 @@ struct System_para
         ncz = 0;                            ///< three dimension of FFT charge/grid, same as "nx,ny,nz"
     bool out_md_control = false;            ///< true if "out_level" is set
     bool rpa_setorb = false;                ///< true if "rpa" is set
+    bool gamma_only_pw = false;             ///< true if "gamma_only" is true and "basis_type" is "pw"
+                                            ///< for plane wave basis.
     bool gamma_only_local = false;          ///< true if "gamma_only" is true and "lcao"
                                             ///< is true; for local orbitals.
     bool double_grid = false;               ///< true if "ndx,ndy,ndz" is larger than "nx,ny,nz"

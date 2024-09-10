@@ -315,7 +315,7 @@ void ESolver_KS_PW<T, Device>::iter_init(const int istep, const int iter)
     if (iter == 1)
     {
         this->p_chgmix->init_mixing();
-        this->p_chgmix->mixing_restart_step = GlobalV::SCF_NMAX + 1;
+        this->p_chgmix->mixing_restart_step = PARAM.inp.scf_nmax + 1;
     }
     // for mixing restart
     if (iter == this->p_chgmix->mixing_restart_step && GlobalV::MIXING_RESTART > 0.0)
@@ -350,7 +350,7 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, c
         hsolver::DiagoIterAssist<T, Device>::need_subspace = ((istep == 0 || istep == 1) && iter == 1) ? false : true;
         hsolver::DiagoIterAssist<T, Device>::SCF_ITER = iter;
         hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR = ethr;
-        hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX = GlobalV::PW_DIAG_NMAX;
+        hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX = PARAM.inp.pw_diag_nmax;
 
         std::vector<bool> is_occupied(this->kspw_psi->get_nk() * this->kspw_psi->get_nbands(), true);
 
@@ -643,7 +643,6 @@ void ESolver_KS_PW<T, Device>::cal_stress(ModuleBase::matrix& stress)
     {
         stress(i, i) -= external_stress[i] / unit_transform;
     }
-    GlobalV::PRESSURE = (stress(0, 0) + stress(1, 1) + stress(2, 2)) / 3;
 }
 
 template <typename T, typename Device>

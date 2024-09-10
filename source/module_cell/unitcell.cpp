@@ -661,7 +661,7 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log) {
     this->set_iat2itia();
 
 #ifdef USE_PAW
-    if (GlobalV::use_paw) {
+    if (PARAM.inp.use_paw) {
         GlobalC::paw_cell.set_libpaw_cell(latvec, lat0);
 
         int* typat;
@@ -1258,14 +1258,14 @@ void UnitCell::setup(const std::string& latname_in,
         this->lc[0] = 1;
         this->lc[1] = 1;
         this->lc[2] = 1;
-        if (!GlobalV::relax_new) {
+        if (!PARAM.inp.relax_new) {
             ModuleBase::WARNING_QUIT(
                 "Input",
                 "there are bugs in the old implementation; set relax_new to be "
                 "1 for fixed_volume relaxation");
         }
     } else if (fixed_axes_in == "shape") {
-        if (!GlobalV::relax_new) {
+        if (!PARAM.inp.relax_new) {
             ModuleBase::WARNING_QUIT(
                 "Input",
                 "set relax_new to be 1 for fixed_shape relaxation");
@@ -1591,7 +1591,7 @@ void UnitCell::cal_nelec(double& nelec) {
     GlobalV::ofs_running << "\n SETUP THE ELECTRONS NUMBER" << std::endl;
 
     if (nelec == 0) {
-        if (GlobalV::use_paw) {
+        if (PARAM.inp.use_paw) {
 #ifdef USE_PAW
             for (int it = 0; it < this->ntype; it++) {
                 std::stringstream ss1, ss2;

@@ -366,7 +366,6 @@
     - [vion\_in\_h](#vion_in_h)
     - [test\_force](#test_force)
     - [test\_stress](#test_stress)
-    - [colour](#colour)
     - [test\_skip\_ewald](#test_skip_ewald)
   - [Electronic conductivities](#electronic-conductivities)
     - [cal\_cond](#cal_cond)
@@ -3505,8 +3504,6 @@ These variables are used to control berry phase and wannier90 interface paramete
   - 0: No.
   - 1: Yes.
 - **Default**: 0
-
-### colour
 
 - **Type**: Boolean
 - **Description**: Specify whether to set the colorful output in terminal.

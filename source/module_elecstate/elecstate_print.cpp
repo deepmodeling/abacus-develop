@@ -316,7 +316,7 @@ void ElecState::print_etot(const bool converged,
     std::vector<std::string> titles;
     std::vector<double> energies_Ry;
     std::vector<double> energies_eV;
-    if (printe > 0 && ((iter + 1) % printe == 0 || converged || iter == GlobalV::SCF_NMAX))
+    if (printe > 0 && ((iter + 1) % printe == 0 || converged || iter == PARAM.inp.scf_nmax))
     {
         int n_order = std::max(0, Occupy::gaussian_type);
         titles.push_back("E_KohnSham");
@@ -423,7 +423,7 @@ void ElecState::print_etot(const bool converged,
                    {FmtTable::Align::LEFT, FmtTable::Align::CENTER});
     table << titles << energies_Ry << energies_eV;
     GlobalV::ofs_running << table.str() << std::endl;
-    if (GlobalV::OUT_LEVEL == "ie" || GlobalV::OUT_LEVEL == "m") // xiaohui add 'm' option, 2015-09-16
+    if (PARAM.inp.out_level == "ie" || PARAM.inp.out_level == "m") // xiaohui add 'm' option, 2015-09-16
     {
         std::vector<double> mag;
         switch (GlobalV::NSPIN)
