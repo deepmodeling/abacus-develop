@@ -6,11 +6,12 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 Record_adj::Record_adj() : iat2ca(nullptr) {}
 Record_adj::~Record_adj(){
-	if(info_modified)
+	if(info_modified) {
 		this->delete_grid();
 }
+}
 
-void Record_adj::delete_grid(void)
+void Record_adj::delete_grid()
 {
 	for(int i=0; i<na_proc; i++)
 	{
@@ -24,7 +25,8 @@ void Record_adj::delete_grid(void)
 	}
 	delete[] info;
 	delete[] na_each;
-	if (iat2ca) delete[] iat2ca;
+	if (iat2ca) { delete[] iat2ca;
+}
 	info_modified=false;
 }
 
@@ -74,7 +76,8 @@ void Record_adj::for_2d(Parallel_Orbitals &pv, bool gamma_only)
 			//GlobalC::GridD.Find_atom( tau1 );
 			GlobalC::GridD.Find_atom(GlobalC::ucell,  tau1 ,T1, I1);
 			const int start1 = GlobalC::ucell.itiaiw2iwt(T1, I1, 0);
-            if(!gamma_only) pv.nlocstart[iat] = pv.nnr;
+            if(!gamma_only) { pv.nlocstart[iat] = pv.nnr;
+}
             
             // (2) search among all adjacent atoms.
 			for (int ad = 0; ad < GlobalC::GridD.getAdjacentNum()+1; ++ad)
@@ -88,12 +91,12 @@ void Record_adj::for_2d(Parallel_Orbitals &pv, bool gamma_only)
 				double rcut = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ORB.Phi[T2].getRcut();
 
 				bool is_adj = false;
-                if (distance < rcut) is_adj = true;
+                if (distance < rcut) { is_adj = true;
                 // there is another possibility that i and j are adjacent atoms.
 				// which is that <i|beta> are adjacents while <beta|j> are also
 				// adjacents, these considerations are only considered in k-point
 				// algorithm, 
-                else if (distance >= rcut)
+                } else if (distance >= rcut)
 				{
 					for (int ad0 = 0; ad0 < GlobalC::GridD.getAdjacentNum()+1; ++ad0)
 					{
@@ -129,13 +132,15 @@ void Record_adj::for_2d(Parallel_Orbitals &pv, bool gamma_only)
                             // the index of orbitals in this processor
                             const int iw1_all = start1 + ii;
                             const int mu = pv.global2local_row(iw1_all);
-                            if(mu<0)continue;
+                            if(mu<0) {continue;
+}
 
                             for(int jj=0; jj<GlobalC::ucell.atoms[T2].nw * GlobalV::NPOL; ++jj)
                             {
                                 const int iw2_all = start2 + jj;
                                 const int nu = pv.global2local_col(iw2_all);
-                                if(nu<0)continue;
+                                if(nu<0) {continue;
+}
                                 
                                 pv.nlocdim[iat]++;
                                 ++(pv.nnr);
@@ -149,7 +154,8 @@ void Record_adj::for_2d(Parallel_Orbitals &pv, bool gamma_only)
 	}//end T1
 }
     //xiaohui add "OUT_LEVEL", 2015-09-16
-    if (PARAM.inp.out_level != "m" && !gamma_only) ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "ParaV.nnr", pv.nnr);
+    if (PARAM.inp.out_level != "m" && !gamma_only) { ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "ParaV.nnr", pv.nnr);
+}
 
 	//------------------------------------------------
 	// info will identify each atom in each unitcell.
@@ -208,8 +214,8 @@ void Record_adj::for_2d(Parallel_Orbitals &pv, bool gamma_only)
 
 
 				bool is_adj = false;
-				if(distance < rcut) is_adj = true;
-				else if(distance >= rcut) 
+				if(distance < rcut) { is_adj = true;
+				} else if(distance >= rcut) 
 				{
 					for (int ad0 = 0; ad0 < adjs.adj_num+1; ++ad0)
 					{
@@ -324,7 +330,8 @@ void Record_adj::for_grid(const Grid_Technique &gt)
 
 
 						bool is_adj = false;
-						if(distance < rcut) is_adj = true;
+						if(distance < rcut) { is_adj = true;
+}
 						/*
 						else if(distance >= rcut)
 						{
