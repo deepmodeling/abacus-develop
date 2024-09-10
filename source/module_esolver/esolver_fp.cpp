@@ -198,6 +198,8 @@ void ESolver_FP::after_scf(const int istep)
             {
                 this->pw_rhod->real2recip(rhor_tot[is], rhog_tot[is]);
             }
+            printf("the GlobalV::global_out_dir is %s\n", GlobalV::global_out_dir.c_str());
+            printf("the PARAM.inp.global_out_dir is %s\n", PARAM.globalv.global_out_dir.c_str());
             ModuleIO::write_rhog(GlobalV::global_out_dir + PARAM.inp.suffix + "-CHARGE-DENSITY.restart",
                                  PARAM.globalv.gamma_only_pw || PARAM.globalv.gamma_only_local,
                                  this->pw_rhod,

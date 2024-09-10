@@ -66,6 +66,7 @@ void ReadInput::set_globalv_bcast()
     add_bool_bcast(sys.rpa_setorb);
     add_bool_bcast(sys.gamma_only_pw);
     add_bool_bcast(sys.gamma_only_local);
+    add_string_bcast(sys.global_out_dir);
     add_bool_bcast(sys.double_grid);
     add_double_bcast(sys.uramping);
 }
