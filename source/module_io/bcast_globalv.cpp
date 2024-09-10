@@ -14,7 +14,17 @@ void ReadInput::set_globalv_bcast()
             const std::string prefix = "OUT.";
             para.sys.global_out_dir = prefix + para.inp.suffix + "/";
             para.sys.global_out_dir = to_dir(para.sys.global_out_dir);
-            
+
+            /// get the global readin directory
+            if (PARAM.inp.read_file_dir == "auto")
+            {
+                para.sys.global_readin_dir = PARAM.globalv.global_out_dir;
+            }
+            else
+            {
+                para.sys.global_readin_dir = PARAM.inp.read_file_dir + '/';
+            }
+            para.sys.global_readin_dir = to_dir(para.sys.global_readin_dir);
             /// caculate the gamma_only_pw and gamma_only_local
             if (para.inp.gamma_only && para.inp.basis_type == "pw") // pengfei Li add 2015-1-31
             {
@@ -67,6 +77,7 @@ void ReadInput::set_globalv_bcast()
     add_bool_bcast(sys.gamma_only_pw);
     add_bool_bcast(sys.gamma_only_local);
     add_string_bcast(sys.global_out_dir);
+    add_string_bcast(sys.global_readin_dir);
     add_bool_bcast(sys.double_grid);
     add_double_bcast(sys.uramping);
 }

@@ -31,7 +31,8 @@ struct System_para
                                             ///< for plane wave basis.
     bool gamma_only_local = false;          ///< true if "gamma_only" is true and "lcao"
                                             ///< is true; for local orbitals.
-    std::string global_out_dir = "";  ///< global output directory
+    std::string global_out_dir = "";        ///< global output directory
+    std::string global_readin_dir = "";     ///< global readin directory
     bool double_grid = false;               ///< true if "ndx,ndy,ndz" is larger than "nx,ny,nz"
     double uramping = -10.0 / 13.6;         /// U-Ramping method (Ry)
     std::vector<double> hubbard_u = {};     ///< Hubbard Coulomb interaction parameter U (Ry)
