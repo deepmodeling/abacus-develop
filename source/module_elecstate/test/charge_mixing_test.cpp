@@ -412,10 +412,10 @@ TEST_F(ChargeMixingTest, InnerDotRecipHartreeTest)
         drhog2_mag[i] = drhog2[i] + drhog2[i+pw_basis.npw];
         drhog2_mag[i+pw_basis.npw] = drhog2[i] - drhog2[i+pw_basis.npw];
     }
-    PARAM.input.gamma_only= false;
+    PARAM.input.gamma_only_pw= false;
     inner = CMtest.inner_product_recip_hartree(drhog1_mag.data(), drhog2_mag.data());
     EXPECT_NEAR(inner, 236763.82650318215, 1e-8);
-    PARAM.input.gamma_only= true;
+    PARAM.input.gamma_only_pw= true;
     inner = CMtest.inner_product_recip_hartree(drhog1_mag.data(), drhog2_mag.data());
     EXPECT_NEAR(inner, 236763.82650318215 * 2, 1e-8);
 
@@ -433,7 +433,7 @@ TEST_F(ChargeMixingTest, InnerDotRecipHartreeTest)
     GlobalV::DOMAG_Z = false;
     inner = CMtest.inner_product_recip_hartree(drhog1.data(), drhog2.data());
     EXPECT_NEAR(inner, 28260.091995611871, 1e-8);
-    PARAM.input.gamma_only= true;
+    PARAM.input.gamma_only_pw= true;
     GlobalV::DOMAG = true;
     GlobalV::DOMAG_Z = true;
     inner = CMtest.inner_product_recip_hartree(drhog1.data(), drhog2.data());
@@ -459,10 +459,10 @@ TEST_F(ChargeMixingTest, InnerDotRecipHartreeTest)
         drhog1[i] = std::complex<double>(1.0, double(i));
         drhog2[i] = std::complex<double>(1.0, 1.0);
     }
-    PARAM.input.gamma_only= false;
+    PARAM.input.gamma_only_pw= false;
     inner = CMtest.inner_product_recip_hartree(drhog1.data(), drhog2.data());
     EXPECT_NEAR(inner, 36548.881431837777, 1e-8);
-    PARAM.input.gamma_only= true;
+    PARAM.input.gamma_only_pw= true;
     inner = CMtest.inner_product_recip_hartree(drhog1.data(), drhog2.data());
     EXPECT_NEAR(inner, 44776.555369916401, 1e-8);
 }
@@ -509,10 +509,10 @@ TEST_F(ChargeMixingTest, InnerDotRecipRhoTest)
         drhog1[i] = std::complex<double>(1.0, double(i));
         drhog2[i] = std::complex<double>(1.0, 1.0);
     }
-    PARAM.input.gamma_only= false;
+    PARAM.input.gamma_only_pw= false;
     inner = CMtest.inner_product_recip_rho(drhog1.data(), drhog2.data());
     EXPECT_NEAR(inner, 236763.82650318215, 1e-8);
-    PARAM.input.gamma_only= true;
+    PARAM.input.gamma_only_pw= true;
     inner = CMtest.inner_product_recip_rho(drhog1.data(), drhog2.data());
     EXPECT_NEAR(inner, 236763.82650318215 * 2, 1e-8);
 
@@ -529,7 +529,7 @@ TEST_F(ChargeMixingTest, InnerDotRecipRhoTest)
     GlobalV::DOMAG_Z = false;
     inner = CMtest.inner_product_recip_rho(drhog1.data(), drhog2.data());
     EXPECT_NEAR(inner, 28260.091995611871, 1e-8);
-    PARAM.input.gamma_only= true;
+    PARAM.input.gamma_only_pw= true;
     GlobalV::DOMAG = true;
     GlobalV::DOMAG_Z = true;
     inner = CMtest.inner_product_recip_rho(drhog1.data(), drhog2.data());

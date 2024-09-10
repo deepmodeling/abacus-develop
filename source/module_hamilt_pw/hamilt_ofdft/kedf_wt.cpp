@@ -285,7 +285,7 @@ void KEDF_WT::get_stress(const double* const* prho, ModulePW::PW_Basis* pw_rho, 
         {
             Parallel_Reduce::reduce_all(this->stress(a, b));
 
-            if (PARAM.inp.gamma_only)
+            if (PARAM.inp.gamma_only_pw)
             {
                 this->stress(a, b) *= -std::pow(ModuleBase::PI, 2)
                                       / (this->alpha_ * this->beta_ * this->kf_

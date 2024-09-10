@@ -1631,12 +1631,12 @@ ModuleBase::timer::tick("Symmetry","group fft grids");
                         rotate_recip(kgmatrix[invmap[isym]], tmp_gdirect0, ii, jj, kk);
                         if(ii>=fftnx || jj>=fftny || kk>= fftnz)
                         {
-                            if(!PARAM.inp.gamma_only)
+                            if(!PARAM.inp.gamma_only_pw)
                             {
                                 std::cout << " ROTATE OUT OF FFT-GRID IN RHOG_SYMMETRY !" << std::endl;
 		                        ModuleBase::QUIT();
                             }
-                            // for gamma_only, just do not consider this rotation.
+                            // for gamma_only_pw, just do not consider this rotation.
                             continue;
                         }
                         int ixyz=(ii*fftny+jj)*fftnz+kk;
