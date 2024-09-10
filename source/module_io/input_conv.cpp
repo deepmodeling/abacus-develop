@@ -163,17 +163,6 @@ void Input_Conv::Convert()
 {
     ModuleBase::TITLE("Input_Conv", "Convert");
     ModuleBase::timer::tick("Input_Conv", "Convert");
-    //-----------------------------------------------
-    // set read_file_dir
-    //-----------------------------------------------
-    if (PARAM.inp.read_file_dir == "auto")
-    {
-        GlobalV::global_readin_dir = PARAM.globalv.global_out_dir;
-    }
-    else
-    {
-        GlobalV::global_readin_dir = PARAM.inp.read_file_dir + '/';
-    }
     //----------------------------------------------------------
     // main parameters / electrons / spin ( 10/16 )
     //----------------------------------------------------------
