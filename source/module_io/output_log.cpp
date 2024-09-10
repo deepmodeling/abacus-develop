@@ -225,7 +225,7 @@ void print_force(std::ofstream& ofs_running,
     table = fmt.str();
     ofs_running << table << std::endl;
     if (PARAM.inp.test_force) std::cout << table << std::endl;
-
+}
 void print_stress(const std::string& name, const ModuleBase::matrix& scs, const bool screen, const bool ry)
 {
     const double output_acc = 1.0e-8;
