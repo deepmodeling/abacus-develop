@@ -449,7 +449,7 @@ void cal_r_overlap_R::out_rR(const int& istep)
         std::stringstream ssr;
         if (PARAM.inp.calculation == "md" && !PARAM.inp.out_app_flag)
         {
-            ssr << GlobalV::global_matrix_dir << step << "_"
+            ssr << PARAM.globalv.global_matrix_dir << step << "_"
                 << "data-rR-sparse.csr";
         }
         else
@@ -521,7 +521,7 @@ void cal_r_overlap_R::out_rR_other(const int& istep, const std::set<Abfs::Vector
     std::stringstream ssr;
     if (PARAM.inp.calculation == "md" && !PARAM.inp.out_app_flag)
     {
-        ssr << GlobalV::global_matrix_dir << step << "_"
+        ssr << PARAM.globalv.global_matrix_dir << step << "_"
             << "data-rR-sparse.csr";
     }
     else

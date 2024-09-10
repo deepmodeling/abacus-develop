@@ -63,7 +63,7 @@ TEST_F(GlobalFile,mkdirout)
         std::string aa = "OUT.Si/warning.log";
         remove(aa.c_str());
         rmdir(PARAM.sys.global_stru_dir.c_str());
-        rmdir(GlobalV::global_matrix_dir.c_str());
+        rmdir(PARAM.sys.global_matrix_dir.c_str());
         rmdir(PARAM.sys.global_out_dir.c_str());
 }
 

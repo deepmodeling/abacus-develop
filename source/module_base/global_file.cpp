@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <sstream>
 #include "global_function.h"
+#include "module_parameter/parameter.h"
 #include "global_variable.h"
 #include "module_base/parallel_common.h"
 #include "module_base/parallel_reduce.h"
@@ -76,7 +77,7 @@ void ModuleBase::Global_File::make_dir_out(
     if(calculation == "md")
     {
         int make_dir_stru = 0;
-        std::string command1 =  "test -d " + PARAM.globalv.global_stru_dir + " || mkdir " + PARAM.global.global_stru_dir;
+        std::string command1 =  "test -d " + PARAM.globalv.global_stru_dir + " || mkdir " + PARAM.globalv.global_stru_dir;
 
         times = 0;
         while(times<GlobalV::NPROC)
@@ -116,7 +117,7 @@ void ModuleBase::Global_File::make_dir_out(
     if((out_dir) && calculation == "md")
     {
         int make_dir_matrix = 0;
-        std::string command1 =  "test -d " + GlobalV::global_matrix_dir + " || mkdir " + GlobalV::global_matrix_dir;
+        std::string command1 =  "test -d " + PARAM.globalv.global_matrix_dir + " || mkdir " + PARAM.globalv.global_matrix_dir;
 
         times = 0;
         while(times<GlobalV::NPROC)

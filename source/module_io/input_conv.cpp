@@ -185,7 +185,7 @@ void Input_Conv::Convert()
         MD_func::current_md_info(GlobalV::MY_RANK, PARAM.globalv.global_readin_dir, istep, temperature);
         if (PARAM.inp.read_file_dir == "auto")
         {
-            GlobalV::stru_file = PARAM.global.global_stru_dir + "STRU_MD_" + std::to_string(istep);
+            GlobalV::stru_file = PARAM.globalv.global_stru_dir + "STRU_MD_" + std::to_string(istep);
         }
     } else if (PARAM.inp.stru_file != "") {
         GlobalV::stru_file = PARAM.inp.stru_file;
