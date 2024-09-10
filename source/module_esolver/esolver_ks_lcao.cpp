@@ -210,7 +210,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
 #endif
 
     // 8) initialize DFT+U
-    if (GlobalV::dft_plus_u) {
+    if (PARAM.inp.dft_plus_u) {
         GlobalC::dftu.init(ucell, &this->pv, this->kv.get_nks());
     }
 
@@ -240,7 +240,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
         // load the DeePKS model from deep neural network
         GlobalC::ld.load_model(PARAM.inp.deepks_model);
         // read pdm from file for NSCF or SCF-restart, do it only once in whole calculation
-        GlobalC::ld.read_projected_DM((GlobalV::init_chg == "file"), GlobalV::deepks_equiv, *orb_.Alpha);
+        GlobalC::ld.read_projected_DM((PARAM.inp.init_chg == "file"), GlobalV::deepks_equiv, *orb_.Alpha);
     }
 #endif
 
@@ -526,11 +526,11 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
         }
     }
     // for mixing restart
-    if (iter == this->p_chgmix->mixing_restart_step && GlobalV::MIXING_RESTART > 0.0)
+    if (iter == this->p_chgmix->mixing_restart_step && PARAM.inp.mixing_restart > 0.0)
     {
         this->p_chgmix->init_mixing();
         this->p_chgmix->mixing_restart_count++;
-        if (GlobalV::dft_plus_u)
+        if (PARAM.inp.dft_plus_u)
         {
             GlobalC::dftu.uramping_update(); // update U by uramping if uramping > 0.01
             if (GlobalC::dftu.uramping > 0.01)
@@ -547,7 +547,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
                 this->p_chgmix->mixing_restart_step = PARAM.inp.scf_nmax + 1;
             }
         }
-        if (GlobalV::MIXING_DMR) // for mixing_dmr
+        if (PARAM.inp.mixing_dmr) // for mixing_dmr
         {
             // allocate memory for dmr_mdata
             const elecstate::DensityMatrix<TK, double>* dm
@@ -623,7 +623,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
     }
 #endif
 
-    if (GlobalV::dft_plus_u)
+    if (PARAM.inp.dft_plus_u)
     {
         if (istep != 0 || iter != 1)
         {
@@ -689,7 +689,7 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2density(int istep, int iter, double ethr)
     this->pelec->charge->save_rho_before_sum_band();
 
     // 2) save density matrix DMR for mixing
-    if (GlobalV::MIXING_RESTART > 0 && GlobalV::MIXING_DMR && this->p_chgmix->mixing_restart_count > 0)
+    if (PARAM.inp.mixing_restart > 0 && PARAM.inp.mixing_dmr && this->p_chgmix->mixing_restart_count > 0)
     {
         elecstate::DensityMatrix<TK, double>* dm = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
         dm->save_DMR();
@@ -738,11 +738,11 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2density(int istep, int iter, double ethr)
 
     // 6) calculate the local occupation number matrix and energy correction in
     // DFT+U
-    if (GlobalV::dft_plus_u)
+    if (PARAM.inp.dft_plus_u)
     {
         // only old DFT+U method should calculated energy correction in esolver,
         // new DFT+U method will calculate energy in calculating Hamiltonian
-        if (GlobalV::dft_plus_u == 2)
+        if (PARAM.inp.dft_plus_u == 2)
         {
             if (GlobalC::dftu.omc != 2)
             {
@@ -919,7 +919,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int& iter)
 
     // 1) mix density matrix if mixing_restart + mixing_dmr + not first
     // mixing_restart at every iter
-    if (GlobalV::MIXING_RESTART > 0 && this->p_chgmix->mixing_restart_count > 0 && GlobalV::MIXING_DMR)
+    if (PARAM.inp.mixing_restart > 0 && this->p_chgmix->mixing_restart_count > 0 && PARAM.inp.mixing_dmr)
     {
         elecstate::DensityMatrix<TK, double>* dm = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
         this->p_chgmix->mix_dmr(dm);
@@ -1074,7 +1074,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int& iter)
     }
 
     // 6) use the converged occupation matrix for next MD/Relax SCF calculation
-    if (GlobalV::dft_plus_u && this->conv_elec)
+    if (PARAM.inp.dft_plus_u && this->conv_elec)
     {
         GlobalC::dftu.initialed_locale = true;
     }
@@ -1242,7 +1242,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
     // 17) write quasi-orbitals, added by Yike Huang.
     if (PARAM.inp.qo_switch)
     {
-        toQO tqo(PARAM.inp.qo_basis, PARAM.inp.qo_strategy, GlobalV::qo_thr, GlobalV::qo_screening_coeff);
+        toQO tqo(PARAM.inp.qo_basis, PARAM.inp.qo_strategy, PARAM.inp.qo_thr, PARAM.inp.qo_screening_coeff);
         tqo.initialize(GlobalV::global_out_dir,
                        PARAM.inp.pseudo_dir,
                        PARAM.inp.orbital_dir,

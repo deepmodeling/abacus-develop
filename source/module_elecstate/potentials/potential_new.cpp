@@ -47,7 +47,7 @@ Potential::~Potential()
         this->components.clear();
     }
     if (GlobalV::device_flag == "gpu") {
-        if (GlobalV::precision_flag == "single") {
+        if (PARAM.inp.precision == "single") {
             delmem_sd_op()(gpu_ctx, s_veff_smooth);
             delmem_sd_op()(gpu_ctx, s_vofk_smooth);
         }
@@ -57,7 +57,7 @@ Potential::~Potential()
         }
     }
     else {
-        if (GlobalV::precision_flag == "single") {
+        if (PARAM.inp.precision == "single") {
             delmem_sh_op()(cpu_ctx, s_veff_smooth);
             delmem_sh_op()(cpu_ctx, s_vofk_smooth);
         }
@@ -130,7 +130,7 @@ void Potential::allocate()
         ModuleBase::Memory::record("Pot::vofk_smooth", sizeof(double) * GlobalV::NSPIN * nrxx_smooth);
     }
     if (GlobalV::device_flag == "gpu") {
-        if (GlobalV::precision_flag == "single") {
+        if (PARAM.inp.precision == "single") {
             resmem_sd_op()(gpu_ctx, s_veff_smooth, GlobalV::NSPIN * nrxx_smooth);
             resmem_sd_op()(gpu_ctx, s_vofk_smooth, GlobalV::NSPIN * nrxx_smooth);
         }
@@ -140,7 +140,7 @@ void Potential::allocate()
         }
     }
     else {
-        if (GlobalV::precision_flag == "single") {
+        if (PARAM.inp.precision == "single") {
             resmem_sh_op()(cpu_ctx, s_veff_smooth, GlobalV::NSPIN * nrxx_smooth, "POT::sveff_smooth");
             resmem_sh_op()(cpu_ctx, s_vofk_smooth, GlobalV::NSPIN * nrxx_smooth, "POT::svofk_smooth");
         }
@@ -178,7 +178,7 @@ void Potential::update_from_charge(const Charge*const chg, const UnitCell*const 
 #endif
 
     if (GlobalV::device_flag == "gpu") {
-        if (GlobalV::precision_flag == "single") {
+        if (PARAM.inp.precision == "single") {
             castmem_d2s_h2d_op()(gpu_ctx,
                                  cpu_ctx,
                                  s_veff_smooth,
@@ -204,7 +204,7 @@ void Potential::update_from_charge(const Charge*const chg, const UnitCell*const 
         }
     }
     else {
-        if (GlobalV::precision_flag == "single") {
+        if (PARAM.inp.precision == "single") {
             castmem_d2s_h2h_op()(cpu_ctx,
                                  cpu_ctx,
                                  s_veff_smooth,

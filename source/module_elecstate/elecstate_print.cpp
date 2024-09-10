@@ -352,7 +352,7 @@ void ElecState::print_etot(const bool converged,
         }
         titles.push_back("E_exx");
         energies_Ry.push_back(this->f_en.exx);
-        if (GlobalV::imp_sol)
+        if (PARAM.inp.imp_sol)
         {
             titles.push_back("E_sol_el");
             energies_Ry.push_back(this->f_en.esol_el);

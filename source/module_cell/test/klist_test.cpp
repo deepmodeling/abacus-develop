@@ -118,7 +118,7 @@ UnitCell ucell;
  *       according to different spin case
  *   - set_both_kvec()
  *     - SetBothKvec: set kvec_c (cartesian coor.) and kvec_d (direct coor.)
- *     - SetBothKvecFinalSCF: same as above, with GlobalV::FINAL_SCF=1
+ *     - SetBothKvecFinalSCF: same as above, with PARAM.input.final_scf=1
  *   - print_klists()
  *     - PrintKlists: print kpoints coordinates
  *     - PrintKlistsWarningQuit: for nkstot < nks error
@@ -651,7 +651,7 @@ TEST_F(KlistTest, SetBothKvecFinalSCF)
     kv->kvec_c[0].y = 0.0;
     kv->kvec_c[0].z = 0.0;
     std::string skpt;
-    GlobalV::FINAL_SCF = true;
+    PARAM.input.final_scf = true;
     kv->kd_done = false;
     kv->kc_done = false;
     // case 1
@@ -694,7 +694,7 @@ TEST_F(KlistTest, SetBothKvec)
     kv->kc_done = false;
     kv->kd_done = true;
     std::string skpt;
-    GlobalV::FINAL_SCF = false;
+    PARAM.input.final_scf = false;
     kv->set_both_kvec(GlobalC::ucell.G, GlobalC::ucell.latvec, skpt);
     EXPECT_TRUE(kv->kc_done);
     kv->kc_done = true;

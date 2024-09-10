@@ -1,5 +1,6 @@
 #include "spar_hsr.h"
 
+#include "module_parameter/parameter.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "module_hamilt_lcao/module_tddft/td_velocity.h"
 #include "spar_dh.h"
@@ -72,7 +73,7 @@ void sparse_format::cal_HSR(const Parallel_Orbitals& pv,
     }
 
     // only old DFT+U method need to cal extra contribution to HR
-    if (GlobalV::dft_plus_u == 2) {
+    if (PARAM.inp.dft_plus_u == 2) {
         if (nspin == 1 || nspin == 2) {
             cal_HR_dftu(pv,
                         HS_Arrays.all_R_coor,

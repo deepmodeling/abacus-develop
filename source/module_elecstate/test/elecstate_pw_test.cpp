@@ -161,7 +161,7 @@ void Charge::check_rho()
 void Set_GlobalV_Default()
 {
     GlobalV::device_flag = "cpu";
-    GlobalV::precision_flag = "double";
+    PARAM.input.precision = "double";
     GlobalV::DOMAG = false;
     GlobalV::DOMAG_Z = false;
     // Base class dependent
@@ -293,7 +293,7 @@ TEST_F(ElecStatePWTest, InitRhoDataDouble)
 
 TEST_F(ElecStatePWTest, InitRhoDataSingle)
 {
-    GlobalV::precision_flag = "single";
+    PARAM.input.precision = "single";
     elecstate::tmp_xc_func_type = 3;
     chg->nspin = GlobalV::NSPIN;
     chg->nrxx = 1000;

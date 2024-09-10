@@ -983,7 +983,7 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry& symm,
 void K_Vectors::set_both_kvec(const ModuleBase::Matrix3& G, const ModuleBase::Matrix3& R, std::string& skpt)
 {
 
-    if (GlobalV::FINAL_SCF) // LiuXh add 20180606
+    if (PARAM.inp.final_scf) // LiuXh add 20180606
     {
         if (k_nkstot == 0)
         {

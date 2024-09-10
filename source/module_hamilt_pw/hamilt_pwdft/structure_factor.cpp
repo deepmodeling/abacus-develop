@@ -1,5 +1,6 @@
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
+#include "module_parameter/parameter.h"
 #include "structure_factor.h"
 #include "module_base/constants.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
@@ -21,7 +22,7 @@ Structure_Factor::Structure_Factor()
 Structure_Factor::~Structure_Factor()
 {
     if (GlobalV::device_flag == "gpu") {
-        if (GlobalV::precision_flag == "single") {
+        if (PARAM.inp.precision == "single") {
             delmem_cd_op()(gpu_ctx, this->c_eigts1);
             delmem_cd_op()(gpu_ctx, this->c_eigts2);
             delmem_cd_op()(gpu_ctx, this->c_eigts3);
@@ -31,7 +32,7 @@ Structure_Factor::~Structure_Factor()
         delmem_zd_op()(gpu_ctx, this->z_eigts3);
     }
     else {
-        if (GlobalV::precision_flag == "single") {
+        if (PARAM.inp.precision == "single") {
             delmem_ch_op()(cpu_ctx, this->c_eigts1);
             delmem_ch_op()(cpu_ctx, this->c_eigts2);
             delmem_ch_op()(cpu_ctx, this->c_eigts3);
@@ -64,8 +65,9 @@ void Structure_Factor::setup_structure_factor(UnitCell* Ucell, const ModulePW::P
 //	outstr = GlobalV::global_out_dir + "strucFac.dat"; 
 //	std::ofstream ofs( outstr.c_str() ) ;
     bool usebspline;
-    if(nbspline > 0)   usebspline = true;
-    else    usebspline = false;
+    if(nbspline > 0) {   usebspline = true;
+    } else {    usebspline = false;
+}
     
     if(usebspline)
     {
@@ -144,7 +146,7 @@ void Structure_Factor::setup_structure_factor(UnitCell* Ucell, const ModulePW::P
         }
     }
     if (GlobalV::device_flag == "gpu") {
-        if (GlobalV::precision_flag == "single") {
+        if (PARAM.inp.precision == "single") {
             resmem_cd_op()(gpu_ctx, this->c_eigts1, Ucell->nat * (2 * rho_basis->nx + 1));
             resmem_cd_op()(gpu_ctx, this->c_eigts2, Ucell->nat * (2 * rho_basis->ny + 1));
             resmem_cd_op()(gpu_ctx, this->c_eigts3, Ucell->nat * (2 * rho_basis->nz + 1));
@@ -160,7 +162,7 @@ void Structure_Factor::setup_structure_factor(UnitCell* Ucell, const ModulePW::P
         syncmem_z2z_h2d_op()(gpu_ctx, cpu_ctx, this->z_eigts3, this->eigts3.c, Ucell->nat * (2 * rho_basis->nz + 1));
     }
     else {
-        if (GlobalV::precision_flag == "single") {
+        if (PARAM.inp.precision == "single") {
             resmem_ch_op()(cpu_ctx, this->c_eigts1, Ucell->nat * (2 * rho_basis->nx + 1));
             resmem_ch_op()(cpu_ctx, this->c_eigts2, Ucell->nat * (2 * rho_basis->ny + 1));
             resmem_ch_op()(cpu_ctx, this->c_eigts3, Ucell->nat * (2 * rho_basis->nz + 1));

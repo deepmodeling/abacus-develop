@@ -93,7 +93,7 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
         delete reinterpret_cast<psi::Psi<T, Device>*>(this->kspw_psi);
     }
     
-    if (GlobalV::precision_flag == "single")
+    if (PARAM.inp.precision == "single")
     {
         delete reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->__kspw_psi);
     }
@@ -140,10 +140,10 @@ void ESolver_KS_PW<T, Device>::before_all_runners(const Input_para& inp, UnitCel
     }
 
     //! 7) prepare some parameters for electronic wave functions initilization
-    this->p_wf_init = new psi::WFInit<T, Device>(GlobalV::init_wfc,
+    this->p_wf_init = new psi::WFInit<T, Device>(PARAM.inp.init_wfc,
                                                  GlobalV::KS_SOLVER,
                                                  PARAM.inp.basis_type,
-                                                 GlobalV::psi_initializer,
+                                                 PARAM.inp.psi_initializer,
                                                  &this->wf,
                                                  this->pw_wfc);
     this->p_wf_init->prepare_init(&(this->sf),
@@ -303,7 +303,7 @@ void ESolver_KS_PW<T, Device>::before_scf(const int istep)
     // time before scf. But for random wavefunction, we dont, because random
     // wavefunction is not related to atomic coordinates. What the old strategy
     // does is only to initialize for once...
-    if (((GlobalV::init_wfc == "random") && (istep == 0)) || (GlobalV::init_wfc != "random"))
+    if (((PARAM.inp.init_wfc == "random") && (istep == 0)) || (PARAM.inp.init_wfc != "random"))
     {
         this->p_wf_init->initialize_psi(this->psi, this->kspw_psi, this->p_hamilt, GlobalV::ofs_running);
     }
@@ -318,7 +318,7 @@ void ESolver_KS_PW<T, Device>::iter_init(const int istep, const int iter)
         this->p_chgmix->mixing_restart_step = PARAM.inp.scf_nmax + 1;
     }
     // for mixing restart
-    if (iter == this->p_chgmix->mixing_restart_step && GlobalV::MIXING_RESTART > 0.0)
+    if (iter == this->p_chgmix->mixing_restart_step && PARAM.inp.mixing_restart > 0.0)
     {
         this->p_chgmix->init_mixing();
     }
@@ -590,13 +590,13 @@ template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::cal_force(ModuleBase::matrix& force)
 {
     Forces<double, Device> ff(GlobalC::ucell.nat);
-    if (this->__kspw_psi != nullptr && GlobalV::precision_flag == "single")
+    if (this->__kspw_psi != nullptr && PARAM.inp.precision == "single")
     {
         delete reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->__kspw_psi);
     }
 
     // Refresh __kspw_psi
-    this->__kspw_psi = GlobalV::precision_flag == "single"
+    this->__kspw_psi = PARAM.inp.precision == "single"
                            ? new psi::Psi<std::complex<double>, Device>(this->kspw_psi[0])
                            : reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->kspw_psi);
 
@@ -615,13 +615,13 @@ template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::cal_stress(ModuleBase::matrix& stress)
 {
     Stress_PW<double, Device> ss(this->pelec);
-    if (this->__kspw_psi != nullptr && GlobalV::precision_flag == "single")
+    if (this->__kspw_psi != nullptr && PARAM.inp.precision == "single")
     {
         delete reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->__kspw_psi);
     }
 
     // Refresh __kspw_psi
-    this->__kspw_psi = GlobalV::precision_flag == "single"
+    this->__kspw_psi = PARAM.inp.precision == "single"
                            ? new psi::Psi<std::complex<double>, Device>(this->kspw_psi[0])
                            : reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->kspw_psi);
     ss.cal_stress(stress,

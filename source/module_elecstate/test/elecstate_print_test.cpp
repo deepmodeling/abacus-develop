@@ -239,7 +239,7 @@ TEST_F(ElecStatePrintTest, PrintEtot)
     elecstate.charge = new Charge;
     elecstate.charge->nrxx = 100;
     elecstate.charge->nxyz = 1000;
-    GlobalV::imp_sol = true;
+    PARAM.input.imp_sol = true;
     PARAM.input.efield_flag = true;
     PARAM.input.gate_flag = true;
     GlobalV::TWO_EFERMI = true;
@@ -319,7 +319,7 @@ TEST_F(ElecStatePrintTest, PrintEtot2)
     elecstate.charge = new Charge;
     elecstate.charge->nrxx = 100;
     elecstate.charge->nxyz = 1000;
-    GlobalV::imp_sol = true;
+    PARAM.input.imp_sol = true;
     PARAM.input.efield_flag = true;
     PARAM.input.gate_flag = true;
     GlobalV::TWO_EFERMI = false;
@@ -357,7 +357,7 @@ TEST_F(ElecStatePrintTest, PrintEtotColorS2)
     elecstate.charge = new Charge;
     elecstate.charge->nrxx = 100;
     elecstate.charge->nxyz = 1000;
-    GlobalV::imp_sol = true;
+    PARAM.input.imp_sol = true;
     PARAM.input.efield_flag = true;
     PARAM.input.gate_flag = true;
     GlobalV::TWO_EFERMI = true;
@@ -381,7 +381,7 @@ TEST_F(ElecStatePrintTest, PrintEtotColorS4)
     elecstate.charge = new Charge;
     elecstate.charge->nrxx = 100;
     elecstate.charge->nxyz = 1000;
-    GlobalV::imp_sol = true;
+    PARAM.input.imp_sol = true;
     PARAM.input.efield_flag = true;
     PARAM.input.gate_flag = true;
     GlobalV::TWO_EFERMI = true;
@@ -407,7 +407,7 @@ TEST_F(ElecStatePrintTest, PrintEtotColorS4)
 //     elecstate.charge = new Charge;
 //     elecstate.charge->nrxx = 100;
 //     elecstate.charge->nxyz = 1000;
-//     GlobalV::imp_sol = true;
+//     PARAM.input.imp_sol = true;
 //     PARAM.input.efield_flag = true;
 //     PARAM.input.gate_flag = true;
 //     GlobalV::TWO_EFERMI = false;

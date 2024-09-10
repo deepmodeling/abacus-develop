@@ -280,7 +280,7 @@ void ElecState::cal_energies(const int type)
     this->f_en.gatefield = get_etot_gatefield();
 
     //! energy from implicit solvation model 
-    if (GlobalV::imp_sol)
+    if (PARAM.inp.imp_sol)
     {
         this->f_en.esol_el = get_solvent_model_Ael();
         this->f_en.esol_cav = get_solvent_model_Acav();
@@ -294,7 +294,7 @@ void ElecState::cal_energies(const int type)
     }
 
      // energy from DFT+U
-    if (GlobalV::dft_plus_u)
+    if (PARAM.inp.dft_plus_u)
     {
         this->f_en.edftu = get_dftu_energy();
     }

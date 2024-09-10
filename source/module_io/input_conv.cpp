@@ -230,8 +230,7 @@ void Input_Conv::Convert()
     {
         GlobalV::KPAR = PARAM.inp.kpar;
     }
-    GlobalV::precision_flag = PARAM.inp.precision;
-    if (GlobalV::device_flag == "cpu" and GlobalV::precision_flag == "single")
+    if (GlobalV::device_flag == "cpu" and PARAM.inp.precision == "single")
     {
 // cpu single precision is not supported while float_fftw lib is not available
 #ifndef __ENABLE_FLOAT_FFTW
@@ -291,7 +290,6 @@ void Input_Conv::Convert()
 #ifdef __LCAO
     if (PARAM.inp.dft_plus_u)
     {
-        GlobalV::dft_plus_u = PARAM.inp.dft_plus_u;
         GlobalC::dftu.Yukawa = PARAM.inp.yukawa_potential;
         GlobalC::dftu.omc = PARAM.inp.omc;
         GlobalC::dftu.orbital_corr = PARAM.inp.orbital_corr;
@@ -528,10 +526,6 @@ void Input_Conv::Convert()
     //----------------------------------------------------------
     // wavefunction / charge / potential / (2/4)
     //----------------------------------------------------------
-    GlobalV::init_chg = PARAM.inp.init_chg;
-    GlobalV::init_wfc = PARAM.inp.init_wfc;
-    GlobalV::psi_initializer = PARAM.inp.psi_initializer;
-    GlobalV::chg_extrap = PARAM.inp.chg_extrap; // xiaohui modify 2015-02-01
     GlobalV::nelec = PARAM.inp.nelec;
     GlobalV::out_pot = PARAM.inp.out_pot;
 
@@ -618,32 +612,16 @@ void Input_Conv::Convert()
     //-----------------------------------------------
     // sunml add for implicit solvation model
     //-----------------------------------------------
-    GlobalV::imp_sol = PARAM.inp.imp_sol;
-    GlobalV::eb_k = PARAM.inp.eb_k;
 
     //-----------------------------------------------
     // Deltaspin related parameters
     //-----------------------------------------------
-    GlobalV::sc_thr = PARAM.inp.sc_thr;
 
     // mixing parameters
-    GlobalV::MIXING_MODE = PARAM.inp.mixing_mode;
-    GlobalV::MIXING_BETA = PARAM.inp.mixing_beta;
-    GlobalV::MIXING_NDIM = PARAM.inp.mixing_ndim;
-    GlobalV::MIXING_RESTART = PARAM.inp.mixing_restart;
-    GlobalV::MIXING_GG0 = PARAM.inp.mixing_gg0;
-    GlobalV::MIXING_BETA_MAG = PARAM.inp.mixing_beta_mag;
-    GlobalV::MIXING_GG0_MAG = PARAM.inp.mixing_gg0_mag;
-    GlobalV::MIXING_GG0_MIN = PARAM.inp.mixing_gg0_min;
-    GlobalV::MIXING_ANGLE = PARAM.inp.mixing_angle;
-    GlobalV::MIXING_TAU = PARAM.inp.mixing_tau;
-    GlobalV::MIXING_DMR = PARAM.inp.mixing_dmr;
 
     //-----------------------------------------------
     // Quasiatomic Orbital analysis
     //-----------------------------------------------
-    GlobalV::qo_thr = PARAM.inp.qo_thr;
-    GlobalV::qo_screening_coeff = PARAM.inp.qo_screening_coeff;
 
     //-----------------------------------------------
     // PEXSI related parameters

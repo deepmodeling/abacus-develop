@@ -139,7 +139,6 @@ extern std::ofstream ofs_device;
 // src_tools
 //==========================================================
 
-extern bool FINAL_SCF; // LiuXh add 20180619
 
 extern bool deepks_out_labels; // (need libnpy) prints energy and force labels
                                // and descriptors for training, wenfei 2022-1-12
@@ -156,27 +155,12 @@ extern bool deepks_setorb;
 
 
 // implicit solvation
-extern bool imp_sol; // sunml added 2022-04-04
-extern double eb_k;
 
 // DFTU control
-extern int dft_plus_u;
 // rpa related
-extern bool rpa_setorb;
 extern std::vector<std::string> rpa_orbitals;
 
 // mixing parameters
-extern std::string MIXING_MODE;
-extern double MIXING_BETA;
-extern int MIXING_NDIM;
-extern double MIXING_RESTART;
-extern double MIXING_GG0;
-extern bool MIXING_TAU;
-extern double MIXING_BETA_MAG;
-extern double MIXING_GG0_MAG;
-extern double MIXING_GG0_MIN;
-extern double MIXING_ANGLE;
-extern bool MIXING_DMR;
 
 //==========================================================
 // device flags added by denghui
@@ -185,31 +169,21 @@ extern std::string device_flag;
 //==========================================================
 // precision flags added by denghui
 //==========================================================
-extern std::string precision_flag;
 
-extern std::string chg_extrap;
 extern int out_pot;
 
-extern std::string init_chg; //  output charge if out_chg > 0, and output every
                              //  "out_chg" elec step.
 /// @brief method to initialize wavefunction
 /// @author kirk0830, 20230920
-extern std::string init_wfc;
 /// @brief whether use the new psi initializer to initialize psi
 /// @author ykhuang, 20230920
-extern bool psi_initializer;
 
 extern double nelec;
-extern bool out_bandgap;
 
 // Deltaspin related
-extern double sc_thr;
 
 // Quasiatomic orbital related
-extern double qo_thr;
-extern std::vector<double> qo_screening_coeff;
 
 // radius of on-site orbitals
-extern double onsite_radius;
 } // namespace GlobalV
 #endif

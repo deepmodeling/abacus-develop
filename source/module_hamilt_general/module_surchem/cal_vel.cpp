@@ -1,5 +1,6 @@
 #include "module_base/timer.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
+#include "module_parameter/parameter.h"
 #include "surchem.h"
 
 void shape_gradn(const double* PS_TOTN_real, const ModulePW::PW_Basis* rho_basis, double* eprime)
@@ -28,7 +29,7 @@ void eps_pot(const double* PS_TOTN_real,
 
     for (int ir = 0; ir < rho_basis->nrxx; ir++)
     {
-        eprime[ir] = eprime[ir] * (GlobalV::eb_k - 1);
+        eprime[ir] = eprime[ir] * (PARAM.inp.eb_k - 1);
     }
 
     ModuleBase::Vector3<double> *nabla_phi = new ModuleBase::Vector3<double>[rho_basis->nrxx];

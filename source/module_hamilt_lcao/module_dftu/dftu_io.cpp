@@ -1,5 +1,6 @@
 #include "dftu.h"
 #include "module_base/timer.h"
+#include "module_parameter/parameter.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 namespace ModuleDFTU
@@ -231,7 +232,7 @@ void DFTU::read_occup_m(const std::string &fn)
         }
         else
         {
-            if (GlobalV::init_chg == "file")
+            if (PARAM.inp.init_chg == "file")
             {
                 std::cout << "DFTU::read_occup_m. Can not find the file onsite.dm . Please do scf calculation first"
                           << std::endl;

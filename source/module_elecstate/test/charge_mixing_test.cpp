@@ -5,6 +5,7 @@
 #undef private
 #include "module_base/module_mixing/broyden_mixing.h"
 #define private public
+#include "module_parameter/parameter.h"
 #include "../module_charge/charge_mixing.h"
 #include "module_basis/module_pw/pw_basis.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
@@ -97,16 +98,16 @@ class ChargeMixingTest : public ::testing::Test
         pw_dbasis.setuptransform(&pw_basis);
         pw_dbasis.collect_local_pw();
         // default mixing parameters
-        GlobalV::MIXING_MODE = "broyden";
-        GlobalV::MIXING_BETA = 0.8;
-        GlobalV::MIXING_NDIM = 8;
-        GlobalV::MIXING_GG0  = 1.0;
-        GlobalV::MIXING_TAU  = false;
-        GlobalV::MIXING_BETA_MAG = 1.6;
-        GlobalV::MIXING_GG0_MAG = 0.0;
-        GlobalV::MIXING_GG0_MIN = 0.1;
-        GlobalV::MIXING_ANGLE = -10.0;
-        GlobalV::MIXING_DMR = false;
+        PARAM.input.mixing_mode = "broyden";
+        PARAM.input.mixing_beta = 0.8;
+        PARAM.input.mixing_ndim = 8;
+        PARAM.input.mixing_gg0  = 1.0;
+        PARAM.input.mixing_tau  = false;
+        PARAM.input.mixing_beta_mag = 1.6;
+        PARAM.input.mixing_gg0_mag = 0.0;
+        PARAM.input.mixing_gg0_min = 0.1;
+        PARAM.input.mixing_angle = -10.0;
+        PARAM.input.mixing_dmr = false;
     }
     ModulePW::PW_Basis pw_basis;
     ModulePW::PW_Basis_Sup pw_dbasis;
@@ -119,20 +120,20 @@ TEST_F(ChargeMixingTest, SetMixingTest)
     GlobalV::NSPIN = 1;
     Charge_Mixing CMtest;
     CMtest.set_rhopw(&pw_basis, &pw_basis);
-    GlobalV::MIXING_BETA = 1.0;
-    GlobalV::MIXING_NDIM = 1;
-    GlobalV::MIXING_GG0 = 1.0;
+    PARAM.input.mixing_beta = 1.0;
+    PARAM.input.mixing_ndim = 1;
+    PARAM.input.mixing_gg0 = 1.0;
 
-    CMtest.set_mixing(GlobalV::MIXING_MODE,
-                    GlobalV::MIXING_BETA,
-                    GlobalV::MIXING_NDIM,
-                    GlobalV::MIXING_GG0,
-                    GlobalV::MIXING_TAU,
-                    GlobalV::MIXING_BETA_MAG,
-                    GlobalV::MIXING_GG0_MAG,
-                    GlobalV::MIXING_GG0_MIN,
-                    GlobalV::MIXING_ANGLE,
-                    GlobalV::MIXING_DMR);
+    CMtest.set_mixing(PARAM.input.mixing_mode,
+                    PARAM.input.mixing_beta,
+                    PARAM.input.mixing_ndim,
+                    PARAM.input.mixing_gg0,
+                    PARAM.input.mixing_tau,
+                    PARAM.input.mixing_beta_mag,
+                    PARAM.input.mixing_gg0_mag,
+                    PARAM.input.mixing_gg0_min,
+                    PARAM.input.mixing_angle,
+                    PARAM.input.mixing_dmr);
     EXPECT_EQ(CMtest.get_mixing_mode(), "broyden");
     EXPECT_EQ(CMtest.get_mixing_beta(), 1.0);
     EXPECT_EQ(CMtest.get_mixing_ndim(), 1);
@@ -144,69 +145,69 @@ TEST_F(ChargeMixingTest, SetMixingTest)
     EXPECT_EQ(CMtest.mixing_angle, -10.0);
     EXPECT_EQ(CMtest.mixing_dmr, false);
 
-    GlobalV::MIXING_TAU = true;
-    GlobalV::MIXING_MODE = "plain";
-    CMtest.set_mixing(GlobalV::MIXING_MODE,
-                    GlobalV::MIXING_BETA,
-                    GlobalV::MIXING_NDIM,
-                    GlobalV::MIXING_GG0,
-                    GlobalV::MIXING_TAU,
-                    GlobalV::MIXING_BETA_MAG,
-                    GlobalV::MIXING_GG0_MAG,
-                    GlobalV::MIXING_GG0_MIN,
-                    GlobalV::MIXING_ANGLE,
-                    GlobalV::MIXING_DMR);
+    PARAM.input.mixing_tau = true;
+    PARAM.input.mixing_mode = "plain";
+    CMtest.set_mixing(PARAM.input.mixing_mode,
+                    PARAM.input.mixing_beta,
+                    PARAM.input.mixing_ndim,
+                    PARAM.input.mixing_gg0,
+                    PARAM.input.mixing_tau,
+                    PARAM.input.mixing_beta_mag,
+                    PARAM.input.mixing_gg0_mag,
+                    PARAM.input.mixing_gg0_min,
+                    PARAM.input.mixing_angle,
+                    PARAM.input.mixing_dmr);
     EXPECT_EQ(CMtest.mixing_mode, "plain");
     EXPECT_EQ(CMtest.mixing_tau, true);
 
-    GlobalV::MIXING_BETA = 1.1;
+    PARAM.input.mixing_beta = 1.1;
     std::string output;
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(CMtest.set_mixing(GlobalV::MIXING_MODE,
-                                GlobalV::MIXING_BETA,
-                                GlobalV::MIXING_NDIM,
-                                GlobalV::MIXING_GG0,
-                                GlobalV::MIXING_TAU,
-                                GlobalV::MIXING_BETA_MAG,
-                                GlobalV::MIXING_GG0_MAG,
-                                GlobalV::MIXING_GG0_MIN,
-                                GlobalV::MIXING_ANGLE,
-                                GlobalV::MIXING_DMR);, ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(CMtest.set_mixing(PARAM.input.mixing_mode,
+                                PARAM.input.mixing_beta,
+                                PARAM.input.mixing_ndim,
+                                PARAM.input.mixing_gg0,
+                                PARAM.input.mixing_tau,
+                                PARAM.input.mixing_beta_mag,
+                                PARAM.input.mixing_gg0_mag,
+                                PARAM.input.mixing_gg0_min,
+                                PARAM.input.mixing_angle,
+                                PARAM.input.mixing_dmr);, ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("You'd better set mixing_beta to [0.0, 1.0]!"));
 
-    GlobalV::MIXING_BETA = 0.7;
-    GlobalV::MIXING_BETA_MAG = -0.1;
+    PARAM.input.mixing_beta = 0.7;
+    PARAM.input.mixing_beta_mag = -0.1;
     GlobalV::NSPIN = 2;
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(CMtest.set_mixing(GlobalV::MIXING_MODE,
-                                GlobalV::MIXING_BETA,
-                                GlobalV::MIXING_NDIM,
-                                GlobalV::MIXING_GG0,
-                                GlobalV::MIXING_TAU,
-                                GlobalV::MIXING_BETA_MAG,
-                                GlobalV::MIXING_GG0_MAG,
-                                GlobalV::MIXING_GG0_MIN,
-                                GlobalV::MIXING_ANGLE,
-                                GlobalV::MIXING_DMR);, ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(CMtest.set_mixing(PARAM.input.mixing_mode,
+                                PARAM.input.mixing_beta,
+                                PARAM.input.mixing_ndim,
+                                PARAM.input.mixing_gg0,
+                                PARAM.input.mixing_tau,
+                                PARAM.input.mixing_beta_mag,
+                                PARAM.input.mixing_gg0_mag,
+                                PARAM.input.mixing_gg0_min,
+                                PARAM.input.mixing_angle,
+                                PARAM.input.mixing_dmr);, ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("You'd better set mixing_beta_mag >= 0.0!"));
 
     GlobalV::NSPIN = 1;
-    GlobalV::MIXING_BETA = 0.7;
-    GlobalV::MIXING_BETA_MAG = 1.6;
-    GlobalV::MIXING_MODE = "nothing";
+    PARAM.input.mixing_beta = 0.7;
+    PARAM.input.mixing_beta_mag = 1.6;
+    PARAM.input.mixing_mode = "nothing";
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(CMtest.set_mixing(GlobalV::MIXING_MODE,
-                                GlobalV::MIXING_BETA,
-                                GlobalV::MIXING_NDIM,
-                                GlobalV::MIXING_GG0,
-                                GlobalV::MIXING_TAU,
-                                GlobalV::MIXING_BETA_MAG,
-                                GlobalV::MIXING_GG0_MAG,
-                                GlobalV::MIXING_GG0_MIN,
-                                GlobalV::MIXING_ANGLE,
-                                GlobalV::MIXING_DMR);, ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(CMtest.set_mixing(PARAM.input.mixing_mode,
+                                PARAM.input.mixing_beta,
+                                PARAM.input.mixing_ndim,
+                                PARAM.input.mixing_gg0,
+                                PARAM.input.mixing_tau,
+                                PARAM.input.mixing_beta_mag,
+                                PARAM.input.mixing_gg0_mag,
+                                PARAM.input.mixing_gg0_min,
+                                PARAM.input.mixing_angle,
+                                PARAM.input.mixing_dmr);, ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("This Mixing mode is not implemended yet,coming soon."));
 }
@@ -219,16 +220,16 @@ TEST_F(ChargeMixingTest, InitMixingTest)
     Charge_Mixing CMtest;
     CMtest.set_rhopw(&pw_basis, &pw_basis);
 
-    CMtest.set_mixing(GlobalV::MIXING_MODE,
-                    GlobalV::MIXING_BETA,
-                    GlobalV::MIXING_NDIM,
-                    GlobalV::MIXING_GG0,
-                    GlobalV::MIXING_TAU,
-                    GlobalV::MIXING_BETA_MAG,
-                    GlobalV::MIXING_GG0_MAG,
-                    GlobalV::MIXING_GG0_MIN,
-                    GlobalV::MIXING_ANGLE,
-                    GlobalV::MIXING_DMR);
+    CMtest.set_mixing(PARAM.input.mixing_mode,
+                    PARAM.input.mixing_beta,
+                    PARAM.input.mixing_ndim,
+                    PARAM.input.mixing_gg0,
+                    PARAM.input.mixing_tau,
+                    PARAM.input.mixing_beta_mag,
+                    PARAM.input.mixing_gg0_mag,
+                    PARAM.input.mixing_gg0_min,
+                    PARAM.input.mixing_angle,
+                    PARAM.input.mixing_dmr);
     
     PARAM.input.scf_thr_type= 1;
     CMtest.init_mixing();
@@ -243,33 +244,33 @@ TEST_F(ChargeMixingTest, InitMixingTest)
     EXPECT_EQ(CMtest.rho_mdata.length, 4 * pw_basis.nrxx);
 
     GlobalV::NSPIN = 1;
-    GlobalV::MIXING_TAU = true;
-    CMtest.set_mixing(GlobalV::MIXING_MODE,
-                    GlobalV::MIXING_BETA,
-                    GlobalV::MIXING_NDIM,
-                    GlobalV::MIXING_GG0,
-                    GlobalV::MIXING_TAU,
-                    GlobalV::MIXING_BETA_MAG,
-                    GlobalV::MIXING_GG0_MAG,
-                    GlobalV::MIXING_GG0_MIN,
-                    GlobalV::MIXING_ANGLE,
-                    GlobalV::MIXING_DMR);
+    PARAM.input.mixing_tau = true;
+    CMtest.set_mixing(PARAM.input.mixing_mode,
+                    PARAM.input.mixing_beta,
+                    PARAM.input.mixing_ndim,
+                    PARAM.input.mixing_gg0,
+                    PARAM.input.mixing_tau,
+                    PARAM.input.mixing_beta_mag,
+                    PARAM.input.mixing_gg0_mag,
+                    PARAM.input.mixing_gg0_min,
+                    PARAM.input.mixing_angle,
+                    PARAM.input.mixing_dmr);
     FUNC_TYPE = 3;
     CMtest.init_mixing();
     EXPECT_EQ(CMtest.tau_mdata.length, pw_basis.nrxx);
 
     GlobalV::NSPIN = 4;
-    GlobalV::MIXING_ANGLE = 1.0;
-    CMtest.set_mixing(GlobalV::MIXING_MODE,
-                    GlobalV::MIXING_BETA,
-                    GlobalV::MIXING_NDIM,
-                    GlobalV::MIXING_GG0,
-                    GlobalV::MIXING_TAU,
-                    GlobalV::MIXING_BETA_MAG,
-                    GlobalV::MIXING_GG0_MAG,
-                    GlobalV::MIXING_GG0_MIN,
-                    GlobalV::MIXING_ANGLE,
-                    GlobalV::MIXING_DMR);
+    PARAM.input.mixing_angle = 1.0;
+    CMtest.set_mixing(PARAM.input.mixing_mode,
+                    PARAM.input.mixing_beta,
+                    PARAM.input.mixing_ndim,
+                    PARAM.input.mixing_gg0,
+                    PARAM.input.mixing_tau,
+                    PARAM.input.mixing_beta_mag,
+                    PARAM.input.mixing_gg0_mag,
+                    PARAM.input.mixing_gg0_min,
+                    PARAM.input.mixing_angle,
+                    PARAM.input.mixing_dmr);
     CMtest.init_mixing();
     EXPECT_EQ(CMtest.rho_mdata.length, 2 * pw_basis.nrxx);
 }
@@ -278,16 +279,16 @@ TEST_F(ChargeMixingTest, InnerDotRealTest)
 {
     Charge_Mixing CMtest;
     // non mixing angle case
-    CMtest.set_mixing(GlobalV::MIXING_MODE,
-                    GlobalV::MIXING_BETA,
-                    GlobalV::MIXING_NDIM,
-                    GlobalV::MIXING_GG0,
-                    GlobalV::MIXING_TAU,
-                    GlobalV::MIXING_BETA_MAG,
-                    GlobalV::MIXING_GG0_MAG,
-                    GlobalV::MIXING_GG0_MIN,
-                    GlobalV::MIXING_ANGLE,
-                    GlobalV::MIXING_DMR);
+    CMtest.set_mixing(PARAM.input.mixing_mode,
+                    PARAM.input.mixing_beta,
+                    PARAM.input.mixing_ndim,
+                    PARAM.input.mixing_gg0,
+                    PARAM.input.mixing_tau,
+                    PARAM.input.mixing_beta_mag,
+                    PARAM.input.mixing_gg0_mag,
+                    PARAM.input.mixing_gg0_min,
+                    PARAM.input.mixing_angle,
+                    PARAM.input.mixing_dmr);
     CMtest.set_rhopw(&pw_basis, &pw_basis);
     GlobalV::NSPIN = 4;
 
@@ -303,17 +304,17 @@ TEST_F(ChargeMixingTest, InnerDotRealTest)
     EXPECT_NEAR(inner, 0.5 * pw_basis.nrxx * GlobalV::NSPIN  * (pw_basis.nrxx * GlobalV::NSPIN - 1), 1e-8);
 
     // mixing angle case
-    GlobalV::MIXING_ANGLE = 1.0;
-    CMtest.set_mixing(GlobalV::MIXING_MODE,
-                    GlobalV::MIXING_BETA,
-                    GlobalV::MIXING_NDIM,
-                    GlobalV::MIXING_GG0,
-                    GlobalV::MIXING_TAU,
-                    GlobalV::MIXING_BETA_MAG,
-                    GlobalV::MIXING_GG0_MAG,
-                    GlobalV::MIXING_GG0_MIN,
-                    GlobalV::MIXING_ANGLE,
-                    GlobalV::MIXING_DMR);
+    PARAM.input.mixing_angle = 1.0;
+    CMtest.set_mixing(PARAM.input.mixing_mode,
+                    PARAM.input.mixing_beta,
+                    PARAM.input.mixing_ndim,
+                    PARAM.input.mixing_gg0,
+                    PARAM.input.mixing_tau,
+                    PARAM.input.mixing_beta_mag,
+                    PARAM.input.mixing_gg0_mag,
+                    PARAM.input.mixing_gg0_min,
+                    PARAM.input.mixing_angle,
+                    PARAM.input.mixing_dmr);
     GlobalV::NSPIN = 4;
 
     // a simple sum for inner product
@@ -332,16 +333,16 @@ TEST_F(ChargeMixingTest, InnerDotRecipSimpleTest)
 {
     Charge_Mixing CMtest;
     // non mixing angle case
-    CMtest.set_mixing(GlobalV::MIXING_MODE,
-                    GlobalV::MIXING_BETA,
-                    GlobalV::MIXING_NDIM,
-                    GlobalV::MIXING_GG0,
-                    GlobalV::MIXING_TAU,
-                    GlobalV::MIXING_BETA_MAG,
-                    GlobalV::MIXING_GG0_MAG,
-                    GlobalV::MIXING_GG0_MIN,
-                    GlobalV::MIXING_ANGLE,
-                    GlobalV::MIXING_DMR);
+    CMtest.set_mixing(PARAM.input.mixing_mode,
+                    PARAM.input.mixing_beta,
+                    PARAM.input.mixing_ndim,
+                    PARAM.input.mixing_gg0,
+                    PARAM.input.mixing_tau,
+                    PARAM.input.mixing_beta_mag,
+                    PARAM.input.mixing_gg0_mag,
+                    PARAM.input.mixing_gg0_min,
+                    PARAM.input.mixing_angle,
+                    PARAM.input.mixing_dmr);
     CMtest.set_rhopw(&pw_basis, &pw_basis);
     GlobalV::NSPIN = 2;
 
@@ -441,17 +442,17 @@ TEST_F(ChargeMixingTest, InnerDotRecipHartreeTest)
 
     // RECIPROCAL NSPIN=4 with mixing_angle
     GlobalV::NSPIN = 4;
-    GlobalV::MIXING_ANGLE = 1.0;
-    CMtest.set_mixing(GlobalV::MIXING_MODE,
-                    GlobalV::MIXING_BETA,
-                    GlobalV::MIXING_NDIM,
-                    GlobalV::MIXING_GG0,
-                    GlobalV::MIXING_TAU,
-                    GlobalV::MIXING_BETA_MAG,
-                    GlobalV::MIXING_GG0_MAG,
-                    GlobalV::MIXING_GG0_MIN,
-                    GlobalV::MIXING_ANGLE,
-                    GlobalV::MIXING_DMR);
+    PARAM.input.mixing_angle = 1.0;
+    CMtest.set_mixing(PARAM.input.mixing_mode,
+                    PARAM.input.mixing_beta,
+                    PARAM.input.mixing_ndim,
+                    PARAM.input.mixing_gg0,
+                    PARAM.input.mixing_tau,
+                    PARAM.input.mixing_beta_mag,
+                    PARAM.input.mixing_gg0_mag,
+                    PARAM.input.mixing_gg0_min,
+                    PARAM.input.mixing_angle,
+                    PARAM.input.mixing_dmr);
     drhog1.resize(pw_basis.npw * 2);
     drhog2.resize(pw_basis.npw * 2);
     for (int i = 0; i < pw_basis.npw * 2; ++i)
@@ -709,7 +710,7 @@ TEST_F(ChargeMixingTest, KerkerScreenRealTest)
 
     // RECIPROCAL
     CMtest.mixing_gg0 = 1.0;
-    GlobalV::MIXING_GG0_MAG = 0.0;
+    PARAM.input.mixing_gg0_mag = 0.0;
     CMtest.Kerker_screen_recip(drhog);
     const double gg0 = std::pow(0.529177, 2);
     for (int i = 0; i < pw_basis.npw; ++i)
@@ -726,7 +727,7 @@ TEST_F(ChargeMixingTest, KerkerScreenRealTest)
     pw_basis.recip2real(drhog_old, drhor);
 
     CMtest.mixing_gg0 = 0.0;
-    GlobalV::MIXING_GG0_MAG = 0.0;
+    PARAM.input.mixing_gg0_mag = 0.0;
     // nothing happens
     CMtest.Kerker_screen_real(drhor);
 
@@ -751,11 +752,11 @@ TEST_F(ChargeMixingTest, MixRhoTest)
     const int nspin = GlobalV::NSPIN = 1;
     GlobalV::DOMAG_Z = false;
     FUNC_TYPE = 3;
-    GlobalV::MIXING_BETA = 0.7;
-    GlobalV::MIXING_NDIM = 1;
-    GlobalV::MIXING_GG0 = 0.0;
-    GlobalV::MIXING_TAU = true;
-    GlobalV::MIXING_MODE = "plain";
+    PARAM.input.mixing_beta = 0.7;
+    PARAM.input.mixing_ndim = 1;
+    PARAM.input.mixing_gg0 = 0.0;
+    PARAM.input.mixing_tau = true;
+    PARAM.input.mixing_mode = "plain";
     const int nrxx = pw_basis.nrxx;
     const int npw = pw_basis.npw;
     charge._space_rho = new double[nspin * nrxx];
@@ -798,16 +799,16 @@ TEST_F(ChargeMixingTest, MixRhoTest)
     Charge_Mixing CMtest_recip;
     CMtest_recip.set_rhopw(&pw_basis, &pw_basis);
     PARAM.input.scf_thr_type= 1;
-    CMtest_recip.set_mixing(GlobalV::MIXING_MODE,
-                            GlobalV::MIXING_BETA,
-                            GlobalV::MIXING_NDIM,
-                            GlobalV::MIXING_GG0,
-                            GlobalV::MIXING_TAU,
-                            GlobalV::MIXING_BETA_MAG,
-                            GlobalV::MIXING_GG0_MAG,
-                            GlobalV::MIXING_GG0_MIN,
-                            GlobalV::MIXING_ANGLE,
-                            GlobalV::MIXING_DMR);
+    CMtest_recip.set_mixing(PARAM.input.mixing_mode,
+                            PARAM.input.mixing_beta,
+                            PARAM.input.mixing_ndim,
+                            PARAM.input.mixing_gg0,
+                            PARAM.input.mixing_tau,
+                            PARAM.input.mixing_beta_mag,
+                            PARAM.input.mixing_gg0_mag,
+                            PARAM.input.mixing_gg0_min,
+                            PARAM.input.mixing_angle,
+                            PARAM.input.mixing_dmr);
     CMtest_recip.init_mixing();
     for(int i = 0 ; i < nspin * npw; ++i)
     {
@@ -837,16 +838,16 @@ TEST_F(ChargeMixingTest, MixRhoTest)
     Charge_Mixing CMtest_real;
     PARAM.input.scf_thr_type= 2;
     CMtest_real.set_rhopw(&pw_basis, &pw_basis);
-    CMtest_real.set_mixing(GlobalV::MIXING_MODE,
-                        GlobalV::MIXING_BETA,
-                        GlobalV::MIXING_NDIM,
-                        GlobalV::MIXING_GG0,
-                        GlobalV::MIXING_TAU,
-                        GlobalV::MIXING_BETA_MAG,
-                        GlobalV::MIXING_GG0_MAG,
-                        GlobalV::MIXING_GG0_MIN,
-                        GlobalV::MIXING_ANGLE,
-                        GlobalV::MIXING_DMR);
+    CMtest_real.set_mixing(PARAM.input.mixing_mode,
+                        PARAM.input.mixing_beta,
+                        PARAM.input.mixing_ndim,
+                        PARAM.input.mixing_gg0,
+                        PARAM.input.mixing_tau,
+                        PARAM.input.mixing_beta_mag,
+                        PARAM.input.mixing_gg0_mag,
+                        PARAM.input.mixing_gg0_min,
+                        PARAM.input.mixing_angle,
+                        PARAM.input.mixing_dmr);
     CMtest_real.init_mixing();
     for(int i = 0 ; i < nspin * nrxx; ++i)
     {
@@ -885,11 +886,11 @@ TEST_F(ChargeMixingTest, MixDoubleGridRhoTest)
     const int nspin = GlobalV::NSPIN = 1;
     GlobalV::DOMAG_Z = false;
     FUNC_TYPE = 3;
-    GlobalV::MIXING_BETA = 0.7;
-    GlobalV::MIXING_NDIM = 1;
-    GlobalV::MIXING_GG0 = 0.0;
-    GlobalV::MIXING_TAU = true;
-    GlobalV::MIXING_MODE = "plain";
+    PARAM.input.mixing_beta = 0.7;
+    PARAM.input.mixing_ndim = 1;
+    PARAM.input.mixing_gg0 = 0.0;
+    PARAM.input.mixing_tau = true;
+    PARAM.input.mixing_mode = "plain";
     const int nrxx = pw_dbasis.nrxx;
     const int npw = pw_dbasis.npw;
     charge._space_rho = new double[nspin * nrxx];
@@ -931,17 +932,19 @@ TEST_F(ChargeMixingTest, MixDoubleGridRhoTest)
     // RECIPROCAL
     Charge_Mixing CMtest_recip;
     CMtest_recip.set_rhopw(&pw_basis, &pw_dbasis);
+
     PARAM.input.scf_thr_type= 1;
-    CMtest_recip.set_mixing(GlobalV::MIXING_MODE,
-                            GlobalV::MIXING_BETA,
-                            GlobalV::MIXING_NDIM,
-                            GlobalV::MIXING_GG0,
-                            GlobalV::MIXING_TAU,
-                            GlobalV::MIXING_BETA_MAG,
-                            GlobalV::MIXING_GG0_MAG,
-                            GlobalV::MIXING_GG0_MIN,
-                            GlobalV::MIXING_ANGLE,
-                            GlobalV::MIXING_DMR);
+    CMtest_recip.set_mixing(PARAM.input.mixing_mode,
+                            PARAM.input.mixing_beta,
+                            PARAM.input.mixing_ndim,
+                            PARAM.input.mixing_gg0,
+                            PARAM.input.mixing_tau,
+                            PARAM.input.mixing_beta_mag,
+                            PARAM.input.mixing_gg0_mag,
+                            PARAM.input.mixing_gg0_min,
+                            PARAM.input.mixing_angle,
+                            PARAM.input.mixing_dmr);
+
     CMtest_recip.init_mixing();
     for (int i = 0; i < nspin * npw; ++i)
     {

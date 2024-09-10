@@ -106,7 +106,6 @@ bool DOMAG = false;
 bool DOMAG_Z = false;
 int NPOL = 1;
 
-bool FINAL_SCF = false; // LiuXh add 20180619
 
 bool deepks_out_labels = false; // caoyu add 2021-10-16 for DeePKS, wenfei 2022-1-16
 bool deepks_scf = false; // caoyu add 2021-10-16 for DeePKS, wenfei 2022-1-16
@@ -118,44 +117,13 @@ bool deepks_equiv = false;
 bool deepks_setorb = false;
 
 
-bool imp_sol = false; // implicit solvation.  sunml added 2022-04-04
-double eb_k = 80.0;
 
-int dft_plus_u = 0; // DFTU control
 
 // Xinyang Dong added for rpa
-bool rpa_setorb = false;
 std::vector<std::string> rpa_orbitals;
 
-std::string of_kinetic = "wt";
-std::string of_method = "tn";
-std::string of_conv = "energy";
-double of_tole = 2e-6;
-double of_tolp = 1e-5;
-double of_tf_weight = 1.;
-double of_vw_weight = 1.;
-double of_wt_alpha = 5. / 6.;
-double of_wt_beta = 5. / 6.;
-double of_wt_rho0 = 0.;
-bool of_hold_rho0 = false;
-double of_lkt_a = 1.3;
-bool of_full_pw = true;
-int of_full_pw_dim = 0;
-bool of_read_kernel = false;
-std::string of_kernel_file = "WTkernel.txt";
 
 // mixing parameters
-std::string MIXING_MODE = "broyden";
-double MIXING_BETA = 0.7;
-int MIXING_NDIM = 8;
-double MIXING_RESTART = 0.0;
-double MIXING_GG0 = 1.00;
-double MIXING_BETA_MAG = 1.6;
-double MIXING_GG0_MAG = 1.00;
-double MIXING_GG0_MIN = 0.1;
-double MIXING_ANGLE = 0.0;
-bool MIXING_TAU = false;
-bool MIXING_DMR = false;
 
 //==========================================================
 // device flags added by denghui
@@ -164,30 +132,20 @@ std::string device_flag = "unknown";
 //==========================================================
 // precision flags added by denghui
 //==========================================================
-std::string precision_flag = "unknown";
 
-std::string chg_extrap = "";
 int out_pot = 0;
 
-std::string init_chg = "";
 
-std::string init_wfc = "atomic";
-bool psi_initializer = false;
 
 double nelec = 0;
-bool out_bandgap = false; // QO added for bandgap printing
 
 //==========================================================
 // Deltaspin related
 //==========================================================
-double sc_thr = 1.0e-6;
 
 //==========================================================
 // Quasiatomic orbital related
 //==========================================================
-double qo_thr = 1.0e-6;
-std::vector<double> qo_screening_coeff = {};
 
 // on-site orbitals
-double onsite_radius = 0.0;
 } // namespace GlobalV
