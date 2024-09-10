@@ -187,7 +187,7 @@ void diago_PAO_in_pw_k2(const int &ik,
     {
         ModuleBase::ComplexMatrix wfcatom(nbands, nbasis);
         std::stringstream filename;
-        filename << GlobalV::global_readin_dir << "WAVEFUNC" << ik + 1 << ".dat";
+        filename << PARAM.globalv.global_readin_dir << "WAVEFUNC" << ik + 1 << ".dat";
         bool result = ModuleIO::read_wfc_pw(filename.str(), wfc_basis, ik, p_wf->nkstot, wfcatom);
 
         if (result)
@@ -350,7 +350,7 @@ void diago_PAO_in_pw_k2(const int &ik,
     {
         ModuleBase::ComplexMatrix wfcatom(nbands, nbasis);
         std::stringstream filename;
-        filename << GlobalV::global_readin_dir << "WAVEFUNC" << ik + 1 << ".dat";
+        filename << PARAM.globalv.global_readin_dir << "WAVEFUNC" << ik + 1 << ".dat";
         bool result = ModuleIO::read_wfc_pw(filename.str(), wfc_basis, ik, p_wf->nkstot, wfcatom);
 
         if (result)
@@ -537,7 +537,7 @@ void diago_PAO_in_pw_k2(const base_device::DEVICE_GPU* ctx,
     if (p_wf->init_wfc == "file")
     {
         std::stringstream filename;
-        filename << GlobalV::global_readin_dir << "WAVEFUNC" << ik + 1 << ".dat";
+        filename << PARAM.globalv.global_readin_dir << "WAVEFUNC" << ik + 1 << ".dat";
         result = ModuleIO::read_wfc_pw(filename.str(), wfc_basis, ik, p_wf->nkstot, wfcatom);
         if (!result)
         {
@@ -646,7 +646,7 @@ void diago_PAO_in_pw_k2(const base_device::DEVICE_GPU* ctx,
     if (p_wf->init_wfc == "file")
     {
         std::stringstream filename;
-        filename << GlobalV::global_readin_dir << "WAVEFUNC" << ik + 1 << ".dat";
+        filename << PARAM.globalv.global_readin_dir << "WAVEFUNC" << ik + 1 << ".dat";
         result = ModuleIO::read_wfc_pw(filename.str(), wfc_basis, ik, p_wf->nkstot, wfcatom);
         if (!result)
         {

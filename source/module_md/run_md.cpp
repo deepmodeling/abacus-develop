@@ -51,7 +51,7 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, const Paramet
     {
         if (mdrun->step_ == 0)
         {
-            mdrun->setup(p_esolver, GlobalV::global_readin_dir);
+            mdrun->setup(p_esolver, PARAM.globalv.global_readin_dir);
         }
         else
         {

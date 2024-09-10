@@ -539,7 +539,7 @@ void LR::ESolver_LR<T, TR>::read_ks_wfc()
     GlobalV::NB2D = 1;
     this->pelec->ekb.create(this->kv.get_nks(), this->nbands);
     this->pelec->wg.create(this->kv.get_nks(), this->nbands);
-    if (!ModuleIO::read_wfc_nao(GlobalV::global_readin_dir, this->paraMat_, *this->psi_ks, this->pelec,
+    if (!ModuleIO::read_wfc_nao(PARAM.globalv.global_readin_dir, this->paraMat_, *this->psi_ks, this->pelec,
         /*skip_bands=*/this->nocc_max - this->nocc)) {
         ModuleBase::WARNING_QUIT("ESolver_LR", "read ground-state wavefunction failed.");
 }
@@ -555,7 +555,7 @@ void LR::ESolver_LR<T, TR>::read_ks_chg(Charge& chg_gs)
     for (int is = 0; is < this->nspin; ++is)
     {
         std::stringstream ssc;
-        ssc << GlobalV::global_readin_dir << "SPIN" << is + 1 << "_CHG.cube";
+        ssc << PARAM.globalv.global_readin_dir << "SPIN" << is + 1 << "_CHG.cube";
         GlobalV::ofs_running << ssc.str() << std::endl;
         double ef;
         if (ModuleIO::read_rho(

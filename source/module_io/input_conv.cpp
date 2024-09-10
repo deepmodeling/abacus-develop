@@ -182,7 +182,7 @@ void Input_Conv::Convert()
     {
         int istep = 0;
         double temperature = 0.0;
-        MD_func::current_md_info(GlobalV::MY_RANK, GlobalV::global_readin_dir, istep, temperature);
+        MD_func::current_md_info(GlobalV::MY_RANK, PARAM.globalv.global_readin_dir, istep, temperature);
         if (PARAM.inp.read_file_dir == "auto")
         {
             GlobalV::stru_file = GlobalV::global_stru_dir + "STRU_MD_" + std::to_string(istep);
@@ -392,7 +392,7 @@ void Input_Conv::Convert()
                        PARAM.inp.dft_functional.end(),
                        dft_functional_lower.begin(),
                        tolower);
-        GlobalC::restart.folder = GlobalV::global_readin_dir + "restart/";
+        GlobalC::restart.folder = PARAM.globalv.global_readin_dir + "restart/";
         ModuleBase::GlobalFunc::MAKE_DIR(GlobalC::restart.folder);
         if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0"
             || dft_functional_lower == "hse"
@@ -411,7 +411,7 @@ void Input_Conv::Convert()
                        PARAM.inp.dft_functional.end(),
                        dft_functional_lower.begin(),
                        tolower);
-        GlobalC::restart.folder = GlobalV::global_readin_dir + "restart/";
+        GlobalC::restart.folder = PARAM.globalv.global_readin_dir + "restart/";
         if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0"
             || dft_functional_lower == "hse"
             || dft_functional_lower == "opt_orb"

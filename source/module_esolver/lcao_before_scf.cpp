@@ -86,7 +86,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
     // init wfc from file
     if(istep == 0 && PARAM.inp.init_wfc == "file")
     {
-        if (! ModuleIO::read_wfc_nao(GlobalV::global_readin_dir, this->pv, *(this->psi), this->pelec))
+        if (! ModuleIO::read_wfc_nao(PARAM.globalv.global_readin_dir, this->pv, *(this->psi), this->pelec))
         {
             ModuleBase::WARNING_QUIT("ESolver_KS_LCAO<TK, TR>::beforesolver",
                                      "read wfc nao failed");
