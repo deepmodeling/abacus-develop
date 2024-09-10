@@ -427,12 +427,6 @@ void ReadInput::item_others()
         this->add_item(item);
     }
     {
-        Input_Item item("colour");
-        item.annotation = "for coders, make their live colourful";
-        read_sync_bool(input.colour);
-        this->add_item(item);
-    }
-    {
         Input_Item item("t_in_h");
         item.annotation = "calculate the kinetic energy or not";
         read_sync_bool(input.t_in_h);

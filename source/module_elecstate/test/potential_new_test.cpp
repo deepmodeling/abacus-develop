@@ -1,5 +1,6 @@
-#include <vector>
 #include "gtest/gtest.h"
+#include <vector>
+
 #define private public
 #include "module_parameter/parameter.h"
 #include "module_elecstate/potentials/potential_new.h"
@@ -546,7 +547,7 @@ TEST_F(PotentialNewTest, GetVofkSmooth)
 
 TEST_F(PotentialNewTest, InterpolateVrsDoubleGrids)
 {
-    GlobalV::double_grid = true;
+     PARAM.sys.double_grid = true;
     elecstate::tmp_xc_func_type = 3;
     // Init pw_basis
     rhopw->initgrids(4, ModuleBase::Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1), 4);
@@ -590,7 +591,7 @@ TEST_F(PotentialNewTest, InterpolateVrsDoubleGrids)
 
 TEST_F(PotentialNewTest, InterpolateVrsWarningQuit)
 {
-    GlobalV::double_grid = true;
+     PARAM.sys.double_grid = true;
     // Init pw_basis
     rhopw->initgrids(4, ModuleBase::Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1), 4);
     rhopw->initparameters(false, 4);
@@ -611,7 +612,7 @@ TEST_F(PotentialNewTest, InterpolateVrsWarningQuit)
 
 TEST_F(PotentialNewTest, InterpolateVrsSingleGrids)
 {
-    GlobalV::double_grid = false;
+     PARAM.sys.double_grid = false;
     elecstate::tmp_xc_func_type = 3;
     // Init pw_basis
     rhopw->initgrids(4, ModuleBase::Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1), 4);

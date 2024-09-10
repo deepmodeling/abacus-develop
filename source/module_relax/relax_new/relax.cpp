@@ -1,5 +1,6 @@
 #include "relax.h"
 
+#include "module_parameter/parameter.h"
 #include <cmath>
 
 #include "module_relax/relax_old/ions_move_basic.h"
@@ -23,7 +24,7 @@ void Relax::init_relax(const int nat_in)
     etot = 0;
     etot_p = 0;
 
-    force_thr_eva = GlobalV::FORCE_THR * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A; //convert to eV/A
+    force_thr_eva = PARAM.inp.force_thr  * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A; //convert to eV/A
     fac_force  = PARAM.inp.relax_scale_force * 0.1;
     fac_stress = fac_force / nat;
 
@@ -133,7 +134,7 @@ bool Relax::setup_gradient(const ModuleBase::matrix& force, const ModuleBase::ma
 
     if(max_grad > force_thr_eva) { force_converged = false;
 }
-	if(GlobalV::OUT_LEVEL=="ie")
+	if(PARAM.inp.out_level=="ie")
 	{
         std::cout << " ETOT DIFF (eV)       : " << etot - etot_p << std::endl;
 		std::cout << " LARGEST GRAD (eV/A)  : " << max_grad << std::endl;

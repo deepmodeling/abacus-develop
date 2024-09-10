@@ -558,7 +558,6 @@ struct Input_para
     // ==============   #Parameters (20.Test) ====================
     bool out_alllog = false;      ///< output all logs.
     int nurse = 0;                ///< used for debug.
-    bool colour = false;          ///< used for fun.
     bool t_in_h = true;           ///< calculate the T or not.
     bool vl_in_h = true;          ///< calculate the vloc or not.
     bool vnl_in_h = true;         ///< calculate the vnl or not.

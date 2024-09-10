@@ -16,13 +16,13 @@ test_deepks::~test_deepks()
 {
 }
 
-void test_deepks::check_dstable(void)
+void test_deepks::check_dstable()
 {
     // OGT.talpha.print_Table_DSR(ORB);
     // this->compare_with_ref("S_I_mu_alpha.dat","S_I_mu_alpha_ref.dat");
 }
 
-void test_deepks::check_psialpha(void)
+void test_deepks::check_psialpha()
 {
     std::vector<int> na;
     na.resize(ucell.ntype);
@@ -42,7 +42,7 @@ void test_deepks::check_psialpha(void)
     this->compare_with_ref("dpsialpha_z.dat", "dpsialpha_z_ref.dat");
 }
 
-void test_deepks::read_dm(void)
+void test_deepks::read_dm()
 {
     std::ifstream ifs("dm");
     dm.resize(1);
@@ -82,7 +82,7 @@ void test_deepks::read_dm_k(const int nks)
     }
 }
 
-void test_deepks::set_dm_new(void)
+void test_deepks::set_dm_new()
 {
     // dm_gamma
     dm_new.resize(dm.size());
@@ -93,7 +93,7 @@ void test_deepks::set_dm_new(void)
     }
 }
 
-void test_deepks::set_dm_k_new(void)
+void test_deepks::set_dm_k_new()
 {
     // dm_k
     dm_k_new.resize(dm_k.size());
@@ -104,9 +104,9 @@ void test_deepks::set_dm_k_new(void)
     }
 }
 
-void test_deepks::check_pdm(void)
+void test_deepks::check_pdm()
 {
-    if (GlobalV::GAMMA_ONLY_LOCAL)
+    if (PARAM.sys.gamma_only_local)
     {
         this->read_dm();
         this->set_dm_new();
@@ -122,10 +122,10 @@ void test_deepks::check_pdm(void)
     this->compare_with_ref("pdm.dat", "pdm_ref.dat");
 }
 
-void test_deepks::check_gdmx(void)
+void test_deepks::check_gdmx()
 {
     this->ld.init_gdmx(ucell.nat);
-    if (GlobalV::GAMMA_ONLY_LOCAL)
+    if (PARAM.sys.gamma_only_local)
     {
         this->ld.cal_gdmx(dm_new[0], ucell, ORB, Test_Deepks::GridD, 0);
     }
@@ -160,14 +160,14 @@ void test_deepks::check_gdmx(void)
     }
 }
 
-void test_deepks::check_descriptor(void)
+void test_deepks::check_descriptor()
 {
     this->ld.cal_descriptor(ucell.nat);
     this->ld.check_descriptor(ucell);
     this->compare_with_ref("descriptor.dat", "descriptor_ref.dat");
 }
 
-void test_deepks::check_gvx(void)
+void test_deepks::check_gvx()
 {
     this->ld.cal_gvx(ucell.nat);
     this->ld.check_gvx(ucell.nat);
@@ -196,10 +196,10 @@ void test_deepks::check_gvx(void)
     }
 }
 
-void test_deepks::check_edelta(void)
+void test_deepks::check_edelta()
 {
     this->ld.load_model("model.ptg");
-    if (GlobalV::GAMMA_ONLY_LOCAL)
+    if (PARAM.sys.gamma_only_local)
     {
         this->ld.allocate_V_delta(ucell.nat);
     }
@@ -218,9 +218,9 @@ void test_deepks::check_edelta(void)
     this->compare_with_ref("gedm.dat", "gedm_ref.dat");
 }
 
-void test_deepks::check_e_deltabands(void)
+void test_deepks::check_e_deltabands()
 {
-    if (GlobalV::GAMMA_ONLY_LOCAL)
+    if (PARAM.sys.gamma_only_local)
     {
         this->ld.cal_e_delta_band(dm_new);
     }
@@ -240,7 +240,7 @@ void test_deepks::check_f_delta()
 {
     ModuleBase::matrix svnl_dalpha;
     svnl_dalpha.create(3, 3);
-    if (GlobalV::GAMMA_ONLY_LOCAL)
+    if (PARAM.sys.gamma_only_local)
     {
         ld.cal_f_delta_gamma(dm_new, ucell, ORB, Test_Deepks::GridD, 1, svnl_dalpha);
     }

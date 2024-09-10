@@ -1,5 +1,6 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
+#include "module_parameter/parameter.h"
 #include "record_adj.h" //mohan add 2012-07-06
 #include "module_base/timer.h"
 #include "module_base/tool_threading.h"
@@ -99,7 +100,7 @@ void Grid_Technique::cal_nnrg(Parallel_Orbitals* pv)
 		}// end I1
 	}// end T1
 
-	if(GlobalV::OUT_LEVEL != "m") { ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"nnrg",this->nnrg);
+	if(PARAM.inp.out_level != "m") { ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"nnrg",this->nnrg);
 }
 
 	//--------------------------------------------------

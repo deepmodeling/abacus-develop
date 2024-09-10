@@ -1,5 +1,6 @@
 #include "VL_in_pw.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/libm/libm.h"
 #include "module_base/math_integral.h"
 #include "module_base/timer.h"
@@ -19,7 +20,7 @@ pseudopot_cell_vl::~pseudopot_cell_vl()
 
 void pseudopot_cell_vl::init_vloc(ModuleBase::matrix& vloc_in, const ModulePW::PW_Basis* rho_basis)
 {
-	if(GlobalV::use_paw) return;
+	if(PARAM.inp.use_paw) return;
 	ModuleBase::TITLE("pseudopot_cell_vl","init_vloc");
 
 	// This routine computes the fourier coefficient of the local
@@ -77,7 +78,7 @@ void pseudopot_cell_vl::init_vloc(ModuleBase::matrix& vloc_in, const ModulePW::P
 
 void pseudopot_cell_vl::allocate(const int ngg)
 {
-	if(GlobalV::use_paw) return;
+	if(PARAM.inp.use_paw) return;
 	if(GlobalV::test_pp>0) ModuleBase::TITLE("pseudopot_cell_vl","allocate");
 	this->vloc.create(GlobalC::ucell.ntype, ngg);
 

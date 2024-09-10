@@ -127,7 +127,7 @@ namespace ModuleESolver
             hsolver::DiagoIterAssist<T>::need_subspace = ((istep == 0 || istep == 1) && iter == 1) ? false : true;
             hsolver::DiagoIterAssist<T>::SCF_ITER = iter;
             hsolver::DiagoIterAssist<T>::PW_DIAG_THR = ethr;
-            hsolver::DiagoIterAssist<T>::PW_DIAG_NMAX = GlobalV::PW_DIAG_NMAX;
+            hsolver::DiagoIterAssist<T>::PW_DIAG_NMAX = PARAM.inp.pw_diag_nmax;
 
             // It is not a good choice to overload another solve function here, this will spoil the concept of
             // multiple inheritance and polymorphism. But for now, we just do it in this way.

@@ -115,7 +115,7 @@ void Potential::allocate()
     this->veff_smooth.create(GlobalV::NSPIN, nrxx_smooth);
     ModuleBase::Memory::record("Pot::veff_smooth", sizeof(double) * GlobalV::NSPIN * nrxx_smooth);
 
-    if(GlobalV::use_paw)
+    if(PARAM.inp.use_paw)
     {
         this->v_xc.create(GlobalV::NSPIN, nrxx);
         ModuleBase::Memory::record("Pot::vxc", sizeof(double) * GlobalV::NSPIN * nrxx);
@@ -168,7 +168,7 @@ void Potential::update_from_charge(const Charge*const chg, const UnitCell*const 
     this->interpolate_vrs();
 
 #ifdef USE_PAW
-    if(GlobalV::use_paw)
+    if(PARAM.inp.use_paw)
     {
         this->v_xc.zero_out();
         const std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v
@@ -220,7 +220,7 @@ void Potential::update_from_charge(const Charge*const chg, const UnitCell*const 
     }
 
 #ifdef USE_PAW
-    if(GlobalV::use_paw)
+    if(PARAM.inp.use_paw)
     {
         GlobalC::paw_cell.calculate_dij(v_effective.c, v_xc.c);
         GlobalC::paw_cell.set_dij();
@@ -316,7 +316,7 @@ void Potential::interpolate_vrs()
     ModuleBase::TITLE("Potential", "interpolate_vrs");
     ModuleBase::timer::tick("Potential", "interpolate_vrs");
 
-    if (GlobalV::double_grid)
+    if ( PARAM.globalv.double_grid)
     {
         if (rho_basis_->gamma_only != rho_basis_smooth_->gamma_only)
         {

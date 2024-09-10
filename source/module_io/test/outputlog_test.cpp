@@ -1,11 +1,13 @@
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include <unistd.h>
-
 #include <cstdio>
 #include <iostream>
 #include <sstream>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "module_base/constants.h"
 #include "module_base/global_variable.h"
 #include "module_io/output_log.h"
@@ -106,7 +108,7 @@ TEST(OutputEfermiTest, TestNotConvergence) {
 TEST(OutputEfermiTest, TestMOutputLevel) {
     bool convergence = true;
     double efermi = 1.0;
-    GlobalV::OUT_LEVEL = "m"; // Setting output level to "m"
+    PARAM.input.out_level = "m"; // Setting output level to "m"
     std::ofstream ofs_running("test_output_efermi_m_outputlevel.txt");
     ModuleIO::output_efermi(convergence, efermi, ofs_running);
     ofs_running.close();

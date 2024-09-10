@@ -78,7 +78,7 @@ class SltkAtomArrangeTest : public testing::Test
 TEST_F(SltkAtomArrangeTest, setsrNL)
 {
     atom_arrange test;
-    std::string teststring = "m";
+    const std::string teststring = "m";
     double rcutmax_Phi = 1;
     double rcutmax_Beta = 2;
     bool gamma_only_local = true;
@@ -92,8 +92,8 @@ TEST_F(SltkAtomArrangeTest, setsrNL)
     test_sr = test.set_sr_NL(ofs, teststring, rcutmax_Phi, rcutmax_Beta, gamma_only_local);
     EXPECT_DOUBLE_EQ(test_sr, 6.01);
 
-    teststring = "no";
-    test_sr = test.set_sr_NL(ofs, teststring, rcutmax_Phi, rcutmax_Beta, gamma_only_local);
+    const std::string teststring2 = "no";
+    test_sr = test.set_sr_NL(ofs, teststring2, rcutmax_Phi, rcutmax_Beta, gamma_only_local);
     ofs.close();
     std::ifstream ifs;
     std::string test2, s;

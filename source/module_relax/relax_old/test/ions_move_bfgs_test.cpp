@@ -1,5 +1,8 @@
 #include "for_test.h"
 #include "gmock/gmock.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include "gtest/gtest.h"
 #define private public
 #define protected public
@@ -201,7 +204,7 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineCase1)
     bfgs.allocate();
     bfgs.tr_min_hit = false;
     GlobalV::test_relax_method = 1;
-    GlobalV::OUT_LEVEL = "ie";
+    PARAM.input.out_level = "ie";
     double lat0 = 1.0;
     Ions_Move_Basic::etot = 1.0;
     Ions_Move_Basic::etot_p = 0.9;
@@ -267,7 +270,7 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineCase2)
     bfgs.allocate();
     bfgs.tr_min_hit = false;
     GlobalV::test_relax_method = 0;
-    GlobalV::OUT_LEVEL = "none";
+    PARAM.input.out_level = "none";
     double lat0 = 1.0;
     Ions_Move_Basic::etot = 1.0;
     Ions_Move_Basic::etot_p = 0.9;
@@ -386,7 +389,7 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineWarningQuit1)
     bfgs.allocate();
     bfgs.tr_min_hit = true;
     GlobalV::test_relax_method = 1;
-    GlobalV::OUT_LEVEL = "ie";
+    PARAM.input.out_level = "ie";
     double lat0 = 1.0;
     Ions_Move_Basic::etot = 1.0;
     Ions_Move_Basic::etot_p = 0.9;
@@ -413,7 +416,7 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineWarningQuit2)
     bfgs.allocate();
     bfgs.tr_min_hit = false;
     GlobalV::test_relax_method = 1;
-    GlobalV::OUT_LEVEL = "ie";
+    PARAM.input.out_level = "ie";
     double lat0 = 1.0;
     Ions_Move_Basic::etot = 1.0;
     Ions_Move_Basic::etot_p = 0.9;

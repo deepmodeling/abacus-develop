@@ -11,6 +11,7 @@
 #include "LCAO_deepks.h"
 #include "module_base/timer.h"
 #include "module_base/vector3.h"
+#include "module_parameter/parameter.h"
 
 void LCAO_Deepks::build_psialpha(const bool& calc_deri,
                                  const UnitCell& ucell,
@@ -44,7 +45,7 @@ void LCAO_Deepks::build_psialpha(const bool& calc_deri,
             const ModuleBase::Vector3<double> tau0 = atom0->tau[I0];
             GridD.Find_atom(ucell, atom0->tau[I0], T0, I0);
 
-            if (GlobalV::GAMMA_ONLY_LOCAL)
+            if (PARAM.globalv.gamma_only_local)
             {
                 this->nlm_save[iat].resize(GridD.getAdjacentNum() + 1);
             }
@@ -60,7 +61,7 @@ void LCAO_Deepks::build_psialpha(const bool& calc_deri,
                 const Atom* atom1 = &ucell.atoms[T1];
 
                 std::unordered_map<int, std::vector<std::vector<double>>> nlm_cur;
-                if (GlobalV::GAMMA_ONLY_LOCAL)
+                if (PARAM.globalv.gamma_only_local)
                 {
                     this->nlm_save[iat][ad].clear();
                 }
@@ -101,7 +102,7 @@ void LCAO_Deepks::build_psialpha(const bool& calc_deri,
                     ModuleBase::Vector3<double> dtau = ucell.atoms[T0].tau[I0] - tau1;
                     overlap_orb_alpha.snap(T1, L1, N1, M1, 0, dtau * ucell.lat0, calc_deri, nlm);
 
-                    if (GlobalV::GAMMA_ONLY_LOCAL)
+                    if (PARAM.globalv.gamma_only_local)
                     {
                         this->nlm_save[iat][ad].insert({all_indexes[iw1l], nlm});
                     }
@@ -113,7 +114,7 @@ void LCAO_Deepks::build_psialpha(const bool& calc_deri,
                     }
                 } // end iw
 
-                if (!GlobalV::GAMMA_ONLY_LOCAL)
+                if (!PARAM.globalv.gamma_only_local)
                 {
                     const int rx = GridD.getBox(ad).x;
                     const int ry = GridD.getBox(ad).y;
@@ -198,7 +199,7 @@ void LCAO_Deepks::check_psialpha(const bool& calc_deri,
                 }
 
                 int ibt, rx, ry, rz;
-                if (GlobalV::GAMMA_ONLY_LOCAL)
+                if (PARAM.globalv.gamma_only_local)
                 {
                     ofs << "ad : " << ad << " " << dist1 << std::endl;
                     ofs_x << "ad : " << ad << " " << dist1 << std::endl;
@@ -232,7 +233,7 @@ void LCAO_Deepks::check_psialpha(const bool& calc_deri,
 
                     std::vector<std::vector<double>> nlm;
 
-                    if (GlobalV::GAMMA_ONLY_LOCAL)
+                    if (PARAM.globalv.gamma_only_local)
                     {
                         nlm = this->nlm_save[iat][ad][iw1];
                     }

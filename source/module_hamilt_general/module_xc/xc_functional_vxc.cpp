@@ -7,7 +7,7 @@
 #include "xc_functional.h"
 #include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
-
+#include "module_parameter/parameter.h"
 // [etxc, vtxc, v] = XC_Functional::v_xc(...)
 std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc(
 	const int &nrxx, // number of real-space grid
@@ -47,7 +47,8 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc(
         {
             // total electron charge density
             double rhox = chr->rho[0][ir] + chr->rho_core[ir];
-            if(GlobalV::use_paw && rhox < 1e-14) rhox = 1e-14;
+            if(PARAM.inp.use_paw && rhox < 1e-14) { rhox = 1e-14;
+}
             double arhox = std::abs(rhox);
             if (arhox > vanishing_charge)
             {
@@ -225,9 +226,11 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc_libxc(		// Peiz
         #ifdef _OPENMP
         #pragma omp parallel for collapse(2) schedule(static, 1024)
         #endif
-        for( int is=0; is<nspin; ++is )
-            for( int ir=0; ir<nrxx; ++ir )
+        for( int is=0; is<nspin; ++is ) {
+            for( int ir=0; ir<nrxx; ++ir ) {
                 rho[ir*nspin+is] = chr->rho[is][ir] + 1.0/nspin*chr->rho_core[ir];
+}
+}
     }
     else
     {
@@ -257,8 +260,9 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc_libxc(		// Peiz
             #ifdef _OPENMP
             #pragma omp parallel for schedule(static, 1024)
             #endif
-            for(int ir=0; ir<nrxx; ++ir)
+            for(int ir=0; ir<nrxx; ++ir) {
                 rhor[ir] = rho[ir*nspin+is];
+}
             //------------------------------------------
             // initialize the charge density array in reciprocal space
             // bring electron charge density from real space to reciprocal space
@@ -281,8 +285,9 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc_libxc(		// Peiz
             #ifdef _OPENMP
             #pragma omp parallel for schedule(static, 1024)
             #endif
-            for( int ir=0; ir<nrxx; ++ir )
+            for( int ir=0; ir<nrxx; ++ir ) {
                 sigma[ir] = gdr[0][ir]*gdr[0][ir];
+}
         }
         else
         {
@@ -317,10 +322,12 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc_libxc(		// Peiz
             #endif
             for( int ir=0; ir<nrxx; ++ir )
             {
-                if ( rho[ir*2]<rho_threshold || std::sqrt(std::abs(sigma[ir*3]))<grho_threshold )
+                if ( rho[ir*2]<rho_threshold || std::sqrt(std::abs(sigma[ir*3]))<grho_threshold ) {
                     sgn[ir*2] = 0.0;
-                if ( rho[ir*2+1]<rho_threshold || std::sqrt(std::abs(sigma[ir*3+2]))<grho_threshold )
+}
+                if ( rho[ir*2+1]<rho_threshold || std::sqrt(std::abs(sigma[ir*3+2]))<grho_threshold ) {
                     sgn[ir*2+1] = 0.0;
+}
             }
         }
 
@@ -349,9 +356,11 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc_libxc(		// Peiz
         #ifdef _OPENMP
         #pragma omp parallel for collapse(2) reduction(+:etxc) schedule(static, 256)
         #endif
-        for( int is=0; is<nspin; ++is )
-            for( int ir=0; ir< nrxx; ++ir )
+        for( int is=0; is<nspin; ++is ) {
+            for( int ir=0; ir< nrxx; ++ir ) {
                 etxc += ModuleBase::e2 * exc[ir] * rho[ir*nspin+is] * sgn[ir*nspin+is];
+}
+}
 
         #ifdef _OPENMP
         #pragma omp parallel for collapse(2) reduction(+:vtxc) schedule(static, 256)
@@ -375,8 +384,9 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc_libxc(		// Peiz
                 #ifdef _OPENMP
                 #pragma omp parallel for schedule(static, 1024)
                 #endif
-                for( int ir=0; ir< nrxx; ++ir )
+                for( int ir=0; ir< nrxx; ++ir ) {
                     h[0][ir] = 2.0 * gdr[0][ir] * vsigma[ir] * 2.0 * sgn[ir];
+}
             }
             else
             {
@@ -394,8 +404,9 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc_libxc(		// Peiz
 
             // define two dimensional array dh [ nspin, nrxx ]
             std::vector<std::vector<double>> dh(nspin, std::vector<double>(nrxx));
-            for( int is=0; is!=nspin; ++is )
+            for( int is=0; is!=nspin; ++is ) {
                 XC_Functional::grad_dot( h[is].data(), dh[is].data(), chr->rhopw, tpiba);
+}
 
             double rvtxc = 0.0;
             #ifdef _OPENMP
@@ -436,8 +447,9 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc_libxc(		// Peiz
     {
         constexpr double vanishing_charge = 1.0e-10;
         ModuleBase::matrix v_nspin4(GlobalV::NSPIN,nrxx);
-        for( int ir=0; ir<nrxx; ++ir )
+        for( int ir=0; ir<nrxx; ++ir ) {
             v_nspin4(0,ir) = 0.5 * (v(0,ir)+v(1,ir));
+}
         if(GlobalV::DOMAG || GlobalV::DOMAG_Z)
         {
             for( int ir=0; ir<nrxx; ++ir )
@@ -445,8 +457,9 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc_libxc(		// Peiz
                 if ( amag[ir] > vanishing_charge )
                 {
                     const double vs = 0.5 * (v(0,ir)-v(1,ir));
-                    for(int ipol=1; ipol<4; ++ipol)
+                    for(int ipol=1; ipol<4; ++ipol) {
                         v_nspin4(ipol,ir) = vs * chr->rho[ipol][ir] / amag[ir];
+}
                 }
             }
         }
@@ -623,10 +636,12 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional::v
 #endif
         for( int ir=0; ir<nrxx; ++ir )
         {
-            if ( rho[ir*2]<rho_th || sqrt(std::abs(sigma[ir*3]))<grho_th || std::abs(kin_r[ir*2])<tau_th)
+            if ( rho[ir*2]<rho_th || sqrt(std::abs(sigma[ir*3]))<grho_th || std::abs(kin_r[ir*2])<tau_th) {
                 sgn[ir*2] = 0.0;
-            if ( rho[ir*2+1]<rho_th || sqrt(std::abs(sigma[ir*3+2]))<grho_th || std::abs(kin_r[ir*2+1])<tau_th)
+}
+            if ( rho[ir*2+1]<rho_th || sqrt(std::abs(sigma[ir*3+2]))<grho_th || std::abs(kin_r[ir*2+1])<tau_th) {
                 sgn[ir*2+1] = 0.0;
+}
         }
     }
 

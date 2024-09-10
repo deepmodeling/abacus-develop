@@ -1,5 +1,6 @@
 #include "sltk_atom_arrange.h"
 #include "sltk_atom_input.h"
+#include "module_parameter/parameter.h"
 #include "sltk_grid.h"
 #include "sltk_grid_driver.h"
 #include "module_base/timer.h"
@@ -17,7 +18,7 @@ atom_arrange::~atom_arrange()
 
 double atom_arrange::set_sr_NL(
 	std::ofstream &ofs_in,
-	std::string &output_level,
+	const std::string &output_level,
 	const double &rcutmax_Phi, 
 	const double &rcutmax_Beta, 
 	const bool gamma_only_local)
@@ -80,8 +81,8 @@ void atom_arrange::search(
 //	OUT(ofs_in,"Atom coordinates reading from",GlobalV::stru_file);
 //	OUT(ofs_in,"The coordinate type",ucell.Coordinate);
 //	OUT(ofs_in,"Use cartesian(unit:lat0) coordinate","TRUE");
-//	if(GlobalV::OUT_LEVEL != "m") OUT(ofs_in,"searching radius is (Bohr))", search_radius_bohr);
-//	if(GlobalV::OUT_LEVEL != "m") OUT(ofs_in,"searching radius unit is (Bohr))",ucell.lat0);
+//	if(PARAM.inp.out_level != "m") OUT(ofs_in,"searching radius is (Bohr))", search_radius_bohr);
+//	if(PARAM.inp.out_level != "m") OUT(ofs_in,"searching radius unit is (Bohr))",ucell.lat0);
 
 	ModuleBase::GlobalFunc::OUT(ofs_in,"searching radius is (Bohr))", search_radius_bohr);
 	ModuleBase::GlobalFunc::OUT(ofs_in,"searching radius unit is (Bohr))",ucell.lat0);

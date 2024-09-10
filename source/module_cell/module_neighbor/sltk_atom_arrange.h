@@ -25,7 +25,7 @@ public:
 	//caoyu modify 2021-05-24
 	static double set_sr_NL(
 		std::ofstream &ofs_in,
-		std::string &output_level,
+		const std::string &output_level,
 		const double& rcutmax_Phi, 
 		const double& rcutmax_Beta, 
 		const bool gamma_only_local);

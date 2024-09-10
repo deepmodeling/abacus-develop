@@ -163,7 +163,6 @@ void Input_Conv::Convert()
 {
     ModuleBase::TITLE("Input_Conv", "Convert");
     ModuleBase::timer::tick("Input_Conv", "Convert");
-    GlobalV::double_grid = PARAM.globalv.double_grid;
     //-----------------------------------------------
     // set read_file_dir
     //-----------------------------------------------
@@ -206,7 +205,6 @@ void Input_Conv::Convert()
 
     if (PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax")
     {
-        GlobalV::fixed_atoms = PARAM.inp.fixed_atoms;
     }
 
 
@@ -231,7 +229,6 @@ void Input_Conv::Convert()
     else
     {
         GlobalV::KPAR = PARAM.inp.kpar;
-        GlobalV::NSTOGROUP = PARAM.inp.bndpar;
     }
     if (GlobalV::device_flag == "cpu" and PARAM.inp.precision == "single")
     {
@@ -246,7 +243,6 @@ void Input_Conv::Convert()
 
     GlobalV::NSPIN = PARAM.inp.nspin;
 
-    GlobalV::FORCE_THR = PARAM.inp.force_thr;
 
 #ifdef __LCAO
     Force_Stress_LCAO<double>::force_invalid_threshold_ev = PARAM.inp.force_thr_ev2;
@@ -266,11 +262,8 @@ void Input_Conv::Convert()
 
 
     GlobalV::RELAX_METHOD = PARAM.inp.relax_method;
-    GlobalV::relax_new = PARAM.inp.relax_new;
 
-    GlobalV::use_paw = PARAM.inp.use_paw;
 
-    GlobalV::OUT_LEVEL = PARAM.inp.out_level;
     Ions_Move_CG::RELAX_CG_THR = PARAM.inp.relax_cg_thr; // pengfei add 2013-09-09
 
     ModuleSymmetry::Symmetry::symm_flag = std::stoi(PARAM.inp.symmetry);
@@ -281,12 +274,10 @@ void Input_Conv::Convert()
     //----------------------------------------------------------
     // planewave (8/8)
     //----------------------------------------------------------
-    GlobalV::GAMMA_ONLY_LOCAL = PARAM.globalv.gamma_only_local;
 
     //----------------------------------------------------------
     // diagonalization  (5/5)
     //----------------------------------------------------------
-    GlobalV::PW_DIAG_NMAX = PARAM.inp.pw_diag_nmax;
     GlobalV::PW_DIAG_NDIM = PARAM.inp.pw_diag_ndim;
 
     GlobalV::PW_DIAG_THR = PARAM.inp.pw_diag_thr;
@@ -297,7 +288,6 @@ void Input_Conv::Convert()
     //----------------------------------------------------------
     // iteration (1/3)
     //----------------------------------------------------------
-    GlobalV::SCF_THR_TYPE = PARAM.inp.scf_thr_type;
 
 #ifdef __LCAO
     if (PARAM.inp.dft_plus_u)
@@ -534,7 +524,6 @@ void Input_Conv::Convert()
     //----------------------------------------------------------
     // iteration
     //----------------------------------------------------------
-    GlobalV::SCF_NMAX = PARAM.inp.scf_nmax;
 
     //----------------------------------------------------------
     // wavefunction / charge / potential / (2/4)
@@ -544,20 +533,20 @@ void Input_Conv::Convert()
 
 #ifdef __LCAO
 
-    if (GlobalV::GAMMA_ONLY_LOCAL)
+    if (PARAM.globalv.gamma_only_local)
     {
         elecstate::ElecStateLCAO<double>::out_wfc_lcao = PARAM.inp.out_wfc_lcao;
     }
-    else if (!GlobalV::GAMMA_ONLY_LOCAL)
+    else if (!PARAM.globalv.gamma_only_local)
     {
         elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_lcao = PARAM.inp.out_wfc_lcao;
     }
     if (PARAM.inp.calculation == "nscf" && !PARAM.inp.towannier90 && !PARAM.inp.berry_phase)
     {
-        if (GlobalV::GAMMA_ONLY_LOCAL)
+        if (PARAM.globalv.gamma_only_local)
         {
             elecstate::ElecStateLCAO<double>::need_psi_grid = false;
-        } else if (!GlobalV::GAMMA_ONLY_LOCAL) {
+        } else if (!PARAM.globalv.gamma_only_local) {
             elecstate::ElecStateLCAO<std::complex<double>>::need_psi_grid
                 = false;
         }
