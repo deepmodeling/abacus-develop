@@ -89,7 +89,7 @@ void ReadInput::item_exx()
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.exx_real_number == "default")
             {
-                if (para.input.gamma_only_pw)
+                if (para.input.gamma_only)
                 {
                     para.input.exx_real_number = "1";
                 }

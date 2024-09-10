@@ -451,11 +451,11 @@ void ReadInput::item_elec_stru()
         Input_Item item("gamma_only");
         item.annotation = "Only for localized orbitals set and gamma point. If "
                           "set to 1, a fast algorithm is used";
-        read_sync_bool(input.gamma_only_pw);
+        read_sync_bool(input.gamma_only);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             Input_para& input = para.input;
             std::string& basis_type = input.basis_type;
-            bool& gamma_only = input.gamma_only_pw;
+            bool& gamma_only = input.gamma_only;
             if (basis_type == "pw" && gamma_only) // pengfei Li add 2015-1-31
             {
                 gamma_only = false;

@@ -22,7 +22,7 @@ void Stress_Func<FPTYPE, Device>::stress_loc(ModuleBase::matrix& sigma,
 
 	const int nspin_rho = (GlobalV::NSPIN == 2) ? 2 : 1;
 
-	if (PARAM.inp.gamma_only_pw && is_pw) { fact=2.0;
+	if (PARAM.globalv.gamma_only_pw && is_pw) { fact=2.0;
 }
 
     
