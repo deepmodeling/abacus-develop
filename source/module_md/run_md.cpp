@@ -99,7 +99,7 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, const Paramet
         {
             unit_in.update_vel(mdrun->vel);
             std::stringstream file;
-            file << GlobalV::global_stru_dir << "STRU_MD_" << mdrun->step_ + mdrun->step_rst_;
+            file << PARAM.globalv.global_stru_dir << "STRU_MD_" << mdrun->step_ + mdrun->step_rst_;
             // changelog 20240509
             // because I move out the dependence on GlobalV from UnitCell::print_stru_file
             // so its parameter is calculated here

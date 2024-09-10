@@ -9,7 +9,6 @@
 #include <mpi.h>
 #endif
 #include <unistd.h>
-#include "module_parameter/parameter.h"
 #include <sstream>
 #include "global_function.h"
 #include "global_variable.h"
@@ -33,22 +32,6 @@ void ModuleBase::Global_File::make_dir_out(
 // USE STL FUNCTION
 // NAME : system
 //----------------------------------------------------------
-
-    std::string prefix ;
-
-#ifdef __EPM
-#ifdef __MPI
-    prefix = "OUT_EPM_MPI.";
-#else
-    prefix = "OUT_EPM.";
-#endif
-#else
-    prefix = "OUT.";
-#endif
-
-    GlobalV::global_out_dir = prefix + suffix + "/";
-    GlobalV::global_stru_dir = PARAM.globalv.global_out_dir + "STRU/";
-    GlobalV::global_matrix_dir = PARAM.globalv.global_out_dir + "matrix/";
 
 #ifdef __MPI
     MPI_Barrier(MPI_COMM_WORLD);
@@ -93,7 +76,7 @@ void ModuleBase::Global_File::make_dir_out(
     if(calculation == "md")
     {
         int make_dir_stru = 0;
-        std::string command1 =  "test -d " + GlobalV::global_stru_dir + " || mkdir " + GlobalV::global_stru_dir;
+        std::string command1 =  "test -d " + PARAM.globalv.global_stru_dir + " || mkdir " + PARAM.global.global_stru_dir;
 
         times = 0;
         while(times<GlobalV::NPROC)
@@ -102,7 +85,7 @@ void ModuleBase::Global_File::make_dir_out(
             {
                 if ( system( command1.c_str() ) == 0 )
                 {
-                    std::cout << " MAKE THE STRU DIR    : " << GlobalV::global_stru_dir << std::endl;
+                    std::cout << " MAKE THE STRU DIR    : " << PARAM.globalv.global_stru_dir << std::endl;
                     make_dir_stru = 1;
                 }
                 else
@@ -142,7 +125,7 @@ void ModuleBase::Global_File::make_dir_out(
             {
                 if ( system( command1.c_str() ) == 0 )
                 {
-                    std::cout << " MAKE THE MATRIX DIR    : " << GlobalV::global_stru_dir << std::endl;
+                    std::cout << " MAKE THE MATRIX DIR    : " << PARAM.globalv.global_stru_dir << std::endl;
                     make_dir_matrix = 1;
                 }
                 else

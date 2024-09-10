@@ -1,5 +1,6 @@
 #include "read_input.h"
 #include "read_input_tool.h"
+#include "module_parameter/parameter.h"
 #include "module_base/global_variable.h"
 #include "module_base/tool_quit.h"
 namespace ModuleIO
@@ -15,6 +16,14 @@ void ReadInput::set_globalv_bcast()
             para.sys.global_out_dir = prefix + para.inp.suffix + "/";
             para.sys.global_out_dir = to_dir(para.sys.global_out_dir);
 
+            /// get the global output directory
+            para.sys.global_stru_dir = PARAM.globalv.global_out_dir + "STRU/";
+            para.sys.global_stru_dir = to_dir(para.sys.global_stru_dir);
+
+            /// get the global output directory
+            para.sys.global_matrix_dir = PARAM.globalv.global_out_dir + "matrix/";
+            para.sys.global_matrix_dir = to_dir(para.sys.global_matrix_dir);
+            
             /// get the global readin directory
             if (PARAM.inp.read_file_dir == "auto")
             {
