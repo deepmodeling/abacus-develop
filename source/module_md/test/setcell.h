@@ -126,7 +126,7 @@ class Setcell
 
     static void parameters(Input_para& input)
     {
-        GlobalV::global_out_dir = "./";
+        PARAM.sys.global_out_dir = "./";
         GlobalV::global_readin_dir = "./";
         GlobalV::SEARCH_RADIUS = 8.5 * ModuleBase::ANGSTROM_AU;
         GlobalV::CAL_STRESS = true;

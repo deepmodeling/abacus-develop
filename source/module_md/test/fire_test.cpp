@@ -1,6 +1,9 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #define private public
+#include "module_parameter/parameter.h"
+#undef private
+#define private public
 #define protected public
 #include "module_esolver/esolver_lj.h"
 #include "module_md/fire.h"
@@ -140,7 +143,7 @@ TEST_F(FIREtest, WriteRestart)
 {
     mdrun->step_ = 1;
     mdrun->step_rst_ = 2;
-    mdrun->write_restart(GlobalV::global_out_dir);
+    mdrun->write_restart(PARAM.sys.global_out_dir);
 
     std::ifstream ifs("Restart_md.dat");
     std::string output_str;

@@ -43,7 +43,7 @@ TEST(OrbInfo,WriteOrbInfo)
     std::string pp_dir = "./support/";
     std::ofstream ofs;
     ofs.open("running.log");
-    GlobalV::global_out_dir = "./";
+    PARAM.sys.global_out_dir = "./";
 	PARAM.input.pseudo_rcut = 15.0;
     GlobalV::LSPINORB = false;
 	GlobalV::NSPIN = 1;

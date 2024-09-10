@@ -1,6 +1,9 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #define private public
+#include "module_parameter/parameter.h"
+#undef private
+#define private public
 #define protected public
 #include "module_esolver/esolver_lj.h"
 #include "module_md/md_func.h"
@@ -239,7 +242,7 @@ TEST_F(MD_func_test, compute_stress)
 
 TEST_F(MD_func_test, dump_info)
 {
-    MD_func::dump_info(0, GlobalV::global_out_dir, ucell, param_in, virial, force, vel);
+    MD_func::dump_info(0, PARAM.sys.global_out_dir, ucell, param_in, virial, force, vel);
     std::ifstream ifs("MD_dump");
     std::string output_str;
     getline(ifs, output_str);
@@ -285,7 +288,7 @@ TEST_F(MD_func_test, dump_info)
     ifs.close();
 
     // append
-    MD_func::dump_info(1, GlobalV::global_out_dir, ucell, param_in, virial, force, vel);
+    MD_func::dump_info(1, PARAM.sys.global_out_dir, ucell, param_in, virial, force, vel);
     std::ifstream ifs2("MD_dump");
     getline(ifs2, output_str);
     EXPECT_THAT(output_str, testing::HasSubstr("MDSTEP:  0"));

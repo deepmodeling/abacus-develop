@@ -64,12 +64,12 @@ TEST_F(GlobalFile,mkdirout)
         remove(aa.c_str());
         rmdir(GlobalV::global_stru_dir.c_str());
         rmdir(GlobalV::global_matrix_dir.c_str());
-        rmdir(GlobalV::global_out_dir.c_str());
+        rmdir(PARAM.sys.global_out_dir.c_str());
 }
 
 TEST_F(GlobalFile,mkdiratom)
 {
-        GlobalV::global_out_dir = "./";
+        PARAM.sys.global_out_dir = "./";
         ModuleBase::Global_File::make_dir_atom("Si");
         int a = access("./Si/",0);
         EXPECT_EQ(a , 0);
@@ -162,9 +162,9 @@ TEST_F(GlobalFile,closealllog)
 TEST_F(GlobalFile, DeleteTmpFiles)
 {
 
-    std::string tmp_chg_1 = GlobalV::global_out_dir + "NOW_SPIN1_CHG.cube";
-    std::string tmp_chg_2 = GlobalV::global_out_dir + "OLD1_SPIN1_CHG.cube";
-    std::string tmp_chg_3 = GlobalV::global_out_dir + "OLD2_SPIN1_CHG.cube";
+    std::string tmp_chg_1 = PARAM.sys.global_out_dir + "NOW_SPIN1_CHG.cube";
+    std::string tmp_chg_2 = PARAM.sys.global_out_dir + "OLD1_SPIN1_CHG.cube";
+    std::string tmp_chg_3 = PARAM.sys.global_out_dir + "OLD2_SPIN1_CHG.cube";
     std::ofstream ofs1(tmp_chg_1.c_str());
     std::ofstream ofs2(tmp_chg_2.c_str());
     std::ofstream ofs3(tmp_chg_3.c_str());
