@@ -52,7 +52,8 @@ struct Input_para
     bool dm_to_rho = false;             ///< read density matrix from npz format and calculate charge density
     std::string chg_extrap = "default"; ///< xiaohui modify 2015-02-01
     bool init_vel = false;              ///< read velocity from STRU or not  liuyu 2021-07-14
-
+    
+    std::string input_file = "INPUT";   ///< input file name
     std::string stru_file = "STRU";     ///< file contains atomic positions --
                                         ///< xiaohui modify 2015-02-01
     std::string kpoint_file = "KPT";    ///< file contains k-points -- xiaohui modify 2015-02-01
