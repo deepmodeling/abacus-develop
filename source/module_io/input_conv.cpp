@@ -179,10 +179,6 @@ void Input_Conv::Convert()
     } else if (PARAM.inp.stru_file != "") {
         GlobalV::stru_file = PARAM.inp.stru_file;
     }
-    if (PARAM.inp.kpoint_file != "")
-    {
-        GlobalV::global_kpoint_card = PARAM.inp.kpoint_file;
-    }
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "pseudo_dir", PARAM.inp.pseudo_dir);
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "orbital_dir", PARAM.inp.orbital_dir);
     // GlobalV::global_pseudo_type = PARAM.inp.pseudo_type;
