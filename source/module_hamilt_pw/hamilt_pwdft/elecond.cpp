@@ -1,5 +1,6 @@
 #include "elecond.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_elecstate/occupy.h"
@@ -136,7 +137,7 @@ void EleCond::jjresponse_ks(const int ik, const int nt, const double dt, const d
         int nkstot = this->p_kv->get_nkstot();
         int ikglobal = this->p_kv->getik_global(ik);
         std::stringstream ss;
-        ss << GlobalV::global_out_dir << "vmatrix" << ikglobal + 1 << ".dat";
+        ss << PARAM.globalv.global_out_dir << "vmatrix" << ikglobal + 1 << ".dat";
         Binstream binpij(ss.str(), "w");
         binpij << 8 * reducenb2;
         binpij.write(pij2.data(), reducenb2);

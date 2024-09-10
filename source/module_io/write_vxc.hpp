@@ -162,7 +162,7 @@ inline void write_orb_energy(const K_Vectors& kv,
     assert(e_orb.size() == kv.get_nks());
     const int nk = kv.get_nks() / nspin0;
     std::ofstream ofs;
-    ofs.open(GlobalV::global_out_dir + term + "_" + (label == "" ? "out.dat" : label + "_out.dat"),
+    ofs.open(PARAM.globalv.global_out_dir + term + "_" + (label == "" ? "out.dat" : label + "_out.dat"),
         app ? std::ios::app : std::ios::out);
     ofs << nk << "\n" << nspin0 << "\n" << nbands << "\n";
     ofs << std::scientific << std::setprecision(16);

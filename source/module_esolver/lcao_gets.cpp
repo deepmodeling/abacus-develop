@@ -70,7 +70,7 @@ void ESolver_KS_LCAO<std::complex<double>, double>::get_S(void)
     }
 
     // mohan add 2024-06-09
-    const std::string fn = GlobalV::global_out_dir + "SR.csr";
+    const std::string fn = PARAM.globalv.global_out_dir + "SR.csr";
 
     std::cout << " The file is saved in " << fn << std::endl;
 
@@ -111,7 +111,7 @@ void ESolver_KS_LCAO<std::complex<double>, std::complex<double>>::get_S(void)
     }
 
     // mohan add 2024-06-09
-    const std::string fn = GlobalV::global_out_dir + "SR.csr";
+    const std::string fn = PARAM.globalv.global_out_dir + "SR.csr";
 
     std::cout << " The file is saved in " << fn << std::endl;
 

@@ -272,7 +272,7 @@ void cal_r_overlap_R::out_rR(const int& istep)
     int output_R_number = 0;
 
     std::stringstream tem1;
-    tem1 << GlobalV::global_out_dir << "temp-data-rR-sparse.dat";
+    tem1 << PARAM.globalv.global_out_dir << "temp-data-rR-sparse.dat";
     std::ofstream ofs_tem1;
     std::ifstream ifs_tem1;
 
@@ -454,7 +454,7 @@ void cal_r_overlap_R::out_rR(const int& istep)
         }
         else
         {
-            ssr << GlobalV::global_out_dir << "data-rR-sparse.csr";
+            ssr << PARAM.globalv.global_out_dir << "data-rR-sparse.csr";
         }
 
         if (binary)
@@ -526,7 +526,7 @@ void cal_r_overlap_R::out_rR_other(const int& istep, const std::set<Abfs::Vector
     }
     else
     {
-        ssr << GlobalV::global_out_dir << "data-rR-sparse.csr";
+        ssr << PARAM.globalv.global_out_dir << "data-rR-sparse.csr";
     }
 
     if (GlobalV::DRANK == 0)

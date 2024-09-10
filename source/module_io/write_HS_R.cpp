@@ -199,7 +199,7 @@ void ModuleIO::output_TR(const int istep,
     if (PARAM.inp.calculation == "md" && !PARAM.inp.out_app_flag) {
         sst << GlobalV::global_matrix_dir << istep << "_" << TR_filename;
     } else {
-        sst << GlobalV::global_out_dir << TR_filename;
+        sst << PARAM.globalv.global_out_dir << TR_filename;
     }
 
     sparse_format::cal_TR(ucell,

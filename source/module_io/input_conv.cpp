@@ -168,7 +168,7 @@ void Input_Conv::Convert()
     //-----------------------------------------------
     if (PARAM.inp.read_file_dir == "auto")
     {
-        GlobalV::global_readin_dir = GlobalV::global_out_dir;
+        GlobalV::global_readin_dir = PARAM.globalv.global_out_dir;
     }
     else
     {

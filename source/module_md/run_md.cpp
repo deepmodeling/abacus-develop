@@ -87,7 +87,7 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, const Paramet
             mdrun->print_md(GlobalV::ofs_running, GlobalV::CAL_STRESS);
 
             MD_func::dump_info(mdrun->step_ + mdrun->step_rst_,
-                               GlobalV::global_out_dir,
+                               PARAM.globalv.global_out_dir,
                                unit_in,
                                param_in,
                                mdrun->virial,
@@ -116,7 +116,7 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, const Paramet
                                     need_orb,
                                     GlobalV::deepks_setorb,
                                     GlobalV::MY_RANK);
-            mdrun->write_restart(GlobalV::global_out_dir);
+            mdrun->write_restart(PARAM.globalv.global_out_dir);
         }
 
         mdrun->step_++;

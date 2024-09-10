@@ -585,16 +585,16 @@ void Exx_Lip<T, Device>::write_q_pack() const
 	{
 		const std::string exx_q_pack = "exx_q_pack/";
 		int return_value=0;
-		const std::string command_mkdir = "test -d " + GlobalV::global_out_dir + exx_q_pack + " || mkdir " + GlobalV::global_out_dir + exx_q_pack;
+		const std::string command_mkdir = "test -d " + PARAM.globalv.global_out_dir + exx_q_pack + " || mkdir " + PARAM.globalv.global_out_dir + exx_q_pack;
         return_value = system(command_mkdir.c_str());
         assert(return_value == 0);
 
-        const std::string command_kpoint = "test -f " + GlobalV::global_out_dir + exx_q_pack + GlobalV::global_kpoint_card + " || cp " + GlobalV::global_kpoint_card + " " + GlobalV::global_out_dir + exx_q_pack + GlobalV::global_kpoint_card;
+        const std::string command_kpoint = "test -f " + PARAM.globalv.global_out_dir + exx_q_pack + GlobalV::global_kpoint_card + " || cp " + GlobalV::global_kpoint_card + " " + PARAM.globalv.global_out_dir + exx_q_pack + GlobalV::global_kpoint_card;
         return_value = system(command_kpoint.c_str());
 		assert(return_value==0);
 
 		std::stringstream ss_wf_wg;
-		ss_wf_wg << GlobalV::global_out_dir << exx_q_pack << "wf_wg_" << GlobalV::MY_POOL;
+		ss_wf_wg << PARAM.globalv.global_out_dir << exx_q_pack << "wf_wg_" << GlobalV::MY_POOL;
 		std::ofstream ofs_wf_wg(ss_wf_wg.str().c_str());
 		for( int iq = 0; iq < q_pack->kv_ptr->get_nks(); ++iq)
 		{
@@ -607,7 +607,7 @@ void Exx_Lip<T, Device>::write_q_pack() const
 		ofs_wf_wg.close();
 
 		std::stringstream ss_hvec;
-		ss_hvec	<< GlobalV::global_out_dir << exx_q_pack << "hvec_" << GlobalV::MY_POOL;
+		ss_hvec	<< PARAM.globalv.global_out_dir << exx_q_pack << "hvec_" << GlobalV::MY_POOL;
 		std::ofstream ofs_hvec(ss_hvec.str().c_str());
 		for( int iq=0; iq<q_pack->kv_ptr->get_nks(); ++iq)
 		{
@@ -634,7 +634,7 @@ void Exx_Lip<T, Device>::write_q_pack() const
 // 	q_pack = new k_package();
 
 // 	q_pack->kv_ptr = new K_Vectors();
-// 	const std::string exx_kpoint_card = GlobalV::global_out_dir + exx_q_pack + GlobalV::global_kpoint_card;
+// 	const std::string exx_kpoint_card = PARAM.globalv.global_out_dir + exx_q_pack + GlobalV::global_kpoint_card;
 // 	q_pack->kv_ptr->set( symm, exx_kpoint_card, GlobalV::NSPIN, ucell_ptr->G, ucell_ptr->latvec, GlobalV::ofs_running );
 
 // 	q_pack->wf_ptr = new wavefunc();
@@ -663,7 +663,7 @@ void Exx_Lip<T, Device>::write_q_pack() const
 // 	if(!GlobalV::RANK_IN_POOL)
 // 	{
 // 		std::stringstream ss_wf_wg;
-// 		ss_wf_wg << GlobalV::global_out_dir << exx_q_pack << "wf_wg_" << GlobalV::MY_POOL;
+// 		ss_wf_wg << PARAM.globalv.global_out_dir << exx_q_pack << "wf_wg_" << GlobalV::MY_POOL;
 // 		std::ifstream ifs_wf_wg(ss_wf_wg.str().c_str());
 // 		for( int iq = 0; iq < q_pack->kv_ptr->get_nks(); ++iq)
 // 		{
@@ -686,7 +686,7 @@ void Exx_Lip<T, Device>::write_q_pack() const
 // 	if(!GlobalV::RANK_IN_POOL)
 // 	{
 // 		std::stringstream ss_hvec;
-// 		ss_hvec	<< GlobalV::global_out_dir << exx_q_pack << "hvec_" << GlobalV::MY_POOL;
+// 		ss_hvec	<< PARAM.globalv.global_out_dir << exx_q_pack << "hvec_" << GlobalV::MY_POOL;
 // 		std::ifstream ifs_hvec(ss_hvec.str().c_str());
 // 		for( int iq=0; iq<q_pack->kv_ptr->get_nks(); ++iq)
 // 		{

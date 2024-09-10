@@ -50,14 +50,14 @@ inline void redirect_log(const bool& out_alllog)
     std::stringstream   ss;
     if (out_alllog)
     {
-        ss << GlobalV::global_out_dir << "running_lr_" << GlobalV::MY_RANK + 1 << ".log";
+        ss << PARAM.globalv.global_out_dir << "running_lr_" << GlobalV::MY_RANK + 1 << ".log";
         GlobalV::ofs_running.open(ss.str());
     }
     else
     {
         if (GlobalV::MY_RANK == 0)
         {
-            ss << GlobalV::global_out_dir << "running_lr.log";
+            ss << PARAM.globalv.global_out_dir << "running_lr.log";
             GlobalV::ofs_running.open(ss.str());
         }
     }
@@ -400,7 +400,7 @@ void LR::ESolver_LR<T, TR>::runner(int istep, UnitCell& cell)
     }
     else    // read the eigenvalues
     {
-        std::ifstream ifs(GlobalV::global_out_dir + "Excitation_Energy.dat");
+        std::ifstream ifs(PARAM.globalv.global_out_dir + "Excitation_Energy.dat");
         std::cout << "reading the excitation energies from file: \n";
         for (int is = 0;is < nspin;++is)
         {
@@ -455,7 +455,7 @@ void LR::ESolver_LR<T, TR>::setup_eigenvectors_X()
         for (int is = 0; is < this->nspin; ++is)
         {
             this->X[is] = std::make_shared<psi::Psi<T>>(LR_Util::read_psi_bandfirst<T>(
-                GlobalV::global_out_dir + "Excitation_Amplitude_" + spin_types[is], GlobalV::MY_RANK));
+                PARAM.globalv.global_out_dir + "Excitation_Amplitude_" + spin_types[is], GlobalV::MY_RANK));
         }
     }
     else

@@ -399,7 +399,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
         // DeePKS force
         if (GlobalV::deepks_out_labels) // not parallelized yet
         {
-            const std::string file_ftot = GlobalV::global_out_dir + "deepks_ftot.npy";
+            const std::string file_ftot = PARAM.globalv.global_out_dir + "deepks_ftot.npy";
             LCAO_deepks_io::save_npy_f(fcs, 
                                        file_ftot, 
                                        GlobalC::ucell.nat, 
@@ -407,7 +407,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
 
             if (GlobalV::deepks_scf)
             {
-                const std::string file_fbase = GlobalV::global_out_dir + "deepks_fbase.npy";
+                const std::string file_fbase = PARAM.globalv.global_out_dir + "deepks_fbase.npy";
                 LCAO_deepks_io::save_npy_f(fcs - GlobalC::ld.F_delta, 
                                            file_fbase, 
                                            GlobalC::ucell.nat, 
@@ -450,13 +450,13 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
                     LCAO_deepks_io::save_npy_gvx(GlobalC::ucell.nat,
                       GlobalC::ld.des_per_atom,
                       GlobalC::ld.gvx_tensor,
-                      GlobalV::global_out_dir,
+                      PARAM.globalv.global_out_dir,
                       GlobalV::MY_RANK);
                 }
             }
             else
             {
-                const std::string file_fbase = GlobalV::global_out_dir + "deepks_fbase.npy";
+                const std::string file_fbase = PARAM.globalv.global_out_dir + "deepks_fbase.npy";
                 LCAO_deepks_io::save_npy_f(fcs, 
                   file_fbase, 
                   GlobalC::ucell.nat,
@@ -619,7 +619,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
 #ifdef __DEEPKS
         if (GlobalV::deepks_out_labels) // not parallelized yet
         {
-            const std::string file_s = GlobalV::global_out_dir + "deepks_sbase.npy";
+            const std::string file_s = PARAM.globalv.global_out_dir + "deepks_sbase.npy";
             LCAO_deepks_io::save_npy_s(scs,
                                       file_s,
                                       GlobalC::ucell.omega,
@@ -641,7 +641,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
         }
         if (GlobalV::deepks_out_labels) // not parallelized yet
         {
-			const std::string file_s = GlobalV::global_out_dir + "deepks_stot.npy";
+			const std::string file_s = PARAM.globalv.global_out_dir + "deepks_stot.npy";
 			LCAO_deepks_io::save_npy_s(
 					scs,
 					file_s,
@@ -660,7 +660,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
                       GlobalC::ucell.nat, 
                       GlobalC::ld.des_per_atom,
                       GlobalC::ld.gvepsl_tensor,
-                      GlobalV::global_out_dir,
+                      PARAM.globalv.global_out_dir,
                       GlobalV::MY_RANK); //  unitless, grad_vepsl
                 }
             }

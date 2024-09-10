@@ -44,7 +44,7 @@ namespace ModuleIO
         for (int i = 0; i < nspin0; i++)
         {
             std::stringstream ss3;
-            ss3 << GlobalV::global_out_dir << "Fermi_Surface_" << i << ".bxsf";
+            ss3 << PARAM.globalv.global_out_dir << "Fermi_Surface_" << i << ".bxsf";
             nscf_fermi_surface(ss3.str(), nbands, eferm.ef, kv, Pkpoints, ucell, ekb);
         }
     }
