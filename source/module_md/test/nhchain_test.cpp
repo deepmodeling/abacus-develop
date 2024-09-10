@@ -54,7 +54,7 @@ class NHC_test : public testing::Test
         param_in.input.mdp.md_pfirst = 1;
         param_in.input.mdp.md_plast = 1;
         mdrun = new Nose_Hoover(param_in, ucell);
-        mdrun->setup(p_esolver, GlobalV::global_readin_dir);
+        mdrun->setup(p_esolver, PARAM.sys.global_readin_dir);
     }
 
     void TearDown()
@@ -177,7 +177,7 @@ TEST_F(NHC_test, write_restart)
 
 TEST_F(NHC_test, restart)
 {
-    mdrun->restart(GlobalV::global_readin_dir);
+    mdrun->restart(PARAM.sys.global_readin_dir);
     remove("Restart_md.dat");
 
     Nose_Hoover* nhc = dynamic_cast<Nose_Hoover*>(mdrun);

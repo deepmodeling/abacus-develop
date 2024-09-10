@@ -53,7 +53,7 @@ class Verlet_test : public testing::Test
         p_esolver->before_all_runners(param_in.inp, ucell);
 
         mdrun = new Verlet(param_in, ucell);
-        mdrun->setup(p_esolver, GlobalV::global_readin_dir);
+        mdrun->setup(p_esolver, PARAM.sys.global_readin_dir);
     }
 
     void TearDown()
@@ -296,7 +296,7 @@ TEST_F(Verlet_test, write_restart)
 
 TEST_F(Verlet_test, restart)
 {
-    mdrun->restart(GlobalV::global_readin_dir);
+    mdrun->restart(PARAM.sys.global_readin_dir);
     remove("Restart_md.dat");
 
     EXPECT_EQ(mdrun->step_rst_, 3);

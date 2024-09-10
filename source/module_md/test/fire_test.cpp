@@ -52,7 +52,7 @@ class FIREtest : public testing::Test
         p_esolver->before_all_runners(param_in.inp, ucell);
 
         mdrun = new FIRE(param_in, ucell);
-        mdrun->setup(p_esolver, GlobalV::global_readin_dir);
+        mdrun->setup(p_esolver, PARAM.sys.global_readin_dir);
     }
 
     void TearDown()
@@ -164,7 +164,7 @@ TEST_F(FIREtest, WriteRestart)
 
 TEST_F(FIREtest, Restart)
 {
-    mdrun->restart(GlobalV::global_readin_dir);
+    mdrun->restart(PARAM.sys.global_readin_dir);
     remove("Restart_md.dat");
 
     FIRE* fire = dynamic_cast<FIRE*>(mdrun);

@@ -52,7 +52,7 @@ class MSST_test : public testing::Test
         p_esolver->before_all_runners(param_in.inp, ucell);
 
         mdrun = new MSST(param_in, ucell);
-        mdrun->setup(p_esolver, GlobalV::global_readin_dir);
+        mdrun->setup(p_esolver, PARAM.sys.global_readin_dir);
     }
 
     void TearDown()
@@ -205,7 +205,7 @@ TEST_F(MSST_test, write_restart)
 
 TEST_F(MSST_test, restart)
 {
-    mdrun->restart(GlobalV::global_readin_dir);
+    mdrun->restart(PARAM.sys.global_readin_dir);
     remove("Restart_md.dat");
 
     MSST* msst = dynamic_cast<MSST*>(mdrun);
