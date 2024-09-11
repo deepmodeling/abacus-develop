@@ -808,13 +808,13 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
     // 1) print Hamiltonian and Overlap matrix
     if (this->conv_elec || iter == PARAM.inp.scf_nmax)
     {
-        if (!PARAM.globalv.gamma_only_local && (PARAM.inp.out_mat_hs[0] || GlobalV::deepks_v_delta))
+        if (!PARAM.globalv.gamma_only_local && (PARAM.inp.out_mat_hs[0] || PARAM.inp.deepks_v_delta))
         {
             this->GK.renew(true);
         }
         for (int ik = 0; ik < this->kv.get_nks(); ++ik)
         {
-            if (PARAM.inp.out_mat_hs[0]|| GlobalV::deepks_v_delta)
+            if (PARAM.inp.out_mat_hs[0]|| PARAM.inp.deepks_v_delta)
             {
                 this->p_hamilt->updateHk(ik);
             }
@@ -854,7 +854,7 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
                                        GlobalV::DRANK);
                 }
 #ifdef __DEEPKS
-                if(GlobalV::deepks_out_labels && GlobalV::deepks_v_delta)
+                if(GlobalV::deepks_out_labels && PARAM.inp.deepks_v_delta)
                 {
                     DeePKS_domain::save_h_mat(h_mat.p, this->pv.nloc);
                 }
@@ -1158,7 +1158,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
                           &(this->pv),
                           *(this->psi),
                           dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(),
-                          GlobalV::deepks_v_delta);
+                          PARAM.inp.deepks_v_delta);
 
     ModuleBase::timer::tick("ESolver_KS_LCAO", "out_deepks_labels");
 #endif

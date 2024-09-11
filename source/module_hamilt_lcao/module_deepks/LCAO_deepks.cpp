@@ -142,7 +142,7 @@ void LCAO_Deepks::init(
 
     this->pv = &pv_in;
 
-    if(GlobalV::deepks_v_delta)
+    if(PARAM.inp.deepks_v_delta)
     {
         //allocate and init h_mat
         if(PARAM.globalv.gamma_only_local)
