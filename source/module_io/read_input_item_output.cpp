@@ -374,6 +374,17 @@ void ReadInput::item_output()
         Input_Item item("out_mat_r");
         item.annotation = "output r(R) matrix";
         read_sync_bool(input.out_mat_r);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if ((para.inp.out_mat_r || para.inp.out_mat_hs2 || para.inp.out_mat_t 
+                    || para.inp.out_mat_dh || para.inp.out_hr_npz
+                    || para.inp.out_dm_npz || para.inp.dm_to_rho)
+                && para.sys.gamma_only_local)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                                            "output of r(R)/H(R)/S(R)/T(R)/dH(R)/DM(R) is not "
+                                            "available for gamma only calculations");
+            }
+        };
         this->add_item(item);
     }
     {

@@ -318,6 +318,7 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
             resetvalue_item->reset_value(*resetvalue_item, param);
 }
     }
+    this->set_globalv(param);
 
     // 4) check the value of the parameters
     for (auto& input_item: this->input_lists)

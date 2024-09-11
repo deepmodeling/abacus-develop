@@ -76,6 +76,12 @@ class ReadInput
      * @param item input_item
      */
     void add_item(const Input_Item& item);
+    /**
+     * @brief set global values
+     *
+     * @param param PARAM use to set global values
+     */
+    void set_globalv(Parameter& param);
     // add bcast functions for global values
     void set_globalv_bcast();
     // system items
