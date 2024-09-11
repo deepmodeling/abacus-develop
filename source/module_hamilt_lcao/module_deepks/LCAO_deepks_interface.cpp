@@ -40,7 +40,7 @@ void LCAO_Deepks_Interface::out_deepks_labels(const double& etot,
 
         LCAO_deepks_io::save_npy_e(etot, file_etot, my_rank);
 
-        if (GlobalV::deepks_scf)
+        if (PARAM.inp.deepks_scf)
         {
             /// ebase :no deepks E_delta including
             LCAO_deepks_io::save_npy_e(etot - ld->E_delta,
@@ -69,7 +69,7 @@ void LCAO_Deepks_Interface::out_deepks_labels(const double& etot,
             const std::string file_otot = PARAM.globalv.global_out_dir + "deepks_otot.npy";
             LCAO_deepks_io::save_npy_o(deepks_bands, file_otot, nks, my_rank);
 
-            if (GlobalV::deepks_scf)
+            if (PARAM.inp.deepks_scf)
             {
                 ModuleBase::matrix wg_hl;
                 wg_hl.create(nspin, GlobalV::NBANDS);
@@ -120,7 +120,7 @@ void LCAO_Deepks_Interface::out_deepks_labels(const double& etot,
             const std::string file_htot = PARAM.globalv.global_out_dir + "deepks_htot.npy";
             LCAO_deepks_io::save_npy_h(h_tot, file_htot, nlocal, my_rank);
 
-            if(GlobalV::deepks_scf)
+            if(PARAM.inp.deepks_scf)
             {
                 ModuleBase::matrix v_delta;
                 v_delta.create(nlocal,nlocal);
@@ -191,11 +191,11 @@ void LCAO_Deepks_Interface::out_deepks_labels(const double& etot,
 
 
     // DeePKS PDM and descriptor
-    if (GlobalV::deepks_out_labels || GlobalV::deepks_scf)
+    if (GlobalV::deepks_out_labels || PARAM.inp.deepks_scf)
     {
         // this part is for integrated test of deepks
         // when deepks_scf is on, the init pdm should be same as the out pdm, so we should not recalculate the pdm
-		if(!GlobalV::deepks_scf) 
+		if(!PARAM.inp.deepks_scf) 
 		{
 			ld->cal_projected_DM(dm, ucell, orb, GridD);
 		}
@@ -221,7 +221,7 @@ void LCAO_Deepks_Interface::out_deepks_labels(const double& etot,
     }
     
     /// print out deepks information to the screen
-    if (GlobalV::deepks_scf)
+    if (PARAM.inp.deepks_scf)
     {
         ld->cal_e_delta_band(dm->get_DMK_vector());
         std::cout << "E_delta_band = " << std::setprecision(8) << ld->e_delta_band << " Ry"
@@ -262,7 +262,7 @@ void LCAO_Deepks_Interface::out_deepks_labels(const double& etot,
 
         LCAO_deepks_io::save_npy_e(etot, file_etot, my_rank);
 
-        if (GlobalV::deepks_scf)
+        if (PARAM.inp.deepks_scf)
         {
             /// ebase :no deepks E_delta including
             LCAO_deepks_io::save_npy_e(etot - ld->E_delta,
@@ -289,7 +289,7 @@ void LCAO_Deepks_Interface::out_deepks_labels(const double& etot,
             const std::string file_otot = PARAM.globalv.global_out_dir + "deepks_otot.npy";
             LCAO_deepks_io::save_npy_o(deepks_bands, file_otot, nks, my_rank);
 
-            if (GlobalV::deepks_scf)
+            if (PARAM.inp.deepks_scf)
             {
                 int nocc = GlobalV::nelec / 2;
                 ModuleBase::matrix wg_hl;
@@ -339,12 +339,12 @@ void LCAO_Deepks_Interface::out_deepks_labels(const double& etot,
 
 
     // DeePKS PDM and descriptor
-    if (GlobalV::deepks_out_labels || GlobalV::deepks_scf)
+    if (GlobalV::deepks_out_labels || PARAM.inp.deepks_scf)
     {
         // this part is for integrated test of deepks
         // so it is printed no matter even if deepks_out_labels is not used
         // when deepks_scf is on, the init pdm should be same as the out pdm, so we should not recalculate the pdm
-		if(!GlobalV::deepks_scf) 
+		if(!PARAM.inp.deepks_scf) 
 		{
 			ld->cal_projected_DM_k(dm, ucell, orb, GridD);
 		}
@@ -368,7 +368,7 @@ void LCAO_Deepks_Interface::out_deepks_labels(const double& etot,
         }
     }
     //
-    if (GlobalV::deepks_scf)
+    if (PARAM.inp.deepks_scf)
     {
         ld->cal_e_delta_band_k(dm->get_DMK_vector(), nks);
 

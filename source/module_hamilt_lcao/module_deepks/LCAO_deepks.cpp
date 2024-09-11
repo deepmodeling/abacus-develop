@@ -55,7 +55,7 @@ LCAO_Deepks::~LCAO_Deepks()
     }
     delete[] pdm;
     //=======2. "deepks_scf" part==========
-    //if (GlobalV::deepks_scf)
+    //if (PARAM.inp.deepks_scf)
     if (gedm)
     {
         //delete gedm**

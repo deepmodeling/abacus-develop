@@ -165,7 +165,7 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
 
     // below is for DeePKS NSCF calculation
 #ifdef __DEEPKS
-    if (GlobalV::deepks_out_labels || GlobalV::deepks_scf) {
+    if (GlobalV::deepks_out_labels || PARAM.inp.deepks_scf) {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "DeepKS output");
         const elecstate::DensityMatrix<TK, double>* dm
             = dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();

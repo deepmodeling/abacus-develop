@@ -235,7 +235,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
 
 #ifdef __DEEPKS
     // 13) initialize deepks
-    if (GlobalV::deepks_scf)
+    if (PARAM.inp.deepks_scf)
     {
         // load the DeePKS model from deep neural network
         GlobalC::ld.load_model(PARAM.inp.deepks_model);
@@ -638,7 +638,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
     GlobalC::ld.set_hr_cal(true);
 
     // HR in HamiltLCAO should be recalculate
-    if (GlobalV::deepks_scf)
+    if (PARAM.inp.deepks_scf)
     {
         this->p_hamilt->refresh();
     }
@@ -757,7 +757,7 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2density(int istep, int iter, double ethr)
 
     // (7) for deepks, calculate delta_e
 #ifdef __DEEPKS
-    if (GlobalV::deepks_scf)
+    if (PARAM.inp.deepks_scf)
     {
         const std::vector<std::vector<TK>>& dm
             = dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->get_DMK_vector();
