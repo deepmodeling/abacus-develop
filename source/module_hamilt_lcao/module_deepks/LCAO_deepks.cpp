@@ -367,7 +367,7 @@ void LCAO_Deepks::allocate_V_delta(const int nat, const int nks)
         //gdmx is used only in calculating gvx
     }
 
-    if (GlobalV::deepks_bandgap)
+    if (PARAM.inp.deepks_bandgap)
     {
         //init o_delta
         o_delta.create(nks, 1);

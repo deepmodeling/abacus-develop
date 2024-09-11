@@ -52,7 +52,7 @@ void LCAO_Deepks_Interface::out_deepks_labels(const double& etot,
             LCAO_deepks_io::save_npy_e(etot, file_ebase, my_rank);
         }
 
-        if (GlobalV::deepks_bandgap)
+        if (PARAM.inp.deepks_bandgap)
         {
             const int nocc = GlobalV::nelec / 2;
             ModuleBase::matrix deepks_bands;
@@ -273,7 +273,7 @@ void LCAO_Deepks_Interface::out_deepks_labels(const double& etot,
             LCAO_deepks_io::save_npy_e(etot, file_ebase, my_rank);
         }
 
-        if (GlobalV::deepks_bandgap)
+        if (PARAM.inp.deepks_bandgap)
         {
             int nocc = GlobalV::nelec / 2;
             ModuleBase::matrix deepks_bands;
