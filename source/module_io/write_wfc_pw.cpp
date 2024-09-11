@@ -24,9 +24,9 @@ void ModuleIO::write_wfc_pw(const std::string& fn,
     for(int ik = 0; ik < nkstot ; ++ik)
     { 
         std::stringstream wfss;
-        if(PARAM.inp.out_wfc_pw==1)
+        if(PARAM.inp.out_wfc_pw==1) {
             wfss<<fn<<ik+1<<".txt";
-        else if(PARAM.inp.out_wfc_pw==2)
+        } else if(PARAM.inp.out_wfc_pw==2)
         {
             wfss<<fn<<ik+1<<".dat";
         }
@@ -172,27 +172,32 @@ void ModuleIO::write_wfc_pw(const std::string& fn,
                         if(PARAM.inp.out_wfc_pw==1)
                         {
                             std::ofstream ofs2( wfilename[ikstot].c_str(),std::ios::app);
-                            if(id==0)   ofs2 << "\n< Band "<<ib+1 <<" >" <<std::endl; 
+                            if(id==0) {   ofs2 << "\n< Band "<<ib+1 <<" >" <<std::endl; 
+}
 							ofs2 << std::scientific;
 							
                             for (int ig=0; ig<psi.get_current_nbas(); ig++)
 							{
-								if (ig%4==0&&(ig!=0||id!=0)) ofs2 << "\n";
+								if (ig%4==0&&(ig!=0||id!=0)) { ofs2 << "\n";
+}
 								ofs2 << std::setw(15) << psi(ib, ig).real()
 									<< std::setw(15) << psi(ib, ig).imag();
 							} // end ig
-                            if(id==GlobalV::NPROC_IN_POOL-1)   ofs2 << "\n< Band "<<ib+1 <<" >" <<std::endl; 
+                            if(id==GlobalV::NPROC_IN_POOL-1) {   ofs2 << "\n< Band "<<ib+1 <<" >" <<std::endl; 
+}
 							ofs2.close();
                         }
                         else if(PARAM.inp.out_wfc_pw==2)
                         {
                             Binstream wfs2(wfilename[ikstot],"a");
-                            if(id==0) wfs2<<ikngtot*16;
+                            if(id==0) { wfs2<<ikngtot*16;
+}
                             for (int ig=0; ig<psi.get_current_nbas(); ig++)
 							{
 								wfs2 << psi(ib, ig).real() << psi(ib, ig).imag();
 							}
-                            if(id==GlobalV::NPROC_IN_POOL-1) wfs2<<ikngtot*16;
+                            if(id==GlobalV::NPROC_IN_POOL-1) { wfs2<<ikngtot*16;
+}
                             wfs2.close();
                         }
 #ifdef __MPI                      
