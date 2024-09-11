@@ -20,7 +20,7 @@
 #include "module_cell/module_paw/paw_cell.h"
 #endif
 
-void Charge::init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMatrix& strucFac, const int& nbz, const int& bz)
+void Charge::init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMatrix& strucFac)
 {
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "init_chg", PARAM.inp.init_chg);
 
@@ -195,7 +195,7 @@ void Charge::init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMa
         GlobalC::restart.info_load.load_charge_finish = true;
     }
 #ifdef __MPI
-    this->init_chgmpi(nbz, bz);
+    this->init_chgmpi();
 #endif
 }
 

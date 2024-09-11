@@ -65,10 +65,8 @@ class Charge
      * 
      * @param eferm_iout fermi energy to be initialized
      * @param strucFac [in] structure factor 
-     * @param nbz [in] number of big grids in z direction
-     * @param bz [in] number of small grids in big grids for z dirction
      */
-    void init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMatrix& strucFac, const int& nbz, const int& bz);
+    void init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMatrix& strucFac);
     
     void allocate(const int &nspin_in);
 
@@ -108,10 +106,8 @@ class Charge
     /**
      * @brief init some arrays for mpi_inter_pools, rho_mpi
      * 
-     * @param nbz number of bigz in big grids
-     * @param bz  number of z for each bigz
      */
-    void init_chgmpi(const int& nbz, const int& bz);
+    void init_chgmpi();
 
     /**
      * @brief Sum rho at different pools (k-point parallelism).

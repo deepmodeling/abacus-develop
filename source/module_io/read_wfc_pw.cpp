@@ -8,7 +8,7 @@
 #include "module_base/timer.h"
 #include "module_base/vector3.h"
 
-bool ModuleIO::read_wfc_pw(const std::string& filename,
+void ModuleIO::read_wfc_pw(const std::string& filename,
                            const ModulePW::PW_Basis_K* pw_wfc,
                            const int& ik,
                            const int& nkstot,
@@ -54,59 +54,33 @@ bool ModuleIO::read_wfc_pw(const std::string& filename,
     std::string filetype = filename.substr(filename.length() - 3, 3);
 
     // whether can open the file
-    if (GlobalV::RANK_IN_POOL == 0)
+    if (filetype == "txt")
     {
-        if (filetype == "txt")
-        {
-            ifs.open(filename);
-            if (!ifs)
-            {
-                error = true;
-                msg = "Can't open file " + filename;
-            }
-        }
-        else if (filetype == "dat")
-        {
-            rfs.open(filename, "r");
-            if (!rfs)
-            {
-                error = true;
-                msg = "Can't open file " + filename;
-            }
-        }
-        else
+        ifs.open(filename);
+        if (!ifs)
         {
             error = true;
-            msg = "Unknown file type " + filetype;
+            msg = "Can't open file " + filename;
         }
     }
-
-#ifdef __MPI
-    // bcast msg to root process
-    int ip = 0;
-    if (error)
+    else if (filetype == "dat")
     {
-        ip = GlobalV::MY_RANK;
-        size = msg.size();
+        rfs.open(filename, "r");
+        if (!rfs)
+        {
+            error = true;
+            msg = "Can't open file " + filename;
+        }
     }
-    MPI_Allreduce(MPI_IN_PLACE, &ip, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
-    MPI_Bcast(&size, 1, MPI_INT, ip, MPI_COMM_WORLD);
-    std::vector<char> swap(size + 1);
-    if (error)
+    else
     {
-        strcpy(swap.data(), msg.c_str());
+        error = true;
+        msg = "Unknown file type " + filetype;
     }
-    MPI_Bcast(swap.data(), size + 1, MPI_CHAR, ip, MPI_COMM_WORLD);
-    msg = static_cast<std::string>(swap.data());
-
-
-    MPI_Bcast(&error, 1, MPI_C_BOOL, ip, MPI_COMM_WORLD);
-#endif
 
     if (error)
     {
-        ModuleBase::WARNING("ModuleIO::read_wfc_pw", msg);
-        return false;
+        ModuleBase::WARNING_QUIT("ModuleIO::read_wfc_pw", msg);
     }
 
     // read in some information
@@ -361,5 +335,105 @@ bool ModuleIO::read_wfc_pw(const std::string& filename,
     }
 
     ModuleBase::timer::tick("ModuleIO", "read_wfc_pw");
-    return true;
+    return;
+}
+
+void ModuleIO::read_wfc_to_rho(const ModulePW::PW_Basis_K* pw_wfc,
+                               const int nkstot,
+                               const std::vector<int>& isk,
+                               Charge& chg)
+{
+    ModuleBase::TITLE("ModuleIO", "read_wfc_pw_to_rho");
+    ModuleBase::timer::tick("ModuleIO", "read_wfc_pw_to_rho");
+
+    const int kpar = GlobalV::KPAR;
+    const int my_pool = GlobalV::MY_POOL;
+    const int my_rank = GlobalV::MY_RANK;
+    const int nbands = GlobalV::NBANDS;
+    const int nspin = GlobalV::NSPIN;
+
+    const int npwk_max = pw_wfc->npwk_max;
+    const int nrxx = pw_wfc->nrxx;
+    for (int is = 0; is < nspin; ++is)
+    {
+        ModuleBase::GlobalFunc::ZEROS(chg.rho[is], nrxx);
+    }
+
+    ModuleBase::ComplexMatrix wfc_tmp(nbands, npwk_max);
+    std::vector<std::complex<double>> rho_tmp(nrxx);
+
+    // read occupation numbers
+    ModuleBase::matrix wg_tmp(nkstot, nbands);
+    if (GlobalV::MY_RANK == 0)
+    {
+        std::string filename = GlobalV::global_readin_dir + "istate.info";
+        std::ifstream ifs(filename);
+        std::string useless;
+        for (int ik_tot = 0; ik_tot < nkstot; ++ik_tot)
+        {
+            ifs >> useless;
+            getline(ifs, useless);
+            for(int ib = 0; ib < nbands; ++ib)
+            {
+                ifs >> useless >> useless >> wg_tmp(ik_tot, ib);
+            }
+        }
+    }
+
+#ifdef __MPI
+    MPI_Bcast(wg_tmp.c, nkstot * nbands, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+#endif
+
+    auto get_ikstot = [&](int ik) {
+        int nkp = nkstot / kpar;
+        int rem = nkstot % kpar;
+        int ikstot;
+        if (my_pool < rem)
+        {
+            ikstot = my_pool * nkp + my_pool + ik;
+        }
+        else
+        {
+            ikstot = my_pool * nkp + rem + ik;
+        }
+        return ikstot;
+    };
+    for (int ik = 0; ik < pw_wfc->nks; ++ik)
+    {
+        int is = 0;
+        if (GlobalV::NSPIN == 2)
+        {
+            is = isk[ik];
+        }
+        const int ikstot = get_ikstot(ik);
+        std::stringstream filename;
+        filename << GlobalV::global_readin_dir << "WAVEFUNC" << ikstot + 1 << ".dat";
+        ModuleIO::read_wfc_pw(filename.str(), pw_wfc, ik, nkstot, wfc_tmp);
+        for (int ib = 0; ib < nbands; ++ib)
+        {
+            const std::complex<double>* wfc_ib = wfc_tmp.c + ib * npwk_max;
+            pw_wfc->recip2real(wfc_ib, rho_tmp.data(), ik);
+
+            const double w1 = wg_tmp(ikstot, ib) / pw_wfc->omega;
+
+            if (w1 != 0.0)
+            {
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+                for (int ir = 0; ir < nrxx; ir++)
+                {
+                    chg.rho[is][ir] += w1 * std::norm(rho_tmp[ir]);
+                }
+            }
+        }
+    }
+
+#ifdef __MPI
+    chg.init_chgmpi();
+    for (int is = 0; is < GlobalV::NSPIN; ++is)
+    {
+        chg.reduce_diff_pools(chg.rho[is]);
+    }
+#endif
 }

@@ -77,19 +77,16 @@ void ReadInput::item_elec_stru()
             {
                 if (!find_str(pw_solvers, ks_solver))
                 {
-                    ModuleBase::WARNING_QUIT("ReadInput",
-                                             "ks_solver must be cg, dav, bpcg "
-                                             "or dav_subspace for pw basis.");
+                    const std::string warningstr = "For PW basis: " + nofound_str(pw_solvers, "ks_solver");
+                    ModuleBase::WARNING_QUIT("ReadInput", warningstr);
                 }
             }
             else if (para.input.basis_type == "lcao")
             {
                 if (!find_str(lcao_solvers, ks_solver))
                 {
-                    ModuleBase::WARNING_QUIT("ReadInput",
-                                             "ks_solver must be genelpa, lapack, scalapack_gvx, "
-                                             "cusolver, pexsi or "
-                                             "cg_in_lcao for lcao basis.");
+                    const std::string warningstr = "For LCAO basis: " + nofound_str(lcao_solvers, "ks_solver");
+                    ModuleBase::WARNING_QUIT("ReadInput", warningstr);
                 }
                 if (ks_solver == "cg_in_lcao")
                 {
@@ -167,7 +164,8 @@ void ReadInput::item_elec_stru()
             const std::vector<std::string> basis_types = {"pw", "lcao_in_pw", "lcao"};
             if (!find_str(basis_types, para.input.basis_type))
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "basis_type should be pw, lcao_in_pw, or lcao");
+                const std::string warningstr = nofound_str(basis_types, "basis_type");
+                ModuleBase::WARNING_QUIT("ReadInput", warningstr);
             }
         };
         this->add_item(item);

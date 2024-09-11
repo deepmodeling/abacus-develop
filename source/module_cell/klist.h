@@ -104,6 +104,7 @@ class K_Vectors
      * This function gets the global index of a k-point based on its local index and the process pool ID.
      * The global index is used when the k-points are distributed among multiple process pools.
      *
+     * @param nkstot The total number of k-points.
      * @param ik The local index of the k-point.
      *
      * @return int Returns the global index of the k-point.
@@ -112,7 +113,7 @@ class K_Vectors
      * process pools (KPAR), and adding the remainder if the process pool ID (MY_POOL) is less than the remainder.
      * @note The function is declared as inline for efficiency.
      */
-    inline int getik_global(const int& ik) const;
+    static inline int getik_global(const int& ik, const int& nkstot);
 
     int get_nks() const
     {
@@ -386,10 +387,10 @@ class K_Vectors
     void print_klists(std::ofstream& fn);
 };
 
-inline int K_Vectors::getik_global(const int& ik) const
+inline int K_Vectors::getik_global(const int& ik, const int& nkstot)
 {
-    int nkp = this->nkstot / GlobalV::KPAR;
-    int rem = this->nkstot % GlobalV::KPAR;
+    int nkp = nkstot / GlobalV::KPAR;
+    int rem = nkstot % GlobalV::KPAR;
     if (GlobalV::MY_POOL < rem)
     {
         return GlobalV::MY_POOL * nkp + GlobalV::MY_POOL + ik;
