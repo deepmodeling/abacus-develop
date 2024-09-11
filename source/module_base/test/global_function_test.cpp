@@ -1,5 +1,8 @@
 #include "../global_function.h"
 #include "../global_variable.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include "../vector3.h"
 #include "../blas_connector.h"
 #include "../tool_quit.h"
@@ -685,36 +688,6 @@ TEST_F(GlobalFunctionTest,MemAvailable)
     }
 }
 
-TEST_F(GlobalFunctionTest,TEST_LEVEL)
-{
-    std::string name;
-    bool test_bool=false;
-    name="none";
-    ModuleBase::GlobalFunc::TEST_LEVEL(name,test_bool);
-    EXPECT_EQ(GlobalV::test_wf,0);
-    EXPECT_EQ(GlobalV::test_potential,0);
-    EXPECT_EQ(GlobalV::test_charge,0);
-    name="init_potential";
-    ModuleBase::GlobalFunc::TEST_LEVEL(name,test_bool);
-    EXPECT_EQ(GlobalV::test_wf,1);
-    EXPECT_EQ(GlobalV::test_potential,1);
-    EXPECT_EQ(GlobalV::test_charge,1);
-    name="init_read";
-    ModuleBase::GlobalFunc::TEST_LEVEL(name,test_bool);
-    EXPECT_EQ(GlobalV::test_input,1);
-    EXPECT_EQ(GlobalV::test_winput,1);
-    EXPECT_EQ(GlobalV::test_kpoint,1);
-    EXPECT_EQ(GlobalV::test_atom,1);
-    EXPECT_EQ(GlobalV::test_unitcell,1);
-#ifndef __EPM
-        EXPECT_EQ(GlobalV::test_pseudo_cell,1);
-#else
-        EXPECT_EQ(test_epm_unitcell,1);
-#endif
-    name="pw_init";
-    ModuleBase::GlobalFunc::TEST_LEVEL(name,test_bool);
-    EXPECT_EQ(GlobalV::test_pw,1);
-}
 
 TEST_F(GlobalFunctionTest,BlockHere)
 {

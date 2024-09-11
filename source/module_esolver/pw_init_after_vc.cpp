@@ -144,7 +144,7 @@ void ESolver_KS_PW<T, Device>::init_after_vc(const Input_para& inp, UnitCell& uc
     }
 
 #ifdef USE_PAW
-    if (GlobalV::use_paw) {
+    if (PARAM.inp.use_paw) {
         GlobalC::paw_cell.set_libpaw_ecut(PARAM.inp.ecutwfc / 2.0,
                                           PARAM.inp.ecutwfc / 2.0); // in Hartree
         GlobalC::paw_cell.set_libpaw_fft(this->pw_wfc->nx,

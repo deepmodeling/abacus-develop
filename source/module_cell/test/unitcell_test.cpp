@@ -168,7 +168,6 @@ using UcellDeathTest = UcellTest;
 
 TEST_F(UcellTest, Constructor)
 {
-    GlobalV::test_unitcell = 1;
     EXPECT_EQ(ucell->Coordinate, "Direct");
     EXPECT_EQ(ucell->latName, "none");
     EXPECT_DOUBLE_EQ(ucell->lat0, 0.0);
@@ -195,7 +194,7 @@ TEST_F(UcellTest, Setup)
     int lmaxmax_in = 2;
     bool init_vel_in = false;
     std::vector<std::string> fixed_axes_in = {"None", "volume", "shape", "a", "b", "c", "ab", "ac", "bc", "abc"};
-    GlobalV::relax_new = true;
+    PARAM.input.relax_new = true;
     for (int i = 0; i < fixed_axes_in.size(); ++i)
     {
         ucell->setup(latname_in, ntype_in, lmaxmax_in, init_vel_in, fixed_axes_in[i]);
@@ -268,7 +267,7 @@ TEST_F(UcellDeathTest, SetupWarningQuit1)
     int ntype_in = 1;
     int lmaxmax_in = 2;
     bool init_vel_in = false;
-    GlobalV::relax_new = false;
+    PARAM.input.relax_new = false;
     std::string fixed_axes_in = "volume";
     testing::internal::CaptureStdout();
     EXPECT_EXIT(ucell->setup(latname_in, ntype_in, lmaxmax_in, init_vel_in, fixed_axes_in),
@@ -286,7 +285,7 @@ TEST_F(UcellDeathTest, SetupWarningQuit2)
     int ntype_in = 1;
     int lmaxmax_in = 2;
     bool init_vel_in = false;
-    GlobalV::relax_new = false;
+    PARAM.input.relax_new = false;
     std::string fixed_axes_in = "shape";
     testing::internal::CaptureStdout();
     EXPECT_EXIT(ucell->setup(latname_in, ntype_in, lmaxmax_in, init_vel_in, fixed_axes_in),
@@ -617,7 +616,7 @@ TEST_F(UcellTest, JudgeParallel)
 TEST_F(UcellTest, Index)
 {
     UcellTestPrepare utp = UcellTestLib["C1H2-Index"];
-    GlobalV::relax_new = utp.relax_new;
+    PARAM.input.relax_new = utp.relax_new;
     ucell = utp.SetUcellInfo();
     // test set_iat2itia
     ucell->set_iat2itia();
@@ -683,7 +682,7 @@ TEST_F(UcellTest, Index)
 TEST_F(UcellTest, GetAtomCounts)
 {
     UcellTestPrepare utp = UcellTestLib["C1H2-Index"];
-    GlobalV::relax_new = utp.relax_new;
+    PARAM.input.relax_new = utp.relax_new;
     ucell = utp.SetUcellInfo();
     // test set_iat2itia
     ucell->set_iat2itia();
@@ -699,7 +698,7 @@ TEST_F(UcellTest, GetAtomCounts)
 TEST_F(UcellTest, GetOrbitalCounts)
 {
     UcellTestPrepare utp = UcellTestLib["C1H2-Index"];
-    GlobalV::relax_new = utp.relax_new;
+    PARAM.input.relax_new = utp.relax_new;
     ucell = utp.SetUcellInfo();
     // test set_iat2itia
     ucell->set_iat2itia();
@@ -711,7 +710,7 @@ TEST_F(UcellTest, GetOrbitalCounts)
 TEST_F(UcellTest, GetLnchiCounts)
 {
     UcellTestPrepare utp = UcellTestLib["C1H2-Index"];
-    GlobalV::relax_new = utp.relax_new;
+    PARAM.input.relax_new = utp.relax_new;
     ucell = utp.SetUcellInfo();
     // test set_iat2itia
     ucell->set_iat2itia();
@@ -735,7 +734,7 @@ TEST_F(UcellTest, GetLnchiCounts)
 TEST_F(UcellTest, CheckDTau)
 {
     UcellTestPrepare utp = UcellTestLib["C1H2-CheckDTau"];
-    GlobalV::relax_new = utp.relax_new;
+    PARAM.input.relax_new = utp.relax_new;
     ucell = utp.SetUcellInfo();
     ucell->check_dtau();
     for (int it = 0; it < utp.natom.size(); ++it)
@@ -755,7 +754,7 @@ TEST_F(UcellTest, CheckDTau)
 TEST_F(UcellTest, CheckTau)
 {
     UcellTestPrepare utp = UcellTestLib["C1H2-CheckTau"];
-    GlobalV::relax_new = utp.relax_new;
+    PARAM.input.relax_new = utp.relax_new;
     ucell = utp.SetUcellInfo();
     GlobalV::ofs_warning.open("checktau_warning");
     ucell->check_tau();
@@ -771,7 +770,7 @@ TEST_F(UcellTest, CheckTau)
 TEST_F(UcellTest, SelectiveDynamics)
 {
     UcellTestPrepare utp = UcellTestLib["C1H2-SD"];
-    GlobalV::relax_new = utp.relax_new;
+    PARAM.input.relax_new = utp.relax_new;
     ucell = utp.SetUcellInfo();
     EXPECT_TRUE(ucell->if_atoms_can_move());
 }
@@ -779,7 +778,7 @@ TEST_F(UcellTest, SelectiveDynamics)
 TEST_F(UcellDeathTest, PeriodicBoundaryAdjustment1)
 {
     UcellTestPrepare utp = UcellTestLib["C1H2-PBA"];
-    GlobalV::relax_new = utp.relax_new;
+    PARAM.input.relax_new = utp.relax_new;
     ucell = utp.SetUcellInfo();
     testing::internal::CaptureStdout();
     EXPECT_EXIT(ucell->periodic_boundary_adjustment(), ::testing::ExitedWithCode(0), "");
@@ -790,7 +789,7 @@ TEST_F(UcellDeathTest, PeriodicBoundaryAdjustment1)
 TEST_F(UcellTest, PeriodicBoundaryAdjustment2)
 {
     UcellTestPrepare utp = UcellTestLib["C1H2-Index"];
-    GlobalV::relax_new = utp.relax_new;
+    PARAM.input.relax_new = utp.relax_new;
     ucell = utp.SetUcellInfo();
     EXPECT_NO_THROW(ucell->periodic_boundary_adjustment());
 }
@@ -798,7 +797,7 @@ TEST_F(UcellTest, PeriodicBoundaryAdjustment2)
 TEST_F(UcellTest, PrintCell)
 {
     UcellTestPrepare utp = UcellTestLib["C1H2-Index"];
-    GlobalV::relax_new = utp.relax_new;
+    PARAM.input.relax_new = utp.relax_new;
     ucell = utp.SetUcellInfo();
     std::ofstream ofs;
     ofs.open("printcell.log");
@@ -818,9 +817,9 @@ TEST_F(UcellTest, PrintCell)
 TEST_F(UcellTest, PrintUnitcellPseudo)
 {
     UcellTestPrepare utp = UcellTestLib["C1H2-Index"];
-    GlobalV::relax_new = utp.relax_new;
+    PARAM.input.relax_new = utp.relax_new;
     ucell = utp.SetUcellInfo();
-    GlobalV::test_pseudo_cell = 1;
+    PARAM.input.test_pseudo_cell = 1;
     std::string fn = "printcell.log";
     ucell->print_unitcell_pseudo(fn);
     std::ifstream ifs;
@@ -854,7 +853,7 @@ TEST_F(UcellTest, PrintUnitcellPseudo)
 TEST_F(UcellTest, PrintSTRU)
 {
     UcellTestPrepare utp = UcellTestLib["C1H2-Index"];
-    GlobalV::relax_new = utp.relax_new;
+    PARAM.input.relax_new = utp.relax_new;
     ucell = utp.SetUcellInfo();
     // Cartesian type of coordinates
     std::string fn = "C1H2_STRU";
@@ -974,7 +973,7 @@ TEST_F(UcellTest, PrintSTRU)
 TEST_F(UcellTest, PrintTauDirect)
 {
     UcellTestPrepare utp = UcellTestLib["C1H2-Index"];
-    GlobalV::relax_new = utp.relax_new;
+    PARAM.input.relax_new = utp.relax_new;
     ucell = utp.SetUcellInfo();
     GlobalV::ofs_running.open("print_tau_direct");
     EXPECT_EQ(ucell->Coordinate, "Direct");
@@ -992,7 +991,7 @@ TEST_F(UcellTest, PrintTauDirect)
 TEST_F(UcellTest, PrintTauCartesian)
 {
     UcellTestPrepare utp = UcellTestLib["C1H2-Cartesian"];
-    GlobalV::relax_new = utp.relax_new;
+    PARAM.input.relax_new = utp.relax_new;
     ucell = utp.SetUcellInfo();
     GlobalV::ofs_running.open("print_tau_Cartesian");
     EXPECT_EQ(ucell->Coordinate, "Cartesian");
@@ -1010,7 +1009,7 @@ TEST_F(UcellTest, PrintTauCartesian)
 TEST_F(UcellTest, UpdateVel)
 {
     UcellTestPrepare utp = UcellTestLib["C1H2-Index"];
-    GlobalV::relax_new = utp.relax_new;
+    PARAM.input.relax_new = utp.relax_new;
     ucell = utp.SetUcellInfo();
     ModuleBase::Vector3<double>* vel_in = new ModuleBase::Vector3<double>[ucell->nat];
     for (int iat = 0; iat < ucell->nat; ++iat)
@@ -1030,7 +1029,7 @@ TEST_F(UcellTest, UpdateVel)
 TEST_F(UcellTest, CalUx1)
 {
     UcellTestPrepare utp = UcellTestLib["C1H2-Read"];
-    GlobalV::relax_new = utp.relax_new;
+    PARAM.input.relax_new = utp.relax_new;
     ucell = utp.SetUcellInfo();
     ucell->atoms[0].m_loc_[0].set(0, -1, 0);
     ucell->atoms[1].m_loc_[0].set(1, 1, 1);
@@ -1045,7 +1044,7 @@ TEST_F(UcellTest, CalUx1)
 TEST_F(UcellTest, CalUx2)
 {
     UcellTestPrepare utp = UcellTestLib["C1H2-Read"];
-    GlobalV::relax_new = utp.relax_new;
+    PARAM.input.relax_new = utp.relax_new;
     ucell = utp.SetUcellInfo();
     ucell->atoms[0].m_loc_[0].set(0, 0, 0);
     ucell->atoms[1].m_loc_[0].set(1, 1, 1);
@@ -1062,7 +1061,7 @@ TEST_F(UcellTest, CalUx2)
 TEST_F(UcellTest, ReadOrbFile)
 {
     UcellTestPrepare utp = UcellTestLib["C1H2-Read"];
-    GlobalV::relax_new = utp.relax_new;
+    PARAM.input.relax_new = utp.relax_new;
     ucell = utp.SetUcellInfo();
     std::string orb_file = "./support/C.orb";
     std::ofstream ofs_running;
@@ -1076,7 +1075,7 @@ TEST_F(UcellTest, ReadOrbFile)
 TEST_F(UcellDeathTest, ReadOrbFileWarning)
 {
     UcellTestPrepare utp = UcellTestLib["C1H2-Read"];
-    GlobalV::relax_new = utp.relax_new;
+    PARAM.input.relax_new = utp.relax_new;
     ucell = utp.SetUcellInfo();
     std::string orb_file = "./support/CC.orb";
     std::ofstream ofs_running;
@@ -1098,7 +1097,7 @@ TEST_F(UcellTest, ReadAtomSpecies)
     ucell->ntype = 2;
     ucell->atoms = new Atom[ucell->ntype];
     ucell->set_atom_flag = true;
-    GlobalV::test_pseudo_cell = 2;
+    PARAM.input.test_pseudo_cell = 2;
     PARAM.input.basis_type = "lcao";
     GlobalV::deepks_setorb = true;
     EXPECT_NO_THROW(ucell->read_atom_species(ifa, ofs_running));
@@ -1255,7 +1254,7 @@ TEST_F(UcellTest, ReadAtomPositionsS1)
     ucell->ntype = 2;
     ucell->atoms = new Atom[ucell->ntype];
     ucell->set_atom_flag = true;
-    GlobalV::test_pseudo_cell = 2;
+    PARAM.input.test_pseudo_cell = 2;
     PARAM.input.basis_type = "lcao";
     GlobalV::deepks_setorb = true;
     GlobalV::NSPIN = 1;
@@ -1286,7 +1285,7 @@ TEST_F(UcellTest, ReadAtomPositionsS2)
     ucell->ntype = 2;
     ucell->atoms = new Atom[ucell->ntype];
     ucell->set_atom_flag = true;
-    GlobalV::test_pseudo_cell = 2;
+    PARAM.input.test_pseudo_cell = 2;
     PARAM.input.basis_type = "lcao";
     GlobalV::deepks_setorb = true;
     GlobalV::NSPIN = 2;
@@ -1317,7 +1316,7 @@ TEST_F(UcellTest, ReadAtomPositionsS4Noncolin)
     ucell->ntype = 2;
     ucell->atoms = new Atom[ucell->ntype];
     ucell->set_atom_flag = true;
-    GlobalV::test_pseudo_cell = 2;
+    PARAM.input.test_pseudo_cell = 2;
     PARAM.input.basis_type = "lcao";
     GlobalV::deepks_setorb = true;
     GlobalV::NSPIN = 4;
@@ -1349,7 +1348,7 @@ TEST_F(UcellTest, ReadAtomPositionsS4Colin)
     ucell->ntype = 2;
     ucell->atoms = new Atom[ucell->ntype];
     ucell->set_atom_flag = true;
-    GlobalV::test_pseudo_cell = 2;
+    PARAM.input.test_pseudo_cell = 2;
     PARAM.input.basis_type = "lcao";
     GlobalV::deepks_setorb = true;
     GlobalV::NSPIN = 4;
@@ -1381,7 +1380,7 @@ TEST_F(UcellTest, ReadAtomPositionsC)
     ucell->ntype = 2;
     ucell->atoms = new Atom[ucell->ntype];
     ucell->set_atom_flag = true;
-    GlobalV::test_pseudo_cell = 2;
+    PARAM.input.test_pseudo_cell = 2;
     PARAM.input.basis_type = "lcao";
     GlobalV::deepks_setorb = true;
     GlobalV::NSPIN = 1;
@@ -1412,7 +1411,7 @@ TEST_F(UcellTest, ReadAtomPositionsCA)
     ucell->ntype = 2;
     ucell->atoms = new Atom[ucell->ntype];
     ucell->set_atom_flag = true;
-    GlobalV::test_pseudo_cell = 2;
+    PARAM.input.test_pseudo_cell = 2;
     PARAM.input.basis_type = "lcao";
     GlobalV::deepks_setorb = true;
     GlobalV::NSPIN = 1;
@@ -1443,7 +1442,7 @@ TEST_F(UcellTest, ReadAtomPositionsCACXY)
     ucell->ntype = 2;
     ucell->atoms = new Atom[ucell->ntype];
     ucell->set_atom_flag = true;
-    GlobalV::test_pseudo_cell = 2;
+    PARAM.input.test_pseudo_cell = 2;
     PARAM.input.basis_type = "lcao";
     GlobalV::deepks_setorb = true;
     GlobalV::NSPIN = 1;
@@ -1474,7 +1473,7 @@ TEST_F(UcellTest, ReadAtomPositionsCACXZ)
     ucell->ntype = 2;
     ucell->atoms = new Atom[ucell->ntype];
     ucell->set_atom_flag = true;
-    GlobalV::test_pseudo_cell = 2;
+    PARAM.input.test_pseudo_cell = 2;
     PARAM.input.basis_type = "lcao";
     GlobalV::deepks_setorb = true;
     GlobalV::NSPIN = 1;
@@ -1505,7 +1504,7 @@ TEST_F(UcellTest, ReadAtomPositionsCACYZ)
     ucell->ntype = 2;
     ucell->atoms = new Atom[ucell->ntype];
     ucell->set_atom_flag = true;
-    GlobalV::test_pseudo_cell = 2;
+    PARAM.input.test_pseudo_cell = 2;
     PARAM.input.basis_type = "lcao";
     GlobalV::deepks_setorb = true;
     GlobalV::NSPIN = 1;
@@ -1536,7 +1535,7 @@ TEST_F(UcellTest, ReadAtomPositionsCACXYZ)
     ucell->ntype = 2;
     ucell->atoms = new Atom[ucell->ntype];
     ucell->set_atom_flag = true;
-    GlobalV::test_pseudo_cell = 2;
+    PARAM.input.test_pseudo_cell = 2;
     PARAM.input.basis_type = "lcao";
     GlobalV::deepks_setorb = true;
     GlobalV::NSPIN = 1;
@@ -1567,7 +1566,7 @@ TEST_F(UcellTest, ReadAtomPositionsCAU)
     ucell->ntype = 2;
     ucell->atoms = new Atom[ucell->ntype];
     ucell->set_atom_flag = true;
-    GlobalV::test_pseudo_cell = 2;
+    PARAM.input.test_pseudo_cell = 2;
     PARAM.input.basis_type = "lcao";
     GlobalV::deepks_setorb = true;
     GlobalV::NSPIN = 1;
@@ -1599,7 +1598,7 @@ TEST_F(UcellTest, ReadAtomPositionsAutosetMag)
     ucell->ntype = 2;
     ucell->atoms = new Atom[ucell->ntype];
     ucell->set_atom_flag = true;
-    GlobalV::test_pseudo_cell = 2;
+    PARAM.input.test_pseudo_cell = 2;
     PARAM.input.basis_type = "lcao";
     GlobalV::deepks_setorb = true;
     GlobalV::NSPIN = 2;
@@ -1653,7 +1652,7 @@ TEST_F(UcellTest, ReadAtomPositionsWarning1)
     ucell->ntype = 2;
     ucell->atoms = new Atom[ucell->ntype];
     ucell->set_atom_flag = true;
-    GlobalV::test_pseudo_cell = 2;
+    PARAM.input.test_pseudo_cell = 2;
     PARAM.input.basis_type = "lcao";
     GlobalV::deepks_setorb = true;
     EXPECT_NO_THROW(ucell->read_atom_species(ifa, ofs_running));
@@ -1696,7 +1695,7 @@ TEST_F(UcellTest, ReadAtomPositionsWarning2)
     ucell->ntype = 2;
     ucell->atoms = new Atom[ucell->ntype];
     ucell->set_atom_flag = true;
-    GlobalV::test_pseudo_cell = 2;
+    PARAM.input.test_pseudo_cell = 2;
     PARAM.input.basis_type = "lcao";
     GlobalV::deepks_setorb = true;
     EXPECT_NO_THROW(ucell->read_atom_species(ifa, ofs_running));
@@ -1732,7 +1731,7 @@ TEST_F(UcellTest, ReadAtomPositionsWarning3)
     ucell->ntype = 2;
     ucell->atoms = new Atom[ucell->ntype];
     ucell->set_atom_flag = true;
-    GlobalV::test_pseudo_cell = 2;
+    PARAM.input.test_pseudo_cell = 2;
     PARAM.input.basis_type = "lcao";
     GlobalV::deepks_setorb = true;
     EXPECT_NO_THROW(ucell->read_atom_species(ifa, ofs_running));
@@ -1768,7 +1767,7 @@ TEST_F(UcellDeathTest, ReadAtomPositionsWarning4)
     ucell->ntype = 2;
     ucell->atoms = new Atom[ucell->ntype];
     ucell->set_atom_flag = true;
-    GlobalV::test_pseudo_cell = 2;
+    PARAM.input.test_pseudo_cell = 2;
     PARAM.input.basis_type = "lcao";
     GlobalV::deepks_setorb = true;
     EXPECT_NO_THROW(ucell->read_atom_species(ifa, ofs_running));
@@ -1800,7 +1799,7 @@ TEST_F(UcellTest, ReadAtomPositionsWarning5)
     ucell->ntype = 2;
     ucell->atoms = new Atom[ucell->ntype];
     ucell->set_atom_flag = true;
-    GlobalV::test_pseudo_cell = 2;
+    PARAM.input.test_pseudo_cell = 2;
     PARAM.input.basis_type = "lcao";
     GlobalV::deepks_setorb = true;
     PARAM.input.calculation = "md";

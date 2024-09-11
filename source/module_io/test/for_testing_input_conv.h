@@ -1,7 +1,7 @@
 #ifndef INPUT_CONV_TEST_H
 #define INPUT_CONV_TEST_H
-
 #define private public
+#include "module_parameter/parameter.h"
 #include "module_cell/module_symmetry/symmetry.h"
 #include "module_cell/unitcell.h"
 #include "module_elecstate/elecstate_lcao.h"
@@ -180,9 +180,6 @@ wavefunc::~wavefunc()
 }
 UnitCell::UnitCell()
 {
-    if (GlobalV::test_unitcell) {
-        ModuleBase::TITLE("unitcell", "Constructor");
-}
     Coordinate = "Direct";
     latName = "none";
     lat0 = 0.0;
@@ -256,14 +253,14 @@ void UnitCell::setup(const std::string& latname_in,
         this->lc[0] = 1;
         this->lc[1] = 1;
         this->lc[2] = 1;
-        if (!GlobalV::relax_new) {
+        if (!PARAM.input.relax_new) {
             ModuleBase::WARNING_QUIT(
                 "Input",
                 "there are bugs in the old implementation; set relax_new to be "
                 "1 for fixed_volume relaxation");
         }
     } else if (fixed_axes_in == "shape") {
-        if (!GlobalV::relax_new) {
+        if (!PARAM.input.relax_new) {
             ModuleBase::WARNING_QUIT(
                 "Input",
                 "set relax_new to be 1 for fixed_shape relaxation");

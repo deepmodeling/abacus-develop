@@ -1,8 +1,11 @@
-#include "module_relax/relax_old/ions_move_basic.h"
-
-#include "for_test.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
+#include "module_relax/relax_old/ions_move_basic.h"
+#include "for_test.h"
+
 /************************************************
  *  unit tests of namespace Ions_Move_Basic
  ***********************************************/
@@ -71,7 +74,7 @@ TEST_F(IonsMoveBasicTest, MoveAtoms)
 {
     // Initialize data
     Ions_Move_Basic::dim = 6;
-    GlobalV::test_relax_method = 1;
+    PARAM.input.test_relax_method = 1;
     for (int i = 0; i < Ions_Move_Basic::dim; ++i)
     {
         pos[i] = 0.0;
@@ -107,8 +110,8 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase1)
     // Initialize data
     Ions_Move_Basic::dim = 6;
     Ions_Move_Basic::update_iter = 1;
-    GlobalV::test_relax_method = 1;
-    GlobalV::OUT_LEVEL = "ie";
+    PARAM.input.test_relax_method = 1;
+    PARAM.input.out_level = "ie";
     for (int i = 0; i < Ions_Move_Basic::dim; ++i)
     {
         grad[i] = 0.0;
@@ -147,9 +150,9 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase2)
     Ions_Move_Basic::dim = 6;
     Ions_Move_Basic::update_iter = 1;
     Ions_Move_Basic::ediff = 0.0;
-    GlobalV::test_relax_method = 1;
-    GlobalV::OUT_LEVEL = "ie";
-    GlobalV::FORCE_THR = 1.0;
+    PARAM.input.test_relax_method = 1;
+    PARAM.input.out_level = "ie";
+    PARAM.input.force_thr  = 1.0;
     grad[0] = 1.0;
 
     // Call the function being tested
@@ -185,9 +188,9 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase3)
     Ions_Move_Basic::dim = 6;
     Ions_Move_Basic::update_iter = 1;
     Ions_Move_Basic::ediff = 1.0;
-    GlobalV::test_relax_method = 1;
-    GlobalV::OUT_LEVEL = "ie";
-    GlobalV::FORCE_THR = 1.0;
+    PARAM.input.test_relax_method = 1;
+    PARAM.input.out_level = "ie";
+    PARAM.input.force_thr  = 1.0;
     grad[0] = 1.0;
 
     // Call the function being tested

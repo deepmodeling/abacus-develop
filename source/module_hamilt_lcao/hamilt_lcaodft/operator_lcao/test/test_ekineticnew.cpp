@@ -104,9 +104,9 @@ class EkineticNewTest : public ::testing::Test
 TEST_F(EkineticNewTest, constructHRd2d)
 {
     std::vector<ModuleBase::Vector3<double>> kvec_d_in(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
-    hamilt::HS_Matrix_K<double> hsk(paraV, 1);
+    hamilt::HS_Matrix_K<double> hsk(paraV, true);
     hsk.set_zero_hk();
-    Grid_Driver gd(0, 0, 0);
+    Grid_Driver gd(0, 0);
     hamilt::EkineticNew<hamilt::OperatorLCAO<double, double>>
         op(&hsk, kvec_d_in, HR, &ucell, &gd, &intor_);
     op.contributeHR();
@@ -154,9 +154,9 @@ TEST_F(EkineticNewTest, constructHRd2cd)
 {
     std::vector<ModuleBase::Vector3<double>> kvec_d_in(2, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     kvec_d_in[1] = ModuleBase::Vector3<double>(0.1, 0.2, 0.3);
-    hamilt::HS_Matrix_K<std::complex<double>> hsk(paraV, 1);
+    hamilt::HS_Matrix_K<std::complex<double>> hsk(paraV, true);
     hsk.set_zero_hk();
-    Grid_Driver gd(0, 0, 0);
+    Grid_Driver gd(0, 0);
     hamilt::EkineticNew<hamilt::OperatorLCAO<std::complex<double>, double>>
         op(&hsk, kvec_d_in, HR, &ucell, &gd, &intor_);
     op.contributeHR();

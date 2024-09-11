@@ -1,4 +1,5 @@
 #include "module_base/libm/libm.h"
+#include "module_parameter/parameter.h"
 #include "module_base/math_polyint.h"
 #include "module_base/math_ylmreal.h"
 #include "module_base/timer.h"
@@ -201,8 +202,9 @@ void Stress_Func<FPTYPE, Device>::dqvan2(const pseudopot_cell_vnl* ppcell_in,
                                          const ModuleBase::matrix& dylmk0,
                                          std::complex<FPTYPE>* dqg)
 {
-    if (GlobalV::test_pp)
+    if (PARAM.inp.test_pp) {
         ModuleBase::TITLE("Stress", "dqvan2");
+}
 
     // computes the indices which correspond to ih,jh
     const int nb = ppcell_in->indv(itype, ih);

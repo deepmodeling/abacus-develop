@@ -50,7 +50,7 @@ void Stress_Func<FPTYPE, Device>::stress_ewa(ModuleBase::matrix& sigma, ModulePW
     //sdewald is the diagonal term 
 
     FPTYPE fact=1.0;
-    if (PARAM.inp.gamma_only && is_pw) fact=2.0;
+    if (PARAM.globalv.gamma_only_pw && is_pw) fact=2.0;
 //    else fact=1.0;
 
 #ifdef _OPENMP

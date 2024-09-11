@@ -1,5 +1,6 @@
 #include "charge_mixing.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/element_elec_config.h"
 #include "module_base/inverse_matrix.h"
 #include "module_base/module_mixing/broyden_mixing.h"
@@ -62,15 +63,15 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
     GlobalV::ofs_running<<"mixing_type: "<< this->mixing_mode <<std::endl;
     GlobalV::ofs_running<<"mixing_beta: "<< this->mixing_beta <<std::endl;
     GlobalV::ofs_running<<"mixing_gg0: "<< this->mixing_gg0 <<std::endl;
-    GlobalV::ofs_running<<"mixing_gg0_min: "<< GlobalV::MIXING_GG0_MIN <<std::endl;
+    GlobalV::ofs_running<<"mixing_gg0_min: "<< PARAM.inp.mixing_gg0_min <<std::endl;
     if (GlobalV::NSPIN==2 || GlobalV::NSPIN==4)
     {
         GlobalV::ofs_running<<"mixing_beta_mag: "<< this->mixing_beta_mag <<std::endl;
-        GlobalV::ofs_running<<"mixing_gg0_mag: "<< GlobalV::MIXING_GG0_MAG <<std::endl;
+        GlobalV::ofs_running<<"mixing_gg0_mag: "<< PARAM.inp.mixing_gg0_mag <<std::endl;
     }
-    if (GlobalV::MIXING_ANGLE > 0)
+    if (PARAM.inp.mixing_angle > 0)
     {
-        GlobalV::ofs_running<<"mixing_angle: "<< GlobalV::MIXING_ANGLE <<std::endl;
+        GlobalV::ofs_running<<"mixing_angle: "<< PARAM.inp.mixing_angle <<std::endl;
     }
     GlobalV::ofs_running<<"mixing_ndim: "<< this->mixing_ndim <<std::endl;
     GlobalV::ofs_running<<"----------- Double Check Mixing Parameters End ------------"<<std::endl;
@@ -106,7 +107,7 @@ void Charge_Mixing::init_mixing()
         ModuleBase::WARNING_QUIT("Charge_Mixing", "This Mixing mode is not implemended yet,coming soon.");
     }
 
-    if (GlobalV::double_grid)
+    if ( PARAM.globalv.double_grid)
     {
         // ONLY smooth part of charge density is mixed by specific mixing method
         // The high_frequency part is mixed by plain mixing method.
@@ -116,9 +117,9 @@ void Charge_Mixing::init_mixing()
 
     // allocate memory for mixing data, if exists, free it first and then allocate new memory
     // initailize rho_mdata
-    if (GlobalV::SCF_THR_TYPE == 1)
+    if (PARAM.inp.scf_thr_type == 1)
     {  
-        if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0 )
+        if (GlobalV::NSPIN == 4 && PARAM.inp.mixing_angle > 0 )
         {
             this->mixing->init_mixing_data(this->rho_mdata,
                                         this->rhopw->npw * 2,
@@ -133,7 +134,7 @@ void Charge_Mixing::init_mixing()
     }
     else
     {
-        if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0 )
+        if (GlobalV::NSPIN == 4 && PARAM.inp.mixing_angle > 0 )
         {
             this->mixing->init_mixing_data(this->rho_mdata, this->rhopw->nrxx * 2, sizeof(double));
         }
@@ -146,7 +147,7 @@ void Charge_Mixing::init_mixing()
     // initailize tau_mdata
     if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
     {
-        if (GlobalV::SCF_THR_TYPE == 1)
+        if (PARAM.inp.scf_thr_type == 1)
         {
             this->mixing->init_mixing_data(this->tau_mdata,
                                            this->rhopw->npw * GlobalV::NSPIN,
@@ -160,7 +161,7 @@ void Charge_Mixing::init_mixing()
 
     // initailize nhat_mdata
 #ifdef USE_PAW
-    if(GlobalV::use_paw) this->mixing->init_mixing_data(this->nhat_mdata, this->rhopw->nrxx * GlobalV::NSPIN, sizeof(double));
+    if(PARAM.inp.use_paw) this->mixing->init_mixing_data(this->nhat_mdata, this->rhopw->nrxx * GlobalV::NSPIN, sizeof(double));
 #endif
 
     ModuleBase::timer::tick("Charge_Mixing", "init_mixing");
@@ -178,11 +179,11 @@ void Charge_Mixing::allocate_mixing_dmr(int nnr)
     //
     const int dmr_nspin = (GlobalV::NSPIN == 2) ? 2 : 1;
     // allocate memory for dmr_mdata
-    if (GlobalV::SCF_THR_TYPE == 1)
+    if (PARAM.inp.scf_thr_type == 1)
     {
         ModuleBase::WARNING_QUIT("Charge_Mixing", "This Mixing of Density Matrix is not supported for PW basis yet");
     }
-    else if (GlobalV::SCF_THR_TYPE == 2)
+    else if (PARAM.inp.scf_thr_type == 2)
     {
         this->mixing->init_mixing_data(this->dmr_mdata, nnr * dmr_nspin, sizeof(double));
     }
@@ -205,7 +206,7 @@ double Charge_Mixing::get_drho(Charge* chr, const double nelec)
     ModuleBase::timer::tick("Charge_Mixing", "get_drho");
     double drho = 0.0;
 
-    if (GlobalV::SCF_THR_TYPE == 1)
+    if (PARAM.inp.scf_thr_type == 1)
     {
         for (int is = 0; is < GlobalV::NSPIN; ++is)
         {
@@ -313,7 +314,7 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
     std::complex<double>* rhoghf_in = nullptr;
     std::complex<double>* rhoghf_out = nullptr;
 
-    if (GlobalV::double_grid)
+    if ( PARAM.globalv.double_grid)
     {
         // divide into smooth part and high_frequency part
         divide_data(chr->rhog_save[0], rhogs_in, rhoghf_in);
@@ -396,7 +397,7 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
         delete[] rhog_mag;
         delete[] rhog_mag_save;
         // get rhogs_out for combine_data()
-        if (GlobalV::double_grid)
+        if ( PARAM.globalv.double_grid)
         {
             for (int ig = 0; ig < npw; ig++)
             {
@@ -405,7 +406,7 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
             }
         }
     }
-    else if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE <= 0)
+    else if (GlobalV::NSPIN == 4 && PARAM.inp.mixing_angle <= 0)
     {
         // normal broyden mixing for {rho, mx, my, mz}
         rhog_in = rhogs_in;
@@ -434,12 +435,12 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
         this->mixing->cal_coef(this->rho_mdata, inner_product);
         this->mixing->mix_data(this->rho_mdata, rhog_out);
     }
-    else if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0)
+    else if (GlobalV::NSPIN == 4 && PARAM.inp.mixing_angle > 0)
     {
         // special broyden mixing for {rho, |m|} proposed by J. Phys. Soc. Jpn. 82 (2013) 114706
         // here only consider the case of mixing_angle = 1, which mean only change |m| and keep angle fixed
         // old support see mix_rho_recip()
-        if (GlobalV::double_grid)
+        if ( PARAM.globalv.double_grid)
         {
             ModuleBase::WARNING_QUIT("Charge_Mixing", "double_grid is not supported for new mixing method yet.");
         }
@@ -517,7 +518,7 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
         delete[] rho_magabs_save;
     }
 
-    if (GlobalV::double_grid)
+    if ( PARAM.globalv.double_grid)
     {
         // plain mixing for high_frequencies
         const int ndimhf = (this->rhodpw->npw - this->rhopw->npw) * GlobalV::NSPIN;
@@ -529,7 +530,7 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
     }
 
     // rhog to rho
-    if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0)
+    if (GlobalV::NSPIN == 4 && PARAM.inp.mixing_angle > 0)
     {
         // only tranfer rhog[0]
         // do not support double_grid, use rhopw directly
@@ -540,7 +541,7 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
             // use rhodpw for double_grid
-            // rhodpw is the same as rhopw for !GlobalV::double_grid
+            // rhodpw is the same as rhopw for ! PARAM.globalv.double_grid
             this->rhodpw->recip2real(chr->rhog[is], chr->rho[is]);
         }
     }
@@ -556,11 +557,11 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
             rhodpw->real2recip(chr->kin_r[is], &kin_g[is * rhodpw->npw]);
             rhodpw->real2recip(chr->kin_r_save[is], &kin_g_save[is * rhodpw->npw]);
         }
-        // for smooth part, for !GlobalV::double_grid only have this part
+        // for smooth part, for ! PARAM.globalv.double_grid only have this part
         std::complex<double>*taugs_in = kin_g_save.data(), *taugs_out = kin_g.data();
         // for high frequency part
         std::complex<double>*taughf_in = nullptr, *taughf_out = nullptr;
-        if (GlobalV::double_grid)
+        if ( PARAM.globalv.double_grid)
         {
             // divide into smooth part and high_frequency part
             divide_data(kin_g_save.data(), taugs_in, taughf_in);
@@ -573,7 +574,7 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
 
         this->mixing->mix_data(this->tau_mdata, taugs_out);
 
-        if (GlobalV::double_grid)
+        if ( PARAM.globalv.double_grid)
         {
             // simple mixing for high_frequencies
             const int ndimhf = (this->rhodpw->npw - this->rhopw->npw) * GlobalV::NSPIN;
@@ -592,7 +593,7 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
     }
 
 #ifdef USE_PAW
-    if(GlobalV::use_paw)
+    if(PARAM.inp.use_paw)
     {
         double *nhat_out, *nhat_in;
         nhat_in = chr->nhat_save[0];
@@ -687,7 +688,7 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
         delete[] rho_mag;
         delete[] rho_mag_save;
     }
-    else if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE <= 0)
+    else if (GlobalV::NSPIN == 4 && PARAM.inp.mixing_angle <= 0)
     {
         // normal broyden mixing for {rho, mx, my, mz}
         rhor_in = chr->rho_save[0];
@@ -718,7 +719,7 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
         this->mixing->cal_coef(this->rho_mdata, inner_product);
         this->mixing->mix_data(this->rho_mdata, rhor_out);
     }
-    else if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0)
+    else if (GlobalV::NSPIN == 4 && PARAM.inp.mixing_angle > 0)
     {
         // special broyden mixing for {rho, |m|} proposed by J. Phys. Soc. Jpn. 82 (2013) 114706
         // here only consider the case of mixing_angle = 1, which mean only change |m| and keep angle fixed
@@ -1047,7 +1048,7 @@ void Charge_Mixing::mix_rho(Charge* chr)
     }
 #ifdef USE_PAW
     std::vector<double> nhat_r123;
-    if(GlobalV::use_paw)
+    if(PARAM.inp.use_paw)
     {
         nhat_r123.resize(GlobalV::NSPIN * nrxx);
 #ifdef _OPENMP
@@ -1063,11 +1064,11 @@ void Charge_Mixing::mix_rho(Charge* chr)
     }        
 #endif
     // --------------------Mixing Body--------------------
-    if (GlobalV::SCF_THR_TYPE == 1)
+    if (PARAM.inp.scf_thr_type == 1)
     {
         mix_rho_recip(chr);
     }
-    else if (GlobalV::SCF_THR_TYPE == 2)
+    else if (PARAM.inp.scf_thr_type == 2)
     {
         mix_rho_real(chr);
     }
@@ -1106,7 +1107,7 @@ void Charge_Mixing::mix_rho(Charge* chr)
     }
 
 #ifdef USE_PAW
-    if(GlobalV::use_paw)
+    if(PARAM.inp.use_paw)
     {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 512)
@@ -1308,7 +1309,7 @@ double Charge_Mixing::inner_product_recip_rho(std::complex<double>* rho1, std::c
         }
         sum *= fac;
 
-        if (GlobalV::GAMMA_ONLY_PW)
+        if (PARAM.globalv.gamma_only_pw)
         {
             sum *= 2.0;
         }
@@ -1329,8 +1330,8 @@ double Charge_Mixing::inner_product_recip_rho(std::complex<double>* rho1, std::c
         }
         mag *= fac2;
 
-        // if(GlobalV::GAMMA_ONLY_PW);
-        if (GlobalV::GAMMA_ONLY_PW) // Peize Lin delete ; 2020.01.31
+        // if(PARAM.globalv.gamma_only_pw);
+        if (PARAM.globalv.gamma_only_pw) // Peize Lin delete ; 2020.01.31
         {
             mag *= 2.0;
         }
@@ -1365,7 +1366,7 @@ double Charge_Mixing::inner_product_recip_rho(std::complex<double>* rho1, std::c
                           + (conj(rhog1[3][ig0]) * rhog2[3][ig0]).real());
             }
             double fac3 = fac2;
-            if (GlobalV::GAMMA_ONLY_PW)
+            if (PARAM.globalv.gamma_only_pw)
             {
                 fac3 *= 2.0;
             }
@@ -1468,7 +1469,7 @@ double Charge_Mixing::inner_product_recip_hartree(std::complex<double>* rhog1, s
         }
         sum *= fac;
 
-        if (GlobalV::GAMMA_ONLY_PW)
+        if (PARAM.globalv.gamma_only_pw)
         {
             sum *= 2.0;
         }
@@ -1489,7 +1490,7 @@ double Charge_Mixing::inner_product_recip_hartree(std::complex<double>* rhog1, s
         }
         mag *= fac2;
 
-        if (GlobalV::GAMMA_ONLY_PW)
+        if (PARAM.globalv.gamma_only_pw)
         {
             mag *= 2.0;
         }
@@ -1524,7 +1525,7 @@ double Charge_Mixing::inner_product_recip_hartree(std::complex<double>* rhog1, s
                           + (conj(rhog1[ig0 + 3*npw]) * rhog2[ig0 + 3*npw]).real());
             }
             double fac3 = fac2;
-            if (GlobalV::GAMMA_ONLY_PW)
+            if (PARAM.globalv.gamma_only_pw)
             {
                 fac3 *= 2.0;
             }
@@ -1560,7 +1561,7 @@ double Charge_Mixing::inner_product_recip_hartree(std::complex<double>* rhog1, s
                        * ((conj(rhog1[ig0 + this->rhopw->npw]) * rhog2[ig0 + this->rhopw->npw]).real());
             }
             double fac3 = fac2;
-            if (GlobalV::GAMMA_ONLY_PW)
+            if (PARAM.globalv.gamma_only_pw)
             {
                 fac3 *= 2.0;
             }

@@ -1,5 +1,6 @@
 #include "grid_bigcell.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/memory.h"
 #include "module_base/timer.h"
 #include "module_basis/module_ao/ORB_read.h"
@@ -69,7 +70,7 @@ void Grid_BigCell::init_big_latvec(const UnitCell& ucell)
 	// (x,y,z) * bigcell_latvec0^(-1) = (i,j,k)
 	this->bigcell_GT = this->bigcell_latvec0.Inverse();
 
-	if(GlobalV::test_gridt)
+	if(PARAM.inp.test_gridt)
 	{
 		GlobalV::ofs_running << " the VECTORS of BIGCELL are (Bohr): " << std::endl;
 		GlobalV::ofs_running << " vec1( " 
@@ -105,7 +106,7 @@ void Grid_BigCell::init_grid_expansion(const UnitCell& ucell,double* rcut)
 	{
 		this->orbital_rmax = std::max( rcut[T], this->orbital_rmax);
 	}
-	if(GlobalV::test_gridt)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"rmax of periodic grid (bohr)",orbital_rmax);
+	if(PARAM.inp.test_gridt)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"rmax of periodic grid (bohr)",orbital_rmax);
 
 	// mohan fixed serious bug 2010-03-06
 	// G = GT^T
@@ -131,8 +132,8 @@ void Grid_BigCell::init_grid_expansion(const UnitCell& ucell,double* rcut)
 	this->dye = static_cast<int>( this->orbital_rmax * g2) +1;
 	this->dze = static_cast<int>( this->orbital_rmax * g3) +1;
 
-	//xiaohui add 'GlobalV::OUT_LEVEL' line, 2015-09-16
-	if(GlobalV::OUT_LEVEL != "m") ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"extended fft grid",dxe,dye,dze);
+	//xiaohui add 'PARAM.inp.out_level' line, 2015-09-16
+	if(PARAM.inp.out_level != "m") ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"extended fft grid",dxe,dye,dze);
 
 	// calculate the dimension of expanded grid.
 	// +1 in order to cover the spillage atom on the right side.
@@ -145,7 +146,7 @@ void Grid_BigCell::init_grid_expansion(const UnitCell& ucell,double* rcut)
 	this->nze = nbz + 2*dze +1;
 	this->nxyze = this->nxe * this->nye * this->nze;
 
-	if(GlobalV::OUT_LEVEL != "m") ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"dimension of extened grid",nxe,nye,nze);
+	if(PARAM.inp.out_level != "m") ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"dimension of extened grid",nxe,nye,nze);
 	return;
 }
 

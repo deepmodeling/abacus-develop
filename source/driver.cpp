@@ -156,7 +156,7 @@ void Driver::reading()
     // parallelization.
     Parallel_Global::init_pools(GlobalV::NPROC,
                                 GlobalV::MY_RANK,
-                                GlobalV::NSTOGROUP,
+                                PARAM.inp.bndpar,
                                 GlobalV::KPAR,
                                 GlobalV::NPROC_IN_STOGROUP,
                                 GlobalV::RANK_IN_STOGROUP,

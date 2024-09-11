@@ -58,7 +58,7 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K
         }
         //no variable can choose xc, maybe it is necessary
         pot_register_in.push_back("xc");
-        if (GlobalV::imp_sol)
+        if (PARAM.inp.imp_sol)
         {
             pot_register_in.push_back("surchem");
         }
@@ -212,7 +212,7 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
     const T one{1, 0};
     const T zero{0, 0};
 
-    if(GlobalV::use_paw)
+    if(PARAM.inp.use_paw)
     {
 #ifdef USE_PAW
         for(int m = 0; m < nbands; m ++)

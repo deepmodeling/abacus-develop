@@ -120,7 +120,7 @@ TEST_F(DMTest, DMInit1)
     std::cout << "nrow: " << paraV->nrow << "    ncol:" << paraV->ncol << std::endl;
     elecstate::DensityMatrix<double, double> DM(kv, paraV, nspin);
     // initialize this->_DMR
-    Grid_Driver gd(0, 0, 0);
+    Grid_Driver gd(0,0);
     DM.init_DMR(&gd, &ucell);
     // compare
     EXPECT_EQ(DM.get_DMR_pointer(1)->size_atom_pairs(), test_size * test_size);
@@ -147,7 +147,7 @@ TEST_F(DMTest, DMInit2)
     std::cout << "nrow: " << paraV->nrow << "    ncol:" << paraV->ncol << std::endl;
     elecstate::DensityMatrix<double, double> DM(kv, paraV, nspin);
     // initialize Record_adj using Grid_Driver
-    Grid_Driver gd(0, 0, 0);
+    Grid_Driver gd(0,0);
     Record_adj ra;
     ra.na_each = new int[ucell.nat];
     ra.info = new int**[ucell.nat];
@@ -209,7 +209,7 @@ TEST_F(DMTest, DMInit3)
     kv->kvec_d[3].x = 0.5;
     // construct a DM
     elecstate::DensityMatrix<std::complex<double>, double> DM(kv, paraV, nspin);
-    Grid_Driver gd(0, 0, 0);
+    Grid_Driver gd(0, 0);
     DM.init_DMR(&gd, &ucell);
     std::cout << "dim0: " << paraV->dim0 << "    dim1:" << paraV->dim1 << std::endl;
     // construct another DM
@@ -238,7 +238,7 @@ TEST_F(DMTest, DMInit4)
     kv->kvec_d[1].x = 0.5;
     kv->kvec_d[3].x = 0.5;
     // construct a new HContainer
-    Grid_Driver gd(0, 0, 0);
+    Grid_Driver gd(0, 0);
     hamilt::HContainer<std::complex<double>>* tmp_DMR;
     tmp_DMR = new hamilt::HContainer<std::complex<double>>(paraV);
     // set up a HContainer
@@ -293,7 +293,7 @@ TEST_F(DMTest, saveDMR)
     kv->kvec_d[3].x = 0.5;
     // construct a DM
     elecstate::DensityMatrix<std::complex<double>, double> DM(kv, paraV, nspin);
-    Grid_Driver gd(0, 0, 0);
+    Grid_Driver gd(0, 0);
     DM.init_DMR(&gd, &ucell);
     // construct another DM
     elecstate::DensityMatrix<std::complex<double>, double> DM_test(kv, paraV, nspin);

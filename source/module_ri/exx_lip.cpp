@@ -1,5 +1,6 @@
 //==========================================================
 // AUTHOR : Peize Lin
+
 // DATE : 2015-03-10
 //==========================================================
 
@@ -13,7 +14,7 @@
 #include "module_base/lapack_connector.h"
 #include <limits>
 #include "module_base/parallel_global.h"
-
+#include "module_parameter/parameter.h"
 template <typename T, typename Device>
 void Exx_Lip<T, Device>::cal_exx()
 {
@@ -174,11 +175,11 @@ Exx_Lip<T, Device>::Exx_Lip(
         // 	k_pack->hvec_array[ik].create(GlobalV::NLOCAL,GlobalV::NBANDS);
         // }
 
-        // if (GlobalV::init_chg=="atomic")
+        // if (PARAM.inp.init_chg=="atomic")
 		{
 			q_pack = k_pack;
 		}
-        // else if(GlobalV::init_chg=="file")
+        // else if(PARAM.inp.init_chg=="file")
         // {
         //     read_q_pack(symm, wfc_basis, sf);
         // }
@@ -228,11 +229,11 @@ Exx_Lip<T, Device>::~Exx_Lip()
 }
     delete k_pack;
 
-    if (GlobalV::init_chg == "atomic")
+    if (PARAM.inp.init_chg == "atomic")
     {
         q_pack = nullptr;
     }
-    else if (GlobalV::init_chg == "file")
+    else if (PARAM.inp.init_chg == "file")
     {
         delete q_pack->kv_ptr;	q_pack->kv_ptr = nullptr;
         delete q_pack->wf_ptr;	q_pack->wf_ptr = nullptr;
@@ -291,7 +292,7 @@ template <typename T, typename Device>
 void Exx_Lip<T, Device>::psi_cal()
 {
     ModuleBase::TITLE("Exx_Lip", "psi_cal");
-    if (GlobalV::init_chg == "atomic")
+    if (PARAM.inp.init_chg == "atomic")
     {
         T* porter = new T[wfc_basis->nrxx];
         for (int iq = 0; iq < q_pack->kv_ptr->get_nks(); ++iq)
@@ -320,7 +321,7 @@ void Exx_Lip<T, Device>::psi_cal()
         }
         delete[] porter;
     }
-    else if (GlobalV::init_chg == "file")
+    else if (PARAM.inp.init_chg == "file")
     {
         for (int iq = 0; iq < q_pack->kv_ptr->get_nks(); ++iq)
         {
@@ -346,11 +347,11 @@ void Exx_Lip<T, Device>::psi_cal()
 template <typename T, typename Device>
 void Exx_Lip<T, Device>::judge_singularity(int ik)
 {
-	if (GlobalV::init_chg=="atomic")
+	if (PARAM.inp.init_chg=="atomic")
 	{
 		iq_vecik = ik;
 	}
-	else if(GlobalV::init_chg=="file")
+	else if(PARAM.inp.init_chg=="file")
 	{
         Real min_q_minus_k(std::numeric_limits<Real>::max());
 		for( int iq=0; iq<q_pack->kv_ptr->get_nks(); ++iq)

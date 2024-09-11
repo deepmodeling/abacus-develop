@@ -28,7 +28,7 @@
 #endif
 
 UnitCell::UnitCell() {
-    if (GlobalV::test_unitcell) {
+    if (test_unitcell) {
         ModuleBase::TITLE("unitcell", "Constructor");
 }
     Coordinate = "Direct";
@@ -88,7 +88,7 @@ UnitCell::~UnitCell() {
 #include "module_base/parallel_common.h"
 #ifdef __MPI
 void UnitCell::bcast_unitcell() {
-    if (GlobalV::test_unitcell) {
+    if (test_unitcell) {
         ModuleBase::TITLE("UnitCell", "bcast_unitcell");
 }
     Parallel_Common::bcast_string(Coordinate);
@@ -169,7 +169,7 @@ void UnitCell::bcast_unitcell2() {
 #endif
 
 void UnitCell::print_cell(std::ofstream& ofs) const {
-    if (GlobalV::test_unitcell) {
+    if (test_unitcell) {
         ModuleBase::TITLE("UnitCell", "print_cell");
 }
 
@@ -195,7 +195,7 @@ void UnitCell::print_cell(std::ofstream& ofs) const {
 /*
 void UnitCell::print_cell_xyz(const std::string& fn) const
 {
-    if (GlobalV::test_unitcell)
+    if (test_unitcell)
         ModuleBase::TITLE("UnitCell", "print_cell_xyz");
 
     if (GlobalV::MY_RANK != 0)
@@ -661,7 +661,7 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log) {
     this->set_iat2itia();
 
 #ifdef USE_PAW
-    if (GlobalV::use_paw) {
+    if (PARAM.inp.use_paw) {
         GlobalC::paw_cell.set_libpaw_cell(latvec, lat0);
 
         int* typat;
@@ -1050,8 +1050,8 @@ void UnitCell::cal_nwfc(std::ofstream& log) {
     // Use localized basis
     //=====================
     if ((PARAM.inp.basis_type == "lcao") || (PARAM.inp.basis_type == "lcao_in_pw")
-        || ((PARAM.inp.basis_type == "pw") && (GlobalV::psi_initializer)
-            && (GlobalV::init_wfc.substr(0, 3) == "nao")
+        || ((PARAM.inp.basis_type == "pw") && (PARAM.inp.psi_initializer)
+            && (PARAM.inp.init_wfc.substr(0, 3) == "nao")
             && (PARAM.inp.esolver_type == "ksdft"))) // xiaohui add 2013-09-02
     {
         ModuleBase::GlobalFunc::AUTO_SET("NBANDS", GlobalV::NBANDS);
@@ -1095,7 +1095,7 @@ void UnitCell::set_iat2iwt(const int& npol_in) {
 // Demand : atoms[].msh
 //======================
 void UnitCell::cal_meshx() {
-    if (GlobalV::test_pseudo_cell) {
+    if (PARAM.inp.test_pseudo_cell) {
         ModuleBase::TITLE("UnitCell", "cal_meshx");
 }
     this->meshx = 0;
@@ -1116,7 +1116,7 @@ void UnitCell::cal_meshx() {
 // 			atoms[].na
 //=========================
 void UnitCell::cal_natomwfc(std::ofstream& log) {
-    if (GlobalV::test_pseudo_cell) {
+    if (PARAM.inp.test_pseudo_cell) {
         ModuleBase::TITLE("UnitCell", "cal_natomwfc");
 }
 
@@ -1258,14 +1258,14 @@ void UnitCell::setup(const std::string& latname_in,
         this->lc[0] = 1;
         this->lc[1] = 1;
         this->lc[2] = 1;
-        if (!GlobalV::relax_new) {
+        if (!PARAM.inp.relax_new) {
             ModuleBase::WARNING_QUIT(
                 "Input",
                 "there are bugs in the old implementation; set relax_new to be "
                 "1 for fixed_volume relaxation");
         }
     } else if (fixed_axes_in == "shape") {
-        if (!GlobalV::relax_new) {
+        if (!PARAM.inp.relax_new) {
             ModuleBase::WARNING_QUIT(
                 "Input",
                 "set relax_new to be 1 for fixed_shape relaxation");
@@ -1591,7 +1591,7 @@ void UnitCell::cal_nelec(double& nelec) {
     GlobalV::ofs_running << "\n SETUP THE ELECTRONS NUMBER" << std::endl;
 
     if (nelec == 0) {
-        if (GlobalV::use_paw) {
+        if (PARAM.inp.use_paw) {
 #ifdef USE_PAW
             for (int it = 0; it < this->ntype; it++) {
                 std::stringstream ss1, ss2;

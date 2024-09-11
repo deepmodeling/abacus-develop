@@ -152,7 +152,7 @@ TEST_F(DFTUTest, constructHRd2d)
     std::vector<ModuleBase::Vector3<double>> kvec_d_in(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     hamilt::HS_Matrix_K<double> hsk(paraV, true);
     hsk.set_zero_hk();
-    Grid_Driver gd(0, 0, 0);
+    Grid_Driver gd(0, 0);
     // check some input values
     EXPECT_EQ(LCAO_Orbitals::get_const_instance().Phi[0].getRcut(), 1.0);
     // reset HR and DMR
@@ -220,7 +220,7 @@ TEST_F(DFTUTest, constructHRd2cd)
     std::vector<ModuleBase::Vector3<double>> kvec_d_in(2, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     hamilt::HS_Matrix_K<std::complex<double>> hsk(paraV, true);
     hsk.set_zero_hk();
-    Grid_Driver gd(0, 0, 0);
+    Grid_Driver gd(0, 0);
     EXPECT_EQ(LCAO_Orbitals::get_const_instance().Phi[0].getRcut(), 1.0);
     // reset HR and DMR
     const double factor = 0.5 / test_nw / test_nw / test_size / test_size;

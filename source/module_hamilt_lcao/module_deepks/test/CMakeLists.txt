@@ -1,5 +1,6 @@
 add_executable(
     test_deepks
+#include "module_parameter/parameter.h"
     main_deepks.cpp klist_1.cpp LCAO_deepks_test_prep.cpp LCAO_deepks_test.cpp nnr.cpp
 )
 

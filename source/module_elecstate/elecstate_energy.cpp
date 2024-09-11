@@ -105,7 +105,7 @@ double ElecState::cal_delta_eband() const
     const double* v_ofk = nullptr;
 
 #ifdef USE_PAW
-    if(GlobalV::use_paw)
+    if(PARAM.inp.use_paw)
     {
         ModuleBase::matrix v_xc;
         const std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v
@@ -126,7 +126,7 @@ double ElecState::cal_delta_eband() const
     }
 #endif
 
-    if(!GlobalV::use_paw)
+    if(!PARAM.inp.use_paw)
     {
         if (get_xc_func_type() == 3 || get_xc_func_type() == 5)
         {
@@ -280,7 +280,7 @@ void ElecState::cal_energies(const int type)
     this->f_en.gatefield = get_etot_gatefield();
 
     //! energy from implicit solvation model 
-    if (GlobalV::imp_sol)
+    if (PARAM.inp.imp_sol)
     {
         this->f_en.esol_el = get_solvent_model_Ael();
         this->f_en.esol_cav = get_solvent_model_Acav();
@@ -294,7 +294,7 @@ void ElecState::cal_energies(const int type)
     }
 
      // energy from DFT+U
-    if (GlobalV::dft_plus_u)
+    if (PARAM.inp.dft_plus_u)
     {
         this->f_en.edftu = get_dftu_energy();
     }

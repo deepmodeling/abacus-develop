@@ -97,7 +97,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
             pot_register_in.push_back("hartree");
         }
         pot_register_in.push_back("xc");
-        if (GlobalV::imp_sol)
+        if (PARAM.inp.imp_sol)
         {
             pot_register_in.push_back("surchem");
         }
@@ -197,10 +197,10 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
 #endif
 
         // end node should be OperatorDFTU
-        if (GlobalV::dft_plus_u)
+        if (PARAM.inp.dft_plus_u)
         {
             Operator<TK>* dftu = nullptr;
-            if (GlobalV::dft_plus_u == 2)
+            if (PARAM.inp.dft_plus_u == 2)
             {
                 dftu = new OperatorDFTU<OperatorLCAO<TK, TR>>(this->hsk,
                                                               kv->kvec_d,
@@ -337,10 +337,10 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
                                                                              &GlobalC::GridD);
             this->getOperator()->add(td_nonlocal);
         }
-        if (GlobalV::dft_plus_u)
+        if (PARAM.inp.dft_plus_u)
         {
             Operator<TK>* dftu = nullptr;
-            if (GlobalV::dft_plus_u == 2)
+            if (PARAM.inp.dft_plus_u == 2)
             {
                 dftu = new OperatorDFTU<OperatorLCAO<TK, TR>>(this->hsk,
                                                               kv->kvec_d,

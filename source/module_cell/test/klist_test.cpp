@@ -98,7 +98,7 @@ UnitCell ucell;
  *   - K_Vectors()
  *     - basic parameters (nks,nkstot,nkstot_ibz) are set
  *   - read_kpoints()
- *     - ReadKpointsGammaOnlyLocal: GlobalV::GAMMA_ONLY_LOCAL = 1
+ *     - ReadKpointsGammaOnlyLocal: PARAM.sys.gamma_only_local = 1
  *     - ReadKpointsKspacing: generate KPT from kspacing parameter
  *     - ReadKpointsGamma: "Gamma" mode of `KPT` file
  *     - ReadKpointsMP: "MP" mode of `KPT` file
@@ -118,7 +118,7 @@ UnitCell ucell;
  *       according to different spin case
  *   - set_both_kvec()
  *     - SetBothKvec: set kvec_c (cartesian coor.) and kvec_d (direct coor.)
- *     - SetBothKvecFinalSCF: same as above, with GlobalV::FINAL_SCF=1
+ *     - SetBothKvecFinalSCF: same as above, with PARAM.input.final_scf=1
  *   - print_klists()
  *     - PrintKlists: print kpoints coordinates
  *     - PrintKlistsWarningQuit: for nkstot < nks error
@@ -296,7 +296,7 @@ TEST_F(KlistTest, MP)
 
 TEST_F(KlistTest, ReadKpointsGammaOnlyLocal)
 {
-    GlobalV::GAMMA_ONLY_LOCAL = true;
+    PARAM.sys.gamma_only_local = true;
     std::string kfile = "KPT_GO";
     kv->nspin = 1;
     kv->read_kpoints(kfile);
@@ -305,7 +305,7 @@ TEST_F(KlistTest, ReadKpointsGammaOnlyLocal)
     EXPECT_THAT(str, testing::HasSubstr("Gamma"));
     EXPECT_THAT(str, testing::HasSubstr("1 1 1 0 0 0"));
     ifs.close();
-    GlobalV::GAMMA_ONLY_LOCAL = false; // this is important for the following tests because it is global
+    PARAM.sys.gamma_only_local = false; // this is important for the following tests because it is global
 }
 
 TEST_F(KlistTest, ReadKpointsKspacing)
@@ -651,7 +651,7 @@ TEST_F(KlistTest, SetBothKvecFinalSCF)
     kv->kvec_c[0].y = 0.0;
     kv->kvec_c[0].z = 0.0;
     std::string skpt;
-    GlobalV::FINAL_SCF = true;
+    PARAM.input.final_scf = true;
     kv->kd_done = false;
     kv->kc_done = false;
     // case 1
@@ -694,7 +694,7 @@ TEST_F(KlistTest, SetBothKvec)
     kv->kc_done = false;
     kv->kd_done = true;
     std::string skpt;
-    GlobalV::FINAL_SCF = false;
+    PARAM.input.final_scf = false;
     kv->set_both_kvec(GlobalC::ucell.G, GlobalC::ucell.latvec, skpt);
     EXPECT_TRUE(kv->kc_done);
     kv->kc_done = true;

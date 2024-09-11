@@ -145,7 +145,7 @@ TEST_F(DMTest, cal_DMR_test)
         }
     }
     // initialize this->_DMR
-    Grid_Driver gd(0, 0, 0);
+    Grid_Driver gd(0,0);
     DM.init_DMR(&gd, &ucell);
     // set Gamma-only
     for (int is = 1; is <= nspin; is++)
@@ -214,7 +214,7 @@ TEST_F(DMTest, cal_DMR_blas_double)
         }
     }
     // initialize this->_DMR
-    Grid_Driver gd(0, 0, 0);
+    Grid_Driver gd(0, 0);
     DM.init_DMR(&gd, &ucell);
     // set Gamma-only
     for (int is = 1; is <= nspin; is++)
@@ -285,7 +285,7 @@ TEST_F(DMTest, cal_DMR_blas_complex)
         }
     }
     // initialize this->_DMR
-    Grid_Driver gd(0, 0, 0);
+    Grid_Driver gd(0, 0);
     DM.init_DMR(&gd, &ucell);
     // calculate this->_DMR
     std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();

@@ -1,5 +1,6 @@
 #include "esolver_sdft_pw.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/memory.h"
 #include "module_base/timer.h"
 #include "module_elecstate/elecstate_pw_sdft.h"
@@ -76,10 +77,10 @@ void ESolver_SDFT_PW::before_all_runners(const Input_para& inp, UnitCell& ucell)
     }
 
     // 6) prepare some parameters for electronic wave functions initilization
-    this->p_wf_init = new psi::WFInit<std::complex<double>>(GlobalV::init_wfc,
+    this->p_wf_init = new psi::WFInit<std::complex<double>>(PARAM.inp.init_wfc,
                                                             GlobalV::KS_SOLVER,
                                                             PARAM.inp.basis_type,
-                                                            GlobalV::psi_initializer,
+                                                            PARAM.inp.psi_initializer,
                                                             &this->wf,
                                                             this->pw_wfc);
     // 7) set occupatio, redundant?
@@ -168,7 +169,7 @@ void ESolver_SDFT_PW::hamilt2density(int istep, int iter, double ethr)
 
     hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR = ethr;
 
-    hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX = GlobalV::PW_DIAG_NMAX;
+    hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX = PARAM.inp.pw_diag_nmax;
 
     // hsolver only exists in this function
     hsolver::HSolverPW_SDFT hsolver_pw_sdft_obj(&this->kv, this->pw_wfc, &this->wf, this->stowf, this->stoche, this->init_psi);

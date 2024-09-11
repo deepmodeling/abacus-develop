@@ -205,7 +205,7 @@ bool K_Vectors::read_kpoints(const std::string& fn)
 
     // 1. Overwrite the KPT file and default K-point information if needed
     // mohan add 2010-09-04
-    if (GlobalV::GAMMA_ONLY_LOCAL)
+    if (PARAM.globalv.gamma_only_local)
     {
         GlobalV::ofs_warning << " Auto generating k-points file: " << fn << std::endl;
         std::ofstream ofs(fn.c_str());
@@ -484,9 +484,6 @@ double K_Vectors::Monkhorst_Pack_formula(const int& k_type, const double& offset
 // add by dwan
 void K_Vectors::Monkhorst_Pack(const int* nmp_in, const double* koffset_in, const int k_type)
 {
-    if (GlobalV::test_kpoint) {
-        ModuleBase::TITLE("K_Vectors", "Monkhorst_Pack");
-    }
     const int mpnx = nmp_in[0];
     const int mpny = nmp_in[1];
     const int mpnz = nmp_in[2];
@@ -986,7 +983,7 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry& symm,
 void K_Vectors::set_both_kvec(const ModuleBase::Matrix3& G, const ModuleBase::Matrix3& R, std::string& skpt)
 {
 
-    if (GlobalV::FINAL_SCF) // LiuXh add 20180606
+    if (PARAM.inp.final_scf) // LiuXh add 20180606
     {
         if (k_nkstot == 0)
         {

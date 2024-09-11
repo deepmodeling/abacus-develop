@@ -1,5 +1,6 @@
 #include "sto_tool.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/math_chebyshev.h"
 #include "module_base/timer.h"
 #ifdef __MPI
@@ -122,7 +123,7 @@ psi::Psi<std::complex<float>>* gatherchi(psi::Psi<std::complex<float>>& chi,
     psi::Psi<std::complex<float>>* p_chi;
     p_chi = &chi;
 #ifdef __MPI
-    if (GlobalV::NSTOGROUP > 1)
+    if (PARAM.inp.bndpar > 1)
     {
         p_chi = &chi_all;
         ModuleBase::timer::tick("sKG", "bands_gather");

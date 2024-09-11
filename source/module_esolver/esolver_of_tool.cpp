@@ -43,7 +43,7 @@ void ESolver_OF::init_elecstate(UnitCell& ucell)
     }
     // no variable can choose xc, maybe it is necessary
     pot_register_in.push_back("xc");
-    if (GlobalV::imp_sol)
+    if (PARAM.inp.imp_sol)
     {
         pot_register_in.push_back("surchem");
     }
@@ -431,7 +431,7 @@ void ESolver_OF::print_info()
     std::vector<double> energies_Ry;
     std::vector<double> energies_eV;
     if (PARAM.inp.printe > 0
-        && ((this->iter_ + 1) % PARAM.inp.printe == 0 || this->conv_elec || this->iter_ == GlobalV::SCF_NMAX))
+        && ((this->iter_ + 1) % PARAM.inp.printe == 0 || this->conv_elec || this->iter_ == PARAM.inp.scf_nmax))
     {
         titles.push_back("E_Total");
         energies_Ry.push_back(this->pelec->f_en.etot);
@@ -477,7 +477,7 @@ void ESolver_OF::print_info()
             titles.push_back("E_vdwD3");
             energies_Ry.push_back(this->pelec->f_en.evdw);
         }
-        if (GlobalV::imp_sol)
+        if (PARAM.inp.imp_sol)
         {
             titles.push_back("E_sol_el");
             energies_Ry.push_back(this->pelec->f_en.esol_el);

@@ -3,6 +3,7 @@
 
 #define private public
 #define protected public
+#include "module_parameter/parameter.h"
 #include "module_cell/unitcell.h"
 #include "module_elecstate/module_charge/charge.h"
 #include "prepare_unitcell.h"
@@ -46,7 +47,7 @@ double tmp_gridecut = 80.0;
 void Set_GlobalV_Default()
 {
     GlobalV::NSPIN = 1;
-    GlobalV::test_charge = 0;
+    PARAM.input.test_charge = 0;
     GlobalV::nelec = 8;
 }
 } // namespace elecstate
@@ -120,7 +121,7 @@ TEST_F(ChargeTest, Allocate)
     EXPECT_EQ(rhopw->npw, 3143);
     EXPECT_EQ(rhopw->npwtot, 3143);
     // call Charge::allocate()
-    GlobalV::test_charge = 2;
+    PARAM.input.test_charge = 2;
     elecstate::tmp_xc_func_type = 3;
     charge->set_rhopw(rhopw);
     EXPECT_FALSE(charge->allocate_rho);
@@ -216,7 +217,7 @@ TEST_F(ChargeTest, InitFinalScf)
 {
     charge->set_rhopw(rhopw);
     elecstate::tmp_xc_func_type = 1;
-    GlobalV::test_charge = 2;
+    PARAM.input.test_charge = 2;
     charge->init_final_scf();
     EXPECT_TRUE(charge->allocate_rho_final_scf);
 }

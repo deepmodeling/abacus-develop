@@ -106,7 +106,7 @@ TEST_F(OverlapNewTest, constructHRcd2cd)
     kvec_d_in[1] = ModuleBase::Vector3<double>(0.1, 0.2, 0.3);
     hamilt::HS_Matrix_K<std::complex<double>> hsk(paraV);
     hsk.set_zero_sk();
-    Grid_Driver gd(0, 0, 0);
+    Grid_Driver gd(0, 0);
     hamilt::OverlapNew<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>
         op(&hsk, kvec_d_in, nullptr, SR, &ucell, &gd, &intor_);
     op.contributeHR();

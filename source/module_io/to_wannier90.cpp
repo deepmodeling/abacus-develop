@@ -1,5 +1,6 @@
 #include "to_wannier90.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/math_integral.h"
 #include "module_base/math_polyint.h"
 #include "module_base/math_sphbes.h"
@@ -33,7 +34,7 @@ toWannier90::toWannier90(const bool& out_wannier_mmn,
         ModuleBase::WARNING_QUIT("toWannier90", "The wannier90 interface does not currently support kpar groups");
     }
 
-    if (GlobalV::NSTOGROUP != 1)
+    if (PARAM.inp.bndpar != 1)
     {
         ModuleBase::WARNING_QUIT("toWannier90", "The wannier90 interface does not currently support bndpar groups");
     }

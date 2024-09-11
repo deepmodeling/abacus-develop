@@ -1,8 +1,9 @@
 #if ((defined __CUDA) /* || (defined __ROCM) */)
 #include <cuda_runtime.h>
+#include "module_parameter/parameter.h"
 #endif
 #include "grid_technique.h"
-
+#include "module_parameter/parameter.h"
 #include "module_base/memory.h"
 #include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
@@ -57,7 +58,7 @@ void Grid_Technique::set_pbc_grid(
     ModuleBase::TITLE("Grid_Technique", "init");
     ModuleBase::timer::tick("Grid_Technique", "init");
 
-    if (GlobalV::OUT_LEVEL != "m") {
+    if (PARAM.inp.out_level != "m") {
         GlobalV::ofs_running
             << "\n SETUP EXTENDED REAL SPACE GRID FOR GRID INTEGRATION"
             << std::endl;
@@ -266,7 +267,7 @@ void Grid_Technique::init_atoms_on_grid(const int& ny,
         }
     }
 
-    if (GlobalV::test_gridt) {
+    if (PARAM.inp.test_gridt) {
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,
                                     "Total_atoms_on_grid",
                                     total_atoms_on_grid);
@@ -470,7 +471,7 @@ void Grid_Technique::cal_grid_integration_index() {
     delete[] all;
 #endif
 
-    if (GlobalV::test_gridt) {
+    if (PARAM.inp.test_gridt) {
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,
                                     "Max atom on bigcell",
                                     max_atom);
@@ -522,7 +523,7 @@ void Grid_Technique::cal_trace_lo(const UnitCell& ucell) {
         }
     }
 
-    if (GlobalV::OUT_LEVEL != "m") {
+    if (PARAM.inp.out_level != "m") {
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,
                                     "Atom number in sub-FFT-grid",
                                     lnat);
@@ -560,6 +561,9 @@ int Grid_Technique::find_offset(const int id1, const int id2, const int iat1, co
 
 void Grid_Technique::init_gpu_gint_variables(const UnitCell& ucell,
                                              const int num_stream) {
+#ifdef __MPI
+    base_device::information::set_device_by_rank();
+#endif
     if (is_malloced) {
         free_gpu_gint_variables(this->nat);
     }

@@ -1,5 +1,6 @@
 #include "record_adj.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/timer.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
@@ -153,7 +154,7 @@ void Record_adj::for_2d(Parallel_Orbitals &pv, bool gamma_only, const std::vecto
 	}//end T1
 }
     //xiaohui add "OUT_LEVEL", 2015-09-16
-    if (GlobalV::OUT_LEVEL != "m" && !gamma_only) { ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "ParaV.nnr", pv.nnr);
+    if (PARAM.inp.out_level != "m" && !gamma_only) { ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "ParaV.nnr", pv.nnr);
 }
 
 	//------------------------------------------------

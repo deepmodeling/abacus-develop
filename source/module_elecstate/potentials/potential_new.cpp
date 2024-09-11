@@ -1,5 +1,6 @@
 #include "potential_new.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_base/memory.h"
@@ -46,7 +47,7 @@ Potential::~Potential()
         this->components.clear();
     }
     if (GlobalV::device_flag == "gpu") {
-        if (GlobalV::precision_flag == "single") {
+        if (PARAM.inp.precision == "single") {
             delmem_sd_op()(gpu_ctx, s_veff_smooth);
             delmem_sd_op()(gpu_ctx, s_vofk_smooth);
         }
@@ -56,7 +57,7 @@ Potential::~Potential()
         }
     }
     else {
-        if (GlobalV::precision_flag == "single") {
+        if (PARAM.inp.precision == "single") {
             delmem_sh_op()(cpu_ctx, s_veff_smooth);
             delmem_sh_op()(cpu_ctx, s_vofk_smooth);
         }
@@ -98,10 +99,12 @@ void Potential::allocate()
     ModuleBase::TITLE("Potential", "allocate");
     int nrxx = this->rho_basis_->nrxx;
     int nrxx_smooth = this->rho_basis_smooth_->nrxx;
-    if (nrxx == 0)
+    if (nrxx == 0) {
         return;
-    if (nrxx_smooth == 0)
+}
+    if (nrxx_smooth == 0) {
         return;
+}
 
     this->v_effective_fixed.resize(nrxx);
     ModuleBase::Memory::record("Pot::veff_fix", sizeof(double) * nrxx);
@@ -112,7 +115,7 @@ void Potential::allocate()
     this->veff_smooth.create(GlobalV::NSPIN, nrxx_smooth);
     ModuleBase::Memory::record("Pot::veff_smooth", sizeof(double) * GlobalV::NSPIN * nrxx_smooth);
 
-    if(GlobalV::use_paw)
+    if(PARAM.inp.use_paw)
     {
         this->v_xc.create(GlobalV::NSPIN, nrxx);
         ModuleBase::Memory::record("Pot::vxc", sizeof(double) * GlobalV::NSPIN * nrxx);
@@ -127,7 +130,7 @@ void Potential::allocate()
         ModuleBase::Memory::record("Pot::vofk_smooth", sizeof(double) * GlobalV::NSPIN * nrxx_smooth);
     }
     if (GlobalV::device_flag == "gpu") {
-        if (GlobalV::precision_flag == "single") {
+        if (PARAM.inp.precision == "single") {
             resmem_sd_op()(gpu_ctx, s_veff_smooth, GlobalV::NSPIN * nrxx_smooth);
             resmem_sd_op()(gpu_ctx, s_vofk_smooth, GlobalV::NSPIN * nrxx_smooth);
         }
@@ -137,7 +140,7 @@ void Potential::allocate()
         }
     }
     else {
-        if (GlobalV::precision_flag == "single") {
+        if (PARAM.inp.precision == "single") {
             resmem_sh_op()(cpu_ctx, s_veff_smooth, GlobalV::NSPIN * nrxx_smooth, "POT::sveff_smooth");
             resmem_sh_op()(cpu_ctx, s_vofk_smooth, GlobalV::NSPIN * nrxx_smooth, "POT::svofk_smooth");
         }
@@ -165,7 +168,7 @@ void Potential::update_from_charge(const Charge*const chg, const UnitCell*const 
     this->interpolate_vrs();
 
 #ifdef USE_PAW
-    if(GlobalV::use_paw)
+    if(PARAM.inp.use_paw)
     {
         this->v_xc.zero_out();
         const std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v
@@ -175,7 +178,7 @@ void Potential::update_from_charge(const Charge*const chg, const UnitCell*const 
 #endif
 
     if (GlobalV::device_flag == "gpu") {
-        if (GlobalV::precision_flag == "single") {
+        if (PARAM.inp.precision == "single") {
             castmem_d2s_h2d_op()(gpu_ctx,
                                  cpu_ctx,
                                  s_veff_smooth,
@@ -201,7 +204,7 @@ void Potential::update_from_charge(const Charge*const chg, const UnitCell*const 
         }
     }
     else {
-        if (GlobalV::precision_flag == "single") {
+        if (PARAM.inp.precision == "single") {
             castmem_d2s_h2h_op()(cpu_ctx,
                                  cpu_ctx,
                                  s_veff_smooth,
@@ -217,7 +220,7 @@ void Potential::update_from_charge(const Charge*const chg, const UnitCell*const 
     }
 
 #ifdef USE_PAW
-    if(GlobalV::use_paw)
+    if(PARAM.inp.use_paw)
     {
         GlobalC::paw_cell.calculate_dij(v_effective.c, v_xc.c);
         GlobalC::paw_cell.set_dij();
@@ -313,7 +316,7 @@ void Potential::interpolate_vrs()
     ModuleBase::TITLE("Potential", "interpolate_vrs");
     ModuleBase::timer::tick("Potential", "interpolate_vrs");
 
-    if (GlobalV::double_grid)
+    if ( PARAM.globalv.double_grid)
     {
         if (rho_basis_->gamma_only != rho_basis_smooth_->gamma_only)
         {

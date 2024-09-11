@@ -134,7 +134,7 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
 #if ((defined __CUDA) || (defined __ROCM))
 		if (GlobalV::device_flag == "gpu")
 		{
-			if (GlobalV::precision_flag == "single")
+			if (PARAM.inp.precision == "single")
 			{
 				return new ESolver_KS_PW<std::complex<float>, base_device::DEVICE_GPU>();
 			}
@@ -144,7 +144,7 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
 			}
 		}
 #endif
-		if (GlobalV::precision_flag == "single")
+		if (PARAM.inp.precision == "single")
 		{
 			return new ESolver_KS_PW<std::complex<float>, base_device::DEVICE_CPU>();
 		}
@@ -156,7 +156,7 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
 #ifdef __LCAO
     else if (esolver_type == "ksdft_lip")
     {
-        if (GlobalV::precision_flag == "single")
+        if (PARAM.inp.precision == "single")
         {
             return new ESolver_KS_LIP<std::complex<float>>();
         }
@@ -167,7 +167,7 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
     }
     else if (esolver_type == "ksdft_lcao")
 	{
-		if (GlobalV::GAMMA_ONLY_LOCAL)
+		if (PARAM.globalv.gamma_only_local)
 		{
 			return new ESolver_KS_LCAO<double, double>();
 		}
@@ -187,18 +187,19 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
     else if (esolver_type == "lr_lcao")
     {
         // use constructor rather than Init function to initialize reference (instead of pointers) to ucell
-        if (GlobalV::GAMMA_ONLY_LOCAL)
+        if (PARAM.globalv.gamma_only_local){
             return new LR::ESolver_LR<double, double>(inp, ucell);
-        else if (GlobalV::NSPIN < 2)
+        } else if (GlobalV::NSPIN < 2) {
             return new LR::ESolver_LR<std::complex<double>, double>(inp, ucell);
-        else
+        } else {
             throw std::runtime_error("LR-TDDFT is not implemented for spin polarized case");
+}
     }
     else if (esolver_type == "ksdft_lr_lcao")
     {
         // initialize the 1st ESolver_KS
         ModuleESolver::ESolver* p_esolver = nullptr;
-        if (GlobalV::GAMMA_ONLY_LOCAL)
+        if (PARAM.globalv.gamma_only_local)
         {
             p_esolver = new ESolver_KS_LCAO<double, double>();
         }
@@ -219,7 +220,7 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
         std::cout << "Setting up the esolver for excited states..." << std::endl;
         // initialize the 2nd ESolver_LR at the temporary pointer
         ModuleESolver::ESolver* p_esolver_lr = nullptr;
-        if (GlobalV::GAMMA_ONLY_LOCAL)
+        if (PARAM.globalv.gamma_only_local)
             p_esolver_lr = new LR::ESolver_LR<double, double>(
                 std::move(*dynamic_cast<ModuleESolver::ESolver_KS_LCAO<double, double>*>(p_esolver)),
                 inp,
@@ -262,8 +263,9 @@ void clean_esolver(ESolver * &pesolver, const bool lcao_cblacs_exit)
 #ifdef __MPI
 	delete pesolver;
 #ifdef __LCAO
-    if (lcao_cblacs_exit)
+    if (lcao_cblacs_exit) {
         Cblacs_exit(1);
+}
 #endif
 #endif
 }

@@ -1,8 +1,8 @@
+#include "gtest/gtest.h"
 #include <vector>
 
-#include "gtest/gtest.h"
-
 #define private public
+#include "module_parameter/parameter.h"
 #include "module_elecstate/potentials/potential_new.h"
 #undef private
 // mock functions
@@ -56,7 +56,7 @@ void Set_GlobalV_Default()
 {
     GlobalV::NSPIN = 1;
     GlobalV::device_flag = "cpu";
-    GlobalV::precision_flag = "double";
+    PARAM.input.precision = "double";
 }
 } // namespace elecstate
 
@@ -150,7 +150,7 @@ TEST_F(PotentialNewTest, ConstructorCPUDouble)
 TEST_F(PotentialNewTest, ConstructorCPUSingle)
 {
     rhopw->nrxx = 100;
-    GlobalV::precision_flag = "single";
+    PARAM.input.precision = "single";
     pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, etxc, vtxc);
     EXPECT_TRUE(pot->fixed_mode);
     EXPECT_TRUE(pot->dynamic_mode);
@@ -199,7 +199,7 @@ TEST_F(PotentialNewTest, ConstructorGPUSingle)
     // this is just a trivial call to the GPU code
     rhopw->nrxx = 100;
     GlobalV::device_flag = "gpu";
-    GlobalV::precision_flag = "single";
+    PARAM.input.precision = "single";
     pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, etxc, vtxc);
     EXPECT_TRUE(pot->fixed_mode);
     EXPECT_TRUE(pot->dynamic_mode);
@@ -547,7 +547,7 @@ TEST_F(PotentialNewTest, GetVofkSmooth)
 
 TEST_F(PotentialNewTest, InterpolateVrsDoubleGrids)
 {
-    GlobalV::double_grid = true;
+     PARAM.sys.double_grid = true;
     elecstate::tmp_xc_func_type = 3;
     // Init pw_basis
     rhopw->initgrids(4, ModuleBase::Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1), 4);
@@ -591,7 +591,7 @@ TEST_F(PotentialNewTest, InterpolateVrsDoubleGrids)
 
 TEST_F(PotentialNewTest, InterpolateVrsWarningQuit)
 {
-    GlobalV::double_grid = true;
+     PARAM.sys.double_grid = true;
     // Init pw_basis
     rhopw->initgrids(4, ModuleBase::Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1), 4);
     rhopw->initparameters(false, 4);
@@ -612,7 +612,7 @@ TEST_F(PotentialNewTest, InterpolateVrsWarningQuit)
 
 TEST_F(PotentialNewTest, InterpolateVrsSingleGrids)
 {
-    GlobalV::double_grid = false;
+     PARAM.sys.double_grid = false;
     elecstate::tmp_xc_func_type = 3;
     // Init pw_basis
     rhopw->initgrids(4, ModuleBase::Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1), 4);

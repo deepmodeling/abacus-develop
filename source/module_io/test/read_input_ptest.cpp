@@ -126,7 +126,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_DOUBLE_EQ(param.inp.relax_bfgs_init, 0.5);
     EXPECT_DOUBLE_EQ(param.inp.relax_scale_force, 0.5);
     EXPECT_EQ(param.inp.nbspline, -1);
-    EXPECT_TRUE(param.inp.gamma_only);
+    EXPECT_FALSE(param.globalv.gamma_only_pw);
     EXPECT_TRUE(param.globalv.gamma_only_local);
     EXPECT_DOUBLE_EQ(param.inp.ecutwfc, 20.0);
     EXPECT_DOUBLE_EQ(param.inp.erf_ecut, 20.0);
@@ -153,13 +153,12 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_DOUBLE_EQ(param.inp.pw_diag_thr, 1.0e-2);
     EXPECT_EQ(param.inp.nb2d, 0);
     EXPECT_EQ(param.inp.nurse, 0);
-    EXPECT_EQ(param.inp.colour, 0);
     EXPECT_EQ(param.inp.t_in_h, 1);
     EXPECT_EQ(param.inp.vl_in_h, 1);
     EXPECT_EQ(param.inp.vnl_in_h, 1);
     EXPECT_EQ(param.inp.vh_in_h, 1);
     EXPECT_EQ(param.inp.vion_in_h, 1);
-    EXPECT_EQ(param.inp.test_force, 0);
+    EXPECT_EQ(PARAM.inp.test_force, 0);
     EXPECT_EQ(param.inp.test_stress, 0);
     EXPECT_NEAR(param.inp.scf_thr, 1.0e-8, 1.0e-15);
     EXPECT_NEAR(param.inp.scf_ene_thr, -1.0, 1.0e-15);

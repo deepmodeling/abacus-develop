@@ -12,6 +12,7 @@ void ReadInput::set_globalv_bcast()
     add_int_bcast(sys.ncz);
     add_bool_bcast(sys.out_md_control);
     add_bool_bcast(sys.rpa_setorb);
+    add_bool_bcast(sys.gamma_only_pw);
     add_bool_bcast(sys.gamma_only_local);
     add_bool_bcast(sys.double_grid);
     add_double_bcast(sys.uramping);

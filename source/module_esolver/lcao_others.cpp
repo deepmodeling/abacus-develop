@@ -81,7 +81,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                              GlobalC::GridD,
                              GlobalC::ucell,
                              GlobalV::SEARCH_RADIUS,
-                             GlobalV::test_atom_input,
+                             PARAM.inp.test_atom_input,
                              true);
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "testing neighbour");
         return;
@@ -99,7 +99,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
     {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "getting partial charge");
         IState_Charge ISC(this->psi, &(this->pv));
-        if (GlobalV::GAMMA_ONLY_LOCAL)
+        if (PARAM.globalv.gamma_only_local)
         {
             ISC.begin(this->GG,
                       this->pelec->charge->rho,
@@ -113,7 +113,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                       this->pw_rhod->nz,
                       this->pw_big->bz,
                       this->pw_big->nbz,
-                      GlobalV::GAMMA_ONLY_LOCAL,
+                      PARAM.globalv.gamma_only_local,
                       PARAM.inp.nbands_istate,
                       PARAM.inp.bands_to_print,
                       GlobalV::NBANDS,
@@ -143,7 +143,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                       this->pw_rhod->nz,
                       this->pw_big->bz,
                       this->pw_big->nbz,
-                      GlobalV::GAMMA_ONLY_LOCAL,
+                      PARAM.globalv.gamma_only_local,
                       PARAM.inp.nbands_istate,
                       PARAM.inp.bands_to_print,
                       GlobalV::NBANDS,
@@ -166,7 +166,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
     {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "getting wave function");
         IState_Envelope IEP(this->pelec);
-        if (GlobalV::GAMMA_ONLY_LOCAL)
+        if (PARAM.globalv.gamma_only_local)
         {
             IEP.begin(this->psi,
                       this->pw_rhod,

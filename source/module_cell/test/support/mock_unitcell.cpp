@@ -1,4 +1,7 @@
 #include "module_cell/unitcell.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 /*
     README:
     This file supports idea like "I dont need any functions of UnitCell, I want
@@ -11,9 +14,6 @@ bool UnitCell::judge_parallel(double a[3], ModuleBase::Vector3<double> b) {
 }
 void UnitCell::set_iat2iwt(const int& npol_in) {}
 UnitCell::UnitCell() {
-    if (GlobalV::test_unitcell) {
-        ModuleBase::TITLE("unitcell", "Constructor");
-}
     Coordinate = "Direct";
     latName = "none";
     lat0 = 0.0;

@@ -58,7 +58,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
     {
         int nsk = 0;
         int ncol = 0;
-        if (GlobalV::GAMMA_ONLY_LOCAL)
+        if (PARAM.globalv.gamma_only_local)
         {
             nsk = GlobalV::NSPIN;
             ncol = this->pv.ncol_bands;
@@ -106,8 +106,8 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
     {
         elecstate::DensityMatrix<TK, double>* DM = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
         this->p_hamilt = new hamilt::HamiltLCAO<TK, TR>(
-            GlobalV::GAMMA_ONLY_LOCAL ? &(this->GG) : nullptr,
-            GlobalV::GAMMA_ONLY_LOCAL ? nullptr : &(this->GK),
+            PARAM.globalv.gamma_only_local ? &(this->GG) : nullptr,
+            PARAM.globalv.gamma_only_local ? nullptr : &(this->GK),
             &this->pv,
             this->pelec->pot,
             this->kv,
@@ -137,7 +137,6 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
 
         if (PARAM.inp.deepks_out_unittest)
         {
-
             GlobalC::ld.check_psialpha(PARAM.inp.cal_force, GlobalC::ucell, orb_, GlobalC::GridD);
         }
     }
@@ -145,7 +144,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
     if (PARAM.inp.sc_mag_switch)
     {
         SpinConstrain<TK, base_device::DEVICE_CPU>& sc = SpinConstrain<TK, base_device::DEVICE_CPU>::getScInstance();
-        sc.init_sc(GlobalV::sc_thr,
+        sc.init_sc(PARAM.inp.sc_thr,
                    PARAM.inp.nsc,
                    PARAM.inp.nsc_min,
                    PARAM.inp.alpha_trial,

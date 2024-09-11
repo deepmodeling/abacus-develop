@@ -1,5 +1,6 @@
 #include "FORCE.h"
 #include "module_base/memory.h"
+#include "module_parameter/parameter.h"
 #include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
 #include "module_base/tool_threading.h"
@@ -267,6 +268,7 @@ void Force_LCAO<std::complex<double>>::finish_ftable(ForceStressArrays& fsr)
 //    RA.delete_grid(); // xiaohui add 2015-02-04
 //    return;
 //}
+
 
 // be called in Force_LCAO::start_force_calculation
 template <>

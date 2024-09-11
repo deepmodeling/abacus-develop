@@ -210,7 +210,7 @@ void ElecState::init_scf(const int istep, const ModuleBase::ComplexMatrix& struc
 {
     //---------Charge part-----------------
     // core correction potential.
-    if (!GlobalV::use_paw)
+    if (!PARAM.inp.use_paw)
     {
         this->charge->set_rho_core(strucfac);
     }

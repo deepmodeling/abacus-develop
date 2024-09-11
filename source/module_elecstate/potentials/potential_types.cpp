@@ -25,7 +25,7 @@ PotBase* Potential::get_pot_type(const std::string& pot_type)
     ModuleBase::TITLE("Potential", "get_pot_type");
     if (pot_type == "local")
     {
-        if(!GlobalV::use_paw)
+        if(!PARAM.inp.use_paw)
         {
             return new PotLocal(this->vloc_, &(this->structure_factors_->strucFac), this->rho_basis_);
         }

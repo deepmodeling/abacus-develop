@@ -62,7 +62,8 @@ void Stress_Func<FPTYPE, Device>::stress_har(ModuleBase::matrix& sigma, ModulePW
 	for (int ig = 0 ; ig < rho_basis->npw ; ++ig)
 	{
 		const FPTYPE g2 = rho_basis->gg[ig];
-		if(g2 < 1e-8) continue;
+		if(g2 < 1e-8) { continue;
+}
 		//const FPTYPE fac = ModuleBase::e2 * ModuleBase::FOUR_PI / (GlobalC::ucell.tpiba2 * GlobalC::sf.gg [ig]);
 		//ehart += ( conj( Porter[j] ) * Porter[j] ).real() * fac;
 		//vh_g[ig] = fac * Porter[j];
@@ -100,7 +101,7 @@ void Stress_Func<FPTYPE, Device>::stress_har(ModuleBase::matrix& sigma, ModulePW
     //        Parallel_Reduce::reduce_pool( ehart );
 //        ehart *= 0.5 * GlobalC::ucell.omega;
         //psic(:)=(0.0,0.0)
-	if(is_pw&&PARAM.inp.gamma_only)
+	if(is_pw&&PARAM.globalv.gamma_only_pw)
 	{
 		for(int l=0;l<3;l++)
 		{
@@ -123,8 +124,9 @@ void Stress_Func<FPTYPE, Device>::stress_har(ModuleBase::matrix& sigma, ModulePW
 	
 	for(int l=0;l<3;l++)
 	{
-		if(is_pw) sigma(l,l) -= elecstate::H_Hartree_pw::hartree_energy /GlobalC::ucell.omega;
-		else sigma(l,l) += elecstate::H_Hartree_pw::hartree_energy /GlobalC::ucell.omega;
+		if(is_pw) { sigma(l,l) -= elecstate::H_Hartree_pw::hartree_energy /GlobalC::ucell.omega;
+		} else { sigma(l,l) += elecstate::H_Hartree_pw::hartree_energy /GlobalC::ucell.omega;
+}
 		for(int m=0;m<l;m++)
 		{
 			sigma(m,l)=sigma(l,m);

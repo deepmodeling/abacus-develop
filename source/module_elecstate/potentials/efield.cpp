@@ -69,7 +69,7 @@ ModuleBase::matrix Efield::add_efield(const UnitCell& cell,
         elec_dipole = cal_elec_dipole(cell, rho_basis, nspin, rho, bmod);
         tot_dipole = ion_dipole - elec_dipole;
 
-        if (GlobalV::imp_sol)
+        if (PARAM.inp.imp_sol)
         {
             induced_dipole = cal_induced_dipole(cell, rho_basis, solvent, bmod);
             tot_dipole += induced_dipole;
@@ -95,7 +95,7 @@ ModuleBase::matrix Efield::add_efield(const UnitCell& cell,
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Computed dipole along efield_dir", efield_dir);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Elec. dipole (Ry a.u.)", elec_dipole);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Ion dipole (Ry a.u.)", ion_dipole);
-        if (GlobalV::imp_sol)
+        if (PARAM.inp.imp_sol)
         {
             ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Induced dipole (Ry a.u.)", induced_dipole);
         }

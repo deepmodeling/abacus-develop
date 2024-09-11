@@ -28,17 +28,17 @@ void ESolver_KS_LCAO<TK, TR>::set_matrix_grid(Record_adj& ra)
 
     // (1) Find adjacent atoms for each atom.
     GlobalV::SEARCH_RADIUS = atom_arrange::set_sr_NL(GlobalV::ofs_running,
-                                                     GlobalV::OUT_LEVEL,
+                                                     PARAM.inp.out_level,
                                                      orb_.get_rcutmax_Phi(),
                                                      GlobalC::ucell.infoNL.get_rcutmax_Beta(),
-                                                     GlobalV::GAMMA_ONLY_LOCAL);
+                                                     PARAM.globalv.gamma_only_local);
 
     atom_arrange::search(PARAM.inp.search_pbc,
                          GlobalV::ofs_running,
                          GlobalC::GridD,
                          GlobalC::ucell,
                          GlobalV::SEARCH_RADIUS,
-                         GlobalV::test_atom_input);
+                         PARAM.inp.test_atom_input);
 
     // ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"SEARCH ADJACENT
     // ATOMS");
@@ -84,9 +84,9 @@ void ESolver_KS_LCAO<TK, TR>::set_matrix_grid(Record_adj& ra)
     // (2)For each atom, calculate the adjacent atoms in different cells
     // and allocate the space for H(R) and S(R).
     // If k point is used here, allocate HlocR after atom_arrange.
-    ra.for_2d(this->pv, GlobalV::GAMMA_ONLY_LOCAL, orb_.cutoffs());
+    ra.for_2d(this->pv, PARAM.globalv.gamma_only_local, orb_.cutoffs());
 
-    if (!GlobalV::GAMMA_ONLY_LOCAL)
+    if (!PARAM.globalv.gamma_only_local)
     {
         // need to first calculae lgd.
         // using GridT.init.

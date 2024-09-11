@@ -1,5 +1,6 @@
 #include "module_base/timer.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
+#include "module_parameter/parameter.h"
 
 namespace LCAO_domain
 {
@@ -22,7 +23,7 @@ void build_Nonlocal_mu_new(const Parallel_Orbitals& pv,
 
     const int nspin = GlobalV::NSPIN;
     const int npol = GlobalV::NPOL;
-    const bool gamma_only_local = GlobalV::GAMMA_ONLY_LOCAL;
+    const bool gamma_only_local = PARAM.globalv.gamma_only_local;
 
     // < phi1 | beta > < beta | phi2 >
     // phi1 is within the unitcell.

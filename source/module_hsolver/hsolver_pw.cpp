@@ -1,5 +1,6 @@
 #include "hsolver_pw.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/global_variable.h"
 #include "module_base/timer.h"
 #include "module_base/tool_quit.h"
@@ -334,7 +335,7 @@ template <typename T, typename Device>
 void HSolverPW<T, Device>::updatePsiK(hamilt::Hamilt<T, Device>* pHamilt, psi::Psi<T, Device>& psi, const int ik)
 {
     psi.fix_k(ik);
-    if (!GlobalV::psi_initializer && !this->initialed_psi && this->basis_type == "pw")
+    if (!PARAM.inp.psi_initializer && !this->initialed_psi && this->basis_type == "pw")
     {
         hamilt::diago_PAO_in_pw_k2(this->ctx, ik, psi, this->wfc_basis, this->pwf, pHamilt);
     }

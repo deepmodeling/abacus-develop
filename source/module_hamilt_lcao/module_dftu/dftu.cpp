@@ -1,5 +1,6 @@
 #include "dftu.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/constants.h"
 #include "module_base/global_function.h"
 #include "module_base/inverse_matrix.h"
@@ -188,7 +189,7 @@ void DFTU::init(UnitCell& cell, // unitcell class
     }
     else
     {
-        if (GlobalV::init_chg == "file")
+        if (PARAM.inp.init_chg == "file")
         {
             std::stringstream sst;
             sst << GlobalV::global_out_dir << "onsite.dm";

@@ -114,7 +114,8 @@ struct Input_para
     double scf_thr = -1.0;   ///< \sum |rhog_out - rhog_in |^2
     double scf_ene_thr = -1.0; ///< energy threshold for scf convergence, in eV
     int scf_thr_type = -1;   ///< type of the criterion of scf_thr, 1: reci drho, 2: real drho
-
+    bool final_scf= false;   ///< whether to do final scf
+    
     bool lspinorb = false;   ///< consider the spin-orbit interaction
     bool noncolin = false;   ///< using non-collinear-spin
     double soc_lambda = 1.0; ///< The fraction of averaged SOC pseudopotential
@@ -557,7 +558,6 @@ struct Input_para
     // ==============   #Parameters (20.Test) ====================
     bool out_alllog = false;      ///< output all logs.
     int nurse = 0;                ///< used for debug.
-    bool colour = false;          ///< used for fun.
     bool t_in_h = true;           ///< calculate the T or not.
     bool vl_in_h = true;          ///< calculate the vloc or not.
     bool vnl_in_h = true;         ///< calculate the vnl or not.
@@ -567,5 +567,16 @@ struct Input_para
     bool test_force = false;      ///< test the force.
     bool test_stress = false;     ///< test the stress.
     bool test_skip_ewald = false; ///< variables for test only
+    bool test_atom_input = false; ///< variables for test_atom_input only
+    bool test_symmetry = false;   ///< variables for test_lattice only
+    int test_wf = 0;         ///< variables for test_wf only
+    int test_grid = false;  ///< variables for test_grid only
+    bool test_charge = false; ///< variables for test_vloc only
+    bool test_energy = false; ///< variables for test_energy only
+    bool test_gridt = false;  ///< variables for test_gridt only
+    bool test_pseudo_cell = false; ///< variables for test_pseudo_cell only
+    int test_pp = 0;          ///< variables for test_pp only
+    bool test_relax_method = false; ///< variables for test_relax_method only
+    int test_deconstructor = false; ///< variables for test_deconstructor only
 };
 #endif

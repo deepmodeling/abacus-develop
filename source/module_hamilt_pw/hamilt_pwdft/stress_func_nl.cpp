@@ -1,4 +1,5 @@
 #include "module_base/math_polyint.h"
+#include "module_parameter/parameter.h"
 #include "module_base/math_ylmreal.h"
 #include "module_base/memory.h"
 #include "module_base/module_device/device.h"
@@ -109,7 +110,7 @@ void Stress_Func<FPTYPE, Device>::get_dvnl1(ModuleBase::ComplexMatrix& vkb,
                                             Structure_Factor* p_sf,
                                             ModulePW::PW_Basis_K* wfc_basis)
 {
-    if (GlobalV::test_pp)
+    if (PARAM.inp.test_pp)
         ModuleBase::TITLE("Stress_Func", "get_dvnl1");
 
     const int npw = wfc_basis->npwk[ik];
@@ -143,18 +144,18 @@ void Stress_Func<FPTYPE, Device>::get_dvnl1(ModuleBase::ComplexMatrix& vkb,
     int jkb = 0;
     for (int it = 0; it < this->ucell->ntype; it++)
     {
-        if (GlobalV::test_pp > 1)
+        if (PARAM.inp.test_pp > 1)
             ModuleBase::GlobalFunc::OUT("it", it);
         // calculate beta in G-space using an interpolation table
         const int nbeta = this->ucell->atoms[it].ncpp.nbeta;
         const int nh = this->ucell->atoms[it].ncpp.nh;
 
-        if (GlobalV::test_pp > 1)
+        if (PARAM.inp.test_pp > 1)
             ModuleBase::GlobalFunc::OUT("nbeta", nbeta);
 
         for (int nb = 0; nb < nbeta; nb++)
         {
-            if (GlobalV::test_pp > 1)
+            if (PARAM.inp.test_pp > 1)
                 ModuleBase::GlobalFunc::OUT("ib", nb);
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -226,7 +227,7 @@ void Stress_Func<FPTYPE, Device>::get_dvnl2(ModuleBase::ComplexMatrix& vkb,
                                             Structure_Factor* p_sf,
                                             ModulePW::PW_Basis_K* wfc_basis)
 {
-    if (GlobalV::test_pp)
+    if (PARAM.inp.test_pp)
         ModuleBase::TITLE("Stress", "get_dvnl2");
     //	ModuleBase::timer::tick("Stress","get_dvnl2");
     const int npw = wfc_basis->npwk[ik];
@@ -258,18 +259,18 @@ void Stress_Func<FPTYPE, Device>::get_dvnl2(ModuleBase::ComplexMatrix& vkb,
     int jkb = 0;
     for (int it = 0; it < this->ucell->ntype; it++)
     {
-        if (GlobalV::test_pp > 1)
+        if (PARAM.inp.test_pp > 1)
             ModuleBase::GlobalFunc::OUT("it", it);
         // calculate beta in G-space using an interpolation table
         const int nbeta = this->ucell->atoms[it].ncpp.nbeta;
         const int nh = this->ucell->atoms[it].ncpp.nh;
 
-        if (GlobalV::test_pp > 1)
+        if (PARAM.inp.test_pp > 1)
             ModuleBase::GlobalFunc::OUT("nbeta", nbeta);
 
         for (int nb = 0; nb < nbeta; nb++)
         {
-            if (GlobalV::test_pp > 1)
+            if (PARAM.inp.test_pp > 1)
                 ModuleBase::GlobalFunc::OUT("ib", nb);
 #ifdef _OPENMP
 #pragma omp parallel for

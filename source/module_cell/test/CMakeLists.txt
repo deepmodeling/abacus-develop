@@ -53,7 +53,7 @@ AddTest(
 
 AddTest(
   TARGET cell_atom_spec
-  LIBS parameter ${math_libs} base device
+  LIBS ${math_libs} base device parameter
   SOURCES atom_spec_test.cpp ../atom_spec.cpp ../atom_pseudo.cpp ../pseudo.cpp ../read_pp.cpp ../read_pp_complete.cpp ../read_pp_upf201.cpp 
   	../read_pp_upf100.cpp ../read_pp_vwr.cpp ../read_pp_blps.cpp ../../module_io/output.cpp
 )

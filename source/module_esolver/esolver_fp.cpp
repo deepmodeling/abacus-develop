@@ -15,11 +15,11 @@ namespace ModuleESolver
 ESolver_FP::ESolver_FP()
 {
     // pw_rho = new ModuleBase::PW_Basis();
-    pw_rho = new ModulePW::PW_Basis_Big(GlobalV::device_flag, GlobalV::precision_flag);
+    pw_rho = new ModulePW::PW_Basis_Big(GlobalV::device_flag, PARAM.inp.precision);
 
-    if (GlobalV::double_grid)
+    if ( PARAM.globalv.double_grid)
     {
-        pw_rhod = new ModulePW::PW_Basis_Big(GlobalV::device_flag, GlobalV::precision_flag);
+        pw_rhod = new ModulePW::PW_Basis_Big(GlobalV::device_flag, PARAM.inp.precision);
     }
     else
     {
@@ -37,7 +37,7 @@ ESolver_FP::ESolver_FP()
 ESolver_FP::~ESolver_FP()
 {
     delete pw_rho;
-    if (GlobalV::double_grid)
+    if ( PARAM.globalv.double_grid)
     {
         delete pw_rhod;
     }
@@ -49,7 +49,7 @@ void ESolver_FP::before_all_runners(const Input_para& inp, UnitCell& cell)
     ModuleBase::TITLE("ESolver_FP", "before_all_runners");
 
     //! 1) read pseudopotentials
-    if (!GlobalV::use_paw)
+    if (!PARAM.inp.use_paw)
     {
         cell.read_pseudo(GlobalV::ofs_running);
     }
@@ -79,7 +79,7 @@ void ESolver_FP::before_all_runners(const Input_para& inp, UnitCell& cell)
     this->pw_rho->collect_uniqgg();
 
     //! 3) initialize the double grid (for uspp) if necessary
-    if (GlobalV::double_grid)
+    if ( PARAM.globalv.double_grid)
     {
         ModulePW::PW_Basis_Sup* pw_rhod_sup = static_cast<ModulePW::PW_Basis_Sup*>(pw_rhod);
 #ifdef __MPI
@@ -199,7 +199,7 @@ void ESolver_FP::after_scf(const int istep)
                 this->pw_rhod->real2recip(rhor_tot[is], rhog_tot[is]);
             }
             ModuleIO::write_rhog(GlobalV::global_out_dir + PARAM.inp.suffix + "-CHARGE-DENSITY.restart",
-                                 GlobalV::GAMMA_ONLY_PW || GlobalV::GAMMA_ONLY_LOCAL,
+                                 PARAM.globalv.gamma_only_pw || PARAM.globalv.gamma_only_local,
                                  this->pw_rhod,
                                  GlobalV::NSPIN,
                                  GlobalC::ucell.GT,
@@ -274,7 +274,7 @@ void ESolver_FP::init_after_vc(const Input_para& inp, UnitCell& cell)
         this->pw_rho->collect_local_pw();
         this->pw_rho->collect_uniqgg();
 
-        if (GlobalV::double_grid)
+        if ( PARAM.globalv.double_grid)
         {
             ModulePW::PW_Basis_Sup* pw_rhod_sup = static_cast<ModulePW::PW_Basis_Sup*>(pw_rhod);
             if (inp.ndx * inp.ndy * inp.ndz == 0)
@@ -299,7 +299,7 @@ void ESolver_FP::init_after_vc(const Input_para& inp, UnitCell& cell)
         pw_rho->collect_local_pw();
         pw_rho->collect_uniqgg();
 
-        if (GlobalV::double_grid)
+        if ( PARAM.globalv.double_grid)
         {
             this->pw_rhod->initgrids(cell.lat0, cell.latvec, pw_rhod->nx, pw_rhod->ny, pw_rhod->nz);
             this->pw_rhod->collect_local_pw();
@@ -328,7 +328,7 @@ void ESolver_FP::print_rhofft(const Input_para& inp, std::ofstream& ofs)
     std::cout << " UNIFORM GRID DIM        : " << pw_rho->nx << " * " << pw_rho->ny << " * " << pw_rho->nz << std::endl;
     std::cout << " UNIFORM GRID DIM(BIG)   : " << pw_big->nbx << " * " << pw_big->nby << " * " << pw_big->nbz
               << std::endl;
-    if (GlobalV::double_grid)
+    if ( PARAM.globalv.double_grid)
     {
         std::cout << " UNIFORM GRID DIM(DENSE) : " << pw_rhod->nx << " * " << pw_rhod->ny << " * " << pw_rhod->nz
                   << std::endl;
@@ -408,7 +408,7 @@ void ESolver_FP::print_rhofft(const Input_para& inp, std::ofstream& ofs)
     ModuleBase::GlobalFunc::OUT(ofs, "max |g|", this->pw_rho->gg_uniq[this->pw_rho->ngg - 1]);
     ModuleBase::GlobalFunc::OUT(ofs, "min |g|", this->pw_rho->gg_uniq[0]);
 
-    if (GlobalV::double_grid)
+    if ( PARAM.globalv.double_grid)
     {
         ofs << std::endl;
         ofs << std::endl;

@@ -1,4 +1,5 @@
 #include "sltk_grid_driver.h"
+#include "module_parameter/parameter.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_base/timer.h"
@@ -9,15 +10,12 @@
 
 namespace GlobalC
 {
-Grid_Driver GridD(GlobalV::test_deconstructor, GlobalV::test_grid_driver, GlobalV::test_grid);
+Grid_Driver GridD;
 }
-
 Grid_Driver::Grid_Driver(
 	const int &test_d_in, 
-	const int &test_gd_in, 
 	const int &test_grid_in)
 :test_deconstructor(test_d_in),
-test_grid_driver(test_gd_in),
 Grid(test_grid_in)
 {
 	//	ModuleBase::TITLE("Grid_Driver","Grid_Driver");
@@ -35,7 +33,6 @@ void Grid_Driver::Find_atom(
 	const int &nnumber,
 	AdjacentAtomInfo *adjs)
 {
-	//if (test_grid_driver) ModuleBase::TITLE(GlobalV::ofs_running, "Grid_Driver", "Find_atom");
  #ifdef _OPENMP
     int in_parallel = omp_in_parallel();
  #else
@@ -43,13 +40,6 @@ void Grid_Driver::Find_atom(
 #endif
     // to avoid writing conflict, disable timing in omp parallel block
 	if (!in_parallel) ModuleBase::timer::tick("Grid_Driver","Find_atom");
-
-	if (test_grid_driver > 1)
-	{
-//		GlobalV::ofs_running << " Atom cartesian_pos = " << cartesian_pos.x
-//		<< " " << cartesian_pos.y
-//		<< " " << cartesian_pos.z << std::endl;
-	}
 
 //----------------------------------------------------------
 // CALL MEMBER FUNCTION :
@@ -76,7 +66,6 @@ int Grid_Driver::Locate_offset(
 	const int &ntype, 
 	const int &nnumber)const
 {
-//	if (test_grid_driver) ModuleBase::TITLE(GlobalV::ofs_running, "Grid_Driver", "Locate_offset");
 
 //----------------------------------------------------------
 // EXPLAIN : Create an AtomLink object
@@ -120,8 +109,6 @@ int Grid_Driver::Locate_offset(
 
 void Grid_Driver::Find_adjacent_atom(const int offset, std::shared_ptr<AdjacentSet> as, AdjacentAtomInfo &adjs) const
 {
-//	if (test_grid_driver) ModuleBase::TITLE(GlobalV::ofs_running, "Grid_Driver", "Find_adjacent_atom");
-
 	// alias of variables
 	auto &adj_num = adjs.adj_num;
 	auto &ntype = adjs.ntype;
@@ -134,11 +121,6 @@ void Grid_Driver::Find_adjacent_atom(const int offset, std::shared_ptr<AdjacentS
 // NAME : getLength(get the adjacent number of this atom)
 //----------------------------------------------------------
 	adj_num = as->getLength();
-
-	if (test_grid_driver > 1) 
-	{
-//		OUT(GlobalV::ofs_running,"adj_num",this->adj_num);
-	}	
 	
 	//std::cout << "\n length = " << adj_num << std::endl;
 	//BLOCK_HERE("Find_adjacent_atom");
@@ -163,22 +145,6 @@ void Grid_Driver::Find_adjacent_atom(const int offset, std::shared_ptr<AdjacentS
 	box[adj_num].y = 0;
 	box[adj_num].z = 0;
 
-	if (test_grid_driver > 1)
-	{
-/*
-		GlobalV::ofs_running << " "
-		<< std::setw(15) << "Box"
-		<< std::setw(8) << "Offset"
-		<< std::setw(5) << "Type"
-		<< std::setw(8) << "Natom"
-		<< std::setw(10) << "X"
-		<< std::setw(10) << "Y"
-		<< std::setw(10) << "Z"
-		<< std::setw(10) << "Distance" << std::endl;
-*/
-	}
-
-
 	for (int i = 0;i < adj_num;i++)
 	{
 //----------------------------------------------------------
@@ -196,22 +162,6 @@ void Grid_Driver::Find_adjacent_atom(const int offset, std::shared_ptr<AdjacentS
 		ntype[i] = this->atomlink[offset_i].fatom.getType();
 		natom[i] = this->atomlink[offset_i].fatom.getNatom();
 
-		if (test_grid_driver > 1)
-		{
-			//if(i<100)
-			{
-/*
-				GlobalV::ofs_running << " "
-				<< std::setw(5) << box[i].x
-				<< std::setw(5) << box[i].y
-				<< std::setw(5) << box[i].z
-				<< std::setw(8) << offset_i
-				<< std::setw(5) << ntype[i]
-				<< std::setw(8) << natom[i];
-*/
-			}
-		}
-
 		if (expand_flag)
 		{
 //----------------------------------------------------------
@@ -224,21 +174,6 @@ void Grid_Driver::Find_adjacent_atom(const int offset, std::shared_ptr<AdjacentS
 			adjacent_tau[i].x = this->atomlink[offset_i].fatom.x();
 			adjacent_tau[i].y = this->atomlink[offset_i].fatom.y();
 			adjacent_tau[i].z = this->atomlink[offset_i].fatom.z();
-
-			if (test_grid_driver > 1)
-			{
-				//if(i<100)
-				{
-					const double distance = Distance(this->atomlink[offset], this->atomlink[offset_i]);
-/*
-					GlobalV::ofs_running << std::setw(10) << this->atomlink[offset_i].fatom.x()
-					<< std::setw(10) << this->atomlink[offset_i].fatom.y()
-					<< std::setw(10) << this->atomlink[offset_i].fatom.z()
-					<< std::setw(10) << distance << std::endl;
-*/
-					assert(distance <= this->sradius);
-				}
-			}
 		}
 		else
 		{
@@ -255,21 +190,6 @@ void Grid_Driver::Find_adjacent_atom(const int offset, std::shared_ptr<AdjacentS
 			                  vec1[1], vec2[1], vec3[1],
 			                  vec1[2], vec2[2], vec3[2],
 			                  box[i].x, box[i].y, box[i].z);
-
-			if (test_grid_driver > 1)
-			{
-				if(i<100)
-				{
-					const double distance = this->Distance(this->atomlink[offset], adjacent_tau[i]);
-/*
-					GlobalV::ofs_running << std::setw(10) << adjacent_tau[i].x
-					<< std::setw(10) << adjacent_tau[i].y
-					<< std::setw(10) << adjacent_tau[i].z
-					<< std::setw(10) << distance;
-*/
-					assert(distance <= this->sradius);
-				}
-			}
 		}//end if expand_flag
 	}// end adjacent number
 
@@ -317,25 +237,6 @@ ModuleBase::Vector3<double> Grid_Driver::Calculate_adjacent_site
 
 	adjacent_site.z = this->atomlink[offset].fatom.z() +
 	                  box_x * box31 + box_y * box32 + box_z * box33;
-
-	if (test_grid_driver > 3)
-	{
-/*
-		GlobalV::ofs_running << " Offset_i cartesian :" 
-		<< " " << this->atomlink[offset].fatom.x()
-		<< " " << this->atomlink[offset].fatom.y()
-		<< " " << this->atomlink[offset].fatom.z() 
-		<< std::endl;
-		GlobalV::ofs_running << " box1 : " << box11 << " " << box12 << " " << box13 << std::endl;
-		GlobalV::ofs_running << " box2 : " << box21 << " " << box22 << " " << box23 << std::endl;
-		GlobalV::ofs_running << " box3 : " << box31 << " " << box32 << " " << box33 << std::endl;
-		GlobalV::ofs_running << " adjacent site:" 
-		<< " " << adjacent_site.x
-		<< " " << adjacent_site.y
-		<< " " << adjacent_site.z 
-		<< std::endl;
-*/
-	}
 
 	return adjacent_site;
 }

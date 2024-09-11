@@ -1,5 +1,6 @@
 #include "ORB_atomic.h"
 
+#include "module_parameter/parameter.h"
 Numerical_Orbital_AtomRelation Numerical_Orbital::NOAR;
 
 Numerical_Orbital::Numerical_Orbital()
@@ -25,7 +26,6 @@ void Numerical_Orbital::set_orbital_info(const int& type_in,
                                          const int* nchi_in,
                                          const int& total_nchi_in)
 {
-    // what is GlobalV::test_overlap
     ModuleBase::TITLE("Numerical_Orbital", "set_type_info");
 
     // (1) set type,label,lmax

@@ -33,7 +33,7 @@ void test_deepks::set_parameters()
     std::ifstream ifs("INPUT");
     char word[80];
     ifs >> word;
-    ifs >> GlobalV::GAMMA_ONLY_LOCAL;
+    ifs >> PARAM.sys.gamma_only_local;
     ifs.close();
 
     ucell.latName = "none";
@@ -134,10 +134,10 @@ void test_deepks::setup_cell()
 void test_deepks::prep_neighbour()
 {
     double search_radius = atom_arrange::set_sr_NL(GlobalV::ofs_running,
-                                                   GlobalV::OUT_LEVEL,
+                                                   PARAM.input.out_level,
                                                    ORB.get_rcutmax_Phi(),
                                                    ucell.infoNL.get_rcutmax_Beta(),
-                                                   GlobalV::GAMMA_ONLY_LOCAL);
+                                                   PARAM.sys.gamma_only_local);
 
     atom_arrange::search(PARAM.inp.search_pbc,
                          GlobalV::ofs_running,
@@ -194,7 +194,7 @@ void test_deepks::setup_kpt()
                  GlobalV::NSPIN,
                  ucell.G,
                  ucell.latvec,
-                 GlobalV::GAMMA_ONLY_LOCAL,
+                 PARAM.sys.gamma_only_local,
                  GlobalV::ofs_running,
                  GlobalV::ofs_warning);
 }
