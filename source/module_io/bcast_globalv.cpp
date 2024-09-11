@@ -11,20 +11,21 @@ void ReadInput::set_globalv_bcast()
         Input_Item item("globalv");
         item.annotation = "add global variables to the Parameter";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            /// caculate the global output directory
+
+            /// set the global output directory
             const std::string prefix = "OUT.";
             para.sys.global_out_dir = prefix + para.inp.suffix + "/";
             para.sys.global_out_dir = to_dir(para.sys.global_out_dir);
 
-            /// get the global output directory
+            /// set the global output directory
             para.sys.global_stru_dir = PARAM.globalv.global_out_dir + "STRU/";
             para.sys.global_stru_dir = to_dir(para.sys.global_stru_dir);
 
-            /// get the global output directory
+            /// set the global output directory
             para.sys.global_matrix_dir = PARAM.globalv.global_out_dir + "matrix/";
             para.sys.global_matrix_dir = to_dir(para.sys.global_matrix_dir);
             
-            /// get the global readin directory
+            /// set the global readin directory
             if (PARAM.inp.read_file_dir == "auto")
             {
                 para.sys.global_readin_dir = PARAM.globalv.global_out_dir;
@@ -34,10 +35,49 @@ void ReadInput::set_globalv_bcast()
                 para.sys.global_readin_dir = PARAM.inp.read_file_dir + '/';
             }
             para.sys.global_readin_dir = to_dir(para.sys.global_readin_dir);
-            /// caculate the gamma_only_pw and gamma_only_local
-            if (para.inp.gamma_only && para.inp.basis_type == "pw") // pengfei Li add 2015-1-31
+            
+            /// set the gamma_only_lcao
+            if (para.inp.gamma_only && para.inp.basis_type == "lcao")
             {
-                para.sys.gamma_only_pw = false;
+                para.sys.gamma_only_local= true;
+                if (para.inp.esolver_type == "tddft")
+                {
+                    para.sys.gamma_only_local = false;
+                    GlobalV::ofs_running << " WARNING : gamma_only is not applicable for tddft" << std::endl;
+                }
+            }
+         
+            /// set the deepks_setorb
+            if (para.input.deepks_scf || para.input.deepks_out_labels)
+            {
+                para.sys.deepks_setorb = true;
+            }
+
+            switch (para.input.nspin)
+            {
+            case 4:
+                para.sys.npol = 2;
+                para.sys.domag = true;
+                para.sys.domag_z = true;
+                break;
+            case 1:
+            case 2:
+                para.sys.npol = 1;
+                para.sys.domag = false;
+                para.sys.domag_z = false;
+                para.input.noncolin = false;
+                para.input.lspinorb = false;
+                break;
+            default:
+                GlobalV::ofs_warning << " WARNING : NSPIN must be 1, 2 or 4" << std::endl;
+                break;
+            }
+        }; 
+
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+               /// check the gamma_only_pw and gamma_only_local
+            if (para.inp.gamma_only && para.inp.basis_type == "pw") 
+            {
                 GlobalV::ofs_warning << " WARNING : gamma_only has not been "
                                         "implemented for pw yet"
                                      << std::endl;
@@ -54,13 +94,10 @@ void ReadInput::set_globalv_bcast()
                 ofs << "1 1 1 0 0 0" << std::endl;
                 ofs.close();
             }
-            else if (para.sys.gamma_only_local)
+
+            if (para.input.nspin ==4 && para.sys.gamma_only_local)
             {
-                if (para.inp.esolver_type == "tddft")
-                {
-                    GlobalV::ofs_running << " WARNING : gamma_only is not applicable for tddft" << std::endl;
-                    para.sys.gamma_only_local = false;
-                }
+                ModuleBase::WARNING_QUIT("ReadInput", "nspin=4 is not supported in gamma_only mode.");
             }
 
             if ((para.inp.out_mat_r || para.inp.out_mat_hs2 || para.inp.out_mat_t 
@@ -72,7 +109,7 @@ void ReadInput::set_globalv_bcast()
                                          "output of r(R)/H(R)/S(R)/T(R)/dH(R)/DM(R) is not "
                                          "available for gamma only calculations");
             }
-            }; 
+        };
         this->add_item(item);
     }
     add_bool_bcast(sys.two_fermi);
@@ -83,6 +120,10 @@ void ReadInput::set_globalv_bcast()
     add_int_bcast(sys.ncz);
     add_bool_bcast(sys.out_md_control);
     add_bool_bcast(sys.rpa_setorb);
+    add_int_bcast(sys.npol);
+    add_bool_bcast(sys.domag);
+    add_bool_bcast(sys.domag_z);
+    add_bool_bcast(sys.deepks_setorb);
     add_bool_bcast(sys.gamma_only_pw);
     add_bool_bcast(sys.gamma_only_local);
     add_string_bcast(sys.global_out_dir);

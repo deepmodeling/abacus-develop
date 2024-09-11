@@ -54,22 +54,24 @@ void ReadInput::item_deepks()
             {
                 para.input.deepks_out_labels = true;
                 para.input.deepks_scf = true;
-                if (GlobalV::NPROC > 1)
-                {
-                    ModuleBase::WARNING_QUIT("ReadInput", "generate deepks unittest with only 1 processor");
-                }
+
+            }
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.deepks_out_unittest){
+                // should be add when
+                // if (GlobalV::NPROC > 1)
+                // {
+                //     ModuleBase::WARNING_QUIT("ReadInput", "generate deepks unittest with only 1 processor");
+                // }
                 if (para.input.cal_force != 1)
                 {
                     ModuleBase::WARNING_QUIT("ReadInput", "force is required in generating deepks unittest");
                 }
-                if (GlobalV::CAL_STRESS != 1)
-                {
-                    ModuleBase::WARNING_QUIT("ReadInput", "stress is required in generating deepks unittest");
-                }
-            }
-            if (para.input.deepks_scf || para.input.deepks_out_labels)
-            {
-                para.input.deepks_setorb = true;
+                // if (GlobalV::CAL_STRESS != 1)
+                // {
+                //     ModuleBase::WARNING_QUIT("ReadInput", "stress is required in generating deepks unittest");
+                // }
             }
         };
         this->add_item(item);
