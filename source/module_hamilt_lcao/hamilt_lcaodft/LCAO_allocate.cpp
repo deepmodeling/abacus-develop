@@ -7,7 +7,7 @@
 namespace LCAO_domain
 {
 
-void divide_HS_in_frag(const bool isGamma, Parallel_Orbitals& pv,const int& nks) {
+void divide_HS_in_frag(const bool isGamma, Parallel_Orbitals& pv,const int& nks, const LCAO_Orbitals& orb) {
     ModuleBase::TITLE("LCAO_domain", "divide_HS_in_frag");
 
     //(1), (2): set up matrix division have been moved into ESolver_KS_LCAO::init_basis_lcao
@@ -24,7 +24,7 @@ void divide_HS_in_frag(const bool isGamma, Parallel_Orbitals& pv,const int& nks)
             na[it] = GlobalC::ucell.atoms[it].na;
         }
 
-        GlobalC::ld.init(GlobalC::ORB,
+        GlobalC::ld.init(orb,
                          GlobalC::ucell.nat,
                          GlobalC::ucell.ntype,
                          pv,

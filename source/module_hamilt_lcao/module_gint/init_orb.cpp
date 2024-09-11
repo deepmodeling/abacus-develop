@@ -6,12 +6,13 @@ namespace Gint_Tools{
 void init_orb(double& dr_uniform, 
                 std::vector<double>& rcuts,
                 UnitCell& ucell,
+                const LCAO_Orbitals& orb,
                 std::vector<std::vector<double>>& psi_u,
                 std::vector<std::vector<double>>& dpsi_u,
                 std::vector<std::vector<double>>& d2psi_u)
 {
     // set the grid parameters
-    dr_uniform=GlobalC::ORB.dr_uniform;
+    dr_uniform=orb.dr_uniform;
     
     const int nwmax=ucell.nwmax;
     const int ntype=ucell.ntype;
@@ -20,7 +21,7 @@ void init_orb(double& dr_uniform,
     ModuleBase::Memory::record("rcuts", sizeof(double)*ntype*3);
     for(int T=0; T<ntype; T++)
 	{
-		rcuts[T]=GlobalC::ORB.Phi[T].getRcut();
+		rcuts[T]=orb.Phi[T].getRcut();
 	}
     
     const double max_cut = *std::max_element(rcuts.begin(), rcuts.end());
@@ -40,7 +41,7 @@ void init_orb(double& dr_uniform,
         {
             if (j < atomx->nw)
             {
-                pointer = &GlobalC::ORB.Phi[i].PhiLN(atomx->iw2l[j],atomx->iw2n[j]);
+                pointer = &orb.Phi[i].PhiLN(atomx->iw2l[j],atomx->iw2n[j]);
                 psi_u[i*nwmax+j]=pointer->psi_uniform;
                 dpsi_u[i*nwmax+j]=pointer->dpsi_uniform;
                 d2psi_u[i*nwmax+j]=pointer->ddpsi_uniform;

@@ -58,6 +58,7 @@ void sparse_format::cal_TR(const UnitCell& ucell,
                            LCAO_HS_Arrays& HS_Arrays,
                            Grid_Driver& grid,
                            const TwoCenterBundle& two_center_bundle,
+                           const LCAO_Orbitals& orb,
                            const double& sparse_thr) {
     ModuleBase::TITLE("sparse_format", "cal_TR");
 
@@ -74,7 +75,7 @@ void sparse_format::cal_TR(const UnitCell& ucell,
                               'T',
                               false,
                               ucell,
-                              GlobalC::ORB,
+                              orb,
                               pv,
                               two_center_bundle,
                               &(GlobalC::GridD),
@@ -82,7 +83,7 @@ void sparse_format::cal_TR(const UnitCell& ucell,
 
     sparse_format::set_R_range(HS_Arrays.all_R_coor, grid);
 
-    sparse_format::cal_STN_R_for_T(ucell, pv, HS_Arrays, grid, sparse_thr);
+    sparse_format::cal_STN_R_for_T(ucell, pv, HS_Arrays, grid, orb.cutoffs(), sparse_thr);
 
     return;
 }
@@ -91,6 +92,7 @@ void sparse_format::cal_STN_R_for_T(const UnitCell& ucell,
                                     const Parallel_Orbitals& pv,
                                     LCAO_HS_Arrays& HS_arrays,
                                     Grid_Driver& grid,
+                                    const std::vector<double>& orb_cutoff,
                                     const double& sparse_thr) {
     ModuleBase::TITLE("sparse_format", "cal_STN_R_for_T");
 
@@ -119,8 +121,7 @@ void sparse_format::cal_STN_R_for_T(const UnitCell& ucell,
                 tau2 = grid.getAdjacentTau(ad);
                 dtau = tau2 - tau1;
                 double distance = dtau.norm() * ucell.lat0;
-                double rcut = GlobalC::ORB.Phi[T1].getRcut()
-                              + GlobalC::ORB.Phi[T2].getRcut();
+                double rcut = orb_cutoff[T1] + orb_cutoff[T2];
 
                 bool adj = false;
 
@@ -139,9 +140,9 @@ void sparse_format::cal_STN_R_for_T(const UnitCell& ucell,
                         double distance1 = dtau1.norm() * ucell.lat0;
                         double distance2 = dtau2.norm() * ucell.lat0;
 
-                        double rcut1 = GlobalC::ORB.Phi[T1].getRcut()
+                        double rcut1 = orb_cutoff[T1]
                                        + ucell.infoNL.Beta[T0].get_rcut_max();
-                        double rcut2 = GlobalC::ORB.Phi[T2].getRcut()
+                        double rcut2 = orb_cutoff[T2]
                                        + ucell.infoNL.Beta[T0].get_rcut_max();
 
                         if (distance1 < rcut1 && distance2 < rcut2) {

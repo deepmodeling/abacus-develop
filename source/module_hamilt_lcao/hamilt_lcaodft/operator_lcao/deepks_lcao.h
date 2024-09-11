@@ -35,6 +35,7 @@ class DeePKS<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                                  const UnitCell* ucell_in,
                                  Grid_Driver* GridD_in,
                                  const TwoCenterIntegrator* intor_orb_alpha,
+                                 const LCAO_Orbitals* ptr_orb,
                                  const int& nks_in,
                                  elecstate::DensityMatrix<TK, double>* DM_in);
     ~DeePKS();
@@ -62,6 +63,7 @@ class DeePKS<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 
     // the following variable is introduced temporarily during LCAO refactoring
     const TwoCenterIntegrator* intor_orb_alpha_ = nullptr;
+    const LCAO_Orbitals* ptr_orb_ = nullptr;
 
 #ifdef __DEEPKS
 

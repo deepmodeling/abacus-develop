@@ -61,7 +61,7 @@ void DFTU::fold_dSR_gamma(
                 tau2 = gd->getAdjacentTau(ad);
                 dtau = tau2 - tau1;
                 double distance = dtau.norm() * ucell.lat0;
-                double rcut = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ORB.Phi[T2].getRcut();
+                double rcut = orb_cutoff_[T1] + orb_cutoff_[T2];
                 bool adj = false;
 				if (distance < rcut)
 				{
@@ -80,8 +80,8 @@ void DFTU::fold_dSR_gamma(
                         dtau2 = tau0 - tau2;
                         double distance1 = dtau1.norm() * ucell.lat0;
                         double distance2 = dtau2.norm() * ucell.lat0;
-                        double rcut1 = GlobalC::ORB.Phi[T1].getRcut() + ucell.infoNL.Beta[T0].get_rcut_max();
-                        double rcut2 = GlobalC::ORB.Phi[T2].getRcut() + ucell.infoNL.Beta[T0].get_rcut_max();
+                        double rcut1 = orb_cutoff_[T1] + ucell.infoNL.Beta[T0].get_rcut_max();
+                        double rcut2 = orb_cutoff_[T2] + ucell.infoNL.Beta[T0].get_rcut_max();
                         if (distance1 < rcut1 && distance2 < rcut2)
                         {
                             adj = true;
@@ -173,7 +173,7 @@ void DFTU::folding_matrix_k(
                 tau2 = GlobalC::GridD.getAdjacentTau(ad);
                 dtau = tau2 - tau1;
                 double distance = dtau.norm() * GlobalC::ucell.lat0;
-                double rcut = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ORB.Phi[T2].getRcut();
+                double rcut = orb_cutoff_[T1] + orb_cutoff_[T2];
 
                 bool adj = false;
 
@@ -195,8 +195,8 @@ void DFTU::folding_matrix_k(
                         double distance1 = dtau1.norm() * GlobalC::ucell.lat0;
                         double distance2 = dtau2.norm() * GlobalC::ucell.lat0;
 
-                        double rcut1 = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
-                        double rcut2 = GlobalC::ORB.Phi[T2].getRcut() + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
+                        double rcut1 = orb_cutoff_[T1] + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
+                        double rcut2 = orb_cutoff_[T2] + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
 
                         if (distance1 < rcut1 && distance2 < rcut2)
                         {

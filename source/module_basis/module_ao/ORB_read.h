@@ -83,6 +83,8 @@ class LCAO_Orbitals
 	//caoyu add 2021-05-24
 	const double& get_rcutmax_Phi() const { return rcutmax_Phi; }
 
+    std::vector<double> cutoffs() const;
+
 	/// numerical atomic orbitals
 	Numerical_Orbital* Phi;
 	

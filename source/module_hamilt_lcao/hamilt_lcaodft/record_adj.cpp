@@ -38,7 +38,7 @@ void Record_adj::delete_grid()
 // If multi-k, calculate nnr at the same time.
 // be called only once in an ion-step.
 //--------------------------------------------
-void Record_adj::for_2d(Parallel_Orbitals &pv, bool gamma_only)
+void Record_adj::for_2d(Parallel_Orbitals &pv, bool gamma_only, const std::vector<double>& orb_cutoff)
 {
 	ModuleBase::TITLE("Record_adj","for_2d");
 	ModuleBase::timer::tick("Record_adj","for_2d");
@@ -88,7 +88,7 @@ void Record_adj::for_2d(Parallel_Orbitals &pv, bool gamma_only)
 				tau2 = GlobalC::GridD.getAdjacentTau(ad);
 				dtau = tau2 - tau1;
 				double distance = dtau.norm() * GlobalC::ucell.lat0;
-				double rcut = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ORB.Phi[T2].getRcut();
+				double rcut = orb_cutoff[T1] + orb_cutoff[T2];
 
 				bool is_adj = false;
                 if (distance < rcut) { is_adj = true;
@@ -108,11 +108,11 @@ void Record_adj::for_2d(Parallel_Orbitals &pv, bool gamma_only)
 						tau0 = GlobalC::GridD.getAdjacentTau(ad0);
 						dtau1 = tau0 - tau1;
 						double distance1 = dtau1.norm() * GlobalC::ucell.lat0;
-						double rcut1 = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
+						double rcut1 = orb_cutoff[T1] + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
 
 						dtau2 = tau0 - tau2;
 						double distance2 = dtau2.norm() * GlobalC::ucell.lat0;
-						double rcut2 = GlobalC::ORB.Phi[T2].getRcut() + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
+						double rcut2 = orb_cutoff[T2] + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
 
 						if( distance1 < rcut1 && distance2 < rcut2 )
 						{
@@ -210,7 +210,7 @@ void Record_adj::for_2d(Parallel_Orbitals &pv, bool gamma_only)
 				tau2 = adjs.adjacent_tau[ad];
 				dtau = tau2 - tau1;
 				double distance = dtau.norm() * GlobalC::ucell.lat0;
-				double rcut = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ORB.Phi[T2].getRcut();
+				double rcut = orb_cutoff[T1] + orb_cutoff[T2];
 
 
 				bool is_adj = false;
@@ -227,11 +227,11 @@ void Record_adj::for_2d(Parallel_Orbitals &pv, bool gamma_only)
 						tau0 = adjs.adjacent_tau[ad0];
 						dtau1 = tau0 - tau1;
 						double distance1 = dtau1.norm() * GlobalC::ucell.lat0;
-						double rcut1 = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
+						double rcut1 = orb_cutoff[T1] + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
 
 						dtau2 = tau0 - tau2;
 						double distance2 = dtau2.norm() * GlobalC::ucell.lat0;
-						double rcut2 = GlobalC::ORB.Phi[T2].getRcut() + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
+						double rcut2 = orb_cutoff[T2] + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
 
 						if( distance1 < rcut1 && distance2 < rcut2 )
 						{
@@ -267,7 +267,7 @@ void Record_adj::for_2d(Parallel_Orbitals &pv, bool gamma_only)
 // This will record the orbitals according to
 // grid division (cut along z direction) 
 //--------------------------------------------
-void Record_adj::for_grid(const Grid_Technique &gt)
+void Record_adj::for_grid(const Grid_Technique &gt, const std::vector<double>& orb_cutoff)
 {
     ModuleBase::TITLE("Record_adj","for_grid");
 	ModuleBase::timer::tick("Record_adj","for_grid");
@@ -326,7 +326,7 @@ void Record_adj::for_grid(const Grid_Technique &gt)
 						tau2 = adjs.adjacent_tau[ad];
 						dtau = tau2 - tau1;
 						double distance = dtau.norm() * GlobalC::ucell.lat0;
-						double rcut = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ORB.Phi[T2].getRcut();
+						double rcut = orb_cutoff[T1] + orb_cutoff[T2];
 
 
 						bool is_adj = false;
@@ -349,8 +349,8 @@ void Record_adj::for_grid(const Grid_Technique &gt)
                                 double distance1 = dtau1.norm() * GlobalC::ucell.lat0;
                                 double distance2 = dtau2.norm() * GlobalC::ucell.lat0;
 
-                                double rcut1 = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
-                                double rcut2 = GlobalC::ORB.Phi[T2].getRcut() + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
+                                double rcut1 = orb_cutoff[T1] + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
+                                double rcut2 = orb_cutoff[T2] + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
 
                                 if( distance1 < rcut1 && distance2 < rcut2 )
                                 {
@@ -420,7 +420,7 @@ void Record_adj::for_grid(const Grid_Technique &gt)
 						tau2 = adjs.adjacent_tau[ad];
 						dtau = tau2 - tau1;
 						double distance = dtau.norm() * GlobalC::ucell.lat0;
-						double rcut = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ORB.Phi[T2].getRcut();
+						double rcut = orb_cutoff[T1] + orb_cutoff[T2];
 
 						// check the distance
 						if(distance < rcut)
@@ -449,8 +449,8 @@ void Record_adj::for_grid(const Grid_Technique &gt)
                                 double distance1 = dtau1.norm() * GlobalC::ucell.lat0;
                                 double distance2 = dtau2.norm() * GlobalC::ucell.lat0;
 
-                                double rcut1 = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
-                                double rcut2 = GlobalC::ORB.Phi[T2].getRcut() + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
+                                double rcut1 = orb_cutoff[T1] + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
+                                double rcut2 = orb_cutoff[T2] + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
 
                                 if( distance1 < rcut1 && distance2 < rcut2 )
                                 {

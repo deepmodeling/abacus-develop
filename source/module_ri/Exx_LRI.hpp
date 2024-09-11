@@ -58,10 +58,11 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in, const K_Vectors &kv_in)
 
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>
 		abfs_same_atom = Exx_Abfs::Construct_Orbs::abfs_same_atom( this->lcaos, this->info.kmesh_times, this->info.pca_threshold );
-	if(this->info.files_abfs.empty())
+	if(this->info.files_abfs.empty()) {
 		this->abfs = abfs_same_atom;
-	else
+	} else {
 		this->abfs = Exx_Abfs::IO::construct_abfs( abfs_same_atom, GlobalC::ORB, this->info.files_abfs, this->info.kmesh_times );
+}
 	Exx_Abfs::Construct_Orbs::print_orbs_size(this->abfs, GlobalV::ofs_running);
 
 	auto get_ccp_parameter = [this]() -> std::map<std::string,double>
@@ -86,8 +87,9 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in, const K_Vectors &kv_in)
     this->abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp(this->abfs, this->info.ccp_type, get_ccp_parameter(), this->info.ccp_rmesh_times);
 
 
-	for( size_t T=0; T!=this->abfs.size(); ++T )
+	for( size_t T=0; T!=this->abfs.size(); ++T ) {
 		GlobalC::exx_info.info_ri.abfs_Lmax = std::max( GlobalC::exx_info.info_ri.abfs_Lmax, static_cast<int>(this->abfs[T].size())-1 );
+}
 
 	this->cv.set_orbitals(
 		this->lcaos, this->abfs, this->abfs_ccp,
@@ -108,11 +110,13 @@ void Exx_LRI<Tdata>::cal_exx_ions()
 //	this->m_abfslcaos_lcaos.init_radial_table(Rradial);
 
 	std::vector<TA> atoms(GlobalC::ucell.nat);
-	for(int iat=0; iat<GlobalC::ucell.nat; ++iat)
+	for(int iat=0; iat<GlobalC::ucell.nat; ++iat) {
 		atoms[iat] = iat;
+}
 	std::map<TA,TatomR> atoms_pos;
-	for(int iat=0; iat<GlobalC::ucell.nat; ++iat)
+	for(int iat=0; iat<GlobalC::ucell.nat; ++iat) {
 		atoms_pos[iat] = RI_Util::Vector3_to_array3( GlobalC::ucell.atoms[ GlobalC::ucell.iat2it[iat] ].tau[ GlobalC::ucell.iat2ia[iat] ] );
+}
 	const std::array<TatomR,Ndim> latvec
 		= {RI_Util::Vector3_to_array3(GlobalC::ucell.a1),
 		   RI_Util::Vector3_to_array3(GlobalC::ucell.a2),
@@ -133,7 +137,7 @@ void Exx_LRI<Tdata>::cal_exx_ions()
 	this->cv.Vws = LRI_CV_Tools::get_CVws(Vs);
 	this->exx_lri.set_Vs(std::move(Vs), this->info.V_threshold);
 
-	if(PARAM.inp.cal_force || GlobalV::CAL_STRESS)
+	if(PARAM.inp.cal_force || PARAM.inp.cal_stress)
 	{
 		std::array<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,3>
 			dVs = this->cv.cal_dVs(
@@ -141,7 +145,7 @@ void Exx_LRI<Tdata>::cal_exx_ions()
 				{{"writable_dVws",true}});
 		this->cv.dVws = LRI_CV_Tools::get_dCVws(dVs);
 		this->exx_lri.set_dVs(std::move(dVs), this->info.V_grad_threshold);
-		if(GlobalV::CAL_STRESS)
+		if(PARAM.inp.cal_stress)
 		{
 			std::array<std::array<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,3>,3> dVRs = LRI_CV_Tools::cal_dMRs(dVs);
 			this->exx_lri.set_dVRs(std::move(dVRs), this->info.V_grad_R_threshold);
@@ -155,18 +159,18 @@ void Exx_LRI<Tdata>::cal_exx_ions()
 	std::pair<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>, std::array<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,3>>
 		Cs_dCs = this->cv.cal_Cs_dCs(
 			list_As_Cs.first, list_As_Cs.second[0],
-			{{"cal_dC",PARAM.inp.cal_force||GlobalV::CAL_STRESS},
+			{{"cal_dC",PARAM.inp.cal_force||PARAM.inp.cal_stress},
 			 {"writable_Cws",true}, {"writable_dCws",true}, {"writable_Vws",false}, {"writable_dVws",false}});
 	std::map<TA,std::map<TAC,RI::Tensor<Tdata>>> &Cs = std::get<0>(Cs_dCs);
 	this->cv.Cws = LRI_CV_Tools::get_CVws(Cs);
 	this->exx_lri.set_Cs(std::move(Cs), this->info.C_threshold);
 
-	if(PARAM.inp.cal_force || GlobalV::CAL_STRESS)
+	if(PARAM.inp.cal_force || PARAM.inp.cal_stress)
 	{
 		std::array<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,3> &dCs = std::get<1>(Cs_dCs);
 		this->cv.dCws = LRI_CV_Tools::get_dCVws(dCs);
 		this->exx_lri.set_dCs(std::move(dCs), this->info.C_grad_threshold);
-		if(GlobalV::CAL_STRESS)
+		if(PARAM.inp.cal_stress)
 		{
 			std::array<std::array<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,3>,3> dCRs = LRI_CV_Tools::cal_dMRs(dCs);
 			this->exx_lri.set_dCRs(std::move(dCRs), this->info.C_grad_R_threshold);
@@ -176,7 +180,9 @@ void Exx_LRI<Tdata>::cal_exx_ions()
 }
 
 template<typename Tdata>
-void Exx_LRI<Tdata>::cal_exx_elec(const std::vector<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>> &Ds, const Parallel_Orbitals &pv)
+void Exx_LRI<Tdata>::cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Ds,
+    const Parallel_Orbitals& pv,
+    const ModuleSymmetry::Symmetry_rotation* p_symrot)
 {
 	ModuleBase::TITLE("Exx_LRI","cal_exx_elec");
 	ModuleBase::timer::tick("Exx_LRI", "cal_exx_elec");
@@ -185,24 +191,38 @@ void Exx_LRI<Tdata>::cal_exx_elec(const std::vector<std::map<TA,std::map<TAC,RI:
 
 	this->Hexxs.resize(GlobalV::NSPIN);
 	this->Eexx = 0;
+    (p_symrot) ? this->exx_lri.set_symmetry(true, p_symrot->get_irreducible_sector()) : this->exx_lri.set_symmetry(false, {});
 	for(int is=0; is<GlobalV::NSPIN; ++is)
 	{
-		if(!(PARAM.inp.cal_force || GlobalV::CAL_STRESS))
-		{
-			this->exx_lri.set_Ds(Ds[is], this->info.dm_threshold);
-			this->exx_lri.cal_Hs();
-		}
-		else
-		{
-			this->exx_lri.set_Ds(Ds[is], this->info.dm_threshold, std::to_string(is));
-			this->exx_lri.cal_Hs({"","",std::to_string(is)});
-		}
-		this->Hexxs[is] = RI::Communicate_Tensors_Map_Judge::comm_map2_first(
-			this->mpi_comm, std::move(this->exx_lri.Hs), std::get<0>(judge[is]), std::get<1>(judge[is]));
+        std::string suffix = ((PARAM.inp.cal_force || PARAM.inp.cal_stress) ? std::to_string(is) : "");
+
+        this->exx_lri.set_Ds(Ds[is], this->info.dm_threshold, suffix);
+        this->exx_lri.cal_Hs({ "","",suffix });
+
+        if (!p_symrot)
+        {
+            this->Hexxs[is] = RI::Communicate_Tensors_Map_Judge::comm_map2_first(
+                this->mpi_comm, std::move(this->exx_lri.Hs), std::get<0>(judge[is]), std::get<1>(judge[is]));
+        }
+        else
+        {
+            // reduce but not repeat
+            auto Hs_a2D = this->exx_lri.post_2D.set_tensors_map2(this->exx_lri.Hs);
+            // rotate locally without repeat
+            Hs_a2D = p_symrot->restore_HR(GlobalC::ucell.symm, GlobalC::ucell.atoms, GlobalC::ucell.st, 'H', Hs_a2D);
+            // cal energy using full Hs without repeat
+            this->exx_lri.energy = this->exx_lri.post_2D.cal_energy(
+                this->exx_lri.post_2D.saves["Ds_" + suffix],
+                this->exx_lri.post_2D.set_tensors_map2(Hs_a2D));
+            // get repeated full Hs for abacus
+            this->Hexxs[is] = RI::Communicate_Tensors_Map_Judge::comm_map2_first(
+                this->mpi_comm, std::move(Hs_a2D), std::get<0>(judge[is]), std::get<1>(judge[is]));
+        }
         this->Eexx += std::real(this->exx_lri.energy);
 		post_process_Hexx(this->Hexxs[is]);
 	}
 	this->Eexx = post_process_Eexx(this->Eexx);
+	this->exx_lri.set_symmetry(false, {});
 	ModuleBase::timer::tick("Exx_LRI", "cal_exx_elec");	
 }
 
@@ -253,9 +273,11 @@ void Exx_LRI<Tdata>::cal_exx_force()
 	for(int is=0; is<GlobalV::NSPIN; ++is)
 	{
 		this->exx_lri.cal_force({"","",std::to_string(is),"",""});
-		for(std::size_t idim=0; idim<Ndim; ++idim)
-			for(const auto &force_item : this->exx_lri.force[idim])
+		for(std::size_t idim=0; idim<Ndim; ++idim) {
+			for(const auto &force_item : this->exx_lri.force[idim]) {
 				this->force_exx(force_item.first, idim) += std::real(force_item.second);
+}
+}
 	}
 
 	const double SPIN_multiple = std::map<int,double>{{1,2}, {2,1}, {4,1}}.at(GlobalV::NSPIN);				// why?
@@ -275,9 +297,11 @@ void Exx_LRI<Tdata>::cal_exx_stress()
 	for(int is=0; is<GlobalV::NSPIN; ++is)
 	{
 		this->exx_lri.cal_stress({"","",std::to_string(is),"",""});
-		for(std::size_t idim0=0; idim0<Ndim; ++idim0)
-			for(std::size_t idim1=0; idim1<Ndim; ++idim1)
+		for(std::size_t idim0=0; idim0<Ndim; ++idim0) {
+			for(std::size_t idim1=0; idim1<Ndim; ++idim1) {
 				this->stress_exx(idim0,idim1) += std::real(this->exx_lri.stress(idim0,idim1));
+}
+}
 	}
 
 	const double SPIN_multiple = std::map<int,double>{{1,2}, {2,1}, {4,1}}.at(GlobalV::NSPIN);				// why?
@@ -287,5 +311,19 @@ void Exx_LRI<Tdata>::cal_exx_stress()
 	ModuleBase::timer::tick("Exx_LRI", "cal_exx_stress");
 }
 
+template<typename Tdata>
+std::vector<std::vector<int>> Exx_LRI<Tdata>::get_abfs_nchis() const
+{
+    std::vector<std::vector<int>> abfs_nchis;
+    for (const auto& abfs_T : this->abfs)
+    {
+        std::vector<int> abfs_nchi_T;
+        for (const auto& abfs_L : abfs_T) {
+            abfs_nchi_T.push_back(abfs_L.size());
+}
+        abfs_nchis.push_back(abfs_nchi_T);
+    }
+    return abfs_nchis;
+}
 
 #endif

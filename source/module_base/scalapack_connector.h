@@ -208,7 +208,7 @@ public:
 			B, &IB, &JB, DESCB, &beta, C, &IC, &JC, DESCC);
 	}
 
-	static inline
+    static inline
 	void getrf(
 		const int M, const int N, 
 		std::complex<double> *A, const int IA, const int JA, const int *DESCA,
