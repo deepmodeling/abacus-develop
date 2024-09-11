@@ -1,5 +1,6 @@
 #include "module_base/constants.h"
 #include "module_base/global_variable.h"
+#include "module_parameter/parameter.h"
 #include "module_base/tool_quit.h"
 #include "read_input.h"
 #include "read_input_tool.h"
@@ -23,6 +24,12 @@ void ReadInput::item_deepks()
         Input_Item item("deepks_equiv");
         item.annotation = "whether to use equivariant version of DeePKS";
         read_sync_bool(input.deepks_equiv);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.deepks_equiv && para.input.deepks_bandgap)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "equivariant version of DeePKS is not implemented yet");
+            }
+        };
         this->add_item(item);
     }
     {

@@ -114,7 +114,7 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, const Paramet
                                     PARAM.inp.calculation == "md", 
                                     PARAM.inp.out_mul,
                                     need_orb,
-                                    GlobalV::deepks_setorb,
+                                    PARAM.inp.deepks_setorb,
                                     GlobalV::MY_RANK);
             mdrun->write_restart(PARAM.globalv.global_out_dir);
         }

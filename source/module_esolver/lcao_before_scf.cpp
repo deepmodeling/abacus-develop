@@ -124,7 +124,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
 #ifdef __DEEPKS
     // for each ionic step, the overlap <psi|alpha> must be rebuilt
     // since it depends on ionic positions
-    if (GlobalV::deepks_setorb)
+    if (PARAM.inp.deepks_setorb)
     {
         const Parallel_Orbitals* pv = &this->pv;
         // build and save <psi(0)|alpha(R)> at beginning

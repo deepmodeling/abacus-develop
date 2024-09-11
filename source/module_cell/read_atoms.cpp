@@ -112,7 +112,7 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
             }
         }    
         // caoyu add 2021-03-16
-        if(GlobalV::deepks_setorb)
+        if(PARAM.inp.deepks_setorb)
         {
             if (ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "NUMERICAL_DESCRIPTOR")) {
                 ifa >> descriptor_file;
