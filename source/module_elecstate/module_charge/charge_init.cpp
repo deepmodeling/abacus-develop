@@ -16,7 +16,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 #include "module_io/rho_io.h"
 #include "module_io/rhog_io.h"
-#include "module_io/read_wfc_pw.h"
+#include "module_io/read_wfc_to_rho.h"
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
 #endif

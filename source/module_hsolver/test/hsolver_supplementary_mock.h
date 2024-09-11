@@ -43,7 +43,7 @@ void ElecState::print_eigenvalue(std::ofstream& ofs)
     return;
 }
 
-void ElecState::init_scf(const int istep, const ModuleBase::ComplexMatrix& strucfac)
+void ElecState::init_scf(const int istep, const ModuleBase::ComplexMatrix& strucfac, const void*)
 {
     return;
 }

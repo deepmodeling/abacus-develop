@@ -71,7 +71,11 @@ void Charge::set_rho_core(ModuleBase::ComplexMatrix const&)
 void Charge::set_rho_core_paw()
 {
 }
-void Charge::init_rho(elecstate::efermi&, ModuleBase::ComplexMatrix const&, const int&, const int&)
+void Charge::init_rho(elecstate::efermi&,
+                      ModuleBase::ComplexMatrix const&,
+                      const int,
+                      const std::vector<int>&,
+                      const void*)
 {
 }
 void Charge::set_rhopw(ModulePW::PW_Basis*)
