@@ -1,5 +1,6 @@
 #include "LCAO_deepks_test.h"
 
+#include "module_parameter/parameter.h"
 void test_deepks::cal_nnr(void)
 {
 	ModuleBase::TITLE("test_deepks","cal_nnr");
@@ -198,14 +199,14 @@ void test_deepks::folding_nnr(const Test_Deepks::K_Vectors &kv)
 						// calculate how many matrix elements are in 
 						// this processor.
 						//--------------------------------------------------
-						for(int ii=0; ii<atom1->nw*GlobalV::NPOL; ii++)
+						for(int ii=0; ii<atom1->nw*PARAM.sys.npol; ii++)
 						{
 							// the index of orbitals in this processor
 							const int iw1_all = start + ii;
 							const int mu = ParaO.global2local_row(iw1_all);
 							if(mu<0)continue;
 
-							for(int jj=0; jj<atom2->nw*GlobalV::NPOL; jj++)
+							for(int jj=0; jj<atom2->nw*PARAM.sys.npol; jj++)
 							{
 								int iw2_all = start2 + jj;
 								const int nu = ParaO.global2local_col(iw2_all);
