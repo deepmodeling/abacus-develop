@@ -25,7 +25,7 @@ and give setup files that you can use to compile ABACUS.
 - [x] Support for [LibRI](https://github.com/abacusmodeling/LibRI) by submodule or automatic installation from github.com (but installed LibRI via `wget` seems to have some problem, please be cautious)
 - [x] A mirror station by Bohrium database, which can download CEREAL, LibNPY, LibRI and LibComm by `wget` in China Internet. 
 - [x] Support for GPU compilation, users can add `-DUSE_CUDA=1` in builder scripts.
-- [ ] A better mirror station for all packages.
+- [ ] Change the downloading url from cp2k mirror to other mirror or directly downloading from official website. (doing)
 - [ ] A better README and Detail markdown file.
 - [ ] Automatic installation of [DEEPMD](https://github.com/deepmodeling/deepmd-kit).
 - [ ] Better compliation method for ABACUS-DEEPMD and ABACUS-DEEPKS.
