@@ -151,7 +151,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
                    PARAM.inp.sc_mag_switch,
                    GlobalC::ucell,
                    PARAM.inp.sc_file,
-                   GlobalV::NPOL,
+                   PARAM.globalv.npol,
                    &(this->pv),
                    GlobalV::NSPIN,
                    this->kv,

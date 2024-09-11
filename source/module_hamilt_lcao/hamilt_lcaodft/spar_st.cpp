@@ -1,5 +1,6 @@
 #include "spar_st.h"
 
+#include "module_parameter/parameter.h"
 #include "force_stress_arrays.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h" // only for INPUT
@@ -157,7 +158,7 @@ void sparse_format::cal_STN_R_for_T(const UnitCell& ucell,
                                                 grid.getBox(ad).y,
                                                 grid.getBox(ad).z);
 
-                    for (int ii = 0; ii < atom1->nw * GlobalV::NPOL; ii++) {
+                    for (int ii = 0; ii < atom1->nw * PARAM.globalv.npol; ii++) {
                         const int iw1_all = start + ii;
                         const int mu = pv.global2local_row(iw1_all);
 
@@ -165,7 +166,7 @@ void sparse_format::cal_STN_R_for_T(const UnitCell& ucell,
                             continue;
                         }
 
-                        for (int jj = 0; jj < atom2->nw * GlobalV::NPOL; jj++) {
+                        for (int jj = 0; jj < atom2->nw * PARAM.globalv.npol; jj++) {
                             int iw2_all = start2 + jj;
                             const int nu = pv.global2local_col(iw2_all);
 

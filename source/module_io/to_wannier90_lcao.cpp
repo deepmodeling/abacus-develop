@@ -688,10 +688,10 @@ void toWannier90_LCAO::construct_overlap_table_project()
     int row = this->ParaV->get_row_size();
     int global_ir = 0;
 
-    for (int ir = 0; ir < row; ir += GlobalV::NPOL)
+    for (int ir = 0; ir < row; ir += PARAM.globalv.npol)
     {
         global_ir = ParaV->local2global_row(ir);
-        int orb_index_row = global_ir / GlobalV::NPOL;
+        int orb_index_row = global_ir / PARAM.globalv.npol;
 
         for (int wannier_index = 0; wannier_index < num_wannier; wannier_index++)
         {
@@ -767,7 +767,7 @@ void toWannier90_LCAO::cal_orbA_overlap_R()
     for (int ir = 0; ir < row; ir++)
     {
         global_ir = ParaV->local2global_row(ir);
-        int orb_index_row = global_ir / GlobalV::NPOL;
+        int orb_index_row = global_ir / PARAM.globalv.npol;
 
         int it1 = iw2it[orb_index_row];
         int ia1 = iw2ia[orb_index_row];

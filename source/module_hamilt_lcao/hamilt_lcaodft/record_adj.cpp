@@ -127,7 +127,7 @@ void Record_adj::for_2d(Parallel_Orbitals &pv, bool gamma_only)
                     ++na_each[iat];
                     if (!gamma_only)
                     {
-                        for(int ii=0; ii<atom1->nw * GlobalV::NPOL; ++ii)
+                        for(int ii=0; ii<atom1->nw * PARAM.globalv.npol; ++ii)
                         {
                             // the index of orbitals in this processor
                             const int iw1_all = start1 + ii;
@@ -135,7 +135,7 @@ void Record_adj::for_2d(Parallel_Orbitals &pv, bool gamma_only)
                             if(mu<0) {continue;
 }
 
-                            for(int jj=0; jj<GlobalC::ucell.atoms[T2].nw * GlobalV::NPOL; ++jj)
+                            for(int jj=0; jj<GlobalC::ucell.atoms[T2].nw * PARAM.globalv.npol; ++jj)
                             {
                                 const int iw2_all = start2 + jj;
                                 const int nu = pv.global2local_col(iw2_all);

@@ -1,5 +1,6 @@
 #include "gint_k.h"
 #include "grid_technique.h"
+#include "module_parameter/parameter.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_base/libm/libm.h"
@@ -70,7 +71,7 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<double>* hR, const UnitCell* ucell
     }
     this->hRGint->set_zero();
 
-    const int npol = GlobalV::NPOL;
+    const int npol = PARAM.globalv.npol;
     const UnitCell& ucell = *ucell_in;
     for (int iat = 0; iat < ucell.nat; ++iat)
     {
@@ -194,7 +195,7 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<std::complex<double>>* hR, const U
     }
     this->hRGintCd->set_zero();
 
-    const int npol = GlobalV::NPOL;
+    const int npol = PARAM.globalv.npol;
     const UnitCell& ucell = *ucell_in;
 
     for (int iat = 0; iat < ucell.nat; ++iat)
