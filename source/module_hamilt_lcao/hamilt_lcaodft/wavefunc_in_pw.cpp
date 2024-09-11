@@ -432,7 +432,7 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int& ik,
 								iwall += 2*L+1;
 							} // end else GlobalC::ucell.atoms[it].has_so
 						} // end for is_N
-                    } // end if GlobalV::NONCOLIN
+                    } // end if PARAM.inp.noncolin
 					else
 					{//LSDA and nomagnet case
 						for(int m=0; m<2*L+1; m++)
