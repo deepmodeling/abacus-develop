@@ -1,5 +1,6 @@
 #include "atom_pseudo.h"
 
+#include "module_parameter/parameter.h"
 Atom_pseudo::Atom_pseudo()
 {
 }
@@ -67,7 +68,7 @@ void Atom_pseudo::set_d_so(ModuleBase::ComplexMatrix& d_so_in,
 
         if (this->lmax > -1)
         {
-            if (GlobalV::LSPINORB)
+            if (PARAM.inp.lspinorb)
             {
                 int is = 0;
                 for (int is1 = 0; is1 < 2; is1++)

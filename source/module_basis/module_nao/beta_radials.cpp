@@ -1,5 +1,6 @@
 #include "module_basis/module_nao/beta_radials.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/global_variable.h"
 #include "module_base/parallel_common.h"
 #include "module_base/tool_quit.h"
@@ -402,7 +403,7 @@ void BetaRadials::build(const Numerical_Nonlocal& nl, const int itype, std::ofst
 //#endif
 //
 //    // It is an error if lspinorb is set to true but the pseudopotential file does not contain spin-orbit information
-//    if (!has_so && GlobalV::LSPINORB)
+//    if (!has_so && PARAM.inp.lspinorb)
 //    {
 //        ModuleBase::WARNING_QUIT("BetaRadials::read_beta_upf201",
 //                "lspinorb is set to true but the pseudopotential file does not contain spin-orbit information");
@@ -558,7 +559,7 @@ void BetaRadials::build(const Numerical_Nonlocal& nl, const int itype, std::ofst
 //    double* rbeta_final = nullptr;
 //    if (rank == 0)
 //    {
-//        if (!GlobalV::LSPINORB && has_so)
+//        if (!PARAM.inp.lspinorb && has_so)
 //        {
 //            /*
 //             * read the PP_DIJ block for averaging
@@ -727,7 +728,7 @@ void BetaRadials::build(const Numerical_Nonlocal& nl, const int itype, std::ofst
 //    delete[] ngrid_final;
 //    delete[] rbeta_final;
 //
-//    if (rank == 0 && !GlobalV::LSPINORB && has_so)
+//    if (rank == 0 && !PARAM.inp.lspinorb && has_so)
 //    {
 //        delete[] l;
 //        delete[] ngrid;
