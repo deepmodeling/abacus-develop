@@ -1,4 +1,5 @@
 #include "module_base/constants.h"
+#include "module_base/global_variable.h"
 #include "module_base/tool_quit.h"
 #include "read_input.h"
 #include "read_input_tool.h"
@@ -41,6 +42,29 @@ void ReadInput::item_deepks()
         item.annotation = "if set 1, prints intermediate quantities that shall "
                           "be used for making unit test";
         read_sync_bool(input.deepks_out_unittest);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.deepks_out_unittest)
+            {
+                para.input.deepks_out_labels = true;
+                para.input.deepks_scf = true;
+                if (GlobalV::NPROC > 1)
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput", "generate deepks unittest with only 1 processor");
+                }
+                if (para.input.cal_force != 1)
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput", "force is required in generating deepks unittest");
+                }
+                if (GlobalV::CAL_STRESS != 1)
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput", "stress is required in generating deepks unittest");
+                }
+            }
+            if (para.input.deepks_scf || para.input.deepks_out_labels)
+            {
+                para.input.deepks_setorb = true;
+            }
+        };
         this->add_item(item);
     }
     {
