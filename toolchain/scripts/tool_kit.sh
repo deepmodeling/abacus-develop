@@ -666,10 +666,10 @@ download_pkg_from_url() {
   local __filename="$2"
   local __url="$3"
   # download
-  #echo "wget ${DOWNLOADER_FLAGS} --quiet $__url"
-  #if ! wget ${DOWNLOADER_FLAGS} --quiet $__url; then
-  echo "wget ${DOWNLOADER_FLAGS} $__url"
-  if ! wget ${DOWNLOADER_FLAGS} $__url; then
+  #echo "wget ${DOWNLOADER_FLAGS} --quiet $__url -O $__filename"
+  #if ! wget ${DOWNLOADER_FLAGS} --quiet $__url -O $__filename; then
+  echo "wget ${DOWNLOADER_FLAGS} $__url -O $__filename"
+  if ! wget ${DOWNLOADER_FLAGS} $__url -O $__filename; then
     report_error "failed to download $__url"
     recommend_offline_installation $__filename $__url
     return 1
