@@ -129,18 +129,6 @@ extern std::ofstream ofs_device;
 //==========================================================
 
 
-extern bool deepks_scf;        //(need libnpy and libtorch) if set 1, a trained model
-                               // would be needed to cal V_delta and F_delta
-extern bool deepks_bandgap;    // for bandgap label. QO added 2021-12-15
-
-extern int deepks_v_delta; // for v_delta label. xinyuan added 2023-2-15
-
-extern bool deepks_equiv; //whether to use equviariant version of DeePKS
-
-extern bool deepks_setorb;
-
-
-
 // implicit solvation
 
 // DFTU control
