@@ -36,8 +36,9 @@ void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv, const LCAO_Orbitals& orb)
 // ofs_mpi<<"memory:\t"<<get_memory(10)<<std::endl;
 	
 	GlobalC::exx_info.info_ri.abfs_Lmax = Exx_Abfs::Jle::Lmax;
-	for( size_t T=0; T!=abfs.size(); ++T )
+	for( size_t T=0; T!=abfs.size(); ++T ) {
 		GlobalC::exx_info.info_ri.abfs_Lmax = std::max( GlobalC::exx_info.info_ri.abfs_Lmax, static_cast<int>(abfs[T].size())-1 );
+}
 
 	const ModuleBase::Element_Basis_Index::Range    range_lcaos = Exx_Abfs::Abfs_Index::construct_range( lcaos );
 	const ModuleBase::Element_Basis_Index::IndexLNM index_lcaos = ModuleBase::Element_Basis_Index::construct_index( range_lcaos );
@@ -357,9 +358,9 @@ std::map<size_t,std::map<size_t,std::set<double>>> Exx_Opt_Orb::get_radial_R() c
 {
 	ModuleBase::TITLE("Exx_Opt_Orb::get_radial_R");
 	std::map<size_t,std::map<size_t,std::set<double>>> radial_R;
-	for( size_t TA=0; TA!=GlobalC::ucell.ntype; ++TA )
-		for( size_t IA=0; IA!=GlobalC::ucell.atoms[TA].na; ++IA )
-			for( size_t TB=0; TB!=GlobalC::ucell.ntype; ++TB )
+	for( size_t TA=0; TA!=GlobalC::ucell.ntype; ++TA ) {
+		for( size_t IA=0; IA!=GlobalC::ucell.atoms[TA].na; ++IA ) {
+			for( size_t TB=0; TB!=GlobalC::ucell.ntype; ++TB ) {
 				for( size_t IB=0; IB!=GlobalC::ucell.atoms[TB].na; ++IB )
 				{
 					const ModuleBase::Vector3<double> &tauA = GlobalC::ucell.atoms[TA].tau[IA];
@@ -368,5 +369,8 @@ std::map<size_t,std::map<size_t,std::set<double>>> Exx_Opt_Orb::get_radial_R() c
 					radial_R[TA][TB].insert( delta_R );
 					radial_R[TB][TA].insert( delta_R );
 				}
+}
+}
+}
 	return radial_R;
 }
