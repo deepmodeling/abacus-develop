@@ -413,7 +413,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
                                            GlobalC::ucell.nat, 
                                            GlobalV::MY_RANK); // Ry/Bohr, F_base
 
-                if (!GlobalV::deepks_equiv) // training with force label not supported by equivariant version now
+                if (!PARAM.inp.deepks_equiv) // training with force label not supported by equivariant version now
                 {
                     if (PARAM.globalv.gamma_only_local)
                     {
@@ -652,7 +652,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
             if (GlobalV::deepks_scf)
             {
 
-                if (!GlobalV::deepks_equiv) // training with stress label not supported by equivariant version now
+                if (!PARAM.inp.deepks_equiv) // training with stress label not supported by equivariant version now
                 {
                     GlobalC::ld.cal_gvepsl(GlobalC::ucell.nat);
 

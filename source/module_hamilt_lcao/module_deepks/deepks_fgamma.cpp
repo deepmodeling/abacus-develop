@@ -1,5 +1,6 @@
 //wenfei 2022-1-11
 //This file contains subroutines for calculating F_delta,
+#include "module_parameter/parameter.h"
 //which is defind as sum_mu,nu rho_mu,nu d/dX (<chi_mu|alpha>V(D)<alpha|chi_nu>)
 
 //There are 2 subroutines in this file:
@@ -132,7 +133,7 @@ void DeePKS_domain::cal_f_delta_gamma(
 
                             assert(nlm1.size()==nlm2[0].size());
 
-                            if(!GlobalV::deepks_equiv)
+                            if(!PARAM.inp.deepks_equiv)
                             {
                                 int ib=0;
                                 for (int L0 = 0; L0 <= orb.Alpha[0].getLmax();++L0)
@@ -195,7 +196,7 @@ void DeePKS_domain::cal_f_delta_gamma(
 
                                 assert(nlm1.size()==nlm2[0].size());                                
 
-                                if(!GlobalV::deepks_equiv)
+                                if(!PARAM.inp.deepks_equiv)
                                 {
                                     int ib=0;
                                     for (int L0 = 0; L0 <= orb.Alpha[0].getLmax();++L0)

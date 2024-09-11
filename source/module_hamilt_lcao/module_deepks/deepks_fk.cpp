@@ -1,5 +1,6 @@
 // cal_f_delta_k, which is used for multi-k calculation
 
+#include "module_parameter/parameter.h"
 #ifdef __DEEPKS
 
 #include "deepks_force.h"
@@ -135,7 +136,7 @@ void DeePKS_domain::cal_f_delta_k(
 
                             assert(nlm1.size()==nlm2[0].size());
 
-                            if(!GlobalV::deepks_equiv)
+                            if(!PARAM.inp.deepks_equiv)
                             {
                                 int ib=0;
                                 for (int L0 = 0; L0 <= orb.Alpha[0].getLmax();++L0)
@@ -198,7 +199,7 @@ void DeePKS_domain::cal_f_delta_k(
 
                                 assert(nlm1.size()==nlm2[0].size());                                
 
-                                if(!GlobalV::deepks_equiv)
+                                if(!PARAM.inp.deepks_equiv)
                                 {
                                     int ib=0;
                                     for (int L0 = 0; L0 <= orb.Alpha[0].getLmax();++L0)
