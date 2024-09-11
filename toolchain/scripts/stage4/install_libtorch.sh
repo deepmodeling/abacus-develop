@@ -52,13 +52,14 @@ case "${with_libtorch}" in
             # download_pkg_from_ABACUS_org "${libtorch_sha256}" "${archive_file}"
             # download from pytorch.com and checksum
             url=https://download.pytorch.org/libtorch/cpu/${archive_file}
-            echo "wget $url -O $filename"
-            if ! wget $url -O $filename; then
-            report_error "failed to download $url"
-            recommend_offline_installation $filename $url
-            fi
-            # checksum
-            checksum "$filename" "$libtorch_sha256"
+            download_pkg_from_url "${cereal_sha256}" "${filename}" "${url}"
+            # echo "wget $url -O $filename"
+            # if ! wget $url -O $filename; then
+            # report_error "failed to download $url"
+            # recommend_offline_installation $filename $url
+            # fi
+            # # checksum
+            # checksum "$filename" "$libtorch_sha256"
         fi
         echo "Installing from scratch into ${pkg_install_dir}"
         [ -d libtorch ] && rm -rf libtorch
