@@ -452,6 +452,13 @@ void ReadInput::item_elec_stru()
         item.annotation = "Only for localized orbitals set and gamma point. If "
                           "set to 1, a fast algorithm is used";
         read_sync_bool(input.gamma_only);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.gamma_only && para.input.basis_type == "pw")
+            {
+                para.input.gamma_only = false;
+               GlobalV::ofs_warning << "ReadInput pw not supported in gamma_only mode."<< std::endl;
+            }
+        };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.inp.gamma_only && para.inp.basis_type == "pw") 
             {
@@ -473,6 +480,7 @@ void ReadInput::item_elec_stru()
             }
             if (para.input.nspin ==4 && para.sys.gamma_only_local)
             {
+                printf("nspin = 4 and gamma_only_local is not supported\n");
                 ModuleBase::WARNING_QUIT("ReadInput", "nspin=4 is not supported in gamma_only mode.");
             }
         };

@@ -332,7 +332,7 @@ void ReadInput::item_system()
     }
     {
         Input_Item item("ndx");
-        item.annotation = "number of points along x axis for FFT smooth grid";
+        item.annotation = "number of points along x axis for FFT dense grid";
         read_sync_int(input.ndx);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.ndx > para.input.nx)
@@ -358,7 +358,7 @@ void ReadInput::item_system()
     }
     {
         Input_Item item("ndy");
-        item.annotation = "number of points along y axis for FFT smooth grid";
+        item.annotation = "number of points along y axis for FFT dense grid";
         read_sync_int(input.ndy);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.ndy > para.input.ny)
@@ -383,10 +383,10 @@ void ReadInput::item_system()
     }
     {
         Input_Item item("ndz");
-        item.annotation = "number of points along z axis for FFT smooth grid";
+        item.annotation = "number of points along z axis for FFT dense grid";
         read_sync_int(input.ndz);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.ndy > para.input.ny)
+            if (para.input.ndz > para.input.nz) 
             {
                 para.sys.double_grid = true;
             }

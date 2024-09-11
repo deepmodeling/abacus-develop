@@ -69,5 +69,12 @@ TEST_F(InputTest, Item_test)
         EXPECT_EQ(param.sys.global_stru_dir, "OUT.test/STRU/");
         EXPECT_EQ(param.sys.global_matrix_dir, "OUT.test/matrix/");
 
+        param.input.basis_type = "lcao";
+        param.input.gamma_only = true;
+        param.input.esolver_type = "tddft";
+        param.input.nspin = 2;
+        readinput.set_globalv(param);
+        EXPECT_EQ(param.sys.gamma_only_local, 0);
+
     }
 }
