@@ -643,10 +643,28 @@ checksum() {
 
 # downloader for the package tars, includes checksum
 download_pkg_from_ABACUS_org() {
-  # usage: download_pkg_from_cp2k_org sha256 filename
+  # usage: download_pkg_from_ABACUS_org sha256 filename
   local __sha256="$1"
   local __filename="$2"
   local __url="https://www.cp2k.org/static/downloads/$__filename"
+  # download
+  #echo "wget ${DOWNLOADER_FLAGS} --quiet $__url"
+  #if ! wget ${DOWNLOADER_FLAGS} --quiet $__url; then
+  echo "wget ${DOWNLOADER_FLAGS} $__url"
+  if ! wget ${DOWNLOADER_FLAGS} $__url; then
+    report_error "failed to download $__url"
+    recommend_offline_installation $__filename $__url
+    return 1
+  fi
+  # checksum
+  checksum "$__filename" "$__sha256"
+}
+
+download_pkg_from_url() {
+  # usage: download_pkg_from_url sha256 filename url
+  local __sha256="$1"
+  local __filename="$2"
+  local __url="$3"
   # download
   #echo "wget ${DOWNLOADER_FLAGS} --quiet $__url"
   #if ! wget ${DOWNLOADER_FLAGS} --quiet $__url; then
