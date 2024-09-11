@@ -200,7 +200,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
         } else    // construct C, V from scratch
         {
             this->exx_lri = std::make_shared<Exx_LRI<T>>(exx_info.info_ri);
-            this->exx_lri->init(MPI_COMM_WORLD, this->kv);
+            this->exx_lri->init(MPI_COMM_WORLD, this->kv, ks_sol.orb_);
             this->exx_lri->cal_exx_ions();
         }
     }
@@ -365,7 +365,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
     if ((xc_kernel == "hf" || xc_kernel == "hse") && this->input.lr_solver != "spectrum")
     {
         this->exx_lri = std::make_shared<Exx_LRI<T>>(exx_info.info_ri);
-        this->exx_lri->init(MPI_COMM_WORLD, this->kv);
+        this->exx_lri->init(MPI_COMM_WORLD, this->kv, orb);
         this->exx_lri->cal_exx_ions();
     }
     // else

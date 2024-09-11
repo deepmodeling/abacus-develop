@@ -19,6 +19,7 @@ public:
 		const double kmesh_times );
 
 	static std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs_same_atom( 
+        const LCAO_Orbitals& orb,
 		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &lcaos,
 		const double kmesh_times_mot,
 		const double times_threshold=0);
@@ -40,6 +41,7 @@ private:
 		const double norm_threshold = std::numeric_limits<double>::min() );
 
 	static std::vector<std::vector<std::vector<std::vector<double>>>> pca(
+        const LCAO_Orbitals& orb,
 		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &abfs,
 		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &orbs,
 		const double kmesh_times_mot,

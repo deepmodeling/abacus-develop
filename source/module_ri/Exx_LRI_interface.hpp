@@ -37,7 +37,7 @@ void Exx_LRI_Interface<T, Tdata>::read_Hexxs_cereal(const std::string& file_name
 }
 
 template<typename T, typename Tdata>
-void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const K_Vectors& kv, const Charge_Mixing& chgmix, const UnitCell& ucell, const Parallel_2D& pv)
+void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const K_Vectors& kv, const Charge_Mixing& chgmix, const UnitCell& ucell, const Parallel_2D& pv, const LCAO_Orbitals& orb)
 {
 #ifdef __MPI
     if (GlobalC::exx_info.info_global.cal_exx)
@@ -72,7 +72,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const K_Vectors& kv, const Charg
 		{
 			//program should be stopped after this judgement
 			Exx_Opt_Orb exx_opt_orb;
-			exx_opt_orb.generate_matrix(kv);
+			exx_opt_orb.generate_matrix(kv, orb);
 			ModuleBase::timer::tick("ESolver_KS_LCAO", "beforescf");
 			return;
 		}

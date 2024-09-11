@@ -4,6 +4,7 @@
 #include "../module_base/matrix.h"
 #include "../module_base/element_basis_index.h"
 #include "module_cell/klist.h"
+#include "module_basis/module_ao/ORB_read.h"
 #include <vector>
 #include <map>
 #include <set>
@@ -12,7 +13,7 @@
 class Exx_Opt_Orb
 {
 public:
-	void generate_matrix(const K_Vectors &kv) const;
+	void generate_matrix(const K_Vectors &kv, const LCAO_Orbitals& orb) const;
 private:
 	std::vector<std::vector<RI::Tensor<double>>> cal_I( 
 		const std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t,RI::Tensor<double>>>>> &ms, 
@@ -29,6 +30,7 @@ private:
 		const std::vector<std::vector<RI::Tensor<double>>> &matrix_S,
 		const RI::Tensor<double> &matrix_V,
 		const size_t TA, const size_t IA, const size_t TB, const size_t IB,
+        const std::vector<double>& orb_cutoff,
 		const ModuleBase::Element_Basis_Index::Range &range_jles, 
 		const ModuleBase::Element_Basis_Index::IndexLNM &index_jles) const;
 	std::map<size_t,std::map<size_t,std::set<double>>> get_radial_R() const;

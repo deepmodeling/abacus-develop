@@ -23,6 +23,7 @@ class Matrix_Orbs22
     // mode:
     //    1: <lcaos lcaos|lcaos lcaos>
     void init(const int mode,
+              const LCAO_Orbitals& orb,
               const double kmesh_times,  // extend Kcut, keep dK
               const double rmesh_times); // extend Rcut, keep dR
 

@@ -54,7 +54,7 @@ public:
     Exx_LRI operator=(Exx_LRI&&);
 
 
-	void init(const MPI_Comm &mpi_comm_in, const K_Vectors &kv_in);
+	void init(const MPI_Comm &mpi_comm_in, const K_Vectors &kv_in, const LCAO_Orbitals& orb);
 	void cal_exx_force();
     void cal_exx_stress();
     std::vector<std::vector<int>> get_abfs_nchis() const;
@@ -69,6 +69,7 @@ private:
 	const Exx_Info::Exx_Info_RI &info;
 	MPI_Comm mpi_comm;
 	const K_Vectors *p_kv = nullptr;
+    std::vector<double> orb_cutoff_;
 
 	std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> lcaos;
 	std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs;
