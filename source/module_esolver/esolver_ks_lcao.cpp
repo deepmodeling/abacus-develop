@@ -854,7 +854,7 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
                                        GlobalV::DRANK);
                 }
 #ifdef __DEEPKS
-                if(GlobalV::deepks_out_labels && PARAM.inp.deepks_v_delta)
+                if(PARAM.inp.deepks_out_labels && PARAM.inp.deepks_v_delta)
                 {
                     DeePKS_domain::save_h_mat(h_mat.p, this->pv.nloc);
                 }

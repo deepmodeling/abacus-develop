@@ -359,7 +359,7 @@ void LCAO_Deepks::allocate_V_delta(const int nat, const int nks)
     {
         //init F_delta
         F_delta.create(nat, 3);
-        if(GlobalV::deepks_out_labels) 
+        if(PARAM.inp.deepks_out_labels) 
         { 
             this->init_gdmx(nat);
             this->init_gdmepsl();

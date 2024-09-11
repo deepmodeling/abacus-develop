@@ -32,7 +32,7 @@ void LCAO_Deepks_Interface::out_deepks_labels(const double& etot,
 
     // calculating deepks correction to bandgap
     // and save the results
-    if (GlobalV::deepks_out_labels)
+    if (PARAM.inp.deepks_out_labels)
     {
         // mohan updated 2024-07-25
         const std::string file_etot = PARAM.globalv.global_out_dir + "deepks_etot.npy";
@@ -191,7 +191,7 @@ void LCAO_Deepks_Interface::out_deepks_labels(const double& etot,
 
 
     // DeePKS PDM and descriptor
-    if (GlobalV::deepks_out_labels || PARAM.inp.deepks_scf)
+    if (PARAM.inp.deepks_out_labels || PARAM.inp.deepks_scf)
     {
         // this part is for integrated test of deepks
         // when deepks_scf is on, the init pdm should be same as the out pdm, so we should not recalculate the pdm
@@ -206,7 +206,7 @@ void LCAO_Deepks_Interface::out_deepks_labels(const double& etot,
 
         ld->check_descriptor(ucell, PARAM.globalv.global_out_dir);
 
-		if (GlobalV::deepks_out_labels)
+		if (PARAM.inp.deepks_out_labels)
 		{
 			LCAO_deepks_io::save_npy_d(
 					nat, 
@@ -254,7 +254,7 @@ void LCAO_Deepks_Interface::out_deepks_labels(const double& etot,
     const int nspin = GlobalV::NSPIN;
 
     /// calculating deepks correction to bandgap and save the results
-    if (GlobalV::deepks_out_labels)
+    if (PARAM.inp.deepks_out_labels)
     {
         // mohan updated 2024-07-25
         const std::string file_etot = PARAM.globalv.global_out_dir + "deepks_etot.npy";
@@ -339,7 +339,7 @@ void LCAO_Deepks_Interface::out_deepks_labels(const double& etot,
 
 
     // DeePKS PDM and descriptor
-    if (GlobalV::deepks_out_labels || PARAM.inp.deepks_scf)
+    if (PARAM.inp.deepks_out_labels || PARAM.inp.deepks_scf)
     {
         // this part is for integrated test of deepks
         // so it is printed no matter even if deepks_out_labels is not used
@@ -355,7 +355,7 @@ void LCAO_Deepks_Interface::out_deepks_labels(const double& etot,
 
         ld->check_descriptor(ucell, PARAM.globalv.global_out_dir);
 
-        if (GlobalV::deepks_out_labels)
+        if (PARAM.inp.deepks_out_labels)
         {
             LCAO_deepks_io::save_npy_d(nat, 
                                        ld->des_per_atom, 

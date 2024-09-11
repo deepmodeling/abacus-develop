@@ -397,7 +397,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
 
 #ifdef __DEEPKS
         // DeePKS force
-        if (GlobalV::deepks_out_labels) // not parallelized yet
+        if (PARAM.inp.deepks_out_labels) // not parallelized yet
         {
             const std::string file_ftot = PARAM.globalv.global_out_dir + "deepks_ftot.npy";
             LCAO_deepks_io::save_npy_f(fcs, 
@@ -617,7 +617,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
         } // end symmetry
 
 #ifdef __DEEPKS
-        if (GlobalV::deepks_out_labels) // not parallelized yet
+        if (PARAM.inp.deepks_out_labels) // not parallelized yet
         {
             const std::string file_s = PARAM.globalv.global_out_dir + "deepks_sbase.npy";
             LCAO_deepks_io::save_npy_s(scs,
@@ -639,7 +639,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
                 }
             }
         }
-        if (GlobalV::deepks_out_labels) // not parallelized yet
+        if (PARAM.inp.deepks_out_labels) // not parallelized yet
         {
 			const std::string file_s = PARAM.globalv.global_out_dir + "deepks_stot.npy";
 			LCAO_deepks_io::save_npy_s(
