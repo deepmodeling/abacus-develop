@@ -5,7 +5,6 @@
 #include "module_io/input_conv.h"
 #include "module_io/nscf_band.h"
 #include "module_io/output_log.h"
-#include "module_io/read_wfc_pw.h"
 #include "module_io/write_dos_pw.h"
 #include "module_io/write_istate_info.h"
 #include "module_io/write_wfc_pw.h"
@@ -219,15 +218,8 @@ void ESolver_KS_PW<T, Device>::before_scf(const int istep)
         GlobalC::ucell.cal_ux();
     }
 
-    //! init density method only for KS_PW
-    //! other methods are in pelec->init_scf
-    if (PARAM.inp.init_chg == "wfc" && istep == 0)
-    {
-        ModuleIO::read_wfc_to_rho(this->pw_wfc, this->kv.get_nkstot(), this->kv.isk, *(this->pelec->charge));
-    }
-
     //! calculate the total local pseudopotential in real space
-    this->pelec->init_scf(istep, this->sf.strucFac);
+    this->pelec->init_scf(istep, this->sf.strucFac, (void*)this->pw_wfc);
 
     //! output the initial charge density
     if (PARAM.inp.out_chg[0] == 2)

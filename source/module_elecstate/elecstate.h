@@ -94,7 +94,14 @@ class ElecState
         return;
     }
 
-    void init_scf(const int istep, const ModuleBase::ComplexMatrix& strucfac);
+    /**
+     * @brief Init rho_core, init rho, renormalize rho, init pot
+     * 
+     * @param istep i-th step
+     * @param strucfac structure factor
+     * @param wfcpw PW basis for wave function if needed
+     */
+    void init_scf(const int istep, const ModuleBase::ComplexMatrix& strucfac, const void* wfcpw = nullptr);
     std::string classname = "elecstate";
 
     int iter = 0;                                  ///< scf iteration

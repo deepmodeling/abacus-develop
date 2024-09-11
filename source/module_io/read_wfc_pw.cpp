@@ -7,6 +7,8 @@
 #include "module_base/parallel_global.h"
 #include "module_base/timer.h"
 #include "module_base/vector3.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_elecstate/module_charge/symmetry_rho.h"
 
 void ModuleIO::read_wfc_pw(const std::string& filename,
                            const ModulePW::PW_Basis_K* pw_wfc,
@@ -364,7 +366,7 @@ void ModuleIO::read_wfc_to_rho(const ModulePW::PW_Basis_K* pw_wfc,
 
     // read occupation numbers
     ModuleBase::matrix wg_tmp(nkstot, nbands);
-    if (GlobalV::MY_RANK == 0)
+    if (my_rank == 0)
     {
         std::string filename = GlobalV::global_readin_dir + "istate.info";
         std::ifstream ifs(filename);
@@ -401,7 +403,7 @@ void ModuleIO::read_wfc_to_rho(const ModulePW::PW_Basis_K* pw_wfc,
     for (int ik = 0; ik < pw_wfc->nks; ++ik)
     {
         int is = 0;
-        if (GlobalV::NSPIN == 2)
+        if (nspin == 2)
         {
             is = isk[ik];
         }
@@ -431,9 +433,17 @@ void ModuleIO::read_wfc_to_rho(const ModulePW::PW_Basis_K* pw_wfc,
 
 #ifdef __MPI
     chg.init_chgmpi();
-    for (int is = 0; is < GlobalV::NSPIN; ++is)
+    for (int is = 0; is < nspin; ++is)
     {
         chg.reduce_diff_pools(chg.rho[is]);
     }
 #endif
+
+    // Since rho is calculated by psi^2, it is not symmetric. We need to rearrange it. 
+    Symmetry_rho srho;
+    for (int is = 0; is < nspin; is++)
+    {
+        srho.begin(is, chg, chg.rhopw, GlobalC::Pgrid, GlobalC::ucell.symm);
+    }
+
 }

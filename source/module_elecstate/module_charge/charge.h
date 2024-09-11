@@ -62,12 +62,19 @@ class Charge
 
     /**
      * @brief Init charge density from file or atomic pseudo-wave-functions
-     * 
-     * @param eferm_iout fermi energy to be initialized
-     * @param strucFac [in] structure factor 
+     *
+     * @param eferm_iout [out] fermi energy to be initialized
+     * @param strucFac [in] structure factor
+     * @param nkstot [in] total number of k points
+     * @param isk [in] k points index
+     * @param wfcpw [in] PW basis for wave function if needed
      */
-    void init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMatrix& strucFac);
-    
+    void init_rho(elecstate::efermi& eferm_iout,
+                  const ModuleBase::ComplexMatrix& strucFac,
+                  const int nkstot,
+                  const std::vector<int>& isk,
+                  const void* wfcpw = nullptr);
+
     void allocate(const int &nspin_in);
 
     void atomic_rho(const int spin_number_need,

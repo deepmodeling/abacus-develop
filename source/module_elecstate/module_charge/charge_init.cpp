@@ -16,11 +16,16 @@
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 #include "module_io/rho_io.h"
 #include "module_io/rhog_io.h"
+#include "module_io/read_wfc_pw.h"
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
 #endif
 
-void Charge::init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMatrix& strucFac)
+void Charge::init_rho(elecstate::efermi& eferm_iout,
+                      const ModuleBase::ComplexMatrix& strucFac,
+                      const int nkstot,
+                      const std::vector<int>& isk,
+                      const void* wfcpw)
 {
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "init_chg", PARAM.inp.init_chg);
 
@@ -197,6 +202,15 @@ void Charge::init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMa
 #ifdef __MPI
     this->init_chgmpi();
 #endif
+    if (PARAM.inp.init_chg == "wfc")
+    {
+        if (wfcpw == nullptr)
+        {
+            ModuleBase::WARNING_QUIT("Charge::init_rho", "wfc is only supported for PW-KSDFT.");
+        }
+        const ModulePW::PW_Basis_K* pw_wfc = reinterpret_cast<ModulePW::PW_Basis_K*>(const_cast<void*>(wfcpw));
+        ModuleIO::read_wfc_to_rho(pw_wfc, nkstot, isk, *this);
+    }
 }
 
 //==========================================================
