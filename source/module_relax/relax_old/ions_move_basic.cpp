@@ -20,6 +20,7 @@ double Ions_Move_Basic::relax_bfgs_rmax = -1.0; // default is 0.8
 double Ions_Move_Basic::relax_bfgs_rmin = -1.0; // default is 1e-5
 double Ions_Move_Basic::relax_bfgs_init = -1.0; // default is 0.5
 double Ions_Move_Basic::best_xxx = 1.0;
+std::string Ions_Move_Basic::relax_method = "bfgs";
 
 int Ions_Move_Basic::out_stru = 0;
 

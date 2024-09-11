@@ -245,8 +245,7 @@ void Input_Conv::Convert()
 
     GlobalV::CAL_STRESS = PARAM.inp.cal_stress;
 
-
-    GlobalV::RELAX_METHOD = PARAM.inp.relax_method;
+    Ions_Move_Basic::relax_method = PARAM.inp.relax_method;
 
 
     Ions_Move_CG::RELAX_CG_THR = PARAM.inp.relax_cg_thr; // pengfei add 2013-09-09
