@@ -29,7 +29,7 @@ inline RI::Tensor<std::complex<double>> tensor_conj(const RI::Tensor<std::comple
     return r;
 }
 template<typename Tdata, typename Tmatrix>
-auto RI_2D_Comm::split_m2D_ktoR(const K_Vectors& kv, const std::vector<const Tmatrix*>& mks_2D, const Parallel_2D& pv, const int nspin)
+auto RI_2D_Comm::split_m2D_ktoR(const K_Vectors & kv, const std::vector<const Tmatrix*>&mks_2D, const Parallel_2D & pv, const int nspin, const bool spgsym)
 -> std::vector<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>>
 {
 	ModuleBase::TITLE("RI_2D_Comm","split_m2D_ktoR");
@@ -45,14 +45,10 @@ auto RI_2D_Comm::split_m2D_ktoR(const K_Vectors& kv, const std::vector<const Tma
 		const std::vector<int> ik_list = RI_2D_Comm::get_ik_list(kv, is_k);
 		for(const TC &cell : RI_Util::get_Born_von_Karmen_cells(period))
 		{
-			RI::Tensor<Tdata> mR_2D;
-			for(const int ik : ik_list)
-			{
-                using Tdata_m = typename Tmatrix::value_type;
-                RI::Tensor<Tdata_m> mk_2D = RI_Util::Vector_to_Tensor<Tdata_m>(*mks_2D[ik], pv.get_col_size(), pv.get_row_size());
-				const Tdata_m frac = SPIN_multiple
-					* RI::Global_Func::convert<Tdata_m>( std::exp(
-                        -ModuleBase::TWO_PI * ModuleBase::IMAG_UNIT * (kv.kvec_c[ik] * (RI_Util::array3_to_Vector3(cell) * GlobalC::ucell.latvec))));
+            RI::Tensor<Tdata> mR_2D;
+            int ik_full = 0;
+            for (const int ik : ik_list)
+            {
                 auto set_mR_2D = [&mR_2D](auto&& mk_frac) {
                     if (mR_2D.empty()) {
                         mR_2D = RI::Global_Func::convert<Tdata>(mk_frac);
@@ -61,15 +57,30 @@ auto RI_2D_Comm::split_m2D_ktoR(const K_Vectors& kv, const std::vector<const Tma
                             = mR_2D + RI::Global_Func::convert<Tdata>(mk_frac);
                     }
                 };
-                if (static_cast<int>(std::round(SPIN_multiple * kv.wk[ik]
-                                                * kv.get_nkstot_full()))
-                    == 2) {
-                    set_mR_2D(mk_2D * (frac * 0.5) + tensor_conj(mk_2D * (frac * 0.5)));
-                } else {
-                    set_mR_2D(mk_2D * frac);
+                using Tdata_m = typename Tmatrix::value_type;
+                if (!spgsym)
+                {
+                    RI::Tensor<Tdata_m> mk_2D = RI_Util::Vector_to_Tensor<Tdata_m>(*mks_2D[ik], pv.get_col_size(), pv.get_row_size());
+                    const Tdata_m frac = SPIN_multiple
+                        * RI::Global_Func::convert<Tdata_m>(std::exp(
+                            -ModuleBase::TWO_PI * ModuleBase::IMAG_UNIT * (kv.kvec_c[ik] * (RI_Util::array3_to_Vector3(cell) * GlobalC::ucell.latvec))));
+                    if (static_cast<int>(std::round(SPIN_multiple * kv.wk[ik] * kv.get_nkstot_full())) == 2)
+                        { set_mR_2D(mk_2D * (frac * 0.5) + tensor_conj(mk_2D * (frac * 0.5))); }
+                    else { set_mR_2D(mk_2D * frac); }
+                }
+                else
+                { // traverse kstar, ik means ik_ibz
+                    for (auto& isym_kvd : kv.kstars[ik % ik_list.size()])
+                    {
+                        RI::Tensor<Tdata_m> mk_2D = RI_Util::Vector_to_Tensor<Tdata_m>(*mks_2D[ik_full + is_k * kv.get_nkstot_full()], pv.get_col_size(), pv.get_row_size());
+                        const Tdata_m frac = SPIN_multiple
+                            * RI::Global_Func::convert<Tdata_m>(std::exp(
+                                -ModuleBase::TWO_PI * ModuleBase::IMAG_UNIT * ((isym_kvd.second * GlobalC::ucell.G) * (RI_Util::array3_to_Vector3(cell) * GlobalC::ucell.latvec))));
+                        set_mR_2D(mk_2D * frac);
+                        ++ik_full;
+                    }
                 }
             }
-
 			for(int iwt0_2D=0; iwt0_2D!=mR_2D.shape[0]; ++iwt0_2D)
 			{
 				const int iwt0 =
@@ -100,8 +111,8 @@ auto RI_2D_Comm::split_m2D_ktoR(const K_Vectors& kv, const std::vector<const Tma
                     mR_a2D(iw0_b,iw1_b) = mR_2D(iwt0_2D, iwt1_2D);
 				}
 			}
-		}
-	}
+        }
+    }
 	ModuleBase::timer::tick("RI_2D_Comm", "split_m2D_ktoR");
 	return mRs_a2D;
 }

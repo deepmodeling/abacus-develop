@@ -22,7 +22,8 @@ void init_basis_lcao(Parallel_Orbitals& pv,
         const double &lcao_dr,
         const double &lcao_rmax,
 		UnitCell& ucell,
-        TwoCenterBundle& two_center_bundle);
+        TwoCenterBundle& two_center_bundle,
+        LCAO_Orbitals& orb);
 
 
 void build_Nonlocal_mu_new(const Parallel_Orbitals& pv,
@@ -40,6 +41,7 @@ void build_Nonlocal_mu_new(const Parallel_Orbitals& pv,
 void grid_prepare(const Grid_Technique& gt,
                   Gint_Gamma& gint_gamma,
                   Gint_k& gint_k,
+                  const LCAO_Orbitals& orb,
                   const ModulePW::PW_Basis& rhopw,
                   const ModulePW::PW_Basis_Big& bigpw);
 
@@ -170,7 +172,7 @@ void build_ST_new(ForceStressArrays& fsr,
  */
 void zeros_HSR(const char& mtype, LCAO_HS_Arrays& HS_arrays);
 
-void divide_HS_in_frag(const bool isGamma, Parallel_Orbitals& pv, const int& nks);
+void divide_HS_in_frag(const bool isGamma, Parallel_Orbitals& pv, const int& nks, const LCAO_Orbitals& orb);
 
 template <typename T>
 void set_mat2d(const int& global_ir,

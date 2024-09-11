@@ -155,7 +155,8 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
                     this->itmin_start = istart[it];
                 }
             }
-            this->getgroup(nrot_out, nrotk_out, ofs_running, pos_spinup.data());
+            this->getgroup(nrot_out, nrotk_out, ofs_running, this->nop, this->symop, this->gmatrix, this->gtrans,
+                pos_spinup.data(), this->rotpos, this->index, this->itmin_type, this->itmin_start, this->istart, this->na);
             // recover na and istart
             for (int it = 0;it < ntype;++it)
             {
@@ -166,11 +167,14 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
             }
             // For AFM analysis End
             //------------------------------------------------------------
-        } else {
+        }
+        else
+        {
             // get the real symmetry operations according to the input structure
             // nrot_out: the number of pure point group rotations
             // nrotk_out: the number of all space group operations
-            this->getgroup(nrot_out, nrotk_out, ofs_running, this->newpos);
+            this->getgroup(nrot_out, nrotk_out, ofs_running, this->nop, this->symop, this->gmatrix, this->gtrans,
+                this->newpos, this->rotpos, this->index, this->itmin_type, this->itmin_start, this->istart, this->na);
         }
         };
 
@@ -289,16 +293,16 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
     // 3. output to running.log
     //----------------------------------
     // output the point group
-    this->pointgroup(this->nrot, this->pgnumber, this->pgname, this->gmatrix, ofs_running);
+    bool valid_group = this->pointgroup(this->nrot, this->pgnumber, this->pgname, this->gmatrix, ofs_running);
 	ModuleBase::GlobalFunc::OUT(ofs_running,"POINT GROUP", this->pgname);
     // output the space group
-    this->pointgroup(this->nrotk, this->spgnumber, this->spgname, this->gmatrix, ofs_running);
+    valid_group = this->pointgroup(this->nrotk, this->spgnumber, this->spgname, this->gmatrix, ofs_running);
     ModuleBase::GlobalFunc::OUT(ofs_running, "POINT GROUP IN SPACE GROUP", this->spgname);
 
     //-----------------------------
     // 4. For the case where point group is not complete due to symmetry_prec
     //-----------------------------
-    if (!this->valid_group)
+    if (!valid_group)
     {   // select the operations that have the inverse
         std::vector<int>invmap(this->nrotk, -1);
         this->gmatrix_invmap(this->gmatrix, this->nrotk, invmap.data());
@@ -883,7 +887,9 @@ void Symmetry::lattice_type(
 }
 
 
-void Symmetry::getgroup(int& nrot, int& nrotk, std::ofstream& ofs_running, double* pos)
+void Symmetry::getgroup(int& nrot, int& nrotk, std::ofstream& ofs_running, const int& nop,
+    const ModuleBase::Matrix3* symop, ModuleBase::Matrix3* gmatrix, ModuleBase::Vector3<double>* gtrans,
+    double* pos, double* rotpos, int* index, const int itmin_type, const int itmin_start, int* istart, int* na)const
 {
     ModuleBase::TITLE("Symmetry", "getgroup");
 
@@ -907,9 +913,7 @@ void Symmetry::getgroup(int& nrot, int& nrotk, std::ofstream& ofs_running, doubl
     //std::cout << "nop = " <<nop <<std::endl;
     for (int i = 0; i < nop; ++i)
     {
-    //    std::cout << "symop = " << symop[i].e11 <<" "<< symop[i].e12 <<" "<< symop[i].e13 <<" "<< symop[i].e21 <<" "<< symop[i].e22 <<" "<< symop[i].e23 <<" "<< symop[i].e31 <<" "<< symop[i].e32 <<" "<< symop[i].e33 << std::endl;
-        this->checksym(this->symop[i], this->gtrans[i], pos);
-      //  std::cout << "s_flag =" <<s_flag<<std::endl;
+        bool s_flag = this->checksym(symop[i], gtrans[i], pos, rotpos, index, itmin_type, itmin_start, istart, na);
         if (s_flag == 1)
         {
 			//------------------------------
@@ -987,7 +991,8 @@ void Symmetry::getgroup(int& nrot, int& nrotk, std::ofstream& ofs_running, doubl
     return;
 }
 
-void Symmetry::checksym(ModuleBase::Matrix3 &s, ModuleBase::Vector3<double> &gtrans, double* pos)
+bool Symmetry::checksym(const ModuleBase::Matrix3& s, ModuleBase::Vector3<double>& gtrans,
+    double* pos, double* rotpos, int* index, const int itmin_type, const int itmin_start, int* istart, int* na)const
 {
 	//----------------------------------------------
     // checks whether a point group symmetry element 
@@ -996,7 +1001,7 @@ void Symmetry::checksym(ModuleBase::Matrix3 &s, ModuleBase::Vector3<double> &gtr
     // the start atom index.
     bool no_diff = false;
     ModuleBase::Vector3<double> trans(2.0, 2.0, 2.0);
-    s_flag = 0;
+    bool s_flag = 0;
 
     for (int it = 0; it < ntype; it++)
     {
@@ -1051,9 +1056,9 @@ void Symmetry::checksym(ModuleBase::Matrix3 &s, ModuleBase::Vector3<double> &gtr
 	//---------------------------------------------------------
     // itmin_start = the start atom positions of species itmin
 	//---------------------------------------------------------
-    sptmin.x = rotpos[itmin_start*3];
-    sptmin.y = rotpos[itmin_start*3+1];
-    sptmin.z = rotpos[itmin_start*3+2];
+    // (s)tart (p)osition of atom (t)ype which has (min)inal number.
+    ModuleBase::Vector3<double> sptmin(rotpos[itmin_start * 3], rotpos[itmin_start * 3 + 1], rotpos[itmin_start * 3 + 2]);
+
     for (int i = itmin_start; i < itmin_start + na[itmin_type]; ++i)
     {
         //set up the current test std::vector "gtrans"
@@ -1143,13 +1148,12 @@ void Symmetry::checksym(ModuleBase::Matrix3 &s, ModuleBase::Vector3<double> &gtr
         gtrans.y = trans.y;
         gtrans.z = trans.z;
     }
-    return;
+    return s_flag;
 }
 
 void Symmetry::pricell(double* pos, const Atom* atoms)
 {
     bool no_diff = false;
-    s_flag = 0;
     ptrans.clear();
 
     for (int it = 0; it < ntype; it++)
@@ -1184,10 +1188,10 @@ void Symmetry::pricell(double* pos, const Atom* atoms)
 
 	//---------------------------------------------------------
     // itmin_start = the start atom positions of species itmin
-	//---------------------------------------------------------
-    sptmin.x = pos[itmin_start*3];
-    sptmin.y = pos[itmin_start*3+1];
-    sptmin.z = pos[itmin_start*3+2];
+    //---------------------------------------------------------
+    // (s)tart (p)osition of atom (t)ype which has (min)inal number.
+    ModuleBase::Vector3<double> sptmin(pos[itmin_start * 3], pos[itmin_start * 3 + 1], pos[itmin_start * 3 + 2]);
+
     for (int i = itmin_start; i < itmin_start + na[itmin_type]; ++i)
     {
         //set up the current test std::vector "gtrans"
@@ -1906,7 +1910,7 @@ void Symmetry::gtrans_convert(const ModuleBase::Vector3<double>* va, ModuleBase:
           vb[i]=va[i]*a*bi;
     }
 }
-void Symmetry::gmatrix_invmap(const ModuleBase::Matrix3* s, const int n, int* invmap)
+void Symmetry::gmatrix_invmap(const ModuleBase::Matrix3* s, const int n, int* invmap) const
 {
     ModuleBase::Matrix3 eig(1, 0, 0, 0, 1, 0, 0, 0, 1);
     ModuleBase::Matrix3 tmp;

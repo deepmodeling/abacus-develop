@@ -35,6 +35,7 @@ void output_dHR(const int& istep,
                 LCAO_HS_Arrays& HS_Arrays,
                 Grid_Driver& grid, // mohan add 2024-04-06
                 const TwoCenterBundle& two_center_bundle,
+                const LCAO_Orbitals& orb,
                 const K_Vectors& kv,
                 const bool& binary = false,
                 const double& sparse_threshold = 1e-10);
@@ -45,6 +46,7 @@ void output_TR(const int istep,
                LCAO_HS_Arrays& HS_Arrays,
                Grid_Driver& grid,
                const TwoCenterBundle& two_center_bundle,
+               const LCAO_Orbitals& orb,
                const std::string& TR_filename = "data-TR-sparse_SPIN0.csr",
                const bool& binary = false,
                const double& sparse_threshold = 1e-10);
