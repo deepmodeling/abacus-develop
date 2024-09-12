@@ -58,7 +58,7 @@ TEST_F(AtomPseudoTest, SetDSo)
 	atom_pseudo->set_d_so(d_so_in,nproj,nproj_soc,has_so);
 	EXPECT_NEAR(atom_pseudo->d_so(0,0,0).real(),1e-8,1e-7);
 	EXPECT_NEAR(atom_pseudo->d_so(0,0,0).imag(),1e-8,1e-7);
-	GlobalV::LSPINORB = true;
+	PARAM.input.lspinorb = true;
 	atom_pseudo->set_d_so(d_so_in,nproj,nproj_soc,has_so);
 	EXPECT_NEAR(atom_pseudo->d_so(0,0,0).real(),1e-8,1e-7);
 	EXPECT_NEAR(atom_pseudo->d_so(0,0,0).imag(),1e-8,1e-7);
