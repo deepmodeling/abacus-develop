@@ -35,7 +35,7 @@ case "${with_openmpi}" in
     pkg_install_dir="${INSTALLDIR}/openmpi-${openmpi_ver}"
     #pkg_install_dir="${HOME}/apps/openmpi/${openmpi_ver}-gcc8"
     install_lock_file="$pkg_install_dir/install_successful"
-    url="https://download.open-mpi.org/release/open-mpi/${openmpi_ver:0:4}/${openmpi_pkg}"
+    url="https://download.open-mpi.org/release/open-mpi/$v{openmpi_ver:0:3}/${openmpi_pkg}"
     if verify_checksums "${install_lock_file}"; then
       echo "openmpi-${openmpi_ver} is already installed, skipping it."
     else
