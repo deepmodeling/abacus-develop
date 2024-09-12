@@ -263,8 +263,6 @@ void Input_Conv::Convert()
     // diagonalization  (5/5)
     //----------------------------------------------------------
     GlobalV::PW_DIAG_NDIM = PARAM.inp.pw_diag_ndim;
-
-    GlobalV::PW_DIAG_THR = PARAM.inp.pw_diag_thr;
     GlobalV::NB2D = PARAM.inp.nb2d;
 
     //----------------------------------------------------------
@@ -297,9 +295,7 @@ void Input_Conv::Convert()
 
     if (GlobalV::NSPIN == 4)
     {
-        GlobalV::NONCOLIN = PARAM.inp.noncolin;
         // wavefunctions are spinors with 2 components
-        GlobalV::NPOL = 2;
         // set the domag variable to make a spin-orbit calculation with zero
         // magnetization
         GlobalV::DOMAG = false;
@@ -313,10 +309,8 @@ void Input_Conv::Convert()
         }
     } else {
         GlobalV::LSPINORB = false;
-        GlobalV::NONCOLIN = false;
         GlobalV::DOMAG = false;
         GlobalV::DOMAG_Z = false;
-        GlobalV::NPOL = 1;
     }
 
     //----------------------------------------------------------
