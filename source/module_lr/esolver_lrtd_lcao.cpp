@@ -206,6 +206,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
     }
 #endif
     this->pelec = new elecstate::ElecStateLCAO<T>();
+    orb_cutoff_ = ks_sol.orb_.cutoffs();
 }
 
 template <typename T, typename TR>
@@ -242,6 +243,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
 
     LCAO_Orbitals orb;
     two_center_bundle_.to_LCAO_Orbitals(orb, inp.lcao_ecut, inp.lcao_dk, inp.lcao_dr, inp.lcao_rmax);
+    orb_cutoff_ = orb.cutoffs();
 
     this->set_dimension();
     //  setup 2d-block distribution for AO-matrix and KS wfc
@@ -388,7 +390,7 @@ void LR::ESolver_LR<T, TR>::runner(int istep, UnitCell& cell)
         for (int is = 0;is < nspin;++is)
         {
             if (nspin == 2) { std::cout << "Calculating " << spin_type[is] << " excitations" << std::endl; }
-            hamilt::Hamilt<T>* phamilt = new HamiltCasidaLR<T>(xc_kernel, nspin, this->nbasis, this->nocc, this->nvirt, this->ucell, GlobalC::GridD, this->psi_ks, this->eig_ks,
+            hamilt::Hamilt<T>* phamilt = new HamiltCasidaLR<T>(xc_kernel, nspin, this->nbasis, this->nocc, this->nvirt, this->ucell, orb_cutoff_, GlobalC::GridD, this->psi_ks, this->eig_ks,
 #ifdef __EXX
                 this->exx_lri, this->exx_info.info_global.hybrid_alpha,
 #endif

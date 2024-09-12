@@ -141,6 +141,7 @@ TEST_F(TNLTest, testTVNLcd2cd)
                                                                                                     kvec_d_in,
                                                                                                     HR,
                                                                                                     &ucell,
+                                                                                                    {1.0},
                                                                                                     &gd,
                                                                                                     &intor_);
     hamilt::Operator<std::complex<double>>* op1
@@ -148,6 +149,7 @@ TEST_F(TNLTest, testTVNLcd2cd)
                                                                                                     kvec_d_in,
                                                                                                     HR,
                                                                                                     &ucell,
+                                                                                                    {1.0},
                                                                                                     &gd,
                                                                                                     &intor_);
     // merge two Operators to a chain

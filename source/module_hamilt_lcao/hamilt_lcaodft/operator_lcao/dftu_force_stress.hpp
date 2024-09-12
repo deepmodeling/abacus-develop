@@ -64,7 +64,6 @@ void DFTU<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
             const ModuleBase::Vector3<double>& tau1 = adjs.adjacent_tau[ad];
             const Atom* atom1 = &ucell->atoms[T1];
 
-            const LCAO_Orbitals& orb = LCAO_Orbitals::get_const_instance();
             auto all_indexes = paraV->get_indexes_row(iat1);
             auto col_indexes = paraV->get_indexes_col(iat1);
             // insert col_indexes into all_indexes to get universal set with no repeat elements

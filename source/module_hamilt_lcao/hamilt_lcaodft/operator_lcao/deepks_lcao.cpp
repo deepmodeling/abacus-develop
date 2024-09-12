@@ -89,12 +89,11 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(Grid_Driver* Gr
             const ModuleBase::Vector3<double>& tau1 = adjs.adjacent_tau[ad1];
             const ModuleBase::Vector3<int>& R_index1 = adjs.box[ad1];
             // choose the real adjacent atoms
-            const LCAO_Orbitals& orb = LCAO_Orbitals::get_const_instance();
             // Note: the distance of atoms should less than the cutoff radius,
             // When equal, the theoretical value of matrix element is zero,
             // but the calculated value is not zero due to the numerical error, which would lead to result changes.
             if (this->ucell->cal_dtau(iat0, iat1, R_index1).norm() * this->ucell->lat0
-                < orb.Phi[T1].getRcut() + orb.Alpha[0].getRcut())
+                < ptr_orb_->Phi[T1].getRcut() + ptr_orb_->Alpha[0].getRcut())
             {
                 is_adj[ad1] = true;
             }
@@ -310,8 +309,6 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
     const Parallel_Orbitals* paraV = this->H_V_delta->get_paraV();
     const int npol = this->ucell->get_npol();
 
-    const LCAO_Orbitals& orb = LCAO_Orbitals::get_const_instance();
-
     // 1. calculate <psi|alpha> for each pair of atoms
     for (int iat0 = 0; iat0 < this->ucell->nat; iat0++)
     {
@@ -327,9 +324,9 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
         if (!GlobalV::deepks_equiv)
         {
             int ib = 0;
-            for (int L0 = 0; L0 <= orb.Alpha[0].getLmax(); ++L0)
+            for (int L0 = 0; L0 <= ptr_orb_->Alpha[0].getLmax(); ++L0)
             {
-                for (int N0 = 0; N0 < orb.Alpha[0].getNchi(L0); ++N0)
+                for (int N0 = 0; N0 < ptr_orb_->Alpha[0].getNchi(L0); ++N0)
                 {
                     const int inl = GlobalC::ld.get_inl(T0, I0, L0, N0);
                     const double* pgedm = GlobalC::ld.get_gedms(inl);
@@ -354,7 +351,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
             int nproj = 0;
             for (int il = 0; il < GlobalC::ld.get_lmaxd() + 1; il++)
             {
-                nproj += (2 * il + 1) * orb.Alpha[0].getNchi(il);
+                nproj += (2 * il + 1) * ptr_orb_->Alpha[0].getNchi(il);
             }
             for (int iproj = 0; iproj < nproj; iproj++)
             {

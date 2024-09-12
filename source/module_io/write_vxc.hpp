@@ -195,6 +195,7 @@ void write_Vxc(const int nspin,
     Gint_Gamma& gint_gamma, // mohan add 2024-04-01
     Gint_k& gint_k,         // mohan add 2024-04-01
     const K_Vectors& kv,
+    const std::vector<double>& orb_cutoff,
     const ModuleBase::matrix& wg,
     Grid_Driver& gd
 #ifdef __EXX
@@ -242,6 +243,7 @@ void write_Vxc(const int nspin,
                                                                         potxc,
                                                                         &vxcs_R_ao[is],
                                                                         &ucell,
+                                                                        orb_cutoff,
                                                                         &gd);
 
         vxcs_op_ao[is]->contributeHR();

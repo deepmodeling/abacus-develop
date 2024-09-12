@@ -63,7 +63,7 @@ namespace ModuleESolver
 //! mohan add 2024-05-11
 //------------------------------------------------------------------------------
 template <typename TK, typename TR>
-ESolver_KS_LCAO<TK, TR>::ESolver_KS_LCAO(): orb_(GlobalC::ORB)
+ESolver_KS_LCAO<TK, TR>::ESolver_KS_LCAO()
 {
     this->classname = "ESolver_KS_LCAO";
     this->basisname = "LCAO";
@@ -463,6 +463,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners()
             this->GG,
             this->GK,
             this->kv,
+            orb_.cutoffs(),
             this->pelec->wg,
             GlobalC::GridD
 #ifdef __EXX
@@ -490,6 +491,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners()
             this->kv,
             this->pelec->wg,
             GlobalC::GridD,
+            orb_.cutoffs(),
             this->two_center_bundle_
 #ifdef __EXX
             , this->exx_lri_double ? &this->exx_lri_double->Hexxs : nullptr
@@ -1266,6 +1268,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
                                                                   this->kv.kvec_d,
                                                                   &hR,
                                                                   &GlobalC::ucell,
+                                                                  orb_.cutoffs(),
                                                                   &GlobalC::GridD,
                                                                   two_center_bundle_.kinetic_orb.get());
 
