@@ -228,9 +228,12 @@ void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<double, double
                     for(int is=0;is<dm->get_DMR_vector().size();is++)
                     {
                         auto* tmp = dm->get_DMR_vector()[is]->find_matrix(ibt1, ibt2, 0, 0, 0);
-#ifdef __DEBUG
-                        assert(tmp != nullptr);
-#endif
+                        if(tmp == nullptr)
+                        {
+                            // in case of no deepks_scf but out_deepks_label, size of DMR would mismatch with deepks-orbitals
+                            dm_current = nullptr; 
+                            break;
+                        }
                         dm_current = tmp->get_pointer();
                         for(int idm=0;idm<row_size*col_size;idm++)
                         {
