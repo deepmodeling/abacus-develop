@@ -108,10 +108,13 @@ void ReadInput::set_globalv_bcast()
 
     add_bool_bcast(sys.gamma_only_pw);
     add_bool_bcast(sys.gamma_only_local);
+    
     add_string_bcast(sys.global_out_dir);
     add_string_bcast(sys.global_readin_dir);
     add_string_bcast(sys.global_stru_dir);
     add_string_bcast(sys.global_matrix_dir);
+    add_string_bcast(sys.global_in_card);
+
     add_bool_bcast(sys.double_grid);
     add_string_bcast(sys.device_flag);
     add_double_bcast(sys.uramping);

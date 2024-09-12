@@ -68,6 +68,7 @@ int GSIZE = DSIZE;
 //----------------------------------------------------------
 // EXPLAIN : The input file name and directory
 //----------------------------------------------------------
+
 std::string stru_file = "STRU";
 
 
