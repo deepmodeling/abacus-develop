@@ -87,7 +87,7 @@ void toWannier90_PW::cal_Mmn(
         std::string fileaddress = PARAM.globalv.global_out_dir + wannier_file_name + ".mmn";
         mmn_file.open(fileaddress.c_str(), std::ios::out);
 
-        time_t time_now = time(NULL);
+        time_t time_now = time(nullptr);
         mmn_file << " Created on " << ctime(&time_now);
         mmn_file << std::setw(12) << num_bands << std::setw(12) << cal_num_kpts << std::setw(12) << nntot << std::endl;
     }
@@ -126,7 +126,8 @@ void toWannier90_PW::cal_Mmn(
         }
     }
 
-    if (GlobalV::MY_RANK == 0) mmn_file.close();
+    if (GlobalV::MY_RANK == 0) { mmn_file.close();
+}
 
 }
 
@@ -143,7 +144,7 @@ void toWannier90_PW::cal_Amn(
 
     if (GlobalV::MY_RANK == 0)
     {
-        time_t time_now = time(NULL);
+        time_t time_now = time(nullptr);
         std::string fileaddress = PARAM.globalv.global_out_dir + wannier_file_name + ".amn";
         Amn_file.open(fileaddress.c_str(), std::ios::out);
         Amn_file << " Created on " << ctime(&time_now);
@@ -174,7 +175,8 @@ void toWannier90_PW::cal_Amn(
         }
     }
 
-    if (GlobalV::MY_RANK == 0) Amn_file.close();
+    if (GlobalV::MY_RANK == 0) { Amn_file.close();
+}
 
 }
 
@@ -222,12 +224,13 @@ void toWannier90_PW::out_unk(
                 }
                 else if (GlobalV::NSPIN == 2)
                 {
-                    if (wannier_spin == "up")
+                    if (wannier_spin == "up") {
                         name << PARAM.globalv.global_out_dir << "UNK" << std::setw(5) << std::setfill('0')
                             << ik + 1 - start_k_index << ".1";
-                    else if (wannier_spin == "down")
+                    } else if (wannier_spin == "down") {
                         name << PARAM.globalv.global_out_dir << "UNK" << std::setw(5) << std::setfill('0')
                             << ik + 1 - start_k_index << ".2";
+}
                 }
                 if (wvfn_formatted)
                 {
@@ -330,10 +333,11 @@ void toWannier90_PW::out_unk(
 
             if (GlobalV::RANK_IN_POOL == 0)
             {
-                if (wvfn_formatted)
+                if (wvfn_formatted) {
                     unkfile.close();
-                else
+                } else {
                     unkfile_b.close();
+}
             }
         }
     }
@@ -548,9 +552,11 @@ void toWannier90_PW::gen_radial_function_in_q(std::vector<ModuleBase::matrix> &r
         {
             int tmp_size = 0;
 
-            if (L[wannier_index] == -1 || L[wannier_index] == -2 || L[wannier_index] == -3) tmp_size = 2;
+            if (L[wannier_index] == -1 || L[wannier_index] == -2 || L[wannier_index] == -3) { tmp_size = 2;
+}
 
-            if (L[wannier_index] == -4 || L[wannier_index] == -5) tmp_size = 3;
+            if (L[wannier_index] == -4 || L[wannier_index] == -5) { tmp_size = 3;
+}
 
             tmp_radial.create(tmp_size, GlobalV::NQX);
 
@@ -630,8 +636,10 @@ void toWannier90_PW::produce_trial_in_pw(
             if (L[wannier_index] == -1)
             {
                 double tmp_bs2 = 0;
-                if (m[wannier_index] == 0) tmp_bs2 = bs2;
-                if (m[wannier_index] == 1) tmp_bs2 = -bs2;
+                if (m[wannier_index] == 0) { tmp_bs2 = bs2;
+}
+                if (m[wannier_index] == 1) { tmp_bs2 = -bs2;
+}
 
                 std::complex<double> *orb_s = new std::complex<double>[npw];
                 std::complex<double> *orb_px = new std::complex<double>[npw];
@@ -656,7 +664,8 @@ void toWannier90_PW::produce_trial_in_pw(
                 if (m[wannier_index] == 0 || m[wannier_index] == 1)
                 {
                     double tmp_bs2 = bs2;
-                    if (m[wannier_index] == 1) tmp_bs2 = -bs2;
+                    if (m[wannier_index] == 1) { tmp_bs2 = -bs2;
+}
 
                     std::complex<double> *orb_s = new std::complex<double>[npw];
                     std::complex<double> *orb_px = new std::complex<double>[npw];
@@ -749,7 +758,8 @@ void toWannier90_PW::produce_trial_in_pw(
                 if (m[wannier_index] == 0 || m[wannier_index] == 1)
                 {
                     double tmp_bs2 = bs2;
-                    if (m[wannier_index] == 1) tmp_bs2 = -bs2;
+                    if (m[wannier_index] == 1) { tmp_bs2 = -bs2;
+}
 
                     std::complex<double> *orb_s = new std::complex<double>[npw];
                     std::complex<double> *orb_px = new std::complex<double>[npw];
@@ -793,7 +803,8 @@ void toWannier90_PW::produce_trial_in_pw(
                 else if (m[wannier_index] == 3 || m[wannier_index] == 4)
                 {
                     double m_pz = 1.0;
-                    if (m[wannier_index] == 4) m_pz = -1.0;
+                    if (m[wannier_index] == 4) { m_pz = -1.0;
+}
 
                     std::complex<double> *orb_pz = new std::complex<double>[npw];
                     std::complex<double> *orb_dz2 = new std::complex<double>[npw];
@@ -888,7 +899,8 @@ void toWannier90_PW::produce_trial_in_pw(
                 {
                     double tmp_pz = -1.0;
 
-                    if (m[wannier_index] == 5) tmp_pz = 1.0;
+                    if (m[wannier_index] == 5) { tmp_pz = 1.0;
+}
 
                     std::complex<double> *orb_s = new std::complex<double>[npw];
                     std::complex<double> *orb_pz = new std::complex<double>[npw];

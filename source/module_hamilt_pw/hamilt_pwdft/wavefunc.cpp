@@ -275,7 +275,8 @@ void diago_PAO_in_pw_k2(const int &ik,
 	else if(p_wf->init_wfc.substr(0,6)=="atomic")
 	{
 		ModuleBase::ComplexMatrix wfcatom(starting_nw, nbasis);//added by zhengdy-soc
-		if(PARAM.inp.test_wf)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "starting_nw", starting_nw);
+		if(PARAM.inp.test_wf) {ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "starting_nw", starting_nw);
+}
 
 		p_wf->atomic_wfc(
 				ik, 
