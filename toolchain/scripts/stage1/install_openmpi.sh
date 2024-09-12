@@ -10,6 +10,8 @@ SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 
 openmpi_ver="5.0.5"
 openmpi_sha256="6588d57c0a4bd299a24103f4e196051b29e8b55fbda49e11d5b3d32030a32776"
+# openmpi_ver="4.1.6"
+# openmpi_sha256="f740994485516deb63b5311af122c265179f5328a0d857a567b85db00b11e415"
 openmpi_pkg="openmpi-${openmpi_ver}.tar.bz2"
 
 source "${SCRIPT_DIR}"/common_vars.sh
@@ -33,13 +35,14 @@ case "${with_openmpi}" in
     pkg_install_dir="${INSTALLDIR}/openmpi-${openmpi_ver}"
     #pkg_install_dir="${HOME}/apps/openmpi/${openmpi_ver}-gcc8"
     install_lock_file="$pkg_install_dir/install_successful"
+    url="https://download.open-mpi.org/release/open-mpi/${openmpi_ver:0:4}/${openmpi_pkg}"
     if verify_checksums "${install_lock_file}"; then
       echo "openmpi-${openmpi_ver} is already installed, skipping it."
     else
       if [ -f ${openmpi_pkg} ]; then
         echo "${openmpi_pkg} is found"
       else
-        download_pkg_from_ABACUS_org "${openmpi_sha256}" "${openmpi_pkg}"
+        download_pkg_from_url "${openmpi_sha256}" "${openmpi_pkg}" "${url}"
       fi
       echo "Installing from scratch into ${pkg_install_dir}"
       [ -d openmpi-${openmpi_ver} ] && rm -rf openmpi-${openmpi_ver}
