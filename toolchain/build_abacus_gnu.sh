@@ -74,3 +74,12 @@ cat << EOF > "${TOOL}/abacus_env.sh"
 source $INSTALL_DIR/setup
 export PATH="${PREFIX}/bin":\${PATH}
 EOF
+
+# generate information
+cat << EOF
+========================== usage =========================
+Done!
+To use the installed ABACUS version
+You need to source path/to/toolchain/abacus_env.sh first !
+"""
+EOF
