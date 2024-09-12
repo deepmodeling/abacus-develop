@@ -25,8 +25,9 @@ void ModuleIO::write_proj_band_lcao(
     const double* sk = dynamic_cast<const hamilt::HamiltLCAO<double, double>*>(p_ham)->getSk();
 
     int nspin0 = 1;
-    if (GlobalV::NSPIN == 2)
+    if (GlobalV::NSPIN == 2) {
         nspin0 = 2;
+}
     int nks = 0;
     if (nspin0 == 1)
     {
@@ -103,14 +104,16 @@ void ModuleIO::write_proj_band_lcao(
 
             out << "<pband>" << std::endl;
             out << "<nspin>" << GlobalV::NSPIN << "</nspin>" << std::endl;
-            if (GlobalV::NSPIN == 4)
+            if (GlobalV::NSPIN == 4) {
                 out << "<norbitals>" << std::setw(2) << GlobalV::NLOCAL / 2 << "</norbitals>" << std::endl;
-            else
+            } else {
                 out << "<norbitals>" << std::setw(2) << GlobalV::NLOCAL << "</norbitals>" << std::endl;
+}
             out << "<band_structure nkpoints=\"" << nks << "\" nbands=\"" << GlobalV::NBANDS << "\" units=\"eV\">"
                 << std::endl;
-            for (int ib = 0; ib < GlobalV::NBANDS; ib++)
+            for (int ib = 0; ib < GlobalV::NBANDS; ib++) {
                 out << " " << (pelec->ekb(is * nks, ib)) * ModuleBase::Ry_to_eV;
+}
             out << std::endl;
             out << "</band_structure>" << std::endl;
 
@@ -139,9 +142,9 @@ void ModuleIO::write_proj_band_lcao(
                     out << "<data>" << std::endl;
                     for (int ib = 0; ib < GlobalV::NBANDS; ib++)
                     {
-                        if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 2)
+                        if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 2) {
                             out << std::setw(13) << weight(is, ib * GlobalV::NLOCAL + w);
-                        else if (GlobalV::NSPIN == 4)
+                        } else if (GlobalV::NSPIN == 4)
                         {
                             int w0 = w - s0;
                             out << std::setw(13)
@@ -178,8 +181,9 @@ void ModuleIO::write_proj_band_lcao(
     ModuleBase::timer::tick("ModuleIO", "write_proj_band_lcao");
 
     int nspin0 = 1;
-    if (GlobalV::NSPIN == 2)
+    if (GlobalV::NSPIN == 2) {
         nspin0 = 2;
+}
     int nks = 0;
     if (nspin0 == 1)
     {
@@ -301,8 +305,9 @@ void ModuleIO::write_proj_band_lcao(
 
 			for (int ik = 0; ik < nks; ik++)
 			{
-				for (int ib = 0; ib < GlobalV::NBANDS; ib++)
+				for (int ib = 0; ib < GlobalV::NBANDS; ib++) {
 					out << " " << (pelec->ekb(ik + is * nks, ib)) * ModuleBase::Ry_to_eV;
+}
 				out << std::endl;
 			}
             out << "</band_structure>" << std::endl;
