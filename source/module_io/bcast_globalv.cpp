@@ -66,7 +66,11 @@ namespace ModuleIO
             GlobalV::ofs_warning << " WARNING : NSPIN must be 1, 2 or 4" << std::endl;
             break;
         }
-
+        /// set deepks_setorb
+        if (para.input.deepks_scf || para.input.deepks_out_labels)
+        {
+            para.sys.deepks_setorb = true;
+        }
         /// set the device_flag
         if (para.input.device == "cpu") 
         {
