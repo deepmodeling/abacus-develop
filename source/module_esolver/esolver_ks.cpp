@@ -145,7 +145,7 @@ void ESolver_KS<T, Device>::before_all_runners(const Input_para& inp, UnitCell& 
 
         if (GlobalV::MY_RANK == 0)
         {
-            std::ifstream ifa(PARAM.inp.stru_file.c_str(), std::ios::in);
+            std::ifstream ifa(GlobalV::stru_file.c_str(), std::ios::in);
             if (!ifa)
             {
                 ModuleBase::WARNING_QUIT("set_libpaw_files", "can not open stru file");
