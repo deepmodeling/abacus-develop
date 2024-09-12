@@ -113,6 +113,7 @@ void ReadInput::set_globalv_bcast()
     add_string_bcast(sys.global_stru_dir);
     add_string_bcast(sys.global_matrix_dir);
     add_bool_bcast(sys.double_grid);
+    add_string_bcast(sys.device_flag);
     add_double_bcast(sys.uramping);
 }
 } // namespace ModuleIO
