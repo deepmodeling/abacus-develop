@@ -55,7 +55,7 @@ PotBase* Potential::get_pot_type(const std::string& pot_type)
 void Set_GlobalV_Default()
 {
     GlobalV::NSPIN = 1;
-    GlobalV::device_flag = "cpu";
+    PARAM.sys.device_flag = "cpu";
     PARAM.input.precision = "double";
 }
 } // namespace elecstate
@@ -185,7 +185,7 @@ TEST_F(PotentialNewTest, ConstructorGPUDouble)
 {
     // this is just a trivial call to the GPU code
     rhopw->nrxx = 100;
-    GlobalV::device_flag = "gpu";
+    PARAM.sys.device_flag = "gpu";
     pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, etxc, vtxc);
     EXPECT_TRUE(pot->fixed_mode);
     EXPECT_TRUE(pot->dynamic_mode);
@@ -198,7 +198,7 @@ TEST_F(PotentialNewTest, ConstructorGPUSingle)
 {
     // this is just a trivial call to the GPU code
     rhopw->nrxx = 100;
-    GlobalV::device_flag = "gpu";
+    PARAM.sys.device_flag = "gpu";
     PARAM.input.precision = "single";
     pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, etxc, vtxc);
     EXPECT_TRUE(pot->fixed_mode);
