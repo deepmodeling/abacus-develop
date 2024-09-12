@@ -225,7 +225,7 @@ void ElecState::init_scf(const int istep, const ModuleBase::ComplexMatrix& struc
     //--------------------------------------------------------------------
     if (istep == 0)
     {
-        this->charge->init_rho(this->eferm, strucfac,this->klist->get_nkstot(), this->klist->isk, wfcpw);
+        this->charge->init_rho(this->eferm, strucfac, (const void*)this->klist, wfcpw);
         this->charge->check_rho(); // check the rho
     }
 

@@ -90,7 +90,7 @@ TEST_F(IstateInfoTest, OutIstateInfoS1)
         str,
         testing::HasSubstr("BAND               Energy(ev)               Occupation                Kpoint = 100"));
     EXPECT_THAT(str, testing::HasSubstr("(0.99 0.99 0.99)"));
-    EXPECT_THAT(str, testing::HasSubstr("4                  2.04085                        0"));
+    EXPECT_THAT(str, testing::HasSubstr("4                2.0408547                        0"));
     ifs.close();
     remove("istate.info");
 }

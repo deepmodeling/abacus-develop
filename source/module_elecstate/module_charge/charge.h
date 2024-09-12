@@ -65,14 +65,12 @@ class Charge
      *
      * @param eferm_iout [out] fermi energy to be initialized
      * @param strucFac [in] structure factor
-     * @param nkstot [in] total number of k points
-     * @param isk [in] k points index
+     * @param klist [in] k points list if needed
      * @param wfcpw [in] PW basis for wave function if needed
      */
     void init_rho(elecstate::efermi& eferm_iout,
                   const ModuleBase::ComplexMatrix& strucFac,
-                  const int nkstot,
-                  const std::vector<int>& isk,
+                  const void* klist = nullptr,
                   const void* wfcpw = nullptr);
 
     void allocate(const int &nspin_in);

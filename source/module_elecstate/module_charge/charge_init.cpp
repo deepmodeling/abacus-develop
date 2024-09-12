@@ -23,8 +23,7 @@
 
 void Charge::init_rho(elecstate::efermi& eferm_iout,
                       const ModuleBase::ComplexMatrix& strucFac,
-                      const int nkstot,
-                      const std::vector<int>& isk,
+                      const void* klist,
                       const void* wfcpw)
 {
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "init_chg", PARAM.inp.init_chg);
@@ -209,6 +208,9 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
             ModuleBase::WARNING_QUIT("Charge::init_rho", "wfc is only supported for PW-KSDFT.");
         }
         const ModulePW::PW_Basis_K* pw_wfc = reinterpret_cast<ModulePW::PW_Basis_K*>(const_cast<void*>(wfcpw));
+        const K_Vectors* kv = reinterpret_cast<const K_Vectors*>(klist);
+        const int nkstot = kv->get_nkstot();
+        const std::vector<int>& isk = kv->isk;
         ModuleIO::read_wfc_to_rho(pw_wfc, nkstot, isk, *this);
     }
 }
