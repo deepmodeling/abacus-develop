@@ -34,7 +34,7 @@ void TwoCenterBundle::build_beta(int ntype, Numerical_Nonlocal* nl)
 
 void TwoCenterBundle::build_alpha(int ndesc, std::string* file_desc0)
 {
-    if (PARAM.inp.deepks_setorb)
+    if (PARAM.globalv.deepks_setorb)
     {
         std::vector<std::string> file_desc(ndesc);
         if (GlobalV::MY_RANK == 0)
@@ -245,7 +245,7 @@ void TwoCenterBundle::to_LCAO_Orbitals(LCAO_Orbitals& ORB,
         (*orb_)(itype).to_numerical_orbital(ORB.Phi[itype], ORB.kmesh, ORB.dk);
     }
 
-    if (PARAM.inp.deepks_setorb)
+    if (PARAM.globalv.deepks_setorb)
     {
         ORB.lmax_d = alpha_->lmax();
         ORB.nchimax_d = alpha_->nzeta_max();

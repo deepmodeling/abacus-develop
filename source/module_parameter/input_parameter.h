@@ -230,7 +230,6 @@ struct Input_para
     bool deepks_equiv = false;        ///< whether to use equivariant version of DeePKS
     bool deepks_out_unittest = false; ///< if set to true, prints intermediate quantities that shall
                                       ///< be used for making unit test
-    bool deepks_setorb = false;       ///< whether to set orbital for deepks
     std::string deepks_model = "None";              ///< needed when deepks_scf=1
     
     int bessel_descriptor_lmax = 2;                 ///< lmax used in descriptor

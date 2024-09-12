@@ -557,10 +557,12 @@ void Input_Conv::Convert()
 //-----------------------------------------------
 // caoyu add for DeePKS
 //-----------------------------------------------
-    if (PARAM.inp.deepks_scf || PARAM.inp.deepks_out_labels || PARAM.inp.deepks_bandgap || PARAM.inp.deepks_v_delta)
-    {
-        ModuleBase::WARNING_QUIT("Input_conv", "please compile with DeePKS");
-    }
+    #ifndef __DEEPKS
+        if (PARAM.inp.deepks_scf || PARAM.inp.deepks_out_labels || PARAM.inp.deepks_bandgap || PARAM.inp.deepks_v_delta)
+        {
+            ModuleBase::WARNING_QUIT("Input_conv", "please compile with DeePKS");
+        }
+    #endif
     //-----------------------------------------------
     // sunml add for implicit solvation model
     //-----------------------------------------------
