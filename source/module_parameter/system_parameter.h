@@ -42,6 +42,7 @@ struct System_para
     bool domag = 0;                         ///< whether to calculate magnetic moment
     bool domag_z = 0;                       ///< whether to calculate magnetic moment along z direction
     
+    std::string device_flag = "cpu";        ///< device flag, "cpu" or "gpu"
     bool double_grid = false;               ///< true if "ndx,ndy,ndz" is larger than "nx,ny,nz"
     double uramping = -10.0 / 13.6;         /// U-Ramping method (Ry)
     std::vector<double> hubbard_u = {};     ///< Hubbard Coulomb interaction parameter U (Ry)

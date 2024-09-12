@@ -5,6 +5,7 @@
 #include "module_base/tool_quit.h"
 namespace ModuleIO
 {
+    
     void ReadInput::set_globalv(Parameter &para)
     {
         /// set the global output directory
@@ -64,6 +65,24 @@ namespace ModuleIO
         default:
             GlobalV::ofs_warning << " WARNING : NSPIN must be 1, 2 or 4" << std::endl;
             break;
+        }
+
+        /// set the device_flag
+        if (para.input.device == "cpu") 
+        {
+            para.sys.device_flag = "cpu"; 
+        }
+        else if ( para.input.device  == "gpu")
+        {
+            if (para.input.basis_type == "lcao_in_pw") 
+            {
+                ModuleBase::WARNING_QUIT("device", "The GPU currently does not support the basis type \"lcao_in_pw\"!");
+            }
+            para.sys.device_flag = "gpu";
+        }
+        else
+        {
+            ModuleBase::WARNING_QUIT("device", "Parameter \"device\" can only be set to \"cpu\" or \"gpu\"!");
         }
     }
 void ReadInput::set_globalv_bcast()
