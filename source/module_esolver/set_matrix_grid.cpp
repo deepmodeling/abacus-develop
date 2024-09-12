@@ -50,7 +50,7 @@ void ESolver_KS_LCAO<TK, TR>::set_matrix_grid(Record_adj& ra)
     std::vector<std::vector<double>> dpsi_u;
     std::vector<std::vector<double>> d2psi_u;
 
-    Gint_Tools::init_orb(dr_uniform, rcuts, GlobalC::ucell, psi_u, dpsi_u, d2psi_u);
+    Gint_Tools::init_orb(dr_uniform, rcuts, GlobalC::ucell, orb_, psi_u, dpsi_u, d2psi_u);
 
     this->GridT.set_pbc_grid(this->pw_rho->nx,
                              this->pw_rho->ny,
@@ -84,13 +84,13 @@ void ESolver_KS_LCAO<TK, TR>::set_matrix_grid(Record_adj& ra)
     // (2)For each atom, calculate the adjacent atoms in different cells
     // and allocate the space for H(R) and S(R).
     // If k point is used here, allocate HlocR after atom_arrange.
-    ra.for_2d(this->pv, PARAM.globalv.gamma_only_local);
+    ra.for_2d(this->pv, PARAM.globalv.gamma_only_local, orb_.cutoffs());
 
     if (!PARAM.globalv.gamma_only_local)
     {
         // need to first calculae lgd.
         // using GridT.init.
-        this->GridT.cal_nnrg(&this->pv);
+        this->GridT.cal_nnrg(&this->pv, orb_.cutoffs());
     }
 
     ModuleBase::timer::tick("ESolver_KS_LCAO", "set_matrix_grid");

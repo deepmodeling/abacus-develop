@@ -1276,6 +1276,13 @@ TEST_F(InputTest, Item_test)
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
+    { // exx_symmetry_realspace
+        auto it = find_label("exx_symmetry_realspace", readinput.input_lists);
+        param.input.exx_symmetry_realspace = true;
+        param.input.symmetry="0";
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.exx_symmetry_realspace, false);
+    }
     { // rpa_ccp_rmesh_times
         auto it = find_label("rpa_ccp_rmesh_times", readinput.input_lists);
         param.input.rpa_ccp_rmesh_times = 0;

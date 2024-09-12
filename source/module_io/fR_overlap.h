@@ -21,6 +21,7 @@ public:
     void set_parameters(
         fr_ptr fr_in, 
         const UnitCell* ucell_in, 
+        const LCAO_Orbitals* ptr_orb, 
         Grid_Driver* GridD_in, 
         const Parallel_Orbitals* paraV,
         int radial_grid_num = 140,
@@ -56,6 +57,7 @@ protected:
 
     fr_ptr fr = nullptr;
     const UnitCell* ucell = nullptr;
+    const LCAO_Orbitals* ptr_orb_ = nullptr;
     int radial_grid_num = 140;
     ModuleBase::Lebedev_laikov_grid *Leb_grid = nullptr;
     hamilt::HContainer<T> *FR_container = nullptr;

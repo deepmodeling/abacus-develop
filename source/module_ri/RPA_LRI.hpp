@@ -8,6 +8,7 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
+#include "module_ri/module_exx_symmetry/symmetry_rotation.h"
 
 #include "RPA_LRI.h"
 #include "module_parameter/parameter.h"
@@ -73,14 +74,29 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>
                                         const K_Vectors& kv)
 {
     Mix_DMk_2D mix_DMk_2D;
-    mix_DMk_2D.set_nks(kv.get_nks(), PARAM.globalv.gamma_only_local);
+    bool exx_spacegroup_symmetry = (GlobalV::NSPIN < 4 && ModuleSymmetry::Symmetry::symm_flag == 1);
+    if (exx_spacegroup_symmetry)
+        {mix_DMk_2D.set_nks(kv.get_nkstot_full() * (GlobalV::NSPIN == 2 ? 2 : 1), PARAM.globalv.gamma_only_local);}
+    else
+        {mix_DMk_2D.set_nks(kv.get_nks(), PARAM.globalv.gamma_only_local);}
+        
     mix_DMk_2D.set_mixing(nullptr);
-    mix_DMk_2D.mix(dm.get_DMK_vector(), true);
-    const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> Ds
-        = PARAM.globalv.gamma_only_local
+    ModuleSymmetry::Symmetry_rotation symrot;
+    if (exx_spacegroup_symmetry)
+    {
+        const std::array<Tcell, Ndim> period = RI_Util::get_Born_vonKarmen_period(kv);
+        symrot.find_irreducible_sector(GlobalC::ucell.symm, GlobalC::ucell.atoms, GlobalC::ucell.st,
+            RI_Util::get_Born_von_Karmen_cells(period), period, GlobalC::ucell.lat);
+        symrot.cal_Ms(kv, GlobalC::ucell, *dm.get_paraV_pointer());
+        mix_DMk_2D.mix(symrot.restore_dm(kv, dm.get_DMK_vector(), *dm.get_paraV_pointer()), true);
+    }
+    else { mix_DMk_2D.mix(dm.get_DMK_vector(), true); }
+    
+    const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>
+		Ds = PARAM.globalv.gamma_only_local
         ? RI_2D_Comm::split_m2D_ktoR<Tdata>(kv, mix_DMk_2D.get_DMk_gamma_out(), *dm.get_paraV_pointer(), GlobalV::NSPIN)
-        : RI_2D_Comm::split_m2D_ktoR<Tdata>(kv, mix_DMk_2D.get_DMk_k_out(), *dm.get_paraV_pointer(), GlobalV::NSPIN);
-
+        : RI_2D_Comm::split_m2D_ktoR<Tdata>(kv, mix_DMk_2D.get_DMk_k_out(), *dm.get_paraV_pointer(), GlobalV::NSPIN, exx_spacegroup_symmetry);
+    
     // set parameters for bare Coulomb potential
     GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hf;
     GlobalC::exx_info.info_global.hybrid_alpha = 1;
@@ -88,7 +104,11 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>
 
     exx_lri_rpa.init(mpi_comm_in, kv);
     exx_lri_rpa.cal_exx_ions();
-    exx_lri_rpa.cal_exx_elec(Ds, *dm.get_paraV_pointer());
+
+    if (exx_spacegroup_symmetry)
+        exx_lri_rpa.cal_exx_elec(Ds, *dm.get_paraV_pointer(), &symrot);
+    else
+        exx_lri_rpa.cal_exx_elec(Ds, *dm.get_paraV_pointer());
     // cout<<"postSCF_Eexx: "<<exx_lri_rpa.Eexx<<endl;
 }
 

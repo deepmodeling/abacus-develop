@@ -32,6 +32,7 @@ class HamiltLCAO : public Hamilt<TK>
           elecstate::Potential* pot_in,
           const K_Vectors& kv_in,
           const TwoCenterBundle& two_center_bundle,
+          const LCAO_Orbitals& orb,
           elecstate::DensityMatrix<TK, double>* DM_in
 #ifdef __EXX
           , int* exx_two_level_step = nullptr
