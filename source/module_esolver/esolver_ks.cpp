@@ -423,7 +423,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
     this->niter = this->maxniter;
 
     // 4) SCF iterations
-    double diag_ethr = this->pw_diag_thr;
+    double diag_ethr = GlobalV::PW_DIAG_THR;
 
     std::cout << " * * * * * *\n << Start SCF iteration." << std::endl;
     for (int iter = 1; iter <= this->maxniter; ++iter)
@@ -447,7 +447,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
                                                  istep,
                                                  iter,
                                                  drho,
-                                                 this->pw_diag_thr,
+                                                 GlobalV::PW_DIAG_THR,
                                                  diag_ethr,
                                                  GlobalV::nelec);
         }
@@ -460,7 +460,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
                                                    istep,
                                                    iter,
                                                    drho,
-                                                   this->pw_diag_thr,
+                                                   GlobalV::PW_DIAG_THR,
                                                    diag_ethr,
                                                    GlobalV::NBANDS,
                                                    esolver_KS_ne);

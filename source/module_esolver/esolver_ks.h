@@ -119,8 +119,6 @@ class ESolver_KS : public ESolver_FP
         void print_wfcfft(const Input_para& inp, std::ofstream& ofs);
 
 	    double esolver_KS_ne = 0.0;
-
-		const double pw_diag_thr=1.0e-2; // pw diagonalization threshold
 };	
 } // end of namespace
 #endif
