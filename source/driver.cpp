@@ -107,7 +107,7 @@ void Driver::print_start_info()
 
     GlobalV::ofs_running << "\n READING GENERAL INFORMATION" << std::endl;
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "global_out_dir", PARAM.globalv.global_out_dir);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "global_in_card", PARAM.inp.input_file);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "input_file", PARAM.inp.input_file);
 }
 
 void Driver::reading()

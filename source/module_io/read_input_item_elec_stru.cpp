@@ -280,6 +280,11 @@ void ReadInput::item_elec_stru()
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "nspin should be 1, 2 or 4.");
             }
+            if (para.input.nspin ==4 && para.sys.gamma_only_local)
+            {
+                printf("nspin = 4 and gamma_only_local is not supported\n");
+                ModuleBase::WARNING_QUIT("ReadInput", "nspin=4 is not supported in gamma_only mode.");
+            }
         };
         this->add_item(item);
     }
@@ -456,7 +461,7 @@ void ReadInput::item_elec_stru()
             if (para.input.gamma_only && para.input.basis_type == "pw")
             {
                 para.input.gamma_only = false;
-               GlobalV::ofs_warning << "ReadInput pw not supported in gamma_only mode."<< std::endl;
+                GlobalV::ofs_warning << "ReadInput pw not supported in gamma_only mode."<< std::endl;
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
@@ -477,11 +482,6 @@ void ReadInput::item_elec_stru()
                 ofs << "Gamma" << std::endl;
                 ofs << "1 1 1 0 0 0" << std::endl;
                 ofs.close();
-            }
-            if (para.input.nspin ==4 && para.sys.gamma_only_local)
-            {
-                printf("nspin = 4 and gamma_only_local is not supported\n");
-                ModuleBase::WARNING_QUIT("ReadInput", "nspin=4 is not supported in gamma_only mode.");
             }
         };
         this->add_item(item);
