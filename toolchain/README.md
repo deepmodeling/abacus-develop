@@ -38,8 +38,7 @@ and give setup files that you can use to compile ABACUS.
 Main script is *install_abacus_toolchain.sh*, 
 which will use scripts in *scripts* directory 
 to compile install dependencies of ABACUS.
-
-You can just `./install_abacus_toolchain.sh -h` to get more help message.
+It can be directly used, but not recommended.
 
 There are also well-modified script to run *install_abacus_toolchain.sh* for `gnu-openblas` and `intel-mkl` toolchains dependencies.
 
@@ -77,12 +76,17 @@ Instead of github.com, we offer other package station, you can use it by:
 ```shell
 wget https://bohrium-api.dp.tech/ds-dl/abacus-deps-93wi-v3 -O abacus-deps-v3.zip
 ```
-`unzip` it ,and you can do offline installation of these packages above after rename. The above station will be updated handly but one should notice that the version will always lower than github repo.
+`unzip` it ,and you can do offline installation of these packages above after rename. 
+```shell
+# packages downloaded from github.com
+mv v1.3.2.tar.gz build/cereal-1.3.2.tar.gz
+```
+The above station will be updated handly but one should notice that the version will always lower than github repo.
 
 If one want to install ABACUS by toolchain OFFLINE, 
 one can manually download all the packages from [cp2k-static/download](https://www.cp2k.org/static/downloads) or official website
 and put them in *build* directory by formatted name
-like *fftw-3.3.10.tar.gz*, or *openmpi-5.0.3.tar.gz*, 
+like *fftw-3.3.10.tar.gz*, or *openmpi-5.0.5.tar.bz2*, 
 then run this toolchain. 
 All package will be detected and installed automatically. 
 Also, one can install parts of packages OFFLINE and parts of packages ONLINE
@@ -98,8 +102,8 @@ just by using this toolchain
 The needed dependencies version default:
 - `cmake` 3.30.0
 - `gcc` 13.2.0 (which will always NOT be installed, But use system)
-- `OpenMPI` 5.0.3
-- `MPICH` 4.1.2
+- `OpenMPI` 5.0.5
+- `MPICH` 4.2.2
 - `OpenBLAS` 0.3.27 (Intel toolchain need `get_vars.sh` tool from it)
 - `ScaLAPACK` 2.2.1
 - `FFTW` 3.3.10
@@ -116,23 +120,15 @@ Dependencies below are optional， which is NOT installed by default:
 - `LibRI` 0.2.0
 - `LibComm` 0.1.1
 Users can install them by using `--with-*=install` in toolchain*.sh, which is `no` in default.
-> Notice: LibRI, LibComm and Libnpy is on actively development, you should check-out the package version when using this toolchain. Also, LibRI and LibComm can be installed by github submodule, which is also work for libnpy, which is more recommended.
+> Notice: LibRI, LibComm and Libnpy is on actively development, you should check-out the package version when using this toolchain. Also, LibRI and LibComm can be installed by github submodule, that is also work for libnpy, which is more recommended.
 
-Notice: for `CEREAL`,`RapidJSON`, `Libnpy`, `LibRI` and `LibComm`, 
-you need to download them from github.com, 
-rename it as formatted, and put them in `build` directory at the same time
-e.g.:
-```shell
-# packages downloaded from github.com
-mv v1.3.2.tar.gz build/cereal-1.3.2.tar.gz
-```
 
 Users can easily compile and install dependencies of ABACUS
 by running these scripts after loading `gcc` or `intel-mkl-mpi`
 environment. 
 
 The toolchain installation process can be interrupted at anytime.
-just re-run *install_abacus_toolchain.sh*, toolchain itself may fix it
+just re-run *toolchain_\*.sh*, toolchain itself may fix it
 
 If compliation is successful, a message will be shown like this:
 
@@ -168,9 +164,14 @@ or you can also do it in a more completely way:
 > rm -rf install build/*/* build/OpenBLAS*/ build/setup_*
 ```
 
-## Common Problem and Solution
+## Common Problems and Solutions
+
+### LibRI and LibComm for EXX
+- GCC toolchain with OpenMPI cannot compile LibComm v0.1.1 due to the different MPI variable type from MPICH and IntelMPI, see discussion here [#5033](https://github.com/deepmodeling/abacus-develop/issues/5033)
+- It is recommended to use Intel toolchain if one wants to include EXX feature in ABACUS, which can have much better performance and can use more than 16 threads in OpenMP parallelization to accelerate the EXX process.
+
 ### GPU version of ABACUS
-add following options in build*.sh:
+For GPU version of ABACUS (do not GPU version installer of ELPA, which is still doing work), add following options in build*.sh:
 ```shell
 cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
         -DCMAKE_CXX_COMPILER=icpx \
@@ -180,9 +181,10 @@ cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
         -DCMAKE_CUDA_COMPILER=${path to cuda toolkit}/bin/nvcc \
         ......
 ```
-Notice: You CANNOT use `icpx` compiler for GPU version of ABACUS for now
+Notice: You CANNOT use `icpx` compiler for GPU version of ABACUS for now, see discussion here [#2906](https://github.com/deepmodeling/abacus-develop/issues/2906) and [#4976](https://github.com/deepmodeling/abacus-develop/issues/4976)
 
-### shell problem
+
+### Shell problem
 If you encounter problem like:
 ```shell
 /bin/bash^M: bad interpreter: No such file or directory
@@ -191,6 +193,7 @@ or   `permission denied` problem, you can simply run:
 ```shell
 ./pre_set.sh
 ```
+
 And also, you can fix `permission denied` problem via `chmod +x`
 if *pre_set.sh* have no execution permission; 
 if the *pre_set.sh* also have `/bin/bash^M` problem, you can run:
@@ -199,14 +202,15 @@ if the *pre_set.sh* also have `/bin/bash^M` problem, you can run:
 ```
 to fix it
 
-### libtorch and deepks problem
+### Libtorch and DeePKS problem
 If deepks feature have problem, you can manually change libtorch version
-from 2.0.1 to 1.12.0 in `toolchain/scripts/stage4/install_libtorch.sh`.
+from 2.1.2 to 2.0.1 or 1.12.0 in `toolchain/scripts/stage4/install_libtorch.sh`.
+
 Also, you can install ABACUS without deepks by removing all the deepks and related options.
 
 NOTICE: if you want deepks feature, your intel-mkl environment should be accessible in building process. you can check it in `build_abacus_gnu.sh`
 
-### deepmd feature problem
+### DeePMD feature problem
 When you encounter problem like `GLIBCXX_3.4.29 not found`, it is sure that your `gcc` version is lower than the requirement of `libdeepmd`.
 
 After my test, you need `gcc`>11.3.1 to enable deepmd feature in ABACUS.
@@ -216,7 +220,7 @@ The default compiler for Intel-oneAPI is `icpx` and `icx`, which will cause prob
 
 The best way is to change `icpx` to `icpc`, `icx` to `icc`. user can manually change it in toolchain*.sh via `--with-intel-classic=yes`
 
-Notice: `icc` and `icpc` from Intel Classic Compiler of Intel-oneAPI is not supported for 2024.0 and newer version.
+Notice: `icc` and `icpc` from Intel Classic Compiler of Intel-oneAPI is not supported for 2024.0 and newer version. And Intel-OneAPI 2023.2.0 can be found in website. See discussion here [#4976](https://github.com/deepmodeling/abacus-develop/issues/4976)
 
 
 ### Intel-oneAPI problem
