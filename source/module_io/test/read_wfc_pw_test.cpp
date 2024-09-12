@@ -27,10 +27,12 @@ class ReadWfcPwTest : public ::testing::Test
     }
     virtual void TearDown()
     {
-        if (wfcpw != nullptr)
+        if (wfcpw != nullptr) {
             delete wfcpw;
-        if (kvec_d != nullptr)
+}
+        if (kvec_d != nullptr) {
             delete[] kvec_d;
+}
     }
 };
 
