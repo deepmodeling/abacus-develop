@@ -193,7 +193,7 @@ TEST_F(TestHSolverPW, solve) {
 
     // // check diago_ethr
     // PARAM.input.init_chg = "atomic";
-    // GlobalV::PW_DIAG_THR = 1e-7;
+    // PARAM.inp.pw_diag_thr = 1e-7;
     // PARAM.input.calculation = "scf";
     // float test_diagethr = hs_f.set_diagethr(hs_f.diag_ethr, 0, 1, 1.0);
     // EXPECT_NEAR(hs_f.diag_ethr, 0.01, 1.0e-7);
@@ -208,7 +208,7 @@ TEST_F(TestHSolverPW, solve) {
     // EXPECT_NEAR(test_diagethr, 0.0001, 1.0e-7);
 
     // PARAM.input.init_chg = "atomic";
-    // GlobalV::PW_DIAG_THR = 1e-7;
+    // PARAM.inp.pw_diag_thr = 1e-7;
     // PARAM.input.calculation = "scf";
     // double test_diagethr_d = hs_d.set_diagethr(hs_d.diag_ethr, 0, 1, 1.0);
     // EXPECT_EQ(hs_d.diag_ethr, 0.01);
