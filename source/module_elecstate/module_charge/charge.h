@@ -87,11 +87,11 @@ class Charge
     void set_rho_core(const ModuleBase::ComplexMatrix &structure_factor);
     void set_rho_core_paw();
 
-    void renormalize_rho(void);
+    void renormalize_rho();
 
-    double sum_rho(void) const;
+    double sum_rho() const;
 
-    void save_rho_before_sum_band(void);
+    void save_rho_before_sum_band();
 
 	// for non-linear core correction
     void non_linear_core_correction
