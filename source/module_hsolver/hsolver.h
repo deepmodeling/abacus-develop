@@ -14,15 +14,15 @@
 namespace hsolver
 {
 
-template <typename T, typename Device = base_device::DEVICE_CPU>
-class HSolver
-{
-  private:
-    using Real = typename GetTypeReal<T>::type;
+// template <typename T, typename Device = base_device::DEVICE_CPU>
+// class HSolver
+// {
+//   private:
+//     using Real = typename GetTypeReal<T>::type;
 
-  public:
-    HSolver() {};
-};
+//   public:
+//     HSolver() {};
+// };
 
 
 double set_diagethr_ks(const std::string basis_type,
