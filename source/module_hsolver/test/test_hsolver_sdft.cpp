@@ -178,9 +178,6 @@ TEST_F(TestHSolverPW_SDFT, solve)
     int istep = 0;
     int iter = 0;
 
-	//check solve()
-	EXPECT_EQ(this->hs_d.initialed_psi, false);
-
     this->hs_d.solve(&hamilt_test_d,
                      psi_test_cd,
                      &elecstate_test,
@@ -189,8 +186,6 @@ TEST_F(TestHSolverPW_SDFT, solve)
                      istep,
                      iter,
                      false);
-
-	EXPECT_EQ(this->hs_d.initialed_psi, true);
 	EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<double>>::avg_iter, 0.0);
 	EXPECT_DOUBLE_EQ(elecstate_test.ekb.c[0], 4.0);
 	EXPECT_DOUBLE_EQ(elecstate_test.ekb.c[1], 7.0);
@@ -232,9 +227,6 @@ TEST_F(TestHSolverPW_SDFT, solve_noband_skipcharge)
     elecstate_test.charge->nrxx = 10;
     int istep = 0;
     int iter = 0;
-    
-	//check solve()
-    hs_d.initialed_psi = true;
 
     this->hs_d.solve(&hamilt_test_d,
                      psi_test_no,
