@@ -77,15 +77,22 @@ void ReadInput::set_globalv_bcast()
     add_bool_bcast(sys.two_fermi);
     add_bool_bcast(sys.dos_setemin);
     add_bool_bcast(sys.dos_setemax);
+    
     add_int_bcast(sys.ncx);
     add_int_bcast(sys.ncy);
     add_int_bcast(sys.ncz);
     add_bool_bcast(sys.out_md_control);
     add_bool_bcast(sys.rpa_setorb);
+
     add_bool_bcast(sys.gamma_only_pw);
     add_bool_bcast(sys.gamma_only_local);
+    
+    add_string_bcast(sys.global_in_card);
     add_string_bcast(sys.global_out_dir);
     add_string_bcast(sys.global_readin_dir);
+    add_string_bcast(sys.global_stru_dir);
+    add_string_bcast(sys.global_matrix_dir);
+
     add_bool_bcast(sys.double_grid);
     add_double_bcast(sys.uramping);
 }
