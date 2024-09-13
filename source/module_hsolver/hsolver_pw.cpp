@@ -582,7 +582,7 @@ void HSolverPW<T, Device>::update_precondition(std::vector<Real>& h_diag, const 
             }
         }
     }
-    if (GlobalV::NSPIN == 4)
+    if (this->nspin == 4)
     {
         const int size = h_diag.size();
         for (int ig = 0; ig < npw; ig++)

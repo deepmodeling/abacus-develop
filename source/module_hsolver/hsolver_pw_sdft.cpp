@@ -64,13 +64,7 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
     }
 
     this->output_iterInfo();
-
-    // psi only should be initialed once for PW
-    if (!this->initialed_psi)
-    {
-        this->initialed_psi = true;
-    }
-
+    
     for (int ik = 0; ik < nks; ik++)
     {
         // init k
@@ -100,7 +94,7 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
     }
     else
     {
-        for (int is = 0; is < GlobalV::NSPIN; is++)
+        for (int is = 0; is < this->nspin; is++)
         {
             ModuleBase::GlobalFunc::ZEROS(pes->charge->rho[is], pes->charge->nrxx);
         }

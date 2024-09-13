@@ -183,6 +183,7 @@ void ESolver_SDFT_PW::hamilt2density(int istep, int iter, double ethr)
                     PARAM.inp.ks_solver,
                     PARAM.inp.use_paw,
                     GlobalV::use_uspp,
+                    GlobalV::NSPIN,
                     hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER,
                     hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX,
                     hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR,

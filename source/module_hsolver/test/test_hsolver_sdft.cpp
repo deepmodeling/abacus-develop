@@ -144,6 +144,7 @@ class TestHSolverPW_SDFT : public ::testing::Test
                                                            "cg",
                                                            false,
                                                            GlobalV::use_uspp,
+                                                           GlobalV::NSPIN,
                      hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER,
                      hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX,
                      hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR,

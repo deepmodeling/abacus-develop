@@ -370,6 +370,7 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, c
                                                      PARAM.inp.ks_solver,
                                                      PARAM.inp.use_paw,
                                                      GlobalV::use_uspp,
+                                                     GlobalV::NSPIN,
                                                      
                                                      hsolver::DiagoIterAssist<T, Device>::SCF_ITER,
                                                      hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX,

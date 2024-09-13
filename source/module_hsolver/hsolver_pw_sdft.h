@@ -18,15 +18,14 @@ class HSolverPW_SDFT : public HSolverPW<std::complex<double>>
                    const std::string method_in,
                    const bool use_paw_in,
                    const bool use_uspp_in,
+                   const int nspin_in,
 
                    const int scf_iter_in,
                    const int diag_iter_max_in,
                    const double diag_thr_in,
 
                    const bool need_subspace_in,
-                   const bool initialed_psi_in
-                   
-                   )
+                   const bool initialed_psi_in)
                    
         : HSolverPW(wfc_basis_in,
                     pwf_in,
@@ -35,6 +34,7 @@ class HSolverPW_SDFT : public HSolverPW<std::complex<double>>
                     method_in,
                     use_paw_in,
                     use_uspp_in,
+                    nspin_in,
                     scf_iter_in,
                     diag_iter_max_in,
                     diag_thr_in,
