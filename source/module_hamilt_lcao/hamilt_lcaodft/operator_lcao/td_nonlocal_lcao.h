@@ -38,6 +38,7 @@ class TDNonlocal<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                                      const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
                                      hamilt::HContainer<TR>* hR_in,
                                      const UnitCell* ucell_in,
+                                     const LCAO_Orbitals& orb,
                                      Grid_Driver* GridD_in);
     ~TDNonlocal<OperatorLCAO<TK, TR>>();
 
@@ -52,6 +53,7 @@ class TDNonlocal<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 
   private:
     const UnitCell* ucell = nullptr;
+    const LCAO_Orbitals& orb_;
 
     HContainer<TR>* HR = nullptr;
     /// @brief Store real space hamiltonian. TD term should include imaginary part, thus it has to be complex type. Only

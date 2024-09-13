@@ -22,9 +22,6 @@ class LCAO_Orbitals
 	LCAO_Orbitals();
 	~LCAO_Orbitals();
 
-	// static function to get global instance
-	static const LCAO_Orbitals& get_const_instance();
-
     void init(
         std::ofstream& ofs_in,
         const int& ntype,
@@ -134,11 +131,4 @@ private:
     friend class TwoCenterBundle; // for the sake of TwoCenterBundle::to_LCAO_Orbitals
 };
 
-/// PLEASE avoid using 'ORB' as global variable 
-///
-///mohan note 2021 - 03 - 23
-namespace GlobalC
-{
-extern LCAO_Orbitals ORB;
-}
 #endif

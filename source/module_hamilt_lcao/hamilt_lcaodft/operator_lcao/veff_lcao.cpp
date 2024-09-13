@@ -38,12 +38,11 @@ void Veff<OperatorLCAO<TK, TR>>::initialize_HR(const UnitCell* ucell_in,
             }
             const ModuleBase::Vector3<int>& R_index2 = adjs.box[ad1];
             // choose the real adjacent atoms
-            const LCAO_Orbitals& orb = LCAO_Orbitals::get_const_instance();
             // Note: the distance of atoms should less than the cutoff radius, 
             // When equal, the theoretical value of matrix element is zero, 
             // but the calculated value is not zero due to the numerical error, which would lead to result changes.
             if (ucell_in->cal_dtau(iat1, iat2, R_index2).norm() * ucell_in->lat0
-                < orb.Phi[T1].getRcut() + orb.Phi[T2].getRcut())
+                < orb_cutoff_[T1] + orb_cutoff_[T2])
             {
                 hamilt::AtomPair<TR> tmp(iat1, iat2, R_index2, paraV);
                 this->hR->insert_pair(tmp);

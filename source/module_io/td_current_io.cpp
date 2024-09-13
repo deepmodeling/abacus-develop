@@ -122,6 +122,7 @@ void ModuleIO::write_current(const int istep,
                              const K_Vectors& kv,
                              const TwoCenterIntegrator* intor,
                              const Parallel_Orbitals* pv,
+                             const LCAO_Orbitals& orb,
                              Record_adj& ra)
 {
 
@@ -131,7 +132,7 @@ void ModuleIO::write_current(const int istep,
     std::vector<hamilt::HContainer<std::complex<double>>*> current_term = {nullptr, nullptr, nullptr};
     if (!TD_Velocity::tddft_velocity)
     {
-        cal_current = new TD_current(&GlobalC::ucell, &GlobalC::GridD, pv, intor);
+        cal_current = new TD_current(&GlobalC::ucell, &GlobalC::GridD, pv, orb, intor);
         cal_current->calculate_vcomm_r();
         cal_current->calculate_grad_term();
         for (int dir = 0; dir < 3; dir++)

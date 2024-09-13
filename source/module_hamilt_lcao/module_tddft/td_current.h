@@ -17,6 +17,7 @@ class TD_current
     TD_current(const UnitCell* ucell_in,
                Grid_Driver* GridD_in,
                const Parallel_Orbitals* paraV,
+               const LCAO_Orbitals& orb,
                const TwoCenterIntegrator* intor);
     ~TD_current();
 
@@ -32,6 +33,8 @@ class TD_current
     const UnitCell* ucell = nullptr;
 
     const Parallel_Orbitals* paraV = nullptr;
+
+    const LCAO_Orbitals& orb_;
 
     Grid_Driver* Grid = nullptr;
     /// @brief Store real space hamiltonian. TD term should include imaginary part, thus it has to be complex type. Only shared between TD operators.

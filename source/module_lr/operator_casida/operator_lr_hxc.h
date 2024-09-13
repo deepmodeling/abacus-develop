@@ -23,6 +23,7 @@ namespace LR
             typename TGint<T>::type* gint_in,
             std::weak_ptr<PotHxcLR> pot_in,
             const UnitCell& ucell_in,
+            const std::vector<double>& orb_cutoff,
             Grid_Driver& gd_in,
             const K_Vectors& kv_in,
             Parallel_2D* pX_in,
@@ -30,7 +31,7 @@ namespace LR
             Parallel_Orbitals* pmat_in)
             : nspin(nspin), naos(naos), nocc(nocc), nvirt(nvirt),
             psi_ks(psi_ks_in), DM_trans(DM_trans_in), gint(gint_in), pot(pot_in),
-            ucell(ucell_in), gd(gd_in), kv(kv_in),
+            ucell(ucell_in), orb_cutoff_(orb_cutoff), gd(gd_in), kv(kv_in),
             pX(pX_in), pc(pc_in), pmat(pmat_in)
         {
             ModuleBase::TITLE("OperatorLRHxc", "OperatorLRHxc");
@@ -65,8 +66,7 @@ namespace LR
                     int iat2 = this->ucell.itia2iat(T2, I2);
                     if (pmat->get_row_size(iat1) <= 0 || pmat->get_col_size(iat2) <= 0) { continue; }
                     const ModuleBase::Vector3<int>& R_index = adjs.box[ad];
-                    const LCAO_Orbitals& orb = LCAO_Orbitals::get_const_instance();
-                    if (ucell.cal_dtau(iat1, iat2, R_index).norm() * this->ucell.lat0 >= orb.Phi[T1].getRcut() + orb.Phi[T2].getRcut()) { continue; }
+                    if (ucell.cal_dtau(iat1, iat2, R_index).norm() * this->ucell.lat0 >= orb_cutoff_[T1] + orb_cutoff_[T2]) { continue; }
                     hamilt::AtomPair<TR> tmp(iat1, iat2, R_index.x, R_index.y, R_index.z, pmat);
                     hR.insert_pair(tmp);
                 }
@@ -120,6 +120,7 @@ namespace LR
         typename TGint<T>::type* gint = nullptr;
 
         const UnitCell& ucell;
+        std::vector<double> orb_cutoff_;
         Grid_Driver& gd;
 
         bool tdm_sym = false; ///< whether transition density matrix is symmetric

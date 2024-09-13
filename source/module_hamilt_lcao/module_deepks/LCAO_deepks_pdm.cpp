@@ -176,7 +176,8 @@ void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<double, double
 
                 auto row_indexes = pv->get_indexes_row(ibt1);
                 const int row_size = row_indexes.size();
-                if(row_size == 0) continue;
+                if(row_size == 0) { continue;
+}
 
                 // no possible to unexist key
                 std::vector<double> s_1t(trace_alpha_size * row_size);
@@ -210,7 +211,8 @@ void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<double, double
 
                     auto col_indexes = pv->get_indexes_col(ibt2);
                     const int col_size = col_indexes.size();
-                    if(col_size == 0) continue;
+                    if(col_size == 0) { continue;
+}
 
                     std::vector<double> s_2t(trace_alpha_size * col_size);
                     // no possible to unexist key
@@ -228,16 +230,20 @@ void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<double, double
                     for(int is=0;is<dm->get_DMR_vector().size();is++)
                     {
                         auto* tmp = dm->get_DMR_vector()[is]->find_matrix(ibt1, ibt2, 0, 0, 0);
-#ifdef __DEBUG
-                        assert(tmp != nullptr);
-#endif
+                        if(tmp == nullptr)
+                        {
+                            // in case of no deepks_scf but out_deepks_label, size of DMR would mismatch with deepks-orbitals
+                            dm_current = nullptr; 
+                            break;
+                        }
                         dm_current = tmp->get_pointer();
                         for(int idm=0;idm<row_size*col_size;idm++)
                         {
                             dm_array[idm] += dm_current[idm];
                         }
                     }
-                    if(dm_current == nullptr) continue; //skip the long range DM pair more than nonlocal term
+                    if(dm_current == nullptr) { continue; //skip the long range DM pair more than nonlocal term
+}
                     dm_current = dm_array.data();
                     //dgemm for s_2t and dm_current to get g_1dmt
                     constexpr char transa='T', transb='N';
@@ -422,10 +428,12 @@ void LCAO_Deepks::cal_projected_DM_k(const elecstate::DensityMatrix<std::complex
 
                 auto row_indexes = pv->get_indexes_row(ibt1);
                 const int row_size = row_indexes.size();
-                if(row_size == 0) continue;
+                if(row_size == 0) { continue;
+}
 
                 key_tuple key_1(ibt1,dR1.x,dR1.y,dR1.z);
-                if(this->nlm_save_k[iat].find(key_1) == this->nlm_save_k[iat].end()) continue;
+                if(this->nlm_save_k[iat].find(key_1) == this->nlm_save_k[iat].end()) { continue;
+}
                 std::vector<double> s_1t(trace_alpha_size * row_size);
                 std::vector<double> g_1dmt(trace_alpha_size * row_size, 0.0);
                 for(int irow=0;irow<row_size;irow++)
@@ -457,11 +465,13 @@ void LCAO_Deepks::cal_projected_DM_k(const elecstate::DensityMatrix<std::complex
 
                     auto col_indexes = pv->get_indexes_col(ibt2);
                     const int col_size = col_indexes.size();
-                    if(col_size == 0) continue;
+                    if(col_size == 0) { continue;
+}
 
                     std::vector<double> s_2t(trace_alpha_size * col_size);
                     key_tuple key_2(ibt2,dR2.x,dR2.y,dR2.z);
-                    if(this->nlm_save_k[iat].find(key_2) == this->nlm_save_k[iat].end()) continue;
+                    if(this->nlm_save_k[iat].find(key_2) == this->nlm_save_k[iat].end()) { continue;
+}
                     for(int icol=0;icol<col_size;icol++)
                     {
                         const double* col_ptr = this->nlm_save_k[iat][key_2][col_indexes[icol]][0].data();
@@ -487,7 +497,8 @@ void LCAO_Deepks::cal_projected_DM_k(const elecstate::DensityMatrix<std::complex
                             dm_array[idm] += dm_current[idm];
                         }
                     }
-                    if(dm_current == nullptr) continue;
+                    if(dm_current == nullptr) { continue;
+}
                     dm_current = dm_array.data();
                     //dgemm for s_2t and dm_current to get g_1dmt
                     constexpr char transa='T', transb='N';
@@ -561,7 +572,7 @@ void LCAO_Deepks::cal_projected_DM_k(const elecstate::DensityMatrix<std::complex
     
 }
 
-void LCAO_Deepks::check_projected_dm(void)
+void LCAO_Deepks::check_projected_dm()
 {
     const std::string file_projdm = GlobalV::global_out_dir + "deepks_projdm.dat";
     std::ofstream ofs(file_projdm.c_str());

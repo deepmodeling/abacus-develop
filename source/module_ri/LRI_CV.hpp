@@ -37,6 +37,7 @@ LRI_CV<Tdata>::~LRI_CV()
 
 template<typename Tdata>
 void LRI_CV<Tdata>::set_orbitals(
+    const LCAO_Orbitals& orb,
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &lcaos_in,
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &abfs_in,
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &abfs_ccp_in,
@@ -46,6 +47,7 @@ void LRI_CV<Tdata>::set_orbitals(
 	ModuleBase::TITLE("LRI_CV", "set_orbitals");
 	ModuleBase::timer::tick("LRI_CV", "set_orbitals");
 
+    this->orb_cutoff_ = orb.cutoffs();
 	this->lcaos = lcaos_in;
 	this->abfs = abfs_in;
 	this->abfs_ccp = abfs_ccp_in;
@@ -59,11 +61,11 @@ void LRI_CV<Tdata>::set_orbitals(
 		range_abfs = Exx_Abfs::Abfs_Index::construct_range( abfs );
 	this->index_abfs = ModuleBase::Element_Basis_Index::construct_index( range_abfs );
 
-	this->m_abfs_abfs.init( 2, kmesh_times, (1+this->ccp_rmesh_times)/2.0 );
+	this->m_abfs_abfs.init( 2, orb, kmesh_times, (1+this->ccp_rmesh_times)/2.0 );
 	this->m_abfs_abfs.init_radial( this->abfs_ccp, this->abfs );
 	this->m_abfs_abfs.init_radial_table();
 
-	this->m_abfslcaos_lcaos.init( 1, kmesh_times, 1 );
+	this->m_abfslcaos_lcaos.init( 1, orb, kmesh_times, 1 );
 	this->m_abfslcaos_lcaos.init_radial( this->abfs_ccp, this->lcaos, this->lcaos );
 	this->m_abfslcaos_lcaos.init_radial_table();
 
@@ -101,8 +103,8 @@ auto LRI_CV<Tdata>::cal_datas(
 			const ModuleBase::Vector3<double> tau0 = GlobalC::ucell.atoms[it0].tau[ia0];
 			const ModuleBase::Vector3<double> tau1 = GlobalC::ucell.atoms[it1].tau[ia1];
 			const double Rcut = std::min(
-				GlobalC::ORB.Phi[it0].getRcut() * rmesh_times + GlobalC::ORB.Phi[it1].getRcut(),
-				GlobalC::ORB.Phi[it1].getRcut() * rmesh_times + GlobalC::ORB.Phi[it0].getRcut());
+				orb_cutoff_[it0] * rmesh_times + orb_cutoff_[it1],
+				orb_cutoff_[it1] * rmesh_times + orb_cutoff_[it0]);
 			const Abfs::Vector3_Order<double> R_delta = -tau0+tau1+(RI_Util::array3_to_Vector3(cell1)*GlobalC::ucell.latvec);
 			if( R_delta.norm()*GlobalC::ucell.lat0 < Rcut )
 			{
