@@ -23,6 +23,7 @@ void cal_TR(const UnitCell& ucell,
             LCAO_HS_Arrays& HS_arrays,
             Grid_Driver& grid,
             const TwoCenterBundle& two_center_bundle,
+            const LCAO_Orbitals& orb,
             const double& sparse_thr);
 
 //! cal_STN_R_for_T is only called by cal_TR
@@ -30,6 +31,7 @@ void cal_STN_R_for_T(const UnitCell& ucell,
                      const Parallel_Orbitals& pv,
                      LCAO_HS_Arrays& HS_arrays,
                      Grid_Driver& grid,
+                     const std::vector<double>& orb_cutoff,
                      const double& sparse_thr);
 
 void destroy_T_R_sparse(LCAO_HS_Arrays& HS_Arrays);

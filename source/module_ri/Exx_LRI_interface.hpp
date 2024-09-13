@@ -37,7 +37,7 @@ void Exx_LRI_Interface<T, Tdata>::read_Hexxs_cereal(const std::string& file_name
 }
 
 template<typename T, typename Tdata>
-void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const K_Vectors& kv, const Charge_Mixing& chgmix)
+void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const K_Vectors& kv, const Charge_Mixing& chgmix, const UnitCell& ucell, const Parallel_2D& pv)
 {
 #ifdef __MPI
     if (GlobalC::exx_info.info_global.cal_exx)
@@ -45,15 +45,26 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const K_Vectors& kv, const Charg
         if (GlobalC::restart.info_load.load_H_finish && !GlobalC::restart.info_load.restart_exx) { XC_Functional::set_xc_type(GlobalC::ucell.atoms[0].ncpp.xc_func);
         } else
         {
-            if (GlobalC::ucell.atoms[0].ncpp.xc_func == "HF" || GlobalC::ucell.atoms[0].ncpp.xc_func == "PBE0" || GlobalC::ucell.atoms[0].ncpp.xc_func == "HSE")
+            if (ucell.atoms[0].ncpp.xc_func == "HF" || ucell.atoms[0].ncpp.xc_func == "PBE0" || ucell.atoms[0].ncpp.xc_func == "HSE")
             {
                 XC_Functional::set_xc_type("pbe");
             }
-            else if (GlobalC::ucell.atoms[0].ncpp.xc_func == "SCAN0")
+            else if (ucell.atoms[0].ncpp.xc_func == "SCAN0")
             {
                 XC_Functional::set_xc_type("scan");
             }
         }
+        // initialize the rotation matrix in AO representation
+        this->exx_spacegroup_symmetry = (GlobalV::NSPIN < 4 && ModuleSymmetry::Symmetry::symm_flag == 1);
+        if (this->exx_spacegroup_symmetry)
+        {
+            const std::array<int, 3>& period = RI_Util::get_Born_vonKarmen_period(kv);
+            this->symrot_.find_irreducible_sector(ucell.symm, ucell.atoms, ucell.st,
+                RI_Util::get_Born_von_Karmen_cells(period), period, ucell.lat);
+            // this->symrot_.set_Cs_rotation(this->exx_ptr->get_abfs_nchis());
+            this->symrot_.cal_Ms(kv, ucell, pv);
+        }
+
         this->exx_ptr->cal_exx_ions();
     }
 
@@ -68,8 +79,11 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const K_Vectors& kv, const Charg
 		
 		// set initial parameter for mix_DMk_2D
 		if(GlobalC::exx_info.info_global.cal_exx)
-		{
-			this->mix_DMk_2D.set_nks(kv.get_nks(), PARAM.globalv.gamma_only_local);
+        {
+            if (this->exx_spacegroup_symmetry)
+                {this->mix_DMk_2D.set_nks(kv.get_nkstot_full() * (GlobalV::NSPIN == 2 ? 2 : 1), PARAM.globalv.gamma_only_local);}
+            else
+                {this->mix_DMk_2D.set_nks(kv.get_nks(), PARAM.globalv.gamma_only_local);}
 			if(GlobalC::exx_info.info_global.separate_loop) {
                 this->mix_DMk_2D.set_mixing(nullptr);
 			} else {
@@ -82,19 +96,21 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const K_Vectors& kv, const Charg
 }
 
 template<typename T, typename Tdata>
-void Exx_LRI_Interface<T, Tdata>::exx_eachiterinit(const elecstate::DensityMatrix<T, double>& dm, const int& iter)
+void Exx_LRI_Interface<T, Tdata>::exx_eachiterinit(const elecstate::DensityMatrix<T, double>& dm, const K_Vectors& kv, const int& iter)
 {
     if (GlobalC::exx_info.info_global.cal_exx)
     {
         if (!GlobalC::exx_info.info_global.separate_loop && this->two_level_step)
         {
-			const bool flag_restart = (iter==1) ? true : false;
-            this->mix_DMk_2D.mix(dm.get_DMK_vector(), flag_restart);
+            const bool flag_restart = (iter == 1) ? true : false;
+            if (this->exx_spacegroup_symmetry) { this->mix_DMk_2D.mix(symrot_.restore_dm(kv, dm.get_DMK_vector(), *dm.get_paraV_pointer()), flag_restart); }
+            else { this->mix_DMk_2D.mix(dm.get_DMK_vector(), flag_restart); }
 			const std::vector<std::map<int,std::map<std::pair<int, std::array<int, 3>>,RI::Tensor<Tdata>>>>
 				Ds = PARAM.globalv.gamma_only_local
                 ? RI_2D_Comm::split_m2D_ktoR<Tdata>(*this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_gamma_out(), *dm.get_paraV_pointer(), GlobalV::NSPIN)
-                : RI_2D_Comm::split_m2D_ktoR<Tdata>(*this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_k_out(), *dm.get_paraV_pointer(), GlobalV::NSPIN);
-            this->exx_ptr->cal_exx_elec(Ds, *dm.get_paraV_pointer());
+                : RI_2D_Comm::split_m2D_ktoR<Tdata>(*this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_k_out(), *dm.get_paraV_pointer(), GlobalV::NSPIN, this->exx_spacegroup_symmetry);
+            if (this->exx_spacegroup_symmetry && GlobalC::exx_info.info_global.exx_symmetry_realspace) { this->exx_ptr->cal_exx_elec(Ds, *dm.get_paraV_pointer(), &this->symrot_); }
+            else { this->exx_ptr->cal_exx_elec(Ds, *dm.get_paraV_pointer()); }
         }
     }
 }
@@ -188,23 +204,61 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
                 timeval t_start;       gettimeofday(&t_start, nullptr);
 
                 const bool flag_restart = (this->two_level_step == 0) ? true : false;
-                this->mix_DMk_2D.mix(dm.get_DMK_vector(), flag_restart);
+
+                if (this->exx_spacegroup_symmetry)
+                    {this->mix_DMk_2D.mix(symrot_.restore_dm(kv, dm.get_DMK_vector(), *dm.get_paraV_pointer()), flag_restart);}
+                else
+                    {this->mix_DMk_2D.mix(dm.get_DMK_vector(), flag_restart);}
 
                 // GlobalC::exx_lcao.cal_exx_elec(p_esolver->LOC, p_esolver->LOWF.wfc_k_grid);
                 const std::vector<std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>>>
                     Ds = std::is_same<T, double>::value //gamma_only_local
                     ? RI_2D_Comm::split_m2D_ktoR<Tdata>(*this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_gamma_out(), *dm.get_paraV_pointer(), nspin)
-                    : RI_2D_Comm::split_m2D_ktoR<Tdata>(*this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_k_out(), *dm.get_paraV_pointer(), nspin);
-                this->exx_ptr->cal_exx_elec(Ds, *dm.get_paraV_pointer());
+                    : RI_2D_Comm::split_m2D_ktoR<Tdata>(*this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_k_out(), *dm.get_paraV_pointer(), nspin, this->exx_spacegroup_symmetry);
+
+                // check the rotation of Ds
+                // this->symrot_.test_HR_rotation(GlobalC::ucell.symm, GlobalC::ucell.atoms, GlobalC::ucell.st, 'D', Ds[0]);
+
+                // check the rotation of H(R) before adding exx
+                // this->symrot_.find_irreducible_sector(GlobalC::ucell.symm, GlobalC::ucell.atoms, GlobalC::ucell.st, this->symrot_.get_Rs_from_adjacent_list(GlobalC::ucell, GlobalC::GridD, *lm.ParaV));
+                // this->symrot_.test_HR_rotation(GlobalC::ucell.symm, GlobalC::ucell.atoms, GlobalC::ucell.st, 'H', *(dynamic_cast<hamilt::HamiltLCAO<T, double>*>(&hamilt)->getHR()));
+                // exit(0);
+
+            if (this->exx_spacegroup_symmetry && GlobalC::exx_info.info_global.exx_symmetry_realspace)
+            {
+                this->exx_ptr->cal_exx_elec(Ds, *dm.get_paraV_pointer(), &this->symrot_);
+                // this->symrot_.print_HR(this->exx_ptr->Hexxs[0], "Hexxs_irreducible");   // test
+                // this->symrot_.print_HR(this->exx_ptr->Hexxs[0], "Hexxs_restored", 1e-10);   // test
+            }
+            else
+            {
+                this->exx_ptr->cal_exx_elec(Ds, *dm.get_paraV_pointer());    // restore DM but not Hexx
+                // this->symrot_.print_HR(this->exx_ptr->Hexxs[0], "Hexxs_restore-DM-only");   // test
+                // this->symrot_.print_HR(this->exx_ptr->Hexxs[0], "Hexxs_ref");   // test
+            }
+                // ========================  test   ========================
+                // if (this->two_level_step)exit(0);
+                // check the rotation of S(R)
+                // this->symrot_.find_irreducible_sector(GlobalC::ucell.symm, GlobalC::ucell.atoms, GlobalC::ucell.st, this->symrot_.get_Rs_from_adjacent_list(GlobalC::ucell, GlobalC::GridD, *lm.ParaV));
+                // this->symrot_.test_HR_rotation(GlobalC::ucell.symm, GlobalC::ucell.atoms, GlobalC::ucell.st, 'H', *(dynamic_cast<hamilt::HamiltLCAO<T, double>*>(&hamilt)->getSR()));
+
+                // check the rotation of D(R): no atom pair?
+                // symrot_.find_irreducible_sector(GlobalC::ucell.symm, GlobalC::ucell.atoms, GlobalC::ucell.st, symrot_.get_Rs_from_adjacent_list(GlobalC::ucell, GlobalC::GridD, *this->DM->get_paraV_pointer()));
+                // symrot_.test_HR_rotation(GlobalC::ucell.symm, GlobalC::ucell.atoms, GlobalC::ucell.st, 'D', *(this->DM->get_DMR_pointer(0)));
+
+                // check the rotation of Hexx
+                // this->symrot_.test_HR_rotation(GlobalC::ucell.symm, GlobalC::ucell.atoms, GlobalC::ucell.st, 'H', this->exx_ptr->Hexxs[0]);
+                // exit(0);// break after test
+                // ========================  test   ========================
                 iter = 0;
                 this->two_level_step++;
 
                 timeval t_end;       gettimeofday(&t_end, nullptr);
                 std::cout << "and rerun SCF\t"
                     << std::setprecision(3) << std::setiosflags(std::ios::scientific)
-                    << (double)(t_end.tv_sec - t_start.tv_sec) + (double)(t_end.tv_usec - t_start.tv_usec) / 1000000.0
+                    << (double)(t_end.tv_sec-t_start.tv_sec) + (double)(t_end.tv_usec-t_start.tv_usec)/1000000.0 
                     << std::defaultfloat << " (s)" << std::endl;
-                return false;
+            return false;
             }
         }
     restart_reset();

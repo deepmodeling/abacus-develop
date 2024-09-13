@@ -1,11 +1,13 @@
 #include "spar_dh.h"
 
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
+#include <vector>
 
 void sparse_format::cal_dH(const Parallel_Orbitals& pv,
                            LCAO_HS_Arrays& HS_Arrays,
                            Grid_Driver& grid,
                            const TwoCenterBundle& two_center_bundle,
+                           const LCAO_Orbitals& orb,
                            const int& current_spin,
                            const double& sparse_thr,
                            Gint_k& gint_k)
@@ -35,7 +37,7 @@ void sparse_format::cal_dH(const Parallel_Orbitals& pv,
                                   'T',
                                   true,
                                   GlobalC::ucell,
-                                  GlobalC::ORB,
+                                  orb,
                                   pv,
                                   two_center_bundle,
                                   &GlobalC::GridD,
@@ -49,7 +51,7 @@ void sparse_format::cal_dH(const Parallel_Orbitals& pv,
                                   'T',
                                   true,
                                   GlobalC::ucell,
-                                  GlobalC::ORB,
+                                  orb,
                                   pv,
                                   two_center_bundle,
                                   &GlobalC::GridD,
@@ -61,11 +63,11 @@ void sparse_format::cal_dH(const Parallel_Orbitals& pv,
                                        nullptr,
                                        true,
                                        GlobalC::ucell,
-                                       GlobalC::ORB,
+                                       orb,
                                        *(two_center_bundle.overlap_orb_beta),
                                        &GlobalC::GridD);
 
-    sparse_format::cal_dSTN_R(pv, HS_Arrays, fsr_dh, grid, current_spin, sparse_thr);
+    sparse_format::cal_dSTN_R(pv, HS_Arrays, fsr_dh, grid, orb.cutoffs(), current_spin, sparse_thr);
 
     delete[] fsr_dh.DHloc_fixedR_x;
     delete[] fsr_dh.DHloc_fixedR_y;
@@ -106,6 +108,7 @@ void sparse_format::cal_dSTN_R(const Parallel_Orbitals& pv,
                                LCAO_HS_Arrays& HS_Arrays,
                                ForceStressArrays& fsr,
                                Grid_Driver& grid,
+                               const std::vector<double>& orb_cutoff,
                                const int& current_spin,
                                const double& sparse_thr)
 {
@@ -137,7 +140,7 @@ void sparse_format::cal_dSTN_R(const Parallel_Orbitals& pv,
                 tau2 = grid.getAdjacentTau(ad);
                 dtau = tau2 - tau1;
                 double distance = dtau.norm() * GlobalC::ucell.lat0;
-                double rcut = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ORB.Phi[T2].getRcut();
+                double rcut = orb_cutoff[T1] + orb_cutoff[T2];
 
                 bool adj = false;
 
@@ -158,8 +161,8 @@ void sparse_format::cal_dSTN_R(const Parallel_Orbitals& pv,
                         double distance1 = dtau1.norm() * GlobalC::ucell.lat0;
                         double distance2 = dtau2.norm() * GlobalC::ucell.lat0;
 
-                        double rcut1 = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
-                        double rcut2 = GlobalC::ORB.Phi[T2].getRcut() + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
+                        double rcut1 = orb_cutoff[T1] + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
+                        double rcut2 = orb_cutoff[T2] + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
 
                         if (distance1 < rcut1 && distance2 < rcut2)
                         {

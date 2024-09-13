@@ -7,6 +7,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/force_stress_arrays.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include <vector>
 
 namespace sparse_format
 {
@@ -14,6 +15,7 @@ void cal_dH(const Parallel_Orbitals& pv,
             LCAO_HS_Arrays& HS_Arrays,
             Grid_Driver& grid,
             const TwoCenterBundle& two_center_bundle,
+            const LCAO_Orbitals& orb,
             const int& current_spin,
             const double& sparse_thr,
             Gint_k& gint_k);
@@ -26,6 +28,7 @@ void cal_dSTN_R(const Parallel_Orbitals& pv,
                 LCAO_HS_Arrays& HS_Arrays,
                 ForceStressArrays& fsr, // mohan add 2024-06-16
                 Grid_Driver& grid,
+                const std::vector<double>& orb_cutoff,
                 const int& current_spin,
                 const double& sparse_thr);
 

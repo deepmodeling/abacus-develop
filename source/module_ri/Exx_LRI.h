@@ -18,6 +18,8 @@
 #include <deque>
 #include <mpi.h>
 
+#include "module_exx_symmetry/symmetry_rotation.h"
+
 	class Parallel_Orbitals;
 	
 	template<typename T, typename Tdata>
@@ -54,12 +56,14 @@ public:
 
 	void init(const MPI_Comm &mpi_comm_in, const K_Vectors &kv_in);
 	void cal_exx_force();
-	void cal_exx_stress();
+    void cal_exx_stress();
+    std::vector<std::vector<int>> get_abfs_nchis() const;
 
 	std::vector< std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> Hexxs;
     double Eexx;
 	ModuleBase::matrix force_exx;
 	ModuleBase::matrix stress_exx;
+    
 
 private:
 	const Exx_Info::Exx_Info_RI &info;
@@ -74,7 +78,9 @@ private:
 	RI::Exx<TA,Tcell,Ndim,Tdata> exx_lri;
 
 	void cal_exx_ions();
-	void cal_exx_elec(const std::vector<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>> &Ds, const Parallel_Orbitals &pv);
+    void cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Ds,
+        const Parallel_Orbitals& pv,
+        const ModuleSymmetry::Symmetry_rotation* p_symrot = nullptr);
 	void post_process_Hexx( std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> &Hexxs_io ) const;
     double post_process_Eexx(const double& Eexx_in) const;
 

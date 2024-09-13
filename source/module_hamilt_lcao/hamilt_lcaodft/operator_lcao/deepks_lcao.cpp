@@ -21,10 +21,12 @@ DeePKS<OperatorLCAO<TK, TR>>::DeePKS(HS_Matrix_K<TK>* hsk_in,
                                      const UnitCell* ucell_in,
                                      Grid_Driver* GridD_in,
                                      const TwoCenterIntegrator* intor_orb_alpha,
+                                     const LCAO_Orbitals* ptr_orb,
                                      const int& nks_in,
                                      elecstate::DensityMatrix<TK, double>* DM_in)
-    : nks(nks_in), ucell(ucell_in), OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in), DM(DM_in),
-      intor_orb_alpha_(intor_orb_alpha)
+    : OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in),
+      DM(DM_in), ucell(ucell_in), 
+      intor_orb_alpha_(intor_orb_alpha), ptr_orb_(ptr_orb), nks(nks_in)
 {
     this->cal_type = calculation_type::lcao_deepks;
 #ifdef __DEEPKS
@@ -156,7 +158,7 @@ void DeePKS<OperatorLCAO<double, double>>::contributeHR()
     {
         ModuleBase::timer::tick("DeePKS", "contributeHR");
         const Parallel_Orbitals* pv = this->hsk->get_pv();
-        GlobalC::ld.cal_projected_DM(this->DM, *this->ucell, GlobalC::ORB, GlobalC::GridD);
+        GlobalC::ld.cal_projected_DM(this->DM, *this->ucell, *ptr_orb_, GlobalC::GridD);
         GlobalC::ld.cal_descriptor(this->ucell->nat);
         GlobalC::ld.cal_gedm(this->ucell->nat);
         // recalculate the H_V_delta
@@ -184,7 +186,7 @@ void DeePKS<OperatorLCAO<std::complex<double>, double>>::contributeHR()
     {
         ModuleBase::timer::tick("DeePKS", "contributeHR");
 
-        GlobalC::ld.cal_projected_DM_k(this->DM, *this->ucell, GlobalC::ORB, GlobalC::GridD);
+        GlobalC::ld.cal_projected_DM_k(this->DM, *this->ucell, *ptr_orb_, GlobalC::GridD);
         GlobalC::ld.cal_descriptor(this->ucell->nat);
         // calculate dE/dD
         GlobalC::ld.cal_gedm(this->ucell->nat);
@@ -217,7 +219,7 @@ void DeePKS<OperatorLCAO<std::complex<double>, std::complex<double>>>::contribut
     {
         ModuleBase::timer::tick("DeePKS", "contributeHR");
 
-        GlobalC::ld.cal_projected_DM_k(this->DM, *this->ucell, GlobalC::ORB, GlobalC::GridD);
+        GlobalC::ld.cal_projected_DM_k(this->DM, *this->ucell, *ptr_orb_, GlobalC::GridD);
         GlobalC::ld.cal_descriptor(this->ucell->nat);
         // calculate dE/dD
         GlobalC::ld.cal_gedm(this->ucell->nat);
@@ -288,8 +290,9 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::pre_calculate_nlm(
             ModuleBase::Vector3<double> dtau = tau0 - tau1;
             intor_orb_alpha_->snap(T1, L1, N1, M1, 0, dtau * ucell->lat0, false /*calc_deri*/, nlm);
             nlm_in[ad].insert({all_indexes[iw1l], nlm[0]});
-            if (npol == 2)
+            if (npol == 2) {
                 nlm_in[ad].insert({all_indexes[iw1l + 1], nlm[0]});
+}
         }
     }
 }
@@ -385,8 +388,9 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
             ModuleBase::Vector3<int>& R_index1 = adjs.box[ad1];
             auto row_indexes = paraV->get_indexes_row(iat1);
             const int row_size = row_indexes.size();
-            if (row_size == 0)
+            if (row_size == 0) {
                 continue;
+}
 
             std::vector<double> s_1t(trace_alpha_size * row_size);
             for (int irow = 0; irow < row_size; irow++)
@@ -410,8 +414,9 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                 hamilt::BaseMatrix<TR>* tmp
                     = this->H_V_delta->find_matrix(iat1, iat2, R_vector[0], R_vector[1], R_vector[2]);
                 // if not found , skip this pair of atoms
-                if (tmp == nullptr)
+                if (tmp == nullptr) {
                     continue;
+}
                 auto col_indexes = paraV->get_indexes_col(iat2);
                 const int col_size = col_indexes.size();
                 std::vector<double> hr_current(row_size * col_size, 0);
