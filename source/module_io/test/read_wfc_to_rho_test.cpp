@@ -279,8 +279,8 @@ int main(int argc, char** argv)
 {
 #ifdef __MPI
     setupmpi(argc, argv, GlobalV::NPROC, GlobalV::MY_RANK);
-    PARAM.input.bndpar = (GlobalV::NPROC > 1) ? 2 : 1;
-    GlobalV::KPAR = PARAM.input.bndpar;
+    PARAM.input.kpar = (GlobalV::NPROC > 1) ? 2 : 1;
+    GlobalV::KPAR = PARAM.input.kpar;
     PARAM.input.bndpar = 1;
     Parallel_Global::divide_pools(GlobalV::NPROC,
                                   GlobalV::MY_RANK,
