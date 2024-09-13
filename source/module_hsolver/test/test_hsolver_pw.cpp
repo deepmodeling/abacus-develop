@@ -133,13 +133,9 @@ TEST_F(TestHSolverPW, solve) {
     EXPECT_DOUBLE_EQ(elecstate_test.ekb.c[1], 7.0);
 
     // check initDiagh()
-    this->hs_f.method = "dav";
-    this->hs_d.method = "dav";
     this->hs_f.initialed_psi = false;
     this->hs_d.initialed_psi = false;
-    // this->hs_f.initDiagh(psi_test_cf);
-    // this->hs_d.initDiagh(psi_test_cd);
-    // will not change state of initialed_psi in initDiagh
+
     EXPECT_EQ(this->hs_f.initialed_psi, false);
     EXPECT_EQ(this->hs_d.initialed_psi, false);
 
