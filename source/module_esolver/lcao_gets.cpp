@@ -63,7 +63,8 @@ void ESolver_KS_LCAO<std::complex<double>, double>::get_S(void)
         this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, double>(
             &this->pv,
             this->kv,
-            *(two_center_bundle_.overlap_orb));
+            *(two_center_bundle_.overlap_orb),
+            orb_.cutoffs());
         dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, double>*>(
             this->p_hamilt->ops)
             ->contributeHR();
@@ -103,7 +104,9 @@ void ESolver_KS_LCAO<std::complex<double>, std::complex<double>>::get_S(void)
                                                 std::complex<double>>(
             &this->pv,
             this->kv,
-            *(two_center_bundle_.overlap_orb));
+            *(two_center_bundle_.overlap_orb),
+            orb_.cutoffs()
+            );
         dynamic_cast<
             hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>*>(
             this->p_hamilt->ops)

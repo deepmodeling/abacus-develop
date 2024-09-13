@@ -257,6 +257,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
                                                                    GlobalC::ucell,
                                                                    &GlobalC::GridD,
                                                                    two_center_bundle.overlap_orb_onsite.get(),
+                                                                   orb.cutoffs(),
                                                                    &GlobalC::dftu);
 
             tmp_dftu.cal_force_stress(isforce, isstress, force_dftu, stress_dftu);

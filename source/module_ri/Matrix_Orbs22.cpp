@@ -9,23 +9,23 @@
 #include "module_base/tool_title.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
-void Matrix_Orbs22::init(const int mode, const double kmesh_times, const double rmesh_times)
+void Matrix_Orbs22::init(const int mode, const LCAO_Orbitals& orb, const double kmesh_times, const double rmesh_times)
 {
     ModuleBase::TITLE("Matrix_Orbs22", "init");
     ModuleBase::timer::tick("Matrix_Orbs22", "init");
     int Lmax_used, Lmax;
 
-    const int ntype = GlobalC::ORB.get_ntype();
+    const int ntype = orb.get_ntype();
     int lmax_orb = -1, lmax_beta = -1;
     for (int it = 0; it < ntype; it++)
     {
-        lmax_orb = std::max(lmax_orb, GlobalC::ORB.Phi[it].getLmax());
+        lmax_orb = std::max(lmax_orb, orb.Phi[it].getLmax());
         lmax_beta = std::max(lmax_beta, GlobalC::ucell.infoNL.Beta[it].getLmax());
     }
-    const double dr = GlobalC::ORB.get_dR();
-    const double dk = GlobalC::ORB.get_dk();
-    const int kmesh = GlobalC::ORB.get_kmesh() * kmesh_times + 1;
-    int Rmesh = static_cast<int>(GlobalC::ORB.get_Rmax() * rmesh_times / dr) + 4;
+    const double dr = orb.get_dR();
+    const double dk = orb.get_dk();
+    const int kmesh = orb.get_kmesh() * kmesh_times + 1;
+    int Rmesh = static_cast<int>(orb.get_Rmax() * rmesh_times / dr) + 4;
     Rmesh += 1 - Rmesh % 2;
 
     Center2_Orb::init_Table_Spherical_Bessel(4,

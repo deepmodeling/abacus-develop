@@ -13,8 +13,9 @@
 
 #include "../module_ri/test_code/element_basis_index-test.h"
 #include "../module_ri/test_code/test_function.h"
+#include <sched.h>
 
-void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv) const
+void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv, const LCAO_Orbitals& orb) const
 {
 // std::ofstream ofs_mpi(GlobalC::exx_lcao.test_dir.process+"time_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK),std::ofstream::app);
 
@@ -22,21 +23,22 @@ void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv) const
 // ofs_mpi<<"memory:\t"<<get_memory(10)<<std::endl;
 
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>
-		lcaos = Exx_Abfs::Construct_Orbs::change_orbs( GlobalC::ORB, this->kmesh_times );
+		lcaos = Exx_Abfs::Construct_Orbs::change_orbs( orb, this->kmesh_times );
 
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>
-		abfs = Exx_Abfs::Construct_Orbs::abfs_same_atom( lcaos, this->kmesh_times, GlobalC::exx_info.info_ri.pca_threshold );
+		abfs = Exx_Abfs::Construct_Orbs::abfs_same_atom( orb, lcaos, this->kmesh_times, GlobalC::exx_info.info_ri.pca_threshold );
 
 // ofs_mpi<<"memory:\t"<<get_memory(10)<<std::endl;
 	
 	Exx_Abfs::Jle jle;
-	jle.init_jle( this->kmesh_times );
+	jle.init_jle( this->kmesh_times, orb );
 
 // ofs_mpi<<"memory:\t"<<get_memory(10)<<std::endl;
 	
 	GlobalC::exx_info.info_ri.abfs_Lmax = Exx_Abfs::Jle::Lmax;
-	for( size_t T=0; T!=abfs.size(); ++T )
+	for( size_t T=0; T!=abfs.size(); ++T ) {
 		GlobalC::exx_info.info_ri.abfs_Lmax = std::max( GlobalC::exx_info.info_ri.abfs_Lmax, static_cast<int>(abfs[T].size())-1 );
+}
 
 	const ModuleBase::Element_Basis_Index::Range    range_lcaos = Exx_Abfs::Abfs_Index::construct_range( lcaos );
 	const ModuleBase::Element_Basis_Index::IndexLNM index_lcaos = ModuleBase::Element_Basis_Index::construct_index( range_lcaos );
@@ -71,7 +73,7 @@ void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv) const
 	const auto ms_lcaoslcaos_lcaoslcaos = [&]() -> std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t,RI::Tensor<double>>>>> 
 	{
 		Matrix_Orbs22 m_lcaoslcaos_lcaoslcaos;
-		m_lcaoslcaos_lcaoslcaos.init( 1, this->kmesh_times, 1 );
+		m_lcaoslcaos_lcaoslcaos.init( 1, orb, this->kmesh_times, 1 );
 		m_lcaoslcaos_lcaoslcaos.init_radial( lcaos, lcaos, lcaos, lcaos );
 		#if TEST_EXX_RADIAL>=1
 		m_lcaoslcaos_lcaoslcaos.init_radial_table(radial_R);
@@ -87,7 +89,7 @@ void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv) const
 	const auto ms_lcaoslcaos_jys = [&]() -> std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t,std::vector<RI::Tensor<double>>>>>>
 	{
 		Matrix_Orbs21 m_jyslcaos_lcaos;
-		m_jyslcaos_lcaos.init( 1, this->kmesh_times, 1 );
+		m_jyslcaos_lcaos.init( 1, orb, this->kmesh_times, 1 );
 		m_jyslcaos_lcaos.init_radial( jle.jle, lcaos, lcaos );
 		#if TEST_EXX_RADIAL>=1
 		m_jyslcaos_lcaos.init_radial_table(radial_R);
@@ -103,7 +105,7 @@ void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv) const
 	const auto ms_jys_jys = [&]() -> std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t,RI::Tensor<double>>>>>
 	{
 		Matrix_Orbs11 m_jys_jys;
-		m_jys_jys.init( 2, this->kmesh_times, 1 );
+		m_jys_jys.init( 2, orb, this->kmesh_times, 1 );
 		m_jys_jys.init_radial( jle.jle, jle.jle );
 		#if TEST_EXX_RADIAL>=1
 		m_jys_jys.init_radial_table(radial_R);
@@ -119,7 +121,7 @@ void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv) const
 	const auto ms_abfs_abfs = [&]() -> std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t,RI::Tensor<double>>>>>
 	{
 		Matrix_Orbs11 m_abfs_abfs;
-		m_abfs_abfs.init( 2, this->kmesh_times, 1 );
+		m_abfs_abfs.init( 2, orb, this->kmesh_times, 1 );
 		m_abfs_abfs.init_radial( abfs, abfs );
 		#if TEST_EXX_RADIAL>=1
 		m_abfs_abfs.init_radial_table(radial_R);
@@ -135,7 +137,7 @@ void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv) const
 	const auto ms_lcaoslcaos_abfs = [&]() -> std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t,std::vector<RI::Tensor<double>>>>>>
 	{
 		Matrix_Orbs21 m_abfslcaos_lcaos;
-		m_abfslcaos_lcaos.init( 1, this->kmesh_times, 1 );
+		m_abfslcaos_lcaos.init( 1, orb, this->kmesh_times, 1 );
 		m_abfslcaos_lcaos.init_radial( abfs, lcaos, lcaos );
 		#if TEST_EXX_RADIAL>=1
 		m_abfslcaos_lcaos.init_radial_table(radial_R);
@@ -151,7 +153,7 @@ void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv) const
 	const auto ms_jys_abfs = [&]() -> std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t,RI::Tensor<double>>>>>
 	{
 		Matrix_Orbs11 m_jys_abfs;
-		m_jys_abfs.init( 2, this->kmesh_times, 1 );
+		m_jys_abfs.init( 2, orb, this->kmesh_times, 1 );
 		m_jys_abfs.init_radial( jle.jle, abfs );
 		#if TEST_EXX_RADIAL>=1
 		m_jys_abfs.init_radial_table(radial_R);
@@ -212,6 +214,7 @@ void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv) const
 								m_jys_jys_proj,
 								m_lcaoslcaos_lcaoslcaos_proj,
 								TA, IA, TB, IB,
+                                orb.cutoffs(),
 								range_jys, index_jys );
 						}
 						else
@@ -222,6 +225,7 @@ void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv) const
 								{{ms_jys_jys.at(T).at(I).at(T).at(I)}},
 								ms_lcaoslcaos_lcaoslcaos.at(T).at(I).at(T).at(I),
 								TA, IA, TB, IB,
+                                orb.cutoffs(),
 								range_jys, index_jys );
 						}
 					}
@@ -278,6 +282,7 @@ void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv) const
 								m_jys_jys_proj,
 								m_lcaoslcaos_lcaoslcaos_proj,
 								TA, IA, TB, IB,
+                                orb.cutoffs(),
 								range_jys, index_jys );
 						}
 						else
@@ -289,6 +294,7 @@ void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv) const
 								 {ms_jys_jys.at(TB).at(IB).at(TA).at(IA), ms_jys_jys.at(TB).at(IB).at(TB).at(IB)}},
 								ms_lcaoslcaos_lcaoslcaos.at(TA).at(IA).at(TB).at(IB),
 								TA, IA, TB, IB,
+                                orb.cutoffs(),
 								range_jys, index_jys );
 						}
 					}
@@ -352,9 +358,9 @@ std::map<size_t,std::map<size_t,std::set<double>>> Exx_Opt_Orb::get_radial_R() c
 {
 	ModuleBase::TITLE("Exx_Opt_Orb::get_radial_R");
 	std::map<size_t,std::map<size_t,std::set<double>>> radial_R;
-	for( size_t TA=0; TA!=GlobalC::ucell.ntype; ++TA )
-		for( size_t IA=0; IA!=GlobalC::ucell.atoms[TA].na; ++IA )
-			for( size_t TB=0; TB!=GlobalC::ucell.ntype; ++TB )
+	for( size_t TA=0; TA!=GlobalC::ucell.ntype; ++TA ) {
+		for( size_t IA=0; IA!=GlobalC::ucell.atoms[TA].na; ++IA ) {
+			for( size_t TB=0; TB!=GlobalC::ucell.ntype; ++TB ) {
 				for( size_t IB=0; IB!=GlobalC::ucell.atoms[TB].na; ++IB )
 				{
 					const ModuleBase::Vector3<double> &tauA = GlobalC::ucell.atoms[TA].tau[IA];
@@ -363,5 +369,8 @@ std::map<size_t,std::map<size_t,std::set<double>>> Exx_Opt_Orb::get_radial_R() c
 					radial_R[TA][TB].insert( delta_R );
 					radial_R[TB][TA].insert( delta_R );
 				}
+}
+}
+}
 	return radial_R;
 }

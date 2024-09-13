@@ -6,6 +6,7 @@
 #include "module_cell/unitcell.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
+#include <vector>
 
 namespace hamilt
 {
@@ -43,6 +44,7 @@ class EkineticNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                                       const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
                                       HContainer<TR>* hR_in,
                                       const UnitCell* ucell_in,
+                                      const std::vector<double>& orb_cutoff,
                                       Grid_Driver* GridD_in,
                                       const TwoCenterIntegrator* intor);
 
@@ -61,6 +63,7 @@ class EkineticNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 
   private:
     const UnitCell* ucell = nullptr;
+    std::vector<double> orb_cutoff_;
 
     hamilt::HContainer<TR>* HR_fixed = nullptr;
 

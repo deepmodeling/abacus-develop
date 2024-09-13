@@ -9,6 +9,7 @@
 #include "module_hamilt_lcao/module_gint/gint_k.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hs_matrix_k.hpp"
+#include <vector>
 #ifdef __EXX
 #include "module_ri/Exx_LRI.h"
 #endif
@@ -43,7 +44,7 @@ class HamiltLCAO : public Hamilt<TK>
     /**
      * @brief Constructor of vacuum Operators, only HR and SR will be initialed as empty HContainer
      */
-    HamiltLCAO(const Parallel_Orbitals* paraV, const K_Vectors& kv_in, const TwoCenterIntegrator& intor_overlap_orb);
+    HamiltLCAO(const Parallel_Orbitals* paraV, const K_Vectors& kv_in, const TwoCenterIntegrator& intor_overlap_orb, const std::vector<double>& orb_cutoff);
 
     ~HamiltLCAO()
     {

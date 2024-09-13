@@ -23,6 +23,7 @@ namespace ModuleIO
         const K_Vectors& kv,
         const ModuleBase::matrix& wg,
         Grid_Driver& gd,
+        const std::vector<double>& orb_cutoff,
         const TwoCenterBundle& two_center_bundle
 #ifdef __EXX
         , std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd = nullptr
@@ -60,7 +61,7 @@ namespace ModuleIO
             hamilt::HContainer<TR> kinetic_R_ao(pv);
             if_gamma_fix(kinetic_R_ao);
             hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>> kinetic_op(&kinetic_k_ao, kv.kvec_d,
-                &kinetic_R_ao, &ucell, &gd, two_center_bundle.kinetic_orb.get());
+                &kinetic_R_ao, &ucell, orb_cutoff, &gd, two_center_bundle.kinetic_orb.get());
             kinetic_op.contributeHR();
             std::vector<std::vector<double>> e_orb_kinetic;
             for (int ik = 0;ik < kv.get_nks();++ik)
@@ -86,7 +87,7 @@ namespace ModuleIO
             hamilt::HContainer<TR> v_pp_local_R_ao(pv);
             if_gamma_fix(v_pp_local_R_ao);
             std::vector<std::vector<double>> e_orb_pp_local;
-            hamilt::Veff<hamilt::OperatorLCAO<TK, TR>> v_pp_local_op(gint, &v_pp_local_k_ao, kv.kvec_d, &pot_local, &v_pp_local_R_ao, &ucell, &gd);
+            hamilt::Veff<hamilt::OperatorLCAO<TK, TR>> v_pp_local_op(gint, &v_pp_local_k_ao, kv.kvec_d, &pot_local, &v_pp_local_R_ao, &ucell, orb_cutoff, &gd);
             v_pp_local_op.contributeHR();
             for (int ik = 0;ik < kv.get_nks();++ik)
             {
@@ -109,7 +110,7 @@ namespace ModuleIO
             if_gamma_fix(v_pp_nonlocal_R_ao);
             std::vector<std::vector<double>> e_orb_pp_nonlocal;
             hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>> v_pp_nonlocal_op(&v_pp_nonlocal_k_ao, kv.kvec_d,
-                &v_pp_nonlocal_R_ao, &ucell, &gd, two_center_bundle.overlap_orb_beta.get());
+                &v_pp_nonlocal_R_ao, &ucell, orb_cutoff, &gd, two_center_bundle.overlap_orb_beta.get());
             v_pp_nonlocal_op.contributeHR();
             for (int ik = 0;ik < kv.get_nks();++ik)
             {
@@ -141,7 +142,7 @@ namespace ModuleIO
             for (int is = 0; is < nspin0; ++is)
             {
                 v_hartree_op[is] = new hamilt::Veff<hamilt::OperatorLCAO<TK, TR>>(gint,
-                    &v_hartree_k_ao, kv.kvec_d, &pot_hartree, &v_hartree_R_ao[is], &ucell, &gd);
+                    &v_hartree_k_ao, kv.kvec_d, &pot_hartree, &v_hartree_R_ao[is], &ucell, orb_cutoff, &gd);
                 v_hartree_op[is]->contributeHR();
             }
             std::vector<std::vector<double>> e_orb_hartree;
@@ -163,7 +164,7 @@ namespace ModuleIO
         // 5. xc (including exx)
         if (!PARAM.inp.out_mat_xc)  // avoid duplicate output
         {
-            write_Vxc<TK, TR>(nspin, nbasis, drank, pv, psi, ucell, sf, rho_basis, rhod_basis, vloc, chg, gint_gamma, gint_k, kv, wg, gd
+            write_Vxc<TK, TR>(nspin, nbasis, drank, pv, psi, ucell, sf, rho_basis, rhod_basis, vloc, chg, gint_gamma, gint_k, kv, orb_cutoff, wg, gd
 #ifdef __EXX
                 , Hexxd, Hexxc
 #endif

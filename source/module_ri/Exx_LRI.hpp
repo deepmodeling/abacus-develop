@@ -26,7 +26,7 @@
 #include <string>
 
 template<typename Tdata>
-void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in, const K_Vectors &kv_in)
+void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in, const K_Vectors &kv_in, const LCAO_Orbitals& orb)
 {
 	ModuleBase::TITLE("Exx_LRI","init");
 	ModuleBase::timer::tick("Exx_LRI", "init");
@@ -49,19 +49,20 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in, const K_Vectors &kv_in)
 
     this->mpi_comm = mpi_comm_in;
     this->p_kv = &kv_in;
+    this->orb_cutoff_ = orb.cutoffs();
 
-	this->lcaos = Exx_Abfs::Construct_Orbs::change_orbs( GlobalC::ORB, this->info.kmesh_times );
+	this->lcaos = Exx_Abfs::Construct_Orbs::change_orbs( orb, this->info.kmesh_times );
 
 //	#ifdef __MPI
 //	Exx_Abfs::Util::bcast( this->info.files_abfs, 0, this->mpi_comm );
 //	#endif
 
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>
-		abfs_same_atom = Exx_Abfs::Construct_Orbs::abfs_same_atom( this->lcaos, this->info.kmesh_times, this->info.pca_threshold );
+		abfs_same_atom = Exx_Abfs::Construct_Orbs::abfs_same_atom( orb, this->lcaos, this->info.kmesh_times, this->info.pca_threshold );
 	if(this->info.files_abfs.empty()) {
 		this->abfs = abfs_same_atom;
 	} else {
-		this->abfs = Exx_Abfs::IO::construct_abfs( abfs_same_atom, GlobalC::ORB, this->info.files_abfs, this->info.kmesh_times );
+		this->abfs = Exx_Abfs::IO::construct_abfs( abfs_same_atom, orb, this->info.files_abfs, this->info.kmesh_times );
 }
 	Exx_Abfs::Construct_Orbs::print_orbs_size(this->abfs, GlobalV::ofs_running);
 
@@ -92,6 +93,7 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in, const K_Vectors &kv_in)
 }
 
 	this->cv.set_orbitals(
+        orb,
 		this->lcaos, this->abfs, this->abfs_ccp,
 		this->info.kmesh_times, this->info.ccp_rmesh_times );
 
@@ -126,7 +128,7 @@ void Exx_LRI<Tdata>::cal_exx_ions()
 	this->exx_lri.set_parallel(this->mpi_comm, atoms_pos, latvec, period);
 
 	// std::max(3) for gamma_only, list_A2 should contain cell {-1,0,1}. In the future distribute will be neighbour.
-	const std::array<Tcell,Ndim> period_Vs = LRI_CV_Tools::cal_latvec_range<Tcell>(1+this->info.ccp_rmesh_times);	
+	const std::array<Tcell,Ndim> period_Vs = LRI_CV_Tools::cal_latvec_range<Tcell>(1+this->info.ccp_rmesh_times, orb_cutoff_);	
 	const std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA,std::array<Tcell,Ndim>>>>>
 		list_As_Vs = RI::Distribute_Equally::distribute_atoms_periods(this->mpi_comm, atoms, period_Vs, 2, false);
 
@@ -152,7 +154,7 @@ void Exx_LRI<Tdata>::cal_exx_ions()
 		}
 	}
 
-	const std::array<Tcell,Ndim> period_Cs = LRI_CV_Tools::cal_latvec_range<Tcell>(2);
+	const std::array<Tcell,Ndim> period_Cs = LRI_CV_Tools::cal_latvec_range<Tcell>(2, orb_cutoff_);
 	const std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA,std::array<Tcell,Ndim>>>>>
 		list_As_Cs = RI::Distribute_Equally::distribute_atoms_periods(this->mpi_comm, atoms, period_Cs, 2, false);
 

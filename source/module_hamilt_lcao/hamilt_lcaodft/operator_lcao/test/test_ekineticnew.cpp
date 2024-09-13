@@ -108,7 +108,7 @@ TEST_F(EkineticNewTest, constructHRd2d)
     hsk.set_zero_hk();
     Grid_Driver gd(0, 0);
     hamilt::EkineticNew<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, HR, &ucell, &gd, &intor_);
+        op(&hsk, kvec_d_in, HR, &ucell, {1.0}, &gd, &intor_);
     op.contributeHR();
     // check the value of HR
     for (int iap = 0; iap < HR->size_atom_pairs(); ++iap)
@@ -158,7 +158,7 @@ TEST_F(EkineticNewTest, constructHRd2cd)
     hsk.set_zero_hk();
     Grid_Driver gd(0, 0);
     hamilt::EkineticNew<hamilt::OperatorLCAO<std::complex<double>, double>>
-        op(&hsk, kvec_d_in, HR, &ucell, &gd, &intor_);
+        op(&hsk, kvec_d_in, HR, &ucell, {1.0}, &gd, &intor_);
     op.contributeHR();
     // check the value of HR
     for (int iap = 0; iap < HR->size_atom_pairs(); ++iap)
