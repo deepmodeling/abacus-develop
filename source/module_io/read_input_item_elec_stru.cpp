@@ -452,7 +452,13 @@ void ReadInput::item_elec_stru()
         item.annotation = "Only for localized orbitals set and gamma point. If "
                           "set to 1, a fast algorithm is used";
         read_sync_bool(input.gamma_only);
-    
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.gamma_only && para.input.basis_type == "pw")
+            {
+                    para.input.gamma_only = false;   
+                    GlobalV::ofs_warning << "gamma_only is not supported in the pw model" << std::endl;
+            }
+        };
         this->add_item(item);
     }
     {

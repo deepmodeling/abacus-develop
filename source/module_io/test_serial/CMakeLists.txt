@@ -64,3 +64,9 @@ AddTest(
   LIBS parameter ${math_libs} base device
   SOURCES read_wfc_nao_test.cpp ../read_wfc_nao.cpp ../../module_psi/psi.cpp ../../module_basis/module_ao/parallel_orbitals.cpp ../../module_basis/module_ao/parallel_2d.cpp
 )
+
+AddTest(
+  TARGET io_system_variable
+  LIBS parameter ${math_libs} base device io_input_serial
+  SOURCES io_system_variable_test.cpp 
+)
