@@ -7,6 +7,7 @@
 #include "module_base/parallel_global.h"
 #include "module_basis/module_pw/pw_basis.h"
 #include "module_elecstate/fp_energy.h"
+#include "module_cell/module_symmetry/symmetry.h"
 
 //a forward declaration of UnitCell
 class UnitCell;
@@ -65,11 +66,13 @@ class Charge
      *
      * @param eferm_iout [out] fermi energy to be initialized
      * @param strucFac [in] structure factor
+     * @param symm [in] symmetry
      * @param klist [in] k points list if needed
      * @param wfcpw [in] PW basis for wave function if needed
      */
     void init_rho(elecstate::efermi& eferm_iout,
                   const ModuleBase::ComplexMatrix& strucFac,
+                  ModuleSymmetry::Symmetry& symm,
                   const void* klist = nullptr,
                   const void* wfcpw = nullptr);
 

@@ -6,6 +6,7 @@
 #include "module_elecstate/module_charge/symmetry_rho.h"
 
 void ModuleIO::read_wfc_to_rho(const ModulePW::PW_Basis_K* pw_wfc,
+                               ModuleSymmetry::Symmetry& symm,
                                const int nkstot,
                                const std::vector<int>& isk,
                                Charge& chg)
@@ -108,7 +109,7 @@ void ModuleIO::read_wfc_to_rho(const ModulePW::PW_Basis_K* pw_wfc,
     Symmetry_rho srho;
     for (int is = 0; is < nspin; is++)
     {
-        srho.begin(is, chg, chg.rhopw, GlobalC::Pgrid, GlobalC::ucell.symm);
+        srho.begin(is, chg, chg.rhopw, GlobalC::ucell.symm);
     }
 
     ModuleBase::timer::tick("ModuleIO", "read_wfc_pw_to_rho");

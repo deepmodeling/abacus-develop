@@ -277,7 +277,7 @@ void Init_Sto_Orbitals_Ecut(Stochastic_WF& stowf,
 
     for (int ik = 0; ik < nks; ++ik)
     {
-        const int iktot = K_Vectors::getik_global(ik, nkstot);
+        const int iktot = K_Vectors::get_ik_global(ik, nkstot);
         const int npw = wfcpw.npwk[ik];
         int* ig2ixyz = new int[npw];
 

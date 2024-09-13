@@ -68,8 +68,8 @@ void ModuleIO::write_wfc_pw(const std::string& fn,
 
                 // ikstot=GlobalC::Pkpoints.startk_pool[ip]+ik;
                 // In the future, Pkpoints should be moved into Klist
-                // To avoid GlobalC, we use getik_global instead
-                ikstot = K_Vectors::getik_global(ik, nkstot);
+                // To avoid GlobalC, we use get_ik_global instead
+                ikstot = K_Vectors::get_ik_global(ik, nkstot);
 #else
                 ikngtot = kv.ngk[ik];
                 ikstot=ik;

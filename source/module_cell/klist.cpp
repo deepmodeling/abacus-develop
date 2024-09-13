@@ -45,6 +45,20 @@ K_Vectors::~K_Vectors()
 #endif
 }
 
+int K_Vectors::get_ik_global(const int& ik, const int& nkstot)
+{
+    int nkp = nkstot / PARAM.inp.kpar;
+    int rem = nkstot % PARAM.inp.kpar;
+    if (GlobalV::MY_POOL < rem)
+    {
+        return GlobalV::MY_POOL * nkp + GlobalV::MY_POOL + ik;
+    }
+    else
+    {
+        return GlobalV::MY_POOL * nkp + rem + ik;
+    }
+}
+
 void K_Vectors::set(const ModuleSymmetry::Symmetry& symm,
                     const std::string& k_file_name,
                     const int& nspin_in,

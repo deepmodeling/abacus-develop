@@ -73,6 +73,7 @@ void Charge::set_rho_core_paw()
 }
 void Charge::init_rho(elecstate::efermi&,
                       ModuleBase::ComplexMatrix const&,
+                      ModuleSymmetry::Symmetry& symm,
                       const void*,
                       const void*)
 {
@@ -393,7 +394,8 @@ TEST_F(ElecStateTest, InitSCF)
     int istep = 0;
     ModuleBase::ComplexMatrix strucfac;
     elecstate->eferm = efermi;
-    EXPECT_NO_THROW(elecstate->init_scf(istep, strucfac));
+    ModuleSymmetry::Symmetry symm;
+    EXPECT_NO_THROW(elecstate->init_scf(istep, strucfac, symm));
     // delete elecstate->pot is done in the destructor of elecstate
     delete charge;
 }

@@ -206,7 +206,7 @@ void ElecState::calEBand()
     return;
 }
 
-void ElecState::init_scf(const int istep, const ModuleBase::ComplexMatrix& strucfac, const void* wfcpw)
+void ElecState::init_scf(const int istep, const ModuleBase::ComplexMatrix& strucfac, ModuleSymmetry::Symmetry& symm, const void* wfcpw)
 {
     //---------Charge part-----------------
     // core correction potential.
@@ -225,7 +225,7 @@ void ElecState::init_scf(const int istep, const ModuleBase::ComplexMatrix& struc
     //--------------------------------------------------------------------
     if (istep == 0)
     {
-        this->charge->init_rho(this->eferm, strucfac, (const void*)this->klist, wfcpw);
+        this->charge->init_rho(this->eferm, strucfac, symm, (const void*)this->klist, wfcpw);
         this->charge->check_rho(); // check the rho
     }
 

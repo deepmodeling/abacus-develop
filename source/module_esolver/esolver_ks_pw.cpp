@@ -219,7 +219,7 @@ void ESolver_KS_PW<T, Device>::before_scf(const int istep)
     }
 
     //! calculate the total local pseudopotential in real space
-    this->pelec->init_scf(istep, this->sf.strucFac, (void*)this->pw_wfc);
+    this->pelec->init_scf(istep, this->sf.strucFac, GlobalC::ucell.symm, (void*)this->pw_wfc);
 
     //! output the initial charge density
     if (PARAM.inp.out_chg[0] == 2)
@@ -283,7 +283,7 @@ void ESolver_KS_PW<T, Device>::before_scf(const int istep)
     Symmetry_rho srho;
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
-        srho.begin(is, *(this->pelec->charge), this->pw_rhod, GlobalC::Pgrid, GlobalC::ucell.symm);
+        srho.begin(is, *(this->pelec->charge), this->pw_rhod, GlobalC::ucell.symm);
     }
 
     // liuyu move here 2023-10-09
@@ -405,7 +405,7 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, c
     Symmetry_rho srho;
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
-        srho.begin(is, *(this->pelec->charge), this->pw_rhod, GlobalC::Pgrid, GlobalC::ucell.symm);
+        srho.begin(is, *(this->pelec->charge), this->pw_rhod, GlobalC::ucell.symm);
     }
 
     // compute magnetization, only for LSDA(spin==2)

@@ -70,10 +70,23 @@ Symmetry_rho::~Symmetry_rho()
 void Symmetry_rho::begin(const int& spin_now,
                          const Charge& CHR,
                          const ModulePW::PW_Basis* rho_basis,
-                         Parallel_Grid& Pgrid,
                          ModuleSymmetry::Symmetry& symm) const
 {
     return;
+}
+
+int K_Vectors::get_ik_global(const int& ik, const int& nkstot)
+{
+    int nkp = nkstot / PARAM.inp.kpar;
+    int rem = nkstot % PARAM.inp.kpar;
+    if (GlobalV::MY_POOL < rem)
+    {
+        return GlobalV::MY_POOL * nkp + GlobalV::MY_POOL + ik;
+    }
+    else
+    {
+        return GlobalV::MY_POOL * nkp + rem + ik;
+    }
 }
 
 namespace GlobalC
@@ -218,7 +231,7 @@ TEST_F(ReadWfcRhoTest, ReadWfcRho)
     ModuleIO::write_wfc_pw("WAVEFUNC", *psi, *kv, wfcpw);
 
     // Read the wave functions to charge density
-    ModuleIO::read_wfc_to_rho(wfcpw, nkstot, kv->isk, chg);
+    ModuleIO::read_wfc_to_rho(wfcpw, GlobalC::ucell.symm, nkstot, kv->isk, chg);
 
     // compare the charge density
     for (int ir = 0; ir < rhopw->nrxx; ++ir)
@@ -266,7 +279,8 @@ int main(int argc, char** argv)
 {
 #ifdef __MPI
     setupmpi(argc, argv, GlobalV::NPROC, GlobalV::MY_RANK);
-    GlobalV::KPAR = (GlobalV::NPROC > 1) ? 2 : 1;
+    PARAM.input.bndpar = (GlobalV::NPROC > 1) ? 2 : 1;
+    GlobalV::KPAR = PARAM.input.bndpar;
     PARAM.input.bndpar = 1;
     Parallel_Global::divide_pools(GlobalV::NPROC,
                                   GlobalV::MY_RANK,

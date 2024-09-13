@@ -147,6 +147,7 @@ void Charge::set_rho_core_paw()
 }
 void Charge::init_rho(elecstate::efermi&,
                       ModuleBase::ComplexMatrix const&,
+                      ModuleSymmetry::Symmetry& symm,
                       const void*,
                       const void*)
 {

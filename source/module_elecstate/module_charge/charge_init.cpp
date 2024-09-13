@@ -23,6 +23,7 @@
 
 void Charge::init_rho(elecstate::efermi& eferm_iout,
                       const ModuleBase::ComplexMatrix& strucFac,
+                      ModuleSymmetry::Symmetry& symm,
                       const void* klist,
                       const void* wfcpw)
 {
@@ -211,7 +212,7 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
         const K_Vectors* kv = reinterpret_cast<const K_Vectors*>(klist);
         const int nkstot = kv->get_nkstot();
         const std::vector<int>& isk = kv->isk;
-        ModuleIO::read_wfc_to_rho(pw_wfc, nkstot, isk, *this);
+        ModuleIO::read_wfc_to_rho(pw_wfc, symm, nkstot, isk, *this);
     }
 }
 
