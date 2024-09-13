@@ -36,8 +36,8 @@ void Evolve_elec::solve_psi(const int& istep,
                             int propagator,
                             const int& nks)
 {
-    ModuleBase::TITLE("Evolve_elec", "eveolve_psi");
-    ModuleBase::timer::tick("Evolve_elec", "evolve_psi");
+    ModuleBase::TITLE("Evolve_elec", "solve_psi");
+    ModuleBase::timer::tick("Evolve_elec", "solve_psi");
 
     for (int ik = 0; ik < nks; ik++)
     {
@@ -82,7 +82,7 @@ void Evolve_elec::solve_psi(const int& istep,
         ModuleBase::timer::tick("Efficience", "evolve_k");
     } // end k
 
-    ModuleBase::timer::tick("Evolve_elec", "evolve_psi");
+    ModuleBase::timer::tick("Evolve_elec", "solve_psi");
     return;
 }
 } // namespace module_tddft
