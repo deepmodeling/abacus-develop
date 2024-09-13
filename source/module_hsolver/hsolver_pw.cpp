@@ -208,28 +208,12 @@ void HSolverPW<T, Device>::paw_func_after_kloop(psi::Psi<T, Device>& psi, elecst
 
 #endif
 
-// template <typename T, typename Device>
-// HSolverPW<T, Device>::HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in,
-//                                 wavefunc* pwf_in,
-//                                 const bool initialed_psi_in)
-// {
-//     this->wfc_basis = wfc_basis_in;
-//     this->pwf = pwf_in;
-
-//     this->initialed_psi = initialed_psi_in;
-// }
-
 template <typename T, typename Device>
 void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
                                  psi::Psi<T, Device>& psi,
                                  elecstate::ElecState* pes,
                                  double* out_eigenvalues,
                                  const std::vector<bool>& is_occupied_in,
-                                //  const std::string method_in,
-                                //  const std::string calculation_type_in,
-                                //  const std::string basis_type_in,
-                                //  const bool use_paw_in,
-                                //  const bool use_uspp_in,
                                  const int rank_in_pool_in,
                                  const int nproc_in_pool_in,
                                  const int scf_iter_in,
@@ -240,14 +224,6 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
 {
     ModuleBase::TITLE("HSolverPW", "solve");
     ModuleBase::timer::tick("HSolverPW", "solve");
-
-    // select the method of diagonalization
-    // this->method = method_in;
-    // this->calculation_type = calculation_type_in;
-    // this->basis_type = basis_type_in;
-
-    // this->use_paw = use_paw_in;
-    // this->use_uspp = use_uspp_in;
 
     this->rank_in_pool = rank_in_pool_in;
     this->nproc_in_pool = nproc_in_pool_in;

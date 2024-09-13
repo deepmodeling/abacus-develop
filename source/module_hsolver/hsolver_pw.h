@@ -22,14 +22,14 @@ class HSolverPW
     HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in,
               wavefunc* pwf_in,
               const bool initialed_psi_in,
-
               const std::string calculation_type_in,
               const std::string basis_type_in,
               const std::string method_in,
               const bool use_paw_in,
               const bool use_uspp_in)
-        : wfc_basis(wfc_basis_in), pwf(pwf_in), initialed_psi(initialed_psi_in), calculation_type(calculation_type_in),
-          basis_type(basis_type_in), method(method_in), use_paw(use_paw_in), use_uspp(use_uspp_in) {};
+        : wfc_basis(wfc_basis_in), pwf(pwf_in), initialed_psi(initialed_psi_in), 
+          calculation_type(calculation_type_in), basis_type(basis_type_in), method(method_in), 
+          use_paw(use_paw_in), use_uspp(use_uspp_in) {};
 
     /// @brief solve function for pw
     /// @param pHamilt interface to hamilt
@@ -42,14 +42,8 @@ class HSolverPW
                elecstate::ElecState* pes,
                double* out_eigenvalues,
                const std::vector<bool>& is_occupied_in,
-               //  const std::string method_in,
-               //  const std::string calculation_type_in,
-               //  const std::string basis_type_in,
-               //  const bool use_paw_in,
-               //  const bool use_uspp_in,
                const int rank_in_pool_in,
                const int nproc_in_pool_in,
-
                const int scf_iter_in,
                const bool need_subspace_in,
                const int diag_iter_max_in,
@@ -81,14 +75,12 @@ class HSolverPW
     bool need_subspace = false;
     int diag_iter_max = 50;
     double iter_diag_thr = 1.0e-2; // threshold for diagonalization
-    
 
-    std::string calculation_type = "scf";
-    std::string basis_type = "pw";
-    std::string method = "none";
-
-    bool use_paw = false;
-    bool use_uspp = false;
+    const std::string calculation_type;
+    const std::string basis_type;
+    const std::string method;
+    const bool use_paw;
+    const bool use_uspp;
 
   private:
     Device* ctx = {};
