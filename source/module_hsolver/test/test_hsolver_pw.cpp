@@ -134,13 +134,6 @@ TEST_F(TestHSolverPW, solve) {
     EXPECT_DOUBLE_EQ(elecstate_test.ekb.c[0], 4.0);
     EXPECT_DOUBLE_EQ(elecstate_test.ekb.c[1], 7.0);
 
-    // check initDiagh()
-    this->hs_f.initialed_psi = false;
-    this->hs_d.initialed_psi = false;
-
-    EXPECT_EQ(this->hs_f.initialed_psi, false);
-    EXPECT_EQ(this->hs_d.initialed_psi, false);
-
     // // check hamiltSolvePsiK()
     // this->hs_f.hamiltSolvePsiK(&hamilt_test_f, psi_test_cf, this->hs_f.precondition, ekb_f.data());
     // this->hs_d.hamiltSolvePsiK(&hamilt_test_d,
