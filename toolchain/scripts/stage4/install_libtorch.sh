@@ -4,7 +4,7 @@
 
 # shellcheck disable=all
 
-# Last Update in 2024-0812
+# Last Update in 2024-0913
 
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
@@ -49,17 +49,9 @@ case "${with_libtorch}" in
         if [ -f ${archive_file} ]; then
             echo "${archive_file} is found"
         else
-            # download_pkg_from_ABACUS_org "${libtorch_sha256}" "${archive_file}"
             # download from pytorch.com and checksum
             url=https://download.pytorch.org/libtorch/cpu/${archive_file}
-            download_pkg_from_url "${cereal_sha256}" "${filename}" "${url}"
-            # echo "wget $url -O $filename"
-            # if ! wget $url -O $filename; then
-            # report_error "failed to download $url"
-            # recommend_offline_installation $filename $url
-            # fi
-            # # checksum
-            # checksum "$filename" "$libtorch_sha256"
+            download_pkg_from_url "${libtorch_sha256}" "${filename}" "${url}"
         fi
         echo "Installing from scratch into ${pkg_install_dir}"
         [ -d libtorch ] && rm -rf libtorch
