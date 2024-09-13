@@ -593,6 +593,13 @@ void ReadInput::item_system()
         Input_Item item("kpoint_file");
         item.annotation = "the name of file containing k points";
         read_sync_string(input.kpoint_file);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.stru_file == "")
+            {
+                GlobalV::ofs_warning << "kpoint_file is set to KPT when stru_file is not set" << std::endl;
+                para.input.stru_file = "KPT";
+            }
+        };
         this->add_item(item);
     }
     {

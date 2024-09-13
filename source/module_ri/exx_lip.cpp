@@ -589,7 +589,7 @@ void Exx_Lip<T, Device>::write_q_pack() const
         return_value = system(command_mkdir.c_str());
         assert(return_value == 0);
 
-        const std::string command_kpoint = "test -f " + PARAM.globalv.global_out_dir + exx_q_pack + GlobalV::global_kpoint_card + " || cp " + GlobalV::global_kpoint_card + " " + PARAM.globalv.global_out_dir + exx_q_pack + GlobalV::global_kpoint_card;
+        const std::string command_kpoint = "test -f " + PARAM.globalv.global_out_dir + exx_q_pack + PARAM.inp.kpoint_file + " || cp " + PARAM.inp.kpoint_file + " " + PARAM.globalv.global_out_dir + exx_q_pack + PARAM.inp.kpoint_file;
         return_value = system(command_kpoint.c_str());
 		assert(return_value==0);
 
@@ -634,7 +634,7 @@ void Exx_Lip<T, Device>::write_q_pack() const
 // 	q_pack = new k_package();
 
 // 	q_pack->kv_ptr = new K_Vectors();
-// 	const std::string exx_kpoint_card = PARAM.globalv.global_out_dir + exx_q_pack + GlobalV::global_kpoint_card;
+// 	const std::string exx_kpoint_card = PARAM.globalv.global_out_dir + exx_q_pack + PARAM.inp.kpoint_file;
 // 	q_pack->kv_ptr->set( symm, exx_kpoint_card, GlobalV::NSPIN, ucell_ptr->G, ucell_ptr->latvec, GlobalV::ofs_running );
 
 // 	q_pack->wf_ptr = new wavefunc();

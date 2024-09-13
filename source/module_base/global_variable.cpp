@@ -72,7 +72,6 @@ int GSIZE = DSIZE;
 //----------------------------------------------------------
 std::string global_in_card = "INPUT";
 std::string stru_file = "STRU";
-std::string global_kpoint_card = "KPT";
 
 
 std::ofstream ofs_running;
