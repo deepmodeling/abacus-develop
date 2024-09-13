@@ -41,8 +41,9 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
     // prepare for the precondition of diagonalization
     std::vector<double> precondition(psi.get_nbasis(), 0.0);
 
-    // select the method of diagonalization
-    this->method = method_in;
+    // // select the method of diagonalization
+    // this->method = method_in;
+
     // report if the specified diagonalization method is not supported
     const std::initializer_list<std::string> _methods = {"cg", "dav", "dav_subspace", "bpcg"};
     if (std::find(std::begin(_methods), std::end(_methods), this->method) == std::end(_methods))

@@ -12,8 +12,22 @@ class HSolverPW_SDFT : public HSolverPW<std::complex<double>>
                    wavefunc* pwf_in,
                    Stochastic_WF& stowf,
                    StoChe<double>& stoche,
-                   const bool initialed_psi_in)
-        : HSolverPW(wfc_basis_in, pwf_in, initialed_psi_in)
+                   const bool initialed_psi_in,
+
+                   const std::string calculation_type_in,
+                   const std::string basis_type_in,
+                   const std::string method_in,
+                   const bool use_paw_in,
+                   const bool use_uspp_in)
+                   
+        : HSolverPW(wfc_basis_in,
+                    pwf_in,
+                    initialed_psi_in,
+                    calculation_type_in,
+                    basis_type_in,
+                    method_in,
+                    use_paw_in,
+                    use_uspp_in)
     {
         stoiter.init(pkv, wfc_basis_in, stowf, stoche);
     }

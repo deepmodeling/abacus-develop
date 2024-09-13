@@ -38,11 +38,21 @@ class TestHSolverPW : public ::testing::Test {
     hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_CPU> hs_f
         = hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_CPU>(&pwbk,
                                                                            nullptr,
-                                                                           false);
+                                                                           false,
+                                                                           "scf",
+                                                                           "pw",
+                                                                           "cg",
+                                                                           false,
+                                                                           GlobalV::use_uspp);
     hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU> hs_d
         = hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU>(&pwbk,
                                                                             nullptr,
-                                                                            false);
+                                                                            false,
+                                                                            "scf",
+                                                                            "pw",
+                                                                            "cg",
+                                                                            false,
+                                                                            GlobalV::use_uspp);
 
     hamilt::Hamilt<std::complex<double>> hamilt_test_d;
     hamilt::Hamilt<std::complex<float>> hamilt_test_f;
@@ -78,11 +88,7 @@ TEST_F(TestHSolverPW, solve) {
                      &elecstate_test,
                      elecstate_test.ekb.c,
                      is_occupied,
-                     method_test,
-                     "scf",
-                     "pw",
-                     false,
-                     GlobalV::use_uspp,
+
                      GlobalV::RANK_IN_POOL,
                      GlobalV::NPROC_IN_POOL,
 
@@ -106,11 +112,7 @@ TEST_F(TestHSolverPW, solve) {
                      &elecstate_test,
                      elecstate_test.ekb.c,
                      is_occupied,
-                     method_test,
-                     "scf",
-                     "pw",
-                     false,
-                     GlobalV::use_uspp,
+                     
                      GlobalV::RANK_IN_POOL,
                      GlobalV::NPROC_IN_POOL,
 
