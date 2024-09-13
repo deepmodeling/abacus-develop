@@ -51,7 +51,7 @@ void Symmetry_Basic::check_boundary(double &x)const
 	return;
 }
 
-double Symmetry_Basic::get_translation_vector(const double &x1, const double &x2)
+double Symmetry_Basic::get_translation_vector(const double& x1, const double& x2) const
 {
 	double t=0.0; // "t"ranslation
 	t = x2 - x1;
@@ -68,7 +68,7 @@ void Symmetry_Basic::check_translation(double &x, const double &t) const
 	return;
 }
 
-double Symmetry_Basic::check_diff(const double &x1, const double &x2)
+double Symmetry_Basic::check_diff(const double& x1, const double& x2)const
 {
 	double diff = x1 - x2;
 	diff = fmod(diff + 100,1);
@@ -656,7 +656,7 @@ void Symmetry_Basic::setgroup(ModuleBase::Matrix3* symop, int &nop, const int &i
 }
 
 int Symmetry_Basic::subgroup(const int& nrot, const int& ninv, const int& nc2, const int& nc3, const int& nc4, const int& nc6,
-    const int& ns1, const int& ns3, const int& ns4, const int& ns6)
+    const int& ns1, const int& ns3, const int& ns4, const int& ns6)const
 {
     if (nrot > 24)
     {
@@ -732,7 +732,7 @@ int Symmetry_Basic::subgroup(const int& nrot, const int& ninv, const int& nc2, c
     }
     return 1;//C_1
 }
-void Symmetry_Basic::pointgroup(const int& nrot, int& pgnumber, std::string& pgname, const ModuleBase::Matrix3* gmatrix, std::ofstream& ofs_running)
+bool Symmetry_Basic::pointgroup(const int& nrot, int& pgnumber, std::string& pgname, const ModuleBase::Matrix3* gmatrix, std::ofstream& ofs_running)const
 {
 	//-------------------------------------------------------------------------
 	//return the name of the point group
@@ -758,25 +758,25 @@ void Symmetry_Basic::pointgroup(const int& nrot, int& pgnumber, std::string& pgn
 	{
 		pgnumber = 1;
 		pgname="C_1";
-		return;
+        return true;
 	}
 	if(nrot == 3)
 	{
 		pgnumber = 9;
 		pgname="C_3";
-		return;
+        return true;
 	}
 	if(nrot == 16)
 	{
 		pgnumber = 20;
 		pgname="D_4h";
-		return;
+        return true;
 	}
 	if(nrot == 48)
 	{
 		pgnumber = 32;
 		pgname="O_h";
-		return;
+        return true;
 	}
 	
 	//-------------------------------------------------------------------------------
@@ -854,19 +854,19 @@ void Symmetry_Basic::pointgroup(const int& nrot, int& pgnumber, std::string& pgn
 		{
 			pgnumber = 2;
 			pgname="S_2";
-			return;
+            return true;
 		}
 		if(nc2 == 1)
 		{
 			pgnumber = 3;
 			pgname="C_2";
-			return;
+            return true;
 		}
 		if(ns1 == 1)
 		{
 			pgnumber = 4;
 			pgname="C_1h";
-			return;
+            return true;
 		}
 	}
 	if(nrot == 4)
@@ -875,31 +875,31 @@ void Symmetry_Basic::pointgroup(const int& nrot, int& pgnumber, std::string& pgn
 		{
 			pgnumber = 5;
 			pgname="C_2h";
-			return;
+            return true;
 		}
 		if(nc2 == 3)
 		{
 			pgnumber = 6;
 			pgname="D_2";
-			return;
+            return true;
 		}
 		if(ns1 == 2) 
 		{
 			pgnumber = 7;
 			pgname="C_2v";
-			return;
+            return true;
 		}
 		if(nc4 == 2)
 		{
 			pgnumber = 14;
 			pgname="C_4";
-			return;
+            return true;
 		}
 		if(ns4 == 2)
 		{
 			pgnumber = 15;
 			pgname="S_4";
-			return;
+            return true;
 		}
 	}
 	if(nrot == 6)
@@ -908,31 +908,31 @@ void Symmetry_Basic::pointgroup(const int& nrot, int& pgnumber, std::string& pgn
 		{
 			pgnumber = 10;
 			pgname="S_6";
-			return;
+            return true;
 		}
 		if(nc2 == 3)
 		{
 			pgnumber = 11;
 			pgname="D_3";
-			return;
+            return true;
 		}
 		if(ns1 == 3)
 		{
 			pgnumber = 12;
 			pgname="C_3v";
-			return;
+            return true;
 		}
 		if(nc2 == 1)
 		{
 			pgnumber = 21;
 			pgname="C_6";
-			return;
+            return true;
 		}
 		if(ns1 == 1)
 		{
 			pgnumber = 22;
 			pgname="C_3h";
-			return;
+            return true;
 		}
 	}
 	if(nrot == 8)
@@ -941,31 +941,31 @@ void Symmetry_Basic::pointgroup(const int& nrot, int& pgnumber, std::string& pgn
 		{
 			pgnumber = 8;
 			pgname="D_2h";
-			return;
+            return true;
 		}
 		if(ns1 == 1)
 		{
 			pgnumber = 16;
 			pgname="C_4h";
-			return;
+            return true;
 		}
 		if(ns1 == 0)
 		{
 			pgnumber = 17;
 			pgname="D_4";
-			return;
+            return true;
 		}
 		if(ns1 == 4)
 		{
 			pgnumber = 18;
 			pgname="C_4v";
-			return;
+            return true;
 		}
 		if(ns1 == 2)
 		{
 			pgnumber = 19;
 			pgname="D_2d";
-			return;
+            return true;
 		}
 	}
 	if(nrot == 12)
@@ -974,37 +974,37 @@ void Symmetry_Basic::pointgroup(const int& nrot, int& pgnumber, std::string& pgn
 		{
 			pgnumber = 13;
 			pgname="D_3d";
-			return;
+            return true;
 		}
 		if(ns1 == 1)
 		{
 			pgnumber = 23;
 			pgname="C_6h";
-			return;
+            return true;
 		}
 		if(nc2 == 7)
 		{
 			pgnumber = 24;
 			pgname="D_6";
-			return;
+            return true;
 		}
 		if(ns1 == 6)
 		{
 			pgnumber = 25;
 			pgname="C_6v";
-			return;
+            return true;
 		}
 		if(ns1 == 4)
 		{
 			pgnumber = 26;
 			pgname="D_3h";
-			return;
+            return true;
 		}
 		if(nc3 == 8)
 		{
 			pgnumber = 28;
 			pgname="T";
-			return;
+            return true;
 		}
 	}
 	if(nrot == 24)
@@ -1013,33 +1013,32 @@ void Symmetry_Basic::pointgroup(const int& nrot, int& pgnumber, std::string& pgn
 		{
 			pgnumber = 27;
 			pgname="D_6h";
-			return;
+            return true;
 		}
 		if(ninv == 1)
 		{
 			pgnumber = 29;
 			pgname="T_h";
-			return;
+            return true;
 		}
 		if(nc4 == 6)
 		{
 			pgnumber = 30;
 			pgname="O";
-			return;
+            return true;
 		}
 		if(ns4 == 6)
 		{
 			pgnumber = 31;
 			pgname="T_d";
-			return;
+            return true;
 		}
 	}
     GlobalV::ofs_running << "\n WARNING: Symmetry operations cannot completely constitute a point group.\n\
     It'll be better to try another `symmetry_prec`.\n  Now search the subgroups ..." << std::endl;
     pgnumber = this->subgroup(nrot, ninv, nc2, nc3, nc4, nc6, ns1, ns3, ns4, ns6);
     pgname = pgdict[pgnumber];
-    this->valid_group = false;
-    return;
+    return false;
 }
 
 

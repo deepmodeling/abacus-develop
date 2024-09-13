@@ -94,7 +94,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
     }
 
     // prepare grid in Gint
-    LCAO_domain::grid_prepare(this->GridT, this->GG, this->GK, *this->pw_rho, *this->pw_big);
+    LCAO_domain::grid_prepare(this->GridT, this->GG, this->GK, orb_, *this->pw_rho, *this->pw_big);
 
     // init Hamiltonian
     if (this->p_hamilt != nullptr)
@@ -112,6 +112,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
             this->pelec->pot,
             this->kv,
             two_center_bundle_,
+            orb_,
             DM
 #ifdef __EXX
             , GlobalC::exx_info.info_ri.real_number ? &this->exd->two_level_step : &this->exc->two_level_step
@@ -209,11 +210,11 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
 #ifdef __EXX // set xc type before the first cal of xc in pelec->init_scf
     if (GlobalC::exx_info.info_ri.real_number)
     {
-        this->exd->exx_beforescf(this->kv, *this->p_chgmix);
+        this->exd->exx_beforescf(this->kv, *this->p_chgmix, GlobalC::ucell, this->pv, orb_);
     }
     else
     {
-        this->exc->exx_beforescf(this->kv, *this->p_chgmix);
+        this->exc->exx_beforescf(this->kv, *this->p_chgmix, GlobalC::ucell, this->pv, orb_);
     }
 #endif // __EXX
 

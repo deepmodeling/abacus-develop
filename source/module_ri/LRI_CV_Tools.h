@@ -78,7 +78,7 @@ namespace LRI_CV_Tools
 		std::map<TkeyA,std::map<TkeyB,std::array<Tvalue,N>>> && ds_in);
 
 	template<typename Tcell>
-	extern std::array<Tcell,3> cal_latvec_range(const double &rcut_times);
+	extern std::array<Tcell,3> cal_latvec_range(const double &rcut_times, const std::vector<double>& orb_cutoff);
 
 	template<typename TA, typename Tcell, typename Tdata>
 	extern std::map<int,std::map<int,std::map<Abfs::Vector3_Order<double>,RI::Tensor<Tdata>>>>

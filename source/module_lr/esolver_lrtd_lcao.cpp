@@ -200,12 +200,13 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
         } else    // construct C, V from scratch
         {
             this->exx_lri = std::make_shared<Exx_LRI<T>>(exx_info.info_ri);
-            this->exx_lri->init(MPI_COMM_WORLD, this->kv);
+            this->exx_lri->init(MPI_COMM_WORLD, this->kv, ks_sol.orb_);
             this->exx_lri->cal_exx_ions();
         }
     }
 #endif
     this->pelec = new elecstate::ElecStateLCAO<T>();
+    orb_cutoff_ = ks_sol.orb_.cutoffs();
 }
 
 template <typename T, typename TR>
@@ -239,7 +240,10 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
 
     /// read orbitals and build the interpolation table
     two_center_bundle_.build_orb(ucell.ntype, ucell.orbital_fn);
-    two_center_bundle_.to_LCAO_Orbitals(GlobalC::ORB, inp.lcao_ecut, inp.lcao_dk, inp.lcao_dr, inp.lcao_rmax);
+
+    LCAO_Orbitals orb;
+    two_center_bundle_.to_LCAO_Orbitals(orb, inp.lcao_ecut, inp.lcao_dk, inp.lcao_dr, inp.lcao_rmax);
+    orb_cutoff_ = orb.cutoffs();
 
     this->set_dimension();
     //  setup 2d-block distribution for AO-matrix and KS wfc
@@ -286,7 +290,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
     std::cout << "ucell.infoNL.get_rcutmax_Beta(): " << GlobalC::ucell.infoNL.get_rcutmax_Beta() << std::endl;
     GlobalV::SEARCH_RADIUS = atom_arrange::set_sr_NL(GlobalV::ofs_running,
         PARAM.inp.out_level,
-        GlobalC::ORB.get_rcutmax_Phi(),
+        orb.get_rcutmax_Phi(),
         GlobalC::ucell.infoNL.get_rcutmax_Beta(),
         PARAM.globalv.gamma_only_local);
     atom_arrange::search(PARAM.inp.search_pbc,
@@ -305,7 +309,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
     std::vector<std::vector<double>> dpsi_u;
     std::vector<std::vector<double>> d2psi_u;
 
-    Gint_Tools::init_orb(dr_uniform, rcuts, GlobalC::ucell, psi_u, dpsi_u, d2psi_u);
+    Gint_Tools::init_orb(dr_uniform, rcuts, GlobalC::ucell, orb, psi_u, dpsi_u, d2psi_u);
     this->gt_.set_pbc_grid(this->pw_rho->nx,
         this->pw_rho->ny,
         this->pw_rho->nz,
@@ -337,7 +341,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
 
     if (std::is_same<T, std::complex<double>>::value)
     {
-        this->gt_.cal_nnrg(&this->paraMat_);
+        this->gt_.cal_nnrg(&this->paraMat_, orb.cutoffs());
         this->gint_k_.allocate_pvpR();   // uses gt_.nnrg
     }
     this->gint_->prep_grid(this->gt_,
@@ -355,7 +359,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
         this->pw_rho->nplane,
         this->pw_rho->startz_current,
         &ucell,
-        &GlobalC::ORB);
+        &orb);
     this->gint_->initialize_pvpR(ucell, &GlobalC::GridD);
 
     // if EXX from scratch, init 2-center integral and calculate Cs, Vs 
@@ -363,7 +367,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
     if ((xc_kernel == "hf" || xc_kernel == "hse") && this->input.lr_solver != "spectrum")
     {
         this->exx_lri = std::make_shared<Exx_LRI<T>>(exx_info.info_ri);
-        this->exx_lri->init(MPI_COMM_WORLD, this->kv);
+        this->exx_lri->init(MPI_COMM_WORLD, this->kv, orb);
         this->exx_lri->cal_exx_ions();
     }
     // else
@@ -386,7 +390,7 @@ void LR::ESolver_LR<T, TR>::runner(int istep, UnitCell& cell)
         for (int is = 0;is < nspin;++is)
         {
             if (nspin == 2) { std::cout << "Calculating " << spin_type[is] << " excitations" << std::endl; }
-            hamilt::Hamilt<T>* phamilt = new HamiltCasidaLR<T>(xc_kernel, nspin, this->nbasis, this->nocc, this->nvirt, this->ucell, GlobalC::GridD, this->psi_ks, this->eig_ks,
+            hamilt::Hamilt<T>* phamilt = new HamiltCasidaLR<T>(xc_kernel, nspin, this->nbasis, this->nocc, this->nvirt, this->ucell, orb_cutoff_, GlobalC::GridD, this->psi_ks, this->eig_ks,
 #ifdef __EXX
                 this->exx_lri, this->exx_info.info_global.hybrid_alpha,
 #endif

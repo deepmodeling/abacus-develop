@@ -92,10 +92,12 @@ void ESolver_KS_LCAO_TDDFT::before_all_runners(const Input_para& inp, UnitCell& 
 								 inp.lcao_dr,
 								 inp.lcao_rmax,
                                  ucell, 
-                                 two_center_bundle_);
+                                 two_center_bundle_,
+                                 orb_);
 
     // 5) allocate H and S matrices according to computational resources
-    LCAO_domain::divide_HS_in_frag(PARAM.globalv.gamma_only_local, this->pv, kv.get_nks());
+    LCAO_domain::divide_HS_in_frag(PARAM.globalv.gamma_only_local, this->pv, kv.get_nks(), orb_);
+
 
     // 6) initialize Density Matrix
     dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)->init_DM(&kv, &this->pv, GlobalV::NSPIN);
@@ -423,6 +425,7 @@ void ESolver_KS_LCAO_TDDFT::after_scf(const int istep)
                                 kv,
                                 two_center_bundle_.overlap_orb.get(),
                                 tmp_DM->get_paraV_pointer(),
+                                orb_,
                                 this->RA);
     }
     ESolver_KS_LCAO<std::complex<double>, double>::after_scf(istep);

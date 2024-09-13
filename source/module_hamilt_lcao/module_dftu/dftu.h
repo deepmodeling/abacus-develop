@@ -40,7 +40,9 @@ class DFTU
     // allocate relevant data strcutures
     void init(UnitCell& cell, // unitcell class
               const Parallel_Orbitals* pv,
-              const int& nks);
+              const int& nks,
+              const LCAO_Orbitals& orb
+              );
 
     // calculate the energy correction
     void cal_energy_correction(const int istep);
@@ -59,6 +61,12 @@ class DFTU
   private:
     const Parallel_Orbitals* paraV = nullptr;
     int cal_type = 3; // 1:dftu_tpye=1, dc=1; 2:dftu_type=1, dc=2; 3:dftu_tpye=2, dc=1; 4:dftu_tpye=2, dc=2;
+
+    // FIXME: the following variable does not have static lifetime;
+    // while the present class is used via a global variable. This has
+    // potential to cause dangling pointer issues.
+    const LCAO_Orbitals* ptr_orb_ = nullptr;
+    std::vector<double> orb_cutoff_;
     
     // transform between iwt index and it, ia, L, N and m index
     std::vector<std::vector<std::vector<std::vector<std::vector<int>>>>>

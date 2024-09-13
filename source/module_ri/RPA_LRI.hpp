@@ -8,16 +8,19 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
+#include <vector>
+#include "module_ri/module_exx_symmetry/symmetry_rotation.h"
 
 #include "RPA_LRI.h"
 #include "module_parameter/parameter.h"
 
 template <typename T, typename Tdata>
-void RPA_LRI<T, Tdata>::init(const MPI_Comm& mpi_comm_in, const K_Vectors& kv_in)
+void RPA_LRI<T, Tdata>::init(const MPI_Comm& mpi_comm_in, const K_Vectors& kv_in, const std::vector<double>& orb_cutoff)
 {
     ModuleBase::TITLE("RPA_LRI", "init");
     ModuleBase::timer::tick("RPA_LRI", "init");
     this->mpi_comm = mpi_comm_in;
+    this->orb_cutoff_ = orb_cutoff;
     this->lcaos = exx_lri_rpa.lcaos;
     this->abfs = exx_lri_rpa.abfs;
     this->abfs_ccp = exx_lri_rpa.abfs_ccp;
@@ -37,7 +40,7 @@ void RPA_LRI<T, Tdata>::cal_rpa_cv()
     }
     const std::array<Tcell, Ndim> period = {p_kv->nmp[0], p_kv->nmp[1], p_kv->nmp[2]};
 
-    const std::array<Tcell, Ndim> period_Vs = LRI_CV_Tools::cal_latvec_range<Tcell>(1 + this->info.ccp_rmesh_times);
+    const std::array<Tcell, Ndim> period_Vs = LRI_CV_Tools::cal_latvec_range<Tcell>(1 + this->info.ccp_rmesh_times, orb_cutoff_);
     const std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA, std::array<Tcell, Ndim>>>>> list_As_Vs
         = RI::Distribute_Equally::distribute_atoms(this->mpi_comm, atoms, period_Vs, 2, false);
 
@@ -48,7 +51,7 @@ void RPA_LRI<T, Tdata>::cal_rpa_cv()
     });
     this->Vs_period = RI::RI_Tools::cal_period(Vs, period);
 
-    const std::array<Tcell, Ndim> period_Cs = LRI_CV_Tools::cal_latvec_range<Tcell>(2);
+    const std::array<Tcell, Ndim> period_Cs = LRI_CV_Tools::cal_latvec_range<Tcell>(2, orb_cutoff_);
     const std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA, std::array<Tcell, Ndim>>>>> list_As_Cs
         = RI::Distribute_Equally::distribute_atoms_periods(this->mpi_comm, atoms, period_Cs, 2, false);
 
@@ -70,25 +73,45 @@ void RPA_LRI<T, Tdata>::cal_rpa_cv()
 template <typename T, typename Tdata>
 void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>& dm,
                                         const MPI_Comm& mpi_comm_in,
-                                        const K_Vectors& kv)
+                                        const K_Vectors& kv,
+                                        const LCAO_Orbitals& orb)
 {
     Mix_DMk_2D mix_DMk_2D;
-    mix_DMk_2D.set_nks(kv.get_nks(), PARAM.globalv.gamma_only_local);
+    bool exx_spacegroup_symmetry = (GlobalV::NSPIN < 4 && ModuleSymmetry::Symmetry::symm_flag == 1);
+    if (exx_spacegroup_symmetry)
+        {mix_DMk_2D.set_nks(kv.get_nkstot_full() * (GlobalV::NSPIN == 2 ? 2 : 1), PARAM.globalv.gamma_only_local);}
+    else
+        {mix_DMk_2D.set_nks(kv.get_nks(), PARAM.globalv.gamma_only_local);}
+        
     mix_DMk_2D.set_mixing(nullptr);
-    mix_DMk_2D.mix(dm.get_DMK_vector(), true);
-    const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> Ds
-        = PARAM.globalv.gamma_only_local
+    ModuleSymmetry::Symmetry_rotation symrot;
+    if (exx_spacegroup_symmetry)
+    {
+        const std::array<Tcell, Ndim> period = RI_Util::get_Born_vonKarmen_period(kv);
+        symrot.find_irreducible_sector(GlobalC::ucell.symm, GlobalC::ucell.atoms, GlobalC::ucell.st,
+            RI_Util::get_Born_von_Karmen_cells(period), period, GlobalC::ucell.lat);
+        symrot.cal_Ms(kv, GlobalC::ucell, *dm.get_paraV_pointer());
+        mix_DMk_2D.mix(symrot.restore_dm(kv, dm.get_DMK_vector(), *dm.get_paraV_pointer()), true);
+    }
+    else { mix_DMk_2D.mix(dm.get_DMK_vector(), true); }
+    
+    const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>
+		Ds = PARAM.globalv.gamma_only_local
         ? RI_2D_Comm::split_m2D_ktoR<Tdata>(kv, mix_DMk_2D.get_DMk_gamma_out(), *dm.get_paraV_pointer(), GlobalV::NSPIN)
-        : RI_2D_Comm::split_m2D_ktoR<Tdata>(kv, mix_DMk_2D.get_DMk_k_out(), *dm.get_paraV_pointer(), GlobalV::NSPIN);
-
+        : RI_2D_Comm::split_m2D_ktoR<Tdata>(kv, mix_DMk_2D.get_DMk_k_out(), *dm.get_paraV_pointer(), GlobalV::NSPIN, exx_spacegroup_symmetry);
+    
     // set parameters for bare Coulomb potential
     GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hf;
     GlobalC::exx_info.info_global.hybrid_alpha = 1;
     GlobalC::exx_info.info_ri.ccp_rmesh_times = PARAM.inp.rpa_ccp_rmesh_times;
 
-    exx_lri_rpa.init(mpi_comm_in, kv);
+    exx_lri_rpa.init(mpi_comm_in, kv, orb);
     exx_lri_rpa.cal_exx_ions();
-    exx_lri_rpa.cal_exx_elec(Ds, *dm.get_paraV_pointer());
+
+    if (exx_spacegroup_symmetry)
+        exx_lri_rpa.cal_exx_elec(Ds, *dm.get_paraV_pointer(), &symrot);
+    else
+        exx_lri_rpa.cal_exx_elec(Ds, *dm.get_paraV_pointer());
     // cout<<"postSCF_Eexx: "<<exx_lri_rpa.Eexx<<endl;
 }
 

@@ -147,10 +147,6 @@ void TwoCenterIntegrator::snap(
 }
 
 #include "module_basis/module_ao/ORB_read.h"
-const LCAO_Orbitals& LCAO_Orbitals::get_const_instance() {
-    static LCAO_Orbitals instance;
-    return instance;
-}
 LCAO_Orbitals::LCAO_Orbitals() { this->Phi = new Numerical_Orbital[1]; }
 LCAO_Orbitals::~LCAO_Orbitals() { delete[] Phi; }
 

@@ -50,6 +50,7 @@ namespace LR
     protected:
         const Input_para& input;
         const UnitCell& ucell;
+        std::vector<double> orb_cutoff_;
 
         // not to use ElecState because 2-particle state is quite different from 1-particle state.
         // implement a independent one (ExcitedState) to pack physical properties if needed.
