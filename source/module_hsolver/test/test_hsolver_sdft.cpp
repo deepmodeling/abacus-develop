@@ -242,11 +242,6 @@ TEST_F(TestHSolverPW_SDFT, solve_noband_skipcharge)
                      stowf,
                      istep,
                      iter,
-                     method_test,
-                     hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER,
-                     hsolver::DiagoIterAssist<std::complex<double>>::need_subspace,
-                     hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX,
-                     hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR,
                      false
     );
 	EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<double>>::avg_iter, 0.0);
@@ -269,11 +264,6 @@ TEST_F(TestHSolverPW_SDFT, solve_noband_skipcharge)
                      stowf,
                      istep,
                      iter,
-                     method_test,
-                     hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER,
-                     hsolver::DiagoIterAssist<std::complex<double>>::need_subspace,
-                     hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX,
-                     hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR,
                      true
     );
     EXPECT_EQ(stowf.nbands_diag, 4);
