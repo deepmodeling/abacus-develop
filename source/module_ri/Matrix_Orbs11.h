@@ -25,6 +25,7 @@ class Matrix_Orbs11
     //    1: <lcaos|lcaos>
     //    2: <jYs|jYs>  <abfs|abfs>
     void init(const int mode,
+              const LCAO_Orbitals& orb,
               const double kmesh_times,  // extend Kcut, keep dK
               const double rmesh_times); // extend Rcut, keep dR
 

@@ -8,17 +8,19 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
+#include <vector>
 #include "module_ri/module_exx_symmetry/symmetry_rotation.h"
 
 #include "RPA_LRI.h"
 #include "module_parameter/parameter.h"
 
 template <typename T, typename Tdata>
-void RPA_LRI<T, Tdata>::init(const MPI_Comm& mpi_comm_in, const K_Vectors& kv_in)
+void RPA_LRI<T, Tdata>::init(const MPI_Comm& mpi_comm_in, const K_Vectors& kv_in, const std::vector<double>& orb_cutoff)
 {
     ModuleBase::TITLE("RPA_LRI", "init");
     ModuleBase::timer::tick("RPA_LRI", "init");
     this->mpi_comm = mpi_comm_in;
+    this->orb_cutoff_ = orb_cutoff;
     this->lcaos = exx_lri_rpa.lcaos;
     this->abfs = exx_lri_rpa.abfs;
     this->abfs_ccp = exx_lri_rpa.abfs_ccp;
@@ -38,7 +40,7 @@ void RPA_LRI<T, Tdata>::cal_rpa_cv()
     }
     const std::array<Tcell, Ndim> period = {p_kv->nmp[0], p_kv->nmp[1], p_kv->nmp[2]};
 
-    const std::array<Tcell, Ndim> period_Vs = LRI_CV_Tools::cal_latvec_range<Tcell>(1 + this->info.ccp_rmesh_times);
+    const std::array<Tcell, Ndim> period_Vs = LRI_CV_Tools::cal_latvec_range<Tcell>(1 + this->info.ccp_rmesh_times, orb_cutoff_);
     const std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA, std::array<Tcell, Ndim>>>>> list_As_Vs
         = RI::Distribute_Equally::distribute_atoms(this->mpi_comm, atoms, period_Vs, 2, false);
 
@@ -49,7 +51,7 @@ void RPA_LRI<T, Tdata>::cal_rpa_cv()
     });
     this->Vs_period = RI::RI_Tools::cal_period(Vs, period);
 
-    const std::array<Tcell, Ndim> period_Cs = LRI_CV_Tools::cal_latvec_range<Tcell>(2);
+    const std::array<Tcell, Ndim> period_Cs = LRI_CV_Tools::cal_latvec_range<Tcell>(2, orb_cutoff_);
     const std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA, std::array<Tcell, Ndim>>>>> list_As_Cs
         = RI::Distribute_Equally::distribute_atoms_periods(this->mpi_comm, atoms, period_Cs, 2, false);
 
@@ -71,7 +73,8 @@ void RPA_LRI<T, Tdata>::cal_rpa_cv()
 template <typename T, typename Tdata>
 void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>& dm,
                                         const MPI_Comm& mpi_comm_in,
-                                        const K_Vectors& kv)
+                                        const K_Vectors& kv,
+                                        const LCAO_Orbitals& orb)
 {
     Mix_DMk_2D mix_DMk_2D;
     bool exx_spacegroup_symmetry = (GlobalV::NSPIN < 4 && ModuleSymmetry::Symmetry::symm_flag == 1);
@@ -102,7 +105,7 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>
     GlobalC::exx_info.info_global.hybrid_alpha = 1;
     GlobalC::exx_info.info_ri.ccp_rmesh_times = PARAM.inp.rpa_ccp_rmesh_times;
 
-    exx_lri_rpa.init(mpi_comm_in, kv);
+    exx_lri_rpa.init(mpi_comm_in, kv, orb);
     exx_lri_rpa.cal_exx_ions();
 
     if (exx_spacegroup_symmetry)

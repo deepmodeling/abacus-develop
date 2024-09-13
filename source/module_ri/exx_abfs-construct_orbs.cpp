@@ -77,6 +77,7 @@ std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> Exx_Abfs::Construct_
 
 // P = f * Y
 std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> Exx_Abfs::Construct_Orbs::abfs_same_atom(
+    const LCAO_Orbitals& orb,
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &orbs,
 	const double kmesh_times_mot,
 	const double times_threshold )
@@ -99,7 +100,7 @@ std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> Exx_Abfs::Construct_
 	#endif
 
 	const std::vector<std::vector<std::vector<std::vector<double>>>>
-		abfs_same_atom_pca_psi = pca( abfs_same_atom, orbs, kmesh_times_mot, times_threshold );
+		abfs_same_atom_pca_psi = pca( orb, abfs_same_atom, orbs, kmesh_times_mot, times_threshold );
 
 	#if TEST_EXX_LCAO==1
 		print_orbs(abfs_same_atom_pca_psi,"abfs_same_atom_pca_psi.dat");
@@ -255,6 +256,7 @@ std::vector<std::vector<std::vector<std::vector<double>>>> Exx_Abfs::Construct_O
 }
 
 std::vector<std::vector<std::vector<std::vector<double>>>> Exx_Abfs::Construct_Orbs::pca(
+    const LCAO_Orbitals& orb,
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &abfs,
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &orbs,
 	const double kmesh_times_mot,
@@ -264,7 +266,7 @@ std::vector<std::vector<std::vector<std::vector<double>>>> Exx_Abfs::Construct_O
 		return std::vector<std::vector<std::vector<std::vector<double>>>>(abfs.size());
 
 	const std::vector<std::vector<std::pair<std::vector<double>,RI::Tensor<double>>>>
-		eig = ABFs_Construct::PCA::cal_PCA( orbs, abfs, kmesh_times_mot );
+		eig = ABFs_Construct::PCA::cal_PCA( orb, orbs, abfs, kmesh_times_mot );
 
 	const std::vector<std::vector<std::vector<std::vector<double>>>> psis = get_psi( abfs );
 	std::vector<std::vector<std::vector<std::vector<double>>>> psis_new( psis.size() );

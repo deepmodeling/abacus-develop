@@ -153,8 +153,6 @@ TEST_F(DFTUTest, constructHRd2d)
     hamilt::HS_Matrix_K<double> hsk(paraV, true);
     hsk.set_zero_hk();
     Grid_Driver gd(0, 0);
-    // check some input values
-    EXPECT_EQ(LCAO_Orbitals::get_const_instance().Phi[0].getRcut(), 1.0);
     // reset HR and DMR
     const double factor = 1.0 / test_nw / test_nw / test_size / test_size;
     for (int i = 0; i < DMR->get_nnr(); i++)
@@ -164,7 +162,7 @@ TEST_F(DFTUTest, constructHRd2d)
     }
     std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
     hamilt::DFTU<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, HR, ucell, &gd, &intor_, &GlobalC::dftu);
+        op(&hsk, kvec_d_in, HR, ucell, &gd, &intor_, {1.0}, &GlobalC::dftu);
     std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed_time
         = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
@@ -221,7 +219,6 @@ TEST_F(DFTUTest, constructHRd2cd)
     hamilt::HS_Matrix_K<std::complex<double>> hsk(paraV, true);
     hsk.set_zero_hk();
     Grid_Driver gd(0, 0);
-    EXPECT_EQ(LCAO_Orbitals::get_const_instance().Phi[0].getRcut(), 1.0);
     // reset HR and DMR
     const double factor = 0.5 / test_nw / test_nw / test_size / test_size;
     for (int i = 0; i < DMR->get_nnr(); i++)
@@ -230,7 +227,7 @@ TEST_F(DFTUTest, constructHRd2cd)
         HR->get_wrapper()[i] = 0.0;
     }
     hamilt::DFTU<hamilt::OperatorLCAO<std::complex<double>, double>>
-        op(&hsk, kvec_d_in, HR, ucell, &gd, &intor_, &GlobalC::dftu);
+        op(&hsk, kvec_d_in, HR, ucell, &gd, &intor_, {1.0}, &GlobalC::dftu);
     op.contributeHR();
     // check the occupations of dftu for spin-up
     for (int iat = 0; iat < test_size; iat++)

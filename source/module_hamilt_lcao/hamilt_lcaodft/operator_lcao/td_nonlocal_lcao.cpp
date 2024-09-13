@@ -17,8 +17,9 @@ hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::TDNonlocal(HS_Matrix_K<TK>* hs
                                                              const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
                                                              hamilt::HContainer<TR>* hR_in,
                                                              const UnitCell* ucell_in,
+                                                             const LCAO_Orbitals& orb,
                                                              Grid_Driver* GridD_in)
-    : hamilt::OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in)
+    : hamilt::OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in), orb_(orb)
 {
     this->cal_type = calculation_type::lcao_tddft_velocity;
     this->ucell = ucell_in;
@@ -75,12 +76,11 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(Grid_Driver
             const ModuleBase::Vector3<double>& tau1 = adjs.adjacent_tau[ad1];
             const ModuleBase::Vector3<int>& R_index1 = adjs.box[ad1];
             // choose the real adjacent atoms
-            const LCAO_Orbitals& orb = LCAO_Orbitals::get_const_instance();
             // Note: the distance of atoms should less than the cutoff radius,
             // When equal, the theoretical value of matrix element is zero,
             // but the calculated value is not zero due to the numerical error, which would lead to result changes.
             if (this->ucell->cal_dtau(iat0, iat1, R_index1).norm() * this->ucell->lat0
-                < orb.Phi[T1].getRcut() + this->ucell->infoNL.Beta[T0].get_rcut_max())
+                < orb_.Phi[T1].getRcut() + this->ucell->infoNL.Beta[T0].get_rcut_max())
             {
                 is_adj[ad1] = true;
             }
@@ -155,7 +155,6 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                 const int iat1 = ucell->itia2iat(T1, I1);
                 const ModuleBase::Vector3<double>& tau1 = adjs.adjacent_tau[ad];
                 const Atom* atom1 = &ucell->atoms[T1];
-                const LCAO_Orbitals& orb = LCAO_Orbitals::get_const_instance();
                 auto all_indexes = paraV->get_indexes_row(iat1);
                 auto col_indexes = paraV->get_indexes_col(iat1);
                 all_indexes.insert(all_indexes.end(), col_indexes.begin(), col_indexes.end());
@@ -171,7 +170,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
 
                     // snap_psibeta_half_tddft() are used to calculate <psi|exp(-iAr)|beta>
                     // and <psi|rexp(-iAr)|beta> as well if current are needed
-                    module_tddft::snap_psibeta_half_tddft(orb,
+                    module_tddft::snap_psibeta_half_tddft(orb_,
                                                           this->ucell->infoNL,
                                                           nlm,
                                                           tau1 * this->ucell->lat0,

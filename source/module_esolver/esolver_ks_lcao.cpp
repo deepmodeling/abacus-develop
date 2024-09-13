@@ -63,7 +63,7 @@ namespace ModuleESolver
 //! mohan add 2024-05-11
 //------------------------------------------------------------------------------
 template <typename TK, typename TR>
-ESolver_KS_LCAO<TK, TR>::ESolver_KS_LCAO(): orb_(GlobalC::ORB)
+ESolver_KS_LCAO<TK, TR>::ESolver_KS_LCAO()
 {
     this->classname = "ESolver_KS_LCAO";
     this->basisname = "LCAO";
@@ -204,8 +204,8 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
         {
             XC_Functional::set_xc_first_loop(ucell);
             // initialize 2-center radial tables for EXX-LRI
-            if (GlobalC::exx_info.info_ri.real_number) { this->exx_lri_double->init(MPI_COMM_WORLD, this->kv); }
-            else { this->exx_lri_complex->init(MPI_COMM_WORLD, this->kv); }
+            if (GlobalC::exx_info.info_ri.real_number) { this->exx_lri_double->init(MPI_COMM_WORLD, this->kv, orb_); }
+            else { this->exx_lri_complex->init(MPI_COMM_WORLD, this->kv, orb_); }
         }
     }
 #endif
@@ -463,6 +463,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners()
             this->GG,
             this->GK,
             this->kv,
+            orb_.cutoffs(),
             this->pelec->wg,
             GlobalC::GridD
 #ifdef __EXX
@@ -490,6 +491,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners()
             this->kv,
             this->pelec->wg,
             GlobalC::GridD,
+            orb_.cutoffs(),
             this->two_center_bundle_
 #ifdef __EXX
             , this->exx_lri_double ? &this->exx_lri_double->Hexxs : nullptr
@@ -1175,8 +1177,9 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
         RPA_LRI<TK, double> rpa_lri_double(GlobalC::exx_info.info_ri);
         rpa_lri_double.cal_postSCF_exx(*dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(),
                                        MPI_COMM_WORLD,
-                                       this->kv);
-        rpa_lri_double.init(MPI_COMM_WORLD, this->kv);
+                                       this->kv,
+                                       orb_);
+        rpa_lri_double.init(MPI_COMM_WORLD, this->kv, orb_.cutoffs());
         rpa_lri_double.out_for_RPA(this->pv, *(this->psi), this->pelec);
     }
 #endif
@@ -1265,6 +1268,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
                                                                   this->kv.kvec_d,
                                                                   &hR,
                                                                   &GlobalC::ucell,
+                                                                  orb_.cutoffs(),
                                                                   &GlobalC::GridD,
                                                                   two_center_bundle_.kinetic_orb.get());
 

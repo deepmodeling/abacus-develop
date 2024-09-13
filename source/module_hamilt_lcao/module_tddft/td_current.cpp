@@ -10,8 +10,9 @@
 TD_current::TD_current(const UnitCell* ucell_in,
                       Grid_Driver* GridD_in,
                       const Parallel_Orbitals* paraV,
+                      const LCAO_Orbitals& orb,
                       const TwoCenterIntegrator* intor)
-    : ucell(ucell_in), Grid(GridD_in), paraV(paraV) , intor_(intor)
+    : ucell(ucell_in), paraV(paraV) , orb_(orb), Grid(GridD_in), intor_(intor)
 {   
     // for length gague, the A(t) = 0 for all the time.
     this->cart_At = ModuleBase::Vector3<double>(0,0,0);
@@ -54,12 +55,11 @@ void TD_current::initialize_vcomm_r(Grid_Driver* GridD, const Parallel_Orbitals*
             const ModuleBase::Vector3<double>& tau1 = adjs.adjacent_tau[ad1];
             const ModuleBase::Vector3<int>& R_index1 = adjs.box[ad1];
             // choose the real adjacent atoms
-            const LCAO_Orbitals& orb = LCAO_Orbitals::get_const_instance();
             // Note: the distance of atoms should less than the cutoff radius, 
             // When equal, the theoretical value of matrix element is zero, 
             // but the calculated value is not zero due to the numerical error, which would lead to result changes.
             if (this->ucell->cal_dtau(iat0, iat1, R_index1).norm() * this->ucell->lat0
-                < orb.Phi[T1].getRcut() + this->ucell->infoNL.Beta[T0].get_rcut_max())
+                < orb_.Phi[T1].getRcut() + this->ucell->infoNL.Beta[T0].get_rcut_max())
             {
                 is_adj[ad1] = true;
             }
@@ -131,12 +131,11 @@ void TD_current::initialize_grad_term(Grid_Driver* GridD, const Parallel_Orbital
             }
             const ModuleBase::Vector3<int>& R_index2 = adjs.box[ad1];
             // choose the real adjacent atoms
-            const LCAO_Orbitals& orb = LCAO_Orbitals::get_const_instance();
             // Note: the distance of atoms should less than the cutoff radius, 
             // When equal, the theoretical value of matrix element is zero, 
             // but the calculated value is not zero due to the numerical error, which would lead to result changes.
             if (this->ucell->cal_dtau(iat1, iat2, R_index2).norm() * this->ucell->lat0
-                < orb.Phi[T1].getRcut() + orb.Phi[T2].getRcut())
+                < orb_.Phi[T1].getRcut() + orb_.Phi[T2].getRcut())
             {
                 is_adj[ad1] = true;
             }
@@ -205,7 +204,6 @@ void TD_current::calculate_vcomm_r()
             const ModuleBase::Vector3<double>& tau1 = adjs.adjacent_tau[ad];
             const Atom* atom1 = &ucell->atoms[T1];
 
-            const LCAO_Orbitals& orb = LCAO_Orbitals::get_const_instance();
             auto all_indexes = paraV->get_indexes_row(iat1);
 #ifdef _OPENMP
             if(atom_row_list.find(iat1) == atom_row_list.end())
@@ -229,7 +227,7 @@ void TD_current::calculate_vcomm_r()
                 // snap_psibeta_half_tddft() are used to calculate <psi|exp(-iAr)|beta>
                 // and <psi|rexp(-iAr)|beta> as well if current are needed
                 
-                module_tddft::snap_psibeta_half_tddft(orb,
+                module_tddft::snap_psibeta_half_tddft(orb_,
                                                         this->ucell->infoNL,
                                                         nlm,
                                                         tau1 * this->ucell->lat0,
@@ -427,7 +425,6 @@ void TD_current::cal_grad_IJR(const int& iat1,
                               const ModuleBase::Vector3<double>& dtau,
                               std::complex<double>** current_mat_p)
 {
-    const LCAO_Orbitals& orb = LCAO_Orbitals::get_const_instance();
     // ---------------------------------------------
     // get info of orbitals of atom1 and atom2 from ucell
     // ---------------------------------------------

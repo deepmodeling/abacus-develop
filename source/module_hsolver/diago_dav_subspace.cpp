@@ -20,8 +20,8 @@ Diago_DavSubspace<T, Device>::Diago_DavSubspace(const std::vector<Real>& precond
                                                 const int& diag_nmax_in,
                                                 const bool& need_subspace_in,
                                                 const diag_comm_info& diag_comm_in)
-    : precondition(precondition_in), n_band(nband_in), dim(nbasis_in), nbase_x(nband_in * david_ndim_in),
-      diag_thr(diag_thr_in), iter_nmax(diag_nmax_in), is_subspace(need_subspace_in), diag_comm(diag_comm_in)
+    : n_band(nband_in), dim(nbasis_in), nbase_x(nband_in * david_ndim_in),
+      diag_thr(diag_thr_in), iter_nmax(diag_nmax_in), is_subspace(need_subspace_in), diag_comm(diag_comm_in), precondition(precondition_in)
 {
     this->device = base_device::get_device_type<Device>(this->ctx);
 
@@ -97,7 +97,7 @@ int Diago_DavSubspace<T, Device>::diag_once(const HPsiFunc& hpsi_func,
     // convflag[m] = true if the m th band is convergent
     std::vector<bool> convflag(this->n_band, false);
 
-    // unconv[m] store the number of the m th unconvergent band
+    // unconv[m] store the index of the m th unconvergent band
     std::vector<int> unconv(this->n_band);
 
     // the dimension of the reduced psi set
@@ -108,6 +108,9 @@ int Diago_DavSubspace<T, Device>::diag_once(const HPsiFunc& hpsi_func,
 
     ModuleBase::timer::tick("Diago_DavSubspace", "first");
 
+    // copy psi_in to psi_in_iter for the first n_band bands
+    // NOTE: not the first nbase_x (nband * david_ndim) bands
+    // since psi_in_iter is zero-initialized, the rest bands are zero
     for (int m = 0; m < this->n_band; m++)
     {
         unconv[m] = m;
@@ -119,10 +122,15 @@ int Diago_DavSubspace<T, Device>::diag_once(const HPsiFunc& hpsi_func,
                              this->dim);
     }
 
+    // compute h*psi_in_iter
+    // NOTE: bands after the first n_band should yield zero
     hpsi_func(this->hphi, this->psi_in_iter, this->nbase_x, this->dim, 0, this->nbase_x - 1);
 
+    // at this stage, notconv = n_band and nbase = 0
+    // note that nbase of cal_elem is an inout parameter: nbase := nbase + notconv
     this->cal_elem(this->dim, nbase, this->notconv, this->psi_in_iter, this->hphi, this->hcc, this->scc);
 
+    // generalized eigenvalue problem (hcc, scc) for the first n_band bands
     this->diag_zhegvx(nbase,
                       this->n_band,
                       this->hcc,
@@ -146,6 +154,7 @@ int Diago_DavSubspace<T, Device>::diag_once(const HPsiFunc& hpsi_func,
     {
         dav_iter++;
 
+        // nbase is the effective subspace size
         this->cal_grad(hpsi_func,
                        this->dim,
                        nbase,
@@ -221,6 +230,26 @@ int Diago_DavSubspace<T, Device>::diag_once(const HPsiFunc& hpsi_func,
             {
                 // overall convergence or last iteration: exit the iteration
 
+                // update this->psi_in_iter according to psi_in
+                for (size_t i = 0; i < this->n_band; i++)
+                {
+                    syncmem_complex_op()(this->ctx,
+                                         this->ctx,
+                                         this->psi_in_iter + i * this->dim,
+                                         psi_in + i * psi_in_dmax,
+                                         this->dim);
+                }
+
+                this->refresh(this->dim,
+                              this->n_band,
+                              nbase,
+                              eigenvalue_in_hsolver,
+                              this->psi_in_iter,
+                              this->hphi,
+                              this->hcc,
+                              this->scc,
+                              this->vcc);
+
                 ModuleBase::timer::tick("Diago_DavSubspace", "last");
                 break;
             }
@@ -283,6 +312,8 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
         }
     }
 
+    // psi_iter[:, nbase:nbase+notconv]
+    //  = psi_iter[:, :nbase] * vcc[:nbase, :notconv]
     gemm_op<T, Device>()(this->ctx,
                          'N',
                          'N',
@@ -298,6 +329,9 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
                          psi_iter + nbase * this->dim,
                          this->dim);
 
+    // for psi_iter[:, nbase:nbase+notconv],
+    // each column is multiplied by the corresponding (minus) eigenvalue
+    // NOTE: eigenvalue_iter[m] correspond to psi_iter[:, nbase+m] (to be verified)
     for (int m = 0; m < notconv; m++)
     {
 
@@ -310,6 +344,12 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
                                           e_temp_cpu.data());
     }
 
+    // psi_iter[:, nbase:nbase+notconv] += hphi[:, :nbase] * vcc[:nbase, :notconv]
+    //
+    // in terms of input, psi_iter should be
+    // psi_iter[:, nbase:nbase+notconv] :=
+    // hpsi[:, :nbase] * vcc[:nbase, :notconv] - e[]*psi_iter[:, nbase:nbase+notconv]*vcc[:nbase, :notconv]
+    // TODO two gemm operations can be combined into one
     gemm_op<T, Device>()(this->ctx,
                          'N',
                          'N',
@@ -325,13 +365,31 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
                          psi_iter + (nbase) * this->dim,
                          this->dim);
 
+    // FIXME 
+    // (QE dav solver -> isolver = 0)
+    // In QE, for davidson, h_diag is computed by g2kin + v_of_0
+    // this is passed to g_psi, where the residual vector is element-wise
+    // multiplied by (h_diag - e * s_siag)
+    //
+    // There is a macro "TEST_NEW_PRECONDITIONING" in QE, which
+    // takes x = h_diag - e * s_siag and define
+    // denm = 0.5 * ( 1 + x + sqrt(1 + (x-1)^2) )
+    // which then precondition the residual vector by psi := psi ./ denm
+    // note that this preconditioning recovers x when x is large, and
+    // approaches 0.5*(1+sqrt(2)) when x is close to 0.
+    // 
+    //
+    // In the current version of ABACUS, "precondition" is simply g2kin,
+    // and the tested preconditioning of QE is always active.
+    //
     // "precondition!!!"
     std::vector<Real> pre(this->dim, 0.0);
     for (int m = 0; m < notconv; m++)
     {
         for (size_t i = 0; i < this->dim; i++)
         {
-            double x = this->precondition[i] - (*eigenvalue_iter)[m];
+            //double x = this->precondition[i] - (*eigenvalue_iter)[m];
+            double x = std::abs(this->precondition[i] - (*eigenvalue_iter)[m]);
             pre[i] = 0.5 * (1.0 + x + sqrt(1 + (x - 1.0) * (x - 1.0)));
         }
         vector_div_vector_op<T, Device>()(this->ctx,
@@ -342,6 +400,8 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     }
 
     // "normalize!!!" in order to improve numerical stability of subspace diagonalization
+
+    // column-wise normalize psi_iter[:, nbase:nbase+notconv]
     std::vector<Real> psi_norm(notconv, 0.0);
     for (size_t i = 0; i < notconv; i++)
     {
@@ -349,7 +409,7 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
                                                this->dim,
                                                psi_iter + (nbase + i) * this->dim,
                                                psi_iter + (nbase + i) * this->dim,
-                                               false);
+                                               false); // FIXME why reduce is false?
         assert(psi_norm[i] > 0.0);
         psi_norm[i] = sqrt(psi_norm[i]);
 
@@ -360,6 +420,7 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
                                             psi_norm[i]);
     }
 
+    // update hpsi[:, nbase:nbase+notconv]
     hpsi_func(&hphi[nbase * this->dim], psi_iter, this->nbase_x, this->dim, nbase, nbase + notconv - 1);
 
     ModuleBase::timer::tick("Diago_DavSubspace", "cal_grad");
@@ -377,6 +438,9 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
 {
     ModuleBase::timer::tick("Diago_DavSubspace", "cal_elem");
 
+    // hcc[:, nbase:] = psi_iter.H * hpsi_iter[:, nbase:]
+    // while psi_iter has nbase_x columns, only the first nbase + notconv columns are
+    // involved in the matrix multiplication
     gemm_op<T, Device>()(this->ctx,
                          'C',
                          'N',
@@ -392,6 +456,7 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
                          &hcc[nbase * this->nbase_x],
                          this->nbase_x);
 
+    // scc[:, :nbase] := psi_iter.H * psi_iter[:, nbase:]
     gemm_op<T, Device>()(this->ctx,
                          'C',
                          'N',
@@ -471,20 +536,28 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
     const size_t last_nbase = nbase; // init: last_nbase = 0
     nbase = nbase + notconv;
 
+
+    // NOTE: nbase is an in & out parameter! nbase is updated to nbase + notconv
+
     for (size_t i = 0; i < nbase; i++)
     {
         if (i >= last_nbase)
         {
+            // ensure the diagonal elements of hcc and scc are real
+            // NOTE: set_real_tocomplex convert a real to itself, and a complex to a new complex
+            // whose real part is the input's real part and imaginary part is zero
             hcc[i * this->nbase_x + i] = set_real_tocomplex(hcc[i * this->nbase_x + i]);
             scc[i * this->nbase_x + i] = set_real_tocomplex(scc[i * this->nbase_x + i]);
         }
         for (size_t j = std::max(i + 1, last_nbase); j < nbase; j++)
         {
+            // ensure the hermicity of hcc and scc
             hcc[i * this->nbase_x + j] = get_conj(hcc[j * this->nbase_x + i]);
             scc[i * this->nbase_x + j] = get_conj(scc[j * this->nbase_x + i]);
         }
     }
 
+    // make hcc[nbase:, nbase:] and scc[nbase:, nbase:] to be zero
     for (size_t i = nbase; i < this->nbase_x; i++)
     {
         for (size_t j = nbase; j < this->nbase_x; j++)
@@ -743,6 +816,7 @@ int Diago_DavSubspace<T, Device>::diag(const HPsiFunc& hpsi_func,
 
     do
     {
+        printf("enter diag... is_subspace = %d, ntry = %d\n", this->is_subspace, ntry);
         if (this->is_subspace || ntry > 0)
         {
             this->diagH_subspace(psi_in, eigenvalue_in_hsolver, hpsi_func, this->n_band, this->dim, psi_in_dmax);
