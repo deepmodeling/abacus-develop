@@ -17,13 +17,6 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
                            Stochastic_WF& stowf,
                            const int istep,
                            const int iter,
-                           const std::string method_in,
-
-                           const int scf_iter_in,
-                           const bool need_subspace_in,
-                           const int diag_iter_max_in,
-                           const double iter_diag_thr_in,
-
                            const bool skip_charge)
 {
     ModuleBase::TITLE("HSolverPW_SDFT", "solve");
@@ -33,16 +26,8 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
     const int nbands = psi.get_nbands();
     const int nks = psi.get_nk();
 
-    this->scf_iter = scf_iter_in;
-    this->need_subspace = need_subspace_in;
-    this->diag_iter_max = diag_iter_max_in;
-    this->iter_diag_thr = iter_diag_thr_in;
-
     // prepare for the precondition of diagonalization
     std::vector<double> precondition(psi.get_nbasis(), 0.0);
-
-    // // select the method of diagonalization
-    // this->method = method_in;
 
     // report if the specified diagonalization method is not supported
     const std::initializer_list<std::string> _methods = {"cg", "dav", "dav_subspace", "bpcg"};

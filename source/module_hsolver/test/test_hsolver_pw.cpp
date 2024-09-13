@@ -38,21 +38,31 @@ class TestHSolverPW : public ::testing::Test {
     hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_CPU> hs_f
         = hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_CPU>(&pwbk,
                                                                            nullptr,
-                                                                           false,
+                                                                           
                                                                            "scf",
                                                                            "pw",
                                                                            "cg",
                                                                            false,
-                                                                           GlobalV::use_uspp);
+                                                                           GlobalV::use_uspp,
+                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::SCF_ITER,
+                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_NMAX,
+                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_THR,
+                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::need_subspace,
+                     false);
     hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU> hs_d
         = hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU>(&pwbk,
                                                                             nullptr,
-                                                                            false,
+
                                                                             "scf",
                                                                             "pw",
                                                                             "cg",
                                                                             false,
-                                                                            GlobalV::use_uspp);
+                                                                            GlobalV::use_uspp,
+                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::SCF_ITER,
+                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_NMAX,
+                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_THR,
+                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::need_subspace,
+                     false);
 
     hamilt::Hamilt<std::complex<double>> hamilt_test_d;
     hamilt::Hamilt<std::complex<float>> hamilt_test_f;
@@ -92,11 +102,6 @@ TEST_F(TestHSolverPW, solve) {
                      GlobalV::RANK_IN_POOL,
                      GlobalV::NPROC_IN_POOL,
 
-                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::SCF_ITER,
-                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::need_subspace,
-                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_NMAX,
-                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_THR,
-
                      true);
     // EXPECT_EQ(this->hs_f.initialed_psi, true);
     for (int i = 0; i < psi_test_cf.size(); i++) {
@@ -115,11 +120,6 @@ TEST_F(TestHSolverPW, solve) {
                      
                      GlobalV::RANK_IN_POOL,
                      GlobalV::NPROC_IN_POOL,
-
-                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::SCF_ITER,
-                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::need_subspace,
-                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_NMAX,
-                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_THR,
 
                      true);
   

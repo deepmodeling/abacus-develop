@@ -138,12 +138,17 @@ class TestHSolverPW_SDFT : public ::testing::Test
                                                            &wf, 
                                                            stowf, 
                                                            stoche, 
-                                                           false,
+                                                           
                                                            "scf",
                                                            "pw",
                                                            "cg",
                                                            false,
-                                                           GlobalV::use_uspp);
+                                                           GlobalV::use_uspp,
+                     hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER,
+                     hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX,
+                     hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR,
+                     hsolver::DiagoIterAssist<std::complex<double>>::need_subspace,
+                     false);
 
     hamilt::Hamilt<std::complex<double>> hamilt_test_d;
 
@@ -182,13 +187,8 @@ TEST_F(TestHSolverPW_SDFT, solve)
                      stowf,
                      istep,
                      iter,
-                     method_test,
-                     hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER,
-                     hsolver::DiagoIterAssist<std::complex<double>>::need_subspace,
-                     hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX,
-                     hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR,
-                     false
-    );
+                     false);
+
 	EXPECT_EQ(this->hs_d.initialed_psi, true);
 	EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<double>>::avg_iter, 0.0);
 	EXPECT_DOUBLE_EQ(elecstate_test.ekb.c[0], 4.0);

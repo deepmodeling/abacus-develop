@@ -178,12 +178,16 @@ void ESolver_SDFT_PW::hamilt2density(int istep, int iter, double ethr)
                     &this->wf, 
                     this->stowf, 
                     this->stoche, 
-                    this->init_psi,
                     PARAM.inp.calculation,
                     PARAM.inp.basis_type,
                     PARAM.inp.ks_solver,
                     PARAM.inp.use_paw,
-                    GlobalV::use_uspp);
+                    GlobalV::use_uspp,
+                    hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER,
+                    hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX,
+                    hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR,
+                    hsolver::DiagoIterAssist<std::complex<double>>::need_subspace,
+                    this->init_psi);
 
     hsolver_pw_sdft_obj.solve(this->p_hamilt,
                               this->psi[0],
@@ -192,11 +196,6 @@ void ESolver_SDFT_PW::hamilt2density(int istep, int iter, double ethr)
                               this->stowf,
                               istep,
                               iter,
-                              GlobalV::KS_SOLVER,
-                              hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER,
-                              hsolver::DiagoIterAssist<std::complex<double>>::need_subspace,
-                              hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX,
-                              hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR,
                               false);
     this->init_psi = true;
 
