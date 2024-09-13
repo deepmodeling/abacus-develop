@@ -32,26 +32,11 @@ void ReadInput::set_globalv(Parameter& para)
         }
         para.sys.global_readin_dir = to_dir(para.sys.global_readin_dir);
         /// caculate the gamma_only_pw and gamma_only_local
-        if (para.inp.gamma_only && para.inp.basis_type == "pw") // pengfei Li add 2015-1-31
+        if (para.input.gamma_only)
         {
-            para.sys.gamma_only_pw = false;
-            GlobalV::ofs_warning << " WARNING : gamma_only has not been "
-                                    "implemented for pw yet"
-                                    << std::endl;
-            GlobalV::ofs_warning << " the INPUT paraeter gamma_only has been reset to 0" << std::endl;
-            GlobalV::ofs_warning << " and a new KPT is generated with "
-                                    "gamma point as the only k point"
-                                    << std::endl;
-
-            GlobalV::ofs_warning << " Auto generating k-points file: " << para.inp.kpoint_file << std::endl;
-            std::ofstream ofs(para.inp.kpoint_file.c_str());
-            ofs << "K_POINTS" << std::endl;
-            ofs << "0" << std::endl;
-            ofs << "Gamma" << std::endl;
-            ofs << "1 1 1 0 0 0" << std::endl;
-            ofs.close();
+            para.sys.gamma_only_local = true;
         }
-        else if (para.sys.gamma_only_local)
+        if (para.sys.gamma_only_local)
         {
             if (para.inp.esolver_type == "tddft")
             {
@@ -77,7 +62,7 @@ void ReadInput::set_globalv_bcast()
     add_bool_bcast(sys.two_fermi);
     add_bool_bcast(sys.dos_setemin);
     add_bool_bcast(sys.dos_setemax);
-    
+
     add_int_bcast(sys.ncx);
     add_int_bcast(sys.ncy);
     add_int_bcast(sys.ncz);
