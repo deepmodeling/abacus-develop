@@ -145,6 +145,12 @@ void ReadInput::item_output()
         Input_Item item("out_mul");
         item.annotation = "mulliken charge or not";
         read_sync_bool(input.out_mul);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.basis_type == "pw" && para.input.out_mul)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_mul is only for lcao");
+            }
+        };
         this->add_item(item);
     }
     {
