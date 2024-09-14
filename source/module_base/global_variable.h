@@ -32,8 +32,6 @@ extern std::string RELAX_METHOD;
 
 extern bool use_uspp;
 
-
-
 extern std::string KS_SOLVER;  // xiaohui add 2013-09-01
 extern double SEARCH_RADIUS;   // 11.1 // mohan add 2011-03-10
 
@@ -70,6 +68,7 @@ extern int NQXQ;  // liuyu add 2023-10-03
 // NAME : DCOLOR( color of each group)
 // NAME : GRANK( index of grid world)
 // NAME : GSIZE( number of processors in each grid world)
+// NAME : KPAR_LCAO ( global number of pools for LCAO diagonalization only)
 //========================================================================
 extern int NPROC;
 extern int KPAR;
@@ -85,12 +84,6 @@ extern int DSIZE;
 extern int DCOLOR;
 extern int GRANK;
 extern int GSIZE;
-
-//========================================================================
-// EXPLAIN : Parallel information
-// GLOBAL VARIABLES :
-// NAME : KPAR_LCAO ( global number of pools for LCAO diagonalization only)
-//========================================================================
 extern int KPAR_LCAO;
 
 //==========================================================
@@ -114,24 +107,6 @@ extern std::ofstream ofs_warning;
 extern std::ofstream ofs_info;
 extern std::ofstream ofs_device;
 
-//==========================================================
-// EXPLAIN : test level for each class
-//==========================================================
-
-//==========================================================
-// src_onscaling
-//==========================================================
-//==========================================================
-// src_pseudo
-//==========================================================
-//==========================================================
-// src_tools
-//==========================================================
-
-
-// implicit solvation
-
-// DFTU control
 // rpa related
 extern std::vector<std::string> rpa_orbitals;
 

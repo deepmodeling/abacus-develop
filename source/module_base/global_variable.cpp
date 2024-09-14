@@ -40,12 +40,7 @@ double DQ = 0.010; // space between Q points of the reciprocal radial tab
 int NQX = 10000;   // number of points describing reciprocal radial tab
 int NQXQ = 10000;  // number of points describing reciprocal radial tab for Q
 
-bool GAMMA_ONLY_PW = false;    // mohan add 2012-06-05
 
-int ZEEMAN_IN_H = 1;
-
-// int ocp_n=0;
-bool out_mul = false; // qifeng add 2019/9/10
 //----------------------------------------------------------
 // EXPLAIN : Parallel information
 //----------------------------------------------------------
@@ -72,15 +67,11 @@ int GSIZE = DSIZE;
 //----------------------------------------------------------
 std::string stru_file = "STRU";
 
-
 std::ofstream ofs_running;
 std::ofstream ofs_warning;
 std::ofstream ofs_info;   // output math lib info
 std::ofstream ofs_device; // output device info
 
-//----------------------------------------------------------
-// src_tools
-//----------------------------------------------------------
 
 // added by zhengdy-soc
 bool NONCOLIN = false;
