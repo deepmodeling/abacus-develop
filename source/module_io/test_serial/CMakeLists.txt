@@ -67,7 +67,7 @@ AddTest(
 )
 
 AddTest(
-  TARGET io_system_test
+  TARGET io_system_vairable_test
   LIBS parameter ${math_libs} base device io_input_serial 
-  SOURCES io_system_test.cpp
+  SOURCES io_system_vairable_test.cpp
 )
