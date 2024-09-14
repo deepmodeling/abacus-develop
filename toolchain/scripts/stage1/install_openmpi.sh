@@ -3,13 +3,15 @@
 # TODO: Review and if possible fix shellcheck errors.
 # shellcheck disable=all
 
-# Last Update in 2024-0811
+# Last Update in 2024-0912
 
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 
-openmpi_ver="5.0.3"
-openmpi_sha256="990582f206b3ab32e938aa31bbf07c639368e4405dca196fabe7f0f76eeda90b"
+openmpi_ver="5.0.5"
+openmpi_sha256="6588d57c0a4bd299a24103f4e196051b29e8b55fbda49e11d5b3d32030a32776"
+# openmpi_ver="4.1.6"
+# openmpi_sha256="f740994485516deb63b5311af122c265179f5328a0d857a567b85db00b11e415"
 openmpi_pkg="openmpi-${openmpi_ver}.tar.bz2"
 
 source "${SCRIPT_DIR}"/common_vars.sh
@@ -33,13 +35,14 @@ case "${with_openmpi}" in
     pkg_install_dir="${INSTALLDIR}/openmpi-${openmpi_ver}"
     #pkg_install_dir="${HOME}/apps/openmpi/${openmpi_ver}-gcc8"
     install_lock_file="$pkg_install_dir/install_successful"
+    url="https://download.open-mpi.org/release/open-mpi/v${openmpi_ver:0:3}/${openmpi_pkg}"
     if verify_checksums "${install_lock_file}"; then
       echo "openmpi-${openmpi_ver} is already installed, skipping it."
     else
       if [ -f ${openmpi_pkg} ]; then
         echo "${openmpi_pkg} is found"
       else
-        download_pkg_from_ABACUS_org "${openmpi_sha256}" "${openmpi_pkg}"
+        download_pkg_from_url "${openmpi_sha256}" "${openmpi_pkg}" "${url}"
       fi
       echo "Installing from scratch into ${pkg_install_dir}"
       [ -d openmpi-${openmpi_ver} ] && rm -rf openmpi-${openmpi_ver}
@@ -59,6 +62,8 @@ case "${with_openmpi}" in
         fi
       fi
     # OpenMPI 5.0 only supports PMIx
+    # PMI support is required for Slurm, but not for other schedulers
+    # default not use
     #   if [ $(command -v srun) ]; then
     #     echo "Slurm installation found. OpenMPI will be configured with --with-pmi."
     #     EXTRA_CONFIGURE_FLAGS="--with-pmi"
