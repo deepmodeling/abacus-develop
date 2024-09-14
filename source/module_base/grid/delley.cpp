@@ -1,26 +1,16 @@
 #include "module_base/grid/delley.h"
 
-/**
- * @brief Delley's table for quadrature on the unit sphere.
- *
- * Reference:
- * Delley, B. (1996). High order integration schemes on the unit sphere.
- * Journal of computational chemistry, 17(9), 1152-1155.
- *
- */
-struct Table {
-    const int lmax_;
-    const int ngrid_;
-    const int ntype_[6];
-    const std::vector<double> data_;
-};
+#include <algorithm>
+#include <string>
+#include <stdexcept>
+#include <cmath>
 
-const std::vector<Table> table = {
+const std::vector<Delley::DelleyTable> Delley::table_ = {
     {
         17, 110, {1, 1, 0, 3, 1, 0},
         {
             0.00000000000000000, 0.00000000000000000, 0.0038282704949371616,
-            0.97735026918962576, 0.57735026918962576, 0.0097937375124875125,
+            0.57735026918962576, 0.57735026918962576, 0.0097937375124875125,
             0.18511563534473617, 0.18511563534473617, 0.0082117372831911110,
             0.39568947305594191, 0.39568947305594191, 0.0095954713360709628,
             0.69042104838229218, 0.21595729184584883, 0.0099428148911781033,
@@ -212,15 +202,206 @@ const std::vector<Table> table = {
     }
 };
 
+const std::vector<Delley::FillFunc> Delley::fill_ = {
+    // vertex (group of 6)
+    // (1, 0, 0) x sign x permutation
+    [](double, double, double* grid) {
+        for (int i = 0; i < 3; ++i) {
+            for (double one : {-1.0, 1.0}) {
+                grid[i] = one;
+                grid[(i+1)%3] = 0.0;
+                grid[(i+2)%3] = 0.0;
+                std::advance(grid, 3);
+            }
+        }
+    },
+
+    // face center (group of 8)
+    // (sqrt(1/3), sqrt(1/3), sqrt(1/3)) x sign
+    [](double, double, double* grid) {
+        const double a = std::sqrt(3) / 3.0;
+        for (int xsign : {-1, 1}) {
+            for (int ysign : {-1, 1}) {
+                for (int zsign : {-1, 1}) {
+                    grid[0] = xsign * a;
+                    grid[1] = ysign * a;
+                    grid[2] = zsign * a;
+                    std::advance(grid, 3);
+                }
+            }
+        }
+    },
+
+    // edge center (group of 12)
+    // (sqrt(2)/2, sqrt(2)/2, 0) x sign x permutation
+    [](double, double, double* grid) {
+        const double a = std::sqrt(2) / 2.0;
+        for (int i = 0; i < 3; ++i) {
+            for (int sign1 : {-1, 1}) {
+                for (int sign2 : {-1, 1}) {
+                    grid[i] = 0;
+                    grid[(i+1)%3] = sign1 * a;
+                    grid[(i+2)%3] = sign2 * a;
+                    std::advance(grid, 3);
+                }
+            }
+        }
+    },
+    
+    // group of 24a
+    // (u, u, sqrt(1-2u^2)) x sign x permutation
+    [](double x, double y, double* grid) {
+        double u = std::abs(x-y) < 1e-12 ? x : std::sqrt(1.0 - x * x - y * y);
+        double v = std::sqrt(1.0 - 2.0 * u * u);
+        for (int i = 0; i < 3; ++i) {
+            for (int sign1 : {-1, 1}) {
+                for (int sign2 : {-1, 1}) {
+                    for (int sign3 : {-1, 1}) {
+                        grid[i] = sign1 * u;
+                        grid[(i+1)%3] = sign2 * u;
+                        grid[(i+2)%3] = sign3 * v;
+                        std::advance(grid, 3);
+                    }
+                }
+            }
+        }
+    },
+
+    // group of 24b
+    // (u, sqrt(1-u^2), 0) x sign x permutation
+    [](double x, double y, double* grid) {
+        double u = std::abs(x) > 1e-12 ? x : y;
+        double v = std::sqrt(1.0 - u * u);
+        for (int i0 = 0; i0 < 3; ++i0) {
+            for (int iu0 : {1, 2}) {
+                for (int sign_u : {-1, 1}) {
+                    for (int sign_v : {-1, 1}) {
+                        grid[i0] = 0;
+                        grid[(i0+iu0)%3] = sign_u * u;
+                        grid[(i0-iu0+3)%3] = sign_v * v;
+                        std::advance(grid, 3);
+                    }
+                }
+            }
+        }
+    },
+
+    // group of 48
+    // (r, s, sqrt(1-r^2-s^2)) x sign x permutation
+    [](double x, double y, double* grid) {
+        double r = x;
+        double s = y;
+        double t = std::sqrt(1.0 - r * r - s * s);
+        for (int ir = 0; ir < 3; ++ir) {
+            for (int irs : {1, 2}) {
+                for (int sign_r : {-1, 1}) {
+                    for (int sign_s : {-1, 1}) {
+                        for (int sign_t : {-1, 1}) {
+                            grid[ir] = sign_r * r;
+                            grid[(ir+irs)%3] = sign_s * s;
+                            grid[(ir-irs+3)%3] = sign_t * t;
+                            std::advance(grid, 3);
+                        }
+                    }
+                }
+            }
+        }
+    },
+};
+
+
+const Delley::DelleyTable* Delley::_retrieve(int lmax) {
+    auto tab = std::find_if(table_.begin(), table_.end(),
+        [lmax](const DelleyTable& t) { return t.lmax_ == lmax; });
+
+    if (tab == table_.end()) {
+        throw std::runtime_error("Delley: table not found for lmax = " +
+                                 std::to_string(lmax));
+    }
+
+    return &(*tab);
+}
+
+
+void Delley::_get(const DelleyTable* tab, double* grid, double* weight) {
+    const double* x = &tab->data_[0];
+    const double* y = &tab->data_[1];
+    const double* w = &tab->data_[2];
+
+    for (int itype = 0; itype < 6; ++itype) {
+        int group_size = group_size_[itype];
+        for (int i = 0; i < tab->ntype_[itype]; ++i, x+=3, y+=3, w+=3) {
+            fill_[itype](*x, *y, grid);
+            std::fill(weight, weight + group_size, *w);
+
+            std::advance(grid, 3*group_size);
+            std::advance(weight, group_size);
+        }
+    }
+}
+
+
+int Delley::ngrid(int& lmax) {
+    // NOTE: this function assumes that elements in "table_" are arranged
+    // such that their member variables "lmax_" are in ascending order.
+    auto it = std::find_if(table_.begin(), table_.end(),
+                [lmax](const DelleyTable& t) { return t.lmax_ >= lmax; });
+    return it == table_.end() ? -1 : (lmax = it->lmax_, it->ngrid_);
+}
+
+
+void Delley::get(int lmax, double* grid, double* weight) {
+    _get(_retrieve(lmax), grid, weight);
+}
+
+
+void Delley::get(
+    int lmax,
+    std::vector<double>& grid,
+    std::vector<double>& weight
+) {
+    const DelleyTable* tab = _retrieve(lmax);
+    grid.resize(tab->ngrid_ * 3);
+    weight.resize(tab->ngrid_);
+    _get(tab, grid.data(), weight.data());
+}
+
+
 #include <cstdio>
 int main() {
 
-    const double x = 0.000000012345678987654321;
-    const double w = 3.8282704949371616e-03;
-    printf("%25.17e\n", x);
-    printf("%25.17e\n", w);
-    printf("%25.17e\n", table[0].data_[2]);
-    printf("%25.17e\n", table[1].data_[2]);
-    printf("%25.17e\n", table.back().data_[2]);
+    //const double x = 0.000000012345678987654321;
+    //const double w = 3.8282704949371616e-03;
+    //printf("%25.17e\n", x);
+    //printf("%25.17e\n", w);
+    //printf("%25.17e\n", table[0].data_[2]);
+    //printf("%25.17e\n", table[1].data_[2]);
+    //printf("%25.17e\n", table.back().data_[2]);
+
+    //int lmax = 20;
+    //printf("ngrid = %i\n", Delley::ngrid(lmax));
+    //printf("updated lmax = %i\n\n", lmax);
+
+    //lmax = 59;
+    //printf("ngrid = %i\n", Delley::ngrid(lmax));
+    //printf("updated lmax = %i\n\n", lmax);
+
+    //lmax = 60;
+    //printf("ngrid = %i\n", Delley::ngrid(lmax));
+    //printf("updated lmax = %i\n\n", lmax);
+
+    //lmax = -1;
+    //printf("ngrid = %i\n", Delley::ngrid(lmax));
+    //printf("updated lmax = %i\n\n", lmax);
+
+    int lmax = 17;
+    int ngrid = Delley::ngrid(lmax);
+    std::vector<double> grid(ngrid*3), weight(ngrid);
+    Delley::get(lmax, grid.data(), weight.data());
+
+    for (int igrid = 0; igrid < ngrid; ++igrid) {
+        printf("(%8.5f, %8.5f, %8.5f)    %8.5f\n",
+                grid[3*igrid], grid[3*igrid+1], grid[3*igrid+2], weight[igrid]);
+    }
 
 }
