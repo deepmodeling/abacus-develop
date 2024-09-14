@@ -136,18 +136,7 @@ void WFInit<T, Device>::allocate_psi(Psi<std::complex<double>>*& psi,
 template <typename T, typename Device>
 void WFInit<T, Device>::make_table(const int nks, Structure_Factor* p_sf)
 {
-    if (this->use_psiinitializer) // new initialization method, used in KSDFT and LCAO_IN_PW calculation
-    {
-        // re-tabulate because GlobalV::DQ may change due to the change of atomic positions and cell parameters
-        // for nao, we recalculate the overlap matrix between flz and jlq
-        // for atomic, we recalculate the overlap matrix between pswfc and jlq
-        // for psig is not read-only, its value will be overwritten in initialize_psi(), dont need delete and
-        // reallocate
-        if ((this->init_wfc.substr(0, 3) == "nao") || (this->init_wfc.substr(0, 6) == "atomic"))
-        {
-            this->psi_init->tabulate();
-        }
-    }
+    if (this->use_psiinitializer) {} // do not need to do anything because the interpolate table is unchanged
     else // old initialization method, used in EXX calculation
     {
         this->p_wf->init_after_vc(nks); // reallocate wanf2, the planewave expansion of lcao
@@ -161,11 +150,13 @@ void WFInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
                                        hamilt::Hamilt<T, Device>* p_hamilt,
                                        std::ofstream& ofs_running)
 {
-    if (!this->use_psiinitializer) {
-        return;
-}
+    if (!this->use_psiinitializer) { return; }
     ModuleBase::timer::tick("WFInit", "initialize_psi");
+    // if psig is not allocated before, allocate it
     if (!this->psi_init->psig_use_count()) { this->psi_init->allocate(/*psig_only=*/true); }
+    
+    // loop over kpoints, make it possible to only allocate memory for psig at the only one kpt
+    // like (1, nbands, npwx), in which npwx is the maximal npw of all kpoints
     for (int ik = 0; ik < this->pw_wfc->nks; ik++)
     {
         //! Fix the wavefunction to initialize at given kpoint
@@ -192,7 +183,12 @@ void WFInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
         //! to use psig, we need to lock it to get a shared pointer version,
         //! then switch kpoint of psig to the given one
         auto psig_ = psig.lock();
-        psig_->fix_k(ik);
+        // CHANGE LOG: if not lcaoinpw, the psig will only be used in psi-initialization
+        // so we can only allocate memory for one kpoint with the maximal number of pw
+        // over all kpoints, then the memory space will be always enough. Then for each
+        // kpoint, the psig is calculated in an overwrite manner.
+        const int ik_psig = (psig_->get_nk() == 1) ? 0 : ik;
+        psig_->fix_k(ik_psig);
 
         std::vector<typename GetTypeReal<T>::type> etatom(psig_->get_nbands(), 0.0);
 
@@ -200,7 +196,7 @@ void WFInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
         // either by matrix-multiplication or by copying-discarding
         if (this->psi_init->method() != "random")
         {
-            // lcao_in_pw and pw share the same esolver. In the future, we will have different esolver
+            // lcaoinpw and pw share the same esolver. In the future, we will have different esolver
             if (((this->ks_solver == "cg") || (this->ks_solver == "lapack")) && (this->basis_type == "pw"))
             {
                 // the following function is only run serially, to be improved

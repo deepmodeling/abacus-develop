@@ -7,7 +7,7 @@
 #include "module_base/global_variable.h"
 #include "module_parameter/parameter.h"
 template<typename T, typename Device>
-psi::Psi<std::complex<double>>* psi_initializer<T, Device>::allocate(bool only_psig)
+psi::Psi<std::complex<double>>* psi_initializer<T, Device>::allocate(const bool only_psig)
 {
     ModuleBase::timer::tick("psi_initializer", "allocate");
     /*
@@ -83,40 +83,38 @@ psi::Psi<std::complex<double>>* psi_initializer<T, Device>::allocate(bool only_p
             }
         }
     }
-	int nkpts_actual = (PARAM.inp.calculation == "nscf" && this->mem_saver_ == 1)? 1 : this->pw_wfc_->nks;
-    int nbasis_actual = this->pw_wfc_->npwk_max * GlobalV::NPOL;
+	const int nks_psi = (PARAM.inp.calculation == "nscf" && this->mem_saver_ == 1)? 1 : this->pw_wfc_->nks;
+    const int nbasis_actual = this->pw_wfc_->npwk_max * GlobalV::NPOL;
     psi::Psi<std::complex<double>>* psi_out = nullptr;
     if(!only_psig)
     {
-        psi_out = new psi::Psi<std::complex<double>>(nkpts_actual, 
+        psi_out = new psi::Psi<std::complex<double>>(nks_psi, 
                                                      GlobalV::NBANDS, // because no matter what, the wavefunction finally needed has GlobalV::NBANDS bands
                                                      nbasis_actual, 
                                                      this->pw_wfc_->npwk);
-        /*
-            WARNING: this will cause DIRECT MEMORY LEAK, psi is not properly deallocated
-        */
-        const size_t memory_cost_psi = 
-                nkpts_actual*
-                    GlobalV::NBANDS * this->pw_wfc_->npwk_max * GlobalV::NPOL*
+        const size_t memory_cost_psi = nks_psi * GlobalV::NBANDS * this->pw_wfc_->npwk_max * GlobalV::NPOL*
                         sizeof(std::complex<double>);
         std::cout << " MEMORY FOR PSI PER PROCESSOR (MB)  : " << double(memory_cost_psi)/1024.0/1024.0 << std::endl;
         ModuleBase::Memory::record("Psi_PW", memory_cost_psi);
     }
-    this->psig_ = std::make_shared<psi::Psi<T, Device>>(nkpts_actual, 
+    // for memory saving, the psig can always only hold one k-point data. But for lcao_in_pw, the psig
+    // is actcually a transformation matrix. During the SCF, the projection might be quite time-
+    // consuming.
+    const int nks_psig = (this->mem_saver_ == 1 && PARAM.inp.basis_type != "lcao_in_pw")? 1 : nks_psi;
+    this->psig_ = std::make_shared<psi::Psi<T, Device>>(nks_psig, 
                                                         nbands_actual, 
                                                         nbasis_actual, 
                                                         this->pw_wfc_->npwk);
     const size_t memory_cost_psig = 
-            nkpts_actual*
-                nbands_actual * this->pw_wfc_->npwk_max * GlobalV::NPOL*
-                    sizeof(T);
+            nks_psig * nbands_actual * this->pw_wfc_->npwk_max * GlobalV::NPOL * sizeof(T);
     std::cout << " MEMORY FOR AUXILLARY PSI PER PROCESSOR (MB)  : " << double(memory_cost_psig)/1024.0/1024.0 << std::endl;
 
     GlobalV::ofs_running << "Allocate memory for psi and psig done.\n"
                          << "Print detailed information of dimension of psi and psig:\n"
-                         << "psi: (" << nkpts_actual << ", " << GlobalV::NBANDS << ", " << nbasis_actual << ")\n"
-                         << "psig: (" << nkpts_actual << ", " << nbands_actual << ", " << nbasis_actual << ")\n"
-                         << "nkpts_actual = " << nkpts_actual << "\n"
+                         << "psi: (" << nks_psi << ", " << GlobalV::NBANDS << ", " << nbasis_actual << ")\n"
+                         << "psig: (" << nks_psig << ", " << nbands_actual << ", " << nbasis_actual << ")\n"
+                         << "nks (psi) = " << nks_psi << "\n"
+                         << "nks (psig) = " << nks_psig << "\n"
                          << "GlobalV::NBANDS = " << GlobalV::NBANDS << "\n"
                          << "nbands_actual = " << nbands_actual << "\n"
                          << "nbands_complem = " << this->nbands_complem_ << "\n"
@@ -156,8 +154,7 @@ void psi_initializer<T, Device>::random_t(T* psi, const int iw_start, const int 
                     
                 for(int ir=0; ir < nxy; ir++)
                 {
-                    if(this->pw_wfc_->fftixy2ip[ir] < 0) { continue;
-}
+                    if(this->pw_wfc_->fftixy2ip[ir] < 0) { continue; }
                     if(GlobalV::RANK_IN_POOL==0)
                     {
                         for(int iz=0; iz<nz; iz++)

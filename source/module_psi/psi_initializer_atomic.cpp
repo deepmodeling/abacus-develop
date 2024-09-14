@@ -141,17 +141,18 @@ void psi_initializer_atomic<T, Device>::tabulate()
 
 std::complex<double> phase_factor(double arg, int mode)
 {
-    if(mode == 1) return std::complex<double>(cos(arg),0);
-    else if (mode == -1) return std::complex<double>(0, sin(arg));
-    else if (mode == 0) return std::complex<double>(cos(arg), sin(arg));
-    else return std::complex<double>(1,0);
+    if(mode == 1) { return std::complex<double>(cos(arg),0); }
+    else if (mode == -1) { return std::complex<double>(0, sin(arg)); }
+    else if (mode == 0) { return std::complex<double>(cos(arg), sin(arg)); }
+    else { return std::complex<double>(1,0); }
 }
 
 template <typename T, typename Device>
-void psi_initializer_atomic<T, Device>::proj_ao_onkG(int ik)
+void psi_initializer_atomic<T, Device>::proj_ao_onkG(const int ik)
 {
     ModuleBase::timer::tick("psi_initializer_atomic", "proj_ao_onkG");
-    this->psig_->fix_k(ik);
+    const int ik_psig = (this->psig_->get_nk() == 1) ? 0 : ik;
+    this->psig_->fix_k(ik_psig);
     //this->print_status(psi);
     const int npw = this->pw_wfc_->npwk[ik];
     int lmax = this->p_ucell_->lmax_ppwf;

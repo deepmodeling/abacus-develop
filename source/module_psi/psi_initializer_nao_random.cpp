@@ -31,10 +31,11 @@ void psi_initializer_nao_random<T, Device>::initialize(Structure_Factor* sf,
 #endif
 
 template <typename T, typename Device>
-void psi_initializer_nao_random<T, Device>::proj_ao_onkG(int ik)
+void psi_initializer_nao_random<T, Device>::proj_ao_onkG(const int ik)
 {
     double rm = this->random_mix();
-    this->psig_->fix_k(ik);
+    const int ik_psig = (this->psig_->get_nk() == 1) ? 0 : ik;
+    this->psig_->fix_k(ik_psig);
     psi_initializer_nao<T, Device>::proj_ao_onkG(ik);
     psi::Psi<T, Device> psi_random(1, this->psig_->get_nbands(), this->psig_->get_nbasis(), nullptr);
     psi_random.fix_k(0);

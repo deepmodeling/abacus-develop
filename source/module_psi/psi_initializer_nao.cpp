@@ -363,11 +363,12 @@ void psi_initializer_nao<T, Device>::tabulate()
 }
 
 template <typename T, typename Device>
-void psi_initializer_nao<T, Device>::proj_ao_onkG(int ik)
+void psi_initializer_nao<T, Device>::proj_ao_onkG(const int ik)
 {
     ModuleBase::timer::tick("psi_initializer_nao", "initialize");
     assert(ik >= 0);
-    this->psig_->fix_k(ik);
+    const int ik_psig = (this->psig_->get_nk() == 1) ? 0 : ik;
+    this->psig_->fix_k(ik_psig);
     const int npw = this->pw_wfc_->npwk[ik];
     const int total_lm = (this->p_ucell_->lmax + 1) * (this->p_ucell_->lmax + 1);
     ModuleBase::matrix ylm(total_lm, npw);
