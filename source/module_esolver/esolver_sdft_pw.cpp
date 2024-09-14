@@ -172,7 +172,23 @@ void ESolver_SDFT_PW::hamilt2density(int istep, int iter, double ethr)
     hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX = PARAM.inp.pw_diag_nmax;
 
     // hsolver only exists in this function
-    hsolver::HSolverPW_SDFT hsolver_pw_sdft_obj(&this->kv, this->pw_wfc, &this->wf, this->stowf, this->stoche, this->init_psi);
+    hsolver::HSolverPW_SDFT hsolver_pw_sdft_obj(
+                    &this->kv, 
+                    this->pw_wfc, 
+                    &this->wf, 
+                    this->stowf, 
+                    this->stoche, 
+                    PARAM.inp.calculation,
+                    PARAM.inp.basis_type,
+                    PARAM.inp.ks_solver,
+                    PARAM.inp.use_paw,
+                    GlobalV::use_uspp,
+                    GlobalV::NSPIN,
+                    hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER,
+                    hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX,
+                    hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR,
+                    hsolver::DiagoIterAssist<std::complex<double>>::need_subspace,
+                    this->init_psi);
 
     hsolver_pw_sdft_obj.solve(this->p_hamilt,
                               this->psi[0],
@@ -181,11 +197,6 @@ void ESolver_SDFT_PW::hamilt2density(int istep, int iter, double ethr)
                               this->stowf,
                               istep,
                               iter,
-                              GlobalV::KS_SOLVER,
-                              hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER,
-                              hsolver::DiagoIterAssist<std::complex<double>>::need_subspace,
-                              hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX,
-                              hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR,
                               false);
     this->init_psi = true;
 
@@ -197,7 +208,7 @@ void ESolver_SDFT_PW::hamilt2density(int istep, int iter, double ethr)
         Symmetry_rho srho;
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
-            srho.begin(is, *(this->pelec->charge), pw_rho, GlobalC::Pgrid, GlobalC::ucell.symm);
+            srho.begin(is, *(this->pelec->charge), pw_rho, GlobalC::ucell.symm);
         }
         this->pelec->f_en.deband = this->pelec->cal_delta_eband();
     }

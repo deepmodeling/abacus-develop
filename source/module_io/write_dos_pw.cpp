@@ -64,9 +64,9 @@ void ModuleIO::write_dos_pw(const ModuleBase::matrix& ekb,
     {
         // DOS_ispin contains not smoothed dos
         std::stringstream ss;
-        ss << GlobalV::global_out_dir << "DOS" << is + 1;
+        ss << PARAM.globalv.global_out_dir << "DOS" << is + 1;
         std::stringstream ss1;
-        ss1 << GlobalV::global_out_dir << "DOS" << is + 1 << "_smearing.dat";
+        ss1 << PARAM.globalv.global_out_dir << "DOS" << is + 1 << "_smearing.dat";
         ModuleIO::calculate_dos(is,
                                 ss.str(),
                                 ss1.str(),

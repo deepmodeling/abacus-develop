@@ -1,5 +1,6 @@
 #include "write_dos_lcao.h"
 
+#include "module_parameter/parameter.h"
 #ifdef __MPI
 #include <mpi.h>
 #endif
@@ -194,7 +195,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psi,
     {
         {
             std::stringstream ps;
-            ps << GlobalV::global_out_dir << "TDOS";
+            ps << PARAM.globalv.global_out_dir << "TDOS";
             std::ofstream out(ps.str().c_str());
             if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 4)
             {
@@ -234,7 +235,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psi,
 
         {
             std::stringstream as;
-            as << GlobalV::global_out_dir << "PDOS";
+            as << PARAM.globalv.global_out_dir << "PDOS";
             std::ofstream out(as.str().c_str());
 
             out << "<pdos>" << std::endl;
@@ -316,9 +317,9 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psi,
     for (int is = 0; is < nspin0; ++is)
     {
         std::stringstream ss;
-        ss << GlobalV::global_out_dir << "DOS" << is + 1;
+        ss << PARAM.globalv.global_out_dir << "DOS" << is + 1;
         std::stringstream ss1;
-        ss1 << GlobalV::global_out_dir << "DOS" << is + 1 << "_smearing.dat";
+        ss1 << PARAM.globalv.global_out_dir << "DOS" << is + 1 << "_smearing.dat";
 
         ModuleIO::calculate_dos(is,
                                 ss.str(),
@@ -541,7 +542,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<std::complex<double>>* psi,
         {
             {
                 std::stringstream ps;
-                ps << GlobalV::global_out_dir << "TDOS";
+                ps << PARAM.globalv.global_out_dir << "TDOS";
                 std::ofstream out(ps.str().c_str());
                 if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 4)
                 {
@@ -581,7 +582,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<std::complex<double>>* psi,
 
             {
                 std::stringstream as;
-                as << GlobalV::global_out_dir << "PDOS";
+                as << PARAM.globalv.global_out_dir << "PDOS";
                 std::ofstream out(as.str().c_str());
 
                 out << "<pdos>" << std::endl;
@@ -665,9 +666,9 @@ void ModuleIO::write_dos_lcao(const psi::Psi<std::complex<double>>* psi,
     for (int is = 0; is < nspin0; ++is)
     {
         std::stringstream ss;
-        ss << GlobalV::global_out_dir << "DOS" << is + 1;
+        ss << PARAM.globalv.global_out_dir << "DOS" << is + 1;
         std::stringstream ss1;
-        ss1 << GlobalV::global_out_dir << "DOS" << is + 1 << "_smearing.dat";
+        ss1 << PARAM.globalv.global_out_dir << "DOS" << is + 1 << "_smearing.dat";
 
         ModuleIO::calculate_dos(is,
                                 ss.str(),

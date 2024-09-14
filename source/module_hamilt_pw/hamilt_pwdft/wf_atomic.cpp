@@ -229,7 +229,7 @@ void WF_atomic::print_PAOs()const
         for (int icc=0; icc<GlobalC::ucell.atoms[it].ncpp.nchi ;icc++)
         {
             std::stringstream ss;
-            ss << GlobalV::global_out_dir << GlobalC::ucell.atoms[it].label << "/" << GlobalC::ucell.atoms[it].label
+            ss << PARAM.globalv.global_out_dir << GlobalC::ucell.atoms[it].label << "/" << GlobalC::ucell.atoms[it].label
                << "-" << GlobalC::ucell.atoms[it].ncpp.els[icc] << ".ORBITAL";
 
             std::ofstream ofs(ss.str().c_str());

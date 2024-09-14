@@ -1,6 +1,6 @@
 AddTest(
     TARGET psi_UT
-    LIBS ${math_libs} base device
+    LIBS parameter ${math_libs} base device 
     SOURCES 
         psi_test.cpp
         ../psi.cpp 
@@ -9,7 +9,7 @@ AddTest(
 if(ENABLE_LCAO)
 AddTest(
     TARGET psi_initializer_unit_test
-    LIBS ${math_libs} base device psi psi_initializer planewave parameter
+    LIBS parameter ${math_libs} base device psi psi_initializer planewave 
     SOURCES
         psi_initializer_unit_test.cpp
         ../../module_hamilt_pw/hamilt_pwdft/soc.cpp

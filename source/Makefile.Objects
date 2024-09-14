@@ -480,6 +480,7 @@ OBJS_IO=input_conv.o\
     rhog_io.o\
     read_exit_file.o\
     read_wfc_pw.o\
+    read_wfc_to_rho.o\
     restart.o\
     binstream.o\
     to_wannier90.o\
@@ -521,7 +522,7 @@ OBJS_IO=input_conv.o\
     read_input_item_exx_dftu.o\
     read_input_item_other.o\
     read_input_item_output.o\
-    bcast_globalv.o\
+    read_set_globalv.o\
 
 OBJS_IO_LCAO=cal_r_overlap_R.o\
       write_orb_info.o\

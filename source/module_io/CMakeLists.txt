@@ -17,6 +17,7 @@ list(APPEND objects
     rhog_io.cpp
     read_exit_file.cpp
     read_wfc_pw.cpp
+    read_wfc_to_rho.cpp
     restart.cpp
     binstream.cpp
     write_wfc_pw.cpp
@@ -92,7 +93,7 @@ add_library(
     read_input_item_other.cpp   
     read_input_item_output.cpp  
     read_input.cpp
-    bcast_globalv.cpp
+    read_set_globalv.cpp
 )
 
 add_library(

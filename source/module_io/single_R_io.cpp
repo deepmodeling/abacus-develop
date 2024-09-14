@@ -1,5 +1,6 @@
 #include "single_R_io.h"
 #include "module_base/parallel_reduce.h"
+#include "module_parameter/parameter.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 
@@ -27,7 +28,7 @@ void ModuleIO::output_single_R(std::ofstream& ofs,
     indptr.push_back(0);
 
     std::stringstream tem1;
-    tem1 << GlobalV::global_out_dir << std::to_string(GlobalV::DRANK) + "temp_sparse_indices.dat";
+    tem1 << PARAM.globalv.global_out_dir << std::to_string(GlobalV::DRANK) + "temp_sparse_indices.dat";
     std::ofstream ofs_tem1;
     std::ifstream ifs_tem1;
 

@@ -1,5 +1,6 @@
 #include "H_TDDFT_pw.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/constants.h"
 #include "module_base/math_integral.h"
 #include "module_base/timer.h"
@@ -112,7 +113,7 @@ void H_TDDFT_pw::cal_fixed_v(double* vl_pseudo)
         if (module_tddft::Evolve_elec::out_efield && GlobalV::MY_RANK == 0)
         {
             std::stringstream as;
-            as << GlobalV::global_out_dir << "efield_" << count << ".dat";
+            as << PARAM.globalv.global_out_dir << "efield_" << count << ".dat";
             std::ofstream ofs(as.str().c_str(), std::ofstream::app);
             ofs << H_TDDFT_pw::istep * dt * ModuleBase::AU_to_FS << "\t"
                 << vext_time * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A << std::endl;
@@ -299,7 +300,7 @@ void H_TDDFT_pw::update_At()
         if (module_tddft::Evolve_elec::out_efield && GlobalV::MY_RANK == 0)
         {
             std::stringstream as;
-            as << GlobalV::global_out_dir << "efield_" << count << ".dat";
+            as << PARAM.globalv.global_out_dir << "efield_" << count << ".dat";
             std::ofstream ofs(as.str().c_str(), std::ofstream::app);
             ofs << H_TDDFT_pw::istep * dt * ModuleBase::AU_to_FS << "\t"
                 << vext_time[0] * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A << std::endl;

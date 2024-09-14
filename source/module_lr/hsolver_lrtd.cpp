@@ -166,13 +166,13 @@ namespace LR
         {
             if (GlobalV::MY_RANK == 0)
             {
-                std::ofstream ofs(GlobalV::global_out_dir + "Excitation_Energy_" + spin_types[ispin_solve] + ".dat");
+                std::ofstream ofs(PARAM.globalv.global_out_dir + "Excitation_Energy_" + spin_types[ispin_solve] + ".dat");
                 ofs << std::setprecision(8) << std::scientific;
                 for (auto& e : eigenvalue) {ofs << e << " ";
 }
                 ofs.close();
             }
-            LR_Util::write_psi_bandfirst(psi, GlobalV::global_out_dir + "Excitation_Amplitude_" + spin_types[ispin_solve], GlobalV::MY_RANK);
+            LR_Util::write_psi_bandfirst(psi, PARAM.globalv.global_out_dir + "Excitation_Amplitude_" + spin_types[ispin_solve], GlobalV::MY_RANK);
         }
 
         // normalization is already satisfied

@@ -60,7 +60,7 @@ void define_fcc_cell(UnitCell& ucell)
     ucell.pseudo_fn[0] = "../../../../tests/PP_ORB/Si_dojo_soc.upf";
     ucell.pseudo_fn[1] = "../../../../tests/PP_ORB/C.LDA.UPF";
 
-    GlobalV::global_out_dir = "./";
+    PARAM.sys.global_out_dir = "./";
     PARAM.input.qo_screening_coeff = {0.1, 0.1};
     PARAM.input.qo_thr = 1e-6;
     GlobalV::ofs_running = std::ofstream("unittest.log");
@@ -97,7 +97,7 @@ void define_sc_cell(UnitCell& ucell)
     ucell.pseudo_fn = new std::string[1];
     ucell.pseudo_fn[0] = "../../../../tests/PP_ORB/Si_dojo_soc.upf";
 
-    GlobalV::global_out_dir = "./";
+    PARAM.sys.global_out_dir = "./";
     PARAM.input.qo_screening_coeff = {0.1};
     PARAM.input.qo_thr = 1e-6;
     GlobalV::ofs_running = std::ofstream("unittest.log");
@@ -554,7 +554,7 @@ TEST_F(toQOTest, Initialize)
              PARAM.input.qo_screening_coeff);
     std::vector<ModuleBase::Vector3<double>> kvecs_d;
     kvecs_d.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
-    tqo.initialize(GlobalV::global_out_dir,
+    tqo.initialize(PARAM.sys.global_out_dir,
                    "",
                    "",
                    &ucell, 
@@ -573,7 +573,7 @@ TEST_F(toQOTest, ReadOvlp)
              PARAM.input.qo_screening_coeff);
     std::vector<ModuleBase::Vector3<double>> kvecs_d;
     kvecs_d.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
-    tqo.initialize(GlobalV::global_out_dir,
+    tqo.initialize(PARAM.sys.global_out_dir,
                    "",
                    "",
                    &ucell, 
@@ -607,7 +607,7 @@ TEST_F(toQOTest, CalculateOvlpR)
              PARAM.input.qo_screening_coeff);
     std::vector<ModuleBase::Vector3<double>> kvecs_d;
     kvecs_d.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
-    tqo.initialize(GlobalV::global_out_dir,
+    tqo.initialize(PARAM.sys.global_out_dir,
                    "",
                    "",
                    &ucell, 
@@ -654,7 +654,7 @@ TEST_F(toQOTest, CalculateSelfOvlpRMinimal)
     ucell.orbital_fn[0] = "Si_special_use_unittest.orb"; // generated in unittest BuildAo
     ucell.orbital_fn[1] = "C_special_use_unittest.orb"; // generated in unittest BuildAo
     ucell.atoms[1].nwl = 1; // only s and p for C
-    tqo.initialize(GlobalV::global_out_dir,
+    tqo.initialize(PARAM.sys.global_out_dir,
                    "",
                    "",
                    &ucell, 
@@ -690,7 +690,7 @@ TEST_F(toQOTest, AppendOvlpReiRk)
              PARAM.input.qo_screening_coeff);
     std::vector<ModuleBase::Vector3<double>> kvecs_d;
     kvecs_d.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
-    tqo.initialize(GlobalV::global_out_dir,
+    tqo.initialize(PARAM.sys.global_out_dir,
                    "",
                    "",
                    &ucell, 
@@ -735,7 +735,7 @@ TEST_F(toQOTest, CalculateSelfOvlpKSymmetrical)
     kvecs_d.push_back(ModuleBase::Vector3<double>(0.25, -0.25, 0.25));
     kvecs_d.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma
 
-    tqo.initialize(GlobalV::global_out_dir,
+    tqo.initialize(PARAM.sys.global_out_dir,
                    "",
                    "",
                    &ucell, 
@@ -900,7 +900,7 @@ TEST_F(toQOTest, CalculateSelfOvlpRFull)
     ucell.orbital_fn[1] = "C_special_use_unittest.orb"; // generated in unittest BuildAo
     ucell.atoms[1].nwl = 1; // only s and p for C
     PARAM.input.qo_thr = 1e-10;
-    tqo.initialize(GlobalV::global_out_dir,
+    tqo.initialize(PARAM.sys.global_out_dir,
                    "",
                    "",
                    &ucell, 
@@ -1227,7 +1227,7 @@ TEST_F(toQOTest, CalculateSelfOvlpRPswfc)
     ucell.orbital_fn[1] = "C_special_use_unittest.orb"; // generated in unittest BuildAo
     ucell.atoms[1].nwl = 1; // only s and p for C
     //PARAM.input.qo_thr = 1e-10;
-    tqo.initialize(GlobalV::global_out_dir,
+    tqo.initialize(PARAM.sys.global_out_dir,
                    "",
                    "",
                    &ucell, 
@@ -1271,7 +1271,7 @@ TEST_F(toQOTest, CalculateOvlpKGamma)
              PARAM.input.qo_screening_coeff);
     std::vector<ModuleBase::Vector3<double>> kvecs_d;
     kvecs_d.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
-    tqo.initialize(GlobalV::global_out_dir,
+    tqo.initialize(PARAM.sys.global_out_dir,
                    "",
                    "",
                    &ucell, 
@@ -1311,7 +1311,7 @@ TEST_F(toQOTest, CalculateOvlpKSlaterGamma)
              PARAM.input.qo_screening_coeff);
     std::vector<ModuleBase::Vector3<double>> kvecs_d;
     kvecs_d.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
-    tqo.initialize(GlobalV::global_out_dir,
+    tqo.initialize(PARAM.sys.global_out_dir,
                    "",
                    "",
                    &ucell, 
@@ -1361,7 +1361,7 @@ TEST_F(toQOTest, CalculateSelfOvlpKPswfcSymmetrical)
     kvecs_d.push_back(ModuleBase::Vector3<double>(0.25, -0.25, 0.25));
     kvecs_d.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma
 
-    tqo.initialize(GlobalV::global_out_dir,
+    tqo.initialize(PARAM.sys.global_out_dir,
                    "",
                    "",
                    &ucell, 
@@ -1466,7 +1466,7 @@ TEST_F(toQOTest, CalculateHydrogenlike)
     std::vector<ModuleBase::Vector3<double>> kvecs_d;
     kvecs_d.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
     kvecs_d.push_back(ModuleBase::Vector3<double>(0.5, 0.0, 0.0));
-    tqo.initialize(GlobalV::global_out_dir,
+    tqo.initialize(PARAM.sys.global_out_dir,
                    "",
                    "",
                    &ucell, 
