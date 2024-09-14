@@ -71,8 +71,8 @@ class HSolverPW
 
     void output_iterInfo();
 
-    const ModulePW::PW_Basis_K* wfc_basis;
-    const wavefunc* pwf; // only for diago_PAO_in_pw_k2 func
+    ModulePW::PW_Basis_K* wfc_basis;
+    wavefunc* pwf; // only for diago_PAO_in_pw_k2 func
 
     const std::string calculation_type;
     const std::string basis_type;
