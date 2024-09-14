@@ -101,7 +101,7 @@ void toWannier90::out_eig(const ModuleBase::matrix& ekb)
     if (GlobalV::MY_RANK == 0)
 #endif
     {
-        std::string fileaddress = GlobalV::global_out_dir + wannier_file_name + ".eig";
+        std::string fileaddress = PARAM.globalv.global_out_dir + wannier_file_name + ".eig";
         std::ofstream eig_file(fileaddress.c_str());
         for (int ik = start_k_index; ik < (cal_num_kpts + start_k_index); ik++)
         {

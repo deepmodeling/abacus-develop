@@ -227,7 +227,7 @@ void ESolver_KS_PW<T, Device>::before_scf(const int istep)
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
             std::stringstream ss;
-            ss << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG_INI.cube";
+            ss << PARAM.globalv.global_out_dir << "SPIN" << is + 1 << "_CHG_INI.cube";
             ModuleIO::write_cube(
 #ifdef __MPI
                 this->pw_big->bz,
@@ -254,7 +254,7 @@ void ESolver_KS_PW<T, Device>::before_scf(const int istep)
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
             std::stringstream ss;
-            ss << GlobalV::global_out_dir << "SPIN" << is + 1 << "_POT_INI.cube";
+            ss << PARAM.globalv.global_out_dir << "SPIN" << is + 1 << "_POT_INI.cube";
             ModuleIO::write_cube(
 #ifdef __MPI
                 this->pw_big->bz,
@@ -478,7 +478,7 @@ void ESolver_KS_PW<T, Device>::iter_finish(int& iter)
                 {
                     data = this->pelec->charge->rho_save[is];
                 }
-                std::string fn = GlobalV::global_out_dir + "/tmp_SPIN" + std::to_string(is + 1) + "_CHG.cube";
+                std::string fn = PARAM.globalv.global_out_dir + "/tmp_SPIN" + std::to_string(is + 1) + "_CHG.cube";
                 ModuleIO::write_cube(
 #ifdef __MPI
                     this->pw_big->bz,
@@ -500,7 +500,7 @@ void ESolver_KS_PW<T, Device>::iter_finish(int& iter)
                     1);
                 if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
                 {
-                    fn = GlobalV::global_out_dir + "/tmp_SPIN" + std::to_string(is + 1) + "_TAU.cube";
+                    fn = PARAM.globalv.global_out_dir + "/tmp_SPIN" + std::to_string(is + 1) + "_TAU.cube";
                     ModuleIO::write_cube(
 #ifdef __MPI
                         this->pw_big->bz,
@@ -525,7 +525,7 @@ void ESolver_KS_PW<T, Device>::iter_finish(int& iter)
         if (this->wf.out_wfc_pw == 1 || this->wf.out_wfc_pw == 2)
         {
             std::stringstream ssw;
-            ssw << GlobalV::global_out_dir << "WAVEFUNC";
+            ssw << PARAM.globalv.global_out_dir << "WAVEFUNC";
             // mohan update 2011-02-21
             // qianrui update 2020-10-17
             ModuleIO::write_wfc_pw(ssw.str(), this->psi[0], this->kv, this->pw_wfc);
@@ -545,7 +545,7 @@ void ESolver_KS_PW<T, Device>::after_scf(const int istep)
     if (this->wf.out_wfc_pw == 1 || this->wf.out_wfc_pw == 2)
     {
         std::stringstream ssw;
-        ssw << GlobalV::global_out_dir << "WAVEFUNC";
+        ssw << PARAM.globalv.global_out_dir << "WAVEFUNC";
         ModuleIO::write_wfc_pw(ssw.str(), this->psi[0], this->kv, this->pw_wfc);
     }
 
@@ -581,7 +581,7 @@ void ESolver_KS_PW<T, Device>::after_scf(const int istep)
                               this->pw_wfc,
                               this->ctx,
                               GlobalC::Pgrid,
-                              GlobalV::global_out_dir,
+                              PARAM.globalv.global_out_dir,
                               PARAM.inp.if_separate_k);
     }
 }
@@ -728,7 +728,7 @@ void ESolver_KS_PW<T, Device>::after_all_runners()
         for (int is = 0; is < nspin0; is++)
         {
             std::stringstream ss2;
-            ss2 << GlobalV::global_out_dir << "BANDS_" << is + 1 << ".dat";
+            ss2 << PARAM.globalv.global_out_dir << "BANDS_" << is + 1 << ".dat";
             GlobalV::ofs_running << "\n Output bands in file: " << ss2.str() << std::endl;
             ModuleIO::nscf_band(is,
                                 ss2.str(),

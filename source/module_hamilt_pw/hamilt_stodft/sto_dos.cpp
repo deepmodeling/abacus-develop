@@ -1,5 +1,6 @@
 #include "sto_dos.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/timer.h"
 #include "module_base/tool_title.h"
 #include "sto_tool.h"
@@ -240,7 +241,7 @@ void Sto_DOS::caldos(const double sigmain, const double de, const int npart)
 #endif
     if (GlobalV::MY_RANK == 0)
     {
-        std::string dosfile = GlobalV::global_out_dir + "DOS1_smearing.dat";
+        std::string dosfile = PARAM.globalv.global_out_dir + "DOS1_smearing.dat";
         ofsdos.open(dosfile.c_str());
         double maxerror = 0;
         double sum = 0;

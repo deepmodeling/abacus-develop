@@ -123,7 +123,7 @@ class ChargeExtraTest : public ::testing::Test
     void SetUp() override
     {
         GlobalV::NSPIN = 1;
-        GlobalV::global_out_dir = "./support/";
+        PARAM.sys.global_out_dir = "./support/";
         ucell = utp.SetUcellInfo();
         ucell->omega = 1.0;
     }

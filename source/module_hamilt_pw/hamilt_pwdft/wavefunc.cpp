@@ -190,8 +190,9 @@ void diago_PAO_in_pw_k2(const int& ik,
         ModuleBase::ComplexMatrix wfcatom(nbands, nbasis);
         std::stringstream filename;
         int ik_tot = K_Vectors::get_ik_global(ik, p_wf->nkstot);
-        filename << GlobalV::global_readin_dir << "WAVEFUNC" << ik_tot + 1 << ".dat";
+        filename << PARAM.globalv.global_readin_dir << "WAVEFUNC" << ik_tot + 1 << ".dat";
         ModuleIO::read_wfc_pw(filename.str(), wfc_basis, ik, p_wf->nkstot, wfcatom);
+
 
         std::vector<std::complex<float>> s_wfcatom(nbands * nbasis);
         castmem_z2c_h2h_op()(cpu_ctx, cpu_ctx, s_wfcatom.data(), wfcatom.c, nbands * nbasis);
@@ -348,8 +349,9 @@ void diago_PAO_in_pw_k2(const int& ik,
         ModuleBase::ComplexMatrix wfcatom(nbands, nbasis);
         std::stringstream filename;
         int ik_tot = K_Vectors::get_ik_global(ik, p_wf->nkstot);
-        filename << GlobalV::global_readin_dir << "WAVEFUNC" << ik_tot + 1 << ".dat";
+        filename <<  PARAM.globalv.global_readin_dir << "WAVEFUNC" << ik_tot + 1 << ".dat";
         ModuleIO::read_wfc_pw(filename.str(), wfc_basis, ik, p_wf->nkstot, wfcatom);
+
 
         if (GlobalV::KS_SOLVER == "cg")
         {
@@ -525,7 +527,7 @@ void diago_PAO_in_pw_k2(const base_device::DEVICE_GPU* ctx,
     {
         std::stringstream filename;
         int ik_tot = K_Vectors::get_ik_global(ik, p_wf->nkstot);
-        filename << GlobalV::global_readin_dir << "WAVEFUNC" << ik_tot + 1 << ".dat";
+        filename << PARAM.globalv.global_readin_dir << "WAVEFUNC" << ik_tot + 1 << ".dat";
         ModuleIO::read_wfc_pw(filename.str(), wfc_basis, ik, p_wf->nkstot, wfcatom);
     }
 
@@ -629,7 +631,7 @@ void diago_PAO_in_pw_k2(const base_device::DEVICE_GPU* ctx,
     {
         std::stringstream filename;
         int ik_tot = K_Vectors::get_ik_global(ik, p_wf->nkstot);
-        filename << GlobalV::global_readin_dir << "WAVEFUNC" << ik_tot + 1 << ".dat";
+        filename << PARAM.globalv.global_readin_dir << "WAVEFUNC" << ik_tot + 1 << ".dat";
         ModuleIO::read_wfc_pw(filename.str(), wfc_basis, ik, p_wf->nkstot, wfcatom);
     }
 

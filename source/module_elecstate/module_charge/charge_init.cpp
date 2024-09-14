@@ -38,7 +38,7 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
         // try to read charge from binary file first, which is the same as QE
         // liuyu 2023-12-05
         std::stringstream binary;
-        binary << GlobalV::global_readin_dir << PARAM.inp.suffix + "-CHARGE-DENSITY.restart";
+        binary << PARAM.globalv.global_readin_dir << PARAM.inp.suffix + "-CHARGE-DENSITY.restart";
         if (ModuleIO::read_rhog(binary.str(), rhopw, rhog))
         {
             GlobalV::ofs_running << " Read in the charge density: " << binary.str() << std::endl;
@@ -52,7 +52,7 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
             for (int is = 0; is < GlobalV::NSPIN; ++is)
             {
                 std::stringstream ssc;
-                ssc << GlobalV::global_readin_dir << "SPIN" << is + 1 << "_CHG.cube";
+                ssc << PARAM.globalv.global_readin_dir << "SPIN" << is + 1 << "_CHG.cube";
                 double& ef_tmp = eferm_iout.get_ef(is);
                 if (ModuleIO::read_rho(
 #ifdef __MPI
@@ -125,7 +125,7 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
                 for (int is = 0; is < GlobalV::NSPIN; is++)
                 {
                     std::stringstream ssc;
-                    ssc << GlobalV::global_readin_dir << "SPIN" << is + 1 << "_TAU.cube";
+                    ssc << PARAM.globalv.global_readin_dir << "SPIN" << is + 1 << "_TAU.cube";
                     GlobalV::ofs_running << " try to read kinetic energy density from file : " << ssc.str()
                                          << std::endl;
                     // mohan update 2012-02-10, sunliang update 2023-03-09

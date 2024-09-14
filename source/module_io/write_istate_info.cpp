@@ -1,5 +1,6 @@
 #include "write_istate_info.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_base/timer.h"
@@ -10,7 +11,7 @@ void ModuleIO::write_istate_info(const ModuleBase::matrix &ekb,const ModuleBase:
 	ModuleBase::timer::tick("ModuleIO", "write_istate_info");
 
 	std::stringstream ss;
-    ss << GlobalV::global_out_dir << "istate.info";
+    ss << PARAM.globalv.global_out_dir << "istate.info";
     if (GlobalV::MY_RANK == 0)
     {
         std::ofstream ofsi(ss.str().c_str()); // clear istate.info
@@ -23,7 +24,8 @@ void ModuleIO::write_istate_info(const ModuleBase::matrix &ekb,const ModuleBase:
         MPI_Barrier(MPI_COMM_WORLD);
         if (GlobalV::MY_POOL == ip)
         {
-            if (GlobalV::RANK_IN_POOL != 0 || GlobalV::MY_STOGROUP != 0 ) continue;
+            if (GlobalV::RANK_IN_POOL != 0 || GlobalV::MY_STOGROUP != 0 ) { continue;
+}
 #endif
             std::ofstream ofsi2(ss.str().c_str(), std::ios::app);
             if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 4)

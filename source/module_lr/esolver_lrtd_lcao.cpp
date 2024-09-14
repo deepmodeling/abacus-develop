@@ -50,14 +50,14 @@ inline void redirect_log(const bool& out_alllog)
     std::stringstream   ss;
     if (out_alllog)
     {
-        ss << GlobalV::global_out_dir << "running_lr_" << GlobalV::MY_RANK + 1 << ".log";
+        ss << PARAM.globalv.global_out_dir << "running_lr_" << GlobalV::MY_RANK + 1 << ".log";
         GlobalV::ofs_running.open(ss.str());
     }
     else
     {
         if (GlobalV::MY_RANK == 0)
         {
-            ss << GlobalV::global_out_dir << "running_lr.log";
+            ss << PARAM.globalv.global_out_dir << "running_lr.log";
             GlobalV::ofs_running.open(ss.str());
         }
     }
@@ -232,7 +232,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
         GlobalC::ucell.symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
     }
-    this->kv.set(ucell.symm, GlobalV::global_kpoint_card, GlobalV::NSPIN, ucell.G, ucell.latvec, GlobalV::ofs_running);
+    this->kv.set(ucell.symm, PARAM.inp.kpoint_file, GlobalV::NSPIN, ucell.G, ucell.latvec, GlobalV::ofs_running);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
     Print_Info::setup_parameters(ucell, this->kv);
 
@@ -404,7 +404,7 @@ void LR::ESolver_LR<T, TR>::runner(int istep, UnitCell& cell)
     }
     else    // read the eigenvalues
     {
-        std::ifstream ifs(GlobalV::global_out_dir + "Excitation_Energy.dat");
+        std::ifstream ifs(PARAM.globalv.global_out_dir + "Excitation_Energy.dat");
         std::cout << "reading the excitation energies from file: \n";
         for (int is = 0;is < nspin;++is)
         {
@@ -459,7 +459,7 @@ void LR::ESolver_LR<T, TR>::setup_eigenvectors_X()
         for (int is = 0; is < this->nspin; ++is)
         {
             this->X[is] = std::make_shared<psi::Psi<T>>(LR_Util::read_psi_bandfirst<T>(
-                GlobalV::global_out_dir + "Excitation_Amplitude_" + spin_types[is], GlobalV::MY_RANK));
+                PARAM.globalv.global_out_dir + "Excitation_Amplitude_" + spin_types[is], GlobalV::MY_RANK));
         }
     }
     else
@@ -543,7 +543,7 @@ void LR::ESolver_LR<T, TR>::read_ks_wfc()
     GlobalV::NB2D = 1;
     this->pelec->ekb.create(this->kv.get_nks(), this->nbands);
     this->pelec->wg.create(this->kv.get_nks(), this->nbands);
-    if (!ModuleIO::read_wfc_nao(GlobalV::global_readin_dir, this->paraMat_, *this->psi_ks, this->pelec,
+    if (!ModuleIO::read_wfc_nao(PARAM.globalv.global_readin_dir, this->paraMat_, *this->psi_ks, this->pelec,
         /*skip_bands=*/this->nocc_max - this->nocc)) {
         ModuleBase::WARNING_QUIT("ESolver_LR", "read ground-state wavefunction failed.");
 }
@@ -559,7 +559,7 @@ void LR::ESolver_LR<T, TR>::read_ks_chg(Charge& chg_gs)
     for (int is = 0; is < this->nspin; ++is)
     {
         std::stringstream ssc;
-        ssc << GlobalV::global_readin_dir << "SPIN" << is + 1 << "_CHG.cube";
+        ssc << PARAM.globalv.global_readin_dir << "SPIN" << is + 1 << "_CHG.cube";
         GlobalV::ofs_running << ssc.str() << std::endl;
         double ef;
         if (ModuleIO::read_rho(

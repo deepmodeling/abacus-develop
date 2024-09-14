@@ -410,7 +410,7 @@ void ESolver_KS_LCAO_TDDFT::after_scf(const int istep)
         if (module_tddft::Evolve_elec::out_dipole == 1)
         {
             std::stringstream ss_dipole;
-            ss_dipole << GlobalV::global_out_dir << "SPIN" << is + 1 << "_DIPOLE";
+            ss_dipole << PARAM.globalv.global_out_dir << "SPIN" << is + 1 << "_DIPOLE";
             ModuleIO::write_dipole(pelec->charge->rho_save[is], pelec->charge->rhopw, is, istep, ss_dipole.str());
         }
     }

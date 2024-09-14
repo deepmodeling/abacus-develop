@@ -150,7 +150,7 @@ void K_Vectors::set(const ModuleSymmetry::Symmetry& symm,
     {
         // output kpoints file
         std::stringstream skpt;
-        skpt << GlobalV::global_readin_dir << "kpoints";
+        skpt << PARAM.globalv.global_readin_dir << "kpoints";
         std::ofstream ofkpt(skpt.str().c_str()); // clear kpoints
         ofkpt << skpt2 << skpt1;
         ofkpt.close();

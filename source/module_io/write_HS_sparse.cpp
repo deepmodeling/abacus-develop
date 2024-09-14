@@ -119,13 +119,13 @@ void ModuleIO::save_HSR_sparse(const int& istep,
     std::stringstream ssh[2];
     std::stringstream sss;
     if (PARAM.inp.calculation == "md" && !PARAM.inp.out_app_flag) {
-        ssh[0] << GlobalV::global_matrix_dir << step << "_" << HR_filename_up;
-        ssh[1] << GlobalV::global_matrix_dir << step << "_" << HR_filename_down;
-        sss << GlobalV::global_matrix_dir << step << "_" << SR_filename;
+        ssh[0] << PARAM.globalv.global_matrix_dir << step << "_" << HR_filename_up;
+        ssh[1] << PARAM.globalv.global_matrix_dir << step << "_" << HR_filename_down;
+        sss << PARAM.globalv.global_matrix_dir << step << "_" << SR_filename;
     } else {
-        ssh[0] << GlobalV::global_out_dir << HR_filename_up;
-        ssh[1] << GlobalV::global_out_dir << HR_filename_down;
-        sss << GlobalV::global_out_dir << SR_filename;
+        ssh[0] << PARAM.globalv.global_out_dir << HR_filename_up;
+        ssh[1] << PARAM.globalv.global_out_dir << HR_filename_down;
+        sss << PARAM.globalv.global_out_dir << SR_filename;
     }
     std::ofstream g1[2];
     std::ofstream g2;
@@ -427,25 +427,25 @@ void ModuleIO::save_dH_sparse(const int& istep,
     std::stringstream sshy[2];
     std::stringstream sshz[2];
     if (PARAM.inp.calculation == "md" && !PARAM.inp.out_app_flag) {
-        sshx[0] << GlobalV::global_matrix_dir << step << "_"
+        sshx[0] << PARAM.globalv.global_matrix_dir << step << "_"
                 << "data-dHRx-sparse_SPIN0.csr";
-        sshx[1] << GlobalV::global_matrix_dir << step << "_"
+        sshx[1] << PARAM.globalv.global_matrix_dir << step << "_"
                 << "data-dHRx-sparse_SPIN1.csr";
-        sshy[0] << GlobalV::global_matrix_dir << step << "_"
+        sshy[0] << PARAM.globalv.global_matrix_dir << step << "_"
                 << "data-dHRy-sparse_SPIN0.csr";
-        sshy[1] << GlobalV::global_matrix_dir << step << "_"
+        sshy[1] << PARAM.globalv.global_matrix_dir << step << "_"
                 << "data-dHRy-sparse_SPIN1.csr";
-        sshz[0] << GlobalV::global_matrix_dir << step << "_"
+        sshz[0] << PARAM.globalv.global_matrix_dir << step << "_"
                 << "data-dHRz-sparse_SPIN0.csr";
-        sshz[1] << GlobalV::global_matrix_dir << step << "_"
+        sshz[1] << PARAM.globalv.global_matrix_dir << step << "_"
                 << "data-dHRz-sparse_SPIN1.csr";
     } else {
-        sshx[0] << GlobalV::global_out_dir << "data-dHRx-sparse_SPIN0.csr";
-        sshx[1] << GlobalV::global_out_dir << "data-dHRx-sparse_SPIN1.csr";
-        sshy[0] << GlobalV::global_out_dir << "data-dHRy-sparse_SPIN0.csr";
-        sshy[1] << GlobalV::global_out_dir << "data-dHRy-sparse_SPIN1.csr";
-        sshz[0] << GlobalV::global_out_dir << "data-dHRz-sparse_SPIN0.csr";
-        sshz[1] << GlobalV::global_out_dir << "data-dHRz-sparse_SPIN1.csr";
+        sshx[0] << PARAM.globalv.global_out_dir << "data-dHRx-sparse_SPIN0.csr";
+        sshx[1] << PARAM.globalv.global_out_dir << "data-dHRx-sparse_SPIN1.csr";
+        sshy[0] << PARAM.globalv.global_out_dir << "data-dHRy-sparse_SPIN0.csr";
+        sshy[1] << PARAM.globalv.global_out_dir << "data-dHRy-sparse_SPIN1.csr";
+        sshz[0] << PARAM.globalv.global_out_dir << "data-dHRz-sparse_SPIN0.csr";
+        sshz[1] << PARAM.globalv.global_out_dir << "data-dHRz-sparse_SPIN1.csr";
     }
     std::ofstream g1x[2];
     std::ofstream g1y[2];

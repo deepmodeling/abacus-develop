@@ -88,7 +88,7 @@ void ESolver_OF::before_all_runners(const Input_para& inp, UnitCell& ucell)
     }
 
     // Setup the k points according to symmetry.
-    kv.set(ucell.symm, GlobalV::global_kpoint_card, GlobalV::NSPIN, ucell.G, ucell.latvec, GlobalV::ofs_running);
+    kv.set(ucell.symm, PARAM.inp.kpoint_file, GlobalV::NSPIN, ucell.G, ucell.latvec, GlobalV::ofs_running);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
 
     // print information

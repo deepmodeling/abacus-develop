@@ -1,6 +1,6 @@
 AddTest(
   TARGET container_kernels_uts
-  LIBS ${math_libs}
+  LIBS parameter ${math_libs}
   SOURCES blas_test.cpp lapack_test.cpp
   memory_test.cpp linalg_test.cpp
 )

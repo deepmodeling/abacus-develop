@@ -18,7 +18,6 @@
  *   - Propagator::compute_propagator_cn2
  *     - compute propagator of method Crank-Nicolson.
  */
-Parameter PARAM;
 #define doublethreshold 1e-8
 Parallel_Orbitals::Parallel_Orbitals()
 {
