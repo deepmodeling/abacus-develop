@@ -46,7 +46,7 @@ psi::Psi<std::complex<double>>* wavefunc::allocate(const int nkstot, const int n
     int prefactor = 1;
     if (GlobalV::NSPIN == 4)
     {
-        prefactor = GlobalV::NPOL; // added by zhengdy-soc
+        prefactor = PARAM.globalv.npol; // added by zhengdy-soc
     }
 
     const int nks2 = nks;
@@ -54,20 +54,20 @@ psi::Psi<std::complex<double>>* wavefunc::allocate(const int nkstot, const int n
     psi::Psi<std::complex<double>>* psi_out = nullptr;
     if (PARAM.inp.calculation == "nscf" && this->mem_saver == 1)
     {
-        // initial psi rather than evc
-        psi_out = new psi::Psi<std::complex<double>>(1, GlobalV::NBANDS, npwx * GlobalV::NPOL, ngk);
-        if (PARAM.inp.basis_type == "lcao_in_pw")
-        {
-            wanf2[0].create(GlobalV::NLOCAL, npwx * GlobalV::NPOL);
-            const size_t memory_cost = GlobalV::NLOCAL * (GlobalV::NPOL * npwx) * sizeof(std::complex<double>);
-            std::cout << " Memory for wanf2 (MB): " << double(memory_cost) / 1024.0 / 1024.0 << std::endl;
-            ModuleBase::Memory::record("WF::wanf2", memory_cost);
-        }
-        const size_t memory_cost = GlobalV::NBANDS * (GlobalV::NPOL * npwx) * sizeof(std::complex<double>);
-        std::cout << " MEMORY FOR PSI (MB)  : " << double(memory_cost) / 1024.0 / 1024.0 << std::endl;
-        ModuleBase::Memory::record("Psi_PW", memory_cost);
-    }
-    else if (PARAM.inp.basis_type != "pw")
+		//initial psi rather than evc
+		psi_out = new psi::Psi<std::complex<double>>(1, GlobalV::NBANDS, npwx * PARAM.globalv.npol, ngk);
+		if(PARAM.inp.basis_type=="lcao_in_pw")
+		{
+			wanf2[0].create(GlobalV::NLOCAL, npwx * PARAM.globalv.npol);
+			const size_t memory_cost = GlobalV::NLOCAL*(PARAM.globalv.npol*npwx) * sizeof(std::complex<double>);
+			std::cout << " Memory for wanf2 (MB): " << double(memory_cost)/1024.0/1024.0 << std::endl;
+			ModuleBase::Memory::record("WF::wanf2", memory_cost) ;
+		}
+		const size_t memory_cost = GlobalV::NBANDS*(PARAM.globalv.npol*npwx) * sizeof(std::complex<double>);
+		std::cout << " MEMORY FOR PSI (MB)  : " << double(memory_cost)/1024.0/1024.0 << std::endl;
+		ModuleBase::Memory::record("Psi_PW", memory_cost);
+	}
+	else if(PARAM.inp.basis_type!="pw")
     {
         if ((PARAM.inp.basis_type == "lcao" || PARAM.inp.basis_type == "lcao_in_pw") || winput::out_spillage == 2)
         { // for lcao_in_pw
@@ -77,23 +77,23 @@ psi::Psi<std::complex<double>>* wavefunc::allocate(const int nkstot, const int n
             }
             this->wanf2 = new ModuleBase::ComplexMatrix[nks2];
 
-            for (int ik = 0; ik < nks2; ik++)
-            {
-                this->wanf2[ik].create(GlobalV::NLOCAL, npwx * GlobalV::NPOL);
-            }
+			for (int ik = 0; ik < nks2; ik++)
+			{
+				this->wanf2[ik].create(GlobalV::NLOCAL, npwx * PARAM.globalv.npol);
+			}
 
-            const size_t memory_cost = nks2 * GlobalV::NLOCAL * (npwx * GlobalV::NPOL) * sizeof(std::complex<double>);
-            std::cout << " Memory for wanf2 (MB): " << double(memory_cost) / 1024.0 / 1024.0 << std::endl;
-            ModuleBase::Memory::record("WF::wanf2", memory_cost);
+			const size_t memory_cost = nks2 * GlobalV::NLOCAL*(npwx * PARAM.globalv.npol) * sizeof(std::complex<double>);
+			std::cout << " Memory for wanf2 (MB): " << double(memory_cost)/1024.0/1024.0 << std::endl;
+			ModuleBase::Memory::record("WF::wanf2", memory_cost) ;
         }
     }
     else
     {
         // initial psi rather than evc
-        psi_out = new psi::Psi<std::complex<double>>(nks2, GlobalV::NBANDS, npwx * GlobalV::NPOL, ngk);
-        const size_t memory_cost = nks2 * GlobalV::NBANDS * (GlobalV::NPOL * npwx) * sizeof(std::complex<double>);
-        std::cout << " MEMORY FOR PSI (MB)  : " << double(memory_cost) / 1024.0 / 1024.0 << std::endl;
-        ModuleBase::Memory::record("Psi_PW", memory_cost);
+        psi_out = new psi::Psi<std::complex<double>>(nks2, GlobalV::NBANDS, npwx * PARAM.globalv.npol, ngk);
+		const size_t memory_cost = nks2 * GlobalV::NBANDS*(PARAM.globalv.npol*npwx) * sizeof(std::complex<double>);
+		std::cout << " MEMORY FOR PSI (MB)  : " << double(memory_cost)/1024.0/1024.0 << std::endl;
+		ModuleBase::Memory::record("Psi_PW", memory_cost);
     }
     return psi_out;
 
@@ -117,7 +117,7 @@ void wavefunc::wfcinit(psi::Psi<std::complex<double>>* psi_in, ModulePW::PW_Basi
         this->irindex = new int[wfc_basis->fftnxy];
         wfc_basis->getfftixy2is(this->irindex);
 #if defined(__CUDA) || defined(__ROCM)
-        if (GlobalV::device_flag == "gpu")
+        if (PARAM.globalv.device_flag == "gpu")
         {
             wfc_basis->get_ig2ixyz_k();
         }
@@ -731,7 +731,7 @@ void wavefunc::init_after_vc(const int nks)
     assert(GlobalV::NBANDS > 0);
 
     const int nks2 = nks;
-    const int nbasis = this->npwx * GlobalV::NPOL;
+	const int nbasis = this->npwx * PARAM.globalv.npol;
 
     if ((PARAM.inp.basis_type == "lcao" || PARAM.inp.basis_type == "lcao_in_pw") || winput::out_spillage == 2)
     {

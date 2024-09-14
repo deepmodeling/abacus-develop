@@ -12,12 +12,24 @@ void ReadInput::item_deepks()
         Input_Item item("deepks_out_labels");
         item.annotation = ">0 compute descriptor for deepks";
         read_sync_bool(input.deepks_out_labels);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.deepks_out_unittest)
+            {
+                para.input.deepks_out_labels = true;
+            }
+        };
         this->add_item(item);
     }
     {
         Input_Item item("deepks_scf");
         item.annotation = ">0 add V_delta to Hamiltonian";
         read_sync_bool(input.deepks_scf);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.deepks_out_unittest)
+            {
+                para.input.deepks_scf = true;
+            }
+        };
         this->add_item(item);
     }
     {
@@ -49,14 +61,6 @@ void ReadInput::item_deepks()
         item.annotation = "if set 1, prints intermediate quantities that shall "
                           "be used for making unit test";
         read_sync_bool(input.deepks_out_unittest);
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.deepks_out_unittest)
-            {
-                para.input.deepks_out_labels = true;
-                para.input.deepks_scf = true;
-
-            }
-        };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.deepks_out_unittest){
                 // should be add when

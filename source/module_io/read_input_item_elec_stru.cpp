@@ -278,6 +278,11 @@ void ReadInput::item_elec_stru()
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "nspin should be 1, 2 or 4.");
             }
+            if (para.input.nspin ==4 && para.sys.gamma_only_local)
+            {
+                printf("nspin = 4 and gamma_only_local is not supported\n");
+                ModuleBase::WARNING_QUIT("ReadInput", "nspin=4 is not supported in gamma_only mode.");
+            }
         };
         this->add_item(item);
     }

@@ -23,6 +23,7 @@ extern double relax_bfgs_init;  // initial value of trust radius,
 extern double best_xxx;         // the last step length of cg , we use it as  bfgs`s initial step length
 
 extern int out_stru; // output the structure or not
+extern std::string relax_method; // the method of relaxation, bfgs or cg or sd or cg_bfgs
 // funny way to pass this parameter, but nevertheless
 
 //----------------------------------------------------------------------------

@@ -1,6 +1,5 @@
 #include "module_base/tool_quit.h"
 #include "module_base/tool_title.h"
-#include "module_parameter/parameter.h"
 #include "paw_cell.h"
 #include "module_base/global_variable.h"
 #include "module_base/parallel_common.h"
@@ -224,7 +223,7 @@ void Paw_Cell::set_libpaw_files()
     filename_list = new char[ntypat*264];
     if(GlobalV::MY_RANK == 0)
     {
-        std::ifstream ifa(PARAM.inp.stru_file.c_str(), std::ios::in);
+        std::ifstream ifa(GlobalV::stru_file.c_str(), std::ios::in);
         if (!ifa)
         {
             ModuleBase::WARNING_QUIT("set_libpaw_files", "can not open stru file");

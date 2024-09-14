@@ -32,7 +32,6 @@ std::string KS_SOLVER = "cg";  // xiaohui add 2013-09-01
 double SEARCH_RADIUS = -1.0;
 
 int PW_DIAG_NDIM = 4;
-double PW_DIAG_THR = 1.0e-2;
 int NB2D = 1;
 
 
@@ -40,7 +39,6 @@ double DQ = 0.010; // space between Q points of the reciprocal radial tab
 int NQX = 10000;   // number of points describing reciprocal radial tab
 int NQXQ = 10000;  // number of points describing reciprocal radial tab for Q
 
-bool GAMMA_ONLY_PW = false;    // mohan add 2012-06-05
 
 int ZEEMAN_IN_H = 1;
 
@@ -70,6 +68,7 @@ int GSIZE = DSIZE;
 //----------------------------------------------------------
 // EXPLAIN : The input file name and directory
 //----------------------------------------------------------
+
 std::string stru_file = "STRU";
 
 
@@ -83,11 +82,9 @@ std::ofstream ofs_device; // output device info
 //----------------------------------------------------------
 
 // added by zhengdy-soc
-bool NONCOLIN = false;
 bool LSPINORB = false;
 bool DOMAG = false;
 bool DOMAG_Z = false;
-int NPOL = 1;
 
 std::vector<std::string> rpa_orbitals;
 

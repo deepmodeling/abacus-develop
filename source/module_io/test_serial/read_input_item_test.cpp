@@ -20,9 +20,14 @@
 #include "module_io/read_input.h"
 #undef private
 
+
+
+
 class InputTest : public testing::Test
-{
+{  
   protected:
+
+
     std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator find_label(
         const std::string& label,
         std::vector<std::pair<std::string, ModuleIO::Input_Item>>& input_lists)
@@ -40,9 +45,7 @@ TEST_F(InputTest, Item_test)
     ModuleIO::ReadInput readinput(0);
     readinput.check_ntype_flag = false;
     Parameter param;
-
     std::string output = "";
-
     { // calculation
         auto it = find_label("calculation", readinput.input_lists);
         param.input.calculation = "get_pchg";
@@ -86,12 +89,18 @@ TEST_F(InputTest, Item_test)
         param.input.noncolin = true;
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.nspin, 4);
-
         param.input.nspin = 3;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(0), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+
+        param.sys.gamma_only_local = true;
+        param.input.nspin = 4;
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(0), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("gamma_only"));
     }
     { // kspacing
         auto it = find_label("kspacing", readinput.input_lists);
@@ -498,6 +507,12 @@ TEST_F(InputTest, Item_test)
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
+}
+TEST_F(InputTest, check_value1) {
+    ModuleIO::ReadInput readinput(0);
+    readinput.check_ntype_flag = false;
+    Parameter param;
+    std::string output = "";
     { // ndz
         auto it = find_label("ndz", readinput.input_lists);
         param.input.ndz = 2;
@@ -546,7 +561,9 @@ TEST_F(InputTest, Item_test)
         EXPECT_EQ(param.input.ks_solver, "genelpa");
 #else
 #ifdef __MPI
+#ifdef __MPI
         param.input.towannier90 = true;
+        param.input.basis_type = "lcao_in_pw";
         param.input.basis_type = "lcao_in_pw";
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.ks_solver, "scalapack_gvx");
@@ -811,6 +828,8 @@ TEST_F(InputTest, Item_test)
         auto it = find_label("gamma_only", readinput.input_lists);
         param.input.basis_type = "pw";
         param.input.gamma_only = true;
+        param.input.nspin = 2;
+        testing::internal::CaptureStdout();
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.gamma_only, false);
     }
@@ -979,16 +998,18 @@ TEST_F(InputTest, Item_test2)
         param.input.nspin = 2;
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.mixing_beta, 0.4);
-        EXPECT_EQ(param.input.mixing_beta_mag, 1.6);
-        EXPECT_EQ(param.input.mixing_gg0_mag, 0.0);
 
         param.input.mixing_beta = -1;
         param.input.nspin = 4;
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.mixing_beta, 0.4);
-        EXPECT_EQ(param.input.mixing_beta_mag, 1.6);
-        EXPECT_EQ(param.input.mixing_gg0_mag, 0.0);
     }
+}
+TEST_F(InputTest, check_value2) {
+    ModuleIO::ReadInput readinput(0);
+    readinput.check_ntype_flag = false;
+    Parameter param;
+    std::string output = "";
     { // mixing_beta_mag
         auto it = find_label("mixing_beta_mag", readinput.input_lists);
         param.input.mixing_beta = 0.3;
@@ -1520,6 +1541,12 @@ TEST_F(InputTest, Item_test2)
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
+}
+TEST_F(InputTest, check_value3) {
+    ModuleIO::ReadInput readinput(0);
+    readinput.check_ntype_flag = false;
+    Parameter param;
+    std::string output = "";
     { // sc_scf_nmin
         auto it = find_label("sc_scf_nmin", readinput.input_lists);
         param.input.sc_scf_nmin = 1;

@@ -167,7 +167,7 @@ void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<double, double
                 const int ibt1 = ucell.itia2iat(T1,I1);
                 const ModuleBase::Vector3<double> tau1 = GridD.getAdjacentTau(ad1);
 				const Atom* atom1 = &ucell.atoms[T1];
-				const int nw1_tot = atom1->nw*GlobalV::NPOL;
+				const int nw1_tot = atom1->nw*PARAM.globalv.npol;
 				const double Rcut_AO1 = orb.Phi[T1].getRcut(); 
                 const double dist1 = (tau1-tau0).norm() * ucell.lat0;
                 if (dist1 >= Rcut_Alpha + Rcut_AO1)
@@ -200,7 +200,7 @@ void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<double, double
                     const int ibt2 = ucell.itia2iat(T2,I2);
 					const ModuleBase::Vector3<double> tau2 = GridD.getAdjacentTau(ad2);
 					const Atom* atom2 = &ucell.atoms[T2];
-					const int nw2_tot = atom2->nw*GlobalV::NPOL;
+					const int nw2_tot = atom2->nw*PARAM.globalv.npol;
 					
 					const double Rcut_AO2 = orb.Phi[T2].getRcut();
                 	const double dist2 = (tau2-tau0).norm() * ucell.lat0;
@@ -417,7 +417,7 @@ void LCAO_Deepks::cal_projected_DM_k(const elecstate::DensityMatrix<std::complex
                 const int start1 = ucell.itiaiw2iwt(T1, I1, 0);
                 const ModuleBase::Vector3<double> tau1 = GridD.getAdjacentTau(ad1);
 				const Atom* atom1 = &ucell.atoms[T1];
-				const int nw1_tot = atom1->nw*GlobalV::NPOL;
+				const int nw1_tot = atom1->nw*PARAM.globalv.npol;
 				const double Rcut_AO1 = orb.Phi[T1].getRcut();
                 const double dist1 = (tau1-tau0).norm() * ucell.lat0;
                 if (dist1 >= Rcut_Alpha + Rcut_AO1)
@@ -453,7 +453,7 @@ void LCAO_Deepks::cal_projected_DM_k(const elecstate::DensityMatrix<std::complex
                     const int ibt2 = ucell.itia2iat(T2,I2);
 					const ModuleBase::Vector3<double> tau2 = GridD.getAdjacentTau(ad2);
 					const Atom* atom2 = &ucell.atoms[T2];
-					const int nw2_tot = atom2->nw*GlobalV::NPOL;
+					const int nw2_tot = atom2->nw*PARAM.globalv.npol;
                     ModuleBase::Vector3<double> dR2(GridD.getBox(ad2).x, GridD.getBox(ad2).y, GridD.getBox(ad2).z);
 					
 					const double Rcut_AO2 = orb.Phi[T2].getRcut();

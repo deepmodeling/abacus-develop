@@ -1,5 +1,6 @@
 #include "sto_stress_pw.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
@@ -274,7 +275,7 @@ void Sto_Stress_PW::sto_stress_nl(ModuleBase::matrix& sigma,
         psi_in[0].fix_k(ik);
         stowf.shchi->fix_k(ik);
         // KS orbitals
-        int npmks = GlobalV::NPOL * nksbands;
+        int npmks = PARAM.globalv.npol * nksbands;
         zgemm_(&transa,
                &transb,
                &nkb,
@@ -289,7 +290,7 @@ void Sto_Stress_PW::sto_stress_nl(ModuleBase::matrix& sigma,
                becp.c,
                &nkb);
         // stochastic orbitals
-        int npmsto = GlobalV::NPOL * nstobands;
+        int npmsto = PARAM.globalv.npol * nstobands;
         zgemm_(&transa,
                &transb,
                &nkb,

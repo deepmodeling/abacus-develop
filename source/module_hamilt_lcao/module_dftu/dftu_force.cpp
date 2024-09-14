@@ -20,8 +20,8 @@
 #include <iomanip>
 #include <iostream>
 #include <sstream>
-#include <stdio.h>
-#include <string.h>
+#include <cstdio>
+#include <cstring>
 
 extern "C"
 {
@@ -228,8 +228,9 @@ void DFTU::force_stress(const elecstate::ElecState* pelec,
         {
             for (int j = 0; j < 3; j++)
             {
-                if (i > j)
+                if (i > j) {
                     stress_dftu(i, j) = stress_dftu(j, i);
+}
             }
         }
 
@@ -301,8 +302,9 @@ void DFTU::cal_force_k(ForceStressArrays& fsr,
                 const int iwt2 = pv.local2global_col(ic);
                 const int irc = ic * pv.nrow + ir;
 
-                if (iwt1 == iwt2)
+                if (iwt1 == iwt2) {
                     force_dftu(iat1, dim) += dm_VU_dSm[irc].real();
+}
 
             } // end ic
         }     // end ir
@@ -334,32 +336,36 @@ void DFTU::cal_force_k(ForceStressArrays& fsr,
             const int NL = GlobalC::ucell.atoms[it].nwl + 1;
             const int LC = orbital_corr[it];
 
-            if (LC == -1)
+            if (LC == -1) {
                 continue;
+}
             for (int ia = 0; ia < GlobalC::ucell.atoms[it].na; ia++)
             {
                 const int iat = GlobalC::ucell.itia2iat(it, ia);
 
                 for (int l = 0; l < NL; l++)
                 {
-                    if (l != orbital_corr[it])
+                    if (l != orbital_corr[it]) {
                         continue;
+}
                     const int N = GlobalC::ucell.atoms[it].l_nchi[l];
 
                     for (int n = 0; n < N; n++)
                     {
-                        if (n != 0)
+                        if (n != 0) {
                             continue;
+}
 
                         for (int m = 0; m < 2 * l + 1; m++)
                         {
-                            for (int ipol = 0; ipol < GlobalV::NPOL; ipol++)
+                            for (int ipol = 0; ipol < PARAM.globalv.npol; ipol++)
                             {
                                 const int iwt = this->iatlnmipol2iwt[iat][l][n][m][ipol];
                                 const int mu = pv.global2local_row(iwt);
                                 const int nu = pv.global2local_col(iwt);
-                                if (mu < 0 || nu < 0)
+                                if (mu < 0 || nu < 0) {
                                     continue;
+}
 
                                 force_dftu(iat, dim) += dm_VU_dSm[nu * pv.nrow + mu].real();
                             }
@@ -437,8 +443,9 @@ void DFTU::cal_stress_k(ForceStressArrays& fsr,
                     const int iwt2 = pv.local2global_col(ic);
                     const int irc = ic * pv.nrow + ir;
 
-                    if (iwt1 == iwt2)
+                    if (iwt1 == iwt2) {
                         stress_dftu(dim1, dim2) += 2.0 * dm_VU_sover[irc].real();
+}
                 } // end ic
             }     // end ir
 
@@ -512,8 +519,9 @@ void DFTU::cal_force_gamma(const double* rho_VU,
                 const int iwt2 = pv.local2global_col(ic);
                 const int irc = ic * pv.nrow + ir;
 
-                if (iwt1 == iwt2)
+                if (iwt1 == iwt2) {
                     force_dftu(iat1, dim) += dm_VU_dSm[irc];
+}
 
             } // end ic
         }     // end ir
@@ -545,34 +553,38 @@ void DFTU::cal_force_gamma(const double* rho_VU,
             const int NL = GlobalC::ucell.atoms[it].nwl + 1;
             const int LC = orbital_corr[it];
 
-            if (LC == -1)
+            if (LC == -1) {
                 continue;
+}
             for (int ia = 0; ia < GlobalC::ucell.atoms[it].na; ia++)
             {
                 const int iat = GlobalC::ucell.itia2iat(it, ia);
 
                 for (int l = 0; l < NL; l++)
                 {
-                    if (l != orbital_corr[it])
+                    if (l != orbital_corr[it]) {
                         continue;
+}
 
                     const int N = GlobalC::ucell.atoms[it].l_nchi[l];
 
                     for (int n = 0; n < N; n++)
                     {
-                        if (n != 0)
+                        if (n != 0) {
                             continue;
+}
 
                         // Calculate the local occupation number matrix
                         for (int m = 0; m < 2 * l + 1; m++)
                         {
-                            for (int ipol = 0; ipol < GlobalV::NPOL; ipol++)
+                            for (int ipol = 0; ipol < PARAM.globalv.npol; ipol++)
                             {
                                 const int iwt = this->iatlnmipol2iwt[iat][l][n][m][ipol];
                                 const int mu = pv.global2local_row(iwt);
                                 const int nu = pv.global2local_col(iwt);
-                                if (mu < 0 || nu < 0)
+                                if (mu < 0 || nu < 0) {
                                     continue;
+}
 
                                 force_dftu(iat, dim) += dm_VU_dSm[nu * pv.nrow + mu];
                             }
@@ -649,8 +661,9 @@ void DFTU::cal_stress_gamma(const UnitCell& ucell,
                     const int iwt2 = this->paraV->local2global_col(ic);
                     const int irc = ic * this->paraV->nrow + ir;
 
-                    if (iwt1 == iwt2)
+                    if (iwt1 == iwt2) {
                         stress_dftu(dim1, dim2) += 2.0 * dm_VU_sover[irc];
+}
                 } // end ic
             }     // end ir
 
