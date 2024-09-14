@@ -828,7 +828,6 @@ TEST_F(InputTest, check_value1) {
         param.input.basis_type = "pw";
         param.input.gamma_only = true;
         param.input.nspin = 2;
-        testing::internal::CaptureStdout();
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.gamma_only, false);
     }
