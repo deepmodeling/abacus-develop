@@ -561,7 +561,6 @@ TEST_F(InputTest, check_value1) {
         EXPECT_EQ(param.input.ks_solver, "genelpa");
 #else
 #ifdef __MPI
-#ifdef __MPI
         param.input.towannier90 = true;
         param.input.basis_type = "lcao_in_pw";
         param.input.basis_type = "lcao_in_pw";
