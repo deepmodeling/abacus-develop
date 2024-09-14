@@ -36,7 +36,6 @@ struct System_para
     std::string global_readin_dir = "";     ///< global readin directory
     std::string global_stru_dir = "";       ///< global structure directory
     std::string global_matrix_dir = "";     ///< global matrix directory
-    std::string global_in_card = "INPUT";   ///< global input file name
     
     bool deepks_setorb = false;             ///< true if "deepks" is set
     
