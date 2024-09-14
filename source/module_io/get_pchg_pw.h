@@ -185,7 +185,6 @@ void get_pchg_pw(const std::vector<int>& bands_to_print,
                            ngmc,
                            nullptr,
                            pw_rhod,
-                           Pgrid,
                            ucell->symm);
             }
 

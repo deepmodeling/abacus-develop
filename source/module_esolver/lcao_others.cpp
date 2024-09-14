@@ -89,7 +89,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
 
     this->beforesolver(istep);
     // pelec should be initialized before these calculations
-    this->pelec->init_scf(istep, this->sf.strucFac);
+    this->pelec->init_scf(istep, this->sf.strucFac, GlobalC::ucell.symm);
     // self consistent calculations for electronic ground state
     if (PARAM.inp.calculation == "nscf")
     {

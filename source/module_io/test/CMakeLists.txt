@@ -170,6 +170,19 @@ add_test(NAME read_wfc_pw_test_parallel
 )
 
 AddTest(
+  TARGET read_wfc_to_rho_test
+  LIBS parameter base ${math_libs} device planewave psi
+  SOURCES read_wfc_to_rho_test.cpp ../read_wfc_pw.cpp ../read_wfc_to_rho.cpp ../binstream.cpp ../../module_basis/module_pw/test/test_tool.cpp
+   ../../module_elecstate/module_charge/charge_mpi.cpp ../write_wfc_pw.cpp
+)
+
+add_test(NAME read_wfc_to_rho_parallel
+      COMMAND mpirun -np 4 ./read_wfc_to_rho_test
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+
+AddTest(
   TARGET numerical_basis_test
   LIBS parameter base ${math_libs} device numerical_atomic_orbitals container orb 
   SOURCES numerical_basis_test.cpp ../numerical_basis_jyjy.cpp ../../module_hamilt_lcao/hamilt_lcaodft/center2_orb.cpp
