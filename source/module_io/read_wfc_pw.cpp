@@ -8,7 +8,7 @@
 #include "module_base/timer.h"
 #include "module_base/vector3.h"
 
-bool ModuleIO::read_wfc_pw(const std::string& filename,
+void ModuleIO::read_wfc_pw(const std::string& filename,
                            const ModulePW::PW_Basis_K* pw_wfc,
                            const int& ik,
                            const int& nkstot,
@@ -16,6 +16,43 @@ bool ModuleIO::read_wfc_pw(const std::string& filename,
 {
     ModuleBase::TITLE("ModuleIO", "read_wfc_pw");
     ModuleBase::timer::tick("ModuleIO", "read_wfc_pw");
+
+    Binstream rfs;
+    std::ifstream ifs;
+    bool error = false;
+    int size = 0;
+    std::string msg = "";
+    std::string filetype = filename.substr(filename.length() - 3, 3);
+
+    // whether can open the file
+    if (filetype == "txt")
+    {
+        ifs.open(filename);
+        if (!ifs)
+        {
+            error = true;
+            msg = "Can't open file " + filename;
+        }
+    }
+    else if (filetype == "dat")
+    {
+        rfs.open(filename, "r");
+        if (!rfs)
+        {
+            error = true;
+            msg = "Can't open file " + filename;
+        }
+    }
+    else
+    {
+        error = true;
+        msg = "Unknown file type " + filetype;
+    }
+
+    if (error)
+    {
+        ModuleBase::WARNING_QUIT("ModuleIO::read_wfc_pw", msg);
+    }
 
     const int nx = pw_wfc->nx;
     const int ny = pw_wfc->ny;
@@ -46,68 +83,7 @@ bool ModuleIO::read_wfc_pw(const std::string& filename,
 
     npwtot *= GlobalV::NPOL;
 
-    Binstream rfs;
-    std::ifstream ifs;
-    bool error = false;
-    int size = 0;
-    std::string msg = "";
-    std::string filetype = filename.substr(filename.length() - 3, 3);
-
-    // whether can open the file
-    if (GlobalV::RANK_IN_POOL == 0)
-    {
-        if (filetype == "txt")
-        {
-            ifs.open(filename);
-            if (!ifs)
-            {
-                error = true;
-                msg = "Can't open file " + filename;
-            }
-        }
-        else if (filetype == "dat")
-        {
-            rfs.open(filename, "r");
-            if (!rfs)
-            {
-                error = true;
-                msg = "Can't open file " + filename;
-            }
-        }
-        else
-        {
-            error = true;
-            msg = "Unknown file type " + filetype;
-        }
-    }
-
-#ifdef __MPI
-    // bcast msg to root process
-    int ip = 0;
-    if (error)
-    {
-        ip = GlobalV::MY_RANK;
-        size = msg.size();
-    }
-    MPI_Allreduce(MPI_IN_PLACE, &ip, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
-    MPI_Bcast(&size, 1, MPI_INT, ip, MPI_COMM_WORLD);
-    std::vector<char> swap(size + 1);
-    if (error)
-    {
-        strcpy(swap.data(), msg.c_str());
-    }
-    MPI_Bcast(swap.data(), size + 1, MPI_CHAR, ip, MPI_COMM_WORLD);
-    msg = static_cast<std::string>(swap.data());
-
-
-    MPI_Bcast(&error, 1, MPI_C_BOOL, ip, MPI_COMM_WORLD);
-#endif
-
-    if (error)
-    {
-        ModuleBase::WARNING("ModuleIO::read_wfc_pw", msg);
-        return false;
-    }
+    
 
     // read in some information
     int ikstot_in, nkstot_in, npwtot_in, nbands_in;
@@ -361,5 +337,5 @@ bool ModuleIO::read_wfc_pw(const std::string& filename,
     }
 
     ModuleBase::timer::tick("ModuleIO", "read_wfc_pw");
-    return true;
+    return;
 }

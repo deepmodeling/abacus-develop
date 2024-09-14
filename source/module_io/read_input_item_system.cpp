@@ -81,7 +81,8 @@ void ReadInput::item_system()
                                                 "gen_bessel"};
             if (!find_str(callist, calculation))
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "check 'calculation' !");
+                const std::string warningstr = nofound_str(callist, "calculation");
+                ModuleBase::WARNING_QUIT("ReadInput", warningstr);
             }
             if (calculation == "get_pchg" || calculation == "get_wf")
             {
@@ -111,9 +112,8 @@ void ReadInput::item_system()
             const std::vector<std::string> esolver_types = { "ksdft", "sdft", "ofdft", "tddft", "lj", "dp", "lr", "ks-lr" };
             if (!find_str(esolver_types, para.input.esolver_type))
             {
-                ModuleBase::WARNING_QUIT("ReadInput",
-                                         "esolver_type should be ksdft, sdft, "
-                                         "ofdft, tddft, lr, ks-lr, lj or dp.");
+                const std::string warningstr = nofound_str(esolver_types, "esolver_type");
+                ModuleBase::WARNING_QUIT("ReadInput", warningstr);
             }
             if (para.input.esolver_type == "dp")
             {
@@ -516,9 +516,11 @@ void ReadInput::item_system()
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.init_chg != "atomic" && para.input.init_chg != "file" && para.input.init_chg != "auto")
+            const std::vector<std::string> init_chgs = {"atomic", "file", "wfc", "auto"};
+            if (!find_str(init_chgs, para.input.init_chg))
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "init_chg should be 'atomic', 'file' or 'auto'");
+                const std::string warningstr = nofound_str(init_chgs, "init_chg");
+                ModuleBase::WARNING_QUIT("ReadInput", warningstr);
             }
         };
         this->add_item(item);

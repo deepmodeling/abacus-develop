@@ -483,9 +483,35 @@ void ReadInput::add_item(const Input_Item& item)
         this->input_lists.push_back(make_pair(item.label, item));
     }
 }
+
 bool find_str(const std::vector<std::string>& strings, const std::string& strToFind)
 {
     auto it = std::find(strings.begin(), strings.end(), strToFind);
     return it != strings.end();
-};
+}
+
+std::string nofound_str(std::vector<std::string> init_chgs, const std::string& str)
+{
+    std::string warningstr = "The parameter ";
+    warningstr.append(str);
+    warningstr.append(" must be ");
+    for(int i = 0; i < init_chgs.size(); i++)
+    {
+        warningstr.append("'");
+        warningstr.append(init_chgs[i]);
+        warningstr.append("'");
+        if(i < init_chgs.size() - 2)
+        {
+            warningstr.append(", ");
+        }
+        else if(i == init_chgs.size() - 2)
+        {
+            warningstr.append(" or ");
+        }
+    }
+    warningstr.append("!");
+
+    return warningstr;
+}
+
 } // namespace ModuleIO

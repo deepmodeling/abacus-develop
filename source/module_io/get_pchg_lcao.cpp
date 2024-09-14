@@ -328,7 +328,6 @@ void IState_Charge::begin(Gint_k& gk,
                                ngmc,
                                nullptr,
                                rho_pw,
-                               *Pgrid,
                                ucell_in->symm);
                 }
 
