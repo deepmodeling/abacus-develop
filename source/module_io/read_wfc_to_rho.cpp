@@ -4,6 +4,7 @@
 #include "module_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_elecstate/module_charge/symmetry_rho.h"
+#include "module_parameter/parameter.h"
 
 void ModuleIO::read_wfc_to_rho(const ModulePW::PW_Basis_K* pw_wfc,
                                ModuleSymmetry::Symmetry& symm,
@@ -34,7 +35,7 @@ void ModuleIO::read_wfc_to_rho(const ModulePW::PW_Basis_K* pw_wfc,
     ModuleBase::matrix wg_tmp(nkstot, nbands);
     if (my_rank == 0)
     {
-        std::string filename = GlobalV::global_readin_dir + "istate.info";
+        std::string filename = PARAM.globalv.global_readin_dir + "istate.info";
         std::ifstream ifs(filename);
         std::string useless;
         for (int ik_tot = 0; ik_tot < nkstot; ++ik_tot)
@@ -75,7 +76,7 @@ void ModuleIO::read_wfc_to_rho(const ModulePW::PW_Basis_K* pw_wfc,
         }
         const int ikstot = get_ikstot(ik);
         std::stringstream filename;
-        filename << GlobalV::global_readin_dir << "WAVEFUNC" << ikstot + 1 << ".dat";
+        filename << PARAM.globalv.global_readin_dir << "WAVEFUNC" << ikstot + 1 << ".dat";
         ModuleIO::read_wfc_pw(filename.str(), pw_wfc, ik, nkstot, wfc_tmp);
         for (int ib = 0; ib < nbands; ++ib)
         {
