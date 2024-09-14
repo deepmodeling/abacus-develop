@@ -38,11 +38,33 @@ class TestHSolverPW : public ::testing::Test {
     hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_CPU> hs_f
         = hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_CPU>(&pwbk,
                                                                            nullptr,
-                                                                           false);
+                                                                           
+                                                                           "scf",
+                                                                           "pw",
+                                                                           "cg",
+                                                                           false,
+                                                                           GlobalV::use_uspp,
+                                                                           GlobalV::NSPIN,
+                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::SCF_ITER,
+                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_NMAX,
+                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_THR,
+                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::need_subspace,
+                     false);
     hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU> hs_d
         = hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU>(&pwbk,
                                                                             nullptr,
-                                                                            false);
+
+                                                                            "scf",
+                                                                            "pw",
+                                                                            "cg",
+                                                                            false,
+                                                                            GlobalV::use_uspp,
+                                                                            GlobalV::NSPIN,
+                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::SCF_ITER,
+                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_NMAX,
+                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_THR,
+                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::need_subspace,
+                     false);
 
     hamilt::Hamilt<std::complex<double>> hamilt_test_d;
     hamilt::Hamilt<std::complex<float>> hamilt_test_f;
@@ -78,18 +100,9 @@ TEST_F(TestHSolverPW, solve) {
                      &elecstate_test,
                      elecstate_test.ekb.c,
                      is_occupied,
-                     method_test,
-                     "scf",
-                     "pw",
-                     false,
-                     GlobalV::use_uspp,
+
                      GlobalV::RANK_IN_POOL,
                      GlobalV::NPROC_IN_POOL,
-
-                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::SCF_ITER,
-                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::need_subspace,
-                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_NMAX,
-                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_THR,
 
                      true);
     // EXPECT_EQ(this->hs_f.initialed_psi, true);
@@ -106,18 +119,9 @@ TEST_F(TestHSolverPW, solve) {
                      &elecstate_test,
                      elecstate_test.ekb.c,
                      is_occupied,
-                     method_test,
-                     "scf",
-                     "pw",
-                     false,
-                     GlobalV::use_uspp,
+                     
                      GlobalV::RANK_IN_POOL,
                      GlobalV::NPROC_IN_POOL,
-
-                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::SCF_ITER,
-                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::need_subspace,
-                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_NMAX,
-                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_THR,
 
                      true);
   
@@ -129,17 +133,6 @@ TEST_F(TestHSolverPW, solve) {
     }
     EXPECT_DOUBLE_EQ(elecstate_test.ekb.c[0], 4.0);
     EXPECT_DOUBLE_EQ(elecstate_test.ekb.c[1], 7.0);
-
-    // check initDiagh()
-    this->hs_f.method = "dav";
-    this->hs_d.method = "dav";
-    this->hs_f.initialed_psi = false;
-    this->hs_d.initialed_psi = false;
-    // this->hs_f.initDiagh(psi_test_cf);
-    // this->hs_d.initDiagh(psi_test_cd);
-    // will not change state of initialed_psi in initDiagh
-    EXPECT_EQ(this->hs_f.initialed_psi, false);
-    EXPECT_EQ(this->hs_d.initialed_psi, false);
 
     // // check hamiltSolvePsiK()
     // this->hs_f.hamiltSolvePsiK(&hamilt_test_f, psi_test_cf, this->hs_f.precondition, ekb_f.data());

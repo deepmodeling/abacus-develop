@@ -41,6 +41,7 @@ void ModuleIO::write_istate_info(const ModuleBase::matrix &ekb,const ModuleBase:
                           << " " << kv.kvec_d[ik].z << ")" << std::endl;
                     for (int ib = 0; ib < GlobalV::NBANDS; ib++)
                     {
+                        ofsi2.precision(16);
                         ofsi2 << std::setw(6) << ib + 1 << std::setw(25)
                               << ekb(ik, ib) * ModuleBase::Ry_to_eV << std::setw(25) << wg(ik, ib)
                               << std::endl;

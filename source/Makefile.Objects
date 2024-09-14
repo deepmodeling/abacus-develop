@@ -480,6 +480,7 @@ OBJS_IO=input_conv.o\
     rhog_io.o\
     read_exit_file.o\
     read_wfc_pw.o\
+    read_wfc_to_rho.o\
     restart.o\
     binstream.o\
     to_wannier90.o\

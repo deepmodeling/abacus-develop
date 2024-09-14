@@ -97,8 +97,9 @@ void EleCond::jjresponse_ks(const int ik, const int nt, const double dt, const d
                             hamilt::Velocity& velop, double* ct11, double* ct12, double* ct22)
 {
     const int nbands = GlobalV::NBANDS;
-    if (wg(ik, 0) - wg(ik, nbands - 1) < 1e-8 || nbands == 0)
+    if (wg(ik, 0) - wg(ik, nbands - 1) < 1e-8 || nbands == 0) {
         return;
+}
     const char transn = 'N';
     const char transc = 'C';
     const int ndim = 3;
@@ -121,7 +122,7 @@ void EleCond::jjresponse_ks(const int ik, const int nt, const double dt, const d
 #ifdef __MPI
         MPI_Allreduce(MPI_IN_PLACE, pij.data(), nbands * nbands, MPI_DOUBLE_COMPLEX, MPI_SUM, POOL_WORLD);
 #endif
-        if (!gamma_only)
+        if (!gamma_only) {
             for (int ib = 0, ijb = 0; ib < nbands; ++ib)
             {
                 for (int jb = ib + 1; jb < nbands; ++jb, ++ijb)
@@ -129,12 +130,13 @@ void EleCond::jjresponse_ks(const int ik, const int nt, const double dt, const d
                     pij2[ijb] += norm(pij[ib * nbands + jb]);
                 }
             }
+}
     }
 
     if (GlobalV::RANK_IN_POOL == 0)
     {
         int nkstot = this->p_kv->get_nkstot();
-        int ikglobal = this->p_kv->getik_global(ik);
+        int ikglobal = K_Vectors::get_ik_global(ik, nkstot);
         std::stringstream ss;
         ss << GlobalV::global_out_dir << "vmatrix" << ikglobal + 1 << ".dat";
         Binstream binpij(ss.str(), "w");
@@ -168,8 +170,9 @@ void EleCond::jjresponse_ks(const int ik, const int nt, const double dt, const d
             for (int jb = ib + 1; jb < nbands; ++jb, ++ijb)
             {
                 double ej = enb[jb];
-                if (ej - ei > decut)
+                if (ej - ei > decut) {
                     continue;
+}
                 double fj = wg(ik, jb);
                 double tmct = sin((ej - ei) * (it)*dt) * (fi - fj) * pij2[ijb];
                 tmct11 += tmct;

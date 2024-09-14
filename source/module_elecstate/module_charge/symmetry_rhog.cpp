@@ -4,7 +4,7 @@
 #include "module_hamilt_general/module_xc/xc_functional.h"
 
 
-void Symmetry_rho::psymmg(std::complex<double>* rhog_part, const ModulePW::PW_Basis *rho_basis, Parallel_Grid &Pgrid, ModuleSymmetry::Symmetry &symm) const
+void Symmetry_rho::psymmg(std::complex<double>* rhog_part, const ModulePW::PW_Basis *rho_basis, ModuleSymmetry::Symmetry &symm) const
 {		
 	//(1) get fftixy2is and do Allreduce
 	int * fftixy2is = new int [rho_basis->fftnxy];

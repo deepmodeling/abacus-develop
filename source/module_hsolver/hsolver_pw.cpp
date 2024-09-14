@@ -209,53 +209,20 @@ void HSolverPW<T, Device>::paw_func_after_kloop(psi::Psi<T, Device>& psi, elecst
 #endif
 
 template <typename T, typename Device>
-HSolverPW<T, Device>::HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in,
-                                wavefunc* pwf_in,
-                                const bool initialed_psi_in)
-{
-    this->wfc_basis = wfc_basis_in;
-    this->pwf = pwf_in;
-
-    this->initialed_psi = initialed_psi_in;
-}
-
-template <typename T, typename Device>
 void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
                                  psi::Psi<T, Device>& psi,
                                  elecstate::ElecState* pes,
                                  double* out_eigenvalues,
                                  const std::vector<bool>& is_occupied_in,
-                                 const std::string method_in,
-                                 const std::string calculation_type_in,
-                                 const std::string basis_type_in,
-                                 const bool use_paw_in,
-                                 const bool use_uspp_in,
                                  const int rank_in_pool_in,
                                  const int nproc_in_pool_in,
-                                 const int scf_iter_in,
-                                 const bool need_subspace_in,
-                                 const int diag_iter_max_in,
-                                 const double iter_diag_thr_in,
                                  const bool skip_charge)
 {
     ModuleBase::TITLE("HSolverPW", "solve");
     ModuleBase::timer::tick("HSolverPW", "solve");
 
-    // select the method of diagonalization
-    this->method = method_in;
-    this->calculation_type = calculation_type_in;
-    this->basis_type = basis_type_in;
-
-    this->use_paw = use_paw_in;
-    this->use_uspp = use_uspp_in;
-
     this->rank_in_pool = rank_in_pool_in;
     this->nproc_in_pool = nproc_in_pool_in;
-
-    this->scf_iter = scf_iter_in;
-    this->need_subspace = need_subspace_in;
-    this->diag_iter_max = diag_iter_max_in;
-    this->iter_diag_thr = iter_diag_thr_in;
 
     // report if the specified diagonalization method is not supported
     const std::initializer_list<std::string> _methods = {"cg", "dav", "dav_subspace", "bpcg"};
@@ -295,7 +262,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
         {
             GlobalV::ofs_running << "Average iterative diagonalization steps for k-points " << ik
                                  << " is: " << DiagoIterAssist<T, Device>::avg_iter
-                                 << " ; where current threshold is: " << this->iter_diag_thr
+                                 << " ; where current threshold is: " << this->diag_thr
                                  << " . " << std::endl;
             DiagoIterAssist<T, Device>::avg_iter = 0.0;
         }
@@ -384,7 +351,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
                               this->calculation_type,
                               this->need_subspace,
                               subspace_func,
-                              this->iter_diag_thr,
+                              this->diag_thr,
                               this->diag_iter_max,
                               this->nproc_in_pool);
 
@@ -494,7 +461,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
                                                   psi.get_k_first() ? psi.get_current_nbas()
                                                                     : psi.get_nk() * psi.get_nbasis(),
                                                   GlobalV::PW_DIAG_NDIM,
-                                                  this->iter_diag_thr,
+                                                  this->diag_thr,
                                                   this->diag_iter_max,
                                                   this->need_subspace,
                                                   comm_info);
@@ -512,7 +479,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         /// allow 5 eigenvecs to be NOT converged.
         const int notconv_max = ("nscf" == this->calculation_type) ? 0 : 5;
         /// convergence threshold
-        const Real david_diag_thr = this->iter_diag_thr;
+        const Real david_diag_thr = this->diag_thr;
         /// maximum iterations
         const int david_maxiter = this->diag_iter_max;
 
@@ -615,7 +582,7 @@ void HSolverPW<T, Device>::update_precondition(std::vector<Real>& h_diag, const 
             }
         }
     }
-    if (GlobalV::NSPIN == 4)
+    if (this->nspin == 4)
     {
         const int size = h_diag.size();
         for (int ig = 0; ig < npw; ig++)
@@ -633,7 +600,7 @@ void HSolverPW<T, Device>::output_iterInfo()
     {
         GlobalV::ofs_running << "Average iterative diagonalization steps: "
                              << DiagoIterAssist<T, Device>::avg_iter / this->wfc_basis->nks
-                             << " ; where current threshold is: " << this->iter_diag_thr << " . "
+                             << " ; where current threshold is: " << this->diag_thr << " . "
                              << std::endl;
         // reset avg_iter
         DiagoIterAssist<T, Device>::avg_iter = 0.0;

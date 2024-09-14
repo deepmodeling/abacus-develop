@@ -218,7 +218,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
     }
 #endif // __EXX
 
-    this->pelec->init_scf(istep, this->sf.strucFac);
+    this->pelec->init_scf(istep, this->sf.strucFac, GlobalC::ucell.symm);
 
     //! output the initial charge density
     if (PARAM.inp.out_chg[0] == 2)
@@ -338,7 +338,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
     Symmetry_rho srho;
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
-        srho.begin(is, *(this->pelec->charge), this->pw_rho, GlobalC::Pgrid, GlobalC::ucell.symm);
+        srho.begin(is, *(this->pelec->charge), this->pw_rho, GlobalC::ucell.symm);
     }
 
     // 1. calculate ewald energy.
