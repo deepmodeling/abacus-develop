@@ -56,19 +56,6 @@ TEST_F(InputTest, Item_test)
         param.input.nspin = 2;
         readinput.set_globalv(param);
         EXPECT_EQ(param.sys.gamma_only_local, 0);
-        
-        param.input.basis_type = "pw";
-        param.input.device = "gpu";
-        readinput.set_globalv(param);
-        EXPECT_EQ(param.sys.device_flag, "gpu");
-
-        param.input.basis_type = "lcao_in_pw";
-        param.input.device = "gpu";
-        param.input.gamma_only = false;
-        testing::internal::CaptureStdout();
-        EXPECT_EXIT(readinput.set_globalv(param), ::testing::ExitedWithCode(0), "");
-        output = testing::internal::GetCapturedStdout();
-        EXPECT_THAT(output, testing::HasSubstr(""));
 
         param.input.nspin = 4;
         readinput.set_globalv(param);
@@ -86,5 +73,28 @@ TEST_F(InputTest, Item_test)
         param.input.deepks_out_labels = true;
         readinput.set_globalv(param);
         EXPECT_EQ(param.sys.deepks_setorb, 1);
+    }
+
+
+}
+TEST_F(InputTest, Item_test2)
+{
+        ModuleIO::ReadInput readinput(0);
+    Parameter param;
+    std::string output = "";
+    readinput.check_ntype_flag = false;
+
+    { 
+        param.input.device = "gpu";
+        param.input.basis_type = "lcao_in_pw";
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(readinput.set_globalv(param), ::testing::ExitedWithCode(0), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("not support"));
+
+        param.input.basis_type = "pw";
+        param.input.device = "gpu";
+        readinput.set_globalv(param);
+        EXPECT_EQ(param.sys.device_flag, "gpu");
     }
 }
