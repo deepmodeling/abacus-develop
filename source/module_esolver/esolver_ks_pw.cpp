@@ -219,7 +219,7 @@ void ESolver_KS_PW<T, Device>::before_scf(const int istep)
     }
 
     //! calculate the total local pseudopotential in real space
-    this->pelec->init_scf(istep, this->sf.strucFac);
+    this->pelec->init_scf(istep, this->sf.strucFac, GlobalC::ucell.symm, (void*)this->pw_wfc);
 
     //! output the initial charge density
     if (PARAM.inp.out_chg[0] == 2)
@@ -283,7 +283,7 @@ void ESolver_KS_PW<T, Device>::before_scf(const int istep)
     Symmetry_rho srho;
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
-        srho.begin(is, *(this->pelec->charge), this->pw_rhod, GlobalC::Pgrid, GlobalC::ucell.symm);
+        srho.begin(is, *(this->pelec->charge), this->pw_rhod, GlobalC::ucell.symm);
     }
 
     // liuyu move here 2023-10-09
@@ -348,6 +348,7 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, c
         // be careful that istep start from 0 and iter start from 1
         // if (iter == 1)
         hsolver::DiagoIterAssist<T, Device>::need_subspace = ((istep == 0 || istep == 1) && iter == 1) ? false : true;
+        
         hsolver::DiagoIterAssist<T, Device>::SCF_ITER = iter;
         hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR = ethr;
         hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX = PARAM.inp.pw_diag_nmax;
@@ -361,25 +362,30 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, c
                                    this->kspw_psi->get_nbands(),
                                    PARAM.inp.diago_full_acc);
         
-        hsolver::HSolverPW<T, Device> hsolver_pw_obj(this->pw_wfc, &this->wf, this->init_psi);
-        hsolver_pw_obj.solve(this->p_hamilt,         // hamilt::Hamilt<T, Device>* pHamilt,
-                           this->kspw_psi[0],        // psi::Psi<T, Device>& psi,
-                           this->pelec,               // elecstate::ElecState<T, Device>* pelec,
+        hsolver::HSolverPW<T, Device> hsolver_pw_obj(this->pw_wfc, 
+                                                     &this->wf, 
+                                                     
+                                                     PARAM.inp.calculation,
+                                                     PARAM.inp.basis_type,
+                                                     PARAM.inp.ks_solver,
+                                                     PARAM.inp.use_paw,
+                                                     GlobalV::use_uspp,
+                                                     GlobalV::NSPIN,
+                                                     
+                                                     hsolver::DiagoIterAssist<T, Device>::SCF_ITER,
+                                                     hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
+                                                     hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR,
+
+                                                     hsolver::DiagoIterAssist<T, Device>::need_subspace,
+                                                     this->init_psi);
+        
+        hsolver_pw_obj.solve(this->p_hamilt,
+                           this->kspw_psi[0],
+                           this->pelec,
                            this->pelec->ekb.c,
                            is_occupied,
-                           PARAM.inp.ks_solver,
-                           PARAM.inp.calculation,
-                           PARAM.inp.basis_type,
-                           PARAM.inp.use_paw,
-                           GlobalV::use_uspp,
                            GlobalV::RANK_IN_POOL,
                            GlobalV::NPROC_IN_POOL,
-
-                           hsolver::DiagoIterAssist<T, Device>::SCF_ITER,
-                           hsolver::DiagoIterAssist<T, Device>::need_subspace,
-                           hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
-                           hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR,
-
                            false);
       
         this->init_psi = true;
@@ -405,7 +411,7 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, c
     Symmetry_rho srho;
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
-        srho.begin(is, *(this->pelec->charge), this->pw_rhod, GlobalC::Pgrid, GlobalC::ucell.symm);
+        srho.begin(is, *(this->pelec->charge), this->pw_rhod, GlobalC::ucell.symm);
     }
 
     // compute magnetization, only for LSDA(spin==2)

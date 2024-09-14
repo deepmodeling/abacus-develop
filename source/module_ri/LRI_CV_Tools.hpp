@@ -245,11 +245,11 @@ LRI_CV_Tools::change_order(std::map<TkeyA,std::map<TkeyB,std::array<Tvalue,N>>> 
 
 template<typename Tcell>
 std::array<Tcell,3>
-LRI_CV_Tools::cal_latvec_range(const double &rcut_times)
+LRI_CV_Tools::cal_latvec_range(const double &rcut_times, const std::vector<double>& orb_cutoff)
 {
 	double Rcut_max = 0;
 	for(int T=0; T<GlobalC::ucell.ntype; ++T)
-		Rcut_max = std::max(Rcut_max, GlobalC::ORB.Phi[T].getRcut());
+		Rcut_max = std::max(Rcut_max, orb_cutoff[T]);
 	const ModuleBase::Vector3<double> proj = ModuleBase::Mathzone::latvec_projection(
 		std::array<ModuleBase::Vector3<double>,3>{GlobalC::ucell.a1, GlobalC::ucell.a2, GlobalC::ucell.a3});
 	const ModuleBase::Vector3<double> latvec_times = Rcut_max * rcut_times / (proj * GlobalC::ucell.lat0);

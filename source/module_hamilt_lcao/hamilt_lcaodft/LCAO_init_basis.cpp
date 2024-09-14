@@ -17,7 +17,9 @@ void init_basis_lcao(Parallel_Orbitals& pv,
         const double &lcao_dr,
         const double &lcao_rmax,
 		UnitCell& ucell,
-        TwoCenterBundle& two_center_bundle)
+        TwoCenterBundle& two_center_bundle,
+        LCAO_Orbitals& orb
+)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "init_basis_lcao");
 
@@ -49,11 +51,11 @@ void init_basis_lcao(Parallel_Orbitals& pv,
     // currently deepks only use one descriptor file, so cast bool to int is
     // fine
 
-    // TODO Due to the omnipresence of GlobalC::ORB, we still have to rely
+    // TODO Due to the omnipresence of LCAO_Orbitals, we still have to rely
     // on the old interface for now.
-    two_center_bundle.to_LCAO_Orbitals(GlobalC::ORB, lcao_ecut, lcao_dk, lcao_dr, lcao_rmax);
+    two_center_bundle.to_LCAO_Orbitals(orb, lcao_ecut, lcao_dk, lcao_dr, lcao_rmax);
 
-    ucell.infoNL.setupNonlocal(ucell.ntype, ucell.atoms, GlobalV::ofs_running, GlobalC::ORB);
+    ucell.infoNL.setupNonlocal(ucell.ntype, ucell.atoms, GlobalV::ofs_running, orb);
 
     two_center_bundle.build_beta(ucell.ntype, ucell.infoNL.Beta);
 

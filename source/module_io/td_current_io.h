@@ -16,6 +16,7 @@ void write_current(const int istep,
                    const K_Vectors& kv,
                    const TwoCenterIntegrator* intor,
                    const Parallel_Orbitals* pv,
+                   const LCAO_Orbitals& orb,
                    Record_adj& ra);
 
 /// @brief calculate sum_n[𝜌_(𝑛𝑘,𝜇𝜈)] for current calculation

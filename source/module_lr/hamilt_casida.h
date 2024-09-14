@@ -20,6 +20,7 @@ namespace LR
             const int& nocc,
             const int& nvirt,
             const UnitCell& ucell_in,
+            const std::vector<double>& orb_cutoff,
             Grid_Driver& gd_in,
             const psi::Psi<T>* psi_ks_in,
             const ModuleBase::matrix& eig_ks,
@@ -42,7 +43,7 @@ namespace LR
             this->ops = new OperatorLRDiag<T>(eig_ks, pX_in, nk, nocc, nvirt);
             //add Hxc operator
             OperatorLRHxc<T>* lr_hxc = new OperatorLRHxc<T>(nspin, naos, nocc, nvirt, psi_ks_in,
-                this->DM_trans, gint_in, pot_in, ucell_in, gd_in, kv_in, pX_in, pc_in, pmat_in);
+                this->DM_trans, gint_in, pot_in, ucell_in, orb_cutoff, gd_in, kv_in, pX_in, pc_in, pmat_in);
             this->ops->add(lr_hxc);
 #ifdef __EXX
             if (xc_kernel == "hf" || xc_kernel == "hse")

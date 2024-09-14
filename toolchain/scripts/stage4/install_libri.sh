@@ -11,8 +11,8 @@
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 # libri 0.2.0 need to be used in newer ABACUS
-libri_ver="0.2.0"
-libri_sha256="ad79dfbc3ed8ff066c85549a2737d29205dbf755b38ea216ab2ab42754f80389"
+libri_ver="0.2.1.0"
+libri_sha256="66a5540daba36effdad6ce2fe5e8368b96ddd4a7e148af90894ef21dc20ff29f"
 source "${SCRIPT_DIR}"/common_vars.sh
 source "${SCRIPT_DIR}"/tool_kit.sh
 source "${SCRIPT_DIR}"/signal_trap.sh

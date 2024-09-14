@@ -77,19 +77,16 @@ void ReadInput::item_elec_stru()
             {
                 if (!find_str(pw_solvers, ks_solver))
                 {
-                    ModuleBase::WARNING_QUIT("ReadInput",
-                                             "ks_solver must be cg, dav, bpcg "
-                                             "or dav_subspace for pw basis.");
+                    const std::string warningstr = "For PW basis: " + nofound_str(pw_solvers, "ks_solver");
+                    ModuleBase::WARNING_QUIT("ReadInput", warningstr);
                 }
             }
             else if (para.input.basis_type == "lcao")
             {
                 if (!find_str(lcao_solvers, ks_solver))
                 {
-                    ModuleBase::WARNING_QUIT("ReadInput",
-                                             "ks_solver must be genelpa, lapack, scalapack_gvx, "
-                                             "cusolver, pexsi or "
-                                             "cg_in_lcao for lcao basis.");
+                    const std::string warningstr = "For LCAO basis: " + nofound_str(lcao_solvers, "ks_solver");
+                    ModuleBase::WARNING_QUIT("ReadInput", warningstr);
                 }
                 if (ks_solver == "cg_in_lcao")
                 {
@@ -167,7 +164,8 @@ void ReadInput::item_elec_stru()
             const std::vector<std::string> basis_types = {"pw", "lcao_in_pw", "lcao"};
             if (!find_str(basis_types, para.input.basis_type))
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "basis_type should be pw, lcao_in_pw, or lcao");
+                const std::string warningstr = nofound_str(basis_types, "basis_type");
+                ModuleBase::WARNING_QUIT("ReadInput", warningstr);
             }
         };
         this->add_item(item);
@@ -452,28 +450,11 @@ void ReadInput::item_elec_stru()
         item.annotation = "Only for localized orbitals set and gamma point. If "
                           "set to 1, a fast algorithm is used";
         read_sync_bool(input.gamma_only);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.inp.gamma_only && para.inp.basis_type == "pw") 
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.gamma_only && para.input.basis_type == "pw")
             {
-                GlobalV::ofs_warning << " WARNING : gamma_only has not been "
-                                        "implemented for pw yet"
-                                        << std::endl;
-                GlobalV::ofs_warning << " the INPUT parameter gamma_only has been reset to 0" << std::endl;
-                GlobalV::ofs_warning << " and a new KPT is generated with "
-                                        "gamma point as the only k point"
-                                        << std::endl;
-
-                GlobalV::ofs_warning << " Auto generating k-points file: " << para.inp.kpoint_file << std::endl;
-                std::ofstream ofs(para.inp.kpoint_file.c_str());
-                ofs << "K_POINTS" << std::endl;
-                ofs << "0" << std::endl;
-                ofs << "Gamma" << std::endl;
-                ofs << "1 1 1 0 0 0" << std::endl;
-                ofs.close();
-            }
-            if (para.input.nspin ==4 && para.sys.gamma_only_local)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "nspin=4 is not supported in gamma_only mode.");
+                    para.input.gamma_only = false;   
+                    GlobalV::ofs_warning << "gamma_only is not supported in the pw model" << std::endl;
             }
         };
         this->add_item(item);

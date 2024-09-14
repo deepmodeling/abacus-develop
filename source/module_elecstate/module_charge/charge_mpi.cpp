@@ -6,7 +6,7 @@
 #include "module_elecstate/elecstate_getters.h"
 #include "module_parameter/parameter.h"
 #ifdef __MPI
-void Charge::init_chgmpi(const int& nbz, const int& bz)
+void Charge::init_chgmpi()
 {
     if (GlobalV::NPROC_IN_STOGROUP % GlobalV::KPAR == 0)
     {

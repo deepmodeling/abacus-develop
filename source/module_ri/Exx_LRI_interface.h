@@ -3,6 +3,7 @@
 
 #include "Exx_LRI.h"
 #include "module_ri/Mix_DMk_2D.h"
+#include "module_ri/module_exx_symmetry/symmetry_rotation.h"
 #include <memory>
 
 class LCAO_Matrix;
@@ -12,6 +13,18 @@ namespace elecstate
     class ElecState;
     template <typename TK, typename TR>
     class DensityMatrix;
+
+    /// for symmetry, multi-k, nspin<4: restore DM(k) form DM(k_ibz)
+    std::vector<std::vector<std::complex<double>>> restore_dm(const K_Vectors& kv,
+        const std::vector<std::vector<std::complex<double>>>& dm_k_ibz,
+        const ModuleSymmetry::Symmetry_rotation& symrot,
+        const Parallel_2D& pv);
+    /// do nothing if gamma_only
+    std::vector<std::vector<double>> restore_dm(const K_Vectors& kv,
+        const std::vector<std::vector<double>>& dm_k_ibz,
+        const ModuleSymmetry::Symmetry_rotation& symrot,
+        const Parallel_2D& pv);
+
 }
 
 template<typename T, typename Tdata>
@@ -36,11 +49,11 @@ public:
 
     // Processes in ESolver_KS_LCAO
     /// @brief in beforescf: set xc type, opt_orb, do DM mixing
-    void exx_beforescf(const K_Vectors& kv, const Charge_Mixing& chgmix);
+    void exx_beforescf(const K_Vectors& kv, const Charge_Mixing& chgmix, const UnitCell& ucell, const Parallel_2D& pv, const LCAO_Orbitals& orb);
 
     /// @brief in eachiterinit:  do DM mixing and calculate Hexx when entering 2nd SCF
     void exx_eachiterinit(const elecstate::DensityMatrix<T, double>& dm/**< double should be Tdata if complex-PBE-DM is supported*/,
-        const int& iter);
+        const K_Vectors& kv, const int& iter);
 
     /// @brief in hamilt2density: calculate Hexx and Eexx
     void exx_hamilt2density(elecstate::ElecState& elec, const Parallel_Orbitals& pv, const int iter);
@@ -59,6 +72,9 @@ public:
 private:
     std::shared_ptr<Exx_LRI<Tdata>> exx_ptr;
     Mix_DMk_2D mix_DMk_2D;
+
+    bool exx_spacegroup_symmetry = false;
+    ModuleSymmetry::Symmetry_rotation symrot_;
 };
 
 #include "Exx_LRI_interface.hpp"

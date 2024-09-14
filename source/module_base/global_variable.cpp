@@ -89,6 +89,14 @@ bool DOMAG = false;
 bool DOMAG_Z = false;
 int NPOL = 1;
 
+bool deepks_out_labels = false; // caoyu add 2021-10-16 for DeePKS, wenfei 2022-1-16
+bool deepks_scf = false; // caoyu add 2021-10-16 for DeePKS, wenfei 2022-1-16
+bool deepks_bandgap = false; // for bandgap label. QO added 2021-12-15
+int  deepks_v_delta = 0; // for v_delta label. xinyuan added 2023-2-15
+
+bool deepks_equiv = false;
+
+bool deepks_setorb = false;
 
 std::vector<std::string> rpa_orbitals;
 

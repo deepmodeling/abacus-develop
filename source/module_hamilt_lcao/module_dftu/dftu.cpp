@@ -19,6 +19,7 @@
 #include <iomanip>
 #include <iostream>
 #include <sstream>
+#include <vector>
 
 namespace GlobalC
 {
@@ -37,7 +38,9 @@ DFTU::~DFTU()
 
 void DFTU::init(UnitCell& cell, // unitcell class
                 const Parallel_Orbitals* pv,
-                const int& nks)
+                const int& nks,
+                const LCAO_Orbitals& orb
+                )
 {
     ModuleBase::TITLE("DFTU", "init");
 
@@ -47,6 +50,9 @@ void DFTU::init(UnitCell& cell, // unitcell class
 #endif
 
     this->paraV = pv;
+    
+    ptr_orb_ = &orb;
+    orb_cutoff_ = orb.cutoffs();
 
     // needs reconstructions in future
     // global parameters, need to be removed in future

@@ -174,7 +174,7 @@ namespace ModuleESolver
         Symmetry_rho srho;
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
-            srho.begin(is, *(this->pelec->charge), this->pw_rhod, GlobalC::Pgrid, GlobalC::ucell.symm);
+            srho.begin(is, *(this->pelec->charge), this->pw_rhod, GlobalC::ucell.symm);
         }
 
         // compute magnetization, only for LSDA(spin==2)

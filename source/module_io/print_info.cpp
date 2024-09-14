@@ -152,13 +152,14 @@ void Print_Info::setup_parameters(UnitCell &ucell, K_Vectors &kv)
 				{
 					norb += (2*L+1)* ucell.atoms[it].l_nchi[L];
 					orb << ucell.atoms[it].l_nchi[L];
-					if(L==0) orb << "s";
-					else if(L==1) orb << "p";
-					else if(L==2) orb << "d";
-					else if(L==3) orb << "f";
-					else if(L==4) orb << "g";
-					else if(L==5) orb << "h";
-					else if(L==6) orb << "i";
+					if(L==0) { orb << "s";
+					} else if(L==1) { orb << "p";
+					} else if(L==2) { orb << "d";
+					} else if(L==3) { orb << "f";
+					} else if(L==4) { orb << "g";
+					} else if(L==5) { orb << "h";
+					} else if(L==6) { orb << "i";
+}
 				}
 				orb << "-" << ucell.atoms[it].Rcut << "au";
 				

@@ -243,6 +243,7 @@
     - [exx\_opt\_orb\_ecut](#exx_opt_orb_ecut)
     - [exx\_opt\_orb\_tolerence](#exx_opt_orb_tolerence)
     - [exx\_real\_number](#exx_real_number)
+    - [exx\_symmetry\_realspace](#exx_symmetry_realspace)
     - [rpa\_ccp\_rmesh\_times](#rpa_ccp_rmesh_times)
   - [Molecular dynamics](#molecular-dynamics)
     - [md\_type](#md_type)
@@ -568,6 +569,7 @@ These variables are used to control general system parameters.
 
   - atomic: the density is starting from the summation of the atomic density of single atoms.
   - file: the density will be read in from a binary file `charge-density.dat` first. If it does not exist, the charge density will be read in from cube files. Besides, when you do `nspin=1` calculation, you only need the density file SPIN1_CHG.cube. However, if you do `nspin=2` calculation, you also need the density file SPIN2_CHG.cube. The density file should be output with these names if you set out_chg = 1 in INPUT file.
+  - wfc: the density will be calculated by wavefunctions and occupations. Wavefunctions are read in from binary files `WAVEFUNC*.dat` while occupations are read in from file `istate.info`.
   - auto: Abacus first attempts to read the density from a file; if not found, it defaults to using atomic density.
 - **Default**: atomic
 
@@ -2424,6 +2426,15 @@ These variables are relevant when using hybrid functionals.
 - **Type**: Real
 - **Description**: How many times larger the radial mesh required is to that of atomic orbitals in the postprocess calculation of the **bare** Coulomb matrix for RPA, GW, etc.
 - **Default**: 10
+
+### exx_symmetry_realspace
+
+- **Type**: Boolean
+- **Availability**: *[symmetry](#symmetry)==1* and exx calculation  (*[dft_fuctional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)==True*)
+- **Description**: 
+  - False: only rotate k-space density matrix D(k) from irreducible k-points to accelerate diagonalization
+  - True: rotate both D(k) and Hexx(R) to accelerate both diagonalization and EXX calculation
+- **Default**: True
 
 [back to top](#full-list-of-input-keywords)
 

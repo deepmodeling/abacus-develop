@@ -63,7 +63,7 @@ namespace ModuleESolver
 //! mohan add 2024-05-11
 //------------------------------------------------------------------------------
 template <typename TK, typename TR>
-ESolver_KS_LCAO<TK, TR>::ESolver_KS_LCAO(): orb_(GlobalC::ORB)
+ESolver_KS_LCAO<TK, TR>::ESolver_KS_LCAO()
 {
     this->classname = "ESolver_KS_LCAO";
     this->basisname = "LCAO";
@@ -171,7 +171,8 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
 								 inp.lcao_dr,
 								 inp.lcao_rmax,
                                  ucell, 
-                                 two_center_bundle_);
+                                 two_center_bundle_,
+                                 orb_);
     //------------------init Basis_lcao----------------------
 
     // 5) initialize density matrix
@@ -190,7 +191,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
     // 6) initialize Hamilt in LCAO
     // * allocate H and S matrices according to computational resources
     // * set the 'trace' between local H/S and global H/S
-    LCAO_domain::divide_HS_in_frag(PARAM.globalv.gamma_only_local, pv, this->kv.get_nks());
+    LCAO_domain::divide_HS_in_frag(PARAM.globalv.gamma_only_local, pv, this->kv.get_nks(), orb_);
 
 #ifdef __EXX
     // 7) initialize exx
@@ -203,15 +204,15 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
         {
             XC_Functional::set_xc_first_loop(ucell);
             // initialize 2-center radial tables for EXX-LRI
-            if (GlobalC::exx_info.info_ri.real_number) { this->exx_lri_double->init(MPI_COMM_WORLD, this->kv); }
-            else { this->exx_lri_complex->init(MPI_COMM_WORLD, this->kv); }
+            if (GlobalC::exx_info.info_ri.real_number) { this->exx_lri_double->init(MPI_COMM_WORLD, this->kv, orb_); }
+            else { this->exx_lri_complex->init(MPI_COMM_WORLD, this->kv, orb_); }
         }
     }
 #endif
 
     // 8) initialize DFT+U
     if (PARAM.inp.dft_plus_u) {
-        GlobalC::dftu.init(ucell, &this->pv, this->kv.get_nks());
+        GlobalC::dftu.init(ucell, &this->pv, this->kv.get_nks(), orb_);
     }
 
     // 9) initialize ppcell
@@ -309,6 +310,7 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(ModuleBase::matrix& force)
                        this->GG, // mohan add 2024-04-01
                        this->GK, // mohan add 2024-04-01
                        two_center_bundle_,
+                       orb_,
                        force,
                        this->scs,
                        this->sf,
@@ -461,6 +463,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners()
             this->GG,
             this->GK,
             this->kv,
+            orb_.cutoffs(),
             this->pelec->wg,
             GlobalC::GridD
 #ifdef __EXX
@@ -488,6 +491,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners()
             this->kv,
             this->pelec->wg,
             GlobalC::GridD,
+            orb_.cutoffs(),
             this->two_center_bundle_
 #ifdef __EXX
             , this->exx_lri_double ? &this->exx_lri_double->Hexxs : nullptr
@@ -615,11 +619,11 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
     // calculate exact-exchange
     if (GlobalC::exx_info.info_ri.real_number)
     {
-        this->exd->exx_eachiterinit(*dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(), iter);
+        this->exd->exx_eachiterinit(*dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(), this->kv, iter);
     }
     else
     {
-        this->exc->exx_eachiterinit(*dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(), iter);
+        this->exc->exx_eachiterinit(*dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(), this->kv, iter);
     }
 #endif
 
@@ -780,7 +784,7 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2density(int istep, int iter, double ethr)
     Symmetry_rho srho;
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
-        srho.begin(is, *(this->pelec->charge), this->pw_rho, GlobalC::Pgrid, GlobalC::ucell.symm);
+        srho.begin(is, *(this->pelec->charge), this->pw_rho, GlobalC::ucell.symm);
     }
 
     // 11) compute magnetization, only for spin==2
@@ -1173,8 +1177,9 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
         RPA_LRI<TK, double> rpa_lri_double(GlobalC::exx_info.info_ri);
         rpa_lri_double.cal_postSCF_exx(*dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(),
                                        MPI_COMM_WORLD,
-                                       this->kv);
-        rpa_lri_double.init(MPI_COMM_WORLD, this->kv);
+                                       this->kv,
+                                       orb_);
+        rpa_lri_double.init(MPI_COMM_WORLD, this->kv, orb_.cutoffs());
         rpa_lri_double.out_for_RPA(this->pv, *(this->psi), this->pelec);
     }
 #endif
@@ -1263,6 +1268,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
                                                                   this->kv.kvec_d,
                                                                   &hR,
                                                                   &GlobalC::ucell,
+                                                                  orb_.cutoffs(),
                                                                   &GlobalC::GridD,
                                                                   two_center_bundle_.kinetic_orb.get());
 

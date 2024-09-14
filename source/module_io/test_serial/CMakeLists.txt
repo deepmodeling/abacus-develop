@@ -20,7 +20,7 @@ add_library(
     ../read_input_item_other.cpp   
     ../read_input_item_output.cpp
     ../read_input.cpp
-    ../bcast_globalv.cpp
+    ../read_set_globalv.cpp
 )
 
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
@@ -32,6 +32,7 @@ AddTest(
 
 AddTest(
   TARGET io_read_item_serial
+  LIBS parameter ${math_libs} base device io_input_serial 
   LIBS parameter ${math_libs} base device io_input_serial 
   SOURCES read_input_item_test.cpp
 )

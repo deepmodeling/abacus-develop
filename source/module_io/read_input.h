@@ -76,12 +76,8 @@ class ReadInput
      * @param item input_item
      */
     void add_item(const Input_Item& item);
-    /**
-     * @brief set global values
-     *
-     * @param param PARAM use to set global values
-     */
-    void set_globalv(Parameter& param);
+    //set globalv parameters
+    void set_globalv(Parameter& para);
     // add bcast functions for global values
     void set_globalv_bcast();
     // system items
@@ -146,6 +142,8 @@ bool convert_bool(std::string str);
 bool find_str(const std::vector<std::string>& strings, const std::string& strToFind);
 // convert to directory format
 std::string to_dir(const std::string& str);
+// return a warning string if the string is not found in the vector
+std::string nofound_str(std::vector<std::string> init_chgs, const std::string& str);
 
 } // namespace ModuleIO
 
