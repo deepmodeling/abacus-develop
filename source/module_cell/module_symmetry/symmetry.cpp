@@ -793,7 +793,7 @@ void Symmetry::lattice_type(
             }       
             /*
             std::stringstream ss;
-            ss << GlobalV::global_out_dir << "STRU_SIMPLE.cif";
+            ss << PARAM.globalv.global_out_dir << "STRU_SIMPLE.cif";
 
             std::ofstream ofs( ss.str().c_str() );
             ofs << "Lattice vector  : " << std::endl;

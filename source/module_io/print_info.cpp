@@ -152,13 +152,14 @@ void Print_Info::setup_parameters(UnitCell &ucell, K_Vectors &kv)
 				{
 					norb += (2*L+1)* ucell.atoms[it].l_nchi[L];
 					orb << ucell.atoms[it].l_nchi[L];
-					if(L==0) orb << "s";
-					else if(L==1) orb << "p";
-					else if(L==2) orb << "d";
-					else if(L==3) orb << "f";
-					else if(L==4) orb << "g";
-					else if(L==5) orb << "h";
-					else if(L==6) orb << "i";
+					if(L==0) { orb << "s";
+					} else if(L==1) { orb << "p";
+					} else if(L==2) { orb << "d";
+					} else if(L==3) { orb << "f";
+					} else if(L==4) { orb << "g";
+					} else if(L==5) { orb << "h";
+					} else if(L==6) { orb << "i";
+}
 				}
 				orb << "-" << ucell.atoms[it].Rcut << "au";
 				
@@ -186,7 +187,7 @@ void Print_Info::print_time(time_t &time_start, time_t &time_finish)
 	std::cout << "\n START  Time  : " << ctime(&time_start);
 	std::cout << " FINISH Time  : " << ctime(&time_finish);
 	std::cout << " TOTAL  Time  : " << int(difftime(time_finish, time_start)) << std::endl;
-	std::cout << " SEE INFORMATION IN : " << GlobalV::global_out_dir << std::endl;
+	std::cout << " SEE INFORMATION IN : " << PARAM.globalv.global_out_dir << std::endl;
 
 	GlobalV::ofs_running << "\n Start  Time  : " << ctime(&time_start);
 	GlobalV::ofs_running << " Finish Time  : " << ctime(&time_finish);

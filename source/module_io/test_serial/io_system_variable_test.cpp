@@ -1,0 +1,61 @@
+#include <cstdio>
+#include <fstream>
+#include <string>
+#include <vector>
+
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
+#include "module_base/tool_quit.h"
+/************************************************
+ *  unit test of read_input_test_item.cpp
+ ***********************************************/
+
+/**
+ * - Tested Functions:
+ *   - Item_test:
+ *     - read in specific values for some items
+ */
+#define private public
+#include "module_io/input_item.h"
+#include "module_io/read_input.h"
+#undef private
+
+class InputTest : public testing::Test
+{
+  protected:
+    std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator find_label(
+        const std::string& label,
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>& bcastfuncs)
+    {
+        auto it = std::find_if(
+            bcastfuncs.begin(),
+            bcastfuncs.end(),
+            [&label](const std::pair<std::string, ModuleIO::Input_Item>& item) { return item.first == label; });
+        return it;
+    }
+};
+ModuleIO::ReadInput readinput(0);
+Parameter param;
+std::string output = "";
+
+TEST_F(InputTest, Item_test)
+{
+    readinput.check_ntype_flag = false;
+
+    { 
+        param.input.suffix = "test";
+        readinput.set_globalv(param);
+        EXPECT_EQ(param.sys.global_out_dir, "OUT.test/");
+        EXPECT_EQ(param.sys.global_stru_dir, "OUT.test/STRU/");
+        EXPECT_EQ(param.sys.global_matrix_dir, "OUT.test/matrix/");
+
+        param.input.basis_type = "lcao";
+        param.input.gamma_only = true;
+        param.input.esolver_type = "tddft";
+        param.input.nspin = 2;
+        readinput.set_globalv(param);
+        EXPECT_EQ(param.sys.gamma_only_local, 0);
+        
+        
+    }
+}

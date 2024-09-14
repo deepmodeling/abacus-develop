@@ -19,7 +19,7 @@ std::string wfc_nao_gen_fname(const int out_type,
                                const int ik,
                                const int istep)
 {
-    // fn_out = "{GlobalV::global_out_dir}/WFC_NAO_{K|GAMMA}{K index}{_ION} + {".txt"/".dat"}""
+    // fn_out = "{PARAM.globalv.global_out_dir}/WFC_NAO_{K|GAMMA}{K index}{_ION} + {".txt"/".dat"}""
     std::string kgamma_block = (gamma_only) ? "_GAMMA" : "_K";
     std::string istep_block
         = (istep >= 0 && (!out_app_flag))
@@ -266,7 +266,7 @@ void write_wfc_nao(const int out_type,
 
         if (myid == 0)
         {
-            std::string fn = GlobalV::global_out_dir + wfc_nao_gen_fname(out_type, gamma_only, PARAM.inp.out_app_flag, ik, istep);
+            std::string fn = PARAM.globalv.global_out_dir + wfc_nao_gen_fname(out_type, gamma_only, PARAM.inp.out_app_flag, ik, istep);
             if (std::is_same<double, T>::value)
             {
                 wfc_nao_write2file(fn, reinterpret_cast<double*>(ctot.data()), nlocal, ik, ekb, wg, writeBinary);

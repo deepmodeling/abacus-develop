@@ -1,5 +1,6 @@
 #include "FORCE.h"
 #include "module_base/memory.h"
+#include "module_parameter/parameter.h"
 #include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
@@ -272,7 +273,7 @@ void Force_LCAO<double>::ftable(const bool isforce,
 
             GlobalC::ld.check_projected_dm();
 
-            GlobalC::ld.check_descriptor(ucell, GlobalV::global_out_dir);
+            GlobalC::ld.check_descriptor(ucell, PARAM.globalv.global_out_dir);
 
             GlobalC::ld.check_gedm();
 

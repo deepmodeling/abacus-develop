@@ -1,5 +1,6 @@
 #include "bessel_basis.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/math_integral.h"
 #include "module_base/math_sphbes.h"
 #include "module_base/parallel_common.h"
@@ -223,7 +224,7 @@ void Bessel_Basis::init_TableOne(
 	//caoyu add 2021-3-10
 	//=========output .orb format=============
 	std::stringstream ss;
-	ss << GlobalV::global_out_dir << "jle.orb";
+	ss << PARAM.globalv.global_out_dir << "jle.orb";
 	std::ofstream ofs(ss.str().c_str());
 	ofs << "---------------------------------------------------------------------------"<< std::endl;
 	ofs << std::setiosflags(std::ios::left) << std::setw(28) << "Energy Cutoff(Ry)" << ecut << std::endl;
@@ -294,7 +295,7 @@ void Bessel_Basis::init_TableOne(
 
 			//====== output ========
 //			std::stringstream ss;
-//			ss << GlobalV::global_out_dir << l << "." << ie << ".txt";
+//			ss << PARAM.globalv.global_out_dir << l << "." << ie << ".txt";
 //			std::ofstream ofs(ss.str().c_str());
 
 //			for(int ir=0; ir<rmesh; ir++) ofs << r[ir] << " " << jle[ir] << " " << jle[ir]*g[ir] << std::endl;

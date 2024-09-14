@@ -15,7 +15,8 @@ void ReadInput::item_relax()
             const std::vector<std::string> relax_methods = {"cg", "bfgs", "sd", "cg_bfgs"};
             if (!find_str(relax_methods, para.input.relax_method))
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "relax_method must be cg, bfgs, sd or cg_bfgs.");
+                const std::string warningstr = nofound_str(relax_methods, "relax_method");
+                ModuleBase::WARNING_QUIT("ReadInput", warningstr);
             }
         };
         this->add_item(item);
