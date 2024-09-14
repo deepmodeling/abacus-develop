@@ -64,9 +64,9 @@ void IState_Charge::begin(Gint_Gamma& gg,
     }
     else if (static_cast<int>(out_band_kb.size()) > 0)
     {
-        // If out_band_kb (bands_to_print) is not empty, set mode to 2
+        // If out_band_kb (out_pchg) is not empty, set mode to 2
         mode = 2;
-        std::cout << " Notice: INPUT parameter `nbands_istate` overwritten by `bands_to_print`!" << std::endl;
+        std::cout << " Notice: INPUT parameter `nbands_istate` overwritten by `out_pchg`!" << std::endl;
     }
     else
     {
@@ -200,9 +200,9 @@ void IState_Charge::begin(Gint_k& gk,
     }
     else if (static_cast<int>(out_band_kb.size()) > 0)
     {
-        // If out_band_kb (bands_to_print) is not empty, set mode to 2
+        // If out_band_kb (out_pchg) is not empty, set mode to 2
         mode = 2;
-        std::cout << " Notice: INPUT parameter `nbands_istate` overwritten by `bands_to_print`!" << std::endl;
+        std::cout << " Notice: INPUT parameter `nbands_istate` overwritten by `out_pchg`!" << std::endl;
     }
     else
     {
@@ -411,7 +411,7 @@ void IState_Charge::select_bands(const int nbands_istate,
         {
             ModuleBase::WARNING_QUIT(
                 "IState_Charge::select_bands",
-                "The number of bands specified by `bands_to_print` in the INPUT file exceeds `nbands`!");
+                "The number of bands specified by `out_pchg` in the INPUT file exceeds `nbands`!");
         }
         // Check if all elements in out_band_kb are 0 or 1
         for (int value: out_band_kb)
@@ -420,7 +420,7 @@ void IState_Charge::select_bands(const int nbands_istate,
             {
                 ModuleBase::WARNING_QUIT(
                     "IState_Charge::select_bands",
-                    "The elements of `bands_to_print` must be either 0 or 1. Invalid values found!");
+                    "The elements of `out_pchg` must be either 0 or 1. Invalid values found!");
             }
         }
         // Fill bands_picked_ with values from out_band_kb

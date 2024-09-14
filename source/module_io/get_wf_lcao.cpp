@@ -45,9 +45,9 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
     }
     else if (static_cast<int>(out_band_kb.size()) > 0)
     {
-        // If out_band_kb (bands_to_print) is not empty, set mode to 2
+        // If out_band_kb (out_wfc_norm) is not empty, set mode to 2
         mode = 2;
-        std::cout << " Notice: INPUT parameter `nbands_istate` overwritten by `bands_to_print`!" << std::endl;
+        std::cout << " Notice: INPUT parameter `nbands_istate` overwritten by `out_wfc_norm`!" << std::endl;
     }
 
     int fermi_band = 0;
@@ -95,7 +95,7 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
         {
             ModuleBase::WARNING_QUIT(
                 "IState_Envelope::begin",
-                "The number of bands specified by `bands_to_print` in the INPUT file exceeds `nbands`!");
+                "The number of bands specified by `out_wfc_norm` in the INPUT file exceeds `nbands`!");
         }
         // Check if all elements in bands_picked_ are 0 or 1
         for (int value: out_band_kb)
@@ -104,7 +104,7 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
             {
                 ModuleBase::WARNING_QUIT(
                     "IState_Envelope::begin",
-                    "The elements of `bands_to_print` must be either 0 or 1. Invalid values found!");
+                    "The elements of `out_wfc_norm` must be either 0 or 1. Invalid values found!");
             }
         }
         // Fill bands_picked_ with values from out_band_kb
@@ -279,9 +279,9 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
     }
     else if (static_cast<int>(out_band_kb.size()) > 0)
     {
-        // If out_band_kb (bands_to_print) is not empty, set mode to 2
+        // If out_band_kb (out_wfc_norm) is not empty, set mode to 2
         mode = 2;
-        std::cout << " Notice: INPUT parameter `nbands_istate` overwritten by `bands_to_print`!" << std::endl;
+        std::cout << " Notice: INPUT parameter `nbands_istate` overwritten by `out_wfc_norm`!" << std::endl;
     }
 
     int fermi_band = 0;
@@ -331,7 +331,7 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
         {
             ModuleBase::WARNING_QUIT(
                 "IState_Envelope::begin",
-                "The number of bands specified by `bands_to_print` in the INPUT file exceeds `nbands`!");
+                "The number of bands specified by `out_wfc_norm` in the INPUT file exceeds `nbands`!");
         }
         // Check if all elements in bands_picked_ are 0 or 1
         for (int value: out_band_kb)
@@ -340,7 +340,7 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
             {
                 ModuleBase::WARNING_QUIT(
                     "IState_Envelope::begin",
-                    "The elements of `bands_to_print` must be either 0 or 1. Invalid values found!");
+                    "The elements of `out_wfc_norm` must be either 0 or 1. Invalid values found!");
             }
         }
         // Fill bands_picked_ with values from out_band_kb

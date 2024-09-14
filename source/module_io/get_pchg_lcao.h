@@ -92,7 +92,7 @@ class IState_Charge
      * @brief Set this->bands_picked_ according to the mode, and process an error if the mode is not recognized.
      *
      * @param nbands_istate INPUT parameter nbands_istate.
-     * @param out_band_kb Calculated from INPUT parameter bands_to_print, vector.
+     * @param out_band_kb INPUT parameter out_pchg, vector.
      * @param nbands INPUT parameter nbands.
      * @param nelec Total number of electrons.
      * @param mode Selected mode.
