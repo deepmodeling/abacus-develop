@@ -80,7 +80,7 @@ void ElecState::calculate_weights()
 
     if (!Occupy::use_gaussian_broadening && !Occupy::fixed_occupations)
     {
-        if (GlobalV::TWO_EFERMI)
+        if (PARAM.globalv.two_fermi)
         {
             Occupy::iweights(nks,
                              this->klist->wk,
@@ -118,7 +118,7 @@ void ElecState::calculate_weights()
     }
     else if (Occupy::use_gaussian_broadening)
     {
-        if (GlobalV::TWO_EFERMI)
+        if (PARAM.globalv.two_fermi)
         {
             double demet_up = 0.0;
             double demet_dw = 0.0;

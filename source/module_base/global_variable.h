@@ -162,8 +162,6 @@ extern std::string device_flag;
 // precision flags added by denghui
 //==========================================================
 
-extern int out_pot;
-
                              //  "out_chg" elec step.
 /// @brief method to initialize wavefunction
 /// @author kirk0830, 20230920

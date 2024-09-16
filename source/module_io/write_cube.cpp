@@ -1,5 +1,6 @@
 #include "module_base/element_name.h"
 #include "module_io/cube_io.h"
+#include "module_parameter/parameter.h"
 #include<vector>
 
 void ModuleIO::write_cube(
@@ -56,7 +57,7 @@ void ModuleIO::write_cube(
         ofs_cube << std::setprecision(6);
         if (out_fermi == 1)
         {
-            if (GlobalV::TWO_EFERMI)
+            if (PARAM.globalv.two_fermi)
             {
                 if (is == 0)
                 {

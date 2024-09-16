@@ -1,5 +1,3 @@
-#include "../dftu_lcao.h"
-
 #include "gtest/gtest.h"
 #include <chrono>
 
@@ -7,6 +5,7 @@
 #define private public
 #include "module_parameter/parameter.h"
 #undef private
+#include "../dftu_lcao.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 ModuleDFTU::DFTU::DFTU(){};
 ModuleDFTU::DFTU::~DFTU(){};

@@ -148,7 +148,7 @@ namespace ModuleESolver
 
             if (PARAM.inp.out_bandgap)
             {
-                if (!GlobalV::TWO_EFERMI)
+                if (!PARAM.globalv.two_fermi)
                 {
                     this->pelec->cal_bandgap();
                 }

@@ -333,11 +333,7 @@ void Input_Conv::Convert()
     // Yu Liu add 2022-09-13
     //----------------------------------------------------------
     GlobalV::nelec = PARAM.inp.nelec;
-    if (PARAM.globalv.two_fermi)
-    {
-        GlobalV::TWO_EFERMI = true;
-        GlobalV::nupdown = PARAM.inp.nupdown;
-    }
+
     elecstate::Gatefield::zgate = PARAM.inp.zgate;
     elecstate::Gatefield::relax = PARAM.inp.relax;
     elecstate::Gatefield::block = PARAM.inp.block;
@@ -514,7 +510,6 @@ void Input_Conv::Convert()
     // wavefunction / charge / potential / (2/4)
     //----------------------------------------------------------
     GlobalV::nelec = PARAM.inp.nelec;
-    GlobalV::out_pot = PARAM.inp.out_pot;
 
 #ifdef __LCAO
 

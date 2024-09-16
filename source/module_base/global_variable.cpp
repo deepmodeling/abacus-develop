@@ -106,8 +106,6 @@ std::vector<std::string> rpa_orbitals;
 //==========================================================
 std::string device_flag = "unknown";
 
-int out_pot = 0;
-
 double nelec = 0;
 
 

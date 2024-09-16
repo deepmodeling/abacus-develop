@@ -1,5 +1,6 @@
 #include "magnetism.h"
 #include "elecstate_getters.h"
+#include "module_parameter/parameter.h"
 #include "module_base/parallel_reduce.h"
 
 Magnetism::Magnetism()
@@ -39,7 +40,7 @@ void Magnetism::compute_magnetization(const int& nrxx, const int& nxyz, const do
 		
 		//update number of electrons for each spin
 		//if TWO_EFERMI, no need to update
-		if(!GlobalV::TWO_EFERMI)
+		if(!PARAM.globalv.two_fermi)
 		{
 			nelec_spin[0] = (GlobalV::nelec + this->tot_magnetization) / 2;
 			nelec_spin[1] = (GlobalV::nelec - this->tot_magnetization) / 2;

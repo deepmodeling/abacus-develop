@@ -108,7 +108,7 @@ void ESolver_KS_PW<T, Device>::nscf() {
     //! 5) print out band gaps
     if (PARAM.inp.out_bandgap) {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "writing band gaps");
-        if (!GlobalV::TWO_EFERMI) {
+        if (!PARAM.globalv.two_fermi) {
             this->pelec->cal_bandgap();
             GlobalV::ofs_running << " E_bandgap "
                                  << this->pelec->bandgap * ModuleBase::Ry_to_eV

@@ -501,7 +501,7 @@ void ESolver_OF::print_info()
         energies_Ry.push_back(this->pelec->f_en.etot);
     }
 
-    if (GlobalV::TWO_EFERMI)
+    if (PARAM.globalv.two_fermi)
     {
         titles.push_back("E_Fermi_up");
         energies_Ry.push_back(this->pelec->eferm.get_efval(0));

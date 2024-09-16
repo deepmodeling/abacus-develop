@@ -711,7 +711,7 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2density(int istep, int iter, double ethr)
 
         if (PARAM.inp.out_bandgap)
         {
-            if (!GlobalV::TWO_EFERMI)
+            if (!PARAM.globalv.two_fermi)
             {
                 this->pelec->cal_bandgap();
             }
@@ -880,14 +880,6 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
                                 istep);
     }
 
-    // 3) print potential
-    if (this->conv_elec || iter == PARAM.inp.scf_nmax)
-    {
-        if (GlobalV::out_pot < 0) // mohan add 2011-10-10
-        {
-            GlobalV::out_pot = -2;
-        }
-    }
 
     if (!this->conv_elec)
     {

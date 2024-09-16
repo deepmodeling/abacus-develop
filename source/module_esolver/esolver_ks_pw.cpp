@@ -392,7 +392,7 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, c
 
         if (PARAM.inp.out_bandgap)
         {
-            if (!GlobalV::TWO_EFERMI)
+            if (!PARAM.globalv.two_fermi)
             {
                 this->pelec->cal_bandgap();
             }

@@ -599,7 +599,7 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log) {
 #endif
 
     // after read STRU, calculate initial total magnetization when NSPIN=2
-    if (GlobalV::NSPIN == 2 && !GlobalV::TWO_EFERMI) {
+    if (GlobalV::NSPIN == 2 && !PARAM.globalv.two_fermi) {
         for (int it = 0; it < this->ntype; it++) {
             for (int ia = 0; ia < this->atoms[it].na; ia++) {
                 GlobalV::nupdown += this->atoms[it].mag[ia];
