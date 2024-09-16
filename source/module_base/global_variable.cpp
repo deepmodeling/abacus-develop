@@ -82,15 +82,8 @@ std::ofstream ofs_device; // output device info
 //----------------------------------------------------------
 
 // added by zhengdy-soc
-bool DOMAG = false;
-bool DOMAG_Z = false;
 
 std::vector<std::string> rpa_orbitals;
-
-//==========================================================
-// device flags added by denghui
-//==========================================================
-std::string device_flag = "unknown";
 
 int out_pot = 0;
 

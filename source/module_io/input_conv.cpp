@@ -196,10 +196,6 @@ void Input_Conv::Convert()
 
     GlobalV::NBANDS = PARAM.inp.nbands;
 
-    GlobalV::device_flag = base_device::information::get_device_flag(PARAM.inp.device,
-                                                                     PARAM.inp.ks_solver,
-                                                                     PARAM.inp.basis_type);
-
     if (PARAM.globalv.device_flag == "gpu" && PARAM.inp.basis_type == "pw")
     {
         GlobalV::KPAR = base_device::information::get_device_kpar(PARAM.inp.kpar);
