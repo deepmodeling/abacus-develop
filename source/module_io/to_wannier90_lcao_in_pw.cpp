@@ -1,5 +1,6 @@
 #include "to_wannier90_lcao_in_pw.h"
 
+#include "module_parameter/parameter.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/math_integral.h"
 #include "module_base/math_polyint.h"
@@ -117,7 +118,7 @@ psi::Psi<std::complex<double>>* toWannier90_LCAO_IN_PW::get_unk_from_lcao(
     unk_inLcao->zero_out();
 
     // Orbital projection to plane wave
-    ModuleBase::realArray table_local(GlobalC::ucell.ntype, GlobalC::ucell.nmax_total, GlobalV::NQX);
+    ModuleBase::realArray table_local(GlobalC::ucell.ntype, GlobalC::ucell.nmax_total, PARAM.globalv.nqx);
 
     for (int ik = 0; ik < num_kpts; ik++)
     {

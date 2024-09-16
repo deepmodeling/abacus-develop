@@ -1,5 +1,6 @@
 #include "VNL_in_pw.h"
 #include "module_base/math_sphbes.h"
+#include "module_parameter/parameter.h"
 #include "module_base/timer.h"
 #include "module_base/math_ylmreal.h"
 #include "module_base/math_integral.h"
@@ -12,11 +13,11 @@ void pseudopot_cell_vnl::initgradq_vnl(const UnitCell &cell)
     const int ntype = cell.ntype;
 	if(GlobalV::NSPIN!=4) 
 	{
-		this->tab_dq.create(ntype, nbrx, GlobalV::NQX);
+		this->tab_dq.create(ntype, nbrx, PARAM.globalv.nqx);
 	}
 	else 
 	{
-		this->tab_dq.create(ntype, nbrx_nc, GlobalV::NQX);
+		this->tab_dq.create(ntype, nbrx_nc, PARAM.globalv.nqx);
 	}
     gradvkb.create(3, nkb, this->wfcpw->npwk_max);
 
@@ -36,7 +37,7 @@ void pseudopot_cell_vnl::initgradq_vnl(const UnitCell &cell)
 		for (int ib = 0;ib < nbeta;ib++)
 		{
 			const int l = cell.atoms[it].ncpp.lll[ib];
-			for (int iq=0; iq<GlobalV::NQX; iq++)  
+			for (int iq=0; iq<PARAM.globalv.nqx; iq++)  
 			{
 				const double q = iq * PARAM.globalv.dq;
 				ModuleBase::Sphbes::dSpherical_Bessel_dx(kkbeta, cell.atoms[it].ncpp.r.data(), q, l, djl);
@@ -105,9 +106,9 @@ void pseudopot_cell_vnl::getgradq_vnl(const int ik)
 			    {
 			    	const double gnorm = gk[ig].norm() * GlobalC::ucell.tpiba;
 			    	vq [ig] = ModuleBase::PolyInt::Polynomial_Interpolation(
-			    			this->tab, it, nb, GlobalV::NQX, PARAM.globalv.dq, gnorm );
+			    			this->tab, it, nb, PARAM.globalv.nqx, PARAM.globalv.dq, gnorm );
 			    	dvq[ig] =ModuleBase::PolyInt::Polynomial_Interpolation(
-			    			this->tab_dq, it, nb, GlobalV::NQX, PARAM.globalv.dq, gnorm );
+			    			this->tab_dq, it, nb, PARAM.globalv.nqx, PARAM.globalv.dq, gnorm );
 			    }
                 nb0 = nb;
             }

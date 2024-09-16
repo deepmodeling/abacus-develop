@@ -170,7 +170,7 @@ void Stress_Func<FPTYPE, Device>::get_dvnl1(ModuleBase::ComplexMatrix& vkb,
                 vq[ig] = ModuleBase::PolyInt::Polynomial_Interpolation(nlpp->tab,
                                                                        it,
                                                                        nb,
-                                                                       GlobalV::NQX,
+                                                                       PARAM.globalv.nqx,
                                                                        PARAM.globalv.dq,
                                                                        gnorm);
 

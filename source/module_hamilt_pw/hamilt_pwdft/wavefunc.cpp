@@ -282,7 +282,7 @@ void diago_PAO_in_pw_k2(const int& ik,
                          wfc_basis,
                          wfcatom,
                          GlobalC::ppcell.tab_at,
-                         GlobalV::NQX,
+                         PARAM.globalv.nqx,
                          PARAM.globalv.dq);
 
         if (p_wf->init_wfc == "atomic+random" && starting_nw == GlobalC::ucell.natomwfc) // added by qianrui 2021-5-16
@@ -439,7 +439,7 @@ void diago_PAO_in_pw_k2(const int& ik,
                          wfc_basis,
                          wfcatom,
                          GlobalC::ppcell.tab_at,
-                         GlobalV::NQX,
+                         PARAM.globalv.nqx,
                          PARAM.globalv.dq);
 
         if (p_wf->init_wfc == "atomic+random" && starting_nw == GlobalC::ucell.natomwfc) // added by qianrui 2021-5-16
@@ -547,7 +547,7 @@ void diago_PAO_in_pw_k2(const base_device::DEVICE_GPU* ctx,
                          wfc_basis,
                          wfcatom,
                          GlobalC::ppcell.tab_at,
-                         GlobalV::NQX,
+                         PARAM.globalv.nqx,
                          PARAM.globalv.dq);
         if (p_wf->init_wfc == "atomic+random" && starting_nw == GlobalC::ucell.natomwfc) // added by qianrui 2021-5-16
         {
@@ -650,7 +650,7 @@ void diago_PAO_in_pw_k2(const base_device::DEVICE_GPU* ctx,
                          wfc_basis,
                          wfcatom,
                          GlobalC::ppcell.tab_at,
-                         GlobalV::NQX,
+                         PARAM.globalv.nqx,
                          PARAM.globalv.dq);
         if (p_wf->init_wfc == "atomic+random" && starting_nw == GlobalC::ucell.natomwfc) // added by qianrui 2021-5-16
         {

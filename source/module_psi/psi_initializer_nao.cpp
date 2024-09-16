@@ -271,7 +271,7 @@ void psi_initializer_nao<T, Device>::allocate_table()
         ModuleBase::WARNING_QUIT("psi_initializer_nao<T, Device>::psi_initializer_nao",
                                  "there is not ANY numerical atomic orbital read in present system, quit.");
     }
-    int dim3 = GlobalV::NQX;
+    int dim3 = PARAM.globalv.nqx;
     // allocate memory for ovlp_flzjlq
     this->ovlp_flzjlq_.create(dim1, dim2, dim3);
     this->ovlp_flzjlq_.zero_out();
@@ -298,7 +298,7 @@ void psi_initializer_nao<T, Device>::initialize(Structure_Factor* sf,
     // allocate
     this->allocate_table();
     this->read_external_orbs(this->p_ucell_->orbital_fn, rank);
-    // this->cal_ovlp_flzjlq(); //because GlobalV::NQX will change during vcrelax, so it should be called in both init
+    // this->cal_ovlp_flzjlq(); //because PARAM.globalv.nqx will change during vcrelax, so it should be called in both init
     // and init_after_vc
     ModuleBase::timer::tick("psi_initializer_nao", "initialize_mpi");
 }
@@ -320,7 +320,7 @@ void psi_initializer_nao<T, Device>::initialize(Structure_Factor* sf,
     // allocate
     this->allocate_table();
     this->read_external_orbs(this->p_ucell_->orbital_fn, 0);
-    // this->cal_ovlp_flzjlq(); //because GlobalV::NQX will change during vcrelax, so it should be called in both init
+    // this->cal_ovlp_flzjlq(); //because PARAM.globalv.nqx will change during vcrelax, so it should be called in both init
     // and init_after_vc
     ModuleBase::timer::tick("psi_initializer_nao", "initialize_serial");
 }
@@ -338,9 +338,9 @@ void psi_initializer_nao<T, Device>::tabulate()
         {
             for (int izeta = 0; izeta < this->p_ucell_->atoms[it].l_nchi[l]; izeta++)
             {
-                std::vector<double> ovlp_flzjlq_q(GlobalV::NQX);
-                std::vector<double> qgrid(GlobalV::NQX);
-                for (int iq = 0; iq < GlobalV::NQX; iq++)
+                std::vector<double> ovlp_flzjlq_q(PARAM.globalv.nqx);
+                std::vector<double> qgrid(PARAM.globalv.nqx);
+                for (int iq = 0; iq < PARAM.globalv.nqx; iq++)
                 {
                     qgrid[iq] = iq * PARAM.globalv.dq;
                 }
@@ -348,10 +348,10 @@ void psi_initializer_nao<T, Device>::tabulate()
                                  this->n_rgrid_[it][ic],
                                  this->rgrid_[it][ic].data(),
                                  this->rvalue_[it][ic].data(),
-                                 GlobalV::NQX,
+                                 PARAM.globalv.nqx,
                                  qgrid.data(),
                                  ovlp_flzjlq_q.data());
-                for (int iq = 0; iq < GlobalV::NQX; iq++)
+                for (int iq = 0; iq < PARAM.globalv.nqx; iq++)
                 {
                     this->ovlp_flzjlq_(it, ic, iq) = ovlp_flzjlq_q[iq];
                 }
@@ -408,7 +408,7 @@ void psi_initializer_nao<T, Device>::proj_ao_onkG(int ik)
                             this->ovlp_flzjlq_, // the spherical bessel transform of numerical orbital function
                             it,
                             ic, // each (it, ic)-pair defines a unique numerical orbital function
-                            GlobalV::NQX,
+                            PARAM.globalv.nqx,
                             PARAM.globalv.dq,                          // grid number and grid spacing of q
                             gk[ig].norm() * this->p_ucell_->tpiba // norm of (G+k) = K
                         );

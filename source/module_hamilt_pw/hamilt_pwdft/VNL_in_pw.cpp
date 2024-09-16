@@ -80,7 +80,7 @@ void pseudopot_cell_vnl::release_memory()
 
 //-----------------------------------
 // setup lmaxkb, nhm, nkb, lmaxq
-// allocate vkb, GlobalV::NQX, tab, tab_at
+// allocate vkb, PARAM.globalv.nqx, tab, tab_at
 //-----------------------------------
 void pseudopot_cell_vnl::init(const int ntype,
                               Structure_Factor* psf_in,
@@ -228,7 +228,7 @@ void pseudopot_cell_vnl::init(const int ntype,
     }
 
     // this->nqx = 10000;		// calculted in allocate_nlpot.f90
-    GlobalV::NQX = static_cast<int>((sqrt(PARAM.inp.ecutwfc) / PARAM.globalv.dq + 4.0) * cell_factor);
+    PARAM.globalv.nqx = static_cast<int>((sqrt(PARAM.inp.ecutwfc) / PARAM.globalv.dq + 4.0) * cell_factor);
     GlobalV::NQXQ = static_cast<int>((sqrt(PARAM.inp.ecutrho) / PARAM.globalv.dq + 4.0) * cell_factor);
     // GlobalV::NQXQ = static_cast<int>(((sqrt(INPUT.ecutrho) + qnorm) / PARAM.globalv.dq + 4.0) * cell_factor);
 
@@ -240,13 +240,13 @@ void pseudopot_cell_vnl::init(const int ntype,
         // nbetam: max number of beta functions
         if (GlobalV::NSPIN != 4)
         {
-            this->tab.create(ntype, nbetam, GlobalV::NQX);
-            ModuleBase::Memory::record("VNL::tab", ntype * nbetam * GlobalV::NQX * sizeof(double));
+            this->tab.create(ntype, nbetam, PARAM.globalv.nqx);
+            ModuleBase::Memory::record("VNL::tab", ntype * nbetam * PARAM.globalv.nqx * sizeof(double));
         }
         else
         {
-            this->tab.create(ntype, nbrx_nc, GlobalV::NQX);
-            ModuleBase::Memory::record("VNL::tab", ntype * nbrx_nc * GlobalV::NQX * sizeof(double));
+            this->tab.create(ntype, nbrx_nc, PARAM.globalv.nqx);
+            ModuleBase::Memory::record("VNL::tab", ntype * nbrx_nc * PARAM.globalv.nqx * sizeof(double));
         }
 
         if (lmaxq > 0)
@@ -263,13 +263,13 @@ void pseudopot_cell_vnl::init(const int ntype,
         // nwfcm : max number of atomic wavefunctions per atom
         if (GlobalV::NSPIN != 4)
         {
-            this->tab_at.create(ntype, nwfcm, GlobalV::NQX);
-            ModuleBase::Memory::record("VNL::tab_at", ntype * nwfcm * GlobalV::NQX * sizeof(double));
+            this->tab_at.create(ntype, nwfcm, PARAM.globalv.nqx);
+            ModuleBase::Memory::record("VNL::tab_at", ntype * nwfcm * PARAM.globalv.nqx * sizeof(double));
         }
         else
         {
-            this->tab_at.create(ntype, nchix_nc, GlobalV::NQX);
-            ModuleBase::Memory::record("VNL::tab_at", ntype * nchix_nc * GlobalV::NQX * sizeof(double));
+            this->tab_at.create(ntype, nchix_nc, PARAM.globalv.nqx);
+            ModuleBase::Memory::record("VNL::tab_at", ntype * nchix_nc * PARAM.globalv.nqx * sizeof(double));
         }
     }
     if (GlobalV::device_flag == "gpu")
@@ -366,7 +366,7 @@ void pseudopot_cell_vnl::getvnl(const int& ik, ModuleBase::ComplexMatrix& vkb_in
                 vq[ig] = ModuleBase::PolyInt::Polynomial_Interpolation(this->tab,
                                                                        it,
                                                                        nb,
-                                                                       GlobalV::NQX,
+                                                                       PARAM.globalv.nqx,
                                                                        PARAM.globalv.dq,
                                                                        gnorm);
             }
@@ -846,7 +846,7 @@ void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_
         for (int ib = 0; ib < nbeta; ib++)
         {
             const int l = cell.atoms[it].ncpp.lll[ib];
-            for (int iq = 0; iq < GlobalV::NQX; iq++)
+            for (int iq = 0; iq < PARAM.globalv.nqx; iq++)
             {
                 const double q = iq * PARAM.globalv.dq;
                 ModuleBase::Sphbes::Spherical_Bessel(kkbeta, cell.atoms[it].ncpp.r.data(), q, l, jl);
@@ -1248,7 +1248,7 @@ double pseudopot_cell_vnl::CG(int l1, int m1, int l2, int m2, int L, int M) // p
 // 				{
 // 					const double gnorm = gk[ig].norm() * GlobalC::ucell.tpiba;
 // 					vq [ig] = ModuleBase::PolyInt::Polynomial_Interpolation(
-// 							this->tab_alpha, it, nb, L, GlobalV::NQX, PARAM.globalv.dq, gnorm);
+// 							this->tab_alpha, it, nb, L, PARAM.globalv.nqx, PARAM.globalv.dq, gnorm);
 
 // 					for (int M=0; M<2*L+1; M++)
 // 					{
@@ -1321,7 +1321,7 @@ void pseudopot_cell_vnl::init_vnl_alpha() // pengfei Li 2018-3-23
     const int nbrx = 10;
 
     const double pref = ModuleBase::FOUR_PI / sqrt(GlobalC::ucell.omega);
-    this->tab_alpha.create(GlobalC::ucell.ntype, nbrx, lmaxkb + 2, GlobalV::NQX);
+    this->tab_alpha.create(GlobalC::ucell.ntype, nbrx, lmaxkb + 2, PARAM.globalv.nqx);
     this->tab_alpha.zero_out();
     GlobalV::ofs_running << "\n Init Non-Local PseudoPotential table( including L index) : ";
     for (int it = 0; it < GlobalC::ucell.ntype; it++)
@@ -1343,7 +1343,7 @@ void pseudopot_cell_vnl::init_vnl_alpha() // pengfei Li 2018-3-23
         {
             for (int L = 0; L <= lmaxkb + 1; L++)
             {
-                for (int iq = 0; iq < GlobalV::NQX; iq++)
+                for (int iq = 0; iq < PARAM.globalv.nqx; iq++)
                 {
                     const double q = iq * PARAM.globalv.dq;
                     ModuleBase::Sphbes::Spherical_Bessel(kkbeta, GlobalC::ucell.atoms[it].ncpp.r.data(), q, L, jl);

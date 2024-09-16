@@ -132,9 +132,9 @@ void Wavefunc_in_pw::make_table_q(
 						 }
 					}
 				}
-				double* table = new double[GlobalV::NQX];
+				double* table = new double[PARAM.globalv.nqx];
 				Wavefunc_in_pw::integral(meshr, psir, radial, rab, L, table);
-				for(int iq=0; iq<GlobalV::NQX; iq++)
+				for(int iq=0; iq<PARAM.globalv.nqx; iq++)
 				{
 					//double energy_q = pow(iq * PARAM.globalv.dq,2);
 					table_local(it,ic,iq) = table[iq];//* Wavefunc_in_pw::smearing(energy_q,150,0.666666);
@@ -157,7 +157,7 @@ void Wavefunc_in_pw::make_table_q(
 			std::stringstream ss;
 			ss << PARAM.globalv.global_out_dir << GlobalC::ucell.atoms[it].label << "/LOCAL_G.dat";
 			std::ofstream ofs(ss.str().c_str());
-			for(int iq=0; iq<GlobalV::NQX; iq++)
+			for(int iq=0; iq<PARAM.globalv.nqx; iq++)
 			{
 				int ic=0;
 				double energy_q = pow((double)iq*PARAM.globalv.dq,2);
@@ -229,7 +229,7 @@ const double *rab, const int &l, double* table)
 
 	double *aux = new double[meshr];
 	double *vchi = new double[meshr];
-	for (int iq=0; iq<GlobalV::NQX; iq++)
+	for (int iq=0; iq<PARAM.globalv.nqx; iq++)
 	{
 		const double q = PARAM.globalv.dq * iq;
 		ModuleBase::Sphbes::Spherical_Bessel(meshr, r, q, l, aux);
@@ -289,7 +289,7 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int& ik,
 					for(int ig=0; ig<npw; ig++)
 					{
 						flq[ig] = ModuleBase::PolyInt::Polynomial_Interpolation(table_local,
-						it, ic, GlobalV::NQX, PARAM.globalv.dq, gk[ig].norm() * GlobalC::ucell.tpiba );
+						it, ic, PARAM.globalv.nqx, PARAM.globalv.dq, gk[ig].norm() * GlobalC::ucell.tpiba );
 					}
 
 					if(GlobalV::NSPIN==4)
@@ -347,7 +347,7 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int& ik,
 										{//Average the two functions
 											chiaux[ig] =  L *
 												ModuleBase::PolyInt::Polynomial_Interpolation(table_local,
-												it, ic, GlobalV::NQX, PARAM.globalv.dq, gk[ig].norm() * GlobalC::ucell.tpiba );
+												it, ic, PARAM.globalv.nqx, PARAM.globalv.dq, gk[ig].norm() * GlobalC::ucell.tpiba );
 
 											chiaux[ig] += flq[ig] * (L+1.0) ;
 											chiaux[ig] *= 1/(2.0*L+1.0);

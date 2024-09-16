@@ -643,8 +643,8 @@ void Exx_Lip<T, Device>::write_q_pack() const
 //                              q_pack->kv_ptr->ngk.data(),
 //                              wfc_basis->npwk_max); // mohan update 2021-02-25
 //     //	q_pack->wf_ptr->init(q_pack->kv_ptr->get_nks(),q_pack->kv_ptr,ucell_ptr,old_pwptr,&ppcell,&GlobalC::ORB,&hm,&Pkpoints);
-//     q_pack->wf_ptr->table_local.create(GlobalC::ucell.ntype, GlobalC::ucell.nmax_total, GlobalV::NQX);
-// //	q_pack->wf_ptr->table_local.create(q_pack->wf_ptr->ucell_ptr->ntype, q_pack->wf_ptr->ucell_ptr->nmax_total, GlobalV::NQX);
+//     q_pack->wf_ptr->table_local.create(GlobalC::ucell.ntype, GlobalC::ucell.nmax_total, PARAM.globalv.nqx);
+// //	q_pack->wf_ptr->table_local.create(q_pack->wf_ptr->ucell_ptr->ntype, q_pack->wf_ptr->ucell_ptr->nmax_total, PARAM.globalv.nqx);
 // #ifdef __LCAO
 // 	Wavefunc_in_pw::make_table_q(GlobalC::ORB.orbital_file, q_pack->wf_ptr->table_local);
 // //	Wavefunc_in_pw::make_table_q(q_pack->wf_ptr->ORB_ptr->orbital_file, q_pack->wf_ptr->table_local, q_pack->wf_ptr);
