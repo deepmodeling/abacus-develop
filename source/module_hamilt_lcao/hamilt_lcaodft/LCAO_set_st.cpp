@@ -311,6 +311,7 @@ void single_overlap(const LCAO_Orbitals& orb,
 void build_ST_new(ForceStressArrays& fsr,
                   const char& dtype,
                   const bool& calc_deri,
+                  const bool& cal_stress,
                   const UnitCell& ucell,
                   const LCAO_Orbitals& orb,
                   const Parallel_Orbitals& pv,
@@ -325,7 +326,6 @@ void build_ST_new(ForceStressArrays& fsr,
 
     const int nspin = GlobalV::NSPIN;
     const int npol = GlobalV::NPOL;
-    const bool cal_stress = GlobalV::CAL_STRESS;
     const bool gamma_only_local = PARAM.globalv.gamma_only_local;
 
     int total_nnr = 0;

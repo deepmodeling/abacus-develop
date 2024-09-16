@@ -29,34 +29,19 @@ void sparse_format::cal_dH(const Parallel_Orbitals& pv,
     ModuleBase::GlobalFunc::ZEROS(fsr_dh.DHloc_fixedR_z, pv.nloc);
     // cal dT=<phi|kin|dphi> in LCAO
     // cal T + VNL(P1) in LCAO basis
-    if (GlobalV::CAL_STRESS)
-    {
-        GlobalV::CAL_STRESS = false;
-
-        LCAO_domain::build_ST_new(fsr_dh,
-                                  'T',
-                                  true,
-                                  GlobalC::ucell,
-                                  orb,
-                                  pv,
-                                  two_center_bundle,
-                                  &GlobalC::GridD,
-                                  nullptr); // delete unused parameter lm.Hloc_fixedR
-
-        GlobalV::CAL_STRESS = true;
-    }
-    else
-    {
-        LCAO_domain::build_ST_new(fsr_dh,
-                                  'T',
-                                  true,
-                                  GlobalC::ucell,
-                                  orb,
-                                  pv,
-                                  two_center_bundle,
-                                  &GlobalC::GridD,
-                                  nullptr); // delete unused parameter lm.Hloc_fixedR
-    }
+    const bool cal_deri = true;
+    const bool cal_stress = false;
+    LCAO_domain::build_ST_new(fsr_dh,
+                                'T',
+                                cal_deri,
+                                cal_stress,
+                                GlobalC::ucell,
+                                orb,
+                                pv,
+                                two_center_bundle,
+                                &GlobalC::GridD,
+                                nullptr,
+                                false); // delete unused parameter lm.Hloc_fixedR
 
     LCAO_domain::build_Nonlocal_mu_new(pv,
                                        fsr_dh,
