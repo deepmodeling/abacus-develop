@@ -166,7 +166,7 @@ void Set_GlobalV_Default()
 {
     PARAM.sys.device_flag = "cpu";
     PARAM.input.precision = "double";
-    GlobalV::DOMAG = false;
+    PARAM.sys.domag = false;
     GlobalV::DOMAG_Z = false;
     // Base class dependent
     GlobalV::NSPIN = 1;

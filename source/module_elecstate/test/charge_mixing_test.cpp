@@ -430,12 +430,12 @@ TEST_F(ChargeMixingTest, InnerDotRecipHartreeTest)
         drhog2[i] = std::complex<double>(1.0, 1.0);
     }
 
-    GlobalV::DOMAG = false;
+    PARAM.sys.domag = false;
     GlobalV::DOMAG_Z = false;
     inner = CMtest.inner_product_recip_hartree(drhog1.data(), drhog2.data());
     EXPECT_NEAR(inner, 28260.091995611871, 1e-8);
     PARAM.sys.gamma_only_pw= true;
-    GlobalV::DOMAG = true;
+    PARAM.sys.domag = true;
     GlobalV::DOMAG_Z = true;
     inner = CMtest.inner_product_recip_hartree(drhog1.data(), drhog2.data());
     EXPECT_NEAR(inner, 110668.61166927818, 1e-8);
@@ -526,12 +526,12 @@ TEST_F(ChargeMixingTest, InnerDotRecipRhoTest)
         drhog2[i] = std::complex<double>(1.0, 1.0);
     }
 
-    GlobalV::DOMAG = false;
+    PARAM.sys.domag = false;
     GlobalV::DOMAG_Z = false;
     inner = CMtest.inner_product_recip_rho(drhog1.data(), drhog2.data());
     EXPECT_NEAR(inner, 28260.091995611871, 1e-8);
     PARAM.sys.gamma_only_pw= true;
-    GlobalV::DOMAG = true;
+    PARAM.sys.domag = true;
     GlobalV::DOMAG_Z = true;
     inner = CMtest.inner_product_recip_rho(drhog1.data(), drhog2.data());
     EXPECT_NEAR(inner, 110668.61166927818, 1e-8);
