@@ -54,6 +54,9 @@ void ReadInput::set_globalv(Parameter& para)
                                         "output of r(R)/H(R)/S(R)/T(R)/dH(R)/DM(R) is not "
                                         "available for gamma only calculations");
         }
+
+        para.sys.nqx=static_cast<int>((sqrt(para.inp.ecutwfc) / para.sys.dq + 4.0) * para.inp.cell_factor); 
+        para.sys.nqxq=static_cast<int>((sqrt(para.inp.ecutrho) / para.sys.dq + 4.0) * para.inp.cell_factor);
     }
 }
 
@@ -80,5 +83,8 @@ void ReadInput::set_globalv_bcast()
 
     add_bool_bcast(sys.double_grid);
     add_double_bcast(sys.uramping);
+    add_double_bcast(sys.dq);
+    add_int_bcast(sys.nqx);
+    add_int_bcast(sys.nqxq);
 }
 } // namespace ModuleIO
