@@ -301,7 +301,6 @@ void Input_Conv::Convert()
         // magnetization
         GlobalV::DOMAG = false;
         GlobalV::DOMAG_Z = true;
-        GlobalV::LSPINORB = PARAM.inp.lspinorb;
         if (PARAM.globalv.gamma_only_local)
         {
             ModuleBase::WARNING_QUIT("input_conv",
@@ -309,7 +308,6 @@ void Input_Conv::Convert()
                                      "not support gamma only calculation");
         }
     } else {
-        GlobalV::LSPINORB = false;
         GlobalV::DOMAG = false;
         GlobalV::DOMAG_Z = false;
     }
@@ -481,7 +479,7 @@ void Input_Conv::Convert()
     }
     // In these case, inversion symmetry is also not allowed, symmetry should be
     // reset to -1
-    if (GlobalV::LSPINORB)
+    if (PARAM.inp.lspinorb)
     {
         ModuleSymmetry::Symmetry::symm_flag = -1;
     }
