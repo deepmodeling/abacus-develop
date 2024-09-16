@@ -244,8 +244,6 @@ void Input_Conv::Convert()
     Ions_Move_Basic::out_stru = PARAM.inp.out_stru; // mohan add 2012-03-23
     Lattice_Change_Basic::fixed_axes = PARAM.inp.fixed_axes;
 
-    PARAM.inp.cal_stress = PARAM.inp.cal_stress;
-
 
     GlobalV::RELAX_METHOD = PARAM.inp.relax_method;
 
