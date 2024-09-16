@@ -43,7 +43,7 @@ cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
         -DENABLE_LIBXC=ON \
         -DUSE_OPENMP=ON \
         -DUSE_ELPA=ON \
-        -DENABLE_RAPIDJSON=ON \
+        -DENABLE_RAPIDJSON=OFF \
 #       -DENABLE_DEEPKS=1 \
 #       -DTorch_DIR=$LIBTORCH \
 #       -Dlibnpy_INCLUDE_DIR=$LIBNPY \
@@ -64,4 +64,13 @@ cat << EOF > "${TOOL}/abacus_env.sh"
 #!/bin/bash
 source $INSTALL_DIR/setup
 export PATH="${PREFIX}/bin":\${PATH}
+EOF
+
+# generate information
+cat << EOF
+========================== usage =========================
+Done!
+To use the installed ABACUS version
+You need to source $(pwd)/abacus_env.sh first !
+"""
 EOF
