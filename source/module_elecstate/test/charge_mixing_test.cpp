@@ -431,12 +431,12 @@ TEST_F(ChargeMixingTest, InnerDotRecipHartreeTest)
     }
 
     PARAM.sys.domag = false;
-    GlobalV::DOMAG_Z = false;
+    PARAM.sys.domag_z = false;
     inner = CMtest.inner_product_recip_hartree(drhog1.data(), drhog2.data());
     EXPECT_NEAR(inner, 28260.091995611871, 1e-8);
     PARAM.sys.gamma_only_pw= true;
     PARAM.sys.domag = true;
-    GlobalV::DOMAG_Z = true;
+    PARAM.sys.domag_z = true;
     inner = CMtest.inner_product_recip_hartree(drhog1.data(), drhog2.data());
     EXPECT_NEAR(inner, 110668.61166927818, 1e-8);
 
@@ -527,12 +527,12 @@ TEST_F(ChargeMixingTest, InnerDotRecipRhoTest)
     }
 
     PARAM.sys.domag = false;
-    GlobalV::DOMAG_Z = false;
+    PARAM.sys.domag_z = false;
     inner = CMtest.inner_product_recip_rho(drhog1.data(), drhog2.data());
     EXPECT_NEAR(inner, 28260.091995611871, 1e-8);
     PARAM.sys.gamma_only_pw= true;
     PARAM.sys.domag = true;
-    GlobalV::DOMAG_Z = true;
+    PARAM.sys.domag_z = true;
     inner = CMtest.inner_product_recip_rho(drhog1.data(), drhog2.data());
     EXPECT_NEAR(inner, 110668.61166927818, 1e-8);
 }
@@ -750,7 +750,7 @@ TEST_F(ChargeMixingTest, MixRhoTest)
      PARAM.sys.double_grid = false;
     charge.set_rhopw(&pw_basis);
     const int nspin = GlobalV::NSPIN = 1;
-    GlobalV::DOMAG_Z = false;
+    PARAM.sys.domag_z = false;
     FUNC_TYPE = 3;
     PARAM.input.mixing_beta = 0.7;
     PARAM.input.mixing_ndim = 1;
@@ -884,7 +884,7 @@ TEST_F(ChargeMixingTest, MixDoubleGridRhoTest)
      PARAM.sys.double_grid = true;
     charge.set_rhopw(&pw_dbasis);
     const int nspin = GlobalV::NSPIN = 1;
-    GlobalV::DOMAG_Z = false;
+    PARAM.sys.domag_z = false;
     FUNC_TYPE = 3;
     PARAM.input.mixing_beta = 0.7;
     PARAM.input.mixing_ndim = 1;
