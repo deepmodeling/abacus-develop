@@ -229,8 +229,8 @@ void pseudopot_cell_vnl::init(const int ntype,
 
     // this->nqx = 10000;		// calculted in allocate_nlpot.f90
     PARAM.globalv.nqx = static_cast<int>((sqrt(PARAM.inp.ecutwfc) / PARAM.globalv.dq + 4.0) * cell_factor);
-    GlobalV::NQXQ = static_cast<int>((sqrt(PARAM.inp.ecutrho) / PARAM.globalv.dq + 4.0) * cell_factor);
-    // GlobalV::NQXQ = static_cast<int>(((sqrt(INPUT.ecutrho) + qnorm) / PARAM.globalv.dq + 4.0) * cell_factor);
+    PARAM.globalv.nqxq = static_cast<int>((sqrt(PARAM.inp.ecutrho) / PARAM.globalv.dq + 4.0) * cell_factor);
+    // PARAM.globalv.nqxq = static_cast<int>(((sqrt(INPUT.ecutrho) + qnorm) / PARAM.globalv.dq + 4.0) * cell_factor);
 
     // mohan update 2021-02-22
     // liuyu update 2023-09-28
@@ -251,7 +251,7 @@ void pseudopot_cell_vnl::init(const int ntype,
 
         if (lmaxq > 0)
         {
-            this->qrad.create(ntype, lmaxq, nbetam * (nbetam + 1) / 2, GlobalV::NQXQ);
+            this->qrad.create(ntype, lmaxq, nbetam * (nbetam + 1) / 2, PARAM.globalv.nqxq);
         }
     }
 
@@ -925,7 +925,7 @@ void pseudopot_cell_vnl::compute_qrad(UnitCell& cell)
 
             for (int l = 0; l < upf->nqlc; l++)
             {
-                for (int iq = 0; iq < GlobalV::NQXQ; iq++)
+                for (int iq = 0; iq < PARAM.globalv.nqxq; iq++)
                 {
                     const double q = iq * PARAM.globalv.dq;
                     // here we compute the spherical bessel function for each q_i
@@ -1036,7 +1036,7 @@ void pseudopot_cell_vnl::radial_fft_q(const int ng,
                                                                      itype,
                                                                      l,
                                                                      ijv,
-                                                                     GlobalV::NQXQ,
+                                                                     PARAM.globalv.nqxq,
                                                                      PARAM.globalv.dq,
                                                                      qnorm[ig]);
                 qm1 = qnorm[ig];
@@ -1127,7 +1127,7 @@ void pseudopot_cell_vnl::radial_fft_q(Device* ctx,
                                                                      itype,
                                                                      l,
                                                                      ijv,
-                                                                     GlobalV::NQXQ,
+                                                                     PARAM.globalv.nqxq,
                                                                      PARAM.globalv.dq,
                                                                      qnorm_double[ig]);
                 qm1 = qnorm_double[ig];
