@@ -299,8 +299,6 @@ void Input_Conv::Convert()
         // wavefunctions are spinors with 2 components
         // set the domag variable to make a spin-orbit calculation with zero
         // magnetization
-        GlobalV::DOMAG = false;
-        GlobalV::DOMAG_Z = true;
         if (PARAM.globalv.gamma_only_local)
         {
             ModuleBase::WARNING_QUIT("input_conv",
@@ -308,8 +306,6 @@ void Input_Conv::Convert()
                                      "not support gamma only calculation");
         }
     } else {
-        GlobalV::DOMAG = false;
-        GlobalV::DOMAG_Z = false;
     }
 
     //----------------------------------------------------------

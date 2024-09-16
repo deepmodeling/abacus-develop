@@ -579,9 +579,6 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log) {
 #ifdef __MPI
     Parallel_Common::bcast_bool(ok);
     Parallel_Common::bcast_bool(ok2);
-    if (GlobalV::NSPIN == 4) {
-        Parallel_Common::bcast_bool(GlobalV::DOMAG_Z);
-    }
 #endif
     if (!ok) {
         ModuleBase::WARNING_QUIT(
