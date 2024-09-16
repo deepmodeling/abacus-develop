@@ -130,7 +130,7 @@ class MockElecState : public ElecState
         GlobalV::NSPIN = 1;
         GlobalV::nelec = 10.0;
         GlobalV::nupdown = 0.0;
-        GlobalV::TWO_EFERMI = false;
+        PARAM.sys.two_fermi = false;
         GlobalV::NBANDS = 6;
         GlobalV::NLOCAL = 6;
         PARAM.input.esolver_type = "ksdft";
@@ -176,7 +176,7 @@ TEST_F(ElecStateTest, Constructor)
     elecstate::ElecState* elecstate_new = new elecstate::ElecState(charge, rhopw, bigpw);
     EXPECT_EQ(elecstate_new->charge, charge);
     EXPECT_EQ(elecstate_new->bigpw, bigpw);
-    EXPECT_EQ(elecstate_new->eferm.two_efermi, GlobalV::TWO_EFERMI);
+    EXPECT_EQ(elecstate_new->eferm.two_efermi, PARAM.sys.two_fermi);
     delete elecstate_new;
     delete bigpw;
     delete rhopw;
@@ -534,7 +534,7 @@ TEST_F(ElecStateTest, CalculateWeightsIWeights)
 TEST_F(ElecStateTest, CalculateWeightsIWeightsTwoFermi)
 {
     // get nelec_spin
-    GlobalV::TWO_EFERMI = true;
+    PARAM.sys.two_fermi = true;
     GlobalV::NSPIN = 2;
     elecstate->init_nelec_spin();
     EXPECT_EQ(elecstate->nelec_spin[0], 5.0);
@@ -641,7 +641,7 @@ TEST_F(ElecStateTest, CalculateWeightsGWeightsTwoFermi)
 {
     Occupy::use_gaussian_broadening = true;
     // get nelec_spin
-    GlobalV::TWO_EFERMI = true;
+    PARAM.sys.two_fermi = true;
     GlobalV::NSPIN = 2;
     elecstate->init_nelec_spin();
     EXPECT_EQ(elecstate->nelec_spin[0], 5.0);

@@ -172,7 +172,7 @@ void Set_GlobalV_Default()
     GlobalV::NSPIN = 1;
     GlobalV::nelec = 10.0;
     GlobalV::nupdown = 0.0;
-    GlobalV::TWO_EFERMI = false;
+    PARAM.sys.two_fermi = false;
     GlobalV::NBANDS = 6;
     GlobalV::NLOCAL = 6;
     PARAM.input.esolver_type = "ksdft";

@@ -2,6 +2,9 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include "module_elecstate/elecstate_getters.h"
 
 /************************************************
@@ -71,7 +74,7 @@ TEST_F(MagnetismTest, JudgeParallel)
 TEST_F(MagnetismTest, ComputeMagnetizationS2)
 {
                   GlobalV::NSPIN = 2;
-                  GlobalV::TWO_EFERMI = false;
+                  PARAM.sys.two_fermi = false;
                   GlobalV::nelec = 10.0;
 
                   Charge* chr = new Charge;
