@@ -244,7 +244,7 @@ void Input_Conv::Convert()
     Ions_Move_Basic::out_stru = PARAM.inp.out_stru; // mohan add 2012-03-23
     Lattice_Change_Basic::fixed_axes = PARAM.inp.fixed_axes;
 
-    GlobalV::CAL_STRESS = PARAM.inp.cal_stress;
+    PARAM.inp.cal_stress = PARAM.inp.cal_stress;
 
 
     GlobalV::RELAX_METHOD = PARAM.inp.relax_method;
@@ -576,7 +576,7 @@ void Input_Conv::Convert()
         {
             ModuleBase::WARNING_QUIT("Input_conv", "force is required in generating deepks unittest");
         }
-        if (GlobalV::CAL_STRESS != 1)
+        if (PARAM.inp.cal_stress != 1)
         {
             ModuleBase::WARNING_QUIT("Input_conv", "stress is required in generating deepks unittest");
         }

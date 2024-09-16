@@ -58,7 +58,7 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
     ModuleBase::OMP_PARALLEL(init_DSloc_Rxyz);
     ModuleBase::Memory::record("Force::dS_K", sizeof(double) * nnr * 3);
 
-    if (GlobalV::CAL_STRESS)
+    if (PARAM.inp.cal_stress)
     {
         fsr.DH_r = new double[3 * nnr];
         fsr.stvnl11 = new double[nnr];
@@ -182,7 +182,7 @@ void Force_LCAO<std::complex<double>>::finish_ftable(ForceStressArrays& fsr)
     delete[] fsr.DHloc_fixedR_y;
     delete[] fsr.DHloc_fixedR_z;
 
-    if (GlobalV::CAL_STRESS)
+    if (PARAM.inp.cal_stress)
     {
         delete[] fsr.DH_r;
         delete[] fsr.stvnl11;

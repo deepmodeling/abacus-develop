@@ -84,7 +84,7 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, const Paramet
 
         if ((mdrun->step_ + mdrun->step_rst_) % param_in.mdp.md_dumpfreq == 0)
         {
-            mdrun->print_md(GlobalV::ofs_running, GlobalV::CAL_STRESS);
+            mdrun->print_md(GlobalV::ofs_running, PARAM.inp.cal_stress);
 
             MD_func::dump_info(mdrun->step_ + mdrun->step_rst_,
                                PARAM.globalv.global_out_dir,

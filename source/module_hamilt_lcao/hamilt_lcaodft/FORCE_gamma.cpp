@@ -41,7 +41,7 @@ void Force_LCAO<double>::allocate(const Parallel_Orbitals& pv,
     ModuleBase::GlobalFunc::ZEROS(fsr.DSloc_z, pv.nloc);
     ModuleBase::Memory::record("Force::dS_GO", sizeof(double) * pv.nloc * 3);
     // allocate stress part in gamma_only-line, added by zhengdy-stress
-    if (GlobalV::CAL_STRESS)
+    if (PARAM.inp.cal_stress)
     {
         fsr.DSloc_11 = new double[pv.nloc];
         fsr.DSloc_12 = new double[pv.nloc];
@@ -135,7 +135,7 @@ void Force_LCAO<double>::finish_ftable(ForceStressArrays& fsr)
     delete[] fsr.DHloc_fixed_y;
     delete[] fsr.DHloc_fixed_z;
 
-    if (GlobalV::CAL_STRESS) // added by zhengdy-stress
+    if (PARAM.inp.cal_stress) // added by zhengdy-stress
     {
         delete[] fsr.DSloc_11;
         delete[] fsr.DSloc_12;

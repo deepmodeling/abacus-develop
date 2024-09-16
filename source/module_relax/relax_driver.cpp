@@ -69,7 +69,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver)
                 p_esolver->cal_force(force);
             }
             // calculate and gather all parts of stress
-            if (GlobalV::CAL_STRESS)
+            if (PARAM.inp.cal_stress)
             {
                 p_esolver->cal_stress(stress);
             }
