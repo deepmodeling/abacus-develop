@@ -32,7 +32,7 @@ struct elecstate_pw_op {
   ///
   /// Input Parameters
   /// @param ctx - which device this function runs on
-  /// @param DOMAG - GlobalV::DOMAG
+  /// @param DOMAG - PARAM.globalv.domag
   /// @param DOMAG_Z - GlobalV::DOMAG_Z
   /// @param nrxx - number of planewaves
   /// @param weight - input constant

@@ -1343,7 +1343,7 @@ double Charge_Mixing::inner_product_recip_rho(std::complex<double>* rho1, std::c
     }
     case 4:
         // non-collinear spin, added by zhengdy
-        if (!GlobalV::DOMAG && !GlobalV::DOMAG_Z)
+        if (!PARAM.globalv.domag && !GlobalV::DOMAG_Z)
             sum += part_of_noncolin();
         else
         {
@@ -1500,7 +1500,7 @@ double Charge_Mixing::inner_product_recip_hartree(std::complex<double>* rhog1, s
     }
     else if (GlobalV::NSPIN==4)
     {
-        if (!GlobalV::DOMAG && !GlobalV::DOMAG_Z)
+        if (!PARAM.globalv.domag && !GlobalV::DOMAG_Z)
         {
             sum += part_of_rho();
         }

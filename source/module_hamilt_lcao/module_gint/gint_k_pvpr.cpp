@@ -281,7 +281,7 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<std::complex<double>>* hR, const U
                                 }
                                 tmp_pointer += 2 * atom2->nw;
                             }
-                            if (GlobalV::DOMAG)
+                            if (PARAM.globalv.domag)
                             {
                                 tmp_pointer = tmp_matrix->get_pointer();
                                 for (int iw = 0; iw < atom1->nw; iw++)

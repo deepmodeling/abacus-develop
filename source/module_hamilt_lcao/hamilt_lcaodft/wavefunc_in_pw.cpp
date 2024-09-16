@@ -301,7 +301,7 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int& ik,
 							if(GlobalC::ucell.atoms[it].ncpp.has_so)
 							{
 								const double j = std::abs(double(L+is_N) - 0.5);
-								if (!(GlobalV::DOMAG||GlobalV::DOMAG_Z))
+								if (!(PARAM.globalv.domag||GlobalV::DOMAG_Z))
 								{//atomic_wfc_so
 									for(int m=0; m<2*L+1; m++)
 									{
@@ -388,7 +388,7 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int& ik,
                                         iwall++;
                                     }
 									iwall += 2*L +1;
-								} // end else INPUT.starting_spin_angle || !GlobalV::DOMAG
+								} // end else INPUT.starting_spin_angle || !PARAM.globalv.domag
 							} // end if GlobalC::ucell.atoms[it].has_so
 							else
 							{//atomic_wfc_nc
