@@ -58,12 +58,14 @@ TEST_F(InputTest, Item_test)
         EXPECT_EQ(param.sys.gamma_only_local, 0);
 
         param.input.nspin = 4;
+        param.input.noncolin = false;
         readinput.set_globalv(param);
         EXPECT_EQ(param.sys.domag, 1);
         EXPECT_EQ(param.sys.domag_z, 1);
         EXPECT_EQ(param.sys.npol, 2);
 
         param.input.nspin = 1;
+        param.input.noncolin = false;
         readinput.set_globalv(param);
         EXPECT_EQ(param.sys.domag, 0);
         EXPECT_EQ(param.sys.domag_z, 0);

@@ -82,7 +82,6 @@ std::ofstream ofs_device; // output device info
 //----------------------------------------------------------
 
 // added by zhengdy-soc
-bool LSPINORB = false;
 bool DOMAG = false;
 bool DOMAG_Z = false;
 

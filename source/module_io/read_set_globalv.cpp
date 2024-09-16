@@ -59,7 +59,11 @@ void ReadInput::set_globalv(Parameter& para)
             GlobalV::ofs_warning << " WARNING : NSPIN must be 1, 2 or 4" << std::endl;
             break;
         }
-        
+        if (para.input.noncolin)
+        {
+            para.sys.domag = true;
+            para.sys.domag_z = false;
+        }
         /// set the device_flag
         if (para.input.device == "cpu") 
         {
