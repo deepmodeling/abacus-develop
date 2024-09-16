@@ -138,7 +138,7 @@ void WFInit<T, Device>::make_table(const int nks, Structure_Factor* p_sf)
 {
     if (this->use_psiinitializer) // new initialization method, used in KSDFT and LCAO_IN_PW calculation
     {
-        // re-tabulate because GlobalV::DQ may change due to the change of atomic positions and cell parameters
+        // re-tabulate because PARAM.globalv.dq may change due to the change of atomic positions and cell parameters
         // for nao, we recalculate the overlap matrix between flz and jlq
         // for atomic, we recalculate the overlap matrix between pswfc and jlq
         // for psig is not read-only, its value will be overwritten in initialize_psi(), dont need delete and

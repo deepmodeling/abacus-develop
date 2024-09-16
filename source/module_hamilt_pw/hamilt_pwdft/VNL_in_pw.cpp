@@ -228,9 +228,9 @@ void pseudopot_cell_vnl::init(const int ntype,
     }
 
     // this->nqx = 10000;		// calculted in allocate_nlpot.f90
-    GlobalV::NQX = static_cast<int>((sqrt(PARAM.inp.ecutwfc) / GlobalV::DQ + 4.0) * cell_factor);
-    GlobalV::NQXQ = static_cast<int>((sqrt(PARAM.inp.ecutrho) / GlobalV::DQ + 4.0) * cell_factor);
-    // GlobalV::NQXQ = static_cast<int>(((sqrt(INPUT.ecutrho) + qnorm) / GlobalV::DQ + 4.0) * cell_factor);
+    GlobalV::NQX = static_cast<int>((sqrt(PARAM.inp.ecutwfc) / PARAM.globalv.dq + 4.0) * cell_factor);
+    GlobalV::NQXQ = static_cast<int>((sqrt(PARAM.inp.ecutrho) / PARAM.globalv.dq + 4.0) * cell_factor);
+    // GlobalV::NQXQ = static_cast<int>(((sqrt(INPUT.ecutrho) + qnorm) / PARAM.globalv.dq + 4.0) * cell_factor);
 
     // mohan update 2021-02-22
     // liuyu update 2023-09-28
@@ -367,7 +367,7 @@ void pseudopot_cell_vnl::getvnl(const int& ik, ModuleBase::ComplexMatrix& vkb_in
                                                                        it,
                                                                        nb,
                                                                        GlobalV::NQX,
-                                                                       GlobalV::DQ,
+                                                                       PARAM.globalv.dq,
                                                                        gnorm);
             }
 
@@ -510,7 +510,7 @@ void pseudopot_cell_vnl::getvnl(Device* ctx, const int& ik, std::complex<FPTYPE>
                  atom_na,
                  atom_nb,
                  atom_nh,
-                 static_cast<FPTYPE>(GlobalV::DQ),
+                 static_cast<FPTYPE>(PARAM.globalv.dq),
                  static_cast<FPTYPE>(GlobalC::ucell.tpiba),
                  static_cast<std::complex<FPTYPE>>(ModuleBase::NEG_IMAG_UNIT),
                  gk,
@@ -848,7 +848,7 @@ void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_
             const int l = cell.atoms[it].ncpp.lll[ib];
             for (int iq = 0; iq < GlobalV::NQX; iq++)
             {
-                const double q = iq * GlobalV::DQ;
+                const double q = iq * PARAM.globalv.dq;
                 ModuleBase::Sphbes::Spherical_Bessel(kkbeta, cell.atoms[it].ncpp.r.data(), q, l, jl);
 
                 for (int ir = 0; ir < kkbeta; ir++)
@@ -927,7 +927,7 @@ void pseudopot_cell_vnl::compute_qrad(UnitCell& cell)
             {
                 for (int iq = 0; iq < GlobalV::NQXQ; iq++)
                 {
-                    const double q = iq * GlobalV::DQ;
+                    const double q = iq * PARAM.globalv.dq;
                     // here we compute the spherical bessel function for each q_i
                     ModuleBase::Sphbes::Spherical_Bessel(kkbeta, upf->r.data(), q, l, besr);
                     for (int nb = 0; nb < nbeta; nb++)
@@ -1037,7 +1037,7 @@ void pseudopot_cell_vnl::radial_fft_q(const int ng,
                                                                      l,
                                                                      ijv,
                                                                      GlobalV::NQXQ,
-                                                                     GlobalV::DQ,
+                                                                     PARAM.globalv.dq,
                                                                      qnorm[ig]);
                 qm1 = qnorm[ig];
             }
@@ -1128,7 +1128,7 @@ void pseudopot_cell_vnl::radial_fft_q(Device* ctx,
                                                                      l,
                                                                      ijv,
                                                                      GlobalV::NQXQ,
-                                                                     GlobalV::DQ,
+                                                                     PARAM.globalv.dq,
                                                                      qnorm_double[ig]);
                 qm1 = qnorm_double[ig];
             }
@@ -1248,7 +1248,7 @@ double pseudopot_cell_vnl::CG(int l1, int m1, int l2, int m2, int L, int M) // p
 // 				{
 // 					const double gnorm = gk[ig].norm() * GlobalC::ucell.tpiba;
 // 					vq [ig] = ModuleBase::PolyInt::Polynomial_Interpolation(
-// 							this->tab_alpha, it, nb, L, GlobalV::NQX, GlobalV::DQ, gnorm);
+// 							this->tab_alpha, it, nb, L, GlobalV::NQX, PARAM.globalv.dq, gnorm);
 
 // 					for (int M=0; M<2*L+1; M++)
 // 					{
@@ -1345,7 +1345,7 @@ void pseudopot_cell_vnl::init_vnl_alpha() // pengfei Li 2018-3-23
             {
                 for (int iq = 0; iq < GlobalV::NQX; iq++)
                 {
-                    const double q = iq * GlobalV::DQ;
+                    const double q = iq * PARAM.globalv.dq;
                     ModuleBase::Sphbes::Spherical_Bessel(kkbeta, GlobalC::ucell.atoms[it].ncpp.r.data(), q, L, jl);
 
                     for (int ir = 0; ir < kkbeta; ir++)

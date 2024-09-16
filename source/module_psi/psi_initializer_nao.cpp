@@ -342,7 +342,7 @@ void psi_initializer_nao<T, Device>::tabulate()
                 std::vector<double> qgrid(GlobalV::NQX);
                 for (int iq = 0; iq < GlobalV::NQX; iq++)
                 {
-                    qgrid[iq] = iq * GlobalV::DQ;
+                    qgrid[iq] = iq * PARAM.globalv.dq;
                 }
                 this->sbt.direct(l,
                                  this->n_rgrid_[it][ic],
@@ -409,7 +409,7 @@ void psi_initializer_nao<T, Device>::proj_ao_onkG(int ik)
                             it,
                             ic, // each (it, ic)-pair defines a unique numerical orbital function
                             GlobalV::NQX,
-                            GlobalV::DQ,                          // grid number and grid spacing of q
+                            PARAM.globalv.dq,                          // grid number and grid spacing of q
                             gk[ig].norm() * this->p_ucell_->tpiba // norm of (G+k) = K
                         );
                     }

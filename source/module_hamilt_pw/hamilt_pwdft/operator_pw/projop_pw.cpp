@@ -70,7 +70,7 @@
  * // the `iproj2l` is the angular momentum for each projector, actually you have used it in `init_proj`, it
  * // is the same as `lproj`
  * // the `nq` is the number of G+k vectors, typically it is always GlobalV::NQX
- * // the `dq` is the step size of G+k vectors, typically it is always GlobalV::DQ
+ * // the `dq` is the step size of G+k vectors, typically it is always PARAM.globalv.dq
  * // the `ik` is the k-point index
  * // the `pw_basis` is the plane wave basis, need ik
  * // the `omega` is the cell volume
@@ -177,7 +177,7 @@ void cal_becp(const std::vector<std::vector<int>>& it2ia,       // level0: for g
               const std::vector<std::vector<double>>& projs,    // level0: projectors indexed by `iproj`
               const std::vector<int>& iproj2l,                  // level0: for given proj index `iproj`, the angular momentum `l`
               const int nq,                                     // level0: GlobalV::NQX
-              const double& dq,                                 // level0: GlobalV::DQ
+              const double& dq,                                 // level0: PARAM.globalv.dq
               const int ik,                                     // level1: the k-point index
               const ModulePW::PW_Basis_K& pw_basis,             // level1: the plane wave basis, need ik
               const double& omega,                              // level1: the cell volume

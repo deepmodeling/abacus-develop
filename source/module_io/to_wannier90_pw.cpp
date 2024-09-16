@@ -948,7 +948,7 @@ void toWannier90_PW::get_trial_orbitals_lm_k(
 {
     for (int ig = 0; ig < npw; ig++)
     {
-        orbital_in_G_single[ig] = ModuleBase::PolyInt::Polynomial_Interpolation(radial_in_q_single, GlobalV::NQX, GlobalV::DQ, gk[ig].norm() * GlobalC::ucell.tpiba);
+        orbital_in_G_single[ig] = ModuleBase::PolyInt::Polynomial_Interpolation(radial_in_q_single, GlobalV::NQX, PARAM.globalv.dq, gk[ig].norm() * GlobalC::ucell.tpiba);
     }
 
     std::complex<double> lphase = pow(ModuleBase::NEG_IMAG_UNIT, orbital_L);
@@ -986,7 +986,7 @@ void toWannier90_PW::integral(
     double *vchi = new double[meshr];
     for (int iq = 0; iq < GlobalV::NQX; iq++)
     {
-        const double q = GlobalV::DQ * iq;
+        const double q = PARAM.globalv.dq * iq;
         ModuleBase::Sphbes::Spherical_Bessel(meshr, r, q, l, aux);
         for (int ir = 0; ir < meshr; ir++)
         {

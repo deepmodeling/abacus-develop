@@ -136,7 +136,7 @@ void Wavefunc_in_pw::make_table_q(
 				Wavefunc_in_pw::integral(meshr, psir, radial, rab, L, table);
 				for(int iq=0; iq<GlobalV::NQX; iq++)
 				{
-					//double energy_q = pow(iq * GlobalV::DQ,2);
+					//double energy_q = pow(iq * PARAM.globalv.dq,2);
 					table_local(it,ic,iq) = table[iq];//* Wavefunc_in_pw::smearing(energy_q,150,0.666666);
 				}
 				delete[] table;
@@ -160,7 +160,7 @@ void Wavefunc_in_pw::make_table_q(
 			for(int iq=0; iq<GlobalV::NQX; iq++)
 			{
 				int ic=0;
-				double energy_q = pow((double)iq*GlobalV::DQ,2);
+				double energy_q = pow((double)iq*PARAM.globalv.dq,2);
 				ofs << energy_q; // unit (Ry)
 				for(int L=0; L<GlobalC::ucell.atoms[it].nwl+1; L++)
 				{
@@ -231,7 +231,7 @@ const double *rab, const int &l, double* table)
 	double *vchi = new double[meshr];
 	for (int iq=0; iq<GlobalV::NQX; iq++)
 	{
-		const double q = GlobalV::DQ * iq;
+		const double q = PARAM.globalv.dq * iq;
 		ModuleBase::Sphbes::Spherical_Bessel(meshr, r, q, l, aux);
 		for (int ir = 0;ir < meshr;ir++)
 		{
@@ -289,7 +289,7 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int& ik,
 					for(int ig=0; ig<npw; ig++)
 					{
 						flq[ig] = ModuleBase::PolyInt::Polynomial_Interpolation(table_local,
-						it, ic, GlobalV::NQX, GlobalV::DQ, gk[ig].norm() * GlobalC::ucell.tpiba );
+						it, ic, GlobalV::NQX, PARAM.globalv.dq, gk[ig].norm() * GlobalC::ucell.tpiba );
 					}
 
 					if(GlobalV::NSPIN==4)
@@ -347,7 +347,7 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int& ik,
 										{//Average the two functions
 											chiaux[ig] =  L *
 												ModuleBase::PolyInt::Polynomial_Interpolation(table_local,
-												it, ic, GlobalV::NQX, GlobalV::DQ, gk[ig].norm() * GlobalC::ucell.tpiba );
+												it, ic, GlobalV::NQX, PARAM.globalv.dq, gk[ig].norm() * GlobalC::ucell.tpiba );
 
 											chiaux[ig] += flq[ig] * (L+1.0) ;
 											chiaux[ig] *= 1/(2.0*L+1.0);

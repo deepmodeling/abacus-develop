@@ -171,7 +171,7 @@ void Stress_Func<FPTYPE, Device>::get_dvnl1(ModuleBase::ComplexMatrix& vkb,
                                                                        it,
                                                                        nb,
                                                                        GlobalV::NQX,
-                                                                       GlobalV::DQ,
+                                                                       PARAM.globalv.dq,
                                                                        gnorm);
 
             } // enddo
@@ -283,7 +283,7 @@ void Stress_Func<FPTYPE, Device>::get_dvnl2(ModuleBase::ComplexMatrix& vkb,
                 vq[ig] = hamilt::Nonlocal_maths<FPTYPE, Device>::Polynomial_Interpolation_nl(nlpp->tab,
                                                                                              it,
                                                                                              nb,
-                                                                                             GlobalV::DQ,
+                                                                                             PARAM.globalv.dq,
                                                                                              gnorm);
 
             } // enddo

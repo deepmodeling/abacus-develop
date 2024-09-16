@@ -277,9 +277,9 @@ void Stress_Func<FPTYPE, Device>::dqvan2(const pseudopot_cell_vnl* ppcell_in,
                                                                      l,
                                                                      ijv,
                                                                      GlobalV::NQXQ,
-                                                                     GlobalV::DQ,
+                                                                     PARAM.globalv.dq,
                                                                      qnorm[ig]);
-                work1 = this->Polynomial_Interpolation_nl(ppcell_in->qrad, itype, l, ijv, GlobalV::DQ, qnorm[ig]);
+                work1 = this->Polynomial_Interpolation_nl(ppcell_in->qrad, itype, l, ijv, PARAM.globalv.dq, qnorm[ig]);
                 qm1 = qnorm[ig];
             }
             dqg[ig] += pref * work * dylmk0(lp, ig) / tpiba;

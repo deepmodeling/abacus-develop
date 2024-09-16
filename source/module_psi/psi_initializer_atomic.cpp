@@ -99,7 +99,7 @@ void psi_initializer_atomic<T, Device>::tabulate()
     std::vector<double> qgrid(GlobalV::NQX);
     for (int iq = 0; iq < GlobalV::NQX; iq++)
     {
-        qgrid[iq] = GlobalV::DQ * iq;
+        qgrid[iq] = PARAM.globalv.dq * iq;
     }
     for (int it=0; it<this->p_ucell_->ntype; it++)
     {
@@ -109,7 +109,7 @@ void psi_initializer_atomic<T, Device>::tabulate()
     
     const double pref = ModuleBase::FOUR_PI / sqrt(this->p_ucell_->omega);
 
-	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"dq(describe PAO in reciprocal space)",GlobalV::DQ);
+	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"dq(describe PAO in reciprocal space)",PARAM.globalv.dq);
 	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"max q",GlobalV::NQX);
 
     for (int it=0; it<this->p_ucell_->ntype; it++)
@@ -192,7 +192,7 @@ void psi_initializer_atomic<T, Device>::proj_ao_onkG(int ik)
                     {
                         ovlp_pswfcjlg[ig] = ModuleBase::PolyInt::Polynomial_Interpolation(
                             this->ovlp_pswfcjlq_, it, ipswfc, 
-                            GlobalV::NQX, GlobalV::DQ, gk[ig].norm() * this->p_ucell_->tpiba );
+                            GlobalV::NQX, PARAM.globalv.dq, gk[ig].norm() * this->p_ucell_->tpiba );
                     }
 /* NSPIN == 4 */
                     if(GlobalV::NSPIN == 4)
@@ -291,7 +291,7 @@ void psi_initializer_atomic<T, Device>::proj_ao_onkG(int ik)
                                         chiaux[ig] =  l *
                                             ModuleBase::PolyInt::Polynomial_Interpolation(
                                                 this->ovlp_pswfcjlq_, it, ipswfc_noncolin_soc, 
-                                                GlobalV::NQX, GlobalV::DQ, gk[ig].norm() * this->p_ucell_->tpiba);
+                                                GlobalV::NQX, PARAM.globalv.dq, gk[ig].norm() * this->p_ucell_->tpiba);
                                         chiaux[ig] += ovlp_pswfcjlg[ig] * (l + 1.0) ;
                                         chiaux[ig] *= 1/(2.0*l+1.0);
                                     }

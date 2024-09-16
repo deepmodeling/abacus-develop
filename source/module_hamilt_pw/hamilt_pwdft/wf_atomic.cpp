@@ -74,7 +74,7 @@ void WF_atomic::init_at_1(Structure_Factor *sf_in)
     double *aux = new double[ndm];
     double *vchi = new double[ndm];
 
-	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"dq(describe PAO in reciprocal space)",GlobalV::DQ);
+	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"dq(describe PAO in reciprocal space)",PARAM.globalv.dq);
 	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"max q",GlobalV::NQX);
 
     for (int it=0; it<GlobalC::ucell.ntype; it++)
@@ -188,7 +188,7 @@ void WF_atomic::init_at_1(Structure_Factor *sf_in)
                 const int l = atom->ncpp.lchi[ic];
                 for (int iq=startq; iq<GlobalV::NQX; iq++)
                 {
-                    const double q = GlobalV::DQ * iq;
+                    const double q = PARAM.globalv.dq * iq;
                     ModuleBase::Sphbes::Spherical_Bessel(atom->ncpp.msh, atom->ncpp.r.data(), q, l, aux);
                     for (int ir = 0;ir < atom->ncpp.msh;ir++)
                     {
