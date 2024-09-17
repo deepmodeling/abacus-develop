@@ -1,5 +1,8 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include "module_io/rhog_io.h"
 #ifdef __MPI
 #include "module_basis/module_pw/test/test_tool.h"
@@ -38,7 +41,7 @@ class ReadRhogTest : public ::testing::Test
 TEST_F(ReadRhogTest, ReadRhog)
 {
     std::string filename = "./support/charge-density.dat";
-    GlobalV::NSPIN = 1;
+    PARAM.input.nspin = 1;
 #ifdef __MPI
     rhopw->initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, MPI_COMM_WORLD);
 #endif
@@ -84,7 +87,7 @@ TEST_F(ReadRhogTest, NotFoundFile)
 TEST_F(ReadRhogTest, InconsistentGammaOnly)
 {
     std::string filename = "./support/charge-density.dat";
-    GlobalV::NSPIN = 2;
+    PARAM.input.nspin = 2;
     rhopw->gamma_only = true;
 
     GlobalV::ofs_warning.open("test_read_rhog.txt");
@@ -111,7 +114,7 @@ TEST_F(ReadRhogTest, InconsistentGammaOnly)
 TEST_F(ReadRhogTest, SomePWMissing)
 {
     std::string filename = "./support/charge-density.dat";
-    GlobalV::NSPIN = 1;
+    PARAM.input.nspin = 1;
     rhopw->npwtot = 2000;
 
     GlobalV::ofs_warning.open("test_read_rhog.txt");

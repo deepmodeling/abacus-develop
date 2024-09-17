@@ -46,7 +46,7 @@ TEST(OrbInfo,WriteOrbInfo)
     PARAM.sys.global_out_dir = "./";
 	PARAM.input.pseudo_rcut = 15.0;
     GlobalV::LSPINORB = false;
-	GlobalV::NSPIN = 1;
+	PARAM.input.nspin = 1;
     PARAM.input.basis_type = "pw";
     PARAM.input.dft_functional = "default";
     ucell->read_cell_pseudopots(pp_dir,ofs);
