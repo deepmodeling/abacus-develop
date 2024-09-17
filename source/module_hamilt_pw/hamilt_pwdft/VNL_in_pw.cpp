@@ -1670,7 +1670,7 @@ void pseudopot_cell_vnl::newd_so(const int& iat, UnitCell& cell)
                     {
                         for (int lh = 0; lh < upf->nh; lh++)
                         {
-                            if (GlobalV::DOMAG)
+                            if (PARAM.globalv.domag)
                             {
                                 deeq_nc(ijs, iat, ih, jh)
                                     += deeq(0, iat, kh, lh)

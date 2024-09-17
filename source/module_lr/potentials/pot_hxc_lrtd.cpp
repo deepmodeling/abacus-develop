@@ -15,7 +15,7 @@ namespace LR
     {
         this->rho_basis_ = rho_basis_in;
         this->nrxx = chg_gs->nrxx;
-        this->nspin = (GlobalV::NSPIN == 1 || (GlobalV::NSPIN == 4 && !GlobalV::DOMAG && !PARAM.globalv.domag_z)) ? 1 : 2;
+        this->nspin = (GlobalV::NSPIN == 1 || (GlobalV::NSPIN == 4 && !PARAM.globalv.domag && !PARAM.globalv.domag_z)) ? 1 : 2;
 
         this->pot_hartree = LR_Util::make_unique<elecstate::PotHartree>(this->rho_basis_);
         std::set<std::string> local_xc = { "lda", "pbe", "hse" };

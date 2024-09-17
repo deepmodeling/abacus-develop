@@ -455,7 +455,7 @@ void Gint_k::cal_dvlocal_R_sparseMatrix(const int& current_spin,
                                         else if (iw % 2 == 0 && iw2 % 2 == 1)
                                         {
                                             // spin = 1;
-                                            if (!GlobalV::DOMAG)
+                                            if (!PARAM.globalv.domag)
                                             {
                                                 // do nothing
                                             }
@@ -490,7 +490,7 @@ void Gint_k::cal_dvlocal_R_sparseMatrix(const int& current_spin,
                                         else if (iw % 2 == 1 && iw2 % 2 == 0)
                                         {
                                             // spin = 2;
-                                            if (!GlobalV::DOMAG)
+                                            if (!PARAM.globalv.domag)
                                             {
                                                 // do nothing
                                             }

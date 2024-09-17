@@ -539,7 +539,7 @@ void Charge::atomic_rho(const int spin_number_need,
                         if (startmag_type == 1)
                         {
                             double sin_a1, sin_a2, cos_a1, cos_a2;
-                            if (GlobalV::DOMAG)
+                            if (PARAM.globalv.domag)
                             { // will not be used now, will be deleted later
                                 ModuleBase::libm::sincos(atom->angle1[0], &sin_a1, &cos_a1);
                                 ModuleBase::libm::sincos(atom->angle2[0], &sin_a2, &cos_a2);
@@ -551,7 +551,7 @@ void Charge::atomic_rho(const int spin_number_need,
                             {
                                 const std::complex<double> swap = strucFac(it, ig) * rho_lgl[this->rhopw->ig2igg[ig]];
                                 rho_g3d(0, ig) += swap;
-                                if (GlobalV::DOMAG)
+                                if (PARAM.globalv.domag)
                                 { // will not be used now, will be deleted later
                                     rho_g3d(1, ig)
                                         += swap * (ucell.magnet.start_magnetization[it] / atom->ncpp.zv) * sin_a1 * cos_a2;
@@ -574,11 +574,11 @@ void Charge::atomic_rho(const int spin_number_need,
                             for (int ia = 0; ia < atom->na; ia++)
                             {
                                 double sin_a1, sin_a2, cos_a1, cos_a2;
-                                if (GlobalV::DOMAG || PARAM.globalv.domag_z)
+                                if (PARAM.globalv.domag || PARAM.globalv.domag_z)
                                 {
                                     ModuleBase::libm::sincos(atom->angle1[ia], &sin_a1, &cos_a1);
                                 }
-                                if (GlobalV::DOMAG)
+                                if (PARAM.globalv.domag)
                                 {
                                     ModuleBase::libm::sincos(atom->angle2[ia], &sin_a2, &cos_a2);
                                 }
@@ -596,12 +596,12 @@ void Charge::atomic_rho(const int spin_number_need,
                                     // calculate rho_total
                                     rho_g3d(0, ig) += swap;
                                     // calculate mag_z
-                                    if (GlobalV::DOMAG || PARAM.globalv.domag_z)
+                                    if (PARAM.globalv.domag || PARAM.globalv.domag_z)
                                     {
                                         rho_g3d(3, ig) += swap * (atom->mag[ia] / atom->ncpp.zv) * cos_a1;
                                     }
                                     // calculate mag_x and mag_y
-                                    if (GlobalV::DOMAG)
+                                    if (PARAM.globalv.domag)
                                     {
                                         rho_g3d(1, ig) += swap * (atom->mag[ia] / atom->ncpp.zv) * sin_a1 * cos_a2;
                                         rho_g3d(2, ig) += swap * (atom->mag[ia] / atom->ncpp.zv) * sin_a1 * sin_a2;
