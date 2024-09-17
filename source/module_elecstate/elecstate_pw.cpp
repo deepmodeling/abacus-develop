@@ -324,7 +324,7 @@ void ElecStatePW<T, Device>::add_usrho(const psi::Psi<T, Device>& psi)
                 for (int ia = 0; ia < atom->na; ia++)
                 {
                     const int iat = ucell->itia2iat(it, ia);
-                    if (GlobalV::NONCOLIN)
+                    if (PARAM.inp.noncolin)
                     {
                         // noncolinear case
                     }
@@ -360,10 +360,10 @@ void ElecStatePW<T, Device>::add_usrho(const psi::Psi<T, Device>& psi)
                     }
 
                     // copy output from GEMM into desired format
-                    if (GlobalV::NONCOLIN && !atom->ncpp.has_so)
+                    if (PARAM.inp.noncolin && !atom->ncpp.has_so)
                     {
                     }
-                    else if (GlobalV::NONCOLIN && atom->ncpp.has_so)
+                    else if (PARAM.inp.noncolin && atom->ncpp.has_so)
                     {
                     }
                     else

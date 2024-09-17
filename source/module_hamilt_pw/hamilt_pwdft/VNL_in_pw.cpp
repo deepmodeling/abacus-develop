@@ -1454,7 +1454,7 @@ void pseudopot_cell_vnl::cal_effective_D(const ModuleBase::matrix& veff,
         for (int iat = 0; iat < cell.nat; iat++)
         {
             int it = cell.iat2it[iat];
-            if (GlobalV::NONCOLIN)
+            if (PARAM.inp.noncolin)
             {
                 if (cell.atoms[it].ncpp.has_so)
                 {
