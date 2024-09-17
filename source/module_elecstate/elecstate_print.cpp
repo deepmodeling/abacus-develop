@@ -183,21 +183,21 @@ void ElecState::print_eigenvalue(std::ofstream& ofs)
         ofs << std::setiosflags(std::ios::showpoint);
         if (ik == 0)
         {
-            ofs << "   NSPIN == " << GlobalV::NSPIN << std::endl;
-            if (GlobalV::NSPIN == 2)
+            ofs << "   NSPIN == " << PARAM.inp.nspin << std::endl;
+            if (PARAM.inp.nspin == 2)
             {
                 ofs << "SPIN UP : " << std::endl;
             }
         }
         else if (ik == this->klist->get_nks() / 2)
         {
-            if (GlobalV::NSPIN == 2)
+            if (PARAM.inp.nspin == 2)
             {
                 ofs << "SPIN DOWN : " << std::endl;
             }
         }
 
-        if (GlobalV::NSPIN == 2)
+        if (PARAM.inp.nspin == 2)
         {
             if (this->klist->isk[ik] == 0)
             {
@@ -426,7 +426,7 @@ void ElecState::print_etot(const bool converged,
     if (PARAM.inp.out_level == "ie" || PARAM.inp.out_level == "m") // xiaohui add 'm' option, 2015-09-16
     {
         std::vector<double> mag;
-        switch (GlobalV::NSPIN)
+        switch (PARAM.inp.nspin)
         {
         case 2:
             mag = {get_ucell_tot_magnetization(), get_ucell_abs_magnetization()};

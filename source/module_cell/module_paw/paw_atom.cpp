@@ -1,5 +1,6 @@
 #include "paw_atom.h"
 #include "module_base/global_variable.h"
+#include "module_parameter/parameter.h"
 
 void Paw_Atom::init_paw_atom(const int nproj_in)
 {

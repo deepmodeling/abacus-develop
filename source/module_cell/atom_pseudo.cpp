@@ -1,4 +1,5 @@
 #include "atom_pseudo.h"
+#include "module_parameter/parameter.h"
 
 Atom_pseudo::Atom_pseudo()
 {

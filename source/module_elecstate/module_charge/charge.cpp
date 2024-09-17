@@ -60,7 +60,7 @@ void Charge::destroy()
 {
     if (allocate_rho || allocate_rho_final_scf) // LiuXh add 20180619
     {
-        for (int i = 0; i < GlobalV::NSPIN; i++)
+        for (int i = 0; i < PARAM.inp.nspin; i++)
         {
             if(PARAM.inp.use_paw)
             {
@@ -660,7 +660,7 @@ void Charge::atomic_rho(const int spin_number_need,
             ima = ima / (double)this->rhopw->nxyz * omega;
             sumrea = sumrea / (double)this->rhopw->nxyz * omega;
 
-            if (((neg < -1.0e-4) && (is == 0 || GlobalV::NSPIN == 2)) || ima > 1.0e-4)
+            if (((neg < -1.0e-4) && (is == 0 || PARAM.inp.nspin == 2)) || ima > 1.0e-4)
             {
                 GlobalV::ofs_warning << " Warning: negative or imaginary starting charge : ";
                 GlobalV::ofs_warning << " neg = " << neg << " ima = " << ima << " SPIN = " << is << std::endl;
@@ -697,7 +697,7 @@ void Charge::atomic_rho(const int spin_number_need,
 
 void Charge::save_rho_before_sum_band()
 {
-    for (int is = 0; is < GlobalV::NSPIN; is++)
+    for (int is = 0; is < PARAM.inp.nspin; is++)
     {
         ModuleBase::GlobalFunc::DCOPY(rho[is], rho_save[is], this->rhopw->nrxx);
         if (elecstate::get_xc_func_type() == 3 || elecstate::get_xc_func_type() == 5) {
@@ -770,16 +770,16 @@ void Charge::init_final_scf()
     assert(allocate_rho_final_scf == false);
     if (PARAM.inp.test_charge > 1)
     {
-        std::cout << "\n spin_number = " << GlobalV::NSPIN << " real_point_number = " << this->rhopw->nrxx << std::endl;
+        std::cout << "\n spin_number = " << PARAM.inp.nspin << " real_point_number = " << this->rhopw->nrxx << std::endl;
     }
 
     // allocate memory
-    rho = new double*[GlobalV::NSPIN];
-    rhog = new std::complex<double>*[GlobalV::NSPIN];
-    rho_save = new double*[GlobalV::NSPIN];
-    rhog_save = new std::complex<double>*[GlobalV::NSPIN];
+    rho = new double*[PARAM.inp.nspin];
+    rhog = new std::complex<double>*[PARAM.inp.nspin];
+    rho_save = new double*[PARAM.inp.nspin];
+    rhog_save = new std::complex<double>*[PARAM.inp.nspin];
 
-    for (int is = 0; is < GlobalV::NSPIN; is++)
+    for (int is = 0; is < PARAM.inp.nspin; is++)
     {
         rho[is] = new double[this->rhopw->nrxx];
         rhog[is] = new std::complex<double>[this->rhopw->npw];
@@ -791,10 +791,10 @@ void Charge::init_final_scf()
         ModuleBase::GlobalFunc::ZEROS(rhog_save[is], this->rhopw->npw);
     }
 
-    ModuleBase::Memory::record("Chg::rho", sizeof(double) * GlobalV::NSPIN * this->rhopw->nrxx);
-    ModuleBase::Memory::record("Chg::rho_save", sizeof(double) * GlobalV::NSPIN * this->rhopw->nrxx);
-    ModuleBase::Memory::record("Chg::rhog", sizeof(double) * GlobalV::NSPIN * this->rhopw->npw);
-    ModuleBase::Memory::record("Chg::rhog_save", sizeof(double) * GlobalV::NSPIN * this->rhopw->npw);
+    ModuleBase::Memory::record("Chg::rho", sizeof(double) * PARAM.inp.nspin * this->rhopw->nrxx);
+    ModuleBase::Memory::record("Chg::rho_save", sizeof(double) * PARAM.inp.nspin * this->rhopw->nrxx);
+    ModuleBase::Memory::record("Chg::rhog", sizeof(double) * PARAM.inp.nspin * this->rhopw->npw);
+    ModuleBase::Memory::record("Chg::rhog_save", sizeof(double) * PARAM.inp.nspin * this->rhopw->npw);
 
     this->rho_core = new double[this->rhopw->nrxx]; // core charge in real space
     ModuleBase::GlobalFunc::ZEROS(rho_core, this->rhopw->nrxx);

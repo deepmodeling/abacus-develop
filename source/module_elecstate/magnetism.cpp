@@ -17,7 +17,7 @@ Magnetism::~Magnetism()
 
 void Magnetism::compute_magnetization(const int& nrxx, const int& nxyz, const double* const * rho, double* nelec_spin)
 {
-    if (GlobalV::NSPIN==2)
+    if (PARAM.inp.nspin==2)
     {
         this->tot_magnetization = 0.00;
         this->abs_magnetization = 0.00;
@@ -50,7 +50,7 @@ void Magnetism::compute_magnetization(const int& nrxx, const int& nxyz, const do
     }
 
 	// noncolliear :
-	else if(GlobalV::NSPIN==4)
+	else if(PARAM.inp.nspin==4)
 	{
 		for(int i=0;i<3;i++)this->tot_magnetization_nc[i] = 0.00;
 		this->abs_magnetization = 0.00;

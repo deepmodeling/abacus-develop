@@ -50,7 +50,7 @@ void ElecStateLCAO<std::complex<double>>::psiToRho(const psi::Psi<std::complex<d
         }
     }
 
-    for (int is = 0; is < GlobalV::NSPIN; is++)
+    for (int is = 0; is < PARAM.inp.nspin; is++)
     {
         ModuleBase::GlobalFunc::ZEROS(this->charge->rho[is],
                                       this->charge->nrxx); // mohan 2009-11-10
@@ -67,7 +67,7 @@ void ElecStateLCAO<std::complex<double>>::psiToRho(const psi::Psi<std::complex<d
 
     if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
     {
-        for (int is = 0; is < GlobalV::NSPIN; is++)
+        for (int is = 0; is < PARAM.inp.nspin; is++)
         {
             ModuleBase::GlobalFunc::ZEROS(this->charge->kin_r[is], this->charge->nrxx);
         }
@@ -105,7 +105,7 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
         ModuleBase::timer::tick("ElecStateLCAO", "cal_dm_2d");
     }
 
-    for (int is = 0; is < GlobalV::NSPIN; is++)
+    for (int is = 0; is < PARAM.inp.nspin; is++)
     {
         ModuleBase::GlobalFunc::ZEROS(this->charge->rho[is],
                                       this->charge->nrxx); // mohan 2009-11-10
@@ -124,7 +124,7 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
 
     if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
     {
-        for (int is = 0; is < GlobalV::NSPIN; is++)
+        for (int is = 0; is < PARAM.inp.nspin; is++)
         {
             ModuleBase::GlobalFunc::ZEROS(this->charge->kin_r[is], this->charge->nrxx);
         }
@@ -165,8 +165,8 @@ void ElecStateLCAO<double>::dmToRho(std::vector<double*> pexsi_DM, std::vector<d
 {
     ModuleBase::timer::tick("ElecStateLCAO", "dmToRho");
 
-    int nspin = GlobalV::NSPIN;
-    if (GlobalV::NSPIN == 4)
+    int nspin = PARAM.inp.nspin;
+    if (PARAM.inp.nspin == 4)
     {
         nspin = 1;
     }
@@ -179,7 +179,7 @@ void ElecStateLCAO<double>::dmToRho(std::vector<double*> pexsi_DM, std::vector<d
     }
     DM->cal_DMR();
 
-    for (int is = 0; is < GlobalV::NSPIN; is++)
+    for (int is = 0; is < PARAM.inp.nspin; is++)
     {
         ModuleBase::GlobalFunc::ZEROS(this->charge->rho[is],
                                       this->charge->nrxx); // mohan 2009-11-10
@@ -191,7 +191,7 @@ void ElecStateLCAO<double>::dmToRho(std::vector<double*> pexsi_DM, std::vector<d
     this->gint_gamma->cal_gint(&inout);
     if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
     {
-        for (int is = 0; is < GlobalV::NSPIN; is++)
+        for (int is = 0; is < PARAM.inp.nspin; is++)
         {
             ModuleBase::GlobalFunc::ZEROS(this->charge->kin_r[0], this->charge->nrxx);
         }

@@ -58,8 +58,8 @@ void ElecState::fixed_weights(const std::vector<double>& ocp_kb, const int& nban
 
 void ElecState::init_nelec_spin()
 {
-    this->nelec_spin.resize(GlobalV::NSPIN);
-    if (GlobalV::NSPIN == 2)
+    this->nelec_spin.resize(PARAM.inp.nspin);
+    if (PARAM.inp.nspin == 2)
     {
         // in fact, when TWO_EFERMI(nupdown in INPUT is not 0.0), nelec_spin will be fixed.
         this->nelec_spin[0] = (GlobalV::nelec + GlobalV::nupdown) / 2.0;
@@ -278,7 +278,7 @@ void ElecState::cal_nbands()
 
     if (GlobalV::NBANDS == 0)
     {
-        if (GlobalV::NSPIN == 1)
+        if (PARAM.inp.nspin == 1)
         {
             const int nbands1 = static_cast<int>(occupied_bands) + 10;
             const int nbands2 = static_cast<int>(1.2 * occupied_bands) + 1;
@@ -287,7 +287,7 @@ void ElecState::cal_nbands()
                 GlobalV::NBANDS = std::min(GlobalV::NBANDS, GlobalV::NLOCAL);
             }
         }
-        else if (GlobalV::NSPIN == 4)
+        else if (PARAM.inp.nspin == 4)
         {
             const int nbands3 = GlobalV::nelec + 20;
             const int nbands4 = static_cast<int>(1.2 * GlobalV::nelec) + 1;
@@ -296,7 +296,7 @@ void ElecState::cal_nbands()
                 GlobalV::NBANDS = std::min(GlobalV::NBANDS, GlobalV::NLOCAL);
             }
         }
-        else if (GlobalV::NSPIN == 2)
+        else if (PARAM.inp.nspin == 2)
         {
             const double max_occ = std::max(this->nelec_spin[0], this->nelec_spin[1]);
             const int nbands3 = static_cast<int>(max_occ) + 11;
@@ -315,7 +315,7 @@ void ElecState::cal_nbands()
         if (GlobalV::NBANDS < occupied_bands) {
             ModuleBase::WARNING_QUIT("unitcell", "Too few bands!");
         }
-        if (GlobalV::NSPIN == 2)
+        if (PARAM.inp.nspin == 2)
         {
             if (GlobalV::NBANDS < this->nelec_spin[0])
             {
