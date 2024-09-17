@@ -242,10 +242,8 @@ void Input_Conv::Convert()
     Ions_Move_Basic::relax_bfgs_rmin = PARAM.inp.relax_bfgs_rmin;
     Ions_Move_Basic::relax_bfgs_init = PARAM.inp.relax_bfgs_init;
     Ions_Move_Basic::out_stru = PARAM.inp.out_stru; // mohan add 2012-03-23
+    Ions_Move_Basic::relax_method = PARAM.inp.relax_method;
     Lattice_Change_Basic::fixed_axes = PARAM.inp.fixed_axes;
-
-
-    GlobalV::RELAX_METHOD = PARAM.inp.relax_method;
 
 
     Ions_Move_CG::RELAX_CG_THR = PARAM.inp.relax_cg_thr; // pengfei add 2013-09-09

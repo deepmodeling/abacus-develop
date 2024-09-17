@@ -22,12 +22,7 @@ extern int NLOCAL;        // 1.1 // mohan add 2009-05-29
 
 
 extern int NSPIN;       // 7
-extern bool TWO_EFERMI; // 7.5 two fermi energy, exist if nupdown isn't zero.
 extern double nupdown;
-
-extern std::string RELAX_METHOD;
-
-
 extern bool use_uspp;
 
 

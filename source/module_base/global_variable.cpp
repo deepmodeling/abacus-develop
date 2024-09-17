@@ -22,15 +22,12 @@ int NBANDS = 0;
 int NLOCAL = 0;        // total number of local basis.
 
 int NSPIN = 1;       // LDA
-bool TWO_EFERMI = false; // two fermi energy, exist only magnetization is fixed.
 double nupdown = 0.0;
-std::string RELAX_METHOD = "bfgs";
 
 bool use_uspp = false;
 std::string KS_SOLVER = "cg";  // xiaohui add 2013-09-01
 double SEARCH_RADIUS = -1.0;
 
-double PW_DIAG_THR = 1.0e-2;
 int NB2D = 1;
 
 
