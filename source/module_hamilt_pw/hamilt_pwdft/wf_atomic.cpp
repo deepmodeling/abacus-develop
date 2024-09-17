@@ -321,7 +321,7 @@ void WF_atomic::atomic_wfc(const int ik,
                             Soc soc;
 						    soc.rot_ylm(l+1);
                             const double j = GlobalC::ucell.atoms[it].ncpp.jchi[iw];
-                            if ( !(GlobalV::DOMAG||GlobalV::DOMAG_Z))
+                            if ( !(GlobalV::DOMAG||PARAM.globalv.domag_z))
                             {//atomic_wfc_so
                                 double fact[2];
                                 for(int m=-l-1;m<l+1;m++)

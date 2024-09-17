@@ -239,7 +239,7 @@ double Charge_Mixing::get_drho(Charge* chr, const double nelec)
         //       The inner_product_real function (L1-norm) is different from that (L2-norm) in mixing.
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
-            if (is != 0 && is != 3 && GlobalV::DOMAG_Z)
+            if (is != 0 && is != 3 && PARAM.globalv.domag_z)
             {
                 continue;
             }
@@ -278,7 +278,7 @@ double Charge_Mixing::get_dkin(Charge* chr, const double nelec)
     // Get dkin from kin_r and kin_r_save for PW and LCAO both, which is different from drho.
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
-        if (is != 0 && is != 3 && GlobalV::DOMAG_Z)
+        if (is != 0 && is != 3 && PARAM.globalv.domag_z)
         {
             continue;
         }
@@ -1018,7 +1018,7 @@ void Charge_Mixing::mix_rho(Charge* chr)
     std::vector<double> rho123(GlobalV::NSPIN * nrxx);
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
-        if (is == 0 || is == 3 || !GlobalV::DOMAG_Z)
+        if (is == 0 || is == 3 || !PARAM.globalv.domag_z)
         {
             double* rho123_is = rho123.data() + is * nrxx;
 #ifdef _OPENMP
@@ -1078,7 +1078,7 @@ void Charge_Mixing::mix_rho(Charge* chr)
     // rho_save is the charge before mixing
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
-        if (is == 0 || is == 3 || !GlobalV::DOMAG_Z)
+        if (is == 0 || is == 3 || !PARAM.globalv.domag_z)
         {
             double* rho123_is = rho123.data() + is * nrxx;
 #ifdef _OPENMP
@@ -1343,7 +1343,7 @@ double Charge_Mixing::inner_product_recip_rho(std::complex<double>* rho1, std::c
     }
     case 4:
         // non-collinear spin, added by zhengdy
-        if (!GlobalV::DOMAG && !GlobalV::DOMAG_Z)
+        if (!GlobalV::DOMAG && !PARAM.globalv.domag_z)
             sum += part_of_noncolin();
         else
         {
@@ -1500,7 +1500,7 @@ double Charge_Mixing::inner_product_recip_hartree(std::complex<double>* rhog1, s
     }
     else if (GlobalV::NSPIN==4)
     {
-        if (!GlobalV::DOMAG && !GlobalV::DOMAG_Z)
+        if (!GlobalV::DOMAG && !PARAM.globalv.domag_z)
         {
             sum += part_of_rho();
         }

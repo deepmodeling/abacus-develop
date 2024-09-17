@@ -1,5 +1,6 @@
 // This file contains subroutines realted to gradient calculations
 // it contains 5 subroutines:
+#include "module_parameter/parameter.h"
 // 1. gradcorr, which calculates gradient correction
 // 2. grad_wfc, which calculates gradient of wavefunction
 //		it is used in stress_func_mgga.cpp
@@ -34,7 +35,7 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 	int nspin0 = GlobalV::NSPIN;
 	if(GlobalV::NSPIN==4) { nspin0 =1;
 }
-	if(GlobalV::NSPIN==4&&(GlobalV::DOMAG||GlobalV::DOMAG_Z)) { nspin0 = 2;
+	if(GlobalV::NSPIN==4&&(GlobalV::DOMAG||PARAM.globalv.domag_z)) { nspin0 = 2;
 }
 
 	assert(nspin0>0);
@@ -124,7 +125,7 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 		XC_Functional::grad_rho( rhogsum2 , gdr2, rhopw, ucell->tpiba);
 	}
 
-	if(GlobalV::NSPIN == 4&&(GlobalV::DOMAG||GlobalV::DOMAG_Z))
+	if(GlobalV::NSPIN == 4&&(GlobalV::DOMAG||PARAM.globalv.domag_z))
 	{
 		rhotmp2 = new double[rhopw->nrxx];
 		rhogsum2 = new std::complex<double>[rhopw->npw];
@@ -389,7 +390,7 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 					else
 					{
 						double zeta = ( rhotmp1[ir] - rhotmp2[ir] ) / rh;
-						if(GlobalV::NSPIN==4&&(GlobalV::DOMAG||GlobalV::DOMAG_Z)) { zeta = fabs(zeta) * neg[ir];
+						if(GlobalV::NSPIN==4&&(GlobalV::DOMAG||PARAM.globalv.domag_z)) { zeta = fabs(zeta) * neg[ir];
 }
 						const double grh2 = (gdr1[ir]+gdr2[ir]).norm2();
 						XC_Functional::gcc_spin(rh, zeta, grh2, sc, v1cup, v1cdw, v2c);
@@ -546,7 +547,7 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 		vtxc += vtxcgc;
 		etxc += etxcgc;
 
-		if(GlobalV::NSPIN == 4 && (GlobalV::DOMAG||GlobalV::DOMAG_Z))
+		if(GlobalV::NSPIN == 4 && (GlobalV::DOMAG||PARAM.globalv.domag_z))
 		{
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static, 1024)
@@ -591,7 +592,7 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 		if(!is_stress) { delete[] h2;
 }
 	}
-	if(GlobalV::NSPIN == 4 && (GlobalV::DOMAG||GlobalV::DOMAG_Z))
+	if(GlobalV::NSPIN == 4 && (GlobalV::DOMAG||PARAM.globalv.domag_z))
 	{
 		delete[] neg;
 		if(!is_stress) 

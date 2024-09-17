@@ -301,7 +301,7 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int& ik,
 							if(GlobalC::ucell.atoms[it].ncpp.has_so)
 							{
 								const double j = std::abs(double(L+is_N) - 0.5);
-								if (!(GlobalV::DOMAG||GlobalV::DOMAG_Z))
+								if (!(GlobalV::DOMAG||PARAM.globalv.domag_z))
 								{//atomic_wfc_so
 									for(int m=0; m<2*L+1; m++)
 									{

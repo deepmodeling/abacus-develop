@@ -187,7 +187,7 @@ void ElecStatePW<T, Device>::rhoBandK(const psi::Psi<T, Device>& psi)
                 // replaced by denghui at 20221110
                 elecstate_pw_op()(this->ctx,
                                   GlobalV::DOMAG,
-                                  GlobalV::DOMAG_Z,
+                                  PARAM.globalv.domag_z,
                                   this->basis->nrxx,
                                   w1,
                                   this->rho,
