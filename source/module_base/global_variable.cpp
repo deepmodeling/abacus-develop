@@ -73,15 +73,6 @@ std::ofstream ofs_info;   // output math lib info
 std::ofstream ofs_device; // output device info
 
 
-// added by zhengdy-soc
-bool NONCOLIN = false;
-bool LSPINORB = false;
-bool DOMAG = false;
-bool DOMAG_Z = false;
-int NPOL = 1;
-
-std::vector<std::string> rpa_orbitals;
-
 //==========================================================
 // device flags added by denghui
 //==========================================================
