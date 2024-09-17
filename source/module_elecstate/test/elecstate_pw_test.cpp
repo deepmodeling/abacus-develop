@@ -169,7 +169,7 @@ void Set_GlobalV_Default()
     GlobalV::DOMAG = false;
     GlobalV::DOMAG_Z = false;
     // Base class dependent
-    GlobalV::NSPIN = 1;
+    PARAM.input.nspin = 1;
     GlobalV::nelec = 10.0;
     GlobalV::nupdown = 0.0;
     PARAM.sys.two_fermi = false;
@@ -299,7 +299,7 @@ TEST_F(ElecStatePWTest, InitRhoDataSingle)
 {
     PARAM.input.precision = "single";
     elecstate::tmp_xc_func_type = 3;
-    chg->nspin = GlobalV::NSPIN;
+    chg->nspin = PARAM.input.nspin;
     chg->nrxx = 1000;
     elecstate_pw_s = new elecstate::ElecStatePW<std::complex<float>, base_device::DEVICE_CPU>(wfcpw,
                                                                                               chg,
