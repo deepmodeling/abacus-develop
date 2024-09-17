@@ -568,8 +568,7 @@ OBJS_LCAO=evolve_elec.o\
       FORCE_STRESS.o\
 	  FORCE_gamma.o\
 	  FORCE_k.o\
-	  fvl_dphi_gamma.o\
-	  fvl_dphi_k.o\
+      stress_tools.o\
 	  fedm_gamma.o\
 	  fedm_k.o\
 	  ftvnl_dphi_gamma.o\

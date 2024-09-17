@@ -12,6 +12,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/write_HS.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/pulay_force_stress/pulay_force_stress.h"
 
 #include <map>
 #include <unordered_map>
@@ -319,7 +320,8 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
     this->cal_ftvnl_dphi(dm, pv, ucell, fsr, isforce, isstress, ftvnl_dphi, stvnl_dphi, ra);
 
     // doing on the real space grid.
-    this->cal_fvl_dphi(isforce, isstress, pelec->pot, gint, fvl_dphi, svl_dphi);
+    // this->cal_fvl_dphi(isforce, isstress, pelec->pot, gint, fvl_dphi, svl_dphi);
+    PulayForceStress::cal_pulay_fs(fvl_dphi, svl_dphi, *dm, ucell, pelec->pot, gint, isforce, isstress, false/*reset dm to gint*/);
 
     this->cal_fvnl_dbeta(dm,
                          pv,

@@ -13,6 +13,7 @@
 #include "module_elecstate/elecstate_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
 #include "module_io/write_HS.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/pulay_force_stress/pulay_force_stress.h"
 
 template <>
 void Force_LCAO<double>::allocate(const Parallel_Orbitals& pv,
@@ -231,9 +232,8 @@ void Force_LCAO<double>::ftable(const bool isforce,
                          fvnl_dbeta,
                          svnl_dbeta);
 
-    this->cal_fvl_dphi(isforce, isstress, pelec->pot, gint, fvl_dphi, svl_dphi);
+    PulayForceStress::cal_pulay_fs(fvl_dphi, svl_dphi, *dm, ucell, pelec->pot, gint, isforce, isstress, false/*reset dm to gint*/);
 
-    // caoyu add for DeePKS
 #ifdef __DEEPKS
     if (PARAM.inp.deepks_scf)
     {
@@ -314,23 +314,3 @@ void Force_LCAO<double>::ftable(const bool isforce,
     ModuleBase::timer::tick("Force_LCAO", "ftable");
     return;
 }
-
-namespace StressTools
-{
-void stress_fill(const double& lat0_, const double& omega_, ModuleBase::matrix& stress_matrix)
-{
-    assert(omega_ > 0.0);
-    double weight = lat0_ / omega_;
-    for (int i = 0; i < 3; ++i)
-    {
-        for (int j = 0; j < 3; ++j)
-        {
-            if (j > i)
-            {
-                stress_matrix(j, i) = stress_matrix(i, j);
-            }
-            stress_matrix(i, j) *= weight;
-        }
-    }
-}
-} // namespace StressTools

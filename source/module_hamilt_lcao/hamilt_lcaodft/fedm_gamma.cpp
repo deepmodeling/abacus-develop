@@ -7,6 +7,7 @@
 #include "module_psi/psi.h"
 #include "module_elecstate/cal_dm.h"
 #include "module_elecstate/module_dm/cal_dm_psi.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/stress_tools.h"
 
 // force due to the overlap matrix.
 // need energy density matrix here.
