@@ -2,6 +2,7 @@
 
 #include "module_base/blacs_connector.h"
 #include "module_base/global_variable.h"
+#include "module_parameter/parameter.h"
 #include "module_base/lapack_connector.h"
 #include "module_base/scalapack_connector.h"
 #include "module_base/timer.h"
