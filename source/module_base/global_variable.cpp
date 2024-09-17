@@ -78,8 +78,6 @@ std::ofstream ofs_device; // output device info
 //==========================================================
 std::string device_flag = "unknown";
 
-int out_pot = 0;
-
 double nelec = 0;
 
 
