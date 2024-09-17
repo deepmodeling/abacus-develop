@@ -26,7 +26,7 @@ IState_Charge::~IState_Charge()
 {
 }
 
-// for gamma only
+// For gamma_only
 void IState_Charge::begin(Gint_Gamma& gg,
                           double** rho,
                           const ModuleBase::matrix& wg,
@@ -483,7 +483,7 @@ void IState_Charge::select_bands(const int nbands_istate,
 }
 
 #ifdef __MPI
-// for gamma only
+// For gamma_only
 void IState_Charge::idmatrix(const int& ib,
                              const int nspin,
                              const double& nelec,

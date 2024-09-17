@@ -16,7 +16,7 @@ class IState_Envelope
     IState_Envelope(const elecstate::ElecState* pes);
     ~IState_Envelope();
 
-    /// for gamma_only
+    /// For gamma_only
     void begin(const psi::Psi<double>* psid,
                const ModulePW::PW_Basis* rhopw,
                const ModulePW::PW_Basis_K* wfcpw,
@@ -54,7 +54,8 @@ class IState_Envelope
     {
         throw std::logic_error("gint_k should use with complex psi.");
     };
-    /// for multi-k
+
+    /// For multi-k
     void begin(const psi::Psi<std::complex<double>>* psi,
                const ModulePW::PW_Basis* rhopw,
                const ModulePW::PW_Basis_K* wfcpw,

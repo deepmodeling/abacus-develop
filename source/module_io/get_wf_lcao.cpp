@@ -17,6 +17,7 @@ IState_Envelope::~IState_Envelope()
 {
 }
 
+// For gamma_only
 void IState_Envelope::begin(const psi::Psi<double>* psid,
                             const ModulePW::PW_Basis* rhopw,
                             const ModulePW::PW_Basis_K* wfcpw,
@@ -253,6 +254,7 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
     return;
 }
 
+// For multi-k
 void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
                             const ModulePW::PW_Basis* rhopw,
                             const ModulePW::PW_Basis_K* wfcpw,

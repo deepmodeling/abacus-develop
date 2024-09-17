@@ -28,7 +28,7 @@ class IState_Charge
 
     ~IState_Charge();
 
-    // for gamma only
+    // For gamma_only
     void begin(Gint_Gamma& gg,
                double** rho,
                const ModuleBase::matrix& wg,
