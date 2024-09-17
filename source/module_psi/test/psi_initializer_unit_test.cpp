@@ -116,7 +116,7 @@ class PsiIntializerUnitTest : public ::testing::Test {
             #endif
             // mock
             GlobalV::NBANDS = 1;
-            GlobalV::NSPIN = 1;
+            PARAM.input.nspin = 1;
             PARAM.input.orbital_dir = "./support/";
             PARAM.input.pseudo_dir = "./support/";
             GlobalV::NPOL = 1;
@@ -524,7 +524,7 @@ TEST_F(PsiIntializerUnitTest, CalPsigAtomic) {
 
 TEST_F(PsiIntializerUnitTest, CalPsigAtomicSoc) {
     PARAM.input.init_wfc = "atomic";
-    GlobalV::NSPIN = 4;
+    PARAM.input.nspin = 4;
     GlobalV::NPOL = 2;
     this->p_ucell->atoms[0].ncpp.has_so = false;
     this->p_ucell->natomwfc *= 2;
@@ -548,7 +548,7 @@ TEST_F(PsiIntializerUnitTest, CalPsigAtomicSoc) {
     psi::Psi<std::complex<double>>* psi = this->psi_init->allocate();
     this->psi_init->proj_ao_onkG(0);
     EXPECT_NEAR(0, psi->operator()(0,0,0).real(), 1e-12);
-    GlobalV::NSPIN = 1;
+    PARAM.input.nspin = 1;
     GlobalV::NPOL = 1;
     this->p_ucell->atoms[0].ncpp.has_so = false;
     this->p_ucell->natomwfc /= 2;
@@ -557,7 +557,7 @@ TEST_F(PsiIntializerUnitTest, CalPsigAtomicSoc) {
 
 TEST_F(PsiIntializerUnitTest, CalPsigAtomicSocHasSo) {
     PARAM.input.init_wfc = "atomic";
-    GlobalV::NSPIN = 4;
+    PARAM.input.nspin = 4;
     GlobalV::NPOL = 2;
     this->p_ucell->atoms[0].ncpp.has_so = true;
     this->p_ucell->natomwfc *= 2;
@@ -581,7 +581,7 @@ TEST_F(PsiIntializerUnitTest, CalPsigAtomicSocHasSo) {
     psi::Psi<std::complex<double>>* psi = this->psi_init->allocate();
     this->psi_init->proj_ao_onkG(0);
     EXPECT_NEAR(0, psi->operator()(0,0,0).real(), 1e-12);
-    GlobalV::NSPIN = 1;
+    PARAM.input.nspin = 1;
     GlobalV::NPOL = 1;
     this->p_ucell->atoms[0].ncpp.has_so = false;
     this->p_ucell->natomwfc /= 2;
@@ -665,7 +665,7 @@ TEST_F(PsiIntializerUnitTest, CalPsigNaoRandom) {
 
 TEST_F(PsiIntializerUnitTest, CalPsigNaoSoc) {
     PARAM.input.init_wfc = "nao";
-    GlobalV::NSPIN = 4;
+    PARAM.input.nspin = 4;
     GlobalV::NPOL = 2;
     this->p_ucell->atoms[0].ncpp.has_so = false;
     GlobalV::DOMAG = false;
@@ -695,7 +695,7 @@ TEST_F(PsiIntializerUnitTest, CalPsigNaoSoc) {
 
 TEST_F(PsiIntializerUnitTest, CalPsigNaoSocHasSo) {
     PARAM.input.init_wfc = "nao";
-    GlobalV::NSPIN = 4;
+    PARAM.input.nspin = 4;
     GlobalV::NPOL = 2;
     this->p_ucell->atoms[0].ncpp.has_so = true;
     GlobalV::DOMAG = false;
@@ -725,7 +725,7 @@ TEST_F(PsiIntializerUnitTest, CalPsigNaoSocHasSo) {
 
 TEST_F(PsiIntializerUnitTest, CalPsigNaoSocHasSoDOMAG) {
     PARAM.input.init_wfc = "nao";
-    GlobalV::NSPIN = 4;
+    PARAM.input.nspin = 4;
     GlobalV::NPOL = 2;
     this->p_ucell->atoms[0].ncpp.has_so = true;
     GlobalV::DOMAG = true;
