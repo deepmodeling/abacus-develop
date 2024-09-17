@@ -109,8 +109,9 @@ void LCAO_Deepks::build_psialpha(const bool& calc_deri,
                     else
                     {
                         nlm_cur.insert({all_indexes[iw1l], nlm});
-                        if (PARAM.globalv.npol == 2)
+                        if (PARAM.globalv.npol == 2) {
                             nlm_cur.insert({all_indexes[iw1l + 1], nlm});
+}
                     }
                 } // end iw
 
@@ -227,8 +228,9 @@ void LCAO_Deepks::check_psialpha(const bool& calc_deri,
                     ofs_z << "iw : " << iw1_all << std::endl;
                     const int iw1_local = pv->global2local_row(iw1_all);
                     const int iw2_local = pv->global2local_col(iw1_all);
-                    if (iw1_local < 0 && iw2_local < 0)
+                    if (iw1_local < 0 && iw2_local < 0) {
                         continue;
+}
                     const int iw1_0 = iw1 / PARAM.globalv.npol;
 
                     std::vector<std::vector<double>> nlm;
@@ -246,19 +248,23 @@ void LCAO_Deepks::check_psialpha(const bool& calc_deri,
                     for (int ind = 0; ind < nlm[0].size(); ind++)
                     {
                         ofs << nlm[0][ind] << " ";
-                        if (ind % 6 == 5)
+                        if (ind % 6 == 5) {
                             ofs << "\n";
+}
                         if (calc_deri)
                         {
                             ofs_x << nlm[1][ind] << " ";
-                            if (ind % 6 == 5)
+                            if (ind % 6 == 5) {
                                 ofs_x << "\n";
+}
                             ofs_y << nlm[2][ind] << " ";
-                            if (ind % 6 == 5)
+                            if (ind % 6 == 5) {
                                 ofs_y << "\n";
+}
                             ofs_z << nlm[3][ind] << " ";
-                            if (ind % 6 == 5)
+                            if (ind % 6 == 5) {
                                 ofs_z << "\n";
+}
                         }
                     }
                     ofs << std::endl;

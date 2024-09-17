@@ -67,7 +67,7 @@ namespace LR
     {
         auto& funcs = this->kernel_to_potential_;
         auto& fxc = this->xc_kernel_components_;
-        if (xc == XCType::LDA) switch (s)
+        if (xc == XCType::LDA) { switch (s)
         {
         case SpinType::S1:
             funcs[s] = [this, &fxc](const double* const rho, ModuleBase::matrix& v_eff)->void
@@ -102,7 +102,7 @@ namespace LR
                 + " unfinished in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
             break;
         }
-        else if (xc == XCType::GGA || xc == XCType::HYB_GGA) switch (s)
+        } else if (xc == XCType::GGA || xc == XCType::HYB_GGA) { switch (s)
         {
         case SpinType::S1:
             funcs[s] = [this, &fxc](const double* const rho, ModuleBase::matrix& v_eff)->void
@@ -153,7 +153,7 @@ namespace LR
                 + std::string(__FILE__) + " line " + std::to_string(__LINE__));
             break;
         }
-        else
+        } else
         {
             throw std::domain_error("GlobalV::XC_Functional::get_func_type() =" + std::to_string(XC_Functional::get_func_type())
                 + " unfinished in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));

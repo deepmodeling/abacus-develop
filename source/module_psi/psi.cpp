@@ -16,7 +16,7 @@ namespace psi
 
 Range::Range(const size_t range_in)
 {
-    k_first = 1;
+    k_first = true;
     index_1 = 0;
     range_1 = range_in;
     range_2 = range_in;
@@ -38,7 +38,8 @@ template <typename T, typename Device> Psi<T, Device>::Psi()
 
 template <typename T, typename Device> Psi<T, Device>::~Psi()
 {
-    if (this->allocate_inside) delete_memory_op()(this->ctx, this->psi);
+    if (this->allocate_inside) { delete_memory_op()(this->ctx, this->psi);
+}
 }
 
 template <typename T, typename Device> Psi<T, Device>::Psi(const int* ngk_in)
@@ -278,12 +279,14 @@ template <typename T, typename Device> void Psi<T, Device>::fix_k(const int ik) 
 {
     assert(ik >= 0);
     this->current_k = ik;
-    if (this->ngk != nullptr && this->npol != 2)
+    if (this->ngk != nullptr && this->npol != 2) {
         this->current_nbasis = this->ngk[ik];
-    else
+    } else {
         this->current_nbasis = this->nbasis;
+}
 
-    if (this->k_first)this->current_b = 0;
+    if (this->k_first) {this->current_b = 0;
+}
     int base = this->current_b * this->nk * this->nbasis;
     if (ik >= this->nk)
     {
@@ -302,7 +305,8 @@ template <typename T, typename Device> void Psi<T, Device>::fix_b(const int ib) 
     assert(ib >= 0);
     this->current_b = ib;
 
-    if (!this->k_first)this->current_k = 0;
+    if (!this->k_first) {this->current_k = 0;
+}
     int base = this->current_k * this->nbands * this->nbasis;
     if (ib >= this->nbands)
     {
@@ -373,7 +377,8 @@ template <typename T, typename Device> int Psi<T, Device>::get_current_nbas() co
 
 template <typename T, typename Device> const int& Psi<T, Device>::get_ngk(const int ik_in) const
 {
-    if (!this->ngk) return this->nbasis;
+    if (!this->ngk) { return this->nbasis;
+}
     return this->ngk[ik_in];
 }
 
