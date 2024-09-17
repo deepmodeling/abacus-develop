@@ -164,7 +164,7 @@ void Charge::check_rho()
 
 void Set_GlobalV_Default()
 {
-    GlobalV::device_flag = "cpu";
+    PARAM.sys.device_flag = "cpu";
     PARAM.input.precision = "double";
     PARAM.sys.domag = false;
     PARAM.sys.domag_z = false;
