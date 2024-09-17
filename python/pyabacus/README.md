@@ -46,9 +46,24 @@ Run `python diago_matrix.py` in `examples` to check the diagonalization of a mat
 ```shell
 $ cd examples/
 $ python diago_matrix.py
-eigenvalues calculated by pyabacus: [-0.38440611 0.24221155 0.31593272 0.53144616 0.85155108 1.06950155 1.11142051 1.12462152]
-eigenvalues calculated by scipy: [-0.38440611 0.24221155 0.31593272 0.53144616 0.85155108 1.06950154 1.11142051 1.12462151]
-error: [9.26164700e-12 2.42959514e-10 2.96529468e-11 7.77933273e-12 7.53686002e-12 2.95628810e-09 1.04678111e-09 7.79106313e-09]
+====== Calculating eigenvalues using davidson method... ======
+eigenvalues calculated by pyabacus-davidson is: 
+ [-0.38440611  0.24221155  0.31593272  0.53144616  0.85155108  1.06950154
+  1.11142051  1.1246216 ]
+eigenvalues calculated by scipy:  [-0.38440611  0.24221155  0.31593272  0.53144616  0.85155108  1.06950154
+  1.11142051  1.12462151]
+eigenvalues difference:  [4.25992575e-13 2.58706945e-12 8.26848034e-11 9.64006652e-13
+ 1.38805634e-11 1.61699987e-10 1.05329057e-09 8.97058461e-08]
+
+====== Calculating eigenvalues using dav_subspace method... ======
+enter diag... is_subspace = 0, ntry = 0
+eigenvalues calculated by pyabacus-dav_subspace is: 
+ [-0.38440611  0.24221155  0.31593272  0.53144616  0.85155108  1.06950154
+  1.11142052  1.12462151]
+eigenvalues calculated by scipy:  [-0.38440611  0.24221155  0.31593272  0.53144616  0.85155108  1.06950154
+  1.11142051  1.12462151]
+eigenvalues difference:  [4.98749930e-11 5.52219381e-12 1.05679354e-11 3.20832250e-12
+ 4.96347408e-12 7.22339299e-10 4.29339986e-09 6.92761959e-09]
 ```
 
 License
