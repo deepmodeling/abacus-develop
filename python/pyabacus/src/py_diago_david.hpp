@@ -130,7 +130,7 @@ public:
             std::copy(hpsi_ptr, hpsi_ptr + (band_index2 - band_index1 + 1) * nbasis_in, hpsi_out);
         };
 
-        auto spsi_func = [] (
+        auto spsi_func = [this] (
             const std::complex<double> *psi_in, 
             std::complex<double> *spsi_out, 
             const int nrow, 
@@ -140,7 +140,7 @@ public:
             syncmem_op()(this->ctx, this->ctx, spsi_out, psi_in, static_cast<size_t>(nbands * nrow));
         };
 
-        obj = std::make_unique<hsolver::Diago_DavSubspace<std::complex<double>, base_device::DEVICE_CPU>>(
+        obj = std::make_unique<hsolver::DiagoDavid<std::complex<double>, base_device::DEVICE_CPU>>(
             precond_vec.data(), 
             nband, 
             nbasis, 
@@ -159,7 +159,7 @@ private:
     int nbasis;
     int nband;
 
-    std::unique_ptr<hsolver::Diago_DavSubspace<std::complex<double>, base_device::DEVICE_CPU>> obj;
+    std::unique_ptr<hsolver::DiagoDavid<std::complex<double>, base_device::DEVICE_CPU>> obj;
 
     base_device::DEVICE_CPU* ctx = {};
     using syncmem_op = base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU, base_device::DEVICE_CPU>;

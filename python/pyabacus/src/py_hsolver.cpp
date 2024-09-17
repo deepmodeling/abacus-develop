@@ -133,9 +133,7 @@ void bind_hsolver(py::module& m)
         "dav_ndim"_a, 
         "tol"_a, 
         "max_iter"_a, 
-        "need_subspace"_a, 
-        "is_occupied"_a, 
-        "scf_type"_a, 
+        "use_paw"_a, 
         "comm_info"_a)
         .def("set_psi", &py_hsolver::PyDiagoDavid::set_psi, R"pbdoc(
             Set the initial guess of the eigenvectors, i.e. the wave functions.
