@@ -7,7 +7,6 @@
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_elecstate/cal_dm.h"
 #include "module_elecstate/elecstate_lcao.h"
-#include "module_elecstate/module_dm/cal_dm_psi.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/write_HS.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/stress_tools.h"
@@ -30,7 +29,7 @@ void Force_LCAO<std::complex<double>>::cal_fedm(const bool isforce,
                                                 const bool isstress,
                                                 ForceStressArrays& fsr,
                                                 const UnitCell& ucell,
-                                                const elecstate::DensityMatrix<std::complex<double>, double>* dm,
+                                                const elecstate::DensityMatrix<std::complex<double>, double>& dm,
                                                 const psi::Psi<std::complex<double>>* psi,
                                                 const Parallel_Orbitals& pv,
                                                 const elecstate::ElecState* pelec,
@@ -43,6 +42,7 @@ void Force_LCAO<std::complex<double>>::cal_fedm(const bool isforce,
     ModuleBase::timer::tick("Force_LCAO", "cal_fedm");
 
     const int nspin = PARAM.inp.nspin;
+<<<<<<< HEAD
     const int nbands = PARAM.inp.nbands;
 
     // construct a DensityMatrix object
@@ -88,6 +88,8 @@ void Force_LCAO<std::complex<double>>::cal_fedm(const bool isforce,
     edm.init_DMR(*ra, &ucell);
     edm.cal_DMR();
     edm.sum_DMR_spin();
+=======
+>>>>>>> 27869bac3 (extract edm)
     //--------------------------------------------
     // summation \sum_{i,j} E(i,j)*dS(i,j)
     // BEGIN CALCULATION OF FORCE OF EACH ATOM
@@ -147,7 +149,7 @@ void Force_LCAO<std::complex<double>>::cal_fedm(const bool isforce,
                 double Ry = ra->info[iat][cb][1];
                 double Rz = ra->info[iat][cb][2];
                 // get BaseMatrix
-                hamilt::BaseMatrix<double>* tmp_matrix = edm.get_DMR_pointer(1)->find_matrix(iat1, iat2, Rx, Ry, Rz);
+                hamilt::BaseMatrix<double>* tmp_matrix = dm.get_DMR_pointer(1)->find_matrix(iat1, iat2, Rx, Ry, Rz);
                 if (tmp_matrix == nullptr)
                 {
                     continue;

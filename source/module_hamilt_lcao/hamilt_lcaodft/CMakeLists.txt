@@ -19,6 +19,7 @@ if(ENABLE_LCAO)
         FORCE_gamma.cpp
         FORCE_k.cpp
         stress_tools.cpp
+        edm.cpp
         fedm_gamma.cpp
         fedm_k.cpp
         ftvnl_dphi_gamma.cpp

@@ -315,7 +315,9 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
 
     // calculate the energy density matrix
     // and the force related to overlap matrix and energy density matrix.
-    this->cal_fedm(isforce, isstress, fsr, ucell, dm, psi, pv, pelec, foverlap, soverlap, kv, ra);
+    this->cal_fedm(isforce, isstress, fsr, ucell, 
+        this->cal_edm(pelec, *psi, *dm, *kv, pv, GlobalV::NSPIN, GlobalV::NBANDS, ucell, *ra), 
+        psi, pv, pelec, foverlap, soverlap, kv, ra);
 
     this->cal_ftvnl_dphi(dm, pv, ucell, fsr, isforce, isstress, ftvnl_dphi, stvnl_dphi, ra);
 
