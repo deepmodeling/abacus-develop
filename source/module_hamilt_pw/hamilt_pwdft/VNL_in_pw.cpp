@@ -228,8 +228,6 @@ void pseudopot_cell_vnl::init(const int ntype,
     }
 
     // this->nqx = 10000;		// calculted in allocate_nlpot.f90
-    PARAM.globalv.nqx = static_cast<int>((sqrt(PARAM.inp.ecutwfc) / PARAM.globalv.dq + 4.0) * cell_factor);
-    PARAM.globalv.nqxq = static_cast<int>((sqrt(PARAM.inp.ecutrho) / PARAM.globalv.dq + 4.0) * cell_factor);
     // PARAM.globalv.nqxq = static_cast<int>(((sqrt(INPUT.ecutrho) + qnorm) / PARAM.globalv.dq + 4.0) * cell_factor);
 
     // mohan update 2021-02-22
