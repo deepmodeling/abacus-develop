@@ -1,5 +1,6 @@
 #include "spar_dh.h"
 
+#include "module_parameter/parameter.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
 #include <vector>
 
@@ -183,7 +184,7 @@ void sparse_format::cal_dSTN_R(const Parallel_Orbitals& pv,
                                 continue;
                             }
 
-                            if (GlobalV::NSPIN != 4)
+                            if (PARAM.inp.nspin != 4)
                             {
                                 temp_value_double = fsr.DHloc_fixedR_x[index];
                                 if (std::abs(temp_value_double) > sparse_thr)
@@ -220,7 +221,7 @@ void sparse_format::destroy_dH_R_sparse(LCAO_HS_Arrays& HS_Arrays)
 {
     ModuleBase::TITLE("LCAO_domain", "destroy_dH_R_sparse");
 
-    if (GlobalV::NSPIN != 4)
+    if (PARAM.inp.nspin != 4)
     {
         std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> empty_dHRx_sparse_up;
         std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> empty_dHRx_sparse_down;

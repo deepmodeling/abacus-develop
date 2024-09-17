@@ -1,5 +1,6 @@
 #include "FORCE.h"
 #include "module_base/memory.h"
+#include "module_parameter/parameter.h"
 #include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
 #include "module_base/tool_threading.h"
@@ -40,7 +41,7 @@ void Force_LCAO<std::complex<double>>::cal_fedm(const bool isforce,
     ModuleBase::TITLE("Force_LCAO", "cal_fedm");
     ModuleBase::timer::tick("Force_LCAO", "cal_fedm");
 
-    const int nspin = GlobalV::NSPIN;
+    const int nspin = PARAM.inp.nspin;
     const int nbands = GlobalV::NBANDS;
 
     // construct a DensityMatrix object

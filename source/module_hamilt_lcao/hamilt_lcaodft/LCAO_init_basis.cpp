@@ -1,5 +1,6 @@
 #include "LCAO_domain.h"
 
+#include "module_parameter/parameter.h"
 /// once the GlobalC::exx_info has been deleted, this include can be gone 
 /// mohan note 2024-07-21
 #ifdef __EXX
@@ -29,7 +30,7 @@ void init_basis_lcao(Parallel_Orbitals& pv,
     {
         if (nlocal > 0)
         {
-            GlobalV::NB2D = (GlobalV::NSPIN == 4) ? 2 : 1;
+            GlobalV::NB2D = (PARAM.inp.nspin == 4) ? 2 : 1;
         }
         if (nlocal > 500)
         {

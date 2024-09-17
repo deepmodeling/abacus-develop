@@ -58,7 +58,7 @@ void DFTU::init(UnitCell& cell, // unitcell class
     // global parameters, need to be removed in future
     const int npol = GlobalV::NPOL;     // number of polarization directions
     const int nlocal = GlobalV::NLOCAL; // number of total local orbitals
-    const int nspin = GlobalV::NSPIN;   // number of spins
+    const int nspin = PARAM.inp.nspin;   // number of spins
 
     this->EU = 0.0;
 
@@ -254,7 +254,7 @@ void DFTU::cal_energy_correction(const int istep)
                         continue;
                     }
 
-                    if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 2)
+                    if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2)
                     {
                         for (int spin = 0; spin < 2; spin++)
                         {
@@ -281,7 +281,7 @@ void DFTU::cal_energy_correction(const int istep)
                             }
                         }
                     }
-                    else if (GlobalV::NSPIN == 4) // SOC
+                    else if (PARAM.inp.nspin == 4) // SOC
                     {
                         double nm_trace = 0.0;
                         double nm2_trace = 0.0;
@@ -328,7 +328,7 @@ void DFTU::cal_energy_correction(const int istep)
                                 {
                                     const int m2_all = m2 + ipol2 * (2 * l + 1);
 
-                                    if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 2)
+                                    if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2)
                                     {
                                         for (int is = 0; is < 2; is++)
                                         {
@@ -337,7 +337,7 @@ void DFTU::cal_energy_correction(const int istep)
                                             EU_dc += VU * this->locale[iat][l][n][is](m1_all, m2_all);
                                         }
                                     }
-                                    else if (GlobalV::NSPIN == 4) // SOC
+                                    else if (PARAM.inp.nspin == 4) // SOC
                                     {
                                         double VU = 0.0;
                                         VU = get_onebody_eff_pot(T, iat, l, n, 0, m1_all, m2_all, false);

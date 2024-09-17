@@ -292,7 +292,7 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int& ik,
 						it, ic, PARAM.globalv.nqx, PARAM.globalv.dq, gk[ig].norm() * GlobalC::ucell.tpiba );
 					}
 
-					if(GlobalV::NSPIN==4)
+					if(PARAM.inp.nspin==4)
 					{
 /*						for(int is_N = 0; is_N < 2; is_N++)*/  //for rotate base
 						for(int is_N = 0; is_N < 1; is_N++)

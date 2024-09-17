@@ -1,5 +1,6 @@
 #include "gint_k.h"
 #include "grid_technique.h"
+#include "module_parameter/parameter.h"
 #include "module_base/timer.h"
 #include "module_base/ylm.h"
 #include "module_basis/module_ao/ORB_read.h"
@@ -109,7 +110,7 @@ void Gint_k::cal_env_k(int ik,
                         int iw1_lo = 0;
                         double* psi1 = &psir_ylm[ib][block_index[ia1]];
                         std::complex<double> tmp{0.0, 0.0};
-                        if (GlobalV::NSPIN == 4) // is it a simple add of 2 spins?
+                        if (PARAM.inp.nspin == 4) // is it a simple add of 2 spins?
                         {
                             for (int is = 0; is < 2; ++is)
                             {

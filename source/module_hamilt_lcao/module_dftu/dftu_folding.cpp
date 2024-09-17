@@ -290,7 +290,7 @@ void DFTU::folding_matrix_k_new(const int ik,
     }
     else
     {
-        if(GlobalV::NSPIN != 4)
+        if(PARAM.inp.nspin != 4)
         {
             dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham)->updateSk(ik, hk_type);
         }
