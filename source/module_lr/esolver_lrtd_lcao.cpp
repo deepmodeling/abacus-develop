@@ -515,7 +515,7 @@ void LR::ESolver_LR<T, TR>::set_X_initial_guess()
     ix2ioiv = std::move(std::get<1>(indexmap));
 
     // use unit vectors as the initial guess
-    // for (int i = 0; i < std::min(this->nstates * GlobalV::PW_DIAG_NDIM, nocc * nvirt); i++)
+    // for (int i = 0; i < std::min(this->nstates * PARAM.inp.pw_diag_ndim, nocc * nvirt); i++)
     for (int is = 0;is < this->nspin;++is)
     {
         for (int s = 0; s < nstates; ++s)
