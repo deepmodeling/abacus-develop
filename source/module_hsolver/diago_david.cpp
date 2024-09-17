@@ -712,7 +712,7 @@ void DiagoDavid<T, Device>::cal_elem(const int& dim,
 #endif
 
     nbase += notconv;
-    ModuleBase::timer::tick("DiagoDavid", "cal_elem");
+    ModuleBase::timer::tick("", "cal_elem");
     return;
 }
 
