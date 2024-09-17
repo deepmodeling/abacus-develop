@@ -1,5 +1,4 @@
 #include "module_base/constants.h"
-#include "module_base/global_variable.h"
 #include "module_parameter/parameter.h"
 #include "module_base/tool_quit.h"
 #include "read_input.h"
@@ -18,6 +17,15 @@ void ReadInput::item_deepks()
         Input_Item item("deepks_scf");
         item.annotation = ">0 add V_delta to Hamiltonian";
         read_sync_bool(input.deepks_scf);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+        #ifndef __DEEPKS
+            if (PARAM.inp.deepks_scf || PARAM.inp.deepks_out_labels || 
+                PARAM.inp.deepks_bandgap || PARAM.inp.deepks_v_delta)
+            {
+                ModuleBase::WARNING_QUIT("Input_conv", "please compile with DeePKS");
+            }
+        #endif
+        };
         this->add_item(item);
     }
     {
@@ -59,19 +67,10 @@ void ReadInput::item_deepks()
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.deepks_out_unittest){
-                // should be add when
-                // if (GlobalV::NPROC > 1)
-                // {
-                //     ModuleBase::WARNING_QUIT("ReadInput", "generate deepks unittest with only 1 processor");
-                // }
                 if (para.input.cal_force != 1)
                 {
                     ModuleBase::WARNING_QUIT("ReadInput", "force is required in generating deepks unittest");
                 }
-                // if (GlobalV::CAL_STRESS != 1)
-                // {
-                //     ModuleBase::WARNING_QUIT("ReadInput", "stress is required in generating deepks unittest");
-                // }
             }
         };
         this->add_item(item);

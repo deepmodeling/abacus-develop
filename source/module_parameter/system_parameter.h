@@ -39,9 +39,6 @@ struct System_para
 
     bool deepks_setorb = false;             ///< true if "deepks" is set
     
-    int npol = 1;                           ///< number of polarization
-    bool domag = 0;                         ///< whether to calculate magnetic moment
-    bool domag_z = 0;                       ///< whether to calculate magnetic moment along z direction
     
     bool double_grid = false;               ///< true if "ndx,ndy,ndz" is larger than "nx,ny,nz"
     double uramping = -10.0 / 13.6;         /// U-Ramping method (Ry)
