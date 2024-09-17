@@ -272,6 +272,11 @@ void ReadInput::item_elec_stru()
             {
                 para.input.nspin = 4;
             }
+            if (para.input.nspin !=4)
+            {
+                para.input.noncolin = false;
+                para.input.lspinorb = false;
+            }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.nspin != 1 && para.input.nspin != 2 && para.input.nspin != 4)
