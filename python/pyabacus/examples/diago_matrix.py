@@ -44,7 +44,7 @@ def calc_eig_scipy(mat_file):
     h_mat, _, nband = load_mat(mat_file)
     e, _ = scipy.sparse.linalg.eigsh(h_mat, k=nband, which='SA', maxiter=1000)
     e = np.sort(e)
-    print('eigenvalues calculated by scipy: ', e)
+    print('eigenvalues calculated by scipy is: \n', e)
     
     return e
 
@@ -57,6 +57,6 @@ if __name__ == '__main__':
         e_pyabacus = calc_eig_pyabacus(mat_file, m)
         e_scipy = calc_eig_scipy(mat_file)
         
-        print('eigenvalues difference: ', e_pyabacus - e_scipy)
+        print('eigenvalues difference: \n', e_pyabacus - e_scipy)
     
     
