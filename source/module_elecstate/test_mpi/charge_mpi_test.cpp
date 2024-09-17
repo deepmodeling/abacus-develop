@@ -97,7 +97,7 @@ TEST_F(ChargeMpiTest, reduce_diff_pools1)
         }
         double refsum = sum_array(array_rho, nrxx);
 
-        charge->init_chgmpi(nz, 1);
+        charge->init_chgmpi();
         charge->reduce_diff_pools(array_rho);
         double sum = sum_array(array_rho, nrxx);
         EXPECT_EQ(sum, refsum * GlobalV::KPAR);
@@ -150,7 +150,7 @@ TEST_F(ChargeMpiTest, reduce_diff_pools2)
             }
         }
 
-        charge->init_chgmpi(nz, 1);
+        charge->init_chgmpi();
         charge->reduce_diff_pools(array_rho);
         double sum = sum_array(array_rho, nrxx);
         MPI_Allreduce(MPI_IN_PLACE, &sum, 1, MPI_DOUBLE, MPI_SUM, POOL_WORLD);
@@ -194,7 +194,7 @@ TEST_F(ChargeMpiTest, rho_mpi)
         charge->nrxx = nrxx;
         charge->rho[0] = new double[nrxx];
         charge->kin_r[0] = new double[nrxx];
-        charge->init_chgmpi(nz, 1);
+        charge->init_chgmpi();
         charge->rho_mpi();
 
         delete[] charge->rho[0];

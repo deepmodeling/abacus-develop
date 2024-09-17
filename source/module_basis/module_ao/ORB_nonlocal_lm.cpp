@@ -1,5 +1,6 @@
 #include <cassert>
 #include <iostream>
+#include "module_parameter/parameter.h"
 #include <sstream>
 #include <cmath>
 #include "ORB_nonlocal_lm.h"
@@ -303,13 +304,13 @@ void Numerical_Nonlocal_Lm::plot(const int &my_rank)const
 	if(my_rank==0)
 	{
 		std::stringstream ssr, ssk, ssru;
-		ssr << GlobalV::global_out_dir << this->label << "/"
+		ssr << PARAM.globalv.global_out_dir << this->label << "/"
 			<< this->label << "-" << orbital_type << "-proj-r.dat";
 
-		ssk << GlobalV::global_out_dir << this->label << "/"
+		ssk << PARAM.globalv.global_out_dir << this->label << "/"
 			<< this->label << "-" << orbital_type << "-proj-k.dat";
 
-		ssru << GlobalV::global_out_dir << this->label << "/"
+		ssru << PARAM.globalv.global_out_dir << this->label << "/"
 			<< this->label << "-" << orbital_type << "-proj-ru.dat";
 
 		std::ofstream ofsr(ssr.str().c_str());

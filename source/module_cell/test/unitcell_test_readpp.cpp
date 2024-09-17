@@ -108,7 +108,7 @@ class UcellTest : public ::testing::Test {
     void SetUp() {
         ofs.open("running.log");
         PARAM.input.relax_new = utp.relax_new;
-        GlobalV::global_out_dir = "./";
+        PARAM.sys.global_out_dir = "./";
         ucell = utp.SetUcellInfo();
         GlobalV::LSPINORB = false;
         pp_dir = "./support/";

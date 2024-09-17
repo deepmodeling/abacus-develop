@@ -62,7 +62,7 @@ void Structure_Factor::setup_structure_factor(UnitCell* Ucell, const ModulePW::P
     ModuleBase::Memory::record("SF::strucFac", sizeof(std::complex<double>) * Ucell->ntype*rho_basis->npw);
 
 //	std::string outstr;
-//	outstr = GlobalV::global_out_dir + "strucFac.dat"; 
+//	outstr = PARAM.globalv.global_out_dir + "strucFac.dat"; 
 //	std::ofstream ofs( outstr.c_str() ) ;
     bool usebspline;
     if(nbspline > 0) {   usebspline = true;

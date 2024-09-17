@@ -54,8 +54,6 @@ extern double DQ; // 19 mohan add 2009-09-10
 extern int NQX;   // 20 mohan add 2009-09-10
 extern int NQXQ;  // liuyu add 2023-10-03
 
-extern bool GAMMA_ONLY_PW;    // mohan add 2012-06-05
-
 
 //========================================================================
 // EXPLAIN : Parallel information
@@ -114,12 +112,6 @@ extern std::string global_kpoint_card;
 
 // extern std::string global_pseudo_type; // mohan add 2013-05-20 (xiaohui add
 // 2013-06-23)
-extern std::string global_out_dir;
-extern std::string global_readin_dir;  // zhengdy modified
-extern std::string global_stru_dir;    // liuyu add 2022-05-24 for MD STRU
-extern std::string global_matrix_dir;  // liuyu add 2022-09-19 for HS matrix outpu, jiyy
-                                       // modified 2023-01-23 for R matrix output
-
 extern std::ofstream ofs_running;
 extern std::ofstream ofs_warning;
 extern std::ofstream ofs_info;

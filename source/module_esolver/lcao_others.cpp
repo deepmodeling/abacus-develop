@@ -89,7 +89,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
 
     this->beforesolver(istep);
     // pelec should be initialized before these calculations
-    this->pelec->init_scf(istep, this->sf.strucFac);
+    this->pelec->init_scf(istep, this->sf.strucFac, GlobalC::ucell.symm);
     // self consistent calculations for electronic ground state
     if (PARAM.inp.calculation == "nscf")
     {
@@ -120,7 +120,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                       GlobalV::nelec,
                       GlobalV::NSPIN,
                       GlobalV::NLOCAL,
-                      GlobalV::global_out_dir,
+                      PARAM.globalv.global_out_dir,
                       GlobalV::MY_RANK,
                       GlobalV::ofs_warning,
                       &GlobalC::ucell,
@@ -150,7 +150,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                       GlobalV::nelec,
                       GlobalV::NSPIN,
                       GlobalV::NLOCAL,
-                      GlobalV::global_out_dir,
+                      PARAM.globalv.global_out_dir,
                       GlobalV::MY_RANK,
                       GlobalV::ofs_warning,
                       &GlobalC::ucell,
@@ -183,7 +183,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                       GlobalV::NBANDS,
                       GlobalV::NSPIN,
                       GlobalV::NLOCAL,
-                      GlobalV::global_out_dir);
+                      PARAM.globalv.global_out_dir);
         }
         else
         {
@@ -202,7 +202,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                       GlobalV::NBANDS,
                       GlobalV::NSPIN,
                       GlobalV::NLOCAL,
-                      GlobalV::global_out_dir);
+                      PARAM.globalv.global_out_dir);
         }
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "getting wave function");
     }

@@ -101,6 +101,13 @@ extern "C"
 	void dsyev_(const char* jobz,const char* uplo,const int* n,double *a,
                 const int* lda,double* w,double* work,const int* lwork, int* info);
 
+    // solve the eigenproblem Ax=ex, where A is a general matrix
+    void dgeev_(const char* jobvl, const char* jobvr, const int* n, double* a, const int* lda,
+        double* wr, double* wi, double* vl, const int* ldvl, double* vr, const int* ldvr,
+        double* work, const int* lwork, int* info);
+    void zgeev_(const char* jobvl, const char* jobvr, const int* n, std::complex<double>* a, const int* lda,
+        std::complex<double>* w, std::complex<double>* vl, const int* ldvl, std::complex<double>* vr, const int* ldvr,
+        std::complex<double>* work, const int* lwork, double* rwork, int* info);
     // liuyu add 2023-10-03
     // dgetri and dgetrf computes the inverse of a n*n real matrix
     void dgetri_(const int* n, double* a, const int* lda, const int* ipiv, double* work, const int* lwork, int* info);

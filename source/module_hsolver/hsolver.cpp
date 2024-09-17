@@ -24,7 +24,7 @@ double set_diagethr_ks(const std::string basis_type,
         {
             if (std::abs(res_diag_ethr - 1.0e-2) < 1.0e-6)
             {
-                if (init_chg_in == "file")
+                if (init_chg_in == "file" || init_chg_in == "wfc")
                 {
                     //======================================================
                     // if you think that the starting potential is good

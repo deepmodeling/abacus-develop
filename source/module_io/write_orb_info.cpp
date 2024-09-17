@@ -1,12 +1,13 @@
 #include "write_orb_info.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/name_angular.h"
 #include "module_cell/atom_spec.h"
 
 void ModuleIO::write_orb_info(const UnitCell* ucell)
 {
     std::stringstream os;
-    os << GlobalV::global_out_dir << "Orbital";
+    os << PARAM.globalv.global_out_dir << "Orbital";
     std::ofstream out(os.str().c_str());
     out << std::setw(5) << "#io" << std::setw(8) << "spec" << std::setw(5) << "l" << std::setw(5) << "m" << std::setw(5)
         << "z" << std::setw(5) << "sym" << std::endl;

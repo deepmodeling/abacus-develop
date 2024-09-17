@@ -162,7 +162,7 @@ void toWannier90_LCAO::cal_Mmn(const K_Vectors& kv, const psi::Psi<std::complex<
 
     if (GlobalV::MY_RANK == 0)
     {
-        std::string fileaddress = GlobalV::global_out_dir + wannier_file_name + ".mmn";
+        std::string fileaddress = PARAM.globalv.global_out_dir + wannier_file_name + ".mmn";
         mmn_file.open(fileaddress.c_str(), std::ios::out);
 
         time_t time_now = time(nullptr);
@@ -221,7 +221,7 @@ void toWannier90_LCAO::cal_Amn(const K_Vectors& kv, const psi::Psi<std::complex<
     if (GlobalV::MY_RANK == 0)
     {
         time_t time_now = time(nullptr);
-        std::string fileaddress = GlobalV::global_out_dir + wannier_file_name + ".amn";
+        std::string fileaddress = PARAM.globalv.global_out_dir + wannier_file_name + ".amn";
         Amn_file.open(fileaddress.c_str(), std::ios::out);
         Amn_file << " Created on " << ctime(&time_now);
         Amn_file << std::setw(12) << num_bands << std::setw(12) << cal_num_kpts << std::setw(12) << num_wannier

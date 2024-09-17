@@ -88,7 +88,7 @@ void ESolver_OF::before_all_runners(const Input_para& inp, UnitCell& ucell)
     }
 
     // Setup the k points according to symmetry.
-    kv.set(ucell.symm, GlobalV::global_kpoint_card, GlobalV::NSPIN, ucell.G, ucell.latvec, GlobalV::ofs_running);
+    kv.set(ucell.symm, PARAM.inp.kpoint_file, GlobalV::NSPIN, ucell.G, ucell.latvec, GlobalV::ofs_running);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
 
     // print information
@@ -120,7 +120,7 @@ void ESolver_OF::before_all_runners(const Input_para& inp, UnitCell& ucell)
     this->init_elecstate(ucell);
 
     // calculate the total local pseudopotential in real space
-    this->pelec->init_scf(0, sf.strucFac); // atomic_rho, v_of_rho, set_vrs
+    this->pelec->init_scf(0, sf.strucFac, GlobalC::ucell.symm); // atomic_rho, v_of_rho, set_vrs
 
     // liuyu move here 2023-10-09
     // D in uspp need vloc, thus behind init_scf()
@@ -279,7 +279,7 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
             GlobalV::ofs_warning);
     }
 
-    this->pelec->init_scf(istep, sf.strucFac);
+    this->pelec->init_scf(istep, sf.strucFac, GlobalC::ucell.symm);
 
     // calculate ewald energy
     this->pelec->f_en.ewald_energy = H_Ewald_pw::compute_ewald(ucell, this->pw_rho, sf.strucFac);
@@ -287,7 +287,7 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
     Symmetry_rho srho;
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
-        srho.begin(is, *(pelec->charge), this->pw_rho, GlobalC::Pgrid, GlobalC::ucell.symm);
+        srho.begin(is, *(pelec->charge), this->pw_rho, GlobalC::ucell.symm);
     }
 
     for (int is = 0; is < GlobalV::NSPIN; ++is)

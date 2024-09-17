@@ -1,5 +1,6 @@
 #include "td_current_io.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_base/libm/libm.h"
@@ -282,7 +283,7 @@ void ModuleIO::write_current(const int istep,
             // MPI_Reduce(local_current_ik, current_ik, 3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
             if (GlobalV::MY_RANK == 0 && TD_Velocity::out_current_k)
             {
-                std::string filename = GlobalV::global_out_dir + "current_spin" + std::to_string(is) + "_ik"
+                std::string filename = PARAM.globalv.global_out_dir + "current_spin" + std::to_string(is) + "_ik"
                                        + std::to_string(ik) + ".dat";
                 std::ofstream fout;
                 fout.open(filename, std::ios::app);
@@ -297,7 +298,7 @@ void ModuleIO::write_current(const int istep,
     }     // end is
     if (GlobalV::MY_RANK == 0)
     {
-        std::string filename = GlobalV::global_out_dir + "current_total.dat";
+        std::string filename = PARAM.globalv.global_out_dir + "current_total.dat";
         std::ofstream fout;
         fout.open(filename, std::ios::app);
         fout << std::setprecision(16);
