@@ -314,7 +314,7 @@ void WF_atomic::atomic_wfc(const int ik,
                                                                it, iw, table_dimension, dq, gk[ig].norm() * GlobalC::ucell.tpiba );
                     }
 
-                    if(GlobalV::NSPIN==4)
+                    if(PARAM.inp.nspin==4)
                     {
                         if(GlobalC::ucell.atoms[it].ncpp.has_so)
                         {

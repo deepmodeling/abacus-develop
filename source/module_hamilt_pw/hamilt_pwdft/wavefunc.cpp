@@ -44,7 +44,7 @@ psi::Psi<std::complex<double>>* wavefunc::allocate(const int nkstot, const int n
 
     // if use spin orbital, do not double nks but double allocate evc and wanf2.
     int prefactor = 1;
-    if (GlobalV::NSPIN == 4)
+    if (PARAM.inp.nspin == 4)
     {
         prefactor = GlobalV::NPOL; // added by zhengdy-soc
     }

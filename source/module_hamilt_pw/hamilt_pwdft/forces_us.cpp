@@ -1,5 +1,6 @@
 #include "forces.h"
 #include "module_base/libm/libm.h"
+#include "module_parameter/parameter.h"
 #include "module_base/math_ylmreal.h"
 #include "module_base/timer.h"
 #include "module_elecstate/elecstate_pw.h"
@@ -31,9 +32,9 @@ void Forces<FPTYPE, Device>::cal_force_us(ModuleBase::matrix& forcenl,
     ModuleBase::matrix forceq(ucell.nat, 3);
 
     ModuleBase::matrix veff = elec.pot->get_effective_v();
-    ModuleBase::ComplexMatrix vg(GlobalV::NSPIN, npw);
+    ModuleBase::ComplexMatrix vg(PARAM.inp.nspin, npw);
     // fourier transform of the total effective potential
-    for (int is = 0; is < GlobalV::NSPIN; is++)
+    for (int is = 0; is < PARAM.inp.nspin; is++)
     {
         rho_basis->real2recip(&veff.c[is * veff.nc], &vg(is, 0));
     }
@@ -71,8 +72,8 @@ void Forces<FPTYPE, Device>::cal_force_us(ModuleBase::matrix& forcenl,
             double* qgm_data = reinterpret_cast<double*>(qgm.c);
 
             ModuleBase::ComplexArray aux1(3, atom->na, npw);
-            ModuleBase::realArray ddeeq(GlobalV::NSPIN, 3, atom->na, nij);
-            for (int is = 0; is < GlobalV::NSPIN; is++)
+            ModuleBase::realArray ddeeq(PARAM.inp.nspin, 3, atom->na, nij);
+            for (int is = 0; is < PARAM.inp.nspin; is++)
             {
                 for (int ia = 0; ia < atom->na; ia++)
                 {
@@ -113,7 +114,7 @@ void Forces<FPTYPE, Device>::cal_force_us(ModuleBase::matrix& forcenl,
                 }
             }
 
-            for (int is = 0; is < GlobalV::NSPIN; is++)
+            for (int is = 0; is < PARAM.inp.nspin; is++)
             {
                 for (int ia = 0; ia < atom->na; ia++)
                 {

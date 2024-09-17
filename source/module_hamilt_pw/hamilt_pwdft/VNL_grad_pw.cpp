@@ -11,7 +11,7 @@ void pseudopot_cell_vnl::initgradq_vnl(const UnitCell &cell)
     const int nbrx = 10;
 	const int nbrx_nc = 20;
     const int ntype = cell.ntype;
-	if(GlobalV::NSPIN!=4) 
+	if(PARAM.inp.nspin!=4) 
 	{
 		this->tab_dq.create(ntype, nbrx, PARAM.globalv.nqx);
 	}

@@ -238,7 +238,7 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
         {
             rhor[ir] = 0.0;
         }
-        for (int is = 0; is < GlobalV::NSPIN; is++)
+        for (int is = 0; is < PARAM.inp.nspin; is++)
         {
             for (int ir = 0; ir < rho_basis->nrxx; ir++)
             {
@@ -248,12 +248,12 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
 
         force_paw = new double[3 * this->nat];
         ModuleBase::matrix v_xc, v_effective;
-        v_effective.create(GlobalV::NSPIN, rho_basis->nrxx);
+        v_effective.create(PARAM.inp.nspin, rho_basis->nrxx);
         v_effective.zero_out();
         elec.pot->update_from_charge(elec.charge, &GlobalC::ucell);
         v_effective = elec.pot->get_effective_v();
 
-        v_xc.create(GlobalV::NSPIN, rho_basis->nrxx);
+        v_xc.create(PARAM.inp.nspin, rho_basis->nrxx);
         v_xc.zero_out();
         const std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v
             = XC_Functional::v_xc(rho_basis->nrxx, elec.charge, &GlobalC::ucell);
@@ -475,7 +475,7 @@ void Forces<FPTYPE, Device>::cal_force_loc(ModuleBase::matrix& forcelc,
         blocking rho_basis->nrxx for data locality.
 
         By blocking aux with block size 1024,
-        we can keep the blocked aux in L1 cache when iterating GlobalV::NSPIN loop
+        we can keep the blocked aux in L1 cache when iterating PARAM.inp.nspin loop
         performance will be better when number of atom is quite huge
     */
     const int block_ir = 1024;
@@ -493,7 +493,7 @@ void Forces<FPTYPE, Device>::cal_force_loc(ModuleBase::matrix& forcelc,
                 aux[ir] = std::complex<double>(chr->rho[0][ir], 0.0);
             }
         }
-        if (GlobalV::NSPIN == 2)
+        if (PARAM.inp.nspin == 2)
         {
             for (int ir = irb; ir < ir_end; ++ir)
             { // accumulate aux
