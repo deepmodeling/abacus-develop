@@ -74,6 +74,25 @@ void ReadInput::set_globalv(Parameter& para)
         default:
             break;
         }
+
+        if (para.input.device == "cpu")
+        {
+            para.sys.device_flag = "cpu";
+        }
+        else if (para.input.device == "gpu")
+        {
+            if (para.input.basis_type == "lcao_in_pw")
+            {
+                GlobalV::ofs_warning << "The GPU currently does not support the basis type \"lcao_in_pw\"!" << std::endl;
+                para.sys.device_flag = "cpu";
+            }
+            para.sys.device_flag = "gpu";
+        }
+        else
+        {
+            GlobalV::ofs_warning << "Parameter \"device\" can only be set to \"cpu\" or \"gpu\"!" << std::endl;
+            ModuleBase::WARNING_QUIT("device", "Parameter \"device\" can only be set to \"cpu\" or \"gpu\"!");
+        }
     }
 }
 
@@ -104,6 +123,8 @@ void ReadInput::set_globalv_bcast()
     add_bool_bcast(sys.domag_z);
     add_int_bcast(sys.npol);
 
+    add_string_bcast(sys.device_flag);
+    
     add_bool_bcast(sys.double_grid);
     add_double_bcast(sys.uramping);
 }

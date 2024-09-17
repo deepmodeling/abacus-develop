@@ -40,8 +40,10 @@ struct System_para
     bool deepks_setorb = false;             ///< true if "deepks" is set
     
     int npol = 1;                           ///< number of polarization
-    bool domag = false;                     ///< true if "nspin" is 4
-    bool domag_z = false;                   ///< true if "nspin" is 4
+    bool domag = false;                     /// 1 : calculate the magnetism with x, y, z component
+    bool domag_z = false;                   /// 1 : constrain the magnetism to z axis
+
+    std::string device_flag = "cpu";        ///< device flag, "cpu" or "gpu"
     bool double_grid = false;               ///< true if "ndx,ndy,ndz" is larger than "nx,ny,nz"
     double uramping = -10.0 / 13.6;         /// U-Ramping method (Ry)
     std::vector<double> hubbard_u = {};     ///< Hubbard Coulomb interaction parameter U (Ry)
