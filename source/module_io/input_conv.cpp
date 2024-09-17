@@ -321,7 +321,10 @@ void Input_Conv::Convert()
     // Yu Liu add 2022-09-13
     //----------------------------------------------------------
     GlobalV::nelec = PARAM.inp.nelec;
-
+    if (PARAM.globalv.two_fermi)
+    {
+        GlobalV::nupdown = PARAM.inp.nupdown;
+    }
     elecstate::Gatefield::zgate = PARAM.inp.zgate;
     elecstate::Gatefield::relax = PARAM.inp.relax;
     elecstate::Gatefield::block = PARAM.inp.block;
