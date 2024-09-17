@@ -24,7 +24,6 @@ int NLOCAL = 0;        // total number of local basis.
 int NSPIN = 1;       // LDA
 bool TWO_EFERMI = false; // two fermi energy, exist only magnetization is fixed.
 double nupdown = 0.0;
-bool CAL_STRESS = false;
 std::string RELAX_METHOD = "bfgs";
 
 bool use_uspp = false;
@@ -36,16 +35,6 @@ double PW_DIAG_THR = 1.0e-2;
 int NB2D = 1;
 
 
-double DQ = 0.010; // space between Q points of the reciprocal radial tab
-int NQX = 10000;   // number of points describing reciprocal radial tab
-int NQXQ = 10000;  // number of points describing reciprocal radial tab for Q
-
-bool GAMMA_ONLY_PW = false;    // mohan add 2012-06-05
-
-int ZEEMAN_IN_H = 1;
-
-// int ocp_n=0;
-bool out_mul = false; // qifeng add 2019/9/10
 //----------------------------------------------------------
 // EXPLAIN : Parallel information
 //----------------------------------------------------------

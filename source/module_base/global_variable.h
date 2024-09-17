@@ -25,8 +25,6 @@ extern int NSPIN;       // 7
 extern bool TWO_EFERMI; // 7.5 two fermi energy, exist if nupdown isn't zero.
 extern double nupdown;
 
-extern bool CAL_STRESS;  // 8.25 calcualte the stress
-
 extern std::string RELAX_METHOD;
 
 
@@ -49,10 +47,6 @@ extern double PW_DIAG_THR; // 15 pw_diag_thr
 extern int NB2D;           // 16.5 dividsion of 2D_matrix.
 
                          // pw, 2: real drho for lcao
-
-extern double DQ; // 19 mohan add 2009-09-10
-extern int NQX;   // 20 mohan add 2009-09-10
-extern int NQXQ;  // liuyu add 2023-10-03
 
 
 //========================================================================
