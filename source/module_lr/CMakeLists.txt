@@ -2,6 +2,7 @@ if(ENABLE_LCAO)
   add_subdirectory(utils)
   add_subdirectory(AX)
   add_subdirectory(dm_trans)
+  add_subdirectory(ri_benchmark)
 
   list(APPEND objects
     utils/lr_util.cpp

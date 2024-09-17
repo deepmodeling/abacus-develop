@@ -282,6 +282,12 @@ void ReadInput::item_exx()
         };
         this->add_item(item);
     }
+    {
+        Input_Item item("out_ri_cv");
+        item.annotation = "Whether to output the coefficient tensor C and ABFs-representation Coulomb matrix V";
+        read_sync_bool(input.out_ri_cv);
+        this->add_item(item);
+    }
 }
 void ReadInput::item_dftu()
 {

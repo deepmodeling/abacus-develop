@@ -245,6 +245,7 @@
     - [exx\_real\_number](#exx_real_number)
     - [exx\_symmetry\_realspace](#exx_symmetry_realspace)
     - [rpa\_ccp\_rmesh\_times](#rpa_ccp_rmesh_times)
+    - [out\_ri\_cv](#out_ri_cv)
   - [Molecular dynamics](#molecular-dynamics)
     - [md\_type](#md_type)
     - [md\_nstep](#md_nstep)
@@ -424,6 +425,8 @@
     - [abs\_wavelen\_range](#abs_wavelen_range)
     - [out\_wfc\_lr](#out_wfc_lr)
     - [abs\_broadening](#abs_broadening)
+    - [ri\_hartree\_benchmark](#ri_hartree_benchmark)
+    - [aims_nbasis](#aims_nbasis)
 
 [back to top](#full-list-of-input-keywords)
 ## System variables
@@ -2436,6 +2439,12 @@ These variables are relevant when using hybrid functionals.
   - True: rotate both D(k) and Hexx(R) to accelerate both diagonalization and EXX calculation
 - **Default**: True
 
+### out_ri_cv
+
+- **Type**: Boolean
+- **Description**: Whether to output the coefficient tensor C(R) and ABFs-representation Coulomb matrix V(R) for each atom pair and cell in real space.
+- **Default**: false
+
 [back to top](#full-list-of-input-keywords)
 
 ## Molecular dynamics
@@ -3945,5 +3954,22 @@ The output files are `OUT.${suffix}/Excitation_Energy.dat` and `OUT.${suffix}/Ex
 - **Type**: Real
 - **Description**: The broadening factor $\eta$ for the absorption spectrum calculation.
 - **Default**: 0.01
+
+### ri_hartree_benchmark
+- **Type**: String
+- **Description**: Whether to use the localized resolution-of-identity (LRI) approximation for the **Hartree** term of kernel in the $A$ matrix of LR-TDDFT for benchmark (with FHI-aims or another ABACUS calculation). Now it only supports molecular systems running with a single processor, and a large enough supercell should be used to make LRI C, V tensors contain only the R=(0 0 0) cell. 
+  - `aims`: The `OUT.${suffix}`directory should contain the FHI-aims output files: RI-LVL tensors`Cs_data_0.txt` and `coulomb_mat_0.txt`, and KS eigenstates from FHI-aims: `band_out`and `KS_eigenvectors.out`. The Casida equation will be constructed under FHI-aims' KS eigenpairs.
+    - LRI tensor files (`Cs_data_0.txt` and `coulomb_mat_0.txt`)and Kohn-Sham eigenvalues (`bands_out`): run FHI-aims with periodic boundary conditions and with `total_energy_method rpa` and `output librpa`.
+    - Kohn-Sham eigenstates under aims NAOs (`KS_eigenvectors.out`): run FHI-aims with `output eigenvectors`.
+    - If the number of atomic orbitals of any atom type in FHI-aims is different from that in ABACUS, the `aims_nbasis` should be set.
+  - `abacus`: The `OUT.${suffix}`directory should contain the RI-LVL tensors `Cs` and `Vs` (written by setting `out_ri_cv` to 1). The Casida equation will be constructed under ABACUS' KS eigenpairs, with the only difference that the Hartree term is constructed with RI approximation.
+  - `none`: Construct the Hartree term by Poisson equation and grid integration as usual.
+- **Default**: none
+
+### aims_nbasis
+- **Type**: A number(ntype) of Integers
+- **Availability**: `ri_hartree_benchmark` = `aims`
+- **Description**: Atomic basis set size for each atom type (with the same order as in `STRU`) in FHI-aims.
+- **Default**: {} (empty list, where ABACUS use its own basis set size)
 
 [back to top](#full-list-of-input-keywords)
