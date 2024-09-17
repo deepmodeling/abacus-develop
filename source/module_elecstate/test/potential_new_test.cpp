@@ -117,22 +117,30 @@ class PotentialNewTest : public ::testing::Test
     }
     virtual void TearDown()
     {
-        if (rhopw != nullptr)
+        if (rhopw != nullptr) {
             delete rhopw;
-        if (rhodpw != nullptr)
+}
+        if (rhodpw != nullptr) {
             delete rhodpw;
-        if (ucell != nullptr)
+}
+        if (ucell != nullptr) {
             delete ucell;
-        if (vloc != nullptr)
+}
+        if (vloc != nullptr) {
             delete vloc;
-        if (structure_factors != nullptr)
+}
+        if (structure_factors != nullptr) {
             delete structure_factors;
-        if (etxc != nullptr)
+}
+        if (etxc != nullptr) {
             delete etxc;
-        if (vtxc != nullptr)
+}
+        if (vtxc != nullptr) {
             delete vtxc;
-        if (pot != nullptr)
+}
+        if (pot != nullptr) {
             delete pot;
+}
     }
 };
 

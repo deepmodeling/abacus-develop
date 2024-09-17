@@ -87,7 +87,7 @@ class MockElecState : public ElecState
         PARAM.input.basis_type = "pw";
         GlobalV::KPAR = 1;
         GlobalV::NPROC_IN_POOL = 1;
-        PARAM.input.sc_mag_switch = 1;
+        PARAM.input.sc_mag_switch = true;
     }
 };
 const double* ElecState::getRho(int spin) const
