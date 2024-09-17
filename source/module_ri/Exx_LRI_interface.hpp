@@ -65,7 +65,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const K_Vectors& kv, const Charg
             this->symrot_.cal_Ms(kv, ucell, pv);
         }
 
-        this->exx_ptr->cal_exx_ions();
+        this->exx_ptr->cal_exx_ions(PARAM.inp.out_ri_cv);
     }
 
 		if (Exx_Abfs::Jle::generate_matrix)

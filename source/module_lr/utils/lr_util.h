@@ -119,5 +119,8 @@ namespace LR_Util
     /// @brief  diagonalize a hermitian matrix
     void diag_lapack(const int& n, double* mat, double* eig);
     void diag_lapack(const int& n, std::complex<double>* mat, double* eig);
+    /// @brief  diagonalize a general matrix
+    void diag_lapack_nh(const int& n, double* mat, std::complex<double>* eig);
+    void diag_lapack_nh(const int& n, std::complex<double>* mat, std::complex<double>* eig);
 }
 #include "lr_util.hpp"

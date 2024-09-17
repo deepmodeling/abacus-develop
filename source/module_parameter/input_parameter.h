@@ -304,7 +304,8 @@ struct Input_para
     bool out_wfc_lr = false; ///< whether to output the eigenvectors (excitation amplitudes) in the particle-hole basis
     std::vector<double> abs_wavelen_range = {0., 0.}; ///< the range of wavelength(nm) to output the absorption spectrum
     double abs_broadening = 0.01;                     ///< the broadening (eta) for LR-TDDFT absorption spectrum
-
+    std::string ri_hartree_benchmark = "none"; ///< whether to use the RI approximation for the Hartree potential in LR-TDDFT for benchmark (with FHI-aims/ABACUS read-in style)
+    std::vector<int> aims_nbasis = {};  ///< the number of basis functions for each atom type used in FHI-aims (for benchmark)
     // ==============   #Parameters (11.Output) ===========================
     bool out_stru = false;                ///< outut stru file each ion step
     int out_freq_elec = 0;                ///< the frequency ( >= 0) of electronic iter to output charge
@@ -490,10 +491,10 @@ struct Input_para
     double exx_opt_orb_ecut = 0.0;              ///< the cut-off of plane wave expansion for opt ABFs
     double exx_opt_orb_tolerence = 0.0;         ///< the threshold when solving for the zeros of spherical Bessel
                                                 ///< functions for opt ABFs
-    bool exx_symmetry_realspace
-        = true; ///< whether to reduce the real-space sector in when using symmetry=1 in EXX calculation
-    double rpa_ccp_rmesh_times = 10.0; ///< how many times larger the radial mesh required for
-                                       ///< calculating Columb potential is to that of atomic orbitals
+    bool exx_symmetry_realspace = true; ///< whether to reduce the real-space sector in when using symmetry=1 in EXX calculation
+    double rpa_ccp_rmesh_times = 10.0;          ///< how many times larger the radial mesh required for
+                                                ///< calculating Columb potential is to that of atomic orbitals
+    bool out_ri_cv = false;   ///<Whether to output the coefficient tensor C and ABFs-representation Coulomb matrix V
     // ==============   #Parameters (16.dft+u) ======================
     //    DFT+U       Xin Qu added on 2020-10-29
     int dft_plus_u = 0;                    ///< 0: standard DFT calculation (default)
