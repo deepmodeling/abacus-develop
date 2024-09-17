@@ -65,7 +65,7 @@ private:
         const std::vector<double> data_;
     };
 
-    using FillFunc = std::function<void(double, double, double*)>;
+    using FillFunc = std::function<void(double*, double, double)>;
 
     static constexpr int group_size_[] = {6, 8, 12, 24, 24, 48};
     static const std::vector<DelleyTable> table_;

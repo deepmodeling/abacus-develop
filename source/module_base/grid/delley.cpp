@@ -42,9 +42,9 @@ const std::vector<Delley::DelleyTable> Delley::table_ = {
             0.35156403455701051, 0.35156403455701051, 0.0034497884243058833,
             0.22196452362941784, 0.22196452362941784, 0.0031089531224136753,
             0.09618308522614784, 0.09618308522614784, 0.0023521014136891644,
-            0.97189558918789607, 0.00000000000000000, 0.0036008209322164603,
+            0.57189558918789607, 0.00000000000000000, 0.0036008209322164603,
             0.26441528870606625, 0.00000000000000000, 0.0029823449631718039,
-            0.04486773725807738, 0.25100347517704651, 0.0035715405542733871,
+            0.54486773725807738, 0.25100347517704651, 0.0035715405542733871,
             0.41277240831685310, 0.12335485325833274, 0.0033923122050061702,
         }
     },
@@ -66,13 +66,13 @@ const std::vector<Delley::DelleyTable> Delley::table_ = {
             0.33443631453434549, 0.09921769636429237, 0.0022366077604378487,
             0.45023303825826254, 0.20548236964030437, 0.0024169300443247753,
             0.55501523610768072, 0.31042840351665415, 0.0024966440545530860,
-            0.99051570489252711, 0.10680182607580483, 0.0025122368545634951,
+            0.59051570489252711, 0.10680182607580483, 0.0025122368545634951,
         }
     },
     {
         41, 590, {1, 1, 0, 8, 4, 6},
         {
-            0.00000000000000000, 0.00000000000000000, 0.0601009005753378758, 
+            0.00000000000000000, 0.00000000000000000, 0.0001009005753378758, 
             0.57735026918962576, 0.57735026918962576, 0.0018514016873890461,
             0.70404760433146996, 0.09291900596883211, 0.0018686219518306975,
             0.68084561988024238, 0.26999719217017240, 0.0018648696345606001,
@@ -112,7 +112,7 @@ const std::vector<Delley::DelleyTable> Delley::table_ = {
             0.12047667931264991, 0.00000000000000000, 0.0010901543574180667,
             0.30940302315480606, 0.00000000000000000, 0.0001869137844803852,
             0.34884276430183016, 0.00000000000000000, 0.0011284267652336505,
-            0.03224214285417946, 0.00000000000000000, 0.0013844558026568455,
+            0.53224214285417946, 0.00000000000000000, 0.0013844558026568455,
             0.23249923409267532, 0.06616159933437003, 0.0011853923885095502,
             0.32477344409682044, 0.14568618765136356, 0.0012949021664637693,
             0.41056989039349425, 0.22832839132127622, 0.0013525857420363760,
@@ -156,14 +156,14 @@ const std::vector<Delley::DelleyTable> Delley::table_ = {
             0.60296191561591869, 0.27838884778821546, 0.0011227906534357658,
             0.35896063295890958, 0.19795789389174069, 0.0010324018471174598,
             0.53486664381354765, 0.20873070611032740, 0.0011072493822838539,
-            0.96749975460743735, 0.40551221378728359, 0.0011217800485199721,
+            0.56749975460743735, 0.40551221378728359, 0.0011217800485199721,
         }
     },
     {
         59, 1202, {1, 1, 1, 13, 4, 16},
         {
             0.00006000000000000, 0.00000000000000000, 0.0001105189233267572, 
-            0.97735026918962576, 0.57735026918962576, 0.0009133159786443561,
+            0.57735026918962576, 0.57735026918962576, 0.0009133159786443561,
             0.70710678118654752, 0.00000000000000000, 0.0009205232738090741,
             0.03712636449657089, 0.03712636449657089, 0.0003690421898017899,
             0.09140060412262223, 0.09140060412262223, 0.0005603990928680660,
@@ -179,7 +179,7 @@ const std::vector<Delley::DelleyTable> Delley::table_ = {
             0.68417883090701434, 0.25258395570071777, 0.0009152873784554116,
             0.70126043301236308, 0.12832618665972300, 0.0009187436274321654,
             0.10723822154781661, 0.00000000000000000, 0.0005176977312965694,
-            0.29820689594969680, 0.00006000000000000, 0.0007331143682101417,
+            0.25820689594969680, 0.00006000000000000, 0.0007331143682101417,
             0.41727529553067168, 0.00000000000000000, 0.0008463232836379928,
             0.57003669117925033, 0.00000000000000000, 0.0009031122694253992,
             0.17717740226153253, 0.05210639477011284, 0.0006485778453163257,
@@ -195,7 +195,7 @@ const std::vector<Delley::DelleyTable> Delley::table_ = {
             0.54343035696939004, 0.24941121623622365, 0.0009010091677105086,
             0.60311616930963100, 0.31122759471496082, 0.0009107813579482705,
             0.49322211848512846, 0.06266250624154169, 0.0008803208679738260,
-            0.96321230207620997, 0.12677748006842827, 0.0009021342299040653,
+            0.56321230207620997, 0.12677748006842827, 0.0009021342299040653,
             0.62698055090243917, 0.19060182227792370, 0.0009131578003189435,
             0.63942796347491023, 0.06424549224220589, 0.0009158016174693465,
         }
@@ -205,7 +205,7 @@ const std::vector<Delley::DelleyTable> Delley::table_ = {
 const std::vector<Delley::FillFunc> Delley::fill_ = {
     // vertex (group of 6)
     // (1, 0, 0) x sign x permutation
-    [](double, double, double* grid) {
+    [](double* grid, double, double) {
         for (int i = 0; i < 3; ++i) {
             for (double one : {-1.0, 1.0}) {
                 grid[i] = one;
@@ -218,7 +218,7 @@ const std::vector<Delley::FillFunc> Delley::fill_ = {
 
     // face center (group of 8)
     // (sqrt(1/3), sqrt(1/3), sqrt(1/3)) x sign
-    [](double, double, double* grid) {
+    [](double* grid, double, double) {
         const double a = std::sqrt(3) / 3.0;
         for (int xsign : {-1, 1}) {
             for (int ysign : {-1, 1}) {
@@ -234,7 +234,7 @@ const std::vector<Delley::FillFunc> Delley::fill_ = {
 
     // edge center (group of 12)
     // (sqrt(2)/2, sqrt(2)/2, 0) x sign x permutation
-    [](double, double, double* grid) {
+    [](double* grid, double, double) {
         const double a = std::sqrt(2) / 2.0;
         for (int i = 0; i < 3; ++i) {
             for (int sign1 : {-1, 1}) {
@@ -250,7 +250,7 @@ const std::vector<Delley::FillFunc> Delley::fill_ = {
     
     // group of 24a
     // (u, u, sqrt(1-2u^2)) x sign x permutation
-    [](double x, double y, double* grid) {
+    [](double* grid, double x, double y) {
         double u = std::abs(x-y) < 1e-12 ? x : std::sqrt(1.0 - x * x - y * y);
         double v = std::sqrt(1.0 - 2.0 * u * u);
         for (int i = 0; i < 3; ++i) {
@@ -269,7 +269,7 @@ const std::vector<Delley::FillFunc> Delley::fill_ = {
 
     // group of 24b
     // (u, sqrt(1-u^2), 0) x sign x permutation
-    [](double x, double y, double* grid) {
+    [](double* grid, double x, double y) {
         double u = std::abs(x) > 1e-12 ? x : y;
         double v = std::sqrt(1.0 - u * u);
         for (int i0 = 0; i0 < 3; ++i0) {
@@ -288,7 +288,7 @@ const std::vector<Delley::FillFunc> Delley::fill_ = {
 
     // group of 48
     // (r, s, sqrt(1-r^2-s^2)) x sign x permutation
-    [](double x, double y, double* grid) {
+    [](double* grid, double x, double y) {
         double r = x;
         double s = y;
         double t = std::sqrt(1.0 - r * r - s * s);
@@ -324,18 +324,13 @@ const Delley::DelleyTable* Delley::_retrieve(int lmax) {
 
 
 void Delley::_get(const DelleyTable* tab, double* grid, double* weight) {
-    const double* x = &tab->data_[0];
-    const double* y = &tab->data_[1];
-    const double* w = &tab->data_[2];
-
+    const double* ptr = &tab->data_[0];
     for (int itype = 0; itype < 6; ++itype) {
         int group_size = group_size_[itype];
-        for (int i = 0; i < tab->ntype_[itype]; ++i, x+=3, y+=3, w+=3) {
-            fill_[itype](*x, *y, grid);
-            std::fill(weight, weight + group_size, *w);
-
-            std::advance(grid, 3*group_size);
-            std::advance(weight, group_size);
+        for (int i = 0; i < tab->ntype_[itype]; ++i, ptr += 3,
+                grid += 3*group_size, weight += group_size) {
+            fill_[itype](grid, ptr[0], ptr[1]);
+            std::fill(weight, weight + group_size, ptr[2]);
         }
     }
 }
@@ -367,41 +362,3 @@ void Delley::get(
 }
 
 
-#include <cstdio>
-int main() {
-
-    //const double x = 0.000000012345678987654321;
-    //const double w = 3.8282704949371616e-03;
-    //printf("%25.17e\n", x);
-    //printf("%25.17e\n", w);
-    //printf("%25.17e\n", table[0].data_[2]);
-    //printf("%25.17e\n", table[1].data_[2]);
-    //printf("%25.17e\n", table.back().data_[2]);
-
-    //int lmax = 20;
-    //printf("ngrid = %i\n", Delley::ngrid(lmax));
-    //printf("updated lmax = %i\n\n", lmax);
-
-    //lmax = 59;
-    //printf("ngrid = %i\n", Delley::ngrid(lmax));
-    //printf("updated lmax = %i\n\n", lmax);
-
-    //lmax = 60;
-    //printf("ngrid = %i\n", Delley::ngrid(lmax));
-    //printf("updated lmax = %i\n\n", lmax);
-
-    //lmax = -1;
-    //printf("ngrid = %i\n", Delley::ngrid(lmax));
-    //printf("updated lmax = %i\n\n", lmax);
-
-    int lmax = 17;
-    int ngrid = Delley::ngrid(lmax);
-    std::vector<double> grid(ngrid*3), weight(ngrid);
-    Delley::get(lmax, grid.data(), weight.data());
-
-    for (int igrid = 0; igrid < ngrid; ++igrid) {
-        printf("(%8.5f, %8.5f, %8.5f)    %8.5f\n",
-                grid[3*igrid], grid[3*igrid+1], grid[3*igrid+2], weight[igrid]);
-    }
-
-}
