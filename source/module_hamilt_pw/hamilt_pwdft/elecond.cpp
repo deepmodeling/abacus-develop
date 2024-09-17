@@ -114,7 +114,7 @@ void EleCond::jjresponse_ks(const int ik, const int nt, const double dt, const d
     std::vector<std::complex<double>> pij(nbands * nbands);
     std::vector<double> pij2(reducenb2, 0);
     // px|right>
-    velop.act(this->p_psi, nbands * GlobalV::NPOL, levc, prevc.data());
+    velop.act(this->p_psi, nbands * PARAM.globalv.npol, levc, prevc.data());
     for (int id = 0; id < ndim; ++id)
     {
 

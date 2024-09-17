@@ -1,5 +1,6 @@
 #include "unk_overlap_pw.h"
 
+#include "module_parameter/parameter.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 unkOverlap_pw::unkOverlap_pw()
@@ -135,12 +136,12 @@ std::complex<double> unkOverlap_pw::unkdotp_soc_G(const ModulePW::PW_Basis_K* wf
 	
 	std::complex<double> result(0.0,0.0);
     const int number_pw = wfcpw->npw;
-    std::complex<double>* unk_L = new std::complex<double>[number_pw * GlobalV::NPOL];
-    std::complex<double>* unk_R = new std::complex<double>[number_pw * GlobalV::NPOL];
-    ModuleBase::GlobalFunc::ZEROS(unk_L,number_pw*GlobalV::NPOL);
-	ModuleBase::GlobalFunc::ZEROS(unk_R,number_pw*GlobalV::NPOL);
+    std::complex<double>* unk_L = new std::complex<double>[number_pw * PARAM.globalv.npol];
+    std::complex<double>* unk_R = new std::complex<double>[number_pw * PARAM.globalv.npol];
+    ModuleBase::GlobalFunc::ZEROS(unk_L,number_pw*PARAM.globalv.npol);
+	ModuleBase::GlobalFunc::ZEROS(unk_R,number_pw*PARAM.globalv.npol);
 	
-	for(int i = 0; i < GlobalV::NPOL; i++)
+	for(int i = 0; i < PARAM.globalv.npol; i++)
 	{
 		for (int igl = 0; igl < evc->get_ngk(ik_L); igl++)
 		{
@@ -153,7 +154,7 @@ std::complex<double> unkOverlap_pw::unkdotp_soc_G(const ModulePW::PW_Basis_K* wf
         }
     }
 
-    for (int iG = 0; iG < number_pw*GlobalV::NPOL; iG++)
+    for (int iG = 0; iG < number_pw*PARAM.globalv.npol; iG++)
 	{
 
 		result = result + conj(unk_L[iG]) * unk_R[iG];
@@ -220,7 +221,7 @@ std::complex<double> unkOverlap_pw::unkdotp_soc_G0(const ModulePW::PW_Basis* rho
     wfcpw->real2recip(psi_up, psi_up, ik_L);
     wfcpw->real2recip(psi_down, psi_down, ik_L);
 
-    for (int i = 0; i < GlobalV::NPOL; i++)
+    for (int i = 0; i < PARAM.globalv.npol; i++)
     {
 		for(int ig = 0; ig < evc->get_ngk(ik_R); ig++)
 		{

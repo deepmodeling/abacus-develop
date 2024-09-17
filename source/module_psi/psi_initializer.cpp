@@ -53,20 +53,20 @@ psi::Psi<std::complex<double>>* psi_initializer<T, Device>::allocate(bool only_p
                     {
             /* EVERY ZETA FOR (2l+1) ORBS */
                         /*
-                            non-rotate basis, nbands_local*=2 for GlobalV::NPOL = 2 is enough
+                            non-rotate basis, nbands_local*=2 for PARAM.globalv.npol = 2 is enough
                         */
-                        //nbands_local += this->p_ucell_->atoms[it].l_nchi[l]*(2*l+1) * GlobalV::NPOL;
+                        //nbands_local += this->p_ucell_->atoms[it].l_nchi[l]*(2*l+1) * PARAM.globalv.npol;
                         /*
                             rotate basis, nbands_local*=4 for p, d, f,... orbitals, and nbands_local*=2 for s orbitals
                             risky when NSPIN = 4, problematic psi value, needed to be checked
                         */
                         if(l == 0) 
 						{
-							nbands_local += this->p_ucell_->atoms[it].l_nchi[l] * GlobalV::NPOL;
+							nbands_local += this->p_ucell_->atoms[it].l_nchi[l] * PARAM.globalv.npol;
 						}
 						else 
 						{
-							nbands_local += this->p_ucell_->atoms[it].l_nchi[l]*(2*l+1) * GlobalV::NPOL;
+							nbands_local += this->p_ucell_->atoms[it].l_nchi[l]*(2*l+1) * PARAM.globalv.npol;
 						}
                     }
                 }
@@ -84,7 +84,7 @@ psi::Psi<std::complex<double>>* psi_initializer<T, Device>::allocate(bool only_p
         }
     }
 	int nkpts_actual = (PARAM.inp.calculation == "nscf" && this->mem_saver_ == 1)? 1 : this->pw_wfc_->nks;
-    int nbasis_actual = this->pw_wfc_->npwk_max * GlobalV::NPOL;
+    int nbasis_actual = this->pw_wfc_->npwk_max * PARAM.globalv.npol;
     psi::Psi<std::complex<double>>* psi_out = nullptr;
     if(!only_psig)
     {
@@ -97,7 +97,7 @@ psi::Psi<std::complex<double>>* psi_initializer<T, Device>::allocate(bool only_p
         */
         const size_t memory_cost_psi = 
                 nkpts_actual*
-                    GlobalV::NBANDS * this->pw_wfc_->npwk_max * GlobalV::NPOL*
+                    GlobalV::NBANDS * this->pw_wfc_->npwk_max * PARAM.globalv.npol*
                         sizeof(std::complex<double>);
         std::cout << " MEMORY FOR PSI PER PROCESSOR (MB)  : " << double(memory_cost_psi)/1024.0/1024.0 << std::endl;
         ModuleBase::Memory::record("Psi_PW", memory_cost_psi);
@@ -108,7 +108,7 @@ psi::Psi<std::complex<double>>* psi_initializer<T, Device>::allocate(bool only_p
                                                         this->pw_wfc_->npwk);
     const size_t memory_cost_psig = 
             nkpts_actual*
-                nbands_actual * this->pw_wfc_->npwk_max * GlobalV::NPOL*
+                nbands_actual * this->pw_wfc_->npwk_max * PARAM.globalv.npol*
                     sizeof(T);
     std::cout << " MEMORY FOR AUXILLARY PSI PER PROCESSOR (MB)  : " << double(memory_cost_psig)/1024.0/1024.0 << std::endl;
 
@@ -122,7 +122,7 @@ psi::Psi<std::complex<double>>* psi_initializer<T, Device>::allocate(bool only_p
                          << "nbands_complem = " << this->nbands_complem_ << "\n"
                          << "nbasis_actual = " << nbasis_actual << "\n"
                          << "npwk_max = " << this->pw_wfc_->npwk_max << "\n"
-                         << "npol = " << GlobalV::NPOL << "\n";
+                         << "npol = " << PARAM.globalv.npol << "\n";
     ModuleBase::Memory::record("psigPW", memory_cost_psig);
     ModuleBase::timer::tick("psi_initializer", "allocate");
     return psi_out;
@@ -149,9 +149,9 @@ void psi_initializer<T, Device>::random_t(T* psi, const int iw_start, const int 
         for (int iw = iw_start; iw < iw_end; iw++)
         {   
             // get the starting memory address of iw band
-            T* psi_slice = &(psi[iw * this->pw_wfc_->npwk_max * GlobalV::NPOL]);
+            T* psi_slice = &(psi[iw * this->pw_wfc_->npwk_max * PARAM.globalv.npol]);
             int startig = 0;
-            for(int ipol = 0 ; ipol < GlobalV::NPOL ; ++ipol)
+            for(int ipol = 0 ; ipol < PARAM.globalv.npol ; ++ipol)
             {
                     
                 for(int ir=0; ir < nxy; ir++)
@@ -191,7 +191,7 @@ void psi_initializer<T, Device>::random_t(T* psi, const int iw_start, const int 
 #endif
         for (int iw = iw_start ;iw < iw_end; iw++)
         {
-            T* psi_slice = &(psi[iw * this->pw_wfc_->npwk_max * GlobalV::NPOL]);
+            T* psi_slice = &(psi[iw * this->pw_wfc_->npwk_max * PARAM.globalv.npol]);
             for (int ig = 0; ig < ng; ig++)
             {
                 const double rr = std::rand()/double(RAND_MAX); //qianrui add RAND_MAX
@@ -199,7 +199,7 @@ void psi_initializer<T, Device>::random_t(T* psi, const int iw_start, const int 
                 const double gk2 = this->pw_wfc_->getgk2(ik,ig);
                 psi_slice[ig] = this->template cast_to_T<T>(std::complex<double>(rr*cos(arg)/(gk2 + 1.0), rr*sin(arg)/(gk2 + 1.0)));
             }
-            if(GlobalV::NPOL==2)
+            if(PARAM.globalv.npol==2)
             {
                 for (int ig = this->pw_wfc_->npwk_max; ig < this->pw_wfc_->npwk_max + ng; ig++)
                 {

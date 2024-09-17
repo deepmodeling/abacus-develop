@@ -49,7 +49,7 @@ void LCAO_Deepks::cal_v_delta_precalc(const int nlocal,
                 const int start1 = ucell.itiaiw2iwt(T1, I1, 0);
                 const ModuleBase::Vector3<double> tau1 = GridD.getAdjacentTau(ad1);
 				const Atom* atom1 = &ucell.atoms[T1];
-				const int nw1_tot = atom1->nw*GlobalV::NPOL;
+				const int nw1_tot = atom1->nw*PARAM.globalv.npol;
 				const double Rcut_AO1 = orb.Phi[T1].getRcut(); 
 
                 const double dist1 = (tau1-tau0).norm() * ucell.lat0;
@@ -65,7 +65,7 @@ void LCAO_Deepks::cal_v_delta_precalc(const int nlocal,
 					const int start2 = ucell.itiaiw2iwt(T2, I2, 0);
 					const ModuleBase::Vector3<double> tau2 = GridD.getAdjacentTau(ad2);
 					const Atom* atom2 = &ucell.atoms[T2];
-					const int nw2_tot = atom2->nw*GlobalV::NPOL;
+					const int nw2_tot = atom2->nw*PARAM.globalv.npol;
 					
 					const double Rcut_AO2 = orb.Phi[T2].getRcut();
                 	const double dist2 = (tau2-tau0).norm() * ucell.lat0;
@@ -81,14 +81,14 @@ void LCAO_Deepks::cal_v_delta_precalc(const int nlocal,
 						const int iw1_local = pv->global2local_row(iw1_all);
 						if(iw1_local < 0) {continue;
 }
-						const int iw1_0 = iw1/GlobalV::NPOL;
+						const int iw1_0 = iw1/PARAM.globalv.npol;
 						for (int iw2=0; iw2<nw2_tot; ++iw2)
 						{
 							const int iw2_all = start2 + iw2; // this is \nu
 							const int iw2_local = pv->global2local_col(iw2_all);
 							if(iw2_local < 0) {continue;
 }
-							const int iw2_0 = iw2/GlobalV::NPOL;
+							const int iw2_0 = iw2/PARAM.globalv.npol;
 
                             std::vector<double> nlm1 = this->nlm_save[iat][ad1][iw1][0];
                             std::vector<double> nlm2 = this->nlm_save[iat][ad2][iw2][0];
