@@ -47,7 +47,7 @@ void toWannier90_LCAO::calculate(const ModuleBase::matrix& ekb,
 
     read_nnkp(kv);
 
-    if (GlobalV::NSPIN == 2)
+    if (PARAM.inp.nspin == 2)
     {
         if (wannier_spin == "up")
         {
@@ -1136,7 +1136,7 @@ void toWannier90_LCAO::unkdotA(const K_Vectors& kv,
     int row = this->ParaV->get_row_size();
     int index_band = -1;
     int R_num = R_coor_car.size();
-    if (GlobalV::NSPIN != 4)
+    if (PARAM.inp.nspin != 4)
     {
         for (int ib = 0; ib < GlobalV::NBANDS; ib++)
         {

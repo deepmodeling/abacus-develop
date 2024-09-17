@@ -286,7 +286,7 @@ void Input_Conv::Convert()
     // added by zhengdy-soc
     //--------------------------------------------
 
-    if (GlobalV::NSPIN == 4)
+    if (PARAM.inp.nspin == 4)
     {
         GlobalV::NONCOLIN = PARAM.inp.noncolin;
         // wavefunctions are spinors with 2 components

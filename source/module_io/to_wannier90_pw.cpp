@@ -37,7 +37,7 @@ void toWannier90_PW::calculate(
 {
     read_nnkp(kv);
 
-    if (GlobalV::NSPIN == 2)
+    if (PARAM.inp.nspin == 2)
     {
         if (wannier_spin == "up")
         {
@@ -216,11 +216,11 @@ void toWannier90_PW::out_unk(
             {
                 
                 std::stringstream name;
-                if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 4)
+                if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 4)
                 {
                     name << PARAM.globalv.global_out_dir << "UNK" << std::setw(5) << std::setfill('0') << ik + 1 << ".1";
                 }
-                else if (GlobalV::NSPIN == 2)
+                else if (PARAM.inp.nspin == 2)
                 {
                     if (wannier_spin == "up")
                         name << PARAM.globalv.global_out_dir << "UNK" << std::setw(5) << std::setfill('0')
@@ -378,7 +378,7 @@ void toWannier90_PW::unkdotkb(
 
         wfcpw->recip2real(phase, phase, cal_ik);
 
-        if (GlobalV::NSPIN == 4)
+        if (PARAM.inp.nspin == 4)
         {
             // (1) set value
             std::complex<double>* psir_up = new std::complex<double>[wfcpw->nmaxgr];
@@ -1024,7 +1024,7 @@ void toWannier90_PW::unkdotW_A(
         {
             int ib = cal_band_index[ib_w];
 
-            if (GlobalV::NSPIN != 4)
+            if (PARAM.inp.nspin != 4)
             {
                 for (int ig = 0; ig < npw; ig++)
                 {

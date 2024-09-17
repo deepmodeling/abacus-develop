@@ -1,5 +1,6 @@
 #include "unk_overlap_pw.h"
 
+#include "module_parameter/parameter.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 unkOverlap_pw::unkOverlap_pw()
@@ -123,7 +124,7 @@ std::complex<double> unkOverlap_pw::unkdotp_G0(const ModulePW::PW_Basis* rhopw,
     return result;
 }
 
-// if noncollinear = 1 or GlobalV::NSPIN = 4 , you need this routine to calculate overlap unk
+// if noncollinear = 1 or PARAM.inp.nspin = 4 , you need this routine to calculate overlap unk
 std::complex<double> unkOverlap_pw::unkdotp_soc_G(const ModulePW::PW_Basis_K* wfcpw,
                                                   const int ik_L,
                                                   const int ik_R,
