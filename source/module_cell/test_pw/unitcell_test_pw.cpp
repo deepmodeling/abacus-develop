@@ -114,7 +114,7 @@ TEST_F(UcellTest,SetupCell)
 	std::string fn = "./support/STRU_MgO";
 	std::ofstream ofs_running;
 	ofs_running.open("setup_cell.tmp");
-	GlobalV::NSPIN = 1;
+	PARAM.input.nspin = 1;
 	ucell->ntype = 2;
 	ucell->setup_cell(fn,ofs_running);
 	ofs_running.close();
