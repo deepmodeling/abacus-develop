@@ -60,6 +60,6 @@ def test_random_matrix_diag(method):
 ])
 def test_diag(file_name, nband, atol, method):
     h_sparse = scipy.io.loadmat(file_name)['Problem']['A'][0, 0]
-    e_pyabacus = diag_pyabacus(h_sparse, nband)
+    e_pyabacus = diag_pyabacus(h_sparse, nband, method)
     e_scipy = diag_eigsh(h_sparse, nband)
     np.testing.assert_allclose(e_pyabacus, e_scipy, atol=atol)
