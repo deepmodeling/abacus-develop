@@ -195,7 +195,7 @@ void psi_initializer_atomic<T, Device>::proj_ao_onkG(int ik)
                             PARAM.globalv.nqx, PARAM.globalv.dq, gk[ig].norm() * this->p_ucell_->tpiba );
                     }
 /* NSPIN == 4 */
-                    if(GlobalV::NSPIN == 4)
+                    if(PARAM.inp.nspin == 4)
                     {
                         if(this->p_ucell_->atoms[it].ncpp.has_so)
                         {

@@ -47,11 +47,11 @@ void Exx_Lip<T, Device>::cal_exx()
 }
         }
 
-        for (int iq_tmp = iq_vecik; iq_tmp < iq_vecik + q_pack->kv_ptr->get_nks() / GlobalV::NSPIN; ++iq_tmp)					// !!! k_point
+        for (int iq_tmp = iq_vecik; iq_tmp < iq_vecik + q_pack->kv_ptr->get_nks() / PARAM.inp.nspin; ++iq_tmp)					// !!! k_point
             // parallel incompleted.need to loop iq in other pool
         {
-            int iq = (ik < (k_pack->kv_ptr->get_nks() / GlobalV::NSPIN)) ? (iq_tmp % (q_pack->kv_ptr->get_nks() / GlobalV::NSPIN)) :
-                (iq_tmp % (q_pack->kv_ptr->get_nks() / GlobalV::NSPIN) + (q_pack->kv_ptr->get_nks() / GlobalV::NSPIN));
+            int iq = (ik < (k_pack->kv_ptr->get_nks() / PARAM.inp.nspin)) ? (iq_tmp % (q_pack->kv_ptr->get_nks() / PARAM.inp.nspin)) :
+                (iq_tmp % (q_pack->kv_ptr->get_nks() / PARAM.inp.nspin) + (q_pack->kv_ptr->get_nks() / PARAM.inp.nspin));
             qkg2_exp(ik, iq);
             //t_qkg2_exp += my_time(t);
             for (int ib = 0; ib < GlobalV::NBANDS; ++ib)
@@ -114,9 +114,9 @@ void Exx_Lip::cal_exx()
 						sum3[iw_l][iw_r] = std::complex<double>(0.0,0.0);
 		}
 
-		for( int iq_tmp=iq_vecik; iq_tmp<iq_vecik+q_pack->kv_ptr->get_nks()/GlobalV::NSPIN; ++iq_tmp)					// !!! k_point parallel incompleted. need to loop iq in other pool
+		for( int iq_tmp=iq_vecik; iq_tmp<iq_vecik+q_pack->kv_ptr->get_nks()/PARAM.inp.nspin; ++iq_tmp)					// !!! k_point parallel incompleted. need to loop iq in other pool
 		{
-			int iq = (ik<(k_pack->kv_ptr->get_nks()/GlobalV::NSPIN)) ? (iq_tmp%(q_pack->kv_ptr->get_nks()/GlobalV::NSPIN)) : (iq_tmp%(q_pack->kv_ptr->get_nks()/GlobalV::NSPIN)+(q_pack->kv_ptr->get_nks()/GlobalV::NSPIN));
+			int iq = (ik<(k_pack->kv_ptr->get_nks()/PARAM.inp.nspin)) ? (iq_tmp%(q_pack->kv_ptr->get_nks()/PARAM.inp.nspin)) : (iq_tmp%(q_pack->kv_ptr->get_nks()/PARAM.inp.nspin)+(q_pack->kv_ptr->get_nks()/PARAM.inp.nspin));
 			qkg2_exp(ik, iq);
 			for( int ib=0; ib<GlobalV::NBANDS; ++ib)
 			{
@@ -246,13 +246,13 @@ template <typename T, typename Device>
 void Exx_Lip<T, Device>::wf_wg_cal()
 {
     ModuleBase::TITLE("Exx_Lip", "wf_wg_cal");
-    if (GlobalV::NSPIN == 1) {
+    if (PARAM.inp.nspin == 1) {
         for (int ik = 0; ik < k_pack->kv_ptr->get_nks(); ++ik) {
             for (int ib = 0; ib < GlobalV::NBANDS; ++ib) {
                 k_pack->wf_wg(ik, ib) = k_pack->pelec->wg(ik, ib) / 2;
 }
 }
-    } else if (GlobalV::NSPIN == 2) {
+    } else if (PARAM.inp.nspin == 2) {
         for (int ik = 0; ik < k_pack->kv_ptr->get_nks(); ++ik) {
             for (int ib = 0; ib < GlobalV::NBANDS; ++ib) {
                 k_pack->wf_wg(ik, ib) = k_pack->pelec->wg(ik, ib);
@@ -492,7 +492,7 @@ void Exx_Lip<T, Device>::sum_all(int ik)
                 if (gzero_rank_in_pool == GlobalV::RANK_IN_POOL)
 				{
                     exx_matrix[ik][iw_l][iw_r] += spin_fac * (fourpi_div_omega * sum3[iw_l][iw_r] * sum2_factor_g);
-                    exx_matrix[ik][iw_l][iw_r] += spin_fac * (-1 / (Real)sqrt(info.lambda * ModuleBase::PI) * (Real)(q_pack->kv_ptr->get_nks() / GlobalV::NSPIN) * sum3[iw_l][iw_r]);
+                    exx_matrix[ik][iw_l][iw_r] += spin_fac * (-1 / (Real)sqrt(info.lambda * ModuleBase::PI) * (Real)(q_pack->kv_ptr->get_nks() / PARAM.inp.nspin) * sum3[iw_l][iw_r]);
                 }
 }
         }
@@ -522,7 +522,7 @@ void Exx_Lip<T, Device>::exx_energy_cal()
 #ifdef __MPI
 	MPI_Allreduce( &exx_energy_tmp, &exx_energy, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);				// !!! k_point parallel incompleted. different pools have different kv.set_nks(>) deadlock
 #endif
-	exx_energy *= (GlobalV::NSPIN==1) ? 2 : 1;
+	exx_energy *= (PARAM.inp.nspin==1) ? 2 : 1;
 	exx_energy /= 2;										// ETOT = E_band - 1/2 E_exx
 
 	#if TEST_EXX==1
@@ -635,7 +635,7 @@ void Exx_Lip<T, Device>::write_q_pack() const
 
 // 	q_pack->kv_ptr = new K_Vectors();
 // 	const std::string exx_kpoint_card = PARAM.globalv.global_out_dir + exx_q_pack + PARAM.inp.kpoint_file;
-// 	q_pack->kv_ptr->set( symm, exx_kpoint_card, GlobalV::NSPIN, ucell_ptr->G, ucell_ptr->latvec, GlobalV::ofs_running );
+// 	q_pack->kv_ptr->set( symm, exx_kpoint_card, PARAM.inp.nspin, ucell_ptr->G, ucell_ptr->latvec, GlobalV::ofs_running );
 
 // 	q_pack->wf_ptr = new wavefunc();
 //     q_pack->wf_ptr->allocate(q_pack->kv_ptr->get_nkstot(),

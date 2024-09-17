@@ -102,7 +102,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver)
                 std::stringstream ss, ss1;
                 ss << PARAM.globalv.global_out_dir << "STRU_ION_D";
                 GlobalC::ucell.print_stru_file(ss.str(),
-                                               GlobalV::NSPIN,
+                                               PARAM.inp.nspin,
                                                true,
                                                PARAM.inp.calculation == "md",
                                                PARAM.inp.out_mul,
@@ -115,7 +115,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver)
                     ss1 << PARAM.globalv.global_out_dir << "STRU_ION";
                     ss1 << istep << "_D";
                     GlobalC::ucell.print_stru_file(ss1.str(),
-                                                   GlobalV::NSPIN,
+                                                   PARAM.inp.nspin,
                                                    true,
                                                    PARAM.inp.calculation == "md",
                                                    PARAM.inp.out_mul,

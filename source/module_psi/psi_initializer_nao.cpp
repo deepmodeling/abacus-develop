@@ -414,7 +414,7 @@ void psi_initializer_nao<T, Device>::proj_ao_onkG(int ik)
                         );
                     }
                     /* FOR EVERY NAO IN EACH ATOM */
-                    if (GlobalV::NSPIN == 4)
+                    if (PARAM.inp.nspin == 4)
                     {
                         /* FOR EACH SPIN CHANNEL */
                         for (int is_N = 0; is_N < 2; is_N++) // rotate base

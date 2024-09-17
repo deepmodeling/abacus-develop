@@ -109,7 +109,7 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, const Paramet
             need_orb = need_orb || PARAM.inp.basis_type=="lcao";
             need_orb = need_orb || PARAM.inp.basis_type=="lcao_in_pw";
             unit_in.print_stru_file(file.str(), 
-                                    GlobalV::NSPIN, 
+                                    PARAM.inp.nspin, 
                                     false, // Cartesian coordinates
                                     PARAM.inp.calculation == "md", 
                                     PARAM.inp.out_mul,
