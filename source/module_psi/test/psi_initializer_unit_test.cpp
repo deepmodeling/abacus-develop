@@ -124,7 +124,7 @@ class PsiIntializerUnitTest : public ::testing::Test {
             PARAM.input.init_wfc = "random";
             GlobalV::KS_SOLVER = "cg";
             GlobalV::DOMAG = false;
-            GlobalV::DOMAG_Z = false;
+            PARAM.sys.domag_z = false;
             // lattice
             this->p_ucell->a1 = {10.0, 0.0, 0.0};
             this->p_ucell->a2 = {0.0, 10.0, 0.0};
@@ -669,7 +669,7 @@ TEST_F(PsiIntializerUnitTest, CalPsigNaoSoc) {
     PARAM.sys.npol = 2;
     this->p_ucell->atoms[0].ncpp.has_so = false;
     GlobalV::DOMAG = false;
-    GlobalV::DOMAG_Z = false;
+    PARAM.sys.domag_z = false;
     this->psi_init = new psi_initializer_nao<std::complex<double>, base_device::DEVICE_CPU>();
 #ifdef __MPI
     this->psi_init->initialize(this->p_sf, 
@@ -699,7 +699,7 @@ TEST_F(PsiIntializerUnitTest, CalPsigNaoSocHasSo) {
     PARAM.sys.npol = 2;
     this->p_ucell->atoms[0].ncpp.has_so = true;
     GlobalV::DOMAG = false;
-    GlobalV::DOMAG_Z = false;
+    PARAM.sys.domag_z = false;
     this->psi_init = new psi_initializer_nao<std::complex<double>, base_device::DEVICE_CPU>();
 #ifdef __MPI
     this->psi_init->initialize(this->p_sf, 
@@ -729,7 +729,7 @@ TEST_F(PsiIntializerUnitTest, CalPsigNaoSocHasSoDOMAG) {
     PARAM.sys.npol = 2;
     this->p_ucell->atoms[0].ncpp.has_so = true;
     GlobalV::DOMAG = true;
-    GlobalV::DOMAG_Z = false;
+    PARAM.sys.domag_z = false;
     this->psi_init = new psi_initializer_nao<std::complex<double>, base_device::DEVICE_CPU>();
 #ifdef __MPI
     this->psi_init->initialize(this->p_sf, 

@@ -643,8 +643,6 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
                         if(PARAM.inp.noncolin)
                         {
                             //if magnetization only along z-axis, default settings are DOMAG_Z=true and DOMAG=false
-                            PARAM.globalv.domag_z = false;
-                            GlobalV::DOMAG = true;
                             if(input_angle_mag)
                             {
                                 atoms[it].m_loc_[ia].z = atoms[it].mag[ia] *
