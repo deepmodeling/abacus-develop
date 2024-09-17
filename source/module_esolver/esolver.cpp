@@ -171,7 +171,7 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
 		{
 			return new ESolver_KS_LCAO<double, double>();
 		}
-		else if (GlobalV::NSPIN < 4)
+		else if (PARAM.inp.nspin < 4)
 		{
 			return new ESolver_KS_LCAO<std::complex<double>, double>();
 		}
@@ -189,7 +189,7 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
         // use constructor rather than Init function to initialize reference (instead of pointers) to ucell
         if (PARAM.globalv.gamma_only_local){
             return new LR::ESolver_LR<double, double>(inp, ucell);
-        } else if (GlobalV::NSPIN < 2) {
+        } else if (PARAM.inp.nspin < 2) {
             return new LR::ESolver_LR<std::complex<double>, double>(inp, ucell);
         } else {
             throw std::runtime_error("LR-TDDFT is not implemented for spin polarized case");
@@ -203,7 +203,7 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
         {
             p_esolver = new ESolver_KS_LCAO<double, double>();
         }
-        else if (GlobalV::NSPIN < 4)
+        else if (PARAM.inp.nspin < 4)
         {
             p_esolver = new ESolver_KS_LCAO<std::complex<double>, double>();
         }

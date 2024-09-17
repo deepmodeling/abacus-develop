@@ -216,7 +216,7 @@ void ESolver_KS<T, Device>::before_all_runners(const Input_para& inp, UnitCell& 
     }
 
     //! 6) Setup the k points according to symmetry.
-    this->kv.set(ucell.symm, PARAM.inp.kpoint_file, GlobalV::NSPIN, ucell.G, ucell.latvec, GlobalV::ofs_running);
+    this->kv.set(ucell.symm, PARAM.inp.kpoint_file, PARAM.inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running);
 
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
 
@@ -696,7 +696,7 @@ void ESolver_KS<T, Device>::print_head()
 {
     std::cout << " " << std::setw(7) << "ITER";
 
-    if (GlobalV::NSPIN == 2)
+    if (PARAM.inp.nspin == 2)
     {
         std::cout << std::setw(10) << "TMAG";
         std::cout << std::setw(10) << "AMAG";

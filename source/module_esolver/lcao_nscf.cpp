@@ -61,7 +61,7 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
     GlobalV::ofs_running << " end of band structure calculation " << std::endl;
     GlobalV::ofs_running << " band eigenvalue in this processor (eV) :" << std::endl;
 
-    const int nspin = GlobalV::NSPIN;
+    const int nspin = PARAM.inp.nspin;
     const int nbands = GlobalV::NBANDS;
 
     for (int ik = 0; ik < this->kv.get_nks(); ++ik)
@@ -193,7 +193,7 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
     /// write potential
     if (PARAM.inp.out_pot == 1 || PARAM.inp.out_pot == 3)
     {
-        for (int is = 0; is < GlobalV::NSPIN; is++)
+        for (int is = 0; is < PARAM.inp.nspin; is++)
         {
             std::string fn = PARAM.globalv.global_out_dir + "/SPIN" + std::to_string(is + 1) + "_POT.cube";
 
@@ -206,7 +206,7 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
 #endif
                 this->pelec->pot->get_effective_v(is),
                 is,
-                GlobalV::NSPIN,
+                PARAM.inp.nspin,
                 0,
                 fn,
                 this->pw_rhod->nx,
