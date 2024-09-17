@@ -638,7 +638,7 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
                     std::string mags;
                     //cout<<"mag"<<atoms[it].mag[ia]<<"angle1"<<atoms[it].angle1[ia]<<"angle2"<<atoms[it].angle2[ia]<<'\n';
 
-                    if(GlobalV::NSPIN==4)
+                    if(PARAM.inp.nspin==4)
                     {
                         if(GlobalV::NONCOLIN)
                         {
@@ -698,7 +698,7 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
                         }
                         ModuleBase::GlobalFunc::ZEROS(magnet.ux_ ,3);
                     }
-                    else if(GlobalV::NSPIN==2)
+                    else if(PARAM.inp.nspin==2)
                     {
                         atoms[it].m_loc_[ia].x = atoms[it].mag[ia];
                         //print only ia==0 && mag>0 to avoid too much output
@@ -827,7 +827,7 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
         }
         if (autoset_mag)
         {
-            if(GlobalV::NSPIN==4)
+            if(PARAM.inp.nspin==4)
             {
                 for (int it = 0;it < ntype; it++)
                 {
@@ -841,7 +841,7 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
                     }
                 }
             }
-            else if(GlobalV::NSPIN==2)
+            else if(PARAM.inp.nspin==2)
             {
                 for (int it = 0;it < ntype; it++)
                 {

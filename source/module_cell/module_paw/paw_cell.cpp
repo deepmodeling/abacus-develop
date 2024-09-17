@@ -125,7 +125,7 @@ void Paw_Cell::init_rhoij()
         for(int iproj = 0; iproj < nproj; iproj ++)
         {
             int i0 = iproj * (iproj + 1) / 2;
-            rhoij_in[i0 + iproj] = mstate_occ[iproj] / GlobalV::NSPIN;
+            rhoij_in[i0 + iproj] = mstate_occ[iproj] / PARAM.inp.nspin;
         }
 
         paw_atom_list[iat].set_rhoij(rhoij_in);

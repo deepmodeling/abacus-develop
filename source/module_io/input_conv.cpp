@@ -226,7 +226,6 @@ void Input_Conv::Convert()
             \n Please recompile with cmake flag \"-DENABLE_FLOAT_FFTW=ON\".\n");
 #endif // __ENABLE_FLOAT_FFTW
     }
-
     GlobalV::NSPIN = PARAM.inp.nspin;
 
 
@@ -286,10 +285,6 @@ void Input_Conv::Convert()
     //--------------------------------------------
     // added by zhengdy-soc
     //--------------------------------------------
-    if (PARAM.inp.noncolin || PARAM.inp.lspinorb)
-    {
-        GlobalV::NSPIN = 4;
-    }
 
     if (GlobalV::NSPIN == 4)
     {
