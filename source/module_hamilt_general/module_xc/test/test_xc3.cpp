@@ -93,7 +93,7 @@ class XCTest_GRADCORR : public XCTest
             XC_Functional::gradcorr(et2,vt2,v2,&chr,&rhopw,&ucell,stress2,true);
 
             GlobalV::NSPIN = 4;
-            PARAM.globalv.domag = true;
+            PARAM.sys.domag = true;
             XC_Functional::gradcorr(et4,vt4,v4,&chr,&rhopw,&ucell,stress4,false); 
         }
 };
