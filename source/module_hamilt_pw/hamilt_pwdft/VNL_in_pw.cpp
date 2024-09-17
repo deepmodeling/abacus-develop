@@ -575,7 +575,7 @@ void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_
     // In the spin-orbit case we need the unitary matrix u which rotates the
     // real spherical harmonics and yields the complex ones.
     soc.fcoef.create(cell.ntype, this->nhm, this->nhm);
-    if (GlobalV::LSPINORB)
+    if (PARAM.inp.lspinorb)
     {
         soc.rot_ylm(this->lmaxkb);
     }
@@ -702,7 +702,7 @@ void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_
                     {
                         const int ir = static_cast<int>(indv(it, ip));
                         const int is = static_cast<int>(indv(it, ip2));
-                        if (GlobalV::LSPINORB)
+                        if (PARAM.inp.lspinorb)
                         {
                             this->dvan_so(0, it, ip, ip2) = cell.atoms[it].ncpp.dion(ir, is);
                             this->dvan_so(3, it, ip, ip2) = cell.atoms[it].ncpp.dion(ir, is);
@@ -784,7 +784,7 @@ void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_
                         for (int jh = ih; jh < upf->nh; jh++)
                         {
                             this->radial_fft_q(1, ih, jh, it, &qnorm, ylmk0, &qgm);
-                            if (GlobalV::LSPINORB)
+                            if (PARAM.inp.lspinorb)
                             {
                                 this->qq_so(it, 0, ih, jh) = cell.omega * qgm.real();
                                 this->qq_so(it, 0, jh, ih) = this->qq_so(it, 0, ih, jh);
@@ -1402,7 +1402,7 @@ void pseudopot_cell_vnl::cal_effective_D(const ModuleBase::matrix& veff,
                 {
                     for (int jh = ih; jh < nht; jh++)
                     {
-                        if (GlobalV::LSPINORB)
+                        if (PARAM.inp.lspinorb)
                         {
                             this->deeq_nc(is, iat, ih, jh) = this->dvan_so(is, it, ih, jh);
                             this->deeq_nc(is, iat, jh, ih) = this->dvan_so(is, it, jh, ih);
@@ -1713,7 +1713,7 @@ void pseudopot_cell_vnl::newd_nc(const int& iat, UnitCell& cell)
     {
         for (int jh = 0; jh < upf->nh; jh++)
         {
-            if (GlobalV::LSPINORB)
+            if (PARAM.inp.lspinorb)
             {
                 deeq_nc(0, iat, ih, jh) = dvan_so(0, it, ih, jh) + deeq(0, iat, ih, jh) + deeq(3, iat, ih, jh);
                 deeq_nc(3, iat, ih, jh) = dvan_so(3, it, ih, jh) + deeq(0, iat, ih, jh) - deeq(3, iat, ih, jh);
