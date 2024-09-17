@@ -191,7 +191,7 @@ void test_deepks::set_orbs(const double& lat0_in)
 void test_deepks::setup_kpt()
 {
     this->kv.set("KPT",
-                 GlobalV::NSPIN,
+                 PARAM.input.nspin,
                  ucell.G,
                  ucell.latvec,
                  PARAM.sys.gamma_only_local,

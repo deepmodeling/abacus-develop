@@ -226,7 +226,6 @@ void Input_Conv::Convert()
             \n Please recompile with cmake flag \"-DENABLE_FLOAT_FFTW=ON\".\n");
 #endif // __ENABLE_FLOAT_FFTW
     }
-    GlobalV::NSPIN = PARAM.inp.nspin;
 
 
 #ifdef __LCAO
