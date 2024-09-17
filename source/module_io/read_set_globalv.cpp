@@ -20,9 +20,14 @@ void ReadInput::set_globalv(Parameter& para)
         /// get the global output directory
         para.sys.global_matrix_dir = para.globalv.global_out_dir + "matrix/";
         para.sys.global_matrix_dir = to_dir(para.sys.global_matrix_dir);
-        
-        /// get the global readin directory
-        para.sys.global_readin_dir = to_dir(para.globalv.global_out_dir);
+        if (para.inp.read_file_dir == "auto")
+        {
+            para.sys.global_readin_dir = para.globalv.global_out_dir;
+        }
+        else
+        {
+            para.sys.global_readin_dir = to_dir(para.inp.read_file_dir);
+        }
         /// caculate the gamma_only_pw and gamma_only_local
         if (para.input.gamma_only)
         {

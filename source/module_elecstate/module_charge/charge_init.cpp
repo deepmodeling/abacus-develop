@@ -169,8 +169,7 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
         }
     }
 
-    if (PARAM.inp.init_chg == "atomic" || 
-        (PARAM.inp.init_chg == "auto" && read_error)) // mohan add 2007-10-17
+    if (PARAM.inp.init_chg == "atomic" || (PARAM.inp.init_chg == "auto" && read_error)) // mohan add 2007-10-17
     {
         this->atomic_rho(GlobalV::NSPIN, GlobalC::ucell.omega, rho, strucFac, GlobalC::ucell);
 

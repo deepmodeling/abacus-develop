@@ -1,5 +1,4 @@
 #include "module_base/constants.h"
-#include "module_base/global_variable.h"
 #include "module_parameter/parameter.h"
 #include "module_base/tool_quit.h"
 #include "read_input.h"
