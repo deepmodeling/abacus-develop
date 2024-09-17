@@ -1,5 +1,8 @@
 #include "gtest/gtest.h"
 #include "xctest.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include "../xc_functional.h"
 #include "../exx_info.h"
 #include "xc3_mock.h"
@@ -81,15 +84,15 @@ class XCTest_GRADCORR : public XCTest
 
             XC_Functional::set_xc_type("PBE");
 
-            GlobalV::NSPIN = 1;
+            PARAM.input.nspin = 1;
             XC_Functional::gradcorr(et1,vt1,v1,&chr,&rhopw,&ucell,stress1,false);
             XC_Functional::gradcorr(et1,vt1,v1,&chr,&rhopw,&ucell,stress1,true);
 
-            GlobalV::NSPIN = 2;
+            PARAM.input.nspin = 2;
             XC_Functional::gradcorr(et2,vt2,v2,&chr,&rhopw,&ucell,stress2,false);
             XC_Functional::gradcorr(et2,vt2,v2,&chr,&rhopw,&ucell,stress2,true);
 
-            GlobalV::NSPIN = 4;
+            PARAM.input.nspin = 4;
             GlobalV::DOMAG = true;
             XC_Functional::gradcorr(et4,vt4,v4,&chr,&rhopw,&ucell,stress4,false); 
         }
