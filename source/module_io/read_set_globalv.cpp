@@ -69,8 +69,6 @@ void ReadInput::set_globalv(Parameter& para)
             para.sys.domag = false;
             para.sys.domag_z = false;
             para.sys.npol = 1;
-            para.input.lspinorb = false;
-            para.input.noncolin = false;
         default:
             break;
         }
