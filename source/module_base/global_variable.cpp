@@ -30,7 +30,6 @@ bool use_uspp = false;
 std::string KS_SOLVER = "cg";  // xiaohui add 2013-09-01
 double SEARCH_RADIUS = -1.0;
 
-int PW_DIAG_NDIM = 4;
 double PW_DIAG_THR = 1.0e-2;
 int NB2D = 1;
 

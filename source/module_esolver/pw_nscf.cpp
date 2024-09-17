@@ -60,7 +60,7 @@ void ESolver_KS_PW<T, Device>::nscf() {
     this->before_scf(istep_tmp);
 
     //! 2) setup the parameters for diagonalization
-    double diag_ethr = GlobalV::PW_DIAG_THR;
+    double diag_ethr = PARAM.inp.pw_diag_thr;
     if (diag_ethr - 1e-2 > -1e-5) {
         diag_ethr
             = std::max(1e-13,

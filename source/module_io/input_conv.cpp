@@ -263,7 +263,6 @@ void Input_Conv::Convert()
     // diagonalization  (5/5)
     //----------------------------------------------------------
 
-    GlobalV::PW_DIAG_THR = PARAM.inp.pw_diag_thr;
     GlobalV::NB2D = PARAM.inp.nb2d;
 
     //----------------------------------------------------------
