@@ -73,7 +73,7 @@ void LCAO_Deepks::cal_gedm_equiv(const int nat) {
 			this->des_per_atom, 
 			this->inlmax, 
 			this->inl_l,
-			GlobalV::deepks_equiv, 
+			PARAM.inp.deepks_equiv, 
 			this->d_tensor, 
             PARAM.globalv.global_out_dir,
 			GlobalV::MY_RANK); // libnpy needed
@@ -102,7 +102,7 @@ void LCAO_Deepks::cal_gedm_equiv(const int nat) {
 // obtain from the machine learning model dE_delta/dDescriptor
 void LCAO_Deepks::cal_gedm(const int nat) {
 
-    if (GlobalV::deepks_equiv) 
+    if (PARAM.inp.deepks_equiv) 
     {
         this->cal_gedm_equiv(nat);
         return;

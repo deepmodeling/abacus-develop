@@ -55,7 +55,7 @@ LCAO_Deepks::~LCAO_Deepks()
     }
     delete[] pdm;
     //=======2. "deepks_scf" part==========
-    //if (GlobalV::deepks_scf)
+    //if (PARAM.inp.deepks_scf)
     if (gedm)
     {
         //delete gedm**
@@ -91,7 +91,7 @@ void LCAO_Deepks::init(
     
     int tot_inl = tot_inl_per_atom * nat;
 
-    if(GlobalV::deepks_equiv) tot_inl = nat;
+    if(PARAM.inp.deepks_equiv) tot_inl = nat;
 
     this->lmaxd = lm;
     this->nmaxd = nm;
@@ -101,7 +101,7 @@ void LCAO_Deepks::init(
 
     int pdm_size = 0;
     this->inlmax = tot_inl;
-    if(!GlobalV::deepks_equiv)
+    if(!PARAM.inp.deepks_equiv)
     {
         GlobalV::ofs_running << " total basis (all atoms) for descriptor= " << std::endl;
 
@@ -127,7 +127,7 @@ void LCAO_Deepks::init(
     }
 
     // cal n(descriptor) per atom , related to Lmax, nchi(L) and m. (not total_nchi!)
-    if(!GlobalV::deepks_equiv)
+    if(!PARAM.inp.deepks_equiv)
     {
         this->des_per_atom=0; // mohan add 2021-04-21
         for (int l = 0; l <= this->lmaxd; l++)
@@ -142,7 +142,7 @@ void LCAO_Deepks::init(
 
     this->pv = &pv_in;
 
-    if(GlobalV::deepks_v_delta)
+    if(PARAM.inp.deepks_v_delta)
     {
         //allocate and init h_mat
         if(PARAM.globalv.gamma_only_local)
@@ -227,7 +227,7 @@ void LCAO_Deepks::init_gdmx(const int nat)
     this->gdmy = new double** [nat];
     this->gdmz = new double** [nat];
     int pdm_size = 0;
-    if(!GlobalV::deepks_equiv)
+    if(!PARAM.inp.deepks_equiv)
     {
         pdm_size = (this->lmaxd * 2 + 1) * (this->lmaxd * 2 + 1);
     }
@@ -281,7 +281,7 @@ void LCAO_Deepks::init_gdmepsl()
     this->gdm_epsl = new double** [6];
     
     int pdm_size = 0;
-    if(!GlobalV::deepks_equiv)
+    if(!PARAM.inp.deepks_equiv)
     {
         pdm_size = (this->lmaxd * 2 + 1) * (this->lmaxd * 2 + 1);
     }
@@ -340,7 +340,7 @@ void LCAO_Deepks::allocate_V_delta(const int nat, const int nks)
 
     //init gedm**
     int pdm_size = 0;
-    if(!GlobalV::deepks_equiv)
+    if(!PARAM.inp.deepks_equiv)
     {
         pdm_size = (this->lmaxd * 2 + 1) * (this->lmaxd * 2 + 1);
     }
@@ -359,7 +359,7 @@ void LCAO_Deepks::allocate_V_delta(const int nat, const int nks)
     {
         //init F_delta
         F_delta.create(nat, 3);
-        if(GlobalV::deepks_out_labels) 
+        if(PARAM.inp.deepks_out_labels) 
         { 
             this->init_gdmx(nat);
             this->init_gdmepsl();
@@ -367,7 +367,7 @@ void LCAO_Deepks::allocate_V_delta(const int nat, const int nks)
         //gdmx is used only in calculating gvx
     }
 
-    if (GlobalV::deepks_bandgap)
+    if (PARAM.inp.deepks_bandgap)
     {
         //init o_delta
         o_delta.create(nks, 1);

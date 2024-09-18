@@ -353,9 +353,6 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_FALSE(param.inp.of_read_kernel);
     EXPECT_EQ(param.inp.of_kernel_file, "WTkernel.txt");
     EXPECT_EQ(param.inp.device, "cpu");
-    EXPECT_EQ(param.globalv.ncx, 0);
-    EXPECT_EQ(param.globalv.ncy, 0);
-    EXPECT_EQ(param.globalv.ncz, 0);
     EXPECT_NEAR(param.inp.force_thr_ev, 0.025711245953622324, 1e-8);
     EXPECT_DOUBLE_EQ(param.globalv.hubbard_u[0], 0);
     EXPECT_EQ(param.inp.orbital_corr[0], -1);

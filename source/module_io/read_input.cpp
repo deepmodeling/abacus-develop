@@ -115,7 +115,7 @@ bool ReadInput::check_mode = false;
 ReadInput::ReadInput(const int& rank)
 {
     this->rank = rank;
-    this->set_globalv_bcast();
+    
     // add items
     this->item_system();
     this->item_elec_stru();
@@ -132,6 +132,9 @@ ReadInput::ReadInput(const int& rank)
     this->item_exx();
     this->item_dftu();
     this->item_others();
+
+    // set globalv functions
+    this->set_globalv_bcast();
 }
 
 void ReadInput::read_parameters(Parameter& param, const std::string& filename_in)
@@ -315,7 +318,6 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
             resetvalue_item->reset_value(*resetvalue_item, param);
 }
     }
-
     this->set_globalv(param);
 
     // 4) check the value of the parameters

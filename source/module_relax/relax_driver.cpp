@@ -107,7 +107,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver)
                                                PARAM.inp.calculation == "md",
                                                PARAM.inp.out_mul,
                                                need_orb,
-                                               GlobalV::deepks_setorb,
+                                               PARAM.globalv.deepks_setorb,
                                                GlobalV::MY_RANK);
 
                 if (Ions_Move_Basic::out_stru)
@@ -120,7 +120,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver)
                                                    PARAM.inp.calculation == "md",
                                                    PARAM.inp.out_mul,
                                                    need_orb,
-                                                   GlobalV::deepks_setorb,
+                                                   PARAM.globalv.deepks_setorb,
                                                    GlobalV::MY_RANK);
                     ModuleIO::CifParser::write(PARAM.globalv.global_out_dir + "STRU_NOW.cif",
                                                GlobalC::ucell,

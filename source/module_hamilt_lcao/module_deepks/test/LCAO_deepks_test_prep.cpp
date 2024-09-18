@@ -27,7 +27,7 @@ void test_deepks::set_parameters()
     PARAM.sys.global_out_dir = "./";
     GlobalV::ofs_warning.open("warning.log");
     GlobalV::ofs_running.open("running.log");
-    GlobalV::deepks_setorb = true;
+    PARAM.sys.deepks_setorb = true;
     PARAM.input.cal_force = 1;
 
     std::ifstream ifs("INPUT");
@@ -161,7 +161,7 @@ void test_deepks::set_orbs(const double& lat0_in)
                            lcao_dk,
                            lcao_dr,
                            lcao_rmax,
-                           GlobalV::deepks_setorb,
+                           PARAM.sys.deepks_setorb,
                            out_mat_r,
                            PARAM.input.cal_force,
                            my_rank);

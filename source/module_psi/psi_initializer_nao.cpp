@@ -467,7 +467,7 @@ void psi_initializer_nao<T, Device>::proj_ao_onkG(int ik)
                                 ibasis += 2 * L + 1;
                             }
                         } // end for is_N
-                    }     // end if GlobalV::NONCOLIN
+                    }     // end if PARAM.inp.noncolin
                     else
                     { // LSDA and nomagnet case
                         /* DOES NOT DISTINGUISH m QUANTUM NUMBER FOR CHI */
