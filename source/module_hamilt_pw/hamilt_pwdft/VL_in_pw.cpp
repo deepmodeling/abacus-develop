@@ -259,7 +259,7 @@ void pseudopot_cell_vl::print_vloc(const ModulePW::PW_Basis* rho_basis) const
 		for(int it=0; it<GlobalC::ucell.ntype; it++)
 		{
 			std::stringstream ss ;
-			ss << GlobalV::global_out_dir << GlobalC::ucell.atoms[it].label << "/v_loc_g.dat" ;
+			ss << PARAM.globalv.global_out_dir << GlobalC::ucell.atoms[it].label << "/v_loc_g.dat" ;
 			std::ofstream ofs_vg( ss.str().c_str() );
 			for(int ig=0;ig<rho_basis->ngg;ig++)
 			{

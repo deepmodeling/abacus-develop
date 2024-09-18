@@ -1,5 +1,6 @@
 #include "write_proj_band_lcao.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_base/scalapack_connector.h"
@@ -96,7 +97,7 @@ void ModuleIO::write_proj_band_lcao(
         if (GlobalV::MY_RANK == 0)
         {
             std::stringstream ps2;
-            ps2 << GlobalV::global_out_dir << "PBANDS_" << is + 1;
+            ps2 << PARAM.globalv.global_out_dir << "PBANDS_" << is + 1;
             GlobalV::ofs_running << "\n Output projected bands in file: " << ps2.str() << std::endl;
             std::ofstream out(ps2.str().c_str());
 
@@ -280,7 +281,7 @@ void ModuleIO::write_proj_band_lcao(
         if (GlobalV::MY_RANK == 0)
         {
             std::stringstream ps2;
-            ps2 << GlobalV::global_out_dir << "PBANDS_" << is + 1;
+            ps2 << PARAM.globalv.global_out_dir << "PBANDS_" << is + 1;
             GlobalV::ofs_running << "\n Output projected bands in file: " << ps2.str() << std::endl;
             std::ofstream out(ps2.str().c_str());
 

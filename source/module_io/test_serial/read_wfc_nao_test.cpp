@@ -1,5 +1,8 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include "module_io/read_wfc_nao.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_io/write_wfc_nao.h"
@@ -45,7 +48,7 @@ TEST_F(ReadWfcNaoTest,ReadWfcNao)
       //Global variables
       int nbands = 3;
       int nlocal = 3;
-      GlobalV::global_readin_dir = "./support/";
+      PARAM.sys.global_readin_dir = "./support/";
       int nks = 1;
 
       Parallel_Orbitals ParaV;
@@ -63,7 +66,7 @@ TEST_F(ReadWfcNaoTest,ReadWfcNao)
       pelec.ekb.create(nks,nbands);
       pelec.wg.create(nks,nbands);
       // Act
-      ModuleIO::read_wfc_nao(GlobalV::global_readin_dir, ParaV, psid, &(pelec));
+      ModuleIO::read_wfc_nao(PARAM.sys.global_readin_dir, ParaV, psid, &(pelec));
       // Assert
       EXPECT_NEAR(pelec.ekb(0,1),0.31482195194888534794941393,1e-5);
       EXPECT_NEAR(pelec.wg(0,1),0.0,1e-5);
@@ -75,7 +78,7 @@ TEST_F(ReadWfcNaoTest, ReadWfcNaoPart)
     const int nbands = 2;
     const int skip_band = 1;
     const int nlocal = 3;
-    GlobalV::global_readin_dir = "./support/";
+    PARAM.sys.global_readin_dir = "./support/";
     const int nks = 1;
 
     Parallel_Orbitals ParaV;
@@ -93,7 +96,7 @@ TEST_F(ReadWfcNaoTest, ReadWfcNaoPart)
     pelec.ekb.create(nks, nbands);
     pelec.wg.create(nks, nbands);
     // Act
-    ModuleIO::read_wfc_nao(GlobalV::global_readin_dir, ParaV, psid, &(pelec), /*skip_band=*/1);
+    ModuleIO::read_wfc_nao(PARAM.sys.global_readin_dir, ParaV, psid, &(pelec), /*skip_band=*/1);
     // Assert
     EXPECT_NEAR(pelec.ekb(0, 1), 7.4141254894954844445464914e-01, 1e-5);
     EXPECT_NEAR(psid(0, 1, 1), 5.6401881891e-01, 1e-5);

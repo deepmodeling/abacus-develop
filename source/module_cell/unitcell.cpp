@@ -202,7 +202,7 @@ void UnitCell::print_cell_xyz(const std::string& fn) const
         return; // xiaohui add 2015-03-15
 
     std::stringstream ss;
-    ss << GlobalV::global_out_dir << fn;
+    ss << PARAM.globalv.global_out_dir << fn;
 
     std::ofstream ofs(ss.str().c_str());
 
@@ -758,7 +758,7 @@ void UnitCell::read_pseudo(std::ofstream& ofs) {
             for (int it = 0; it < ntype; it++) {
                 Atom* atom = &atoms[it];
                 std::stringstream ss;
-                ss << GlobalV::global_out_dir << atom->label << "/"
+                ss << PARAM.globalv.global_out_dir << atom->label << "/"
                    << atom->label << ".NONLOCAL";
                 std::ofstream ofs(ss.str().c_str());
 

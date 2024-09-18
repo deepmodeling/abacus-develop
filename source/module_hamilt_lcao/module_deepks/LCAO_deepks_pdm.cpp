@@ -1,5 +1,6 @@
 //wenfei 2022-1-11
 //This file contains subroutines for calculating pdm,
+#include "module_parameter/parameter.h"
 //which is defind as sum_mu,nu rho_mu,nu (<chi_mu|alpha><alpha|chi_nu>);
 //as well as gdmx, which is the gradient of pdm, defined as
 //sum_mu,nu rho_mu,nu d/dX(<chi_mu|alpha><alpha|chi_nu>)
@@ -44,7 +45,7 @@ void LCAO_Deepks::read_projected_DM(bool read_pdm_file, bool is_equiv, const Num
             pdm_size = nproj * nproj;
         }
 
-        const std::string file_projdm = GlobalV::global_out_dir + "deepks_projdm.dat";
+        const std::string file_projdm = PARAM.globalv.global_out_dir + "deepks_projdm.dat";
         std::ifstream ifs(file_projdm.c_str());
 
         if (!ifs)
@@ -574,7 +575,7 @@ void LCAO_Deepks::cal_projected_DM_k(const elecstate::DensityMatrix<std::complex
 
 void LCAO_Deepks::check_projected_dm()
 {
-    const std::string file_projdm = GlobalV::global_out_dir + "deepks_projdm.dat";
+    const std::string file_projdm = PARAM.globalv.global_out_dir + "deepks_projdm.dat";
     std::ofstream ofs(file_projdm.c_str());
 
     const int pdm_size = (this->lmaxd * 2 + 1) * (this->lmaxd * 2 + 1);

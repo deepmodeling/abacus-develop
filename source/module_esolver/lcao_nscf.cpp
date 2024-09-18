@@ -195,7 +195,7 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
     {
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
-            std::string fn = GlobalV::global_out_dir + "/SPIN" + std::to_string(is + 1) + "_POT.cube";
+            std::string fn = PARAM.globalv.global_out_dir + "/SPIN" + std::to_string(is + 1) + "_POT.cube";
 
             ModuleIO::write_cube(
 #ifdef __MPI
@@ -220,7 +220,7 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
     }
     else if (PARAM.inp.out_pot == 2)
     {
-        std::string fn = GlobalV::global_out_dir + "/ElecStaticPot.cube";
+        std::string fn = PARAM.globalv.global_out_dir + "/ElecStaticPot.cube";
         ModuleIO::write_elecstat_pot(
 #ifdef __MPI
             this->pw_big->bz,

@@ -1,5 +1,6 @@
 #ifndef __WRITE_VXC_LIP_H_
 #define __WRITE_VXC_LIP_H_
+#include "module_parameter/parameter.h"
 #include "module_base/parallel_reduce.h"
 #include "module_base/module_container/base/third_party/blas.h"
 #include "module_hamilt_pw/hamilt_pwdft/operator_pw/veff_pw.h"
@@ -221,7 +222,7 @@ namespace ModuleIO
                 assert(e_orb.size() == kv.get_nks());
                 const int nk = kv.get_nks() / nspin0;
                 std::ofstream ofs;
-                ofs.open(GlobalV::global_out_dir + "vxc_" + (label == "" ? "out.dat" : label + "_out.dat"),
+                ofs.open(PARAM.globalv.global_out_dir + "vxc_" + (label == "" ? "out.dat" : label + "_out.dat"),
                     app ? std::ios::app : std::ios::out);
                 ofs << nk << "\n" << nspin0 << "\n" << nbands << "\n";
                 ofs << std::scientific << std::setprecision(16);

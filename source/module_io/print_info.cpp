@@ -174,7 +174,7 @@ void Print_Info::print_time(time_t &time_start, time_t &time_finish)
 	std::cout << "\n START  Time  : " << ctime(&time_start);
 	std::cout << " FINISH Time  : " << ctime(&time_finish);
 	std::cout << " TOTAL  Time  : " << int(difftime(time_finish, time_start)) << std::endl;
-	std::cout << " SEE INFORMATION IN : " << GlobalV::global_out_dir << std::endl;
+	std::cout << " SEE INFORMATION IN : " << PARAM.globalv.global_out_dir << std::endl;
 
 	GlobalV::ofs_running << "\n Start  Time  : " << ctime(&time_start);
 	GlobalV::ofs_running << " Finish Time  : " << ctime(&time_finish);

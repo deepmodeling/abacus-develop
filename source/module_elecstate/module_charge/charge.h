@@ -7,6 +7,7 @@
 #include "module_base/parallel_global.h"
 #include "module_basis/module_pw/pw_basis.h"
 #include "module_elecstate/fp_energy.h"
+#include "module_cell/module_symmetry/symmetry.h"
 
 //a forward declaration of UnitCell
 class UnitCell;
@@ -62,14 +63,19 @@ class Charge
 
     /**
      * @brief Init charge density from file or atomic pseudo-wave-functions
-     * 
-     * @param eferm_iout fermi energy to be initialized
-     * @param strucFac [in] structure factor 
-     * @param nbz [in] number of big grids in z direction
-     * @param bz [in] number of small grids in big grids for z dirction
+     *
+     * @param eferm_iout [out] fermi energy to be initialized
+     * @param strucFac [in] structure factor
+     * @param symm [in] symmetry
+     * @param klist [in] k points list if needed
+     * @param wfcpw [in] PW basis for wave function if needed
      */
-    void init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMatrix& strucFac, const int& nbz, const int& bz);
-    
+    void init_rho(elecstate::efermi& eferm_iout,
+                  const ModuleBase::ComplexMatrix& strucFac,
+                  ModuleSymmetry::Symmetry& symm,
+                  const void* klist = nullptr,
+                  const void* wfcpw = nullptr);
+
     void allocate(const int &nspin_in);
 
     void atomic_rho(const int spin_number_need,
@@ -81,11 +87,11 @@ class Charge
     void set_rho_core(const ModuleBase::ComplexMatrix &structure_factor);
     void set_rho_core_paw();
 
-    void renormalize_rho(void);
+    void renormalize_rho();
 
-    double sum_rho(void) const;
+    double sum_rho() const;
 
-    void save_rho_before_sum_band(void);
+    void save_rho_before_sum_band();
 
 	// for non-linear core correction
     void non_linear_core_correction
@@ -108,10 +114,8 @@ class Charge
     /**
      * @brief init some arrays for mpi_inter_pools, rho_mpi
      * 
-     * @param nbz number of bigz in big grids
-     * @param bz  number of z for each bigz
      */
-    void init_chgmpi(const int& nbz, const int& bz);
+    void init_chgmpi();
 
     /**
      * @brief Sum rho at different pools (k-point parallelism).

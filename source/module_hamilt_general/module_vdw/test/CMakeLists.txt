@@ -7,6 +7,6 @@ install(FILES r0.txt DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 AddTest(
   TARGET vdwTest
-  LIBS ${math_libs} base device vdw 
+  LIBS parameter ${math_libs} base device vdw 
   SOURCES vdw_test.cpp 
 )

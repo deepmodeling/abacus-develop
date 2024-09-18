@@ -1,5 +1,6 @@
 #include "write_HS.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
@@ -17,14 +18,14 @@ void ModuleIO::save_HS_ccf(const int &iter, const int &Hnnz, const int *colptr_H
 
     if(bit)
     {
-        ssh << GlobalV::global_out_dir << "H_bit.ccf";
-        sss << GlobalV::global_out_dir << "S_bit.ccf";
+        ssh << PARAM.globalv.global_out_dir << "H_bit.ccf";
+        sss << PARAM.globalv.global_out_dir << "S_bit.ccf";
     }
     else
     {
         // mohan update 2021-02-10
-        ssh << GlobalV::global_out_dir << "H" << ELEC_scf::iter << "_" << iter+1 << ".ccf";
-        sss << GlobalV::global_out_dir << "S" << ELEC_scf::iter << "_" << iter+1 << ".ccf";
+        ssh << PARAM.globalv.global_out_dir << "H" << ELEC_scf::iter << "_" << iter+1 << ".ccf";
+        sss << PARAM.globalv.global_out_dir << "S" << ELEC_scf::iter << "_" << iter+1 << ".ccf";
     }
 
     if(bit)
@@ -101,13 +102,13 @@ void ModuleIO::save_mat(const int istep,
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Dimension of " + label + " : ", dim);
 
     std::stringstream ss;
-    if (bit) {ss << GlobalV::global_out_dir << file_name + "-" + label + "-bit";
+    if (bit) {ss << PARAM.globalv.global_out_dir << file_name + "-" + label + "-bit";
     } else
     {
         if (app || istep < 0) {
-            ss << GlobalV::global_out_dir << file_name + "-" + label;
+            ss << PARAM.globalv.global_out_dir << file_name + "-" + label;
         } else {
-            ss << GlobalV::global_out_dir << istep << "_" << file_name + "-" + label;
+            ss << PARAM.globalv.global_out_dir << istep << "_" << file_name + "-" + label;
 }
     }
     if (bit)

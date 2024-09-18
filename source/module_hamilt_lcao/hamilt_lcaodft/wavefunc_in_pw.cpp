@@ -1,5 +1,6 @@
 #include "wavefunc_in_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_parameter/parameter.h"
 #include <cstring>		// Peize Lin fix bug about strcmp 2016-08-02
 #include "module_base/math_integral.h"
 #include "module_base/math_sphbes.h"
@@ -154,7 +155,7 @@ void Wavefunc_in_pw::make_table_q(
 		for(int it=0; it<GlobalC::ucell.ntype; it++)
 		{
 			std::stringstream ss;
-			ss << GlobalV::global_out_dir << GlobalC::ucell.atoms[it].label << "/LOCAL_G.dat";
+			ss << PARAM.globalv.global_out_dir << GlobalC::ucell.atoms[it].label << "/LOCAL_G.dat";
 			std::ofstream ofs(ss.str().c_str());
 			for(int iq=0; iq<GlobalV::NQX; iq++)
 			{
