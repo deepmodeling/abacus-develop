@@ -1,8 +1,8 @@
 #include "gtest/gtest.h"
-#include "xctest.h"
 #define private public
 #include "module_parameter/parameter.h"
 #undef private
+#include "xctest.h"
 #include "../xc_functional.h"
 #include "../exx_info.h"
 #include "xc3_mock.h"
@@ -93,7 +93,7 @@ class XCTest_GRADCORR : public XCTest
             XC_Functional::gradcorr(et2,vt2,v2,&chr,&rhopw,&ucell,stress2,true);
 
             PARAM.input.nspin = 4;
-            GlobalV::DOMAG = true;
+            PARAM.sys.domag = true;
             XC_Functional::gradcorr(et4,vt4,v4,&chr,&rhopw,&ucell,stress4,false); 
         }
 };
