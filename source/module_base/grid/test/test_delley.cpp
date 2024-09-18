@@ -9,6 +9,11 @@
 
 using namespace Grid;
 
+// mock the function to prevent unnecessary dependency
+namespace ModuleBase {
+void WARNING_QUIT(const std::string&, const std::string&) {}
+}
+
 class DelleyTest: public ::testing::Test {
 protected:
     void randgen(int lmax, std::vector<double>& coef);
