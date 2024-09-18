@@ -309,12 +309,12 @@ void cal_r_overlap_R::out_rR(const int& istep)
                     ic = this->ParaV->global2local_col(iw2);
                     if (ic >= 0)
                     {
-                        int orb_index_row = iw1 / GlobalV::NPOL;
-                        int orb_index_col = iw2 / GlobalV::NPOL;
+                        int orb_index_row = iw1 / PARAM.globalv.npol;
+                        int orb_index_col = iw2 / PARAM.globalv.npol;
 
                         // The off-diagonal term in SOC calculaiton is zero, and the two diagonal terms are the same
-                        int new_index = iw1 - GlobalV::NPOL * orb_index_row
-                                        + (iw2 - GlobalV::NPOL * orb_index_col) * GlobalV::NPOL;
+                        int new_index = iw1 - PARAM.globalv.npol * orb_index_row
+                                        + (iw2 - PARAM.globalv.npol * orb_index_col) * PARAM.globalv.npol;
 
                         if (new_index == 0 || new_index == 3)
                         {
@@ -583,12 +583,12 @@ void cal_r_overlap_R::out_rR_other(const int& istep, const std::set<Abfs::Vector
                     ic = this->ParaV->global2local_col(iw2);
                     if (ic >= 0)
                     {
-                        int orb_index_row = iw1 / GlobalV::NPOL;
-                        int orb_index_col = iw2 / GlobalV::NPOL;
+                        int orb_index_row = iw1 / PARAM.globalv.npol;
+                        int orb_index_col = iw2 / PARAM.globalv.npol;
 
                         // The off-diagonal term in SOC calculaiton is zero, and the two diagonal terms are the same
-                        int new_index = iw1 - GlobalV::NPOL * orb_index_row
-                                        + (iw2 - GlobalV::NPOL * orb_index_col) * GlobalV::NPOL;
+                        int new_index = iw1 - PARAM.globalv.npol * orb_index_row
+                                        + (iw2 - PARAM.globalv.npol * orb_index_col) * PARAM.globalv.npol;
 
                         if (new_index == 0 || new_index == 3)
                         {

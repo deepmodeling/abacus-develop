@@ -1,5 +1,6 @@
 #ifdef __DEEPKS
 
+#include "module_parameter/parameter.h"
 #include "LCAO_deepks.h"
 #include "module_base/vector3.h"
 #include "module_base/timer.h"
@@ -61,7 +62,7 @@ void LCAO_Deepks::cal_gdmx_k(const std::vector<std::vector<std::complex<double>>
                 
                 const ModuleBase::Vector3<double> tau1 = GridD.getAdjacentTau(ad1);
 				const Atom* atom1 = &ucell.atoms[T1];
-				const int nw1_tot = atom1->nw*GlobalV::NPOL;
+				const int nw1_tot = atom1->nw*PARAM.globalv.npol;
 				const double Rcut_AO1 = orb.Phi[T1].getRcut();
 
                 ModuleBase::Vector3<double> dR1(GridD.getBox(ad1).x, GridD.getBox(ad1).y, GridD.getBox(ad1).z); 
@@ -74,7 +75,7 @@ void LCAO_Deepks::cal_gdmx_k(const std::vector<std::vector<std::complex<double>>
                     const int ibt2 = ucell.itia2iat(T2,I2);
 					const ModuleBase::Vector3<double> tau2 = GridD.getAdjacentTau(ad2);
 					const Atom* atom2 = &ucell.atoms[T2];
-					const int nw2_tot = atom2->nw*GlobalV::NPOL;
+					const int nw2_tot = atom2->nw*PARAM.globalv.npol;
                     ModuleBase::Vector3<double> dR2(GridD.getBox(ad2).x, GridD.getBox(ad2).y, GridD.getBox(ad2).z);
 					
 					const double Rcut_AO2 = orb.Phi[T2].getRcut();

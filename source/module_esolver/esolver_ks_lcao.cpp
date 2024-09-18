@@ -880,14 +880,6 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
                                 istep);
     }
 
-    // 3) print potential
-    if (this->conv_elec || iter == PARAM.inp.scf_nmax)
-    {
-        if (GlobalV::out_pot < 0) // mohan add 2011-10-10
-        {
-            GlobalV::out_pot = -2;
-        }
-    }
 
     if (!this->conv_elec)
     {
@@ -1173,7 +1165,6 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
     {
         // ModuleRPA::DFT_RPA_interface
         // rpa_interface(GlobalC::exx_info.info_global);
-        // rpa_interface.rpa_exx_lcao().info.files_abfs = GlobalV::rpa_orbitals;
         RPA_LRI<TK, double> rpa_lri_double(GlobalC::exx_info.info_ri);
         rpa_lri_double.cal_postSCF_exx(*dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(),
                                        MPI_COMM_WORLD,

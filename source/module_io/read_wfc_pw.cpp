@@ -1,5 +1,6 @@
 #include "read_wfc_pw.h"
 
+#include "module_parameter/parameter.h"
 #include "binstream.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
@@ -81,7 +82,7 @@ void ModuleIO::read_wfc_pw(const std::string& filename,
     ikstot = ik;
 #endif
 
-    npwtot *= GlobalV::NPOL;
+    npwtot *= PARAM.globalv.npol;
 
     
 
@@ -200,7 +201,7 @@ void ModuleIO::read_wfc_pw(const std::string& filename,
         {
             glo_order[i] = -1;
         }
-        for (int i = 0; i < npwtot_in / GlobalV::NPOL; ++i)
+        for (int i = 0; i < npwtot_in / PARAM.globalv.npol; ++i)
         {
             int index = (miller[i].x * ny + miller[i].y) * nz + miller[i].z;
             glo_order[index] = i;
@@ -255,7 +256,7 @@ void ModuleIO::read_wfc_pw(const std::string& filename,
                              ip + GlobalV::NPROC_IN_POOL,
                              POOL_WORLD,
                              MPI_STATUS_IGNORE);
-                    if (GlobalV::NPOL == 2)
+                    if (PARAM.globalv.npol == 2)
                     {
                         MPI_Recv(&wfc(ib, npwk_max),
                                  pw_wfc->npwk[ik],
@@ -280,7 +281,7 @@ void ModuleIO::read_wfc_pw(const std::string& filename,
                         wfc_ip[i] = wfc_in[glo_order[ig_ip[i]]];
                     }
                     MPI_Send(wfc_ip, size, MPI_DOUBLE_COMPLEX, ip, ip + GlobalV::NPROC_IN_POOL, POOL_WORLD);
-                    if (GlobalV::NPOL == 2)
+                    if (PARAM.globalv.npol == 2)
                     {
                         for (int i = 0; i < size; i++)
                         {
@@ -300,7 +301,7 @@ void ModuleIO::read_wfc_pw(const std::string& filename,
                     {
                         wfc(ib, i) = wfc_in[glo_order[l2g_pw[i]]];
                     }
-                    if (GlobalV::NPOL == 2)
+                    if (PARAM.globalv.npol == 2)
                     {
                         for (int i = 0; i < pw_wfc->npwk[ik]; ++i)
                         {
@@ -316,7 +317,7 @@ void ModuleIO::read_wfc_pw(const std::string& filename,
         {
             wfc(ib, i) = wfc_in[glo_order[l2g_pw[i]]];
         }
-        if (GlobalV::NPOL == 2)
+        if (PARAM.globalv.npol == 2)
         {
             for (int i = 0; i < pw_wfc->npwk[ik]; ++i)
             {
