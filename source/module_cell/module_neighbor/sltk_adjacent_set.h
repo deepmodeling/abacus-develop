@@ -4,6 +4,7 @@
 #include <vector>
 #include <stdexcept>
 #include <iostream>
+#include <cereal/types/vector.hpp>
 
 class out_of_range;
 
@@ -111,6 +112,12 @@ public:
 	// so I change short to int.
 	std::vector<int> offset;
 	std::vector<int> box;
+
+    // serialization, used for parallization of adjacent atoms
+    template <class Archive> void serialize(Archive & ar)
+    {
+        ar(length, dx, dy, dz, center, expand_flag, trueX, trueY, trueZ, offset, box);
+    }
 
 };
 

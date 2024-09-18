@@ -4,6 +4,7 @@
 #include <memory>
 #include "sltk_util.h"
 #include "sltk_adjacent_set.h"
+#include <cereal/cereal.hpp>
 
 class AdjacentSet;
 
@@ -69,6 +70,12 @@ public:
 	void setZ(const double& r) { d_z = r; }
 	void setType(const int ntype) {type = ntype;}
 	void setNatom(const int atom) {natom = atom;}
+
+    // serialization, used for parallization of adjacent atoms
+    template <class Archive> void serialize(Archive & ar)
+    {
+        ar(d_x, d_y, d_z, as, type, natom);
+    }
 };
 
 #endif

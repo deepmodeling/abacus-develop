@@ -3,6 +3,10 @@
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_base/memory.h"
+#include <mpi.h>
+#include <cereal/archives/binary.hpp>
+#include <cereal/types/memory.hpp>
+#include <cereal/types/vector.hpp>
 //=================
 // Class AtomLink
 //=================
@@ -752,6 +756,81 @@ void Grid::Construct_Adjacent_expand(
 //----------------------------------------------------------
 // EXPLAIN : Only construct AdjacentSet for 'true' cell.
 //----------------------------------------------------------
+#ifdef __MPI
+    int comm_size = 0;
+    int my_rank = 0;
+    MPI_Comm_size(MPI_COMM_WORLD, &comm_size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+
+    int i_start = 0;
+    int i_step = 0;
+    i_start = my_rank;
+    i_step = std::min(this->natom, comm_size);
+
+    int atoms_tmp = 0;
+    std::vector<char> v_send;
+    for(int ia = i_start; ia < Cell[true_i][true_j][true_k].length; ia += i_step)
+    {
+        Cell[true_i][true_j][true_k].address[ia].fatom.allocate_AdjacentSet();
+        if(this->pbc)
+        {
+            Construct_Adjacent_expand_periodic(true_i, true_j, true_k, ia);
+        }
+        else
+        {
+            ModuleBase::WARNING_QUIT("Construct_Adjacent_expand", "\n Expand case, must use periodic boundary.");
+        }
+
+        // serialization, used for parallization of adjacent atoms
+        std::stringstream ss;
+        cereal::BinaryOutputArchive ar(ss);
+        ar(ia);
+        ar(Cell[true_i][true_j][true_k].address[ia].fatom);
+
+        std::string str(ss.str());
+        v_send.insert(v_send.end(), str.begin(), str.end());
+
+        atoms_tmp++;
+    }
+
+    std::vector<int> atoms_all(comm_size);
+    MPI_Allgather(&atoms_tmp, 1, MPI_INT, atoms_all.data(), 1, MPI_INT, MPI_COMM_WORLD);
+
+    int length_tmp = v_send.size();
+    std::vector<int> length_all(comm_size);
+    MPI_Allgather(&length_tmp, 1, MPI_INT, length_all.data(), 1, MPI_INT, MPI_COMM_WORLD);
+
+    int total_size = 0;
+    int displs_tmp = 0;
+    std::vector<int> displs_all(comm_size);
+    for(int irank = 0; irank < comm_size; irank++)
+    {
+        displs_all[irank] = displs_tmp;
+        displs_tmp += length_all[irank];
+
+        total_size += length_all[irank];
+    }
+
+    std::vector<char> v_recv(total_size);
+    MPI_Allgatherv(v_send.data(), v_send.size(), MPI_CHAR, v_recv.data(), length_all.data(), displs_all.data(), MPI_CHAR, MPI_COMM_WORLD);
+
+    for(int irank = 0; irank < comm_size; irank++)
+    {
+        int start_pos = displs_all[irank];
+        int end_pos = start_pos + length_all[irank];
+        std::string str(v_recv.begin() + start_pos, v_recv.begin() + end_pos);
+        std::stringstream ss(str);
+
+        // deserialization, used for parallization of adjacent atoms
+        int ia_tmp = 0;
+        cereal::BinaryInputArchive ar(ss);
+        for(int ia = 0; ia < atoms_all[irank]; ia++)
+        {
+            ar(ia_tmp);
+            ar(Cell[true_i][true_j][true_k].address[ia_tmp].fatom);
+        }
+    }
+#elif
 	for (int ia = 0;ia < Cell[true_i][true_j][true_k].length;ia++)
 	{
 		Cell[true_i][true_j][true_k].address[ia].fatom.allocate_AdjacentSet();
@@ -765,6 +844,8 @@ void Grid::Construct_Adjacent_expand(
 			ModuleBase::WARNING_QUIT("Construct_Adjacent_expand", "\n Expand case, must use periodic boundary.");
 		}
 	}
+#endif
+
 	return;
 }
 
