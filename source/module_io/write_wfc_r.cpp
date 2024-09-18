@@ -1,5 +1,6 @@
 //======================
 // AUTHOR : Peize Lin
+#include "module_parameter/parameter.h"
 // DATE :   2021-11-21
 //======================
 
@@ -27,7 +28,7 @@ void write_psi_r_1(const psi::Psi<std::complex<double>>& wfc_g,
     ModuleBase::TITLE("ModuleIO", "write_psi_r_1");
     ModuleBase::timer::tick("ModuleIO", "write_psi_r_1");
 
-    const std::string outdir = GlobalV::global_out_dir + folder_name + "/";
+    const std::string outdir = PARAM.globalv.global_out_dir + folder_name + "/";
     ModuleBase::GlobalFunc::MAKE_DIR(outdir);
 #ifdef __MPI
 		std::vector<MPI_Request> mpi_requests;

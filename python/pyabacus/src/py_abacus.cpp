@@ -5,12 +5,12 @@ namespace py = pybind11;
 
 void bind_base_math(py::module& m);
 void bind_m_nao(py::module& m);
-void bind_diago_dav_subspace(py::module& m);
+void bind_hsolver(py::module& m);
 
 PYBIND11_MODULE(_core, m)
 {
     m.doc() = "Python extension for ABACUS built with pybind11 and scikit-build.";
     bind_base_math(m);
     bind_m_nao(m);
-    bind_diago_dav_subspace(m);
+    bind_hsolver(m);
 }

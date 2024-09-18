@@ -51,7 +51,7 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, const Paramet
     {
         if (mdrun->step_ == 0)
         {
-            mdrun->setup(p_esolver, GlobalV::global_readin_dir);
+            mdrun->setup(p_esolver, PARAM.globalv.global_readin_dir);
         }
         else
         {
@@ -87,7 +87,7 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, const Paramet
             mdrun->print_md(GlobalV::ofs_running, GlobalV::CAL_STRESS);
 
             MD_func::dump_info(mdrun->step_ + mdrun->step_rst_,
-                               GlobalV::global_out_dir,
+                               PARAM.globalv.global_out_dir,
                                unit_in,
                                param_in,
                                mdrun->virial,
@@ -99,7 +99,7 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, const Paramet
         {
             unit_in.update_vel(mdrun->vel);
             std::stringstream file;
-            file << GlobalV::global_stru_dir << "STRU_MD_" << mdrun->step_ + mdrun->step_rst_;
+            file << PARAM.globalv.global_stru_dir << "STRU_MD_" << mdrun->step_ + mdrun->step_rst_;
             // changelog 20240509
             // because I move out the dependence on GlobalV from UnitCell::print_stru_file
             // so its parameter is calculated here
@@ -114,9 +114,9 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, const Paramet
                                     PARAM.inp.calculation == "md", 
                                     PARAM.inp.out_mul,
                                     need_orb,
-                                    GlobalV::deepks_setorb,
+                                    PARAM.globalv.deepks_setorb,
                                     GlobalV::MY_RANK);
-            mdrun->write_restart(GlobalV::global_out_dir);
+            mdrun->write_restart(PARAM.globalv.global_out_dir);
         }
 
         mdrun->step_++;

@@ -86,7 +86,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
     // init wfc from file
     if(istep == 0 && PARAM.inp.init_wfc == "file")
     {
-        if (! ModuleIO::read_wfc_nao(GlobalV::global_readin_dir, this->pv, *(this->psi), this->pelec))
+        if (! ModuleIO::read_wfc_nao(PARAM.globalv.global_readin_dir, this->pv, *(this->psi), this->pelec))
         {
             ModuleBase::WARNING_QUIT("ESolver_KS_LCAO<TK, TR>::beforesolver",
                                      "read wfc nao failed");
@@ -125,7 +125,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
 #ifdef __DEEPKS
     // for each ionic step, the overlap <psi|alpha> must be rebuilt
     // since it depends on ionic positions
-    if (GlobalV::deepks_setorb)
+    if (PARAM.globalv.deepks_setorb)
     {
         const Parallel_Orbitals* pv = &this->pv;
         // build and save <psi(0)|alpha(R)> at beginning
@@ -152,7 +152,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
                    PARAM.inp.sc_mag_switch,
                    GlobalC::ucell,
                    PARAM.inp.sc_file,
-                   GlobalV::NPOL,
+                   PARAM.globalv.npol,
                    &(this->pv),
                    GlobalV::NSPIN,
                    this->kv,
@@ -165,7 +165,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
     // cal_ux should be called before init_scf because
     // the direction of ux is used in noncoline_rho
     //=========================================================
-    if (GlobalV::NSPIN == 4 && GlobalV::DOMAG)
+    if (GlobalV::NSPIN == 4 && PARAM.globalv.domag)
     {
         GlobalC::ucell.cal_ux();
     }
@@ -218,7 +218,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
     }
 #endif // __EXX
 
-    this->pelec->init_scf(istep, this->sf.strucFac);
+    this->pelec->init_scf(istep, this->sf.strucFac, GlobalC::ucell.symm);
 
     //! output the initial charge density
     if (PARAM.inp.out_chg[0] == 2)
@@ -226,7 +226,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
             std::stringstream ss;
-            ss << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG_INI.cube";
+            ss << PARAM.globalv.global_out_dir << "SPIN" << is + 1 << "_CHG_INI.cube";
             ModuleIO::write_cube(
 #ifdef __MPI
                 this->pw_big->bz, // bz first, then nbz
@@ -253,7 +253,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
             std::stringstream ss;
-            ss << GlobalV::global_out_dir << "SPIN" << is + 1 << "_POT_INI.cube";
+            ss << PARAM.globalv.global_out_dir << "SPIN" << is + 1 << "_POT_INI.cube";
             ModuleIO::write_cube(
 #ifdef __MPI
                 this->pw_big->bz,
@@ -308,7 +308,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
         int nspin0 = GlobalV::NSPIN == 2 ? 2 : 1;
         for (int is = 0; is < nspin0; is++)
         {
-            std::string fn = GlobalV::global_out_dir + "/SPIN" + std::to_string(is + 1) + "_CHG.cube";
+            std::string fn = PARAM.globalv.global_out_dir + "/SPIN" + std::to_string(is + 1) + "_CHG.cube";
             ModuleIO::write_cube(
 #ifdef __MPI
                 this->pw_big->bz,
@@ -338,7 +338,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
     Symmetry_rho srho;
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
-        srho.begin(is, *(this->pelec->charge), this->pw_rho, GlobalC::Pgrid, GlobalC::ucell.symm);
+        srho.begin(is, *(this->pelec->charge), this->pw_rho, GlobalC::ucell.symm);
     }
 
     // 1. calculate ewald energy.

@@ -76,7 +76,7 @@ void LCAO_Deepks::cal_orbital_precalc_k(
                 }
 
                 const Atom* atom1 = &ucell.atoms[T1];
-                const int nw1_tot = atom1->nw * GlobalV::NPOL;
+                const int nw1_tot = atom1->nw * PARAM.globalv.npol;
 
                 ModuleBase::Vector3<double> dR1(GridD.getBox(ad1).x,
                                                 GridD.getBox(ad1).y,
@@ -126,7 +126,7 @@ void LCAO_Deepks::cal_orbital_precalc_k(
 
                     const Atom* atom2 = &ucell.atoms[T2];
 
-                    const int nw2_tot = atom2->nw * GlobalV::NPOL;
+                    const int nw2_tot = atom2->nw * PARAM.globalv.npol;
 
                     ModuleBase::Vector3<double> dR2(GridD.getBox(ad2).x,
                                                     GridD.getBox(ad2).y,

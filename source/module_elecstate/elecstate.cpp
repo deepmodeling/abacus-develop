@@ -206,7 +206,7 @@ void ElecState::calEBand()
     return;
 }
 
-void ElecState::init_scf(const int istep, const ModuleBase::ComplexMatrix& strucfac)
+void ElecState::init_scf(const int istep, const ModuleBase::ComplexMatrix& strucfac, ModuleSymmetry::Symmetry& symm, const void* wfcpw)
 {
     //---------Charge part-----------------
     // core correction potential.
@@ -225,7 +225,7 @@ void ElecState::init_scf(const int istep, const ModuleBase::ComplexMatrix& struc
     //--------------------------------------------------------------------
     if (istep == 0)
     {
-        this->charge->init_rho(this->eferm, strucfac, this->bigpw->nbz, this->bigpw->bz);
+        this->charge->init_rho(this->eferm, strucfac, symm, (const void*)this->klist, wfcpw);
         this->charge->check_rho(); // check the rho
     }
 
@@ -265,7 +265,7 @@ void ElecState::cal_nbands()
     // calculate number of bands (setup.f90)
     //=======================================
     double occupied_bands = static_cast<double>(GlobalV::nelec / ModuleBase::DEGSPIN);
-    if (GlobalV::LSPINORB == 1) {
+    if (PARAM.inp.lspinorb == 1) {
         occupied_bands = static_cast<double>(GlobalV::nelec);
     }
 

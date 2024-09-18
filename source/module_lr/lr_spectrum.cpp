@@ -1,5 +1,6 @@
 #include "lr_spectrum.h"
 #include "module_lr/utils/lr_util.h"
+#include "module_parameter/parameter.h"
 #include "module_lr/dm_trans/dm_trans.h"
 #include "module_base/parallel_reduce.h"
 #include "module_lr/utils/lr_util.h"
@@ -167,7 +168,7 @@ void LR::LR_Spectrum<T>::optical_absorption(const std::vector<double>& freq, con
 {
     ModuleBase::TITLE("LR::LR_Spectrum", "optical_absorption");
     std::vector<double>& osc = this->oscillator_strength_;
-    std::ofstream ofs(GlobalV::global_out_dir + "absorption_" + this->spin_types[ispin] + ".dat");
+    std::ofstream ofs(PARAM.globalv.global_out_dir + "absorption_" + this->spin_types[ispin] + ".dat");
     if (GlobalV::MY_RANK == 0) { ofs << "Frequency (eV) | wave length(nm) | Absorption (a.u.)" << std::endl; }
     double FourPI_div_c = ModuleBase::FOUR_PI / 137.036;
     for (int f = 0;f < freq.size();++f)

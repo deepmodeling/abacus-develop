@@ -22,8 +22,9 @@ void DFTU::output()
 
             if (L >= orbital_corr[T] && orbital_corr[T] != -1)
             {
-                if (L != orbital_corr[T])
+                if (L != orbital_corr[T]) {
                     continue;
+}
 
                 if (!Yukawa)
                 {
@@ -34,8 +35,9 @@ void DFTU::output()
                 {
                     for (int n = 0; n < N; n++)
                     {
-                        if (n != 0)
+                        if (n != 0) {
                             continue;
+}
                         double Ueff = (this->U_Yukawa[T][L][n] - this->J_Yukawa[T][L][n]) * ModuleBase::Ry_to_eV;
                         GlobalV::ofs_running << "atom_type=" << T << "  L=" << L << "  chi=" << n
                                              << "    U=" << this->U_Yukawa[T][L][n] * ModuleBase::Ry_to_eV << "eV    "
@@ -48,14 +50,14 @@ void DFTU::output()
     }
 
     GlobalV::ofs_running << "Local occupation matrices" << std::endl;
-    this->write_occup_m(GlobalV::ofs_running, 1);
+    this->write_occup_m(GlobalV::ofs_running, true);
     GlobalV::ofs_running << "//=======================================================//" << std::endl;
     
     //Write onsite.dm
     std::ofstream ofdftu;
     if(PARAM.inp.out_chg[0]){
       if(GlobalV::MY_RANK == 0){
-        ofdftu.open(GlobalV::global_out_dir + "onsite.dm");
+        ofdftu.open(PARAM.globalv.global_out_dir + "onsite.dm");
       }
     }
     if(!ofdftu){
@@ -75,12 +77,14 @@ void DFTU::write_occup_m(std::ofstream &ofs, bool diag)
 {
     ModuleBase::TITLE("DFTU", "write_occup_m");
 
-    if(GlobalV::MY_RANK != 0) return;
+    if(GlobalV::MY_RANK != 0) { return;
+}
 
     for (int T = 0; T < GlobalC::ucell.ntype; T++)
     {
-        if (orbital_corr[T] == -1)
+        if (orbital_corr[T] == -1) {
             continue;
+}
         const int NL = GlobalC::ucell.atoms[T].nwl + 1;
         const int LC = orbital_corr[T];
 
@@ -92,8 +96,9 @@ void DFTU::write_occup_m(std::ofstream &ofs, bool diag)
 
             for (int l = 0; l < NL; l++)
             {
-                if (l != orbital_corr[T])
+                if (l != orbital_corr[T]) {
                     continue;
+}
 
                 const int N = GlobalC::ucell.atoms[T].l_nchi[l];
                 ofs << "L"
@@ -102,8 +107,9 @@ void DFTU::write_occup_m(std::ofstream &ofs, bool diag)
                 for (int n = 0; n < N; n++)
                 {
                     // if(!Yukawa && n!=0) continue;
-                    if (n != 0)
+                    if (n != 0) {
                         continue;
+}
 
                     ofs << "zeta"
                         << "  " << n << std::endl;
@@ -185,16 +191,16 @@ void DFTU::write_occup_m(std::ofstream &ofs, bool diag)
                             }
                             ofs << std::setw(12) << std::setprecision(8) << std::fixed<< "atomic mag: "<<iat<<" " << sum0[1] <<" "<< sum0[2] << " " << sum0[3] << std::endl;
                         }
-                        else
+                        else {
                         for (int m0 = 0; m0 < 2 * l + 1; m0++)
                         {
-                            for (int ipol0 = 0; ipol0 < GlobalV::NPOL; ipol0++)
+                            for (int ipol0 = 0; ipol0 < PARAM.globalv.npol; ipol0++)
                             {
                                 const int m0_all = m0 + (2 * l + 1) * ipol0;
 
                                 for (int m1 = 0; m1 < 2 * l + 1; m1++)
                                 {
-                                    for (int ipol1 = 0; ipol1 < GlobalV::NPOL; ipol1++)
+                                    for (int ipol1 = 0; ipol1 < PARAM.globalv.npol; ipol1++)
                                     {
                                         int m1_all = m1 + (2 * l + 1) * ipol1;
                                         ofs << std::setw(12) << std::setprecision(8) << std::fixed
@@ -204,6 +210,7 @@ void DFTU::write_occup_m(std::ofstream &ofs, bool diag)
                                 ofs << std::endl;
                             }
                         }
+}
                     }
                 } // n
             } // l
@@ -217,8 +224,9 @@ void DFTU::read_occup_m(const std::string &fn)
 {
     ModuleBase::TITLE("DFTU", "read_occup_m");
 
-    if (GlobalV::MY_RANK != 0)
+    if (GlobalV::MY_RANK != 0) {
         return;
+}
 
     std::ifstream ifdftu(fn.c_str(), std::ios::in);
 
@@ -253,8 +261,9 @@ void DFTU::read_occup_m(const std::string &fn)
     while (ifdftu.good())
     {
         ifdftu >> word;
-        if (ifdftu.eof())
+        if (ifdftu.eof()) {
             break;
+}
 
         if (strcmp("atoms", word) == 0)
         {
@@ -267,8 +276,9 @@ void DFTU::read_occup_m(const std::string &fn)
 
             for (int l = 0; l < NL; l++)
             {
-                if (l != orbital_corr[T])
+                if (l != orbital_corr[T]) {
                     continue;
+}
 
                 ifdftu >> word;
 
@@ -281,8 +291,9 @@ void DFTU::read_occup_m(const std::string &fn)
                     for (int n = 0; n < N; n++)
                     {
                         // if(!Yukawa && n!=0) continue;
-                        if (n != 0)
+                        if (n != 0) {
                             continue;
+}
 
                         ifdftu >> word;
                         if (strcmp("zeta", word) == 0)
@@ -324,13 +335,13 @@ void DFTU::read_occup_m(const std::string &fn)
                                 double value = 0.0;
                                 for (int m0 = 0; m0 < 2 * L + 1; m0++)
                                 {
-                                    for (int ipol0 = 0; ipol0 < GlobalV::NPOL; ipol0++)
+                                    for (int ipol0 = 0; ipol0 < PARAM.globalv.npol; ipol0++)
                                     {
                                         const int m0_all = m0 + (2 * L + 1) * ipol0;
 
                                         for (int m1 = 0; m1 < 2 * L + 1; m1++)
                                         {
-                                            for (int ipol1 = 0; ipol1 < GlobalV::NPOL; ipol1++)
+                                            for (int ipol1 = 0; ipol1 < PARAM.globalv.npol; ipol1++)
                                             {
                                                 int m1_all = m1 + (2 * L + 1) * ipol1;
                                                 ifdftu >> value;
@@ -379,8 +390,9 @@ void DFTU::local_occup_bcast()
 
     for (int T = 0; T < GlobalC::ucell.ntype; T++)
     {
-        if (orbital_corr[T] == -1)
+        if (orbital_corr[T] == -1) {
             continue;
+}
 
         for (int I = 0; I < GlobalC::ucell.atoms[T].na; I++)
         {
@@ -389,14 +401,16 @@ void DFTU::local_occup_bcast()
 
             for (int l = 0; l <= GlobalC::ucell.atoms[T].nwl; l++)
             {
-                if (l != orbital_corr[T])
+                if (l != orbital_corr[T]) {
                     continue;
+}
 
                 for (int n = 0; n < GlobalC::ucell.atoms[T].l_nchi[l]; n++)
                 {
                     // if(!Yukawa && n!=0) continue;
-                    if (n != 0)
+                    if (n != 0) {
                         continue;
+}
 
                     if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 2)
                     {
@@ -417,13 +431,13 @@ void DFTU::local_occup_bcast()
                     {
                         for (int m0 = 0; m0 < 2 * L + 1; m0++)
                         {
-                            for (int ipol0 = 0; ipol0 < GlobalV::NPOL; ipol0++)
+                            for (int ipol0 = 0; ipol0 < PARAM.globalv.npol; ipol0++)
                             {
                                 const int m0_all = m0 + (2 * L + 1) * ipol0;
 
                                 for (int m1 = 0; m1 < 2 * L + 1; m1++)
                                 {
-                                    for (int ipol1 = 0; ipol1 < GlobalV::NPOL; ipol1++)
+                                    for (int ipol1 = 0; ipol1 < PARAM.globalv.npol; ipol1++)
                                     {
                                         int m1_all = m1 + (2 * L + 1) * ipol1;
 #ifdef __MPI

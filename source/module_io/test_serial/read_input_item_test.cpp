@@ -545,10 +545,17 @@ TEST_F(InputTest, Item_test)
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.ks_solver, "genelpa");
 #else
+#ifdef __MPI
         param.input.towannier90 = true;
-        param.input.basis_type = "lcao";
+        param.input.basis_type = "lcao_in_pw";
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.ks_solver, "scalapack_gvx");
+#else
+        param.input.towannier90 = true;
+        param.input.basis_type = "lcao_in_pw";
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.ks_solver, "lapack");
+#endif
 #endif
         param.input.ks_solver = "default";
         param.input.basis_type = "lcao";
@@ -804,24 +811,18 @@ TEST_F(InputTest, Item_test)
         auto it = find_label("gamma_only", readinput.input_lists);
         param.input.basis_type = "pw";
         param.input.gamma_only = true;
-        testing::internal::CaptureStdout();
         it->second.reset_value(it->second, param);
-        output = testing::internal::GetCapturedStdout();
         EXPECT_EQ(param.input.gamma_only, false);
-
-        param.input.basis_type = "lcao";
-        param.input.gamma_only = true;
-        param.input.esolver_type = "tddft";
-        it->second.reset_value(it->second, param);
-        EXPECT_EQ(param.sys.gamma_only_local, false);
-
+    }
+    { // out_mat_r
+        auto it = find_label("out_mat_r", readinput.input_lists);
         param.input.esolver_type = "lcao";
         param.input.out_mat_r = true;
         param.sys.gamma_only_local = true;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.reset_value(it->second, param), ::testing::ExitedWithCode(0), "");
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(0), "");
         output = testing::internal::GetCapturedStdout();
-        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+        EXPECT_THAT(output, testing::HasSubstr("available"));
     }
     { // lcao_ecut
         auto it = find_label("lcao_ecut", readinput.input_lists);
@@ -854,6 +855,14 @@ TEST_F(InputTest, Item_test)
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.out_mat_hs[0], 1);
     }
+}
+TEST_F(InputTest, Item_test2)
+{
+    ModuleIO::ReadInput readinput(0);
+    readinput.check_ntype_flag = false;
+    Parameter param;
+
+    std::string output = "";
     { // out_mat_dh
         auto it = find_label("out_mat_dh", readinput.input_lists);
         param.input.out_mat_dh = true;
@@ -1318,19 +1327,21 @@ TEST_F(InputTest, Item_test)
     }
     { // towannier90
         auto it = find_label("towannier90", readinput.input_lists);
+        param.input.towannier90 = true;
         param.input.calculation = "nscf";
         param.input.nspin = 2;
         param.input.wannier_spin = "none";
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(0), "");
         output = testing::internal::GetCapturedStdout();
-        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+        EXPECT_THAT(output, testing::HasSubstr("towannier90"));
 
+        param.input.towannier90 = true;
         param.input.calculation = "scf";
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(0), "");
         output = testing::internal::GetCapturedStdout();
-        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+        EXPECT_THAT(output, testing::HasSubstr("towannier90"));
     }
     { // wannier_method
         auto it = find_label("wannier_method", readinput.input_lists);

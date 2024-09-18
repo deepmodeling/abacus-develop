@@ -13,7 +13,7 @@ void UnitCell::read_cell_pseudopots(const std::string& pp_dir, std::ofstream& lo
     ModuleBase::TITLE("UnitCell", "read_cell_pseudopots");
     // setup reading log for pseudopot_upf
     std::stringstream ss;
-    ss << GlobalV::global_out_dir << "atom_pseudo.log";
+    ss << PARAM.globalv.global_out_dir << "atom_pseudo.log";
 
     // Read in the atomic pseudo potentials
     std::string pp_address;

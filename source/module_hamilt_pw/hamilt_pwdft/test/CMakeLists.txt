@@ -5,7 +5,7 @@ remove_definitions(-D__EXX)
 
 AddTest(
   TARGET pwdft_soc
-  LIBS ${math_libs}
+  LIBS parameter  ${math_libs}
   SOURCES soc_test.cpp ../soc.cpp
   	../../../module_base/global_variable.cpp
   	../../../module_base/global_function.cpp
@@ -23,6 +23,6 @@ AddTest(
 
 AddTest(
 	TARGET radial_proj_test
-	LIBS base device ${math_libs}
+	LIBS parameter  base device ${math_libs}
 	SOURCES radial_proj_test.cpp ../radial_proj.cpp
 )

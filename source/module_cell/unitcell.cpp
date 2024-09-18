@@ -202,7 +202,7 @@ void UnitCell::print_cell_xyz(const std::string& fn) const
         return; // xiaohui add 2015-03-15
 
     std::stringstream ss;
-    ss << GlobalV::global_out_dir << fn;
+    ss << PARAM.globalv.global_out_dir << fn;
 
     std::ofstream ofs(ss.str().c_str());
 
@@ -579,10 +579,6 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log) {
 #ifdef __MPI
     Parallel_Common::bcast_bool(ok);
     Parallel_Common::bcast_bool(ok2);
-    if (GlobalV::NSPIN == 4) {
-        Parallel_Common::bcast_bool(GlobalV::DOMAG);
-        Parallel_Common::bcast_bool(GlobalV::DOMAG_Z);
-    }
 #endif
     if (!ok) {
         ModuleBase::WARNING_QUIT(
@@ -758,7 +754,7 @@ void UnitCell::read_pseudo(std::ofstream& ofs) {
             for (int it = 0; it < ntype; it++) {
                 Atom* atom = &atoms[it];
                 std::stringstream ss;
-                ss << GlobalV::global_out_dir << atom->label << "/"
+                ss << PARAM.globalv.global_out_dir << atom->label << "/"
                    << atom->label << ".NONLOCAL";
                 std::ofstream ofs(ss.str().c_str());
 
@@ -985,15 +981,15 @@ void UnitCell::cal_nwfc(std::ofstream& log) {
     this->iwt2iw = new int[GlobalV::NLOCAL];
 
     this->itia2iat.create(ntype, namax);
-    // this->itiaiw2iwt.create(ntype, namax, nwmax*GlobalV::NPOL);
-    this->set_iat2iwt(GlobalV::NPOL);
+    // this->itiaiw2iwt.create(ntype, namax, nwmax*PARAM.globalv.npol);
+    this->set_iat2iwt(PARAM.globalv.npol);
     int iat = 0;
     int iwt = 0;
     for (int it = 0; it < ntype; it++) {
         for (int ia = 0; ia < atoms[it].na; ia++) {
             this->itia2iat(it, ia) = iat;
             // this->iat2ia[iat] = ia;
-            for (int iw = 0; iw < atoms[it].nw * GlobalV::NPOL; iw++) {
+            for (int iw = 0; iw < atoms[it].nw * PARAM.globalv.npol; iw++) {
                 // this->itiaiw2iwt(it, ia, iw) = iwt;
                 this->iwt2iat[iwt] = iat;
                 this->iwt2iw[iwt] = iw;

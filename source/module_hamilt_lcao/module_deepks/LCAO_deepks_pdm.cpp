@@ -1,5 +1,6 @@
 //wenfei 2022-1-11
 //This file contains subroutines for calculating pdm,
+#include "module_parameter/parameter.h"
 //which is defind as sum_mu,nu rho_mu,nu (<chi_mu|alpha><alpha|chi_nu>);
 //as well as gdmx, which is the gradient of pdm, defined as
 //sum_mu,nu rho_mu,nu d/dX(<chi_mu|alpha><alpha|chi_nu>)
@@ -44,7 +45,7 @@ void LCAO_Deepks::read_projected_DM(bool read_pdm_file, bool is_equiv, const Num
             pdm_size = nproj * nproj;
         }
 
-        const std::string file_projdm = GlobalV::global_out_dir + "deepks_projdm.dat";
+        const std::string file_projdm = PARAM.globalv.global_out_dir + "deepks_projdm.dat";
         std::ifstream ifs(file_projdm.c_str());
 
         if (!ifs)
@@ -80,7 +81,7 @@ void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<double, double
         return;
     }
     int pdm_size = 0;
-    if(!GlobalV::deepks_equiv)
+    if(!PARAM.inp.deepks_equiv)
     {
         pdm_size = (this->lmaxd * 2 + 1) * (this->lmaxd * 2 + 1);
     }
@@ -119,7 +120,7 @@ void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<double, double
             //trace alpha orbital
             std::vector<int> trace_alpha_row;
             std::vector<int> trace_alpha_col;
-            if(!GlobalV::deepks_equiv)
+            if(!PARAM.inp.deepks_equiv)
             {
                 int ib=0;
                 for (int L0 = 0; L0 <= orb.Alpha[0].getLmax();++L0)
@@ -166,7 +167,7 @@ void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<double, double
                 const int ibt1 = ucell.itia2iat(T1,I1);
                 const ModuleBase::Vector3<double> tau1 = GridD.getAdjacentTau(ad1);
 				const Atom* atom1 = &ucell.atoms[T1];
-				const int nw1_tot = atom1->nw*GlobalV::NPOL;
+				const int nw1_tot = atom1->nw*PARAM.globalv.npol;
 				const double Rcut_AO1 = orb.Phi[T1].getRcut(); 
                 const double dist1 = (tau1-tau0).norm() * ucell.lat0;
                 if (dist1 >= Rcut_Alpha + Rcut_AO1)
@@ -199,7 +200,7 @@ void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<double, double
                     const int ibt2 = ucell.itia2iat(T2,I2);
 					const ModuleBase::Vector3<double> tau2 = GridD.getAdjacentTau(ad2);
 					const Atom* atom2 = &ucell.atoms[T2];
-					const int nw2_tot = atom2->nw*GlobalV::NPOL;
+					const int nw2_tot = atom2->nw*PARAM.globalv.npol;
 					
 					const double Rcut_AO2 = orb.Phi[T2].getRcut();
                 	const double dist2 = (tau2-tau0).norm() * ucell.lat0;
@@ -263,7 +264,7 @@ void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<double, double
                         &row_size);
 				}//ad2
                 // do dot of g_1dmt and s_1t to get orbital_pdm_shell
-                if(!GlobalV::deepks_equiv)
+                if(!PARAM.inp.deepks_equiv)
                 {
                     int ib=0, index=0, inc=1;
                     for (int L0 = 0; L0 <= orb.Alpha[0].getLmax();++L0)
@@ -329,7 +330,7 @@ void LCAO_Deepks::cal_projected_DM_k(const elecstate::DensityMatrix<std::complex
     }
 
     int pdm_size = 0;
-    if(!GlobalV::deepks_equiv)
+    if(!PARAM.inp.deepks_equiv)
     {
         pdm_size = (this->lmaxd * 2 + 1) * (this->lmaxd * 2 + 1);
     }
@@ -368,7 +369,7 @@ void LCAO_Deepks::cal_projected_DM_k(const elecstate::DensityMatrix<std::complex
             //trace alpha orbital
             std::vector<int> trace_alpha_row;
             std::vector<int> trace_alpha_col;
-            if(!GlobalV::deepks_equiv)
+            if(!PARAM.inp.deepks_equiv)
             {
                 int ib=0;
                 for (int L0 = 0; L0 <= orb.Alpha[0].getLmax();++L0)
@@ -416,7 +417,7 @@ void LCAO_Deepks::cal_projected_DM_k(const elecstate::DensityMatrix<std::complex
                 const int start1 = ucell.itiaiw2iwt(T1, I1, 0);
                 const ModuleBase::Vector3<double> tau1 = GridD.getAdjacentTau(ad1);
 				const Atom* atom1 = &ucell.atoms[T1];
-				const int nw1_tot = atom1->nw*GlobalV::NPOL;
+				const int nw1_tot = atom1->nw*PARAM.globalv.npol;
 				const double Rcut_AO1 = orb.Phi[T1].getRcut();
                 const double dist1 = (tau1-tau0).norm() * ucell.lat0;
                 if (dist1 >= Rcut_Alpha + Rcut_AO1)
@@ -452,7 +453,7 @@ void LCAO_Deepks::cal_projected_DM_k(const elecstate::DensityMatrix<std::complex
                     const int ibt2 = ucell.itia2iat(T2,I2);
 					const ModuleBase::Vector3<double> tau2 = GridD.getAdjacentTau(ad2);
 					const Atom* atom2 = &ucell.atoms[T2];
-					const int nw2_tot = atom2->nw*GlobalV::NPOL;
+					const int nw2_tot = atom2->nw*PARAM.globalv.npol;
                     ModuleBase::Vector3<double> dR2(GridD.getBox(ad2).x, GridD.getBox(ad2).y, GridD.getBox(ad2).z);
 					
 					const double Rcut_AO2 = orb.Phi[T2].getRcut();
@@ -518,7 +519,7 @@ void LCAO_Deepks::cal_projected_DM_k(const elecstate::DensityMatrix<std::complex
                         &row_size);
 				}//ad2
                 // do dot of g_1dmt and s_1t to get orbital_pdm_shell
-                if(!GlobalV::deepks_equiv)
+                if(!PARAM.inp.deepks_equiv)
                 {
                     int ib=0, index=0, inc=1;
                     for (int L0 = 0; L0 <= orb.Alpha[0].getLmax();++L0)
@@ -574,7 +575,7 @@ void LCAO_Deepks::cal_projected_DM_k(const elecstate::DensityMatrix<std::complex
 
 void LCAO_Deepks::check_projected_dm()
 {
-    const std::string file_projdm = GlobalV::global_out_dir + "deepks_projdm.dat";
+    const std::string file_projdm = PARAM.globalv.global_out_dir + "deepks_projdm.dat";
     std::ofstream ofs(file_projdm.c_str());
 
     const int pdm_size = (this->lmaxd * 2 + 1) * (this->lmaxd * 2 + 1);

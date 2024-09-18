@@ -1,5 +1,6 @@
 #include "dftu.h"
 #include "module_base/timer.h"
+#include "module_parameter/parameter.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 namespace ModuleDFTU
@@ -32,7 +33,7 @@ void DFTU::cal_VU_pot_mat_complex(const int spin, const bool newlocale, std::com
 
                     for (int m1 = 0; m1 < 2 * L + 1; m1++)
                     {
-                        for (int ipol1 = 0; ipol1 < GlobalV::NPOL; ipol1++)
+                        for (int ipol1 = 0; ipol1 < PARAM.globalv.npol; ipol1++)
                         {
                             const int mu = this->paraV->global2local_row(this->iatlnmipol2iwt[iat][L][n][m1][ipol1]);
                             if (mu < 0) {
@@ -41,7 +42,7 @@ void DFTU::cal_VU_pot_mat_complex(const int spin, const bool newlocale, std::com
 
                             for (int m2 = 0; m2 < 2 * L + 1; m2++)
                             {
-                                for (int ipol2 = 0; ipol2 < GlobalV::NPOL; ipol2++)
+                                for (int ipol2 = 0; ipol2 < PARAM.globalv.npol; ipol2++)
                                 {
                                     const int nu
                                         = this->paraV->global2local_col(this->iatlnmipol2iwt[iat][L][n][m2][ipol2]);
@@ -93,7 +94,7 @@ void DFTU::cal_VU_pot_mat_real(const int spin, const bool newlocale, double* VU)
 
                     for (int m1 = 0; m1 < 2 * L + 1; m1++)
                     {
-                        for (int ipol1 = 0; ipol1 < GlobalV::NPOL; ipol1++)
+                        for (int ipol1 = 0; ipol1 < PARAM.globalv.npol; ipol1++)
                         {
                             const int mu = this->paraV->global2local_row(this->iatlnmipol2iwt[iat][L][n][m1][ipol1]);
                             if (mu < 0) {
@@ -101,7 +102,7 @@ void DFTU::cal_VU_pot_mat_real(const int spin, const bool newlocale, double* VU)
 }
                             for (int m2 = 0; m2 < 2 * L + 1; m2++)
                             {
-                                for (int ipol2 = 0; ipol2 < GlobalV::NPOL; ipol2++)
+                                for (int ipol2 = 0; ipol2 < PARAM.globalv.npol; ipol2++)
                                 {
                                     const int nu
                                         = this->paraV->global2local_col(this->iatlnmipol2iwt[iat][L][n][m2][ipol2]);

@@ -229,7 +229,7 @@ void WF_atomic::print_PAOs()const
         for (int icc=0; icc<GlobalC::ucell.atoms[it].ncpp.nchi ;icc++)
         {
             std::stringstream ss;
-            ss << GlobalV::global_out_dir << GlobalC::ucell.atoms[it].label << "/" << GlobalC::ucell.atoms[it].label
+            ss << PARAM.globalv.global_out_dir << GlobalC::ucell.atoms[it].label << "/" << GlobalC::ucell.atoms[it].label
                << "-" << GlobalC::ucell.atoms[it].ncpp.els[icc] << ".ORBITAL";
 
             std::ofstream ofs(ss.str().c_str());
@@ -321,7 +321,7 @@ void WF_atomic::atomic_wfc(const int ik,
                             Soc soc;
 						    soc.rot_ylm(l+1);
                             const double j = GlobalC::ucell.atoms[it].ncpp.jchi[iw];
-                            if ( !(GlobalV::DOMAG||GlobalV::DOMAG_Z))
+                            if ( !(PARAM.globalv.domag||PARAM.globalv.domag_z))
                             {//atomic_wfc_so
                                 double fact[2];
                                 for(int m=-l-1;m<l+1;m++)
@@ -615,9 +615,9 @@ void WF_atomic::random_t(std::complex<FPTYPE>* psi,
         FPTYPE *tmparg = new FPTYPE[nstnz];
         for (int iw = iw_start ;iw < iw_end;iw++)
         {
-            std::complex<FPTYPE>* ppsi = &(psi[iw * this->npwx * GlobalV::NPOL]);
+            std::complex<FPTYPE>* ppsi = &(psi[iw * this->npwx * PARAM.globalv.npol]);
             int startig = 0;
-            for(int ipol = 0 ; ipol < GlobalV::NPOL ; ++ipol)
+            for(int ipol = 0 ; ipol < PARAM.globalv.npol ; ++ipol)
             {
             
 	            for(int ir=0; ir < nxy; ir++)
@@ -662,7 +662,7 @@ void WF_atomic::random_t(std::complex<FPTYPE>* psi,
 #endif // __MPI
         for (int iw = iw_start ;iw < iw_end;iw++)
         {
-            std::complex<FPTYPE>* ppsi = &(psi[iw * this->npwx * GlobalV::NPOL]);
+            std::complex<FPTYPE>* ppsi = &(psi[iw * this->npwx * PARAM.globalv.npol]);
             for (int ig = 0;ig < ng;ig++)
             {
                 const FPTYPE rr = std::rand()/FPTYPE(RAND_MAX); //qianrui add RAND_MAX
@@ -670,7 +670,7 @@ void WF_atomic::random_t(std::complex<FPTYPE>* psi,
                 const FPTYPE gk2 = wfc_basis->getgk2(ik,ig);
                 ppsi[ig] = std::complex<FPTYPE>(rr * cos(arg), rr * sin(arg)) / FPTYPE(gk2 + 1.0);
             }
-            if(GlobalV::NPOL==2) {for (int ig = this->npwx;ig < this->npwx + ng;ig++)
+            if(PARAM.globalv.npol==2) {for (int ig = this->npwx;ig < this->npwx + ng;ig++)
             {
                 const FPTYPE rr = std::rand()/FPTYPE(RAND_MAX);
                 const FPTYPE arg= ModuleBase::TWO_PI * std::rand()/FPTYPE(RAND_MAX);
@@ -710,7 +710,7 @@ void WF_atomic::atomicrandom(ModuleBase::ComplexMatrix& psi,
         for (int iw = iw_start ;iw < iw_end;iw++)
         {
             int startig = 0;
-            for(int ipol = 0 ; ipol < GlobalV::NPOL ; ++ipol)
+            for(int ipol = 0 ; ipol < PARAM.globalv.npol ; ++ipol)
             {
 	            for(int ir=0; ir < nxy; ir++)
 	            {
@@ -754,7 +754,7 @@ void WF_atomic::atomicrandom(ModuleBase::ComplexMatrix& psi,
 		for (int iw = iw_start ;iw < iw_end;iw++)
 		{
 			int startig = 0;
-			for(int ip = 0 ; ip < GlobalV::NPOL; ++ip)
+			for(int ip = 0 ; ip < PARAM.globalv.npol; ++ip)
 			{
 				for(int ig = 0 ; ig < npw ; ++ig)
 				{

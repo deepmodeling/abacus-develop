@@ -21,7 +21,7 @@ Structure_Factor::Structure_Factor()
 
 Structure_Factor::~Structure_Factor()
 {
-    if (GlobalV::device_flag == "gpu") {
+    if (PARAM.globalv.device_flag == "gpu") {
         if (PARAM.inp.precision == "single") {
             delmem_cd_op()(gpu_ctx, this->c_eigts1);
             delmem_cd_op()(gpu_ctx, this->c_eigts2);
@@ -62,7 +62,7 @@ void Structure_Factor::setup_structure_factor(UnitCell* Ucell, const ModulePW::P
     ModuleBase::Memory::record("SF::strucFac", sizeof(std::complex<double>) * Ucell->ntype*rho_basis->npw);
 
 //	std::string outstr;
-//	outstr = GlobalV::global_out_dir + "strucFac.dat"; 
+//	outstr = PARAM.globalv.global_out_dir + "strucFac.dat"; 
 //	std::ofstream ofs( outstr.c_str() ) ;
     bool usebspline;
     if(nbspline > 0) {   usebspline = true;
@@ -145,7 +145,7 @@ void Structure_Factor::setup_structure_factor(UnitCell* Ucell, const ModulePW::P
             inat++;
         }
     }
-    if (GlobalV::device_flag == "gpu") {
+    if (PARAM.globalv.device_flag == "gpu") {
         if (PARAM.inp.precision == "single") {
             resmem_cd_op()(gpu_ctx, this->c_eigts1, Ucell->nat * (2 * rho_basis->nx + 1));
             resmem_cd_op()(gpu_ctx, this->c_eigts2, Ucell->nat * (2 * rho_basis->ny + 1));

@@ -165,7 +165,7 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
 
     // below is for DeePKS NSCF calculation
 #ifdef __DEEPKS
-    if (GlobalV::deepks_out_labels || GlobalV::deepks_scf) {
+    if (PARAM.inp.deepks_out_labels || PARAM.inp.deepks_scf) {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "DeepKS output");
         const elecstate::DensityMatrix<TK, double>* dm
             = dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
@@ -195,7 +195,7 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
     {
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
-            std::string fn = GlobalV::global_out_dir + "/SPIN" + std::to_string(is + 1) + "_POT.cube";
+            std::string fn = PARAM.globalv.global_out_dir + "/SPIN" + std::to_string(is + 1) + "_POT.cube";
 
             ModuleIO::write_cube(
 #ifdef __MPI
@@ -220,7 +220,7 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
     }
     else if (PARAM.inp.out_pot == 2)
     {
-        std::string fn = GlobalV::global_out_dir + "/ElecStaticPot.cube";
+        std::string fn = PARAM.globalv.global_out_dir + "/ElecStaticPot.cube";
         ModuleIO::write_elecstat_pot(
 #ifdef __MPI
             this->pw_big->bz,

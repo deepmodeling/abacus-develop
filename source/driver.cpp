@@ -106,8 +106,8 @@ void Driver::print_start_info()
     std::cout << std::setiosflags(std::ios::left);
 
     GlobalV::ofs_running << "\n READING GENERAL INFORMATION" << std::endl;
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "global_out_dir", GlobalV::global_out_dir);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "global_in_card", GlobalV::global_in_card);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "global_out_dir", PARAM.globalv.global_out_dir);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "global_in_card",  PARAM.globalv.global_in_card);
 }
 
 void Driver::reading()
@@ -119,7 +119,7 @@ void Driver::reading()
 
     // (1) read the input file
     ModuleIO::ReadInput read_input(PARAM.globalv.myrank);
-    read_input.read_parameters(PARAM, GlobalV::global_in_card);
+    read_input.read_parameters(PARAM,  PARAM.globalv.global_in_card);
 
     // (2) create the output directory, running_*.log and print info
     read_input.create_directory(PARAM);
@@ -127,7 +127,7 @@ void Driver::reading()
 
     // (3) write the input file
     std::stringstream ss1;
-    ss1 << GlobalV::global_out_dir << GlobalV::global_in_card;
+    ss1 << PARAM.globalv.global_out_dir <<  PARAM.globalv.global_in_card;
     read_input.write_parameters(PARAM, ss1.str());
 
     // (*temp*) copy the variables from INPUT to each class

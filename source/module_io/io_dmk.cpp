@@ -1,5 +1,6 @@
 #include "module_io/io_dmk.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/parallel_common.h"
 #include "module_base/scalapack_connector.h"
 #include "module_base/timer.h"
@@ -296,7 +297,7 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
 #endif
 
             if (my_rank == 0) {
-                std::string fn = GlobalV::global_out_dir
+                std::string fn = PARAM.globalv.global_out_dir
                                  + dmk_gen_fname(gamma_only, ispin, ik);
                 std::ofstream ofs(fn.c_str());
 

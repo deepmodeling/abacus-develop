@@ -106,6 +106,7 @@ add_library(naopack SHARED
 # add diago shared library
 list(APPEND _diago
     ${HSOLVER_PATH}/diago_dav_subspace.cpp
+    ${HSOLVER_PATH}/diago_david.cpp
     ${HSOLVER_PATH}/diag_const_nums.cpp
     ${HSOLVER_PATH}/diago_iter_assist.cpp
 
@@ -151,7 +152,7 @@ list(APPEND _sources
     ${PROJECT_SOURCE_DIR}/src/py_abacus.cpp
     ${PROJECT_SOURCE_DIR}/src/py_base_math.cpp
     ${PROJECT_SOURCE_DIR}/src/py_m_nao.cpp
-    ${PROJECT_SOURCE_DIR}/src/py_diago_dav_subspace.cpp
+    ${PROJECT_SOURCE_DIR}/src/py_hsolver.cpp
     )
 pybind11_add_module(_core MODULE ${_sources})
 target_link_libraries(_core PRIVATE pybind11::headers naopack diagopack)

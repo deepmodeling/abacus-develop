@@ -1,5 +1,6 @@
 #include "td_velocity.h"
 
+#include "module_parameter/parameter.h"
 #include "module_elecstate/potentials/H_TDDFT_pw.h"
 
 bool TD_Velocity::tddft_velocity = false;
@@ -83,7 +84,7 @@ void TD_Velocity::cal_cart_At(const ModuleBase::Vector3<double>& At)
     // output the vector potential if needed
     if (out_vecpot == true)
     {
-        this->output_cart_At(GlobalV::global_out_dir);
+        this->output_cart_At(PARAM.globalv.global_out_dir);
     }
 }
 

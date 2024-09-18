@@ -1,5 +1,6 @@
 #include "wavefunc_in_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_parameter/parameter.h"
 #include <cstring>		// Peize Lin fix bug about strcmp 2016-08-02
 #include "module_base/math_integral.h"
 #include "module_base/math_sphbes.h"
@@ -154,7 +155,7 @@ void Wavefunc_in_pw::make_table_q(
 		for(int it=0; it<GlobalC::ucell.ntype; it++)
 		{
 			std::stringstream ss;
-			ss << GlobalV::global_out_dir << GlobalC::ucell.atoms[it].label << "/LOCAL_G.dat";
+			ss << PARAM.globalv.global_out_dir << GlobalC::ucell.atoms[it].label << "/LOCAL_G.dat";
 			std::ofstream ofs(ss.str().c_str());
 			for(int iq=0; iq<GlobalV::NQX; iq++)
 			{
@@ -300,7 +301,7 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int& ik,
 							if(GlobalC::ucell.atoms[it].ncpp.has_so)
 							{
 								const double j = std::abs(double(L+is_N) - 0.5);
-								if (!(GlobalV::DOMAG||GlobalV::DOMAG_Z))
+								if (!(PARAM.globalv.domag||PARAM.globalv.domag_z))
 								{//atomic_wfc_so
 									for(int m=0; m<2*L+1; m++)
 									{
@@ -387,7 +388,7 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int& ik,
                                         iwall++;
                                     }
 									iwall += 2*L +1;
-								} // end else INPUT.starting_spin_angle || !GlobalV::DOMAG
+								} // end else INPUT.starting_spin_angle || !PARAM.globalv.domag
 							} // end if GlobalC::ucell.atoms[it].has_so
 							else
 							{//atomic_wfc_nc
@@ -431,7 +432,7 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int& ik,
 								iwall += 2*L+1;
 							} // end else GlobalC::ucell.atoms[it].has_so
 						} // end for is_N
-                    } // end if GlobalV::NONCOLIN
+                    } // end if PARAM.inp.noncolin
 					else
 					{//LSDA and nomagnet case
 						for(int m=0; m<2*L+1; m++)

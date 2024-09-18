@@ -56,7 +56,7 @@ void DFTU::init(UnitCell& cell, // unitcell class
 
     // needs reconstructions in future
     // global parameters, need to be removed in future
-    const int npol = GlobalV::NPOL;     // number of polarization directions
+    const int npol = PARAM.globalv.npol;     // number of polarization directions
     const int nlocal = GlobalV::NLOCAL; // number of total local orbitals
     const int nspin = GlobalV::NSPIN;   // number of spins
 
@@ -192,7 +192,7 @@ void DFTU::init(UnitCell& cell, // unitcell class
         if (PARAM.inp.init_chg == "file")
         {
             std::stringstream sst;
-            sst << GlobalV::global_out_dir << "onsite.dm";
+            sst << PARAM.globalv.global_out_dir << "onsite.dm";
             this->read_occup_m(sst.str());
 #ifdef __MPI
             this->local_occup_bcast();
@@ -288,14 +288,14 @@ void DFTU::cal_energy_correction(const int istep)
 
                         for (int m0 = 0; m0 < 2 * l + 1; m0++)
                         {
-                            for (int ipol0 = 0; ipol0 < GlobalV::NPOL; ipol0++)
+                            for (int ipol0 = 0; ipol0 < PARAM.globalv.npol; ipol0++)
                             {
                                 const int m0_all = m0 + (2 * l + 1) * ipol0;
                                 nm_trace += this->locale[iat][l][n][0](m0_all, m0_all);
 
                                 for (int m1 = 0; m1 < 2 * l + 1; m1++)
                                 {
-                                    for (int ipol1 = 0; ipol1 < GlobalV::NPOL; ipol1++)
+                                    for (int ipol1 = 0; ipol1 < PARAM.globalv.npol; ipol1++)
                                     {
                                         int m1_all = m1 + (2 * l + 1) * ipol1;
 
@@ -319,12 +319,12 @@ void DFTU::cal_energy_correction(const int istep)
                     // calculate the double counting term included in eband
                     for (int m1 = 0; m1 < 2 * l + 1; m1++)
                     {
-                        for (int ipol1 = 0; ipol1 < GlobalV::NPOL; ipol1++)
+                        for (int ipol1 = 0; ipol1 < PARAM.globalv.npol; ipol1++)
                         {
                             const int m1_all = m1 + ipol1 * (2 * l + 1);
                             for (int m2 = 0; m2 < 2 * l + 1; m2++)
                             {
-                                for (int ipol2 = 0; ipol2 < GlobalV::NPOL; ipol2++)
+                                for (int ipol2 = 0; ipol2 < PARAM.globalv.npol; ipol2++)
                                 {
                                     const int m2_all = m2 + ipol2 * (2 * l + 1);
 

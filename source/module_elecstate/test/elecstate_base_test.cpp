@@ -71,7 +71,11 @@ void Charge::set_rho_core(ModuleBase::ComplexMatrix const&)
 void Charge::set_rho_core_paw()
 {
 }
-void Charge::init_rho(elecstate::efermi&, ModuleBase::ComplexMatrix const&, const int&, const int&)
+void Charge::init_rho(elecstate::efermi&,
+                      ModuleBase::ComplexMatrix const&,
+                      ModuleSymmetry::Symmetry& symm,
+                      const void*,
+                      const void*)
 {
 }
 void Charge::set_rhopw(ModulePW::PW_Basis*)
@@ -130,7 +134,7 @@ class MockElecState : public ElecState
         GlobalV::NBANDS = 6;
         GlobalV::NLOCAL = 6;
         PARAM.input.esolver_type = "ksdft";
-        GlobalV::LSPINORB = false;
+        PARAM.input.lspinorb = false;
         PARAM.input.basis_type = "pw";
         GlobalV::KPAR = 1;
         GlobalV::NPROC_IN_POOL = 1;
@@ -194,7 +198,7 @@ TEST_F(ElecStateTest, CalNbandsFractionElec)
 
 TEST_F(ElecStateTest, CalNbandsSOC)
 {
-    GlobalV::LSPINORB = true;
+    PARAM.input.lspinorb = true;
     GlobalV::NBANDS = 0;
     elecstate->cal_nbands();
     EXPECT_EQ(GlobalV::NBANDS, 20);
@@ -390,7 +394,8 @@ TEST_F(ElecStateTest, InitSCF)
     int istep = 0;
     ModuleBase::ComplexMatrix strucfac;
     elecstate->eferm = efermi;
-    EXPECT_NO_THROW(elecstate->init_scf(istep, strucfac));
+    ModuleSymmetry::Symmetry symm;
+    EXPECT_NO_THROW(elecstate->init_scf(istep, strucfac, symm));
     // delete elecstate->pot is done in the destructor of elecstate
     delete charge;
 }

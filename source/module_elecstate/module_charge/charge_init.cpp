@@ -16,11 +16,16 @@
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 #include "module_io/rho_io.h"
 #include "module_io/rhog_io.h"
+#include "module_io/read_wfc_to_rho.h"
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
 #endif
 
-void Charge::init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMatrix& strucFac, const int& nbz, const int& bz)
+void Charge::init_rho(elecstate::efermi& eferm_iout,
+                      const ModuleBase::ComplexMatrix& strucFac,
+                      ModuleSymmetry::Symmetry& symm,
+                      const void* klist,
+                      const void* wfcpw)
 {
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "init_chg", PARAM.inp.init_chg);
 
@@ -33,7 +38,7 @@ void Charge::init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMa
         // try to read charge from binary file first, which is the same as QE
         // liuyu 2023-12-05
         std::stringstream binary;
-        binary << GlobalV::global_readin_dir << PARAM.inp.suffix + "-CHARGE-DENSITY.restart";
+        binary << PARAM.globalv.global_readin_dir << PARAM.inp.suffix + "-CHARGE-DENSITY.restart";
         if (ModuleIO::read_rhog(binary.str(), rhopw, rhog))
         {
             GlobalV::ofs_running << " Read in the charge density: " << binary.str() << std::endl;
@@ -47,7 +52,7 @@ void Charge::init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMa
             for (int is = 0; is < GlobalV::NSPIN; ++is)
             {
                 std::stringstream ssc;
-                ssc << GlobalV::global_readin_dir << "SPIN" << is + 1 << "_CHG.cube";
+                ssc << PARAM.globalv.global_readin_dir << "SPIN" << is + 1 << "_CHG.cube";
                 double& ef_tmp = eferm_iout.get_ef(is);
                 if (ModuleIO::read_rho(
 #ifdef __MPI
@@ -120,7 +125,7 @@ void Charge::init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMa
                 for (int is = 0; is < GlobalV::NSPIN; is++)
                 {
                     std::stringstream ssc;
-                    ssc << GlobalV::global_readin_dir << "SPIN" << is + 1 << "_TAU.cube";
+                    ssc << PARAM.globalv.global_readin_dir << "SPIN" << is + 1 << "_TAU.cube";
                     GlobalV::ofs_running << " try to read kinetic energy density from file : " << ssc.str()
                                          << std::endl;
                     // mohan update 2012-02-10, sunliang update 2023-03-09
@@ -195,8 +200,20 @@ void Charge::init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMa
         GlobalC::restart.info_load.load_charge_finish = true;
     }
 #ifdef __MPI
-    this->init_chgmpi(nbz, bz);
+    this->init_chgmpi();
 #endif
+    if (PARAM.inp.init_chg == "wfc")
+    {
+        if (wfcpw == nullptr)
+        {
+            ModuleBase::WARNING_QUIT("Charge::init_rho", "wfc is only supported for PW-KSDFT.");
+        }
+        const ModulePW::PW_Basis_K* pw_wfc = reinterpret_cast<ModulePW::PW_Basis_K*>(const_cast<void*>(wfcpw));
+        const K_Vectors* kv = reinterpret_cast<const K_Vectors*>(klist);
+        const int nkstot = kv->get_nkstot();
+        const std::vector<int>& isk = kv->isk;
+        ModuleIO::read_wfc_to_rho(pw_wfc, symm, nkstot, isk, *this);
+    }
 }
 
 //==========================================================

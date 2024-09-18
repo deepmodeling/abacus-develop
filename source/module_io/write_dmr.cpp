@@ -1,5 +1,6 @@
 #include "write_dmr.h"
 
+#include "module_parameter/parameter.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
 #include "module_hamilt_lcao/module_hcontainer/output_hcontainer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
@@ -80,7 +81,7 @@ void write_dmr(const std::vector<hamilt::HContainer<double>*> dmr,
 #endif
             if (GlobalV::MY_RANK == 0)
             {
-                std::string fname = GlobalV::global_out_dir + dmr_gen_fname(1, ispin, append, istep);
+                std::string fname = PARAM.globalv.global_out_dir + dmr_gen_fname(1, ispin, append, istep);
                 write_dmr_csr(fname, &dm_serial, istep);
             }
         }

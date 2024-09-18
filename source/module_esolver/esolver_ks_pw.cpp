@@ -213,13 +213,13 @@ void ESolver_KS_PW<T, Device>::before_scf(const int istep)
 
     //! cal_ux should be called before init_scf because
     //! the direction of ux is used in noncoline_rho
-    if (GlobalV::NSPIN == 4 && GlobalV::DOMAG)
+    if (GlobalV::NSPIN == 4 && PARAM.globalv.domag)
     {
         GlobalC::ucell.cal_ux();
     }
 
     //! calculate the total local pseudopotential in real space
-    this->pelec->init_scf(istep, this->sf.strucFac);
+    this->pelec->init_scf(istep, this->sf.strucFac, GlobalC::ucell.symm, (void*)this->pw_wfc);
 
     //! output the initial charge density
     if (PARAM.inp.out_chg[0] == 2)
@@ -227,7 +227,7 @@ void ESolver_KS_PW<T, Device>::before_scf(const int istep)
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
             std::stringstream ss;
-            ss << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG_INI.cube";
+            ss << PARAM.globalv.global_out_dir << "SPIN" << is + 1 << "_CHG_INI.cube";
             ModuleIO::write_cube(
 #ifdef __MPI
                 this->pw_big->bz,
@@ -254,7 +254,7 @@ void ESolver_KS_PW<T, Device>::before_scf(const int istep)
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
             std::stringstream ss;
-            ss << GlobalV::global_out_dir << "SPIN" << is + 1 << "_POT_INI.cube";
+            ss << PARAM.globalv.global_out_dir << "SPIN" << is + 1 << "_POT_INI.cube";
             ModuleIO::write_cube(
 #ifdef __MPI
                 this->pw_big->bz,
@@ -283,7 +283,7 @@ void ESolver_KS_PW<T, Device>::before_scf(const int istep)
     Symmetry_rho srho;
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
-        srho.begin(is, *(this->pelec->charge), this->pw_rhod, GlobalC::Pgrid, GlobalC::ucell.symm);
+        srho.begin(is, *(this->pelec->charge), this->pw_rhod, GlobalC::ucell.symm);
     }
 
     // liuyu move here 2023-10-09
@@ -348,6 +348,7 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, c
         // be careful that istep start from 0 and iter start from 1
         // if (iter == 1)
         hsolver::DiagoIterAssist<T, Device>::need_subspace = ((istep == 0 || istep == 1) && iter == 1) ? false : true;
+        
         hsolver::DiagoIterAssist<T, Device>::SCF_ITER = iter;
         hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR = ethr;
         hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX = PARAM.inp.pw_diag_nmax;
@@ -361,25 +362,30 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, c
                                    this->kspw_psi->get_nbands(),
                                    PARAM.inp.diago_full_acc);
         
-        hsolver::HSolverPW<T, Device> hsolver_pw_obj(this->pw_wfc, &this->wf, this->init_psi);
-        hsolver_pw_obj.solve(this->p_hamilt,         // hamilt::Hamilt<T, Device>* pHamilt,
-                           this->kspw_psi[0],        // psi::Psi<T, Device>& psi,
-                           this->pelec,               // elecstate::ElecState<T, Device>* pelec,
+        hsolver::HSolverPW<T, Device> hsolver_pw_obj(this->pw_wfc, 
+                                                     &this->wf, 
+                                                     
+                                                     PARAM.inp.calculation,
+                                                     PARAM.inp.basis_type,
+                                                     PARAM.inp.ks_solver,
+                                                     PARAM.inp.use_paw,
+                                                     GlobalV::use_uspp,
+                                                     GlobalV::NSPIN,
+                                                     
+                                                     hsolver::DiagoIterAssist<T, Device>::SCF_ITER,
+                                                     hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
+                                                     hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR,
+
+                                                     hsolver::DiagoIterAssist<T, Device>::need_subspace,
+                                                     this->init_psi);
+        
+        hsolver_pw_obj.solve(this->p_hamilt,
+                           this->kspw_psi[0],
+                           this->pelec,
                            this->pelec->ekb.c,
                            is_occupied,
-                           PARAM.inp.ks_solver,
-                           PARAM.inp.calculation,
-                           PARAM.inp.basis_type,
-                           PARAM.inp.use_paw,
-                           GlobalV::use_uspp,
                            GlobalV::RANK_IN_POOL,
                            GlobalV::NPROC_IN_POOL,
-
-                           hsolver::DiagoIterAssist<T, Device>::SCF_ITER,
-                           hsolver::DiagoIterAssist<T, Device>::need_subspace,
-                           hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
-                           hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR,
-
                            false);
       
         this->init_psi = true;
@@ -405,7 +411,7 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, c
     Symmetry_rho srho;
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
-        srho.begin(is, *(this->pelec->charge), this->pw_rhod, GlobalC::Pgrid, GlobalC::ucell.symm);
+        srho.begin(is, *(this->pelec->charge), this->pw_rhod, GlobalC::ucell.symm);
     }
 
     // compute magnetization, only for LSDA(spin==2)
@@ -472,7 +478,7 @@ void ESolver_KS_PW<T, Device>::iter_finish(int& iter)
                 {
                     data = this->pelec->charge->rho_save[is];
                 }
-                std::string fn = GlobalV::global_out_dir + "/tmp_SPIN" + std::to_string(is + 1) + "_CHG.cube";
+                std::string fn = PARAM.globalv.global_out_dir + "/tmp_SPIN" + std::to_string(is + 1) + "_CHG.cube";
                 ModuleIO::write_cube(
 #ifdef __MPI
                     this->pw_big->bz,
@@ -494,7 +500,7 @@ void ESolver_KS_PW<T, Device>::iter_finish(int& iter)
                     1);
                 if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
                 {
-                    fn = GlobalV::global_out_dir + "/tmp_SPIN" + std::to_string(is + 1) + "_TAU.cube";
+                    fn = PARAM.globalv.global_out_dir + "/tmp_SPIN" + std::to_string(is + 1) + "_TAU.cube";
                     ModuleIO::write_cube(
 #ifdef __MPI
                         this->pw_big->bz,
@@ -519,7 +525,7 @@ void ESolver_KS_PW<T, Device>::iter_finish(int& iter)
         if (this->wf.out_wfc_pw == 1 || this->wf.out_wfc_pw == 2)
         {
             std::stringstream ssw;
-            ssw << GlobalV::global_out_dir << "WAVEFUNC";
+            ssw << PARAM.globalv.global_out_dir << "WAVEFUNC";
             // mohan update 2011-02-21
             // qianrui update 2020-10-17
             ModuleIO::write_wfc_pw(ssw.str(), this->psi[0], this->kv, this->pw_wfc);
@@ -539,7 +545,7 @@ void ESolver_KS_PW<T, Device>::after_scf(const int istep)
     if (this->wf.out_wfc_pw == 1 || this->wf.out_wfc_pw == 2)
     {
         std::stringstream ssw;
-        ssw << GlobalV::global_out_dir << "WAVEFUNC";
+        ssw << PARAM.globalv.global_out_dir << "WAVEFUNC";
         ModuleIO::write_wfc_pw(ssw.str(), this->psi[0], this->kv, this->pw_wfc);
     }
 
@@ -575,7 +581,7 @@ void ESolver_KS_PW<T, Device>::after_scf(const int istep)
                               this->pw_wfc,
                               this->ctx,
                               GlobalC::Pgrid,
-                              GlobalV::global_out_dir,
+                              PARAM.globalv.global_out_dir,
                               PARAM.inp.if_separate_k);
     }
 }
@@ -722,7 +728,7 @@ void ESolver_KS_PW<T, Device>::after_all_runners()
         for (int is = 0; is < nspin0; is++)
         {
             std::stringstream ss2;
-            ss2 << GlobalV::global_out_dir << "BANDS_" << is + 1 << ".dat";
+            ss2 << PARAM.globalv.global_out_dir << "BANDS_" << is + 1 << ".dat";
             GlobalV::ofs_running << "\n Output bands in file: " << ss2.str() << std::endl;
             ModuleIO::nscf_band(is,
                                 ss2.str(),

@@ -111,9 +111,9 @@ void ESolver_KS_LCAO<TK, TR>::cal_mag(const int istep, const bool print)
     if (print && GlobalV::MY_RANK == 0)
     {
         /// write the Orbital file
-        cell_index.write_orb_info(GlobalV::global_out_dir);
+        cell_index.write_orb_info(PARAM.globalv.global_out_dir);
         /// write mulliken.txt
-        mulp.write(istep, GlobalV::global_out_dir);
+        mulp.write(istep, PARAM.globalv.global_out_dir);
         /// write atomic mag info in running log file
         mulp.print_atom_mag(atom_chg, GlobalV::ofs_running);
     }

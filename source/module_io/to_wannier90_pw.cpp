@@ -1,5 +1,6 @@
 #include "to_wannier90_pw.h"
 
+#include "module_parameter/parameter.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/math_integral.h"
 #include "module_base/math_polyint.h"
@@ -83,7 +84,7 @@ void toWannier90_PW::cal_Mmn(
 
     if (GlobalV::MY_RANK == 0)
     {
-        std::string fileaddress = GlobalV::global_out_dir + wannier_file_name + ".mmn";
+        std::string fileaddress = PARAM.globalv.global_out_dir + wannier_file_name + ".mmn";
         mmn_file.open(fileaddress.c_str(), std::ios::out);
 
         time_t time_now = time(NULL);
@@ -143,7 +144,7 @@ void toWannier90_PW::cal_Amn(
     if (GlobalV::MY_RANK == 0)
     {
         time_t time_now = time(NULL);
-        std::string fileaddress = GlobalV::global_out_dir + wannier_file_name + ".amn";
+        std::string fileaddress = PARAM.globalv.global_out_dir + wannier_file_name + ".amn";
         Amn_file.open(fileaddress.c_str(), std::ios::out);
         Amn_file << " Created on " << ctime(&time_now);
         Amn_file << std::setw(12) << num_bands << std::setw(12) << cal_num_kpts << std::setw(12) << num_wannier
@@ -217,15 +218,15 @@ void toWannier90_PW::out_unk(
                 std::stringstream name;
                 if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 4)
                 {
-                    name << GlobalV::global_out_dir << "UNK" << std::setw(5) << std::setfill('0') << ik + 1 << ".1";
+                    name << PARAM.globalv.global_out_dir << "UNK" << std::setw(5) << std::setfill('0') << ik + 1 << ".1";
                 }
                 else if (GlobalV::NSPIN == 2)
                 {
                     if (wannier_spin == "up")
-                        name << GlobalV::global_out_dir << "UNK" << std::setw(5) << std::setfill('0')
+                        name << PARAM.globalv.global_out_dir << "UNK" << std::setw(5) << std::setfill('0')
                             << ik + 1 - start_k_index << ".1";
                     else if (wannier_spin == "down")
-                        name << GlobalV::global_out_dir << "UNK" << std::setw(5) << std::setfill('0')
+                        name << PARAM.globalv.global_out_dir << "UNK" << std::setw(5) << std::setfill('0')
                             << ik + 1 - start_k_index << ".2";
                 }
                 if (wvfn_formatted)

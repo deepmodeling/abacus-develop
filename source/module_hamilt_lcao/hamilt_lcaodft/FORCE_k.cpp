@@ -330,7 +330,7 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
                          svnl_dbeta);
 
 #ifdef __DEEPKS
-    if (GlobalV::deepks_scf)
+    if (PARAM.inp.deepks_scf)
     {
         const std::vector<std::vector<std::complex<double>>>& dm_k = dm->get_DMK_vector();
 

@@ -50,7 +50,7 @@ TEST_F(IstateInfoTest, OutIstateInfoS1)
     GlobalV::KPAR = 1;
     GlobalV::NBANDS = 4;
     GlobalV::NSPIN = 1;
-    GlobalV::global_out_dir = "./";
+    PARAM.sys.global_out_dir = "./";
     // mpi setting
     Parallel_Global::init_pools(GlobalV::NPROC,
                                 GlobalV::MY_RANK,
@@ -90,7 +90,7 @@ TEST_F(IstateInfoTest, OutIstateInfoS1)
         str,
         testing::HasSubstr("BAND               Energy(ev)               Occupation                Kpoint = 100"));
     EXPECT_THAT(str, testing::HasSubstr("(0.99 0.99 0.99)"));
-    EXPECT_THAT(str, testing::HasSubstr("4                  2.04085                        0"));
+    EXPECT_THAT(str, testing::HasSubstr("4                2.0408547                        0"));
     ifs.close();
     remove("istate.info");
 }
@@ -101,7 +101,7 @@ TEST_F(IstateInfoTest, OutIstateInfoS2)
     GlobalV::KPAR = 1;
     GlobalV::NBANDS = 4;
     GlobalV::NSPIN = 2;
-    GlobalV::global_out_dir = "./";
+    PARAM.sys.global_out_dir = "./";
     // mpi setting
     Parallel_Global::init_pools(GlobalV::NPROC,
                                 GlobalV::MY_RANK,
