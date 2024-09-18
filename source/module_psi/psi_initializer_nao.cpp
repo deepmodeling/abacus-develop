@@ -300,6 +300,10 @@ void psi_initializer_nao<T, Device>::initialize(Structure_Factor* sf,
     this->read_external_orbs(this->p_ucell_->orbital_fn, rank);
     // this->cal_ovlp_flzjlq(); //because GlobalV::NQX will change during vcrelax, so it should be called in both init
     // and init_after_vc
+    // then for generate random number to fill in the wavefunction
+    this->ixy2is_.clear();
+    this->ixy2is_.resize(this->pw_wfc_->fftnxy);
+    this->pw_wfc_->getfftixy2is(this->ixy2is_.data());
     ModuleBase::timer::tick("psi_initializer_nao", "initialize_mpi");
 }
 #else
@@ -322,6 +326,10 @@ void psi_initializer_nao<T, Device>::initialize(Structure_Factor* sf,
     this->read_external_orbs(this->p_ucell_->orbital_fn, 0);
     // this->cal_ovlp_flzjlq(); //because GlobalV::NQX will change during vcrelax, so it should be called in both init
     // and init_after_vc
+    // then for generate random number to fill in the wavefunction
+    this->ixy2is_.clear();
+    this->ixy2is_.resize(this->pw_wfc_->fftnxy);
+    this->pw_wfc_->getfftixy2is(this->ixy2is_.data());
     ModuleBase::timer::tick("psi_initializer_nao", "initialize_serial");
 }
 #endif
