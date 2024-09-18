@@ -316,20 +316,17 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
     const double* dSx[3] = { fsr.DSloc_Rx, fsr.DSloc_Ry, fsr.DSloc_Rz };
     // calculate the energy density matrix
     // and the force related to overlap matrix and energy density matrix.
-    // this->cal_fedm(isforce, isstress, fsr, ucell, 
-    //     this->cal_edm(pelec, *psi, *dm, *kv, pv, GlobalV::NSPIN, GlobalV::NBANDS, ucell, *ra), 
-    //     psi, pv, pelec, foverlap, soverlap, kv, ra);
     PulayForceStress::cal_pulay_fs(foverlap, soverlap,
         this->cal_edm(pelec, *psi, *dm, *kv, pv, GlobalV::NSPIN, GlobalV::NBANDS, ucell, *ra), 
         ucell, pv, dSx, fsr.DH_r, isforce, isstress, ra, -1.0, 1.0);
 
     const double* dHx[3] = { fsr.DHloc_fixedR_x, fsr.DHloc_fixedR_y, fsr.DHloc_fixedR_z }; // T+Vnl
     const double* dHxy[6] = { fsr.stvnl11, fsr.stvnl12, fsr.stvnl13, fsr.stvnl22, fsr.stvnl23, fsr.stvnl33 };   //T
-    // this->cal_ftvnl_dphi(dm, pv, ucell, fsr, isforce, isstress, ftvnl_dphi, stvnl_dphi, ra);
+    // tvnl_dphi
     PulayForceStress::cal_pulay_fs(ftvnl_dphi, stvnl_dphi, *dm, ucell, pv, dHx, dHxy, isforce, isstress, ra, 1.0, -1.0);
 
     // doing on the real space grid.
-    // this->cal_fvl_dphi(isforce, isstress, pelec->pot, gint, fvl_dphi, svl_dphi);
+    // vl_dphi
     PulayForceStress::cal_pulay_fs(fvl_dphi, svl_dphi, *dm, ucell, pelec->pot, gint, isforce, isstress, false/*reset dm to gint*/);
 
     this->cal_fvnl_dbeta(dm,

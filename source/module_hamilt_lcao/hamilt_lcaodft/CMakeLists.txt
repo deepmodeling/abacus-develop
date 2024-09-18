@@ -21,10 +21,6 @@ if(ENABLE_LCAO)
         FORCE_k.cpp
         stress_tools.cpp
         edm.cpp
-        fedm_gamma.cpp
-        fedm_k.cpp
-        ftvnl_dphi_gamma.cpp
-        ftvnl_dphi_k.cpp
         fvnl_dbeta_gamma.cpp
         fvnl_dbeta_k.cpp
         grid_init.cpp

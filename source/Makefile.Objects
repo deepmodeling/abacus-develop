@@ -56,6 +56,7 @@ VPATH=./src_global:\
 ./module_hamilt_lcao/module_dftu:\
 ./module_hamilt_lcao/module_deltaspin:\
 ./module_hamilt_lcao/hamilt_lcaodft/operator_lcao:\
+./module_hamilt_lcao/hamilt_lcaodft/pulay_force_stress:\
 ./module_hamilt_lcao/module_gint:\
 ./module_relax:\
 ./module_relax/relax_old:\
@@ -571,10 +572,6 @@ OBJS_LCAO=evolve_elec.o\
       stress_tools.o\
       edm.o\
       pulay_force_stress_center2.o\
-	  fedm_gamma.o\
-	  fedm_k.o\
-	  ftvnl_dphi_gamma.o\
-	  ftvnl_dphi_k.o\
 	  fvnl_dbeta_gamma.o\
 	  fvnl_dbeta_k.o\
 	  grid_init.o\
