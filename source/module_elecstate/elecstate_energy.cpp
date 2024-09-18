@@ -302,7 +302,7 @@ void ElecState::cal_energies(const int type)
 
 #ifdef __DEEPKS
     // energy from deepks
-    if (GlobalV::deepks_scf)
+    if (PARAM.inp.deepks_scf)
     {
         this->f_en.edeepks_scf = get_deepks_E_delta() - get_deepks_E_delta_band();
     }

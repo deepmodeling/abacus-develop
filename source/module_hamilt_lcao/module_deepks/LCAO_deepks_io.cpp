@@ -1,5 +1,6 @@
 //wenfei 2022-1-11
 //This file contains subroutines that contains interface with libnpy
+#include "module_parameter/parameter.h"
 //since many arrays must be saved in numpy format
 //It also contains subroutines for printing density matrices
 //which is used in unit tests
@@ -134,7 +135,7 @@ void LCAO_deepks_io::save_npy_d(const int nat,
 	}
 
     //save descriptor in .npy format
-    // deepks_equiv was GlobalV::deepks_equiv
+    // deepks_equiv was PARAM.inp.deepks_equiv
     if(!deepks_equiv)
     {
         std::vector<double> npy_des;

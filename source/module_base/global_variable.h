@@ -25,8 +25,6 @@ extern int NSPIN;       // 7
 extern double nupdown;
 extern bool use_uspp;
 
-
-
 extern std::string KS_SOLVER;  // xiaohui add 2013-09-01
 extern double SEARCH_RADIUS;   // 11.1 // mohan add 2011-03-10
 
@@ -57,6 +55,7 @@ extern int NB2D;           // 16.5 dividsion of 2D_matrix.
 // NAME : DCOLOR( color of each group)
 // NAME : GRANK( index of grid world)
 // NAME : GSIZE( number of processors in each grid world)
+// NAME : KPAR_LCAO ( global number of pools for LCAO diagonalization only)
 //========================================================================
 extern int NPROC;
 extern int KPAR;
@@ -72,12 +71,6 @@ extern int DSIZE;
 extern int DCOLOR;
 extern int GRANK;
 extern int GSIZE;
-
-//========================================================================
-// EXPLAIN : Parallel information
-// GLOBAL VARIABLES :
-// NAME : KPAR_LCAO ( global number of pools for LCAO diagonalization only)
-//========================================================================
 extern int KPAR_LCAO;
 
 //==========================================================
@@ -93,10 +86,7 @@ extern int KPAR_LCAO;
 // NAME : ofs_running( contain information during runnnig)
 // NAME : ofs_warning( contain warning information, including error)
 //==========================================================
-extern std::string global_in_card;
 extern std::string stru_file;
-extern std::string global_kpoint_card;
-
 // extern std::string global_pseudo_type; // mohan add 2013-05-20 (xiaohui add
 // 2013-06-23)
 extern std::ofstream ofs_running;
@@ -104,38 +94,6 @@ extern std::ofstream ofs_warning;
 extern std::ofstream ofs_info;
 extern std::ofstream ofs_device;
 
-//==========================================================
-// EXPLAIN : test level for each class
-//==========================================================
-
-//==========================================================
-// src_onscaling
-//==========================================================
-//==========================================================
-// src_pseudo
-//==========================================================
-//==========================================================
-// src_tools
-//==========================================================
-
-
-extern bool deepks_out_labels; // (need libnpy) prints energy and force labels
-                               // and descriptors for training, wenfei 2022-1-12
-extern bool deepks_scf;        //(need libnpy and libtorch) if set 1, a trained model
-                               // would be needed to cal V_delta and F_delta
-extern bool deepks_bandgap;    // for bandgap label. QO added 2021-12-15
-
-extern int deepks_v_delta; // for v_delta label. xinyuan added 2023-2-15
-
-extern bool deepks_equiv; //whether to use equviariant version of DeePKS
-
-extern bool deepks_setorb;
-
-
-
-// implicit solvation
-
-// DFTU control
 // rpa related
 extern std::vector<std::string> rpa_orbitals;
 

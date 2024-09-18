@@ -78,7 +78,7 @@ void atom_arrange::search(
 
 	assert( search_radius_bohr > 0.0 );
 
-//	OUT(ofs_in,"Atom coordinates reading from",GlobalV::stru_file);
+//	OUT(ofs_in,"Atom coordinates reading from",PARAM.inp.stru_file);
 //	OUT(ofs_in,"The coordinate type",ucell.Coordinate);
 //	OUT(ofs_in,"Use cartesian(unit:lat0) coordinate","TRUE");
 //	if(PARAM.inp.out_level != "m") OUT(ofs_in,"searching radius is (Bohr))", search_radius_bohr);

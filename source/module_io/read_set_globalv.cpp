@@ -44,15 +44,10 @@ void ReadInput::set_globalv(Parameter& para)
                 para.sys.gamma_only_local = false;
             }
         }
-
-        if ((para.inp.out_mat_r || para.inp.out_mat_hs2 || para.inp.out_mat_t 
-                || para.inp.out_mat_dh || para.inp.out_hr_npz
-                || para.inp.out_dm_npz || para.inp.dm_to_rho)
-            && para.sys.gamma_only_local)
+        /// set deepks_setorb
+        if (para.input.deepks_scf || para.input.deepks_out_labels)
         {
-            ModuleBase::WARNING_QUIT("ReadInput",
-                                        "output of r(R)/H(R)/S(R)/T(R)/dH(R)/DM(R) is not "
-                                        "available for gamma only calculations");
+            para.sys.deepks_setorb = true;
         }
 
         para.sys.nqx=static_cast<int>((sqrt(para.inp.ecutwfc) / para.sys.dq + 4.0) * para.inp.cell_factor); 
@@ -81,6 +76,7 @@ void ReadInput::set_globalv_bcast()
     add_string_bcast(sys.global_stru_dir);
     add_string_bcast(sys.global_matrix_dir);
 
+    add_bool_bcast(sys.deepks_setorb);
     add_bool_bcast(sys.double_grid);
     add_double_bcast(sys.uramping);
     add_double_bcast(sys.dq);

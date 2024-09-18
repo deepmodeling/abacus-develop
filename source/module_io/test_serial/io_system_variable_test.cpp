@@ -56,6 +56,10 @@ TEST_F(InputTest, Item_test)
         readinput.set_globalv(param);
         EXPECT_EQ(param.sys.gamma_only_local, 0);
         
+        param.input.deepks_scf = true;
+        param.input.deepks_out_labels = true;
+        readinput.set_globalv(param);
+        EXPECT_EQ(param.sys.deepks_setorb, 1);
         
     }
 }

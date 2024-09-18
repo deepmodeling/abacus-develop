@@ -371,7 +371,7 @@ void ElecState::print_etot(const bool converged,
         }
 
 #ifdef __DEEPKS
-        if (GlobalV::deepks_scf) // caoyu add 2021-08-10
+        if (PARAM.inp.deepks_scf) // caoyu add 2021-08-10
         {
             titles.push_back("E_DeePKS");
             energies_Ry.push_back(GlobalC::ld.E_delta);

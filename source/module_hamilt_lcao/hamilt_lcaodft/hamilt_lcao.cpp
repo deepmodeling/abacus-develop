@@ -187,7 +187,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
         }
 
 #ifdef __DEEPKS
-        if (GlobalV::deepks_scf)
+        if (PARAM.inp.deepks_scf)
         {
             Operator<TK>* deepks = new DeePKS<OperatorLCAO<TK, TR>>(this->hsk,
                                                                     this->kv->kvec_d,
@@ -314,7 +314,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
         }
 
 #ifdef __DEEPKS
-        if (GlobalV::deepks_scf)
+        if (PARAM.inp.deepks_scf)
         {
             Operator<TK>* deepks = new DeePKS<OperatorLCAO<TK, TR>>(this->hsk,
                                                                     this->kv->kvec_d,
