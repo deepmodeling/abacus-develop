@@ -14,7 +14,16 @@
 
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
+#endif
 
+#ifdef __EXX
+#include "module_hamilt_pw/hamilt_pwdft/hamilt_lcaopw.h"
+#endif
+
+namespace hsolver
+{
+
+#ifdef USE_PAW
 template <typename T>
 void HSolverLIP<T>::paw_func_in_kloop(const int ik)
 {
@@ -182,15 +191,7 @@ void HSolverLIP<T>::paw_func_after_kloop(psi::Psi<T>& psi, elecstate::ElecState*
         GlobalC::paw_cell.get_nhat(pes->charge->nhat, nhatgr);
     }
 }
-
 #endif
-
-#ifdef __EXX
-#include "module_hamilt_pw/hamilt_pwdft/hamilt_lcaopw.h"
-#endif
-
-namespace hsolver
-{
 
 template <typename T>
 HSolverLIP<T>::HSolverLIP(ModulePW::PW_Basis_K* wfc_basis_in)
