@@ -599,7 +599,7 @@ void HSolverPW<T, Device>::output_iterInfo()
     if (DiagoIterAssist<T, Device>::avg_iter > 0.0)
     {
         GlobalV::ofs_running << "Average iterative diagonalization steps: "
-                             << DiagoIterAssist<T, Device>::avg_iter / psi.get_nk()
+                             << DiagoIterAssist<T, Device>::avg_iter / this->wfc_basis->nks
                              << " ; where current threshold is: " << this->diag_thr << " . "
                              << std::endl;
         // reset avg_iter
