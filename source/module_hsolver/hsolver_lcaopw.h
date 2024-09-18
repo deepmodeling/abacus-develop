@@ -4,45 +4,45 @@
 #include "hsolver.h"
 #include "module_base/macros.h"
 #include "module_base/module_device/types.h"
-namespace hsolver {
+namespace hsolver
+{
 
-    // LCAO-in-PW does not support GPU now.
-    template <typename T>
-    class HSolverLIP
-    {
-    private:
-        // Note GetTypeReal<T>::type will 
-        // return T if T is real type(float, double), 
-        // otherwise return the real type of T(complex<float>, complex<double>)
-        using Real = typename GetTypeReal<T>::type;
+// LCAO-in-PW does not support GPU now.
+template <typename T>
+class HSolverLIP
+{
+  private:
+    // Note GetTypeReal<T>::type will
+    // return T if T is real type(float, double),
+    // otherwise return the real type of T(complex<float>, complex<double>)
+    using Real = typename GetTypeReal<T>::type;
 
-    public:
+  public:
+    HSolverLIP(ModulePW::PW_Basis_K* wfc_basis_in);
 
-        HSolverLIP(ModulePW::PW_Basis_K* wfc_basis_in);
+    /// @brief solve function for lcao_in_pw
+    /// @param pHamilt interface to hamilt
+    /// @param psi reference to psi
+    /// @param pes interface to elecstate
+    /// @param transform transformation matrix between lcao and pw
+    /// @param skip_charge
+    void solve(hamilt::Hamilt<T>* pHamilt,
+               psi::Psi<T>& psi,
+               elecstate::ElecState* pes,
+               psi::Psi<T>& transform,
+               const bool skip_charge);
 
-        /// @brief solve function for lcao_in_pw
-        /// @param pHamilt interface to hamilt
-        /// @param psi reference to psi
-        /// @param pes interface to elecstate
-        /// @param transform transformation matrix between lcao and pw
-        /// @param skip_charge 
-        void solve(hamilt::Hamilt<T>* pHamilt,
-            psi::Psi<T>& psi,
-            elecstate::ElecState* pes,
-            psi::Psi<T>& transform,
-            const bool skip_charge);
+  private:
+    ModulePW::PW_Basis_K* wfc_basis = nullptr;
 
-    protected:
+    std::vector<Real> eigenvalues;
 
-        ModulePW::PW_Basis_K* wfc_basis = nullptr;
+#ifdef USE_PAW
+    void paw_func_in_kloop(const int ik);
 
-        std::vector<Real> eigenvalues;
-        using castmem_2d_2h_op
-            = base_device::memory::cast_memory_op<double, Real, base_device::DEVICE_CPU, base_device::DEVICE_CPU>;
-
-    private:
-        std::string method = "none";
-    };
+    void paw_func_after_kloop(psi::Psi<T, Device>& psi, elecstate::ElecState* pes);
+#endif
+};
 
 } // namespace hsolver
 
