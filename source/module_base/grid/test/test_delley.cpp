@@ -1,6 +1,4 @@
-// g++ test_delley.cpp ../delley.cpp ../../ylm.cpp ../../tool_quit.cpp ../../global_variable.cpp ../../timer.cpp ../../global_file.cpp ../../global_function.cpp -I../../.. -lgtest -o test_delley
 #include "module_base/grid/delley.h"
-
 #include "module_base/ylm.h"
 
 #include "gtest/gtest.h"
@@ -9,23 +7,35 @@
 #include <mpi.h>
 #endif
 
-class DelleyTest: public ::testing::Test {
+using namespace Grid;
 
+class DelleyTest: public ::testing::Test {
 protected:
     void randgen(int lmax, std::vector<double>& coef);
-    const double rel_tol = 1e-12;
-    const double abs_tol = 1e-12;
+    const double tol = 1e-12;
 };
 
+
 void DelleyTest::randgen(int lmax, std::vector<double>& coef) {
-    coef.resize(lmax + 1);
+    coef.resize((lmax + 1) * (lmax + 1));
 
     // fill coef with uniformly distributed random numbers
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_real_distribution<double> dis(0.0, 1.0);
-    for (int i = 0; i <= lmax; i++) {
-        coef[i] = dis(gen) / std::sqrt(lmax);
+    for (size_t i = 0; i < coef.size(); ++i) {
+        coef[i] = dis(gen);
+    }
+
+    // normalize the coefficients
+    double fac = 0.0;
+    for (size_t i = 0; i < coef.size(); ++i) {
+        fac += coef[i] * coef[i];
+    }
+
+    fac = 1.0 / std::sqrt(fac);
+    for (size_t i = 0; i < coef.size(); ++i) {
+        coef[i] *= fac;
     }
 }
 
@@ -59,20 +69,34 @@ TEST_F(DelleyTest, NumGrid) {
 
 
 TEST_F(DelleyTest, Accuracy) {
+    /* 
+     * Given
+     *
+     *      f = c[0]*Y00 + c[1]*Y10 + c[2]*Y11 + ...,
+     *
+     * where c[0], c[1], c[2], ... are some random numbers, the integration
+     * of |f|^2 on the unit sphere
+     *
+     *      \int |f|^2 d\Omega = c[0]^2 + c[1]^2 + c[2]^2 + ... .
+     *
+     * This test verifies with the above integral that quadrature with
+     * Delley's grid is exact up to floating point errors.
+     *
+     */
     std::vector<double> grid, weight, coef;
 
     for (int grid_lmax = 17; grid_lmax < 60; grid_lmax +=6) {
         Delley::get(grid_lmax, grid, weight);
-
-        int coef_lmax = grid_lmax / 2;
-        randgen(coef_lmax, coef);
+        int func_lmax = grid_lmax / 2;
+        randgen(func_lmax, coef);
 
         double val = 0.0;
         std::vector<double> ylm_real;
         for (size_t i = 0; i < weight.size(); i++) {
             double tmp = 0.0;
-            ModuleBase::Ylm::sph_harm(coef_lmax, grid[3*i], grid[3*i+1], grid[3*i+2], ylm_real);
-            for (int l = 0; l <= coef_lmax; l++) {
+            ModuleBase::Ylm::sph_harm(func_lmax,
+                    grid[3*i], grid[3*i+1], grid[3*i+2], ylm_real);
+            for (int l = 0; l <= func_lmax; l++) {
                 for (int m = 0; m <= 2*l; ++m) {
                     tmp += coef[l] * ylm_real[l*l+m];
                 }
@@ -82,14 +106,14 @@ TEST_F(DelleyTest, Accuracy) {
         val *= 4.0 * std::acos(-1.0);
 
         double val_ref = 0.0;
-        for (int l = 0; l <= coef_lmax; l++) {
+        for (int l = 0; l <= func_lmax; l++) {
             val_ref += (2*l+1) * coef[l] * coef[l];
         }
 
         double abs_diff = std::abs(val - val_ref);
-
-        printf("order = %2i    abs_diff = %8.5e\n", grid_lmax, abs_diff);
-        EXPECT_LT(abs_diff, abs_tol + rel_tol * val_ref);
+        EXPECT_LT(abs_diff, tol);
+        //printf("order = %2i    val_ref = %8.5f    abs_diff = %8.5e\n",
+        //        grid_lmax, val_ref, abs_diff);
     }
 }
 

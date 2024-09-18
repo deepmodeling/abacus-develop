@@ -1,11 +1,20 @@
 #include "module_base/grid/delley.h"
 
 #include <algorithm>
-#include <string>
-#include <stdexcept>
 #include <cmath>
+#include <cassert>
 
-const std::vector<Delley::DelleyTable> Delley::table_ = {
+namespace {
+
+struct Table {
+    const int lmax_;
+    const int ngrid_;
+    const int ntype_[6];
+    const std::vector<double> data_;
+};
+
+// Delley's table from the original article
+const std::vector<Table> table = {
     {
         17, 110, {1, 1, 0, 3, 1, 0},
         {
@@ -139,7 +148,7 @@ const std::vector<Delley::DelleyTable> Delley::table_ = {
             0.52145638884158605, 0.52145638884158605, 0.0011237247880515553,
             0.62531702446541989, 0.46685890569574328, 0.0011252393252438136,
             0.66379267445231699, 0.34461365423743822, 0.0011261532718159050,
-            0.69104103984983007, 0.21195415185018465, 0.0011302869311238468,
+            0.69104103984983007, 0.21195415185018465, 0.0011302869311238408,
             0.70529070074577603, 0.07162440144995566, 0.0011349865343639549,
             0.12366867626579899, 0.00000000000000000, 0.0006823367927109931,
             0.29407771144683870, 0.00000000000000000, 0.0009454158160447096,
@@ -200,11 +209,22 @@ const std::vector<Delley::DelleyTable> Delley::table_ = {
             0.63942796347491023, 0.06424549224220589, 0.0009158016174693465,
         }
     }
-};
+}; // end of the definition of "table"
 
-const std::vector<Delley::FillFunc> Delley::fill_ = {
-    // vertex (group of 6)
-    // (1, 0, 0) x sign x permutation
+// size of each group of points with octahedral symmetry
+// 6: (1, 0, 0) x sign x permutation (vertices)
+// 8: (sqrt(1/3), sqrt(1/3), sqrt(1/3)) x sign (face centers)
+// 12: (sqrt(2)/2, sqrt(2)/2, 0) x sign x permutation (edge centers)
+// 24a: (u, u, sqrt(1-2u^2)) x sign x permutation
+// 24b: (u, 0, sqrt(1-u^2)) x sign x permutation
+// 48: (u, v, sqrt(1-u^2-v^2)) x sign x permutation
+const int group_size[] = {6, 8, 12, 24, 24, 48};
+
+using Fill_t = std::function<void(double*, double, double)>;
+
+// functors that fill the grid group-wise
+const std::vector<Fill_t> fill = {
+    // (1, 0, 0) x sign x permutation (vertices)
     [](double* grid, double, double) {
         for (int i = 0; i < 3; ++i) {
             for (double one : {-1.0, 1.0}) {
@@ -216,8 +236,7 @@ const std::vector<Delley::FillFunc> Delley::fill_ = {
         }
     },
 
-    // face center (group of 8)
-    // (sqrt(1/3), sqrt(1/3), sqrt(1/3)) x sign
+    // (sqrt(1/3), sqrt(1/3), sqrt(1/3)) x sign (face centers)
     [](double* grid, double, double) {
         const double a = std::sqrt(3) / 3.0;
         for (int xsign : {-1, 1}) {
@@ -232,8 +251,7 @@ const std::vector<Delley::FillFunc> Delley::fill_ = {
         }
     },
 
-    // edge center (group of 12)
-    // (sqrt(2)/2, sqrt(2)/2, 0) x sign x permutation
+    // (sqrt(2)/2, sqrt(2)/2, 0) x sign x permutation (edge centers)
     [](double* grid, double, double) {
         const double a = std::sqrt(2) / 2.0;
         for (int i = 0; i < 3; ++i) {
@@ -248,10 +266,9 @@ const std::vector<Delley::FillFunc> Delley::fill_ = {
         }
     },
     
-    // group of 24a
     // (u, u, sqrt(1-2u^2)) x sign x permutation
     [](double* grid, double x, double y) {
-        double u = std::abs(x-y) < 1e-12 ? x : std::sqrt(1.0 - x * x - y * y);
+        double u = x == y ? x : std::sqrt(1.0 - x * x - y * y);
         double v = std::sqrt(1.0 - 2.0 * u * u);
         for (int i = 0; i < 3; ++i) {
             for (int sign1 : {-1, 1}) {
@@ -267,10 +284,9 @@ const std::vector<Delley::FillFunc> Delley::fill_ = {
         }
     },
 
-    // group of 24b
-    // (u, sqrt(1-u^2), 0) x sign x permutation
+    // (u, 0, sqrt(1-u^2)) x sign x permutation
     [](double* grid, double x, double y) {
-        double u = std::abs(x) > 1e-12 ? x : y;
+        double u = x > 0 ? x : y;
         double v = std::sqrt(1.0 - u * u);
         for (int i0 = 0; i0 < 3; ++i0) {
             for (int iu0 : {1, 2}) {
@@ -286,8 +302,7 @@ const std::vector<Delley::FillFunc> Delley::fill_ = {
         }
     },
 
-    // group of 48
-    // (r, s, sqrt(1-r^2-s^2)) x sign x permutation
+    // (u, v, sqrt(1-u^2-v^2)) x sign x permutation
     [](double* grid, double x, double y) {
         double r = x;
         double s = y;
@@ -307,58 +322,55 @@ const std::vector<Delley::FillFunc> Delley::fill_ = {
             }
         }
     },
-};
+}; // end of the definition of "fill"
 
-
-const Delley::DelleyTable* Delley::_retrieve(int lmax) {
-    auto tab = std::find_if(table_.begin(), table_.end(),
-        [lmax](const DelleyTable& t) { return t.lmax_ == lmax; });
-
-    if (tab == table_.end()) {
-        throw std::runtime_error("Delley: table not found for lmax = " +
-                                 std::to_string(lmax));
-    }
-
-    return &(*tab);
+const Table* _find_table(int& lmax) {
+    // NOTE: this function assumes elements in "Delley::table_" are
+    // arranged such that their members "lmax_" are in ascending order.
+    auto tab = std::find_if(table.begin(), table.end(),
+            [lmax](const Table& t) { return t.lmax_ >= lmax; });
+    return tab == table.end() ? nullptr : (lmax = tab->lmax_, &(*tab));
 }
 
-
-void Delley::_get(const DelleyTable* tab, double* grid, double* weight) {
+void _get(const Table* tab, double* grid, double* weight) {
+    assert(tab);
     const double* ptr = &tab->data_[0];
     for (int itype = 0; itype < 6; ++itype) {
-        int group_size = group_size_[itype];
+        int stride = group_size[itype];
         for (int i = 0; i < tab->ntype_[itype]; ++i, ptr += 3,
-                grid += 3*group_size, weight += group_size) {
-            fill_[itype](grid, ptr[0], ptr[1]);
-            std::fill(weight, weight + group_size, ptr[2]);
+                grid += 3*stride, weight += stride) {
+            fill[itype](grid, ptr[0], ptr[1]);
+            std::fill(weight, weight + stride, ptr[2]);
         }
     }
 }
 
+} // end of anonymous namespace
 
-int Delley::ngrid(int& lmax) {
-    // NOTE: this function assumes that elements in "table_" are arranged
-    // such that their member variables "lmax_" are in ascending order.
-    auto it = std::find_if(table_.begin(), table_.end(),
-                [lmax](const DelleyTable& t) { return t.lmax_ >= lmax; });
-    return it == table_.end() ? -1 : (lmax = it->lmax_, it->ngrid_);
+
+int Grid::Delley::ngrid(int& lmax) {
+    auto tab = _find_table(lmax);
+    return tab ? tab->ngrid_ : -1;
 }
 
 
-void Delley::get(int lmax, double* grid, double* weight) {
-    _get(_retrieve(lmax), grid, weight);
+int Grid::Delley::get(int& lmax, double* grid, double* weight) {
+    auto tab = _find_table(lmax);
+    return tab ? _get(tab, grid, weight), 0 : -1;
 }
 
 
-void Delley::get(
-    int lmax,
+int Grid::Delley::get(
+    int& lmax,
     std::vector<double>& grid,
     std::vector<double>& weight
 ) {
-    const DelleyTable* tab = _retrieve(lmax);
-    grid.resize(tab->ngrid_ * 3);
+    auto tab = _find_table(lmax);
+    if (!tab) {
+        return -1;
+    }
+    grid.resize(3 * tab->ngrid_);
     weight.resize(tab->ngrid_);
     _get(tab, grid.data(), weight.data());
+    return 0;
 }
-
-

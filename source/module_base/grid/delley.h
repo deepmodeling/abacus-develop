@@ -12,67 +12,46 @@
  * Journal of computational chemistry, 17(9), 1152-1155.
  *
  */
-class Delley {
+namespace Grid {
+namespace Delley {
 
-public:
-
-    /**
-     * @brief Number of grid points required for a certain order of accuracy.
-     *
-     * This function finds the minimum order of the Delley grid that is
-     * equal or above lmax. On exit, lmax is set to this minimum order,
-     * and its corresponding number of grid points is returned.
-     *
-     * This function will return -1 and leave lmax unchanged if the requested
-     * lmax is not supported (i.e., greater than 59).
-     *
-     */
-    static int ngrid(int& lmax);
-
-    /**
-     * @brief Delley grid and weights.
-     *
-     * This function retrieves the Delley grid of order lmax. The grid
-     * coordinates are returned in the array "grid" as
-     *
-     *      x0, y0, z0, x1, y1, z1, x2, y2, z2, ...
-     *
-     * "grid" and "weight" must be pre-allocated to hold 3*ngrid(lmax) and
-     * ngrid(lmax) elements, respectively. The function will abort if the
-     * requested order is not supported.
-     *
-     */
-    static void get(
-        int lmax,
-        double* grid,
-        double* weight
-    );
-
-    // a handy wrapper function doing the same as above
-    static void get(
-        int lmax,
-        std::vector<double>& grid,
-        std::vector<double>& weight
-    );
+/**
+ * @brief Number of Delley's grid points for a certain order of accuracy.
+ *
+ * This function finds the minimum Delley's grid with an accuracy
+ * of order "lmax". On exit, lmax is set to the order of this grid, and
+ * its corresponding number of grid points is returned. If no such grid
+ * is available, lmax is left unchanged and the function will return -1.
+ *
+ * For example, if lmax = 20 on input, the function will return 194 and
+ * lmax will be set to 23.
+ *
+ */
+int ngrid(int& lmax);
 
 
-private:
+/**
+ * @brief Delley's quadrature grid and weights.
+ *
+ * This function retrieves the minimum Delley's grid with an accuray
+ * of order "lmax". On exit, lmax is set to the order of this grid, and
+ * the coordinates & weights are returned in "grid" & "weight".
+ *
+ * Coordinates are stored in the following order:
+ *
+ *      x0, y0, z0, x1, y1, z1, x2, y2, z2, ...
+ *
+ * "grid" and "weight" must be pre-allocated to hold 3*ngrid(lmax) and
+ * ngrid(lmax) elements, respectively. The function will return 0 if
+ * successful, or -1 if the requested order cannot be fulfilled.
+ *
+ */
+int get(int& lmax, double* grid, double* weight);
 
-    struct DelleyTable {
-        const int lmax_;
-        const int ngrid_;
-        const int ntype_[6];
-        const std::vector<double> data_;
-    };
+// a handy wrapper doing the same as above
+int get(int& lmax, std::vector<double>& grid, std::vector<double>& weight);
 
-    using FillFunc = std::function<void(double*, double, double)>;
-
-    static constexpr int group_size_[] = {6, 8, 12, 24, 24, 48};
-    static const std::vector<DelleyTable> table_;
-    static const std::vector<FillFunc> fill_;
-
-    static const DelleyTable* _retrieve(int lmax);
-    static void _get(const DelleyTable* tab, double* grid, double* weight);
-};
+} // end of namespace Delley
+} // end of namespace Grid
 
 #endif
