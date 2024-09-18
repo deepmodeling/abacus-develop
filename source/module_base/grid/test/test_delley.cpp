@@ -98,21 +98,19 @@ TEST_F(DelleyTest, Accuracy) {
         double val = 0.0;
         std::vector<double> ylm_real;
         for (size_t i = 0; i < weight.size(); i++) {
-            double tmp = 0.0;
             ModuleBase::Ylm::sph_harm(func_lmax,
                     grid[3*i], grid[3*i+1], grid[3*i+2], ylm_real);
-            for (int l = 0; l <= func_lmax; l++) {
-                for (int m = 0; m <= 2*l; ++m) {
-                    tmp += coef[l] * ylm_real[l*l+m];
-                }
+            double tmp = 0.0;
+            for (size_t i = 0; i < coef.size(); ++i) {
+                tmp += coef[i] * ylm_real[i];
             }
             val += weight[i] * tmp * tmp;
         }
         val *= 4.0 * std::acos(-1.0);
 
         double val_ref = 0.0;
-        for (int l = 0; l <= func_lmax; l++) {
-            val_ref += (2*l+1) * coef[l] * coef[l];
+        for (size_t i = 0; i < coef.size(); ++i) {
+            val_ref += coef[i] * coef[i];
         }
 
         double abs_diff = std::abs(val - val_ref);

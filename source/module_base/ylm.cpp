@@ -536,7 +536,7 @@ void Ylm::sph_harm
 	std::vector<double> &rly
 )
 {
-	rly.reserve( (Lmax+1)*(Lmax+1) );
+	rly.resize( (Lmax+1)*(Lmax+1) );
 
 	//begin calculation
 	/***************************
