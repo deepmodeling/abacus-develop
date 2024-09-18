@@ -82,9 +82,6 @@ class ElecState
     //for NSPIN=4, it will record total number, magnetization for x, y, z direction  
     std::vector<double> nelec_spin;
 
-    //calculate nbands and 
-    void cal_nbands();
-
     virtual void print_psi(const psi::Psi<double>& psi_in, const int istep = -1)
     {
         return;
@@ -195,6 +192,16 @@ void set_is_occupied(std::vector<bool>& is_occupied,
                      const int nk,
                      const int nband,
                      const bool diago_full_acc);
+
+/**
+ * @brief Calculate the number of bands.
+ * 
+ * @param nelec [in] total number of electrons
+ * @param nlocal [in] total number of local basis
+ * @param nelec_spin [in] number of electrons for each spin
+ * @param nbands  [out] number of bands
+ */
+void cal_nbands(const int& nelec, const int& nlocal, const std::vector<double>& nelec_spin, int& nbands);
 
 } // namespace elecstate
 #endif

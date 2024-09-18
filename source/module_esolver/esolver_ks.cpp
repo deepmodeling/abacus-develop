@@ -191,9 +191,6 @@ void ESolver_KS<T, Device>::before_all_runners(const Input_para& inp, UnitCell& 
 #endif
     /// End PAW
 
-    //! 3) calculate the electron number
-    ucell.cal_nelec(GlobalV::nelec);
-
     //! 4) it has been established that
     // xc_func is same for all elements, therefore
     // only the first one if used

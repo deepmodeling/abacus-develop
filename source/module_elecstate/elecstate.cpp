@@ -248,14 +248,12 @@ void ElecState::init_ks(Charge* chg_in, // pointer for class Charge
     this->bigpw = bigpw_in;
     // init nelec_spin with nelec and nupdown
     this->init_nelec_spin();
-    // autoset and check GlobalV::NBANDS, nelec_spin is used when NSPIN==2
-    this->cal_nbands();
     // initialize ekb and wg
     this->ekb.create(nk_in, GlobalV::NBANDS);
     this->wg.create(nk_in, GlobalV::NBANDS);
 }
 
-void ElecState::cal_nbands()
+void cal_nbands(const int& nelec, const int& nlocal, const std::vector<double>& nelec_spin, int& nbands)
 {
     if (PARAM.inp.esolver_type == "sdft") // qianrui 2021-2-20
     {
@@ -264,9 +262,9 @@ void ElecState::cal_nbands()
     //=======================================
     // calculate number of bands (setup.f90)
     //=======================================
-    double occupied_bands = static_cast<double>(GlobalV::nelec / ModuleBase::DEGSPIN);
+    double occupied_bands = static_cast<double>(nelec / ModuleBase::DEGSPIN);
     if (GlobalV::LSPINORB == 1) {
-        occupied_bands = static_cast<double>(GlobalV::nelec);
+        occupied_bands = static_cast<double>(nelec);
     }
 
     if ((occupied_bands - std::floor(occupied_bands)) > 0.0)
@@ -276,63 +274,63 @@ void ElecState::cal_nbands()
 
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "occupied bands", occupied_bands);
 
-    if (GlobalV::NBANDS == 0)
+    if (nbands == 0)
     {
         if (GlobalV::NSPIN == 1)
         {
             const int nbands1 = static_cast<int>(occupied_bands) + 10;
             const int nbands2 = static_cast<int>(1.2 * occupied_bands) + 1;
-            GlobalV::NBANDS = std::max(nbands1, nbands2);
+            nbands = std::max(nbands1, nbands2);
             if (PARAM.inp.basis_type != "pw") {
-                GlobalV::NBANDS = std::min(GlobalV::NBANDS, GlobalV::NLOCAL);
+                nbands = std::min(nbands, nlocal);
             }
         }
         else if (GlobalV::NSPIN == 4)
         {
-            const int nbands3 = GlobalV::nelec + 20;
-            const int nbands4 = static_cast<int>(1.2 * GlobalV::nelec) + 1;
-            GlobalV::NBANDS = std::max(nbands3, nbands4);
+            const int nbands3 = nelec + 20;
+            const int nbands4 = static_cast<int>(1.2 * nelec) + 1;
+            nbands = std::max(nbands3, nbands4);
             if (PARAM.inp.basis_type != "pw") {
-                GlobalV::NBANDS = std::min(GlobalV::NBANDS, GlobalV::NLOCAL);
+                nbands = std::min(nbands, nlocal);
             }
         }
         else if (GlobalV::NSPIN == 2)
         {
-            const double max_occ = std::max(this->nelec_spin[0], this->nelec_spin[1]);
+            const double max_occ = std::max(nelec_spin[0], nelec_spin[1]);
             const int nbands3 = static_cast<int>(max_occ) + 11;
             const int nbands4 = static_cast<int>(1.2 * max_occ) + 1;
-            GlobalV::NBANDS = std::max(nbands3, nbands4);
+            nbands = std::max(nbands3, nbands4);
             if (PARAM.inp.basis_type != "pw") {
-                GlobalV::NBANDS = std::min(GlobalV::NBANDS, GlobalV::NLOCAL);
+                nbands = std::min(nbands, nlocal);
             }
         }
-        ModuleBase::GlobalFunc::AUTO_SET("NBANDS", GlobalV::NBANDS);
+        ModuleBase::GlobalFunc::AUTO_SET("NBANDS", nbands);
     }
     // else if ( PARAM.inp.calculation=="scf" || PARAM.inp.calculation=="md" || PARAM.inp.calculation=="relax") //pengfei
     // 2014-10-13
     else
     {
-        if (GlobalV::NBANDS < occupied_bands) {
+        if (nbands < occupied_bands) {
             ModuleBase::WARNING_QUIT("unitcell", "Too few bands!");
         }
         if (GlobalV::NSPIN == 2)
         {
-            if (GlobalV::NBANDS < this->nelec_spin[0])
+            if (nbands < nelec_spin[0])
             {
-                ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "nelec_up", this->nelec_spin[0]);
+                ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "nelec_up", nelec_spin[0]);
                 ModuleBase::WARNING_QUIT("ElecState::cal_nbands", "Too few spin up bands!");
             }
-            if (GlobalV::NBANDS < this->nelec_spin[1])
+            if (nbands < nelec_spin[1])
             {
-                ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "nelec_down", this->nelec_spin[1]);
+                ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "nelec_down", nelec_spin[1]);
                 ModuleBase::WARNING_QUIT("ElecState::cal_nbands", "Too few spin down bands!");
             }
         }
     }
 
     // mohan add 2010-09-04
-    // std::cout << "nbands(this-> = " <<GlobalV::NBANDS <<std::endl;
-    if (GlobalV::NBANDS == occupied_bands)
+    // std::cout << "nbands(this-> = " <<nbands <<std::endl;
+    if (nbands == occupied_bands)
     {
         if (Occupy::gauss())
         {
@@ -344,18 +342,18 @@ void ElecState::cal_nbands()
     // mohan add 2011-01-5
     if (PARAM.inp.basis_type == "lcao" || PARAM.inp.basis_type == "lcao_in_pw")
     {
-        if (GlobalV::NBANDS > GlobalV::NLOCAL)
+        if (nbands > nlocal)
         {
             ModuleBase::WARNING_QUIT("ElecState::cal_nbandsc", "NLOCAL < NBANDS");
         }
         else
         {
-            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "NLOCAL", GlobalV::NLOCAL);
-            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "NBANDS", GlobalV::NBANDS);
+            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "NLOCAL", nlocal);
+            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "NBANDS", nbands);
         }
     }
 
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "NBANDS", GlobalV::NBANDS);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "NBANDS", nbands);
 }
 
 void set_is_occupied(std::vector<bool>& is_occupied,

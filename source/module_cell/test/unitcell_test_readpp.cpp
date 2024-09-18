@@ -396,7 +396,7 @@ TEST_F(UcellTest, CalNelec) {
     EXPECT_EQ(1, ucell->atoms[0].na);
     EXPECT_EQ(2, ucell->atoms[1].na);
     double nelec = 0;
-    ucell->cal_nelec(nelec);
+    cal_nelec(ucell->atoms, ucell->ntype, nelec);
     EXPECT_DOUBLE_EQ(6, nelec);
 }
 

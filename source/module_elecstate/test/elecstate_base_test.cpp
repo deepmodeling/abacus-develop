@@ -185,14 +185,14 @@ TEST_F(ElecStateTest, Constructor)
 
 TEST_F(ElecStateTest, CalNbands)
 {
-    elecstate->cal_nbands();
+    cal_nbands(GlobalV::nelec, GlobalV::NLOCAL, elecstate->nelec_spin, GlobalV::NBANDS);
     EXPECT_EQ(GlobalV::NBANDS, 6);
 }
 
 TEST_F(ElecStateTest, CalNbandsFractionElec)
 {
     GlobalV::nelec = 9.5;
-    elecstate->cal_nbands();
+    cal_nbands(GlobalV::nelec, GlobalV::NLOCAL, elecstate->nelec_spin, GlobalV::NBANDS);
     EXPECT_EQ(GlobalV::NBANDS, 6);
 }
 
@@ -200,20 +200,20 @@ TEST_F(ElecStateTest, CalNbandsSOC)
 {
     GlobalV::LSPINORB = true;
     GlobalV::NBANDS = 0;
-    elecstate->cal_nbands();
+    cal_nbands(GlobalV::nelec, GlobalV::NLOCAL, elecstate->nelec_spin, GlobalV::NBANDS);
     EXPECT_EQ(GlobalV::NBANDS, 20);
 }
 
 TEST_F(ElecStateTest, CalNbandsSDFT)
 {
     PARAM.input.esolver_type = "sdft";
-    EXPECT_NO_THROW(elecstate->cal_nbands());
+    EXPECT_NO_THROW(cal_nbands(GlobalV::nelec, GlobalV::NLOCAL, elecstate->nelec_spin, GlobalV::NBANDS));
 }
 
 TEST_F(ElecStateTest, CalNbandsLCAO)
 {
     PARAM.input.basis_type = "lcao";
-    EXPECT_NO_THROW(elecstate->cal_nbands());
+    EXPECT_NO_THROW(cal_nbands(GlobalV::nelec, GlobalV::NLOCAL, elecstate->nelec_spin, GlobalV::NBANDS));
 }
 
 TEST_F(ElecStateDeathTest, CalNbandsLCAOINPW)
@@ -221,7 +221,7 @@ TEST_F(ElecStateDeathTest, CalNbandsLCAOINPW)
     PARAM.input.basis_type = "lcao_in_pw";
     GlobalV::NLOCAL = GlobalV::NBANDS - 1;
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(elecstate->cal_nbands(), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(cal_nbands(GlobalV::nelec, GlobalV::NLOCAL, elecstate->nelec_spin, GlobalV::NBANDS), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("NLOCAL < NBANDS"));
 }
@@ -230,7 +230,7 @@ TEST_F(ElecStateDeathTest, CalNbandsWarning1)
 {
     GlobalV::NBANDS = GlobalV::nelec / 2 - 1;
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(elecstate->cal_nbands(), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(cal_nbands(GlobalV::nelec, GlobalV::NLOCAL, elecstate->nelec_spin, GlobalV::NBANDS), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("Too few bands!"));
 }
@@ -241,7 +241,7 @@ TEST_F(ElecStateDeathTest, CalNbandsWarning2)
     GlobalV::nupdown = 4.0;
     elecstate->init_nelec_spin();
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(elecstate->cal_nbands(), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(cal_nbands(GlobalV::nelec, GlobalV::NLOCAL, elecstate->nelec_spin, GlobalV::NBANDS), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("Too few spin up bands!"));
 }
@@ -252,7 +252,7 @@ TEST_F(ElecStateDeathTest, CalNbandsWarning3)
     GlobalV::nupdown = -4.0;
     elecstate->init_nelec_spin();
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(elecstate->cal_nbands(), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(cal_nbands(GlobalV::nelec, GlobalV::NLOCAL, elecstate->nelec_spin, GlobalV::NBANDS), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("Too few spin down bands!"));
 }
@@ -261,7 +261,7 @@ TEST_F(ElecStateTest, CalNbandsSpin1)
 {
     GlobalV::NSPIN = 1;
     GlobalV::NBANDS = 0;
-    elecstate->cal_nbands();
+    cal_nbands(GlobalV::nelec, GlobalV::NLOCAL, elecstate->nelec_spin, GlobalV::NBANDS);
     EXPECT_EQ(GlobalV::NBANDS, 15);
 }
 
@@ -270,7 +270,7 @@ TEST_F(ElecStateTest, CalNbandsSpin1LCAO)
     GlobalV::NSPIN = 1;
     GlobalV::NBANDS = 0;
     PARAM.input.basis_type = "lcao";
-    elecstate->cal_nbands();
+    cal_nbands(GlobalV::nelec, GlobalV::NLOCAL, elecstate->nelec_spin, GlobalV::NBANDS);
     EXPECT_EQ(GlobalV::NBANDS, 6);
 }
 
@@ -278,7 +278,7 @@ TEST_F(ElecStateTest, CalNbandsSpin4)
 {
     GlobalV::NSPIN = 4;
     GlobalV::NBANDS = 0;
-    elecstate->cal_nbands();
+    cal_nbands(GlobalV::nelec, GlobalV::NLOCAL, elecstate->nelec_spin, GlobalV::NBANDS);
     EXPECT_EQ(GlobalV::NBANDS, 30);
 }
 
@@ -287,7 +287,7 @@ TEST_F(ElecStateTest, CalNbandsSpin4LCAO)
     GlobalV::NSPIN = 4;
     GlobalV::NBANDS = 0;
     PARAM.input.basis_type = "lcao";
-    elecstate->cal_nbands();
+    cal_nbands(GlobalV::nelec, GlobalV::NLOCAL, elecstate->nelec_spin, GlobalV::NBANDS);
     EXPECT_EQ(GlobalV::NBANDS, 6);
 }
 
@@ -296,7 +296,7 @@ TEST_F(ElecStateTest, CalNbandsSpin2)
     GlobalV::NSPIN = 2;
     GlobalV::NBANDS = 0;
     elecstate->init_nelec_spin();
-    elecstate->cal_nbands();
+    cal_nbands(GlobalV::nelec, GlobalV::NLOCAL, elecstate->nelec_spin, GlobalV::NBANDS);
     EXPECT_EQ(GlobalV::NBANDS, 16);
 }
 
@@ -306,7 +306,7 @@ TEST_F(ElecStateTest, CalNbandsSpin2LCAO)
     GlobalV::NBANDS = 0;
     PARAM.input.basis_type = "lcao";
     elecstate->init_nelec_spin();
-    elecstate->cal_nbands();
+    cal_nbands(GlobalV::nelec, GlobalV::NLOCAL, elecstate->nelec_spin, GlobalV::NBANDS);
     EXPECT_EQ(GlobalV::NBANDS, 6);
 }
 
@@ -316,7 +316,7 @@ TEST_F(ElecStateDeathTest, CalNbandsGaussWarning)
     EXPECT_TRUE(Occupy::gauss());
     GlobalV::NBANDS = 5;
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(elecstate->cal_nbands(), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(cal_nbands(GlobalV::nelec, GlobalV::NLOCAL, elecstate->nelec_spin, GlobalV::NBANDS), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("for smearing, num. of bands > num. of occupied bands"));
     Occupy::use_gaussian_broadening = false;

@@ -8,6 +8,7 @@
 #include "module_base/global_variable.h"
 #include "unitcell.h"
 #include "module_parameter/parameter.h"
+#include "cal_atoms_info.h"
 
 #ifdef __LCAO
 #include "../module_basis/module_ao/ORB_read.h" // to use 'ORB' -- mohan 2021-01-30
@@ -598,17 +599,6 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log) {
     this->bcast_unitcell();
 #endif
 
-    // after read STRU, calculate initial total magnetization when NSPIN=2
-    if (GlobalV::NSPIN == 2 && !GlobalV::TWO_EFERMI) {
-        for (int it = 0; it < this->ntype; it++) {
-            for (int ia = 0; ia < this->atoms[it].na; ia++) {
-                GlobalV::nupdown += this->atoms[it].mag[ia];
-            }
-        }
-        GlobalV::ofs_running << " The readin total magnetization is "
-                             << GlobalV::nupdown << std::endl;
-    }
-
     //========================================================
     // Calculate unit cell volume
     // the reason to calculate volume here is
@@ -835,13 +825,14 @@ void UnitCell::read_pseudo(std::ofstream& ofs) {
             ModuleBase::WARNING_QUIT("setup_cell",
                                      "All DFT functional must consistent.");
         }
-        if (atoms[it].ncpp.tvanp) {
-            GlobalV::use_uspp = true;
-        }
     }
 
     // setup the total number of PAOs
     cal_natomwfc(ofs);
+
+    // Calculate the information of atoms from the pseudopotential to set PARAM
+    CalAtomsInfo ca;
+    ca.cal_atoms_info(this->atoms, this->ntype, PARAM);
 
     // setup GlobalV::NLOCAL
     cal_nwfc(ofs);
@@ -954,14 +945,14 @@ void UnitCell::cal_nwfc(std::ofstream& log) {
     //===========================
     // (3) set nwfc and stapos_wf
     //===========================
-    GlobalV::NLOCAL = 0;
+    int nlocal_tmp = 0;
     for (int it = 0; it < ntype; it++) {
-        atoms[it].stapos_wf = GlobalV::NLOCAL;
+        atoms[it].stapos_wf = nlocal_tmp;
         const int nlocal_it = atoms[it].nw * atoms[it].na;
         if (GlobalV::NSPIN != 4) {
-            GlobalV::NLOCAL += nlocal_it;
+            nlocal_tmp += nlocal_it;
         } else {
-            GlobalV::NLOCAL += nlocal_it * 2; // zhengdy-soc
+            nlocal_tmp += nlocal_it * 2; // zhengdy-soc
         }
 
         // for tests
@@ -972,7 +963,7 @@ void UnitCell::cal_nwfc(std::ofstream& log) {
 
     // OUT(GlobalV::ofs_running,"NLOCAL",GlobalV::NLOCAL);
     log << " " << std::setw(40) << "NLOCAL"
-        << " = " << GlobalV::NLOCAL << std::endl;
+        << " = " << nlocal_tmp << std::endl;
     //========================================================
     // (4) set index for itia2iat, itiaiw2iwt
     //========================================================
@@ -1586,59 +1577,51 @@ void UnitCell::remake_cell() {
     }
 }
 
-void UnitCell::cal_nelec(double& nelec) {
+void cal_nelec(const Atom* atoms, const int& ntype, double& nelec)
+{
     ModuleBase::TITLE("UnitCell", "cal_nelec");
     GlobalV::ofs_running << "\n SETUP THE ELECTRONS NUMBER" << std::endl;
 
-    if (nelec == 0) {
-        if (PARAM.inp.use_paw) {
+    if (nelec == 0)
+    {
+        if (PARAM.inp.use_paw)
+        {
 #ifdef USE_PAW
-            for (int it = 0; it < this->ntype; it++) {
+            for (int it = 0; it < ntype; it++)
+            {
                 std::stringstream ss1, ss2;
-                ss1 << " electron number of element "
-                    << GlobalC::paw_cell.get_zat(it) << std::endl;
-                const int nelec_it
-                    = GlobalC::paw_cell.get_val(it) * this->atoms[it].na;
+                ss1 << " electron number of element " << GlobalC::paw_cell.get_zat(it) << std::endl;
+                const int nelec_it = GlobalC::paw_cell.get_val(it) * atoms[it].na;
                 nelec += nelec_it;
-                ss2 << "total electron number of element "
-                    << GlobalC::paw_cell.get_zat(it);
+                ss2 << "total electron number of element " << GlobalC::paw_cell.get_zat(it);
 
-                ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,
-                                            ss1.str(),
-                                            GlobalC::paw_cell.get_val(it));
-                ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,
-                                            ss2.str(),
-                                            nelec_it);
+                ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, ss1.str(), GlobalC::paw_cell.get_val(it));
+                ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, ss2.str(), nelec_it);
             }
 #endif
-        } else {
-            for (int it = 0; it < this->ntype; it++) {
+        }
+        else
+        {
+            for (int it = 0; it < ntype; it++)
+            {
                 std::stringstream ss1, ss2;
-                ss1 << "electron number of element " << this->atoms[it].label;
-                const double nelec_it
-                    = this->atoms[it].ncpp.zv * this->atoms[it].na;
+                ss1 << "electron number of element " << atoms[it].label;
+                const double nelec_it = atoms[it].ncpp.zv * atoms[it].na;
                 nelec += nelec_it;
-                ss2 << "total electron number of element "
-                    << this->atoms[it].label;
+                ss2 << "total electron number of element " << atoms[it].label;
 
-                ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,
-                                            ss1.str(),
-                                            this->atoms[it].ncpp.zv);
-                ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,
-                                            ss2.str(),
-                                            nelec_it);
+                ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, ss1.str(), atoms[it].ncpp.zv);
+                ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, ss2.str(), nelec_it);
             }
-            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,
-                                        "AUTOSET number of electrons: ",
-                                        nelec);
+            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "AUTOSET number of electrons: ", nelec);
         }
     }
-    if (PARAM.inp.nelec_delta != 0) {
-        ModuleBase::GlobalFunc::OUT(
-            GlobalV::ofs_running,
-            "nelec_delta is NOT zero, please make sure you know what you are "
-            "doing! nelec_delta: ",
-            PARAM.inp.nelec_delta);
+    if (PARAM.inp.nelec_delta != 0)
+    {
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,
+                                    "nelec_delta is NOT zero, please make sure you know what you are "
+                                    "doing! nelec_delta: ",
+                                    PARAM.inp.nelec_delta);
         nelec += PARAM.inp.nelec_delta;
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "nelec now: ", nelec);
     }
