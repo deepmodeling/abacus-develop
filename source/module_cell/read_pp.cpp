@@ -1,5 +1,6 @@
 #include "read_pp.h"
 
+#include "module_parameter/parameter.h"
 #include <cmath>
 
 #include <cstring> // Peize Lin fix bug about strcpy 2016-08-02
@@ -123,7 +124,7 @@ int Pseudopot_upf::average_p(const double& lambda, Atom_pseudo& pp)
 {
     int error = 0;
     double lambda_ = lambda;
-    if(!GlobalV::LSPINORB) { lambda_ = 0.0; }
+    if(!PARAM.inp.lspinorb) { lambda_ = 0.0; }
     if (pp.has_so && pp.tvanp)
     {
         error++;
@@ -132,7 +133,7 @@ int Pseudopot_upf::average_p(const double& lambda, Atom_pseudo& pp)
         std::cout << "------------------------------------------------------" << std::endl;
         return error;
     }
-    if (!pp.has_so && GlobalV::LSPINORB)
+    if (!pp.has_so && PARAM.inp.lspinorb)
     {
         error++;
         std::cout << "warning_quit! no soc upf used for lspinorb calculation, error!" << std::endl;
@@ -140,13 +141,13 @@ int Pseudopot_upf::average_p(const double& lambda, Atom_pseudo& pp)
     }
     // ModuleBase::WARNING_QUIT("average_p", "no soc upf used for lspinorb calculation, error!");
 
-    if (!pp.has_so || (GlobalV::LSPINORB && std::abs(lambda_ - 1.0) < 1.0e-8))
+    if (!pp.has_so || (PARAM.inp.lspinorb && std::abs(lambda_ - 1.0) < 1.0e-8))
     {
         return error;
     }
 
     //if(std::abs(lambda_)<1.0e-8)
-	if(!GlobalV::LSPINORB)
+	if(!PARAM.inp.lspinorb)
 	{
 		int new_nbeta = 0; //calculate the new nbeta
 		for(int nb=0; nb< pp.nbeta; nb++)

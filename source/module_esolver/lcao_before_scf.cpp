@@ -152,7 +152,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
                    PARAM.inp.sc_mag_switch,
                    GlobalC::ucell,
                    PARAM.inp.sc_file,
-                   GlobalV::NPOL,
+                   PARAM.globalv.npol,
                    &(this->pv),
                    GlobalV::NSPIN,
                    this->kv,
@@ -165,7 +165,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
     // cal_ux should be called before init_scf because
     // the direction of ux is used in noncoline_rho
     //=========================================================
-    if (GlobalV::NSPIN == 4 && GlobalV::DOMAG)
+    if (GlobalV::NSPIN == 4 && PARAM.globalv.domag)
     {
         GlobalC::ucell.cal_ux();
     }

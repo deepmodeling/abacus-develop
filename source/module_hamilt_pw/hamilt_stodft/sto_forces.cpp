@@ -224,13 +224,13 @@ void Sto_Forces::cal_sto_force_nl(ModuleBase::matrix& forcenl,
 		psi_in->fix_k(ik);
 		stowf.shchi->fix_k(ik);
 		//KS orbitals
-		int npmks = GlobalV::NPOL * nksbands;
+		int npmks = PARAM.globalv.npol * nksbands;
 		zgemm_(&transa,&transb,&nkb,&npmks,&npw,&ModuleBase::ONE,
 				GlobalC::ppcell.vkb.c,&npwx,
             	psi_in->get_pointer(),&npwx,
             	&ModuleBase::ZERO,becp.c,&nkb);
 		//stochastic orbitals
-		int npmsto = GlobalV::NPOL * nstobands;
+		int npmsto = PARAM.globalv.npol * nstobands;
 		zgemm_(&transa,&transb,&nkb,&npmsto,&npw,&ModuleBase::ONE,
 				GlobalC::ppcell.vkb.c,&npwx,
             	stowf.shchi->get_pointer(),&npwx,

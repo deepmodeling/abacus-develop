@@ -263,7 +263,7 @@ void cal_nbands(const int& nelec, const int& nlocal, const std::vector<double>& 
     // calculate number of bands (setup.f90)
     //=======================================
     double occupied_bands = static_cast<double>(nelec / ModuleBase::DEGSPIN);
-    if (GlobalV::LSPINORB == 1) {
+    if (PARAM.inp.lspinorb == 1) {
         occupied_bands = static_cast<double>(nelec);
     }
 

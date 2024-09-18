@@ -1,5 +1,6 @@
 #include "sto_hchi.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
 #include "module_base/tool_title.h"
@@ -31,7 +32,7 @@ void Stochastic_hchi::hchi(complex<double>* chig, complex<double>* hchig, const 
     const int current_spin = pkv->isk[ik];
     const int npwx = this->wfcpw->npwk_max;
     const int npw = this->wfcpw->npwk[ik];
-    const int npm = GlobalV::NPOL * m;
+    const int npm = PARAM.globalv.npol * m;
     const int inc = 1;
     const double tpiba2 = GlobalC::ucell.tpiba2;
     const int nrxx = this->wfcpw->nrxx;
@@ -88,11 +89,11 @@ void Stochastic_hchi::hchi(complex<double>* chig, complex<double>* hchig, const 
         if (GlobalC::ppcell.nkb > 0)
         {
             int nkb = GlobalC::ppcell.nkb;
-            complex<double>* becp = new complex<double>[nkb * GlobalV::NPOL * m];
+            complex<double>* becp = new complex<double>[nkb * PARAM.globalv.npol * m];
             char transc = 'C';
             char transn = 'N';
             char transt = 'T';
-            if (m == 1 && GlobalV::NPOL == 1)
+            if (m == 1 && PARAM.globalv.npol == 1)
             {
                 zgemv_(&transc,
                        &npw,
@@ -122,10 +123,10 @@ void Stochastic_hchi::hchi(complex<double>* chig, complex<double>* hchig, const 
                        becp,
                        &nkb);
             }
-            Parallel_Reduce::reduce_pool(becp, nkb * GlobalV::NPOL * m);
+            Parallel_Reduce::reduce_pool(becp, nkb * PARAM.globalv.npol * m);
 
-            complex<double>* Ps = new complex<double>[nkb * GlobalV::NPOL * m];
-            ModuleBase::GlobalFunc::ZEROS(Ps, GlobalV::NPOL * m * nkb);
+            complex<double>* Ps = new complex<double>[nkb * PARAM.globalv.npol * m];
+            ModuleBase::GlobalFunc::ZEROS(Ps, PARAM.globalv.npol * m * nkb);
 
             int sum = 0;
             int iat = 0;
@@ -153,7 +154,7 @@ void Stochastic_hchi::hchi(complex<double>* chig, complex<double>* hchig, const 
                 } // end na
             }     // end nt
 
-            if (GlobalV::NPOL == 1 && m == 1)
+            if (PARAM.globalv.npol == 1 && m == 1)
             {
                 zgemv_(&transn,
                        &npw,

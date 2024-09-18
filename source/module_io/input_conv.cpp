@@ -289,37 +289,6 @@ void Input_Conv::Convert()
         }
     }
 #endif
-    //--------------------------------------------
-    // added by zhengdy-soc
-    //--------------------------------------------
-    if (PARAM.inp.noncolin || PARAM.inp.lspinorb)
-    {
-        GlobalV::NSPIN = 4;
-    }
-
-    if (GlobalV::NSPIN == 4)
-    {
-        GlobalV::NONCOLIN = PARAM.inp.noncolin;
-        // wavefunctions are spinors with 2 components
-        GlobalV::NPOL = 2;
-        // set the domag variable to make a spin-orbit calculation with zero
-        // magnetization
-        GlobalV::DOMAG = false;
-        GlobalV::DOMAG_Z = true;
-        GlobalV::LSPINORB = PARAM.inp.lspinorb;
-        if (PARAM.globalv.gamma_only_local)
-        {
-            ModuleBase::WARNING_QUIT("input_conv",
-                                     "nspin=4(soc or noncollinear-spin) does "
-                                     "not support gamma only calculation");
-        }
-    } else {
-        GlobalV::LSPINORB = false;
-        GlobalV::NONCOLIN = false;
-        GlobalV::DOMAG = false;
-        GlobalV::DOMAG_Z = false;
-        GlobalV::NPOL = 1;
-    }
 
     //----------------------------------------------------------
     // Yu Liu add 2022-05-18
@@ -488,7 +457,7 @@ void Input_Conv::Convert()
     }
     // In these case, inversion symmetry is also not allowed, symmetry should be
     // reset to -1
-    if (GlobalV::LSPINORB)
+    if (PARAM.inp.lspinorb)
     {
         ModuleSymmetry::Symmetry::symm_flag = -1;
     }
@@ -514,7 +483,6 @@ void Input_Conv::Convert()
     // wavefunction / charge / potential / (2/4)
     //----------------------------------------------------------
     GlobalV::nelec = PARAM.inp.nelec;
-    GlobalV::out_pot = PARAM.inp.out_pot;
 
 #ifdef __LCAO
 

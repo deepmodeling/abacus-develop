@@ -161,7 +161,8 @@ void Charge_Mixing::init_mixing()
 
     // initailize nhat_mdata
 #ifdef USE_PAW
-    if(PARAM.inp.use_paw) this->mixing->init_mixing_data(this->nhat_mdata, this->rhopw->nrxx * GlobalV::NSPIN, sizeof(double));
+    if(PARAM.inp.use_paw) { this->mixing->init_mixing_data(this->nhat_mdata, this->rhopw->nrxx * GlobalV::NSPIN, sizeof(double));
+}
 #endif
 
     ModuleBase::timer::tick("Charge_Mixing", "init_mixing");
@@ -239,7 +240,7 @@ double Charge_Mixing::get_drho(Charge* chr, const double nelec)
         //       The inner_product_real function (L1-norm) is different from that (L2-norm) in mixing.
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
-            if (is != 0 && is != 3 && GlobalV::DOMAG_Z)
+            if (is != 0 && is != 3 && PARAM.globalv.domag_z)
             {
                 continue;
             }
@@ -278,7 +279,7 @@ double Charge_Mixing::get_dkin(Charge* chr, const double nelec)
     // Get dkin from kin_r and kin_r_save for PW and LCAO both, which is different from drho.
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
-        if (is != 0 && is != 3 && GlobalV::DOMAG_Z)
+        if (is != 0 && is != 3 && PARAM.globalv.domag_z)
         {
             continue;
         }
@@ -505,7 +506,8 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
         {
             chr->rhog[0][ig] = rhog_magabs[ig]; // rhog
             double norm = std::sqrt(chr->rho[1][ig] * chr->rho[1][ig] + chr->rho[2][ig] * chr->rho[2][ig] + chr->rho[3][ig] * chr->rho[3][ig]);
-            if (std::abs(norm) < 1e-10) continue;
+            if (std::abs(norm) < 1e-10) { continue;
+}
             double rescale_tmp = rho_magabs[npw + ig] / norm; 
             chr->rho[1][ig] *= rescale_tmp;
             chr->rho[2][ig] *= rescale_tmp;
@@ -770,7 +772,8 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
         {
             chr->rho[0][ir] = rho_magabs[ir]; // rho
             double norm = std::sqrt(chr->rho[1][ir] * chr->rho[1][ir] + chr->rho[2][ir] * chr->rho[2][ir] + chr->rho[3][ir] * chr->rho[3][ir]);
-            if (norm < 1e-10) continue;
+            if (norm < 1e-10) { continue;
+}
             double rescale_tmp = rho_magabs[nrxx + ir] / norm; 
             chr->rho[1][ir] *= rescale_tmp;
             chr->rho[2][ir] *= rescale_tmp;
@@ -1018,7 +1021,7 @@ void Charge_Mixing::mix_rho(Charge* chr)
     std::vector<double> rho123(GlobalV::NSPIN * nrxx);
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
-        if (is == 0 || is == 3 || !GlobalV::DOMAG_Z)
+        if (is == 0 || is == 3 || !PARAM.globalv.domag_z)
         {
             double* rho123_is = rho123.data() + is * nrxx;
 #ifdef _OPENMP
@@ -1078,7 +1081,7 @@ void Charge_Mixing::mix_rho(Charge* chr)
     // rho_save is the charge before mixing
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
-        if (is == 0 || is == 3 || !GlobalV::DOMAG_Z)
+        if (is == 0 || is == 3 || !PARAM.globalv.domag_z)
         {
             double* rho123_is = rho123.data() + is * nrxx;
 #ifdef _OPENMP
@@ -1122,21 +1125,24 @@ void Charge_Mixing::mix_rho(Charge* chr)
     }
 #endif
 
-    if (new_e_iteration)
+    if (new_e_iteration) {
         new_e_iteration = false;
+}
     ModuleBase::timer::tick("Charge", "mix_rho");
     return;
 }
 
 void Charge_Mixing::Kerker_screen_recip(std::complex<double>* drhog)
 {
-    if (this->mixing_gg0 <= 0.0 || this->mixing_beta <= 0.1)
+    if (this->mixing_gg0 <= 0.0 || this->mixing_beta <= 0.1) {
         return;
+}
     double fac, gg0, amin;
 
     // consider a resize for mixing_angle
     int resize_tmp = 1;
-    if (GlobalV::NSPIN == 4 && this->mixing_angle > 0) resize_tmp = 2;
+    if (GlobalV::NSPIN == 4 && this->mixing_angle > 0) { resize_tmp = 2;
+}
 
     // implement Kerker for density and magnetization separately
     for (int is = 0; is < GlobalV::NSPIN / resize_tmp; ++is)
@@ -1181,11 +1187,13 @@ void Charge_Mixing::Kerker_screen_recip(std::complex<double>* drhog)
 
 void Charge_Mixing::Kerker_screen_real(double* drhor)
 {
-    if (this->mixing_gg0 <= 0.0001 || this->mixing_beta <= 0.1)
+    if (this->mixing_gg0 <= 0.0001 || this->mixing_beta <= 0.1) {
         return;
+}
     // consider a resize for mixing_angle
     int resize_tmp = 1;
-    if (GlobalV::NSPIN == 4 && this->mixing_angle > 0) resize_tmp = 2;
+    if (GlobalV::NSPIN == 4 && this->mixing_angle > 0) { resize_tmp = 2;
+}
     //
     std::vector<std::complex<double>> drhog(this->rhopw->npw * GlobalV::NSPIN / resize_tmp);
     std::vector<double> drhor_filter(this->rhopw->nrxx * GlobalV::NSPIN / resize_tmp);
@@ -1208,7 +1216,8 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
                 assert(is == 1); // make sure break works
 #endif
                 double is_mag = GlobalV::NSPIN - 1;
-                if (GlobalV::NSPIN == 4 && this->mixing_angle > 0) is_mag = 1;
+                if (GlobalV::NSPIN == 4 && this->mixing_angle > 0) { is_mag = 1;
+}
                 for (int ig = 0; ig < this->rhopw->npw * is_mag; ig++)
                 {
                     drhog[is * this->rhopw->npw + ig] = 0;
@@ -1282,8 +1291,9 @@ double Charge_Mixing::inner_product_recip_rho(std::complex<double>* rho1, std::c
 #endif
         for (int ig = 0; ig < this->rhopw->npw; ++ig)
         {
-            if (this->rhopw->gg[ig] < 1e-8)
+            if (this->rhopw->gg[ig] < 1e-8) {
                 continue;
+}
             sum += (conj(rhog1[0][ig]) * rhog2[0][ig]).real() / this->rhopw->gg[ig];
         }
         sum *= fac;
@@ -1303,8 +1313,9 @@ double Charge_Mixing::inner_product_recip_rho(std::complex<double>* rho1, std::c
 #endif
         for (int ig = 0; ig < this->rhopw->npw; ++ig)
         {
-            if (this->rhopw->gg[ig] < 1e-8)
+            if (this->rhopw->gg[ig] < 1e-8) {
                 continue;
+}
             sum += (conj(rhog1[0][ig] + rhog1[1][ig]) * (rhog2[0][ig] + rhog2[1][ig])).real() / this->rhopw->gg[ig];
         }
         sum *= fac;
@@ -1343,9 +1354,9 @@ double Charge_Mixing::inner_product_recip_rho(std::complex<double>* rho1, std::c
     }
     case 4:
         // non-collinear spin, added by zhengdy
-        if (!GlobalV::DOMAG && !GlobalV::DOMAG_Z)
+        if (!PARAM.globalv.domag && !PARAM.globalv.domag_z) {
             sum += part_of_noncolin();
-        else
+        } else
         {
             // another part with magnetization
 #ifdef _OPENMP
@@ -1353,8 +1364,9 @@ double Charge_Mixing::inner_product_recip_rho(std::complex<double>* rho1, std::c
 #endif
             for (int ig = 0; ig < this->rhopw->npw; ig++)
             {
-                if (ig == this->rhopw->ig_gge0)
+                if (ig == this->rhopw->ig_gge0) {
                     continue;
+}
                 sum += (conj(rhog1[0][ig]) * rhog2[0][ig]).real() / this->rhopw->gg[ig];
             }
             sum *= fac;
@@ -1375,8 +1387,9 @@ double Charge_Mixing::inner_product_recip_rho(std::complex<double>* rho1, std::c
 #endif
             for (int ig = 0; ig < this->rhopw->npw; ig++)
             {
-                if (ig == ig0)
+                if (ig == ig0) {
                     continue;
+}
                 sum += fac3
                        * ((conj(rhog1[1][ig]) * rhog2[1][ig]).real() + (conj(rhog1[2][ig]) * rhog2[2][ig]).real()
                           + (conj(rhog1[3][ig]) * rhog2[3][ig]).real());
@@ -1405,7 +1418,8 @@ double Charge_Mixing::inner_product_recip_simple(std::complex<double>* rho1, std
     double rnorm = 0.0;
     // consider a resize for mixing_angle
     int resize_tmp = 1;
-    if (GlobalV::NSPIN == 4 && this->mixing_angle > 0) resize_tmp = 2;
+    if (GlobalV::NSPIN == 4 && this->mixing_angle > 0) { resize_tmp = 2;
+}
 #ifdef _OPENMP
 #pragma omp parallel for reduction(+ : rnorm)
 #endif
@@ -1443,8 +1457,9 @@ double Charge_Mixing::inner_product_recip_hartree(std::complex<double>* rhog1, s
 #endif
         for (int ig = 0; ig < this->rhopw->npw; ++ig)
         {
-            if (this->rhopw->gg[ig] < 1e-8)
+            if (this->rhopw->gg[ig] < 1e-8) {
                 continue;
+}
             sum += (conj(rhog1[ig]) * rhog2[ig]).real() / this->rhopw->gg[ig];
         }
         sum *= fac;
@@ -1463,8 +1478,9 @@ double Charge_Mixing::inner_product_recip_hartree(std::complex<double>* rhog1, s
 #endif
         for (int ig = 0; ig < this->rhopw->npw; ++ig)
         {
-            if (this->rhopw->gg[ig] < 1e-8)
+            if (this->rhopw->gg[ig] < 1e-8) {
                 continue;
+}
             sum += (conj(rhog1[ig]) * (rhog2[ig])).real() / this->rhopw->gg[ig];
         }
         sum *= fac;
@@ -1500,7 +1516,7 @@ double Charge_Mixing::inner_product_recip_hartree(std::complex<double>* rhog1, s
     }
     else if (GlobalV::NSPIN==4)
     {
-        if (!GlobalV::DOMAG && !GlobalV::DOMAG_Z)
+        if (!PARAM.globalv.domag && !PARAM.globalv.domag_z)
         {
             sum += part_of_rho();
         }
@@ -1512,8 +1528,9 @@ double Charge_Mixing::inner_product_recip_hartree(std::complex<double>* rhog1, s
 #endif
             for (int ig = 0; ig < this->rhopw->npw; ig++)
             {
-                if (ig == this->rhopw->ig_gge0)
+                if (ig == this->rhopw->ig_gge0) {
                     continue;
+}
                 sum += (conj(rhog1[ig]) * rhog2[ig]).real() / this->rhopw->gg[ig];
             }
             sum *= fac;
@@ -1534,8 +1551,9 @@ double Charge_Mixing::inner_product_recip_hartree(std::complex<double>* rhog1, s
 #endif
             for (int ig = 0; ig < this->rhopw->npw; ig++)
             {
-                if (ig == ig0)
+                if (ig == ig0) {
                     continue;
+}
                 sum += fac3
                        * ((conj(rhog1[ig + npw]) * rhog2[ig + npw]).real() + (conj(rhog1[ig + 2*npw]) * rhog2[ig + 2*npw]).real()
                           + (conj(rhog1[ig + 3*npw]) * rhog2[ig + 3*npw]).real());
@@ -1549,8 +1567,9 @@ double Charge_Mixing::inner_product_recip_hartree(std::complex<double>* rhog1, s
 #endif
             for (int ig = 0; ig < this->rhopw->npw; ig++)
             {
-                if (ig == this->rhopw->ig_gge0)
+                if (ig == this->rhopw->ig_gge0) {
                     continue;
+}
                 sum += (conj(rhog1[ig]) * rhog2[ig]).real() / this->rhopw->gg[ig];
             }
             sum *= fac;
@@ -1570,8 +1589,9 @@ double Charge_Mixing::inner_product_recip_hartree(std::complex<double>* rhog1, s
 #endif
             for (int ig = 0; ig < this->rhopw->npw; ig++)
             {
-                if (ig == ig0)
+                if (ig == ig0) {
                     continue;
+}
                 sum += fac3
                        * ((conj(rhog1[ig + this->rhopw->npw]) * rhog2[ig + this->rhopw->npw]).real());
             }
@@ -1593,7 +1613,8 @@ double Charge_Mixing::inner_product_real(double* rho1, double* rho2)
     double rnorm = 0.0;
     // consider a resize for mixing_angle
     int resize_tmp = 1;
-    if (GlobalV::NSPIN == 4 && this->mixing_angle > 0) resize_tmp = 2;
+    if (GlobalV::NSPIN == 4 && this->mixing_angle > 0) { resize_tmp = 2;
+}
 
 #ifdef _OPENMP
 #pragma omp parallel for reduction(+ : rnorm)

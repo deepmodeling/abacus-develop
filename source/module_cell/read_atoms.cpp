@@ -139,18 +139,6 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
         }
     }
 
-    if (PARAM.globalv.rpa_setorb)
-    {
-        if (ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "ABFS_ORBITAL"))
-        {
-            std::cout << "RPA_EXX_LCAO read abfs_orb!!!" << std::endl;
-            GlobalV::rpa_orbitals.resize(ntype);
-            for (int i = 0; i < ntype; i++)
-            {
-                ifa >> GlobalV::rpa_orbitals[i];
-            }
-        }
-    }
 #endif // __EXX
 #endif // __MPI
 #endif // __LCAO
@@ -640,11 +628,9 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
 
                     if(GlobalV::NSPIN==4)
                     {
-                        if(GlobalV::NONCOLIN)
+                        if(PARAM.inp.noncolin)
                         {
                             //if magnetization only along z-axis, default settings are DOMAG_Z=true and DOMAG=false
-                            GlobalV::DOMAG_Z = false;
-                            GlobalV::DOMAG = true;
                             if(input_angle_mag)
                             {
                                 atoms[it].m_loc_[ia].z = atoms[it].mag[ia] *
