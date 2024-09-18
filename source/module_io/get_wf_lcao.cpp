@@ -222,6 +222,32 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
                     3,
                     1);
 
+//                 if (out_wfc_r)
+//                 {
+//                     std::cout << " write |psi(band, r)| for band " << ib + 1 << " and spin " << is + 1 << std::endl;
+//                     std::stringstream ss_wfc;
+//                     ss_wfc << global_out_dir << "WFC_BAND" << ib + 1 << "_s_" << is + 1 << ".cube";
+//                     ModuleIO::write_cube(
+// #ifdef __MPI
+//                         bigpw->bz,
+//                         bigpw->nbz,
+//                         rhopw->nplane,
+//                         rhopw->startz_current,
+// #endif
+//                         wfc_gamma_grid[is][ib],
+//                         is,
+//                         nspin,
+//                         0,
+//                         ss_wfc.str(),
+//                         rhopw->nx,
+//                         rhopw->ny,
+//                         rhopw->nz,
+//                         ef_tmp,
+//                         &(GlobalC::ucell),
+//                         6,
+//                         0);
+//                 }
+
                 if (out_wfc_pw || out_wfc_r)
                 { // only for gamma_only now
                     this->set_pw_wfc(wfcpw, 0, ib, nspin, pes_->charge->rho_save, pw_wfc_g);
@@ -439,7 +465,7 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
                 gk.cal_env_k(ik, wfc_k_grid[ik][ib], pes_->charge->rho[ispin], kv.kvec_c, kv.kvec_d, GlobalC::ucell);
 
                 std::stringstream ss;
-                ss << global_out_dir << "BAND" << ib + 1 << "_k_" << ik / nspin0 + 1 << "_s_" << ispin + 1
+                ss << global_out_dir << "BAND" << ib + 1 << "_k_" << ik + 1 << "_s_" << ispin + 1
                    << "_ENV.cube";
                 const double ef_tmp = this->pes_->eferm.get_efval(ispin);
 
@@ -486,6 +512,88 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
         {
             ModuleIO::write_psi_r_1(pw_wfc_g, wfcpw, "wfc_realspace", false, kv);
         }
+//         if (out_wf_r)
+//         {
+//             std::cout << " Outputting real-space wave functions in cube format..." << std::endl;
+
+//             for (int ib = 0; ib < nbands; ib++)
+//             {
+//                 if (bands_picked_[ib])
+//                 {
+//                     const int nspin0 = (nspin == 2) ? 2 : 1;
+//                     for (int ik = 0; ik < nks; ++ik)
+//                     {
+//                         const int ispin = kv.isk[ik];
+//                         std::cout << " Processing band " << ib + 1 << ", k-point " << ik << ", spin " << ispin + 1
+//                                   << std::endl;
+
+//                         pw_wfc_g.fix_k(ik);
+
+//                         // 计算实空间波函数
+//                         std::vector<std::complex<double>> wfc_r(wfcpw->nrxx);
+//                         wfcpw->recip2real(&pw_wfc_g(ib, 0), wfc_r.data(), ik);
+
+//                         // 提取实部和虚部
+//                         std::vector<double> wfc_real(wfcpw->nrxx);
+//                         std::vector<double> wfc_imag(wfcpw->nrxx);
+//                         for (int ir = 0; ir < wfcpw->nrxx; ++ir)
+//                         {
+//                             wfc_real[ir] = wfc_r[ir].real();
+//                             wfc_imag[ir] = wfc_r[ir].imag();
+//                         }
+
+//                         // 输出实部
+//                         std::stringstream ss_real;
+//                         ss_real << global_out_dir << "BAND" << ib + 1 << "_k_" << ik + 1 << "_s_" << ispin + 1
+//                                 << "_REAL.cube";
+//                         const double ef_tmp = this->pes_->eferm.get_efval(ispin);
+//                         ModuleIO::write_cube(
+// #ifdef __MPI
+//                             bigpw->bz,
+//                             bigpw->nbz,
+//                             rhopw->nplane,
+//                             rhopw->startz_current,
+// #endif
+//                             wfc_real.data(),
+//                             ispin,
+//                             nspin,
+//                             0,
+//                             ss_real.str(),
+//                             rhopw->nx,
+//                             rhopw->ny,
+//                             rhopw->nz,
+//                             ef_tmp,
+//                             &(GlobalC::ucell),
+//                             3,
+//                             1);
+
+//                         // 输出虚部
+//                         std::stringstream ss_imag;
+//                         ss_imag << global_out_dir << "BAND" << ib + 1 << "_k_" << ik + 1 << "_s_" << ispin + 1
+//                                 << "_IMAG.cube";
+//                         ModuleIO::write_cube(
+// #ifdef __MPI
+//                             bigpw->bz,
+//                             bigpw->nbz,
+//                             rhopw->nplane,
+//                             rhopw->startz_current,
+// #endif
+//                             wfc_imag.data(),
+//                             ispin,
+//                             nspin,
+//                             0,
+//                             ss_imag.str(),
+//                             rhopw->nx,
+//                             rhopw->ny,
+//                             rhopw->nz,
+//                             ef_tmp,
+//                             &(GlobalC::ucell),
+//                             3,
+//                             1);
+//                     }
+//                 }
+//             }
+//         }
     }
 
     for (int ik = 0; ik < nks; ++ik)
