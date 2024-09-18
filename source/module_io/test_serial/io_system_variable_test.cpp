@@ -75,6 +75,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_EQ(param.sys.domag, 0);
         EXPECT_EQ(param.sys.domag_z, 0);
         EXPECT_EQ(param.sys.npol, 1);
+
         
     }
 }
