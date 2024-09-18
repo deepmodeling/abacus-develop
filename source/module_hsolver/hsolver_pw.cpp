@@ -234,10 +234,10 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
     // prepare for the precondition of diagonalization
     std::vector<Real> precondition(psi.get_nbasis(), 0.0);
     // std::vector<Real> eigenvalues(pes->ekb.nr * pes->ekb.nc, 0.0);
-    std::vector<Real> eigenvalues(this->wfc_basis->nks * psi.get_nbands(), 0.0);
+    std::vector<Real> eigenvalues(psi.get_nk() * psi.get_nbands(), 0.0);
 
     /// Loop over k points for solve Hamiltonian to charge density
-    for (int ik = 0; ik < this->wfc_basis->nks; ++ik)
+    for (int ik = 0; ik < psi.get_nk(); ++ik)
     {
         /// update H(k) for each k point
         pHamilt->updateHk(ik);
@@ -278,7 +278,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
         out_eigenvalues,
         eigenvalues.data(),
         // pes->ekb.nr * pes->ekb.nc
-        this->wfc_basis->nks * psi.get_nbands());
+        psi.get_nk() * psi.get_nbands());
 
     if (skip_charge)
     {
@@ -599,7 +599,7 @@ void HSolverPW<T, Device>::output_iterInfo()
     if (DiagoIterAssist<T, Device>::avg_iter > 0.0)
     {
         GlobalV::ofs_running << "Average iterative diagonalization steps: "
-                             << DiagoIterAssist<T, Device>::avg_iter / this->wfc_basis->nks
+                             << DiagoIterAssist<T, Device>::avg_iter / psi.get_nk()
                              << " ; where current threshold is: " << this->diag_thr << " . "
                              << std::endl;
         // reset avg_iter
