@@ -40,7 +40,7 @@ class HSolverLIP
 #ifdef USE_PAW
     void paw_func_in_kloop(const int ik);
 
-    void paw_func_after_kloop(psi::Psi<T, Device>& psi, elecstate::ElecState* pes);
+    void paw_func_after_kloop(psi::Psi<T>& psi, elecstate::ElecState* pes);
 #endif
 };
 
