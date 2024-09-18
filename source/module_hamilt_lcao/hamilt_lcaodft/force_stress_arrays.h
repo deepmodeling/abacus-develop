@@ -60,6 +60,10 @@ class ForceStressArrays
     double* DSloc_23;
     double* DSloc_33;
 
+    //缺少DSlocR_11, DSlocR_12, DSlocR_13, DSlocR_22, DSlocR_23, DSlocR_33
+    //DH_r更省内存
+    // 数组接口需要重构
+
     double* DHloc_fixed_11;
     double* DHloc_fixed_12;
     double* DHloc_fixed_13;

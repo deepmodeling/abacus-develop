@@ -97,6 +97,6 @@ elecstate::DensityMatrix<std::complex<double>, double> Force_LCAO<std::complex<d
     // cal_dm_2d
     edm.init_DMR(ra, &ucell);
     edm.cal_DMR();
-    edm.sum_DMR_spin();
+    // edm.sum_DMR_spin();
     return edm;
 }

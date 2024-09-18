@@ -15,6 +15,7 @@ if(ENABLE_LCAO)
         operator_lcao/td_nonlocal_lcao.cpp
         operator_lcao/sc_lambda_lcao.cpp
         operator_lcao/dftu_lcao.cpp
+        pulay_force_stress/pulay_force_stress_center2.cpp
         FORCE_STRESS.cpp
         FORCE_gamma.cpp
         FORCE_k.cpp
