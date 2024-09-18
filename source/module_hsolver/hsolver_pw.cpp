@@ -434,8 +434,8 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
     else if (this->method == "dav_subspace")
     {
         auto ngk_pointer = psi.get_ngk_pointer();
-        auto hpsi_func = [hm, ngk_pointer](T* hpsi_out,
-                                           T* psi_in,
+        auto hpsi_func = [hm, ngk_pointer](T* psi_in,
+                                           T* hpsi_out,
                                            const int nband_in,
                                            const int nbasis_in,
                                            const int band_index1,
@@ -492,9 +492,9 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
 
         auto ngk_pointer = psi.get_ngk_pointer();
         /// wrap hpsi into lambda function, Matrix \times blockvector
-        /// hpsi(HX, X, nband, dim, band_index1, band_index2)
-        auto hpsi_func = [hm, ngk_pointer](T* hpsi_out,
-                                           T* psi_in,
+        /// hpsi(X, HX, nband, dim, band_index1, band_index2)
+        auto hpsi_func = [hm, ngk_pointer](T* psi_in,
+                                           T* hpsi_out,
                                            const int nband_in,
                                            const int nbasis_in,
                                            const int band_index1,
