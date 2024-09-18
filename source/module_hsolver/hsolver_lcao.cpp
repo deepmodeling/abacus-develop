@@ -208,8 +208,8 @@ void HSolverLCAO<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>&
         {
             for (int j = i; j < h_mat.col; j++)
             {
-                h_mat.p[h_mat.row * j + i] = hsolver::my_conj(h_mat.p[h_mat.row * i + j]);
-                s_mat.p[s_mat.row * j + i] = hsolver::my_conj(s_mat.p[s_mat.row * i + j]);
+                h_mat.p[h_mat.row * j + i] = hsolver::get_conj(h_mat.p[h_mat.row * i + j]);
+                s_mat.p[s_mat.row * j + i] = hsolver::get_conj(s_mat.p[s_mat.row * i + j]);
             }
         }
 
