@@ -49,6 +49,48 @@ void ReadInput::set_globalv(Parameter& para)
         {
             para.sys.deepks_setorb = true;
         }
+        switch (para.input.nspin)
+        {
+        case 4:
+            if (para.input.noncolin)
+            {
+                para.sys.domag = true;
+                para.sys.domag_z = false;
+            }
+            else
+            {
+                para.sys.domag = false;
+                para.sys.domag_z = true;
+            }
+            para.sys.npol = 2;
+            break;
+        case 2:
+        case 1:
+            para.sys.domag = false;
+            para.sys.domag_z = false;
+            para.sys.npol = 1;
+        default:
+            break;
+        }
+
+        if (para.input.device == "cpu")
+        {
+            para.sys.device_flag = "cpu";
+        }
+        else if (para.input.device == "gpu")
+        {
+            if (para.input.basis_type == "lcao_in_pw")
+            {
+                GlobalV::ofs_warning << "The GPU currently does not support the basis type \"lcao_in_pw\"!" << std::endl;
+                para.sys.device_flag = "cpu";
+            }
+            para.sys.device_flag = "gpu";
+        }
+        else
+        {
+            GlobalV::ofs_warning << "Parameter \"device\" can only be set to \"cpu\" or \"gpu\"!" << std::endl;
+            ModuleBase::WARNING_QUIT("device", "Parameter \"device\" can only be set to \"cpu\" or \"gpu\"!");
+        }
 
         para.sys.nqx=static_cast<int>((sqrt(para.inp.ecutwfc) / para.sys.dq + 4.0) * para.inp.cell_factor); 
         para.sys.nqxq=static_cast<int>((sqrt(para.inp.ecutrho) / para.sys.dq + 4.0) * para.inp.cell_factor);
@@ -77,6 +119,13 @@ void ReadInput::set_globalv_bcast()
     add_string_bcast(sys.global_matrix_dir);
 
     add_bool_bcast(sys.deepks_setorb);
+    
+    add_bool_bcast(sys.domag);
+    add_bool_bcast(sys.domag_z);
+    add_int_bcast(sys.npol);
+
+    add_string_bcast(sys.device_flag);
+    
     add_bool_bcast(sys.double_grid);
     add_double_bcast(sys.uramping);
     add_double_bcast(sys.dq);

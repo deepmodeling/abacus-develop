@@ -71,7 +71,7 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<double>* hR, const UnitCell* ucell
     }
     this->hRGint->set_zero();
 
-    const int npol = GlobalV::NPOL;
+    const int npol = PARAM.globalv.npol;
     const UnitCell& ucell = *ucell_in;
     for (int iat = 0; iat < ucell.nat; ++iat)
     {
@@ -195,7 +195,7 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<std::complex<double>>* hR, const U
     }
     this->hRGintCd->set_zero();
 
-    const int npol = GlobalV::NPOL;
+    const int npol = PARAM.globalv.npol;
     const UnitCell& ucell = *ucell_in;
 
     for (int iat = 0; iat < ucell.nat; ++iat)
@@ -281,7 +281,7 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<std::complex<double>>* hR, const U
                                 }
                                 tmp_pointer += 2 * atom2->nw;
                             }
-                            if (GlobalV::DOMAG)
+                            if (PARAM.globalv.domag)
                             {
                                 tmp_pointer = tmp_matrix->get_pointer();
                                 for (int iw = 0; iw < atom1->nw; iw++)

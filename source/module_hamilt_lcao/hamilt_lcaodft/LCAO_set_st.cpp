@@ -325,7 +325,7 @@ void build_ST_new(ForceStressArrays& fsr,
     ModuleBase::timer::tick("LCAO_domain", "build_ST_new");
 
     const int nspin = PARAM.inp.nspin;
-    const int npol = GlobalV::NPOL;
+    const int npol = PARAM.globalv.npol;
     const bool gamma_only_local = PARAM.globalv.gamma_only_local;
 
     int total_nnr = 0;

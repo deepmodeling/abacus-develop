@@ -387,7 +387,7 @@ TEST_F(ElecStatePrintTest, PrintEtotColorS4)
     PARAM.sys.two_fermi = true;
     PARAM.input.out_bandgap = true;
     PARAM.input.nspin = 4;
-    GlobalV::NONCOLIN = true;
+    PARAM.input.noncolin = true;
     GlobalV::MY_RANK = 0;
     elecstate.print_etot(converged, iter, scf_thr, scf_thr_kin, duration, printe, pw_diag_thr, avg_iter, print);
 }

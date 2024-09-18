@@ -28,12 +28,6 @@ extern bool use_uspp;
 extern std::string KS_SOLVER;  // xiaohui add 2013-09-01
 extern double SEARCH_RADIUS;   // 11.1 // mohan add 2011-03-10
 
-// added by zhengdy-soc
-extern bool NONCOLIN;     // 0 : collinear ; 1 : non-collinear
-extern bool LSPINORB;     // 0 : no soc ; 1 : has soc
-extern bool DOMAG;        // 1 : calculate the magnetism with x, y, z component
-extern bool DOMAG_Z;      // 1 : constrain the magnetism to z axis
-extern int NPOL;          // 1 : no soc; 2 : has soc
 
 extern int NB2D;           // 16.5 dividsion of 2D_matrix.
 
@@ -94,8 +88,6 @@ extern std::ofstream ofs_warning;
 extern std::ofstream ofs_info;
 extern std::ofstream ofs_device;
 
-// rpa related
-extern std::vector<std::string> rpa_orbitals;
 
 // mixing parameters
 

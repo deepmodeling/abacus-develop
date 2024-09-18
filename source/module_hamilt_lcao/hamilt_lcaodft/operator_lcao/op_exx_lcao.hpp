@@ -212,7 +212,7 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHR()
                 GlobalC::exx_info.info_global.hybrid_alpha,
                 *this->Hexxd,
                 *this->hR->get_paraV(),
-                GlobalV::NPOL,
+                PARAM.globalv.npol,
                 *this->hR,
                 this->use_cell_nearest ? &this->cell_nearest : nullptr);
         } else {
@@ -221,7 +221,7 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHR()
                 GlobalC::exx_info.info_global.hybrid_alpha,
                 *this->Hexxc,
                 *this->hR->get_paraV(),
-                GlobalV::NPOL,
+                PARAM.globalv.npol,
                 *this->hR,
                 this->use_cell_nearest ? &this->cell_nearest : nullptr);
 }

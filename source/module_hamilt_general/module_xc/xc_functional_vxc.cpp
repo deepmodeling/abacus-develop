@@ -37,7 +37,7 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc(
 
     double vanishing_charge = 1.0e-10;
 
-    if (PARAM.inp.nspin == 1 || ( PARAM.inp.nspin ==4 && !GlobalV::DOMAG && !GlobalV::DOMAG_Z))
+    if (PARAM.inp.nspin == 1 || ( PARAM.inp.nspin ==4 && !PARAM.globalv.domag && !PARAM.globalv.domag_z))
     {
         // spin-unpolarized case
 #ifdef _OPENMP
@@ -188,7 +188,7 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc_libxc(		// Peiz
     ModuleBase::timer::tick("XC_Functional","v_xc_libxc");
 
     const int nspin = 
-        (PARAM.inp.nspin == 1 || ( PARAM.inp.nspin ==4 && !GlobalV::DOMAG && !GlobalV::DOMAG_Z))
+        (PARAM.inp.nspin == 1 || ( PARAM.inp.nspin ==4 && !PARAM.globalv.domag && !PARAM.globalv.domag_z))
         ? 1 : 2;
 
     double etxc = 0.0;
@@ -450,7 +450,7 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc_libxc(		// Peiz
         for( int ir=0; ir<nrxx; ++ir ) {
             v_nspin4(0,ir) = 0.5 * (v(0,ir)+v(1,ir));
 }
-        if(GlobalV::DOMAG || GlobalV::DOMAG_Z)
+        if(PARAM.globalv.domag || PARAM.globalv.domag_z)
         {
             for( int ir=0; ir<nrxx; ++ir )
             {

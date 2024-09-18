@@ -114,8 +114,8 @@ void Gint_k::cal_env_k(int ik,
                         {
                             for (int is = 0; is < 2; ++is)
                             {
-                                iw1_lo = this->gridt->trace_lo[start1] / GlobalV::NPOL
-                                         + this->gridt->lgd / GlobalV::NPOL * is;
+                                iw1_lo = this->gridt->trace_lo[start1] / PARAM.globalv.npol
+                                         + this->gridt->lgd / PARAM.globalv.npol * is;
                                 for (int iw = 0; iw < atom1->nw; ++iw, ++iw1_lo)
                                 {
                                     tmp += std::complex<double>(psi1[iw], 0.0) * psi_k[iw1_lo] * kphase;

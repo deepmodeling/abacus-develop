@@ -379,13 +379,13 @@ void Gint_k::cal_dvlocal_R_sparseMatrix(const int& current_spin,
 
                             int ixxx = DM_start + this->gridt->find_R2st[iat][nad2];
 
-                            for (int iw = 0; iw < atom1->nw * GlobalV::NPOL; iw++)
+                            for (int iw = 0; iw < atom1->nw * PARAM.globalv.npol; iw++)
                             {
-                                for (int iw2 = 0; iw2 < atom2->nw * GlobalV::NPOL; iw2++)
+                                for (int iw2 = 0; iw2 < atom2->nw * PARAM.globalv.npol; iw2++)
                                 {
                                     const int nw = atom2->nw;
-                                    const int mug0 = iw / GlobalV::NPOL;
-                                    const int nug0 = iw2 / GlobalV::NPOL;
+                                    const int mug0 = iw / PARAM.globalv.npol;
+                                    const int nug0 = iw2 / PARAM.globalv.npol;
                                     const int iw_nowg = ixxx + mug0 * nw + nug0;
 
                                     if (PARAM.inp.nspin == 4)
@@ -455,7 +455,7 @@ void Gint_k::cal_dvlocal_R_sparseMatrix(const int& current_spin,
                                         else if (iw % 2 == 0 && iw2 % 2 == 1)
                                         {
                                             // spin = 1;
-                                            if (!GlobalV::DOMAG)
+                                            if (!PARAM.globalv.domag)
                                             {
                                                 // do nothing
                                             }
@@ -490,7 +490,7 @@ void Gint_k::cal_dvlocal_R_sparseMatrix(const int& current_spin,
                                         else if (iw % 2 == 1 && iw2 % 2 == 0)
                                         {
                                             // spin = 2;
-                                            if (!GlobalV::DOMAG)
+                                            if (!PARAM.globalv.domag)
                                             {
                                                 // do nothing
                                             }
