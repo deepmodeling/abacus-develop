@@ -832,7 +832,7 @@ void Grid::Construct_Adjacent_expand(
             ar(Cell[true_i][true_j][true_k].address[ia_tmp].fatom);
         }
     }
-#elif
+#else
 	for (int ia = 0;ia < Cell[true_i][true_j][true_k].length;ia++)
 	{
 		Cell[true_i][true_j][true_k].address[ia].fatom.allocate_AdjacentSet();
