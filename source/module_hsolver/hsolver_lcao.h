@@ -36,18 +36,6 @@ class HSolverLCAO
     std::string method = "none";
 };
 
-template <typename T>
-inline T my_conj(T value)
-{
-    return value;
-}
-
-template <>
-inline std::complex<double> my_conj(std::complex<double> value)
-{
-    return std::conj(value);
-}
-
 } // namespace hsolver
 
 #endif
