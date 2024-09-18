@@ -16,7 +16,7 @@ class diag_comm_info:
     def nproc(self) -> int: ...
     
 def dav_subspace(
-    mm_op: Callable[[NDArray[np.complex128]], NDArray[np.complex128]],
+    mvv_op: Callable[[NDArray[np.complex128]], NDArray[np.complex128]],
     init_v: NDArray[np.complex128],
     dim: int,
     num_eigs: int,
@@ -32,9 +32,10 @@ def dav_subspace(
 
     Parameters
     ----------
-    mm_op : Callable[[NDArray[np.complex128]], NDArray[np.complex128]],
-        The operator to be diagonalized, which is a function that takes a matrix as input
-        and returns a matrix mv_op(X) = H * X as output.
+    mvv_op : Callable[[NDArray[np.complex128]], NDArray[np.complex128]],
+        The operator to be diagonalized, which is a function that takes a set of 
+        vectors X = [x1, ..., xN] as input and returns a matrix(vector block)
+        mvv_op(X) = H * X ([Hx1, ..., HxN]) as output.
     init_v : NDArray[np.complex128]
         The initial guess for the eigenvectors.
     dim : int
@@ -68,8 +69,8 @@ def dav_subspace(
     v : NDArray[np.complex128]
         The eigenvectors corresponding to the eigenvalues.
     """
-    if not callable(mm_op):
-        raise TypeError("mm_op must be a callable object.")
+    if not callable(mvv_op):
+        raise TypeError("mvv_op must be a callable object.")
     
     if is_occupied is None:
         is_occupied = [True] * num_eigs
@@ -86,7 +87,7 @@ def dav_subspace(
     assert dav_ndim * num_eigs < dim * comm_info.nproc, "dav_ndim * num_eigs must be less than dim * comm_info.nproc."
    
     _ = _diago_obj_dav_subspace.diag(
-        mm_op,
+        mvv_op,
         pre_condition,
         dav_ndim,
         tol,
@@ -103,7 +104,7 @@ def dav_subspace(
     return e, v
 
 def davidson(
-    mm_op: Callable[[NDArray[np.complex128]], NDArray[np.complex128]],
+    mvv_op: Callable[[NDArray[np.complex128]], NDArray[np.complex128]],
     init_v: NDArray[np.complex128],
     dim: int,
     num_eigs: int,
@@ -119,9 +120,10 @@ def davidson(
 
     Parameters
     ----------
-    mm_op : Callable[[NDArray[np.complex128]], NDArray[np.complex128]],
-        The operator to be diagonalized, which is a function that takes a matrix as input
-        and returns a matrix mv_op(X) = H * X as output.
+    mvv_op : Callable[[NDArray[np.complex128]], NDArray[np.complex128]],
+        The operator to be diagonalized, which is a function that takes a set of 
+        vectors X = [x1, ..., xN] as input and returns a matrix(vector block)
+        mvv_op(X) = H * X ([Hx1, ..., HxN]) as output.
     init_v : NDArray[np.complex128]
         The initial guess for the eigenvectors.
     dim : int
@@ -146,8 +148,8 @@ def davidson(
     v : NDArray[np.complex128]
         The eigenvectors corresponding to the eigenvalues.
     """
-    if not callable(mm_op):
-        raise TypeError("mm_op must be a callable object.")
+    if not callable(mvv_op):
+        raise TypeError("mvv_op must be a callable object.")
     
     if init_v.ndim != 1 or init_v.dtype != np.complex128:
         init_v = init_v.flatten().astype(np.complex128, order='C')
@@ -159,7 +161,7 @@ def davidson(
     comm_info = hsolver.diag_comm_info(0, 1)
     
     _ = _diago_obj_dav_subspace.diag(
-        mm_op,
+        mvv_op,
         pre_condition,
         dav_ndim,
         tol,
