@@ -33,8 +33,9 @@ double KEDF_vW::get_energy(double** pphi, ModulePW::PW_Basis* pw_rho)
     }
 
     double** LapPhi = new double*[PARAM.inp.nspin];
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    for (int is = 0; is < PARAM.inp.nspin; ++is) {
         LapPhi[is] = new double[pw_rho->nrxx];
+}
     this->laplacian_phi(tempPhi, LapPhi, pw_rho);
 
     double energy = 0.; // in Ry
@@ -95,8 +96,9 @@ double KEDF_vW::get_energy_density(double** pphi, int is, int ir, ModulePW::PW_B
     }
 
     double** LapPhi = new double*[PARAM.inp.nspin];
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    for (int is = 0; is < PARAM.inp.nspin; ++is) {
         LapPhi[is] = new double[pw_rho->nrxx];
+}
     this->laplacian_phi(tempPhi, LapPhi, pw_rho);
 
     double energyDen = 0.; // in Ry
@@ -177,8 +179,9 @@ void KEDF_vW::vw_potential(const double* const* pphi, ModulePW::PW_Basis* pw_rho
 
     // calculate the minus \nabla^2 sqrt(rho)
     double** LapPhi = new double*[PARAM.inp.nspin];
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    for (int is = 0; is < PARAM.inp.nspin; ++is) {
         LapPhi[is] = new double[pw_rho->nrxx];
+}
     this->laplacian_phi(tempPhi, LapPhi, pw_rho);
 
     // calculate potential

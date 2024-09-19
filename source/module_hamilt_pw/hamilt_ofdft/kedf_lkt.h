@@ -1,7 +1,7 @@
 #ifndef KEDF_LKT_H
 #define KEDF_LKT_H
-#include <math.h>
-#include <stdio.h>
+#include <cmath>
+#include <cstdio>
 
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
