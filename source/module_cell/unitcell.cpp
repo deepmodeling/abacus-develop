@@ -1704,7 +1704,10 @@ void cal_nbands(const int& nelec, const int& nlocal, const std::vector<double>& 
     // std::cout << "nbands(this-> = " <<nbands <<std::endl;
     if (nbands == occupied_bands)
     {
-        ModuleBase::WARNING_QUIT("ElecState::cal_nbands", "for smearing, num. of bands > num. of occupied bands");
+        if (PARAM.inp.smearing_method != "fixed")
+        {
+            ModuleBase::WARNING_QUIT("ElecState::cal_nbands", "for smearing, num. of bands > num. of occupied bands");
+        }
     }
 
     // mohan update 2021-02-19

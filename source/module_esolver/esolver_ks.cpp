@@ -11,6 +11,7 @@
 #include "module_io/print_info.h"
 #include "module_io/write_istate_info.h"
 #include "module_parameter/parameter.h"
+#include "module_cell/cal_atoms_info.h"
 
 #include <iostream>
 //--------------Temporary----------------
@@ -187,6 +188,8 @@ void ESolver_KS<T, Device>::before_all_runners(const Input_para& inp, UnitCell& 
         }
         delete[] atom_coord;
         delete[] atom_type;
+        CalAtomsInfo ca;
+        ca.cal_atoms_info(ucell.atoms, ucell.ntype, PARAM);
     }
 #endif
     /// End PAW

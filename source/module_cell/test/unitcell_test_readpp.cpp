@@ -331,7 +331,7 @@ TEST_F(UcellTest, CalNwfc2) {
     ucell->read_cell_pseudopots(pp_dir, ofs);
     EXPECT_FALSE(ucell->atoms[0].ncpp.has_so);
     EXPECT_FALSE(ucell->atoms[1].ncpp.has_so);
-    GlobalV::NLOCAL = 3 * 9;
+    GlobalV::NLOCAL = 3 * 9 * 2;
     EXPECT_NO_THROW(ucell->cal_nwfc(ofs));
 }
 
@@ -472,7 +472,9 @@ TEST_F(UcellTest, CalNbandsWarning2)
 {
     GlobalV::NSPIN = 2;
     GlobalV::nupdown = 4.0;
-    std::vector<double> nelec_spin(2, 5.0);
+    std::vector<double> nelec_spin(2);
+    nelec_spin[0] = (GlobalV::nelec + GlobalV::nupdown) / 2.0;
+    nelec_spin[1] = (GlobalV::nelec - GlobalV::nupdown) / 2.0;
     testing::internal::CaptureStdout();
     EXPECT_EXIT(cal_nbands(GlobalV::nelec, GlobalV::NLOCAL, nelec_spin, GlobalV::NBANDS), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
@@ -483,7 +485,9 @@ TEST_F(UcellTest, CalNbandsWarning3)
 {
     GlobalV::NSPIN = 2;
     GlobalV::nupdown = -4.0;
-    std::vector<double> nelec_spin(2, 5.0);
+    std::vector<double> nelec_spin(2);
+    nelec_spin[0] = (GlobalV::nelec + GlobalV::nupdown) / 2.0;
+    nelec_spin[1] = (GlobalV::nelec - GlobalV::nupdown) / 2.0;
     testing::internal::CaptureStdout();
     EXPECT_EXIT(cal_nbands(GlobalV::nelec, GlobalV::NLOCAL, nelec_spin, GlobalV::NBANDS), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
@@ -551,6 +555,7 @@ TEST_F(UcellTest, CalNbandsGaussWarning)
 {
     GlobalV::NBANDS = 5;
     std::vector<double> nelec_spin(2, 5.0);
+    PARAM.input.smearing_method = "gaussian";
     testing::internal::CaptureStdout();
     EXPECT_EXIT(cal_nbands(GlobalV::nelec, GlobalV::NLOCAL, nelec_spin, GlobalV::NBANDS), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
