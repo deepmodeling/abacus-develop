@@ -111,7 +111,7 @@ void write_elf(
     {
         for (int is = 0; is < nspin; ++is)
         {
-            std::string fn_temp = out_dir + "/ELF" + std::to_string(is) + ".cube";
+            std::string fn_temp = out_dir + "/ELF_SPIN" + std::to_string(is) + ".cube";
             int ispin = is + 1;
 
             ModuleIO::write_cube(
