@@ -54,7 +54,7 @@ std::vector<double> Ylm::ylmcoef = {
 // here Lmax == max angular momentum + 1
 void Ylm::get_ylm_real( const int &Lmax, const ModuleBase::Vector3<double> &vec, double ylmr[] )
 {
-	ModuleBase::timer::tick ("Ylm","get_ylm_real");
+	//ModuleBase::timer::tick ("Ylm","get_ylm_real");
 	//1e-9 is too large
 	const double cut0 = 1e-12;
 	// allocate space.
@@ -165,7 +165,7 @@ void Ylm::get_ylm_real( const int &Lmax, const ModuleBase::Vector3<double> &vec,
 		}
 	}// end do
 
-	ModuleBase::timer::tick ("Ylm", "get_ylm_real");
+	//ModuleBase::timer::tick ("Ylm", "get_ylm_real");
 	return;
 }
 
@@ -536,7 +536,7 @@ void Ylm::sph_harm
 	std::vector<double> &rly
 )
 {
-	rly.reserve( (Lmax+1)*(Lmax+1) );
+	rly.resize( (Lmax+1)*(Lmax+1) );
 
 	//begin calculation
 	/***************************
