@@ -654,7 +654,7 @@ TEST_F(GlobalFunctionTest, COPYARRAY)
 
 TEST_F(GlobalFunctionTest,IsColumnMajor)
 {
-	GlobalV::KS_SOLVER = "genelpa";
+	PARAM.input.ks_solver = "genelpa";
 	EXPECT_TRUE(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER());
 }
 

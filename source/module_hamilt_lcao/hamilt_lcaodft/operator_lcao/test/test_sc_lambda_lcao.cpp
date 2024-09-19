@@ -1,5 +1,8 @@
 #include <algorithm>
 #include <random>
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 
 #include "../sc_lambda_lcao.h"
 #include "gmock/gmock.h"
@@ -104,7 +107,7 @@ TEST_F(ScLambdaLCAOTest, ContributeHk)
     sc_lambda[0][2] = 1.0;
     sc.set_sc_lambda(sc_lambda, 1);
     // set KS_SOLVER, which determines IS_COLUMN_MAJOR_KS_SOLVER()
-    GlobalV::KS_SOLVER = "genelpa";
+    PARAM.input.ks_solver = "genelpa";
     EXPECT_TRUE(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER());
     // set sc_lambda_op
     auto sc_lambda_op
@@ -163,7 +166,7 @@ TEST_F(ScLambdaLCAOTest, ContributeHkS2)
     sc_lambda[0][2] = 1.0;
     sc.set_sc_lambda(sc_lambda, 1);
     // set KS_SOLVER, which determines IS_COLUMN_MAJOR_KS_SOLVER()
-    GlobalV::KS_SOLVER = "genelpa";
+    PARAM.input.ks_solver = "genelpa";
     EXPECT_TRUE(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER());
     // set sc_lambda_op
     auto sc_lambda_op
