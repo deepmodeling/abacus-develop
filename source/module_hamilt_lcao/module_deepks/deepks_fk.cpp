@@ -1,5 +1,6 @@
 // cal_f_delta_k, which is used for multi-k calculation
 
+#include "module_parameter/parameter.h"
 #ifdef __DEEPKS
 
 #include "deepks_force.h"
@@ -55,7 +56,7 @@ void DeePKS_domain::cal_f_delta_k(
                 const int start1 = ucell.itiaiw2iwt(T1, I1, 0);
                 const ModuleBase::Vector3<double> tau1 = GridD.getAdjacentTau(ad1);
                 const Atom* atom1 = &ucell.atoms[T1];
-                const int nw1_tot = atom1->nw*GlobalV::NPOL;
+                const int nw1_tot = atom1->nw*PARAM.globalv.npol;
                 const double Rcut_AO1 = orb.Phi[T1].getRcut();
 
                 ModuleBase::Vector3<double> dR1(GridD.getBox(ad1).x, GridD.getBox(ad1).y, GridD.getBox(ad1).z);
@@ -68,7 +69,7 @@ void DeePKS_domain::cal_f_delta_k(
                     const int start2 = ucell.itiaiw2iwt(T2, I2, 0);
                     const ModuleBase::Vector3<double> tau2 = GridD.getAdjacentTau(ad2);
                     const Atom* atom2 = &ucell.atoms[T2];
-                    const int nw2_tot = atom2->nw*GlobalV::NPOL;
+                    const int nw2_tot = atom2->nw*PARAM.globalv.npol;
                     ModuleBase::Vector3<double> dR2(GridD.getBox(ad2).x, GridD.getBox(ad2).y, GridD.getBox(ad2).z);
                     
                     const double Rcut_AO2 = orb.Phi[T2].getRcut();
@@ -135,7 +136,7 @@ void DeePKS_domain::cal_f_delta_k(
 
                             assert(nlm1.size()==nlm2[0].size());
 
-                            if(!GlobalV::deepks_equiv)
+                            if(!PARAM.inp.deepks_equiv)
                             {
                                 int ib=0;
                                 for (int L0 = 0; L0 <= orb.Alpha[0].getLmax();++L0)
@@ -198,7 +199,7 @@ void DeePKS_domain::cal_f_delta_k(
 
                                 assert(nlm1.size()==nlm2[0].size());                                
 
-                                if(!GlobalV::deepks_equiv)
+                                if(!PARAM.inp.deepks_equiv)
                                 {
                                     int ib=0;
                                     for (int L0 = 0; L0 <= orb.Alpha[0].getLmax();++L0)

@@ -40,7 +40,7 @@ void Driver::driver_run() {
 
     // the life of ucell should begin here, mohan 2024-05-12
     // delete ucell as a GlobalC in near future
-    GlobalC::ucell.setup_cell(GlobalV::stru_file, GlobalV::ofs_running);
+    GlobalC::ucell.setup_cell(PARAM.inp.stru_file, GlobalV::ofs_running);
     Check_Atomic_Stru::check_atomic_stru(GlobalC::ucell,
                                          PARAM.inp.min_dist_coef);
 

@@ -353,7 +353,7 @@ void DFTU::cal_force_k(ForceStressArrays& fsr,
 
                         for (int m = 0; m < 2 * l + 1; m++)
                         {
-                            for (int ipol = 0; ipol < GlobalV::NPOL; ipol++)
+                            for (int ipol = 0; ipol < PARAM.globalv.npol; ipol++)
                             {
                                 const int iwt = this->iatlnmipol2iwt[iat][l][n][m][ipol];
                                 const int mu = pv.global2local_row(iwt);
@@ -566,7 +566,7 @@ void DFTU::cal_force_gamma(const double* rho_VU,
                         // Calculate the local occupation number matrix
                         for (int m = 0; m < 2 * l + 1; m++)
                         {
-                            for (int ipol = 0; ipol < GlobalV::NPOL; ipol++)
+                            for (int ipol = 0; ipol < PARAM.globalv.npol; ipol++)
                             {
                                 const int iwt = this->iatlnmipol2iwt[iat][l][n][m][ipol];
                                 const int mu = pv.global2local_row(iwt);

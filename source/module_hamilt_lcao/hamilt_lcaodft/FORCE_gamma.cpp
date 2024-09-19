@@ -233,7 +233,7 @@ void Force_LCAO<double>::ftable(const bool isforce,
 
     // caoyu add for DeePKS
 #ifdef __DEEPKS
-    if (GlobalV::deepks_scf)
+    if (PARAM.inp.deepks_scf)
     {
         const std::vector<std::vector<double>>& dm_gamma = dm->get_DMK_vector();
 

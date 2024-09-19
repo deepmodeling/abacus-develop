@@ -40,12 +40,7 @@ double DQ = 0.010; // space between Q points of the reciprocal radial tab
 int NQX = 10000;   // number of points describing reciprocal radial tab
 int NQXQ = 10000;  // number of points describing reciprocal radial tab for Q
 
-bool GAMMA_ONLY_PW = false;    // mohan add 2012-06-05
 
-int ZEEMAN_IN_H = 1;
-
-// int ocp_n=0;
-bool out_mul = false; // qifeng add 2019/9/10
 //----------------------------------------------------------
 // EXPLAIN : Parallel information
 //----------------------------------------------------------
@@ -70,43 +65,18 @@ int GSIZE = DSIZE;
 //----------------------------------------------------------
 // EXPLAIN : The input file name and directory
 //----------------------------------------------------------
-std::string global_in_card = "INPUT";
 std::string stru_file = "STRU";
-
 
 std::ofstream ofs_running;
 std::ofstream ofs_warning;
 std::ofstream ofs_info;   // output math lib info
 std::ofstream ofs_device; // output device info
 
-//----------------------------------------------------------
-// src_tools
-//----------------------------------------------------------
-
-// added by zhengdy-soc
-bool NONCOLIN = false;
-bool LSPINORB = false;
-bool DOMAG = false;
-bool DOMAG_Z = false;
-int NPOL = 1;
-
-bool deepks_out_labels = false; // caoyu add 2021-10-16 for DeePKS, wenfei 2022-1-16
-bool deepks_scf = false; // caoyu add 2021-10-16 for DeePKS, wenfei 2022-1-16
-bool deepks_bandgap = false; // for bandgap label. QO added 2021-12-15
-int  deepks_v_delta = 0; // for v_delta label. xinyuan added 2023-2-15
-
-bool deepks_equiv = false;
-
-bool deepks_setorb = false;
-
-std::vector<std::string> rpa_orbitals;
 
 //==========================================================
 // device flags added by denghui
 //==========================================================
 std::string device_flag = "unknown";
-
-int out_pot = 0;
 
 double nelec = 0;
 

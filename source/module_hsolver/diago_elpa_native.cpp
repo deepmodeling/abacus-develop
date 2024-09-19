@@ -2,6 +2,7 @@
 
 #include "module_base/blacs_connector.h"
 #include "module_base/global_variable.h"
+#include "module_parameter/parameter.h"
 #include "module_base/lapack_connector.h"
 #include "module_base/scalapack_connector.h"
 #include "module_base/timer.h"
@@ -94,7 +95,7 @@ void DiagoElpaNative<T>::diag_pool(hamilt::MatrixBlock<T>& h_mat,
     elpa_set(handle, "solver", ELPA_SOLVER_1STAGE, &success);
 
 #ifdef __CUDA
-    if (GlobalV::device_flag == "gpu")
+    if (PARAM.globalv.device_flag == "gpu")
     {
         elpa_set(handle, "nvidia-gpu", 1, &success);
 

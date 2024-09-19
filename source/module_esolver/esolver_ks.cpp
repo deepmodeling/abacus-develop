@@ -55,7 +55,7 @@ ESolver_KS<T, Device>::ESolver_KS()
 
     // pw_rho = new ModuleBase::PW_Basis();
     // temporary, it will be removed
-    pw_wfc = new ModulePW::PW_Basis_K_Big(GlobalV::device_flag, PARAM.inp.precision);
+    pw_wfc = new ModulePW::PW_Basis_K_Big(PARAM.globalv.device_flag, PARAM.inp.precision);
     ModulePW::PW_Basis_K_Big* tmp = static_cast<ModulePW::PW_Basis_K_Big*>(pw_wfc);
 
     // should not use INPUT here, mohan 2024-05-12
@@ -145,7 +145,7 @@ void ESolver_KS<T, Device>::before_all_runners(const Input_para& inp, UnitCell& 
 
         if (GlobalV::MY_RANK == 0)
         {
-            std::ifstream ifa(GlobalV::stru_file.c_str(), std::ios::in);
+            std::ifstream ifa(PARAM.inp.stru_file.c_str(), std::ios::in);
             if (!ifa)
             {
                 ModuleBase::WARNING_QUIT("set_libpaw_files", "can not open stru file");

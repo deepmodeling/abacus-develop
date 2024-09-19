@@ -33,6 +33,7 @@ AddTest(
 AddTest(
   TARGET io_read_item_serial
   LIBS parameter ${math_libs} base device io_input_serial 
+  LIBS parameter ${math_libs} base device io_input_serial 
   SOURCES read_input_item_test.cpp
 )
 
@@ -66,7 +67,7 @@ AddTest(
 )
 
 AddTest(
-  TARGET io_system_variable
-  LIBS parameter ${math_libs} base device io_input_serial
-  SOURCES io_system_variable_test.cpp 
+  TARGET io_system_variable_test
+  LIBS parameter ${math_libs} base device io_input_serial 
+  SOURCES io_system_variable_test.cpp
 )

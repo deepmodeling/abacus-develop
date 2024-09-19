@@ -362,7 +362,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
                 }
 #ifdef __DEEPKS
                 // mohan add 2021-08-04
-                if (GlobalV::deepks_scf)
+                if (PARAM.inp.deepks_scf)
                 {
                     fcs(iat, i) += GlobalC::ld.F_delta(iat, i);
                 }
@@ -400,7 +400,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
 
 #ifdef __DEEPKS
         // DeePKS force
-        if (GlobalV::deepks_out_labels) // not parallelized yet
+        if (PARAM.inp.deepks_out_labels) // not parallelized yet
         {
             const std::string file_ftot = PARAM.globalv.global_out_dir + "deepks_ftot.npy";
             LCAO_deepks_io::save_npy_f(fcs, 
@@ -408,7 +408,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
                                        GlobalC::ucell.nat, 
                                        GlobalV::MY_RANK); // Ty/Bohr, F_tot
 
-            if (GlobalV::deepks_scf)
+            if (PARAM.inp.deepks_scf)
             {
                 const std::string file_fbase = PARAM.globalv.global_out_dir + "deepks_fbase.npy";
                 LCAO_deepks_io::save_npy_f(fcs - GlobalC::ld.F_delta, 
@@ -416,7 +416,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
                                            GlobalC::ucell.nat, 
                                            GlobalV::MY_RANK); // Ry/Bohr, F_base
 
-                if (!GlobalV::deepks_equiv) // training with force label not supported by equivariant version now
+                if (!PARAM.inp.deepks_equiv) // training with force label not supported by equivariant version now
                 {
                     if (PARAM.globalv.gamma_only_local)
                     {
@@ -542,7 +542,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
             }
 #ifdef __DEEPKS
             // caoyu add 2021-06-03
-            if (GlobalV::deepks_scf)
+            if (PARAM.inp.deepks_scf)
             {
                 ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "DeePKS 	FORCE", GlobalC::ld.F_delta, true);
                 // this->print_force("DeePKS 	FORCE", GlobalC::ld.F_delta, 1, ry);
@@ -620,7 +620,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
         } // end symmetry
 
 #ifdef __DEEPKS
-        if (GlobalV::deepks_out_labels) // not parallelized yet
+        if (PARAM.inp.deepks_out_labels) // not parallelized yet
         {
             const std::string file_s = PARAM.globalv.global_out_dir + "deepks_sbase.npy";
             LCAO_deepks_io::save_npy_s(scs,
@@ -628,7 +628,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
                                       GlobalC::ucell.omega,
                                       GlobalV::MY_RANK); // change to energy unit Ry when printing, S_base;
         }
-        if (GlobalV::deepks_scf)
+        if (PARAM.inp.deepks_scf)
         {
             if (ModuleSymmetry::Symmetry::symm_flag == 1)
             {
@@ -642,7 +642,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
                 }
             }
         }
-        if (GlobalV::deepks_out_labels) // not parallelized yet
+        if (PARAM.inp.deepks_out_labels) // not parallelized yet
         {
 			const std::string file_s = PARAM.globalv.global_out_dir + "deepks_stot.npy";
 			LCAO_deepks_io::save_npy_s(
@@ -652,10 +652,10 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
 					GlobalV::MY_RANK); // change to energy unit Ry when printing, S_tot, w/ model
 
             // wenfei add 2021/11/2
-            if (GlobalV::deepks_scf)
+            if (PARAM.inp.deepks_scf)
             {
 
-                if (!GlobalV::deepks_equiv) // training with stress label not supported by equivariant version now
+                if (!PARAM.inp.deepks_equiv) // training with stress label not supported by equivariant version now
                 {
                     GlobalC::ld.cal_gvepsl(GlobalC::ucell.nat);
 

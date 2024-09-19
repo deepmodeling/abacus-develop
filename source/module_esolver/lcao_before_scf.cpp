@@ -125,7 +125,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
 #ifdef __DEEPKS
     // for each ionic step, the overlap <psi|alpha> must be rebuilt
     // since it depends on ionic positions
-    if (GlobalV::deepks_setorb)
+    if (PARAM.globalv.deepks_setorb)
     {
         const Parallel_Orbitals* pv = &this->pv;
         // build and save <psi(0)|alpha(R)> at beginning
@@ -152,7 +152,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
                    PARAM.inp.sc_mag_switch,
                    GlobalC::ucell,
                    PARAM.inp.sc_file,
-                   GlobalV::NPOL,
+                   PARAM.globalv.npol,
                    &(this->pv),
                    GlobalV::NSPIN,
                    this->kv,
@@ -165,7 +165,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
     // cal_ux should be called before init_scf because
     // the direction of ux is used in noncoline_rho
     //=========================================================
-    if (GlobalV::NSPIN == 4 && GlobalV::DOMAG)
+    if (GlobalV::NSPIN == 4 && PARAM.globalv.domag)
     {
         GlobalC::ucell.cal_ux();
     }

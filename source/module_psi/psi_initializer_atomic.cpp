@@ -217,7 +217,7 @@ void psi_initializer_atomic<T, Device>::proj_ao_onkG(const int ik)
                             Soc soc; soc.rot_ylm(l + 1);
                             const double j = this->p_ucell_->atoms[it].ncpp.jchi[ipswfc];
     /* NOT NONCOLINEAR CASE, rotation matrix become identity */
-                            if (!(GlobalV::DOMAG||GlobalV::DOMAG_Z))
+                            if (!(PARAM.globalv.domag||PARAM.globalv.domag_z))
                             {
                                 double cg_coeffs[2];
                                 for(int m = -l-1; m < l+1; m++)

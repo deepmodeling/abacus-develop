@@ -1,4 +1,5 @@
 #include "module_base/constants.h"
+#include "module_parameter/parameter.h"
 #include "module_base/tool_quit.h"
 #include "read_input.h"
 #include "read_input_tool.h"
@@ -16,12 +17,27 @@ void ReadInput::item_deepks()
         Input_Item item("deepks_scf");
         item.annotation = ">0 add V_delta to Hamiltonian";
         read_sync_bool(input.deepks_scf);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+        #ifndef __DEEPKS
+            if (PARAM.inp.deepks_scf || PARAM.inp.deepks_out_labels || 
+                PARAM.inp.deepks_bandgap || PARAM.inp.deepks_v_delta)
+            {
+                ModuleBase::WARNING_QUIT("Input_conv", "please compile with DeePKS");
+            }
+        #endif
+        };
         this->add_item(item);
     }
     {
         Input_Item item("deepks_equiv");
         item.annotation = "whether to use equivariant version of DeePKS";
         read_sync_bool(input.deepks_equiv);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.deepks_equiv && para.input.deepks_bandgap)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "equivariant version of DeePKS is not implemented yet");
+            }
+        };
         this->add_item(item);
     }
     {
@@ -41,6 +57,22 @@ void ReadInput::item_deepks()
         item.annotation = "if set 1, prints intermediate quantities that shall "
                           "be used for making unit test";
         read_sync_bool(input.deepks_out_unittest);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.deepks_out_unittest)
+            {
+                para.input.deepks_out_labels = true;
+                para.input.deepks_scf = true;
+
+            }
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.deepks_out_unittest){
+                if (para.input.cal_force != 1)
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput", "force is required in generating deepks unittest");
+                }
+            }
+        };
         this->add_item(item);
     }
     {

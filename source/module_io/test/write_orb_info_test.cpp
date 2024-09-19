@@ -45,7 +45,7 @@ TEST(OrbInfo,WriteOrbInfo)
     ofs.open("running.log");
     PARAM.sys.global_out_dir = "./";
 	PARAM.input.pseudo_rcut = 15.0;
-    GlobalV::LSPINORB = false;
+    PARAM.input.lspinorb = false;
 	GlobalV::NSPIN = 1;
     PARAM.input.basis_type = "pw";
     PARAM.input.dft_functional = "default";

@@ -289,37 +289,6 @@ void Input_Conv::Convert()
         }
     }
 #endif
-    //--------------------------------------------
-    // added by zhengdy-soc
-    //--------------------------------------------
-    if (PARAM.inp.noncolin || PARAM.inp.lspinorb)
-    {
-        GlobalV::NSPIN = 4;
-    }
-
-    if (GlobalV::NSPIN == 4)
-    {
-        GlobalV::NONCOLIN = PARAM.inp.noncolin;
-        // wavefunctions are spinors with 2 components
-        GlobalV::NPOL = 2;
-        // set the domag variable to make a spin-orbit calculation with zero
-        // magnetization
-        GlobalV::DOMAG = false;
-        GlobalV::DOMAG_Z = true;
-        GlobalV::LSPINORB = PARAM.inp.lspinorb;
-        if (PARAM.globalv.gamma_only_local)
-        {
-            ModuleBase::WARNING_QUIT("input_conv",
-                                     "nspin=4(soc or noncollinear-spin) does "
-                                     "not support gamma only calculation");
-        }
-    } else {
-        GlobalV::LSPINORB = false;
-        GlobalV::NONCOLIN = false;
-        GlobalV::DOMAG = false;
-        GlobalV::DOMAG_Z = false;
-        GlobalV::NPOL = 1;
-    }
 
     //----------------------------------------------------------
     // Yu Liu add 2022-05-18
@@ -488,7 +457,7 @@ void Input_Conv::Convert()
     }
     // In these case, inversion symmetry is also not allowed, symmetry should be
     // reset to -1
-    if (GlobalV::LSPINORB)
+    if (PARAM.inp.lspinorb)
     {
         ModuleSymmetry::Symmetry::symm_flag = -1;
     }
@@ -514,7 +483,6 @@ void Input_Conv::Convert()
     // wavefunction / charge / potential / (2/4)
     //----------------------------------------------------------
     GlobalV::nelec = PARAM.inp.nelec;
-    GlobalV::out_pot = PARAM.inp.out_pot;
 
 #ifdef __LCAO
 
@@ -557,45 +525,6 @@ void Input_Conv::Convert()
 //-----------------------------------------------
 // caoyu add for DeePKS
 //-----------------------------------------------
-#ifdef __DEEPKS
-    GlobalV::deepks_scf = PARAM.inp.deepks_scf;
-    GlobalV::deepks_bandgap = PARAM.inp.deepks_bandgap; // QO added for bandgap label 2021-12-15
-    GlobalV::deepks_v_delta = PARAM.inp.deepks_v_delta;
-    GlobalV::deepks_out_labels = PARAM.inp.deepks_out_labels;
-    GlobalV::deepks_equiv = PARAM.inp.deepks_equiv;
-
-    if (GlobalV::deepks_equiv && GlobalV::deepks_bandgap) {
-        ModuleBase::WARNING_QUIT(
-            "Input_conv",
-            "deepks_equiv and deepks_bandgap cannot be used together");
-    }
-    if (PARAM.inp.deepks_out_unittest)
-    {
-        GlobalV::deepks_out_labels = true;
-        GlobalV::deepks_scf = true;
-        if (GlobalV::NPROC > 1)
-        {
-            ModuleBase::WARNING_QUIT("Input_conv", "generate deepks unittest with only 1 processor");
-        }
-        if (PARAM.inp.cal_force != 1)
-        {
-            ModuleBase::WARNING_QUIT("Input_conv", "force is required in generating deepks unittest");
-        }
-        if (GlobalV::CAL_STRESS != 1)
-        {
-            ModuleBase::WARNING_QUIT("Input_conv", "stress is required in generating deepks unittest");
-        }
-    }
-    if (GlobalV::deepks_scf || GlobalV::deepks_out_labels)
-    {
-        GlobalV::deepks_setorb = true;
-    }
-#else
-    if (PARAM.inp.deepks_scf || PARAM.inp.deepks_out_labels || PARAM.inp.deepks_bandgap || PARAM.inp.deepks_v_delta)
-    {
-        ModuleBase::WARNING_QUIT("Input_conv", "please compile with DeePKS");
-    }
-#endif
     //-----------------------------------------------
     // sunml add for implicit solvation model
     //-----------------------------------------------
