@@ -15,26 +15,26 @@ void Ions_Move_Methods::allocate(const int &natom)
 {
     Ions_Move_Basic::dim = natom * 3;
 
-    if (GlobalV::RELAX_METHOD == "bfgs")
+    if (Ions_Move_Basic::relax_method == "bfgs")
     {
         this->bfgs.allocate();
     }
-    else if (GlobalV::RELAX_METHOD == "sd")
+    else if (Ions_Move_Basic::relax_method == "sd")
     {
         this->sd.allocate();
     }
-    else if (GlobalV::RELAX_METHOD == "cg")
+    else if (Ions_Move_Basic::relax_method == "cg")
     {
         this->cg.allocate();
     }
-    else if (GlobalV::RELAX_METHOD == "cg_bfgs")
+    else if (Ions_Move_Basic::relax_method == "cg_bfgs")
     {
         this->cg.allocate();
         this->bfgs.allocate(); // added by pengfei  13-8-8
     }
     else
     {
-        ModuleBase::WARNING("Ions_Move_Methods::init", "the parameter GlobalV::RELAX_METHOD is not correct.");
+        ModuleBase::WARNING("Ions_Move_Methods::init", "the parameter Ions_Move_Basic::relax_method is not correct.");
     }
     return;
 }
@@ -51,28 +51,28 @@ void Ions_Move_Methods::cal_movement(const int &istep,
     // Ions_Move_Basic::istep = istep;
     Ions_Move_Basic::istep = force_step;
 
-    if (GlobalV::RELAX_METHOD == "bfgs")
+    if (Ions_Move_Basic::relax_method == "bfgs")
     {
         // move_ions
         // output tau
         // check all symmery
         bfgs.start(ucell, f, etot);
     }
-    else if (GlobalV::RELAX_METHOD == "sd")
+    else if (Ions_Move_Basic::relax_method == "sd")
     {
         sd.start(ucell, f, etot);
     }
-    else if (GlobalV::RELAX_METHOD == "cg")
+    else if (Ions_Move_Basic::relax_method == "cg")
     {
         cg.start(ucell, f, etot);
     }
-    else if (GlobalV::RELAX_METHOD == "cg_bfgs")
+    else if (Ions_Move_Basic::relax_method == "cg_bfgs")
     {
         cg.start(ucell, f, etot); // added by pengfei 13-8-10
     }
     else
     {
-        ModuleBase::WARNING("Ions_Move_Methods::init", "the parameter GlobalV::RELAX_METHOD is not correct.");
+        ModuleBase::WARNING("Ions_Move_Methods::init", "the parameter Ions_Move_Basic::relax_method is not correct.");
     }
     return;
 }

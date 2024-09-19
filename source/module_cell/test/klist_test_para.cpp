@@ -224,7 +224,7 @@ TEST_F(KlistParaTest, Set)
     std::string k_file = "./support/KPT1";
     // set klist
     kv->nspin = 1;
-    GlobalV::NSPIN = 1;
+    PARAM.input.nspin = 1;
     if (GlobalV::NPROC == 4)
     {
         GlobalV::KPAR = 2;
@@ -281,7 +281,7 @@ TEST_F(KlistParaTest, SetAfterVC)
     std::string k_file = "./support/KPT1";
     // set klist
     kv->nspin = 1;
-    GlobalV::NSPIN = 1;
+    PARAM.input.nspin = 1;
     if (GlobalV::NPROC == 4)
     {
         GlobalV::KPAR = 1;

@@ -1,5 +1,6 @@
 #include "FORCE.h"
 
+#include "module_parameter/parameter.h"
 #include <map>
 #include <unordered_map>
 
@@ -41,7 +42,7 @@ void Force_LCAO<std::complex<double>>::cal_fvl_dphi(
 
     ModuleBase::timer::tick("Force_LCAO", "cal_fvl_dphi");
 
-    const int nspin = GlobalV::NSPIN;
+    const int nspin = PARAM.inp.nspin;
 
     for (int is = 0; is < nspin; ++is)
     {

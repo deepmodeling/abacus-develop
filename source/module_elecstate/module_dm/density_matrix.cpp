@@ -1,5 +1,6 @@
 #include "density_matrix.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/libm/libm.h"
 #include "module_base/memory.h"
 #include "module_base/timer.h"
@@ -507,7 +508,7 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR()
                 }
 #endif
                 // loop over k-points
-                if (GlobalV::NSPIN != 4)
+                if (PARAM.inp.nspin != 4)
                 {
                     for (int ik = 0; ik < this->_nks; ++ik)
                     {
@@ -550,7 +551,7 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR()
                 }
 
                 // treat DMR as pauli matrix when NSPIN=4
-                if (GlobalV::NSPIN == 4)
+                if (PARAM.inp.nspin == 4)
                 {
                     std::vector<std::complex<double>> tmp_DMR(this->_paraV->get_col_size()
                                                                   * this->_paraV->get_row_size(),
@@ -672,7 +673,7 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR(const int ik)
                 }
 #endif
                 // Remove loop over k-points and directly use the provided ik
-                if (GlobalV::NSPIN != 4)
+                if (PARAM.inp.nspin != 4)
                 {
                     // cal k_phase
                     // if TK==std::complex<double>, kphase is e^{ikR}

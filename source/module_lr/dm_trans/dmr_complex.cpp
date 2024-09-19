@@ -1,5 +1,6 @@
 #include "module_elecstate/module_dm/density_matrix.h"
 #include "module_base/timer.h"
+#include "module_parameter/parameter.h"
 #include "module_base/libm/libm.h"
 namespace elecstate
 {
@@ -41,7 +42,7 @@ namespace elecstate
                     }
 #endif
                     // loop over k-points
-                    if (GlobalV::NSPIN != 4)
+                    if (PARAM.inp.nspin != 4)
                         for (int ik = 0; ik < this->_nks; ++ik)
                         {
                             // cal k_phase
@@ -70,7 +71,7 @@ namespace elecstate
                             }
                         }
                     // treat DMR as pauli matrix when NSPIN=4
-                    if (GlobalV::NSPIN == 4)
+                    if (PARAM.inp.nspin == 4)
                         throw std::runtime_error("complex DM(R) with NSPIN=4 is not implemented yet");
                 }
             }

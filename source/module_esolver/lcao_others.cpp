@@ -118,7 +118,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                       PARAM.inp.out_pchg,
                       GlobalV::NBANDS,
                       GlobalV::nelec,
-                      GlobalV::NSPIN,
+                      PARAM.inp.nspin,
                       GlobalV::NLOCAL,
                       PARAM.globalv.global_out_dir,
                       GlobalV::ofs_warning,
@@ -147,7 +147,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                       PARAM.inp.out_pchg,
                       GlobalV::NBANDS,
                       GlobalV::nelec,
-                      GlobalV::NSPIN,
+                      PARAM.inp.nspin,
                       GlobalV::NLOCAL,
                       PARAM.globalv.global_out_dir,
                       GlobalV::ofs_warning,
@@ -180,7 +180,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                       PARAM.inp.out_wfc_norm,
                       PARAM.inp.out_wfc_re_im,
                       GlobalV::NBANDS,
-                      GlobalV::NSPIN,
+                      PARAM.inp.nspin,
                       GlobalV::NLOCAL,
                       PARAM.globalv.global_out_dir);
         }
@@ -200,7 +200,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                       PARAM.inp.out_wfc_norm,
                       PARAM.inp.out_wfc_re_im,
                       GlobalV::NBANDS,
-                      GlobalV::NSPIN,
+                      PARAM.inp.nspin,
                       GlobalV::NLOCAL,
                       PARAM.globalv.global_out_dir);
         }

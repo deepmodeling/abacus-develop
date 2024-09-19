@@ -84,7 +84,7 @@ void LR::ESolver_LR<T, TR>::parameter_check()const
 template<typename T, typename TR>
 void LR::ESolver_LR<T, TR>::set_dimension()
 {
-    this->nspin = GlobalV::NSPIN;
+    this->nspin = PARAM.inp.nspin;
     if (nspin == 2) { std::cout << "** Assuming the spin-up and spin-down states are degenerate. **" << std::endl;
 }
     this->nstates = input.lr_nstates;
@@ -242,7 +242,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
         GlobalC::ucell.symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
     }
-    this->kv.set(ucell.symm, PARAM.inp.kpoint_file, GlobalV::NSPIN, ucell.G, ucell.latvec, GlobalV::ofs_running);
+    this->kv.set(ucell.symm, PARAM.inp.kpoint_file, PARAM.inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
     Print_Info::setup_parameters(ucell, this->kv);
 
@@ -515,7 +515,7 @@ void LR::ESolver_LR<T, TR>::set_X_initial_guess()
     ix2ioiv = std::move(std::get<1>(indexmap));
 
     // use unit vectors as the initial guess
-    // for (int i = 0; i < std::min(this->nstates * GlobalV::PW_DIAG_NDIM, nocc * nvirt); i++)
+    // for (int i = 0; i < std::min(this->nstates * PARAM.inp.pw_diag_ndim, nocc * nvirt); i++)
     for (int is = 0;is < this->nspin;++is)
     {
         for (int s = 0; s < nstates; ++s)

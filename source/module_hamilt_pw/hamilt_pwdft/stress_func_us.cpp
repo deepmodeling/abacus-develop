@@ -27,9 +27,9 @@ void Stress_PW<FPTYPE, Device>::stress_us(ModuleBase::matrix& sigma,
     ModuleBase::matrix stressus(3, 3);
 
     ModuleBase::matrix veff = this->pelec->pot->get_effective_v();
-    ModuleBase::ComplexMatrix vg(GlobalV::NSPIN, npw);
+    ModuleBase::ComplexMatrix vg(PARAM.inp.nspin, npw);
     // fourier transform of the total effective potential
-    for (int is = 0; is < GlobalV::NSPIN; is++)
+    for (int is = 0; is < PARAM.inp.nspin; is++)
     {
         rho_basis->real2recip(&veff.c[is * veff.nc], &vg(is, 0));
     }
@@ -66,7 +66,7 @@ void Stress_PW<FPTYPE, Device>::stress_us(ModuleBase::matrix& sigma,
                 // qgm contains derivatives of the Fourier transform of the Q function
                 const int nij = atom->ncpp.nh * (atom->ncpp.nh + 1) / 2;
                 ModuleBase::ComplexMatrix qgm(nij, npw);
-                ModuleBase::matrix tbecsum(GlobalV::NSPIN, nij);
+                ModuleBase::matrix tbecsum(PARAM.inp.nspin, nij);
 
                 // Compute and store derivatives of Q(G) for this atomic species
                 // (without structure factor)
@@ -95,7 +95,7 @@ void Stress_PW<FPTYPE, Device>::stress_us(ModuleBase::matrix& sigma,
                 for (int ia = 0; ia < atom->na; ia++)
                 {
                     const int iat = ucell.itia2iat(it, ia);
-                    for (int is = 0; is < GlobalV::NSPIN; is++)
+                    for (int is = 0; is < PARAM.inp.nspin; is++)
                     {
                         for (int ij = 0; ij < nij; ij++)
                         {
@@ -103,7 +103,7 @@ void Stress_PW<FPTYPE, Device>::stress_us(ModuleBase::matrix& sigma,
                         }
                     }
 
-                    ModuleBase::ComplexMatrix aux2(GlobalV::NSPIN, npw);
+                    ModuleBase::ComplexMatrix aux2(PARAM.inp.nspin, npw);
                     double* aux2_data = reinterpret_cast<double*>(aux2.c);
 
                     const char transa = 'N';
@@ -114,7 +114,7 @@ void Stress_PW<FPTYPE, Device>::stress_us(ModuleBase::matrix& sigma,
                     dgemm_(&transa,
                            &transb,
                            &dim,
-                           &GlobalV::NSPIN,
+                           &PARAM.inp.nspin,
                            &nij,
                            &one,
                            qgm_data,
@@ -125,7 +125,7 @@ void Stress_PW<FPTYPE, Device>::stress_us(ModuleBase::matrix& sigma,
                            aux2_data,
                            &dim);
 
-                    for (int is = 0; is < GlobalV::NSPIN; is++)
+                    for (int is = 0; is < PARAM.inp.nspin; is++)
                     {
                         for (int ig = 0; ig < npw; ig++)
                         {
@@ -145,13 +145,13 @@ void Stress_PW<FPTYPE, Device>::stress_us(ModuleBase::matrix& sigma,
                         }
                     }
 
-                    ModuleBase::matrix fac(GlobalV::NSPIN, 3);
+                    ModuleBase::matrix fac(PARAM.inp.nspin, 3);
                     const char transc = 'T';
                     const int three = 3;
                     dgemm_(&transc,
                            &transb,
                            &three,
-                           &GlobalV::NSPIN,
+                           &PARAM.inp.nspin,
                            &dim,
                            &one,
                            aux1_data,
@@ -162,7 +162,7 @@ void Stress_PW<FPTYPE, Device>::stress_us(ModuleBase::matrix& sigma,
                            fac.c,
                            &three);
 
-                    for (int is = 0; is < GlobalV::NSPIN; is++)
+                    for (int is = 0; is < PARAM.inp.nspin; is++)
                     {
                         for (int jpol = 0; jpol < 3; jpol++)
                         {
@@ -276,10 +276,10 @@ void Stress_Func<FPTYPE, Device>::dqvan2(const pseudopot_cell_vnl* ppcell_in,
                                                                      itype,
                                                                      l,
                                                                      ijv,
-                                                                     GlobalV::NQXQ,
-                                                                     GlobalV::DQ,
+                                                                     PARAM.globalv.nqxq,
+                                                                     PARAM.globalv.dq,
                                                                      qnorm[ig]);
-                work1 = this->Polynomial_Interpolation_nl(ppcell_in->qrad, itype, l, ijv, GlobalV::DQ, qnorm[ig]);
+                work1 = this->Polynomial_Interpolation_nl(ppcell_in->qrad, itype, l, ijv, PARAM.globalv.dq, qnorm[ig]);
                 qm1 = qnorm[ig];
             }
             dqg[ig] += pref * work * dylmk0(lp, ig) / tpiba;

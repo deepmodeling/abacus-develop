@@ -1,5 +1,6 @@
 #include "veff_lcao.h"
 #include "module_base/timer.h"
+#include "module_parameter/parameter.h"
 #include "module_base/tool_title.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_cell/unitcell.h"
@@ -15,7 +16,7 @@ void Veff<OperatorLCAO<TK, TR>>::initialize_HR(const UnitCell* ucell_in,
     ModuleBase::TITLE("Veff", "initialize_HR");
     ModuleBase::timer::tick("Veff", "initialize_HR");
 
-    this->nspin = GlobalV::NSPIN;
+    this->nspin = PARAM.inp.nspin;
     auto* paraV = this->hR->get_paraV();// get parallel orbitals from HR
     // TODO: if paraV is nullptr, AtomPair can not use paraV for constructor, I will repair it in the future.
 

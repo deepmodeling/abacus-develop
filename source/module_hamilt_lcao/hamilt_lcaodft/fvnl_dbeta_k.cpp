@@ -40,7 +40,7 @@ void Force_LCAO<std::complex<double>>::cal_fvnl_dbeta(const elecstate::DensityMa
     ModuleBase::TITLE("Force_LCAO", "cal_fvnl_dbeta");
     ModuleBase::timer::tick("Force_LCAO", "cal_fvnl_dbeta");
 
-    const int nspin = GlobalV::NSPIN;
+    const int nspin = PARAM.inp.nspin;
     const int nspin_DMR = (nspin == 2) ? 2 : 1;
     const int npol = PARAM.globalv.npol;
 

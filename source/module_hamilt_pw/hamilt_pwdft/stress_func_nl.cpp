@@ -110,8 +110,9 @@ void Stress_Func<FPTYPE, Device>::get_dvnl1(ModuleBase::ComplexMatrix& vkb,
                                             Structure_Factor* p_sf,
                                             ModulePW::PW_Basis_K* wfc_basis)
 {
-    if (PARAM.inp.test_pp)
+    if (PARAM.inp.test_pp) {
         ModuleBase::TITLE("Stress_Func", "get_dvnl1");
+}
 
     const int npw = wfc_basis->npwk[ik];
     const int lmaxkb = nlpp->lmaxkb;
@@ -144,19 +145,22 @@ void Stress_Func<FPTYPE, Device>::get_dvnl1(ModuleBase::ComplexMatrix& vkb,
     int jkb = 0;
     for (int it = 0; it < this->ucell->ntype; it++)
     {
-        if (PARAM.inp.test_pp > 1)
+        if (PARAM.inp.test_pp > 1) {
             ModuleBase::GlobalFunc::OUT("it", it);
+}
         // calculate beta in G-space using an interpolation table
         const int nbeta = this->ucell->atoms[it].ncpp.nbeta;
         const int nh = this->ucell->atoms[it].ncpp.nh;
 
-        if (PARAM.inp.test_pp > 1)
+        if (PARAM.inp.test_pp > 1) {
             ModuleBase::GlobalFunc::OUT("nbeta", nbeta);
+}
 
         for (int nb = 0; nb < nbeta; nb++)
         {
-            if (PARAM.inp.test_pp > 1)
+            if (PARAM.inp.test_pp > 1) {
                 ModuleBase::GlobalFunc::OUT("ib", nb);
+}
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
@@ -170,8 +174,8 @@ void Stress_Func<FPTYPE, Device>::get_dvnl1(ModuleBase::ComplexMatrix& vkb,
                 vq[ig] = ModuleBase::PolyInt::Polynomial_Interpolation(nlpp->tab,
                                                                        it,
                                                                        nb,
-                                                                       GlobalV::NQX,
-                                                                       GlobalV::DQ,
+                                                                       PARAM.globalv.nqx,
+                                                                       PARAM.globalv.dq,
                                                                        gnorm);
 
             } // enddo
@@ -227,8 +231,9 @@ void Stress_Func<FPTYPE, Device>::get_dvnl2(ModuleBase::ComplexMatrix& vkb,
                                             Structure_Factor* p_sf,
                                             ModulePW::PW_Basis_K* wfc_basis)
 {
-    if (PARAM.inp.test_pp)
+    if (PARAM.inp.test_pp) {
         ModuleBase::TITLE("Stress", "get_dvnl2");
+}
     //	ModuleBase::timer::tick("Stress","get_dvnl2");
     const int npw = wfc_basis->npwk[ik];
     const int lmaxkb = nlpp->lmaxkb;
@@ -259,19 +264,22 @@ void Stress_Func<FPTYPE, Device>::get_dvnl2(ModuleBase::ComplexMatrix& vkb,
     int jkb = 0;
     for (int it = 0; it < this->ucell->ntype; it++)
     {
-        if (PARAM.inp.test_pp > 1)
+        if (PARAM.inp.test_pp > 1) {
             ModuleBase::GlobalFunc::OUT("it", it);
+}
         // calculate beta in G-space using an interpolation table
         const int nbeta = this->ucell->atoms[it].ncpp.nbeta;
         const int nh = this->ucell->atoms[it].ncpp.nh;
 
-        if (PARAM.inp.test_pp > 1)
+        if (PARAM.inp.test_pp > 1) {
             ModuleBase::GlobalFunc::OUT("nbeta", nbeta);
+}
 
         for (int nb = 0; nb < nbeta; nb++)
         {
-            if (PARAM.inp.test_pp > 1)
+            if (PARAM.inp.test_pp > 1) {
                 ModuleBase::GlobalFunc::OUT("ib", nb);
+}
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
@@ -283,7 +291,7 @@ void Stress_Func<FPTYPE, Device>::get_dvnl2(ModuleBase::ComplexMatrix& vkb,
                 vq[ig] = hamilt::Nonlocal_maths<FPTYPE, Device>::Polynomial_Interpolation_nl(nlpp->tab,
                                                                                              it,
                                                                                              nb,
-                                                                                             GlobalV::DQ,
+                                                                                             PARAM.globalv.dq,
                                                                                              gnorm);
 
             } // enddo
