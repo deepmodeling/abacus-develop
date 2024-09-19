@@ -496,6 +496,7 @@ OBJS_IO=input_conv.o\
     winput.o\
     write_cube.o\
     write_elecstat_pot.o\
+    write_elf.o\
     write_dipole.o\
     td_current_io.o\
     write_wfc_r.o\
