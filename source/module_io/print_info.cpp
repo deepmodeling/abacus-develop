@@ -79,7 +79,7 @@ void Print_Info::setup_parameters(UnitCell &ucell, K_Vectors &kv)
 		if (orbinfo) { std::cout << std::setw(12) << "NBASE"; }
 
 		std::cout << std::endl;
-		std::cout << " " << std::setw(8) << GlobalV::NSPIN;
+		std::cout << " " << std::setw(8) << PARAM.inp.nspin;
 
 		if(PARAM.globalv.gamma_only_local)
 		{

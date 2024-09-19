@@ -76,10 +76,10 @@ class PotEfield : public PotBase
 
     void cal_fixed_v(double *vl_pseudo) override
     {
-        ModuleBase::matrix v_efield(GlobalV::NSPIN, rho_basis_->nrxx);
+        ModuleBase::matrix v_efield(PARAM.inp.nspin, rho_basis_->nrxx);
         v_efield = Efield::add_efield(*ucell_,
                                       const_cast<const ModulePW::PW_Basis*>(rho_basis_),
-                                      GlobalV::NSPIN,
+                                      PARAM.inp.nspin,
                                       nullptr,
                                       GlobalC::solvent_model);
         for (int ir = 0; ir < rho_basis_->nrxx; ++ir)

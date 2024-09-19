@@ -146,7 +146,7 @@ void LCAO_Deepks::cal_orbital_precalc(
                     }
 
                     std::vector<double> dm_array(row_size * col_size, 0.0);
-                    for (int is = 0; is < GlobalV::NSPIN; is++) 
+                    for (int is = 0; is < PARAM.inp.nspin; is++) 
                     {
                         hamilt::AtomPair<double> dm_pair(ibt1,
                                                          ibt2,

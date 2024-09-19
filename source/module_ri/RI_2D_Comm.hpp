@@ -1,5 +1,6 @@
 //=======================
 // AUTHOR : Peize Lin
+#include "module_parameter/parameter.h"
 // DATE :   2022-08-17
 //=======================
 
@@ -131,7 +132,7 @@ void RI_2D_Comm::add_Hexx(
 	ModuleBase::timer::tick("RI_2D_Comm", "add_Hexx");
 
 	const std::map<int, std::vector<int>> is_list = {{1,{0}}, {2,{kv.isk[ik]}}, {4,{0,1,2,3}}};
-	for(const int is_b : is_list.at(GlobalV::NSPIN))
+	for(const int is_b : is_list.at(PARAM.inp.nspin))
 	{
 		int is0_b, is1_b;
 		std::tie(is0_b,is1_b) = RI_2D_Comm::split_is_block(is_b);
@@ -171,7 +172,7 @@ RI_2D_Comm::get_iat_iw_is_block(const int iwt)
 {
 	const int iat = GlobalC::ucell.iwt2iat[iwt];
 	const int iw = GlobalC::ucell.iwt2iw[iwt];
-	switch(GlobalV::NSPIN)
+	switch(PARAM.inp.nspin)
 	{
 		case 1: case 2:
 			return std::make_tuple(iat, iw, 0);
@@ -184,7 +185,7 @@ RI_2D_Comm::get_iat_iw_is_block(const int iwt)
 
 int RI_2D_Comm::get_is_block(const int is_k, const int is_row_b, const int is_col_b)
 {
-	switch(GlobalV::NSPIN)
+	switch(PARAM.inp.nspin)
 	{
 		case 1:		return 0;
 		case 2:		return is_k;
@@ -196,7 +197,7 @@ int RI_2D_Comm::get_is_block(const int is_k, const int is_row_b, const int is_co
 std::tuple<int,int>
 RI_2D_Comm::split_is_block(const int is_b)
 {
-	switch(GlobalV::NSPIN)
+	switch(PARAM.inp.nspin)
 	{
 		case 1:	case 2:
 			return std::make_tuple(0, 0);
@@ -214,7 +215,7 @@ int RI_2D_Comm::get_iwt(const int iat, const int iw_b, const int is_b)
 	const int it = GlobalC::ucell.iat2it[iat];
 	const int ia = GlobalC::ucell.iat2ia[iat];
 	int iw=-1;
-	switch(GlobalV::NSPIN)
+	switch(PARAM.inp.nspin)
 	{
 		case 1: case 2:
 			iw = iw_b;			break;
@@ -240,7 +241,7 @@ void RI_2D_Comm::add_HexxR(
     ModuleBase::TITLE("RI_2D_Comm", "add_HexxR");
     ModuleBase::timer::tick("RI_2D_Comm", "add_HexxR");
     const std::map<int, std::vector<int>> is_list = { {1,{0}}, {2,{current_spin}}, {4,{0,1,2,3}} };
-    for (const int is_hs : is_list.at(GlobalV::NSPIN))
+    for (const int is_hs : is_list.at(PARAM.inp.nspin))
     {
         int is0_b = 0, is1_b = 0;
         std::tie(is0_b, is1_b) = RI_2D_Comm::split_is_block(is_hs);

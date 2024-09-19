@@ -155,13 +155,13 @@ namespace RadialProjection
                                 const double* r,
                                 const std::vector<double*>& radials,
                                 const std::vector<int>& l,
-                                const int nq,                             //< GlobalV::DQ
-                                const double& dq);                        //< GlobalV::NQX
+                                const int nq,                             //< PARAM.globalv.dq
+                                const double& dq);                        //< PARAM.globalv.nqx
             void _build_sbt_tab(const std::vector<double>& r,
                                 const std::vector<std::vector<double>>& radials,
                                 const std::vector<int>& l,
-                                const int nq,                             //< GlobalV::DQ
-                                const double& dq);                        //< GlobalV::NQX
+                                const int nq,                             //< PARAM.globalv.dq
+                                const double& dq);                        //< PARAM.globalv.nqx
 
             /**
              * @brief perform analytical version of the Fourier transform:

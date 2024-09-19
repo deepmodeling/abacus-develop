@@ -279,7 +279,7 @@ void ModuleBase::Global_File::delete_tmp_files()
 {
     if (GlobalV::MY_RANK == 0)
     {
-        for (int is = 0; is < GlobalV::NSPIN; ++is)
+        for (int is = 0; is < PARAM.inp.nspin; ++is)
         {
             std::string tmp_chg_1 = PARAM.globalv.global_out_dir + "NOW_SPIN" + std::to_string(is + 1) + "_CHG.cube";
             std::string tmp_chg_2 = PARAM.globalv.global_out_dir + "OLD1_SPIN" + std::to_string(is + 1) + "_CHG.cube";

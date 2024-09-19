@@ -1,5 +1,6 @@
 #include "operator_lr_hxc.h"
 #include <vector>
+#include "module_parameter/parameter.h"
 #include "module_base/blas_connector.h"
 #include "module_base/timer.h"
 #include "module_lr/utils/lr_util.h"
@@ -100,7 +101,7 @@ namespace LR
         double** rho_trans;
         const int& nrxx = this->pot.lock()->nrxx;
         // LR_Util::new_p2(rho_trans, nspin_solve, nrxx);
-        LR_Util::new_p2(rho_trans, nspin, nrxx); // currently gint_kernel_rho uses GlobalV::NSPIN, it needs refactor
+        LR_Util::new_p2(rho_trans, nspin, nrxx); // currently gint_kernel_rho uses PARAM.inp.nspin, it needs refactor
         for (int is = 0;is < nspin_solve;++is)ModuleBase::GlobalFunc::ZEROS(rho_trans[is], nrxx);
         Gint_inout inout_rho(rho_trans, Gint_Tools::job_type::rho, false);
         this->gint->cal_gint(&inout_rho);
@@ -147,7 +148,7 @@ namespace LR
                 double** rho_trans;
                 const int& nrxx = this->pot.lock()->nrxx;
                 // LR_Util::new_p2(rho_trans, nspin_solve, nrxx);
-                LR_Util::new_p2(rho_trans, nspin, nrxx); // currently gint_kernel_rho uses GlobalV::NSPIN, it needs refactor
+                LR_Util::new_p2(rho_trans, nspin, nrxx); // currently gint_kernel_rho uses PARAM.inp.nspin, it needs refactor
                 for (int is = 0;is < nspin_solve;++is)ModuleBase::GlobalFunc::ZEROS(rho_trans[is], nrxx);
                 Gint_inout inout_rho(rho_trans, Gint_Tools::job_type::rho, false);
                 this->gint->cal_gint(&inout_rho);

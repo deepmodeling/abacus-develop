@@ -23,7 +23,7 @@ void sparse_format::cal_HSR(const Parallel_Orbitals& pv,
 
     sparse_format::set_R_range(HS_Arrays.all_R_coor, grid);
 
-    const int nspin = GlobalV::NSPIN;
+    const int nspin = PARAM.inp.nspin;
 
     // cal_STN_R_sparse(current_spin, sparse_thr);
     if (nspin == 1 || nspin == 2) {
@@ -250,7 +250,7 @@ void sparse_format::clear_zero_elements(LCAO_HS_Arrays& HS_Arrays,
                                         const double& sparse_thr) {
     ModuleBase::TITLE("sparse_format", "clear_zero_elements");
 
-    if (GlobalV::NSPIN != 4) {
+    if (PARAM.inp.nspin != 4) {
         for (auto& R_loop: HS_Arrays.HR_sparse[current_spin]) {
             for (auto& row_loop: R_loop.second) {
                 auto& col_map = row_loop.second;
@@ -330,7 +330,7 @@ void sparse_format::clear_zero_elements(LCAO_HS_Arrays& HS_Arrays,
 void sparse_format::destroy_HS_R_sparse(LCAO_HS_Arrays& HS_Arrays) {
     ModuleBase::TITLE("sparse_format", "destroy_HS_R_sparse");
 
-    if (GlobalV::NSPIN != 4) {
+    if (PARAM.inp.nspin != 4) {
         std::map<Abfs::Vector3_Order<int>,
                  std::map<size_t, std::map<size_t, double>>>
             empty_HR_sparse_up;

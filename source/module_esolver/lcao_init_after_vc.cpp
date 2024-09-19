@@ -48,11 +48,11 @@ void ESolver_KS_LCAO<TK, TR>::init_after_vc(const Input_para& inp, UnitCell& uce
             this->pw_big);
 
         dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)
-            ->init_DM(&this->kv, &this->pv, GlobalV::NSPIN);
+            ->init_DM(&this->kv, &this->pv, PARAM.inp.nspin);
 
         GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, this->pw_rho);
 
-        this->pelec->charge->allocate(GlobalV::NSPIN);
+        this->pelec->charge->allocate(PARAM.inp.nspin);
         this->pelec->omega = GlobalC::ucell.omega;
 
         // Initialize the potential.

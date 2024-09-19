@@ -1,5 +1,6 @@
 #include "klist.h"
 
+#include "module_parameter/parameter.h"
 namespace Test_Deepks
 {
 	K_Vectors::K_Vectors()
@@ -67,11 +68,11 @@ namespace Test_Deepks
 		this->set_both_kvec(reciprocal_vec, latvec, ofs_running);
 
 		int deg = 0;
-		if(GlobalV::NSPIN == 1)
+		if(PARAM.input.nspin == 1)
 		{
 			deg = 2;
 		}
-		else if(GlobalV::NSPIN == 2||GlobalV::NSPIN==4)
+		else if(PARAM.input.nspin == 2||PARAM.input.nspin==4)
 		{
 			deg = 1;
 		}

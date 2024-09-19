@@ -1,5 +1,6 @@
 #include "surchem.h"
 #include "module_base/timer.h"
+#include "module_parameter/parameter.h"
 
 void force_cor_one(const UnitCell& cell, const ModulePW::PW_Basis* rho_basis, ModuleBase::matrix& forcesol)
 {
@@ -78,7 +79,7 @@ void force_cor_two(const UnitCell& cell, const ModulePW::PW_Basis* rho_basis, Mo
     std::complex<double> *Vel_g = new complex<double>[rho_basis->npw];
     ModuleBase::GlobalFunc::ZEROS(Vcav_g, rho_basis->npw);
     ModuleBase::GlobalFunc::ZEROS(Vel_g, rho_basis->npw);
-    for(int is=0; is<GlobalV::NSPIN; is++)
+    for(int is=0; is<PARAM.inp.nspin; is++)
 	{
 		for (int ir=0; ir<rho_basis->nrxx; ir++)
 		{

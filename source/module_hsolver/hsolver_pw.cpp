@@ -460,7 +460,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
                                                   psi.get_nbands(),
                                                   psi.get_k_first() ? psi.get_current_nbas()
                                                                     : psi.get_nk() * psi.get_nbasis(),
-                                                  GlobalV::PW_DIAG_NDIM,
+                                                  PARAM.inp.pw_diag_ndim,
                                                   this->diag_thr,
                                                   this->diag_iter_max,
                                                   this->need_subspace,
@@ -529,7 +529,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         DiagoDavid<T, Device> david(pre_condition.data(),
                                     nband,
                                     dim,
-                                    GlobalV::PW_DIAG_NDIM,
+                                    PARAM.inp.pw_diag_ndim,
                                     this->use_paw,
                                     comm_info);
         // do diag and add davidson iteration counts up to avg_iter
