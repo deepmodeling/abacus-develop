@@ -38,7 +38,7 @@ void psi_initializer_atomic<T, Device>::allocate_table()
     {
         ModuleBase::WARNING_QUIT("psi_initializer_atomic<T, Device>::allocate_table", "there is not ANY pseudo atomic orbital read in present system, recommand other methods, quit.");
     }
-    int dim3 = GlobalV::NQX;
+    int dim3 = PARAM.globalv.nqx;
     // allocate memory for ovlp_flzjlq
     this->ovlp_pswfcjlq_.create(dim1, dim2, dim3);
     this->ovlp_pswfcjlq_.zero_out();
@@ -55,8 +55,11 @@ void psi_initializer_atomic<T, Device>::initialize(Structure_Factor* sf,        
                                                    const int& rank)
 {
     ModuleBase::timer::tick("psi_initializer_atomic", "initialize");
-    if(p_pspot_nl == nullptr) ModuleBase::WARNING_QUIT("psi_initializer_atomic<T, Device>::initialize_only_once", 
-                                                       "pseudopot_cell_vnl object cannot be mullptr for atomic, quit.");
+    if(p_pspot_nl == nullptr)
+    {
+        ModuleBase::WARNING_QUIT("psi_initializer_atomic<T, Device>::initialize", 
+                                 "pseudopot_cell_vnl object cannot be nullptr for atomic, quit.");
+    }
     // import
     this->sf_ = sf;
     this->pw_wfc_ = pw_wfc;
@@ -66,6 +69,10 @@ void psi_initializer_atomic<T, Device>::initialize(Structure_Factor* sf,        
     this->random_seed_ = random_seed;
     // allocate
     this->allocate_table();
+    // then for generate random number to fill in the wavefunction
+    this->ixy2is_.clear();
+    this->ixy2is_.resize(this->pw_wfc_->fftnxy);
+    this->pw_wfc_->getfftixy2is(this->ixy2is_.data());
     ModuleBase::timer::tick("psi_initializer_atomic", "initialize_only_once");
 }
 #else
@@ -77,8 +84,11 @@ void psi_initializer_atomic<T, Device>::initialize(Structure_Factor* sf,        
                                                    pseudopot_cell_vnl* p_pspot_nl)
 {
     ModuleBase::timer::tick("psi_initializer_atomic", "initialize");
-    if(p_pspot_nl == nullptr) ModuleBase::WARNING_QUIT("psi_initializer_atomic<T, Device>::initialize_only_once", 
-                                                       "pseudopot_cell_vnl object cannot be mullptr for atomic, quit.");
+    if(p_pspot_nl == nullptr)
+    {
+        ModuleBase::WARNING_QUIT("psi_initializer_atomic<T, Device>::initialize", 
+                                 "pseudopot_cell_vnl object cannot be nullptr for atomic, quit.");
+    }
     // import
     this->sf_ = sf;
     this->pw_wfc_ = pw_wfc;
@@ -87,6 +97,10 @@ void psi_initializer_atomic<T, Device>::initialize(Structure_Factor* sf,        
     this->random_seed_ = random_seed;
     // allocate
     this->allocate_table();
+    // then for generate random number to fill in the wavefunction
+    this->ixy2is_.clear();
+    this->ixy2is_.resize(this->pw_wfc_->fftnxy);
+    this->pw_wfc_->getfftixy2is(this->ixy2is_.data());
     ModuleBase::timer::tick("psi_initializer_atomic", "initialize_only_once");
 }
 #endif
@@ -96,10 +110,10 @@ void psi_initializer_atomic<T, Device>::tabulate()
 {
     ModuleBase::timer::tick("psi_initializer_atomic", "cal_ovlp_pswfcjlq");
     int maxn_rgrid = 0;
-    std::vector<double> qgrid(GlobalV::NQX);
-    for (int iq = 0; iq < GlobalV::NQX; iq++)
+    std::vector<double> qgrid(PARAM.globalv.nqx);
+    for (int iq = 0; iq < PARAM.globalv.nqx; iq++)
     {
-        qgrid[iq] = GlobalV::DQ * iq;
+        qgrid[iq] = PARAM.globalv.dq * iq;
     }
     for (int it=0; it<this->p_ucell_->ntype; it++)
     {
@@ -109,8 +123,8 @@ void psi_initializer_atomic<T, Device>::tabulate()
     
     const double pref = ModuleBase::FOUR_PI / sqrt(this->p_ucell_->omega);
 
-	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"dq(describe PAO in reciprocal space)",GlobalV::DQ);
-	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"max q",GlobalV::NQX);
+	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"dq(describe PAO in reciprocal space)",PARAM.globalv.dq);
+	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"max q",PARAM.globalv.nqx);
 
     for (int it=0; it<this->p_ucell_->ntype; it++)
     {
@@ -122,14 +136,14 @@ void psi_initializer_atomic<T, Device>::tabulate()
         {
             int n_rgrid = (PARAM.inp.pseudo_mesh)?atom->ncpp.mesh:atom->ncpp.msh;
             std::vector<double> pswfcr(n_rgrid);
-            for (int ir=0; ir<n_rgrid; ir++) pswfcr[ir] = atom->ncpp.chi(ic, ir);
+            for (int ir=0; ir<n_rgrid; ir++) { pswfcr[ir] = atom->ncpp.chi(ic, ir); }
             normalize(n_rgrid, pswfcr, atom->ncpp.rab.data());
             if (atom->ncpp.oc[ic] >= 0.0) // reasonable occupation number, but is it always true?
             {
                 const int l = atom->ncpp.lchi[ic];
-                std::vector<double> ovlp_pswfcjlq_q(GlobalV::NQX);
-                this->sbt.direct(l, atom->ncpp.msh, atom->ncpp.r.data(), pswfcr.data(), GlobalV::NQX, qgrid.data(), ovlp_pswfcjlq_q.data(), 1);
-                for (int iq = 0; iq < GlobalV::NQX; iq++)
+                std::vector<double> ovlp_pswfcjlq_q(PARAM.globalv.nqx);
+                this->sbt.direct(l, atom->ncpp.msh, atom->ncpp.r.data(), pswfcr.data(), PARAM.globalv.nqx, qgrid.data(), ovlp_pswfcjlq_q.data(), 1);
+                for (int iq = 0; iq < PARAM.globalv.nqx; iq++)
                 {
                     this->ovlp_pswfcjlq_(it, ic, iq) = pref * ovlp_pswfcjlq_q[iq];
                 }
@@ -141,17 +155,18 @@ void psi_initializer_atomic<T, Device>::tabulate()
 
 std::complex<double> phase_factor(double arg, int mode)
 {
-    if(mode == 1) return std::complex<double>(cos(arg),0);
-    else if (mode == -1) return std::complex<double>(0, sin(arg));
-    else if (mode == 0) return std::complex<double>(cos(arg), sin(arg));
-    else return std::complex<double>(1,0);
+    if(mode == 1) { return std::complex<double>(cos(arg),0); }
+    else if (mode == -1) { return std::complex<double>(0, sin(arg)); }
+    else if (mode == 0) { return std::complex<double>(cos(arg), sin(arg)); }
+    else { return std::complex<double>(1,0); }
 }
 
 template <typename T, typename Device>
-void psi_initializer_atomic<T, Device>::proj_ao_onkG(int ik)
+void psi_initializer_atomic<T, Device>::proj_ao_onkG(const int ik)
 {
     ModuleBase::timer::tick("psi_initializer_atomic", "proj_ao_onkG");
-    this->psig_->fix_k(ik);
+    const int ik_psig = (this->psig_->get_nk() == 1) ? 0 : ik;
+    this->psig_->fix_k(ik_psig);
     //this->print_status(psi);
     const int npw = this->pw_wfc_->npwk[ik];
     int lmax = this->p_ucell_->lmax_ppwf;
@@ -192,17 +207,17 @@ void psi_initializer_atomic<T, Device>::proj_ao_onkG(int ik)
                     {
                         ovlp_pswfcjlg[ig] = ModuleBase::PolyInt::Polynomial_Interpolation(
                             this->ovlp_pswfcjlq_, it, ipswfc, 
-                            GlobalV::NQX, GlobalV::DQ, gk[ig].norm() * this->p_ucell_->tpiba );
+                            PARAM.globalv.nqx, PARAM.globalv.dq, gk[ig].norm() * this->p_ucell_->tpiba );
                     }
 /* NSPIN == 4 */
-                    if(GlobalV::NSPIN == 4)
+                    if(PARAM.inp.nspin == 4)
                     {
                         if(this->p_ucell_->atoms[it].ncpp.has_so)
                         {
                             Soc soc; soc.rot_ylm(l + 1);
                             const double j = this->p_ucell_->atoms[it].ncpp.jchi[ipswfc];
     /* NOT NONCOLINEAR CASE, rotation matrix become identity */
-                            if (!(GlobalV::DOMAG||GlobalV::DOMAG_Z))
+                            if (!(PARAM.globalv.domag||PARAM.globalv.domag_z))
                             {
                                 double cg_coeffs[2];
                                 for(int m = -l-1; m < l+1; m++)
@@ -291,7 +306,7 @@ void psi_initializer_atomic<T, Device>::proj_ao_onkG(int ik)
                                         chiaux[ig] =  l *
                                             ModuleBase::PolyInt::Polynomial_Interpolation(
                                                 this->ovlp_pswfcjlq_, it, ipswfc_noncolin_soc, 
-                                                GlobalV::NQX, GlobalV::DQ, gk[ig].norm() * this->p_ucell_->tpiba);
+                                                PARAM.globalv.nqx, PARAM.globalv.dq, gk[ig].norm() * this->p_ucell_->tpiba);
                                         chiaux[ig] += ovlp_pswfcjlg[ig] * (l + 1.0) ;
                                         chiaux[ig] *= 1/(2.0*l+1.0);
                                     }

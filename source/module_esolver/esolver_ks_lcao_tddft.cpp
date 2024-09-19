@@ -100,10 +100,10 @@ void ESolver_KS_LCAO_TDDFT::before_all_runners(const Input_para& inp, UnitCell& 
 
 
     // 6) initialize Density Matrix
-    dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)->init_DM(&kv, &this->pv, GlobalV::NSPIN);
+    dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)->init_DM(&kv, &this->pv, PARAM.inp.nspin);
 
     // 8) initialize the charge density
-    this->pelec->charge->allocate(GlobalV::NSPIN);
+    this->pelec->charge->allocate(PARAM.inp.nspin);
     this->pelec->omega = GlobalC::ucell.omega; // this line is very odd.
 
     // 9) initializee the potential
@@ -214,7 +214,7 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(const int istep, const int iter, cons
     if (istep <= 1)
     {
         Symmetry_rho srho;
-        for (int is = 0; is < GlobalV::NSPIN; is++)
+        for (int is = 0; is < PARAM.inp.nspin; is++)
         {
             srho.begin(is, *(pelec->charge), pw_rho, GlobalC::ucell.symm);
         }
@@ -297,7 +297,7 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
     // Calculate new potential according to new Charge Density
     if (!this->conv_elec)
     {
-        if (GlobalV::NSPIN == 4)
+        if (PARAM.inp.nspin == 4)
         {
             GlobalC::ucell.cal_ux();
         }
@@ -405,7 +405,7 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
 
 void ESolver_KS_LCAO_TDDFT::after_scf(const int istep)
 {
-    for (int is = 0; is < GlobalV::NSPIN; is++)
+    for (int is = 0; is < PARAM.inp.nspin; is++)
     {
         if (module_tddft::Evolve_elec::out_dipole == 1)
         {

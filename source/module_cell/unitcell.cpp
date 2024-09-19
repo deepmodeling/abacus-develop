@@ -142,7 +142,7 @@ void UnitCell::bcast_unitcell() {
     Parallel_Common::bcast_double(latvec_supercell.e33);
     Parallel_Common::bcast_double(magnet.start_magnetization, ntype);
 
-    if (GlobalV::NSPIN == 4) {
+    if (PARAM.inp.nspin == 4) {
         Parallel_Common::bcast_double(magnet.ux_[0]);
         Parallel_Common::bcast_double(magnet.ux_[1]);
         Parallel_Common::bcast_double(magnet.ux_[2]);
@@ -579,10 +579,6 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log) {
 #ifdef __MPI
     Parallel_Common::bcast_bool(ok);
     Parallel_Common::bcast_bool(ok2);
-    if (GlobalV::NSPIN == 4) {
-        Parallel_Common::bcast_bool(GlobalV::DOMAG);
-        Parallel_Common::bcast_bool(GlobalV::DOMAG_Z);
-    }
 #endif
     if (!ok) {
         ModuleBase::WARNING_QUIT(
@@ -599,7 +595,7 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log) {
 #endif
 
     // after read STRU, calculate initial total magnetization when NSPIN=2
-    if (GlobalV::NSPIN == 2 && !GlobalV::TWO_EFERMI) {
+    if (PARAM.inp.nspin == 2 && !PARAM.globalv.two_fermi) {
         for (int it = 0; it < this->ntype; it++) {
             for (int ia = 0; ia < this->atoms[it].na; ia++) {
                 GlobalV::nupdown += this->atoms[it].mag[ia];
@@ -687,7 +683,7 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log) {
 
         GlobalC::paw_cell.set_libpaw_files();
 
-        GlobalC::paw_cell.set_nspin(GlobalV::NSPIN);
+        GlobalC::paw_cell.set_nspin(PARAM.inp.nspin);
     }
 #endif
 
@@ -958,7 +954,7 @@ void UnitCell::cal_nwfc(std::ofstream& log) {
     for (int it = 0; it < ntype; it++) {
         atoms[it].stapos_wf = GlobalV::NLOCAL;
         const int nlocal_it = atoms[it].nw * atoms[it].na;
-        if (GlobalV::NSPIN != 4) {
+        if (PARAM.inp.nspin != 4) {
             GlobalV::NLOCAL += nlocal_it;
         } else {
             GlobalV::NLOCAL += nlocal_it * 2; // zhengdy-soc
@@ -985,15 +981,15 @@ void UnitCell::cal_nwfc(std::ofstream& log) {
     this->iwt2iw = new int[GlobalV::NLOCAL];
 
     this->itia2iat.create(ntype, namax);
-    // this->itiaiw2iwt.create(ntype, namax, nwmax*GlobalV::NPOL);
-    this->set_iat2iwt(GlobalV::NPOL);
+    // this->itiaiw2iwt.create(ntype, namax, nwmax*PARAM.globalv.npol);
+    this->set_iat2iwt(PARAM.globalv.npol);
     int iat = 0;
     int iwt = 0;
     for (int it = 0; it < ntype; it++) {
         for (int ia = 0; ia < atoms[it].na; ia++) {
             this->itia2iat(it, ia) = iat;
             // this->iat2ia[iat] = ia;
-            for (int iw = 0; iw < atoms[it].nw * GlobalV::NPOL; iw++) {
+            for (int iw = 0; iw < atoms[it].nw * PARAM.globalv.npol; iw++) {
                 // this->itiaiw2iwt(it, ia, iw) = iwt;
                 this->iwt2iat[iwt] = iat;
                 this->iwt2iw[iwt] = iw;
@@ -1128,7 +1124,7 @@ void UnitCell::cal_natomwfc(std::ofstream& log) {
         int tmp = 0;
         for (int l = 0; l < atoms[it].ncpp.nchi; l++) {
             if (atoms[it].ncpp.oc[l] >= 0) {
-                if (GlobalV::NSPIN == 4) {
+                if (PARAM.inp.nspin == 4) {
                     if (atoms[it].ncpp.has_so) {
                         tmp += 2 * atoms[it].ncpp.lchi[l];
                         if (fabs(atoms[it].ncpp.jchi[l] - atoms[it].ncpp.lchi[l]

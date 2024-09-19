@@ -17,11 +17,11 @@ namespace ModuleESolver
 ESolver_FP::ESolver_FP()
 {
     // pw_rho = new ModuleBase::PW_Basis();
-    pw_rho = new ModulePW::PW_Basis_Big(GlobalV::device_flag, PARAM.inp.precision);
+    pw_rho = new ModulePW::PW_Basis_Big(PARAM.globalv.device_flag, PARAM.inp.precision);
 
     if ( PARAM.globalv.double_grid)
     {
-        pw_rhod = new ModulePW::PW_Basis_Big(GlobalV::device_flag, PARAM.inp.precision);
+        pw_rhod = new ModulePW::PW_Basis_Big(PARAM.globalv.device_flag, PARAM.inp.precision);
     }
     else
     {
@@ -114,7 +114,7 @@ void ESolver_FP::before_all_runners(const Input_para& inp, UnitCell& cell)
     this->print_rhofft(inp, GlobalV::ofs_running);
 
     //! 5) initialize the charge extrapolation method if necessary
-    this->CE.Init_CE(GlobalV::NSPIN, GlobalC::ucell.nat, this->pw_rhod->nrxx, inp.chg_extrap);
+    this->CE.Init_CE(PARAM.inp.nspin, GlobalC::ucell.nat, this->pw_rhod->nrxx, inp.chg_extrap);
 
     return;
 }
@@ -136,7 +136,7 @@ void ESolver_FP::after_scf(const int istep)
         // 3) write charge density
         if (PARAM.inp.out_chg[0] > 0)
         {
-            for (int is = 0; is < GlobalV::NSPIN; is++)
+            for (int is = 0; is < PARAM.inp.nspin; is++)
             {
                 double* data = nullptr;
                 if (PARAM.inp.dm_to_rho)
@@ -159,7 +159,7 @@ void ESolver_FP::after_scf(const int istep)
 #endif
                     data,
                     is,
-                    GlobalV::NSPIN,
+                    PARAM.inp.nspin,
                     istep,
                     fn,
                     this->pw_rhod->nx,
@@ -181,7 +181,7 @@ void ESolver_FP::after_scf(const int istep)
 #endif
                         this->pelec->charge->kin_r_save[is],
                         is,
-                        GlobalV::NSPIN,
+                        PARAM.inp.nspin,
                         istep,
                         fn,
                         this->pw_rhod->nx,
@@ -196,14 +196,14 @@ void ESolver_FP::after_scf(const int istep)
         {
             std::complex<double>** rhog_tot = (PARAM.inp.dm_to_rho)? this->pelec->charge->rhog : this->pelec->charge->rhog_save;
             double** rhor_tot = (PARAM.inp.dm_to_rho)? this->pelec->charge->rho : this->pelec->charge->rho_save;
-            for (int is = 0; is < GlobalV::NSPIN; is++)
+            for (int is = 0; is < PARAM.inp.nspin; is++)
             {
                 this->pw_rhod->real2recip(rhor_tot[is], rhog_tot[is]);
             }
             ModuleIO::write_rhog(PARAM.globalv.global_out_dir + PARAM.inp.suffix + "-CHARGE-DENSITY.restart",
                                  PARAM.globalv.gamma_only_pw || PARAM.globalv.gamma_only_local,
                                  this->pw_rhod,
-                                 GlobalV::NSPIN,
+                                 PARAM.inp.nspin,
                                  GlobalC::ucell.GT,
                                  rhog_tot,
                                  GlobalV::RANK_IN_POOL,
@@ -213,7 +213,7 @@ void ESolver_FP::after_scf(const int istep)
         // 4) write potential
         if (PARAM.inp.out_pot == 1 || PARAM.inp.out_pot == 3)
         {
-            for (int is = 0; is < GlobalV::NSPIN; is++)
+            for (int is = 0; is < PARAM.inp.nspin; is++)
             {
                 std::string fn =PARAM.globalv.global_out_dir + "/SPIN" + std::to_string(is + 1) + "_POT.cube";
 
@@ -226,7 +226,7 @@ void ESolver_FP::after_scf(const int istep)
 #endif
                     this->pelec->pot->get_effective_v(is),
                     is,
-                    GlobalV::NSPIN,
+                    PARAM.inp.nspin,
                     istep,
                     fn,
                     this->pw_rhod->nx,
@@ -344,7 +344,7 @@ void ESolver_FP::init_after_vc(const Input_para& inp, UnitCell& cell)
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
     }
 
-    kv.set_after_vc(GlobalV::NSPIN, cell.G, cell.latvec);
+    kv.set_after_vc(PARAM.inp.nspin, cell.G, cell.latvec);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
 
     return;

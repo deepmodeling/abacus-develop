@@ -110,12 +110,12 @@ class UcellTest : public ::testing::Test {
         PARAM.input.relax_new = utp.relax_new;
         PARAM.sys.global_out_dir = "./";
         ucell = utp.SetUcellInfo();
-        GlobalV::LSPINORB = false;
+        PARAM.input.lspinorb = false;
         pp_dir = "./support/";
         PARAM.input.pseudo_rcut = 15.0;
         PARAM.input.dft_functional = "default";
         PARAM.input.test_pseudo_cell = true;
-        GlobalV::NSPIN = 1;
+        PARAM.input.nspin = 1;
         PARAM.input.basis_type = "pw";
     }
     void TearDown() { ofs.close(); }
@@ -124,7 +124,7 @@ class UcellTest : public ::testing::Test {
 using UcellDeathTest = UcellTest;
 
 TEST_F(UcellDeathTest, ReadCellPPWarning1) {
-    GlobalV::LSPINORB = true;
+    PARAM.input.lspinorb = true;
     ucell->pseudo_fn[1] = "H_sr.upf";
     testing::internal::CaptureStdout();
     EXPECT_EXIT(ucell->read_cell_pseudopots(pp_dir, ofs),
@@ -224,8 +224,8 @@ TEST_F(UcellTest, CalNatomwfc1) {
 }
 
 TEST_F(UcellTest, CalNatomwfc2) {
-    GlobalV::LSPINORB = false;
-    GlobalV::NSPIN = 4;
+    PARAM.input.lspinorb = false;
+    PARAM.input.nspin = 4;
     ucell->read_cell_pseudopots(pp_dir, ofs);
     EXPECT_FALSE(ucell->atoms[0].ncpp.has_so);
     EXPECT_FALSE(ucell->atoms[1].ncpp.has_so);
@@ -238,8 +238,8 @@ TEST_F(UcellTest, CalNatomwfc2) {
 }
 
 TEST_F(UcellTest, CalNatomwfc3) {
-    GlobalV::LSPINORB = true;
-    GlobalV::NSPIN = 4;
+    PARAM.input.lspinorb = true;
+    PARAM.input.nspin = 4;
     ucell->read_cell_pseudopots(pp_dir, ofs);
     EXPECT_TRUE(ucell->atoms[0].ncpp.has_so);
     EXPECT_TRUE(ucell->atoms[1].ncpp.has_so);
@@ -317,7 +317,7 @@ TEST_F(UcellTest, CalNwfc1) {
 }
 
 TEST_F(UcellTest, CalNwfc2) {
-    GlobalV::NSPIN = 4;
+    PARAM.input.nspin = 4;
     PARAM.input.basis_type = "lcao";
     ucell->read_cell_pseudopots(pp_dir, ofs);
     EXPECT_FALSE(ucell->atoms[0].ncpp.has_so);

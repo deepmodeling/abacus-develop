@@ -84,7 +84,7 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, const Paramet
 
         if ((mdrun->step_ + mdrun->step_rst_) % param_in.mdp.md_dumpfreq == 0)
         {
-            mdrun->print_md(GlobalV::ofs_running, GlobalV::CAL_STRESS);
+            mdrun->print_md(GlobalV::ofs_running, PARAM.inp.cal_stress);
 
             MD_func::dump_info(mdrun->step_ + mdrun->step_rst_,
                                PARAM.globalv.global_out_dir,
@@ -109,12 +109,12 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, const Paramet
             need_orb = need_orb || PARAM.inp.basis_type=="lcao";
             need_orb = need_orb || PARAM.inp.basis_type=="lcao_in_pw";
             unit_in.print_stru_file(file.str(), 
-                                    GlobalV::NSPIN, 
+                                    PARAM.inp.nspin, 
                                     false, // Cartesian coordinates
                                     PARAM.inp.calculation == "md", 
                                     PARAM.inp.out_mul,
                                     need_orb,
-                                    GlobalV::deepks_setorb,
+                                    PARAM.globalv.deepks_setorb,
                                     GlobalV::MY_RANK);
             mdrun->write_restart(PARAM.globalv.global_out_dir);
         }

@@ -44,9 +44,9 @@ psi::Psi<std::complex<double>>* wavefunc::allocate(const int nkstot, const int n
 
     // if use spin orbital, do not double nks but double allocate evc and wanf2.
     int prefactor = 1;
-    if (GlobalV::NSPIN == 4)
+    if (PARAM.inp.nspin == 4)
     {
-        prefactor = GlobalV::NPOL; // added by zhengdy-soc
+        prefactor = PARAM.globalv.npol; // added by zhengdy-soc
     }
 
     const int nks2 = nks;
@@ -55,15 +55,15 @@ psi::Psi<std::complex<double>>* wavefunc::allocate(const int nkstot, const int n
     if (PARAM.inp.calculation == "nscf" && this->mem_saver == 1)
     {
         // initial psi rather than evc
-        psi_out = new psi::Psi<std::complex<double>>(1, GlobalV::NBANDS, npwx * GlobalV::NPOL, ngk);
+        psi_out = new psi::Psi<std::complex<double>>(1, GlobalV::NBANDS, npwx * PARAM.globalv.npol, ngk);
         if (PARAM.inp.basis_type == "lcao_in_pw")
         {
-            wanf2[0].create(GlobalV::NLOCAL, npwx * GlobalV::NPOL);
-            const size_t memory_cost = GlobalV::NLOCAL * (GlobalV::NPOL * npwx) * sizeof(std::complex<double>);
+            wanf2[0].create(GlobalV::NLOCAL, npwx * PARAM.globalv.npol);
+            const size_t memory_cost = GlobalV::NLOCAL * (PARAM.globalv.npol * npwx) * sizeof(std::complex<double>);
             std::cout << " Memory for wanf2 (MB): " << double(memory_cost) / 1024.0 / 1024.0 << std::endl;
             ModuleBase::Memory::record("WF::wanf2", memory_cost);
         }
-        const size_t memory_cost = GlobalV::NBANDS * (GlobalV::NPOL * npwx) * sizeof(std::complex<double>);
+        const size_t memory_cost = GlobalV::NBANDS * (PARAM.globalv.npol * npwx) * sizeof(std::complex<double>);
         std::cout << " MEMORY FOR PSI (MB)  : " << double(memory_cost) / 1024.0 / 1024.0 << std::endl;
         ModuleBase::Memory::record("Psi_PW", memory_cost);
     }
@@ -79,10 +79,10 @@ psi::Psi<std::complex<double>>* wavefunc::allocate(const int nkstot, const int n
 
             for (int ik = 0; ik < nks2; ik++)
             {
-                this->wanf2[ik].create(GlobalV::NLOCAL, npwx * GlobalV::NPOL);
+                this->wanf2[ik].create(GlobalV::NLOCAL, npwx * PARAM.globalv.npol);
             }
 
-            const size_t memory_cost = nks2 * GlobalV::NLOCAL * (npwx * GlobalV::NPOL) * sizeof(std::complex<double>);
+            const size_t memory_cost = nks2 * GlobalV::NLOCAL * (npwx * PARAM.globalv.npol) * sizeof(std::complex<double>);
             std::cout << " Memory for wanf2 (MB): " << double(memory_cost) / 1024.0 / 1024.0 << std::endl;
             ModuleBase::Memory::record("WF::wanf2", memory_cost);
         }
@@ -90,8 +90,8 @@ psi::Psi<std::complex<double>>* wavefunc::allocate(const int nkstot, const int n
     else
     {
         // initial psi rather than evc
-        psi_out = new psi::Psi<std::complex<double>>(nks2, GlobalV::NBANDS, npwx * GlobalV::NPOL, ngk);
-        const size_t memory_cost = nks2 * GlobalV::NBANDS * (GlobalV::NPOL * npwx) * sizeof(std::complex<double>);
+        psi_out = new psi::Psi<std::complex<double>>(nks2, GlobalV::NBANDS, npwx * PARAM.globalv.npol, ngk);
+        const size_t memory_cost = nks2 * GlobalV::NBANDS * (PARAM.globalv.npol * npwx) * sizeof(std::complex<double>);
         std::cout << " MEMORY FOR PSI (MB)  : " << double(memory_cost) / 1024.0 / 1024.0 << std::endl;
         ModuleBase::Memory::record("Psi_PW", memory_cost);
     }
@@ -117,7 +117,7 @@ void wavefunc::wfcinit(psi::Psi<std::complex<double>>* psi_in, ModulePW::PW_Basi
         this->irindex = new int[wfc_basis->fftnxy];
         wfc_basis->getfftixy2is(this->irindex);
 #if defined(__CUDA) || defined(__ROCM)
-        if (GlobalV::device_flag == "gpu")
+        if (PARAM.globalv.device_flag == "gpu")
         {
             wfc_basis->get_ig2ixyz_k();
         }
@@ -282,8 +282,8 @@ void diago_PAO_in_pw_k2(const int& ik,
                          wfc_basis,
                          wfcatom,
                          GlobalC::ppcell.tab_at,
-                         GlobalV::NQX,
-                         GlobalV::DQ);
+                         PARAM.globalv.nqx,
+                         PARAM.globalv.dq);
 
         if (p_wf->init_wfc == "atomic+random" && starting_nw == GlobalC::ucell.natomwfc) // added by qianrui 2021-5-16
         {
@@ -439,8 +439,8 @@ void diago_PAO_in_pw_k2(const int& ik,
                          wfc_basis,
                          wfcatom,
                          GlobalC::ppcell.tab_at,
-                         GlobalV::NQX,
-                         GlobalV::DQ);
+                         PARAM.globalv.nqx,
+                         PARAM.globalv.dq);
 
         if (p_wf->init_wfc == "atomic+random" && starting_nw == GlobalC::ucell.natomwfc) // added by qianrui 2021-5-16
         {
@@ -547,8 +547,8 @@ void diago_PAO_in_pw_k2(const base_device::DEVICE_GPU* ctx,
                          wfc_basis,
                          wfcatom,
                          GlobalC::ppcell.tab_at,
-                         GlobalV::NQX,
-                         GlobalV::DQ);
+                         PARAM.globalv.nqx,
+                         PARAM.globalv.dq);
         if (p_wf->init_wfc == "atomic+random" && starting_nw == GlobalC::ucell.natomwfc) // added by qianrui 2021-5-16
         {
             p_wf->atomicrandom(wfcatom, 0, starting_nw, ik, wfc_basis);
@@ -650,8 +650,8 @@ void diago_PAO_in_pw_k2(const base_device::DEVICE_GPU* ctx,
                          wfc_basis,
                          wfcatom,
                          GlobalC::ppcell.tab_at,
-                         GlobalV::NQX,
-                         GlobalV::DQ);
+                         PARAM.globalv.nqx,
+                         PARAM.globalv.dq);
         if (p_wf->init_wfc == "atomic+random" && starting_nw == GlobalC::ucell.natomwfc) // added by qianrui 2021-5-16
         {
             p_wf->atomicrandom(wfcatom, 0, starting_nw, ik, wfc_basis);
@@ -731,7 +731,7 @@ void wavefunc::init_after_vc(const int nks)
     assert(GlobalV::NBANDS > 0);
 
     const int nks2 = nks;
-    const int nbasis = this->npwx * GlobalV::NPOL;
+    const int nbasis = this->npwx * PARAM.globalv.npol;
 
     if ((PARAM.inp.basis_type == "lcao" || PARAM.inp.basis_type == "lcao_in_pw") || winput::out_spillage == 2)
     {

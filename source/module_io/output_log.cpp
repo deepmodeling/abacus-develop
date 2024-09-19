@@ -140,7 +140,7 @@ void output_vacuum_level(const UnitCell* ucell,
     {
         totchg[ir] = rho[0][ir];
     }
-    if (GlobalV::NSPIN == 2)
+    if (PARAM.inp.nspin == 2)
     {
         for (int ir = 0; ir < nrxx; ++ir)
         {

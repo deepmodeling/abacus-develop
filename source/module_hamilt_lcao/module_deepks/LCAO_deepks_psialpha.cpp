@@ -85,9 +85,9 @@ void LCAO_Deepks::build_psialpha(const bool& calc_deri,
                 all_indexes.erase(std::unique(all_indexes.begin(), all_indexes.end()), all_indexes.end());
 
                 // middle loop : all atomic basis on the adjacent atom ad
-                for (int iw1l = 0; iw1l < all_indexes.size(); iw1l += GlobalV::NPOL)
+                for (int iw1l = 0; iw1l < all_indexes.size(); iw1l += PARAM.globalv.npol)
                 {
-                    const int iw1 = all_indexes[iw1l] / GlobalV::NPOL;
+                    const int iw1 = all_indexes[iw1l] / PARAM.globalv.npol;
                     std::vector<std::vector<double>> nlm;
                     // 2D, dim 0 contains the overlap <psi|alpha>
                     // dim 1-3 contains the gradient of overlap
@@ -109,7 +109,7 @@ void LCAO_Deepks::build_psialpha(const bool& calc_deri,
                     else
                     {
                         nlm_cur.insert({all_indexes[iw1l], nlm});
-                        if (GlobalV::NPOL == 2)
+                        if (PARAM.globalv.npol == 2)
                             nlm_cur.insert({all_indexes[iw1l + 1], nlm});
                     }
                 } // end iw
@@ -189,7 +189,7 @@ void LCAO_Deepks::check_psialpha(const bool& calc_deri,
 
                 const ModuleBase::Vector3<double> tau1 = GridD.getAdjacentTau(ad);
                 const Atom* atom1 = &ucell.atoms[T1];
-                const int nw1_tot = atom1->nw * GlobalV::NPOL;
+                const int nw1_tot = atom1->nw * PARAM.globalv.npol;
 
                 const double dist1 = (tau1 - tau0).norm() * ucell.lat0;
 
@@ -229,7 +229,7 @@ void LCAO_Deepks::check_psialpha(const bool& calc_deri,
                     const int iw2_local = pv->global2local_col(iw1_all);
                     if (iw1_local < 0 && iw2_local < 0)
                         continue;
-                    const int iw1_0 = iw1 / GlobalV::NPOL;
+                    const int iw1_0 = iw1 / PARAM.globalv.npol;
 
                     std::vector<std::vector<double>> nlm;
 

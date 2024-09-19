@@ -1,5 +1,6 @@
 // use PEXSI to solve a Kohn-Sham equation
 // the H and S matrices are given by 2D block cyclic distribution
+#include "module_parameter/parameter.h"
 // the Density Matrix and Energy Density Matrix calculated by PEXSI are transformed to 2D block cyclic distribution
 // #include "mpi.h"
 #ifdef __PEXSI
@@ -114,7 +115,7 @@ int loadPEXSIOption(MPI_Comm comm,
     int_para[15] = 0;
     int_para[16] = pexsi::PEXSI_Solver::pexsi_nproc_pole;
 
-    double_para[0] = 2;//GlobalV::NSPIN; // pexsi::PEXSI_Solver::pexsi_spin;
+    double_para[0] = 2;//PARAM.inp.nspin; // pexsi::PEXSI_Solver::pexsi_spin;
     double_para[1] = pexsi::PEXSI_Solver::pexsi_temp;
     double_para[2] = pexsi::PEXSI_Solver::pexsi_gap;
     double_para[3] = pexsi::PEXSI_Solver::pexsi_delta_e;

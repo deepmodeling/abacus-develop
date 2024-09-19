@@ -76,12 +76,12 @@ class UcellTest : public ::testing::Test
         PARAM.input.relax_new = utp.relax_new;
         PARAM.sys.global_out_dir = "./";
         ucell = utp.SetUcellInfo();
-        GlobalV::LSPINORB = false;
+        PARAM.input.lspinorb = false;
         pp_dir = "./support/";
         PARAM.input.pseudo_rcut = 15.0;
         PARAM.input.dft_functional = "default";
         PARAM.input.test_pseudo_cell = 1;
-        GlobalV::NSPIN = 1;
+        PARAM.input.nspin = 1;
         PARAM.input.basis_type = "pw";
     }
     void TearDown()
@@ -106,7 +106,7 @@ TEST_F(UcellTest, BcastUnitcell2)
 
 TEST_F(UcellTest, BcastUnitcell)
 {
-    GlobalV::NSPIN = 4;
+    PARAM.input.nspin = 4;
     ucell->bcast_unitcell();
     if (GlobalV::MY_RANK != 0)
     {

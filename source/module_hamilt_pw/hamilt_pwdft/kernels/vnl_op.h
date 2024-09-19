@@ -23,7 +23,7 @@ struct cal_vnl_op
     /// @param atom_nh - GlobalC::ucell.atoms[ii].ncpp.nh
     /// @param atom_nb - GlobalC::ucell.atoms[it].ncpp.nbeta
     /// @param atom_na - GlobalC::ucell.atoms[ii].na
-    /// @param DQ - GlobalV::DQ
+    /// @param DQ - PARAM.globalv.dq
     /// @param tpiba - GlobalC::ucell.tpiba
     /// @param NEG_IMAG_UNIT - ModuleBase::NEG_IMAG_UNIT
     /// @param gk - GlobalC::wf.get_1qvec_cartesian

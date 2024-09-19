@@ -114,7 +114,7 @@ void DFTU::write_occup_m(std::ofstream &ofs, bool diag)
                     ofs << "zeta"
                         << "  " << n << std::endl;
 
-                    if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 2)
+                    if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2)
                     {
                         double sum0[2];
                         for (int is = 0; is < 2; is++)
@@ -159,7 +159,7 @@ void DFTU::write_occup_m(std::ofstream &ofs, bool diag)
                             ofs << std::setw(12) << std::setprecision(8) << std::fixed<< "atomic mag: "<<iat<<" " << sum0[0] - sum0[1] << std::endl;
                         }
                     }
-                    else if (GlobalV::NSPIN == 4) // SOC
+                    else if (PARAM.inp.nspin == 4) // SOC
                     {
                         if(diag)// diagonalization for local occupation matrix and print the eigenvalues
                         {//output the eigenvalues for rho , mag_x, mag_y, mag_z
@@ -194,13 +194,13 @@ void DFTU::write_occup_m(std::ofstream &ofs, bool diag)
                         else {
                         for (int m0 = 0; m0 < 2 * l + 1; m0++)
                         {
-                            for (int ipol0 = 0; ipol0 < GlobalV::NPOL; ipol0++)
+                            for (int ipol0 = 0; ipol0 < PARAM.globalv.npol; ipol0++)
                             {
                                 const int m0_all = m0 + (2 * l + 1) * ipol0;
 
                                 for (int m1 = 0; m1 < 2 * l + 1; m1++)
                                 {
-                                    for (int ipol1 = 0; ipol1 < GlobalV::NPOL; ipol1++)
+                                    for (int ipol1 = 0; ipol1 < PARAM.globalv.npol; ipol1++)
                                     {
                                         int m1_all = m1 + (2 * l + 1) * ipol1;
                                         ofs << std::setw(12) << std::setprecision(8) << std::fixed
@@ -301,7 +301,7 @@ void DFTU::read_occup_m(const std::string &fn)
                             ifdftu >> zeta;
                             ifdftu.ignore(150, '\n');
 
-                            if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 2)
+                            if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2)
                             {
                                 for (int is = 0; is < 2; is++)
                                 {
@@ -330,18 +330,18 @@ void DFTU::read_occup_m(const std::string &fn)
                                     }
                                 }
                             }
-                            else if (GlobalV::NSPIN == 4) // SOC
+                            else if (PARAM.inp.nspin == 4) // SOC
                             {
                                 double value = 0.0;
                                 for (int m0 = 0; m0 < 2 * L + 1; m0++)
                                 {
-                                    for (int ipol0 = 0; ipol0 < GlobalV::NPOL; ipol0++)
+                                    for (int ipol0 = 0; ipol0 < PARAM.globalv.npol; ipol0++)
                                     {
                                         const int m0_all = m0 + (2 * L + 1) * ipol0;
 
                                         for (int m1 = 0; m1 < 2 * L + 1; m1++)
                                         {
-                                            for (int ipol1 = 0; ipol1 < GlobalV::NPOL; ipol1++)
+                                            for (int ipol1 = 0; ipol1 < PARAM.globalv.npol; ipol1++)
                                             {
                                                 int m1_all = m1 + (2 * L + 1) * ipol1;
                                                 ifdftu >> value;
@@ -412,7 +412,7 @@ void DFTU::local_occup_bcast()
                         continue;
 }
 
-                    if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 2)
+                    if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2)
                     {
                         for (int spin = 0; spin < 2; spin++)
                         {
@@ -427,17 +427,17 @@ void DFTU::local_occup_bcast()
                             }
                         }
                     }
-                    else if (GlobalV::NSPIN == 4) // SOC
+                    else if (PARAM.inp.nspin == 4) // SOC
                     {
                         for (int m0 = 0; m0 < 2 * L + 1; m0++)
                         {
-                            for (int ipol0 = 0; ipol0 < GlobalV::NPOL; ipol0++)
+                            for (int ipol0 = 0; ipol0 < PARAM.globalv.npol; ipol0++)
                             {
                                 const int m0_all = m0 + (2 * L + 1) * ipol0;
 
                                 for (int m1 = 0; m1 < 2 * L + 1; m1++)
                                 {
-                                    for (int ipol1 = 0; ipol1 < GlobalV::NPOL; ipol1++)
+                                    for (int ipol1 = 0; ipol1 < PARAM.globalv.npol; ipol1++)
                                     {
                                         int m1_all = m1 + (2 * L + 1) * ipol1;
 #ifdef __MPI

@@ -52,7 +52,8 @@ struct Input_para
     bool dm_to_rho = false;             ///< read density matrix from npz format and calculate charge density
     std::string chg_extrap = "default"; ///< xiaohui modify 2015-02-01
     bool init_vel = false;              ///< read velocity from STRU or not  liuyu 2021-07-14
-
+    
+    std::string input_file = "INPUT";   ///< input file name
     std::string stru_file = "STRU";     ///< file contains atomic positions --
                                         ///< xiaohui modify 2015-02-01
     std::string kpoint_file = "KPT";    ///< file contains k-points -- xiaohui modify 2015-02-01
@@ -229,8 +230,8 @@ struct Input_para
     bool deepks_equiv = false;        ///< whether to use equivariant version of DeePKS
     bool deepks_out_unittest = false; ///< if set to true, prints intermediate quantities that shall
                                       ///< be used for making unit test
-
     std::string deepks_model = "None";              ///< needed when deepks_scf=1
+    
     int bessel_descriptor_lmax = 2;                 ///< lmax used in descriptor
     std::string bessel_descriptor_ecut = "default"; ///< energy cutoff for spherical bessel functions(Ry)
     double bessel_descriptor_tolerence = 1e-12;     ///< tolerance for spherical bessel root

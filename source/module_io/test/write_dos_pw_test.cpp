@@ -48,7 +48,7 @@ TEST_F(DosPWTest,Dos1)
 	dosp.read_istate_info();
 	EXPECT_EQ(dosp.is,0);
 	double dos_scale = 0.01;
-	GlobalV::NSPIN = 1;
+	PARAM.input.nspin = 1;
 	PARAM.input.dos_emax_ev = dosp.emax_ev;
 	PARAM.sys.dos_setemax = true;
 	PARAM.input.dos_emin_ev = dosp.emin_ev;
@@ -98,7 +98,7 @@ TEST_F(DosPWTest,Dos2)
 	dosp.read_istate_info();
 	EXPECT_EQ(dosp.is,0);
 	double dos_scale = 0.01;
-	GlobalV::NSPIN = 1;
+	PARAM.input.nspin = 1;
 	PARAM.input.dos_emax_ev = dosp.emax_ev;
 	PARAM.sys.dos_setemax = false;
 	PARAM.input.dos_emin_ev = dosp.emin_ev;

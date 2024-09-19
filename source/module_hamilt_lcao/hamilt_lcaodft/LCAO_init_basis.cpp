@@ -1,5 +1,6 @@
 #include "LCAO_domain.h"
 
+#include "module_parameter/parameter.h"
 /// once the GlobalC::exx_info has been deleted, this include can be gone 
 /// mohan note 2024-07-21
 #ifdef __EXX
@@ -29,7 +30,7 @@ void init_basis_lcao(Parallel_Orbitals& pv,
     {
         if (nlocal > 0)
         {
-            GlobalV::NB2D = (GlobalV::NSPIN == 4) ? 2 : 1;
+            GlobalV::NB2D = (PARAM.inp.nspin == 4) ? 2 : 1;
         }
         if (nlocal > 500)
         {
@@ -45,7 +46,7 @@ void init_basis_lcao(Parallel_Orbitals& pv,
     // * construct the interpolation tables.
 
     two_center_bundle.build_orb(ucell.ntype, ucell.orbital_fn);
-    two_center_bundle.build_alpha(GlobalV::deepks_setorb, &ucell.descriptor_file);
+    two_center_bundle.build_alpha(PARAM.globalv.deepks_setorb, &ucell.descriptor_file);
     two_center_bundle.build_orb_onsite(onsite_radius);
     // currently deepks only use one descriptor file, so cast bool to int is
     // fine

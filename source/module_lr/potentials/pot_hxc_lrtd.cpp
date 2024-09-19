@@ -1,5 +1,6 @@
 #include "pot_hxc_lrtd.h"
 #include "module_elecstate/potentials/pot_base.h"
+#include "module_parameter/parameter.h"
 #include "module_elecstate/potentials/H_Hartree_pw.h"
 #include "module_base/timer.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
@@ -14,7 +15,7 @@ namespace LR
     {
         this->rho_basis_ = rho_basis_in;
         this->nrxx = chg_gs->nrxx;
-        this->nspin = (GlobalV::NSPIN == 1 || (GlobalV::NSPIN == 4 && !GlobalV::DOMAG && !GlobalV::DOMAG_Z)) ? 1 : 2;
+        this->nspin = (PARAM.inp.nspin == 1 || (PARAM.inp.nspin == 4 && !PARAM.globalv.domag && !PARAM.globalv.domag_z)) ? 1 : 2;
 
         this->pot_hartree = LR_Util::make_unique<elecstate::PotHartree>(this->rho_basis_);
         std::set<std::string> local_xc = { "lda", "pbe", "hse" };

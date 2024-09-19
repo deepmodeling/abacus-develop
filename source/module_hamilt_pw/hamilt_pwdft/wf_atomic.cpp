@@ -74,8 +74,8 @@ void WF_atomic::init_at_1(Structure_Factor *sf_in)
     double *aux = new double[ndm];
     double *vchi = new double[ndm];
 
-	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"dq(describe PAO in reciprocal space)",GlobalV::DQ);
-	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"max q",GlobalV::NQX);
+	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"dq(describe PAO in reciprocal space)",PARAM.globalv.dq);
+	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"max q",PARAM.globalv.nqx);
 
     for (int it=0; it<GlobalC::ucell.ntype; it++)
     {
@@ -186,9 +186,9 @@ void WF_atomic::init_at_1(Structure_Factor *sf_in)
             if (atom->ncpp.oc[ic] >= 0.0)
             {
                 const int l = atom->ncpp.lchi[ic];
-                for (int iq=startq; iq<GlobalV::NQX; iq++)
+                for (int iq=startq; iq<PARAM.globalv.nqx; iq++)
                 {
-                    const double q = GlobalV::DQ * iq;
+                    const double q = PARAM.globalv.dq * iq;
                     ModuleBase::Sphbes::Spherical_Bessel(atom->ncpp.msh, atom->ncpp.r.data(), q, l, aux);
                     for (int ir = 0;ir < atom->ncpp.msh;ir++)
                     {
@@ -314,14 +314,14 @@ void WF_atomic::atomic_wfc(const int ik,
                                                                it, iw, table_dimension, dq, gk[ig].norm() * GlobalC::ucell.tpiba );
                     }
 
-                    if(GlobalV::NSPIN==4)
+                    if(PARAM.inp.nspin==4)
                     {
                         if(GlobalC::ucell.atoms[it].ncpp.has_so)
                         {
                             Soc soc;
 						    soc.rot_ylm(l+1);
                             const double j = GlobalC::ucell.atoms[it].ncpp.jchi[iw];
-                            if ( !(GlobalV::DOMAG||GlobalV::DOMAG_Z))
+                            if ( !(PARAM.globalv.domag||PARAM.globalv.domag_z))
                             {//atomic_wfc_so
                                 double fact[2];
                                 for(int m=-l-1;m<l+1;m++)
@@ -615,9 +615,9 @@ void WF_atomic::random_t(std::complex<FPTYPE>* psi,
         FPTYPE *tmparg = new FPTYPE[nstnz];
         for (int iw = iw_start ;iw < iw_end;iw++)
         {
-            std::complex<FPTYPE>* ppsi = &(psi[iw * this->npwx * GlobalV::NPOL]);
+            std::complex<FPTYPE>* ppsi = &(psi[iw * this->npwx * PARAM.globalv.npol]);
             int startig = 0;
-            for(int ipol = 0 ; ipol < GlobalV::NPOL ; ++ipol)
+            for(int ipol = 0 ; ipol < PARAM.globalv.npol ; ++ipol)
             {
             
 	            for(int ir=0; ir < nxy; ir++)
@@ -662,7 +662,7 @@ void WF_atomic::random_t(std::complex<FPTYPE>* psi,
 #endif // __MPI
         for (int iw = iw_start ;iw < iw_end;iw++)
         {
-            std::complex<FPTYPE>* ppsi = &(psi[iw * this->npwx * GlobalV::NPOL]);
+            std::complex<FPTYPE>* ppsi = &(psi[iw * this->npwx * PARAM.globalv.npol]);
             for (int ig = 0;ig < ng;ig++)
             {
                 const FPTYPE rr = std::rand()/FPTYPE(RAND_MAX); //qianrui add RAND_MAX
@@ -670,7 +670,7 @@ void WF_atomic::random_t(std::complex<FPTYPE>* psi,
                 const FPTYPE gk2 = wfc_basis->getgk2(ik,ig);
                 ppsi[ig] = std::complex<FPTYPE>(rr * cos(arg), rr * sin(arg)) / FPTYPE(gk2 + 1.0);
             }
-            if(GlobalV::NPOL==2) {for (int ig = this->npwx;ig < this->npwx + ng;ig++)
+            if(PARAM.globalv.npol==2) {for (int ig = this->npwx;ig < this->npwx + ng;ig++)
             {
                 const FPTYPE rr = std::rand()/FPTYPE(RAND_MAX);
                 const FPTYPE arg= ModuleBase::TWO_PI * std::rand()/FPTYPE(RAND_MAX);
@@ -710,7 +710,7 @@ void WF_atomic::atomicrandom(ModuleBase::ComplexMatrix& psi,
         for (int iw = iw_start ;iw < iw_end;iw++)
         {
             int startig = 0;
-            for(int ipol = 0 ; ipol < GlobalV::NPOL ; ++ipol)
+            for(int ipol = 0 ; ipol < PARAM.globalv.npol ; ++ipol)
             {
 	            for(int ir=0; ir < nxy; ir++)
 	            {
@@ -754,7 +754,7 @@ void WF_atomic::atomicrandom(ModuleBase::ComplexMatrix& psi,
 		for (int iw = iw_start ;iw < iw_end;iw++)
 		{
 			int startig = 0;
-			for(int ip = 0 ; ip < GlobalV::NPOL; ++ip)
+			for(int ip = 0 ; ip < PARAM.globalv.npol; ++ip)
 			{
 				for(int ig = 0 ; ig < npw ; ++ig)
 				{
