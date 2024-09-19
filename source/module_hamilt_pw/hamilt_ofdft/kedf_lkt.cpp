@@ -85,6 +85,37 @@ double KEDF_LKT::get_energy_density(const double* const* prho, int is, int ir, M
     return energy_den;
 }
 
+void KEDF_LKT::tau_lkt(const double* const* prho, ModulePW::PW_Basis* pw_rho, double* rtau_lkt)
+{
+    double* as = new double[pw_rho->nrxx]; // a*s
+    double** nabla_rho = new double*[3];
+    for (int i = 0; i < 3; ++i)
+    {
+        nabla_rho[i] = new double[pw_rho->nrxx];
+    }
+
+    if (GlobalV::NSPIN == 1)
+    {
+        this->nabla(prho[0], pw_rho, nabla_rho);
+        this->get_as(prho[0], nabla_rho, pw_rho->nrxx, as);
+
+        for (int ir = 0; ir < pw_rho->nrxx; ++ir)
+        {
+            double coshas = std::cosh(as[ir]);
+            rtau_lkt[ir] += std::pow(prho[0][ir], 5. / 3.) / coshas * this->c_tf_;
+        }
+    }
+    else if (GlobalV::NSPIN == 2)
+    {
+        // Waiting for update
+    }
+
+    delete[] as;
+    for (int i = 0; i < 3; ++i)
+        delete[] nabla_rho[i];
+    delete[] nabla_rho;
+}
+
 /**
  * @brief Get the potential of LKT KEDF, and add it into rpotential,
  * and the LKT energy will be calculated and stored in this->lkt_energy

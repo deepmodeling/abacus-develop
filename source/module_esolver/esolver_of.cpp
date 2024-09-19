@@ -510,7 +510,13 @@ bool ESolver_OF::check_exit()
  */
 void ESolver_OF::after_opt(const int istep, UnitCell& ucell)
 {
-    // 1) call after_scf() of ESolver_FP
+    // 1) calculate the kinetic energy density
+    if (PARAM.inp.out_elf)
+    {
+        this->kinetic_energy_density(this->pelec->charge->rho, this->pphi_, this->pelec->charge->kin_r);
+    }
+
+    // 2) call after_scf() of ESolver_FP
     ESolver_FP::after_scf(istep);
 }
 

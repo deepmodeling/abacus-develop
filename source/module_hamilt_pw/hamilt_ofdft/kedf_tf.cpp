@@ -62,6 +62,34 @@ double KEDF_TF::get_energy_density(const double* const* prho, int is, int ir)
 }
 
 /**
+ * @brief Get the kinetic energy of TF KEDF, and add it onto rtau_tf
+ * \f[ \tau_{TF} = c_{TF} * \prho^{5/3} \f]
+ * 
+ * @param prho charge density
+ * @param rtau_tf rtau_tf => rtau_tf + tau_tf
+ */
+void KEDF_TF::tau_tf(const double* const* prho, double* rtau_tf)
+{
+    if (GlobalV::NSPIN == 1)
+    {
+        for (int ir = 0; ir < this->nx_; ++ir)
+        {
+            rtau_tf[ir] += this->c_tf_ * std::pow(prho[0][ir], 5.0 / 3.0);
+        }
+    }
+    else if (GlobalV::NSPIN == 2)
+    {
+        for (int is = 0; is < GlobalV::NSPIN; ++is)
+        {
+            for (int ir = 0; ir < this->nx_; ++ir)
+            {
+                rtau_tf[ir] += 0.5 * this->c_tf_ * std::pow(2.0 * prho[is][ir], 5.0 / 3.0);
+            }
+        }
+    }
+}
+
+/**
  * @brief Get the potential of TF KEDF, and add it into rpotential,
  * and the TF energy will be calculated and stored in this->tf_energy
  * \f[ V_{TF} = \delta E_{TF}/\delta \rho = 5/3 * c_{TF} * \rho^{2/3} \f]

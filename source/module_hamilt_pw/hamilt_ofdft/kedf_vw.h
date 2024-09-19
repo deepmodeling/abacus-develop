@@ -29,6 +29,7 @@ class KEDF_vW
 
     double get_energy(double** pphi, ModulePW::PW_Basis* pw_rho);
     double get_energy_density(double** pphi, int is, int ir, ModulePW::PW_Basis* pw_rho);
+    void tau_vw(const double* const* prho, ModulePW::PW_Basis* pw_rho, double* rtau_vw);
     void vw_potential(const double* const* pphi, ModulePW::PW_Basis* pw_rho, ModuleBase::matrix& rpotential);
     void get_stress(const double* const* pphi, ModulePW::PW_Basis* pw_rho);
 

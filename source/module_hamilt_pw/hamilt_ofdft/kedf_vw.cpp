@@ -113,6 +113,42 @@ double KEDF_vW::get_energy_density(double** pphi, int is, int ir, ModulePW::PW_B
 }
 
 /**
+ * @brief Get the positive definite energy density of vW KEDF
+ * \f[ \tau_{vW} = |\nabla \rho|^2 / (8 \rho) \f]
+ * 
+ * @param prho charge density
+ * @param pw_rho pw basis
+ * @param rtau_vw rtau_vw => rtau_vw + tau_vw
+ */
+void KEDF_vW::tau_vw(const double* const* prho, ModulePW::PW_Basis* pw_rho, double* rtau_vw)
+{
+    for (int is = 0; is < GlobalV::NSPIN; ++is)
+    {
+        std::vector<std::vector<double>> nabla_rho(3, std::vector<double>(pw_rho->nrxx, 0.));
+
+        std::complex<double> *recip_rho = new std::complex<double>[pw_rho->npw];
+        std::complex<double> *recip_nabla_rho = new std::complex<double>[pw_rho->npw];
+        pw_rho->real2recip(prho[is], recip_rho);
+        
+        std::complex<double> img(0.0, 1.0);
+        for (int j = 0; j < 3; ++j)
+        {
+            for (int ip = 0; ip < pw_rho->npw; ++ip)
+            {
+                recip_nabla_rho[ip] = img * pw_rho->gcar[ip][j] * recip_rho[ip] * pw_rho->tpiba;
+            }
+
+            pw_rho->recip2real(recip_nabla_rho, nabla_rho[j].data());
+
+            for (int ir = 0; ir < pw_rho->nrxx; ++ir)
+            {
+                rtau_vw[ir] += nabla_rho[j][ir] * nabla_rho[j][ir] / (8. * prho[is][ir]) * 2.0; // convert Ha to Ry.
+            }
+        }
+    }
+}
+
+/**
  * @brief Get the potential of vW KEDF, and add it into rpotential,
  * and the vW energy will be calculated and stored in this->vw_energy
  * V_{vW}(r)=-1/2 * nabla^2 sqrt(rho(r))]/sqrt(rho(r))
