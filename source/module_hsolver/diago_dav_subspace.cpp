@@ -816,7 +816,7 @@ int Diago_DavSubspace<T, Device>::diag(const HPsiFunc& hpsi_func,
 
     do
     {
-        printf("enter diag... is_subspace = %d, ntry = %d\n", this->is_subspace, ntry);
+        //printf("enter diag... is_subspace = %d, ntry = %d\n", this->is_subspace, ntry);
         if (this->is_subspace || ntry > 0)
         {
             this->diagH_subspace(psi_in, eigenvalue_in_hsolver, hpsi_func, this->n_band, this->dim, psi_in_dmax);
