@@ -267,7 +267,6 @@ void Input_Conv::Convert()
     GlobalV::PW_DIAG_NDIM = PARAM.inp.pw_diag_ndim;
 
     GlobalV::PW_DIAG_THR = PARAM.inp.pw_diag_thr;
-    GlobalV::NB2D = PARAM.inp.nb2d;
 
     //----------------------------------------------------------
     // iteration (1/3)
