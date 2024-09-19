@@ -1,0 +1,1 @@
+test out_elf in PW KSDFT. symmetry = on.; test init_chg=auto, and no chg file (will use atomic chg). 
