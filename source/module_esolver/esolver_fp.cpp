@@ -265,13 +265,13 @@ void ESolver_FP::after_scf(const int istep)
             srho.begin(is, *(this->pelec->charge), this->pw_rho, GlobalC::ucell.symm);
         }
 
-        std::string fn =PARAM.globalv.global_out_dir + "/ELF.cube";
+        std::string out_dir =PARAM.globalv.global_out_dir;
         ModuleIO::write_elf(
 #ifdef __MPI
             this->pw_big->bz,
             this->pw_big->nbz,
 #endif
-            fn,
+            out_dir,
             istep,
             GlobalV::NSPIN,
             this->pelec->charge->rho,

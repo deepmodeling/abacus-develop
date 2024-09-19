@@ -12,7 +12,7 @@ void write_elf(
     const int& bz,
     const int& nbz,
 #endif
-    const std::string& fn,
+    const std::string& out_dir,
     const int& istep,
     const int& nspin,
     const double* const* rho,

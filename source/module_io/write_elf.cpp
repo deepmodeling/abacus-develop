@@ -8,7 +8,7 @@ void write_elf(
     const int& bz,
     const int& nbz,
 #endif
-    const std::string& fn,
+    const std::string& out_dir,
     const int& istep,
     const int& nspin,
     const double* const* rho,
@@ -16,9 +16,9 @@ void write_elf(
     ModulePW::PW_Basis* rho_basis,
     const UnitCell* ucell_)
 {
-    std::vector<double> result(rho_basis->nrxx, 0.);
+    std::vector<std::vector<double>> elf(nspin, std::vector<double>(rho_basis->nrxx, 0.));
     // 1) calculate the kinetic energy density of vW KEDF
-    std::vector<double> tau_vw(rho_basis->nrxx, 0.);
+    std::vector<std::vector<double>> tau_vw(nspin, std::vector<double>(rho_basis->nrxx, 0.));
     for (int is = 0; is < nspin; ++is)
     {
         std::vector<std::vector<double>> nabla_rho(3, std::vector<double>(rho_basis->nrxx, 0.));
@@ -39,13 +39,13 @@ void write_elf(
 
             for (int ir = 0; ir < rho_basis->nrxx; ++ir)
             {
-                tau_vw[ir] += nabla_rho[j][ir] * nabla_rho[j][ir] / (8. * rho[is][ir]) * 2.0; // convert Ha to Ry.
+                tau_vw[is][ir] += nabla_rho[j][ir] * nabla_rho[j][ir] / (8. * rho[is][ir]) * 2.0; // convert Ha to Ry.
             }
         }
     }
 
     // 2) calculate the kinetic energy density of TF KEDF
-    std::vector<double> tau_TF(rho_basis->nrxx, 0.);
+    std::vector<std::vector<double>> tau_TF(nspin, std::vector<double>(rho_basis->nrxx, 0.));
     const double c_tf
         = 3.0 / 10.0 * std::pow(3 * std::pow(M_PI, 2.0), 2.0 / 3.0)
           * 2.0; // 10/3*(3*pi^2)^{2/3}, multiply by 2 to convert unit from Hartree to Ry, finally in Ry*Bohr^(-2)
@@ -53,7 +53,7 @@ void write_elf(
     {
         for (int ir = 0; ir < rho_basis->nrxx; ++ir)
         {
-            tau_TF[ir] = c_tf * std::pow(rho[0][ir], 5.0 / 3.0);
+            tau_TF[0][ir] = c_tf * std::pow(rho[0][ir], 5.0 / 3.0);
         }
     }
     else if (nspin == 2)
@@ -62,50 +62,107 @@ void write_elf(
         {
             for (int ir = 0; ir < rho_basis->nrxx; ++ir)
             {
-                tau_TF[ir] += 0.5 * c_tf * std::pow(2.0 * rho[is][ir], 5.0 / 3.0);
+                tau_TF[is][ir] = 0.5 * c_tf * std::pow(2.0 * rho[is][ir], 5.0 / 3.0);
             }
         }
     }
 
-    // 3) calculate the enhancement factor F = (tau_KS - tau_vw) / tau_TF
-    for (int ir = 0; ir < rho_basis->nrxx; ++ir)
+    // 3) calculate the enhancement factor F = (tau_KS - tau_vw) / tau_TF, and then ELF = 1 / (1 + F^2)
+    for (int is = 0; is < nspin; ++is)
     {
-        for (int is = 0; is < nspin; ++is)
+        for (int ir = 0; ir < rho_basis->nrxx; ++ir)
         {
-            result[ir] += tau[is][ir];
+            elf[is][ir] = (tau[is][ir] - tau_vw[is][ir]) / tau_TF[is][ir];
+            elf[is][ir] = 1. / (1. + elf[is][ir] * elf[is][ir]);
         }
-        result[ir] = (result[ir] - tau_vw[ir]) / tau_TF[ir];
     }
 
-    // 4) calculate the ELF = 1 / (1 + F^2)
-    for (int ir = 0; ir < rho_basis->nrxx; ++ir)
-    {
-        result[ir] = 1. / (1. + result[ir] * result[ir]);
-    }
-
+    // 4) output the ELF = 1 / (1 + F^2) to cube file
     int precision = 9;
-    int is = -1;
     double ef_tmp = 0.0;
     int out_fermi = 0;
 
-    ModuleIO::write_cube(
-#ifdef __MPI
-        bz,
-        nbz,
-        rho_basis->nplane,
-        rho_basis->startz_current,
-#endif
-        result.data(),
-        is,
-        nspin,
-        istep,
-        fn,
-        rho_basis->nx,
-        rho_basis->ny,
-        rho_basis->nz,
-        ef_tmp,
-        ucell_,
-        precision,
-        out_fermi);
+    if (nspin == 1)
+    {
+        std::string fn = out_dir + "/ELF.cube";
+
+        int is = -1;
+        ModuleIO::write_cube(
+    #ifdef __MPI
+            bz,
+            nbz,
+            rho_basis->nplane,
+            rho_basis->startz_current,
+    #endif
+            elf[0].data(),
+            is,
+            nspin,
+            istep,
+            fn,
+            rho_basis->nx,
+            rho_basis->ny,
+            rho_basis->nz,
+            ef_tmp,
+            ucell_,
+            precision,
+            out_fermi);   
+    }
+    else if (nspin == 2)
+    {
+        for (int is = 0; is < nspin; ++is)
+        {
+            std::string fn_temp = out_dir + "/ELF" + std::to_string(is) + ".cube";
+            int ispin = is + 1;
+
+            ModuleIO::write_cube(
+        #ifdef __MPI
+                bz,
+                nbz,
+                rho_basis->nplane,
+                rho_basis->startz_current,
+        #endif
+                elf[is].data(),
+                ispin,
+                nspin,
+                istep,
+                fn_temp,
+                rho_basis->nx,
+                rho_basis->ny,
+                rho_basis->nz,
+                ef_tmp,
+                ucell_,
+                precision,
+                out_fermi);   
+        }
+
+        std::vector<double> elf_tot(rho_basis->nrxx, 0.0);
+        for (int ir = 0; ir < rho_basis->nrxx; ++ir)
+        {
+            elf_tot[ir] = (tau[0][ir] + tau[1][ir] - tau_vw[0][ir] - tau_vw[1][ir]) / (tau_TF[0][ir] + tau_TF[1][ir]);
+            elf_tot[ir] = 1. / (1. + elf_tot[ir] * elf_tot[ir]);
+        }
+        std::string fn = out_dir + "/ELF.cube";
+
+        int is = -1;
+        ModuleIO::write_cube(
+    #ifdef __MPI
+            bz,
+            nbz,
+            rho_basis->nplane,
+            rho_basis->startz_current,
+    #endif
+            elf_tot.data(),
+            is,
+            nspin,
+            istep,
+            fn,
+            rho_basis->nx,
+            rho_basis->ny,
+            rho_basis->nz,
+            ef_tmp,
+            ucell_,
+            precision,
+            out_fermi);   
+    }
 }
 }
