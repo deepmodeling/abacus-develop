@@ -12,7 +12,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/write_HS.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/pulay_force_stress/pulay_force_stress.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/pulay_force_stress.h"
 
 #include <map>
 #include <unordered_map>
