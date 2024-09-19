@@ -42,6 +42,7 @@ namespace ModuleESolver
         void cal_en_shift(const bool is_shift);
 
         //--------------temporary----------------------------
+        double serch_radius;
         ModuleBase::matrix lj_rcut;
         ModuleBase::matrix lj_c12;
         ModuleBase::matrix lj_c6;

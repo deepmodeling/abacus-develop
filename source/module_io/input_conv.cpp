@@ -254,7 +254,6 @@ void Input_Conv::Convert()
 
     ModuleSymmetry::Symmetry::symm_flag = std::stoi(PARAM.inp.symmetry);
     ModuleSymmetry::Symmetry::symm_autoclose = PARAM.inp.symmetry_autoclose;
-    GlobalV::SEARCH_RADIUS = PARAM.inp.search_radius;
 
     //----------------------------------------------------------
     // planewave (8/8)

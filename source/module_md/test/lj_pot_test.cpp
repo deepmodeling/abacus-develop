@@ -1,5 +1,8 @@
 #include "gtest/gtest.h"
 #define private public
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include "module_esolver/esolver_lj.h"
 #include "module_md/md_func.h"
 #include "setcell.h"
@@ -101,7 +104,7 @@ TEST_F(LJ_pot_test, RcutSearchRadius)
             EXPECT_NEAR(p_esolver->lj_rcut(i, j), 3.0 * ModuleBase::ANGSTROM_AU, doublethreshold);
         }
     }
-    EXPECT_NEAR(GlobalV::SEARCH_RADIUS, 3.0 * ModuleBase::ANGSTROM_AU + 0.01, doublethreshold);
+    EXPECT_NEAR(p_esolver->serch_radius, 3.0 * ModuleBase::ANGSTROM_AU + 0.01, doublethreshold);
 
     rcut = {3.0, 4.0, 5.0};
     p_esolver->rcut_search_radius(rcut);
@@ -109,7 +112,7 @@ TEST_F(LJ_pot_test, RcutSearchRadius)
     EXPECT_NEAR(p_esolver->lj_rcut(0, 1), 4.0 * ModuleBase::ANGSTROM_AU, doublethreshold);
     EXPECT_NEAR(p_esolver->lj_rcut(1, 0), 4.0 * ModuleBase::ANGSTROM_AU, doublethreshold);
     EXPECT_NEAR(p_esolver->lj_rcut(1, 1), 5.0 * ModuleBase::ANGSTROM_AU, doublethreshold);
-    EXPECT_NEAR(GlobalV::SEARCH_RADIUS, 5.0 * ModuleBase::ANGSTROM_AU + 0.01, doublethreshold);
+    EXPECT_NEAR(p_esolver->serch_radius, 5.0 * ModuleBase::ANGSTROM_AU + 0.01, doublethreshold);
 }
 
 TEST_F(LJ_pot_test, SetC6C12)
