@@ -497,7 +497,7 @@ void ReadInput::item_output()
         item.annotation = "output electron localization function (ELF)";
         read_sync_bool(input.out_elf);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.esolver_type != "ksdft" && para.input.esolver_type != "ofdft")
+            if (para.input.out_elf && para.input.esolver_type != "ksdft" && para.input.esolver_type != "ofdft")
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "ELF is only aviailable for ksdft and ofdft");
             }
