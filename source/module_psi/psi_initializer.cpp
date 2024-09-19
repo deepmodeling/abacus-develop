@@ -164,6 +164,7 @@ void psi_initializer<T, Device>::random_t(T* psi, const int iw_start, const int 
         std::vector<Real> stickarg(nz);
         std::vector<Real> tmprr(nstnz);
         std::vector<Real> tmparg(nstnz);
+
         for (int iw = iw_start; iw < iw_end; iw++)
         {   
             // get the starting memory address of iw band
@@ -195,7 +196,8 @@ void psi_initializer<T, Device>::random_t(T* psi, const int iw_start, const int 
 #endif
                 }
                 // then for each g-component, initialize the wavefunction value
-                for (int ig = 0;ig < ng;ig++)
+                #pragma omp parallel for schedule(static, 4096/sizeof(T))
+                for (int ig = 0; ig < ng; ig++)
                 {
                     // get the correct value of "rr" and "arg" by indexing map "getigl2isz"
                     const double rr = tmprr[this->pw_wfc_->getigl2isz(ik, ig)];
@@ -214,6 +216,8 @@ void psi_initializer<T, Device>::random_t(T* psi, const int iw_start, const int 
         for (int iw = iw_start ;iw < iw_end; iw++)
         {
             T* psi_slice = &(psi[iw * this->pw_wfc_->npwk_max * PARAM.globalv.npol]); // get the memory to write directly. For nspin 4, nbasis*2
+
+            #pragma omp parallel for schedule(static, 4096/sizeof(T))
             for (int ig = 0; ig < ng; ig++)
             {
                 const double rr = std::rand()/double(RAND_MAX); //qianrui add RAND_MAX
@@ -221,8 +225,9 @@ void psi_initializer<T, Device>::random_t(T* psi, const int iw_start, const int 
                 const double gk2 = this->pw_wfc_->getgk2(ik, ig);
                 psi_slice[ig] = this->template cast_to_T<T>(std::complex<double>(rr*cos(arg)/(gk2 + 1.0), rr*sin(arg)/(gk2 + 1.0)));
             }
-            if(PARAM.globalv.npol==2) // additionally for nspin 4...
+            if(PARAM.globalv.npol == 2) // additionally for nspin 4...
             {
+                #pragma omp parallel for schedule(static, 4096/sizeof(T))
                 for (int ig = this->pw_wfc_->npwk_max; ig < this->pw_wfc_->npwk_max + ng; ig++)
                 {
                     const double rr = std::rand()/double(RAND_MAX);
