@@ -12,7 +12,7 @@
 #include "module_base/tool_title.h"
 #include "module_base/timer.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
-
+#include "module_parameter/parameter.h"
 #include <RI/global/Global_Func-2.h>
 
 #include <cmath>
@@ -84,7 +84,7 @@ auto RI_2D_Comm::split_m2D_ktoR(const K_Vectors & kv, const std::vector<const Tm
 			for(int iwt0_2D=0; iwt0_2D!=mR_2D.shape[0]; ++iwt0_2D)
 			{
 				const int iwt0 =
-					ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER()
+					ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver)
                     ? pv.local2global_col(iwt0_2D)
                     : pv.local2global_row(iwt0_2D);
 				int iat0, iw0_b, is0_b;
@@ -93,7 +93,7 @@ auto RI_2D_Comm::split_m2D_ktoR(const K_Vectors & kv, const std::vector<const Tm
 				for(int iwt1_2D=0; iwt1_2D!=mR_2D.shape[1]; ++iwt1_2D)
 				{
 					const int iwt1 =
-						ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER()
+						ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver)
                         ? pv.local2global_row(iwt1_2D)
                         : pv.local2global_col(iwt1_2D);
 					int iat1, iw1_b, is1_b;

@@ -157,7 +157,7 @@ void LCAO_Deepks::cal_orbital_precalc(
 
                         dm_pair.allocate(dm_array.data(), 0);
 
-                        if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER()) 
+                        if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver)) 
                         {
                             dm_pair.add_from_matrix(dm_hl[0][is].c,
                                                     pv->get_row_size(),

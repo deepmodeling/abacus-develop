@@ -214,7 +214,7 @@ void test_deepks::folding_nnr(const Test_Deepks::K_Vectors &kv)
 
 								if(nu<0)continue;
 								int iic;
-                                if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER() )
+                                if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.input.ks_solver) )
 								{
 									iic=mu+nu*ParaO.nrow;
 								}

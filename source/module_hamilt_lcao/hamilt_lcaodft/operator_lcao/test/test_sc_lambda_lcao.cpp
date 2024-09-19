@@ -1,12 +1,12 @@
 #include <algorithm>
 #include <random>
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #define private public
 #include "module_parameter/parameter.h"
 #undef private
 
 #include "../sc_lambda_lcao.h"
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "module_cell/klist.h"
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 
@@ -106,9 +106,9 @@ TEST_F(ScLambdaLCAOTest, ContributeHk)
     sc_lambda[0][1] = 1.0;
     sc_lambda[0][2] = 1.0;
     sc.set_sc_lambda(sc_lambda, 1);
-    // set KS_SOLVER, which determines IS_COLUMN_MAJOR_KS_SOLVER()
+    // set KS_SOLVER, which determines IS_COLUMN_MAJOR_KS_SOLVER(PARAM.input.ks_solver)
     PARAM.input.ks_solver = "genelpa";
-    EXPECT_TRUE(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER());
+    EXPECT_TRUE(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.input.ks_solver));
     // set sc_lambda_op
     auto sc_lambda_op
         = hamilt::OperatorScLambda<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>(&hsk,
@@ -165,9 +165,9 @@ TEST_F(ScLambdaLCAOTest, ContributeHkS2)
     sc_lambda[0][1] = 0.0;
     sc_lambda[0][2] = 1.0;
     sc.set_sc_lambda(sc_lambda, 1);
-    // set KS_SOLVER, which determines IS_COLUMN_MAJOR_KS_SOLVER()
+    // set KS_SOLVER, which determines IS_COLUMN_MAJOR_KS_SOLVER(PARAM.input.ks_solver)
     PARAM.input.ks_solver = "genelpa";
-    EXPECT_TRUE(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER());
+    EXPECT_TRUE(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.input.ks_solver));
     // set sc_lambda_op
     auto sc_lambda_op
         = hamilt::OperatorScLambda<hamilt::OperatorLCAO<std::complex<double>, double>>(&hsk,

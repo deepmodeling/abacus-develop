@@ -106,7 +106,7 @@ void DeePKS_domain::cal_f_delta_k(
                         double sinp, cosp;
                         ModuleBase::libm::sincos(arg, &sinp, &cosp);
                         const std::complex<double> kphase = std::complex<double>(cosp, sinp);
-                        if(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
+                        if(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
                         {
                             dm_pair.add_from_matrix(dm[ik].data(), pv.get_row_size(), kphase, 1);
                         }

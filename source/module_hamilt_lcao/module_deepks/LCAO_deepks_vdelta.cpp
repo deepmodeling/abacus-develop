@@ -1,5 +1,6 @@
 //This file contains subroutines related to V_delta, which is the deepks contribution to Hamiltonian
 //defined as |alpha>V(D)<alpha|
+#include "module_parameter/parameter.h"
 //as well as subroutines for printing them for checking
 //It also contains subroutine related to calculating e_delta_bands, which is basically
 //tr (rho * V_delta)
@@ -63,7 +64,7 @@ void LCAO_Deepks::cal_e_delta_band_k(const std::vector<std::vector<std::complex<
             if (mu >= 0 && nu >= 0)
             {                
                 int iic;
-                if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
+                if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
                 {
                     iic = mu + nu * pv->nrow;
                 }
