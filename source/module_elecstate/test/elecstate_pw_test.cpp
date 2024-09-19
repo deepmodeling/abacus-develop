@@ -164,10 +164,10 @@ void Charge::check_rho()
 
 void Set_GlobalV_Default()
 {
-    GlobalV::device_flag = "cpu";
+    PARAM.sys.device_flag = "cpu";
     PARAM.input.precision = "double";
-    GlobalV::DOMAG = false;
-    GlobalV::DOMAG_Z = false;
+    PARAM.sys.domag = false;
+    PARAM.sys.domag_z = false;
     // Base class dependent
     PARAM.input.nspin = 1;
     GlobalV::nelec = 10.0;
@@ -176,7 +176,7 @@ void Set_GlobalV_Default()
     GlobalV::NBANDS = 6;
     GlobalV::NLOCAL = 6;
     PARAM.input.esolver_type = "ksdft";
-    GlobalV::LSPINORB = false;
+    PARAM.input.lspinorb = false;
     PARAM.input.basis_type = "pw";
     GlobalV::KPAR = 1;
     GlobalV::NPROC_IN_POOL = 1;

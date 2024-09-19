@@ -187,7 +187,7 @@ void LCAO_Deepks::prepare_psialpha(const int nlocal,
 
                 const ModuleBase::Vector3<double> tau1 = GridD.getAdjacentTau(ad);
 				const Atom* atom1 = &ucell.atoms[T1];
-				const int nw1_tot = atom1->nw*GlobalV::NPOL;
+				const int nw1_tot = atom1->nw*PARAM.globalv.npol;
 
 				const double dist1 = (tau1-tau0).norm() * ucell.lat0;
 
@@ -204,7 +204,7 @@ void LCAO_Deepks::prepare_psialpha(const int nlocal,
 					const int iw2_local = pv->global2local_col(iw1_all);
 					if(iw1_local < 0 || iw2_local < 0) {continue;
 }
-					const int iw1_0 = iw1/GlobalV::NPOL;
+					const int iw1_0 = iw1/PARAM.globalv.npol;
 					std::vector<double> nlm = this->nlm_save[iat][ad][iw1][0];
                     
                     int ib=0;

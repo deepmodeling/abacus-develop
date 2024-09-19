@@ -1,5 +1,6 @@
 // TODO: This is a temperary location for these functions.
 // And will be moved to a global module(module base) later.
+#include "module_parameter/parameter.h"
 #ifndef MODULE_ELECSTATE_ELECSTATE_MULTI_DEVICE_H
 #define MODULE_ELECSTATE_ELECSTATE_MULTI_DEVICE_H
 #include <complex>
@@ -32,8 +33,8 @@ struct elecstate_pw_op {
   ///
   /// Input Parameters
   /// @param ctx - which device this function runs on
-  /// @param DOMAG - GlobalV::DOMAG
-  /// @param DOMAG_Z - GlobalV::DOMAG_Z
+  /// @param DOMAG - PARAM.globalv.domag
+  /// @param DOMAG_Z - PARAM.globalv.domag_z
   /// @param nrxx - number of planewaves
   /// @param weight - input constant
   /// @param wfcr - input array, psi in real space

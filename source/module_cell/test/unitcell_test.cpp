@@ -1320,7 +1320,7 @@ TEST_F(UcellTest, ReadAtomPositionsS4Noncolin)
     PARAM.input.basis_type = "lcao";
     PARAM.sys.deepks_setorb = true;
     PARAM.input.nspin = 4;
-    GlobalV::NONCOLIN = true;
+    PARAM.input.noncolin = true;
     EXPECT_NO_THROW(ucell->read_atom_species(ifa, ofs_running));
     EXPECT_DOUBLE_EQ(ucell->latvec.e11, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e22, 4.27957);
@@ -1352,7 +1352,7 @@ TEST_F(UcellTest, ReadAtomPositionsS4Colin)
     PARAM.input.basis_type = "lcao";
     PARAM.sys.deepks_setorb = true;
     PARAM.input.nspin = 4;
-    GlobalV::NONCOLIN = false;
+    PARAM.input.noncolin = false;
     EXPECT_NO_THROW(ucell->read_atom_species(ifa, ofs_running));
     EXPECT_DOUBLE_EQ(ucell->latvec.e11, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e22, 4.27957);

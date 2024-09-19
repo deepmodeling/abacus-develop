@@ -74,10 +74,9 @@ void Print_Info::setup_parameters(UnitCell &ucell, K_Vectors &kv)
 		     << std::setw(16) << "KPOINTS"
 		     << std::setw(12) << "PROCESSORS";
 
-		if(PARAM.inp.basis_type=="lcao" || PARAM.inp.basis_type=="lcao_in_pw" || (PARAM.inp.basis_type=="pw" && PARAM.inp.init_wfc.substr(0, 3) == "nao"))
-		{
-			std::cout << std::setw(12) << "NBASE";
-		}
+		const bool orbinfo = (PARAM.inp.basis_type=="lcao" || PARAM.inp.basis_type=="lcao_in_pw" 
+						  || (PARAM.inp.basis_type=="pw" && PARAM.inp.init_wfc.substr(0, 3) == "nao"));
+		if (orbinfo) { std::cout << std::setw(12) << "NBASE"; }
 
 		std::cout << std::endl;
 		std::cout << " " << std::setw(8) << PARAM.inp.nspin;
@@ -92,11 +91,7 @@ void Print_Info::setup_parameters(UnitCell &ucell, K_Vectors &kv)
 		}
 
 		std::cout << std::setw(12) << GlobalV::NPROC;
-
-		if(PARAM.inp.basis_type=="lcao" || PARAM.inp.basis_type=="lcao_in_pw" || (PARAM.inp.basis_type=="pw" && PARAM.inp.init_wfc.substr(0, 3) == "nao"))
-		{
-			std::cout << std::setw(12) << GlobalV::NLOCAL;
-		}
+		if (orbinfo) { std::cout << std::setw(12) << GlobalV::NLOCAL; }
 
 		std::cout << std::endl;
 
@@ -104,15 +99,15 @@ void Print_Info::setup_parameters(UnitCell &ucell, K_Vectors &kv)
 
 
 		std::cout << " ---------------------------------------------------------" << std::endl;
-		if(PARAM.inp.basis_type=="lcao")
+		if(PARAM.inp.basis_type == "lcao")
 		{
 			std::cout << " Use Systematically Improvable Atomic bases" << std::endl;
 		}
-		else if(PARAM.inp.basis_type=="lcao_in_pw")
+		else if(PARAM.inp.basis_type == "lcao_in_pw")
 		{
 			std::cout << " Expand Atomic bases into plane waves" << std::endl;
 		}
-		else if(PARAM.inp.basis_type=="pw")
+		else if(PARAM.inp.basis_type == "pw")
 		{
 			std::cout << " Use plane wave basis" << std::endl;
 		}
@@ -126,7 +121,7 @@ void Print_Info::setup_parameters(UnitCell &ucell, K_Vectors &kv)
 
 		std::cout << " " << std::setw(8) << "ELEMENT";
 
-		if(PARAM.inp.basis_type=="lcao" || PARAM.inp.basis_type=="lcao_in_pw")
+		if (orbinfo)
 		{
 			std::cout << std::setw(16) << "ORBITALS";
 			std::cout << std::setw(12) << "NBASE";
@@ -137,29 +132,21 @@ void Print_Info::setup_parameters(UnitCell &ucell, K_Vectors &kv)
 		std::cout << std::endl;
 
 
-
+		const std::string spectrum = "spdfghi";
 		for(int it=0; it<ucell.ntype; ++it)
 		{
 			std::cout << " " << std::setw(8) << ucell.atoms[it].label;
 
-			if(PARAM.inp.basis_type=="lcao" || PARAM.inp.basis_type=="lcao_in_pw" || (PARAM.inp.basis_type=="pw" && PARAM.inp.init_wfc.substr(0, 3) == "nao"))
+			if (orbinfo)
 			{
 				std::stringstream orb;
-
 				int norb = 0;
 
 				for(int L=0; L<=ucell.atoms[it].nwl; ++L)        // pengfei Li 16-2-29
 				{
 					norb += (2*L+1)* ucell.atoms[it].l_nchi[L];
 					orb << ucell.atoms[it].l_nchi[L];
-					if(L==0) { orb << "s";
-					} else if(L==1) { orb << "p";
-					} else if(L==2) { orb << "d";
-					} else if(L==3) { orb << "f";
-					} else if(L==4) { orb << "g";
-					} else if(L==5) { orb << "h";
-					} else if(L==6) { orb << "i";
-}
+					orb << spectrum[L];
 				}
 				orb << "-" << ucell.atoms[it].Rcut << "au";
 				

@@ -83,11 +83,11 @@ class MockElecState : public ElecState
         GlobalV::NBANDS = 6;
         GlobalV::NLOCAL = 6;
         PARAM.input.esolver_type = "ksdft";
-        GlobalV::LSPINORB = false;
+        PARAM.input.lspinorb = false;
         PARAM.input.basis_type = "pw";
         GlobalV::KPAR = 1;
         GlobalV::NPROC_IN_POOL = 1;
-        PARAM.input.sc_mag_switch = 1;
+        PARAM.input.sc_mag_switch = true;
     }
 };
 const double* ElecState::getRho(int spin) const

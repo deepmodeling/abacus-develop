@@ -224,7 +224,7 @@ void DFTU::cal_occup_m_k(const int iter,
                         // Calculate the local occupation number matrix
                         for (int m0 = 0; m0 < 2 * l + 1; m0++)
                         {
-                            for (int ipol0 = 0; ipol0 < GlobalV::NPOL; ipol0++)
+                            for (int ipol0 = 0; ipol0 < PARAM.globalv.npol; ipol0++)
                             {
                                 const int iwt0 = this->iatlnmipol2iwt[iat][l][n][m0][ipol0];
                                 const int mu = this->paraV->global2local_row(iwt0);
@@ -232,7 +232,7 @@ void DFTU::cal_occup_m_k(const int iter,
 
                                 for (int m1 = 0; m1 < 2 * l + 1; m1++)
                                 {
-                                    for (int ipol1 = 0; ipol1 < GlobalV::NPOL; ipol1++)
+                                    for (int ipol1 = 0; ipol1 < PARAM.globalv.npol; ipol1++)
                                     {
                                         const int iwt1 = this->iatlnmipol2iwt[iat][l][n][m1][ipol1];
                                         const int nu = this->paraV->global2local_col(iwt1);
@@ -292,7 +292,7 @@ void DFTU::cal_occup_m_k(const int iter,
                         ModuleBase::matrix temp(locale[iat][l][n][0]);
                         MPI_Allreduce(&temp(0, 0),
                                       &locale[iat][l][n][0](0, 0),
-                                      (2 * l + 1) * GlobalV::NPOL * (2 * l + 1) * GlobalV::NPOL,
+                                      (2 * l + 1) * PARAM.globalv.npol * (2 * l + 1) * PARAM.globalv.npol,
                                       MPI_DOUBLE,
                                       MPI_SUM,
                                       MPI_COMM_WORLD);
@@ -420,7 +420,7 @@ void DFTU::cal_occup_m_gamma(const int iter, const std::vector<std::vector<doubl
                         // Calculate the local occupation number matrix
                         for (int m0 = 0; m0 < 2 * l + 1; m0++)
                         {
-                            for (int ipol0 = 0; ipol0 < GlobalV::NPOL; ipol0++)
+                            for (int ipol0 = 0; ipol0 < PARAM.globalv.npol; ipol0++)
                             {
                                 const int iwt0 = this->iatlnmipol2iwt[iat][l][n][m0][ipol0];
                                 const int mu = this->paraV->global2local_row(iwt0);
@@ -428,7 +428,7 @@ void DFTU::cal_occup_m_gamma(const int iter, const std::vector<std::vector<doubl
 
                                 for (int m1 = 0; m1 < 2 * l + 1; m1++)
                                 {
-                                    for (int ipol1 = 0; ipol1 < GlobalV::NPOL; ipol1++)
+                                    for (int ipol1 = 0; ipol1 < PARAM.globalv.npol; ipol1++)
                                     {
                                         const int iwt1 = this->iatlnmipol2iwt[iat][l][n][m1][ipol1];
                                         const int nu = this->paraV->global2local_col(iwt1);
@@ -462,7 +462,7 @@ void DFTU::cal_occup_m_gamma(const int iter, const std::vector<std::vector<doubl
 #ifdef __MPI
                         MPI_Allreduce(&temp(0, 0),
                                       &locale[iat][l][n][is](0, 0),
-                                      (2 * l + 1) * GlobalV::NPOL * (2 * l + 1) * GlobalV::NPOL,
+                                      (2 * l + 1) * PARAM.globalv.npol * (2 * l + 1) * PARAM.globalv.npol,
                                       MPI_DOUBLE,
                                       MPI_SUM,
                                       MPI_COMM_WORLD);

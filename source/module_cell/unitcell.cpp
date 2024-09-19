@@ -579,10 +579,6 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log) {
 #ifdef __MPI
     Parallel_Common::bcast_bool(ok);
     Parallel_Common::bcast_bool(ok2);
-    if (PARAM.inp.nspin == 4) {
-        Parallel_Common::bcast_bool(GlobalV::DOMAG);
-        Parallel_Common::bcast_bool(GlobalV::DOMAG_Z);
-    }
 #endif
     if (!ok) {
         ModuleBase::WARNING_QUIT(
@@ -985,15 +981,15 @@ void UnitCell::cal_nwfc(std::ofstream& log) {
     this->iwt2iw = new int[GlobalV::NLOCAL];
 
     this->itia2iat.create(ntype, namax);
-    // this->itiaiw2iwt.create(ntype, namax, nwmax*GlobalV::NPOL);
-    this->set_iat2iwt(GlobalV::NPOL);
+    // this->itiaiw2iwt.create(ntype, namax, nwmax*PARAM.globalv.npol);
+    this->set_iat2iwt(PARAM.globalv.npol);
     int iat = 0;
     int iwt = 0;
     for (int it = 0; it < ntype; it++) {
         for (int ia = 0; ia < atoms[it].na; ia++) {
             this->itia2iat(it, ia) = iat;
             // this->iat2ia[iat] = ia;
-            for (int iw = 0; iw < atoms[it].nw * GlobalV::NPOL; iw++) {
+            for (int iw = 0; iw < atoms[it].nw * PARAM.globalv.npol; iw++) {
                 // this->itiaiw2iwt(it, ia, iw) = iwt;
                 this->iwt2iat[iwt] = iat;
                 this->iwt2iw[iwt] = iw;

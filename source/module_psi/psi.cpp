@@ -1,5 +1,6 @@
 #include "psi.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/global_variable.h"
 #include "module_base/tool_quit.h"
 
@@ -31,7 +32,7 @@ Range::Range(const bool k_first_in, const size_t index_1_in, const size_t range_
 
 template <typename T, typename Device> Psi<T, Device>::Psi()
 {
-    this->npol = GlobalV::NPOL;
+    this->npol = PARAM.globalv.npol;
     this->device = base_device::get_device_type<Device>(this->ctx);
 }
 
@@ -43,7 +44,7 @@ template <typename T, typename Device> Psi<T, Device>::~Psi()
 template <typename T, typename Device> Psi<T, Device>::Psi(const int* ngk_in)
 {
     this->ngk = ngk_in;
-    this->npol = GlobalV::NPOL;
+    this->npol = PARAM.globalv.npol;
     this->device = base_device::get_device_type<Device>(this->ctx);
 }
 
@@ -53,7 +54,7 @@ template <typename T, typename Device> Psi<T, Device>::Psi(const int nk_in, cons
     this->ngk = ngk_in;
     this->current_b = 0;
     this->current_k = 0;
-    this->npol = GlobalV::NPOL;
+    this->npol = PARAM.globalv.npol;
     this->device = base_device::get_device_type<Device>(this->ctx);
     this->resize(nk_in, nbd_in, nbs_in);
     // Currently only GPU's implementation is supported for device recording!
@@ -70,7 +71,7 @@ template <typename T, typename Device> Psi<T, Device>::Psi(T* psi_pointer, const
     this->ngk = ngk_in;
     this->current_b = 0;
     this->current_k = 0;
-    this->npol = GlobalV::NPOL;
+    this->npol = PARAM.globalv.npol;
     this->device = base_device::get_device_type<Device>(this->ctx);
     this->nk = nk_in;
     this->nbands = nbd_in;

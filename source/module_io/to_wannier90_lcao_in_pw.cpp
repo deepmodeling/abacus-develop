@@ -114,7 +114,7 @@ psi::Psi<std::complex<double>>* toWannier90_LCAO_IN_PW::get_unk_from_lcao(
 {
     // init
     int npwx = wfcpw->npwk_max;
-    psi::Psi<std::complex<double>> *unk_inLcao = new psi::Psi<std::complex<double>>(num_kpts, num_bands, npwx*GlobalV::NPOL, kv.ngk.data());
+    psi::Psi<std::complex<double>> *unk_inLcao = new psi::Psi<std::complex<double>>(num_kpts, num_bands, npwx*PARAM.globalv.npol, kv.ngk.data());
     unk_inLcao->zero_out();
 
     // Orbital projection to plane wave
@@ -123,7 +123,7 @@ psi::Psi<std::complex<double>>* toWannier90_LCAO_IN_PW::get_unk_from_lcao(
     for (int ik = 0; ik < num_kpts; ik++)
     {
         int npw = kv.ngk[ik];
-        ModuleBase::ComplexMatrix orbital_in_G(GlobalV::NLOCAL, npwx*GlobalV::NPOL);
+        ModuleBase::ComplexMatrix orbital_in_G(GlobalV::NLOCAL, npwx*PARAM.globalv.npol);
         // Wavefunc_in_pw::produce_local_basis_in_pw(ik, wfcpw, sf, orbital_in_G, table_local);
         //produce_local_basis_in_pw(ik, wfcpw, sf, orbital_in_G, table_local);
         nao_G_expansion(ik, wfcpw, orbital_in_G);
@@ -163,7 +163,7 @@ psi::Psi<std::complex<double>>* toWannier90_LCAO_IN_PW::get_unk_from_lcao(
         {
             for (int ib = 0; ib < num_bands; ib++)
             {
-                // for (int ig = 0; ig < npwx*GlobalV::NPOL; ig++)
+                // for (int ig = 0; ig < npwx*PARAM.globalv.npol; ig++)
                 // {
                 //     for (int iw = 0; iw < GlobalV::NLOCAL; iw++)
                 //     {
@@ -220,7 +220,7 @@ void toWannier90_LCAO_IN_PW::nao_G_expansion(
     if(psig.expired()) { ModuleBase::WARNING_QUIT("toWannier90_LCAO_IN_PW::nao_G_expansion", "psig is expired");
 }
     int nbands = GlobalV::NLOCAL;
-    int nbasis = npwx*GlobalV::NPOL;
+    int nbasis = npwx*PARAM.globalv.npol;
     for (int ib = 0; ib < nbands; ib++)
     {
         for (int ig = 0; ig < nbasis; ig++)

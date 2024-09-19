@@ -164,7 +164,7 @@ void sparse_format::cal_dSTN_R(const Parallel_Orbitals& pv,
 
                     Abfs::Vector3_Order<int> dR(grid.getBox(ad).x, grid.getBox(ad).y, grid.getBox(ad).z);
 
-                    for (int ii = 0; ii < atom1->nw * GlobalV::NPOL; ii++)
+                    for (int ii = 0; ii < atom1->nw * PARAM.globalv.npol; ii++)
                     {
                         const int iw1_all = start + ii;
                         const int mu = pv.global2local_row(iw1_all);
@@ -174,7 +174,7 @@ void sparse_format::cal_dSTN_R(const Parallel_Orbitals& pv,
                             continue;
                         }
 
-                        for (int jj = 0; jj < atom2->nw * GlobalV::NPOL; jj++)
+                        for (int jj = 0; jj < atom2->nw * PARAM.globalv.npol; jj++)
                         {
                             int iw2_all = start2 + jj;
                             const int nu = pv.global2local_col(iw2_all);

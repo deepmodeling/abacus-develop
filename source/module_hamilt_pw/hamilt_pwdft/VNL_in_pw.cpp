@@ -32,7 +32,7 @@ void pseudopot_cell_vnl::release_memory()
     if (this->nhm <= 0 || memory_released) {
         return;
 }
-    if (GlobalV::device_flag == "gpu")
+    if (PARAM.globalv.device_flag == "gpu")
     {
         if (PARAM.inp.precision == "single")
         {
@@ -153,7 +153,7 @@ void pseudopot_cell_vnl::init(const int ntype,
         this->deeq_nc.create(PARAM.inp.nspin, GlobalC::ucell.nat, this->nhm, this->nhm);
         this->qq_nt.create(ntype, this->nhm, this->nhm);
         this->qq_so.create(ntype, 4, this->nhm, this->nhm);
-        if (GlobalV::device_flag == "gpu")
+        if (PARAM.globalv.device_flag == "gpu")
         {
             if (PARAM.inp.precision == "single")
             {
@@ -270,7 +270,7 @@ void pseudopot_cell_vnl::init(const int ntype,
             ModuleBase::Memory::record("VNL::tab_at", ntype * nchix_nc * PARAM.globalv.nqx * sizeof(double));
         }
     }
-    if (GlobalV::device_flag == "gpu")
+    if (PARAM.globalv.device_flag == "gpu")
     {
         if (PARAM.inp.precision == "single")
         {
@@ -464,7 +464,7 @@ void pseudopot_cell_vnl::getvnl(Device* ctx, const int& ik, std::complex<FPTYPE>
     {
         _gk[ig] = this->wfcpw->getgpluskcar(ik, ig);
     }
-    if (GlobalV::device_flag == "gpu")
+    if (PARAM.globalv.device_flag == "gpu")
     {
         resmem_int_op()(ctx, atom_nh, GlobalC::ucell.ntype);
         resmem_int_op()(ctx, atom_nb, GlobalC::ucell.ntype);
@@ -573,7 +573,7 @@ void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_
     // In the spin-orbit case we need the unitary matrix u which rotates the
     // real spherical harmonics and yields the complex ones.
     soc.fcoef.create(cell.ntype, this->nhm, this->nhm);
-    if (GlobalV::LSPINORB)
+    if (PARAM.inp.lspinorb)
     {
         soc.rot_ylm(this->lmaxkb);
     }
@@ -700,7 +700,7 @@ void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_
                     {
                         const int ir = static_cast<int>(indv(it, ip));
                         const int is = static_cast<int>(indv(it, ip2));
-                        if (GlobalV::LSPINORB)
+                        if (PARAM.inp.lspinorb)
                         {
                             this->dvan_so(0, it, ip, ip2) = cell.atoms[it].ncpp.dion(ir, is);
                             this->dvan_so(3, it, ip, ip2) = cell.atoms[it].ncpp.dion(ir, is);
@@ -782,7 +782,7 @@ void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_
                         for (int jh = ih; jh < upf->nh; jh++)
                         {
                             this->radial_fft_q(1, ih, jh, it, &qnorm, ylmk0, &qgm);
-                            if (GlobalV::LSPINORB)
+                            if (PARAM.inp.lspinorb)
                             {
                                 this->qq_so(it, 0, ih, jh) = cell.omega * qgm.real();
                                 this->qq_so(it, 0, jh, ih) = this->qq_so(it, 0, ih, jh);
@@ -861,7 +861,7 @@ void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_
         delete[] aux;
         delete[] jl;
     }
-    if (GlobalV::device_flag == "gpu")
+    if (PARAM.globalv.device_flag == "gpu")
     {
         if (PARAM.inp.precision == "single")
         {
@@ -1400,7 +1400,7 @@ void pseudopot_cell_vnl::cal_effective_D(const ModuleBase::matrix& veff,
                 {
                     for (int jh = ih; jh < nht; jh++)
                     {
-                        if (GlobalV::LSPINORB)
+                        if (PARAM.inp.lspinorb)
                         {
                             this->deeq_nc(is, iat, ih, jh) = this->dvan_so(is, it, ih, jh);
                             this->deeq_nc(is, iat, jh, ih) = this->dvan_so(is, it, jh, ih);
@@ -1452,7 +1452,7 @@ void pseudopot_cell_vnl::cal_effective_D(const ModuleBase::matrix& veff,
         for (int iat = 0; iat < cell.nat; iat++)
         {
             int it = cell.iat2it[iat];
-            if (GlobalV::NONCOLIN)
+            if (PARAM.inp.noncolin)
             {
                 if (cell.atoms[it].ncpp.has_so)
                 {
@@ -1479,7 +1479,7 @@ void pseudopot_cell_vnl::cal_effective_D(const ModuleBase::matrix& veff,
             }
         }
     }
-    if (GlobalV::device_flag == "gpu")
+    if (PARAM.globalv.device_flag == "gpu")
     {
         if (PARAM.inp.precision == "single")
         {
@@ -1668,7 +1668,7 @@ void pseudopot_cell_vnl::newd_so(const int& iat, UnitCell& cell)
                     {
                         for (int lh = 0; lh < upf->nh; lh++)
                         {
-                            if (GlobalV::DOMAG)
+                            if (PARAM.globalv.domag)
                             {
                                 deeq_nc(ijs, iat, ih, jh)
                                     += deeq(0, iat, kh, lh)
@@ -1711,7 +1711,7 @@ void pseudopot_cell_vnl::newd_nc(const int& iat, UnitCell& cell)
     {
         for (int jh = 0; jh < upf->nh; jh++)
         {
-            if (GlobalV::LSPINORB)
+            if (PARAM.inp.lspinorb)
             {
                 deeq_nc(0, iat, ih, jh) = dvan_so(0, it, ih, jh) + deeq(0, iat, ih, jh) + deeq(3, iat, ih, jh);
                 deeq_nc(3, iat, ih, jh) = dvan_so(3, it, ih, jh) + deeq(0, iat, ih, jh) - deeq(3, iat, ih, jh);

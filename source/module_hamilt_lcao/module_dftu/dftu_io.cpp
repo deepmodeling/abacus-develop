@@ -194,13 +194,13 @@ void DFTU::write_occup_m(std::ofstream &ofs, bool diag)
                         else {
                         for (int m0 = 0; m0 < 2 * l + 1; m0++)
                         {
-                            for (int ipol0 = 0; ipol0 < GlobalV::NPOL; ipol0++)
+                            for (int ipol0 = 0; ipol0 < PARAM.globalv.npol; ipol0++)
                             {
                                 const int m0_all = m0 + (2 * l + 1) * ipol0;
 
                                 for (int m1 = 0; m1 < 2 * l + 1; m1++)
                                 {
-                                    for (int ipol1 = 0; ipol1 < GlobalV::NPOL; ipol1++)
+                                    for (int ipol1 = 0; ipol1 < PARAM.globalv.npol; ipol1++)
                                     {
                                         int m1_all = m1 + (2 * l + 1) * ipol1;
                                         ofs << std::setw(12) << std::setprecision(8) << std::fixed
@@ -335,13 +335,13 @@ void DFTU::read_occup_m(const std::string &fn)
                                 double value = 0.0;
                                 for (int m0 = 0; m0 < 2 * L + 1; m0++)
                                 {
-                                    for (int ipol0 = 0; ipol0 < GlobalV::NPOL; ipol0++)
+                                    for (int ipol0 = 0; ipol0 < PARAM.globalv.npol; ipol0++)
                                     {
                                         const int m0_all = m0 + (2 * L + 1) * ipol0;
 
                                         for (int m1 = 0; m1 < 2 * L + 1; m1++)
                                         {
-                                            for (int ipol1 = 0; ipol1 < GlobalV::NPOL; ipol1++)
+                                            for (int ipol1 = 0; ipol1 < PARAM.globalv.npol; ipol1++)
                                             {
                                                 int m1_all = m1 + (2 * L + 1) * ipol1;
                                                 ifdftu >> value;
@@ -431,13 +431,13 @@ void DFTU::local_occup_bcast()
                     {
                         for (int m0 = 0; m0 < 2 * L + 1; m0++)
                         {
-                            for (int ipol0 = 0; ipol0 < GlobalV::NPOL; ipol0++)
+                            for (int ipol0 = 0; ipol0 < PARAM.globalv.npol; ipol0++)
                             {
                                 const int m0_all = m0 + (2 * L + 1) * ipol0;
 
                                 for (int m1 = 0; m1 < 2 * L + 1; m1++)
                                 {
-                                    for (int ipol1 = 0; ipol1 < GlobalV::NPOL; ipol1++)
+                                    for (int ipol1 = 0; ipol1 < PARAM.globalv.npol; ipol1++)
                                     {
                                         int m1_all = m1 + (2 * L + 1) * ipol1;
 #ifdef __MPI

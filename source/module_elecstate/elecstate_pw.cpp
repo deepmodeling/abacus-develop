@@ -47,7 +47,7 @@ ElecStatePW<T, Device>::~ElecStatePW()
 template<typename T, typename Device>
 void ElecStatePW<T, Device>::init_rho_data() 
 {
-    if (GlobalV::device_flag == "gpu" || PARAM.inp.precision == "single") {
+    if (PARAM.globalv.device_flag == "gpu" || PARAM.inp.precision == "single") {
         this->rho = new Real*[this->charge->nspin];
         resmem_var_op()(this->ctx, this->rho_data, this->charge->nspin * this->charge->nrxx);
         for (int ii = 0; ii < this->charge->nspin; ii++) {
@@ -108,7 +108,7 @@ void ElecStatePW<T, Device>::psiToRho(const psi::Psi<T, Device>& psi)
     {
         this->add_usrho(psi);
     }
-    if (GlobalV::device_flag == "gpu" || PARAM.inp.precision == "single") {
+    if (PARAM.globalv.device_flag == "gpu" || PARAM.inp.precision == "single") {
         for (int ii = 0; ii < PARAM.inp.nspin; ii++) {
             castmem_var_d2h_op()(cpu_ctx, this->ctx, this->charge->rho[ii], this->rho[ii], this->charge->nrxx);
             if (get_xc_func_type() == 3)
@@ -186,8 +186,8 @@ void ElecStatePW<T, Device>::rhoBandK(const psi::Psi<T, Device>& psi)
             {
                 // replaced by denghui at 20221110
                 elecstate_pw_op()(this->ctx,
-                                  GlobalV::DOMAG,
-                                  GlobalV::DOMAG_Z,
+                                  PARAM.globalv.domag,
+                                  PARAM.globalv.domag_z,
                                   this->basis->nrxx,
                                   w1,
                                   this->rho,
@@ -324,7 +324,7 @@ void ElecStatePW<T, Device>::add_usrho(const psi::Psi<T, Device>& psi)
                 for (int ia = 0; ia < atom->na; ia++)
                 {
                     const int iat = ucell->itia2iat(it, ia);
-                    if (GlobalV::NONCOLIN)
+                    if (PARAM.inp.noncolin)
                     {
                         // noncolinear case
                     }
@@ -360,10 +360,10 @@ void ElecStatePW<T, Device>::add_usrho(const psi::Psi<T, Device>& psi)
                     }
 
                     // copy output from GEMM into desired format
-                    if (GlobalV::NONCOLIN && !atom->ncpp.has_so)
+                    if (PARAM.inp.noncolin && !atom->ncpp.has_so)
                     {
                     }
-                    else if (GlobalV::NONCOLIN && atom->ncpp.has_so)
+                    else if (PARAM.inp.noncolin && atom->ncpp.has_so)
                     {
                     }
                     else

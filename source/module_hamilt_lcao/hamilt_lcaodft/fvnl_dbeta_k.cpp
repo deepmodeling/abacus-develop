@@ -42,7 +42,7 @@ void Force_LCAO<std::complex<double>>::cal_fvnl_dbeta(const elecstate::DensityMa
 
     const int nspin = PARAM.inp.nspin;
     const int nspin_DMR = (nspin == 2) ? 2 : 1;
-    const int npol = GlobalV::NPOL;
+    const int npol = PARAM.globalv.npol;
 
     // Data structure for storing <psi|beta>, for a detailed description
     // check out the same data structure in build_Nonlocal_mu_new
