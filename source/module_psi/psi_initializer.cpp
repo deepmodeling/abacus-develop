@@ -90,7 +90,7 @@ psi::Psi<std::complex<double>>* psi_initializer<T, Device>::allocate(const bool 
     }
 
 	  const int nks_psi = (PARAM.inp.calculation == "nscf" && this->mem_saver_ == 1)? 1 : this->pw_wfc_->nks;
-    const int nbasis_actual = this->pw_wfc_->npwk_max * GlobalV::NPOL;
+    const int nbasis_actual = this->pw_wfc_->npwk_max * PARAM.globalv.npol;
     psi::Psi<std::complex<double>>* psi_out = nullptr;
     if(!only_psig)
     {
@@ -98,7 +98,7 @@ psi::Psi<std::complex<double>>* psi_initializer<T, Device>::allocate(const bool 
                                                      GlobalV::NBANDS, // because no matter what, the wavefunction finally needed has GlobalV::NBANDS bands
                                                      nbasis_actual, 
                                                      this->pw_wfc_->npwk);
-        double memory_cost_psi = nks_psi * GlobalV::NBANDS * this->pw_wfc_->npwk_max * GlobalV::NPOL*
+        double memory_cost_psi = nks_psi * GlobalV::NBANDS * this->pw_wfc_->npwk_max * PARAM.globalv.npol*
                         sizeof(std::complex<double>);
 #ifdef __MPI
         // get the correct memory cost for psi by all-reduce sum
@@ -117,7 +117,7 @@ psi::Psi<std::complex<double>>* psi_initializer<T, Device>::allocate(const bool 
                                                         this->pw_wfc_->npwk);
 
     double memory_cost_psig = 
-            nks_psig * nbands_actual * this->pw_wfc_->npwk_max * GlobalV::NPOL * sizeof(T);
+            nks_psig * nbands_actual * this->pw_wfc_->npwk_max * PARAM.globalv.npol * sizeof(T);
 #ifdef __MPI
     // get the correct memory cost for psig by all-reduce sum
     Parallel_Reduce::reduce_all(memory_cost_psig);
