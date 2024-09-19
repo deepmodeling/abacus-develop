@@ -193,15 +193,5 @@ void set_is_occupied(std::vector<bool>& is_occupied,
                      const int nband,
                      const bool diago_full_acc);
 
-/**
- * @brief Calculate the number of bands.
- * 
- * @param nelec [in] total number of electrons
- * @param nlocal [in] total number of local basis
- * @param nelec_spin [in] number of electrons for each spin
- * @param nbands  [out] number of bands
- */
-void cal_nbands(const int& nelec, const int& nlocal, const std::vector<double>& nelec_spin, int& nbands);
-
 } // namespace elecstate
 #endif

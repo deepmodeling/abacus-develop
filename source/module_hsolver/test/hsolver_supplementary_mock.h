@@ -57,11 +57,6 @@ void ElecState::init_ks(Charge* chg_in, // pointer for class Charge
     return;
 }
 
-void ElecState::cal_nbands(const int& nelec, const int& nlocal, const std::vector<double>& nelec_spin, int& nbands)
-{
-    return;
-}
-
 } // namespace elecstate
 
 

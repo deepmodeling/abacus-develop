@@ -1,6 +1,5 @@
 #ifndef CAL_ATOMS_INFO_H
 #define CAL_ATOMS_INFO_H
-#include "module_elecstate/elecstate.h"
 #include "module_parameter/parameter.h"
 #include "unitcell.h"
 class CalAtomsInfo
@@ -65,7 +64,7 @@ class CalAtomsInfo
             nelec_spin[0] = (GlobalV::nelec + GlobalV::nupdown) / 2.0;
             nelec_spin[1] = (GlobalV::nelec - GlobalV::nupdown) / 2.0;
         }
-        elecstate::cal_nbands(GlobalV::nelec, GlobalV::NLOCAL, nelec_spin, GlobalV::NBANDS);
+        cal_nbands(GlobalV::nelec, GlobalV::NLOCAL, nelec_spin, GlobalV::NBANDS);
 
         return;
     }

@@ -124,5 +124,5 @@ void UnitCell::setup(const std::string& latname_in,
                      const int& lmaxmax_in,
                      const bool& init_vel_in,
                      const std::string& fixed_axes_in) {}
-void UnitCell::cal_nelec(const Atom* atoms, const int& ntype, double& nelec) {}
+void cal_nelec(const Atom* atoms, const int& ntype, double& nelec) {}
 void UnitCell::compare_atom_labels(std::string label1, std::string label2) {}
