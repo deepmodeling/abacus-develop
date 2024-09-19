@@ -58,6 +58,7 @@ gamma_only=$(get_input_key_value "gamma_only" "INPUT")
 imp_sol=$(get_input_key_value "imp_sol" "INPUT")
 run_rpa=$(get_input_key_value "rpa" "INPUT")
 out_pot=$(get_input_key_value "out_pot" "INPUT")
+out_elf=$(get_input_key_value "out_elf" "INPUT")
 out_dm1=$(get_input_key_value "out_dm1" "INPUT")
 get_s=$(get_input_key_value "calculation" "INPUT")
 out_pband=$(get_input_key_value "out_proj_band" "INPUT")
@@ -163,6 +164,14 @@ if ! test -z "$out_pot"  && [  $out_pot == 2 ]; then
 	pot1cal=OUT.autotest/ElecStaticPot.cube
 	python3 ../tools/CompareFile.py $pot1ref $pot1cal 8
 	echo "ComparePot_pass $?" >>$1
+fi
+
+#echo $out_elf
+if ! test -z "$out_elf"  && [  $out_elf == 1 ]; then
+	pot1ref=refELF.cube
+	pot1cal=OUT.autotest/ELF.cube
+	python3 ../tools/CompareFile.py $pot1ref $pot1cal 3
+	echo "ComparePot1_pass $?" >>$1
 fi
 
 #echo $get_s
