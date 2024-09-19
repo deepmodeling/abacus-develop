@@ -172,8 +172,9 @@ class XCTest_GRADWFC : public XCTest
             rhopw.nrxx = 5;
             rhopw.nks = 1;
             gcar_wrapper = new ModuleBase::Vector3<double>[rhopw.npwk_max];
-            for (int ii = 0; ii < rhopw.npwk_max; ii++)
+            for (int ii = 0; ii < rhopw.npwk_max; ii++) {
                 gcar_wrapper[ii] = ModuleBase::Vector3<double>(0,0,0);
+}
             kvec_c_wrapper = new ModuleBase::Vector3<double>(1,2,3);
 
             rhopw.gcar = gcar_wrapper;
