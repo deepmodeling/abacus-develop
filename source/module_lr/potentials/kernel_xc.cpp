@@ -1,5 +1,6 @@
 #include "kernel.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
+#include "module_parameter/parameter.h"
 #include "module_base/timer.h"
 #include "module_lr/utils/lr_util.h"
 #ifdef USE_LIBXC
@@ -218,11 +219,11 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
         } // end for( xc_func_type &func : funcs )
         XC_Functional::finish_func(funcs);
 
-        if (1 == GlobalV::NSPIN || 2 == GlobalV::NSPIN) return;
-        // else if (4 == GlobalV::NSPIN)
+        if (1 == PARAM.inp.nspin || 2 == PARAM.inp.nspin) return;
+        // else if (4 == PARAM.inp.nspin)
         else//NSPIN != 1,2,4 is not supported
         {
-            throw std::domain_error("GlobalV::NSPIN =" + std::to_string(GlobalV::NSPIN)
+            throw std::domain_error("PARAM.inp.nspin =" + std::to_string(PARAM.inp.nspin)
                 + " unfinished in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
         }
 }

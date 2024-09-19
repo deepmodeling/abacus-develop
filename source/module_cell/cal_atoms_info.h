@@ -13,12 +13,12 @@ class CalAtomsInfo
      *
      * @param atoms [in] Atom pointer
      * @param ntype [in] number of atom types
-     * @param PARAM [out] Parameter object
+     * @param para [out] Parameter object
      */
-    void cal_atoms_info(const Atom* atoms, const int& ntype, Parameter& PARAM)
+    void cal_atoms_info(const Atom* atoms, const int& ntype, Parameter& para)
     {
         // calculate initial total magnetization when NSPIN=2
-        if (GlobalV::NSPIN == 2 && !GlobalV::TWO_EFERMI)
+        if (para.inp.nspin == 2 && !para.globalv.two_fermi)
         {
             for (int it = 0; it < ntype; ++it)
             {
@@ -30,7 +30,7 @@ class CalAtomsInfo
             GlobalV::ofs_running << " The readin total magnetization is " << GlobalV::nupdown << std::endl;
         }
 
-        if (!PARAM.inp.use_paw)
+        if (!para.inp.use_paw)
         {
             // decide whether to be USPP
             for (int it = 0; it < ntype; ++it)
@@ -46,7 +46,7 @@ class CalAtomsInfo
             for (int it = 0; it < ntype; ++it)
             {
                 const int nlocal_it = atoms[it].nw * atoms[it].na;
-                if (GlobalV::NSPIN != 4)
+                if (para.inp.nspin != 4)
                 {
                     GlobalV::NLOCAL += nlocal_it;
                 }
@@ -62,7 +62,7 @@ class CalAtomsInfo
 
         // autoset and check GlobalV::NBANDS
         std::vector<double> nelec_spin(2, 0.0);
-        if (GlobalV::NSPIN == 2)
+        if (para.inp.nspin == 2)
         {
             nelec_spin[0] = (GlobalV::nelec + GlobalV::nupdown) / 2.0;
             nelec_spin[1] = (GlobalV::nelec - GlobalV::nupdown) / 2.0;

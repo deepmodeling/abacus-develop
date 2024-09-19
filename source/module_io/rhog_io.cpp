@@ -1,5 +1,6 @@
 #include "binstream.h"
 #include "module_base/global_function.h"
+#include "module_parameter/parameter.h"
 #include "module_base/global_variable.h"
 #include "module_base/parallel_global.h"
 #include "module_base/timer.h"
@@ -63,7 +64,7 @@ bool ModuleIO::read_rhog(const std::string& filename, const ModulePW::PW_Basis* 
         {
             ModuleBase::WARNING("ModuleIO::read_rhog", "some planewaves in file are missing");
         }
-        if (nspin_in < GlobalV::NSPIN)
+        if (nspin_in < PARAM.inp.nspin)
         {
             ModuleBase::WARNING("ModuleIO::read_rhog", "some spin channels in file are missing");
         }
@@ -105,7 +106,7 @@ bool ModuleIO::read_rhog(const std::string& filename, const ModulePW::PW_Basis* 
     MPI_Bcast(miller.data(), miller.size(), MPI_INT, 0, POOL_WORLD);
 #endif
     // set to zero
-    for (int is = 0; is < GlobalV::NSPIN; ++is)
+    for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
         ModuleBase::GlobalFunc::ZEROS(rhog[is], pw_rhod->npw);
     }
@@ -164,7 +165,7 @@ bool ModuleIO::read_rhog(const std::string& filename, const ModulePW::PW_Basis* 
             }
         }
 
-        if (nspin_in == 2 && GlobalV::NSPIN == 4 && is == 1)
+        if (nspin_in == 2 && PARAM.inp.nspin == 4 && is == 1)
         {
             for (int ig = 0; ig < pw_rhod->npw; ++ig)
             {

@@ -1,5 +1,6 @@
 #include "module_io/output_mulliken.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/formatter.h"
 #include "module_base/name_angular.h"
 #include "module_base/scalapack_connector.h"
@@ -568,8 +569,8 @@ void Output_Mulliken<double>::cal_orbMulP()
     int nw = this->cell_index_->get_nw();
     const int nspin = (this->nspin_ == 2) ? 2 : 1;
     const int nlocal = (this->nspin_ == 4) ? nw / 2 : nw;
-    // std::vector<std::vector<double>> MecMulP(GlobalV::NSPIN, std::vector<double>(nlocal, 0));
-    // std::vector<std::vector<double>> orbMulP(GlobalV::NSPIN, std::vector<double>(nlocal, 0));
+    // std::vector<std::vector<double>> MecMulP(PARAM.inp.nspin, std::vector<double>(nlocal, 0));
+    // std::vector<std::vector<double>> orbMulP(PARAM.inp.nspin, std::vector<double>(nlocal, 0));
     ModuleBase::matrix MecMulP(this->nspin_, nlocal, true);
     this->orbMulP_.create(this->nspin_, nlocal, true);
 

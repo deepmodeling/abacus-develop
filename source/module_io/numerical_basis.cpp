@@ -1,5 +1,6 @@
 #include "numerical_basis.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/constants.h"
 #include "module_base/global_variable.h"
 #include "module_base/intarray.h"
@@ -652,7 +653,7 @@ void Numerical_Basis::output_k(std::ofstream& ofs, const K_Vectors& kv)
 #ifdef __MPI
         // temprary restrict kpar=1 for NSPIN=2 case for generating_orbitals
         int pool = 0;
-        if (GlobalV::NSPIN != 2) {
+        if (PARAM.inp.nspin != 2) {
             pool = GlobalC::Pkpoints.whichpool[ik];
 }
         const int iknow = ik - GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL];
@@ -793,7 +794,7 @@ void Numerical_Basis::output_overlap_Sq(const std::string& name, std::ofstream& 
 
     // only half of nkstot should be output in "NSPIN == 2" case, k_up and k_down has same k infomation
     int ispin = 1;
-    if (GlobalV::NSPIN == 2) {
+    if (PARAM.inp.nspin == 2) {
         ispin = 2;
 }
     int nkstot = kv.get_nkstot() / ispin;

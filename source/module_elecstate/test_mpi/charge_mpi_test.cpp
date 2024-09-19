@@ -183,7 +183,7 @@ TEST_F(ChargeMpiTest, rho_mpi)
         rhopw->initparameters(false, 10);
         rhopw->setuptransform();
         charge->rhopw = rhopw;
-        GlobalV::NSPIN = 1;
+        PARAM.input.nspin = 1;
         charge->rho = new double*[1];
         charge->kin_r = new double*[1];
 

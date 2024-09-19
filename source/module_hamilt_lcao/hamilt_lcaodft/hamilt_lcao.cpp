@@ -403,7 +403,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
 #endif
     // if NSPIN==2, HR should be separated into two parts, save HR into this->hRS2
     int memory_fold = 1;
-    if (GlobalV::NSPIN == 2)
+    if (PARAM.inp.nspin == 2)
     {
         this->hRS2.resize(this->hR->get_nnr() * 2);
         this->hR->allocate(this->hRS2.data(), 0);
@@ -431,7 +431,7 @@ void HamiltLCAO<TK, TR>::updateHk(const int ik)
     ModuleBase::TITLE("HamiltLCAO", "updateHk");
     ModuleBase::timer::tick("HamiltLCAO", "updateHk");
     // update global spin index
-    if (GlobalV::NSPIN == 2)
+    if (PARAM.inp.nspin == 2)
     {
         // if Veff is added and current_spin is changed, refresh HR
         if (PARAM.inp.vl_in_h && this->kv->isk[ik] != this->current_spin)
@@ -455,7 +455,7 @@ void HamiltLCAO<TK, TR>::refresh()
 {
     ModuleBase::TITLE("HamiltLCAO", "refresh");
     dynamic_cast<hamilt::OperatorLCAO<TK, TR>*>(this->ops)->set_hr_done(false);
-    if (GlobalV::NSPIN == 2)
+    if (PARAM.inp.nspin == 2)
     {
         this->refresh_times = 1;
         this->current_spin = 0;

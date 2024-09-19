@@ -1,5 +1,6 @@
 #include "hsolver_lcao.h"
 
+#include "module_parameter/parameter.h"
 #include "diago_cg.h"
 
 #ifdef __MPI
@@ -324,7 +325,7 @@ void HSolverLCAO<T, Device>::parakSolve(hamilt::Hamilt<T>* pHamilt,
                      nb2d,
                      GlobalV::NPROC,
                      GlobalV::MY_RANK,
-                     GlobalV::NSPIN);
+                     PARAM.inp.nspin);
     /// set psi_pool
     const int zero = 0;
     int ncol_bands_pool = numroc_(&(nbands), &(nb2d), &(k2d.get_p2D_pool()->coord[1]), &zero, &(k2d.get_p2D_pool()->dim1));

@@ -58,8 +58,8 @@ void ElecState::fixed_weights(const std::vector<double>& ocp_kb, const int& nban
 
 void ElecState::init_nelec_spin()
 {
-    this->nelec_spin.resize(GlobalV::NSPIN);
-    if (GlobalV::NSPIN == 2)
+    this->nelec_spin.resize(PARAM.inp.nspin);
+    if (PARAM.inp.nspin == 2)
     {
         // in fact, when TWO_EFERMI(nupdown in INPUT is not 0.0), nelec_spin will be fixed.
         this->nelec_spin[0] = (GlobalV::nelec + GlobalV::nupdown) / 2.0;
@@ -80,7 +80,7 @@ void ElecState::calculate_weights()
 
     if (!Occupy::use_gaussian_broadening && !Occupy::fixed_occupations)
     {
-        if (GlobalV::TWO_EFERMI)
+        if (PARAM.globalv.two_fermi)
         {
             Occupy::iweights(nks,
                              this->klist->wk,
@@ -118,7 +118,7 @@ void ElecState::calculate_weights()
     }
     else if (Occupy::use_gaussian_broadening)
     {
-        if (GlobalV::TWO_EFERMI)
+        if (PARAM.globalv.two_fermi)
         {
             double demet_up = 0.0;
             double demet_dw = 0.0;

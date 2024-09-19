@@ -46,7 +46,7 @@ double get_ucell_omega()
 double tmp_gridecut = 80.0;
 void Set_GlobalV_Default()
 {
-    GlobalV::NSPIN = 1;
+    PARAM.input.nspin = 1;
     PARAM.input.test_charge = 0;
     GlobalV::nelec = 8;
 }
@@ -62,7 +62,7 @@ void Set_GlobalV_Default()
  *     - this is a trivial test
  *   - Allocate: Charge::set_rhopw(), Charge::allocate(), Charge::destroy()
  *     - allocate rho, rhog, rho_save, rhog_save, kin_r, kin_r_save
- *     - using rhopw and GlobalV::NSPIN
+ *     - using rhopw and PARAM.input.nspin
  *   - SumRho: Charge::sum_rho()
  *     - calculate \sum_{is}^nspin \sum_{ir}^nrxx rho[is][ir]
  *   - RenormalizeRho: Charge::renormalize_rho()
@@ -125,10 +125,10 @@ TEST_F(ChargeTest, Allocate)
     elecstate::tmp_xc_func_type = 3;
     charge->set_rhopw(rhopw);
     EXPECT_FALSE(charge->allocate_rho);
-    charge->allocate(GlobalV::NSPIN);
+    charge->allocate(PARAM.input.nspin);
     EXPECT_TRUE(charge->allocate_rho);
     // test if Charge::allocate() be called twice
-    EXPECT_NO_THROW(charge->allocate(GlobalV::NSPIN));
+    EXPECT_NO_THROW(charge->allocate(PARAM.input.nspin));
     EXPECT_TRUE(charge->allocate_rho);
 }
 
@@ -136,9 +136,9 @@ TEST_F(ChargeTest, SumRho)
 {
     charge->set_rhopw(rhopw);
     EXPECT_FALSE(charge->allocate_rho);
-    charge->allocate(GlobalV::NSPIN);
+    charge->allocate(PARAM.input.nspin);
     EXPECT_TRUE(charge->allocate_rho);
-    int nspin = (GlobalV::NSPIN == 2) ? 2 : 1;
+    int nspin = (PARAM.input.nspin == 2) ? 2 : 1;
     for (int is = 0; is < nspin; is++)
     {
         for (int ir = 0; ir < rhopw->nrxx; ir++)
@@ -154,9 +154,9 @@ TEST_F(ChargeTest, RenormalizeRho)
 {
     charge->set_rhopw(rhopw);
     EXPECT_FALSE(charge->allocate_rho);
-    charge->allocate(GlobalV::NSPIN);
+    charge->allocate(PARAM.input.nspin);
     EXPECT_TRUE(charge->allocate_rho);
-    int nspin = (GlobalV::NSPIN == 2) ? 2 : 1;
+    int nspin = (PARAM.input.nspin == 2) ? 2 : 1;
     for (int is = 0; is < nspin; is++)
     {
         for (int ir = 0; ir < rhopw->nrxx; ir++)
@@ -174,9 +174,9 @@ TEST_F(ChargeTest, CheckNe)
 {
     charge->set_rhopw(rhopw);
     EXPECT_FALSE(charge->allocate_rho);
-    charge->allocate(GlobalV::NSPIN);
+    charge->allocate(PARAM.input.nspin);
     EXPECT_TRUE(charge->allocate_rho);
-    int nspin = (GlobalV::NSPIN == 2) ? 2 : 1;
+    int nspin = (PARAM.input.nspin == 2) ? 2 : 1;
     for (int is = 0; is < nspin; is++)
     {
         for (int ir = 0; ir < rhopw->nrxx; ir++)
@@ -195,9 +195,9 @@ TEST_F(ChargeTest, SaveRhoBeforeSumBand)
 {
     charge->set_rhopw(rhopw);
     EXPECT_FALSE(charge->allocate_rho);
-    charge->allocate(GlobalV::NSPIN);
+    charge->allocate(PARAM.input.nspin);
     EXPECT_TRUE(charge->allocate_rho);
-    int nspin = (GlobalV::NSPIN == 2) ? 2 : 1;
+    int nspin = (PARAM.input.nspin == 2) ? 2 : 1;
     for (int is = 0; is < nspin; is++)
     {
         for (int ir = 0; ir < rhopw->nrxx; ir++)

@@ -1,5 +1,8 @@
 #include <gtest/gtest.h>
 #include <iostream>
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include <vector>
 
 #define private public
@@ -144,7 +147,7 @@ class TestHSolverPW_SDFT : public ::testing::Test
                                                            "cg",
                                                            false,
                                                            GlobalV::use_uspp,
-                                                           GlobalV::NSPIN,
+                                                           PARAM.input.nspin,
                      hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER,
                      hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX,
                      hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR,
@@ -220,7 +223,7 @@ TEST_F(TestHSolverPW_SDFT, solve_noband_skipcharge)
     psi_test_no.nbasis = 0;
 	GlobalV::nelec = 1.0;
     GlobalV::MY_STOGROUP = 0.0;
-    GlobalV::NSPIN = 1;
+    PARAM.input.nspin = 1;
     elecstate_test.charge = new Charge;
     elecstate_test.charge->rho = new double*[1];
     elecstate_test.charge->rho[0] = new double[10];

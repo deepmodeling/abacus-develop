@@ -1,5 +1,3 @@
-#include "../dftu_lcao.h"
-
 #include "gtest/gtest.h"
 #include <chrono>
 
@@ -7,6 +5,7 @@
 #define private public
 #include "module_parameter/parameter.h"
 #undef private
+#include "../dftu_lcao.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 ModuleDFTU::DFTU::DFTU(){};
 ModuleDFTU::DFTU::~DFTU(){};
@@ -148,7 +147,7 @@ class DFTUTest : public ::testing::Test
 TEST_F(DFTUTest, constructHRd2d)
 {
     // test for nspin=1
-    GlobalV::NSPIN = 1;
+    PARAM.input.nspin = 1;
     std::vector<ModuleBase::Vector3<double>> kvec_d_in(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     hamilt::HS_Matrix_K<double> hsk(paraV, true);
     hsk.set_zero_hk();
@@ -214,7 +213,7 @@ TEST_F(DFTUTest, constructHRd2d)
 TEST_F(DFTUTest, constructHRd2cd)
 {
     // test for nspin=2
-    GlobalV::NSPIN = 2;
+    PARAM.input.nspin = 2;
     std::vector<ModuleBase::Vector3<double>> kvec_d_in(2, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     hamilt::HS_Matrix_K<std::complex<double>> hsk(paraV, true);
     hsk.set_zero_hk();

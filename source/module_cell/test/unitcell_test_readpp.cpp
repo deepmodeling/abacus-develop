@@ -118,11 +118,11 @@ class UcellTest : public ::testing::Test {
         PARAM.input.dft_functional = "default";
         PARAM.input.esolver_type = "ksdft";
         PARAM.input.test_pseudo_cell = true;
-        GlobalV::NSPIN = 1;
+        PARAM.input.nspin = 1;
         PARAM.input.basis_type = "pw";
         GlobalV::nelec = 10.0;
         GlobalV::nupdown = 0.0;
-        GlobalV::TWO_EFERMI = false;
+        PARAM.sys.two_fermi = false;
         GlobalV::NBANDS = 6;
         GlobalV::NLOCAL = 6;
         PARAM.input.lspinorb = false;
@@ -234,7 +234,7 @@ TEST_F(UcellTest, CalNatomwfc1) {
 
 TEST_F(UcellTest, CalNatomwfc2) {
     PARAM.input.lspinorb = false;
-    GlobalV::NSPIN = 4;
+    PARAM.input.nspin = 4;
     ucell->read_cell_pseudopots(pp_dir, ofs);
     EXPECT_FALSE(ucell->atoms[0].ncpp.has_so);
     EXPECT_FALSE(ucell->atoms[1].ncpp.has_so);
@@ -248,7 +248,7 @@ TEST_F(UcellTest, CalNatomwfc2) {
 
 TEST_F(UcellTest, CalNatomwfc3) {
     PARAM.input.lspinorb = true;
-    GlobalV::NSPIN = 4;
+    PARAM.input.nspin = 4;
     ucell->read_cell_pseudopots(pp_dir, ofs);
     EXPECT_TRUE(ucell->atoms[0].ncpp.has_so);
     EXPECT_TRUE(ucell->atoms[1].ncpp.has_so);
@@ -326,7 +326,7 @@ TEST_F(UcellTest, CalNwfc1) {
 }
 
 TEST_F(UcellTest, CalNwfc2) {
-    GlobalV::NSPIN = 4;
+    PARAM.input.nspin = 4;
     PARAM.input.basis_type = "lcao";
     ucell->read_cell_pseudopots(pp_dir, ofs);
     EXPECT_FALSE(ucell->atoms[0].ncpp.has_so);
@@ -470,7 +470,7 @@ TEST_F(UcellTest, CalNbandsWarning1)
 
 TEST_F(UcellTest, CalNbandsWarning2)
 {
-    GlobalV::NSPIN = 2;
+    PARAM.input.nspin = 2;
     GlobalV::nupdown = 4.0;
     std::vector<double> nelec_spin(2);
     nelec_spin[0] = (GlobalV::nelec + GlobalV::nupdown) / 2.0;
@@ -483,7 +483,7 @@ TEST_F(UcellTest, CalNbandsWarning2)
 
 TEST_F(UcellTest, CalNbandsWarning3)
 {
-    GlobalV::NSPIN = 2;
+    PARAM.input.nspin = 2;
     GlobalV::nupdown = -4.0;
     std::vector<double> nelec_spin(2);
     nelec_spin[0] = (GlobalV::nelec + GlobalV::nupdown) / 2.0;
@@ -496,7 +496,7 @@ TEST_F(UcellTest, CalNbandsWarning3)
 
 TEST_F(UcellTest, CalNbandsSpin1)
 {
-    GlobalV::NSPIN = 1;
+    PARAM.input.nspin = 1;
     GlobalV::NBANDS = 0;
     std::vector<double> nelec_spin(2, 5.0);
     cal_nbands(GlobalV::nelec, GlobalV::NLOCAL, nelec_spin, GlobalV::NBANDS);
@@ -505,7 +505,7 @@ TEST_F(UcellTest, CalNbandsSpin1)
 
 TEST_F(UcellTest, CalNbandsSpin1LCAO)
 {
-    GlobalV::NSPIN = 1;
+    PARAM.input.nspin = 1;
     GlobalV::NBANDS = 0;
     PARAM.input.basis_type = "lcao";
     std::vector<double> nelec_spin(2, 5.0);
@@ -515,7 +515,7 @@ TEST_F(UcellTest, CalNbandsSpin1LCAO)
 
 TEST_F(UcellTest, CalNbandsSpin4)
 {
-    GlobalV::NSPIN = 4;
+    PARAM.input.nspin = 4;
     GlobalV::NBANDS = 0;
     std::vector<double> nelec_spin(2, 5.0);
     cal_nbands(GlobalV::nelec, GlobalV::NLOCAL, nelec_spin, GlobalV::NBANDS);
@@ -524,7 +524,7 @@ TEST_F(UcellTest, CalNbandsSpin4)
 
 TEST_F(UcellTest, CalNbandsSpin4LCAO)
 {
-    GlobalV::NSPIN = 4;
+    PARAM.input.nspin = 4;
     GlobalV::NBANDS = 0;
     PARAM.input.basis_type = "lcao";
     std::vector<double> nelec_spin(2, 5.0);
@@ -534,7 +534,7 @@ TEST_F(UcellTest, CalNbandsSpin4LCAO)
 
 TEST_F(UcellTest, CalNbandsSpin2)
 {
-    GlobalV::NSPIN = 2;
+    PARAM.input.nspin = 2;
     GlobalV::NBANDS = 0;
     std::vector<double> nelec_spin(2, 5.0);
     cal_nbands(GlobalV::nelec, GlobalV::NLOCAL, nelec_spin, GlobalV::NBANDS);
@@ -543,7 +543,7 @@ TEST_F(UcellTest, CalNbandsSpin2)
 
 TEST_F(UcellTest, CalNbandsSpin2LCAO)
 {
-    GlobalV::NSPIN = 2;
+    PARAM.input.nspin = 2;
     GlobalV::NBANDS = 0;
     PARAM.input.basis_type = "lcao";
     std::vector<double> nelec_spin(2, 5.0);

@@ -143,7 +143,7 @@ void UnitCell::bcast_unitcell() {
     Parallel_Common::bcast_double(latvec_supercell.e33);
     Parallel_Common::bcast_double(magnet.start_magnetization, ntype);
 
-    if (GlobalV::NSPIN == 4) {
+    if (PARAM.inp.nspin == 4) {
         Parallel_Common::bcast_double(magnet.ux_[0]);
         Parallel_Common::bcast_double(magnet.ux_[1]);
         Parallel_Common::bcast_double(magnet.ux_[2]);
@@ -673,7 +673,7 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log) {
 
         GlobalC::paw_cell.set_libpaw_files();
 
-        GlobalC::paw_cell.set_nspin(GlobalV::NSPIN);
+        GlobalC::paw_cell.set_nspin(PARAM.inp.nspin);
     }
 #endif
 
@@ -945,7 +945,7 @@ void UnitCell::cal_nwfc(std::ofstream& log) {
     for (int it = 0; it < ntype; it++) {
         atoms[it].stapos_wf = nlocal_tmp;
         const int nlocal_it = atoms[it].nw * atoms[it].na;
-        if (GlobalV::NSPIN != 4) {
+        if (PARAM.inp.nspin != 4) {
             nlocal_tmp += nlocal_it;
         } else {
             nlocal_tmp += nlocal_it * 2; // zhengdy-soc
@@ -1116,7 +1116,7 @@ void UnitCell::cal_natomwfc(std::ofstream& log) {
         int tmp = 0;
         for (int l = 0; l < atoms[it].ncpp.nchi; l++) {
             if (atoms[it].ncpp.oc[l] >= 0) {
-                if (GlobalV::NSPIN == 4) {
+                if (PARAM.inp.nspin == 4) {
                     if (atoms[it].ncpp.has_so) {
                         tmp += 2 * atoms[it].ncpp.lchi[l];
                         if (fabs(atoms[it].ncpp.jchi[l] - atoms[it].ncpp.lchi[l]
@@ -1648,7 +1648,7 @@ void cal_nbands(const int& nelec, const int& nlocal, const std::vector<double>& 
 
     if (nbands == 0)
     {
-        if (GlobalV::NSPIN == 1)
+        if (PARAM.inp.nspin == 1)
         {
             const int nbands1 = static_cast<int>(occupied_bands) + 10;
             const int nbands2 = static_cast<int>(1.2 * occupied_bands) + 1;
@@ -1657,7 +1657,7 @@ void cal_nbands(const int& nelec, const int& nlocal, const std::vector<double>& 
                 nbands = std::min(nbands, nlocal);
             }
         }
-        else if (GlobalV::NSPIN == 4)
+        else if (PARAM.inp.nspin == 4)
         {
             const int nbands3 = nelec + 20;
             const int nbands4 = static_cast<int>(1.2 * nelec) + 1;
@@ -1666,7 +1666,7 @@ void cal_nbands(const int& nelec, const int& nlocal, const std::vector<double>& 
                 nbands = std::min(nbands, nlocal);
             }
         }
-        else if (GlobalV::NSPIN == 2)
+        else if (PARAM.inp.nspin == 2)
         {
             const double max_occ = std::max(nelec_spin[0], nelec_spin[1]);
             const int nbands3 = static_cast<int>(max_occ) + 11;
@@ -1685,7 +1685,7 @@ void cal_nbands(const int& nelec, const int& nlocal, const std::vector<double>& 
         if (nbands < occupied_bands) {
             ModuleBase::WARNING_QUIT("unitcell", "Too few bands!");
         }
-        if (GlobalV::NSPIN == 2)
+        if (PARAM.inp.nspin == 2)
         {
             if (nbands < nelec_spin[0])
             {

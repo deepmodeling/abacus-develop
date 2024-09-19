@@ -1,5 +1,8 @@
 #ifdef __PEXSI
 #include "module_hsolver/diago_pexsi.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 
 #include "module_base/global_variable.h"
 #include "module_base/parallel_global.h"
@@ -183,7 +186,7 @@ class PexsiPrepare
         GlobalV::NLOCAL = nlocal;
         GlobalV::NBANDS = nbands;
         GlobalV::DSIZE = dsize;
-        GlobalV::NSPIN = 1;
+        PARAM.input.nspin = 1;
         DIAG_WORLD = MPI_COMM_WORLD;
         GlobalV::NPROC = dsize;
 

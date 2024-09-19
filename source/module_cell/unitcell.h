@@ -262,7 +262,7 @@ class UnitCell {
      * elsewhere. Print STRU file respect to given setting
      *
      * @param fn STRU file name
-     * @param nspin GlobalV::NSPIN feed in
+     * @param nspin PARAM.inp.nspin feed in
      * @param direct true for direct coords, false for cartesian coords
      * @param vol true for printing velocities
      * @param magmom true for printing Mulliken population analysis produced
