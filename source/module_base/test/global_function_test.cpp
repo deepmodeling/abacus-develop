@@ -13,7 +13,7 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include <time.h>
+#include <ctime>
 
 /************************************************
  *  unit test of functions in global_function
@@ -300,7 +300,8 @@ TEST_F(GlobalFunctionTest, OutV2)
     {
 	tmp_para += "a";
 	length = tmp_para.size()+1;
-	if (length == 32) EXPECT_THAT(str, testing::HasSubstr(tmp_para));
+	if (length == 32) { EXPECT_THAT(str, testing::HasSubstr(tmp_para));
+}
     }
     ifs.close();
 }
@@ -430,8 +431,8 @@ TEST_F(GlobalFunctionTest, MakeDir)
 TEST_F(GlobalFunctionTest, OutTime)
 {
     std::string name = "scf";
-    start = time(NULL);
-    end = time(NULL) + 200;
+    start = time(nullptr);
+    end = time(nullptr) + 200;
     ModuleBase::GlobalFunc::OUT_TIME(name, start, end);
     GlobalV::ofs_warning.close();
     ifs.open("warning.log");
