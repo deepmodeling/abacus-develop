@@ -254,7 +254,6 @@ void Input_Conv::Convert()
 
     ModuleSymmetry::Symmetry::symm_flag = std::stoi(PARAM.inp.symmetry);
     ModuleSymmetry::Symmetry::symm_autoclose = PARAM.inp.symmetry_autoclose;
-    GlobalV::KS_SOLVER = PARAM.inp.ks_solver;
     GlobalV::SEARCH_RADIUS = PARAM.inp.search_radius;
 
     //----------------------------------------------------------

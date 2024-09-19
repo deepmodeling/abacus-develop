@@ -62,12 +62,12 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
         {
             nsk = GlobalV::NSPIN;
             ncol = this->pv.ncol_bands;
-            if (GlobalV::KS_SOLVER == "genelpa"
-                || GlobalV::KS_SOLVER == "elpa"
-                || GlobalV::KS_SOLVER == "lapack"
-                || GlobalV::KS_SOLVER == "pexsi"
-                || GlobalV::KS_SOLVER == "cusolver"
-                || GlobalV::KS_SOLVER == "cusolvermp") {
+            if (PARAM.inp.ks_solver == "genelpa"
+                || PARAM.inp.ks_solver == "elpa"
+                || PARAM.inp.ks_solver == "lapack"
+                || PARAM.inp.ks_solver == "pexsi"
+                || PARAM.inp.ks_solver == "cusolver"
+                || PARAM.inp.ks_solver == "cusolvermp") {
                 ncol = this->pv.ncol;
             }
         }
@@ -156,7 +156,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
                    &(this->pv),
                    GlobalV::NSPIN,
                    this->kv,
-                   GlobalV::KS_SOLVER,
+                   PARAM.inp.ks_solver,
                    this->p_hamilt,
                    this->psi,
                    this->pelec);
