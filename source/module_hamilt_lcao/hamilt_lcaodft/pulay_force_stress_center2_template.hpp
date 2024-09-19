@@ -1,6 +1,7 @@
 #pragma once
 #include "pulay_force_stress.h"
 #include "module_base/timer.h"
+#include "module_parameter/parameter.h"
 namespace PulayForceStress
 {
     // common kernel
@@ -24,7 +25,7 @@ namespace PulayForceStress
         ModuleBase::TITLE("Force_LCAO", "cal_pulay_fs_center2");
         ModuleBase::timer::tick("Force_LCAO", "cal_pulay_fs_center2");
 
-        const int nspin_DMR = (GlobalV::NSPIN == 2) ? 2 : 1;
+        const int nspin_DMR = (PARAM.inp.nspin == 2) ? 2 : 1;
         int total_irr = 0;
 #ifdef _OPENMP
 #pragma omp parallel

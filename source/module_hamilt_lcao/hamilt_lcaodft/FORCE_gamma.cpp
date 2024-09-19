@@ -220,7 +220,7 @@ void Force_LCAO<double>::ftable(const bool isforce,
     const double* dSxy[6] = { fsr.DSloc_11, fsr.DSloc_12, fsr.DSloc_13, fsr.DSloc_22, fsr.DSloc_23, fsr.DSloc_33 };
     // calculate the force related to 'energy density matrix'.
     PulayForceStress::cal_pulay_fs(foverlap, soverlap,
-        this->cal_edm(pelec, *psi, *dm, *kv, pv, GlobalV::NSPIN, GlobalV::NBANDS, ucell, *ra), 
+        this->cal_edm(pelec, *psi, *dm, *kv, pv, PARAM.inp.nspin, PARAM.inp.nbands, ucell, *ra),
         ucell, pv, dSx, dSxy, isforce, isstress);
 
     const double* dHx[3] = { fsr.DHloc_fixed_x, fsr.DHloc_fixed_y, fsr.DHloc_fixed_z };

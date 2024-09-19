@@ -2,6 +2,7 @@
 #include "pulay_force_stress.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/stress_tools.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
+#include "module_parameter/parameter.h"
 namespace PulayForceStress
 {
     template<typename TK, typename TR>
@@ -17,7 +18,7 @@ namespace PulayForceStress
         const bool& set_dmr_gint)
     {
         if (set_dmr_gint) { gint.transfer_DM2DtoGrid(dm.get_DMR_vector()); }    // 2d block to grid
-        const int nspin = GlobalV::NSPIN;
+        const int nspin = PARAM.inp.nspin;
         for (int is = 0; is < nspin; ++is)
         {
             const double* vr_eff1 = pot->get_effective_v(is);

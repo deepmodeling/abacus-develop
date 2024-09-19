@@ -19,8 +19,8 @@ namespace PulayForceStress
         ModuleBase::TITLE("Force_LCAO", "cal_pulay_fs_center2");
         ModuleBase::timer::tick("Force_LCAO", "cal_pulay_fs_center2");
 
-        const int nspin = GlobalV::NSPIN;
-        const int nlocal = GlobalV::NLOCAL;
+        const int nspin = PARAM.inp.nspin;
+        const int nlocal = PARAM.globalv.nlocal;
 
         for (int i = 0; i < nlocal; ++i)
         {

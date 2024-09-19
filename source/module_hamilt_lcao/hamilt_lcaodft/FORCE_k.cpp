@@ -317,7 +317,7 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
     // calculate the energy density matrix
     // and the force related to overlap matrix and energy density matrix.
     PulayForceStress::cal_pulay_fs(foverlap, soverlap,
-        this->cal_edm(pelec, *psi, *dm, *kv, pv, GlobalV::NSPIN, GlobalV::NBANDS, ucell, *ra), 
+        this->cal_edm(pelec, *psi, *dm, *kv, pv, PARAM.inp.nspin, PARAM.inp.nbands, ucell, *ra),
         ucell, pv, dSx, fsr.DH_r, isforce, isstress, ra, -1.0, 1.0);
 
     const double* dHx[3] = { fsr.DHloc_fixedR_x, fsr.DHloc_fixedR_y, fsr.DHloc_fixedR_z }; // T+Vnl
