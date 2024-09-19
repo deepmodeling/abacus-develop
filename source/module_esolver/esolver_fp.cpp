@@ -5,9 +5,11 @@
 #include "module_io/cube_io.h"
 #include "module_io/output_log.h"
 #include "module_io/write_elecstat_pot.h"
+#include "module_io/write_elf.h"
 #include "module_parameter/parameter.h"
 #include "module_io/rhog_io.h"
 #include "module_io/cif_io.h"
+#include "module_elecstate/module_charge/symmetry_rho.h"
 
 namespace ModuleESolver
 {
@@ -251,6 +253,31 @@ void ESolver_FP::after_scf(const int istep)
                 &(GlobalC::ucell),
                 this->pelec->pot->get_fixed_v());
         }
+    }
+
+    // 5) write ELF
+    if (PARAM.inp.out_elf)
+    {
+        this->pelec->charge->cal_elf = true;
+        Symmetry_rho srho;
+        for (int is = 0; is < GlobalV::NSPIN; is++)
+        {
+            srho.begin(is, *(this->pelec->charge), this->pw_rho, GlobalC::ucell.symm);
+        }
+
+        std::string fn =PARAM.globalv.global_out_dir + "/ELF.cube";
+        ModuleIO::write_elf(
+#ifdef __MPI
+            this->pw_big->bz,
+            this->pw_big->nbz,
+#endif
+            fn,
+            istep,
+            GlobalV::NSPIN,
+            this->pelec->charge->rho,
+            this->pelec->charge->kin_r,
+            this->pw_rhod,
+            &(GlobalC::ucell));
     }
 }
 

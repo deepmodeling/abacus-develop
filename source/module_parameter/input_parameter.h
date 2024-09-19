@@ -355,6 +355,7 @@ struct Input_para
     int nbands_istate = 5;                ///< number of bands around fermi level for get_pchg calculation.
     std::vector<int> bands_to_print = {}; ///< specify the bands to be calculated in the get_pchg
     bool if_separate_k = false; ///< whether to write partial charge for all k-points to individual files or merge them
+    bool out_elf = false;       ///< output the electron localization function (ELF)
 
     // ==============   #Parameters (12.Postprocess) ===========================
     double dos_emin_ev = -15.0;

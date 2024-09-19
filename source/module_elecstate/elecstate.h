@@ -52,6 +52,14 @@ class ElecState
     }
     // virtual void updateRhoK(const psi::Psi<std::complex<double>> &psi) = 0;
     // virtual void updateRhoK(const psi::Psi<double> &psi)=0
+    virtual void cal_tau(const psi::Psi<std::complex<double>>& psi)
+    {
+        return;
+    }
+    virtual void cal_tau(const psi::Psi<double>& psi)
+    {
+        return;
+    }
 
     // update charge density for next scf step
     // in this function, 1. input rho for construct Hamilt and 2. calculated rho from Psi will mix to 3. new charge
