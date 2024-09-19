@@ -1,4 +1,4 @@
-threshold 0.00001
-force_threshold 0.00001 
-stress_threshold 0.00001
-fatal_threshold 0.00001
+threshold 0.0001
+force_threshold 0.001 
+stress_threshold 0.001
+fatal_threshold 0.001
