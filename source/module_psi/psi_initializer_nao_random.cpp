@@ -11,9 +11,6 @@ void psi_initializer_nao_random<T, Device>::initialize(Structure_Factor* sf,
                                                        const int& rank)
 {
     psi_initializer_nao<T, Device>::initialize(sf, pw_wfc, p_ucell, p_parakpts, random_seed, p_pspot_nl, rank);
-    this->ixy2is_.clear();
-    this->ixy2is_.resize(this->pw_wfc_->fftnxy);
-    this->pw_wfc_->getfftixy2is(this->ixy2is_.data());
 }
 #else
 template <typename T, typename Device>
@@ -24,17 +21,15 @@ void psi_initializer_nao_random<T, Device>::initialize(Structure_Factor* sf,
                                                        pseudopot_cell_vnl* p_pspot_nl)
 {
     psi_initializer_nao<T, Device>::initialize(sf, pw_wfc, p_ucell, random_seed, p_pspot_nl);
-    this->ixy2is_.clear();
-    this->ixy2is_.resize(this->pw_wfc_->fftnxy);
-    this->pw_wfc_->getfftixy2is(this->ixy2is_.data());
 }
 #endif
 
 template <typename T, typename Device>
-void psi_initializer_nao_random<T, Device>::proj_ao_onkG(int ik)
+void psi_initializer_nao_random<T, Device>::proj_ao_onkG(const int ik)
 {
     double rm = this->random_mix();
-    this->psig_->fix_k(ik);
+    const int ik_psig = (this->psig_->get_nk() == 1) ? 0 : ik;
+    this->psig_->fix_k(ik_psig);
     psi_initializer_nao<T, Device>::proj_ao_onkG(ik);
     psi::Psi<T, Device> psi_random(1, this->psig_->get_nbands(), this->psig_->get_nbasis(), nullptr);
     psi_random.fix_k(0);

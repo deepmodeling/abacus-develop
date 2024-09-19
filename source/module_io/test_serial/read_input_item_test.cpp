@@ -811,8 +811,15 @@ TEST_F(InputTest, Item_test)
         auto it = find_label("gamma_only", readinput.input_lists);
         param.input.basis_type = "pw";
         param.input.gamma_only = true;
+        std::string filename = param.input.kpoint_file;
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.gamma_only, false);
+        std::ifstream ifs(filename);
+        std::string line;
+        std::getline(ifs, line);
+        ifs.close();
+        EXPECT_EQ(line, "K_POINTS");
+
     }
     { // out_mat_r
         auto it = find_label("out_mat_r", readinput.input_lists);

@@ -451,10 +451,21 @@ void ReadInput::item_elec_stru()
                           "set to 1, a fast algorithm is used";
         read_sync_bool(input.gamma_only);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.gamma_only && para.input.basis_type == "pw")
+            if (para.input.basis_type == "pw" && para.input.gamma_only) 
             {
-                    para.input.gamma_only = false;   
-                    GlobalV::ofs_warning << "gamma_only is not supported in the pw model" << std::endl;
+                para.input.gamma_only = false;   
+                GlobalV::ofs_warning << " WARNING : gamma_only has not been implemented for pw yet" << std::endl;
+                GlobalV::ofs_warning << "gamma_only is not supported in the pw model" << std::endl;
+                GlobalV::ofs_warning << " the INPUT parameter gamma_only has been reset to 0" << std::endl;
+                GlobalV::ofs_warning << " and a new KPT is generated with "
+                                        "gamma point as the only k point"<< std::endl;
+                GlobalV::ofs_warning << " Auto generating k-points file: " << para.input.kpoint_file << std::endl;
+                std::ofstream ofs(para.input.kpoint_file.c_str());
+                ofs << "K_POINTS" << std::endl;
+                ofs << "0" << std::endl;
+                ofs << "Gamma" << std::endl;
+                ofs << "1 1 1 0 0 0" << std::endl;
+                ofs.close();
             }
         };
         this->add_item(item);
