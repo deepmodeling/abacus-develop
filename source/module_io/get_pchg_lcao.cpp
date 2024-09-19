@@ -41,7 +41,7 @@ void IState_Charge::begin(Gint_Gamma& gg,
                           const int bigpw_nbz,
                           const bool gamma_only_local,
                           const int nbands_istate,
-                          const std::vector<int>& out_band_kb,
+                          const std::vector<int>& out_pchg,
                           const int nbands,
                           const double nelec,
                           const int nspin,
@@ -57,13 +57,13 @@ void IState_Charge::begin(Gint_Gamma& gg,
     std::cout << " Perform |psi(i)|^2 for selected bands (band-decomposed charge densities, gamma only)." << std::endl;
 
     int mode = 0;
-    if (nbands_istate > 0 && static_cast<int>(out_band_kb.size()) == 0)
+    if (nbands_istate > 0 && static_cast<int>(out_pchg.size()) == 0)
     {
         mode = 1;
     }
-    else if (static_cast<int>(out_band_kb.size()) > 0)
+    else if (static_cast<int>(out_pchg.size()) > 0)
     {
-        // If out_band_kb (out_pchg) is not empty, set mode to 2
+        // If out_pchg is not empty, set mode to 2
         mode = 2;
         std::cout << " Notice: INPUT parameter `nbands_istate` overwritten by `out_pchg`!" << std::endl;
     }
@@ -80,7 +80,7 @@ void IState_Charge::begin(Gint_Gamma& gg,
     std::cout << " number of occupied bands = " << fermi_band << std::endl;
 
     // Set this->bands_picked_ according to the mode
-    select_bands(nbands_istate, out_band_kb, nbands, nelec, mode, fermi_band);
+    select_bands(nbands_istate, out_pchg, nbands, nelec, mode, fermi_band);
 
     for (int ib = 0; ib < nbands; ++ib)
     {
@@ -173,7 +173,7 @@ void IState_Charge::begin(Gint_k& gk,
                           const int bigpw_nbz,
                           const bool gamma_only_local,
                           const int nbands_istate,
-                          const std::vector<int>& out_band_kb,
+                          const std::vector<int>& out_pchg,
                           const int nbands,
                           const double nelec,
                           const int nspin,
@@ -192,13 +192,13 @@ void IState_Charge::begin(Gint_k& gk,
     std::cout << " Perform |psi(i)|^2 for selected bands (band-decomposed charge densities, multi-k)." << std::endl;
 
     int mode = 0;
-    if (nbands_istate > 0 && static_cast<int>(out_band_kb.size()) == 0)
+    if (nbands_istate > 0 && static_cast<int>(out_pchg.size()) == 0)
     {
         mode = 1;
     }
-    else if (static_cast<int>(out_band_kb.size()) > 0)
+    else if (static_cast<int>(out_pchg.size()) > 0)
     {
-        // If out_band_kb (out_pchg) is not empty, set mode to 2
+        // If out_pchg is not empty, set mode to 2
         mode = 2;
         std::cout << " Notice: INPUT parameter `nbands_istate` overwritten by `out_pchg`!" << std::endl;
     }
@@ -212,7 +212,7 @@ void IState_Charge::begin(Gint_k& gk,
     std::cout << " number of occupied bands = " << fermi_band << std::endl;
 
     // Set this->bands_picked_ according to the mode
-    select_bands(nbands_istate, out_band_kb, nbands, nelec, mode, fermi_band);
+    select_bands(nbands_istate, out_pchg, nbands, nelec, mode, fermi_band);
 
     for (int ib = 0; ib < nbands; ++ib)
     {
@@ -320,13 +320,7 @@ void IState_Charge::begin(Gint_k& gk,
                     {
                         rho_save_pointers[i] = rho_save[i].data();
                     }
-                    srho.begin(is,
-                               rho_save_pointers.data(),
-                               rhog,
-                               ngmc,
-                               nullptr,
-                               rho_pw,
-                               ucell_in->symm);
+                    srho.begin(is, rho_save_pointers.data(), rhog, ngmc, nullptr, rho_pw, ucell_in->symm);
                 }
 
                 std::cout << " Writing cube files...";
@@ -366,7 +360,7 @@ void IState_Charge::begin(Gint_k& gk,
 }
 
 void IState_Charge::select_bands(const int nbands_istate,
-                                 const std::vector<int>& out_band_kb,
+                                 const std::vector<int>& out_pchg,
                                  const int nbands,
                                  const double nelec,
                                  const int mode,
@@ -404,30 +398,28 @@ void IState_Charge::select_bands(const int nbands_istate,
     }
     else if (mode == 2)
     {
-        // Check if length of out_band_kb is valid
-        if (static_cast<int>(out_band_kb.size()) > nbands)
+        // Check if length of out_pchg is valid
+        if (static_cast<int>(out_pchg.size()) > nbands)
         {
-            ModuleBase::WARNING_QUIT(
-                "IState_Charge::select_bands",
-                "The number of bands specified by `out_pchg` in the INPUT file exceeds `nbands`!");
+            ModuleBase::WARNING_QUIT("IState_Charge::select_bands",
+                                     "The number of bands specified by `out_pchg` in the INPUT file exceeds `nbands`!");
         }
-        // Check if all elements in out_band_kb are 0 or 1
-        for (int value: out_band_kb)
+        // Check if all elements in out_pchg are 0 or 1
+        for (int value: out_pchg)
         {
             if (value != 0 && value != 1)
             {
-                ModuleBase::WARNING_QUIT(
-                    "IState_Charge::select_bands",
-                    "The elements of `out_pchg` must be either 0 or 1. Invalid values found!");
+                ModuleBase::WARNING_QUIT("IState_Charge::select_bands",
+                                         "The elements of `out_pchg` must be either 0 or 1. Invalid values found!");
             }
         }
-        // Fill bands_picked_ with values from out_band_kb
+        // Fill bands_picked_ with values from out_pchg
         // Remaining bands are already set to 0
-        const int length = std::min(static_cast<int>(out_band_kb.size()), nbands);
+        const int length = std::min(static_cast<int>(out_pchg.size()), nbands);
         for (int i = 0; i < length; ++i)
         {
-            // out_band_kb rely on function parse_expression
-            bands_picked_[i] = out_band_kb[i];
+            // out_pchg rely on function parse_expression
+            bands_picked_[i] = out_pchg[i];
         }
 
         // Check if there are selected bands below the Fermi surface

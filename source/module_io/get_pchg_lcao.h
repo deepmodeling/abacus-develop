@@ -43,7 +43,7 @@ class IState_Charge
                const int bigpw_nbz,
                const bool gamma_only_local,
                const int nbands_istate,
-               const std::vector<int>& out_band_kb,
+               const std::vector<int>& out_pchg,
                const int nbands,
                const double nelec,
                const int nspin,
@@ -71,7 +71,7 @@ class IState_Charge
                const int bigpw_nbz,
                const bool gamma_only_local,
                const int nbands_istate,
-               const std::vector<int>& out_band_kb,
+               const std::vector<int>& out_pchg,
                const int nbands,
                const double nelec,
                const int nspin,
@@ -90,14 +90,14 @@ class IState_Charge
      * @brief Set this->bands_picked_ according to the mode, and process an error if the mode is not recognized.
      *
      * @param nbands_istate INPUT parameter nbands_istate.
-     * @param out_band_kb INPUT parameter out_pchg, vector.
+     * @param out_pchg INPUT parameter out_pchg, vector.
      * @param nbands INPUT parameter nbands.
      * @param nelec Total number of electrons.
      * @param mode Selected mode.
      * @param fermi_band Calculated Fermi band.
      */
     void select_bands(const int nbands_istate,
-                      const std::vector<int>& out_band_kb,
+                      const std::vector<int>& out_pchg,
                       const int nbands,
                       const double nelec,
                       const int mode,

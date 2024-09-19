@@ -28,7 +28,8 @@ class IState_Envelope
                const K_Vectors& kv,
                const double nelec,
                const int nbands_istate,
-               const std::vector<int>& out_band_kb,
+               const std::vector<int>& out_wfc_norm,
+               const std::vector<int>& out_wfc_re_im,
                const int nbands,
                const int nspin,
                const int nlocal,
@@ -46,7 +47,8 @@ class IState_Envelope
                const K_Vectors& kv,
                const double nelec,
                const int nbands_istate,
-               const std::vector<int>& out_band_kb,
+               const std::vector<int>& out_wfc_norm,
+               const std::vector<int>& out_wfc_re_im,
                const int nbands,
                const int nspin,
                const int nlocal,
@@ -67,7 +69,8 @@ class IState_Envelope
                const K_Vectors& kv,
                const double nelec,
                const int nbands_istate,
-               const std::vector<int>& out_band_kb,
+               const std::vector<int>& out_wfc_norm,
+               const std::vector<int>& out_wfc_re_im,
                const int nbands,
                const int nspin,
                const int nlocal,
@@ -85,7 +88,8 @@ class IState_Envelope
                const K_Vectors& kv,
                const double nelec,
                const int nbands_istate,
-               const std::vector<int>& out_band_kb,
+               const std::vector<int>& out_wfc_norm,
+               const std::vector<int>& out_wfc_re_im,
                const int nbands,
                const int nspin,
                const int nlocal,
@@ -95,8 +99,12 @@ class IState_Envelope
     };
 
   private:
-    std::vector<int> bands_picked_;
-    const elecstate::ElecState* pes_ = nullptr;
+    void select_bands(const int nbands_istate,
+                      const std::vector<int>& out_wfc_kb,
+                      const int nbands,
+                      const double nelec,
+                      const int mode,
+                      const int fermi_band);
 
     void set_pw_wfc(const ModulePW::PW_Basis_K* wfcpw,
                     const int& ik,
@@ -104,7 +112,9 @@ class IState_Envelope
                     const int& nspin,
                     const double* const* const rho,
                     psi::Psi<std::complex<double>>& wfc_g);
+
     int globalIndex(int localindex, int nblk, int nprocs, int myproc);
+
     int localIndex(int globalindex, int nblk, int nprocs, int& myproc);
 
 #ifdef __MPI
@@ -121,5 +131,8 @@ class IState_Envelope
     template <typename T>
     void wfc_2d_to_grid(const T* wfc_2d, const Parallel_Orbitals& pv, T** wfc_grid, const std::vector<int>& trace_lo);
 #endif
+
+    std::vector<int> bands_picked_;
+    const elecstate::ElecState* pes_ = nullptr;
 };
 #endif
