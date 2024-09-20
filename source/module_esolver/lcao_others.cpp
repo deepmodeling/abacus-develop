@@ -70,12 +70,12 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
     {
         // test_search_neighbor();
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "testing neighbour");
-        double serach_radius = PARAM.inp.search_radius;
+        double search_radius = PARAM.inp.search_radius;
         atom_arrange::search(PARAM.inp.search_pbc,
                              GlobalV::ofs_running,
                              GlobalC::GridD,
                              GlobalC::ucell,
-                             serach_radius,
+                             search_radius,
                              PARAM.inp.test_atom_input,
                              true);
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "testing neighbour");

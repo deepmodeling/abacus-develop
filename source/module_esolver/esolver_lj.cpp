@@ -38,7 +38,7 @@ namespace ModuleESolver
             GlobalV::ofs_running,
             grid_neigh,
             ucell,
-            serch_radius,
+            search_radius,
             PARAM.inp.test_atom_input);
 
         double distance=0.0;
@@ -95,7 +95,7 @@ namespace ModuleESolver
             PARAM.inp.search_pbc,
             grid_neigh,
             ucell, 
-            serch_radius,
+            search_radius,
             PARAM.inp.test_atom_input);
 #endif
     }
@@ -200,7 +200,7 @@ namespace ModuleESolver
         }
 
         // set the search radius
-        serch_radius = rcut_max + 0.01;
+        search_radius = rcut_max + 0.01;
     }
 
     void ESolver_LJ::set_c6_c12(const int rule, const std::vector<double> epsilon, const std::vector<double> sigma)
