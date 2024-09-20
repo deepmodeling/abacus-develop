@@ -29,7 +29,7 @@ void LCAO_Deepks::cal_o_delta(const std::vector<std::vector<ModuleBase::matrix>>
                 if (mu >= 0 && nu >= 0)
                 {                
                     const int index = nu * pv->nrow + mu;
-                    for (int is = 0; is < GlobalV::NSPIN; ++is)
+                    for (int is = 0; is < PARAM.inp.nspin; ++is)
                     {
                         this->o_delta(0,hl) += dm_hl[hl][is](nu, mu) * this->H_V_delta[index];
                     }

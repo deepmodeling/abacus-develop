@@ -30,7 +30,7 @@ void init_basis_lcao(Parallel_Orbitals& pv,
     {
         if (nlocal > 0)
         {
-            nb2d = (GlobalV::NSPIN == 4) ? 2 : 1;
+            nb2d = (PARAM.inp.nspin == 4) ? 2 : 1;
         }
         if (nlocal > 500)
         {

@@ -380,7 +380,7 @@ void TDEkinetic<OperatorLCAO<std::complex<double>, double>>::contributeHk(int ik
         ModuleBase::timer::tick("TDEkinetic", "contributeHk");
         const Parallel_Orbitals* paraV = this->hR_tmp->get_atom_pair(0).get_paraV();
         // save HR data for output
-        int spin_tot = GlobalV::NSPIN;
+        int spin_tot = PARAM.inp.nspin;
         if (spin_tot == 4)
             ;
         else if (!output_hR_done && TD_Velocity::out_mat_R)

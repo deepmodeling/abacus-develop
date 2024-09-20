@@ -1,5 +1,6 @@
 #include "FORCE.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_parameter/parameter.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include <unordered_map>
 #include "module_base/timer.h"
@@ -20,7 +21,7 @@ void Force_LCAO<double>::cal_ftvnl_dphi(
     ModuleBase::timer::tick("Force_LCAO","cal_ftvnl_dphi");
 
     const int nlocal = GlobalV::NLOCAL;
-    const int nspin = GlobalV::NSPIN;
+    const int nspin = PARAM.inp.nspin;
 
     for(int i=0; i<nlocal; i++)
     {

@@ -28,7 +28,7 @@ void LCAO_Deepks_Interface::out_deepks_labels(const double& etot,
     ModuleBase::TITLE("LCAO_Deepks_Interface", "out_deepks_labels");
 
     const int my_rank = GlobalV::MY_RANK;
-    const int nspin = GlobalV::NSPIN;
+    const int nspin = PARAM.inp.nspin;
 
     // calculating deepks correction to bandgap
     // and save the results
@@ -251,7 +251,7 @@ void LCAO_Deepks_Interface::out_deepks_labels(const double& etot,
     ModuleBase::timer::tick("LCAO_Deepks_Interface", "out_deepks_labels");
 
     const int my_rank = GlobalV::MY_RANK;
-    const int nspin = GlobalV::NSPIN;
+    const int nspin = PARAM.inp.nspin;
 
     /// calculating deepks correction to bandgap and save the results
     if (PARAM.inp.deepks_out_labels)

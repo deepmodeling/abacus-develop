@@ -90,21 +90,21 @@ void ESolver_KS_LCAO<TK, TR>::cal_mag(const int istep, const bool print)
     auto cell_index = CellIndex(GlobalC::ucell.get_atomLabels(),
                                 GlobalC::ucell.get_atomCounts(),
                                 GlobalC::ucell.get_lnchiCounts(),
-                                GlobalV::NSPIN);
+                                PARAM.inp.nspin);
     auto out_sk = ModuleIO::Output_Sk<TK>(this->p_hamilt,
                                           &(this->pv),
-                                          GlobalV::NSPIN,
+                                          PARAM.inp.nspin,
                                           this->kv.get_nks());
     auto out_dmk = ModuleIO::Output_DMK<TK>(dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(),
                                             &(this->pv),
-                                            GlobalV::NSPIN,
+                                            PARAM.inp.nspin,
                                             this->kv.get_nks());
     auto mulp = ModuleIO::Output_Mulliken<TK>(&(out_sk),
                                               &(out_dmk),
                                               &(this->pv),
                                               &cell_index,
                                               this->kv.isk,
-                                              GlobalV::NSPIN);
+                                              PARAM.inp.nspin);
     auto atom_chg = mulp.get_atom_chg();
     /// used in updating mag info in STRU file
     GlobalC::ucell.atom_mulliken = mulp.get_atom_mulliken(atom_chg);

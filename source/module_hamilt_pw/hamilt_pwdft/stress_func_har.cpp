@@ -1,5 +1,6 @@
 #include "stress_func.h"
 #include "module_elecstate/potentials/H_Hartree_pw.h"
+#include "module_parameter/parameter.h"
 #include "module_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
@@ -12,14 +13,14 @@ void Stress_Func<FPTYPE, Device>::stress_har(ModuleBase::matrix& sigma, ModulePW
 
 	std::complex<FPTYPE> *aux = new std::complex<FPTYPE>[rho_basis->nmaxgr];
 
-	const int nspin_rho = (GlobalV::NSPIN == 2) ? 2 : 1;
+	const int nspin_rho = (PARAM.inp.nspin == 2) ? 2 : 1;
 
 	//  Hartree potential VH(r) from n(r)
     /*
         blocking rho_basis->nrxx for data locality.
 
         By blocking aux with block size 1024,
-        we can keep the blocked aux in L1 cache when iterating GlobalV::NSPIN loop
+        we can keep the blocked aux in L1 cache when iterating PARAM.inp.nspin loop
         performance will be better when number of atom is quite huge
     */
     const int block_ir = 1024;

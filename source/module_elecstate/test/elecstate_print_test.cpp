@@ -138,7 +138,7 @@ TEST_F(ElecStatePrintTest, PrintFormat)
 
 TEST_F(ElecStatePrintTest, PrintEigenvalueS2)
 {
-    GlobalV::NSPIN = 2;
+    PARAM.input.nspin = 2;
     GlobalV::ofs_running.open("test.dat", std::ios::out);
     // print eigenvalue
     elecstate.print_eigenvalue(GlobalV::ofs_running);
@@ -161,7 +161,7 @@ TEST_F(ElecStatePrintTest, PrintEigenvalueS2)
 
 TEST_F(ElecStatePrintTest, PrintEigenvalueS4)
 {
-    GlobalV::NSPIN = 4;
+    PARAM.input.nspin = 4;
     GlobalV::ofs_running.open("test.dat", std::ios::out);
     // print eigenvalue
     elecstate.print_eigenvalue(GlobalV::ofs_running);
@@ -182,7 +182,7 @@ TEST_F(ElecStatePrintTest, PrintEigenvalueS4)
 
 TEST_F(ElecStatePrintTest, PrintBand)
 {
-    GlobalV::NSPIN = 1;
+    PARAM.input.nspin = 1;
     GlobalV::NBANDS = 2;
     GlobalV::MY_RANK = 0;
     GlobalV::ofs_running.open("test.dat", std::ios::out);
@@ -201,7 +201,7 @@ TEST_F(ElecStatePrintTest, PrintBand)
 TEST_F(ElecStatePrintTest, PrintEigenvalueWarning)
 {
     elecstate.ekb(0, 0) = 1.0e11;
-    GlobalV::NSPIN = 4;
+    PARAM.input.nspin = 4;
     GlobalV::ofs_running.open("test.dat", std::ios::out);
     testing::internal::CaptureStdout();
     EXPECT_EXIT(elecstate.print_eigenvalue(GlobalV::ofs_running), ::testing::ExitedWithCode(0), "");
@@ -214,7 +214,7 @@ TEST_F(ElecStatePrintTest, PrintEigenvalueWarning)
 TEST_F(ElecStatePrintTest, PrintBandWarning)
 {
     elecstate.ekb(0, 0) = 1.0e11;
-    GlobalV::NSPIN = 4;
+    PARAM.input.nspin = 4;
     GlobalV::ofs_running.open("test.dat", std::ios::out);
     testing::internal::CaptureStdout();
     EXPECT_EXIT(elecstate.print_band(0, 1, 0), ::testing::ExitedWithCode(0), "");
@@ -242,11 +242,11 @@ TEST_F(ElecStatePrintTest, PrintEtot)
     PARAM.input.imp_sol = true;
     PARAM.input.efield_flag = true;
     PARAM.input.gate_flag = true;
-    GlobalV::TWO_EFERMI = true;
+    PARAM.sys.two_fermi = true;
     PARAM.input.out_bandgap = true;
     GlobalV::MY_RANK = 0;
     PARAM.input.basis_type = "pw";
-    GlobalV::NSPIN = 2;
+    PARAM.input.nspin = 2;
     // iteration of different vdw_method
     std::vector<std::string> vdw_methods = {"d2", "d3_0", "d3_bj"};
     for (int i = 0; i < vdw_methods.size(); i++)
@@ -322,7 +322,7 @@ TEST_F(ElecStatePrintTest, PrintEtot2)
     PARAM.input.imp_sol = true;
     PARAM.input.efield_flag = true;
     PARAM.input.gate_flag = true;
-    GlobalV::TWO_EFERMI = false;
+    PARAM.sys.two_fermi = false;
     PARAM.input.out_bandgap = true;
     GlobalV::MY_RANK = 0;
     PARAM.input.basis_type = "pw";
@@ -360,9 +360,9 @@ TEST_F(ElecStatePrintTest, PrintEtotColorS2)
     PARAM.input.imp_sol = true;
     PARAM.input.efield_flag = true;
     PARAM.input.gate_flag = true;
-    GlobalV::TWO_EFERMI = true;
+    PARAM.sys.two_fermi = true;
     PARAM.input.out_bandgap = true;
-    GlobalV::NSPIN = 2;
+    PARAM.input.nspin = 2;
     GlobalV::MY_RANK = 0;
     elecstate.print_etot(converged, iter, scf_thr, scf_thr_kin, duration, printe, pw_diag_thr, avg_iter, print);
 }
@@ -384,9 +384,9 @@ TEST_F(ElecStatePrintTest, PrintEtotColorS4)
     PARAM.input.imp_sol = true;
     PARAM.input.efield_flag = true;
     PARAM.input.gate_flag = true;
-    GlobalV::TWO_EFERMI = true;
+    PARAM.sys.two_fermi = true;
     PARAM.input.out_bandgap = true;
-    GlobalV::NSPIN = 4;
+    PARAM.input.nspin = 4;
     PARAM.input.noncolin = true;
     GlobalV::MY_RANK = 0;
     elecstate.print_etot(converged, iter, scf_thr, scf_thr_kin, duration, printe, pw_diag_thr, avg_iter, print);
@@ -410,7 +410,7 @@ TEST_F(ElecStatePrintTest, PrintEtotColorS4)
 //     PARAM.input.imp_sol = true;
 //     PARAM.input.efield_flag = true;
 //     PARAM.input.gate_flag = true;
-//     GlobalV::TWO_EFERMI = false;
+//     PARAM.sys.two_fermi = false;
 //     PARAM.input.out_bandgap = true;
 //     GlobalV::MY_RANK = 0;
 //     PARAM.input.basis_type = "pw";

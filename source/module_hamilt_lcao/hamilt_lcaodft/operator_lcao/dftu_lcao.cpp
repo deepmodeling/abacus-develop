@@ -31,7 +31,7 @@ hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::DFTU(HS_Matrix_K<TK>* hsk_in,
     // initialize HR to allocate sparse Nonlocal matrix memory
     this->initialize_HR(GridD_in);
     // set nspin
-    this->nspin = GlobalV::NSPIN;
+    this->nspin = PARAM.inp.nspin;
 }
 
 // destructor

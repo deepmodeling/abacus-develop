@@ -28,7 +28,7 @@ void Force_LCAO<double>::cal_fedm(
     ModuleBase::TITLE("Force_LCAO","cal_fedm");
     ModuleBase::timer::tick("Force_LCAO","cal_fedm");
 
-    const int nspin = GlobalV::NSPIN;
+    const int nspin = PARAM.inp.nspin;
     const int nbands = GlobalV::NBANDS;
     const int nlocal = GlobalV::NLOCAL;
 

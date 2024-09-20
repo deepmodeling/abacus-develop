@@ -1,5 +1,6 @@
 #include "FORCE.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_parameter/parameter.h"
 #include "module_base/timer.h"
 
 template<>
@@ -14,7 +15,7 @@ void Force_LCAO<double>::cal_fvl_dphi(
     ModuleBase::TITLE("Force_LCAO","cal_fvl_dphi");
     ModuleBase::timer::tick("Force_LCAO","cal_fvl_dphi");
 
-    const int nspin = GlobalV::NSPIN;
+    const int nspin = PARAM.inp.nspin;
 
     fvl_dphi.zero_out();
     svl_dphi.zero_out();

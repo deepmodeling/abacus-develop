@@ -115,7 +115,7 @@ class UcellTest : public ::testing::Test {
         PARAM.input.pseudo_rcut = 15.0;
         PARAM.input.dft_functional = "default";
         PARAM.input.test_pseudo_cell = true;
-        GlobalV::NSPIN = 1;
+        PARAM.input.nspin = 1;
         PARAM.input.basis_type = "pw";
     }
     void TearDown() { ofs.close(); }
@@ -225,7 +225,7 @@ TEST_F(UcellTest, CalNatomwfc1) {
 
 TEST_F(UcellTest, CalNatomwfc2) {
     PARAM.input.lspinorb = false;
-    GlobalV::NSPIN = 4;
+    PARAM.input.nspin = 4;
     ucell->read_cell_pseudopots(pp_dir, ofs);
     EXPECT_FALSE(ucell->atoms[0].ncpp.has_so);
     EXPECT_FALSE(ucell->atoms[1].ncpp.has_so);
@@ -239,7 +239,7 @@ TEST_F(UcellTest, CalNatomwfc2) {
 
 TEST_F(UcellTest, CalNatomwfc3) {
     PARAM.input.lspinorb = true;
-    GlobalV::NSPIN = 4;
+    PARAM.input.nspin = 4;
     ucell->read_cell_pseudopots(pp_dir, ofs);
     EXPECT_TRUE(ucell->atoms[0].ncpp.has_so);
     EXPECT_TRUE(ucell->atoms[1].ncpp.has_so);
@@ -317,7 +317,7 @@ TEST_F(UcellTest, CalNwfc1) {
 }
 
 TEST_F(UcellTest, CalNwfc2) {
-    GlobalV::NSPIN = 4;
+    PARAM.input.nspin = 4;
     PARAM.input.basis_type = "lcao";
     ucell->read_cell_pseudopots(pp_dir, ofs);
     EXPECT_FALSE(ucell->atoms[0].ncpp.has_so);

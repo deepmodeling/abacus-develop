@@ -1,5 +1,6 @@
 #ifndef ELECSTATE_H
 #define ELECSTATE_H
+#include "module_parameter/parameter.h"
 
 #include "fp_energy.h"
 #include "module_cell/klist.h"
@@ -21,7 +22,7 @@ class ElecState
         this->charge = charge_in;
         this->charge->set_rhopw(rhopw_in);
         this->bigpw = bigpw_in;
-        this->eferm.two_efermi = GlobalV::TWO_EFERMI;
+        this->eferm.two_efermi = PARAM.globalv.two_fermi;
     }
     virtual ~ElecState()
     {

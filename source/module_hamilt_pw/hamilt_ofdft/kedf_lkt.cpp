@@ -1,5 +1,6 @@
 #include "./kedf_lkt.h"
 
+#include "module_parameter/parameter.h"
 #include <iostream>
 
 #include "module_base/parallel_reduce.h"
@@ -28,7 +29,7 @@ double KEDF_LKT::get_energy(const double* const* prho, ModulePW::PW_Basis* pw_rh
         nabla_rho[i] = new double[pw_rho->nrxx];
     }
 
-    if (GlobalV::NSPIN == 1)
+    if (PARAM.inp.nspin == 1)
     {
         this->nabla(prho[0], pw_rho, nabla_rho);
         this->get_as(prho[0], nabla_rho, pw_rho->nrxx, as);
@@ -38,7 +39,7 @@ double KEDF_LKT::get_energy(const double* const* prho, ModulePW::PW_Basis* pw_rh
         }
         energy *= this->dV_ * this->c_tf_;
     }
-    else if (GlobalV::NSPIN == 2)
+    else if (PARAM.inp.nspin == 2)
     {
         // Waiting for update
     }
@@ -107,7 +108,7 @@ void KEDF_LKT::lkt_potential(const double* const* prho, ModulePW::PW_Basis* pw_r
     }
     double* nabla_term = new double[pw_rho->nrxx];
 
-    if (GlobalV::NSPIN == 1)
+    if (PARAM.inp.nspin == 1)
     {
         this->nabla(prho[0], pw_rho, nabla_rho);
         this->get_as(prho[0], nabla_rho, pw_rho->nrxx, as);
@@ -146,7 +147,7 @@ void KEDF_LKT::lkt_potential(const double* const* prho, ModulePW::PW_Basis* pw_r
         this->lkt_energy *= this->c_tf_ * this->dV_;
         Parallel_Reduce::reduce_all(this->lkt_energy);
     }
-    else if (GlobalV::NSPIN == 2)
+    else if (PARAM.inp.nspin == 2)
     {
         // Waiting for update
     }
@@ -176,7 +177,7 @@ void KEDF_LKT::get_stress(const double* const* prho, ModulePW::PW_Basis* pw_rho)
     }
     double* nabla_term = new double[pw_rho->nrxx];
 
-    if (GlobalV::NSPIN == 1)
+    if (PARAM.inp.nspin == 1)
     {
         this->nabla(prho[0], pw_rho, nabla_rho);
         this->get_as(prho[0], nabla_rho, pw_rho->nrxx, as);
@@ -220,7 +221,7 @@ void KEDF_LKT::get_stress(const double* const* prho, ModulePW::PW_Basis* pw_rho)
             }
         }
     }
-    else if (GlobalV::NSPIN == 2)
+    else if (PARAM.inp.nspin == 2)
     {
         // Waiting for update
     }
