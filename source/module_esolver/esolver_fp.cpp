@@ -259,7 +259,7 @@ void ESolver_FP::after_scf(const int istep)
         {
             this->pelec->charge->cal_elf = true;
             Symmetry_rho srho;
-            for (int is = 0; is < GlobalV::NSPIN; is++)
+            for (int is = 0; is < PARAM.inp.nspin; is++)
             {
                 srho.begin(is, *(this->pelec->charge), this->pw_rhod, GlobalC::ucell.symm);
             }
@@ -272,7 +272,7 @@ void ESolver_FP::after_scf(const int istep)
 #endif
                 out_dir,
                 istep,
-                GlobalV::NSPIN,
+                PARAM.inp.nspin,
                 this->pelec->charge->rho,
                 this->pelec->charge->kin_r,
                 this->pw_rhod,

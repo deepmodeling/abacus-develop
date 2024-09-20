@@ -168,9 +168,9 @@ fi
 
 #echo $out_elf
 if ! test -z "$out_elf"  && [  $out_elf == 1 ]; then
-	pot1ref=refELF.cube
-	pot1cal=OUT.autotest/ELF.cube
-	python3 ../tools/CompareFile.py $pot1ref $pot1cal 3
+	elf1ref=refELF.cube
+	elf1cal=OUT.autotest/ELF.cube
+	python3 ../tools/CompareFile.py $elf1ref $elf1cal 3
 	echo "ComparePot1_pass $?" >>$1
 fi
 

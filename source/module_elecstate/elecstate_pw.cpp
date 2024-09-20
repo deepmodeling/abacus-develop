@@ -532,7 +532,7 @@ template<typename T, typename Device>
 void ElecStatePW<T, Device>::cal_tau(const psi::Psi<T, Device>& psi)
 {
     ModuleBase::TITLE("ElecStatePW", "cal_tau");
-    for(int is=0; is<GlobalV::NSPIN; is++)
+    for(int is=0; is<PARAM.inp.nspin; is++)
 	{
         setmem_var_op()(this->ctx, this->kin_r[is], 0,  this->charge->nrxx);
 	}
@@ -542,7 +542,7 @@ void ElecStatePW<T, Device>::cal_tau(const psi::Psi<T, Device>& psi)
         psi.fix_k(ik);
         int npw = psi.get_current_nbas();
         int current_spin = 0;
-        if (GlobalV::NSPIN == 2)
+        if (PARAM.inp.nspin == 2)
         {
             current_spin = this->klist->isk[ik];
         }
@@ -576,7 +576,7 @@ void ElecStatePW<T, Device>::cal_tau(const psi::Psi<T, Device>& psi)
         }
     }
     if (GlobalV::device_flag == "gpu" || PARAM.inp.precision == "single") {
-        for (int ii = 0; ii < GlobalV::NSPIN; ii++) {
+        for (int ii = 0; ii < PARAM.inp.nspin; ii++) {
             castmem_var_d2h_op()(cpu_ctx, this->ctx, this->charge->kin_r[ii], this->kin_r[ii], this->charge->nrxx);
         }
     }
