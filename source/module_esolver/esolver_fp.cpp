@@ -253,32 +253,32 @@ void ESolver_FP::after_scf(const int istep)
                 &(GlobalC::ucell),
                 this->pelec->pot->get_fixed_v());
         }
-    }
 
-    // 5) write ELF
-    if (PARAM.inp.out_elf[0] > 0)
-    {
-        this->pelec->charge->cal_elf = true;
-        Symmetry_rho srho;
-        for (int is = 0; is < GlobalV::NSPIN; is++)
+        // 5) write ELF
+        if (PARAM.inp.out_elf[0] > 0)
         {
-            srho.begin(is, *(this->pelec->charge), this->pw_rhod, GlobalC::ucell.symm);
-        }
+            this->pelec->charge->cal_elf = true;
+            Symmetry_rho srho;
+            for (int is = 0; is < GlobalV::NSPIN; is++)
+            {
+                srho.begin(is, *(this->pelec->charge), this->pw_rhod, GlobalC::ucell.symm);
+            }
 
-        std::string out_dir =PARAM.globalv.global_out_dir;
-        ModuleIO::write_elf(
+            std::string out_dir =PARAM.globalv.global_out_dir;
+            ModuleIO::write_elf(
 #ifdef __MPI
-            this->pw_big->bz,
-            this->pw_big->nbz,
+                this->pw_big->bz,
+                this->pw_big->nbz,
 #endif
-            out_dir,
-            istep,
-            GlobalV::NSPIN,
-            this->pelec->charge->rho,
-            this->pelec->charge->kin_r,
-            this->pw_rhod,
-            &(GlobalC::ucell),
-            PARAM.inp.out_elf[1]);
+                out_dir,
+                istep,
+                GlobalV::NSPIN,
+                this->pelec->charge->rho,
+                this->pelec->charge->kin_r,
+                this->pw_rhod,
+                &(GlobalC::ucell),
+                PARAM.inp.out_elf[1]);
+        }
     }
 }
 
