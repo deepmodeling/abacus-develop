@@ -1,5 +1,6 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
 
+#include "module_parameter/parameter.h"
 namespace LCAO_domain
 {
 
@@ -22,7 +23,7 @@ void set_mat2d(
     const int ic = pv.global2local_col(global_ic);
 
     const long index =
-        ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER()
+        ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver)
         ? ic * static_cast<long>(pv.nrow) + ir
         : ir * static_cast<long>(pv.ncol) + ic;
 

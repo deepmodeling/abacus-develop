@@ -44,7 +44,8 @@ void ESolver_KS_LCAO<std::complex<double>, double>::get_S(void)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "get_S");
     // (1) Find adjacent atoms for each atom.
-    GlobalV::SEARCH_RADIUS = atom_arrange::set_sr_NL(GlobalV::ofs_running,
+    double search_radius = -1.0;
+    search_radius = atom_arrange::set_sr_NL(GlobalV::ofs_running,
                                                      PARAM.inp.out_level,
                                                      orb_.get_rcutmax_Phi(),
                                                      GlobalC::ucell.infoNL.get_rcutmax_Beta(),
@@ -54,7 +55,7 @@ void ESolver_KS_LCAO<std::complex<double>, double>::get_S(void)
                          GlobalV::ofs_running,
                          GlobalC::GridD,
                          GlobalC::ucell,
-                         GlobalV::SEARCH_RADIUS,
+                         search_radius,
                          PARAM.inp.test_atom_input);
 
     this->RA.for_2d(this->pv, PARAM.globalv.gamma_only_local, orb_.cutoffs());
@@ -85,7 +86,8 @@ void ESolver_KS_LCAO<std::complex<double>, std::complex<double>>::get_S(void)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "get_S");
     // (1) Find adjacent atoms for each atom.
-    GlobalV::SEARCH_RADIUS = atom_arrange::set_sr_NL(GlobalV::ofs_running,
+    double search_radius = -1.0;
+    search_radius = atom_arrange::set_sr_NL(GlobalV::ofs_running,
                                                      PARAM.inp.out_level,
                                                      orb_.get_rcutmax_Phi(),
                                                      GlobalC::ucell.infoNL.get_rcutmax_Beta(),
@@ -95,7 +97,7 @@ void ESolver_KS_LCAO<std::complex<double>, std::complex<double>>::get_S(void)
                          GlobalV::ofs_running,
                          GlobalC::GridD,
                          GlobalC::ucell,
-                         GlobalV::SEARCH_RADIUS,
+                         search_radius,
                          PARAM.inp.test_atom_input);
 
     this->RA.for_2d(this->pv, PARAM.globalv.gamma_only_local, orb_.cutoffs());
