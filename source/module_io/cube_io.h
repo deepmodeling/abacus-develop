@@ -49,6 +49,10 @@ extern void write_cube(
     const int out_fermi = 1); // mohan add 2007-10-17
 
 
+// when MPI:
+//      read file as order (ixy,iz) to data[ixy*nz+iz]
+// when serial:
+//      read file as order (ixy,iz) to data[iz*nxy+ixy]
 extern void read_cube_core_match(
     std::ifstream &ifs,
 #ifdef __MPI
@@ -73,6 +77,10 @@ extern void read_cube_core_mismatch(
     const int ny_read,
     const int nz_read);
 
+// when MPI:
+//      write data[ixy*nplane+iz] to file as order (ixy,iz)
+// when serial:
+//      write data[iz*nxy+ixy] to file as order (ixy,iz)
 extern void write_cube_core(
     std::ofstream &ofs_cube,
 #ifdef __MPI
