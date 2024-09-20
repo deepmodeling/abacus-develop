@@ -36,18 +36,18 @@ case "${with_cmake}" in
     pkg_install_dir="${INSTALLDIR}/cmake-${cmake_ver}"
     #pkg_install_dir="${HOME}/apps/cmake/${cmake_ver}"
     install_lock_file="$pkg_install_dir/install_successful"
-    pkg_name="cmake-${cmake_ver}-${cmake_arch}.sh"
+    cmake_pkg="cmake-${cmake_ver}-${cmake_arch}.sh"
     if verify_checksums "${install_lock_file}"; then
       echo "cmake-${cmake_ver} is already installed, skipping it."
     else
-      if [ -f $pkg_name ]; then
-        echo "$pkg_name is found"
+      if [ -f $cmake_pkg ]; then
+        echo "$cmake_pkg is found"
       else
-        download_pkg_from_ABACUS_org "${cmake_sha256}" "$pkg_name"
+        download_pkg_from_ABACUS_org "${cmake_sha256}" "$cmake_pkg"
       fi
       echo "Installing from scratch into ${pkg_install_dir}"
       mkdir -p ${pkg_install_dir}
-      /bin/sh $pkg_name --prefix=${pkg_install_dir} --skip-license > install.log 2>&1 || tail -n ${LOG_LINES} install.log
+      /bin/sh $cmake_pkg --prefix=${pkg_install_dir} --skip-license > install.log 2>&1 || tail -n ${LOG_LINES} install.log
       write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage0/$(basename ${SCRIPT_NAME})"
     fi
     ;;
