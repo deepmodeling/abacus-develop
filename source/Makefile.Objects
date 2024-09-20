@@ -454,7 +454,12 @@ OBJS_XC=xc_functional.o\
     xc_functional_gradcorr.o\
     xc_functional_wrapper_xc.o\
     xc_functional_wrapper_gcxc.o\
-    xc_functional_wrapper_tauxc.o\
+    xc_functional_libxc.o\
+    xc_functional_libxc_tools.o\
+    xc_functional_libxc_vxc.o\
+    xc_functional_libxc_wrapper_xc.o\
+    xc_functional_libxc_wrapper_gcxc.o\
+    xc_functional_libxc_wrapper_tauxc.o\
     xc_funct_exch_lda.o\
     xc_funct_corr_lda.o\
     xc_funct_exch_gga.o\

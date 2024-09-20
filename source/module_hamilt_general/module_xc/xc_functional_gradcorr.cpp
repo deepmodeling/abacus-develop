@@ -17,6 +17,10 @@
 #include <ATen/core/tensor_types.h>
 #include <module_hamilt_general/module_xc/kernels/xc_functional_op.h>
 
+#ifdef USE_LIBXC
+#include "xc_functional_libxc.h"
+#endif
+
 // from gradcorr.f90
 void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 	const Charge* const chr, ModulePW::PW_Basis* rhopw, const UnitCell *ucell,
@@ -24,18 +28,14 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 {
 	ModuleBase::TITLE("XC_Functional","gradcorr");
 	
-	if(func_type == 0 || func_type == 1) { return; // none or LDA functional
-}
+	if(func_type == 0 || func_type == 1) { return; } // none or LDA functional
 
 	bool igcc_is_lyp = false;
-	if( func_id[1] == XC_GGA_C_LYP) { igcc_is_lyp = true;
-}
+	if( func_id[1] == XC_GGA_C_LYP) { igcc_is_lyp = true; }
 
 	int nspin0 = PARAM.inp.nspin;
-	if(PARAM.inp.nspin==4) { nspin0 =1;
-}
-	if(PARAM.inp.nspin==4&&(PARAM.globalv.domag||PARAM.globalv.domag_z)) { nspin0 = 2;
-}
+	if(PARAM.inp.nspin==4) { nspin0 =1; }
+	if(PARAM.inp.nspin==4&&(PARAM.globalv.domag||PARAM.globalv.domag_z)) { nspin0 = 2; }
 
 	assert(nspin0>0);
 	const double fac = 1.0/ nspin0;
@@ -91,8 +91,7 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 	}
 
 	gdr1 = new ModuleBase::Vector3<double>[rhopw->nrxx];
-	if(!is_stress) {	h1 = new ModuleBase::Vector3<double>[rhopw->nrxx];
-}
+	if(!is_stress) { h1 = new ModuleBase::Vector3<double>[rhopw->nrxx]; }
 	
 	XC_Functional::grad_rho( rhogsum1 , gdr1, rhopw, ucell->tpiba);
 
@@ -118,8 +117,7 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 		}
 
 		gdr2 = new ModuleBase::Vector3<double>[rhopw->nrxx];
-		if(!is_stress) { h2 = new ModuleBase::Vector3<double>[rhopw->nrxx];
-}
+		if(!is_stress) { h2 = new ModuleBase::Vector3<double>[rhopw->nrxx]; }
 		
 		XC_Functional::grad_rho( rhogsum2 , gdr2, rhopw, ucell->tpiba);
 	}
@@ -253,11 +251,11 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 					{
 						double v3xc;
 						double atau = chr->kin_r[0][ir]/2.0;
-						XC_Functional::tau_xc( arho, grho2a, atau, sxc, v1xc, v2xc, v3xc);
+						XC_Functional_Libxc::tau_xc( func_id, arho, grho2a, atau, sxc, v1xc, v2xc, v3xc);
 					}
 					else
 					{
-						XC_Functional::gcxc_libxc( arho, grho2a, sxc, v1xc, v2xc);
+						XC_Functional_Libxc::gcxc_libxc( func_id, arho, grho2a, sxc, v1xc, v2xc);
 					}
 #endif 
 				} // end use_libxc
@@ -313,12 +311,16 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 					double v3xcup, v3xcdw;
 					double atau1 = chr->kin_r[0][ir]/2.0;
 					double atau2 = chr->kin_r[1][ir]/2.0;
-					XC_Functional::tau_xc_spin( rhotmp1[ir], rhotmp2[ir], gdr1[ir], gdr2[ir], 
+					XC_Functional_Libxc::tau_xc_spin(
+						func_id,
+						rhotmp1[ir], rhotmp2[ir], gdr1[ir], gdr2[ir], 
 						atau1, atau2, sxc, v1xcup, v1xcdw, v2xcup, v2xcdw, v2xcud, v3xcup, v3xcdw);
 				}
 				else
 				{
-					XC_Functional::gcxc_spin_libxc(rhotmp1[ir], rhotmp2[ir], gdr1[ir], gdr2[ir], 
+					XC_Functional_Libxc::gcxc_spin_libxc(
+						func_id,
+						rhotmp1[ir], rhotmp2[ir], gdr1[ir], gdr2[ir], 
 						sxc, v1xcup, v1xcdw, v2xcup, v2xcdw, v2xcud);
 				}
 				if(is_stress)

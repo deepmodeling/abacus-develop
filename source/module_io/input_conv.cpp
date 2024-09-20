@@ -398,7 +398,7 @@ void Input_Conv::Convert()
         // EXX case, convert all EXX related variables
         // GlobalC::exx_info.info_global.cal_exx = true;
         GlobalC::exx_info.info_global.hybrid_alpha = std::stod(PARAM.inp.exx_hybrid_alpha);
-        XC_Functional::get_hybrid_alpha(std::stod(PARAM.inp.exx_hybrid_alpha));
+        XC_Functional::set_hybrid_alpha(std::stod(PARAM.inp.exx_hybrid_alpha));
         GlobalC::exx_info.info_global.hse_omega = PARAM.inp.exx_hse_omega;
         GlobalC::exx_info.info_global.separate_loop = PARAM.inp.exx_separate_loop;
         GlobalC::exx_info.info_global.hybrid_step = PARAM.inp.exx_hybrid_step;
