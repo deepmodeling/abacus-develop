@@ -256,7 +256,7 @@ void ESolver_FP::after_scf(const int istep)
     }
 
     // 5) write ELF
-    if (PARAM.inp.out_elf)
+    if (PARAM.inp.out_elf[0] > 0)
     {
         this->pelec->charge->cal_elf = true;
         Symmetry_rho srho;
@@ -277,7 +277,8 @@ void ESolver_FP::after_scf(const int istep)
             this->pelec->charge->rho,
             this->pelec->charge->kin_r,
             this->pw_rhod,
-            &(GlobalC::ucell));
+            &(GlobalC::ucell),
+            PARAM.inp.out_elf[1]);
     }
 }
 

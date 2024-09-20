@@ -18,7 +18,8 @@ void write_elf(
     const double* const* rho,
     const double* const* tau,
     ModulePW::PW_Basis* rho_basis,
-    const UnitCell* ucell_);
+    const UnitCell* ucell_,
+    const int& precision);
 }
 
 #endif

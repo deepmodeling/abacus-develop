@@ -511,7 +511,7 @@ bool ESolver_OF::check_exit()
 void ESolver_OF::after_opt(const int istep, UnitCell& ucell)
 {
     // 1) calculate the kinetic energy density
-    if (PARAM.inp.out_elf)
+    if (PARAM.inp.out_elf[0] > 0)
     {
         this->kinetic_energy_density(this->pelec->charge->rho, this->pphi_, this->pelec->charge->kin_r);
     }

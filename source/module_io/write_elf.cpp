@@ -14,7 +14,8 @@ void write_elf(
     const double* const* rho,
     const double* const* tau,
     ModulePW::PW_Basis* rho_basis,
-    const UnitCell* ucell_)
+    const UnitCell* ucell_,
+    const int& precision)
 {
     std::vector<std::vector<double>> elf(nspin, std::vector<double>(rho_basis->nrxx, 0.));
     // 1) calculate the kinetic energy density of vW KEDF
@@ -78,7 +79,6 @@ void write_elf(
     }
 
     // 4) output the ELF = 1 / (1 + F^2) to cube file
-    int precision = 9;
     double ef_tmp = 0.0;
     int out_fermi = 0;
 
