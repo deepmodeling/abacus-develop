@@ -3,44 +3,44 @@
 
 bool ModuleIO::read_cube(
 #ifdef __MPI
-    Parallel_Grid* Pgrid,
+    const Parallel_Grid*const Pgrid,
 #endif
-    int my_rank,
-    std::string esolver_type,
-    int rank_in_stogroup,
-    const int& is,
+    const int my_rank,
+    const std::string esolver_type,
+    const int rank_in_stogroup,
+    const int is,
     std::ofstream& ofs_running,
-    const int& nspin,
+    const int nspin,
     const std::string& fn,
-    double* data,
-    const int& nx,
-    const int& ny,
-    const int& nz,
+    double*const data,
+    const int nx,
+    const int ny,
+    const int nz,
     double& ef,
-    const UnitCell* ucell,
+    const UnitCell*const ucell,
     int& prenspin,
-    const bool& warning_flag)
+    const bool warning_flag)
 {
     ModuleBase::TITLE("ModuleIO","read_cube");
     std::ifstream ifs(fn.c_str());
-    if (!ifs) 
-	{
-		std::string tmp_warning_info = "!!! Couldn't find the charge file of ";
-		tmp_warning_info += fn;
-		ofs_running << tmp_warning_info << std::endl;
-		return false;
-	}
-	else
-	{
-    	ofs_running << " Find the file, try to read charge from file." << std::endl;
-	}
+    if (!ifs)
+    {
+        std::string tmp_warning_info = "!!! Couldn't find the charge file of ";
+        tmp_warning_info += fn;
+        ofs_running << tmp_warning_info << std::endl;
+        return false;
+    }
+    else
+    {
+        ofs_running << " Find the file, try to read charge from file." << std::endl;
+    }
 
-	bool quit=false;
+    bool quit=false;
 
-	ifs.ignore(300, '\n'); // skip the header
+    ifs.ignore(300, '\n'); // skip the header
 
-	if(nspin != 4)
-	{
+    if(nspin != 4)
+    {
         int v_in;
         ifs >> v_in;
         if (v_in != nspin)
@@ -49,16 +49,16 @@ bool ModuleIO::read_cube(
             return false;
         }
     }
-	else
-	{
-		ifs >> prenspin;
-	}
-	ifs.ignore(150, ')');
+    else
+    {
+        ifs >> prenspin;
+    }
+    ifs.ignore(150, ')');
 
-	ifs >> ef;
-	ofs_running << " read in fermi energy = " << ef << std::endl;
+    ifs >> ef;
+    ofs_running << " read in fermi energy = " << ef << std::endl;
 
-	ifs.ignore(150, '\n');
+    ifs.ignore(150, '\n');
 
     ModuleBase::CHECK_INT(ifs, ucell->nat);
     ifs.ignore(150, '\n');
@@ -93,8 +93,6 @@ bool ModuleIO::read_cube(
         ifs >> temp >> temp >> temp;
     }
 
-    const bool same = (nx == nx_read && ny == ny_read && nz == nz_read) ? true : false;
-
     for (int it = 0; it < ucell->ntype; it++)
     {
         for (int ia = 0; ia < ucell->atoms[it].na; ia++)
@@ -114,86 +112,88 @@ bool ModuleIO::read_cube(
         }
     }
 
+    const bool flag_read_rank = (my_rank == 0 || (esolver_type == "sdft" && rank_in_stogroup == 0));
 #ifdef __MPI
-    const int nxy = nx * ny;
-    double* zpiece = nullptr;
-    double** read_rho = nullptr;
-    if (my_rank == 0 || (esolver_type == "sdft" && rank_in_stogroup == 0))
-    {
-        read_rho = new double*[nz];
-        for (int iz = 0; iz < nz; iz++)
-        {
-            read_rho[iz] = new double[nxy];
-        }
-        if (same)
-        {
-            for (int ix = 0; ix < nx; ix++)
-            {
-                for (int iy = 0; iy < ny; iy++)
-                {
-                    for (int iz = 0; iz < nz; iz++)
-                    {
-                        ifs >> read_rho[iz][ix * ny + iy];
-                    }
-                }
-            }
-        }
-        else
-        {
-            ModuleIO::trilinear_interpolate(ifs, nx_read, ny_read, nz_read, nx, ny, nz, read_rho);
-        }
-    }
+    if(nx == nx_read && ny == ny_read && nz == nz_read)
+        ModuleIO::read_cube_core_match(ifs, Pgrid, flag_read_rank, data, nx*ny, nz);
     else
-    {
-        zpiece = new double[nxy];
-        ModuleBase::GlobalFunc::ZEROS(zpiece, nxy);
-    }
-
-    for (int iz = 0; iz < nz; iz++)
-    {
-        if (my_rank == 0 || (esolver_type == "sdft" && rank_in_stogroup == 0))
-        {
-            zpiece = read_rho[iz];
-        }
-        Pgrid->zpiece_to_all(zpiece, iz, data);
-    } // iz
-
-    if (my_rank == 0 || (esolver_type == "sdft" && rank_in_stogroup == 0))
-    {
-        for (int iz = 0; iz < nz; iz++)
-        {
-            delete[] read_rho[iz];
-        }
-        delete[] read_rho;
-    }
-    else
-    {
-        delete[] zpiece;
-    }
+        ModuleIO::read_cube_core_mismatch(ifs, Pgrid, flag_read_rank, data, nx, ny, nz, nx_read, ny_read, nz_read);
 #else
     ofs_running << " Read SPIN = " << is + 1 << " charge now." << std::endl;
-    if (same)
+    if(nx == nx_read && ny == ny_read && nz == nz_read)
+        ModuleIO::read_cube_core_match(ifs, data, nx*ny, nz);
+    else
+        ModuleIO::read_cube_core_mismatch(ifs, data, nx, ny, nz, nx_read, ny_read, nz_read);
+#endif
+
+    return true;
+}
+
+void ModuleIO::read_cube_core_match(
+    std::ifstream &ifs,
+#ifdef __MPI
+    const Parallel_Grid*const Pgrid,
+    const bool flag_read_rank,
+#endif
+    double*const data,
+    const int nxy,
+    const int nz)
+{
+#ifdef __MPI
+    if (flag_read_rank)
     {
-        for (int i = 0; i < nx; i++)
-        {
-            for (int j = 0; j < ny; j++)
-            {
-                for (int k = 0; k < nz; k++)
-                {
-                    ifs >> data[k * nx * ny + i * ny + j];
-                }
-            }
-        }
+        std::vector<std::vector<double>> read_rho(nz, std::vector<double>(nxy));
+        for (int ixy = 0; ixy < nxy; ixy++)
+            for (int iz = 0; iz < nz; iz++)
+                ifs >> read_rho[iz][ixy];
+        for (int iz = 0; iz < nz; iz++)
+            Pgrid->zpiece_to_all(read_rho[iz].data(), iz, data);
     }
     else
     {
-        ModuleIO::trilinear_interpolate(ifs, nx_read, ny_read, nz_read, nx, ny, nz, data);
+        std::vector<double> zpiece(nxy);
+        for (int iz = 0; iz < nz; iz++)
+            Pgrid->zpiece_to_all(zpiece.data(), iz, data);
     }
+#else
+    for (int ixy = 0; ixy < nxy; ixy++)
+        for (int iz = 0; iz < nz; iz++)
+            ifs >> data[iz * nxy + ixy];
 #endif
+}
 
-    if (my_rank == 0 || (esolver_type == "sdft" && rank_in_stogroup == 0))
-        ifs.close();
-    return true;
+void ModuleIO::read_cube_core_mismatch(
+    std::ifstream &ifs,
+#ifdef __MPI
+    const Parallel_Grid*const Pgrid,
+    const bool flag_read_rank,
+#endif
+    double*const data,
+    const int nx,
+    const int ny,
+    const int nz,
+    const int nx_read,
+    const int ny_read,
+    const int nz_read)
+{
+#ifdef __MPI
+    const int nxy = nx * ny;
+    if (flag_read_rank)
+    {
+        std::vector<std::vector<double>> read_rho(nz, std::vector<double>(nxy));
+        ModuleIO::trilinear_interpolate(ifs, nx_read, ny_read, nz_read, nx, ny, nz, read_rho);
+        for (int iz = 0; iz < nz; iz++)
+            Pgrid->zpiece_to_all(read_rho[iz].data(), iz, data);
+    }
+    else
+    {
+        std::vector<double> zpiece(nxy);
+        for (int iz = 0; iz < nz; iz++)
+            Pgrid->zpiece_to_all(zpiece.data(), iz, data);
+    }
+#else
+    ModuleIO::trilinear_interpolate(ifs, nx_read, ny_read, nz_read, nx, ny, nz, data);
+#endif
 }
 
 void ModuleIO::trilinear_interpolate(std::ifstream& ifs,
@@ -204,7 +204,7 @@ void ModuleIO::trilinear_interpolate(std::ifstream& ifs,
                                      const int& ny,
                                      const int& nz,
 #ifdef __MPI
-                                     double** data
+                                     std::vector<std::vector<double>> &data
 #else
                                      double* data
 #endif
