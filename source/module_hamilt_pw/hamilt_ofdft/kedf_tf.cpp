@@ -71,16 +71,16 @@ double KEDF_TF::get_energy_density(const double* const* prho, int is, int ir)
  */
 void KEDF_TF::tau_tf(const double* const* prho, double* rtau_tf)
 {
-    if (GlobalV::NSPIN == 1)
+    if (PARAM.inp.nspin == 1)
     {
         for (int ir = 0; ir < this->nx_; ++ir)
         {
             rtau_tf[ir] += this->c_tf_ * std::pow(prho[0][ir], 5.0 / 3.0);
         }
     }
-    else if (GlobalV::NSPIN == 2)
+    else if (PARAM.inp.nspin == 2)
     {
-        for (int is = 0; is < GlobalV::NSPIN; ++is)
+        for (int is = 0; is < PARAM.inp.nspin; ++is)
         {
             for (int ir = 0; ir < this->nx_; ++ir)
             {

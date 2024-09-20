@@ -125,7 +125,7 @@ double KEDF_vW::get_energy_density(double** pphi, int is, int ir, ModulePW::PW_B
  */
 void KEDF_vW::tau_vw(const double* const* prho, ModulePW::PW_Basis* pw_rho, double* rtau_vw)
 {
-    for (int is = 0; is < GlobalV::NSPIN; ++is)
+    for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
         std::vector<std::vector<double>> nabla_rho(3, std::vector<double>(pw_rho->nrxx, 0.));
 

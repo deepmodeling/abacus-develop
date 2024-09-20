@@ -151,25 +151,25 @@ double KEDF_WT::get_energy_density(const double* const* prho, int is, int ir, Mo
  */
 void KEDF_WT::tau_wt(const double* const* prho, ModulePW::PW_Basis* pw_rho, double* rtau_wt)
 {
-    double** kernelRhoBeta = new double*[GlobalV::NSPIN];
-    for (int is = 0; is < GlobalV::NSPIN; ++is) {
+    double** kernelRhoBeta = new double*[PARAM.inp.nspin];
+    for (int is = 0; is < PARAM.inp.nspin; ++is) {
         kernelRhoBeta[is] = new double[pw_rho->nrxx];
 }
     this->multi_kernel(prho, kernelRhoBeta, this->beta_, pw_rho);
 
-    if (GlobalV::NSPIN == 1)
+    if (PARAM.inp.nspin == 1)
     {
         for (int ir = 0; ir < pw_rho->nrxx; ++ir)
         {
             rtau_wt[ir] += std::pow(prho[0][ir], this->alpha_) * kernelRhoBeta[0][ir] * this->c_tf_;
         }
     }
-    else if (GlobalV::NSPIN == 2)
+    else if (PARAM.inp.nspin == 2)
     {
         // Waiting for update
     }
 
-    for (int is = 0; is < GlobalV::NSPIN; ++is)
+    for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
         delete[] kernelRhoBeta[is];
     }

@@ -95,7 +95,7 @@ void KEDF_LKT::tau_lkt(const double* const* prho, ModulePW::PW_Basis* pw_rho, do
         nabla_rho[i] = new double[pw_rho->nrxx];
     }
 
-    if (GlobalV::NSPIN == 1)
+    if (PARAM.inp.nspin == 1)
     {
         this->nabla(prho[0], pw_rho, nabla_rho);
         this->get_as(prho[0], nabla_rho, pw_rho->nrxx, as);
@@ -106,7 +106,7 @@ void KEDF_LKT::tau_lkt(const double* const* prho, ModulePW::PW_Basis* pw_rho, do
             rtau_lkt[ir] += std::pow(prho[0][ir], 5. / 3.) / coshas * this->c_tf_;
         }
     }
-    else if (GlobalV::NSPIN == 2)
+    else if (PARAM.inp.nspin == 2)
     {
         // Waiting for update
     }
