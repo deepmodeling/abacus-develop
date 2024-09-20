@@ -1,6 +1,6 @@
 # The ABACUS Toolchain
 
-Version 2024.2
+Version 2024.3
 
 ## Author
 
