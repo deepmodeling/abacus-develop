@@ -156,11 +156,6 @@ namespace LR
                         std::vector<bool>(psi_k1_dav.get_nbands(), true),
                         false /*scf*/));
             }
-            // else if (this->method == "cg")
-            // {
-            //     this->pdiagh = new DiagoCG<T, Device>(precondition.data());
-            //     this->pdiagh->method = this->method;
-            // }
             else {throw std::runtime_error("HSolverLR::solve: method not implemented");}
         }
 
