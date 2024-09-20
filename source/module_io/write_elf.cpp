@@ -21,25 +21,25 @@ void write_elf(
     std::vector<std::vector<double>> tau_vw(nspin, std::vector<double>(rho_basis->nrxx, 0.));
     for (int is = 0; is < nspin; ++is)
     {
-        std::vector<std::vector<double>> nabla_rho(3, std::vector<double>(rho_basis->nrxx, 0.));
+        std::vector<std::vector<double>> gradient_rho(3, std::vector<double>(rho_basis->nrxx, 0.));
 
-        std::complex<double> *recip_rho = new std::complex<double>[rho_basis->npw];
-        std::complex<double> *recip_nabla_rho = new std::complex<double>[rho_basis->npw];
-        rho_basis->real2recip(rho[is], recip_rho);
+        std::vector<std::complex<double>> recip_rho(rho_basis->npw, 0.0);
+        std::vector<std::complex<double>> recip_gradient_rho(rho_basis->npw, 0.0);
+        rho_basis->real2recip(rho[is], recip_rho.data());
         
         std::complex<double> img(0.0, 1.0);
         for (int j = 0; j < 3; ++j)
         {
             for (int ip = 0; ip < rho_basis->npw; ++ip)
             {
-                recip_nabla_rho[ip] = img * rho_basis->gcar[ip][j] * recip_rho[ip] * rho_basis->tpiba;
+                recip_gradient_rho[ip] = img * rho_basis->gcar[ip][j] * recip_rho[ip] * rho_basis->tpiba;
             }
 
-            rho_basis->recip2real(recip_nabla_rho, nabla_rho[j].data());
+            rho_basis->recip2real(recip_gradient_rho.data(), gradient_rho[j].data());
 
             for (int ir = 0; ir < rho_basis->nrxx; ++ir)
             {
-                tau_vw[is][ir] += nabla_rho[j][ir] * nabla_rho[j][ir] / (8. * rho[is][ir]) * 2.0; // convert Ha to Ry.
+                tau_vw[is][ir] += gradient_rho[j][ir] * gradient_rho[j][ir] / (8. * rho[is][ir]) * 2.0; // convert Ha to Ry.
             }
         }
     }

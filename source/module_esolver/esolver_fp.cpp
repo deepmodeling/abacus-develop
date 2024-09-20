@@ -262,7 +262,7 @@ void ESolver_FP::after_scf(const int istep)
         Symmetry_rho srho;
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
-            srho.begin(is, *(this->pelec->charge), this->pw_rho, GlobalC::ucell.symm);
+            srho.begin(is, *(this->pelec->charge), this->pw_rhod, GlobalC::ucell.symm);
         }
 
         std::string out_dir =PARAM.globalv.global_out_dir;
