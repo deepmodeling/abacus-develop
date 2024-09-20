@@ -49,11 +49,11 @@ void DFTU::copy_locale()
 
                 for (int n = 0; n < N; n++)
                 {
-                    if (GlobalV::NSPIN == 4)
+                    if (PARAM.inp.nspin == 4)
                     {
                         locale_save[iat][l][n][0] = locale[iat][l][n][0];
                     }
-                    else if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 2)
+                    else if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2)
                     {
                         locale_save[iat][l][n][0] = locale[iat][l][n][0];
                         locale_save[iat][l][n][1] = locale[iat][l][n][1];
@@ -84,11 +84,11 @@ void DFTU::zero_locale()
 
                 for (int n = 0; n < N; n++)
                 {
-                    if (GlobalV::NSPIN == 4)
+                    if (PARAM.inp.nspin == 4)
                     {
                         locale[iat][l][n][0].zero_out();
                     }
-                    else if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 2)
+                    else if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2)
                     {
                         locale[iat][l][n][0].zero_out();
                         locale[iat][l][n][1].zero_out();
@@ -122,11 +122,11 @@ void DFTU::mix_locale(const double& mixing_beta)
 
                 for (int n = 0; n < N; n++)
                 {
-                    if (GlobalV::NSPIN == 4)
+                    if (PARAM.inp.nspin == 4)
                     {
                         locale[iat][l][n][0] = locale[iat][l][n][0]*beta + locale_save[iat][l][n][0]*(1.0-beta);
                     }
-                    else if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 2)
+                    else if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2)
                     {
                         locale[iat][l][n][0] = locale[iat][l][n][0] * beta + locale_save[iat][l][n][0] * (1.0-beta);
                         locale[iat][l][n][1] = locale[iat][l][n][1] * beta + locale_save[iat][l][n][1] * (1.0-beta);
@@ -163,7 +163,7 @@ void DFTU::cal_occup_m_k(const int iter,
         // srho(mu,nu) = \sum_{iw} S(mu,iw)*dm_k(iw,nu)
         this->folding_matrix_k_new(ik, p_ham);
         std::complex<double>* s_k_pointer = nullptr;
-        if(GlobalV::NSPIN != 4)
+        if(PARAM.inp.nspin != 4)
         {
             s_k_pointer = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham)->getSk();
         }
@@ -287,7 +287,7 @@ void DFTU::cal_occup_m_k(const int iter,
                         // set the local occupation mumber matrix of spin up and down zeros
 
 #ifdef __MPI
-                    if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 4)
+                    if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 4)
                     {
                         ModuleBase::matrix temp(locale[iat][l][n][0]);
                         MPI_Allreduce(&temp(0, 0),
@@ -297,7 +297,7 @@ void DFTU::cal_occup_m_k(const int iter,
                                       MPI_SUM,
                                       MPI_COMM_WORLD);
                     }
-                    else if (GlobalV::NSPIN == 2)
+                    else if (PARAM.inp.nspin == 2)
                     {
                         ModuleBase::matrix temp0(locale[iat][l][n][0]);
                         MPI_Allreduce(&temp0(0, 0),
@@ -318,7 +318,7 @@ void DFTU::cal_occup_m_k(const int iter,
 #endif
 
                     // for the case spin independent calculation
-                    switch (GlobalV::NSPIN)
+                    switch (PARAM.inp.nspin)
                     {
                     case 1:
                         locale[iat][l][n][0] += transpose(locale[iat][l][n][0]);
@@ -327,7 +327,7 @@ void DFTU::cal_occup_m_k(const int iter,
                         break;
 
                     case 2:
-                        for (int is = 0; is < GlobalV::NSPIN; is++)
+                        for (int is = 0; is < PARAM.inp.nspin; is++)
                             locale[iat][l][n][is] += transpose(locale[iat][l][n][is]);
                         break;
 
@@ -368,7 +368,7 @@ void DFTU::cal_occup_m_gamma(const int iter, const std::vector<std::vector<doubl
     const double alpha = 1.0, beta = 0.0;
 
     std::vector<double> srho(this->paraV->nloc);
-    for (int is = 0; is < GlobalV::NSPIN; is++)
+    for (int is = 0; is < PARAM.inp.nspin; is++)
     {
         // srho(mu,nu) = \sum_{iw} S(mu,iw)*dm_gamma(iw,nu)
         double* s_gamma_pointer = dynamic_cast<hamilt::HamiltLCAO<double, double>*>(p_ham)->getSk();
@@ -469,7 +469,7 @@ void DFTU::cal_occup_m_gamma(const int iter, const std::vector<std::vector<doubl
 #endif
 
                         // for the case spin independent calculation
-                        switch (GlobalV::NSPIN)
+                        switch (PARAM.inp.nspin)
                         {
                         case 1:
                             locale[iat][l][n][0] += transpose(locale[iat][l][n][0]);

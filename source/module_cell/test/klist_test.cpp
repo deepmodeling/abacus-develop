@@ -596,7 +596,7 @@ TEST_F(KlistTest, SetAfterVC)
     kv->kvec_c[0].x = 0;
     kv->kvec_c[0].y = 0;
     kv->kvec_c[0].z = 0;
-    kv->set_after_vc(GlobalV::NSPIN, GlobalC::ucell.G, GlobalC::ucell.latvec);
+    kv->set_after_vc(PARAM.input.nspin, GlobalC::ucell.G, GlobalC::ucell.latvec);
     EXPECT_TRUE(kv->kd_done);
     EXPECT_TRUE(kv->kc_done);
     EXPECT_DOUBLE_EQ(kv->kvec_d[0].x, 0);
@@ -616,7 +616,7 @@ TEST_F(KlistTest, PrintKlists)
     kv->kvec_c[0].x = 0;
     kv->kvec_c[0].y = 0;
     kv->kvec_c[0].z = 0;
-    kv->set_after_vc(GlobalV::NSPIN, GlobalC::ucell.G, GlobalC::ucell.latvec);
+    kv->set_after_vc(PARAM.input.nspin, GlobalC::ucell.G, GlobalC::ucell.latvec);
     EXPECT_TRUE(kv->kd_done);
     kv->print_klists(GlobalV::ofs_running);
     GlobalV::ofs_running.close();

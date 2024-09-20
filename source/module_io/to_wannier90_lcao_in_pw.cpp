@@ -53,7 +53,7 @@ void toWannier90_LCAO_IN_PW::calculate(
     this->psi_init_->allocate(true);
     read_nnkp(kv);
 
-    if (GlobalV::NSPIN == 2)
+    if (PARAM.inp.nspin == 2)
     {
         if (wannier_spin == "up")
         {
@@ -118,7 +118,7 @@ psi::Psi<std::complex<double>>* toWannier90_LCAO_IN_PW::get_unk_from_lcao(
     unk_inLcao->zero_out();
 
     // Orbital projection to plane wave
-    ModuleBase::realArray table_local(GlobalC::ucell.ntype, GlobalC::ucell.nmax_total, GlobalV::NQX);
+    ModuleBase::realArray table_local(GlobalC::ucell.ntype, GlobalC::ucell.nmax_total, PARAM.globalv.nqx);
 
     for (int ik = 0; ik < num_kpts; ik++)
     {
@@ -131,7 +131,7 @@ psi::Psi<std::complex<double>>* toWannier90_LCAO_IN_PW::get_unk_from_lcao(
         ModuleBase::ComplexMatrix lcao_wfc_global;
         get_lcao_wfc_global_ik(ik, psi_in, lcao_wfc_global);
 
-        if (GlobalV::NSPIN != 4)
+        if (PARAM.inp.nspin != 4)
         {
             for (int ib = 0; ib < num_bands; ib++)
             {

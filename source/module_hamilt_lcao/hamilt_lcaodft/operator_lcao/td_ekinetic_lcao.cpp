@@ -1,5 +1,6 @@
 #include "td_ekinetic_lcao.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/global_variable.h"
 #include "module_base/libm/libm.h"
 #include "module_base/timer.h"
@@ -379,7 +380,7 @@ void TDEkinetic<OperatorLCAO<std::complex<double>, double>>::contributeHk(int ik
         ModuleBase::timer::tick("TDEkinetic", "contributeHk");
         const Parallel_Orbitals* paraV = this->hR_tmp->get_atom_pair(0).get_paraV();
         // save HR data for output
-        int spin_tot = GlobalV::NSPIN;
+        int spin_tot = PARAM.inp.nspin;
         if (spin_tot == 4)
             ;
         else if (!output_hR_done && TD_Velocity::out_mat_R)
@@ -395,7 +396,7 @@ void TDEkinetic<OperatorLCAO<std::complex<double>, double>>::contributeHk(int ik
             output_hR_done = true;
         }
         // folding inside HR to HK
-        if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
+        if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
         {
             const int nrow = paraV->get_row_size();
             hamilt::folding_HR(*this->hR_tmp, this->hsk->get_hk(), this->kvec_d[ik], nrow, 1);

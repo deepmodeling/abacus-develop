@@ -1,5 +1,6 @@
 #include "forces.h"
 #include "stress_func.h"
+#include "module_parameter/parameter.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/output_log.h"
 // new
@@ -49,7 +50,7 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
         return;
     }
 
-    ModuleBase::matrix v(GlobalV::NSPIN, rho_basis->nrxx);
+    ModuleBase::matrix v(PARAM.inp.nspin, rho_basis->nrxx);
 
     if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
     {
@@ -66,7 +67,7 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
     }
     else
     {
-        if (GlobalV::NSPIN == 4) {
+        if (PARAM.inp.nspin == 4) {
             ucell_in.cal_ux();
 }
         const auto etxc_vtxc_v = XC_Functional::v_xc(rho_basis->nrxx, chr, &ucell_in);
@@ -78,7 +79,7 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
 
     const ModuleBase::matrix vxc = v;
     std::complex<double>* psiv = new std::complex<double>[rho_basis->nmaxgr];
-    if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 4)
+    if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 4)
     {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 1024)

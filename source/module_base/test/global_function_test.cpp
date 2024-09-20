@@ -13,7 +13,7 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include <time.h>
+#include <ctime>
 
 /************************************************
  *  unit test of functions in global_function
@@ -57,7 +57,7 @@
  *   - print out warning info in running.log file
  * - COPYARRAY
  *   - copy complex or double arrays
- * - IS_COLUMN_MAJOR_KS_SOLVER()
+ * - IS_COLUMN_MAJOR_KS_SOLVER(PARAM.input.ks_solver)
  *   - judge whether the KS_SOLVER is column major
  * - VECTOR_TO_PTR
  *   - get a copy of the ptr of a vector
@@ -300,7 +300,8 @@ TEST_F(GlobalFunctionTest, OutV2)
     {
 	tmp_para += "a";
 	length = tmp_para.size()+1;
-	if (length == 32) EXPECT_THAT(str, testing::HasSubstr(tmp_para));
+	if (length == 32) { EXPECT_THAT(str, testing::HasSubstr(tmp_para));
+}
     }
     ifs.close();
 }
@@ -430,8 +431,8 @@ TEST_F(GlobalFunctionTest, MakeDir)
 TEST_F(GlobalFunctionTest, OutTime)
 {
     std::string name = "scf";
-    start = time(NULL);
-    end = time(NULL) + 200;
+    start = time(nullptr);
+    end = time(nullptr) + 200;
     ModuleBase::GlobalFunc::OUT_TIME(name, start, end);
     GlobalV::ofs_warning.close();
     ifs.open("warning.log");
@@ -654,8 +655,8 @@ TEST_F(GlobalFunctionTest, COPYARRAY)
 
 TEST_F(GlobalFunctionTest,IsColumnMajor)
 {
-	GlobalV::KS_SOLVER = "genelpa";
-	EXPECT_TRUE(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER());
+	PARAM.input.ks_solver = "genelpa";
+	EXPECT_TRUE(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.input.ks_solver));
 }
 
 TEST_F(GlobalFunctionTest,Vector2Ptr)

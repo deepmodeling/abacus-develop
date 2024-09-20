@@ -1,5 +1,6 @@
 #include "spar_u.h"
 #include "module_base/parallel_reduce.h"
+#include "module_parameter/parameter.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/timer.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
@@ -60,7 +61,7 @@ void sparse_format::cal_HR_dftu(
                     for (auto &col_loop : row_loop.second)
                     {
                         ic = pv.global2local_col(col_loop.first);
-                        if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
+                        if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
                         {
                             iic = ir + ic * pv.nrow;
                         }
@@ -85,7 +86,7 @@ void sparse_format::cal_HR_dftu(
                         ic = pv.global2local_col(j);
                         if (ic >= 0)
                         {
-                            if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
+                            if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
                             {
                                 iic = ir + ic * pv.nrow;
                             }
@@ -180,7 +181,7 @@ void sparse_format::cal_HR_dftu_soc(
                     for (auto &col_loop : row_loop.second)
                     {
                         ic = pv.global2local_col(col_loop.first);
-                        if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
+                        if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
                         {
                             iic = ir + ic * pv.nrow;
                         }
@@ -205,7 +206,7 @@ void sparse_format::cal_HR_dftu_soc(
                         ic = pv.global2local_col(j);
                         if (ic >= 0)
                         {
-                            if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
+                            if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
                             {
                                 iic = ir + ic * pv.nrow;
                             }

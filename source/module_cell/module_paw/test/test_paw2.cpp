@@ -1,6 +1,9 @@
 #include "gtest/gtest.h"
 #include <fstream>
 #include <iostream>
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include "module_base/global_variable.h"
 
 #include "../paw_atom.h"
@@ -24,7 +27,7 @@ class Test_Paw_Atom : public testing::Test
 
 TEST_F(Test_Paw_Atom, test_paw)
 {
-    GlobalV::NSPIN = 1;
+    PARAM.input.nspin = 1;
     paw_atom.init_paw_atom(nproj);
     paw_atom.reset_rhoij();
 

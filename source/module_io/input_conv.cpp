@@ -227,8 +227,6 @@ void Input_Conv::Convert()
 #endif // __ENABLE_FLOAT_FFTW
     }
 
-    GlobalV::NSPIN = PARAM.inp.nspin;
-
 
 #ifdef __LCAO
     Force_Stress_LCAO<double>::force_invalid_threshold_ev = PARAM.inp.force_thr_ev2;
@@ -242,20 +240,14 @@ void Input_Conv::Convert()
     Ions_Move_Basic::relax_bfgs_rmin = PARAM.inp.relax_bfgs_rmin;
     Ions_Move_Basic::relax_bfgs_init = PARAM.inp.relax_bfgs_init;
     Ions_Move_Basic::out_stru = PARAM.inp.out_stru; // mohan add 2012-03-23
+    Ions_Move_Basic::relax_method = PARAM.inp.relax_method;
     Lattice_Change_Basic::fixed_axes = PARAM.inp.fixed_axes;
-
-    GlobalV::CAL_STRESS = PARAM.inp.cal_stress;
-
-
-    GlobalV::RELAX_METHOD = PARAM.inp.relax_method;
 
 
     Ions_Move_CG::RELAX_CG_THR = PARAM.inp.relax_cg_thr; // pengfei add 2013-09-09
 
     ModuleSymmetry::Symmetry::symm_flag = std::stoi(PARAM.inp.symmetry);
     ModuleSymmetry::Symmetry::symm_autoclose = PARAM.inp.symmetry_autoclose;
-    GlobalV::KS_SOLVER = PARAM.inp.ks_solver;
-    GlobalV::SEARCH_RADIUS = PARAM.inp.search_radius;
 
     //----------------------------------------------------------
     // planewave (8/8)
@@ -264,10 +256,7 @@ void Input_Conv::Convert()
     //----------------------------------------------------------
     // diagonalization  (5/5)
     //----------------------------------------------------------
-    GlobalV::PW_DIAG_NDIM = PARAM.inp.pw_diag_ndim;
 
-    GlobalV::PW_DIAG_THR = PARAM.inp.pw_diag_thr;
-    GlobalV::NB2D = PARAM.inp.nb2d;
 
     //----------------------------------------------------------
     // iteration (1/3)
@@ -304,7 +293,6 @@ void Input_Conv::Convert()
     GlobalV::nelec = PARAM.inp.nelec;
     if (PARAM.globalv.two_fermi)
     {
-        GlobalV::TWO_EFERMI = true;
         GlobalV::nupdown = PARAM.inp.nupdown;
     }
     elecstate::Gatefield::zgate = PARAM.inp.zgate;

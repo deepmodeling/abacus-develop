@@ -1,5 +1,6 @@
 #include "gint.h"
 #include "module_base/memory.h"
+#include "module_parameter/parameter.h"
 #include "module_base/timer.h"
 
 void Gint::gint_kernel_rho(Gint_inout* inout) {
@@ -53,7 +54,7 @@ void Gint::gint_kernel_rho(Gint_inout* inout) {
                                 cal_flag.get_ptr_2D(),
                                 psir_ylm.get_ptr_2D());
 
-        for (int is = 0; is < GlobalV::NSPIN; ++is)
+        for (int is = 0; is < PARAM.inp.nspin; ++is)
         {
             ModuleBase::Array_Pool<double> psir_DM(this->bxyz, LD_pool);
             ModuleBase::GlobalFunc::ZEROS(psir_DM.get_ptr_1D(), this->bxyz * LD_pool);
@@ -130,7 +131,7 @@ void Gint::gint_kernel_tau(Gint_inout* inout) {
             dpsir_ylm_y.get_ptr_2D(),
             dpsir_ylm_z.get_ptr_2D());
 
-        for(int is=0; is<GlobalV::NSPIN; ++is)
+        for(int is=0; is<PARAM.inp.nspin; ++is)
         {
             ModuleBase::Array_Pool<double> dpsix_DM(this->bxyz, LD_pool);
             ModuleBase::Array_Pool<double> dpsiy_DM(this->bxyz, LD_pool);

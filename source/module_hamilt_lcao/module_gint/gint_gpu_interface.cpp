@@ -45,7 +45,7 @@ void Gint::gpu_rho_interface(Gint_inout* inout) {
         ylmcoef[i] = ModuleBase::Ylm::ylmcoef[i];
     }
     int nrxx = this->gridt->ncx * this->gridt->ncy * this->nplane;
-    for (int is = 0; is < GlobalV::NSPIN; ++is) {
+    for (int is = 0; is < PARAM.inp.nspin; ++is) {
         ModuleBase::GlobalFunc::ZEROS(inout->rho[is], nrxx);
         GintKernel::gint_rho_gpu(this->DMRGint[is],
                                        ylmcoef,

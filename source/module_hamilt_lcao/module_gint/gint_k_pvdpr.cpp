@@ -1,5 +1,6 @@
 #include "gint_k.h"
 #include "grid_technique.h"
+#include "module_parameter/parameter.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_base/memory.h"
@@ -14,7 +15,7 @@ void Gint_k::allocate_pvdpR(void)
 {
     ModuleBase::TITLE("Gint_k","allocate_pvpR");
 
-    const int nspin = GlobalV::NSPIN;
+    const int nspin = PARAM.inp.nspin;
     assert(nspin>0);
 
     //xiaohui modify 2015-05-30
@@ -41,7 +42,7 @@ void Gint_k::destroy_pvdpR(void)
 {
     ModuleBase::TITLE("Gint_k","destroy_pvpR");
 
-    const int nspin = GlobalV::NSPIN;
+    const int nspin = PARAM.inp.nspin;
     assert(nspin>0);
     
 	for(int is =0;is<nspin;is++) 

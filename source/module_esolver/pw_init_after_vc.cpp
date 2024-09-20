@@ -103,7 +103,7 @@ void ESolver_KS_PW<T, Device>::init_after_vc(const Input_para& inp, UnitCell& uc
                                                     this->pw_rho,
                                                     this->pw_big);
 
-        this->pelec->charge->allocate(GlobalV::NSPIN);
+        this->pelec->charge->allocate(PARAM.inp.nspin);
 
         //! setup cell volume
         this->pelec->omega = ucell.omega;

@@ -499,7 +499,7 @@ void Grid_Technique::cal_trace_lo(const UnitCell& ucell) {
             if (this->in_this_processor[iat]) {
                 ++lnat;
                 int nw0 = ucell.atoms[it].nw;
-                if (GlobalV::NSPIN
+                if (PARAM.inp.nspin
                     == 4) { // added by zhengdy-soc, need to be double in soc
                     nw0 *= 2;
                     this->lgd += nw0;
@@ -515,7 +515,7 @@ void Grid_Technique::cal_trace_lo(const UnitCell& ucell) {
             } else {
                 // global index of atomic orbitals
                 iw_all += ucell.atoms[it].nw;
-                if (GlobalV::NSPIN == 4) {
+                if (PARAM.inp.nspin == 4) {
                     iw_all += ucell.atoms[it].nw;
 }
             }

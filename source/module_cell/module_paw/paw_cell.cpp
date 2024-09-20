@@ -125,7 +125,7 @@ void Paw_Cell::init_rhoij()
         for(int iproj = 0; iproj < nproj; iproj ++)
         {
             int i0 = iproj * (iproj + 1) / 2;
-            rhoij_in[i0 + iproj] = mstate_occ[iproj] / GlobalV::NSPIN;
+            rhoij_in[i0 + iproj] = mstate_occ[iproj] / PARAM.inp.nspin;
         }
 
         paw_atom_list[iat].set_rhoij(rhoij_in);
@@ -215,7 +215,7 @@ void Paw_Cell::set_paw_k(
 
     std::complex<double> i_cplx(0.0,1.0);
     // ig : i(G)
-    if(PARAM.inp.cal_force || GlobalV::CAL_STRESS)
+    if(PARAM.inp.cal_force || PARAM.inp.cal_stress)
     {
         ig.resize(npw);
         for(int ipw = 0; ipw < npw; ipw ++)

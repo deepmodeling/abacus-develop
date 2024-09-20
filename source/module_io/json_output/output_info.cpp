@@ -72,7 +72,7 @@ namespace Json
             // AbacusJson::add_Json(force_array,false,"output",-1,"force");
         }
 
-        if (GlobalV::CAL_STRESS){
+        if (PARAM.inp.cal_stress){
         //add stress
             Json::jsonValue stress_array(JarrayType);
             for (int i = 0; i < 3; i++)

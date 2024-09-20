@@ -54,7 +54,7 @@ PotBase* Potential::get_pot_type(const std::string& pot_type)
 
 void Set_GlobalV_Default()
 {
-    GlobalV::NSPIN = 1;
+    PARAM.input.nspin = 1;
     PARAM.sys.device_flag = "cpu";
     PARAM.input.precision = "double";
 }
@@ -151,7 +151,7 @@ TEST_F(PotentialNewTest, ConstructorCPUDouble)
     EXPECT_TRUE(pot->fixed_mode);
     EXPECT_TRUE(pot->dynamic_mode);
     EXPECT_EQ(pot->v_effective_fixed.size(), 100);
-    EXPECT_EQ(pot->v_effective.nr, GlobalV::NSPIN);
+    EXPECT_EQ(pot->v_effective.nr, PARAM.input.nspin);
     EXPECT_EQ(pot->v_effective.nc, 100);
 }
 
@@ -163,7 +163,7 @@ TEST_F(PotentialNewTest, ConstructorCPUSingle)
     EXPECT_TRUE(pot->fixed_mode);
     EXPECT_TRUE(pot->dynamic_mode);
     EXPECT_EQ(pot->v_effective_fixed.size(), 100);
-    EXPECT_EQ(pot->v_effective.nr, GlobalV::NSPIN);
+    EXPECT_EQ(pot->v_effective.nr, PARAM.input.nspin);
     EXPECT_EQ(pot->v_effective.nc, 100);
 }
 
@@ -183,9 +183,9 @@ TEST_F(PotentialNewTest, ConstructorXC3)
     EXPECT_TRUE(pot->fixed_mode);
     EXPECT_TRUE(pot->dynamic_mode);
     EXPECT_EQ(pot->v_effective_fixed.size(), 100);
-    EXPECT_EQ(pot->v_effective.nr, GlobalV::NSPIN);
+    EXPECT_EQ(pot->v_effective.nr, PARAM.input.nspin);
     EXPECT_EQ(pot->v_effective.nc, 100);
-    EXPECT_EQ(pot->vofk_effective.nr, GlobalV::NSPIN);
+    EXPECT_EQ(pot->vofk_effective.nr, PARAM.input.nspin);
     EXPECT_EQ(pot->vofk_effective.nc, 100);
 }
 
@@ -198,7 +198,7 @@ TEST_F(PotentialNewTest, ConstructorGPUDouble)
     EXPECT_TRUE(pot->fixed_mode);
     EXPECT_TRUE(pot->dynamic_mode);
     EXPECT_EQ(pot->v_effective_fixed.size(), 100);
-    EXPECT_EQ(pot->v_effective.nr, GlobalV::NSPIN);
+    EXPECT_EQ(pot->v_effective.nr, PARAM.input.nspin);
     EXPECT_EQ(pot->v_effective.nc, 100);
 }
 
@@ -212,7 +212,7 @@ TEST_F(PotentialNewTest, ConstructorGPUSingle)
     EXPECT_TRUE(pot->fixed_mode);
     EXPECT_TRUE(pot->dynamic_mode);
     EXPECT_EQ(pot->v_effective_fixed.size(), 100);
-    EXPECT_EQ(pot->v_effective.nr, GlobalV::NSPIN);
+    EXPECT_EQ(pot->v_effective.nr, PARAM.input.nspin);
     EXPECT_EQ(pot->v_effective.nc, 100);
 }
 
@@ -385,7 +385,7 @@ TEST_F(PotentialNewTest, GetVnew)
     Charge* chg = new Charge;
     ModuleBase::matrix vnew;
     pot->get_vnew(chg, vnew);
-    EXPECT_EQ(vnew.nr, GlobalV::NSPIN);
+    EXPECT_EQ(vnew.nr, PARAM.input.nspin);
     EXPECT_EQ(vnew.nc, 100);
     delete chg;
 }
@@ -398,9 +398,9 @@ TEST_F(PotentialNewTest, GetEffectiveVmatrix)
     //
     ModuleBase::matrix v_eff_tmp = pot->get_effective_v();
     const ModuleBase::matrix v_eff_tmp_const = pot->get_effective_v();
-    EXPECT_EQ(v_eff_tmp.nr, GlobalV::NSPIN);
+    EXPECT_EQ(v_eff_tmp.nr, PARAM.input.nspin);
     EXPECT_EQ(v_eff_tmp.nc, 100);
-    EXPECT_EQ(v_eff_tmp_const.nr, GlobalV::NSPIN);
+    EXPECT_EQ(v_eff_tmp_const.nr, PARAM.input.nspin);
     EXPECT_EQ(v_eff_tmp_const.nc, 100);
     for (int ir = 0; ir < v_eff_tmp.nr; ir++)
     {
@@ -449,9 +449,9 @@ TEST_F(PotentialNewTest, GetEffectiveVofkmatrix)
     //
     ModuleBase::matrix vofk_eff_tmp = pot->get_effective_vofk();
     const ModuleBase::matrix vofk_eff_tmp_const = pot->get_effective_vofk();
-    EXPECT_EQ(vofk_eff_tmp.nr, GlobalV::NSPIN);
+    EXPECT_EQ(vofk_eff_tmp.nr, PARAM.input.nspin);
     EXPECT_EQ(vofk_eff_tmp.nc, 100);
-    EXPECT_EQ(vofk_eff_tmp_const.nr, GlobalV::NSPIN);
+    EXPECT_EQ(vofk_eff_tmp_const.nr, PARAM.input.nspin);
     EXPECT_EQ(vofk_eff_tmp_const.nc, 100);
     for (int ir = 0; ir < vofk_eff_tmp.nr; ir++)
     {
@@ -517,9 +517,9 @@ TEST_F(PotentialNewTest, GetVeffSmooth)
     //
     ModuleBase::matrix veff_smooth_tmp = pot->get_veff_smooth();
     const ModuleBase::matrix veff_smooth_const_tmp = pot->get_veff_smooth();
-    EXPECT_EQ(veff_smooth_tmp.nr, GlobalV::NSPIN);
+    EXPECT_EQ(veff_smooth_tmp.nr, PARAM.input.nspin);
     EXPECT_EQ(veff_smooth_tmp.nc, 100);
-    EXPECT_EQ(veff_smooth_const_tmp.nr, GlobalV::NSPIN);
+    EXPECT_EQ(veff_smooth_const_tmp.nr, PARAM.input.nspin);
     EXPECT_EQ(veff_smooth_const_tmp.nc, 100);
     for (int ir = 0; ir < veff_smooth_tmp.nr; ir++)
     {
@@ -539,9 +539,9 @@ TEST_F(PotentialNewTest, GetVofkSmooth)
     //
     ModuleBase::matrix vofk_smooth_tmp = pot->get_veff_smooth();
     const ModuleBase::matrix vofk_smooth_const_tmp = pot->get_veff_smooth();
-    EXPECT_EQ(vofk_smooth_tmp.nr, GlobalV::NSPIN);
+    EXPECT_EQ(vofk_smooth_tmp.nr, PARAM.input.nspin);
     EXPECT_EQ(vofk_smooth_tmp.nc, 100);
-    EXPECT_EQ(vofk_smooth_const_tmp.nr, GlobalV::NSPIN);
+    EXPECT_EQ(vofk_smooth_const_tmp.nr, PARAM.input.nspin);
     EXPECT_EQ(vofk_smooth_const_tmp.nc, 100);
     for (int ir = 0; ir < vofk_smooth_tmp.nr; ir++)
     {

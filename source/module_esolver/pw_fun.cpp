@@ -88,7 +88,7 @@ void ESolver_KS_PW<T, Device>::hamilt2estates(const double ethr)
                                                  PARAM.inp.ks_solver,
                                                  PARAM.inp.use_paw,
                                                  GlobalV::use_uspp,
-                                                 GlobalV::NSPIN,
+                                                 PARAM.inp.nspin,
                                                  
                                                  hsolver::DiagoIterAssist<T, Device>::SCF_ITER,
                                                  hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX,

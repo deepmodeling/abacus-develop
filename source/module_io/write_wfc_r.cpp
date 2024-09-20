@@ -36,7 +36,7 @@ void write_psi_r_1(const psi::Psi<std::complex<double>>& wfc_g,
 		for(int ik=0; ik<wfc_g.get_nk(); ++ik)
 		{
 			wfc_g.fix_k(ik);
-			const int ik_out = (GlobalV::NSPIN!=2)
+			const int ik_out = (PARAM.inp.nspin!=2)
 				? ik + GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL]
 				: ik - kv.get_nks()/2*kv.isk[ik] + kv.get_nkstot()/2*kv.isk[ik] + GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL];
 			for(int ib=0; ib<wfc_g.get_nbands(); ++ib)

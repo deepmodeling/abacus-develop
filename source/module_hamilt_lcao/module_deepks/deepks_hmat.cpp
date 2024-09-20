@@ -1,5 +1,6 @@
 #ifdef __DEEPKS
 
+#include "module_parameter/parameter.h"
 #include "LCAO_deepks.h"
 #include "module_base/parallel_reduce.h"
 
@@ -48,7 +49,7 @@ void DeePKS_domain::collect_h_mat(
                 if (ic>=0)
                 {
                     int iic=0;
-                    if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
+                    if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
                     {
                         iic=ir+ic*pv.nrow;
                     }
