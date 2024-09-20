@@ -1,4 +1,5 @@
 #include "atom_pseudo.h"
+#include "module_parameter/parameter.h"
 
 #include "module_parameter/parameter.h"
 Atom_pseudo::Atom_pseudo()
@@ -106,7 +107,7 @@ void Atom_pseudo::set_d_so(ModuleBase::ComplexMatrix& d_so_in,
                 {
                     for (int is2 = 0; is2 < 2; is2++)
                     {
-                        if (is >= GlobalV::NSPIN) {
+                        if (is >= PARAM.inp.nspin) {
                             break;
 }
                         for (int L1 = 0; L1 < nproj_soc; L1++)

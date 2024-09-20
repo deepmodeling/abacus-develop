@@ -1,5 +1,8 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include "memory"
 #include "module_base/mathzone.h"
 #include "module_base/global_variable.h"
@@ -74,7 +77,7 @@ TEST_F(UcellTest,SetupCellS1)
 	std::string fn = "./support/STRU_MgO";
 	std::ofstream ofs_running;
 	ofs_running.open("setup_cell.tmp");
-	GlobalV::NSPIN = 1;
+	PARAM.input.nspin = 1;
 	ucell->ntype = 2;
 	ucell->setup_cell(fn,ofs_running);
 	ofs_running.close();
@@ -86,7 +89,7 @@ TEST_F(UcellTest,SetupCellS2)
 	std::string fn = "./support/STRU_MgO";
 	std::ofstream ofs_running;
 	ofs_running.open("setup_cell.tmp");
-	GlobalV::NSPIN = 2;
+	PARAM.input.nspin = 2;
 	ucell->ntype = 2;
 	ucell->setup_cell(fn,ofs_running);
 	ofs_running.close();
@@ -98,7 +101,7 @@ TEST_F(UcellTest,SetupCellS4)
 	std::string fn = "./support/STRU_MgO";
 	std::ofstream ofs_running;
 	ofs_running.open("setup_cell.tmp");
-	GlobalV::NSPIN = 4;
+	PARAM.input.nspin = 4;
 	ucell->ntype = 2;
 	ucell->setup_cell(fn,ofs_running);
 	ofs_running.close();
@@ -138,7 +141,7 @@ TEST_F(UcellTest,SetupCellAfterVC)
 	std::string fn = "./support/STRU_MgO";
 	std::ofstream ofs_running;
 	ofs_running.open("setup_cell.tmp");
-	GlobalV::NSPIN = 1;
+	PARAM.input.nspin = 1;
 	ucell->ntype = 2;
 	delete[] ucell->magnet.start_magnetization;
 	ucell->magnet.start_magnetization = new double[ucell->ntype];

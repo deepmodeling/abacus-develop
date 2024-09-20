@@ -388,7 +388,7 @@ void Gint_k::cal_dvlocal_R_sparseMatrix(const int& current_spin,
                                     const int nug0 = iw2 / PARAM.globalv.npol;
                                     const int iw_nowg = ixxx + mug0 * nw + nug0;
 
-                                    if (GlobalV::NSPIN == 4)
+                                    if (PARAM.inp.nspin == 4)
                                     {
                                         // pvp is symmetric, only half is calculated.
 
@@ -557,7 +557,7 @@ void Gint_k::cal_dvlocal_R_sparseMatrix(const int& current_spin,
         }
     }
 
-    if (GlobalV::NSPIN != 4)
+    if (PARAM.inp.nspin != 4)
     {
         distribute_pvdpR_sparseMatrix(current_spin, 0, sparse_threshold, pvdpRx_sparseMatrix, HS_Arrays, pv);
         distribute_pvdpR_sparseMatrix(current_spin, 1, sparse_threshold, pvdpRy_sparseMatrix, HS_Arrays, pv);

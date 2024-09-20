@@ -1,6 +1,7 @@
 #include "fs_nonlocal_tools.h"
 
 #include "module_base/math_polyint.h"
+#include "module_parameter/parameter.h"
 #include "module_base/math_ylmreal.h"
 #include "module_base/memory.h"
 #include "module_base/timer.h"
@@ -207,7 +208,7 @@ void FS_Nonlocal_tools<FPTYPE, Device>::cal_becp(int ik, int npm)
                     npw,
                     this->nlpp_->tab.getBound2(),
                     this->nlpp_->tab.getBound3(),
-                    GlobalV::DQ,
+                    PARAM.globalv.dq,
                     this->ucell_->atoms[it].ncpp.nbeta,
                     hd_vq);
 
@@ -331,7 +332,7 @@ void FS_Nonlocal_tools<FPTYPE, Device>::cal_dbecp_s(int ik, int npm, int ipol, i
                     npw,
                     this->nlpp_->tab.getBound2(),
                     this->nlpp_->tab.getBound3(),
-                    GlobalV::DQ,
+                    PARAM.globalv.dq,
                     this->ucell_->atoms[it].ncpp.nbeta,
                     hd_vq);
         cal_vq_deri_op()(this->ctx,
@@ -341,7 +342,7 @@ void FS_Nonlocal_tools<FPTYPE, Device>::cal_dbecp_s(int ik, int npm, int ipol, i
                          npw,
                          this->nlpp_->tab.getBound2(),
                          this->nlpp_->tab.getBound3(),
-                         GlobalV::DQ,
+                         PARAM.globalv.dq,
                          this->ucell_->atoms[it].ncpp.nbeta,
                          hd_vq_deri);
 

@@ -24,7 +24,7 @@ void sparse_format::cal_SR(
 
     sparse_format::set_R_range(all_R_coor, grid);
 
-    const int nspin = GlobalV::NSPIN;
+    const int nspin = PARAM.inp.nspin;
 
     // cal_STN_R_sparse(current_spin, sparse_thr);
     if (nspin == 1 || nspin == 2) {
@@ -74,6 +74,7 @@ void sparse_format::cal_TR(const UnitCell& ucell,
     LCAO_domain::build_ST_new(fsr_tmp,
                               'T',
                               false,
+                              PARAM.inp.cal_stress,
                               ucell,
                               orb,
                               pv,
@@ -96,7 +97,7 @@ void sparse_format::cal_STN_R_for_T(const UnitCell& ucell,
                                     const double& sparse_thr) {
     ModuleBase::TITLE("sparse_format", "cal_STN_R_for_T");
 
-    const int nspin = GlobalV::NSPIN;
+    const int nspin = PARAM.inp.nspin;
 
     int index = 0;
     ModuleBase::Vector3<double> dtau, tau1, tau2;
@@ -197,7 +198,7 @@ void sparse_format::cal_STN_R_for_T(const UnitCell& ucell,
 void sparse_format::destroy_T_R_sparse(LCAO_HS_Arrays& HS_Arrays) {
     ModuleBase::TITLE("sparse_format", "destroy_T_R_sparse");
 
-    if (GlobalV::NSPIN != 4) {
+    if (PARAM.inp.nspin != 4) {
         std::map<Abfs::Vector3_Order<int>,
                  std::map<size_t, std::map<size_t, double>>>
             empty_TR_sparse;

@@ -1,5 +1,6 @@
 #include "FORCE.h"
 
+#include "module_parameter/parameter.h"
 #include <map>
 #include <unordered_map>
 
@@ -38,7 +39,7 @@ void Force_LCAO<std::complex<double>>::cal_ftvnl_dphi(
     ModuleBase::TITLE("Force_LCAO", "cal_ftvnl_dphi");
     ModuleBase::timer::tick("Force_LCAO", "cal_ftvnl_dphi");
 
-    const int nspin_DMR = (GlobalV::NSPIN == 2) ? 2 : 1;
+    const int nspin_DMR = (PARAM.inp.nspin == 2) ? 2 : 1;
 
     int total_irr = 0;
     // get the adjacent atom's information.

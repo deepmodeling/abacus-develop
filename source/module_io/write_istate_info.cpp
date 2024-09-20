@@ -28,7 +28,7 @@ void ModuleIO::write_istate_info(const ModuleBase::matrix &ekb,const ModuleBase:
 }
 #endif
             std::ofstream ofsi2(ss.str().c_str(), std::ios::app);
-            if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 4)
+            if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 4)
             {
                 for (int ik = 0; ik < kv.get_nks(); ik++)
                 {

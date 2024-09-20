@@ -158,6 +158,7 @@ void psi_initializer_nao<T, Device>::initialize(Structure_Factor* sf,
                                                 const int& rank)
 {
     ModuleBase::timer::tick("psi_initializer_nao", "initialize_mpi");
+  
     // import
     this->sf_ = sf;
     this->pw_wfc_ = pw_wfc;
@@ -165,9 +166,11 @@ void psi_initializer_nao<T, Device>::initialize(Structure_Factor* sf,
     this->p_parakpts_ = p_parakpts;
     this->p_pspot_nl_ = p_pspot_nl;
     this->random_seed_ = random_seed;
+  
     // allocate
     this->allocate_table();
     this->read_external_orbs(this->p_ucell_->orbital_fn, rank);
+
     // then for generate random number to fill in the wavefunction
     this->ixy2is_.clear();
     this->ixy2is_.resize(this->pw_wfc_->fftnxy);
@@ -183,15 +186,18 @@ void psi_initializer_nao<T, Device>::initialize(Structure_Factor* sf,
                                                 pseudopot_cell_vnl* p_pspot_nl)
 {
     ModuleBase::timer::tick("psi_initializer_nao", "initialize_serial");
+  
     // import
     this->sf_ = sf;
     this->pw_wfc_ = pw_wfc;
     this->p_ucell_ = p_ucell;
     this->p_pspot_nl_ = p_pspot_nl;
     this->random_seed_ = random_seed;
+  
     // allocate
     this->allocate_table();
     this->read_external_orbs(this->p_ucell_->orbital_fn, 0);
+
     // then for generate random number to fill in the wavefunction
     this->ixy2is_.clear();
     this->ixy2is_.resize(this->pw_wfc_->fftnxy);
@@ -302,7 +308,7 @@ void psi_initializer_nao<T, Device>::proj_ao_onkG(const int ik)
                     this->cubspl_->eval(npw, qnorm.data(), Jlfq.data(), nullptr, nullptr, this->projmap_(it, L, N));
 
                     /* FOR EVERY NAO IN EACH ATOM */
-                    if (GlobalV::NSPIN == 4)
+                    if (PARAM.inp.nspin == 4)
                     {
                         /* FOR EACH SPIN CHANNEL */
                         for (int is_N = 0; is_N < 2; is_N++) // rotate base

@@ -181,7 +181,7 @@ pseudo::~pseudo()
 
 TEST(OutputVacuumLevelTest, OutputVacuumLevel)
 {
-    GlobalV::NSPIN = 1;
+    PARAM.input.nspin = 1;
     UnitCell ucell;
     const int nx = 50, ny = 50, nz = 50, nxyz = 125000, nrxx = 125000, nplane = 50, startz_current = 0;
 

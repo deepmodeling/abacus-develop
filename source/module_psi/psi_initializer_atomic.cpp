@@ -38,7 +38,7 @@ void psi_initializer_atomic<T, Device>::allocate_table()
     {
         ModuleBase::WARNING_QUIT("psi_initializer_atomic<T, Device>::allocate_table", "there is not ANY pseudo atomic orbital read in present system, recommand other methods, quit.");
     }
-    int dim3 = GlobalV::NQX;
+    int dim3 = PARAM.globalv.nqx;
     // allocate memory for ovlp_flzjlq
     this->ovlp_pswfcjlq_.create(dim1, dim2, dim3);
     this->ovlp_pswfcjlq_.zero_out();
@@ -110,10 +110,10 @@ void psi_initializer_atomic<T, Device>::tabulate()
 {
     ModuleBase::timer::tick("psi_initializer_atomic", "cal_ovlp_pswfcjlq");
     int maxn_rgrid = 0;
-    std::vector<double> qgrid(GlobalV::NQX);
-    for (int iq = 0; iq < GlobalV::NQX; iq++)
+    std::vector<double> qgrid(PARAM.globalv.nqx);
+    for (int iq = 0; iq < PARAM.globalv.nqx; iq++)
     {
-        qgrid[iq] = GlobalV::DQ * iq;
+        qgrid[iq] = PARAM.globalv.dq * iq;
     }
     for (int it=0; it<this->p_ucell_->ntype; it++)
     {
@@ -123,8 +123,8 @@ void psi_initializer_atomic<T, Device>::tabulate()
     
     const double pref = ModuleBase::FOUR_PI / sqrt(this->p_ucell_->omega);
 
-	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"dq(describe PAO in reciprocal space)",GlobalV::DQ);
-	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"max q",GlobalV::NQX);
+	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"dq(describe PAO in reciprocal space)",PARAM.globalv.dq);
+	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"max q",PARAM.globalv.nqx);
 
     for (int it=0; it<this->p_ucell_->ntype; it++)
     {
@@ -141,9 +141,9 @@ void psi_initializer_atomic<T, Device>::tabulate()
             if (atom->ncpp.oc[ic] >= 0.0) // reasonable occupation number, but is it always true?
             {
                 const int l = atom->ncpp.lchi[ic];
-                std::vector<double> ovlp_pswfcjlq_q(GlobalV::NQX);
-                this->sbt.direct(l, atom->ncpp.msh, atom->ncpp.r.data(), pswfcr.data(), GlobalV::NQX, qgrid.data(), ovlp_pswfcjlq_q.data(), 1);
-                for (int iq = 0; iq < GlobalV::NQX; iq++)
+                std::vector<double> ovlp_pswfcjlq_q(PARAM.globalv.nqx);
+                this->sbt.direct(l, atom->ncpp.msh, atom->ncpp.r.data(), pswfcr.data(), PARAM.globalv.nqx, qgrid.data(), ovlp_pswfcjlq_q.data(), 1);
+                for (int iq = 0; iq < PARAM.globalv.nqx; iq++)
                 {
                     this->ovlp_pswfcjlq_(it, ic, iq) = pref * ovlp_pswfcjlq_q[iq];
                 }
@@ -207,10 +207,10 @@ void psi_initializer_atomic<T, Device>::proj_ao_onkG(const int ik)
                     {
                         ovlp_pswfcjlg[ig] = ModuleBase::PolyInt::Polynomial_Interpolation(
                             this->ovlp_pswfcjlq_, it, ipswfc, 
-                            GlobalV::NQX, GlobalV::DQ, gk[ig].norm() * this->p_ucell_->tpiba );
+                            PARAM.globalv.nqx, PARAM.globalv.dq, gk[ig].norm() * this->p_ucell_->tpiba );
                     }
 /* NSPIN == 4 */
-                    if(GlobalV::NSPIN == 4)
+                    if(PARAM.inp.nspin == 4)
                     {
                         if(this->p_ucell_->atoms[it].ncpp.has_so)
                         {
@@ -306,7 +306,7 @@ void psi_initializer_atomic<T, Device>::proj_ao_onkG(const int ik)
                                         chiaux[ig] =  l *
                                             ModuleBase::PolyInt::Polynomial_Interpolation(
                                                 this->ovlp_pswfcjlq_, it, ipswfc_noncolin_soc, 
-                                                GlobalV::NQX, GlobalV::DQ, gk[ig].norm() * this->p_ucell_->tpiba);
+                                                PARAM.globalv.nqx, PARAM.globalv.dq, gk[ig].norm() * this->p_ucell_->tpiba);
                                         chiaux[ig] += ovlp_pswfcjlg[ig] * (l + 1.0) ;
                                         chiaux[ig] *= 1/(2.0*l+1.0);
                                     }

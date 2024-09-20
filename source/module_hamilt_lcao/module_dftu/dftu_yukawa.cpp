@@ -1,5 +1,6 @@
 //==========================================================
 // Author:Xin Qu
+#include "module_parameter/parameter.h"
 // DATE : 2019-12-10
 //==========================================================
 #include "module_base/constants.h"
@@ -31,9 +32,9 @@ void DFTU::cal_yukawa_lambda(double** rho, const int& nrxx)
 
     double sum_rho = 0.0;
     double sum_rho_lambda = 0.0;
-    for (int is = 0; is < GlobalV::NSPIN; is++)
+    for (int is = 0; is < PARAM.inp.nspin; is++)
     {
-        if(GlobalV::NSPIN == 4 && is > 0) { continue;// for non-collinear spin case, first spin contains the charge density
+        if(PARAM.inp.nspin == 4 && is > 0) { continue;// for non-collinear spin case, first spin contains the charge density
 }
         for (int ir = 0; ir < nrxx; ir++)
         {

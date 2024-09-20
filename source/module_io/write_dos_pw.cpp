@@ -14,7 +14,7 @@ void ModuleIO::write_dos_pw(const ModuleBase::matrix& ekb,
     ModuleBase::TITLE("ModuleIO", "write_dos_pw");
 
     int nspin0 = 1;
-    if (GlobalV::NSPIN == 2)
+    if (PARAM.inp.nspin == 2)
         nspin0 = 2;
 
     // find energy range
