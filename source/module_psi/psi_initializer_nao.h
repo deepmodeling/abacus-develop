@@ -2,7 +2,8 @@
 #define PSI_INITIALIZER_NAO_H
 #include "psi_initializer.h"
 #include "module_base/realarray.h"
-
+#include "module_base/cubic_spline.h"
+#include <memory>
 /*
 Psi (planewave based wavefunction) initializer: numerical atomic orbital method
 */
@@ -54,7 +55,10 @@ class psi_initializer_nao : public psi_initializer<T, Device>
 
     private:
         std::vector<std::string> orbital_files_;
-        ModuleBase::realArray ovlp_flzjlq_;
+        /// @brief cubic spline for interpolation
+        std::unique_ptr<ModuleBase::CubicSpline> cubspl_;
+        /// @brief radial map, [itype][l][izeta] -> i
+        ModuleBase::realArray projmap_;
         /// @brief number of realspace grids per type per chi, [itype][ichi]
         std::vector<std::vector<int>> nr_;
         /// @brief data of numerical atomic orbital per type per chi per position, [itype][ichi][ir]

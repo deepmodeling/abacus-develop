@@ -124,26 +124,27 @@ template <typename T, typename Device>
 void psi_initializer_nao<T, Device>::allocate_table()
 {
     // find correct dimension for ovlp_flzjlq
-    int dim1 = this->p_ucell_->ntype;
-    int dim2 = 0; // dim2 should be the maximum number of zeta for each atomtype
+    int ntype = this->p_ucell_->ntype;
+    int lmaxmax = 0; // lmaxmax
+    int nzeta_max = 0; // dim3 should be the maximum number of zeta for each atomtype
     for (int it = 0; it < this->p_ucell_->ntype; it++)
     {
         int nzeta = 0;
-        for (int l = 0; l < this->p_ucell_->atoms[it].nwl + 1; l++)
+        int lmax = this->p_ucell_->atoms[it].nwl;
+        lmaxmax = (lmaxmax > lmax) ? lmaxmax : lmax;
+        for (int l = 0; l < lmax + 1; l++)
         {
             nzeta += this->p_ucell_->atoms[it].l_nchi[l];
         }
-        dim2 = (nzeta > dim2) ? nzeta : dim2;
+        nzeta_max = (nzeta > nzeta_max) ? nzeta : nzeta_max;
     }
-    if (dim2 == 0)
+    if (nzeta_max == 0)
     {
         ModuleBase::WARNING_QUIT("psi_initializer_nao<T, Device>::psi_initializer_nao",
                                  "there is not ANY numerical atomic orbital read in present system, quit.");
     }
-    int dim3 = GlobalV::NQX;
-    // allocate memory for ovlp_flzjlq
-    this->ovlp_flzjlq_.create(dim1, dim2, dim3);
-    this->ovlp_flzjlq_.zero_out();
+    // allocate a map (it, l, izeta) -> i, should allocate memory of ntype * lmax * nzeta_max
+    this->projmap_.create(ntype, lmaxmax + 1, nzeta_max);
 }
 
 #ifdef __MPI
@@ -167,8 +168,6 @@ void psi_initializer_nao<T, Device>::initialize(Structure_Factor* sf,
     // allocate
     this->allocate_table();
     this->read_external_orbs(this->p_ucell_->orbital_fn, rank);
-    // this->cal_ovlp_flzjlq(); //because GlobalV::NQX will change during vcrelax, so it should be called in both init
-    // and init_after_vc
     // then for generate random number to fill in the wavefunction
     this->ixy2is_.clear();
     this->ixy2is_.resize(this->pw_wfc_->fftnxy);
@@ -193,8 +192,6 @@ void psi_initializer_nao<T, Device>::initialize(Structure_Factor* sf,
     // allocate
     this->allocate_table();
     this->read_external_orbs(this->p_ucell_->orbital_fn, 0);
-    // this->cal_ovlp_flzjlq(); //because GlobalV::NQX will change during vcrelax, so it should be called in both init
-    // and init_after_vc
     // then for generate random number to fill in the wavefunction
     this->ixy2is_.clear();
     this->ixy2is_.resize(this->pw_wfc_->fftnxy);
@@ -207,7 +204,32 @@ template <typename T, typename Device>
 void psi_initializer_nao<T, Device>::tabulate()
 {
     ModuleBase::timer::tick("psi_initializer_nao", "tabulate");
-    this->ovlp_flzjlq_.zero_out();
+
+    // a uniformed qgrid
+    std::vector<double> qgrid(GlobalV::NQX);
+    std::iota(qgrid.begin(), qgrid.end(), 0);
+    std::for_each(qgrid.begin(), qgrid.end(), [this](double& q) { q = q * GlobalV::DQ; });
+
+    // only when needed, allocate memory for cubspl_
+    if (this->cubspl_.get()) { this->cubspl_.reset(); }
+    this->cubspl_ = std::unique_ptr<ModuleBase::CubicSpline>(
+        new ModuleBase::CubicSpline(qgrid.size(), qgrid.data()));
+
+    // calculate the total number of radials and call reserve to allocate memory
+    int nchi = 0;
+    for (int it = 0; it < this->p_ucell_->ntype; it++)
+    {
+        for (int l = 0; l < this->p_ucell_->atoms[it].nwl + 1; l++)
+        {
+            nchi += this->p_ucell_->atoms[it].l_nchi[l];
+        }
+    }
+    this->cubspl_->reserve(nchi);
+    ModuleBase::SphericalBesselTransformer sbt_(true); // bool: enable cache
+    
+    // tabulate the spherical bessel transform of numerical orbital function
+    std::vector<double> Jlfq(GlobalV::NQX, 0.0);
+    int i = 0;
     for (int it = 0; it < this->p_ucell_->ntype; it++)
     {
         int ic = 0;
@@ -215,23 +237,15 @@ void psi_initializer_nao<T, Device>::tabulate()
         {
             for (int izeta = 0; izeta < this->p_ucell_->atoms[it].l_nchi[l]; izeta++)
             {
-                std::vector<double> ovlp_flzjlq_q(GlobalV::NQX);
-                std::vector<double> qgrid(GlobalV::NQX);
-                std::iota(qgrid.begin(), qgrid.end(), 0);
-                std::for_each(qgrid.begin(), qgrid.end(), [this](double& q) { q = q * GlobalV::DQ; });
-                this->sbt.direct(l,
-                                 this->nr_[it][ic],
-                                 this->rgrid_[it][ic].data(),
-                                 this->chi_[it][ic].data(),
-                                 GlobalV::NQX,
-                                 qgrid.data(),
-                                 ovlp_flzjlq_q.data());
-
-                #pragma omp parallel for schedule(static, 4096 / sizeof(double))
-                for (int iq = 0; iq < GlobalV::NQX; iq++)
-                {
-                    this->ovlp_flzjlq_(it, ic, iq) = ovlp_flzjlq_q[iq];
-                }
+                sbt_.direct(l,
+                            this->nr_[it][ic],
+                            this->rgrid_[it][ic].data(),
+                            this->chi_[it][ic].data(),
+                            GlobalV::NQX,
+                            qgrid.data(),
+                            Jlfq.data());
+                this->cubspl_->add(Jlfq.data());
+                this->projmap_(it, l, izeta) = i++; // index it
                 ++ic;
             }
         }
@@ -251,16 +265,18 @@ void psi_initializer_nao<T, Device>::proj_ao_onkG(const int ik)
     ModuleBase::matrix ylm(total_lm, npw);
 
     std::vector<std::complex<double>> aux(npw);
-    std::vector<ModuleBase::Vector3<double>> gk(npw);
+    std::vector<double> qnorm(npw);
+    std::vector<ModuleBase::Vector3<double>> q(npw);
     #pragma omp parallel for schedule(static, 4096 / sizeof(double))
     for (int ig = 0; ig < npw; ig++)
     {
-        gk[ig] = this->pw_wfc_->getgpluskcar(ik, ig);
+        q[ig] = this->pw_wfc_->getgpluskcar(ik, ig);
+        qnorm[ig] = q[ig].norm() * this->p_ucell_->tpiba;
     }
 
-    ModuleBase::YlmReal::Ylm_Real(total_lm, npw, gk.data(), ylm);
+    ModuleBase::YlmReal::Ylm_Real(total_lm, npw, q.data(), ylm);
     // int index = 0;
-    std::vector<double> ovlp_flzjlg(npw);
+    std::vector<double> Jlfq(npw, 0.0);
     int ibasis = 0;
     for (int it = 0; it < this->p_ucell_->ntype; it++)
     {
@@ -281,18 +297,10 @@ void psi_initializer_nao<T, Device>::proj_ao_onkG(const int ik)
                         transformation of numerical orbital function, is indiced by it and ic, is needed to
                         interpolate everytime when ic updates, therefore everytime when present orbital is done
                     */
-                    #pragma omp parallel for schedule(static, 4096 / sizeof(double))
-                    for (int ig = 0; ig < npw; ig++)
-                    {
-                        ovlp_flzjlg[ig] = ModuleBase::PolyInt::Polynomial_Interpolation(
-                            this->ovlp_flzjlq_, // the spherical bessel transform of numerical orbital function
-                            it,
-                            ic, // each (it, ic)-pair defines a unique numerical orbital function
-                            GlobalV::NQX,
-                            GlobalV::DQ,                          // grid number and grid spacing of q
-                            gk[ig].norm() * this->p_ucell_->tpiba // norm of (G+k) = K
-                        );
-                    }
+
+                    // use cublic spline instead of previous polynomial interpolation
+                    this->cubspl_->eval(npw, qnorm.data(), Jlfq.data(), nullptr, nullptr, this->projmap_(it, L, N));
+
                     /* FOR EVERY NAO IN EACH ATOM */
                     if (GlobalV::NSPIN == 4)
                     {
@@ -321,7 +329,7 @@ void psi_initializer_nao<T, Device>::proj_ao_onkG(const int ik)
                                     #pragma omp parallel for
                                     for (int ig = 0; ig < npw; ig++)
                                     {
-                                        aux[ig] = sk[ig] * ylm(lm, ig) * ovlp_flzjlg[ig];
+                                        aux[ig] = sk[ig] * ylm(lm, ig) * Jlfq[ig];
                                     }
 
                                     #pragma omp parallel for
@@ -361,7 +369,7 @@ void psi_initializer_nao<T, Device>::proj_ao_onkG(const int ik)
                             for (int ig = 0; ig < npw; ig++)
                             {
                                 (*(this->psig_))(ibasis, ig)
-                                    = this->template cast_to_T<T>(lphase * sk[ig] * ylm(lm, ig) * ovlp_flzjlg[ig]);
+                                    = this->template cast_to_T<T>(lphase * sk[ig] * ylm(lm, ig) * Jlfq[ig]);
                             }
                             ++ibasis;
                         }
