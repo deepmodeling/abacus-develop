@@ -18,6 +18,8 @@
 #endif
 #include "module_parameter/parameter.h"
 #include "module_io/orb_io.h"
+// GlobalV::NQX and GlobalV::DQ are here
+#include "module_parameter/parameter.h"
 
 #include <numeric>
 #include <algorithm>
@@ -212,9 +214,9 @@ void psi_initializer_nao<T, Device>::tabulate()
     ModuleBase::timer::tick("psi_initializer_nao", "tabulate");
 
     // a uniformed qgrid
-    std::vector<double> qgrid(GlobalV::NQX);
+    std::vector<double> qgrid(PARAM.globalv.nqx);
     std::iota(qgrid.begin(), qgrid.end(), 0);
-    std::for_each(qgrid.begin(), qgrid.end(), [this](double& q) { q = q * GlobalV::DQ; });
+    std::for_each(qgrid.begin(), qgrid.end(), [this](double& q) { q = q * PARAM.globalv.dq; });
 
     // only when needed, allocate memory for cubspl_
     if (this->cubspl_.get()) { this->cubspl_.reset(); }
@@ -234,7 +236,7 @@ void psi_initializer_nao<T, Device>::tabulate()
     ModuleBase::SphericalBesselTransformer sbt_(true); // bool: enable cache
     
     // tabulate the spherical bessel transform of numerical orbital function
-    std::vector<double> Jlfq(GlobalV::NQX, 0.0);
+    std::vector<double> Jlfq(PARAM.globalv.nqx, 0.0);
     int i = 0;
     for (int it = 0; it < this->p_ucell_->ntype; it++)
     {
@@ -247,7 +249,7 @@ void psi_initializer_nao<T, Device>::tabulate()
                             this->nr_[it][ic],
                             this->rgrid_[it][ic].data(),
                             this->chi_[it][ic].data(),
-                            GlobalV::NQX,
+                            PARAM.globalv.nqx,
                             qgrid.data(),
                             Jlfq.data());
                 this->cubspl_->add(Jlfq.data());
