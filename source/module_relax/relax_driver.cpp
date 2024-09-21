@@ -2,12 +2,13 @@
 
 #include "module_base/global_file.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h" // use chr.
+#include "module_io/cif_io.h"
 #include "module_io/json_output/output_info.h"
+#include "module_io/output_log.h"
 #include "module_io/print_info.h"
 #include "module_io/read_exit_file.h"
 #include "module_io/write_wfc_r.h"
 #include "module_parameter/parameter.h"
-#include "module_io/cif_io.h"
 void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver)
 {
     ModuleBase::TITLE("Ions", "opt_ions");
@@ -128,37 +129,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver)
                                                "data_?");
                 }
 
-                if (p_esolver && stop && p_esolver->get_maxniter() == p_esolver->get_niter()
-                    && !(p_esolver->get_conv_elec()))
-                {
-                    std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
-                              << std::endl;
-                    std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
-                              << std::endl;
-                    std::cout << " Relaxation is converged, but the SCF is unconverged! The results are unreliable. "
-                              << std::endl;
-                    std::cout
-                        << " It is suggested to increase the maximum SCF step and/or perform the relaxation again."
-                        << std::endl;
-                    std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
-                              << std::endl;
-                    std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
-                              << std::endl;
-                    GlobalV::ofs_running
-                        << "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
-                    GlobalV::ofs_running
-                        << "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
-                    GlobalV::ofs_running
-                        << "\n Relaxation is converged, but the SCF is unconverged! The results are unreliable.. "
-                        << std::endl;
-                    GlobalV::ofs_running
-                        << "\n It is suggested to increase the maximum SCF step and/or perform the relaxation again. "
-                        << std::endl;
-                    GlobalV::ofs_running
-                        << "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
-                    GlobalV::ofs_running
-                        << "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
-                }
+                ModuleIO::output_after_relax(stop, p_esolver->get_conv_elec(), GlobalV::ofs_running);
             }
 
 #ifdef __RAPIDJSON
