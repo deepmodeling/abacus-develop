@@ -7,7 +7,7 @@
 #define SPH_BESSEL_RECURSIVE_H
 
 #include <vector>
-#include"stddef.h"
+#include<cstddef>
 
 namespace ModuleBase
 {
