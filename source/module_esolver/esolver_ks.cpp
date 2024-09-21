@@ -760,16 +760,6 @@ int ESolver_KS<T, Device>::get_maxniter()
 }
 
 //------------------------------------------------------------------------------
-//! the 12th function of ESolver_KS: get_conv_elec
-//! tqzhao add 2024-05-15
-//------------------------------------------------------------------------------
-template <typename T, typename Device>
-bool ESolver_KS<T, Device>::get_conv_elec()
-{
-    return this->conv_elec;
-}
-
-//------------------------------------------------------------------------------
 //! the 16th-20th functions of ESolver_KS
 //! mohan add 2024-05-12
 //------------------------------------------------------------------------------
