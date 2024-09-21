@@ -39,8 +39,8 @@ class DiagoDavid : public DiagH<T, Device>
      * For eigenvalue problem HX = λX or generalized eigenvalue problem HX = λSX,
      * this function computes the product of the Hamiltonian matrix H and a blockvector X.
      *
-     * @param[out] HX  Pointer to output blockvector of type `T*`.
-     * @param[in]  X  Pointer to input blockvector of type `T*`.
+     * @param[out] X  Pointer to input blockvector of type `T*`.
+     * @param[in]  HX  Pointer to output blockvector of type `T*`.
      * @param[in]  neig  Number of eigebpairs required.
      * @param[in]  dim  Dimension of matrix.
      * @param[in]  id_start  Start index of blockvector.
