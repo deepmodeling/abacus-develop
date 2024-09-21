@@ -204,6 +204,7 @@ void ESolver_FP::after_scf(const int istep)
                                  PARAM.inp.nspin,
                                  GlobalC::ucell.GT,
                                  rhog_tot,
+                                 GlobalV::MY_POOL,
                                  GlobalV::RANK_IN_POOL,
                                  GlobalV::NPROC_IN_POOL);
         }

@@ -82,8 +82,8 @@ namespace LR
                 // do diag and add davidson iteration counts up to avg_iter
 
                 auto hpsi_func = [pHamilt](
-                    T* hpsi_out,
                     T* psi_in,
+                    T* hpsi_out,
                     const int nband_in,
                     const int nbasis_in,
                     const int band_index1,
@@ -119,8 +119,8 @@ namespace LR
                     comm_info);
 
                 std::function<void(T*, T*, const int, const int, const int, const int)> hpsi_func = [pHamilt](
-                    T* hpsi_out,
                     T* psi_in,
+                    T* hpsi_out,
                     const int nband_in,
                     const int nbasis_in,
                     const int band_index1,
