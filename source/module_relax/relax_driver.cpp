@@ -159,11 +159,6 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver)
         std::cout << " ION DYNAMICS FINISHED :)" << std::endl;
     }
 
-    if (PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax")
-    {
-        ModuleBase::Global_File::delete_tmp_files();
-    }
-
     ModuleBase::timer::tick("Ions", "opt_ions");
     return;
 }
