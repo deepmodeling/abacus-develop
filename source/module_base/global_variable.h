@@ -80,7 +80,6 @@ extern int KPAR_LCAO;
 // NAME : ofs_running( contain information during runnnig)
 // NAME : ofs_warning( contain warning information, including error)
 //==========================================================
-extern std::string stru_file;
 // extern std::string global_pseudo_type; // mohan add 2013-05-20 (xiaohui add
 // 2013-06-23)
 extern std::ofstream ofs_running;

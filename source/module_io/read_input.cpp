@@ -304,12 +304,7 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
         readvalue_item->read_value(*readvalue_item, param);
     }
 
-    // 2) count the number of atom types from STRU file
-    if (this->check_ntype_flag) {
-        check_ntype(param.input.stru_file, param.input.ntype);
-}
-
-    // 3) reset this value when some conditions are met
+    // 2) reset this value when some conditions are met
     //    e.g. if (calulation_type == "nscf") then set "init_chg" to "file".
     for (auto& input_item: this->input_lists)
     {
@@ -319,6 +314,12 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
 }
     }
     this->set_globalv(param);
+
+    // 3) count the number of atom types from STRU file
+    if (this->check_ntype_flag)
+    {
+        check_ntype(param.input.stru_file, param.input.ntype);
+    }
 
     // 4) check the value of the parameters
     for (auto& input_item: this->input_lists)
@@ -474,6 +475,24 @@ void ReadInput::check_ntype(const std::string& fn, int& param_ntype)
     else {
         GlobalV::ofs_running << " 'ntype' is automatically set to " << param_ntype << std::endl;
 }
+}
+
+int ReadInput::current_md_step(const std::string& file_dir)
+{
+    std::stringstream ssc;
+    ssc << file_dir << "Restart_md.dat";
+    std::ifstream file(ssc.str().c_str());
+
+    if (!file)
+    {
+        ModuleBase::WARNING_QUIT("current_md_step", "no Restart_md.dat");
+    }
+
+    int md_step;
+    file >> md_step;
+    file.close();
+
+    return md_step;
 }
 
 void ReadInput::add_item(const Input_Item& item)
