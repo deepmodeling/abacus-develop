@@ -213,7 +213,7 @@ void ESolver_KS_PW<T, Device>::before_scf(const int istep)
 
     //! cal_ux should be called before init_scf because
     //! the direction of ux is used in noncoline_rho
-    if (PARAM.inp.nspin == 4 && PARAM.globalv.domag)
+    if (PARAM.inp.nspin == 4)
     {
         GlobalC::ucell.cal_ux();
     }
