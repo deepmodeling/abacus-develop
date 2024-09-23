@@ -21,7 +21,6 @@ psi::Psi<std::complex<double>>* psi_initializer<T, Device>::allocate(const bool 
         The way of calculating this->p_ucell_->natomwfc is, for each atom, read pswfc and for s, it is 1, for p, it is 3
         , then multiplied by the number of atoms, and then add them together.
     */
-	int prefactor = 1;
     int nbands_actual = 0;
     if(this->method_ == "random") 
     {
@@ -32,16 +31,8 @@ psi::Psi<std::complex<double>>* psi_initializer<T, Device>::allocate(const bool 
     {
         if(this->method_.substr(0, 6) == "atomic")
         {
-            if(this->p_ucell_->natomwfc >= GlobalV::NBANDS)
-            {
-                nbands_actual = this->p_ucell_->natomwfc;
-                this->nbands_complem_ = 0;
-            }
-            else
-            {
-                nbands_actual = GlobalV::NBANDS;
-                this->nbands_complem_ = GlobalV::NBANDS - this->p_ucell_->natomwfc;
-            }
+            nbands_actual = std::max(this->p_ucell_->natomwfc, GlobalV::NBANDS);
+            this->nbands_complem_ = nbands_actual - this->p_ucell_->natomwfc;
         }
         else if(this->method_.substr(0, 3) == "nao")
         {
@@ -51,45 +42,29 @@ psi::Psi<std::complex<double>>* psi_initializer<T, Device>::allocate(const bool 
             int nbands_local = 0;
             for(int it = 0; it < this->p_ucell_->ntype; it++)
             {
-                for(int ia = 0; ia < this->p_ucell_->atoms[it].na; ia++)
+                for(int l = 0; l < this->p_ucell_->atoms[it].nwl + 1; l++)
                 {
-            /* FOR EVERY ATOM */
-                    for(int l = 0; l < this->p_ucell_->atoms[it].nwl + 1; l++)
-                    {
-            /* EVERY ZETA FOR (2l+1) ORBS */
-                        /*
-                            non-rotate basis, nbands_local*=2 for PARAM.globalv.npol = 2 is enough
-                        */
-                        //nbands_local += this->p_ucell_->atoms[it].l_nchi[l]*(2*l+1) * PARAM.globalv.npol;
-                        /*
-                            rotate basis, nbands_local*=4 for p, d, f,... orbitals, and nbands_local*=2 for s orbitals
-                            risky when NSPIN = 4, problematic psi value, needed to be checked
-                        */
-                        if(l == 0) 
-						{
-							nbands_local += this->p_ucell_->atoms[it].l_nchi[l] * PARAM.globalv.npol;
-						}
-						else 
-						{
-							nbands_local += this->p_ucell_->atoms[it].l_nchi[l]*(2*l+1) * PARAM.globalv.npol;
-						}
-                    }
+                    /* EVERY ZETA FOR (2l+1) ORBS */
+                    const int nchi = this->p_ucell_->atoms[it].l_nchi[l];
+                    const int degen_l = (l == 0)? 1 : 2*l+1;
+                    nbands_local += nchi * degen_l * PARAM.globalv.npol * this->p_ucell_->atoms[it].na;
+                    /*
+                        non-rotate basis, nbands_local*=2 for PARAM.globalv.npol = 2 is enough
+                    */
+                    //nbands_local += this->p_ucell_->atoms[it].l_nchi[l]*(2*l+1) * PARAM.globalv.npol;
+                    /*
+                        rotate basis, nbands_local*=4 for p, d, f,... orbitals, and nbands_local*=2 for s orbitals
+                        risky when NSPIN = 4, problematic psi value, needed to be checked
+                    */
                 }
             }
-            if(nbands_local >= GlobalV::NBANDS)
-            {
-                nbands_actual = nbands_local;
-                this->nbands_complem_ = 0;
-            }
-            else
-            {
-                nbands_actual = GlobalV::NBANDS;
-                this->nbands_complem_ = GlobalV::NBANDS - nbands_local;
-            }
+            nbands_actual = std::max(nbands_local, GlobalV::NBANDS);
+            this->nbands_complem_ = nbands_actual - nbands_local;
         }
     }
+    assert(this->nbands_complem_ >= 0);
 
-	  const int nks_psi = (PARAM.inp.calculation == "nscf" && this->mem_saver_ == 1)? 1 : this->pw_wfc_->nks;
+	const int nks_psi = (PARAM.inp.calculation == "nscf" && this->mem_saver_ == 1)? 1 : this->pw_wfc_->nks;
     const int nbasis_actual = this->pw_wfc_->npwk_max * PARAM.globalv.npol;
     psi::Psi<std::complex<double>>* psi_out = nullptr;
     if(!only_psig)
