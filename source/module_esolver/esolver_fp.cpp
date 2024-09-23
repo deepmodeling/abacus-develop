@@ -117,6 +117,15 @@ void ESolver_FP::before_all_runners(const Input_para& inp, UnitCell& cell)
     return;
 }
 
+//------------------------------------------------------------------------------
+//! the 12th function of ESolver_KS: get_conv_elec
+//! tqzhao add 2024-05-15
+//------------------------------------------------------------------------------
+bool ESolver_FP::get_conv_elec()
+{
+    return this->conv_elec;
+}
+
 //! Something to do after SCF iterations when SCF is converged or comes to the max iter step.
 void ESolver_FP::after_scf(const int istep)
 {

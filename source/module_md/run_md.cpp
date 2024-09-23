@@ -122,8 +122,6 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, const Paramet
         mdrun->step_++;
     }
 
-    ModuleBase::Global_File::delete_tmp_files();
-
     delete mdrun;
     ModuleBase::timer::tick("Run_MD", "md_line");
     return;

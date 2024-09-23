@@ -61,7 +61,7 @@ class ESolver
     // get conv_elec used in current scf
     virtual bool get_conv_elec()
     {
-        return false;
+        return true;
     }
     std::string classname;
 };
