@@ -51,6 +51,7 @@ bool write_rhog(const std::string& fchg,
                 const int nspin,                  // GlobalV
                 const ModuleBase::Matrix3& GT,    // from UnitCell, useful for calculating the miller
                 std::complex<double>** rhog,
+                const int ipool,
                 const int irank,
                 const int nrank);
 

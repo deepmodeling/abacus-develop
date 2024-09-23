@@ -44,6 +44,9 @@ namespace ModuleESolver
         //! Initialize of the first-principels energy solver
         virtual void before_all_runners(const Input_para& inp, UnitCell& cell) override;
 
+        // get conv_elec used in current scf
+        virtual bool get_conv_elec() override;
+
         virtual void init_after_vc(const Input_para& inp, UnitCell& cell);    // liuyu add 2023-03-09
 
         //! Electronic states

@@ -71,7 +71,7 @@ namespace LR
                 ct::Tensor(ct::DataTypeToEnum<T>::value, ct::DeviceTypeToEnum<base_device::DEVICE_CPU>::value,
                     { pmat->get_col_size(), pmat->get_row_size() }));
             for (auto& v : v_hxc_2d) v.zero();
-            int nrow = ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER() ? this->pmat->get_row_size() : this->pmat->get_col_size();
+            int nrow = ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver) ? this->pmat->get_row_size() : this->pmat->get_col_size();
             for (int ik = 0;ik < nk;++ik) { folding_HR(*this->hR, v_hxc_2d[ik].data<T>(), this->kv.kvec_d[ik], nrow, 1); }  // V(R) -> V(k)
             // LR_Util::print_HR(*this->hR, this->ucell.nat, "4.VR");
             // if (this->first_print)

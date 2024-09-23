@@ -138,7 +138,7 @@ void ModuleIO::save_mat(const int istep,
                     if (ic >= 0)
                     {
                         int iic;
-                        if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
+                        if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
                         {
                             iic = ir + ic * pv.nrow;
                         }
@@ -214,7 +214,7 @@ void ModuleIO::save_mat(const int istep,
                     if (ic >= 0)
                     {
                         int iic;
-                        if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
+                        if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
                         {
                             iic = ir + ic * pv.nrow;
                         }

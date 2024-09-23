@@ -204,11 +204,15 @@ bool ModuleIO::write_rhog(const std::string& fchg,
                           const int nspin, // GlobalV
                           const ModuleBase::Matrix3& GT, // from UnitCell, useful for calculating the miller
                           std::complex<double>** rhog,
+                          const int ipool,
                           const int irank,
                           const int nrank)
 {
     ModuleBase::TITLE("ModuleIO", "write_rhog");
     ModuleBase::timer::tick("ModuleIO", "write_rhog");
+    if (ipool != 0) { return true; }
+    // only one pool writes the rhog, because rhog in all pools are identical.
+
     // for large-scale data, it is not wise to collect all distributed components to the
     // master process and then write the data to the file. Instead, we can write the data
     // processer by processer.

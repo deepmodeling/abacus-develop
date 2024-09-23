@@ -23,8 +23,8 @@ void ElecStateLCAO_TDDFT::psiToRho_td(const psi::Psi<std::complex<double>>& psi)
     // this part for calculating DMK in 2d-block format, not used for charge now
     //    psi::Psi<std::complex<double>> dm_k_2d();
 
-    if (GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "scalapack_gvx"
-        || GlobalV::KS_SOLVER == "lapack") // Peize Lin test 2019-05-15
+    if (PARAM.inp.ks_solver == "genelpa" || PARAM.inp.ks_solver == "scalapack_gvx"
+        || PARAM.inp.ks_solver == "lapack") // Peize Lin test 2019-05-15
     {
         elecstate::cal_dm_psi(this->DM->get_paraV_pointer(), this->wg, psi, *(this->DM));
         this->DM->cal_DMR();
