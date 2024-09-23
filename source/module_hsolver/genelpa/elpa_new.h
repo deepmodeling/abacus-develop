@@ -25,6 +25,8 @@ extern "C"
 #include <elpa/elpa_generated.h>
     // #include <elpa/elpa_generic.h>
 #undef complex
+#include <elpa/elpa_configured_options.h>
+
     const char *elpa_strerr(int elpa_error);
 }
 

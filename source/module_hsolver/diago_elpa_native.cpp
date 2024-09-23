@@ -9,7 +9,6 @@
 #include "module_base/tool_quit.h"
 #include "module_hsolver/genelpa/elpa_new.h"
 #include "omp.h"
-#include <elpa/elpa.h>
 
 namespace hsolver
 {
