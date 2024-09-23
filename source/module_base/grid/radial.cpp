@@ -1,7 +1,11 @@
 #include "module_base/grid/radial.h"
 
 #include <cmath>
-#include <cassert>
+
+namespace {
+const double pi = std::acos(-1.0);
+const double inv_ln2 = 1.0 / std::log(2.0);
+}
 
 namespace Grid {
 namespace Radial {
@@ -28,23 +32,36 @@ void baker(int nbase, double R, int mult, std::vector<double>& grid,
 void murray(int ngrid, double R, double* grid, double* weight) {
     for (int i = 1; i <= ngrid; ++i) {
         double x = static_cast<double>(i) / (ngrid + 1);
-        grid[i-1] = std::pow(x / (1 - x), 2) * R;
+        grid[i-1] = std::pow(x / (1.0 - x), 2) * R;
         weight[i-1] = 2.0 * std::pow(R, 3) * std::pow(x, 5)
-                        / (std::pow(1-x, 7) * (ngrid + 1));
+                        / (std::pow(1.0 - x, 7) * (ngrid + 1));
+    }
+}
+
+
+void ta3(int ngrid, double R, double* grid, double* weight) {
+    for (int i = 1; i <= ngrid; ++i) {
+        double x = std::cos(i * pi / (ngrid + 1));
+        double beta = std::sqrt((1.0 + x) / (1.0 - x));
+        double gamma = std::log((1.0 - x) / 2.0);
+        grid[i-1] = -R * inv_ln2 * gamma;
+        weight[i-1] = pi / (ngrid + 1) * std::pow(R * inv_ln2, 3)
+                      * gamma * gamma * beta;
     }
 }
 
 
 void ta4(int ngrid, double R, double* grid, double* weight, double alpha) {
-    const double pi = std::acos(-1.0);
     for (int i = 1; i <= ngrid; ++i) {
         double x = std::cos(i * pi / (ngrid + 1));
-        //grid[i-1] = ;
-        //weight[i-1] = ;
+        double beta = std::sqrt((1.0 + x) / (1.0 - x));
+        double gamma = std::log((1.0 - x) / 2.0);
+        double delta = std::pow(1.0 + x, alpha);
+        grid[i-1] = -R * inv_ln2 * delta * gamma;
+        weight[i-1] = pi / (ngrid + 1) * std::pow(delta * R * inv_ln2, 3)
+                      * gamma * gamma * (beta - alpha / beta * gamma);
     }
-
 }
-
 
 }
 }
