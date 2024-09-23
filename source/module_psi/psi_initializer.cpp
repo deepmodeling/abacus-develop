@@ -178,6 +178,7 @@ void psi_initializer<T, Device>::random_t(T* psi, const int iw_start, const int 
                     // if the stick is not on present processor, then skip
                     if(this->pw_wfc_->fftixy2ip[ir] < 0) { continue; }
                     // otherwise
+                    // the following code is very time-consuming, but it can be skipped with pw_seed = 0
                     if(GlobalV::RANK_IN_POOL == 0)
                     {
                         // generate random number for (x,y) and all z, the stick will must
@@ -196,7 +197,7 @@ void psi_initializer<T, Device>::random_t(T* psi, const int iw_start, const int 
 #endif
                 }
                 // then for each g-component, initialize the wavefunction value
-                // #pragma omp parallel for schedule(static, 4096/sizeof(T))
+                #pragma omp parallel for schedule(static, 4096/sizeof(T))
                 for (int ig = 0; ig < ng; ig++)
                 {
                     // get the correct value of "rr" and "arg" by indexing map "getigl2isz"
