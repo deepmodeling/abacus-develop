@@ -6,6 +6,7 @@ namespace ModuleIO
 {
 class ReadInput;
 }
+class CalAtomInfo;
 class Parameter
 {
   public:
@@ -32,8 +33,12 @@ class Parameter
     void set_start_time(const std::time_t& start_time);
 
   private:
-    // Only ReadInput can modify the value of Parameter.
-    friend class ModuleIO::ReadInput;
+    // Only ReadInput and CalAtomInfo can modify the value of Parameter.
+    // Do not add extra friend class here!!!
+    friend class ModuleIO::ReadInput; // ReadInput read INPUT file and give the value to Parameter
+    friend class CalAtomsInfo; // CalAtomInfo calculate the atom information from pseudopotential and give the value to
+                               // Parameter
+
     // INPUT parameters
     Input_para input;
     // System parameters

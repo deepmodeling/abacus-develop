@@ -49,6 +49,7 @@ TEST(OrbInfo,WriteOrbInfo)
 	PARAM.input.nspin = 1;
     PARAM.input.basis_type = "pw";
     PARAM.input.dft_functional = "default";
+    GlobalV::NLOCAL = 18;
     ucell->read_cell_pseudopots(pp_dir,ofs);
     ucell->cal_nwfc(ofs);
     ModuleIO::write_orb_info(ucell);

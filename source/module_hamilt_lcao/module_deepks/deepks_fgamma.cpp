@@ -104,7 +104,7 @@ void DeePKS_domain::cal_f_delta_gamma(
 
                     for(int is=0;is<dm.size();is++)
                     {
-                        if(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
+                        if(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
                         {
                             dm_pair.add_from_matrix(dm[is].data(), pv.get_row_size(), 1.0, 1);
                         }

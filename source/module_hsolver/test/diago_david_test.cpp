@@ -109,7 +109,7 @@ public:
 #endif	
 
 		
-		auto hpsi_func = [phm](std::complex<double>* hpsi_out,std::complex<double>* psi_in,
+		auto hpsi_func = [phm](std::complex<double>* psi_in,std::complex<double>* hpsi_out,
 					const int nband_in, const int nbasis_in,
                     const int band_index1, const int band_index2)
                     {

@@ -64,7 +64,7 @@ void LCAO_Deepks::cal_o_delta_k(const std::vector<std::vector<ModuleBase::Comple
                     if (mu >= 0 && nu >= 0)
                     {                
                         int iic;
-                        if(GlobalV::KS_SOLVER=="genelpa" || GlobalV::KS_SOLVER=="scalapack_gvx" || GlobalV::KS_SOLVER=="pexsi")  // save the matrix as column major format
+                        if(PARAM.inp.ks_solver=="genelpa" || PARAM.inp.ks_solver=="scalapack_gvx" || PARAM.inp.ks_solver=="pexsi")  // save the matrix as column major format
                         {
                             iic = mu + nu * pv->nrow;
                         }
