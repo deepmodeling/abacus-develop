@@ -3,7 +3,10 @@
 #include "module_base/math_integral.h"
 #include "module_base/parallel_common.h"
 #include "module_base/tool_quit.h"
-#include "module_io/orb_io.h"
+
+// FIXME: should update with pyabacus
+// #include "module_io/orb_io.h"
+
 #include "projgen.h"
 
 #include <fstream>
@@ -270,6 +273,7 @@ void AtomicRadials::read_abacus_orb(std::ifstream& ifs, std::ofstream* ptr_log, 
     delete[] rgrid;
 }
 
+// FIXME: should update with pyabacus
 // void AtomicRadials::read_abacus_orb(std::ifstream& ifs, std::ofstream* ptr_log, const int rank)
 // {
 //     /*
