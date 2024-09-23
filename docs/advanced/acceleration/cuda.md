@@ -31,7 +31,7 @@ Check the [Advanced Installation Options](https://abacus-rtd.readthedocs.io/en/l
 
 Setting both USE_ELPA and USE_CUDA to ON does not automatically enable ELPA to run on GPUs. ELPA support for GPUs needs to be enabled when ELPA is compiled. [enable GPU support](https://github.com/marekandreas/elpa/blob/master/documentation/INSTALL.md).
 
-The ABACUS program will automatically determine whether the current ELPA supports GPU based on the elpa/elpa_configured_options.h header file. Users can also check this header file to determine the GPU support of ELPA in their environment.
+The ABACUS program will automatically determine whether the current ELPA supports GPU based on the elpa/elpa_configured_options.h header file. Users can also check this header file to determine the GPU support of ELPA in their environment. ELPA introduced a new API elpa_setup_gpu in version 2023.11.001. So if you want to enable ELPA GPU in ABACUS, the ELPA version must be greater than or equal to 2023.11.001.
 
 ## Run with the GPU support by editing the INPUT script:
 
