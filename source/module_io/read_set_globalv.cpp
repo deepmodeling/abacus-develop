@@ -39,12 +39,16 @@ void ReadInput::set_globalv(Parameter& para)
 
             if (para.inp.read_file_dir == "auto")
             {
-                para.input.stru_file = para.sys.global_stru_dir + "STRU_MD_" + std::to_string(istep);
+                para.globalv.global_in_stru = para.sys.global_stru_dir + "STRU_MD_" + std::to_string(istep);
             }
             else
             {
-                para.input.stru_file = para.inp.read_file_dir + "STRU_MD_" + std::to_string(istep);
+                para.globalv.global_in_stru = para.inp.read_file_dir + "STRU_MD_" + std::to_string(istep);
             }
+        }
+        else
+        {
+            para.globalv.global_in_stru = para.inp.stru_file;
         }
 
         /// caculate the gamma_only_pw and gamma_only_local

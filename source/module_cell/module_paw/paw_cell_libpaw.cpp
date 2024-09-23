@@ -224,7 +224,7 @@ void Paw_Cell::set_libpaw_files()
     filename_list = new char[ntypat*264];
     if(GlobalV::MY_RANK == 0)
     {
-        std::ifstream ifa(PARAM.inp.stru_file.c_str(), std::ios::in);
+        std::ifstream ifa(PARAM.globalv.global_in_stru.c_str(), std::ios::in);
         if (!ifa)
         {
             ModuleBase::WARNING_QUIT("set_libpaw_files", "can not open stru file");

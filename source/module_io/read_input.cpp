@@ -318,7 +318,7 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
     // 3) count the number of atom types from STRU file
     if (this->check_ntype_flag)
     {
-        check_ntype(param.input.stru_file, param.input.ntype);
+        check_ntype(param.globalv.global_in_stru, param.input.ntype);
     }
 
     // 4) check the value of the parameters
