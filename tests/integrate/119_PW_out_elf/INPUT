@@ -8,7 +8,7 @@ symmetry		1
 pseudo_dir	../../PP_ORB
 
 #Parameters (2.Iteration)
-ecutwfc			20
+ecutwfc			5
 scf_thr				1e-9
 scf_nmax			100
 

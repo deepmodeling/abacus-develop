@@ -10,7 +10,7 @@ pseudo_rcut 16
 nspin        1
 
 #Parameters (2.Iteration)
-ecutwfc		20
+ecutwfc		5
 scf_nmax	50
 
 #OFDFT
