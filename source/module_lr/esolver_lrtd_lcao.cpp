@@ -236,7 +236,6 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
     this->pelec = new elecstate::ElecStateLCAO<T>();
 
     // necessary steps in ESolver_KS::before_all_runners : symmetry and k-points
-    ucell.cal_nelec(GlobalV::nelec);
     if (ModuleSymmetry::Symmetry::symm_flag == 1)
     {
         GlobalC::ucell.symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running);
@@ -298,7 +297,8 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
 
     // search adjacent atoms and init Gint
     std::cout << "ucell.infoNL.get_rcutmax_Beta(): " << GlobalC::ucell.infoNL.get_rcutmax_Beta() << std::endl;
-    GlobalV::SEARCH_RADIUS = atom_arrange::set_sr_NL(GlobalV::ofs_running,
+    double search_radius = -1.0;
+    search_radius = atom_arrange::set_sr_NL(GlobalV::ofs_running,
         PARAM.inp.out_level,
         orb.get_rcutmax_Phi(),
         GlobalC::ucell.infoNL.get_rcutmax_Beta(),
@@ -307,7 +307,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
         GlobalV::ofs_running,
         GlobalC::GridD,
         this->ucell,
-        GlobalV::SEARCH_RADIUS,
+        search_radius,
         PARAM.inp.test_atom_input);
     this->set_gint();
     this->gint_->gridt = &this->gt_;
@@ -557,7 +557,6 @@ template<typename T, typename TR>
 void LR::ESolver_LR<T, TR>::read_ks_wfc()
 {
     assert(this->psi_ks != nullptr);
-    GlobalV::NB2D = 1;
     this->pelec->ekb.create(this->kv.get_nks(), this->nbands);
     this->pelec->wg.create(this->kv.get_nks(), this->nbands);
 

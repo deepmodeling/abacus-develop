@@ -1,5 +1,6 @@
 #include "cal_dm_psi.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/blas_connector.h"
 #include "module_base/scalapack_connector.h"
 #include "module_base/timer.h"
@@ -123,7 +124,7 @@ void cal_dm_psi(const Parallel_Orbitals* ParaV,
         // C++: dm(iw1,iw2) = wfc(ib,iw1).T * wg_wfc(ib,iw2)
 #ifdef __MPI
 
-        if (GlobalV::KS_SOLVER == "cg_in_lcao")
+        if (PARAM.inp.ks_solver == "cg_in_lcao")
         {
             psiMulPsi(wg_wfc, wfc, dmk_pointer);
         } else 

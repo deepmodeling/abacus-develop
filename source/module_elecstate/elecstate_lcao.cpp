@@ -72,9 +72,9 @@ void ElecStateLCAO<std::complex<double>>::psiToRho(const psi::Psi<std::complex<d
         // now
         //    psi::Psi<std::complex<double>> dm_k_2d();
 
-        if (GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "elpa" || GlobalV::KS_SOLVER == "scalapack_gvx" || GlobalV::KS_SOLVER == "lapack"
-            || GlobalV::KS_SOLVER == "cusolver" || GlobalV::KS_SOLVER == "cusolvermp"
-            || GlobalV::KS_SOLVER == "cg_in_lcao") // Peize Lin test 2019-05-15
+        if (PARAM.inp.ks_solver == "genelpa" || PARAM.inp.ks_solver == "elpa" || PARAM.inp.ks_solver == "scalapack_gvx" || PARAM.inp.ks_solver == "lapack"
+            || PARAM.inp.ks_solver == "cusolver" || PARAM.inp.ks_solver == "cusolvermp"
+            || PARAM.inp.ks_solver == "cg_in_lcao") // Peize Lin test 2019-05-15
         {
             elecstate::cal_dm_psi(this->DM->get_paraV_pointer(),
                                   this->wg,
@@ -120,8 +120,8 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
     this->calculate_weights();
     this->calEBand();
 
-    if (GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "elpa" || GlobalV::KS_SOLVER == "scalapack_gvx" || GlobalV::KS_SOLVER == "lapack"
-        || GlobalV::KS_SOLVER == "cusolver" || GlobalV::KS_SOLVER == "cusolvermp" || GlobalV::KS_SOLVER == "cg_in_lcao")
+    if (PARAM.inp.ks_solver == "genelpa" || PARAM.inp.ks_solver == "elpa" || PARAM.inp.ks_solver == "scalapack_gvx" || PARAM.inp.ks_solver == "lapack"
+        || PARAM.inp.ks_solver == "cusolver" || PARAM.inp.ks_solver == "cusolvermp" || PARAM.inp.ks_solver == "cg_in_lcao")
     {
         ModuleBase::timer::tick("ElecStateLCAO", "cal_dm_2d");
 
