@@ -1,5 +1,6 @@
 #include "module_base/grid/delley.h"
 
+#include <functional>
 #include <algorithm>
 #include <cmath>
 #include <cassert>
@@ -348,19 +349,19 @@ void _get(const Table* tab, double* grid, double* weight) {
 } // end of anonymous namespace
 
 
-int Grid::Delley::ngrid(int& lmax) {
+int Grid::Angular::Delley::ngrid(int& lmax) {
     auto tab = _find_table(lmax);
     return tab ? tab->ngrid_ : -1;
 }
 
 
-int Grid::Delley::get(int& lmax, double* grid, double* weight) {
+int Grid::Angular::Delley::get(int& lmax, double* grid, double* weight) {
     auto tab = _find_table(lmax);
     return tab ? _get(tab, grid, weight), 0 : -1;
 }
 
 
-int Grid::Delley::get(
+int Grid::Angular::Delley::get(
     int& lmax,
     std::vector<double>& grid,
     std::vector<double>& weight

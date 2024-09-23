@@ -7,7 +7,7 @@
 #include <mpi.h>
 #endif
 
-using namespace Grid;
+using namespace Grid::Angular;
 
 // mock the function to prevent unnecessary dependency
 namespace ModuleBase {

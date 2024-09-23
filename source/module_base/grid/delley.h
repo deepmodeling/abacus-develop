@@ -1,8 +1,7 @@
-#ifndef GRID_DELLEY_H
-#define GRID_DELLEY_H
+#ifndef GRID_ANGULAR_DELLEY_H
+#define GRID_ANGULAR_DELLEY_H
 
 #include <vector>
-#include <functional>
 
 /**
  * @brief Delley's grid for quadrature on the unit sphere.
@@ -13,6 +12,7 @@
  *
  */
 namespace Grid {
+namespace Angular {
 namespace Delley {
 
 /**
@@ -52,6 +52,7 @@ int get(int& lmax, double* grid, double* weight);
 int get(int& lmax, std::vector<double>& grid, std::vector<double>& weight);
 
 } // end of namespace Delley
+} // end of namespace Angular
 } // end of namespace Grid
 
 #endif
