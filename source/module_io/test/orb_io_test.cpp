@@ -111,7 +111,7 @@ TEST_F(OrbIOTest, WriteAbacusOrb)
 #ifdef __MPI
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
-    // remove(ftmp.c_str());
+    remove(ftmp.c_str());
 }
 
 int main(int argc, char** argv)
