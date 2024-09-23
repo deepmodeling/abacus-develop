@@ -128,8 +128,9 @@ class Setcell
     {
         PARAM.sys.global_out_dir = "./";
         PARAM.sys.global_readin_dir = "./";
-        GlobalV::SEARCH_RADIUS = 8.5 * ModuleBase::ANGSTROM_AU;
+        PARAM.input.search_radius = 8.5 * ModuleBase::ANGSTROM_AU;
         PARAM.input.cal_stress = true;
+
 
         input.mdp.dump_virial = true;
         input.mdp.dump_force = true;

@@ -55,7 +55,7 @@ double get_ucell_tot_magnetization_nc_z()
 
 std::string get_ks_solver_type()
 {
-    return GlobalV::KS_SOLVER;
+    return PARAM.inp.ks_solver;
 }
 
 } // namespace elecstate

@@ -107,7 +107,7 @@ void LCAO_Deepks::cal_gdmx(const std::vector<double>& dm,
 
                     hamilt::AtomPair<double> dm_pair(ibt1, ibt2, 0, 0, 0, pv);
                     dm_pair.allocate(nullptr, 1);
-                    if(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
+                    if(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
                     {
                         dm_pair.add_from_matrix(dm.data(), pv->get_row_size(), 1.0, 1);
                     }

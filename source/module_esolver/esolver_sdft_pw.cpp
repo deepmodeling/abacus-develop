@@ -78,7 +78,7 @@ void ESolver_SDFT_PW::before_all_runners(const Input_para& inp, UnitCell& ucell)
 
     // 6) prepare some parameters for electronic wave functions initilization
     this->p_wf_init = new psi::WFInit<std::complex<double>>(PARAM.inp.init_wfc,
-                                                            GlobalV::KS_SOLVER,
+                                                            PARAM.inp.ks_solver,
                                                             PARAM.inp.basis_type,
                                                             PARAM.inp.psi_initializer,
                                                             &this->wf,

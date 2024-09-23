@@ -83,9 +83,6 @@ class ElecState
     //for NSPIN=4, it will record total number, magnetization for x, y, z direction  
     std::vector<double> nelec_spin;
 
-    //calculate nbands and 
-    void cal_nbands();
-
     virtual void print_psi(const psi::Psi<double>& psi_in, const int istep = -1)
     {
         return;

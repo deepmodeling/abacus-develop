@@ -96,7 +96,8 @@ void DeePKS_domain::cal_f_delta_k(
 
                     auto row_indexes = pv.get_indexes_row(ibt1);
                     auto col_indexes = pv.get_indexes_col(ibt2);
-                    if(row_indexes.size() * col_indexes.size() == 0) continue;
+                    if(row_indexes.size() * col_indexes.size() == 0) { continue;
+}
 
                     hamilt::AtomPair<double> dm_pair(ibt1, ibt2, (dR2-dR1).x, (dR2-dR1).y, (dR2-dR1).z, &pv);
                     dm_pair.allocate(nullptr, 1);
@@ -106,7 +107,7 @@ void DeePKS_domain::cal_f_delta_k(
                         double sinp, cosp;
                         ModuleBase::libm::sincos(arg, &sinp, &cosp);
                         const std::complex<double> kphase = std::complex<double>(cosp, sinp);
-                        if(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
+                        if(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
                         {
                             dm_pair.add_from_matrix(dm[ik].data(), pv.get_row_size(), kphase, 1);
                         }
@@ -266,7 +267,8 @@ void DeePKS_domain::cal_f_delta_k(
 		{
 			for(int j=0;j<3;++j)
 			{
-				if(j>i) svnl_dalpha(j,i) = svnl_dalpha(i,j);
+				if(j>i) { svnl_dalpha(j,i) = svnl_dalpha(i,j);
+}
 				svnl_dalpha(i,j) *= weight ;
 			}
 		}

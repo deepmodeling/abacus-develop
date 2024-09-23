@@ -64,7 +64,7 @@ void LCAO_Deepks::cal_e_delta_band_k(const std::vector<std::vector<std::complex<
             if (mu >= 0 && nu >= 0)
             {                
                 int iic;
-                if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
+                if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
                 {
                     iic = mu + nu * pv->nrow;
                 }
