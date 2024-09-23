@@ -69,11 +69,12 @@ void write_elf(
     }
 
     // 3) calculate the enhancement factor F = (tau_KS - tau_vw) / tau_TF, and then ELF = 1 / (1 + F^2)
+    double eps = 1.0e-5; // suppress the numerical instability in LCAO
     for (int is = 0; is < nspin; ++is)
     {
         for (int ir = 0; ir < rho_basis->nrxx; ++ir)
         {
-            elf[is][ir] = (tau[is][ir] - tau_vw[is][ir]) / tau_TF[is][ir];
+            elf[is][ir] = (tau[is][ir] - tau_vw[is][ir] + eps) / tau_TF[is][ir];
             elf[is][ir] = 1. / (1. + elf[is][ir] * elf[is][ir]);
         }
     }
