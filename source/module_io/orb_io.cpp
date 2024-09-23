@@ -160,7 +160,7 @@ void ModuleIO::write_abacus_orb(std::ofstream& ofs,
         ofs << std::endl;
         ofs << "SUMMARY  END\n\n";
         ofs << std::left << std::setw(28) << "Mesh" << nr << std::endl;
-        ofs << std::left << std::setw(28) << "dr" << dr << std::endl;
+        ofs << std::left << std::setw(28) << "dr" << std::fixed << std::setprecision(2) << dr << std::endl;
 
         int ichi = 0;
         for (int l = 0; l <= lmax; l++)
@@ -179,8 +179,8 @@ void ModuleIO::write_abacus_orb(std::ofstream& ofs,
                     {
                         ofs << std::endl;
                     }
-                    ofs << std::left << std::setw(22) << std::setprecision(14) << std::scientific
-                        << std::setw(20) << radials[ichi][i];
+                    ofs << std::left << std::setw(22) << std::setprecision(14) 
+                        << std::scientific << radials[ichi][i];
                 }
                 ofs << std::endl;
                 ichi++;

@@ -14,7 +14,7 @@ class OrbIOTest : public testing::Test
     void SetUp();
     void TearDown(){};
 
-    const std::string file = "../../../../../tests/PP_ORB/Ti_gga_10au_100Ry_4s2p2d1f.orb";
+    const std::string file = "../../../../tests/PP_ORB/Ti_gga_10au_100Ry_4s2p2d1f.orb";
     const double tol = 1e-12;
 };
 
@@ -33,7 +33,7 @@ TEST_F(OrbIOTest, ReadAbacusOrb)
     int nr;
     std::vector<int> nzeta;
     std::vector<std::vector<double>> radials;
-    ModuleIO::read_abacus_orb(ifs, elem, ecut, nr, dr, nzeta, radials);
+    ModuleIO::read_abacus_orb(ifs, elem, ecut, nr, dr, nzeta, radials, GlobalV::MY_RANK);
     EXPECT_EQ(elem, "Ti");
     EXPECT_DOUBLE_EQ(ecut, 100.0);
     EXPECT_EQ(nr, 1001);
@@ -71,20 +71,24 @@ TEST_F(OrbIOTest, WriteAbacusOrb)
     int nr;
     std::vector<int> nzeta;
     std::vector<std::vector<double>> radials;
-    ModuleIO::read_abacus_orb(ifs, elem, ecut, nr, dr, nzeta, radials);
-
+    ModuleIO::read_abacus_orb(ifs, elem, ecut, nr, dr, nzeta, radials, GlobalV::MY_RANK);
+#ifdef __MPI
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
     const std::string ftmp = "tmp.orb";
-    std::ofstream ofs(ftmp);
-    ModuleIO::write_abacus_orb(ofs, elem, ecut, nr, dr, nzeta, radials);
+    std::ofstream ofs(ftmp, std::ios::out);
+    ModuleIO::write_abacus_orb(ofs, elem, ecut, nr, dr, nzeta, radials, GlobalV::MY_RANK);
     ofs.close();
-
+#ifdef __MPI
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
     std::ifstream ifs1(ftmp);
     std::string elem1;
     double ecut1, dr1;
     int nr1;
     std::vector<int> nzeta1;
     std::vector<std::vector<double>> radials1;
-    ModuleIO::read_abacus_orb(ifs1, elem1, ecut1, nr1, dr1, nzeta1, radials1);
+    ModuleIO::read_abacus_orb(ifs1, elem1, ecut1, nr1, dr1, nzeta1, radials1, GlobalV::MY_RANK);
     EXPECT_EQ(elem, elem1);
     EXPECT_DOUBLE_EQ(ecut, ecut1);
     EXPECT_EQ(nr, nr1);
@@ -104,7 +108,10 @@ TEST_F(OrbIOTest, WriteAbacusOrb)
         }
     }
     ifs1.close();
-    remove(ftmp.c_str());
+#ifdef __MPI
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
+    // remove(ftmp.c_str());
 }
 
 int main(int argc, char** argv)
