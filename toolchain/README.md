@@ -1,6 +1,6 @@
 # The ABACUS Toolchain
 
-Version 2024.2
+Version 2024.3
 
 ## Author
 
@@ -108,13 +108,13 @@ The needed dependencies version default:
 
 - `cmake` 3.30.0
 - `gcc` 13.2.0 (which will always NOT be installed, But use system)
-- `OpenMPI` 5.0.5
+- `OpenMPI` 4.1.6 (5.0.5 can be used but have some problem in OpenMP parallel computation in ELPA)
 - `MPICH` 4.2.2
-- `OpenBLAS` 0.3.27 (Intel toolchain need `get_vars.sh` tool from it)
-- `ScaLAPACK` 2.2.1
+- `OpenBLAS` 0.3.28 (Intel toolchain need `get_vars.sh` tool from it)
+- `ScaLAPACK` 2.2.1 (a developing version)
 - `FFTW` 3.3.10
 - `LibXC` 6.2.2
-- `ELPA` 2024.03.001
+- `ELPA` 2024.05.001
 - `CEREAL` 1.3.2
 - `RapidJSON` 1.1.0
 And Intel-oneAPI need user or server manager to manually install from Intel.
