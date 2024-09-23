@@ -86,7 +86,7 @@ void psi_initializer_nao<T, Device>::read_external_orbs(std::string* orbital_fil
                                     << this->orbital_files_[it] << std::endl;
         }
         std::string elem; // garbage value, will discard
-        double ecut; // garbage value, will discard
+        double ecut;      // garbage value, will discard
         int nr;
         double dr;
         std::vector<int> nzeta;
@@ -275,6 +275,7 @@ void psi_initializer_nao<T, Device>::proj_ao_onkG(const int ik)
     std::vector<std::complex<double>> aux(npw);
     std::vector<double> qnorm(npw);
     std::vector<ModuleBase::Vector3<double>> q(npw);
+    
     #pragma omp parallel for schedule(static, 4096 / sizeof(double))
     for (int ig = 0; ig < npw; ig++)
     {

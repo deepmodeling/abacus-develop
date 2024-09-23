@@ -196,7 +196,7 @@ void psi_initializer<T, Device>::random_t(T* psi, const int iw_start, const int 
 #endif
                 }
                 // then for each g-component, initialize the wavefunction value
-                #pragma omp parallel for schedule(static, 4096/sizeof(T))
+                // #pragma omp parallel for schedule(static, 4096/sizeof(T))
                 for (int ig = 0; ig < ng; ig++)
                 {
                     // get the correct value of "rr" and "arg" by indexing map "getigl2isz"
