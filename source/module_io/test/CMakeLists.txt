@@ -155,6 +155,7 @@ AddTest(
   ../../module_cell/parallel_kpoints.cpp
   ../../module_cell/test/support/mock_unitcell.cpp
   ../../module_hamilt_lcao/hamilt_lcaodft/center2_orb.cpp
+  ../orb_io.cpp
 )
 endif()
 
@@ -185,7 +186,10 @@ add_test(NAME read_wfc_to_rho_parallel
 AddTest(
   TARGET numerical_basis_test
   LIBS parameter  base ${math_libs} device numerical_atomic_orbitals container orb 
-  SOURCES numerical_basis_test.cpp ../numerical_basis_jyjy.cpp ../../module_hamilt_lcao/hamilt_lcaodft/center2_orb.cpp
+  SOURCES numerical_basis_test.cpp 
+          ../numerical_basis_jyjy.cpp 
+          ../../module_hamilt_lcao/hamilt_lcaodft/center2_orb.cpp
+          ../orb_io.cpp
 )
 
 
@@ -196,6 +200,7 @@ AddTest(
   ../../module_cell/cell_index.cpp
   ../../module_basis/module_ao/parallel_2d.cpp
   ../../module_basis/module_ao/parallel_orbitals.cpp
+  ../orb_io.cpp
 )
 
 if(ENABLE_LCAO)
@@ -220,5 +225,16 @@ AddTest(
 
 add_test(NAME cif_io_test_parallel
       COMMAND mpirun -np 4 ./cif_io_test
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+AddTest(
+  TARGET orb_io_test
+  LIBS parameter base ${math_libs} device
+  SOURCES orb_io_test.cpp ../orb_io.cpp
+)
+
+add_test(NAME orb_io_test_parallel
+      COMMAND mpirun -np 4 ./orb_io_test
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )

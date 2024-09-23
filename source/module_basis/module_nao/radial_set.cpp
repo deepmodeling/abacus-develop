@@ -6,6 +6,7 @@
 #include <fstream>
 
 #include "module_base/spherical_bessel_transformer.h"
+#include "module_io/orb_io.h"
 
 RadialSet::~RadialSet()
 {
@@ -193,62 +194,26 @@ void RadialSet::cleanup()
     index_map_ = nullptr;
 }
 
-void RadialSet::write_abacus_orb(const std::string& file_name, const int rank) const
+void RadialSet::write_abacus_orb(const std::string& forb, const int rank) const
 {
-    std::ofstream file_to;
-    file_to.open(file_name, std::ios::out);
+    std::ofstream ofs;
+    ofs.open(forb, std::ios::out);
 
-    std::vector<std::string> sublayers = {"S", "P", "D", "F", "G", "H", "I", "J", "K"};
-    if(file_to.good())
+    const double dr = 0.01;
+    const int nr = static_cast<int>(rcut_max_ / dr) + 1;
+    std::vector<int> nzeta(lmax_ + 1);
+    std::copy(nzeta_, nzeta_ + lmax_ + 1, nzeta.begin());
+    std::vector<std::vector<double>> radials(nchi_, std::vector<double>(nr, 0.0));
+    int ichi = 0;
+    for (int l = 0; l <= lmax_; l++)
     {
-        for(int i = 0; i < 75; ++i)
+        for (int izeta = 0; izeta < nzeta[l]; izeta++)
         {
-            file_to << "-";
-        }
-        file_to << std::endl;
-        // left aligned
-        file_to << std::left << std::setw(28) << "Element" << symbol_ << std::endl;
-        file_to << std::left << std::setw(28) << "Energy Cutoff(Ry)" << std::to_string(int(100.0)) << std::endl;
-        // rcut .1f, not scientific
-        file_to << std::left << std::setw(28) << "Radius Cutoff(a.u.)" 
-                << std::fixed << std::setprecision(1) << rcut_max_ << std::endl;
-        file_to << std::left << std::setw(28) << "Lmax" << lmax_ << std::endl;
-        for(int l = 0; l <= lmax_; ++l)
-        {
-            std::string title = "Number of " + sublayers[l] + "orbital-->";
-            file_to << std::left << std::setw(28) << title << nzeta_[l] << std::endl;
-        }
-        for(int i = 0; i < 75; ++i)
-        {
-            file_to << "-";
-        }
-        file_to << std::endl;
-        file_to << "SUMMARY  END\n\n";
-        file_to << std::left << std::setw(28) << "Mesh" << std::setprecision(0) << int(rcut_max_/0.01) + 1 << std::endl;
-        file_to << std::left << std::setw(28) << "dr" << std::setprecision(2) << 0.01 << std::endl;
-
-        for(int l = 0; l <= lmax_; l++)
-        {
-            for(int izeta = 0; izeta < nzeta_[l]; izeta++)
-            {
-                file_to << std::right << std::setw(20) << "Type"
-                        << std::right << std::setw(20) << "L"
-                        << std::right << std::setw(20) << "N" << std::endl;
-                file_to << std::right << std::setw(20) << std::to_string(0)
-                        << std::right << std::setw(20) << std::to_string(l)
-                        << std::right << std::setw(20) << std::to_string(izeta);
-                for(int i = 0; i < int(rcut_max_/0.01) + 1; i++)
-                {
-                    if(i % 4 == 0)
-                    {
-                        file_to << std::endl;
-                    }
-                    file_to << std::left << std::setw(22) << std::setprecision(14) << std::scientific 
-                            << chi_[index(l, izeta)].rvalue()[i];
-                }
-                file_to << std::endl;
-            }
+            std::copy(chi_[index(l, izeta)].rvalue(), chi_[index(l, izeta)].rvalue() + nr, radials[ichi].begin());
+            ichi++;
         }
     }
-    file_to.close();
+
+    ModuleIO::write_abacus_orb(ofs, symbol_, 100, nr, dr, nzeta, radials, rank);
+    ofs.close();
 }

@@ -118,3 +118,74 @@ void ModuleIO::read_abacus_orb(std::ifstream& ifs,
     }
 }
 
+void ModuleIO::write_abacus_orb(std::ofstream& ofs,
+                                const std::string& elem,
+                                const double& ecut,
+                                const int nr,
+                                const double dr,
+                                const std::vector<int>& nzeta,
+                                const std::vector<std::vector<double>>& radials,
+                                const int rank)
+{
+    const std::vector<std::string> spec = {"S", "P", "D", "F", "G", "H", "I", "J", "K"};
+    if (!ofs.good())
+    {
+        ModuleBase::WARNING_QUIT("AtomicRadials::write_abacus_orb", "Couldn't open orbital file.");
+    }
+    if (rank == 0)
+    {
+        const int lmax = nzeta.size() - 1;
+
+        for (int i = 0; i < 75; ++i)
+        {
+            ofs << "-";
+        }
+        ofs << std::endl;
+        // left aligned
+        ofs << std::left << std::setw(28) << "Element" << elem << std::endl;
+        ofs << std::left << std::setw(28) << "Energy Cutoff(Ry)" << ecut << std::endl;
+        // rcut .1f, not scientific
+        ofs << std::left << std::setw(28) << "Radius Cutoff(a.u.)" 
+            << std::fixed << std::setprecision(1) << dr * (nr - 1) << std::endl;
+        ofs << std::left << std::setw(28) << "Lmax" << lmax << std::endl;
+        for (int l = 0; l != nzeta.size(); ++l)
+        {
+            std::string title = "Number of " + spec[l] + "orbital-->";
+            ofs << std::left << std::setw(28) << title << nzeta[l] << std::endl;
+        }
+        for (int i = 0; i < 75; ++i)
+        {
+            ofs << "-";
+        }
+        ofs << std::endl;
+        ofs << "SUMMARY  END\n\n";
+        ofs << std::left << std::setw(28) << "Mesh" << nr << std::endl;
+        ofs << std::left << std::setw(28) << "dr" << dr << std::endl;
+
+        int ichi = 0;
+        for (int l = 0; l <= lmax; l++)
+        {
+            for (int izeta = 0; izeta < nzeta[l]; izeta++)
+            {
+                ofs << std::right << std::setw(20) << "Type"
+                    << std::right << std::setw(20) << "L"
+                    << std::right << std::setw(20) << "N" << std::endl;
+                ofs << std::right << std::setw(20) << 0
+                    << std::right << std::setw(20) << l
+                    << std::right << std::setw(20) << izeta;
+                for (int i = 0; i < nr; i++)
+                {
+                    if (i % 4 == 0)
+                    {
+                        ofs << std::endl;
+                    }
+                    ofs << std::left << std::setw(22) << std::setprecision(14) << std::scientific
+                        << std::setw(20) << radials[ichi][i];
+                }
+                ofs << std::endl;
+                ichi++;
+            }
+        }
+    }
+    // ofs.close(); // like read_abacus_orb, who opens it, who closes it
+}
