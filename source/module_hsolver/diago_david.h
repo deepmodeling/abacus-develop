@@ -30,8 +30,6 @@ class DiagoDavid : public DiagH<T, Device>
 
     // declare type of matrix-blockvector functions.
     // the function type is defined as a std::function object.
-    // notice that hpsi and spsi functions require
-    // !different! order of input and output blockvectors.
     /**
      * @brief A function type representing the HX function.
      *
@@ -39,12 +37,12 @@ class DiagoDavid : public DiagH<T, Device>
      * For eigenvalue problem HX = λX or generalized eigenvalue problem HX = λSX,
      * this function computes the product of the Hamiltonian matrix H and a blockvector X.
      *
-     * @param[out] X  Pointer to input blockvector of type `T*`.
-     * @param[in]  HX  Pointer to output blockvector of type `T*`.
-     * @param[in]  neig  Number of eigebpairs required.
-     * @param[in]  dim  Dimension of matrix.
-     * @param[in]  id_start  Start index of blockvector.
-     * @param[in]  id_end  End index of blockvector.
+     * @param[out] X      Pointer to input blockvector of type `T*`.
+     * @param[in]  HX     Pointer to output blockvector of type `T*`.
+     * @param[in]  nvec   Number of eigebpairs, i.e. number of vectors in a block.
+     * @param[in]  dim    Dimension of matrix.
+     * @param[in]  id_start Start index of blockvector.
+     * @param[in]  id_end   End index of blockvector.
      */
     using HPsiFunc = std::function<void(T*, T*, const int, const int, const int, const int)>;
 
@@ -60,6 +58,8 @@ class DiagoDavid : public DiagH<T, Device>
      * @param[in] nrow    Dimension of SX: nbands * nrow.
      * @param[in] npw     Number of plane waves.
      * @param[in] nbands  Number of bands.
+     * 
+     * @note called as spsi(in, out, dim, dim, 1)
      */
     using SPsiFunc = std::function<void(T*, T*, const int, const int, const int)>;
 
