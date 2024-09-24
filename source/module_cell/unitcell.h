@@ -307,10 +307,6 @@ class UnitCell {
                const bool& init_vel_in,
                const std::string& fixed_axes_in);
 
-    /// @brief calculate the total number of electrons in system
-    /// (GlobalV::nelec)
-    void cal_nelec(double& nelec);
-
     /// @brief check consistency between two atom labels from STRU and pseudo or
     /// orb file
     void compare_atom_labels(std::string label1, std::string label2);
@@ -333,5 +329,24 @@ class UnitCell {
     /// l:nchi vector
     std::vector<std::vector<int>> get_lnchiCounts() const;
 };
+
+/**
+ * @brief calculate the total number of electrons in system
+ *
+ * @param atoms [in] atom pointer
+ * @param ntype [in] number of atom types
+ * @param nelec [out] total number of electrons
+ */
+void cal_nelec(const Atom* atoms, const int& ntype, double& nelec);
+
+/**
+ * @brief Calculate the number of bands.
+ *
+ * @param nelec [in] total number of electrons
+ * @param nlocal [in] total number of local basis
+ * @param nelec_spin [in] number of electrons for each spin
+ * @param nbands  [out] number of bands
+ */
+void cal_nbands(const int& nelec, const int& nlocal, const std::vector<double>& nelec_spin, int& nbands);
 
 #endif // unitcell class

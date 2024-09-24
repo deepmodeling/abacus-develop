@@ -8,10 +8,10 @@
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 
-openmpi_ver="5.0.5"
-openmpi_sha256="6588d57c0a4bd299a24103f4e196051b29e8b55fbda49e11d5b3d32030a32776"
-# openmpi_ver="4.1.6"
-# openmpi_sha256="f740994485516deb63b5311af122c265179f5328a0d857a567b85db00b11e415"
+#openmpi_ver="5.0.5"
+#openmpi_sha256="6588d57c0a4bd299a24103f4e196051b29e8b55fbda49e11d5b3d32030a32776"
+openmpi_ver="4.1.6"
+openmpi_sha256="f740994485516deb63b5311af122c265179f5328a0d857a567b85db00b11e415"
 openmpi_pkg="openmpi-${openmpi_ver}.tar.bz2"
 
 source "${SCRIPT_DIR}"/common_vars.sh
@@ -64,6 +64,7 @@ case "${with_openmpi}" in
     # OpenMPI 5.0 only supports PMIx
     # PMI support is required for Slurm, but not for other schedulers
     # default not use
+    # for OpenMPI 4.1 with pmi slurm, we can open this setting manually
     #   if [ $(command -v srun) ]; then
     #     echo "Slurm installation found. OpenMPI will be configured with --with-pmi."
     #     EXTRA_CONFIGURE_FLAGS="--with-pmi"

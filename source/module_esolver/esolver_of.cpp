@@ -70,7 +70,6 @@ void ESolver_OF::before_all_runners(const Input_para& inp, UnitCell& ucell)
     this->max_iter_ = inp.scf_nmax;
     this->dV_ = ucell.omega / this->pw_rho->nxyz;
 
-    ucell.cal_nelec(GlobalV::nelec);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");
 
     XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
