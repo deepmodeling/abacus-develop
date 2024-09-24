@@ -16,7 +16,10 @@ AddTest(
 AddTest(
   TARGET lattice_change_cg_test
   LIBS parameter ${math_libs} base device 
-  SOURCES lattice_change_cg_test.cpp ../lattice_change_cg.cpp ../lattice_change_basic.cpp
+  SOURCES lattice_change_cg_test.cpp 
+          ../lattice_change_cg.cpp 
+          ../lattice_change_basic.cpp
+          ../../../module_io/orb_io.cpp
 )
 
 AddTest(
@@ -40,13 +43,20 @@ AddTest(
 AddTest(
   TARGET ions_move_bfgs_test
   LIBS parameter ${math_libs} base device 
-  SOURCES ions_move_bfgs_test.cpp ../ions_move_bfgs.cpp ../ions_move_basic.cpp ../bfgs_basic.cpp
+  SOURCES ions_move_bfgs_test.cpp 
+          ../ions_move_bfgs.cpp 
+          ../ions_move_basic.cpp 
+          ../bfgs_basic.cpp
+          ../../../module_io/orb_io.cpp
 )
 
 AddTest(
   TARGET ions_move_cg_test
   LIBS parameter ${math_libs} base device 
-  SOURCES ions_move_cg_test.cpp ../ions_move_cg.cpp ../ions_move_basic.cpp
+  SOURCES ions_move_cg_test.cpp 
+          ../ions_move_cg.cpp 
+          ../ions_move_basic.cpp
+          ../../../module_io/orb_io.cpp
 )
 
 AddTest(
