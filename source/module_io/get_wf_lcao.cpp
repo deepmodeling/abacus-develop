@@ -475,7 +475,7 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
                         ef_tmp,
                         &(GlobalC::ucell));
 
-                    // 输出虚部
+                    // Output imaginary part
                     std::stringstream ss_imag;
                     ss_imag << global_out_dir << "BAND" << ib + 1 << "_k_" << ik + 1 << "_s_" << ispin + 1
                             << "_IMAG.cube";
