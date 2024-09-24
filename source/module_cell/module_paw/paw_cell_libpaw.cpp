@@ -204,9 +204,11 @@ void Paw_Cell::mix_dij(const int iat, double*dij_paw)
     const int size_dij = nproj * (nproj+1) / 2;
     for(int i = 0; i < size_dij * nspden; i ++)
     {  
-        if(!first_iter) dij_paw[i] = dij_save[iat][i] * (1.0 - mixing_beta) + dij_paw[i] * mixing_beta;
+        if(!first_iter) { dij_paw[i] = dij_save[iat][i] * (1.0 - mixing_beta) + dij_paw[i] * mixing_beta;
+}
 
-        if(count > 30) dij_paw[i] = dij_save[iat][i];
+        if(count > 30) { dij_paw[i] = dij_save[iat][i];
+}
 
         dij_save[iat][i] = dij_paw[i];
     }
@@ -224,7 +226,7 @@ void Paw_Cell::set_libpaw_files()
     filename_list = new char[ntypat*264];
     if(GlobalV::MY_RANK == 0)
     {
-        std::ifstream ifa(PARAM.inp.stru_file.c_str(), std::ios::in);
+        std::ifstream ifa(PARAM.globalv.global_in_stru.c_str(), std::ios::in);
         if (!ifa)
         {
             ModuleBase::WARNING_QUIT("set_libpaw_files", "can not open stru file");
@@ -234,7 +236,8 @@ void Paw_Cell::set_libpaw_files()
         while(!ifa.eof())
         {
             getline(ifa,line);
-            if (line.find("PAW_FILES") != std::string::npos) break;
+            if (line.find("PAW_FILES") != std::string::npos) { break;
+}
         }
 
         for(int i = 0; i < ntypat*264; i++)
@@ -681,7 +684,8 @@ void Paw_Cell::set_sij()
         double* sij = new double[nproj * nproj];
 
 #ifdef __MPI
-        if(GlobalV::RANK_IN_POOL == 0) extract_sij(it,size_sij,sij_libpaw);
+        if(GlobalV::RANK_IN_POOL == 0) { extract_sij(it,size_sij,sij_libpaw);
+}
         Parallel_Common::bcast_double(sij_libpaw,size_sij*nspden);
 #else
         extract_sij(it,size_sij,sij_libpaw);

@@ -214,7 +214,7 @@ TEST(AbacusJsonTest, GeneralInfo)
     PARAM.input.device = "cpu";
     PARAM.input.pseudo_dir = "./abacus/test/pseudo_dir";
     PARAM.input.orbital_dir = "./abacus/test/orbital_dir";
-    PARAM.input.stru_file = "./abacus/test/stru_file";
+    PARAM.sys.global_in_stru = "./abacus/test/stru_file";
     PARAM.input.kpoint_file = "./abacus/test/kpoint_file";
     // output the json file
     Json::AbacusJson::doc.Parse("{}");

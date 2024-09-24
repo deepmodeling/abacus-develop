@@ -167,11 +167,13 @@ TEST(CifParserTest, ReadSimpleTest)
     ofs.close();
 #ifdef __MPI
     }
+    MPI_Barrier(MPI_COMM_WORLD); // make sure the file is written
 #endif
     std::map<std::string, std::vector<std::string>> data;
     ModuleIO::CifParser::read("mp-2516584.cif", data);
     // delete the file
 #ifdef __MPI
+    MPI_Barrier(MPI_COMM_WORLD); // make sure the file is already read
     if (rank == 0)
     {
 #endif
@@ -241,11 +243,13 @@ TEST(CifParserTest, ReadMediumTest)
     ofs.close();
 #ifdef __MPI
     }
+    MPI_Barrier(MPI_COMM_WORLD); // make sure the file is written
 #endif
     std::map<std::string, std::vector<std::string>> data;
     ModuleIO::CifParser::read("cod-1000065.cif", data);
     // delete the file
 #ifdef __MPI
+    MPI_Barrier(MPI_COMM_WORLD); // make sure the file is already read
     if (rank == 0)
     {
 #endif
@@ -316,7 +320,6 @@ TEST(CifParserTest, WriteTest)
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 #endif
     const std::string fcif = "test.cif";
-    std::ofstream ofs(fcif);
     const std::vector<double> abc_angles = {2.46637620, 2.46637620, 24.84784531, 90.0, 90.0, 120.0};
     const int natom = 4;
     const std::vector<std::string> atom_site_labels = {"C", "C", "C", "C"};
@@ -325,16 +328,21 @@ TEST(CifParserTest, WriteTest)
                                                  0.333333, 0.666667, 0.75, 
                                                  0.666667, 0.333333, 0.25};
     ModuleIO::CifParser::write(fcif, 
-                                abc_angles.data(), 
-                                natom, 
-                                atom_site_labels.data(), 
-                                atom_site_fract.data(),
-                                "# Generated during unittest of function ModuleIO::CifParser::write",
-                                "data_test");
+                               abc_angles.data(), 
+                               natom, 
+                               atom_site_labels.data(), 
+                               atom_site_fract.data(),
+                               "# Generated during unittest of function ModuleIO::CifParser::write",
+                               "data_test",
+                               rank);
+#ifdef __MPI
+    MPI_Barrier(MPI_COMM_WORLD); // make sure the file is written
+#endif
     std::map<std::string, std::vector<std::string>> data;
-    ModuleIO::CifParser::read(fcif, data);
+    ModuleIO::CifParser::read(fcif, data, rank);
     // delete the file
 #ifdef __MPI
+    MPI_Barrier(MPI_COMM_WORLD); // make sure the file is already read
     if (rank == 0)
     {
 #endif
