@@ -47,8 +47,9 @@ double KEDF_LKT::get_energy(const double* const* prho, ModulePW::PW_Basis* pw_rh
     Parallel_Reduce::reduce_all(this->lkt_energy);
 
     delete[] as;
-    for (int i = 0; i < 3; ++i)
+    for (int i = 0; i < 3; ++i) {
         delete[] nabla_rho[i];
+}
     delete[] nabla_rho;
 
     return energy;
@@ -79,8 +80,9 @@ double KEDF_LKT::get_energy_density(const double* const* prho, int is, int ir, M
     energy_den = this->c_tf_ * pow(prho[is][ir], 5. / 3.) / std::cosh(as[ir]);
 
     delete[] as;
-    for (int i = 0; i < 3; ++i)
+    for (int i = 0; i < 3; ++i) {
         delete[] nabla_rho[i];
+}
     delete[] nabla_rho;
 
     return energy_den;
@@ -112,8 +114,9 @@ void KEDF_LKT::tau_lkt(const double* const* prho, ModulePW::PW_Basis* pw_rho, do
     }
 
     delete[] as;
-    for (int i = 0; i < 3; ++i)
+    for (int i = 0; i < 3; ++i) {
         delete[] nabla_rho[i];
+}
     delete[] nabla_rho;
 }
 
@@ -184,8 +187,9 @@ void KEDF_LKT::lkt_potential(const double* const* prho, ModulePW::PW_Basis* pw_r
     }
 
     delete[] as;
-    for (int i = 0; i < 3; ++i)
+    for (int i = 0; i < 3; ++i) {
         delete[] nabla_rho[i];
+}
     delete[] nabla_rho;
     delete[] nabla_term;
 
@@ -258,8 +262,9 @@ void KEDF_LKT::get_stress(const double* const* prho, ModulePW::PW_Basis* pw_rho)
     }
 
     delete[] as;
-    for (int i = 0; i < 3; ++i)
+    for (int i = 0; i < 3; ++i) {
         delete[] nabla_rho[i];
+}
     delete[] nabla_rho;
     delete[] nabla_term;
 }

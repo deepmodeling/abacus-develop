@@ -30,6 +30,7 @@ list(APPEND objects
     output_log.cpp
     para_json.cpp
     parse_args.cpp
+    orb_io.cpp
 )
 
 list(APPEND objects_advanced

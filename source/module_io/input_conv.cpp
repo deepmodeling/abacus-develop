@@ -166,19 +166,6 @@ void Input_Conv::Convert()
     //----------------------------------------------------------
     // main parameters / electrons / spin ( 10/16 )
     //----------------------------------------------------------
-    //  suffix
-    if (PARAM.inp.calculation == "md" && PARAM.mdp.md_restart) // md restart  liuyu add 2023-04-12
-    {
-        int istep = 0;
-        double temperature = 0.0;
-        MD_func::current_md_info(GlobalV::MY_RANK, PARAM.globalv.global_readin_dir, istep, temperature);
-        if (PARAM.inp.read_file_dir == "auto")
-        {
-            GlobalV::stru_file = PARAM.globalv.global_stru_dir + "STRU_MD_" + std::to_string(istep);
-        }
-    } else if (PARAM.inp.stru_file != "") {
-        GlobalV::stru_file = PARAM.inp.stru_file;
-    }
 
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "pseudo_dir", PARAM.inp.pseudo_dir);
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "orbital_dir", PARAM.inp.orbital_dir);
