@@ -55,8 +55,6 @@ int GSIZE = DSIZE;
 //----------------------------------------------------------
 // EXPLAIN : The input file name and directory
 //----------------------------------------------------------
-std::string stru_file = "STRU";
-
 std::ofstream ofs_running;
 std::ofstream ofs_warning;
 std::ofstream ofs_info;   // output math lib info

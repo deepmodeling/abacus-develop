@@ -2,6 +2,8 @@
 
 #include <elpa/elpa_version.h>
 
+
+
 #if ELPA_API_VERSION >= 20221101
 #include <elpa/elpa.h>
 #else
@@ -25,8 +27,16 @@ extern "C"
 #include <elpa/elpa_generated.h>
     // #include <elpa/elpa_generic.h>
 #undef complex
+
     const char *elpa_strerr(int elpa_error);
+
+// This is a header file related to GPU support.
+// This header file was not available in the early ELPA.
+#if ELPA_API_VERSION >= 20231101
+#include <elpa/elpa_configured_options.h>
+#endif
 }
+
 
 #include "elpa_generic.hpp" // This is a wrapper for `elpa/elpa_generic.h`.
 #endif
