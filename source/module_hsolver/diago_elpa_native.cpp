@@ -95,11 +95,17 @@ void DiagoElpaNative<T>::diag_pool(hamilt::MatrixBlock<T>& h_mat,
     elpa_setup(handle);
     elpa_set(handle, "solver", ELPA_SOLVER_1STAGE, &success);
 
-#ifdef __CUDA
+/*  ELPA_WITH_NVIDIA_GPU_VERSION is a symbol defined in elpa/elpa_configured_options.h
+    For example:
+    cat elpa/elpa_configured_options.h
+    #define ELPA_WITH_NVIDIA_GPU_VERSION 1
+    #define ELPA_WITH_AMD_GPU_VERSION 0
+    #define ELPA_WITH_SYCL_GPU_VERSION 0
+ */
+#if ELPA_WITH_NVIDIA_GPU_VERSION
     if (PARAM.globalv.device_flag == "gpu")
     {
         elpa_set(handle, "nvidia-gpu", 1, &success);
-
         elpa_set(handle, "real_kernel", ELPA_2STAGE_REAL_NVIDIA_GPU, &success);
         elpa_setup_gpu(handle);
     }
