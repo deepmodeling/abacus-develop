@@ -19,7 +19,7 @@
 #ifdef __MPI
 #include "module_base/parallel_reduce.h"
 #endif
-
+#include "module_io/orb_io.h"
 /**
  * ===============================================================================================
  * 
@@ -137,7 +137,7 @@ void init_proj(const std::string& orbital_dir,
         double dr_ = -1.0;
         std::vector<int> nzeta; // number of radials for each l
         std::vector<std::vector<double>> radials; // radials arranged in serial
-        AtomicRadials::read_abacus_orb(ifs, elem, ecut, nr_, dr_, nzeta, radials);
+        ModuleIO::read_abacus_orb(ifs, elem, ecut, nr_, dr_, nzeta, radials);
 #ifdef __DEBUG
         assert(elem != "");
         assert(ecut != -1.0);

@@ -36,7 +36,8 @@ struct System_para
                                             ///< for plane wave basis.
     bool gamma_only_local = false;          ///< true if "gamma_only" is true and "lcao"
                                             ///< is true; for local orbitals.
-    std::string global_in_card = "INPUT";   ///< global input directory
+    std::string global_in_card = "INPUT";   ///< input file
+    std::string global_in_stru = "STRU";    ///< stru file
     std::string global_out_dir = "";        ///< global output directory
     std::string global_readin_dir = "";     ///< global readin directory
     std::string global_stru_dir = "";       ///< global structure directory
