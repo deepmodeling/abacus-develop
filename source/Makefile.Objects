@@ -213,6 +213,7 @@ OBJS_ELECSTAT=elecstate.o\
     elecstate_print.o\
     elecstate_pw.o\
     elecstate_pw_sdft.o\
+    elecstate_pw_cal_tau.o\
     elecstate_op.o\
     efield.o\
     gatefield.o\
@@ -226,6 +227,7 @@ OBJS_ELECSTAT=elecstate.o\
 
 OBJS_ELECSTAT_LCAO=elecstate_lcao.o\
       elecstate_lcao_tddft.o\
+      elecstate_lcao_cal_tau.o\
       density_matrix.o\
       cal_dm_psi.o\
 
