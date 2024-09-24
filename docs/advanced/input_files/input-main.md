@@ -666,6 +666,7 @@ These variables are used to control parameters related to input files.
 - **Type**: String
 - **Description**: the name of the structure file
   - Containing various information about atom species, including pseudopotential files, local orbitals files, cell information, atom positions, and whether atoms should be allowed to move.
+  - When [calculation](#calculation) is set to `md` and [md_restart](#md_restart) is set to `true`, this keyword will NOT work.
   - Refer to [Doc](https://github.com/deepmodeling/abacus-develop/blob/develop/docs/advanced/input_files/stru.md)
 - **Default**: STRU
 

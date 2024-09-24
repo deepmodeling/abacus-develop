@@ -64,7 +64,7 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
     }
 
     this->output_iterInfo();
-    
+
     for (int ik = 0; ik < nks; ik++)
     {
         // init k

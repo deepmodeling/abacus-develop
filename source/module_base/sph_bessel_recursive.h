@@ -7,7 +7,7 @@
 #define SPH_BESSEL_RECURSIVE_H
 
 #include <vector>
-#include"stddef.h"
+#include<cstddef>
 
 namespace ModuleBase
 {
@@ -32,7 +32,7 @@ public:
 
 private:
 	std::vector<std::vector<double>> jlx;		// jlx[l][x]
-	double dx;
+	double dx = 0.0;
 	bool finish_set_dx = false;
 	
 	void cal_jlx_0( const int l_size );
@@ -56,7 +56,7 @@ public:
 
 private:
 	std::vector<std::vector<std::vector<double>>> jlx;		// jlx[l][x1][x2]
-	double dx;
+	double dx = 0.0;
 	bool finish_set_dx = false;
 	
 	void cal_jlx_0( const int l_size, const size_t ix1_size, const size_t ix2_size );

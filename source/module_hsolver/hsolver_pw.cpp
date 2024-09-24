@@ -323,7 +323,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
 
     if (this->method == "cg")
     {
-        // warp the subspace_func into a lambda function
+        // wrap the subspace_func into a lambda function
         auto ngk_pointer = psi.get_ngk_pointer();
         auto subspace_func = [hm, ngk_pointer](const ct::Tensor& psi_in, ct::Tensor& psi_out) {
             // psi_in should be a 2D tensor:
@@ -355,10 +355,10 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
                               this->diag_iter_max,
                               this->nproc_in_pool);
 
-        // warp the hpsi_func and spsi_func into a lambda function
+        // wrap the hpsi_func and spsi_func into a lambda function
         using ct_Device = typename ct::PsiToContainer<Device>::type;
 
-        // warp the hpsi_func and spsi_func into a lambda function
+        // wrap the hpsi_func and spsi_func into a lambda function
         auto hpsi_func = [hm, ngk_pointer](const ct::Tensor& psi_in, ct::Tensor& hpsi_out) {
             ModuleBase::timer::tick("DiagoCG_New", "hpsi_func");
             // psi_in should be a 2D tensor:
