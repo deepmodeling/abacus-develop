@@ -38,7 +38,7 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
 {
     ModuleBase::TITLE("IState_Envelope", "begin");
 
-    std::cout << " Perform |psi(i, r)|, Re[psi(i, r)], Im[psi(i, r)] for selected bands (gamma only)." << std::endl;
+    std::cout << " Calculate |psi(i, r)|, Re[psi(i, r)], Im[psi(i, r)] for selected bands (gamma only)." << std::endl;
 
     // if ucell is odd, it's correct,
     // if ucell is even, it's also correct.
@@ -299,7 +299,7 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
 {
     ModuleBase::TITLE("IState_Envelope", "begin");
 
-    std::cout << " Perform |psi(i, r)|, Re[psi(i, r)], Im[psi(i, r)] for selected bands (multi-k)." << std::endl;
+    std::cout << " Calculate |psi(i, r)|, Re[psi(i, r)], Im[psi(i, r)] for selected bands (multi-k)." << std::endl;
 
     // if ucell is odd, it's correct,
     // if ucell is even, it's also correct.
@@ -361,7 +361,7 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
                 const int ispin = kv.isk[ik];
                 ModuleBase::GlobalFunc::ZEROS(pes_->charge->rho[ispin],
                                               wfcpw->nrxx); // terrible, you make changes on another instance's data???
-                std::cout << " Perform envelope function for kpoint " << ik + 1 << ",  band" << ib + 1 << std::endl;
+                std::cout << " Calculate envelope function for kpoint " << ik + 1 << ",  band" << ib + 1 << std::endl;
                 //  2d-to-grid conversion is unified into `wfc_2d_to_grid`.
                 psi->fix_k(ik);
 #ifdef __MPI // need to deal with NSPIN=4 !!!!

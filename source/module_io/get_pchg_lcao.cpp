@@ -54,7 +54,7 @@ void IState_Charge::begin(Gint_Gamma& gg,
 {
     ModuleBase::TITLE("IState_Charge", "begin");
 
-    std::cout << " Perform |psi(i)|^2 for selected bands (band-decomposed charge densities, gamma only)." << std::endl;
+    std::cout << " Calculate |psi(i)|^2 for selected bands (band-decomposed charge densities, gamma only)." << std::endl;
 
     int mode = 0;
     if (nbands_istate > 0 && static_cast<int>(out_pchg.size()) == 0)
@@ -189,7 +189,7 @@ void IState_Charge::begin(Gint_k& gk,
 {
     ModuleBase::TITLE("IState_Charge", "begin");
 
-    std::cout << " Perform |psi(i)|^2 for selected bands (band-decomposed charge densities, multi-k)." << std::endl;
+    std::cout << " Calculate |psi(i)|^2 for selected bands (band-decomposed charge densities, multi-k)." << std::endl;
 
     int mode = 0;
     if (nbands_istate > 0 && static_cast<int>(out_pchg.size()) == 0)
