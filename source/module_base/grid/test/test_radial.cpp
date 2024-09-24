@@ -21,8 +21,12 @@ using Func_t = std::function<double(double)>;
 
 const double pi = std::acos(-1.0);
 
-// tested functions and their analytical integrals
-// for \int_0^{+\infty} dr r^2 f(r)
+// test functions f(r) and their analytical integrals
+//
+//      / inf     2
+//      |     dr r  f(r)
+//      /  0
+//
 std::vector<std::pair<Func_t, double>> test_func_ref = {
     {
         [](double r) {
@@ -55,15 +59,62 @@ double quadrature(const Func_t& f, int n, double* r, double* w) {
 
 
 TEST(RadialTest, Baker) {
-    int nbase = 30;
+    // R should be large enough to cover the range of the function.
+    // For mult = 1, R is the cutoff radius; for mult > 1, there
+    // are (mult - 1) grid points extend beyond R.
+    int nbase = 20;
     int mult = 2;
-    double R = 2.0;
+    double R = 7.0;
     std::vector<double> r, w;
     baker(nbase, R, r, w, mult);
 
+    EXPECT_EQ(r.size(), (nbase + 1) * mult - 1);
+
     for (auto& t : test_func_ref) {
         double res = quadrature(t.first, r.size(), r.data(), w.data());
-        EXPECT_NEAR(res, t.second, 1.0e-5);
+        EXPECT_NEAR(res, t.second, 1.0e-6);
+    }
+}
+
+
+TEST(RadialTest, Murray) {
+    int n = 40;
+    double R = 7.0;
+    std::vector<double> r(n), w(n);
+    murray(n, R, r.data(), w.data());
+
+    for (auto& t : test_func_ref) {
+        double res = quadrature(t.first, r.size(), r.data(), w.data());
+        EXPECT_NEAR(res, t.second, 1.0e-6);
+    }
+}
+
+
+TEST(RadialTest, Treutler) {
+    int n = 40;
+    double R = 7.0;
+    std::vector<double> r(n), w(n);
+
+    for (auto alpha : {0.0, 0.6, 1.0}) {
+        treutler_m4(n, R, r.data(), w.data(), alpha);
+
+        for (auto& t : test_func_ref) {
+            double res = quadrature(t.first, r.size(), r.data(), w.data());
+            EXPECT_NEAR(res, t.second, 1.0e-6);
+        }
+    }
+}
+
+
+TEST(RadialTest, Mura) {
+    int n = 40;
+    double R = 7.0;
+    std::vector<double> r(n), w(n);
+    mura(n, R, r.data(), w.data());
+
+    for (auto& t : test_func_ref) {
+        double res = quadrature(t.first, r.size(), r.data(), w.data());
+        EXPECT_NEAR(res, t.second, 1.0e-6);
     }
 }
 

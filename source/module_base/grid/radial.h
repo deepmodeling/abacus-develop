@@ -7,10 +7,10 @@ namespace Grid {
 namespace Radial {
 
 /**
- * @brief Radial quadrature schemes.
+ * @brief Radial quadratures.
  *
- * This namespace provides functions to generate radial grids and weights
- * for numerical integration like
+ * This namespace contains functions that generate grids and weights
+ * for numerical integration
  *
  *      / inf     2
  *      |     dr r  g(r) ~ \sum_i w[i] g(r[i])
@@ -53,7 +53,6 @@ void murray(int n, double R, double* r, double* w);
  *
  * @note The M4 grid reduces to the M3 grid when alpha = 0.
  */
-void treutler_m3(int n, double R, double* r, double* w);
 void treutler_m4(int n, double R, double* r, double* w, double alpha = 0.6);
 
 

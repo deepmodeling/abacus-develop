@@ -15,9 +15,9 @@ namespace Radial {
 
 void baker(int nbase, double R, double* r, double* w, int mult) {
     int n = (nbase+1) * mult - 1;
-    double r0 = -R / std::log(1.0 - nbase*nbase/((nbase+1)*(nbase+1)));
+    double r0 = -R / std::log(1.0 - static_cast<double>(nbase)*nbase/((nbase+1)*(nbase+1)));
     for (int i = 1; i <= n; ++i) {
-        r[i-1] = -r0 * std::log(1.0 - i*i/((n+1)*(n+1)));
+        r[i-1] = -r0 * std::log(1.0 - static_cast<double>(i)*i/((n+1)*(n+1)));
         w[i-1] = 2.0 * i * r0 * r[i-1] * r[i-1] / ((n+1+i)*(n+1-i));
     }
 }
@@ -37,18 +37,6 @@ void murray(int n, double R, double* r, double* w) {
         r[i-1] = std::pow(x / (1.0 - x), 2) * R;
         w[i-1] = 2.0 / (n + 1) * std::pow(R, 3) * std::pow(x, 5)
                  / std::pow(1.0 - x, 7);
-    }
-}
-
-
-void treutler_m3(int n, double R, double* r, double* w) {
-    for (int i = 1; i <= n; ++i) {
-        double x = std::cos(i * pi / (n + 1));
-        double beta = std::sqrt((1.0 + x) / (1.0 - x));
-        double gamma = std::log((1.0 - x) / 2.0);
-        r[i-1] = -R * inv_ln2 * gamma;
-        w[i-1] = pi / (n + 1) * std::pow(R * inv_ln2, 3)
-                 * gamma * gamma * beta;
     }
 }
 
