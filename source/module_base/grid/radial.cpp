@@ -15,12 +15,13 @@ namespace Radial {
 
 void baker(int nbase, double R, double* r, double* w, int mult) {
     int n = (nbase+1) * mult - 1;
-    double r0 = -R / std::log(1.0 - static_cast<double>(nbase)*nbase/((nbase+1)*(nbase+1)));
+    double r0 = -R / std::log((2.0 * nbase + 1.0) / ((nbase+1)*(nbase+1)));
     for (int i = 1; i <= n; ++i) {
         r[i-1] = -r0 * std::log(1.0 - static_cast<double>(i)*i/((n+1)*(n+1)));
         w[i-1] = 2.0 * i * r0 * r[i-1] * r[i-1] / ((n+1+i)*(n+1-i));
     }
 }
+
 
 void baker(int nbase, double R, std::vector<double>& r,
            std::vector<double>& w, int mult) {
@@ -43,7 +44,7 @@ void murray(int n, double R, double* r, double* w) {
 
 void treutler_m4(int n, double R, double* r, double* w, double alpha) {
     for (int i = 1; i <= n; ++i) {
-        double x = std::cos(i * pi / (n+ 1));
+        double x = std::cos(i * pi / (n + 1));
         double beta = std::sqrt((1.0 + x) / (1.0 - x));
         double gamma = std::log((1.0 - x) / 2.0);
         double delta = std::pow(1.0 + x, alpha);

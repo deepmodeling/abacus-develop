@@ -7,7 +7,7 @@
 
 namespace {
 
-struct Table {
+struct DelleyTable {
     const int lmax_;
     const int ngrid_;
     const int ntype_[6];
@@ -15,7 +15,7 @@ struct Table {
 };
 
 // Delley's table from the original article
-const std::vector<Table> table = {
+const std::vector<DelleyTable> delley_table = {
     {
         17, 110, {1, 1, 0, 3, 1, 0},
         {
@@ -210,7 +210,7 @@ const std::vector<Table> table = {
             0.63942796347491023, 0.06424549224220589, 0.0009158016174693465,
         }
     }
-}; // end of the definition of "table"
+}; // end of the definition of "delley_table"
 
 // size of each group of points with octahedral symmetry
 // 6: (1, 0, 0) x sign x permutation (vertices)
@@ -325,15 +325,15 @@ const std::vector<Fill_t> fill = {
     },
 }; // end of the definition of "fill"
 
-const Table* _find_table(int& lmax) {
-    // NOTE: this function assumes elements in "Delley::table_" are
+const DelleyTable* _find_delley(int& lmax) {
+    // NOTE: this function assumes elements in "delley_table" are
     // arranged such that their members "lmax_" are in ascending order.
-    auto tab = std::find_if(table.begin(), table.end(),
-            [lmax](const Table& t) { return t.lmax_ >= lmax; });
-    return tab == table.end() ? nullptr : (lmax = tab->lmax_, &(*tab));
+    auto tab = std::find_if(delley_table.begin(), delley_table.end(),
+            [lmax](const DelleyTable& t) { return t.lmax_ >= lmax; });
+    return tab == delley_table.end() ? nullptr : (lmax = tab->lmax_, &(*tab));
 }
 
-void _get(const Table* tab, double* grid, double* weight) {
+void _delley(const DelleyTable* tab, double* grid, double* weight) {
     assert(tab);
     const double* ptr = &tab->data_[0];
     for (int itype = 0; itype < 6; ++itype) {
@@ -349,29 +349,29 @@ void _get(const Table* tab, double* grid, double* weight) {
 } // end of anonymous namespace
 
 
-int Grid::Angular::Delley::ngrid(int& lmax) {
-    auto tab = _find_table(lmax);
+int Grid::Angular::ngrid_delley(int& lmax) {
+    auto tab = _find_delley(lmax);
     return tab ? tab->ngrid_ : -1;
 }
 
 
-int Grid::Angular::Delley::get(int& lmax, double* grid, double* weight) {
-    auto tab = _find_table(lmax);
-    return tab ? _get(tab, grid, weight), 0 : -1;
+int Grid::Angular::delley(int& lmax, double* grid, double* weight) {
+    auto tab = _find_delley(lmax);
+    return tab ? _delley(tab, grid, weight), 0 : -1;
 }
 
 
-int Grid::Angular::Delley::get(
+int Grid::Angular::delley(
     int& lmax,
     std::vector<double>& grid,
     std::vector<double>& weight
 ) {
-    auto tab = _find_table(lmax);
+    auto tab = _find_delley(lmax);
     if (!tab) {
         return -1;
     }
     grid.resize(3 * tab->ngrid_);
     weight.resize(tab->ngrid_);
-    _get(tab, grid.data(), weight.data());
+    _delley(tab, grid.data(), weight.data());
     return 0;
 }

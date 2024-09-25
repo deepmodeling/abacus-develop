@@ -51,7 +51,7 @@ void murray(int n, double R, double* r, double* w);
  * Efficient molecular numerical integration schemes.
  * The Journal of Chemical Physics, 102(1), 346-354.
  *
- * @note The M4 grid reduces to the M3 grid when alpha = 0.
+ * @note M4 reduces to M3 at alpha = 0.
  */
 void treutler_m4(int n, double R, double* r, double* w, double alpha = 0.6);
 

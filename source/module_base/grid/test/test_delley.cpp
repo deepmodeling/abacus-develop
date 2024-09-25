@@ -47,27 +47,27 @@ void DelleyTest::randgen(int lmax, std::vector<double>& coef) {
 
 TEST_F(DelleyTest, NumGrid) {
     int lmax = 5;
-    int ngrid = Delley::ngrid(lmax);
+    int ngrid = ngrid_delley(lmax);
     EXPECT_EQ(lmax, 17);
     EXPECT_EQ(ngrid, 110);
 
     lmax = 17;
-    ngrid = Delley::ngrid(lmax);
+    ngrid = ngrid_delley(lmax);
     EXPECT_EQ(lmax, 17);
     EXPECT_EQ(ngrid, 110);
 
     lmax = 20;
-    ngrid = Delley::ngrid(lmax);
+    ngrid = ngrid_delley(lmax);
     EXPECT_EQ(lmax, 23);
     EXPECT_EQ(ngrid, 194);
 
     lmax = 59;
-    ngrid = Delley::ngrid(lmax);
+    ngrid = ngrid_delley(lmax);
     EXPECT_EQ(lmax, 59);
     EXPECT_EQ(ngrid, 1202);
 
     lmax = 60;
-    ngrid = Delley::ngrid(lmax);
+    ngrid = ngrid_delley(lmax);
     EXPECT_EQ(lmax, 60);
     EXPECT_EQ(ngrid, -1);
 }
@@ -91,7 +91,7 @@ TEST_F(DelleyTest, Accuracy) {
     std::vector<double> grid, weight, coef;
 
     for (int grid_lmax = 17; grid_lmax < 60; grid_lmax +=6) {
-        Delley::get(grid_lmax, grid, weight);
+        delley(grid_lmax, grid, weight);
         int func_lmax = grid_lmax / 2;
         randgen(func_lmax, coef);
 
