@@ -77,9 +77,9 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>
                                         const LCAO_Orbitals& orb)
 {
     Mix_DMk_2D mix_DMk_2D;
-    bool exx_spacegroup_symmetry = (GlobalV::NSPIN < 4 && ModuleSymmetry::Symmetry::symm_flag == 1);
+    bool exx_spacegroup_symmetry = (PARAM.inp.nspin < 4 && ModuleSymmetry::Symmetry::symm_flag == 1);
     if (exx_spacegroup_symmetry)
-        {mix_DMk_2D.set_nks(kv.get_nkstot_full() * (GlobalV::NSPIN == 2 ? 2 : 1), PARAM.globalv.gamma_only_local);}
+        {mix_DMk_2D.set_nks(kv.get_nkstot_full() * (PARAM.inp.nspin == 2 ? 2 : 1), PARAM.globalv.gamma_only_local);}
     else
         {mix_DMk_2D.set_nks(kv.get_nks(), PARAM.globalv.gamma_only_local);}
         
@@ -97,8 +97,8 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>
     
     const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>
 		Ds = PARAM.globalv.gamma_only_local
-        ? RI_2D_Comm::split_m2D_ktoR<Tdata>(kv, mix_DMk_2D.get_DMk_gamma_out(), *dm.get_paraV_pointer(), GlobalV::NSPIN)
-        : RI_2D_Comm::split_m2D_ktoR<Tdata>(kv, mix_DMk_2D.get_DMk_k_out(), *dm.get_paraV_pointer(), GlobalV::NSPIN, exx_spacegroup_symmetry);
+        ? RI_2D_Comm::split_m2D_ktoR<Tdata>(kv, mix_DMk_2D.get_DMk_gamma_out(), *dm.get_paraV_pointer(), PARAM.inp.nspin)
+        : RI_2D_Comm::split_m2D_ktoR<Tdata>(kv, mix_DMk_2D.get_DMk_k_out(), *dm.get_paraV_pointer(), PARAM.inp.nspin, exx_spacegroup_symmetry);
     
     // set parameters for bare Coulomb potential
     GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hf;
@@ -106,12 +106,13 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>
     GlobalC::exx_info.info_ri.ccp_rmesh_times = PARAM.inp.rpa_ccp_rmesh_times;
 
     exx_lri_rpa.init(mpi_comm_in, kv, orb);
-    exx_lri_rpa.cal_exx_ions();
+    exx_lri_rpa.cal_exx_ions(PARAM.inp.out_ri_cv);
 
-    if (exx_spacegroup_symmetry)
+    if (exx_spacegroup_symmetry) {
         exx_lri_rpa.cal_exx_elec(Ds, *dm.get_paraV_pointer(), &symrot);
-    else
+    } else {
         exx_lri_rpa.cal_exx_elec(Ds, *dm.get_paraV_pointer());
+}
     // cout<<"postSCF_Eexx: "<<exx_lri_rpa.Eexx<<endl;
 }
 
@@ -146,8 +147,8 @@ void RPA_LRI<T, Tdata>::out_eigen_vector(const Parallel_Orbitals& parav, const p
 
     ModuleBase::TITLE("DFT_RPA_interface", "out_eigen_vector");
 
-    const int nks_tot = GlobalV::NSPIN == 2 ? p_kv->get_nks() / 2 : p_kv->get_nks();
-    const int npsin_tmp = GlobalV::NSPIN == 2 ? 2 : 1;
+    const int nks_tot = PARAM.inp.nspin == 2 ? p_kv->get_nks() / 2 : p_kv->get_nks();
+    const int npsin_tmp = PARAM.inp.nspin == 2 ? 2 : 1;
     const std::complex<double> zero(0.0, 0.0);
 
     for (int ik = 0; ik < nks_tot; ik++)
@@ -215,7 +216,7 @@ void RPA_LRI<T, Tdata>::out_struc()
     }
     ModuleBase::TITLE("DFT_RPA_interface", "out_struc");
     double TWOPI_Bohr2A = ModuleBase::TWO_PI * ModuleBase::BOHR_TO_A;
-    const int nks_tot = GlobalV::NSPIN == 2 ? (int)p_kv->get_nks() / 2 : p_kv->get_nks();
+    const int nks_tot = PARAM.inp.nspin == 2 ? (int)p_kv->get_nks() / 2 : p_kv->get_nks();
     ModuleBase::Matrix3 lat = GlobalC::ucell.latvec / ModuleBase::BOHR_TO_A;
     ModuleBase::Matrix3 G = GlobalC::ucell.G * TWOPI_Bohr2A;
     std::stringstream ss;
@@ -250,14 +251,14 @@ void RPA_LRI<T, Tdata>::out_bands(const elecstate::ElecState* pelec)
     {
         return;
     }
-    const int nks_tot = GlobalV::NSPIN == 2 ? (int)p_kv->get_nks() / 2 : p_kv->get_nks();
-    const int nspin_tmp = GlobalV::NSPIN == 2 ? 2 : 1;
+    const int nks_tot = PARAM.inp.nspin == 2 ? (int)p_kv->get_nks() / 2 : p_kv->get_nks();
+    const int nspin_tmp = PARAM.inp.nspin == 2 ? 2 : 1;
     std::stringstream ss;
     ss << "band_out";
     std::ofstream ofs;
     ofs.open(ss.str().c_str(), std::ios::out);
     ofs << nks_tot << std::endl;
-    ofs << GlobalV::NSPIN << std::endl;
+    ofs << PARAM.inp.nspin << std::endl;
     ofs << GlobalV::NBANDS << std::endl;
     ofs << GlobalV::NLOCAL << std::endl;
     ofs << (pelec->eferm.ef / 2.0) << std::endl;
@@ -328,7 +329,7 @@ void RPA_LRI<T, Tdata>::out_coulomb_k()
         mu_shift[I] = all_mu;
         all_mu += exx_lri_rpa.cv.get_index_abfs_size(GlobalC::ucell.iat2it[I]);
     }
-    const int nks_tot = GlobalV::NSPIN == 2 ? (int)p_kv->get_nks() / 2 : p_kv->get_nks();
+    const int nks_tot = PARAM.inp.nspin == 2 ? (int)p_kv->get_nks() / 2 : p_kv->get_nks();
     std::stringstream ss;
     ss << "coulomb_mat_" << GlobalV::MY_RANK << ".txt";
 
@@ -371,7 +372,7 @@ void RPA_LRI<T, Tdata>::out_coulomb_k()
                 size_t nu_num = exx_lri_rpa.cv.get_index_abfs_size(GlobalC::ucell.iat2it[iJ]);
                 ofs << all_mu << "   " << mu_shift[I] + 1 << "   " << mu_shift[I] + mu_num << "  " << mu_shift[iJ] + 1
                     << "   " << mu_shift[iJ] + nu_num << std::endl;
-                ofs << ik + 1 << "  " << p_kv->wk[ik] / 2.0 * GlobalV::NSPIN << std::endl;
+                ofs << ik + 1 << "  " << p_kv->wk[ik] / 2.0 * PARAM.inp.nspin << std::endl;
                 for (int i = 0; i != vq_J.data->size(); i++)
                 {
                     ofs << std::setw(21) << std::fixed << std::setprecision(12) << (*vq_J.data)[i].real()

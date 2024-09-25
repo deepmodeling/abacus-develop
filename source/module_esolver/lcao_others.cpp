@@ -70,17 +70,12 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
     {
         // test_search_neighbor();
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "testing neighbour");
-        if (GlobalV::SEARCH_RADIUS < 0)
-        {
-            std::cout << " SEARCH_RADIUS : " << GlobalV::SEARCH_RADIUS << std::endl;
-            std::cout << " please make sure search_radius > 0" << std::endl;
-        }
-
+        double search_radius = PARAM.inp.search_radius;
         atom_arrange::search(PARAM.inp.search_pbc,
                              GlobalV::ofs_running,
                              GlobalC::GridD,
                              GlobalC::ucell,
-                             GlobalV::SEARCH_RADIUS,
+                             search_radius,
                              PARAM.inp.test_atom_input,
                              true);
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "testing neighbour");
@@ -89,7 +84,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
 
     this->beforesolver(istep);
     // pelec should be initialized before these calculations
-    this->pelec->init_scf(istep, this->sf.strucFac);
+    this->pelec->init_scf(istep, this->sf.strucFac, GlobalC::ucell.symm);
     // self consistent calculations for electronic ground state
     if (PARAM.inp.calculation == "nscf")
     {
@@ -118,9 +113,9 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                       PARAM.inp.bands_to_print,
                       GlobalV::NBANDS,
                       GlobalV::nelec,
-                      GlobalV::NSPIN,
+                      PARAM.inp.nspin,
                       GlobalV::NLOCAL,
-                      GlobalV::global_out_dir,
+                      PARAM.globalv.global_out_dir,
                       GlobalV::MY_RANK,
                       GlobalV::ofs_warning,
                       &GlobalC::ucell,
@@ -148,9 +143,9 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                       PARAM.inp.bands_to_print,
                       GlobalV::NBANDS,
                       GlobalV::nelec,
-                      GlobalV::NSPIN,
+                      PARAM.inp.nspin,
                       GlobalV::NLOCAL,
-                      GlobalV::global_out_dir,
+                      PARAM.globalv.global_out_dir,
                       GlobalV::MY_RANK,
                       GlobalV::ofs_warning,
                       &GlobalC::ucell,
@@ -181,9 +176,9 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                       PARAM.inp.nbands_istate,
                       PARAM.inp.bands_to_print,
                       GlobalV::NBANDS,
-                      GlobalV::NSPIN,
+                      PARAM.inp.nspin,
                       GlobalV::NLOCAL,
-                      GlobalV::global_out_dir);
+                      PARAM.globalv.global_out_dir);
         }
         else
         {
@@ -200,9 +195,9 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                       PARAM.inp.nbands_istate,
                       PARAM.inp.bands_to_print,
                       GlobalV::NBANDS,
-                      GlobalV::NSPIN,
+                      PARAM.inp.nspin,
                       GlobalV::NLOCAL,
-                      GlobalV::global_out_dir);
+                      PARAM.globalv.global_out_dir);
         }
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "getting wave function");
     }

@@ -1,8 +1,17 @@
 #pragma once
 #include <ATen/tensor.h>
 #include "module_psi/psi.h"
+#ifdef __EXX
+#include <RI/global/Tensor.h>
+#endif
 namespace LR_Util
 {
+    template<typename T>
+    constexpr T filter(const T& v, const double& threshold = 1e-10)
+    {
+        return (std::abs(v) > threshold ? v : 0);
+    }
+
     template<typename T>
     void print_psi_bandfirst(const psi::Psi<T>& psi, const std::string& label, const int& ib, const double& threshold = 1e-10)
     {
@@ -13,8 +22,7 @@ namespace LR_Util
             std::cout << "iks=" << ik << "\n";
             for (int i = 0;i < psi.get_nbasis();++i)
             {
-                const auto& v = psi(ib, ik, i);
-                std::cout << (std::abs(v) > threshold ? v : 0) << " ";
+                std::cout << filter(psi(ib, ik, i)) << " ";
             }
             std::cout << "\n";
         }
@@ -32,8 +40,7 @@ namespace LR_Util
             {
                 for (int i = 0;i < psi.get_nbasis();++i)
                 {
-                    const auto& v = psi(ib, ik, i);
-                    ofs << (std::abs(v) > threshold ? v : 0) << " ";
+                    ofs << filter(psi(ib, ik, i)) << " ";
                 }
                 ofs << "\n";
             }
@@ -69,8 +76,7 @@ namespace LR_Util
                 std::cout << "ib=" << ib << ": ";
                 for (int i = 0;i < psi.get_nbasis();++i)
                 {
-                    const auto& v = psi(ik, ib, i);
-                    std::cout << (std::abs(v) > threshold ? v : 0) << " ";
+                    std::cout << filter(psi(ik, ib, i)) << " ";
                 }
                 std::cout << "\n";
             }
@@ -84,8 +90,7 @@ namespace LR_Util
         {
             for (int i = 0;i < pmat->get_row_size();++i)
             {
-                const auto& v = t.data<T>()[j * pmat->get_row_size() + i];
-                std::cout << (std::abs(v) > threshold ? v : 0) << " ";
+                std::cout << filter(t.data<T>()[j * pmat->get_row_size() + i]) << " ";
             }
             std::cout << std::endl;
         }
@@ -101,4 +106,85 @@ namespace LR_Util
 };
     }
 
+
+    using TC = std::array<int, 3>;
+    using TAC = std::pair<int, TC>;
+    template<typename T>
+    using TLRIX = std::map<int, std::map<TAC, std::vector<T>>>;
+
+    template<typename T>
+    void print_CsX(const TLRIX<T>& CsX, const int nvirt, const std::string& label, const double& threshold = 1e-10)
+    {
+        std::cout << label << "\n";
+        for (const auto& tmp1 : CsX)
+        {
+            const int& iat1 = tmp1.first;
+            for (const auto& tmp2 : tmp1.second)
+            {
+                const int& iat2 = tmp2.first.first;
+                const auto& R = tmp2.first.second;
+                auto& t = tmp2.second;
+                const int nocc = t.size() / nvirt;
+                std::cout << "iat1=" << iat1 << " iat2=" << iat2 << " R=(" << R[0] << " " << R[1] << " " << R[2] << ")\n";
+                for (int io = 0;io < nocc;++io)
+                {
+                    for (int iv = 0;iv < nvirt;++iv) { std::cout << filter(t[io * nvirt + iv]) << " "; }
+                    std::cout << "\n";
+                }
+                std::cout << "\n";
+            }
+        }
+    }
+
+#ifdef __EXX
+    template <typename T>
+    using TLRI = std::map<int, std::map<TAC, RI::Tensor<T>>>;
+    template<typename T>
+    void print_CV(const TLRI<T>& Cs, const std::string& label, const double& threshold = 1e-10)
+    {
+        std::cout << label << "\n";
+        for (const auto& tmp1 : Cs)
+        {
+            const int& iat1 = tmp1.first;
+            for (const auto& tmp2 : tmp1.second)
+            {
+                const int& iat2 = tmp2.first.first;
+                const auto& R = tmp2.first.second;
+                auto& t = tmp2.second;
+                if (R != TC({ 0, 0, 0 })) {continue;}   // for test
+                std::cout << "iat1=" << iat1 << " iat2=" << iat2 << " R=(" << R[0] << " " << R[1] << " " << R[2] << ")\n";
+                if (t.shape.size() == 2)
+                {
+                    for (int iabf1 = 0;iabf1 < t.shape[0];++iabf1)
+                    {
+                        for (int iabf2 = 0;iabf2 < t.shape[1];++iabf2)
+                        {
+                            std::cout << filter(t(iabf1, iabf2)) << " ";
+                        }
+                        std::cout << "\n";
+                    }
+                }
+                else if (t.shape.size() == 3)
+                {
+                    const int nabf = t.shape[0];
+                    const int nw1 = t.shape[1];
+                    const int nw2 = t.shape[2];
+                    std::cout << "size: " << nabf << " " << nw1 << " " << nw2 << "\n";
+                    for (int iabf = 0;iabf < nabf;++iabf)
+                    {
+                        for (int iw1 = 0;iw1 < nw1;++iw1)
+                        {
+                            for (int iw2 = 0;iw2 < nw2;++iw2)
+                            {
+                                std::cout << filter(t(iabf, iw1, iw2)) << " ";
+                            }
+                            std::cout << "\n";
+                        }
+                        std::cout << "\n";
+                    }
+                }
+            }
+        }
+    }
+#endif
 }

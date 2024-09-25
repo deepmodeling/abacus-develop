@@ -49,8 +49,8 @@ TEST_F(IstateInfoTest, OutIstateInfoS1)
     // preconditions
     GlobalV::KPAR = 1;
     GlobalV::NBANDS = 4;
-    GlobalV::NSPIN = 1;
-    GlobalV::global_out_dir = "./";
+    PARAM.input.nspin = 1;
+    PARAM.sys.global_out_dir = "./";
     // mpi setting
     Parallel_Global::init_pools(GlobalV::NPROC,
                                 GlobalV::MY_RANK,
@@ -65,7 +65,7 @@ TEST_F(IstateInfoTest, OutIstateInfoS1)
     kv->set_nkstot(100);
     int nkstot = kv->get_nkstot();
     Pkpoints
-        ->kinfo(nkstot, GlobalV::KPAR, GlobalV::MY_POOL, GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL, GlobalV::NSPIN);
+        ->kinfo(nkstot, GlobalV::KPAR, GlobalV::MY_POOL, GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL, PARAM.input.nspin);
     // std::cout<<"my_rank "<<GlobalV::MY_RANK<<" pool rank/size: "
     //	<<GlobalV::RANK_IN_POOL<<"/"<<GlobalV::NPROC_IN_POOL<<std::endl;
     // std::cout<<"MY_POOL "<<GlobalV::MY_POOL<<std::endl;
@@ -90,7 +90,7 @@ TEST_F(IstateInfoTest, OutIstateInfoS1)
         str,
         testing::HasSubstr("BAND               Energy(ev)               Occupation                Kpoint = 100"));
     EXPECT_THAT(str, testing::HasSubstr("(0.99 0.99 0.99)"));
-    EXPECT_THAT(str, testing::HasSubstr("4                  2.04085                        0"));
+    EXPECT_THAT(str, testing::HasSubstr("4                2.0408547                        0"));
     ifs.close();
     remove("istate.info");
 }
@@ -100,8 +100,8 @@ TEST_F(IstateInfoTest, OutIstateInfoS2)
     // preconditions
     GlobalV::KPAR = 1;
     GlobalV::NBANDS = 4;
-    GlobalV::NSPIN = 2;
-    GlobalV::global_out_dir = "./";
+    PARAM.input.nspin = 2;
+    PARAM.sys.global_out_dir = "./";
     // mpi setting
     Parallel_Global::init_pools(GlobalV::NPROC,
                                 GlobalV::MY_RANK,
@@ -116,7 +116,7 @@ TEST_F(IstateInfoTest, OutIstateInfoS2)
     kv->set_nkstot(100);
     int nkstot = kv->get_nkstot();
     Pkpoints
-        ->kinfo(nkstot, GlobalV::KPAR, GlobalV::MY_POOL, GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL, GlobalV::NSPIN);
+        ->kinfo(nkstot, GlobalV::KPAR, GlobalV::MY_POOL, GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL, PARAM.input.nspin);
     // std::cout<<"my_rank "<<GlobalV::MY_RANK<<" pool rank/size: "
     //	<<GlobalV::RANK_IN_POOL<<"/"<<GlobalV::NPROC_IN_POOL<<std::endl;
     // std::cout<<"MY_POOL "<<GlobalV::MY_POOL<<std::endl;

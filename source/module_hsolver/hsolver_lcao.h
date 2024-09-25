@@ -16,37 +16,21 @@ class HSolverLCAO
     void solve(hamilt::Hamilt<T>* pHamilt,
                psi::Psi<T>& psi,
                elecstate::ElecState* pes,
-               const std::string method_in,
                const bool skip_charge);
 
   private:
     void hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>& psi, double* eigenvalue);
 
-    const Parallel_Orbitals* ParaV;
-
     void parakSolve(hamilt::Hamilt<T>* pHamilt, psi::Psi<T>& psi, elecstate::ElecState* pes, int kpar);
 
-    bool is_first_scf = true;
+    const Parallel_Orbitals* ParaV;
+    
+    const std::string method;
 
+    // for cg_in_lcao
     using Real = typename GetTypeReal<T>::type;
     std::vector<Real> precondition_lcao;
-
-    DiagH<T, Device>* pdiagh = nullptr; // for single Hamiltonian matrix diagonal solver
-
-    std::string method = "none";
 };
-
-template <typename T>
-inline T my_conj(T value)
-{
-    return value;
-}
-
-template <>
-inline std::complex<double> my_conj(std::complex<double> value)
-{
-    return std::conj(value);
-}
 
 } // namespace hsolver
 

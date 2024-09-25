@@ -26,6 +26,7 @@ PREFIX=$ABACUS_DIR
 ELPA=$INSTALL_DIR/elpa-2024.03.001/cpu
 CEREAL=$INSTALL_DIR/cereal-1.3.2/include/cereal
 LIBXC=$INSTALL_DIR/libxc-6.2.2
+RAPIDJSON=$INSTALL_DIR/rapidjson-1.1.0/
 # LIBTORCH=$INSTALL_DIR/libtorch-2.1.2/share/cmake/Torch
 # LIBNPY=$INSTALL_DIR/libnpy-1.0.1/include
 # LIBRI=$INSTALL_DIR/LibRI-0.1.1
@@ -44,6 +45,7 @@ cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
         -DUSE_OPENMP=ON \
         -DUSE_ELPA=ON \
         -DENABLE_RAPIDJSON=ON \
+        -DRapdidJSON_DIR=$RAPIDJSON \
 #       -DENABLE_DEEPKS=1 \
 #       -DTorch_DIR=$LIBTORCH \
 #       -Dlibnpy_INCLUDE_DIR=$LIBNPY \
@@ -64,4 +66,13 @@ cat << EOF > "${TOOL}/abacus_env.sh"
 #!/bin/bash
 source $INSTALL_DIR/setup
 export PATH="${PREFIX}/bin":\${PATH}
+EOF
+
+# generate information
+cat << EOF
+========================== usage =========================
+Done!
+To use the installed ABACUS version
+You need to source $(pwd)/abacus_env.sh first !
+"""
 EOF

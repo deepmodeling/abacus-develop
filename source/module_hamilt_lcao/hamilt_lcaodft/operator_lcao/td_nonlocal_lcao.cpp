@@ -1,5 +1,6 @@
 #include "td_nonlocal_lcao.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/timer.h"
 #include "module_base/tool_title.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
@@ -444,7 +445,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<std::complex<double>, double>>::con
         ModuleBase::TITLE("TDNonlocal", "contributeHk");
         ModuleBase::timer::tick("TDNonlocal", "contributeHk");
         // folding inside HR to HK
-        if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
+        if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
         {
             const int nrow = this->hsk->get_pv()->get_row_size();
             folding_HR(*this->hR_tmp, this->hsk->get_hk(), this->kvec_d[ik], nrow, 1);

@@ -46,7 +46,7 @@ Potential::~Potential()
         }
         this->components.clear();
     }
-    if (GlobalV::device_flag == "gpu") {
+    if (PARAM.globalv.device_flag == "gpu") {
         if (PARAM.inp.precision == "single") {
             delmem_sd_op()(gpu_ctx, s_veff_smooth);
             delmem_sd_op()(gpu_ctx, s_vofk_smooth);
@@ -109,40 +109,40 @@ void Potential::allocate()
     this->v_effective_fixed.resize(nrxx);
     ModuleBase::Memory::record("Pot::veff_fix", sizeof(double) * nrxx);
 
-    this->v_effective.create(GlobalV::NSPIN, nrxx);
-    ModuleBase::Memory::record("Pot::veff", sizeof(double) * GlobalV::NSPIN * nrxx);
+    this->v_effective.create(PARAM.inp.nspin, nrxx);
+    ModuleBase::Memory::record("Pot::veff", sizeof(double) * PARAM.inp.nspin * nrxx);
 
-    this->veff_smooth.create(GlobalV::NSPIN, nrxx_smooth);
-    ModuleBase::Memory::record("Pot::veff_smooth", sizeof(double) * GlobalV::NSPIN * nrxx_smooth);
+    this->veff_smooth.create(PARAM.inp.nspin, nrxx_smooth);
+    ModuleBase::Memory::record("Pot::veff_smooth", sizeof(double) * PARAM.inp.nspin * nrxx_smooth);
 
     if(PARAM.inp.use_paw)
     {
-        this->v_xc.create(GlobalV::NSPIN, nrxx);
-        ModuleBase::Memory::record("Pot::vxc", sizeof(double) * GlobalV::NSPIN * nrxx);
+        this->v_xc.create(PARAM.inp.nspin, nrxx);
+        ModuleBase::Memory::record("Pot::vxc", sizeof(double) * PARAM.inp.nspin * nrxx);
     }
 
     if (elecstate::get_xc_func_type() == 3 || elecstate::get_xc_func_type() == 5)
     {
-        this->vofk_effective.create(GlobalV::NSPIN, nrxx);
-        ModuleBase::Memory::record("Pot::vofk", sizeof(double) * GlobalV::NSPIN * nrxx);
+        this->vofk_effective.create(PARAM.inp.nspin, nrxx);
+        ModuleBase::Memory::record("Pot::vofk", sizeof(double) * PARAM.inp.nspin * nrxx);
 
-        this->vofk_smooth.create(GlobalV::NSPIN, nrxx_smooth);
-        ModuleBase::Memory::record("Pot::vofk_smooth", sizeof(double) * GlobalV::NSPIN * nrxx_smooth);
+        this->vofk_smooth.create(PARAM.inp.nspin, nrxx_smooth);
+        ModuleBase::Memory::record("Pot::vofk_smooth", sizeof(double) * PARAM.inp.nspin * nrxx_smooth);
     }
-    if (GlobalV::device_flag == "gpu") {
+    if (PARAM.globalv.device_flag == "gpu") {
         if (PARAM.inp.precision == "single") {
-            resmem_sd_op()(gpu_ctx, s_veff_smooth, GlobalV::NSPIN * nrxx_smooth);
-            resmem_sd_op()(gpu_ctx, s_vofk_smooth, GlobalV::NSPIN * nrxx_smooth);
+            resmem_sd_op()(gpu_ctx, s_veff_smooth, PARAM.inp.nspin * nrxx_smooth);
+            resmem_sd_op()(gpu_ctx, s_vofk_smooth, PARAM.inp.nspin * nrxx_smooth);
         }
         else {
-            resmem_dd_op()(gpu_ctx, d_veff_smooth, GlobalV::NSPIN * nrxx_smooth);
-            resmem_dd_op()(gpu_ctx, d_vofk_smooth, GlobalV::NSPIN * nrxx_smooth);
+            resmem_dd_op()(gpu_ctx, d_veff_smooth, PARAM.inp.nspin * nrxx_smooth);
+            resmem_dd_op()(gpu_ctx, d_vofk_smooth, PARAM.inp.nspin * nrxx_smooth);
         }
     }
     else {
         if (PARAM.inp.precision == "single") {
-            resmem_sh_op()(cpu_ctx, s_veff_smooth, GlobalV::NSPIN * nrxx_smooth, "POT::sveff_smooth");
-            resmem_sh_op()(cpu_ctx, s_vofk_smooth, GlobalV::NSPIN * nrxx_smooth, "POT::svofk_smooth");
+            resmem_sh_op()(cpu_ctx, s_veff_smooth, PARAM.inp.nspin * nrxx_smooth, "POT::sveff_smooth");
+            resmem_sh_op()(cpu_ctx, s_vofk_smooth, PARAM.inp.nspin * nrxx_smooth, "POT::svofk_smooth");
         }
         else {
             this->d_veff_smooth = this->veff_smooth.c;
@@ -177,7 +177,7 @@ void Potential::update_from_charge(const Charge*const chg, const UnitCell*const 
     }
 #endif
 
-    if (GlobalV::device_flag == "gpu") {
+    if (PARAM.globalv.device_flag == "gpu") {
         if (PARAM.inp.precision == "single") {
             castmem_d2s_h2d_op()(gpu_ctx,
                                  cpu_ctx,
@@ -323,8 +323,8 @@ void Potential::interpolate_vrs()
             ModuleBase::WARNING_QUIT("Potential::interpolate_vrs", "gamma_only is not consistent");
         }
 
-        ModuleBase::ComplexMatrix vrs(GlobalV::NSPIN, rho_basis_->npw);
-        for (int is = 0; is < GlobalV::NSPIN; is++)
+        ModuleBase::ComplexMatrix vrs(PARAM.inp.nspin, rho_basis_->npw);
+        for (int is = 0; is < PARAM.inp.nspin; is++)
         {
             rho_basis_->real2recip(&v_effective(is, 0), &vrs(is, 0));
             rho_basis_smooth_->recip2real(&vrs(is, 0), &veff_smooth(is, 0));
@@ -332,8 +332,8 @@ void Potential::interpolate_vrs()
 
         if (elecstate::get_xc_func_type() == 3 || elecstate::get_xc_func_type() == 5)
         {
-            ModuleBase::ComplexMatrix vrs_ofk(GlobalV::NSPIN, rho_basis_->npw);
-            for (int is = 0; is < GlobalV::NSPIN; is++)
+            ModuleBase::ComplexMatrix vrs_ofk(PARAM.inp.nspin, rho_basis_->npw);
+            for (int is = 0; is < PARAM.inp.nspin; is++)
             {
                 rho_basis_->real2recip(&vofk_effective(is, 0), &vrs_ofk(is, 0));
                 rho_basis_smooth_->recip2real(&vrs_ofk(is, 0), &vofk_smooth(is, 0));

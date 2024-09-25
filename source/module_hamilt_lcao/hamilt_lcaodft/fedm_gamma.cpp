@@ -1,5 +1,6 @@
 #include "FORCE.h"
 #include "module_elecstate/elecstate_lcao.h"
+#include "module_parameter/parameter.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
@@ -27,7 +28,7 @@ void Force_LCAO<double>::cal_fedm(
     ModuleBase::TITLE("Force_LCAO","cal_fedm");
     ModuleBase::timer::tick("Force_LCAO","cal_fedm");
 
-    const int nspin = GlobalV::NSPIN;
+    const int nspin = PARAM.inp.nspin;
     const int nbands = GlobalV::NBANDS;
     const int nlocal = GlobalV::NLOCAL;
 
@@ -46,7 +47,7 @@ void Force_LCAO<double>::cal_fedm(
     elecstate::DensityMatrix<double, double> edm(&pv, nspin);
     
 #ifdef __PEXSI
-    if (GlobalV::KS_SOLVER == "pexsi")
+    if (PARAM.inp.ks_solver == "pexsi")
     {
         auto pes = dynamic_cast<const elecstate::ElecStateLCAO<double>*>(pelec);
         for (int ik = 0; ik < nspin; ik++)

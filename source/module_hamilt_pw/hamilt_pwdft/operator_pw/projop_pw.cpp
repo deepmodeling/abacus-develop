@@ -1,5 +1,6 @@
 #include <cassert>
 #include <numeric>
+#include "module_parameter/parameter.h"
 #include <fstream>
 #include <string>
 #include <vector>
@@ -18,7 +19,7 @@
 #ifdef __MPI
 #include "module_base/parallel_reduce.h"
 #endif
-
+#include "module_io/orb_io.h"
 /**
  * ===============================================================================================
  * 
@@ -69,8 +70,8 @@
  * // the `rgrid` and `projs` are also the output of function `init_proj`
  * // the `iproj2l` is the angular momentum for each projector, actually you have used it in `init_proj`, it
  * // is the same as `lproj`
- * // the `nq` is the number of G+k vectors, typically it is always GlobalV::NQX
- * // the `dq` is the step size of G+k vectors, typically it is always GlobalV::DQ
+ * // the `nq` is the number of G+k vectors, typically it is always PARAM.globalv.nqx
+ * // the `dq` is the step size of G+k vectors, typically it is always PARAM.globalv.dq
  * // the `ik` is the k-point index
  * // the `pw_basis` is the plane wave basis, need ik
  * // the `omega` is the cell volume
@@ -136,7 +137,7 @@ void init_proj(const std::string& orbital_dir,
         double dr_ = -1.0;
         std::vector<int> nzeta; // number of radials for each l
         std::vector<std::vector<double>> radials; // radials arranged in serial
-        AtomicRadials::read_abacus_orb(ifs, elem, ecut, nr_, dr_, nzeta, radials);
+        ModuleIO::read_abacus_orb(ifs, elem, ecut, nr_, dr_, nzeta, radials);
 #ifdef __DEBUG
         assert(elem != "");
         assert(ecut != -1.0);
@@ -176,8 +177,8 @@ void cal_becp(const std::vector<std::vector<int>>& it2ia,       // level0: for g
               const std::vector<double>& rgrid,                 // level0: the radial grid shared by all projectors
               const std::vector<std::vector<double>>& projs,    // level0: projectors indexed by `iproj`
               const std::vector<int>& iproj2l,                  // level0: for given proj index `iproj`, the angular momentum `l`
-              const int nq,                                     // level0: GlobalV::NQX
-              const double& dq,                                 // level0: GlobalV::DQ
+              const int nq,                                     // level0: PARAM.globalv.nqx
+              const double& dq,                                 // level0: PARAM.globalv.dq
               const int ik,                                     // level1: the k-point index
               const ModulePW::PW_Basis_K& pw_basis,             // level1: the plane wave basis, need ik
               const double& omega,                              // level1: the cell volume

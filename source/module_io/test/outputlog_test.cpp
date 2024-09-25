@@ -86,6 +86,33 @@ TEST(OutputEfermiTest, TestConvergence) {
     std::remove("test_output_efermi.txt");
 }
 
+// Test the output_efermi function
+TEST(OutputAfterRelaxTest, TestConvergence)
+{
+    bool conv_ion = true;
+    bool conv_elec = false;
+    std::ofstream ofs_running("test_output_after_relax.txt");
+    ModuleIO::output_after_relax(conv_ion, conv_elec, ofs_running);
+    ofs_running.close();
+
+    std::ifstream ifs_running("test_output_after_relax.txt");
+    std::stringstream ss;
+    ss << ifs_running.rdbuf();
+    std::string file_content = ss.str();
+    ifs_running.close();
+
+    std::string expected_content
+        = "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
+          "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n\n Relaxation is converged, but the SCF is unconverged! The "
+          "results are unreliable.. \n\n It is suggested to increase the maximum SCF step and/or perform the "
+          "relaxation again. "
+          "\n\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n\n%%%%%%%%%%%%%%%%%%%%%%%%%%"
+          "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n";
+
+    EXPECT_EQ(file_content, expected_content);
+    std::remove("test_output_after_relax.txt");
+}
+
 TEST(OutputEfermiTest, TestNotConvergence) {
     bool convergence = false;
     double efermi = 1.0;
@@ -181,7 +208,7 @@ pseudo::~pseudo()
 
 TEST(OutputVacuumLevelTest, OutputVacuumLevel)
 {
-    GlobalV::NSPIN = 1;
+    PARAM.input.nspin = 1;
     UnitCell ucell;
     const int nx = 50, ny = 50, nz = 50, nxyz = 125000, nrxx = 125000, nplane = 50, startz_current = 0;
 

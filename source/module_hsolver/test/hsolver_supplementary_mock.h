@@ -43,7 +43,7 @@ void ElecState::print_eigenvalue(std::ofstream& ofs)
     return;
 }
 
-void ElecState::init_scf(const int istep, const ModuleBase::ComplexMatrix& strucfac)
+void ElecState::init_scf(const int istep, const ModuleBase::ComplexMatrix& strucfac, ModuleSymmetry::Symmetry&, const void*)
 {
     return;
 }
@@ -53,11 +53,6 @@ void ElecState::init_ks(Charge* chg_in, // pointer for class Charge
                         int nk_in,
                         ModulePW::PW_Basis* rhopw_in,
                         const ModulePW::PW_Basis_Big* bigpw_in)
-{
-    return;
-}
-
-void ElecState::cal_nbands()
 {
     return;
 }

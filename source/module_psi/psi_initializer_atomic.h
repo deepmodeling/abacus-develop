@@ -34,7 +34,7 @@ class psi_initializer_atomic : public psi_initializer<T, Device>
         #endif
         virtual void allocate_table() override;
         virtual void tabulate() override;
-        virtual void proj_ao_onkG(int ik) override;
+        virtual void proj_ao_onkG(const int ik) override;
         // additional getter
         std::vector<std::string> pseudopot_files() const { return pseudopot_files_; }
 

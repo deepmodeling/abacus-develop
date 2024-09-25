@@ -47,7 +47,7 @@ void toWannier90_LCAO::calculate(const ModuleBase::matrix& ekb,
 
     read_nnkp(kv);
 
-    if (GlobalV::NSPIN == 2)
+    if (PARAM.inp.nspin == 2)
     {
         if (wannier_spin == "up")
         {
@@ -162,7 +162,7 @@ void toWannier90_LCAO::cal_Mmn(const K_Vectors& kv, const psi::Psi<std::complex<
 
     if (GlobalV::MY_RANK == 0)
     {
-        std::string fileaddress = GlobalV::global_out_dir + wannier_file_name + ".mmn";
+        std::string fileaddress = PARAM.globalv.global_out_dir + wannier_file_name + ".mmn";
         mmn_file.open(fileaddress.c_str(), std::ios::out);
 
         time_t time_now = time(nullptr);
@@ -221,7 +221,7 @@ void toWannier90_LCAO::cal_Amn(const K_Vectors& kv, const psi::Psi<std::complex<
     if (GlobalV::MY_RANK == 0)
     {
         time_t time_now = time(nullptr);
-        std::string fileaddress = GlobalV::global_out_dir + wannier_file_name + ".amn";
+        std::string fileaddress = PARAM.globalv.global_out_dir + wannier_file_name + ".amn";
         Amn_file.open(fileaddress.c_str(), std::ios::out);
         Amn_file << " Created on " << ctime(&time_now);
         Amn_file << std::setw(12) << num_bands << std::setw(12) << cal_num_kpts << std::setw(12) << num_wannier
@@ -688,10 +688,10 @@ void toWannier90_LCAO::construct_overlap_table_project()
     int row = this->ParaV->get_row_size();
     int global_ir = 0;
 
-    for (int ir = 0; ir < row; ir += GlobalV::NPOL)
+    for (int ir = 0; ir < row; ir += PARAM.globalv.npol)
     {
         global_ir = ParaV->local2global_row(ir);
-        int orb_index_row = global_ir / GlobalV::NPOL;
+        int orb_index_row = global_ir / PARAM.globalv.npol;
 
         for (int wannier_index = 0; wannier_index < num_wannier; wannier_index++)
         {
@@ -767,7 +767,7 @@ void toWannier90_LCAO::cal_orbA_overlap_R()
     for (int ir = 0; ir < row; ir++)
     {
         global_ir = ParaV->local2global_row(ir);
-        int orb_index_row = global_ir / GlobalV::NPOL;
+        int orb_index_row = global_ir / PARAM.globalv.npol;
 
         int it1 = iw2it[orb_index_row];
         int ia1 = iw2ia[orb_index_row];
@@ -1136,7 +1136,7 @@ void toWannier90_LCAO::unkdotA(const K_Vectors& kv,
     int row = this->ParaV->get_row_size();
     int index_band = -1;
     int R_num = R_coor_car.size();
-    if (GlobalV::NSPIN != 4)
+    if (PARAM.inp.nspin != 4)
     {
         for (int ib = 0; ib < GlobalV::NBANDS; ib++)
         {

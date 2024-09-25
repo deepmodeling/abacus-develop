@@ -1,5 +1,6 @@
 #include "LCAO_domain.h"
 
+#include "module_parameter/parameter.h"
 /// once the GlobalC::exx_info has been deleted, this include can be gone 
 /// mohan note 2024-07-21
 #ifdef __EXX
@@ -23,21 +24,21 @@ void init_basis_lcao(Parallel_Orbitals& pv,
     ModuleBase::TITLE("ESolver_KS_LCAO", "init_basis_lcao");
 
     const int nlocal = GlobalV::NLOCAL;
-
+    int nb2d = PARAM.inp.nb2d;
     // autoset NB2D first
-    if (GlobalV::NB2D == 0)
+    if (nb2d == 0)
     {
         if (nlocal > 0)
         {
-            GlobalV::NB2D = (GlobalV::NSPIN == 4) ? 2 : 1;
+            nb2d = (PARAM.inp.nspin == 4) ? 2 : 1;
         }
         if (nlocal > 500)
         {
-            GlobalV::NB2D = 32;
+            nb2d = 32;
         }
         if (nlocal > 1000)
         {
-            GlobalV::NB2D = 64;
+            nb2d = 64;
         }
     }
 
@@ -45,7 +46,7 @@ void init_basis_lcao(Parallel_Orbitals& pv,
     // * construct the interpolation tables.
 
     two_center_bundle.build_orb(ucell.ntype, ucell.orbital_fn);
-    two_center_bundle.build_alpha(GlobalV::deepks_setorb, &ucell.descriptor_file);
+    two_center_bundle.build_alpha(PARAM.globalv.deepks_setorb, &ucell.descriptor_file);
     two_center_bundle.build_orb_onsite(onsite_radius);
     // currently deepks only use one descriptor file, so cast bool to int is
     // fine
@@ -74,7 +75,7 @@ void init_basis_lcao(Parallel_Orbitals& pv,
     // storage form of H and S matrices on each processor
     // is determined in 'divide_HS_2d' subroutine
 
-    int try_nb = pv.init(nlocal, nlocal, GlobalV::NB2D, DIAG_WORLD);
+    int try_nb = pv.init(nlocal, nlocal, nb2d, DIAG_WORLD);
     try_nb += pv.set_nloc_wfc_Eij(GlobalV::NBANDS, GlobalV::ofs_running, GlobalV::ofs_warning);
     if (try_nb != 0)
     {

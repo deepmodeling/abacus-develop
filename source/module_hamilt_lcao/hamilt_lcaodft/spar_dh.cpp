@@ -1,5 +1,6 @@
 #include "spar_dh.h"
 
+#include "module_parameter/parameter.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
 #include <vector>
 
@@ -29,34 +30,19 @@ void sparse_format::cal_dH(const Parallel_Orbitals& pv,
     ModuleBase::GlobalFunc::ZEROS(fsr_dh.DHloc_fixedR_z, pv.nloc);
     // cal dT=<phi|kin|dphi> in LCAO
     // cal T + VNL(P1) in LCAO basis
-    if (GlobalV::CAL_STRESS)
-    {
-        GlobalV::CAL_STRESS = false;
-
-        LCAO_domain::build_ST_new(fsr_dh,
-                                  'T',
-                                  true,
-                                  GlobalC::ucell,
-                                  orb,
-                                  pv,
-                                  two_center_bundle,
-                                  &GlobalC::GridD,
-                                  nullptr); // delete unused parameter lm.Hloc_fixedR
-
-        GlobalV::CAL_STRESS = true;
-    }
-    else
-    {
-        LCAO_domain::build_ST_new(fsr_dh,
-                                  'T',
-                                  true,
-                                  GlobalC::ucell,
-                                  orb,
-                                  pv,
-                                  two_center_bundle,
-                                  &GlobalC::GridD,
-                                  nullptr); // delete unused parameter lm.Hloc_fixedR
-    }
+    const bool cal_deri = true;
+    const bool cal_stress = false;
+    LCAO_domain::build_ST_new(fsr_dh,
+                                'T',
+                                cal_deri,
+                                cal_stress,
+                                GlobalC::ucell,
+                                orb,
+                                pv,
+                                two_center_bundle,
+                                &GlobalC::GridD,
+                                nullptr,
+                                false); // delete unused parameter lm.Hloc_fixedR
 
     LCAO_domain::build_Nonlocal_mu_new(pv,
                                        fsr_dh,
@@ -178,7 +164,7 @@ void sparse_format::cal_dSTN_R(const Parallel_Orbitals& pv,
 
                     Abfs::Vector3_Order<int> dR(grid.getBox(ad).x, grid.getBox(ad).y, grid.getBox(ad).z);
 
-                    for (int ii = 0; ii < atom1->nw * GlobalV::NPOL; ii++)
+                    for (int ii = 0; ii < atom1->nw * PARAM.globalv.npol; ii++)
                     {
                         const int iw1_all = start + ii;
                         const int mu = pv.global2local_row(iw1_all);
@@ -188,7 +174,7 @@ void sparse_format::cal_dSTN_R(const Parallel_Orbitals& pv,
                             continue;
                         }
 
-                        for (int jj = 0; jj < atom2->nw * GlobalV::NPOL; jj++)
+                        for (int jj = 0; jj < atom2->nw * PARAM.globalv.npol; jj++)
                         {
                             int iw2_all = start2 + jj;
                             const int nu = pv.global2local_col(iw2_all);
@@ -198,7 +184,7 @@ void sparse_format::cal_dSTN_R(const Parallel_Orbitals& pv,
                                 continue;
                             }
 
-                            if (GlobalV::NSPIN != 4)
+                            if (PARAM.inp.nspin != 4)
                             {
                                 temp_value_double = fsr.DHloc_fixedR_x[index];
                                 if (std::abs(temp_value_double) > sparse_thr)
@@ -235,7 +221,7 @@ void sparse_format::destroy_dH_R_sparse(LCAO_HS_Arrays& HS_Arrays)
 {
     ModuleBase::TITLE("LCAO_domain", "destroy_dH_R_sparse");
 
-    if (GlobalV::NSPIN != 4)
+    if (PARAM.inp.nspin != 4)
     {
         std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> empty_dHRx_sparse_up;
         std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> empty_dHRx_sparse_down;

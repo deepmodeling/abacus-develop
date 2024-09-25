@@ -60,7 +60,7 @@ void ESolver_SDFT_PW::before_all_runners(const Input_para& inp, UnitCell& ucell)
                                                   pw_big);
 
     // 4) inititlize the charge density.
-    this->pelec->charge->allocate(GlobalV::NSPIN);
+    this->pelec->charge->allocate(PARAM.inp.nspin);
     this->pelec->omega = ucell.omega;
 
     // 5) initialize the potential.
@@ -78,7 +78,7 @@ void ESolver_SDFT_PW::before_all_runners(const Input_para& inp, UnitCell& ucell)
 
     // 6) prepare some parameters for electronic wave functions initilization
     this->p_wf_init = new psi::WFInit<std::complex<double>>(PARAM.inp.init_wfc,
-                                                            GlobalV::KS_SOLVER,
+                                                            PARAM.inp.ks_solver,
                                                             PARAM.inp.basis_type,
                                                             PARAM.inp.psi_initializer,
                                                             &this->wf,
@@ -172,7 +172,23 @@ void ESolver_SDFT_PW::hamilt2density(int istep, int iter, double ethr)
     hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX = PARAM.inp.pw_diag_nmax;
 
     // hsolver only exists in this function
-    hsolver::HSolverPW_SDFT hsolver_pw_sdft_obj(&this->kv, this->pw_wfc, &this->wf, this->stowf, this->stoche, this->init_psi);
+    hsolver::HSolverPW_SDFT hsolver_pw_sdft_obj(
+                    &this->kv, 
+                    this->pw_wfc, 
+                    &this->wf, 
+                    this->stowf, 
+                    this->stoche, 
+                    PARAM.inp.calculation,
+                    PARAM.inp.basis_type,
+                    PARAM.inp.ks_solver,
+                    PARAM.inp.use_paw,
+                    GlobalV::use_uspp,
+                    PARAM.inp.nspin,
+                    hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER,
+                    hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX,
+                    hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR,
+                    hsolver::DiagoIterAssist<std::complex<double>>::need_subspace,
+                    this->init_psi);
 
     hsolver_pw_sdft_obj.solve(this->p_hamilt,
                               this->psi[0],
@@ -181,11 +197,6 @@ void ESolver_SDFT_PW::hamilt2density(int istep, int iter, double ethr)
                               this->stowf,
                               istep,
                               iter,
-                              GlobalV::KS_SOLVER,
-                              hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER,
-                              hsolver::DiagoIterAssist<std::complex<double>>::need_subspace,
-                              hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX,
-                              hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR,
                               false);
     this->init_psi = true;
 
@@ -195,9 +206,9 @@ void ESolver_SDFT_PW::hamilt2density(int istep, int iter, double ethr)
     if (GlobalV::MY_STOGROUP == 0)
     {
         Symmetry_rho srho;
-        for (int is = 0; is < GlobalV::NSPIN; is++)
+        for (int is = 0; is < PARAM.inp.nspin; is++)
         {
-            srho.begin(is, *(this->pelec->charge), pw_rho, GlobalC::Pgrid, GlobalC::ucell.symm);
+            srho.begin(is, *(this->pelec->charge), pw_rho, GlobalC::ucell.symm);
         }
         this->pelec->f_en.deband = this->pelec->cal_delta_eband();
     }

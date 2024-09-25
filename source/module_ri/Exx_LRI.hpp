@@ -75,7 +75,7 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in, const K_Vectors &kv_in, c
 			case Conv_Coulomb_Pot_K::Ccp_Type::Hf:
 			{
 				// 4/3 * pi * Rcut^3 = V_{supercell} = V_{unitcell} * Nk
-				const int nspin0 = (GlobalV::NSPIN==2) ? 2 : 1;
+				const int nspin0 = (PARAM.inp.nspin==2) ? 2 : 1;
 				const double hf_Rcut = std::pow(0.75 * this->p_kv->get_nkstot_full()/nspin0 * GlobalC::ucell.omega / (ModuleBase::PI), 1.0/3.0);
 				return {{"hf_Rcut", hf_Rcut}};
 			}
@@ -101,7 +101,7 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in, const K_Vectors &kv_in, c
 }
 
 template<typename Tdata>
-void Exx_LRI<Tdata>::cal_exx_ions()
+void Exx_LRI<Tdata>::cal_exx_ions(const bool write_cv)
 {
 	ModuleBase::TITLE("Exx_LRI","cal_exx_ions");
 	ModuleBase::timer::tick("Exx_LRI", "cal_exx_ions");
@@ -165,6 +165,7 @@ void Exx_LRI<Tdata>::cal_exx_ions()
 			 {"writable_Cws",true}, {"writable_dCws",true}, {"writable_Vws",false}, {"writable_dVws",false}});
 	std::map<TA,std::map<TAC,RI::Tensor<Tdata>>> &Cs = std::get<0>(Cs_dCs);
 	this->cv.Cws = LRI_CV_Tools::get_CVws(Cs);
+    if (write_cv && GlobalV::MY_RANK == 0) { LRI_CV_Tools::write_Cs_ao(Cs, PARAM.globalv.global_out_dir + "Cs"); }
 	this->exx_lri.set_Cs(std::move(Cs), this->info.C_threshold);
 
 	if(PARAM.inp.cal_force || PARAM.inp.cal_stress)
@@ -191,10 +192,10 @@ void Exx_LRI<Tdata>::cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, R
 
 	const std::vector<std::tuple<std::set<TA>, std::set<TA>>> judge = RI_2D_Comm::get_2D_judge(pv);
 
-	this->Hexxs.resize(GlobalV::NSPIN);
+	this->Hexxs.resize(PARAM.inp.nspin);
 	this->Eexx = 0;
     (p_symrot) ? this->exx_lri.set_symmetry(true, p_symrot->get_irreducible_sector()) : this->exx_lri.set_symmetry(false, {});
-	for(int is=0; is<GlobalV::NSPIN; ++is)
+	for(int is=0; is<PARAM.inp.nspin; ++is)
 	{
         std::string suffix = ((PARAM.inp.cal_force || PARAM.inp.cal_stress) ? std::to_string(is) : "");
 
@@ -243,7 +244,7 @@ template<typename Tdata>
 double Exx_LRI<Tdata>::post_process_Eexx(const double& Eexx_in) const
 {
 	ModuleBase::TITLE("Exx_LRI","post_process_Eexx");
-    const double SPIN_multiple = std::map<int, double>{ {1,2}, {2,1}, {4,1} }.at(GlobalV::NSPIN);				// why?
+    const double SPIN_multiple = std::map<int, double>{ {1,2}, {2,1}, {4,1} }.at(PARAM.inp.nspin);				// why?
     const double frac = -SPIN_multiple;
 	return frac * Eexx_in;
 }
@@ -260,7 +261,7 @@ post_process_old
 
 	// E
 	const std::map<int,double> SPIN_multiple = {{1,2}, {2,1}, {4,1}};							// ???
-	energy *= SPIN_multiple.at(GlobalV::NSPIN);			// ?
+	energy *= SPIN_multiple.at(PARAM.inp.nspin);			// ?
 	energy /= 2;					// /2 for Ry
 }
 */
@@ -272,7 +273,7 @@ void Exx_LRI<Tdata>::cal_exx_force()
 	ModuleBase::timer::tick("Exx_LRI", "cal_exx_force");
 
 	this->force_exx.create(GlobalC::ucell.nat, Ndim);
-	for(int is=0; is<GlobalV::NSPIN; ++is)
+	for(int is=0; is<PARAM.inp.nspin; ++is)
 	{
 		this->exx_lri.cal_force({"","",std::to_string(is),"",""});
 		for(std::size_t idim=0; idim<Ndim; ++idim) {
@@ -282,7 +283,7 @@ void Exx_LRI<Tdata>::cal_exx_force()
 }
 	}
 
-	const double SPIN_multiple = std::map<int,double>{{1,2}, {2,1}, {4,1}}.at(GlobalV::NSPIN);				// why?
+	const double SPIN_multiple = std::map<int,double>{{1,2}, {2,1}, {4,1}}.at(PARAM.inp.nspin);				// why?
 	const double frac = -2 * SPIN_multiple;		// why?
 	this->force_exx *= frac;
 	ModuleBase::timer::tick("Exx_LRI", "cal_exx_force");
@@ -296,7 +297,7 @@ void Exx_LRI<Tdata>::cal_exx_stress()
 	ModuleBase::timer::tick("Exx_LRI", "cal_exx_stress");
 
 	this->stress_exx.create(Ndim, Ndim);
-	for(int is=0; is<GlobalV::NSPIN; ++is)
+	for(int is=0; is<PARAM.inp.nspin; ++is)
 	{
 		this->exx_lri.cal_stress({"","",std::to_string(is),"",""});
 		for(std::size_t idim0=0; idim0<Ndim; ++idim0) {
@@ -306,7 +307,7 @@ void Exx_LRI<Tdata>::cal_exx_stress()
 }
 	}
 
-	const double SPIN_multiple = std::map<int,double>{{1,2}, {2,1}, {4,1}}.at(GlobalV::NSPIN);				// why?
+	const double SPIN_multiple = std::map<int,double>{{1,2}, {2,1}, {4,1}}.at(PARAM.inp.nspin);				// why?
 	const double frac = 2 * SPIN_multiple / GlobalC::ucell.omega * GlobalC::ucell.lat0;		// why?
 	this->stress_exx *= frac;
 

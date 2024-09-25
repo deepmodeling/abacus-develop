@@ -1,5 +1,6 @@
 #include "td_current_io.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_base/libm/libm.h"
@@ -58,7 +59,7 @@ void ModuleIO::cal_tmp_DM(elecstate::DensityMatrix<std::complex<double>, double>
             }
 #endif
             // only ik
-            if (GlobalV::NSPIN != 4)
+            if (PARAM.inp.nspin != 4)
             {
                 // cal k_phase
                 // if TK==std::complex<double>, kphase is e^{ikR}
@@ -156,8 +157,8 @@ void ModuleIO::write_current(const int istep,
     // construct a DensityMatrix object
     // Since the function cal_dm_psi do not suport DMR in complex type, I replace it with two DMR in double type. Should
     // be refactored in the future.
-    elecstate::DensityMatrix<std::complex<double>, double> DM_real(&kv, pv, GlobalV::NSPIN);
-    elecstate::DensityMatrix<std::complex<double>, double> DM_imag(&kv, pv, GlobalV::NSPIN);
+    elecstate::DensityMatrix<std::complex<double>, double> DM_real(&kv, pv, PARAM.inp.nspin);
+    elecstate::DensityMatrix<std::complex<double>, double> DM_imag(&kv, pv, PARAM.inp.nspin);
     // calculate DMK
     elecstate::cal_dm_psi(DM_real.get_paraV_pointer(), pelec->wg, psi[0], DM_real);
 
@@ -166,16 +167,16 @@ void ModuleIO::write_current(const int istep,
     DM_imag.init_DMR(ra, &GlobalC::ucell);
 
     int nks = DM_real.get_DMK_nks();
-    if (GlobalV::NSPIN == 2)
+    if (PARAM.inp.nspin == 2)
     {
         nks /= 2;
     }
     double current_total[3] = {0.0, 0.0, 0.0};
-    for (int is = 1; is <= GlobalV::NSPIN; ++is)
+    for (int is = 1; is <= PARAM.inp.nspin; ++is)
     {
         for (int ik = 0; ik < nks; ++ik)
         {
-            cal_tmp_DM(DM_real, DM_imag, ik, GlobalV::NSPIN, is);
+            cal_tmp_DM(DM_real, DM_imag, ik, PARAM.inp.nspin, is);
             // check later
             double current_ik[3] = {0.0, 0.0, 0.0};
             int total_irr = 0;
@@ -282,7 +283,7 @@ void ModuleIO::write_current(const int istep,
             // MPI_Reduce(local_current_ik, current_ik, 3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
             if (GlobalV::MY_RANK == 0 && TD_Velocity::out_current_k)
             {
-                std::string filename = GlobalV::global_out_dir + "current_spin" + std::to_string(is) + "_ik"
+                std::string filename = PARAM.globalv.global_out_dir + "current_spin" + std::to_string(is) + "_ik"
                                        + std::to_string(ik) + ".dat";
                 std::ofstream fout;
                 fout.open(filename, std::ios::app);
@@ -297,7 +298,7 @@ void ModuleIO::write_current(const int istep,
     }     // end is
     if (GlobalV::MY_RANK == 0)
     {
-        std::string filename = GlobalV::global_out_dir + "current_total.dat";
+        std::string filename = PARAM.globalv.global_out_dir + "current_total.dat";
         std::ofstream fout;
         fout.open(filename, std::ios::app);
         fout << std::setprecision(16);

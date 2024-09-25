@@ -47,11 +47,11 @@ void Exx_Lip<T, Device>::cal_exx()
 }
         }
 
-        for (int iq_tmp = iq_vecik; iq_tmp < iq_vecik + q_pack->kv_ptr->get_nks() / GlobalV::NSPIN; ++iq_tmp)					// !!! k_point
+        for (int iq_tmp = iq_vecik; iq_tmp < iq_vecik + q_pack->kv_ptr->get_nks() / PARAM.inp.nspin; ++iq_tmp)					// !!! k_point
             // parallel incompleted.need to loop iq in other pool
         {
-            int iq = (ik < (k_pack->kv_ptr->get_nks() / GlobalV::NSPIN)) ? (iq_tmp % (q_pack->kv_ptr->get_nks() / GlobalV::NSPIN)) :
-                (iq_tmp % (q_pack->kv_ptr->get_nks() / GlobalV::NSPIN) + (q_pack->kv_ptr->get_nks() / GlobalV::NSPIN));
+            int iq = (ik < (k_pack->kv_ptr->get_nks() / PARAM.inp.nspin)) ? (iq_tmp % (q_pack->kv_ptr->get_nks() / PARAM.inp.nspin)) :
+                (iq_tmp % (q_pack->kv_ptr->get_nks() / PARAM.inp.nspin) + (q_pack->kv_ptr->get_nks() / PARAM.inp.nspin));
             qkg2_exp(ik, iq);
             //t_qkg2_exp += my_time(t);
             for (int ib = 0; ib < GlobalV::NBANDS; ++ib)
@@ -114,9 +114,9 @@ void Exx_Lip::cal_exx()
 						sum3[iw_l][iw_r] = std::complex<double>(0.0,0.0);
 		}
 
-		for( int iq_tmp=iq_vecik; iq_tmp<iq_vecik+q_pack->kv_ptr->get_nks()/GlobalV::NSPIN; ++iq_tmp)					// !!! k_point parallel incompleted. need to loop iq in other pool
+		for( int iq_tmp=iq_vecik; iq_tmp<iq_vecik+q_pack->kv_ptr->get_nks()/PARAM.inp.nspin; ++iq_tmp)					// !!! k_point parallel incompleted. need to loop iq in other pool
 		{
-			int iq = (ik<(k_pack->kv_ptr->get_nks()/GlobalV::NSPIN)) ? (iq_tmp%(q_pack->kv_ptr->get_nks()/GlobalV::NSPIN)) : (iq_tmp%(q_pack->kv_ptr->get_nks()/GlobalV::NSPIN)+(q_pack->kv_ptr->get_nks()/GlobalV::NSPIN));
+			int iq = (ik<(k_pack->kv_ptr->get_nks()/PARAM.inp.nspin)) ? (iq_tmp%(q_pack->kv_ptr->get_nks()/PARAM.inp.nspin)) : (iq_tmp%(q_pack->kv_ptr->get_nks()/PARAM.inp.nspin)+(q_pack->kv_ptr->get_nks()/PARAM.inp.nspin));
 			qkg2_exp(ik, iq);
 			for( int ib=0; ib<GlobalV::NBANDS; ++ib)
 			{
@@ -246,13 +246,13 @@ template <typename T, typename Device>
 void Exx_Lip<T, Device>::wf_wg_cal()
 {
     ModuleBase::TITLE("Exx_Lip", "wf_wg_cal");
-    if (GlobalV::NSPIN == 1) {
+    if (PARAM.inp.nspin == 1) {
         for (int ik = 0; ik < k_pack->kv_ptr->get_nks(); ++ik) {
             for (int ib = 0; ib < GlobalV::NBANDS; ++ib) {
                 k_pack->wf_wg(ik, ib) = k_pack->pelec->wg(ik, ib) / 2;
 }
 }
-    } else if (GlobalV::NSPIN == 2) {
+    } else if (PARAM.inp.nspin == 2) {
         for (int ik = 0; ik < k_pack->kv_ptr->get_nks(); ++ik) {
             for (int ib = 0; ib < GlobalV::NBANDS; ++ib) {
                 k_pack->wf_wg(ik, ib) = k_pack->pelec->wg(ik, ib);
@@ -492,7 +492,7 @@ void Exx_Lip<T, Device>::sum_all(int ik)
                 if (gzero_rank_in_pool == GlobalV::RANK_IN_POOL)
 				{
                     exx_matrix[ik][iw_l][iw_r] += spin_fac * (fourpi_div_omega * sum3[iw_l][iw_r] * sum2_factor_g);
-                    exx_matrix[ik][iw_l][iw_r] += spin_fac * (-1 / (Real)sqrt(info.lambda * ModuleBase::PI) * (Real)(q_pack->kv_ptr->get_nks() / GlobalV::NSPIN) * sum3[iw_l][iw_r]);
+                    exx_matrix[ik][iw_l][iw_r] += spin_fac * (-1 / (Real)sqrt(info.lambda * ModuleBase::PI) * (Real)(q_pack->kv_ptr->get_nks() / PARAM.inp.nspin) * sum3[iw_l][iw_r]);
                 }
 }
         }
@@ -522,7 +522,7 @@ void Exx_Lip<T, Device>::exx_energy_cal()
 #ifdef __MPI
 	MPI_Allreduce( &exx_energy_tmp, &exx_energy, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);				// !!! k_point parallel incompleted. different pools have different kv.set_nks(>) deadlock
 #endif
-	exx_energy *= (GlobalV::NSPIN==1) ? 2 : 1;
+	exx_energy *= (PARAM.inp.nspin==1) ? 2 : 1;
 	exx_energy /= 2;										// ETOT = E_band - 1/2 E_exx
 
 	#if TEST_EXX==1
@@ -585,16 +585,16 @@ void Exx_Lip<T, Device>::write_q_pack() const
 	{
 		const std::string exx_q_pack = "exx_q_pack/";
 		int return_value=0;
-		const std::string command_mkdir = "test -d " + GlobalV::global_out_dir + exx_q_pack + " || mkdir " + GlobalV::global_out_dir + exx_q_pack;
+		const std::string command_mkdir = "test -d " + PARAM.globalv.global_out_dir + exx_q_pack + " || mkdir " + PARAM.globalv.global_out_dir + exx_q_pack;
         return_value = system(command_mkdir.c_str());
         assert(return_value == 0);
 
-        const std::string command_kpoint = "test -f " + GlobalV::global_out_dir + exx_q_pack + GlobalV::global_kpoint_card + " || cp " + GlobalV::global_kpoint_card + " " + GlobalV::global_out_dir + exx_q_pack + GlobalV::global_kpoint_card;
+        const std::string command_kpoint = "test -f " + PARAM.globalv.global_out_dir + exx_q_pack + PARAM.inp.kpoint_file + " || cp " + PARAM.inp.kpoint_file + " " + PARAM.globalv.global_out_dir + exx_q_pack + PARAM.inp.kpoint_file;
         return_value = system(command_kpoint.c_str());
 		assert(return_value==0);
 
 		std::stringstream ss_wf_wg;
-		ss_wf_wg << GlobalV::global_out_dir << exx_q_pack << "wf_wg_" << GlobalV::MY_POOL;
+		ss_wf_wg << PARAM.globalv.global_out_dir << exx_q_pack << "wf_wg_" << GlobalV::MY_POOL;
 		std::ofstream ofs_wf_wg(ss_wf_wg.str().c_str());
 		for( int iq = 0; iq < q_pack->kv_ptr->get_nks(); ++iq)
 		{
@@ -607,7 +607,7 @@ void Exx_Lip<T, Device>::write_q_pack() const
 		ofs_wf_wg.close();
 
 		std::stringstream ss_hvec;
-		ss_hvec	<< GlobalV::global_out_dir << exx_q_pack << "hvec_" << GlobalV::MY_POOL;
+		ss_hvec	<< PARAM.globalv.global_out_dir << exx_q_pack << "hvec_" << GlobalV::MY_POOL;
 		std::ofstream ofs_hvec(ss_hvec.str().c_str());
 		for( int iq=0; iq<q_pack->kv_ptr->get_nks(); ++iq)
 		{
@@ -634,8 +634,8 @@ void Exx_Lip<T, Device>::write_q_pack() const
 // 	q_pack = new k_package();
 
 // 	q_pack->kv_ptr = new K_Vectors();
-// 	const std::string exx_kpoint_card = GlobalV::global_out_dir + exx_q_pack + GlobalV::global_kpoint_card;
-// 	q_pack->kv_ptr->set( symm, exx_kpoint_card, GlobalV::NSPIN, ucell_ptr->G, ucell_ptr->latvec, GlobalV::ofs_running );
+// 	const std::string exx_kpoint_card = PARAM.globalv.global_out_dir + exx_q_pack + PARAM.inp.kpoint_file;
+// 	q_pack->kv_ptr->set( symm, exx_kpoint_card, PARAM.inp.nspin, ucell_ptr->G, ucell_ptr->latvec, GlobalV::ofs_running );
 
 // 	q_pack->wf_ptr = new wavefunc();
 //     q_pack->wf_ptr->allocate(q_pack->kv_ptr->get_nkstot(),
@@ -643,8 +643,8 @@ void Exx_Lip<T, Device>::write_q_pack() const
 //                              q_pack->kv_ptr->ngk.data(),
 //                              wfc_basis->npwk_max); // mohan update 2021-02-25
 //     //	q_pack->wf_ptr->init(q_pack->kv_ptr->get_nks(),q_pack->kv_ptr,ucell_ptr,old_pwptr,&ppcell,&GlobalC::ORB,&hm,&Pkpoints);
-//     q_pack->wf_ptr->table_local.create(GlobalC::ucell.ntype, GlobalC::ucell.nmax_total, GlobalV::NQX);
-// //	q_pack->wf_ptr->table_local.create(q_pack->wf_ptr->ucell_ptr->ntype, q_pack->wf_ptr->ucell_ptr->nmax_total, GlobalV::NQX);
+//     q_pack->wf_ptr->table_local.create(GlobalC::ucell.ntype, GlobalC::ucell.nmax_total, PARAM.globalv.nqx);
+// //	q_pack->wf_ptr->table_local.create(q_pack->wf_ptr->ucell_ptr->ntype, q_pack->wf_ptr->ucell_ptr->nmax_total, PARAM.globalv.nqx);
 // #ifdef __LCAO
 // 	Wavefunc_in_pw::make_table_q(GlobalC::ORB.orbital_file, q_pack->wf_ptr->table_local);
 // //	Wavefunc_in_pw::make_table_q(q_pack->wf_ptr->ORB_ptr->orbital_file, q_pack->wf_ptr->table_local, q_pack->wf_ptr);
@@ -663,7 +663,7 @@ void Exx_Lip<T, Device>::write_q_pack() const
 // 	if(!GlobalV::RANK_IN_POOL)
 // 	{
 // 		std::stringstream ss_wf_wg;
-// 		ss_wf_wg << GlobalV::global_out_dir << exx_q_pack << "wf_wg_" << GlobalV::MY_POOL;
+// 		ss_wf_wg << PARAM.globalv.global_out_dir << exx_q_pack << "wf_wg_" << GlobalV::MY_POOL;
 // 		std::ifstream ifs_wf_wg(ss_wf_wg.str().c_str());
 // 		for( int iq = 0; iq < q_pack->kv_ptr->get_nks(); ++iq)
 // 		{
@@ -686,7 +686,7 @@ void Exx_Lip<T, Device>::write_q_pack() const
 // 	if(!GlobalV::RANK_IN_POOL)
 // 	{
 // 		std::stringstream ss_hvec;
-// 		ss_hvec	<< GlobalV::global_out_dir << exx_q_pack << "hvec_" << GlobalV::MY_POOL;
+// 		ss_hvec	<< PARAM.globalv.global_out_dir << exx_q_pack << "hvec_" << GlobalV::MY_POOL;
 // 		std::ifstream ifs_hvec(ss_hvec.str().c_str());
 // 		for( int iq=0; iq<q_pack->kv_ptr->get_nks(); ++iq)
 // 		{

@@ -35,7 +35,7 @@ void ModuleIO::save_HSR_sparse(const int& istep,
     ModuleBase::GlobalFunc::ZEROS(S_nonzero_num, total_R_num);
 
     int spin_loop = 1;
-    if (GlobalV::NSPIN == 2) {
+    if (PARAM.inp.nspin == 2) {
         spin_loop = 2;
     }
 
@@ -46,7 +46,7 @@ void ModuleIO::save_HSR_sparse(const int& istep,
 
     int count = 0;
     for (auto& R_coor: all_R_coor_ptr) {
-        if (GlobalV::NSPIN != 4) {
+        if (PARAM.inp.nspin != 4) {
             for (int ispin = 0; ispin < spin_loop; ++ispin) {
                 if (TD_Velocity::tddft_velocity) {
                     auto iter
@@ -101,7 +101,7 @@ void ModuleIO::save_HSR_sparse(const int& istep,
         Parallel_Reduce::reduce_all(H_nonzero_num[ispin], total_R_num);
     }
 
-    if (GlobalV::NSPIN == 2) {
+    if (PARAM.inp.nspin == 2) {
         for (int index = 0; index < total_R_num; ++index) {
             if (H_nonzero_num[0][index] != 0 || H_nonzero_num[1][index] != 0
                 || S_nonzero_num[index] != 0) {
@@ -119,13 +119,13 @@ void ModuleIO::save_HSR_sparse(const int& istep,
     std::stringstream ssh[2];
     std::stringstream sss;
     if (PARAM.inp.calculation == "md" && !PARAM.inp.out_app_flag) {
-        ssh[0] << GlobalV::global_matrix_dir << step << "_" << HR_filename_up;
-        ssh[1] << GlobalV::global_matrix_dir << step << "_" << HR_filename_down;
-        sss << GlobalV::global_matrix_dir << step << "_" << SR_filename;
+        ssh[0] << PARAM.globalv.global_matrix_dir << step << "_" << HR_filename_up;
+        ssh[1] << PARAM.globalv.global_matrix_dir << step << "_" << HR_filename_down;
+        sss << PARAM.globalv.global_matrix_dir << step << "_" << SR_filename;
     } else {
-        ssh[0] << GlobalV::global_out_dir << HR_filename_up;
-        ssh[1] << GlobalV::global_out_dir << HR_filename_down;
-        sss << GlobalV::global_out_dir << SR_filename;
+        ssh[0] << PARAM.globalv.global_out_dir << HR_filename_up;
+        ssh[1] << PARAM.globalv.global_out_dir << HR_filename_down;
+        sss << PARAM.globalv.global_out_dir << SR_filename;
     }
     std::ofstream g1[2];
     std::ofstream g2;
@@ -189,7 +189,7 @@ void ModuleIO::save_HSR_sparse(const int& istep,
         int dRy = R_coor.y;
         int dRz = R_coor.z;
 
-        if (GlobalV::NSPIN == 2) {
+        if (PARAM.inp.nspin == 2) {
             if (H_nonzero_num[0][count] == 0 && H_nonzero_num[1][count] == 0
                 && S_nonzero_num[count] == 0) {
                 count++;
@@ -247,7 +247,7 @@ void ModuleIO::save_HSR_sparse(const int& istep,
                 //     }
                 // }
             } else {
-                if (GlobalV::NSPIN != 4) {
+                if (PARAM.inp.nspin != 4) {
                     if (TD_Velocity::tddft_velocity) {
                         output_single_R(g1[ispin],
                                         TD_Velocity::td_vel_op
@@ -287,7 +287,7 @@ void ModuleIO::save_HSR_sparse(const int& istep,
             //     }
             // }
         } else {
-            if (GlobalV::NSPIN != 4) {
+            if (PARAM.inp.nspin != 4) {
                 output_single_R(g2,
                                 SR_sparse_ptr[R_coor],
                                 sparse_thr,
@@ -348,7 +348,7 @@ void ModuleIO::save_dH_sparse(const int& istep,
     int step = istep;
 
     int spin_loop = 1;
-    if (GlobalV::NSPIN == 2) {
+    if (PARAM.inp.nspin == 2) {
         spin_loop = 2;
     }
 
@@ -363,7 +363,7 @@ void ModuleIO::save_dH_sparse(const int& istep,
 
     int count = 0;
     for (auto& R_coor: all_R_coor_ptr) {
-        if (GlobalV::NSPIN != 4) {
+        if (PARAM.inp.nspin != 4) {
             for (int ispin = 0; ispin < spin_loop; ++ispin) {
                 auto iter1 = dHRx_sparse_ptr[ispin].find(R_coor);
                 if (iter1 != dHRx_sparse_ptr[ispin].end()) {
@@ -404,7 +404,7 @@ void ModuleIO::save_dH_sparse(const int& istep,
         Parallel_Reduce::reduce_all(dHz_nonzero_num[ispin], total_R_num);
     }
 
-    if (GlobalV::NSPIN == 2) {
+    if (PARAM.inp.nspin == 2) {
         for (int index = 0; index < total_R_num; ++index) {
             if (dHx_nonzero_num[0][index] != 0 || dHx_nonzero_num[1][index] != 0
                 || dHy_nonzero_num[0][index] != 0
@@ -427,25 +427,25 @@ void ModuleIO::save_dH_sparse(const int& istep,
     std::stringstream sshy[2];
     std::stringstream sshz[2];
     if (PARAM.inp.calculation == "md" && !PARAM.inp.out_app_flag) {
-        sshx[0] << GlobalV::global_matrix_dir << step << "_"
+        sshx[0] << PARAM.globalv.global_matrix_dir << step << "_"
                 << "data-dHRx-sparse_SPIN0.csr";
-        sshx[1] << GlobalV::global_matrix_dir << step << "_"
+        sshx[1] << PARAM.globalv.global_matrix_dir << step << "_"
                 << "data-dHRx-sparse_SPIN1.csr";
-        sshy[0] << GlobalV::global_matrix_dir << step << "_"
+        sshy[0] << PARAM.globalv.global_matrix_dir << step << "_"
                 << "data-dHRy-sparse_SPIN0.csr";
-        sshy[1] << GlobalV::global_matrix_dir << step << "_"
+        sshy[1] << PARAM.globalv.global_matrix_dir << step << "_"
                 << "data-dHRy-sparse_SPIN1.csr";
-        sshz[0] << GlobalV::global_matrix_dir << step << "_"
+        sshz[0] << PARAM.globalv.global_matrix_dir << step << "_"
                 << "data-dHRz-sparse_SPIN0.csr";
-        sshz[1] << GlobalV::global_matrix_dir << step << "_"
+        sshz[1] << PARAM.globalv.global_matrix_dir << step << "_"
                 << "data-dHRz-sparse_SPIN1.csr";
     } else {
-        sshx[0] << GlobalV::global_out_dir << "data-dHRx-sparse_SPIN0.csr";
-        sshx[1] << GlobalV::global_out_dir << "data-dHRx-sparse_SPIN1.csr";
-        sshy[0] << GlobalV::global_out_dir << "data-dHRy-sparse_SPIN0.csr";
-        sshy[1] << GlobalV::global_out_dir << "data-dHRy-sparse_SPIN1.csr";
-        sshz[0] << GlobalV::global_out_dir << "data-dHRz-sparse_SPIN0.csr";
-        sshz[1] << GlobalV::global_out_dir << "data-dHRz-sparse_SPIN1.csr";
+        sshx[0] << PARAM.globalv.global_out_dir << "data-dHRx-sparse_SPIN0.csr";
+        sshx[1] << PARAM.globalv.global_out_dir << "data-dHRx-sparse_SPIN1.csr";
+        sshy[0] << PARAM.globalv.global_out_dir << "data-dHRy-sparse_SPIN0.csr";
+        sshy[1] << PARAM.globalv.global_out_dir << "data-dHRy-sparse_SPIN1.csr";
+        sshz[0] << PARAM.globalv.global_out_dir << "data-dHRz-sparse_SPIN0.csr";
+        sshz[1] << PARAM.globalv.global_out_dir << "data-dHRz-sparse_SPIN1.csr";
     }
     std::ofstream g1x[2];
     std::ofstream g1y[2];
@@ -531,7 +531,7 @@ void ModuleIO::save_dH_sparse(const int& istep,
         int dRy = R_coor.y;
         int dRz = R_coor.z;
 
-        if (GlobalV::NSPIN == 2) {
+        if (PARAM.inp.nspin == 2) {
             if (dHx_nonzero_num[0][count] == 0 && dHx_nonzero_num[1][count] == 0
                 && dHy_nonzero_num[0][count] == 0
                 && dHy_nonzero_num[1][count] == 0
@@ -597,7 +597,7 @@ void ModuleIO::save_dH_sparse(const int& istep,
 
         for (int ispin = 0; ispin < spin_loop; ++ispin) {
             if (dHx_nonzero_num[ispin][count] > 0) {
-                if (GlobalV::NSPIN != 4) {
+                if (PARAM.inp.nspin != 4) {
                     output_single_R(g1x[ispin],
                                     dHRx_sparse_ptr[ispin][R_coor],
                                     sparse_thr,
@@ -612,7 +612,7 @@ void ModuleIO::save_dH_sparse(const int& istep,
                 }
             }
             if (dHy_nonzero_num[ispin][count] > 0) {
-                if (GlobalV::NSPIN != 4) {
+                if (PARAM.inp.nspin != 4) {
                     output_single_R(g1y[ispin],
                                     dHRy_sparse_ptr[ispin][R_coor],
                                     sparse_thr,
@@ -627,7 +627,7 @@ void ModuleIO::save_dH_sparse(const int& istep,
                 }
             }
             if (dHz_nonzero_num[ispin][count] > 0) {
-                if (GlobalV::NSPIN != 4) {
+                if (PARAM.inp.nspin != 4) {
                     output_single_R(g1z[ispin],
                                     dHRz_sparse_ptr[ispin][R_coor],
                                     sparse_thr,

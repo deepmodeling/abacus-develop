@@ -1,9 +1,9 @@
 #ifndef OPEXXLCAO_HPP
 #define OPEXXLCAO_HPP
-
 #ifdef __EXX
 
 #include "op_exx_lcao.h"
+#include "module_parameter/parameter.h"
 #include "module_ri/RI_2D_Comm.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
@@ -101,15 +101,15 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
 
     if (PARAM.inp.calculation == "nscf" && GlobalC::exx_info.info_global.cal_exx)
     {    // if nscf, read HexxR first and reallocate hR according to the read-in HexxR
-        const std::string file_name_exx = GlobalV::global_readin_dir + "HexxR" + std::to_string(GlobalV::MY_RANK);
+        const std::string file_name_exx = PARAM.globalv.global_readin_dir + "HexxR" + std::to_string(GlobalV::MY_RANK);
         if (GlobalC::exx_info.info_ri.real_number)
         {
-            ModuleIO::read_Hexxs_csr(file_name_exx, GlobalC::ucell, GlobalV::NSPIN, GlobalV::NLOCAL, *Hexxd);
+            ModuleIO::read_Hexxs_csr(file_name_exx, GlobalC::ucell, PARAM.inp.nspin, GlobalV::NLOCAL, *Hexxd);
             if (this->add_hexx_type == Add_Hexx_Type::R) { reallocate_hcontainer(*Hexxd, this->hR); }
         }
         else
         {
-            ModuleIO::read_Hexxs_csr(file_name_exx, GlobalC::ucell, GlobalV::NSPIN, GlobalV::NLOCAL, *Hexxc);
+            ModuleIO::read_Hexxs_csr(file_name_exx, GlobalC::ucell, PARAM.inp.nspin, GlobalV::NLOCAL, *Hexxc);
             if (this->add_hexx_type == Add_Hexx_Type::R) { reallocate_hcontainer(*Hexxc, this->hR); }
         }
         this->use_cell_nearest = false;
@@ -180,10 +180,10 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
                 // read in Hexx(R)
                 const std::string restart_HR_path = GlobalC::restart.folder + "HexxR" + std::to_string(GlobalV::MY_RANK);
                 if (GlobalC::exx_info.info_ri.real_number) {
-                    ModuleIO::read_Hexxs_csr(restart_HR_path, GlobalC::ucell, GlobalV::NSPIN, GlobalV::NLOCAL, *Hexxd);
+                    ModuleIO::read_Hexxs_csr(restart_HR_path, GlobalC::ucell, PARAM.inp.nspin, GlobalV::NLOCAL, *Hexxd);
                 }
                 else {
-                    ModuleIO::read_Hexxs_csr(restart_HR_path, GlobalC::ucell, GlobalV::NSPIN, GlobalV::NLOCAL, *Hexxc);
+                    ModuleIO::read_Hexxs_csr(restart_HR_path, GlobalC::ucell, PARAM.inp.nspin, GlobalV::NLOCAL, *Hexxc);
                 }
             }
 
@@ -212,7 +212,7 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHR()
                 GlobalC::exx_info.info_global.hybrid_alpha,
                 *this->Hexxd,
                 *this->hR->get_paraV(),
-                GlobalV::NPOL,
+                PARAM.globalv.npol,
                 *this->hR,
                 this->use_cell_nearest ? &this->cell_nearest : nullptr);
         } else {
@@ -221,12 +221,12 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHR()
                 GlobalC::exx_info.info_global.hybrid_alpha,
                 *this->Hexxc,
                 *this->hR->get_paraV(),
-                GlobalV::NPOL,
+                PARAM.globalv.npol,
                 *this->hR,
                 this->use_cell_nearest ? &this->cell_nearest : nullptr);
 }
     }
-    if (GlobalV::NSPIN == 2) { this->current_spin = 1 - this->current_spin;
+    if (PARAM.inp.nspin == 2) { this->current_spin = 1 - this->current_spin;
 }
 }
 

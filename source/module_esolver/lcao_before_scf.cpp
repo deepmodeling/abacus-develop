@@ -60,14 +60,14 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
         int ncol = 0;
         if (PARAM.globalv.gamma_only_local)
         {
-            nsk = GlobalV::NSPIN;
+            nsk = PARAM.inp.nspin;
             ncol = this->pv.ncol_bands;
-            if (GlobalV::KS_SOLVER == "genelpa"
-                || GlobalV::KS_SOLVER == "elpa"
-                || GlobalV::KS_SOLVER == "lapack"
-                || GlobalV::KS_SOLVER == "pexsi"
-                || GlobalV::KS_SOLVER == "cusolver"
-                || GlobalV::KS_SOLVER == "cusolvermp") {
+            if (PARAM.inp.ks_solver == "genelpa"
+                || PARAM.inp.ks_solver == "elpa"
+                || PARAM.inp.ks_solver == "lapack"
+                || PARAM.inp.ks_solver == "pexsi"
+                || PARAM.inp.ks_solver == "cusolver"
+                || PARAM.inp.ks_solver == "cusolvermp") {
                 ncol = this->pv.ncol;
             }
         }
@@ -86,7 +86,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
     // init wfc from file
     if(istep == 0 && PARAM.inp.init_wfc == "file")
     {
-        if (! ModuleIO::read_wfc_nao(GlobalV::global_readin_dir, this->pv, *(this->psi), this->pelec))
+        if (! ModuleIO::read_wfc_nao(PARAM.globalv.global_readin_dir, this->pv, *(this->psi), this->pelec))
         {
             ModuleBase::WARNING_QUIT("ESolver_KS_LCAO<TK, TR>::beforesolver",
                                      "read wfc nao failed");
@@ -125,7 +125,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
 #ifdef __DEEPKS
     // for each ionic step, the overlap <psi|alpha> must be rebuilt
     // since it depends on ionic positions
-    if (GlobalV::deepks_setorb)
+    if (PARAM.globalv.deepks_setorb)
     {
         const Parallel_Orbitals* pv = &this->pv;
         // build and save <psi(0)|alpha(R)> at beginning
@@ -152,11 +152,11 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
                    PARAM.inp.sc_mag_switch,
                    GlobalC::ucell,
                    PARAM.inp.sc_file,
-                   GlobalV::NPOL,
+                   PARAM.globalv.npol,
                    &(this->pv),
-                   GlobalV::NSPIN,
+                   PARAM.inp.nspin,
                    this->kv,
-                   GlobalV::KS_SOLVER,
+                   PARAM.inp.ks_solver,
                    this->p_hamilt,
                    this->psi,
                    this->pelec);
@@ -165,7 +165,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
     // cal_ux should be called before init_scf because
     // the direction of ux is used in noncoline_rho
     //=========================================================
-    if (GlobalV::NSPIN == 4 && GlobalV::DOMAG)
+    if (PARAM.inp.nspin == 4)
     {
         GlobalC::ucell.cal_ux();
     }
@@ -218,15 +218,15 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
     }
 #endif // __EXX
 
-    this->pelec->init_scf(istep, this->sf.strucFac);
+    this->pelec->init_scf(istep, this->sf.strucFac, GlobalC::ucell.symm);
 
     //! output the initial charge density
     if (PARAM.inp.out_chg[0] == 2)
     {
-        for (int is = 0; is < GlobalV::NSPIN; is++)
+        for (int is = 0; is < PARAM.inp.nspin; is++)
         {
             std::stringstream ss;
-            ss << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG_INI.cube";
+            ss << PARAM.globalv.global_out_dir << "SPIN" << is + 1 << "_CHG_INI.cube";
             ModuleIO::write_cube(
 #ifdef __MPI
                 this->pw_big->bz, // bz first, then nbz
@@ -236,7 +236,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
 #endif
                 this->pelec->charge->rho[is],
                 is,
-                GlobalV::NSPIN,
+                PARAM.inp.nspin,
                 istep,
                 ss.str(),
                 this->pw_rhod->nx,
@@ -250,10 +250,10 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
     //! output total local potential of the initial charge density
     if (PARAM.inp.out_pot == 3)
     {
-        for (int is = 0; is < GlobalV::NSPIN; is++)
+        for (int is = 0; is < PARAM.inp.nspin; is++)
         {
             std::stringstream ss;
-            ss << GlobalV::global_out_dir << "SPIN" << is + 1 << "_POT_INI.cube";
+            ss << PARAM.globalv.global_out_dir << "SPIN" << is + 1 << "_POT_INI.cube";
             ModuleIO::write_cube(
 #ifdef __MPI
                 this->pw_big->bz,
@@ -263,7 +263,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
 #endif
                 this->pelec->pot->get_effective_v(is),
                 is,
-                GlobalV::NSPIN,
+                PARAM.inp.nspin,
                 istep,
                 ss.str(),
                 this->pw_rhod->nx,
@@ -297,7 +297,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
         elecstate::DensityMatrix<TK, double>* dm
             = dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
         this->read_mat_npz(zipname, *(dm->get_DMR_pointer(1)));
-        if (GlobalV::NSPIN == 2)
+        if (PARAM.inp.nspin == 2)
         {
             zipname = "output_DM1.npz";
             this->read_mat_npz(zipname, *(dm->get_DMR_pointer(2)));
@@ -305,10 +305,10 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
 
         this->pelec->psiToRho(*this->psi);
 
-        int nspin0 = GlobalV::NSPIN == 2 ? 2 : 1;
+        int nspin0 = PARAM.inp.nspin == 2 ? 2 : 1;
         for (int is = 0; is < nspin0; is++)
         {
-            std::string fn = GlobalV::global_out_dir + "/SPIN" + std::to_string(is + 1) + "_CHG.cube";
+            std::string fn = PARAM.globalv.global_out_dir + "/SPIN" + std::to_string(is + 1) + "_CHG.cube";
             ModuleIO::write_cube(
 #ifdef __MPI
                 this->pw_big->bz,
@@ -318,7 +318,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
 #endif
                 this->pelec->charge->rho[is],
                 is,
-                GlobalV::NSPIN,
+                PARAM.inp.nspin,
                 istep,
                 fn,
                 this->pw_rhod->nx,
@@ -336,9 +336,9 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
     // the electron charge density should be symmetrized,
     // here is the initialization
     Symmetry_rho srho;
-    for (int is = 0; is < GlobalV::NSPIN; is++)
+    for (int is = 0; is < PARAM.inp.nspin; is++)
     {
-        srho.begin(is, *(this->pelec->charge), this->pw_rho, GlobalC::Pgrid, GlobalC::ucell.symm);
+        srho.begin(is, *(this->pelec->charge), this->pw_rho, GlobalC::ucell.symm);
     }
 
     // 1. calculate ewald energy.

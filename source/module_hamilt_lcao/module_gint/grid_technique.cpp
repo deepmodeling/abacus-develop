@@ -13,7 +13,7 @@
 Grid_Technique::Grid_Technique() {
     allocate_find_R2 = false;
 #if ((defined __CUDA) /* || (defined __ROCM) */)
-    if (GlobalV::device_flag == "gpu") {
+    if (PARAM.globalv.device_flag == "gpu") {
         is_malloced = false;
     }
 #endif
@@ -22,7 +22,7 @@ Grid_Technique::Grid_Technique() {
 Grid_Technique::~Grid_Technique() {
 
 #if ((defined __CUDA) /* || (defined __ROCM) */)
-    if (GlobalV::device_flag == "gpu") {
+    if (PARAM.globalv.device_flag == "gpu") {
         free_gpu_gint_variables(this->nat);
     }
 #endif
@@ -118,7 +118,7 @@ void Grid_Technique::set_pbc_grid(
 
     this->cal_trace_lo(ucell);
 #if ((defined __CUDA) /* || (defined __ROCM) */)
-    if (GlobalV::device_flag == "gpu") {
+    if (PARAM.globalv.device_flag == "gpu") {
         this->init_gpu_gint_variables(ucell, num_stream);
     }
 #endif
@@ -499,7 +499,7 @@ void Grid_Technique::cal_trace_lo(const UnitCell& ucell) {
             if (this->in_this_processor[iat]) {
                 ++lnat;
                 int nw0 = ucell.atoms[it].nw;
-                if (GlobalV::NSPIN
+                if (PARAM.inp.nspin
                     == 4) { // added by zhengdy-soc, need to be double in soc
                     nw0 *= 2;
                     this->lgd += nw0;
@@ -515,7 +515,7 @@ void Grid_Technique::cal_trace_lo(const UnitCell& ucell) {
             } else {
                 // global index of atomic orbitals
                 iw_all += ucell.atoms[it].nw;
-                if (GlobalV::NSPIN == 4) {
+                if (PARAM.inp.nspin == 4) {
                     iw_all += ucell.atoms[it].nw;
 }
             }

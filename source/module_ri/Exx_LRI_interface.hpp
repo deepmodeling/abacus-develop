@@ -55,7 +55,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const K_Vectors& kv, const Charg
             }
         }
         // initialize the rotation matrix in AO representation
-        this->exx_spacegroup_symmetry = (GlobalV::NSPIN < 4 && ModuleSymmetry::Symmetry::symm_flag == 1);
+        this->exx_spacegroup_symmetry = (PARAM.inp.nspin < 4 && ModuleSymmetry::Symmetry::symm_flag == 1);
         if (this->exx_spacegroup_symmetry)
         {
             const std::array<int, 3>& period = RI_Util::get_Born_vonKarmen_period(kv);
@@ -65,7 +65,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const K_Vectors& kv, const Charg
             this->symrot_.cal_Ms(kv, ucell, pv);
         }
 
-        this->exx_ptr->cal_exx_ions();
+        this->exx_ptr->cal_exx_ions(PARAM.inp.out_ri_cv);
     }
 
 		if (Exx_Abfs::Jle::generate_matrix)
@@ -81,7 +81,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const K_Vectors& kv, const Charg
 		if(GlobalC::exx_info.info_global.cal_exx)
         {
             if (this->exx_spacegroup_symmetry)
-                {this->mix_DMk_2D.set_nks(kv.get_nkstot_full() * (GlobalV::NSPIN == 2 ? 2 : 1), PARAM.globalv.gamma_only_local);}
+                {this->mix_DMk_2D.set_nks(kv.get_nkstot_full() * (PARAM.inp.nspin == 2 ? 2 : 1), PARAM.globalv.gamma_only_local);}
             else
                 {this->mix_DMk_2D.set_nks(kv.get_nks(), PARAM.globalv.gamma_only_local);}
 			if(GlobalC::exx_info.info_global.separate_loop) {
@@ -107,8 +107,8 @@ void Exx_LRI_Interface<T, Tdata>::exx_eachiterinit(const elecstate::DensityMatri
             else { this->mix_DMk_2D.mix(dm.get_DMK_vector(), flag_restart); }
 			const std::vector<std::map<int,std::map<std::pair<int, std::array<int, 3>>,RI::Tensor<Tdata>>>>
 				Ds = PARAM.globalv.gamma_only_local
-                ? RI_2D_Comm::split_m2D_ktoR<Tdata>(*this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_gamma_out(), *dm.get_paraV_pointer(), GlobalV::NSPIN)
-                : RI_2D_Comm::split_m2D_ktoR<Tdata>(*this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_k_out(), *dm.get_paraV_pointer(), GlobalV::NSPIN, this->exx_spacegroup_symmetry);
+                ? RI_2D_Comm::split_m2D_ktoR<Tdata>(*this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_gamma_out(), *dm.get_paraV_pointer(), PARAM.inp.nspin)
+                : RI_2D_Comm::split_m2D_ktoR<Tdata>(*this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_k_out(), *dm.get_paraV_pointer(), PARAM.inp.nspin, this->exx_spacegroup_symmetry);
             if (this->exx_spacegroup_symmetry && GlobalC::exx_info.info_global.exx_symmetry_realspace) { this->exx_ptr->cal_exx_elec(Ds, *dm.get_paraV_pointer(), &this->symrot_); }
             else { this->exx_ptr->cal_exx_elec(Ds, *dm.get_paraV_pointer()); }
         }

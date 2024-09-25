@@ -50,7 +50,7 @@ void gen_general_info(const Parameter& param)
     AbacusJson::add_json({"general_info", "omp_num"}, omp_num, false);
     AbacusJson::add_json({"general_info", "pseudo_dir"}, param.inp.pseudo_dir, false);
     AbacusJson::add_json({"general_info", "orbital_dir"}, param.inp.orbital_dir, false);
-    AbacusJson::add_json({"general_info", "stru_file"}, param.inp.stru_file, false);
+    AbacusJson::add_json({"general_info", "stru_file"}, param.globalv.global_in_stru, false);
     AbacusJson::add_json({"general_info", "kpt_file"}, param.inp.kpoint_file, false);
     AbacusJson::add_json({"general_info", "start_time"}, start_time_str, false);
     AbacusJson::add_json({"general_info", "end_time"}, end_time_str, false);

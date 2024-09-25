@@ -112,7 +112,7 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
             }
         }    
         // caoyu add 2021-03-16
-        if(GlobalV::deepks_setorb)
+        if(PARAM.globalv.deepks_setorb)
         {
             if (ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "NUMERICAL_DESCRIPTOR")) {
                 ifa >> descriptor_file;
@@ -139,18 +139,6 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
         }
     }
 
-    if (PARAM.globalv.rpa_setorb)
-    {
-        if (ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "ABFS_ORBITAL"))
-        {
-            std::cout << "RPA_EXX_LCAO read abfs_orb!!!" << std::endl;
-            GlobalV::rpa_orbitals.resize(ntype);
-            for (int i = 0; i < ntype; i++)
-            {
-                ifa >> GlobalV::rpa_orbitals[i];
-            }
-        }
-    }
 #endif // __EXX
 #endif // __MPI
 #endif // __LCAO
@@ -638,13 +626,11 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
                     std::string mags;
                     //cout<<"mag"<<atoms[it].mag[ia]<<"angle1"<<atoms[it].angle1[ia]<<"angle2"<<atoms[it].angle2[ia]<<'\n';
 
-                    if(GlobalV::NSPIN==4)
+                    if(PARAM.inp.nspin==4)
                     {
-                        if(GlobalV::NONCOLIN)
+                        if(PARAM.inp.noncolin)
                         {
                             //if magnetization only along z-axis, default settings are DOMAG_Z=true and DOMAG=false
-                            GlobalV::DOMAG_Z = false;
-                            GlobalV::DOMAG = true;
                             if(input_angle_mag)
                             {
                                 atoms[it].m_loc_[ia].z = atoms[it].mag[ia] *
@@ -698,7 +684,7 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
                         }
                         ModuleBase::GlobalFunc::ZEROS(magnet.ux_ ,3);
                     }
-                    else if(GlobalV::NSPIN==2)
+                    else if(PARAM.inp.nspin==2)
                     {
                         atoms[it].m_loc_[ia].x = atoms[it].mag[ia];
                         //print only ia==0 && mag>0 to avoid too much output
@@ -827,7 +813,7 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
         }
         if (autoset_mag)
         {
-            if(GlobalV::NSPIN==4)
+            if(PARAM.inp.nspin==4)
             {
                 for (int it = 0;it < ntype; it++)
                 {
@@ -841,7 +827,7 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
                     }
                 }
             }
-            else if(GlobalV::NSPIN==2)
+            else if(PARAM.inp.nspin==2)
             {
                 for (int it = 0;it < ntype; it++)
                 {

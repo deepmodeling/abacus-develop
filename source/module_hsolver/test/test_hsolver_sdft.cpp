@@ -1,5 +1,8 @@
 #include <gtest/gtest.h>
 #include <iostream>
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include <vector>
 
 #define private public
@@ -133,7 +136,23 @@ class TestHSolverPW_SDFT : public ::testing::Test
     K_Vectors kv;
     wavefunc wf;
     StoChe<double> stoche;
-    hsolver::HSolverPW_SDFT hs_d = hsolver::HSolverPW_SDFT(&kv, &pwbk, &wf, stowf, stoche, false);
+    hsolver::HSolverPW_SDFT hs_d = hsolver::HSolverPW_SDFT(&kv, 
+                                                           &pwbk, 
+                                                           &wf, 
+                                                           stowf, 
+                                                           stoche, 
+                                                           
+                                                           "scf",
+                                                           "pw",
+                                                           "cg",
+                                                           false,
+                                                           GlobalV::use_uspp,
+                                                           PARAM.input.nspin,
+                     hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER,
+                     hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX,
+                     hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR,
+                     hsolver::DiagoIterAssist<std::complex<double>>::need_subspace,
+                     false);
 
     hamilt::Hamilt<std::complex<double>> hamilt_test_d;
 
@@ -162,9 +181,6 @@ TEST_F(TestHSolverPW_SDFT, solve)
     int istep = 0;
     int iter = 0;
 
-	//check solve()
-	EXPECT_EQ(this->hs_d.initialed_psi, false);
-
     this->hs_d.solve(&hamilt_test_d,
                      psi_test_cd,
                      &elecstate_test,
@@ -172,14 +188,7 @@ TEST_F(TestHSolverPW_SDFT, solve)
                      stowf,
                      istep,
                      iter,
-                     method_test,
-                     hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER,
-                     hsolver::DiagoIterAssist<std::complex<double>>::need_subspace,
-                     hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX,
-                     hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR,
-                     false
-    );
-	EXPECT_EQ(this->hs_d.initialed_psi, true);
+                     false);
 	EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<double>>::avg_iter, 0.0);
 	EXPECT_DOUBLE_EQ(elecstate_test.ekb.c[0], 4.0);
 	EXPECT_DOUBLE_EQ(elecstate_test.ekb.c[1], 7.0);
@@ -214,16 +223,13 @@ TEST_F(TestHSolverPW_SDFT, solve_noband_skipcharge)
     psi_test_no.nbasis = 0;
 	GlobalV::nelec = 1.0;
     GlobalV::MY_STOGROUP = 0.0;
-    GlobalV::NSPIN = 1;
+    PARAM.input.nspin = 1;
     elecstate_test.charge = new Charge;
     elecstate_test.charge->rho = new double*[1];
     elecstate_test.charge->rho[0] = new double[10];
     elecstate_test.charge->nrxx = 10;
     int istep = 0;
     int iter = 0;
-    
-	//check solve()
-    hs_d.initialed_psi = true;
 
     this->hs_d.solve(&hamilt_test_d,
                      psi_test_no,
@@ -232,11 +238,6 @@ TEST_F(TestHSolverPW_SDFT, solve_noband_skipcharge)
                      stowf,
                      istep,
                      iter,
-                     method_test,
-                     hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER,
-                     hsolver::DiagoIterAssist<std::complex<double>>::need_subspace,
-                     hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX,
-                     hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR,
                      false
     );
 	EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<double>>::avg_iter, 0.0);
@@ -259,11 +260,6 @@ TEST_F(TestHSolverPW_SDFT, solve_noband_skipcharge)
                      stowf,
                      istep,
                      iter,
-                     method_test,
-                     hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER,
-                     hsolver::DiagoIterAssist<std::complex<double>>::need_subspace,
-                     hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX,
-                     hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR,
                      true
     );
     EXPECT_EQ(stowf.nbands_diag, 4);

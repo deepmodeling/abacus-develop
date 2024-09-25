@@ -6,7 +6,7 @@
 #include "module_elecstate/elecstate_getters.h"
 #include "module_parameter/parameter.h"
 #ifdef __MPI
-void Charge::init_chgmpi(const int& nbz, const int& bz)
+void Charge::init_chgmpi()
 {
     if (GlobalV::NPROC_IN_STOGROUP % GlobalV::KPAR == 0)
     {
@@ -129,7 +129,7 @@ void Charge::rho_mpi()
 }
     ModuleBase::timer::tick("Charge", "rho_mpi");
 
-    for (int is = 0; is < GlobalV::NSPIN; ++is)
+    for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
         reduce_diff_pools(this->rho[is]);
         if (elecstate::get_xc_func_type() == 3 || elecstate::get_xc_func_type() == 5)

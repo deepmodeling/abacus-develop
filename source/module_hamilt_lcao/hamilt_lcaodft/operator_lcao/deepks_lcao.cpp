@@ -1,5 +1,6 @@
 #include "deepks_lcao.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/timer.h"
 #include "module_base/tool_title.h"
 #ifdef __DEEPKS
@@ -321,7 +322,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
         std::vector<int> trace_alpha_row;
         std::vector<int> trace_alpha_col;
         std::vector<double> gedms;
-        if (!GlobalV::deepks_equiv)
+        if (!PARAM.inp.deepks_equiv)
         {
             int ib = 0;
             for (int L0 = 0; L0 <= ptr_orb_->Alpha[0].getLmax(); ++L0)
@@ -517,7 +518,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHk(int ik)
     // set SK to zero and then calculate SK for each k vector
     ModuleBase::GlobalFunc::ZEROS(h_delta_k, this->hsk->get_size());
 
-    if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
+    if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
     {
         const int nrow = this->hsk->get_pv()->get_row_size();
         hamilt::folding_HR(*this->H_V_delta, h_delta_k, this->kvec_d[ik], nrow, 1);

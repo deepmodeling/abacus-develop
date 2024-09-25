@@ -1,5 +1,6 @@
 //QO 2022-1-7
 //This file contains subroutines for calculating O_delta, i.e., corrections of the bandgap,
+#include "module_parameter/parameter.h"
 //which is defind as sum_mu,nu rho^{hl}_mu,nu <chi_mu|alpha>V(D)<alpha|chi_nu>
 //where rho^{hl}_mu,nu = C_{L\mu}C_{L\nu} - C_{H\mu}C_{H\nu}, L for LUMO, H for HOMO
 
@@ -28,7 +29,7 @@ void LCAO_Deepks::cal_o_delta(const std::vector<std::vector<ModuleBase::matrix>>
                 if (mu >= 0 && nu >= 0)
                 {                
                     const int index = nu * pv->nrow + mu;
-                    for (int is = 0; is < GlobalV::NSPIN; ++is)
+                    for (int is = 0; is < PARAM.inp.nspin; ++is)
                     {
                         this->o_delta(0,hl) += dm_hl[hl][is](nu, mu) * this->H_V_delta[index];
                     }
@@ -63,7 +64,7 @@ void LCAO_Deepks::cal_o_delta_k(const std::vector<std::vector<ModuleBase::Comple
                     if (mu >= 0 && nu >= 0)
                     {                
                         int iic;
-                        if(GlobalV::KS_SOLVER=="genelpa" || GlobalV::KS_SOLVER=="scalapack_gvx" || GlobalV::KS_SOLVER=="pexsi")  // save the matrix as column major format
+                        if(PARAM.inp.ks_solver=="genelpa" || PARAM.inp.ks_solver=="scalapack_gvx" || PARAM.inp.ks_solver=="pexsi")  // save the matrix as column major format
                         {
                             iic = mu + nu * pv->nrow;
                         }

@@ -119,11 +119,11 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
         // which should be loop over all atoms, f.e only loop over spin-up atoms
         // --------------------------------
         // AFM analysis Start
-        if (GlobalV::NSPIN > 1) {
+        if (PARAM.inp.nspin > 1) {
             pricell_loop = this->magmom_same_check(atoms);
         }
 
-        if (!pricell_loop && GlobalV::NSPIN == 2)
+        if (!pricell_loop && PARAM.inp.nspin == 2)
         {//analyze symmetry for spin-up atoms only
             std::vector<double> pos_spinup;
             for (int it = 0;it < ntype;++it)
@@ -793,7 +793,7 @@ void Symmetry::lattice_type(
             }       
             /*
             std::stringstream ss;
-            ss << GlobalV::global_out_dir << "STRU_SIMPLE.cif";
+            ss << PARAM.globalv.global_out_dir << "STRU_SIMPLE.cif";
 
             std::ofstream ofs( ss.str().c_str() );
             ofs << "Lattice vector  : " << std::endl;

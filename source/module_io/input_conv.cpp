@@ -163,37 +163,10 @@ void Input_Conv::Convert()
 {
     ModuleBase::TITLE("Input_Conv", "Convert");
     ModuleBase::timer::tick("Input_Conv", "Convert");
-    //-----------------------------------------------
-    // set read_file_dir
-    //-----------------------------------------------
-    if (PARAM.inp.read_file_dir == "auto")
-    {
-        GlobalV::global_readin_dir = GlobalV::global_out_dir;
-    }
-    else
-    {
-        GlobalV::global_readin_dir = PARAM.inp.read_file_dir + '/';
-    }
     //----------------------------------------------------------
     // main parameters / electrons / spin ( 10/16 )
     //----------------------------------------------------------
-    //  suffix
-    if (PARAM.inp.calculation == "md" && PARAM.mdp.md_restart) // md restart  liuyu add 2023-04-12
-    {
-        int istep = 0;
-        double temperature = 0.0;
-        MD_func::current_md_info(GlobalV::MY_RANK, GlobalV::global_readin_dir, istep, temperature);
-        if (PARAM.inp.read_file_dir == "auto")
-        {
-            GlobalV::stru_file = GlobalV::global_stru_dir + "STRU_MD_" + std::to_string(istep);
-        }
-    } else if (PARAM.inp.stru_file != "") {
-        GlobalV::stru_file = PARAM.inp.stru_file;
-    }
-    if (PARAM.inp.kpoint_file != "")
-    {
-        GlobalV::global_kpoint_card = PARAM.inp.kpoint_file;
-    }
+
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "pseudo_dir", PARAM.inp.pseudo_dir);
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "orbital_dir", PARAM.inp.orbital_dir);
     // GlobalV::global_pseudo_type = PARAM.inp.pseudo_type;
@@ -241,8 +214,6 @@ void Input_Conv::Convert()
 #endif // __ENABLE_FLOAT_FFTW
     }
 
-    GlobalV::NSPIN = PARAM.inp.nspin;
-
 
 #ifdef __LCAO
     Force_Stress_LCAO<double>::force_invalid_threshold_ev = PARAM.inp.force_thr_ev2;
@@ -256,20 +227,14 @@ void Input_Conv::Convert()
     Ions_Move_Basic::relax_bfgs_rmin = PARAM.inp.relax_bfgs_rmin;
     Ions_Move_Basic::relax_bfgs_init = PARAM.inp.relax_bfgs_init;
     Ions_Move_Basic::out_stru = PARAM.inp.out_stru; // mohan add 2012-03-23
+    Ions_Move_Basic::relax_method = PARAM.inp.relax_method;
     Lattice_Change_Basic::fixed_axes = PARAM.inp.fixed_axes;
-
-    GlobalV::CAL_STRESS = PARAM.inp.cal_stress;
-
-
-    GlobalV::RELAX_METHOD = PARAM.inp.relax_method;
 
 
     Ions_Move_CG::RELAX_CG_THR = PARAM.inp.relax_cg_thr; // pengfei add 2013-09-09
 
     ModuleSymmetry::Symmetry::symm_flag = std::stoi(PARAM.inp.symmetry);
     ModuleSymmetry::Symmetry::symm_autoclose = PARAM.inp.symmetry_autoclose;
-    GlobalV::KS_SOLVER = PARAM.inp.ks_solver;
-    GlobalV::SEARCH_RADIUS = PARAM.inp.search_radius;
 
     //----------------------------------------------------------
     // planewave (8/8)
@@ -278,10 +243,7 @@ void Input_Conv::Convert()
     //----------------------------------------------------------
     // diagonalization  (5/5)
     //----------------------------------------------------------
-    GlobalV::PW_DIAG_NDIM = PARAM.inp.pw_diag_ndim;
 
-    GlobalV::PW_DIAG_THR = PARAM.inp.pw_diag_thr;
-    GlobalV::NB2D = PARAM.inp.nb2d;
 
     //----------------------------------------------------------
     // iteration (1/3)
@@ -303,37 +265,6 @@ void Input_Conv::Convert()
         }
     }
 #endif
-    //--------------------------------------------
-    // added by zhengdy-soc
-    //--------------------------------------------
-    if (PARAM.inp.noncolin || PARAM.inp.lspinorb)
-    {
-        GlobalV::NSPIN = 4;
-    }
-
-    if (GlobalV::NSPIN == 4)
-    {
-        GlobalV::NONCOLIN = PARAM.inp.noncolin;
-        // wavefunctions are spinors with 2 components
-        GlobalV::NPOL = 2;
-        // set the domag variable to make a spin-orbit calculation with zero
-        // magnetization
-        GlobalV::DOMAG = false;
-        GlobalV::DOMAG_Z = true;
-        GlobalV::LSPINORB = PARAM.inp.lspinorb;
-        if (PARAM.globalv.gamma_only_local)
-        {
-            ModuleBase::WARNING_QUIT("input_conv",
-                                     "nspin=4(soc or noncollinear-spin) does "
-                                     "not support gamma only calculation");
-        }
-    } else {
-        GlobalV::LSPINORB = false;
-        GlobalV::NONCOLIN = false;
-        GlobalV::DOMAG = false;
-        GlobalV::DOMAG_Z = false;
-        GlobalV::NPOL = 1;
-    }
 
     //----------------------------------------------------------
     // Yu Liu add 2022-05-18
@@ -349,7 +280,6 @@ void Input_Conv::Convert()
     GlobalV::nelec = PARAM.inp.nelec;
     if (PARAM.globalv.two_fermi)
     {
-        GlobalV::TWO_EFERMI = true;
         GlobalV::nupdown = PARAM.inp.nupdown;
     }
     elecstate::Gatefield::zgate = PARAM.inp.zgate;
@@ -392,7 +322,7 @@ void Input_Conv::Convert()
                        PARAM.inp.dft_functional.end(),
                        dft_functional_lower.begin(),
                        tolower);
-        GlobalC::restart.folder = GlobalV::global_readin_dir + "restart/";
+        GlobalC::restart.folder = PARAM.globalv.global_readin_dir + "restart/";
         ModuleBase::GlobalFunc::MAKE_DIR(GlobalC::restart.folder);
         if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0"
             || dft_functional_lower == "hse"
@@ -411,7 +341,7 @@ void Input_Conv::Convert()
                        PARAM.inp.dft_functional.end(),
                        dft_functional_lower.begin(),
                        tolower);
-        GlobalC::restart.folder = GlobalV::global_readin_dir + "restart/";
+        GlobalC::restart.folder = PARAM.globalv.global_readin_dir + "restart/";
         if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0"
             || dft_functional_lower == "hse"
             || dft_functional_lower == "opt_orb"
@@ -502,7 +432,7 @@ void Input_Conv::Convert()
     }
     // In these case, inversion symmetry is also not allowed, symmetry should be
     // reset to -1
-    if (GlobalV::LSPINORB)
+    if (PARAM.inp.lspinorb)
     {
         ModuleSymmetry::Symmetry::symm_flag = -1;
     }
@@ -528,7 +458,6 @@ void Input_Conv::Convert()
     // wavefunction / charge / potential / (2/4)
     //----------------------------------------------------------
     GlobalV::nelec = PARAM.inp.nelec;
-    GlobalV::out_pot = PARAM.inp.out_pot;
 
 #ifdef __LCAO
 
@@ -571,45 +500,6 @@ void Input_Conv::Convert()
 //-----------------------------------------------
 // caoyu add for DeePKS
 //-----------------------------------------------
-#ifdef __DEEPKS
-    GlobalV::deepks_scf = PARAM.inp.deepks_scf;
-    GlobalV::deepks_bandgap = PARAM.inp.deepks_bandgap; // QO added for bandgap label 2021-12-15
-    GlobalV::deepks_v_delta = PARAM.inp.deepks_v_delta;
-    GlobalV::deepks_out_labels = PARAM.inp.deepks_out_labels;
-    GlobalV::deepks_equiv = PARAM.inp.deepks_equiv;
-
-    if (GlobalV::deepks_equiv && GlobalV::deepks_bandgap) {
-        ModuleBase::WARNING_QUIT(
-            "Input_conv",
-            "deepks_equiv and deepks_bandgap cannot be used together");
-    }
-    if (PARAM.inp.deepks_out_unittest)
-    {
-        GlobalV::deepks_out_labels = true;
-        GlobalV::deepks_scf = true;
-        if (GlobalV::NPROC > 1)
-        {
-            ModuleBase::WARNING_QUIT("Input_conv", "generate deepks unittest with only 1 processor");
-        }
-        if (PARAM.inp.cal_force != 1)
-        {
-            ModuleBase::WARNING_QUIT("Input_conv", "force is required in generating deepks unittest");
-        }
-        if (GlobalV::CAL_STRESS != 1)
-        {
-            ModuleBase::WARNING_QUIT("Input_conv", "stress is required in generating deepks unittest");
-        }
-    }
-    if (GlobalV::deepks_scf || GlobalV::deepks_out_labels)
-    {
-        GlobalV::deepks_setorb = true;
-    }
-#else
-    if (PARAM.inp.deepks_scf || PARAM.inp.deepks_out_labels || PARAM.inp.deepks_bandgap || PARAM.inp.deepks_v_delta)
-    {
-        ModuleBase::WARNING_QUIT("Input_conv", "please compile with DeePKS");
-    }
-#endif
     //-----------------------------------------------
     // sunml add for implicit solvation model
     //-----------------------------------------------

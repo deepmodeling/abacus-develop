@@ -58,7 +58,7 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
     ModuleBase::OMP_PARALLEL(init_DSloc_Rxyz);
     ModuleBase::Memory::record("Force::dS_K", sizeof(double) * nnr * 3);
 
-    if (GlobalV::CAL_STRESS)
+    if (PARAM.inp.cal_stress)
     {
         fsr.DH_r = new double[3 * nnr];
         fsr.stvnl11 = new double[nnr];
@@ -91,6 +91,7 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
     LCAO_domain::build_ST_new(fsr,
                               'S',
                               cal_deri,
+                              PARAM.inp.cal_stress,
                               GlobalC::ucell,
                               orb,
                               pv,
@@ -121,6 +122,7 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
     LCAO_domain::build_ST_new(fsr,
                               'T',
                               cal_deri,
+                              PARAM.inp.cal_stress,
                               GlobalC::ucell,
                               orb,
                               pv,
@@ -149,6 +151,7 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
         LCAO_domain::build_ST_new(fsr,
                                   'S',
                                   cal_deri,
+                                  PARAM.inp.cal_stress,
                                   GlobalC::ucell,
                                   orb,
                                   pv,
@@ -179,7 +182,7 @@ void Force_LCAO<std::complex<double>>::finish_ftable(ForceStressArrays& fsr)
     delete[] fsr.DHloc_fixedR_y;
     delete[] fsr.DHloc_fixedR_z;
 
-    if (GlobalV::CAL_STRESS)
+    if (PARAM.inp.cal_stress)
     {
         delete[] fsr.DH_r;
         delete[] fsr.stvnl11;
@@ -330,7 +333,7 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
                          svnl_dbeta);
 
 #ifdef __DEEPKS
-    if (GlobalV::deepks_scf)
+    if (PARAM.inp.deepks_scf)
     {
         const std::vector<std::vector<std::complex<double>>>& dm_k = dm->get_DMK_vector();
 

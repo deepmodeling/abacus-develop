@@ -11,7 +11,7 @@
 #include "xc_functional.h"
 #include "module_base/timer.h"
 #include "module_basis/module_pw/pw_basis_k.h"
-
+#include "module_parameter/parameter.h"
 #include <ATen/core/tensor.h>
 #include <ATen/core/tensor_map.h>
 #include <ATen/core/tensor_types.h>
@@ -31,10 +31,10 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 	if( func_id[1] == XC_GGA_C_LYP) { igcc_is_lyp = true;
 }
 
-	int nspin0 = GlobalV::NSPIN;
-	if(GlobalV::NSPIN==4) { nspin0 =1;
+	int nspin0 = PARAM.inp.nspin;
+	if(PARAM.inp.nspin==4) { nspin0 =1;
 }
-	if(GlobalV::NSPIN==4&&(GlobalV::DOMAG||GlobalV::DOMAG_Z)) { nspin0 = 2;
+	if(PARAM.inp.nspin==4&&(PARAM.globalv.domag||PARAM.globalv.domag_z)) { nspin0 = 2;
 }
 
 	assert(nspin0>0);
@@ -51,7 +51,7 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 
 	// doing FFT to get rho in G space: rhog1 
     rhopw->real2recip(chr->rho[0], chr->rhog[0]);
-	if(GlobalV::NSPIN==2)//mohan fix bug 2012-05-28
+	if(PARAM.inp.nspin==2)//mohan fix bug 2012-05-28
 	{
 		rhopw->real2recip(chr->rho[1], chr->rhog[1]);
 	}
@@ -98,7 +98,7 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 
 	// for spin polarized case;
 	// calculate the gradient of (rho_core+rho) in reciprocal space.
-	if(GlobalV::NSPIN==2)
+	if(PARAM.inp.nspin==2)
 	{
 		rhotmp2 = new double[rhopw->nrxx];
 		rhogsum2 = new std::complex<double>[rhopw->npw];
@@ -124,7 +124,7 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 		XC_Functional::grad_rho( rhogsum2 , gdr2, rhopw, ucell->tpiba);
 	}
 
-	if(GlobalV::NSPIN == 4&&(GlobalV::DOMAG||GlobalV::DOMAG_Z))
+	if(PARAM.inp.nspin == 4&&(PARAM.globalv.domag||PARAM.globalv.domag_z))
 	{
 		rhotmp2 = new double[rhopw->nrxx];
 		rhogsum2 = new std::complex<double>[rhopw->npw];
@@ -148,14 +148,14 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 		}
 		if(!is_stress)
 		{
-			vsave = new double* [GlobalV::NSPIN];
-			for(int is = 0;is<GlobalV::NSPIN;is++) {
+			vsave = new double* [PARAM.inp.nspin];
+			for(int is = 0;is<PARAM.inp.nspin;is++) {
 				vsave[is]= new double [rhopw->nrxx];
 			}
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static, 1024)
 #endif
-			for(int is = 0;is<GlobalV::NSPIN;is++) {
+			for(int is = 0;is<PARAM.inp.nspin;is++) {
 				for(int ir =0;ir<rhopw->nrxx;ir++){
 					vsave[is][ir] = v(is,ir);
 					v(is,ir) = 0;
@@ -389,7 +389,7 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 					else
 					{
 						double zeta = ( rhotmp1[ir] - rhotmp2[ir] ) / rh;
-						if(GlobalV::NSPIN==4&&(GlobalV::DOMAG||GlobalV::DOMAG_Z)) { zeta = fabs(zeta) * neg[ir];
+						if(PARAM.inp.nspin==4&&(PARAM.globalv.domag||PARAM.globalv.domag_z)) { zeta = fabs(zeta) * neg[ir];
 }
 						const double grh2 = (gdr1[ir]+gdr2[ir]).norm2();
 						XC_Functional::gcc_spin(rh, zeta, grh2, sc, v1cup, v1cdw, v2c);
@@ -546,12 +546,12 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 		vtxc += vtxcgc;
 		etxc += etxcgc;
 
-		if(GlobalV::NSPIN == 4 && (GlobalV::DOMAG||GlobalV::DOMAG_Z))
+		if(PARAM.inp.nspin == 4 && (PARAM.globalv.domag||PARAM.globalv.domag_z))
 		{
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static, 1024)
 #endif
-			for(int is=0;is<GlobalV::NSPIN;is++)
+			for(int is=0;is<PARAM.inp.nspin;is++)
 			{
 				for(int ir=0;ir<rhopw->nrxx;ir++)
 				{
@@ -583,7 +583,7 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 	if(!is_stress) { delete[] h1;
 }
 
-	if(GlobalV::NSPIN==2)
+	if(PARAM.inp.nspin==2)
 	{
 		delete[] rhotmp2;
 		delete[] rhogsum2;
@@ -591,7 +591,7 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 		if(!is_stress) { delete[] h2;
 }
 	}
-	if(GlobalV::NSPIN == 4 && (GlobalV::DOMAG||GlobalV::DOMAG_Z))
+	if(PARAM.inp.nspin == 4 && (PARAM.globalv.domag||PARAM.globalv.domag_z))
 	{
 		delete[] neg;
 		if(!is_stress) 
@@ -599,7 +599,7 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 			for(int i=0; i<nspin0; i++) { delete[] vgg[i];
 }
 			delete[] vgg;
-			for(int i=0; i<GlobalV::NSPIN; i++) { delete[] vsave[i];
+			for(int i=0; i<PARAM.inp.nspin; i++) { delete[] vsave[i];
 }
 			delete[] vsave;
 			delete[] h2;

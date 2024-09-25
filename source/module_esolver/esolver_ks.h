@@ -56,11 +56,8 @@ class ESolver_KS : public ESolver_FP
 		// get maxniter used in current scf
 		virtual int get_maxniter() override;
 
-		// get conv_elec used in current scf
-		virtual bool get_conv_elec() override;
-
-	protected:
-		//! Something to do before SCF iterations.
+      protected:
+        //! Something to do before SCF iterations.
 		virtual void before_scf(const int istep) {};
 
 		//! Something to do before hamilt2density function in each iter loop.

@@ -1,5 +1,6 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
 #include "module_base/timer.h"
+#include "module_parameter/parameter.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 
@@ -15,7 +16,7 @@ void divide_HS_in_frag(const bool isGamma, Parallel_Orbitals& pv,const int& nks,
     // wenfei 2021-12-19
     // preparation for DeePKS
 
-    if (GlobalV::deepks_out_labels || GlobalV::deepks_scf) {
+    if (PARAM.inp.deepks_out_labels || PARAM.inp.deepks_scf) {
         // allocate relevant data structures for calculating descriptors
         std::vector<int> na;
         na.resize(GlobalC::ucell.ntype);
@@ -29,7 +30,7 @@ void divide_HS_in_frag(const bool isGamma, Parallel_Orbitals& pv,const int& nks,
                          pv,
                          na);
 
-        if (GlobalV::deepks_scf) {
+        if (PARAM.inp.deepks_scf) {
             if (isGamma) {
                 GlobalC::ld.allocate_V_delta(GlobalC::ucell.nat);
             } else {

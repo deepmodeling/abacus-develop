@@ -43,12 +43,13 @@ TEST(OrbInfo,WriteOrbInfo)
     std::string pp_dir = "./support/";
     std::ofstream ofs;
     ofs.open("running.log");
-    GlobalV::global_out_dir = "./";
+    PARAM.sys.global_out_dir = "./";
 	PARAM.input.pseudo_rcut = 15.0;
-    GlobalV::LSPINORB = false;
-	GlobalV::NSPIN = 1;
+    PARAM.input.lspinorb = false;
+	PARAM.input.nspin = 1;
     PARAM.input.basis_type = "pw";
     PARAM.input.dft_functional = "default";
+    GlobalV::NLOCAL = 18;
     ucell->read_cell_pseudopots(pp_dir,ofs);
     ucell->cal_nwfc(ofs);
     ModuleIO::write_orb_info(ucell);

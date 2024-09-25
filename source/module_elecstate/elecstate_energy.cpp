@@ -116,7 +116,7 @@ double ElecState::cal_delta_eband() const
         {
             deband_aux -= this->charge->rho[0][ir] * v_xc(0,ir);
         }
-        if (GlobalV::NSPIN == 2)
+        if (PARAM.inp.nspin == 2)
         {
             for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++)
             {
@@ -142,7 +142,7 @@ double ElecState::cal_delta_eband() const
             }
         }
 
-        if (GlobalV::NSPIN == 2)
+        if (PARAM.inp.nspin == 2)
         {
             v_eff = this->pot->get_effective_v(1);
             v_ofk = this->pot->get_effective_vofk(1);
@@ -155,7 +155,7 @@ double ElecState::cal_delta_eband() const
                 }
             }
         }
-        else if (GlobalV::NSPIN == 4)
+        else if (PARAM.inp.nspin == 4)
         {
             for (int is = 1; is < 4; is++)
             {
@@ -211,7 +211,7 @@ double ElecState::cal_delta_escf() const
         }
     }
 
-    if (GlobalV::NSPIN == 2)
+    if (PARAM.inp.nspin == 2)
     {
         v_eff = this->pot->get_effective_v(1);
         if (get_xc_func_type() == 3 || get_xc_func_type() == 5)
@@ -227,7 +227,7 @@ double ElecState::cal_delta_escf() const
             }
         }
     }
-    if (GlobalV::NSPIN == 4)
+    if (PARAM.inp.nspin == 4)
     {
         for (int is = 1; is < 4; is++)
         {
@@ -302,7 +302,7 @@ void ElecState::cal_energies(const int type)
 
 #ifdef __DEEPKS
     // energy from deepks
-    if (GlobalV::deepks_scf)
+    if (PARAM.inp.deepks_scf)
     {
         this->f_en.edeepks_scf = get_deepks_E_delta() - get_deepks_E_delta_band();
     }

@@ -115,7 +115,7 @@ bool ReadInput::check_mode = false;
 ReadInput::ReadInput(const int& rank)
 {
     this->rank = rank;
-    this->set_globalv_bcast();
+    
     // add items
     this->item_system();
     this->item_elec_stru();
@@ -132,6 +132,9 @@ ReadInput::ReadInput(const int& rank)
     this->item_exx();
     this->item_dftu();
     this->item_others();
+
+    // set globalv functions
+    this->set_globalv_bcast();
 }
 
 void ReadInput::read_parameters(Parameter& param, const std::string& filename_in)
@@ -301,12 +304,7 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
         readvalue_item->read_value(*readvalue_item, param);
     }
 
-    // 2) count the number of atom types from STRU file
-    if (this->check_ntype_flag) {
-        check_ntype(param.input.stru_file, param.input.ntype);
-}
-
-    // 3) reset this value when some conditions are met
+    // 2) reset this value when some conditions are met
     //    e.g. if (calulation_type == "nscf") then set "init_chg" to "file".
     for (auto& input_item: this->input_lists)
     {
@@ -314,6 +312,13 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
         if (resetvalue_item->reset_value != nullptr) {
             resetvalue_item->reset_value(*resetvalue_item, param);
 }
+    }
+    this->set_globalv(param);
+
+    // 3) count the number of atom types from STRU file
+    if (this->check_ntype_flag)
+    {
+        check_ntype(param.globalv.global_in_stru, param.input.ntype);
     }
 
     // 4) check the value of the parameters
@@ -428,7 +433,7 @@ void ReadInput::check_ntype(const std::string& fn, int& param_ntype)
     if (!ifa)
     {
         GlobalV::ofs_warning << fn;
-        ModuleBase::WARNING_QUIT("ReadInput::check_ntype", "Can not find the file containing atom positions.!");
+        ModuleBase::WARNING_QUIT("ReadInput::check_ntype", "Can not find the file: " + fn);
     }
 
     int ntype_stru = 0;
@@ -472,6 +477,24 @@ void ReadInput::check_ntype(const std::string& fn, int& param_ntype)
 }
 }
 
+int ReadInput::current_md_step(const std::string& file_dir)
+{
+    std::stringstream ssc;
+    ssc << file_dir << "Restart_md.dat";
+    std::ifstream file(ssc.str().c_str());
+
+    if (!file)
+    {
+        ModuleBase::WARNING_QUIT("current_md_step", "no Restart_md.dat");
+    }
+
+    int md_step;
+    file >> md_step;
+    file.close();
+
+    return md_step;
+}
+
 void ReadInput::add_item(const Input_Item& item)
 {
     // only rank 0 read the input file
@@ -481,9 +504,35 @@ void ReadInput::add_item(const Input_Item& item)
         this->input_lists.push_back(make_pair(item.label, item));
     }
 }
+
 bool find_str(const std::vector<std::string>& strings, const std::string& strToFind)
 {
     auto it = std::find(strings.begin(), strings.end(), strToFind);
     return it != strings.end();
-};
+}
+
+std::string nofound_str(std::vector<std::string> init_chgs, const std::string& str)
+{
+    std::string warningstr = "The parameter ";
+    warningstr.append(str);
+    warningstr.append(" must be ");
+    for(int i = 0; i < init_chgs.size(); i++)
+    {
+        warningstr.append("'");
+        warningstr.append(init_chgs[i]);
+        warningstr.append("'");
+        if(i < init_chgs.size() - 2)
+        {
+            warningstr.append(", ");
+        }
+        else if(i == init_chgs.size() - 2)
+        {
+            warningstr.append(" or ");
+        }
+    }
+    warningstr.append("!");
+
+    return warningstr;
+}
+
 } // namespace ModuleIO

@@ -80,25 +80,31 @@ void ESolver_KS_PW<T, Device>::hamilt2estates(const double ethr)
                                 this->kspw_psi->get_nbands(),
                                 PARAM.inp.diago_full_acc);
 
-    hsolver::HSolverPW<T, Device> hsolver_pw_obj(this->pw_wfc, &this->wf, this->init_psi);
+    hsolver::HSolverPW<T, Device> hsolver_pw_obj(this->pw_wfc, 
+                                                 &this->wf, 
+                                                 
+                                                 PARAM.inp.calculation,
+                                                 PARAM.inp.basis_type,
+                                                 PARAM.inp.ks_solver,
+                                                 PARAM.inp.use_paw,
+                                                 GlobalV::use_uspp,
+                                                 PARAM.inp.nspin,
+                                                 
+                                                 hsolver::DiagoIterAssist<T, Device>::SCF_ITER,
+                                                 hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
+                                                 hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR,
+
+                                                 hsolver::DiagoIterAssist<T, Device>::need_subspace,
+                                                 this->init_psi);
 
     hsolver_pw_obj.solve(this->p_hamilt,
-                            this->kspw_psi[0],
-                            this->pelec,
-                            this->pelec->ekb.c,
-                            is_occupied,
-                            PARAM.inp.ks_solver,
-                            PARAM.inp.calculation,
-                            PARAM.inp.basis_type,
-                            PARAM.inp.use_paw,
-                            GlobalV::use_uspp,
-                            GlobalV::RANK_IN_POOL,
-                            GlobalV::NPROC_IN_POOL,
-                            hsolver::DiagoIterAssist<T, Device>::SCF_ITER,
-                            hsolver::DiagoIterAssist<T, Device>::need_subspace,
-                            hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
-                            hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR,
-                            true);
+                         this->kspw_psi[0],
+                         this->pelec,
+                         this->pelec->ekb.c,
+                         is_occupied,
+                         GlobalV::RANK_IN_POOL,
+                         GlobalV::NPROC_IN_POOL,
+                         true);
 
     this->init_psi = true;
 }

@@ -63,7 +63,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
 #ifdef USE_PAW
         if(PARAM.inp.use_paw)
         {
-            if(GlobalV::NSPIN != 1)
+            if(PARAM.inp.nspin != 1)
             {
                 ModuleBase::WARNING_QUIT("set_xc_type","paw does not support pz with spin polarization");
             }
@@ -215,11 +215,11 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
     {
         ModuleBase::WARNING_QUIT("set_xc_type","hybrid functional not realized for planewave yet");
     }
-    if((func_type == 3 || func_type == 5) && GlobalV::NSPIN==4)
+    if((func_type == 3 || func_type == 5) && PARAM.inp.nspin==4)
     {
         ModuleBase::WARNING_QUIT("set_xc_type","meta-GGA has not been implemented for nspin = 4 yet");
     }
-    //if((func_type == 3 || func_type == 5) && GlobalV::CAL_STRESS == 1 && GlobalV::NSPIN!=1)
+    //if((func_type == 3 || func_type == 5) && PARAM.inp.cal_stress == 1 && PARAM.inp.nspin!=1)
     //{
     //    ModuleBase::WARNING_QUIT("set_xc_type","mgga stress not implemented for polarized case yet");
     //}

@@ -1,5 +1,6 @@
 //==========================================================
 // AUTHOR : mohan
+
 // DATE : 2008-11-10
 //==========================================================
 #include "global_file.h"
@@ -7,10 +8,10 @@
 #ifdef __MPI
 #include <mpi.h>
 #endif
-
 #include <unistd.h>
 #include <sstream>
 #include "global_function.h"
+#include "module_parameter/parameter.h"
 #include "global_variable.h"
 #include "module_base/parallel_common.h"
 #include "module_base/parallel_reduce.h"
@@ -33,28 +34,12 @@ void ModuleBase::Global_File::make_dir_out(
 // NAME : system
 //----------------------------------------------------------
 
-    std::string prefix ;
-
-#ifdef __EPM
-#ifdef __MPI
-    prefix = "OUT_EPM_MPI.";
-#else
-    prefix = "OUT_EPM.";
-#endif
-#else
-    prefix = "OUT.";
-#endif
-
-    GlobalV::global_out_dir = prefix + suffix + "/";
-    GlobalV::global_stru_dir = GlobalV::global_out_dir + "STRU/";
-    GlobalV::global_matrix_dir = GlobalV::global_out_dir + "matrix/";
-
 #ifdef __MPI
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
     int make_dir = 0;
 	// mohan update 2011-05-03
-    std::string command0 =  "test -d " + GlobalV::global_out_dir + " || mkdir " + GlobalV::global_out_dir;
+    std::string command0 =  "test -d " + PARAM.globalv.global_out_dir + " || mkdir " + PARAM.globalv.global_out_dir;
 
 	int times = 0;
 	while(times<GlobalV::NPROC)
@@ -63,7 +48,7 @@ void ModuleBase::Global_File::make_dir_out(
 		{
 			if ( system( command0.c_str() ) == 0 )
 			{
-				std::cout << " MAKE THE DIR         : " << GlobalV::global_out_dir << std::endl;
+				std::cout << " MAKE THE DIR         : " << PARAM.globalv.global_out_dir << std::endl;
 				make_dir = 1;
 			}
 			else
@@ -92,7 +77,7 @@ void ModuleBase::Global_File::make_dir_out(
     if(calculation == "md")
     {
         int make_dir_stru = 0;
-        std::string command1 =  "test -d " + GlobalV::global_stru_dir + " || mkdir " + GlobalV::global_stru_dir;
+        std::string command1 =  "test -d " + PARAM.globalv.global_stru_dir + " || mkdir " + PARAM.globalv.global_stru_dir;
 
         times = 0;
         while(times<GlobalV::NPROC)
@@ -101,7 +86,7 @@ void ModuleBase::Global_File::make_dir_out(
             {
                 if ( system( command1.c_str() ) == 0 )
                 {
-                    std::cout << " MAKE THE STRU DIR    : " << GlobalV::global_stru_dir << std::endl;
+                    std::cout << " MAKE THE STRU DIR    : " << PARAM.globalv.global_stru_dir << std::endl;
                     make_dir_stru = 1;
                 }
                 else
@@ -132,7 +117,7 @@ void ModuleBase::Global_File::make_dir_out(
     if((out_dir) && calculation == "md")
     {
         int make_dir_matrix = 0;
-        std::string command1 =  "test -d " + GlobalV::global_matrix_dir + " || mkdir " + GlobalV::global_matrix_dir;
+        std::string command1 =  "test -d " + PARAM.globalv.global_matrix_dir + " || mkdir " + PARAM.globalv.global_matrix_dir;
 
         times = 0;
         while(times<GlobalV::NPROC)
@@ -141,7 +126,7 @@ void ModuleBase::Global_File::make_dir_out(
             {
                 if ( system( command1.c_str() ) == 0 )
                 {
-                    std::cout << " MAKE THE MATRIX DIR    : " << GlobalV::global_stru_dir << std::endl;
+                    std::cout << " MAKE THE MATRIX DIR    : " << PARAM.globalv.global_stru_dir << std::endl;
                     make_dir_matrix = 1;
                 }
                 else
@@ -209,7 +194,7 @@ void ModuleBase::Global_File::make_dir_atom(const std::string &label)
 // EXPLAIN : generate atom dir for each type of atom
 //----------------------------------------------------------
     std::stringstream ss;
-    ss << GlobalV::global_out_dir << label << "/";
+    ss << PARAM.globalv.global_out_dir << label << "/";
     ModuleBase::GlobalFunc::MAKE_DIR(ss.str());
     return;
 }
@@ -218,10 +203,10 @@ void ModuleBase::Global_File::open_log(std::ofstream &ofs, const std::string &fn
 {
 //----------------------------------------------------------
 // USE GLOBAL VARIABLE :
-// GlobalV::global_out_dir : (default dir to store "*.log" file)
+// PARAM.globalv.global_out_dir : (default dir to store "*.log" file)
 //----------------------------------------------------------
     std::stringstream ss;
-    ss << GlobalV::global_out_dir << fn << ".log";
+    ss << PARAM.globalv.global_out_dir << fn << ".log";
 
     if(calculation == "md" && restart)
     {
@@ -288,31 +273,5 @@ void ModuleBase::Global_File::close_all_log(const int rank, const bool out_alllo
     close_log(GlobalV::ofs_info, "math_info");
 #endif
     return;
-}
-
-void ModuleBase::Global_File::delete_tmp_files()
-{
-    if (GlobalV::MY_RANK == 0)
-    {
-        for (int is = 0; is < GlobalV::NSPIN; ++is)
-        {
-            std::string tmp_chg_1 = GlobalV::global_out_dir + "NOW_SPIN" + std::to_string(is + 1) + "_CHG.cube";
-            std::string tmp_chg_2 = GlobalV::global_out_dir + "OLD1_SPIN" + std::to_string(is + 1) + "_CHG.cube";
-            std::string tmp_chg_3 = GlobalV::global_out_dir + "OLD2_SPIN" + std::to_string(is + 1) + "_CHG.cube";
-
-            if (access(tmp_chg_1.c_str(), 0) == 0)
-            {
-                std::remove(tmp_chg_1.c_str());
-            }
-            if (access(tmp_chg_2.c_str(), 0) == 0)
-            {
-                std::remove(tmp_chg_2.c_str());
-            }
-            if (access(tmp_chg_3.c_str(), 0) == 0)
-            {
-                std::remove(tmp_chg_3.c_str());
-            }
-        }
-    }
 }
 }

@@ -1,5 +1,6 @@
 #ifdef __DEEPKS
 
+#include "module_parameter/parameter.h"
 #include "LCAO_deepks.h"
 #include "module_base/vector3.h"
 #include "module_base/timer.h"
@@ -66,7 +67,7 @@ void LCAO_Deepks::cal_gdmx(const std::vector<double>& dm,
                 
                 const ModuleBase::Vector3<double> tau1 = GridD.getAdjacentTau(ad1);
 				const Atom* atom1 = &ucell.atoms[T1];
-				const int nw1_tot = atom1->nw*GlobalV::NPOL;
+				const int nw1_tot = atom1->nw*PARAM.globalv.npol;
 				const double Rcut_AO1 = orb.Phi[T1].getRcut(); 
 
 				for (int ad2=0; ad2 < GridD.getAdjacentNum()+1 ; ad2++)
@@ -77,7 +78,7 @@ void LCAO_Deepks::cal_gdmx(const std::vector<double>& dm,
                     const int ibt2 = ucell.itia2iat(T2,I2);
 					const ModuleBase::Vector3<double> tau2 = GridD.getAdjacentTau(ad2);
 					const Atom* atom2 = &ucell.atoms[T2];
-					const int nw2_tot = atom2->nw*GlobalV::NPOL;
+					const int nw2_tot = atom2->nw*PARAM.globalv.npol;
 					
 					const double Rcut_AO2 = orb.Phi[T2].getRcut();
                 	const double dist1 = (tau1-tau0).norm() * ucell.lat0;
@@ -106,7 +107,7 @@ void LCAO_Deepks::cal_gdmx(const std::vector<double>& dm,
 
                     hamilt::AtomPair<double> dm_pair(ibt1, ibt2, 0, 0, 0, pv);
                     dm_pair.allocate(nullptr, 1);
-                    if(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
+                    if(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
                     {
                         dm_pair.add_from_matrix(dm.data(), pv->get_row_size(), 1.0, 1);
                     }

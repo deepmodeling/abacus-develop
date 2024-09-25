@@ -1,5 +1,6 @@
 #include "write_proj_band_lcao.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_base/scalapack_connector.h"
@@ -24,7 +25,7 @@ void ModuleIO::write_proj_band_lcao(
     const double* sk = dynamic_cast<const hamilt::HamiltLCAO<double, double>*>(p_ham)->getSk();
 
     int nspin0 = 1;
-    if (GlobalV::NSPIN == 2)
+    if (PARAM.inp.nspin == 2)
         nspin0 = 2;
     int nks = 0;
     if (nspin0 == 1)
@@ -96,13 +97,13 @@ void ModuleIO::write_proj_band_lcao(
         if (GlobalV::MY_RANK == 0)
         {
             std::stringstream ps2;
-            ps2 << GlobalV::global_out_dir << "PBANDS_" << is + 1;
+            ps2 << PARAM.globalv.global_out_dir << "PBANDS_" << is + 1;
             GlobalV::ofs_running << "\n Output projected bands in file: " << ps2.str() << std::endl;
             std::ofstream out(ps2.str().c_str());
 
             out << "<pband>" << std::endl;
-            out << "<nspin>" << GlobalV::NSPIN << "</nspin>" << std::endl;
-            if (GlobalV::NSPIN == 4)
+            out << "<nspin>" << PARAM.inp.nspin << "</nspin>" << std::endl;
+            if (PARAM.inp.nspin == 4)
                 out << "<norbitals>" << std::setw(2) << GlobalV::NLOCAL / 2 << "</norbitals>" << std::endl;
             else
                 out << "<norbitals>" << std::setw(2) << GlobalV::NLOCAL << "</norbitals>" << std::endl;
@@ -138,9 +139,9 @@ void ModuleIO::write_proj_band_lcao(
                     out << "<data>" << std::endl;
                     for (int ib = 0; ib < GlobalV::NBANDS; ib++)
                     {
-                        if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 2)
+                        if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2)
                             out << std::setw(13) << weight(is, ib * GlobalV::NLOCAL + w);
-                        else if (GlobalV::NSPIN == 4)
+                        else if (PARAM.inp.nspin == 4)
                         {
                             int w0 = w - s0;
                             out << std::setw(13)
@@ -177,7 +178,7 @@ void ModuleIO::write_proj_band_lcao(
     ModuleBase::timer::tick("ModuleIO", "write_proj_band_lcao");
 
     int nspin0 = 1;
-    if (GlobalV::NSPIN == 2)
+    if (PARAM.inp.nspin == 2)
         nspin0 = 2;
     int nks = 0;
     if (nspin0 == 1)
@@ -207,7 +208,7 @@ void ModuleIO::write_proj_band_lcao(
                 {
                     // calculate SK for current k point
                     const std::complex<double>* sk = nullptr;
-                    if (GlobalV::NSPIN == 4)
+                    if (PARAM.inp.nspin == 4)
                     {
                         dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(p_ham)->updateSk(ik, 1);
                         sk = dynamic_cast<const hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(p_ham)->getSk();
@@ -280,13 +281,13 @@ void ModuleIO::write_proj_band_lcao(
         if (GlobalV::MY_RANK == 0)
         {
             std::stringstream ps2;
-            ps2 << GlobalV::global_out_dir << "PBANDS_" << is + 1;
+            ps2 << PARAM.globalv.global_out_dir << "PBANDS_" << is + 1;
             GlobalV::ofs_running << "\n Output projected bands in file: " << ps2.str() << std::endl;
             std::ofstream out(ps2.str().c_str());
 
             out << "<pband>" << std::endl;
-            out << "<nspin>" << GlobalV::NSPIN << "</nspin>" << std::endl;
-            if (GlobalV::NSPIN == 4)
+            out << "<nspin>" << PARAM.inp.nspin << "</nspin>" << std::endl;
+            if (PARAM.inp.nspin == 4)
             {
                 out << "<norbitals>" << std::setw(2) << GlobalV::NLOCAL / 2 << "</norbitals>" << std::endl;
             }
@@ -333,15 +334,15 @@ void ModuleIO::write_proj_band_lcao(
 					{
 						for (int ib = 0; ib < GlobalV::NBANDS; ib++)
 						{
-							if (GlobalV::NSPIN == 1)
+							if (PARAM.inp.nspin == 1)
 							{
 								out << std::setw(13) << weight(ik, ib * GlobalV::NLOCAL + w);
 							}
-							else if (GlobalV::NSPIN == 2)
+							else if (PARAM.inp.nspin == 2)
 							{
 								out << std::setw(13) << weight(ik + nks * is, ib * GlobalV::NLOCAL + w);
 							}
-							else if (GlobalV::NSPIN == 4)
+							else if (PARAM.inp.nspin == 4)
 							{
 								int w0 = w - s0;
 								out << std::setw(13)

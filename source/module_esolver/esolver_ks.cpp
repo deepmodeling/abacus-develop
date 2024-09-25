@@ -11,6 +11,7 @@
 #include "module_io/print_info.h"
 #include "module_io/write_istate_info.h"
 #include "module_parameter/parameter.h"
+#include "module_cell/cal_atoms_info.h"
 
 #include <iostream>
 //--------------Temporary----------------
@@ -55,7 +56,7 @@ ESolver_KS<T, Device>::ESolver_KS()
 
     // pw_rho = new ModuleBase::PW_Basis();
     // temporary, it will be removed
-    pw_wfc = new ModulePW::PW_Basis_K_Big(GlobalV::device_flag, PARAM.inp.precision);
+    pw_wfc = new ModulePW::PW_Basis_K_Big(PARAM.globalv.device_flag, PARAM.inp.precision);
     ModulePW::PW_Basis_K_Big* tmp = static_cast<ModulePW::PW_Basis_K_Big*>(pw_wfc);
 
     // should not use INPUT here, mohan 2024-05-12
@@ -145,7 +146,7 @@ void ESolver_KS<T, Device>::before_all_runners(const Input_para& inp, UnitCell& 
 
         if (GlobalV::MY_RANK == 0)
         {
-            std::ifstream ifa(GlobalV::stru_file.c_str(), std::ios::in);
+            std::ifstream ifa(PARAM.globalv.global_in_stru.c_str(), std::ios::in);
             if (!ifa)
             {
                 ModuleBase::WARNING_QUIT("set_libpaw_files", "can not open stru file");
@@ -187,12 +188,11 @@ void ESolver_KS<T, Device>::before_all_runners(const Input_para& inp, UnitCell& 
         }
         delete[] atom_coord;
         delete[] atom_type;
+        CalAtomsInfo ca;
+        ca.cal_atoms_info(ucell.atoms, ucell.ntype, PARAM);
     }
 #endif
     /// End PAW
-
-    //! 3) calculate the electron number
-    ucell.cal_nelec(GlobalV::nelec);
 
     //! 4) it has been established that
     // xc_func is same for all elements, therefore
@@ -216,7 +216,7 @@ void ESolver_KS<T, Device>::before_all_runners(const Input_para& inp, UnitCell& 
     }
 
     //! 6) Setup the k points according to symmetry.
-    this->kv.set(ucell.symm, GlobalV::global_kpoint_card, GlobalV::NSPIN, ucell.G, ucell.latvec, GlobalV::ofs_running);
+    this->kv.set(ucell.symm, PARAM.inp.kpoint_file, PARAM.inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running);
 
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
 
@@ -423,7 +423,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
     this->niter = this->maxniter;
 
     // 4) SCF iterations
-    double diag_ethr = GlobalV::PW_DIAG_THR;
+    double diag_ethr = PARAM.inp.pw_diag_thr;
 
     std::cout << " * * * * * *\n << Start SCF iteration." << std::endl;
     for (int iter = 1; iter <= this->maxniter; ++iter)
@@ -447,7 +447,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
                                                  istep,
                                                  iter,
                                                  drho,
-                                                 GlobalV::PW_DIAG_THR,
+                                                 PARAM.inp.pw_diag_thr,
                                                  diag_ethr,
                                                  GlobalV::nelec);
         }
@@ -460,7 +460,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
                                                    istep,
                                                    iter,
                                                    drho,
-                                                   GlobalV::PW_DIAG_THR,
+                                                   PARAM.inp.pw_diag_thr,
                                                    diag_ethr,
                                                    GlobalV::NBANDS,
                                                    esolver_KS_ne);
@@ -696,7 +696,7 @@ void ESolver_KS<T, Device>::print_head()
 {
     std::cout << " " << std::setw(7) << "ITER";
 
-    if (GlobalV::NSPIN == 2)
+    if (PARAM.inp.nspin == 2)
     {
         std::cout << std::setw(10) << "TMAG";
         std::cout << std::setw(10) << "AMAG";
@@ -757,16 +757,6 @@ template <typename T, typename Device>
 int ESolver_KS<T, Device>::get_maxniter()
 {
     return this->maxniter;
-}
-
-//------------------------------------------------------------------------------
-//! the 12th function of ESolver_KS: get_conv_elec
-//! tqzhao add 2024-05-15
-//------------------------------------------------------------------------------
-template <typename T, typename Device>
-bool ESolver_KS<T, Device>::get_conv_elec()
-{
-    return this->conv_elec;
 }
 
 //------------------------------------------------------------------------------

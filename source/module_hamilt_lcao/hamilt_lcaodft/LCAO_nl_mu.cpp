@@ -21,8 +21,8 @@ void build_Nonlocal_mu_new(const Parallel_Orbitals& pv,
     ModuleBase::TITLE("LCAO_domain", "vnl_mu_new");
     ModuleBase::timer::tick("LCAO_domain", "vnl_mu_new");
 
-    const int nspin = GlobalV::NSPIN;
-    const int npol = GlobalV::NPOL;
+    const int nspin = PARAM.inp.nspin;
+    const int npol = PARAM.globalv.npol;
     const bool gamma_only_local = PARAM.globalv.gamma_only_local;
 
     // < phi1 | beta > < beta | phi2 >

@@ -29,7 +29,9 @@ To compile and use ABACUS in CUDA mode, you currently need to have an NVIDIA GPU
 
 Check the [Advanced Installation Options](https://abacus-rtd.readthedocs.io/en/latest/advanced/install.html#build-with-cuda-support) for the installation of CUDA version support.
 
-When the compilation parameter USE_ELPA is ON (which is the default value) and USE_CUDA is also set to ON, the ELPA library needs to [enable GPU support](https://github.com/marekandreas/elpa/blob/master/documentation/INSTALL.md) at compile time.
+Setting both USE_ELPA and USE_CUDA to ON does not automatically enable ELPA to run on GPUs. ELPA support for GPUs needs to be enabled when ELPA is compiled. [enable GPU support](https://github.com/marekandreas/elpa/blob/master/documentation/INSTALL.md).
+
+The ABACUS program will automatically determine whether the current ELPA supports GPU based on the elpa/elpa_configured_options.h header file. Users can also check this header file to determine the GPU support of ELPA in their environment. ELPA introduced a new API elpa_setup_gpu in version 2023.11.001. So if you want to enable ELPA GPU in ABACUS, the ELPA version must be greater than or equal to 2023.11.001.
 
 ## Run with the GPU support by editing the INPUT script:
 

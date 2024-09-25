@@ -32,7 +32,7 @@ void ModuleIO::output_HSR(const int& istep,
     ModuleBase::TITLE("ModuleIO", "output_HSR");
     ModuleBase::timer::tick("ModuleIO", "output_HSR");
 
-    const int nspin = GlobalV::NSPIN;
+    const int nspin = PARAM.inp.nspin;
 
     if (nspin == 1 || nspin == 4) {
         const int spin_now = 0;
@@ -99,7 +99,7 @@ void ModuleIO::output_dHR(const int& istep,
 
     gint_k.allocate_pvdpR();
 
-    const int nspin = GlobalV::NSPIN;
+    const int nspin = PARAM.inp.nspin;
 
     if (nspin == 1 || nspin == 4) {
         // mohan add 2024-04-01
@@ -201,9 +201,9 @@ void ModuleIO::output_TR(const int istep,
 
     std::stringstream sst;
     if (PARAM.inp.calculation == "md" && !PARAM.inp.out_app_flag) {
-        sst << GlobalV::global_matrix_dir << istep << "_" << TR_filename;
+        sst << PARAM.globalv.global_matrix_dir << istep << "_" << TR_filename;
     } else {
-        sst << GlobalV::global_out_dir << TR_filename;
+        sst << PARAM.globalv.global_out_dir << TR_filename;
     }
 
     sparse_format::cal_TR(ucell,

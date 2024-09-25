@@ -3,15 +3,17 @@
 # TODO: Review and if possible fix shellcheck errors.
 # shellcheck disable=all
 
-# Last Update in 2023-0918
+# Last Update in 2024-0912
 
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 
 # mpich_ver="4.0.3"
 # mpich_sha256="17406ea90a6ed4ecd5be39c9ddcbfac9343e6ab4f77ac4e8c5ebe4a3e3b6c501"
-mpich_ver="4.1.2"
-mpich_sha256="3492e98adab62b597ef0d292fb2459b6123bc80070a8aa0a30be6962075a12f0"
+# mpich_ver="4.1.2"
+# mpich_sha256="3492e98adab62b597ef0d292fb2459b6123bc80070a8aa0a30be6962075a12f0"
+mpich_ver="4.2.2"
+mpich_sha256="883f5bb3aeabf627cb8492ca02a03b191d09836bbe0f599d8508351179781d41"
 mpich_pkg="mpich-${mpich_ver}.tar.gz"
 
 source "${SCRIPT_DIR}"/common_vars.sh
@@ -35,13 +37,15 @@ case "${with_mpich}" in
     pkg_install_dir="${INSTALLDIR}/mpich-${mpich_ver}"
     #pkg_install_dir="${HOME}/apps/mpich/${mpich_ver}-intel"
     install_lock_file="$pkg_install_dir/install_successful"
+    url="https://www.mpich.org/static/downloads/${mpich_ver}/${mpich_pkg}"
     if verify_checksums "${install_lock_file}"; then
       echo "mpich-${mpich_ver} is already installed, skipping it."
     else
       if [ -f ${mpich_pkg} ]; then
         echo "${mpich_pkg} is found"
       else
-        download_pkg_from_ABACUS_org "${mpich_sha256}" "${mpich_pkg}"
+        #download_pkg_from_ABACUS_org "${mpich_sha256}" "${mpich_pkg}"
+        download_pkg_from_url "${mpich_sha256}" "${mpich_pkg}" "${url}"
       fi
       echo "Installing from scratch into ${pkg_install_dir} for MPICH device ${MPICH_DEVICE}"
       [ -d mpich-${mpich_ver} ] && rm -rf mpich-${mpich_ver}

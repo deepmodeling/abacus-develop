@@ -16,11 +16,16 @@
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 #include "module_io/rho_io.h"
 #include "module_io/rhog_io.h"
+#include "module_io/read_wfc_to_rho.h"
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
 #endif
 
-void Charge::init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMatrix& strucFac, const int& nbz, const int& bz)
+void Charge::init_rho(elecstate::efermi& eferm_iout,
+                      const ModuleBase::ComplexMatrix& strucFac,
+                      ModuleSymmetry::Symmetry& symm,
+                      const void* klist,
+                      const void* wfcpw)
 {
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "init_chg", PARAM.inp.init_chg);
 
@@ -33,21 +38,21 @@ void Charge::init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMa
         // try to read charge from binary file first, which is the same as QE
         // liuyu 2023-12-05
         std::stringstream binary;
-        binary << GlobalV::global_readin_dir << PARAM.inp.suffix + "-CHARGE-DENSITY.restart";
+        binary << PARAM.globalv.global_readin_dir << PARAM.inp.suffix + "-CHARGE-DENSITY.restart";
         if (ModuleIO::read_rhog(binary.str(), rhopw, rhog))
         {
             GlobalV::ofs_running << " Read in the charge density: " << binary.str() << std::endl;
-            for (int is = 0; is < GlobalV::NSPIN; ++is)
+            for (int is = 0; is < PARAM.inp.nspin; ++is)
             {
                 rhopw->recip2real(rhog[is], rho[is]);
             }
         }
         else
         {
-            for (int is = 0; is < GlobalV::NSPIN; ++is)
+            for (int is = 0; is < PARAM.inp.nspin; ++is)
             {
                 std::stringstream ssc;
-                ssc << GlobalV::global_readin_dir << "SPIN" << is + 1 << "_CHG.cube";
+                ssc << PARAM.globalv.global_readin_dir << "SPIN" << is + 1 << "_CHG.cube";
                 double& ef_tmp = eferm_iout.get_ef(is);
                 if (ModuleIO::read_rho(
 #ifdef __MPI
@@ -58,7 +63,7 @@ void Charge::init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMa
                         GlobalV::RANK_IN_STOGROUP,
                         is,
                         GlobalV::ofs_running,
-                        GlobalV::NSPIN,
+                        PARAM.inp.nspin,
                         ssc.str(),
                         this->rho[is],
                         this->rhopw->nx,
@@ -117,10 +122,10 @@ void Charge::init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMa
 
             if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
             {
-                for (int is = 0; is < GlobalV::NSPIN; is++)
+                for (int is = 0; is < PARAM.inp.nspin; is++)
                 {
                     std::stringstream ssc;
-                    ssc << GlobalV::global_readin_dir << "SPIN" << is + 1 << "_TAU.cube";
+                    ssc << PARAM.globalv.global_readin_dir << "SPIN" << is + 1 << "_TAU.cube";
                     GlobalV::ofs_running << " try to read kinetic energy density from file : " << ssc.str()
                                          << std::endl;
                     // mohan update 2012-02-10, sunliang update 2023-03-09
@@ -133,7 +138,7 @@ void Charge::init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMa
                             GlobalV::RANK_IN_STOGROUP,
                             is,
                             GlobalV::ofs_running,
-                            GlobalV::NSPIN,
+                            PARAM.inp.nspin,
                             ssc.str(),
                             this->kin_r[is],
                             this->rhopw->nx,
@@ -167,7 +172,7 @@ void Charge::init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMa
     if (PARAM.inp.init_chg == "atomic" || 
         (PARAM.inp.init_chg == "auto" && read_error)) // mohan add 2007-10-17
     {
-        this->atomic_rho(GlobalV::NSPIN, GlobalC::ucell.omega, rho, strucFac, GlobalC::ucell);
+        this->atomic_rho(PARAM.inp.nspin, GlobalC::ucell.omega, rho, strucFac, GlobalC::ucell);
 
         // liuyu 2023-06-29 : move here from atomic_rho(), which will be called several times in charge extrapolation
         // wenfei 2021-7-29 : initial tau = 3/5 rho^2/3, Thomas-Fermi
@@ -175,11 +180,11 @@ void Charge::init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMa
         {
             const double pi = 3.141592653589790;
             const double fact = (3.0 / 5.0) * pow(3.0 * pi * pi, 2.0 / 3.0);
-            for (int is = 0; is < GlobalV::NSPIN; ++is)
+            for (int is = 0; is < PARAM.inp.nspin; ++is)
             {
                 for (int ir = 0; ir < this->rhopw->nrxx; ++ir)
                 {
-                    kin_r[is][ir] = fact * pow(std::abs(rho[is][ir]) * GlobalV::NSPIN, 5.0 / 3.0) / GlobalV::NSPIN;
+                    kin_r[is][ir] = fact * pow(std::abs(rho[is][ir]) * PARAM.inp.nspin, 5.0 / 3.0) / PARAM.inp.nspin;
                 }
             }
         }
@@ -188,15 +193,27 @@ void Charge::init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMa
     // Peize Lin add 2020.04.04
     if (GlobalC::restart.info_load.load_charge && !GlobalC::restart.info_load.load_charge_finish)
     {
-        for (int is = 0; is < GlobalV::NSPIN; ++is)
+        for (int is = 0; is < PARAM.inp.nspin; ++is)
         {
             GlobalC::restart.load_disk("charge", is, this->nrxx, rho[is]);
         }
         GlobalC::restart.info_load.load_charge_finish = true;
     }
 #ifdef __MPI
-    this->init_chgmpi(nbz, bz);
+    this->init_chgmpi();
 #endif
+    if (PARAM.inp.init_chg == "wfc")
+    {
+        if (wfcpw == nullptr)
+        {
+            ModuleBase::WARNING_QUIT("Charge::init_rho", "wfc is only supported for PW-KSDFT.");
+        }
+        const ModulePW::PW_Basis_K* pw_wfc = reinterpret_cast<ModulePW::PW_Basis_K*>(const_cast<void*>(wfcpw));
+        const K_Vectors* kv = reinterpret_cast<const K_Vectors*>(klist);
+        const int nkstot = kv->get_nkstot();
+        const std::vector<int>& isk = kv->isk;
+        ModuleIO::read_wfc_to_rho(pw_wfc, symm, nkstot, isk, *this);
+    }
 }
 
 //==========================================================
