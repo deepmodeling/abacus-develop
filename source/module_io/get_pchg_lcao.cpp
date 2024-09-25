@@ -57,20 +57,19 @@ void IState_Charge::begin(Gint_Gamma& gg,
     std::cout << " Calculate |psi(i)|^2 for selected bands (band-decomposed charge densities, gamma only)."
               << std::endl;
 
+    // Determine the mode based on the input parameters
     int mode = 0;
+    // mode = 1: select bands below and above the Fermi surface using parameter `nbands_istate`
     if (nbands_istate > 0 && static_cast<int>(out_pchg.size()) == 0)
     {
         mode = 1;
     }
+    // mode = 2: select bands directly using parameter `out_pchg`
     else if (static_cast<int>(out_pchg.size()) > 0)
     {
         // If out_pchg is not empty, set mode to 2
         mode = 2;
         std::cout << " Notice: INPUT parameter `nbands_istate` overwritten by `out_pchg`!" << std::endl;
-    }
-    else
-    {
-        mode = 3;
     }
 
     // if ucell is odd, it's correct,
