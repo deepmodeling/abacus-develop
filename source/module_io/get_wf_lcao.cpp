@@ -528,6 +528,7 @@ void IState_Envelope::select_bands(const int nbands_istate,
     this->bands_picked_.resize(nbands);
     ModuleBase::GlobalFunc::ZEROS(bands_picked_.data(), nbands);
 
+    // mode = 1: select bands below and above the Fermi surface using parameter `nbands_istate`
     if (mode == 1)
     {
         bands_below = nbands_istate;
@@ -548,6 +549,7 @@ void IState_Envelope::select_bands(const int nbands_istate,
             }
         }
     }
+    // mode = 2: select bands directly using parameter `out_wfc_norm` or `out_wfc_re_im`
     else if (mode == 2)
     {
         // Check if length of out_wfc_kb is valid

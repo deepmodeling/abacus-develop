@@ -54,7 +54,8 @@ void IState_Charge::begin(Gint_Gamma& gg,
 {
     ModuleBase::TITLE("IState_Charge", "begin");
 
-    std::cout << " Calculate |psi(i)|^2 for selected bands (band-decomposed charge densities, gamma only)." << std::endl;
+    std::cout << " Calculate |psi(i)|^2 for selected bands (band-decomposed charge densities, gamma only)."
+              << std::endl;
 
     int mode = 0;
     if (nbands_istate > 0 && static_cast<int>(out_pchg.size()) == 0)
@@ -374,6 +375,7 @@ void IState_Charge::select_bands(const int nbands_istate,
     this->bands_picked_.resize(nbands);
     ModuleBase::GlobalFunc::ZEROS(bands_picked_.data(), nbands);
 
+    // mode = 1: select bands below and above the Fermi surface using parameter `nbands_istate`
     if (mode == 1)
     {
         bands_below = nbands_istate;
@@ -396,6 +398,7 @@ void IState_Charge::select_bands(const int nbands_istate,
             }
         }
     }
+    // mode = 2: select bands directly using parameter `out_pchg`
     else if (mode == 2)
     {
         // Check if length of out_pchg is valid
