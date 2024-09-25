@@ -5,6 +5,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_elecstate/module_charge/symmetry_rho.h"
 #include "module_parameter/parameter.h"
+#include "module_elecstate/kernels/elecstate_op.h"
 
 void ModuleIO::read_wfc_to_rho(const ModulePW::PW_Basis_K* pw_wfc,
                                ModuleSymmetry::Symmetry& symm,
@@ -21,14 +22,14 @@ void ModuleIO::read_wfc_to_rho(const ModulePW::PW_Basis_K* pw_wfc,
     const int nbands = GlobalV::NBANDS;
     const int nspin = PARAM.inp.nspin;
 
-    const int npwk_max = pw_wfc->npwk_max;
+    const int ng_npol = pw_wfc->npwk_max * PARAM.globalv.npol;
     const int nrxx = pw_wfc->nrxx;
     for (int is = 0; is < nspin; ++is)
     {
         ModuleBase::GlobalFunc::ZEROS(chg.rho[is], nrxx);
     }
 
-    ModuleBase::ComplexMatrix wfc_tmp(nbands, npwk_max);
+    ModuleBase::ComplexMatrix wfc_tmp(nbands, ng_npol);
     std::vector<std::complex<double>> rho_tmp(nrxx);
 
     // read occupation numbers
@@ -78,21 +79,44 @@ void ModuleIO::read_wfc_to_rho(const ModulePW::PW_Basis_K* pw_wfc,
         std::stringstream filename;
         filename << PARAM.globalv.global_readin_dir << "WAVEFUNC" << ikstot + 1 << ".dat";
         ModuleIO::read_wfc_pw(filename.str(), pw_wfc, ik, nkstot, wfc_tmp);
-        for (int ib = 0; ib < nbands; ++ib)
+        if (PARAM.inp.nspin == 4)
         {
-            const std::complex<double>* wfc_ib = wfc_tmp.c + ib * npwk_max;
-            pw_wfc->recip2real(wfc_ib, rho_tmp.data(), ik);
-
-            const double w1 = wg_tmp(ikstot, ib) / pw_wfc->omega;
-
-            if (w1 != 0.0)
+            std::vector<std::complex<double>> rho_tmp2(nrxx);
+            for (int ib = 0; ib < nbands; ++ib)
             {
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
-                for (int ir = 0; ir < nrxx; ir++)
+                const std::complex<double>* wfc_ib = wfc_tmp.c + ib * ng_npol;
+                const std::complex<double>* wfc_ib2 = wfc_tmp.c + ib * ng_npol + ng_npol / 2;
+                pw_wfc->recip2real(wfc_ib, rho_tmp.data(), ik);
+                pw_wfc->recip2real(wfc_ib2, rho_tmp2.data(), ik);
+                const double w1 = wg_tmp(ikstot, ib) / pw_wfc->omega;
+
+                if (w1 != 0.0)
                 {
-                    chg.rho[is][ir] += w1 * std::norm(rho_tmp[ir]);
+                    base_device::DEVICE_CPU* ctx = nullptr;
+                    elecstate::elecstate_pw_op<double, base_device::DEVICE_CPU>()(ctx,
+                                                                                  PARAM.globalv.domag,
+                                                                                  PARAM.globalv.domag_z,
+                                                                                  nrxx,
+                                                                                  w1,
+                                                                                  chg.rho,
+                                                                                  rho_tmp.data(),
+                                                                                  rho_tmp2.data());
+                }
+            }
+        }
+        else
+        {
+            for (int ib = 0; ib < nbands; ++ib)
+            {
+                const std::complex<double>* wfc_ib = wfc_tmp.c + ib * ng_npol;
+                pw_wfc->recip2real(wfc_ib, rho_tmp.data(), ik);
+
+                const double w1 = wg_tmp(ikstot, ib) / pw_wfc->omega;
+
+                if (w1 != 0.0)
+                {
+                    base_device::DEVICE_CPU* ctx = nullptr;
+                    elecstate::elecstate_pw_op<double, base_device::DEVICE_CPU>()(ctx, is, nrxx, w1, chg.rho, rho_tmp.data());
                 }
             }
         }
