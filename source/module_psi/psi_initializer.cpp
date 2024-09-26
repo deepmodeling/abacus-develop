@@ -82,10 +82,9 @@ psi::Psi<std::complex<double>>* psi_initializer<T, Device>::allocate(const bool 
         // std::cout << " MEMORY FOR PSI PER PROCESSOR (MB)  : " << double(memory_cost_psi)/1024.0/1024.0 << std::endl;
         ModuleBase::Memory::record("Psi_PW", memory_cost_psi);
     }
-    // for memory saving, the psig can always only hold one k-point data. But for lcao_in_pw, the psig
-    // is actcually a transformation matrix. During the SCF, the projection might be quite time-
-    // consuming.
-    const int nks_psig = (this->mem_saver_ == 1 && PARAM.inp.basis_type != "lcao_in_pw")? 1 : nks_psi;
+    // psi_initializer also works for basis transformation tasks. In this case, psig needs to allocate memory for 
+    // each kpoint, otherwise, for initializing pw wavefunction, only one kpoint's space is enough.
+    const int nks_psig = (PARAM.inp.basis_type == "pw")? 1 : nks_psi;
     this->psig_ = std::make_shared<psi::Psi<T, Device>>(nks_psig, 
                                                         nbands_actual, 
                                                         nbasis_actual, 
