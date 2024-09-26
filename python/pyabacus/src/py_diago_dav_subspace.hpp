@@ -110,11 +110,14 @@ public:
         bool scf_type,
         hsolver::diag_comm_info comm_info
     ) {
-        auto hpsi_func = [mm_op] (std::complex<double> *hpsi_out,
-                    std::complex<double> *psi_in, const int nband_in,
-                    const int nbasis_in, const int band_index1,
-                    const int band_index2) 
-        {
+        auto hpsi_func = [mm_op] (
+            std::complex<double> *psi_in,
+            std::complex<double> *hpsi_out, 
+            const int nband_in,
+            const int nbasis_in, 
+            const int band_index1,
+            const int band_index2
+        ) {
             // Note: numpy's py::array_t is row-major, but
             //       our raw pointer-array is column-major
             py::array_t<std::complex<double>, py::array::f_style> psi({nbasis_in, band_index2 - band_index1 + 1});
