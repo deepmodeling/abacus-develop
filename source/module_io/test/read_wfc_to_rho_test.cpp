@@ -116,7 +116,7 @@ class ReadWfcRhoTest : public ::testing::Test
         rhopw = new ModulePW::PW_Basis;
         kv = new K_Vectors;
         GlobalV::NBANDS = 4;
-        GlobalV::NSPIN = 1;
+        PARAM.input.nspin = 1;
         PARAM.input.out_wfc_pw = 2;
     }
     virtual void TearDown()

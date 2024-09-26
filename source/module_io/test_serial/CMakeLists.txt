@@ -33,7 +33,6 @@ AddTest(
 AddTest(
   TARGET io_read_item_serial
   LIBS parameter ${math_libs} base device io_input_serial 
-  LIBS parameter ${math_libs} base device io_input_serial 
   SOURCES read_input_item_test.cpp
 )
 

@@ -21,6 +21,28 @@ void output_convergence_after_scf(bool& convergence, double& energy, std::ofstre
     }
 }
 
+void output_after_relax(bool conv_ion, bool conv_elec, std::ofstream& ofs_running)
+{
+    if (conv_ion && !conv_elec)
+    {
+        std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
+        std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
+        std::cout << " Relaxation is converged, but the SCF is unconverged! The results are unreliable. " << std::endl;
+        std::cout << " It is suggested to increase the maximum SCF step and/or perform the relaxation again."
+                  << std::endl;
+        std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
+        std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
+        ofs_running << "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
+        ofs_running << "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
+        ofs_running << "\n Relaxation is converged, but the SCF is unconverged! The results are unreliable.. "
+                    << std::endl;
+        ofs_running << "\n It is suggested to increase the maximum SCF step and/or perform the relaxation again. "
+                    << std::endl;
+        ofs_running << "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
+        ofs_running << "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
+    }
+}
+
 void output_efermi(bool& convergence, double& efermi, std::ofstream& ofs_running)
 {
     if (convergence && PARAM.inp.out_level != "m")
@@ -140,7 +162,7 @@ void output_vacuum_level(const UnitCell* ucell,
     {
         totchg[ir] = rho[0][ir];
     }
-    if (GlobalV::NSPIN == 2)
+    if (PARAM.inp.nspin == 2)
     {
         for (int ir = 0; ir < nrxx; ++ir)
         {

@@ -1,5 +1,6 @@
 #include "esolver_of.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_parameter/parameter.h"
 
 namespace ModuleESolver
 {
@@ -87,7 +88,7 @@ void ESolver_OF::kinetic_potential(double** prho, double** pphi, ModuleBase::mat
     }
 
     // Before call vw_potential, change rpot to rpot * 2 * pphi
-    for (int is = 0; is < GlobalV::NSPIN; ++is)
+    for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
         for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
         {
@@ -215,10 +216,10 @@ void ESolver_OF::init_opt()
     }
 
     // optimize theta if nspin=2
-    if (GlobalV::NSPIN == 2)
+    if (PARAM.inp.nspin == 2)
     {
         this->opt_cg_mag_ = new ModuleBase::Opt_CG;
-        this->opt_cg_mag_->allocate(GlobalV::NSPIN);
+        this->opt_cg_mag_->allocate(PARAM.inp.nspin);
     }
 }
 
@@ -228,7 +229,7 @@ void ESolver_OF::init_opt()
  */
 void ESolver_OF::get_direction()
 {
-    for (int is = 0; is < GlobalV::NSPIN; ++is)
+    for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
         if (this->of_method_ == "tn")
         {
@@ -273,7 +274,7 @@ void ESolver_OF::get_step_length(double* dEdtheta, double** ptemp_phi, UnitCell&
     double kinetic_energy = 0.0;   // kinetic energy
     double pseudopot_energy = 0.0; // electron-ion interaction energy
 
-    if (GlobalV::NSPIN == 1)
+    if (PARAM.inp.nspin == 1)
     {
         int numDC = 0; // iteration number of line search
         strcpy(this->task_, "START");
@@ -333,16 +334,16 @@ void ESolver_OF::get_step_length(double* dEdtheta, double** ptemp_phi, UnitCell&
             }
         }
     }
-    else if (GlobalV::NSPIN == 2)
+    else if (PARAM.inp.nspin == 2)
     {
         ModuleBase::WARNING_QUIT("esolver_of", "Sorry, SPIN2 case is not supported by OFDFT for now.");
         // ========================== Under testing ==========================
         //     this->opt_cg_mag_->refresh();
 
-        //     double *pthetaDir = new double[GlobalV::NSPIN];
-        //     double *temp_theta = new double[GlobalV::NSPIN];
-        //     ModuleBase::GlobalFunc::ZEROS(pthetaDir, GlobalV::NSPIN);
-        //     ModuleBase::GlobalFunc::ZEROS(temp_theta, GlobalV::NSPIN);
+        //     double *pthetaDir = new double[PARAM.inp.nspin];
+        //     double *temp_theta = new double[PARAM.inp.nspin];
+        //     ModuleBase::GlobalFunc::ZEROS(pthetaDir, PARAM.inp.nspin);
+        //     ModuleBase::GlobalFunc::ZEROS(temp_theta, PARAM.inp.nspin);
         //     double thetaAlpha = 0.;
         //     double alphaTol = 1e-4;
         //     double maxThetaDir = 0.;
@@ -358,7 +359,7 @@ void ESolver_OF::get_step_length(double* dEdtheta, double** ptemp_phi, UnitCell&
 
         //         if (dEdalpha >= 0.)
         //         {
-        //             for (int is = 0; is < GlobalV::NSPIN; ++is)
+        //             for (int is = 0; is < PARAM.inp.nspin; ++is)
         //             {
         //                 pthetaDir[is] = -dEdtheta[is];
         //             }
@@ -379,7 +380,7 @@ void ESolver_OF::get_step_length(double* dEdtheta, double** ptemp_phi, UnitCell&
         //             this->pw_rho->nxyz); temp_energy =
         //             this->pelec->f_en.etot; kinetic_energy =
         //             this->kinetic_energy(); pseudopot_energy = 0.; for (int
-        //             is = 0; is < GlobalV::NSPIN; ++is) {
+        //             is = 0; is < PARAM.inp.nspin; ++is) {
         //                 pseudopot_energy +=
         //                 this->inner_product(GlobalC::pot.vltot,
         //                 ptemp_rho_[is], this->pw_rho->nrxx, this->dV_);
@@ -391,7 +392,7 @@ void ESolver_OF::get_step_length(double* dEdtheta, double** ptemp_phi, UnitCell&
 
         //             if (strncmp(this->task_, "FG", 2) == 0)
         //             {
-        //                 for (int is = 0; is < GlobalV::NSPIN; ++is)
+        //                 for (int is = 0; is < PARAM.inp.nspin; ++is)
         //                 {
         //                     temp_theta[is] = this->theta_[is] + thetaAlpha *
         //                     pthetaDir[is]; for (int ir = 0; ir <
@@ -433,7 +434,7 @@ void ESolver_OF::get_step_length(double* dEdtheta, double** ptemp_phi, UnitCell&
         //             }
         //         }
 
-        //         for (int is = 0; is < GlobalV::NSPIN; ++is) this->theta_[is]
+        //         for (int is = 0; is < PARAM.inp.nspin; ++is) this->theta_[is]
         //         += thetaAlpha * pthetaDir[is]; if (sqrt(dEdtheta[0] *
         //         dEdtheta[0] + dEdtheta[1] * dEdtheta[1]) < alphaTol) break;
         //         thetaIter++;
@@ -443,7 +444,7 @@ void ESolver_OF::get_step_length(double* dEdtheta, double** ptemp_phi, UnitCell&
         //     delete[] pthetaDir;
         // ========================== Under testing ==========================
     }
-    else if (GlobalV::NSPIN == 4)
+    else if (PARAM.inp.nspin == 4)
     {
         ModuleBase::WARNING_QUIT("esolver_of", "Sorry, SPIN4 case is not supported by OFDFT for now.");
     }

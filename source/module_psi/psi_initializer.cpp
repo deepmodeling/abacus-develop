@@ -6,8 +6,13 @@
 // three global variables definition
 #include "module_base/global_variable.h"
 #include "module_parameter/parameter.h"
+
+#ifdef __MPI
+#include "module_base/parallel_reduce.h"
+#endif
+
 template<typename T, typename Device>
-psi::Psi<std::complex<double>>* psi_initializer<T, Device>::allocate(bool only_psig)
+psi::Psi<std::complex<double>>* psi_initializer<T, Device>::allocate(const bool only_psig)
 {
     ModuleBase::timer::tick("psi_initializer", "allocate");
     /*
@@ -16,7 +21,6 @@ psi::Psi<std::complex<double>>* psi_initializer<T, Device>::allocate(bool only_p
         The way of calculating this->p_ucell_->natomwfc is, for each atom, read pswfc and for s, it is 1, for p, it is 3
         , then multiplied by the number of atoms, and then add them together.
     */
-	int prefactor = 1;
     int nbands_actual = 0;
     if(this->method_ == "random") 
     {
@@ -27,16 +31,8 @@ psi::Psi<std::complex<double>>* psi_initializer<T, Device>::allocate(bool only_p
     {
         if(this->method_.substr(0, 6) == "atomic")
         {
-            if(this->p_ucell_->natomwfc >= GlobalV::NBANDS)
-            {
-                nbands_actual = this->p_ucell_->natomwfc;
-                this->nbands_complem_ = 0;
-            }
-            else
-            {
-                nbands_actual = GlobalV::NBANDS;
-                this->nbands_complem_ = GlobalV::NBANDS - this->p_ucell_->natomwfc;
-            }
+            nbands_actual = std::max(this->p_ucell_->natomwfc, GlobalV::NBANDS);
+            this->nbands_complem_ = nbands_actual - this->p_ucell_->natomwfc;
         }
         else if(this->method_.substr(0, 3) == "nao")
         {
@@ -46,77 +42,69 @@ psi::Psi<std::complex<double>>* psi_initializer<T, Device>::allocate(bool only_p
             int nbands_local = 0;
             for(int it = 0; it < this->p_ucell_->ntype; it++)
             {
-                for(int ia = 0; ia < this->p_ucell_->atoms[it].na; ia++)
+                for(int l = 0; l < this->p_ucell_->atoms[it].nwl + 1; l++)
                 {
-            /* FOR EVERY ATOM */
-                    for(int l = 0; l < this->p_ucell_->atoms[it].nwl + 1; l++)
-                    {
-            /* EVERY ZETA FOR (2l+1) ORBS */
-                        /*
-                            non-rotate basis, nbands_local*=2 for PARAM.globalv.npol = 2 is enough
-                        */
-                        //nbands_local += this->p_ucell_->atoms[it].l_nchi[l]*(2*l+1) * PARAM.globalv.npol;
-                        /*
-                            rotate basis, nbands_local*=4 for p, d, f,... orbitals, and nbands_local*=2 for s orbitals
-                            risky when NSPIN = 4, problematic psi value, needed to be checked
-                        */
-                        if(l == 0) 
-						{
-							nbands_local += this->p_ucell_->atoms[it].l_nchi[l] * PARAM.globalv.npol;
-						}
-						else 
-						{
-							nbands_local += this->p_ucell_->atoms[it].l_nchi[l]*(2*l+1) * PARAM.globalv.npol;
-						}
-                    }
+                    /* EVERY ZETA FOR (2l+1) ORBS */
+                    const int nchi = this->p_ucell_->atoms[it].l_nchi[l];
+                    const int degen_l = (l == 0)? 1 : 2*l+1;
+                    nbands_local += nchi * degen_l * PARAM.globalv.npol * this->p_ucell_->atoms[it].na;
+                    /*
+                        non-rotate basis, nbands_local*=2 for PARAM.globalv.npol = 2 is enough
+                    */
+                    //nbands_local += this->p_ucell_->atoms[it].l_nchi[l]*(2*l+1) * PARAM.globalv.npol;
+                    /*
+                        rotate basis, nbands_local*=4 for p, d, f,... orbitals, and nbands_local*=2 for s orbitals
+                        risky when NSPIN = 4, problematic psi value, needed to be checked
+                    */
                 }
             }
-            if(nbands_local >= GlobalV::NBANDS)
-            {
-                nbands_actual = nbands_local;
-                this->nbands_complem_ = 0;
-            }
-            else
-            {
-                nbands_actual = GlobalV::NBANDS;
-                this->nbands_complem_ = GlobalV::NBANDS - nbands_local;
-            }
+            nbands_actual = std::max(nbands_local, GlobalV::NBANDS);
+            this->nbands_complem_ = nbands_actual - nbands_local;
         }
     }
-	int nkpts_actual = (PARAM.inp.calculation == "nscf" && this->mem_saver_ == 1)? 1 : this->pw_wfc_->nks;
-    int nbasis_actual = this->pw_wfc_->npwk_max * PARAM.globalv.npol;
+    assert(this->nbands_complem_ >= 0);
+
+	const int nks_psi = (PARAM.inp.calculation == "nscf" && this->mem_saver_ == 1)? 1 : this->pw_wfc_->nks;
+    const int nbasis_actual = this->pw_wfc_->npwk_max * PARAM.globalv.npol;
     psi::Psi<std::complex<double>>* psi_out = nullptr;
     if(!only_psig)
     {
-        psi_out = new psi::Psi<std::complex<double>>(nkpts_actual, 
+        psi_out = new psi::Psi<std::complex<double>>(nks_psi, 
                                                      GlobalV::NBANDS, // because no matter what, the wavefunction finally needed has GlobalV::NBANDS bands
                                                      nbasis_actual, 
                                                      this->pw_wfc_->npwk);
-        /*
-            WARNING: this will cause DIRECT MEMORY LEAK, psi is not properly deallocated
-        */
-        const size_t memory_cost_psi = 
-                nkpts_actual*
-                    GlobalV::NBANDS * this->pw_wfc_->npwk_max * PARAM.globalv.npol*
+        double memory_cost_psi = nks_psi * GlobalV::NBANDS * this->pw_wfc_->npwk_max * PARAM.globalv.npol*
                         sizeof(std::complex<double>);
-        std::cout << " MEMORY FOR PSI PER PROCESSOR (MB)  : " << double(memory_cost_psi)/1024.0/1024.0 << std::endl;
+#ifdef __MPI
+        // get the correct memory cost for psi by all-reduce sum
+        Parallel_Reduce::reduce_all(memory_cost_psi);
+#endif
+        // std::cout << " MEMORY FOR PSI PER PROCESSOR (MB)  : " << double(memory_cost_psi)/1024.0/1024.0 << std::endl;
         ModuleBase::Memory::record("Psi_PW", memory_cost_psi);
     }
-    this->psig_ = std::make_shared<psi::Psi<T, Device>>(nkpts_actual, 
+    // for memory saving, the psig can always only hold one k-point data. But for lcao_in_pw, the psig
+    // is actcually a transformation matrix. During the SCF, the projection might be quite time-
+    // consuming.
+    const int nks_psig = (this->mem_saver_ == 1 && PARAM.inp.basis_type != "lcao_in_pw")? 1 : nks_psi;
+    this->psig_ = std::make_shared<psi::Psi<T, Device>>(nks_psig, 
                                                         nbands_actual, 
                                                         nbasis_actual, 
                                                         this->pw_wfc_->npwk);
-    const size_t memory_cost_psig = 
-            nkpts_actual*
-                nbands_actual * this->pw_wfc_->npwk_max * PARAM.globalv.npol*
-                    sizeof(T);
-    std::cout << " MEMORY FOR AUXILLARY PSI PER PROCESSOR (MB)  : " << double(memory_cost_psig)/1024.0/1024.0 << std::endl;
+
+    double memory_cost_psig = 
+            nks_psig * nbands_actual * this->pw_wfc_->npwk_max * PARAM.globalv.npol * sizeof(T);
+#ifdef __MPI
+    // get the correct memory cost for psig by all-reduce sum
+    Parallel_Reduce::reduce_all(memory_cost_psig);
+#endif
+    // std::cout << " MEMORY FOR AUXILLARY PSI PER PROCESSOR (MB)  : " << double(memory_cost_psig)/1024.0/1024.0 << std::endl;
 
     GlobalV::ofs_running << "Allocate memory for psi and psig done.\n"
                          << "Print detailed information of dimension of psi and psig:\n"
-                         << "psi: (" << nkpts_actual << ", " << GlobalV::NBANDS << ", " << nbasis_actual << ")\n"
-                         << "psig: (" << nkpts_actual << ", " << nbands_actual << ", " << nbasis_actual << ")\n"
-                         << "nkpts_actual = " << nkpts_actual << "\n"
+                         << "psi: (" << nks_psi << ", " << GlobalV::NBANDS << ", " << nbasis_actual << ")\n"
+                         << "psig: (" << nks_psig << ", " << nbands_actual << ", " << nbasis_actual << ")\n"
+                         << "nks (psi) = " << nks_psi << "\n"
+                         << "nks (psig) = " << nks_psig << "\n"
                          << "GlobalV::NBANDS = " << GlobalV::NBANDS << "\n"
                          << "nbands_actual = " << nbands_actual << "\n"
                          << "nbands_complem = " << this->nbands_complem_ << "\n"
@@ -134,10 +122,15 @@ void psi_initializer<T, Device>::random_t(T* psi, const int iw_start, const int 
     ModuleBase::timer::tick("psi_initializer", "random_t");
     assert(iw_start >= 0);
     const int ng = this->pw_wfc_->npwk[ik];
-#ifdef __MPI
+
+    // if random seed is specified, then based on this seed to generate random wavefunction
     if (this->random_seed_ > 0) // qianrui add 2021-8-13
     {
+#ifdef __MPI // if compile with MPI, then let the seed include the kpoint information
         srand(unsigned(this->random_seed_ + this->p_parakpts_->startk_pool[GlobalV::MY_POOL] + ik));
+#else // otherwise, it is the run in serial, without the Parallel_Kpoints class
+        srand(unsigned(this->random_seed_ + ik));
+#endif
         const int nxy = this->pw_wfc_->fftnxy;
         const int nz = this->pw_wfc_->nz;
         const int nstnz = this->pw_wfc_->nst*nz;
@@ -146,6 +139,7 @@ void psi_initializer<T, Device>::random_t(T* psi, const int iw_start, const int 
         std::vector<Real> stickarg(nz);
         std::vector<Real> tmprr(nstnz);
         std::vector<Real> tmparg(nstnz);
+
         for (int iw = iw_start; iw < iw_end; iw++)
         {   
             // get the starting memory address of iw band
@@ -153,66 +147,73 @@ void psi_initializer<T, Device>::random_t(T* psi, const int iw_start, const int 
             int startig = 0;
             for(int ipol = 0 ; ipol < PARAM.globalv.npol ; ++ipol)
             {
-                    
-                for(int ir=0; ir < nxy; ir++)
+                // loop over all fft (x,y), but actually loop over all sticks
+                for(int ir = 0; ir < nxy; ir++)
                 {
-                    if(this->pw_wfc_->fftixy2ip[ir] < 0) { continue;
-}
-                    if(GlobalV::RANK_IN_POOL==0)
+                    // if the stick is not on present processor, then skip
+                    if(this->pw_wfc_->fftixy2ip[ir] < 0) { continue; }
+                    // otherwise
+                    // the following code is very time-consuming, but it can be skipped with pw_seed = 0
+                    if(GlobalV::RANK_IN_POOL == 0)
                     {
-                        for(int iz=0; iz<nz; iz++)
+                        // generate random number for (x,y) and all z, the stick will must
+                        // be filled, because length of stick can be no longer than nz
+                        // with: rr*exp(i*arg) = rr*cos(arg) + i*rr*sin(arg)
+                        for(int iz = 0; iz < nz; iz++)
                         {
-                            stickrr[iz] = std::rand()/Real(RAND_MAX);
-                            stickarg[iz] = std::rand()/Real(RAND_MAX);
+                            stickrr[iz] = std::rand()/Real(RAND_MAX);  // amplitude
+                            stickarg[iz] = std::rand()/Real(RAND_MAX); // phase
                         }
                     }
+#ifdef __MPI // the stick-distribution is not used for non-MPI version
+                    // then distribute the data to all processors in the pool 
                     stick_to_pool(stickrr.data(), ir, tmprr.data());
                     stick_to_pool(stickarg.data(), ir, tmparg.data());
+#endif
                 }
-
-                for (int ig = 0;ig < ng;ig++)
+                // then for each g-component, initialize the wavefunction value
+                #pragma omp parallel for schedule(static, 4096/sizeof(T))
+                for (int ig = 0; ig < ng; ig++)
                 {
-                    const double rr = tmprr[this->pw_wfc_->getigl2isz(ik,ig)];
-                    const double arg= ModuleBase::TWO_PI * tmparg[this->pw_wfc_->getigl2isz(ik,ig)];
-                    const double gk2 = this->pw_wfc_->getgk2(ik,ig);
+                    // get the correct value of "rr" and "arg" by indexing map "getigl2isz"
+                    const double rr = tmprr[this->pw_wfc_->getigl2isz(ik, ig)];
+                    const double arg = ModuleBase::TWO_PI * tmparg[this->pw_wfc_->getigl2isz(ik,ig)];
+                    // get the |G+k|^2
+                    const double gk2 = this->pw_wfc_->getgk2(ik, ig);
+                    // initialize the wavefunction value with rr/(gk2 + 1.0) * exp(i*arg)
                     psi_slice[ig+startig] = this->template cast_to_T<T>(std::complex<double>(rr*cos(arg)/(gk2 + 1.0), rr*sin(arg)/(gk2 + 1.0)));
                 }
-                startig += this->pw_wfc_->npwk_max;
+                startig += this->pw_wfc_->npwk_max; // move to the next polarization
             }
         }
     }
-    else
+    else // if random seed is not specified, then generate random wavefunction directly
     {
-#else  // !__MPI
-        if (this->random_seed_ > 0) // qianrui add 2021-8-13
-        {
-            srand(unsigned(this->random_seed_ + ik));
-        }
-#endif
         for (int iw = iw_start ;iw < iw_end; iw++)
         {
-            T* psi_slice = &(psi[iw * this->pw_wfc_->npwk_max * PARAM.globalv.npol]);
+            T* psi_slice = &(psi[iw * this->pw_wfc_->npwk_max * PARAM.globalv.npol]); // get the memory to write directly. For nspin 4, nbasis*2
+
+            #pragma omp parallel for schedule(static, 4096/sizeof(T))
             for (int ig = 0; ig < ng; ig++)
             {
                 const double rr = std::rand()/double(RAND_MAX); //qianrui add RAND_MAX
-                const double arg= ModuleBase::TWO_PI * std::rand()/double(RAND_MAX);
-                const double gk2 = this->pw_wfc_->getgk2(ik,ig);
+                const double arg = ModuleBase::TWO_PI * std::rand()/double(RAND_MAX);
+                const double gk2 = this->pw_wfc_->getgk2(ik, ig);
                 psi_slice[ig] = this->template cast_to_T<T>(std::complex<double>(rr*cos(arg)/(gk2 + 1.0), rr*sin(arg)/(gk2 + 1.0)));
             }
-            if(PARAM.globalv.npol==2)
+            if(PARAM.globalv.npol == 2) // additionally for nspin 4...
             {
+                #pragma omp parallel for schedule(static, 4096/sizeof(T))
                 for (int ig = this->pw_wfc_->npwk_max; ig < this->pw_wfc_->npwk_max + ng; ig++)
                 {
                     const double rr = std::rand()/double(RAND_MAX);
-                    const double arg= ModuleBase::TWO_PI * std::rand()/double(RAND_MAX);
-                    const double gk2 = this->pw_wfc_->getgk2(ik,ig-this->pw_wfc_->npwk_max);
+                    const double arg = ModuleBase::TWO_PI * std::rand()/double(RAND_MAX);
+                    const double gk2 = this->pw_wfc_->getgk2(ik, ig - this->pw_wfc_->npwk_max);
                     psi_slice[ig] = this->template cast_to_T<T>(std::complex<double>(rr*cos(arg)/(gk2 + 1.0), rr*sin(arg)/(gk2 + 1.0)));
                 }
             }
         }
-#ifdef __MPI
     }
-#endif
     ModuleBase::timer::tick("psi_initializer_random", "random_t");
 }
 

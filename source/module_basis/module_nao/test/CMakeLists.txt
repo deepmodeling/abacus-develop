@@ -17,6 +17,7 @@ AddTest(
     ../projgen.cpp
     ../../module_ao/ORB_atomic_lm.cpp
     ../../module_ao/ORB_atomic.cpp
+    ../../../module_io/orb_io.cpp
   LIBS parameter ${math_libs} device base 
 )
 
@@ -29,6 +30,7 @@ AddTest(
     ../numerical_radial.cpp
     ../../module_ao/ORB_atomic_lm.cpp
     ../../module_ao/ORB_atomic.cpp
+    ../../../module_io/orb_io.cpp
   LIBS parameter ${math_libs} device base 
 )
 
@@ -41,6 +43,7 @@ AddTest(
     ../numerical_radial.cpp
     ../../module_ao/ORB_atomic_lm.cpp
     ../../module_ao/ORB_atomic.cpp
+    ../../../module_io/orb_io.cpp
   LIBS parameter ${math_libs} device base 
 )
 
@@ -53,6 +56,7 @@ AddTest(
     ../numerical_radial.cpp
     ../../module_ao/ORB_atomic_lm.cpp
     ../../module_ao/ORB_atomic.cpp
+    ../../../module_io/orb_io.cpp
   LIBS parameter ${math_libs} device base 
 )
 
@@ -65,6 +69,7 @@ AddTest(
     ../numerical_radial.cpp
     ../../module_ao/ORB_atomic_lm.cpp
     ../../module_ao/ORB_atomic.cpp
+    ../../../module_io/orb_io.cpp
  LIBS parameter ${math_libs} device base 
 )
 
@@ -83,6 +88,7 @@ AddTest(
     ../sphbes_radials.cpp
     ../../module_ao/ORB_atomic_lm.cpp
     ../../module_ao/ORB_atomic.cpp
+    ../../../module_io/orb_io.cpp
   LIBS parameter ${math_libs} device base 
 )
 
@@ -103,6 +109,7 @@ AddTest(
     ../two_center_bundle.cpp
     ../two_center_integrator.cpp
     ../real_gaunt_table.cpp
+    ../../../module_io/orb_io.cpp
   LIBS parameter ${math_libs} device base container orb 
 )
 
@@ -132,6 +139,7 @@ AddTest(
     ../radial_set.cpp
     ../numerical_radial.cpp
     ../two_center_bundle.cpp
+    ../../../module_io/orb_io.cpp
   LIBS parameter ${math_libs} device base container orb 
 )
 
@@ -152,6 +160,7 @@ AddTest(
     ../radial_set.cpp
     ../projgen.cpp
     ../numerical_radial.cpp
+    ../../../module_io/orb_io.cpp
   LIBS parameter ${math_libs} device base container orb 
 )
 
@@ -172,6 +181,7 @@ AddTest(
     ../radial_set.cpp
     ../projgen.cpp
     ../numerical_radial.cpp
+    ../../../module_io/orb_io.cpp
   LIBS parameter ${math_libs} device base container orb 
 )
 

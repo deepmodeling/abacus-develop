@@ -55,6 +55,8 @@ case "$with_rapidjson" in
         tar -xzf $filename
         mkdir -p "${pkg_install_dir}"
         cp -r $dirname/* "${pkg_install_dir}/"
+        # for CMake to find rapidjson
+        cp ${pkg_install_dir}/RapidJSONConfig.cmake.in ${pkg_install_dir}/RapidJSONConfig.cmake
         write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename ${SCRIPT_NAME})"
     fi
         ;;

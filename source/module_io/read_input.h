@@ -66,6 +66,13 @@ class ReadInput
      */
     void write_txt_input(const Parameter& param, const std::string& filename);
     /**
+     * @brief determine the md step in restart case
+     *
+     * @param file_dir directory of Restart_md.dat
+     * @return md step
+     */
+    int current_md_step(const std::string& file_dir);
+    /**
      * @brief count_nype from STRU file
      *
      */

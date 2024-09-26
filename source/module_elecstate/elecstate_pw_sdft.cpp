@@ -1,5 +1,6 @@
 #include "./elecstate_pw_sdft.h"
 #include "module_base/global_variable.h"
+#include "module_parameter/parameter.h"
 #include "module_base/timer.h"
 #include "module_base/global_function.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
@@ -9,7 +10,7 @@ namespace elecstate
     {
         ModuleBase::TITLE(this->classname, "psiToRho");
         ModuleBase::timer::tick(this->classname, "psiToRho");
-        for(int is=0; is < GlobalV::NSPIN; is++)
+        for(int is=0; is < PARAM.inp.nspin; is++)
 		{
 			ModuleBase::GlobalFunc::ZEROS(this->charge->rho[is], this->charge->nrxx);
             if (XC_Functional::get_func_type() == 3)
@@ -22,7 +23,7 @@ namespace elecstate
 		{
             this->calEBand();
 
-            for(int is=0; is<GlobalV::NSPIN; is++)
+            for(int is=0; is<PARAM.inp.nspin; is++)
 	        {
 		        ModuleBase::GlobalFunc::ZEROS(this->charge->rho[is], this->charge->nrxx);
 	        }

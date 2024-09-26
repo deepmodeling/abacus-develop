@@ -1,5 +1,6 @@
 #include "overlap_new.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/timer.h"
 #include "module_base/tool_title.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
@@ -196,7 +197,7 @@ void hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::contributeHk(int ik)
     ModuleBase::timer::tick("OverlapNew", "contributeHk");
     // set SK to zero and then calculate SK for each k vector
     this->hsk->set_zero_sk();
-    if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
+    if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
     {
         const int nrow = this->SR->get_atom_pair(0).get_paraV()->get_row_size();
         hamilt::folding_HR(*this->SR, this->hsk->get_sk(), this->kvec_d[ik], nrow, 1);

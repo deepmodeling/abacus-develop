@@ -36,10 +36,6 @@ using ModuleBase::SphericalBesselTransformer;
  *
  *  - to_numerical_orbital
  *      - Overwrites the content of a Numerical_Orbital object with the current object.
- * 
- *  - read_abacus_orb
- *     - The static version, reads the radial functions from an abacus file.
- * 
  *                                                                      */
 class AtomicRadialsTest : public ::testing::Test
 {
@@ -266,44 +262,6 @@ TEST_F(AtomicRadialsTest, ToNumericalOrbital)
     {
         EXPECT_EQ(Ti_radials.nzeta(l), no.getNchi(l));
     }
-}
-
-TEST_F(AtomicRadialsTest, ReadAbacusOrb)
-{
-    std::ifstream ifs(file);
-    std::string elem;
-    double ecut, dr;
-    int nr;
-    std::vector<int> nzeta;
-    std::vector<std::vector<double>> radials;
-    AtomicRadials::read_abacus_orb(ifs, elem, ecut, nr, dr, nzeta, radials);
-    EXPECT_EQ(elem, "Ti");
-    EXPECT_DOUBLE_EQ(ecut, 100.0);
-    EXPECT_EQ(nr, 1001);
-    EXPECT_DOUBLE_EQ(dr, 0.01);
-    EXPECT_EQ(nzeta.size(), 4); // l from 0 to 3
-    EXPECT_EQ(nzeta[0], 4);
-    EXPECT_EQ(nzeta[1], 2);
-    EXPECT_EQ(nzeta[2], 2);
-    EXPECT_EQ(nzeta[3], 1);
-    EXPECT_EQ(radials.size(), 9); // 4 + 2 + 2 + 1
-    for(auto& radial: radials)
-    {
-        EXPECT_EQ(radial.size(), 1001);
-    }
-    EXPECT_EQ(radials[0][0], -1.581711853170e-01);
-    EXPECT_EQ(radials[0][4], -1.583907030513e-01);
-    EXPECT_EQ(radials[0][996], -4.183526380009e-05);
-    EXPECT_EQ(radials[0][1000], 0);
-    EXPECT_EQ(radials[3][0], -1.166292682541e+00);
-    EXPECT_EQ(radials[3][4], -1.164223359672e+00);
-    EXPECT_EQ(radials[3][996], -3.183325576529e-04);
-    EXPECT_EQ(radials[3][1000], 0);
-    EXPECT_EQ(radials[8][0], 0);
-    EXPECT_EQ(radials[8][4], 3.744878535962e-05);
-    EXPECT_EQ(radials[8][996], 7.495357740660e-05);
-    EXPECT_EQ(radials[8][1000], 0);
-    ifs.close();
 }
 
 int main(int argc, char** argv)

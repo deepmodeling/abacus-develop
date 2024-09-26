@@ -25,14 +25,14 @@ void Gint_k::allocate_pvpR(void)
 
     // xiaohui modify 2015-05-30
     //  the number of matrix element <phi_0 | V | phi_R> is nnrg.
-    this->pvpR_reduced = new double*[GlobalV::NSPIN];
-    for (int is = 0; is < GlobalV::NSPIN; is++)
+    this->pvpR_reduced = new double*[PARAM.inp.nspin];
+    for (int is = 0; is < PARAM.inp.nspin; is++)
     {
         this->pvpR_reduced[is] = new double[this->gridt->nnrg];
         ModuleBase::GlobalFunc::ZEROS(pvpR_reduced[is], this->gridt->nnrg);
     }
 
-    ModuleBase::Memory::record("pvpR_reduced", sizeof(double) * this->gridt->nnrg * GlobalV::NSPIN);
+    ModuleBase::Memory::record("pvpR_reduced", sizeof(double) * this->gridt->nnrg * PARAM.inp.nspin);
 
     this->pvpR_alloc_flag = true;
     return;
@@ -47,7 +47,7 @@ void Gint_k::destroy_pvpR(void)
         return;
     }
 
-    for (int is = 0; is < GlobalV::NSPIN; is++)
+    for (int is = 0; is < PARAM.inp.nspin; is++)
     {
         delete[] pvpR_reduced[is];
     }

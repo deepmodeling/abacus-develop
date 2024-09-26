@@ -2,7 +2,8 @@
 #define PSI_INITIALIZER_NAO_H
 #include "psi_initializer.h"
 #include "module_base/realarray.h"
-
+#include "module_base/cubic_spline.h"
+#include <memory>
 /*
 Psi (planewave based wavefunction) initializer: numerical atomic orbital method
 */
@@ -15,7 +16,7 @@ class psi_initializer_nao : public psi_initializer<T, Device>
         psi_initializer_nao() {this->set_method("nao");};
         ~psi_initializer_nao() {};
 
-        virtual void proj_ao_onkG(int ik) override;
+        virtual void proj_ao_onkG(const int ik) override;
 
         #ifdef __MPI // MPI additional implementation
         /// @brief initialize the psi_initializer with external data and methods
@@ -40,13 +41,13 @@ class psi_initializer_nao : public psi_initializer<T, Device>
         virtual void tabulate() override;
         
         std::vector<std::string> external_orbs() const { return orbital_files_; }
-        std::vector<std::vector<int>> n_rgrid() const { return n_rgrid_; }
-        std::vector<int> n_rgrid(const int& itype) const { return n_rgrid_[itype]; }
-        int n_rgrid(const int& itype, const int& ichi) const { return n_rgrid_[itype][ichi]; }
-        std::vector<std::vector<std::vector<double>>> rvalue() const { return rvalue_; }
-        std::vector<std::vector<double>> rvalue(const int& itype) const { return rvalue_[itype]; }
-        std::vector<double> rvalue(const int& itype, const int& ichi) const { return rvalue_[itype][ichi]; }
-        double rvalue(const int& itype, const int& ichi, const int& ir) const { return rvalue_[itype][ichi][ir]; }
+        std::vector<std::vector<int>> nr() const { return nr_; }
+        std::vector<int> nr(const int& itype) const { return nr_[itype]; }
+        int nr(const int& itype, const int& ichi) const { return nr_[itype][ichi]; }
+        std::vector<std::vector<std::vector<double>>> chi() const { return chi_; }
+        std::vector<std::vector<double>> chi(const int& itype) const { return chi_[itype]; }
+        std::vector<double> chi(const int& itype, const int& ichi) const { return chi_[itype][ichi]; }
+        double chi(const int& itype, const int& ichi, const int& ir) const { return chi_[itype][ichi][ir]; }
         std::vector<std::vector<std::vector<double>>> rgrid() const { return rgrid_; }
         std::vector<std::vector<double>> rgrid(const int& itype) const { return rgrid_[itype]; }
         std::vector<double> rgrid(const int& itype, const int& ichi) const { return rgrid_[itype][ichi]; }
@@ -54,11 +55,14 @@ class psi_initializer_nao : public psi_initializer<T, Device>
 
     private:
         std::vector<std::string> orbital_files_;
-        ModuleBase::realArray ovlp_flzjlq_;
+        /// @brief cubic spline for interpolation
+        std::unique_ptr<ModuleBase::CubicSpline> cubspl_;
+        /// @brief radial map, [itype][l][izeta] -> i
+        ModuleBase::realArray projmap_;
         /// @brief number of realspace grids per type per chi, [itype][ichi]
-        std::vector<std::vector<int>> n_rgrid_;
+        std::vector<std::vector<int>> nr_;
         /// @brief data of numerical atomic orbital per type per chi per position, [itype][ichi][ir]
-        std::vector<std::vector<std::vector<double>>> rvalue_;
+        std::vector<std::vector<std::vector<double>>> chi_;
         /// @brief r of numerical atomic orbital per type per chi per position, [itype][ichi][ir]
         std::vector<std::vector<std::vector<double>>> rgrid_;
 };

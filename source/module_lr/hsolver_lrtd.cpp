@@ -82,8 +82,8 @@ namespace LR
                 // do diag and add davidson iteration counts up to avg_iter
 
                 auto hpsi_func = [pHamilt](
-                    T* hpsi_out,
                     T* psi_in,
+                    T* hpsi_out,
                     const int nband_in,
                     const int nbasis_in,
                     const int band_index1,
@@ -103,7 +103,7 @@ namespace LR
 
                 const int& dim = psi_k1_dav.get_nbasis();   //equals to leading dimension here
                 const int& nband = psi_k1_dav.get_nbands();
-                hsolver::DiagoDavid<T, Device> david(precondition.data(), nband, dim, GlobalV::PW_DIAG_NDIM, PARAM.inp.use_paw, comm_info);
+                hsolver::DiagoDavid<T, Device> david(precondition.data(), nband, dim, PARAM.inp.pw_diag_ndim, PARAM.inp.use_paw, comm_info);
                 hsolver::DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(david.diag(hpsi_func, spsi_func,
                     dim, psi_k1_dav.get_pointer(), eigenvalue.data(), this->diag_ethr, david_maxiter, ntry_max, 0));
             }
@@ -112,15 +112,15 @@ namespace LR
                 hsolver::Diago_DavSubspace<T, Device> dav_subspace(precondition,
                     psi_k1_dav.get_nbands(),
                     psi_k1_dav.get_nbasis(),
-                    GlobalV::PW_DIAG_NDIM,
+                    PARAM.inp.pw_diag_ndim,
                     this->diag_ethr,
                     david_maxiter,
                     false, //always do the subspace diag (check the implementation)
                     comm_info);
 
                 std::function<void(T*, T*, const int, const int, const int, const int)> hpsi_func = [pHamilt](
-                    T* hpsi_out,
                     T* psi_in,
+                    T* hpsi_out,
                     const int nband_in,
                     const int nbasis_in,
                     const int band_index1,
@@ -156,11 +156,6 @@ namespace LR
                         std::vector<bool>(psi_k1_dav.get_nbands(), true),
                         false /*scf*/));
             }
-            // else if (this->method == "cg")
-            // {
-            //     this->pdiagh = new DiagoCG<T, Device>(precondition.data());
-            //     this->pdiagh->method = this->method;
-            // }
             else {throw std::runtime_error("HSolverLR::solve: method not implemented");}
         }
 

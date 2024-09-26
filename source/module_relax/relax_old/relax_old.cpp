@@ -117,7 +117,7 @@ bool Relax_old::if_do_cellrelax(const UnitCell& ucell)
         }
         else
         {
-            assert(GlobalV::CAL_STRESS == 1);
+            assert(PARAM.inp.cal_stress == 1);
             return true;
         }
     }

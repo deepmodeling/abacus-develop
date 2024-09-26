@@ -106,7 +106,7 @@ public:
 #endif	
 
         
-        auto hpsi_func = [phm](double* hpsi_out,double* psi_in,
+        auto hpsi_func = [phm](double* psi_in,double* hpsi_out,
 					const int nband_in, const int nbasis_in,
                     const int band_index1, const int band_index2)
                     {

@@ -166,19 +166,6 @@ void Input_Conv::Convert()
     //----------------------------------------------------------
     // main parameters / electrons / spin ( 10/16 )
     //----------------------------------------------------------
-    //  suffix
-    if (PARAM.inp.calculation == "md" && PARAM.mdp.md_restart) // md restart  liuyu add 2023-04-12
-    {
-        int istep = 0;
-        double temperature = 0.0;
-        MD_func::current_md_info(GlobalV::MY_RANK, PARAM.globalv.global_readin_dir, istep, temperature);
-        if (PARAM.inp.read_file_dir == "auto")
-        {
-            GlobalV::stru_file = PARAM.globalv.global_stru_dir + "STRU_MD_" + std::to_string(istep);
-        }
-    } else if (PARAM.inp.stru_file != "") {
-        GlobalV::stru_file = PARAM.inp.stru_file;
-    }
 
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "pseudo_dir", PARAM.inp.pseudo_dir);
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "orbital_dir", PARAM.inp.orbital_dir);
@@ -227,8 +214,6 @@ void Input_Conv::Convert()
 #endif // __ENABLE_FLOAT_FFTW
     }
 
-    GlobalV::NSPIN = PARAM.inp.nspin;
-
 
 #ifdef __LCAO
     Force_Stress_LCAO<double>::force_invalid_threshold_ev = PARAM.inp.force_thr_ev2;
@@ -242,20 +227,14 @@ void Input_Conv::Convert()
     Ions_Move_Basic::relax_bfgs_rmin = PARAM.inp.relax_bfgs_rmin;
     Ions_Move_Basic::relax_bfgs_init = PARAM.inp.relax_bfgs_init;
     Ions_Move_Basic::out_stru = PARAM.inp.out_stru; // mohan add 2012-03-23
+    Ions_Move_Basic::relax_method = PARAM.inp.relax_method;
     Lattice_Change_Basic::fixed_axes = PARAM.inp.fixed_axes;
-
-    GlobalV::CAL_STRESS = PARAM.inp.cal_stress;
-
-
-    GlobalV::RELAX_METHOD = PARAM.inp.relax_method;
 
 
     Ions_Move_CG::RELAX_CG_THR = PARAM.inp.relax_cg_thr; // pengfei add 2013-09-09
 
     ModuleSymmetry::Symmetry::symm_flag = std::stoi(PARAM.inp.symmetry);
     ModuleSymmetry::Symmetry::symm_autoclose = PARAM.inp.symmetry_autoclose;
-    GlobalV::KS_SOLVER = PARAM.inp.ks_solver;
-    GlobalV::SEARCH_RADIUS = PARAM.inp.search_radius;
 
     //----------------------------------------------------------
     // planewave (8/8)
@@ -264,10 +243,7 @@ void Input_Conv::Convert()
     //----------------------------------------------------------
     // diagonalization  (5/5)
     //----------------------------------------------------------
-    GlobalV::PW_DIAG_NDIM = PARAM.inp.pw_diag_ndim;
 
-    GlobalV::PW_DIAG_THR = PARAM.inp.pw_diag_thr;
-    GlobalV::NB2D = PARAM.inp.nb2d;
 
     //----------------------------------------------------------
     // iteration (1/3)
@@ -304,7 +280,6 @@ void Input_Conv::Convert()
     GlobalV::nelec = PARAM.inp.nelec;
     if (PARAM.globalv.two_fermi)
     {
-        GlobalV::TWO_EFERMI = true;
         GlobalV::nupdown = PARAM.inp.nupdown;
     }
     elecstate::Gatefield::zgate = PARAM.inp.zgate;

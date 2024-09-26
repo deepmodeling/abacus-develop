@@ -1,5 +1,6 @@
 //=======================
 // AUTHOR : Peize Lin
+#include "module_parameter/parameter.h"
 // DATE :   2022-09-13
 //=======================
 
@@ -53,7 +54,7 @@ void sparse_format::cal_HR_exx(
     RI::Cell_Nearest<int, int, 3, double, 3> cell_nearest;
     cell_nearest.init(atoms_pos, latvec, Rs_period);
 
-    const std::vector<int> is_list = (GlobalV::NSPIN != 4)
+    const std::vector<int> is_list = (PARAM.inp.nspin != 4)
                                          ? std::vector<int>{current_spin}
                                          : std::vector<int>{0, 1, 2, 3};
 
@@ -97,7 +98,7 @@ void sparse_format::cal_HR_exx(
                         }
 
                         if (std::abs(Hexx(iw0, iw1)) > sparse_threshold) {
-                            if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 2) {
+                            if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2) {
                                 auto& HR_sparse_ptr
                                     = HS_Arrays
                                           .HR_sparse[current_spin][R][iwt0];
@@ -107,7 +108,7 @@ void sparse_format::cal_HR_exx(
                                 if (std::abs(HR_sparse) <= sparse_threshold) {
                                     HR_sparse_ptr.erase(iwt1);
                                 }
-                            } else if (GlobalV::NSPIN == 4) {
+                            } else if (PARAM.inp.nspin == 4) {
                                 auto& HR_sparse_ptr
                                     = HS_Arrays.HR_soc_sparse[R][iwt0];
                                 std::complex<double>& HR_sparse

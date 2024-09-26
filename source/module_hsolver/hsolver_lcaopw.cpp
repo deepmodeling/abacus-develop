@@ -193,11 +193,6 @@ void HSolverLIP<T>::paw_func_after_kloop(psi::Psi<T>& psi, elecstate::ElecState*
 }
 #endif
 
-template <typename T>
-HSolverLIP<T>::HSolverLIP(ModulePW::PW_Basis_K* wfc_basis_in)
-{
-    this->wfc_basis = wfc_basis_in;
-}
 
 /*
     lcao_in_pw

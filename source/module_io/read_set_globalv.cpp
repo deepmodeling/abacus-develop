@@ -1,8 +1,8 @@
-#include "read_input.h"
-#include "read_input_tool.h"
-#include "module_parameter/parameter.h"
 #include "module_base/global_variable.h"
 #include "module_base/tool_quit.h"
+#include "module_parameter/parameter.h"
+#include "read_input.h"
+#include "read_input_tool.h"
 namespace ModuleIO
 {
 void ReadInput::set_globalv(Parameter& para)
@@ -31,6 +31,26 @@ void ReadInput::set_globalv(Parameter& para)
             para.sys.global_readin_dir = para.inp.read_file_dir + '/';
         }
         para.sys.global_readin_dir = to_dir(para.sys.global_readin_dir);
+
+        /// get the stru file for md restart case
+        if (para.inp.calculation == "md" && para.mdp.md_restart)
+        {
+            int istep = current_md_step(para.sys.global_readin_dir);
+
+            if (para.inp.read_file_dir == "auto")
+            {
+                para.sys.global_in_stru = para.sys.global_stru_dir + "STRU_MD_" + std::to_string(istep);
+            }
+            else
+            {
+                para.sys.global_in_stru = para.inp.read_file_dir + "STRU_MD_" + std::to_string(istep);
+            }
+        }
+        else
+        {
+            para.sys.global_in_stru = para.inp.stru_file;
+        }
+
         /// caculate the gamma_only_pw and gamma_only_local
         if (para.input.gamma_only)
         {
@@ -91,6 +111,9 @@ void ReadInput::set_globalv(Parameter& para)
             GlobalV::ofs_warning << "Parameter \"device\" can only be set to \"cpu\" or \"gpu\"!" << std::endl;
             ModuleBase::WARNING_QUIT("device", "Parameter \"device\" can only be set to \"cpu\" or \"gpu\"!");
         }
+
+        para.sys.nqx=static_cast<int>((sqrt(para.inp.ecutwfc) / para.sys.dq + 4.0) * para.inp.cell_factor); 
+        para.sys.nqxq=static_cast<int>((sqrt(para.inp.ecutrho) / para.sys.dq + 4.0) * para.inp.cell_factor);
     }
 }
 
@@ -125,5 +148,8 @@ void ReadInput::set_globalv_bcast()
     
     add_bool_bcast(sys.double_grid);
     add_double_bcast(sys.uramping);
+    add_double_bcast(sys.dq);
+    add_int_bcast(sys.nqx);
+    add_int_bcast(sys.nqxq);
 }
 } // namespace ModuleIO

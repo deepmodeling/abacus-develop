@@ -1,5 +1,6 @@
 #include "occupy.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/constants.h"
 #include "module_base/mymath.h"
 #include "module_base/parallel_reduce.h"
@@ -141,7 +142,7 @@ void Occupy::iweights(
 {
     assert(is < 2);
     double degspin = 2.0;
-    if (GlobalV::NSPIN == 4)
+    if (PARAM.inp.nspin == 4)
         degspin = 1.0;
     if (is != -1)
         degspin = 1.0;
@@ -159,7 +160,7 @@ void Occupy::iweights(
     for (int ik = 0; ik < nks; ++ik)
     {
         // when NSPIN=2, only calculate spin up or spin down with TWO_FERMI mode(nupdown != 0)
-        if (GlobalV::NSPIN == 2 && isk[ik] != is && is != -1)
+        if (PARAM.inp.nspin == 2 && isk[ik] != is && is != -1)
         {
             continue;
         }

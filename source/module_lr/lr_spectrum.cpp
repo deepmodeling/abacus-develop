@@ -57,7 +57,7 @@ void LR::LR_Spectrum<double>::oscillator_strength()
         // 2. transition density
         double** rho_trans;
         // LR_Util::new_p2(rho_trans, nspin_solve, this->rho_basis.nrxx);
-        LR_Util::new_p2(rho_trans, nspin, this->rho_basis.nrxx); // currently gint_kernel_rho uses GlobalV::NSPIN, it needs refactor
+        LR_Util::new_p2(rho_trans, nspin, this->rho_basis.nrxx); // currently gint_kernel_rho uses PARAM.inp.nspin, it needs refactor
         this->cal_gint_rho(rho_trans, nspin_solve, this->rho_basis.nrxx);
 
         // 3. transition dipole moment

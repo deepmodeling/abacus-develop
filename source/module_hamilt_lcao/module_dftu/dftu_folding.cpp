@@ -240,7 +240,7 @@ void DFTU::folding_matrix_k(
 }
 
                             int iic;
-                            if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
+                            if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
                             {
                                 iic = mu + nu * pv.nrow;
                             }
@@ -278,7 +278,7 @@ void DFTU::folding_matrix_k_new(const int ik,
     ModuleBase::timer::tick("DFTU", "folding_matrix_k_new");
 
     int hk_type = 0;
-    if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
+    if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
     {
         hk_type = 1;
     }
@@ -290,7 +290,7 @@ void DFTU::folding_matrix_k_new(const int ik,
     }
     else
     {
-        if(GlobalV::NSPIN != 4)
+        if(PARAM.inp.nspin != 4)
         {
             dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham)->updateSk(ik, hk_type);
         }

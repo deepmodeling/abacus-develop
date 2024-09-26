@@ -22,23 +22,13 @@ int NBANDS = 0;
 int NLOCAL = 0;        // total number of local basis.
 
 int NSPIN = 1;       // LDA
-bool TWO_EFERMI = false; // two fermi energy, exist only magnetization is fixed.
 double nupdown = 0.0;
-bool CAL_STRESS = false;
-std::string RELAX_METHOD = "bfgs";
 
 bool use_uspp = false;
 std::string KS_SOLVER = "cg";  // xiaohui add 2013-09-01
 double SEARCH_RADIUS = -1.0;
 
-int PW_DIAG_NDIM = 4;
-double PW_DIAG_THR = 1.0e-2;
 int NB2D = 1;
-
-
-double DQ = 0.010; // space between Q points of the reciprocal radial tab
-int NQX = 10000;   // number of points describing reciprocal radial tab
-int NQXQ = 10000;  // number of points describing reciprocal radial tab for Q
 
 
 //----------------------------------------------------------
@@ -65,8 +55,6 @@ int GSIZE = DSIZE;
 //----------------------------------------------------------
 // EXPLAIN : The input file name and directory
 //----------------------------------------------------------
-std::string stru_file = "STRU";
-
 std::ofstream ofs_running;
 std::ofstream ofs_warning;
 std::ofstream ofs_info;   // output math lib info

@@ -1,5 +1,6 @@
 #ifndef ELECSTATE_H
 #define ELECSTATE_H
+#include "module_parameter/parameter.h"
 
 #include "fp_energy.h"
 #include "module_cell/klist.h"
@@ -21,7 +22,7 @@ class ElecState
         this->charge = charge_in;
         this->charge->set_rhopw(rhopw_in);
         this->bigpw = bigpw_in;
-        this->eferm.two_efermi = GlobalV::TWO_EFERMI;
+        this->eferm.two_efermi = PARAM.globalv.two_fermi;
     }
     virtual ~ElecState()
     {
@@ -81,9 +82,6 @@ class ElecState
     //for NSPIN=2, it will record number of spin up and number of spin down
     //for NSPIN=4, it will record total number, magnetization for x, y, z direction  
     std::vector<double> nelec_spin;
-
-    //calculate nbands and 
-    void cal_nbands();
 
     virtual void print_psi(const psi::Psi<double>& psi_in, const int istep = -1)
     {
