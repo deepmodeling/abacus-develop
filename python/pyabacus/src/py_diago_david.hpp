@@ -109,8 +109,8 @@ public:
         hsolver::diag_comm_info comm_info
     ) {
         auto hpsi_func = [mm_op] (
-            std::complex<double> *hpsi_out,
-            std::complex<double> *psi_in, 
+            std::complex<double> *psi_in,
+            std::complex<double> *hpsi_out, 
             const int nband_in, 
             const int nbasis_in, 
             const int band_index1, 
