@@ -1,19 +1,10 @@
-#ifndef GRID_DELLEY_H
-#define GRID_DELLEY_H
+#ifndef GRID_ANGULAR_DELLEY_H
+#define GRID_ANGULAR_DELLEY_H
 
 #include <vector>
-#include <functional>
 
-/**
- * @brief Delley's grid for quadrature on the unit sphere.
- *
- * Reference:
- * Delley, B. (1996). High order integration schemes on the unit sphere.
- * Journal of computational chemistry, 17(9), 1152-1155.
- *
- */
 namespace Grid {
-namespace Delley {
+namespace Angular {
 
 /**
  * @brief Number of Delley's grid points for a certain order of accuracy.
@@ -27,7 +18,7 @@ namespace Delley {
  * lmax will be set to 23.
  *
  */
-int ngrid(int& lmax);
+int ngrid_delley(int& lmax);
 
 
 /**
@@ -45,13 +36,16 @@ int ngrid(int& lmax);
  * ngrid(lmax) elements, respectively. The function will return 0 if
  * successful, or -1 if the requested order cannot be fulfilled.
  *
+ * Reference:
+ * Delley, B. (1996). High order integration schemes on the unit sphere.
+ * Journal of computational chemistry, 17(9), 1152-1155.
  */
-int get(int& lmax, double* grid, double* weight);
+int delley(int& lmax, double* grid, double* weight);
 
 // a handy wrapper doing the same as above
-int get(int& lmax, std::vector<double>& grid, std::vector<double>& weight);
+int delley(int& lmax, std::vector<double>& grid, std::vector<double>& weight);
 
-} // end of namespace Delley
+} // end of namespace Angular
 } // end of namespace Grid
 
 #endif
