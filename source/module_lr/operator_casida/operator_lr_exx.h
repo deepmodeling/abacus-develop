@@ -66,7 +66,7 @@ namespace LR
         const int& naos;
         const int& nocc;
         const int& nvirt;
-        const double& alpha;
+        const double alpha = 1.0;   //(allow non-ref constant)
         const bool cal_dm_trans = false;
         const bool tdm_sym = false; ///< whether transition density matrix is symmetric
         const K_Vectors& kv;
