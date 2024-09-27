@@ -20,7 +20,7 @@ struct System_para
     // ------------ but decided by INPUT parameters      -------------
     // ---------------------------------------------------------------
     bool two_fermi = false; ///< true if "nupdown" is set
-
+    bool use_uspp = false;   ///< true if "uspp" is set
     bool dos_setemin = false; ///< true: "dos_emin_ev" is set
     bool dos_setemax = false; ///< true: "dos_emax_ev" is set
 

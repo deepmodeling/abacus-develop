@@ -721,7 +721,7 @@ void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_
     // g) It computes the qq terms which define the S matrix.
 
     // compute Clebsch-Gordan coefficients
-    if (GlobalV::use_uspp)
+    if (PARAM.globalv.use_uspp)
     {
         ModuleBase::Clebsch_Gordan::clebsch_gordan(lmaxkb + 1, ap, lpx, lpl);
     }
@@ -1387,7 +1387,7 @@ void pseudopot_cell_vnl::cal_effective_D(const ModuleBase::matrix& veff,
     3. rotate to effective matrix when spin-orbital coupling is used
     */
 
-    if (!GlobalV::use_uspp)
+    if (!PARAM.globalv.use_uspp)
     {
         for (int iat = 0; iat < cell.nat; iat++)
         {

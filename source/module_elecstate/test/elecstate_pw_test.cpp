@@ -180,7 +180,7 @@ void Set_GlobalV_Default()
     PARAM.input.basis_type = "pw";
     GlobalV::KPAR = 1;
     GlobalV::NPROC_IN_POOL = 1;
-    GlobalV::use_uspp = false;
+    PARAM.sys.use_uspp = false;
 }
 
 /************************************************

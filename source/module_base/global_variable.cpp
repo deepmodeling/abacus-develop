@@ -21,9 +21,6 @@ namespace GlobalV
 int NBANDS = 0;
 int NLOCAL = 0;        // total number of local basis.
 
-double nupdown = 0.0;
-
-bool use_uspp = false;
 
 
 //----------------------------------------------------------

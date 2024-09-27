@@ -37,7 +37,7 @@ class CalAtomsInfo
             {
                 if (atoms[it].ncpp.tvanp)
                 {
-                    GlobalV::use_uspp = true;
+                    PARAM.sys.use_uspp = true;
                 }
             }
     

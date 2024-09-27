@@ -104,7 +104,7 @@ void ElecStatePW<T, Device>::psiToRho(const psi::Psi<T, Device>& psi)
         psi.fix_k(ik);
         this->updateRhoK(psi);
     }
-    if (GlobalV::use_uspp)
+    if (PARAM.globalv.use_uspp)
     {
         this->add_usrho(psi);
     }

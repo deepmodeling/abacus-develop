@@ -369,7 +369,7 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, c
                                                      PARAM.inp.basis_type,
                                                      PARAM.inp.ks_solver,
                                                      PARAM.inp.use_paw,
-                                                     GlobalV::use_uspp,
+                                                     PARAM.globalv.use_uspp,
                                                      PARAM.inp.nspin,
                                                      
                                                      hsolver::DiagoIterAssist<T, Device>::SCF_ITER,
@@ -457,7 +457,7 @@ void ESolver_KS_PW<T, Device>::iter_finish(int& iter)
     // D in uspp need vloc, thus needs update when veff updated
     // calculate the effective coefficient matrix for non-local pseudopotential
     // projectors
-    if (GlobalV::use_uspp)
+    if (PARAM.globalv.use_uspp)
     {
         ModuleBase::matrix veff = this->pelec->pot->get_effective_v();
         GlobalC::ppcell.cal_effective_D(veff, this->pw_rhod, GlobalC::ucell);

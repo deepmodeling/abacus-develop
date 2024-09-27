@@ -69,7 +69,7 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
             this->npwx = wfc_basis->npwk_max;
             Forces::cal_force_nl(forcenl, wg, ekb, pkv, wfc_basis, p_sf, &GlobalC::ppcell, GlobalC::ucell, psi_in);
 
-            if (GlobalV::use_uspp)
+            if (PARAM.globalv.use_uspp)
             {
                 this->cal_force_us(forcenl, rho_basis, &GlobalC::ppcell, elec, GlobalC::ucell);
             }
