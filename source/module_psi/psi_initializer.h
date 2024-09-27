@@ -175,7 +175,7 @@ class psi_initializer
         // avoid memory leak
         std::shared_ptr<psi::Psi<T, Device>> psig_;
     private:
-        int mem_saver_ = 1;
+        int mem_saver_ = 0;
         std::string method_ = "none";
         int nbands_complem_ = 0;
         double random_mix_ = 0;
