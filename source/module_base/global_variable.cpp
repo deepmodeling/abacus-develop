@@ -64,7 +64,6 @@ std::ofstream ofs_device; // output device info
 //==========================================================
 // device flags added by denghui
 //==========================================================
-std::string device_flag = "unknown";
 
 double nelec = 0;
 
