@@ -121,7 +121,7 @@ class UcellTest : public ::testing::Test {
         PARAM.input.nspin = 1;
         PARAM.input.basis_type = "pw";
         PARAM.input.nelec = 10.0;
-        GlobalV::nupdown = 0.0;
+        PARAM.input.nupdown  = 0.0;
         PARAM.sys.two_fermi = false;
         GlobalV::NBANDS = 6;
         GlobalV::NLOCAL = 6;
@@ -471,10 +471,10 @@ TEST_F(UcellTest, CalNbandsWarning1)
 TEST_F(UcellTest, CalNbandsWarning2)
 {
     PARAM.input.nspin = 2;
-    GlobalV::nupdown = 4.0;
+    PARAM.input.nupdown  = 4.0;
     std::vector<double> nelec_spin(2);
-    nelec_spin[0] = (PARAM.input.nelec + GlobalV::nupdown) / 2.0;
-    nelec_spin[1] = (PARAM.input.nelec - GlobalV::nupdown) / 2.0;
+    nelec_spin[0] = (PARAM.input.nelec + PARAM.input.nupdown ) / 2.0;
+    nelec_spin[1] = (PARAM.input.nelec - PARAM.input.nupdown ) / 2.0;
     testing::internal::CaptureStdout();
     EXPECT_EXIT(cal_nbands(PARAM.input.nelec, GlobalV::NLOCAL, nelec_spin, GlobalV::NBANDS), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
@@ -484,10 +484,10 @@ TEST_F(UcellTest, CalNbandsWarning2)
 TEST_F(UcellTest, CalNbandsWarning3)
 {
     PARAM.input.nspin = 2;
-    GlobalV::nupdown = -4.0;
+    PARAM.input.nupdown  = -4.0;
     std::vector<double> nelec_spin(2);
-    nelec_spin[0] = (PARAM.input.nelec + GlobalV::nupdown) / 2.0;
-    nelec_spin[1] = (PARAM.input.nelec - GlobalV::nupdown) / 2.0;
+    nelec_spin[0] = (PARAM.input.nelec + PARAM.input.nupdown ) / 2.0;
+    nelec_spin[1] = (PARAM.input.nelec - PARAM.input.nupdown ) / 2.0;
     testing::internal::CaptureStdout();
     EXPECT_EXIT(cal_nbands(PARAM.input.nelec, GlobalV::NLOCAL, nelec_spin, GlobalV::NBANDS), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();

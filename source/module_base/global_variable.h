@@ -24,9 +24,7 @@ extern int NLOCAL;        // 1.1 // mohan add 2009-05-29
 extern int NSPIN;       // 7
 extern double nupdown;
 extern bool use_uspp;
-extern int NB2D;           // 16.5 dividsion of 2D_matrix.
 
-                         // pw, 2: real drho for lcao
 
 
 //========================================================================
@@ -98,7 +96,6 @@ extern std::ofstream ofs_device;
 /// @brief whether use the new psi initializer to initialize psi
 /// @author ykhuang, 20230920
 
-extern double nelec;
 
 // Deltaspin related
 

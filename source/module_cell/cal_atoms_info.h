@@ -24,10 +24,10 @@ class CalAtomsInfo
             {
                 for (int ia = 0; ia < atoms[it].na; ++ia)
                 {
-                    GlobalV::nupdown += atoms[it].mag[ia];
+                    PARAM.input.nupdown  += atoms[it].mag[ia];
                 }
             }
-            GlobalV::ofs_running << " The readin total magnetization is " << GlobalV::nupdown << std::endl;
+            GlobalV::ofs_running << " The readin total magnetization is " << PARAM.inp.nupdown  << std::endl;
         }
 
         if (!para.inp.use_paw)
@@ -64,8 +64,8 @@ class CalAtomsInfo
         std::vector<double> nelec_spin(2, 0.0);
         if (para.inp.nspin == 2)
         {
-            nelec_spin[0] = (PARAM.inp.nelec + GlobalV::nupdown) / 2.0;
-            nelec_spin[1] = (PARAM.inp.nelec - GlobalV::nupdown) / 2.0;
+            nelec_spin[0] = (PARAM.inp.nelec + PARAM.inp.nupdown ) / 2.0;
+            nelec_spin[1] = (PARAM.inp.nelec - PARAM.inp.nupdown ) / 2.0;
         }
         cal_nbands(PARAM.inp.nelec, GlobalV::NLOCAL, nelec_spin, GlobalV::NBANDS);
 

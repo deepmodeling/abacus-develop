@@ -26,8 +26,6 @@ double nupdown = 0.0;
 
 bool use_uspp = false;
 
-int NB2D = 1;
-
 
 //----------------------------------------------------------
 // EXPLAIN : Parallel information
@@ -62,8 +60,6 @@ std::ofstream ofs_device; // output device info
 //==========================================================
 // device flags added by denghui
 //==========================================================
-
-double nelec = 0;
 
 
 // on-site orbitals
