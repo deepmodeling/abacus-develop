@@ -92,7 +92,7 @@ namespace LR
                         auto psi_iter_wrapper = psi::Psi<T, Device>(psi_in, 1, nband_in, nbasis_in, nullptr);
                         psi::Range bands_range(true, 0, band_index1, band_index2);
                         using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
-                        hpsi_info info(&psi_iter_wrapper, bands_range, hpsi_out);
+                        hpsi_info info(&psi_iter_wrapper, bands_range, hpsi_out+ band_index1*nbasis_in);
                         pHamilt->ops->hPsi(info);
                     };
                 auto spsi_func = [pHamilt](const T* psi_in, T* spsi_out,
@@ -129,7 +129,7 @@ namespace LR
                         auto psi_iter_wrapper = psi::Psi<T, Device>(psi_in, 1, nband_in, nbasis_in, nullptr);
                         psi::Range bands_range(true, 0, band_index1, band_index2);
                         using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
-                        hpsi_info info(&psi_iter_wrapper, bands_range, hpsi_out);
+                        hpsi_info info(&psi_iter_wrapper, bands_range, hpsi_out + band_index1 * nbasis_in);
                         pHamilt->ops->hPsi(info);
                     };
                 auto subspace_func = [pHamilt](T* psi_out,
