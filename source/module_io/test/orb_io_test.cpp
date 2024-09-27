@@ -27,13 +27,21 @@ void OrbIOTest::SetUp()
 
 TEST_F(OrbIOTest, ReadAbacusOrb)
 {
-    std::ifstream ifs(file);
+    std::ifstream ifs;
     std::string elem;
     double ecut, dr;
     int nr;
     std::vector<int> nzeta;
     std::vector<std::vector<double>> radials;
+    if (GlobalV::MY_RANK == 0)
+    {
+        ifs.open(file);
+    }
     ModuleIO::read_abacus_orb(ifs, elem, ecut, nr, dr, nzeta, radials, GlobalV::MY_RANK);
+    if (GlobalV::MY_RANK == 0)
+    {
+        ifs.close();
+    }
     EXPECT_EQ(elem, "Ti");
     EXPECT_DOUBLE_EQ(ecut, 100.0);
     EXPECT_EQ(nr, 1001);
@@ -60,38 +68,58 @@ TEST_F(OrbIOTest, ReadAbacusOrb)
     EXPECT_EQ(radials[8][4], 3.744878535962e-05);
     EXPECT_EQ(radials[8][996], 7.495357740660e-05);
     EXPECT_EQ(radials[8][1000], 0);
-    ifs.close();
 }
 
 TEST_F(OrbIOTest, WriteAbacusOrb)
 {
-    std::ifstream ifs(file);
+    std::ifstream ifs;
     std::string elem;
     double ecut, dr;
     int nr;
     std::vector<int> nzeta;
     std::vector<std::vector<double>> radials;
+    if (GlobalV::MY_RANK == 0)
+    {
+        ifs.open(file);
+    }
     ModuleIO::read_abacus_orb(ifs, elem, ecut, nr, dr, nzeta, radials, GlobalV::MY_RANK);
-#ifdef __MPI
-    MPI_Barrier(MPI_COMM_WORLD);
-#endif
+    if (GlobalV::MY_RANK == 0)
+    {
+        ifs.close();
+    }
+
     const std::string ftmp = "tmp.orb";
-    std::ofstream ofs(ftmp, std::ios::out);
+    std::ofstream ofs;
+    if (GlobalV::MY_RANK == 0)
+    {
+        ofs.open(ftmp);
+    }
     ModuleIO::write_abacus_orb(ofs, elem, ecut, nr, dr, nzeta, radials, GlobalV::MY_RANK);
-    ofs.close();
+    if (GlobalV::MY_RANK == 0)
+    {
+        ofs.close();
+    }
 #ifdef __MPI
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
-    std::ifstream ifs1(ftmp);
+
+    std::ifstream ifs1;
+
     std::string elem1;
     double ecut1, dr1;
     int nr1;
     std::vector<int> nzeta1;
     std::vector<std::vector<double>> radials1;
+    if (GlobalV::MY_RANK == 0)
+    {
+        ifs1.open(ftmp);
+    }
     ModuleIO::read_abacus_orb(ifs1, elem1, ecut1, nr1, dr1, nzeta1, radials1, GlobalV::MY_RANK);
-#ifdef __MPI // make sure all processes have finished reading
-    MPI_Barrier(MPI_COMM_WORLD);
-#endif
+    if (GlobalV::MY_RANK == 0)
+    {
+        ifs1.close();
+    }
+
     EXPECT_EQ(elem, elem1);
     EXPECT_DOUBLE_EQ(ecut, ecut1);
     EXPECT_EQ(nr, nr1);
@@ -110,11 +138,10 @@ TEST_F(OrbIOTest, WriteAbacusOrb)
             EXPECT_NEAR(radials[i][j], radials1[i][j], tol);
         }
     }
-    ifs1.close();
-#ifdef __MPI
-    MPI_Barrier(MPI_COMM_WORLD);
-#endif
-    remove(ftmp.c_str());
+    if (GlobalV::MY_RANK == 0)
+    {
+        remove(ftmp.c_str());
+    }
 }
 
 int main(int argc, char** argv)
