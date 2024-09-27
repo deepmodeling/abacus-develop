@@ -129,7 +129,7 @@ public:
 
             py::buffer_info hpsi_buf = hpsi.request();
             std::complex<double>* hpsi_ptr = static_cast<std::complex<double>*>(hpsi_buf.ptr);
-            std::copy(hpsi_ptr, hpsi_ptr + (band_index2 - band_index1 + 1) * nbasis_in, hpsi_out);
+            std::copy(hpsi_ptr + band_index1 * nbasis_i, hpsi_ptr + (band_index2 + 1) * nbasis_in, hpsi_out);
         };
 
         obj = std::make_unique<hsolver::Diago_DavSubspace<std::complex<double>, base_device::DEVICE_CPU>>(
