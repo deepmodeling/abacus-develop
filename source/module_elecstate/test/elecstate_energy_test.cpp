@@ -77,7 +77,7 @@ class MockElecState : public ElecState
         PARAM.input.dft_plus_u = 0;
         // base class
         PARAM.input.nspin = 1;
-        GlobalV::nelec = 10.0;
+        PARAM.input.nelec = 10.0;
         GlobalV::nupdown = 0.0;
         PARAM.sys.two_fermi = false;
         GlobalV::NBANDS = 6;

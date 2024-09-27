@@ -87,7 +87,7 @@ TEST_F(TestHSolverPW, solve) {
     this->ekb_f.resize(2);
     psi_test_cf.resize(1, 2, 3);
     psi_test_cd.resize(1, 2, 3);
-    GlobalV::nelec = 1.0;
+    PARAM.input.nelec = 1.0;
 
     // check solve()
     EXPECT_EQ(this->hs_f.initialed_psi, false);
@@ -247,7 +247,7 @@ TEST_F(TestHSolverPW, SolveLcaoInPW) {
             psi_value_f += std::complex<float>(1.0, 0.0);
         }
     }
-    GlobalV::nelec = 1.0;
+    PARAM.input.nelec = 1.0;
 
     // check solve()
     elecstate_test.ekb.c[0] = 1.0;

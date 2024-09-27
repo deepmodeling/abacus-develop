@@ -298,7 +298,7 @@ class PexsiPrepare
             return false;
         }
 
-        f_dm >> GlobalV::nelec >> mu;
+        f_dm >> PARAM.input.nelec >> mu;
 
         dm.resize(nread * nread);
         // T* edm = new T[nglobal*nglobal];
