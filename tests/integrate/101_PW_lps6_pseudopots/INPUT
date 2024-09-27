@@ -25,3 +25,5 @@ dft_functional	pbe
 #Parameters (5.Mixing)
 mixing_type		broyden
 mixing_beta		0.7
+
+pw_seed 1

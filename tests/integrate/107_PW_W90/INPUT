@@ -14,3 +14,5 @@ symmetry                0
 towannier90             1
 nnkpfile                diamond.nnkp
 read_file_dir		./
+
+pw_seed 1

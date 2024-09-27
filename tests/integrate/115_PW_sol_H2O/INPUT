@@ -18,3 +18,5 @@ eb_k                    80
 tau                     0.000010798
 sigma_k                 0.6
 nc_k                    0.00037
+
+pw_seed 1
