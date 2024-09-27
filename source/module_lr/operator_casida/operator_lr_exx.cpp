@@ -135,18 +135,22 @@ namespace LR
             // 3. set [AX]_iak = DM_onbase * Hexxs for each occ-virt pair and each k-point
             // caution: parrallel
 
-            for (int io = 0;io < this->nocc;++io)
-                for (int iv = 0;iv < this->nvirt;++iv)
-                    for (int ik = 0;ik < nk;++ik)
+            for (int io = 0;io < this->nocc;++io) {
+                for (int iv = 0;iv < this->nvirt;++iv) {
+                    for (int ik = 0;ik < nk;++ik) {
                         for (int is = 0;is < this->nspin_solve;++is)
                             {
                                 this->cal_DM_onebase(io, iv, ik, is);       //set Ds_onebase for all e-h pairs (not only on this processor)
                                 // LR_Util::print_CV(Ds_onebase[is], "Ds_onebase of occ " + std::to_string(io) + ", virtual " + std::to_string(iv) + " in OperatorLREXX", 1e-10);
                                 const T& ene= 2 * alpha * //minus for exchange(but here plus is right, why?), 2 for Hartree to Ry
                                     lri->exx_lri.post_2D.cal_energy(this->Ds_onebase[is], lri->Hexxs[is]);
-                                if(this->pX->in_this_processor(iv, io)) 
+                                if(this->pX->in_this_processor(iv, io)) { 
                                     psi_out_bfirst(ik, this->pX->global2local_col(io) * this->pX->get_row_size() + this->pX->global2local_row(iv)) += ene;
+}
                             }
+}
+}
+}
         }
     }
     template class OperatorLREXX<double>;
