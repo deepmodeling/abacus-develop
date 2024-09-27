@@ -448,7 +448,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
             psi::Range bands_range(true, 0, band_index1, band_index2);
 
             using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
-            hpsi_info info(&psi_iter_wrapper, bands_range, hpsi_out);
+            hpsi_info info(&psi_iter_wrapper, bands_range, hpsi_out + band_index1*nbasis_in);
             hm->ops->hPsi(info);
 
             ModuleBase::timer::tick("DavSubspace", "hpsi_func");
@@ -507,7 +507,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
             psi::Range bands_range(true, 0, band_index1, band_index2);
 
             using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
-            hpsi_info info(&psi_iter_wrapper, bands_range, hpsi_out);
+            hpsi_info info(&psi_iter_wrapper, bands_range, hpsi_out + band_index1*nbasis_in);
             hm->ops->hPsi(info);
 
             ModuleBase::timer::tick("David", "hpsi_func");
