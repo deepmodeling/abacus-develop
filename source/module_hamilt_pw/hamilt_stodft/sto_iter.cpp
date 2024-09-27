@@ -26,7 +26,7 @@ void Stochastic_Iter::init(K_Vectors* pkv_in,
     p_che = stoche.p_che;
     spolyv = stoche.spolyv;
     nchip = stowf.nchip;
-    targetne = GlobalV::nelec;
+    targetne = PARAM.inp.nelec;
     this->pkv = pkv_in;
     this->method = stoche.method_sto;
 
@@ -217,13 +217,13 @@ void Stochastic_Iter::itermu(const int iter, elecstate::ElecState* pes)
     if (iter == 1)
     {
         dmu = 2;
-        th_ne = 0.1 * PARAM.inp.scf_thr * GlobalV::nelec;
+        th_ne = 0.1 * PARAM.inp.scf_thr * PARAM.inp.nelec;
         // std::cout<<"th_ne "<<th_ne<<std::endl;
     }
     else
     {
         dmu = 0.1;
-        th_ne = 1e-2 * PARAM.inp.scf_thr * GlobalV::nelec;
+        th_ne = 1e-2 * PARAM.inp.scf_thr * PARAM.inp.nelec;
         th_ne = std::min(th_ne, 1e-5);
     }
     this->stofunc.mu = mu0 - dmu;

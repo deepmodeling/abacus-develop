@@ -134,7 +134,7 @@ void ESolver_OF::before_all_runners(const Input_para& inp, UnitCell& ucell)
     this->nelec_ = new double[PARAM.inp.nspin];
     if (PARAM.inp.nspin == 1)
     {
-        this->nelec_[0] = GlobalV::nelec;
+        this->nelec_[0] = PARAM.inp.nelec;
     }
     else if (PARAM.inp.nspin == 2)
     {

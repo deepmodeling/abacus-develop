@@ -449,7 +449,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
                                                  drho,
                                                  PARAM.inp.pw_diag_thr,
                                                  diag_ethr,
-                                                 GlobalV::nelec);
+                                                 PARAM.inp.nelec);
         }
         else if (PARAM.inp.esolver_type == "sdft")
         {
@@ -487,7 +487,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
             // double drho = this->estate.caldr2();
             // EState should be used after it is constructed.
 
-            drho = p_chgmix->get_drho(pelec->charge, GlobalV::nelec);
+            drho = p_chgmix->get_drho(pelec->charge, PARAM.inp.nelec);
             double hsolver_error = 0.0;
             if (firstscf)
             {
@@ -495,7 +495,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
                 hsolver_error = hsolver::cal_hsolve_error(PARAM.inp.basis_type,
                                                           PARAM.inp.esolver_type,
                                                           diag_ethr,
-                                                          GlobalV::nelec);
+                                                          PARAM.inp.nelec);
                 
                 // The error of HSolver is larger than drho,
                 // so a more precise HSolver should be excuconv_elected.
@@ -508,16 +508,16 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
                                                          hsolver_error,
                                                          drho,
                                                          diag_ethr,
-                                                         GlobalV::nelec);
+                                                         PARAM.inp.nelec);
 
                     this->hamilt2density(istep, iter, diag_ethr);
 
-                    drho = p_chgmix->get_drho(pelec->charge, GlobalV::nelec);
+                    drho = p_chgmix->get_drho(pelec->charge, PARAM.inp.nelec);
 
                     hsolver_error = hsolver::cal_hsolve_error(PARAM.inp.basis_type,
                                                               PARAM.inp.esolver_type,
                                                               diag_ethr,
-                                                              GlobalV::nelec);
+                                                              PARAM.inp.nelec);
                 }
             }
             // mixing will restart at this->p_chgmix->mixing_restart steps
@@ -601,7 +601,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
         double dkin = 0.0; // for meta-GGA
         if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
         {
-            dkin = p_chgmix->get_dkin(pelec->charge, GlobalV::nelec);
+            dkin = p_chgmix->get_dkin(pelec->charge, PARAM.inp.nelec);
         }
         this->print_iter(iter, drho, dkin, duration, diag_ethr);
 

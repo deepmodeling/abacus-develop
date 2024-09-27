@@ -64,7 +64,7 @@ void ESolver_KS_PW<T, Device>::nscf() {
     if (diag_ethr - 1e-2 > -1e-5) {
         diag_ethr
             = std::max(1e-13,
-                       0.1 * std::min(1e-2, PARAM.inp.scf_thr / GlobalV::nelec));
+                       0.1 * std::min(1e-2, PARAM.inp.scf_thr / PARAM.inp.nelec));
     }
     GlobalV::ofs_running << " PW_DIAG_THR  = " << diag_ethr << std::endl;
 

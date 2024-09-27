@@ -85,7 +85,7 @@ int PEXSI_Solver::solve(double mu0)
                 'c',
                 this->h,
                 this->s,
-                GlobalV::nelec,
+                PARAM.inp.nelec,
                 "PEXSIOPTION",
                 this->DM,
                 this->EDM,

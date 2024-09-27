@@ -69,7 +69,7 @@ void ElecStateLCAO_TDDFT::calculate_weights_td()
         {
             num_elec += PARAM.inp.ocp_kb[i];
         }
-        if (std::abs(num_elec - GlobalV::nelec) > 1.0e-5)
+        if (std::abs(num_elec - PARAM.inp.nelec) > 1.0e-5)
         {
             ModuleBase::WARNING_QUIT("ElecStateLCAO_TDDFT::calculate_weights_td",
                                      "total number of occupations is wrong , please check ocp_set");

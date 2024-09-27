@@ -25,8 +25,6 @@ int NSPIN = 1;       // LDA
 double nupdown = 0.0;
 
 bool use_uspp = false;
-std::string KS_SOLVER = "cg";  // xiaohui add 2013-09-01
-double SEARCH_RADIUS = -1.0;
 
 int NB2D = 1;
 

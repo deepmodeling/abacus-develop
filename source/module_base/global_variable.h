@@ -24,11 +24,6 @@ extern int NLOCAL;        // 1.1 // mohan add 2009-05-29
 extern int NSPIN;       // 7
 extern double nupdown;
 extern bool use_uspp;
-
-extern std::string KS_SOLVER;  // xiaohui add 2013-09-01
-extern double SEARCH_RADIUS;   // 11.1 // mohan add 2011-03-10
-
-
 extern int NB2D;           // 16.5 dividsion of 2D_matrix.
 
                          // pw, 2: real drho for lcao

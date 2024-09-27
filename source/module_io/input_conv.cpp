@@ -273,7 +273,6 @@ void Input_Conv::Convert()
     //----------------------------------------------------------
     // Yu Liu add 2022-09-13
     //----------------------------------------------------------
-    GlobalV::nelec = PARAM.inp.nelec;
     if (PARAM.globalv.two_fermi)
     {
         GlobalV::nupdown = PARAM.inp.nupdown;
@@ -453,7 +452,6 @@ void Input_Conv::Convert()
     //----------------------------------------------------------
     // wavefunction / charge / potential / (2/4)
     //----------------------------------------------------------
-    GlobalV::nelec = PARAM.inp.nelec;
 
 #ifdef __LCAO
 

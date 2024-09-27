@@ -62,8 +62,8 @@ void ElecState::init_nelec_spin()
     if (PARAM.inp.nspin == 2)
     {
         // in fact, when TWO_EFERMI(nupdown in INPUT is not 0.0), nelec_spin will be fixed.
-        this->nelec_spin[0] = (GlobalV::nelec + GlobalV::nupdown) / 2.0;
-        this->nelec_spin[1] = (GlobalV::nelec - GlobalV::nupdown) / 2.0;
+        this->nelec_spin[0] = (PARAM.inp.nelec + GlobalV::nupdown) / 2.0;
+        this->nelec_spin[1] = (PARAM.inp.nelec - GlobalV::nupdown) / 2.0;
     }
 }
 
@@ -108,7 +108,7 @@ void ElecState::calculate_weights()
             Occupy::iweights(nks,
                              this->klist->wk,
                              nbands,
-                             GlobalV::nelec,
+                             PARAM.inp.nelec,
                              this->ekb,
                              this->eferm.ef,
                              this->wg,
@@ -154,7 +154,7 @@ void ElecState::calculate_weights()
             Occupy::gweights(nks,
                              this->klist->wk,
                              nbands,
-                             GlobalV::nelec,
+                             PARAM.inp.nelec,
                              Occupy::gaussian_parameter,
                              Occupy::gaussian_type,
                              this->ekb,
