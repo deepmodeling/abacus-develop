@@ -89,6 +89,9 @@ TEST_F(OrbIOTest, WriteAbacusOrb)
     std::vector<int> nzeta1;
     std::vector<std::vector<double>> radials1;
     ModuleIO::read_abacus_orb(ifs1, elem1, ecut1, nr1, dr1, nzeta1, radials1, GlobalV::MY_RANK);
+#ifdef __MPI // make sure all processes have finished reading
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
     EXPECT_EQ(elem, elem1);
     EXPECT_DOUBLE_EQ(ecut, ecut1);
     EXPECT_EQ(nr, nr1);
