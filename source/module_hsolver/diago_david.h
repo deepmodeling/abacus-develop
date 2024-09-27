@@ -36,6 +36,7 @@ class DiagoDavid : public DiagH<T, Device>
      * This function type is used to define a matrix-blockvector operator H.
      * For eigenvalue problem HX = λX or generalized eigenvalue problem HX = λSX,
      * this function computes the product of the Hamiltonian matrix H and a blockvector X.
+     * The result will be: HX[id_start:id_end] = H(X[id_start:id_end]).
      *
      * @param[out] X      Pointer to input blockvector of type `T*`.
      * @param[in]  HX     Pointer to output blockvector of type `T*`.
