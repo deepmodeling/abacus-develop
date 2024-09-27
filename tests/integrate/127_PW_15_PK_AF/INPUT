@@ -33,5 +33,3 @@ pseudo_dir	../../PP_ORB
 orbital_dir	../../PP_ORB
 
 pw_seed 1
-
-pw_seed 1
