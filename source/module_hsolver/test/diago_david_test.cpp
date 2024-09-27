@@ -116,7 +116,7 @@ public:
                         auto psi_iter_wrapper = psi::Psi<std::complex<double>>(psi_in, 1, nband_in, nbasis_in, nullptr);
                         psi::Range bands_range(1, 0, band_index1, band_index2);
                         using hpsi_info = typename hamilt::Operator<std::complex<double>>::hpsi_info;
-                        hpsi_info info(&psi_iter_wrapper, bands_range, hpsi_out);
+                        hpsi_info info(&psi_iter_wrapper, bands_range, hpsi_out + band_index1 * nbasis_in);
                         phm->ops->hPsi(info);
                     };
 		auto spsi_func = [phm](const std::complex<double>* psi_in, std::complex<double>* spsi_out,const int nrow, const int npw,  const int nbands){
