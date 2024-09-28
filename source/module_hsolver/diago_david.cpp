@@ -1149,6 +1149,10 @@ void DiagoDavid<T, Device>::planSchmidtOrth(const int nband, std::vector<int>& p
 /**
  * @brief Performs iterative diagonalization using the David algorithm.
  * 
+ * @warning Please see docs of `HPsiFunc` for more information.
+ * @warning Please adhere strictly to the requirements of the function pointer
+ * @warning for the hpsi mat-vec interface; it may seem counterintuitive.
+ * 
  * @tparam T The type of the elements in the matrix.
  * @tparam Device The device type (CPU or GPU).
  * @param hpsi_func The function object that computes the matrix-blockvector product H * psi.
