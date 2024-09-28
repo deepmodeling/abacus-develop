@@ -161,6 +161,7 @@
     - [nbands\_istate](#nbands_istate)
     - [bands\_to\_print](#bands_to_print)
     - [if\_separate\_k](#if_separate_k)
+    - [out\_elf](#out_elf)
   - [Density of states](#density-of-states)
     - [dos\_edelta\_ev](#dos_edelta_ev)
     - [dos\_sigma](#dos_sigma)
@@ -1521,7 +1522,7 @@ These variables are used to control the output of properties.
 - **Type**: Integer \[Integer\](optional)
 - **Description**: 
   The first integer controls whether to output the charge density on real space grids:
-  - 1. Output the charge density (in Bohr^-3) on real space grids into the density files in the folder `OUT.${suffix}`. The files are named as:
+  - 1: Output the charge density (in Bohr^-3) on real space grids into the density files in the folder `OUT.${suffix}`. The files are named as:
     - nspin = 1: SPIN1_CHG.cube;
     - nspin = 2: SPIN1_CHG.cube, and SPIN2_CHG.cube;
     - nspin = 4: SPIN1_CHG.cube, SPIN2_CHG.cube, SPIN3_CHG.cube, and SPIN4_CHG.cube.
@@ -1800,6 +1801,23 @@ The band (KS orbital) energy for each (k-point, spin, band) will be printed in t
 - **Availability**: Only for LCAO, used only when `calculation = get_pchg` and `gamma_only` is turned off.
 - **Description**: Specifies whether to write the partial charge densities for all k-points to individual files or merge them. **Warning**: Enabling symmetry may produce incorrect results due to incorrect k-point weights. Therefore, when calculating partial charge densities, it is strongly recommended to set `symmetry = -1`.
 - **Default**: false
+
+### out_elf
+
+- **Type**: Integer \[Integer\](optional)
+- **Availability**: Only for Kohn-Sham DFT and Orbital Free DFT.
+- **Description**: Whether to output the electron localization function (ELF) in the folder `OUT.${suffix}`. The files are named as 
+    - nspin = 1:
+      - ELF.cube: ${\rm{ELF}} = \frac{1}{1+\chi^2}$, $\chi = \frac{\frac{1}{2}\sum_{i}{f_i |\nabla\psi_{i}|^2} - \frac{|\nabla\rho|^2}{8\rho}}{\frac{3}{10}(3\pi^2)^{2/3}\rho^{5/3}}$;
+    - nspin = 2:
+      - ELF_SPIN1.cube, ELF_SPIN2.cube: ${\rm{ELF}}_\sigma = \frac{1}{1+\chi_\sigma^2}$, $\chi_\sigma = \frac{\frac{1}{2}\sum_{i}{f_i |\nabla\psi_{i,\sigma}|^2} - \frac{|\nabla\rho_\sigma|^2}{8\rho_\sigma}}{\frac{3}{10}(6\pi^2)^{2/3}\rho_\sigma^{5/3}}$;
+      - ELF.cube: ${\rm{ELF}} = \frac{1}{1+\chi^2}$, $\chi = \frac{\frac{1}{2}\sum_{i,\sigma}{f_i |\nabla\psi_{i,\sigma}|^2} - \sum_{\sigma}{\frac{|\nabla\rho_\sigma|^2}{8\rho_\sigma}}}{\sum_{\sigma}{\frac{3}{10}(6\pi^2)^{2/3}\rho_\sigma^{5/3}}}$;
+
+  The second integer controls the precision of the kinetic energy density output, if not given, will use `3` as default. For purpose restarting from this file and other high-precision involved calculation, recommend to use `10`.
+
+  ---
+  In molecular dynamics calculations, the output frequency is controlled by [out_interval](#out_interval).
+- **Default**: 0 3
 
 [back to top](#full-list-of-input-keywords)
 

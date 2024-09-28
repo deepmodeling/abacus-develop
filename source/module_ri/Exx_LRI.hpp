@@ -137,6 +137,7 @@ void Exx_LRI<Tdata>::cal_exx_ions(const bool write_cv)
 			list_As_Vs.first, list_As_Vs.second[0],
 			{{"writable_Vws",true}});
 	this->cv.Vws = LRI_CV_Tools::get_CVws(Vs);
+	if (write_cv && GlobalV::MY_RANK == 0) { LRI_CV_Tools::write_Vs_abf(Vs, PARAM.globalv.global_out_dir + "Vs"); }
 	this->exx_lri.set_Vs(std::move(Vs), this->info.V_threshold);
 
 	if(PARAM.inp.cal_force || PARAM.inp.cal_stress)

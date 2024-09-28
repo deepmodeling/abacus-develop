@@ -1,7 +1,7 @@
 #ifndef KEDF_LKT_H
 #define KEDF_LKT_H
-#include <math.h>
-#include <stdio.h>
+#include <cmath>
+#include <cstdio>
 
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
@@ -29,6 +29,7 @@ class KEDF_LKT
 
     double get_energy(const double* const* prho, ModulePW::PW_Basis* pw_rho);
     double get_energy_density(const double* const* prho, int is, int ir, ModulePW::PW_Basis* pw_rho);
+    void tau_lkt(const double* const* prho, ModulePW::PW_Basis* pw_rho, double* rtau_lkt);
     void lkt_potential(const double* const* prho, ModulePW::PW_Basis* pw_rho, ModuleBase::matrix& rpotential);
     void get_stress(const double* const* prho, ModulePW::PW_Basis* pw_rho);
 

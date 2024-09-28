@@ -31,3 +31,5 @@ cal_stress             1
 
 init_chg               auto
 read_file_dir          .
+
+pw_seed 1

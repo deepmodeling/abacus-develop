@@ -33,6 +33,7 @@ class ElecStatePW : public ElecState
     virtual void psiToRho(const psi::Psi<T, Device>& psi);
     // return current electronic density rho, as a input for constructing Hamiltonian
     // const double* getRho(int spin) const override;
+    virtual void cal_tau(const psi::Psi<T, Device>& psi);
 
     // update charge density for next scf step
     // void getNewRho() override;

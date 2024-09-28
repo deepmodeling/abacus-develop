@@ -139,6 +139,40 @@ double ESolver_OF::kinetic_energy()
 
 /**
  * @brief [Interface to kedf]
+ * Calculated the kinetic energy density, ONLY SPIN=1 SUPPORTED
+ *
+ * @param [in] prho charge density
+ * @param [in] pphi phi^2 = rho
+ * @param [out] rtau kinetic energy density
+ */
+void ESolver_OF::kinetic_energy_density(double** prho, double** pphi, double** rtau)
+{
+    for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
+    {
+        rtau[0][ir] = 0.0;
+    }
+
+    if (this->of_kinetic_ == "tf" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt")
+    {
+        this->tf_->tau_tf(prho, rtau[0]);
+    }
+    if (this->of_kinetic_ == "vw" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt"
+        || this->of_kinetic_ == "lkt")
+    {
+        this->vw_->tau_vw(prho, this->pw_rho, rtau[0]);
+    }
+    if (this->of_kinetic_ == "wt")
+    {
+        this->wt_->tau_wt(prho, this->pw_rho, rtau[0]);
+    }
+    if (this->of_kinetic_ == "lkt")
+    {
+        this->lkt_->tau_lkt(prho, this->pw_rho, rtau[0]);
+    }
+}
+
+/**
+ * @brief [Interface to kedf]
  * Calculate the stress of kedf
  *
  * @param [out] kinetic_stress_

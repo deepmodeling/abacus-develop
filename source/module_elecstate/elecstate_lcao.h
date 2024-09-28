@@ -46,6 +46,7 @@ class ElecStateLCAO : public ElecState
     // virtual void psiToRho(const psi::Psi<double>& psi) override;
     //  return current electronic density rho, as a input for constructing Hamiltonian
     //  const double* getRho(int spin) const override;
+    virtual void cal_tau(const psi::Psi<TK>& psi) override;
 
     // update charge density for next scf step
     // void getNewRho() override;
