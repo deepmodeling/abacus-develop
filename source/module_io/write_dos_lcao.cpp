@@ -53,7 +53,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psi,
     double emin = ekb(0, 0);
     for (int ik = 0; ik < kv.get_nks(); ++ik)
     {
-        for (int ib = 0; ib < GlobalV::NBANDS; ++ib)
+        for (int ib = 0; ib < PARAM.inp.nbands; ++ib)
         {
             emax = std::max(emax, ekb(ik, ib));
             emin = std::min(emin, ekb(ik, ib));
@@ -127,7 +127,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psi,
 
         psi->fix_k(is);
         const double* ppsi = psi->get_pointer();
-        for (int i = 0; i < GlobalV::NBANDS; ++i)
+        for (int i = 0; i < PARAM.inp.nbands; ++i)
         {
             ModuleBase::GlobalFunc::ZEROS(waveg, PARAM.globalv.nlocal);
 
@@ -332,7 +332,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psi,
                                 kv.get_nkstot(),
                                 kv.wk,
                                 kv.isk,
-                                GlobalV::NBANDS,
+                                PARAM.inp.nbands,
                                 ekb,
                                 wg);
     }
@@ -364,7 +364,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<std::complex<double>>* psi,
     double emin = ekb(0, 0);
     for (int ik = 0; ik < kv.get_nks(); ++ik)
     {
-        for (int ib = 0; ib < GlobalV::NBANDS; ++ib)
+        for (int ib = 0; ib < PARAM.inp.nbands; ++ib)
         {
             emax = std::max(emax, ekb(ik, ib));
             emin = std::min(emin, ekb(ik, ib));
@@ -466,7 +466,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<std::complex<double>>* psi,
                         p_dwfc[index] = conj(p_dwfc[index]);
                     }
 
-                    for (int i = 0; i < GlobalV::NBANDS; ++i)
+                    for (int i = 0; i < PARAM.inp.nbands; ++i)
                     {
 
                         ModuleBase::GlobalFunc::ZEROS(waveg, PARAM.globalv.nlocal);
@@ -681,7 +681,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<std::complex<double>>* psi,
                                 kv.get_nkstot(),
                                 kv.wk,
                                 kv.isk,
-                                GlobalV::NBANDS,
+                                PARAM.inp.nbands,
                                 ekb,
                                 wg);
     }

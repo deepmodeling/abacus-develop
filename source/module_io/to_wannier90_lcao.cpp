@@ -421,7 +421,7 @@ void toWannier90_LCAO::unkdotkb(const K_Vectors& kv,
 
     char transa = 'C';
     char transb = 'N';
-    int Bands = GlobalV::NBANDS;
+    int Bands = PARAM.inp.nbands;
     int nlocal = PARAM.globalv.nlocal;
     std::complex<double> alpha = {1.0, 0.0}, beta = {0.0, 0.0};
     int one = 1;
@@ -474,7 +474,7 @@ void toWannier90_LCAO::unkdotkb(const K_Vectors& kv,
 #endif
 
     int count_m = -1;
-    for (int m = 0; m < GlobalV::NBANDS; m++)
+    for (int m = 0; m < PARAM.inp.nbands; m++)
     {
         if (exclude_bands.count(m)) {
             continue;
@@ -485,7 +485,7 @@ void toWannier90_LCAO::unkdotkb(const K_Vectors& kv,
         if (ir >= 0)
         {
             int count_n = -1;
-            for (int n = 0; n < GlobalV::NBANDS; n++)
+            for (int n = 0; n < PARAM.inp.nbands; n++)
             {
                 if (exclude_bands.count(n)) {
                     continue;
@@ -1138,7 +1138,7 @@ void toWannier90_LCAO::unkdotA(const K_Vectors& kv,
     int R_num = R_coor_car.size();
     if (PARAM.inp.nspin != 4)
     {
-        for (int ib = 0; ib < GlobalV::NBANDS; ib++)
+        for (int ib = 0; ib < PARAM.inp.nbands; ib++)
         {
             if (exclude_bands.count(ib)) {
                 continue;
@@ -1170,7 +1170,7 @@ void toWannier90_LCAO::unkdotA(const K_Vectors& kv,
     }
     else
     {
-        for (int ib = 0; ib < GlobalV::NBANDS; ib++)
+        for (int ib = 0; ib < PARAM.inp.nbands; ib++)
         {
             if (exclude_bands.count(ib)) {
                 continue;

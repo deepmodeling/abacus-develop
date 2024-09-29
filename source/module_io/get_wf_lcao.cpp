@@ -1,5 +1,6 @@
 #include "get_wf_lcao.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_base/memory.h"
@@ -541,7 +542,7 @@ int IState_Envelope::set_wfc_grid(const int naroc[2],
     for (int j = 0; j < naroc[1]; ++j)
     {
         int igcol = globalIndex(j, nb, dim1, ipcol);
-        if (igcol >= GlobalV::NBANDS)
+        if (igcol >= PARAM.inp.nbands)
         {
             continue;
         }

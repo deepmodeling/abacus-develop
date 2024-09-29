@@ -39,9 +39,9 @@ void ModuleIO::write_proj_band_lcao(
 
     ModuleBase::ComplexMatrix weightk;
     ModuleBase::matrix weight;
-    int NUM = PARAM.globalv.nlocal * GlobalV::NBANDS * nspin0;
-    weightk.create(nspin0, GlobalV::NBANDS * PARAM.globalv.nlocal, true);
-    weight.create(nspin0, GlobalV::NBANDS * PARAM.globalv.nlocal, true);
+    int NUM = PARAM.globalv.nlocal * PARAM.inp.nbands * nspin0;
+    weightk.create(nspin0, PARAM.inp.nbands * PARAM.globalv.nlocal, true);
+    weight.create(nspin0, PARAM.inp.nbands * PARAM.globalv.nlocal, true);
 
 
     for (int is = 0; is < nspin0; is++)
@@ -51,7 +51,7 @@ void ModuleIO::write_proj_band_lcao(
         Mulk[0].create(pv.ncol, pv.nrow);
 
         psi->fix_k(is);
-        for (int i = 0; i < GlobalV::NBANDS; ++i)
+        for (int i = 0; i < PARAM.inp.nbands; ++i)
         {
             const int NB = i + 1;
 
@@ -107,9 +107,9 @@ void ModuleIO::write_proj_band_lcao(
                 out << "<norbitals>" << std::setw(2) << PARAM.globalv.nlocal / 2 << "</norbitals>" << std::endl;
             else
                 out << "<norbitals>" << std::setw(2) << PARAM.globalv.nlocal << "</norbitals>" << std::endl;
-            out << "<band_structure nkpoints=\"" << nks << "\" nbands=\"" << GlobalV::NBANDS << "\" units=\"eV\">"
+            out << "<band_structure nkpoints=\"" << nks << "\" nbands=\"" << PARAM.inp.nbands << "\" units=\"eV\">"
                 << std::endl;
-            for (int ib = 0; ib < GlobalV::NBANDS; ib++)
+            for (int ib = 0; ib < PARAM.inp.nbands; ib++)
                 out << " " << (pelec->ekb(is * nks, ib)) * ModuleBase::Ry_to_eV;
             out << std::endl;
             out << "</band_structure>" << std::endl;
@@ -137,7 +137,7 @@ void ModuleIO::write_proj_band_lcao(
                     out << std::setw(2) << "z=\"" << std::setw(40) << N1 + 1 << "\"" << std::endl;
                     out << ">" << std::endl;
                     out << "<data>" << std::endl;
-                    for (int ib = 0; ib < GlobalV::NBANDS; ib++)
+                    for (int ib = 0; ib < PARAM.inp.nbands; ib++)
                     {
                         if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2)
                             out << std::setw(13) << weight(is, ib * PARAM.globalv.nlocal + w);
@@ -192,9 +192,9 @@ void ModuleIO::write_proj_band_lcao(
 
     ModuleBase::ComplexMatrix weightk;
     ModuleBase::matrix weight;
-    int NUM = PARAM.globalv.nlocal * GlobalV::NBANDS * kv.get_nks();
-    weightk.create(kv.get_nks(), GlobalV::NBANDS * PARAM.globalv.nlocal, true);
-    weight.create(kv.get_nks(), GlobalV::NBANDS * PARAM.globalv.nlocal, true);
+    int NUM = PARAM.globalv.nlocal * PARAM.inp.nbands * kv.get_nks();
+    weightk.create(kv.get_nks(), PARAM.inp.nbands * PARAM.globalv.nlocal, true);
+    weight.create(kv.get_nks(), PARAM.inp.nbands * PARAM.globalv.nlocal, true);
 
     for (int is = 0; is < nspin0; is++)
     {
@@ -228,7 +228,7 @@ void ModuleIO::write_proj_band_lcao(
                         p_dwfc[index] = conj(p_dwfc[index]);
                     }
 
-                    for (int i = 0; i < GlobalV::NBANDS; ++i)
+                    for (int i = 0; i < PARAM.inp.nbands; ++i)
                     {
                         const int NB = i + 1;
 
@@ -296,12 +296,12 @@ void ModuleIO::write_proj_band_lcao(
                 out << "<norbitals>" << std::setw(2) << PARAM.globalv.nlocal << "</norbitals>" << std::endl;
             }
 
-            out << "<band_structure nkpoints=\"" << nks << "\" nbands=\"" << GlobalV::NBANDS << "\" units=\"eV\">"
+            out << "<band_structure nkpoints=\"" << nks << "\" nbands=\"" << PARAM.inp.nbands << "\" units=\"eV\">"
                 << std::endl;
 
 			for (int ik = 0; ik < nks; ik++)
 			{
-				for (int ib = 0; ib < GlobalV::NBANDS; ib++)
+				for (int ib = 0; ib < PARAM.inp.nbands; ib++)
 					out << " " << (pelec->ekb(ik + is * nks, ib)) * ModuleBase::Ry_to_eV;
 				out << std::endl;
 			}
@@ -332,7 +332,7 @@ void ModuleIO::write_proj_band_lcao(
                     out << "<data>" << std::endl;
 					for (int ik = 0; ik < nks; ik++)
 					{
-						for (int ib = 0; ib < GlobalV::NBANDS; ib++)
+						for (int ib = 0; ib < PARAM.inp.nbands; ib++)
 						{
 							if (PARAM.inp.nspin == 1)
 							{

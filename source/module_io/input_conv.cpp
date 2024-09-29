@@ -181,7 +181,7 @@ void Input_Conv::Convert()
     }
 
 
-    GlobalV::NBANDS = PARAM.inp.nbands;
+    PARAM.inp.nbands = PARAM.inp.nbands;
 
     if (PARAM.globalv.device_flag  == "gpu" && PARAM.inp.basis_type == "pw")
     {

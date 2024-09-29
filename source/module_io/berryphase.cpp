@@ -31,7 +31,7 @@ void berryphase::get_occupation_bands()
     }
 
     occ_nbands = (int)occupied_bands;
-    if (occ_nbands > GlobalV::NBANDS)
+    if (occ_nbands > PARAM.inp.nbands)
     {
         ModuleBase::WARNING_QUIT("berryphase::get_occupation_bands",
                                  "not enough bands for berryphase, increase band numbers.");

@@ -98,7 +98,7 @@ void Cal_Test::test_memory(
 	mrhog_core = ModuleBase::Memory::calculate_mem( ngmc, "cdouble"); 
 	
 	mhs = ModuleBase::Memory::calculate_mem( PARAM.globalv.nlocal*PARAM.globalv.nlocal, "double" );
-	mwf = ModuleBase::Memory::calculate_mem( PARAM.globalv.nlocal*GlobalV::NBANDS, "double" );
+	mwf = ModuleBase::Memory::calculate_mem( PARAM.globalv.nlocal*PARAM.inp.nbands, "double" );
 	mnonzero = ModuleBase::Memory::calculate_mem( PARAM.globalv.nlocal*(PARAM.globalv.nlocal+1)/2, "bool");
 // mohan comment out 2021-02-11
 //	mspar_hsrho = Memory::calculate_mem( Hnnz*3, "double");
@@ -113,7 +113,7 @@ void Cal_Test::test_memory(
 
 	//(3) Memory for H,S matrix.
 	std::cout << " NLOCAL = " << PARAM.globalv.nlocal << std::endl;
-	std::cout << " NBANDS = " << GlobalV::NBANDS << std::endl;
+	std::cout << " NBANDS = " << PARAM.inp.nbands << std::endl;
 
 	std::cout << " Memory for H,S matrix ( " 
 		<< PARAM.globalv.nlocal << ", "
@@ -123,7 +123,7 @@ void Cal_Test::test_memory(
 	//(4) Memory for wave functions.
 	std::cout << " Memory for wave functions ( " 
 		<< PARAM.globalv.nlocal << ", "
-		<< GlobalV::NBANDS << ") = "
+		<< PARAM.inp.nbands << ") = "
 		<< mwf << " MB" << std::endl;
 
 	print_mem(1);
