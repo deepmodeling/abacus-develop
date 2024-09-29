@@ -53,6 +53,14 @@ class ElecState
     }
     // virtual void updateRhoK(const psi::Psi<std::complex<double>> &psi) = 0;
     // virtual void updateRhoK(const psi::Psi<double> &psi)=0
+    virtual void cal_tau(const psi::Psi<std::complex<double>>& psi)
+    {
+        return;
+    }
+    virtual void cal_tau(const psi::Psi<double>& psi)
+    {
+        return;
+    }
 
     // update charge density for next scf step
     // in this function, 1. input rho for construct Hamilt and 2. calculated rho from Psi will mix to 3. new charge
@@ -82,9 +90,6 @@ class ElecState
     //for NSPIN=2, it will record number of spin up and number of spin down
     //for NSPIN=4, it will record total number, magnetization for x, y, z direction  
     std::vector<double> nelec_spin;
-
-    //calculate nbands and 
-    void cal_nbands();
 
     virtual void print_psi(const psi::Psi<double>& psi_in, const int istep = -1)
     {

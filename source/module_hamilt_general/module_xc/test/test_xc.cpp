@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 #include "../xc_functional.h"
+#include "../xc_functional_libxc.h"
 #include "../exx_info.h"
 #include "xctest.h"
 
@@ -829,7 +830,7 @@ class XCTest_PBE0 : public XCTest
         void SetUp()
         {
             XC_Functional::set_xc_type("PBE0");
-            XC_Functional::get_hybrid_alpha(0.5);
+            XC_Functional::set_hybrid_alpha(0.5);
             std::vector<double> rho  = {0.17E+01, 0.17E+01, 0.15E+01, 0.88E-01, 0.18E+04};
             std::vector<double> grho = {0.81E-11, 0.17E+01, 0.36E+02, 0.87E-01, 0.55E+00};
 
@@ -884,7 +885,7 @@ class XCTest_PBE_LibXC : public XCTest
                 XC_Functional::xc(rho[i],e,v);
                 e_lda.push_back(e);
                 v_lda.push_back(v);
-                XC_Functional::gcxc_libxc(rho[i],grho[i],e,v1,v2);
+                XC_Functional_Libxc::gcxc_libxc(XC_Functional::get_func_id(), rho[i],grho[i],e,v1,v2);
                 e_gga.push_back(e);
                 v1_gga.push_back(v1);
                 v2_gga.push_back(v2);

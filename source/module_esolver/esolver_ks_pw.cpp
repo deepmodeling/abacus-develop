@@ -213,7 +213,7 @@ void ESolver_KS_PW<T, Device>::before_scf(const int istep)
 
     //! cal_ux should be called before init_scf because
     //! the direction of ux is used in noncoline_rho
-    if (PARAM.inp.nspin == 4 && PARAM.globalv.domag)
+    if (PARAM.inp.nspin == 4)
     {
         GlobalC::ucell.cal_ux();
     }
@@ -538,10 +538,16 @@ void ESolver_KS_PW<T, Device>::iter_finish(int& iter)
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::after_scf(const int istep)
 {
-    // 1) call after_scf() of ESolver_KS
+    // 1) calculate the kinetic energy density tau, sunliang 2024-09-18
+    if (PARAM.inp.out_elf[0] > 0)
+    {
+        this->pelec->cal_tau(*(this->psi));
+    }
+
+    // 2) call after_scf() of ESolver_KS
     ESolver_KS<T, Device>::after_scf(istep);
 
-    // 2) output wavefunctions
+    // 3) output wavefunctions
     if (this->wf.out_wfc_pw == 1 || this->wf.out_wfc_pw == 2)
     {
         std::stringstream ssw;

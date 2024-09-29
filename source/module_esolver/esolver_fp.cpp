@@ -5,9 +5,11 @@
 #include "module_io/cube_io.h"
 #include "module_io/output_log.h"
 #include "module_io/write_elecstat_pot.h"
+#include "module_io/write_elf.h"
 #include "module_parameter/parameter.h"
 #include "module_io/rhog_io.h"
 #include "module_io/cif_io.h"
+#include "module_elecstate/module_charge/symmetry_rho.h"
 
 namespace ModuleESolver
 {
@@ -115,6 +117,15 @@ void ESolver_FP::before_all_runners(const Input_para& inp, UnitCell& cell)
     this->CE.Init_CE(PARAM.inp.nspin, GlobalC::ucell.nat, this->pw_rhod->nrxx, inp.chg_extrap);
 
     return;
+}
+
+//------------------------------------------------------------------------------
+//! the 12th function of ESolver_KS: get_conv_elec
+//! tqzhao add 2024-05-15
+//------------------------------------------------------------------------------
+bool ESolver_FP::get_conv_elec()
+{
+    return this->conv_elec;
 }
 
 //! Something to do after SCF iterations when SCF is converged or comes to the max iter step.
@@ -251,6 +262,32 @@ void ESolver_FP::after_scf(const int istep)
                 this->pelec->charge,
                 &(GlobalC::ucell),
                 this->pelec->pot->get_fixed_v());
+        }
+
+        // 5) write ELF
+        if (PARAM.inp.out_elf[0] > 0)
+        {
+            this->pelec->charge->cal_elf = true;
+            Symmetry_rho srho;
+            for (int is = 0; is < PARAM.inp.nspin; is++)
+            {
+                srho.begin(is, *(this->pelec->charge), this->pw_rhod, GlobalC::ucell.symm);
+            }
+
+            std::string out_dir =PARAM.globalv.global_out_dir;
+            ModuleIO::write_elf(
+#ifdef __MPI
+                this->pw_big->bz,
+                this->pw_big->nbz,
+#endif
+                out_dir,
+                istep,
+                PARAM.inp.nspin,
+                this->pelec->charge->rho,
+                this->pelec->charge->kin_r,
+                this->pw_rhod,
+                &(GlobalC::ucell),
+                PARAM.inp.out_elf[1]);
         }
     }
 }

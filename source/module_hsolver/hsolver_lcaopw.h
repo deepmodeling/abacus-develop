@@ -18,7 +18,7 @@ class HSolverLIP
     using Real = typename GetTypeReal<T>::type;
 
   public:
-    HSolverLIP(ModulePW::PW_Basis_K* wfc_basis_in);
+    HSolverLIP(ModulePW::PW_Basis_K* wfc_basis_in) : wfc_basis(wfc_basis_in) {};
 
     /// @brief solve function for lcao_in_pw
     /// @param pHamilt interface to hamilt
@@ -33,9 +33,7 @@ class HSolverLIP
                const bool skip_charge);
 
   private:
-    ModulePW::PW_Basis_K* wfc_basis = nullptr;
-
-    std::vector<Real> eigenvalues;
+    ModulePW::PW_Basis_K* wfc_basis;
 
 #ifdef USE_PAW
     void paw_func_in_kloop(const int ik);

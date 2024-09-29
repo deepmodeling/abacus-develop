@@ -7,6 +7,9 @@
 
 #include "module_base/spherical_bessel_transformer.h"
 
+// FIXME: should update with pyabacus
+// #include "module_io/orb_io.h"
+
 RadialSet::~RadialSet()
 {
     delete[] nzeta_;
@@ -252,3 +255,28 @@ void RadialSet::write_abacus_orb(const std::string& file_name, const int rank) c
     }
     file_to.close();
 }
+
+// FIXME: should update with pyabacus
+// void RadialSet::write_abacus_orb(const std::string& forb, const int rank) const
+// {
+//     std::ofstream ofs;
+//     ofs.open(forb, std::ios::out);
+
+//     const double dr = 0.01;
+//     const int nr = static_cast<int>(rcut_max_ / dr) + 1;
+//     std::vector<int> nzeta(lmax_ + 1);
+//     std::copy(nzeta_, nzeta_ + lmax_ + 1, nzeta.begin());
+//     std::vector<std::vector<double>> radials(nchi_, std::vector<double>(nr, 0.0));
+//     int ichi = 0;
+//     for (int l = 0; l <= lmax_; l++)
+//     {
+//         for (int izeta = 0; izeta < nzeta[l]; izeta++)
+//         {
+//             std::copy(chi_[index(l, izeta)].rvalue(), chi_[index(l, izeta)].rvalue() + nr, radials[ichi].begin());
+//             ichi++;
+//         }
+//     }
+
+//     ModuleIO::write_abacus_orb(ofs, symbol_, 100, nr, dr, nzeta, radials, rank);
+//     ofs.close();
+// }

@@ -31,3 +31,5 @@ smearing_sigma			0.002
 mixing_type		plain
 mixing_beta		0.7
 
+
+pw_seed 1

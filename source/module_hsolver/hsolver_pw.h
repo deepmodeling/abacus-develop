@@ -21,20 +21,17 @@ class HSolverPW
   public:
     HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in,
               wavefunc* pwf_in,
-              
               const std::string calculation_type_in,
               const std::string basis_type_in,
               const std::string method_in,
               const bool use_paw_in,
               const bool use_uspp_in,
               const int nspin_in,
-              
               const int scf_iter_in,
               const int diag_iter_max_in,
               const double diag_thr_in,
               const bool need_subspace_in,
               const bool initialed_psi_in)
-              
         : wfc_basis(wfc_basis_in), pwf(pwf_in),
           calculation_type(calculation_type_in), basis_type(basis_type_in), method(method_in), 
           use_paw(use_paw_in), use_uspp(use_uspp_in), nspin(nspin_in),

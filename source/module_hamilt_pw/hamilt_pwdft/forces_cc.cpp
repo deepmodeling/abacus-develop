@@ -23,6 +23,9 @@
 #include "module_cell/module_paw/paw_cell.h"
 #endif
 
+#ifdef USE_LIBXC
+#include "module_hamilt_general/module_xc/xc_functional_libxc.h"
+#endif
 
 
 template <typename FPTYPE, typename Device>
@@ -56,7 +59,7 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
     {
 #ifdef USE_LIBXC
         const auto etxc_vtxc_v
-            = XC_Functional::v_xc_meta(rho_basis->nrxx, ucell_in.omega, ucell_in.tpiba, chr);
+            = XC_Functional_Libxc::v_xc_meta(XC_Functional::get_func_id(), rho_basis->nrxx, ucell_in.omega, ucell_in.tpiba, chr);
 
         // etxc = std::get<0>(etxc_vtxc_v);
         // vtxc = std::get<1>(etxc_vtxc_v);

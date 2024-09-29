@@ -1,4 +1,5 @@
 #include "../xc_functional.h"
+#include "../xc_functional_libxc.h"
 #include "gtest/gtest.h"
 #define private public
 #include "module_parameter/parameter.h"
@@ -282,7 +283,7 @@ class XCTest_VXC_meta : public XCTest
 
             PARAM.input.nspin = 1;
             std::tuple<double, double, ModuleBase::matrix, ModuleBase::matrix> etxc_vtxc_v
-                = XC_Functional::v_xc_meta(rhopw.nrxx,ucell.omega,ucell.tpiba,&chr);
+                = XC_Functional_Libxc::v_xc_meta(XC_Functional::get_func_id(), rhopw.nrxx,ucell.omega,ucell.tpiba,&chr);
             et1 = std::get<0>(etxc_vtxc_v);
             vt1 = std::get<1>(etxc_vtxc_v);
             v1  = std::get<2>(etxc_vtxc_v);
@@ -290,7 +291,7 @@ class XCTest_VXC_meta : public XCTest
 
             PARAM.input.nspin = 2;
             etxc_vtxc_v
-                = XC_Functional::v_xc_meta(rhopw.nrxx,ucell.omega,ucell.tpiba,&chr);
+                = XC_Functional_Libxc::v_xc_meta(XC_Functional::get_func_id(), rhopw.nrxx,ucell.omega,ucell.tpiba,&chr);
             et2 = std::get<0>(etxc_vtxc_v);
             vt2 = std::get<1>(etxc_vtxc_v);
             v2  = std::get<2>(etxc_vtxc_v);

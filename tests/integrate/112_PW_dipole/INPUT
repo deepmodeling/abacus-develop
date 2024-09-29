@@ -29,3 +29,5 @@ efield_pos_dec      0.1
 efield_amp          0.01
 cal_force           1
 cal_stress          1
+
+pw_seed 1

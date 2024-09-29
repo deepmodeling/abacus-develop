@@ -21,7 +21,6 @@ namespace GlobalV
 int NBANDS = 0;
 int NLOCAL = 0;        // total number of local basis.
 
-int NSPIN = 1;       // LDA
 double nupdown = 0.0;
 
 bool use_uspp = false;
@@ -55,8 +54,6 @@ int GSIZE = DSIZE;
 //----------------------------------------------------------
 // EXPLAIN : The input file name and directory
 //----------------------------------------------------------
-std::string stru_file = "STRU";
-
 std::ofstream ofs_running;
 std::ofstream ofs_warning;
 std::ofstream ofs_info;   // output math lib info

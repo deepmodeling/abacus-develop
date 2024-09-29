@@ -47,7 +47,7 @@ struct Input_para
     bool diago_full_acc = false;        ///< all the empty states are diagonalized
     std::string init_wfc = "atomic";    ///< "file","atomic","random"
     bool psi_initializer = false;       ///< whether use psi_initializer to initialize wavefunctions
-    int pw_seed = 1;                    ///< random seed for initializing wave functions qianrui 2021-8-12
+    int pw_seed = 0;                    ///< random seed for initializing wave functions
     std::string init_chg = "atomic";    ///< "file","atomic"
     bool dm_to_rho = false;             ///< read density matrix from npz format and calculate charge density
     std::string chg_extrap = "default"; ///< xiaohui modify 2015-02-01
@@ -356,6 +356,7 @@ struct Input_para
     int nbands_istate = 5;                ///< number of bands around fermi level for get_pchg calculation.
     std::vector<int> bands_to_print = {}; ///< specify the bands to be calculated in the get_pchg
     bool if_separate_k = false; ///< whether to write partial charge for all k-points to individual files or merge them
+    std::vector<int> out_elf = {0, 3};    ///< output the electron localization function (ELF). 0: no; 1: yes
 
     // ==============   #Parameters (12.Postprocess) ===========================
     double dos_emin_ev = -15.0;

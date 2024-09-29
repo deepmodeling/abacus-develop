@@ -7,3 +7,8 @@ AddTest(
   ../../ylm.cpp
 )
 
+AddTest(
+  TARGET test_radial
+  SOURCES test_radial.cpp
+  ../radial.cpp
+)

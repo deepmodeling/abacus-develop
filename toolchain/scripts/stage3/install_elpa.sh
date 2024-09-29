@@ -9,8 +9,8 @@
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 
 # From https://elpa.mpcdf.mpg.de/software/tarball-archive/ELPA_TARBALL_ARCHIVE.html
-elpa_ver="2024.03.001"
-elpa_sha256="41c6cbf56d2dac26443faaba8a77307d261bf511682a64b96e24def77c813622"
+elpa_ver="2024.05.001"
+elpa_sha256="9caf41a3e600e2f6f4ce1931bd54185179dade9c171556d0c9b41bbc6940f2f6"
 
 
 source "${SCRIPT_DIR}"/common_vars.sh
@@ -59,13 +59,15 @@ case "$with_elpa" in
       echo "elpa-${elpa_ver} is already installed, skipping it."
     else
       require_env MATH_LIBS
-      if [ -f elpa-${elpa_ver}.tar.gz ]; then
-        echo "elpa-${elpa_ver}.tar.gz is found"
+      elpa_pkg="elpa-${elpa_ver}.tar.gz"
+      url=f"https://elpa.mpcdf.mpg.de/software/tarball-archive/Releases/${elpa_ver}/${elpa_pkg}"
+      if [ -f ${elpa_pkg} ]; then
+        echo "${elpa_pkg} is found"
       else
-        download_pkg_from_ABACUS_org "${elpa_sha256}" "elpa-${elpa_ver}.tar.gz"
+        download_pkg_from_url "${elpa_sha256}" "${elpa_pkg}" "${url}"
       fi
       [ -d elpa-${elpa_ver} ] && rm -rf elpa-${elpa_ver}
-      tar -xzf elpa-${elpa_ver}.tar.gz
+      tar -xzf ${elpa_pkg}
 
       # elpa expect FC to be an mpi fortran compiler that is happy
       # with long lines, and that a bunch of libs can be found

@@ -29,6 +29,7 @@ class KEDF_TF
 
     double get_energy(const double* const* prho);
     double get_energy_density(const double* const* prho, int is, int ir);
+    void tau_tf(const double* const* prho, double* rtau_tf);
     void tf_potential(const double* const* prho, ModuleBase::matrix& rpotential);
     void get_stress(double cell_vol);
 

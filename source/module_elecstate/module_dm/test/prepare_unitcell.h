@@ -308,8 +308,8 @@ UcellTestPrepare::UcellTestPrepare(std::string latname_in,
       coor_type(coor_type_in),
       coordinates(coordinates_in)
 {
-    mbl = {0};
-    velocity = {0};
+    mbl = std::valarray<double>(0.0, coordinates_in.size());
+	velocity = std::valarray<double>(0.0, coordinates_in.size());
 }
 
 UcellTestPrepare::UcellTestPrepare(std::string latname_in,

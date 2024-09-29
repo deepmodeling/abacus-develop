@@ -20,12 +20,14 @@
 template<>
 void LR::ESolver_LR<double>::move_exx_lri(std::shared_ptr<Exx_LRI<double>>& exx_ks)
 {
+    ModuleBase::TITLE("ESolver_LR<double>", "move_exx_lri");
     this->exx_lri = exx_ks;
     exx_ks = nullptr;
 }
 template<>
 void LR::ESolver_LR<std::complex<double>>::move_exx_lri(std::shared_ptr<Exx_LRI<std::complex<double>>>& exx_ks)
 {
+    ModuleBase::TITLE("ESolver_LR<complex>", "move_exx_lri");
     this->exx_lri = exx_ks;
     exx_ks = nullptr;
 }
@@ -128,7 +130,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
 #endif
 {
     redirect_log(inp.out_alllog);
-    ModuleBase::TITLE("ESolver_LR", "ESolver_LR");
+    ModuleBase::TITLE("ESolver_LR", "ESolver_LR(KS)");
 
     if (this->input.lr_solver == "spectrum") {
         throw std::invalid_argument("when lr_solver==spectrum, esolver_type must be set to `lr` to skip the KS calculation.");
@@ -226,7 +228,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
 #endif
 {
     redirect_log(inp.out_alllog);
-    ModuleBase::TITLE("ESolver_LR", "ESolver_LR");
+    ModuleBase::TITLE("ESolver_LR", "ESolver_LR(from scratch)");
     // xc kernel
     this->xc_kernel = inp.xc_kernel;
     std::transform(xc_kernel.begin(), xc_kernel.end(), xc_kernel.begin(), tolower);
@@ -236,7 +238,6 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
     this->pelec = new elecstate::ElecStateLCAO<T>();
 
     // necessary steps in ESolver_KS::before_all_runners : symmetry and k-points
-    ucell.cal_nelec(GlobalV::nelec);
     if (ModuleSymmetry::Symmetry::symm_flag == 1)
     {
         GlobalC::ucell.symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running);

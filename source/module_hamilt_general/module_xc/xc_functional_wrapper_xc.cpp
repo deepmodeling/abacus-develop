@@ -122,38 +122,3 @@ void XC_Functional::xc_spin(const double &rho, const double &zeta,
 	}
 	return;
 }
-
-void XC_Functional::xc_spin_libxc(const double &rhoup, const double &rhodw,
-		double &exc, double &vxcup, double &vxcdw)
-{
-#ifdef USE_LIBXC
-    double e, vup, vdw;
-    double *rho_ud, *vxc_ud;
-    exc = vxcup = vxcdw = 0.0;
-
-    rho_ud = new double[2];
-    vxc_ud = new double[2];
-    rho_ud[0] = rhoup;
-    rho_ud[1] = rhodw;
-
-    std::vector<xc_func_type> funcs = init_func(XC_POLARIZED);
-
-    for(xc_func_type &func : funcs)
-    {
-        if( func.info->family == XC_FAMILY_LDA)
-        {
-            // call Libxc function: xc_lda_exc_vxc
-            xc_lda_exc_vxc( &func, 1, rho_ud, &e, vxc_ud);
-        }
-        exc += e;
-        vxcup += vxc_ud[0];
-        vxcdw += vxc_ud[1];
-    }    
-
-    finish_func(funcs);
-    delete[] rho_ud;
-    delete[] vxc_ud;
-#else
-    ModuleBase::WARNING_QUIT("xc_spin_libxc","compile with LIBXC to use this subroutine");
-#endif 
-}
