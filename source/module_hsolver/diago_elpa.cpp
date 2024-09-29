@@ -1,5 +1,6 @@
 #include "diago_elpa.h"
 
+#include "module_parameter/parameter.h"
 #include "genelpa/elpa_solver.h"
 #include "module_base/blacs_connector.h"
 #include "module_base/global_variable.h"
@@ -74,7 +75,7 @@ void DiagoElpa<std::complex<double>>::diag(
     matcd h_mat, s_mat;
     phm_in->matrix(h_mat, s_mat);
 
-    std::vector<double> eigen(GlobalV::NLOCAL, 0.0);
+    std::vector<double> eigen(PARAM.globalv.nlocal, 0.0);
 
     bool isReal = false;
     MPI_Comm COMM_DIAG = setmpicomm(); // set mpi_comm needed
@@ -112,7 +113,7 @@ void DiagoElpa<double>::diag(hamilt::Hamilt<double>* phm_in,
     matd h_mat, s_mat;
     phm_in->matrix(h_mat, s_mat);
 
-    std::vector<double> eigen(GlobalV::NLOCAL, 0.0);
+    std::vector<double> eigen(PARAM.globalv.nlocal, 0.0);
 
     bool isReal = true;
     MPI_Comm COMM_DIAG = setmpicomm(); // set mpi_comm needed
@@ -154,7 +155,7 @@ void DiagoElpa<std::complex<double>>::diag_pool(hamilt::MatrixBlock<std::complex
     Real* eigenvalue_in,
     MPI_Comm& comm)
 {
-    std::vector<double> eigen(GlobalV::NLOCAL, 0.0);
+    std::vector<double> eigen(PARAM.globalv.nlocal, 0.0);
     bool isReal = false;
     ELPA_Solver es((const bool)isReal,
                    comm,
@@ -183,7 +184,7 @@ void DiagoElpa<double>::diag_pool(hamilt::MatrixBlock<double>& h_mat,
     Real* eigenvalue_in,
     MPI_Comm& comm)
 {
-    std::vector<double> eigen(GlobalV::NLOCAL, 0.0);
+    std::vector<double> eigen(PARAM.globalv.nlocal, 0.0);
 
     bool isReal = true;
     // ELPA_Solver es(isReal, COMM_DIAG, GlobalV::NBANDS, h_mat.row, h_mat.col,

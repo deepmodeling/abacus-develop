@@ -1,5 +1,6 @@
 #include "diago_cusolver.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/blacs_connector.h"
 #include "module_base/global_variable.h"
 #include "module_base/scalapack_connector.h"
@@ -140,7 +141,7 @@ void DiagoCusolver<T>::diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* e
 #endif
 
     // Allocate memory for eigenvalues
-    std::vector<double> eigen(GlobalV::NLOCAL, 0.0);
+    std::vector<double> eigen(PARAM.globalv.nlocal, 0.0);
 
     // Start the timer for the cusolver operation
     ModuleBase::timer::tick("DiagoCusolver", "cusolver");

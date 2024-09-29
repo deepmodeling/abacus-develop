@@ -70,7 +70,7 @@ void DiagoElpaNative<T>::diag_pool(hamilt::MatrixBlock<T>& h_mat,
     int nprows, npcols, myprow, mypcol;
 
     Cblacs_gridinfo(cblacs_ctxt, &nprows, &npcols, &myprow, &mypcol);
-    std::vector<Real> eigen(GlobalV::NLOCAL, 0.0);
+    std::vector<Real> eigen(PARAM.globalv.nlocal, 0.0);
     std::vector<T> eigenvectors(narows * nacols);
 
     if (elpa_init(20210430) != ELPA_OK)

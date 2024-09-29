@@ -1,5 +1,6 @@
 #ifdef __CUSOLVERMP
 
+#include "module_parameter/parameter.h"
 #include "diago_cusolvermp.h"
 
 #include "module_base/timer.h"
@@ -15,7 +16,7 @@ void DiagoCusolverMP<T>::diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real*
     hamilt::MatrixBlock<T> h_mat, s_mat;
     phm_in->matrix(h_mat, s_mat);
 
-    std::vector<Real> eigen(GlobalV::NLOCAL, 0.0);
+    std::vector<Real> eigen(PARAM.globalv.nlocal, 0.0);
     std::vector<T> eigenvectors(h_mat.row * h_mat.col);
 
     MPI_Comm COMM_DIAG = MPI_COMM_WORLD; // use all processes
