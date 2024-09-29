@@ -55,7 +55,7 @@ class CalAtomsInfo
                     para.sys.nlocal += nlocal_it * 2; // zhengdy-soc
                 }
             }
-            PARAM.globalv.nlocal = para.sys.nlocal;
+            GlobalV::NLOCAL = para.sys.nlocal;
         }
 
         // calculate the total number of electrons

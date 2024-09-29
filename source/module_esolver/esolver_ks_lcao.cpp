@@ -453,7 +453,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners()
     if (PARAM.inp.out_mat_xc)
     {
         ModuleIO::write_Vxc<TK, TR>(PARAM.inp.nspin,
-                                    GlobalV::NLOCAL,
+                                    PARAM.globalv.nlocal,
                                     GlobalV::DRANK,
                                     &this->pv,
                                     *this->psi,
@@ -480,7 +480,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners()
     if (PARAM.inp.out_eband_terms)
     {
         ModuleIO::write_eband_terms<TK, TR>(PARAM.inp.nspin,
-                                            GlobalV::NLOCAL,
+                                            PARAM.globalv.nlocal,
                                             GlobalV::DRANK,
                                             &this->pv,
                                             *this->psi,
@@ -843,7 +843,7 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
                 {
                     ModuleIO::save_mat(istep,
                                        h_mat.p,
-                                       GlobalV::NLOCAL,
+                                       PARAM.globalv.nlocal,
                                        bit,
                                        PARAM.inp.out_mat_hs[1],
                                        1,
@@ -854,7 +854,7 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
                                        GlobalV::DRANK);
                     ModuleIO::save_mat(istep,
                                        s_mat.p,
-                                       GlobalV::NLOCAL,
+                                       PARAM.globalv.nlocal,
                                        bit,
                                        PARAM.inp.out_mat_hs[1],
                                        1,
@@ -1164,7 +1164,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
     LDI.out_deepks_labels(this->pelec->f_en.etot,
                           this->pelec->klist->get_nks(),
                           GlobalC::ucell.nat,
-                          GlobalV::NLOCAL,
+                          PARAM.globalv.nlocal,
                           this->pelec->ekb,
                           this->pelec->klist->kvec_d,
                           GlobalC::ucell,
@@ -1288,7 +1288,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
             ekinetic->init(ik);
             ModuleIO::save_mat(0,
                                hsk.get_hk(),
-                               GlobalV::NLOCAL,
+                               PARAM.globalv.nlocal,
                                false,
                                PARAM.inp.out_mat_tk[1],
                                1,

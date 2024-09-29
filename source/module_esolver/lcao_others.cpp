@@ -114,7 +114,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                       GlobalV::NBANDS,
                       PARAM.inp.nelec,
                       PARAM.inp.nspin,
-                      GlobalV::NLOCAL,
+                      PARAM.globalv.nlocal,
                       PARAM.globalv.global_out_dir,
                       GlobalV::MY_RANK,
                       GlobalV::ofs_warning,
@@ -144,7 +144,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                       GlobalV::NBANDS,
                       PARAM.inp.nelec,
                       PARAM.inp.nspin,
-                      GlobalV::NLOCAL,
+                      PARAM.globalv.nlocal,
                       PARAM.globalv.global_out_dir,
                       GlobalV::MY_RANK,
                       GlobalV::ofs_warning,
@@ -177,7 +177,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                       PARAM.inp.bands_to_print,
                       GlobalV::NBANDS,
                       PARAM.inp.nspin,
-                      GlobalV::NLOCAL,
+                      PARAM.globalv.nlocal,
                       PARAM.globalv.global_out_dir);
         }
         else
@@ -196,7 +196,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                       PARAM.inp.bands_to_print,
                       GlobalV::NBANDS,
                       PARAM.inp.nspin,
-                      GlobalV::NLOCAL,
+                      PARAM.globalv.nlocal,
                       PARAM.globalv.global_out_dir);
         }
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "getting wave function");

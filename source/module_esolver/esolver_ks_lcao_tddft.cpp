@@ -129,7 +129,7 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(const int istep, const int iter, cons
         {
             module_tddft::Evolve_elec::solve_psi(istep,
                                                  GlobalV::NBANDS,
-                                                 GlobalV::NLOCAL,
+                                                 PARAM.globalv.nlocal,
                                                  this->p_hamilt,
                                                  this->pv,
                                                  this->psi,
@@ -148,7 +148,7 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(const int istep, const int iter, cons
     {
         module_tddft::Evolve_elec::solve_psi(istep,
                                              GlobalV::NBANDS,
-                                             GlobalV::NLOCAL,
+                                             PARAM.globalv.nlocal,
                                              this->p_hamilt,
                                              this->pv,
                                              this->psi,
@@ -256,7 +256,7 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
                 {
                     ModuleIO::save_mat(istep,
                                        h_mat.p,
-                                       GlobalV::NLOCAL,
+                                       PARAM.globalv.nlocal,
                                        bit,
                                        PARAM.inp.out_mat_hs[1],
                                        1,
@@ -268,7 +268,7 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
 
                     ModuleIO::save_mat(istep,
                                        s_mat.p,
-                                       GlobalV::NLOCAL,
+                                       PARAM.globalv.nlocal,
                                        bit,
                                        PARAM.inp.out_mat_hs[1],
                                        1,
@@ -313,7 +313,7 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
     const int ncol_nbands = this->pv.ncol_bands;
     const int nrow = this->pv.nrow;
     const int nbands = GlobalV::NBANDS;
-    const int nlocal = GlobalV::NLOCAL;
+    const int nlocal = PARAM.globalv.nlocal;
 
     // store wfc and Hk laststep
     if (istep >= (wf.init_wfc == "file" ? 0 : 1) && this->conv_elec)
