@@ -59,6 +59,11 @@ void ElecState::fixed_weights(const std::vector<double>& ocp_kb, const int& nban
 void ElecState::init_nelec_spin()
 {
     this->nelec_spin.resize(PARAM.inp.nspin);
+    if (PARAM.inp.nspin == 2)
+    {
+        this->nelec_spin[0] = (PARAM.inp.nelec + PARAM.inp.nupdown) / 2.0;
+        this->nelec_spin[1] = (PARAM.inp.nelec - PARAM.inp.nupdown) / 2.0;
+    }
 }
 
 void ElecState::calculate_weights()
