@@ -19,6 +19,7 @@ struct System_para
     // ------------ parameters not defined in INPUT file -------------
     // ------------ but decided by INPUT parameters      -------------
     // ---------------------------------------------------------------
+    int nlocal = 0; ///< total number of local basis.
     bool two_fermi = false; ///< true if "nupdown" is set
     bool use_uspp = false;   ///< true if "uspp" is set
     bool dos_setemin = false; ///< true: "dos_emin_ev" is set

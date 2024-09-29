@@ -42,19 +42,20 @@ class CalAtomsInfo
             }
     
             // calculate the total number of local basis
-            GlobalV::NLOCAL = 0;
+            para.sys.nlocal = 0;
             for (int it = 0; it < ntype; ++it)
             {
                 const int nlocal_it = atoms[it].nw * atoms[it].na;
                 if (para.inp.nspin != 4)
                 {
-                    GlobalV::NLOCAL += nlocal_it;
+                    para.sys.nlocal += nlocal_it;
                 }
                 else
                 {
-                    GlobalV::NLOCAL += nlocal_it * 2; // zhengdy-soc
+                    para.sys.nlocal += nlocal_it * 2; // zhengdy-soc
                 }
             }
+            PARAM.globalv.nlocal = para.sys.nlocal;
         }
 
         // calculate the total number of electrons
@@ -67,7 +68,7 @@ class CalAtomsInfo
             nelec_spin[0] = (PARAM.inp.nelec + PARAM.inp.nupdown ) / 2.0;
             nelec_spin[1] = (PARAM.inp.nelec - PARAM.inp.nupdown ) / 2.0;
         }
-        cal_nbands(PARAM.inp.nelec, GlobalV::NLOCAL, nelec_spin, GlobalV::NBANDS);
+        cal_nbands(PARAM.inp.nelec, para.sys.nlocal, nelec_spin, GlobalV::NBANDS);
 
         return;
     }
