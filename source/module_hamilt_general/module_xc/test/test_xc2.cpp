@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 #include "xctest.h"
 #include "../xc_functional.h"
+#include "../xc_functional_libxc.h"
 #include "../exx_info.h"
 /************************************************
 *  unit test of functionals
@@ -455,7 +456,7 @@ class XCTest_PBE_SPN_LibXC : public XCTest
                 double e,v1,v2,v3,v4,v5;
                 double r1 = rho[i] * (1+zeta[i]) / 2.0;
                 double r2 = rho[i] * (1-zeta[i]) / 2.0;
-                XC_Functional::gcxc_spin_libxc(r1,r2,gdr[i],gdr[i],e,v1,v2,v3,v4,v5);
+                XC_Functional_Libxc::gcxc_spin_libxc(XC_Functional::get_func_id(), r1,r2,gdr[i],gdr[i],e,v1,v2,v3,v4,v5);
                 e_gga.push_back(e);
                 v1_gga.push_back(v1+v3);
                 v2_gga.push_back(v2+v4);
@@ -494,7 +495,7 @@ class XCTest_PZ_SPN_LibXC : public XCTest
                 double e,v1,v2;
                 double r1 = rho[i] * (1+zeta[i]) / 2.0;
                 double r2 = rho[i] * (1-zeta[i]) / 2.0;
-                XC_Functional::xc_spin_libxc(r1,r2,e,v1,v2);
+                XC_Functional_Libxc::xc_spin_libxc(XC_Functional::get_func_id(), r1,r2,e,v1,v2);
                 e_lda.push_back(e);
                 v1_lda.push_back(v1);
                 v2_lda.push_back(v2);
