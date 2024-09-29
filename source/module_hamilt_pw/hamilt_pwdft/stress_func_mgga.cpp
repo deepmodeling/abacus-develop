@@ -48,7 +48,7 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(ModuleBase::matrix& sigma,
             current_spin = p_kv->isk[ik];
         const int npw = p_kv->ngk[ik];
 
-        for (int ibnd = 0; ibnd < GlobalV::NBANDS; ibnd++)
+        for (int ibnd = 0; ibnd < PARAM.inp.nbands; ibnd++)
         {
             const FPTYPE w1 = wg(ik, ibnd) / GlobalC::ucell.omega;
             const std::complex<FPTYPE>* psi = &psi_in[0](ik, ibnd, 0);

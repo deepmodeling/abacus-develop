@@ -134,9 +134,9 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
 
                 psi_in[0].fix_k(ik);
                 double *weight, *epsilon;
-                weight = new double[GlobalV::NBANDS];
-                epsilon = new double[GlobalV::NBANDS];
-                for (int ib = 0; ib < GlobalV::NBANDS; ib++)
+                weight = new double[PARAM.inp.nbands];
+                epsilon = new double[PARAM.inp.nbands];
+                for (int ib = 0; ib < PARAM.inp.nbands; ib++)
                 {
                     weight[ib] = wg(ik, ib);
                     epsilon[ib] = ekb(ik, ib);
@@ -144,7 +144,7 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
                 GlobalC::paw_cell.paw_nl_force(reinterpret_cast<std::complex<double>*>(psi_in[0].get_pointer()),
                                                epsilon,
                                                weight,
-                                               GlobalV::NBANDS,
+                                               PARAM.inp.nbands,
                                                forcenl.c);
 
                 delete[] weight;
