@@ -23,7 +23,7 @@ void init_basis_lcao(Parallel_Orbitals& pv,
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "init_basis_lcao");
 
-    const int nlocal = GlobalV::NLOCAL;
+    const int nlocal = PARAM.globalv.nlocal;
     int nb2d = PARAM.inp.nb2d;
     // autoset NB2D first
     if (nb2d == 0)
