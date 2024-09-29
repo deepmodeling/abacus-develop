@@ -229,7 +229,7 @@ TEST(ModuleIOTest, WriteWfcNao)
     {
         // Set up GlobalV
         GlobalV::DRANK = 0;
-        GlobalV::NBANDS = 2;
+        PARAM.input.nbands = 2;
         PARAM.sys.nlocal = 2;
         PARAM.input.out_app_flag = true;
 
@@ -276,7 +276,7 @@ TEST(ModuleIOTest, WriteWfcNaoBinary)
     {
         // Set up GlobalV
         GlobalV::DRANK = 0;
-        GlobalV::NBANDS = 2;
+        PARAM.input.nbands = 2;
         PARAM.sys.nlocal = 2;
         PARAM.input.out_app_flag = true;
 
@@ -333,7 +333,7 @@ TEST(ModuleIOTest, WriteWfcNaoComplex)
     if (GlobalV::MY_RANK == 0)
     {
         // Set up GlobalV
-        GlobalV::NBANDS = 2;
+        PARAM.input.nbands = 2;
         PARAM.sys.nlocal = 3;
         PARAM.input.out_app_flag = true;
         // set up test data
@@ -377,7 +377,7 @@ TEST(ModuleIOTest, WriteWfcNaoComplexBinary)
     if (GlobalV::MY_RANK == 0)
     {
         // Set up GlobalV
-        GlobalV::NBANDS = 2;
+        PARAM.input.nbands = 2;
         PARAM.sys.nlocal = 3;
         PARAM.input.out_app_flag = true;
         // set up test data

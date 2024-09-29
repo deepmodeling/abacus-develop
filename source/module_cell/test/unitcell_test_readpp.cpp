@@ -123,7 +123,7 @@ class UcellTest : public ::testing::Test {
         PARAM.input.nelec = 10.0;
         PARAM.input.nupdown  = 0.0;
         PARAM.sys.two_fermi = false;
-        GlobalV::NBANDS = 6;
+        PARAM.input.nbands = 6;
         PARAM.sys.nlocal = 6;
         PARAM.input.lspinorb = false;
     }
@@ -412,58 +412,58 @@ TEST_F(UcellTest, CalNelec) {
 TEST_F(UcellTest, CalNbands)
 {
     std::vector<double> nelec_spin(2, 5.0);
-    cal_nbands(PARAM.input.nelec, PARAM.sys.nlocal, nelec_spin, GlobalV::NBANDS);
-    EXPECT_EQ(GlobalV::NBANDS, 6);
+    cal_nbands(PARAM.input.nelec, PARAM.sys.nlocal, nelec_spin, PARAM.input.nbands);
+    EXPECT_EQ(PARAM.input.nbands, 6);
 }
 
 TEST_F(UcellTest, CalNbandsFractionElec)
 {
     PARAM.input.nelec = 9.5;
     std::vector<double> nelec_spin(2, 5.0);
-    cal_nbands(PARAM.input.nelec, PARAM.sys.nlocal, nelec_spin, GlobalV::NBANDS);
-    EXPECT_EQ(GlobalV::NBANDS, 6);
+    cal_nbands(PARAM.input.nelec, PARAM.sys.nlocal, nelec_spin, PARAM.input.nbands);
+    EXPECT_EQ(PARAM.input.nbands, 6);
 }
 
 TEST_F(UcellTest, CalNbandsSOC)
 {
     PARAM.input.lspinorb = true;
-    GlobalV::NBANDS = 0;
+    PARAM.input.nbands = 0;
     std::vector<double> nelec_spin(2, 5.0);
-    cal_nbands(PARAM.input.nelec, PARAM.sys.nlocal, nelec_spin, GlobalV::NBANDS);
-    EXPECT_EQ(GlobalV::NBANDS, 20);
+    cal_nbands(PARAM.input.nelec, PARAM.sys.nlocal, nelec_spin, PARAM.input.nbands);
+    EXPECT_EQ(PARAM.input.nbands, 20);
 }
 
 TEST_F(UcellTest, CalNbandsSDFT)
 {
     PARAM.input.esolver_type = "sdft";
     std::vector<double> nelec_spin(2, 5.0);
-    EXPECT_NO_THROW(cal_nbands(PARAM.input.nelec, PARAM.sys.nlocal, nelec_spin, GlobalV::NBANDS));
+    EXPECT_NO_THROW(cal_nbands(PARAM.input.nelec, PARAM.sys.nlocal, nelec_spin, PARAM.input.nbands));
 }
 
 TEST_F(UcellTest, CalNbandsLCAO)
 {
     PARAM.input.basis_type = "lcao";
     std::vector<double> nelec_spin(2, 5.0);
-    EXPECT_NO_THROW(cal_nbands(PARAM.input.nelec, PARAM.sys.nlocal, nelec_spin, GlobalV::NBANDS));
+    EXPECT_NO_THROW(cal_nbands(PARAM.input.nelec, PARAM.sys.nlocal, nelec_spin, PARAM.input.nbands));
 }
 
 TEST_F(UcellTest, CalNbandsLCAOINPW)
 {
     PARAM.input.basis_type = "lcao_in_pw";
-    PARAM.sys.nlocal = GlobalV::NBANDS - 1;
+    PARAM.sys.nlocal = PARAM.input.nbands - 1;
     std::vector<double> nelec_spin(2, 5.0);
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(cal_nbands(PARAM.input.nelec, PARAM.sys.nlocal, nelec_spin, GlobalV::NBANDS), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(cal_nbands(PARAM.input.nelec, PARAM.sys.nlocal, nelec_spin, PARAM.input.nbands), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("NLOCAL < NBANDS"));
 }
 
 TEST_F(UcellTest, CalNbandsWarning1)
 {
-    GlobalV::NBANDS = PARAM.input.nelec / 2 - 1;
+    PARAM.input.nbands = PARAM.input.nelec / 2 - 1;
     std::vector<double> nelec_spin(2, 5.0);
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(cal_nbands(PARAM.input.nelec, PARAM.sys.nlocal, nelec_spin, GlobalV::NBANDS), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(cal_nbands(PARAM.input.nelec, PARAM.sys.nlocal, nelec_spin, PARAM.input.nbands), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("Too few bands!"));
 }
@@ -476,7 +476,7 @@ TEST_F(UcellTest, CalNbandsWarning2)
     nelec_spin[0] = (PARAM.input.nelec + PARAM.input.nupdown ) / 2.0;
     nelec_spin[1] = (PARAM.input.nelec - PARAM.input.nupdown ) / 2.0;
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(cal_nbands(PARAM.input.nelec, PARAM.sys.nlocal, nelec_spin, GlobalV::NBANDS), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(cal_nbands(PARAM.input.nelec, PARAM.sys.nlocal, nelec_spin, PARAM.input.nbands), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("Too few spin up bands!"));
 }
@@ -489,7 +489,7 @@ TEST_F(UcellTest, CalNbandsWarning3)
     nelec_spin[0] = (PARAM.input.nelec + PARAM.input.nupdown ) / 2.0;
     nelec_spin[1] = (PARAM.input.nelec - PARAM.input.nupdown ) / 2.0;
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(cal_nbands(PARAM.input.nelec, PARAM.sys.nlocal, nelec_spin, GlobalV::NBANDS), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(cal_nbands(PARAM.input.nelec, PARAM.sys.nlocal, nelec_spin, PARAM.input.nbands), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("Too few spin down bands!"));
 }
@@ -497,67 +497,67 @@ TEST_F(UcellTest, CalNbandsWarning3)
 TEST_F(UcellTest, CalNbandsSpin1)
 {
     PARAM.input.nspin = 1;
-    GlobalV::NBANDS = 0;
+    PARAM.input.nbands = 0;
     std::vector<double> nelec_spin(2, 5.0);
-    cal_nbands(PARAM.input.nelec, PARAM.sys.nlocal, nelec_spin, GlobalV::NBANDS);
-    EXPECT_EQ(GlobalV::NBANDS, 15);
+    cal_nbands(PARAM.input.nelec, PARAM.sys.nlocal, nelec_spin, PARAM.input.nbands);
+    EXPECT_EQ(PARAM.input.nbands, 15);
 }
 
 TEST_F(UcellTest, CalNbandsSpin1LCAO)
 {
     PARAM.input.nspin = 1;
-    GlobalV::NBANDS = 0;
+    PARAM.input.nbands = 0;
     PARAM.input.basis_type = "lcao";
     std::vector<double> nelec_spin(2, 5.0);
-    cal_nbands(PARAM.input.nelec, PARAM.sys.nlocal, nelec_spin, GlobalV::NBANDS);
-    EXPECT_EQ(GlobalV::NBANDS, 6);
+    cal_nbands(PARAM.input.nelec, PARAM.sys.nlocal, nelec_spin, PARAM.input.nbands);
+    EXPECT_EQ(PARAM.input.nbands, 6);
 }
 
 TEST_F(UcellTest, CalNbandsSpin4)
 {
     PARAM.input.nspin = 4;
-    GlobalV::NBANDS = 0;
+    PARAM.input.nbands = 0;
     std::vector<double> nelec_spin(2, 5.0);
-    cal_nbands(PARAM.input.nelec, PARAM.sys.nlocal, nelec_spin, GlobalV::NBANDS);
-    EXPECT_EQ(GlobalV::NBANDS, 30);
+    cal_nbands(PARAM.input.nelec, PARAM.sys.nlocal, nelec_spin, PARAM.input.nbands);
+    EXPECT_EQ(PARAM.input.nbands, 30);
 }
 
 TEST_F(UcellTest, CalNbandsSpin4LCAO)
 {
     PARAM.input.nspin = 4;
-    GlobalV::NBANDS = 0;
+    PARAM.input.nbands = 0;
     PARAM.input.basis_type = "lcao";
     std::vector<double> nelec_spin(2, 5.0);
-    cal_nbands(PARAM.input.nelec, PARAM.sys.nlocal, nelec_spin, GlobalV::NBANDS);
-    EXPECT_EQ(GlobalV::NBANDS, 6);
+    cal_nbands(PARAM.input.nelec, PARAM.sys.nlocal, nelec_spin, PARAM.input.nbands);
+    EXPECT_EQ(PARAM.input.nbands, 6);
 }
 
 TEST_F(UcellTest, CalNbandsSpin2)
 {
     PARAM.input.nspin = 2;
-    GlobalV::NBANDS = 0;
+    PARAM.input.nbands = 0;
     std::vector<double> nelec_spin(2, 5.0);
-    cal_nbands(PARAM.input.nelec, PARAM.sys.nlocal, nelec_spin, GlobalV::NBANDS);
-    EXPECT_EQ(GlobalV::NBANDS, 16);
+    cal_nbands(PARAM.input.nelec, PARAM.sys.nlocal, nelec_spin, PARAM.input.nbands);
+    EXPECT_EQ(PARAM.input.nbands, 16);
 }
 
 TEST_F(UcellTest, CalNbandsSpin2LCAO)
 {
     PARAM.input.nspin = 2;
-    GlobalV::NBANDS = 0;
+    PARAM.input.nbands = 0;
     PARAM.input.basis_type = "lcao";
     std::vector<double> nelec_spin(2, 5.0);
-    cal_nbands(PARAM.input.nelec, PARAM.sys.nlocal, nelec_spin, GlobalV::NBANDS);
-    EXPECT_EQ(GlobalV::NBANDS, 6);
+    cal_nbands(PARAM.input.nelec, PARAM.sys.nlocal, nelec_spin, PARAM.input.nbands);
+    EXPECT_EQ(PARAM.input.nbands, 6);
 }
 
 TEST_F(UcellTest, CalNbandsGaussWarning)
 {
-    GlobalV::NBANDS = 5;
+    PARAM.input.nbands = 5;
     std::vector<double> nelec_spin(2, 5.0);
     PARAM.input.smearing_method = "gaussian";
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(cal_nbands(PARAM.input.nelec, PARAM.sys.nlocal, nelec_spin, GlobalV::NBANDS), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(cal_nbands(PARAM.input.nelec, PARAM.sys.nlocal, nelec_spin, PARAM.input.nbands), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("for smearing, num. of bands > num. of occupied bands"));
 }

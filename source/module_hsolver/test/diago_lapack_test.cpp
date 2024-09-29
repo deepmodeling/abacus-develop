@@ -189,7 +189,7 @@ class DiagoLapackPrepare
     void set_env()
     {
         PARAM.sys.nlocal = nlocal;
-        GlobalV::NBANDS = nbands;
+        PARAM.input.nbands = nbands;
     }
 
     void diago()

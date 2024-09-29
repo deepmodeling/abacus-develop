@@ -201,7 +201,7 @@ class DiagoPrepare
     void set_env()
     {
         PARAM.sys.nlocal = nlocal;
-        GlobalV::NBANDS = nbands;
+        PARAM.input.nbands = nbands;
         GlobalV::DSIZE = dsize;
     }
 

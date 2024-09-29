@@ -184,7 +184,7 @@ class PexsiPrepare
     void set_env()
     {
         PARAM.sys.nlocal = nlocal;
-        GlobalV::NBANDS = nbands;
+        PARAM.input.nbands = nbands;
         GlobalV::DSIZE = dsize;
         PARAM.input.nspin = 1;
         DIAG_WORLD = MPI_COMM_WORLD;

@@ -173,7 +173,7 @@ void Set_GlobalV_Default()
     PARAM.input.nelec = 10.0;
     PARAM.input.nupdown  = 0.0;
     PARAM.sys.two_fermi = false;
-    GlobalV::NBANDS = 6;
+    PARAM.input.nbands = 6;
     PARAM.sys.nlocal = 6;
     PARAM.input.esolver_type = "ksdft";
     PARAM.input.lspinorb = false;
