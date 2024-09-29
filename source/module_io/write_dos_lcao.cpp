@@ -94,7 +94,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psi,
 
     const int npoints = static_cast<int>(std::floor((emax - emin) / de_ev));
 
-    int NUM = GlobalV::NLOCAL * npoints;
+    int NUM = PARAM.globalv.nlocal * npoints;
 
     const int np = npoints;
     ModuleBase::matrix* pdosk = new ModuleBase::matrix[nspin0];
@@ -102,19 +102,19 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psi,
     for (int is = 0; is < nspin0; ++is)
     {
 
-        pdosk[is].create(GlobalV::NLOCAL, np, true);
+        pdosk[is].create(PARAM.globalv.nlocal, np, true);
     }
     ModuleBase::matrix* pdos = new ModuleBase::matrix[nspin0];
     for (int is = 0; is < nspin0; ++is)
     {
-        pdos[is].create(GlobalV::NLOCAL, np, true);
+        pdos[is].create(PARAM.globalv.nlocal, np, true);
     }
 
     double a = bcoeff;
     double c = 2 * 3.141592653;
     double b = sqrt(c) * a;
 
-    std::complex<double>* waveg = new std::complex<double>[GlobalV::NLOCAL];
+    std::complex<double>* waveg = new std::complex<double>[PARAM.globalv.nlocal];
 
     double* Gauss = new double[np];
 
@@ -129,7 +129,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psi,
         const double* ppsi = psi->get_pointer();
         for (int i = 0; i < GlobalV::NBANDS; ++i)
         {
-            ModuleBase::GlobalFunc::ZEROS(waveg, GlobalV::NLOCAL);
+            ModuleBase::GlobalFunc::ZEROS(waveg, PARAM.globalv.nlocal);
 
             ModuleBase::GlobalFunc::ZEROS(Gauss, np);
             for (int n = 0; n < npoints; ++n)
@@ -149,8 +149,8 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psi,
 #ifdef __MPI
             const char T_char = 'T';
             pdgemv_(&T_char,
-                    &GlobalV::NLOCAL,
-                    &GlobalV::NLOCAL,
+                    &PARAM.globalv.nlocal,
+                    &PARAM.globalv.nlocal,
                     &one_float,
                     sk,
                     &one_int,
@@ -169,7 +169,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psi,
                     &one_int);
 #endif
 
-            for (int j = 0; j < GlobalV::NLOCAL; ++j)
+            for (int j = 0; j < PARAM.globalv.nlocal; ++j)
             {
 
                 if (pv.in_this_processor(j, i))
@@ -204,7 +204,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psi,
                 {
                     double y = 0.0;
                     double en = emin + n * de_ev;
-                    for (int i = 0; i < GlobalV::NLOCAL; i++)
+                    for (int i = 0; i < PARAM.globalv.nlocal; i++)
                     {
                         y += pdos[0](i, n);
                     }
@@ -219,7 +219,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psi,
                     double y = 0.0;
                     double z = 0.0;
                     double en = emin + n * de_ev;
-                    for (int i = 0; i < GlobalV::NLOCAL; i++)
+                    for (int i = 0; i < PARAM.globalv.nlocal; i++)
                     {
                         y += pdos[0](i, n);
                         z += pdos[1](i, n);
@@ -241,9 +241,9 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psi,
             out << "<pdos>" << std::endl;
             out << "<nspin>" << PARAM.inp.nspin << "</nspin>" << std::endl;
             if (PARAM.inp.nspin == 4) {
-                out << "<norbitals>" << std::setw(2) << GlobalV::NLOCAL / 2 << "</norbitals>" << std::endl;
+                out << "<norbitals>" << std::setw(2) << PARAM.globalv.nlocal / 2 << "</norbitals>" << std::endl;
             } else {
-                out << "<norbitals>" << std::setw(2) << GlobalV::NLOCAL << "</norbitals>" << std::endl;
+                out << "<norbitals>" << std::setw(2) << PARAM.globalv.nlocal << "</norbitals>" << std::endl;
 }
             out << "<energy_values units=\"eV\">" << std::endl;
 
@@ -406,7 +406,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<std::complex<double>>* psi,
 
     const int npoints = static_cast<int>(std::floor((emax - emin) / de_ev));
 
-    int NUM = GlobalV::NLOCAL * npoints;
+    int NUM = PARAM.globalv.nlocal * npoints;
 
     const int np = npoints;
 
@@ -416,21 +416,21 @@ void ModuleIO::write_dos_lcao(const psi::Psi<std::complex<double>>* psi,
 
         for (int is = 0; is < nspin0; ++is)
         {
-            pdosk[is].create(GlobalV::NLOCAL, np, true);
+            pdosk[is].create(PARAM.globalv.nlocal, np, true);
         }
 
         ModuleBase::matrix* pdos = new ModuleBase::matrix[nspin0];
 
         for (int is = 0; is < nspin0; ++is)
         {
-            pdos[is].create(GlobalV::NLOCAL, np, true);
+            pdos[is].create(PARAM.globalv.nlocal, np, true);
         }
 
         double a = bcoeff;
         double c = 2 * 3.141592653;
         double b = sqrt(c) * a;
 
-        std::complex<double>* waveg = new std::complex<double>[GlobalV::NLOCAL];
+        std::complex<double>* waveg = new std::complex<double>[PARAM.globalv.nlocal];
 
         double* Gauss = new double[np]();
 
@@ -469,7 +469,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<std::complex<double>>* psi,
                     for (int i = 0; i < GlobalV::NBANDS; ++i)
                     {
 
-                        ModuleBase::GlobalFunc::ZEROS(waveg, GlobalV::NLOCAL);
+                        ModuleBase::GlobalFunc::ZEROS(waveg, PARAM.globalv.nlocal);
 
                         ModuleBase::GlobalFunc::ZEROS(Gauss, np);
                         for (int n = 0; n < npoints; ++n)
@@ -490,8 +490,8 @@ void ModuleIO::write_dos_lcao(const psi::Psi<std::complex<double>>* psi,
 
 #ifdef __MPI
                         pzgemv_(&T_char,
-                                &GlobalV::NLOCAL,
-                                &GlobalV::NLOCAL,
+                                &PARAM.globalv.nlocal,
+                                &PARAM.globalv.nlocal,
                                 &one_float[0],
                                 sk,
                                 &one_int,
@@ -510,7 +510,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<std::complex<double>>* psi,
                                 &one_int);
 #endif
 
-                        for (int j = 0; j < GlobalV::NLOCAL; ++j)
+                        for (int j = 0; j < PARAM.globalv.nlocal; ++j)
                         {
 
                             if (pv.in_this_processor(j, i))
@@ -551,7 +551,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<std::complex<double>>* psi,
                     {
                         double y = 0.0;
                         double en = emin + n * de_ev;
-                        for (int i = 0; i < GlobalV::NLOCAL; i++)
+                        for (int i = 0; i < PARAM.globalv.nlocal; i++)
                         {
                             y += pdos[0](i, n);
                         }
@@ -566,7 +566,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<std::complex<double>>* psi,
                         double y = 0.0;
                         double z = 0.0;
                         double en = emin + n * de_ev;
-                        for (int i = 0; i < GlobalV::NLOCAL; i++)
+                        for (int i = 0; i < PARAM.globalv.nlocal; i++)
                         {
                             y += pdos[0](i, n);
                             z += pdos[1](i, n);
@@ -589,11 +589,11 @@ void ModuleIO::write_dos_lcao(const psi::Psi<std::complex<double>>* psi,
                 out << "<nspin>" << PARAM.inp.nspin << "</nspin>" << std::endl;
                 if (PARAM.inp.nspin == 4)
                 {
-                    out << "<norbitals>" << std::setw(2) << GlobalV::NLOCAL / 2 << "</norbitals>" << std::endl;
+                    out << "<norbitals>" << std::setw(2) << PARAM.globalv.nlocal / 2 << "</norbitals>" << std::endl;
                 }
                 else
                 {
-                    out << "<norbitals>" << std::setw(2) << GlobalV::NLOCAL << "</norbitals>" << std::endl;
+                    out << "<norbitals>" << std::setw(2) << PARAM.globalv.nlocal << "</norbitals>" << std::endl;
                 }
                 out << "<energy_values units=\"eV\">" << std::endl;
 

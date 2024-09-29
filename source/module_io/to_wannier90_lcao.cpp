@@ -65,12 +65,12 @@ void toWannier90_LCAO::calculate(const ModuleBase::matrix& ekb,
 
     if (out_wannier_mmn || out_wannier_amn)
     {
-        iw2it.resize(GlobalV::NLOCAL);
-        iw2ia.resize(GlobalV::NLOCAL);
-        iw2iL.resize(GlobalV::NLOCAL);
-        iw2iN.resize(GlobalV::NLOCAL);
-        iw2im.resize(GlobalV::NLOCAL);
-        iw2iorb.resize(GlobalV::NLOCAL);
+        iw2it.resize(PARAM.globalv.nlocal);
+        iw2ia.resize(PARAM.globalv.nlocal);
+        iw2iL.resize(PARAM.globalv.nlocal);
+        iw2iN.resize(PARAM.globalv.nlocal);
+        iw2im.resize(PARAM.globalv.nlocal);
+        iw2iorb.resize(PARAM.globalv.nlocal);
 
         std::map<size_t, std::map<size_t, std::map<size_t, size_t>>> temp_orb_index;
         int count = 0;
@@ -422,7 +422,7 @@ void toWannier90_LCAO::unkdotkb(const K_Vectors& kv,
     char transa = 'C';
     char transb = 'N';
     int Bands = GlobalV::NBANDS;
-    int nlocal = GlobalV::NLOCAL;
+    int nlocal = PARAM.globalv.nlocal;
     std::complex<double> alpha = {1.0, 0.0}, beta = {0.0, 0.0};
     int one = 1;
 

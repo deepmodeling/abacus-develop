@@ -58,8 +58,8 @@ psi::Psi<std::complex<double>>* wavefunc::allocate(const int nkstot, const int n
         psi_out = new psi::Psi<std::complex<double>>(1, GlobalV::NBANDS, npwx * PARAM.globalv.npol, ngk);
         if (PARAM.inp.basis_type == "lcao_in_pw")
         {
-            wanf2[0].create(GlobalV::NLOCAL, npwx * PARAM.globalv.npol);
-            const size_t memory_cost = GlobalV::NLOCAL * (PARAM.globalv.npol * npwx) * sizeof(std::complex<double>);
+            wanf2[0].create(PARAM.globalv.nlocal, npwx * PARAM.globalv.npol);
+            const size_t memory_cost = PARAM.globalv.nlocal * (PARAM.globalv.npol * npwx) * sizeof(std::complex<double>);
             std::cout << " Memory for wanf2 (MB): " << double(memory_cost) / 1024.0 / 1024.0 << std::endl;
             ModuleBase::Memory::record("WF::wanf2", memory_cost);
         }
@@ -79,10 +79,10 @@ psi::Psi<std::complex<double>>* wavefunc::allocate(const int nkstot, const int n
 
             for (int ik = 0; ik < nks2; ik++)
             {
-                this->wanf2[ik].create(GlobalV::NLOCAL, npwx * PARAM.globalv.npol);
+                this->wanf2[ik].create(PARAM.globalv.nlocal, npwx * PARAM.globalv.npol);
             }
 
-            const size_t memory_cost = nks2 * GlobalV::NLOCAL * (npwx * PARAM.globalv.npol) * sizeof(std::complex<double>);
+            const size_t memory_cost = nks2 * PARAM.globalv.nlocal * (npwx * PARAM.globalv.npol) * sizeof(std::complex<double>);
             std::cout << " Memory for wanf2 (MB): " << double(memory_cost) / 1024.0 / 1024.0 << std::endl;
             ModuleBase::Memory::record("WF::wanf2", memory_cost);
         }
@@ -742,7 +742,7 @@ void wavefunc::init_after_vc(const int nks)
         this->wanf2 = new ModuleBase::ComplexMatrix[nks2];
         for (int ik = 0; ik < nks2; ik++)
         {
-            this->wanf2[ik].create(GlobalV::NLOCAL, nbasis);
+            this->wanf2[ik].create(PARAM.globalv.nlocal, nbasis);
         }
     }
 

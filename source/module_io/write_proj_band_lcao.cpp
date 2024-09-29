@@ -39,9 +39,9 @@ void ModuleIO::write_proj_band_lcao(
 
     ModuleBase::ComplexMatrix weightk;
     ModuleBase::matrix weight;
-    int NUM = GlobalV::NLOCAL * GlobalV::NBANDS * nspin0;
-    weightk.create(nspin0, GlobalV::NBANDS * GlobalV::NLOCAL, true);
-    weight.create(nspin0, GlobalV::NBANDS * GlobalV::NLOCAL, true);
+    int NUM = PARAM.globalv.nlocal * GlobalV::NBANDS * nspin0;
+    weightk.create(nspin0, GlobalV::NBANDS * PARAM.globalv.nlocal, true);
+    weight.create(nspin0, GlobalV::NBANDS * PARAM.globalv.nlocal, true);
 
 
     for (int is = 0; is < nspin0; is++)
@@ -60,8 +60,8 @@ void ModuleIO::write_proj_band_lcao(
 #ifdef __MPI
             const char T_char = 'T';
             pdgemv_(&T_char,
-                &GlobalV::NLOCAL,
-                &GlobalV::NLOCAL,
+                &PARAM.globalv.nlocal,
+                &PARAM.globalv.nlocal,
                 &one_float,
                 sk,
                 &one_int,
@@ -79,14 +79,14 @@ void ModuleIO::write_proj_band_lcao(
                 pv.desc,
                 &one_int);
 #endif
-            for (int j = 0; j < GlobalV::NLOCAL; ++j)
+            for (int j = 0; j < PARAM.globalv.nlocal; ++j)
             {
 
                 if (pv.in_this_processor(j, i))
                 {
                     const int ir = pv.global2local_row(j);
                     const int ic = pv.global2local_col(i);
-                    weightk(is, i * GlobalV::NLOCAL + j) = Mulk[0](ic, ir) * psi[0](ic, ir);
+                    weightk(is, i * PARAM.globalv.nlocal + j) = Mulk[0](ic, ir) * psi[0](ic, ir);
                 }
             }
         } // ib
@@ -104,9 +104,9 @@ void ModuleIO::write_proj_band_lcao(
             out << "<pband>" << std::endl;
             out << "<nspin>" << PARAM.inp.nspin << "</nspin>" << std::endl;
             if (PARAM.inp.nspin == 4)
-                out << "<norbitals>" << std::setw(2) << GlobalV::NLOCAL / 2 << "</norbitals>" << std::endl;
+                out << "<norbitals>" << std::setw(2) << PARAM.globalv.nlocal / 2 << "</norbitals>" << std::endl;
             else
-                out << "<norbitals>" << std::setw(2) << GlobalV::NLOCAL << "</norbitals>" << std::endl;
+                out << "<norbitals>" << std::setw(2) << PARAM.globalv.nlocal << "</norbitals>" << std::endl;
             out << "<band_structure nkpoints=\"" << nks << "\" nbands=\"" << GlobalV::NBANDS << "\" units=\"eV\">"
                 << std::endl;
             for (int ib = 0; ib < GlobalV::NBANDS; ib++)
@@ -140,13 +140,13 @@ void ModuleIO::write_proj_band_lcao(
                     for (int ib = 0; ib < GlobalV::NBANDS; ib++)
                     {
                         if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2)
-                            out << std::setw(13) << weight(is, ib * GlobalV::NLOCAL + w);
+                            out << std::setw(13) << weight(is, ib * PARAM.globalv.nlocal + w);
                         else if (PARAM.inp.nspin == 4)
                         {
                             int w0 = w - s0;
                             out << std::setw(13)
-                                << weight(is, ib * GlobalV::NLOCAL + s0 + 2 * w0)
-                                + weight(is, ib * GlobalV::NLOCAL + s0 + 2 * w0 + 1);
+                                << weight(is, ib * PARAM.globalv.nlocal + s0 + 2 * w0)
+                                + weight(is, ib * PARAM.globalv.nlocal + s0 + 2 * w0 + 1);
                         }
                     }
                     out << std::endl;
@@ -192,9 +192,9 @@ void ModuleIO::write_proj_band_lcao(
 
     ModuleBase::ComplexMatrix weightk;
     ModuleBase::matrix weight;
-    int NUM = GlobalV::NLOCAL * GlobalV::NBANDS * kv.get_nks();
-    weightk.create(kv.get_nks(), GlobalV::NBANDS * GlobalV::NLOCAL, true);
-    weight.create(kv.get_nks(), GlobalV::NBANDS * GlobalV::NLOCAL, true);
+    int NUM = PARAM.globalv.nlocal * GlobalV::NBANDS * kv.get_nks();
+    weightk.create(kv.get_nks(), GlobalV::NBANDS * PARAM.globalv.nlocal, true);
+    weight.create(kv.get_nks(), GlobalV::NBANDS * PARAM.globalv.nlocal, true);
 
     for (int is = 0; is < nspin0; is++)
     {
@@ -238,8 +238,8 @@ void ModuleIO::write_proj_band_lcao(
                         const char T_char = 'T';
 #ifdef __MPI
                         pzgemv_(&T_char,
-                            &GlobalV::NLOCAL,
-                            &GlobalV::NLOCAL,
+                            &PARAM.globalv.nlocal,
+                            &PARAM.globalv.nlocal,
                             &one_float[0],
                             sk,
                             &one_int,
@@ -257,7 +257,7 @@ void ModuleIO::write_proj_band_lcao(
                             pv.desc,
                             &one_int);
 #endif
-                        for (int j = 0; j < GlobalV::NLOCAL; ++j)
+                        for (int j = 0; j < PARAM.globalv.nlocal; ++j)
                         {
 
                             if (pv.in_this_processor(j, i))
@@ -266,7 +266,7 @@ void ModuleIO::write_proj_band_lcao(
                                 const int ir = pv.global2local_row(j);
                                 const int ic = pv.global2local_col(i);
 
-                                weightk(ik, i * GlobalV::NLOCAL + j) = Mulk[0](ic, ir) * psi[0](ic, ir);
+                                weightk(ik, i * PARAM.globalv.nlocal + j) = Mulk[0](ic, ir) * psi[0](ic, ir);
                             }
                         }
 
@@ -289,11 +289,11 @@ void ModuleIO::write_proj_band_lcao(
             out << "<nspin>" << PARAM.inp.nspin << "</nspin>" << std::endl;
             if (PARAM.inp.nspin == 4)
             {
-                out << "<norbitals>" << std::setw(2) << GlobalV::NLOCAL / 2 << "</norbitals>" << std::endl;
+                out << "<norbitals>" << std::setw(2) << PARAM.globalv.nlocal / 2 << "</norbitals>" << std::endl;
             }
             else
             {
-                out << "<norbitals>" << std::setw(2) << GlobalV::NLOCAL << "</norbitals>" << std::endl;
+                out << "<norbitals>" << std::setw(2) << PARAM.globalv.nlocal << "</norbitals>" << std::endl;
             }
 
             out << "<band_structure nkpoints=\"" << nks << "\" nbands=\"" << GlobalV::NBANDS << "\" units=\"eV\">"
@@ -336,18 +336,18 @@ void ModuleIO::write_proj_band_lcao(
 						{
 							if (PARAM.inp.nspin == 1)
 							{
-								out << std::setw(13) << weight(ik, ib * GlobalV::NLOCAL + w);
+								out << std::setw(13) << weight(ik, ib * PARAM.globalv.nlocal + w);
 							}
 							else if (PARAM.inp.nspin == 2)
 							{
-								out << std::setw(13) << weight(ik + nks * is, ib * GlobalV::NLOCAL + w);
+								out << std::setw(13) << weight(ik + nks * is, ib * PARAM.globalv.nlocal + w);
 							}
 							else if (PARAM.inp.nspin == 4)
 							{
 								int w0 = w - s0;
 								out << std::setw(13)
-									<< weight(ik, ib * GlobalV::NLOCAL + s0 + 2 * w0)
-									+ weight(ik, ib * GlobalV::NLOCAL + s0 + 2 * w0 + 1);
+									<< weight(ik, ib * PARAM.globalv.nlocal + s0 + 2 * w0)
+									+ weight(ik, ib * PARAM.globalv.nlocal + s0 + 2 * w0 + 1);
 							}
 						}
 						out << std::endl;
