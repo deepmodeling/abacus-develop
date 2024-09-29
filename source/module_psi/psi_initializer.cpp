@@ -16,7 +16,7 @@ psi::Psi<std::complex<double>>* psi_initializer<T, Device>::allocate(const bool 
 {
     ModuleBase::timer::tick("psi_initializer", "allocate");
     /*
-        WARNING: when basis_type = "pw", the variable GlobalV::NLOCAL will also be set, in this case, it is set to
+        WARNING: when basis_type = "pw", the variable PARAM.globalv.nlocal will also be set, in this case, it is set to
         9 = 1 + 3 + 5, which is the maximal number of orbitals spd, I don't think it is reasonable
         The way of calculating this->p_ucell_->natomwfc is, for each atom, read pswfc and for s, it is 1, for p, it is 3
         , then multiplied by the number of atoms, and then add them together.
@@ -37,7 +37,7 @@ psi::Psi<std::complex<double>>* psi_initializer<T, Device>::allocate(const bool 
         else if(this->method_.substr(0, 3) == "nao")
         {
             /*
-                previously GlobalV::NLOCAL is used here, however it is wrong. GlobalV::NLOCAL is fixed to 9*nat.
+                previously PARAM.globalv.nlocal is used here, however it is wrong. PARAM.globalv.nlocal is fixed to 9*nat.
             */
             int nbands_local = 0;
             for(int it = 0; it < this->p_ucell_->ntype; it++)

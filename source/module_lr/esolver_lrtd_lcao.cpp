@@ -90,7 +90,7 @@ void LR::ESolver_LR<T, TR>::set_dimension()
     if (nspin == 2) { std::cout << "** Assuming the spin-up and spin-down states are degenerate. **" << std::endl;
 }
     this->nstates = input.lr_nstates;
-    this->nbasis = GlobalV::NLOCAL;
+    this->nbasis = PARAM.globalv.nlocal;
     // calculate the number of occupied and unoccupied states
     // which determines the basis size of the excited states
     this->nocc_max = LR_Util::cal_nocc(LR_Util::cal_nelec(ucell));
