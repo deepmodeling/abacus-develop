@@ -68,8 +68,8 @@ class CalAtomsInfo
             nelec_spin[0] = (PARAM.inp.nelec + PARAM.inp.nupdown ) / 2.0;
             nelec_spin[1] = (PARAM.inp.nelec - PARAM.inp.nupdown ) / 2.0;
         }
-        cal_nbands(PARAM.inp.nelec, para.sys.nlocal, nelec_spin, GlobalV::NBANDS);
-
+        cal_nbands(PARAM.inp.nelec, para.sys.nlocal, nelec_spin, PARAM.input.nbands);
+        GlobalV::NBANDS = PARAM.input.nbands;
         return;
     }
 };

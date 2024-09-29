@@ -245,7 +245,7 @@ void ElecState::print_band(const int& ik, const int& printe, const int& iter)
 {
     // check the band energy.
     bool wrong = false;
-    for (int ib = 0; ib < GlobalV::NBANDS; ++ib)
+    for (int ib = 0; ib < PARAM.inp.nbands; ++ib)
     {
         if (std::abs(this->ekb(ik, ib)) > 1.0e10)
         {
@@ -267,7 +267,7 @@ void ElecState::print_band(const int& ik, const int& printe, const int& iter)
             GlobalV::ofs_running << " Energy (eV) & Occupations  for spin=" << this->klist->isk[ik] + 1
                                  << " K-point=" << ik + 1 << std::endl;
             GlobalV::ofs_running << std::setiosflags(std::ios::showpoint);
-            for (int ib = 0; ib < GlobalV::NBANDS; ib++)
+            for (int ib = 0; ib < PARAM.inp.nbands; ib++)
             {
                 GlobalV::ofs_running << " " << std::setw(6) << ib + 1 << std::setw(15)
                                      << this->ekb(ik, ib) * ModuleBase::Ry_to_eV;

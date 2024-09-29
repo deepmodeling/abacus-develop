@@ -910,7 +910,7 @@ void UnitCell::read_pseudo(std::ofstream& ofs) {
 // calculate the total number of local basis
 // Target : nwfc, lmax,
 // 			atoms[].stapos_wf
-// 			GlobalV::NBANDS
+// 			PARAM.inp.nbands
 //===========================================
 void UnitCell::cal_nwfc(std::ofstream& log) {
     ModuleBase::TITLE("UnitCell", "cal_nwfc");
@@ -1042,12 +1042,12 @@ void UnitCell::cal_nwfc(std::ofstream& log) {
             && (PARAM.inp.init_wfc.substr(0, 3) == "nao")
             && (PARAM.inp.esolver_type == "ksdft"))) // xiaohui add 2013-09-02
     {
-        ModuleBase::GlobalFunc::AUTO_SET("NBANDS", GlobalV::NBANDS);
+        ModuleBase::GlobalFunc::AUTO_SET("NBANDS", PARAM.inp.nbands);
     } else // plane wave basis
     {
         // if(winput::after_iter && winput::sph_proj)
         //{
-        //	if(GlobalV::NBANDS < PARAM.globalv.nlocal)
+        //	if(PARAM.inp.nbands < PARAM.globalv.nlocal)
         //	{
         //		ModuleBase::WARNING_QUIT("cal_nwfc","NBANDS must > PARAM.globalv.nlocal
         //!");

@@ -57,7 +57,7 @@ void ElecStateLCAO_TDDFT::calculate_weights_td()
     if (PARAM.inp.ocp == 1)
     {
         int num = 0;
-        num = this->klist->get_nks() * GlobalV::NBANDS;
+        num = this->klist->get_nks() * PARAM.inp.nbands;
         if (num != PARAM.inp.ocp_kb.size())
         {
             ModuleBase::WARNING_QUIT("ElecStateLCAO_TDDFT::calculate_weights_td",
@@ -77,9 +77,9 @@ void ElecStateLCAO_TDDFT::calculate_weights_td()
 
         for (int ik = 0; ik < this->klist->get_nks(); ik++)
         {
-            for (int ib = 0; ib < GlobalV::NBANDS; ib++)
+            for (int ib = 0; ib < PARAM.inp.nbands; ib++)
             {
-                this->wg(ik, ib) = PARAM.inp.ocp_kb[ik * GlobalV::NBANDS + ib];
+                this->wg(ik, ib) = PARAM.inp.ocp_kb[ik * PARAM.inp.nbands + ib];
             }
         }
     }

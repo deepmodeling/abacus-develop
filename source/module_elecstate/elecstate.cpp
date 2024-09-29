@@ -248,8 +248,8 @@ void ElecState::init_ks(Charge* chg_in, // pointer for class Charge
     // init nelec_spin with nelec and nupdown
     this->init_nelec_spin();
     // initialize ekb and wg
-    this->ekb.create(nk_in, GlobalV::NBANDS);
-    this->wg.create(nk_in, GlobalV::NBANDS);
+    this->ekb.create(nk_in, PARAM.inp.nbands);
+    this->wg.create(nk_in, PARAM.inp.nbands);
 }
 
 void set_is_occupied(std::vector<bool>& is_occupied,
