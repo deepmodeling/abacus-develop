@@ -164,10 +164,10 @@ void RPA_LRI<T, Tdata>::out_eigen_vector(const Parallel_Orbitals& parav, const p
         std::vector<ModuleBase::ComplexMatrix> is_wfc_ib_iw(npsin_tmp);
         for (int is = 0; is < npsin_tmp; is++)
         {
-            is_wfc_ib_iw[is].create(GlobalV::NBANDS, GlobalV::NLOCAL);
+            is_wfc_ib_iw[is].create(GlobalV::NBANDS, PARAM.globalv.nlocal);
             for (int ib_global = 0; ib_global < GlobalV::NBANDS; ++ib_global)
             {
-                std::vector<std::complex<double>> wfc_iks(GlobalV::NLOCAL, zero);
+                std::vector<std::complex<double>> wfc_iks(PARAM.globalv.nlocal, zero);
 
                 const int ib_local = parav.global2local_col(ib_global);
 
@@ -181,16 +181,16 @@ void RPA_LRI<T, Tdata>::out_eigen_vector(const Parallel_Orbitals& parav, const p
 
                 std::vector<std::complex<double>> tmp = wfc_iks;
 #ifdef __MPI
-                MPI_Allreduce(&tmp[0], &wfc_iks[0], GlobalV::NLOCAL, MPI_DOUBLE_COMPLEX, MPI_SUM, MPI_COMM_WORLD);
+                MPI_Allreduce(&tmp[0], &wfc_iks[0], PARAM.globalv.nlocal, MPI_DOUBLE_COMPLEX, MPI_SUM, MPI_COMM_WORLD);
 #endif
-                for (int iw = 0; iw < GlobalV::NLOCAL; iw++)
+                for (int iw = 0; iw < PARAM.globalv.nlocal; iw++)
                 {
                     is_wfc_ib_iw[is](ib_global, iw) = wfc_iks[iw];
                 }
             } // ib
         }     // is
         ofs << ik + 1 << std::endl;
-        for (int iw = 0; iw < GlobalV::NLOCAL; iw++)
+        for (int iw = 0; iw < PARAM.globalv.nlocal; iw++)
         {
             for (int ib = 0; ib < GlobalV::NBANDS; ib++)
             {
@@ -260,7 +260,7 @@ void RPA_LRI<T, Tdata>::out_bands(const elecstate::ElecState* pelec)
     ofs << nks_tot << std::endl;
     ofs << PARAM.inp.nspin << std::endl;
     ofs << GlobalV::NBANDS << std::endl;
-    ofs << GlobalV::NLOCAL << std::endl;
+    ofs << PARAM.globalv.nlocal << std::endl;
     ofs << (pelec->eferm.ef / 2.0) << std::endl;
 
     for (int ik = 0; ik != nks_tot; ik++)
