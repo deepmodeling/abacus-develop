@@ -460,6 +460,7 @@ void cal_r_overlap_R::out_rR(const int& istep)
         if (binary)
         {
             ofs_tem1.close();
+            int nlocal = PARAM.globalv.nlocal;
             if (PARAM.inp.calculation == "md" && PARAM.inp.out_app_flag && step)
             {
                 out_r.open(ssr.str().c_str(), std::ios::binary | std::ios::app);
@@ -469,7 +470,7 @@ void cal_r_overlap_R::out_rR(const int& istep)
                 out_r.open(ssr.str().c_str(), std::ios::binary);
             }
             out_r.write(reinterpret_cast<char*>(&step), sizeof(int));
-            out_r.write(reinterpret_cast<char*>(&PARAM.globalv.nlocal), sizeof(int));
+            out_r.write(reinterpret_cast<char*>(&nlocal), sizeof(int));
             out_r.write(reinterpret_cast<char*>(&output_R_number), sizeof(int));
 
             ifs_tem1.open(tem1.str().c_str(), std::ios::binary);
@@ -533,6 +534,7 @@ void cal_r_overlap_R::out_rR_other(const int& istep, const std::set<Abfs::Vector
     {
         if (binary)
         {
+            int nlocal = PARAM.globalv.nlocal;
             if (PARAM.inp.calculation == "md" && PARAM.inp.out_app_flag && step)
             {
                 out_r.open(ssr.str().c_str(), std::ios::binary | std::ios::app);
@@ -542,7 +544,7 @@ void cal_r_overlap_R::out_rR_other(const int& istep, const std::set<Abfs::Vector
                 out_r.open(ssr.str().c_str(), std::ios::binary);
             }
             out_r.write(reinterpret_cast<char*>(&step), sizeof(int));
-            out_r.write(reinterpret_cast<char*>(&PARAM.globalv.nlocal), sizeof(int));
+            out_r.write(reinterpret_cast<char*>(&nlocal), sizeof(int));
             out_r.write(reinterpret_cast<char*>(&output_R_number), sizeof(int));
         }
         else

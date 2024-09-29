@@ -132,6 +132,7 @@ void ModuleIO::save_HSR_sparse(const int& istep,
 
     if (GlobalV::DRANK == 0) {
         if (binary) {
+            int nlocal = PARAM.globalv.nlocal;
             for (int ispin = 0; ispin < spin_loop; ++ispin) {
                 if (PARAM.inp.calculation == "md" && PARAM.inp.out_app_flag
                     && step) {
@@ -141,7 +142,7 @@ void ModuleIO::save_HSR_sparse(const int& istep,
                     g1[ispin].open(ssh[ispin].str().c_str(), std::ios::binary);
                 }
                 g1[ispin].write(reinterpret_cast<char*>(&step), sizeof(int));
-                g1[ispin].write(reinterpret_cast<char*>(&PARAM.globalv.nlocal),
+                g1[ispin].write(reinterpret_cast<char*>(&nlocal),
                                 sizeof(int));
                 g1[ispin].write(reinterpret_cast<char*>(&output_R_number),
                                 sizeof(int));
@@ -153,7 +154,7 @@ void ModuleIO::save_HSR_sparse(const int& istep,
                 g2.open(sss.str().c_str(), std::ios::binary);
             }
             g2.write(reinterpret_cast<char*>(&step), sizeof(int));
-            g2.write(reinterpret_cast<char*>(&PARAM.globalv.nlocal), sizeof(int));
+            g2.write(reinterpret_cast<char*>(&nlocal), sizeof(int));
             g2.write(reinterpret_cast<char*>(&output_R_number), sizeof(int));
         } else {
             for (int ispin = 0; ispin < spin_loop; ++ispin) {
@@ -453,6 +454,7 @@ void ModuleIO::save_dH_sparse(const int& istep,
 
     if (GlobalV::DRANK == 0) {
         if (binary) {
+            int nlocal = PARAM.globalv.nlocal;
             for (int ispin = 0; ispin < spin_loop; ++ispin) {
                 if (PARAM.inp.calculation == "md" && PARAM.inp.out_app_flag
                     && step) {
@@ -472,19 +474,19 @@ void ModuleIO::save_dH_sparse(const int& istep,
                 }
 
                 g1x[ispin].write(reinterpret_cast<char*>(&step), sizeof(int));
-                g1x[ispin].write(reinterpret_cast<char*>(&PARAM.globalv.nlocal),
+                g1x[ispin].write(reinterpret_cast<char*>(&nlocal),
                                  sizeof(int));
                 g1x[ispin].write(reinterpret_cast<char*>(&output_R_number),
                                  sizeof(int));
 
                 g1y[ispin].write(reinterpret_cast<char*>(&step), sizeof(int));
-                g1y[ispin].write(reinterpret_cast<char*>(&PARAM.globalv.nlocal),
+                g1y[ispin].write(reinterpret_cast<char*>(&nlocal),
                                  sizeof(int));
                 g1y[ispin].write(reinterpret_cast<char*>(&output_R_number),
                                  sizeof(int));
 
                 g1z[ispin].write(reinterpret_cast<char*>(&step), sizeof(int));
-                g1z[ispin].write(reinterpret_cast<char*>(&PARAM.globalv.nlocal),
+                g1z[ispin].write(reinterpret_cast<char*>(&nlocal),
                                  sizeof(int));
                 g1z[ispin].write(reinterpret_cast<char*>(&output_R_number),
                                  sizeof(int));
@@ -714,6 +716,7 @@ void ModuleIO::save_sparse(
     std::ofstream ofs;
     if (!reduce || GlobalV::DRANK == 0) {
         if (binary) {
+            int nlocal = PARAM.globalv.nlocal;
             if (PARAM.inp.calculation == "md" && PARAM.inp.out_app_flag
                 && istep) {
                 ofs.open(sss.str().c_str(), std::ios::binary | std::ios::app);
@@ -721,7 +724,7 @@ void ModuleIO::save_sparse(
                 ofs.open(sss.str().c_str(), std::ios::binary);
             }
             ofs.write(reinterpret_cast<char*>(0), sizeof(int));
-            ofs.write(reinterpret_cast<char*>(&PARAM.globalv.nlocal), sizeof(int));
+            ofs.write(reinterpret_cast<char*>(&nlocal), sizeof(int));
             ofs.write(reinterpret_cast<char*>(&output_R_number), sizeof(int));
         } else {
             if (PARAM.inp.calculation == "md" && PARAM.inp.out_app_flag
