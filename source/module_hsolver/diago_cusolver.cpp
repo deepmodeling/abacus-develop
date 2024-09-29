@@ -171,7 +171,7 @@ void DiagoCusolver<T>::diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* e
         MPI_Barrier(MPI_COMM_WORLD);
 
         // broadcast eigenvalues to all processes
-        MPI_Bcast(eigen.data(), GlobalV::NBANDS, MPI_DOUBLE, root_proc, MPI_COMM_WORLD);
+        MPI_Bcast(eigen.data(), PARAM.inp.nbands, MPI_DOUBLE, root_proc, MPI_COMM_WORLD);
 
         // distribute psi to all processes
         distributePsi(this->ParaV->desc_wfc, psi.get_pointer(), psi_g.data());
@@ -195,7 +195,7 @@ void DiagoCusolver<T>::diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* e
 
     // Copy the eigenvalues to the output arrays
     const int inc = 1;
-    BlasConnector::copy(GlobalV::NBANDS, eigen.data(), inc, eigenvalue_in, inc);
+    BlasConnector::copy(PARAM.inp.nbands, eigen.data(), inc, eigenvalue_in, inc);
 }
 
 // Explicit instantiation of the DiagoCusolver class for real and complex numbers

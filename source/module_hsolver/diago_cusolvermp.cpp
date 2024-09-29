@@ -28,7 +28,7 @@ void DiagoCusolverMP<T>::diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real*
         ModuleBase::timer::tick("DiagoCusolverMP", "Diag_CusolverMP_gvd");
     }
     const int inc = 1;
-    BlasConnector::copy(GlobalV::NBANDS, eigen.data(), inc, eigenvalue_in, inc);
+    BlasConnector::copy(PARAM.inp.nbands, eigen.data(), inc, eigenvalue_in, inc);
     const int size = psi.get_nbands() * psi.get_nbasis();
     BlasConnector::copy(size, eigenvectors.data(), inc, psi.get_pointer(), inc);
 }

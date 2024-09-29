@@ -59,7 +59,7 @@ void DiagoElpaNative<T>::diag_pool(hamilt::MatrixBlock<T>& h_mat,
 
     ModuleBase::timer::tick("DiagoElpaNative", "elpa_solve");
 
-    int nev = GlobalV::NBANDS;
+    int nev = PARAM.inp.nbands;
     int narows = h_mat.row;
     int nacols = h_mat.col;
 
@@ -134,7 +134,7 @@ void DiagoElpaNative<T>::diag_pool(hamilt::MatrixBlock<T>& h_mat,
     }
 
     const int inc = 1;
-    BlasConnector::copy(GlobalV::NBANDS, eigen.data(), inc, eigenvalue_in, inc);
+    BlasConnector::copy(PARAM.inp.nbands, eigen.data(), inc, eigenvalue_in, inc);
     const int size = psi.get_nbands() * psi.get_nbasis();
     BlasConnector::copy(size, eigenvectors.data(), inc, psi.get_pointer(), inc);
 }

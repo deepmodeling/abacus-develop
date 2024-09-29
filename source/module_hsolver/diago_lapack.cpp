@@ -73,7 +73,7 @@ int DiagoLapack<T>::dsygvx_once(const int ncol,
 
     // Prepare caculate parameters
     const char jobz = 'V', range = 'I', uplo = 'U';
-    const int itype = 1, il = 1, iu = GlobalV::NBANDS, one = 1;
+    const int itype = 1, il = 1, iu = PARAM.inp.nbands, one = 1;
     int M = 0, info = 0;
     double vl = 0, vu = 0;
     const double abstol = 0;
@@ -164,7 +164,7 @@ int DiagoLapack<T>::zhegvx_once(const int ncol,
     memcpy(s_tmp.c, s_mat, sizeof(std::complex<double>) * ncol * nrow);
 
     const char jobz = 'V', range = 'I', uplo = 'U';
-    const int itype = 1, il = 1, iu = GlobalV::NBANDS, one = 1;
+    const int itype = 1, il = 1, iu = PARAM.inp.nbands, one = 1;
     int M = 0, lrwork = -1, info = 0;
     const double abstol = 0;
 
