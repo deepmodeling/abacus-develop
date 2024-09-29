@@ -164,8 +164,8 @@ void RPA_LRI<T, Tdata>::out_eigen_vector(const Parallel_Orbitals& parav, const p
         std::vector<ModuleBase::ComplexMatrix> is_wfc_ib_iw(npsin_tmp);
         for (int is = 0; is < npsin_tmp; is++)
         {
-            is_wfc_ib_iw[is].create(GlobalV::NBANDS, PARAM.globalv.nlocal);
-            for (int ib_global = 0; ib_global < GlobalV::NBANDS; ++ib_global)
+            is_wfc_ib_iw[is].create(PARAM.inp.nbands, PARAM.globalv.nlocal);
+            for (int ib_global = 0; ib_global < PARAM.inp.nbands; ++ib_global)
             {
                 std::vector<std::complex<double>> wfc_iks(PARAM.globalv.nlocal, zero);
 
@@ -192,7 +192,7 @@ void RPA_LRI<T, Tdata>::out_eigen_vector(const Parallel_Orbitals& parav, const p
         ofs << ik + 1 << std::endl;
         for (int iw = 0; iw < PARAM.globalv.nlocal; iw++)
         {
-            for (int ib = 0; ib < GlobalV::NBANDS; ib++)
+            for (int ib = 0; ib < PARAM.inp.nbands; ib++)
             {
                 for (int is = 0; is < npsin_tmp; is++)
                 {
@@ -259,7 +259,7 @@ void RPA_LRI<T, Tdata>::out_bands(const elecstate::ElecState* pelec)
     ofs.open(ss.str().c_str(), std::ios::out);
     ofs << nks_tot << std::endl;
     ofs << PARAM.inp.nspin << std::endl;
-    ofs << GlobalV::NBANDS << std::endl;
+    ofs << PARAM.inp.nbands << std::endl;
     ofs << PARAM.globalv.nlocal << std::endl;
     ofs << (pelec->eferm.ef / 2.0) << std::endl;
 
@@ -268,7 +268,7 @@ void RPA_LRI<T, Tdata>::out_bands(const elecstate::ElecState* pelec)
         for (int is = 0; is != nspin_tmp; is++)
         {
             ofs << std::setw(6) << ik + 1 << std::setw(6) << is + 1 << std::endl;
-            for (int ib = 0; ib != GlobalV::NBANDS; ib++)
+            for (int ib = 0; ib != PARAM.inp.nbands; ib++)
             {
                 ofs << std::setw(5) << ib + 1 << "   " << std::setw(8) << pelec->wg(ik + is * nks_tot, ib) * nks_tot
                     << std::setw(18) << std::fixed << std::setprecision(8) << pelec->ekb(ik + is * nks_tot, ib) / 2.0

@@ -54,7 +54,7 @@ void Exx_Lip<T, Device>::cal_exx()
                 (iq_tmp % (q_pack->kv_ptr->get_nks() / PARAM.inp.nspin) + (q_pack->kv_ptr->get_nks() / PARAM.inp.nspin));
             qkg2_exp(ik, iq);
             //t_qkg2_exp += my_time(t);
-            for (int ib = 0; ib < GlobalV::NBANDS; ++ib)
+            for (int ib = 0; ib < PARAM.inp.nbands; ++ib)
             {
                 b_cal(ik, iq, ib);
                 //t_b_cal += my_time(t);
@@ -118,7 +118,7 @@ void Exx_Lip::cal_exx()
 		{
 			int iq = (ik<(k_pack->kv_ptr->get_nks()/PARAM.inp.nspin)) ? (iq_tmp%(q_pack->kv_ptr->get_nks()/PARAM.inp.nspin)) : (iq_tmp%(q_pack->kv_ptr->get_nks()/PARAM.inp.nspin)+(q_pack->kv_ptr->get_nks()/PARAM.inp.nspin));
 			qkg2_exp(ik, iq);
-			for( int ib=0; ib<GlobalV::NBANDS; ++ib)
+			for( int ib=0; ib<PARAM.inp.nbands; ++ib)
 			{
 				b_cal(ik, iq, ib);
 				if( Exx_Info::Hybrid_Type::HF==info.hybrid_type || Exx_Info::Hybrid_Type::PBE0==info.hybrid_type || Exx_Info::Hybrid_Type::SCAN0==info.hybrid_type )
@@ -166,13 +166,13 @@ Exx_Lip<T, Device>::Exx_Lip(
 #ifdef __MPI
         MPI_Allreduce(&gzero_judge, &gzero_rank_in_pool, 1, MPI_INT, MPI_MAX, POOL_WORLD);
 	#endif
-		k_pack->wf_wg.create(k_pack->kv_ptr->get_nks(),GlobalV::NBANDS);
+		k_pack->wf_wg.create(k_pack->kv_ptr->get_nks(),PARAM.inp.nbands);
 
-        k_pack->hvec_array = new psi::Psi<T, Device>(k_pack->kv_ptr->get_nks(), GlobalV::NBANDS, PARAM.globalv.nlocal);
+        k_pack->hvec_array = new psi::Psi<T, Device>(k_pack->kv_ptr->get_nks(), PARAM.inp.nbands, PARAM.globalv.nlocal);
         // k_pack->hvec_array = new ModuleBase::ComplexMatrix[k_pack->kv_ptr->get_nks()];
         // for( int ik=0; ik<k_pack->kv_ptr->get_nks(); ++ik)
         // {
-        // 	k_pack->hvec_array[ik].create(PARAM.globalv.nlocal,GlobalV::NBANDS);
+        // 	k_pack->hvec_array[ik].create(PARAM.globalv.nlocal,PARAM.inp.nbands);
         // }
 
         // if (PARAM.inp.init_chg=="atomic")
@@ -190,8 +190,8 @@ Exx_Lip<T, Device>::Exx_Lip(
         psi.resize(q_pack->kv_ptr->get_nks());
         for (int iq = 0; iq < q_pack->kv_ptr->get_nks(); ++iq)
         {
-            psi[iq].resize(GlobalV::NBANDS);
-            for (int ib = 0; ib < GlobalV::NBANDS; ++ib) { psi[iq][ib].resize(rho_basis->nrxx); }
+            psi[iq].resize(PARAM.inp.nbands);
+            for (int ib = 0; ib < PARAM.inp.nbands; ++ib) { psi[iq][ib].resize(rho_basis->nrxx); }
         }
 
         recip_qkg2.resize(rho_basis->npw);
@@ -248,13 +248,13 @@ void Exx_Lip<T, Device>::wf_wg_cal()
     ModuleBase::TITLE("Exx_Lip", "wf_wg_cal");
     if (PARAM.inp.nspin == 1) {
         for (int ik = 0; ik < k_pack->kv_ptr->get_nks(); ++ik) {
-            for (int ib = 0; ib < GlobalV::NBANDS; ++ib) {
+            for (int ib = 0; ib < PARAM.inp.nbands; ++ib) {
                 k_pack->wf_wg(ik, ib) = k_pack->pelec->wg(ik, ib) / 2;
 }
 }
     } else if (PARAM.inp.nspin == 2) {
         for (int ik = 0; ik < k_pack->kv_ptr->get_nks(); ++ik) {
-            for (int ib = 0; ib < GlobalV::NBANDS; ++ib) {
+            for (int ib = 0; ib < PARAM.inp.nbands; ++ib) {
                 k_pack->wf_wg(ik, ib) = k_pack->pelec->wg(ik, ib);
 }
 }
@@ -297,7 +297,7 @@ void Exx_Lip<T, Device>::psi_cal()
         T* porter = new T[wfc_basis->nrxx];
         for (int iq = 0; iq < q_pack->kv_ptr->get_nks(); ++iq)
         {
-            for (int ib = 0; ib < GlobalV::NBANDS; ++ib)
+            for (int ib = 0; ib < PARAM.inp.nbands; ++ib)
             {
                 wfc_basis->recip2real(&(q_pack->kspw_psi_ptr->operator()(iq, ib, 0)), porter, iq);
 
@@ -326,7 +326,7 @@ void Exx_Lip<T, Device>::psi_cal()
         for (int iq = 0; iq < q_pack->kv_ptr->get_nks(); ++iq)
         {
             phi_cal(q_pack, iq);
-            for (int ib = 0; ib < GlobalV::NBANDS; ++ib)
+            for (int ib = 0; ib < PARAM.inp.nbands; ++ib)
             {
                 ModuleBase::GlobalFunc::ZEROS(psi[iq][ib].data(), rho_basis->nrxx);
                 for (int iw = 0; iw < PARAM.globalv.nlocal; ++iw)
@@ -512,7 +512,7 @@ void Exx_Lip<T, Device>::exx_energy_cal()
 		{
 			for( int iw_r=0; iw_r<PARAM.globalv.nlocal; ++iw_r)
 			{
-				for( int ib=0; ib<GlobalV::NBANDS; ++ib)
+				for( int ib=0; ib<PARAM.inp.nbands; ++ib)
 				{
                     exx_energy_tmp += (exx_matrix[ik][iw_l][iw_r] * conj((*k_pack->hvec_array)(ik, ib, iw_l)) * (*k_pack->hvec_array)(ik, ib, iw_r)).real() * k_pack->wf_wg(ik, ib);
 				}
@@ -557,7 +557,7 @@ void Exx_Lip<T, Device>::exx_energy_cal()
 				for( int iw_r=0; iw_r<PARAM.globalv.nlocal; ++iw_r)
 				{
                     T DM = { 0,0 };
-					for( int ib=0; ib<GlobalV::NBANDS; ++ib )
+					for( int ib=0; ib<PARAM.inp.nbands; ++ib )
                         DM += conj((*k_pack->hvec_array)(ik, ib, iw_l)) * (*k_pack->hvec_array)(ik, ib, iw_r) * k_pack->wf_wg(ik, ib);
 					ofs<<DM<<"\t";
 				}
@@ -598,7 +598,7 @@ void Exx_Lip<T, Device>::write_q_pack() const
 		std::ofstream ofs_wf_wg(ss_wf_wg.str().c_str());
 		for( int iq = 0; iq < q_pack->kv_ptr->get_nks(); ++iq)
 		{
-			for( int ib=0; ib<GlobalV::NBANDS; ++ib)
+			for( int ib=0; ib<PARAM.inp.nbands; ++ib)
 			{
 				ofs_wf_wg<<q_pack->wf_wg(iq,ib)<<"\t";
 			}
@@ -613,7 +613,7 @@ void Exx_Lip<T, Device>::write_q_pack() const
 		{
 			for( int iw=0; iw<PARAM.globalv.nlocal; ++iw)
 			{
-				for( int ib=0; ib<GlobalV::NBANDS; ++ib)
+				for( int ib=0; ib<PARAM.inp.nbands; ++ib)
 				{
                     ofs_hvec << (*q_pack->hvec_array)(iq, ib, iw).real() << " " << (*q_pack->hvec_array)(iq, ib, iw).imag() << " ";
 				}
@@ -659,7 +659,7 @@ void Exx_Lip<T, Device>::write_q_pack() const
 //         // q_pack->wf_ptr);
 //     }
 // #endif
-// 	q_pack->wf_wg.create(q_pack->kv_ptr->get_nks(),GlobalV::NBANDS);
+// 	q_pack->wf_wg.create(q_pack->kv_ptr->get_nks(),PARAM.inp.nbands);
 // 	if(!GlobalV::RANK_IN_POOL)
 // 	{
 // 		std::stringstream ss_wf_wg;
@@ -667,7 +667,7 @@ void Exx_Lip<T, Device>::write_q_pack() const
 // 		std::ifstream ifs_wf_wg(ss_wf_wg.str().c_str());
 // 		for( int iq = 0; iq < q_pack->kv_ptr->get_nks(); ++iq)
 // 		{
-// 			for( int ib=0; ib<GlobalV::NBANDS; ++ib)
+// 			for( int ib=0; ib<PARAM.inp.nbands; ++ib)
 // 			{
 // 				ifs_wf_wg>>q_pack->wf_wg(iq,ib);
 // 			}
@@ -675,13 +675,13 @@ void Exx_Lip<T, Device>::write_q_pack() const
 // 		ifs_wf_wg.close();
 // 	}
 // 	#ifdef __MPI
-// 	MPI_Bcast( q_pack->wf_wg.c, q_pack->kv_ptr->get_nks()*GlobalV::NBANDS, MPI_DOUBLE, 0, POOL_WORLD);
+// 	MPI_Bcast( q_pack->wf_wg.c, q_pack->kv_ptr->get_nks()*PARAM.inp.nbands, MPI_DOUBLE, 0, POOL_WORLD);
 // 	#endif
 
 // 	q_pack->hvec_array = new ModuleBase::ComplexMatrix [q_pack->kv_ptr->get_nks()];
 // 	for( int iq=0; iq<q_pack->kv_ptr->get_nks(); ++iq)
 // 	{
-// 		q_pack->hvec_array[iq].create(PARAM.globalv.nlocal,GlobalV::NBANDS);
+// 		q_pack->hvec_array[iq].create(PARAM.globalv.nlocal,PARAM.inp.nbands);
 // 	}
 // 	if(!GlobalV::RANK_IN_POOL)
 // 	{
@@ -692,7 +692,7 @@ void Exx_Lip<T, Device>::write_q_pack() const
 // 		{
 // 			for( int iw=0; iw<PARAM.globalv.nlocal; ++iw)
 // 			{
-// 				for( int ib=0; ib<GlobalV::NBANDS; ++ib)
+// 				for( int ib=0; ib<PARAM.inp.nbands; ++ib)
 // 				{
 // 					double a,b;
 // 					ifs_hvec>>a>>b;
@@ -705,7 +705,7 @@ void Exx_Lip<T, Device>::write_q_pack() const
 // 	#ifdef __MPI
 // 	for( int iq=0; iq<q_pack->kv_ptr->get_nks(); ++iq)
 // 	{
-// 		MPI_Bcast( q_pack->hvec_array[iq].c, PARAM.globalv.nlocal*GlobalV::NBANDS, MPI_DOUBLE_COMPLEX, 0, POOL_WORLD);
+// 		MPI_Bcast( q_pack->hvec_array[iq].c, PARAM.globalv.nlocal*PARAM.inp.nbands, MPI_DOUBLE_COMPLEX, 0, POOL_WORLD);
 // 	}
 // 	#endif
 
