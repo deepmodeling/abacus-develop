@@ -174,7 +174,7 @@ void Set_GlobalV_Default()
     PARAM.input.nupdown  = 0.0;
     PARAM.sys.two_fermi = false;
     GlobalV::NBANDS = 6;
-    GlobalV::NLOCAL = 6;
+    PARAM.sys.nlocal = 6;
     PARAM.input.esolver_type = "ksdft";
     PARAM.input.lspinorb = false;
     PARAM.input.basis_type = "pw";

@@ -1,5 +1,8 @@
 #include "module_hsolver/diago_scalapack.h"
 #include "module_hsolver/test/diago_elpa_utils.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include "mpi.h"
 #include "string.h"
 
@@ -200,7 +203,7 @@ class DiagoPrepare
 
     void set_env()
     {
-        GlobalV::NLOCAL = nlocal;
+        PARAM.sys.nlocal = nlocal;
         GlobalV::NBANDS = nbands;
         GlobalV::DSIZE = dsize;
     }
