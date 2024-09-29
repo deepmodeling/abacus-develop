@@ -181,8 +181,6 @@ void Input_Conv::Convert()
     }
 
 
-    PARAM.inp.nbands = PARAM.inp.nbands;
-
     if (PARAM.globalv.device_flag  == "gpu" && PARAM.inp.basis_type == "pw")
     {
         GlobalV::KPAR = base_device::information::get_device_kpar(PARAM.inp.kpar);
