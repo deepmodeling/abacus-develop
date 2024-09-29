@@ -79,7 +79,7 @@ void ESolver_KS_PW<T, Device>::nscf() {
     //! 4) print out band energies and weights
     std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "writing band energies");
     const int nspin = PARAM.inp.nspin;
-    const int nbands = GlobalV::NBANDS;
+    const int nbands = PARAM.inp.nbands;
     for (int ik = 0; ik < this->kv.get_nks(); ik++) {
         if (nspin == 2) {
             if (ik == 0) {

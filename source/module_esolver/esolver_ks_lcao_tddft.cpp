@@ -128,7 +128,7 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(const int istep, const int iter, cons
         if (istep >= 1)
         {
             module_tddft::Evolve_elec::solve_psi(istep,
-                                                 GlobalV::NBANDS,
+                                                 PARAM.inp.nbands,
                                                  PARAM.globalv.nlocal,
                                                  this->p_hamilt,
                                                  this->pv,
@@ -147,7 +147,7 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(const int istep, const int iter, cons
     else if (istep >= 2)
     {
         module_tddft::Evolve_elec::solve_psi(istep,
-                                             GlobalV::NBANDS,
+                                             PARAM.inp.nbands,
                                              PARAM.globalv.nlocal,
                                              this->p_hamilt,
                                              this->pv,
@@ -189,7 +189,7 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(const int istep, const int iter, cons
         GlobalV::ofs_running << std::setiosflags(std::ios::showpoint);
         for (int ik = 0; ik < kv.get_nks(); ik++)
         {
-            for (int ib = 0; ib < GlobalV::NBANDS; ib++)
+            for (int ib = 0; ib < PARAM.inp.nbands; ib++)
             {
                 std::setprecision(6);
                 GlobalV::ofs_running << ik + 1 << "     " << ib + 1 << "      " << this->pelec_td->wg(ik, ib)
@@ -312,7 +312,7 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
     const int nloc = this->pv.nloc;
     const int ncol_nbands = this->pv.ncol_bands;
     const int nrow = this->pv.nrow;
-    const int nbands = GlobalV::NBANDS;
+    const int nbands = PARAM.inp.nbands;
     const int nlocal = PARAM.globalv.nlocal;
 
     // store wfc and Hk laststep
@@ -390,7 +390,7 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
 
         for (int ik = 0; ik < kv.get_nks(); ik++)
         {
-            for (int ib = 0; ib < GlobalV::NBANDS; ib++)
+            for (int ib = 0; ib < PARAM.inp.nbands; ib++)
             {
                 GlobalV::ofs_running << ik + 1 << "     " << ib + 1 << "      "
                                      << this->pelec_td->ekb(ik, ib) * ModuleBase::Ry_to_eV << std::endl;

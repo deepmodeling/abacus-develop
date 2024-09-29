@@ -462,7 +462,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
                                                    drho,
                                                    PARAM.inp.pw_diag_thr,
                                                    diag_ethr,
-                                                   GlobalV::NBANDS,
+                                                   PARAM.inp.nbands,
                                                    esolver_KS_ne);
         }
 

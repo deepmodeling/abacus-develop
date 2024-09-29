@@ -161,7 +161,7 @@ void ESolver_KS_PW<T, Device>::before_all_runners(const Input_para& inp, UnitCel
     //! 9) setup occupations
     if (PARAM.inp.ocp)
     {
-        this->pelec->fixed_weights(PARAM.inp.ocp_kb, GlobalV::NBANDS, PARAM.inp.nelec);
+        this->pelec->fixed_weights(PARAM.inp.ocp_kb, PARAM.inp.nbands, PARAM.inp.nelec);
     }
 }
 
@@ -738,7 +738,7 @@ void ESolver_KS_PW<T, Device>::after_all_runners()
             GlobalV::ofs_running << "\n Output bands in file: " << ss2.str() << std::endl;
             ModuleIO::nscf_band(is,
                                 ss2.str(),
-                                GlobalV::NBANDS,
+                                PARAM.inp.nbands,
                                 0.0,
                                 PARAM.inp.out_band[1],
                                 this->pelec->ekb,

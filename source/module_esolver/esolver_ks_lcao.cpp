@@ -251,7 +251,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
     // 14) set occupations
     if (PARAM.inp.ocp)
     {
-        this->pelec->fixed_weights(PARAM.inp.ocp_kb, GlobalV::NBANDS, PARAM.inp.nelec);
+        this->pelec->fixed_weights(PARAM.inp.ocp_kb, PARAM.inp.nbands, PARAM.inp.nelec);
     }
 
     // 15) if kpar is not divisible by nks, print a warning
@@ -419,7 +419,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners()
             GlobalV::ofs_running << "\n Output bands in file: " << ss2.str() << std::endl;
             ModuleIO::nscf_band(is,
                                 ss2.str(),
-                                GlobalV::NBANDS,
+                                PARAM.inp.nbands,
                                 0.0,
                                 PARAM.inp.out_band[1],
                                 this->pelec->ekb,
@@ -446,7 +446,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners()
                               GlobalC::Pkpoints,
                               GlobalC::ucell,
                               this->pelec->eferm,
-                              GlobalV::NBANDS,
+                              PARAM.inp.nbands,
                               this->p_hamilt);
     }
 
