@@ -933,6 +933,8 @@ calculations.
   - **genelpa**: This method should be used if you choose localized orbitals.
   - **scalapack_gvx**: Scalapack can also be used for localized orbitals.
   - **cusolver**: This method needs building with CUDA and at least one gpu is available.
+  - **cusolvermp**: This method supports multi-GPU acceleration and needs building with CUDA。 Note that when using cusolvermp, you should set the number of MPI processes to be equal to the number of GPUs.
+  - **elpa**: The ELPA solver supports both CPU and GPU. By setting the `device` to GPU, you can launch the ELPA solver with GPU acceleration (provided that you have installed a GPU-supported version of ELPA, which requires you to manually compile and install ELPA, and the ABACUS should be compiled with -DUSE_ELPA=ON and -DUSE_CUDA=ON). The ELPA solver also supports multi-GPU acceleration.
 
   If you set ks_solver=`genelpa` for basis_type=`pw`, the program will be stopped with an error message:
 
@@ -941,7 +943,13 @@ calculations.
   ```
 
   Then the user has to correct the input file and restart the calculation.
-- **Default**: cg (plane-wave basis), or genelpa (localized atomic orbital basis, if compiling option `USE_ELPA` has been set),lapack (localized atomic orbital basis, if compiling option `ENABLE_MPI` has not been set), scalapack_gvx, (localized atomic orbital basis, if compiling option `USE_ELPA` has not been set and if compiling option `ENABLE_MPI` has been set)
+- **Default**: 
+  - **PW basis**: cg.
+  - **LCAO basis**:
+    - genelpa (if compiling option `USE_ELPA` has been set)
+    - lapack (if compiling option `ENABLE_MPI` has not been set)
+    - scalapack_gvx (if compiling option `USE_ELPA` has not been set and compiling option `ENABLE_MPI` has been set)
+    - cusolver (if compiling option `USE_CUDA` has been set)
 
 ### nbands
 

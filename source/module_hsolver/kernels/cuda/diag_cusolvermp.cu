@@ -10,13 +10,15 @@ extern "C"
 #include "module_hsolver/genelpa/Cblacs.h"
 }
 #include <iostream>
+#include <cstdint>
 #include "helper_cusolver.h"
 #include "module_base/global_function.h"
 #include "module_base/module_device/device.h"
 static calError_t allgather(void* src_buf, void* recv_buf, size_t size, void* data, void** request)
 {
     MPI_Request req;
-    int err = MPI_Iallgather(src_buf, size, MPI_BYTE, recv_buf, size, MPI_BYTE, (MPI_Comm)(data), &req);
+    intptr_t ptr = reinterpret_cast<intptr_t>(data);
+    int err = MPI_Iallgather(src_buf, size, MPI_BYTE, recv_buf, size, MPI_BYTE, (MPI_Comm)ptr, &req);
     if (err != MPI_SUCCESS)
     {
         return CAL_ERROR;
@@ -27,7 +29,8 @@ static calError_t allgather(void* src_buf, void* recv_buf, size_t size, void* da
 
 static calError_t request_test(void* request)
 {
-    MPI_Request req = (MPI_Request)(request);
+    intptr_t ptr = reinterpret_cast<intptr_t>(request);
+    MPI_Request req = (MPI_Request)ptr;
     int completed;
     int err = MPI_Test(&req, &completed, MPI_STATUS_IGNORE);
     if (err != MPI_SUCCESS)
