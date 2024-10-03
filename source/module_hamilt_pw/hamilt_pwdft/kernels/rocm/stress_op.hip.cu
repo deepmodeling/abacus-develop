@@ -743,4 +743,7 @@ template struct cal_dbecp_noevc_nl_op<double, base_device::DEVICE_GPU>;
 template struct cal_stress_nl_op<float, base_device::DEVICE_GPU>;
 template struct cal_stress_nl_op<double, base_device::DEVICE_GPU>;
 
+template struct cal_force_npw_op<double, base_device::DEVICE_GPU>;
+template struct cal_force_npw_op<float, base_device::DEVICE_GPU>;
+
 }  // namespace hamilt

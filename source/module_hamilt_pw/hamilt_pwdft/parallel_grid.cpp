@@ -182,7 +182,7 @@ void Parallel_Grid::z_distribution(void)
 
 
 #ifdef __MPI
-void Parallel_Grid::zpiece_to_all(double *zpiece, const int &iz, double *rho)
+void Parallel_Grid::zpiece_to_all(double *zpiece, const int &iz, double *rho) const
 {
 	if(PARAM.inp.esolver_type == "sdft")
 	{
@@ -256,7 +256,7 @@ void Parallel_Grid::zpiece_to_all(double *zpiece, const int &iz, double *rho)
 #endif
 
 #ifdef __MPI
-void Parallel_Grid::zpiece_to_stogroup(double *zpiece, const int &iz, double *rho)
+void Parallel_Grid::zpiece_to_stogroup(double *zpiece, const int &iz, double *rho) const
 {
 	assert(allocate);	
 	//TITLE("Parallel_Grid","zpiece_to_all");

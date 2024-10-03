@@ -36,13 +36,23 @@ class DiagoDavid : public DiagH<T, Device>
      * This function type is used to define a matrix-blockvector operator H.
      * For eigenvalue problem HX = λX or generalized eigenvalue problem HX = λSX,
      * this function computes the product of the Hamiltonian matrix H and a blockvector X.
+     * 
+     * Called as follows:
+     * hpsi(X, HX, nvec, dim, id_start, id_end)
+     * Result is stored in HX.
+     * HX = H * X[id_start:id_end]
      *
-     * @param[out] X      Pointer to input blockvector of type `T*`.
-     * @param[in]  HX     Pointer to output blockvector of type `T*`.
+     * @param[out] X      Head address of input blockvector of type `T*`.
+     * @param[in]  HX     Where to write output blockvector of type `T*`.
      * @param[in]  nvec   Number of eigebpairs, i.e. number of vectors in a block.
      * @param[in]  dim    Dimension of matrix.
      * @param[in]  id_start Start index of blockvector.
      * @param[in]  id_end   End index of blockvector.
+     * 
+     * @warning HX is the exact address to store output H*X[id_start:id_end];
+     * @warning while X is the head address of input blockvector, \b without offset.
+     * @warning Calling function should pass X and HX[offset] as arguments,
+     * @warning where offset is usually id_start * leading dimension.
      */
     using HPsiFunc = std::function<void(T*, T*, const int, const int, const int, const int)>;
 

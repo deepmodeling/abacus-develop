@@ -20,8 +20,6 @@ namespace GlobalV
 extern int NBANDS;
 extern int NLOCAL;        // 1.1 // mohan add 2009-05-29
 
-
-extern int NSPIN;       // 7
 extern double nupdown;
 extern bool use_uspp;
 
