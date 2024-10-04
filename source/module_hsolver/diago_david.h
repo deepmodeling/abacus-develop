@@ -43,8 +43,8 @@ class DiagoDavid : public DiagH<T, Device>
      *
      * @param[out] X      Head address of input blockvector of type `T*`.
      * @param[in]  HX     Head address of output blockvector of type `T*`.
-     * @param[in]  ld     Leading dimension of matrix.
-     * @param[in]  nvec   Number of eigenpairs, i.e. number of vectors in a block.
+     * @param[in]  ld     Leading dimension of blockvector.
+     * @param[in]  nvec   Number of vectors in a block.
      * 
      * @warning X and HX are the exact address to read input X and store output H*X,
      * @warning both of size ld * nvec.
@@ -58,8 +58,8 @@ class DiagoDavid : public DiagH<T, Device>
      * For generalized eigenvalue problem HX = λSX,
      * this function computes the product of the overlap matrix S and a blockvector X.
      *
-     * @param[in]   X     Pointer to the input array.
-     * @param[out] SX     Pointer to the output array.
+     * @param[in]   X     Pointer to the input blockvector.
+     * @param[out] SX     Pointer to the output blockvector.
      * @param[in] nrow    Dimension of SX: nbands * nrow.
      * @param[in] npw     Number of plane waves.
      * @param[in] nbands  Number of bands.
