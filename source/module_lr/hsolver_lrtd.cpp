@@ -118,16 +118,14 @@ namespace LR
                     false, //always do the subspace diag (check the implementation)
                     comm_info);
 
-                std::function<void(T*, T*, const int, const int, const int, const int)> hpsi_func = [pHamilt](
+                auto hpsi_func = [pHamilt](
                     T* psi_in,
                     T* hpsi_out,
-                    const int nband_in,
-                    const int nbasis_in,
-                    const int band_index1,
-                    const int band_index2)
+                    const int ldPsi,
+                    const int nvec)
                     {
-                        auto psi_iter_wrapper = psi::Psi<T, Device>(psi_in, 1, nband_in, nbasis_in, nullptr);
-                        psi::Range bands_range(true, 0, band_index1, band_index2);
+                        auto psi_iter_wrapper = psi::Psi<T, Device>(psi_in, 1, nvec, ldPsi, nullptr);
+                        psi::Range bands_range(true, 0, 0, nvec-1);
                         using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
                         hpsi_info info(&psi_iter_wrapper, bands_range, hpsi_out);
                         pHamilt->ops->hPsi(info);
