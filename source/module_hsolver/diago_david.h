@@ -44,17 +44,13 @@ class DiagoDavid : public DiagH<T, Device>
      *
      * @param[out] X      Head address of input blockvector of type `T*`.
      * @param[in]  HX     Where to write output blockvector of type `T*`.
+     * @param[in]  ld    Leading dimension of matrix.
      * @param[in]  nvec   Number of eigebpairs, i.e. number of vectors in a block.
-     * @param[in]  dim    Dimension of matrix.
-     * @param[in]  id_start Start index of blockvector.
-     * @param[in]  id_end   End index of blockvector.
      * 
-     * @warning HX is the exact address to store output H*X[id_start:id_end];
-     * @warning while X is the head address of input blockvector, \b without offset.
-     * @warning Calling function should pass X and HX[offset] as arguments,
-     * @warning where offset is usually id_start * leading dimension.
+     * @warning X and HX are the exact address to read input X and store output H*X,
+     * @warning both of size ld * nvec.
      */
-    using HPsiFunc = std::function<void(T*, T*, const int, const int, const int, const int)>;
+    using HPsiFunc = std::function<void(T*, T*, const int, const int)>;
 
     /**
      * @brief A function type representing the SX function.

@@ -230,7 +230,7 @@ int DiagoDavid<T, Device>::diag_once(const HPsiFunc& hpsi_func,
     // end of SchmidtOrth and calculate H|psi>
     // hpsi_info dav_hpsi_in(&basis, psi::Range(true, 0, 0, nband - 1), this->hpsi);
     // phm_in->ops->hPsi(dav_hpsi_in);
-    hpsi_func(basis, hpsi, nbase_x, dim, 0, nband - 1);
+    hpsi_func(basis, hpsi, dim, nband);
 
     this->cal_elem(dim, nbase, nbase_x, this->notconv, this->hpsi, this->spsi, this->hcc, this->scc);
 
@@ -601,7 +601,7 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     //                       psi::Range(true, 0, nbase, nbase + notconv - 1),
     //                       &hpsi[nbase * dim]); // &hp(nbase, 0)
     // phm_in->ops->hPsi(dav_hpsi_in);
-    hpsi_func(basis, &hpsi[nbase * dim], nbase_x, dim, nbase, nbase + notconv - 1);
+    hpsi_func(basis + nbase * dim, hpsi + nbase * dim, dim, notconv);
 
     delmem_complex_op()(this->ctx, lagrange);
     delmem_complex_op()(this->ctx, vc_ev_vector);
@@ -1149,9 +1149,7 @@ void DiagoDavid<T, Device>::planSchmidtOrth(const int nband, std::vector<int>& p
 /**
  * @brief Performs iterative diagonalization using the David algorithm.
  * 
- * @warning Please see docs of `HPsiFunc` for more information.
- * @warning Please adhere strictly to the requirements of the function pointer
- * @warning for the hpsi mat-vec interface; it may seem counterintuitive.
+ * @warning Please see docs of `HPsiFunc` for more information about the hpsi mat-vec interface.
  * 
  * @tparam T The type of the elements in the matrix.
  * @tparam Device The device type (CPU or GPU).
