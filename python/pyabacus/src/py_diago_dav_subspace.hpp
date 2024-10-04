@@ -113,23 +113,21 @@ public:
         auto hpsi_func = [mm_op] (
             std::complex<double> *psi_in,
             std::complex<double> *hpsi_out, 
-            const int nband_in,
-            const int nbasis_in, 
-            const int band_index1,
-            const int band_index2
+            const int ldPsi,
+            const int nvec
         ) {
             // Note: numpy's py::array_t is row-major, but
             //       our raw pointer-array is column-major
-            py::array_t<std::complex<double>, py::array::f_style> psi({nbasis_in, band_index2 - band_index1 + 1});
+            py::array_t<std::complex<double>, py::array::f_style> psi({ldPsi, band_index2 - band_index1 + 1});
             py::buffer_info psi_buf = psi.request();
             std::complex<double>* psi_ptr = static_cast<std::complex<double>*>(psi_buf.ptr);
-            std::copy(psi_in + band_index1 * nbasis_in, psi_in + (band_index2 + 1) * nbasis_in, psi_ptr);
+            std::copy(psi_in, psi_in + nvec * ldPsi, psi_ptr);
 
             py::array_t<std::complex<double>, py::array::f_style> hpsi = mm_op(psi);
 
             py::buffer_info hpsi_buf = hpsi.request();
             std::complex<double>* hpsi_ptr = static_cast<std::complex<double>*>(hpsi_buf.ptr);
-            std::copy(hpsi_ptr, hpsi_ptr + (band_index2 - band_index1 + 1) * nbasis_in, hpsi_out);
+            std::copy(hpsi_ptr, hpsi_ptr + nvec * ldPsi, hpsi_out);
         };
 
         obj = std::make_unique<hsolver::Diago_DavSubspace<std::complex<double>, base_device::DEVICE_CPU>>(
