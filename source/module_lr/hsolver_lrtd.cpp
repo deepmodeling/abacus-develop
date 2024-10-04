@@ -14,7 +14,8 @@ namespace LR
     inline void print_eigs(const std::vector<T>& eigs, const std::string& label = "", const double factor = 1.0)
     {
         std::cout << label << std::endl;
-        for (auto& e : eigs)std::cout << e * factor << " ";
+        for (auto& e : eigs) {std::cout << e * factor << " ";
+}
         std::cout << std::endl;
     }
     template<typename T, typename Device>
