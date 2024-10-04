@@ -68,15 +68,16 @@ class DiagoDavid : public DiagH<T, Device>
      */
     using SPsiFunc = std::function<void(T*, T*, const int, const int, const int)>;
 
-    int diag(const HPsiFunc& hpsi_func,           // function void hpsi(T*, T*, const int, const int, const int, const int) 
-             const SPsiFunc& spsi_func,           // function void spsi(T*, T*, const int, const int, const int) 
-                      const int ldPsi,            // Leading dimension of the psi input
-                      T *psi_in,                  // Pointer to eigenvectors
-                      Real* eigenvalue_in,        // Pointer to store the resulting eigenvalues
-                      const Real david_diag_thr,  // Convergence threshold for the Davidson iteration
-                      const int david_maxiter,    // Maximum allowed iterations for the Davidson method
-                      const int ntry_max = 5,     // Maximum number of diagonalization attempts (default is 5)
-                      const int notconv_max = 0); // Maximum number of allowed non-converged eigenvectors
+    int diag(
+      const HPsiFunc& hpsi_func,  // function void hpsi(T*, T*, const int, const int, const int, const int) 
+      const SPsiFunc& spsi_func,  // function void spsi(T*, T*, const int, const int, const int) 
+      const int ldPsi,            // Leading dimension of the psi input
+      T *psi_in,                  // Pointer to eigenvectors
+      Real* eigenvalue_in,        // Pointer to store the resulting eigenvalues
+      const Real david_diag_thr,  // Convergence threshold for the Davidson iteration
+      const int david_maxiter,    // Maximum allowed iterations for the Davidson method
+      const int ntry_max = 5,     // Maximum number of diagonalization attempts (default is 5)
+      const int notconv_max = 0); // Maximum number of allowed non-converged eigenvectors
 
   private:
     bool use_paw = false;
@@ -166,12 +167,12 @@ class DiagoDavid : public DiagH<T, Device>
                  T* vcc);
 
     void SchmidtOrth(const int& dim,
-                    const int nband,
-                    const int m,
-                    const T* spsi,
-                    T* lagrange_m,
-                    const int mm_size,
-                    const int mv_size);
+                     const int nband,
+                     const int m,
+                     const T* spsi,
+                     T* lagrange_m,
+                     const int mm_size,
+                     const int mv_size);
 
     void planSchmidtOrth(const int nband, std::vector<int>& pre_matrix_mm_m, std::vector<int>& pre_matrix_mv_m);
 
