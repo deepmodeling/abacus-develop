@@ -118,7 +118,7 @@ public:
         ) {
             // Note: numpy's py::array_t is row-major, but
             //       our raw pointer-array is column-major
-            py::array_t<std::complex<double>, py::array::f_style> psi({ldPsi, band_index2 - band_index1 + 1});
+            py::array_t<std::complex<double>, py::array::f_style> psi({ldPsi, nvec});
             py::buffer_info psi_buf = psi.request();
             std::complex<double>* psi_ptr = static_cast<std::complex<double>*>(psi_buf.ptr);
             std::copy(psi_in, psi_in + nvec * ldPsi, psi_ptr);
