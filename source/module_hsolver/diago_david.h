@@ -53,6 +53,8 @@ class DiagoDavid : public DiagH<T, Device>
 
     /**
      * @brief A function type representing the SX function.
+     * 
+     * nrow is leading dimension of spsi, npw is leading dimension of psi, nbands is number of vecs
      *
      * This function type is used to define a matrix-blockvector operator S.
      * For generalized eigenvalue problem HX = λSX,
@@ -60,11 +62,11 @@ class DiagoDavid : public DiagH<T, Device>
      *
      * @param[in]   X     Pointer to the input blockvector.
      * @param[out] SX     Pointer to the output blockvector.
-     * @param[in] nrow    Dimension of SX: nbands * nrow.
-     * @param[in] npw     Number of plane waves.
-     * @param[in] nbands  Number of bands.
+     * @param[in] nrow    Leading dimension of spsi. Dimension of SX: nbands * nrow.
+     * @param[in] npw     Leading dimension of psi. Number of plane waves.
+     * @param[in] nbands  Number of vectors.
      * 
-     * @note called as spsi(in, out, dim, dim, 1)
+     * @note called like spsi(in, out, dim, dim, 1)
      */
     using SPsiFunc = std::function<void(T*, T*, const int, const int, const int)>;
 

@@ -512,6 +512,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
 
         /// wrap spsi into lambda function, Matrix \times blockvector
         /// spsi(X, SX, nrow, npw, nbands)
+        /// nrow is leading dimension of spsi, npw is leading dimension of psi, nbands is number of vecs
         auto spsi_func = [hm](const T* psi_in, T* spsi_out,
                                const int nrow,  // dimension of spsi: nbands * nrow
                                const int npw,   // number of plane waves
