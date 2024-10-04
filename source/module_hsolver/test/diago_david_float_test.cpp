@@ -108,11 +108,10 @@ public:
 
 		
 		auto hpsi_func = [phm](std::complex<float>* psi_in,std::complex<float>* hpsi_out,
-					const int nband_in, const int nbasis_in,
-                    const int band_index1, const int band_index2)
+					const int ldPsi, const int nvec)
                     {
-                        auto psi_iter_wrapper = psi::Psi<std::complex<float>>(psi_in, 1, nband_in, nbasis_in, nullptr);
-                        psi::Range bands_range(1, 0, band_index1, band_index2);
+                        auto psi_iter_wrapper = psi::Psi<std::complex<float>>(psi_in, 1, nvec, ldPsi, nullptr);
+                        psi::Range bands_range(1, 0, 0, nvec-1);
                         using hpsi_info = typename hamilt::Operator<std::complex<float>>::hpsi_info;
                         hpsi_info info(&psi_iter_wrapper, bands_range, hpsi_out);
                         phm->ops->hPsi(info);
