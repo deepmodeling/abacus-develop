@@ -31,6 +31,7 @@ class Diago_DavSubspace : public DiagH<T, Device>
 
     virtual ~Diago_DavSubspace() override;
 
+    // See diago_david.h for information on the HPsiFunc function type
     using HPsiFunc = std::function<void(T*, T*, const int, const int)>;
 
     int diag(const HPsiFunc& hpsi_func,

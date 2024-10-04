@@ -230,6 +230,8 @@ int DiagoDavid<T, Device>::diag_once(const HPsiFunc& hpsi_func,
     // end of SchmidtOrth and calculate H|psi>
     // hpsi_info dav_hpsi_in(&basis, psi::Range(true, 0, 0, nband - 1), this->hpsi);
     // phm_in->ops->hPsi(dav_hpsi_in);
+    // hpsi[:, 0:nband] = H basis[:, 0:nband]
+    // slice index in this piece of code is in C manner. i.e. 0:id stands for [0,id)
     hpsi_func(basis, hpsi, dim, nband);
 
     this->cal_elem(dim, nbase, nbase_x, this->notconv, this->hpsi, this->spsi, this->hcc, this->scc);
@@ -601,6 +603,7 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     //                       psi::Range(true, 0, nbase, nbase + notconv - 1),
     //                       &hpsi[nbase * dim]); // &hp(nbase, 0)
     // phm_in->ops->hPsi(dav_hpsi_in);
+    // hpsi[:, nbase:nbase+notcnv] = H basis[:, nbase:nbase+notcnv]
     hpsi_func(basis + nbase * dim, hpsi + nbase * dim, dim, notconv);
 
     delmem_complex_op()(this->ctx, lagrange);

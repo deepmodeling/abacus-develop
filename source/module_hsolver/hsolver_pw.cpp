@@ -491,14 +491,14 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
 
         auto ngk_pointer = psi.get_ngk_pointer();
         /// wrap hpsi into lambda function, Matrix \times blockvector
-        /// hpsi(X, HX, nband, dim, band_index1, band_index2)
+        // hpsi_func (X, HX, ld, nvec) -> HX = H(X), X and HX blockvectors of size ld x nvec
         auto hpsi_func = [hm, ngk_pointer](T *psi_in,
                                            T *hpsi_out,
                                            const int ldPsi,
                                            const int nvec) {
             ModuleBase::timer::tick("David", "hpsi_func");
 
-            // Convert "pointer data stucture" to a psi::Psi object
+            // Convert pointer of psi_in to a psi::Psi object
             auto psi_iter_wrapper = psi::Psi<T, Device>(psi_in, 1, nvec, ldPsi, ngk_pointer);
 
             psi::Range bands_range(true, 0, 0, nvec-1);

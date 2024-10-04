@@ -38,14 +38,13 @@ class DiagoDavid : public DiagH<T, Device>
      * this function computes the product of the Hamiltonian matrix H and a blockvector X.
      * 
      * Called as follows:
-     * hpsi(X, HX, nvec, dim, id_start, id_end)
-     * Result is stored in HX.
-     * HX = H * X[id_start:id_end]
+     * hpsi(X, HX, ld, nvec) where X and HX are (ld, nvec)-shaped blockvectors.
+     * Result HX = H * X is stored in HX.
      *
      * @param[out] X      Head address of input blockvector of type `T*`.
-     * @param[in]  HX     Where to write output blockvector of type `T*`.
-     * @param[in]  ld    Leading dimension of matrix.
-     * @param[in]  nvec   Number of eigebpairs, i.e. number of vectors in a block.
+     * @param[in]  HX     Head address of output blockvector of type `T*`.
+     * @param[in]  ld     Leading dimension of matrix.
+     * @param[in]  nvec   Number of eigenpairs, i.e. number of vectors in a block.
      * 
      * @warning X and HX are the exact address to read input X and store output H*X,
      * @warning both of size ld * nvec.
