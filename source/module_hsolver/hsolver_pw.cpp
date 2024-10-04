@@ -514,13 +514,13 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         /// spsi(X, SX, nrow, npw, nbands)
         /// nrow is leading dimension of spsi, npw is leading dimension of psi, nbands is number of vecs
         auto spsi_func = [hm](const T* psi_in, T* spsi_out,
-                               const int nrow,  // dimension of spsi: nbands * nrow
-                               const int npw,   // number of plane waves
-                               const int nbands // number of bands
+                               const int ldSpsi,  // dimension of spsi: nbands * nrow
+                               const int ldPsi,   // number of plane waves
+                               const int nvec     // number of bands
                             ){
             ModuleBase::timer::tick("David", "spsi_func");
             // sPsi determines S=I or not by GlobalV::use_uspp inside
-            hm->sPsi(psi_in, spsi_out, nrow, npw, nbands);
+            hm->sPsi(psi_in, spsi_out, ldSpsi, ldPsi, nvec);
             ModuleBase::timer::tick("David", "spsi_func");
         };
 
