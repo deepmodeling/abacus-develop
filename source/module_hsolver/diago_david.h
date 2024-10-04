@@ -69,14 +69,14 @@ class DiagoDavid : public DiagH<T, Device>
     using SPsiFunc = std::function<void(T*, T*, const int, const int, const int)>;
 
     int diag(
-      const HPsiFunc& hpsi_func,  // function void hpsi(T*, T*, const int, const int, const int, const int) 
+      const HPsiFunc& hpsi_func,  // function void hpsi(T*, T*, const int, const int) 
       const SPsiFunc& spsi_func,  // function void spsi(T*, T*, const int, const int, const int) 
       const int ldPsi,            // Leading dimension of the psi input
       T *psi_in,                  // Pointer to eigenvectors
       Real* eigenvalue_in,        // Pointer to store the resulting eigenvalues
       const Real david_diag_thr,  // Convergence threshold for the Davidson iteration
       const int david_maxiter,    // Maximum allowed iterations for the Davidson method
-      const int ntry_max = 5,     // Maximum number of diagonalization attempts (default is 5)
+      const int ntry_max = 5,     // Maximum number of diagonalization attempts (5 by default)
       const int notconv_max = 0); // Maximum number of allowed non-converged eigenvectors
 
   private:
