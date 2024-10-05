@@ -561,27 +561,27 @@ struct Input_para
     double pexsi_zero_thr = 1e-10;
 
     // ==============   #Parameters (20.Test) ====================
-    bool out_alllog = false;      ///< output all logs.
-    int nurse = 0;                ///< used for debug.
-    bool t_in_h = true;           ///< calculate the T or not.
-    bool vl_in_h = true;          ///< calculate the vloc or not.
-    bool vnl_in_h = true;         ///< calculate the vnl or not.
-    bool vh_in_h = true;          ///< calculate the hartree potential or not
-    bool vion_in_h = true;        ///< calculate the local ionic potential or not
-                                  ///< //only relevant when vl_in_h = 1
-    bool test_force = false;      ///< test the force.
-    bool test_stress = false;     ///< test the stress.
-    bool test_skip_ewald = false; ///< variables for test only
-    bool test_atom_input = false; ///< variables for test_atom_input only
-    bool test_symmetry = false;   ///< variables for test_lattice only
-    int test_wf = 0;         ///< variables for test_wf only
-    int test_grid = false;  ///< variables for test_grid only
-    bool test_charge = false; ///< variables for test_vloc only
-    bool test_energy = false; ///< variables for test_energy only
-    bool test_gridt = false;  ///< variables for test_gridt only
-    bool test_pseudo_cell = false; ///< variables for test_pseudo_cell only
-    int test_pp = 0;          ///< variables for test_pp only
-    bool test_relax_method = false; ///< variables for test_relax_method only
-    int test_deconstructor = false; ///< variables for test_deconstructor only
+    bool out_alllog = false;         ///< output all logs.
+    int nurse = 0;                   ///< used for debug.
+    bool t_in_h = true;              ///< calculate the T or not.
+    bool vl_in_h = true;             ///< calculate the vloc or not.
+    bool vnl_in_h = true;            ///< calculate the vnl or not.
+    bool vh_in_h = true;             ///< calculate the hartree potential or not
+    bool vion_in_h = true;           ///< calculate the local ionic potential or not
+                                     ///< //only relevant when vl_in_h = 1
+    bool test_force = false;         ///< test the force.
+    bool test_stress = false;        ///< test the stress.
+    bool test_skip_ewald = false;    ///< variables for test only
+    int  test_atom_input = false;    ///< variables for test_atom_input only
+    int  test_symmetry = false;      ///< variables for test_lattice only
+    int  test_wf = 0;                ///< variables for test_wf only
+    int  test_grid = false;          ///< variables for test_grid only
+    int  test_charge = false;        ///< variables for test_vloc only
+    int  test_energy = false;        ///< variables for test_energy only
+    int  test_gridt = false;         ///< variables for test_gridt only
+    int  test_pseudo_cell = false;   ///< variables for test_pseudo_cell only
+    int  test_pp = 0;                ///< variables for test_pp only
+    int  test_relax_method = false;  ///< variables for test_relax_method only
+    int  test_deconstructor = false; ///< variables for test_deconstructor only
 };
 #endif
