@@ -437,12 +437,12 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         // hpsi_func (X, HX, ld, nvec) -> HX = H(X), X and HX blockvectors of size ld x nvec
         auto hpsi_func = [hm, ngk_pointer](T *psi_in,
                                            T *hpsi_out,
-                                           const int ldPsi,
+                                           const int ld_psi,
                                            const int nvec) {
             ModuleBase::timer::tick("DavSubspace", "hpsi_func");
 
             // Convert "pointer data stucture" to a psi::Psi object
-            auto psi_iter_wrapper = psi::Psi<T, Device>(psi_in, 1, nvec, ldPsi, ngk_pointer);
+            auto psi_iter_wrapper = psi::Psi<T, Device>(psi_in, 1, nvec, ld_psi, ngk_pointer);
 
             psi::Range bands_range(true, 0, 0, nvec-1);
 
@@ -485,7 +485,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         // dimensions of matrix to be solved
         const int dim = psi.get_current_nbas(); /// dimension of matrix
         const int nband = psi.get_nbands();     /// number of eigenpairs sought
-        const int ldPsi = psi.get_nbasis();     /// leading dimension of psi
+        const int ld_psi = psi.get_nbasis();     /// leading dimension of psi
 
         // Davidson matrix-blockvector functions
 
@@ -494,12 +494,12 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         // hpsi_func (X, HX, ld, nvec) -> HX = H(X), X and HX blockvectors of size ld x nvec
         auto hpsi_func = [hm, ngk_pointer](T *psi_in,
                                            T *hpsi_out,
-                                           const int ldPsi,
+                                           const int ld_psi,
                                            const int nvec) {
             ModuleBase::timer::tick("David", "hpsi_func");
 
             // Convert pointer of psi_in to a psi::Psi object
-            auto psi_iter_wrapper = psi::Psi<T, Device>(psi_in, 1, nvec, ldPsi, ngk_pointer);
+            auto psi_iter_wrapper = psi::Psi<T, Device>(psi_in, 1, nvec, ld_psi, ngk_pointer);
 
             psi::Range bands_range(true, 0, 0, nvec-1);
 
@@ -514,13 +514,14 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         /// spsi(X, SX, nrow, npw, nbands)
         /// nrow is leading dimension of spsi, npw is leading dimension of psi, nbands is number of vecs
         auto spsi_func = [hm](const T* psi_in, T* spsi_out,
-                               const int ldSpsi,  // dimension of spsi: nbands * nrow
-                               const int ldPsi,   // number of plane waves
-                               const int nvec     // number of bands
+                               const int ld_spsi,  // Leading dimension of spsi. Dimension of SX: nbands * nrow.
+                               const int ld_psi,   // Leading dimension of psi. Number of plane waves.
+                               const int nvec      // Number of vectors(bands)
                             ){
             ModuleBase::timer::tick("David", "spsi_func");
             // sPsi determines S=I or not by GlobalV::use_uspp inside
-            hm->sPsi(psi_in, spsi_out, ldSpsi, ldPsi, nvec);
+            // sPsi(psi, spsi, nrow, npw, nbands)
+            hm->sPsi(psi_in, spsi_out, ld_spsi, ld_psi, nvec);
             ModuleBase::timer::tick("David", "spsi_func");
         };
 
@@ -533,7 +534,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         // do diag and add davidson iteration counts up to avg_iter
         DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(david.diag(hpsi_func,
                                                                                spsi_func,
-                                                                               ldPsi,
+                                                                               ld_psi,
                                                                                psi.get_pointer(),
                                                                                eigenvalue,
                                                                                david_diag_thr,

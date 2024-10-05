@@ -85,10 +85,10 @@ namespace LR
                 auto hpsi_func = [pHamilt](
                     T* psi_in,
                     T* hpsi_out,
-                    const int ldPsi,
+                    const int ld_psi,
                     const int nvec)
                     {
-                        auto psi_iter_wrapper = psi::Psi<T, Device>(psi_in, 1, nvec, ldPsi, nullptr);
+                        auto psi_iter_wrapper = psi::Psi<T, Device>(psi_in, 1, nvec, ld_psi, nullptr);
                         psi::Range bands_range(true, 0, 0, nvec-1);
                         using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
                         hpsi_info info(&psi_iter_wrapper, bands_range, hpsi_out);
@@ -120,10 +120,10 @@ namespace LR
                 auto hpsi_func = [pHamilt](
                     T* psi_in,
                     T* hpsi_out,
-                    const int ldPsi,
+                    const int ld_psi,
                     const int nvec)
                     {
-                        auto psi_iter_wrapper = psi::Psi<T, Device>(psi_in, 1, nvec, ldPsi, nullptr);
+                        auto psi_iter_wrapper = psi::Psi<T, Device>(psi_in, 1, nvec, ld_psi, nullptr);
                         psi::Range bands_range(true, 0, 0, nvec-1);
                         using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
                         hpsi_info info(&psi_iter_wrapper, bands_range, hpsi_out);

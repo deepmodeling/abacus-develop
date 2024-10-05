@@ -60,11 +60,11 @@ class DiagoDavid : public DiagH<T, Device>
      * For generalized eigenvalue problem HX = λSX,
      * this function computes the product of the overlap matrix S and a blockvector X.
      *
-     * @param[in]   X     Pointer to the input blockvector.
-     * @param[out] SX     Pointer to the output blockvector.
-     * @param[in] nrow    Leading dimension of spsi. Dimension of SX: nbands * nrow.
-     * @param[in] npw     Leading dimension of psi. Number of plane waves.
-     * @param[in] nbands  Number of vectors.
+     * @param[in]   X       Pointer to the input blockvector.
+     * @param[out] SX       Pointer to the output blockvector.
+     * @param[in] ld_spsi   Leading dimension of spsi. Dimension of SX: nbands * nrow.
+     * @param[in] ld_psi    Leading dimension of psi. Number of plane waves.
+     * @param[in] nbands    Number of vectors.
      * 
      * @note called like spsi(in, out, dim, dim, 1)
      */
@@ -73,7 +73,7 @@ class DiagoDavid : public DiagH<T, Device>
     int diag(
       const HPsiFunc& hpsi_func,  // function void hpsi(T*, T*, const int, const int) 
       const SPsiFunc& spsi_func,  // function void spsi(T*, T*, const int, const int, const int) 
-      const int ldPsi,            // Leading dimension of the psi input
+      const int ld_psi,           // Leading dimension of the psi input
       T *psi_in,                  // Pointer to eigenvectors
       Real* eigenvalue_in,        // Pointer to store the resulting eigenvalues
       const Real david_diag_thr,  // Convergence threshold for the Davidson iteration
@@ -128,7 +128,7 @@ class DiagoDavid : public DiagH<T, Device>
                   const SPsiFunc& spsi_func,
                   const int dim,
                   const int nband,
-                  const int ldPsi,
+                  const int ld_psi,
                   T *psi_in,
                   Real* eigenvalue_in,
                   const Real david_diag_thr,
@@ -161,7 +161,7 @@ class DiagoDavid : public DiagH<T, Device>
                  const int nbase_x,
                  const Real* eigenvalue,
                  const T *psi_in,
-                 const int ldPsi,
+                 const int ld_psi,
                  T* hpsi,
                  T* spsi,
                  T* hcc,
