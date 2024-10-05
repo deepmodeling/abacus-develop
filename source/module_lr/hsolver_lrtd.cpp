@@ -95,9 +95,9 @@ namespace LR
                         pHamilt->ops->hPsi(info);
                     };
                 auto spsi_func = [pHamilt](const T* psi_in, T* spsi_out,
-                               const int nrow, const int npw,  const int nbands){
+                               const int ld_psi, const int nbands){
                     // sPsi determines S=I or not by GlobalV::use_uspp inside
-                    pHamilt->sPsi(psi_in, spsi_out, nrow, npw, nbands);
+                    pHamilt->sPsi(psi_in, spsi_out, ld_psi, ld_psi, nbands);
                 };
 
                 const int& dim = psi_k1_dav.get_nbasis();   //equals to leading dimension here
