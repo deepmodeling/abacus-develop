@@ -47,7 +47,6 @@ int get_device_kpar(const int& kpar);
  * for module_io PARAM.globalv.device_flag
  */
 std::string get_device_flag(const std::string& device,
-                            const std::string& ks_solver,
                             const std::string& basis_type);
 
 #if __MPI

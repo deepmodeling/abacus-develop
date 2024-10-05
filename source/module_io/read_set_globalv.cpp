@@ -1,5 +1,6 @@
 #include "module_base/global_variable.h"
 #include "module_base/tool_quit.h"
+#include "module_base/module_device/device.h"
 #include "module_parameter/parameter.h"
 #include "read_input.h"
 #include "read_input_tool.h"
