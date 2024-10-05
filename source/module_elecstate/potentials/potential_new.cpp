@@ -46,7 +46,7 @@ Potential::~Potential()
         }
         this->components.clear();
     }
-    if (PARAM.globalv.device_flag == "gpu") {
+    if (PARAM.inp.device == "gpu") {
         if (PARAM.inp.precision == "single") {
             delmem_sd_op()(gpu_ctx, s_veff_smooth);
             delmem_sd_op()(gpu_ctx, s_vofk_smooth);
@@ -129,7 +129,7 @@ void Potential::allocate()
         this->vofk_smooth.create(PARAM.inp.nspin, nrxx_smooth);
         ModuleBase::Memory::record("Pot::vofk_smooth", sizeof(double) * PARAM.inp.nspin * nrxx_smooth);
     }
-    if (PARAM.globalv.device_flag == "gpu") {
+    if (PARAM.inp.device == "gpu") {
         if (PARAM.inp.precision == "single") {
             resmem_sd_op()(gpu_ctx, s_veff_smooth, PARAM.inp.nspin * nrxx_smooth);
             resmem_sd_op()(gpu_ctx, s_vofk_smooth, PARAM.inp.nspin * nrxx_smooth);
@@ -177,7 +177,7 @@ void Potential::update_from_charge(const Charge*const chg, const UnitCell*const 
     }
 #endif
 
-    if (PARAM.globalv.device_flag == "gpu") {
+    if (PARAM.inp.device == "gpu") {
         if (PARAM.inp.precision == "single") {
             castmem_d2s_h2d_op()(gpu_ctx,
                                  cpu_ctx,

@@ -94,24 +94,24 @@ void ReadInput::set_globalv(Parameter& para)
             break;
         }
 
-        if (para.input.device == "cpu")
-        {
-            para.sys.device_flag = "cpu";
-        }
-        else if (para.input.device == "gpu")
-        {
-            if (para.input.basis_type == "lcao_in_pw")
-            {
-                GlobalV::ofs_warning << "The GPU currently does not support the basis type \"lcao_in_pw\"!" << std::endl;
-                para.sys.device_flag = "cpu";
-            }
-            para.sys.device_flag = "gpu";
-        }
-        else
-        {
-            GlobalV::ofs_warning << "Parameter \"device\" can only be set to \"cpu\" or \"gpu\"!" << std::endl;
-            ModuleBase::WARNING_QUIT("device", "Parameter \"device\" can only be set to \"cpu\" or \"gpu\"!");
-        }
+        // if (para.input.device == "cpu")
+        // {
+        //     para.sys.device_flag = "cpu";
+        // }
+        // else if (para.input.device == "gpu")
+        // {
+        //     if (para.input.basis_type == "lcao_in_pw")
+        //     {
+        //         GlobalV::ofs_warning << "The GPU currently does not support the basis type \"lcao_in_pw\"!" << std::endl;
+        //         para.sys.device_flag = "cpu";
+        //     }
+        //     para.sys.device_flag = "gpu";
+        // }
+        // else
+        // {
+        //     GlobalV::ofs_warning << "Parameter \"device\" can only be set to \"cpu\" or \"gpu\"!" << std::endl;
+        //     ModuleBase::WARNING_QUIT("device", "Parameter \"device\" can only be set to \"cpu\" or \"gpu\"!");
+        // }
 
         para.sys.nqx=static_cast<int>((sqrt(para.inp.ecutwfc) / para.sys.dq + 4.0) * para.inp.cell_factor); 
         para.sys.nqxq=static_cast<int>((sqrt(para.inp.ecutrho) / para.sys.dq + 4.0) * para.inp.cell_factor);

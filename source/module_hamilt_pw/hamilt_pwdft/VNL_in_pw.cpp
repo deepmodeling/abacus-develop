@@ -32,7 +32,7 @@ void pseudopot_cell_vnl::release_memory()
     if (this->nhm <= 0 || memory_released) {
         return;
 }
-    if (PARAM.globalv.device_flag == "gpu")
+    if (PARAM.inp.device == "gpu")
     {
         if (PARAM.inp.precision == "single")
         {
@@ -153,7 +153,7 @@ void pseudopot_cell_vnl::init(const int ntype,
         this->deeq_nc.create(PARAM.inp.nspin, GlobalC::ucell.nat, this->nhm, this->nhm);
         this->qq_nt.create(ntype, this->nhm, this->nhm);
         this->qq_so.create(ntype, 4, this->nhm, this->nhm);
-        if (PARAM.globalv.device_flag == "gpu")
+        if (PARAM.inp.device == "gpu")
         {
             if (PARAM.inp.precision == "single")
             {
@@ -270,7 +270,7 @@ void pseudopot_cell_vnl::init(const int ntype,
             ModuleBase::Memory::record("VNL::tab_at", ntype * nchix_nc * PARAM.globalv.nqx * sizeof(double));
         }
     }
-    if (PARAM.globalv.device_flag == "gpu")
+    if (PARAM.inp.device == "gpu")
     {
         if (PARAM.inp.precision == "single")
         {
@@ -464,7 +464,7 @@ void pseudopot_cell_vnl::getvnl(Device* ctx, const int& ik, std::complex<FPTYPE>
     {
         _gk[ig] = this->wfcpw->getgpluskcar(ik, ig);
     }
-    if (PARAM.globalv.device_flag == "gpu")
+    if (PARAM.inp.device == "gpu")
     {
         resmem_int_op()(ctx, atom_nh, GlobalC::ucell.ntype);
         resmem_int_op()(ctx, atom_nb, GlobalC::ucell.ntype);
@@ -861,7 +861,7 @@ void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_
         delete[] aux;
         delete[] jl;
     }
-    if (PARAM.globalv.device_flag == "gpu")
+    if (PARAM.inp.device == "gpu")
     {
         if (PARAM.inp.precision == "single")
         {
@@ -1479,7 +1479,7 @@ void pseudopot_cell_vnl::cal_effective_D(const ModuleBase::matrix& veff,
             }
         }
     }
-    if (PARAM.globalv.device_flag == "gpu")
+    if (PARAM.inp.device == "gpu")
     {
         if (PARAM.inp.precision == "single")
         {

@@ -181,7 +181,7 @@ void Input_Conv::Convert()
     }
 
 
-    if (PARAM.globalv.device_flag  == "gpu" && PARAM.inp.basis_type == "pw")
+    if (PARAM.inp.device  == "gpu" && PARAM.inp.basis_type == "pw")
     {
         GlobalV::KPAR = base_device::information::get_device_kpar(PARAM.inp.kpar);
     }
@@ -197,7 +197,7 @@ void Input_Conv::Convert()
     {
         GlobalV::KPAR = PARAM.inp.kpar;
     }
-    if (PARAM.globalv.device_flag  == "cpu" and PARAM.inp.precision == "single")
+    if (PARAM.inp.device  == "cpu" and PARAM.inp.precision == "single")
     {
 // cpu single precision is not supported while float_fftw lib is not available
 #ifndef __ENABLE_FLOAT_FFTW

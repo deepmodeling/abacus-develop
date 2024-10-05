@@ -103,7 +103,7 @@ void DiagoElpaNative<T>::diag_pool(hamilt::MatrixBlock<T>& h_mat,
     #define ELPA_WITH_SYCL_GPU_VERSION 0
  */
 #if ELPA_WITH_NVIDIA_GPU_VERSION
-    if (PARAM.globalv.device_flag == "gpu")
+    if (PARAM.inp.device == "gpu")
     {
         elpa_set(handle, "nvidia-gpu", 1, &success);
         elpa_set(handle, "real_kernel", ELPA_2STAGE_REAL_NVIDIA_GPU, &success);

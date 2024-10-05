@@ -44,7 +44,7 @@ int get_device_kpar(const int& kpar);
 
 /**
  * @brief Get the device flag object
- * for module_io PARAM.globalv.device_flag
+ * for module_io PARAM.inp.device
  */
 std::string get_device_flag(const std::string& device,
                             const std::string& basis_type);

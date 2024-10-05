@@ -117,7 +117,7 @@ void wavefunc::wfcinit(psi::Psi<std::complex<double>>* psi_in, ModulePW::PW_Basi
         this->irindex = new int[wfc_basis->fftnxy];
         wfc_basis->getfftixy2is(this->irindex);
 #if defined(__CUDA) || defined(__ROCM)
-        if (PARAM.globalv.device_flag == "gpu")
+        if (PARAM.inp.device == "gpu")
         {
             wfc_basis->get_ig2ixyz_k();
         }
