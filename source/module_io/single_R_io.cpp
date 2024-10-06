@@ -61,7 +61,8 @@ void ModuleIO::output_single_R(std::ofstream& ofs,
             }
         }
 
-        if (reduce)Parallel_Reduce::reduce_all(line, PARAM.globalv.nlocal);
+        if (reduce) {Parallel_Reduce::reduce_all(line, PARAM.globalv.nlocal);
+}
 
         if (!reduce || GlobalV::DRANK == 0)
         {
