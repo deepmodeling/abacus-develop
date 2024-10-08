@@ -38,50 +38,48 @@ class DiagoDavid : public DiagH<T, Device>
      * this function computes the product of the Hamiltonian matrix H and a blockvector X.
      * 
      * Called as follows:
-     * hpsi(X, HX, nvec, dim, id_start, id_end)
-     * Result is stored in HX.
-     * HX = H * X[id_start:id_end]
+     * hpsi(X, HX, ld, nvec) where X and HX are (ld, nvec)-shaped blockvectors.
+     * Result HX = H * X is stored in HX.
      *
      * @param[out] X      Head address of input blockvector of type `T*`.
-     * @param[in]  HX     Where to write output blockvector of type `T*`.
-     * @param[in]  nvec   Number of eigebpairs, i.e. number of vectors in a block.
-     * @param[in]  dim    Dimension of matrix.
-     * @param[in]  id_start Start index of blockvector.
-     * @param[in]  id_end   End index of blockvector.
+     * @param[in]  HX     Head address of output blockvector of type `T*`.
+     * @param[in]  ld     Leading dimension of blockvector.
+     * @param[in]  nvec   Number of vectors in a block.
      * 
-     * @warning HX is the exact address to store output H*X[id_start:id_end];
-     * @warning while X is the head address of input blockvector, \b without offset.
-     * @warning Calling function should pass X and HX[offset] as arguments,
-     * @warning where offset is usually id_start * leading dimension.
+     * @warning X and HX are the exact address to read input X and store output H*X,
+     * @warning both of size ld * nvec.
      */
-    using HPsiFunc = std::function<void(T*, T*, const int, const int, const int, const int)>;
+    using HPsiFunc = std::function<void(T*, T*, const int, const int)>;
 
     /**
      * @brief A function type representing the SX function.
+     * 
+     * nrow is leading dimension of spsi, npw is leading dimension of psi, nbands is number of vecs
      *
      * This function type is used to define a matrix-blockvector operator S.
      * For generalized eigenvalue problem HX = λSX,
      * this function computes the product of the overlap matrix S and a blockvector X.
      *
-     * @param[in]   X     Pointer to the input array.
-     * @param[out] SX     Pointer to the output array.
-     * @param[in] nrow    Dimension of SX: nbands * nrow.
-     * @param[in] npw     Number of plane waves.
-     * @param[in] nbands  Number of bands.
+     * @param[in]   X       Pointer to the input blockvector.
+     * @param[out] SX       Pointer to the output blockvector.
+     * @param[in] ld_spsi   Leading dimension of spsi. Dimension of SX: nbands * nrow.
+     * @param[in] ld_psi    Leading dimension of psi. Number of plane waves.
+     * @param[in] nbands    Number of vectors.
      * 
-     * @note called as spsi(in, out, dim, dim, 1)
+     * @note called like spsi(in, out, dim, dim, 1)
      */
     using SPsiFunc = std::function<void(T*, T*, const int, const int, const int)>;
 
-    int diag(const HPsiFunc& hpsi_func,           // function void hpsi(T*, T*, const int, const int, const int, const int) 
-             const SPsiFunc& spsi_func,           // function void spsi(T*, T*, const int, const int, const int) 
-                      const int ldPsi,            // Leading dimension of the psi input
-                      T *psi_in,                  // Pointer to eigenvectors
-                      Real* eigenvalue_in,        // Pointer to store the resulting eigenvalues
-                      const Real david_diag_thr,  // Convergence threshold for the Davidson iteration
-                      const int david_maxiter,    // Maximum allowed iterations for the Davidson method
-                      const int ntry_max = 5,     // Maximum number of diagonalization attempts (default is 5)
-                      const int notconv_max = 0); // Maximum number of allowed non-converged eigenvectors
+    int diag(
+      const HPsiFunc& hpsi_func,  // function void hpsi(T*, T*, const int, const int) 
+      const SPsiFunc& spsi_func,  // function void spsi(T*, T*, const int, const int, const int) 
+      const int ld_psi,           // Leading dimension of the psi input
+      T *psi_in,                  // Pointer to eigenvectors
+      Real* eigenvalue_in,        // Pointer to store the resulting eigenvalues
+      const Real david_diag_thr,  // Convergence threshold for the Davidson iteration
+      const int david_maxiter,    // Maximum allowed iterations for the Davidson method
+      const int ntry_max = 5,     // Maximum number of diagonalization attempts (5 by default)
+      const int notconv_max = 0); // Maximum number of allowed non-converged eigenvectors
 
   private:
     bool use_paw = false;
@@ -130,7 +128,7 @@ class DiagoDavid : public DiagH<T, Device>
                   const SPsiFunc& spsi_func,
                   const int dim,
                   const int nband,
-                  const int ldPsi,
+                  const int ld_psi,
                   T *psi_in,
                   Real* eigenvalue_in,
                   const Real david_diag_thr,
@@ -163,7 +161,7 @@ class DiagoDavid : public DiagH<T, Device>
                  const int nbase_x,
                  const Real* eigenvalue,
                  const T *psi_in,
-                 const int ldPsi,
+                 const int ld_psi,
                  T* hpsi,
                  T* spsi,
                  T* hcc,
@@ -171,12 +169,12 @@ class DiagoDavid : public DiagH<T, Device>
                  T* vcc);
 
     void SchmidtOrth(const int& dim,
-                    const int nband,
-                    const int m,
-                    const T* spsi,
-                    T* lagrange_m,
-                    const int mm_size,
-                    const int mv_size);
+                     const int nband,
+                     const int m,
+                     const T* spsi,
+                     T* lagrange_m,
+                     const int mm_size,
+                     const int mv_size);
 
     void planSchmidtOrth(const int nband, std::vector<int>& pre_matrix_mm_m, std::vector<int>& pre_matrix_mv_m);
 
