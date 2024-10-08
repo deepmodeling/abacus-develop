@@ -43,37 +43,37 @@ void write_psi_r_1(const psi::Psi<std::complex<double>>& wfc_g,
         {
             const std::vector<std::complex<double>> wfc_r = cal_wfc_r(wfcpw, wfc_g, ik, ib);
 
-            std::vector<double> wfc_r2(wfc_r.size());
-            std::vector<double> wfc_i2;
+            std::vector<double> wfc_real(wfc_r.size());
+            std::vector<double> wfc_imag;
             if (square)
             {
-                for (int ir = 0; ir < wfc_r2.size(); ++ir)
+                for (int ir = 0; ir < wfc_real.size(); ++ir)
                 {
-                    wfc_r2[ir] = std::norm(wfc_r[ir]); // "std::norm(z)" returns |z|^2
+                    wfc_real[ir] = std::norm(wfc_r[ir]); // "std::norm(z)" returns |z|^2
                 }
             }
             else
             {
-                wfc_i2.resize(wfc_r.size());
-                for (int ir = 0; ir < wfc_r2.size(); ++ir)
+                wfc_imag.resize(wfc_r.size());
+                for (int ir = 0; ir < wfc_real.size(); ++ir)
                 {
-                    wfc_r2[ir] = wfc_r[ir].real();
-                    wfc_i2[ir] = wfc_r[ir].imag();
+                    wfc_real[ir] = wfc_r[ir].real();
+                    wfc_imag[ir] = wfc_r[ir].imag();
                 }
             }
             const std::string file_name = outdir + "wfc_realspace_" + ModuleBase::GlobalFunc::TO_STRING(ik_out) + "_"
                                           + ModuleBase::GlobalFunc::TO_STRING(ib);
 #ifdef __MPI
             mpi_requests.push_back({});
-            write_chg_r_1(wfcpw, wfc_r2, file_name, mpi_requests.back());
+            write_chg_r_1(wfcpw, wfc_real, file_name, mpi_requests.back());
             if (!square)
             {
-                write_chg_r_1(wfcpw, wfc_i2, file_name + "_imag", mpi_requests.back());
+                write_chg_r_1(wfcpw, wfc_imag, file_name + "_imag", mpi_requests.back());
             }
 #else
-            write_chg_r_1(wfcpw, wfc_r2, file_name);
+            write_chg_r_1(wfcpw, wfc_real, file_name);
             // if (!square)
-            // write_chg_r_1(wfc_i2, file_name + "_imag", mpi_requests.back());
+            // write_chg_r_1(wfc_imag, file_name + "_imag", mpi_requests.back());
 #endif
         }
     }
