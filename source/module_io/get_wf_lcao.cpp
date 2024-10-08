@@ -19,9 +19,9 @@ IState_Envelope::~IState_Envelope()
 
 // For gamma_only
 void IState_Envelope::begin(const psi::Psi<double>* psid,
-                            const ModulePW::PW_Basis* rhopw,
-                            const ModulePW::PW_Basis_K* wfcpw,
-                            const ModulePW::PW_Basis_Big* bigpw,
+                            const ModulePW::PW_Basis* pw_rhod,
+                            const ModulePW::PW_Basis_K* pw_wfc,
+                            const ModulePW::PW_Basis_Big* pw_big,
                             const Parallel_Orbitals& para_orb,
                             Gint_Gamma& gg,
                             const int& out_wfc_pw,
@@ -93,7 +93,7 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
 
             for (int is = 0; is < nspin; ++is)
             {
-                ModuleBase::GlobalFunc::ZEROS(pes_->charge->rho[is], wfcpw->nrxx);
+                ModuleBase::GlobalFunc::ZEROS(pes_->charge->rho[is], pw_wfc->nrxx);
 
                 psid->fix_k(is);
 #ifdef __MPI
@@ -122,19 +122,19 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
                 const double ef_tmp = this->pes_->eferm.get_efval(is);
                 ModuleIO::write_cube(
 #ifdef __MPI
-                    bigpw->bz,
-                    bigpw->nbz,
-                    rhopw->nplane,
-                    rhopw->startz_current,
+                    pw_big->bz,
+                    pw_big->nbz,
+                    pw_rhod->nplane,
+                    pw_rhod->startz_current,
 #endif
                     pes_->charge->rho_save[is],
                     is,
                     nspin,
                     0,
                     ss.str(),
-                    rhopw->nx,
-                    rhopw->ny,
-                    rhopw->nz,
+                    pw_rhod->nx,
+                    pw_rhod->ny,
+                    pw_rhod->nz,
                     ef_tmp,
                     &(GlobalC::ucell));
             }
@@ -165,7 +165,7 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
 
             for (int is = 0; is < nspin; ++is)
             {
-                ModuleBase::GlobalFunc::ZEROS(pes_->charge->rho[is], wfcpw->nrxx);
+                ModuleBase::GlobalFunc::ZEROS(pes_->charge->rho[is], pw_wfc->nrxx);
 
                 psid->fix_k(is);
 #ifdef __MPI
@@ -192,17 +192,17 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
 
                 // only for gamma_only now
                 psi_g.fix_k(is);
-                this->set_pw_wfc(wfcpw, is, ib, nspin, pes_->charge->rho, psi_g);
+                this->set_pw_wfc(pw_wfc, is, ib, nspin, pes_->charge->rho, psi_g);
 
                 // Calculate real-space wave functions
                 psi_g.fix_k(is);
-                std::vector<std::complex<double>> wfc_r(wfcpw->nrxx);
-                wfcpw->recip2real(&psi_g(ib, 0), wfc_r.data(), is);
+                std::vector<std::complex<double>> wfc_r(pw_wfc->nrxx);
+                pw_wfc->recip2real(&psi_g(ib, 0), wfc_r.data(), is);
 
                 // Extract real and imaginary parts
-                std::vector<double> wfc_real(wfcpw->nrxx);
-                std::vector<double> wfc_imag(wfcpw->nrxx);
-                for (int ir = 0; ir < wfcpw->nrxx; ++ir)
+                std::vector<double> wfc_real(pw_wfc->nrxx);
+                std::vector<double> wfc_imag(pw_wfc->nrxx);
+                for (int ir = 0; ir < pw_wfc->nrxx; ++ir)
                 {
                     wfc_real[ir] = wfc_r[ir].real();
                     wfc_imag[ir] = wfc_r[ir].imag();
@@ -213,19 +213,19 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
                 ss_real << global_out_dir << "BAND" << ib + 1 << "_GAMMA" << "_SPIN" << is + 1 << "_REAL.cube";
                 ModuleIO::write_cube(
 #ifdef __MPI
-                    bigpw->bz,
-                    bigpw->nbz,
-                    rhopw->nplane,
-                    rhopw->startz_current,
+                    pw_big->bz,
+                    pw_big->nbz,
+                    pw_rhod->nplane,
+                    pw_rhod->startz_current,
 #endif
                     wfc_real.data(),
                     is,
                     nspin,
                     0,
                     ss_real.str(),
-                    rhopw->nx,
-                    rhopw->ny,
-                    rhopw->nz,
+                    pw_rhod->nx,
+                    pw_rhod->ny,
+                    pw_rhod->nz,
                     ef_tmp,
                     &(GlobalC::ucell));
 
@@ -234,19 +234,19 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
                 ss_imag << global_out_dir << "BAND" << ib + 1 << "_GAMMA" << "_SPIN" << is + 1 << "_IMAG.cube";
                 ModuleIO::write_cube(
 #ifdef __MPI
-                    bigpw->bz,
-                    bigpw->nbz,
-                    rhopw->nplane,
-                    rhopw->startz_current,
+                    pw_big->bz,
+                    pw_big->nbz,
+                    pw_rhod->nplane,
+                    pw_rhod->startz_current,
 #endif
                     wfc_imag.data(),
                     is,
                     nspin,
                     0,
                     ss_imag.str(),
-                    rhopw->nx,
-                    rhopw->ny,
-                    rhopw->nz,
+                    pw_rhod->nx,
+                    pw_rhod->ny,
+                    pw_rhod->nz,
                     ef_tmp,
                     &(GlobalC::ucell));
             }
@@ -259,12 +259,12 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
         ssw << global_out_dir << "WAVEFUNC";
         std::cout << " Write G-space wave functions into \"" << global_out_dir << "/" << ssw.str() << "\" files."
                   << std::endl;
-        ModuleIO::write_wfc_pw(ssw.str(), psi_g, kv, wfcpw);
+        ModuleIO::write_wfc_pw(ssw.str(), psi_g, kv, pw_wfc);
     }
 
     if (out_wfc_r)
     {
-        ModuleIO::write_psi_r_1(psi_g, wfcpw, "wfc_realspace", false, kv);
+        ModuleIO::write_psi_r_1(psi_g, pw_wfc, "wfc_realspace", false, kv);
     }
 
     for (int is = 0; is < nspin; ++is)
@@ -280,9 +280,9 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
 
 // For multi-k
 void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
-                            const ModulePW::PW_Basis* rhopw,
-                            const ModulePW::PW_Basis_K* wfcpw,
-                            const ModulePW::PW_Basis_Big* bigpw,
+                            const ModulePW::PW_Basis* pw_rhod,
+                            const ModulePW::PW_Basis_K* pw_wfc,
+                            const ModulePW::PW_Basis_Big* pw_big,
                             const Parallel_Orbitals& para_orb,
                             Gint_k& gk,
                             const int& out_wf,
@@ -330,7 +330,7 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
     psi::Psi<std::complex<double>> psi_g(kv.ngk.data());
     if (out_wf || out_wf_r)
     {
-        psi_g.resize(nks, nbands, wfcpw->npwk_max);
+        psi_g.resize(nks, nbands, pw_wfc->npwk_max);
     }
 
     int mode_norm = 0;
@@ -360,7 +360,7 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
             {
                 const int ispin = kv.isk[ik];
                 ModuleBase::GlobalFunc::ZEROS(pes_->charge->rho[ispin],
-                                              wfcpw->nrxx); // terrible, you make changes on another instance's data???
+                                              pw_wfc->nrxx); // terrible, you make changes on another instance's data???
                 std::cout << " Calculate envelope function for kpoint " << ik + 1 << ",  band" << ib + 1 << std::endl;
                 //  2d-to-grid conversion is unified into `wfc_2d_to_grid`.
                 psi->fix_k(ik);
@@ -382,19 +382,19 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
 
                 ModuleIO::write_cube(
 #ifdef __MPI
-                    bigpw->bz,
-                    bigpw->nbz,
-                    rhopw->nplane,
-                    rhopw->startz_current,
+                    pw_big->bz,
+                    pw_big->nbz,
+                    pw_rhod->nplane,
+                    pw_rhod->startz_current,
 #endif
                     pes_->charge->rho[ispin],
                     ispin,
                     nspin,
                     0,
                     ss.str(),
-                    rhopw->nx,
-                    rhopw->ny,
-                    rhopw->nz,
+                    pw_rhod->nx,
+                    pw_rhod->ny,
+                    pw_rhod->nz,
                     ef_tmp,
                     &(GlobalC::ucell),
                     3,
@@ -403,7 +403,7 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
                 if (out_wf || out_wf_r)
                 {
                     psi_g.fix_k(ik);
-                    this->set_pw_wfc(wfcpw, ik, ib, nspin, pes_->charge->rho, psi_g);
+                    this->set_pw_wfc(pw_wfc, ik, ib, nspin, pes_->charge->rho, psi_g);
                 }
             }
         }
@@ -417,11 +417,11 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
             ssw << global_out_dir << "WAVEFUNC";
             std::cout << " write G-space wave functions into \"" << global_out_dir << "/" << ssw.str() << "\" files."
                       << std::endl;
-            ModuleIO::write_wfc_pw(ssw.str(), psi_g, kv, wfcpw);
+            ModuleIO::write_wfc_pw(ssw.str(), psi_g, kv, pw_wfc);
         }
         if (out_wf_r)
         {
-            ModuleIO::write_psi_r_1(psi_g, wfcpw, "wfc_realspace", false, kv);
+            ModuleIO::write_psi_r_1(psi_g, pw_wfc, "wfc_realspace", false, kv);
         }
 
         std::cout << " Outputting real-space wave functions in cube format..." << std::endl;
@@ -440,13 +440,13 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
                     psi_g.fix_k(ik);
 
                     // Calculate real-space wave functions
-                    std::vector<std::complex<double>> wfc_r(wfcpw->nrxx);
-                    wfcpw->recip2real(&psi_g(ib, 0), wfc_r.data(), ik);
+                    std::vector<std::complex<double>> wfc_r(pw_wfc->nrxx);
+                    pw_wfc->recip2real(&psi_g(ib, 0), wfc_r.data(), ik);
 
                     // Extract real and imaginary parts
-                    std::vector<double> wfc_real(wfcpw->nrxx);
-                    std::vector<double> wfc_imag(wfcpw->nrxx);
-                    for (int ir = 0; ir < wfcpw->nrxx; ++ir)
+                    std::vector<double> wfc_real(pw_wfc->nrxx);
+                    std::vector<double> wfc_imag(pw_wfc->nrxx);
+                    for (int ir = 0; ir < pw_wfc->nrxx; ++ir)
                     {
                         wfc_real[ir] = wfc_r[ir].real();
                         wfc_imag[ir] = wfc_r[ir].imag();
@@ -459,19 +459,19 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
                     const double ef_tmp = this->pes_->eferm.get_efval(ispin);
                     ModuleIO::write_cube(
 #ifdef __MPI
-                        bigpw->bz,
-                        bigpw->nbz,
-                        rhopw->nplane,
-                        rhopw->startz_current,
+                        pw_big->bz,
+                        pw_big->nbz,
+                        pw_rhod->nplane,
+                        pw_rhod->startz_current,
 #endif
                         wfc_real.data(),
                         ispin,
                         nspin,
                         0,
                         ss_real.str(),
-                        rhopw->nx,
-                        rhopw->ny,
-                        rhopw->nz,
+                        pw_rhod->nx,
+                        pw_rhod->ny,
+                        pw_rhod->nz,
                         ef_tmp,
                         &(GlobalC::ucell));
 
@@ -481,19 +481,19 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
                             << "_IMAG.cube";
                     ModuleIO::write_cube(
 #ifdef __MPI
-                        bigpw->bz,
-                        bigpw->nbz,
-                        rhopw->nplane,
-                        rhopw->startz_current,
+                        pw_big->bz,
+                        pw_big->nbz,
+                        pw_rhod->nplane,
+                        pw_rhod->startz_current,
 #endif
                         wfc_imag.data(),
                         ispin,
                         nspin,
                         0,
                         ss_imag.str(),
-                        rhopw->nx,
-                        rhopw->ny,
-                        rhopw->nz,
+                        pw_rhod->nx,
+                        pw_rhod->ny,
+                        pw_rhod->nz,
                         ef_tmp,
                         &(GlobalC::ucell));
                 }
@@ -627,7 +627,7 @@ void IState_Envelope::select_bands(const int nbands_istate,
 }
 
 // for each band
-void IState_Envelope::set_pw_wfc(const ModulePW::PW_Basis_K* wfcpw,
+void IState_Envelope::set_pw_wfc(const ModulePW::PW_Basis_K* pw_wfc,
                                  const int& ik,
                                  const int& ib,
                                  const int& nspin,
@@ -640,19 +640,19 @@ void IState_Envelope::set_pw_wfc(const ModulePW::PW_Basis_K* wfcpw,
         ModuleBase::TITLE("IState_Envelope", "set_pw_wfc");
     }
 
-    std::vector<std::complex<double>> Porter(wfcpw->nrxx);
+    std::vector<std::complex<double>> Porter(pw_wfc->nrxx);
     // here I refer to v_hartree, but I don't know how to deal with NSPIN=4
     const int nspin0 = (nspin == 2) ? 2 : 1;
     for (int is = 0; is < nspin0; ++is)
     {
-        for (int ir = 0; ir < wfcpw->nrxx; ++ir)
+        for (int ir = 0; ir < pw_wfc->nrxx; ++ir)
         {
             Porter[ir] += std::complex<double>(rho[is][ir], 0.0);
         }
     }
 
     // call FFT
-    wfcpw->real2recip(Porter.data(), &wfc_g(ib, 0), ik);
+    pw_wfc->real2recip(Porter.data(), &wfc_g(ib, 0), ik);
 }
 
 #ifdef __MPI

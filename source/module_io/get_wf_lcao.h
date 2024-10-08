@@ -18,9 +18,9 @@ class IState_Envelope
 
     /// For gamma_only
     void begin(const psi::Psi<double>* psid,
-               const ModulePW::PW_Basis* rhopw,
-               const ModulePW::PW_Basis_K* wfcpw,
-               const ModulePW::PW_Basis_Big* bigpw,
+               const ModulePW::PW_Basis* pw_rhod,
+               const ModulePW::PW_Basis_K* pw_wfc,
+               const ModulePW::PW_Basis_Big* pw_big,
                const Parallel_Orbitals& para_orb,
                Gint_Gamma& gg,
                const int& out_wfc_pw,
@@ -37,9 +37,9 @@ class IState_Envelope
 
     /// tmp, delete after Gint is refactored.
     void begin(const psi::Psi<double>* psid,
-               const ModulePW::PW_Basis* rhopw,
-               const ModulePW::PW_Basis_K* wfcpw,
-               const ModulePW::PW_Basis_Big* bigpw,
+               const ModulePW::PW_Basis* pw_rhod,
+               const ModulePW::PW_Basis_K* pw_wfc,
+               const ModulePW::PW_Basis_Big* pw_big,
                const Parallel_Orbitals& para_orb,
                Gint_k& gg,
                const int& out_wfc_pw,
@@ -59,9 +59,9 @@ class IState_Envelope
 
     /// For multi-k
     void begin(const psi::Psi<std::complex<double>>* psi,
-               const ModulePW::PW_Basis* rhopw,
-               const ModulePW::PW_Basis_K* wfcpw,
-               const ModulePW::PW_Basis_Big* bigpw,
+               const ModulePW::PW_Basis* pw_rhod,
+               const ModulePW::PW_Basis_K* pw_wfc,
+               const ModulePW::PW_Basis_Big* pw_big,
                const Parallel_Orbitals& para_orb,
                Gint_k& gk,
                const int& out_wfc_pw,
@@ -78,9 +78,9 @@ class IState_Envelope
 
     /// tmp, delete after Gint is refactored.
     void begin(const psi::Psi<std::complex<double>>* psi,
-               const ModulePW::PW_Basis* rhopw,
-               const ModulePW::PW_Basis_K* wfcpw,
-               const ModulePW::PW_Basis_Big* bigpw,
+               const ModulePW::PW_Basis* pw_rhod,
+               const ModulePW::PW_Basis_K* pw_wfc,
+               const ModulePW::PW_Basis_Big* pw_big,
                const Parallel_Orbitals& para_orb,
                Gint_Gamma& gk,
                const int& out_wfc_pw,
@@ -106,7 +106,7 @@ class IState_Envelope
                       const int mode,
                       const int fermi_band);
 
-    void set_pw_wfc(const ModulePW::PW_Basis_K* wfcpw,
+    void set_pw_wfc(const ModulePW::PW_Basis_K* pw_wfc,
                     const int& ik,
                     const int& ib,
                     const int& nspin,
