@@ -59,10 +59,10 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
     }
 
     // for pw_wfc in G space
-    psi::Psi<std::complex<double>> pw_wfc_g;
+    psi::Psi<std::complex<double>> psi_g;
     if (out_wfc_pw || out_wfc_r)
     {
-        pw_wfc_g.resize(nspin, nbands, kv.ngk[0]);
+        psi_g.resize(nspin, nbands, kv.ngk[0]);
     }
 
     const double mem_size = sizeof(double) * double(gg.gridt->lgd) * double(nbands) * double(nspin) / 1024.0 / 1024.0;
@@ -191,13 +191,13 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
                 const double ef_tmp = this->pes_->eferm.get_efval(is);
 
                 // only for gamma_only now
-                pw_wfc_g.fix_k(is);
-                this->set_pw_wfc(wfcpw, is, ib, nspin, pes_->charge->rho, pw_wfc_g);
+                psi_g.fix_k(is);
+                this->set_pw_wfc(wfcpw, is, ib, nspin, pes_->charge->rho, psi_g);
 
                 // Calculate real-space wave functions
-                pw_wfc_g.fix_k(is);
+                psi_g.fix_k(is);
                 std::vector<std::complex<double>> wfc_r(wfcpw->nrxx);
-                wfcpw->recip2real(&pw_wfc_g(ib, 0), wfc_r.data(), is);
+                wfcpw->recip2real(&psi_g(ib, 0), wfc_r.data(), is);
 
                 // Extract real and imaginary parts
                 std::vector<double> wfc_real(wfcpw->nrxx);
@@ -259,12 +259,12 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
         ssw << global_out_dir << "WAVEFUNC";
         std::cout << " Write G-space wave functions into \"" << global_out_dir << "/" << ssw.str() << "\" files."
                   << std::endl;
-        ModuleIO::write_wfc_pw(ssw.str(), pw_wfc_g, kv, wfcpw);
+        ModuleIO::write_wfc_pw(ssw.str(), psi_g, kv, wfcpw);
     }
 
     if (out_wfc_r)
     {
-        ModuleIO::write_psi_r_1(pw_wfc_g, wfcpw, "wfc_realspace", false, kv);
+        ModuleIO::write_psi_r_1(psi_g, wfcpw, "wfc_realspace", false, kv);
     }
 
     for (int is = 0; is < nspin; ++is)
@@ -327,10 +327,10 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
     printf(" Estimated on-the-fly memory consuming by IState_Envelope::begin::wfc_k_grid: %f MB\n", mem_size);
 
     // for pw_wfc in G space
-    psi::Psi<std::complex<double>> pw_wfc_g(kv.ngk.data());
+    psi::Psi<std::complex<double>> psi_g(kv.ngk.data());
     if (out_wf || out_wf_r)
     {
-        pw_wfc_g.resize(nks, nbands, wfcpw->npwk_max);
+        psi_g.resize(nks, nbands, wfcpw->npwk_max);
     }
 
     int mode_norm = 0;
@@ -402,8 +402,8 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
 
                 if (out_wf || out_wf_r)
                 {
-                    pw_wfc_g.fix_k(ik);
-                    this->set_pw_wfc(wfcpw, ik, ib, nspin, pes_->charge->rho, pw_wfc_g);
+                    psi_g.fix_k(ik);
+                    this->set_pw_wfc(wfcpw, ik, ib, nspin, pes_->charge->rho, psi_g);
                 }
             }
         }
@@ -417,11 +417,11 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
             ssw << global_out_dir << "WAVEFUNC";
             std::cout << " write G-space wave functions into \"" << global_out_dir << "/" << ssw.str() << "\" files."
                       << std::endl;
-            ModuleIO::write_wfc_pw(ssw.str(), pw_wfc_g, kv, wfcpw);
+            ModuleIO::write_wfc_pw(ssw.str(), psi_g, kv, wfcpw);
         }
         if (out_wf_r)
         {
-            ModuleIO::write_psi_r_1(pw_wfc_g, wfcpw, "wfc_realspace", false, kv);
+            ModuleIO::write_psi_r_1(psi_g, wfcpw, "wfc_realspace", false, kv);
         }
 
         std::cout << " Outputting real-space wave functions in cube format..." << std::endl;
@@ -437,11 +437,11 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
                     std::cout << " Processing band " << ib + 1 << ", k-point " << ik << ", spin " << ispin + 1
                               << std::endl;
 
-                    pw_wfc_g.fix_k(ik);
+                    psi_g.fix_k(ik);
 
                     // Calculate real-space wave functions
                     std::vector<std::complex<double>> wfc_r(wfcpw->nrxx);
-                    wfcpw->recip2real(&pw_wfc_g(ib, 0), wfc_r.data(), ik);
+                    wfcpw->recip2real(&psi_g(ib, 0), wfc_r.data(), ik);
 
                     // Extract real and imaginary parts
                     std::vector<double> wfc_real(wfcpw->nrxx);
@@ -572,11 +572,7 @@ void IState_Envelope::select_bands(const int nbands_istate,
         // Fill bands_picked_ with values from out_wfc_kb
         // Remaining bands are already set to 0
         const int length = std::min(static_cast<int>(out_wfc_kb.size()), nbands);
-        for (int i = 0; i < length; ++i)
-        {
-            // out_wfc_kb rely on function parse_expression
-            bands_picked_[i] = out_wfc_kb[i];
-        }
+        std::copy(out_wfc_kb.begin(), out_wfc_kb.begin() + length, bands_picked_.begin());
 
         // Check if there are selected bands below the Fermi surface
         bool has_below = false;

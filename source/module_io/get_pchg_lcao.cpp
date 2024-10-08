@@ -418,11 +418,7 @@ void IState_Charge::select_bands(const int nbands_istate,
         // Fill bands_picked_ with values from out_pchg
         // Remaining bands are already set to 0
         const int length = std::min(static_cast<int>(out_pchg.size()), nbands);
-        for (int i = 0; i < length; ++i)
-        {
-            // out_pchg rely on function parse_expression
-            bands_picked_[i] = out_pchg[i];
-        }
+        std::copy(out_pchg.begin(), out_pchg.begin() + length, bands_picked_.begin());
 
         // Check if there are selected bands below the Fermi surface
         bool has_below = false;
