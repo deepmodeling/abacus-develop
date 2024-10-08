@@ -68,7 +68,7 @@ struct Input_para
     std::vector<double> kspacing = {0.0, 0.0, 0.0}; ///< kspacing for k-point generation
     double min_dist_coef = 0.2;                     ///< allowed minimum distance between two atoms
 
-    std::string device = "cpu";
+    std::string device = "auto";
     std::string precision = "double";
 
     // ==============   #Parameters (2.Electronic structure) ===========================
