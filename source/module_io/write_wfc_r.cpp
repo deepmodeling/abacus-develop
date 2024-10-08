@@ -4,6 +4,11 @@
 // DATE :   2021-11-21
 //======================
 
+//======================
+// WARNING: These interfaces will be removed in the future! Do not use them!
+// Taoni add 2024-10-08
+//======================
+
 #include "module_base/timer.h"
 #include "module_base/tool_title.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
