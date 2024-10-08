@@ -64,6 +64,7 @@ void write_psi_r_1(const psi::Psi<std::complex<double>>& wfc_g,
             const std::string file_name = outdir + "wfc_realspace_" + ModuleBase::GlobalFunc::TO_STRING(ik_out) + "_"
                                           + ModuleBase::GlobalFunc::TO_STRING(ib);
 #ifdef __MPI
+            // Use write_chg_r_1 to output the real and imaginary parts of the wave function to file
             mpi_requests.push_back({});
             write_chg_r_1(wfcpw, wfc_real, file_name, mpi_requests.back());
             if (!square)
